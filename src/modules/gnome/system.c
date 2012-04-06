@@ -135,6 +135,7 @@ void Rgnome_CleanUp(SA_TYPE saveact, int status, int runLast)
 {
     GtkWidget *dialog;
     gint which; /* yes = 0, no = 1, cancel = 2 || -1 */
+    char *tmpdir, buf[1000];
 
 /*
     GList *curfile = R_gtk_editfiles;
@@ -206,6 +207,10 @@ void Rgnome_CleanUp(SA_TYPE saveact, int status, int runLast)
       curfile = g_list_next(curfile);
     }
 */
+    if((tmpdir = getenv("R_SESSION_TMPDIR"))) {
+	sprintf(buf, "rm -rf %s", tmpdir);
+	system(buf);
+    }
 
 
     /* close all the graphics devices */
@@ -339,7 +344,7 @@ void gnome_start(int ac, char **av, Rstart Rp)
 	R_HistoryFile = ".Rhistory";
     R_HistorySize = 512;
     if ((p = getenv("R_HISTSIZE"))) {
-	value = Decode2Long(p, &ierr);
+	value = R_Decode2Long(p, &ierr);
 	if (ierr != 0 || value < 0)
 	    fprintf(stderr, "WARNING: invalid R_HISTSIZE ignored;");
 	else

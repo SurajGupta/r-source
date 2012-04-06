@@ -39,30 +39,23 @@ help <- function(topic, offline = FALSE, package = .packages(),
                     if(file.exists(file)) {
                         ofile <- file
                         base.pos <- match("package:base", search())
-                        if (exists("help.start.has.been.run",
-                                   where=base.pos, mode="logical") &&
-                            get("help.start.has.been.run",
-                                   pos=base.pos, mode="logical")) {
-                        ## we need to use the version in ~/.R if we can.
-                            lnkfile <-
-                                file.path(Sys.getenv("HOME"), ".R",
-                                          "library", package, "html",
-                                          paste(topic, "html", sep="."))
-                            if (any(ex <- file.exists(lnkfile))) {
-                                lnkfile <- lnkfile[ex]
-                                file <- lnkfile[1] # could be more than one
-                            }
+                        ## We need to use the version in per-session dir
+                        ## if we can.
+                        lnkfile <-
+                            file.path(tempdir(), ".R",
+                                      "library", package, "html",
+                                      paste(topic, "html", sep="."))
+                        if (any(ex <- file.exists(lnkfile))) {
+                            lnkfile <- lnkfile[ex]
+                            file <- lnkfile[1] # could be more than one
                         }
                         if (file == ofile) {
                             warning("Using non-linked HTML file: style sheet and hyperlinks may be incorrect")
                         }
-                        file <- paste("file:", file, sep="")
-                        if (is.null(getOption("browser")))
+                        file <- paste("file://", file, sep = "")
+                        if(is.null(browser <- getOption("browser")))
                             stop("options(\"browser\") not set")
-                        browser <- getOption("browser")
-                        system(paste(browser, " -remote \"openURL(",
-                                     file, ")\" 2>/dev/null || ", browser, " ",
-                                     file, " &", sep = ""))
+                        browseURL(file)
                         cat("help() for",topic, " is shown in browser",browser,
                             "...\nUse\t help(",topic,", htmlhelp=FALSE)\nor\t",
                             "options(htmlhelp = FALSE)\nto revert.\n")
@@ -109,18 +102,25 @@ help <- function(topic, offline = FALSE, package = .packages(),
                     file.append(FILE, zfile)
                     cat("\\end{document}\n",
                         file = FILE, append = TRUE)
+                    ## <NOTE>
+                    ## We now have help-print.sh in share/sh but we do
+                    ## not use the .Script mechanism because we play
+                    ## with the TEXINPUTS environment variable and not
+                    ## all systems can be assumed to support Sys.putenv().
                     system(paste(paste("TEXINPUTS=",
                                        file.path(R.home(), "share",
                                                  "texmf"),
                                        ":",
                                        "$TEXINPUTS",
                                        sep = ""),
-                                 file.path(R.home(), "bin", "help"),
-                                 "PRINT",
+                                 "/bin/sh",
+                                 file.path(R.home(), "share", "sh",
+                                           "help-print.sh"),
                                  FILE,
                                  topic,
                                  getOption("latexcmd"),
                                  getOption("dvipscmd")))
+                    ## </NOTE>
                     return(invisible())
                 }
                 else

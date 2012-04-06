@@ -18,7 +18,7 @@ LEA_MALLOC=YES
 
 # Set to YES and specify the path if you want to use the ATLAS BLAS.
 USE_ATLAS=NO
-ATLAS_PATH=/R/ATLAS/lib/WinNT_PII
+ATLAS_PATH=/R/ATLAS/lib/WinNT_P4SSE2
 
 # Where does 'HTML Help Workshop' live? (unused if compiled HTML help is
 # not requested. Spaces allowed.)
@@ -32,8 +32,6 @@ TCL_VERSION = 83
 
 # location where Inno Setup was installed
 ISDIR=C:/packages/Inno
-# location where zip files of binary packages are kept
-PKGS=C:/R/Rdist/libs
 
 ## =================== cross-compiler settings  =================
 
@@ -45,6 +43,11 @@ HEADER=/users/ripley/R/cross-tools/mingw32/include
 endif
 
 ## =============== end of user-customizable parts  ===================
+
+## want survival before boot for xrefs
+REC_NONBUNDLES=KernSmooth survival boot cluster foreign grid lattice mgcv nlme rpart
+RECOMMENDED=VR $(REC_NONBUNDLES)
+REC_PKGS=$(REC_NONBUNDLES) MASS class nnet spatial
 
 ifeq ($(strip $(BUILD)),MINGW)
 BINPREF=
@@ -87,6 +90,18 @@ RESCOMP=$(BINPREF)windres
 .c.d:
 	@echo "making $@ from $<"
 	@$(CC) -M $(CFLAGS) $($*-CFLAGS) $< -o $@
+
+.cc.d:
+	@echo "making $@ from $<"
+	@$(CXX) -M $(CXXFLAGS) $($*-CXXFLAGS) $< -o $@
+
+.cpp.d:
+	@echo "making $@ from $<"
+	@$(CXX) -M $(CXXFLAGS) $($*-CXXFLAGS) $< -o $@
+
+.C.d:
+	@echo "making $@ from $<"
+	@$(CXX) -M $(CXXFLAGS) $($*-CXXFLAGS) $< -o $@
 
 .c.o:
 	$(CC) $(CFLAGS) $($*-CFLAGS) -c $< -o $@

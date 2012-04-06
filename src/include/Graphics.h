@@ -331,11 +331,11 @@ typedef struct {
     SEXP displayList;	/* display list */
 } DevDesc;
 
-/* For easy reference: Here are the source files of 
+/* For easy reference: Here are the source files of
  * currently existing device drivers:
  * FILE				driver name prefix
  * ----------------------	------------------
- * ../main/devPS.c		PS  _and_  XFig
+ * ../main/devPS.c		PS , PDF _and_  XFig
  * ../main/devPicTeX.c		PicTeX
  * ../modules/X11/devX11.c	X11
  * ../gnuwin32/devga.c		GA
@@ -390,6 +390,7 @@ unsigned int str2col(char *);
 char* col2name(unsigned int);
 
 unsigned int ScaleColor(double x);
+unsigned int CheckColor(int x);
 
 char* RGB2rgb(unsigned int, unsigned int, unsigned int);
 

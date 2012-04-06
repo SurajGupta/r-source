@@ -38,8 +38,10 @@
 #include "run.h"
 #include "Startup.h"
 #include <stdlib.h>		/* for exit */
+void CleanTempDir();		/* from extra.c */
 
-unsigned int R_max_memory = INT_MAX;
+
+R_size_t R_max_memory = INT_MAX;
 Rboolean UseInternet2 = FALSE;
 
 SA_TYPE SaveAction = SA_DEFAULT;
@@ -175,6 +177,7 @@ void Rconsolesetwidth(int cols)
 static int
 GuiReadConsole(char *prompt, char *buf, int len, int addtohistory)
 {
+    int res;
     char *p;
     char *NormalPrompt =
 	(char *) CHAR(STRING_ELT(GetOption(install("prompt"), R_NilValue), 0));
@@ -184,12 +187,12 @@ GuiReadConsole(char *prompt, char *buf, int len, int addtohistory)
 	Rconsolesetwidth(consolecols(RConsole));
     }
     ConsoleAcceptCmd = !strcmp(prompt, NormalPrompt);
-    consolereads(RConsole, prompt, buf, len, addtohistory);
+    res = consolereads(RConsole, prompt, buf, len, addtohistory);
     for (p = buf; *p; p++)
 	if (*p == EOF)
 	    *p = '\001';
     ConsoleAcceptCmd = 0;
-    return 1;
+    return !res;
 }
 
 
@@ -243,9 +246,9 @@ ThreadedReadConsole(char *prompt, char *buf, int len, int addtohistory)
 static int
 CharReadConsole(char *prompt, char *buf, int len, int addtohistory)
 {
-   getline(prompt,buf,len);
+   int res = getline(prompt,buf,len);
    if (addtohistory) gl_histadd(buf);
-   return 1;
+   return !res;
 }
 
 /*3: (as InThreadReadConsole) and 4: non-interactive */
@@ -396,6 +399,7 @@ void R_CleanUp(SA_TYPE saveact, int status, int runLast)
     }
     R_RunExitFinalizers();
     CleanEd();
+    CleanTempDir();
     closeAllHlpFiles();
     KillAllDevices();
     AllDevicesKilled = TRUE;
@@ -623,7 +627,7 @@ static void env_command_line(int *pac, char **argv)
 int cmdlineoptions(int ac, char **av)
 {
     int   i, ierr;
-    long value;
+    R_size_t value;
     char *p;
     char  s[1024];
     structRstart rstart;
@@ -647,7 +651,7 @@ int cmdlineoptions(int ac, char **av)
     /* set defaults for R_max_memory. This is set here so that
        embedded applications get no limit */
     GlobalMemoryStatus(&ms);
-    R_max_memory = min(256 * Mega, ms.dwTotalPhys);
+    R_max_memory = min(1024 * Mega, ms.dwTotalPhys);
     /* need enough to start R: fails on a 8Mb system */
     R_max_memory = max(16 * Mega, R_max_memory);
     
@@ -725,7 +729,7 @@ int cmdlineoptions(int ac, char **av)
 		    R_ShowMessage("WARNING: no max-mem-size given\n");
 		    break;
 		}
-		value = Decode2Long(p, &ierr);
+		value = R_Decode2Long(p, &ierr);
 		if(ierr) {
 		    if(ierr < 0)
 			sprintf(s, "WARNING: --max-mem-size value is invalid: ignored\n");
@@ -808,7 +812,7 @@ int cmdlineoptions(int ac, char **av)
     R_HistorySize = 512;
     if ((p = getenv("R_HISTSIZE"))) {
 	int value, ierr;
-	value = Decode2Long(p, &ierr);
+	value = R_Decode2Long(p, &ierr);
 	if (ierr != 0 || value < 0)
 	    REprintf("WARNING: invalid R_HISTSIZE ignored;");
 	else

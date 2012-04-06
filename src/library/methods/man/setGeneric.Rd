@@ -9,10 +9,11 @@
   control.  See the details section.
 }
 \usage{
-setGeneric(name, def, group=NULL, valueClass=NULL, where=1, doAssign,
-           myDispatch = FALSE, useAsDefault)
+setGeneric(name, def, group=NULL, valueClass=NULL, where=1, package, 
+           signature, useAsDefault, genericFunction)
 
-setGroupGeneric(name, def, group=NULL, valueClass=NULL, knownMembers, where=1)
+setGroupGeneric(name, def, group=NULL, valueClass=NULL, knownMembers, 
+                package, where=1)
 }
 \arguments{
   \item{name}{ The character string name of the generic function.  In
@@ -23,10 +24,10 @@ setGroupGeneric(name, def, group=NULL, valueClass=NULL, knownMembers, where=1)
   \item{def}{ An optional function object, defining the generic.  This
     argument is usually only needed (and is then required) if there is
     no current function of this name. In that case, the formal arguments
-    and default values for the generic are taken from \code{def}.  The
-    body will be set to the standard dispatch mechanism, unless you want
-    to do something different (use argument \code{myDispatch} in this
-    case.
+    and default values for the generic are taken from \code{def}.  You
+    can also supply this argument if you want the generic function to
+    do something other than just dispatch methods (an advanced topic
+    best left alone unless you are sure you want it).
     
     Note that \code{def} is \emph{not} the default method; use argument
     \code{useAsDefault} if you want to specify the default separately.
@@ -44,25 +45,25 @@ setGroupGeneric(name, def, group=NULL, valueClass=NULL, knownMembers, where=1)
       an error is generated.  See the
       details section for supplying an expression.
    }
+  \item{package}{ The name of the package with which this function is
+      associated.  Usually determined automatically (as the package
+      containing the non-generic version if there is one, or else the
+      package where this generic is to be saved).
+      }
   \item{where}{ Where to store the resulting initial methods definition,
     and possibly the generic function; by
-    default, stored into the global environment.
+    default, stored into the top-level environment.
   }
-  \item{doAssign}{ 
-    You can supply \code{doAssign} as \code{TRUE} to force assigning a
-    generic function even if one already exists. See the details
-    section. The rule of not assigning
-    generics for primitives cannot be overriden by setting
-    \code{doAssign} to \code{TRUE}.
+  \item{signature}{
+      Optionally, the signature of arguments in the function that can
+      be used in methods for this generic.  By default, all arguments
+      other than \code{...} can be used.  The signature argument can
+      prohibit methods from using some arguments.  The argument, if
+      provided, is a vector of formal argument names.
   }
-  \item{myDispatch}{
-    Normally, the body of a generic function does nothing except to
-    dispatch methods (via a call to \code{\link{standardGeneric}}).  The
-    evaluation model, however, allows the generic to do any other
-    computation it wants, it it calls \code{standardGeneric} at
-    some point.  Otherwise, \code{setGeneric} will ignore the body of
-    the supplied generic unless \code{myDispatch} is set to
-    \code{TRUE}. See the details section.
+  \item{genericFunction}{ The object to be used as a (nonstandard)
+  generic function definition. Supply this explicitly \emph{only} if
+  you know what you are doing!
   }
   \item{useAsDefault}{
     Override the usual choice of default argument (an existing
@@ -114,7 +115,7 @@ setGroupGeneric(name, def, group=NULL, valueClass=NULL, knownMembers, where=1)
   there is not direct or inherited method on call to the function).
 
   The same no-default situation occurs if there is no non-generic form of the function, and
-  \code{useAsDefault} does not supply one.  Remember, though, you can
+  \code{useAsDefault=FALSE}.  Remember, though, you can
   also just assign the default you want (even one that generates an
   error) rather than relying on the prior situation.
 
@@ -125,7 +126,7 @@ setGroupGeneric(name, def, group=NULL, valueClass=NULL, knownMembers, where=1)
   the new one; see \code{\link{removeGeneric}}).  There is one
   absolute restriction:  you cannot create an explicit generic for the
   primitive functions in the base library.  These are dispatched from
-  C code for efficiency and, also, are implicitly not to be redefined
+  C code for efficiency and are not to be redefined
   in any case.
 
   As mentioned, the body of a generic function usually does nothing
@@ -134,29 +135,20 @@ setGroupGeneric(name, def, group=NULL, valueClass=NULL, knownMembers, where=1)
   computation in the generic function itself.  As long as your
   function eventually calls \code{standardGeneric} that is permissible
   (though perhaps not a good idea, in that it makes the behavior of
-  your function different from the usual S model).  If your function
+  your function different from the usual S model).  If your explicit
+  definition of the generic function
   does \emph{not} call \code{standardGeneric} you are in trouble,
   because none of the methods for the function will ever be
-  dispatched.  The computations in \code{setGeneric} look for such a
-  call, and normally ignore the body of a \code{def} argument that
-  has no such call.  If you really need to supply such a definition
-  (perhaps because you call something else that calls
-  \code{standardGeneric}), you can force the use of \code{def} by
-  supplying \code{myDispatch = TRUE}.
+  dispatched. 
+
       By default, the generic function can return any object.
-    
-   If \code{valueClass} is supplied, it can be either a vector of
-   class names or an unevaluated expression.  If an unevaluated expression is supplied (e.g., by using
-   \code{\link{quote}}), the expression will be evaluated in the frame
-   of the call to the generic function, after the method is
-   dispatched.  Therefore, the expression can involve any argument or
-   locally defined object in that frame.
-   The test is done in the form
-   \code{is(object, class)}, so that a value from a class that extends
-   a supplied value class will be accepted.
+   If \code{valueClass} is supplied, it should be a vector of
+   class names; the value returned by a method is then required to
+   satisfy \code{is(object, Class)} for one of the specified classes.
    An empty (i.e., zero length) vector of classes means anything is
-   allowed (but it would be clearer programming to have an expression that
-   evaluated to \code{"ANY"}).
+   allowed.
+   Note that more complicated requirements on the result can be
+   specified explicitly, by defining a non-standard generic function.
 
   The \code{setGroupGeneric} function behaves like \code{setGeneric} except that
   it constructs a group generic function, differing in two ways from an
@@ -168,21 +160,121 @@ setGroupGeneric(name, def, group=NULL, valueClass=NULL, knownMembers, where=1)
   definition changes, through changes in the search list or direct
   specification of methods, etc.
 }
+\section{Generic Functions and Primitive Functions}{
+  A number of the basic R functions are specially implemented as
+  primitive functions, to be evaluated directly in the underlying C
+  code rather than by evaluating an S language definition.  Primitive
+  functions are eligible to have methods, but are handled differently
+  by \code{setGeneric} and \code{setGroupGeneric}.  A call to
+  \code{setGeneric} for a primitive function does not create a new
+  definition of the function, and the call is allowed only to ``turn
+  on'' methods for that function.
+
+  A call to \code{setGeneric} for a primitive causes the evaluator to
+  look for methods for that generic; a call to \code{setGroupGeneric}
+  for any of the groups that include primitives (\code{"Arith", "Logic",
+  "Compare", "Ops", "Math", "Math2", "Summary",} and \code{"Complex"})
+  does the same for each of the functions in that group.
+
+  You usually only need to use either function if the methods are
+  being defined only for the group generic.  Defining a method for a
+  primitive function, say \code{"+"}, by a call to \code{setMethod} 
+  turns on method dispatch for that function.  But in R defining a
+  method for the corresponding group generic, \code{"Arith"}, does not
+  currently turn on method dispatch (for efficiency reasons).  If
+  there are no non-group methods for the functions, you have two
+  choices.
+
+  You can turn on method dispatch for \emph{all} the functions in the
+  group by calling \code{setGroupGeneric("Arith")}, or you can turn on
+  method dispatch for only some of the functions by calling
+  \code{setGeneric("+")}, etc.  Note that in either case you should
+  give the name of the generic function as the only argument.
+}
 \value{
   The \code{setGeneric} function exists for its side effect: saving the
   generic function to allow methods to be specified later.  It returns
   \code{name}.
 }
 \references{
-  The web page \url{http://www.omegahat.org/RSMethods/index.html} is the
-  primary documentation.
+  The R package \code{methods} implements, with a few exceptions, the
+  programming interface for classes
+  and methods in the book \emph{Programming with Data} (John
+  M. Chambers, Springer, 1998), in particular sections 1.6, 2.7, 2.8,
+  and chapters 7 and 8.
 
-  The functions in this package emulate the facility for classes and
-  methods described in \emph{Programming with Data} (John M. Chambers,
-  Springer, 1998).  See this book for further details and examples.
+  While the programming interface for the methods package follows the reference,
+  the R software is an original implementation, so details in
+  the reference that reflect the S4 implementation may appear
+  differently in R.  Also, there are extensions to the programming
+  interface developed more recently than the reference.  For a
+  discussion of details and ongoing development, see the web page 
+  \url{http://developer.r-project.org/methodsPackage.html} and the
+  pointers from that page.
 }
-\author{
-  John Chambers
+\examples{
+\testonly{
+setClass("track",
+            representation(x="numeric", y="numeric"))
+}
+
+###   A non-standard generic function.  It insists that the methods
+###   return a non-empty character vector (a stronger requirement than
+###    valueClass = "character" in the call to setGeneric)
+
+setGeneric("authorNames", 
+    function(text) {
+      value <- standardGeneric("authorNames")
+      if(!(is(value, "character") && any(nchar(value)>0)))
+        stop("authorNames methods must return non-empty strings")
+      value
+      })
+
+\testonly{
+
+setMethod("authorNames", "character", function(text)text)
+
+stopifnot(identical(authorNames(c("me", "you")), c("me", "you")))
+
+stopifnot(is(trySilent(authorNames(character())), "try-error")) # empty value
+
+stopifnot(is(trySilent(authorNames(NULL)), "try-error")) # no default method
+
+stopifnot(is(trySilent(setGeneric("[", function(x,...)standardGeneric("["))),
+           "try-error")) # trying setGeneric on a primitive
+
+}
+
+## An example of group generic methods, using the class
+## "track"; see the documentation of setClass for its definition
+
+#define a method for the Arith group
+
+setMethod("Arith", c("track", "numeric"), 
+ function(e1, e2){
+  e1@y <- callGeneric(e1@y , e2)
+  e1
+})
+
+setMethod("Arith", c("numeric", "track"), 
+ function(e1, e2){
+  e2@y <- callGeneric(e1, e2@y)
+  e2
+})
+
+# now arithmetic operators  will dispatch methods:
+
+t1 <- new("track", x=1:10, y=sort(rnorm(10)))
+
+t1 - 100
+
+1/t1
+
+\testonly{
+removeGeneric("authorNames")
+removeClass("track")
+removeMethods("Arith")
+}
 }
 \seealso{
   \code{\link{Methods}} for a discussion of other functions to specify

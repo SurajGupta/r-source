@@ -46,9 +46,9 @@ AH_BOTTOM([
 #ifdef Win32
 # define snprintf  _snprintf
 # define vsnprintf  _vsnprintf
-# define isnan(a) _isnan((a))
-# define finite(a) _finite((a))
-/* 27/03/2000 win32-api needs this for ANSI compliance */
+# define isnan(a) _isnan(a)
+# define finite(a) _finite(a)
+/* 2000-03-27 win32-api needs this for ANSI compliance */
 # define NONAMELESSUNION
 #endif /* Win32 */
 
@@ -110,8 +110,17 @@ fi
 
 ## We provide these defaults so that headers and libraries in
 ## '/usr/local' are found (by the native tools, mostly).
-: ${CPPFLAGS="-I/usr/local/include"}
-: ${LDFLAGS="-L/usr/local/lib"}
+## <FIXME>
+## GCC 3.1 seems to be very unhappy about '/usr/local/include' to the
+## header search path seems ... 
+if test -f "/sw/etc/fink.conf"; then
+  : ${CPPFLAGS="-I/sw/include -I/usr/local/include"}
+  : ${LDFLAGS="-L/sw/lib -L/usr/local/lib"}
+else
+  : ${CPPFLAGS="-I/usr/local/include"}
+  : ${LDFLAGS="-L/usr/local/lib"}
+fi
+## </FIXME>
 
 ### ** Handle arguments to configure.
 
@@ -119,29 +128,6 @@ config_opts="${ac_configure_args}"
 AC_SUBST(config_opts)
 
 ### ** Optional features.
-
-## <FIXME>
-## Remove in 1.6.
-for arg in ${ac_configure_args}; do
-  case "${arg}" in
-    --with-g77*)
-      warn_arg_with_g77="option '--with-g77' is deprecated.
-Use variable F77 to specify a FORTRAN 77 compiler if necessary."
-      AC_MSG_WARN([${warn_arg_with_g77}])
-      ;;
-    --with-f77*)
-      warn_arg_with_f77="option '--with-f77' is deprecated.
-Use variable F77 to specify a FORTRAN 77 compiler if necessary."
-      AC_MSG_WARN([${warn_arg_with_f77}])
-      ;;
-    --with-f2c*)
-      warn_arg_with_f2c="option '--with-f2c' is deprecated.
-Use variable F2C to specify the FORTRAN-to-C converter if necessary."
-      AC_MSG_WARN([${warn_arg_with_f2c}])
-      ;;
-  esac
-done
-## </FIXME>
 
 ## Allow the user to specify support for R profiling.
 AC_ARG_ENABLE([R-profiling],
@@ -163,9 +149,6 @@ AC_ARG_ENABLE([R-shlib],
 [want_R_shlib="${enableval}"],
 [want_R_shlib=no])
 AM_CONDITIONAL(WANT_R_SHLIB, [test "x${want_R_shlib}" = xyes])
-## <FIXME>
-## Should we add a check whether the user disabled shlibs in general?
-## </FIXME>
 if test "${want_R_shlib}" = yes; then
   LIBR="-L\$(R_HOME)/bin -lR"
 else
@@ -226,6 +209,12 @@ else
 fi],
 [want_gnome=no])
 
+## Aqua.
+AC_ARG_WITH([aqua],
+[AC_HELP_STRING([--with-aqua],
+                [use Aqua (if available) (experimental) @<:@no@:>@])],
+[want_aqua=yes])
+
 ## Tcl/Tk.
 AC_ARG_WITH([tcltk],
 [AC_HELP_STRING([--with-tcltk],
@@ -262,6 +251,14 @@ AC_ARG_WITH([tk-config],
 ## </FIXME>
 AM_CONDITIONAL(USE_LIBTOOL, [test "x${use_libtool}" = xyes])
 
+## Recommended R packages.
+AC_ARG_WITH([recommended-packages],
+[AC_HELP_STRING([--with-recommended-packages],
+                [use/install recommended R packages (if available)
+                 @<:@yes@:>@])],
+[R_ARG_USE(recommended_packages)],
+[use_recommended_packages=yes])
+
 ### ** Precious variables.
 
 AC_ARG_VAR([R_PRINTCMD],
@@ -287,11 +284,11 @@ AC_ARG_VAR([CPICFLAGS],
            [special flags for compiling C code to be turned into a
             shared library.])
 AC_ARG_VAR([FPICFLAGS],
-           [special flags for compiling FORTRAN code to be turned into a
+           [special flags for compiling Fortran code to be turned into a
             shared library.])
 AC_ARG_VAR([SHLIB_LD],
            [command for linking shared libraries which contain object
-            files from a C or FORTRAN compiler only])
+            files from a C or Fortran compiler only])
 AC_ARG_VAR([SHLIB_LDFLAGS],
            [special flags used by SHLIB_LD])
 AC_ARG_VAR([CXXPICFLAGS],
@@ -307,7 +304,7 @@ AC_ARG_VAR([TCLTK_LIBS],
 AC_ARG_VAR([TCLTK_CPPFLAGS],
            [flags needed for finding the tcl.h and tk.h headers])
 AC_ARG_VAR([MAKE], [Make command])
-AC_ARG_VAR([F2C], [FORTRAN-to-C converter command])
+AC_ARG_VAR([F2C], [Fortran-to-C converter command])
 
 ### ** Check whether we build in srcdir.
 
@@ -354,6 +351,8 @@ AM_PROG_LIBTOOL
 AC_SUBST(LIBTOOL_DEPS)
 ## Makeinfo
 R_PROG_MAKEINFO
+## Browser
+R_PROG_BROWSER
 
 AC_PROG_CC
 AC_PROG_CC_STDC
@@ -436,7 +435,7 @@ AC_HEADER_SYS_WAIT
 ## includes.
 AC_CHECK_HEADERS(arpa/inet.h dl.h dlfcn.h elf.h fcntl.h floatingpoint.h \
   fpu_control.h grp.h ieee754.h ieeefp.h locale.h netdb.h netinet/in.h \
-  pwd.h readline/history.h readline/readline.h rpc/rpc.h strings.h \
+  pwd.h readline/history.h readline/readline.h strings.h \
   sys/param.h sys/select.h sys/socket.h sys/stat.h sys/time.h \
   sys/times.h sys/utsname.h unistd.h)
 ## </NOTE>
@@ -473,7 +472,7 @@ R_TYPE_SOCKLEN
 
 ### * Checks for compiler characteristics.
 
-### ** Generic tests for the C, FORTRAN 77 and C++ compilers.
+### ** Generic tests for the C, Fortran 77 and C++ compilers.
 
 ### *** C compiler.
 
@@ -497,7 +496,7 @@ AC_CHECK_SIZEOF(long double, 0)
 
 R_PROG_CC_MAKEFRAG
 
-### *** FORTRAN 77 compiler.
+### *** Fortran 77 compiler.
 
 if test -n "${F77}"; then
   R_PROG_F77_FLIBS
@@ -521,13 +520,15 @@ AM_CONDITIONAL(COMPILE_DOUBLE_COMPLEX,
 
 R_PROG_CXX_MAKEFRAG
 
-### ** Platform-specific overrides for the C, FORTRAN 77 and C++ compilers.
+### ** Platform-specific overrides for the C, Fortran 77 and C++ compilers.
 
 case "${host_cpu}" in
   i*86)
     R_PROG_CC_FLAG_D__NO_MATH_INLINES
     R_PROG_CC_FLAG([-mieee-fp],
                    [R_XTRA_CFLAGS="${R_XTRA_CFLAGS} -mieee-fp"])
+    R_PROG_F77_FLAG([-mieee-fp],
+                   [R_XTRA_FFLAGS="${R_XTRA_FFLAGS} -mieee-fp"])
     R_PROG_CXX_FLAG([-mieee-fp],
                     [R_XTRA_CXXFLAGS="${R_XTRA_CXXFLAGS} -mieee-fp"])
     ;;
@@ -543,7 +544,7 @@ case "${host_cpu}" in
     ## @option{-ieee} (or @option{-mieee}) are not enough.
     ## According to <Albrecht.Gebhardt@uni-klu.ac.at> and Luke Tierney
     ## <luke@stat.umn.edu>, @option{-fpe3} is what we want for the
-    ## native FORTRAN 77 compiler: seems that not all versions map
+    ## native Fortran 77 compiler: seems that not all versions map
     ## @option{-ieee} to @option{-fpe3}.
     ## What about the C++ compilers?
     if test "${GCC}" = yes; then
@@ -613,7 +614,7 @@ case "${host_os}" in
   irix*)
     R_C_OPTIEEE
     ## <NOTE>
-    ## We really should test explictly whether the FORTRAN and C++
+    ## We really should test explictly whether the Fortran and C++
     ## compilers *need* '-OPT:IEEE_NaN_inf=ON'.  Currently, all we do is
     ## check whether the non-GNU tools *accept* the flag.
     if test "${G77}" != yes; then
@@ -749,14 +750,19 @@ case "${host_os}" in
   darwin*)
     cpicflags="-fno-common"
     cxxpicflags="-fno-common"
-    fpicflags="-fno-common"
+    if test "${G77}" = yes; then
+      fpicflags="-fno-common"
+    fi
+    ## <FIXME>
+    ## Needed because currently the Quartz device driver gets linked to
+    ## the main binary.  Change once the driver is modularized.
+    main_ldflags="-framework Carbon"
+    ## </FIXME>
     case "${host_os}" in
       darwin1.[[012]])
 	shlib_ldflags="-bundle -undefined suppress" ;;
-      darwin1.3)
-        shlib_ldflags="-bundle -flat_namespace -undefined suppress" ;;
       *)
-	shlib_ldflags="-bundle -bundle_loader \$(R_HOME)/bin/R.bin" ;;
+        shlib_ldflags="-bundle -flat_namespace -undefined suppress" ;;
     esac
     shlib_cxxldflags="${shlib_ldflags}"
     ;;
@@ -784,7 +790,7 @@ case "${host_os}" in
       shlib_ldflags="-shared -fPIC"
     else
       ## <NOTE>
-      ## If native cc insists on tacking on crt0.o when it calls ld, and
+      ## Native cc insists on tacking on crt0.o when it calls ld, and
       ## crt0.o is not built with PIC.  As there seems to be no obvious
       ## way to tell cc not to do this, we use ld for linking shlibs.
       shlib_ld=ld
@@ -863,12 +869,7 @@ esac
 ## ## Step 4.  In case we use libtool ...
 ## if test "${use_libtool}" = yes; then
 ##   case "${host_os}" in
-##     aix*)
-##       ## FIXME: AIX needs special care.
-##       ;;
 ##     *)
-##       ## FIXME: Maybe we should set this here and not in R_bin_LDFLAGS?
-##       main_ldflags=
 ##       ;;
 ##   esac
 ## fi
@@ -915,7 +916,7 @@ if test -z "${CXXPICFLAGS}"; then
     aix*|irix*|mingw*|osf*)
       ;;
     *)
-      warn_cxxpicflags="I could not determine CXXPICFLAGS"
+      warn_cxxpicflags="I could not determine CXXPICFLAGS."
       AC_MSG_WARN([${warn_cxxpicflags}])
       ;;
   esac
@@ -956,7 +957,12 @@ LIBR_LDFLAGS="${SHLIB_LDFLAGS}"
 case "${host_os}" in
   darwin*)
     LIBR_EXT=".dylib"
-    LIBR_LDFLAGS="-dynamiclib"
+    ## <FIXME>
+    ## We need '-framework Carbon' because currently the Quartz device
+    ## driver gets linked to the main binary and hence also the R dylib.
+    ##  Change once the driver is modularized.
+    LIBR_LDFLAGS="-dynamiclib -flat_namespace -undefined suppress -install_name \$(Rexeclibdir)/libR.dylib -framework Carbon"
+    ## </FIXME>
     ;;
 esac
 
@@ -986,7 +992,7 @@ AC_CHECK_FUNCS(access chdir expm1 fcntl finite ftruncate getcwd \
   popen putenv rint setenv strcoll stat strptime system times unsetenv)
 ## <NOTE>
 ## No need checking for bcopy bzero memcpy mempcpy even though ifnames
-## might stop corresponding HAVE_FOO conditionals.
+## might report corresponding HAVE_FOO conditionals.
 ## </NOTE>
 
 ## Used to build src/include/Rmath.h.
@@ -1020,7 +1026,7 @@ R_FUNC_STRPTIME
 
 ## BLAS.
 ## <NOTE>
-## This has to come *after* checking for FORTRAN 77 compiler/converter
+## This has to come *after* checking for Fortran 77 compiler/converter
 ## characteristics (notably name mangling and FLIBS).
 if test "${use_blas}" = yes; then
   R_BLAS_LIBS
@@ -1035,6 +1041,8 @@ AC_SUBST(BLAS)
 AM_CONDITIONAL(USE_EXTERNAL_BLAS, [test "x${BLAS_LIBS}" != x])
 
 ### * Checks for system services.
+
+AC_SUBST(R_GUIS)
 
 ## X11.
 ## Here we use the standard X11 search macro.
@@ -1058,7 +1066,11 @@ if test "${use_gnome}" = yes; then
   R_GUIS="${R_GUIS} gnome";
 fi
 
-AC_SUBST(R_GUIS)
+## Aqua
+R_AQUA
+if test "${use_aqua}" = yes; then
+  R_GUIS="${R_GUIS} aqua";
+fi
 
 ## Tcl/Tk.
 R_TCLTK
@@ -1080,6 +1092,9 @@ R_ZLIB
 
 ## bzlib headers and libraries.
 R_BZLIB
+
+## PCRE headers and libraries.
+R_PCRE
 
 ## POSIX times.
 R_SYS_POSIX_LEAPSECONDS
@@ -1114,7 +1129,7 @@ AC_SUBST(R_PAPERSIZE)
 ## Saving.
 AC_SUBST(R_BATCHSAVE)
 
-## Make sure -L terms come first in LIBS, separate out as LIBPATHS.
+## Make sure -L terms come first in LIBS.
 LIBS1=""
 LIBS2=""
 for arg in ${LIBS}; do
@@ -1128,8 +1143,6 @@ for arg in ${LIBS}; do
   esac
 done
 LIBS="${LIBS1} ${LIBS2}"
-LIBPATHS="${LIBS1}"
-AC_SUBST(LIBPATHS)
 
 ## R_LD_LIBRARY_PATH.
 ## <FIXME>
@@ -1151,12 +1164,20 @@ done
 ## </FIXME>
 AC_SUBST(R_LD_LIBRARY_PATH)
 
+## Recommended packages.
+if test "${use_recommended_packages}" = yes; then
+  R_RECOMMENDED_PACKAGES
+fi
+AM_CONDITIONAL(USE_RECOMMENDED_PACKAGES,
+               [test "x${use_recommended_packages}" = xyes])
+
 ### * Win32 overrides
 case "${host_os}" in
   mingw*)
     AC_DEFINE(HAVE_INTERNET, 1)
     AC_DEFINE(HAVE_JPEG, 1)
     AC_DEFINE(SUPPORT_LIBXML, 1)
+    AC_DEFINE(HAVE_PCRE, 1)
     AC_DEFINE(HAVE_PNG, 1)
     AC_DEFINE(HAVE_POSIX_SETJMP, 1)
     AC_DEFINE(HAVE_SOCKETS, 1)
@@ -1192,6 +1213,7 @@ AC_CONFIG_FILES(
   src/include/Makefile
   src/include/Rmath.h
   src/include/R_ext/Makefile
+  src/library/Recommended/Makefile
   src/library/Makefile
   src/library/base/DESCRIPTION
   src/library/base/Makefile
@@ -1233,6 +1255,7 @@ AC_CONFIG_FILES(
   src/main/Makefile
   src/modules/Makefile
   src/modules/X11/Makefile
+  src/modules/aqua/Makefile
   src/modules/gnome/Makefile
   src/modules/internet/Makefile
   src/modules/lapack/Makefile
@@ -1256,6 +1279,7 @@ AC_CONFIG_FILES(
   tests/Makefile
   tests/Embedding/Makefile
   tests/Examples/Makefile
+  tests/Native/Makefile
   tools/Makefile
 ])
 
@@ -1283,9 +1307,9 @@ AC_OUTPUT
 C_compiler="${CC} ${R_XTRA_CFLAGS} ${CFLAGS}"
 CXX_compiler="${CXX} ${R_XTRA_CXXFLAGS} ${CXXFLAGS}"
 if test -z "${F2C}"; then
-  FORTRAN_compiler="${F77} ${R_XTRA_FFLAGS} ${FFLAGS}"
+  Fortran_compiler="${F77} ${R_XTRA_FFLAGS} ${FFLAGS}"
 else
-  FORTRAN_compiler="${F2C} ${F2CFLAGS}"
+  Fortran_compiler="${F2C} ${F2CFLAGS}"
 fi
 AC_MSG_RESULT(
 [
@@ -1293,9 +1317,10 @@ R is now configured for ${host}
 
   Source directory:          ${srcdir}
   Installation directory:    ${prefix}
+
   C compiler:                ${C_compiler}
   C++ compiler:              ${CXX_compiler}
-  FORTRAN compiler:          ${FORTRAN_compiler}
+  Fortran compiler:          ${Fortran_compiler}
 
   X11 support:               ${use_X11}
   Gnome support:             ${use_gnome}
@@ -1304,21 +1329,14 @@ R is now configured for ${host}
 
   R profiling support:       ${want_R_profiling}
   R as a shared library:     ${want_R_shlib}
+
+  Recommended packages:      ${use_recommended_packages} 
 ])
-if test -n "${warn_arg_var_FC}"; then
-  AC_MSG_WARN([${warn_arg_var_FC}])
-fi
-if test -n "${warn_arg_with_g77}"; then
-  AC_MSG_WARN([${warn_arg_with_g77}])
-fi
-if test -n "${warn_arg_with_f77}"; then
-  AC_MSG_WARN([${warn_arg_with_f77}])
-fi
-if test -n "${warn_arg_with_f2c}"; then
-  AC_MSG_WARN([${warn_arg_with_f2c}])
-fi
 if test -n "${warn_F77_and_F2C}"; then
   AC_MSG_WARN([${warn_F77_and_F2C}])
+fi
+if test -n "${warn_f77_cc_double_complex}"; then
+  AC_MSG_WARN([${warn_f77_cc_double_complex}])
 fi
 if test -n "${warn_f2c_flibs}"; then
   AC_MSG_WARN([${warn_f2c_flibs}])
@@ -1358,6 +1376,9 @@ if test -n "${warn_pdf}"; then
 fi
 if test -n "${warn_pager}"; then
   AC_MSG_WARN([${warn_pager}])
+fi
+if test -n "${warn_browser}"; then
+  AC_MSG_WARN([${warn_browser}])
 fi
 
 ### Local variables: ***

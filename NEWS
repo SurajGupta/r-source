@@ -1,9 +1,521 @@
 				Dear Emacs, please make this -*-Text-*- mode!
 	**************************************************
 	*						 *
-	*	       1.5 SERIES NEWS			 *
+	*	       1.6 SERIES NEWS			 *
 	*						 *
 	**************************************************
+
+
+		CHANGES IN R VERSION 1.6.0
+
+
+USER-VISIBLE CHANGES
+
+    o	The default colour palette now has "grey" instead of "white"
+	in location 8.	See palette().
+
+    o	grid(nx) behaves differently (but the same as in R versions <= 0.64).
+
+
+NEW FEATURES
+
+    o	New operator :: in the grammar, for name spaces.
+
+    o	New faster rowsum(), also works on data frames.
+
+    o	grep(), (g)sub() and regexpr() have a new argument `perl'
+	which if TRUE uses Perl-style regexps from PCRE (if installed).
+	New capabilities option "PCRE" to say if PCRE is available.
+
+    o	Preparations for name space support:
+
+	- Functions in the base package are now defined in a name space.
+	  As a temporary measure, you can disable this by defining the
+	  environment variable R_NO_BASE_NAMESPACE.
+
+	- UseMethod dispatching now searches for methods in the
+	  environment of the caller of the generic function rather
+	  than the environment where the generic is defined.
+
+    o	The objects created in the methods package to represent
+	classes, generic functions, method definitions, and
+	inheritance relations now themselves belong to true classes.  In
+	particular, the "classRepresentation" objects follow the description
+	in "Programming with Data" (section 7.6).
+
+    o	Other additions and changes to the methods package:
+
+	- The function setOldClass() has been added, following the
+	  description on page 450 of "Programming with Data".  Use it
+	  if old-style classes are to be supplied in signatures for
+	  setMethod, particularly if the old-style classes have
+	  inheritance.	Many of the old-style classes in the base
+	  package should be pre-specified; try getClass("mlm"), e.g.
+
+	- The setGeneric() function applies some heuristics to warn
+	  about possibly erroneous generic function definitions.
+	  (Before, obscure bugs could result.)
+
+	- The function promptMethods() has been revised to work better
+	  and to provide aliases for individual methods.
+
+	- The behavior of the as() function has been generalized, in
+	  particular with a strict= argument, the general goal being
+	  to let simple extensions of classes pass through in method
+	  dispatch and related computations without altering the
+	  objects. More to make method behavior more "natural" than
+	  for direct use.
+
+	- Some inconsistencies following detach("package:methods")
+	  have been removed, so it _should_ be possible to
+	  detach/re-attach the methods package.
+
+    o	New methods ([[, print, str) and extended plot() method
+	(incl. logical `horiz') for "dendrogram" class.
+
+    o	sprintf() now checks the agreement between formats and object
+	types, and handles special values (NA, Inf, ...) correctly.
+
+    o	chol() now uses a tolerance for non-positive-definiteness and
+	so should give more consistent results across platforms.
+
+    o	New function agrep() for approximate (fuzzy) string matching.
+
+    o	help.search() can now use both approximate (fuzzy) and regular
+	expression matching.  By default, if the pattern to be matched
+	consists of only alphanumeric characters, whitespace or a dash,
+	approximate matching is used.
+
+    o	axis() has three new optional arguments `col', `lty', and `lwd'
+	all for drawing the axis line and tick marks.
+
+    o	Function vcov() (formerly in MASS), a generic function to
+	return the variance-covariance matrix of the parameter
+	estimates of a fitted model.
+
+    o	duplicated() and unique() have methods for matrices and arrays
+	(based on ideas from Jens Oehlschlägel).
+
+    o	Internally memory sizes and counts of cons cells are now stored
+	in unsigned longs.  This allows memory limits to be set and
+	objects created in the range 2-4Gb on 32-bit platforms, and
+	allows 64-bit platforms to use much larger amounts of memory.
+
+    o	Command-line flags to set memory can now use the suffix `G'
+	for gigabytes.	The setting of maximum vsize is now only
+	limited by the platform's address space.
+
+    o	All warning and error messages are truncated to a length set
+	by options(warning.length=), defaulting to 1000.  (Previously
+	most (but not quite all) were truncated at 8192 characters.)
+
+    o	[dpqr]gamma() check for shape parameter > 0.
+
+    o	as.POSIX[cl]t can now convert logical NAs.
+
+    o	All installed packages (even those shipped with R) are
+	given a `Built' field in the DESCRIPTION file.
+
+    o	as.data.frame() now coerces logical matrices into logical
+	columns (rather than factors).
+
+    o	[[<-.data.frame no longer coerces character replacement values
+	to factor.  This is consistent with using $ to replace and
+	with S4.
+
+    o	library() attempts to detect improperly installed packages, so
+	as from this version an installed package must have a
+	DESCRIPTION file and that file must have been stamped with a
+	`Built:' line (which was introduced in 1.2.0).	Under
+	Unix-alikes, the platform is checked against that used for
+	installation.
+
+    o	print.factor() has new arguments `max.levels' (with a smart default)
+	and `width'.  print.ordered() is no longer needed.
+
+    o	RNGkind() has an additional option for normal random generators:
+	"Inversion".
+
+    o	data.frame() recycles factors and "AsIs" objects as well as
+	atomic vectors.
+
+    o	predict.lm() warns if `newdata' is supplied and the fit was
+	rank-deficient, as this can be misleading.
+
+    o	rect() accepts additional graphics parameters through a ...
+	argument (in the same way as polygon).
+
+    o	strwidth/strheight() now coerce their first argument in exactly
+	the same way text() does, so a wider range of inputs is allowed.
+
+    o	prompt()'s default and data.frame methods have a new 3rd argument
+	`name' allowing them to used more easily in scripts and loops.
+
+    o	rgb() has a new `maxColorValue' argument, allowing r,g,b in [0,M],
+	particularly in {0:255}, efficiently and non-error-prone.
+
+    o	summaryRprof() provides the functionality of R CMD Rprof in R
+	code, though more slowly.
+
+    o	stop() accepts multiple arguments (which are concatenated)
+	just as warning() does.
+
+    o	scan() now throws an error with incorrect logical input (which
+	was previously taken as FALSE).
+
+    o	pdf() now uses PDF not R code for clipping, which ensures that
+	partially visible text strings are (partially) shown.
+
+    o	Each R session uses a per-session temporary directory which
+	is removed at normal termination.  The directory name is given
+	by the tempdir() function, and filenames returned by
+	tempfile() will be within that directory.
+
+    o	help.start() on Unix now uses a .R subdirectory of the
+	per-session temporary directory and not ~/.R.  A side effect
+	is that ~/.R is now never deleted by R.
+
+	This now uses the remote control mechanism only if the X
+	display is local to the R process (as otherwise it might use a
+	browser running on an arbitrary machine).
+
+    o	*Very* experimental browseEnv() for browsing objects in an
+	environment.
+
+    o	cbind/rbind() used to ignore all zero-length vectors, an
+	undocumented quirk for S-compatibility.	 This caused problems
+	when combining zero-extent matrices and zero-length vectors, and
+	now zero-length vectors are ignored unless the result would
+	have zero rows/columns.
+
+    o	read.table(stdin()) will now work.
+
+    o	plot.spec(x) now also works for other x than AR and Pgram results.
+
+    o	New functions La.chol() and La.chol2inv() for Cholesky
+	decomposition and inverse of positive definite matrices using
+	Lapack.
+
+    o	Changes to the tcltk package
+
+	- on Unix systems, the Tcl event loop has been integrated with
+	  R's own (so that tkwait.variable() no longer halts updates of
+	  plot windows).
+
+	- also on Unix, stubs have been created to divert R's input
+	  and output routines to go via Tcl commands. (Nothing
+	  uses this at present, but packages might be developed to
+	  take advantage of it.)
+
+	- return value from Tcl commands is no longer invisible. A new
+	  print method, print.tclObj(), has been introduced.
+
+	- Tcl variables created by tclVar() are now explicitly put into
+	  Tcl's global namespace, removing potential scoping problems.
+
+	- The tcltk dynamic library now loads with local=FALSE since
+	  the default had trouble when loading Tcl extensions
+	  (e.g. Tix)
+
+	- The tkpager() function had not been updated for the return
+	  value change from 1.5.0
+
+    o	The bmp(), jpeg() and png() devices can produce multiple
+	bitmap files, one for each page.  The default filenames have been
+	changed to include a sequence number.
+
+    o	New function axTicks() returning tick mark locations like axis().
+
+    o	grid() has a more sensible default behavior.  Tick axis alignment
+	only happens when no numbers of grid cells are specified.  New
+	arguments lwd and equilogs; nx/ny = NA for not drawing, see ?grid.
+
+    o	installed.packages() has a new argument `priority'.
+
+    o	termplot() uses factor levels rather than 1,2,3... for x-axis.
+
+    o	Workaround for optimization bugs on gcc 3.1/2 on 32-bit Solaris.
+
+    o	The trace() function has been robustified and a new function
+	tracingState() added to turn tracing temporarily on and off.
+
+    o	New cophenetic() in "mva" as utility for hierarchical clustering.
+
+    o	p.adjust() has two new methods, 'Hommel' and 'FDR', contributed
+	by Gordon Smyth <smyth@wehi.edu.au>.
+
+    o	stars() now has add and plot arguments.
+
+
+DEPRECATED & DEFUNCT
+
+    o	The assignment operator `_' is deprecated: a warning is	given
+	once per R session.
+
+    o	machine() is deprecated in favour of .Platform$OS.type.
+	Machine() and Platform() are deprecated in favour of .Machine
+	and .Platform.
+
+    o	arima0.diag() (package ts) is defunct.
+
+    o	piechart() is defunct.
+
+    o	print.ordered() has been removed, so print.factor() is used.
+
+    o	The global internal variables .Dyn.libs and .lib.loc are
+	removed in favor of the internal functions .dynLibs() and
+	.libPaths().
+
+    o	restart() is deprecated in preparation for proper exception
+	handling.  Use try(), as has long been recommended.
+
+
+DOCUMENTATION CHANGES
+
+    o	New demo(persp) containing some of the former example(persp) ones
+	and more.
+
+
+C-LEVEL FACILITIES
+
+    o	Rversion.h is no longer automatically included by R.h.
+	Include it explicitly if you need it.
+
+    o	New entry point R_tmpnam in Utils.h.
+
+    o	The Unix event loop interface has been changed to facilitate
+	integration with other loops. R_checkActivity and
+	R_runHandlers should eventually replace getSelectedHandler.
+
+
+INSTALLATION CHANGES
+
+    o	Perl 5.005 or newer is now required.
+
+    o	R CMD INSTALL is now guaranteed to sort the R source files in
+	ASCII order.
+
+
+UTILITIES
+
+    o	R CMD check now tests for mis-use on an installed or binary
+	package, and sets 'T' and 'F' to 'NULL' when running the
+	examples.
+
+    o	New function SweaveSyntConv() converts between Sweave file
+	syntaxes. RweaveLatex() now gets its prompt from options() and
+	uses the text width as linebreak cutoff for deparsing input
+	statements.
+
+
+BUG FIXES
+
+    o	axis() was not respecting par("mgp")[3] by default.
+	(PR#916)
+
+    o	tcltk back-compatibility fix for tcl8.0
+
+    o	hist.POSIXct(*, breaks) now works for `breaks = #{breaks}' and
+	when `x' has NAs; the latter applies to cut.POSIXct() as well.
+
+    o	The internal download.file() methods were setting the proxy
+	port to 0 unless it was specified.
+
+    o	poly() did not work for >=3 column matrices.
+
+    o	cut.default() was not handling infinite values with infinite
+	breaks.	 (PR#1694)
+
+    o	ks.test() could fail due to integer overflow if n.x and n.y
+	were both large.
+
+    o	all.equal(3., 3:3) wasn't TRUE when the methods package was
+	present.
+
+    o	read.table() could remap non-syntactic names to duplicates,
+	and did not check for duplicated names.
+
+    o	ls.str(envir = environment(F)) now works (when F is a function).
+
+    o	pie() now has a `border' (and 'lty') argument which allows empty
+	slice borders and makes pie() useable for hundreds of slices.
+
+    o	all.equal.character() now works correctly also when NAs don't
+	match (PR#1767).
+
+    o	all.equal.numeric() now gives character {instead of list} when
+	lengths don't match.
+
+    o	read.dcf() had a memory leak.
+
+    o	Setting "tcl = a" in a highlevel graphic function worked almost
+	as if par(tcl = a) was called (i.e. was persistent).  Further,
+	after par(tcl= <.>), highlevel graphic setting of tcl didn't work
+	anymore.  "tck" has now S's default of -0.01 (when tcl=NA).
+
+    o	data() was not checking if ./data was a directory before
+	warning.
+
+    o	Assignment beyond the end of character strings was filling
+	with "", whereas changing the length extended with NA_STRING.
+	Now NA_STRING is used for both.
+
+    o	boxplot()s with logarithmic scale in "width-direction" now have
+	proper widths, i.e. typically constant.
+
+    o	Using GNU readline in asynchronous event callbacks (e.g. TclTk
+	or Gtk) works correctly, i.e. doesn't cause readline to abort
+	the process.
+
+    o	Using Q to exit a browser invoked at the top-level could lead to
+	the browser being invoked on all future top-level loops (PR#1721)
+
+    o	step(fit, direction="both") now uses both directions even if
+	no scope is supplied.
+
+    o	strwidth(), strheight() now give 0 on NA strings (as they
+	are no longer plotted). (PR#1739)
+
+    o	mtext(), persp(), plot.hclust() and title() no longer plot NA
+	character strings.
+
+    o	pdf() has been protected against the user who specified
+	non-existent fonts. (PR#1748)
+
+    o	dlnorm() returns zero for negative x argument. (PR#1781)
+
+    o	Printing 0 in octmode gave "" not "0". (PR#1759)
+
+    o	anova.glm() was ignoring a `dispersion' argument if given
+	multiple objects. (PR#1807)
+
+    o	model.matrix() with a `rhs ~ .' formula included columns with
+	duplicated names in the data frame, which caused subsequent
+	confusion (e.g. in prediction from the object).
+
+	model.matrix() was sometimes incorrectly determining the first
+	factor in a formula without an intercept.
+
+    o	termplot() now needs data= argument more rarely. (PR#828)
+
+    o	abline() on log scale doesn't draw -ve points. (PR#1243)
+
+    o	The Java search engine now works within Mozilla 1.0 and
+	Netscape 6.2.x / 7.0pr1.
+
+    o	unsplit() failed if f was a list of factors. (PR#1843)
+
+    o	The methods package generic version of primitives is now "sealed"
+	and cannot be redefined (it was always a bad idea to do so).
+
+    o	quantile() gave -Inf not NaN in some examples. (Related to PR#1852)
+
+    o	read.table() read too far in checking the file structure if
+	0 < nrows < 5 and more rows existed on the file. (PR1809)
+
+    o	loess() was not checking for too small a span (so no points
+	were included in the smoothing window).
+
+    o	match() was assuming that there was only one possible bit
+	pattern for a numeric NA, so some matches failed on Solaris
+	under some compiler options.
+
+    o	identical() no longer thinks NaN and as.double(NA) are identical.
+
+    o	pipe() can open in a binary mode even on Linux (where popen
+	cannot).
+
+    o	zero-column matrices were not being printed at all, not even
+	the row names.
+
+    o	polygon()'s `border' argument was incorrectly documented: in
+	particular `border = 0' plots in background colour.
+
+    o	delete.response() was losing the attribute set for safe
+	prediction. (PR#1840)
+
+    o	poly() was checking the degree against the number of points
+	even when predicting.
+
+    o	Comparison of a data frame and list failed due to typo. (PR#1889)
+
+    o	dput() and dump() attempt to check if writing succeeded. (PR#1884)
+
+    o	rep(1:2, 0) and hence array(1:2, 0) fail no longer.
+
+    o	apply(matrix("", 3, 0), 2, length) now works.
+
+    o	order(na.last = NA, decreasing = TRUE) now sorts in decreasing
+	order.	(PR#1906)
+
+    o	order(na.last=NA) failed if all args were of length 1 or all
+	were NA. (PR#1913, 1981)
+
+    o	source() would crash if the `keep.source = TRUE' and the input
+	contained a function with a line longer than 1024 chars. (PR#1900)
+
+	The limits on nesting of functions and on total function size
+	when the source is kept are now enforced.  As (incorrectly)
+	the source was always kept, this meant functions longer than
+	128Kb could crash R, even in packages.
+
+    o	lqs() and cov.rob() check that the quantile argument does not
+	exceed n-1.
+
+    o	grid() now also works with log coordinates active.
+
+    o	plot.table(tab, xlab="X", ylab="Y") now works as expected.
+
+    o	plot.formula(ask=FALSE) now works. (PR#1923)
+
+    o	as.list(<logical>) now works properly. (PR#1926).
+
+    o	The residual SSq printed from an aov() fit with weights is
+	now the weighted SSq.  (PR#1930)
+
+    o	aov() could still fail on multistrata models with very long
+	Error formulae.
+
+    o	try() could fail in BATCH use due to use of fflush(stdin).
+	Only seen on Solaris. (PR#1934)
+
+   o	title(main=list("main")) printed garbage, as did similar calls
+	using quote() instead of expression() for plotmath. (PR#1939)
+
+   o	deparse() dropped parentheses in some case where they were
+	needed. (PR#1119, 1737, 1928, at least)
+
+   o	pdf(onefile = FALSE) never incremented the file number beyond
+	two.
+
+   o	On Unix, protect against broken pipes where popen calls succeed
+	even though the command does not exist (and the glibc manual
+	says it should return NULL).  (PR#1959)
+
+   o	data.frame() was allowing explicit row.names with missing
+	values, but row names are required to be unique.
+
+   o	as.character(expression) was silently truncating to 60
+	characters: the help page claimed 500 which is now true.
+
+   o	as.hclust(x) now also works (as identity) for "hclust" objects.
+
+   o	NextMethod didn't work right in Ops.
+
+   o	dotchart() now obeys `xlim ='.
+
+   o	t(x) behaves when x is a (multivariate) time series. (PR#1998)
+
+   o	parse(text=x) no longer parses from stdin if length(x) is zero
+
+   o	binom.test() miscalculated p-value in some extreme cases
+
+   o	get("print.ts")(1) would segfault. It's now just an error.
+
+   o	cbind(NULL) {and similar} gave an error instead of NULL.
+
+   o	the complex version of solve(a,b) now also works if b is a
+        vector
 
 
 		CHANGES IN R VERSION 1.5.1
@@ -208,7 +720,7 @@ USER-VISIBLE CHANGES
 
     o	XDR support is now guaranteed to be available, so the default
 	save format will always be XDR binary files, and it is safe to
-	distribute data in that format.  (We are unaware of any
+	distribute data in that format.	 (We are unaware of any
 	platform that did not support XDR in recent versions of R.)
 
 	gzfile() is guaranteed to be available, so the preferred
@@ -224,33 +736,33 @@ USER-VISIBLE CHANGES
 	consistently, and the character string "NA" can be used as a
 	non-missing value.
 
-    o   summary.factor() now uses a stable sort, so the output will
+    o	summary.factor() now uses a stable sort, so the output will
 	change where there are ties in the frequencies.
 
 
 NEW FEATURES
 
-    o   Changes in handling missing character strings:
+    o	Changes in handling missing character strings:
 
-        -  "NA" is no longer automatically coerced to a missing value
+	-  "NA" is no longer automatically coerced to a missing value
 	   for a character string.  Use as.character(NA) where a missing
 	   value is required, and test via is.na(x) not x == "NA".
 	   String "NA" is still converted to missing by scan() and
 	   read.table() unless `na.strings' is changed from the default.
 
-        -  A missing character string is now printed as `NA' (no quotes)
+	-  A missing character string is now printed as `NA' (no quotes)
 	   amongst quoted character strings, and `<NA>' if amongst
 	   unquoted character strings.
 
-        -  axis() and text.default() omit missing values of their
+	-  axis() and text.default() omit missing values of their
 	   `labels' argument (rather than plotting "NA").
 
-        -  Missing character strings are treated as missing much more
+	-  Missing character strings are treated as missing much more
 	   consistently, e.g. in logical comparisons and in sorts.
 	   identical() now differentiates "NA" from the missing string.
 
 
-    o   Changes in package methods:
+    o	Changes in package methods:
 
 	-  New function validSlotNames().
 
@@ -275,9 +787,9 @@ NEW FEATURES
 
     o	Changes in package tcltk:
 
-        -  Now works with the GNOME user interface.
+	-  Now works with the GNOME user interface.
 
-        -  Several new functions allow access to C level Tcl objects.
+	-  Several new functions allow access to C level Tcl objects.
 	   These are implemented using a new `tclObj' class, and this
 	   is now the class of the return value from .Tcl() and tkcmd().
 
@@ -289,11 +801,11 @@ NEW FEATURES
 	   ARIMA-fitting functions.
 
 	-  New function arima() which will replace arima0() in due
-           course.  Meanwhile, arima0() has been enhanced in several
-           ways.  Missing values are accepted.  Parameter values can
-           be initialized and can held fixed during fitting.  There is
-           a new argument `method' giving the option to use
-           conditional-sum-of-squares estimation.
+	   course.  Meanwhile, arima0() has been enhanced in several
+	   ways.  Missing values are accepted.	Parameter values can
+	   be initialized and can held fixed during fitting.  There is
+	   a new argument `method' giving the option to use
+	   conditional-sum-of-squares estimation.
 
 	-  New function arima.sim().
 
@@ -302,13 +814,13 @@ NEW FEATURES
 	   time series Seatbelts).
 
 	-  New generic function tsdiag() and methods for arima and arima0,
-	   to produce diagnostic plots.  Supersedes arima0.diag().
+	   to produce diagnostic plots.	 Supersedes arima0.diag().
 
 	-  New functions ARMAacf() and ARMAtoMA() to compute
-           theoretical quantities for an ARMA process.
+	   theoretical quantities for an ARMA process.
 
 	-  New function acf2AR() to compute the AR process with a given
-           autocorrelation function.
+	   autocorrelation function.
 
 	-  New function StructTS() to fit structural time series, and
 	   new generic function tsSmooth() for fixed-interval
@@ -327,23 +839,23 @@ NEW FEATURES
 	including lm() and glm().  See ?poly, ?cars and ?ns for
 	examples.
 
-    o   acosh(), asinh(), atanh() are guaranteed to be available.
+    o	acosh(), asinh(), atanh() are guaranteed to be available.
 
-    o   axis() now omits labels which are NA (but still draws the
+    o	axis() now omits labels which are NA (but still draws the
 	tick mark.
 
     o	Connections to bzip2-ed files via bzfile().
 
-    o   chol() allows pivoting via new argument `pivot'.
+    o	chol() allows pivoting via new argument `pivot'.
 
     o	cmdscale() now takes rownames from a dist object `d' as well
 	as from a matrix; it has new arguments `add' (as S) and `x.ret'.
 
-    o   crossprod() handles the case of real matrices with y = x
+    o	crossprod() handles the case of real matrices with y = x
 	separately (by accepting y = NULL).  This gives a small
 	performance gain (suggestion of Jonathan Rougier).
 
-    o   deriv/deriv3() can now handle expressions involving pnorm and
+    o	deriv/deriv3() can now handle expressions involving pnorm and
 	dnorm (with a single argument), as in S-PLUS.
 
     o	New function expm1() both in R and in C API, for accurate exp(x)-1;
@@ -370,9 +882,9 @@ NEW FEATURES
     o	Added function logb(), same as log() but for S-PLUS
 	compatibility (where log now has only one argument).
 
-    o   New na.action function na.pass() passes through NAs unaltered.
+    o	New na.action function na.pass() passes through NAs unaltered.
 
-    o   piechart() has been renamed to pie(), as piechart is a Trellis
+    o	piechart() has been renamed to pie(), as piechart is a Trellis
 	function for arrays of pie charts.  The default fill colours
 	are now a set of pastel shades, rather than par("bg").
 
@@ -386,15 +898,15 @@ NEW FEATURES
 	zeroes (as in S).
 
     o	New prettyNum() function used in formatC() and format.default()
-        which have new optional arguments `big.mark', `big.interval',
-        `small.mark', `small.interval', and `decimal.mark'.
+	which have new optional arguments `big.mark', `big.interval',
+	`small.mark', `small.interval', and `decimal.mark'.
 
     o	print.coefmat() has a new argument 'eps.Pvalue' for determining
-        when small P-values should be printed as  "< {...}".
+	when small P-values should be printed as  "< {...}".
 
-    o   The recover() function has been moved to the base package.
-        This is an interactive debugging function, usually a good
-        choice for options(error=).  See ?recover.
+    o	The recover() function has been moved to the base package.
+	This is an interactive debugging function, usually a good
+	choice for options(error=).  See ?recover.
 
     o	rep() has a new argument `each' for S-PLUS compatibility.
 	The internal call is made available as rep.int(), again for
@@ -410,7 +922,7 @@ NEW FEATURES
 
     o	New option by = "DSTday" for seq.POSIXt().
 
-    o   Changes to sorting:
+    o	Changes to sorting:
 
 	-  sort(), sort.list() and order() have a new argument
 	   `decreasing' to allow the order to be reversed whilst
@@ -420,14 +932,14 @@ NEW FEATURES
 	   (currently numeric vectors and increasing order).
 
 	-  The default Shell sort is Sedgewick's variant, around 20%
-           faster, and pre-screening for NAs speeds cases without any
+	   faster, and pre-screening for NAs speeds cases without any
 	   NAs several-fold.
 
 	-  sort.list() (and order with just one vector) is several
 	   times faster for numeric, integer and logical vectors, and
 	   faster for character vectors.
 
-    o   New assignment forms of split(); new function unsplit().
+    o	New assignment forms of split(); new function unsplit().
 
     o	New sprintf() function for general C like formatting, from
 	Jonathan Rougier.
@@ -438,13 +950,13 @@ NEW FEATURES
 	`digits' is now an argument to the print method and not to
 	summary.princomp itself.
 
-    o   An extended version of the trace() function is available,
-        compatible with the function in S-PLUS.  Calls to R functions
-        can be inserted on entry, on exit, and before any
-        subexpressions. Calls to browser() and recover() are useful.
-        See ?trace.
+    o	An extended version of the trace() function is available,
+	compatible with the function in S-PLUS.	 Calls to R functions
+	can be inserted on entry, on exit, and before any
+	subexpressions. Calls to browser() and recover() are useful.
+	See ?trace.
 
-    o   New function TukeyHSD() for multiple comparisons in the results
+    o	New function TukeyHSD() for multiple comparisons in the results
 	of aov().  (Formerly function Tukey in package Devore5 by
 	Douglas Bates.)
 
@@ -457,14 +969,14 @@ NEW FEATURES
 
     o	Methods for [, [<- and as.data.frame() for class "POSIXlt".
 
-    o   Much improved printing of matrices and arrays of type "list".
+    o	Much improved printing of matrices and arrays of type "list".
 
     o	The "Knuth-TAOCP" option for random-number generation has been
 	given an option of using the 2002 revision.  See ?RNG for the
 	details: the R usage already protected against the
 	reported `weakness'.
 
-    o   min/max of integer(0) (or NULL) is now Inf/-Inf, not an
+    o	min/max of integer(0) (or NULL) is now Inf/-Inf, not an
 	extreme integer.
 
 
@@ -482,8 +994,8 @@ DOCUMENTATION CHANGES
     o	`Writing R Extensions' now has an example of calling R's
 	random numbers from FORTRAN via C.
 
-    o   R itself and all R manuals now have ISBN numbers, please use
-        them when citing R or one of the manuals.
+    o	R itself and all R manuals now have ISBN numbers, please use
+	them when citing R or one of the manuals.
 
 
 INSTALLATION CHANGES
@@ -493,26 +1005,26 @@ INSTALLATION CHANGES
 	following 'visible' consequences:
 
 	- By default, configure no longer uses a cache file.  Use the
-          command line option '--config-cache' (or '-C') to enable
-          caching.
+	  command line option '--config-cache' (or '-C') to enable
+	  caching.
 
 	- Key configuration variables such as 'CC' are now *precious*,
-          implying that the variables
+	  implying that the variables
 
 	  * no longer need to be exported to the environment and can and
-            should be set as command line arguments;
+	    should be set as command line arguments;
 
 	  * are kept in the cache even if not specified on the command
-            line, and checked for consistency between two configure runs
-            (provided that caching is used, see above);
+	    line, and checked for consistency between two configure runs
+	    (provided that caching is used, see above);
 
 	  * are kept during automatic reconfiguration as if having been
-            passed as command line arguments, even if no cache is used.
+	    passed as command line arguments, even if no cache is used.
 
 	  See the variable output section of 'configure --help' for a
 	  list of all these variables.
 
-    o   Configure variable 'FC' is deprecated, and options '--with-g77',
+    o	Configure variable 'FC' is deprecated, and options '--with-g77',
 	'--with-f77' and '--with-f2c' are defunct.  Use configure
 	variable 'F77' to specify the FORTRAN 77 compiler, and 'F2C' to
 	specify the FORTRAN-to-C compiler and/or that it should be used
@@ -534,30 +1046,30 @@ UTILITIES
 
     o	Rdconv can convert to the S4 '.sgml' format.
 
-    o   R::Utils.pm masks some platform dependencies in perl code by
-        providing global variables like R_OSTYPE or wrapper functions
-        like R_runR().
+    o	R::Utils.pm masks some platform dependencies in perl code by
+	providing global variables like R_OSTYPE or wrapper functions
+	like R_runR().
 
-    o   If a directory 'inst/doc' is present in the sources of a
-        package, the HTML index of the installed package has a link to
-        the respective subdirectory.
+    o	If a directory 'inst/doc' is present in the sources of a
+	package, the HTML index of the installed package has a link to
+	the respective subdirectory.
 
     o	R CMD check is more stringent: it now also fails on malformed
 	'Depends' and 'Maintainer' fields in 'DESCRIPTION' files, and on
-	unbalanced braces in Rd files.  It now also provides pointers to
+	unbalanced braces in Rd files.	It now also provides pointers to
 	documentation for problems it reports.
 
     o	R CMD check, build and INSTALL produce outline-type output.
 
     o	QA functions in package 'tools' now return the results of their
-	computations as objects with suitable print() methods.  By
+	computations as objects with suitable print() methods.	By
 	default, output	is only produced if a problem was found.
 
     o	New utility R CMD config to get the values of basic R configure
 	variables, or the header and library flags necessary for linking
 	against R.
 
-    o   Rdindex and maketitle.pl require perl 5.005, as Text::Wrap::fill
+    o	Rdindex and maketitle.pl require perl 5.005, as Text::Wrap::fill
 	was only introduced at 5.004_05.
 
 
@@ -593,11 +1105,11 @@ C-LEVEL FACILITIES
 	memory until .C() returned in earlier versions of R.)
 
     o	Server sockets on non-Windows platforms now set the SO_REUSEADDR
-	socket option.  This allows a server to create simultanous
+	socket option.	This allows a server to create simultanous
 	connections to several clients.
 
     o	New quicksort sorting (for numeric no-NA data), accessible from
-        C as R_qsort() etc and from Fortran as qsort4() and qsort3().
+	C as R_qsort() etc and from Fortran as qsort4() and qsort3().
 
     o	Rinternals.h no longer includes fcntl.h, as this is not an
 	ISO C header and cannot be guaranteed to exist.
@@ -662,11 +1174,11 @@ BUG FIXES
 	equal, yet not always distinguishing NA and NaN.  This was
 	very rare except for data imported as binary numbers.
 
-    o   The error handler recover() protects itself against errors in
-        dump.frames and uses a new utility, limitedLabels, to generate
-        names for the dump that don't inadvertently blow the limit on
-        symbol length.  (TODO:  either fix dump.frames accordingly or
-        remove the limit--say by truncating very long symbols?)
+    o	The error handler recover() protects itself against errors in
+	dump.frames and uses a new utility, limitedLabels, to generate
+	names for the dump that don't inadvertently blow the limit on
+	symbol length.	(TODO:	either fix dump.frames accordingly or
+	remove the limit--say by truncating very long symbols?)
 
     o	se.contrasts() works more reliably with multistratum models,
 	and its help page has an example.
@@ -683,7 +1195,7 @@ BUG FIXES
 	Under some circumstances subsetting of a character matrix
 	inserted NA in the wrong place.
 
-    o   abs() was not being treated as member of the Math group
+    o	abs() was not being treated as member of the Math group
 	generic function, so e.g. its method for data frames was not
 	being used.
 
@@ -695,23 +1207,23 @@ BUG FIXES
     o	logLik.glm() was incorrect for families with estimated dispersion.
 
     o	Added strptime() workaround for those platforms (such as
-	Solaris) that returned missing components as 0.  Missing
+	Solaris) that returned missing components as 0.	 Missing
 	days are now detected, but missing years will still
 	be interpreted as 1900 on such platforms.
 
-    o   Inheritance in formal classes (the methods package) works
-        breadth-first as intuition would expect.
+    o	Inheritance in formal classes (the methods package) works
+	breadth-first as intuition would expect.
 
     o	The new() function in package `methods' works better (maybe even
-        correctly?) for the various combinations of super-classes and
-        prototypes that can be supplied as unnamed arguments.
+	correctly?) for the various combinations of super-classes and
+	prototypes that can be supplied as unnamed arguments.
 
     o	Internal code allowed one more connection to be allocated than
 	the table size, leading to segfaults. (PR#1333)
 
     o	If a user asks to open a connection when it is created and
 	it cannot be opened, the connection is destroyed before returning
-	from the creation call.  (related to PR#1333)
+	from the creation call.	 (related to PR#1333)
 
     o	Sys.putenv() was not using permanent storage. (PR#1371)
 
@@ -720,17 +1232,17 @@ BUG FIXES
     o	deriv(3) now reports correctly the function it cannot find
 	the derivatives table.
 
-    o   The GNOME user interface was over-enthusiastic about setting
-        locale information.  Now only LC_CTYPE, LC_COLLATE and LC_TIME
-        are determined by the user's environment variables (PR#1321)
+    o	The GNOME user interface was over-enthusiastic about setting
+	locale information.  Now only LC_CTYPE, LC_COLLATE and LC_TIME
+	are determined by the user's environment variables (PR#1321)
 
-    o   In X11, locator() would sound the bell even if "xset b off"
-        had been set.
+    o	In X11, locator() would sound the bell even if "xset b off"
+	had been set.
 
     o	merge() could be confused by inconsistent use of as.character()
 	giving leading spaces.
 
-    o   [pqr]binom() no longer silently round the `size' argument,
+    o	[pqr]binom() no longer silently round the `size' argument,
 	but return NaN (as dbinom() does). (PR#1377)
 
     o	Fixed socket writing code to block until all data is written.
@@ -745,12 +1257,12 @@ BUG FIXES
 	that a character value could not be longer than the existing
 	levels.
 
-    o   The pdf() device was running out of objects before the
+    o	The pdf() device was running out of objects before the
 	documented 500 page limit.  Now there is no limit.
 
-    o   legend() did not deal correctly with `angle' arguments. (PR#1404)
+    o	legend() did not deal correctly with `angle' arguments. (PR#1404)
 
-    o   sum() tried to give an integer result for integer arguments,
+    o	sum() tried to give an integer result for integer arguments,
 	but (PR#1408)
 	- this was not documented
 	- it sometimes warned on overflow, sometimes not
@@ -767,72 +1279,72 @@ BUG FIXES
 	range of less than about 1e-8, which was excessively conservative.
 	(PR#1416)
 
-    o	tsp(x) <- NULL  now also works after library(methods).
+    o	tsp(x) <- NULL	now also works after library(methods).
 
     o	persp(shade=) was not working correctly with the default
 	col=NULL if this was transparent. (PR#1419)
 
     o	min/max(complex(0)) was returning a random value.
 
-    o   range() gave c(1, 1).
+    o	range() gave c(1, 1).
 
     o	range(numeric(0)) is now c(Inf, -Inf), as it was documented to be.
 
-    o   print.ts() was occasionally making rounding errors in the labels
+    o	print.ts() was occasionally making rounding errors in the labels
 	for multiple calendar time series.
 
-    o   Rdconv was not handling nested \describe{} constructs when
+    o	Rdconv was not handling nested \describe{} constructs when
 	converting to HTML (PR#1257) and not fixing up mal-formed
 	\item fields in \describe{} when converting to text (PR#1330).
 
-    o   filled.contour() was not checking consistency of x, y, z.
+    o	filled.contour() was not checking consistency of x, y, z.
 	(PR#1432)
 
-    o   persp.default() no longer crashes with non-character labels.
+    o	persp.default() no longer crashes with non-character labels.
 	(PR#1431)
 
-    o   fft() gave incorrect answers for input sizes 392, 588, 968, 980 ....
+    o	fft() gave incorrect answers for input sizes 392, 588, 968, 980 ....
 	(PR#1429)
 
-    o   det(method = "qr") gave incorrect results for numerically
+    o	det(method = "qr") gave incorrect results for numerically
 	singular matrices. (PR#1244)
 
-    o   barplot() now allows the user to control `xpd'. (PR#1088, 1398)
+    o	barplot() now allows the user to control `xpd'. (PR#1088, 1398)
 
-    o   library() (with no arguments) no longer fails on empty TITLE files.
+    o	library() (with no arguments) no longer fails on empty TITLE files.
 
-    o   glm() was failing if both offset() and start were specified. (PR#1421)
+    o	glm() was failing if both offset() and start were specified. (PR#1421)
 
     o	glm() might have gotten confused if both step-shortening and
 	pivoting had occurred (PR#1331).  Step-halving to avoid the
 	boundary of feasible values was not working.
 
-    o   Internal representation of logical values was not being
+    o	Internal representation of logical values was not being
 	treated consistently. (Related to PR#1439)
 
-    o   The c() function sometimes inserted garbage in the name vector
-        for some types of objects, e.g.  names(c(ls, a=1)).
+    o	The c() function sometimes inserted garbage in the name vector
+	for some types of objects, e.g.	 names(c(ls, a=1)).
 
-    o   Fixed bug in `$' that could cause mutations on assignment (PR#1450).
+    o	Fixed bug in `$' that could cause mutations on assignment (PR#1450).
 
-    o   Some X servers displayed random bytes in the window title of
+    o	Some X servers displayed random bytes in the window title of
 	graphics windows (PR#1451)
 
-    o   The X11 data editor would segfault if closed with window manager
-        controls (PR#1453)
+    o	The X11 data editor would segfault if closed with window manager
+	controls (PR#1453)
 
     o	Interrupt of Sys.sleep() on UNIX no longer causes subsequent
 	Sys.sleep() calls to segfault due to infinite recusion.
 
-    o   Eliminated a race condition that could cause segfaults when a SIGINT
+    o	Eliminated a race condition that could cause segfaults when a SIGINT
 	was received while handling an earlier SIGINT.
 
-    o   rect(lty = "blank") was incorrectly drawing with a dashed line.
+    o	rect(lty = "blank") was incorrectly drawing with a dashed line.
 
-    o   type.convert() was not reporting incorrectly formatted complex
+    o	type.convert() was not reporting incorrectly formatted complex
 	inputs. (PR#1477)
 
-    o   readChar() was not resetting vmax, so causing memory build-up.
+    o	readChar() was not resetting vmax, so causing memory build-up.
 	(PR#1483)
 
 
@@ -4000,6 +4512,12 @@ BUG FIXES
     o	guard against segfault in dataentry(0,0) (or, more
 	realistically, when mistyping data.entry(x,y) as
 	dataentry(x,y))
+
+    o	fixed special cases that caused bad behavior for methods,
+	particularly with nested use of primitive operators when
+	setMethod had been called.  Also fixed some situations that
+	prevented caching methods (and therfore slowed down dispatch
+	seriously) in similar cases.
 
 
 	*********************************************************

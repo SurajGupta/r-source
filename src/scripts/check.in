@@ -41,7 +41,7 @@ use Text::Wrap;
 ## don't buffer output
 $| = 1;
 
-my $revision = ' $Revision: 1.96.2.1 $ ';
+my $revision = ' $Revision: 1.110 $ ';
 my $version;
 my $name;
 $revision =~ / ([\d\.]*) /;
@@ -62,6 +62,14 @@ my $opt_vignettes = 1;
 my $WINDOWS = ($R::Vars::OSTYPE eq "windows");
 
 R::Vars::error("R_HOME", "R_CMD", "R_EXE");
+
+## <FIXME>
+## This should really be in R::Utils so that it can be kept in sync
+## between R CMD check and R CMD build.
+my $data_exts_re = "(R|r|RData|rdata|rda|TXT|txt|tab|csv|CSV)";
+my $demo_exts_re = "[Rr]";
+my $vignette_exts_re = "[RrSs](nw|tex)";
+## </FIXME>
 
 my @knownoptions = ("help|h", "version|v", "outdir|o:s", "library|l:s",
 		    "no-clean", "no-examples", "no-tests", "no-latex",
@@ -170,10 +178,10 @@ foreach my $pkg (@ARGV) {
     my $description;
     my $is_base_pkg = 0;
     ## Package sources from the R distribution are special.  They have a
-    ## `DESCRIPTION.in' file (instead of `DESCRIPTION'), with Version
-    ## field containing `@VERSION@' for substitution by configure.  We
-    ## test for such packages by looking for `DESCRIPTION.in' with
-    ## Priority `base', and skip the installation test for such
+    ## 'DESCRIPTION.in' file (instead of 'DESCRIPTION'), with Version
+    ## field containing '@VERSION@' for substitution by configure.  We
+    ## test for such packages by looking for 'DESCRIPTION.in' with
+    ## Priority 'base', and skip the installation test for such
     ## packages.
     if(-r &file_path($pkgdir, "DESCRIPTION.in")) {
 	$description =
@@ -186,16 +194,6 @@ foreach my $pkg (@ARGV) {
     }
 
     if(!$is_base_pkg) {
-	if($opt_install) {
-	    print("\n");
-	    if(system("${R::Vars::R_CMD} INSTALL -l $library $pkgdir")) {
-		$log->error();
-		$log->print("Installation failed.\n");
-		exit(1);
-	    }
-	    print("\n");
-	}
-
 	$log->checking(join("",
 			    ("for file '",
 			     &file_path($pkgname, "DESCRIPTION"),
@@ -208,6 +206,27 @@ foreach my $pkg (@ARGV) {
 	else {
 	    $log->result("NO");
 	    exit(1);
+	}
+	## <NOTE>
+	## This check should be adequate, but would not catch a manually
+	## installed package, nor one installed prior to 1.4.0.
+	## </NOTE>
+	$log->checking("if this is a source package");
+	if(!defined($description->{"Built"})) {
+	    $log->result("OK")
+	} else {
+	    $log->error();
+	    $log->print("Only *source* packages can be checked.\n");
+	    exit(1);
+	}
+	if($opt_install) {
+	    print("\n");
+	    if(system("${R::Vars::R_CMD} INSTALL -l $library $pkgdir")) {
+		$log->error();
+		$log->print("Installation failed.\n");
+		exit(1);
+	    }
+	    print("\n");
 	}
     }
 
@@ -273,15 +292,15 @@ sub check_pkg {
 
     ## Check for sufficient file permissions (Unix only).
 
-    ## This is a bit controversial, and hence has an option `--no-perms'
+    ## This is a bit controversial, and hence has an option '--no-perms'
     ## to turn this off.  In fact, the code below does a bit too much.
     ## What would really be needed is the following:
     ## * All dirs or files must be at least 555 or 444, respectively.
     ## * Everything that gets installed must be writeable.  This
     ##   includes DESCRIPTION COPYING INDEX TITLE data/* demo/* exec/*
     ##   and inst/*.
-    ## * All directories used for building `objects' must be at least
-    ##   755.  This includes `.' and src.
+    ## * All directories used for building 'objects' must be at least
+    ##   755.  This includes '.' and src.
     ## Given time, the above could be implemented.
 
     if($opt_perms && ($R::Vars::OSTYPE eq "unix")) {
@@ -302,7 +321,14 @@ sub check_pkg {
 	    my $filename = $File::Find::name;
 	    $filename =~ s/^[^\/]*\///;
 	    foreach my $p (@excludepatterns) {
-		return 0 if($filename =~ /$p/);
+		if($WINDOWS) {
+ 		    ## Argh: Windows is case-honoring but not
+		    ## case-insensitive ...
+		    return 0 if($filename =~ /$p/i);
+		}
+		else {
+		    return 0 if($filename =~ /$p/);
+		}
 	    }
 	    if(-d $_ && (((stat $_)[2] & 00755) < oct("755"))) {
 		push @badfiles, $File::Find::name;
@@ -406,7 +432,14 @@ sub check_pkg {
 	$log->print("DESCRIPTION Package field differs from dir name.\n");
 	exit(1);
     }
+    if($description->{"Package"} !~ /^[a-z][a-z\d\.]*$/i) {
+	$log->error();
+	$log->print("Malformed package name.\n");
+	$log->print(wrap("", "", @msg_DESCRIPTION));
+	exit(1);
+    }
     $log->result("OK");
+	    
 
     $log->checking("DESCRIPTION Version field");
     if(! $description->{"Version"}) {
@@ -415,11 +448,12 @@ sub check_pkg {
 	$log->print(wrap("", "", @msg_DESCRIPTION));
 	exit(1);
     }
-    if(($description->{"Version"} =~ /[^\d\.\-]/) && !$is_base_pkg) {
-	## Package sources from the R distribution have `@VERSION@' in
-	## their `DESCRIPTION.in' files ...
+    if(($description->{"Version"} !~ /^\d+([.-]\d+)+$/)
+       && !$is_base_pkg) {
+	## Package sources from the R distribution have '@VERSION@' in
+	## their 'DESCRIPTION.in' files ...
 	$log->error();
-	$log->print("Version may only contain digits, '.' and '-'.\n");
+	$log->print("Malformed package version.\n");
 	$log->print(wrap("", "", @msg_DESCRIPTION));
 	exit(1);
     }
@@ -460,9 +494,9 @@ sub check_pkg {
 	foreach my $dep (@dependencies) {
 	    $dep =~ /^\s*([\w\.]+)(\s*\(([^) ]+)\s+([^) ]+)\))?\s*$/;
 	    ## The entry is malformed if there is no match, or there is
-	    ## a match but the dep_op is different from `<=' or `>', or
-	    ## the dep_version does not only consist of digits, `.' or
-	    ## `-'.
+	    ## a match but the dep_op is different from '<=' or '>', or
+	    ## the dep_version does not only consist of digits, '.' or
+	    ## '-'.
 	    if(!($1) || ($2 && (!(($3 eq "<=") || ($3 eq ">="))
 				|| ($4 =~ /[^\d\.\-]/)))) {
 		$any++;
@@ -480,13 +514,73 @@ sub check_pkg {
 	}
     }
 
+    ## Check index files.
+
+    $log->checking("index files");
+    my @badfiles = ();
+    sub checkIndex {
+	my $index = $_[0];
+	## Currently, only test whether the index exists and has size
+	## greater than 0.
+	push(@badfiles, $index) unless (-s $index);
+	## Could have more tests, e.g. for correct format ...
+    }
+    &checkIndex("INDEX");
+    &checkIndex(&file_path("data", "00Index"))
+      if(-d "data" && &list_files_with_exts("data", $data_exts_re));
+    &checkIndex(&file_path("demo", "00Index"))
+      if(-d "demo" && &list_files_with_exts("demo", $demo_exts_re));
+    &checkIndex(&file_path("inst", "doc", "00Index.dcf"))
+      if(-d &file_path("inst", "doc")
+	 && &list_files_with_exts(&file_path("inst", "doc"),
+				  $vignette_exts_re));
+    if($#badfiles >= 0) {
+	$log->warning();
+	$log->print("The following index files are missing " .
+		    "or have zero length:\n");
+	$log->print("  " . join("\n  ", @badfiles) . "\n");
+	$log->print(wrap("", "",
+			 ("See the information on INDEX files and package",
+			  "subdirectories in section 'Creating R packages'",
+			  "of the 'Writing R Extensions' manual.\n")));
+    }
+    else {
+	$log->result("OK");
+    }
+
+    ## Check contents of directory 'inst'.
+    if(-d "inst") {
+	$log->checking("contents of directory 'inst'");
+	my @R_system_subdirs = ("R", "data", "demo", "exec", "man",
+				"help", "html", "latex", "R-ex");
+	my @bad_dirs = ();
+	foreach my $dir (@R_system_subdirs) {
+	    push(@bad_dirs, $dir)
+	      if(-d &file_path("inst", $dir)
+		 && &list_files(file_path("inst", $dir)));
+	}
+	if($#bad_dirs >= 0) {
+	    $log->warning();
+	    $log->print(wrap("", "",
+			     ("Found the following non-empty",
+			      "subdirectories also used by R:\n")));
+	    $log->print("  " . join(" ", @bad_dirs) . "\n");
+	    $log->print(wrap("", "",
+			     ("It is recommended not to interfere with",
+			      "package subdirectories used by R.\n")));
+	}
+	else {
+	    $log->result("OK");
+	}
+    }
+
     ## Check R code for syntax errors.
 
     if(!$is_base_pkg && -d "R") {
 	$log->checking("R files for syntax errors");
 	my @Rfiles = &list_files_with_exts("R", "[RrSsq]");
 	my $Rcmd = "Rfiles <- c(\"";
-	$Rcmd .= join("\", \"", @Rfiles) . "\")\n";
+	$Rcmd .= join("\",\n\"", @Rfiles) . "\")\n";
 	$Rcmd .= "for(f in Rfiles)\n";
 	$Rcmd .= "if(inherits(try(parse(f)), \"try-error\")) stop(f)\n";
         my @out = R_runR($Rcmd, "${R_opts} --quiet");
@@ -575,7 +669,7 @@ sub check_pkg {
     }
 
     ## Check whether assignment functions have their final argument
-    ## named `value'.
+    ## named 'value'.
 
     if(-d "R") {
 	$log->checking("for assignment functions with final arg not " .
@@ -598,6 +692,30 @@ sub check_pkg {
 	    $log->print(join("\n", @out) . "\n");
 	    ## exit(1);
             ## </FIXME>
+	}
+	else {
+	    $log->result("OK");
+	}
+    }
+
+    ## Check foreign function calls.
+
+    if(-d "R" && $ENV{'R_CHECK_FF_CALLS'}) {
+	$log->checking("foreign function calls");
+
+	my $Rcmd = "library(tools)\n";
+	if($opt_install && ($R::Vars::OSTYPE eq "unix")) {
+	    $Rcmd .= "checkFF(package = \"${pkgname}\")\n";
+	}
+        else {
+	    $Rcmd .= "checkFF(dir = \"${pkgdir}\")\n";
+	}
+
+        my @out = R_runR($Rcmd, "${R_opts} --quiet");
+	@out = grep(!/^\>/, @out);
+	if($#out>=0) {
+	    $log->warning();
+	    $log->print(join("\n", @out) . "\n");
 	}
 	else {
 	    $log->result("OK");
@@ -778,7 +896,7 @@ sub check_pkg {
 
     ## Check for undocumented objects.
 
-    if(((-d "R") || (-d "data")) && -d "man") {
+    if(((-d "R") || (-d "data")) && (-d "man")) {
 	$log->checking("for undocumented objects");
 
 	my $Rcmd = "library(tools)\n";
@@ -810,7 +928,7 @@ sub check_pkg {
 
     ## Check for code/documentation mismatches.
 
-    if($opt_codoc && ((-d "R") || (-d "data")) && -d "man") {
+    if($opt_codoc && (-d "R") && (-d "man")) {
 	$log->checking("for code/documentation mismatches");
 
 	my $Rcmd = "library(tools)\n";
@@ -908,7 +1026,7 @@ sub check_pkg {
 	    my $UNZIP = &R_getenv("R_UNZIPCMD", "unzip -q");
             system(join(" ",
 			("$UNZIP",
-			 &file_path($Rexdir, Rex.zip),
+			 &file_path($Rexdir, "Rex.zip"),
 			 " -d $Rexdir")));
         }
         if($WINDOWS) {
@@ -1018,12 +1136,14 @@ sub check_pkg {
 
     chdir($pkgoutdir);
 
-    if($opt_vignettes && (-d &file_path($pkgdir, "inst", "doc"))) {
+    if($opt_vignettes
+       && (-d &file_path($pkgdir, "inst", "doc"))
+       && &list_files_with_exts(&file_path($pkgdir, "inst", "doc"),
+				$vignette_exts_re)) {
 	$log->checking(join("",
 			    ("Sweave files in '",
 			     &file_path("inst", "doc"),
 			     "'")));
-
 
 	my $Rcmd = "library(tools)\n";
 	if($opt_install && ($R::Vars::OSTYPE eq "unix")) {

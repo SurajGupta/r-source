@@ -4,6 +4,7 @@
 \alias{resetClass}
 \alias{isClass}
 \alias{getClasses}
+\alias{findClass}
 \title{Create a Class Definition}
 \description{
   Create a formally defined class with specified slots and/or
@@ -13,17 +14,19 @@
   of a class.
 }
 \usage{
-setClass(Class, representation, prototype,
-         contains=character(), validity, access, where=1, version=FALSE)
+setClass(Class, representation, prototype, contains=character(), validity, 
+         access, where=1, version=FALSE, sealed, package)
 
-removeClass(Class, where=-1)
+removeClass(Class, where=-1, removeSubclassLinks = TRUE)
 
 isClass(Class, formal=TRUE)
 isClassDef(object)
 
 getClasses(where)
 
-resetClass(Class)
+findClass(Class)
+
+resetClass(Class, resetSubclasses = TRUE)
 
 }
 \arguments{
@@ -43,9 +46,30 @@ resetClass(Class)
     searches for a definition to remove, for \code{removeClass}. }
   \item{validity, access, version}{ Control arguments included for
     compatibility with the S-Plus API, but not currently used.  }
+  \item{sealed}{ If \code{TRUE}, the class definition will be sealed,
+    so that another call to \code{setClass} will fail on this class name.
+    }
+  \item{package}{ An optional package name for the class.  By default
+  (and usually) the package where the class definition is assigned
+  will be used.
+    }
   \item{x}{an arbitrary object.}
   \item{formal}{ Should a formal definition be required? }
   \item{object}{ any R object. }
+
+  \item{removeSubclassLinks}{When a class is removed, any links
+      \emph{to} that class from other classes will become invalid.  If
+      this argument is not supplied as \code{FALSE}, then
+      \code{removeClass} will search for all such links and delete
+      them. You can omit the  argument, or supply it as the
+      positions in the search list to look for these links (by default
+      all attached object tables will be searched).}
+  \item{resetSubclasses}{
+      Should \code{resetClass} also reset all known
+    subclasses.  Usually \code{TRUE}, unless you know from the context
+    these will be reset elsewhere.
+
+    }
 }
 \details{
 
@@ -91,6 +115,11 @@ resetClass(Class)
       of the attached packages, but have not yet been used in the
       session).
     }
+    \item{\code{findClass}:}{
+        Where on the current search list the class named \code{Class}
+        is defined.  (If there is more than one definition, all
+        corresponding elements of the search list are returned.)
+    }
 
     \item{\code{unclass}:}{
       Returns the object containing the values of all the slots in this
@@ -111,6 +140,7 @@ resetClass(Class)
       definition of a class that this class extends (but doing that in
       the  middle of a session is living dangerously, since it may
       invalidate existing objects).
+
     }
   }
 }
@@ -149,25 +179,29 @@ resetClass(Class)
 }
 
 \references{
-  The web page \url{http://www.omegahat.org/RSMethods/index.html}
-  is the primary documentation.
+  The R package \code{methods} implements, with a few exceptions, the
+  programming interface for classes
+  and methods in the book \emph{Programming with Data} (John
+  M. Chambers, Springer, 1998), in particular sections 1.6, 2.7, 2.8,
+  and chapters 7 and 8.
 
-  The functions in this package emulate the facility for classes
-  and methods described in \emph{Programming with Data} (John
-  M. Chambers, Springer, 1998).  See this book for further details and
-  examples.
-}
-\author{
-  John Chambers
+  While the programming interface for the methods package follows the reference,
+  the R software is an original implementation, so details in
+  the reference that reflect the S4 implementation may appear
+  differently in R.  Also, there are extensions to the programming
+  interface developed more recently than the reference.  For a
+  discussion of details and ongoing development, see the web page 
+  \url{http://developer.r-project.org/methodsPackage.html} and the
+  pointers from that page.
 }
 \examples{
 \testonly{
-if(isClass("track"))
-  removeClass("track")
-if(isClass("trackCurve"))
-  removeClass("trackCurve")
 if(isClass("trackMultiCurve"))
   removeClass("trackMultiCurve")
+if(isClass("trackCurve"))
+  removeClass("trackCurve")
+if(isClass("track"))
+  removeClass("track")
 }
 ## A simple class with two slots
 setClass("track",
@@ -210,7 +244,6 @@ stopifnot(identical(new("xNum")@x, xxx))
 ## (in S-Plus 6.0, new() doesn't work right with this class)
 
 setClass("maybeNumber")
-setIs("maybeNumber", "vector") # required to be a data part
 setIs("numeric", "maybeNumber")
 setIs("logical", "maybeNumber")
 setClass("withId", representation("maybeNumber", id = "character"))
@@ -218,9 +251,10 @@ setClass("withId", representation("maybeNumber", id = "character"))
 ttt <- 1:10 ## relevant that this is class integer, to test indirect extensions
 www <- new("withId", ttt, id = "test 1")
 
-## The following test should use identical(), but then the two
-## expressions differ by having the object bit on and off resp.
-stopifnot(all(as(www, "maybeNumber") == ttt))
+## the following test is less trivial than it looks.
+## It depends on the assignment of the data part NOT performing
+## a strict coerce to "numeric" on the way to satisfying is(ttt, "maybeNumber").
+stopifnot(identical(www@.Data, ttt))
 
 ## The following should not be needed.  But make check removes all files
 ## between example files, in a crude way that does not cause the class
@@ -229,16 +263,22 @@ stopifnot(all(as(www, "maybeNumber") == ttt))
 
 removeClass("withId")
 removeClass("maybeNumber")
+removeClass("xNum")
+removeClass("myMatrix")
 resetClass("integer")
 resetClass("numeric")
 resetClass("logical")
+  removeClass("trackMultiCurve")
+  removeClass("trackCurve")
+  removeClass("track")
+
 
 }
 
 
 }
 
-\seealso{\code{\link{Methods}}, \code{\link{setSClass}}}
+\seealso{\code{\link{Methods}}, \code{\link{makeClassRepresentation}}}
 \keyword{programming}
 \keyword{classes}
 \keyword{methods}

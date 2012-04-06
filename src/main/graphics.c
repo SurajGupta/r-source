@@ -3,6 +3,7 @@
  *  Copyright (C) 1995, 1996  Robert Gentleman and Ross Ihaka
  *  Copyright (C) 1997--2001  Robert Gentleman, Ross Ihaka and the
  *			      R Development Core Team
+ *  Copyright (C) 2002        The R Foundation
  *
  *  This program is free software; you can redistribute it and/or modify
  *  it under the terms of the GNU General Public License as published by
@@ -1801,8 +1802,7 @@ DevDesc *GNewPlot(Rboolean recording)
 	}
 
 	GReset(dd);
-	if (Rf_dpptr(dd)->canClip)
-	    GForceClip(dd);
+	GForceClip(dd);
     }
 
     /* IF the division of the device into separate regions */
@@ -1927,7 +1927,7 @@ void GScale(double min, double max, int axis, DevDesc *dd)
 
     /* ------  The following : Only computation of [xy]axp[0:2] ------- */
 
-    /* This is not directly needed when [xy]axp = "n",
+    /* This is not directly needed when [xy]axt = "n",
      * but may later be different in another call to axis(), e.g.:
       > plot(1, xaxt = "n");  axis(1)
      * In that case, do_axis() should do the following.
@@ -1936,11 +1936,7 @@ void GScale(double min, double max, int axis, DevDesc *dd)
      */
 
     swap = min > max;
-    if(swap) {
-#ifdef DEBUG_PLOT
-	REprintf("GScale(..axis=%d) __SWAP__ (min = %g > %g = max); log=%d]\n",
-		 axis, min, max, log);
-#endif
+    if(swap) { /* Feature: in R, something like  xlim = c(100,0)  just works */
 	temp = min; min = max; max = temp;
     }
 
@@ -2210,6 +2206,7 @@ static double	mkhsave;	/* mark height */
 static int	pchsave;	/* plotting character */
 static double	srtsave;	/* string rotation */
 static double	tcksave;	/* tick mark length */
+static double	tclsave;	/* tick mark length in LINES */
 static double	xaxpsave[3];	/* x axis parameters */
 static int	xaxssave;	/* x axis calculation style */
 static int	xaxtsave;	/* x axis type */
@@ -2259,6 +2256,7 @@ void GSavePars(DevDesc *dd)
     pchsave = Rf_gpptr(dd)->pch;
     srtsave = Rf_gpptr(dd)->srt;
     tcksave = Rf_gpptr(dd)->tck;
+    tclsave = Rf_gpptr(dd)->tcl;
     xaxpsave[0] = Rf_gpptr(dd)->xaxp[0];
     xaxpsave[1] = Rf_gpptr(dd)->xaxp[1];
     xaxpsave[2] = Rf_gpptr(dd)->xaxp[2];
@@ -2313,6 +2311,7 @@ void GRestorePars(DevDesc *dd)
     Rf_gpptr(dd)->pch = pchsave;
     Rf_gpptr(dd)->srt = srtsave;
     Rf_gpptr(dd)->tck = tcksave;
+    Rf_gpptr(dd)->tcl = tclsave;
     Rf_gpptr(dd)->xaxp[0] = xaxpsave[0];
     Rf_gpptr(dd)->xaxp[1] = xaxpsave[1];
     Rf_gpptr(dd)->xaxp[2] = xaxpsave[2];
@@ -2356,6 +2355,7 @@ void GCheckState(DevDesc *dd)
  */
 
 /* CLIPPING paradigm:
+
    R uses both the clipping capabilities of the device (if present)
    and its own internal clipping algorithms.
    If the device has no clipping capabilities (canClip = FALSE) then R
@@ -2364,6 +2364,7 @@ void GCheckState(DevDesc *dd)
    clipping (to the device extent).  This is to avoid "silly" values
    being sent to the device (e.g., X11 and Ghostview will barf if you
    send a ridiculously large number to them).  Call this silly-clipping.
+
        The problem with getting R to do some of the clipping is that it is
        not necessarily as good as the device at clipping (e.g., R's text
        clipping is very crude).  This is the motivation for leaving as much
@@ -2407,11 +2408,7 @@ void GClip(DevDesc *dd)
     if (Rf_gpptr(dd)->xpd != Rf_gpptr(dd)->oldxpd) {
 	double x1, y1, x2, y2;
 	setClipRect(&x1, &y1, &x2, &y2, DEVICE, dd);
-	if (dd->newDevStruct)
-	    ((GEDevDesc*) dd)->dev->clip(x1, x2, y1, y2,
-					 ((GEDevDesc*) dd)->dev);
-	else
-	    Rf_dpptr(dd)->clip(x1, x2, y1, y2, dd);
+	GESetClip(x1, y1, x2, y2, (GEDevDesc*) dd);
 	Rf_gpptr(dd)->oldxpd = Rf_gpptr(dd)->xpd;
     }
 }
@@ -2423,10 +2420,7 @@ void GForceClip(DevDesc *dd)
     double x1, y1, x2, y2;
     if (Rf_gpptr(dd)->state == 0) return;
     setClipRect(&x1, &y1, &x2, &y2, DEVICE, dd);
-    if (dd->newDevStruct)
-	GESetClip(x1, x2, y1, y2, (GEDevDesc*) dd);
-    else
-	Rf_dpptr(dd)->clip(x1, x2, y1, y2, dd);
+    GESetClip(x1, y1, x2, y2, (GEDevDesc*) dd);
 }
 
 
@@ -2755,8 +2749,8 @@ void GLine(double x1, double y1, double x2, double y2, int coords, DevDesc *dd)
     Rboolean clip_ok;
     if (Rf_gpptr(dd)->lty == LTY_BLANK) return;
     if (Rf_dpptr(dd)->canClip) {
-	clip_ok = clipLine(&x1, &y1, &x2, &y2, coords, 1, dd);
 	GClip(dd);
+	clip_ok = clipLine(&x1, &y1, &x2, &y2, coords, 1, dd);
     }
     else {
 	clip_ok = clipLine(&x1, &y1, &x2, &y2, coords, 0, dd);
@@ -3490,7 +3484,11 @@ double GStrWidth(char *str, GUnit units, DevDesc *dd)
     static char *sbuf = NULL;
 
     if (dd->newDevStruct) {
-	w = GEStrWidth(str, Rf_gpptr(dd)->font, Rf_gpptr(dd)->cex,
+	/* 
+	 * FIXME:  If/When GStrWidth gets passed fontfamily and lineheight
+	 * use these instead of "" and 1 below
+	 */
+	w = GEStrWidth(str, "", Rf_gpptr(dd)->font, 1, Rf_gpptr(dd)->cex,
 		       (double) Rf_gpptr(dd)->ps,
 		       (GEDevDesc*) dd);
 	if (units != DEVICE)
@@ -4465,6 +4463,10 @@ void hsv2rgb(double *h, double *s, double *v, double *r, double *g, double *b)
  */
 
 /* Default Color Palette */
+/* Paul Murrell 05/06/02
+ * Changed "white" to "grey" in the default palette
+ * in response to user suggestion
+ */
 
 char *DefaultPalette[] = {
     "black",
@@ -4474,7 +4476,7 @@ char *DefaultPalette[] = {
     "cyan",
     "magenta",
     "yellow",
-    "white",
+    "grey",
     NULL
 };
 
@@ -5904,6 +5906,7 @@ void restoredpSaved(DevDesc *dd)
     Rf_dpptr(dd)->smo = Rf_dpSavedptr(dd)->smo;
     Rf_dpptr(dd)->srt = Rf_dpSavedptr(dd)->srt;
     Rf_dpptr(dd)->tck = Rf_dpSavedptr(dd)->tck;
+    Rf_dpptr(dd)->tcl = Rf_dpSavedptr(dd)->tcl;
     Rf_dpptr(dd)->tmag = Rf_dpSavedptr(dd)->tmag;
     Rf_dpptr(dd)->type = Rf_dpSavedptr(dd)->type;
     Rf_dpptr(dd)->xaxp[0] = Rf_dpSavedptr(dd)->xaxp[0];

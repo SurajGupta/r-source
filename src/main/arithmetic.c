@@ -1,7 +1,7 @@
 /*
  *  R : A Computer Language for Statistical Data Analysis
  *  Copyright (C) 1995, 1996, 1997  Robert Gentleman and Ross Ihaka
- *  Copyright (C) 1998--2001	    The R Development Core Team.
+ *  Copyright (C) 1998--2002	    The R Development Core Team.
  *
  *  This program is free software; you can redistribute it and/or modify
  *  it under the terms of the GNU General Public License as published by
@@ -34,7 +34,6 @@
 #define MATHLIB_PRIVATE
 #include <Rmath.h>
 #undef MATHLIB_PRIVATE
-#include "R_ext/Applic.h"		/* machar */
 #include "arithmetic.h"
 
 /* Error Handling for Floating Point Errors */
@@ -95,24 +94,24 @@ typedef union
    a song and dance in a threaded application (e.g pthread_once(),
    etc.).
  */
-#ifndef _AIX
-#  ifdef WORDS_BIGENDIAN
-static const int hw = 0;
-static const int  lw = 1;
-#  else  /* WORDS_BIGENDIAN */
-static const int hw = 1;
-static const int lw = 0;
-#  endif /* WORDS_BIGENDIAN */
+
+/* gcc has problems with static const on AIX and Solaris
+   Solaris is for gcc 3.1 and 3.2 under -O2 32-bit on 64-bit kernel */
+#ifdef _AIX
+#define CONST
+#elif defined(sparc) && defined (__GNUC__) && __GNUC__ == 3
+#define CONST
 #else
-/* gcc on AIX messes up symbol table with static const */
-#  ifdef WORDS_BIGENDIAN
-static int hw = 0;
-static int  lw = 1;
-#  else  /* WORDS_BIGENDIAN */
-static int hw = 1;
-static int lw = 0;
-#  endif /* WORDS_BIGENDIAN */
+#define CONST const
 #endif
+
+#ifdef WORDS_BIGENDIAN
+static CONST int hw = 0;
+static CONST int lw = 1;
+#else  /* !WORDS_BIGENDIAN */
+static CONST int hw = 1;
+static CONST int lw = 0;
+#endif /* WORDS_BIGENDIAN */
 
 
 static double R_ValueOfNA(void)
@@ -241,75 +240,6 @@ void InitArithmetic()
 }
 
 
-/* Machine Constants */
-
-SEXP do_Machine(SEXP call, SEXP op, SEXP args, SEXP env)
-{
-    int ibeta, it, irnd, ngrd, machep, negep, iexp, minexp, maxexp;
-    double eps, epsneg, xmin, xmax;
-    SEXP ans, nms;
-
-    checkArity(op, args);
-
-    machar(&ibeta, &it, &irnd, &ngrd, &machep, &negep, &iexp,
-	   &minexp, &maxexp, &eps, &epsneg, &xmin, &xmax);
-
-    PROTECT(ans = allocVector(VECSXP, 17));
-    PROTECT(nms = allocVector(STRSXP, 17));
-    SET_STRING_ELT(nms, 0, mkChar("double.eps"));
-    SET_VECTOR_ELT(ans, 0, ScalarReal(eps));
-
-    SET_STRING_ELT(nms, 1, mkChar("double.neg.eps"));
-    SET_VECTOR_ELT(ans, 1, ScalarReal(epsneg));
-
-    SET_STRING_ELT(nms, 2, mkChar("double.xmin"));
-    SET_VECTOR_ELT(ans, 2, ScalarReal(xmin));
-
-    SET_STRING_ELT(nms, 3, mkChar("double.xmax"));
-    SET_VECTOR_ELT(ans, 3, ScalarReal(xmax));
-
-    SET_STRING_ELT(nms, 4, mkChar("double.base"));
-    SET_VECTOR_ELT(ans, 4, ScalarInteger(ibeta));
-
-    SET_STRING_ELT(nms, 5, mkChar("double.digits"));
-    SET_VECTOR_ELT(ans, 5, ScalarInteger(it));
-
-    SET_STRING_ELT(nms, 6, mkChar("double.rounding"));
-    SET_VECTOR_ELT(ans, 6, ScalarInteger(irnd));
-
-    SET_STRING_ELT(nms, 7, mkChar("double.guard"));
-    SET_VECTOR_ELT(ans, 7, ScalarInteger(ngrd));
-
-    SET_STRING_ELT(nms, 8, mkChar("double.ulp.digits"));
-    SET_VECTOR_ELT(ans, 8, ScalarInteger(machep));
-
-    SET_STRING_ELT(nms, 9, mkChar("double.neg.ulp.digits"));
-    SET_VECTOR_ELT(ans, 9, ScalarInteger(negep));
-
-    SET_STRING_ELT(nms, 10, mkChar("double.exponent"));
-    SET_VECTOR_ELT(ans, 10, ScalarInteger(iexp));
-
-    SET_STRING_ELT(nms, 11, mkChar("double.min.exp"));
-    SET_VECTOR_ELT(ans, 11, ScalarInteger(minexp));
-
-    SET_STRING_ELT(nms, 12, mkChar("double.max.exp"));
-    SET_VECTOR_ELT(ans, 12, ScalarInteger(maxexp));
-
-    SET_STRING_ELT(nms, 13, mkChar("integer.max"));
-    SET_VECTOR_ELT(ans, 13, ScalarInteger(INT_MAX));
-
-    SET_STRING_ELT(nms, 14, mkChar("sizeof.long"));
-    SET_VECTOR_ELT(ans, 14, ScalarInteger(SIZEOF_LONG));
-
-    SET_STRING_ELT(nms, 15, mkChar("sizeof.longlong"));
-    SET_VECTOR_ELT(ans, 15, ScalarInteger(SIZEOF_LONG_LONG));
-
-    SET_STRING_ELT(nms, 16, mkChar("sizeof.longdouble"));
-    SET_VECTOR_ELT(ans, 16, ScalarInteger(SIZEOF_LONG_DOUBLE));
-    setAttrib(ans, R_NamesSymbol, nms);
-    UNPROTECT(2);
-    return ans;
-}
 
 static double myfmod(double x1, double x2)
 {
@@ -552,9 +482,10 @@ SEXP R_binary(SEXP call, SEXP op, SEXP x, SEXP y)
     PROTECT(x);
     /* Don't set the dims if one argument is an array of size 0 and the
        other isn't of size zero, cos they're wrong */
+    /* Not if the other argument is a scalar (PR#1979) */
     if (dims != R_NilValue) {
-	if (!((xarray && (nx == 0) && (ny != 0)) ||
-	      (yarray && (ny == 0) && (nx != 0)))){
+	if (!((xarray && (nx == 0) && (ny > 1)) ||
+	      (yarray && (ny == 0) && (nx > 1)))){
 	    setAttrib(x, R_DimSymbol, dims);
 	    if (xnames != R_NilValue)
 		setAttrib(x, R_DimNamesSymbol, xnames);

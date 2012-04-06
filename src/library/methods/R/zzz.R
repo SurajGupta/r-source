@@ -24,7 +24,7 @@
     table <- new.env(hash=TRUE)
     assign("__MethodMetaData", table, envir = where)
     .Call("R_initialize_methods_metadata", table, PACKAGE = "methods")
-    .C("R_initMethodDispatch", PACKAGE = "methods")# C-level initialization
+    initMethodDispatch()
     saved <- (if(exists(".saveImage", envir = where, inherits = FALSE))
               get(".saveImage", envir = where)
               else
@@ -32,31 +32,37 @@
     if(identical(saved, FALSE)) {
         cat("initializing class and method definitions now ...")
         on.exit(assign(".saveImage", NA, envir = where))
+        .InitClassDefinition(where)
         .InitBasicClasses(where)
+        .initClassSupport(where)
         .InitMethodsListClass(where)
-        .makeBasicFunsList(where)
         .setCoerceGeneric(where)
+        assign("makeGeneric", .makeGeneric, envir = where)
+        assign("newClassRepresentation", .newClassRepresentation, envir = where)
+        assign(".mergeClassDefSlots", ..mergeClassDefSlots, envir = where)
+        .makeBasicFunsList(where)
+        rm(.makeGeneric, .newClassRepresentation, envir = where)
         .InitMethodDefinitions(where)
         .InitShowMethods(where)
+        ## TO DO: .InitSubsetMethods(where)
         assign(".saveImage", TRUE, envir = where)
         on.exit()
         cat("done\n")
     }
-    else if(!identical(saved, TRUE))
-        stop("Looks like the methods library was not installed correctly; check the make results!\n")
+    else {
+        if(!identical(saved, TRUE))
+            stop("Looks like the methods library was not installed correctly; check the make results!\n")
+        classRepClass <- getClassDef("classRepresentation", where)
+        if(is.null(classRepClass))
+            stop("The methods library was not initialized correctly: couldn't find the definition of the \"classRepresentation\" class")
+        ## cache the definition of classRepresentation to boot the class system
+        assignClassDef("classRepresentation", classRepClass, 0)
+    }
     ## cache metadata for all environments in search path.  The assumption is that
     ## this has not been done, since cacheMetaData is in this package.  library, attach,
     ## and detach functions look for cacheMetaData and call it if it's found.
     for(i in rev(seq(along = search())))
-      cacheMetaData(as.environment(i), TRUE)
-    if (! identical(environment(log), .GlobalEnv)) { # check if namespace used
-        # if base is using a name space then any replacements for functions
-        # in base defined in methods need to be installed directly into base
-        # or they will not be visible to base code.
-        for (n in ls(env = where))
-            if (exists(n, env = NULL))
-                assign(n, get(n, env = where), env = NULL)
-    }
+      cacheMetaData(i, TRUE)
 }
 
 ### The following code is only executed when dumping

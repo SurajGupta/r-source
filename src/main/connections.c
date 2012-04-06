@@ -218,15 +218,6 @@ void init_con(Rconnection new, char *description, char *mode)
 }
 
 /* ------------------- file connections --------------------- */
-#ifdef Unix
-char * Runix_tmpnam(char * prefix);
-#endif
-#ifdef Win32
-char * Rwin32_tmpnam(char * prefix);
-#endif
-#ifdef Macintosh
-char * Rmac_tmpnam(char * prefix);
-#endif
 
 static Rboolean file_open(Rconnection con)
 {
@@ -241,15 +232,7 @@ static Rboolean file_open(Rconnection con)
 
     if(strlen(con->description) == 0) {
 	temp = TRUE;
-#ifdef Unix
-	name = Runix_tmpnam("Rf");
-#endif
-#ifdef Win32
-	name = Rwin32_tmpnam("Rf");
-#endif
-#ifdef Macintosh
-	name = Rmac_tmpnam("Rf");
-#endif
+	name = R_tmpnam("Rf");
     } else name = R_ExpandFileName(con->description);
     fp = R_fopen(name, con->mode);
     if(!fp) {
@@ -646,8 +629,16 @@ SEXP do_fifo(SEXP call, SEXP op, SEXP args, SEXP env)
 static Rboolean pipe_open(Rconnection con)
 {
     FILE *fp;
+    char mode[3];
 
-    fp = popen(con->description, con->mode);
+#ifdef Win32
+    strncpy(mode, con->mode, 2);
+    mode[2] = '\0';
+#else
+    mode[0] = con->mode[0];
+    mode[1] = '\0';
+#endif
+    fp = popen(con->description, mode);
     if(!fp) {
 	warning("cannot open cmd `%s'", con->description);
 	return FALSE;
@@ -947,6 +938,7 @@ SEXP do_gzfile(SEXP call, SEXP op, SEXP args, SEXP env)
 /* ------------------- bzipped file connections --------------------- */
 
 #if defined(HAVE_BZLIB)
+#undef ERROR /* for compilation on Windows */
 #include <bzlib.h>
 
 static Rboolean bzfile_open(Rconnection con)

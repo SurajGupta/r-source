@@ -28,9 +28,15 @@
 
 #include "Defn.h"
 #include "Graphics.h"
-#include "R_ext/Error.h"
+#include <R_ext/Error.h>
 #include "Fileio.h"
 #include <Rdevices.h>
+
+#ifdef HAVE_ERRNO_H
+#include <errno.h>
+#else
+extern int errno;
+#endif
 
 #ifdef __MRC__
 extern char *R_fgets(char *buf, int i, FILE *fp);
@@ -52,11 +58,11 @@ static char PS_hyphen = 173;
 /* This structure gives the set of font names for each type face. */
 /* They also give the afm file names. */
 
-static struct {
-    char *family;
-    char *afmfile[5];
+static const struct {
+    char const *family;
+    char const *afmfile[5];
 }
-Family[] = {
+Family [] = {
 
     { "AvantGarde",
       {"agw_____.afm", "agd_____.afm", "agwo____.afm", "agdo____.afm",
@@ -225,9 +231,9 @@ enum {
     Unknown
 };
 
-static struct {
-    char *keyword;
-    int code;
+static const struct {
+    const char *keyword;
+    const int code;
 }
 KeyWordDictionary[] = {
     { "StartFontMetrics",    StartFontMetrics },
@@ -263,14 +269,14 @@ KeyWordDictionary[] = {
     { NULL,		     Unknown },
 };
 
-static int MatchKey(char *l, char *k)
+static int MatchKey(char const * l, char const * k)
 {
     while (*k)
 	if (*k++ != *l++) return 0;
     return 1;
 }
 
-static int KeyType(char *s)
+static int KeyType(const char * const s)
 {
     int i;
 #ifdef __MRC__
@@ -422,30 +428,36 @@ static int GetKPX(char *buf, int nkp, FontMetricInfo *metrics)
 /* Statics here are OK, as all the calls are in one initialization
    so no concurrency (until threads?) */
 
-/* read in the next encoding item, separated by white space. */
-static int GetNextItem(FILE *fp, char *dest, int c)
-{
-    static char buf[1000], *p = NULL, *p0;
+typedef struct {
+  /* Probably can make buf and p0 local variables. Only p needs to be
+     stored across calls. Need to investigate this more closely. */
+  char buf[1000];
+  char *p;
+  char *p0;
+} EncodingInputState;
 
-    if (c < 0) p = NULL;
+/* read in the next encoding item, separated by white space. */
+static int GetNextItem(FILE *fp, char *dest, int c, EncodingInputState *state)
+{
+    if (c < 0) state->p = NULL;
     while (1) {
-	if (feof(fp)) { p = NULL; return 1; }
-	if (!p || *p == '\n' || *p == '\0') {
+	if (feof(fp)) { state->p = NULL; return 1; }
+	if (!state->p || *state->p == '\n' || *state->p == '\0') {
 #ifdef __MRC__
-	    p = R_fgets(buf, 1000, fp);
+	    state->p = R_fgets(state->buf, 1000, fp);
 #else
-	    p = fgets(buf, 1000, fp);
+	    state->p = fgets(state->buf, 1000, fp);
 #endif
 
 	}
 	/* check for incomplete encoding file */
-	if(!p) return 1;
-	while (isspace((int)*p)) p++;
-	if (p == '\0' || *p == '%'|| *p == '\n') { p = NULL; continue; }
-	p0 = p;
-	while (!isspace((int)*p)) p++;
-	if (p != '\0') *p++ = '\0';
-	if(c == 45) strcpy(dest, "/minus"); else strcpy(dest, p0);
+	if(!state->p) return 1;
+	while (isspace((int)* state->p)) state->p++;
+	if (state->p == '\0' || *state->p == '%'|| *state->p == '\n') { state->p = NULL; continue; }
+	state->p0 = state->p;
+	while (!isspace((int)*state->p)) state->p++;
+	if (state->p != '\0') *state->p++ = '\0';
+	if(c == 45) strcpy(dest, "/minus"); else strcpy(dest, state->p0);
 	break;
     }
     return 0;
@@ -460,6 +472,8 @@ LoadEncoding(char *encpath, char *encname, Rboolean isPDF)
     char buf[BUFSIZE];
     int i;
     FILE *fp;
+    EncodingInputState state;
+    state.p = state.p0 = NULL;
 
     if(strchr(encpath, FILESEP[0])) strcpy(buf, encpath);
     else sprintf(buf, "%s%safm%s%s", R_Home, FILESEP, FILESEP, encpath);
@@ -470,18 +484,18 @@ LoadEncoding(char *encpath, char *encname, Rboolean isPDF)
 	strcat(buf, ".enc");
 	if (!(fp = R_fopen(R_ExpandFileName(buf), "r"))) return 0;
     }
-    if (GetNextItem(fp, buf, -1)) return 0; /* encoding name */
+    if (GetNextItem(fp, buf, -1, &state)) return 0; /* encoding name */
     strcpy(encname, buf+1);
     if (!isPDF) sprintf(enccode, "/%s [\n", encname);
     else enccode[0] = '\0';
-    if (GetNextItem(fp, buf, 0)) { fclose(fp); return 0;} /* [ */
+    if (GetNextItem(fp, buf, 0, &state)) { fclose(fp); return 0;} /* [ */
     for(i = 0; i < 256; i++) {
-	if (GetNextItem(fp, buf, i)) { fclose(fp); return 0; }
+	if (GetNextItem(fp, buf, i, &state)) { fclose(fp); return 0; }
 	strcpy(encnames[i], buf+1);
 	strcat(enccode, " /"); strcat(enccode, encnames[i]);
 	if(i%8 == 7) strcat(enccode, "\n");
     }
-    if (GetNextItem(fp, buf, 0)) { fclose(fp); return 0;} /* ] */
+    if (GetNextItem(fp, buf, 0, &state)) { fclose(fp); return 0;} /* ] */
     fclose(fp);
     if (!isPDF) strcat(enccode,"]\n");
     return 1;
@@ -492,7 +506,7 @@ LoadEncoding(char *encpath, char *encname, Rboolean isPDF)
 /* Load font metrics from a file: defaults to the R_HOME/afm directory */
 
 static int
-PostScriptLoadFontMetrics(char *fontpath, FontMetricInfo *metrics,
+PostScriptLoadFontMetrics(const char * const fontpath, FontMetricInfo *metrics,
 			  char *fontname, int reencode)
 {
     char buf[BUFSIZE], *p;
@@ -656,7 +670,7 @@ PostScriptMetricInfo(int c, double *ascent, double *descent,
 
 /*  Part 2.  Graphics Support Code.  */
 
-static char *TypeFaceDef[] = { "R", "B", "I", "BI", "S" };
+static const char * const TypeFaceDef[] = { "R", "B", "I", "BI", "S" };
 
 static void PSEncodeFont(FILE *fp, char *encname)
 {
@@ -1396,7 +1410,7 @@ static void SetFont(int style, int size, NewDevDesc *dd)
 
 static Rboolean PS_Open(NewDevDesc *dd, PostScriptDesc *pd)
 {
-    char buf[512], *p;
+    char buf[512];
     int i;
 
     if (!LoadEncoding(pd->encpath, pd->encname, FALSE)) {
@@ -1404,6 +1418,7 @@ static Rboolean PS_Open(NewDevDesc *dd, PostScriptDesc *pd)
 	return FALSE;
     }
     for(i = 0; i < 5 ; i++) {
+        char const *p;
 	if(pd->fontfamily == USERAFM) p = pd->afmpaths[i];
 	else p = Family[pd->fontfamily].afmfile[i];
 	if(!PostScriptLoadFontMetrics(p, &(pd->metrics[i]),
@@ -1419,17 +1434,23 @@ static Rboolean PS_Open(NewDevDesc *dd, PostScriptDesc *pd)
 	return FALSE;
 #else
 	if(strlen(pd->command) == 0) return FALSE;
+        errno = 0;
 	pd->psfp = popen(pd->command, "w");
 	pd->open_type = 1;
+        if (!pd->psfp || errno != 0) {
+            warning("cannot open `postscript' pipe to `%s'", pd->command);
+            return FALSE;
+        }
 #endif
     } else if (pd->filename[0] == '|') {
 #ifndef HAVE_POPEN
 	warning("file = \"|cmd\" is not implemented in this version");
 	return FALSE;
 #else
+	errno = 0;
 	pd->psfp = popen(pd->filename + 1, "w");
 	pd->open_type = 1;
-	if (!pd->psfp) {
+	if (!pd->psfp || errno != 0) {
 	    warning("cannot open `postscript' pipe to `%s'", pd->filename + 1);
 	    return FALSE;
 	}
@@ -1809,7 +1830,8 @@ typedef struct {
     rcolor col;		 /* current color */
     rcolor fill;	 /* current fill color */
     rcolor bg;		 /* background color */
-    int XFigColors[534]; int nXFigColors;
+    int XFigColors[534]; 
+    int nXFigColors;
 
     FILE *psfp;		 /* output file */
     FILE *tmpfp;         /* temp file */
@@ -1957,7 +1979,7 @@ static void XFig_Text(double x, double y, char *str,
 		     NewDevDesc *dd);
 static Rboolean XFig_Open(NewDevDesc*, XFigDesc*);
 
-static int XFig_basenums[] = {4, 8, 12, 16, 20, 24, 28, 0};
+static const int XFig_basenums[] = {4, 8, 12, 16, 20, 24, 28, 0};
 
 
 /* Driver Support Routines */
@@ -2167,16 +2189,6 @@ XFigDeviceDriver(DevDesc *dd, char *file, char *paper, char *family,
 				 ps, onefile, pagecentre);
 }
 
-#ifdef Unix
-char * Runix_tmpnam(char * prefix);
-#endif
-#ifdef Win32
-char * Rwin32_tmpnam(char * prefix);
-#endif
-#ifdef Macintosh
-char * Rmac_tmpnam(char * prefix);
-#endif
-
 static Rboolean XFig_Open(NewDevDesc *dd, XFigDesc *pd)
 {
     char buf[512], name[50];
@@ -2207,15 +2219,7 @@ static Rboolean XFig_Open(NewDevDesc *dd, XFigDesc *pd)
     }
     if (!pd->psfp) return FALSE;
     /* assume tmpname is less than PATH_MAX */
-#ifdef Unix
-    strcpy(pd->tmpname, Runix_tmpnam("Rxfig"));
-#endif
-#ifdef Win32
-    strcpy(pd->tmpname, Rwin32_tmpnam("Rxfig"));
-#endif
-#ifdef Macintosh
-    strcpy(pd->tmpname, Rmac_tmpnam("Rxfig"));
-#endif
+    strcpy(pd->tmpname, R_tmpnam("Rxfig"));
     pd->tmpfp = R_fopen(pd->tmpname, "w");
     if (!pd->tmpfp) {
 	fclose(pd->psfp);
@@ -2454,7 +2458,7 @@ static void XFig_Polyline(int n, double *x, double *y,
     }
 }
 
-static int styles[4] = {0,2,1,3};
+static const int styles[4] = {0,2,1,3};
 
 static void XFig_Text(double x, double y, char *str,
 		      double rot, double hadj,
@@ -2548,6 +2552,7 @@ typedef struct {
     char filename[PATH_MAX];
 
     int pageno;		/* page number */
+    int fileno;		/* file number */
 
     int fontfamily;	/* font family */
     char encpath[PATH_MAX]; /* font encoding */
@@ -2686,7 +2691,7 @@ innerPDFDeviceDriver(NewDevDesc* dd, char *file, char *family, char *encoding,
 
     pd->onefile = onefile;
     pd->maxpointsize = 72.0 * ((height > width) ? height : width);
-    pd->pageno = 0;
+    pd->pageno = pd->fileno = 0;
     /* Base Pointsize */
     /* Nominal Character Sizes in Pixels */
     /* Only right for 12 point font. */
@@ -2730,7 +2735,7 @@ innerPDFDeviceDriver(NewDevDesc* dd, char *file, char *family, char *encoding,
     dd->canChangeFont = 1;
     dd->canRotateText = 1;
     dd->canResizeText = 1;
-    dd->canClip = 0;
+    dd->canClip = 1;
     dd->canHAdj = 0;
     dd->canChangeGamma = FALSE;
 
@@ -2966,7 +2971,7 @@ static void PDF_endfile(PDFDesc *pd)
 
 static Rboolean PDF_Open(NewDevDesc *dd, PDFDesc *pd)
 {
-    char buf[512], *p;
+    char buf[512];
     int i;
 
     if (!LoadEncoding(pd->encpath, pd->encname, TRUE)) {
@@ -2974,7 +2979,7 @@ static Rboolean PDF_Open(NewDevDesc *dd, PDFDesc *pd)
 	return FALSE;
     }
     for(i = 0; i < 4 ; i++) {
-	p = Family[pd->fontfamily].afmfile[i];
+	char const *p = Family[pd->fontfamily].afmfile[i];
 	if(!PostScriptLoadFontMetrics(p, &(pd->metrics[i]),
 				      familyname[i], 1)) {
 	    warning("cannot read afm file %s", p);
@@ -2989,7 +2994,7 @@ static Rboolean PDF_Open(NewDevDesc *dd, PDFDesc *pd)
 
     /* NB: this must be binary to get tell positions and line endings right */
 
-    sprintf(buf, pd->filename, pd->pageno + 1); /* page 1 to start */
+    sprintf(buf, pd->filename, pd->fileno + 1); /* file 1 to start */
     pd->pdffp = R_fopen(R_ExpandFileName(buf), "wb");
     if (!pd->pdffp) {
 	warning("cannot open `pdf' file argument `%s'", buf);
@@ -3000,14 +3005,16 @@ static Rboolean PDF_Open(NewDevDesc *dd, PDFDesc *pd)
     return TRUE;
 }
 
-
 static void PDF_Clip(double x0, double x1, double y0, double y1, NewDevDesc *dd)
 {
-/*    PDFDesc *pd = (PDFDesc *) dd->deviceSpecific;
+    PDFDesc *pd = (PDFDesc *) dd->deviceSpecific;
 
-    fprintf(pd->pdffp, "Q q %.2f %.2f %.2f %.2f re W\n",
-	    x0, y0, x1 - x0, y1 - y0);
-    PDF_Invalidate(dd); */
+    if(pd->inText) textoff(pd);
+    if(x0 != 0.0 || y0 != 0.0 || x1 != 72*pd->width || y1 != 72*pd->height)
+	fprintf(pd->pdffp, "Q q %.2f %.2f %.2f %.2f re W n\n",
+		x0, y0, x1 - x0, y1 - y0);
+    else fprintf(pd->pdffp, "Q q\n");
+    PDF_Invalidate(dd);
 }
 
 static void PDF_Size(double *left, double *right,
@@ -3052,7 +3059,8 @@ static void PDF_NewPage(int fill, double gamma, NewDevDesc *dd)
 	PDF_endpage(pd);
 	if(!pd->onefile) {
 	    PDF_endfile(pd);
-	    sprintf(buf, pd->filename, pd->pageno + 1); /* page 1 to start */
+	    pd->fileno++;
+	    sprintf(buf, pd->filename, pd->fileno + 1); /* file 1 to start */
 	    pd->pdffp = R_fopen(R_ExpandFileName(buf), "wb");
 	    if (!pd->pdffp)
 		error("cannot open `pdf' file argument `%s'\n  please shut down the PDFdevice", buf);
@@ -3255,6 +3263,7 @@ static void PDF_Text(double x, double y, char *str,
     int face = font;
     double a, b, rot1;
 
+    if(face < 1 || face > 5) face = 1;
     rot1 = rot * DEG2RAD;
     a = size * cos(rot1);
     b = size * sin(rot1);
@@ -3286,6 +3295,7 @@ static double PDF_StrWidth(char *str, int font,
 {
     PDFDesc *pd = (PDFDesc *) dd->deviceSpecific;
 
+    if(font < 1 || font > 5) font = 1;
     return floor(cex * ps + 0.5) *
 	PostScriptStringWidth((unsigned char *)str,
 			      &(pd->metrics[font-1]));
@@ -3297,6 +3307,7 @@ static void PDF_MetricInfo(int c, int font, double cex, double ps,
 {
     PDFDesc *pd = (PDFDesc *) dd->deviceSpecific;
 
+    if(font < 1 || font > 5) font = 1;
     PostScriptMetricInfo(c, ascent, descent, width,
 			 &(pd->metrics[font-1]));
     *ascent = floor(cex * ps + 0.5) * *ascent;

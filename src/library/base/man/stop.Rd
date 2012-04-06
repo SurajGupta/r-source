@@ -1,13 +1,14 @@
 \name{stop}
 \title{Stop Function Execution}
 \usage{
-stop(message = NULL, call. = TRUE)
+stop(\dots, call. = TRUE)
 geterrmessage()
 }
 \alias{stop}
 \alias{geterrmessage}
 \arguments{
-  \item{message}{a character vector (of length 1) or \code{NULL}.}
+  \item{\dots}{character vectors (which are pasted together with no
+    separator) or \code{NULL}.}
   \item{call.}{logical, indicating if the call should become part of the
     error message.}
 }
@@ -23,13 +24,16 @@ geterrmessage()
   error-handler) in interactive use is
   to return to the top level prompt, and in non-interactive use to
   (effectively) call \code{\link{q}("no", status=1, runLast=FALSE}).
+
+  Errors will be truncated to \code{getOption("warning.length")}
+  characters, default 1000.
 }
 \value{
   \code{geterrmessage} gives the last error message, as character string
   ending in \code{"\n"}.
 }
 \seealso{
-  \code{\link{warning}}, \code{\link{restart}} to catch errors and retry,
+  \code{\link{warning}}, \code{\link{try}} to catch errors and retry,
   and \code{\link{options}} for setting error handlers.
   \code{\link{stopifnot}} for validity testing.
 }

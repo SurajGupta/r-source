@@ -4,7 +4,7 @@ function(..., list = character(0),
          verbose = getOption("verbose"))
 {
     sQuote <- function(s) paste("`", s, "'", sep = "")
-    
+
     names <- c(as.character(substitute(list(...))[-1]), list)
     if(!missing(package))
         if(is.name(y <- substitute(package)))
@@ -14,16 +14,17 @@ function(..., list = character(0),
 
     ## Find the directories of the given packages and maybe the working
     ## directory.
-    paths <- .find.package(package, lib.loc, verbose = verbose)    
+    paths <- .find.package(package, lib.loc, verbose = verbose)
     if(is.null(lib.loc))
         paths <- c(.path.package(package, TRUE), getwd(), paths)
     paths <- unique(paths[file.exists(paths)])
 
-    ## Find the directories with a `data' subdirectory.
+    ## Find the directories with a 'data' subdirectory.
     nodata <- !file.exists(file.path(paths, "data"))
+    nodata[!file.info(file.path(paths, "data"))$isdir] <- TRUE
     if(any(nodata)) {
         if(!missing(package) && (length(package) > 0)) {
-            ## Warn about given packages which do not have a `data'
+            ## Warn about given packages which do not have a 'data'
             ## subdirectory.
             packagesWithNoData <-
                 package[package %in% sapply(paths[nodata], basename)]
@@ -43,7 +44,7 @@ function(..., list = character(0),
     }
 
     if(length(names) == 0) {
-        ## Give `index' of all possible data sets.
+        ## List all possible data sets.
 
         ## Build the data db.
         db <- matrix(character(0), nr = 0, nc = 4)
@@ -51,7 +52,7 @@ function(..., list = character(0),
         for(path in paths) {
             INDEX <- file.path(path, "data", "00Index")
             ## <NOTE>
-            ## Earlier versions also used to check for `index.doc'.
+            ## Earlier versions also used to check for 'index.doc'.
             ## </NOTE>
             if(file.exists(INDEX)) {
                 entries <- read.00Index(INDEX)
@@ -63,7 +64,7 @@ function(..., list = character(0),
                 }
             }
             else {
-                ## no index: check for datasets---won't work if zipped
+                ## no index: check whether subdir 'data' contains files.
                 if(length(list.files(file.path(path, "data"))) > 0)
                     noindex <- c(noindex, basename(path))
             }
@@ -74,27 +75,30 @@ function(..., list = character(0),
             if(!missing(package) && (length(package) > 0)) {
                 ## Warn about given packages which do not have a data
                 ## index.
-                packagesWithNoIndex <- package[package %in% noindex]        
+                packagesWithNoIndex <- package[package %in% noindex]
                 if(length(packagesWithNoIndex) > 1) {
                     warning(paste("packages",
                                   paste(sQuote(packagesWithNoIndex),
                                         collapse=", "),
-                                  "contain datasets but no index"))
+                                  "contain data sets but no index"))
                 }
                 else if(length(packagesWithNoIndex) == 1)
-                    warning(paste("package", sQuote(packagesWithNoIndex),
-                                  "contains datasets but no index"))
+                    warning(paste("package",
+                                  sQuote(packagesWithNoIndex),
+                                  "contains data sets but no index"))
             }
         }
-        
+
         footer <- if(missing(package))
-            paste("Use `data(package = ",
-                  ".packages(all.available = TRUE))'\n",
-                  "to list the data sets in all ",
-                  "*available* packages.", sep = "")
+            paste("Use ",
+                  sQuote(paste("data(package =",
+                               ".packages(all.available = TRUE))")),
+                  "\n",
+                  "to list the data sets in all *available* packages.",
+                  sep = "")
         else
             NULL
-        y <- list(type = "data",
+        y <- list(type = "data", title = "Data sets",
                   header = NULL, results = db, footer = footer)
         class(y) <- "packageIQR"
         return(y)
@@ -109,7 +113,9 @@ function(..., list = character(0),
                     files <-
                         c(files,
                           file.path(p, scan(fp, what="", quiet = TRUE)))
-                else warning(paste("`filelist' is missing for dir", p))
+                else warning(paste(sQuote("filelist"),
+                                   "is missing for dir",
+                                   sQuote(p)))
             } else {
                 files <- c(files, list.files(p, full = TRUE))
             }
@@ -126,7 +132,7 @@ function(..., list = character(0),
                     break
                 found <- TRUE
                 ext <- sub(".*\\.", "", file)
-                ## make sure the match is really for `name.ext'
+                ## make sure the match is really for 'name.ext'
                 ## otherwise
                 if (sub(subpre, "", file) != paste(name, ".", ext, sep = ""))
                     found <- FALSE

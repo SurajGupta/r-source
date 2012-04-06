@@ -1,4 +1,4 @@
-### $Id: zzModels.R,v 1.5.14.1 2002/06/14 16:34:20 pd Exp $
+### $Id: zzModels.R,v 1.6 2002/06/14 20:22:57 ripley Exp $
 ###
 ###       Individual selfStarting nonlinear regression models
 ###

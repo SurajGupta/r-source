@@ -1,7 +1,7 @@
 /*
  *  Mathlib : A C Library of Special Functions
  *  Copyright (C) 1998 Ross Ihaka
- *  Copyright (C) 2000 the R Development Core Team
+ *  Copyright (C) 2000-2 the R Development Core Team
  *
  *  This program is free software; you can redistribute it and/or modify
  *  it under the terms of the GNU General Public License as published by
@@ -19,7 +19,7 @@
  *
  *  SYNOPSIS
  *
- *    #include "Rmath.h"
+ *    #include <Rmath.h>
  *    double norm_rand(void);
  *
  *  DESCRIPTION
@@ -30,7 +30,7 @@
  */
 
 #include "nmath.h"
-#include "R_ext/Random.h"
+#include <R_ext/Random.h>
 
 #define repeat for(;;)
 
@@ -257,6 +257,12 @@ double norm_rand(void)
     case USER_NORM:
 	return *((double *) User_norm_fun());
 #endif
+    case INVERSION:
+#define BIG 134217728 /* 2^27 */
+	/* unif_rand() alone is not of high enough precision */
+	u1 = unif_rand();
+	u1 = (int)(BIG*u1) + unif_rand();
+	return qnorm5(u1/BIG, 0.0, 1.0, 1, 0);
     default:
 	MATHLIB_ERROR("norm_rand(): invalid N01_kind: %d\n", N01_kind)
 	    return 0.0;/*- -Wall */

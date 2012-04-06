@@ -4,6 +4,40 @@
 See the file NEWS for changes that affect all versions of R.
 
 
+rw1060
+======
+
+The installer program name has changed from SetupR.exe to rw1060.exe.
+
+The miniR distribution has grown to eight floppies, and the zip files
+are no longer distributed on CRAN.
+
+The default memory limit has been raised to the smaller of 1Gb and the
+amount of physical RAM.  (See the changes for rw1040 and rw1020 below.)
+
+Support for bzip-ed connections has been added to the standard distribution.
+
+update.packages() and install.packages() will not try to install a package
+that is in use (with an informative warning).
+
+Using HTML help has changed slightly: in particular
+help(htmlhelp=TRUE) makes use of the setting of options("browser").
+
+Ctrl-Z in Rgui or Rterm will signal EOF, and so can be used to
+terminate a read by readLines() or scan(), for example.
+
+bmp(), png(), jpeg() and win.metafile() devices can plot multiple
+pages in separate files.
+
+The preferred compiler is gcc-3.1: gcc-2.95.3 can still be used but
+up-to-date header files are needed.
+
+Making packages containing source code automagically makes dependency
+information for C and C++ code: this is useful when experimenting with
+packages, and especially for the packages which ship with R.
+
+
+
 rw1051
 ======
 
@@ -17,7 +51,7 @@ Bulding the standalone Rmath.dll was not making the import library
 libRmath.a.
 
 We may have been able to track down (to the isprint routine) the cause
-of the FAQ Q2.14 about crashes caused be non-ASCII characters, and
+of the FAQ Q2.14 about crashes caused by non-ASCII characters, and
 hence to circumvent it.
 
 File | Print on the menu of a windows() graphics device was not working.

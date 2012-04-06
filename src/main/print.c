@@ -56,7 +56,7 @@
 #include "Print.h"
 #include "Fileio.h"
 #include "Rconnections.h"
-#include "S.h"
+#include <S.h>
 
 /* Global print parameter struct: */
 R_print_par_t R_print;
@@ -759,5 +759,9 @@ int F77_NAME(realp0) (char *label, int *nchar, float *data, int *ndata)
 
 void F77_NAME(xerbla)(char *srname, int *info)
 {
-    error("LAPACK routine %6s gave error code %d", srname, *info);
+   /* srname is not null-terminated.  It should be 6 characters. */
+    char buf[7];
+    strncpy(buf, srname, 6);
+    buf[6] = '\0';
+    error("LAPACK routine %6s gave error code %d", buf, -(*info));
 }

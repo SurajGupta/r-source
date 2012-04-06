@@ -427,16 +427,17 @@ enum {
 enum {
     kItemShowWSpace  =  1,
 	kItemClrWSpace	 =  2,
-    kItemLoadWSpace  =  4,
-	kItemSaveWSpace	 =  5,
-	kItemLoadHistory =  7,
-	kItemSaveHistory =  8,
-	kItemShowHistory =  9,
-	kItemChangeDir   =  11,
-	kItemShowDir	 =  12,
-	kItemResetDir    =  13,
-	kItemShowLibrary =  15,
-	kItemShowData	 =  16
+	kItemBrowseWSpace =	3,
+    kItemLoadWSpace  =  5,
+	kItemSaveWSpace	 =  6,
+	kItemLoadHistory =  8,
+	kItemSaveHistory =  9,
+	kItemShowHistory =  10,
+	kItemChangeDir   =  12,
+	kItemShowDir	 =  13,
+	kItemResetDir    =  14,
+	kItemShowLibrary =  16,
+	kItemShowData	 =  17
 };
 
 /*	Config menu items
@@ -445,6 +446,13 @@ enum {
     kItemAllowInterrupt =  1,
 	kItemOnOpenSource	=  2
 };
+
+
+
+/* for the data browser */
+
+#include "DataBrowser.h"
+
 
 
 /*	Alert & dialog template resource IDs

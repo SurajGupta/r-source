@@ -19,7 +19,7 @@
  *
  *  SYNOPSIS
  *
- *    #include "Rmath.h"
+ *    #include <Rmath.h>
  *    double fround(double x, double digits);
  *
  *  DESCRIPTION
@@ -33,6 +33,18 @@
 
 #ifndef HAVE_RINT
 #define USE_BUILTIN_RINT
+#endif
+
+#ifdef WIN32
+/* earlier Windows headers did not include rint */
+#if __MINGW32_MAJOR_VERSION < 2
+static __inline__ double rint (double x)
+{
+    double retval;
+    __asm__ ("frndint;": "=t" (retval) : "0" (x));
+    return retval;
+}
+#endif
 #endif
 
 #ifdef USE_BUILTIN_RINT

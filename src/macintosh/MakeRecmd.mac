@@ -39,8 +39,16 @@ mainfiles Ä $OutOfDate
 	   NewFolder {RHOME}library:{pkg}
 	  end
 	  if  `Exists ::library:{pkg}:DESCRIPTION`
-	  Duplicate -y ::library:{pkg}:DESCRIPTION {RHOME}library:{pkg}
+	  Duplicate -y ::library:{pkg}:DESCRIPTION {RHOME}library:{pkg}:DESCRIPTION
 	  end
+	  if  `Exists ::library:{pkg}:DESCRIPTION.in`
+	  Duplicate -y ::library:{pkg}:DESCRIPTION.in {RHOME}library:{pkg}:DESCRIPTION
+	  end
+	  if  `Exists {RHOME}library:{pkg}:DESCRIPTION`
+	   duplicate -y {RHOME}library:{pkg}:DESCRIPTION {RHOME}library:{pkg}:des
+	   catenate {RHOME}library:{pkg}:des :pkgver > {RHOME}library:{pkg}:DESCRIPTION
+       delete  {RHOME}library:{pkg}:des
+      end	  
 	  if  `Exists ::library:{pkg}:INDEX`
 	   Duplicate -y ::library:{pkg}:INDEX {RHOME}library:{pkg}
 	  end 
@@ -70,7 +78,9 @@ Libfiles Ä $OutOfDate
 	   if ! `Exists -d {RHOME}library:{pkg}:libs`
 	    NewFolder {RHOME}library:{pkg}:libs
 	   end
-	   Duplicate -y :makefiles:{pkg}.mac  ::library:{pkg}:src:Makefile.mac
+##	   Duplicate -y :makefiles:{pkg}.mac  ::library:{pkg}:src:Makefile.mac
+       SetFile -c 'ttxt' -t 'TEXT' :makefiles:{pkg}.mac
+	   translate ¶0x0a ¶0x0d <:makefiles:{pkg}.mac >::library:{pkg}:src:Makefile.mac
 	   Directory ::library:{pkg}:src
 	   Make -f Makefile.mac >build
 	   build

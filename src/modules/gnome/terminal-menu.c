@@ -199,11 +199,12 @@ static void help_about_cb(GtkWidget *widget,
     g_assert(copyright != NULL);
 
     about_box = gnome_about_new("R", version, copyright, authors,
-				"`GNU S' - A language and environment for statistical computing and graphics. R is similar to S, which was developed at Bell Laboratories by John Chambers et al. It provides a wide variety of statistical and graphical techniques (linear and nonlinear modelling, statistical tests, time series analysis, classification, clustering, ...).\n \nR is designed as a true computer language with control-flow constructions for iteration and alternation, and it allows users to add additional functionality by defining new functions. For computationally intensive tasks, C and Fortran code can be linked and called at run time.", "R-logo-sm.xpm");
+				"`GNU S' - A language and environment for statistical computing and graphics. R is similar to S, which was developed at Bell Laboratories by John Chambers et al. It provides a wide variety of statistical and graphical techniques (linear and nonlinear modelling, statistical tests, time series analysis, classification, clustering, ...).", "R-logo-sm.xpm");
 
     hbox = gtk_hbox_new(TRUE, 0);
     home_href = gnome_href_new("http://www.r-project.org/", "R home page");
-    FAQ_href = gnome_href_new("http://www.ci.tuwien.ac.at/~hornik/R/R-FAQ.html", "R FAQ");
+    FAQ_href = gnome_href_new("http://cran.r-project.org/doc/FAQ/R-FAQ.html",
+			      "R FAQ");
     gtk_box_pack_start(GTK_BOX(hbox), home_href, FALSE, FALSE, 0);
     gtk_box_pack_start(GTK_BOX(hbox), FAQ_href, FALSE, FALSE, 0);
     gtk_box_pack_start(GTK_BOX(GNOME_DIALOG(about_box)->vbox),
@@ -240,25 +241,25 @@ static void generic_cb(GtkWidget *widget, gpointer data)
 static GnomeUIInfo file_menu[] =
 {
   { GNOME_APP_UI_ITEM, "_Open...", "Open a saved workspace image",
-    R_gtk_terminal_file_open, NULL, NULL, 
+    (gpointer) R_gtk_terminal_file_open, NULL, NULL, 
     GNOME_APP_PIXMAP_STOCK, GNOME_STOCK_MENU_OPEN,
     GNOME_KEY_NAME_OPEN, GNOME_KEY_MOD_NEW, NULL },
   { GNOME_APP_UI_ITEM, "Save", "Save the workspace image",
-    R_gtk_terminal_file_save, NULL, NULL,
+    (gpointer) R_gtk_terminal_file_save, NULL, NULL,
     GNOME_APP_PIXMAP_STOCK, GNOME_STOCK_MENU_SAVE,
     GNOME_KEY_NAME_SAVE, GNOME_KEY_MOD_SAVE, NULL },
   { GNOME_APP_UI_ITEM, "Save _As...", "Save the workspace image to a file",
-    R_gtk_terminal_file_saveas, NULL, NULL,
+    (gpointer) R_gtk_terminal_file_saveas, NULL, NULL,
     GNOME_APP_PIXMAP_STOCK, GNOME_STOCK_MENU_SAVE_AS,
     GNOME_KEY_NAME_SAVE_AS, GNOME_KEY_MOD_SAVE_AS, NULL },
   GNOMEUIINFO_SEPARATOR,
   { GNOME_APP_UI_ITEM, "_Print...", "Print the console output", 
-    generic_cb, NULL, NULL,
+    (gpointer) generic_cb, NULL, NULL,
     GNOME_APP_PIXMAP_STOCK, GNOME_STOCK_MENU_PRINT,
     0, (GdkModifierType)0, NULL },
   GNOMEUIINFO_MENU_PRINT_SETUP_ITEM(generic_cb, NULL),
   GNOMEUIINFO_SEPARATOR,
-  GNOMEUIINFO_MENU_EXIT_ITEM(file_exit_cb, NULL),
+  GNOMEUIINFO_MENU_EXIT_ITEM((gpointer) file_exit_cb, NULL),
   GNOMEUIINFO_END
 };
 
@@ -301,7 +302,7 @@ static GnomeUIInfo graphics_menu[] =
 static GnomeUIInfo commands_menu[] =
 {
   { GNOME_APP_UI_ITEM, "_Interrupt", "Interrupt R processing (SIGTERM)", 
-    commands_interrupt_cb, NULL, NULL,
+    (gpointer) commands_interrupt_cb, NULL, NULL,
     GNOME_APP_PIXMAP_STOCK, GNOME_STOCK_MENU_STOP,
     GDK_Escape, (GdkModifierType)0, NULL },
   GNOMEUIINFO_SEPARATOR,

@@ -35,7 +35,14 @@ SEXP do_Gnome(SEXP, SEXP, SEXP, SEXP);
 SEXP do_GTK(SEXP, SEXP, SEXP, SEXP);
 SEXP do_XFig(SEXP, SEXP, SEXP, SEXP);
 SEXP do_PDF(SEXP, SEXP, SEXP, SEXP);
+SEXP do_Quartz(SEXP, SEXP, SEXP, SEXP);
+
+#if defined(Unix) && defined(HAVE_AQUA)
+SEXP do_wsbrowser(SEXP, SEXP, SEXP, SEXP);
+#endif
+
 #ifdef Macintosh
+SEXP do_wsbrowser(SEXP, SEXP, SEXP, SEXP);
 SEXP do_Macintosh(SEXP, SEXP, SEXP, SEXP);
 SEXP do_applescript(SEXP, SEXP, SEXP, SEXP);
 SEXP do_fileedit(SEXP, SEXP, SEXP, SEXP);
@@ -46,11 +53,15 @@ SEXP do_getmenucmd(SEXP, SEXP, SEXP, SEXP);
 SEXP do_getnumcmd(SEXP, SEXP, SEXP, SEXP);
 SEXP do_delnumcmd(SEXP, SEXP, SEXP, SEXP);
 SEXP do_delusrcmd(SEXP, SEXP, SEXP, SEXP);
+SEXP do_wsbrowser(SEXP, SEXP, SEXP, SEXP);
+SEXP do_truepath(SEXP, SEXP, SEXP, SEXP);
+SEXP do_unlink(SEXP, SEXP, SEXP, SEXP);
+SEXP do_dircreate(SEXP, SEXP, SEXP, SEXP);
 #endif
 
 /* Function Names */
 
-#if defined(Win32) || defined(Macintosh)
+#if defined(Win32)
 SEXP do_unlink(SEXP, SEXP, SEXP, SEXP);
 SEXP do_helpstart(SEXP, SEXP, SEXP, SEXP);
 SEXP do_helpitem(SEXP, SEXP, SEXP, SEXP);
@@ -76,6 +87,7 @@ SEXP do_selectlist(SEXP, SEXP, SEXP, SEXP);
 SEXP do_abbrev(SEXP, SEXP, SEXP, SEXP);
 SEXP do_abline(SEXP, SEXP, SEXP, SEXP);
 SEXP do_abs(SEXP, SEXP, SEXP, SEXP);
+SEXP do_agrep(SEXP, SEXP, SEXP, SEXP);
 SEXP do_alias(SEXP, SEXP, SEXP, SEXP);
 SEXP do_allnames(SEXP, SEXP, SEXP, SEXP);
 SEXP do_anydf(SEXP, SEXP, SEXP, SEXP);
@@ -248,7 +260,7 @@ SEXP do_logic(SEXP, SEXP, SEXP, SEXP);
 SEXP do_logic2(SEXP, SEXP, SEXP, SEXP);
 SEXP do_logic3(SEXP, SEXP, SEXP, SEXP);
 SEXP do_ls(SEXP, SEXP, SEXP, SEXP);
-SEXP do_Machine(SEXP, SEXP, SEXP, SEXP);
+/* SEXP do_Machine(SEXP, SEXP, SEXP, SEXP);*/
 SEXP do_machine(SEXP, SEXP, SEXP, SEXP);
 SEXP do_makelist(SEXP, SEXP, SEXP, SEXP);
 SEXP do_makenames(SEXP, SEXP, SEXP, SEXP);
@@ -291,7 +303,9 @@ SEXP do_paste(SEXP, SEXP, SEXP, SEXP);
 SEXP do_pathexpand(SEXP, SEXP, SEXP, SEXP);
 SEXP do_pause(SEXP, SEXP, SEXP, SEXP);
 SEXP do_persp(SEXP, SEXP, SEXP, SEXP);
-SEXP do_Platform(SEXP, SEXP, SEXP, SEXP);
+SEXP do_pgrep(SEXP, SEXP, SEXP, SEXP);
+SEXP do_pgsub(SEXP, SEXP, SEXP, SEXP);
+/* SEXP do_Platform(SEXP, SEXP, SEXP, SEXP);*/
 SEXP do_plot_new(SEXP, SEXP, SEXP, SEXP);
 SEXP do_plot_window(SEXP, SEXP, SEXP, SEXP);
 SEXP do_plot_xy(SEXP, SEXP, SEXP, SEXP);
@@ -299,6 +313,7 @@ SEXP do_pmatch(SEXP, SEXP, SEXP, SEXP);
 SEXP do_polygon(SEXP, SEXP, SEXP, SEXP);
 SEXP do_polyroot(SEXP, SEXP, SEXP, SEXP);
 SEXP do_pos2env(SEXP, SEXP, SEXP, SEXP);
+SEXP do_pregexpr(SEXP, SEXP, SEXP, SEXP);
 SEXP do_primitive(SEXP, SEXP, SEXP, SEXP);
 SEXP do_printdefault(SEXP, SEXP, SEXP, SEXP);
 SEXP do_printdf(SEXP, SEXP, SEXP, SEXP);
@@ -393,6 +408,7 @@ SEXP do_symbols(SEXP, SEXP, SEXP, SEXP);
 SEXP do_sys(SEXP, SEXP, SEXP, SEXP);
 SEXP do_system(SEXP, SEXP, SEXP, SEXP);
 SEXP do_systime(SEXP, SEXP, SEXP, SEXP);
+SEXP do_tempdir(SEXP, SEXP, SEXP, SEXP);
 SEXP do_tempfile(SEXP, SEXP, SEXP, SEXP);
 SEXP do_termsform(SEXP, SEXP, SEXP, SEXP);
 SEXP do_text(SEXP, SEXP, SEXP, SEXP);
@@ -467,5 +483,8 @@ SEXP do_bndIsActive(SEXP, SEXP, SEXP, SEXP);
 SEXP do_mkUnbound(SEXP, SEXP, SEXP, SEXP);
 #endif
 #ifdef EXPERIMENTAL_NAMESPACES
-SEXP do_useNSDisp(SEXP, SEXP, SEXP, SEXP);
+SEXP do_regNS(SEXP call, SEXP op, SEXP args, SEXP rho);
+SEXP do_unregNS(SEXP call, SEXP op, SEXP args, SEXP rho);
+SEXP do_getRegNS(SEXP call, SEXP op, SEXP args, SEXP rho);
+SEXP do_getNSRegistry(SEXP call, SEXP op, SEXP args, SEXP rho);
 #endif

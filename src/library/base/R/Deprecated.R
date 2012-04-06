@@ -9,14 +9,32 @@
 		  sep = ""), call. = FALSE)
 }
 
-## Deprecated in 1.5.0
-piechart <- function(x, labels = names(x), edges = 200, radius = 0.8,
-              density = NULL, angle = 45, col = NULL,
-              main = NULL, ...)
+## consider keeping one (commented) entry here, for easier additions
+
+## <entry>
+## Deprecated in 1.6.0
+machine <- function()
 {
-    .Deprecated("pie")
-    mcall <- match.call()
-    mcall[[1]] <- as.name("pie")
-    eval(mcall, parent.frame())
+    .Deprecated(".Platform$OS.type")
+    .Internal(machine())
 }
-## </Deprecated>
+
+Machine <- function()
+{
+    .Deprecated(".Machine")
+    get(".Machine", "package:base")
+}
+
+Platform <- function()
+{
+    .Deprecated(".Platform")
+    get(".Platform", "package:base")
+}
+
+restart<-function (on = TRUE){
+    .Deprecated("try")
+    .Internal(restart(on))
+}
+
+## </entry>
+

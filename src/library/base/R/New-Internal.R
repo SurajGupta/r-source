@@ -1,17 +1,10 @@
 ##vector <- function(mode = "logical", length = 0).Internal(vector(mode,length))
 
-#warning <- function(message = NULL).Internal(warning(message))
-
-warning <- function(..., call. = TRUE)
-{
-    if(nargs() == 0) message <- NULL else message <- paste(..., sep="")
-    .Internal(warning(as.logical(call.), message))
-}
-
-restart <- function(on = TRUE).Internal(restart(on))
 geterrmessage <- function() .Internal(geterrmessage())
+
 try <- function(expr, first = TRUE)
 {
+    restart <- function(on = TRUE).Internal(restart(on))
     restart(first)
     if(is.logical(first) && first) {
         first <- FALSE
@@ -49,9 +42,8 @@ lchoose <- function(n,k).Internal(lchoose(n,k))
 ##-- 2nd part --
 D <- function(expr, name) .Internal(D(expr, name))
 
-Machine <- function().Internal(Machine())
+# Machine <- function().Internal(Machine())
 R.Version <- function().Internal(Version())
-machine <- function().Internal(machine())
 colors <- function().Internal(colors())
 colours <- colors
 col2rgb <- function(col).Internal(col2rgb(col))

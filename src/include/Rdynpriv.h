@@ -47,7 +47,7 @@ typedef void *HINSTANCE;
 
 
 #include "Defn.h"
-#include "R_ext/Rdynload.h"
+#include <R_ext/Rdynload.h>
 
   /*
      A name-routine pair.
@@ -75,23 +75,25 @@ typedef struct {
     char       *name;
     DL_FUNC     fun;
     int         numArgs;
-    /* Add information about argument types or converters. */  
+
+    R_NativePrimitiveArgType *types;
+    R_NativeArgStyle *styles;
+   
 } Rf_DotCSymbol;
+typedef Rf_DotCSymbol Rf_DotFortranSymbol;
+
 
 typedef struct {
     char       *name;
     DL_FUNC     fun;
     int         numArgs;
+    R_NativeObjectArgType *types;
 
+    R_NativeArgStyle *styles;
 } Rf_DotCallSymbol;
 
-typedef struct {
-    char       *name;
-    DL_FUNC     fun;
-    int         numArgs;
-} Rf_DotFortranSymbol;
+typedef Rf_DotCallSymbol Rf_DotExternalSymbol;
 
-typedef Rf_DotFortranSymbol Rf_DotExternalSymbol;
 
 
   /*

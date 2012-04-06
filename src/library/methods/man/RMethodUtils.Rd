@@ -1,4 +1,13 @@
 \name{RMethodUtils}
+%% FIXME:  undocumented utilities (Sep. 23/02)
+\alias{asMethodDefinition}
+\alias{nonstandardGeneric-class}
+\alias{nonstandardGenericFunction-class}
+\alias{nonstandardGroupGenericFunction-class}
+\alias{OptionalFunction-class}
+\alias{PossibleMethod-class}
+%%
+\alias{substituteFunctionArgs}
 \alias{makeGeneric}
 \alias{makeStandardGeneric}
 \alias{getAllMethods}
@@ -10,8 +19,6 @@
 \alias{conformMethod}
 \alias{getGeneric}
 \alias{getGroup}
-\alias{getGroupMembers}
-\alias{setGroupMembers}
 \alias{getMethodsMetaData}
 \alias{assignMethodsMetaData}
 \alias{matchSignature}
@@ -27,7 +34,6 @@
 \alias{cacheMetaData}
 \alias{cacheGenericsMetaData}
 \alias{setPrimitiveMethods}
-\alias{copyEnvironment}
 \alias{printNoClass}
 \alias{print.default}
 \alias{missingArg}
@@ -35,6 +41,8 @@
 \alias{sigToEnv}
 \alias{rematchDefinition}
 \alias{unRematchDefinition}
+\allias{asMethodDefinition}
+\alias{findNextMethod}
 \alias{.valueClassTest}
 %% Not for the user to know about!
 \alias{.ShortPrimitiveSkeletons} %% used from C code
@@ -47,8 +55,8 @@
   by the user.
 }
 \usage{
-makeGeneric(f, fdef, keepMethods=TRUE, useAsDefault=NA,
-            group=character(), valueClass=character())
+makeGeneric(f, fdef, fdefault, group=character(),
+            valueClass=character(), package, signature, genericFunction)
 
 makeStandardGeneric(f, fdef)
 
@@ -56,7 +64,7 @@ generic.skeleton(name, fdef, fdefault)
 
 defaultDumpName(generic, signature)
 
-getAllMethods(f, libs=search())
+getAllMethods(f, fdef, libs=search())
 
 setAllMethodsSlot(mlist)
 
@@ -68,10 +76,7 @@ getGeneric(f, mustFind=FALSE)
 
 getGroup(fdef, recursive=FALSE)
 
-getGroupMembers(f, fdef = getGeneric(f))
-setGroupMembers(f, members, fdef = getGeneric(f))
-
-matchSignature(names, signature, fun)
+matchSignature(signature, fun)
 
 ## manage method metadata
 getFromMethodMetaData(name)
@@ -88,11 +93,9 @@ MethodAddCoerce(method, argName, thisClass, methodClass)
 
 is.primitive(fdef)
 
-copyEnvironment(object, exceptions)
+cacheMetaData(where, attach = TRUE)
 
-cacheMetaData(envir, attach = TRUE)
-
-cacheGenericsMetaData(generics, attach = TRUE, envir)
+cacheGenericsMetaData(generics, attach = TRUE, where, package)
 
 setPrimitiveMethods(f, fdef, code, generic, mlist)
 
@@ -100,7 +103,7 @@ printNoClass(x, digits, quote, na.print, print.gap, right, ...)
 
 print.default(x, ...)
 
-missingArg(symbol, envir = parent.frame())
+missingArg(symbol, envir = parent.frame(), eval)
 
 balanceMethodsList(mlist, args, check = TRUE)
 
@@ -109,6 +112,10 @@ sigToEnv(signature)
 rematchDefinition(definition, generic, mnames, fnames)
 unRematchDefinition(definition)
 
+asMethodDefinition(def, signature)
+
+findNextMethod(method, f, mlist, optional = FALSE, envir)
+
 }
 \section{Summary of Functions}{
  
@@ -116,7 +123,8 @@ unRematchDefinition(definition)
    
     \item{\code{makeGeneric}:}{ 
       Makes a generic function object corresponding to the given
-      function name and optional definition.
+      function name, optional definition and optional default method.  Other arguments supply optional
+      elements for the slots of \code{\link{genericFunction-class}}.
     }
 
     \item{\code{makeStandardGeneric}:}{ 
@@ -205,23 +213,19 @@ unRematchDefinition(definition)
       If \code{recursive=TRUE}, also all the group(s) of these groups.
     }
 
-    \item{\code{getGroupMembers}, \code{setGroupMembers}:}{
-      Get or set the known members of the group generic function \code{f}.
-    }
-  
     \item{\code{matchSignature}}{
       Matches the signature object (a partially or completely named
-      subset of the arguments of \code{fun}), and return a vector of all
-      the classes in the order specified by \code{names}.  The classes
+      subset of the signature arguments of the generic function object
+      \code{fun}), and return a vector of all
+      the classes in the order specified by \code{fun@signature}.  The classes
       not specified by `signature' will be \code{"ANY"} in the value,
       but extra trailing \code{"ANY"}'s are removed.  When the input
       signature is empty, the returned signature is a single
       \code{"ANY"} matching the first formal argument (so the returned
       value is always non-empty).
   
-      The formal arguments of \code{fun} must agree with \code{names}
-      (usually the formal arguments of the generic function) as well,
-      and \code{matchSignature} checks this.
+      Generates an error if any of the supplied signature names are
+      not legal; that is, not in the signature slot of the generic function.
     }
 
     \item{\code{getMethodsMetaData}, \code{assignMethodsMetaData}, \code{mlistMetaName}:}{
@@ -334,5 +338,15 @@ unRematchDefinition(definition)
  reverses the procedure; if given a function or method definition that
  does not correspond to this form, it just returns its argument.
 }
+  \item{\code{asMethodDefinition}:}{ Turn a function definition into a
+      \code{\link{MethodDefiniton-class}} object, corresponding to the
+      given \code{signature} (by default generates a default method
+      with empty signature).
+      }
+  \item{\code{findNextMethod}:}{ A generic function that finds the
+      next method in \code{mlist} corresponding the method definition
+      \code{method}. It uses methods defined suitably for ordinary
+      methods and for methods with calls to \code{\link{callNextMethod}}.
+      }
 }
 \keyword{internal}

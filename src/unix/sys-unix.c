@@ -28,6 +28,7 @@
 #include "Defn.h"
 #include "Fileio.h"
 #include "Runix.h"
+#include <sys/stat.h> /* for mkdir */
 
 /* HP-UX headers need this before CLK_TCK */
 #ifdef HAVE_UNISTD_H
@@ -224,20 +225,54 @@ SEXP do_system(SEXP call, SEXP op, SEXP args, SEXP rho)
     }
 }
 
-char * Runix_tmpnam(char * prefix)
+void InitTempDir()
 {
-    char *tmp, tm[PATH_MAX], tmp1[PATH_MAX], *res;
-    unsigned int n, done = 0, pid;
+    char *tmp, *tm, tmp1[PATH_MAX+10], *p;
+    int len, res;
+
+    tmp = getenv("R_SESSION_TMPDIR");
+    if (!tmp) {
+        /* This looks like it will only be called in the embedded case
+           since this is done in the script. Also should test if directory
+           exists rather than just attempting to remove it. */
+	char *buf;
+	tm = getenv("TMPDIR");
+	if (!tm) tm = getenv("TMP");
+	if (!tm) tm = getenv("TEMP");
+	if (!tm) tm = "/tmp";
+	sprintf(tmp1, "rm -rf %s/Rtmp%u", tm, (unsigned int)getpid());
+	system(tmp1);
+	sprintf(tmp1, "%s/Rtmp%u", tm, (unsigned int)getpid());
+	res = mkdir(tmp1, 0755);
+	if(res) R_Suicide("Can't mkdir R_TempDir");
+	tmp = tmp1;
+	buf = (char *) malloc((strlen(tmp) + 20) * sizeof(char));
+	if(buf) {
+	    sprintf(buf, "R_SESSION_TMPDIR=%s", tmp);
+	    putenv(buf);
+	    /* no free here: storage remains in use */
+	}
+    }
+    
+    len = strlen(tmp) + 1;
+    p = (char *) malloc(len);
+    if(!p) R_Suicide("Can't allocate R_TempDir");
+    else {
+	R_TempDir = p;
+	strcpy(R_TempDir, tmp);
+    }
+}
+
+char * R_tmpnam(const char * prefix)
+{
+    char tm[PATH_MAX], tmp1[PATH_MAX], *res;
+    unsigned int n, done = 0;
 
     if(!prefix) prefix = "";	/* NULL */
-    tmp = getenv("TMP");
-    if (!tmp) tmp = getenv("TEMP");
-    if (tmp && strlen(tmp) < PATH_MAX - 25) strcpy(tmp1, tmp);
-    else strcpy(tmp1, "/tmp");
-    pid = (unsigned int) getpid();
+    strcpy(tmp1, R_TempDir);
     for (n = 0; n < 100; n++) {
 	/* try a random number at the end */
-	sprintf(tm, "%s/%sR%xS%x", tmp1, prefix, pid, rand());
+	sprintf(tm, "%s/%s%x", tmp1, prefix, rand());
         if(!R_FileExists(tm)) { done = 1; break; }
     }
     if(!done)
@@ -247,26 +282,6 @@ char * Runix_tmpnam(char * prefix)
     return res;
 }
 
-SEXP do_tempfile(SEXP call, SEXP op, SEXP args, SEXP env)
-{
-    SEXP  ans;
-    char *tn, *tm;
-    int i, slen=0 /* -Wall */;
-
-    checkArity(op, args);
-    if (!isString(CAR(args)) || (slen = LENGTH(CAR(args))) < 1)
-	errorcall(call, "invalid file name argument");
-    PROTECT(ans = allocVector(STRSXP, slen));
-    for(i = 0; i < slen; i++) {
-	tn = CHAR(STRING_ELT(CAR(args), i));
-	/* try to get a new file name */
-	tm = Runix_tmpnam(tn);
-	SET_STRING_ELT(ans, i, mkChar(tm));
-	free(tm);
-    }
-    UNPROTECT(1);
-    return (ans);
-}
 
 
 #ifdef HAVE_SYS_UTSNAME_H

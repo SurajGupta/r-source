@@ -6,13 +6,16 @@
 }
 \usage{
 axis(side, at = NULL, labels = TRUE, tick = TRUE, line = 0,
-     pos = NA, outer = FALSE, font = NA, vfont = NULL, \dots)
+     pos = NA, outer = FALSE, font = NA, vfont = NULL,
+     lty = "solid", lwd = 1, col = NULL, \dots)
 }
 \arguments{
   \item{side}{an integer specifying which side of the plot the axis is
-    to be drawn on.}
-  \item{at}{the points at which tick-marks are to be drawn. Non-finite
-    (infinite, \code{NaN} or \code{NA}) values are omitted.}
+    to be drawn on.  The axis is placed as follows: 1=below,
+  2=left, 3=above and 4=right.}
+  \item{at}{the points at which tick-marks are to be drawn.  Non-finite
+    (infinite, \code{NaN} or \code{NA}) values are omitted.  By default,
+  when \code{NULL}, tickmark locations are computed, see Details below.}
   \item{labels}{this can either be a logical value specifying whether
     (numerical) annotations are to be made at the tickmarks, or a vector
     of character strings to be placed at the tickpoints.}
@@ -29,13 +32,15 @@ axis(side, at = NULL, labels = TRUE, tick = TRUE, line = 0,
     margin.}
   \item{font}{font for text.}
   \item{vfont}{vector font for text.}
-  \item{\dots}{graphical parameters may also be passed as arguments to
+  \item{lty, lwd}{line type, width for the axis line and the tick marks.}
+  \item{col}{color for the axis line and the tick marks.  The default
+    \code{NULL} means to use \code{par("fg")}.}
+  \item{\dots}{other graphical parameters may also be passed as arguments to
     this function.}
 }
 \value{
   This function is invoked for its side effect, which is to add an axis
-  to an already existing plot.  The axis is placed as follows: 1=below,
-  2=left, 3=above and 4=right.
+  to an already existing plot.
 }
 \details{
   The axis line is drawn from the lowest to the highest value of
@@ -43,6 +48,10 @@ axis(side, at = NULL, labels = TRUE, tick = TRUE, line = 0,
   are drawn from points within the plot region (up to a tolerance for
   rounding error) are plotted, but the ticks and their labels may well
   extend outside the plot region.
+
+  When \code{at = NULL}, pretty tick mark locations are computed internally,
+  from \code{\link{par}("usr","lab")}, and \code{\link{par}("xlog")} (or
+  \code{ylog} respectively).
 }
 \examples{
 plot(1:4, rnorm(4), axes=FALSE)
@@ -50,12 +59,16 @@ axis(1, 1:4, LETTERS[1:4])
 axis(2)
 box() #- to make it look "as usual"
 
-plot(1:7, rnorm(7), type = 's', xaxt='n', col = 'red')
-axis(1, 1:7, LETTERS[1:7], col.axis = 'blue')
+plot(1:7, rnorm(7), main = "axis() examples",
+     type = "s", xaxt="n", frame = FALSE, col = "red")
+axis(1, 1:7, LETTERS[1:7], col.axis = "blue")
+# unusual options:
+axis(4, col = "violet", col.axis="dark violet",lwd = 2)
+axis(3, col = "gold", lty = 2, lwd = 0.5)
 \testonly{ # test sorting of labels
-Y <- c(10.50, 4.0, 13.75, 7.25)
-plot(1:4, Y, xlim=c(0,5), ylim=c(0,15))
-axis(side=4, at=Y, labels=LETTERS[1:4])
+ Y <- c(10.50, 4.0, 13.75, 7.25)
+ plot(1:4, Y, xlim=c(0,5), ylim=c(0,15))
+ axis(side=4, at=Y, labels=LETTERS[1:4])
 }
 }
 \keyword{aplot}

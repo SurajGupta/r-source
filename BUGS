@@ -83,6 +83,41 @@ Date: Thu, 13 Jun 2002 08:21:50 +0200
 --The supplementary (table of sum one) is fixed for 1.5.1.
 --Detection code for the first problem has been added to 1.5.1 which will stop
 --the crash, but the underlying cause is still open.
+* PR# 1716 *
+Subject: rdiscrete in e1071 fails when n==1
+From: "John Aitchison" <jaitchis@hwy.com.au>
+Date: Fri, 28 Jun 2002 10:28:17 +1000
+* PR# 1729 *
+Subject: problem with qq( )
+From: Jarno.Tuimala@Helsinki.Fi
+Date: Tue, 2 Jul 2002 10:37:10 +0200 (MET DST)
+--A report on lattice
+* PR# 1741 *
+Subject: groupedData constructor from a function
+From: dieter.menne@menne-biomed.de
+Date: Thu, 4 Jul 2002 15:59:59 +0200 (MET DST)
+* PR# 1745 *
+Subject: nlme: failed augPred with NA in an unused column
+From: dieter.menne@menne-biomed.de
+Date: Fri, 5 Jul 2002 08:32:32 +0200 (MET DST)
+--nlme needs an update as suggested in the followup
+* PR# 1901 *
+Subject: svm seg faults
+From: stefan.boehringer+science@uni-bochum.de
+Date: Tue, 13 Aug 2002 14:12:17 +0200 (MET DST)
+--Seem to be due to gcc `2.96' from RH7.3
+* PR# 1974 *
+Subject: Rwave installation problem
+From: ld-temp-qt3i@pobox.com
+Date: Mon, 2 Sep 2002 09:27:36 +0200 (MET DST)
+* PR# 1977 *
+Subject: Bugs in $RHOME/src/library/SJava/src/makefile.win
+From: grimm.hinz@rcc.ch
+Date: Tue, 3 Sep 2002 13:13:17 +0200 (MET DST)
+* PR# 1978 *
+Subject: SJava 0.65, Sample Java files are missing
+From: grimm.heinz@rcc.ch
+Date: Tue, 3 Sep 2002 13:24:30 +0200 (MET DST)
 
 Directory:  Analyses
 
@@ -103,10 +138,10 @@ Subject: cex/col/etc. in title(): documentation?
 From: Ben Bolker <ben@zoo.ufl.edu>
 Date: Mon, 22 Oct 2001 11:55:14 -0400 (EDT)
 --MM:actually the documentation still could elaborate a bit..
-* PR# 1582 *
-Subject: No documentation for class AsIs
-From: "David Kane  <David Kane" <a296180@mica.fmr.com>
-Date: Mon, 20 May 2002 17:30:42 -0400
+* PR# 1772 *
+Subject: bug(?) in R FAQ - Should I run R from within Emacs?
+From: Tim.Harrold@csiro.au
+Date: Thu, 11 Jul 2002 18:21:42 +1000
 
 Directory:  Graphics
 
@@ -152,14 +187,6 @@ Date: Mon, 22 Jan 2001 10:47:39 +0100
 --mtext is unscaled by default.  It is not clear if this should
 --use the par("cex") setting or an inline cex setting such as cex.axis.
 --It might make more sense to use axis rather than mtext, as boxplot does.
-* PR# 828 *
-Subject: termplot fails for composite non-factor terms
-From: John Maindonald <john.maindonald@anu.edu.au>
-Date: Sat, 27 Jan 2001 11:57:37 +1100 (EST)
---Neither of the proposed changes actually works in sufficient generality.
---
---The easy and unimportant part of this, the labels, is fixed in 1.2.2. Getting
---the data right is a project for 1.3
 * PR# 831 *
 Subject: screen can't go back to (split) screen with log="y" plot
 From: Thomas Vogels <tov@ece.cmu.edu>
@@ -178,10 +205,6 @@ Date: 01 Feb 2001 14:20:52 -0500
 Subject: axis(adj=anything) has no effect
 From: jhallman@frb.gov
 Date: Wed, 28 Mar 2001 20:51:05 +0200 (MET DST)
-* PR# 916 *
-Subject:  par(mgp) bug 
-From: paul@stat.auckland.ac.nz
-Date: Fri, 20 Apr 2001 08:33:45 +1200 (NZST)
 * PR# 943 *
 Subject: legend() with xpd=T; omission of initial plot character
 From: John Maindonald <john.maindonald@anu.edu.au>
@@ -211,10 +234,6 @@ Date: Sun, 9 Dec 2001 21:46:32 -0500 (EST)
 Subject: Axes labelling with logarithmic scales
 From: tobias.hoevekamp@ilw.agrl.ethz.ch
 Date: Thu, 3 Jan 2002 15:29:02 +0100 (MET)
-* PR# 1243 *
-Subject: abline and log plots
-From: stephen@cogsci.ed.ac.uk
-Date: Sat, 5 Jan 2002 01:11:47 +0100 (MET)
 * PR# 1300 *
 Subject: FW: layout and piechart diameter problem
 From: "Warnes, Gregory R" <gregory_r_warnes@groton.pfizer.com>
@@ -251,10 +270,36 @@ Date: Tue, 11 Jun 2002 09:29:39 -0400 (EDT)
 Subject:  mtext() alignment of perpendicular text 
 From: p.murrell@auckland.ac.nz
 Date: Wed, 12 Jun 2002 13:29:45 +1200 (NZST)
+* PR# 1878 *
+Subject: close.screen
+From: Martin.Schlather@uni-bayreuth.de
+Date: Mon, 5 Aug 2002 22:35:02 +0200 (MET DST)
+* PR# 1899 *
+Subject: interaction.plot() legend too narrow when mfcol > 2
+From: Martin Maechler <maechler@stat.math.ethz.ch>
+Date: Tue, 13 Aug 2002 09:36:15 +0200
+* PR# 1933 *
+Subject: dev2eps() prints ticks with wrong length!
+From: Timur Elzhov <Timur.Elzhov@jinr.ru>
+Date: Fri, 23 Aug 2002 17:22:15 +0400
+--dev.copy problem
+* PR# 1972 *
+Subject: lattice install
+From: robert.king@newcastle.edu.au
+Date: Mon, 2 Sep 2002 04:55:41 +0200 (MET DST)
+--Perhaps lattice should require(grid) and print a clearer message?
+* PR# 2069 *
+Subject: split.screen problem
+From: cbodily@att.net
+Date: Thu, 26 Sep 2002 19:37:40 +0200 (MET DST)
 
 Directory:  In-Out
 
-none
+* PR# 1688 *
+Subject: Maybe a problem in binary read/write
+From: accot@free.fr
+Date: Tue, 18 Jun 2002 22:51:17 +0200 (MET DST)
+--I don't think file() is said to work with devices!
 
 Directory:  Installation
 
@@ -289,22 +334,48 @@ Date: Mon, 1 Apr 2002 22:19:07 +0200 (MET DST)
 Subject: configure script fails on comment in tkConfig.sh
 From: Peter Kleiweg <kleiweg@let.rug.nl>
 Date: Tue, 30 Apr 2002 16:41:51 +0200 (CEST)
+--Looks like a conspiracy between a shell problem and an oddity in Tk 8.0 rather
+--than an R problem. Good to know for the workaround though. The comment in
+--TK_XINCLUDES has since disappeared, at least in Tk 8.3.3.
 * PR# 1501 *
 Subject: configure error: Maybe change CFLAGS or FFLAGS?
 From: ale@ini.phys.ethz.ch
 Date: Wed, 1 May 2002 15:23:14 +0200 (MET DST)
-* PR# 1656 *
-Subject: command line editing does not work
-From: Petr.Savicky@cuni.cz
-Date: Tue, 11 Jun 2002 19:51:24 +0200
-* PR# 1657 *
-Subject: command line editing does not work (2)
-From: Petr.Savicky@cuni.cz
-Date: Tue, 11 Jun 2002 20:20:11 +0200
+--Tried to use fort77 on RedHat, should likely try g77 instead.
 * PR# 1658 *
 Subject: make install fails - index.html not found
 From: dhouston@bio.ri.ccf.org
 Date: Tue, 11 Jun 2002 22:14:07 +0200 (MET DST)
+--Missing perl??
+* PR# 1676 *
+Subject: R configure.in makes bad alpha assumptions
+From: mcmahill@mtl.mit.edu
+Date: Sat, 15 Jun 2002 19:21:09 -0400 (EDT)
+--Probably fixed in 1.5.1
+* PR# 1825 *
+Subject: bug in R-1.5.1 for Mac OS X installer
+From: Kow Kuroda <kkuroda@crl.ucsd.edu>
+Date: Mon, 22 Jul 2002 16:40:26 -0700
+--Darwin port
+* PR# 1829 *
+Subject: R config failure on solaris
+From: "Siva Ginjupalli" <gsivrao@hotmail.com>
+Date: Wed, 24 Jul 2002 20:08:49 +0000
+--Missing info on R version and compilers.
+* PR# 1937 *
+Subject:  Inconsistent use of Perl? 
+From: Berwin Turlach <berwin@maths.uwa.edu.au>
+Date: Sat, 24 Aug 2002 18:41:09 +0800
+--Some packages require Perl v 5.005
+* PR# 1995 *
+Subject:  2002-09-08 1.6.0 build fails in Recommended 
+From: <stvjc@channing.harvard.edu>
+Date: Sun, 8 Sep 2002 23:57:39 -0400 (EDT)
+--I think this got cleared up...
+* PR# 1996 *
+Subject:  config checks for --with-gnome need update 
+From: <stvjc@channing.harvard.edu>
+Date: Mon, 9 Sep 2002 00:08:59 -0400 (EDT)
 
 Directory:  Language
 
@@ -321,10 +392,6 @@ Subject: Bug(s) w/ rbind.data.frame(); fix also read.table(*, as.is = TRUE) ?
 From: Martin Maechler <maechler@stat.math.ethz.ch>
 Date: Mon, 25 Sep 2000 10:17:15 +0200
 --status of AsIs columns
-* PR# 921 *
-Subject:  Managed to confuse match.arg 
-From: J.C.Rougier@durham.ac.uk
-Date: Wed, 25 Apr 2001 12:22:54 +0100 (BST)
 * PR# 1073 *
 Subject: Wierd problem comparing numeric values and list using ==
 From: "Warnes, Gregory R" <gregory_r_warnes@groton.pfizer.com>
@@ -339,10 +406,6 @@ Date: Mon, 27 Aug 2001 08:44:22 -0400
 Subject: a patch to tapply
 From: Vadim Ogranovich <vograno@arbitrade.com>
 Date: Thu, 29 Nov 2001 14:48:35 -0600
-* PR# 1193 *
-Subject: Re: [R] appending similar data frames?
-From: Thomas Lumley <tlumley@u.washington.edu>
-Date: Mon, 3 Dec 2001 13:46:35 -0800 (PST)
 * PR# 1214 *
 Subject: syntax questtion, maybe a bug
 From: Rich Heiberger <rmh@surfer.sbm.temple.edu>
@@ -352,6 +415,10 @@ Date: Thu, 13 Dec 2001 13:46:54 -0500 (EST)
 Subject:  Problem with "missing" in "local" 
 From: J.C.Rougier@durham.ac.uk
 Date: Fri, 4 Jan 2002 13:34:34 GMT
+* PR# 1891 *
+Subject: summary.data.frame with compound elements problem
+From: b.rowlingson@lancaster.ac.uk
+Date: Fri, 9 Aug 2002 10:35:43 +0200 (MET DST)
 
 Directory:  Low-level
 
@@ -369,15 +436,25 @@ Subject: Interrupts (was Re: [Rd] X11 protocol errors ...)
 From: "John W. Eaton" <jwe@bevo.che.wisc.edu>
 Date: Wed, 22 Aug 2001 21:56:33 -0500
 --part of PR#1068
-* PR# 1211 *
-Subject: crash bug in get("function.name")()
-From: Rich Heiberger <rmh@surfer.sbm.temple.edu>
-Date: Tue, 11 Dec 2001 17:34:07 -0500 (EST)
---Still segfaults in 1.5.1 
+* PR# 1880 *
+Subject:  You requested this report 
+From: Berwin Turlach <berwin@maths.uwa.edu.au>
+Date: Tue, 6 Aug 2002 16:57:54 +0800
+--The bug is that we get as far as mkCLOSXP before an error is reported
 
 Directory:  Macintosh
 
-none
+* PR# 1819 *
+Subject: Date arithmetic fails
+From: RML27@cornell.edu
+Date: Sun, 21 Jul 2002 20:26:12 +0200 (MET DST)
+--In fact, as.POSIXct is off by 66 years. See
+--   http://developer.apple.com/qa/ops/ops23.html
+--This is semifixed, but timezones still don't work
+* PR# 1991 *
+Subject: Mac Save As... bug
+From: Tim Cole <tjc1@cam.ac.uk>
+Date: Sun, 8 Sep 2002 13:47:00 +0100
 
 Directory:  Misc
 
@@ -398,7 +475,21 @@ Date: Thu, 2 May 2002 09:29:07 +0200
 
 Directory:  Models
 
-none
+* PR# 1861 *
+Subject: update() can not find objects
+From: yzhou@arcturusag.com
+Date: Thu, 1 Aug 2002 19:01:59 +0200 (MET DST)
+--The problem is actually deeper than this.
+--
+--Sometime update() wants to evaluate arguments in the environment where the model
+--was defined, as here. 
+--
+--Sometimes it wants to use the current environment, eg this snippet from MASS 
+--ph.fun <- function(data, i) {
+--  d <- data
+--  d$calls <- d$fitted + d$res[i]
+--  coef(update(fit, data=d))
+--}
 
 Directory:  Startup
 
@@ -464,6 +555,10 @@ Date: Mon, 15 Apr 2002 10:13:36 +0000
 Subject: hitting ^C breaks readline history
 From: Cyril Humbert <humbertc@univ-mlv.fr>
 Date: Tue, 28 May 2002 12:07:07 +0200 (MET DST)
+* PR# 2048 *
+Subject: Install with 64-bit GCC 3.2
+From: Kev Buckley <k.buckley@lancaster.ac.uk>
+Date: Fri, 20 Sep 2002 17:33:33 +0100 (BST)
 
 Directory:  TooMuchAtOnce
 
@@ -471,12 +566,12 @@ none
 
 Directory:  Windows
 
-* PR# 1507 *
-Subject: copy or save to metafile from graphics device shrinks plots
-From: drew.tyre@csiro.au
-Date: Fri, 3 May 2002 04:26:07 +0200 (MET DST)
---report on 1.4.0, about copying of graphics.
---Awaiting test under 1.5.0.
+* PR# 1711 *
+Subject: GUI bug
+From: socrates@mail.ru
+Date: Thu, 27 Jun 2002 10:30:51 +0200 (MET DST)
+--A crash that is *very* hard to trigger (after several
+--minutes of continuous resizing)
 
 Directory:  incoming
 
@@ -484,19 +579,49 @@ Directory:  incoming
 Subject: lib.fixup, .GlobalEnv, and R1.5.0
 From: mark.bravington@csiro.au
 Date: Wed, 15 May 2002 08:30:50 +0200 (MET DST)
-* PR# 1672 *
-Subject: [??????´º?º] ??~?ð?????© ?????¶°­°? µ??µ?? °?°?!! ????±? ???????? ??°?!!   
-From: "??¶???????´?..............."<erokorea17@hotmail.com>
-Date: Sat, 15 Jun 2002 17:08:44 -0600
-* PR# 1673 *
-Subject: Late Make Problem with Readline
-From: jerfox@stanford.edu
-Date: Sat, 15 Jun 2002 12:00:07 +0200 (MET DST)
-* PR# 1674 *
-Subject: ???? ¾?´? ???? ??µ??? 8°­ !!! [±¤°?]
-From: ????´???<mhpark@hananet.net>
-Date: Sat, 15 Jun 2002 12:45:33 +0200 (MET DST)
-* PR# 1675 *
-Subject: ¢????????? ????????[±?±???][±¤°?]
-From: ?º?¾?? <eunjw234@dreamwiz.com>
-Date: Tue, 16 Apr 2002 02:44:59 +0900
+* PR# 1761 *
+Subject: svd() very slow for wide matrix X but not for t(X)
+From: "Warnes, Gregory R" <gregory_r_warnes@groton.pfizer.com>
+Date: Tue, 9 Jul 2002 11:39:15 -0400 
+--Doesn't happen with the now preferred La.svd.
+* PR# 2003 *
+Subject: rhome.c: getRHOME() fails, if R is called from SJava
+From: grimm.heinz@rcc.ch
+Date: Wed, 11 Sep 2002 15:17:53 +0200 (MET DST)
+* PR# 2005 *
+Subject: R_HOME/etc/Renviron.site not interpreted on windows
+From: Uwe Ligges <ligges@statistik.uni-dortmund.de>
+Date: Thu, 12 Sep 2002 13:34:55 +0200
+* PR# 2018 *
+Subject: missing data in stripchart
+From: baron@CATTELL.psych.upenn.edu
+Date: Sat, 14 Sep 2002 19:35:32 +0200 (MET DST)
+* PR# 2019 *
+Subject: p.s. regarding stripchart missing-data report
+From: Jonathan Baron <baron@cattell.psych.upenn.edu>
+Date: Sat, 14 Sep 2002 13:48:34 -0400
+* PR# 2023 *
+Subject: mosaicplot enhancements
+From: Uwe Ligges <ligges@statistik.uni-dortmund.de>
+Date: Mon, 16 Sep 2002 12:00:26 +0200
+* PR# 2033 *
+Subject: switch
+From: rwehrens@sci.kun.nl
+Date: Tue, 17 Sep 2002 23:25:39 +0200 (MET DST)
+--not a bug; but worth a documentation hint
+* PR# 2037 *
+Subject: contrasts in lm~-1+(numeric.variable)/(factor)
+From: hosking@watson.ibm.com
+Date: Wed, 18 Sep 2002 23:06:12 +0200 (MET DST)
+* PR# 2038 *
+Subject: savehistory directories and quitting R
+From: Mark.Bravington@csiro.au
+Date: Thu, 19 Sep 2002 14:53:25 +1000
+* PR# 2042 *
+Subject: install.packages() together with pixmap package
+From: w.huber@dkfz.de
+Date: Thu, 19 Sep 2002 18:26:55 +0200 (MET DST)
+* PR# 2067 *
+Subject: R crashes when given graphic command
+From: anson@bgumail.bgu.ac.il
+Date: Wed, 25 Sep 2002 17:56:18 +0200 (MET DST)

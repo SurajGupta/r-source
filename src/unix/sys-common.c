@@ -299,33 +299,32 @@ void R_DefParams(Rstart Rp)
     Rp->DebugInitFile = FALSE;
     Rp->vsize = R_VSIZE;
     Rp->nsize = R_NSIZE;
-    Rp->max_vsize = INT_MAX;
-    Rp->max_nsize = INT_MAX;
+    Rp->max_vsize = R_SIZE_T_MAX;
+    Rp->max_nsize = R_SIZE_T_MAX;
     Rp->NoRenviron = FALSE;
 }
 
-#define Max_Nsize 50000000	/* must be < LONG_MAX (= 2^32 - 1 =)
-				   2147483647 = 2.1e9 */
-                                /* limit was 2e7, changed to 5e7, which gives
-                                   nearly 2Gb of cons cells */
-#define Max_Vsize (2048*Mega)	/* 2048*Mega = 2^(11+20) must be < LONG_MAX */
+#define Max_Nsize 50000000	/* about 1.4Gb 32-bit, 2.8Gb 64-bit */
+#define Max_Vsize R_SIZE_T_MAX	/* unlimited */
 
-#define Min_Nsize 160000
+#define Min_Nsize 220000
 #define Min_Vsize (1*Mega)
 
 void R_SizeFromEnv(Rstart Rp)
 {
-    int value, ierr;
+    int ierr;
+    R_size_t value;
     char *p;
+
     if((p = getenv("R_VSIZE"))) {
-	value = Decode2Long(p, &ierr);
+	value = R_Decode2Long(p, &ierr);
 	if(ierr != 0 || value > Max_Vsize || value < Min_Vsize)
 	    R_ShowMessage("WARNING: invalid R_VSIZE ignored\n");
 	else
 	    Rp->vsize = value;
     }
     if((p = getenv("R_NSIZE"))) {
-	value = Decode2Long(p, &ierr);
+	value = R_Decode2Long(p, &ierr);
 	if(ierr != 0 || value > Max_Nsize || value < Min_Nsize)
 	    R_ShowMessage("WARNING: invalid R_NSIZE ignored\n");
 	else
@@ -333,7 +332,7 @@ void R_SizeFromEnv(Rstart Rp)
     }
 }
 
-static void SetSize(int vsize, int nsize)
+static void SetSize(R_size_t vsize, R_size_t nsize)
 {
     char msg[1024];
 
@@ -343,14 +342,14 @@ static void SetSize(int vsize, int nsize)
 	vsize *= Mega;
     }
     if(vsize < Min_Vsize || vsize > Max_Vsize) {
-	sprintf(msg, "WARNING: invalid v(ector heap)size `%d' ignored\n"
+	sprintf(msg, "WARNING: invalid v(ector heap)size `%lu' ignored\n"
 		 "using default = %gM\n", vsize, R_VSIZE / Mega);
 	R_ShowMessage(msg);
 	R_VSize = R_VSIZE;
     } else
 	R_VSize = vsize;
     if(nsize < Min_Nsize || nsize > Max_Nsize) {
-	sprintf(msg, "WARNING: invalid language heap (n)size `%d' ignored,"
+	sprintf(msg, "WARNING: invalid language heap (n)size `%lu' ignored,"
 		 " using default = %ld\n", nsize, R_NSIZE);
 	R_ShowMessage(msg);
 	R_NSize = R_NSIZE;
@@ -396,14 +395,14 @@ void R_SetParams(Rstart Rp)
 void
 R_set_command_line_arguments(int argc, char **argv, Rstart Rp)
 {
- int i;
+    int i;
 
-  Rp->NumCommandLineArgs = argc;
-  Rp->CommandLineArgs = (char**) calloc(argc, sizeof(char*));
+    Rp->NumCommandLineArgs = argc;
+    Rp->CommandLineArgs = (char**) calloc(argc, sizeof(char*));
 
-  for(i = 0; i < argc; i++) {
-    Rp->CommandLineArgs[i] = strdup(argv[i]);
-  }
+    for(i = 0; i < argc; i++) {
+	Rp->CommandLineArgs[i] = strdup(argv[i]);
+    }
 }
 
 
@@ -414,15 +413,15 @@ R_set_command_line_arguments(int argc, char **argv, Rstart Rp)
 SEXP
 do_commandArgs(SEXP call, SEXP op, SEXP args, SEXP env)
 {
- int i;
- SEXP vals;
+    int i;
+    SEXP vals;
 
-  vals = allocVector(STRSXP, NumCommandLineArgs);
-  for(i = 0; i < NumCommandLineArgs; i++) {
-    SET_STRING_ELT(vals, i, mkChar(CommandLineArgs[i]));
-  }
+    vals = allocVector(STRSXP, NumCommandLineArgs);
+    for(i = 0; i < NumCommandLineArgs; i++) {
+	SET_STRING_ELT(vals, i, mkChar(CommandLineArgs[i]));
+    }
 
- return(vals);
+    return(vals);
 }
 
 void
@@ -430,7 +429,7 @@ R_common_command_line(int *pac, char **argv, Rstart Rp)
 {
     int ac = *pac, newac = 1;	/* argv[0] is process name */
     int ierr;
-    long value;
+    R_size_t value;
     char *p, **av = argv, msg[1024];
 
     R_RestoreHistory = 1;
@@ -527,7 +526,7 @@ R_common_command_line(int *pac, char **argv, Rstart Rp)
 		    R_ShowMessage(msg);
 		    break;
 		}
-		value = Decode2Long(p, &ierr);
+		value = R_Decode2Long(p, &ierr);
 		if(ierr) {
 		    if(ierr < 0)
 			sprintf(msg, "WARNING: %s value is invalid: ignored\n",
@@ -555,7 +554,7 @@ R_common_command_line(int *pac, char **argv, Rstart Rp)
 		    R_ShowMessage("WARNING: no vsize given\n");
 		    break;
 		}
-		value = Decode2Long(p, &ierr);
+		value = R_Decode2Long(p, &ierr);
 		if(ierr) {
 		    if(ierr < 0) /* R_common_badargs(); */
 			sprintf(msg, "WARNING: --vsize value is invalid: ignored\n");
@@ -578,12 +577,12 @@ R_common_command_line(int *pac, char **argv, Rstart Rp)
 		    R_ShowMessage("WARNING: no nsize given\n");
 		    break;
 		}
-		value = Decode2Long(p, &ierr);
+		value = R_Decode2Long(p, &ierr);
 		if(ierr) {
 		    if(ierr < 0) /* R_common_badargs(); */
 			sprintf(msg, "WARNING: --nsize value is invalid: ignored\n");
 		    else
-		    sprintf(msg, "WARNING: --nsize=%ld`%c': too large and ignored\n",
+		    sprintf(msg, "WARNING: --nsize=%lu`%c': too large and ignored\n",
 			    value,
 			    (ierr == 1) ? 'M': ((ierr == 2) ? 'K':'k'));
 		    R_ShowMessage(msg);
@@ -759,4 +758,35 @@ void process_user_Renviron()
     }
 #endif
     process_Renviron(s);
+}
+
+SEXP do_tempdir(SEXP call, SEXP op, SEXP args, SEXP env)
+{
+    SEXP  ans;
+
+    PROTECT(ans = allocVector(STRSXP, 1));
+    SET_STRING_ELT(ans, 0, mkChar(R_TempDir));
+    UNPROTECT(1);
+    return (ans);
+}
+
+SEXP do_tempfile(SEXP call, SEXP op, SEXP args, SEXP env)
+{
+    SEXP  ans;
+    char *tn, *tm;
+    int i, slen=0 /* -Wall */;
+
+    checkArity(op, args);
+    if (!isString(CAR(args)) || (slen = LENGTH(CAR(args))) < 1)
+	errorcall(call, "invalid file name argument");
+    PROTECT(ans = allocVector(STRSXP, slen));
+    for(i = 0; i < slen; i++) {
+	tn = CHAR(STRING_ELT(CAR(args), i));
+	/* try to get a new file name */
+	tm = R_tmpnam(tn);
+	SET_STRING_ELT(ans, i, mkChar(tm));
+	free(tm);
+    }
+    UNPROTECT(1);
+    return (ans);
 }

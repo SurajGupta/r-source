@@ -8,10 +8,13 @@ strheight(s, units = "user", cex = NULL)
 \alias{strheight}
 \arguments{
   \item{s}{character vector or \code{\link{expression}}s whose string
-    widths in plotting units are to be determined.}
+    widths in plotting units are to be determined.  An attempt is made
+    to coerce other vectors to character, and other language objects
+    to expressions.}
   \item{units}{character indicating in which units \code{s} is measured;
-    must be one of \code{"user"}, \code{"inches"}, \code{"figure"} .}
-  \item{cex}{character expansion to which is applies. Per default, the
+    should be one of \code{"user"}, \code{"inches"}, \code{"figure"};
+    partial matching is performed.}
+  \item{cex}{character expansion to which is applies.  By default, the
     current \code{par("cex")} is used.}
 }
 \description{
@@ -21,8 +24,9 @@ strheight(s, units = "user", cex = NULL)
   or as fraction of the figure width \code{par("fin")}.
 }
 \value{
-  integer vector with the same length as \code{s}, giving the
-  width for each \code{s[i]}.
+  Numeric vector with the same length as \code{s}, giving the
+  width or height for each \code{s[i]}.  \code{NA} strings are given
+  width and height 0 (as they are not plotted).
 }
 \seealso{
   \code{\link{text}}, \code{\link{nchar}}

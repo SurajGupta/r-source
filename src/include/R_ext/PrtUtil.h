@@ -1,6 +1,6 @@
 /*
  *  R : A Computer Language for Statistical Data Analysis
- *  Copyright (C) 1998-2001    Robert Gentleman, Ross Ihaka
+ *  Copyright (C) 1998-2002    Robert Gentleman, Ross Ihaka
  *                             and the R Development Core Team
  *
  *  This program is free software; you can redistribute it and/or modify
@@ -26,15 +26,14 @@
 #ifndef PRTUTIL_H_
 #define PRTUTIL_H_
 
-#include "R_ext/Complex.h"
-#include "R_ext/Print.h"
+#include <R_ext/Complex.h>
+#include <R_ext/Print.h>
 
 #ifndef R_NO_REMAP
 #define formatLogical      Rf_formatLogical
 #define formatInteger      Rf_formatInteger
 #define formatReal         Rf_formatReal
 #define formatComplex      Rf_formatComplex
-#define Decode2Long        Rf_Decode2Long
 #define EncodeLogical      Rf_EncodeLogical
 #define EncodeInteger      Rf_EncodeInteger
 #define EncodeReal         Rf_EncodeReal
@@ -59,7 +58,6 @@ void formatInteger(int*,int,int*);
 void formatReal(double*, int, int*, int*, int*, int);
 void formatComplex(Rcomplex*, int, int*, int*, int*, int*, int*, int*, int);
 
-long Decode2Long(char *p, int *ierr);
 /* Formating of values */
 char *EncodeLogical(int, int);
 char *EncodeInteger(int, int);

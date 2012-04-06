@@ -6,7 +6,7 @@ function(package, help, lib.loc = NULL, character.only = FALSE,
 {
     testRversion <- function(descfile)
     {
-        current <- paste(R.Version()[c("major", "minor")], collapse = ".")
+        current <- paste(R.version[c("major", "minor")], collapse = ".")
         fields <- read.dcf(descfile, fields =
                            c("Package", "Depends", "Built"))
         ## depends on R version?
@@ -19,14 +19,27 @@ function(package, help, lib.loc = NULL, character.only = FALSE,
         }
         ## which version was this package built under?
         if(!is.na(built <- fields[1, "Built"])) {
-            builtunder <- substring(strsplit(built, ";")[[1]][1], 3)
+            builtFields <- strsplit(built, ";")[[1]]
+            builtunder <- substring(builtFields[1], 3)
             if(nchar(builtunder) &&
                compareVersion(current, builtunder) < 0) {
                 warning(paste("package", fields[1, "Package"],
                               "was built under R version", builtunder),
                         call. = FALSE)
             }
+            if(.Platform$OS.type == "unix") {
+                platform <- builtFields[2]
+                ## allow for small mismatches, e.g. OS version number.
+                m <- agrep(platform, R.version$platform)
+                if(!length(m))
+                    stop(paste("package", fields[1, "Package"],
+                               "was built for", platform),
+                         call. = FALSE)
+            }
         }
+        else
+            stop(paste("This package has not been installed properly\n",
+                       "See the Note in ?library"))
     }
 
     sQuote <- function(s) paste("`", s, "'", sep = "")
@@ -37,10 +50,14 @@ function(package, help, lib.loc = NULL, character.only = FALSE,
             stop("argument `package' must be of length 1")
 	pkgname <- paste("package", package, sep = ":")
 	if(is.na(match(pkgname, search()))) {
-            ## check for the methods package before attaching this package.
-            ## Only if it is _already_ here do we do cacheMetaData
-            ## (otherwise, the methods package does it instead, perhaps
-            ## from a requires() in this package's .First.lib).
+            ## Check for the methods package before attaching this
+            ## package.
+            ## Only if it is _already_ here do we do cacheMetaData.
+            ## The methods package caches all other libs when it is
+            ## attached. 
+            ## Note for detail: this does _not_ test whether dispatch is
+            ## currently on, but rather whether the package is attached
+            ## (cf .isMethodsDispachOn).
             hasMethods <- !is.na(match("package:methods", search()))
             pkgpath <- .find.package(package, lib.loc, quiet = TRUE,
                                      verbose = verbose)
@@ -57,6 +74,7 @@ function(package, help, lib.loc = NULL, character.only = FALSE,
             descfile <- system.file("DESCRIPTION", package = package,
                                     lib.loc = which.lib.loc)
             if(nchar(descfile)) testRversion(descfile)
+            else stop("This is not a valid package -- no DESCRIPTION exists")
             ## if the name space mechanism is available and the package
             ## has a name space, then the name space loading mechanism
             ## takes over.
@@ -70,7 +88,7 @@ function(package, help, lib.loc = NULL, character.only = FALSE,
 	    ## source file into loadenv
 	    if(file.exists(codeFile))
                 sys.source(codeFile, loadenv, keep.source = keep.source)
-            else
+            else if(verbose)
 		warning(paste("Package ",
                               sQuote(package),
                               "contains no R code"))
@@ -82,6 +100,8 @@ function(package, help, lib.loc = NULL, character.only = FALSE,
 	    ## the actual copy has to be done by C code to avoid forcing
             ## promises that might have been created using delay().
             .Internal(lib.fixup(loadenv, env))
+            ## save the package name in the environment
+            assign(".packageName", package, envir = env)
             ## run .First.lib
 	    if(exists(".First.lib", envir = env, inherits = FALSE)) {
 		firstlib <- get(".First.lib", envir = env, inherits = FALSE)
@@ -188,12 +208,18 @@ function(package, help, lib.loc = NULL, character.only = FALSE,
                 nopkgs <- c(nopkgs, lib)
         }
         colnames(db) <- c("Package", "LibPath", "Title")
+        if((length(nopkgs) > 0) && !missing(lib.loc)) {
+            if(length(nopkgs) > 1)
+                warning(paste("libraries",
+                              paste(sQuote(nopkgs), collapse = ", "),
+                              "contain no packages"))
+            else
+                warning(paste("library",
+                              paste(sQuote(nopkgs)),
+                              "contains no package"))
+        }
 
         y <- list(header = NULL, results = db, footer = NULL)
-        ## <FIXME>
-        ## Should do something about libraries without packages, as
-	## recorded in nopkgs.
-        ## </FIXME>
         class(y) <- "libraryIQR"
         return(y)
     }
@@ -207,43 +233,31 @@ library.dynam <-
 function(chname, package = .packages(), lib.loc = NULL, verbose =
          getOption("verbose"), file.ext = .Platform$dynlib.ext, ...)
 {
-    ## <FIXME>
-    ## Versions of R prior to 1.4.0 had .Dyn.libs in .AutoloadEnv
-    ## (and did not always ensure getting it from there).
-    ## We now consistently use the base environment.
-    if(!exists(".Dyn.libs", envir = NULL)) {
-        assign(".Dyn.libs", character(0), envir = NULL)
-    }
-    if(missing(chname) || (LEN <- nchar(chname)) == 0)
-        return(get(".Dyn.libs", envir = NULL))
-    nc.ext <- nchar(file.ext)
-    if(substr(chname, LEN - nc.ext + 1, LEN) == file.ext)
-        chname <- substr(chname, 1, LEN - nc.ext)
-    if(is.na(match(chname, get(".Dyn.libs", envir = NULL)))) {
-        ## <FIXME>
-        ## Do we really want `quiet = TRUE'?
-        for(pkg in .find.package(package, lib.loc, quiet = TRUE,
-                                 verbose = verbose)) {
+    sQuote <- function(s) paste("`", s, "'", sep = "")
+
+    .Dyn.libs <- .dynLibs()
+    if(missing(chname) || (ncChname <- nchar(chname)) == 0)
+        return(.Dyn.libs)
+    ncFileExt <- nchar(file.ext)
+    if(substr(chname, ncChname - ncFileExt + 1, ncChname) == file.ext)
+        chname <- substr(chname, 1, ncChname - ncFileExt)
+    if(is.na(match(chname, .Dyn.libs))) {
+        for(pkg in .find.package(package, lib.loc, verbose = verbose)) {
             file <- file.path(pkg, "libs",
                               paste(chname, file.ext, sep = ""))
             if(file.exists(file)) break
             else
                 file <- ""
         }
-        ## </FIXME>
         if(file == "") {
-            stop(paste("dynamic library `", chname, "' not found",
-                       sep = ""))
+            stop(paste("dynamic library", sQuote(chname), "not found"))
         }
         if(verbose)
-            cat("now dyn.load(", file, ")..\n", sep = "")
+            cat("now dyn.load(", file, ") ...\n", sep = "")
         dyn.load(file, ...)
-        assign(".Dyn.libs",
-               c(get(".Dyn.libs", envir = NULL), chname),
-               envir = NULL)
+        .dynLibs(c(.Dyn.libs, chname))
     }
-    invisible(get(".Dyn.libs", envir = NULL))
-    ## </FIXME>
+    invisible(.dynLibs())
 }
 
 require <-
@@ -269,8 +283,7 @@ function(all.available = FALSE, lib.loc = NULL)
         for(lib in lib.loc) {
             a <- list.files(lib, all.files = FALSE, full.names = FALSE)
             for(nam in a) {
-                if(file.exists(file.path(lib, nam, "R", nam))
-                   || file.exists(file.path(lib, nam, "data")))
+                if(file.exists(file.path(lib, nam, "DESCRIPTION")))
                     ans <- c(ans, nam)
             }
         }
@@ -293,7 +306,7 @@ function(package = .packages(), quiet = FALSE)
     if(any(m <- is.na(pos))) {
         if(!quiet) {
             if(all(m))
-                stop(paste("none of the packages are not loaded"))
+                stop(paste("none of the packages are loaded"))
             else
                 warning(paste("package(s)",
                               paste(package[m], collapse=", "),
@@ -305,17 +318,14 @@ function(package = .packages(), quiet = FALSE)
 }
 
 .find.package <-
-function(package, lib.loc = NULL, use.attached, quiet = FALSE,
+function(package, lib.loc = NULL, quiet = FALSE,
          verbose = getOption("verbose"))
 {
     sQuote <- function(s) paste("`", s, "'", sep = "")
 
-    if(!missing(use.attached))
-        warning(paste("argument", sQuote("use.attached"),
-                      "is deprecated"))
-    use.attached <- FALSE
+    useAttached <- FALSE
     if(is.null(lib.loc)) {
-        use.attached <- TRUE
+        useAttached <- TRUE
         lib.loc <- .libPaths()
     }
 
@@ -327,7 +337,7 @@ function(package, lib.loc = NULL, use.attached, quiet = FALSE,
 
     for(pkg in package) {
         fp <- file.path(lib.loc, pkg)
-        if(use.attached)
+        if(useAttached)
             fp <- c(.path.package(pkg, TRUE), fp)
         fp <- unique(fp[file.exists(fp)])
         if(length(fp) == 0) {
@@ -355,14 +365,6 @@ function(package, lib.loc = NULL, use.attached, quiet = FALSE,
     }
 
     paths
-}
-
-.libPaths <-
-function(new)
-{
-    if(!missing(new))
-        assign(".lib.loc", unique(c(new, .Library)), envir = NULL)
-    get(".lib.loc", envir = NULL)
 }
 
 print.packageInfo <-

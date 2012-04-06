@@ -1,31 +1,34 @@
-\name{ClassUtils}
+\name{RClassUtils}
+%% FIXME the following are undocumented utilities (Sep 23/02)
+\alias{completeSubclasses}
+\alias{getClassPackage}
+\alias{newClassRepresentation}
+\alias{print.classRepresentation}
+\alias{setExtendsMetaData}
+\alias{setSubclassMetaData}
+\alias{subclassesMetaName}
+\alias{extendsMetaName}
+\alias{completeSubclasses}
+\alias{classPrototypeDef-class}
+\alias{trySilent}
+%%
 \alias{testVirtual}
 \alias{SessionClassMetaData}
 \alias{makePrototypeFromClassDef}
 \alias{newEmptyObject}
 \alias{completeClassDefinition}
-\alias{getFromClassDef}
-\alias{setInClassDef}
-\alias{synchronizeClassDef}
 \alias{getProperties}
-\alias{setProperties}
 \alias{getSlots}
 \alias{getExtends}
 \alias{getAccess}
 \alias{getAllSuperClasses}
 \alias{superClassDepth}
-\alias{setExtends}
 \alias{getPrototype}
-\alias{setPrototype}
 \alias{getVirtual}
 \alias{isVirtualClass}
-\alias{setVirtual}
 \alias{getSubclasses}
-\alias{setSubclasses}
 \alias{getClassName}
-\alias{setClassName}
 \alias{assignClassDef}
-\alias{newClassEnvironment}
 \alias{newBasic}
 \alias{makeExtends}
 \alias{reconcilePropertiesAndPrototype}
@@ -33,24 +36,21 @@
 \alias{empty.dump}
 \alias{showClass}
 \alias{showExtends}
-\alias{showNonVector}
-\alias{print.classRepEnvironment}
-\alias{print.environment}
 \alias{getFromClassMetaData}
 \alias{assignToClassMetaData}
 \alias{removeFromClassMetaData}
-\alias{extendsCoerce}
-\alias{extendsReplace}
-\alias{findExtends}
+\alias{possibleExtends}
 \alias{completeExtends}
 \alias{classMetaName}
-\alias{methodsMetaName}
-\alias{as.data.frame}
+\alias{methodsPackageMetaName}
+\alias{metaNameUndo}
 \alias{requireMethods}
 \alias{checkSlotAssignment}
 \alias{defaultPrototype}
 \alias{isClassDef}
 \alias{validSlotNames}
+\alias{getDataPart}
+\alias{setDataPart}
 %% not explicitly documented here
 \alias{.BasicClasses}
 \alias{.BasicVectorClasses}
@@ -74,15 +74,7 @@ newEmptyObject()
 
 completeClassDefinition(Class, ClassDef)
 
-getFromClassDef(ClassDef, what)
-
-setInClassDef(ClassDef, what, value, synchronize=TRUE)
-
-synchronizeClassDef(ClassDef)
-
 getProperties(ClassDef)
-
-setProperties(ClassDef, value)
 
 getSlots(x, complete = TRUE)
 
@@ -94,38 +86,28 @@ getAllSuperClasses(ClassDef)
 
 superClassDepth(ClassDef, soFar)
 
-setExtends(ClassDef, value)
-
 getPrototype(ClassDef)
-
-setPrototype(ClassDef, value)
 
 getVirtual(ClassDef)
 
 isVirtualClass(Class)
 
-setVirtual(ClassDef, value)
-
 getSubclasses(ClassDef)
-
-setSubclasses(ClassDef, value)
 
 getClassName(ClassDef)
 
-setClassName(ClassDef, value)
-
 assignClassDef(Class, def, where=.GlobalEnv)
 
-newClassEnvironment(name, properties, extends, prototype, subclasses,
-                 virtual, validity, access)
+newBasic(Class, ...)
 
-newBasic(Class, ..., .Force=FALSE)
+makeExtends(Class, to, coerce, test, replace, by, package, slots,
+                 classDef1, classDef2)
 
-makeExtends(extends)
-
-reconcilePropertiesAndPrototype(name, properties, prototype, extends)
+reconcilePropertiesAndPrototype(name, properties, prototype, superClasses)
 
 tryNew(Class)
+
+trySilent(expr)
 
 empty.dump()
 
@@ -133,29 +115,21 @@ showClass(Class, complete=TRUE, propertiesAreCalled="Properties")
 
 showExtends(ext, printTo = stdout())
 
-print.classRepEnvironment(x, ...)
-
-print.environment(x, ...)
-
 getFromClassMetaData(name)
 
 assignToClassMetaData(name, value)
 
 removeFromClassMetaData(name)
 
-extendsCoerce(fromClass, Class, formFunction)
+possibleExtends(class1, class2)
 
-extendsReplace(objectClass, Class)
-
-findExtends(class1, class2)
-
-completeExtends(ClassDef, soFar)
+completeExtends(ClassDef)
 
 classMetaName(name)
 
-methodsMetaName(prefix, name)
+methodsPackageMetaName(prefix, name)
 
-as.data.frame(x, row.names=NULL, optional=FALSE)
+metaNameUndo(strings, prefix = "M", searchForm = FALSE)
 
 requireMethods(functions, signature, message)
 
@@ -166,6 +140,9 @@ defaultPrototype()
 isClassDef(object)
 
 validSlotNames(names)
+
+getDataPart(object)
+setDataPart(object, value)
 
 }
 
@@ -227,32 +204,13 @@ validSlotNames(names)
       properties (".Properties", etc.)  Strictly a utility function.
     }
 
-    \item{\code{setInClassDef}:}{ 
-      Set Property in Class Definition.
-      Set one of the intrinsically defined class definition properties
-      (".Properties", etc.)  Strictly a utility function.
-    }
 
-    \item{\code{synchronizeClassDef}:}{ 
-      Does whatever is needed to synchronize information in the class
-      definition.
-
-      Basically computes derived information used to make object
-      manipulations more efficient but that need to be revised if
-      information changes.
-
-      (Nothing at the moment)
-    }
 
     \item{\code{getProperties}:}{ 
       Extracts the class's Properties information from the class
       representation (only, not from the name of the class).
     }
     
-    \item{\code{setProperties}:}{ 
-      Sets the class's Properties information given the class
-      representation (only, not from the name of the class)
-    }
 
     \item{\code{getSlots}:}{
       Returns a named character vector.  The names are the names of the
@@ -266,7 +224,7 @@ validSlotNames(names)
       Extracts the class's Extends information from the class
       representation (only, not from the name of the class)
 
-      Contrast with the \code{findExtends} and \code{is} functions, both
+      Contrast with the \code{possibleExtends} and \code{is} functions, both
       of which use indirect information as well.
     }
 
@@ -290,11 +248,6 @@ validSlotNames(names)
       network of class relationships.
     }
 
-    \item{\code{setExtends}:}{ 
-      set the class's Extends information given the class representation
-      (only, not from the name of the class)
-    }
-
     \item{\code{getPrototype}:}{ 
       extract the class's Prototype information from the class
       representation (only, not from the name of the class)
@@ -305,11 +258,6 @@ validSlotNames(names)
       representation (only, not from the name of the class)
     }
 
-    \item{\code{setPrototype}:}{ 
-      set the class's Prototype information given the class
-      representation (only, not from the name of the class)
-    }
-    
     \item{\code{getVirtual}:}{ 
       extract the class's Virtual information from the class
       representation (only, not from the name of the class)
@@ -322,27 +270,15 @@ validSlotNames(names)
       class is not formally defined.
     }
 
-    \item{\code{setVirtual}:}{
-      set the class's Virtual information given the class representation
-      (only, not from the name of the class)
-    }
     
     \item{\code{getSubclasses}:}{ 
       extract the class's Subclasses information from the class
       representation (only, not from the name of the class)
     }
     
-    \item{\code{setSubclasses}:}{ 
-      set the class's Subclasses information given the class
-      representation (only, not from the name of the class)
-    }
 
     \item{\code{getClassName}:}{ 
       The internal property in the class definition for the class name.
-    }
-    
-    \item{\code{setClassName}:}{ 
-      set the name of the class inside the class definition
     }
     
     \item{\code{assignClassDef}:}{ 
@@ -404,31 +340,13 @@ validSlotNames(names)
       and how for the extensions.)
     }
     
-    \item{\code{print.environment}, \code{showNonVector}:}{
-      These routines provide a default printing mechanism for objects
-      from non-vector classes, implemented as environments.  The
-      \code{print.environment} function exists to intercept printing
-      based on S3-style methods; it calls \code{showNonVector} to do the
-      work.
-    }
     
-    \item{\code{extendsCoerce}, \code{extendsReplace}:}{ 
-      Returns the function to perform coercion or replacement,
-      respectivelyl, based on the \code{is} relation between two classes.
-      
-      A method may be explicitly stored in the metadata or inferred.  If
-      the latter, a function will always be constructed if explicit test
-      and/or coerce methods (in a call to setIs) were encountered, or if
-      \code{formFunction=TRUE}.  If \code{formFunction=FALSE}, the
-      purpose of the call is to determine if the relation is explicit or
-      intrinsic (according to whether a function object is returned).
-    }
-    
-    \item{\code{findExtends}:}{ 
+    \item{\code{possibleExtends}:}{ 
       Find the information that says whether class1 extends class2,
       directly or indirectly.
       
-      This can be either a logical value or an object containing various
+      This can be either a logical value or an object of class
+      \code{\link{SClassExtension-class}} containing various
       functions to test and/or coerce the relationship.
     }
     
@@ -441,29 +359,20 @@ validSlotNames(names)
       relation with an unconditional one, or by adding indirect
       relations.
       
-      The resulting extends list is presented in depth-first order; that
-      is, the first immediate superclass followed by all the indirect
-      relations through it, then the next immediate superclass, etc.
-      
-      Depth first order is required for consistent elaboration of
-      inherited methods during dispatch, because the method dispatcher
-      stores the inherited method under the immediate class name.  Under
-      rather obscure situations of multiple inheritance, the result could
-      be ambiguous (depending on the order in which signatures are seen
-      by the dispatcher for a particular generic function), unless
-      searching is done depth first.
-      
-      Used recursively, with \code{soFar} defining what has been included
-      in previous calls at this level.
     }
     
     \item{\code{classMetaName}:}{ 
       a name for the object storing this class's definition
     }
     
-    \item{\code{methodsMetaName}:}{ 
-      a name mangling device to simulate the meta-data in S4
+    \item{\code{methodsPackageMetaName}:}{ 
+      a name mangling device to hide metadata defining method and
+      class information.
     }
+  \item{metaNameUndo}{ As its name implies, this function undoes the
+      name-mangling used to produce meta-data object names, and
+      returns a object of class \code{\link{ObjectsWithPackage-class}}.
+      }
     
     \item{\code{requireMethods}:}{
       Require a subclass to implement methods for the generic functions,
@@ -520,6 +429,9 @@ validSlotNames(names)
       case there is an error.  (As of writing, \code{"class"} is the
       only reserved slot name.)
     }
+  \item{\code{getDataPart}, \code{setDataPart}:}{ Utilities called from the base C code
+      to implement \code{object@.Data}.
+      }
     
   }
 }

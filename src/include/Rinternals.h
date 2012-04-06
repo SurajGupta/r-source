@@ -21,13 +21,13 @@
 #ifndef _R_INTERNALS_H_
 #define _R_INTERNALS_H_
 
-#include "R_ext/Arith.h"
-#include "R_ext/Boolean.h"
-#include "R_ext/Complex.h"
-#include "R_ext/Error.h"
-#include "R_ext/Memory.h"
-#include "R_ext/PrtUtil.h"
-#include "R_ext/Utils.h"
+#include <R_ext/Arith.h>
+#include <R_ext/Boolean.h>
+#include <R_ext/Complex.h>
+#include <R_ext/Error.h>
+#include <R_ext/Memory.h>
+#include <R_ext/PrtUtil.h>
+#include <R_ext/Utils.h>
 
 #include <errno.h>
 #include <stdio.h>
@@ -246,8 +246,8 @@ typedef union { VECTOR_SEXPREC s; double align; } SEXPREC_ALIGN;
 #define DATAPTR(x)	(((SEXPREC_ALIGN *) (x)) + 1)
 #define CHAR(x)		((char *) DATAPTR(x))
 #define LOGICAL(x)	((int *) DATAPTR(x))
-#define COMPLEX(x)	((Rcomplex *) DATAPTR(x))
 #define INTEGER(x)	((int *) DATAPTR(x))
+#define COMPLEX(x)	((Rcomplex *) DATAPTR(x))
 #define REAL(x)		((double *) DATAPTR(x))
 #define STRING_ELT(x,i)	((SEXP *) DATAPTR(x))[i]
 #define VECTOR_ELT(x,i)	((SEXP *) DATAPTR(x))[i]
@@ -663,7 +663,7 @@ SEXP GetPar(char*, SEXP);
 SEXP GetRowNames(SEXP);
 void gsetVar(SEXP, SEXP, SEXP);
 Rboolean inherits(SEXP, char*);
-SEXP install(char*);
+SEXP install(char const *);
 Rboolean isArray(SEXP);
 Rboolean isComplex(SEXP);
 Rboolean isEnvironment(SEXP);
@@ -925,7 +925,7 @@ void R_SetUseNamespaceDispatch(Rboolean val);
 /* Save/Load Interface */
 #define R_XDR_DOUBLE_SIZE 8
 #define R_XDR_INTEGER_SIZE 4
- 
+
 void R_XDREncodeDouble(double d, void *buf);
 double R_XDRDecodeDouble(void *buf);
 void R_XDREncodeInteger(int i, void *buf);
@@ -950,7 +950,7 @@ struct R_outpstream_st {
     SEXP (*OutPersistHookFunc)(SEXP, SEXP);
     SEXP OutPersistHookData;
 };
-    
+
 typedef struct R_inpstream_st *R_inpstream_t;
 struct R_inpstream_st {
     R_pstream_data_t data;
@@ -997,4 +997,9 @@ void R_InitConnInPStream(R_inpstream_t stream,  Rconnection con,
 
 void R_Serialize(SEXP s, R_outpstream_t ops);
 SEXP R_Unserialize(R_inpstream_t ips);
+
+/* slot management */
+SEXP R_do_slot(SEXP obj, SEXP name);
+SEXP R_do_slot_assign(SEXP obj, SEXP name, SEXP value);
+
 #endif /* _R_INTERNALS_H_ */

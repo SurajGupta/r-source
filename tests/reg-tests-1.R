@@ -685,8 +685,10 @@ ddf <- rbind(df, df)
 stopifnot(!is.factor(ddf$b))
 ## 1.5.0 had b as a factor.
 
+
 ## PR 1548 : prettyNum inserted leading commas
 stopifnot(prettyNum(123456, big.mark=",") == "123,456")
+
 
 ## PR 1552: cut.dendrogram
 library(mva)
@@ -725,8 +727,252 @@ logist <- selfStart( logist, initial = logistInit ) ##-> Error in R 1.5.0
 str(logist)
 detach("package:nls")
 
+
 ## part of PR 1662: fisher.test with total one
 fisher.test(cbind(0, c(0,0,0,1)))
 ## crashed in R <= 1.5.0
 
 stopifnot(all(Mod(vector("complex", 7)) == 0))# contained garbage in 1.5.0
+
+## hist.POSIXt with numeric `breaks'
+hist(.leap.seconds, breaks = 5)
+## error in 1.5.1
+
+##Jonathan Rougier 2002-06-18
+x <- matrix(runif(30), 10, 3)
+poly(x, degree=2)
+## failed in 1.5.1
+
+
+## PR#1694 cut with infinite values -> NA (Markus Jäntti)
+cut.off <- c(-Inf, 0, Inf)
+x <- c(-Inf, -10, 0, 10, Inf)
+(res <- cut(x, cut.off, include.lowest=TRUE))
+stopifnot(all(!is.na(res)))
+(res <- cut(x, cut.off, include.lowest=TRUE, right=FALSE))
+stopifnot(all(!is.na(res)))
+## outer values were NA in 1.5.1
+
+
+## ls.str() for function environments:
+library(stepfun)
+Fn <- ecdf(rnorm(50))
+ls.str(envir = environment(Fn))
+detach("package:stepfun")
+## failed in 1.5.1
+
+
+## PR 1767 all.equal.character for non-matching NAs
+all.equal(c("A", "B"), c("A", NA))
+## failed in 1.5.1
+
+
+## failed since at least version 0.90:
+stopifnot(is.character(a12 <- all.equal(1,1:2)),
+          length(a12) == 2,
+          a12[2] == "Numeric: lengths (1, 2) differ")
+## a12 was *list* of length 3
+
+
+## related to PR 1577/1608, conversions to character
+DF <- data.frame(b = LETTERS[1:3])
+sapply(DF, class)
+DF[[1]] <- LETTERS[1:3]
+stopifnot(is.character(DF$b)) ## was factor < 1.6.0
+DF <- data.frame(b = LETTERS[1:3])
+DF$b <- LETTERS[1:3]
+stopifnot(is.character(DF$b)) ## always was character.
+
+x <- data.frame(var = LETTERS[1:3]); x$var <- as.character(x$var)
+x[[1]][2] <- "3"
+x
+stopifnot(is.character(x$var))
+is.na(x[[1]]) <- 2
+stopifnot(is.character(x$var))
+
+x <- data.frame(var = I(LETTERS[1:3]))
+x[[1]][2] <- "3"
+x
+stopifnot(is.character(x$var))
+is.na(x[[1]]) <- 2
+stopifnot(is.character(x$var))
+
+x <- data.frame(var = LETTERS[1:3])
+x[[1]][2] <- "3"
+x
+stopifnot(is.factor(x$var))
+is.na(x[[1]]) <- 2
+stopifnot(is.factor(x$var))
+
+x <- data.frame(a = 1:4)
+y <- data.frame(b = LETTERS[1:3])
+y$b <- as.character(y$b)
+z <- merge(x, y, by = 0, all.x = TRUE)
+sapply(z, data.class)
+stopifnot(is.character(z$b))
+## end of `related to PR 1577/1608'
+
+
+## logicals became factors < 1.6.0
+stopifnot(sapply(as.data.frame(matrix((1:12)%% 4 == 1, 3,4)),
+                 is.logical))
+
+
+## recycling of factors in data.frame (wish from PR#1713)
+data.frame(x=c("A","B"), y="C")      # failed to recycle in 1.5.1
+X <- data.frame(x=c("A","B"), y=I("C")) # also failed
+XX <- data.frame(x=c("A","B"), y=I(rep("C", 2))) # fine
+stopifnot(identical(X, XX))
+## Last is false in some S variants.
+
+
+## test of rank-deficient prediction, as various claims this did not work
+## on R-help in June 2002
+x1 <- rnorm(100)
+x3 <- rnorm(100)
+y <- rnorm(100)
+train <- data.frame(y=y, x1=x1, x2=x1, x3=x3)
+fit <- lm(y ~ ., train)
+stopifnot(all.equal(predict(fit), predict(fit, train)))
+## warning added for 1.6.0
+
+
+## terms(y ~ .) on data frames with duplicate names
+DF <- data.frame(y = rnorm(10), x1 = rnorm(10), x2 = rnorm(10), x3 = rnorm(10))
+names(DF)[3] <- "x1"
+fit <- try(lm(y ~ ., DF))
+stopifnot(class(fit) == "try-error")
+## had formula y ~ x1 + x1 + x3 in 1.5.1.
+
+
+## PR#1759 as.character.octmode() (Henrik Bengtsson)
+x <- 0; class(x) <- "octmode"
+stopifnot(as.character(x) == "0")
+## gave "" in 1.5.1
+
+
+## PR#1843 unsplit() with f a list
+g <- factor(round(10 * runif(1000)))
+x <- rnorm(1000) + sqrt(as.numeric(g))
+xg <- split(x, list(g1=g,g2=g))
+res <- unsplit(xg, list(g1=g, g2=g))
+stopifnot(x == res) # can't have rounding error here
+## gave incorrect result with warning in 1.5.1.
+
+
+## matching NAs on Solaris (MM 2002-08-02)
+x <- as.double(NA)
+identical(x + 0, x)
+stopifnot(match(x + 0, x, 0) == 1)
+## match failed on Solaris with some compiler settings
+
+
+## identical on specials  (BDR 2002-08-02)
+stopifnot(identical(as.double(NA), NaN) == FALSE)
+## was identical on 1.5.1
+
+
+## safe prediction (PR#1840)
+data(cars)
+cars.1 <- lm(dist ~ poly(speed, degree = 1), data = cars)
+cars1  <- lm(dist ~      speed,              data = cars)
+DF <- data.frame(speed=4)
+stopifnot(all.equal(predict(cars.1, DF), predict(cars1, DF)))
+## error in 1.5.1
+
+
+## Ops.data.frame (PR#1889)
+d <- data.frame(1:10)
+d > list(5)
+## failed in 1.5.1
+
+
+## order(na.last = NA) (PR#1913 / 1906 / 1981)
+x <- 1
+order(x, na.last=NA)
+order(x, x, x, na.last=NA)
+## failed in 1.5.1, since sapply simplified to a scalar.
+stopifnot(3:1 == order(c(1,2,3,NA), na.last=NA, decreasing=TRUE))
+## ignored `decreasing' in 1.5.1
+order(c(NA, NA), na.last = NA)
+## error in 1.5.1, now integer(0)
+
+## as.list() coerced logical to integer (PR#1926)
+x <- c(TRUE,FALSE,NA)
+stopifnot(identical(x, unlist(as.list(x))))
+## the 2nd was (1,0,NA) before 1.6
+
+
+## test of long Error expression in aov(): PR#1315 and later,
+## and also a cross-check of deparse(, cutoff = 500)
+AA <- structure(list(Y2 = c(10, 9, 0, 0, 5, 6, 0, 0, 8, 9, 0, 0, 4,
+4, 0, 0, 12, 11, 2, 0, 6, 7, 0, 0), P2 = structure(c(1, 1, 1,
+1, 1, 1, 1, 1, 2, 2, 2, 2, 2, 2, 2, 2, 3, 3, 3, 3, 3, 3, 3, 3
+), .Label = c("1", "2", "3"), class = "factor"), AAAAAAAA = structure(c(1,
+1, 1, 1, 2, 2, 2, 2, 1, 1, 1, 1, 2, 2, 2, 2, 1, 1, 1, 1, 2, 2,
+2, 2), .Label = c("E1", "E2"), class = "factor"), B2 = structure(c(1,
+1, 2, 2, 1, 1, 2, 2, 1, 1, 2, 2, 1, 1, 2, 2, 1, 1, 2, 2, 1, 1,
+2, 2), .Label = c("Red", "Unred"), class = "factor"), C2 = structure(c(1,
+2, 1, 2, 1, 2, 1, 2, 1, 2, 1, 2, 1, 2, 1, 2, 1, 2, 1, 2, 1, 2,
+1, 2), .Label = c("Agent", "Patient"), class = "factor")), .Names = c("Y2",
+"P2", "AAAAAAAA", "B2", "C2"), class = "data.frame", row.names = c("1",
+"2", "3", "4", "5", "6", "7", "8", "9", "10", "11", "12", "13",
+"14", "15", "16", "17", "18", "19", "20", "21", "22", "23", "24"
+))
+AK2anova.out <-
+    aov(Y2 ~ AAAAAAAA * B2 * C2 +
+        Error(P2 + P2:AAAAAAAA + P2:B2 + P2:C2 + P2:AAAAAAAA:B2 +
+              P2:AAAAAAAA:C2 + P2:B2:C2 + P2:AAAAAAAA:B2:C2),
+        data=AA)
+## failed in 1.5.1
+
+## as.character was silently truncating expressions to 60 chars
+q2 <- expression(c(1,2,3,4,5,6,7,8,9,10,11,12,13,14,15,16,17,18,19))
+(q3 <- as.character(q2))
+stopifnot(nchar(q3) == 68)
+## was 61 in 1.5.1
+
+## Ops wasn't using NextMethod correctly
+
+## Ops.ordered:
+or <- ordered(c("a","b","c"))
+stopifnot( (or == "a") == c(TRUE,FALSE,FALSE))
+stopifnot(or == or)
+stopifnot(or != "d")
+##  last was NA NA NA in 1.5.1
+
+Ops.foo <- function(e1, e2) {
+    NextMethod()
+}
+Ops.baz <- function(e1, e2) {
+   NextMethod()
+}
+a <- b <- 1
+class(a) <- c("foo","bar","baz")
+class(b) <- c("foo","baz")
+stopifnot(a == 1,
+          b == a)
+##(already worked in 1.5.1)
+
+## t() wrongly kept "ts" class and "tsp"
+t(ts(c(a=1, d=2)))
+## gave error while printing in 1.5.1
+at <- attributes(t(ts(cbind(1, 1:20))))
+stopifnot(length(at) == 2,
+          at$dim == c(2, 20),
+          at$dimnames[[1]] == paste("Series", 1:2))
+## failed in 1.5.1
+
+## Nextmethod from anonymous function (PR#1211)
+try( get("print.ts")(1) )# -> Error
+## seg.faulted till 1.5.1
+
+## cbind/rbind should work with NULL only args
+stopifnot(is.null(cbind(NULL)), is.null(cbind(NULL,NULL)),
+          is.null(rbind(NULL)), is.null(rbind(NULL,NULL)))
+## gave error from 0.63 till 1.5.1
+
+## keep at end, as package `methods' has had persistent side effects
+library(methods)
+stopifnot(all.equal(3:3, 3.), all.equal(1., 1:1))
+detach("package:methods")

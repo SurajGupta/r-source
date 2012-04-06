@@ -13,11 +13,19 @@ help.start <- function(update = TRUE, gui = "irrelevant",
         try(make.search.html(.Library))
     }
     a <- gsub("/", "\\\\", a)
-    cat("If nothing happens, you have to open `", a, "' yourself\n")
-    if(is.null(browser)) .Internal(help.start())
+    cat("If nothing happens, you should open `", a, "' yourself\n")
+    browseURL(a, browser = browser)
+    invisible("")
+}
+
+browseURL <- function(url, browser = getOption("browser"))
+{
+    if(!is.character(url) || !(length(url) == 1) || (nchar(url) == 0))
+        stop("url must be a non-empty character string")
+    if(is.null(browser))
+        shell.exec(url)
     else {
-        cmd <- paste('"', browser, '" ', a, sep="")
+        cmd <- paste('"', browser, '" ', url, sep="")
         system(cmd, wait=FALSE)
     }
-    invisible("")
 }

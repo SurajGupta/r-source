@@ -22,7 +22,7 @@ quantile.default <-
 	x <- sort(x, partial = unique(c(lo, hi)))
 	i <- index > lo
 	qs <- x[lo]
-        i <- seq(along=i)[i & !is.na(i)][qs[i] > -Inf]
+        i <- seq(along=i)[i & !is.na(i)]
         .minus <- function(x,y) ifelse(x == y, 0, x - y)# ok for Inf - Inf
         qs[i] <- qs[i] + .minus(x[hi[i]], x[lo[i]]) * (index[i] - lo[i])
     }
@@ -39,6 +39,7 @@ quantile.default <-
     }
     if(na.p) { # do this more elegantly (?!)
         o.pr[p.ok] <- qs
+        names(o.pr) <- rep("", length(o.pr)) # suppress <NA> names
         names(o.pr)[p.ok] <- names(qs)
         o.pr
     } else qs

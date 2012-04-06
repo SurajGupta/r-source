@@ -20,25 +20,30 @@
  */
 
 #ifdef HAVE_CONFIG_H
-#include <config.h>
+# include <config.h>
 #endif
 
 #ifndef Macintosh
-#include <sys/types.h>
+# include <sys/types.h>
 #else 
-#include <types.h>
+# include <types.h>
 #endif
 
 #include "Defn.h"
+
 /* The next must come after other header files to redefine RE_DUP_MAX */
 #ifdef USE_SYSTEM_REGEX
-#include <regex.h>
+# include <regex.h>
 #else
-#include "Rregex.h"
+# include "Rregex.h"
 #endif
 
+#include <Print.h> /* for R_print */
+
+#include "apse.h"
+
 #ifndef MAX
-#define MAX(a, b) ((a) > (b) ? (a) : (b))
+# define MAX(a, b) ((a) > (b) ? (a) : (b))
 #endif
 
 /* Functions to perform analogues of the standard C string library. */
@@ -46,7 +51,7 @@
 
 SEXP do_nchar(SEXP call, SEXP op, SEXP args, SEXP env)
 {
-    SEXP d, s, x;
+    SEXP d, s, x, ch;
     int i, len;
 
     checkArity(op, args);
@@ -55,8 +60,12 @@ SEXP do_nchar(SEXP call, SEXP op, SEXP args, SEXP env)
 	errorcall(call, "nchar() requires a character vector");
     len = LENGTH(x);
     PROTECT(s = allocVector(INTSXP, len));
-    for (i = 0; i < len; i++)
-	INTEGER(s)[i] = strlen(CHAR(STRING_ELT(x, i)));
+    for (i = 0; i < len; i++) {
+	ch = STRING_ELT(x, i);
+	/* give print width for an NA_STRING */
+	INTEGER(s)[i] = 
+	    (ch == NA_STRING) ? R_print.na_width : strlen(CHAR(ch));
+    }
     if ((d = getAttrib(x, R_DimSymbol)) != R_NilValue)
 	setAttrib(s, R_DimSymbol, d);
     if ((d = getAttrib(x, R_DimNamesSymbol)) != R_NilValue)
@@ -904,7 +913,7 @@ do_chartr(SEXP call, SEXP op, SEXP args, SEXP env)
     /* Build the old and new tr_spec lists. */
     tr_build_spec(CHAR(STRING_ELT(old, 0)), trs_old);
     tr_build_spec(CHAR(STRING_ELT(new, 0)), trs_new);
-    /* Initilize the pointers for walking through the old and new
+    /* Initialize the pointers for walking through the old and new
        tr_spec lists and retrieving the next chars from the lists.
        */
     trs_old_ptr = (struct tr_spec **) malloc(sizeof(struct tr_spec *));
@@ -940,4 +949,91 @@ do_chartr(SEXP call, SEXP op, SEXP args, SEXP env)
 
     UNPROTECT(1);
     return(y);
+}
+
+SEXP
+do_agrep(SEXP call, SEXP op, SEXP args, SEXP env)
+{
+    SEXP pat, vec, ind, ans;
+    int i, j, n, nmatches;
+    int igcase_opt, value_opt, max_distance_opt;
+    int max_deletions_opt, max_insertions_opt, max_substitutions_opt;
+    apse_t *aps;
+    char *str;
+    
+    checkArity(op, args);
+    pat = CAR(args); args = CDR(args);
+    vec = CAR(args); args = CDR(args);
+    igcase_opt = asLogical(CAR(args)); args = CDR(args);
+    value_opt = asLogical(CAR(args)); args = CDR(args);
+    max_distance_opt = (apse_size_t)asInteger(CAR(args));
+    args = CDR(args);
+    max_deletions_opt = (apse_size_t)asInteger(CAR(args));
+    args = CDR(args);
+    max_insertions_opt = (apse_size_t)asInteger(CAR(args));
+    args = CDR(args);
+    max_substitutions_opt = (apse_size_t)asInteger(CAR(args));
+
+    if(igcase_opt == NA_INTEGER) igcase_opt = 0;
+    if(value_opt == NA_INTEGER) value_opt = 0;
+
+    if(!isString(pat) || length(pat) < 1 || !isString(vec))
+	errorcall(call, R_MSG_IA);
+
+    /* Create search pattern object. */
+    str = CHAR(STRING_ELT(pat, 0));
+    aps = apse_create((unsigned char *)str, (apse_size_t)strlen(str),
+		      max_distance_opt);
+    if(!aps)
+	error("could not allocate memory for approximate matching");
+
+    /* Set further restrictions on search distances. */
+    apse_set_deletions(aps, max_deletions_opt);
+    apse_set_insertions(aps, max_insertions_opt);
+    apse_set_substitutions(aps, max_substitutions_opt);
+
+    /* Matching. */
+    n = length(vec);
+    PROTECT(ind = allocVector(LGLSXP, n));
+    nmatches = 0;
+    for(i = 0 ; i < n ; i++) {
+	str = CHAR(STRING_ELT(vec, i));
+	/* Set case ignore flag for the whole string to be matched. */
+	if(!apse_set_caseignore_slice(aps, 0,
+				      (apse_ssize_t)strlen(str),
+				      (apse_bool_t)igcase_opt)) {
+	    /* Most likely, an error in apse_set_caseignore_slice()
+	     * means that allocating memory failed (as we ensure that
+	     * the slice is contained in the string) ... */
+	    errorcall(call, "could not perform case insensitive matching");
+	}
+	/* Perform match. */
+	if(apse_match(aps,
+		      (unsigned char *)str,
+		      (apse_size_t)strlen(str))) {
+	    INTEGER(ind)[i] = 1;
+	    nmatches++;
+	}
+	else INTEGER(ind)[i] = 0;
+    }
+    apse_destroy(aps);
+
+    PROTECT(ans = value_opt
+                ? allocVector(STRSXP, nmatches)
+                : allocVector(INTSXP, nmatches));
+    if(value_opt) {
+	for(j = i = 0 ; i < n ; i++) {
+	    if(INTEGER(ind)[i])
+		SET_STRING_ELT(ans, j++, STRING_ELT(vec, i));
+	}
+    }
+    else {
+	for(j = i = 0 ; i < n ; i++) {
+	    if(INTEGER(ind)[i])
+		INTEGER(ans)[j++] = i + 1;
+	}
+    }
+
+    UNPROTECT(2);
+    return ans;
 }

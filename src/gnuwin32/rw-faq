@@ -1,6 +1,6 @@
 R for Windows FAQ
 Frequently Asked Questions on R for Windows
-Version for rw1051
+Version for rw1060
 Brian Ripley
 
 
@@ -20,7 +20,7 @@ Table of Contents
   2.7 How can I keep workspaces for different projects in different directories?
   2.8 How do I print from R?
   2.9 Can I use `R BATCH'?
-  2.10 Can I use rw1051 with ESS and (X)emacs?
+  2.10 Can I use rw1060 with ESS and (X)emacs?
   2.11 What are HOME and working directories?
   2.12 R can't find my file, but I know it is there!
   2.13 Does R use the Registry?
@@ -29,12 +29,13 @@ Table of Contents
 
 3 Packages
   3.1 Can I install packages (libraries) in this version?
-  3.2 I don't have permission to write to the `rw1051\library' directory.
+  3.2 I don't have permission to write to the `rw1060\library' directory.
   3.3 The packages I installed do not appear in the HTML help system.
   3.4 My functions are not found by the HTML help search system.
   3.5 Loading a package fails.
   3.6 Package TclTk does not work.
   3.7 Hyperlinks in Compiled HTML sometimes do not work.
+  3.8 `update.packages()' fails
 
 4 Windows Features
   4.1 What should I expect to behave differently from the Unix version of R?
@@ -76,7 +77,7 @@ that version.  The main R FAQ can be found at
 
 The information here applies only to recent versions of R for Windows,
 (`1.4.0' or later); the current version is often called something like
-`rw1051' (although not officially).
+`rw1060' (although not officially).
 
 
 2 Installation and Usage
@@ -87,22 +88,13 @@ The information here applies only to recent versions of R for Windows,
 
 Go to any CRAN site (see `http://cran.r-project.org/mirrors.html' for a
 list), navigate to the `bin/windows/base' directory and collect the
-files you need.  There are three versions of the distribution.
+files you need.  There are two versions of the distribution.
 
-1) `SetupR.exe' is about 18Mb and gives a complete installation.
+1) `rw1060.exe' is about 19Mb and gives a complete installation.
 
-2) Directory `miniR' contains `miniR.exe' and seven files
+2) Directory `miniR' contains `miniR.exe' and eight files
 `miniR-?.bin'.  You can put  `miniR.exe' and `miniR-1.bin' on one
 floppy and the remaining `miniR-?.bin' on a floppy each.
-
-3) Via zip files in directory `zip'.  You will need at least the files
-           rw1051b.zip
-           rw1051h.zip (text help) or rw1051ch.zip (Compiled HTML help)
-
-and you may want `rw1051w.zip' (the HTML format help files),
-`rw1051l.zip' (the LaTeX format help files, used for offline printing),
-or `rw1051d?.zip' (the manuals, in PDF).  The recommended packages are
-available separately.
 
 2.2 How do I install R for Windows?
 ===================================
@@ -115,7 +107,7 @@ If you want to build packages from sources, we recommend that you choose
 an installation path not containing spaces.  (Using a path with spaces
 in will probably work, but is little-tested.)
 
-The simplest way is to use `SetupR.exe' or `miniR.exe'.  Just
+The simplest way is to use `rw1060.exe' or `miniR.exe'.  Just
 double-click on the icon and follow the instructions.  If you installed
 R this way you can uninstall it from the Control Panel or Start Menu
 (unless you supressed making a group for R).
@@ -123,10 +115,10 @@ R this way you can uninstall it from the Control Panel or Start Menu
 For a manual installation, choose a location and unzip the zip files
 (with a tool that preserves long file names and the directory structure:
 we recommend the INFO-ZIP project's `unzip').  All the files will
-unpack into a directory `rw1051'.
+unpack into a directory `rw1060'.
 
 Choose a working directory for R.  If you installed manually, make a
-shortcut to `rw1051\bin\Rgui.exe' on your desktop or somewhere on the
+shortcut to `rw1060\bin\Rgui.exe' on your desktop or somewhere on the
 Start menu file tree.  Right-click the shortcut, select Properties...
 and change the `Start in' field to your working directory.
 
@@ -155,8 +147,8 @@ directory of the shell.)
 
 Normally you can do this from the R group on the Start Menu or from the
 `Add/Remove Programs' in the Control Panel.  If it does not appear
-there or if you want to remove an old version, run `unis000.exe' in the
-top-level installation directory.
+there or if you want to remove an old version, run `unins000.exe' in
+the top-level installation directory.
 
 Uninstalling R only removes files from the initial installation, not for
 example packages you have installed.
@@ -180,14 +172,12 @@ versions around if you prefer.
 
 Indeed there is.  It is set by the command-line flag `--max-mem-size'
 (*note How do I install R for Windows?::) and defaults to the smaller
-of the amount of physical RAM in the machine and 256Mb.  It can be set
-to any amount over 10M. (R will not run in less.)  Be aware though that
+of the amount of physical RAM in the machine and 1Gb.  It can be set to
+any amount over 10M. (R will not run in less.)  Be aware though that
 Windows has (in most versions) a maximum amount of user virtual memory
-of 2Gb, and parts of this can be reserved by processes but not used.  R
-itself reserves on startup the larger of 256Mb and the amount specified
-by `--max-mem-size'.  Because of the way the memory manager works, it
-is possible that there will be free memory but R will not be able to
-reserve it.
+of 2Gb, and parts of this can be reserved by processes but not used.
+Because of the way the memory manager works, it is possible that there
+will be free memory but R will not be able to make use of it.
 
 Use `?Memory' and `?memory.size' for information about memory usage.
 The limit can be raised by calling `memory.limit' within a running R
@@ -236,15 +226,15 @@ It depends what you want to print.
 ========================
 
 Yes, if you have Perl and the files for making source packages (from
-`SetupR.exe' or `rw1051sp.zip') installed.  The Windows analogue is
-`Rcmd BATCH': use `Rcmd BATCH --help' for full details.
+`rw1060.exe') installed.  The Windows analogue is `Rcmd BATCH': use
+`Rcmd BATCH --help' for full details.
 
 Otherwise you can set up a batch file using `Rterm.exe'.  A sample
 batch file might contain (as one line)
 
      path_to_R\bin\Rterm.exe --no-restore --no-save < %1 > %1.out
 
-2.10 Can I use rw1051 with ESS and (X)emacs?
+2.10 Can I use rw1060 with ESS and (X)emacs?
 ============================================
 
 Yes.  Recent versions of ESS (e.g. 5.1.20) come with support for this
@@ -278,7 +268,7 @@ You can find this from R code by `Sys.getenv("R_USER")'.
 
 How did you specify it?  Backslashes have to be doubled in R character
 strings, so for example one needs
-`"d:\\rw1051\\library\\xgobi\\scripts\\xgobi.bat"'.  Make life easier
+`"d:\\rw1060\\library\\xgobi\\scripts\\xgobi.bat"'.  Make life easier
 for yourself by using forward slashes as path separators: they do work
 under Windows.
 
@@ -309,21 +299,21 @@ neither sets up nor removes the file associations.
 2.14 Entering certain characters crashes Rgui.
 ==============================================
 
-This seems to happen occasionally, and all the occurrences we have
-solved have been traced to faulty versions of `msvcrt.dll'.  Try
-extracting the one to be found in the self-extracting archive
+This used to happen occasionally, and all the occurrences we have
+solved have been traced to faulty versions of `msvcrt.dll'.  We have
+installed a workaround as from `rw1051' that seems to avoid this.
+
+If it still happens, try extracting the one to be found in the
+self-extracting archive
 `ftp://ftp.microsoft.com/softlib/mslfiles/msvcrt.exe' and put it in the
-`rw1051\bin' directory.  Removing `msvcrt.dll' from that directory
-reverts to the standard behaviour.
+`rw1060\bin' directory.  Removing `msvcrt.dll' from that directory
+reverts to the standard behaviour.  It seems that on some versions of
+Windows (but not 2000/XP) you also need to put the `rw1060\bin'
+directory early in your path.
 
 This fix has solved other problems too, for example incorrect results in
-the date-time functions.
-
-It seems that on some versions of Windows (but not 2000/XP) you also
-need to put the `rw1051\bin' directory early in your path.
-
-We have installed a workaround as from `rw1051' that hopefully avoids
-this.
+the date-time functions.  However, you are probably better off
+re-installing Windows.
 
 2.15 The internet download functions fail.
 ==========================================
@@ -360,22 +350,20 @@ Note that the pre-compiled versions on CRAN are unsupported: see
 `http://cran.r-project.org/bin/windows/contrib/ReadMe'.
 
 If there is not a pre-compiled version or that is not up-to-date or you
-prefer compiling from source, get `rw1051sp.zip' from the distribution
-(*note Where can I find the latest version?::; you may already have
-installed this from `SetupR.exe') and unpack it in the parent of
-`rw1051'.  Then read the file `readme.packages'.  You will need to
-collect and install several tools to use this: you can download them
-via the portal at `http://www.stats.ox.ac.uk/pub/Rtools/'.  Once you
-have done so, just run `Rcmd INSTALL pkgname'.  To check the package
-(including running all the examples on its help pages and in its test
-suite, if any) use `Rcmd check pkgname': see the _`Writing R
-Extensions'_ manual.
+prefer compiling from source, make sure you installed the necessary
+files from `rw1060.exe'.  Then read the file `README.packages'.  You
+will need to collect and install several tools to use this: you can
+download them via the portal at
+`http://www.stats.ox.ac.uk/pub/Rtools/'.  Once you have done so, just
+run `Rcmd INSTALL pkgname'.  To check the package (including running
+all the examples on its help pages and in its test suite, if any) use
+`Rcmd check pkgname': see the _`Writing R Extensions'_ manual.
 
 Note that this is rather so tricky; please do ensure that you have
 followed the instructions *exactly*.  At least 90% of the questions
 asked are because people have not done so.
 
-3.2 I don't have permission to write to the `rw1051\library' directory.
+3.2 I don't have permission to write to the `rw1060\library' directory.
 =======================================================================
 
 You can install packages anywhere and use the environment variable
@@ -410,7 +398,7 @@ then `.Renviron' then the inherited environment.
 3.3 The packages I installed do not appear in the HTML help system.
 ===================================================================
 
-The HTML search only works for packages installed in `rw1051\library'.
+The HTML search only works for packages installed in `rw1060\library'.
 
 To update the HTML indices after you have installed a pre-compiled
 package, run at the R prompt.
@@ -419,7 +407,7 @@ package, run at the R prompt.
 
 This is done automatically when installing from the Packages menu or by
 `install.packages()', and when `help.start' is run, provided you have
-write permission in `rw1051\library'.
+write permission in `rw1060\library'.
 
 3.4 My functions are not found by the HTML help search system.
 ==============================================================
@@ -427,7 +415,7 @@ write permission in `rw1051\library'.
 The following conditions need to hold for functions in a package you
 installed.
 
-   * the package is installed in `rw1051\library'.
+   * the package is installed in `rw1060\library'.
 
    * the package contains a `CONTENTS' file in its top-level directory.
 
@@ -473,7 +461,8 @@ will warn you if this is unset, and Q3.2 explains how to set them.  NB:
 do not quote the path, even if as here it contains spaces. If you
 forget, you can set the variable inside R by something like
          Sys.putenv("TCL_LIBRARY"="c:/Program Files/Tcl/lib/tcl8.3")
-.)
+.)  Similarly, you can set the path if needed by something like
+         Sys.putenv(PATH=paste(Sys.getenv("PATH"), "c:/Tcl/bin", sep = ";"))
 
 3.7 Hyperlinks in Compiled HTML sometimes do not work.
 ======================================================
@@ -481,6 +470,16 @@ forget, you can set the variable inside R by something like
 They may well not work between packages installed in different
 libraries.  This is solved under Unix using symbolic links which Windows
 does not implement.
+
+3.8 `update.packages()' fails
+=============================
+
+You may not be able to update a package which is in use: Windows `locks'
+the package's DLL when it is loaded.  So use `update.packages()' (or
+the menu equivalent) in a new session.
+
+If you put `library(foo)' in your `.Rprofile' you will need to start R
+with `--vanilla' to be able to update package `foo'.
 
 
 4 Windows Features
@@ -652,11 +651,11 @@ scrollbar or the <CTRL + left/right arrow> keys to scroll horizontally.
 7.1 How can I compile R from source?
 ====================================
 
-Get the R sources.  Suppose you want to compile R-1.5.1.  Start in a
+Get the R sources.  Suppose you want to compile R-1.6.0.  Start in a
 directory whose path does not contain spaces, and run
 
-     tar zxvf R-1.5.1.tgz
-     cd R-1.5.1
+     tar zxvf R-1.6.0.tgz
+     cd R-1.6.0
      cd src\gnuwin32
 
 Now read the `INSTALL' file and set up all the tools needed.  Then you
@@ -672,32 +671,33 @@ case) did not work.
 
 Fast BLAS (Basic Linear Algebra Subprograms,
 `http://www.netlib.org/blas/faq.html') routines are used to speed up
-numerical linear algebra.  If you compile R from sources yourself,
-there is support for the `tuned' BLAS called ATLAS
-(`http://www.netlib.org/atlas/').  The savings can be appreciable: on a
-366MHz PIIM and a 1000 x 1000 matrix `La.svd' took 182 sec with the
-standard BLAS and 59 sec with ATLAS.  Because ATLAS is tuned to a
-particular chip we can't use it generally: the optimal routines for a
-PIII or an Athlon XP are quite different and neither will not run at all
-on a PII.
-
-In the file `MkRules' there are macros `USE_ATLAS' and `ATLAS_PATH'.
-Set `USE_ATLAS = YES' and `ATLAS_PATH' to where the ATLAS libraries are
-located.  You will need to make the libraries yourself: none of the
-binaries we have seen are compiled for the correct compiler.
+numerical linear algebra.  There is support in the R sources for the
+`tuned' BLAS called ATLAS (`http://math-atlas.sourceforge.net').  The
+savings can be appreciable: on a 366MHz PIIM and a 1000 x 1000 matrix
+`La.svd' took 182 sec with the standard BLAS and 59 sec with ATLAS.
+Because ATLAS is tuned to a particular chip we can't use it generally:
+the optimal routines for a PIII or an Athlon XP are quite different and
+neither will not run at all on a PII.
 
 BLAS support is supplied by the single DLL `R_HOME\bin\Rblas.dll', and
-you can add a fast BLAS just by replacing that.
+you can add a fast BLAS just by replacing that.  Replacements for some
+of the more common chips are available on CRAN in directory
+`bin/windows/contrib/ATLAS'.
+
+If you are building R from source, in the file `MkRules' there are
+macros `USE_ATLAS' and `ATLAS_PATH'.  Set `USE_ATLAS = YES' and
+`ATLAS_PATH' to where the ATLAS libraries are located.  You will need
+to make the libraries yourself: none of the binaries we have seen are
+compiled for the correct compiler.
 
 7.3 How do I include compiled C code?
 =====================================
 
 We strongly encourage you to do this _via_ building an R package: see
 the _`Writing R Extensions'_ manual.  In any event you should install
-the parts of the R system for building R packages (in `SetupR.exe' or
-`rw1051sp.zip'), and get and install the tools (including Perl) and
-compilers mentioned in the file `readme.packages' contained therein.
-Then you can use
+the parts of the R system for building R packages (in `rw1060.exe'),
+and get and install the tools (including Perl) and compilers mentioned
+in the file `readme.packages' contained therein.  Then you can use
      ...\bin\Rcmd SHLIB foo.c bar.f
 
 to make `foo.dll'.  Use `...\bin\Rcmd SHLIB --help' for further
@@ -729,13 +729,13 @@ and make a debug version of your package by
 
 Then you can debug by
 
-     gdb /path/to/rw1051/bin/Rgui.exe
+     gdb /path/to/rw1060/bin/Rgui.exe
 
 However, note
 
    * `gdb' will only be able to find the source code if we run in the
-     location where the source was compiled (`rw1051/src/gnuwin32' for
-     the main system, `rw1051/src/library/mypkg/src' for a package),
+     location where the source was compiled (`rw1060/src/gnuwin32' for
+     the main system, `rw1060/src/library/mypkg/src' for a package),
      unless told otherwise by the `directory' command.  It is most
      convenient to set a list of code locations via `directory' commands
      in the file `.gdbinit' in the directory from which `gdb' is run.
@@ -835,6 +835,6 @@ then `R_ProcessEvents()'.
 
 
 
-Last edited 2002 June 01 by Professor B. D. Ripley
+Last edited 2002 July 26 by Professor B. D. Ripley
 <ripley@stats.ox.ac.uk>
 

@@ -22,6 +22,10 @@
 # include <config.h>
 #endif
 
+/* Avoid braced-groups warning from -Wall */
+#define G_STMT_START do
+#define G_STMT_END   while(0)
+
 #include <gnome.h>
 #include <math.h>
 
@@ -30,13 +34,12 @@
 #include "Rdevices.h"
 #include "devGNOME.h"
 #include "terminal.h"
+#include "terminal-functions.h"
 
 #define CURSOR		GDK_CROSSHAIR		/* Default cursor */
 #define MM_PER_INCH	25.4			/* mm -> inch conversion */
 
 /* routines from here */
-//Rboolean GnomeDeviceDriver(NewDevDesc *dd, char *display, 
-//			   double width, double height, double pointsize);
 
 /* Device driver actions */
 static void GNOME_Activate(NewDevDesc *dd);
@@ -408,20 +411,20 @@ static void toolbar_print_cb (GtkWidget *widget, gpointer data)
 static GnomeUIInfo graphics_toolbar[] =
 {
     { GNOME_APP_UI_ITEM, "Activate", "Make this window the current device",
-      toolbar_activate_cb, NULL, NULL, GNOME_APP_PIXMAP_STOCK,
+      (gpointer) toolbar_activate_cb, NULL, NULL, GNOME_APP_PIXMAP_STOCK,
       GNOME_STOCK_PIXMAP_JUMP_TO, 0, (GdkModifierType) 0, NULL },
     GNOMEUIINFO_SEPARATOR,
     { GNOME_APP_UI_ITEM, "Save As", "Save as a PostScript file", 
-      toolbar_save_as_cb, NULL, NULL, 
+      (gpointer) toolbar_save_as_cb, NULL, NULL, 
       GNOME_APP_PIXMAP_STOCK, GNOME_STOCK_PIXMAP_SAVE_AS, 0, 
       (GdkModifierType) 0, NULL },
     { GNOME_APP_UI_ITEM, "Print", "Print graphics", 
-      toolbar_print_cb, NULL, NULL, 
+      (gpointer) toolbar_print_cb, NULL, NULL, 
       GNOME_APP_PIXMAP_STOCK, GNOME_STOCK_PIXMAP_PRINT, 0, 
       (GdkModifierType) 0, NULL },
     GNOMEUIINFO_SEPARATOR,
     { GNOME_APP_UI_ITEM, "Close", "Close this graphics device",
-      toolbar_close_cb, NULL, NULL,
+      (gpointer) toolbar_close_cb, NULL, NULL,
       GNOME_APP_PIXMAP_STOCK, GNOME_STOCK_PIXMAP_CLOSE, 0, 
       (GdkModifierType) 0, NULL },
     GNOMEUIINFO_END
@@ -912,8 +915,6 @@ static void GNOME_Text(double x, double y, char *str,
   gnomeDesc *gd = (gnomeDesc *) dd->deviceSpecific;
   int size;
 
-  //FIXME: Tidy up GConvert(&x, &y, coords, DEVICE, dd);
-
   size = cex * ps + 0.5;
   SetFont(dd, font, size);
   
@@ -1009,7 +1010,7 @@ Rboolean GnomeDeviceDriver(DevDesc *odd, char *display,
     if(!(gd = (gnomeDesc *) malloc(sizeof(gnomeDesc))))
 	return FALSE;
 
-    dd = (NewDevDesc*) odd;  //How safe is this?
+    dd = (NewDevDesc*) odd;  
     dd->deviceSpecific = (void *) gd;
 
     /* FIXME: font loading */
@@ -1080,8 +1081,6 @@ Rboolean GnomeDeviceDriver(DevDesc *odd, char *display,
     dd->canClip = FALSE;/* FIXME: really? */
     dd->canHAdj = 0;/* not better? {0, 0.5, 1} */
     dd->canChangeGamma = FALSE;
-
-    dd->ask = FALSE;
 
     /* x11 device description stuff */
     gd->cex = 1.0;

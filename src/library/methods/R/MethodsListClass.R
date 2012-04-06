@@ -4,32 +4,48 @@
     if(exists(classMetaName("MethodsList"), envir))
         return(FALSE)
 
-    setClass("OptionalMethods", where = envir)
-    setIs("function", "OptionalMethods")
-    setIs("NULL", "OptionalMethods")
-    setClass("MethodsList", representation(methods = "list", argument = "name", allMethods = "list"),
-             prototype = list(methods=list(),  argument = as.name("<UNDEFINED>"),  allMethods = list())
-             , where = envir)
-    setIs("MethodsList", "OptionalMethods", where = envir)
+    setClass("MethodsList",
+             representation(methods = "list", argument = "name", allMethods = "list"),
+             sealed = TRUE, where = envir)
     setClass("EmptyMethodsList", representation(argument = "name", sublist = "list"),
-             where = envir)
+             sealed = TRUE, where = envir)
 
     setClass("LinearMethodsList", representation(methods = "list", arguments = "list",
                                                  classes = "list", fromClasses = "list"),
-             where = envir)
+             sealed = TRUE, where = envir)
     ## the classes for method definitions
-    setClass("PossibleMethod", where = envir)
+    setClass("PossibleMethod", sealed = TRUE, where = envir)
     ## functions (esp. primitives) are methods
     setIs("function", "PossibleMethod", where = envir)
 
     ## signatures -- used mainly as named character vectors
-    setClass("signature", representation("character", names = "character"), where = envir)
+    setClass("signature", representation("character", names = "character"), sealed = TRUE, where = envir)
     
     ## formal method definition for all but primitives
-    setClass("MethodDefinition", representation("function", "PossibleMethod",
-                                                target = "signature", defined = "signature"), where = envir)
+    setClass("MethodDefinition",
+             representation("function", "PossibleMethod",
+                            target = "signature", defined = "signature"),
+             sealed = TRUE, where = envir)
     setClass("MethodWithNext",
-             representation("MethodDefinition", nextMethod = "PossibleMethod", excluded = "list"), where = envir)
+             representation("MethodDefinition", nextMethod = "PossibleMethod", excluded = "list"), sealed = TRUE, where = envir)
+    setClass("genericFunction",
+             representation("function", generic = "character", package = "character",
+                            group = "list", valueClass = "character",
+                            signature = "character", default = "MethodsList",
+                            skeleton = "call"))
+    setClass("nonstandardGeneric", # virtual class to mark special generic/group generic
+             sealed = TRUE, where = envir)
+    setClass("nonstandardGenericFunction",
+             representation("genericFunction", "nonstandardGeneric"),
+             sealed = TRUE, where = envir)
+    setClass("groupGenericFunction",
+             representation("genericFunction", groupMembers = "list"),
+             sealed = TRUE, where = envir)
+    setClass("nonstandardGroupGenericFunction",
+             representation("groupGenericFunction", "nonstandardGeneric"),
+             sealed = TRUE, where = envir)
+    setClass("ObjectsWithPackage", representation("character", package = "character"),
+             sealed = TRUE, where = envir)
 
     TRUE
 }
@@ -72,45 +88,45 @@
                   assign(".nextMethod", method@nextMethod, envir = envir)
                   method
               }, where = envir)
-    setGeneric("findNextMethod", function(method, f = "<unknown>", mlist, optional = FALSE)
+    setGeneric("findNextMethod", function(method, f = "<unknown>", mlist, optional = FALSE, envir)
                standardGeneric("findNextMethod"), where = envir)
     setMethod("findNextMethod", "MethodDefinition",
-              function(method, f, mlist, optional) {
-                  value <- .findNextMethod(method, f, mlist, optional, method@defined)
+              function(method, f, mlist, optional, envir) {
+                  value <- .findNextMethod(method, f, mlist, optional, list(method@defined), envir)
                   new("MethodWithNext", method, nextMethod = value,
                       excluded = list(method@defined))
               }, where = envir)
     setMethod("findNextMethod", "MethodWithNext",
-              function(method, f, mlist, optional) {
+              function(method, f, mlist, optional, envir) {
                   excluded <- c(method@excluded, list(method@defined))
-                  value <- .findNextMethod(method, f, mlist, optional, excluded)
+                  value <- .findNextMethod(method, f, mlist, optional, excluded, envir)
                   new("MethodWithNext", method, nextMethod = value,
                       excluded = excluded)
               }, where = envir)
     if(!isGeneric("initialize")) {
-        setGeneric("initialize",  function(object, ...) {
+        setGeneric("initialize",  function(.Object, ...) {
             value <- standardGeneric("initialize")
-            if(!identical(class(value), class(object)))
+            if(!identical(class(value), class(.Object)))
                 stop(paste("Initialize method returned an object of class \"",
                            class(value), "\" instead of the required class \"",
-                           class(object), "\"", sep=""))
+                           class(.Object), "\"", sep=""))
             value
-        }, where = envir, myDispatch = TRUE, useAsDefault = TRUE)
+        }, where = envir, useAsDefault = TRUE)
     }
     .InitTraceFunctions(envir)
     setMethod("initialize", "signature",
-              function(object, functionDef, ...) {
+              function(.Object, functionDef, ...) {
                   if(nargs() < 2)
-                      object
+                      .Object
                   else if(missing(functionDef))
-                      .MakeSignature(object, , list(...))
+                      .MakeSignature(.Object, , list(...))
                   else if(!is(functionDef, "function"))
-                      .MakeSignature(object, , list(functionDef, ...))
+                      .MakeSignature(.Object, , list(functionDef, ...))
                   else
-                      .MakeSignature(object, functionDef, list(...))
+                      .MakeSignature(.Object, functionDef, list(...))
               }, where = envir)
     setMethod("initialize", "environment",
-              function(object, ...) {
+              function(.Object, ...) {
                   value <- new.env()
                   args <- list(...)
                   objs <- names(args)
@@ -127,7 +143,10 @@
     if(length(signature)>0) {
         classes <- as.character(signature)
         sigArgs <- names(signature)
-        formalNames <- formalArgs(def)
+        if(is(def, "genericFunction"))
+            formalNames <- def@signature
+        else if(is(def, "function"))
+            formalNames <- formalArgs(def)
         if(length(sigArgs)< length(signature))
             names(signature) <- formalNames[seq(along = classes)]
         else if(length(sigArgs) > 0 && any(is.na(match(sigArgs, formalNames))))

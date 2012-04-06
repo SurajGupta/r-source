@@ -3,7 +3,7 @@
 # It also builds help files for the Macintosh
 # distribution.
 #
-# Jago November 2001, Stefano M. Iacus
+# Jago July 2002, Stefano M. Iacus
 #
 #
 
@@ -37,6 +37,7 @@ MODULES = vfonts lapack
 fixdesc Ä $OutOfDate
 	echo "creating DESCRIPTION files"
 	execute :tools:GETDESC (PACKAGES}
+	execute :tools:PKGVERSION
 
 library Ä mainfiles Libfiles datafiles help demofiles
 
@@ -50,7 +51,9 @@ mainfiles Ä fixdesc
 	   NewFolder {RHOME}library:{pkg}
 	  end
 	  if  `Exists ::library:{pkg}:DESCRIPTION`
-	  Duplicate -y ::library:{pkg}:DESCRIPTION {RHOME}library:{pkg}
+	   duplicate -y ::library:{pkg}:DESCRIPTION ::library:{pkg}:des
+	   catenate ::library:{pkg}:des :pkgver > {RHOME}library:{pkg}:DESCRIPTION
+       delete  ::library:{pkg}:des
 	  end
 	  if  `Exists ::library:{pkg}:INDEX`
 	   Duplicate -y ::library:{pkg}:INDEX {RHOME}library:{pkg}
@@ -97,6 +100,8 @@ Libfiles Ä $OutOfDate
 	   if ! `Exists -d {RHOME}library:{pkg}:libs`
 	    NewFolder {RHOME}library:{pkg}:libs
 	   end
+	   SetFile -c 'ttxt' -t 'TEXT' :makefiles:{pkg}.mac
+	   translate ¶0x0a ¶0x0d <:makefiles:{pkg}.mac >::library:{pkg}:src:Makefile.mac
 	   Directory ::library:{pkg}:src
 	   Make -f Makefile.mac >build
 	   build
@@ -154,6 +159,8 @@ modules Ä $OutOfDate
 	   if ! `Exists -d {RHOME}modules`
 	    NewFolder {RHOME}modules
 	   end
+	   SetFile -c 'ttxt' -t 'TEXT' :makefiles:{modl}.mac
+	   translate ¶0x0a ¶0x0d <:makefiles:{modl}.mac >::modules:{modl}:Makefile.mac
 	   Directory ::modules:{modl}
 	   Make -f Makefile.mac >build
 	   build

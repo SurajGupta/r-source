@@ -144,20 +144,12 @@ void AdjustCursor ( Point mouseLoc, RgnHandle mouseRgn )
 {
 	Cursor		arrow ;
 	WindowRef	window ;
-
+    WEReference we;
 	// by default, set mouseRgn to the whole QuickDraw coordinate plane,
 	// so that we never get mouse moved events
 
 	SetRectRgn ( mouseRgn, -0x7FFF, -0x7FFF, 0x7FFF, 0x7FFF ) ;
 
-#if ! TARGET_API_MAC_CARBON
-	// give text services a chance to set the cursor shape
-	// (this call is not needed for Carbon clients)
-	if ( SetTSMCursor( mouseLoc ) )
-	{
-		return ;
-	}
-#endif
 
 	// if there is a window open, give WEAdjustCursor an opportunity to set the cursor
 	// WEAdjustCursor intersects mouseRgn (if supplied) with a region within which
@@ -166,10 +158,9 @@ void AdjustCursor ( Point mouseLoc, RgnHandle mouseRgn )
 
 	if ( ( window = FrontWindow ( ) ) != nil )
 	{
-		if ( WEAdjustCursor ( mouseLoc, mouseRgn, GetWindowWE ( window ) ) )
-		{
+	    if( (we = GetWindowWE(window)) != NULL)
+		 if ( WEAdjustCursor ( mouseLoc, mouseRgn, we ) )
 			return ;
-		}
 	}
 
 	// set the cursor to the arrow cursor
@@ -625,10 +616,12 @@ void DoNullEvent( const EventRecord *event )
 #pragma unused (event)
 
     WindowPtr window;
-
+    WEReference		we;
+    
     if ( ( window = FrontWindow( ) ) != nil )
     {
-	WEIdle( &sSleepTime, GetWindowWE(window) );
+     if( (we = GetWindowWE(window)) != nil)
+ 	  WEIdle( &sSleepTime, we );
     }
     else
     {

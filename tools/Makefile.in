@@ -23,13 +23,15 @@ DISTFILES = README \
 	install-sh \
 	keywords2html.pl \
 	ldAIX4 \
+	link-recommended \
 	linkcheck.pl \
 	ltmain.sh \
 	mdate-sh \
 	missing \
 	mkinstalldirs \
 	move-if-change \
-	pkg2tex.pl
+	pkg2tex.pl \
+	rsync-recommended
 
 all: Makefile R
 

@@ -32,7 +32,7 @@
   package are in non-system directories.  In this case, one can use the
   configure variables \code{LIBS} and \code{CPPFLAGS} to specify these
   locations (and set these via \code{--configure-vars}), see section
-  `Configuration variables' in ``R Installation and Adminstration'' for
+  `Configuration variables' in ``R Installation and Administration'' for
   more information.  One can also bypass the configure mechanism using
   the option \code{--no-configure}.
   
@@ -54,6 +54,23 @@
   specified via \code{--save=ARGS}.
 
   Use \code{R CMD INSTALL --help} for more usage information.
+}
+
+\section{Packages using the methods package}{
+  Packages that require the methods package, and that use functions such
+  as \code{\link[methods]{setMethod}} or
+  \code{\link[methods]{setClass}}, should be installed by creating a
+  binary image.
+
+  The package should require the methods package, both during
+  installation and when the user attaches the package.  A good solution
+  for most cases is to include the line \code{require("methods")} twice,
+  once at the beginning of the package's R source, and once in the file
+  \file{install.R} in the package directory (the top-level directory,
+  \emph{not} in the \file{R} directory below that).  The
+  \file{install.R} file causes an image to be saved, and the contents
+  will ensure that methods are available when the package is attached.
+
 }
 \seealso{
   \code{\link{REMOVE}},

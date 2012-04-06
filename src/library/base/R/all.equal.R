@@ -8,15 +8,18 @@ all.equal.default <- function(target, current, ...)
     if(is.recursive(target))
 	return(all.equal.list(target, current, ...))
     msg <- c(attr.all.equal(target, current, ...),
-	     if(data.class(target) != data.class(current))
-		paste("target is ", data.class(target), ", current is ",
-		      data.class(current), sep = "") else
-		switch (mode(target),
-			logical = ,
-                        complex = ,
-			numeric	  = all.equal.numeric(target, current, ...),
-			character = all.equal.character(target, current, ...),
-			NULL))
+	     if(is.numeric(target) && is.numeric(current)) {
+		 all.equal.numeric(target, current, ...)
+	     } else if(data.class(target) != data.class(current)) {
+		 paste("target is ", data.class(target), ", current is ",
+		       data.class(current), sep = "")
+	     } else
+	     switch (mode(target),
+		     logical = ,
+		     complex = ,
+		     numeric = all.equal.numeric(target, current, ...),
+		     character = all.equal.character(target, current, ...),
+		     NULL))
     if(is.null(msg)) TRUE else msg
 }
 
@@ -29,7 +32,7 @@ function(target, current, tolerance = .Machine$double.eps ^ .5,
     cplx <- is.complex(target)
     if(lt != lc)
 	return(paste(if(cplx)"Complex" else "Numeric",
-                     ": lengths (", lt, ", ", lc, ") differ"), sep = "")
+                     ": lengths (", lt, ", ", lc, ") differ", sep = ""))
     else msg <- NULL
     target <- as.vector(target)
     current <- as.vector(current)
@@ -72,7 +75,7 @@ all.equal.character <- function(target, current, ...)
     nas <- is.na(target)
     if (any(nas != is.na(current)))
         return(paste("`is.NA' value mismatches:", sum(is.na(current)),
-                     "in current,", sum(out), " in target"))
+                     "in current,", sum(nas), " in target"))
     ne <- !nas & (target != current)
     if(!any(ne) && is.null(msg)) TRUE
     else if(any(ne)) c(msg, paste(sum(ne), "string mismatches"))

@@ -34,11 +34,29 @@
 
 /* The R graphics device */
 
-static DevDesc *MathDevice;
+/* These are a bit unthreadable aren't they?
+ * Better to pass them all down, but that's a heck of a lot of 
+ * changes to make to the function call argument lists!!
+ */
+static GEDevDesc *MathDevice;
 static unsigned int BoxColor;
 static unsigned int TextColor;
+/* The value of cex passed into GEMathText
+ */
 static double BaseCex = 1;
-static GUnit MetricUnit = INCHES;
+static double MathGamma;
+static char *MathFontFamily;
+/* The value of font passed into GEMathText
+ * May be modified by plotmath code -- it is plotmath code's 
+ * responsibility to save and restore temporary changes.
+ */
+static int MathFont;
+static double MathLineHeight;
+/* A temporary value of cex that may be modified by plotmath code.
+ */
+static double MathCex;
+static double MathPs;
+static GEUnit MetricUnit = GE_INCHES;
 
 /* Font Definitions */
 
@@ -71,7 +89,6 @@ static double CurrentAngle;
 static double CosAngle;
 static double SinAngle;
 
-
 /* Convert CurrentX and CurrentY from */
 /* 0 angle to and CurrentAngle */
 
@@ -80,7 +97,7 @@ static double ConvertedX()
     double rotatedX = ReferenceX +
 	(CurrentX - ReferenceX) * CosAngle -
 	(CurrentY - ReferenceY) * SinAngle;
-    return rotatedX;
+    return toDeviceX(rotatedX, MetricUnit, MathDevice);
 }
 
 static double ConvertedY()
@@ -88,7 +105,7 @@ static double ConvertedY()
     double rotatedY = ReferenceY +
 	(CurrentY - ReferenceY) * CosAngle +
 	(CurrentX - ReferenceX) * SinAngle;
-    return rotatedY;
+    return toDeviceY(rotatedY, MetricUnit, MathDevice);
 }
 
 static void PMoveAcross(double xamount)
@@ -113,63 +130,85 @@ static void PMoveTo(double x, double y)
 static double FontHeight()
 {
     double height, depth, width;
-    GMetricInfo(0, &height, &depth, &width, MetricUnit, MathDevice);
-    return height + depth;
+    /* 
+     * FIXME:  When fontfamily is passed to GEMetricInfo,
+     * this will need updating (times many in this file)
+     */
+    GEMetricInfo(0, 
+		MathFont, MathCex, MathPs,
+		&height, &depth, &width, MathDevice);
+    return fromDeviceHeight(height + depth, MetricUnit, MathDevice);
 }
 #endif
 
 static double xHeight()
 {
     double height, depth, width;
-    GMetricInfo('x', &height, &depth, &width, MetricUnit, MathDevice);
-    return height;
+    GEMetricInfo('x', 
+		MathFont, MathCex, MathPs,
+		&height, &depth, &width, MathDevice);
+    return fromDeviceHeight(height, MetricUnit, MathDevice);
 }
 
 static double XHeight()
 {
     double height, depth, width;
-    GMetricInfo('X', &height, &depth, &width, MetricUnit, MathDevice);
-    return height;
+    GEMetricInfo('X', 
+		MathFont, MathCex, MathPs,
+		&height, &depth, &width, MathDevice);
+    return fromDeviceHeight(height, MetricUnit, MathDevice);
 }
 
 static double AxisHeight()
 {
     double height, depth, width;
-    GMetricInfo('+', &height, &depth, &width, MetricUnit, MathDevice);
-    return 0.5 * height;
+    GEMetricInfo('+', 
+		MathFont, MathCex, MathPs,
+		&height, &depth, &width, MathDevice);
+    return fromDeviceHeight(0.5 * height, MetricUnit, MathDevice);
 }
 
 static double Quad()
 {
     double height, depth, width;
-    GMetricInfo('M', &height, &depth, &width, MetricUnit, MathDevice);
-    return width;
+    GEMetricInfo('M', 
+		MathFont, MathCex, MathPs,
+		&height, &depth, &width, MathDevice);
+    return fromDeviceHeight(width, MetricUnit, MathDevice);
 }
 
 /* The height of digits */
 static double FigHeight()
 {
     double height, depth, width;
-    GMetricInfo('0', &height, &depth, &width, MetricUnit, MathDevice);
-    return height;
+    GEMetricInfo('0', 
+		MathFont, MathCex, MathPs,
+		&height, &depth, &width, MathDevice);
+    return fromDeviceHeight(height, MetricUnit, MathDevice);
 }
 
 /* Depth of lower case descenders */
 static double DescDepth()
 {
     double height, depth, width;
-    GMetricInfo('g', &height, &depth, &width, MetricUnit, MathDevice);
-    return depth;
+    GEMetricInfo('g', 
+		MathFont, MathCex, MathPs,
+		&height, &depth, &width, MathDevice);
+    return fromDeviceHeight(depth, MetricUnit, MathDevice);
 }
 
 #ifdef NOT_used_currently/*-- out 'def'	 (-Wall) --*/
 static double AscHeight()
 {
     double height, depth, width, save;
-    GMetricInfo('d', &height, &depth, &width, MetricUnit, MathDevice);
+    GEMetricInfo('d', 
+		MathFont, MathCex, MathPs,
+		&height, &depth, &width, MathDevice);
     save = height;
-    GMetricInfo('a', &height, &depth, &width, MetricUnit, MathDevice);
-    return save - height;
+    GEMetricInfo('a', 
+		MathFont, MathCex, MathPs,
+		&height, &depth, &width, MathDevice);
+    return fromDeviceHeight(save - height, MetricUnit, MathDevice);
 }
 #endif
 /* Thickness of rules */
@@ -182,32 +221,40 @@ static double ThinSpace()
 {
     double height, depth, width;
     static double OneSixth = 0.16666666666666666666;
-    GMetricInfo('M', &height, &depth, &width, MetricUnit, MathDevice);
-    return OneSixth * width;
+    GEMetricInfo('M', 
+		MathFont, MathCex, MathPs,
+		&height, &depth, &width, MathDevice);
+    return fromDeviceHeight(OneSixth * width, MetricUnit, MathDevice);
 }
 
 static double MediumSpace()
 {
     double height, depth, width;
     static double TwoNinths = 0.22222222222222222222;
-    GMetricInfo('M', &height, &depth, &width, MetricUnit, MathDevice);
-    return TwoNinths * width;
+    GEMetricInfo('M', 
+		MathFont, MathCex, MathPs,
+		&height, &depth, &width, MathDevice);
+    return fromDeviceHeight(TwoNinths * width, MetricUnit, MathDevice);
 }
 
 static double ThickSpace()
 {
     double height, depth, width;
     static double FiveEighteenths = 0.27777777777777777777;
-    GMetricInfo('M', &height, &depth, &width, MetricUnit, MathDevice);
-    return FiveEighteenths * width;
+    GEMetricInfo('M', 
+		MathFont, MathCex, MathPs,
+		&height, &depth, &width, MathDevice);
+    return fromDeviceHeight(FiveEighteenths * width, MetricUnit, MathDevice);
 }
 
 static double MuSpace()
 {
     double height, depth, width;
     static double OneEighteenth = 0.05555555555555555555;
-    GMetricInfo('M', &height, &depth, &width, MetricUnit, MathDevice);
-    return OneEighteenth * width;
+    GEMetricInfo('M', 
+		MathFont, MathCex, MathPs,
+		&height, &depth, &width, MathDevice);
+    return fromDeviceHeight(OneEighteenth * width, MetricUnit, MathDevice);
 }
 
 
@@ -338,15 +385,15 @@ static void SetStyle(STYLE newstyle)
     case STYLE_T:
     case STYLE_D1:
     case STYLE_T1:
-	Rf_gpptr(MathDevice)->cex = 1.0 * BaseCex;
+	MathCex = 1.0 * BaseCex;
 	break;
     case STYLE_S:
     case STYLE_S1:
-	Rf_gpptr(MathDevice)->cex = 0.7 * BaseCex;
+	MathCex = 0.7 * BaseCex;
 	break;
     case STYLE_SS:
     case STYLE_SS1:
-	Rf_gpptr(MathDevice)->cex = 0.5 * BaseCex;
+	MathCex = 0.5 * BaseCex;
 	break;
     default:
 	error("invalid math style encountered");
@@ -572,7 +619,6 @@ static BBOX DrawBBox(BBOX bbox, double xoffset, double yoffset)
     double x[5], y[5];
     CurrentX += xoffset;
     CurrentY += yoffset;
-    Rf_gpptr(MathDevice)->col = BoxColor;
     PMoveUp(-bboxDepth(bbox));
     x[4] = x[0] = ConvertedX();
     y[4] = y[0] = ConvertedY();
@@ -585,9 +631,8 @@ static BBOX DrawBBox(BBOX bbox, double xoffset, double yoffset)
     PMoveAcross(-bboxWidth(bbox));
     x[3] = ConvertedX();
     y[3] = ConvertedY();
-    GPolyline(5, x, y, INCHES, MathDevice);
+    GEPolyline(5, x, y, BoxColor, MathGamma, LTY_SOLID, 1, INCHES, MathDevice);
     PMoveTo(xsaved, ysaved);
-    Rf_gpptr(MathDevice)->col = TextColor;
     return bbox;
 }
 #endif
@@ -914,30 +959,32 @@ static FontType CurrentFont = 3;
 #endif
 static FontType GetFont()
 {
-    return Rf_gpptr(MathDevice)->font;
+    return MathFont;
 }
 
 static FontType SetFont(FontType font)
 {
-    FontType prevfont = Rf_gpptr(MathDevice)->font;
-    Rf_gpptr(MathDevice)->font = font;
+    FontType prevfont = MathFont;
+    MathFont = font;
     return prevfont;
 }
 
 static int UsingItalics()
 {
-    return (Rf_gpptr(MathDevice)->font == ItalicFont ||
-	    Rf_gpptr(MathDevice)->font == BoldItalicFont);
+    return (MathFont == ItalicFont ||
+	    MathFont == BoldItalicFont);
 }
 
 static BBOX GlyphBBox(int chr)
 {
     BBOX bbox;
     double height, depth, width;
-    GMetricInfo(chr, &height, &depth, &width, MetricUnit, MathDevice);
-    bboxHeight(bbox) = height;
-    bboxDepth(bbox)  = depth;
-    bboxWidth(bbox)  = width;
+    GEMetricInfo(chr, 
+		MathFont, MathCex, MathPs,
+		&height, &depth, &width, MathDevice);
+    bboxHeight(bbox) = fromDeviceHeight(height, MetricUnit, MathDevice);
+    bboxDepth(bbox)  = fromDeviceHeight(depth, MetricUnit, MathDevice);
+    bboxWidth(bbox)  = fromDeviceHeight(width, MetricUnit, MathDevice);
     bboxItalic(bbox) = 0;
     bboxSimple(bbox) = 1;
     return bbox;
@@ -984,8 +1031,11 @@ static BBOX RenderSymbolChar(int ascii, int draw)
     if (draw) {
 	asciiStr[0] = ascii;
 	asciiStr[1] = '\0';
-	GText(ConvertedX(), ConvertedY(), INCHES, asciiStr,
-	      0.0, 0.0, CurrentAngle, MathDevice);
+	GEText(ConvertedX(), ConvertedY(), asciiStr, 
+	       0.0, 0.0, CurrentAngle, 
+	       TextColor, MathGamma, 
+	       MathFontFamily, MathFont, MathLineHeight, MathCex, MathPs,
+	       MathDevice);
 	PMoveAcross(bboxWidth(bbox));
     }
     SetFont(prev);
@@ -1024,8 +1074,12 @@ static BBOX RenderSymbolStr(char *str, int draw)
 	    if (draw) {
 		chr[0] = *s;
 		PMoveAcross(lastItalicCorr);
-		GText(ConvertedX(), ConvertedY(), INCHES, chr,
-		      0.0, 0.0, CurrentAngle, MathDevice);
+		GEText(ConvertedX(), ConvertedY(), chr,
+		       0.0, 0.0, CurrentAngle, 
+		       TextColor, MathGamma, 
+		       MathFontFamily, MathFont, MathLineHeight, 
+		       MathCex, MathPs,
+		       MathDevice);
 		PMoveAcross(bboxWidth(glyphBBox));
 	    }
 	    bboxWidth(resultBBox) += lastItalicCorr;
@@ -1050,8 +1104,11 @@ static BBOX RenderChar(int ascii, int draw)
     if (draw) {
 	asciiStr[0] = ascii;
 	asciiStr[1] = '\0';
-	GText(ConvertedX(), ConvertedY(), INCHES, asciiStr,
-	      0.0, 0.0, CurrentAngle, MathDevice);
+	GEText(ConvertedX(), ConvertedY(), asciiStr,
+	       0.0, 0.0, CurrentAngle, 
+	       TextColor, MathGamma, 
+	       MathFontFamily, MathFont, MathLineHeight, MathCex, MathPs,
+	       MathDevice);
 	PMoveAcross(bboxWidth(bbox));
     }
     return bbox;
@@ -1069,8 +1126,12 @@ static BBOX RenderStr(char *str, int draw)
 	    s++;
 	}
 	if (draw) {
-	    GText(ConvertedX(), ConvertedY(), INCHES, str,
-		  0.0, 0.0, CurrentAngle, MathDevice);
+	    GEText(ConvertedX(), ConvertedY(), str,
+		   0.0, 0.0, CurrentAngle, 
+		   TextColor, MathGamma, 
+		   MathFontFamily, MathFont, MathLineHeight, 
+		   MathCex, MathPs,
+		   MathDevice);
 	    PMoveAcross(bboxWidth(resultBBox));
 	}
 	if (UsingItalics())
@@ -1248,18 +1309,18 @@ static BBOX RenderSlash(int draw)
 #endif
 #ifdef SLASH1
     /* Symbol Magnify Version */
-    double savecex = Rf_gpptr(MathDevice)->cex;
+    double savecex = MathCex;
     BBOX bbox;
     double height1, height2;
     height1 = bboxHeight(RenderSymbolChar(S_SLASH, 0));
-    Rf_gpptr(MathDevice)->cex = 1.2 * Rf_gpptr(MathDevice)->cex;
+    MathCex = 1.2 * MathCex;
     height2 = bboxHeight(RenderSymbolChar(S_SLASH, 0));
     if (draw)
 	PMoveUp(- 0.5 * (height2 - height1));
     bbox = RenderSymbolChar(S_SLASH, draw);
     if (draw)
 	PMoveUp(0.5 * (height2 - height1));
-    Rf_gpptr(MathDevice)->cex = savecex;
+    MathCex = savecex;
     return bbox;
 #endif
 #ifdef SLASH2
@@ -1278,7 +1339,8 @@ static BBOX RenderSlash(int draw)
 	x[1] = ConvertedX();
 	y[1] = ConvertedY();
 	PMoveUp(-height);
-	GPolyline(2, x, y, INCHES, MathDevice);
+	GEPolyline(2, x, y,
+		  TextColor, MathGamma, LTY_SOLID, 1, MathDevice);
 	PMoveAcross(0.5 * width);
     }
     return MakeBBox(height, depth, 2 * width);
@@ -1521,7 +1583,8 @@ static BBOX RenderWideTilde(SEXP expr, int draw)
 	PMoveTo(baseX + totalwidth, baseY + hatHeight);
 	x[NTILDE + 2] = ConvertedX();
 	y[NTILDE + 2] = ConvertedY();
-	GPolyline(NTILDE + 3, x, y, INCHES, MathDevice);
+	GEPolyline(NTILDE + 3, x, y, 
+		  TextColor, MathGamma, LTY_SOLID, 1, MathDevice);
 	PMoveTo(savedX + totalwidth, savedY);
     }
     return MakeBBox(height + accentGap + hatHeight,
@@ -1557,7 +1620,8 @@ static BBOX RenderWideHat(SEXP expr, int draw)
 	PMoveUp(-hatHeight);
 	x[2] = ConvertedX();
 	y[2] = ConvertedY();
-	GPolyline(3, x, y, INCHES, MathDevice);
+	GEPolyline(3, x, y, 
+		  TextColor, MathGamma, LTY_SOLID, 1, MathDevice);
 	PMoveTo(savedX + width, savedY);
     }
     return EnlargeBBox(bbox, accentGap + hatHeight, 0, 0);
@@ -1587,7 +1651,8 @@ static BBOX RenderBar(SEXP expr, int draw)
 	PMoveAcross(width);
 	x[1] = ConvertedX();
 	y[1] = ConvertedY();
-	GPolyline(2, x, y, INCHES, MathDevice);
+	GEPolyline(2, x, y, 
+		  TextColor, MathGamma, LTY_SOLID, 1, MathDevice);
 	PMoveTo(savedX + width, savedY);
     }
     return EnlargeBBox(bbox, accentGap, 0, 0);
@@ -1761,7 +1826,8 @@ static BBOX RenderFraction(SEXP expr, int rule, int draw)
 	    PMoveAcross(width);
 	    x[1] = ConvertedX();
 	    y[1] = ConvertedY();
-	    GPolyline(2, x, y, INCHES, MathDevice);
+	    GEPolyline(2, x, y, 
+		  TextColor, MathGamma, LTY_SOLID, 1, MathDevice);
 	    PMoveUp(-AxisHeight());
 	}
 	PMoveTo(savedX + width, savedY);
@@ -1843,10 +1909,10 @@ static int DelimCode(SEXP expr, SEXP head)
 static BBOX RenderDelimiter(int delim, int draw)
 {
     BBOX bbox;
-    double savecex = Rf_gpptr(MathDevice)->cex;
-    Rf_gpptr(MathDevice)->cex = DelimSymbolMag * Rf_gpptr(MathDevice)->cex;
+    double savecex = MathCex;
+    MathCex = DelimSymbolMag * MathCex;
     bbox = RenderSymbolChar(delim, draw);
-    Rf_gpptr(MathDevice)->cex = savecex;
+    MathCex = savecex;
     return bbox;
 }
 
@@ -1857,32 +1923,32 @@ static int GroupAtom(SEXP expr)
 
 static BBOX RenderGroup(SEXP expr, int draw)
 {
-    double cexSaved = Rf_gpptr(MathDevice)->cex;
+    double cexSaved = MathCex;
     BBOX bbox;
     int code;
     if (length(expr) != 4)
 	errorcall(expr, "invalid group specification");
     bbox = NullBBox();
     code = DelimCode(expr, CADR(expr));
-    Rf_gpptr(MathDevice)->cex = DelimSymbolMag * Rf_gpptr(MathDevice)->cex;
+    MathCex = DelimSymbolMag * MathCex;
     if (code == 2) {
 	bbox = RenderSymbolChar('|', draw);
 	bbox = RenderSymbolChar('|', draw);
     }
     else if (code != '.')
 	bbox = RenderSymbolChar(code, draw);
-    Rf_gpptr(MathDevice)->cex = cexSaved;
+    MathCex = cexSaved;
     bbox = CombineBBoxes(bbox, RenderElement(CADDR(expr), draw));
     bbox = RenderItalicCorr(bbox, draw);
     code = DelimCode(expr, CADDDR(expr));
-    Rf_gpptr(MathDevice)->cex = DelimSymbolMag * Rf_gpptr(MathDevice)->cex;
+    MathCex = DelimSymbolMag * MathCex;
     if (code == 2) {
 	bbox = CombineBBoxes(bbox, RenderSymbolChar('|', draw));
 	bbox = CombineBBoxes(bbox, RenderSymbolChar('|', draw));
     }
     else if (code != '.')
 	bbox = CombineBBoxes(bbox, RenderSymbolChar(code, draw));
-    Rf_gpptr(MathDevice)->cex = cexSaved;
+    MathCex = cexSaved;
     return bbox;
 }
 
@@ -2154,7 +2220,7 @@ static int OpAtom(SEXP expr)
 static BBOX RenderOpSymbol(SEXP op, int draw)
 {
     BBOX bbox;
-    double cexSaved = Rf_gpptr(MathDevice)->cex;
+    double cexSaved = MathCex;
     /*double savedX = CurrentX;*/
     /*double savedY = CurrentY;*/
     double shift;
@@ -2164,7 +2230,7 @@ static BBOX RenderOpSymbol(SEXP op, int draw)
     if (opId == S_SUM || opId == S_PRODUCT ||
 	opId == S_UNION || opId == S_INTERSECTION) {
 	if (display) {
-	    Rf_gpptr(MathDevice)->cex = OperatorSymbolMag * Rf_gpptr(MathDevice)->cex;
+	    MathCex = OperatorSymbolMag * MathCex;
 	    bbox = RenderSymbolChar(OpAtom(op), 0);
 	    shift = 0.5 * (bboxHeight(bbox) - bboxDepth(bbox)) - TeX(sigma22);
 	    if (draw) {
@@ -2172,7 +2238,7 @@ static BBOX RenderOpSymbol(SEXP op, int draw)
 		bbox = RenderSymbolChar(opId, 1);
 		PMoveUp(shift);
 	    }
-	    Rf_gpptr(MathDevice)->cex = cexSaved;
+	    MathCex = cexSaved;
 	    return ShiftBBox(bbox, -shift);
 	}
 	else return RenderSymbolChar(opId, draw);
@@ -2339,7 +2405,8 @@ static BBOX RenderRadical(SEXP expr, int draw)
 	PMoveAcross(radSpace + bboxWidth(bodyBBox) + radTrail);
 	x[4] = ConvertedX();
 	y[4] = ConvertedY();
-	GPolyline(5, x, y, INCHES, MathDevice);
+	GEPolyline(5, x, y, 
+		  TextColor, MathGamma, LTY_SOLID, 1, MathDevice);
 	PMoveTo(savedX, savedY);
     }
     orderBBox = CombineAlignedBBoxes(orderBBox,
@@ -2378,7 +2445,8 @@ static BBOX RenderAbs(SEXP expr, int draw)
 	PMoveUp(depth + height);
 	x[1] = ConvertedX();
 	y[1] = ConvertedY();
-	GPolyline(2, x, y, INCHES, MathDevice);
+	GEPolyline(2, x, y, 
+		  TextColor, MathGamma, LTY_SOLID, 1, MathDevice);
 	PMoveUp(-height);
     }
     bbox = CombineBBoxes(bbox, RenderGap(MuSpace(), draw));
@@ -2392,7 +2460,8 @@ static BBOX RenderAbs(SEXP expr, int draw)
 	PMoveUp(depth + height);
 	x[1] = ConvertedX();
 	y[1] = ConvertedY();
-	GPolyline(2, x, y, INCHES, MathDevice);
+	GEPolyline(2, x, y, 
+		  TextColor, MathGamma, LTY_SOLID, 1, MathDevice);
 	PMoveUp(-height);
     }
     bbox = CombineBBoxes(bbox, RenderGap(MuSpace(), draw));
@@ -2828,69 +2897,66 @@ static BBOX RenderOffsetElement(SEXP expr, double x, double y, int draw)
 
 }
 
+/* Functions forming the R API */
+
 /* Calculate width of expression */
 /* BBOXes are in INCHES (see MetricUnit) */
 
-/* #ifdef'ed this function out to shut -Wall up */
-#ifdef OLD
-static
-void GExpressionBBox(SEXP expr, GUnit units, double *width,
-		     double *height, double *depth, DevDesc *dd)
-{
-    BBOX bbox;
-    MathDevice = dd;
-/* The following two lines don't look right to me, but I inserted them
-   because otherwise you get trouble if you calculate BBoxes without
-   plotting any math first... Similar problem in the next two functions
-	 --pd */
-    CurrentStyle = STYLE_D;
-    SetFont(PlainFont);
-    bbox = RenderElement(expr, 0);
-    *width  = bboxWidth(bbox);
-    *height  = bboxHeight(bbox);
-    *depth  = bboxDepth(bbox);
-    if (units != INCHES) {
-	*width = GConvertXUnits(*width, INCHES, units, dd);
-	*height = GConvertYUnits(*height, INCHES, units, dd);
-	*depth = GConvertYUnits(*depth, INCHES, units, dd);
-    }
-}
-#endif
-
-double GExpressionWidth(SEXP expr, GUnit units, DevDesc *dd)
+double GEExpressionWidth(SEXP expr, 
+			 int font, double cex, double ps,
+			 GEDevDesc *dd)
 {
     BBOX bbox;
     double width;
     MathDevice = dd;
+    BaseCex = cex;
+    MathFont = font;
+    MathCex = cex;
+    MathPs = ps;
     CurrentStyle = STYLE_D;
     SetFont(PlainFont);
     bbox = RenderElement(expr, 0);
     width  = bboxWidth(bbox);
-    if (units == INCHES)
-	return width;
-    else
-	return GConvertXUnits(width, INCHES, units, dd);
+    /* 
+     * NOTE that we do fabs() here in case the device
+     * runs right-to-left.
+     * This is so that these calculations match those
+     * for string widths and heights, where the width
+     * and height of text is positive no matter how
+     * the device drawing is oriented.
+     */
+    return fabs(toDeviceWidth(width, GE_INCHES, dd));
 }
 
-double GExpressionHeight(SEXP expr, GUnit units, DevDesc *dd)
+double GEExpressionHeight(SEXP expr, 
+			  int font, double cex, double ps,
+			  GEDevDesc *dd)
 {
     BBOX bbox;
     double height;
     MathDevice = dd;
+    BaseCex = cex;
+    MathFont = font;
+    MathCex = cex;
+    MathPs = ps;
     CurrentStyle = STYLE_D;
     SetFont(PlainFont);
     bbox = RenderElement(expr, 0);
     height = bboxHeight(bbox) + bboxDepth(bbox);
-    if (units == INCHES)
-	return height;
-    else
-	return GConvertYUnits(height, INCHES, units, dd);
+    /* NOTE that we do fabs() here in case the device
+     * draws top-to-bottom (like an X11 window).
+     * This is so that these calculations match those
+     * for string widths and heights, where the width
+     * and height of text is positive no matter how
+     * the device drawing is oriented.
+     */
+    return fabs(toDeviceHeight(height, GE_INCHES, dd));
 }
 
-/* Functions forming the R API */
-
-void GMathText(double x, double y, int coords, SEXP expr,
-	       double xc, double yc, double rot, DevDesc *dd)
+void GEMathText(double x, double y, SEXP expr,
+		double xc, double yc, double rot, 
+		int col, double gamma, int font, double cex, double ps,
+		GEDevDesc *dd)
 {
     BBOX bbox;
 
@@ -2899,21 +2965,32 @@ void GMathText(double x, double y, int coords, SEXP expr,
     /* IF font metric information is not available for device */
     /* then bail out */
     double ascent, descent, width;
-    GMetricInfo(0, &ascent, &descent, &width, DEVICE, dd);
+    GEMetricInfo(0, 
+		font, cex, ps,
+		&ascent, &descent, &width, dd);
     if ((ascent==0) && (descent==0) && (width==0))
 	error("Metric information not yet available for this device");
 #endif
 
     MathDevice = dd;
-    BaseCex = Rf_gpptr(MathDevice)->cex;
+    BaseCex = cex;
     BoxColor = name2col("pink");
-    TextColor = Rf_gpptr(MathDevice)->col;
+    TextColor = col;
+    MathGamma = gamma;
+    /* 
+     * FIXME:  When fontfamily and lineheight are passed to GEMathText
+     * need to use those instead of "" and 1 below
+     */
+    MathFontFamily = "";
+    MathFont = font;
+    MathLineHeight = 1;
+    MathCex = cex;
+    MathPs = ps;
     CurrentStyle = STYLE_D;
     SetFont(PlainFont);
     bbox = RenderElement(expr, 0);
-    ReferenceX = x;
-    ReferenceY = y;
-    GConvert(&ReferenceX, &ReferenceY, coords, INCHES, dd);
+    ReferenceX = fromDeviceX(x, GE_INCHES, dd);
+    ReferenceY = fromDeviceY(y, GE_INCHES, dd);
     if (R_FINITE(xc))
 	CurrentX = ReferenceX - xc * bboxWidth(bbox);
     else
@@ -2940,6 +3017,53 @@ void GMathText(double x, double y, int coords, SEXP expr,
 }/* GMathText */
 
 
+/********************************
+ * Code below here ...
+ * ... should be moved to base.c and 
+ * ... is part of the base graphics API NOT the graphics engine API
+ ********************************
+ */
+double GExpressionWidth(SEXP expr, GUnit units, DevDesc *dd)
+{
+    double width = GEExpressionWidth(expr, 
+				     Rf_gpptr(dd)->font, Rf_gpptr(dd)->cex, 
+				     Rf_gpptr(dd)->ps, (GEDevDesc*) dd);
+    if (units == DEVICE)
+	return width;
+    else
+	return GConvertXUnits(width, DEVICE, units, dd);
+}
+
+double GExpressionHeight(SEXP expr, GUnit units, DevDesc *dd)
+{
+    double height = GEExpressionHeight(expr, 
+				       Rf_gpptr(dd)->font, Rf_gpptr(dd)->cex, 
+				       Rf_gpptr(dd)->ps, (GEDevDesc*) dd);
+    if (units == DEVICE)
+	return height;
+    else
+	return GConvertYUnits(height, DEVICE, units, dd);
+}
+
+/* This is just here to satisfy the Rgraphics.h API.
+ * This allows new graphics API (GraphicsDevice.h, GraphicsEngine.h) 
+ * to be developed alongside.
+ * Could be removed if Rgraphics.h ever gets REPLACED by new API
+ * NOTE that base graphics code no longer calls this -- the base
+ * graphics system directly calls the graphics engine for mathematical
+ * annotation (GEMathText)
+ */
+void GMathText(double x, double y, int coords, SEXP expr,
+	       double xc, double yc, double rot, 
+	       DevDesc *dd)
+{
+    GConvert(&x, &y, coords, DEVICE, dd);
+    GClip(dd);
+    GEMathText(x, y, expr, xc, yc, rot, 
+	       Rf_gpptr(dd)->col, Rf_gpptr(dd)->gamma, Rf_gpptr(dd)->font,
+	       Rf_gpptr(dd)->cex, Rf_gpptr(dd)->ps, (GEDevDesc*) dd);
+}
+
 void GMMathText(SEXP str, int side, double line, int outer,
 		double at, int las, DevDesc *dd)
 {
@@ -2956,9 +3080,9 @@ void GMMathText(SEXP str, int side, double line, int outer,
 	error("Metric information not yet available for this device");
 #endif
 
-    MathDevice = dd;
+    MathDevice = (GEDevDesc*) dd;
 
-    xadj = Rf_gpptr(MathDevice)->adj;
+    xadj = Rf_gpptr(dd)->adj;
 
     /* This is MOSTLY the same as the same section of GMtext
      * BUT it differs because it sets different values for yadj for
@@ -3045,5 +3169,15 @@ void GMMathText(SEXP str, int side, double line, int outer,
 	}
 	break;
     }
-    GMathText(at, line, coords, str, xadj, yadj, angle, dd);
+    GConvert(&at, &line, coords, DEVICE, dd);
+    /* The graphics engine (unlike graphics.c code) knows nothing about
+     * xpd settings (that is a base graphics system concept), hence
+     * the graphics engine does not call GClip.  So we must call GClip
+     * here to make sure that the current xpd setting is enforced
+     * on the device.
+     */
+    GClip(dd);
+    GEMathText(at, line, str, xadj, yadj, angle, 
+	       Rf_gpptr(dd)->col, Rf_gpptr(dd)->gamma, Rf_gpptr(dd)->font,
+	       Rf_gpptr(dd)->cex, Rf_gpptr(dd)->ps, (GEDevDesc*) dd);
 }/* GMMathText */

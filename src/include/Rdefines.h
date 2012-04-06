@@ -22,8 +22,8 @@
 
 #if !defined(R_R_H) && !defined(R_S_H)
 /* user forget to include R.h or S.h */
-#include "R_ext/Memory.h"
-#include "R_ext/RS.h"
+#include <R_ext/Memory.h>
+#include <R_ext/RS.h>
 #endif
 
 /*
@@ -119,6 +119,9 @@
 #define SET_NAMES(x, n)		setAttrib(x, R_NamesSymbol, n)
 #define GET_LENGTH(x)		length(x)
 #define SET_LENGTH(x, n)	(x = lengthgets(x, n))
+
+#define GET_SLOT(x, what)       R_do_slot(x, what)
+#define SET_SLOT(x, what, value)  R_do_slot_assign(x, what, value)
 
 #define s_object                SEXPREC
 #define S_EVALUATOR             /**/

@@ -28,10 +28,14 @@
 \alias{.Alias}
 \alias{reshapeLong}
 \alias{reshapeWide}
+\alias{piechart}
+\alias{print.ordered}
+\alias{.Dyn.libs}
+\alias{.lib.loc}
 %
 \description{
-  The functions listed here are no longer part of \R as they are not
-  needed (any more).
+  The functions or variables listed here are no longer part of \R as
+  they are not needed (any more).
 }
 \usage{
 .Defunct()
@@ -74,6 +78,13 @@ reshapeLong(x,jvars,  ilev = row.names(x),
             jlev = names(x)[jvars], iname = "reshape.i",
             jname = "reshape.j", vname = "reshape.v")
 % </Removed 1.5.0>
+% Removed in 1.6.0
+piechart(x, labels = names(x), edges = 200, radius = 0.8,
+         density = NULL, angle = 45, col = NULL, main = NULL, ...)
+print.ordered(.)
+.Dyn.libs
+.lib.loc
+% </Removed 1.6.0>
 }
 \details{
   \code{.Defunct} is the function to which defunct functions are set.
@@ -106,7 +117,7 @@ reshapeLong(x,jvars,  ilev = row.names(x),
   \code{parse.dcf} has been replaced by \code{read.dcf}, which is much
   faster, but has a slightly different interface.
 
-    \code{.Alias} provided an unreliable way to create duplicate
+  \code{.Alias} provided an unreliable way to create duplicate
   references to the same object. There is no direct replacement. Where
   multiple references to a single object are required for semantic
   reasons consider using environments or external pointers. There are
@@ -115,6 +126,15 @@ reshapeLong(x,jvars,  ilev = row.names(x),
   \code{reshape*}, which were experimental, are replaced by
   \code{\link{reshape}}. This has a different syntax and allows multiple
   time-varying variables.
+
+  \code{piechart} is the old name for \code{pie}, but clashed with usage
+  in Trellis.
+
+  \code{.Dyn.libs} and \code{.lib.loc} were internal variables used for
+  storing and manipulating the information about packages with dynloaded
+  shared libs, and the known \R library trees.  These are now dynamic
+  variables which one can get or set using \code{\link{.dynLibs}} and
+  \code{\link{.libPaths}}, respectively.
 }
 \seealso{\code{\link{Deprecated}}}
 \keyword{documentation}

@@ -22,19 +22,6 @@
 #endif
 #include <Defn.h>
 
-
-/* MEMCMP: a general, quicker (in principle) test for non-recursive
-   vectors than comparing elements in a loop.
-   Depends on the existence of memcmp (which is checked and set in
-   config.h by autoconf.
-
-   One detail is that using memcmp on double's implies that different
-   NaN bit patterns (if they occur) are different.  The non-memcmp
-   version for this case, below, treats all NaN's the same.
-*/
-#define MEMCMP(x, y, n) ((length(x) == length(y)) && (memcmp((void *)DATAPTR(x),\
-        (void *)DATAPTR(y), length(x)*n)==0) ? TRUE : FALSE)
-
 /* Implementation of identical(x, y) */
 
 static Rboolean compute_identical(SEXP x, SEXP y);
@@ -42,11 +29,9 @@ static Rboolean neWithNaN(double x,  double y);
 
 SEXP do_identical(SEXP x, SEXP y)
 {
-
     SEXP ans;
 
     PROTECT(ans = allocVector(LGLSXP, 1));
-
     LOGICAL(ans)[0] = compute_identical(x, y);
     UNPROTECT(1);
     return(ans);
@@ -54,14 +39,10 @@ SEXP do_identical(SEXP x, SEXP y)
 
 /* primitive interface */
 
-SEXP do_ident(SEXP call,  SEXP op,  SEXP args, SEXP env)
+SEXP do_ident(SEXP call, SEXP op, SEXP args, SEXP env)
 {
-    /* needs some more includes, but Defn.h produces compile errors.
-     When that's figured out, add
-     checkArity(op, args);
-  */
+    checkArity(op, args);
     return do_identical(CAR(args), CADR(args));
-
 }
 
 /* do the two objects compute as identical? */
@@ -83,64 +64,35 @@ static Rboolean compute_identical(SEXP x, SEXP y)
     case NILSXP:
 	return TRUE;
     case LGLSXP:
-#ifdef HAVE_MEMCMP
-	return(MEMCMP(x, y, sizeof(int)));
-#else
-	{
-	    int *xp = LOGICAL(x), *yp = LOGICAL(y);
-	    long i, n = length(x);
-	    if(n != length(y)) return FALSE;
-	    for(i=0; i<n; i++)
-		if(xp[i] != yp[i]) return FALSE;
-	    return TRUE;
-	}
-#endif
     case INTSXP:
-#ifdef HAVE_MEMCMP
-	return(MEMCMP(x, y, sizeof(int)));
-#else
-	{
-	    int *xp = INTEGER(x), *yp = INTEGER(y);
-	    long i, n = length(x);
-	    if(n != length(y)) return FALSE;
-	    for(i=0; i<n; i++)
-		if(xp[i] != yp[i]) return FALSE;
-	    return TRUE;
-	}
-#endif
+	if (length(x) != length(y)) return FALSE;
+	/* Use memcmp (which is ISO C) to speed up the comparison */
+	return memcmp((void *)DATAPTR(x), (void *)DATAPTR(y), 
+		      length(x) * sizeof(int)) == 0 ? TRUE : FALSE;
     case REALSXP:
-#ifdef HAVE_MEMCMP
-	return(MEMCMP(x, y, sizeof(double)));
-#else
-	{
-	    double *xp = REAL(x), *yp = REAL(y);
-	    long i, n = length(x);
-	    if(n != length(y)) return FALSE;
-	    for(i=0; i<n; i++)
-		if(neWithNaN(xp[i], yp[i])) return FALSE;
-	    return TRUE;
-	}
-#endif
+    {
+	double *xp = REAL(x), *yp = REAL(y);
+	int i, n = length(x);
+	if(n != length(y)) return FALSE;
+	for(i = 0; i < n; i++)
+	    if(neWithNaN(xp[i], yp[i])) return FALSE;
+	return TRUE;
+    }
     case CPLXSXP:
-#ifdef HAVE_MEMCMP
-	return(MEMCMP(x, y, sizeof(Rcomplex)));
-#else
-	{
-	    Rcomplex *xp = COMPLEX(x), *yp = COMPLEX(y);
-	    long i, n = length(x);
-	    if(n != length(y)) return FALSE;
-	    for(i=0; i<n; i++)
-		if(neWithNaN(xp[i].r,  yp[i].r) ||
-		   neWithNaN(xp[i].i,  yp[i].i))
-		    return FALSE;
-	    return TRUE;
-	}
-#endif
+    {
+	Rcomplex *xp = COMPLEX(x), *yp = COMPLEX(y);
+	int i, n = length(x);
+	if(n != length(y)) return FALSE;
+	for(i = 0; i < n; i++)
+	    if(neWithNaN(xp[i].r,  yp[i].r) || neWithNaN(xp[i].i,  yp[i].i))
+		return FALSE;
+	return TRUE;
+    }
     case STRSXP:
     {
-	long i, n = length(x);
+	int i, n = length(x);
 	if(n != length(y)) return FALSE;
-	for(i=0; i<n; i++) {
+	for(i = 0; i < n; i++) {
 	    Rboolean na1 = (STRING_ELT(x, i) == NA_STRING),
 		na2 = (STRING_ELT(y, i) == NA_STRING);
 	    if(na1 ^ na2) return FALSE;
@@ -152,18 +104,18 @@ static Rboolean compute_identical(SEXP x, SEXP y)
 	return TRUE;
     }
     case VECSXP:
-    case EXPRSXP: {
-	long i, n;
-	n = length(x);
-	if(n != length(y))
-	    return FALSE;
-	for(i=0; i<n; i++)
+    case EXPRSXP: 
+    {
+	int i, n = length(x);
+	if(n != length(y)) return FALSE;
+	for(i = 0; i < n; i++)
 	    if(!compute_identical(VECTOR_ELT(x, i),VECTOR_ELT(y, i)))
 		return FALSE;
 	return TRUE;
     }
     case LANGSXP:
-    case LISTSXP: {
+    case LISTSXP: 
+    {
 	while (x != R_NilValue) {
 	    if(y == R_NilValue)
 		return FALSE;
@@ -202,12 +154,13 @@ static Rboolean compute_identical(SEXP x, SEXP y)
 }
 
 /* return TRUE if x and y differ, including the case
-   that one, but not both are NAN.  Two NAN values are judged
-   identical for this purpose */
-/* used only in the NO_MEMCMP case */
+   that one, but not both are NaN.  Two NaN values are judged
+   identical for this purpose, but NA != NaN */
 
 static Rboolean neWithNaN(double x,  double y)
 {
+    if(R_IsNA(x))
+	return(R_IsNA(y) ? FALSE : TRUE);
     if(ISNAN(x))
 	return(ISNAN(y) ? FALSE : TRUE);
     return(x != y);

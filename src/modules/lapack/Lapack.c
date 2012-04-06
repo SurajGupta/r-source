@@ -300,7 +300,7 @@ static SEXP modLa_zgesv(SEXP A, SEXP B)
     if (!(isMatrix(A) && isComplex(A)))
 	error("A must be a complex matrix");
     if (!(isMatrix(B) && isComplex(B)))
-	error("A must be a complex matrix");
+	error("B must be a complex matrix");
     Adims = INTEGER(coerceVector(getAttrib(A, R_DimSymbol), INTSXP));
     Bdims = INTEGER(coerceVector(getAttrib(B, R_DimSymbol), INTSXP));
     n = Adims[0];
@@ -310,7 +310,8 @@ static SEXP modLa_zgesv(SEXP A, SEXP B)
     if(Adims[1] != n)
 	error("A (%d x %d) must be square", n, Adims[1]);
     if(Bdims[0] != n)
-	error("B (%d x %d) must be square", Bdims[0], p);
+	error("B (%d x %d) must be compatible with A (%d x %d)",
+		Bdims[0], p, n, n);
     ipiv = (int *) R_alloc(n, sizeof(int));
 
     avals = (Rcomplex *) R_alloc(n * n, sizeof(Rcomplex));
@@ -614,8 +615,79 @@ static SEXP modLa_rg_cmplx(SEXP x, SEXP only_values)
 #endif
 }
 
-#include "R_ext/Rlapack.h"
-#include "R_ext/Rdynload.h"
+static SEXP modLa_chol(SEXP A)
+{
+    if (isMatrix(A)) {
+	SEXP ans = PROTECT((TYPEOF(A) == REALSXP)?duplicate(A):
+			   coerceVector(A, REALSXP));
+	SEXP adims = getAttrib(A, R_DimSymbol);
+	int m = INTEGER(adims)[0];
+	int n = INTEGER(adims)[1];
+	int i, j;
+	
+	if (m != n) error("A must be a square matrix");
+	if (m <= 0) error("A must have dims > 0");
+	for (j = 0; j < n; j++) {	/* zero the lower triangle */
+	    for (i = j+1; i < n; i++) {
+		REAL(ans)[i + j * n] = 0.;
+	    }
+	}
+
+	F77_CALL(dpotrf)("Upper", &m, REAL(ans), &m, &i);
+	if (i != 0) {
+	    if (i > 0)
+		error("error code %d from Lapack routine dpotrf", i);
+	    error("argument no. %d to Lapack routine dpotrf is illegal",
+		  -i);
+	}
+	unprotect(1);
+	return ans;
+    }
+    else error("A must be a numeric matrix");
+    return R_NilValue; /* -Wall */
+}
+
+static SEXP modLa_chol2inv(SEXP A, SEXP size)
+{
+    int sz = asInteger(size);
+    if (sz == NA_INTEGER || sz < 1)
+	error("size argument must be a positive integer");
+    if (isMatrix(A)) {
+	SEXP Amat = PROTECT(coerceVector(A, REALSXP));
+	SEXP ans;
+	SEXP adims = getAttrib(A, R_DimSymbol);
+	int m = INTEGER(adims)[0];
+	int n = INTEGER(adims)[1];
+	int i, j;
+	
+	if (sz > n) error("size cannot exceed ncol(x) = %d", n);
+	if (sz > m) error("size cannot exceed nrow(x) = %d", m);
+	ans = PROTECT(allocMatrix(REALSXP, sz, sz));
+	for (j = 0; j < sz; j++) {
+	    for (i = 0; i <= j; i++)
+		REAL(ans)[i + j * sz] = REAL(Amat)[i + j * sz];
+	}
+	F77_CALL(dpotri)("Upper", &sz, REAL(ans), &sz, &i);
+	if (i != 0) {
+	    if (i > 0)
+		error("error code %d from Lapack routine dpotri", i);
+	    error("argument no. %d to Lapack routine dpotri is illegal",
+		  -i);
+	}
+	for (j = 0; j < sz; j++) {
+	    for (i = j+1; i < sz; i++)
+		REAL(ans)[i + j * sz] = REAL(ans)[j + i * sz];
+	}
+	unprotect(2);
+	return ans;
+    }
+    else error("A must be a numeric matrix");
+    return R_NilValue; /* -Wall */
+}
+
+
+#include <R_ext/Rlapack.h>
+#include <R_ext/Rdynload.h>
 
 void
 R_init_lapack(DllInfo *info)
@@ -633,7 +705,8 @@ R_init_lapack(DllInfo *info)
     tmp->svd_cmplx = modLa_svd_cmplx;
     tmp->rs_cmplx = modLa_rs_cmplx;
     tmp->rg_cmplx = modLa_rg_cmplx;
-
+    tmp->chol = modLa_chol;
+    tmp->chol2inv = modLa_chol2inv;
     R_setLapackRoutines(tmp);
 }
 

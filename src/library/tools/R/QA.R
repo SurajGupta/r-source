@@ -2,6 +2,19 @@
 
 sQuote <- function(s) paste("'", s, "'", sep = "")
 
+.convertFilePathToAbsolute <- function(path) {
+    ## Turn a possibly relative file path absolute, performing tilde
+    ## expansion if necessary.
+    ## Seems the only way we can do this is 'temporarily' change the
+    ## working dir and see where this takes us.
+    if(!file.exists(epath <- path.expand(path)))
+        stop(paste("file", sQuote(path), "does not exist"))
+    cwd <- getwd()
+    on.exit(setwd(cwd))
+    setwd(dirname(epath))
+    file.path(getwd(), basename(epath))
+}
+
 .listFilesWithExts <- function(dir, exts, path = TRUE) {
     ## Return the paths or names of the files in @code{dir} with
     ## extension in @code{exts}.
@@ -27,7 +40,8 @@ sQuote <- function(s) paste("'", s, "'", sep = "")
         pos <- match(paste("package", package, sep = ":"), search())
         if(!is.na(pos))
             detach(pos = pos)
-        library(package, lib.loc = lib.loc, character.only = TRUE)
+        library(package, lib.loc = lib.loc, character.only = TRUE,
+                verbose = FALSE)
     })
     if(inherits(yy, "try-error"))
         stop(yy)
@@ -103,8 +117,7 @@ function(package, dir, lib.loc = NULL)
         if(!file.exists(dir))
             stop(paste("directory", sQuote(dir), "does not exist"))
         else
-            ## maybe perform tilde expansion on @code{dir}
-            dir <- file.path(dirname(dir), basename(dir))
+            dir <- .convertFilePathToAbsolute(dir)
         if(!file.exists(docsDir <- file.path(dir, "man")))
             stop(paste("directory", sQuote(dir),
                        "does not contain Rd sources"))
@@ -200,6 +213,24 @@ function(package, dir, lib.loc = NULL)
         ## (with names starting with '.__C__' or '.__M__'; well, as long
         ## as there are none in base).
         ## </FIXME>
+
+        ## <FIXME>
+        ## Need to do something about S4 generic functions 'created' by
+        ## setGeneric() or setMethod() on 'ordinary' functions.  Short
+        ## term, we do this by checking for S4 generics in a package
+        ## which come from another one.  Long term, we need dynamic
+        ## documentation ...
+        if(!is.na(match("package:methods", search()))) {
+            codeObjs <-
+                codeObjs[sapply(codeObjs, function(f) {
+                    f <- get(f, envir = codeEnv)
+                    fAttr <- attributes(f)[c("class", "package")]
+                    (length(fAttr) == 2
+                     && fAttr[1] == "genericFunction"
+                     && fAttr[2] != basename(dir))
+                } == FALSE)]
+        }
+        ## </FIXME>
     }
 
     undocObjs <- list(code = codeObjs[! codeObjs %in% allDocTopics],
@@ -207,10 +238,15 @@ function(package, dir, lib.loc = NULL)
 
     if(!is.na(match("package:methods", search()))) {
         S4ClassObjs <- getClasses(codeEnv)
+        ## Note that currently, topicName() is not vectorized in its
+        ## 'topic' argument (so that it can perform mangling for S4
+        ## methods), hence the unlist/lapply construction.
         undocObjs <-
             c(undocObjs,
               list("S4 class" =
-                   S4ClassObjs[! topicName("class", S4ClassObjs)
+                   S4ClassObjs[! unlist(lapply(S4ClassObjs,
+                                               function(u)
+                                               topicName("class", u)))
                                %in% allDocTopics]))
     }
     
@@ -265,8 +301,7 @@ function(package, dir, lib.loc = NULL,
         if(!file.exists(dir))
             stop(paste("directory", sQuote(dir), "does not exist"))
         else
-            ## maybe perform tilde expansion on @code{dir}
-            dir <- file.path(dirname(dir), basename(dir))
+            dir <- .convertFilePathToAbsolute(dir)
         if(!file.exists(codeDir <- file.path(dir, "R")))
             stop(paste("directory", sQuote(dir),
                        "does not contain R code"))
@@ -483,8 +518,7 @@ function(package, dir, lib.loc = NULL)
         if(!file.exists(dir))
             stop(paste("directory", sQuote(dir), "does not exist"))
         else
-            ## maybe perform tilde expansion on @code{dir}
-            dir <- file.path(dirname(dir), basename(dir))
+            dir <- .convertFilePathToAbsolute(dir)            
         if(!file.exists(codeDir <- file.path(dir, "R")))
             stop(paste("directory", sQuote(dir),
                        "does not contain R code"))
@@ -547,8 +581,7 @@ function(package, dir, lib.loc = NULL)
         if(!file.exists(dir))
             stop(paste("directory", sQuote(dir), "does not exist"))
         else
-            ## maybe perform tilde expansion on @code{dir}
-            dir <- file.path(dirname(dir), basename(dir))
+            dir <- .convertFilePathToAbsolute(dir)            
     }
 
     if(!file.exists(docsDir <- file.path(dir, "man")))
@@ -682,8 +715,7 @@ function(package, dir, lib.loc = NULL)
         if(!file.exists(dir))
             stop(paste("directory", sQuote(dir), "does not exist"))
         else
-            ## maybe perform tilde expansion on @code{dir}
-            dir <- file.path(dirname(dir), basename(dir))
+            dir <- .convertFilePathToAbsolute(dir)            
         if(!file.exists(codeDir <- file.path(dir, "R")))
             stop(paste("directory", sQuote(dir),
                        "does not contain R code"))
@@ -870,8 +902,7 @@ function(package, dir, file, lib.loc = NULL,
         if(!file.exists(dir))
             stop(paste("directory", sQuote(dir), "does not exist"))
         else
-            ## maybe perform tilde expansion on @code{dir}
-            dir <- file.path(dirname(dir), basename(dir))
+            dir <- .convertFilePathToAbsolute(dir)            
         if(!file.exists(codeDir <- file.path(dir, "R")))
             stop(paste("directory", sQuote(dir),
                        "does not contain R code"))
@@ -989,8 +1020,7 @@ function(package, dir, lib.loc = NULL)
         if(!file.exists(dir))
             stop(paste("directory", sQuote(dir), "does not exist"))
         else
-            ## maybe perform tilde expansion on 'dir'
-            dir <- file.path(dirname(dir), basename(dir))
+            dir <- .convertFilePathToAbsolute(dir)            
         if(!file.exists(codeDir <- file.path(dir, "R")))
             stop(paste("directory", sQuote(dir),
                        "does not contain R code"))
@@ -1114,22 +1144,26 @@ function(x, ...)
 checkTnF <-
 function(package, dir, file, lib.loc = NULL)
 {
+    docsFiles <- character(0)
+    
     if(!missing(package)) {
         if(length(package) != 1)
             stop("argument 'package' must be of length 1")
         packageDir <- .find.package(package, lib.loc)
         if(file.exists(file.path(packageDir, "R", "all.rda"))) {
             warning("cannot check R code installed as image")
-            return(invisible())
         }
-        file <- file.path(packageDir, "R", package)
+        codeFiles <- file.path(packageDir, "R", package)
+        if(file.exists(exampleDir <- file.path(packageDir, "R-ex"))) {
+            codeFiles <- c(codeFiles,
+                           .listFilesWithExts(exampleDir, "R"))
+        }
     }
     else if(!missing(dir)) {
         if(!file.exists(dir))
             stop(paste("directory", sQuote(dir), "does not exist"))
         else
-            ## maybe perform tilde expansion on @code{dir}
-            dir <- file.path(dirname(dir), basename(dir))
+            dir <- .convertFilePathToAbsolute(dir)            
         if(!file.exists(codeDir <- file.path(dir, "R")))
             stop(paste("directory", sQuote(dir),
                        "does not contain R code"))
@@ -1138,34 +1172,67 @@ function(package, dir, file, lib.loc = NULL)
         if(file.exists(codeOSDir <- file.path(codeDir, .Platform$OS)))
             codeFiles <- c(codeFiles,
                            .listFilesWithExts(codeOSDir, codeExts))
-        file <- tempfile()
-        on.exit(unlink(file))
-        file.create(file)
-        file.append(file, codeFiles)
+        if(file.exists(docsDir <- file.path(dir, "man"))) {
+            docsExts <- c("Rd", "rd")
+            docsFiles <- .listFilesWithExts(docsDir, docsExts)
+            if(file.exists(docsOSDir <- file.path(docsDir,
+                                                  .Platform$OS)))
+                docsFiles <- c(docsFiles,
+                               .listFilesWithExts(docsOSDir, docsExts))
+        }
     }
-    else if(missing(file)) {
+    else if(!missing(file)) {
+        if(!file.exists(file))
+            stop(paste("file", sQuote(file), "does not exist"))
+        else
+            codeFiles <- file
+    }
+    else
         stop("you must specify 'package', 'dir' or 'file'")
-    }
 
-    if(!file.exists(file))
-        stop(paste("file", sQuote(file), "does not exist"))
+    findTnFInFile <- function(file) {
+        matches <- list()
+        TnF <- c("T", "F")
+        findBadExprs <- function(e, p) {
+            if(is.name(e)
+               && (as.character(e) %in% TnF)
+               && !is.null(p)) {
+                ## Need the 'list()' to deal with T/F in function
+                ## arglists which are pairlists ...
+                matches <<- c(matches, list(p))
+            }
+            else if(is.recursive(e)) {
+                for(i in seq(along = e)) Recall(e[[i]], e)
+            }
+        }
+        exprs <- parse(file = file, n = -1)
+        for(i in seq(along = exprs))
+            findBadExprs(exprs[[i]], NULL)
+        matches
+    }
 
     badExprs <- list()
-    badTnF <- c("T", "F")    
-    findBadExprs <- function(e, p) {
-        if(is.name(e) && (as.character(e) %in% badTnF) && !is.null(p)) {
-            ## Need the 'list()' to deal with T/F in function arglists
-            ## which are pairlists ...
-            badExprs <<- c(badExprs, list(p))
-        }
-        else if(is.recursive(e)) {
-            for(i in seq(along = e)) Recall(e[[i]], e)
+    for(file in codeFiles) {
+        exprs <- findTnFInFile(file)
+        if(length(exprs) > 0) {
+            exprs <- list(exprs)
+            names(exprs) <- file
+            badExprs <- c(badExprs, exprs)
         }
     }
-
-    exprs <- parse(file = file, n = -1)
-    for(i in seq(along = exprs))
-        findBadExprs(exprs[[i]], NULL)
+    for(file in docsFiles) {
+        exampleFile <- tempfile()
+        .Script("perl", "extract-examples.pl", paste(file, exampleFile))
+        if(file.exists(exampleFile)) {
+            exprs <- findTnFInFile(exampleFile)
+            if(length(exprs) > 0) {
+                exprs <- list(exprs)
+                names(exprs) <- file
+                badExprs <- c(badExprs, exprs)
+            }
+            unlink(exampleFile)
+        }
+    }
     class(badExprs) <- "checkTnF"
     badExprs
 }
@@ -1173,10 +1240,16 @@ function(package, dir, file, lib.loc = NULL)
 print.checkTnF <-
 function(x, ...)
 {
-    for(i in seq(along = x)) {
-        writeLines(strwrap(paste("found T/F in",
-                                 paste(deparse(x[[i]]), collapse = "")),
-                           exdent = 4))
+    for(fname in names(x)) {
+        writeLines(paste("File ", sQuote(fname), ":", sep = ""))
+        xfname <- x[[fname]]
+        for(i in seq(along = xfname)) {
+            writeLines(strwrap(paste("found T/F in",
+                                     paste(deparse(xfname[[i]]),
+                                           collapse = "")),
+                               exdent = 4))
+        }
+        writeLines("")        
     }
     invisible(x)
 }

@@ -1,6 +1,6 @@
-dnl aclocal.m4 generated automatically by aclocal 1.4-p4
+dnl aclocal.m4 generated automatically by aclocal 1.4-p6
 
-dnl Copyright (C) 1994, 1995-8, 1999 Free Software Foundation, Inc.
+dnl Copyright (C) 1994, 1995-8, 1999, 2001 Free Software Foundation, Inc.
 dnl This file is free software; the Free Software Foundation
 dnl gives unlimited permission to copy and/or distribute it,
 dnl with or without modifications, as long as this notice is preserved.
@@ -69,9 +69,9 @@ AC_SUBST(NO_PERL5)
 ])# R_PROG_PERL
 
 AC_DEFUN([_R_PROG_PERL_VERSION],
-[AC_CACHE_CHECK([whether perl version is at least 5.004],
+[AC_CACHE_CHECK([whether perl version is at least 5.005],
                 [r_cv_prog_perl_v5],
-[if ${PERL} -e 'require 5.004 or exit 1'; then
+[if ${PERL} -e 'require 5.005 or exit 1'; then
   r_cv_prog_perl_v5=yes
 else
   r_cv_prog_perl_v5=no
@@ -83,24 +83,24 @@ AC_DEFUN([R_PROG_TEXMF],
 AC_PATH_PROGS(DVIPS, [${DVIPS} dvips], false)
 AC_PATH_PROGS(TEX, [${TEX} tex], false)
 AC_PATH_PROGS(LATEX, [${LATEX} latex], false)
-if test -z "${ac_cv_path_LATEX}" ; then
-  ## <FIXME>
-  ## This is not quite true: need LaTeX for refman, and TeX for the 
-  ## Texinfo manuals.
+if test -z "${ac_cv_path_TEX}" ; then
   warn_dvi="you cannot build DVI versions of the R manuals"
+elif test -z "${ac_cv_path_LATEX}"; then
+  warn_dvi="you cannot build DVI versions of all the help pages"
+fi
+if test -n "${warn_dvi}"; then
   AC_MSG_WARN([${warn_dvi}])
-  ## </FIXME>
 fi
 AC_PATH_PROGS(MAKEINDEX, [${MAKEINDEX} makeindex], false)
 AC_PATH_PROGS(PDFTEX, [${PDFTEX} pdftex], false)
 AC_PATH_PROGS(PDFLATEX, [${PDFLATEX} pdflatex], false)
-if test -z "${ac_cv_path_PDFLATEX}" ; then
-  ## <FIXME>
-  ## This is not quite true: need pdfLaTeX for refman, and pdfTeX for
-  ## the Texinfo manuals.
+if test -z "${ac_cv_path_PDFTEX}" ; then
   warn_pdf="you cannot build PDF versions of the R manuals"
+elif test -z "${ac_cv_path_PDFLATEX}" ; then
+  warn_pdf="you cannot build PDF versions of all the help pages"
+fi
+if test -n "${warn_pdf}"; then
   AC_MSG_WARN([${warn_pdf}])
-  ## </FIXME>
 fi
 AC_PATH_PROGS(MAKEINFO_CMD, [${MAKEINFO} makeinfo])
 if test "${PERL}" = "${FALSE}"; then
@@ -143,6 +143,15 @@ else
   r_cv_prog_makeinfo_v4=yes
 fi])
 ])# _R_PROG_MAKEINFO_VERSION
+
+AC_DEFUN([R_PROG_BROWSER],
+[AC_PATH_PROGS(R_BROWSER, [netscape mozilla galeon kfmclient opera gnome-moz-remote open])
+if test -z "${R_BROWSER}"; then
+  warn_browser="I could not determine a browser"
+  AC_MSG_WARN([${warn_browser}])
+fi
+AC_SUBST(R_BROWSER)
+])# R_BROWSER
 
 
 AC_DEFUN([R_PROG_CC_M],
@@ -211,7 +220,7 @@ AC_SUBST_FILE(cc_rules_frag)
 
 AC_DEFUN([R_PROG_CC_FLAG],
 [ac_safe=`echo "$1" | sed 'y%./+-:=%__p___%'`
-AC_MSG_CHECKING([whether ${CC-cc} accepts $1])
+AC_MSG_CHECKING([whether ${CC} accepts $1])
 AC_CACHE_VAL([r_cv_prog_cc_flag_${ac_safe}],
 [AC_LANG_PUSH(C)
 r_save_CFLAGS="${CFLAGS}"
@@ -376,21 +385,13 @@ fi
 
 
 AC_DEFUN([R_PROG_F77_OR_F2C],
-[if test -n "${FC}"; then
-  warn_arg_var_FC="configure variable 'FC' is deprecated.
-Use variable 'F77' to specify a FORTRAN 77 compiler if necessary."
-  AC_MSG_WARN([${warn_arg_var_FC}])
-fi
-if test -n "${F77}" && test -n "${F2C}"; then
+[if test -n "${F77}" && test -n "${F2C}"; then
   warn_F77_and_F2C="both 'F77' and 'F2C' given.
-Using the given FORTRAN 77 compiler ..."
+Using the given Fortran 77 compiler ..."
   AC_MSG_WARN([${warn_F77_and_F2C}])
   F2C=
 fi
 if test -n "${F77}"; then
-  AC_MSG_RESULT([defining F77 to be ${F77}])
-elif test -n "${FC}"; then
-  F77="${FC}"
   AC_MSG_RESULT([defining F77 to be ${F77}])
 elif test -z "${F2C}"; then
   F77=
@@ -411,7 +412,7 @@ else
   AC_MSG_RESULT([defining F2C to be ${F2C}])
 fi
 if test -n "${F77}"; then
-  ## If the above 'found' a FORTRAN 77 compiler, we run AC_PROG_F77 as
+  ## If the above 'found' a Fortran 77 compiler, we run AC_PROG_F77 as
   ## this does additional testing (GNU, '-g', ...).
   AC_PROG_F77
 elif test -z "${F2C}"; then
@@ -439,13 +440,15 @@ for arg in ${FLIBS}; do
       ;;
   esac
 done
+case "${host_os}" in
+  darwin*)
+    flibs=`echo "${flibs}" | sed 's/\(.*\)-lcrtbegin.o\(.*\)/\1\2/'`
+    ;;
+esac
 FLIBS="${flibs}"
 if test "${G77}" = yes; then
   r_save_LIBS="${LIBS}"
-  ## <FIXME>
-  ## Potentially dangerous ...
   flibs=`echo "${ac_cv_flibs}" | sed 's/-lg2c/-lg2c-pic/'`
-  ## </FIXME>
   LIBS="${LIBS} ${flibs}"
   AC_LANG_PUSH(C)
   AC_TRY_LINK([], [], [FLIBS="${flibs}"])
@@ -458,8 +461,8 @@ AC_DEFUN([R_PROG_F77_APPEND_UNDERSCORE],
 [AC_REQUIRE([AC_F77_WRAPPERS])
 case "${ac_cv_f77_mangling}" in
   "upper "*)
-    AC_MSG_WARN([FORTRAN compiler uses uppercase external names])
-    AC_MSG_ERROR([cannot use FORTRAN])
+    AC_MSG_WARN([Fortran compiler uses uppercase external names])
+    AC_MSG_ERROR([cannot use Fortran])
     ;;
 esac
 AC_CACHE_VAL([r_cv_prog_f77_append_underscore],
@@ -472,7 +475,7 @@ AC_CACHE_VAL([r_cv_prog_f77_append_underscore],
     ;;
 esac])
 if test -z "${r_cv_prog_f77_append_underscore}"; then
-  AC_MSG_ERROR([cannot use FORTRAN])
+  AC_MSG_ERROR([cannot use Fortran])
 fi
 if test "${r_cv_prog_f77_append_underscore}" = yes; then
   AC_DEFINE(HAVE_F77_UNDERSCORE, 1,
@@ -483,7 +486,7 @@ fi
 
 AC_DEFUN([R_PROG_F77_CC_COMPAT],
 [AC_REQUIRE([AC_CHECK_LIBM])
-AC_MSG_CHECKING([whether ${F77-f77} and ${CC-cc} agree on int and double])
+AC_MSG_CHECKING([whether ${F77} and ${CC} agree on int and double])
 AC_CACHE_VAL([r_cv_prog_f77_cc_compat],
 [cat > conftestf.f <<EOF
       subroutine cftest(a, b, x, y)
@@ -498,7 +501,6 @@ AC_CACHE_VAL([r_cv_prog_f77_cc_compat],
       end
 EOF
 ${F77} ${FFLAGS} -c conftestf.f 1>&AS_MESSAGE_LOG_FD 2>&AS_MESSAGE_LOG_FD
-dnl Yes we need to double quote this ...
 [cat > conftest.c <<EOF
 #include <math.h>
 #include "confdefs.h"
@@ -531,14 +533,18 @@ int main () {
   exit(res);
 }
 EOF]
-if ${CC-cc} ${CFLAGS} -c conftest.c 1>&AS_MESSAGE_LOG_FD 2>&AS_MESSAGE_LOG_FD; then
-  ## <FIXME>
+if ${CC} ${CFLAGS} -c conftest.c 1>&AS_MESSAGE_LOG_FD 2>&AS_MESSAGE_LOG_FD; then
+  ## <NOTE>
   ## This should really use MAIN_LD, and hence come after this is
-  ## determined.  Or maybe we can always use ${CC} eventually?
-  if ${CC-cc} ${LDFLAGS} ${MAIN_LDFLAGS} -o conftest${ac_exeext} \
+  ## determined (and necessary additions to MAIN_LDFLAGS were made).
+  ## But it seems that we currently can always use the C compiler.
+  ## Also, to be defensive there should be a similar test with SHLIB_LD
+  ## and SHLIB_LDFLAGS (and note that on HPUX with native cc we have to
+  ## use ld for SHLIB_LD) ...
+  if ${CC} ${LDFLAGS} ${MAIN_LDFLAGS} -o conftest${ac_exeext} \
        conftest.${ac_objext} conftestf.${ac_objext} ${FLIBS} \
        ${LIBM} 1>&AS_MESSAGE_LOG_FD 2>&AS_MESSAGE_LOG_FD;
-  ## </FIXME>
+  ## </NOTE>
   then
     output=`./conftest${ac_exeext} 2>&1`
     if test ${?} = 0; then
@@ -551,14 +557,14 @@ rm -rf conftest conftest.* conftestf.* core
 if test -n "${r_cv_prog_f77_cc_compat}"; then
   AC_MSG_RESULT([yes])
 else
-  AC_MSG_WARN([${F77-f77} and ${CC-cc} disagree on int and double])
+  AC_MSG_WARN([${F77} and ${CC} disagree on int and double])
   AC_MSG_ERROR([Maybe change CFLAGS or FFLAGS?])
 fi
 ])# R_PROG_F77_CC_COMPAT
 
 AC_DEFUN([R_PROG_F77_CC_COMPAT_COMPLEX],
 [AC_REQUIRE([AC_CHECK_LIBM])
-AC_MSG_CHECKING([whether ${F77-f77} and ${CC-cc} agree on double complex])
+AC_MSG_CHECKING([whether ${F77} and ${CC} agree on double complex])
 AC_CACHE_VAL([r_cv_prog_f77_cc_compat_complex],
 [cat > conftestf.f <<EOF
       subroutine cftest(x)
@@ -571,7 +577,6 @@ c a few tests of constructs that are sometimes missing
       end
 EOF
 ${F77} ${FFLAGS} -c conftestf.f 1>&AS_MESSAGE_LOG_FD 2>&AS_MESSAGE_LOG_FD
-dnl Yes we need to double quote this ...
 [cat > conftest.c <<EOF
 #include <math.h>
 #include "confdefs.h"
@@ -604,14 +609,18 @@ int main () {
     else exit(1);
 }
 EOF]
-if ${CC-cc} ${CFLAGS} -c conftest.c 1>&AS_MESSAGE_LOG_FD 2>&AS_MESSAGE_LOG_FD; then
-  ## <FIXME>
+if ${CC} ${CFLAGS} -c conftest.c 1>&AS_MESSAGE_LOG_FD 2>&AS_MESSAGE_LOG_FD; then
+  ## <NOTE>
   ## This should really use MAIN_LD, and hence come after this is
-  ## determined.  Or maybe we can always use ${CC} eventually?
-  if ${CC-cc} ${LDFLAGS} ${MAIN_LDFLAGS} -o conftest${ac_exeext} \
+  ## determined (and necessary additions to MAIN_LDFLAGS were made).
+  ## But it seems that we currently can always use the C compiler.
+  ## Also, to be defensive there should be a similar test with SHLIB_LD
+  ## and SHLIB_LDFLAGS (and note that on HPUX with native cc we have to
+  ## use ld for SHLIB_LD) ...
+  if ${CC} ${LDFLAGS} ${MAIN_LDFLAGS} -o conftest${ac_exeext} \
        conftest.${ac_objext} conftestf.${ac_objext} ${FLIBS} \
        ${LIBM} 1>&AS_MESSAGE_LOG_FD 2>&AS_MESSAGE_LOG_FD;
-  ## </FIXME>
+  ## </NOTE>
   then
     output=`./conftest${ac_exeext} 2>&1`
     if test ${?} = 0; then
@@ -627,10 +636,8 @@ if test -n "${r_cv_prog_f77_cc_compat_complex}"; then
             [Define if C's Rcomplex and Fortran's COMPLEX*16 can be
              interchanged, and can do arithmetic on the latter.])
 else
-  ## <FIXME>
-  ## Use warn_f77_cc_double_complex ...
-  AC_MSG_WARN([${F77-f77} and ${CC-cc} disagree on double complex])
-  ## </FIXME>
+  warn_f77_cc_double_complex="${F77} and ${CC} disagree on double complex"
+  AC_MSG_WARN([${warn_f77_cc_double_complex}])
 fi
 AC_SUBST(HAVE_DOUBLE_COMPLEX)
 ])# R_PROG_F77_CC_COMPAT_COMPLEX
@@ -680,7 +687,7 @@ AC_SUBST_FILE(f77_rules_frag)
 
 AC_DEFUN([R_PROG_F77_FLAG],
 [ac_safe=`echo "$1" | sed 'y%./+-:=%__p___%'`
-AC_MSG_CHECKING([whether ${F77-f77} accepts $1])
+AC_MSG_CHECKING([whether ${F77} accepts $1])
 AC_CACHE_VAL([r_cv_prog_f77_flag_${ac_safe}],
 [AC_LANG_PUSH(Fortran 77)
 r_save_FFLAGS="${FFLAGS}"
@@ -879,16 +886,12 @@ fi
 AC_DEFUN([R_HEADER_SETJMP],
 [AC_CACHE_CHECK([whether setjmp.h is POSIX.1 compatible], 
                 [r_cv_header_setjmp_posix],
-[AC_EGREP_HEADER(sigjmp_buf, setjmp.h, 
-                 [r_cv_header_setjmp_posix=yes],
-                 [r_cv_header_setjmp_posix=no])
-if test "${r_cv_header_setjmp_posix}" = yes; then
-  AC_EGREP_HEADER([siglongjmp], setjmp.h, [], [r_cv_header_setjmp_posix=no])
-fi
-if test "${r_cv_header_setjmp_posix}" = yes; then
-  AC_EGREP_HEADER([sigsetjmp], setjmp.h, [], [r_cv_header_setjmp_posix=no])
-fi
-])
+[AC_TRY_COMPILE([#include <setjmp.h>],
+[sigjmp_buf b;
+sigsetjmp(b, 0);
+siglongjmp(b, 1);],
+[r_cv_header_setjmp_posix=yes],
+[r_cv_header_setjmp_posix=no])])
 if test "${r_cv_header_setjmp_posix}" = yes; then
   AC_DEFINE(HAVE_POSIX_SETJMP, 1,
             [Define if you have POSIX.1 compatible sigsetjmp/siglongjmp.])
@@ -919,8 +922,8 @@ fi
 AC_DEFUN([R_TYPE_SOCKLEN],
 [AC_MSG_CHECKING([for type of socket length])
 AC_CACHE_VAL([r_cv_type_socklen],
-  [for t in socklen_t size_t int; do
-    AC_TRY_COMPILE(
+[for t in socklen_t size_t int; do
+  AC_TRY_COMPILE(
 [#include <stddef.h>
 #include <sys/types.h>
 #ifdef HAVE_SYS_SOCKET_H
@@ -930,10 +933,10 @@ AC_CACHE_VAL([r_cv_type_socklen],
 #include <winsock.h>
 #endif
 ], 
-                   [(void)getsockopt (1, 1, 1, NULL, (${t} *)NULL)],
-                   [r_cv_type_socklen=${t}; break],
-	           [r_cv_type_socklen=])
-  done])
+                 [(void)getsockopt (1, 1, 1, NULL, (${t} *)NULL)],
+                 [r_cv_type_socklen=${t}; break],
+                 [r_cv_type_socklen=])
+done])
 if test "x${r_cv_type_socklen}" = x; then
   warn_type_socklen="could not determine type of socket length"
   AC_MSG_WARN([${warn_type_socklen}])
@@ -961,12 +964,28 @@ if test "${use_gnome}" != yes; then
   GNOME_IF_FILES=
 else
   AC_DEFINE(HAVE_GNOME, 1,
-            [Define if the GNOME headers and libraries are available,
+            [Define if you have the GNOME headers and libraries,
              and want the GNOME GUI to be built.])
 fi
 AC_SUBST(HAVE_GNOME)
 AC_SUBST(GNOME_IF_FILES)
 ])# R_GNOME
+
+AC_DEFUN([R_AQUA],
+[use_aqua=no
+if test "${want_aqua}" = yes; then
+  case "${host_os}" in
+    darwin*)
+      use_aqua=yes
+      ;;
+  esac
+fi
+if test "${use_aqua}" = yes; then
+  AC_DEFINE(HAVE_AQUA, 1,
+            [Define if you have the Aqua headers and libraries,
+             and want the Aqua GUI to be built.])
+fi
+])# R_AQUA
 
 AC_DEFUN([R_IEEE_754],
 [AC_CHECK_FUNCS([finite isnan])
@@ -1075,7 +1094,7 @@ AC_EGREP_CPP([yes],
 AC_DEFUN([_R_PATH_TCL_CONFIG],
 [AC_MSG_CHECKING([for tclConfig.sh in library (sub)directories])
 AC_CACHE_VAL([r_cv_path_TCL_CONFIG],
-[for ldir in /opt/lib /usr/local/lib /usr/lib /lib; do
+[for ldir in /opt/lib /sw/lib /usr/local/lib /usr/lib /lib; do
   for dir in \
       ${ldir} \
       `ls -d ${ldir}/tcl[[8-9]].[[0-9]]* 2>/dev/null | sort -r`; do
@@ -1095,7 +1114,7 @@ fi
 AC_DEFUN([_R_PATH_TK_CONFIG],
 [AC_MSG_CHECKING([for tkConfig.sh in library (sub)directories])
 AC_CACHE_VAL([r_cv_path_TK_CONFIG],
-[for ldir in /opt/lib /usr/local/lib /usr/lib /lib; do
+[for ldir in /opt/lib /sw/lib /usr/local/lib /usr/lib /lib; do
   for dir in \
       ${ldir} \
       `ls -d ${ldir}/tk[[8-9]].[[0-9]]* 2>/dev/null | sort -r`; do
@@ -1151,10 +1170,16 @@ if test -z "${TCLTK_CPPFLAGS}" \
       have_tcltk=no
     fi
   fi
-  ## <FIXME>
-  ## Shouldn't there also be a test that major and minor versions of
-  ## the scripts match?
-  ## </FIXME>
+  if test -n "${TCL_CONFIG}" \
+      && test -n "${TK_CONFIG}" \
+      && test -z "${warn_tcltk_version}"; then
+    if test ${TCL_MAJOR_VERSION} -ne ${TK_MAJOR_VERSION} \
+      || test ${TCL_MINOR_VERSION} -ne ${TK_MINOR_VERSION}; then
+     warn_tcltk_version="Tcl and Tk major or minor versions disagree"
+      AC_MSG_WARN([${warn_tcltk_version}])
+      have_tcltk=no
+    fi
+  fi
 fi
 ])# _R_TCLTK_CONFIG
 
@@ -1194,14 +1219,12 @@ if test -z "${TCLTK_CPPFLAGS}"; then
       ## Look for tcl.h in
       ##   ${TCL_PREFIX}/include/tcl${TCL_VERSION}
       ##   ${TCL_PREFIX}/include
-      ## <FIXME>
       ## Also look in
       ##   ${TCL_PREFIX}/include/tcl${TCL_VERSION}/generic
       ## to deal with current FreeBSD layouts.  These also link the real
       ## thing to the version subdir, but the link cannot be used as it
       ## fails to include 'tclDecls.h' which is not linked.  Hence we
       ## must look for the real thing first.  Argh ...
-      ## </FIXME>
       for dir in \
           ${TCL_PREFIX}/include/tcl${TCL_VERSION}/generic \
           ${TCL_PREFIX}/include/tcl${TCL_VERSION} \
@@ -1229,16 +1252,13 @@ if test -z "${TCLTK_CPPFLAGS}"; then
       ## Look for tk.h in
       ##   ${TK_PREFIX}/include/tk${TK_VERSION}
       ##   ${TK_PREFIX}/include
-      ## <FIXME>
       ## Also look in
       ##   ${TK_PREFIX}/include/tcl${TK_VERSION}
       ## to compensate for Debian madness ...
-      ## </FIXME>
-      ## <FIXME>
       ## Also look in
       ##   ${TK_PREFIX}/include/tk${TK_VERSION}/generic
       ## to deal with current FreeBSD layouts.  See above for details.
-      ## </FIXME>
+      ##
       ## As the AC_CHECK_HEADER test tries including the header file and
       ## tk.h includes tcl.h and X11/Xlib.h, we need to change CPPFLAGS
       ## for the check.
@@ -1454,18 +1474,20 @@ AC_SUBST(BLAS_LIBS)
 ])# R_BLAS_LIBS
 
 AC_DEFUN([R_XDR],
-[AC_CACHE_CHECK([for XDR support],
+[AC_CHECK_HEADER(rpc/types.h)
+if test "${ac_cv_header_rpc_types_h}" = yes ; then
+  AC_CHECK_HEADER(rpc/xdr.h, , , [#include <rpc/types.h>])
+fi
+AC_CACHE_CHECK([for XDR support],
                 [r_cv_xdr],
-[if test "${ac_cv_header_rpc_rpc_h}" = yes \
-    && test "${ac_cv_search_xdr_string}" != no ; then
+[if test "${ac_cv_header_rpc_types_h}" = yes \
+     && test "${ac_cv_header_rpc_xdr_h}" = yes \
+     && test "${ac_cv_search_xdr_string}" != no ; then
   r_cv_xdr=yes
 else
   r_cv_xdr=no
-fi])
-if test "${r_cv_xdr}" = yes; then
-  AC_DEFINE(HAVE_XDR, 1,
-            [Define if you have the XDR headers and library routines.])
 fi
+])
 AM_CONDITIONAL(BUILD_XDR, [test "x${r_cv_xdr}" = xno])
 ])# R_XDR
 
@@ -1526,6 +1548,21 @@ caddr_t hello() {
 	       [r_cv_zlib_mmap=yes]))
 ])# _R_ZLIB_MMAP
 
+AC_DEFUN([R_PCRE],
+[AC_CHECK_LIB(pcre, pcre_fullinfo, [have_pcre=yes], [have_pcre=no])
+if test "${have_pcre}" = yes; then
+  AC_CHECK_HEADERS(pcre.h pcre/pcre.h)
+  if test "${ac_cv_header_pcre_h}" = no \
+      && test "${ac_cv_header_pcre_pcre_h}" = no; then
+    have_pcre=no
+  fi
+fi
+if test "${have_pcre}" = yes; then
+  AC_DEFINE(HAVE_PCRE, 1,
+            [Define if you have the PCRE headers and libraries.])
+  LIBS="-lpcre ${LIBS}"
+fi
+])# R_PCRE
 
 AC_DEFUN([R_BZLIB],
 [AC_CHECK_LIB(bz2, BZ2_bzlibVersion, [have_bzlib=yes], [have_bzlib=no])
@@ -1538,7 +1575,6 @@ if test "${have_bzlib}" = yes; then
   LIBS="-lbz2 ${LIBS}"
 fi
 ])# R_BZLIB
-
 
 AC_DEFUN([R_SYS_POSIX_LEAPSECONDS],
 [AC_CACHE_CHECK([whether leap seconds are treated according to POSIX],
@@ -1567,6 +1603,23 @@ if test "x${r_cv_sys_posix_leapseconds}" = xyes; then
 	     seconds, as required by POSIX.])
 fi
 ])# R_SYS_POSIX_LEAPSECONDS
+
+
+AC_DEFUN([R_RECOMMENDED_PACKAGES],
+[AC_CACHE_CHECK([for recommended packages],
+                [r_cv_misc_recommended_packages],
+[r_cv_misc_recommended_packages=yes
+recommended_pkgs=`grep '^R_PKGS_RECOMMENDED *=' ${srcdir}/Makeconf.in | \
+  sed 's/.*=//'`
+for pkg in ${recommended_pkgs}; do
+  n_pkg=`ls ${srcdir}/src/library/Recommended/${pkg}_*.tar.gz | wc -l`
+  if test ${n_pkg} -ne 1; then
+    r_cv_misc_recommended_packages=no
+    break
+  fi
+done])
+use_recommended_packages=${r_cv_misc_recommended_packages}
+])# R_RECOMMENDED_PACKAGES
 
 dnl
 dnl GNOME_GNORBA_HOOK (script-if-gnorba-found, failflag)
@@ -5288,7 +5341,7 @@ ifelse([AC_DISABLE_FAST_INSTALL])
 
 # Define a conditional.
 
-AC_DEFUN(AM_CONDITIONAL,
+AC_DEFUN([AM_CONDITIONAL],
 [AC_SUBST($1_TRUE)
 AC_SUBST($1_FALSE)
 if $2; then
@@ -5308,8 +5361,9 @@ fi])
 dnl Usage:
 dnl AM_INIT_AUTOMAKE(package,version, [no-define])
 
-AC_DEFUN(AM_INIT_AUTOMAKE,
-[AC_REQUIRE([AC_PROG_INSTALL])
+AC_DEFUN([AM_INIT_AUTOMAKE],
+[AC_REQUIRE([AM_SET_CURRENT_AUTOMAKE_VERSION])dnl
+AC_REQUIRE([AC_PROG_INSTALL])
 PACKAGE=[$1]
 AC_SUBST(PACKAGE)
 VERSION=[$2]
@@ -5325,18 +5379,47 @@ AC_REQUIRE([AM_SANITY_CHECK])
 AC_REQUIRE([AC_ARG_PROGRAM])
 dnl FIXME This is truly gross.
 missing_dir=`cd $ac_aux_dir && pwd`
-AM_MISSING_PROG(ACLOCAL, aclocal, $missing_dir)
+AM_MISSING_PROG(ACLOCAL, aclocal-${am__api_version}, $missing_dir)
 AM_MISSING_PROG(AUTOCONF, autoconf, $missing_dir)
-AM_MISSING_PROG(AUTOMAKE, automake, $missing_dir)
+AM_MISSING_PROG(AUTOMAKE, automake-${am__api_version}, $missing_dir)
 AM_MISSING_PROG(AUTOHEADER, autoheader, $missing_dir)
 AM_MISSING_PROG(MAKEINFO, makeinfo, $missing_dir)
 AC_REQUIRE([AC_PROG_MAKE_SET])])
+
+# Copyright 2002  Free Software Foundation, Inc.
+
+# This program is free software; you can redistribute it and/or modify
+# it under the terms of the GNU General Public License as published by
+# the Free Software Foundation; either version 2, or (at your option)
+# any later version.
+
+# This program is distributed in the hope that it will be useful,
+# but WITHOUT ANY WARRANTY; without even the implied warranty of
+# MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
+# GNU General Public License for more details.
+
+# You should have received a copy of the GNU General Public License
+# along with this program; if not, write to the Free Software
+# Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA
+
+# AM_AUTOMAKE_VERSION(VERSION)
+# ----------------------------
+# Automake X.Y traces this macro to ensure aclocal.m4 has been
+# generated from the m4 files accompanying Automake X.Y.
+AC_DEFUN([AM_AUTOMAKE_VERSION],[am__api_version="1.4"])
+
+# AM_SET_CURRENT_AUTOMAKE_VERSION
+# -------------------------------
+# Call AM_AUTOMAKE_VERSION so it can be traced.
+# This function is AC_REQUIREd by AC_INIT_AUTOMAKE.
+AC_DEFUN([AM_SET_CURRENT_AUTOMAKE_VERSION],
+	 [AM_AUTOMAKE_VERSION([1.4-p6])])
 
 #
 # Check to make sure that the build environment is sane.
 #
 
-AC_DEFUN(AM_SANITY_CHECK,
+AC_DEFUN([AM_SANITY_CHECK],
 [AC_MSG_CHECKING([whether build environment is sane])
 # Just in case
 sleep 1
@@ -5377,7 +5460,7 @@ AC_MSG_RESULT(yes)])
 
 dnl AM_MISSING_PROG(NAME, PROGRAM, DIRECTORY)
 dnl The program must properly implement --version.
-AC_DEFUN(AM_MISSING_PROG,
+AC_DEFUN([AM_MISSING_PROG],
 [AC_MSG_CHECKING(for working $2)
 # Run test in a subshell; some versions of sh will print an error if
 # an executable is not found, even if stderr is redirected.

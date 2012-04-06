@@ -19,7 +19,7 @@
  *
  *  SYNOPSIS
  *
- * #include "Rmath.h"
+ * #include <Rmath.h>
  *
  * double pbeta_raw(double x, double pin, double qin, int lower_tail)
  * double pbeta	   (double x, double pin, double qin, int lower_tail, int log_p)
@@ -109,7 +109,7 @@ double pbeta_raw(double x, double pin, double qin, int lower_tail)
 	/* now evaluate the finite sum, maybe. */
 
 	if (q > 1) {
-	    xb = p * log(y) + q * log(1 - y) - lbeta(p, q) - log(q);
+	    xb = p * log(y) + q * log1p(-y) - lbeta(p, q) - log(q);
 	    ib = fmax2(xb / lnsml, 0.0);
 	    term = exp(xb - ib * lnsml);
 	    c = 1 / (1 - y);

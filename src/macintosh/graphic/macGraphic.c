@@ -52,6 +52,8 @@ static int BuildingPict = 0;
 extern char *mac_getenv(const char *name);
 extern int GetScreenRes(void);
 
+extern Boolean Interrupt;
+
    /* Device Driver Actions */
 
 static void Mac_Activate(NewDevDesc *dd);
@@ -514,6 +516,7 @@ static void Mac_Deactivate(NewDevDesc *dd)
 /* Fixed Dec 2001, Jago. Stefano M. Iacus 
    Rectangles are now drawn using lty and lwd parameter
    double code suppressed.
+   Fixed July 2002, Ken Beath <kjbeath@kagi.com>
 */
 
 static void Mac_Rect(double x0, double y0, double x1, double y1,
@@ -562,10 +565,10 @@ static void Mac_Rect(double x0, double y0, double x1, double y1,
     }
     if (col != NA_INTEGER){
 	Mac_SetColor(col, dd);
-	DrawLineType(x0, y0, x1+1, y0, dd);
-	DrawLineType(x1+1, y0, x1+1, y1+1, dd);
-	DrawLineType(x1+1, y1+1, x0, y1+1, dd);
-	DrawLineType(x0, y1+1, x0, y0, dd);
+	DrawLineType(x0, y0, x1, y0, dd);
+	DrawLineType(x1, y0, x1, y1, dd);
+	DrawLineType(x1, y1, x0, y1, dd);
+	DrawLineType(x0, y1, x0, y0, dd);
     }
 
     SetPort(savedPort);
@@ -935,8 +938,18 @@ static Rboolean Mac_Locator(double *x, double *y, NewDevDesc *dd)
 
 
     while(!mouseClick) {
+	
+    if(Interrupt && CheckEventQueueForUserCancel()){
+     SetPort(savePort);
+	 Rprintf("\n");
+	 error("user break");
+	 raise(SIGINT);
+     return FALSE;
+    }
+
 	gotEvent = WaitNextEvent( everyEvent, &event, 0, nil);
 
+   
 	if (event.what == mouseDown) {
 	    partCode = FindWindow(event.where, &window);
 	    if ((window == (xd->window)) && (partCode == inContent)) {

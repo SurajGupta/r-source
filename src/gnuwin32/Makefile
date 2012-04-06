@@ -1,6 +1,8 @@
 include MkRules
 include RWVERSION
 
+## This is done so Rpwd.exe gets built first under a native build,
+## but it is not used in Makefile under a cross-build.
 ifneq ($(strip $(BUILD)),CROSS)
 ifneq ($(strip $(wildcard Rpwd.exe)),)
 all: Rpwd.exe rbuild rpackage rdocs
@@ -44,7 +46,8 @@ FLIBS+=-lRblas
 SOURCES = $(filter-out malloc.c blas00.c,$(wildcard *.c *.f))
 OBJS = $(SOURCES:.c=.o)
 MAINLIBS = libmain.a libappl.a libmath.a
-EXTRALIBS = ga.a gl.a xdr.a ../extra/zlib/libz.a
+EXTRALIBS = ga.a gl.a xdr.a ../extra/zlib/libz.a ../extra/pcre/libRpcre.a\
+   ../extra/bzip2/libbz2.a
 
 LIBFILES = $(foreach i, $(ALLPACKAGES), ../../library/$i) ../../library/R.css
 PKGS = $(foreach i,$(PACKAGES),pkg-$i)
@@ -61,7 +64,7 @@ endif
 
 # separate as Tcl/Tk headers are needed.
 tcl: 
-	$(MAKE) STAMP=NO pkg-tcltk
+	$(MAKE) pkg-tcltk
 
 CFLAGS = $(OPTFLAGS) -I../include -I. -DHAVE_CONFIG_H -DR_DLL_BUILD
 FFLAGS = $(OPTFLAGS)
@@ -77,12 +80,15 @@ rbuild: fixfiles rlibs makeMakedeps libRblas.a ../../bin/R.dll libR.a \
 	 ../../bin/Rblas.dll CHTML front-ends COPYRIGHTS rmodules
 
 rpackage: fixed/fixdesc ../../library/R.css
-	$(MAKE) STAMP=NO $(PKGS)
+	$(MAKE) $(PKGS)
 
 rinstaller:
-	$(MAKE) -C installer RPREFIX=$(RPREFIX)
+	$(MAKE) -C installer
+	$(MAKE) -C installer clean
 
 rlibs:
+# need pcre.h built before main is built
+	$(MAKE) -C ../extra/pcre -f Makefile.win
 	$(MAKE) -C ../appl  OPTFLAGS='$(OPTFLAGS)' -f Makefile.win
 	$(MAKE) -C ../main  OPTFLAGS='$(OPTFLAGS)' -f Makefile.win
 	$(MAKE) -C ../nmath OPTFLAGS='$(OPTFLAGS)' -f Makefile.win
@@ -151,7 +157,6 @@ Rm.exp1: $(OBJS-EXTRA)
 	$(ECHO) EXPORTS > $@
 	$(NM) $(OBJS-EXTRA) > RDefs
 	$(SED) -n '/^........ [T] _/s/^........ [T] _/ /p' RDefs >> $@
-	$(CAT) exported-vars >> $@
 	$(RM) RDefs
 
 ../../library/R.css: ../../doc/html/R.css
@@ -159,6 +164,12 @@ Rm.exp1: $(OBJS-EXTRA)
 
 ../extra/zlib/libz.a:
 	$(MAKE) -C ../extra/zlib -f Makefile.win
+
+../extra/pcre/libRpcre.a:
+	$(MAKE) -C ../extra/pcre -f Makefile.win
+
+../extra/bzip2/libbz2.a:
+	$(MAKE) -C ../extra/bzip2  -f Makefile.win libbz2.a
 
 rdocs:
 	@$(MAKE) -C ../../doc/manual -f Makefile.win html BUILD=$(BUILD)
@@ -180,7 +191,7 @@ libRblas.a:  Rblas.def
 ifeq ($(strip $(USE_ATLAS)),YES)
 ../../bin/Rblas.dll: blas00.o dllversion.o
 	@$(ECHO) -------- Building $@ --------
-	$(DLL) -shared -o $@ $^ Rblas.def -L $(ATLAS_PATH) \
+	$(DLL) -shared $(DLLFLAGS) -o $@ $^ Rblas.def -L $(ATLAS_PATH) \
 	   -L. -lR -lg2c -lf77blas -latlas
 ## suppress lots of warnings: this is a dummy
 blas00.o: blas00.c
@@ -188,7 +199,7 @@ blas00.o: blas00.c
 else
 ../../bin/Rblas.dll: blas.o cmplxblas.o dllversion.o
 	@$(ECHO) -------- Building $@ --------
-	$(DLL) -shared -o $@ Rblas.def $^ -L. -lR
+	$(DLL) -shared $(DLLFLAGS) -o $@ Rblas.def $^ -L. -lR
 
 blas.o: ../appl/blas.f
 	$(F77) $(FFLAGS) -c $< -o $@
@@ -218,13 +229,27 @@ ts-ZIPDATA = zip
 
 MASS-HELP = ziponly
 MASS-ZIPDATA = zip
+boot-HELP = ziponly
+boot-ZIPDATA = zip
+cluster-HELP = ziponly
+cluster-ZIPDATA = zip
+grid-HELP = ziponly
+grid-ZIPDATA = zip
+lattice-HELP = ziponly
+lattice-ZIPDATA = zip
+nlme-HELP = ziponly
+nlme-ZIPDATA = zip
+rpart-HELP = ziponly
+rpart-ZIPDATA = zip
+survival-HELP = ziponly
+survival-ZIPDATA = zip
 
 bundle-%:
 	$(PERL) fixed/dobundle.pl $* $(PKGD) $(RLIB)
 
 pkg-%:
 	$(MAKE) DLLNM=$($*-DLLNM)  FLIBS="$(FLIBS)" BUILD=$(BUILD) \
-	  -C $(PKGDIR)/$* PKG=$* RHOME=$(RHOME) RLIB=$(RLIB) \
+	  -C $(PKGDIR)/$* PKG=$* RHOME=$(RHOME) RLIB=$(RLIB) RVER=$(RVER) \
 	  -f $(RHOME)/src/gnuwin32/MakePkg
 	@if test -d $(RLIB)/$*/data ; then \
 	  $(MAKE) $($*-ZIPDATA)data-$* ; \
@@ -241,16 +266,16 @@ endif
 endif
 
 pkgclean-%:
-	$(MAKE) DLLNM=$($*-DLLNM) RHOME=$(RHOME) BUILD=$(BUILD) \
+	$(MAKE)  --no-print-directory DLLNM=$($*-DLLNM) RHOME=$(RHOME) BUILD=$(BUILD) \
 	  -C $(PKGDIR)/$* PKG=$* -f $(RHOME)/src/gnuwin32/MakePkg clean
 
 pkgcheck-%:
 	@$(ECHO) -------- Testing package $* --------
 	-@mkdir -p $(PKGDIR)/$*/check
-	@$(MAKE) -C $(PKGDIR)/$*/check PKG=$* RHOME=$(RHOME) RLIB=$(RLIB) \
+	@$(MAKE) --no-print-directory -C $(PKGDIR)/$*/check PKG=$* RHOME=$(RHOME) RLIB=$(RLIB) \
 	  -f $(RHOME)/src/gnuwin32/check/PkgCheck
 	@if test -d $(PKGDIR)/$*/tests ; then \
-	  $(MAKE) -C $(PKGDIR)/$*/tests PKG=$* RHOME=$(RHOME) RLIB=$(RLIB) \
+	  $(MAKE) --no-print-directory -C $(PKGDIR)/$*/tests PKG=$* RHOME=$(RHOME) RLIB=$(RLIB) \
 	    -f $(RHOME)/src/gnuwin32/check/PkgCheck tests;\
 	fi
 
@@ -283,12 +308,16 @@ clean: cleanwin $(PKGCLEAN)
 	-$(MAKE) -C ../modules -f Makefile.win clean
 	-$(MAKE) -C ../../tests -f Makefile.win clean
 	$(RM) -f ../library/methods/R/methods
+	for p in $(REC_PKGS); do \
+	  $(RM) -rf ../library/$$p; \
+	done
 
-distclean veryclean: clean
+distclean veryclean: clean clean-recommended
 	$(RM) -r ../../bin ../../library ../../modules
 	$(RM) ../include/config.h ../include/psignal.h \
 	../include/Rconfig.h ../include/Rversion.h ../include/Rmath.h
 	$(RM) ../library/*/src/*.o ../library/*/src/*.a
+	$(RM) ../library/*/src/*.d ../library/*/src/Makedeps
 	$(RM) ../library/*/src/*.dll
 	$(RM) -r ../library/*/check
 	$(RM) R.exp Rm.exp COPYRIGHTS
@@ -299,7 +328,7 @@ distclean veryclean: clean
 	../../etc/rgb.txt ../../share/make/wintests.mk \
 	../include/Platform.h ../../tests/*.Rout ../../tests/*.Rout.fail
 	$(MAKE) -C fixed distclean
-	-$(MAKE) -C installer ISdistclean
+	-$(MAKE) -C installer distclean
 	@for pkg in $(ALLPACKAGES); do \
 	  $(RM) ../library/$${pkg}/DESCRIPTION; \
 	done
@@ -314,8 +343,10 @@ cleanwin:
 	$(MAKE) -C help clean
 	$(MAKE) -C front-ends clean
 	$(MAKE) -C ../extra/xdr -f Makefile.win clean
+	$(MAKE) -C ../extra/pcre -f Makefile.win distclean
+	$(MAKE) -C ../extra/bzip2 -f Makefile.win clean
 	$(MAKE) -C bitmap clean
-	-$(MAKE) -C installer clean ISclean
+	-$(MAKE) -C installer clean
 
 
 #                          ===== testing ======
@@ -331,6 +362,10 @@ test-Specific:
 PKGS-CHK = $(foreach i, $(PACKAGES), pkgcheck-$i)
 pkgtests: $(PKGS-CHK)
 
+fullcheck: check check-recommended
+
+REC_PKGS-CHK = $(foreach i, $(REC_PKGS), pkgcheck-$i)
+check-recommended: $(REC_PKGS-CHK)
 
 #                          ===== documentation ======
 
@@ -416,7 +451,7 @@ endif
 
 
 #taken from ../include/Makefile.in
-SRC_HEADERS = R.h S.h Rdefines.h Rgraphics.h Rinternals.h Rmath.h
+SRC_HEADERS = R.h S.h Rdefines.h Rdevices.h Rgraphics.h Rinternals.h Rmath.h
 OBJ_HEADERS = Rconfig.h Rversion.h
 GW32_HEADERS =
 
@@ -430,7 +465,7 @@ packagedist:
 	$(CP) ../../doc/KEYWORDS* $(RPREFIX)/doc
 	$(CP) -p exported-vars R.exp Rblas.def MkRules MakePkg MakeDll \
 	  Rpwd.exe pwd.pl makeDllRes.pl install-save.sh $(RPREFIX)/src/gnuwin32
-	$(CP) -p Makefile.packages $(RPREFIX)/src/gnuwin32/Makefile
+	$(SED) -e s/@RVER@/$(RVER)/g Makefile.packages > $(RPREFIX)/src/gnuwin32/Makefile
 	$(CP) fixed/dobundle.pl $(RPREFIX)/src/gnuwin32/fixed
 	$(CP) -pr help check $(RPREFIX)/src/gnuwin32
 	$(RM) $(RPREFIX)/src/gnuwin32/help/*.c \
@@ -470,12 +505,41 @@ docsdist: docs
 install:
 	cp *.zip /pub/bdr/RWin/Rpre
 
+CRANREC = cran.r-project.org::CRAN/src/contrib/$(RVER)/Recommended
 
+rsync-recommended:
+	(cd ../library; \
+	rsync -rvCt --delete --exclude=Makefile.in --exclude=.cvsignore \
+	  --include=*.tar.gz $(CRANREC) . ); \
+	(cd ../library/Recommended; for i in ${RECOMMENDED} ; do cp -p $${i}*.tar.gz $${i}_tgz ; done)
+
+../library/%/DESCRIPTION: ../library/RECOMMENDED/%_tgz
+	@echo "---- $*"
+	(cd ../library; tar zxf Recommended/$*_tgz; touch $@)
+
+unpack-recommended:
+	@echo "--- Unpacking recommended packages"
+	@for i in ${RECOMMENDED} ; do $(MAKE) -s --no-print-directory ../library/$$i/DESCRIPTION ; done
+
+clean-recommended:
+	@for i in ${RECOMMENDED} ; do $(RM) -r ../library/$${i} ; done
+
+recommended: unpack-recommended
+	@echo "--- Making recommended packages"
+	@$(MAKE) --no-print-directory bundle-VR
+	@for p in $(REC_NONBUNDLES); do \
+	  $(MAKE) --no-print-directory pkg-$$p; \
+	done
+
+dist-recommended:
+	@for p in $(REC_PKGS); do \
+	(cd ../..; zip -r9X src/gnuwin32/Recommended.zip library/$$p) ; \
+	done
 
 ## ============= End of maintainer targets ========================
 
 # Dependencies
-CSOURCES=$(wildcard *.c)
+CSOURCES=$(filter-out malloc.c blas00.c,$(wildcard *.c))
 DEPS=$(CSOURCES:.c=.d)
 
 makeMakedeps: $(DEPS)

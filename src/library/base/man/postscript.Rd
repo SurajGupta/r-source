@@ -43,7 +43,7 @@ ps.options(paper, horizontal, width, height, family, encoding,
 #endif
 
     For use with \code{onefile=FALSE} give a \code{printf} format such
-    as \code{"Rplot\%d.ps"} (the default in that case).
+    as \code{"Rplot\%03d.ps"} (the default in that case).
   }
   \item{\dots}{further options for \code{postscript()}.}
   \item{paper}{the size of paper in the printer.  The choices are
@@ -76,12 +76,12 @@ ps.options(paper, horizontal, width, height, family, encoding,
     if the path does not contain a path separator.  An extension
     \code{".enc"} can be omitted.}
   \item{pointsize}{the default point size to be used.}
-  \item{bg}{the default background color to be used. If "white" (or a
-    specification equivalent to white), no background is painted.}
+  \item{bg}{the default background color to be used.  If "transparent" (or
+    an equivalent specification), no background is painted.}
   \item{fg}{the default foreground color to be used.}
   \item{onefile}{logical: if true (the default) allow multiple figures
     in one file. If false, generate a
-    file name containing the page number and give EPSF header
+    file name containing the page number and use an EPSF header
     and no \code{DocumentMedia} comment.}
   \item{pagecentre}{logical: should the device region be centred on the page:
     defaults to true.}
@@ -105,11 +105,14 @@ ps.options(paper, horizontal, width, height, family, encoding,
     \item Setting \code{print.it = TRUE} causes the command given in
     argument \code{command} to be called with argument \code{"file"}
     when the device is closed.
-    Note that the plot file is not deleted unless command arranges to
+    Note that the plot file is not deleted unless \code{command} arranges to
     delete it.
 
     \item \code{file=""} or \code{file="|cmd"} can be used to print
-    using a pipe on systems that support \file{popen}.
+    using a pipe on systems that support \file{popen}.  Failure to open the
+    command will probably be reported to the terminal but not to
+    \file{popen}, in which case close the device by \code{dev.off}
+    immediately.
   }
 #ifdef windows
   Only the first of these will work on Windows, and the default
@@ -132,10 +135,6 @@ ps.options(paper, horizontal, width, height, family, encoding,
   vector \code{.ps.prolog}.  This is marked in the output, and can be
   changed by changing that vector.  (This is only advisable for
   PostScript experts.)
-
-  As ISOLatin1 encoding is used, \code{-} is set as a minus and not
-  as a hyphen.  Supply a hyphen (character 173) if that is what you
-  need.
 
   \code{ps.options} needs to be called before calling \code{postscript},
   and the default values it sets can be overridden by supplying
@@ -235,7 +234,7 @@ dev.off()              # plot will appear on printer
 #endif
 #ifdef windows
 options(printcmd='redpr -P"\\\\markov\\lw"')
-postscript(file=tempfile("R.ps"), print.it=TRUE)
+postscript(file=tempfile("Rps."), print.it=TRUE)
 # produce the desired graph(s)
 dev.off()              # send plot file to the printer
 #endif

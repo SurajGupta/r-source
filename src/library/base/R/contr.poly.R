@@ -55,10 +55,10 @@ poly <- function(x, ..., degree = 1, coefs = NULL)
     }
     if(degree < 1)
         stop("degree must be at least 1")
-    if(degree >= length(x))
-        stop("degree must be less than number of points")
     n <- degree + 1
     if(is.null(coefs)) { # fitting
+        if(degree >= length(x))
+            stop("degree must be less than number of points")
         xbar <- mean(x)
         x <- x - xbar
         X <- outer(x, seq(length = n) - 1, "^")
@@ -113,7 +113,7 @@ polym <- function(..., degree = 1)
     n <- sapply(dots, length)
     if(any(n != n[1]))
         stop("arguments must have the same length")
-    z <- expand.grid(0:degree, 0:degree)
+    z <- do.call("expand.grid", rep(list(0:degree), nd))
     s <- rowSums(z)
     ind <- (s > 0) & (s <= degree)
     z <- z[ind, ]; s <- s[ind]

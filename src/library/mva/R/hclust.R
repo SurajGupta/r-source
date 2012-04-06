@@ -39,18 +39,20 @@ hclust <- function(d, method="complete", members=NULL)
 	stop("invalid dissimilarities")
     if(n < 2)
         stop("Must have n >= 2 objects to cluster")
+    len <- as.integer(n*(n-1)/2)
+    if(length(d) != len)
+        (if (length(d) < len) stop else warning
+         )("dissimilarities of improper length")
+
     labels <- attr(d, "Labels")
-
-    len <- n*(n-1)/2
-
     if(is.null(members))
         members <- rep(1, n)
-    if(length(members) != n)
+    else if(length(members) != n)
         stop("Invalid length of members")
 
     hcl <- .Fortran("hclust",
-		    n = as.integer(n),
-		    len = as.integer(len),
+		    n = n,
+		    len = len,
 		    method = as.integer(method),
 		    ia = integer(n),
 		    ib = integer(n),
@@ -77,11 +79,8 @@ hclust <- function(d, method="complete", members=NULL)
 		 order = hcass$order,
 		 labels=attr(d, "Labels"),
                  method=METHODS[method],
-                 call=match.call())
-
-    if(!is.null(attr(d, "method"))){
-        tree$dist.method <- attr(d, "method")
-    }
+                 call = match.call(),
+                 dist.method = attr(d, "method"))
     class(tree) <- "hclust"
     tree
 }
@@ -147,20 +146,27 @@ plclust <- function(tree, hang = 0.1, unit = FALSE, level = FALSE, hmin = 0,
 }
 
 
-
 as.hclust <- function(x, ...) UseMethod("as.hclust")
+## need *.default for idempotency:
+as.hclust.default <- function(x, ...) {
+    if(inherits(x, "hclust")) x
+    else
+	stop("argument `x' cannot be coerced to class `hclust'.",
+             if(!is.null(class(x)))
+             "\n Consider providing an as.hclust.",class(x)[1],"() method")
+}
 
 as.hclust.twins <- function(x, ...)
 {
-    retval <- list(merge = x$merge,
-                   height = sort(x$height),
-                   order = x$order,
-                   call = match.call(),
-                   method = NA,
-                   dist.method = attr(x$diss, "Metric"),
-                   labels = rownames(x$data))
-    class(retval) <- "hclust"
-    retval
+    r <- list(merge = x$merge,
+              height = sort(x$height),
+              order = x$order,
+              call = match.call(),
+              method = NA,
+              dist.method = attr(x$diss, "Metric"),
+              labels = rownames(x$data))
+    class(r) <- "hclust"
+    r
 }
 
 print.hclust <- function(x, ...)
@@ -171,8 +177,29 @@ print.hclust <- function(x, ...)
         cat("Cluster method   :", x$method, "\n")
     if(!is.null(x$dist.method))
         cat("Distance         :", x$dist.method, "\n")
-        cat("Number of objects:", length(x$height)+1, "\n")
+    cat("Number of objects:", length(x$height)+1, "\n")
     cat("\n")
 }
 
+cophenetic <- function(x) {
+    x <- as.hclust(x)
+    nobs <- length(x$order)
+    ilist <- vector("list", length=nobs)
+    names(ilist) <- 1:nobs # FIXME: do better when you can!
+    rmat <- matrix(NA, nr=nobs, nc=nobs)
+    for( i in 1:(nobs-1)) {
+        inds <- x$merge[i,]
+        ids1 <- if(inds[1] < 0) -inds[1] else ilist[[inds[1]]]
+        ids2 <- if(inds[2] < 0) -inds[2] else ilist[[inds[2]]]
+        ilist[[i]] <- c(ids1, ids2)
+        for( ival1 in ids1)
+            for( ival2 in ids2 ){
+                if( ival1 > ival2 )
+                    rmat[ival1, ival2] <- x$height[i]
+                else
+                    rmat[ival2, ival1] <- x$height[i]
+            }
+    }
+    return(as.dist(rmat))
+}
 

@@ -111,26 +111,15 @@ The information here applies only to recent versions of R for Windows,
 
 Go to any CRAN site (see @uref{http://cran.r-project.org/mirrors.html}
 for a list), navigate to the @code{bin/windows/base}
-directory and collect the files you need.  There are three versions of
+directory and collect the files you need.  There are two versions of
 the distribution.
 
-1) @code{SetupR.exe} is about 18Mb and gives a complete installation.
+1) @code{@RWVER@.exe} is about 19Mb and gives a complete installation.
 
-2) Directory @code{miniR} contains @code{miniR.exe} and seven files
+2) Directory @code{miniR} contains @code{miniR.exe} and eight files
 @code{miniR-?.bin}.  You can put  @code{miniR.exe} and @code{miniR-1.bin}
 on one floppy and the remaining @code{miniR-?.bin} on a floppy each.
 
-3) Via zip files in directory @code{zip}.  You will need at least the
-files
-@example
-      @RWVER@b.zip
-      @RWVER@h.zip (text help) or @RWVER@ch.zip (Compiled HTML help)
-@end example
-@noindent
-and you may want @code{@RWVER@w.zip} (the HTML format help files),
-@code{@RWVER@l.zip} (the LaTeX format help files, used for offline
-printing), or @code{@RWVER@d?.zip} (the manuals, in PDF).  The
-recommended packages are available separately.
 
 @node How do I install R for Windows?, How do I run it?, Where can I find the latest version?, Installation and Usage
 @section How do I install R for Windows?
@@ -143,7 +132,7 @@ If you want to build packages from sources, we recommend that you choose
 an installation path not containing spaces.  (Using a path with spaces
 in will probably work, but is little-tested.)
 
-The simplest way is to use @code{SetupR.exe} or @code{miniR.exe}.  Just
+The simplest way is to use @code{@RWVER@.exe} or @code{miniR.exe}.  Just
 double-click on the icon and follow the instructions.  If you installed
 R this way you can uninstall it from the Control Panel or Start Menu
 (unless you supressed making a group for R).
@@ -184,7 +173,7 @@ currect working directory of the shell.)
 
 Normally you can do this from the R group on the Start Menu or from the
 @code{Add/Remove Programs} in the Control Panel.  If it does not appear
-there or if you want to remove an old version, run @file{unis000.exe} in
+there or if you want to remove an old version, run @file{unins000.exe} in
 the top-level installation directory.
 
 Uninstalling R only removes files from the initial installation, not for
@@ -212,13 +201,12 @@ versions around if you prefer.
 Indeed there is.  It is set by the command-line flag
 @code{--max-mem-size} (@pxref{How do I install R for Windows?}) and
 defaults to the smaller of the amount of physical RAM in the machine and
-256Mb.  It can be set to any amount over 10M. (R will not run in less.)
+1Gb.  It can be set to any amount over 10M. (R will not run in less.)
 Be aware though that Windows has (in most versions) a maximum amount of
 user virtual memory of 2Gb, and parts of this can be reserved by
-processes but not used.  R itself reserves on startup the larger of
-256Mb and the amount specified by @code{--max-mem-size}.  Because of the
-way the memory manager works, it is possible that there will be free
-memory but R will not be able to reserve it.
+processes but not used.  Because of the way the memory manager works, it
+is possible that there will be free memory but R will not be able to
+make use of it.
 
 Use @code{?Memory} and @code{?memory.size} for information about memory
 usage.  The limit can be raised by calling @code{memory.limit} within a
@@ -271,9 +259,8 @@ LaTeX installed you can print help files by @code{help(fn_name, offline=TRUE)}.
 @section Can I use @code{R BATCH}?
 
 Yes, if you have Perl and the files for making source packages (from
-@code{SetupR.exe} or @code{@RWVER@sp.zip}) installed.  The Windows
-analogue is @code{Rcmd BATCH}: use @code{Rcmd BATCH --help} for full
-details.
+@code{@RWVER@.exe}) installed.  The Windows analogue is @code{Rcmd
+BATCH}: use @code{Rcmd BATCH --help} for full details.
 
 Otherwise you can set up a batch file using @code{Rterm.exe}.  A sample
 batch file might contain (as one line)
@@ -351,21 +338,23 @@ and that this neither sets up nor removes the file associations.
 @node Entering certain characters crashes Rgui., The internet download functions fail., Does R use the Registry?, Installation and Usage
 @section Entering certain characters crashes Rgui.
 
-This seems to happen occasionally, and all the occurrences we have
-solved have been traced to faulty versions of @samp{msvcrt.dll}.  Try
-extracting the one to be found in the self-extracting archive
-@uref{ftp://ftp.microsoft.com/softlib/mslfiles/msvcrt.exe}
-and put it in the @code{@RWVER@\bin} directory.  Removing
-@samp{msvcrt.dll} from that directory reverts to the standard behaviour.
+This used to happen occasionally, and all the occurrences we have
+solved have been traced to faulty versions of @samp{msvcrt.dll}.  
+We have installed a workaround as from @code{rw1051} that seems to
+avoid this.
 
-This fix has solved other problems too, for example incorrect results in
-the date-time functions.
-
+If it still happens, try extracting the one to be found in the
+self-extracting archive
+@uref{ftp://ftp.microsoft.com/softlib/mslfiles/msvcrt.exe} and put it in
+the @code{@RWVER@\bin} directory.  Removing @samp{msvcrt.dll} from that
+directory reverts to the standard behaviour.
 It seems that on some versions of Windows (but not 2000/XP) you also
 need to put the @code{@RWVER@\bin} directory early in your path.
 
-We have installed a workaround as from @code{rw1051} that hopefully
-avoids this.
+This fix has solved other problems too, for example incorrect results in
+the date-time functions.  However, you are probably better off
+re-installing Windows.
+
 
 @node The internet download functions fail.,  , Entering certain characters crashes Rgui., Installation and Usage
 @section The internet download functions fail.
@@ -396,6 +385,7 @@ later installed).
 * Loading a package fails.::    
 * Package TclTk does not work.::  
 * Hyperlinks in Compiled HTML do not work.::  
+* update.packages() fails::     
 @end menu
 
 
@@ -415,13 +405,11 @@ point-and-click interface to package installation.
 Note that the pre-compiled versions on CRAN are unsupported: see
 @uref{http://cran.r-project.org/bin/windows/contrib/ReadMe}.
 
-If there is not a pre-compiled version or that is not up-to-date or you
-prefer compiling from source, get @code{@RWVER@sp.zip} from the
-distribution (@pxref{Where can I find the latest version?}; you may
-already have installed this from @code{SetupR.exe}) and unpack it in the
-parent of @code{@RWVER@}.  Then read the file @file{readme.packages}.
-You will need to collect and install several tools to use this: you can
-download them via the portal at
+If there is not a pre-compiled version or that is not up-to-date or
+you prefer compiling from source, make sure you installed the
+necessary files from @code{@RWVER@.exe}.  Then read the file
+@file{README.packages}.  You will need to collect and install several
+tools to use this: you can download them via the portal at
 @uref{http://www.stats.ox.ac.uk/pub/Rtools/}.  Once you have done so,
 just run @code{Rcmd INSTALL pkgname}.  To check the package (including
 running all the examples on its help pages and in its test suite, if
@@ -547,16 +535,29 @@ you forget, you can set the variable inside R by something like
 @smallexample
     Sys.putenv("TCL_LIBRARY"="c:/Program Files/Tcl/lib/tcl8.3")
 @end smallexample
-.)
+.)  Similarly, you can set the path if needed by something like
+@smallexample
+    Sys.putenv(PATH=paste(Sys.getenv("PATH"), "c:/Tcl/bin", sep = ";"))
+@end smallexample
 
 
-@node  Hyperlinks in Compiled HTML do not work.,  , Package TclTk does not work., Packages
+
+@node  Hyperlinks in Compiled HTML do not work., update.packages() fails, Package TclTk does not work., Packages
 @section Hyperlinks in Compiled HTML sometimes do not work.
 
 They may well not work between packages installed in different
 libraries.  This is solved under Unix using symbolic links which Windows
 does not implement.
 
+@node update.packages() fails,  , Hyperlinks in Compiled HTML do not work., Packages
+@section @code{update.packages()} fails
+
+You may not be able to update a package which is in use: Windows `locks'
+the package's DLL when it is loaded.  So use @code{update.packages()}
+(or the menu equivalent) in a new session.
+
+If you put @code{library(foo)} in your @file{.Rprofile} you will need to
+start R with @code{--vanilla} to be able to update package @code{foo}.
 
 @newchap{}
 @node Windows Features, Workspaces, Packages, Top
@@ -802,23 +803,26 @@ case) did not work.
 
 Fast BLAS (Basic Linear Algebra Subprograms,
 @uref{http://www.netlib.org/blas/faq.html}) routines are used to speed
-up numerical linear algebra.  If you compile R from sources yourself,
-there is support for the `tuned' BLAS called ATLAS
-(@uref{http://www.netlib.org/atlas/}).  The savings can be appreciable:
-on a 366MHz PIIM and a 1000 x 1000 matrix @code{La.svd} took 182 sec
-with the standard BLAS and 59 sec with ATLAS.  Because ATLAS is tuned to
-a particular chip we can't use it generally: the optimal routines for a
-PIII or an Athlon XP are quite different and neither will not run at all
-on a PII.
-
-In the file @file{MkRules} there are macros @code{USE_ATLAS} and
-@code{ATLAS_PATH}.  Set @code{USE_ATLAS = YES} and @code{ATLAS_PATH} to
-where the ATLAS libraries are located.  You will need to make the
-libraries yourself: none of the binaries we have seen are compiled for
-the correct compiler.
+up numerical linear algebra.  There is support in the R sources for
+the `tuned' BLAS called ATLAS
+(@uref{http://math-atlas.sourceforge.net}).  The savings can be
+appreciable: on a 366MHz PIIM and a 1000 x 1000 matrix @code{La.svd}
+took 182 sec with the standard BLAS and 59 sec with ATLAS.  Because
+ATLAS is tuned to a particular chip we can't use it generally: the
+optimal routines for a PIII or an Athlon XP are quite different and
+neither will not run at all on a PII.
 
 BLAS support is supplied by the single DLL @file{R_HOME\bin\Rblas.dll},
-and you can add a fast BLAS just by replacing that.
+and you can add a fast BLAS just by replacing that.  Replacements for
+some of the more common chips are available on CRAN in directory
+@file{bin/windows/contrib/ATLAS}.
+
+If you are building R from source, in the file @file{MkRules} there
+are macros @code{USE_ATLAS} and @code{ATLAS_PATH}.  Set
+@code{USE_ATLAS = YES} and @code{ATLAS_PATH} to where the ATLAS
+libraries are located.  You will need to make the libraries yourself:
+none of the binaries we have seen are compiled for the correct
+compiler.
 
 
 @node  How do I include compiled C code?, How do I debug code that I have compiled and dyn.load-ed?, Can I use a fast BLAS?, Building from Source
@@ -827,9 +831,9 @@ and you can add a fast BLAS just by replacing that.
 We strongly encourage you to do this @emph{via} building an R package:
 see the @emph{`Writing R Extensions'} manual.  In any event you should
 install the parts of the R system for building R packages (in
-@code{SetupR.exe} or @code{@RWVER@sp.zip}), and get and install the
-tools (including Perl) and compilers mentioned in the file
-@file{readme.packages} contained therein.  Then you can use
+@code{@RWVER@.exe}), and get and install the tools (including Perl) and
+compilers mentioned in the file @file{readme.packages} contained
+therein.  Then you can use
 @example
 ...\bin\Rcmd SHLIB foo.c bar.f
 @end example
@@ -1010,7 +1014,7 @@ Last edited 2002 June 01 by Professor B. D. Ripley
 @end ifhtml
 @ifinfo
 @sp 2
-Last edited 2002 June 01 by Professor B. D. Ripley <ripley@@stats.ox.ac.uk>
+Last edited 2002 July 26 by Professor B. D. Ripley <ripley@@stats.ox.ac.uk>
 @end ifinfo
 
 @bye

@@ -1,64 +1,74 @@
 \name{grep}
 \title{Pattern Matching and Replacement}
-\usage{
-grep(pattern, x, ignore.case=FALSE, extended=TRUE, value=FALSE)
-sub(pattern, replacement, x,
-        ignore.case=FALSE, extended=TRUE)
-gsub(pattern, replacement, x,
-        ignore.case=FALSE, extended=TRUE)
-regexpr(pattern, text,  extended=TRUE)
-}
 \alias{grep}
 \alias{sub}
 \alias{gsub}
 \alias{regexpr}
-\arguments{
-\item{pattern}{character string containing a regular expression
-  to be matched in the vector of character string \code{vec}.}
-\item{x, text}{a character vector where matches are sought.}
-\item{ignore.case}{if \code{FALSE}, the pattern matching is
-  \emph{case sensitive} and if \code{TRUE}, case is ignored during matching.}
-\item{extended}{if \code{TRUE}, extended regular expression matching
-  is used, and if \code{FALSE} basic regular expressions are used.}
-\item{value}{if \code{FALSE}, a vector containing the (\code{integer}) indices
-  of the matches determined by \code{grep} is returned,
-  and if \code{TRUE}, a vector containing the matching
-  elements themselves is returned.}
-\item{replacement}{a replacement for matched pattern in
-  \code{sub} and \code{gsub}.}
-}
 \description{
   \code{grep} searches for matches to \code{pattern} (its first
   argument) within the character vector \code{x} (second
   argument). \code{regexpr} does too, but returns more detail in a
   different format.
 
-  \code{sub} and \code{gsub} perform replacement of matches
-  determined by regular expression matching.
+  \code{sub} and \code{gsub} perform replacement of matches determined
+  by regular expression matching.
+}
+\usage{
+grep(pattern, x, ignore.case=FALSE, extended=TRUE, perl=FALSE, value=FALSE)
+sub(pattern, replacement, x,
+        ignore.case=FALSE, extended=TRUE, perl=FALSE)
+gsub(pattern, replacement, x,
+        ignore.case=FALSE, extended=TRUE, perl=FALSE)
+regexpr(pattern, text,  extended=TRUE, perl=FALSE)
+}
+\arguments{
+  \item{pattern}{character string containing a regular expression to be
+    matched in the given character vector.}
+  \item{x, text}{a character vector where matches are sought.}
+  \item{ignore.case}{if \code{FALSE}, the pattern matching is \emph{case
+      sensitive} and if \code{TRUE}, case is ignored during matching.}
+  \item{extended}{if \code{TRUE}, extended regular expression matching
+    is used, and if \code{FALSE} basic regular expressions are used.}
+  \item{perl}{logical. Should perl-compatible regexps be used if
+    available?  Has priority over \code{extended}.}
+  \item{value}{if \code{FALSE}, a vector containing the (\code{integer})
+    indices of the matches determined by \code{grep} is returned, and if
+    \code{TRUE}, a vector containing the matching elements themselves is
+    returned.}
+  \item{replacement}{a replacement for matched pattern in \code{sub} and
+    \code{gsub}.}
 }
 \details{
-  The two \code{*sub} functions differ only in that \code{sub} replaces only
-  the first occurrence of a \code{pattern} whereas \code{gsub} replaces
-  all occurrences.
+  The two \code{*sub} functions differ only in that \code{sub} replaces
+  only the first occurrence of a \code{pattern} whereas \code{gsub}
+  replaces all occurrences.
 
   The regular expressions used are those specified by POSIX 1003.2,
   either extended or basic, depending on the value of the
-  \code{extended} argument.
+  \code{extended} argument, unless \code{perl = TRUE} when they are
+  those of PCRE,
+  \url{ftp://ftp.csx.cam.ac.uk/pub/software/programming/pcre/}.
 }
 \value{
-    For \code{grep} a vector giving either the indices of the elements
-    of \code{x} that yielded a match or, if \code{value} is \code{TRUE},
-    the matched elements.
+  For \code{grep} a vector giving either the indices of the elements of
+  \code{x} that yielded a match or, if \code{value} is \code{TRUE}, the
+  matched elements.
 
-    For \code{sub} and \code{gsub} a character vector of the same
-    length as the original.
+  For \code{sub} and \code{gsub} a character vector of the same length
+  as the original.
 
-    For \code{regexpr} an integer vector of the same length as
-    \code{text} giving the starting position of the first match, or -1
-    if there is none, with attribute \code{"match.length"} giving the
-    length of the matched text (or -1 for no match).
+  For \code{regexpr} an integer vector of the same length as \code{text}
+  giving the starting position of the first match, or \eqn{-1} if there
+  is none, with attribute \code{"match.length"} giving the length of the
+  matched text (or \eqn{-1} for no match).
+}
+\note{
+  \code{perl=TRUE} will only be available if \R was compiled against 
+  PCRE: this is detected at configure time.
 }
 \seealso{
+  \code{\link{agrep}} for approximate matching.
+  
   \code{\link{tolower}}, \code{\link{toupper}} and \code{\link{chartr}}
   for character translations.
   \code{\link{charmatch}}, \code{\link{pmatch}}, \code{\link{match}}.
@@ -94,6 +104,13 @@ txt[gsub("g","#", txt) !=
     gsub("g","#", txt, ignore.case = TRUE)] # the "G" words
 
 regexpr("en", txt)
+
+## trim trailing white space
+str = 'Now is the time      '
+sub(' +$', '', str)  ## spaces only
+sub('[[:space:]]+$', '', str) ## white space, POSIX-style
+if(capabilities("PCRE"))
+  sub('\\\\s+$', '', str, perl = TRUE) ## perl-style white space
 }
 \keyword{character}
 \keyword{utilities}

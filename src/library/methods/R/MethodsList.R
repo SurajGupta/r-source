@@ -86,13 +86,20 @@ insertMethod <-
 {
     ## Checks for assertions about valid calls.
     ## See rev. 1.17 for the code before the assertions added.
-    if(identical(args[1], "..."))
-        stop("inserting method with invalid signature containing \"...\"")
+    if(identical(args[1], "...")) {
+        if(!identical(signature[[1]], "ANY"))
+           stop("inserting method with invalid signature matching argument \"...\" to class \"",
+                signature[[1]], "\"")
+        args <- args[-1]
+        signature <- signature[-1]
+        if(length(signature) == 0)
+            return(mlist)
+    }
     if(length(signature) == 0)
         stop("inserting method corresponding to empty signature")
     if(!is(mlist, "MethodsList"))
         stop(paste("inserting method into non-methods-list object (class \"",
-                   data.class(mlist), "\")", sep=""))
+                   .class1(mlist), "\")", sep=""))
     if(length(args) > 1 && !cacheOnly)
         mlist <- balanceMethodsList(mlist, args)
     Class <- el(signature, 1)
@@ -160,11 +167,12 @@ MethodsListSelect <-
   ## a method specifically linked to class `"missing"'.  Once a function is found, it
   ## is returned as the value.  If matching fails,  NULL is returned.
     function(f, env,
-             mlist = getMethodsForDispatch(f),
-             fEnv = NULL,  ## supplied ONLY to save results in session metadata
+             mlist = getMethodsForDispatch(f, fdef),
+             fEnv = if(is(fdef, "genericFunction")) environment(fdef) else NULL,
              finalDefault = finalDefaultMethod(mlist),
              evalArgs = TRUE,
-             useInherited = TRUE  ## supplied when evalArgs is FALSE
+             useInherited = TRUE,  ## supplied when evalArgs is FALSE
+             fdef = getGeneric(f)
  )
 {
     if(!is(mlist, "MethodsList")) {
@@ -178,8 +186,10 @@ MethodsListSelect <-
         ## of a call to this function.  Make sure it's turned back on if an error occurs.
         .Call("R_clear_method_selection", PACKAGE = "methods")
         ## and remove the function from the cached method data
-        removeFromMethodMetaData(f)
+        resetGeneric(f, fdef)
     })
+    if(!is.logical(useInherited))
+        stop("useInherited must be TRUE, FALSE, or a named logical vector of T/F")
     argName <- slot(mlist, "argument")
     arg <- NULL ## => don't use instance-specific inheritance
     if(evalArgs) {
@@ -188,11 +198,24 @@ MethodsListSelect <-
             thisClass <- "missing"
         else {
             arg <- eval(as.name(argName), env) ## DO use instance-specific inheritance
-            thisClass <- data.class(arg) #really class, but only 1st string.
+            thisClass <- .class1(arg)
         }
     }
     else
         thisClass <- get(as.character(argName), envir = env)
+    if(identical(useInherited, TRUE) || identical(useInherited, FALSE))
+        thisInherit <- nextUseInherited <- useInherited
+    else {
+        which <- match(as.character(argName), names(useInherited))
+        if(is.na(which)) {
+            nextUseInherited <- useInherited
+            thisInherit <- TRUE
+        }
+        else {
+            thisInherit <- useInherited[which]
+            nextUseInherited <- useInherited[-which]
+        }
+    }
     fromClass <- thisClass ## will mark the class actually providing the method
     allMethods <- mlist@allMethods
     which <- match(thisClass, names(allMethods))
@@ -202,7 +225,8 @@ MethodsListSelect <-
         if(is(selection, "function"))
             value <- mlist ## no change
         else {
-            method <- Recall(NULL, env, selection, finalDefault = finalDefault)
+            method <- Recall(NULL, env, selection, finalDefault = finalDefault,
+                   evalArgs = evalArgs, useInherited = nextUseInherited, fdef = fdef)
             if(is(method, "EmptyMethodsList"))
                 value <- method
             else {
@@ -213,30 +237,18 @@ MethodsListSelect <-
     }
     if(inherited || is(value, "EmptyMethodsList"))  {
         ## direct selection failed at this level or below
-        allSelections <- matchArg(arg, fromClass, mlist, env)
+        allSelections <- inheritedSubMethodLists(arg, fromClass, mlist, env)
         allClasses <- names(allSelections)
         method <- NULL
-        for(i in seq(along = allSelections)) {
+        if(thisInherit) for(i in seq(along = allSelections)) {
             selection <- allSelections[[i]]
             fromClass <- allClasses[[i]]
             if(is(selection, "function"))
                 method <- selection
             else if(is(selection, "MethodsList")) {
                 ## go on to try matching further arguments
-                if(evalArgs)
-                    method <- Recall(NULL, env, selection, finalDefault = finalDefault)
-                else {
-                    which <- match(as.character(argName), names(useInherited))
-                    if(is.na(which))
-                        thisInherit <- nextUseInherited <- useInherited ## likely TRUE or FALSE
-                    else {
-                        nextUseInherited <- useInherited[-which]
-                        thisInherit <- useInherited[[which]]
-                    }
-                    if(thisInherit)
-                        method <- Recall(NULL, env, selection, finalDefault = finalDefault,
-                                         evalArgs = FALSE, useInherited = nextUseInherited)
-                }
+                method <- Recall(NULL, env, selection, finalDefault = finalDefault,
+                         evalArgs = evalArgs, useInherited = nextUseInherited, fdef = fdef)
                 if(is(method, "EmptyMethodsList"))
                     selection <- method   ## recursive selection failed
             }
@@ -253,7 +265,7 @@ MethodsListSelect <-
             value <- emptyMethodsList(mlist, thisClass) ## nothing found
         else {
             method <- MethodAddCoerce(method, argName, thisClass, fromClass)
-            value <- insertCachedMethods(mlist, as.character(argName), thisClass, fromClass,
+            value <- .insertCachedMethods(mlist, as.character(argName), thisClass, fromClass,
                                          method)
         }
     }
@@ -266,7 +278,6 @@ MethodsListSelect <-
             assign(".Methods", value, envir = fEnv)
         }
     }
-    validObject(value)
     ## clear the error actions
     on.exit()
     value
@@ -315,7 +326,7 @@ finalDefaultMethod <-
 }
 
 
-matchArg <-
+inheritedSubMethodLists <-
   ## Utility function to match the object to the elements of a methods list.
   ##
   ## The function looks only for an inherited match, and only among
@@ -329,7 +340,7 @@ matchArg <-
   defaultMethod <- elNamed(methods, "ANY")## maybe NULL
   classes <- names(methods)
   value <- list()
-  if(thisClass == "missing") {
+  if(identical(thisClass, "missing")) {
         ## no superclasses for "missing"
   }
   else {
@@ -362,7 +373,7 @@ matchArg <-
       }
     }
   }
-  if(length(value) == 0 && !is.null(defaultMethod))
+  if(!is.null(defaultMethod))
       elNamed(value, "ANY") <- defaultMethod
   value
 }
@@ -376,13 +387,14 @@ matchSignature <-
   ##
   ## The formal arguments of `fun' must agree with `names' (usually the formal arguments
   ## of the generic function) as well, and `matchSignature' checks this.
-  function(names, signature, fun)
+  function(signature, fun)
 {
+    if(!is(fun, "genericFunction"))
+        stop("Internal error: matchSignature was not called with a generic function object")
+    names <- fun@signature
     sigClasses <- as.character(signature)
-    if(length(sigClasses) > 0) {
+    if(length(sigClasses) > 0)
         unknown <- !sapply(sigClasses, function(x)isClass(x))
-        unknown <- unknown & is.na(match(sigClasses, .OldClasses))
-    }
     else
         unknown <- logical()
     signature <- as.list(signature)
@@ -390,7 +402,7 @@ matchSignature <-
         stop("signature argument doesn't look like a legitimate signature (vector of single class names)")
     if(any(unknown)) {
         unknown <- unique(sigClasses[unknown])
-        warning("Class ", paste("\"", unknown, "\"", sep="", collapse = ", "), "not defined")
+        warning("Class ", paste("\"", unknown, "\"", sep="", collapse = ", "), " not defined")
     }
     ## construct a function call with the same naming pattern as signature
     fcall <- do.call("call", c("fun", signature))
@@ -399,12 +411,8 @@ matchSignature <-
     snames <- names(smatch)[-1]
     which <- match(snames, names)
     if(any(is.na(which)))
-        stop(paste("Signature names did not match supplied argument names:",
+        stop(paste("Invalid names in signature:",
                    paste(snames[is.na(which)], collapse = ", ")))
-    test <- all.equal.character(names, formalArgs(fun))
-    if(is.character(test))
-        warning(paste("The supplied names and the formal arguments of the function differ:",
-                      test))
     n <- length(names)
     value <- rep("ANY", n)
     value[which] <- sigClasses
@@ -488,31 +496,38 @@ promptMethods <-
   ## `filename' can be a logical or the name of a file to print to.  If `file' is `FALSE',
   ## the methods skeleton is returned, to be included in other printing (typically,
   ## the output from `prompt'.
-  function(f, filename = TRUE, addTo = FALSE, inherited = FALSE, type = "methods") {
+  function(f, filename = TRUE, methods) {
       paste0 <- function(...)paste(..., sep="")
-      object <- linearizeMlist(getMethods(f), inherited)
+      packageString = ""
+      if(missing(methods)) {
+          where <- find(mlistMetaName(f))
+          if(length(where) == 0)
+              stop("No methods found for generic \"", f, "\"")
+          where <- where[1]
+          methods <- getMethods(f, where)
+          if(where != 1)
+              packageString <- paste("in package", getPackageName(where))
+      }
+      object <- linearizeMlist(methods, FALSE)
       methods <- object@methods; n <- length(methods)
       args <- object@arguments
       signatures <- object@classes
       labels <- character(n)
-      fullName <- topicName(type, f)
-      for(i in seq(length = n))
+      aliases <- character(n)
+      fullName <- topicName("methods", f)
+      for(i in seq(length = n)) {
           labels[[i]] <- paste(args[[i]], signatures[[i]], collapse = ", ", sep = " = ")
-      text <- paste0("\\item{", labels, "}{ ~~describe this method here }")
+          aliases[[i]] <- paste0("\\alias{", topicName("method", c(f, signatures[[i]])),
+                                "}")
+      }
+      text <- paste0(aliases, "\n\\item{", labels, "}{ ~~describe this method here }")
       text <- c("\\section{Methods}{\\describe{", text, "}}")
       aliasText <- paste0("\\alias{", fullName, "}")
       endText <- c("\\keyword{methods}", "\\keyword{ ~~ other possible keyword(s)}")
       if(identical(filename, FALSE))
           return(c(aliasText, text))
-      if(identical(addTo, TRUE))
-          beginText <- readLines(paste0(f, ".Rd"))
-      else if(is(addTo, "character")) {
-          beginText <- addTo
-      }
-      else {
-          beginText <-  c(paste0("\\name{", fullName, "}"), paste0("\\docType{", type, "}"),
-                paste0("\\title{ ~~ Methods for Function ", f, " ~~}"))
-      }
+      beginText <-  c(paste0("\\name{", fullName, "}"), paste0("\\docType{methods}"),
+                paste("\\title{ ~~ Methods for Function", f, packageString, "~~}"))
       if(identical(filename, TRUE))
           filename <- paste0(fullName, ".Rd")
       text <-c(beginText, aliasText, text, endText)
@@ -559,7 +574,7 @@ linearizeMlist <-
             }
             else
                 warning("Skipping methods list element ", paste(cnames[i], collapse = ", "),
-                        " of unexpected class \"", data.class(mi),
+                        " of unexpected class \"", .class1(mi),
                         "\"\n\n")
         }
         new("LinearMethodsList", methods = value, classes = classes, arguments = arguments)
@@ -598,7 +613,7 @@ listFromMlist <-
     list(sigs, methods)
 }
 
-insertCachedMethods <- function(mlist, argName, Class, fromClass, def) {
+.insertCachedMethods <- function(mlist, argName, Class, fromClass, def) {
     if(is(def, "MethodsList")) {
         ## insert all the cached methods in def
         newArg <- c(argName, as.character(def@argument))
@@ -609,13 +624,13 @@ insertCachedMethods <- function(mlist, argName, Class, fromClass, def) {
                             newDefs[[j]])
     }
     else {
-        def <- addMethodFrom(def, argName[1], Class[1], fromClass)
+        def <- .addMethodFrom(def, argName[1], Class[1], fromClass)
         mlist <- insertMethod(mlist, Class, argName, def, TRUE)
     }
     mlist
 }
 
-addMethodFrom <- function(def, arg, Class, fromClass) {
+.addMethodFrom <- function(def, arg, Class, fromClass) {
     if(is(def, "MethodDefinition")) {
         ## eventually, we may enforce method definition objects
         ## If not, just leave raw functions alone (NextMethod won't work)

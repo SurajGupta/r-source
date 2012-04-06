@@ -25,8 +25,8 @@
 #ifndef R_APPLIC_H_
 #define R_APPLIC_H_
 
-#include "R_ext/Boolean.h"
-#include "R_ext/RS.h"		/* F77_... */
+#include <R_ext/Boolean.h>
+#include <R_ext/RS.h>		/* F77_... */
 
 #ifdef  __cplusplus
 extern "C" {
@@ -43,8 +43,6 @@ void bincode (double *x, int *n, double *breaks, int *nb,
 	      int *code, int *right, int *include_border, int *naok);
 void bincount(double *x, int *n, double *breaks, int *nb, int *count,
 	      int *right, int *include_border, int *naok);
-/*unused*/
-void bincode2(double *, int *, double *, int *, int *, int *, int *);
 
 /* chull.c -- comments in the source */
 void R_chull(int *n, double *x, int *m, int *in,

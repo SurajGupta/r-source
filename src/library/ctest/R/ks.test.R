@@ -13,7 +13,7 @@ function(x, y, ..., alternative = c("two.sided", "less", "greater"),
     if(is.numeric(y)) {
         DNAME <- paste(DNAME, "and", deparse(substitute(y)))
         y <- y[!is.na(y)]
-        n.x <- n
+        n.x <- as.double(n)             # to avoid integer overflow
         n.y <- length(y)
         if(n.y < 1)
             stop("Not enough y data")

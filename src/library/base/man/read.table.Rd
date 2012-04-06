@@ -38,7 +38,9 @@ read.delim2(file, header = TRUE, sep = "\t", quote="\"", dec=",",
 
     Alternatively, \code{file} can be a \code{\link{connection}}, which
     will be opened if necessary, and if so closed at the end of the
-    function call.
+    function call.  (If \code{stdin()} is used, the prompts for lines
+    may be somewhat confusing.  Terminate input with an EOF
+    signal, \code{Ctrl-D} on Unix and \code{Ctrl-Z} on Windows.)
 
     \code{file} can also be a complete URL.
   }
@@ -108,7 +110,8 @@ read.delim2(file, header = TRUE, sep = "\t", quote="\"", dec=",",
   \item{check.names}{logical.  If \code{TRUE} then the names of the
     variables in the data frame are checked to ensure that they are
     syntactically valid variable names.  If necessary they are adjusted
-    (by \code{\link{make.names}}) so that they are.}
+    (by \code{\link{make.names}}) so that they are, and also to ensure
+    that there are no duplicates.}
 
   \item{fill}{logical. If \code{TRUE} then in case the rows have unequal
     length, blank fields are implicitly added.  See Details.}

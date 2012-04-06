@@ -66,14 +66,14 @@ sub file_path {
     my $filesep = "/";
     my $outpath ="";
     my $v;
-    
+
     if($R::Vars::OSTYPE eq "mac") {
      foreach $v (@args) {
       $v =~ s/:\z//;
-     }         
+     }
      $filesep = ":";
     }
-    
+
     join($filesep, @args);
 }
 
@@ -125,7 +125,8 @@ sub get_exclude_patterns {
     ## Return list of file patterns excluded by R CMD build and check.
     ## Kept here so that we ensure that the lists are in sync, but not
     ## exported.
-    my @exclude_patterns = ("^.Rbuildignore\$", "\~\$", "\\.swp\$",
+    my @exclude_patterns = ("^.Rbuildignore\$",
+			    "\~\$", "\\.swp\$", "\\.bak\$",
 			    "^.*/\\.#[^/]*\$", "^.*/#[^/]*#\$");
     @exclude_patterns;
 }
@@ -154,7 +155,7 @@ sub R_system
     my $tmpf = R_tempfile();
     if($R::Vars::OSTYPE eq "windows") {
 	open(tmpf, "> $tmpf")
-	  or die "Error: cannot write to \`$tmpf'\n";
+	  or die "Error: cannot write to '$tmpf'\n";
 	print tmpf "$cmd\n";
 	close tmpf;
 	$res = system("sh $tmpf");
@@ -173,7 +174,7 @@ sub R_runR
     my $Rout = R_tempfile("Rout");
 
     R::Vars::error("R_EXE");
-    open RIN, "> $Rin" or die "Error: cannot write to \`$Rin'\n";
+    open RIN, "> $Rin" or die "Error: cannot write to '$Rin'\n";
     print RIN "$cmd\n";
     close RIN;
     R_system("${R::Vars::R_EXE} ${Ropts} < ${Rin} > ${Rout}");
@@ -203,7 +204,7 @@ sub formatDL {
     $Text::Wrap::columns = $width; # fill column
 
     $description =~ s/^\s*//;	# remove leading whitespace
-    
+
     my $txt;
     my $prefix = " " x $indent;
     if($style eq "table") {

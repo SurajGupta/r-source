@@ -1,4 +1,4 @@
-### $Id: selfStart.R,v 1.3.14.1 2002/06/07 07:50:36 maechler Exp $
+### $Id: selfStart.R,v 1.4 2002/06/08 16:18:22 ripley Exp $
 ###
 ###            self-starting nonlinear regression models
 ###

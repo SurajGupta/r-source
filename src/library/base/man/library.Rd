@@ -10,7 +10,6 @@
 \alias{.find.package}
 \alias{.packages}
 \alias{.path.package}
-\alias{.lib.loc}
 \alias{.libPaths}
 \alias{print.libraryIQR}
 \alias{print.packageInfo}
@@ -37,7 +36,7 @@ require(package, quietly = FALSE, warn.conflicts = TRUE,
 
 .packages(all.available = FALSE, lib.loc = NULL)
 .path.package(package = .packages(), quiet = FALSE)
-.find.package(package, lib.loc = NULL, use.attached, quiet = FALSE,
+.find.package(package, lib.loc = NULL, quiet = FALSE,
               verbose = getOption("verbose"))
 .libPaths(new)
 
@@ -76,9 +75,6 @@ require(package, quietly = FALSE, warn.conflicts = TRUE,
     if the package(s) are not loaded?
     For \code{.find.package}, should this not give warnings or an error
     if the package(s) are not found?}
-  \item{use.attached}{a logical indicating whether attached packages
-    should be considered in addition to the ones installed in the given
-    libraries.}
   \item{new}{a character vector with the locations of \R library trees.}
 }
 \details{
@@ -148,10 +144,9 @@ require(package, quietly = FALSE, warn.conflicts = TRUE,
   package is found more than once, the first match is used.  Unless
   \code{quiet = TRUE} a warning will be given about the named packages
   which are not found, and an error if none are.  If \code{verbose} is
-  true, warnings about packages found more than once are given.
-  Argument \code{use.attached} is deprecated.  This function is not
-  meant to be called by users, and its interface might change in future
-  versions.
+  true, warnings about packages found more than once are given.  This
+  function is not meant to be called by users, and its interface might
+  change in future versions.
 
   \code{.Autoloaded} contains the ``base names'' of the packages for
   which autoloading has been promised.
@@ -173,15 +168,22 @@ require(package, quietly = FALSE, warn.conflicts = TRUE,
 #endif
   list of directories at which \R library trees are rooted) by calling
   \code{.libPaths} with the directories specified in \code{R_LIBS}. 
-  Currently, the global variable \code{.lib.loc} is used for storing the
-  paths to the known library trees; however, this variable should not be
-  accessed directly.
 }
 \value{
   \code{library} returns the list of loaded (or available) packages
   (or \code{TRUE} if \code{logical.return} is \code{TRUE}).
   \code{require} returns a logical indicating whether the required
   package is available.
+}
+\note{
+  \code{library} and \code{require} can only load an \emph{installed}
+  package, and this is detected by having a \file{DESCRIPTION} file
+  containing a \code{Built:} field.  Packages
+  installed prior to 1.2.0 (released in December 2000) will need to be
+  re-installed.
+
+  Under Unix-alikes, the code checks that the package was installed
+  under a similar operating system as given by \code{.Platform$canonical.name}.
 }
 \author{R core;  Guido Masarotto for the \code{all.available=TRUE}
   part of \code{.packages}.}

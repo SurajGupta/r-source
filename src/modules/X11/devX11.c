@@ -20,7 +20,7 @@
  */
 
 #ifdef HAVE_CONFIG_H
-#include <config.h>
+# include <config.h>
 #endif
 
 /*
@@ -39,22 +39,22 @@
 #include <X11/Xatom.h>
 #include <X11/Xutil.h>
 #include <X11/cursorfont.h>
-#include <X11/Intrinsic.h>/*->	Xlib.h	Xutil.h Xresource.h .. */
+#include <X11/Intrinsic.h>	/*->	Xlib.h	Xutil.h Xresource.h .. */
 
 
 #include "Defn.h"
 #include "Graphics.h"
-#include "Fileio.h" /* R_fopen */
-#include "rotated.h"/* 'Public' routines from here */
+#include "Fileio.h"		/* R_fopen */
+#include "rotated.h"		/* 'Public' routines from here */
 /* For the input handlers of the event loop mechanism: */
-#include "R_ext/eventloop.h" 
-#include "R_ext/Memory.h" /* vmaxget */
+#include <R_ext/eventloop.h>
+#include <R_ext/Memory.h>	/* vmaxget */
 #include "Rdevices.h"
 
 #define R_X11_DEVICE 1
 #include "devX11.h"
 
-#include "R_ext/RX11.h"
+#include <R_ext/RX11.h>
 
 #define CURSOR		XC_crosshair		/* Default cursor */
 #define MM_PER_INCH	25.4			/* mm -> inch conversion */
@@ -62,9 +62,9 @@
 #define IS_100DPI ((int) (1./pixelHeight() + 0.5) == 100)
 
 
-#define X_BELL_VOLUME 0 /* integer between -100 and 100 for the volume 
+#define X_BELL_VOLUME 0 /* integer between -100 and 100 for the volume
                             of the bell in locator. */
-			/* Note: This is in relation to 
+			/* Note: This is in relation to
 			the general bell level. Was 50, but if > 0
 			then "xset b off" will not disable the
 			locator bell - pd 2002-3-11 */
@@ -130,7 +130,7 @@ static void newX11_Circle(double x, double y, double r,
 			  int col, int fill, double gamma,
 			  int lty, double lwd,
 			  NewDevDesc *dd);
-static void newX11_Clip(double x0, double x1, double y0, double y1, 
+static void newX11_Clip(double x0, double x1, double y0, double y1,
 		     NewDevDesc *dd);
 static void newX11_Close(NewDevDesc *dd);
 static void newX11_Deactivate(NewDevDesc *dd);
@@ -144,15 +144,15 @@ static void newX11_MetricInfo(int c, int font, double cex, double ps,
 			      double* width, NewDevDesc *dd);
 static void newX11_Mode(int mode, NewDevDesc *dd);
 static void newX11_NewPage(int fill, double gamma, NewDevDesc *dd);
-Rboolean newX11_Open(NewDevDesc *dd, newX11Desc *xd, 
-		     char *dsp, double w, double h, 
-		     double gamma_fac, X_COLORTYPE colormodel, 
+Rboolean newX11_Open(NewDevDesc *dd, newX11Desc *xd,
+		     char *dsp, double w, double h,
+		     double gamma_fac, X_COLORTYPE colormodel,
 		     int maxcube, int canvascolor);
-static void newX11_Polygon(int n, double *x, double *y, 
-			   int col, int fill, double gamma, 
+static void newX11_Polygon(int n, double *x, double *y,
+			   int col, int fill, double gamma,
 			   int lty, double lwd,
 			   NewDevDesc *dd);
-static void newX11_Polyline(int n, double *x, double *y, 
+static void newX11_Polyline(int n, double *x, double *y,
 			    int col, double gamma, int lty, double lwd,
 			    NewDevDesc *dd);
 static void newX11_Rect(double x0, double y0, double x1, double y1,
@@ -164,8 +164,8 @@ static void newX11_Size(double *left, double *right,
 		     NewDevDesc *dd);
 static double newX11_StrWidth(char *str, int font,
 			      double cex, double ps, NewDevDesc *dd);
-static void newX11_Text(double x, double y, char *str, 
-			double rot, double hadj, 
+static void newX11_Text(double x, double y, char *str,
+			double rot, double hadj,
 			int col, double gamma,
 			int font, double cex, double ps,
 			NewDevDesc *dd);
@@ -183,6 +183,8 @@ static int SetBaseFont(newX11Desc*);
 static void SetColor(int, NewDevDesc*);
 static void SetFont(int, int, NewDevDesc*);
 static void SetLinetype(int, double, NewDevDesc*);
+static void X11_Close_bitmap(newX11Desc *xd);
+
 
 
 	/************************/
@@ -581,14 +583,14 @@ static void handleEvent(XEvent event)
 	dd = (NewDevDesc *) temp;
 	xd = (newX11Desc *) dd->deviceSpecific;
 	if (xd->resize) {
-	    dd->size(&(dd->left), &(dd->right), &(dd->bottom), &(dd->top), 
+	    dd->size(&(dd->left), &(dd->right), &(dd->bottom), &(dd->top),
 		     dd);
 	    xd->resize = 0;
 	}
 	/* It appears possible that a device may receive an expose
 	 * event in the middle of the device being "kill"ed by R
 	 * This means that R knows nothing about the device
-	 * so devNumber becomes 0 (the null device) and it is not 
+	 * so devNumber becomes 0 (the null device) and it is not
 	 * a good idea to pass the null device to GEplayDisplayList
 	 */
 	devNum = devNumber((DevDesc*) dd);
@@ -909,7 +911,7 @@ static XFontStruct *RLoadFont(int face, int size)
 	if (tmp) Rprintf("success\n"); else Rprintf("failure\n");
 #endif
     }
-    
+
 
     if (tmp){
 	f = &fontcache[nfonts++];
@@ -960,7 +962,7 @@ static void SetFont(int face, int size, NewDevDesc *dd)
 	    xd->fontface = face;
 	    xd->fontsize = size;
 	    XSetFont(display, xd->wgc, xd->font->fid);
-	} else 
+	} else
 	    error("X11 font at size %d could not be loaded", size);
     }
 }
@@ -977,7 +979,7 @@ static void SetColor(int color, NewDevDesc *dd)
     }
 }
 
-/* --> See "Notes on Line Textures" in ../include/Graphics.h
+/* --> See "Notes on Line Textures" in ../../include/Rgraphics.h
  *
  *	27/5/98 Paul - change to allow lty and lwd to interact:
  *	the line texture is now scaled by the line width so that,
@@ -989,16 +991,16 @@ static void SetColor(int color, NewDevDesc *dd)
 static void SetLinetype(int newlty, double nlwd, NewDevDesc *dd)
 {
     static char dashlist[8];
-    int i, ndash, newlwd;
+    int i, newlwd;
     newX11Desc *xd = (newX11Desc *) dd->deviceSpecific;
 
-    newlwd = nlwd;
+    newlwd = nlwd;/*cast*/
     if (newlwd < 1)/* not less than 1 pixel */
 	newlwd = 1;
     if (newlty != xd->lty || newlwd != xd->lwd) {
 	xd->lty = newlty;
 	xd->lwd = newlwd;
-	if (newlty == 0) {/* special hack for  lty = 0 -- only for X11 */
+	if (newlty == 0) {/* special hack for lty = 0 -- only for X11 */
 	    XSetLineAttributes(display,
 			       xd->wgc,
 			       newlwd,
@@ -1007,7 +1009,6 @@ static void SetLinetype(int newlty, double nlwd, NewDevDesc *dd)
 			       JoinRound);
 	}
 	else {
-	    ndash = 0;
 	    for(i = 0 ; i < 8 && (newlty != 0); i++) {
 		int j = newlty & 15;
 		if (j == 0) j = 1; /* Or we die with an X Error */
@@ -1016,10 +1017,10 @@ static void SetLinetype(int newlty, double nlwd, NewDevDesc *dd)
 		/* make sure that scaled line texture */
 		/* does not exceed X11 storage limits */
 		if (j > 255) j=255;
-		dashlist[ndash++] = j;
+		dashlist[i] = j;
 		newlty = newlty >> 4;
 	    }
-	    XSetDashes(display, xd->wgc, 0, dashlist, ndash);
+	    XSetDashes(display, xd->wgc, 0, dashlist, i);
 	    XSetLineAttributes(display,
 			       xd->wgc,
 			       newlwd,
@@ -1056,9 +1057,9 @@ static int R_X11IOErr(Display *dsp)
 }
 
 
-Rboolean 
-newX11_Open(NewDevDesc *dd, newX11Desc *xd, char *dsp, double w, double h, 
-	 double gamma_fac, X_COLORTYPE colormodel, int maxcube, 
+Rboolean
+newX11_Open(NewDevDesc *dd, newX11Desc *xd, char *dsp, double w, double h,
+	 double gamma_fac, X_COLORTYPE colormodel, int maxcube,
 	 int canvascolor)
 {
     /* if we have to bail out with "error", then must free(dd) and free(xd) */
@@ -1073,20 +1074,24 @@ newX11_Open(NewDevDesc *dd, newX11Desc *xd, char *dsp, double w, double h,
     Rboolean DisplayOpened = FALSE;
 
     if (!strncmp(dsp, "png::", 5)) {
+	char buf[512];
 	FILE *fp;
 #ifndef HAVE_PNG
 	warning("No png support in this version of R");
 	return FALSE;
 #endif
-	if (!(fp = R_fopen(R_ExpandFileName(dsp+5), "w"))) {
-	    warning("could not open PNG file `%s'", dsp+6);
+	strcpy(xd->filename, dsp+5);
+	sprintf(buf, dsp+5, 1); /* page 1 to start */
+	if (!(fp = R_fopen(R_ExpandFileName(buf), "w"))) {
+	    warning("could not open PNG file `%s'", buf);
 	    return FALSE;
 	}
 	xd->fp = fp;
 	type = PNG;
 	p = "";
-    } 
+    }
     else if (!strncmp(dsp, "jpeg::", 6)) {
+	char buf[512];
 	FILE *fp;
 #ifndef HAVE_JPEG
 	warning("No jpeg support in this version of R");
@@ -1094,8 +1099,10 @@ newX11_Open(NewDevDesc *dd, newX11Desc *xd, char *dsp, double w, double h,
 #endif
 	p = strchr(dsp+6, ':'); *p='\0';
 	xd->quality = atoi(dsp+6);
-	if (!(fp = R_fopen(R_ExpandFileName(p+1), "w"))) {
-	    warning("could not open JPEG file `%s'", p+1);
+	strcpy(xd->filename, p+1);
+	sprintf(buf, p+1, 1); /* page 1 to start */
+	if (!(fp = R_fopen(R_ExpandFileName(buf), "w"))) {
+	    warning("could not open JPEG file `%s'", buf);
 	    return FALSE;
 	}
 	xd->fp = fp;
@@ -1125,7 +1132,7 @@ newX11_Open(NewDevDesc *dd, newX11Desc *xd, char *dsp, double w, double h,
 			    R_ProcessEvents, XActivity);
     }
     /* whitepixel = GetX11Pixel(255, 255, 255); */
-    whitepixel = GetX11Pixel(R_RED(canvascolor), R_GREEN(canvascolor), 
+    whitepixel = GetX11Pixel(R_RED(canvascolor), R_GREEN(canvascolor),
 			     R_BLUE(canvascolor));
     blackpixel = GetX11Pixel(0, 0, 0);
 
@@ -1144,7 +1151,7 @@ newX11_Open(NewDevDesc *dd, newX11Desc *xd, char *dsp, double w, double h,
 	xd->canvas = 0xffffff;
     }
     if(type > WINDOW) xd->fill = xd->canvas;
-    
+
 
     /* Try to create a simple window. */
     /* We want to know about exposures */
@@ -1174,9 +1181,9 @@ newX11_Open(NewDevDesc *dd, newX11Desc *xd, char *dsp, double w, double h,
 		warning("unable to create X11 window");
 		return FALSE;
 	    }
-	    
+
 	    XChangeProperty(display, xd->window, XA_WM_NAME, XA_STRING,
-			    8, PropModeReplace, 
+			    8, PropModeReplace,
 			    (unsigned char*)"R Graphics", 13);
 
 	    xd->gcursor = XCreateFontCursor(display, CURSOR);
@@ -1187,7 +1194,7 @@ newX11_Open(NewDevDesc *dd, newX11Desc *xd, char *dsp, double w, double h,
 	    _XA_WM_PROTOCOLS = XInternAtom(display, "WM_PROTOCOLS", 0);
 	    protocol = XInternAtom(display, "WM_DELETE_WINDOW", 0);
 	    XSetWMProtocols(display, xd->window, &protocol, 1);
-	
+
 	}
 	/* Save the NewDevDesc* with the window for event dispatching */
 	XSaveContext(display, xd->window, devPtrContext, (caddr_t) dd);
@@ -1198,10 +1205,10 @@ newX11_Open(NewDevDesc *dd, newX11Desc *xd, char *dsp, double w, double h,
 			 ExposureMask | ButtonPressMask | StructureNotifyMask);
 	    XMapWindow(display, xd->window);
 	    XSync(display, 0);
-	    
+
 	    /* Gobble expose events */
-	    
-	    while ( XPeekEvent(display, &event), 
+
+	    while ( XPeekEvent(display, &event),
 		    !XCheckTypedEvent(display, Expose, &event))
                 ;
 	    /* XNextEvent(display, &event);
@@ -1286,31 +1293,27 @@ static void newX11_MetricInfo(int c, int font, double cex, double ps,
     }
 }
 
-static void newX11_Clip(double x0, double x1, double y0, double y1, 
+static void newX11_Clip(double x0, double x1, double y0, double y1,
 			NewDevDesc *dd)
 {
     newX11Desc *xd = (newX11Desc *) dd->deviceSpecific;
 
     if (x0 < x1) {
-	xd->clip.x = dd->clipLeft = (int) x0 ;
+	xd->clip.x = (int) x0 ;
 	xd->clip.width = (int) x1 - (int) x0 + 1;
-	dd->clipRight = dd->clipLeft + xd->clip.width;
     }
     else {
-	xd->clip.x = dd->clipLeft = (int) x1;
+	xd->clip.x = (int) x1;
 	xd->clip.width = (int) x0 - (int) x1 + 1;
-	dd->clipRight = dd->clipLeft + xd->clip.width;
     }
 
     if (y0 < y1) {
-	xd->clip.y = dd->clipBottom = (int) y0;
+	xd->clip.y = (int) y0;
 	xd->clip.height = (int) y1 -  (int) y0 + 1;
-	dd->clipTop = dd->clipBottom + xd->clip.height;
     }
     else {
-	xd->clip.y = dd->clipBottom = (int) y1;
+	xd->clip.y = (int) y1;
 	xd->clip.height = (int) y0 - (int) y1 + 1;
-	dd->clipTop = dd->clipBottom + xd->clip.height;
     }
 
     XSetClipRectangles(display, xd->wgc, 0, 0, &(xd->clip), 1, Unsorted);
@@ -1324,7 +1327,7 @@ static void newX11_Size(double *left, double *right,
 		     NewDevDesc *dd)
 {
     newX11Desc *xd = (newX11Desc *) dd->deviceSpecific;
-    
+
     *left = 0.0;
     *right = xd->windowWidth;
     *bottom = xd->windowHeight;
@@ -1336,8 +1339,26 @@ static void newX11_NewPage(int fill, double gamma, NewDevDesc *dd)
     newX11Desc *xd = (newX11Desc *) dd->deviceSpecific;
 
     if (xd->type > WINDOW) {
-	if (xd->npages++)
-	    error("attempt to draw second page on pixmap device");
+	if (xd->npages++) {
+	    /* try to preserve the page we do have */
+	    if (xd->type != XIMAGE) X11_Close_bitmap(xd);
+	    if (xd->type != XIMAGE && xd->fp != NULL) fclose(xd->fp);
+	    if (xd->type == PNG) {
+		char buf[512];
+		sprintf(buf, xd->filename, xd->npages);
+		xd->fp = R_fopen(R_ExpandFileName(buf), "w");
+		if (!xd->fp)
+		    error("could not open PNG file `%s'", buf);
+	    }
+	    if (xd->type == JPEG) {
+		char buf[512];
+		sprintf(buf, xd->filename, xd->npages);
+		xd->fp = R_fopen(R_ExpandFileName(buf), "w");
+		if (!xd->fp)
+		    error("could not open JPEG file `%s'", buf);
+	    }
+	    /* error("attempt to draw second page on pixmap device");*/
+	}
 /* we want to override the default bg="transparent" */
 /*	xd->fill = R_OPAQUE(dd->bg) ? dd->bg : xd->canvas; */
 	xd->fill = R_OPAQUE(fill) ? fill: PNG_TRANS;
@@ -1359,13 +1380,14 @@ static void newX11_NewPage(int fill, double gamma, NewDevDesc *dd)
 #endif
 }
 
-extern int R_SaveAsPng(void  *d, int width, int height, 
+extern int R_SaveAsPng(void  *d, int width, int height,
 		       unsigned long (*gp)(XImage *, int, int),
 		       int bgr, FILE *fp, unsigned int transparent);
 
-extern int R_SaveAsJpeg(void  *d, int width, int height, 
+extern int R_SaveAsJpeg(void  *d, int width, int height,
 			unsigned long (*gp)(XImage *, int, int),
 			int bgr, int quality, FILE *outfile);
+
 
 static long knowncols[512];
 
@@ -1390,7 +1412,7 @@ static unsigned long bitgp(XImage *xi, int x, int y)
 		    | (xcol.blue>>8);
 	    }
 	    return knowncols[i];
-	} 
+	}
 	else {
 	    xcol.pixel = i;
 	    XQueryColor(display, colormap, &xcol);
@@ -1405,6 +1427,36 @@ static unsigned long bitgp(XImage *xi, int x, int y)
 	return 0;
     }
     return 0; /* not reached, needed for some compilers */
+}
+
+static void X11_Close_bitmap(newX11Desc *xd)
+{
+    int i;
+    XImage *xi;
+    for (i = 0; i < 512; i++) knowncols[i] = -1;
+    xi = XGetImage(display, xd->window, 0, 0,
+		   xd->windowWidth, xd->windowHeight,
+		   AllPlanes, ZPixmap);
+    if (xd->type == PNG) {
+	unsigned int pngtrans = PNG_TRANS;
+	if(model == TRUECOLOR) {
+	    int i, r, g, b;
+	    /* some `truecolor' displays distort colours */
+	    i = GetX11Pixel(R_RED(PNG_TRANS),
+			    R_GREEN(PNG_TRANS),
+			    R_BLUE(PNG_TRANS));
+	    r = ((i>>RShift)&RMask) * 255 /(RMask);
+	    g = ((i>>GShift)&GMask) * 255 /(GMask);
+	    b = ((i>>BShift)&BMask) * 255 /(BMask);
+	    pngtrans = (r<<16) | (g<<8) | b;
+	}
+	R_SaveAsPng(xi, xd->windowWidth, xd->windowHeight,
+		    bitgp, 0, xd->fp,
+		    (xd->fill != PNG_TRANS) ? 0 : pngtrans);
+    } else if (xd->type == JPEG)
+	R_SaveAsJpeg(xi, xd->windowWidth, xd->windowHeight,
+		     bitgp, 0, xd->quality, xd->fp);
+    XDestroyImage(xi);
 }
 
 static void newX11_Close(NewDevDesc *dd)
@@ -1424,34 +1476,7 @@ static void newX11_Close(NewDevDesc *dd)
 	XDestroyWindow(display, xd->window);
 	XSync(display, 0);
     } else {
-	if (xd->npages && xd->type != XIMAGE) {
-	    int i;
-	    XImage *xi;
-	    for (i = 0; i < 512; i++) knowncols[i] = -1;
-	    xi = XGetImage(display, xd->window, 0, 0, 
-			   xd->windowWidth, xd->windowHeight, 
-			   AllPlanes, ZPixmap);
-	    if (xd->type == PNG) {
-		unsigned int pngtrans = PNG_TRANS;
-		if(model == TRUECOLOR) {
-		    int i, r, g, b;
-		    /* some `truecolor' displays distort colours */
-		    i = GetX11Pixel(R_RED(PNG_TRANS), 
-					   R_GREEN(PNG_TRANS), 
-					   R_BLUE(PNG_TRANS));
-		    r = ((i>>RShift)&RMask) * 255 /(RMask);
-		    g = ((i>>GShift)&GMask) * 255 /(GMask);
-		    b = ((i>>BShift)&BMask) * 255 /(BMask);
-		    pngtrans = (r<<16) | (g<<8) | b;
-		}
-		R_SaveAsPng(xi, xd->windowWidth, xd->windowHeight, 
-			    bitgp, 0, xd->fp,
-			    (xd->fill != PNG_TRANS) ? 0 : pngtrans);
-	    } else if (xd->type == JPEG)
-		R_SaveAsJpeg(xi, xd->windowWidth, xd->windowHeight, 
-			     bitgp, 0, xd->quality, xd->fp);
-	    XDestroyImage(xi);
-	}
+	if (xd->npages && xd->type != XIMAGE) X11_Close_bitmap(xd);
 	XFreeGC(display, xd->wgc);
 	XFreePixmap(display, xd->window);
 	if (xd->type != XIMAGE && xd->fp != NULL) fclose(xd->fp);
@@ -1522,7 +1547,7 @@ static void newX11_Deactivate(NewDevDesc *dd)
 }
 
 static void newX11_Rect(double x0, double y0, double x1, double y1,
-			int col, int fill, double gamma, 
+			int col, int fill, double gamma,
 			int lty, double lwd,
 			NewDevDesc *dd)
 {
@@ -1556,7 +1581,7 @@ static void newX11_Rect(double x0, double y0, double x1, double y1,
 }
 
 static void newX11_Circle(double x, double y, double r,
-			  int col, int fill, double gamma, 
+			  int col, int fill, double gamma,
 			  int lty, double lwd,
 			  NewDevDesc *dd)
 {
@@ -1608,7 +1633,7 @@ static void newX11_Line(double x1, double y1, double x2, double y2,
     }
 }
 
-static void newX11_Polyline(int n, double *x, double *y, 
+static void newX11_Polyline(int n, double *x, double *y,
 			    int col, double gamma, int lty, double lwd,
 			    NewDevDesc *dd)
 {
@@ -1631,7 +1656,7 @@ static void newX11_Polyline(int n, double *x, double *y,
 	for(i = 0; i < n; i+= 10000-1) {
 	    j = n - i;
 	    j = (j <= 10000) ? j: 10000; /* allow for overlap */
-	    XDrawLines(display, xd->window, xd->wgc, points+i, j, 
+	    XDrawLines(display, xd->window, xd->wgc, points+i, j,
 		       CoordModeOrigin);
 	}
 #ifdef XSYNC
@@ -1642,8 +1667,8 @@ static void newX11_Polyline(int n, double *x, double *y,
     vmaxset(vmax);
 }
 
-static void newX11_Polygon(int n, double *x, double *y, 
-			   int col, int fill, double gamma, 
+static void newX11_Polygon(int n, double *x, double *y,
+			   int col, int fill, double gamma,
 			   int lty, double lwd,
 			   NewDevDesc *dd)
 {
@@ -1680,9 +1705,9 @@ static void newX11_Polygon(int n, double *x, double *y,
 }
 
 
-static void newX11_Text(double x, double y, 
-			char *str, double rot, double hadj, 
-			int col, double gamma, 
+static void newX11_Text(double x, double y,
+			char *str, double rot, double hadj,
+			int col, double gamma,
 			int font, double cex, double ps,
 			NewDevDesc *dd)
 {
@@ -1726,7 +1751,7 @@ static Rboolean newX11_Locator(double *x, double *y, NewDevDesc *dd)
 		if (event.xbutton.button == Button1) {
 		    *x = event.xbutton.x;
 		    *y = event.xbutton.y;
-  		       /* Make a beep! Was print "\07", but that 
+  		       /* Make a beep! Was print "\07", but that
                           messes up some terminals. */
                     XBell(display, X_BELL_VOLUME);
 		    XSync(display, 0);
@@ -1782,14 +1807,14 @@ Rboolean newX11DeviceDriver(DevDesc *dd,
     newX11Desc *xd;
 
     xd = Rf_allocNewX11DeviceDesc(pointsize);
-    /* Used to set dd->dp.font=1 and dd->dp.ps=pointsize, 
+    /* Used to set dd->dp.font=1 and dd->dp.ps=pointsize,
      * but Paul removed that.
      * This sort of initialisation occurs in R base graphics now.
      */
 
     /*	Start the Device Driver and Hardcopy.  */
 
-    if (!newX11_Open((NewDevDesc*)(dd), xd, disp_name, width, height, 
+    if (!newX11_Open((NewDevDesc*)(dd), xd, disp_name, width, height,
 		     gamma_fac, colormodel, maxcube, canvascolor)) {
 	free(xd);
 	return FALSE;
@@ -1806,7 +1831,7 @@ Rboolean newX11DeviceDriver(DevDesc *dd,
 
 /**
   This fills the general device structure (dd) with the X-specific
-  methods/functions. It also specifies the current values of the 
+  methods/functions. It also specifies the current values of the
   dimensions of the device, and establishes the fonts, line styles, etc.
  */
 int
@@ -1876,8 +1901,6 @@ Rf_setNewX11DeviceData(NewDevDesc *dd, double gamma_fac, newX11Desc *xd)
     dd->canHAdj = 0;
     dd->canChangeGamma = FALSE;
 
-    dd->ask = FALSE;
-
     dd->startps = xd->basefontsize;
     dd->startcol = xd->col;
     dd->startfill = xd->fill;
@@ -1940,8 +1963,8 @@ Rboolean R_GetX11Image(int d, XImage **pximage, int *pwidth, int *pheight)
 	NewDevDesc *dd = ((GEDevDesc *)GetDevice(d))->dev;
 	newX11Desc *xd = dd->deviceSpecific;
 
-	*pximage = XGetImage(display, xd->window, 0, 0, 
-			     xd->windowWidth, xd->windowHeight, 
+	*pximage = XGetImage(display, xd->window, 0, 0,
+			     xd->windowWidth, xd->windowHeight,
 			     AllPlanes, ZPixmap);
 	*pwidth = xd->windowWidth;
 	*pheight = xd->windowHeight;
@@ -1960,17 +1983,17 @@ Rf_getX11Display()
 
 
 /**
- Allows the caller to register the X11 Display object for the process. 
+ Allows the caller to register the X11 Display object for the process.
  Typically this will be done when the first X device is created, but this allows
- other code to generate the Display object and then register it with the R graphics 
- engine. 
+ other code to generate the Display object and then register it with the R graphics
+ engine.
  In addition to providing the Display, the caller should also give the default value for the
  gamma factor and also the colormodel and color cube size. See the documentation for the x11()
- function. 
+ function.
  Finally, setHandlers controls whether the code establishes handlers for the X errors.
  */
 int
-Rf_setX11Display(Display *dpy, double gamma_fac, X_COLORTYPE colormodel, 
+Rf_setX11Display(Display *dpy, double gamma_fac, X_COLORTYPE colormodel,
 		 int maxcube, Rboolean setHandlers)
 {
 /*    static int alreadyDone = 0;
@@ -2036,10 +2059,10 @@ void R_init_X11(DllInfo *info)
 {
       /* Ideally, we would not cast X11DeviceDriver here.
          However, the declaration in R_ext/RX11.h doesn't have access
-         to the definition of X_COLORTYPE, at present. Thus we need 
+         to the definition of X_COLORTYPE, at present. Thus we need
          to explicitly cast to avoid compiler warnings.
        */
-    R_setX11Routines((R_X11DeviceDriverRoutine) newX11DeviceDriver, 
-                      RX11_dataentry, 
+    R_setX11Routines((R_X11DeviceDriverRoutine) newX11DeviceDriver,
+                      RX11_dataentry,
                       R_GetX11Image);
 }

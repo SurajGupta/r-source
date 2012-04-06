@@ -2,7 +2,8 @@
 \title{Draw a Rectangle}
 \usage{
 rect(xleft, ybottom, xright, ytop, density = NULL, angle = 45,
-     col = NULL, border = NULL, lty = NULL, lwd = par("lwd"), xpd = NULL)
+     col = NULL, border = NULL, lty = NULL, lwd = par("lwd"),
+     xpd = NULL, \dots)
 }
 \alias{rect}
 \arguments{
@@ -23,6 +24,7 @@ rect(xleft, ybottom, xright, ytop, density = NULL, angle = 45,
   \item{lwd}{width for borders.}
   \item{xpd}{logical (``e\bold{xp}an\bold{d}''); defaults to
     \code{par("xpd")}.  See \code{\link{par}(xpd= )}.}
+  \item{\dots}{other graphical parameters can be given as arguments.}
 }
 \description{
   \code{rect} draws a rectangle (or sequence of rectangles) with the
@@ -41,6 +43,8 @@ rect(xleft, ybottom, xright, ytop, density = NULL, angle = 45,
   \code{\link{box}} for the ``standard'' box around the plot;
   \code{\link{polygon}} and \code{\link{segments}} for flexible line
   drawing.
+
+  \code{\link{par}} for how to specify colors.
 }
 \examples{
 ## set up the plot region:

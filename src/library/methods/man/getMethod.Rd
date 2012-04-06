@@ -1,25 +1,23 @@
 \name{getMethod}
 \alias{getMethod}
 \alias{findMethod}
+\alias{existsMethod}
 \alias{getMethods}
 \alias{selectMethod}
+\alias{hasMethod}
 \alias{MethodsListSelect}
-\title{ Get the Definition of a Method }
+\title{ Get or Test for the Definition of a Method }
 \description{
-  A call to \code{getMethod} returns the method corresponding a
-  particular generic function and signature; a call to \code{findMethod}
-  returns the vector of package names in which a matching method is found.
-
-  The functions \code{MethodsListSelect} and \code{selectMethod} select
-  methods using an environment in which arguments to the function have
-  been assigned (they differ in the treatment of inheritance).  Neither
-  is intended to be called directly, except perhaps in debugging.  The
-  function \code{getMethods} returns \emph{all} the methods for the
-  generic function.
-
+  The functions \code{getMethod} and \code{selectMethod} get the
+  definition of a particular method; the functions \code{existsMethod}
+  and \code{hasMethod} test for the existence of a method.  In both
+  cases the first function only gets direct definitions and the second
+  uses inheritance.
   The function \code{findMethod} returns the package(s) in the search
   list (or in the packages specified by the \code{where} argument) that
   contain a method for this function and signature.
+
+  The other functions are support functions: see the details below.
 }
 \usage{
 getMethod(f, signature=character(), where, optional=FALSE)
@@ -28,8 +26,16 @@ findMethod(f, signature, where)
 
 getMethods(f, where=-1)
 
-MethodsListSelect(f, env, mlist, fEnv, finalDefault, evalArgs, useInherited)
-selectMethod(f, signature, optional=FALSE, useInherited, mlist=getMethods(f))
+existsMethod(f, signature = character(), where)
+
+hasMethod(f, signature=character())
+
+selectMethod(f, signature, optional=FALSE, useInherited,
+             mlist=getMethods(f), fdef = getGeneric(f))
+
+MethodsListSelect(f, env, mlist, fEnv, finalDefault, evalArgs,
+                  useInherited, fdef)
+
 }
 \arguments{
   \item{f}{ The character-string name of the generic function.
@@ -47,8 +53,8 @@ selectMethod(f, signature, optional=FALSE, useInherited, mlist=getMethods(f))
 
     For \code{selectMethod}, the signature can optionally be an
     environment with classes assigned to the names of the corresponding
-    arguments.  If the signature is not an environment, it must
-    currently be named.}
+    arguments.  Note:  the names correspond to the names of the classes, \emph{not}
+    to the objects supplied in a call to the generic function.}
   \item{where}{ The position or environment in which to look for the method:  by default,
       anywhere in
     the current search list.}
@@ -58,8 +64,8 @@ selectMethod(f, signature, optional=FALSE, useInherited, mlist=getMethods(f))
     more than one method matches this signature, or \code{NULL} if no
     method matches.}
 
-  \item{mlist}{In \code{selectMethod}, the \code{MethodsList} object
-    can be explicitly supplied.  (Unlikely to be used, except in the
+  \item{mlist, fdef}{In \code{selectMethod}, the \code{MethodsList} object
+    and/or the generic function object can be explicitly supplied.  (Unlikely to be used, except in the
     recursive call that finds matches to more than one argument.)}
 
   \item{env}{The environment in which argument evaluations are done in
@@ -79,6 +85,20 @@ selectMethod(f, signature, optional=FALSE, useInherited, mlist=getMethods(f))
   whether the function returns \code{NULL} or generates an error if
   the method is not found.  The search for the method makes no use of
   inheritance.
+
+  The function \code{selectMethod} also looks for a method given the
+  function and signature, but makes full use of the method dispatch
+  mechanism; i.e., inherited methods and group generics are taken into
+  account just as they would be in dispatching a method for the
+  corresponding signature, with the one exception that conditional
+  inheritance is not used.  Like \code{getMethod}, \code{selectMethod}
+  returns \code{NULL} or generates an error if
+  the method is not found, depending on the argument \code{optional}.
+
+  The functions \code{existsMethod} and \code{hasMethod} return
+  \code{TRUE} or \code{FALSE} according to whether a method is found,
+  the first corresponding to \code{getMethod} (no inheritance) and the
+  second to \code{selectMethod}.
 
   The function \code{getMethods} returns all the methods for a
   particular generic (in the form of a generic function with the
@@ -105,15 +125,14 @@ selectMethod(f, signature, optional=FALSE, useInherited, mlist=getMethods(f))
   stored by the evaluator so that the search is not required next
   time.)
 
-  The \code{selectMethod} function is similar to
-  \code{MethodsListSelect} (and calls it) but differs in that it
-  is intended to be used with control over which arguments are allowed
-  to use inheritance.  The restriction is needed to make sensible
-  method selection for coerce methods (the \code{\link{as}} function).
+
 }
 \value{
   The call to \code{selectMethod} or \code{getMethod} returns a
-  function object, the selected method, if a unique selection exists.
+  \code{\link{MethodDefinition-class}} object, the selected method, if
+  a unique selection exists.
+  (This class extends \code{function}, so you can use the result
+  directly as a function if that is what you want.)
   Otherwise an error is thrown if \code{optional} is \code{FALSE}.  If
   \code{optional} is \code{TRUE}, the value returned is \code{NULL} if
   no method matched, or a \code{MethodsList} object if multiple
@@ -125,16 +144,20 @@ selectMethod(f, signature, optional=FALSE, useInherited, mlist=getMethods(f))
   error in this case.
 }
 \references{
-  The web page \url{http://www.omegahat.org/RSMethods/index.html} is the
-  primary documentation.
+  The R package \code{methods} implements, with a few exceptions, the
+  programming interface for classes
+  and methods in the book \emph{Programming with Data} (John
+  M. Chambers, Springer, 1998), in particular sections 1.6, 2.7, 2.8,
+  and chapters 7 and 8.
 
-  The functions in this package implement a facility for classes and
-  methods as described in \emph{Programming with Data} (John
-  M. Chambers, Springer, 1998).  See this book for further details and
-  examples.
-}
-\author{
-  John Chambers
+  While the programming interface for the methods package follows the reference,
+  the R software is an original implementation, so details in
+  the reference that reflect the S4 implementation may appear
+  differently in R.  Also, there are extensions to the programming
+  interface developed more recently than the reference.  For a
+  discussion of details and ongoing development, see the web page 
+  \url{http://developer.r-project.org/methodsPackage.html} and the
+  pointers from that page.
 }
 \keyword{programming}
 \keyword{classes}

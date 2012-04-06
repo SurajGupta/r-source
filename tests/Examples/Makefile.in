@@ -15,18 +15,21 @@ DISTFILES = Makefile.in
 
 R = $(top_builddir)/bin/R --vanilla
 
-EX_IN = $(R_PKGS:=-Ex.R)
+EX_IN = $(R_PKGS_BASE:=-Ex.R)
 EX_OUT = $(EX_IN:.R=.Rout)
+
+RECOMMENDED_EX_IN = $(R_PKGS_RECOMMENDED_EXPANDED:=-Ex.R)
+RECOMMENDED_EX_OUT = $(RECOMMENDED_EX_IN:.R=.Rout)
 
 .SUFFIXES:
 .SUFFIXES: .R .Rout
 
-all: Makefile Makedeps test-Examples
+all: Makefile Makedeps test-Examples 
 
 Makefile: $(srcdir)/Makefile.in $(top_builddir)/config.status
 	@cd $(top_builddir) && $(SHELL) ./config.status $(subdir)/$@
 Makedeps: Makefile
-	@(for p in $(R_PKGS); do \
+	@(for p in $(R_PKGS_BASE); do \
 	    dep="$${p}-Ex.Rout: $${p}-Ex.R"; \
 	    dep="$${dep} \$$(top_builddir)/library/$${p}/R/$${p}"; \
 	    tmp="library/$${p}/libs/$${p}" ; \
@@ -37,17 +40,21 @@ Makedeps: Makefile
 	    echo $${dep}; \
 	  done) >> Makefile
 	@touch $@
-
-test-Examples: Makefile
+test-Examples: test-Examples-Base
+test-Examples-Base: Makefile
 	@$(MAKE) Makedeps
 	@$(MAKE) $(EX_OUT)
+
+test-Examples-Recommended: test-Examples-Base
+	@$(MAKE) $(RECOMMENDED_EX_OUT)
+
 
 R:
 	@cd $(top_builddir) && $(MAKE) R
 
 .R.Rout:
-	@if [ -f $@.bak ]; then mv $@.bak $@.bakk ; fi
-	@if [ -f $@ ];     then cp -p $@     $@.bak  ; fi
+	@if test -f $@.bak ; then mv $@.bak $@.bakk ; fi
+	@if test -f $@     ; then cp -p $@  $@.bak  ; fi
 	@echo $(ECHO_N) "running code in '$<' ...$(ECHO_C)"
 	@$(R) < $< > $@ || (mv $@ $@.fail && exit 1)
 	@echo "$(ECHO_T) OK"
@@ -64,16 +71,44 @@ $(EX_IN): FORCE
 	  fi; \
 	  echo "collecting examples for package '$${pkg}' ..."; \
 	  (cd $(top_builddir)/src/library && \
-	    OPTS="--txt --example" $(MAKE) R_PKGS="$${pkg}" DOCS); \
+	    OPTS="--txt --example" $(MAKE) R_PKGS_BASE="$${pkg}" DOCS); \
 	  f=$${TMPDIR-/tmp}/R$$$$; \
 	  $(PERL) $(top_srcdir)/share/perl/massage-Examples.pl $${pkg} \
 	    $(top_builddir)/library/$${pkg}/R-ex > $${f}; \
 	  $(top_srcdir)/tools/move-if-change $${f} $@; \
 	  touch $@; \
 	fi)
+
+# The ugly "find .. |grep" construct is necessary because "test foo -nt bar" 
+# is nonportable. The pipeline will succeed if the target exists and is newer
+# than the corresponding DESCRIPTION file in the package. If the target does
+# not exist, then find will fail; if it exists and is older, then find will 
+# succeed but output nothing so that the grep will fail.
+$(RECOMMENDED_EX_IN): FORCE
+	@(pkg=`basename $@ -Ex.R`; \
+	find $@ -newer $(top_builddir)/library/$${pkg}/DESCRIPTION \
+	 -print | grep $@ > /dev/null ||\
+	(\
+	  if test -f $@ ; then \
+	    if test -n "`tail -6 $@ | grep '^Time elapsed'`" ; then \
+	      if test -f $@.bak ; then mv $@.bak $@.bakk ; fi; \
+	      cp -p $@ $@.bak; \
+	    fi; \
+	  fi; \
+	  echo "collecting examples for package '$${pkg}' ..."; \
+	  f=$${TMPDIR-/tmp}/R$$$$; \
+	  $(PERL) $(top_srcdir)/share/perl/massage-Examples.pl $${pkg} \
+	    $(top_builddir)/library/$${pkg}/R-ex > $${f}; \
+	  $(top_srcdir)/tools/move-if-change $${f} $@; \
+	  touch $@; \
+	))
 FORCE:
 
 $(EX_OUT): Makefile \
+  $(top_builddir)/bin/R.bin \
+  $(top_builddir)/library/base/R/base \
+  $(top_builddir)/modules/lapack$(SHLIB_EXT)
+$(RECOMMENDED_EX_OUT): Makefile \
   $(top_builddir)/bin/R.bin \
   $(top_builddir)/library/base/R/base \
   $(top_builddir)/modules/lapack$(SHLIB_EXT)

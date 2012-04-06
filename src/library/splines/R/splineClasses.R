@@ -1,4 +1,4 @@
-## $Id: splineClasses.R,v 1.8.2.1 2002/05/07 17:18:47 maechler Exp $
+## $Id: splineClasses.R,v 1.9 2002/05/08 17:32:12 ripley Exp $
 ##
 ## Classes and methods for determining and manipulating interpolation
 ## splines.

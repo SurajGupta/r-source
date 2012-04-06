@@ -2,7 +2,7 @@
  *  R : A Computer Language for Statistical Data Analysis
  *  file system.c
  *  Copyright (C) 1998-1999  Ross Ihaka
- *                2000-2001  Stefano M. Iacus and the R core team
+ *                2000-2002  Stefano M. Iacus and the R core team
  *
  *  This program is free software; you can redistribute it and/or modify
  *  it under the terms of the GNU General Public License as published by
@@ -36,7 +36,6 @@
 #include "Fileio.h"
 #include "Graphics.h"
 #include "RIntf.h"
-#include "RFLaunch.h"
 #include <Rdevices.h>
 #include <CFBundle.h>
 #include <Folders.h>
@@ -85,12 +84,15 @@ OSStatus LoadFrameworkBundle(CFStringRef framework, CFBundleRef *bundlePtr);
 Boolean CanLoadFrameWork(void);
 Boolean IsFrameWorkLoaded = false;
 
+OSStatus DoubleClickFile(char *filename);
+
 
 
 /* end of code from Apple's CarbonLib SDK 1.6 */
  
 void R_Suicide(char *s);
 void GetSysVersion(void);
+void CleanTempDir(void);
 
 
 
@@ -163,7 +165,6 @@ void  R_doErrorAlert(Str255 labelText);
 void  StrToStr255(char* sourceText, Str255 targetText);
 void R_ShowMessage(char *);
 
-OSStatus GoToMyHelpPage(CFStringRef pagePath,CFStringRef anchorName);
 
 extern void R_Edit(char** lines, int nlines);
 extern void main_1 ( void );
@@ -175,7 +176,7 @@ void R_setStartTime(void);
 
 #ifdef __MRC__
 int mkdir(char *,int );
-int mkdir(char *x,int a){ return 0;}
+int rmdir(char *);
 
 extern int chdir(char *);
 extern int getcwd(char *,int );
@@ -555,7 +556,7 @@ int Mac_initialize_R(int ac, char **av)
 
     R_HistorySize = 512;
     if ((p = mac_getenv("R_HISTSIZE"))) {
-	value = Decode2Long(p, &ierr);
+	value = R_Decode2Long(p, &ierr);
 	if (ierr != 0 || value < 0)
 	    REprintf("WARNING: invalid R_HISTSIZE ignored;");
 	else
@@ -638,6 +639,8 @@ void R_CleanUp(SA_TYPE saveact, int status, int runLast)
     
     
     R_RunExitFinalizers();
+    CleanEd();
+    CleanTempDir();
     KillAllDevices();
     if(saveact != SA_SUICIDE && R_CollectWarnings)
 	PrintWarnings();	/* from device close and .Last */
@@ -867,7 +870,7 @@ SEXP do_system(SEXP call, SEXP op, SEXP args, SEXP rho)
 }
 
 /* 
-   	Rmac_tmpnam is a version of Runix_tmpnam for Macintosh. 
+   	R_tmpnam is a version of the Unix R_tmpnam for Macintosh. 
    	This routine has been rewritten. Now temporary files are
    	written in the default System's Temporary Files directory.
    	This directory is freed as needed by the MasOS from time
@@ -880,45 +883,23 @@ SEXP do_system(SEXP call, SEXP op, SEXP args, SEXP rho)
    
 
 
-char *Rmac_tmpnam(char * prefix)
+char *R_tmpnam(const char * prefix)
 {
     char *tmp, tm[PATH_MAX], tmp1[PATH_MAX], *res;
-    char curFolder[MAC_FILE_SIZE], newFolder[MAC_FILE_SIZE];
-    unsigned int n, done = 0, pid;
-    short 	foundVRefNum,plen;
-    long	foundDirID;
-    OSStatus	err;
-    Str255		string;
-    Handle		path = NULL;
+    unsigned int n, done = 0;
     
-    /* We search for the System Temporary directory */
-    err = FindFolder(kOnSystemDisk,kTemporaryFolderType, 
-    		kCreateFolder, &foundVRefNum, &foundDirID);
-
-    if(err != noErr){
-    	done = false;
-    	goto cleanup;
-    }
-
-    pid = (unsigned int) getpid();
+    if(!prefix) prefix = "";	/* NULL */
+    strcpy(tmp1, R_TempDir);
+ 
     for (n = 0; n < 100; n++) {
 	/* try a random number at the end */
-        sprintf(tm, "%sR%xS%x\0", prefix, pid, rand());
-        CopyCStringToPascal(tm,string);
-        err = GetFullPath(foundVRefNum,foundDirID,string,&plen,&path);
-
-     	HLock((Handle) path);
-        strncpy(tm, *path, plen);
-	    tm[plen] = '\0';
-	    HUnlock((Handle) path);
- 
+        sprintf(tm, "%s:%s%d", tmp1,prefix, rand());      
         if (!R_FileExists(tm)) { done = 1; break; }
     }
     
-cleanup:
-    if(!done)
-  	 error("cannot write tempfile");
-    res = (char *)malloc(strlen(tm)+1);
+   if(!done)
+	error("cannot find unused tempfile name");
+    res = (char *) malloc((strlen(tm)+1) * sizeof(char));
     strcpy(res, tm);
     return res;
 }
@@ -946,10 +927,20 @@ SEXP do_tempfile(SEXP call, SEXP op, SEXP args, SEXP env)
     for(i = 0; i < slen; i++) {
 	tn = CHAR( STRING_ELT( CAR(args) ,i ) );
 	/* try to get a new file name */
-	tm = Rmac_tmpnam(tn);
+	tm = R_tmpnam(tn);
 	SET_STRING_ELT(ans, i, mkChar(tm));	
 	if(tm) free(tm);
     }
+    UNPROTECT(1);
+    return (ans);
+}
+
+SEXP do_tempdir(SEXP call, SEXP op, SEXP args, SEXP env)
+{
+    SEXP  ans;
+
+    PROTECT(ans = allocVector(STRSXP, 1));
+    SET_STRING_ELT(ans, 0, mkChar(R_TempDir));
     UNPROTECT(1);
     return (ans);
 }
@@ -983,112 +974,36 @@ SEXP do_dircreate(SEXP call, SEXP op, SEXP args, SEXP env)
 
 static void SelectTargetsToLaunch(void);
 
-/*
-   do_helpstart it is just as under Windows. 
-   (Stefano M. Iacus) Jago Jan-01, implemented in R 1.x.x 
+
+
+SEXP do_truepath(SEXP call, SEXP op, SEXP args, SEXP env);
+/* This function returns unix-like path under OSX.
+   Useful if you want to use OSX applications as R
+   helpers like, for example, an external editor, a
+   browser, etc.
+   Jago Aug 8 2002, Stefano M. Iacus
 */
-
-SEXP do_helpstart(SEXP call, SEXP op, SEXP args, SEXP env)
-{
-    char *home, buf[PATH_MAX];
-    FILE *ff;
-    FSSpec  fileSpec;
-    OSErr err;
-    Str255 HelpFileName;
-    char errbuf[512];
-    short  foundVRefNum,vrefnum;
-    SInt32 foundDirID;  
-    Str255	string;
-    Handle	path = NULL;
-    short 	plen;
-    FSSpec	spec;
-                                          
+   
+SEXP do_truepath(SEXP call, SEXP op, SEXP args, SEXP env){
+    char buf[300];
+    SEXP ans;
+    char *file;
+                          
     checkArity(op, args);
+
+    if (!isString(CAR(args)))
+	 errorcall(call, "invalid topic argument");
+    file = CHAR(STRING_ELT(CAR(args), 0));
+
+    if( RunningOnCarbonX()) 
+     ConvertHFSPathToUnixPath(file, (char *)&buf);   
+    else
+     strcpy(buf,file);
     
-    home =  R_Home; // No env, Jago
-   
-
-    if (home == NULL)
-	error("R_HOME not set");
-    sprintf(buf, "%s:doc:html:index.html", home);
-    ff = R_fopen(buf, "r");
-    if (!ff) {
-	sprintf(buf, "%s:doc:html:index.htm", home);
-	ff = R_fopen(buf, "r");
-	if (!ff) {
-	    sprintf(buf, "%s:doc:html:index.htm[l] not found", home);
-	    error(buf);
-	}
-    }
-    fclose(ff);
-
-    if (strlen(buf) < 254)
-	strcpy((char *) HelpFileName, buf);
-    else {
-	error("file name too long");
-	return R_NilValue;
-    }
-    
-#if ! TARGET_API_MAC_CARBON
-    CtoPstr((char *) HelpFileName);
-#else    
-    CopyCStringToPascal((char*)HelpFileName,HelpFileName);
-#endif
-    err = FSMakeFSSpecFromPath((ConstStr255Param) HelpFileName, &fileSpec);
-    if (err != noErr) {
-	sprintf(errbuf, "error code %d creating file spec for help file %s",
-		err, buf);
-	error(errbuf);        
-	return R_NilValue;
-    }
-          
-    err = FinderLaunch(1, &fileSpec);
-    if(err!=noErr)
-	error("Cannot launch browser");
-   
-  
-   // err = GoToMyHelpPage(NULL,NULL);
-
-    
-    return R_NilValue;
-}
-
-OSStatus GoToMyHelpPage(
-            CFStringRef pagePath,   /* If NULL, goes to main TOC */
-            CFStringRef anchorName) /* If NULL, goes to top of page */
-    { 
-    CFBundleRef myAppsBundle;
-    CFTypeRef myBookName;
-    OSStatus err;
-
-        /* set up a known state */
-    myAppsBundle = NULL;
-    myBookName = NULL;
-
-        /* Get our application's main bundle from Core Foundation */
-    myAppsBundle = CFBundleGetMainBundle();
-    if (myAppsBundle == NULL) { err = fnfErr; goto bail; } 
-
-        /* get the help book's name */
-    myBookName = CFBundleGetValueForInfoDictionaryKey( 
-    myAppsBundle, CFSTR("CFBundleHelpBookName")); 
-    if (myAppsBundle == NULL) { err = fnfErr; goto bail; } 
-
-        /* verify the data type returned */
-    if(CFGetTypeID(myBookName) == CFStringGetTypeID()) {
-        err = paramErr;
-        goto bail;
-    }
-
-        /* go to the page */
-    err = AHGotoPage(myBookName, pagePath, anchorName); 
-    if (err != noErr) goto bail;
-
-        /* done */
-    return noErr;
-
-bail:
-    return err;
+    PROTECT(ans = allocVector(STRSXP, 1));
+	SET_STRING_ELT(ans, 0, mkChar(buf));	
+    UNPROTECT(1);
+    return (ans);  
 }
 
 
@@ -1096,65 +1011,6 @@ bail:
    Stefano M. Iacus (Jago Jan 2001)
 */
    
-SEXP do_helpitem(SEXP call, SEXP op, SEXP args, SEXP env)
-{
-/*
- * type = 1: launch html file.
- *        
- */
-
-    char *item;
-    char buf[PATH_MAX];
-    FILE *ff;
-    int   type;
-    Str255 HelpFileName;
-    FSSpec  fileSpec;
-    OSErr err;
-    char errbuf[512];
-    char tempname[2048];
-     
-    checkArity(op, args);
-    if (!isString(CAR(args)))
-	errorcall(call, "invalid topic argument");
-    item = CHAR(STRING_ELT(CAR(args), 0));
-    type = asInteger(CADR(args));
-    if (type == 1) {
-	ff = R_fopen(item, "r");
-	if (!ff) {
-	    sprintf(buf, "%s not found", item);
-	    error(buf);
-	}
-	fclose(ff);
-	    
-	if (strlen(item) < 254)
-	    strcpy((char *) HelpFileName, item);
-	else {
-	    error("file name too long");
-	    return R_NilValue;
-	}
-
-//	CtoPstr((char *) HelpFileName);
-	
-    CopyCStringToPascal((char *)HelpFileName,HelpFileName);
-//    CopyCStringToPascal(HelpFileName,tempname);
-
-	err = FSMakeFSSpecFromPath((ConstStr255Param) HelpFileName, &fileSpec);
-	if (err != noErr) {
-	    sprintf(errbuf, "error code %d creating file spec for help file %s",
-		    err, item);
-	    error(errbuf);        
-	    return R_NilValue;
-	}
-  
-	err = FinderLaunch(1, &fileSpec);
-	if(err!=noErr)
-	    error("Cannot lauch browser");    
-    }
-    else
-	warning("type not yet implemented");
-    return R_NilValue;
-}
-
 
 SEXP do_dataentry(SEXP call, SEXP op, SEXP args, SEXP rho)
 {
@@ -1163,12 +1019,12 @@ SEXP do_dataentry(SEXP call, SEXP op, SEXP args, SEXP rho)
 
 
 void InitEd(){
- DefaultFileName = Rmac_tmpnam("REdit");
+ DefaultFileName = R_tmpnam("REdit");
 }
 
 void CleanEd()
 {
-    if(EdFileUsed==0) unlink(DefaultFileName);
+    if(EdFileUsed==0) R_unlink(DefaultFileName,1);
 }
 
 
@@ -1286,41 +1142,49 @@ SEXP do_edit(SEXP call, SEXP op, SEXP args, SEXP rho)
 #   include <mpw_stat.h>
 #  endif
 
+/*
+   new functions 
+   R_unlink
+   R_unlink_one
+   added 
+   and
+   do_unlink modified accordingly
+
+   Jago: Aug 6 2002, Stefano M. Iacus   
+*/
+
+static int R_unlink(char *names, int recursive);
+static int R_unlink_one(char *dir, char *name, int recursive);
+
+static int R_unlink_one(char *dir, char *name, int recursive)
+{
+    char tmp[PATH_MAX];
+
+    if(strcmp(name, ":") == 0) return 0;
+    if(strcmp(name, "::") == 0) return 0;
+    if(strlen(dir)) {
+	strcpy(tmp, dir);
+	if(*(dir + strlen(dir) - 1) != ':') strcat(tmp, ":");
+	strcat(tmp, name);
+    } else strcpy(tmp, name);
+    return (recursive ? R_unlink(tmp, 1): remove(tmp)) !=0;
+}
+
 SEXP do_unlink(SEXP call, SEXP op, SEXP args, SEXP env)
 {
     SEXP  fn, ans;
-    char *p, tmp[PATH_MAX], dir[PATH_MAX];
-    int i, nfiles, failures = 0;
-    struct stat sb;
-
+    int i, nfiles, failures = 0, recursive;
 
     checkArity(op, args);
     fn = CAR(args);
     nfiles = length(fn);
     if (!isString(fn) || nfiles < 1)
 	errorcall(call, "invalid file name argument");
- 
-    for(i = 0; i < nfiles; i++) {
-	strcpy(tmp, CHAR( STRING_ELT(fn,i) ));
-	for(p = tmp; *p != '\0'; p++)
-	    if(*p == '/') *p = ':';
-
-	if(stat(tmp, &sb) == 0)
-	    /* Is this a directory? */
-	    if(sb.st_mode & S_IFDIR) {
-#ifndef __MRC__
-		if(rmdir(tmp)) failures++;		
-#endif
-		continue;
-	    }
-//#endif	    
-	/* Regular file (or more) */
-	strcpy(dir, tmp);
-	if ((p = strrchr(dir, ':'))) *(++p) = '\0'; else *dir = '\0';
-	/* wildcard not allowed */
-	// strcpy(tmp, dir); //strcat(tmp, find_data.cFileName);
-	failures += (unlink(tmp) !=0);
-    }
+    recursive = asLogical(CADR(args));
+    if (recursive == NA_LOGICAL)
+	errorcall(call, "invalid recursive argument");
+    for(i = 0; i < nfiles; i++)
+	failures += R_unlink(CHAR(STRING_ELT(fn, i)), recursive);
     PROTECT(ans = allocVector(INTSXP, 1));
     if (!failures)
 	INTEGER(ans)[0] = 0;
@@ -1329,6 +1193,31 @@ SEXP do_unlink(SEXP call, SEXP op, SEXP args, SEXP env)
     UNPROTECT(1);
     return (ans);
 }
+
+static int R_unlink(char *names, int recursive)
+{
+    int failures = 0;
+    char *p, tmp[PATH_MAX];
+    struct stat sb;
+
+    strcpy(tmp, names);
+    for(p = tmp; *p != '\0'; p++) if(*p == '/') *p = ':';
+    if(stat(tmp, &sb) == 0) {
+	 if(sb.st_mode & S_IFDIR) { /* Is this a directory? */
+	    if(recursive) {
+			if(rmdir(tmp)) 
+			 failures++;
+	    } 
+	    else 
+	     failures++; /* don't try to delete dirs */
+	 } 
+	 else /* Regular file */
+	  remove(tmp);
+	}
+    
+    return failures;
+}
+
 
 
 void R_Suicide(char *s)
@@ -1569,33 +1458,32 @@ void R_DefParams(Rstart Rp)
     Rp->DebugInitFile = FALSE;
     Rp->vsize = R_VSIZE;
     Rp->nsize = R_NSIZE;
-    Rp->max_vsize = INT_MAX;
-    Rp->max_nsize = INT_MAX;
+    Rp->max_vsize = R_SIZE_T_MAX;
+    Rp->max_nsize = R_SIZE_T_MAX;
     Rp->NoRenviron = FALSE;
 }
 
-#define Max_Nsize 50000000	/* must be < LONG_MAX (= 2^32 - 1 =)
-				   2147483647 = 2.1e9 */
-                                /* limit was 2e7, changed to 5e7, which gives
-                                   nearly 2Gb of cons cells */
-#define Max_Vsize (2048*Mega)	/* 2048*Mega = 2^(11+20) must be < LONG_MAX */
+#define Max_Nsize 50000000	/* about 1.4Gb 32-bit, 2.8Gb 64-bit */
+#define Max_Vsize R_SIZE_T_MAX	/* unlimited */
 
-#define Min_Nsize 160000
+#define Min_Nsize 220000
 #define Min_Vsize (1*Mega)
 
 void R_SizeFromEnv(Rstart Rp)
 {
-    int value, ierr;
+    int ierr;
+    R_size_t value;
     char *p;
+
     if((p = getenv("R_VSIZE"))) {
-	value = Decode2Long(p, &ierr);
+	value = R_Decode2Long(p, &ierr);
 	if(ierr != 0 || value > Max_Vsize || value < Min_Vsize)
 	    R_ShowMessage("WARNING: invalid R_VSIZE ignored\n");
 	else
 	    Rp->vsize = value;
     }
     if((p = getenv("R_NSIZE"))) {
-	value = Decode2Long(p, &ierr);
+	value = R_Decode2Long(p, &ierr);
 	if(ierr != 0 || value > Max_Nsize || value < Min_Nsize)
 	    R_ShowMessage("WARNING: invalid R_NSIZE ignored\n");
 	else
@@ -1603,7 +1491,7 @@ void R_SizeFromEnv(Rstart Rp)
     }
 }
 
-static void SetSize(int vsize, int nsize)
+static void SetSize(R_size_t vsize, R_size_t nsize)
 {
     char msg[1024];
 
@@ -1613,14 +1501,14 @@ static void SetSize(int vsize, int nsize)
 	vsize *= Mega;
     }
     if(vsize < Min_Vsize || vsize > Max_Vsize) {
-	sprintf(msg, "WARNING: invalid v(ector heap)size `%d' ignored\n"
+	sprintf(msg, "WARNING: invalid v(ector heap)size `%lu' ignored\n"
 		 "using default = %gM\n", vsize, R_VSIZE / Mega);
 	R_ShowMessage(msg);
 	R_VSize = R_VSIZE;
     } else
 	R_VSize = vsize;
     if(nsize < Min_Nsize || nsize > Max_Nsize) {
-	sprintf(msg, "WARNING: invalid language heap (n)size `%d' ignored,"
+	sprintf(msg, "WARNING: invalid language heap (n)size `%lu' ignored,"
 		 " using default = %ld\n", nsize, R_NSIZE);
 	R_ShowMessage(msg);
 	R_NSize = R_NSIZE;
@@ -1697,7 +1585,7 @@ R_common_command_line(int *pac, char **argv, Rstart Rp)
 {
     int ac = *pac, newac = 1;	/* argv[0] is process name */
     int ierr;
-    long value;
+    R_size_t value;
     char *p, **av = argv, msg[1024];
 
     R_RestoreHistory = 1;
@@ -1794,7 +1682,7 @@ R_common_command_line(int *pac, char **argv, Rstart Rp)
 		    R_ShowMessage(msg);
 		    break;
 		}
-		value = Decode2Long(p, &ierr);
+		value = R_Decode2Long(p, &ierr);
 		if(ierr) {
 		    if(ierr < 0)
 			sprintf(msg, "WARNING: %s value is invalid: ignored\n",
@@ -1822,7 +1710,7 @@ R_common_command_line(int *pac, char **argv, Rstart Rp)
 		    R_ShowMessage("WARNING: no vsize given\n");
 		    break;
 		}
-		value = Decode2Long(p, &ierr);
+		value = R_Decode2Long(p, &ierr);
 		if(ierr) {
 		    if(ierr < 0) /* R_common_badargs(); */
 			sprintf(msg, "WARNING: --vsize value is invalid: ignored\n");
@@ -1845,12 +1733,12 @@ R_common_command_line(int *pac, char **argv, Rstart Rp)
 		    R_ShowMessage("WARNING: no nsize given\n");
 		    break;
 		}
-		value = Decode2Long(p, &ierr);
+		value = R_Decode2Long(p, &ierr);
 		if(ierr) {
 		    if(ierr < 0) /* R_common_badargs(); */
 			sprintf(msg, "WARNING: --nsize value is invalid: ignored\n");
 		    else
-			sprintf(msg, "WARNING: --nsize=%ld`%c': too large and ignored\n",
+			sprintf(msg, "WARNING: --nsize=%lu`%c': too large and ignored\n",
 				value,
 				(ierr == 1) ? 'M': ((ierr == 2) ? 'K':'k'));
 		    R_ShowMessage(msg);
@@ -2125,3 +2013,127 @@ Boolean CanLoadFrameWork(void)
 
 /* end of code from Apple's CarbonLib SDK 1.6 */
 
+#ifdef __MRC__
+/* Reference date on Mac is 1904-1-1 on Posix is 1970-1-1 */
+
+time_t POSIXMakeTime(struct tm *tm);
+
+time_t POSIXMakeTime(struct tm *tm)
+{
+  return mktime(tm) - 2082844800u;
+}
+#endif
+
+
+
+void InitTempDir()
+{
+    int len, done = false, res;
+	char *tmp, tm[PATH_MAX], tmp1[PATH_MAX], *p;
+    unsigned int n, pid;
+    short 	foundVRefNum,plen;
+    long	foundDirID;
+    OSStatus	err;
+    Str255		string;
+    Handle		path = NULL;
+    
+ 
+    err = FindFolder(kOnSystemDisk,kTemporaryFolderType, 
+    		kCreateFolder, &foundVRefNum, &foundDirID);
+
+    if(err != noErr){
+    	done = false;
+    	goto cleanup;
+    }
+
+    pid = (unsigned int) getpid();
+    for (n = 0; n < 100; n++) {
+	/* try a random number at the end */
+	    sprintf(tm, "%s%d", "Rtmp", rand());
+        CopyCStringToPascal(tm,string);
+        err = GetFullPath(foundVRefNum,foundDirID,string,&plen,&path);
+
+     	HLock((Handle) path);
+        strncpy(tm, *path, plen);
+	    tm[plen] = '\0';
+	    HUnlock((Handle) path);
+ 
+        if (!R_FileExists(tm)) { done = true; break; }
+    }
+    
+cleanup:
+
+    if(!done)
+	 R_Suicide("cannot find unused tempdir name");
+    err = DirCreate(foundVRefNum, foundDirID, string, &foundDirID);
+    if(err!=noErr) 
+	R_Suicide("Can't mkdir R_TempDir");
+    len = strlen(tm);
+    p = (char *) malloc(len+1);
+    if(!p) 
+	R_Suicide("Can't allocate R_TempDir");
+    else {
+	R_TempDir = p;
+	strcpy(R_TempDir, tm);
+    }
+}
+
+
+
+void CleanTempDir(void)
+{
+    R_unlink(R_TempDir, 1);
+}
+
+
+
+/*
+   Newly implemented mkdir and rmdir functions 
+   Jago, Aug 6, 2002. Stefano M. Iacus
+*/   
+
+#ifdef __MRC__
+int mkdir(char *x,int a)
+{
+	Str31		name;
+	short		vRefNum;
+    long		parID;
+	OSStatus	err;
+     long               dirID;
+    Str255	   pathname;
+    short             realVRefNum;
+    long              realParID;
+    Str255             realName;
+    Boolean           isDirectory;
+
+    CopyCStringToPascal(x,pathname);
+   
+    GetObjectLocation(vRefNum, dirID, &pathname, &realVRefNum,
+     &realParID, &realName, &isDirectory);
+    err = DirCreate(realVRefNum, realParID, pathname, &dirID);
+  
+    return err;
+}
+
+int rmdir(char *x)
+{
+	Str31		name;
+	short		vRefNum;
+    long		parID;
+	OSStatus	err;
+     long               dirID;
+    Str255	   pathname;
+    short             realVRefNum;
+    long              realParID;
+    Str255             realName;
+    Boolean           isDirectory;
+
+    CopyCStringToPascal(x,pathname);
+   
+    GetObjectLocation(vRefNum, dirID, &pathname, &realVRefNum,
+    &realParID, &realName, &isDirectory);
+     
+    err = DeleteDirectory(realVRefNum, realParID, pathname); 
+    return err;
+}
+#endif

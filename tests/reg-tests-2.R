@@ -383,10 +383,12 @@ set.seed(123, "default")
 runif(4)
 ## last set.seed failed < 1.5.0.
 
+
 ## merging, ggrothendieck@yifan.net, 2002-03-16
 d.df <- data.frame(x = 1:3, y = c("A","D","E"), z = c(6,9,10))
 merge(d.df[1,], d.df)
 ## 1.4.1 got confused by inconsistencies in as.character
+
 
 ## PR#1394 (levels<-.factor)
 f <- factor(c("a","b"))
@@ -454,3 +456,50 @@ y <- rpois(100, pmax(3*x, 0))
 glm(y ~ x, family = poisson(identity), start = c(1,0))
 warnings()
 
+
+## extending char arrrays
+x <- y <- LETTERS[1:2]
+x[5] <- "C"
+length(y) <- 5
+x
+y
+## x was filled with "", y with NA in 1.5.0
+
+
+## formula with no intercept, 2002-07-22
+oldcon <- options(contrasts = c("contr.helmert", "contr.poly"))
+U <- gl(3, 6, 18, labels=letters[1:3])
+V <- gl(3, 2, 18, labels=letters[1:3])
+A <- rep(c(0, 1), 9)
+B <- rep(c(1, 0), 9)
+set.seed(1); y <- rnorm(18)
+terms(y ~ A:U + A:V - 1)
+lm(y ~ A:U + A:V - 1)$coef  # 1.5.1 used dummies coding for V
+lm(y ~ (A + B) : (U + V) - 1) # 1.5.1 used dummies coding for A:V but not B:V
+options(oldcon)
+## 1.5.1 miscomputed the first factor in the formula.
+
+
+## quantile extremes, MM 13 Apr 2000 and PR#1852
+for(k in 0:5)
+    print(quantile(c(rep(-Inf,k+1), 0:k, rep(Inf, k)), pr=seq(0,1, .1)))
+x <- c(-Inf, -Inf, Inf, Inf)
+median(x)
+quantile(x)
+## 1.5.1 had -Inf not NaN in several places
+
+
+## NAs in matrix dimnames
+z <- matrix(1:9, 3, 3)
+dimnames(z) <- list(c("x", "y", NA), c(1, NA, 3))
+z
+## NAs in dimnames misaligned when printing in 1.5.1
+
+
+## weighted aov (PR#1930)
+r <- c(10,23,23,26,17,5,53,55,32,46,10,8,10,8,23,0,3,22,15,32,3)
+n <- c(39,62,81,51,39,6,74,72,51,79,13,16,30,28,45,4,12,41,30,51,7)
+trt <- factor(rep(1:4,c(5,6,5,5)))
+Y <- r/n
+z <- aov(Y ~ trt, weights=n)
+## 1.5.1 gave unweighted RSS

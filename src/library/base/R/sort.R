@@ -57,10 +57,11 @@ order <- function(..., na.last = TRUE, decreasing = FALSE)
         z <- list(...)
         if(any(diff(sapply(z, length)) != 0))
             stop("Argument lengths differ")
-        ok <- !apply(sapply(z, is.na), 1, any)
-        if(all(!ok)) stop("all elements contain an NA")
+        ans <- sapply(z, is.na)
+        ok <- if(is.matrix(ans)) !apply(ans, 1, any) else !any(ans)
+        if(all(!ok)) return(integer(0))
         z[[1]][!ok] <- NA
-        ans <- do.call("order", z)
+        ans <- do.call("order", c(z, decreasing=decreasing))
         keep <- seq(along=ok)[ok]
         ans[ans %in% keep]
     }

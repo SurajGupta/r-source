@@ -81,13 +81,11 @@ extern "C" {
  *	elements it is replicated to create a pattern with an
  *	even number of elements.  (If this is a pain, do something
  *	different its not crucial).
- *
  */
 
-/*--- The basic numbered & names line types; Here device-independent:
-  e.g. "dashed" == "44",  "dotdash" == "1343"
+/* The basic numbered & named line types; here device-independent:
+ * e.g. "dashed" == "44",  "dotdash" == "1343"
 */
-
 #define LTY_BLANK	-1
 #define LTY_SOLID	0
 #define LTY_DASHED	4 + (4<<4)
@@ -254,8 +252,8 @@ void GRestorePars(DevDesc*);
 
 		/* More Programmer GPar functions */
 
-void ProcessInlinePars(SEXP, DevDesc*);
-void Specify2(char*, SEXP, DevDesc*);
+void ProcessInlinePars(SEXP, DevDesc*, SEXP call);
+void Specify2(char*, SEXP, DevDesc*, SEXP call);
 void RecordGraphicsCall(SEXP);
 
 SEXP FixupPch(SEXP, int);

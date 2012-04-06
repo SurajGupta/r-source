@@ -31,8 +31,8 @@ dumpMethods(f, file, signature, methods, where)
 signature(\dots)
 removeMethods(f, where)
 setReplaceMethod(f, \dots)
-getGenerics(where)
-allGenerics(where)
+getGenerics(where, searchForm = FALSE)
+allGenerics(where, searchForm = FALSE)
 callGeneric(\dots)
 }
 \usage{
@@ -58,9 +58,9 @@ removeMethods(f, where)
 
 setReplaceMethod(f, \dots)
 
-getGenerics(where)
+getGenerics(where, searchForm = FALSE)
 
-allGenerics(where)
+allGenerics(where, searchForm = FALSE)
 
 callGeneric(\dots)
 
@@ -87,8 +87,12 @@ callGeneric(\dots)
       defined for it.
     }
   
-    \item{\code{removeGeneric}:}{ 
-      Remove the generic function of this name.  
+    \item{\code{removeGeneric}, \code{removeMethods}:}{ 
+      Remove the all the methods for the generic function of this
+      name.  In addition, \code{removeGeneric} removes the function
+      itself; \code{removeMethods} restores the non-generic function
+      which was the default method.   If there was no default method,
+      \code{removeMethods} leaves a generic function with no methods.
     }
     \item{\code{standardGeneric}:}{ 
       Dispatches a method from the current function call for the generic
@@ -127,6 +131,20 @@ callGeneric(\dots)
       Returns a named list of classes to be matched to arguments of a
       generic function.
     }
+      \item{\code{getGenerics}:}{ Returns the names of the generic
+          functions that have methods defined on \code{where}; this
+          argument can be an environment or an index into the search
+          list.  By default, the whole search list is used.
+
+          The methods definitions are stored with
+          package qualifiers; for example, methods for function
+          \code{"initialize"} might refer to two different functions
+          of that name, on different packages.  The package names
+          corresponding to the method list object are contained in the
+           slot \code{package} of the returned object.  The form of
+           the returned name can be plain (e.g., \code{"base"}), or in
+           the form used in the search list (\code{"package:base"})
+           according to the value of \code{searchForm}}
     \item{\code{callGeneric}:}{ 
       In the body of a method, this function will make a call to the
       current generic function.  If no arguments are passed to
@@ -172,6 +190,10 @@ callGeneric(\dots)
     the methods defined for this generic (optionally on the specified
     \code{where} location).
   }
+  \item{searchForm}{In \code{getGenerics}, if  \code{TRUE}, the
+      \code{package} slot of the returned result is in the form used
+      by \code{search()}, otherwise as the simple package name (e.g,
+      \code{"package:base"} vs \code{"base"}). }
   
 }
 
@@ -251,23 +273,29 @@ callGeneric(\dots)
       \code{FALSE} (silently) otherwise.
   
       If there is a default method, the function will be re-assigned as
-      a simple function with this definition; otherwise, it will be
-      removed.  The assignment or removal can be controlled by optional
-      argument \code{where}, which defaults to the first element of the
-      search list having a function called \code{f}.
+      a simple function with this definition.
+      Otherwise, the generic function remains but with no methods (so
+      any call to it will generate an error).  In either case, a
+      following call to \code{setMethod} will consistently
+      re-establish the same generic function as before.
     }
   }
 }
 \references{
-  The web page \url{http://www.omegahat.org/RSMethods/index.html} is the
-  primary documentation.
+  The R package \code{methods} implements, with a few exceptions, the
+  programming interface for classes
+  and methods in the book \emph{Programming with Data} (John
+  M. Chambers, Springer, 1998), in particular sections 1.6, 2.7, 2.8,
+  and chapters 7 and 8.
 
-  The functions in this package emulate the facility for classes and
-  methods described in \emph{Programming with Data} (John M. Chambers,
-  Springer, 1998).  See this book for further details and examples.
-}
-\author{
-  John Chambers
+  While the programming interface for the methods package follows the reference,
+  the R software is an original implementation, so details in
+  the reference that reflect the S4 implementation may appear
+  differently in R.  Also, there are extensions to the programming
+  interface developed more recently than the reference.  For a
+  discussion of details and ongoing development, see the web page 
+  \url{http://developer.r-project.org/methodsPackage.html} and the
+  pointers from that page.
 }
 \seealso{
   \code{\link{setGeneric}},

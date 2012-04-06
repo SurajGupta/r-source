@@ -40,9 +40,9 @@
 #include "console.h"
 #include "rui.h"
 #include "opt.h"
-#include "Rversion.h"
+#include <Rversion.h>
 #include "getline/getline.h"  /* for gl_load/savehistory */
-#include "Startup.h"          /* for SA_DEFAULT */
+#include <Startup.h>          /* for SA_DEFAULT */
 
 #define TRACERUI(a)
 
@@ -489,7 +489,7 @@ void readconsolecfg()
     consolec = 90;
     consolebg = White;
     consolefg = Black;
-    consoleuser = Red;
+    consoleuser = gaRed;
     highlight = DarkRed;
     pagerrow = 25;
     pagercol = 80;

@@ -2,7 +2,7 @@
 /*
  *  R : A Computer Langage for Statistical Data Analysis
  *  Copyright (C) 1995, 1996, 1997  Robert Gentleman and Ross Ihaka
- *  Copyright (C) 1997--2001  Robert Gentleman, Ross Ihaka and the
+ *  Copyright (C) 1997--2002  Robert Gentleman, Ross Ihaka and the
  *                            R Development Core Team
  *
  *  This program is free software; you can redistribute it and/or modify
@@ -71,7 +71,9 @@ static int 	xxcharcount, xxcharsave;
 
 /* Handle function source */
 
-/* FIXME: These arrays really ought to be dynamically extendable */
+/* FIXME: These arrays really ought to be dynamically extendable
+   As from 1.6.0, SourceLine[] is, and the other two are checked.
+*/
 
 #define MAXFUNSIZE 131072
 #define MAXLINESIZE  1024
@@ -133,6 +135,7 @@ static int	xxvalue(SEXP, int);
 %token		LEFT_ASSIGN EQ_ASSIGN RIGHT_ASSIGN LBB
 %token		FOR IN IF ELSE WHILE NEXT BREAK REPEAT
 %token		GT GE LT LE EQ NE AND OR
+%token		NS_GET
 
 %left		'?'
 %left		LOW WHILE FOR REPEAT
@@ -153,6 +156,7 @@ static int	xxvalue(SEXP, int);
 %left		UMINUS UPLUS
 %right		'^'
 %left		'$' '@'
+%left		NS_GET
 %nonassoc	'(' '[' LBB
 
 %%
@@ -216,6 +220,10 @@ expr	: 	NUM_CONST			{ $$ = $1; }
 	|	REPEAT expr_or_assign			{ $$ = xxrepeat($1,$2); }
 	|	expr LBB sublist ']' ']'	{ $$ = xxsubscript($1,$2,$3); }
 	|	expr '[' sublist ']'		{ $$ = xxsubscript($1,$2,$3); }
+	|	SYMBOL NS_GET SYMBOL		{ $$ = xxbinary($2,$1,$3); }
+	|	SYMBOL NS_GET STR_CONST		{ $$ = xxbinary($2,$1,$3); }
+	|	STR_CONST NS_GET SYMBOL		{ $$ = xxbinary($2,$1,$3); }
+	|	STR_CONST NS_GET STR_CONST	{ $$ = xxbinary($2,$1,$3); }
 	|	expr '$' SYMBOL			{ $$ = xxbinary($2,$1,$3); }
 	|	expr '$' STR_CONST		{ $$ = xxbinary($2,$1,$3); }
 	|	expr '@' SYMBOL			{ $$ = xxbinary($2,$1,$3); }
@@ -282,9 +290,11 @@ static int xxgetc(void)
         return R_EOF;
     }
     if (c == '\n') R_ParseError += 1;
-    /* FIXME: check for overrun in SourcePtr */
-    if ( GenerateCode && FunctionLevel > 0 )
-	*SourcePtr++ = c;
+    if ( KeepSource && GenerateCode && FunctionLevel > 0 ) {
+	if(SourcePtr <  FunctionSource + MAXFUNSIZE)
+	    *SourcePtr++ = c;
+	else  error("function is too long to keep source");
+    }
     xxcharcount++;
     return c;
 }
@@ -292,7 +302,7 @@ static int xxgetc(void)
 static int xxungetc(int c)
 {
     if (c == '\n') R_ParseError -= 1;
-    if ( GenerateCode && FunctionLevel > 0 )
+    if ( KeepSource && GenerateCode && FunctionLevel > 0 )
 	SourcePtr--;
     xxcharcount--;
     return ptr_ungetc(c);
@@ -651,10 +661,21 @@ static SEXP xxdefun(SEXP fname, SEXP formals, SEXP body)
 		    nc = p - p0;
 		    if (*p != '\n')
 			nc++;
-		    strncpy((char *)SourceLine, (char *)p0, nc);
-		    SourceLine[nc] = '\0';
-		    SET_STRING_ELT(source, lines++,
-				   mkChar((char *)SourceLine));
+		    if (nc <= MAXLINESIZE) {
+			strncpy((char *)SourceLine, (char *)p0, nc);
+			SourceLine[nc] = '\0';
+			SET_STRING_ELT(source, lines++,
+				       mkChar((char *)SourceLine));
+		    } else { /* over-long line */
+			char *LongLine = (char *) malloc(nc);
+			if(!LongLine) 
+			    error("unable to allocate space to source line");
+			strncpy(LongLine, (char *)p0, nc);
+			LongLine[nc] = '\0';
+			SET_STRING_ELT(source, lines++,
+				       mkChar((char *)LongLine));
+			free(LongLine);
+		    }
 		    p0 = p + 1;
 		}
 	    /* PrintValue(source); */
@@ -1624,7 +1645,7 @@ int isValidName(char *name)
     if( c != '.' && !isalpha(c) )
         return 0;
 
-    if (c == '.' && isdigit(*p)) 
+    if (c == '.' && isdigit((int)*p)) 
 	return 0;
 
     while ( c = *p++, (isalnum(c) || c=='.') )
@@ -1653,9 +1674,10 @@ static int SymbolValue(int c)
     while ((c = xxgetc()) != R_EOF && (isalnum(c) || c == '.'));
     xxungetc(c);
     *p = '\0';
-    /* FIXME: check overrun conditions */
     if ((kw = KeywordLookup(yytext))) {
 	if ( kw == FUNCTION ) {
+	    if (FunctionLevel >= MAXNEST)
+		error("functions nested too deeply in source code");
 	    if ( FunctionLevel++ == 0 && GenerateCode) {
 		strcpy((char *)FunctionSource, "function");
 		SourcePtr = FunctionSource + 8;
@@ -1670,6 +1692,8 @@ static int SymbolValue(int c)
     PROTECT(yylval = install(yytext));
     return SYMBOL;
 }
+
+static int not_warned_on_underline = 1;
 
 /* Split the input stream into tokens. */
 /* This is the lowest of the parsing levels. */
@@ -1725,6 +1749,9 @@ static int token()
 
     if (c == '_') {
 	yylval = install("<-");
+	if(not_warned_on_underline) 
+	    warning("The use of _ is deprecated: you will be warned only once per session");
+	not_warned_on_underline = 0;
 	return LEFT_ASSIGN;
     }
 
@@ -1785,6 +1812,10 @@ static int token()
 	yylval = install("=");
 	return EQ_ASSIGN;
     case ':':
+	if (nextchar(':')) {
+	    yylval = install("::");
+	    return NS_GET;
+	}
 	if (nextchar('=')) {
 	    yylval = install(":=");
 	    return LEFT_ASSIGN;

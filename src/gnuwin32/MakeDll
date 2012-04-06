@@ -1,5 +1,5 @@
 #-*- Makefile -*-
-all:  libR $(DLLNAME).dll
+all:  libR makeMakedeps $(DLLNAME).dll
 
 # set this in Makevars.win to supply your own resource file
 RCNAME=${DLLNAME}_res
@@ -8,6 +8,7 @@ RCOBJ=$(RCNAME).o
 
 # Don't use SOURCES as this get passed on for libR.
 CFSOURCES=$(wildcard -f *.c *.f)
+CSOURCES=$(wildcard -f *.c)
 CXXSOURCES=$(wildcard -f *.cc *.cpp *.C)
 OBJSA=$(foreach i,$(CFSOURCES) $(CXXSOURCES),$(basename $i).o)
 
@@ -48,8 +49,8 @@ else
 endif
 
 libR:
-	@$(MAKE) --no-print-directory -C $(RHOME)/src/gnuwin32 libR.a
-	@$(MAKE) --no-print-directory -C $(RHOME)/src/gnuwin32 libRblas.a
+	@$(MAKE) -s --no-print-directory -C $(RHOME)/src/gnuwin32 libR.a
+	@$(MAKE) -s --no-print-directory -C $(RHOME)/src/gnuwin32 libRblas.a
 
 $(DLLNAME)_res.rc:
 	@PERL5LIB=$(RHOME)/share/perl perl $(RHOME)/src/gnuwin32/makeDllRes.pl $(DLLNAME) > $@
@@ -62,3 +63,14 @@ $(DLLNAME).a: $(OBJS)
 	$(RANLIB) $@
 
 $(DLLNAME).dll : $(DLLNAME).a $(RCOBJ)
+
+# Dependencies
+DEPS=$(CSOURCES:.c=.d) $(CXXSOURCES:.cc=.d) $(CXXSOURCES:.cpp=.d) $(CXXSOURCES:.C=.d)
+
+makeMakedeps: $(DEPS)
+	@$(RM) Makedeps
+ifneq ($(strip $(DEPS)),)
+	@cat $(DEPS) >> Makedeps
+endif
+
+-include Makedeps

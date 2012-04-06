@@ -68,7 +68,7 @@ DISTFILES = Makefile.in Makefile.win README \
 	$(test-src-ts) \
 	gct-foot.R \
 	nanbug.rda
-SUBDIRS = Embedding Examples
+SUBDIRS = Embedding Examples Native
 
 R = LC_ALL=C SRCDIR=$(srcdir) $(top_builddir)/bin/R --vanilla
 RDIFF = $(top_builddir)/bin/Rdiff
@@ -95,6 +95,7 @@ test-out = $(test-src:.R=.Rout) $(test-out-gct) \
 .SUFFIXES: .R .Rin .Rout .Rout-gct
 
 all check: Makefile test-all-basics
+fullcheck: check test-Examples-Recommended
 
 Makefile: $(srcdir)/Makefile.in $(top_builddir)/config.status
 	@cd $(top_builddir) && $(SHELL) ./config.status $(subdir)/$@
@@ -122,7 +123,7 @@ FORCE:
 	@echo $(ECHO_N) "running code in '$<' ...$(ECHO_C)"
 	@$(R) < $< > $@ || (mv $@ $@.fail && exit 1)
 	@echo "$(ECHO_T) OK"
-	@if [ -f $(srcdir)/$@.save ] ; then \
+	@if test -f $(srcdir)/$@.save ; then \
 	  mv $@ $@.fail; \
 	  echo $(ECHO_N) \
 	    "comparing '$@' to '$(srcdir)/$@.save' ...$(ECHO_C)"; \
@@ -148,6 +149,8 @@ test-all-basics: Makefile
 	done
 test-Examples:
 	@(cd Examples && $(MAKE) $@)
+test-Examples-Recommended:
+	@(cd Examples && $(MAKE) $@)
 test-Specific-strict: $(test-out-strict)
 test-Specific-sloppy: $(test-out-sloppy)
 test-Specific:
@@ -158,6 +161,13 @@ test-Specific:
 	@echo "running sloppy specific tests"
 	@$(MAKE) test-Specific-sloppy RVAL_IF_DIFF=0
 	@rm -f data F.Rd c0.Rd df0.Rd l0.Rd
+
+test-Packages:
+	@for p in $(R_PKGS_BASE); do \
+	  echo "* checking package '$${p}'"; \
+	  $(top_builddir)/bin/R CMD check \
+	    $(top_srcdir)/src/library/$${p} || echo; \
+	done
 
 test-Gct: $(test-out-gct)
 
@@ -188,7 +198,7 @@ test-Ts:
 	@$(MAKE) $(test-out-ts) RVAL_IF_DIFF=0
 test-DocArgs:
 	@echo "checking whether arguments from usage are documented"
-	@for p in $(R_PKGS); do \
+	@for p in $(R_PKGS_BASE); do \
 	  out="package"; \
 	  echo $(ECHO_N) "$${out} '$${p}' ...$(ECHO_C)"; \
 	  out=`(echo "library(tools)"; \
@@ -205,7 +215,7 @@ test-DocArgs:
 	done
 test-DocStyle:
 	@echo "checking usages for method documentation style"
-	@for p in $(R_PKGS); do \
+	@for p in $(R_PKGS_BASE); do \
 	  out="package"; \
 	  echo $(ECHO_N) "$${out} '$${p}' ...$(ECHO_C)"; \
 	  out=`(echo "library(tools)"; \
@@ -222,7 +232,7 @@ test-DocStyle:
 	done
 test-FF:
 	@echo "checking foreign function calls"
-	@for p in $(R_PKGS); do \
+	@for p in $(R_PKGS_BASE); do \
 	  out="package"; \
 	  echo $(ECHO_N) "$${out} '$${p}' ...$(ECHO_C)"; \
 	  out=`(echo "library(tools)"; \
@@ -237,7 +247,7 @@ test-FF:
 	done
 test-Methods:
 	@echo "checking generic/method consistency"
-	@for p in $(R_PKGS); do \
+	@for p in $(R_PKGS_BASE); do \
 	  out="package"; \
 	  echo $(ECHO_N) "$${out} '$${p}' ...$(ECHO_C)"; \
 	  out=`(echo "library(tools)"; \
@@ -254,7 +264,7 @@ test-Methods:
 	done
 test-codoc:
 	@echo "checking code/documentation mismatches"
-	@for p in $(R_PKGS); do \
+	@for p in $(R_PKGS_BASE); do \
 	  out="package"; \
 	  echo $(ECHO_N) "$${out} '$${p}' ...$(ECHO_C)"; \
 	  out=`(echo "library(tools)"; \
@@ -271,7 +281,7 @@ test-codoc:
 	done
 test-undoc:
 	@echo "checking undocumented objects"
-	@for p in $(R_PKGS); do \
+	@for p in $(R_PKGS_BASE); do \
 	  out="package"; \
 	  echo $(ECHO_N) "$${out} '$${p}' ...$(ECHO_C)"; \
 	  out=`(echo "library(tools)"; \
@@ -291,15 +301,18 @@ stamp-R: $(top_builddir)/bin/R.bin $(top_builddir)/library/base/R/base
 
 mostlyclean: clean
 clean:
-	-@(cd Examples; $(MAKE) $@)
-	-@(cd Embedding; $(MAKE) $@)
+	-@for d in $(SUBDIRS); do \
+	  (cd $${d} && $(MAKE) $@); \
+	done
 	-@rm -f stamp-R Makedeps Rplot* Rprof.out *.Rd data dumpdata.R \
 	  reg-plot.ps
 	-@rm -rf anRpackage
 distclean: clean
-	-@(cd Examples; $(MAKE) $@)
-	-@(cd Embedding; $(MAKE) $@)
+	-@for d in $(SUBDIRS); do \
+	  (cd $${d} && $(MAKE) $@); \
+	done
 	-@rm -f Makefile $(test-out) $(test-src-auto) .RData
+	-@rm -rf *.Rcheck
 maintainer-clean: distclean
 
 R install install-strip uninstall TAGS info dvi:

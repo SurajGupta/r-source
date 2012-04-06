@@ -24,8 +24,8 @@
 #ifndef R_EXT_UTILS_H_
 #define R_EXT_UTILS_H_
 
-#include "R_ext/Boolean.h"
-#include "R_ext/Complex.h"
+#include <R_ext/Boolean.h>
+#include <R_ext/Complex.h>
 
 #ifndef R_NO_REMAP
 #define revsort       Rf_revsort
@@ -74,6 +74,7 @@ Rboolean StringTrue(char*);
 Rboolean isBlankString(char *);
 
 double 	R_strtod(const char *c, char **end);
+char *  R_tmpnam(const char *prefix);
 
 void	hsv2rgb(double *h, double *s, double *v,/* in */
 		double *r, double *g, double *b);/* out */

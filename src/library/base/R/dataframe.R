@@ -12,12 +12,16 @@ row.names.default <- function(x) if(!is.null(dim(x))) rownames(x)# else NULL
     value <- as.character(value)
     if (any(duplicated(value)))
 	stop("duplicate row.names are not allowed")
+    if (any(is.na(value)))
+	stop("missing row.names are not allowed")
     attr(x, "row.names") <- value
     x
 }
+
 "row.names<-.default" <- function(x, value) "rownames<-"(x, value)
 
-is.na.data.frame <- function (x) {
+is.na.data.frame <- function (x)
+{
     y <- do.call("cbind", lapply(x, "is.na"))
     rownames(y) <- row.names(x)
     y
@@ -70,17 +74,6 @@ dimnames.data.frame <- function(x) list(attr(x,"row.names"), names(x))
     x
 }
 
-## OLD:
-as.data.frame <- function(x, row.names = NULL, optional = FALSE)
-    UseMethod("as.data.frame")
-as.data.frame.default <- function(x, row.names = NULL, optional = FALSE)
-{
-    dcmethod <- paste("as.data.frame", data.class(x), sep=".")
-    if(exists(dcmethod, mode="function"))
-	(get(dcmethod, mode="function"))(x, row.names, optional)
-    else stop(paste("can't coerce",data.class(x), "into a data.frame"))
-}
-## NEW:
 as.data.frame <- function(x, row.names = NULL, optional = FALSE) {
     if(is.null(x))			# can't assign class to NULL
 	return(as.data.frame(list()))
@@ -171,7 +164,7 @@ as.data.frame.matrix <- function(x, row.names = NULL, optional = FALSE)
     if(any(empty <- nchar(collabs)==0))
 	collabs[empty] <- paste("V", ic, sep = "")[empty]
     value <- vector("list", ncols)
-    if(mode(x) == "character" || mode(x) == "logical") {
+    if(mode(x) == "character") {
 	for(i in ic)
 	    value[[i]] <- as.factor(x[,i])
     } else {
@@ -224,7 +217,8 @@ as.data.frame.AsIs <- function(x, row.names = NULL, optional = FALSE)
 ###  It does everything by calling the methods presented above.
 
 data.frame <-
-function(..., row.names = NULL, check.rows = FALSE, check.names = TRUE) {
+    function(..., row.names = NULL, check.rows = FALSE, check.names = TRUE)
+{
     data.row.names <-
 	if(check.rows && missing(row.names))
 	    function(current, new, i) {
@@ -283,17 +277,28 @@ function(..., row.names = NULL, check.rows = FALSE, check.names = TRUE) {
             }
         }## ncols[i] <= 1
 	nrows[i] <- length(rowsi)
-	if(missing(row.names) && (nrows[i] > 0) && (rowsi[[1]] != ""))
+	if(missing(row.names) && (nrows[i] > 0) && !(rowsi[[1]] %in% ""))
 	    row.names <- data.row.names(row.names, rowsi, i)
 	vlist[[i]] <- xi
     }
     nr <- max(nrows)
     for(i in (1:n)[nrows < nr]) {
 	xi <- vlist[[i]]
-	if(length(xi)==1 && nr%%nrows[i]==0 && is.vector(xi[[1]]))
-	    vlist[[i]] <- list(rep(xi[[1]], length=nr))
-	else stop(paste("arguments imply differing number of rows:",
-			paste(unique(nrows), collapse = ", ")))
+	if(length(xi)==1 && nr%%nrows[i]==0) {
+            xi1 <- xi[[1]]
+            if(is.vector(xi1) || is.factor(xi1)) {
+                vlist[[i]] <- list(rep(xi1, length=nr))
+                next
+            }
+            if(is.character(xi1) && class(xi1) == "AsIs") {
+                ## simple char vectors only
+                cl <- class(xi1) # `methods' adds a class
+                vlist[[i]] <- list(structure(rep(xi1, length=nr), class=cl))
+                next
+            }
+        }
+	stop(paste("arguments imply differing number of rows:",
+                   paste(unique(nrows), collapse = ", ")))
     }
     value <- unlist(vlist, recursive=FALSE, use.names=FALSE)
     ## unlist() drops i-th component if it has 0 columns
@@ -317,6 +322,8 @@ function(..., row.names = NULL, check.rows = FALSE, check.names = TRUE) {
 	value <- value[ - i]
     }
     row.names <- as.character(row.names)
+    if(any(is.na(row.names)))
+        stop("row names contain missing values")
     if(any(duplicated(row.names)))
 	stop(paste("duplicate row.names:",
 		   paste(unique(row.names[duplicated(row.names)]),
@@ -416,11 +423,11 @@ function(..., row.names = NULL, check.rows = FALSE, check.names = TRUE) {
     ## explicitly. Also will check for wrong number or empty args
     if(nargs() < 3)
 	(function(x, i)
-	 if(is.matrix(i))
-	 as.matrix(x)[[i]]
-	 else unclass(x)[[i]])(x, ...)
-    else (function(x, i, j)
-	  x[[j]][[i]])(unclass(x), ...)
+	  if(is.matrix(i))
+	  as.matrix(x)[[i]]
+ 	  else .subset2(x,i))(x, ...)
+    else
+        .subset2(.subset2(x,..1),..2)
 }
 
 "[<-.data.frame" <- function(x, i, j, value)
@@ -578,19 +585,23 @@ function(..., row.names = NULL, check.rows = FALSE, check.names = TRUE) {
     nrows <- length(rows)
     if(nargs() < 4) {
 	## really ambiguous, but follow common use as if list
-	## el(x,i) <- value is the preferred approach
-	if(is.null(value)) {}
-	else {
-	    if(!inherits(value, "data.frame"))
-		value <- as.data.frame(value)
-	    if(length(value) != 1)
-		stop(paste("trying to replace one column with",
-			   length(value)))
-	    if(length(row.names(value)) != nrows)
-		stop(paste("replacement has", length(value),
-			   "rows, data has", nrows))
-	    class(value) <- NULL
-	    value <- value[[1]]
+	if(!is.null(value)) {
+#	    if(!inherits(value, "data.frame"))
+# 		value <- as.data.frame(value)
+# 	    if(length(value) != 1)
+# 		stop(paste("trying to replace one column with",
+# 			   length(value)))
+# 	    if(length(row.names(value)) != nrows)
+# 		stop(paste("replacement has", length(value),
+# 			   "rows, data has", nrows))
+# 	    class(value) <- NULL
+# 	    value <- value[[1]]
+            N <- NROW(value)
+            if(N < nrows)
+                if(nrows %% N == 0 && length(dim(value)) <= 1)
+                    value <- rep(value, length = nrows)
+                else
+                    stop(paste("replacement has", N, "rows, data has", nrows))
 	}
 	x[[i]] <- value
 	class(x) <- cl
@@ -649,8 +660,8 @@ function(..., row.names = NULL, check.rows = FALSE, check.names = TRUE) {
     x
 }
 
-xpdrows.data.frame <-
-function(x, old.rows, new.rows) {
+xpdrows.data.frame <- function(x, old.rows, new.rows)
+{
     nc <- length(x)
     nro <- length(old.rows)
     nrn <- length(new.rows)
@@ -931,26 +942,6 @@ as.matrix.data.frame <- function (x)
     X
 }
 
-if(FALSE)
-Math.data.frame <- function(x, ...)
-{
-    X <- x
-    class(X) <- NULL
-    f <- get(.Generic, mode = "function")
-    call <- match.call(f, sys.call())
-    call[[1]] <- as.name(.Generic)
-    arg <- names(formals(f))[[1]]
-    call[[arg]] <- as.name("xx")
-    for(j in names(X)) {
-	xx <- X[[j]]
-	if(!is.numeric(xx) && !is.complex(xx))
-	    stop(paste("Non-numeric variable:", j))
-	X[[j]] <- eval(call)
-    }
-    attr(X, "class") <- class(x)
-    X
-}
-
 Math.data.frame <- function (x, ...)
 {
     f <- get(.Generic, mode = "function")
@@ -1002,7 +993,7 @@ Ops.data.frame <- function(e1, e2 = NULL)
 	cn <- names(e1)
 	rscalar <- length(e2) <= 1 # e2 might be null
 	if(isList(e2)) {
-	    if(scalar) e2 <- e2[[1]]
+	    if(rscalar) e2 <- e2[[1]]
 	    else if(length(e2) != ncol(e1))
 		stop(paste("list of length", length(e2), "not meaningful"))
 	} else {
@@ -1045,3 +1036,4 @@ Summary.data.frame <- function(x, ...)
 	stop("only defined on a data frame with all numeric or complex variables")
     NextMethod(.Generic)
 }
+

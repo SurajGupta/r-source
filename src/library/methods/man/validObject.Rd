@@ -18,7 +18,7 @@
 validObject(object, test)
 
 getValidity(ClassDef)
-setValidity(ClassDef, method)
+setValidity(Class, method, where = 1 )
 }
 \arguments{
   \item{object}{ Any object, but not much will happen unless the
@@ -27,14 +27,20 @@ setValidity(ClassDef, method)
     function returns a vector of strings describing the problems.  If
     \code{test} is \code{FALSE} (the default) validity failure generates
     an error.}
-  \item{ClassDef}{The name of the class whose validity method is to be
+  \item{Class}{The name or class definition of the class whose validity method is to be
     set.}
+  \item{ClassDef}{The class definition of the class whose validity method is to be
+    retrieved.}
   \item{method}{A validity method;  that is, either \code{NULL} or a
     function of one argument (the \code{object}).  Like
     \code{validObject}, the function should return \code{TRUE} if the
     object is valid, and one or more descriptive strings if any problems
     are found.  Unlike \code{validObject}, it should never generate an
     error.
+   }
+  \item{where}{ The modified class definition will be stored in this
+  position on the search list.
+  }
 
     Note that validity methods do not have to check validity of any
     slots or superclasses:  the logic of \code{validObject} ensures
@@ -42,7 +48,7 @@ setValidity(ClassDef, method)
     method wants to use another, it should extract and call the method
     from the other definition of the other class by calling
     \code{\link{getValidity}}:  it should \emph{not} call
-    \code{validObject}.}
+    \code{validObject}.
 }
 \details{
   Validity testing takes place ``bottom up'':  first the validity of the
@@ -62,18 +68,21 @@ setValidity(ClassDef, method)
   with the corresponding strings in the error message.
 }
 \references{
-  The web page \url{http://www.omegahat.org/RSMethods/index.html}
-  is the primary documentation.
+  The R package \code{methods} implements, with a few exceptions, the
+  programming interface for classes
+  and methods in the book \emph{Programming with Data} (John
+  M. Chambers, Springer, 1998), in particular sections 1.6, 2.7, 2.8,
+  and chapters 7 and 8.
 
-  The functions in this package emulate the facility for classes
-  and methods described in \emph{Programming with Data} (John
-  M. Chambers, Springer, 1998).  See this book for further details and
-  examples.
+  While the programming interface for the methods package follows the reference,
+  the R software is an original implementation, so details in
+  the reference that reflect the S4 implementation may appear
+  differently in R.  Also, there are extensions to the programming
+  interface developed more recently than the reference.  For a
+  discussion of details and ongoing development, see the web page 
+  \url{http://developer.r-project.org/methodsPackage.html} and the
+  pointers from that page.
 }
-\author{
-  John Chambers
-}
-
 \seealso{ \code{\link{setClass}}. }
 
 \examples{
@@ -93,7 +102,8 @@ setValidity(ClassDef, method)
   ## Now we do something bad
   t1@x <- 1:20
   ## This should generate an error
-  try(validObject(t1))
+  \dontrun{try(validObject(t1))}
+ \testonly{stopifnot(is(try(validObject(t1)), "try-error"))}
 }
 
 \keyword{programming}

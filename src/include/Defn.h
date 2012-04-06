@@ -86,7 +86,11 @@ void R_ProcessEvents(void);
 
 /*  Heap and Pointer Protection Stack Sizes.  */
 
+typedef unsigned long R_size_t;
+#define R_SIZE_T_MAX ULONG_MAX
+
 #define Mega 1048576. /* 1 Mega Byte := 2^20 (= 1048576) Bytes */
+#define Giga 1073741824. /* 1 Giga Byte := 2^30 Bytes */
 
 /*	R_PPSSIZE  The pointer protection stack size  */
 /*	R_NSIZE	   The number of cons cells	 */
@@ -105,7 +109,7 @@ void R_ProcessEvents(void);
 #endif
 
 #ifdef Macintosh
-#include <fp.h> 
+#include <fp.h>
 #else
 #include <math.h>
 #endif
@@ -147,13 +151,15 @@ extern int vsnprintf (char *str, size_t count, const char *fmt, va_list arg);
 # if defined(HAVE_SYS_PARAM_H)
 #  include <sys/param.h>
 # endif
-# if defined(MAXPATHLEN) && !defined(PATH_MAX)
-#  define PATH_MAX MAXPATHLEN
-# elif defined(Win32)
-#  define PATH_MAX 260
-# else 
+# if !defined(PATH_MAX)
+#  if defined(MAXPATHLEN)
+#    define PATH_MAX MAXPATHLEN
+#  elif defined(Win32)
+#    define PATH_MAX 260
+#  else
 /* quite possibly unlimited, so we make this large, and test when used */
-#  define PATH_MAX 5000
+#    define PATH_MAX 5000
+#  endif
 # endif
 #endif
 
@@ -174,7 +180,7 @@ extern int vsnprintf (char *str, size_t count, const char *fmt, va_list arg);
 # define _R_HAVE_TIMING_ 1
 #endif
 
-#include "R_ext/Rdynload.h"
+#include <R_ext/Rdynload.h>
 
 #define HSIZE	   4119	/* The size of the hash table for symbols */
 #define MAXELTSIZE 8192 /* The largest string size */
@@ -206,6 +212,33 @@ typedef enum {
     PP_DOLLAR 	= 18,
     PP_FOREIGN 	= 19,
     PP_REPEAT 	= 20
+} PPkind;
+
+typedef enum {
+    PREC_FN	 = 0,
+    PREC_LEFT    = 1,
+    PREC_EQ	 = 2,
+    PREC_RIGHT	 = 3,
+    PREC_TILDE	 = 4,
+    PREC_OR	 = 5,
+    PREC_AND	 = 6,
+    PREC_NOT	 = 7,
+    PREC_COMPARE = 8,
+    PREC_SUM	 = 9,
+    PREC_PROD	 = 10,
+    PREC_PERCENT = 11,
+    PREC_COLON	 = 12,
+    PREC_SIGN	 = 13,
+    PREC_POWER	 = 14,
+    PREC_DOLLAR  = 15,
+    PREC_NS	 = 16,
+    PREC_SUBSET	 = 17
+} PPprec;
+
+typedef struct {
+	PPkind kind; 	 /* deparse kind */
+	PPprec precedence; /* operator precedence */
+	unsigned int rightassoc;  /* right associative? */
 } PPinfo;
 
 /* The type definitions for the table of built-in functions. */
@@ -408,11 +441,11 @@ extern int	gc_inhibit_torture INI_as(1);
 extern char*	R_Home;		    /* Root of the R tree */
 
 /* Memory Management */
-extern int	R_NSize		INI_as(R_NSIZE);/* Size of cons cell heap */
-extern int	R_VSize		INI_as(R_VSIZE);/* Size of the vector heap */
+extern R_size_t	R_NSize		INI_as(R_NSIZE);/* Size of cons cell heap */
+extern R_size_t	R_VSize		INI_as(R_VSIZE);/* Size of the vector heap */
 extern SEXP	R_NHeap;	    /* Start of the cons cell heap */
 extern SEXP	R_FreeSEXP;	    /* Cons cell free list */
-extern long	R_Collected;	    /* Number of free cons cells (after gc) */
+extern R_size_t	R_Collected;	    /* Number of free cons cells (after gc) */
 LibExtern SEXP	R_PreciousList;	    /* List of Persistent Objects */
 LibExtern int	R_Is_Running;	    /* for Windows memory manager */
 
@@ -436,8 +469,9 @@ extern int	R_BrowseLevel	INI_as(0);	/* how deep the browser is */
 extern int	R_Expressions	INI_as(500);	/* options(expressions) */
 extern Rboolean	R_KeepSource	INI_as(FALSE);	/* options(keep.source) */
 #ifdef EXPERIMENTAL_NAMESPACES
-extern int	R_UseNamespaceDispatch INI_as(FALSE);
+extern int	R_UseNamespaceDispatch INI_as(TRUE);
 #endif
+extern int	R_WarnLength	INI_as(1000);	/* Error/warning max length */
 
 /* File Input/Output */
 LibExtern Rboolean R_Interactive	INI_as(TRUE);	/* TRUE during interactive use*/
@@ -449,6 +483,7 @@ extern Rboolean	R_Verbose	INI_as(FALSE);	/* Be verbose */
 extern FILE*	R_Consolefile	INI_as(NULL);	/* Console output file */
 extern FILE*	R_Outputfile	INI_as(NULL);	/* Output file */
 extern int	R_ErrorCon	INI_as(2);	/* Error connection */
+extern char*	R_TempDir	INI_as(NULL);	/* Name of per-session dir */
 
 /* Objects Used In Parsing  */
 extern SEXP	R_CommentSxp;	    /* Comments accumulate here */
@@ -474,13 +509,14 @@ extern int	R_ShowErrorMessages INI_as(1);	/* show error messages? */
 extern char*	R_GUIType	INI_as("unknown");
 
 /* Pointer  type and utilities for dispatch in the methods package */
-typedef SEXP (*R_stdGen_ptr_t)(SEXP, SEXP); /* typedef */
+typedef SEXP (*R_stdGen_ptr_t)(SEXP, SEXP, SEXP); /* typedef */
 R_stdGen_ptr_t R_get_standardGeneric_ptr(); /* get method */
-R_stdGen_ptr_t R_set_standardGeneric_ptr(R_stdGen_ptr_t new); /* set method */
+R_stdGen_ptr_t R_set_standardGeneric_ptr(R_stdGen_ptr_t newValue); /* set method */
 SEXP R_deferred_default_method();
 SEXP R_set_prim_method(SEXP fname, SEXP op, SEXP code_vec, SEXP fundef, SEXP mlist);
 SEXP do_set_prim_method(SEXP op, char *code_string, SEXP fundef, SEXP mlist);
 void R_set_quick_method_check(R_stdGen_ptr_t);
+SEXP R_primitive_methods(SEXP op);
 
 /* slot management (in attrib.c) */
 SEXP R_do_slot(SEXP obj, SEXP name);
@@ -532,6 +568,7 @@ SEXP R_do_slot_assign(SEXP obj, SEXP name, SEXP value);
 # define InitMemory		Rf_InitMemory
 # define InitNames		Rf_InitNames
 # define InitOptions		Rf_InitOptions
+# define InitTempDir		Rf_InitTempDir
 # define initStack		Rf_initStack
 # define internalTypeCheck	Rf_internalTypeCheck
 # define isValidName		Rf_isValidName
@@ -642,12 +679,15 @@ void InitConnections(void);
 void InitEd(void);
 void InitFunctionHashing(void);
 void InitGlobalEnv(void);
+Rboolean R_current_trace_state();
 Rboolean R_has_methods(SEXP);
 void R_InitialData(void);
 SEXP R_possible_dispatch(SEXP, SEXP, SEXP, SEXP);
 void InitMemory(void);
 void InitNames(void);
 void InitOptions(void);
+void Init_R_Variables(SEXP);
+void InitTempDir(void);
 void initStack(void);
 void internalTypeCheck(SEXP, SEXP, SEXPTYPE);
 int isValidName(char *);
@@ -728,10 +768,11 @@ void warningcall(SEXP, const char*,...);
 void ErrorMessage(SEXP, int, ...);
 void WarningMessage(SEXP, R_WARNING, ...);
 
-int R_GetMaxVSize(void);
-void R_SetMaxVSize(int);
-int R_GetMaxNSize(void);
-void R_SetMaxNSize(int);
+R_size_t R_GetMaxVSize(void);
+void R_SetMaxVSize(R_size_t);
+R_size_t R_GetMaxNSize(void);
+void R_SetMaxNSize(R_size_t);
+R_size_t R_Decode2Long(char *p, int *ierr);
 
 void R_run_onexits(RCNTXT *);
 void R_restore_globals(RCNTXT *);

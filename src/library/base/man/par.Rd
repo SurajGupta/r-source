@@ -243,17 +243,18 @@ par(\dots, no.readonly = FALSE)
       be used; \code{"s"} generates a square plotting region and
       \code{"m"} generates the maximal plotting region.}
     \item{\code{smo}}{(\emph{Unimplemented}) a value which indicates how
-      smooth circles and circular arc should be.}
+      smooth circles and circular arcs should be.}
     \item{\code{srt}}{The string rotation in degrees.
       %% NOT true for R (but for S): Causes \code{srt} to be set to the
       %% same value.
     }
     \item{\code{tck}}{The length of tick marks as a fraction of the
       smaller of the width or height of the plotting region.  If
-      \code{tck=1}, grid lines are drawn.  The default setting is to use
-      \code{tcl=-0.5} (see below).}
+      \code{tck=1}, grid lines are drawn.  The default setting
+      (\code{tck = NA}) is to use \code{tcl = -0.5} (see below).}
     \item{\code{tcl}}{The length of tick marks as a fraction of the
-      height of a line of text.  The default value is \code{-0.5}.}
+      height of a line of text.  The default value is \code{-0.5};
+      setting \code{tcl = NA} sets \code{tck = -0.01} which is S' default.}
     \item{\code{tmag}}{A number specifying the enlargement of text of
       the main title relative to the other annotating text of the plot.}
     \item{\code{type}}{character;  the default plot type desired, see
@@ -266,7 +267,15 @@ par(\dots, no.readonly = FALSE)
     }
     \item{\code{xaxp}}{A vector of the form \code{c(x1, x2, n)} giving
       the coordinates of the extreme tick marks and the number of
-      intervals between tick-marks.}
+      intervals between tick-marks when \code{par("xlog")} is false.
+      Otherwise, when \emph{log} coordinates are active, the three
+      values have a different meaning: For a small range, \code{n} is
+      \emph{negative}, and the ticks are as in the linear case,
+      otherwise, \code{n} is in \code{1:3}, specifying a case number,
+      and \code{x1} and \code{x2} are the lowest and highest power of 10
+      inside the user coordinates, \code{par("usr")[1:2]}.  See
+      \code{\link{axTicks}()} for more details.
+      }
     \item{\code{xaxs}}{The style of axis interval calculation to be used
       for the x-axis.  Possible values are \code{"r"}, \code{"i"},
       \code{"e"}, \code{"s"}, \code{"d"}.  The styles are generally
@@ -300,7 +309,8 @@ par(\dots, no.readonly = FALSE)
       \code{NA}, all plotting is clipped to the device region.}
     \item{\code{yaxp}}{A vector of the form \code{c(y1, y2, n)} giving
       the coordinates of the extreme tick marks and the number of
-      intervals between tick-marks.}
+      intervals between tick-marks unless for log coordinates, see
+      \code{xaxp} above.}
     \item{\code{yaxs}}{The style of axis interval calculation to be used
       for the y-axis.  See \code{xaxs} above.}
     \item{\code{yaxt}}{A character which specifies the axis type.
@@ -319,9 +329,10 @@ par(\dots, no.readonly = FALSE)
   where each of the pairs \code{RR}, \code{GG}, \code{BB} consist of two
   hexadecimal digits giving a value in the range \code{00} to \code{FF}.
   Colors can also be specified by giving an index into a small table of
-  colors, the \code{\link{palette}}.  This provides compatibility with S.
+  colors, the \code{\link{palette}}.  This provides compatibility with
+  S.  Index \code{0} corresponds to the background color.
 
-  Additionally, \code{"transparent"} or (integer) \code{0} is
+  Additionally, \code{"transparent"} or (integer) \code{NA} is
   \emph{transparent}, useful for filled areas (such as the background!),
   and just invisible for things like lines or text.
 

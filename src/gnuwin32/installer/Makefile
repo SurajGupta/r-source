@@ -3,14 +3,8 @@
 include ../MkRules
 include ../RWVERSION
 
-all: SetupR.exe miniR.exe
-clean: ISclean
-distclean: ISdistclean
+all: $(RPREFIX).exe miniR.exe
 
-# section for JR software installer.
-
-RECOMMENDED=KernSmooth VR boot cluster foreign mgcv nlme rpart survival grid lattice
-EXTRA=
 
 R.iss: JRins.pl ../$(RPREFIX)b.zip ../$(RPREFIX)h.zip \
 ../$(RPREFIX)ch.zip ../$(RPREFIX)d1.zip ../$(RPREFIX)d2.zip \
@@ -23,8 +17,8 @@ R.iss: JRins.pl ../$(RPREFIX)b.zip ../$(RPREFIX)h.zip \
 	unzip -qo ../$(RPREFIX)l -d $(RPREFIX)l
 	unzip -qo ../$(RPREFIX)sp -d $(RPREFIX)sp
 	unzip -qo ../$(RPREFIX)w -d $(RPREFIX)w
-	for p in $(RECOMMENDED) $(EXTRA); do \
-	  unzip -qo $(PKGS)/$${p} -d $(RPREFIX)/library; \
+	for p in $(REC_PKGS); do \
+	  cp -pr ../../../library/$${p} -d $(RPREFIX)/library; \
 	done
 	zip -rmq foo.zip $(RPREFIX)/library/*/html
 	unzip -qo foo -d $(RPREFIX)w
@@ -45,12 +39,12 @@ R.iss: JRins.pl ../$(RPREFIX)b.zip ../$(RPREFIX)h.zip \
 	perl JRins.pl $(RPREFIX)
 
 
-SetupR.exe: R.iss
-	"$(ISDIR)/iscc" R.iss > setupR.log
+$(RPREFIX).exe: R.iss
+	"$(ISDIR)/iscc" R.iss > $(RPREFIX).log
 
 Rsmall.iss: JRsmall.pl ../$(RPREFIX)b.zip \
   ../$(RPREFIX)h.zip ../$(RPREFIX)ch.zip ../$(RPREFIX)d1.zip
-	rm -rf $(RPREFIX)*
+	rm -rf $(RPREFIX) $(RPREFIX)? $(RPREFIX)??
 	unzip -qo ../$(RPREFIX)b
 	unzip -qo ../$(RPREFIX)h
 	unzip -qo ../$(RPREFIX)ch -d $(RPREFIX)ch
@@ -58,8 +52,8 @@ Rsmall.iss: JRsmall.pl ../$(RPREFIX)b.zip \
 	rm $(RPREFIX)d1/$(RPREFIX)/doc/manual/R-admin.pdf
 	rm $(RPREFIX)d1/$(RPREFIX)/doc/manual/R-exts.pdf
 	rm $(RPREFIX)d1/$(RPREFIX)/doc/manual/R-lang.pdf
-	for p in $(RECOMMENDED); do \
-	  unzip -qo $(PKGS)/$${p} -d $(RPREFIX)/library; \
+	for p in $(REC_PKGS); do \
+	  cp -pr ../../../library/$${p} -d $(RPREFIX)/library; \
 	done
 	rm -rf $(RPREFIX)/library/*/html $(RPREFIX)/library/*/latex \
 	  $(RPREFIX)/library/*/man
@@ -71,8 +65,12 @@ Rsmall.iss: JRsmall.pl ../$(RPREFIX)b.zip \
 miniR.exe: Rsmall.iss
 	"$(ISDIR)/iscc" Rsmall.iss > miniR.log
 
-ISclean:
-	rm -rf R.iss Rsmall.iss *.log $(RPREFIX)*
+clean:
+	rm -rf R.iss Rsmall.iss *.log $(RPREFIX) $(RPREFIX)? $(RPREFIX)??
 
-ISdistclean: ISclean
-	rm -f SetupR.exe miniR*
+distclean: clean
+	rm -f $(RPREFIX).exe miniR*
+
+# for historical reasons
+ISclean: clean
+ISdistclean: distclean

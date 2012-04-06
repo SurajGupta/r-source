@@ -1,7 +1,7 @@
 /*
  *  R : A Computer Language for Statistical Data Analysis
  *  file extra.c
- *  Copyright (C) 1998--2001  Guido Masarotto and Brian Ripley
+ *  Copyright (C) 1998--2002  Guido Masarotto and Brian Ripley
  *
  *  This program is free software; you can redistribute it and/or modify
  *  it under the terms of the GNU General Public License as published by
@@ -35,24 +35,15 @@
 #include "graphapp/ga.h"
 #include "rui.h"
 
-char * Rwin32_tmpnam(char * prefix)
+char * R_tmpnam(const char * prefix)
 {
-    char *tmp, tm[MAX_PATH], tmp1[MAX_PATH], *p, *res;
-    int hasspace = 0;
+    char tm[MAX_PATH], tmp1[MAX_PATH], *res;
     unsigned int n, done = 0;
     WIN32_FIND_DATA fd;
     HANDLE h;
 
-    tmp = getenv("TMP");
-    if (!tmp) tmp = getenv("TEMP");
-    if (!tmp) tmp = getenv("R_USER"); /* this one will succeed */
-    /* make sure no spaces in path */
-    for (p = tmp; *p; p++)
-	if (isspace(*p)) { hasspace = 1; break; }
-    if (hasspace)
-	GetShortPathName(tmp, tmp1, MAX_PATH);
-    else
-	strcpy(tmp1, tmp);
+    if(!prefix) prefix = "";	/* NULL */
+    strcpy(tmp1, R_TempDir);
     for (n = 0; n < 100; n++) {
 	/* try a random number at the end */
         sprintf(tm, "%s\\%s%d", tmp1, prefix, rand());
@@ -70,27 +61,6 @@ char * Rwin32_tmpnam(char * prefix)
     return res;
 }
 
-
-SEXP do_tempfile(SEXP call, SEXP op, SEXP args, SEXP env)
-{
-    SEXP  ans;
-    char *tn, *tm;
-    int i, slen=0 /* -Wall */;
-
-    checkArity(op, args);
-    if (!isString(CAR(args)) || (slen = LENGTH(CAR(args))) < 1)
-	errorcall(call, "invalid file name argument");
-    PROTECT(ans = allocVector(STRSXP, slen));
-    for(i = 0; i < slen; i++) {
-	tn = CHAR(STRING_ELT(CAR(args), i));
-	/* try to get a new file name */
-	tm = Rwin32_tmpnam(tn);
-	SET_STRING_ELT(ans, i, mkChar(tm));
-	free(tm);
-    }
-    UNPROTECT(1);
-    return (ans);
-}
 
 SEXP do_dircreate(SEXP call, SEXP op, SEXP args, SEXP env)
 {
@@ -919,4 +889,53 @@ int Rwin_rename(char *from, char *to)
 	res = (MoveFile(from, to) == 0);
     }
     return res;
+}
+
+void InitTempDir()
+{
+    char *tmp, tm[MAX_PATH], tmp1[MAX_PATH], *p;
+    unsigned int n;
+    int hasspace = 0, len, done = 0, res;
+    WIN32_FIND_DATA fd;
+    HANDLE h;
+
+    tmp = getenv("TMP");
+    if (!tmp) tmp = getenv("TEMP");
+    if (!tmp) tmp = getenv("R_USER"); /* this one will succeed */
+    /* make sure no spaces in path */
+    for (p = tmp; *p; p++)
+	if (isspace(*p)) { hasspace = 1; break; }
+    if (hasspace)
+	GetShortPathName(tmp, tmp1, MAX_PATH);
+    else
+	strcpy(tmp1, tmp);
+    /* now try a random addition */
+    srand( (unsigned)time( NULL ) );
+    for (n = 0; n < 100; n++) {
+	/* try a random number at the end */
+        sprintf(tm, "%s\\%s%d", tmp1, "Rtmp", rand());
+        if ((h = FindFirstFile(tm, &fd)) == INVALID_HANDLE_VALUE) {
+	    done = 1;
+	    break;
+	}
+        FindClose(h);
+        tm[0] = '\0';
+    }
+    if(!done)
+	R_Suicide("cannot find unused tempdir name");
+    /* Now try to create it */
+    res = mkdir(tm);
+    if(res) R_Suicide("Can't mkdir R_TempDir");
+    len = strlen(tm);
+    p = (char *) malloc(len+1);
+    if(!p) R_Suicide("Can't allocate R_TempDir");
+    else {
+	R_TempDir = p;
+	strcpy(R_TempDir, tm);
+    }
+}
+
+void CleanTempDir()
+{
+    R_unlink(R_TempDir, 1);
 }

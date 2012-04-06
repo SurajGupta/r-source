@@ -106,7 +106,8 @@ help pages
 @end smallexample
 
 @noindent
-before reading on.
+before reading on.  If the package you are writing uses the
+@code{methods} package, look at the corresponding section in @code{?INSTALL}.
 
 @menu
 * Package structure::
@@ -170,6 +171,12 @@ start with a space or tab.  The @samp{Package}, @samp{Version},
 @samp{License}, @samp{Description}, @samp{Title}, @samp{Author}, and
 @samp{Maintainer} fields are mandatory, the remaining fields
 (@samp{Date}, @samp{Depends}, @samp{URL}, @dots{}) are optional.
+
+The @samp{Package} and @samp{Version} fields given the name and the
+version of the package, respectively.  The name should consist of
+letters, numbers, and the dot character and start with a letter.  The
+version is a sequence of at least non-negative integers separated by
+single @samp{.} or @samp{-} characters.
 
 The @samp{License} field should contain an explicit statement or a
 well-known abbreviation (such as @samp{GPL}, @samp{LGPL}, @samp{BSD}, or
@@ -298,7 +305,10 @@ file, see above.  (Note that it is currently not possible to generate
 this index file automatically.)
 
 The contents of the @file{inst} subdirectory will be copied recursively
-to the installation directory.
+to the installation directory.  Subdirectories of @file{inst} should not
+interfere with those used by R (currently, @file{R}, @file{data},
+@file{demo}, @file{exec}, @file{man}, @file{help}, @file{html},
+@file{latex}, and @file{R-ex}).
 
 Subdirectory @file{tests} is for additional package-specific test code,
 similar to the specific tests that come with the @R{} distribution.
@@ -1623,9 +1633,9 @@ The command @command{Rprof} is used to control profiling, and its help
 page can be consulted for full details.  Profiling works by recording at
 fixed intervals (by default every 20 msecs) which @R{} function is being
 used, and recording the results in a file (default @file{Rprof.out} in
-the working directory).  Then the utility @code{R CMD Rprof
-@var{Rprof.out}} can be used to summarize the activity.  (Use @code{Rcmd
-Rprof @var{Rprof.out}} on Windows.)
+the working directory).  Then the function @code{summaryRprof} or the
+command-line utility @code{R CMD Rprof @var{Rprof.out}} can be used to summarize the
+activity.  
 
 As an example, consider the following code (from Venables & Ripley,
 1999).
@@ -1708,6 +1718,12 @@ Self seconds: time spent in function alone.
 This often produces surprising results and can be used to identify
 bottlenecks or pieces of @R{} code that could benefit from being
 replaced by compiled code.
+
+@code{R CMD Rprof} (or @code{Rcmd Rprof} under Windows) uses a Perl
+script that may be much faster than @code{summaryRprof} for large files
+(about 4 times faster for the example above). On the other hand
+@code{summaryRprof} does not require Perl and provides the results as an
+@R{} object.
 
 Two warnings: profiling does impose a small performance penalty, and the
 output files can be very large if long runs are profiled.
@@ -4517,7 +4533,17 @@ There is also an @code{F77_CALL(interv)()} version of
 @code{findInterval()} with the same arguments, but all pointers.
 @end deftypefun
 
-There is also the internal function use to expand file names in several
+A system-independent interface to produce the name of a temporary
+file is provided as
+
+@deftypefun {char *} R_tmpnam (const char* @var{prefix})
+Return a pathname for a temporary file with name beginning with
+@var{prefix}.  A @code{NULL} prefix is replaced by @code{""}.
+@end deftypefun
+
+@c ----
+
+There is also the internal function used to expand file names in several
 @R{} functions, and called directly by @code{path.expand}.
 
 @deftypefun {char *} R_ExpandFileName (char* @var{fn})
@@ -4537,18 +4563,19 @@ The header files define @code{USING_R}, which should be used to test if
 the code is indeed being used with @R{}.
 
 Header file @file{Rconfig.h} (included by @file{R.h}) is used to define
-platform-specific macros that are mainly for us in other header files.
+platform-specific macros that are mainly for use in other header files.
 The macro @code{WORDS_BIGENDIAN} is defined on big-endian systems
 (e.g.@: @code{sparc-sun-solaris2.6}) and not on little-endian systems
 (such as @code{i686} under Linux or Windows). It can be useful when
 manipulating binary files.
 
-Header file @file{Rversion.h} (included by @file{R.h}) defines a macro
-@code{R_VERSION} giving the version number encoded as an integer, plus a
-macro @code{R_Version} to do the encoding.  This can be used to test if
-the version of @R{} is late enough, or to include back-compatibility
-features.  For protection against earlier versions of @R{} which did not
-have this macro, use a construction such as
+Header file @file{Rversion.h} (@strong{not} included by @file{R.h} as from
+@R{} 1.6.0) defines a macro @code{R_VERSION} giving the version number
+encoded as an integer, plus a macro @code{R_Version} to do the encoding.
+This can be used to test if the version of @R{} is late enough, or to
+include back-compatibility features.  For protection against earlier
+versions of @R{} which did not have this macro, use a construction such
+as
 
 @smallexample
 @group

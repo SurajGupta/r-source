@@ -1,15 +1,17 @@
 \name{chol}
 \alias{chol}
+\alias{La.chol}
 \title{The Choleski Decomposition}
 \description{
-  Compute the Choleski factorization of a symmetric (Hermitian),
-  positive definite square matrix.
+  Compute the Choleski factorization of a real symmetric
+  positive-definite square matrix.
 }
 \usage{
 chol(x, pivot = FALSE)
+La.chol(x)
 }
 \arguments{
-  \item{x}{a symmetric, positive definite matrix}
+  \item{x}{a real symmetric, positive-definite matrix}
   \item{pivot}{Should pivoting be used?}
 }
 \value{
@@ -20,13 +22,15 @@ chol(x, pivot = FALSE)
   \code{"pivot"} and \code{"rank"} are also returned.
 }
 \details{
+  \code{chol} provides an interface to the LINPACK routine DCHDC.
+  \code{La.chol} provides an interface to the LAPACK routine DPOTRF.
+
   Note that only the upper triangular part of \code{x} is used, so
   that \eqn{R'R = x} when \code{x} is symmetric.
 
   If \code{pivot = FALSE} and \code{x} is not non-negative definite an
   error occurs.  If \code{x} is positive semi-definite (i.e. some zero
-  eigenvalues) an error may or may not occur, depending on
-  finite precision numerical errors.
+  eigenvalues) an error will also occur, as a numerical tolerance is used.
 
   If \code{pivot = TRUE}, then the Choleski decomposition of a positive
   semi-definite \code{x} can be computed.  The rank of \code{x} is
@@ -40,8 +44,9 @@ chol(x, pivot = FALSE)
 }
 
 \section{Warning}{
-  The code does not check for symmetry or for non-negative
-  definiteness.  If \code{pivot = TRUE} and \code{x} is not non-negative
+  The code does not check for symmetry.
+
+  If \code{pivot = TRUE} and \code{x} is not non-negative
   definite then there will be no error message but a meaningless
   result will occur.  So only use \code{pivot = TRUE} when \code{x} is
   non-negative definite by construction.
@@ -50,6 +55,11 @@ chol(x, pivot = FALSE)
 \references{
   Dongarra, J. J., Bunch, J. R., Moler, C. B. and Stewart, G. W. (1978)
   \emph{LINPACK Users Guide.}  Philadelphia: SIAM Publications.
+
+  Anderson. E. and ten others (1999)
+  \emph{LAPACK Users' Guide}. Third Edition. SIAM.\cr
+  Available on-line at
+  \url{http://www.netlib.org/lapack/lug/lapack_lug.html}.
 }
 
 \seealso{
@@ -65,6 +75,9 @@ chol(x, pivot = FALSE)
 ( cm <- chol(m) )
 t(cm) \%*\% cm  #-- = 'm'
 all(abs(m  -  t(cm) \%*\% cm) < 100* .Machine$double.eps) # TRUE
+( Lcm <- La.chol(m) )
+crossprod(Lcm)
+all(abs(m - crossprod(Lcm))  < 100* .Machine$double.eps) # TRUE
 \testonly{# check with pivoting
 ( cm <- chol(m, TRUE) )
 t(cm) \%*\% cm  #-- = 'm'
@@ -90,7 +103,7 @@ qr(m)$rank # is 2, as it should be
 # chol() unlike qr() does not use a tolerance.
 test <- try(Q <- chol(m))     
 
-(Q <- chol(m, pivot = TRUE)) # NB wrong rank here ... you have been warned!
+(Q <- chol(m, pivot = TRUE)) # NB wrong rank here ... see Warning section.
 pivot <- attr(Q, "pivot")
 oo <- order(pivot)
 all.equal(t(Q[, oo]) \%*\% Q[, oo], m) # TRUE

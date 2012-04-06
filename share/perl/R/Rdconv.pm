@@ -599,7 +599,7 @@ sub text2html {
 	    }
 	}
 	else {
-	    $main::misslink = $main::misslink . " " . $argkey 
+	    $main::misslink = $main::misslink . " " . $argkey
 		unless $opt ne "";
 	    if($using_chm){
 		if($opt ne "") {
@@ -731,11 +731,11 @@ sub code2html {
 		 else{
 		 	$text =~
 		    s/\\link(\[.*\])?$id.*$id/<a href=\"..\/..\/$htmlfile\">$arg<\/a>/s;
-		 }   
+		 }
 	    }
 	}
 	else{
-	    $main::misslink = $main::misslink . " " . $argkey 
+	    $main::misslink = $main::misslink . " " . $argkey
 		unless $opt ne "";
 	    if($using_chm){
 		if($opt ne "") {
@@ -1967,7 +1967,17 @@ sub code2examp {
     $text =~ s/\\dots/.../go;
 
     $text = undefine_command($text, "link");
+
     $text = undefine_command($text, "testonly");
+    ## Ideas for alternatives :
+    ## 1) if the comments were shown in example() at all :
+    ## $text = replace_command($text, "testonly",
+    ##			    "## BEGIN{testonly}\n", "\n## END{testonly}}");
+    ## 2)
+    ## $text = replace_command($test, "testonly",
+    ##	      "if(is.null(F) || <call from example(*, testonly = TRUE)>)) {\\n",
+    ##				"\\n}");
+
     $text = replace_prepend_command($text, "dontrun","##Don't run: ", "",
 				    "##D ");
     $text =~ s/\\\\/\\/g;
@@ -2383,7 +2393,7 @@ sub rdoc2Ssgm { # (filename) ; 0 for STDOUT
     if ($#keywords > 0) {
 	print $sgmlout "<s-keywords>\n";
 	while ($#keywords >= 0) {
-	    print $sgmlout "<s-keyword>", shift( @keywords ), 
+	    print $sgmlout "<s-keyword>", shift( @keywords ),
 	    "</s-keyword>\n";
 	}
 	print $sgmlout "</s-keywords>\n";
@@ -2555,7 +2565,7 @@ sub Ssgm_print_block {
 
     my ($block,$sname) = @_;
 
-    Ssgm_print_a_section("<$sname>", $blocks{$block}, "</$sname>") 
+    Ssgm_print_a_section("<$sname>", $blocks{$block}, "</$sname>")
 	if defined $blocks{$block};
 }
 
@@ -2563,16 +2573,16 @@ sub Ssgm_print_block_named {
 
     my ($block,$name) = @_;
 
-    Ssgm_print_a_section("<s-section name=\"".uc($name)."\">", 
-			 $blocks{$block}, "</s-section>") 
+    Ssgm_print_a_section("<s-section name=\"".uc($name)."\">",
+			 $blocks{$block}, "</s-section>")
 	if defined $blocks{$block};
 }
 
 sub Ssgm_print_usage {
 
     if(defined $blocks{"usage"}){
-	print $sgmlout ("<s-usage>\n<s-old-style-usage>", 
-			code2Ssgm($blocks{"usage"}), 
+	print $sgmlout ("<s-usage>\n<s-old-style-usage>",
+			code2Ssgm($blocks{"usage"}),
 			"</s-old-style-usage>\n</s-usage>\n\n");
     }
 }
@@ -2581,7 +2591,7 @@ sub Ssgm_print_examples {
 
     if(defined $blocks{"examples"}){
 	print $sgmlout ("<s-examples>\n<s-example type = text>",
-			code2Ssgm($blocks{"examples"}), 
+			code2Ssgm($blocks{"examples"}),
 			"</s-example>\n</s-examples>\n");
     }
 }
@@ -2589,7 +2599,7 @@ sub Ssgm_print_examples {
 sub Ssgm_print_seealso {
 
     if(defined $blocks{"seealso"}){
-	print $sgmlout ("<s-see>\n", see2Ssgm($blocks{"seealso"}), 
+	print $sgmlout ("<s-see>\n", see2Ssgm($blocks{"seealso"}),
 			"\n</s-see>\n\n");
     }
 }
@@ -2659,7 +2669,7 @@ sub Ssgm_print_valueblock {
 		print $sgmlout ("<s-return-component name=\"",
 				text2Ssgm($arg, 1, 1),
 				"\">\n",
-				text2Ssgm($desc, 1, 1), 
+				text2Ssgm($desc, 1, 1),
 				"</s-return-component>\n");
 		$text =~ s/.*$id//s;
 	    }
@@ -2709,7 +2719,7 @@ sub Ssgm_unescape_codes {
 	  && $text =~ /$ECODE($ID)/){
 	my $id = $1;
 	my $ec = code2Ssgm($ecodes{$id});
-	if($ec =~ /<s-function/) { 
+	if($ec =~ /<s-function/) {
 	    # <s-expression cannot contain <s-function>
 	    $text =~ s/$ECODE$id/$ec/;
 	} else {
@@ -2792,7 +2802,7 @@ sub Ssgm_functionhead
 {
     my ($name,$title) = @_;
 
-    my $retval = 
+    my $retval =
     "<!doctype s-function-doc system \"s-function-doc.dtd\" [\n".
     "<!entity % S-OLD \"INCLUDE\">\n]\n>\n".
     "<s-function-doc>\n";
