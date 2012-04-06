@@ -21,7 +21,7 @@
  *  Foundation, Inc., 59 Temple Place, Suite 330, Boston, MA  02111-1307  USA
 
   
-  $Source: /home/rdevel/CVS-ARCHIVE//R/doc/html/search/IndexTable.java,v $
+  $Source: /home/rdevel/CVS-ARCHIVE/R/doc/html/search/IndexTable.java,v $
   
   $Revision: 1.4 $
 
