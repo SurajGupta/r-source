@@ -243,8 +243,8 @@ static int LabelInsideWindow(SEXP label, DevDesc *dd) {
 	x = REAL(label)[i];
 	y = REAL(label)[i+4];
 	GConvert(&x, &y, USER, NDC, dd);
-	//	x = GConvertXUnits(REAL(label)[i], USER, NDC, dd);
-	//	y = GConvertYUnits(REAL(label)[i+4], USER, NDC, dd);
+	/*	x = GConvertXUnits(REAL(label)[i], USER, NDC, dd);
+		y = GConvertYUnits(REAL(label)[i+4], USER, NDC, dd); */
 	
 	if ((x < 0) || (x > 1) ||
 	    (y < 0) || (y > 1))
@@ -468,6 +468,7 @@ int findGapDown(double *xxx, double *yyy, int ns, double labelDistance,
 }
     
 static void contour(SEXP x, int nx, SEXP y, int ny, SEXP z, double zc,
+		    SEXP labels, int cnum,
 		    int drawLabels, int method, int vectorFonts, int typeface, 
 		    int fontindex, double atom, DevDesc *dd)
 {
@@ -494,6 +495,7 @@ static void contour(SEXP x, int nx, SEXP y, int ny, SEXP z, double zc,
     double labelHeight;
     SEXP label1 = allocVector(REALSXP, 8);
     SEXP label2;
+    SEXP lab;
     int gotLabel = 0;
     int ddl;  /** Don't draw label */
 
@@ -714,11 +716,25 @@ static void contour(SEXP x, int nx, SEXP y, int ny, SEXP z, double zc,
 		yyy[ns++] = s->y1;
 		GMode(1, dd);
 
-		/* Need to send labels in from interpreted R code ? */
-	        sprintf(buffer, " %.00f ", zc);
+		/* If user supplied labels, use i'th one of them
+		   Otherwise stringify the z-value of the contour */
+		buffer[0] = ' ';
+		if (!isNull(labels)) {
+		    int numl = length(labels);
+		    strcpy(&buffer[1], CHAR(STRING(labels)[cnum % numl]));
+		}
+		else {
+		    PROTECT(lab = allocVector(REALSXP, 1));
+		    REAL(lab)[0] = zc;
+		    lab = labelformat(lab);
+		    strcpy(&buffer[1], CHAR(STRING(lab)[0]));
+		    UNPROTECT(1);
+		}
+		buffer[strlen(buffer)+1] = '\0';
+		buffer[strlen(buffer)] = ' ';
 
 		if (vectorFonts) {
-		    // 1, 1 => sans serif, basic font
+		    /* 1, 1 => sans serif, basic font */
 		    labelDistance = GVStrWidth(buffer, typeface, fontindex,
 					       INCHES, dd);
 		    labelHeight = GVStrHeight(buffer, typeface, fontindex,
@@ -850,7 +866,7 @@ static void contour(SEXP x, int nx, SEXP y, int ny, SEXP z, double zc,
 			    if (lowestVariance < 9999999)
 				gotLabel = 1;
 			}
-		    } // switch (method) 
+		    } /* switch (method) */
 		    
 		    if (method == 0) {
 			GPolyline(ns, xxx, yyy, USER, dd);
@@ -871,7 +887,7 @@ static void contour(SEXP x, int nx, SEXP y, int ny, SEXP z, double zc,
 
 			if (gotLabel) {
 			    /* find which plot edge we are closest to */
-			    int closest; // 0 = index,  1 = index+range
+			    int closest; /* 0 = index,  1 = index+range */
 			    double dx1, dx2, dy1, dy2, dmin;
 			    dx1 = fmin2((xxx[index] - dd->gp.usr[0]),
 					(dd->gp.usr[1] - xxx[index]));
@@ -971,8 +987,8 @@ static void contour(SEXP x, int nx, SEXP y, int ny, SEXP z, double zc,
 				*/
 				GConvert(&ux, &uy, USER, INCHES, dd);
 				GConvert(&vx, &vy, USER, INCHES, dd);
-				// 1, 1 => sans serif, basic font
-				// 0, .5 => left, centre justified
+				/* 1, 1 => sans serif, basic font
+				   0, .5 => left, centre justified */
 				if (vectorFonts) 
 				    GVText(ux, uy, INCHES, buffer, 
 					   typeface, fontindex,
@@ -986,9 +1002,9 @@ static void contour(SEXP x, int nx, SEXP y, int ny, SEXP z, double zc,
 					  atan2(vy - uy, vx - ux), 
 					  dd);
 			    }
-			} // if (gotLabel)
-		    } // if (method == 0) else ...
-		} // if ((drawLabels == 1) && (labelDistance > 0))
+			} /* if (gotLabel) */
+		    } /* if (method == 0) else ... */
+		} /* if ((drawLabels == 1) && (labelDistance > 0)) */
 		else {
 		    GPolyline(ns, xxx, yyy, USER, dd);
 		}
@@ -1004,7 +1020,7 @@ static void contour(SEXP x, int nx, SEXP y, int ny, SEXP z, double zc,
 
 SEXP do_contour(SEXP call, SEXP op, SEXP args, SEXP env)
 {
-    SEXP oargs, c, x, y, z, vfont, col, lty, lwd;
+    SEXP oargs, c, x, y, z, vfont, col, lty, lwd, labels;
     int i, j, nx, ny, nc, ncol, nlty, nlwd;
     int ltysave, colsave, lwdsave;
     double cexsave;
@@ -1044,6 +1060,11 @@ SEXP do_contour(SEXP call, SEXP op, SEXP args, SEXP env)
     nc = LENGTH(c);
     args = CDR(args);
 
+    labels = CAR(args);
+    if (!isNull(labels))
+	internalTypeCheck(call, labels, STRSXP);
+    args = CDR(args);
+
     labcex = asReal(CAR(args));
     args = CDR(args);
 
@@ -1062,14 +1083,17 @@ SEXP do_contour(SEXP call, SEXP op, SEXP args, SEXP env)
     }
     args = CDR(args);
 
-    PROTECT(col = FixupCol(GetPar("col", args), NA_INTEGER));
+    PROTECT(col = FixupCol(CAR(args), NA_INTEGER));
     ncol = length(col);
+    args = CDR(args);
 
-    PROTECT(lty = FixupLty(GetPar("lty", args), dd->gp.lty));
+    PROTECT(lty = FixupLty(CAR(args), dd->gp.lty));
     nlty = length(lty);
+    args = CDR(args);
 
-    PROTECT(lwd = FixupLwd(GetPar("lwd", args), dd->gp.lwd));
+    PROTECT(lwd = FixupLwd(CAR(args), dd->gp.lwd));
     nlwd = length(lwd);
+    args = CDR(args);
 
     if (nx < 2 || ny < 2)
 	errorcall(call, "insufficient x or y values");
@@ -1153,7 +1177,8 @@ SEXP do_contour(SEXP call, SEXP op, SEXP args, SEXP env)
 	if (dd->gp.lwd == NA_REAL)
 	    dd->gp.lwd = lwdsave;
 	dd->gp.cex = labcex;
-	contour(x, nx, y, ny, z, REAL(c)[i], drawLabels, method-1,
+	contour(x, nx, y, ny, z, REAL(c)[i], labels, i,
+		drawLabels, method-1,
 		vectorFonts, typeface, fontindex, atom, dd);
 	vmaxset(vmax);
     }
@@ -1882,14 +1907,34 @@ static short int TickVector[8][3] = {
     {-1, 1, 0},
     {1, 1, 0}};
 
-int lowest(double y1, double y2, double y3, double y4) {
+static int lowest(double y1, double y2, double y3, double y4) {
     return ((y1 <= y2) && (y1 <= y3) && (y1 <= y4));
 }
 
-static void PerspAxis(double *x, double *y, double *z, int axis,
-		       int axisType, DevDesc *dd) {
+static double labelAngle(double x1, double y1, double x2, double y2) {
+    double dx, dy;
+    double angle;
+    dx = fabs(x2 - x1);
+    if (x2 > x1) 
+	dy = y2 - y1;
+    else
+	dy = y1 - y2;
+    if (dx == 0) {
+	if (dy > 0)
+	    angle = 90;
+	else
+	    angle = 270;
+    } else {
+	angle = (180 / M_PI) * atan2(dy, dx);
+    }
+    return angle;
+}
+
+static void PerspAxis(double *x, double *y, double *z, 
+		      int axis, int axisType, int nTicks, int tickType, 
+		      char *label, DevDesc *dd) {
     Vector3d u1, u2, u3, v1, v2, v3;
-    double tickLength = .03; // proportion of axis length
+    double tickLength = .03; /* proportion of axis length */
     double min, max, *range;
     double axp[3];
     int nint, i;
@@ -1911,52 +1956,143 @@ static void PerspAxis(double *x, double *y, double *z, int axis,
 	range = z;
 	break;
     }
-    nint = 7;
+    nint = nTicks-1;
     GPretty(&min, &max, &nint);
     axp[0] = min;
     axp[1] = max;
     axp[2] = nint;
-    PROTECT(at = CreateAtVector(axp, range, 7, 0));
-    PROTECT(lab = labelformat(at));
-    for (i=0; i<length(at); i++) { 
-	switch (axisType) {
-	case 0:
-	    u1[0] = REAL(at)[i]; 
-	    u1[1] = y[Vertex[AxisStart[axis]][1]];
-	    u1[2] = z[Vertex[AxisStart[axis]][2]];
-	    break;
-	case 1:
-	    u1[0] = x[Vertex[AxisStart[axis]][0]];
-	    u1[1] = REAL(at)[i];
-	    u1[2] = z[Vertex[AxisStart[axis]][2]];
-	    break;
-	case 2:
-	    u1[0] = x[Vertex[AxisStart[axis]][0]];
-	    u1[1] = y[Vertex[AxisStart[axis]][1]];
-	    u1[2] = REAL(at)[i];
-	    break;
-	}
-	u1[3] = 1;
-	u2[0] = u1[0] + tickLength*(x[1]-x[0])*TickVector[axis][0];
-	u2[1] = u1[1] + tickLength*(y[1]-y[0])*TickVector[axis][1];
-	u2[2] = u1[2] + tickLength*(z[1]-z[0])*TickVector[axis][2];
-	u2[3] = 1;
-	u3[0] = u2[0] + tickLength*(x[1]-x[0])*TickVector[axis][0];
-	u3[1] = u2[1] + tickLength*(y[1]-y[0])*TickVector[axis][1];
-	u3[2] = u2[2] + tickLength*(z[1]-z[0])*TickVector[axis][2];
-	u3[3] = 1;
-	TransVector(u1, VT, v1);
-	TransVector(u2, VT, v2);
-	TransVector(u3, VT, v3);
-	GLine(v1[0]/v1[3], v1[1]/v1[3],
-	      v2[0]/v2[3], v2[1]/v2[3], USER, dd);
-	GText(v3[0]/v3[3], v3[1]/v3[3], USER, CHAR(STRING(lab)[i]),
-	      .5, .5, 0, dd);
+    /* Do the following calculations for both ticktypes */
+    switch (axisType) {
+    case 0:
+	u1[0] = min; 
+	u1[1] = y[Vertex[AxisStart[axis]][1]];
+	u1[2] = z[Vertex[AxisStart[axis]][2]];
+	break;
+    case 1:
+	u1[0] = x[Vertex[AxisStart[axis]][0]];
+	u1[1] = min;
+	u1[2] = z[Vertex[AxisStart[axis]][2]];
+	break;
+    case 2:
+	u1[0] = x[Vertex[AxisStart[axis]][0]];
+	u1[1] = y[Vertex[AxisStart[axis]][1]];
+	u1[2] = min;
+	break;
     }
-    UNPROTECT(2);
+    u1[0] = u1[0] + tickLength*(x[1]-x[0])*TickVector[axis][0];
+    u1[1] = u1[1] + tickLength*(y[1]-y[0])*TickVector[axis][1];
+    u1[2] = u1[2] + tickLength*(z[1]-z[0])*TickVector[axis][2];
+    u1[3] = 1;
+    switch (axisType) {
+    case 0:
+	u2[0] = max; 
+	u2[1] = u1[1];
+	u2[2] = u1[2];
+	break;
+    case 1:
+	u2[0] = u1[0];
+	u2[1] = max;
+	u2[2] = u1[2];
+	break;
+    case 2:
+	u2[0] = u1[0];
+	u2[1] = u1[1];
+	u2[2] = max;
+	break;
+    }
+    u2[3] = 1;
+    /* The axis label has to be further out for "detailed" ticks
+       in order to leave room for the tick labels */
+    switch (tickType) {
+    case 1: /* "simple": just an arrow parallel to axis, indicating direction 
+	       of increase */
+	u3[0] = u1[0] + tickLength*(x[1]-x[0])*TickVector[axis][0];
+	u3[1] = u1[1] + tickLength*(y[1]-y[0])*TickVector[axis][1];
+	u3[2] = u1[2] + tickLength*(z[1]-z[0])*TickVector[axis][2];
+	break;
+    case 2:
+	u3[0] = u1[0] + 2.5*tickLength*(x[1]-x[0])*TickVector[axis][0];
+	u3[1] = u1[1] + 2.5*tickLength*(y[1]-y[0])*TickVector[axis][1];
+	u3[2] = u1[2] + 2.5*tickLength*(z[1]-z[0])*TickVector[axis][2];
+	break;
+    }
+    switch (axisType) {
+    case 0:
+	u3[0] = (min + max)/2; 
+	break;
+    case 1:
+	u3[1] = (min + max)/2;
+	break;
+    case 2:
+	u3[2] = (min + max)/2;
+	break;
+    }
+    u3[3] = 1;
+    TransVector(u1, VT, v1);
+    TransVector(u2, VT, v2);
+    TransVector(u3, VT, v3);
+    /* Draw axis label */
+    GText(v3[0]/v3[3], v3[1]/v3[3], USER, label, .5, .5, 
+	  labelAngle(v1[0]/v1[3], v1[1]/v1[3], v2[0]/v2[3], v2[1]/v2[3]),
+	  dd);
+    /* Draw axis ticks */
+    switch (tickType) {
+    case 1: /* "simple": just an arrow parallel to axis, indicating direction 
+	       of increase */
+	/* arrow head is 0.25 inches long, with angle 30 degrees,
+	   and drawn at v2 end of line */
+	GArrow(v1[0]/v1[3], v1[1]/v1[3],
+	       v2[0]/v2[3], v2[1]/v2[3], USER, 
+	       0.1, 10, 2, dd);
+	break;
+    case 2: /* "detailed": normal ticks as per 2D plots */
+	PROTECT(at = CreateAtVector(axp, range, 7, 0));
+	PROTECT(lab = labelformat(at));
+	for (i=0; i<length(at); i++) { 
+	    switch (axisType) {
+	    case 0:
+		u1[0] = REAL(at)[i]; 
+		u1[1] = y[Vertex[AxisStart[axis]][1]];
+		u1[2] = z[Vertex[AxisStart[axis]][2]];
+		break;
+	    case 1:
+		u1[0] = x[Vertex[AxisStart[axis]][0]];
+		u1[1] = REAL(at)[i];
+		u1[2] = z[Vertex[AxisStart[axis]][2]];
+		break;
+	    case 2:
+		u1[0] = x[Vertex[AxisStart[axis]][0]];
+		u1[1] = y[Vertex[AxisStart[axis]][1]];
+		u1[2] = REAL(at)[i];
+		break;
+	    }
+	    u1[3] = 1;
+	    u2[0] = u1[0] + tickLength*(x[1]-x[0])*TickVector[axis][0];
+	    u2[1] = u1[1] + tickLength*(y[1]-y[0])*TickVector[axis][1];
+	    u2[2] = u1[2] + tickLength*(z[1]-z[0])*TickVector[axis][2];
+	    u2[3] = 1;
+	    u3[0] = u2[0] + tickLength*(x[1]-x[0])*TickVector[axis][0];
+	    u3[1] = u2[1] + tickLength*(y[1]-y[0])*TickVector[axis][1];
+	    u3[2] = u2[2] + tickLength*(z[1]-z[0])*TickVector[axis][2];
+	    u3[3] = 1;
+	    TransVector(u1, VT, v1);
+	    TransVector(u2, VT, v2);
+	    TransVector(u3, VT, v3);
+	    /* Draw tick line */
+	    GLine(v1[0]/v1[3], v1[1]/v1[3],
+		  v2[0]/v2[3], v2[1]/v2[3], USER, dd);
+	    /* Draw tick label */
+	    GText(v3[0]/v3[3], v3[1]/v3[3], USER, CHAR(STRING(lab)[i]),
+		  .5, .5, 0, dd);
+	}
+	UNPROTECT(2);
+	break;
+    }
 }
 
-static void PerspAxes(double *x, double *y, double *z, DevDesc *dd) {
+static void PerspAxes(double *x, double *y, double *z, 
+                      char *xlab, char *ylab, char *zlab,
+		      int nTicks, int tickType, DevDesc *dd) {
     int xAxis=0, yAxis=0, zAxis=0; /* -Wall */
     int xpdsave;
     Vector3d u0 = {0, 0, 0, 1};
@@ -1988,8 +2124,8 @@ static void PerspAxes(double *x, double *y, double *z, DevDesc *dd) {
 	yAxis = 3;
     } else 
 	warning("Axis orientation not calculated");
-    PerspAxis(x, y, z, xAxis, 0, dd);
-    PerspAxis(x, y, z, yAxis, 1, dd);
+    PerspAxis(x, y, z, xAxis, 0, nTicks, tickType, xlab, dd);
+    PerspAxis(x, y, z, yAxis, 1, nTicks, tickType, ylab, dd);
     /* Figure out which Z axis to draw */
     if (lowest(v0[0]/v0[3], v1[0]/v1[3], v2[0]/v2[3], v3[0]/v3[3])) {
 	zAxis = 4;
@@ -2001,7 +2137,7 @@ static void PerspAxes(double *x, double *y, double *z, DevDesc *dd) {
 	zAxis = 7;
     } else
 	warning("Axes orientation not calculated");
-    PerspAxis(x, y, z, zAxis, 2, dd);
+    PerspAxis(x, y, z, zAxis, 2, nTicks, tickType, zlab, dd);
     
     dd->gp.xpd = xpdsave;
 }    
@@ -2010,11 +2146,11 @@ SEXP do_persp(SEXP call, SEXP op, SEXP args, SEXP env)
 {
     SEXP x, y, z, xlim, ylim, zlim;
     SEXP depth, index, originalArgs;
-    SEXP col, border;
+    SEXP col, border, xlab, ylab, zlab;
     double theta, phi, r, d;
     double ltheta, lphi;
     double expand, xc, yc, zc, xs, ys, zs;
-    int i, j, scale, ncol, dobox, doaxes;
+    int i, j, scale, ncol, dobox, doaxes, nTicks, tickType;
     DevDesc *dd;
 
     if (length(args) < 18)
@@ -2069,6 +2205,11 @@ SEXP do_persp(SEXP call, SEXP op, SEXP args, SEXP env)
     Shade  = asReal(CAR(args)); args = CDR(args);
     dobox  = asLogical(CAR(args)); args = CDR(args);
     doaxes = asLogical(CAR(args)); args = CDR(args);
+    nTicks = asInteger(CAR(args)); args = CDR(args);
+    tickType = asInteger(CAR(args)); args = CDR(args);
+    xlab = CAR(args); args = CDR(args);
+    ylab = CAR(args); args = CDR(args);
+    zlab = CAR(args); args = CDR(args);
 
     if (R_FINITE(Shade) && Shade <= 0) Shade = 1;
     if (R_FINITE(ltheta) && R_FINITE(lphi) && R_FINITE(Shade))
@@ -2093,6 +2234,10 @@ SEXP do_persp(SEXP call, SEXP op, SEXP args, SEXP env)
 	errorcall(call, "invalid expand value");
     if (scale == NA_LOGICAL)
 	scale = 0;
+    if ((nTicks == NA_INTEGER) || (nTicks < 0)) 
+	errorcall(call, "invalid nticks value");
+    if ((tickType == NA_INTEGER) || (tickType < 1) || (tickType > 2)) 
+	errorcall(call, "invalid ticktype value");
 
     dd = GNewPlot(call != R_NilValue, NA_LOGICAL);
 
@@ -2104,6 +2249,7 @@ SEXP do_persp(SEXP call, SEXP op, SEXP args, SEXP env)
 
     GSetState(1, dd);
     GSavePars(dd);
+    RecordGraphicsCall(call);
     ProcessInlinePars(args, dd);
     if (length(border) > 1)
 	dd->gp.fg = INTEGER(border)[0];
@@ -2153,7 +2299,10 @@ SEXP do_persp(SEXP call, SEXP op, SEXP args, SEXP env)
     if (dobox) {
         PerspBox(0, REAL(xlim), REAL(ylim), REAL(zlim), dd);
 	if (doaxes)
-	    PerspAxes(REAL(xlim), REAL(ylim), REAL(zlim), dd);
+	    PerspAxes(REAL(xlim), REAL(ylim), REAL(zlim), 
+		      CHAR(STRING(xlab)[0]), CHAR(STRING(ylab)[0]),
+		      CHAR(STRING(zlab)[0]),
+		      nTicks, tickType, dd);
     }
 
     DrawFacets(REAL(z), REAL(x), REAL(y), nrows(z), ncols(z), INTEGER(index),

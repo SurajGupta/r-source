@@ -954,6 +954,7 @@ SEXP do_math1(SEXP call, SEXP op, SEXP args, SEXP env)
     case 5: return math1(CAR(args), trunc);
 
     case 10: return math1(CAR(args), exp);
+    case 12: return math1(CAR(args), log1p);
     case 20: return math1(CAR(args), cos);
     case 21: return math1(CAR(args), sin);
     case 22: return math1(CAR(args), tan);
@@ -1451,9 +1452,10 @@ SEXP do_math3(SEXP call, SEXP op, SEXP args, SEXP env)
 
     case 34:  return Math3_1(args, dnchisq);
     case 35:  return Math3_2(args, pnchisq);
-#ifdef UNIMP
+/* #ifdef UNIMP */
+/* This appears to be IMP already */
     case 36:  return Math3_2(args, qnchisq);
-#endif
+/* #endif */
 
 #ifdef UNIMP
     case 37:  return Math3_1(args, dnt);

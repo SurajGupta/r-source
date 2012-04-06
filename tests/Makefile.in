@@ -12,9 +12,10 @@ include $(top_builddir)/Makeconf
 
 distdir = $(top_builddir)/$(PACKAGE)-$(VERSION)/$(subdir)
 DISTFILES = Makefile.in README \
-	mode-methods.R make*.R \
-	$(TESTsrc) \
-	$(TESTsrc:.R=.Rout.save)
+	$(TESTsrc-strict-1) $(TESTsrc-strict-1:.R=.Rout.save) \
+	$(TESTsrc-sloppy-1) $(TESTsrc-sloppy-1:.R=.Rout.save) \
+	make-isas-tests.R isas-tests.Rout.save \
+	make-no-segfault.R
 SUBDIRS = Examples
 
 R = LC_ALL=C $(top_builddir)/bin/R --vanilla
@@ -73,7 +74,7 @@ Makedeps: Makefile
 FORCE:
 
 %.R : $(srcdir)/make-%.R stamp-R
-	$(R) < $< > /dev/null
+	@$(R) < $< > /dev/null
 
 %.Rout : %.R
 	@rm -f $@ $@.fail
@@ -108,7 +109,11 @@ test-Specific:
 test-undoc:
 	@for p in $(R_PKGS); do \
 	  echo "undocumented objects in package \`$${p}':"; \
-	  echo "undoc(\"$${p}\")" | $(R) --nsize=500000 | grep "^ *\\["; \
+	  nsize=`$(R) --print-nsize`; \
+	  nsize=`expr 2 \* $${nsize}`; \
+	  echo "undoc(\"$${p}\")" \
+	    | $(R) --nsize=$${nsize} \
+	    | grep "^ *\\["; \
 	  echo; \
 	done
 

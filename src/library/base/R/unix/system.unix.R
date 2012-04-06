@@ -7,14 +7,9 @@ unix <- function(call, intern = FALSE) {
     system(call, intern)
 }
 
-##--- The following 2  should/could really be done in C [platform !] :
-tempfile <- function(pattern = "file") {
-    if(!is.character(pattern)) stop("argument must be character")
-    system(paste("for p in", paste(pattern, collapse = " "), ";",
-		 "do echo ${TMPDIR:-/tmp}/$p$$; done"),
-	   intern = TRUE)
-}
+tempfile <- function(pattern = "file") .Internal(tempfile(pattern))
 
+##--- The following should/could really be done in C [platform !] :
 unlink <- function(x) {
     if(!is.character(x)) stop("argument must be character")
     system(paste("rm -rf ", paste(x, collapse = " ")))

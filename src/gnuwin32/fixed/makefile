@@ -30,8 +30,7 @@ r/rw-FAQ.html: ../rw-FAQ.texi
 ../rw-faq: ../rw-FAQ.texi
 	makeinfo --no-headers --number-sections -o $@ $<
 
-
-fixh: h/config.h ../../../date-stamp ../../include/FFDecl.h ../../include/FFTab.h
+fixh: h/config.h ../../../date-stamp ../../include/FFDecl.h ../../include/FFTab.h ../../../VERSION
 	$(CP) -p ./h/config.h ./h/psignal.h ../../include
 	sh ./GETVERSION > ../../include/Rversion.h
 	sh ./GETCONFIG > ../../include/Rconfig.h
@@ -41,7 +40,7 @@ fixbin: $(filter-out ./bin/CVS, $(wildcard ./bin/*))
 	$(CP) -p  $^ ../../../bin
 	$(ECHO) done > fixbin
 
-fixr: $(wildcard ./r/*.html)
+fixr: $(wildcard ./r/*.html) ../../../doc/html/search/SearchEngine.html
 	$(CP) -p ./r/*.html ../../../doc/html
 	$(ECHO) done > fixr
 
@@ -51,3 +50,9 @@ fixetc: $(filter-out ./etc/CVS, $(wildcard ./etc/*))
 
 clean:
 	$(RM) *~ */*~ fixr fixh fixbin fixetc
+
+../../../doc/html/search/SearchEngine.html:../../../doc/KEYWORDS.db
+	(cd ../../../doc; \
+	cat html/search/SearchEngine-head.html > html/search/SearchEngine.html; \
+	perl ../src/gnuwin32/fixed/keywords2html KEYWORDS.db >> html/search/SearchEngine.html; \
+	cat html/search/SearchEngine-foot.html >> html/search/SearchEngine.html)

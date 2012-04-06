@@ -15,12 +15,14 @@ SCRIPT_SOURCES = \
 	help2man.in \
 	install-info.in \
 	keyword-test.in \
+	keywords2html.in \
 	pkg2tex.in
+
 SCRIPT_OBJECTS = $(SCRIPT_SOURCES:.in=)
 
 distdir = $(top_builddir)/$(PACKAGE)-$(VERSION)/$(subdir)
 DISTFILES = Makefile.in \
-	GETMAKEVAL GETSYMBOLS GETVERSION \
+	GETCONFIG GETMAKEVAL GETSYMBOLS GETVERSION \
 	Rd.files \
 	Rdiff \
 	config.guess \

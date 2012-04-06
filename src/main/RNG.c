@@ -27,6 +27,7 @@
 #include "Random.h"
 
 #define RNG_DEFAULT MARSAGLIA_MULTICARRY
+#define N01_DEFAULT KINDERMAN_RAMAGE
 
 /* platform-specific, from dynload.c */
 DL_FUNC R_FindSymbol(char const *, char const *);
@@ -178,9 +179,13 @@ static void FixupSeeds(RNGtype kind, int initial)
     }
 }
 
+extern double BM_norm_keep; /* ../nmath/snorm.c */
+
 static void RNG_Init(RNGtype kind, Int32 seed)
 {
     int j;
+
+    BM_norm_keep = 0.0; /* zap Box-Muller history */
 
     /* Initial scrambling */
     for(j = 0; j < 50; j++)
@@ -238,7 +243,8 @@ void GetRNGstate()
     /* Get  .Random.seed  into proper variables */
     int len_seed, j, tmp;
     SEXP seeds;
-
+    RNGtype newRNG; N01type newN01;
+    
     seeds = findVar(R_SeedsSymbol, R_GlobalEnv);
     if (seeds == R_UnboundValue) {
 	Randomize(RNG_kind);
@@ -250,15 +256,17 @@ void GetRNGstate()
 	if (!isVector(seeds))
 	    error(".Random.seed is not a vector");
 	tmp = INTEGER(seeds)[0];
-	if(tmp == NA_INTEGER)
+	if (tmp == NA_INTEGER)
 	    error(".Random.seed[0] is not a valid integer");
-	RNG_kind = tmp % 100;
-	N01_kind = tmp / 100;
+	newRNG = tmp % 100;
+	newN01 = tmp / 100;
 	/*if (RNG_kind > USER || RNG_kind < 0) {
 	    warning(".Random.seed was invalid: re-initializing");
 	    RNG_kind = RNG_DEFAULT;
 	    }*/
- 	switch(RNG_kind) {
+	if (newN01 < 0 || newN01 > BOX_MULLER)
+	    error(".Random.seed[0] is not a valid Normal type");
+ 	switch(newRNG) {
  	case WICHMANN_HILL:
  	case MARSAGLIA_MULTICARRY:
  	case SUPER_DUPER:
@@ -272,6 +280,7 @@ void GetRNGstate()
 	default:
 	    error(".Random.seed[1] is NOT a valid RNG kind (code)");
 	}
+	RNG_kind = newRNG; N01_kind = newN01;
 	len_seed = RNG_Table[RNG_kind].n_seed;
 	if(LENGTH(seeds) > 1 && LENGTH(seeds) < len_seed + 1)
 	    error(".Random.seed has wrong length");
@@ -291,10 +300,18 @@ void GetRNGstate()
 
 void PutRNGstate()
 {
+    /* Copy out seeds to  .Random.seed  */
     int len_seed, j;
     SEXP seeds;
-    len_seed = RNG_Table[RNG_kind].n_seed;
     
+    if (RNG_kind < 0 || RNG_kind > USER ||
+	N01_kind < 0 || N01_kind > BOX_MULLER ) {
+	warning("Internal .Random.seed is corrupt: not saving");
+	return;
+    }
+    
+    len_seed = RNG_Table[RNG_kind].n_seed;
+   
     PROTECT(seeds = allocVector(INTSXP, len_seed + 1));
 
     INTEGER(seeds)[0] = RNG_kind + 100 * N01_kind;
@@ -310,6 +327,7 @@ static void RNGkind(RNGtype newkind)
 /* Choose a new kind of RNG.
  * Initialize its seed by calling the old RNG's unif_rand()
  */
+    if (newkind == -1) newkind = RNG_DEFAULT;
     switch(newkind) {
     case WICHMANN_HILL:
     case MARSAGLIA_MULTICARRY:
@@ -332,6 +350,7 @@ static void RNGkind(RNGtype newkind)
 SEXP do_RNGkind (SEXP call, SEXP op, SEXP args, SEXP env)
 {
     SEXP ans, rng, norm;
+    N01type newN01;
 
     checkArity(op,args);
     PROTECT(ans = allocVector(INTSXP, 2));
@@ -339,11 +358,16 @@ SEXP do_RNGkind (SEXP call, SEXP op, SEXP args, SEXP env)
     INTEGER(ans)[1] = N01_kind;
     rng = CAR(args);
     norm = CADR(args);
+    if(!isNull(norm)) { /* set a new normal kind */
+	newN01 = asInteger(norm);
+	if (newN01 == -1) newN01 = N01_DEFAULT;
+	if (newN01 < 0 || newN01 > BOX_MULLER)
+	    errorcall(call, "invalid Normal type");
+	N01_kind = newN01;
+	BM_norm_keep = 0.0; /* zap Box-Muller history */
+    }
     if(!isNull(rng)) { /* set a new RNG kind */
 	RNGkind(asInteger(rng));
-    }
-    if(!isNull(norm)) { /* set a new normal kind */
-	N01_kind = asInteger(norm);
     }
     UNPROTECT(1);
     return ans;

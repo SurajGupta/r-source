@@ -195,6 +195,7 @@ typedef struct RCNTXT {
     int callflag;		/* The context "type" */
     JMP_BUF cjmpbuf;		/* C stack and register information */
     int cstacktop;		/* Top of the pointer protection stack */
+    int evaldepth;	        /* evaluation depth at inception */
     SEXP promargs;		/* Promises supplied to closure */
     SEXP sysparent;		/* environment the closure was called from */
     SEXP call;			/* The call that effected this context*/
@@ -366,7 +367,7 @@ extern int	R_HistorySize;	/* Size of the history file */
 /* Warnings/Errors */
 extern int	R_CollectWarnings INI_as(0);	/* the number of warnings */
 extern SEXP	R_Warnings;	    /* the warnings and their calls */
-
+extern int	R_ShowErrorMessages INI_as(1);  /* show error messages? */
 
 #ifdef __MAIN__
 #undef extern

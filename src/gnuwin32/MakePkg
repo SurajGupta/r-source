@@ -19,12 +19,12 @@ ifeq ($(strip $(LSOURCES)),)
   LOBJS=
   DYNLIB=
 else
-  LOBJS=$(foreach i,$(LSOURCES),$(basename $i).o)
+  LOBJS=$(foreach i, $(LSOURCES), $(basename $i).o)
   DYNLIB=$(DPKG)/libs/$(DLLNAME).dll
 endif
 
 # data
-DSOURCES=$(filter-out $(SPKG)/data/CVS,$(wildcard $(SPKG)/data/*))
+DSOURCES=$(filter-out $(SPKG)/data/CVS, $(wildcard $(SPKG)/data/*))
 ifeq ($(strip $(DSOURCES)),)
   DATA= 
 else
@@ -72,11 +72,15 @@ else
 	@$(ECHO) "  no R files in this package"
 endif
 
+$(SPKG)/TITLE:
+	if [ ! -f $(SPKG)/TITLE -a -f $(SPKG)/DESCRIPTION ] ; then \
+	  $(AWK) -f $(RHOME)/src/gnuwin32/maketitle $(SPKG)/DESCRIPTION > $@; \
+	fi
 
 # This fails if DESCRIPTION.. doesn't exist.
 # $(DPKG)/zzzz: $(OFILES3) $(OFILES)
 # On the other hand, ...zzzz is never created so
-$(DPKG)/zzzz: 
+$(DPKG)/zzzz: $(SPKG)/TITLE
 	@$(ECHO) "---------- Making package $(PKG) ------------"
 	$(MKDIR) -p $(DPKG)
 ifeq ($(strip $(INSTFILES)),)

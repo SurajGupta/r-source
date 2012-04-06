@@ -25,11 +25,7 @@ actual reference number, of course!).
 
 Directory:  Accuracy
 
-* PR# 138 *
-Subject: Re: [R] bug? and New bug.
-From: Martin Maechler <maechler@stat.math.ethz.ch>
-Date: Wed, 10 Mar 1999 17:21:16 +0100
---pt() for large df. Solved, but problem remains for pf et al.
+none
 
 Directory:  Add-ons
 
@@ -37,13 +33,7 @@ none
 
 Directory:  Analyses
 
-* PR# 144 *
-Subject: glm throws erroneous(?)'names attribute must be the same length as the vector' 
-From: wagman@enteract.com
-Date: Thu, 18 Mar 1999 08:58:47 +0100
---Can anyone reproduce this ??
---Same error as when doing regression on empty subset. All fitted
---values might be 0 or 1
+none
 
 Directory:  Documentation
 
@@ -51,104 +41,29 @@ none
 
 Directory:  Graphics
 
-* PR# 120 *
-Subject: graphics bug: type="l"
-From: Matthew Wiener <mcw@ln.nimh.nih.gov>
-Date: Tue, 16 Feb 1999 15:30:25 -0500 (EST)
---X server problem drawing > 64K lines at once. Workaround?
-* PR# 149 *
-Subject: plot.formula and pch=
-From: Peter Dalgaard BSA <p.dalgaard@biostat.ku.dk>
-Date: 25 Mar 1999 21:22:44 +0100
---plot(y~x,pch=z) may subset x and y but leave z.
---E.g. with missing values you can get incorrect plot symbols.
 * PR# 202 *
 Subject: persp box occlusion bug
 From: wsi@gcal.ac.uk
 Date: Wed, 2 Jun 1999 15:02:03 +0200 (MET DST)
---Don't think I (pd) got the point there...
-* PR# 225 *
-Subject: pch and mkh bug
-From: Stephen Harker <sjh@ph.adfa.edu.au>
-Date: Wed, 14 Jul 1999 13:10:31 +1000 (EST)
---(1) is an S incompatibility, but the S rules may not be a good model
---(2) is a bug, fixed for 0.65.0
---(3) has gone away in 0.65.0
-* PR# 230 *
-Subject: Use of lwd = 0, lty = 2 in segments.
-From: Douglas Bates <bates@stat.wisc.edu>
-Date: Sat, 17 Jul 1999 17:18:44 -0500 (CDT)
---still with us (0.90.1, Dec.1999)
-* PR# 267 *
-Subject: matplot(... panel.first=..) fails  <==> dealing with "..."
-From: Martin Maechler <maechler@stat.math.ethz.ch>
-Date: Mon, 6 Sep 1999 11:04:03 +0200
-* PR# 287 *
-Subject: text( col=, cex=, font=) : doesn't allow more than length-1 arg
-From: Martin Maechler <maechler@stat.math.ethz.ch>
-Date: Mon, 27 Sep 1999 11:12:08 +0200
---FIXME (still in 0.90.1)
-* PR# 299 *
-Subject: Wrong text() adjustment with (math)expression and "\n"
-From: Martin Maechler <maechler@stat.math.ethz.ch>
-Date: Tue, 26 Oct 1999 19:57:01 +0200 (MET DST)
---Not clear this is really a bug
-* PR# 308 *
-Subject:  R abnormal exit when plotting lm 
-From: Ulf Mehlig <umehlig@uni-bremen.de>
-Date: Tue, 2 Nov 1999 22:18:23 +0100
---This is a problem with the X library (or possibly X server) when using plot.lm.
---We need further details (promised later).
-* PR# 340 *
-Subject: "outer" argument in mtext
-From: Douglas Bates <bates@stat.wisc.edu>
-Date: 23 Nov 1999 12:31:36 -0600
-* PR# 349 *
-Subject: size of text and numbers in graphs
-From: "Wolfgang Koller" <koller2@fgr.wu-wien.ac.at>
-Date: Sat, 27 Nov 1999 17:03:53 CET (+0100)
---not a bug (PD)
-* PR# 365 *
-Subject: plot math - segfault and "frac", "^" bug(s)..
-From: Martin Maechler <maechler@stat.math.ethz.ch>
-Date: Wed, 8 Dec 1999 18:27:03 +0100 (MET)
---seg.fault fixed; "^" precedence is really bad
-* PR# 366 *
-Subject: pch==NA
-From: Peter Dalgaard BSA <p.dalgaard@biostat.ku.dk>
-Date: 07 Dec 1999 15:19:46 +0100
-* PR# 372 *
-Subject: hist() with horiz=TRUE does not give horiz. plots
-From: fran@stat.berkeley.edu
-Date: Sun, 12 Dec 1999 00:27:25 +0100 (MET)
-* PR# 378 *
-Subject: plot()  after split.screen() on postscript() Device produces inconsistent PostScript file
-From: boble@usa.net
-Date: Fri, 17 Dec 1999 21:32:23 +0100 (MET)
-* PR# 384 *
-Subject: tck crash
-From: Patrick Lindsey <plindsey@alpha.luc.ac.be>
-Date: Wed, 22 Dec 1999 10:05:48 +0100 (MET)
-* PR# 389 *
-Subject: coredump with plot(x,y,pch="+",cex=2.2)
-From: Rashid Nassar <rnassar@duke.edu>
-Date: Sun, 26 Dec 1999 18:14:10 -0500 (EST)
-* PR# 390 *
-Subject: axis for small ranges
-From: Andreas Weingessel <Andreas.Weingessel@ci.tuwien.ac.at>
-Date: Tue, 28 Dec 1999 13:28:01 +0100
+--The persp algorithm does not apply the occlusion rules to the frame, 
+--which is always plotted first. 
+--A bug, but not very simple to fix.
 * PR# 400 *
 Subject: X11 troubles
 From: Peter Dalgaard BSA <p.dalgaard@biostat.ku.dk>
 Date: 13 Jan 2000 14:31:42 +0100
+--a) We don't handle multiple window closes well
+--b) X11 errors should be caught by an error handler, not kill R
+* PR# 414 *
+Subject:  graphics bugs: steep slopes and large values beyond ylim 
+From: Ben Bolker <bolker@zoo.ufl.edu>
+Date: Mon, 7 Feb 2000 18:28:04 -0500
+--Followup on R-devel showed this was due to generating integer coordinates 
+--outside +/- 2^15 in the X11 driver.
 
 Directory:  In-Out
 
-* PR# 129 *
-Subject: Formatting in formatC and format
-From: Prof Brian D Ripley <ripley@stats.ox.ac.uk>
-Date: Sun, 28 Feb 1999 08:53:34 +0000 (GMT)
---Documentation and ``merge'' of format() and formatC() would be desired - MM
+none
 
 Directory:  Installation
 
@@ -156,69 +71,22 @@ none
 
 Directory:  Language
 
-* PR# 105 *
-Subject: an old bug resurfaces
-From: Jim Lindsey <jlindsey@alpha.luc.ac.be>
-Date: Fri, 29 Jan 1999 08:28:32 +0100 (MET)
---Model formulas. Proper fix probably requires extensive rewrite of model formula
---parser, which would make in non-S-compatible.
-* PR# 263 *
-Subject: Problems sourcing functions with R65.0
-From: Patrick Lindsey <plindsey@alpha.luc.ac.be>
-Date: Wed, 1 Sep 1999 11:58:51 +0200 (MET DST)
---There is a 128K limit on functions wirh keep.source set. Try modular
---programming!
+* PR# 408 *
+Subject: convolution bug
+From: wsimpson@gcal.ac.uk
+Date: Fri, 28 Jan 2000 11:17:36 +0100 (MET)
+* PR# 412 *
+Subject: anomalies with call objects
+From: Peter Dalgaard BSA <p.dalgaard@biostat.ku.dk>
+Date: 06 Feb 2000 01:18:50 +0100
 
 Directory:  Low-level
 
-* PR# 101 *
-Subject: Re: [R] Re: R-0.63.2 for Windows - some comments
-From: Guido Masarotto <guido@hal.stat.unipd.it>
-Date: Fri, 22 Jan 1999 12:40:26 +0100
---This is really about fixed buffer sizes in printutils.c
---Does anyone know how to compute the size of a print statement? vsnprintf? 
-* PR# 135 *
-Subject: summary() of lm() problem
-From: Simon Fear <fears@roycastle.liv.ac.uk>
-Date: Tue, 9 Mar 1999 13:18:37 -0000 
---lm (?) AND Windows problem;  Win solved (fudged) for 0.63.3
---
---Another low-level buffer-size problem
-* PR# 197 *
-Subject: glm crash
-From: Cor en Aylin <Cor.Berrevoets@gironet.nl>
-Date: Fri, 21 May 1999 19:44:23 +0200
---Obscure report. Cannot reproduce from given info.
-* PR# 296 *
-Subject: source(,echo=T) doesn't echo comments
-From: Thomas Lumley <thomas@biostat.washington.edu>
-Date: Thu, 21 Oct 1999 08:59:22 -0700 (PDT)
---Currently, a feature
-* PR# 343 *
-Subject: rbind invisible return value
-From: Thomas Lumley <thomas@biostat.washington.edu>
-Date: Wed, 24 Nov 1999 11:34:10 -0800 (PST)
-* PR# 358 *
-Subject: [[ substitution
-From: clive@bell-labs.com
-Date: Fri, 3 Dec 1999 16:45:08 +0100 (MET)
-* PR# 377 *
-Subject: lists of functions
-From: Jim Lindsey <jlindsey@alpha.luc.ac.be>
-Date: Fri, 17 Dec 1999 09:10:50 +0100 (MET)
---same as PR#358
-* PR# 386 *
-Subject: as.matrix.data.frame() modifies content of character columns
-From: "=?iso-8859-1?Q?Jens_Oehlschl=E4gel-Akiyoshi?=" <jens.oehlschlaegel-akiyoshi@mdfactory.de>
-Date: Wed, 22 Dec 1999 16:18:19 +0100
-* PR# 387 *
-Subject: different subscripting behaviour using  $<-  or  [<-  for data.frames
-From: "=?iso-8859-1?Q?Jens_Oehlschl=E4gel-Akiyoshi?=" <jens.oehlschlaegel-akiyoshi@mdfactory.de>
-Date: Thu, 23 Dec 1999 19:10:17 +0100
-* PR# 388 *
-Subject: data.frame(I(matrix)) ?
-From: "=?iso-8859-1?Q?Jens_Oehlschl=E4gel-Akiyoshi?=" <jens.oehlschlaegel-akiyoshi@mdfactory.de>
-Date: Thu, 23 Dec 1999 19:12:58 +0100
+* PR# 391 *
+Subject: Segfault in dataentry()
+From: Peter Dalgaard BSA <p.dalgaard@pubhealth.ku.dk>
+Date: 29 Dec 1999 11:59:50 +0100
+--dataentry(0,0) segfaults
 
 Directory:  Misc
 
@@ -234,24 +102,15 @@ none
 
 Directory:  System-specific
 
-none
+* PR# 452 *
+Subject: problem with glm
+From: Brad McNeney <mcneney@cs.sfu.ca>
+Date: Fri, 18 Feb 2000 17:51:54 -0800 (PST)
+--Problems on Alpha's with glm. Status unclear
 
 Directory:  TooMuchAtOnce
 
-* PR# 53 *
-Subject: 0.62.3 bugs, incompatibilities and problems
-From: Jim Lindsey <jlindsey@alpha.luc.ac.be>
-Date: Mon, 12 Oct 1998 09:43:51 +0200 (MET DST)
---Of Jims points: (checked in 0.65 April 26 compared to Splus 3.4)
--- 4. works the same as S
--- 5. Splus gives NA and the if(class(z)=="repeated") doesn't work in either
--- 10. seems to work
--- 7.  seems to do what Jim wants now
---  
-* PR# 76 *
-Subject: R-0.63.0
-From: Rashid Nassar <rnassar@acpub.duke.edu>
-Date: Fri, 11 Dec 1998 23:20:08 -0500 (EST)
+none
 
 Directory:  Windows
 
@@ -259,55 +118,4 @@ none
 
 Directory:  incoming
 
-* PR# 385 *
-Subject: Apply dimnames
-From: Jonathan Rougier <J.C.Rougier@durham.ac.uk>
-Date: Wed, 22 Dec 1999 11:22:27 +0000 (GMT)
---(+ patch proposal)
-* PR# 391 *
-Subject: Segfault in dataentry()
-From: Peter Dalgaard BSA <p.dalgaard@pubhealth.ku.dk>
-Date: 29 Dec 1999 11:59:50 +0100
-* PR# 394 *
-Subject: formatC (bug and fix)
-From: "=?iso-8859-1?Q?Jens_Oehlschl=E4gel-Akiyoshi?=" <jens.oehlschlaegel-akiyoshi@mdfactory.de>
-Date: Tue, 4 Jan 2000 10:31:53 +0100
-* PR# 398 *
-Subject: a +1 shift overlaying lines/points on a boxplot
-From: acuster@nature.berkeley.edu
-Date: Tue, 11 Jan 2000 02:53:56 +0100 (MET)
-* PR# 405 *
-Subject: error in dweibull
-From: setzer.woodrow@epa.gov
-Date: Thu, 27 Jan 2000 16:37:06 +0100 (MET)
-* PR# 406 *
-Subject: handling of dimension-attribute in density
-From: polzehl@wias-berlin.de
-Date: Thu, 27 Jan 2000 17:12:35 +0100 (MET)
-* PR# 407 *
-Subject: NA not printed after table
-From: Andreas Weingessel <Andreas.Weingessel@ci.tuwien.ac.at>
-Date: Thu, 27 Jan 2000 18:47:38 +0100
-* PR# 408 *
-Subject: convolution bug
-From: wsimpson@gcal.ac.uk
-Date: Fri, 28 Jan 2000 11:17:36 +0100 (MET)
-* PR# 409 *
-Subject: Segmentation fault in recursion, 0.90.1
-From: Jonathan Rougier <J.C.Rougier@durham.ac.uk>
-Date: Tue, 1 Feb 2000 12:12:41 +0000 (GMT)
-* PR# 410 *
-Subject: Bugs and comments.
-From: Patrick Lindsey <plindsey@alpha.luc.ac.be>
-Date: Wed, 2 Feb 2000 13:41:50 +0100 (MET)
-* PR# 411 *
-Subject: constrained optimiser doesn't obey constraints 
-Subject: constrained optimiser doesn't obey constraints
-From: Thomas Lumley <thomas@biostat.washington.edu>
-From: Thomas Lumley <thomas@biostat.washington.edu>
-Date: Fri, 4 Feb 2000 16:45:52 +0000 (GMT)
-Date: Fri, 4 Feb 2000 01:58:44 +0000 (GMT)
-* PR# 412 *
-Subject: anomalies with call objects
-From: Peter Dalgaard BSA <p.dalgaard@biostat.ku.dk>
-Date: 06 Feb 2000 01:18:50 +0100
+none

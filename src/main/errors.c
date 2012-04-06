@@ -171,8 +171,11 @@ void PrintWarnings(void)
 	}
     }
     else {
-	REprintf("There were %d warnings (use warnings() to see them)\n",
-		 R_CollectWarnings);
+	if (R_CollectWarnings < 50)
+	    REprintf("There were %d warnings (use warnings() to see them)\n",
+		     R_CollectWarnings);
+	else
+	    REprintf("There were 50 or more warnings (use warnings() to see the first 50)\n");
     }
     /* now truncate and install last.warning */
     PROTECT(s = allocVector(VECSXP, R_CollectWarnings));
@@ -191,10 +194,11 @@ void PrintWarnings(void)
     return;
 }
 
+static char errbuf[BUFSIZE];
 
 void errorcall(SEXP call, char *format,...)
 {
-    char buf[BUFSIZE], *p, *dcall;
+    char *p, *dcall;
 
     va_list(ap);
 
@@ -205,21 +209,33 @@ void errorcall(SEXP call, char *format,...)
     }
 
     if(call != R_NilValue ) {
+	inError = 1;
 	dcall = CHAR(STRING(deparse1(call, 0))[0]);
-	sprintf(buf, "Error in %s : ", dcall);
-	if (strlen(dcall) > LONGCALL) strcat(buf, "\n	");
+	sprintf(errbuf, "Error in %s : ", dcall);
+	if (strlen(dcall) > LONGCALL) strcat(errbuf, "\n	");
     }
     else
-	sprintf(buf, "Error: ");
+	sprintf(errbuf, "Error: ");
 
-    p = buf + strlen(buf);
+    p = errbuf + strlen(errbuf);
     va_start(ap, format);
     vsprintf(p, format, ap);
     va_end(ap);
-    p = buf + strlen(buf) - 1;
-    if(*p != '\n') strcat(buf, "\n");
-    REprintf("%s", buf);
+    p = errbuf + strlen(errbuf) - 1;
+    if(*p != '\n') strcat(errbuf, "\n");
+    if (R_ShowErrorMessages) REprintf("%s", errbuf);
     jump_to_toplevel();
+}
+
+SEXP do_geterrmessage(SEXP call, SEXP op, SEXP args, SEXP env)
+{
+    SEXP res;
+
+    checkArity(op, args);
+    PROTECT(res = allocVector(STRSXP, 1));
+    STRING(res)[0] = mkChar(errbuf);
+    UNPROTECT(1);    
+    return res;
 }
 
 void error(const char *format, ...)

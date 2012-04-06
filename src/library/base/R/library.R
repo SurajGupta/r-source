@@ -21,10 +21,12 @@ library <-
 		}
 		else stop(txt)
 	    }
+            lib.loc <- unique(lib.loc)
 	    which.lib.loc <-
 		lib.loc[match(packagedir[1], file.path(lib.loc, package))]
 	    if (length(packagedir) > 1) {
-		warning(paste("Package `", package, "' found more than once,\n  ",
+		warning(paste("Package `", package,
+                              "' found more than once,\n  ",
 			      "using the one found in `", which.lib.loc,
 			      "'", sep = ""))
 	    }
@@ -40,6 +42,9 @@ library <-
 	    }
 	    # create environment
 	    env <- attach(NULL, name = pkgname)
+            lastbit<- file.path("", "R", package)
+            path <- gsub(paste(lastbit, "$", sep=""), "", file)
+            attr(env, "path") <- path
 	    # "source" file into env
 	    if (file == "")
 		warning(paste("Package `", package, "' contains no R code",
@@ -88,10 +93,20 @@ library <-
     else if (!missing(help)) {
 	if (!character.only)
 	    help <- as.character(substitute(help))
+        help <- help[1]         # only give help on one package
 	file <- system.file("INDEX", pkg=help, lib=lib.loc)
 	if (file == "")
 	    stop(paste("No documentation for package `", help, "'", sep = ""))
-	else file.show(file, title = paste("Contents of package", help))
+        if(length(file) > 1) {
+	    which.lib.loc <-
+                lib.loc[match(system.file("", pkg = help, lib =
+                                          lib.loc)[1],
+                              file.path(lib.loc, help))]
+            warning(paste("Package `", help, "' found more than once,\n  ", 
+                          "using the one found in `", which.lib.loc, 
+                          "'", sep = ""))
+        }
+	file.show(file[1], title = paste("Contents of package", help))
     }
     else {
 	## library():
@@ -199,4 +214,22 @@ provide <- function(package) {
     } ## else
     s <- search()
     return(invisible(substring(s[substr(s, 1, 8) == "package:"], 9)))
+}
+
+.path.package <- function(package = .packages())
+{
+    if(length(package) == 0) return(character(0))
+    s <- search()
+    searchpaths <- lapply(1:length(s),
+                          function(i) attr(pos.to.env(i), "path"))
+    searchpaths[[length(s)]] <- system.file()
+    pkgs <- paste("package", package, sep=":")
+    pos <- match(pkgs, s)
+    if(any(m <- is.na(pos))) {
+        miss <- paste(package[m], collapse=", ")
+        if(all(m)) error(paste("none of the packages are not loaded"))
+        else warning(paste("package(s)", miss, "are not loaded"))
+        pos <- pos[!m]
+    }
+    unlist(searchpaths[pos], use.names=FALSE)
 }

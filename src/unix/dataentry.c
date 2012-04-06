@@ -31,6 +31,9 @@
 #include "MACconsole.h"
 #endif
 
+
+static void clearwindow(void);
+
 /*
    The spreadsheet function returns a list of vectors. The types of
    these vectors can be specified by the user as can their names. It
@@ -366,7 +369,8 @@ void drawwindow()
 
     /* now set up the window with the new dimensions */
 
-    /* clearwindow(); */
+    clearwindow();
+
     setattribsfromwindow();
 
     nwide = (windowWidth - 2 * bwidth) / box_w;
@@ -401,6 +405,14 @@ void drawwindow()
     Rsync();
 
 }
+
+#ifndef Macintosh
+static void clearwindow()
+{
+    XClearWindow(iodisplay, iowindow);
+}
+
+#endif
 
 /* find_coords finds the coordinates of the upper left corner of the
    given square on the screen */

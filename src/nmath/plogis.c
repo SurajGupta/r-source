@@ -18,6 +18,7 @@
  *  Foundation, Inc., 59 Temple Place, Suite 330, Boston, MA  02111-1307 USA.
  */
 #include "Mathlib.h"
+#include "dpq.h"
 
 double plogis(double x, double location, double scale,
 	      int lower_tail, int log_p)
@@ -35,6 +36,6 @@ double plogis(double x, double location, double scale,
 	/* x < 0 */return R_DT_0;
     }
     x = exp(lower_tail ? -x : x);
-    return (log_p ? -logrelerr(x) : 1 / (1 + x));
+    return (log_p ? -log1p(x) : 1 / (1 + x));
 }
 

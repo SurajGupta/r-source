@@ -94,6 +94,7 @@ FUNTAB R_FunTab[] =
 {"return",	do_return,	0,	0,	-1,	PP_RETURN},
 {"stop",	do_stop,	0,	11,	1,	PP_FUNCALL},
 {"warning",	do_warning,	0,	111,	1,	PP_FUNCALL},
+{"geterrmessage",do_geterrmessage,	0,	11,	0,	PP_FUNCALL},
 {"restart",	do_restart,	0,	11,	1,	PP_FUNCALL},
 {"function",	do_function,	0,	0,	-1,	PP_FUNCTION},
 {"as.function.default",do_asfunction,0,	11,	2,	PP_FUNCTION},
@@ -209,7 +210,7 @@ FUNTAB R_FunTab[] =
 {"log",		do_log,		10003,	11,	1,	PP_FUNCALL},
 {"signif",	do_signif,	10004,	11,	1,	PP_FUNCALL},
 
-/* KH(1999/09/12) {"abs", do_math1, 0, 1, 1, PP_FUNCALL}, */
+/* KH(1999/09/12)-> complex: {"abs", do_math1, 0, 1, 1, PP_FUNCALL}, */
 {"floor",	do_math1,	1,	1,	1,	PP_FUNCALL},
 {"ceiling",	do_math1,	2,	1,	1,	PP_FUNCALL},
 {"sqrt",	do_math1,	3,	1,	1,	PP_FUNCALL},
@@ -217,6 +218,7 @@ FUNTAB R_FunTab[] =
 {"trunc",	do_math1,	5,	1,	1,	PP_FUNCALL},
 
 {"exp",		do_math1,	10,	1,	1,	PP_FUNCALL},
+{"log1p",	do_math1,	12,	11,	1,	PP_FUNCALL},
 
 {"cos",		do_math1,	20,	1,	1,	PP_FUNCALL},
 {"sin",		do_math1,	21,	1,	1,	PP_FUNCALL},
@@ -487,6 +489,7 @@ FUNTAB R_FunTab[] =
 {"machine",	do_machine,	0,	11,	0,	PP_FUNCALL},
 {"Machine",	do_Machine,	0,	11,	0,	PP_FUNCALL},
 {"commandArgs", do_commandArgs, 0,      11,     0,      PP_FUNCALL},
+{"tempfile",	do_tempfile,	0,	11,	1,	PP_FUNCALL},
 #ifdef Win32
 {"system",	do_system,	0,	11,	3,	PP_FUNCALL},
 #else
@@ -496,7 +499,6 @@ FUNTAB R_FunTab[] =
 {"getenv",	do_getenv,	0,	11,	1,	PP_FUNCALL},
 #endif
 #ifdef Win32
-{"tempfile",	do_tempfile,	0,	11,	1,	PP_FUNCALL},
 {"unlink",	do_unlink,	0,	11,	1,	PP_FUNCALL},
 {"getenv",	do_getenv,	0,	11,	1,	PP_FUNCALL},
 {"help.start",	do_helpstart,	0,	11,	0,	PP_FUNCALL},
@@ -654,7 +656,7 @@ FUNTAB R_FunTab[] =
 {"identify",	do_identify,	0,	11,	6,	PP_FUNCALL},
 {"strheight",	do_strheight,	0,	11,	3,	PP_FUNCALL},
 {"strwidth",	do_strwidth,	0,	11,	3,	PP_FUNCALL},
-{"contour",	do_contour,	0,	11,	11,	PP_FUNCALL},
+{"contour",	do_contour,	0,	11,	12,	PP_FUNCALL},
 {"image",	do_image,	0,	11,	5,	PP_FUNCALL},
 {"dend",	do_dend,	0,	111,	6,	PP_FUNCALL},
 {"dend.window",	do_dendwindow,	0,	111,	6,	PP_FUNCALL},
@@ -665,6 +667,7 @@ FUNTAB R_FunTab[] =
 {"filledcontour",do_filledcontour,0,    111,    5,      PP_FUNCALL},
 
 /* Objects */
+
 {"UseMethod",	do_usemethod,	0,	 0,	-1,	PP_FUNCALL},
 {"NextMethod",	do_nextmethod,	0,	10,	-1,	PP_FUNCALL},
 

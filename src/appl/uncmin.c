@@ -769,6 +769,7 @@ lnsrch(int n, double *x, double f, double *g, double *p, double *xpls,
 	    /* solution not (yet) found */
 
 	    /* First find a point with a finite value */
+	    
 	    if (almbda < rmnlmb) {
 		/* no satisfactory xpls found sufficiently distinct from x */
 

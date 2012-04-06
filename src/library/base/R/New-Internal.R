@@ -3,6 +3,17 @@
 stop <- function(message = NULL).Internal(stop(message))
 warning <- function(message = NULL).Internal(warning(message))
 restart <- function(on = TRUE).Internal(restart(on))
+geterrmessage <- function() .Internal(geterrmessage())
+try <- function(expr, first = TRUE)
+{
+    restart(first)
+    if(is.logical(first) && first) {
+        first <- FALSE
+        expr
+    } else
+       invisible(structure(.Internal(geterrmessage()), class="try-error"))
+}
+
 
 comment <- function(x).Internal(comment(x))
 "comment<-" <- function(x,value).Internal("comment<-"(x,value))
@@ -11,6 +22,7 @@ round <- function(x, digits = 0).Internal(round(x,digits))
 signif <- function(x, digits = 6).Internal(signif(x,digits))
 log <- function(x, base=exp(1))
     if(missing(base)).Internal(log(x)) else .Internal(log(x,base))
+log1p <- function(x).Internal(log1p(x))
 
 atan2 <- function(y, x).Internal(atan2(y, x))
 
@@ -93,6 +105,15 @@ rank <- function(x, na.last = TRUE) {
 }
 readline <- function(prompt="").Internal(readline(prompt))
 search <- function().Internal(search())
+searchpaths <- function()
+{
+    s <- search()
+    paths <- lapply(1:length(s), function(i) attr(pos.to.env(i), "path"))
+    paths[[length(s)]] <- system.file()
+    m <- grep("^package:", s)
+    if(length(m)) paths[-m] <- as.list(s[-m])
+    unlist(paths)
+}
 
 sink <- function(file=NULL, append = FALSE)
     .Internal(sink(file, append))

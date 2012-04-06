@@ -3,8 +3,11 @@
 ###--- We need to use such a long "real script" instead of a for loop,
 ###--- because "error --> jump_to_toplevel", i.e., outside any loop.
 
-core.pkgs <- .packages(all=TRUE,lib.loc = .lib.loc[length(.lib.loc)])
+core.pkgs <-
+{x <- installed.packages(file.path(R.home(), "library"));
+    x[x[,"Priority"]=="base", "Package"]}
 ## c("base", "eda", "lqs", "modreg", "mva", "stepfun", "ts", "nls","splines")
+## .packages(all=TRUE,lib.loc = .lib.loc[length(.lib.loc)])
 stop.list <- vector("list", length(core.pkgs))
 names(stop.list) <- core.pkgs
 
@@ -26,7 +29,7 @@ stop.list[["base"]] <-
 	## print.plot() will print a blank page on the printer and is
 	## deprecated anyway --pd
 	misc.2 <- c("help.start", "print.plot",
-		    "gctorture", "q", "quit",
+		    "gctorture", "q", "quit", "restart", "try",
                     "read.fwf", "source",## << MM thinks "FIXME"
 		    "data.entry", "dataentry", "de", apropos("^de\."))
 	c(inet.list, socket.fun, dev.int, edit.int, misc.int, misc.2)

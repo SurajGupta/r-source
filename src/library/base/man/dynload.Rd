@@ -1,4 +1,4 @@
-\name{dynload}
+\name{dyn.load}
 \alias{dyn.load}
 \alias{dyn.unload}
 \alias{is.loaded}
@@ -118,5 +118,6 @@ symbol.For(name)
 is.loaded(symbol.For("hcass2")) #-> probably  FALSE
 library(mva)
 is.loaded(symbol.For("hcass2")) #-> TRUE
+\testonly{detach("package:mva")}
 }
 \keyword{interface}

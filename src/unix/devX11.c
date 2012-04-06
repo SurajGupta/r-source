@@ -792,7 +792,7 @@ static char *weight[] = {"medium", "bold"};
 
 /* Bitmap of the Adobe design sizes */
 
-static unsigned int adobe_sizes = 0x0403175D;
+static unsigned int adobe_sizes = 0x0403165D;
 
 #define MAXFONTS 64
 #define CLRFONTS 16 /* Number to free when cache runs full */
@@ -849,7 +849,19 @@ static XFontStruct *RLoadFont(int face, int size)
  	static int near[]=
 	  {14,14,14,17,17,18,20,20,20,20,24,24,24,25,25,25,25};
 	/* 13 14 15 16 17 18 19 20 21 22 23 24 25 26 27 28 29  */
-	if ( ADOBE_SIZE(pixelsize) ) return NULL; /* tried it */ 
+
+	/* If ADOBE_SIZE(pixelsize) is true at this point then
+	   the user's system does not have the standard ADOBE font set
+	   so we just have to use a "fixed" font.
+	   If we can't find a "fixed" font then something is seriously
+	   wrong */
+	if ( ADOBE_SIZE(pixelsize) ) {
+	    tmp = XLoadQueryFont(display, "fixed"); 
+	    if (tmp)
+		return tmp;
+	    else
+		error("Could not find any X11 fonts\nCheck that the Font Path is correct.");
+	}
 
 	if ( pixelsize < 8 ) 
 	    pixelsize = 8;

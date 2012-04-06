@@ -25,8 +25,7 @@ text.default (x, y = NULL, labels = seq(along = x), adj = NULL,
     of a character width.}
   \item{vfont}{if a character vector of length 2 is specified, then Hershey
     vector fonts are used.  The first element of the vector
-    selects a typeface and the second element selects a style 
-    (see the Details section).} 
+    selects a typeface and the second element selects a style.}
   \item{\dots}{further graphical parameters (from \code{\link{par}}),
     such as \code{cex}, etc.}
 }
@@ -56,39 +55,13 @@ text.default (x, y = NULL, labels = seq(along = x), adj = NULL,
   Text can be rotated by using graphical parameters \code{srt} (see
   \code{\link{par}}); this rotates about the centre set by \code{adj}.
 
-  The available values for \code{(typeface, fontindex)} for Hershey
-  vector fonts are:
-    \code{("serif", "symbol")},
-    \code{("serif", "plain")},
-    \code{("serif", "italic")},
-    \code{("serif", "bold")},
-    \code{("serif", "bold italic")},
-    \code{("sans serif", "symbol")},
-    \code{("sans serif", "plain")},
-    \code{("sans serif", "italic")},
-    \code{("sans serif", "bold")},
-    \code{("sans serif", "bold italic")},
-    \code{("script", "symbol")},
-    \code{("script", "plain")},
-    \code{("script", "italic")},
-    \code{("script", "bold")},
-    \code{("gothic english", "symbol")},
-    \code{("gothic english", "plain")},
-    \code{("gothic german", "symbol")},
-    \code{("gothic german", "plain")},
-    \code{("gothic italian", "symbol")},
-    \code{("gothic italian", "plain")},
-    \code{("serif symbol", "symbol")},
-    \code{("serif symbol", "plain")},
-    \code{("serif symbol", "italic")},
-    \code{("serif symbol", "bold")},
-    \code{("serif symbol", "bold italic")},
-    \code{("sans serif symbol", "symbol")},
-    \code{("sans serif symbol", "plain")},
-    \code{("sans serif symbol", "italic")}.
+  Graphical parameters \code{col}, \code{cex} and \code{font} can be
+  vectors and will then be applied cyclically to the \code{labels} (and
+  extra values will be ignored).
 }
 \seealso{
-  \code{\link{mtext}}, \code{\link{title}};
+  \code{\link{mtext}}, \code{\link{title}},
+  \code{\link{Hershey}} for details on Hershey vector fonts,
   \code{\link{plotmath}} for details and more examples on
   mathematical annotation.
 }

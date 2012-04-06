@@ -361,13 +361,6 @@ void R_SetParams(Rstart Rp)
 
 /* Remove and process common command-line arguments */
 
-/* FIXME: not used?
-static void R_common_badargs() {
-    R_ShowMessage("invalid argument passed to R\n");
-    exit(1);
-}
-*/
-
 /*
   This copies the command line arguments to the Rstart
   structure. The memory is obtained from calloc, etc.
@@ -423,6 +416,14 @@ R_common_command_line(int *pac, char **argv, Rstart Rp)
 	    if (!strcmp(*av, "--version")) {
 		PrintVersion(msg);
 		R_ShowMessage(msg);
+		exit(0);
+	    }
+	    else if(!strcmp(*av, "--print-nsize")) {
+		Rprintf("%d\n", R_NSize);
+		exit(0);
+	    }
+	    else if(!strcmp(*av, "--print-vsize")) {
+		Rprintf("%d\n", R_VSize);
 		exit(0);
 	    }
 	    else if(!strcmp(*av, "--save")) {
@@ -482,7 +483,6 @@ R_common_command_line(int *pac, char **argv, Rstart Rp)
 	    }
 	    else if(strncmp(*av, "--vsize", 7) == 0) {
 		if(strlen(*av) < 9) {
-		    R_ShowMessage("WARNING: use `--vsize=V' rather than `--vsize V'.\n");
 		    ac--; av++; p = *av;
 		}
 		else
@@ -510,7 +510,6 @@ R_common_command_line(int *pac, char **argv, Rstart Rp)
 	    }
 	    else if(strncmp(*av, "--nsize", 7) == 0) {
 		if(strlen(*av) < 9) {
-		    R_ShowMessage("WARNING: use `--nsize=V' rather than `--nsize V'.\n");
 		    ac--; av++; p = *av;
 		}
 		else

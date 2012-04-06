@@ -131,7 +131,7 @@ static int xbufmakeroom(xbuf p, xlong size)
     return 1;
 }
 
-#define XPUTC(c) {if (!p->av) xbufmakeroom(p,1); *p->free++=c; p->av-=1;}
+#define XPUTC(c) {if (!p->av) xbufmakeroom(p,1); *p->free++=c; p->av--;}
 
 static void xbufaddc(xbuf p, char c)
 {
@@ -143,23 +143,22 @@ static void xbufaddc(xbuf p, char c)
 	break;
       case '\b':
 	if (strlen(p->s[p->ns - 1])) {
-	    p->free -= 1;
-	    p->av += 1;
+	    p->free--;
+	    p->av++;
 	}
 	break;
       case '\r':
 	break;
       case '\t':
 	XPUTC(' ');
+	*p->free = '\0';
 	for (i = strlen(p->s[p->ns - 1]); (i % TABSIZE); i++)
 	    XPUTC(' ');
 	break;
       case '\n':
 	XPUTC('\0');
-	xbufmakeroom(p, 1);
 	p->s[p->ns] = p->free;
-	p->user[p->ns] = -1;
-	p->ns += 1;
+	p->user[p->ns++] = -1;
 	break;
       default:
 	XPUTC(c);
@@ -329,6 +328,9 @@ typedef struct structConsoleData *ConsoleData;
 
 #define RSHOW(r) {gbitblt(c, p->bm, topleft(r), r);}
 
+static rgb consolebg = White, consolefg = Black, consoleuser = Red,
+    pagerhighlight = Red;
+
 static ConsoleData
 newconsoledata(font f, int rows, int cols,
 	       rgb fg, rgb ufg, rgb bg, int kind)
@@ -453,7 +455,7 @@ static int writeline(ConsoleData p, int i, int j)
 	    WLHELPER(d, col1, p->ufg, p->bg);
 	}
     } else if (USER(i) == -2) {
-	WLHELPER(0, col1, DarkRed, p->bg);
+	WLHELPER(0, col1, pagerhighlight, p->bg);
     } else
 	WLHELPER(0, col1, p->fg, p->bg);
     if ((p->r >= 0) && (p->c >= FC) && (p->c < FC + COLS) &&
@@ -1300,11 +1302,10 @@ static int fontsty, pointsize;
 static int consoler = 25, consolec = 80;
 static int pagerrow = 25, pagercol = 80;
 static int pagerMultiple = 1;
-static rgb consolebg = White, consolefg = Black, consoleuser = Red;
 
 void
 setconsoleoptions(char *fnname,int fnsty, int fnpoints,
-                  int rows, int cols, rgb nfg, rgb nufg, rgb nbg,
+                  int rows, int cols, rgb nfg, rgb nufg, rgb nbg, rgb high,
 		  int pgr, int pgc, int multiplewindows, int widthonresize)
 {
     char msg[LF_FACESIZE + 128];
@@ -1335,6 +1336,7 @@ setconsoleoptions(char *fnname,int fnsty, int fnpoints,
     consolefg = nfg;
     consoleuser = nufg;
     consolebg = nbg;
+    pagerhighlight = high;
     pagerrow = pgr;
     pagercol = pgc;
     pagerMultiple = multiplewindows;

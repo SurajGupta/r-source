@@ -1,10 +1,10 @@
 include MkRules
 
 HELP=YES
-WINHELP=BOTH # NO, CHM, BOTH
+WINHELP=CHM # NO, CHM, BOTH
 
 PACKAGES=base ctest eda lqs modreg mva nls splines stepfun ts
-RPREFIX=rw0990
+RPREFIX=rw1000
 
 RHOME=$(shell cd ../..; pwd)# must be absolute path
 RLIB=$(RHOME)/library
@@ -152,6 +152,10 @@ ziponly-%:
 	$(MAKE) -C ./help RHOME=$(RHOME) PKGDIR=$(PKGD) RLIB=$(RLIB) ziponlyhelp-$*
 	$(MAKE) -C ./help RHOME=$(RHOME) PKGDIR=$(PKGD) RLIB=$(RLIB) contents-$*
 
+zipdata-%:
+	(cd $(RLIB)/$*/data; ls -1 > filelist; \
+	  zip -rmq9X Rdata * -x filelist 00Index)
+
 bootstrap-DLLNM=boott
 
 clean: cleanwin $(PKGCLEAN)
@@ -258,7 +262,7 @@ packagedist:
 	  $(RPREFIX)/src/include $(RPREFIX)/src/library \
 	  $(RPREFIX)/src/gnuwin32 $(RPREFIX)/src/gnuwin32/fixed
 	$(CP) -p ../../COPYING exported-vars R.exp MkRules MakePkg MakeDll \
-	  $(RPREFIX)/src/gnuwin32
+	  maketitle $(RPREFIX)/src/gnuwin32
 	$(CP) -p Makefile.packages $(RPREFIX)/src/gnuwin32/Makefile
 	$(CP) fixed/dobundle.pl $(RPREFIX)/src/gnuwin32/fixed
 	$(CP) -pr help check $(RPREFIX)/src/gnuwin32

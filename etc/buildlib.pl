@@ -255,7 +255,13 @@ sub build_htmlpkglist {
     close htmlfile;
 }
 
-
+sub striptitle { # text
+    my $text = $_[0];
+    $text =~ s/\\//go;
+    $text =~ s/---/-/go;
+    $text =~ s/--/-/go;
+    return $text;
+}
 
 sub build_index {
 
@@ -359,6 +365,7 @@ sub build_index {
     if($opt_chm) {print chmfile "\n<p>\n<table width=\"100%\">\n";}
 
     my $firstletter = "";
+    my $current = "", $currentfile = "", $file, $generic;
     while(<anindex>){
         chomp;  ($alias, $file) = split /\t/;
         $aliasfirst = uc substr($alias, 0, 1);
@@ -375,15 +382,29 @@ sub build_index {
 	    }
 	    $firstletter = $aliasfirst;
 	}
+# skip method aliases.
+	$generic = $alias;  
+	$generic =~ s/\.data\.frame$/.dataframe/o;
+	$generic =~ s/\.model\.matrix$/.modelmatrix/o;
+	$generic =~ s/\.[^.]+$//o;
+#	print "   $alias, $generic, $file, $currentfile\n";
+	next if $alias =~ /<-$/o || $generic =~ /<-$/o;
+	if ($generic ne "" && $generic eq $current && 
+	    $file eq $currentfile && $generic ne "ar") { 
+#	    print "skipping $alias\n";
+	    next; 
+	} else { $current = $alias; $currentfile = $file;}
+
 	print titleindex "$alias\t$alltitles{$alias}\n";
 	$htmlalias = $alias;
 	$htmlalias =~ s/</&lt;/go;
 	$htmlalias =~ s/>/&gt;/go;
+	my $title = striptitle($alltitles{$alias});
 	print htmlfile "<TR><TD width=\"25%\"><A HREF=\"$file.$HTML\">" .
-	    "$htmlalias</A></TD>\n<TD>$alltitles{$alias}</TD></TR>\n";
+	    "$htmlalias</A></TD>\n<TD>$title</TD></TR>\n";
 	if($opt_chm) {
 	    print chmfile "<TR><TD width=\"25%\"><A HREF=\"$file.$HTML\">" .
-		"$htmlalias</A></TD>\n<TD>$alltitles{$alias}</TD></TR>\n";}
+		"$htmlalias</A></TD>\n<TD>$title</TD></TR>\n";}
     }
 
     print htmlfile "</TABLE>\n";
@@ -425,6 +446,7 @@ sub build_htmlfctlist {
     print htmlfile "\n</table>\n<p>\n<table width=\"100%\">\n";
 
     my $firstletter = "";
+    my $current = "", $currentfile = "", $file, $generic;
     foreach $alias (sort foldorder keys %htmltitles) {
 	$aliasfirst = uc substr($alias, 0, 1);
 	if($aliasfirst =~ /[A-Z]/){
@@ -435,9 +457,24 @@ sub build_htmlfctlist {
 		print htmlfile "<table width=\"100%\">\n";
 		$firstletter = $aliasfirst;
 	    }
+# skip method aliases.
+	    $file = $htmlindex{$alias};
+	    $generic = $alias;  
+	    $generic =~ s/\.data\.frame$/.dataframe/o;
+	    $generic =~ s/\.model\.matrix$/.modelmatrix/o;
+	    $generic =~ s/\.[^.]+$//o;
+# omit all replacement functions and all plot and print methods
+	    next if $alias =~ /<-$/o || $generic =~ /<-$/o;
+	    next if $alias =~ /plot\./o;
+	    next if $alias =~ /print\./o;
+	    if ($generic ne "" && $generic eq $current && 
+		$file eq $currentfile && $generic ne "ar") { 
+		next;
+	    } else { $current  = $alias; $currentfile = $file;}
+	    my $title = striptitle($htmltitles{$alias});
 	    print htmlfile "<TR><TD width=\"25%\">" .
-		"<A HREF=\"../../library/$htmlindex{$alias}\">" .
-		    "$alias</A></TD>\n<TD>$htmltitles{$alias}</TD></TR>\n";
+		"<A HREF=\"../../library/$file\">" .
+		    "$alias</A></TD>\n<TD>$title</TD></TR>\n";
 	}
     }
 

@@ -2,7 +2,7 @@
 #
 # ${R_HOME}/bin/build
 
-revision='$Revision: 1.10 $'
+revision='$Revision: 1.14 $'
 version=`set - ${revision}; echo ${2}`
 version="R package builder ${version}
 
@@ -75,6 +75,7 @@ checking () {
     echo ${ECHO_N} "* checking $@ ...${ECHO_C}"
   fi
 }
+creating () { echo ${ECHO_N} "* creating $@ ...${ECHO_C}"; }
 message () { echo "* $@"; }
 result () { echo "${ECHO_T} $@"; }
 
@@ -202,7 +203,7 @@ buildpkg () {
   else
     result "NO"
     if test -n "${title}"; then
-      message "creating \`TITLE' from \`DESCRIPTION' title entry"
+      creating "\`TITLE' from \`DESCRIPTION' title entry"
       ${R_HOME}/bin/maketitle > TITLE
       if test ${?} -ne 0; then
 	result "ERROR"
@@ -219,11 +220,17 @@ buildpkg () {
   ## Check R documentation files
   if test -d man; then
     checking "Rd files"    
-    Rdfiles=`find man -name "*.[Rr]d" -print | sort`
+    all_file=${TMPDIR:-/tmp}/Rall${$}
+    tag_file=${TMPDIR:-/tmp}/Rtag${$}
+    rm -f ${all_file} 2>/dev/null
+    find man -name "*.[Rr]d" -print | sort > ${all_file}
+    Rdfiles=`cat ${all_file}`
     if test -n "${Rdfiles}"; then
       any=
       for tag in name alias title description keyword; do
-	badfiles=`grep -L "^\\\\\\\\${tag}" ${Rdfiles} 2>/dev/null`
+	rm -f ${tag_file} 2>/dev/null
+	grep -l "^\\\\${tag}" ${Rdfiles} > ${tag_file} 2>/dev/null
+	badfiles=`comm -2 -3 ${all_file} ${tag_file}`
 	if test -n "${badfiles}"; then
 	  if test -z "${any}"; then
 	    result "WARNING:"
@@ -239,6 +246,7 @@ buildpkg () {
     else
       result "WARNING: no Rd files found"
     fi
+    rm -f ${all_file} ${tag_file} 2>/dev/null
   fi
 
   ## Check for `INDEX'
@@ -252,7 +260,7 @@ buildpkg () {
   else
     result "NO"
     if test -n "${Rdfiles}"; then
-      message "creating \`INDEX' from Rd files"
+      creating "\`INDEX' from Rd files"
       ${R_HOME}/bin/Rdindex ${Rdfiles} > INDEX
       if test ${?} -ne 0; then
 	result "ERROR"
@@ -281,7 +289,7 @@ buildpkg () {
     else
       result "NO"
       if test -n "${Rdfiles}"; then
-	message "creating \`data/00Index' from Rd files"
+	creating "\`data/00Index' from Rd files"
 	${R_HOME}/bin/Rdindex ${Rdfiles} > data/00Index
 	if test ${?} -ne 0; then
 	  result "ERROR"
@@ -300,9 +308,9 @@ buildpkg () {
   if test -d R -a -d man; then
     checking "for undocumented objects"
     out=`echo "undoc(dir = \"${dir}\")" \
-      | ${R_HOME}/bin/R.X11 ${R_opts} \
-      | grep "^Error\\|^ *\\["`
+      | ${R_HOME}/bin/R.X11 ${R_opts}`
     err=`echo "${out}" | grep "^Error"`
+    out=`echo "${out}" | grep "^ *\\["`
     if test -z "${err}"; then
       if test -n "${out}"; then
 	result "WARNING:"
@@ -324,7 +332,7 @@ buildpkg () {
     if test -r src/Makefile; then
       (cd src && make clean)
     else
-      rm -f *.o *.s[lo]
+      rm -f src/*.o src/*.s[lo]
     fi
   fi
 
@@ -346,12 +354,14 @@ buildpkg () {
   exclude_file=${TMPDIR:-/tmp}/Rbuild${$}
   rm -f ${exclude_file} 2>/dev/null \
     || (echo "cannot create file with exclude patterns" && exit 2)
-  for pattern in "*~" "CVS" "GNUMakefile"; do
-    echo "${pattern}" >> ${exclude_file}
+  for pattern in "GNUMakefile" "check"; do
+    echo "${package}/${pattern}" >> ${exclude_file}
   done
+  find ${package} -name CVS >> ${exclude_file}
+  find ${package} -name \*~ >> ${exclude_file}
   message "building \`${start_dir}/${package}_${version}.tar.gz'"
-  tar zch -X ${exclude_file} \
-    -f ${start_dir}/${package}_${version}.tar.gz ${package}
+  tar chfX - ${exclude_file} ${package} | \
+    gzip -c9 > ${start_dir}/${package}_${version}.tar.gz 
   rm -f ${exclude_file}
 }
 

@@ -14,12 +14,15 @@ S
 @sc{html}
 @end macro
 
-@macro plusminus
-@ifinfo
-+/-
-@end ifinfo
-@tex $\\pm$%
+@macro eqn {t, a}
+@iftex
+@tex
+$\t\$%
 @end tex
+@end iftex
+@ifnottex
+\a\@c
+@end ifnottex
 @end macro
 
 @macro pkg {p}

@@ -7,7 +7,8 @@ as.char.or.expr <- function(x) {
 text <- function(x, ...) UseMethod("text")
 text.default <- function(x, y = NULL, labels = seq(along = x),
                          adj = NULL, pos = NULL, offset = 0.5, 
-                         vfont = NULL, ...) {
+                         vfont = NULL, cex = 1, col = NULL,
+			 font = NULL, xpd = NA, ...) {
     if (!missing(y) && (is.character(y) || is.expression(y))) {
 	labels <- y; y <- NULL
     }
@@ -17,9 +18,11 @@ text.default <- function(x, y = NULL, labels = seq(along = x),
 			      	       "gothic italian", "serif symbol",
 				       "sans serif symbol"))
         fontindex <- pmatch(vfont[2], c("symbol", "plain", "italic", "bold",
-				        "bold italic"))
+				        "bold italic", "cyrillic",
+					"oblique cyrillic", "EUC"))
         vfont <- c(typeface-1, fontindex-1)
     }
     .Internal(text(xy.coords(x,y, recycle=TRUE),
-		   as.char.or.expr(labels), adj, pos, offset, vfont, ...))
+		   as.char.or.expr(labels), adj, pos, offset, vfont,
+		   cex, col, font, xpd, ...))
 }

@@ -534,7 +534,7 @@ void PostScriptSetLineTexture(FILE *fp, int *lty, int nlty, double lwd)
     int i;
     fprintf(fp,"[");
     for (i = 0; i < nlty; i++) {
-        dash = lwd * ((i % 2) ? lty[i] + 1 : lty[i] - 1);
+        dash = (lwd >= 1 ? lwd:1) * ((i % 2) ? lty[i] + 1 : lty[i] - 1);
 	if (dash < 0) dash = 0;
 	fprintf(fp," %.2f", dash);
     }
@@ -579,6 +579,9 @@ static void PostScriptWriteString(FILE *fp, char *str)
 	switch(*str) {
 	case '\n':
 	    fprintf(fp, "\\n");
+	    break;
+	case '\\':
+	    fprintf(fp, "\\\\");
 	    break;
 	case '-':
 	    if (isdigit((int)str[1]))

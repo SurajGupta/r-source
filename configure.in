@@ -22,6 +22,8 @@ dnl Copyright (C) 1998, 1999, 2000 R Core Team
 ### Software Foundation, 59 Temple Place -- Suite 330, Boston, MA
 ### 02111-3307, USA.
 
+AC_PREREQ(2.13)
+
 AC_INIT(src/include/Defn.h)
 AC_CONFIG_HEADER(src/include/config.h)
 AC_CONFIG_AUX_DIR(tools)
@@ -219,7 +221,6 @@ case "${host}" in
     AC_AIX
     ;;
   *hpux*)
-    LIBS="-L/lib/pa1.1 ${LIBS}"
     case "${CC}" in
       cc)
         if test `echo ${CFLAGS} | grep -c -e "-A[ae] "` = 0; then
@@ -271,15 +272,19 @@ elif ${use_f2c}; then
   fi
   AC_MSG_RESULT([defining F2C to be ${F2C}])
 else
-  AC_PATH_PROGS(F77, g77 f77 fort77 f90 xlf cf77 fc)
-  if test -n "${F77}"; then
-    if test -n "`file ${F77} | grep script`"; then
-      dnl If F77 found above is a shell or perl script, don't use it.
-      F77=
-    else
-      F77=`basename ${F77}`
+  F77=
+  for name in g77 fort77 f77 f90 xlf cf77 fc; do
+    AC_PATH_PROGS(F77, ${name})
+    if test -n "${F77}"; then
+      if test -n "`file ${F77} | grep script`"; then
+	dnl If F77 found above is a shell or perl script, do not use it.
+	F77=
+      else
+	F77=`basename ${F77}`
+	break
+      fi
     fi
-  fi
+  done
   if test -z "${F77}"; then
     AC_CHECK_PROGS(F2C, f2c)
   fi
@@ -287,8 +292,9 @@ fi
 
 if test -n "${F77}"; then
   FC=${F77}
-  R_PROG_F77_FLIBS
-  R_PROG_F77_G77
+  R_PROG_F77_WORKS
+  R_PROG_F77_GNU
+  OCTAVE_FLIBS
   R_PROG_F77_APPEND_UNDERSCORE
   R_PROG_F77_CC_COMPAT
   f77_rules_frag=Makefrag.f77
@@ -394,8 +400,8 @@ AC_HEADER_DIRENT
 AC_HEADER_SYS_WAIT
 AC_CHECK_HEADERS(dl.h dlfcn.h elf.h floatingpoint.h fpu_control.h \
   ieee754.h ieeefp.h locale.h readline/history.h readline/readline.h \
-  rpc/rpc.h rpc/xdr.h sys/param.h sys/stat.h sys/time.h sys/times.h \
-  unistd.h)
+  rpc/rpc.h rpc/xdr.h string.h sys/param.h sys/stat.h sys/time.h \
+  sys/times.h unistd.h)
 case "${host}" in
   *sunos4*)
     AC_DEFINE(SunOS4) ;;
@@ -438,8 +444,22 @@ case "${host}" in
     ;;
   alpha*osf*)
     AC_DEFINE(HAVE_NO_SYMBOL_UNDERSCORE)
-    R_PROG_CC_FLAG(-ieee_with_inexact,
-      R_XTRA_CFLAGS="${R_XTRA_CFLAGS} -ieee_with_inexact")
+    ## <Albrecht.Gebhardt@uni-klu.ac.at>
+    if test -z "${GCC}"; then
+      R_PROG_CC_FLAG(-ieee_with_inexact,
+        R_XTRA_CFLAGS="${R_XTRA_CFLAGS} -ieee_with_inexact")
+      R_PROG_CC_FLAG(-std1,
+        R_XTRA_CFLAGS="${R_XTRA_CFLAGS} -std1")
+    else
+      R_PROG_CC_FLAG(-mieee,
+        R_XTRA_CFLAGS="${R_XTRA_CFLAGS} -mieee")
+    fi
+    if test -z "${G77}"; then
+      R_XTRA_FFLAGS="${R_XTRA_FFLAGS} -fpe3"
+    else
+      R_XTRA_FFLAGS="${R_XTRA_FFLAGS} -mieee"
+    fi
+    ## </Albrecht.Gebhardt@uni-klu.ac.at>
     ;;
   alpha*linux)
     R_PROG_CC_FLAG(-mieee,
@@ -546,7 +566,7 @@ case "${host}" in
         cpicflags="+z" ;;
     esac
     case "${FC}" in
-      f77)
+      f77|fort77)
         fpicflags="+z" ;;
     esac
     dllflags="-Wl,-E"
@@ -676,6 +696,7 @@ AC_OUTPUT(Makeconf
   Makefile
   afm/Makefile
   demos/Makefile
+  demos/dynload/Makefile
   doc/Makefile
   doc/manual/Makefile
   etc/Makefile
@@ -725,7 +746,6 @@ AC_OUTPUT(Makeconf
   src/scripts/Rd2txt
   src/scripts/Rdconv
   src/scripts/Rdindex
-  src/scripts/Rman2Rd
   src/scripts/SHLIB
   src/scripts/Sd2Rd
   src/scripts/build-help
@@ -738,6 +758,7 @@ AC_OUTPUT(Makeconf
   tools/Rdnewer
   tools/help2man
   tools/keyword-test
+  tools/keywords2html
   tools/install-info
   tools/pkg2tex
 )
@@ -748,6 +769,7 @@ AC_OUTPUT_COMMANDS(
   tools/help2man \
   tools/install-info \
   tools/keyword-test \
+  tools/keywords2html \
   tools/pkg2tex
 )
 

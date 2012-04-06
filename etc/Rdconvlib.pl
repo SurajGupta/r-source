@@ -1,4 +1,4 @@
-# Subroutines for converting R documentation into text, HTML, LaTeX, Nroff
+# Subroutines for converting R documentation into text, HTML, LaTeX
 # and R (Examples) format
 
 # Copyright (C) 1997-2000 R Development Core Team
@@ -20,10 +20,9 @@
 
 # Send any bug reports to R-bugs@lists.r-project.org
 
-# Bugs: still get ``\bsl{}'' in verbatim-like, see e.g. Examples of apropos.Rd
 
 require "$R_HOME/etc/html-layout.pl";
-
+use Text::Tabs;
 
 # names of unique text blocks, these may NOT appear MORE THAN ONCE!
 @blocknames = ("name", "title", "usage", "arguments", "format",
@@ -64,14 +63,13 @@ sub Rdconv { # Rdconv(foobar.Rd, type, debug, filename, pkgname)
 	## Trivial (R 0.62 case): Only 1 $type at a time ==> one filename is ok.
 	## filename = 0	  <==>	STDOUT
 	## filename = -1  <==>	do NOT open and close files!
-	$htmlfile= $nrofffile= $txtfile= $Sdfile= $latexfile= 
+	$htmlfile= $txtfile= $Sdfile= $latexfile= 
 	    $Exfile = $chmfile = $_[3];
     } else { # have "," in $type: Multiple types with multiple output files
 	$dirname = $_[3]; # The super-directory , such as  <Rlib>/library/<pkg>
 	die "Rdconv(): '$dirname' is NOT a valid directory:$!\n"
 	  unless -d $dirname;
 	$htmlfile = $dirname ."/html/" .$Rdname.".html" if $type =~ /html/i;
-	$nrofffile= $dirname ."/help/" . $Rdname	if $type =~ /nroff/i;
 	$txtfile= $dirname ."/help/" . $Rdname	        if $type =~ /txt/i;
 	die "Rdconv(): type 'Sd' must not be used with other types (',')\n"
 	  if $type =~ /Sd/i;
@@ -91,6 +89,7 @@ sub Rdconv { # Rdconv(foobar.Rd, type, debug, filename, pkgname)
     $skipping = 0;
     #-- remove comments (everything after a %)
     while(<rdfile>){
+	$_ = expand $_;
 	if (/^#ifdef\s+([A-Za-z0-9]+)/o) {
 	    if ($1 ne $OSdir) { $skipping = 1; }
 	    next;
@@ -132,7 +131,7 @@ sub Rdconv { # Rdconv(foobar.Rd, type, debug, filename, pkgname)
 
 	get_blocks($complete_text);
  
-	if($type =~ /html/i || $type =~ /nroff/i || $type =~ /txt/i ||
+	if($type =~ /html/i || $type =~ /txt/i ||
 	   $type =~ /Sd/    || $type =~ /tex/i || $type =~ /chm/i ) {
 
 	    get_sections($complete_text);
@@ -144,7 +143,6 @@ sub Rdconv { # Rdconv(foobar.Rd, type, debug, filename, pkgname)
 	}
 
 	rdoc2html($htmlfile)	if $type =~ /html/i;
-	rdoc2nroff($nrofffile)	if $type =~ /nroff/i;
 	rdoc2txt($txtfile)	if $type =~ /txt/i;
 	rdoc2Sd($Sdfile)	if $type =~ /Sd/i;
 	rdoc2latex($latexfile)	if $type =~ /tex/i;
@@ -333,8 +331,8 @@ sub get_arguments {
     # Returns a list with the id of the last closing bracket and
     # the arguments.
 
-    if($text =~ /\\($command)($ID)/){
-	$id = $2;
+    if($text =~ /\\($command)(\[[^\]]+\])?($ID)/){
+	$id = $3;
 	$text =~ /$id(.*)$id/s;
 	$retval[1] = $1;
 	my $k=2;
@@ -343,6 +341,24 @@ sub get_arguments {
 	    $text =~ /$id\s*(.*)$id/s;
 	    $retval[$k++] = $1;
 	}
+    }
+    $retval[0] = $id;
+    @retval;
+}
+
+# Get the argument(s) of a link.
+sub get_link {
+    my ($text) = @_;
+    my @retval, $id;
+    if($text =~ /\\link\[([^\]]+)\]($ID)/){
+	$retval[2] = $1;
+	$id = $2;
+	$text =~ /$id(.*)$id/s;
+	$retval[1] = $1;
+    } elsif($text =~ /\\link($ID)/){
+	$id = $1;
+	$text =~ /$id(.*)$id/s;
+	$retval[1] = $1;
     }
     $retval[0] = $id;
     @retval;
@@ -385,7 +401,7 @@ sub undefine_command {
     my $loopcount = 0;
     while(checkloop($loopcount++, $text, "\\$cmd") &&  $text =~ /\\$cmd/){
 	my ($id, $arg)	= get_arguments($cmd, $text, 1);
-	$text =~ s/\\$cmd$id(.*)$id/$1/s;
+	$text =~ s/\\$cmd(\[.*\])?$id(.*)$id/$2/s;
     }
     $text;
 }
@@ -503,16 +519,16 @@ sub text2html {
 	$text =~ s/\\dots/.../go;
 	$text =~ s/\\ldots/.../go;
 
-	$text =~ s/\\Gamma/&Gamma/go;
-	$text =~ s/\\alpha/&alpha/go;
-	$text =~ s/\\Alpha/&Alpha/go;
-	$text =~ s/\\pi/&pi/go;
-	$text =~ s/\\mu/&mu/go;
-	$text =~ s/\\sigma/&sigma/go;
-	$text =~ s/\\Sigma/&Sigma/go;
-	$text =~ s/\\lambda/&lambda/go;
-	$text =~ s/\\beta/&beta/go;
-	$text =~ s/\\epsilon/&epsilon/go;
+	$text =~ s/\\Gamma/&Gamma;/go;
+	$text =~ s/\\alpha/&alpha;/go;
+	$text =~ s/\\Alpha/&Alpha;/go;
+	$text =~ s/\\pi/&pi;/go;
+	$text =~ s/\\mu/&mu;/go;
+	$text =~ s/\\sigma/&sigma;/go;
+	$text =~ s/\\Sigma/&Sigma;/go;
+	$text =~ s/\\lambda/&lambda;/go;
+	$text =~ s/\\beta/&beta;/go;
+	$text =~ s/\\epsilon/&epsilon;/go;
 	$text =~ s/\\left\(/\(/go;
 	$text =~ s/\\right\)/\)/go;
 	$text =~ s/\\R/<FONT FACE=\"Courier New,Courier\" COLOR=\"\#666666\"><b>R<\/b><\/FONT>/go;
@@ -532,7 +548,7 @@ sub text2html {
     my $loopcount = 0;
     while(checkloop($loopcount++, $text, "\\link")
 	  &&  $text =~ /\\link/){
-	my ($id, $arg)	= get_arguments("link", $text, 1);
+	my ($id, $arg, $org) = get_link($text);
 	## fix conversions in key of htmlindex:
 	my $argkey = $arg;
 	$argkey =~ s/&lt;/</go;
@@ -550,15 +566,33 @@ sub text2html {
 #		    print "$htmlfile\n";
 		}
 		$text =~
-		    s/\\link$id.*$id/<A HREF=\"$htmlfile\">$arg<\/A>/s;
+		    s/\\link(\[.*\])?$id.*$id/<A HREF=\"$htmlfile\">$arg<\/A>/s;
 	    } else {
 		$text =~
-		    s/\\link$id.*$id/<A HREF=\"..\/..\/$htmlfile\">$arg<\/A>/s;
+		    s/\\link(\[.*\])?$id.*$id/<A HREF=\"..\/..\/$htmlfile\">$arg<\/A>/s;
 	    }
 	}
 	else {
-	    $misslink = $misslink . " " . $arg;
-	    $text =~ s/\\link$id.*$id/$arg/s;
+	    $misslink = $misslink . " " . $argkey unless $opt ne "";
+	    if($using_chm){
+		if($opt ne "") {
+		    $opt =~ s/:.*$//o;
+		    $htmlfile = "ms-its:../../$opt/chtml/$opt.chm::/$arg.html";
+		    $text =~ s/\\link(\[.*\])?$id.*$id/<A HREF=\"$htmlfile\">$arg<\/A>/s;
+		} else {
+		    $text =~ s/\\link(\[.*\])?$id.*$id/$arg/s;
+		} 
+	    }
+	    else{
+		if($opt ne "") {
+		    my ($pkg, $topic) = split(/:/, $opt);
+		    $topic = $arg if $topic eq "";
+		    $htmlfile = $pkg."/".$topic.".html";
+		    $text =~ s/\\link(\[.*\])?$id.*$id/<A HREF=\"..\/..\/$htmlfile\">$arg<\/A>/s;
+		} else {
+		    $text =~ s/\\link(\[.*\])?$id.*$id/<A HREF=\"..\/..\/..\/doc\/html\/search\/SearchObject.html?$argkey\">$arg<\/A>/s;
+		}
+	    }
 	}
     }
 
@@ -626,7 +660,7 @@ sub code2html {
     my $loopcount = 0;
     while(checkloop($loopcount++, $text, "\\link")
 	  &&  $text =~ /\\link/){
-	my ($id, $arg)	= get_arguments("link", $text, 1);
+	my ($id, $arg, $opt) = get_link($text);
 
 	## fix conversions in key of htmlindex:
 	my $argkey = $arg;
@@ -646,15 +680,33 @@ sub code2html {
 #		    print "$htmlfile\n";
 		}
 		$text =~
-		    s/\\link$id.*$id/<A HREF=\"$htmlfile\">$arg<\/A>/s;
+		    s/\\link(\[.*\])?$id.*$id/<A HREF=\"$htmlfile\">$arg<\/A>/s;
 	    } else {
 		$text =~
-		    s/\\link$id.*$id/<A HREF=\"..\/..\/$htmlfile\">$arg<\/A>/s;
+		    s/\\link(\[.*\])?$id.*$id/<A HREF=\"..\/..\/$htmlfile\">$arg<\/A>/s;
 	    }
 	}
 	else{
-	    $misslink = $misslink . " " . $argkey;
-	    $text =~ s/\\link$id.*$id/$arg/s;
+	    $misslink = $misslink . " " . $argkey unless $opt ne "";
+	    if($using_chm){
+		if($opt ne "") {
+		    $opt =~ s/:.*$//o;
+		    $htmlfile = "ms-its:../../$opt/chtml/$opt.chm::/$arg";
+		    $text =~ s/\\link(\[.*\])?$id.*$id/<A HREF=\"$htmlfile\">$arg<\/A>/s;
+		} else {
+		    $text =~ s/\\link(\[.*\])?$id.*$id/$arg/s;
+		} 
+	    }
+	    else{
+		if($opt ne "") {
+		    my ($pkg, $topic) = split(/:/, $opt);
+		    $topic = $arg if $topic eq "";
+		    $htmlfile = $pkg."/".$topic.".html";
+		    $text =~ s/\\link(\[.*\])?$id.*$id/<A HREF=\"..\/..\/$htmlfile\">$arg<\/A>/s;
+		} else {
+		    $text =~ s/\\link(\[.*\])?$id.*$id/<A HREF=\"..\/..\/..\/doc\/html\/search\/SearchObject.html?$argkey\">$arg<\/A>/s;
+		}
+	    }
 	}
     }
 
@@ -814,388 +866,6 @@ sub html_tables {
 }
 
 
-
-#==************************** nroff ******************************
-
-
-sub rdoc2nroff { # (filename); 0 for STDOUT
-
-    if($_[0]!= -1) {
-      if($_[0]) { open nroffout, "> $_[0]"; } else { open nroffout, "| cat"; }
-    }
-
-    $INDENT = "0.5i";
-    $TAGOFF = "1i";
-
-    print nroffout ".ND\n";
-    print nroffout ".pl 100i\n";
-    print nroffout ".po 3\n";
-    print nroffout ".na\n";
-    if ($pkgname) {
-	print nroffout ".lt 65\n";
-	print nroffout ".tl '", $blocks{"name"}, "'package:",
-	    $pkgname, "'R Documentation'\n\n";
-    }
-    print nroffout ".SH\n";
-    print nroffout striptitle($blocks{"title"}), "\n";
-    nroff_print_block("description", "Description");
-    nroff_print_codeblock("usage", "Usage");
-    nroff_print_argblock("arguments", "Arguments");
-    nroff_print_block("format", "Format");
-    nroff_print_block("details", "Details");
-    nroff_print_argblock("value", "Value");
-
-    nroff_print_sections();
-
-    nroff_print_block("note", "Note");
-    nroff_print_block("author", "Author(s)");
-    nroff_print_block("source", "Source");
-    nroff_print_block("references", "References");
-    nroff_print_block("seealso", "See Also");
-    nroff_print_codeblock("examples", "Examples");
-
-    close nroffout;
-}
-
-
-### Convert a Rdoc text string to nroff
-###   $_[0]: text to be converted
-###   $_[1]: (optional) indentation of paragraphs. default = $INDENT
-
-sub text2nroff {
-
-    my $text = $_[0];
-    if($_[1]){
-	my $indent = $_[1];
-    }
-    else{
-	my $indent = $INDENT;
-    }
-
-    $text =~ s/^\.|([\n\(])\./$1\\\&./g;
-
-    ## TABs are just whitespace
-    $text =~ s/\t/ /g;
-
-    ## tables are pre-processed by the tbl(1) command, so this has to
-    ## be done first
-    $text = nroff_tables($text);
-    $text =~ s/\\cr\n?/\n.br\n/sgo;
-
-    $text =~ s/\n\s*\n/\n.IP \"\" $indent\n/sgo;
-    $text =~ s/\\dots/\\&.../go;
-    $text =~ s/\\ldots/\\&.../go;
-    $text =~ s/\\le/<=/go;
-    $text =~ s/\\ge/>=/go;
-    $text =~ s/\\%/%/sgo;
-    $text =~ s/\\\$/\$/sgo;
-
-
-    $text =~ s/\\Gamma/Gamma/go;
-    $text =~ s/\\alpha/alpha/go;
-    $text =~ s/\\Alpha/Alpha/go;
-    $text =~ s/\\pi/pi/go;
-    $text =~ s/\\mu/mu/go;
-    $text =~ s/\\sigma/sigma/go;
-    $text =~ s/\\Sigma/Sigma/go;
-    $text =~ s/\\lambda/lambda/go;
-    $text =~ s/\\beta/beta/go;
-    $text =~ s/\\epsilon/epsilon/go;
-    $text =~ s/\\left\(/\(/go;
-    $text =~ s/\\right\)/\)/go;
-    $text =~ s/\\R/R/go;
-# these are troff, not nroff
-#    $text =~ s/---/\\(em/go;
-#    $text =~ s/--/\\(en/go;
-    $text =~ s/---/--/go;
-    $text =~ s/--/-/go;
-    $text =~ s/$EOB/\{/go;
-    $text =~ s/$ECB/\}/go;
-
-    $text = undefine_command($text, "link");
-    $text = undefine_command($text, "emph");
-    $text = undefine_command($text, "bold");
-    $text = undefine_command($text, "textbf");
-    $text = undefine_command($text, "mathbf");
-    $text = undefine_command($text, "email");
-    $text = replace_command($text, "file", "`", "'");
-    $text = replace_command($text, "url", "<URL: ", ">");
-
-
-    # handle equations:
-    my $loopcount = 0;
-    while(checkloop($loopcount++, $text, "\\eqn")
-	  &&  $text =~ /\\eqn/){
-	my ($id, $eqn, $ascii) = get_arguments("eqn", $text, 2);
-	$eqn = $ascii if $ascii;
-	$eqn =~ s/\\([^&])/$1/go;
-	$text =~ s/\\eqn(.*)$id/$eqn/s;
-    }
-
-    $loopcount = 0;
-    while(checkloop($loopcount++, $text, "\\deqn") &&  $text =~ /\\deqn/){
-	my ($id, $eqn, $ascii) = get_arguments("deqn", $text, 2);
-	$eqn = $ascii if $ascii;
-	$eqn =~ s/\\([^&])/$1/go;
-	$text =~ s/\\deqn(.*)$id/\n.DS B\n$eqn\n.DE\n/s;
-    }
-
-    $list_depth=0;
-
-    $text = replace_command($text,
-			    "itemize",
-			    "\n.in +$INDENT\n",
-			    "\n.in -$INDENT\n");
-
-    $text = replace_command($text,
-			    "enumerate",
-			    "\n.in +$INDENT\n",
-			    "\n.in -$INDENT\n");
-
-    $text =~ s/\\item\s+/\n.ti -\\w\@*\\ \@u\n* /go;
-
-    # handle "\describe"
-    $text = replace_command($text,
-			    "describe",
-			    "\n.in +$INDENT\n",
-			    "\n.in -$INDENT\n");
-    while(checkloop($loopcount++, $text, "\\item") && $text =~ /\\itemnormal/s)
-    {
-	my ($id, $arg, $desc)  = get_arguments("item", $text, 2);
-	$arg = text2nroff($arg);
-	$descitem = ".IP \"\" $TAGOFF\n".
-	    ".ti -\\w\@" . $arg . 
-	    "\\ \@u\n" . $arg . "\\ " . text2nroff($desc);
-	$descitem =~ s/\\&\././go;
-	$text =~ s/\\itemnormal.*$id/$descitem/s;
-    }
-    $text = nroff_unescape_codes($text);
-    unmark_brackets($text);
-}
-
-sub nroff_parse_lists {
-
-    my $text = $_[0];
-
-    my $loopcount = 0;
-    while(checkloop($loopcount++, $text, "\\itemize|\\enumerate") &&
-	  $text =~ /\\itemize|\\enumerate/){
-	my ($id, $innertext) = get_arguments("deqn", $text, 1);
-	if($innertext =~ /\\itemize/){
-	    my $tmptext = html_parse_lists($innertext);
-	    $text = s/\\itemize$id(.*)$id/\\itemize$id$tmptext$id/s;
-	}
-	elsif($innertext =~ /\\enumerate/){
-	    my $tmptext = html_parse_lists($innertext);
-	    $text = s/\\enumerate$id(.*)$id/\\enumerate$id$tmptext$id/s;
-	}
-	else{
-	    if($text =~ /\\itemize|\\enumerate/){
-		$text = replace_command($text, "itemize", "<UL>", "</UL>");
-		$text = replace_command($text, "enumerate", "<OL>", "</OL>");
-		$text =~ s/\\item\s+/<li>/go;
-	    }
-	}
-    }
-
-    $text;
-}
-
-sub code2nroff {
-
-    my $text = $_[0];
-
-    $text =~ s/^\.|([\n\(])\./$1\\&./g;
-    $text =~ s/\\%/%/go;
-    $text =~ s/\\ldots/.../go;
-    $text =~ s/\\dots/.../go;
-    $text =~ s/\\n/\\\\n/g;
-
-    $text = undefine_command($text, "link");
-    $text = undefine_command($text, "dontrun");
-    $text = drop_full_command($text, "testonly");
-
-    unmark_brackets($text);
-}
-
-# Print a standard block
-sub nroff_print_block {
-
-    my ($block,$title) = @_;
-
-    if(defined $blocks{$block}){
-	print nroffout "\n";
-	print nroffout ".SH\n";
-	print nroffout "$title:\n";
-#	print nroffout ".LP\n";
-#	print nroffout ".in +$INDENT\n";
-	print nroffout ".IP \"\" $INDENT\n";
-	print nroffout text2nroff($blocks{$block}), "\n";
-	print nroffout ".in -$INDENT\n";
-    }
-}
-
-# Print a code block (preformatted)
-sub nroff_print_codeblock {
-
-    my ($block,$title) = @_;
-
-    if(defined $blocks{$block}){
-	print nroffout "\n";
-	print nroffout ".SH\n" if $title;
-	print nroffout "$title:\n" if $title;
-	print nroffout ".LP\n";
-	print nroffout ".nf\n";
-	print nroffout ".in +$INDENT\n";
-	print nroffout code2nroff($blocks{$block}), "\n";
-	print nroffout ".in -$INDENT\n";
-	print nroffout ".fi\n";
-    }
-}
-
-
-# Print the value or arguments block
-sub nroff_print_argblock {
-
-    my ($block,$title) = @_;
-
-    if(defined $blocks{$block}){
-
-	print nroffout "\n";
-	print nroffout ".SH\n" if $title;
-	print nroffout "$title:\n" if $title;
-#	print nroffout ".LP\n";
-#	print nroffout ".in +$INDENT\n";
-	print nroffout ".IP \"\" $INDENT\n";
-
-	my $text = $blocks{$block};
-
-	if($text =~ /\\item/s){
-	    $text =~ /^(.*)(\\item.*)*/s;
-	    my ($begin, $rest) = split(/\\item/, $text, 2);
-	    if($begin){
-		print nroffout text2nroff($begin);
-		$text =~ s/^$begin//s;
-	    }
-	    my $loopcount = 0;
-	    while(checkloop($loopcount++, $text, "\\item") &&
-		  $text =~ /\\item/s){
-		my ($id, $arg, $desc)  = get_arguments("item", $text, 2);
-		$arg = text2nroff($arg);
-		$desc = text2nroff($desc);
-		print nroffout "\n";
-		print nroffout ".IP \"\" $TAGOFF\n";
-		print nroffout ".ti -\\w\@$arg:\\ \@u\n";
-		print nroffout "$arg:\\ $desc\n";
-		$text =~ s/.*$id//s;
-	    }
-	    print nroffout text2nroff($text, $TAGOFF), "\n";
-	}
-	else{
-	    print nroffout text2nroff($text), "\n";
-	}
-#	print nroffout ".in -$INDENT\n";
-    }
-}
-
-# Print sections
-sub nroff_print_sections {
-
-    my $section;
-
-    for($section=0; $section<$max_section; $section++){
-	print nroffout "\n";
-	print nroffout ".SH\n";
-	print nroffout $section_title[$section], ":\n";
-#	print nroffout ".LP\n";
-#	print nroffout ".in +$INDENT\n";
-	print nroffout ".IP \"\" $INDENT\n";
-	print nroffout text2nroff($section_body[$section]), "\n";
-#	print nroffout ".in -$INDENT\n";
-    }
-}
-
-
-sub nroff_unescape_codes {
-
-    my $text = $_[0];
-
-    my $loopcount = 0;
-    while(checkloop($loopcount++, $text, "escaped code")
-	  && $text =~ /$ECODE($ID)/){
-	my $id = $1;
-	my $ec = code2nroff($ecodes{$id});
-	$text =~ s/$ECODE$id/\`$ec\'/;
-    }
-    $text;
-}
-
-
-sub nroff_tables {
-
-    my $text = $_[0];
-
-    my $loopcount = 0;
-    while(checkloop($loopcount++, $text, "\\tabular")
-	  &&  $text =~ /\\tabular/){
-
-	my ($id, $format, $arg)	 =
-	    get_arguments("tabular", $text, 2);
-
-	$arg =~ s/\n/ /sgo;
-
-	# remove trailing \cr (otherwise we get an empty last line)
-	$arg =~ s/\\cr\s*$//go;
-
-	# parse the format of the tabular environment
-	my $ncols = length($format);
-	my @colformat = ();
-	for($k=0; $k<$ncols; $k++){
-	    my $cf = substr($format, $k, 1);
-
-	    if($cf =~ /l/o){
-		$colformat[$k] = "l";
-	    }
-	    elsif($cf =~ /r/o){
-		$colformat[$k] = "r";
-	    }
-	    elsif($cf =~ /c/o){
-		$colformat[$k] = "c";
-	    }
-	    else{
-		die("Error: unknown identifier \{$cf\} in" .
-		    " tabular format \{$format\}\n");
-	    }
-	}
-
-	my $table = ".TS\n";
-	for($l=0; $l<$#colformat; $l++){
-	    $table .= "$colformat[$l] ";
-	}
-	$table .= "$colformat[$#colformat].\n";
-
-
-	# now do the real work: split into lines and columns
-	my @rows = split(/\\cr/, $arg);
-	for($k=0; $k<=$#rows;$k++){
-	    my @cols = split(/\\tab/, $rows[$k]);
-	    die("Error:\n  $rows[$k]\\cr\n" .
-		"does not fit tabular format \{$format\}\n")
-		if ($#cols != $#colformat);
-	    for($l=0; $l<$#cols; $l++){
-		$cols[$l] =~ s/^\s*(.*)\s*$/$1/;
-		$table .= "$cols[$l]\t";
-	    }
-	    $cols[$#cols] =~ s/^\s*(.*)\s*$/$1/;
-	    $table .= "$cols[$#cols]\n";
-	}
-	$table .= ".TE\n";
-
-	$text =~ s/\\tabular.*$id/$table/s;
-    }
-
-    $text;
-}
 #==************************** txt ******************************
 
 use Text::Wrap;
@@ -1376,7 +1046,6 @@ sub code2txt {
     $text =~ s/\\%/%/go;
     $text =~ s/\\ldots/.../go;
     $text =~ s/\\dots/.../go;
-#    $text =~ s/\\n/\\\\n/g;
 
     $text = undefine_command($text, "link");
     $text = undefine_command($text, "dontrun");
@@ -1416,12 +1085,17 @@ sub txt_fill { # pre1, base, "text to be formatted"
 
 # first split by paragraphs
 
-    $text =~ s/\\&//go;
+    $text =~ s/\\\\/\\bsl{}/go;
+    $text =~ s/\\&\./\./go; # unescape code pieces
+# A mess:  map  & \& \\& \\\& to  & & \& \&
+    $text =~ s/\\&/&/go;
     $text =~ s/\\ / /go;
     $text =~ s/\\_/_/go;
     $text =~ s/\\$/\$/go;
     $text =~ s/\\#/#/go;
     $text =~ s/\\%/%/go;
+    $text =~ s/\\bsl{}/\\/go;
+
     my @paras = split /\n\n/, $text;
     $indent1 = $pre1; $indent2 = $indent;
 
@@ -1429,7 +1103,6 @@ sub txt_fill { # pre1, base, "text to be formatted"
     foreach $para (@paras) {
 	# strip leading white space
 	$para  =~ s/^\s+//;
-#	print "$para\n\n";
 	my $para0 = $para;
 	$para0 =~ s/\n\s*/ /go;
 	# check for a item in itemize etc
@@ -1903,10 +1576,11 @@ sub ltxstriptitle { # text
     $text =~ s/\\R/\\R\{\}/go;
     return $text;
 }
+sub foldorder {uc($a) cmp uc($b) or $a cmp $b;}
 
 sub rdoc2latex {# (filename)
 
-    my($c,$a);
+    my $c, $a;
 
     if($_[0]!= -1) {
       if($_[0]) { open latexout, "> $_[0]"; } else { open latexout, "| cat"; }
@@ -1917,17 +1591,26 @@ sub rdoc2latex {# (filename)
     print latexout ltxstriptitle($blocks{"title"});
     print latexout "\}\n";
 
-    foreach (@aliases) {
-      $c= code2latex($_,0);
-      $a= latex_code_alias($c);
-      print STDERR "rdoc2l: alias='$_', code2l(.)='$c', latex_c_a(.)='$a'\n"
-	if $debug;
-      printf latexout "\\alias\{%s\}\{%s\}\n", $a, $blocks{"name"}
+    my $current = $blocks{"name"}, $generic, $cmd;
+    foreach (sort foldorder @aliases) {
+	$generic = $a = $_;
+	$generic =~ s/\.data\.frame$/.dataframe/o;
+	$generic =~ s/\.model\.matrix$/.modelmatrix/o;
+	$generic =~ s/\.[^.]+$//o;
+	if ($generic ne "" && $generic eq $current && $generic ne "ar") { 
+	    $cmd = "methalias"
+	} else { $cmd = "alias"; $current = $a; }
+	
+	$c = code2latex($_,0);
+	$a = latex_code_alias($c);
+	print STDERR "rdoc2l: alias='$_', code2l(.)='$c', latex_c_a(.)='$a'\n"
+	    if $debug;
+	printf latexout "\\%s\{%s\}\{%s\}\n", $cmd, $a, $blocks{"name"}
 	unless /^\Q$blocks{"name"}\E$/; # Q..E : Quote (escape) Metacharacters
     }
     foreach (@keywords) {
-      printf latexout "\\keyword\{%s\}\{%s\}\n", $_, $blocks{"name"}
-      unless /^$/ ;
+	printf latexout "\\keyword\{%s\}\{%s\}\n", $_, $blocks{"name"}
+	unless /^$/ ;
     }
     latex_print_block("description", "Description");
     latex_print_codeblock("usage", "Usage");
@@ -1988,10 +1671,12 @@ sub text2latex {
     $text =~ s/\\dddeqn/\\deqn/og;
     $text =~ s/\\DITEM/\\item/og;
 
-    $text =~ s/&/\\&/go;
-    $text =~ s/\\R(\s+)/\\R\{\}$1/go;
     $text =~ s/\\\\/\\bsl{}/go;
-    $text =~ s/\\cr/\\\\\{\}/go;
+# A mess:  map  & \& \\& \\\& to  \& \& \bsl{}\& \bsl{}\&
+    $text =~ s/([^\\])&/$1\\&/go;
+    $text =~ s/\\R(\s+)/\\R\{\}$1/go;
+    $text =~ s/\\cr\n\[/\\\\\{\}\n\[/go;
+    $text =~ s/\\cr/\\\\/go;
     $text =~ s/\\tab(\s+)/&$1/go;
 
     ##-- We should escape $LATEX_SPEC  unless within `eqn' above ...
@@ -2009,13 +1694,13 @@ sub code2latex {
     $text =~ s/\\ldots/.../go;
     $text =~ s/\\dots/.../go;
 
-    $text =~ s/\\\\/\\bsl{}/go;
+#    $text =~ s/\\\\/\\bsl{}/go;
     if($hyper) {
 	my $loopcount = 0;
 	while(checkloop($loopcount++, $text, "\\link")
 	      && $text =~ /\\link/) {
-	    my ($id, $arg) = get_arguments("link", $text, 1);
-	    $text =~ s/\\link$id.*$id/HYPERLINK($arg)/s;
+	    my ($id, $arg, $opt) = get_link($text);
+	    $text =~ s/\\link(\[.*\])?$id.*$id/HYPERLINK($arg)/s;
 	}
     } else {
 	$text = undefine_command($text, "link");
@@ -2030,7 +1715,7 @@ sub latex_print_block {
     my ($block,$env) = @_;
 
     if(defined $blocks{$block}){
-	print latexout "\\begin\{$env\}\n";
+	print latexout "\\begin\{$env\}\\relax\n";
 	print latexout text2latex($blocks{$block});
 	print latexout "\\end\{$env\}\n";
     }
@@ -2056,7 +1741,9 @@ sub latex_print_exampleblock {
     if(defined $blocks{$block}){
 	print latexout "\\begin\{$env\}\n";
 	print latexout "\\begin\{ExampleCode\}";
-	print latexout code2latex($blocks{$block},0);
+	my $out = code2latex($blocks{$block},0);
+	$out =~ s/\\\\/\\/go;
+	print latexout $out;
 	print latexout "\\end\{ExampleCode\}\n";
 	print latexout "\\end\{$env\}\n";
     }
@@ -2134,12 +1821,13 @@ sub latex_code_trans {
     my $BSL = '@BSL@';
 
     if($c =~ /[$LATEX_SPECIAL]/){
-      $c =~ s/\\\\/$BSL/go;
-      $c =~ s/[$LATEX_SPECIAL]/\\$&/go;	 #- escape them (not the "bsl" \)
-      $c =~ s/\\\^/\$\\,\\hat{\\,}\$/go;# ^ is SPECIAL
-      $c =~ s/\\~/\$\\,\\tilde{\\,}\$/go;
-      $c =~ s/$BSL/\\bsl{}/go;
-      }
+	$c =~ s/\\\\/$BSL/go;
+	$c =~ s/\\([$LATEX_SPECIAL])/$1/go; #- unescape them (should not be escaped)
+	$c =~ s/[$LATEX_SPECIAL]/\\$&/go; #- escape them
+	$c =~ s/\\\^/\$\\,\\hat{\\,}\$/go;# ^ is SPECIAL
+	$c =~ s/\\~/\$\\,\\tilde{\\,}\$/go;
+	$c =~ s/$BSL/\\bsl{}/go;
+    }
     ## avoid conversion to guillemots
     $c =~ s/<</<\{\}</;
     $c =~ s/>>/>\{\}>/;

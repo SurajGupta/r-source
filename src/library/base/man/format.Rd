@@ -2,8 +2,8 @@
 \title{Encode in a Common Format}
 \usage{
 format(x, \dots)
-format.default(x, trim=FALSE, digits = getOption("digits"))
-format.pval(x, digits= max(1, getOption("digits") - 2),
+format.default(x, trim = FALSE, digits = getOption("digits"))
+format.pval(x, digits = max(1, getOption("digits") - 2),
             eps = .Machine$double.eps)
 }
 \alias{format}
@@ -33,9 +33,17 @@ format.pval(x, digits= max(1, getOption("digits") - 2),
   fixed, floating point and very small values (those \code{< eps}).
 
   The function \code{\link{formatC}} provides a rather more flexible
-  formatting facility for numbers, does \emph{not} provide a common
-  format for several numbers, however.
+  formatting facility for numbers, but does \emph{not} provide a common
+  format for several numbers.
 }
+\note{
+  Currently \code{format} loses trailing zeroes, so \code{format(6.001,
+    digits=2)} gives \code{"6"} and \code{format(c(6.0, 13.1),
+    digits=2)} gives \code{c(" 6", "13")}.
+
+  Character(s) \code{"} in input strings \code{x} are escaped to \code{\\"}.
+}
+
 \seealso{
   \code{\link{formatC}}, \code{\link{paste}}, \code{\link{as.character}}.
 }

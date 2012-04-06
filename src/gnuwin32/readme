@@ -1,13 +1,12 @@
-R 0.99.0 for Windows 9x and NT
-==============================
+R 1.0.0 for Windows
+===================
 
-This distribution contains a binary distribution of R-0.99.0 to run on
-Windows 95, 98 and NT4 on Intel/clone chips. It is designed to
-be as close as possible to the implementation on Unix, but see the
-list of differences below. The port was by Guido Masarotto with
-many important contributions by Brian Ripley.
+This distribution contains a binary distribution of R-1.0.0 to run on
+Windows 95, 98, NT4.0 and 2000 on Intel/clone chips. It is designed to be
+as close as possible to the implementation on Unix, but see the list
+of differences below. The port was by Guido Masarotto and Brian Ripley.
 
-See CHANGES for the new features of this version.
+See the file `CHANGES' for the new features of this version.
 
 
 Installation
@@ -15,42 +14,42 @@ Installation
 
 The distribution consists of several zip files:
 
-rw0990b1.zip and rw0990b2.zip		the base system
-rw0990h.zip				text help
-rw0990ch.zip				compiled HTML help
-rw0990w.zip				HTML help files
-rw0990l.zip				latex help for offline help
-rw0990d1.zip				PDF manuals except
-rw0990d2.zip				PDF version of the reference manual
-rw0990sp.zip				files to install source packages
+rw1000b1.zip and rw1000b2.zip		the base system
+rw1000h.zip				text help
+rw1000ch.zip				compiled HTML help
+rw1000w.zip				HTML help files
+rw1000l.zip				latex help for offline help
+rw1000d1.zip				PDF manuals except
+rw1000d2.zip				  PDF version of the reference manual
+rw1000sp.zip				files to install from source packages
 
 and optionally the installer rwinst.exe.
 
 The simplest way to install is to run the installer (double-click on
 the icon for rwinst.exe and navigate its wizard-like pages).
 
-To install manually, unpack rw0990b1.zip and rw0990b2.zip anywhere you
-like. It will unpack to a directory tree under rw0990. The help,
+To install manually, unpack rw1000b1.zip and rw1000b2.zip anywhere you
+like. It will unpack to a directory tree under rw1000. The help,
 compiled HTML, HTML and latex help files are in separate files
-rw0990h.zip, rw0990ch.zip rw0990w.zip and rw0990l.zip which should be
-unpacked in the same directory you unpacked rw0990b1.zip.  File
-rw0990d.zip contains PDF versions of the (draft) manuals for R, which
-unpack into rw0990/doc/manual.
+rw1000h.zip, rw1000ch.zip rw1000w.zip and rw1000l.zip which should be
+unpacked in the same directory you unpacked rw1000b1.zip.  Files
+rw1000d1.zip and rw1000d2.zip contains PDF versions of the manuals for
+R, which unpack into rw1000/doc/manual.
 
-You should install either the text or compiled HTML help.
+You should install at least one of the text help and the compiled HTML help.
 
 
 Usage
 =====
 
-There are two executables in rw0990\bin:
+There are two executables in rw1000\bin:
 
 GUI:
 
 Rgui.exe runs as a standard Windows GUI executable and provides an R
 console in its own window. It takes the standard R command-line
 arguments; these are most easily set by making a shortcut to
-...\rw0990\bin\rgui.exe and adding the arguments in the Target field.
+...\rw1000\bin\rgui.exe and adding the arguments in the Target field.
 Set the `Start in' field of the shortcut to the directory you want to use
 as the working directory (where workspaces and files are saved and
 loaded from).
@@ -65,14 +64,14 @@ directory that was last used, and start their dialog boxes from that
 directory the next time they are used. That directory can be made the
 working directory by the File | Change dir menu item.  All the `save'
 menu items start dialog boxes at the current working directory: this
-includes Save image and the various ways to save graphics, as well as
+includes `Save image' and the various ways to save graphics, as well as
 saving the workspace at the end of the session.
 
-Observe that the help files use the latin1 encoding. To see all the
+Note that the text help files use the latin1 encoding. To see all the
 characters you must use an appropriate font (European-language True
 Type fonts should be OK). To check if your preferred font has latin1
 capability, try "help(text)" and look at the examples.  [Note: only a
-couple of files make use of latin1 characters not contained in the
+few help files make use of latin1 characters not contained in the
 standard ASCII set so if you like a font without latin1 capability,
 use it.]
 
@@ -120,6 +119,7 @@ in the global environment.
 
 There is only one graphics history shared by all the windows devices.
 
+
 HELP:
 
 There are several options for help, depending on which help files you
@@ -139,7 +139,7 @@ bin/windows/windows-NT/etc.
 options(winhelp=T) or for individual help items by help(topic,
 winhelp=T).  Full text search is available from the Search tab. The
 conversion to this format is a little rough, and tables may be
-incomplete.
+incomplete. The help on Japanese fonts has been omitted.
 
 (iv) HTML help to be displayed in your normal browser.  Set this as
 the default by options(htmlhelp=T) or for individual help items by
@@ -147,7 +147,7 @@ help(topic, htmlhelp=T).  Using help.start() sets the browser to the
 top-level page, from which you can access a search engine.
 
 (v) Latex help files are available for use with help(topic, offline=T).
-You will need to customize the file rw0990\bin\helpPRINT.bat: it
+You will need to customize the file rw1000\bin\helpPRINT.bat: it
 contains instructions.
 
 
@@ -157,17 +157,18 @@ Customization
 
 Environment variables can be set as NAME=value on the command line,
 including in a short-cut.  They can also be set (as NAME=value lines)
-in the file .Renviron, or if that does not exist HOME\.Renviron.
+in the file .Renviron in the working directory, or if that does not
+exist HOME\.Renviron.
 
-Many aspects of the console (size, appearance, font, colours) can be
-customized by editing the file etc\Rconsole, and a copy with a user's
-settings can be put in her HOME directory or in the working
-directory. (The exact sequence is to search the directory pointed to
-by the first found of the environment variables R_USER then HOME then
-{HOMEDRIVE}{HOMEPATH} then the working directory, finally R_HOME\etc.
-This applies to .Renviron and other uses of `HOME' in our documentation.)
-The file contains a description of the settings that can be
-altered. See also ?Rconsole.
+Many aspects of the console (size, appearance, font, font size,
+colours) can be customized by editing the file etc\Rconsole, and a
+copy with a user's settings can be put in her HOME directory or in the
+working directory. (The exact sequence is to search the directory
+pointed to by the first found of the environment variables R_USER then
+HOME then {HOMEDRIVE}{HOMEPATH} then the working directory, finally
+R_HOME\etc.  This applies to .Renviron and other uses of `HOME' in our
+documentation.)  The file contains a description of the settings that
+can be altered. See also ?Rconsole.
 
 The mapping between Windows fonts and R font's number can be set by
 editing the file etc\Rdevga, and a copy with a user's settings can be
@@ -191,7 +192,7 @@ Adding packages
 
 Binaries for many packages are available at
 CRAN/bin/windows/windows-NT/contrib. These are zip files which should
-be unpacked in rw0990\library. They are then available for use. You
+be unpacked in rw1000\library. They are then available for use. You
 can also use the installer rwinst.exe to selectively unpack the zip
 files.
 
@@ -201,10 +202,10 @@ search engine can be updated from a running R process by the command
 	link.html.help()
 
 provided the owner of the process has write permission on
-rw0990\doc\html.  If you have the source-package files and Perl
-installed you can use
+rw1000\doc\html.  If you have the source-package files and Perl
+installed you can (and should in preference) use
 
-	cd ...\rw0990\src\gnuwin32\help
+	cd ...\rw1000\src\gnuwin32\help
 	make indices
 
 Private libraries of packages can be used and can be specified by the
@@ -214,22 +215,23 @@ use packages installed in directory R:\libraries\gm, set
 
 R_LIBS=R:\libraries\gm
 
-in the environment or on the command line, or add the line
+in the environment or your .Renviron file or on the command line, or
+add the line
 
 .lib.loc <- c("R:/libraries/gm", .lib.loc)
 
 to your .Rprofile or at the end of R_HOME\etc\Rprofile.
 
 To install a package from source code you need the source-package
-distribution rw0990sp.zip installed (but not the R source). This contains
-detailed instructions.
+distribution rw1000sp.zip installed (but not the R source). This
+contains detailed instructions.
 
 
-Differences from Unix
-=====================
+Differences from Unix versions of R
+===================================
 
 - R can be interrupted by Esc in Rgui and by Ctrl-C or Ctrl-Break in Rterm:
-  Ctrl-C is used for copying in the GUI version. C-c C-c works
+  Ctrl-C is used for copying in the GUI version.  C-c C-c works
   under NTemacs.
 
 - Command-line editing is always available, but is much simpler than
@@ -239,14 +241,14 @@ Differences from Unix
   always saved even if the workspace is not saved.
 
 - The HTML function and package lists and search datasbase are not
-  re-generated automatically by html.start(). Use link.html.help().
+  re-generated automatically by html.start().  Use link.html.help().
 
 - Paths to files can be specified with "/" or "\\".
 
 - Using help.start() does not automatically send help requests to the
   browser: use options(htmlhelp=T) to turn this on.
 
-- Graphics save and replay only here.
+- Graphics save and replay are only available here.
 
 - system() is enhanced here and does not automatically use a shell.
   See its help page and that of shell().
