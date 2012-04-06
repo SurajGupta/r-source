@@ -1,4 +1,23 @@
 /*
+ *  R : A Computer Language for Statistical Data Analysis
+ *  Copyright (C) 1997-1998 Ross Ihaka
+ *  Copyright (C) 1999-2000 R Development Core Team
+ *
+ *  This program is free software; you can redistribute it and/or modify
+ *  it under the terms of the GNU General Public License as published by
+ *  the Free Software Foundation; either version 2 of the License, or
+ *  (at your option) any later version.
+ *
+ *  This program is distributed in the hope that it will be useful,
+ *  but WITHOUT ANY WARRANTY; without even the implied warranty of
+ *  MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
+ *  GNU General Public License for more details.
+ *
+ *  You should have received a copy of the GNU General Public License
+ *  along with this program; if not, write to the Free Software
+ *  Foundation, Inc., 59 Temple Place, Suite 330, Boston, MA  02111-1307  USA
+
+ *
  *	cpoly finds the zeros of a complex polynomial.
  *
  *	On Entry
@@ -43,8 +62,9 @@
 #include "Arith.h"
 #include "Applic.h"
 
-#define True    (1)
-#define False   (0)
+#ifndef HAVE_HYPOT
+# define hypot pythag
+#endif
 
 static void calct(int *);
 static void fxshft(int *, double *, double *, int *);
@@ -52,15 +72,14 @@ static void vrshft(int, double *, double *, int *);
 static void nexth(int *);
 static void noshft(int);
 static void polyev(int *,
-	    double *, double *, double *, double *,
-	    double *, double *, double *, double *);
+		   double *, double *, double *, double *,
+		   double *, double *, double *, double *);
 static double errev(int *, double *, double *, double *,
-	     double *, double *, double *);
+		    double *, double *, double *);
 static double cpoly_cauchy(int *, double *, double *);
 static void cpoly_scale(int *, double *, double *, double *,
 			double *, double *, double *);
 static void cdivid(double *, double *, double *, double *, double *, double *);
-static double cpoly_cmod(double *, double *);
 
 /* Global Variables (too many!) */
 
@@ -87,7 +106,7 @@ static double infin;
 
 
 int R_cpoly(double *opr, double *opi, int *degree,
-	  double *zeror, double *zeroi, int *fail)
+	    double *zeror, double *zeroi, int *fail)
 {
     int i__1;
     double d__1, d__2;
@@ -103,19 +122,18 @@ int R_cpoly(double *opr, double *opi, int *degree,
     smalno = DBL_MIN;
 
     are = eta;
-    mre = sqrt(2.0) * 2.0 * eta;
+    mre = 2. * M_SQRT2 * eta;
 
-    /* We use the originals so we get exact */
-    /* agreement with the original, but ... */
+    /* We use the originals to get exact agreement with the original, but ... */
     /*	cos 94 =   -0.06975647374412529990   */
     /*	sin 94 =    0.99756405025982424767   */
     /*	1/sqrt(2) = 0.70710678118654752440   */
-
     cosr = (float)-.060756474;
     sinr = (float).99756405;
     xx = (float).70710678;
+
     yy = -xx;
-    *fail = False;
+    *fail = LFALSE;
 
     nn = *degree;
     d1 = nn - 1;
@@ -123,7 +141,7 @@ int R_cpoly(double *opr, double *opi, int *degree,
     /* algorithm fails if the leading coefficient is zero. */
 
     if (opr[0] == 0.0 && opi[0] == 0.0) {
-	*fail = True;
+	*fail = LTRUE;
 	return 0;
     }
 
@@ -165,7 +183,7 @@ int R_cpoly(double *opr, double *opi, int *degree,
 	/* calculate bnd, a lower bound on the modulus of the zeros. */
 
 	for (i=0 ; i < nn ; i++)
-	    shr[i] = cpoly_cmod(&pr[i], &pi[i]);
+	    shr[i] = hypot(pr[i], pi[i]);
 
 	bnd = cpoly_cauchy(&nn, shr, shi);
 
@@ -204,7 +222,7 @@ int R_cpoly(double *opr, double *opi, int *degree,
 	/* the zerofinder has failed on two major passes */
 	/* return empty handed */
 
-	*fail = True;
+	*fail = LTRUE;
 	return 0;
 
 	/* the second stage jumps directly to the third stage iteration.
@@ -253,8 +271,8 @@ static void noshft(int l1)
 
     for (jj = 1; jj <= l1; jj++) {
 
-	if (cpoly_cmod(&hr[n-1], &hi[n-1]) <= 
-	    eta * 10.0 * cpoly_cmod(&pr[n-1], &pi[n-1])) {
+	if (hypot(hr[n-1], hi[n-1]) <=
+	    eta * 10.0 * hypot(pr[n-1], pi[n-1])) {
 
 	    /*	If the constant term is essentially zero, */
 	    /*	shift h coefficients. */
@@ -310,8 +328,8 @@ static void fxshft(int *l2, double *zr, double *zi, int *conv)
     polyev(&nn, &sr, &si,
 	   pr, pi, qpr, qpi, &pvr, &pvi);
 
-    test = True;
-    pasd = False;
+    test = LTRUE;
+    pasd = LFALSE;
 
     /* calculate first t = -p(s)/h(s). */
 
@@ -337,11 +355,11 @@ static void fxshft(int *l2, double *zr, double *zi, int *conv)
 	if (!bool && test && j != *l2) {
 	    d__1 = tr - otr;
 	    d__2 = ti - oti;
-	    if (cpoly_cmod(&d__1, &d__2) >= cpoly_cmod(zr, zi) * 0.5) {
-		pasd = False;
+	    if (hypot(tr - otr, ti - oti) >= hypot(*zr, *zi) * 0.5) {
+		pasd = LFALSE;
 	    }
 	    else if (! pasd) {
-		pasd = True;
+		pasd = LTRUE;
 	    }
 	    else {
 
@@ -365,7 +383,7 @@ static void fxshft(int *l2, double *zr, double *zi, int *conv)
 		/* turn off testing and restore */
 		/* h, s, pv and t. */
 
-		test = False;
+		test = LFALSE;
 		for (i=1 ; i<=n ; i++) {
 		    hr[i-1] = shr[i-1];
 		    hi[i-1] = shi[i-1];
@@ -399,8 +417,8 @@ static void vrshft(int l3, double *zr, double *zi, int *conv)
     static double r1, r2, mp, ms, tp, relstp;
     static double omp;
 
-    *conv = False;
-    b = False;
+    *conv = LFALSE;
+    b = LFALSE;
     sr = *zr;
     si = *zi;
 
@@ -413,8 +431,8 @@ static void vrshft(int l3, double *zr, double *zi, int *conv)
 	polyev(&nn, &sr, &si,
 	       pr, pi, qpr, qpi,
 	       &pvr, &pvi);
-	mp = cpoly_cmod(&pvr, &pvi);
-	ms = cpoly_cmod(&sr, &si);
+	mp = hypot(pvr, pvi);
+	ms = hypot(sr, si);
 	if (mp <=  20. * errev(&nn, qpr, qpi, &ms, &mp, &are, &mre)) {
 	    goto L_conv;
 	}
@@ -433,7 +451,7 @@ static void vrshft(int l3, double *zr, double *zi, int *conv)
 		/* one zero to dominate. */
 
 		tp = relstp;
-		b = True;
+		b = LTRUE;
 		if (relstp < eta)
 		    tp = eta;
 		r1 = sqrt(tp);
@@ -468,7 +486,7 @@ static void vrshft(int l3, double *zr, double *zi, int *conv)
 	nexth(&bool);
 	calct(&bool);
 	if (!bool) {
-	    relstp = cpoly_cmod(&tr, &ti) / cpoly_cmod(&sr, &si);
+	    relstp = hypot(tr, ti) / hypot(sr, si);
 	    sr += tr;
 	    si += ti;
 	}
@@ -476,7 +494,7 @@ static void vrshft(int l3, double *zr, double *zi, int *conv)
     return;
 
 L_conv:
-    *conv = True;
+    *conv = LTRUE;
     *zr = sr;
     *zi = si;
 }
@@ -496,7 +514,7 @@ static void calct(int *bool)
 
     polyev(&n, &sr, &si, hr, hi,
 	   qhr, qhi, &hvr, &hvi);
-    *bool = cpoly_cmod(&hvr, &hvi) <= are * 10. * cpoly_cmod(&hr[n-1], &hi[n-1]);
+    *bool = hypot(hvr, hvi) <= are * 10. * hypot(hr[n-1], hi[n-1]);
     if (!*bool) {
 	d__1 = -pvr;
 	d__2 = -pvi;
@@ -507,8 +525,6 @@ static void calct(int *bool)
 	ti = 0.;
     }
 }
-
-
 
 static void nexth(int *bool)
 {
@@ -587,15 +603,15 @@ double errev(int *nn, double *qr, double *qi, double *ms,
     double e;
     int i;
 
-    e = cpoly_cmod(&qr[0], &qi[0]) * *mre / (*are + *mre);
+    e = hypot(qr[0], qi[0]) * *mre / (*are + *mre);
     for (i=0 ; i < *nn ; i++) {
-	e *= (*ms + cpoly_cmod(&qr[i], &qi[i]));
+	e *= (*ms + hypot(qr[i], qi[i]));
     }
     return e * (*are + *mre) - *mp * *mre;
 }
 
 
-static 
+static
 double cpoly_cauchy(int *nn, double *pt, double *q)
 {
     /* Computes a lower bound on the moduli of the zeros of a polynomial
@@ -729,23 +745,6 @@ void cdivid(double *ar, double *ai, double *br, double *bi,
     }
 }
 
-static
-double cpoly_cmod(double *r, double *i)
-{
-    /* modulus of a complex number avoiding overflow. */
-    double ai, ar, d1;
-
-    ar = fabs(*r);
-    ai = fabs(*i);
-    if (ar < ai) {
-	d1 = ar / ai;
-	return ai * sqrt(d1 * d1 + 1.0);
-    }
-    else if (ar <= ai) {
-	return ar * sqrt(2.0);
-    }
-    else {
-	d1 = ai / ar;
-	return ar * sqrt(d1 * d1 + 1.0);
-    }
-}
+/* static double cpoly_cmod(double *r, double *i)
+ * --> replaced by hypot() everywhere
+*/

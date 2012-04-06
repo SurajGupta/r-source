@@ -41,14 +41,16 @@ SEXP do_Platform(SEXP call, SEXP op, SEXP args, SEXP rho)
 {
     SEXP value, names;
     checkArity(op, args);
-    PROTECT(value = allocVector(VECSXP, 3));
-    PROTECT(names = allocVector(STRSXP, 3));
+    PROTECT(value = allocVector(VECSXP, 4));
+    PROTECT(names = allocVector(STRSXP, 4));
     STRING(names)[0] = mkChar("OS.type");
     STRING(names)[1] = mkChar("file.sep");
     STRING(names)[2] = mkChar("dynlib.ext");
+    STRING(names)[3] = mkChar("GUI");
     VECTOR(value)[0] = mkString(R_OSType);
     VECTOR(value)[1] = mkString(R_FileSep);
     VECTOR(value)[2] = mkString(R_DynLoadExt);
+    VECTOR(value)[3] = mkString(R_GUIType);
     setAttrib(value, R_NamesSymbol, names);
     UNPROTECT(2);
     return value;
@@ -444,7 +446,7 @@ SEXP do_indexsearch(SEXP call, SEXP op, SEXP args, SEXP rho)
 		CHAR(STRING(sep)[0]),
 		"help", CHAR(STRING(sep)[0]),
 		CHAR(STRING(indexname)[0]));
-	if ((fp = fopen(linebuf, "rt")) != NULL){
+	if ((fp = R_fopen(R_ExpandFileName(linebuf), "rt")) != NULL){
 	    while (filbuf(linebuf, fp)) {
 		if(strncmp(linebuf, topicbuf, ltopicbuf) == 0) {
 		    p = &linebuf[ltopicbuf - 1];

@@ -240,7 +240,6 @@ static int AddDLL(char *path, int asLocal, int now)
 }
 
  /*
-
     Computes the flag to be passed as the second argument to dlopen(),
     controlling whether the local or global symbol integration
     and lazy or eager resolution of the undefined symbols.
@@ -256,60 +255,75 @@ static int AddDLL(char *path, int asLocal, int now)
 static int
 computeDLOpenFlag(int asLocal, int now)
 {
- static char *warningMessages[] = {
-  "Explicit local dynamic loading not supported on this platform. Using default.",
-  "Explicit global dynamic loading not supported on this platform. Using default.",
-  "Explicit non-lazy dynamic loading not supported on this platform. Using default.",
-  "Explicit lazy dynamic loading not supported on this platform. Using default."
- };
-  /* Define a local macro for issuing the warnings.
-     This allows us to redefine it easily so that it only emits the warning
-     once as in
+#if !defined(RTLD_LOCAL) || !defined(RTLD_GLOBAL) || !defined(RTLD_NOW) || !defined(RTLD_LAZY)
+    static char *warningMessages[] = {
+	"Explicit local dynamic loading not supported on this platform. Using default.",
+	"Explicit global dynamic loading not supported on this platform. Using default.",
+	"Explicit non-lazy dynamic loading not supported on this platform. Using default.",
+	"Explicit lazy dynamic loading not supported on this platform. Using default."
+    };
+    /* Define a local macro for issuing the warnings.
+       This allows us to redefine it easily so that it only emits the
+       warning once as in
          DL_WARN(i) if(warningMessages[i]) {\
                      warning(warningMessages[i]); \
                      warningMessages[i] = NULL; \
     	            }
-     or to control the emission via the options currently in effect at call time.
-   */
-#define DL_WARN(i) \
-   if(asInteger(GetOption(install("warn"),R_NilValue)) == 1 || \
-         asInteger(GetOption(install("verbose"),R_NilValue)) > 0) \
-                      warning(warningMessages[i]);
+       or to control the emission via the options currently in effect at
+       call time.
+       */
+# define DL_WARN(i) \
+    if(asInteger(GetOption(install("warn"), R_NilValue)) == 1 || \
+       asInteger(GetOption(install("verbose"), R_NilValue)) > 0) \
+        warning(warningMessages[i]);
+#endif
 
- int openFlag = 0; /* Default value so no-ops for undefined flags should do nothing
-                      in the resulting dlopen(). */
+    int openFlag = 0;		/* Default value so no-ops for undefined
+				   flags should do nothing in the
+				   resulting dlopen(). */
 
-if(asLocal != 0) {
+    if(asLocal != 0) {
 #ifndef RTLD_LOCAL
-  DL_WARN(0)
+	DL_WARN(0)
 #else
-  openFlag = RTLD_LOCAL;
+	openFlag = RTLD_LOCAL;
 #endif
-} else {
+    } else {
 #ifndef RTLD_GLOBAL
-  DL_WARN(1)
+	DL_WARN(1)
 #else
-  openFlag = RTLD_GLOBAL;
+	openFlag = RTLD_GLOBAL;
 #endif
-}
+    }
 
-if(now != 0) {
+    if(now != 0) {
 #ifndef RTLD_NOW
-  DL_WARN(2)
+	DL_WARN(2)
 #else
-  openFlag |= RTLD_NOW;
+	openFlag |= RTLD_NOW;
 #endif
-} else {
+    } else {
 #ifndef RTLD_LAZY
-  DL_WARN(3)
+	DL_WARN(3)
 #else
-  openFlag |= RTLD_LAZY;
+	openFlag |= RTLD_LAZY;
 #endif
+    }
+
+    return(openFlag);
 }
 
- return(openFlag);
-}
 
+static DL_FUNC R_dlsym(void *handle, char const *name)
+{
+    char buf[MAXIDSIZE+1];
+#ifdef HAVE_NO_SYMBOL_UNDERSCORE
+    sprintf(buf, "%s", name);
+#else
+    sprintf(buf, "_%s", name);
+#endif
+    return (DL_FUNC) dlsym(handle, buf);
+}
 
 	/* R_FindSymbol checks whether one of the libraries */
 	/* that have been loaded contains the symbol name and */
@@ -318,7 +332,6 @@ if(now != 0) {
 
 DL_FUNC R_FindSymbol(char const *name, char const *pkg)
 {
-    char buf[MAXIDSIZE+1];
     DL_FUNC fcnptr;
     int i, all = (strlen(pkg) == 0), doit;
 
@@ -329,11 +342,6 @@ DL_FUNC R_FindSymbol(char const *name, char const *pkg)
 	    return CPFun[i].func;
 #endif
 
-#ifdef HAVE_NO_SYMBOL_UNDERSCORE
-    sprintf(buf, "%s", name);
-#else
-    sprintf(buf, "_%s", name);
-#endif
 
 	/* The following is not legal ANSI C. */
 	/* It is only meant to be used in systems supporting */
@@ -345,7 +353,7 @@ DL_FUNC R_FindSymbol(char const *name, char const *pkg)
 	doit = all;
 	if(!doit && !strcmp(pkg, LoadedDLL[i].name)) doit = 2;
 	if(doit) {
-	    fcnptr = (DL_FUNC) dlsym(LoadedDLL[i].handle, buf);
+	    fcnptr = R_dlsym(LoadedDLL[i].handle, name);
 	    if (fcnptr != (DL_FUNC) NULL) {
 #ifdef CACHE_DLL_SYM
 		if(strlen(pkg) <= 20 && strlen(name) <= 20 && nCPFun < 100) {
@@ -361,7 +369,7 @@ DL_FUNC R_FindSymbol(char const *name, char const *pkg)
     }
     if(all || !strcmp(pkg, "base")) {
 #ifdef DL_SEARCH_PROG
-	fcnptr = (DL_FUNC)dlsym(dlhandle, buf);
+	fcnptr = R_dlsym(dlhandle, name);
 #else
 	for(i=0 ; CFunTab[i].name ; i++)
 	    if(!strcmp(name, CFunTab[i].name))
@@ -430,7 +438,111 @@ SEXP do_dynunload(SEXP call, SEXP op, SEXP args, SEXP env)
     return R_NilValue;
 }
 
+
+#include "Runix.h"
+#include <sys/types.h>
+#include <sys/stat.h>
+
+extern DL_FUNC ptr_X11DeviceDriver, ptr_dataentry;
+
+void R_load_X11_shlib()
+{
+    char X11_DLL[PATH_MAX], buf[1000], *p;
+    void *handle;
+    struct stat sb;
+
+    p = getenv("R_HOME");
+    if(!p) {
+	sprintf(buf, "R_HOME was not set");
+	R_Suicide(buf);
+    }
+    strcpy(X11_DLL, p);
+    strcat(X11_DLL, "/bin/R_X11.");
+    strcat(X11_DLL, SHLIBEXT); /* from config.h */
+    if(stat(X11_DLL, &sb))
+	R_Suicide("Probably no X11 support: the shared library was not found");
+/* cannot use computeDLOpenFlag as warnings will crash R at this stage */
+#ifdef RTLD_NOW
+    handle = dlopen(X11_DLL, RTLD_NOW);
 #else
+    handle = dlopen(X11_DLL, 0);
+#endif
+    if(handle == NULL) {
+	sprintf(buf, "The X11 shared library could not be loaded.\n  The error was %s\n", dlerror());
+	R_Suicide(buf);
+    }
+    ptr_X11DeviceDriver = R_dlsym(handle, "X11DeviceDriver");
+    if(!ptr_X11DeviceDriver) R_Suicide("Cannot load X11DeviceDriver");
+    ptr_dataentry = R_dlsym(handle, "RX11_dataentry");
+    if(!ptr_dataentry) R_Suicide("Cannot load do_dataentry");
+}
+
+extern DL_FUNC ptr_R_Suicide, ptr_R_ShowMessage, ptr_R_ReadConsole,
+    ptr_R_WriteConsole, ptr_R_ResetConsole, ptr_R_FlushConsole,
+    ptr_R_ClearerrConsole, ptr_R_Busy, ptr_R_CleanUp, ptr_R_ShowFiles,
+    ptr_R_ChooseFile, ptr_gnome_start, 
+    ptr_GnomeDeviceDriver, ptr_GTKDeviceDriver;
+
+
+void R_load_gnome_shlib()
+{
+    char gnome_DLL[PATH_MAX], buf[1000], *p;
+    void *handle;
+    struct stat sb;
+
+    p = getenv("R_HOME");
+    if(!p) {
+	sprintf(buf, "R_HOME was not set");
+	R_Suicide(buf);
+    }
+    strcpy(gnome_DLL, p);
+    strcat(gnome_DLL, "/gnome/R_gnome.");
+    strcat(gnome_DLL, SHLIBEXT); /* from config.h */
+    if(stat(gnome_DLL, &sb))
+	R_Suicide("Probably no GNOME support: the shared library was not found");
+/* cannot use computeDLOpenFlag as warnings will crash R at this stage */
+#ifdef RTLD_NOW
+    handle = dlopen(gnome_DLL, RTLD_NOW);
+#else
+    handle = dlopen(gnome_DLL, 0);
+#endif
+    if(handle == NULL) {
+	sprintf(buf, "The GNOME shared library could not be loaded.\n  The error was %s\n", dlerror());
+	R_Suicide(buf);
+    }
+    ptr_R_Suicide = R_dlsym(handle, "Rgnome_Suicide");
+    if(!ptr_R_Suicide) Rstd_Suicide("Cannot load R_Suicide");
+    ptr_R_ShowMessage = R_dlsym(handle, "Rgnome_ShowMessage");
+    if(!ptr_R_ShowMessage) R_Suicide("Cannot load R_ShowMessage");
+    ptr_R_ReadConsole = R_dlsym(handle, "Rgnome_ReadConsole");
+    if(!ptr_R_ReadConsole) R_Suicide("Cannot load R_ReadConsole");
+    ptr_R_WriteConsole = R_dlsym(handle, "Rgnome_WriteConsole");
+    if(!ptr_R_WriteConsole) R_Suicide("Cannot load R_WriteConsole");
+    ptr_R_ResetConsole = R_dlsym(handle, "Rgnome_ResetConsole");
+    if(!ptr_R_ResetConsole) R_Suicide("Cannot load R_ResetConsole");
+    ptr_R_FlushConsole = R_dlsym(handle, "Rgnome_FlushConsole");
+    if(!ptr_R_FlushConsole) R_Suicide("Cannot load R_FlushConsole");
+    ptr_R_ClearerrConsole = R_dlsym(handle, "Rgnome_ClearerrConsole");
+    if(!ptr_R_ClearerrConsole) R_Suicide("Cannot load R_ClearerrConsole");
+    ptr_R_Busy = R_dlsym(handle, "Rgnome_Busy");
+    if(!ptr_R_Busy) R_Suicide("Cannot load R_Busy");
+    ptr_R_CleanUp = R_dlsym(handle, "Rgnome_CleanUp");
+    if(!ptr_R_CleanUp) R_Suicide("Cannot load R_CleanUp");
+    ptr_R_ShowFiles = R_dlsym(handle, "Rgnome_ShowFiles");
+    if(!ptr_R_ShowFiles) R_Suicide("Cannot load R_ShowFiles");
+    ptr_R_ChooseFile = R_dlsym(handle, "Rgnome_ChooseFile");
+    if(!ptr_R_ChooseFile) R_Suicide("Cannot load R_ChooseFile");
+    ptr_gnome_start = R_dlsym(handle, "gnome_start");
+    if(!ptr_gnome_start) R_Suicide("Cannot load gnome_start");
+    ptr_GTKDeviceDriver = R_dlsym(handle, "GTKDeviceDriver");
+    if(!ptr_GTKDeviceDriver) R_Suicide("Cannot load GTKDeviceDriver");
+/* Uncomment the next two lines to experiment with the gnome() device */
+/*    ptr_GnomeDeviceDriver = R_dlsym(handle, "GnomeDeviceDriver");
+      if(!ptr_GnomeDeviceDriver) R_Suicide("Cannot load GnomeDeviceDriver");*/
+}
+
+
+#else /* no dyn.load support */
 
 void InitFunctionHashing()
 {
@@ -459,4 +571,14 @@ SEXP do_dynunload(SEXP call, SEXP op, SEXP args, SEXP env)
     error("no dyn.load support in this R version");
 }
 
+void R_load_X11_shlib()
+{
+    R_Suicide("no support to load X11 shared library in this R version");
+}
+
+
+void R_load_gnome_shlib()
+{
+    R_Suicide("no support to load gnome shared library in this R version");
+}
 #endif

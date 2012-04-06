@@ -32,6 +32,8 @@
 #define HAVE_ISNAN 1		/* IEEE Arith indicator */
 #define HAVE_FINITE 1
 
+#undef HAVE_FLOATINGPOINT_H
+#undef HAVE_FPU_CONTROL_H
 #undef HAVE_IEEEFP_H		/* "-Wall" */
 #undef HAVE_IEEE754_H		/* Linux */
 
@@ -89,6 +91,7 @@ extern int _finite(double);
 #define HAVE_ASINH 1
 #define HAVE_ACOSH 1
 #define HAVE_ATANH 1
+#define HAVE_HYPOT 1
 double asinh(double);
 double acosh(double);
 double atanh(double);
@@ -108,6 +111,7 @@ double atanh(double);
 #undef HAVE_MEMCPY
 #undef HAVE_BCOPY
 
+/* POSIX.1 sigsetjmp/siglongjmp available */
 #define HAVE_POSIX_SETJMP 1
 #define PSIGNAL
 
@@ -147,6 +151,15 @@ double atanh(double);
 #undef FINITE_BROKEN
 #undef LOG_BROKEN
 
+/* IPC stuff */
+#undef HAVE_BSD_NETWORKING
+/* have popen, but it is said not to work in Windows applications */
+#undef HAVE_POPEN
+
+/* Bitmap headers and libraries */
+#define HAVE_PNG 1
+#define HAVE_JPEG 1
+
 /* Some platforms other than ELF drop the leading _ */
 #undef HAVE_NO_SYMBOL_UNDERSCORE
 #ifndef HAVE_NO_SYMBOL_UNDERSCORE
@@ -177,6 +190,10 @@ double atanh(double);
 
 /* Used for buffer-overflow in printutils.c if available */
 #define HAVE_VSNPRINTF 1
+
+/* Which GUIs can we use? */
+#undef HAVE_X11
+#undef HAVE_GNOME
 
 /* for platform.c to put in .Platform */
 #ifdef Unix
@@ -222,7 +239,8 @@ double atanh(double);
 #define gamma(x) gammafn(x)
 #define lgamma(x) lgammafn(x)
 
-/* 27/03/2000 win32-api needs this */
+
+/* 27/03/2000 win32-api needs this for ANSI compliance */
 #define NONAMELESSUNION
 
 #endif

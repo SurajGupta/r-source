@@ -58,7 +58,7 @@ define(PERL5_CHECK,
 >>)
 changequote([, ]) dnl
 AC_DEFUN(R_PROG_PERL,
- [AC_PATH_PROG(PERL, perl)
+ [AC_PATH_PROGS(PERL, [${PERL} perl])
   if test -n "${PERL}"; then
     AC_CACHE_CHECK([whether perl version is at least 5],
       r_cv_prog_perl_v5, [PERL5_CHECK()] )
@@ -78,17 +78,19 @@ dnl R_PROG_TEXMF
 dnl
 AC_DEFUN(R_PROG_TEXMF,
  [AC_REQUIRE([R_PROG_PERL])
-  AC_PATH_PROG(DVIPS, [${DVIPS} dvips], false)
-  AC_PATH_PROG(LATEX, [${LATEX} latex], false)
+  AC_PATH_PROGS(DVIPS, [${DVIPS} dvips], false)
+  AC_PATH_PROGS(TEX, [${TEX} tex], false)
+  AC_PATH_PROGS(LATEX, [${LATEX} latex], false)
   if test "{ac_cv_path_LATEX}" = false; then
     AC_MSG_WARN([you cannot build DVI versions of the R manuals])
   fi
-  AC_PATH_PROG(MAKEINDEX, [${MAKEINDEX} makeindex], false)
-  AC_PATH_PROG(PDFLATEX, [${PDFLATEX} pdflatex], false)
+  AC_PATH_PROGS(MAKEINDEX, [${MAKEINDEX} makeindex], false)
+  AC_PATH_PROGS(PDFTEX, [${PDFTEX} pdftex], false)
+  AC_PATH_PROGS(PDFLATEX, [${PDFLATEX} pdflatex], false)
   if test "{ac_cv_path_PDFLATEX}" = false; then
     AC_MSG_WARN([you cannot build PDF versions of the R manuals])
   fi
-  AC_PATH_PROG(MAKEINFO, [${MAKEINFO} makeinfo])
+  AC_PATH_PROGS(MAKEINFO, [${MAKEINFO} makeinfo])
   if test -n "${MAKEINFO}"; then
     AC_CACHE_CHECK([whether makeinfo version is at least 4],
       r_cv_prog_makeinfo_v4,
@@ -111,7 +113,7 @@ AC_DEFUN(R_PROG_TEXMF,
     INSTALL_INFO="\$(top_builddir)/tools/install-info"
     AC_SUBST(INSTALL_INFO)
   else
-    AC_PATH_PROG(INSTALL_INFO, [${INSTALL_INFO} install-info], false)
+    AC_PATH_PROGS(INSTALL_INFO, [${INSTALL_INFO} install-info], false)
   fi
   : ${R_RD4DVI="ae"}
   AC_SUBST(R_RD4DVI)
@@ -159,15 +161,43 @@ AC_DEFUN(R_PROG_CC_FLAG,
   [ ac_safe=`echo "$1" | sed 'y%./+-%__p_%'`
     AC_MSG_CHECKING([whether ${CC-cc} accepts $1])
     AC_CACHE_VAL(r_cv_prog_cc_flag_${ac_safe},
-      [ AC_LANG_C
+      [ AC_LANG_SAVE
+        AC_LANG_C
 	XCFLAGS="${CFLAGS}"
 	CFLAGS="${CFLAGS} $1"
 	AC_TRY_LINK([], [],
 	  eval "r_cv_prog_cc_flag_${ac_safe}=yes",
 	  eval "r_cv_prog_cc_flag_${ac_safe}=no")
 	CFLAGS="${XCFLAGS}"
+	AC_LANG_RESTORE
       ])
     if eval "test \"`echo '$r_cv_prog_cc_flag_'$ac_safe`\" = yes"; then
+      AC_MSG_RESULT(yes)
+      [$2]
+    else
+      AC_MSG_RESULT(no)
+    fi
+  ])
+dnl
+dnl R_PROG_CXX_FLAG
+dnl
+dnl Test whether the C++ compiler handles a command line option
+dnl
+AC_DEFUN(R_PROG_CXX_FLAG,
+  [ ac_safe=`echo "$1" | sed 'y%./+-%__p_%'`
+    AC_MSG_CHECKING([whether ${CXX-c++} accepts $1])
+    AC_CACHE_VAL(r_cv_prog_cxx_flag_${ac_safe},
+      [ AC_LANG_SAVE
+        AC_LANG_CPLUSPLUS
+	XCXXFLAGS="${CXXFLAGS}"
+	CXXFLAGS="${CXXFLAGS} $1"
+	AC_TRY_LINK([], [],
+	  eval "r_cv_prog_cxx_flag_${ac_safe}=yes",
+	  eval "r_cv_prog_cxx_flag_${ac_safe}=no")
+	CXXFLAGS="${XCXXFLAGS}"
+	AC_LANG_RESTORE
+      ])
+    if eval "test \"`echo '$r_cv_prog_cxx_flag_'$ac_safe`\" = yes"; then
       AC_MSG_RESULT(yes)
       [$2]
     else
@@ -225,190 +255,6 @@ AC_DEFUN(R_PROG_F77_GNU,
       G77=
     fi
   ])
-dnl
-dnl OCTAVE_FLIBS
-dnl
-dnl See what libraries are used by the Fortran compiler.
-dnl
-dnl Write a minimal program and compile it with -v.  I don't know what
-dnl to do if your compiler doesn't have -v...
-dnl
-AC_DEFUN(OCTAVE_FLIBS,
-[AC_MSG_CHECKING([for Fortran libraries])
-AC_CACHE_VAL(octave_cv_flibs,
-[changequote(, )dnl
-echo "      END" > conftest.f
-foutput=`${F77-f77} -v -o conftest conftest.f 2>&1 | grep -v "^Driving"`
-dnl
-dnl The easiest thing to do for xlf output is to replace all the commas
-dnl with spaces.  Try to only do that if the output is really from xlf,
-dnl since doing that causes problems on other systems.
-dnl
-xlf_p=`echo $foutput | grep xlfentry`
-if test -n "$xlf_p"; then
-  foutput=`echo $foutput | sed 's/,/ /g'`
-fi
-dnl
-ld_run_path=`echo $foutput | \
-  sed -n -e 's/^.*LD_RUN_PATH *= *\([^ ]*\).*/\1/p'`
-dnl
-dnl We are only supposed to find this on Solaris systems...
-dnl Uh, the run path should be absolute, shouldn't it?
-dnl
-case "$ld_run_path" in
-  /*)
-    if test "$ac_cv_prog_gcc" = yes; then
-      ld_run_path="-Xlinker -R -Xlinker $ld_run_path"
-    else
-      ld_run_path="-R $ld_run_path"
-    fi
-  ;;
-  *)
-    ld_run_path=
-  ;;
-esac
-dnl
-flibs=
-lflags=
-dnl
-dnl If want_arg is set, we know we want the arg to be added to the list,
-dnl so we don't have to examine it.
-dnl
-want_arg=
-dnl
-for arg in $foutput; do
-  old_want_arg=$want_arg
-  want_arg=
-dnl
-dnl None of the options that take arguments expect the argument to
-dnl start with a -, so pretend we didn't see anything special.
-dnl
-  if test -n "$old_want_arg"; then
-    case "$arg" in
-      -*)
-	old_want_arg=
-      ;;
-    esac
-  fi
-  case "$old_want_arg" in
-    '')
-      case $arg in
-	/*.a)
-	  exists=false
-	  for f in $lflags; do
-	    if test x$arg = x$f; then
-	      exists=true
-	    fi
-	  done
-	  if $exists; then
-	    arg=
-	  else
-	    lflags="$lflags $arg"
-	  fi
-	;;
-	-bI:*)
-	  exists=false
-	  for f in $lflags; do
-	    if test x$arg = x$f; then
-	      exists=true
-	    fi
-	  done
-	  if $exists; then
-	    arg=
-	  else
-	    if test "$ac_cv_prog_gcc" = yes; then
-	      lflags="$lflags -Xlinker $arg"
-	    else
-	      lflags="$lflags $arg"
-	    fi
-	  fi
-	;;
-	-lang* | -lcrt0.o | -lc | -lgcc)
-	  arg=
-	;;
-	-[lLR])
-	  want_arg=$arg
-	  arg=
-	;;
-	-[lLR]*)
-	  exists=false
-	  for f in $lflags; do
-	    if test x$arg = x$f; then
-	      exists=true
-	    fi
-	  done
-	  if $exists; then
-	    arg=
-	  else
-	    case "$arg" in
-	      -lkernel32)
-		case "$canonical_host_type" in
-		  *-*-cygwin32)
-		    arg=
-		  ;;
-		  *)
-		    lflags="$lflags $arg"
-		  ;;
-		esac
-	      ;;
-	      -lm)
-	      ;;
-	      *)
-		lflags="$lflags $arg"
-	      ;;
-	    esac
-	  fi
-	;;
-	-u)
-	  want_arg=$arg
-	  arg=
-	;;
-	-Y)
-	  want_arg=$arg
-	  arg=
-	;;
-	*)
-	  arg=
-	;;
-      esac
-    ;;
-    -[lLR])
-      arg="$old_want_arg $arg"
-    ;;
-    -u)
-      arg="-u $arg"
-    ;;
-    -Y)
-dnl
-dnl Should probably try to ensure unique directory options here too.
-dnl This probably only applies to Solaris systems, and then will only
-dnl work with gcc...
-dnl
-      arg=`echo $arg | sed -e 's%^P,%%'`
-      SAVE_IFS=$IFS
-      IFS=:
-      list=
-      for elt in $arg; do
-	list="$list -L$elt"
-      done
-      IFS=$SAVE_IFS
-      arg="$list"
-    ;;
-  esac
-dnl
-  if test -n "$arg"; then
-    flibs="$flibs $arg"
-  fi
-done
-if test -n "$ld_run_path"; then
-  flibs_result="$ld_run_path $flibs"
-else
-  flibs_result="$flibs"
-fi
-changequote([, ])dnl
-octave_cv_flibs="$flibs_result"])
-FLIBS="$octave_cv_flibs"
-AC_MSG_RESULT([$FLIBS])])
 dnl
 dnl See if the Fortran compiler appends underscores
 dnl
@@ -500,7 +346,7 @@ int main () {
 EOF
       changequote([, ])
       if ${CC-cc} ${CFLAGS} -c conftest.c 1>&AC_FD_CC 2>&AC_FD_CC; then
-	if ${CC-cc} ${LDFLAGS} -o conftest conftest.o conftestf.o \
+	if ${CC-cc} ${LDFLAGS} ${MAINLDFLAGS} -o conftest conftest.o conftestf.o \
             ${FLIBS} -lm 1>&AC_FD_CC 2>&AC_FD_CC; then
           output=`./conftest 2>&1`
 	  if test ${?} = 0; then
@@ -703,8 +549,6 @@ AC_DEFUN(R_GNOME, [
     if test "${GNOMEUI_LIBS}"; then
       AM_PATH_LIBGLADE(
         [use_gnome="yes"
-	  RGNOMEDIR="gnome"
-	  RGNOMEBIN="\$(top_builddir)/bin/R.GNOME"
 	  GNOME_IF_FILES="gnome-interface.glade"],
         [AC_MSG_WARN([GNOME support requires libglade version >= 0.3])],
         gnome)
@@ -712,12 +556,11 @@ AC_DEFUN(R_GNOME, [
   fi
   if test "${use_gnome}" != yes; then
     use_gnome="no"
-    RGNOMEDIR=
-    RGNOMEBIN=
     GNOME_IF_FILES=
+  else
+    AC_DEFINE(HAVE_GNOME, 1)
   fi
-  AC_SUBST(RGNOMEDIR)
-  AC_SUBST(RGNOMEBIN)
+  AC_SUBST(HAVE_GNOME)
   AC_SUBST(GNOME_IF_FILES)])
 dnl
 dnl GNOME_INIT_HOOK (script-if-gnome-enabled, failflag)
@@ -935,6 +778,83 @@ AC_DEFUN(AM_CONDITIONAL, [
     $1_FALSE=
   fi
 ])
+
+
+dnl
+dnl R_BITMAPS
+dnl
+AC_DEFUN(R_BITMAPS, [
+BITMAP_LIBS=
+AC_CHECK_HEADER(jpeglib.h, [
+  AC_CHECK_LIB(jpeg, jpeg_destroy_compress, 
+    [ 
+      BITMAP_LIBS=-ljpeg
+      AC_DEFINE(HAVE_JPEG)
+    ], , ${LIBS})
+  ])
+AC_CHECK_HEADER(png.h, [
+  AC_CHECK_LIB(png, png_create_write_struct, 
+    [
+      BITMAP_LIBS="${BITMAP_LIBS} -lpng -lz"
+      AC_DEFINE(HAVE_PNG)
+    ], , ${LIBS})
+  ])
+## echo "using libraries \`${BITMAP_LIBS}' for bitmap functions"
+AC_SUBST(BITMAP_LIBS)
+])
+
+dnl
+dnl R_TCLTK
+dnl
+AC_DEFUN(R_TCLTK,
+  [ have_tcltk=no
+    TCLTK_LIBS=
+    if test "${want_tcltk}" = yes; then
+      AC_CHECK_LIB(tcl, Tcl_CreateInterp, [ TCLTK_LIBS="-ltcl"])
+      if test -n "${TCLTKLIBS}"; then
+        AC_CHECK_LIB(tk, Tk_Init,
+          [ TCLTK_LIBS="-ltcl -ltk" have_tcltk=yes ],, ${TCLTKLIBS})
+        if test "${have_tcltk}" = no; then
+        ## Try X11 libs
+          echo "checking with X11 libraries:"
+	  unset ac_cv_lib_tk_Tk_Init
+            AC_CHECK_LIB(tk, Tk_Init,
+              [ TCLTK_LIBS="-ltcl -ltk ${X_LIBS}"
+	        have_tcltk=yes ], , [-ltcl ${X_LIBS}])
+        fi
+      fi
+      if test "${have_tcltk}" = no; then
+	## Try finding {tcl,tk}Config.sh
+	libpath="${tcltk_prefix}:${LD_LIBRARY_PATH}"
+	libpath="${libpath}:/opt/lib:/usr/local/lib:/usr/lib:/lib"
+	TCL_CONFIG=
+	AC_PATH_PROG(TCL_CONFIG, tclConfig.sh, , ${libpath})
+	if test -n "${TCL_CONFIG}"; then
+	  . ${TCL_CONFIG}	# get TCL_VERSION
+	  AC_CHECK_LIB(tcl${TCL_VERSION}, Tcl_CreateInterp,
+	    [ TCLTK_LIBS="-ltcl${TCL_VERSION}" ],
+	    [ want_tcltk=no ])
+	  if test "${want_tcltk}" = yes; then
+	    TK_CONFIG=
+	    AC_PATH_PROG(TK_CONFIG, tkConfig.sh, , ${libpath})
+	    if test -n "${TK_CONFIG}"; then
+	      . ${TK_CONFIG}	# get TK_VERSION
+	      AC_CHECK_LIB(tk${TK_VERSION}, Tk_Init,
+	        [ TCLTK_LIBS="${TCLTK_LIBS} -ltk${TK_VERSION}  ${TK_XLIBSW}"
+		  have_tcltk=yes ], , [${TCLTK_LIBS} ${TK_XLIBSW}] )
+	    fi
+	  fi
+	fi
+      fi
+    fi
+    if test "${have_tcltk}" = yes; then
+      AC_DEFINE(HAVE_TCLTK)
+      use_tcltk=yes
+    else
+      use_tcltk=no
+    fi
+    AC_SUBST(TCLTK_LIBS)
+  ])
 
 dnl Local Variables: ***
 dnl mode: sh ***

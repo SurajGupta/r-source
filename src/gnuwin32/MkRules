@@ -3,37 +3,44 @@
 
 # Alternatives CYGWIN (-mno-cygwin), MINGW32 (mingw32 gcc), CROSS (Linux)
 BUILD=MINGW32
+# Set this to YES if you make MINGW32 and gcc-2.95.2.1 or later.
+#HAVE_SHARED=YES
 
 # Where does 'HTML Help Workshop' live? (unused if compiled HTML help is
 # not requested. Spaces allowed.)
 HHWDIR=C:/Program Files/HTML Help Workshop
 
+# Where does Tcl/Tk live? Spaces allowed.
+TCL_HOME = c:/packages/Tcl
+
 ifeq ($(strip $(BUILD)),CYGWIN)
 BINPREF=
 MINGW32CFLAG= -mno-cygwin -DWIN32
 MINGW32LDFLAG= -mno-cygwin
-#-L(directory where gcc-2.95-mingw-extra.tar.gz was uncompressed)
-FLIBS=-L/cygnus/cygwin-b20/mingw32/lib -lg2c
+#-L(directory where gcc-2.95.2-mingw-extra.tar.gz was uncompressed)
+# is needed with earlier versions of cygwin.
+FLIBS=-lg2c
 AWK=gawk
 endif
 
 ifeq ($(strip $(BUILD)),MINGW32)
 BINPREF=
-MINGW32CFLAG= 
-MINGW32LDFLAG= 
+MINGW32CFLAG=
+MINGW32LDFLAG=
 FLIBS=-lg2c
 AWK=gawk
-endif 
+endif
 
 ifeq ($(strip $(BUILD)),CROSS)
-# Next two might be i586- if pre-built cross-compiler is used.
+# Next two might be i586- if a pre-built cross-compiler is used.
 BINPREF=i386-mingw32-
+# Set this to where the mingw32 include files are
 HEADER=/packages/R-X/i386-mingw32/include
 MINGW32CFLAG=-isystem $(HEADER)
-MINGW32LDFLAG= 
+MINGW32LDFLAG=
 FLIBS=-lg2c
 AWK=awk
-endif 
+endif
 
 PERL=perl
 RM=rm -f
@@ -42,17 +49,17 @@ ECHO=echo
 CP=cp
 MKDIR=mkdir
 CAT=cat
-CC=$(BINPREF)gcc $(MINGW32CFLAG) 
+CC=$(BINPREF)gcc $(MINGW32CFLAG)
 F77=$(BINPREF)g77
 AS=$(BINPREF)as
-DLL=$(BINPREF)gcc $(MINGW32LDFLAG) -mdll
+DLL=$(BINPREF)gcc $(MINGW32LDFLAG)
 DLLTOOL=$(BINPREF)dlltool -k --as $(AS)
-LINKER=$(BINPREF)gcc $(MINGW32LDFLAG) 
+LINKER=$(BINPREF)gcc $(MINGW32LDFLAG)
 AR=$(BINPREF)ar
 RANLIB=$(BINPREF)ranlib
 NM=$(BINPREF)nm
 CPP=$(CC) -E
-RESCOMP=$(BINPREF)windres 
+RESCOMP=$(BINPREF)windres
 
 .c.o:
 	$(CC)  $(CFLAGS) $($*-CFLAGS) -c $< -o $@
@@ -60,46 +67,38 @@ RESCOMP=$(BINPREF)windres
 .f.o:
 	$(F77) $(FFLAGS) $($*-FFLAGS) -c $< -o $@
 
-#%.exe %.exp:  
-#	@$(ECHO) -------- Building $@ from $^ --------
-#	$(ECHO) EXPORTS > $*.exp
-#	$(NM) $^ | $(SED) -n "/^........ [BCDRT] _/s/^........ [BCDRT] _/ /p" >> $*.exp
-#	$(DLLTOOL) --dllname $@  --output-exp $*.e --def $*.exp
-#	$(LINKER)  $(LINKFLAGS) $($*-LINKFLAGS) -o $@ -Wl,--base-file,$*.b $*.e $^ $($*-LIBS) $(LIBS)
-#	$(DLLTOOL) --dllname $@  --base-file $*.b  --output-exp $*.e  --def $*.exp
-#	$(LINKER)  $(LINKFLAGS) $($*-LINKFLAGS) -o $@ $*.e $^ $($*-LIBS) $(LIBS)
-#	rm $*.e $*.b 
-
-%.exe:  
+%.exe:
 	$(LINKER)  $(LINKFLAGS) $($*-LINKFLAGS) -o $@ $^ $($*-LIBS) $(LIBS)
 
 
-%.dll %.def:   
+%.dll %.def:
 	@$(ECHO) ------- Building $@ from $^ --------
 	$(ECHO) LIBRARY $* > $*.def
 	$(ECHO) EXPORTS >> $*.def
 	$(NM) $^ > Defs
-	$(SED) -n "/^........ [BCDRT] _/s/^........ [BCDRT] _/ /p" Defs >> $*.def
-	$(DLL) -Wl,--base-file,$*.b $(DLLFLAGS) $($*-DLLFLAGS) -o $@  $^ $($*-DLLLIBS) $(DLLLIBS)
+	$(SED) -n '/^........ [BCDRT] _/s/^........ [BCDRT] _/ /p' Defs >> $*.def
+	$(RM) Defs
+ifeq ($(strip $(HAVE_SHARED)),YES)
+	$(DLL) --shared $(DLLFLAGS) $($*-DLLFLAGS) -o $@  $*.def $^ $($*-DLLLIBS) $(DLLLIBS)
+else
+	$(DLL) -mdll -Wl,--base-file,$*.b $(DLLFLAGS) $($*-DLLFLAGS) -o $@  $^ $($*-DLLLIBS) $(DLLLIBS)
 	$(DLLTOOL) $(DLLTOOLFLAGS) $($*-DLLTOOLFLAGS) --dllname $@  --base-file $*.b --output-exp $*.e --def $*.def
-	$(DLL)  -Wl,--base-file,$*.b $(DLLFLAGS) $($*-DLLFLAGS) -o $@ $*.e $^ $($*-DLLLIBS) $(DLLLIBS)
-	$(DLLTOOL) $(DLLTOOLFLAGS) $($*-DLLTOOLFLAGS) --dllname $@ --base-file $*.b --output-exp $*.e --def $*.def 
-	$(DLL)  $(DLLFLAGS) $($*-DLLFLAGS) -o $@  $*.e $^ $($*-DLLLIBS) $(DLLLIBS)	     
-	$(RM)  $*.b $*.e Defs
+	$(DLL) -mdll -Wl,--base-file,$*.b $(DLLFLAGS) $($*-DLLFLAGS) -o $@ $*.e $^ $($*-DLLLIBS) $(DLLLIBS)
+	$(DLLTOOL) $(DLLTOOLFLAGS) $($*-DLLTOOLFLAGS) --dllname $@ --base-file $*.b --output-exp $*.e --def $*.def
+	$(DLL) -mdll $(DLLFLAGS) $($*-DLLFLAGS) -o $@  $*.e $^ $($*-DLLLIBS) $(DLLLIBS)
+	$(RM)  $*.b $*.e
+endif
+
 
 lib%.a: %.def
 	@$(ECHO) -------- Building $@ from $^ --------
 	$(DLLTOOL) $(DLLTOOLFLAGS) $($*-DLLTOOLFLAGS) --dllname $*.dll --def $*.def --output-lib lib$*.a
 
-lib%.a: %.exp
-	@$(ECHO) -------- Building $@ from $^ --------
-	$(DLLTOOL) $(DLLTOOLFLAGS) $($*-DLLTOOLFLAGS) --dllname $*.exe --def $*.exp --output-lib lib$*.a	 
-
-%.a:    
+%.a:
 	@$(ECHO) -------- Building $@ from $^ --------
 	$(AR) cr $@ $^
 	$(RANLIB) $@
 
 
 %.o:    %.rc
-	$(RESCOMP) $(RESFLAGS) $($*-RESFLAGS) -i $^ -o $@
+	$(RESCOMP) $(RESFLAGS) $($*-RESFLAGS) -i $< -o $@

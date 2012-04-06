@@ -1,5 +1,6 @@
 \name{plot.lm}
 \alias{plot.lm}
+\alias{plot.mlm}%which is .NotYetImplemented()
 \title{Plot Diagnostics for an lm Object}
 \usage{
 plot.lm(x, which = 1:4,
@@ -7,7 +8,8 @@ plot.lm(x, which = 1:4,
                     "Scale-Location plot", "Cook's distance plot"),
         panel = points,
         sub.caption = deparse(x$call), main = "",
-        ask = interactive() && one.fig && .Device != "postscript",
+        ask = interactive() && one.fig && length(which) > 1
+         	&& .Device != "postscript",
         \dots,
         id.n = 3, labels.id = names(residuals(x)), cex.id = 0.25)
 }
@@ -22,7 +24,7 @@ plot.lm(x, which = 1:4,
   \item{sub.caption}{common title---above figures if there are multiple;
     used as \code{sub} (s.\code{\link{title}}) otherwise.}
   \item{main}{title to each plot---in addition to the above
-    \code{caption}.} 
+    \code{caption}.}
   \item{ask}{logical; if \code{TRUE}, the user is \emph{ask}ed before
     each plot, see \code{\link{par}(ask=.)}.}
   \item{\dots}{other parameters to be passed through to plotting
@@ -54,7 +56,7 @@ plot.lm(x, which = 1:4,
   have identical variance (under the hypothesis).  They are given as
   \eqn{R_i / (s \times \sqrt{1 - h_{ii}})}{R[i] / (s*sqrt(1 - h.ii))}
   where \eqn{h_{ii}}{h.ii} are the diagonal entries of the hat matrix,
-% bug in Rdconv: "$" and \link inside \code fails; '\$' doesn't help...
+% bug in Rdconv: "$" and \link inside \code fails; '\$' doesn't help :
   \code{\link{lm.influence}()}\code{$hat}, see also \code{\link{hat}}.
 }
 \references{
@@ -75,10 +77,9 @@ plot.lm(x, which = 1:4,
 \author{
   John Maindonald and Martin Maechler.
 }
-\seealso{
-  \code{\link{lm.influence}}, \code{\link{cooks.distance}}
+\seealso{\code{\link{termplot}}, \code{\link{lm.influence}},
+  \code{\link{cooks.distance}}.
 }
-
 \examples{
 ## Analysis of the life-cycle savings data
 ## given in Belsley, Kuh and Welsch.
@@ -95,10 +96,15 @@ plot(lm.SR, id.n = 5, labels.id = NULL)# 5 id numbers
 plot(lm.SR, panel = panel.smooth)
 ## Gives a smoother curve
 plot(lm.SR, panel = function(x,y) panel.smooth(x, y, span = 1))
-## Warnings:  panel = panel.smoth, span = 1
 
 par(mfrow=c(2,1))# same oma as above
 plot(lm.SR, which = 1:2, sub.caption = "Saving Rates, n=50, p=5")
+\testonly{% which=4 failed in R 1.0.1
+ par(mfrow=c(1,1), oma= rep(0,4))
+ data(longley)
+ summary(lm.fm2 <- lm(Employed ~ . - Population - GNP.deflator, data = longley))
+ for(wh in 1:4) plot(lm.fm2, which = wh)
+}
 }
 \keyword{hplot}
 \keyword{regression}

@@ -18,10 +18,10 @@ The distribution consists of several zip files:
 @RWVER@h.zip				text help
 @RWVER@ch.zip				compiled HTML help
 @RWVER@w.zip				HTML help files
-@RWVER@l.zip				latex help for offline help
+@RWVER@l.zip				latex help files for offline help
 @RWVER@d1.zip				PDF manuals except
 @RWVER@d2.zip				  PDF version of the reference manual
-@RWVER@sp.zip				files to install from source packages
+@RWVER@sp.zip				files to build packages from source
 
 and optionally the installer rwinst.exe.
 
@@ -29,7 +29,7 @@ The simplest way to install is to run the installer (double-click on
 the icon for rwinst.exe and navigate its wizard-like pages).
 
 To install manually, unpack @RWVER@b1.zip and @RWVER@b2.zip anywhere you
-like. It will unpack to a directory tree under @RWVER@. The help,
+like. They will unpack to a directory tree under @RWVER@. The help,
 compiled HTML, HTML and latex help files are in separate files
 @RWVER@h.zip, @RWVER@ch.zip @RWVER@w.zip and @RWVER@l.zip which should be
 unpacked in the same directory you unpacked @RWVER@b1.zip.  Files
@@ -85,7 +85,7 @@ purpose is to allow batch operation, but it does provide all the
 facilities needed for interactive use, including simple command-line
 editing.
 
-Batch use: At it simplest, Rterm.exe can be used in a batch mode by
+Batch use: At its simplest, Rterm.exe can be used in a batch mode by
 commands like
 
 Rterm.exe --vsize=10M --nsize=400k --no-restore --no-save < infile > outfile
@@ -94,9 +94,10 @@ although users will probably want to set up simple .bat or .cmd files
 to run batch jobs.
 
 
-Use with ESS: You can use Rterm.exe to provide inferior R-mode in
-ESS under NTEmacs, for example ess-5.1.11.  The pager is automatically
-set to "console" so help will be displayed in emacs buffers.
+Use with ESS: You can use Rterm.exe to provide inferior R-mode in ESS
+under NTEmacs, for example with ess-5.1.13.  The pager is
+automatically set to "console" so help will be displayed in emacs
+buffers.
 
 
 GRAPHICS:
@@ -128,18 +129,19 @@ installed.
 (i) Text help. This is the default, and the fallback option.
 It will display in the currently set pager (use options(pager=) to change).
 
-(ii) Compiled HTML files. Set this as the default by
+(ii) Compiled HTML files.  Set this as the default by
 options(chmhelp=T) or for individual help items by help(topic,
-chmhelp=T).  Full text search is available from the Search tab.  To
-make use of this you will need a recent version of Windows or IE4 or
-later installed, or use the updater hhupd.exe on CRAN at 
-bin/windows/windows-NT/etc.
+chmhelp=T).  Full text search is available from the Search tab.
+According to Microsoft, to make use of this you will need to have IE3
+or later installed and a recent version of Windows or (not Windows
+2000) use the updater hhupd.exe at
+http://msdn.microsoft.com/library/tools/htmlhelp/wkshp/download.htm.
 
 (iii) Windows .hlp files. Set this as the default by
 options(winhelp=T) or for individual help items by help(topic,
 winhelp=T).  Full text search is available from the Search tab. The
 conversion to this format is a little rough, and tables may be
-incomplete. The help on Japanese fonts has been omitted.
+incomplete. The help on Hershey and Japanese fonts has been omitted.
 
 (iv) HTML help to be displayed in your normal browser.  Set this as
 the default by options(htmlhelp=T) or for individual help items by
@@ -166,9 +168,14 @@ copy with a user's settings can be put in her HOME directory or in the
 working directory. (The exact sequence is to search the directory
 pointed to by the first found of the environment variables R_USER then
 HOME then {HOMEDRIVE}{HOMEPATH} then the working directory, finally
-R_HOME\etc.  This applies to .Renviron and other uses of `HOME' in our
-documentation.)  The file contains a description of the settings that
-can be altered. See also ?Rconsole.
+R_HOME\etc.  This also applies to .Renviron and other uses of `HOME'
+in our documentation.)  The file contains a description of the
+settings that can be altered. See also ?Rconsole.
+
+An alternative way to edit the Rconsole file is to use the GUI
+preferences item on the Edit menu in Rgui.exe.  This can change some
+of the settings (for example colours, font and window sizes) on the
+current running console.
 
 The mapping between Windows fonts and R font's number can be set by
 editing the file etc\Rdevga, and a copy with a user's settings can be
@@ -182,7 +189,7 @@ file .Rprofile. In particular:
 - The pager is set by options(pager=). The default is "internal" which
   brings up a separate console-like window. The internal pager can use
   a single window or a different window for each topic shown
-  (configurable in etc\Rconsole). Other possibilities we have
+  (configurable in Rconsole). Other possibilities we have
   used are "notepad" and "pfe32 /v", and "console" to list the files in
   the console (rgui.exe) or terminal window (rterm.exe).
 
@@ -223,7 +230,7 @@ add the line
 to your .Rprofile or at the end of R_HOME\etc\Rprofile.
 
 To install a package from source code you need the source-package
-distribution @RWVER@sp.zip installed (but not the R source). This
+distribution @RWVER@sp.zip installed (but not the R sources). This
 contains detailed instructions.
 
 
@@ -237,8 +244,7 @@ Differences from Unix versions of R
 - Command-line editing is always available, but is much simpler than
   under readline-based input on Unix.
 
-- The commands history is saved between sessions only by Rgui: it is 
-  always saved even if the workspace is not saved.
+- The commands history is always saved between sessions.
 
 - The HTML function and package lists and search datasbase are not
   re-generated automatically by html.start().  Use link.html.help().
@@ -248,12 +254,10 @@ Differences from Unix versions of R
 - Using help.start() does not automatically send help requests to the
   browser: use options(htmlhelp=T) to turn this on.
 
-- Graphics save and replay are only available here.
-
 - system() is enhanced here and does not automatically use a shell.
   See its help page and that of shell().
 
-- graphics devices png(), jpeg() and bmp() are available in this version.
+- graphics device bmp() is available in this version.
 
 
 Building From Source

@@ -34,12 +34,8 @@
  *	Applied Statistics 24, page 385.
  */
 
-#include "Mathlib.h"
+#include "nmath.h"
 #include "dpq.h"
-
-#ifdef DEBUG_q
-# include "PrtUtil.h"
-#endif
 
 double qgamma(double p, double alpha, double scale, int lower_tail, int log_p)
 /*			shape = alpha */

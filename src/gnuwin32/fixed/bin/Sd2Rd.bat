@@ -25,7 +25,7 @@ goto endofperl
 
 use Getopt::Long;
 
-my $revision = ' $Revision: 1.1.2.1 $ ';
+my $revision = ' $Revision: 1.2 $ ';
 my $version;
 my $name;
 

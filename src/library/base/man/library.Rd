@@ -3,27 +3,26 @@
 \usage{
 library(package, help = NULL, lib.loc = .lib.loc,
         character.only = FALSE, logical.return = FALSE,
-        warn.conflicts = TRUE)
-require(package, quietly = FALSE, warn.conflicts = TRUE)
-provide(package)
+        warn.conflicts = TRUE, keep.source = getOption("keep.source.pkgs"))
+require(package, quietly = FALSE, warn.conflicts = TRUE,
+        keep.source = getOption("keep.source.pkgs"))
 
 .First.lib(libname, pkgname)
+.Last.lib(libpath)
 
 .packages(all.available = FALSE, lib.loc = .lib.loc)
 .path.package(package = .packages())
 .lib.loc
 .Library
-.Provided
 .Autoloaded
 }
 \alias{library}
-\alias{provide}
 \alias{require}
 \alias{R_LIBS}
 \alias{.Autoloaded}
 \alias{.First.lib}
+\alias{.Last.lib}
 \alias{.Library}
-\alias{.Provided}
 \alias{.packages}
 \alias{.path.package}
 \alias{.lib.loc}
@@ -39,11 +38,14 @@ provide(package)
   \item{warn.conflicts}{logical.  If \code{TRUE}, warnings are
     printed about \code{\link{conflicts}} from attaching the new
     package, unless that package contains an object \code{.conflicts.OK}.}
+  \item{keep.source}{logical.  If \code{TRUE}, functions ``keep their
+    source'' including comments, see \code{\link{options}(keep.source = *)}.}
   \item{quietly}{a logical.  If \code{TRUE}, a warning will not be
     printed if the package cannot be found.}
   \item{libname}{a character string giving the library directory where
       the package was found.}
   \item{pkgname}{a character string giving the name of the package.}
+  \item{libpath}{a character string giving the complete path to the package.}
   \item{all.available}{logical; if \code{TRUE} return \code{character}
       vector of all available packages in \code{lib.loc}.}
 }
@@ -61,16 +63,10 @@ provide(package)
   inside other functions; it returns \code{FALSE} and optionally gives a
   warning, rather than giving an error, if the package does not exist.
   Both functions check and update the list of currently loaded packages
-  and do not reload code that is already loaded.  \code{require} also
-  checks the list \code{.Provided}.
+  and do not reload code that is already loaded.
 
-  \code{provide} allows code to register services that it provides.  The
-  argument is stored in the list \code{.Provided}.  \code{provide}
-  returns \code{FALSE} if the package was already present in
-  \code{.Provided} or among the packages in \code{search()}.  The main
-  use for \code{provide} is when multiple packages share code.  This is
-  most likely when the code implements features present in S(-PLUS) but
-  not in R.
+  For large packages, setting \code{keep.source = FALSE} may save quite
+  a bit of memory.
 
   If \code{library} is called with no \code{package} or \code{help}
   argument, it gives a list of all available packages in \code{lib.loc}
@@ -81,17 +77,29 @@ provide(package)
   \code{somename}, typically by listing the most important user level
   objects it contains.
 
-  \code{.First.lib()} is called when a package is loaded by
-  \code{library()}.  It is called with two arguments, the name of the
-  library tree where the package was found (i.e., the corresponding
+  \code{.First.lib} is called when a package is loaded by
+  \code{library}.  It is called with two arguments, the name of the
+  library directory where the package was found (i.e., the corresponding
   element of \code{lib.loc}), and the name of the package (in that
   order).  It is a good place to put calls to \code{library.dynam()}
   which are needed when loading a package into this function (don't call
   \code{library.dynam()} directly, as this will not work if the package
-  is not installed in a ``standard'' location).  \code{.First.lib()}
+  is not installed in a ``standard'' location).  \code{.First.lib}
   is invoked after \code{search()} has been updated, so
   \code{pos.to.env(match("package:name"), search())} will return the
-  environment in which the package is stored.
+  environment in which the package is stored.  If calling
+  \code{.First.lib} gives an error the loading of the package is
+  abandoned, and the package will be unavailable.  Similarly, if the
+  option \code{".First.lib"} has a list element with the package's name,
+  this element is called in the same manner as \code{.First.lib} when
+  the package is loaded.  This mechanism allows the user to set package
+  ``load hooks'' in addition to startup code as provided by the package
+  maintainers.
+
+  \code{.Last.lib} is called when a package is detached.  Beware
+  that it might be called if \code{.First.lib} has failed, so it
+  should be written defensively. (It is called within \code{\link{try}},
+  so errors will not stop the package being detached.)
 
   \code{.packages()} returns the ``base names'' of the currently attached
   packages \emph{invisibly} whereas
@@ -121,31 +129,37 @@ provide(package)
   \code{.Library}.
 }
 \value{
-    \code{library} returns the list of loaded (or available) packages
-    (or \code{TRUE} if \code{logical.return} is \code{TRUE}).
-    \code{require} returns a logical indicating whether the required
-    package is available.
+  \code{library} returns the list of loaded (or available) packages
+  (or \code{TRUE} if \code{logical.return} is \code{TRUE}).
+  \code{require} returns a logical indicating whether the required
+  package is available.
 }
 \author{R core;  Guido Masarotto for the \code{all.available=TRUE}
-    part of \code{.packages}.}
+  part of \code{.packages}.}
 \seealso{
-    \code{\link{attach}}, \code{\link{detach}}, \code{\link{search}},
-    \code{\link{objects}}, \code{\link{autoload}},
-    \code{\link{library.dynam}},
-    \code{\link{data}}, \code{\link{install.packages}}.
+  \code{\link{attach}}, \code{\link{detach}}, \code{\link{search}},
+  \code{\link{objects}}, \code{\link{autoload}},
+  \code{\link{library.dynam}},
+  \code{\link{data}}, \code{\link{install.packages}}.
 #ifdef unix
-    \code{\link{INSTALL}}, \code{\link{REMOVE}}
+  \code{\link{INSTALL}}, \code{\link{REMOVE}}
 #endif
 }
 \examples{
-.packages()                 # maybe just "base"
+(.packages())		    # maybe just "base"
 .packages(all = TRUE)       # return all available as char.vector
 library()                   # list all available packages
 library(lib = .Library)     # list all packages in the default library
 library(help = eda)         # documentation on package "eda"
 library(eda)                # load package "eda"
 require(eda)                # the same
-.packages()                 # "eda", too
+(.packages())		    # "eda", too
+.path.package()
+.Autoloaded     # maybe "ctest"
+
+.lib.loc
+.Library == .lib.loc[length(.lib.loc)]  # `by definition'
+
 require(nonexistent)        # FALSE
 \dontrun{## Suppose a package needs to call a shared library named "foo.EXT",
 ## where "EXT" is the system-specific extension.  Then you should use

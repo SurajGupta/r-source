@@ -108,11 +108,8 @@ DISTFILES = Makefile.in Makefile.win \
 	gram.y
 
 RLIBS = ../unix/libunix.a ../appl/libappl.a ../nmath/libmath.a
-RGNOMELIBS = ../gnome/libRgnome.a ../appl/libappl.a ../nmath/libmath.a
 
-ALL_X_LIBS = $(X_PRE_LIBS) $(X_LIBS) $(X_EXTRA_LIBS)
-ALL_LIBS = $(RLIBS) $(ALL_X_LIBS) $(FLIBS) $(R_XTRA_LIBS) $(LIBS)
-ALL_GNOME_LIBS = $(RGNOMELIBS) $(FLIBS) $(R_XTRA_LIBS) $(LIBS) $(GNOME_LIBDIR) $(GNOMEUI_LIBS) $(LIBGLADE_LIBS)
+ALL_LIBS = $(RLIBS) $(LIBS) $(FLIBS) $(R_XTRA_LIBS)
 
 all: Makefile Makedeps R
 
@@ -131,9 +128,9 @@ Makedeps: Makefile $(DEPENDS)
 	@touch $@
 
 R: Makefile
-	@for t in Makedeps $(top_builddir)/bin/R.X11 @RGNOMEBIN@; do \
-	  $(MAKE) $${t}; \
-	done
+	@$(MAKE) Makedeps
+	@$(MAKE) $(top_builddir)/bin/R.bin
+	@(cd ../unix && $(MAKE) DLLs)
 
 ../include/config.h:
 	(cd ../include; $(MAKE) $(@F))
@@ -142,13 +139,9 @@ R: Makefile
 ../include/FFDecl.h: $(top_srcdir)/src/appl/ROUTINES
 	(cd ../include; $(top_srcdir)/tools/GETSYMBOLS)
 
-$(top_builddir)/bin/R.X11: $(OBJECTS) $(RLIBS) @EXPORTFILE@
+$(top_builddir)/bin/R.bin: $(OBJECTS) $(RLIBS) @EXPORTFILE@
 	@$(MKINSTALLDIRS) $(top_builddir)/bin
-	$(LDCMD) $(DLLFLAGS) $(LDFLAGS) -o $@ $(OBJECTS) $(ALL_LIBS)
-
-$(top_builddir)/bin/R.GNOME: $(OBJECTS) $(RGNOMELIBS)
-	@$(MKINSTALLDIRS) $(top_builddir)/bin
-	$(LDCMD) $(DLLFLAGS) $(LDFLAGS) $(GNOME_LIBDIR) -o $@ $(OBJECTS) $(ALL_GNOME_LIBS)
+	$(MAINLD) $(MAINLDFLAGS) $(LDFLAGS) -o $@ $(OBJECTS) $(ALL_LIBS)
 
 $(top_builddir)/etc/R.exp: $(OBJECTS) $(RLIBS)
 	@$(top_srcdir)/tools/ldAIX4 -o $@ $(OBJECTS) $(RLIBS)

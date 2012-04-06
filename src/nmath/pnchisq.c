@@ -8,7 +8,7 @@
  *  parameter theta
  */
 
-#include "Mathlib.h"
+#include "nmath.h"
 #include "dpq.h"
 
 /*----------- DEBUGGING -------------
@@ -18,9 +18,6 @@
  * -- Feb.6, 2000 (R pre0.99); M.Maechler:  still have
  * bad precision & non-convergence in some cases (x ~= f, both LARGE)
  */
-#ifdef DEBUG_pnch
-# include "PrtUtil.h"
-#endif
 
 double pnchisq(double x, double f, double theta, int lower_tail, int log_p)
 {

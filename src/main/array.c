@@ -602,7 +602,7 @@ SEXP do_matprod(SEXP call, SEXP op, SEXP args, SEXP rho)
 
 SEXP do_transpose(SEXP call, SEXP op, SEXP args, SEXP rho)
 {
-    SEXP a, r, dims, dimnames, dimnamesnames=R_NilValue, 
+    SEXP a, r, dims, dimnames, dimnamesnames=R_NilValue,
 	ndimnamesnames, rnames, cnames;
     int i, len = 0, ncol=0, nrow=0;
 
@@ -740,7 +740,7 @@ SEXP do_aperm(SEXP call, SEXP op, SEXP args, SEXP rho)
 
     PROTECT(perm = coerceVector(CADR(args), INTSXP));
     if (!isVector(perm) || (length(perm) != length(dimsa)))
-	error("aperm: invalid second argument, must be a vector");
+	error("aperm: invalid second argument, must be a vector of the appropriate length");
 
     len = length(a);
 
@@ -784,7 +784,7 @@ SEXP do_aperm(SEXP call, SEXP op, SEXP args, SEXP rho)
 	    VECTOR(r)[j] = VECTOR(a)[i];
 	}
     default:
-	errorcall(call, "invalid argument");
+	errorcall(call, R_MSG_IA);
     }
 
     if (INTEGER(CAR(CDDR(args)))[0])

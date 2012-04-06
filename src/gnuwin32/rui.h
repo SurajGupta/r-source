@@ -28,8 +28,6 @@ extern window RConsole;
 void Rconsolecmd(char *);
 
 void R_ShowMessage(char *s);
-/*void (*R_ShowMessage)(char *s);*/
-int (*R_yesnocancel)(char *s);
 
 int check_doc_file(char *);
 void internal_shellexec(char *);
@@ -42,4 +40,6 @@ int windelmenuitem(char * item, char * menu, char *errmsg);
 
 void Rwin_fpset();
 
+void Rgui_configure();
+void readconsolecfg();
 

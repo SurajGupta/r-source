@@ -369,7 +369,7 @@ void setup_Rmainloop(void)
     /* Perhaps it makes more sense to quit gracefully? */
 
     fp = R_OpenLibraryFile("base");
-    R_Inputfile = fp;
+    R_Inputfile = NULL;
     if (fp == NULL) {
 	R_Suicide("unable to open the base package\n");
     }
@@ -378,11 +378,12 @@ void setup_Rmainloop(void)
     SETJMP(R_Toplevel.cjmpbuf);
     R_GlobalContext = R_ToplevelContext = &R_Toplevel;
     signal(SIGINT, onintr);
+    signal(SIGUSR1,onsigusr1);
+    signal(SIGUSR2,onsigusr2);
     if (!doneit) {
 	doneit = 1;
 	R_ReplFile(fp, R_NilValue, 0, 0);
     }
-    R_Inputfile = NULL;
     fclose(fp);
 
     /* This is where we try to load a user's */
@@ -397,6 +398,8 @@ void setup_Rmainloop(void)
     SETJMP(R_Toplevel.cjmpbuf);
     R_GlobalContext = R_ToplevelContext = &R_Toplevel;
     signal(SIGINT, onintr);
+    signal(SIGUSR1,onsigusr1);
+    signal(SIGUSR2,onsigusr2);
     if (!doneit) {
 	doneit = 1;
 	R_InitialData();
@@ -407,19 +410,11 @@ void setup_Rmainloop(void)
     /* This is where we source the system-wide, the site's and the
        user's profile (in that order).  If there is an error, we
        drop through to further processing. */
-#ifdef OLD
-    R_LoadProfile(R_OpenSysInitFile());
-#ifndef Macintosh
-    R_LoadProfile(R_OpenSiteFile());
-    R_LoadProfile(R_OpenInitFile());
-#endif
-#else
+
     R_LoadProfile(R_OpenSysInitFile(), R_NilValue);
-#ifndef Macintosh
     R_LoadProfile(R_OpenSiteFile(), R_NilValue); 
     R_LoadProfile(R_OpenInitFile(), R_GlobalEnv);
-#endif
-#endif
+
     /* Initial Loading is done.  At this point */
     /* we try to invoke the .First Function. */
     /* If there is an error we continue */
@@ -453,6 +448,8 @@ void run_Rmainloop(void)
     SETJMP(R_Toplevel.cjmpbuf);
     R_GlobalContext = R_ToplevelContext = &R_Toplevel;
     signal(SIGINT, onintr);
+    signal(SIGUSR1,onsigusr1);
+    signal(SIGUSR2,onsigusr2);
 
     R_ReplConsole(R_GlobalEnv, 0, 0);
 }

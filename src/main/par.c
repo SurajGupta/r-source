@@ -170,6 +170,7 @@ static int Specify(char *what, SEXP value, DevDesc *dd)
 	case '7':
 	case 'c': case 'C': case '[':
 	case ']':
+	case 'u': case 'U':
 	case 'n':
 	    dd->dp.bty = dd->gp.bty = ix;
 	    break;
@@ -504,6 +505,9 @@ static int Specify(char *what, SEXP value, DevDesc *dd)
 	}
 	*/
 	GReset(dd);
+	/* Force a device clip */
+	if (dd->dp.canClip)
+	    GForceClip(dd);
     }
     else if (streql(what, "mgp")) {
 	value = coerceVector(value, REALSXP);
@@ -834,6 +838,7 @@ void Specify2(char *what, SEXP value, DevDesc *dd)
 	case '7':
 	case 'c': case 'C': case '[':
 	case ']':
+	case 'u': case 'U':
 	case 'n':
 	    dd->gp.bty = ix;
 	    break;
@@ -1112,8 +1117,8 @@ static SEXP Query(char *what, DevDesc *dd)
 	REAL(value)[0] = dd->dp.adj;
     }
     else if (streql(what, "ann")) {
-	value = allocVector(INTSXP, 1);
-	INTEGER(value)[0] = dd->dp.ann;
+	value = allocVector(LGLSXP, 1);
+	LOGICAL(value)[0] = (dd->dp.ann != 0);
     }
     else if (streql(what, "ask")) {
 	value = allocVector(LGLSXP, 1);

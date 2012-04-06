@@ -107,3 +107,4 @@ void R_approx(double *x, double *y, int *nxy, double *xout, int *nout,
 	if(!ISNA(xout[i]))
 	    xout[i] = approx1(xout[i], x, y, *nxy, *method);
 }
+

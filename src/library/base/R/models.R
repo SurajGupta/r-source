@@ -30,7 +30,10 @@ formula.data.frame<- function (x, ...)
     eval(ff)
 }
 
-print.formula <- function(x, ...) print.default(unclass(x), ...)
+print.formula <- function(x, ...) {
+    attr(x, ".Environment") <- NULL
+    print.default(unclass(x), ...)
+}
 
 "[.formula" <- function(x,i) {
     ans <- NextMethod("[")
@@ -158,11 +161,37 @@ na.fail <- function(object, ...)UseMethod("na.fail")
 na.fail.default <- function(object)
 {
     ok <- complete.cases(object)
-    if(all(ok)) object else stop("missing values in data frame");
+    if(all(ok)) object else stop("missing values in object");
 }
 
 na.omit <- function(object, ...)UseMethod("na.omit")
-na.omit.default <- function(object)  {
+na.omit.default <- function(object)
+{
+    ## only handle vectors and matrices
+    if(!is.atomic(object)) return(object)
+    d <- dim(object)
+    if(length(d) > 2) return(object)
+    if(length(d)){
+        omit <- seq(along=object)[is.na(object)]
+        omit <- unique(((omit-1) %% d[1]) + 1)
+        nm <- rownames(object)
+        object <- object[-omit, , drop=FALSE]
+    } else {
+	omit <- seq(along=object)[is.na(object)]
+        nm <- names(object)
+        object <- object[-omit]
+    }
+    if (any(omit)) {
+	temp <- seq(omit)[omit]
+	names(temp) <- nm[omit]
+	attr(temp, "class") <- "omit"
+	attr(object, "na.action") <- temp
+    }
+    object
+}
+
+na.omit.data.frame <- function(object)
+{
     ## Assuming a data.frame like object
     n <- length(object)
     omit <- FALSE
@@ -224,11 +253,11 @@ model.frame.default <-
     extranames <- as.character(substitute(list(...))[-1])
     extras <- substitute(list(...))
     extras <- eval(extras, data, sys.frame(sys.parent()))
-    if(length(extras)) { # remove NULL args
-        keep <- !sapply(extras, is.null)
-        extras <- extras[keep]
-        extranames <- extranames[keep]
-    }
+    ##if(length(extras)) { # remove NULL args
+    ##    keep <- !sapply(extras, is.null)
+    ##    extras <- extras[keep]
+    ##    extranames <- extranames[keep]
+    ##}
     subset <- eval(substitute(subset), data, sys.frame(sys.parent()))
     data <- .Internal(model.frame(formula, rownames, variables, varnames,
 				  extras, extranames, subset, na.action))

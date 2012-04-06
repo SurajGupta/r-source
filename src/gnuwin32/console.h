@@ -18,9 +18,9 @@
  *  Foundation, Inc., 59 Temple Place, Suite 330, Boston, MA  02111-1307  USA
  */
 
-
 typedef window console;
 typedef window pager;
+typedef window dataeditor;
 
 void
 setconsoleoptions(char *fnname,int fnsty, int fnpoints,
@@ -43,6 +43,7 @@ void consoletogglelazy(console c);
 int  consolegetlazy(console c);
 void consoleflush(console c);
 void consoleprint(console c);
+void drawconsole(control c, rect r);
 void savehistory(control c, char *s);
 void readhistory(control c, char *s);
 

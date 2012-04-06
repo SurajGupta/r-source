@@ -77,6 +77,7 @@ SEXP do_flatContour(SEXP, SEXP, SEXP, SEXP);
 SEXP do_filledcontour(SEXP, SEXP, SEXP, SEXP);
 SEXP do_restart(SEXP, SEXP, SEXP, SEXP);
 SEXP do_primitive(SEXP, SEXP, SEXP, SEXP);
+SEXP do_symbols(SEXP, SEXP, SEXP, SEXP);
 
 FUNTAB R_FunTab[] =
 {
@@ -194,11 +195,15 @@ FUNTAB R_FunTab[] =
 {"remove",	do_remove,	0,	111,	3,	PP_FUNCALL},
 {"duplicated",	do_duplicated,	0,	11,	1,	PP_FUNCALL},
 {"unique",	do_duplicated,	1,	11,	1,	PP_FUNCALL},
+{"which.min",	do_first_min,	1,	11,	1,	PP_FUNCALL},
+{"which.max",	do_first_max,	1,	11,	1,	PP_FUNCALL},
+{"unique",	do_duplicated,	1,	11,	1,	PP_FUNCALL},
 {"match",	do_match,	0,	11,	3,	PP_FUNCALL},
 {"pmatch",	do_pmatch,	0,	11,	3,	PP_FUNCALL},
 {"charmatch",	do_charmatch,	0,	11,	2,	PP_FUNCALL},
 {"match.call",	do_matchcall,	0,	11,	3,	PP_FUNCALL},
 {"complete.cases",do_compcases,	0,	11,	1,	PP_FUNCALL},
+
 {"attach",	do_attach,	0,	111,	3,	PP_FUNCALL},
 {"detach",	do_detach,	0,	111,	1,	PP_FUNCALL},
 {"search",	do_search,	0,	11,	0,	PP_FUNCALL},
@@ -439,9 +444,12 @@ FUNTAB R_FunTab[] =
 {"sub",		do_gsub,	0,	11,	5,	PP_FUNCALL},
 {"gsub",	do_gsub,	1,	11,	5,	PP_FUNCALL},
 {"regexpr",	do_regexpr,	1,	11,	3,	PP_FUNCALL},
+{"tolower",	do_tolower,	1,	11,	1,	PP_FUNCALL},
+{"toupper",	do_toupper,	1,	11,	1,	PP_FUNCALL},
+{"chartr",	do_chartr,	1,	11,	3,	PP_FUNCALL},
 
 
-/* Type Checking */
+/* Type Checking (typically implemented in ./coerce.c ) */
 
 {"is.null",	do_is,		NILSXP,	1,	1,	PP_FUNCALL},
 {"is.logical",	do_is,		LGLSXP,	1,	1,	PP_FUNCALL},
@@ -450,7 +458,7 @@ FUNTAB R_FunTab[] =
 {"is.double",	do_is,		REALSXP,1,	1,	PP_FUNCALL},
 {"is.complex",	do_is,		CPLXSXP,1,	1,	PP_FUNCALL},
 {"is.character",do_is,		STRSXP,	1,	1,	PP_FUNCALL},
-{"is.name",	do_is,		SYMSXP,	1,	1,	PP_FUNCALL},
+{"is.symbol",	do_is,		SYMSXP,	1,	1,	PP_FUNCALL},
 {"is.environment",do_is,	ENVSXP,	1,	1,	PP_FUNCALL},
 {"is.list",	do_is,		VECSXP,	1,	1,	PP_FUNCALL},
 {"is.pairlist",	do_is,		LISTSXP,1,	1,	PP_FUNCALL},
@@ -489,18 +497,13 @@ FUNTAB R_FunTab[] =
 {"machine",	do_machine,	0,	11,	0,	PP_FUNCALL},
 {"Machine",	do_Machine,	0,	11,	0,	PP_FUNCALL},
 {"commandArgs", do_commandArgs, 0,      11,     0,      PP_FUNCALL},
-{"tempfile",	do_tempfile,	0,	11,	1,	PP_FUNCALL},
 #ifdef Win32
 {"system",	do_system,	0,	11,	3,	PP_FUNCALL},
 #else
 {"system",	do_system,	0,	11,	2,	PP_FUNCALL},
 #endif
-#ifdef Unix
-{"getenv",	do_getenv,	0,	11,	1,	PP_FUNCALL},
-#endif
 #ifdef Win32
 {"unlink",	do_unlink,	0,	11,	1,	PP_FUNCALL},
-{"getenv",	do_getenv,	0,	11,	1,	PP_FUNCALL},
 {"help.start",	do_helpstart,	0,	11,	0,	PP_FUNCALL},
 {"show.help.item",do_helpitem,	0,	11,	3,	PP_FUNCALL},
 {"flush.console",do_flushconsole,0,     11,     0,      PP_FUNCALL},
@@ -513,6 +516,7 @@ FUNTAB R_FunTab[] =
 {"winDialogString",  do_windialogstring,   0,      11,     2,      PP_FUNCALL},
 {"winMenuAdd",  do_winmenuadd, 0,      11,     3,      PP_FUNCALL},
 {"winMenuDel",  do_winmenudel, 0,      11,     2,      PP_FUNCALL},
+{"savehistory", do_savehistory,0,      11,     1,      PP_FUNCALL},
 #endif
 {"parse",	do_parse,	0,	11,	4,	PP_FUNCALL},
 {"save",	do_save,	0,	111,	4,	PP_FUNCALL},
@@ -581,7 +585,7 @@ FUNTAB R_FunTab[] =
 {"sink",	do_sink,	0,	111,	1,	PP_FUNCALL},
 {"lib.fixup",	do_libfixup,	0,	111,	2,	PP_FUNCALL},
 {"pos.to.env",	do_pos2env,	0,	1,	1,	PP_FUNCALL},
-{"lapply",	do_lapply,	0,	11,	2,	PP_FUNCALL},
+{"lapply",	do_lapply,	0,	10,	2,	PP_FUNCALL},
 {"apply",	do_apply,	0,	11,	3,	PP_FUNCALL},
 
 /* Functions To Interact with the Operating System */
@@ -593,10 +597,12 @@ FUNTAB R_FunTab[] =
 {"list.files",  do_listfiles,   0,      11,     4,      PP_FUNCALL},
 {"file.exists", do_fileexists,  0,      11,     1,      PP_FUNCALL},
 {"file.choose", do_filechoose,  0,      11,     1,      PP_FUNCALL},
+{"tempfile",	do_tempfile,	0,	11,	1,	PP_FUNCALL},
 {"R.home",	do_Rhome,	0,	11,	0,	PP_FUNCALL},
 {"date",	do_date,	0,	11,	0,	PP_FUNCALL},
 {"Platform",	do_Platform,	0,	11,	0,	PP_FUNCALL},
 {"index.search",do_indexsearch, 0,      11,     5,      PP_FUNCALL},
+{"getenv",	do_getenv,	0,	11,	1,	PP_FUNCALL},
 {"getwd",	do_getwd,	0,	11,	0,	PP_FUNCALL},
 {"setwd",	do_setwd,	0,	11,	1,	PP_FUNCALL},
 {"basename",	do_basename,	0,	11,	1,	PP_FUNCALL},
@@ -610,15 +616,17 @@ FUNTAB R_FunTab[] =
 
 /* Device Drivers */
 
+{"PS",		do_PS,		0,	111,   14,	PP_FUNCALL},
+{"PicTeX",	do_PicTeX,	0,	111,	6,	PP_FUNCALL},
+{"XFig",	do_XFig,	0,	111,   12,	PP_FUNCALL},
 #ifdef Win32
 {"devga",	do_devga,	0,	111,	4,	PP_FUNCALL},
-#else
-{"X11",		do_X11,		0,	111,	7,	PP_FUNCALL},
 #endif
-{"PS",		do_PS,		0,	111,   11,	PP_FUNCALL},
-{"PicTeX",	do_PicTeX,	0,	111,	6,	PP_FUNCALL},
-{"Macintosh",	do_Macintosh,	0,	111,	4,	PP_FUNCALL},
-{"Gnome",       do_Gnome,       0,      111,    4,      PP_FUNCALL},
+#ifdef Unix
+{"X11",		do_X11,		0,	111,	7,	PP_FUNCALL},
+{"gnome",       do_Gnome,       0,      111,    4,      PP_FUNCALL},
+{"GTK",       	do_GTK,       	0,      111,    4,      PP_FUNCALL},
+#endif
 
 /* Graphics */
 
@@ -657,7 +665,7 @@ FUNTAB R_FunTab[] =
 {"strheight",	do_strheight,	0,	11,	3,	PP_FUNCALL},
 {"strwidth",	do_strwidth,	0,	11,	3,	PP_FUNCALL},
 {"contour",	do_contour,	0,	11,	12,	PP_FUNCALL},
-{"image",	do_image,	0,	11,	5,	PP_FUNCALL},
+{"image",	do_image,	0,	11,	4,	PP_FUNCALL},
 {"dend",	do_dend,	0,	111,	6,	PP_FUNCALL},
 {"dend.window",	do_dendwindow,	0,	111,	6,	PP_FUNCALL},
 {"replay",	do_replay,	0,	111,	0,	PP_FUNCALL},
@@ -665,6 +673,11 @@ FUNTAB R_FunTab[] =
 {"dotplot",	do_dotplot,	0,	111,	1,	PP_FUNCALL},
 {"persp",	do_persp,	0,	111,	4,	PP_FUNCALL},
 {"filledcontour",do_filledcontour,0,    111,    5,      PP_FUNCALL},
+{"getDL",	do_getDL,	0,	111,	0,	PP_FUNCALL},
+{"playDL",	do_playDL,	0,	111,	1,	PP_FUNCALL},
+{"getGPar",	do_getGPar,	0,	111,	0,	PP_FUNCALL},
+{"setGPar",	do_setGPar,	0,	111,	1,	PP_FUNCALL},
+{"symbols",	do_symbols,	0,	111,	-1,	PP_FUNCALL},
 
 /* Objects */
 
@@ -717,6 +730,7 @@ int StrToInternal(char *s)
     return 0;
 }
 
+#ifdef OLD
 /* string hashing */
 int hashpjw(char *s)
 {
@@ -731,6 +745,7 @@ int hashpjw(char *s)
     }
     return h % HSIZE;
 }
+#endif
 
 static void installFunTab(int i)
 {
@@ -746,6 +761,8 @@ static void SymbolShortcuts()
 {
     R_Bracket2Symbol = install("[[");
     R_BracketSymbol = install("[");
+    R_BraceSymbol = install("{");
+    R_TmpvalSymbol = install("*tmp*");
     R_ClassSymbol = install("class");
     R_DimNamesSymbol = install("dimnames");
     R_DimSymbol = install("dim");
@@ -762,7 +779,10 @@ static void SymbolShortcuts()
     R_TspSymbol = install("tsp");
     R_CommentSymbol = install("comment");
     R_SourceSymbol = install("source");
+    R_DotEnvSymbol = install(".Environment");
 }
+
+extern SEXP framenames; /* from model.c */
 
 /* initialize the symbol table */
 void InitNames()
@@ -770,7 +790,7 @@ void InitNames()
     int i;
     /* R_NilValue */
     /* THIS MUST BE THE FIRST CONS CELL ALLOCATED */
-    /* OR ARMAGEDON HAPPENS. */
+    /* OR ARMAGEDDON HAPPENS. */
     R_NilValue = allocSExp(NILSXP);
     CAR(R_NilValue) = R_NilValue;
     CDR(R_NilValue) = R_NilValue;
@@ -811,6 +831,7 @@ void InitNames()
 	installFunTab(i);
     /*  Unbound values which are to be preserved through GCs */
     R_PreciousList = R_NilValue;
+    framenames = R_NilValue;
 }
 
 
@@ -822,21 +843,23 @@ SEXP install(char *name)
 {
     char buf[MAXIDSIZE+1];
     SEXP sym;
-    int i;
+    int i, hashcode;
 
     if (*name == '\0')
 	error("attempt to use zero-length variable name");
     if (strlen(name) > MAXIDSIZE)
 	error("symbol print-name too long");
     strcpy(buf, name);
-    i = hashpjw(buf);
-    /* Check to see if the symbol is already present. */
-    /* If it is return it. */
+    hashcode = R_Newhashpjw(buf);
+    i = hashcode % HSIZE;
+    /* Check to see if the symbol is already present;  if it is, return it. */
     for (sym = R_SymbolTable[i]; sym != R_NilValue; sym = CDR(sym))
 	if (strcmp(buf, CHAR(PRINTNAME(CAR(sym)))) == 0)
 	    return (CAR(sym));
     /* Create a new symbol node and link it into the table. */
     sym = mkSYMSXP(mkChar(buf), R_UnboundValue);
+    HASHVALUE(PRINTNAME(sym)) = hashcode;
+    HASHASH(PRINTNAME(sym)) = 1;
     R_SymbolTable[i] = CONS(sym, R_SymbolTable[i]);
     return (sym);
 }

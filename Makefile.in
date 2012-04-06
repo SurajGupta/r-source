@@ -12,7 +12,7 @@ include $(top_builddir)/Makeconf
 distdir = $(PACKAGE)-$(VERSION)
 INSTFILES = COPYING COPYRIGHTS FAQ MIRROR-SITES NEWS RESOURCES 
 DISTFILES = $(INSTFILES) \
-	BUGS INSTALL README VERSION Y2K \
+	BUGS INSTALL ONEWS README VERSION Y2K \
 	Makeconf.in Makefile.in \
 	aclocal.m4 config.site configure configure.in \
 	date-stamp
@@ -23,16 +23,16 @@ GZIP = --best
 all: Makefile Makeconf R docs
 
 Makefile: $(srcdir)/Makefile.in $(top_builddir)/config.status
-	cd $(top_builddir) \
+	@cd $(top_builddir) \
 	  && CONFIG_FILES=$@ CONFIG_HEADERS= $(SHELL) ./config.status
 Makeconf: $(srcdir)/Makeconf.in $(top_builddir)/config.status
-	cd $(top_builddir) \
+	@cd $(top_builddir) \
 	  && CONFIG_FILES=$@ CONFIG_HEADERS= $(SHELL) ./config.status
 
 config.status: $(srcdir)/configure
-	$(SHELL) ./config.status --recheck
+	@$(SHELL) ./config.status --recheck
 $(srcdir)/configure: $(srcdir)/configure.in $(srcdir)/aclocal.m4
-	cd $(srcdir) && autoconf
+	@cd $(srcdir) && autoconf
 
 R:
 	@if [ "$(srcdir)" != "." ]; then \
@@ -47,34 +47,33 @@ R:
 	  echo "you should \`make docs' now ..."; \
 	fi
 
-src/include/config.h: $(srcdir)/configure \
-  $(srcdir)/src/include/config.h.in
-	$(top_srcdir)/configure --srcdir $(top_srcdir) @config_opts@
-
 docs help html latex examples:: FORCE
 	-@(cd src/library && $(MAKE) $@)
 FORCE:
 
-install: all installdirs
+install: installdirs
 	@for d in afm demos doc etc; do \
 	  (cd $${d} && $(MAKE) $@) || exit 1; \
 	done
-	@(cd $(srcdir); \
-	  for f in $(INSTFILES); do \
-	    $(INSTALL_DATA) $${f} $(rhome); \
-	  done)
+	@for f in $(INSTFILES); do \
+	  $(INSTALL_DATA) $(srcdir)/$${f} $(rhome); \
+	done
 	@echo "installing executables ..."
-	@$(INSTALL_PROGRAM) bin/R.X11 $(rhome)/bin
-	@if test -x bin/R.GNOME; then \
-	  $(INSTALL_PROGRAM) bin/R.GNOME $(rhome)/bin; \
-	fi
+	@$(INSTALL_PROGRAM) bin/R.bin $(rhome)/bin
 	@sed "s@R_HOME=.*@R_HOME=$(rhome)\}@" < bin/R > $(rhome)/bin/R
 	@sed "s@R_HOME=.*@R_HOME=$(rhome)\}@" < bin/R > $(bindir)/R
 	@chmod 755 $(bindir)/R $(rhome)/bin/R
-	@for f in `ls bin/* | grep -v '^bin/R\**$$' \
-	                    | grep -v '^bin/R.X11\**$$' \
-	                    | grep -v '^bin/R.GNOME\**$$'`; do \
-	  $(INSTALL) $${f} $(rhome)/bin; \
+	@for f in `ls bin/*.$(SHLIBEXT)`; do \
+	  $(INSTALL_PROGRAM) $${f} $(rhome)/bin; \
+	done
+	@if test -n "$(GNOMEUI_LIBS)"; then \
+	  $(INSTALL_PROGRAM) gnome/R_gnome.$(SHLIBEXT) $(rhome)/gnome; \
+	fi
+	@for f in `find bin -type f -print \
+	             | grep -v '^bin/R$$' \
+	             | grep -v '^bin/R_' \
+	             | grep -v '^bin/R.bin'`; do \
+	  $(INSTALL_SCRIPT) $${f} $(rhome)/bin; \
 	done
 	@echo "installing headers ..."
 	@for f in include/*.h; do \
@@ -114,6 +113,7 @@ uninstall:
 	@rm -rf $(rhome)/include
 	@echo "uninstalling executables ..."
 	@rm -rf $(rhome)/bin
+	@rm -rf $(rhome)/gnome
 	@rm -f $(bindir)/R
 	@for f in $(INSTFILES); do \
 	  rm -f $(rhome)/$${f}; \
@@ -134,7 +134,7 @@ distclean: clean
 	@for d in $(SUBDIRS); do \
 	  (cd $${d} && $(MAKE) $@); \
 	done
-	@rm -rf bin include library
+	@rm -rf bin include library gnome
 	@rm -f Makeconf Makefile Makefile.bak Makefrag.* \
 	  config.cache config.log config.status
 maintainer-clean: distclean

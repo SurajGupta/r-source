@@ -25,24 +25,35 @@
 
 /* Code to handle lapply/apply */
 
-/* .Internal(lapply(i, FUN)) */
+/* .Internal(lapply(X, FUN)) */
 
 SEXP do_lapply(SEXP call, SEXP op, SEXP args, SEXP rho)
 {
-    SEXP R_fcall, ans, FUN, ind;
+    SEXP R_fcall, ans, X, FUN, ind, tmp;
     int i, n;
 
     checkArity(op, args);
-    n = asInteger(CAR(args));
+    X = CAR(args);
+    FUN = CADR(args);
+    if (!isSymbol(X) || !isSymbol(FUN))
+	errorcall(call, "arguments must be symbolic");
+    n = length(eval(X, rho));
     if (n == NA_INTEGER)
 	errorcall(call, "invalid length");
     args = CDR(args);
-    FUN = CAR(args);
-    if(!isFunction(FUN))
-	errorcall(call, "argument FUN is not a function");
-    PROTECT(R_fcall = LCONS(FUN, args));
-    PROTECT(ind = allocVector(INTSXP, 1));
-    CADR(R_fcall) = ind;
+
+    /* Build call: FUN(X[[<ind>]], ...) */
+
+    /* Notice that it is OK to have one arg to LCONS do memory
+       allocation and not PROTECT the result (LCONS does memory
+       protection of its args internally), but not both of them,
+       since the computation of one may destroy the other */
+
+
+    ind = allocVector(INTSXP, 1);
+    PROTECT(tmp = LCONS(R_Bracket2Symbol, LCONS(X, LCONS(ind, R_NilValue))));
+    PROTECT(R_fcall = LCONS(FUN, LCONS(tmp, LCONS(R_DotsSymbol, R_NilValue))));
+
     PROTECT(ans = allocVector(VECSXP, n));
     for(i = 0; i < n; i++) {
 	INTEGER(ind)[0] = i + 1;
@@ -52,7 +63,7 @@ SEXP do_lapply(SEXP call, SEXP op, SEXP args, SEXP rho)
     return ans;
 }
 
-/* .Internal(lapply(X, FUN)) */
+/* .Internal(apply(X, X1, FUN)) */
 /* X is a matrix, and the last dimension is the one we want to 
    loop over */
 
@@ -62,21 +73,17 @@ SEXP do_apply(SEXP call, SEXP op, SEXP args, SEXP rho)
     int i, nr, nc;
 
     checkArity(op, args);
-    X = CAR(args);
+    X = CAR(args); args = CDR(args);
     if(!isMatrix(X))
 	errorcall(call, "First arg is not a matrix");
     Xd = getAttrib(X, R_DimSymbol);
     nr = INTEGER(Xd)[0];
     nc = INTEGER(Xd)[1];
-    args = CDR(args);
-    X1 = CAR(args);
-    args = CDR(args);
-    FUN = CAR(args);
-    if(!isFunction(FUN))
-	errorcall(call, "argument FUN is not a function");
-    PROTECT(R_fcall = LCONS(FUN, args));
+    X1 = CAR(args); args = CDR(args);
+    FUN = CAR(args); args = CDR(args);
+
+    PROTECT(R_fcall = LCONS(FUN, LCONS(X1, LCONS(R_DotsSymbol, R_NilValue))));
     PROTECT(ans = allocVector(VECSXP, nc));
-    CADR(R_fcall) = X1;
     for(i = 0; i < nc; i++) {
 	switch(TYPEOF(X)) {
 	case REALSXP:

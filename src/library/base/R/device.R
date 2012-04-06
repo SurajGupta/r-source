@@ -102,10 +102,67 @@ dev.copy <- function(device, ..., which = dev.next())
     dev.cur()
 }
 
-dev.print <- function(device = postscript, ...)
+dev.print <- function(device = postscript,  ...)
 {
     current.device <- dev.cur()
-    dev.off(dev.copy(device = device, ...)) # user must still print this
+    nm <- names(current.device)[1]
+    if(nm == "null device") stop("no device to print from")
+    if(nm != "X11" && nm != "windows" && nm != "gtk"  && nm != "gnome")
+        stop("can only print from screen device")
+    oc <- match.call()
+    oc[[1]] <- as.name("dev.copy")
+    oc$device <- device
+    din <- par("din"); w <- din[1]; h <- din[2]
+    if(missing(device)) { ## safe way to recognize postscript
+        if(is.null(oc$file)) oc$file <- ""
+        hz <- oc$horizontal
+        wp <- 8; wh <- 10
+        paper <- oc$paper
+        if(is.null(paper)) paper <- ps.options()$paper
+        if(paper == "default") paper <- getOption("papersize")
+        paper <- tolower(paper)
+        if(paper == "a4") {wp <- 8; hp <- 14.0 - 0.5}
+        ## Letter is defaults.
+        if(paper == "legal") {wp <- 8.27 - 0.5; hp <- 11.69 - 0.5}
+        if(paper == "executive") {wp <- 7.25 - 0.5; hp <- 10.5 - 0.5}
+        if(is.null(hz)) hz <- ps.options()$horizontal
+        if(w > wp && w < hp && h < wp) { horizontal <- TRUE }
+        else if (h > wp && h < hp && w < wp) { horizontal <- FALSE }
+        else {
+            h0 <- ifelse(hz, wp, wh)
+            if(h > h0) {w <- w * h0 /h; h<- h0 }
+            w0 <- ifelse(hz, wh, wp)
+            if(w > w0) { h <- h * w0 /w;  w <- w0}
+        }
+        if(is.null(oc$pointsize)) {
+            pt <- ps.options()$pointsize
+            oc$pointsize <- pt * w/din[1]
+        }
+    }
+    if(is.null(oc$width)) oc$width <- w
+    if(is.null(oc$height)) oc$height <- h
+    dev.off(eval(oc))
+    dev.set(current.device)
+}
+
+dev.copy2eps <- function(...)
+{
+    current.device <- dev.cur()
+    nm <- names(current.device)[1]
+    if(nm == "null device") stop("no device to print from")
+    if(nm != "X11" && nm != "windows" && nm != "gtk"  && nm != "gnome")
+        stop("can only print from screen device")
+    oc <- match.call()
+    oc[[1]] <- as.name("dev.copy")
+    oc$device <- postscript
+    oc$onefile <- FALSE
+    oc$horizontal <- FALSE
+    oc$paper <- "special"
+    din <- par("din"); w <- din[1]; h <- din[2]
+    if(is.null(oc$width)) oc$width <- w
+    if(is.null(oc$height)) oc$height <- h
+    if(is.null(oc$file)) oc$file <- "Rplot.eps"
+    dev.off(eval(oc))
     dev.set(current.device)
 }
 

@@ -23,7 +23,7 @@
 /* From http://www.netlib.org/specfun/rkbesl	Fortran translated by f2c,...
  *	------------------------------=#----	Martin Maechler, ETH Zurich
  */
-#include "Mathlib.h"
+#include "nmath.h"
 
 static double xmax = 705.342;/* maximal x for UNscaled answer, see below */
 

@@ -1,9 +1,393 @@
 				Dear Emacs, please make this -*-Text-*- mode!
 	**************************************************
 	*						 *
-	*	       1.0 SERIES NEWS			 *
+	*	       1.1 SERIES NEWS			 *
 	*						 *
 	**************************************************
+
+
+		CHANGES IN R VERSION 1.1.0
+
+
+NEW FEATURES
+
+
+    o	There are several changes to the compile and link flags, and
+	an attempt is made to use /usr/local/include and
+	/usr/local/lib on all platforms.  Please read config.site and
+	INSTALL if you have set flags for previous versions.
+
+    o	New package tcltk, providing interface and language bindings for
+	the Tcl/Tk graphical interface toolkit. This makes it possible
+	to do some rather nifty things with buttons and entry fields
+	and so forth in very few lines of code.  It is still somewhat
+	experimental so don't go churning out thousands of lines of
+	GUI code and then blame us for changing the API later on. It does
+	not currently work with GNOME because of event loop differences.
+	See demo(tkttest) and demo(tkdensity). 
+
+    o	Internally using global R_Expressions [getOption("expressions")]
+	dramatically speeds up eval.c.
+
+    o	The X11 support code is now in a separate shared library, and
+	flag --gui=none will run R without X11 support (and so x11()
+	and data.entry() will not be available).  R BATCH sets --gui=none.
+
+    o	Configuring without X (e.g. --without-x) does work (at last).
+	configure will report if X11 support has been included.
+	If R has been built without X11 the default GUI is "none".
+
+    o	GNOME support files have moved from src/gnome to src/unix/gnome
+	and the code is now in a separate shared library.  Both
+	--gui=GNOME and --gui=gnome are allowed.
+
+	The main graphics device for use with GNOME is now called
+	gtk(); the x11() device from the X11 support can also be used.
+	(The gnome() device remains unreliable, and is by default
+	unavailable.)
+
+	All GNOME support now installs in R_HOME/gnome to make it
+	easier to package separately.
+
+    o	Command line option `-g' can now be used as short version of
+	`--gui'.
+
+    o	The "keep.source" option now defaults to interactive()
+	instead of TRUE.
+
+    o	Many interface enhancements to the data editor, which now uses
+	(by default) variable-width columns and much less redrawing.
+	See ?dataentry for a description of the current user interface.
+
+    o	R under Unix can be sent SIGUSR1 to quit and save or SIGUSR2
+	to quit and save without running .Last and on.exit
+	expressions.
+
+    o	Added ability to use the graphics device driver to perform
+	horizontal justification of strings.  This is used in the
+	x11(), windows(), postscript() and xfig() drivers and will
+	lead to more accurate placing of centred or right-justified
+	strings.
+
+    o	Formulas created with the tilde operator now contain the
+	environment in which they were created.  The environment of a
+	formula can be accessed with the environment() function.  This
+	facility is still experimental; it is intended to help
+	simplify writing modeling functions.
+
+
+    o	$ and $<- are now generic functions.
+
+    o	add1.glm() and drop1.glm() now allow test="F", which is
+	appropriate for models with estimated dispersion.
+
+    o	approx() and approxfun() have an extra argument ties= to control
+	handling of tied x values
+
+    o	New function as.symbol(), identical to as.name().
+	is.symbol and is.name() are now identical by definition;
+	before, they were equivalent by implementation.
+
+    o	attach() now works for R data files.
+
+    o	axis() now has additional arguments.  The argument "tick" turns
+	tick drawing on and off (on by default).  Additional arguments
+	line, pos, and outer; allow more flexible placement of axes.
+
+    o	New device bitmap(), like dev2bitmap() but a stand-alone device.
+
+    o	boxplot() returns (and bxp() accepts) a list containing the summary
+	statistics for the boxes (changed from a list of elements one for
+	each box).
+
+    o	file="|cmd" is allowed (to pipe output to `cmd'), under cat()
+	and postscript() and functions that use them (for example, write()).
+
+    o	New functions chartr() for general-purpose character translation
+	in character vectors, and tolower() and toupper() for converting
+	alphabetic characters to lower-case and upper-case, respectively.
+
+    o	coplot() has new option subscripts=TRUE to pass the indices
+	to the panel function.
+
+    o	cor.test(method="spearman") might give slightly better P values,
+	since it now relies on pnorm() (with proper tail) instead of alnorm.
+
+    o	dbinom() works for size=0 (where appropriate).
+
+    o	New trivial function det() for determinant computation
+	(the example in ?qr did not seem to be sufficient).
+
+    o	If present in the package, a function .Last.lib will be called
+	when a package is detached.
+
+    o	New function dev.copy2eps() copies the current device to an eps
+	file, taking the size from that of the device.
+
+    o	dev.print() now prints if possible, and takes the size from
+	the device being copied.
+
+    o	edit() or fix() applied to a numeric or character matrix now
+	uses the data editor, if available.
+
+    o	edit.data.frame() edits factors in character mode by default,
+	and will allow the row names to be edited, by default if they
+	are not 1:nrow(name).
+
+    o	expand.model.frame() for adding variables to a model frame.
+
+    o	The handling of estimating the dispersion in glm() fits has been
+	changed for consistency across methods.	 For `binomial' and
+	`poisson' families the dispersion is always taken as one.
+	For `quasibinomial' and `quasipoisson' families it is always
+	estimated (by residual chisq/residual df).
+
+    o	Using "~" when specifying lib.loc (for example to help() or
+	library()) is now supported.
+
+    o	image() has a new argument "breaks" and divides the zlim range
+	into equal-length intervals.
+
+    o	install.packages() and update.packages() have a new `destdir'
+	argument for the directory to which to download the packages.
+
+    o	New function interaction.plot().
+
+    o	Internal cleanup of lapply()'s C code.
+
+    o	library(), require(), and sys.source() have a new argument
+	` keep.source = getOption("keep.source.pkgs") '.
+	This defaults to false, but can be set (also for base) to true
+	by setting the environment variable R_KEEP_PKG_SOURCE to "yes"
+
+    o	Par `lty' in lines() now defaults to par("lty") not "solid",
+	for consistency with plot().
+
+    o	list.files() [aka dir()]: path argument has now default = "."
+
+    o	locator() allows inline graphics parameters (for the plotting
+	it does with type !="n").
+
+    o	New function max.col() from MASS, thanks to V&R.
+
+    o	nlm() can now take additional arguments in ... to be passed to f.
+
+    o	par() returns elements in alphabetical order, and "ann" as a
+	logical (not integer).
+
+    o	.Platform has a new component GUI specifying the GUI in use
+	(which might be "unknown").
+
+    o	plot.formula() searches for a plot method for the left-side of the
+	formula before searching for a plot method for the right-side of
+	the formula.
+
+    o	New bitmap devices png() and jpeg() on Unix/X11. (They were
+	already available on Windows.)
+
+    o	postscript(print.it=TRUE) now does print the plot file.
+	postscript(onefile=FALSE) now produces multiple separate files.
+
+    o	provide() is now deprecated.
+
+    o	New function quade.test() in package ctest for the Quade test
+	for unreplicated blocked data.
+
+    o	quantile(x, probs) now propagates NA/NaN in probs.
+
+    o	Option for user-supplied normal random generator in RNGkind().
+
+    o	read.fwf() is no longer dependent on Perl.
+
+    o	New arguments check.names and strip.white to read.table() and
+	friends.
+
+    o	Functions recordPlot() and replayPlot() save a plot to an R
+	variable and replay it.
+
+    o	residuals.lm() also allows types "partial" and "response"
+	as residuals.glm().
+
+    o	Added col option to rug().
+
+    o	scale() is now generic with scale.default method.
+
+    o	New "call. = TRUE" argument for stop(), and
+	new function  stopifnot(.) -- to be used in "make check".
+
+    o	str(.) has a new optional argument "nchar.max = 128" and truncates
+	strings longer than that.  Also eliminated a few minor glitches.
+
+    o   The symbols() function is now implemented.
+
+    o	New function termplot() with similar functionality to
+	plot.gam() in S.
+
+    o   The parameters to title() which specify the labels may now
+        be specified as a list containing the parameter together
+	with additional modifying par values (cex, col, font) which
+	affect just that label.
+
+	title() also has new line and outer arguments which provide
+	functionality which matches that in axis().
+
+    o	New functions which.min() amd which.max().
+
+    o	The Wilcoxon and Ansari-Bradley tests now optionally return
+	confidence intervals for the location or scale parameter of
+	interest.
+
+    o	New argument `extend' to window() (and updated documentation).
+
+    o	write.table() can now write CSV files in the format Excel expects.
+
+    o	New device xfig() to produce XFig files.
+
+    o	New xyz.coords() utility function to be used for 3D highlevel plots.
+
+
+    o	R CMD build now also works for package bundles.
+
+    o	Rdconv allows an output file to be specified.
+
+    o	Initial support for C++ source code in add-on packages under Unix.
+
+    o	Mathlib can be built as a standalone library: see directory
+	src/nmath/standalone.
+
+
+
+BUG FIXES
+
+    o	The Mathlib functions now use exactly the same values for
+	+/-Inf, NaN and NA as the rest of R in all cases.
+
+    o	Improved automatic remaking.
+
+
+    o	option keep.source was not set correctly before the base
+	package was loaded: some functions in the base package had
+	the source kept.  The memory usage should now be reduced by ca 1Mb.
+
+    o	The base file is no longer closed twice in case of a syntax
+	error (caused segfault on Linux).
+
+    o	The X11 data editor scrolls cells and so allows more than ca 10
+	characters to be entered.  Several interface/redraw errors
+	have been corrected.
+
+    o	Using `destroy' or `close' on the X11 data editor window killed R.
+
+    o	Multiple `destroy' events or X11 errors killed R (PR#400).
+
+    o	Warnings from .Last or closing devices are printed where
+	sensible (e.g. not on GNOME nor Windows console).
+
+    o	add1.glm() and drop1.glm gave() incorrect results in the "Chisq"
+	test option when the scale was estimated.
+
+    o	aggregate() applied to multiple time series lost the series names.
+
+    o   as.hclust.twins() in package mva sets method=NA (PR#538)
+
+    o	ave(1:3) now works (as when is.null(list()) was TRUE years ago).
+
+    o	barplot(c(0.1, 0.5, 1), ylim = c(0, 1)) now works: [xy]axs="i"
+	and exact limits now labels the limits.
+
+    o	by() works when embedded in a function.
+
+    o	The xlab and ylab in coplot() now set the x and y axis labels,
+	as in S.  Supply a second component to label the conditioning
+	variables.
+
+    o	count.fields() and read.table() now have the same default
+	quote = "\"'".
+
+    o	guard against segfault in dataentry(x<-1, Modes = plot), and the like.
+
+    o	dev.print() now checks if the current device is replayable
+	(and not all devices were, despite the documentation).
+
+    o	The gtk() device (formerly x11() under GNOME) was incorrectly
+	returning character information, so in particular `*' was
+	wrongly centred as a plotting symbol.
+
+    o	is.qr() checks not only for $qr, but also for $rank & $qraux, PR#482.
+
+    o	library() will not leave the package on the search path if
+	loading fails (including if .First.lib fails).
+
+    o	lqs(, method="S") rounded k0 on passing to C.
+
+    o	na.omit() now handles vectors and matrices as well as data
+        frames.
+
+    o	plot.lm(*, which=4) now works thanks to Marcel Wolbers.
+
+    o	postscript() now uses the options "papersize" and "printcmd"
+	rather than the values of R_PAPERSIZE in the environment
+	and R_PRINTCMD found at build time.
+
+    o	postscript() now makes use of kerning information in computing
+	string widths.
+
+    o	M <- 2 ; print(ppr(.., nterms = M))  now works.
+
+    o	ppr(, sm.method="spline") had an internal limit of 250 rows:
+	this is now 2500 and is now checked.
+
+    o	predict.lm(,type="terms",se.fit=T) gives correct standard errors
+	(thanks to John Maindonald)
+
+    o	print.ftable() now returns its argument.
+
+    o	proj.aovlist() now gives a non-zero result for strata with
+	no fitted effects.
+
+    o	qnorm() is now based on AS 241 instead of AS 111, and should
+	give precise results up to 16 digits precision.
+
+    o	rgeom(, prob=1) gives 0 rather than NA
+
+    o	rpois(*, lambda) now works when lambda > .Machine$integer.max
+
+    o	strheight("X") with no active device would segfault.
+
+    o	system() is now (partially) functional on systems without popen.
+
+    o	Fixed bug in undoc() - requiring new `chdir' argument
+	for sys.source()
+
+    o	Fixed problem in usemethod() where CAR(call) could be non-symbol.
+
+    o	The x11() device no longer crashes R if a font is not found,
+	and will warn if there is a size mismatch of more than 10%.
+
+
+    o	R CMD Rd2dvi now sorts files alphabetically.
+
+    o	Rdconv now reports if an invalid type is specified (rather
+	than using latex).
+
+    o	Support for Rd conversion to Sd has been reinstated (it was
+	unintentionally removed along with nroff-based conversion to text).
+
+    o	\deqn{} fix in R-exts.texi, PR#523.
+
+
+    o	Linpack.h now makes clear which routines are actually in R.
+
+    o	Entry-point "pythag" is now loaded even though it is not
+	necessarily used in R.  Where "hypot" is available pythag
+	just calls hypot after checking for special values.
+
+    o	call_R will now correctly handle character vector arguments.
+
+    o   The alphabet links on top of HTML function indices with more than
+	100 entries now contain only the letters which are really
+	first letters of at least one entry.
+
 
 
 		CHANGES IN R VERSION 1.0.1
@@ -53,6 +437,8 @@ BUG FIXES
 
     o	barplot now works okay when length(col) < length(legend.txt),
 	thanks to Ben Bolker, PR#494.
+
+    o	legend has new args `ncol' and `horiz' thanks to Ben Bolker.
 
     o	kernel("dirichlet", m=10, r=1) in package ts now works.
 
@@ -104,8 +490,8 @@ BUG FIXES
 
     o	quantile(x) now works when x contains several +/- Inf's.
 
-    o   guard against segfault in dataentry(0,0) (or, more
-        realistically, when mistyping data.entry(x,y) as
+    o	guard against segfault in dataentry(0,0) (or, more
+	realistically, when mistyping data.entry(x,y) as
 	dataentry(x,y))
 
 

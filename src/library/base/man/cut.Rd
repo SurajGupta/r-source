@@ -9,7 +9,7 @@ cut.default(x, breaks, labels = NULL,
 \alias{cut.default}
 \arguments{
 \item{x}{a numeric vector which is to be converted to a factor by cutting.}
-\item{break}{either a vector of cut points or number
+\item{breaks}{either a vector of cut points or number
   giving the number of intervals which \code{x} is to be cut into.}
 \item{labels}{labels for the levels of the resulting category.  By default,
     labels are constructed using \code{"(a,b]"} interval notation. If
@@ -60,8 +60,8 @@ system.time(print(sum(   hist  (Z, br = -6:6, plot=FALSE)$counts)))
 cut(rep(1,5),4)#-- dummy
 tx0 <- c(9, 4, 6, 5, 3, 10, 5, 3, 5)
 x <- rep(0:8, tx0)
-tx <- table(x)
-all(tx == tx0)
+stopifnot(table(x) == tx0)
+
 table( cut(x, b = 8))
 table( cut(x, br = 3*(-2:5)))
 table( cut(x, br = 3*(-2:5), right = F))

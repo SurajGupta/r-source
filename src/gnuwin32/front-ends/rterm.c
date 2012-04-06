@@ -1,6 +1,6 @@
 /*
  *  R : A Computer Language for Statistical Data Analysis
- *  Copyright (C) 1998--1999  R Development Core Team
+ *  Copyright (C) 1998--2000  R Development Core Team
  *
  *  This program is free software; you can redistribute it and/or modify
  *  it under the terms of the GNU General Public License as published by
@@ -17,6 +17,7 @@
  *  Foundation, Inc., 59 Temple Place, Suite 330, Boston, MA  02111-1307  USA
  */
 
+#define NONAMELESSUNION
 #include <windows.h>
 #include <stdio.h>
 #include <io.h> /* for isatty */
@@ -29,7 +30,9 @@
 #define UserBreak     (*_imp__UserBreak)
 
 extern void cmdlineoptions(int, char **);
-extern void setup_term_ui(void);
+extern void readconsolecfg();
+extern void gl_loadhistory(char *);
+extern int initapp(int, char **);
 extern void Rf_mainloop(void);
 extern UImode CharacterMode;
 extern int UserBreak;
@@ -64,7 +67,9 @@ int AppMain (int argc, char **argv)
     cmdlineoptions(argc, argv);
     mainThreadId = GetCurrentThreadId() ;
     signal(SIGBREAK, my_onintr);
-    setup_term_ui();
+    initapp(0, NULL);
+    readconsolecfg();
+    gl_loadhistory(".Rhistory");
     Rf_mainloop();
     /* NOTREACHED */
     return 0;

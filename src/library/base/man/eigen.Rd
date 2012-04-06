@@ -29,10 +29,6 @@ eigen(x, symmetric, only.values=FALSE)
     eigenvectors of \code{x}, or \code{NULL} if \code{only.values} is
     \code{TRUE}.}
 }
-\note{
-  To compute the determinant of a matrix (do you \emph{really} need it?),
-  it is much more efficient to use the QR decomposition, see \code{\link{qr}}.
-}
 \references{
   Smith, B. T, Boyle, J. M., Dongarra, J. J., Garbow, B. S., Ikebe,Y.,
   Klema, V., and  Moler, C. B. (1976).
@@ -40,8 +36,11 @@ eigen(x, symmetric, only.values=FALSE)
   Springer-Verlag Lecture Notes in Computer Science.
 }
 \seealso{
-\code{\link{svd}}, a generalization of \code{eigen}; \code{\link{qr}}, and
-\code{\link{chol}} for related decompositions.
+  \code{\link{svd}}, a generalization of \code{eigen}; \code{\link{qr}}, and
+  \code{\link{chol}} for related decompositions.
+
+  To compute the determinant of a matrix, the \code{\link{qr}}
+  decomposition is much more efficient: \code{\link{det}}.
 }
 \examples{
 eigen(cbind(c(1,-1),c(-1,1)))
@@ -60,8 +59,9 @@ sm <- m + t(m) #- symmetric matrix
 em <- eigen(sm); V <- em$vect
 print(lam <- em$values) # ordered DEcreasingly
 
-all(abs(sm \%*\% V - V \%*\% diag(lam))          < 60*Meps)
-all(abs(sm       - V \%*\% diag(lam) \%*\% t(V)) < 60*Meps)
+stopifnot(
+ abs(sm \%*\% V - V \%*\% diag(lam))          < 60*Meps,
+ abs(sm       - V \%*\% diag(lam) \%*\% t(V)) < 60*Meps)
 
 ##------- Symmetric = FALSE:  -- different to above : ---
 
@@ -69,19 +69,19 @@ em <- eigen(sm, symmetric = FALSE); V2 <- em$vect
 print(lam2 <- em$values) # ordered decreasingly in ABSolute value !
                          # and V2 is not normalized (where V is):
 print(i <- rev(order(lam2)))
-all(abs(1 - lam2[i] / lam) < 60 * Meps)# [1] TRUE
+stopifnot(abs(1 - lam2[i] / lam) < 60 * Meps)
 
 zapsmall(Diag <- t(V2) \%*\% V2) # orthogonal, but not normalized
 print(norm2V <- apply(V2 * V2, 2, sum))
-all( abs(1- norm2V / diag(Diag)) < 60*Meps) #> TRUE
+stopifnot( abs(1- norm2V / diag(Diag)) < 60*Meps)
 
 V2n <- sweep(V2,2, STATS= sqrt(norm2V), FUN="/")## V2n are now Normalized EV
 apply(V2n * V2n, 2, sum)
 ##[1] 1 1 1 1 1
 
 ## Both are now TRUE:
-all(abs(sm \%*\% V2n - V2n \%*\% diag(lam2))            < 60*Meps)
-all(abs(sm         - V2n \%*\% diag(lam2) \%*\% t(V2n)) < 60*Meps)
+stopifnot(abs(sm \%*\% V2n - V2n \%*\% diag(lam2))            < 60*Meps,
+          abs(sm         - V2n \%*\% diag(lam2) \%*\% t(V2n)) < 60*Meps)
 
 ## Re-ordered as with symmetric:
 sV <- V2n[,i]

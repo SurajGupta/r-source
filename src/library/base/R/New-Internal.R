@@ -1,6 +1,5 @@
 ##vector <- function(mode = "logical", length = 0).Internal(vector(mode,length))
 
-stop <- function(message = NULL).Internal(stop(message))
 warning <- function(message = NULL).Internal(warning(message))
 restart <- function(on = TRUE).Internal(restart(on))
 geterrmessage <- function() .Internal(geterrmessage())
@@ -65,7 +64,13 @@ rbind <- function(..., deparse.level=1) {
     .Internal(rbind(...))
 }
 
-dataentry <- function(data, modes).Internal(dataentry(data, modes))
+dataentry <- function (data, modes) {
+    if(length(data) && !all(md <- sapply(data, is.vector)))
+        stop("invalid data argument")
+    if(length(modes) && !all(mm <- sapply(modes, is.character)))
+        stop("invalid modes argument")
+    .Internal(dataentry(data, modes))
+}
 deparse <-
     function(expr, width.cutoff = 60).Internal(deparse(expr, width.cutoff))
 

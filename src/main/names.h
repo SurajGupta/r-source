@@ -48,6 +48,8 @@ SEXP do_X11(SEXP, SEXP, SEXP, SEXP);
 SEXP do_PS(SEXP, SEXP, SEXP, SEXP);
 SEXP do_PicTeX(SEXP, SEXP, SEXP, SEXP);
 SEXP do_Gnome(SEXP, SEXP, SEXP, SEXP);
+SEXP do_GTK(SEXP, SEXP, SEXP, SEXP);
+SEXP do_XFig(SEXP, SEXP, SEXP, SEXP);
 
 /* Function Names */
 
@@ -71,6 +73,7 @@ SEXP do_windialog(SEXP, SEXP, SEXP, SEXP);
 SEXP do_windialogstring(SEXP, SEXP, SEXP, SEXP);
 SEXP do_winmenuadd(SEXP, SEXP, SEXP, SEXP);
 SEXP do_winmenudel(SEXP, SEXP, SEXP, SEXP);
+SEXP do_savehistory(SEXP, SEXP, SEXP, SEXP);
 #endif
 
 SEXP do_abbrev(SEXP, SEXP, SEXP, SEXP);
@@ -109,6 +112,7 @@ SEXP do_c(SEXP, SEXP, SEXP, SEXP);
 SEXP do_call(SEXP, SEXP, SEXP, SEXP);
 SEXP do_cat(SEXP, SEXP, SEXP, SEXP);
 SEXP do_charmatch(SEXP, SEXP, SEXP, SEXP);
+SEXP do_chartr(SEXP, SEXP, SEXP, SEXP);
 SEXP do_class(SEXP, SEXP, SEXP, SEXP);
 SEXP do_classgets(SEXP, SEXP, SEXP, SEXP);
 SEXP do_colors(SEXP, SEXP, SEXP, SEXP);
@@ -169,6 +173,8 @@ SEXP do_fileexists(SEXP, SEXP, SEXP, SEXP);
 SEXP do_filecreate(SEXP, SEXP, SEXP, SEXP);
 SEXP do_fileremove(SEXP, SEXP, SEXP, SEXP);
 SEXP do_fileshow(SEXP, SEXP, SEXP, SEXP);
+SEXP do_first_max(SEXP, SEXP, SEXP, SEXP);
+SEXP do_first_min(SEXP, SEXP, SEXP, SEXP);
 SEXP do_fft(SEXP, SEXP, SEXP, SEXP);
 SEXP do_fmin(SEXP, SEXP, SEXP, SEXP);
 SEXP do_for(SEXP, SEXP, SEXP, SEXP);
@@ -215,7 +221,6 @@ SEXP do_logic3(SEXP, SEXP, SEXP, SEXP);
 SEXP do_ls(SEXP, SEXP, SEXP, SEXP);
 SEXP do_Machine(SEXP, SEXP, SEXP, SEXP);
 SEXP do_machine(SEXP, SEXP, SEXP, SEXP);
-SEXP do_Macintosh(SEXP, SEXP, SEXP, SEXP);
 SEXP do_makelist(SEXP, SEXP, SEXP, SEXP);
 SEXP do_makenames(SEXP, SEXP, SEXP, SEXP);
 SEXP do_makevector(SEXP, SEXP, SEXP, SEXP);
@@ -251,6 +256,9 @@ SEXP do_pause(SEXP, SEXP, SEXP, SEXP);
 SEXP do_persp(SEXP, SEXP, SEXP, SEXP);
 SEXP do_polyroot(SEXP, SEXP, SEXP, SEXP);
 SEXP do_pos2env(SEXP, SEXP, SEXP, SEXP);
+#ifdef HAVE_TIMES
+SEXP do_proctime(SEXP, SEXP, SEXP, SEXP);
+#endif
 SEXP do_abline(SEXP, SEXP, SEXP, SEXP);
 SEXP do_plot_xy(SEXP, SEXP, SEXP, SEXP);
 SEXP do_plot_new(SEXP, SEXP, SEXP, SEXP);
@@ -326,9 +334,8 @@ SEXP do_tempfile(SEXP, SEXP, SEXP, SEXP);
 SEXP do_termsform(SEXP, SEXP, SEXP, SEXP);
 SEXP do_text(SEXP, SEXP, SEXP, SEXP);
 SEXP do_tilde(SEXP, SEXP, SEXP, SEXP);
-#ifdef HAVE_TIMES
-SEXP do_proctime(SEXP, SEXP, SEXP, SEXP);
-#endif
+SEXP do_tolower(SEXP, SEXP, SEXP, SEXP);
+SEXP do_toupper(SEXP, SEXP, SEXP, SEXP);
 SEXP do_transpose(SEXP, SEXP, SEXP, SEXP);
 SEXP do_typecvt(SEXP, SEXP, SEXP, SEXP);
 SEXP do_typeof(SEXP, SEXP, SEXP, SEXP);
@@ -340,3 +347,8 @@ SEXP do_version(SEXP, SEXP, SEXP, SEXP);
 SEXP do_warning(SEXP, SEXP, SEXP, SEXP);
 SEXP do_while(SEXP, SEXP, SEXP, SEXP);
 SEXP do_zeroin(SEXP, SEXP, SEXP, SEXP);
+
+SEXP do_getDL(SEXP, SEXP, SEXP, SEXP);
+SEXP do_playDL(SEXP, SEXP, SEXP, SEXP);
+SEXP do_getGPar(SEXP, SEXP, SEXP, SEXP);
+SEXP do_setGPar(SEXP, SEXP, SEXP, SEXP);

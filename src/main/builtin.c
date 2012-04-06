@@ -1,7 +1,7 @@
 /*
  *  R : A Computer Language for Statistical Data Analysis
  *  Copyright (C) 1995-1998  Robert Gentleman and Ross Ihaka
- *  Copyright (C) 1999,2000  The R Development Core Team.
+ *  Copyright (C) 1999-2000  The R Development Core Team.
  *
  *  This program is free software; you can redistribute it and/or modify
  *  it under the terms of the GNU General Public License as published by
@@ -33,7 +33,7 @@ SEXP do_delay(SEXP call, SEXP op, SEXP args, SEXP rho)
     expr = CAR(args);
     env = eval(CADR(args), rho);
     if (!isEnvironment(env))
-	errorcall(call, "invalid argument");
+	errorcall(call, R_MSG_IA);
     return mkPROMISE(expr, env);
 }
 
@@ -58,8 +58,7 @@ SEXP do_onexit(SEXP call, SEXP op, SEXP args, SEXP rho)
 	addit = (LOGICAL(add)[0] == 1);
 	break;
     default:
-	errorcall(call, "invalid number of arguments");
-	code = R_NilValue;/* for -Wall */
+	errorcall_return(call, "invalid number of arguments");
     }
     ctxt = R_GlobalContext;
     while (ctxt != R_ToplevelContext && !(ctxt->callflag & CTXT_FUNCTION) )
@@ -67,10 +66,10 @@ SEXP do_onexit(SEXP call, SEXP op, SEXP args, SEXP rho)
     if (ctxt->callflag & CTXT_FUNCTION)
     {
 	if (addit && (oldcode = ctxt->conexit) != R_NilValue ) {
-	    if ( CAR(oldcode) != install("{") )
+	    if ( CAR(oldcode) != R_BraceSymbol )
 	    {
 		PROTECT(tmp = allocList(3));
-		CAR(tmp) = install("{");
+		CAR(tmp) = R_BraceSymbol;
 		CADR(tmp) = oldcode;
 		CADDR(tmp) = code;
 		TYPEOF(tmp) = LANGSXP;
@@ -134,7 +133,7 @@ SEXP do_envir(SEXP call, SEXP op, SEXP args, SEXP rho)
 	return CLOENV(CAR(args));
     else if (CAR(args) == R_NilValue)
 	return R_GlobalContext->sysparent;
-    return R_NilValue;
+    else return getAttrib(CAR(args), R_DotEnvSymbol);
 }
 
 SEXP do_envirgets(SEXP call, SEXP op, SEXP args, SEXP rho)
@@ -142,6 +141,8 @@ SEXP do_envirgets(SEXP call, SEXP op, SEXP args, SEXP rho)
     checkArity(op, args);
     if (TYPEOF(CAR(args)) == CLOSXP && isEnvironment(CADR(args)))
 	CLOENV(CAR(args)) = CADR(args);
+    else if (isEnvironment(CADR(args)))
+	setAttrib(CAR(args), R_DotEnvSymbol, CADR(args));
     return CAR(args);
 }
 
@@ -151,7 +152,7 @@ static void cat_newline(SEXP labels, int *width, int lablen, int ntot)
     *width = 0;
     if (labels != R_NilValue) {
 	Rprintf("%s ", EncodeString(CHAR(STRING(labels)[ntot % lablen]),
-				    1, 0, adj_left));
+				    1, 0, Rprt_adj_left));
 	*width += Rstrlen(CHAR(STRING(labels)[ntot % lablen])) + 1;
     }
 }
@@ -179,9 +180,9 @@ SEXP do_cat(SEXP call, SEXP op, SEXP args, SEXP rho)
 {
     SEXP objs, file, fill, sepr, labs, s;
     FILE *savefp;
-    int havefile, append;
+    int havefile, usepopen = 0, append;
     int w, i, iobj, n, nobjs, pwidth, width, sepw, lablen, ntot, nlsep, nlines;
-    char *p = "", buf[512];
+    char *p = "", *pfile, buf[512];
 
     checkArity(op, args);
 
@@ -226,12 +227,22 @@ SEXP do_cat(SEXP call, SEXP op, SEXP args, SEXP rho)
     if (append == NA_LOGICAL)
 	errorcall(call, "invalid append specification");
 
-    if (strlen(CHAR(STRING(file)[0])) > 0) {
+    if (strlen(pfile = CHAR(STRING(file)[0])) > 0) {
 	savefp = R_Outputfile;
-	if(!(R_Outputfile = R_fopen(R_ExpandFileName(CHAR(STRING(file)[0])),
-				    (append) ? "a" : "w"))) {
-	    R_Outputfile = savefp;
-	    errorcall(call, "unable to open file");
+	if (pfile[0] == '|') {
+#ifndef HAVE_POPEN
+	    error("file = \"|cmd\" is not implemented in this version");
+#else
+	    R_Outputfile = popen(pfile + 1, "w");
+	    usepopen = 1;
+#endif
+	} else {
+	    R_Outputfile = R_fopen(R_ExpandFileName(pfile),
+				   (append) ? "a" : "w");
+	    if (!R_Outputfile) {
+		R_Outputfile = savefp;
+		errorcall(call, "unable to open file");
+	    }
 	}
 	havefile = 1;
     }
@@ -314,7 +325,7 @@ SEXP do_cat(SEXP call, SEXP op, SEXP args, SEXP rho)
     if ((pwidth != INT_MAX) || nlsep)
 	Rprintf("\n");
     if (havefile) {
-	fclose(R_Outputfile);
+	if (usepopen) pclose(R_Outputfile); else fclose(R_Outputfile);
 	R_Outputfile = savefp;
     }
     else
@@ -509,7 +520,7 @@ SEXP lengthgets(SEXP x, int len)
 		if (xnames != R_NilValue)
 		    STRING(names)[i] = STRING(xnames)[i];
 	    }
-	break;	
+	break;
     }
     if (isVector(x) && xnames != R_NilValue)
 	setAttrib(rval, R_NamesSymbol, names);

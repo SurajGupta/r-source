@@ -124,16 +124,14 @@ void machar(int *ibeta, int *it, int *irnd, int *ngrd, int *machep, int *negep,
 /* massdist.c */
 /* ...............*/
 
+void R_max_col(double *matrix, int *pnr, int *nc, int *maxes);
+
 /* pretty.c */
 double R_pretty0(double *lo, double *up, int *ndiv, int min_n,
 	       double shrink_sml, double high_u_fact[],
 	       int eps_correction, int return_bounds);
 void R_pretty(double *lo, double *up, int *ndiv, int *min_n,
 	    double *shrink_sml, double *high_u_fact, int *eps_correction);
-
-
-/* pythag.c */
-double pythag(double, double);
 
 /* rowsum.c */
 void R_rowsum(int *dim, double *na_x, double *x, double *group);
@@ -187,7 +185,7 @@ void optif0(int nr, int n, double *x, fcn_p fcn, void *state,
 typedef double (*D_fp)();
 typedef /* Subroutine */ int (*S_fp)();
 
-/* ../appl/blas.f */
+/* ../appl/blas.f ---> see also ./Linpack.h - "extern"s all of BLAS+Linpack*/
 double F77_SYMBOL(dasum)(int *n, double *dx, int *incx);
 int F77_SYMBOL(daxpy)(int *n, double *da, double *dx, int *incx,
 		      double *dy, int *incy);
@@ -248,7 +246,7 @@ int F77_SYMBOL(dtrco)(double *t, int *ldt, int *n, double *rcond,
 int F77_SYMBOL(dtrsl)(double *t, int *ldt, int *n, double *b, int *job,
 		      int *info);
 
-double Brent_fmin(double ax, double bx, double (*f)(double, void *), 
+double Brent_fmin(double ax, double bx, double (*f)(double, void *),
 		  void *info, double tol);
 int F77_SYMBOL(lminfl)(double *x, int *ldx, int *n, int *k, double *qraux,
 		       double *resid, double *hat, double *coef, double *sigma);

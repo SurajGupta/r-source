@@ -22,7 +22,7 @@
  *    The density function of the Poisson distribution.
  */
 
-#include "Mathlib.h"
+#include "nmath.h"
 #include "dpq.h"
 
 double dpois(double x, double lambda, int give_log)
@@ -33,18 +33,15 @@ double dpois(double x, double lambda, int give_log)
 	return x + lambda;
 #endif
     if(fabs(x - floor(x + 0.5)) > 1e-7) {
-	warning("non-integer x = %f", x);
+	MATHLIB_WARNING("non-integer x = %f", x);
 	return R_D__0;
     }
     if(lambda < 0.0) ML_ERR_return_NAN;
 
-    if (x < 0)
+    if (x < 0 || !R_FINITE(x))
 	return R_D__0;
-    if(!R_FINITE(x))
-	return R_D__0;
-
-    if (lambda == 0.0)
-	    return (x > 0) ? R_D__0 : R_D__1 ;
-
-    return R_D_exp(x * log(lambda) - lambda - lgammafn(x + 1));
+    if (lambda == 0)
+	return (x > 0) ? R_D__0 : R_D__1 ;
+    return R_D_exp((x == 0) ? -lambda :
+		   x * log(lambda) - lambda - lgammafn(x + 1));
 }

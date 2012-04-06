@@ -1,6 +1,6 @@
 /*
  *  R : A Computer Language for Statistical Data Analysis
- *  Copyright (C) 1998--1999  R Development Core Team
+ *  Copyright (C) 1998--2000  R Development Core Team
  *
  *  This program is free software; you can redistribute it and/or modify
  *  it under the terms of the GNU General Public License as published by
@@ -17,6 +17,8 @@
  *  Foundation, Inc., 59 Temple Place, Suite 330, Boston, MA  02111-1307  USA
  */
 
+/* 27/03/2000 win32-api needs this */
+#define NONAMELESSUNION
 #include <windows.h>
 #include <stdio.h>
 #include "config.h"
@@ -108,7 +110,8 @@ int main (int argc, char **argv)
     if(getenv("R_HOME")) {
 	strcpy(RHome, getenv("R_HOME"));
     } else {
-	strcpy(RHome, "c:/R/R-release");
+	fprintf(stderr, "R_HOME must be set\n");
+	exit(1);
     }
     Rp->rhome = RHome;
 /*

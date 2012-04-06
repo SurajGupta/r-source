@@ -3197,6 +3197,7 @@ int yylex(void)
     case GE:
     case GT:
     case EQ:
+    case NE:
     case OR:
     case AND:
     case SPECIAL:

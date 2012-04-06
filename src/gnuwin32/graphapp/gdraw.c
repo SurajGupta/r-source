@@ -1,6 +1,6 @@
 /*
  *  R : A Computer Language for Statistical Data Analysis
- *  Copyright (C) 1998--1999  Guido Masarotto
+ *  Copyright (C) 1998--2000  Guido Masarotto
  *
  *  This program is free software; you can redistribute it and/or modify
  *  it under the terms of the GNU General Public License as published by
@@ -182,6 +182,7 @@ void gdrawpolyline(drawing d, int width, int style, rgb c,
     HDC dc = GETHDC(d);
     COLORREF winrgb = getwinrgb(d, c);
     int i;
+
     if (n < 2) return;
     if (!style) {
 	HPEN gpen = CreatePen(PS_INSIDEFRAME, width, winrgb);
@@ -403,7 +404,7 @@ void gfillpolygon(drawing d, rgb fill, point *p, int n)
    DeleteObject(br);
 }
 
-
+/* For ordinary text, e.g. in console */
 int gdrawstr(drawing d, font f, rgb c, point p, char *s)
 {
     POINT curr_pos;
@@ -415,7 +416,7 @@ int gdrawstr(drawing d, font f, rgb c, point p, char *s)
     old = SelectObject(dc, f->handle);
     MoveToEx(dc, p.x, p.y, NULL);
     SetBkMode(dc, TRANSPARENT);
-    SetTextAlign(dc, TA_LEFT | TA_TOP | TA_UPDATECP);
+    SetTextAlign(dc, TA_TOP | TA_LEFT | TA_UPDATECP);
 
     TextOut(dc, p.x, p.y, s, strlen(s));
 
@@ -424,6 +425,25 @@ int gdrawstr(drawing d, font f, rgb c, point p, char *s)
     SelectObject(dc, old);
 
     return width;
+}
+
+/* This version aligns on baseline, and allows hadj = 0, 0.5, 1 */
+void gdrawstr1(drawing d, font f, rgb c, point p, char *s, double hadj)
+{
+    HFONT old;
+    HDC dc = GETHDC(d);
+    UINT flags = TA_BASELINE | TA_UPDATECP;
+
+    SetTextColor(dc, getwinrgb(d,c));
+    old = SelectObject(dc, f->handle);
+    MoveToEx(dc, p.x, p.y, NULL);
+    SetBkMode(dc, TRANSPARENT);
+    if (hadj < 0.25) flags |= TA_LEFT;
+    else if (hadj < 0.75) flags |= TA_CENTER;
+    else flags |= TA_RIGHT;
+    SetTextAlign(dc, flags);
+    TextOut(dc, p.x, p.y, s, strlen(s));
+    SelectObject(dc, old);
 }
 
 rect gstrrect(drawing d, font f, char *s)
@@ -498,7 +518,7 @@ void gcharmetric(drawing d, font f, int c, int *ascent, int *descent,
       *descent = tm.tmDescent ;
       *ascent = size.cy - *descent - extra ;
       *width = size.cx;
-      /* 
+      /*
 	 Under NT, ' ' gives 0 ascent and descent, which seems
 	 correct but this : (i) makes R engine to center in random way;
 	 (ii) doesn't correspond to what 98 and X do (' ' is there
@@ -507,15 +527,14 @@ void gcharmetric(drawing d, font f, int c, int *ascent, int *descent,
       if ((c!=' ') && (tm.tmPitchAndFamily & TMPF_TRUETYPE)) {
         GLYPHMETRICS gm;
         MAT2 m2;
-	m2.eM11.value = m2.eM22.value = (WORD) 1 ; 
+	m2.eM11.value = m2.eM22.value = (WORD) 1 ;
 	m2.eM21.value = m2.eM12.value = (WORD) 0 ;
-	m2.eM11.fract = m2.eM12.fract = 
+	m2.eM11.fract = m2.eM12.fract =
 	  m2.eM21.fract = m2.eM22.fract =  (short) 0 ;
-        if (GetGlyphOutline(dc,c,GGO_METRICS,&gm,0,NULL,&m2) !=
-	    GDI_ERROR) { 
+        if (GetGlyphOutline(dc,c,GGO_METRICS,&gm,0,NULL,&m2) != GDI_ERROR) {
 	  *descent = gm.gmBlackBoxY - gm.gmptGlyphOrigin.y ;
 	  *ascent  = gm.gmptGlyphOrigin.y + 1;
-        } 
+        }
       }
     } else {
 	*ascent = 0;
@@ -613,3 +632,8 @@ int devicewidthmm(drawing dev) MEASUREDEV(HORZSIZE)
 int deviceheightmm(drawing dev) MEASUREDEV(VERTSIZE)
 int devicepixelsx(drawing dev) MEASUREDEV(LOGPIXELSX)
 int devicepixelsy(drawing dev) MEASUREDEV(LOGPIXELSY)
+
+void BringToTop(window c)
+{
+    SetForegroundWindow(c->handle);
+}

@@ -56,6 +56,7 @@ Copyright @copyright{} 1999, 2000 R Development Core Team
 * System and foreign language interfaces::  
 * The R API::                   
 * R (internal) programming miscellania::  
+* R coding standards::          
 * Function and variable index::  
 * Concept index::               
 @end menu
@@ -90,11 +91,10 @@ packages, such as @pkg{eda}, @pkg{mva}, and @pkg{stepfun}.
 
 A package consists of a subdirectory containing the files
 @file{DESCRIPTION} and @file{INDEX}, and the subdirectories @file{R},
-@file{data}, @file{exec}, @file{inst}, @file{man}, and @file{src} (some
-of which can be missing).  Optionally the package can also contain
-script files @file{configure} and @file{cleanup} which are executed
-before and after installation, @xref{Configure and cleanup}.
-
+@file{data}, @file{exec}, @file{inst}, @file{man}, @file{src}, and
+@file{tests} (some of which can be missing).  Optionally the package can
+also contain script files @file{configure} and @file{cleanup} which are
+executed before and after installation, @xref{Configure and cleanup}.
 
 @menu
 * The DESCRIPTION file::        
@@ -107,7 +107,6 @@ before and after installation, @xref{Configure and cleanup}.
 @subsection The DESCRIPTION file
 @comment  node-name,  next,  previous,  up@subsection The DESCRIPTION file
 @cindex DESCRIPTION file
-
 
 The @file{DESCRIPTION} file contains basic information about the package
 in the following format:
@@ -226,12 +225,25 @@ makes available for loading using @code{data()}.  Currently, data files
 can have one of three types as indicated by their extension: plain R
 code (@file{.R} or @file{.r}), tables (@file{.tab}, @file{.txt}, or
 @file{.csv}), or @code{save()} images (@file{.RData} or @file{.rda}).
-The subdirectory should contain a @file{00Index} file that describes the
-datasets available.  Ideally this should have a one-line description of
-each dataset, with full documentation in the @file{man} directory.
+Note that R code should be ``self-sufficient'' and not make use of extra
+functionality provided by the package, so that the data file can also be
+used without having to load the package.  The @file{data} subdirectory
+should also contain a @file{00Index} file that describes the datasets
+available.  Ideally this should have a one-line description of each
+dataset, with full documentation in the @file{man} directory.
 
 The contents of the @file{inst} subdirectory will be copied recursively
 to the installation directory.
+
+Subdirectory @file{tests} is for additional package-specific test code,
+similar to the specific tests that come with the @R{} distribution.
+Test code can either be provided directly in a @file{.R} file, or via a
+@file{.Rin} file containing code which in turn creates the corresponding
+@file{.R} file (e.g., by collecting all function objects in the package
+and then calling them with the strangest arguments).  The results of
+running a @file{.R} file are written to a @file{.Rout} file.  If there
+is a corresponding @file{.Rout.save} file, these two are compared, with
+differences being reported but not causing an error.
 
 Finally, @file{exec} could contain additional executables the package
 needs, typically shell or Perl scripts.  This mechanism is currently not
@@ -243,8 +255,8 @@ used by any Unix package, and still experimental.
 
 Sometimes it is convenient to distribute several packages as a
 @emph{bundle}.  (The main current example is @pkg{VR} which contains
-four packages.)  The installation scripts on both Unix and Windows can
-handle package bundles as from @R{} 0.90.1.
+four packages.)  The installation procedures on both Unix and Windows can
+handle package bundles.
 
 The @file{DESCRIPTION} file of a bundle has an extra @samp{Bundle}
 field, as in
@@ -358,11 +370,13 @@ manually.
 
 @findex R CMD check
 Using @code{R CMD check}, the @R{} package checker, one can test whether
-@emph{installed} @R{} packages work correctly.  Currently, the only
-check performed is whether the examples provided by the packages'
-documentation can be run successfully (@pxref{Writing R documentation},
-for information on using @code{\examples} to create executable example
-code.)  Other means for regression testing will be added in the future.
+@emph{installed} @R{} packages work correctly.  This checks whether the
+examples provided by the packages' documentation can be run successfully
+(@pxref{Writing R documentation}, for information on using
+@code{\examples} to create executable example code.)  If the package
+sources contain a @file{tests} directory then the tests specified in
+that directory are run. (Typically they will consist of a set of
+@file{.R} source files and target output files @file{.Rout.save}.)
 
 Of course, released packages should be able to run at least their own
 examples.
@@ -694,7 +708,7 @@ For example,
 @example
 x <- runif(10)       # @r{Shown and run.}
 \dontrun@{plot(x)@}    # @r{Only shown.}
-\testonly@{log(x@}     # @r{Only run.}
+\testonly@{log(x)@}    # @r{Only run.}
 @end example
 
 Thus, example code not included in @code{\dontrun} must be executable!
@@ -932,9 +946,9 @@ Both commands can also be used as @code{\eqn@{@var{latexascii}@}} (only
 The following example is from the @code{Poisson} help page:
 
 @example
-\deqn@{p(x) = @{\lambda^x\ \frac@{e^@{-\lambda@}@}@{x!@}@}
-     @{p(x) = lambda^x exp(-lambda)/x!@}
-for \eqn@{x = 0, 1, 2, ...@}.
+  \deqn@{p(x) = \frac@{\lambda^x e^@{-\lambda@}@}@{x!@}@}@{%
+        p(x) = lambda^x exp(-lambda)/x!@}
+  for \eqn@{x = 0, 1, 2, \ldots@}.
 @end example
 
 @iftex
@@ -1063,7 +1077,7 @@ provides two user-level programs for processing Rd format.
 @code{R CMD Rd2txt} produces ``pretty'' plain text output from an Rd
 file, and is particularly useful as a previewer when writing Rd format
 documentation within Emacs.  @code{R CMD Rd2dvi} generates DVI (or, if
-option @option{--pdf} is given, PDF) output from from documentation in
+option @option{--pdf} is given, PDF) output from documentation in
 Rd files, which can be specified either explictly or by the path to a
 directory with the sources of a package.  In the latter case, a
 reference manual for all documented objects in the package is created.
@@ -1328,7 +1342,7 @@ If an add-on package @var{pkg} contains C or Fortran code in its
 @file{src} subdirectory, @code{R CMD INSTALL} creates a shared library
 (for loading into @R{} in the @code{.First.lib} function of the package)
 either automatically using the above @code{R CMD SHLIB} mechanism, or
-using @code{make} if a @file{src} contains a @file{Makefile}.  In both
+using @code{make} if directory @file{src} contains a @file{Makefile}.  In both
 cases, if file @file{Makevars} exists it is read first when invoking
 @code{make}.  If a @file{Makefile} is really needed or provided, it
 needs to ensure that the shared library created is linked against all
@@ -1344,8 +1358,8 @@ Suppose we have the following hypothetical C++ library, consisting of
 the two files @file{X.hh} and @file{X.cc}, and implementing the 2
 classes @code{X} and @code{Y} which we want to use in @R{}.
 
-@smallexample
 @cartouche
+@smallexample
 // X.hh
 
 class X @{
@@ -1357,11 +1371,11 @@ class Y @{
 public:
   Y (); ~Y ();
 @};
-@end cartouche
 @end smallexample
+@end cartouche
 
-@smallexample
 @cartouche
+@smallexample
 // X.cc
 
 #include <iostream.h>
@@ -1373,8 +1387,8 @@ X::X()  @{ cout << "constructor X" << endl; @}
 X::~X() @{ cout << "destructor X" << endl; @}
 Y::Y()  @{ cout << "constructor Y" << endl; @}
 Y::~Y() @{ cout << "destructor Y" << endl; @}
-@end cartouche
 @end smallexample
+@end cartouche
 
 To use with @R{}, the only thing we have to do is writing a wrapper
 function and ensuring that the function is enclosed in
@@ -1387,8 +1401,8 @@ extern "C" @{
 
 For example,
 
-@smallexample
 @cartouche
+@smallexample
 // X_main.cc:
 
 #include "X.hh"
@@ -1400,38 +1414,48 @@ void X_main () @{
 @}
 
 @}
-@end cartouche
 @end smallexample
+@end cartouche
 
 Compiling and linking should be done with the C++ compiler-linker
 (rather than the C compiler-linker or the linker itself); otherwise,
 the C++ initialization code (and hence the constructor of the static
-variable @code{Y}) are not called.  For example, under Linux we might
-use
+variable @code{Y}) are not called.  On a properly configured Unix system
+(support for C++ was added in version 1.1), one can simply use
 
 @smallexample
-g++ -c X.cc
-g++ -c X_main.cc
-g++ -shared -o X.so X_main.o X.o
+R CMD SHLIB X.cc X_main.cc
 @end smallexample
 
-Now starting R yields
+@noindent
+to create the shared library, typically @file{X.so} (the file name
+extension may be different on your platform).  Now starting R yields
 
 @smallexample
-R: Copyright 1999, The R Development Core Team
-Version 0.63.2  (January 12, 1999)
+R : Copyright 2000, The R Development Core Team
+Version 1.1.0 Under development (unstable) (April 14, 2000)
 ...
 Type    "q()" to quit R.
 
-R> dyn.load("X.so")
+R> dyn.load(paste("X", .Platform$dynlib.ext, sep = ""))
 constructor Y
 R> .C("X_main")
 constructor X
 destructor X
+list()
 R> q()
 Save workspace image? [y/n/c]: y
 destructor Y
 @end smallexample
+
+The R for Windows FAQ (@file{rw-FAQ}) contains details of how to compie
+this example under various Windows compilers.
+
+Using C++ iostreams, as in this example, is best avoided.  There is no
+guarantee that the output will appear in the R console, and indeed it
+will not on the R for Windows console.  Use R code or the C
+entry points (@pxref{Printing}) for all I/O if at all possible.
+
 
 @node Handling R objects in C, Interface functions .Call and .External, Interfacing C++ code, System and foreign language interfaces
 @section Handling R objects in C
@@ -1540,17 +1564,17 @@ It is necessary to know something about how @R{} objects are handled in
 C code.  All the @R{} objects you will deal with will be handled with
 the type @dfn{SEXP}@footnote{SEXP is an acronym for @emph{S}imple
 @emph{EXP}ression, common in LISP-like language syntaxes.}, which is a
-pointer to a structure.  Think of this structure as a @emph{variant
-type} that can handle all the usual types of @R{} objects, that is
-vectors of various modes, functions, environments, language objects and
-so on.  The details are given later in this section, but for most
-purposes the programmer does not need to know them.  Think rather of a
-model such as that used by Visual Basic, in which @R{} objects are
-handed around in C code (as they are in interpreted @R{} code) as the
-variant type, and the appropriate part is extracted for, for example,
-numerical calculations, only when it is needed.  As in interpreted @R{}
-code, much use is made of coercion to force the variant object to the
-right type.
+pointer to a structure with typedef @code{SEXPREC}.  Think of this
+structure as a @emph{variant type} that can handle all the usual types
+of @R{} objects, that is vectors of various modes, functions,
+environments, language objects and so on.  The details are given later
+in this section, but for most purposes the programmer does not need to
+know them.  Think rather of a model such as that used by Visual Basic,
+in which @R{} objects are handed around in C code (as they are in
+interpreted @R{} code) as the variant type, and the appropriate part is
+extracted for, for example, numerical calculations, only when it is
+needed.  As in interpreted @R{} code, much use is made of coercion to
+force the variant object to the right type.
 
 @menu
 * Garbage Collection::          
@@ -1573,27 +1597,36 @@ We need to know a little about the way @R{} handles memory allocation.
 The memory allocated for @R{} objects is not freed by the user; instead,
 the memory is from time to time @dfn{garbage collected}.  That is, all
 the allocated memory not being used is freed, and the objects that are
-in use may be moved.  If you create an @R{} object in your C code, you
-must tell @R{} that you are using the object via call to the
-@code{PROTECT} macro.  This has two effects.  First it tells @R{} that
-the object is in use so it is not destroyed.  Second, it ensures that
-the @code{SEXP} pointer to the object is updated if the object's
-structure is moved in memory during garbage collection.  (Because of
-this it is not safe to save and re-use pointers to parts of an object's
-structure.)
+in use may be moved. 
 
-Protecting a @code{SEXP} pointer protexts all the @R{} objects in a
-recursive structure (such as list).
+The @R{} object types are represented by a C structure defined by a
+typedef @code{SEXPREC} in @file{Rinternals.h}. It contains several
+things among which are pointers to data blocks and to other
+@code{SEXPREC}s. With the current memory managements scheme, the data
+blocks may be moved in memory during garbage collection, and the
+pointers to them updated. Because of this it is not safe to save and
+re-use pointers to data blocks in an object's structure. A @code{SEXP}
+is simply a pointer to a @code{SEXPREC}.
+
+If you create an @R{} object in your C code, you must tell @R{} that you
+are using the object by using the @code{PROTECT} macro on a pointer to
+the object. This tells @R{} that the object is in use so it is not
+destroyed. Notice that it is the object which is protected, not the pointer
+variable. It is a common mistake to believe that if you invoked
+@code{PROTECT(@var{p})} at some point then @var{p} is protected from
+then on, but that is not true once a new object is assigned to @var{p}.
+
+Protecting an R object automatically protects all the @R{} objects
+pointed to in the corresponding @code{SEXPREC}.
 
 The programmer is solely responsible for housekeeping the calls to
 @code{PROTECT}.  There is a corresponding macro @code{UNPROTECT} that
-takes as argument an @code{int} giving the number of @code{SEXP}s to
+takes as argument an @code{int} giving the number of objects to
 unprotect when they are no longer needed.  The protection mechanism is
 stack-based, so @code{UNPROTECT(@var{n})} unprotects the last @var{n}
 objects which were protected.  The calls to @code{PROTECT} and
-@code{UNPROTECT} must balance when the user's code returns, even if it
-returns because of an error (calling @code{error} or @code{errorcall}
-for example).  @R{} will warn about @code{"stack imbalance in .Call"}
+@code{UNPROTECT} must balance when the user's code returns.
+@R{} will warn about @code{"stack imbalance in .Call"}
 (or @code{.External}) if the housekeeping is wrong.
 
 Here is a small example of creating an @R{} numeric vector in C code.
@@ -1626,20 +1659,30 @@ and then those in @file{Rinternals.h}:
 @end example
 
 Now, the reader may ask how the @R{} object could possibly get removed
-during those manipulations, as it is just our C code that is running.
-The answer is we do not know (nor want to know) what is hiding behind
-the @R{} macros and functions we use, and any of them might cause memory
-to be allocated, hence garbage collection and hence our object @code{ab}
-to be (re)moved.  It is wise to err on the side of caution and assume
+during those manipulations, as it is just our C code that is running. As
+it happens, we can do without the protection in this case, but in
+general we do not know (nor want to know) what is hiding behind the @R{}
+macros and functions we use, and any of them might cause memory to be
+allocated, hence garbage collection and hence our object @code{ab} to be
+(re)moved. It is usually wise to err on the side of caution and assume
 that any of the @R{} macros and functions might (re)move the object.
+
+In some cases it is necessary to keep better track of whether protection
+is really needed. Be particularly aware of situations where a large
+number of objects are generated. The pointer protection stack has a
+fixed size (default 10,000) and can become full. It is not a good idea
+then to just @code{PROTECT} everything in sight and @code{UNPROTECT}
+several thousand objects at the end. It will almost invariably be
+possible to either assign the objects as part of another object (which
+automatically protects them) or unprotect them immediately after use.
 
 Protection is not needed for objects which @R{} already knows are in
 use.  In particular, this applies to function arguments.
 
-There is a less-used@footnote{for historical reasons,
-@code{UNPROTECT_PTR(@var{s})} has existed only since @R{} version 0.63.0
-(Nov.@: 1998)} macro @code{UNPROTECT_PTR(@var{s})} that unprotects the
-@code{SEXP} @var{s}.
+There is a less-used macro @code{UNPROTECT_PTR(@var{s})} that unprotects the
+object pointed to by the @code{SEXP} @var{s}, even if it is not the top
+item on the pointer protection stack. This is rarely needed outside the
+parser (the R sources have one example, in @file{plot3d.c}). 
 @findex UNPROTECT_PTR
 
 @node Allocating storage, Details of R types, Garbage Collection, Handling R objects in C
@@ -2777,6 +2820,7 @@ $7 = 5
 * Mathematical Constants::      
 * Utility functions::           
 * Version information::         
+* Standalone Mathlib::          
 @end menu
 
 There are a large number of entry points in the @R{} executable/DLL that
@@ -3239,7 +3283,7 @@ There are a few other numerical utilities available as entry points.
 @c double	beta(double, double);
 @c double	lbeta(double, double);
 
-@ftable @code
+@table @code
 @findex R_pow
 @findex R_pow_di
 @item double R_pow(double @var{x}, double @var{y});
@@ -3304,7 +3348,7 @@ This is the function used by @R{}'s @code{signif()}.
 @c double	fsquare(double);
 @c double	fcube(double);
 
-@end ftable
+@end table
 
 @node Mathematical Constants, Utility functions, Mathematical Utilities, The R API
 @section Mathematical Constants
@@ -3365,6 +3409,7 @@ compatibility with @Sl{}.
 @findex iPsort
 @findex rPsort
 @findex cPsort
+@findex R_maxcol
 
 @R{} has a fairly comprehensive set of sort routines which are made
 available to users' C code.  These include the following.
@@ -3392,7 +3437,16 @@ all provide (very) partial sorting: they permute @var{x} so that
 the left, larger ones to the right.
 @end table
 
-@node Version information,  , Utility functions, The R API
+Further utilities in @R{} include
+@table @code
+@item void R_max_col(double *matrix, int *nr, int *nc, int *maxes)
+  Given the @code{nr} by @code{ny} matrix @code{matrix} in row(``Fortran'')
+  order, @code{R_max_col()} returns in @code{maxes[i-1]} the column number
+  of the maximal element in the i-th row (the same as @R{}'s
+  @code{max.col()} function).
+@end table
+
+@node Version information, Standalone Mathlib, Utility functions, The R API
 @section Version information
 @cindex Version information from C
 @findex R_Version
@@ -3418,8 +3472,43 @@ More detailed information is available in the macros @code{R_MAJOR},
 header file @file{Rversion.h} for their format.  Note that the minor
 version includes the patchlevel (as in @code{99.0}).
 
+@node Standalone Mathlib,  , Version information, The R API
+@section Using these functions in your own C code
 
-@node R (internal) programming miscellania, Function and variable index, The R API, Top
+It is possible to build @code{Mathlib}, the @R{} set of mathematical
+functions documented in @file{R_ext/Mathlib.h}, as a standalone library
+@file{libRmath} under Unix and Windows.  This includes the functions
+documented in @ref{Distribution functions} and @ref{Mathematical
+Utilities} and the constants in @ref{Mathematical Constants}.
+
+The library is not built automatically when @R{} is installed, but
+can be built in the directory @file{src/nmath/standalone}. See the file
+@file{README} there.  To use the code in your own C program include
+@smallexample
+#define MATHLIB_STANDALONE
+#include "R_ext/Mathlib.h"
+@end smallexample
+@noindent
+and link against @code{-lRmath}.  There is an example file @file{test.c}.
+
+A little care is needed to use the random-number routines. You will
+need to supply the uniform random number generator 
+@smallexample
+double unif_rand(void)
+@end smallexample
+@noindent
+or use the one supplied (and with a shared library or DLL you will have
+to use the one supplied, which is the Marsaglia-multicarry with an entry
+point
+@smallexample
+set_seed(unsigned int, unsigned int)
+@end smallexample
+@noindent
+to set its seeds).
+
+
+
+@node R (internal) programming miscellania, R coding standards, The R API, Top
 @appendix R (internal) programming miscellania
 
 @menu
@@ -3595,8 +3684,132 @@ computer).  If the new function, for example, accesses the internet, or
 requires GUI interaction, please add its name to the ``stop list'' in
 @file{tests/make-no-segfault.R}.
 
+@node R coding standards, Function and variable index, R (internal) programming miscellania, Top
+@appendix R coding standards
 
-@node Function and variable index, Concept index, R (internal) programming miscellania, Top
+@R{} is meant to run on a wide variety of platforms, including Linux and
+most variants of Unix as well as 32-bit Windows versions and eventually
+(again) on the Power Mac.  Therefore, when extending @R{} by either
+adding to the @R{} base distribution or by providing an add-on package,
+one should not rely on features specific to only a few supported
+platforms, if this can be avoided.  In particular, although most @R{}
+developers use GNU tools, they should not employ the GNU extensions to
+standard tools.  Whereas some other software packages explicitly rely on
+e.g.@: GNU make or the GNU C++ compiler, @R{} does not.  Nevertheless,
+@R{} is a GNU project, and the spirit of the @cite{GNU Coding Standards}
+should be followed if possible.
+
+The following tools can ``safely be assumed'' for @R{} extensions.
+
+@itemize @bullet
+@item
+An ANSI C compiler.  If you do not have access to the ANSI standard,
+refer to the 2nd edition of Brian W. Kernighan & Dennis M. Ritchie,
+@cite{The C Programming Language}.  Any extensions, such as POSIX, must
+be tested for, typically using Autoconf (@pxref{Configure and cleanup}).
+
+@item
+A FORTRAN 77 compiler or @command{f2c}, the FORTRAN-to-C converter.
+
+@item
+A simple @command{make}, considering the features of @command{make} in
+4.2 BSD systems as a baseline.
+
+GNU or other extensions, including pattern rules using @samp{%}, the
+automatic variable @samp{$^}, the @samp{+=} syntax to append to the
+value of a variable, the (``safe'') inclusion of makefiles with no
+error, conditional execution, and many more, must not be used (see
+Chapter ``Features'' in the @cite{GNU Make Manual} for more
+information).  On the other hand, building @R{} in a separate directory
+(not containing the sources) should work provided that @command{make}
+supports the @code{VPATH} mechanism.
+
+Windows-specific makefiles can assume GNU @command{make} 3.75 or later,
+as no other @command{make} is viable on that platform.
+
+@item
+A Bourne shell and the ``traditional'' Unix programming tools, including
+@command{grep}, @command{sed}, and @command{awk}.
+
+There are POSIX standards for these tools, but these may not fully be
+supported, and the precise standards are typically hard to access.
+Baseline features could be determined from a book such as @cite{The UNIX
+Programming Environment} by Brian W. Kernighan & Rob Pike.  Note in
+particular that @samp{|} in a regexp is an extended regexp, and is not
+supported by all versions of @command{grep} or @command{sed}.
+
+Under Windows, these tools can be assumed because versions
+(specifically, of @command{cat}, @command{cp}, @command{cut},
+@command{diff}, @command{echo}, @command{egrep}, @command{expr},
+@command{find},@command{gawk}, @command{grep}, @command{ls},
+@command{mkdir}, @command{mv}, @command{rm}, @command{sed} and
+@command{sort}) are provided at CRAN.  However, redirection cannot be
+assumed to be available via @command{system} as this does not use a
+standard shell (let alone a Bourne shell).
+@end itemize
+
+In addition, the following tools are needed for certain tasks.
+
+@itemize @bullet
+@item
+Perl version 5 is needed for converting documentation written in Rd
+format to plain text, HTML, La@TeX{}, and to extract the examples.  In
+addition, several other tools, in particular @command{check} and
+@command{build} (@pxref{Checking and building packages}), require Perl.
+
+The @R{} Core Team has decided that Perl (version 5) can safely be
+assumed for building @R{} from source, building and checking add-on
+packages, and for installing add-on packages from source.  On the other
+hand, Perl cannot be assumed at all for installing @emph{binary}
+(pre-built) versions of add-on packages, or at run time.
+
+@item
+Makeinfo version 4 is needed to build the Info files for the @R{}
+manuals written in the GNU Texinfo system.  (Future distributions of
+@R{} will contain the Info files.)
+@end itemize
+
+It is also important that code is written in a way that allows others to
+understand it.  This is particularly helpful for fixing problems, and
+includes using self-descriptive variable names, commenting the code, and
+also formatting it properly.  The @R{} Core Team recommends to use a
+basic indentation of 4 for @R{} and C (and most likely also Perl) code,
+and 2 for documentation in Rd format.  Emacs users can implement this
+indentation style by putting the following in one of their startup
+files.
+
+@smallexample
+;;; C
+(add-hook 'c-mode-hook
+          (lambda () (c-set-style "bsd")))
+;;; ESS
+(add-hook 'ess-mode-hook
+          (lambda ()
+            (ess-set-style 'C++)
+            ;; Because
+            ;;                                 DEF GNU BSD K&R C++
+            ;; ess-indent-level                  2   2   8   5   4
+            ;; ess-continued-statement-offset    2   2   8   5   4
+            ;; ess-brace-offset                  0   0  -8  -5  -4
+            ;; ess-arg-function-offset           2   4   0   0   0
+            ;; ess-expression-offset             4   2   8   5   4
+            ;; ess-else-offset                   0   0   0   0   0
+            ;; ess-close-brace-offset            0   0   0   0   0
+            (add-hook 'local-write-file-hooks
+                      '(lambda ()
+                        (nuke-trailing-whitespace)))))
+;;; Perl
+(add-hook 'perl-mode-hook
+          '(lambda () (setq perl-indent-level 4)))
+@end smallexample
+
+@noindent
+(The `GNU' styles for Emacs' C and R modes use a basic indentation of 2,
+which has been determined not to display the structure clearly enough
+when using narrow fonts.)
+
+
+@node Function and variable index, Concept index, R coding standards, Top
 @unnumbered Function and variable index
 
 @printindex vr

@@ -25,6 +25,13 @@
    See the file COPYLIB.TXT for details.
 */
 
+/*  Changes for R:
+
+    sort out resize (confused screen and client coords)
+    add printer and metafile handling
+
+ */
+
 #include "internal.h"
 
 /*
@@ -177,23 +184,51 @@ void redraw(control obj)
 	draw(obj);
 }
 
+/*  void getscreenrect(control obj, rect *r) */
+/*  { */
+/*      RECT W; */
+/*      GetWindowRect(obj->handle, &W); */
+/*      r->x = W.left; */
+/*      r->y = W.top; */
+/*      r->width = W.right - W.left; */
+/*      r->height = W.bottom - W.top; */
+/*  } */
+
+
+/* The original here used GetWindowRect (which used screen coordinates)
+   and MoveWindow (which uses client coordinates) so got the positioning
+   hopelessly wrong.  This version works for WindowObjects, but I would be
+   suspicious of it for other cases.  BDR 2000/04/05
+*/
 void resize(control obj, rect r)
 {
-	RECT R;
-	int dw, dh;
+        RECT R;
+	WINDOWPLACEMENT W;
+	int dw, dh, dx, dy;
 
 	if (! obj)
 		return;
 	r = rcanon(r);
 	if (obj->kind == WindowObject) {
+	        W.length = sizeof(WINDOWPLACEMENT);
 		r.x = obj->rect.x;
 		r.y = obj->rect.y;
-		if (! equalr(r, obj->rect)) {
-			GetWindowRect(obj->handle, &R);
-			dw = R.right - R.left - r.width;
-			dh = R.bottom - R.top - r.height;
-			MoveWindow(obj->handle, r.x, r.y,
-				r.width+dw, r.height+dh, 1);
+		if (!equalr(r, obj->rect)) {
+			GetWindowPlacement(obj->handle, &W);
+			dx = r.x - obj->rect.x;
+			dy = r.y - obj->rect.y;
+			/* don't believe current sizes!
+			dw = r.width - obj->rect.width;
+			dh = r.height - obj->rect.height;
+			Rprintf("dw %d dh %d\n", dw, dh); */
+			GetClientRect(obj->handle, &R);
+			dw = r.width - (R.right - R.left);
+			dh = r.height - (R.bottom - R.top);
+			W.rcNormalPosition.left += dx;
+			W.rcNormalPosition.top += dy;
+			W.rcNormalPosition.right += dx + dw;
+			W.rcNormalPosition.bottom += dy + dh;
+			SetWindowPlacement(obj->handle, &W);
 		}
 	}
 	else {
@@ -849,6 +884,3 @@ void delobj(object obj)
 		break;
 	}
 }
-
-
-

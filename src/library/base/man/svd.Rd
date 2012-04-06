@@ -42,16 +42,16 @@ svd(x, nu = min(n,p), nv = min(n,p))
 hilbert <- function(n) { i <- 1:n; 1 / outer(i - 1, i, "+") }
 str(X <- hilbert(9)[,1:6])
 str(s <- svd(X))
-Eps <- 10 * .Machine$double.eps
+Eps <- 100 * .Machine$double.eps
 
 D <- diag(s$d)
-all(abs(X - s$u \%*\% D \%*\% t(s$v)) < Eps)# TRUE:  X = U D V'
-all(abs(D - t(s$u) \%*\% X \%*\% s$v) < Eps)# TRUE:  D = U' X V
+stopifnot(abs(X - s$u \%*\% D \%*\% t(s$v)) < Eps)#  X = U D V'
+stopifnot(abs(D - t(s$u) \%*\% X \%*\% s$v) < Eps)#  D = U' X V
 
 X <- cbind(1, 1:7)
 str(s <- svd(X)); D <- diag(s$d)
-all(abs(X - s$u \%*\% D \%*\% t(s$v)) < Eps)# TRUE:  X = U D V'
-all(abs(D - t(s$u) \%*\% X \%*\% s$v) < Eps)# TRUE:  D = U' X V
+stopifnot(abs(X - s$u \%*\% D \%*\% t(s$v)) < Eps)#  X = U D V'
+stopifnot(abs(D - t(s$u) \%*\% X \%*\% s$v) < Eps)#  D = U' X V
 }
 \keyword{algebra}
 \keyword{array}

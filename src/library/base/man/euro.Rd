@@ -24,9 +24,13 @@
 \examples{
 data(euro)
 cbind(euro)
-all(euro == signif(euro,6))# TRUE: [6 digit precision in Euro's definition]
 
-all(euro.cross == outer(1/euro, euro)) # TRUE
+## These relations hold:
+euro == signif(euro,6) # [6 digit precision in Euro's definition]
+all(euro.cross == outer(1/euro, euro))
+\testonly{
+ stopifnot(euro == signif(euro,6), euro.cross == outer(1/euro, euro))
+}
 
 ## Convert 20 Euro to Belgian Franc
 20 * euro["BEF"]

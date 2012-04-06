@@ -5,10 +5,10 @@
 \title{Box Plots}
 \usage{
 boxplot(x, \dots)
-boxplot.default(x, \dots, range = 1.5, width = NULL, varwidth = FALSE,
-        notch = FALSE, names, data = sys.frame(sys.parent()),
-        plot = TRUE, border = par("fg"), col = NULL, log = "",
-        pars = NULL)
+boxplot.default(x, \dots, range = 1.5, width = NULL,
+        varwidth = FALSE, notch = FALSE, names, boxwex = 0.8,
+        data = sys.frame(sys.parent()), plot = TRUE,
+        border = par("fg"), col = NULL, log = "", pars = NULL)
 boxplot.formula(formula, data = NULL, subset, na.action, \dots)
 }
 \arguments{
@@ -40,6 +40,9 @@ boxplot.formula(formula, data = NULL, subset, na.action, \dots)
     overlap then the medians are significantly different at the 5
     percent level.}
   \item{names}{group labels which will be printed under each boxplot.}
+  \item{boxwex}{a scale factor to be applied to all boxes.  When there
+    are only a few groups, the appearance of the plot can be improved
+    by making the boxes narrower.}
   \item{data}{\code{\link{data.frame}}, \code{\link{list}}, or
     \code{\link{environment}} in which variable names are evaluated
     when \code{x} is a formula.}
@@ -77,15 +80,18 @@ boxplot.formula(formula, data = NULL, subset, na.action, \dots)
     (\code{boxplot.formula}).
 }
 \value{
-  List with one component corresponding to each plot.  The
-  components are themselves lists with named components as follows:
-  \item{stats}{a vector containing the extreme of the lower whisker,
+  List with the following components:
+  \item{stats}{a matrix, each column contains the extreme of the lower whisker,
     the lower hinge, the median, the upper hinge and the extreme of
-    the upper whisker.}
-  \item{n}{the number of observations in the sample.}
-  \item{conf}{the lower and upper extremes of the notch.}
+    the upper whisker for one group/plot.}
+  \item{n}{a vector with the number of observations in each group.}
+  \item{conf}{a matrix where each column contains the lower and upper
+    extremes of the notch.}
   \item{out}{the values of any data points which lie beyond the
     extremes of the whiskers.}
+  \item{group}{a vector of the same length as \code{out} whose elements
+    indicate which group the outlier belongs to}
+  \item{names}{a vector of names for the groups}
 }
 \seealso{
   \code{\link{boxplot.stats}} which does the computation,

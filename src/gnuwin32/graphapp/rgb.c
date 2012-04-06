@@ -1359,7 +1359,7 @@ static int RgbValue[RGBCOLORS][3] = {
 
 
 /* Return transparent if the color doesn't exist.
- *  Case insentive comparison?
+ *  Case insensitive comparison?
 */
 rgb nametorgb(char *name)
 {
@@ -1380,5 +1380,39 @@ rgb nametorgb(char *name)
 	return rgb(RgbValue[mid][0], RgbValue[mid][1], RgbValue[mid][2]);
 }
 
+/* return "white" not "gray100" */
+char *rgbtoname(rgb in)
+{
+    int i;
 
+    for(i = 0; i < RGBCOLORS; i++)
+	if(in == rgb(RgbValue[i][0], RgbValue[i][1], RgbValue[i][2])
+	   && strcmp(ColorName[i], "gray100")
+	   && strcmp(ColorName[i], "grey100")) return ColorName[i];
+    return "";
+}
+
+int rgbtonum(rgb in)
+{
+    int i;
+
+    for(i = 0; i < RGBCOLORS; i++)
+	if(in == rgb(RgbValue[i][0], RgbValue[i][1], RgbValue[i][2])
+	   && strcmp(ColorName[i], "gray100")
+	   && strcmp(ColorName[i], "grey100")) return i;
+    return -1;
+}
+
+#include <windows.h>
+/* Windows uses 0x00bbggrr ! */
+rgb myGetSysColor(int x)
+{
+    int col = GetSysColor(x);
+    return rgb( (col)&0xFFUL, (col>>8)&0xFFUL, (col>>16)&0x00FFUL );
+}
+
+rgb dialog_bg()
+{
+    return myGetSysColor(COLOR_BTNFACE);
+}
 

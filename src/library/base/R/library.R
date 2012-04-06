@@ -4,7 +4,9 @@
 
 library <-
   function (package, help, lib.loc = .lib.loc, character.only = FALSE,
-	    logical.return = FALSE, warn.conflicts = package != "MASS")
+	    logical.return = FALSE, warn.conflicts = package != "MASS",
+            keep.source = getOption("keep.source.pkgs"))
+
 {
     if (!missing(package)) {
 	if (!character.only)
@@ -40,23 +42,32 @@ library <-
 		    on.exit(unlink(file))
 		}
 	    }
-	    # create environment
+	    ## create environment
 	    env <- attach(NULL, name = pkgname)
+            ## detach does not allow character vector args
+            on.exit(detach(2))
             lastbit<- file.path("", "R", package)
             path <- gsub(paste(lastbit, "$", sep=""), "", file)
             attr(env, "path") <- path
-	    # "source" file into env
+	    ## "source" file into env
 	    if (file == "")
 		warning(paste("Package `", package, "' contains no R code",
 			      sep = ""))
-	    else sys.source(file, env)
+	    else sys.source(file, env, keep.source = keep.source)
 	    .Internal(lib.fixup(env, .GlobalEnv))
 	    if(exists(".First.lib", envir = env, inherits = FALSE)) {
 		firstlib <- get(".First.lib", envir = env, inherits = FALSE)
-		firstlib(which.lib.loc, package)
+                tt<- try(firstlib(which.lib.loc, package))
+                if(inherits(tt, "try-error"))
+                    if (logical.return) return(FALSE)
+                    else stop(".First.lib failed")
 	    }
-            if(!is.null(firstlib <- getOption(".First")[[package]]))
-                firstlib(which.lib.loc, package)
+            if(!is.null(firstlib <- getOption(".First.lib")[[package]])){
+                tt<- try(firstlib(which.lib.loc, package))
+                if(inherits(tt, "try-error"))
+                    if (logical.return) return(FALSE)
+                    else stop(".First.lib failed")
+            }
 	    if (warn.conflicts &&
 		!exists(".conflicts.OK",  envir = env, inherits = FALSE)) {
 		##-- Check for conflicts
@@ -84,6 +95,7 @@ library <-
 		    }
 		}
 	    }
+            on.exit()
 	}
 	else {
 	    if (getOption("verbose"))
@@ -93,7 +105,7 @@ library <-
     else if (!missing(help)) {
 	if (!character.only)
 	    help <- as.character(substitute(help))
-        help <- help[1]         # only give help on one package
+        help <- help[1]                 # only give help on one package
 	file <- system.file("INDEX", pkg=help, lib=lib.loc)
 	if (file == "")
 	    stop(paste("No documentation for package `", help, "'", sep = ""))
@@ -102,8 +114,8 @@ library <-
                 lib.loc[match(system.file("", pkg = help, lib =
                                           lib.loc)[1],
                               file.path(lib.loc, help))]
-            warning(paste("Package `", help, "' found more than once,\n  ", 
-                          "using the one found in `", which.lib.loc, 
+            warning(paste("Package `", help, "' found more than once,\n  ",
+                          "using the one found in `", which.lib.loc,
                           "'", sep = ""))
         }
 	file.show(file[1], title = paste("Contents of package", help))
@@ -168,36 +180,18 @@ library.dynam <-
   invisible(.Dyn.libs)
 }
 
-require <- function(package, quietly = FALSE, warn.conflicts = TRUE) {
+require <- function(package, quietly = FALSE, warn.conflicts = TRUE,
+                    keep.source = getOption("keep.source.pkgs"))
+{
     package <- as.character(substitute(package)) # allowing "require(eda)"
-    if (!exists(".Provided", inherits = TRUE))
-	assign(".Provided", character(0), envir = .GlobalEnv)
-    if (is.na(match(paste("package", package, sep = ":"), search()))
-	&& is.na(match(package, .Provided))) {
+    if (is.na(match(paste("package", package, sep = ":"), search())))
+        if(!exists(".Provided") || is.na(match(package, .Provided))) {
 	if (!quietly)
 	    cat("Loading required package:", package, "\n")
 	library(package, char = TRUE, logical = TRUE,
-		warn.conflicts = warn.conflicts )
-    }
-    else
-	TRUE
-}
-
-provide <- function(package) {
-    if (!exists(".Provided", inherits = TRUE))
-	assign(".Provided", character(0), envir = .GlobalEnv)
-    if (missing(package))
-	.Provided
-    else {
-	package <- as.character(substitute(package))
-	if (is.na(match(package, .packages())) &&
-	    is.na(match(package, .Provided))) {
-	    assign(".Provided", c(package, .Provided), envir = .GlobalEnv)
-	    TRUE
-	}
-	else
-	    FALSE
-    }
+		warn.conflicts = warn.conflicts, keep.source = keep.source)
+    } else TRUE
+    else TRUE
 }
 
 .packages <- function(all.available = FALSE, lib.loc = .lib.loc) {
@@ -227,7 +221,7 @@ provide <- function(package) {
     pos <- match(pkgs, s)
     if(any(m <- is.na(pos))) {
         miss <- paste(package[m], collapse=", ")
-        if(all(m)) error(paste("none of the packages are not loaded"))
+        if(all(m)) stop(paste("none of the packages are not loaded"))
         else warning(paste("package(s)", miss, "are not loaded"))
         pos <- pos[!m]
     }

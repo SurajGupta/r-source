@@ -8,8 +8,11 @@ options(latexcmd = as.vector(getenv("R_LATEXCMD")))
 options(dvipscmd = as.vector(getenv("R_DVIPSCMD")))
 options(unzip = as.vector(getenv("R_UNZIPCMD")))
 options(editor = as.vector(getenv("EDITOR")))
-options(device = if(interactive() && getenv("DISPLAY") != "")
-        "X11" else "postscript")
+if(interactive() && getenv("DISPLAY") != "") {
+    options(device = switch(.Platform$GUI,
+            "X11" = "X11", "GNOME" = "gtk", "postscript"))
+} else options(device = "postscript")
+## this must be set for x11 to be used, even non-interactively
 options(X11colortype = "true")
 options(pager = "${R_HOME}/bin/pager")
 options(browser = "netscape")

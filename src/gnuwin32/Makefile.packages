@@ -3,23 +3,21 @@
 
 include MkRules
 
-HELP=YES
-WINHELP=NO # Use one of NO, CHM, BOTH (chm and winhelp)
+HELP = YES
+WINHELP = NO # Use one of NO, CHM, BOTH (chm and winhelp)
 
-RHOME=$(shell cd ../..; pwd)# must be absolute path
-RLIB=$(RHOME)/library
-PKGDIR=$(RHOME)/src/library
-PKGD=$(shell cd $(PKGDIR); pwd)# must be absolute path
+RHOME = $(shell perl pwd.pl ../..)# must be absolute path
+RLIB = $(RHOME)/library
+PKGDIR = $(RHOME)/src/library
+PKGD = $(shell perl pwd.pl $(PKGDIR))# must be absolute path
 
 ifdef DEBUG
- OPTFLAGS=-g -O2 -Wall
- DLLFLAGS=
+ OPTFLAGS = -g -O2 -Wall
+ DLLFLAGS =
 else
- OPTFLAGS=-O2 -Wall
- DLLFLAGS=-s 
+ OPTFLAGS = -O2 -Wall -pedantic
+ DLLFLAGS = -s
 endif
-#CFLAGS=$(OPTFLAGS) -I../include -I../include/R_ext
-#FFLAGS=$(OPTFLAGS)
 
 libR.a:  R.exp
 	$(DLLTOOL) $(DLLTOOLFLAGS) $(R-DLLTOOLFLAGS) --dllname R.dll --def R.exp --output-lib libR.a
@@ -49,6 +47,10 @@ pkgcheck-%:
 	-@mkdir -p $(PKGDIR)/$*/check
 	@$(MAKE) -C $(PKGDIR)/$*/check PKG=$* RHOME=$(RHOME) RLIB=$(RLIB) \
 	  -f $(RHOME)/src/gnuwin32/check/PkgCheck
+	@if test -d $(PKGDIR)/$*/tests ; then \
+	  $(MAKE) -C $(PKGDIR)/$*/tests PKG=$* RHOME=$(RHOME) RLIB=$(RLIB) \
+	    -f $(RHOME)/src/gnuwin32/check/PkgCheck tests;\
+	fi
 
 ziphelp-%:
 	$(MAKE) -C ./help RHOME=$(RHOME) PKGDIR=$(PKGD) RLIB=$(RLIB) ziphelp-$*
@@ -57,6 +59,10 @@ ziphelp-%:
 ziponly-%:
 	$(MAKE) -C ./help RHOME=$(RHOME) PKGDIR=$(PKGD) RLIB=$(RLIB) ziponlyhelp-$*
 	$(MAKE) -C ./help RHOME=$(RHOME) PKGDIR=$(PKGD) RLIB=$(RLIB) contents-$*
+
+zipdata-%:
+	(cd $(RLIB)/$*/data; ls -1 > filelist; \
+	  zip -rmq9X Rdata * -x filelist 00Index)
 
 bundle-%:
 	$(PERL) fixed/dobundle.pl $* $(PKGD) $(RLIB)

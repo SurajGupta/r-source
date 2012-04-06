@@ -46,10 +46,12 @@ SOURCES = \
 	signrank.c
 DEPENDS = $(SOURCES:.c=.d)
 OBJECTS = $(SOURCES:.c=.o)
-HEADERS = dpq.h
+HEADERS = dpq.h nmath.h
 
 distdir = $(top_builddir)/$(PACKAGE)-$(VERSION)/$(subdir)
 DISTFILES = Makefile.in Makefile.win $(SOURCES) $(HEADERS)
+
+SUBDIRS = standalone
 
 LIB = libmath.a
 
@@ -76,8 +78,10 @@ mostlyclean: clean
 clean:
 	@echo "cleaning in $(subdir)"
 	@-rm -f Makedeps *.d *.o *.a
+	@(cd standalone; $(MAKE) clean)
 distclean: clean
 	@-rm -f Makefile
+	@(cd standalone; $(MAKE) distclean)
 maintainer-clean: distclean
 
 distdir: $(DISTFILES)
@@ -86,6 +90,11 @@ distdir: $(DISTFILES)
 	    || ln $(srcdir)/$${f} $(distdir)/$${f} 2>/dev/null \
 	    || cp -p $(srcdir)/$${f} $(distdir)/$${f}; \
 	done
+	@for d in $(SUBDIRS); do \
+	  ((cd $(srcdir); $(TAR) -c -f - --exclude=CVS $${d}) \
+	      | (cd $(distdir); $(TAR) -x -f -)) \
+	    || exit 1; \
+        done
 
 ## Automagically generated dependencies:
 

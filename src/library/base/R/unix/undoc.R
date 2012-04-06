@@ -45,11 +45,11 @@ undoc <- function(pkg, dir)
         ## FIXME: Still unixy, but this version is not GNUish!
         cmd <- paste("grep -h '^\\\\name'",
                      paste(files, collapse = " "),
-                     "| sed 's/\\\\name{\\(.*\\)}/\\1/'")
+                     "| sed 's/\\\\name{\\(.*\\)}.*/\\1/'")
         objsdocs <- system(cmd, intern = TRUE)
         cmd <- paste("grep -h '^\\\\alias'",
                      paste(files, collapse = " "),
-                     "| sed 's/\\\\alias{\\(.*\\)}/\\1/'")
+                     "| sed 's/\\\\alias{\\(.*\\)}.*/\\1/'")
         objsdocs <- c(objsdocs, system(cmd, intern = TRUE))
         objsdocs <- gsub("\\\\%", "%", objsdocs)
         objsdocs <- gsub(" ", "", objsdocs)
@@ -93,7 +93,7 @@ undoc <- function(pkg, dir)
         dataObjs <- NULL
         if(any(i <- grep("\\.\(R\|r\)$", files))) {
             for (f in file.path(dataDir, files[i])) {
-                sys.source(f, envir = dataEnv)
+                sys.source(f, envir = dataEnv, chdir = TRUE)
                 new <- ls(all = TRUE, envir = dataEnv)
                 dataObjs <- c(dataObjs, new)
                 rm(list = new, envir = dataEnv)
@@ -118,5 +118,5 @@ undoc <- function(pkg, dir)
     if(is.null(allObjs))
         warning("Neither code nor data objects found")
     else
-        allObjs[! allObjs %in% c(objsdocs, ".First.lib")]
+        allObjs[! allObjs %in% c(objsdocs, ".First.lib", ".Last.lib")]
 }

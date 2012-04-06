@@ -4,7 +4,15 @@
 : ${R_HOME=R_HOME_DIR}
 export R_HOME
 
-R_binary="R.X11"
+: ${R_LD_LIBRARY_PATH=@R_LD_LIBRARY_PATH@}
+if test -z "${LD_LIBRARY_PATH}"; then
+  LD_LIBRARY_PATH="${R_LD_LIBRARY_PATH}"
+else
+  LD_LIBRARY_PATH="${R_LD_LIBRARY_PATH}:${LD_LIBRARY_PATH}"
+fi
+export LD_LIBRARY_PATH
+
+R_binary="R.bin"
 
 # Default printer paper size
 # Choose one of the following:
@@ -18,6 +26,7 @@ export R_PAPERSIZE
 # Choose one of the following:
 # R_PRINTCMD="lpr"
 # R_PRINTCMD="lp"
+# R_PRINTCMD=""
 : ${R_PRINTCMD=@R_PRINTCMD@}
 export R_PRINTCMD
 
@@ -69,10 +78,9 @@ Options:
   --silent              Same as --quiet
   --slave               Make R run as quietly as possible
   --verbose             Print more information about progress
-  -d NAME, --debugger=NAME
-                        Run R through debugger NAME
-  --gui=TYPE		Use TYPE as GUI; possible values are \`X11'
-			(default) and \`GNOME'
+  -d, --debugger=NAME   Run R through debugger NAME
+  -g, --gui=TYPE	Use TYPE as GUI; possible values are \`X11'
+			(default), \`none' and \`gnome'
 
 Commands:
   BATCH			Run R in batch mode
@@ -99,7 +107,6 @@ Report bugs to <R-bugs@lists.r-project.org>."
 # Argument loop
 args=
 debugger=
-gui=X11
 while test -n "${1}"; do
   case ${1} in
     RHOME|--print-home)
@@ -108,20 +115,10 @@ while test -n "${1}"; do
       cmd="${1}"; shift; exec sh "${R_HOME}/bin/${cmd}" "${@}" ;;
     CMD)
       shift; PATH="${R_HOME}/bin:${PATH}" exec "${@}" ;;
-    -g|--gnome)
-      echo "option \`${1}' is defunct, use \`--gui=GNOME'"
+    --gnome)
+      echo "option \`${1}' is defunct, use \`--gui=gnome'"
       exit 1
       ;;
-    --gui)
-      if test -n "`echo ${2} | sed 's/^-.*//'`"; then
-	gui="${2}"; shift
-      else
-	echo "ERROR: option \`${1}' requires an argument"
-	exit 1
-      fi
-      ;;
-    --gui=*)
-      gui=`echo "${1}" | sed -e 's/[^=]*=//'` ;;
     -d|--debugger)
       if test -n "`echo ${2} | sed 's/^-.*//'`"; then      
 	debugger="${2}"; shift
@@ -150,13 +147,6 @@ done
 # R_HOME may have moved, so check (or you get "GUI X11 is not supported")
 if [ ! -x ${R_HOME} ]; then
   echo "R_HOME = \`${R_HOME}' not found"
-  exit 1
-fi
-
-if test -x ${R_HOME}/bin/R.${gui}; then
-  R_binary="R.${gui}"
-else
-  echo "GUI \`${gui}' is not supported"
   exit 1
 fi
 

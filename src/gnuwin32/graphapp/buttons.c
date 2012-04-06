@@ -31,6 +31,14 @@
    See the file COPYLIB.TXT for details.
 */
 
+/* Changes for R:
+
+   set the system font for labels
+   add newscrollbar, field_no_border
+   add extended selections, pass on de-selections
+
+ */
+
 #include "internal.h"
 
 #define SHADOW_WIDTH 1
@@ -902,6 +910,19 @@ field newfield(char *text, rect r)
 	return obj;
 }
 
+
+field newfield_no_border(char *text, rect r)
+{
+	field obj = newchildwin("edit", NULL,
+			ES_LEFT | ES_AUTOHSCROLL,
+			r, NULL);
+	if (obj) {
+		obj->kind = FieldObject;
+		settext(obj, text);
+	}
+	return obj;
+}
+
 field newpassword(char *text, rect r)
 {
 	field obj = newchildwin("edit", NULL,
@@ -1085,7 +1106,7 @@ listbox newdroplist(char *list[], rect r, scrollfn fn)
 
 	obj = newchildwin("combobox", NULL,
 				CBS_DROPDOWNLIST |
-				CBS_DISABLENOSCROLL |
+				//CBS_DISABLENOSCROLL |
 				WS_BORDER |
 				WS_VSCROLL | WS_HSCROLL,
 				r, NULL);

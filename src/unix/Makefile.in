@@ -10,18 +10,20 @@ subdir = src/unix
 
 include $(top_builddir)/Makeconf
 
-ALL_CPPFLAGS = $(R_XTRA_CPPFLAGS) $(X_CFLAGS) $(CPPFLAGS) $(DEFS)
+ALL_CPPFLAGS = $(R_XTRA_CPPFLAGS) $(CPPFLAGS) $(DEFS)
 
-SOURCES = dataentry.c devX11.c dynload.c edit.c rotated.c \
-	  system.c sys-unix.c sys-common.c
+SOURCES = devices.c dynload.c edit.c stubs.c system.c sys-unix.c \
+          sys-common.c sys-std.c
 DEPENDS = $(SOURCES:.c=.d)
 OBJECTS = $(SOURCES:.c=.o)
-HEADERS = dataentry.h devX11.h rotated.h
+HEADERS = Runix.h devUI.h
 
 distdir = $(top_builddir)/$(PACKAGE)-$(VERSION)/$(subdir)
 DISTFILES = \
 	Makefile.in PSPAPER $(SOURCES) $(HEADERS) \
 	hpdlfcn.c system.txt
+
+SUBDIRS = X11 gnome
 
 LIB = libunix.a
 
@@ -45,6 +47,13 @@ R: Makefile
 	@$(MAKE) Makedeps
 	@$(MAKE) $(LIB)
 
+DLLs:
+	@for g in $(R_GUIS) ""; do \
+	  if test -n "$${g}"; then \
+	    (cd $${g} && $(MAKE) R) || exit 1; \
+	  fi; \
+	done
+
 ../include/Rversion.h:
 	(cd ../include; $(MAKE) $(@F))
 ../include/FFDecl.h ../include/FFTab.h: $(top_srcdir)/src/appl/ROUTINES
@@ -57,8 +66,21 @@ $(LIB): $(OBJECTS)
 mostlyclean: clean
 clean:
 	@echo "cleaning in $(subdir)"
+	@for g in $(R_GUIS) ""; do \
+	  if test -n "$${g}"; then \
+	    (cd $${g} && $(MAKE) $@); \
+	  fi; \
+	done
 	@-rm -f Makedeps *.d *.o *.a
 distclean: clean
+	@for g in $(R_GUIS) ""; do \
+	  if test -n "$${g}"; then \
+	    (cd $${g} && $(MAKE) $@); \
+	  fi; \
+	done
+	@for d in $(SUBDIRS); do \
+	  rm -f $${d}/Makefile; \
+	done
 	@-rm -f Makefile
 maintainer-clean: distclean
 
@@ -67,6 +89,14 @@ distdir: $(DISTFILES)
 	  test -f $(distdir)/$${f} \
 	    || ln $(srcdir)/$${f} $(distdir)/$${f} 2>/dev/null \
 	    || cp -p $(srcdir)/$${f} $(distdir)/$${f}; \
+	done
+	@for d in $(SUBDIRS); do \
+	  test -d $(distdir)/$${d} \
+	    || mkdir $(distdir)/$${d} \
+	    || exit 1; \
+	  chmod 755 $(distdir)/$${d}; \
+	  (cd $${d} && $(MAKE) distdir) \
+	    || exit 1; \
 	done
 
 ## Automagically generated dependencies:

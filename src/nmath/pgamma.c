@@ -45,14 +45,11 @@
  *	Applied Statistics 37, 1988.
  */
 
-#include "Mathlib.h"
+#include "nmath.h"
 #include "dpq.h"
 /*----------- DEBUGGING -------------
  *	make CFLAGS='-DDEBUG_p -g -I/usr/local/include -I../include'
  */
-#ifdef DEBUG_p
-# include "PrtUtil.h"
-#endif
 
 static const double
     xbig = 1.0e+8,

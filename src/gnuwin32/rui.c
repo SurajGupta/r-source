@@ -21,6 +21,9 @@
 #include <config.h>
 #endif
 
+#ifdef Win32
+#define USE_MDI 1
+#endif
 /* R user interface based on GraphApp */
 #include "Defn.h"
 #undef append /* defined by graphapp/internal.h */
@@ -28,7 +31,9 @@
 /* the user menu code looks at the internal structure */
 #include "graphapp/internal.h"
 #include "graphapp/ga.h"
+#ifdef USE_MDI
 #include "graphapp/stdimg.h"
+#endif
 #include "console.h"
 #include "rui.h"
 #include "opt.h"
@@ -39,16 +44,18 @@
 extern int UserBreak;
 
 console RConsole = NULL;
+#ifdef USE_MDI
 int   RguiMDI = RW_MDI | RW_TOOLBAR | RW_STATUSBAR;
 int   MDIset = 0;
 static window RFrame;
+#endif
 extern int ConsoleAcceptCmd;
 static menubar RMenuBar;
-static menuitem msource, mdisplay, mload, msave, mpaste, mcopy, 
-    mcopypaste, mlazy;
-static menuitem mls, mrm, msearch, mhelp, mmanintro, mmanref, 
-    mmanext, mapropos, mhelpstart;
-static int lhelpstart, lmanintro, lmanref, lmanext;
+static menuitem msource, mdisplay, mload, msave, msavehistory, mpaste, mcopy, 
+    mcopypaste, mlazy, mconfig,
+    mls, mrm, msearch, mhelp, mmanintro, mmanref, 
+    mmanext, mapropos, mhelpstart, mFAQ, mrwFAQ;
+static int lmanintro, lmanref, lmanext;
 static menu m, mman;
 static char cmd[1024];
 
@@ -124,12 +131,26 @@ static void menusaveimage(control m)
 
     if (!ConsoleAcceptCmd) return;
     setuserfilter("R images (*.RData)\0*.RData\0All files (*.*)\0*.*\0\0");
-    fn = askfilesave("Save image in", "");
+    fn = askfilesave("Save image in", ".RData");
     show(RConsole);
     if (fn) {
 	fixslash(fn);
 	sprintf(cmd, "save.image(\"%s\")", fn);
 	consolecmd(RConsole, cmd);
+    }
+}
+
+static void menusavehistory(control m)
+{
+    char *fn;
+
+    if (!ConsoleAcceptCmd) return;
+    setuserfilter("All files (*.*)\0*.*\0\0");
+    fn = askfilesave("Save history in", ".Rhistory");
+    show(RConsole);
+    if (fn) {
+	fixslash(fn);
+	savehistory(RConsole, fn);
     }
 }
 
@@ -181,6 +202,12 @@ static void menucopypaste(control m)
 	consolepaste(RConsole);
     } else
 	askok("No selection");
+    show(RConsole);
+}
+
+static void menuconfig(control m)
+{
+    Rgui_configure();
     show(RConsole);
 }
 
@@ -279,6 +306,16 @@ static void menuhelpstart(control m)
     internal_shellexec("doc/html/rwin.html");
 }
 
+static void menuFAQ(control m)
+{
+    internal_shellexec("doc/html/faq.html");
+}
+
+static void menurwFAQ(control m)
+{
+    internal_shellexec("doc/html/rw-faq.html");
+}
+
 static void menuabout(control m)
 {
     char  s[256];
@@ -334,7 +371,7 @@ static void menuact(control m)
 
 #define MCHECK(m) {if(!(m)) {del(RConsole); return 0;}}
 
-static void readconsolecfg()
+void readconsolecfg()
 {
     int   consoler, consolec, pagerrow, pagercol, multiplewin, widthonresize;
     rgb   consolebg, consolefg, consoleuser, highlight ;
@@ -342,7 +379,7 @@ static void readconsolecfg()
     char  fn[128] = "FixedFont";
     int   sty = Plain;
     int   pointsize = 12;
-    char  optf[MAX_PATH];
+    char  optf[PATH_MAX];
     char *opt[2];
 
     consoler = 32;
@@ -355,11 +392,12 @@ static void readconsolecfg()
     pagercol = 80;
     multiplewin = 0;
     widthonresize = 1;
+#ifdef USE_MDI
     if (MDIset == 1)
 	RguiMDI = RguiMDI |= RW_MDI;
     if (MDIset == -1)
 	RguiMDI = RguiMDI &= ~RW_MDI;
-
+#endif
     sprintf(optf, "%s/RConsole", getenv("R_USER"));
     if (!optopenfile(optf)) {
 	sprintf(optf, "%s/etc/RConsole", getenv("R_HOME"));
@@ -419,6 +457,7 @@ static void readconsolecfg()
 		    multiplewin = 1;
 		done = 1;
 	    }
+#ifdef USE_MDI
 	    if (!strcmp(opt[0], "MDI")) {
 		if (!MDIset && !strcmp(opt[1], "yes"))
 		    RguiMDI = RguiMDI |= RW_MDI;
@@ -440,23 +479,32 @@ static void readconsolecfg()
 		    RguiMDI = RguiMDI &= ~RW_STATUSBAR;
 		done = 1;
 	    }
+#endif
 	    if (!strcmp(opt[0], "background")) {
-		consolebg = nametorgb(opt[1]);
+		if (!strcmpi(opt[1], "Windows")) 
+		    consolebg = myGetSysColor(COLOR_WINDOW);
+		else consolebg = nametorgb(opt[1]);
 		if (consolebg != Transparent)
 		    done = 1;
 	    }
 	    if (!strcmp(opt[0], "normaltext")) {
-		consolefg = nametorgb(opt[1]);
+		if (!strcmpi(opt[1], "Windows")) 
+		    consolefg = myGetSysColor(COLOR_WINDOWTEXT);
+		else consolefg = nametorgb(opt[1]);
 		if (consolefg != Transparent)
 		    done = 1;
 	    }
 	    if (!strcmp(opt[0], "usertext")) {
-		consoleuser = nametorgb(opt[1]);
+		if (!strcmpi(opt[1], "Windows")) 
+		    consoleuser = myGetSysColor(COLOR_ACTIVECAPTION);
+		else consoleuser = nametorgb(opt[1]);
 		if (consoleuser != Transparent)
 		    done = 1;
 	    }
 	    if (!strcmp(opt[0], "highlight")) {
-		highlight = nametorgb(opt[1]);
+		if (!strcmpi(opt[1], "Windows")) 
+		    highlight = myGetSysColor(COLOR_ACTIVECAPTION);
+		else highlight = nametorgb(opt[1]);
 		if (highlight != Transparent)
 		    done = 1;
 	    }
@@ -490,12 +538,6 @@ static void closeconsole(control m)
     R_CleanUp(SA_DEFAULT, 0, 1);
 }
 
-void setup_term_ui()
-{
-    initapp(0, 0);
-    readconsolecfg();
-}
-
 static MenuItem ConsolePopup[] = {
     {"Copy", menucopy, 0},
     {"Paste", menupaste, 0},
@@ -527,11 +569,11 @@ static void popupact(control m)
 	disable(ConsolePopup[1].m);
 }
 
-
 int setupui()
 {
     initapp(0, 0);
     readconsolecfg();
+#ifdef USE_MDI
     if (RguiMDI & RW_MDI) {
 	TRACERUI("Rgui");
 	RFrame = newwindow("RGui", rect(0, 0, 0, 0),
@@ -540,11 +582,13 @@ int setupui()
 	show(RFrame);
 	TRACERUI("Rgui done");
     }
+#endif
     TRACERUI("Console");
     if (!(RConsole = newconsole("R Console",
 				StandardWindow | Document | Menubar)))
 	return 0;
     TRACERUI("Console done");
+#ifdef USE_MDI
     if (ismdi() && (RguiMDI & RW_TOOLBAR)) {
           int btsize = 24;
           rect r = rect(2, 2, btsize, btsize);
@@ -595,6 +639,7 @@ int setupui()
 	setstatus(s);
 	TRACERUI("status bar done");
     }
+#endif
     addto(RConsole);
     setclose(RConsole, closeconsole);
     MCHECK(gpopup(popupact, ConsolePopup));
@@ -605,6 +650,7 @@ int setupui()
     MCHECK(newmenuitem("-", 0, NULL));
     MCHECK(mload = newmenuitem("Load Image", 0, menuloadimage));
     MCHECK(msave = newmenuitem("Save Image", 0, menusaveimage));
+    MCHECK(msavehistory = newmenuitem("Save History", 0, menusavehistory));
     MCHECK(newmenuitem("-", 0, NULL));
     MCHECK(newmenuitem("Change dir", 0, menuchangedir));
     MCHECK(newmenuitem("-", 0, NULL));
@@ -618,6 +664,9 @@ int setupui()
     MCHECK(mcopypaste = newmenuitem("Copy And Paste  \tCTRL+X", 
 				    0, menucopypaste));
     MCHECK(newmenuitem("Select all", 0, menuselectall));
+    MCHECK(newmenuitem("-", 0, NULL));
+    MCHECK(mconfig = newmenuitem("GUI preferences", 0, menuconfig));
+
     MCHECK(newmenu("Misc"));
     MCHECK(newmenuitem("Stop current computation           \tESC", 0, menukill));
     MCHECK(newmenuitem("-", 0, NULL));
@@ -627,13 +676,20 @@ int setupui()
     MCHECK(mrm = newmenuitem("Remove all objects", 0, menurm));
     MCHECK(msearch = newmenuitem("List &search path", 0, menusearch));
 
+#ifdef USE_MDI
     newmdimenu();
+#endif
     MCHECK(m = newmenu("Help"));
     MCHECK(newmenuitem("Console", 0, menuconsolehelp));
+    MCHECK(newmenuitem("-", 0, NULL));
+    MCHECK(mFAQ = newmenuitem("FAQ on R", 0, menuFAQ));
+    if (!check_doc_file("doc/html/faq.html")) disable(mFAQ);
+    MCHECK(mrwFAQ = newmenuitem("FAQ on R for &Windows", 0, menurwFAQ));
+    if (!check_doc_file("doc/html/rw-faq.html")) disable(mrwFAQ);
+    MCHECK(newmenuitem("-", 0, NULL));
     MCHECK(mhelp = newmenuitem("R language (standard)", 0, menuhelp));
     MCHECK(mhelpstart = newmenuitem("R language (&html)", 0, menuhelpstart));
-    lhelpstart = check_doc_file("doc/html/rwin.html");
-    if (!lhelpstart) disable(mhelpstart);
+    if (!check_doc_file("doc/html/rwin.html")) disable(mhelpstart);
     MCHECK(mman = newsubmenu(m, "Manuals"));
     MCHECK(mmanintro = newmenuitem("An &Introduction to R", 0, menumainman));
     lmanintro = check_doc_file("doc/manual/R-intro.pdf");
@@ -648,13 +704,24 @@ int setupui()
     if (!lmanintro && !lmanref && !lmanext) disable(mman);
     addto(m);
 
+    MCHECK(newmenuitem("-", 0, NULL));
     MCHECK(mapropos = newmenuitem("Apropos", 0, menuapropos));
+    MCHECK(newmenuitem("-", 0, NULL));
     MCHECK(newmenuitem("About", 0, menuabout));
     consolesetbrk(RConsole, menukill, ESC, 0);
     readhistory(RConsole, ".Rhistory");
     show(RConsole);
     return 1;
 }
+
+#ifdef USE_MDI
+static RECT RframeRect; /* for use by pagercreate */
+RECT *RgetMDIsize()
+{
+    GetClientRect(hwndClient, &RframeRect);
+    return &RframeRect;
+}
+#endif
 
 extern int  CharacterMode;
 int DialogSelectFile(char *buf, int len)

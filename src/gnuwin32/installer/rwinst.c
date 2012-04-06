@@ -1,7 +1,7 @@
 /*
  *  R : A Computer Language for Statistical Data Analysis
  *  file rwinst.c
- *  Copyright (C) 1999  B. D. Ripley
+ *  Copyright (C) 1999-2000  B. D. Ripley
  *
  *  This program is free software; you can redistribute it and/or modify
  *  it under the terms of the GNU General Public License as published by
@@ -107,6 +107,7 @@ int direxists(char * dir)
     dosslash(dir);
     /* remove trailing \, but leave c:\ alone */
     if(strlen(dir) > 3 && *(p = dir + strlen(dir) - 1) == '\\') *p = '\0';
+    if(strlen(dir) == 2 && dir[1] == ':') strcat(dir, "\\");
     res = stat(dir, &sb);
     if(res != 0) return 0;
       return (sb.st_mode & _S_IFMT) == _S_IFDIR;

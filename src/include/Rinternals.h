@@ -211,6 +211,8 @@ extern SEXP	R_MissingArg;	    /* Missing argument marker */
 /* Symbol Table Shortcuts */
 extern SEXP	R_Bracket2Symbol;   /* "[[" */
 extern SEXP	R_BracketSymbol;    /* "[" */
+extern SEXP	R_BraceSymbol;      /* "{" */
+extern SEXP	R_TmpvalSymbol;     /* "*tmp*" */
 extern SEXP	R_ClassSymbol;	    /* "class" */
 extern SEXP	R_DimNamesSymbol;   /* "dimnames" */
 extern SEXP	R_DimSymbol;	    /* "dim" */
@@ -227,6 +229,7 @@ extern SEXP	R_TspSymbol;	    /* "tsp" */
 extern SEXP	R_LastvalueSymbol;  /* ".Last.value" */
 extern SEXP	R_CommentSymbol;    /* "comment" */
 extern SEXP	R_SourceSymbol;     /* "source" */
+extern SEXP	R_DotEnvSymbol;     /* ".Environment" */
 
 /* Missing Values - others from Arith.h */
 #define NA_STRING	R_NaString
@@ -548,6 +551,10 @@ int StringBlank(SEXP);
 SEXP substitute(SEXP,SEXP);
 void unprotect(int);
 void unprotect_ptr(SEXP);
+
+				/* return(.) NOT reached : for -Wall */
+#define error_return(msg)	{ error(msg);		return R_NilValue; }
+#define errorcall_return(cl,msg){ errorcall(cl, msg);	return R_NilValue; }
 
 #ifdef __MAIN__
 #undef extern

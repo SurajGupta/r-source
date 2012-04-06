@@ -32,7 +32,15 @@ getOption(x)
     on UNIX.}
 
   \item{pager}{the (stand-alone) program used for displaying ASCII files on
-    \R's console.  Defaults to \file{\$R\_HOME/bin/pager} on UNIX.}
+    \R's console.
+#ifdef unix
+   Defaults to \file{\$R\_HOME/bin/pager}.
+#endif
+#ifdef windows
+   Defaults to \code{"internal"}, which uses a pager similar to the GUI
+   console. Another possibility is \code{"console"} to use the console itself.
+#endif
+  }
 
   \item{browser}{default HTML browser used by \code{\link{help.start}()}
     on UNIX.}
@@ -50,26 +58,35 @@ getOption(x)
     will be evaluated.  This is especially important on the Macintosh
     since stack overflow is likely if this is set too high.}
 
-  \item{keep.source}{When \code{TRUE}, the default, the source code for
-    functions loaded by is stored in their \code{"source"} attribute,
-    allowing comments to be kept in the right places.  This does not apply
-    to functions loaded by \code{library}.}
+  \item{keep.source}{When \code{TRUE}, the source code for functions
+    (newly defined or loaded) is stored in their \code{"source"}
+    attribute (see \code{\link{attr}}) allowing comments to be kept in
+    the right places.
+
+    The default is \code{\link{interactive}()}, i.e., \code{TRUE} for
+    interactive use.}
+
+  \item{keep.source.pkgs}{As for \code{keep.source}, for functions in
+    packages loaded by \code{\link{library}} or \code{\link{require}}.
+    Defaults to \code{FALSE} unless the environment variable
+    \code{R_KEEP_PKG_SOURCE} is set to \code{yes}.}
 
   \item{na.action}{the name of a function for treating missing values
     (\code{\link{NA}}'s) for certain situations.}
 
-  \item{papersize}{the paper format used for graphics printing; currently
-    \bold{read-only}, set by environment variable \code{R_PAPERSIZE}, or in
-    \file{config.site}.}
+  \item{papersize}{the default paper format used by \code{\link{postscript}};
+    set by environment variable \code{R_PAPERSIZE} when \R is started
+    and defaulting to \code{"a4"} if that is unset or invalid.}
 
-  \item{printcmd}{the command used for graphics printing; currently
-    \bold{read-only}, set by environment variable \code{R_PRINTCMD}, or in
-    \file{config.site}.}
+  \item{printcmd}{the command used by \code{\link{postscript}} for
+    printing; set by environment variable \code{R_PRINTCMD} when \R is
+    started. This should be a command that expects either input to be piped
+    to \file{stdin} or to be given a single filename argument.}
 #ifdef unix
   \item{latexcmd, dvipscmd}{character strings giving commands to be used
     in off-line printing of help pages.}
 #endif
-  
+
   \item{show.signif.stars, show.coef.Pvalues}{logical, affecting P value
     printing, see \code{\link{print.coefmat}}.}
 
@@ -105,20 +122,27 @@ getOption(x)
     progress? Set to \code{TRUE} by the command-line option
     \code{--verbose}.}
 
-  \item{device}{a character string giving the default device for that session.}
+  \item{device}{a character string giving the default device for that
+    session. This defaults to the normal screen device (e.g. \code{x11},
+    \code{windows} or \code{gtk}) for an interactive session, and
+    \code{postscript} in batch use or if a screen is not available.}
 #ifdef unix
   \item{X11colortype}{The default colour type for \code{\link{X11}} devices.}
 #endif
 
   \item{CRAN}{The URL of the preferred CRAN node for use by
     \code{\link{update.packages}}. Defaults to
-    \url{http://cran.r-project.org}.} 
+    \url{http://cran.r-project.org}.}
 
   \item{unzip}{the command used unzipping help files.
 #ifdef windows
     Defaults to "internal" when the internal unzip DLL is used.
 #endif
   }
+  \item{de.cellwidth}{integer: the cell widths (number of  characters)
+    to be used in the data editor \code{\link{dataentry}}.  If this is
+    unset, 0, negative or \code{NA}, variable cell widths are used.}
+
   \item{x}{a character string holding one of the above option names.}
 }
 \description{
@@ -179,7 +203,12 @@ options(contrasts=c("contr.helmert", "contr.poly"))
 \dontrun{## on error, terminate the R session with error status 66
 options(error=quote(q("no", status=66, runLast=FALSE)))
 stop("test it")
+}
+\dontrun{## set an error action for debugging: see ?debugger.
+options(error=quote(dump.frames()))
+## A possible setting for non-interactive sessions
+options(error=quote({dump.frames(to.file=TRUE); q()}))
 }}
 \keyword{environment}
-%later, when we'll have an error handler : \keyword{error}
+\keyword{error}
 \keyword{print}

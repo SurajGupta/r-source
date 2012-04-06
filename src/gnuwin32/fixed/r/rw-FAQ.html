@@ -13,7 +13,7 @@
 
 <body>
 <h1 align="center">R for Windows FAQ</h1>
-<h2>Version for <tt>rw1001</tt></h2>
+<h2>Version for <tt>rw1010</tt></h2>
 <address>B. D. Ripley</address>
 <p><p><hr><p>
 
@@ -64,6 +64,7 @@
 <li><a href="#How%20do%20I%20include%20C++%20code%3f">7.3 How do I include C++ code?</a>
 <li><a href="#The%20output%20from%20my%20C%20code%20disappears.">7.4 The output from my C code disappears. Why?</a>
 <li><a href="#The%20output%20from%20my%20Fortran%20code%20disappears.">7.5 The output from my Fortran code disappears. Why?</a>
+<li><a href="#The%20console%20freezes%20when%20my%20compiled%20code%20is%20running">7.6 The console freezes when my compiled code is running.</a>
 </ul>
 </ul>
 
@@ -83,13 +84,9 @@ that version. The main R FAQ can be found at
 <pre><a href="http://www.ci.tuwien.ac.at/~hornik/R/R-FAQ.html">http://www.ci.tuwien.ac.at/~hornik/R/R-FAQ.html</a>.
 </pre>
 
-<p>There have been two versions of R for Windows, but only is under active
-development, that described here. It is often called something like
-<code>rw1001</code> (although not officially). The information here applies
-only to recent versions (<code>rw0901</code> or later).
-
-<p>There is also information on the use of R for Windows in the Venables
-&amp; Ripley `R Complements' at <a href="http://www.stats.ox.ac.uk/pub/MASS2">http://www.stats.ox.ac.uk/pub/MASS2</a>.
+<p>The information here applies only to recent versions of R for Windows,
+(<code>rw1000</code> or later); the current version is often called something like
+<code>rw1010</code> (although not officially).
 
 <p><hr>
 
@@ -180,10 +177,10 @@ latex installed you can print help files by <code>help(fn_name, offline=TRUE)</c
 
 <h2>2.6 Can I use <code>R BATCH</code>?</h2>
 
-<p>No, but you can set up a batch file using <code>rterm.exe</code>. A sample batch file
+<p>No, but you can set up a batch file using <code>Rterm.exe</code>. A sample batch file
 might contain (as one line)
 
-<pre>path_to_R\bin\rterm.exe --vsize=10M --nsize=500k --no-restore --no-save &lt; %1 &gt; %1.out
+<pre>path_to_R\bin\Rterm.exe --vsize=10M --nsize=500k --no-restore --no-save &lt; %1 &gt; %1.out
 </pre>
 
 <a name="Can%20I%20use%20rwXxxx%20with%20ESS%20and%20emacs%3f"></a>
@@ -194,7 +191,7 @@ might contain (as one line)
 version of R, and there is support for interrupting the R process from
 ESS (by <code>C-c C-c</code>).
 
-<p>For help with ESS, please send email to <a href="ESS-help@stat.ethz.ch">ESS-help@stat.ethz.ch</a>,
+<p>For help with ESS, please send email to <a href="mailto:ESS-help@stat.ethz.ch">ESS-help@stat.ethz.ch</a>,
 not the R mailing lists.
 
 <a name="What%20are%20HOME%20and%20working%20directories%3f"></a>
@@ -274,7 +271,7 @@ launch <code>Rgui</code> / <code>Rterm</code>. Under Windows NT/2000 you can use
 control panel or the properties of `My Computer'. You can also set them
 on the command line, for example in the shortcut you could have
 
-<pre>path_to_R\bin\rgui.exe --vsize=10M R_LIBS=e:/R/library
+<pre>path_to_R\bin\Rgui.exe --vsize=10M R_LIBS=e:/R/library
 </pre>
 
 <p>and you can set variables in a file <code>.Renviron</code> in the working directory
@@ -342,20 +339,25 @@ installing the package.
 <h2>4.1 What should I expect to behave differently from the Unix version of R?</h2>
 
 <ul>
-<li>R commands can be interrupted by &lt;Esc&gt; in <code>rgui.exe</code>
-and &lt;Ctrl-break&gt; or &lt;Ctrl-C&gt; in <code>rterm.exe</code>: &lt;Ctrl-C&gt;
-is used for copying in the GUI version. 
+<li>R commands can be interrupted by &lt;Esc&gt; in <code>Rgui.exe</code>
+and &lt;Ctrl-break&gt; or &lt;Ctrl-C&gt; in <code>Rterm.exe</code>: &lt;Ctrl-C&gt;
+is used for copying in the GUI version.
+
 <li>Command-line editing is always available, but is much simpler than the
-readline-based editing on Unix. For <code>rgui.exe</code>, the menu item `Help |
-Console' will give details. 
-<li>The commands history is saved between sessions only on
-<code>rgui.exe</code>, and it is always saved. 
-<li>Using <code>help.start()</code> does not automatically send help requests to the
-browser: use <code>options(htmlhelp=T)</code> to turn this on. 
+readline-based editing on Unix. For <code>Rgui.exe</code>, the menu item `Help |
+Console' will give details.
+
+<li>The commands history is always saved between sessions.
+
+<li>Using <code>help.start()</code> does not automatically send help
+requests to the browser: use <code>options(htmlhelp=T)</code> to turn this on.
+
 <li>The HTML help system can only access packages installed in the standard
-place. 
-<li>Paths to files (e.g. in <code>source()</code>) can be specified with either "/" or
-"\\". 
+place.
+
+<li>Paths to files (e.g. in <code>source()</code>) can be specified with
+either "/" or "\\".
+
 <li><code>system()</code> is slightly different: see its help page and that
 of <code>shell()</code>. 
 </ul>
@@ -387,11 +389,13 @@ variable in the global environment.
 <p>There is only one graphics history shared by all the windows devices.' 
 </blockquote>
 
-<p>The R console and graphics windows have configuration files stored in the
-<code>RHOME\etc</code> directory called <code>Rconsole</code> and <code>Rdevga</code>; you can
-keep personal copies in your <code>HOME</code> directory. They contain comments which
-should suffice for you to edit them to your preferences. For more details
-see <code>?Rconsole</code>.
+<p>The R console and graphics windows have configuration files stored in
+the <code>RHOME\etc</code> directory called <code>Rconsole</code> and <code>Rdevga</code>;
+you can keep personal copies in your <code>HOME</code> directory. They contain
+comments which should suffice for you to edit them to your
+preferences. For more details see <code>?Rconsole</code>.  From <code>rw1010</code>
+there is a Preferences editor invoked from the <code>Edit</code> menu which
+can be used to edit the file <code>Rconsole</code>.
 
 <p><hr>
 
@@ -472,9 +476,8 @@ the buffer and so update the console.
 <h2>6.4 Long lines in the console or pager are truncated.</h2>
 
 <p>They only <strong>seem</strong> to be truncated: that $ at the end indicates you
-can scroll the window to see the rest of the message. Use the
-&lt;CTRL+arrow&gt; keys to scroll horizontally, or (<code>rw0990</code> and
-later) use the horizontal scrollbar.
+can scroll the window to see the rest of the message. Use the horizontal
+scrollbar or the &lt;CTRL+arrow&gt; keys to scroll horizontally.
 
 <p><hr>
 
@@ -488,10 +491,10 @@ later) use the horizontal scrollbar.
 
 <h2>7.1 How can I compile R from source?</h2>
 
-<p>Get the R sources. Suppose you want to compile R-1.0.1.
+<p>Get the R sources. Suppose you want to compile R-1.1.0.
 
-<pre>tar zxvf R-1.0.1.tgz
-cd R-1.0.1
+<pre>tar zxvf R-1.1.0.tgz
+cd R-1.1.0
 cd src\gnuwin32
 </pre>
 
@@ -564,12 +567,12 @@ the <code>cygwin gdb</code> was able to catch but which terminated the
 <code>mingw32 gdb</code>. 
 </ul>
 
-<p>If you have an X server available on the PC, there is a version of <code>DDD</code>
-available that runs under the cygwin emulation layer (follow the links
-at <a href="http://sourceware.cygnus.com/cygwin">http://sourceware.cygnus.com/cygwin</a>) and provides a graphical
-user interface to <code>gdb</code>.  Another (Windows-native) GUI for
-<code>gdb</code> is <code>Insight</code>, from
-<a href="ftp://ftp.xraylith.wisc.edu/pub/khan/gnu-win32/cygwin/ports/">ftp://ftp.xraylith.wisc.edu/pub/khan/gnu-win32/cygwin/ports/</a>.
+<p>If you have an X server available on the PC, there is a version of
+<code>DDD</code> available that runs under the cygwin emulation layer (follow
+the links at <a href="http://sourceware.cygnus.com/cygwin">http://sourceware.cygnus.com/cygwin</a>) and provides a
+graphical user interface to <code>gdb</code>.  Another (Windows-native) GUI
+for <code>gdb</code> is <code>Insight</code>, part of the latest <code>cygwin</code>
+version of <code>gdb</code>
 
 <a name="How%20do%20I%20include%20C++%20code%3f"></a>
 
@@ -581,23 +584,32 @@ user interface to <code>gdb</code>.  Another (Windows-native) GUI for
  <code>extern "C"</code>.
 
 <p>(b) Include the C++ libraries in the link to make the DLL. Suppose
-<code>X.cc</code> contains your C++ code, and <code>X_R.cc</code> is the
-wrapper. Then build the DLL by (<code>gcc-2.95.x</code>)
+<code>X.cc</code> contains your C++ code, and <code>X_main.cc</code> is the wrapper,
+as in the example in `<em>Writing R Extensions</em>'. Then build the DLL by
+(<code>gcc-2.95.x</code>)
 
-<pre>g++ -c X.cc X_R.cc
-dlltool --export-all-symbols --output-def X.def X_R.o
-dllwrap -o X.dll --def X.def X.o X_R.o -lstdc++
+<pre>g++ -c X.cc X_main.cc
+dlltool --export-all-symbols --output-def X.def X_main.o
+dllwrap -o X.dll --def X.def X.o X_main.o -lstdc++
 </pre>
 
-<p>or (VC++)
+<p>or (VC++, which requires extension <code>.cpp</code>)
 
-<pre>cl /MT /c X.cpp X_R.cpp
-link /dll /out:XX.dll /export:X_main X.obj X_R.obj
+<pre>cl /MT /c X.cpp X_main.cpp
+link /dll /out:X.dll /export:X_main X.obj X_main.obj
 </pre>
 
-<p>and call the entry point(s) in <code>X_R</code>.  Construction of static variables
-will occur when the DLL is loaded, and destruction when the DLL is
-unloaded, usually when R terminates.
+<p>or (Borland C++, which also requires extension <code>.cpp</code>)
+
+<pre>bcc32 -u- -WDE X.cpp X_main.cpp
+</pre>
+
+<p>and call the entry point(s) in <code>X_R</code>, such as <code>X_main</code>. 
+Construction of static variables will occur when the DLL is loaded, and
+destruction when the DLL is unloaded, usually when R terminates.
+
+<p>Note that you may not see the messages from this example in the GUI
+console: see the next section.
 
 <a name="The%20output%20from%20my%20C%20code%20disappears."></a>
 
@@ -609,6 +621,9 @@ console. (This will work with <code>Rterm.exe</code>.)  Use <code>Rprintf</code>
 <code>REprintf</code> instead. These are declared in header file
 <code>R_ext/PrtUtil.h</code>.
 
+<p>Note that output from the console is delayed (see <a href="#The%20output%20to%20the%20console%20seems%20to%20be%20delayed">The output to the console seems to be delayed</a>), so that you will not normally see any
+output before returning to the R prompt.
+
 <a name="The%20output%20from%20my%20Fortran%20code%20disappears."></a>
 
 <h2>7.5 The output from my Fortran code disappears. Why?</h2>
@@ -617,9 +632,19 @@ console. (This will work with <code>Rterm.exe</code>.)  Use <code>Rprintf</code>
 Use one of the subroutines <code>dblepr</code>, <code>intpr</code> or <code>realpr</code>
 documented in the <em>`Writing R Extensions'</em> manual.
 
+<a name="The%20console%20freezes%20when%20my%20compiled%20code%20is%20running"></a>
+
+<h2>7.6 The console freezes when my compiled code is running.</h2>
+
+<p>The console, pagers and graphics window all run in the same thread
+as the R engine.  To allow the console etc to respond to Windows events,
+call <code>R_ProcessEvents()</code> periodically from your compiled code. 
+If you want output to be updated on the console, call
+<code>R_FlushConsole()</code> and then <code>R_ProcessEvents()</code>.
+
 <p><hr WIDTH="100%">
 <address>
-Last edited 2000 April 6 by Brian Ripley
+Last edited 2000 June 10 by Brian Ripley
 <code><a href="mailto:ripley@stats.ox.ac.uk">ripley@stats.ox.ac.uk</a></code>
 </address>
 

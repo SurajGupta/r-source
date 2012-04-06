@@ -1,7 +1,7 @@
 /*
  *  R : A Computer Language for Statistical Data Analysis
  *  Copyright (C) 1995, 1996  Robert Gentleman and Ross Ihaka
- *  Copyright (C) 1999, 2000  The R Development Core Team
+ *  Copyright (C) 1999--2000  The R Development Core Team
  *
  *  This program is free software; you can redistribute it and/or modify
  *  it under the terms of the GNU General Public License as published by
@@ -149,23 +149,26 @@ char *EncodeReal(double x, int w, int d, int e)
 	}
 #else
 	/* Win32 libraries always use e+xxx format so avoid them */
-	double xx = prec(x, (double)(d+1)); /* might have 9.99997e-7 */
+	double X= x, xx = prec(x, (double)(d+1)); /* might have 9.99997e-7 */
 	int kp = (xx == 0.0) ? 0 : floor(log10(fabs(xx))+1e-12), ee = 1;
 	if(kp > 0) {
 	    x = x / pow(10.0, (double)kp);
 	} else if (kp < 0) {
 	    x = x * pow(10.0, (double)(-kp));
 	}
-	if(abs(kp) >= 100) ee = 2;
-	if(d)
-	    sprintf(fmt, "%%#%d.%dfe%%+0%dd", w-ee-3, d, ee+2);
-	else
-	    sprintf(fmt, "%%%d.%dfe%%+0%dd", w-ee-3, d, ee+2);
-	sprintf(Encodebuf, fmt, x, kp);
+	if(abs(kp) >= 100) {
+	    if(d) sprintf(fmt,"%%#%d.%de", w, d);
+	    else sprintf(fmt,"%%%d.%de", w, d);
+	    sprintf(Encodebuf, fmt, X);
+	} else {
+	    if(d) sprintf(fmt, "%%#%d.%dfe%%+0%dd", w-ee-3, d, ee+2);
+	    else sprintf(fmt, "%%%d.%dfe%%+0%dd", w-ee-3, d, ee+2);
+	    sprintf(Encodebuf, fmt, x, kp);
+	}
 #endif
     }
     else {
-	sprintf(fmt,"%%%d.%df",w,d);
+	sprintf(fmt,"%%%d.%df", w, d);
 	sprintf(Encodebuf, fmt, x);
     }
     return Encodebuf;
@@ -351,7 +354,7 @@ char *EncodeElement(SEXP x, int index, int quote)
 	break;
     case STRSXP:
 	formatString(&STRING(x)[index], 1, &w, quote);
-	EncodeString(CHAR(STRING(x)[index]), w, quote, adj_left);
+	EncodeString(CHAR(STRING(x)[index]), w, quote, Rprt_adj_left);
 	break;
     case CPLXSXP:
 	formatComplex(&COMPLEX(x)[index], 1,
@@ -424,10 +427,10 @@ void Rvprintf(const char *format, va_list arg)
 	fflush(R_Outputfile);
     }
     else {
-	char buf[BUFSIZE], *p = buf, *vmax = vmaxget(); 
+	char buf[BUFSIZE], *p = buf, *vmax = vmaxget();
+#ifdef HAVE_VSNPRINTF
 	int res;
 
-#ifdef HAVE_VSNPRINTF
 	res = vsnprintf(p, BUFSIZE, format, arg);
 	if(res >= BUFSIZE) { /* res is the desired output length */
 	    p = R_alloc(res+1, sizeof(char));
@@ -450,7 +453,7 @@ void Rvprintf(const char *format, va_list arg)
     }
 }
 
-/* 
+/*
    REvprintf is part of the error handler.
    Do not change it unless you are SURE that
    your changes are compatible with the
@@ -487,7 +490,7 @@ void MatrixColumnLabel(SEXP cl, int j, int w)
     if (!isNull(cl)) {
 	l = Rstrlen(CHAR(STRING(cl)[j]));
 	Rprintf("%*s%s", w-l, "",
-		EncodeString(CHAR(STRING(cl)[j]), l, 0, adj_left));
+		EncodeString(CHAR(STRING(cl)[j]), l, 0, Rprt_adj_left));
     }
     else {
 	Rprintf("%*s[,%ld]", w-IndexWidth(j+1)-3, "", j+1);
@@ -501,7 +504,7 @@ void RightMatrixColumnLabel(SEXP cl, int j, int w)
     if (!isNull(cl)) {
 	l = Rstrlen(CHAR(STRING(cl)[j]));
 	Rprintf("%*s", R_print.gap+w,
-		EncodeString(CHAR(STRING(cl)[j]), l, 0, adj_right));
+		EncodeString(CHAR(STRING(cl)[j]), l, 0, Rprt_adj_right));
     }
     else {
 	Rprintf("%*s[,%ld]%*s", R_print.gap, "", j+1, w-IndexWidth(j+1)-3, "");
@@ -515,7 +518,7 @@ void LeftMatrixColumnLabel(SEXP cl, int j, int w)
     if (!isNull(cl)) {
 	l = Rstrlen(CHAR(STRING(cl)[j]));
 	Rprintf("%*s%s%*s", R_print.gap, "",
-		EncodeString(CHAR(STRING(cl)[j]), l, 0, adj_left), w-l, "");
+		EncodeString(CHAR(STRING(cl)[j]), l, 0, Rprt_adj_left), w-l, "");
     }
     else {
 	Rprintf("%*s[,%ld]%*s", R_print.gap, "", j+1, w-IndexWidth(j+1)-3, "");
@@ -529,7 +532,7 @@ void MatrixRowLabel(SEXP rl, int i, int rlabw, int lbloff)
     if (!isNull(rl)) {
 	l = Rstrlen(CHAR(STRING(rl)[i]));
 	Rprintf("\n%*s%s%*s", lbloff, "",
-		EncodeString(CHAR(STRING(rl)[i]), l, 0, adj_left),
+		EncodeString(CHAR(STRING(rl)[i]), l, 0, Rprt_adj_left),
 		rlabw-l-lbloff, "");
     }
     else {

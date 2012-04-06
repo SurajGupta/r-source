@@ -158,7 +158,7 @@ SEXP do_strsplit(SEXP call, SEXP op, SEXP args, SEXP env)
     x = CAR(args);
     tok = CADR(args);
     if (!isString(x) || !isString(tok))
-	errorcall(call,"non-character argument in strsplit()");
+	errorcall_return(call,"non-character argument in strsplit()");
     len = LENGTH(x);
     tlen = LENGTH(tok);
     PROTECT(s = allocVector(VECSXP, len));
@@ -353,7 +353,7 @@ SEXP do_abbrev(SEXP call, SEXP op, SEXP args, SEXP env)
     checkArity(op,args);
 
     if (!isString(CAR(args)))
-	errorcall(call, "the first argument must be a string");
+	errorcall_return(call, "the first argument must be a string");
     len = length(CAR(args));
 
     PROTECT(ans = allocVector(STRSXP, len));
@@ -419,7 +419,7 @@ SEXP do_grep(SEXP call, SEXP op, SEXP args, SEXP env)
     if (value_opt == NA_INTEGER) value_opt = 0;
 
     if (!isString(pat) || length(pat) < 1 || !isString(vec))
-	errorcall(call, "invalid argument");
+	errorcall(call, R_MSG_IA);
 
     eflags = 0;
 
@@ -544,7 +544,7 @@ SEXP do_gsub(SEXP call, SEXP op, SEXP args, SEXP env)
     if (!isString(pat) || length(pat) < 1 ||
 	!isString(rep) || length(rep) < 1 ||
 	!isString(vec))
-	errorcall(call, "invalid argument");
+	errorcall(call, R_MSG_IA);
 
     eflags = 0;
     if (extended_opt) eflags = eflags | REG_EXTENDED;
@@ -623,7 +623,7 @@ SEXP do_regexpr(SEXP call, SEXP op, SEXP args, SEXP env)
 
     if (!isString(pat) || length(pat) < 1 ||
 	!isString(text) || length(text) < 1 )
-	errorcall(call, "invalid argument");
+	errorcall(call, R_MSG_IA);
 
     eflags = extended_opt ? REG_EXTENDED : 0;
 
@@ -635,7 +635,7 @@ SEXP do_regexpr(SEXP call, SEXP op, SEXP args, SEXP env)
 
     for (i = 0 ; i < n ; i++) {
 	if(regexec(&reg, CHAR(STRING(text)[i]), 1, regmatch, 0) == 0) {
-	    st = regmatch[0].rm_so; 
+	    st = regmatch[0].rm_so;
 	    INTEGER(ans)[i] = st + 1; /* index from one */
 	    INTEGER(matchlen)[i] = regmatch[0].rm_eo - st;
 	} else {
@@ -646,4 +646,218 @@ SEXP do_regexpr(SEXP call, SEXP op, SEXP args, SEXP env)
     setAttrib(ans, install("match.length"), matchlen);
     UNPROTECT(2);
     return ans;
+}
+
+SEXP
+do_tolower(SEXP call, SEXP op, SEXP args, SEXP env)
+{
+    SEXP x, y;
+    int i, n;
+    char *p;
+
+    checkArity(op, args);
+    x = CAR(args);
+    if(!isString(x))
+	errorcall(call, "non-character argument to tolower()");
+    n = LENGTH(x);
+    PROTECT(y = allocVector(STRSXP, n));
+    for(i = 0; i < n; i++) {
+	STRING(y)[i] = allocString(strlen(CHAR(STRING(x)[i])));
+	strcpy(CHAR(STRING(y)[i]), CHAR(STRING(x)[i]));
+    }
+
+    for(i = 0; i < n; i++) {
+	for(p = CHAR(STRING(y)[i]); *p != '\0'; p++) {
+	    *p = tolower(*p);
+	}
+    }
+    UNPROTECT(1);
+    return(y);
+}
+
+SEXP
+do_toupper(SEXP call, SEXP op, SEXP args, SEXP env)
+{
+    SEXP x, y;
+    int i, n;
+    char *p;
+
+    checkArity(op, args);
+    x = CAR(args);
+    if(!isString(x))
+	errorcall(call, "non-character argument to toupper()");
+    n = LENGTH(x);
+    PROTECT(y = allocVector(STRSXP, n));
+    for(i = 0; i < n; i++) {
+	STRING(y)[i] = allocString(strlen(CHAR(STRING(x)[i])));
+	strcpy(CHAR(STRING(y)[i]), CHAR(STRING(x)[i]));
+    }
+
+    for(i = 0; i < n; i++) {
+	for(p = CHAR(STRING(y)[i]); *p != '\0'; p++) {
+	    *p = toupper(*p);
+	}
+    }
+    UNPROTECT(1);
+    return(y);
+}
+
+struct tr_spec {
+    enum { TR_INIT, TR_CHAR, TR_RANGE } type;
+    struct tr_spec *next;
+    union {
+	unsigned char c;
+	struct {
+	    unsigned char first;
+	    unsigned char last;
+	} r;
+    } u;
+};
+
+/*
+  FIXME:
+  We should really check all subsequent malloc()'s for their return
+  value.
+  */
+
+static void
+tr_build_spec(const char *s, struct tr_spec *trs) {
+    int i, len = strlen(s);
+    struct tr_spec *this, *new;
+
+    this = trs;
+    for(i = 0; i < len - 2; ) {
+	new = (struct tr_spec *) malloc(sizeof(struct tr_spec));
+	new->next = NULL;
+	if(s[i + 1] == '-') {
+	    new->type = TR_RANGE;
+	    if(s[i] > s[i + 2])
+		error("decreasing range specification (`%c-%c')",
+		      s[i], s[i + 2]);
+	    new->u.r.first = s[i];
+	    new->u.r.last = s[i + 2];
+	    i = i + 3;
+	} else {
+	    new->type = TR_CHAR;
+	    new->u.c = s[i];
+	    i++;
+	}
+	this = this->next = new;
+    }
+    for( ; i < len; i++) {
+	new = (struct tr_spec *) malloc(sizeof(struct tr_spec));
+	new->next = NULL;
+	new->type = TR_CHAR;
+	new->u.c = s[i];
+	this = this->next = new;
+    }
+}
+
+static void
+tr_free_spec(struct tr_spec *trs) {
+    struct tr_spec *this, *next;
+    this = trs;
+    while(this) {
+	next = this->next;
+	free(this);
+	this = next;
+    }
+}
+
+unsigned char
+tr_get_next_char_from_spec(struct tr_spec **p) {
+    unsigned char c;
+    struct tr_spec *this;
+
+    this = *p;
+    if(!this)
+	return('\0');
+    switch(this->type) {
+	/* Note: this code does not deal with the TR_INIT case. */
+    case TR_CHAR:
+	c = this->u.c;
+	*p = this->next;
+	break;
+    case TR_RANGE:
+	c = this->u.r.first;
+	if(c == this->u.r.last) {
+	    *p = this->next;
+	} else {
+	    (this->u.r.first)++;
+	}
+	break;
+    default:
+	c = '\0';
+	break;
+    }
+    return(c);
+}
+
+SEXP
+do_chartr(SEXP call, SEXP op, SEXP args, SEXP env)
+{
+    SEXP old, new, x, y;
+    unsigned char xtable[UCHAR_MAX + 1], *p, c_old, c_new;
+    struct tr_spec *trs_old, **trs_old_ptr;
+    struct tr_spec *trs_new, **trs_new_ptr;
+    int i, n;
+
+    checkArity(op, args);
+    old = CAR(args); args = CDR(args);
+    new = CAR(args); args = CDR(args);
+    x = CAR(args);
+    if(!isString(old) || (length(old) < 1) ||
+       !isString(new) || (length(new) < 1) ||
+       !isString(x))
+	errorcall(call, R_MSG_IA);
+
+    for(i = 0; i <= UCHAR_MAX; i++)
+	xtable[i] = i;
+
+    /* Initialize the old and new tr_spec lists. */
+    trs_old = (struct tr_spec *) malloc(sizeof(struct tr_spec));
+    trs_old->type = TR_INIT;
+    trs_old->next = NULL;
+    trs_new = (struct tr_spec *) malloc(sizeof(struct tr_spec));
+    trs_new->type = TR_INIT;
+    trs_new->next = NULL;
+    /* Build the old and new tr_spec lists. */
+    tr_build_spec(CHAR(STRING(old)[0]), trs_old);
+    tr_build_spec(CHAR(STRING(new)[0]), trs_new);
+    /* Initilize the pointers for walking through the old and new
+       tr_spec lists and retrieving the next chars from the lists.
+       */
+    trs_old_ptr = (struct tr_spec **) malloc(sizeof(struct tr_spec *));
+    *trs_old_ptr = trs_old->next;
+    trs_new_ptr = (struct tr_spec **) malloc(sizeof(struct tr_spec *));
+    *trs_new_ptr = trs_new->next;
+    for(;;) {
+	c_old = tr_get_next_char_from_spec(trs_old_ptr);
+	c_new = tr_get_next_char_from_spec(trs_new_ptr);
+	if(c_old == '\0')
+	    break;
+	else if(c_new == '\0')
+	    errorcall(call, "old is longer than new");
+	else
+	    xtable[c_old] = c_new;
+    }
+    /* Free the memory occupied by the tr_spec lists. */
+    tr_free_spec(trs_old);
+    tr_free_spec(trs_new);
+
+    n = LENGTH(x);
+    PROTECT(y = allocVector(STRSXP, n));
+    for(i = 0; i < n; i++) {
+	STRING(y)[i] = allocString(strlen(CHAR(STRING(x)[i])));
+	strcpy(CHAR(STRING(y)[i]), CHAR(STRING(x)[i]));
+    }
+
+    for(i = 0; i < length(y); i++) {
+	for(p = CHAR(STRING(y)[i]); *p != '\0'; p++) {
+	    *p = xtable[*p];
+	}
+    }
+
+    UNPROTECT(1);
+    return(y);
 }

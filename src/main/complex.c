@@ -22,11 +22,15 @@
 #include <config.h>
 #endif
 
-#include "Defn.h"
+#include "Defn.h"	/* -> ../include/R_ext/Complex.h */
 #include "Mathlib.h"
 #include "Applic.h"		/* R_cpoly */
 
-#include "arithmetic.h"		/* complex_ */
+#include "arithmetic.h"		/* complex_*  */
+
+#ifndef HAVE_HYPOT
+# define hypot pythag
+#endif
 
 static int naflag;
 
@@ -40,6 +44,7 @@ SEXP complex_unary(int code, SEXP s1)
     case PLUSOP:
 	return s1;
     case MINUSOP:
+
 	ans = duplicate(s1);
 	n = LENGTH(s1);
 	for (i = 0; i < n; i++) {
@@ -60,8 +65,7 @@ SEXP complex_unary(int code, SEXP s1)
 	}
 	return ans;
     default:
-	error("illegal complex unary operator");
-	return R_NilValue;	/* -Wall*/
+	error_return("illegal complex unary operator");
     }
 }
 
@@ -452,8 +456,8 @@ static void z_asin(Rcomplex *r, Rcomplex *z)
     double alpha, beta, t1, t2, x, y;
     x = z->r;
     y = z->i;
-    t1 = 0.5 * sqrt((x + 1) * (x + 1) + y * y);
-    t2 = 0.5 * sqrt((x - 1) * (x - 1) + y * y);
+    t1 = 0.5 * hypot(x + 1, y);
+    t2 = 0.5 * hypot(x - 1, y);
     alpha = t1 + t2;
     beta = t1 - t2;
     r->r = asin(beta);
@@ -694,8 +698,7 @@ SEXP complex_math2(SEXP call, SEXP op, SEXP args, SEXP env)
     case 0:
 	return cmath2(op, CAR(args), CADR(args), z_atan2);
     default:
-	errorcall(call, "unimplemented complex function");
-	return call;		/* just for -Wall */
+	errorcall_return(call, "unimplemented complex function");
     }
 }
 
@@ -775,7 +778,7 @@ SEXP do_polyroot(SEXP call, SEXP op, SEXP args, SEXP rho)
 	if(fail) errorcall(call, "root finding code failed");
 	UNPROTECT(2);
 	r = allocVector(CPLXSXP, degree);
-	for(i=0 ; i<n ; i++) {
+	for(i=0 ; i<degree ; i++) {
 	    COMPLEX(r)[i].r = REAL(rr)[i];
 	    COMPLEX(r)[i].i = REAL(ri)[i];
 	}

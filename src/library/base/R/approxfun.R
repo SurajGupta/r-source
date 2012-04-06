@@ -1,4 +1,6 @@
-approxfun <- function (x, y=NULL, method = "linear", yleft, yright, rule=1, f=0)
+approxfun <-
+    function(x, y=NULL, method = "linear", yleft, yright, rule=1,
+             f=0, ties=mean)
 {
     x <- xy.coords(x, y)
     y <- x$y
@@ -16,14 +18,25 @@ approxfun <- function (x, y=NULL, method = "linear", yleft, yright, rule=1, f=0)
     ok <- !(is.na(x) | is.na(y))
     x <- x[ok]
     y <- y[ok]
-    o <- order(x)
-    x <- x[o]
-    y <- y[o]
+    if (!is.character(ties) || (ties!="ordered")){
+        if (length(ux<-unique(x))<length(x)){
+            if (missing(ties))
+                warning("Collapsing to unique x values")
+            y <- tapply(y,x,ties)
+            x <- sort(ux)
+        } else {
+            o <- order(x)
+            x <- x[o]
+            y <- y[o]
+            rm(o)
+        }
+
+    }
     if (missing(yleft))
 	yleft <- if(rule == 1) NA else y[1]
     if (missing(yright))
 	yright <- if(rule == 1) NA else y[length(y)]
-    rm(o, ok, rule)
+    rm(ok, rule)
     function(v) .C("R_approx", as.double(x), as.double(y),
 		   n, xout = as.double(v), length(v), as.integer(method),
 		   as.double(yleft), as.double(yright),

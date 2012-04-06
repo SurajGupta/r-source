@@ -1,45 +1,45 @@
 include MkRules
 
-HELP=YES
-WINHELP=BOTH # NO, CHM, BOTH
+HELP = YES
+WINHELP = BOTH # NO, CHM, BOTH
 
-PACKAGES=base ctest eda lqs modreg mva nls splines stepfun ts
-RPREFIX=rw1001
-RVER=$(shell cut -d' ' -f1 ../../VERSION)
+PACKAGES = base ctest eda lqs modreg mva nls splines stepfun ts
+ALLPACKAGES = $(PACKAGES) tcltk
+RPREFIX = rw1010
 
-RHOME=$(shell cd ../..; perl src/gnuwin32/pwd.pl)# must be absolute path
-RLIB=$(RHOME)/library
-PKGDIR=$(RHOME)/src/library
-PKGD=$(shell cd $(PKGDIR); perl $(RHOME)/src/gnuwin32/pwd.pl)# must be absolute path
+RHOME = $(shell perl pwd.pl ../..)# must be absolute path
+RLIB = $(RHOME)/library
+PKGDIR = $(RHOME)/src/library
+PKGD = $(shell perl pwd.pl $(PKGDIR))# must be absolute path
 
 ifdef DEBUG
- OPTFLAGS=-g -O2 -Wall
- DLLFLAGS=
+ OPTFLAGS = -g -O2 -Wall
+ DLLFLAGS =
 else
- OPTFLAGS=-O2 -Wall -pedantic
- DLLFLAGS=-s 
+ OPTFLAGS = -O2 -Wall -pedantic
+ DLLFLAGS = -s
 endif
 
-R-DLLFLAGS= $(STRIPFLAG) -mwindows
-R-DLLLIBS=-L. $(FLIBS) -lwsock32 -lcomctl32
-SOURCES=$(wildcard *.c *.f)
-OBJS=$(foreach i, $(SOURCES), $(basename $i).o)
-MAINLIBS=libmain.a libappl.a libmath.a
-EXTRALIBS=ga.a gl.a xdr.a em.a
+R-DLLFLAGS =  $(STRIPFLAG) -mwindows
+R-DLLLIBS = -L. $(FLIBS) -lwsock32 -lcomctl32 -lversion
+SOURCES = $(wildcard *.c *.f)
+OBJS = $(foreach i, $(SOURCES), $(basename $i).o)
+MAINLIBS = libmain.a libappl.a libmath.a
+EXTRALIBS = ga.a gl.a xdr.a em.a
 
-LIBFILES=$(foreach i, $(PACKAGES), ../../library/$i)
-PKGS=$(foreach i, $(PACKAGES), pkg-$i)
-PKGCLEAN=$(foreach i, $(PACKAGES), pkgclean-$i)
+LIBFILES = $(foreach i, $(ALLPACKAGES), ../../library/$i)
+PKGS = $(foreach i, $(PACKAGES), pkg-$i)
+PKGCLEAN = $(foreach i, $(ALLPACKAGES), pkgclean-$i)
 
 .PHONY:  clean veryclean  rlibs fixfiles front-ends
 
 all: rbuild rdemo rpackage
 
-CFLAGS=$(OPTFLAGS) -I../include -I../include/R_ext -I. -DHAVE_CONFIG_H
-FFLAGS=$(OPTFLAGS)
+CFLAGS = $(OPTFLAGS) -I../include -I../include/R_ext -I. -DHAVE_CONFIG_H
+FFLAGS = $(OPTFLAGS)
 
 rbuild: fixfiles makeMakedeps rlibs ../../bin/R.dll libR.a CHTML \
-	../include/globalvar.h front-ends docfiles
+	../include/globalvar.h front-ends COPYRIGHTS
 
 rpackage: fixed/fixdesc $(PKGS)
 
@@ -49,38 +49,22 @@ rinstaller:
 rdemo:  libR.a
 	make -C ../../demos/dynload -f $(RHOME)/src/gnuwin32/MkDyndemo
 
-rlibs: 
-	$(MAKE) -C ../appl OPTFLAGS="$(OPTFLAGS)" -f Makefile.win
-	$(MAKE) -C ../main OPTFLAGS="$(OPTFLAGS)" -f Makefile.win
-	$(MAKE) -C ../nmath OPTFLAGS="$(OPTFLAGS)" -f Makefile.win
+rlibs:
+	$(MAKE) -C ../appl  OPTFLAGS='$(OPTFLAGS)' -f Makefile.win
+	$(MAKE) -C ../main  OPTFLAGS='$(OPTFLAGS)' -f Makefile.win
+	$(MAKE) -C ../nmath OPTFLAGS='$(OPTFLAGS)' -f Makefile.win
 	$(MAKE) -C ./graphapp
 	$(MAKE) -C ./getline
 	$(MAKE) -C ./xdr
 	$(MAKE) -C ./math
 
 
-docfiles: INSTALL COPYRIGHTS FAQs
-SEDVER= -e s/@RVER@/$(RVER)/g -e s/@RWVER@/$(RPREFIX)/g
-
 COPYRIGHTS: $(RHOME)/COPYRIGHTS COPYRIGHTS.win
 	cat $^ > $@
 
-INSTALL: INSTALL.in ../../VERSION
-	$(SED) $(SEDVER) INSTALL.in > INSTALL
-
-FAQs: rw-faq fixed/r/rw-FAQ.html
-
-fixed/r/rw-FAQ.html: rw-FAQ.texi ../../VERSION
-	$(SED) $(SEDVER) $< | \
-	  makeinfo --html --no-headers --number-sections -o $@
-
-rw-faq: rw-FAQ.texi ../../VERSION
-	$(SED) $(SEDVER) $< | \
-	  makeinfo --no-headers --number-sections -o $@
-
 
 fixfiles:
-	$(MKDIR) -p ../../bin 
+	$(MKDIR) -p ../../bin
 	$(MAKE) -C ./fixed
 	$(CP) -pr unzip ../..
 	$(RM) ../../unzip/*.h
@@ -88,7 +72,9 @@ fixfiles:
 fixed/fixdesc:
 	sh fixed/GETDESC $(PACKAGES)
 
-R.dll: R.a $(MAINLIBS) $(EXTRALIBS)
+dllversion.o: ../include/Rversion.h
+
+R.dll: R.a $(MAINLIBS) $(EXTRALIBS) dllversion.o
 
 ../../bin/R.dll: fixfiles rlibs R.dll
 	$(MKDIR) -p ../../bin
@@ -116,14 +102,18 @@ R.exp: R.exp1
 R.exp1: R.a $(MAINLIBS) $(EXTRALIBS) exported-vars
 	$(ECHO) EXPORTS > $@
 	$(NM) R.a $(MAINLIBS) $(EXTRALIBS) > RDefs
-	$(SED) -n "/^........ [T] _/s/^........ [T] _/ /p" RDefs >> $@
+	$(SED) -n '/^........ [T] _/s/^........ [T] _/ /p' RDefs >> $@
 	$(CAT) exported-vars >> $@
 	$(RM) RDefs
 
 # avoid building globalvar.h with errors
 ../include/globalvar.h: exported-vars
-	$(AWK) -- '//{if ($$1 != "") print "#define " $$1 " (*_imp__" $$1 ")"}' \
-	           exported-vars > ../include/globalvar.h
+	perl -n makeimps.pl exported-vars > $@
+
+tcl:
+	sh fixed/GETDESC tcltk
+	$(MAKE) pkg-tcltk
+
 
 CHTML:
 ifeq ($(strip $(HELP)),YES)
@@ -136,7 +126,7 @@ endif
 endif
 
 
-base-HELP=ziponly
+base-HELP = ziponly
 
 pkg-%:  libR.a #../include/globalvar.h
 	$(MAKE) DLLNM=$($*-DLLNM)  EXTRADOCS=$($*-EXTRADOCS) \
@@ -162,6 +152,10 @@ pkgcheck-%:
 	-@mkdir -p $(PKGDIR)/$*/check
 	@$(MAKE) -C $(PKGDIR)/$*/check PKG=$* RHOME=$(RHOME) RLIB=$(RLIB) \
 	  -f $(RHOME)/src/gnuwin32/check/PkgCheck
+	@if test -d $(PKGDIR)/$*/tests ; then \
+	  $(MAKE) -C $(PKGDIR)/$*/tests PKG=$* RHOME=$(RHOME) RLIB=$(RLIB) \
+	    -f $(RHOME)/src/gnuwin32/check/PkgCheck tests;\
+	fi
 
 ziphelp-%:
 	$(MAKE) -C ./help RHOME=$(RHOME) PKGDIR=$(PKGD) RLIB=$(RLIB) ziphelp-$*
@@ -180,17 +174,18 @@ bootstrap-DLLNM=boott
 clean: cleanwin $(PKGCLEAN)
 	$(RM) -f ../*/*.o $(WINOBJS) *.a ../*/*.d ../*/Makedeps fixed/fixdesc
 	-$(MAKE) -C ../../doc/manual -f Makefile.win distclean
+	-$(MAKE) -C ../nmath/standalone -f Makefile.win distclean
 
 distclean veryclean: clean
 	$(RM) -rf R.exp ../../bin ../../library
 	$(RM) -f ../library/*/src/*.o ../library/*/src/*.a
-	$(RM) -f ../library/*/src/*.def ../library/*/src/*.dll
+	$(RM) -f ../library/*/src/*.dll
 	$(RM) -rf ../library/*/check
 	$(RM) -f ../../doc/html/search/index.txt \
 	../../doc/html/function.html ../../doc/html/packages.html \
 	../../demos/dynload/zero.def ../../demos/dynload/zero.dll \
 	../../demos/dynload/zero.o \
-	../../etc/R* ../../etc/rgb.txt \
+	../../etc/Rconsole ../etc/Rdevga ../etc/Rprofile ../../etc/rgb.txt \
 	../include/FFDecl.h ../include/FFTab.h ../include/Platform.h \
 	../include/globalvar.h ../../tests/*.Rout ../../tests/*.Rout.fail
 
@@ -207,7 +202,60 @@ cleanwin:
 	$(MAKE) -C bitmap clean
 	-$(MAKE) -C installer clean
 
-bindist:
+
+# tests
+check: all test
+test: test-Specific pkgtests
+
+test-Specific:
+	-@$(MAKE) -C $(RHOME)/tests -f $(RHOME)/src/gnuwin32/check/Maketests clean
+	-@$(MAKE) -C $(RHOME)/tests -f $(RHOME)/src/gnuwin32/check/Maketests RHOME=$(RHOME)
+
+PKGS-CHK = $(foreach i, $(PACKAGES), pkgcheck-$i)
+pkgtests: $(PKGS-CHK)
+
+pkgcheck-base:
+	@$(ECHO) -------- Testing package base --------
+	@(cd ../../library/base/R-ex; unzip -oq Rex)
+	-@mkdir -p ../library/base/check
+	-@$(MAKE) -C ../library/base/check \
+	  PKG=base RHOME=$(RHOME) RLIB=$(RLIB) \
+	  -f ../../../gnuwin32/check/PkgCheck
+	@(cd ../../library/base/R-ex; rm -f *.R)
+
+bundle-%:
+	$(PERL) fixed/dobundle.pl $* $(PKGD) $(RLIB)
+
+docs manuals:
+	@$(MAKE) -C $(RHOME)/doc/manual -f Makefile.win clean
+	@$(MAKE) -C $(RHOME)/doc/manual -f Makefile.win R_PKGS='$(PACKAGES)'
+	@$(MAKE) ziponly-base
+
+
+## ============= Maintainer targets ========================
+
+RVER = $(shell cut -d' ' -f1 ../../VERSION | sed -n 1p)
+
+docfiles: INSTALL FAQs
+SEDVER = -e s/@RVER@/$(RVER)/g -e s/@RWVER@/$(RPREFIX)/g
+
+INSTALL: INSTALL.in ../../VERSION
+	$(SED) $(SEDVER) INSTALL.in > INSTALL
+
+FAQs: rw-faq fixed/r/rw-FAQ.html
+
+fixed/r/rw-FAQ.html: rw-FAQ.texi ../../VERSION
+	$(SED) $(SEDVER) $< | \
+	  makeinfo --html --no-headers --number-sections -o $@
+
+rw-faq: rw-FAQ.texi ../../VERSION
+	$(SED) $(SEDVER) $< | \
+	  makeinfo --no-headers --number-sections -o $@
+
+
+distribution: bindist packagedist docsdist
+
+bindist: docfiles
 	$(RM) -rf $(RPREFIX)
 	$(MKDIR) $(RPREFIX)
 	$(CP) -pr ../../bin ../../afm ../../demos  ../../unzip $(RPREFIX)
@@ -236,7 +284,7 @@ bindist:
 	   $(RPREFIX)w.zip $(RPREFIX)l.zip $(RPREFIX)ch.zip
 	$(RM) anindex.zip
 	zip -mrX anindex.zip $(RPREFIX)/library/*/help/AnIndex $(RPREFIX)/library/*/help/00Titles
-	zip -mr9X $(RPREFIX)h.zip $(RPREFIX)/library/*/help 
+	zip -mr9X $(RPREFIX)h.zip $(RPREFIX)/library/*/help
 	unzip anindex.zip
 	$(RM) anindex.zip
 	zip -rm9X $(RPREFIX)w.zip $(RPREFIX)/doc/html $(RPREFIX)/library/*/html
@@ -249,8 +297,7 @@ bindist:
 	zip -r9X $(RPREFIX)b1.zip $(RPREFIX)
 	$(RM) -rf $(RPREFIX)
 
-
-
+## currently unused
 srcdist:
 	$(RM) -r ../src src
 	$(MKDIR) ../src
@@ -260,7 +307,7 @@ srcdist:
 	$(RM) -r ../src/gnuwin32/installer/unzip
 	$(RM) -r ../src/gnuwin32/bitmap/jpeg-6b
 	$(RM) -r ../src/gnuwin32/bitmap/libpng
-	$(RM) -r ../src/gnuwin32/bitmap/zlib 
+	$(RM) -r ../src/gnuwin32/bitmap/zlib
 	$(RM) -f ../src/gnuwin32/unzip/*.dll
 	$(MAKE) -k -C ../src/gnuwin32 cleanwin
 	mv ../src .
@@ -293,40 +340,10 @@ packagedist:
 	$(CP) readme.packages $(RPREFIX)
 	$(CP) ../../etc/Rdconvlib.pl ../../etc/buildlib.pl \
 	   ../../etc/html-layout.pl $(RPREFIX)/etc
+	$(CP) -p graphapp/graphapp.h $(RPREFIX)/src/include
+	$(CP) -pr windlgs $(RPREFIX)/src/library
 	zip -rX $(RPREFIX)sp.zip $(RPREFIX)
 	$(RM) -r $(RPREFIX)
-
-
-distribution: bindist packagedist docsdist
-
-# tests
-check: all test
-test: test-Specific pkgtests
-
-test-Specific:
-	-@$(MAKE) -C $(RHOME)/tests -f $(RHOME)/src/gnuwin32/check/Maketests clean
-	-@$(MAKE) -C $(RHOME)/tests -f $(RHOME)/src/gnuwin32/check/Maketests
-
-PKGS-CHK=$(foreach i, $(PACKAGES), pkgcheck-$i)
-pkgtests: $(PKGS-CHK)
-
-pkgcheck-base:
-	@$(ECHO) -------- Testing package base --------
-	@(cd ../../library/base/R-ex; unzip -oq Rex)
-	-@mkdir -p ../library/base/check
-	-@$(MAKE) -C ../library/base/check \
-	  PKG=base RHOME=$(RHOME) RLIB=$(RLIB) \
-	  -f ../../../gnuwin32/check/PkgCheck
-	@(cd ../../library/base/R-ex; rm -f *.R)
-
-bundle-%:
-	$(PERL) fixed/dobundle.pl $* $(PKGD) $(RLIB)
-
-docs manuals:
-	@$(MAKE) -C $(RHOME)/doc/manual -f Makefile.win clean
-	@$(MAKE) -C $(RHOME)/doc/manual -f Makefile.win R_PKGS="$(PACKAGES)"
-#	$(RM) $(RHOME)/library/base/latex/*.tex
-	@$(MAKE) ziponly-base
 
 docsdist:
 	$(RM) -rf $(RPREFIX)
@@ -338,10 +355,11 @@ docsdist:
 	  -x $(RPREFIX)/doc/manual/R-FAQ.pdf
 	$(RM) -rf $(RPREFIX)
 
+## ============= End of maintainer targets ========================
 
 # Dependencies
-CSOURCES=$(wildcard *.c)
-DEPS=$(foreach i, $(CSOURCES), $(basename $i).d)
+CSOURCES = $(wildcard *.c)
+DEPS = $(foreach i, $(CSOURCES), $(basename $i).d)
 
 .c.d:
 	@echo "making $@ from $<"

@@ -201,7 +201,6 @@ typedef void (*scrollfn)(scrollbar s, int position);
 
 int 	initapp(int argc, char *argv[]);
 void	exitapp(void);
-void	app_cleanup(void);
 
 void	drawall(void);
 int 	peekevent(void);
@@ -210,7 +209,7 @@ void	mainloop(void);
 
 int 	execapp(char *cmd);
 
-void	gabeep(void);
+/*void	beep(void);*/
 
 /*
  *  Point and rectangle arithmetic.
@@ -283,7 +282,7 @@ void	setrgb(rgb c);
 
 #define DarkBlue	0x00000080UL
 #define DarkGreen	0x00008000UL
-#define DarkRed		0x00800000UL
+#define DarkRed		0x008B0000UL/* changed to match rgb */
 #define LightBlue	0x0080C0FFUL
 #define LightGreen	0x0080FF80UL
 #define LightRed	0x00FFC0FFUL
@@ -684,7 +683,6 @@ int 	askyesno(char *question);
 int 	askyesnocancel(char *question);
 char *	askstring(char *question, char *default_string);
 char *	askpassword(char *question, char *default_string);
-char *	askcdstring(char *question, char *default_string);
 char *	askfilename(char *title, char *default_name);
 char *	askfilesave(char *title, char *default_name);
 
@@ -733,6 +731,7 @@ extern	cursor	WatchCursor;	/* wait for the computer */
 extern	cursor	CaretCursor;	/* insert text */
 extern	cursor	TextCursor;	/* insert text */
 extern	cursor	HandCursor;	/* hand pointer */
+
 
 #ifdef __cplusplus
 }

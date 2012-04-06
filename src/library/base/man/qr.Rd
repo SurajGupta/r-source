@@ -31,7 +31,7 @@ as.qr(x)
 }
 \description{
   \code{qr} computes the QR decomposition of a matrix.  It provides an
-  interface to the techniques used in the LINPACK routine DQRDC.  
+  interface to the techniques used in the LINPACK routine DQRDC.
 }
 \details{
   The QR decomposition plays an important role in many
@@ -48,8 +48,9 @@ as.qr(x)
 
   \code{qr.solve} solves systems of equations via the QR decomposition.
 
-  \code{is.qr} returns \code{TRUE} if \code{x} is a list with a
-  component named \code{qr} and \code{FALSE} otherwise.
+  \code{is.qr} returns \code{TRUE} if \code{x} is a \code{\link{list}}
+  with components named \code{qr}, \code{rank} and \code{qraux} and
+  \code{FALSE} otherwise.
 
   It is not possible to coerce objects to mode \code{"qr"}.  Objects
   either are QR decompositions or they are not.
@@ -80,12 +81,11 @@ as.qr(x)
   \code{\link{qr.Q}},  \code{\link{qr.R}},  \code{\link{qr.X}} for
   reconstruction of the matrices.
   \code{\link{solve.qr}},  \code{\link{lsfit}},
-  \code{\link{eigen}}, \code{\link{svd}}.}
-\examples{
-## The determinant of a matrix  -- if you really must have it
-det2 <- function(x) prod(diag(qr(x)$qr))*(-1)^(ncol(x)-1)
-det2(print(cbind(1,1:3,c(2,0,1))))
+  \code{\link{eigen}}, \code{\link{svd}}.
 
+  \code{\link{det}} (using \code{qr}) to compute the determinant of a matrix.
+}
+\examples{
 hilbert <- function(n) { i <- 1:n; 1 / outer(i - 1, i, "+") }
 h9 <- hilbert(9); h9
 qr(h9)$rank           #--> only 7

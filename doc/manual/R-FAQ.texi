@@ -4,9 +4,9 @@
 @settitle R FAQ
 @setchapternewpage on
 @set FAQ-YEAR 2000
-@set FAQ-VERSION 1.0-1, 2000/02/28
-@set REL-VERSION 1.0.0
-@set DEV-VERSION 1.1.0
+@set FAQ-VERSION 1.1-0, 2000/06/12
+@set REL-VERSION 1.1.0
+@set DEV-VERSION 1.2.0
 @c %**end of header
 
 @dircategory Programming
@@ -209,9 +209,10 @@ individuals has contributed to R by sending code and bug reports.
 
 Since mid-1997 there has been a core group (the ``R Core Team'') who can
 modify the R source code CVS archive.  The group currently consists of
-Doug Bates, Peter Dalgaard, Robert Gentleman, Kurt Hornik, Ross Ihaka,
-Friedrich Leisch, Thomas Lumley, Martin Maechler, Guido Masarotto, Paul
-Murrell, Brian Ripley, Duncan Temple Lang, and Luke Tierney.
+Doug Bates, John Chambers, Peter Dalgaard, Robert Gentleman, Kurt
+Hornik, Ross Ihaka, Friedrich Leisch, Thomas Lumley, Martin Maechler,
+Guido Masarotto, Paul Murrell, Brian Ripley, Duncan Temple Lang, and
+Luke Tierney.
 
 R has a home page at @uref{http://www.r-project.org/}.  It is free
 software distributed under a GNU-style copyleft, and an official part of
@@ -306,7 +307,7 @@ it, for example to @file{/usr/local/bin}.  In addition, plain text help
 pages as well as @HTML{} and La@TeX{} versions of the documentation are
 built.
 
-Use @kbd{make dvi} to create dvi versions of the R manuals, such as
+Use @kbd{make dvi} to create DVI versions of the R manuals, such as
 @file{refman.dvi} (an R object reference index) and @file{R-exts.dvi},
 the ``R Extension Writers Guide'', in the @file{doc/manual}
 subdirectory.  These files can be previewed and printed using standard
@@ -325,9 +326,9 @@ install}.  By default, this will install to the following directories:
 
 @table @file
 @item $@{prefix@}/bin
-(some) executables
+the front-end shell script
 @item $@{prefix@}/man/man1
-man pages
+the man page
 @item $@{prefix@}/lib/R
 all the rest (libraries, on-line help system, @dots{}).  This is the ``R
 Home Directory'' (@env{R_HOME}) of the installed system.
@@ -346,7 +347,7 @@ $ ./configure --prefix=/where/you/want/R/to/go
 (E.g., the R executable will then be installed into
 @file{/where/you/want/R/to/go/bin}.)
 
-To install dvi, info and PDF versions of the manuals, use @kbd{make
+To install DVI, info and PDF versions of the manuals, use @kbd{make
 install-dvi}, @kbd{make install-info} and @kbd{make install-pdf},
 respectively.
 
@@ -386,24 +387,23 @@ distribution is available.  We hope that this will change soon.
 @node Are there Unix binaries for R?, What documentation exists for R?, How can R be installed?, R Basics
 @section Are there Unix binaries for R?
 
-@c Linux binaries as of 2000/02/12:
+@c Linux binaries as of 2000/06/12:
 @c
-@c debian   2.1 i386  0.99.0 Doug Bates
-@c          2.2 i386  0.99.0 Doug Bates
-@c linuxppc 5.0 ppc   0.99.0 Alex Buerkle <buerkle@hawaii.edu>
-@c redhat   6.x alpha 0.99.0 Naoki Takebayashi <ntakebay@bio.indiana.edu>
-@c              i386  0.99.0 Martyn Plummer <plummer@iarc.fr>
-@c              sparc 0.99.0 Vin Everett <vin.everett@mrc-bsu.cam.ac.uk>
-@c suse     5.3 i386  0.90.1 Albrecht Gebhardt <albrecht.gebhardt@uni-klu.ac.at>
-@c          6.0 i386  0.90.1 Albrecht Gebhardt <albrecht.gebhardt@uni-klu.ac.at>
-@c          6.2 i386  0.90.1 Albrecht Gebhardt <albrecht.gebhardt@uni-klu.ac.at>
-@c          6.3 i386  0.99.0 Albrecht Gebhardt <albrecht.gebhardt@uni-klu.ac.at>
+@c debian   2.1 i386  1.0.0  Doug Bates
+@c          2.2 i386  1.0.1  Doug Bates
+@c          2.3 i386  1.0.1  Doug Bates
+@c linuxppc 5.0 ppc   1.0.1  Alex Buerkle <buerkle@hawaii.edu>
+@c redhat   6.x alpha 1.0.1  Naoki Takebayashi <ntakebay@bio.indiana.edu>
+@c              i386  1.0.1  Martyn Plummer <plummer@iarc.fr>
+@c              sparc 1.0.0  Vin Everett <vin.everett@mrc-bsu.cam.ac.uk>
+@c suse     5.3 i386  1.0.1  Albrecht Gebhardt <albrecht.gebhardt@uni-klu.ac.at>
+@c          6.4 i386  1.0.1  Albrecht Gebhardt <albrecht.gebhardt@uni-klu.ac.at>
 
-The @file{bin/linux} directory of a CRAN site contains Debian 2.1 and
-2.2 packages for the i386 platform (now part of the Debian distribution
-and maintained by Doug Bates), Red Hat 6.x packages for the alpha, i386
-and sparc platforms (maintained by Naoki Takebayashi, Martyn Plummer,
-and Vin Everett, respectively), SuSE 5.3/6.0/6.2/6.3 i386 packages by
+The @file{bin/linux} directory of a CRAN site contains Debian
+2.1/2.2/2.3 packages for the i386 platform (now part of the Debian
+distribution and maintained by Doug Bates), Red Hat 6.x packages for the
+alpha, i386 and sparc platforms (maintained by Naoki Takebayashi, Martyn
+Plummer, and Vin Everett, respectively), SuSE 5.3/6.4 i386 packages by
 Albrecht Gebhardt, and Linuxppc 5.0 RPMs by Alex Buerkle.
 
 The @file{bin/osf} directory of a CRAN site contains RPMs for alpha
@@ -464,13 +464,20 @@ W. N. Venables and B. D. Ripley (1999), ``Modern Applied Statistics with
 @noindent
 This has a home page at @uref{http://www.stats.ox.ac.uk/pub/MASS3/}
 providing additional material, in particular ``R Complements'' which
-describe how to use the book with R.  These complements provide both
+describe how to use the book with R.  These complements contain both
 descriptions of some of the differences between R and @SPLUS{}, and the
-modifications needed to run the examples in the book.  Its companion
-volume on ``S Programming'', due in about April 2000, will provide an
-in-depth guide to writing software in the S language which forms the
-basis of both the commercial @SPLUS{} and the Open Source R data
-analysis software systems.
+modifications needed to run the examples in the book.  Its companion is
+
+@quotation
+W. N. Venables and B. D. Ripley (2000), ``S Programming''.  Springer,
+ISBN 0-387-98966-8.
+@end quotation
+
+@noindent
+This provides an in-depth guide to writing software in the S language
+which forms the basis of both the commercial @SPLUS{} and the Open
+Source R data analysis software systems.  See
+@uref{http://www.stats.ox.ac.uk/pub/MASS3/Sprog/} for more information.
 
 More introductory books are
 
@@ -480,6 +487,17 @@ P. Spector (1994), ``An introduction to S and @SPLUS{}'', Duxbury Press.
 A. Krause and M. Olsen (1997), ``The Basics of S and @SPLUS{}'',
 Springer.
 @end quotation
+
+The book
+@quotation
+J. C. Pinheiro and D. M. Bates (2000), ``Mixed-Effects Models in S and
+@SPLUS{}'', Springer, ISBN 0-387-98957-0
+@end quotation
+
+@noindent
+provides a comprehensive guide to the use of the @strong{nlme} package
+for linear and nonlinear mixed-effects models.  This has a home page at
+@uref{http://nlme.stat.wisc.edu/MEMSS/}.
 
 Last, but not least, Ross' and Robert's experience in designing and
 implementing R is described in:
@@ -1219,6 +1237,8 @@ Regression spline functions and classes.
 @item stepfun
 Code for dealing with STEP FUNctions, including empirical cumulative
 distribution functions.
+@item tcltk
+Interface and language bindings to Tcl/Tk GUI elements.
 @item ts
 Time Series.
 @end table
@@ -1230,6 +1250,9 @@ area.
 @item Devore5
 Data sets and sample analyses from ``Probability and Statistics for
 Engineering and the Sciences (5th ed)'' by Jay L. Devore, 2000, Duxbury.
+@item GenKern
+Functions for generating and manipulating generalised binned kernel
+density estimates.
 @item KernSmooth
 Functions for kernel smoothing (and density estimation) corresponding to
 the book ``Kernel Smoothing'' by M. P. Wand and M. C. Jones, 1995.
@@ -1240,6 +1263,8 @@ bundle.
 @item NISTnls
 A set of test nonlinear least squares examples from NIST, the
 U.S. National Institute for Standards and Technology.
+@item RODBC
+ODBC support and a back end database.
 @item RmSQL
 An interface between R and the mSQL database system.
 @c @item Rnotes
@@ -1247,8 +1272,8 @@ An interface between R and the mSQL database system.
 @c (@pxref{What documentation exists for R?}).
 @item SASmixed
 Data sets and sample linear mixed effects analyses corresponding to the
-examples in ``SAS System for Mixed Models'' by Littel, Milliken, Stroup
-and Wolfinger, 1996, SAS Institute.
+examples in ``SAS System for Mixed Models'' by R. C. Littell,
+G. A. Milliken, W. W. Stroup and R. D. Wolfinger, 1996, SAS Institute.
 @item acepack
 ace (Alternating Conditional Expectations) and avas (Additivity and
 VAriance Stabilization for regression) for selecting regression
@@ -1272,6 +1297,8 @@ Convex clustering methods, including @math{k}-means algorithm, on-line
 update algorithm (Hard Competitive Learning) and Neural Gas algorithm
 (Soft Competitive Learning) and calculation of several indexes for
 finding the number of clusters in a data set.
+@item cfa
+Analysis of configuration frequencies.
 @item chron
 A package for working with chronological objects (times and dates).
 @item class
@@ -1291,6 +1318,8 @@ any mixture of these.
 Miscellaneous functions used at the Department of Statistics at TU Wien
 (E1071), including moments, short-time Fourier transforms, Independent
 Component Analysis, and simulation of a Wiener process.
+@item fdim
+Functions for calculating fractal dimension.
 @item fracdiff
 Maximum likelihood estimation of the parameters of a fractionally
 differenced ARIMA(@math{p,d,q}) model (Haslett and Raftery, Applied
@@ -1301,6 +1330,12 @@ approach to GLMs for dependent data.
 @item gss
 A comprehensive package for structural multivariate function estimation
 using smoothing splines.
+@item hpower
+A suite of functions to compute power and sample size for tests of the
+general linear hypothesis.
+@item ineq
+Inequality, concentration and poverty measures, and Lorenz curves
+(empirical and theoretic).
 @item integrate
 Adaptive quadrature in up to 20 dimensions.
 @item leaps
@@ -1316,6 +1351,9 @@ and H. Sonnberger, 1986, Physica.
 Local Regression, likelihood and density estimation.
 @item logspline
 Logspline density estimation.
+@item maptree
+Functions with example data for graphing and mapping models from
+hierarchical clustering and classification and regression trees.
 @item mclust
 Model-based cluster analysis.
 @item mda
@@ -1397,8 +1435,12 @@ A constrained two-dimensional Delaunay triangulation package.
 Additional code for time series analysis.
 @item wavethresh
 Software to perform 1-d and 2-d wavelet statistics and transforms.
+@item wle
+Robust statistical inference via a weighted likelihood approach.
 @item xgobi
 Interface to the XGobi and XGvis programs for graphical data analysis.
+@item zmatrix
+Matrices with numeric indices starting at zero rather than one.
 @end table
 
 @noindent
@@ -1417,8 +1459,15 @@ Functions for exporting R objects as @HTML{} tables.
 An interface between R and the MySQL database system.
 @item RPgSQL
 An interface between R and the PostgreSQL database system.
+@item cmprsk
+Estimation, testing and regression modeling of subdistribution functions
+in competing risks.
+@item cxx
+A small C++ test package.
 @item dopt
 Finding D-optimal experimental designs.
+@item dse
+Multivariate time series.
 @item foreign
 Functions for reading data stored by statistical software like Minitab,
 SAS, SPSS, etc.
@@ -1430,43 +1479,33 @@ Interface to the NCSA HDF5 library.
 @item multidim
 Code for correspondence analysis and other multidimensional descriptive
 statistics.
-@item tcltk
-Basic interface with Tcl/Tk.
+@item syskern
+Functions for writing code that is OS and R/S independent.
+@item tframe
+Functions for writing code that is independent of the representation of
+time.
 @item timeslab
 Time series routines.
-@item vtcl
-Interface to Visual Tcl.
 @end table
 
 @email{jlindsey@@luc.ac.be, Jim Lindsey} has written a collection of R
 packages for nonlinear regression and repeated measurements, consisting
-of @strong{event} (procedures for event history analysis), @strong{gnlm}
-(generalized nonlinear regression models), @strong{growth} (normal
-theory repeated measurements models), @strong{repeated} (models for
-non-normal repeated measurements.), @strong{rmutil} (tools for repeated
+of @strong{event} (event history procedures and models), @strong{gnlm}
+(generalized nonlinear regression models), @strong{growth} (multivariate
+normal and elliptically-contoured repeated measurements models),
+@strong{repeated} (non-normal repeated measurements models),
+@strong{rmutil} (utilities for nonlinear regression and repeated
 measurements), and @strong{stable} (probability functions and
-generalized regression models for stable distributions).  Jim's packages
-were used for all analyses in the new edition of his book ``Models for
-Repeated Measurements'' (1999, Oxford University Press), and can be
-obtained from @uref{http://www.luc.ac.be/~jlindsey/rcode.html}.
-
-@email{pgilbert@@bank-banque-canada.ca, Paul Gilbert} has written the
-Dynamic Systems Estimation (DSE) Library, a multivariate time series
-package which implements an object oriented approach to time series
-models (using classes and methods in R/S).  The package provides
-state-space models and the Kalman filter, VARMA and cointegration
-models, and numerical differentiation.  It also contains Troll models as
-another class (the Troll interface is not yet functional in R).  Paul's
-package @strong{dse} can be obtained via
-@uref{http://www.bank-banque-canada.ca/pgilbert/dsedesc.htm}.
+generalized regression models for stable distributions).  All analyses
+in the new edition of his book ``Models for Repeated Measurements''
+(1999, Oxford University Press) were carried out using these packages.
+Jim has also started @strong{dna}, a package with procedures for the
+analysis of DNA sequences.  Jim's packages can be obtained from
+@uref{http://www.luc.ac.be/~jlindsey/rcode.html}.
 
 @c @email{hfe@@math.uio.no, Harald Fekjaer} has written @strong{addreg}, a
 @c package for additive hazards regression, which can be obtained from
 @c @uref{http://www.med.uio.no/imb/stat/addreg/}.
-
-@email{mlapsley@@ndirect.co.uk, Michael Lapsley} has written
-@strong{RODBC}, a package which provides an R ODBC interface; see
-@uref{http://www.ndirect.co.uk/~mlapsley/} for more information.
 
 More code has been posted to the r-help mailing list, and can be
 obtained from the mailing list archive.
@@ -1618,10 +1657,6 @@ exists for R?}, and gives information on package structure, the
 configure and cleanup mechanisms, and on automated package checking and
 building.
 
-The web page @uref{http://www.biostat.washington.edu/~thomas/Rlib.html}
-maintained by Thomas Lumley provides information on porting S packages
-to R.
-
 @xref{What is CRAN?}, for information on uploading a package to CRAN.
 
 @node How can I contribute to R?,  , How can I create an R package?, R Add-On Packages
@@ -1682,7 +1717,7 @@ R support contains code for editing R source code (syntactic indentation
 and highlighting of source code, partial evaluations of code, loading
 and error-checking of code, and source code revision maintenance) and
 documentation (syntactic indentation and highlighting of source code,
-sending Examples to running ESS process, and previewing), interacting
+sending examples to running ESS process, and previewing), interacting
 with an inferior R process from within Emacs (command-line editing,
 searchable command history, command-line completion of R object and file
 names, quick access to object and search lists, transcript recording,
@@ -1735,10 +1770,10 @@ run out of memory?}).
 To debug R ``from within Emacs'', there are several possibilities.  To
 use the Emacs GUD (Grand Unified Debugger) library with the recommended
 debugger GDB, type @kbd{M-x gdb} and give the path to the R
-@emph{binary}, typically @file{R.X11}, as argument.  At the gdb prompt,
-set @env{R_HOME} and other environment variables as needed (using e.g.@:
-@kbd{set env R_HOME /path/to/R/}, but see also below), and start the
-binary with the desired arguments (e.g., @kbd{run --vsize=12M}).
+@emph{binary} as argument.  At the gdb prompt, set @env{R_HOME} and
+other environment variables as needed (using e.g.@: @kbd{set env R_HOME
+/path/to/R/}, but see also below), and start the binary with the desired
+arguments (e.g., @kbd{run --vsize=12M}).
 
 If you have ESS, you can do @kbd{C-u M-x R @key{RET} - d @key{SPC} g d b
 @key{RET}} to start an inferior R process with arguments @option{-d
@@ -1787,6 +1822,8 @@ dir /opt/R/src/unix
 * Why does plotting give a color allocation error?::  
 * Is R Y2K-compliant?::         
 * How do I convert factors to numeric?::  
+* Are Trellis displays implemented in R?::  
+* What are the enclosing and parent environments?::  
 @end menu
 
 @node Why does R run out of memory?, Why does sourcing a correct file fail?, R Miscellania, R Miscellania
@@ -2048,9 +2085,9 @@ If the problem occurs when Netscape is running, try (re)starting it with
 either the @option{-no-install} (to use the default colormap) or the
 @option{-install} (to install a private colormap) option.
 
-You could also set the @code{colortype} of @code{X11()} to `pseudo.cube'
-rather than the default `pseudo'.  See the help page for @code{X11()}
-for more information.
+You could also set the @code{colortype} of @code{X11()} to
+@code{"pseudo.cube"} rather than the default @code{"pseudo"}.  See the
+help page for @code{X11()} for more information.
 
 @node Is R Y2K-compliant?, How do I convert factors to numeric?, Why does plotting give a color allocation error?, R Miscellania
 @section Is R Y2K-compliant?
@@ -2064,7 +2101,7 @@ whatsoever}.
 R, like any other programming language, can be used to write programs
 and manipulate data in ways that are not Y2K compliant.
 
-@node How do I convert factors to numeric?,  , Is R Y2K-compliant?, R Miscellania
+@node How do I convert factors to numeric?, Are Trellis displays implemented in R?, Is R Y2K-compliant?, R Miscellania
 @section How do I convert factors to numeric?
 
 It may happen that when reading numeric data into R (usually, when
@@ -2083,6 +2120,67 @@ as.numeric(levels(f))[as.integer(f)]
 @end example
 
 In any case, do not call @code{as.numeric} or their likes directly.
+
+@node Are Trellis displays implemented in R?, What are the enclosing and parent environments?, How do I convert factors to numeric?, R Miscellania
+@section Are Trellis displays implemented in R?
+
+Not yet.  Meanwhile, you could look at @code{coplot()} and
+@code{dotplot()} which might do at least some of what you want.  Note
+also that the R version of @code{pairs()} is fairly general and provides
+most of the functionality of @code{splom()}, and that R's default plot
+method has an argument @code{asp} allowing to specify (and fix against
+device resizing) the aspect ratio of the plot.
+
+(By the way, ``Trellis'' is a trademark which cannot be used in R;
+instead, the term ``lattice'' has been proposed for the R equivalent.)
+
+@node What are the enclosing and parent environments?,  , Are Trellis displays implemented in R?, R Miscellania
+@section What are the enclosing and parent environments?
+
+Inside a function you may want to access variables in two additional
+environments: the one that the function was defined in (``enclosing''),
+and the one it was invoked in (``parent'')
+
+If you create a function at the command line or load it in a package its
+enclosing environment is the global workspace.  If you define a function
+@code{f()} inside another function @code{g()} its enclosing environment
+is the environment inside @code{g()}.  The enclosing environment for a
+function is fixed when the function is created.  You can find out the
+enclosing environment for a function @code{f()} using
+@code{environment(f)}.
+
+The ``parent'' environment, on the other hand, is defined when you
+invoke a function.  If you invoke @code{lm()} at the command line its
+parent environment is the global workspace, if you invoke it inside a
+function @code{f()} then its parent environment is the environment
+inside @code{f()}.  You can find out the parent environment for an
+invocation of a function by using @code{parent.frame()} or
+@code{sys.frame(sys.parent())}.
+
+So for most user-visible functions the enclosing environment will be the
+global workspace, since that is where most functions are defined.  The
+parent environment will be wherever the function happens to be called
+from.  If a function @code{f()} is defined inside another function
+@code{g()} it will probably be used inside @code{g()} as well, so its
+parent environment and enclosing environment will probably be the same.
+
+Parent environments are important because things like model formulas
+need to be evaluated in the environment the function was called from,
+since that's where all the variables will be available.  This relies on
+the parent environment being potentially different with each invocation.
+
+Enclosing environments are important because a function can use
+variables in the enclosing environment to share information with other
+functions or with other invocations of itself (see the section on
+lexical scoping).  This relies on the enclosing environment being the
+same each time the function is invoked.
+
+Scoping @emph{is} hard.  Looking at examples helps.  It is particularly
+instructive to look at examples that work differently in R and S and try
+to see why they differ.  One way to describe the scoping differences
+between R and S is to say that in S the enclosing environment is
+@emph{always} the global workspace, but in R the enclosing environment
+is wherever the function was created.
 
 @node R Programming, R Bugs, R Miscellania, Top
 @chapter R Programming

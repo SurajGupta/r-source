@@ -2,7 +2,8 @@
 \title{Display a Color Image}
 \usage{
 image(x, y, z, zlim, col = heat.colors(12),
-      add = FALSE, xaxs = "i", yaxs = "i", xlab, ylab, \dots)
+      add = FALSE, xaxs = "i", yaxs = "i", xlab, ylab,
+      breaks, oldstyle = FALSE, \dots)
 }
 \alias{image}
 \arguments{
@@ -32,6 +33,13 @@ image(x, y, z, zlim, col = heat.colors(12),
   \item{xlab, ylab}{each a character string giving the labels for the x and
     y axis.  Default to the `call names' of \code{x} or \code{y}, or to
     \code{""} if these where unspecified.}
+  \item{breaks}{a set of breakpoints for the colours: must give one more
+    breakpoint than colour.}
+  \item{oldstyle}{logical. If true the midpoints of the colour intervals
+    are equally spaced, and \code{zlim[1]} and \code{zlim[2]} were taken
+    to be midpoints. (This was the default prior to \R 1.1.0.)
+    The current default is to have colour intervals of equal lengths
+    between the limits.}
   \item{\dots}{graphical parameters for \code{\link{plot}} may also be
     passed as arguments to this function.}
 }
@@ -46,14 +54,18 @@ image(x, y, z, zlim, col = heat.colors(12),
   \code{n} giving the number of colors desired.
 }
 \details{
-    The length of \code{x} should be equal to the \code{nrow(x)+1} or
-    \code{nrow(x)}. In the first case \code{x} specifies the boundaries
-    between the cells: in the second case \code{x} specifies the
-    midpoints of the cells. Similar reasoning applies to \code{y}. It
-    probably only makes sense to specify the midpoints of an
-    equally-spaced grid. If you specify just one row or column and a
-    length-one \code{x} or \code{y}, the whole user area in the
-    corresponding direction is filled.
+  The length of \code{x} should be equal to the \code{nrow(x)+1} or
+  \code{nrow(x)}. In the first case \code{x} specifies the boundaries
+  between the cells: in the second case \code{x} specifies the
+  midpoints of the cells. Similar reasoning applies to \code{y}. It
+  probably only makes sense to specify the midpoints of an
+  equally-spaced grid. If you specify just one row or column and a
+  length-one \code{x} or \code{y}, the whole user area in the
+  corresponding direction is filled.
+
+  If \code{breaks} is specified then \code{zlim} is unused and the
+  algorithm used follows \code{\link{cut}}, so intervals are closed on
+  the right and open on the left except for the lowest interval.
 }
 \note{
   Based on a function by Thomas Lumley
@@ -74,6 +86,10 @@ image(x, y, z, zlim, col = heat.colors(12),
 ## Degenerate, should still work
 image(as.matrix(1))
 image(matrix(pi,2,4))
+x <- seq(0,1,len=100)
+image(x, 1, matrix(x), col=heat.colors(10))
+image(x, 1, matrix(x), col=heat.colors(10), oldstyle=T)
+image(x, 1, matrix(x), col=heat.colors(10), breaks=seq(0.1,1.1,len=11))
 }
 x <- y <- seq(-4*pi, 4*pi, len=27)
 r <- sqrt(outer(x^2, y^2, "+"))

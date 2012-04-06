@@ -39,7 +39,7 @@
  *    M_LN_SQRT_PI = ln(sqrt(pi)) = ln(pi)/2
  */
 
-#include "Mathlib.h"
+#include "nmath.h"
 #include "dpq.h"
 
 /*----------- DEBUGGING -------------
@@ -49,9 +49,6 @@
  * -- Feb.3, 1999; M.Maechler:
 	- For 't > delta > 20' (or so)	the result is completely WRONG!
  */
-#ifdef DEBUG_pnt
-# include "PrtUtil.h"
-#endif
 
 double pnt(double t, double df, double delta, int lower_tail, int log_p)
 {

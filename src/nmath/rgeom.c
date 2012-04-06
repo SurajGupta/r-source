@@ -39,11 +39,11 @@
  *    Page 480.
  */
 
-#include "Mathlib.h"
+#include "nmath.h"
 
 double rgeom(double p)
 {
-    if (ISNAN(p) || p <= 0 || p >= 1) ML_ERR_return_NAN;
+    if (ISNAN(p) || p <= 0 || p > 1) ML_ERR_return_NAN;
 
     return rpois(exp_rand() * ((1 - p) / p));
 }

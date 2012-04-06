@@ -46,7 +46,7 @@
  *	ACM Transactions on Mathematical Software. 19, 22-32.
  */
 
-#include "Mathlib.h"
+#include "nmath.h"
 #include "dpq.h"
 double pnorm5(double x, double mu, double sigma, int lower_tail, int log_p)
 {

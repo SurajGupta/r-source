@@ -43,10 +43,15 @@ runif(n, min=0, max=1)
 }
 \examples{
 u <- runif(20)
-all(punif(u) == u) # T
-all(dunif(u) == 1) # T
 
+## The following relations always hold :
+ punif(u) == u
+ dunif(u) == 1
+ runif(10, 2,2) == 2
+\testonly{
+ stopifnot(punif(u) == u, dunif(u) == 1,
+           runif(100, 2,2) == 2)#-> TRUE [bug in R version <= 0.63.1]
+}
 var(runif(10000))#- ~ = 1/12 = .08333
-all(runif(100, 2,2) == 2)#-> TRUE [exhibits bug in R version <= 0.63.1]
 }
 \keyword{distribution}

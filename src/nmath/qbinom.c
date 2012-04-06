@@ -29,12 +29,9 @@
  *	1 or 2.	 A search is then conducted of values close to
  *	this initial start point.
  */
-#include "Mathlib.h"
+#include "nmath.h"
 #include "dpq.h"
 
-#ifdef DEBUG_qbinom
-# include "PrtUtil.h"
-#endif
 
 double qbinom(double p, double n, double pr, int lower_tail, int log_p)
 {
@@ -87,9 +84,15 @@ double qbinom(double p, double n, double pr, int lower_tail, int log_p)
     /* fuzz to ensure left continuity: */
     p *= 1 - 64*DBL_EPSILON;
 
-/*-- Fixme, here y can be way off --
-  should use interval search instead of primitive stepping down or up */
 
+    if (y>n){
+	y=n;
+	z = pbinom(y, n, pr, /*lower_tail*/LTRUE, /*log_p*/LFALSE);
+    }
+    else if (y<0){
+	y=0;
+	z = pbinom(y, n, pr, /*lower_tail*/LTRUE, /*log_p*/LFALSE);
+    }
 #ifdef maybe_future
     if((lower_tail && z >= p) || (!lower_tail && z <= p)) {
 #else

@@ -43,10 +43,18 @@ rnorm(n, mean=0, sd=1)
   }
   where \eqn{\mu}{mu} is the mean of the distribution and
   \eqn{\sigma}{sigma} the standard deviation.
+
+  \code{qnorm} is based on Wichura's algorithm AS 241 which provides
+  precise results up to about 16 digits.
 }
 \seealso{
   \code{\link{runif}} and \code{\link{.Random.seed}} about random number
   generation, and \code{\link{dlnorm}} for the \emph{Log}normal distribution.
+}
+\references{
+  Wichura, M. J. (1988)
+  Algorithm AS 241: The Percentage Points of the Normal Distribution.
+  \emph{Applied Statistics}, \bold{37}, 477--484.
 }
 \examples{
 dnorm(0) == 1/ sqrt(2*pi)
