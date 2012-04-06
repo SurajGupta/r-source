@@ -1,6 +1,9 @@
-include ../../Makeconf
+# ${RHOME}/src/appl/Makefile
 
-INCLUDES= -I../include
+srcdir = @srcdir@
+top_srcdir = @top_srcdir@
+
+include $(top_srcdir)/Makeconf
 
 OBJ= \
 	approx.o \
@@ -50,3 +53,4 @@ clean:
 		@-rm -f *.o *.a
 
 realclean:	clean
+		@-rm -f Makefile

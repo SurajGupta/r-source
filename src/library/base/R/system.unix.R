@@ -1,12 +1,13 @@
 data <-
-function(..., list = character(0), package =c(.packages(),.Autoloaded),
+function(..., list = character(0), package =c(.packages(), .Autoloaded),
 	 lib.loc = .lib.loc, trace = FALSE) {
   names <- c(as.character(substitute(list(...))[-1]), list)
   if (!missing(package))
     if (is.name(y <- substitute(package)))# && !is.character(package))
       package <- as.character(y)
   found <- FALSE
-  if (length(names) == 0) { #-- give 'index' of all possible data sets
+  if (length(names) == 0) {             # give `index' of all possible
+                                        # data sets
     file <- tempfile("Rdata.")
     on.exit(unlink(file))
     for (lib in lib.loc)
@@ -59,6 +60,8 @@ function(..., list = character(0), package =c(.packages(),.Autoloaded),
   invisible(names)
 }
 
+date <- function() { system("date", intern = TRUE) }
+
 getenv <- function(x) {
   if (missing(x)) {
     x <- strsplit(.Internal(getenv(character())), "=")
@@ -74,7 +77,8 @@ getenv <- function(x) {
 }
 
 help <-
-function(topic, package = c(.packages(),.Autoloaded), lib.loc =.lib.loc) {
+function(topic, offline = FALSE, package = c(.packages(), .Autoloaded),
+         lib.loc = .lib.loc) {
   if (!missing(package))
     if (is.name(y <- substitute(package)))# && !is.character(package))
       package <- as.character(y)
@@ -92,21 +96,38 @@ function(topic, package = c(.packages(),.Autoloaded), lib.loc =.lib.loc) {
       topic <- "Extract"
     else if (!is.na(match(topic, c("&", "&&", "|", "||", "!"))))
       topic <- "Logic"
-    else if (!is.na(match(topic,c("%*%"))))
+    else if (!is.na(match(topic, c("%*%"))))
       topic<- "matmult"
-    topic <- gsub("\\[","\\\\[", topic)#- for cmd/help ..
+    topic <- gsub("\\[","\\\\[", topic) # for cmd/help ..
     INDICES <- paste(t(outer(lib.loc, package, paste, sep = "/")),
 		     "help", "AnIndex", sep = "/", collapse = " ")
-    file <- system(paste("${RHOME}/cmd/help '", topic, "' ", INDICES, sep=""),
+    file <- system(paste("${RHOME}/cmd/help INDEX '", topic, "' ",
+                         INDICES, sep=""),
 		   intern = TRUE)
-    if (file == "") { # try data .doc -- this is OUTDATED
+    if (file == "") {                   # try data .doc -- this is OUTDATED
       file <- system.file(paste("data", "/", topic, ".doc", sep = ""),
 			  package, lib.loc)
     }
     if (length(file) && file != "") {
       if (!is.null(.Options$trace) && .Options$trace)
-        cat ("\t\t\t\t\t\tHelp file name '", sub(".*/","",file),".Rd'\n",sep="")
-      system(paste("${RHOME}/cmd/pager", file))
+        cat ("\t\t\t\t\t\tHelp file name `", sub(".*/", "", file),
+             ".Rd'\n", sep = "")
+      if (!offline)
+        system(paste("${RHOME}/cmd/pager", file))
+      else {
+        FILE <- tempfile()
+        ## on.exit(unlink(paste(FILE, "*", sep = "")))
+        cat("\\documentclass[", .Options$papersize, "paper]{article}\n",
+            file = FILE, sep = "")
+        system(paste("cat ${RHOME}/doc/manual/Rd.sty >>", FILE))
+        cat("\\InputIfFileExists{Rhelp.cfg}{}{}\n\\begin{document}\n",
+            file = FILE, append = TRUE)
+        system(paste("cat ", sub("help/", "latex/", file), ".tex >>",
+                     FILE, sep = ""))
+        cat("\\end{document}\n", file = FILE, append = TRUE)
+        system(paste("${RHOME}/cmd/help PRINT", FILE, topic))
+        return()
+      }
     } else
       stop(paste("No documentation for `", topic, "'", sep = ""))
   }
@@ -115,7 +136,7 @@ function(topic, package = c(.packages(),.Autoloaded), lib.loc =.lib.loc) {
   else if (!missing(lib.loc))
     library(lib = lib.loc)
   else
-    help("help", "base", .Library)
+    help("help", package = "base", lib.loc = .Library)
 }
 
 library <-
@@ -214,8 +235,9 @@ function(chname, package = .packages(), lib.loc = .lib.loc) {
 }
 
 system <- function(call, intern = FALSE) .Internal(system(call, intern))
-
-system.date <- function() { system("date", intern = TRUE) }
+unix <- function(call, intern = FALSE) {
+	.Deprecated("system"); system(call,intern)
+}
 
 system.file <- function(file = "", pkg = .packages(), lib = .lib.loc) {
 	FILES <- paste(t(outer(lib, pkg, paste, sep = "/")),

@@ -1,6 +1,9 @@
-include ../../Makeconf
+# ${RHOME}/src/graphics/Makefile
 
-INCLUDES= -I ../include
+srcdir = @srcdir@
+top_srcdir = @top_srcdir@
+
+include $(top_srcdir)/Makeconf
 
 OBJS=	graphics.o
 
@@ -18,3 +21,4 @@ clean:
 		@-rm -f *.o *.a
 
 realclean:	clean
+		@-rm -f Makefile

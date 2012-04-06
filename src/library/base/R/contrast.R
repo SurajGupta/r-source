@@ -1,14 +1,14 @@
 contrasts <-
-function (x, contrasts = TRUE) 
+function (x, contrasts = TRUE)
 {
-  if (!is.factor(x)) 
+  if (!is.factor(x))
     stop("contrasts apply only to factors")
   ctr <- attr(x, "contrasts")
   if (is.null(ctr)) {
     ctr <- get(options("contrasts")[[1]] [[if (is.ordered(x)) 2 else 1]])(levels(x), contrasts = contrasts)
     dimnames(ctr) <- list(levels(x), dimnames(ctr)[[2]])
   }
-  else if (is.character(ctr)) 
+  else if (is.character(ctr))
     ctr <- get(ctr)(levels(x), contrasts = contrasts)
   if(ncol(ctr)==1) dimnames(ctr) <- list(dimnames(ctr)[[1]], "")
   ctr
@@ -19,6 +19,7 @@ function(x, how.many, value)
 {
  if(!is.factor(x))
 	stop("contrasts apply only to factors")
+ if(is.function(value)) value <- value(nlevels(x))
  if(is.numeric(value)) {
    value <- as.matrix(value)
    nlevs <- nlevels(x)
@@ -26,6 +27,7 @@ function(x, how.many, value)
      stop("wrong number of contrast matrix rows")
    n1 <- if(missing(how.many)) nlevs - 1 else how.many
    nc <- ncol(value)
+   rownames(value) <- levels(x)
    if(nc  < n1) {
      cm <- qr(cbind(1,value))
      if(cm$rank != nc+1) stop("singular contrast matrix")
@@ -34,7 +36,7 @@ function(x, how.many, value)
      dimnames(cm) <- list(levels(x),NULL)
      if(!is.null(nmcol <- dimnames(value)[[2]]))
        dimnames(cm)[[2]] <- c(nmcol, rep("", n1-nc))
-   } else cm <- value[, 1:n1, drop=F]
+   } else cm <- value[, 1:n1, drop=FALSE]
  }
  else if(is.character(value)) cm <- value
  else if(is.null(value)) cm <- NULL

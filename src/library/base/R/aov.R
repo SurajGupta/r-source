@@ -13,6 +13,7 @@ aov <-
   fit$call <- Call
   fit
 }
+
 print.aov <-
 function(x, intercept = FALSE, tol = .Machine$double.eps^0.5, ...)
 {
@@ -20,15 +21,14 @@ function(x, intercept = FALSE, tol = .Machine$double.eps^0.5, ...)
     cat("Call:\n   ")
     dput(cl)
   }
-  asgn <- x$assign
+  asgn <- x$assign[x$qr$pivot[1:x$rank]] # changed
   effects <- x$effects[seq(along=asgn)]
   nmeffect <- c("(Intercept)", attr(x$terms, "term.labels"))
   nterms <- max(asgn)+1
   df <- ss <- numeric(nterms)
   if(nterms) {
     for(i in seq(nterms)) {
-      ai <- asgn==(i-1)
-      ai <- !is.na(x$coef) & ai
+      ai <- asgn==(i-1) # delete line
       df[i] <- sum(ai)
       ss[i] <- sum(effects[ai]^2)
     }
@@ -57,7 +57,8 @@ function(x, intercept = FALSE, tol = .Machine$double.eps^0.5, ...)
     nmeffect[nterms] <- "Residuals"
   }
   print(matrix(c(format(ss), format(df)), 2, nterms, byrow=TRUE,
-               dimnames=list(c("Sum of Squares", "Deg. of Freedom"), nmeffect)),
+               dimnames=list(c("Sum of Squares", "Deg. of Freedom"),
+               nmeffect)),
         quote = FALSE, right = TRUE)
   rank <- x$rank
   int <- attr(x$terms, "int")
@@ -86,10 +87,9 @@ function(x, intercept = FALSE, tol = .Machine$double.eps^0.5, ...)
   invisible(x)
 }
 
-summary.aov <- function(object, intercept = FALSE, keep.zero.df = TRUE,
-                        signif.stars= .Options$show.signif.stars, ...)
+summary.aov <- function(object, intercept = FALSE, keep.zero.df = TRUE, ...)
 {
-  asgn <- object$assign
+  asgn <- object$assign[object$qr$pivot[1:object$rank]] # changed
   nterms <- max(asgn)+1
   effects <- object$effects[seq(along=asgn)]
   nmeffect <- c("(Intercept)", attr(object$terms, "term.labels"))
@@ -107,7 +107,7 @@ summary.aov <- function(object, intercept = FALSE, keep.zero.df = TRUE,
     df <- ss <- numeric(nterms)
     nmrows <- character(nterms)
     for(i in 1:nterms) {
-      ai <- (asgn == i-1) & !is.na(object$coef)
+      ai <- asgn == (i-1) # changed
       df[i] <- sum(ai)
       ss[i] <- sum(effects[ai]^2)
       nmrows[i] <- nmeffect[i]
@@ -133,11 +133,6 @@ summary.aov <- function(object, intercept = FALSE, keep.zero.df = TRUE,
     TT[nterms] <- TP[nterms] <- NA
     x$"F Value" <- TT
     x$"Pr(F)" <- TP
-    if(signif.stars)
-      x$Signif <- c(symnum(TP[ - nterms], corr = FALSE,
-                           cutpoints = c(0, 0.001, 0.01, 0.05, 0.1, 1),
-                           symbols = c("***", "**", "*", ".", " ")),
-                    "") ## 'nterms' ~= 'Residuals' have no P-value
   }
   class(x) <- c("anova", "data.frame")
   row.names(x) <- format(nmrows)
