@@ -48,8 +48,8 @@ typedef struct {
 
 struct structHelpMenuItems {
   menuitem mhelp, mmanintro, mmanref, mmandata,
-    mmanext, mmanlang, mmanadmin, mman0, mapropos, mhelpstart, mhelpsearch, 
-    msearchRsite, mFAQ, mrwFAQ, mCRAN;
+    mmanext, mmanint, mmanlang, mmanadmin, mman0, mapropos, mhelpstart, 
+    mhelpsearch, msearchRsite, mFAQ, mrwFAQ, mCRAN;
   menu mman;
 };
 typedef struct structHelpMenuItems *HelpMenuItems;
@@ -63,7 +63,6 @@ typedef struct structPkgMenuItems *PkgMenuItems;
 #include <R_ext/Error.h> /* for R_ShowMessage */
 int check_doc_file(char *);
 void internal_shellexec(char *);
-int internal_ShowFile(char *, char *);
 
 int winaddmenu(char * name, char *errmsg);
 int winaddmenuitem(char * item, char * menu, char * action, char *errmsg);

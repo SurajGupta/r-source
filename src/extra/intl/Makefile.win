@@ -10,12 +10,7 @@ header-install: libintl.h
 	@cp -p $< ../../../include
 
 DEFS=-DIN_LIBINTL -DHAVE_CONFIG_H
-
-ifdef DEBUG
- DEFS+=-g
-endif
-
-CFLAGS=-O3 $(DEFS) -I. -I../../include
+CFLAGS=$(DEFS) -I. -I../../include $(OPTFLAGS)
 dcigettext-CFLAGS=-DLOCALEDIR=\"\"
 
 SOURCES = \
@@ -51,4 +46,6 @@ printf.o: printf-args.h printf-args.c printf-parse.h wprintf-parse.h xsize.h \
    printf-parse.c vasnprintf.h vasnwprintf.h vasnprintf.c
 
 clean:
-	rm -f *.a *.o libgnuintl.h libintl.h
+	@$(RM) *.o libgnuintl.h libintl.h
+distclean: clean
+	@$(RM) *.a

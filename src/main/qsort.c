@@ -52,6 +52,7 @@ SEXP attribute_hidden do_qsort(SEXP call, SEXP op, SEXP args, SEXP rho)
     x_int = !x_real && (TYPEOF(x) == INTSXP || TYPEOF(x) == LGLSXP);
     PROTECT(sx = (x_real || x_int) ? duplicate(x) : coerceVector(x, REALSXP));
     SET_ATTRIB(sx, R_NilValue);
+    SET_OBJECT(sx, 0);
     /* if x has names, drop them, since they won't be ordered
        if (!isNull(getAttrib(sx, R_NamesSymbol)))
            setAttrib(sx, R_NamesSymbol, R_NilValue); */
@@ -76,8 +77,8 @@ SEXP attribute_hidden do_qsort(SEXP call, SEXP op, SEXP args, SEXP rho)
 
 	SET_VECTOR_ELT(ans, 0, sx);
 	SET_VECTOR_ELT(ans, 1, indx);
-	SET_VECTOR_ELT(ansnames, 0, mkChar("x"));
-	SET_VECTOR_ELT(ansnames, 1, mkChar("ix"));
+	SET_STRING_ELT(ansnames, 0, mkChar("x"));
+	SET_STRING_ELT(ansnames, 1, mkChar("ix"));
 	setAttrib(ans, R_NamesSymbol, ansnames);
 	UNPROTECT(4);
 	return ans;

@@ -127,6 +127,10 @@
    */
 #define HAVE_DECL_PUTENV 1
 
+/* Define to 1 if you have the declaration of `realpath', and to 0 if you
+   don't. */
+#define HAVE_DECL_REALPATH 0
+
 /* Define to 1 if you have the declaration of `siglongjmp', and to 0 if you
    don't. */
 #define HAVE_DECL_SIGLONGJMP 1
@@ -185,6 +189,10 @@
 
 /* Define to 1 if you have the `expm1' function. */
 #define HAVE_EXPM1 1
+
+/* Define if your Fortran compiler appends an extra_underscore to external
+   names containing an underscore. */
+#define HAVE_F77_EXTRA_UNDERSCORE 1
 
 /* Define if your Fortran compiler appends an underscore to external names. */
 #define HAVE_F77_UNDERSCORE 1
@@ -318,6 +326,9 @@
 /* Define if you have the JPEG headers and libraries. */
 #define HAVE_JPEG 1
 
+/* Define if KERN_USRSTACK sysctl is supported. */
+/* #undef HAVE_KERN_USRSTACK */
+
 /* Define if you have KeySym defined in X11. */
 /* #undef HAVE_KEYSYM */
 
@@ -380,6 +391,9 @@
 
 /* Define to 1 if you have the `mbrtowc' function. */
 #define HAVE_MBRTOWC 1
+
+/* Define to 1 if the system has the type `mbstate_t'. */
+#define HAVE_MBSTATE_T 1
 
 /* Define to 1 if you have the `mbstowcs' function. */
 #define HAVE_MBSTOWCS 1
@@ -610,7 +624,7 @@
 #define HAVE_UNSIGNED_LONG_LONG 1
 
 /* Define to 1 if you have the `vasprintf' function. */
-/* #undef HAVE_VASPRINTF */
+#define HAVE_VASPRINTF 1
 
 /* Define to 1 if you have the `va_copy' function. */
 #define HAVE_VA_COPY 1
@@ -761,19 +775,22 @@
 #define PACKAGE_NAME "R"
 
 /* Define to the full name and version of this package. */
-#define PACKAGE_STRING "R 2.3.1"
+#define PACKAGE_STRING "R 2.4.0"
 
 /* Define to the one symbol short name of this package. */
 #define PACKAGE_TARNAME "R"
 
 /* Define to the version of this package. */
-#define PACKAGE_VERSION "2.3.1"
+#define PACKAGE_VERSION "2.4.0"
 
 /* Define if <inttypes.h> exists and defines unusable PRI* macros. */
 /* #undef PRI_MACROS_BROKEN */
 
 /* Define as the return type of signal handlers (`int' or `void'). */
 #define RETSIGTYPE void
+
+/* Define this to use architecture-dependent subdirectories of this name. */
+#define R_ARCH ""
 
 /* Define this to be the name of the CPU of your system. */
 #define R_CPU "i386"
@@ -861,7 +878,7 @@
 #define VALGRIND_LEVEL 0
 
 /* Version number of package */
-#define VERSION "2.3.1"
+#define VERSION "2.4.0"
 
 /* Define to 1 if your processor stores words with the most significant byte
    first (like Motorola and SPARC, unlike Intel and VAX). */

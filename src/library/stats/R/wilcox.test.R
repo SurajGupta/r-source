@@ -68,7 +68,7 @@ function(x, y = NULL, alternative = c("two.sided", "less", "greater"),
                        "greater" = psignrank(STATISTIC - 1, n, lower = FALSE),
                        "less" = psignrank(STATISTIC, n))
             if(conf.int) {
-                ## Exact confidence intervale for the median in the
+                ## Exact confidence interval for the median in the
                 ## one-sample case.  When used with paired values this
                 ## gives a confidence interval for mean(x) - mean(y).
                 x <- x + mu             # we want a conf.int for the median
@@ -83,7 +83,7 @@ function(x, y = NULL, alternative = c("two.sided", "less", "greater"),
                                ql <- n*(n+1)/2 - qu
                                uci <- diffs[qu]
                                lci <- diffs[ql+1]
-                               achieved.alpha<-2*psignrank(trunc(qu),n)
+                               achieved.alpha<-2*psignrank(trunc(qu)-1,n)
                                if (achieved.alpha-alpha > (alpha)/2){
                                  warning("Requested conf.level not achievable")
                                  conf.level<-1-signif(achieved.alpha,2)
@@ -94,7 +94,7 @@ function(x, y = NULL, alternative = c("two.sided", "less", "greater"),
                                qu <- qsignrank(alpha, n)
                                if(qu == 0) qu <- 1
                                uci <- diffs[qu]
-                               achieved.alpha<-psignrank(trunc(qu),n)
+                               achieved.alpha<-psignrank(trunc(qu)-1,n)
                                if (achieved.alpha-alpha > (alpha)/2){
                                  warning("Requested conf.level not achievable")
                                  conf.level<-1-signif(achieved.alpha,2)
@@ -106,7 +106,7 @@ function(x, y = NULL, alternative = c("two.sided", "less", "greater"),
                                if(qu == 0) qu <- 1
                                ql <- n*(n+1)/2 - qu
                                lci <- diffs[ql+1]
-                               achieved.alpha<-psignrank(trunc(qu),n)
+                               achieved.alpha<-psignrank(trunc(qu)-1,n)
                                if (achieved.alpha-alpha > (alpha)/2){
                                  warning("Requested conf.level not achievable")
                                  conf.level<-1-signif(achieved.alpha,2)
@@ -257,7 +257,7 @@ function(x, y = NULL, alternative = c("two.sided", "less", "greater"),
         n.y <- as.double(length(y))
         if(is.null(exact))
             exact <- (n.x < 50) && (n.y < 50)
-        STATISTIC <- sum(r[seq(along = x)]) - n.x * (n.x + 1) / 2
+        STATISTIC <- sum(r[seq_along(x)]) - n.x * (n.x + 1) / 2
         names(STATISTIC) <- "W"
         TIES <- (length(r) != length(unique(r)))
         if(exact && !TIES) {
@@ -290,7 +290,7 @@ function(x, y = NULL, alternative = c("two.sided", "less", "greater"),
                                ql <- n.x*n.y - qu
                                uci <- diffs[qu]
                                lci <- diffs[ql + 1]
-                               achieved.alpha<-2*pwilcox(trunc(qu),n.x,n.y)
+                               achieved.alpha<-2*pwilcox(trunc(qu)-1,n.x,n.y)
                                if (achieved.alpha-alpha > alpha/2){
                                  warning("Requested conf.level not achievable")
                                  conf.level<-1-achieved.alpha
@@ -301,7 +301,7 @@ function(x, y = NULL, alternative = c("two.sided", "less", "greater"),
                                qu <- qwilcox(alpha, n.x, n.y)
                                if(qu == 0) qu <- 1
                                uci <- diffs[qu]
-                               achieved.alpha<-2*pwilcox(trunc(qu),n.x,n.y)
+                               achieved.alpha<-2*pwilcox(trunc(qu)-1,n.x,n.y)
                                if (achieved.alpha-alpha > alpha/2){
                                  warning("Requested conf.level not achievable")
                                  conf.level<-1-achieved.alpha
@@ -313,7 +313,7 @@ function(x, y = NULL, alternative = c("two.sided", "less", "greater"),
                                if(qu == 0 ) qu <- 1
                                ql <- n.x*n.y - qu
                                lci <- diffs[ql + 1]
-                               achieved.alpha<-2*pwilcox(trunc(qu),n.x,n.y)
+                               achieved.alpha<-2*pwilcox(trunc(qu)-1,n.x,n.y)
                                if (achieved.alpha-alpha > alpha/2){
                                  warning("Requested conf.level not achievable")
                                  conf.level<-1-achieved.alpha
@@ -359,7 +359,7 @@ function(x, y = NULL, alternative = c("two.sided", "less", "greater"),
                 wdiff <- function(d, zq) {
                     dr <- rank(c(x - d, y))
                     NTIES.CI <- table(dr)
-                    dz <- (sum(dr[seq(along = x)])
+                    dz <- (sum(dr[seq_along(x)])
                            - n.x * (n.x + 1) / 2 - n.x * n.y / 2)
                     if(correct) {
                         CORRECTION.CI <-
@@ -404,10 +404,11 @@ function(x, y = NULL, alternative = c("two.sided", "less", "greater"),
         }
     }
 
+    names(mu) <- if(paired || !is.null(y)) "location shift" else "location"
     RVAL <- list(statistic = STATISTIC,
                  parameter = NULL,
                  p.value = as.numeric(PVAL),
-                 null.value = c(mu = mu),
+                 null.value = mu,
                  alternative = alternative,
                  method = METHOD,
                  data.name = DNAME)

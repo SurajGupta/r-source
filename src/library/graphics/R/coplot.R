@@ -37,7 +37,8 @@ coplot <-
 	     number = 6, overlap = 0.5, xlim, ylim, ...)
 {
     deparen <- function(expr) {
-	while (is.language(expr) && !is.name(expr) && deparse(expr[[1]])== "(")
+	while (is.language(expr) && !is.name(expr) &&
+               deparse(expr[[1]])[1] == "(")
 	    expr <- expr[[2]]
 	expr
     }
@@ -51,12 +52,12 @@ coplot <-
 	bad.formula()
     y <- deparen(formula[[2]])
     rhs <- deparen(formula[[3]])
-    if (deparse(rhs[[1]]) != "|")
+    if (deparse(rhs[[1]])[1] != "|")
 	bad.formula()
     x <- deparen(rhs[[2]])
     rhs <- deparen(rhs[[3]])
     if (is.language(rhs) && !is.name(rhs)
-	&& (deparse(rhs[[1]]) == "*" || deparse(rhs[[1]]) == "+")) {
+	&& (deparse(rhs[[1]])[1] == "*" || deparse(rhs[[1]])[1] == "+")) {
 	have.b <- TRUE
 	a <- deparen(rhs[[2]])
 	b <- deparen(rhs[[3]])
@@ -105,14 +106,14 @@ coplot <-
     if(missing(given.values)) {
 	a.intervals <-
 	    if(a.is.fac) {
-		i <- seq(along = a.levels <- levels(a))
+		i <- seq_along(a.levels <- levels(a))
 		a <- as.numeric(a)
 		cbind(i - 0.5, i + 0.5)
 	    } else co.intervals(unclass(a), number=number[1], overlap=overlap[1])
 	b.intervals <-
 	    if (have.b) {
 		if(b.is.fac) {
-                    i <- seq(along = b.levels <- levels(b))
+                    i <- seq_along(b.levels <- levels(b))
 		    b <- as.numeric(b)
 		    cbind(i - 0.5, i + 0.5)
 		}

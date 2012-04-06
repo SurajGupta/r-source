@@ -261,7 +261,7 @@ function(dir, outDir)
     writeLines(paste(".packageName <- \"", db["Package"], "\"", sep=""),
                outFile)
     # use fast version of file.append that ensures LF between files
-    if(!all(.Internal(codeFiles.append(outFile, codeFiles))))
+    if(!all(.file_append_ensuring_LFs(outFile, codeFiles)))
         stop("unable to write code files")
     ## </NOTE>
 
@@ -316,7 +316,7 @@ function(dir, outDir)
     if(!file_test("-d", docsDir)) {
         if(file_test("-d", dataDir))
             .saveRDS(.build_data_index(dataDir, NULL),
-                     file.path(outDir, "Meta", "data.rds"), compress = TRUE)
+                     file.path(outDir, "Meta", "data.rds"))
         return(invisible())
     }
 
@@ -350,7 +350,7 @@ function(dir, outDir)
                            file.path(outDir, "Meta", "Rd.rds"))
 
     .saveRDS(.build_hsearch_index(contents, packageName),
-             file.path(outDir, "Meta", "hsearch.rds"), compress = TRUE)
+             file.path(outDir, "Meta", "hsearch.rds"))
 
     .write_contents_as_DCF(contents, packageName,
                            file.path(outDir, "CONTENTS"))
@@ -368,7 +368,7 @@ function(dir, outDir)
 
     if(file_test("-d", dataDir))
         .saveRDS(.build_data_index(dataDir, contents),
-                 file.path(outDir, "Meta", "data.rds"), compress = TRUE)
+                 file.path(outDir, "Meta", "data.rds"))
     invisible()
 }
 
@@ -457,9 +457,9 @@ function(src_dir, out_dir, packages)
     ## See @file{src/library/Makefile.in}.
 
     for(p in unlist(strsplit(packages, "[[:space:]]+")))
-        tools:::.install_package_indices(file.path(src_dir, p),
+        .install_package_indices(file.path(src_dir, p),
                                          file.path(out_dir, p))
-    tools:::unix.packages.html(.Library)
+    unix.packages.html(.Library)
     invisible()
 }
 
@@ -587,7 +587,7 @@ function(dir, outDir)
     if(!file_test("-d", outMetaDir) && !dir.create(outMetaDir))
         stop(gettextf("cannot open directory '%s'", outMetaDir),
              domain = NA)
-    .saveRDS(nsInfo, nsInfoFilePath, compress = TRUE)
+    .saveRDS(nsInfo, nsInfoFilePath)
     invisible()
 }
 
@@ -637,7 +637,7 @@ function(dir, packages)
     for(file in manfiles) {
         fn <- sub(".*/man/", "", file)
         cat(file=con, "% --- Source file: ", fn, " ---\n", sep="")
-        writeLines(readLines(file), con) # will ensure final \n
+        writeLines(readLines(file, warn = FALSE), con) # will ensure final \n
         ## previous format had (sometimes) blank line before \eof, but
         ## this is not needed.
         cat(file=con, "\\eof\n")
@@ -657,6 +657,27 @@ function(dir, packages)
     demoOutDir <- file.path(outDir, "demo")
     if(!file_test("-d", demoOutDir)) dir.create(demoOutDir)
     file.copy(file.path(demodir, demofiles), demoOutDir)
+}
+
+
+### * .find_cinclude_paths
+
+.find_cinclude_paths <- function(pkgs, lib.loc = NULL, file = NULL)
+{
+    ## given a character string of comma-separated package names,
+    ## find where the packages are installed and generate
+    ## -I"/path/to/package/include" ...
+
+    if(!is.null(file)) {
+        tmp <- read.dcf(file, "LinkingTo")[1,1]
+        if(is.na(tmp)) return(invisible())
+        pkgs <- tmp
+    }
+    pkgs <- strsplit(pkgs[1], ",[:blank]*")[[1]]
+    paths <- .find.package(pkgs, lib.loc, quiet=TRUE)
+    if(length(paths))
+        cat(paste(paste('-I"', paths, '/include"', sep=""), collapse=" "))
+    return(invisible())
 }
 
 ### Local variables: ***

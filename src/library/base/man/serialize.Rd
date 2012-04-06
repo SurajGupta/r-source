@@ -9,9 +9,12 @@
 }
 \usage{
 serialize(object, connection, ascii = FALSE, refhook = NULL)
+
 unserialize(connection, refhook = NULL)
+
 .saveRDS(object, file = "", ascii = FALSE, version = NULL,
-         compress = FALSE, refhook = NULL)
+         compress = TRUE, refhook = NULL)
+
 .readRDS(file, refhook = NULL)
 }
 \arguments{
@@ -28,7 +31,8 @@ unserialize(connection, refhook = NULL)
   \item{compress}{a logical specifying whether saving to a named file is
     to use compression.  Ignored when \code{file} is a connection and for
     workspace format version 1.}
-  \item{connection}{an open connection.}
+  \item{connection}{an open connection, a raw vector or a length-one
+    character vector.}
   \item{refhook}{a hook function for handling reference objects.}
 }
 \details{
@@ -36,33 +40,32 @@ unserialize(connection, refhook = NULL)
   connection.  Sharing of reference objects is preserved within the
   object but not across separate calls to serialize.  If
   \code{connection} is \code{NULL} then \code{object} is serialized to a
-  scalar string, which is returned as the result of \code{serialize}.
+  raw vector, which is returned as the result of \code{serialize}.
   For a text mode connection, the default value of \code{ascii} is set
   to \code{TRUE}.
 
   \code{unserialize} reads an object (as written by \code{serialize})
-  from \code{connection}.
+  from \code{connection} or a raw vector or (for compatibility with
+  earlier versions of \code{serialize}) a length-one character vector.
 
   The \code{refhook} functions can be used to customize handling of
   non-system reference objects (all external pointers and weak
   references, and all environments other than name space and package
   environments and \code{.GlobalEnv}).  The hook function for
-  \code{serialize} should return a character vector for references it
+  \code{serialize} should return a raw vector for references it
   wants to handle; otherwise it should return \code{NULL}.  The hook for
-  \code{unserialize} will be called with character vectors supplied to
+  \code{unserialize} will be called with raw vectors supplied to
   \code{serialize} and should return an appropriate object.
 }
 \section{Warning}{
-  These functions are still experimental.  Both names, interfaces and
-  values might change in future versions
-  (and are expected to for \R 2.4.0).
-  \code{.saveRDS} and \code{.readRDS} are intended for internal use.
+  These functions are still experimental.  Names, interfaces and
+  values might change in future versions (and the value of
+  \code{serialize} was changed for \R 2.4.0).  \code{.saveRDS} and
+  \code{.readRDS} are intended for internal use.
 }
 \value{
-  For \code{serialize}, \code{NULL} unless \code{connection=NULL}, when
-  the result is stored in the first element of a character vector (but
-  is not a normal character string unless \code{ascii = TRUE} and should
-  not be processed except by \code{unserialize}).
+  For \code{serialize}, \code{NULL} unless \code{connection = NULL}, when
+  the result is stored in a raw vector.
 
   For \code{unserialize} and \code{.readRDS}, an \R object.
 
@@ -71,7 +74,8 @@ unserialize(connection, refhook = NULL)
 \examples{
 x <- serialize(list(1,2,3), NULL)
 unserialize(x)
-(y <- charToRaw(x))
+## test earlier interface as a length-one character vector
+y <- rawToChar(x)
 unserialize(y)
 }
 \keyword{internal}

@@ -1,7 +1,7 @@
 /*
  *  R : A Computer Language for Statistical Data Analysis
  *  Copyright (C) 1995, 1996  Robert Gentleman and Ross Ihaka
- *  Copyright (C) 1997--2003  Robert Gentleman, Ross Ihaka and the
+ *  Copyright (C) 1997--2006  Robert Gentleman, Ross Ihaka and the
  *                            R Development Core Team
  *
  *  This program is free software; you can redistribute it and/or modify
@@ -36,6 +36,39 @@ static SEXP removeAttrib(SEXP, SEXP);
 SEXP comment(SEXP);
 static SEXP commentgets(SEXP, SEXP);
 
+static SEXP row_names_gets(SEXP vec , SEXP val)
+{
+    SEXP ans;
+    if(isInteger(val)) {
+	Rboolean OK_compact = TRUE;
+	int i, n = LENGTH(val);
+	if(n == 2 && INTEGER(val)[0] == NA_INTEGER) {
+	    n = INTEGER(val)[1];
+	} else if (n > 2) {
+	    for(i = 0; i < n; i++)
+		if(INTEGER(val)[i] != i+1) {
+		    OK_compact = FALSE;
+		    break;
+		}
+	} else OK_compact = FALSE;
+	if(OK_compact) {
+	    /* we hide the length in an impossible integer vector */
+	    PROTECT(val = allocVector(INTSXP, 2));
+	    INTEGER(val)[0] = NA_INTEGER;
+	    INTEGER(val)[1] = n;
+	    ans =  installAttrib(vec, R_RowNamesSymbol, val);
+	    UNPROTECT(1);
+	    return ans;
+	} 
+    } else if(!isString(val))
+	error(_("row names must be 'character' or 'integer', not '%s'"),
+	      type2char(TYPEOF(val)));
+    PROTECT(val);
+    ans =  installAttrib(vec, R_RowNamesSymbol, val);
+    UNPROTECT(1);
+    return ans;
+}
+
 static SEXP stripAttrib(SEXP tag, SEXP lst)
 {
     if(lst == R_NilValue) return lst;
@@ -50,17 +83,10 @@ static SEXP stripAttrib(SEXP tag, SEXP lst)
    conclude that the class attribute is R_NilValue.  If you want to
    rewrite this function to use such a pre-test, be sure to adjust
    serialize.c accordingly.  LT */
-SEXP getAttrib(SEXP vec, SEXP name)
+SEXP attribute_hidden getAttrib0(SEXP vec, SEXP name)
 {
     SEXP s;
     int len, i, any;
-
-    /* pre-test to avoid expensive operations if clearly not needed -- LT */
-    if (ATTRIB(vec) == R_NilValue &&
-	! (TYPEOF(vec) == LISTSXP || TYPEOF(vec) == LANGSXP))
-	return R_NilValue;
-
-    if (isString(name)) name = install(CHAR(STRING_ELT(name, 0)));
 
     if (name == R_NamesSymbol) {
 	if(isVector(vec) || isList(vec) || isLanguage(vec)) {
@@ -86,7 +112,8 @@ SEXP getAttrib(SEXP vec, SEXP name)
 		    SET_STRING_ELT(s, i, PRINTNAME(TAG(vec)));
 		}
 		else
-		    error(_("getAttrib: invalid type for TAG"));
+		    error(_("getAttrib: invalid type (%s) for TAG"),
+			  type2char(TYPEOF(TAG(vec))));
 	    }
 	    UNPROTECT(1);
 	    if (any) {
@@ -118,6 +145,30 @@ SEXP getAttrib(SEXP vec, SEXP name)
     return R_NilValue;
 }
 
+SEXP getAttrib(SEXP vec, SEXP name)
+{
+    /* pre-test to avoid expensive operations if clearly not needed -- LT */
+    if (ATTRIB(vec) == R_NilValue &&
+	! (TYPEOF(vec) == LISTSXP || TYPEOF(vec) == LANGSXP))
+	return R_NilValue;
+
+    if (isString(name)) name = install(CHAR(STRING_ELT(name, 0)));
+
+    if (name == R_RowNamesSymbol) { 
+	SEXP s = getAttrib0(vec, R_RowNamesSymbol);
+	if(isInteger(s) && LENGTH(s) == 2 && INTEGER(s)[0] == NA_INTEGER) {
+	    int i, n = INTEGER(s)[1];
+	    PROTECT(s = allocVector(INTSXP, n));
+	    for(i = 0; i < n; i++)
+		INTEGER(s)[i] = i+1;
+	    UNPROTECT(1);
+	}
+	return s;
+    } else
+	return getAttrib0(vec, name);
+}
+
+
 SEXP setAttrib(SEXP vec, SEXP name, SEXP val)
 {
     if (isString(name))
@@ -146,6 +197,8 @@ SEXP setAttrib(SEXP vec, SEXP name, SEXP val)
 	return tspgets(vec, val);
     else if (name == R_CommentSymbol)
 	return commentgets(vec, val);
+    else if (name == R_RowNamesSymbol)
+	return row_names_gets(vec, val);
     else
 	return installAttrib(vec, name, val);
 }
@@ -172,7 +225,7 @@ void copyMostAttrib(SEXP inp, SEXP ans)
 }
 
 /* version that does not preserve ts information, for subsetting */
-void copyMostAttribNoTs(SEXP inp, SEXP ans)
+void attribute_hidden copyMostAttribNoTs(SEXP inp, SEXP ans)
 {
     SEXP s;
     PROTECT(ans);
@@ -261,7 +314,8 @@ static void checkNames(SEXP x, SEXP s)
 {
     if (isVector(x) || isList(x) || isLanguage(x)) {
 	if (!isVector(s) && !isList(s))
-	    error(_("invalid type for 'names': must be vector"));
+	    error(_("invalid type (%s) for 'names': must be vector"),
+		  type2char(TYPEOF(s)));
 	if (length(x) != length(s))
 	    error(_("'names' attribute [%d] must be the same length as the vector [%d]"), length(s), length(x));
     }
@@ -354,10 +408,13 @@ SEXP classgets(SEXP vec, SEXP class)
 	    SET_OBJECT(vec, 0);
 	}
 	else {
-	    /* When data frames where a special data type */
+	    /* When data frames were a special data type */
 	    /* we had more exhaustive checks here.  Now that */
 	    /* use JMCs interpreted code, we don't need this */
 	    /* FIXME : The whole "classgets" may as well die. */
+
+	    /* HOWEVER, it is the way that the object bit gets set/unset */
+
 	    installAttrib(vec, R_ClassSymbol, class);
 	    SET_OBJECT(vec, 1);
 	}
@@ -617,7 +674,8 @@ SEXP namesgets(SEXP vec, SEXP val)
     else if (isVector(vec))
 	installAttrib(vec, R_NamesSymbol, val);
     else
-	error(_("invalid type to set 'names' attribute"));
+	error(_("invalid type (%s) to set 'names' attribute"),
+	      type2char(TYPEOF(vec)));
     UNPROTECT(2);
     return vec;
 }
@@ -707,7 +765,8 @@ SEXP dimnamesgets(SEXP vec, SEXP val)
 	SEXP this = VECTOR_ELT(val, i);
 	if (this != R_NilValue) {
 	    if (!isVector(this))
-		error(_("invalid type for 'dimnames' (must be a vector)"));
+		error(_("invalid type (%s) for 'dimnames' (must be a vector)"),
+		      type2char(TYPEOF(this)));
 	    if (INTEGER(dims)[i] != LENGTH(this) && LENGTH(this) != 0)
 		error(_("length of 'dimnames' [%d] not equal to array extent"),
 		      i+1);
@@ -768,7 +827,7 @@ SEXP dimgets(SEXP vec, SEXP val)
     int len, ndim, i, total;
     PROTECT(vec);
     PROTECT(val);
-    if ((!isVector(vec) && !isList(vec)) || inherits(vec, "factor") )
+    if ((!isVector(vec) && !isList(vec)))
 	error(_("dim<- : invalid first argument"));
 
     if (!isVector(val) && !isList(val))
@@ -818,7 +877,12 @@ SEXP attribute_hidden do_attributes(SEXP call, SEXP op, SEXP args, SEXP env)
 	nvalues++;
     }
     while (attrs != R_NilValue) {
-	SET_VECTOR_ELT(value, nvalues, CAR(attrs));
+	/* treat R_RowNamesSymbol specially */
+	if (TAG(attrs) == R_RowNamesSymbol)
+	    SET_VECTOR_ELT(value, nvalues, 
+			   getAttrib(CAR(args), R_RowNamesSymbol));
+	else
+	    SET_VECTOR_ELT(value, nvalues, CAR(attrs));
 	if (TAG(attrs) == R_NilValue)
 	    SET_STRING_ELT(names, nvalues, R_BlankString);
 	else
@@ -1084,6 +1148,7 @@ static SEXP data_part(SEXP obj) {
     val = CDR(e);
     SETCAR(val, obj);
     val = eval(e, R_MethodsNamespace);
+    UNSET_S4_OBJECT(val); /* data part must be base vector */
     UNPROTECT(1);
     return(val);
 }
@@ -1099,6 +1164,7 @@ static SEXP set_data_part(SEXP obj,  SEXP rhs) {
     val = CDR(val);
     SETCAR(val, rhs);
     val = eval(e, R_MethodsNamespace);
+    SET_S4_OBJECT(val);
     UNPROTECT(1);
     return(val);
 }
@@ -1166,11 +1232,13 @@ SEXP R_do_slot_assign(SEXP obj, SEXP name, SEXP value) {
     return obj;
 }
 
+#ifdef UNUSED
 SEXP R_pseudo_null() {
     if(pseudo_NULL == 0)
 	init_slot_handling();
     return pseudo_NULL;
 }
+#endif
 
 
 /* the @ operator, and its assignment form.  Processed much like $
@@ -1240,7 +1308,7 @@ SEXP attribute_hidden do_AT(SEXP call, SEXP op, SEXP args, SEXP env)
 	error(_("invalid type or length for slot name"));
     if(isString(nlist)) nlist = install(CHAR(STRING_ELT(nlist, 0)));
     PROTECT(object = eval(CAR(args), env));
-    if(can_test_S4Object && !R_seemsS4Object(object)) {
+    if(can_test_S4Object && !IS_S4_OBJECT(object)) {
       class = getAttrib(object, R_ClassSymbol);
       if(length(class) == 0)
 	    error(_("trying to get slot \"%s\" from an object of a basic class (\"%s\") with no slots"),

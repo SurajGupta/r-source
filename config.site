@@ -48,9 +48,14 @@
 ## Debugging and optimization options for the C compiler.
 ## Use this to specify CFLAGS for the version of the C compiler
 ## specified above.
-## If unspecified, defaults to '-g -O2 -std=c99' for gcc, 
+## If unspecified, defaults to '-g -O2 -std=gnu99' for gcc, 
 ## and '-g' in all other cases except icc (for which see R-admin.html).
 ## CFLAGS=
+
+## Defines for C compilation.
+## Use this to specify defines to be used in the compilation of R,
+## e.g. -DUSE_TYPE_CHECKING_STRICT
+## DEFS=
 
 ## The following additional CFLAGS to be used only in the main
 ## compilation and only in building shared libraries respectively.

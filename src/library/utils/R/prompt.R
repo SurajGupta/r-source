@@ -63,14 +63,14 @@ function(object, filename = NULL, name = NULL,
         arg.n[arg.n == "..."] <- "\\dots"
     }
     ## Construct the 'call' for \usage.
-    call <- paste0(name, "(")
-    for(i in seq(length = n)) {                       # i-th argument
-        call <- paste0(call, arg.names[i],
+    Call <- paste0(name, "(")
+    for(i in seq_len(n)) {                       # i-th argument
+        Call <- paste0(Call, arg.names[i],
                        if(!is.missing.arg(argls[[i]]))
                        paste0(" = ",
                               paste(deparse(argls[[i]], width.cutoff= 500),
                                     collapse="\n")))
-        if(i != n) call <- paste0(call, ", ")
+        if(i != n) Call <- paste0(Call, ", ")
     }
 
     ## Construct the definition for \examples.
@@ -93,7 +93,7 @@ function(object, filename = NULL, name = NULL,
              paste("  ~~ A concise (1-5 lines) description of what",
                    "the function does. ~~"),
              "}"),
-             usage = c("\\usage{", paste0(call, ")"), "}",
+             usage = c("\\usage{", paste0(Call, ")"), "}",
              paste("%- maybe also 'usage' for other objects",
                    "documented here.")),
              arguments = NULL,
@@ -126,8 +126,10 @@ function(object, filename = NULL, name = NULL,
              "## The function is currently defined as",
              x.def,
              "}"),
-             keywords = c(paste("\\keyword{ ~kwd1 }% at least one,",
-             "from doc/KEYWORDS"),
+             keywords = c(paste("% Add one or more standard keywords,",
+             "see file 'KEYWORDS' in the"),
+             "% R documentation directory.",
+             "\\keyword{ ~kwd1 }",
              "\\keyword{ ~kwd2 }% __ONLY ONE__ keyword per line"))
 
     Rdtxt$arguments <- if(n > 0)
@@ -361,8 +363,9 @@ function(package, lib.loc = NULL, filename = NULL, name = NULL, final = FALSE)
         insert2("description",
                 gettext("A concise (1-5 lines) description of the package"))
         insert2("details",
-                gettext("An overview of how to use the package, including the most important functions"))
-        insert2("author", gettext("The author and/or maintainer of the package"))
+                strwrap(gettext("An overview of how to use the package, including the most important functions")))
+        insert2("author",
+                gettext("The author and/or maintainer of the package"))
         Rdtxt$references <-
             c("\\references{",
               paste("~~",
@@ -370,15 +373,14 @@ function(package, lib.loc = NULL, filename = NULL, name = NULL, final = FALSE)
                     "~~"),
               "}")
         Rdtxt$seealso <- c("\\seealso{", "}")
-        insert2("seealso", c(gettext("Optional links to other man pages, e.g."),
-        		     "\\code{\\link[<pkg>:<pkg>-package]{<pkg>}}"))
+        insert2("seealso",
+                c(gettext("Optional links to other man pages, e.g."),
+                  "\\code{\\link[<pkg>:<pkg>-package]{<pkg>}}"))
         Rdtxt$examples <- c("\\examples{","}")
         insert2("examples",
                 gettext("simple examples of the most important functions"))
-        Rdtxt$keywords <-
-            c(Rdtxt$keywords,
-              paste("~~",
-                    gettext("Optionally other keywords from doc/KEYWORDS, one per line")))
+        insert2("keywords",
+                strwrap(gettext("Optionally other standard keywords, one per line, from file KEYWORDS in the R documentation directory")))
     }
 
     if(is.na(filename)) return(Rdtxt)

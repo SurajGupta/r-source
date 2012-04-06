@@ -9,11 +9,11 @@
 ## This is set by R CMD on Unix but not on Windows
 R_PAPERSIZE=${R_PAPERSIZE-a4}
 
-revision='$Rev: 37352 $'
+revision='$Rev: 38686 $'
 version=`set - ${revision}; echo ${2}`
 version="Rd2dvi.sh ${version}
 
-Copyright (C) 2000-2005 The R Core Development Team.
+Copyright (C) 2000-2006 The R Core Development Team.
 This is free software; see the GNU General Public Licence version 2
 or later for copying conditions.  There is NO warranty." 
 
@@ -40,6 +40,8 @@ Options:
       --pdf		generate PDF output
       --title=NAME	use NAME as the title of the document
   -V, --verbose		report on what is done
+
+The output papersize is set by the environment variable R_PAPERSIZE.
 
 Report bugs to <r-bugs@r-project.org>."
 
@@ -149,7 +151,9 @@ Rd_DESCRIPTION_to_LaTeX () {
   echo "\\begin{description}"
   echo "\\raggedright{}"
   for f in `echo "${fields}" | sed '/Package/d; /Bundle/d;'`; do
-    text=`get_dcf_field ${f} ${1}`
+    text=`get_dcf_field ${f} ${1} | \
+      tr '\n' ' ' | \
+      sed "s/\"\([^\"]*\)\"/\\\`\\\`\\1''/g"`
     echo "\\item[${f}] \\AsIs{${text}}"
   done
   echo "\\end{description}"
@@ -335,7 +339,7 @@ status=0
 
 miktex=`latex --version | grep ^MiKTeX | wc -l`
 if test "${miktex}" = "1"; then
-R_TEXOPTS=--include-directory=$(RHOME)/share/texmf
+R_TEXOPTS=--include-directory=${R_HOME}/share/texmf
 else
 R_TEXOPTS=
 fi

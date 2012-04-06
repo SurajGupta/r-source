@@ -78,10 +78,10 @@ static void internet_Init(void)
 {
     int res;
 #ifdef Win32
-    res = UseInternet2 ? moduleCdynload("internet2", 1, 1) : 
-	moduleCdynload("internet", 1, 1);
+    res = UseInternet2 ? R_moduleCdynload("internet2", 1, 1) : 
+	R_moduleCdynload("internet", 1, 1);
 #else
-    res = moduleCdynload("internet", 1, 1);
+    res = R_moduleCdynload("internet", 1, 1);
 #endif
     initialized = -1;
     if(!res) return;
@@ -103,7 +103,7 @@ SEXP attribute_hidden do_download(SEXP call, SEXP op, SEXP args, SEXP env)
     }
 }
 
-Rconnection R_newurl(char *description, char *mode)
+Rconnection attribute_hidden R_newurl(char *description, char *mode)
 {
     if(!initialized) internet_Init();
     if(initialized > 0)
@@ -129,7 +129,7 @@ void *R_HTTPOpen(const char *url)
 {
     if(!initialized) internet_Init();
     if(initialized > 0)
-	return (*ptr->HTTPOpen)(url, 0);
+	return (*ptr->HTTPOpen)(url, NULL, 0);
     else {
 	error(_("internet routines cannot be loaded"));
 	return NULL;

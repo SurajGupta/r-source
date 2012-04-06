@@ -1,7 +1,7 @@
 /*
  *  R : A Computer Language for Statistical Data Analysis
  *  Copyright (C) 1995, 1996  Robert Gentleman and Ross Ihaka
- *  Copyright (C) 1997--2005  Robert Gentleman, Ross Ihaka
+ *  Copyright (C) 1997--2006  Robert Gentleman, Ross Ihaka
  *                            and the R Development Core Team
  *
  *  This program is free software; you can redistribute it and/or modify
@@ -486,7 +486,7 @@ static struct {
   Registers the specified routine and prompt with readline
   and keeps a record of it on the top of the R readline stack.
  */
-void attribute_hidden
+static void
 pushReadline(char *prompt, rl_vcpfunc_t f)
 {
    if(ReadlineStack.current >= ReadlineStack.max) {
@@ -504,7 +504,7 @@ pushReadline(char *prompt, rl_vcpfunc_t f)
   Unregister the current readline handler and pop it from R's readline
   stack, followed by re-registering the previous one.
 */
-void attribute_hidden popReadline()
+static void popReadline()
 {
   if(ReadlineStack.current > -1) {
      rl_callback_handler_remove();
@@ -516,7 +516,7 @@ void attribute_hidden popReadline()
 
 static void readline_handler(char *line)
 {
-    int l;
+    int l, buflen = rl_top->readline_len;
 
     popReadline();
 
@@ -527,11 +527,16 @@ static void readline_handler(char *line)
 	if (strlen(line) && rl_top->readline_addtohistory)
 	    add_history(line);
 # endif
-	l = (((rl_top->readline_len-2) > strlen(line))?
-	     strlen(line): (rl_top->readline_len-2));
-	strncpy((char *)rl_top->readline_buf, line, l);
-	rl_top->readline_buf[l] = '\n';
-	rl_top->readline_buf[l+1] = '\0';
+	/* We need to append a \n if the completed line would fit in the
+	   buffer but not otherwise.  Byte [buflen] is zeroed in
+	   the caller.
+	*/
+	strncpy((char *)rl_top->readline_buf, line, buflen);
+	l = strlen(line);
+	if(l < buflen - 1) {
+	    rl_top->readline_buf[l] = '\n';
+	    rl_top->readline_buf[l+1] = '\0';
+	}
     }
     else {
 	rl_top->readline_buf[0] = '\n';
@@ -594,7 +599,7 @@ Rstd_ReadConsole(char *prompt, unsigned char *buf, int len,
 	if(strlen(R_StdinEnc) && strcmp(R_StdinEnc, "native.enc")) {
 #if defined(HAVE_ICONV) && defined(ICONV_LATIN1)
 	    size_t res, inb = strlen((char *)buf), onb = len;
-	    char obuf[1001];
+	    char obuf[CONSOLE_BUFFER_SIZE+1];
 	    char *ib = (char *)buf, *ob = obuf;
 	    if(!cd) {
 		cd = Riconv_open("", R_StdinEnc);
@@ -737,17 +742,28 @@ void attribute_hidden Rstd_Busy(int which)
  */
 
 
+void R_CleanTempDir(void)
+{
+    char buf[1024];
+
+    if((Sys_TempDir)) {
+	snprintf(buf, 1024, "rm -rf %s", Sys_TempDir);
+	buf[1023] = '\0';
+	R_system(buf);
+    }
+}
+
+
 void attribute_hidden Rstd_CleanUp(SA_TYPE saveact, int status, int runLast)
 {
-    unsigned char buf[1024];
-    char * tmpdir;
-
     if(saveact == SA_DEFAULT) /* The normal case apart from R_Suicide */
 	saveact = SaveAction;
 
     if(saveact == SA_SAVEASK) {
 	if(R_Interactive) {
+	    unsigned char buf[1024];
 	qask:
+
 	    R_ClearerrConsole();
 	    R_FlushConsole();
 	    R_ReadConsole("Save workspace image? [y/n/c]: ",
@@ -795,10 +811,7 @@ void attribute_hidden Rstd_CleanUp(SA_TYPE saveact, int status, int runLast)
     R_RunExitFinalizers();
     CleanEd();
     if(saveact != SA_SUICIDE) KillAllDevices();
-    if((tmpdir = R_TempDir)) {
-	snprintf((char *)buf, 1024, "rm -rf %s", tmpdir);
-	R_system((char *)buf);
-    }
+    R_CleanTempDir();
     if(saveact != SA_SUICIDE && R_CollectWarnings)
 	PrintWarnings();	/* from device close and .Last */
     fpu_setup(FALSE);

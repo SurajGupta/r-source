@@ -10,11 +10,17 @@
     link.html.help<-function(verbose = FALSE, ...)
     {
         html <- getOption("htmlhelp")
-        if (!is.null(html) && html) make.packages.html()
+        # update only if temporary help files exist
+        if (!is.null(html) && html && file.exists(paste(tempdir(),"/.R/doc",sep=''))) {
+            #.Script("sh", "help-links.sh", paste(tempdir(), paste(.libPaths(),
+            #                                                      collapse = " ")))
+            make.packages.html()
+        }
     }
     untar<-function(what, where)
     {
-        xcode <- system(paste("tar zxf \"", what, "\" -C \"", where, "\"", sep=''), intern=FALSE)
+        xcode <- system(paste("tar zxf \"", path.expand(what), "\" -C \"",
+                              path.expand(where), "\"", sep=''), intern=FALSE)
         if (xcode)
             warning(gettextf("'tar' returned non-zero exit code %d", ,xcode),
                     domain = NA, call. = FALSE)
@@ -27,15 +33,17 @@
         ## dir over to the appropriate install dir.
         tmpDir <- tempfile(, lib)
         if (!dir.create(tmpDir))
-            stop(sprintf(gettext("unable to create temporary directory '%s'"),
-                         tmpDir), domain = NA, call. = FALSE)
+            stop(gettextf("unable to create temporary directory '%s'",
+                          tmpDir),
+                 domain = NA, call. = FALSE)
         cDir <- getwd()
         on.exit(setwd(cDir), add = TRUE)
         res <- untar(pkg, tmpDir)
         setwd(tmpDir)
         res <- tools::checkMD5sums(pkgname, file.path(tmpDir, pkgname))
         if(!is.na(res) && res) {
-            cat(sprintf(gettext("package '%s' successfully unpacked and MD5 sums checked\n"), pkgname))
+            cat(gettextf("package '%s' successfully unpacked and MD5 sums checked\n",
+                         pkgname))
             flush.console()
         }
 
@@ -52,7 +60,8 @@
             for (curPkg in pkgs) res <- res &
             tools::checkMD5sums(pkgname, file.path(tmpDir, curPkg))
             if(!is.na(res) && res) {
-                cat(sprintf(gettext("bundle '%s' successfully unpacked and MD5 sums checked\n"), pkgname))
+                cat(gettextf("bundle '%s' successfully unpacked and MD5 sums checked\n",
+                             pkgname))
                 flush.console()
             }
         } else pkgs <- pkgname
@@ -74,9 +83,8 @@
                 ## remove our temp dir
                 ret <- file.rename(file.path(tmpDir, curPkg), instPath)
                 if(!ret)
-                    warning(sprintf(gettext(
-                         "unable to move temporary installation '%s' to '%s'"),
-                                    file.path(tmpDir, curPkg), instPath),
+                    warning(gettextf("unable to move temporary installation '%s' to '%s'",
+                                     file.path(tmpDir, curPkg), instPath),
                             domain = NA, call. = FALSE)
             } else
                 stop("cannot remove prior installation of package ",

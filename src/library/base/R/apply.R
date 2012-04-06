@@ -32,7 +32,7 @@ apply <- function(X, MARGIN, FUN, ...)
         newX <- array(vector(typeof(X), 1), dim = c(prod(d.call), 1))
         ans <- FUN(if(length(d.call) < 2) newX[,1] else
                    array(newX[,1], d.call, dn.call), ...)
-        return(if(is.null(ans)) ans else if(length(d.call) < 2) ans[1][-1]
+        return(if(is.null(ans)) ans else if(length(d.ans) < 2) ans[1][-1]
                else array(ans, d.ans, dn.ans))
     }
     ## else

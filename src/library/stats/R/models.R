@@ -337,7 +337,7 @@ model.frame.default <-
                              nr, nr2), call.=FALSE)
     }
     if(is.null(attr(formula, "predvars"))) {
-        for (i in seq(along = varnames))
+        for (i in seq_along(varnames))
             predvars[[i+1]] <- makepredictcall(variables[[i]], vars[[i+1]])
         attr(formula, "predvars") <- predvars
     }
@@ -397,6 +397,7 @@ model.offset <- function(x) {
 }
 
 model.matrix <- function(object, ...) UseMethod("model.matrix")
+
 model.matrix.default <- function(object, data = environment(object),
 				 contrasts.arg = NULL, xlev = NULL, ...)
 {
@@ -409,15 +410,23 @@ model.matrix.default <- function(object, data = environment(object),
                          names(data))
 	if (any(is.na(reorder)))
 	    stop("model frame and formula mismatch in model.matrix()")
-	data <- data[,reorder, drop=FALSE]
+	if(!identical(reorder, seq_len(ncol(data))))
+	    data <- data[,reorder, drop=FALSE]
     }
     int <- attr(t, "response")
     if(length(data)) { # otherwise no rhs terms, so skip all this
         contr.funs <- as.character(getOption("contrasts"))
+        namD <- names(data)
+        ## turn any character columns into factors
+        for(i in namD)
+            if(is.character(data[[i]])) {
+                data[[i]] <- factor(data[[i]])
+                warning(gettextf("variable '%s' converted to a factor", i),
+                        domain = NA)
+            }
         isF <- sapply(data, function(x) is.factor(x) || is.logical(x) )
         isF[int] <- FALSE
         isOF <- sapply(data, is.ordered)
-        namD <- names(data)
         for(nn in namD[isF])            # drop response
             if(is.null(attr(data[[nn]], "contrasts")))
                 contrasts(data[[nn]]) <- contr.funs[1 + isOF[nn]]

@@ -67,10 +67,6 @@ SEXP attribute_hidden do_pgrep(SEXP call, SEXP op, SEXP args, SEXP env)
 
 
     if (length(pat) < 1) errorcall(call, R_MSG_IA);
-    if (!isString(pat)) PROTECT(pat = coerceVector(pat, STRSXP));
-    else PROTECT(pat);
-    if (!isString(vec)) PROTECT(vec = coerceVector(vec, STRSXP));
-    else PROTECT(vec);
 
     /* NAs are removed in R code so this isn't used */
     /* it's left in case we change our minds again */
@@ -149,19 +145,25 @@ SEXP attribute_hidden do_pgrep(SEXP call, SEXP op, SEXP args, SEXP env)
     pcre_free((void *)tables);
     PROTECT(ind);
     if (value_opt) {
+	SEXP nmold = getAttrib(vec, R_NamesSymbol), nm;
 	ans = allocVector(STRSXP, nmatches);
-	j = 0;
-	for (i = 0 ; i < n ; i++)
-	    if (INTEGER(ind)[i])
+	for (i = 0, j = 0; i < n ; i++)
+	    if (LOGICAL(ind)[i])
 		SET_STRING_ELT(ans, j++, STRING_ELT(vec, i));
-    }
-    else {
+	/* copy across names and subset */
+	if (!isNull(nmold)) {
+	    nm = allocVector(STRSXP, nmatches);
+	    for (i = 0, j = 0; i < n ; i++)
+		if (LOGICAL(ind)[i])
+		    SET_STRING_ELT(nm, j++, STRING_ELT(nmold, i));
+	    setAttrib(ans, R_NamesSymbol, nm);
+	}
+    } else {
 	ans = allocVector(INTSXP, nmatches);
-	j = 0;
-	for (i = 0 ; i < n ; i++)
-	    if (INTEGER(ind)[i]) INTEGER(ans)[j++] = i + 1;
+	for (i = 0, j = 0 ; i < n ; i++)
+	    if (LOGICAL(ind)[i]) INTEGER(ans)[j++] = i + 1;
     }
-    UNPROTECT(3);
+    UNPROTECT(1);
     return ans;
 }
 
@@ -321,12 +323,6 @@ SEXP attribute_hidden do_pgsub(SEXP call, SEXP op, SEXP args, SEXP env)
     if (length(pat) < 1 || length(rep) < 1)
 	errorcall(call, R_MSG_IA);
 
-    if (!isString(pat)) PROTECT(pat = coerceVector(pat, STRSXP));
-    else PROTECT(pat);
-    if (!isString(rep)) PROTECT(rep = coerceVector(rep, STRSXP));
-    else PROTECT(rep);
-    if (!isString(vec)) PROTECT(vec = coerceVector(vec, STRSXP));
-    else PROTECT(vec);
 
     if (igcase_opt) options |= PCRE_CASELESS;
 
@@ -452,7 +448,7 @@ SEXP attribute_hidden do_pgsub(SEXP call, SEXP op, SEXP args, SEXP env)
     (pcre_free)(re_pe);
     (pcre_free)(re_pcre);
     pcre_free((void *)tables);
-    UNPROTECT(4);
+    UNPROTECT(1);
     return ans;
 }
 
@@ -478,9 +474,6 @@ SEXP attribute_hidden do_pregexpr(SEXP call, SEXP op, SEXP args, SEXP env)
 
     if (length(pat) < 1 || length(text) < 1 ) errorcall(call, R_MSG_IA);
     if (!isString(pat)) PROTECT(pat = coerceVector(pat, STRSXP));
-    else PROTECT(pat);
-    if (!isString(text)) PROTECT(text = coerceVector(text, STRSXP));
-    else PROTECT(text);
 
 #ifdef SUPPORT_UTF8
     if(useBytes) ;
@@ -551,7 +544,7 @@ SEXP attribute_hidden do_pregexpr(SEXP call, SEXP op, SEXP args, SEXP env)
     (pcre_free)(re_pcre);
     pcre_free((void *)tables);
     setAttrib(ans, install("match.length"), matchlen);
-    UNPROTECT(4);
+    UNPROTECT(2);
     return ans;
 }
 
@@ -576,10 +569,6 @@ SEXP attribute_hidden do_gpregexpr(SEXP call, SEXP op, SEXP args, SEXP env)
     if (useBytes == NA_INTEGER) useBytes = 0;
 
     if (length(pat) < 1 || length(text) < 1 ) errorcall(call, R_MSG_IA);
-    if (!isString(pat)) PROTECT(pat = coerceVector(pat, STRSXP));
-    else PROTECT(pat);
-    if (!isString(text)) PROTECT(text = coerceVector(text, STRSXP));
-    else PROTECT(text);
 
 #ifdef SUPPORT_UTF8
     if(useBytes) ;
@@ -657,7 +646,10 @@ SEXP attribute_hidden do_gpregexpr(SEXP call, SEXP op, SEXP args, SEXP env)
                 st = ovector[0];
                 INTEGER(matchbuf)[matchIndex] = st + 1; /* index from one */
                 INTEGER(matchlenbuf)[matchIndex] = ovector[1] - st;
-                start = ovector[0] + 1;
+                if (INTEGER(matchlenbuf)[matchIndex] == 0)
+                    start = ovector[0] + 1;
+                else
+                    start = ovector[1];
 #ifdef SUPPORT_UTF8
                 if(!useBytes && mbcslocale) {
                     int mlen = ovector[1] - st;
@@ -710,6 +702,6 @@ SEXP attribute_hidden do_gpregexpr(SEXP call, SEXP op, SEXP args, SEXP env)
     if(cbuff.bufsize != MAXELTSIZE) R_FreeStringBuffer(&cbuff);
     (pcre_free)(re_pcre);
     pcre_free((void *)tables);
-    UNPROTECT(5);
+    UNPROTECT(3);
     return ansList;
 }

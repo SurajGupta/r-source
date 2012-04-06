@@ -475,6 +475,11 @@ command is syntactically complete.  This prompt may be changed by the
 user.  We will generally omit the continuation prompt
 and indicate continuation by simple indenting.
 
+Command lines entered at the console are limited@footnote{some of the
+consoles will not allow you to enter more, and amongst those which do
+some will silently discard the excess and some will use it as the start
+of the next line.} to about 1024 bytes (not characters).
+
 @node Recall and correction of previous commands, Executing commands from or diverting output to a file, R commands; case sensitivity etc, Introduction and preliminaries
 @section Recall and correction of previous commands
 
@@ -500,9 +505,9 @@ statistical system FAQ}.
 @section Executing commands from or diverting output to a file
 @cindex Diverting input and output
 
-If commands are stored in an external file, say @file{commands.R} in the
-working directory @file{work}, they may be executed at any time in an
-@R{} session with the command
+If commands@footnote{of unlimited length.} are stored in an external
+file, say @file{commands.R} in the working directory @file{work}, they
+may be executed at any time in an @R{} session with the command
 
 @example
 > source("commands.R")
@@ -795,7 +800,7 @@ of numbers.  For example @code{1:30} is the vector @code{c(1, 2,
 The colon operator has high priority within an expression, so, for
 example @code{2*1:15} is the vector @code{c(2, 4, @dots{}, 28, 30)}.
 Put @code{n <- 10} and compare the sequences @code{1:n-1} and
-@code{1:(n-1)}.  
+@code{1:(n-1)}.
 
 The construction @code{30:1} may be used to generate a sequence
 backwards.
@@ -1346,7 +1351,7 @@ and vectors can be extended (by missing values) in the same way.
 
 The function @code{attributes(@var{object})}
 @findex attributes
-gives a list of all the non-intrinsic attributes currently defined for
+returns a list of all the non-intrinsic attributes currently defined for
 that object.  The function @code{attr(@var{object}, @var{name})}
 @findex attr
 can be used to select a specific attribute.  These functions are rarely
@@ -1560,8 +1565,8 @@ simple instance (just one factor) what happens can be thought of as
 follows.  The values in the vector are collected into groups
 corresponding to the distinct entries in the factor.  The function is
 then applied to each of these groups individually.  The value is a
-vector of function results, labelled by the levels attribute of the
-factor.
+vector of function results, labelled by the @code{levels} attribute of
+the factor.
 
 The combination of a vector and a labelling factor is an example of what
 is sometimes called a @emph{ragged array}, since the subclass sizes are
@@ -1614,7 +1619,7 @@ creating and handling arrays, and in particular the special case of
 matrices.
 
 A dimension vector is a vector of non-negative integers.  If its length is
-@math{k} then the array is @math{k}-dimensional, e.g. a matrix is a
+@math{k} then the array is @math{k}-dimensional, e.g.@ a matrix is a
 @math{2}-dimensional array.  The dimensions are indexed from one up to
 the values given in the dimension vector.
 
@@ -1775,6 +1780,10 @@ However a simpler direct way of producing this matrix is to use
 @example
 > N <- table(blocks, varieties)
 @end example
+
+Index matrices must be numerical: any other form of matrix (e.g.@ a
+logical or character matrix) supplied as a matrix is treated as an
+indexing vector.
 
 @node The array() function, The outer product of two arrays, Index matrices, Arrays and matrices
 @section The @code{array()} function
@@ -2329,7 +2338,7 @@ code for each entry in a data vector.  The assignment
 
 @noindent
 gives in @code{statefr} a table of frequencies of each state in the
-sample.  The frequencies are ordered and labelled by the levels
+sample.  The frequencies are ordered and labelled by the @code{levels}
 attribute of the factor.  This simple case is equivalent to, but more
 convenient than,
 
@@ -3300,7 +3309,7 @@ distribution under the null hypothesis.
 
 data:  A and B
 W = 89, p-value = 0.007497
-alternative hypothesis: true mu is not equal to 0
+alternative hypothesis: true location shift is not equal to 0
 
 Warning message:
 Cannot compute exact p-value with ties in: wilcox.test(A, B)
@@ -3332,7 +3341,7 @@ distribution:
 
 data:  A and B
 D = 0.5962, p-value = 0.05919
-alternative hypothesis: two.sided
+alternative hypothesis: two-sided
 
 Warning message:
 cannot compute correct p-values with ties in: ks.test(A, B)
@@ -4070,7 +4079,7 @@ at the very end of the session.  An example is given below.
 The class of an object determines how it will be treated by what are
 known as @emph{generic} functions.  Put the other way round, a generic
 function performs a task or action on its arguments @emph{specific to
-the class of the argument itself}.  If the argument lacks any class
+the class of the argument itself}.  If the argument lacks any @code{class}
 attribute, or has a class not catered for specifically by the generic
 function in question, there is always a @emph{default action} provided.
 
@@ -4559,7 +4568,7 @@ Short form: @code{resid(@var{object})}.
 @findex step
 @item step(@var{object})
 Select a suitable model by adding or dropping terms and preserving
-hierarchies.  The model with the largest value of AIC (Akaike's An
+hierarchies.  The model with the smallest value of AIC (Akaike's An
 Information Criterion) discovered in the stepwise search is returned.
 
 @findex summary
@@ -6364,7 +6373,7 @@ Terminate all graphics devices on the list, except the null device.
 @cindex Dynamic graphics
 
 @R{} does not have builtin capabilities for dynamic or
-interactive graphics, e.g. rotating point clouds or to ``brushing''
+interactive graphics, e.g.@ rotating point clouds or to ``brushing''
 (interactively highlighting) points. However, extensive dynamic graphics
 facilities are available in the system GGobi by Swayne, Cook and Buja
 available from
@@ -6939,9 +6948,8 @@ be given when starting the @R{} executable from inside the debugger.
 also includes interactive graphics).  Currently, possible values for
 @var{type} are @samp{X11} (the default), provided that @samp{Tcl/Tk}
 support is available, @samp{Tk} and @samp{gnome} provided that package
-@pkg{gnomeGUI} is installed (@pxref{Building the GNOME console, , ,
-R-admin, R Installation and Adminstration}).  (For back-compatibility,
-@samp{x11}, @samp{tk} and @samp{GNOME} are accepted.)
+@pkg{gnomeGUI} is installed.  (For back-compatibility, @samp{x11},
+@samp{tk} and @samp{GNOME} are accepted.)
 
 @item --args
 This flag does nothing except cause the rest of the command line to be
@@ -6950,8 +6958,9 @@ skipped: this can be useful to retrieve values from it with
 @end table
 
 Note that input and output can be redirected in the usual way (using
-@samp{<} and @samp{>}).  Warning and error messages are sent to the
-error channel (@code{stderr}) except on Windows 9X/ME.
+@samp{<} and @samp{>}), but the line length limit of 1024 bytes still
+applies.  Warning and error messages are sent to the error channel
+(@code{stderr}) except on Windows 9X/ME.
 
 The command @code{R CMD} allows the invocation of various tools which
 are useful in conjunction with @R{}, but not intended to be called
@@ -7013,7 +7022,7 @@ to obtain usage information for each of the tools accessible via the
 @appendixsec Invoking R under Windows
 
 There are two ways to run @R{} under Windows.  Within a terminal window
-(e.g. @code{cmd.exe} or @code{command.com} or a more capable shell), the
+(e.g.@ @code{cmd.exe} or @code{command.com} or a more capable shell), the
 methods described in the previous section may be used, invoking by
 @code{R.exe} or more directly by @code{Rterm.exe}.  (These are
 principally intended for batch use.)  For interactive use, there is a
@@ -7047,9 +7056,10 @@ invoking @code{RGui.exe}.
 @item --mdi
 @itemx --sdi
 @itemx --no-mdi
-Control whether @code{Rgui} will operate as an MDI program (the default,
-with multiple child windows within one main window) or an SDI application
-(with multiple top-level windows for the console, graphics and pager).
+Control whether @code{Rgui} will operate as an MDI program 
+(with multiple child windows within one main window) or an SDI application
+(with multiple top-level windows for the console, graphics and pager).  The 
+command-line setting overrides the setting in the user's @file{Rconsole} file.
 
 @item --debug
 Enable the ``Break to debugger'' menu item in @code{Rgui}, and trigger
@@ -7093,9 +7103,7 @@ accessible from within the GUI.
 When the @acronym{GNU} @strong{readline} library is available at the
 time @R{} is configured for compilation under UNIX, an inbuilt command
 line editor allowing recall, editing and re-submission of prior commands
-is used.  Note: this appendix does @strong{not} apply to the
-@acronym{GNOME} interface under UNIX, only to the standard command-line
-interface.
+is used.
 
 It can be disabled (useful for usage with @acronym{ESS} @footnote{The
 `Emacs Speaks Statistics' package; see the @acronym{URL}

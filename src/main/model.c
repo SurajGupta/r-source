@@ -1,7 +1,7 @@
 /*
  *  R : A Computer Language for Statistical Data Analysis
  *  Copyright (C) 1995, 1996  Robert Gentleman and Ross Ihaka
- *  Copyright (C) 1997-2003   Robert Gentleman, Ross Ihaka and the
+ *  Copyright (C) 1997-2006   Robert Gentleman, Ross Ihaka and the
  *                            R Development Core Team
  *
  *  This program is free software; you can redistribute it and/or modify
@@ -708,7 +708,7 @@ static SEXP ExpandDots(SEXP object, SEXP value);
 
 SEXP attribute_hidden do_termsform(SEXP call, SEXP op, SEXP args, SEXP rho)
 {
-    SEXP a, ans, v, pattern, formula, varnames, term, termlabs;
+    SEXP a, ans, v, pattern, formula, varnames, term, termlabs, ord;
     SEXP specials, t, data, rhs;
     int i, j, k, l, n, keepOrder, allowDot;
 
@@ -796,7 +796,7 @@ SEXP attribute_hidden do_termsform(SEXP call, SEXP op, SEXP args, SEXP rho)
     intercept = 1;
     parity = 1;
     response = 0;
-    PROTECT(varlist = lcons(install("list"), R_NilValue));
+    PROTECT(varlist = LCONS(install("list"), R_NilValue));
     ExtractVars(CAR(args), 1);
     UNPROTECT(1);
     SETCAR(a, varlist);
@@ -872,9 +872,10 @@ SEXP attribute_hidden do_termsform(SEXP call, SEXP op, SEXP args, SEXP rho)
     /* Step 3: Reorder the model terms by BitCount, otherwise
        preserving their order. */
 
-    if (!keepOrder) {
+    PROTECT(ord = allocVector(INTSXP, nterm));
+    {
 	SEXP sCounts;
-	int *counts, bitmax = 0;
+	int *counts, bitmax = 0, *iord = INTEGER(ord), m = 0;
 
 	PROTECT(pattern = allocVector(VECSXP, nterm));
 	PROTECT(sCounts = allocVector(INTSXP, nterm));
@@ -885,14 +886,20 @@ SEXP attribute_hidden do_termsform(SEXP call, SEXP op, SEXP args, SEXP rho)
 	}
 	for (n = 0; n < nterm; n++) 
 	    if(counts[n] > bitmax) bitmax = counts[n];
-	call = formula;
-	for (i = 0; i <= bitmax; i++) /* can order 0 occur? */
+	if(keepOrder) {
 	    for (n = 0; n < nterm; n++)
-		if (counts[n] == i) {
-		    SETCAR(call, VECTOR_ELT(pattern, n));
-		    SETLEVELS(CAR(call), i);
-		    call = CDR(call);
-		}
+		iord[n] = counts[n];
+	} else {   
+	    call = formula;
+	    m = 0;
+	    for (i = 0; i <= bitmax; i++) /* can order 0 occur? */
+		for (n = 0; n < nterm; n++)
+		    if (counts[n] == i) {
+			SETCAR(call, VECTOR_ELT(pattern, n));
+			call = CDR(call);
+			iord[m++] = i;
+		    }
+	}
 	UNPROTECT(2);
     }
     
@@ -1025,8 +1032,12 @@ SEXP attribute_hidden do_termsform(SEXP call, SEXP op, SEXP args, SEXP rho)
     
     SETCAR(a, allocVector(INTSXP, nterm));
     n = 0;
-    for (call = formula; call != R_NilValue; call = CDR(call))
-	INTEGER(CAR(a))[n++] = LEVELS(CAR(call));
+    {
+	int *ia = INTEGER(CAR(a)), *iord = INTEGER(ord);
+	for (call = formula; call != R_NilValue; call = CDR(call), n++) 
+	    ia[n] = iord[n];
+    }
+    
     SET_TAG(a, install("order"));
     a = CDR(a);
 
@@ -1042,10 +1053,11 @@ SEXP attribute_hidden do_termsform(SEXP call, SEXP op, SEXP args, SEXP rho)
 
     SETCAR(a, mkString("terms"));
     SET_TAG(a, install("class"));
-    SETCDR(a, R_NilValue);  /* truncate if necessary */
     SET_OBJECT(ans, 1);
 
-    UNPROTECT(2);
+    SETCDR(a, R_NilValue);  /* truncate if necessary */
+
+    UNPROTECT(3);
     return ans;
 }
 
@@ -1236,6 +1248,7 @@ SEXP attribute_hidden do_updateform(SEXP call, SEXP op, SEXP args, SEXP rho)
     /* value, but it can't hurt. */
 
     SET_ATTRIB(new, R_NilValue);
+    SET_OBJECT(new, 0);
     setAttrib(new, R_DotEnvSymbol, getAttrib(old, R_DotEnvSymbol)); 
     
     return new;
@@ -1308,10 +1321,8 @@ SEXP attribute_hidden do_modelframe(SEXP call, SEXP op, SEXP args, SEXP rho)
     /*  check for NULL extra arguments -- moved from interpreted code */
 
     nactualdots = 0;
-    for (i = 0; i < ndots; i++){
-	if (VECTOR_ELT(dots, i) != R_NilValue)
-	    nactualdots++;
-    }
+    for (i = 0; i < ndots; i++)
+	if (VECTOR_ELT(dots, i) != R_NilValue) nactualdots++;
 
     /* Assemble the base data frame. */
 
@@ -1344,10 +1355,20 @@ SEXP attribute_hidden do_modelframe(SEXP call, SEXP op, SEXP args, SEXP rho)
 	nr = nrows(VECTOR_ELT(data, 0));
 	for (i = 0; i < nc; i++) {
 	    ans = VECTOR_ELT(data, i);
-	    if (TYPEOF(ans) < LGLSXP ||
-		TYPEOF(ans) > REALSXP)
-		errorcall(call, _("invalid variable type for '%s'"),
+	    switch(TYPEOF(ans)) {
+	    case LGLSXP:
+	    case INTSXP:
+	    case REALSXP:
+	    case CPLXSXP:
+	    case STRSXP:
+	    case RAWSXP:
+		break;
+	    default:
+		errorcall(call, 
+			  _("invalid type (%s) for variable '%s'"),
+			  type2char(TYPEOF(ans)),
 			  CHAR(STRING_ELT(names, i)));
+	    }
 	    if (nrows(ans) != nr)
 		errorcall(call, _("variable lengths differ (found for '%s')"),
 			  CHAR(STRING_ELT(names, i)));
@@ -1367,13 +1388,9 @@ SEXP attribute_hidden do_modelframe(SEXP call, SEXP op, SEXP args, SEXP rho)
     UNPROTECT(1);
     if (length(row_names) == nr) {
 	setAttrib(data, R_RowNamesSymbol, row_names);
-    }
-    else {
-	PROTECT(row_names = allocVector(STRSXP, nr));
-	for (i=0; i<nr; i++) {
-	    sprintf(buf, "%d", i+1);
-	    SET_STRING_ELT(row_names, i, mkChar(buf));
-	}
+    } else {
+	PROTECT(row_names = allocVector(INTSXP, nr));
+	for (i = 0; i < nr; i++) INTEGER(row_names)[i] = i+1;
 	setAttrib(data, R_RowNamesSymbol, row_names);
 	UNPROTECT(1);
     }
@@ -1600,11 +1617,18 @@ SEXP attribute_hidden do_modelmatrix(SEXP call, SEXP op, SEXP args, SEXP rho)
     if (length(vars) == 0)
 	errorcall(call, _("do not know how many cases"));
     n = nrows(VECTOR_ELT(vars, 0));
-    rnames = getAttrib(vars, R_RowNamesSymbol);
+    /* This could be generated, so need to protect it */
+    PROTECT(rnames = getAttrib(vars, R_RowNamesSymbol));
 
-    /* This section of the code checks the types of the variables */
-    /* in the model frame.  Note that it should really only check */
-    /* the variables if they appear in a term in the model. */
+    /* This section of the code checks the types of the variables
+       in the model frame.  Note that it should really only check
+       the variables if they appear in a term in the model.
+       Because it does not, we need to allow other types here, as they 
+       might well occur on the LHS.
+       The R code converts all character variables in the model frame to 
+       factors, so the only types that ought to be here are logical, 
+       integer (including factor), numeric and complex.
+     */
 
     PROTECT(variable = allocVector(VECSXP, nVar));
     PROTECT(nlevs = allocVector(INTSXP, nVar));
@@ -1630,8 +1654,6 @@ SEXP attribute_hidden do_modelmatrix(SEXP call, SEXP op, SEXP args, SEXP rho)
 	    INTEGER(columns)[i] = ncols(var_i);
 	}
 	else if (isLogical(var_i)) {
-	    /* currently this cannot happen as R code turns 
-	       logical into factor when setting contrasts */ 
 	    LOGICAL(ordered)[i] = 0;
 	    INTEGER(nlevs)[i] = 2;
 	    INTEGER(columns)[i] = ncols(var_i);
@@ -1643,8 +1665,14 @@ SEXP attribute_hidden do_modelmatrix(SEXP call, SEXP op, SEXP args, SEXP rho)
 	    INTEGER(nlevs)[i] = 0;
 	    INTEGER(columns)[i] = ncols(var_i);
 	}
-	else
-	    errorcall(call, _("invalid variable type"));
+	else {
+	    LOGICAL(ordered)[i] = 0;
+	    INTEGER(nlevs)[i] = 0;
+	    INTEGER(columns)[i] = ncols(var_i);
+	}
+/*	else
+	    errorcall(call, _("invalid variable type for '%s'"),
+	    CHAR(STRING_ELT(vnames, i))); */
     }
 
     /* If there is no intercept we look through the factor pattern */
@@ -1776,6 +1804,7 @@ SEXP attribute_hidden do_modelmatrix(SEXP call, SEXP op, SEXP args, SEXP rho)
 
     PROTECT(xnames = allocVector(STRSXP, nc));
 
+
     /* Here we loop over the terms in the model and, within each */
     /* term, loop over the corresponding columns of the design */
     /* matrix, assembling the names. */
@@ -1826,8 +1855,9 @@ SEXP attribute_hidden do_modelmatrix(SEXP call, SEXP op, SEXP args, SEXP rho)
 			    else
 				warningcall(call, _("term names will be truncated"));
 			}
-		    }
-		    else {
+		    } else if (isComplex(var_i)) {
+			errorcall(call, _("complex variables are not currently allowed in model matrices"));
+		    } else if(isNumeric(var_i)) { /* numeric */
 			x = ColumnNames(var_i);
 			ll = ncols(var_i);
 			addp = CHAR(STRING_ELT(vnames, i));
@@ -1849,7 +1879,10 @@ SEXP attribute_hidden do_modelmatrix(SEXP call, SEXP op, SEXP args, SEXP rho)
 				    warningcall(call, _("term names will be truncated"));
 			    }
 			}
-		    }
+		    } else
+			errorcall(call, 
+				  _("variables of type '%s' are not allowed in model matrices"),
+				  type2char(TYPEOF(var_i)));
 		    indx /= ll;
 		}
 	    }
@@ -1860,6 +1893,13 @@ SEXP attribute_hidden do_modelmatrix(SEXP call, SEXP op, SEXP args, SEXP rho)
     /* Allocate and compute the design matrix. */
 
     PROTECT(x = allocMatrix(REALSXP, n, nc));
+
+#ifdef R_MEMORY_PROFILING
+    if (TRACE(vars)){
+       memtrace_report(vars, x);
+       SET_TRACE(x, 1);
+    }
+#endif
 
     /* a) Begin with a column of 1s for the intercept. */
 
@@ -1878,6 +1918,12 @@ SEXP attribute_hidden do_modelmatrix(SEXP call, SEXP op, SEXP args, SEXP rho)
 	    if (INTEGER(columns)[i] == 0)
 		continue;
 	    var_i = VECTOR_ELT(variable, i);
+#ifdef R_MEMORY_PROFILING
+	    if (TRACE(var_i)){
+	       memtrace_report(var_i, x);	    
+	       SET_TRACE(x, 1);
+	    }
+#endif
 	    fik = INTEGER(factors)[i + k * nVar];
 	    if (fik) {
 		switch(fik) {
@@ -1927,6 +1973,6 @@ SEXP attribute_hidden do_modelmatrix(SEXP call, SEXP op, SEXP args, SEXP rho)
     SET_VECTOR_ELT(tnames, 1, xnames);
     setAttrib(x, R_DimNamesSymbol, tnames);
     setAttrib(x, install("assign"), assign);
-    UNPROTECT(13);
+    UNPROTECT(14);
     return x;
 }

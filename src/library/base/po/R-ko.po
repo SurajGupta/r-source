@@ -2,7 +2,7 @@ msgid ""
 msgstr ""
 "Project-Id-Version: R 2.3.0\n"
 "Report-Msgid-Bugs-To: bugs@r-project.org\n"
-"POT-Creation-Date: 2006-05-29 07:58\n"
+"POT-Creation-Date: 2006-09-26 14:33\n"
 "PO-Revision-Date: 2005-05-31 09:39+0900\n"
 "Last-Translator: Korean <uiami@hanmail.com>\n"
 "Language-Team: Korean <translation-team-ko@lists.sourceforge.net>\n"
@@ -104,6 +104,7 @@ msgstr "이하에 의해 요구되었습니다 :"
 msgid "(still attached)"
 msgstr "(아직 attached되어 있습니다)"
 
+#, fuzzy
 msgid "replaced regular expression pattern '[' by  '\\\\['"
 msgstr "정규 표현 패턴'['를 '\\\\['로 옮겨놓았습니다"
 
@@ -214,7 +215,8 @@ msgstr "무효인 'row.names' 길이입니다"
 msgid "duplicate 'row.names' are not allowed"
 msgstr "중복한 'row.names'는 허용되지 않습니다"
 
-msgid "missing 'row.names' are not allowed"
+#, fuzzy
+msgid "missing values in 'row.names' are not allowed"
 msgstr "'row.names'가 빠져 있어 되지 않습니다"
 
 msgid "invalid 'dimnames' given for data frame"
@@ -229,6 +231,9 @@ msgstr ""
 
 msgid "supplied %d row names for %d rows"
 msgstr "%d개의 행명이 %d개의 행에 제공되었습니다"
+
+msgid "options('stringsAsFactors') not set to TRUE or FALSE"
+msgstr ""
 
 msgid "mismatch of row names in arguments of 'data.frame', item %d"
 msgstr "'data.frame'의 인수에 행명(항목 &d)가 적당하지 않습니다"
@@ -645,6 +650,10 @@ msgstr "'max.distance'요소는 non-negative가 나오지 않으면 되지 않�
 msgid "matrix should be square"
 msgstr "정방 행렬이어야 합니다"
 
+#, fuzzy
+msgid "'object' must be a list"
+msgstr "'subset'는 논리값이 아니면 되지 않습니다"
+
 msgid "This is R %s, package '%s' needs %s %s"
 msgstr "이것은 R %s입니다.패키지 '%s'는 %s %s를 필요로 합니다"
 
@@ -669,6 +678,18 @@ msgstr "라이브러리?의 노트를 보아주십시오"
 
 msgid "Attaching package: '%s'"
 msgstr "다음의 패키지를 첨가합니다: '%s'"
+
+msgid "The following object(s) are masked"
+msgstr ""
+
+msgid "_by_"
+msgstr ""
+
+msgid "from"
+msgstr ""
+
+msgid ":"
+msgstr ""
 
 msgid "package '%s' has been merged into '%s'"
 msgstr "패케지'%s'는 '%s'에 병합되었습니다"
@@ -795,11 +816,19 @@ msgstr ""
 msgid "input has been corrupted, with LF replaced by CR"
 msgstr "입력 오류가 발생되어지고 있습니다. LF가 CR로 옮겨 놓을 수가 있습니다"
 
+msgid ""
+"file '%s' has magic number '%s'\n"
+"   Use of save versions prior to 2 is deprecated"
+msgstr ""
+
 msgid "bad 'file' argument"
 msgstr "잘못한 'file' 인수입니다"
 
 msgid "'file' must be specified"
 msgstr "'file'가 지정되지 않으면 안됩니다"
+
+msgid "Use of save versions prior to 2 is deprecated"
+msgstr ""
 
 msgid "'file' must be non-empty string"
 msgstr "'file'는 비어 있지 않는 문자열이 아니면 되지 않습니다"
@@ -874,6 +903,9 @@ msgstr "match 해야 할 행이 없습니다"
 msgid "'by.x' and 'by.y' specify different numbers of columns"
 msgstr "'by.x' 그리고 'by.y'는 다른 열수를 지정하고 있습니다"
 
+msgid "(loaded the methods namespace)"
+msgstr ""
+
 msgid ""
 "Tracing functions requires the methods package, but unable to load methods "
 "namespace"
@@ -882,8 +914,19 @@ msgstr ""
 "적재할수가\n"
 "없습니다"
 
+msgid "Expected a single logical value for the S4 object state"
+msgstr ""
+
 msgid "'%s' is not an exported object from 'namespace:%s'"
 msgstr "'%s'는 'namespace:%s' 로부터  export된 오브젝트가 아닙니다"
+
+#, fuzzy
+msgid "package '%s' has no name space and"
+msgstr "패키지 '%s'는 이름 공간을 가지고 있지 않습니다"
+
+#, fuzzy
+msgid "is not on the search path"
+msgstr "'%s'는 탐색 패스에서는 검색되지 않았습니다. pos = 2를 사용합니다"
 
 msgid "%s failed in 'attachNamespace'"
 msgstr "%s는 'attachNamespace'에 실패했습니다"
@@ -931,6 +974,15 @@ msgstr "'%s'에는 export를 위한 클래스는 검색되지 않습니다"
 msgid "in '%s' methods for export not found: %s"
 msgstr "'%s'에는 export를 위한 메소드는 검색되지 않습니다"
 
+msgid "No methods table for \""
+msgstr ""
+
+msgid "\""
+msgstr ""
+
+msgid "Failed to find metadata object for \"%s\""
+msgstr ""
+
 msgid "in '%s' methods specified for export, but none defined: %s"
 msgstr ""
 "'%s'에 export를 위한 메소드가 지정되어 있습니다만, 어느것도 정의되지 않았습니"
@@ -948,7 +1000,8 @@ msgstr "name space '%s'가 적재 되었습니다"
 msgid "%s failed in unloadNamespace(%s)"
 msgstr "%s는 unloadNamespace(%s)에 실패했습니다"
 
-msgid "name space '%s' is still used by:"
+#, fuzzy
+msgid "name space '%s' is still used by: '%s'"
 msgstr "이름 '%s' 여전히 이하에 의해 사용되어 있습니다"
 
 msgid "imperative name space directives are disabled"
@@ -974,6 +1027,9 @@ msgstr "밀폐된 name 공간에는 import할수가 없지 않습니다"
 
 msgid "invalid import target"
 msgstr "무효인 import target입니다"
+
+msgid "Found methods to import for function \"%s\" but not the generic itself"
+msgstr ""
 
 msgid "requested 'methods' objects not found in environment/package '%s': %s"
 msgstr "요구된 'methods' 오브젝트는 환경/패키지 '%s'에 검색되지 않습니다 :%s"
@@ -1186,6 +1242,11 @@ msgstr ""
 msgid "singular matrix 'a' in solve"
 msgstr "solve에서 특이 행렬 'a'가 있었습니다"
 
+msgid ""
+"'decreasing' must be a length-1 logical vector.\n"
+"Did you intend to set 'partial'?"
+msgstr ""
+
 msgid "'index.return' only for non-factors"
 msgstr "'index.return'는 단지 non-factors입니다"
 
@@ -1204,6 +1265,11 @@ msgstr "유한하지 않는 'partial' 입니다"
 msgid "argument lengths differ"
 msgstr "인수의 길이가 다릅니다"
 
+msgid ""
+"'x' must be atomic for 'sort.list'\n"
+"Have you called 'sort' on a list?"
+msgstr ""
+
 msgid "method=\"quick\" is only for numeric 'x'"
 msgstr "method=\"quick\"는 수치의 'x'입니다"
 
@@ -1221,6 +1287,9 @@ msgid "unable to find a plausible encoding"
 msgstr "그럴듯한 인코딩을 검색할수가 없습니다"
 
 msgid "'chdir = TRUE' makes no sense for a URL"
+msgstr ""
+
+msgid "cannot 'chdir' as current directory is unknown"
 msgstr ""
 
 msgid "'chdir = TRUE' makes no sense for a connection"
@@ -1275,18 +1344,6 @@ msgstr "테이블에 강제 변환 할수 없습니다"
 msgid "'x' is not an array"
 msgstr "'x'는 배열이 아닙니다"
 
-msgid "invalid argument 'n'"
-msgstr "무효인 인수'n' 입니다"
-
-msgid "invalid argument 'r'"
-msgstr "무효인 인수'r' 입니다"
-
-msgid "invalid argument 'c'"
-msgstr "무효인 인수 'c' 입니다"
-
-msgid "arguments 'r' and 'c' must have the same sums"
-msgstr "인수 'r' 그리고 'c'는 동일 합계를 가지지 않으면 안됩니다"
-
 msgid "'bin' must be numeric or a factor"
 msgstr "'bin'는 수치 또는 인자가 아니면 되지 않습니다"
 
@@ -1313,6 +1370,9 @@ msgstr "이용 할수 있는 traceback가 없습니다"
 
 msgid "argument to 'which' is not logical"
 msgstr "'which'에서 인수는 논리값이 아닙니다"
+
+msgid "'quote' must be 'TRUE', 'FALSE' or numeric"
+msgstr ""
 
 msgid "invalid numbers in 'quote'"
 msgstr "'quote'에서 무효인 수치가 있습니다"
@@ -1398,3 +1458,19 @@ msgid_plural "Warning messages:\n"
 msgstr[0] ""
 "경고 메세지:\n"
 "경고 메세지(복수)\n"
+
+#, fuzzy
+#~ msgid "rows are empty: giving up"
+#~ msgstr "최초의 5행이 비어 있습니다: 그만둡니다"
+
+#~ msgid "invalid argument 'n'"
+#~ msgstr "무효인 인수'n' 입니다"
+
+#~ msgid "invalid argument 'r'"
+#~ msgstr "무효인 인수'r' 입니다"
+
+#~ msgid "invalid argument 'c'"
+#~ msgstr "무효인 인수 'c' 입니다"
+
+#~ msgid "arguments 'r' and 'c' must have the same sums"
+#~ msgstr "인수 'r' 그리고 'c'는 동일 합계를 가지지 않으면 안됩니다"

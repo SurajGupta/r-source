@@ -1,7 +1,7 @@
 /*
   R : A Computer Language for Statistical Data Analysis
   Copyright (C) 1995-1996   Robert Gentleman and Ross Ihaka
-  Copyright (C) 1997-2004   Robert Gentleman, Ross Ihaka
+  Copyright (C) 1997-2006   Robert Gentleman, Ross Ihaka
                             and the R Development Core Team
 
   This program is free software; you can redistribute it and/or modify
@@ -312,7 +312,7 @@ static void iconv_Init(void)
     snprintf(dllpath, PATH_MAX, "%s%smodules%s%s%s", getenv("R_HOME"), 
 	     FILESEP, FILESEP, "iconv", SHLIB_EXT);
     if(!initialized) {
-	int res = moduleCdynload("iconv", 1, 1);
+	int res = R_moduleCdynload("iconv", 1, 1);
 	initialized = res ? 1 : -1;
 	if(initialized > 0) {
 	    ptr_iconv = R_FindSymbol("libiconv", "iconv", NULL);
@@ -554,6 +554,7 @@ void attribute_hidden InitTempDir()
     int hasspace = 0;
 #endif
 
+    if(R_TempDir) return; /* someone else set it */
     tmp = NULL; /* getenv("R_SESSION_TMPDIR");   no longer set in R.sh */
     if (!tmp) {
 	tm = getenv("TMPDIR");
@@ -602,6 +603,7 @@ void attribute_hidden InitTempDir()
     else {
 	R_TempDir = p;
 	strcpy(R_TempDir, tmp);
+	Sys_TempDir = R_TempDir;
     }
 }
 

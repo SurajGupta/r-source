@@ -37,8 +37,9 @@ SOURCES_F = \
 	eigen.f \
 	lminfl.f
 DEPENDS = $(SOURCES_C:.c=.d)
+OBJECTS_BLAS = @USE_EXTERNAL_BLAS_FALSE@ blas.o @COMPILE_FORTRAN_DOUBLE_COMPLEX_FALSE@ cmplxblas.o
 OBJECTS = $(SOURCES_C:.c=.o) $(SOURCES_F:.f=.o) \
-  @USE_EXTERNAL_BLAS_FALSE@ blas.o @COMPILE_FORTRAN_DOUBLE_COMPLEX_FALSE@ cmplxblas.o
+  @BLAS_SHLIB_FALSE@ $(OBJECTS_BLAS)
 HEADERS =
 
 distdir = $(top_builddir)/$(PACKAGE)-$(VERSION)/$(subdir)
@@ -46,11 +47,13 @@ DISTFILES = COPYRIGHT COPYRIGHT.ftn README lowess.doc \
 	Makefile.in Makefile.win \
 	$(HEADERS) \
 	$(SOURCES_C) \
-	$(SOURCES_F) \
-	blas.f cmplxblas.f
+	$(SOURCES_F)
 
 @WANT_R_SHLIB_TRUE@ALL_CFLAGS = $(ALL_CFLAGS_LO)
 @WANT_R_SHLIB_TRUE@ALL_FFLAGS = $(ALL_FFLAGS_LO)
+
+Rblas_la = libRblas$(DYLIB_EXT)
+Rblas_la_LIBADD = @DYLIB_UNDEFINED_ALLOWED_FALSE@ -flat_namespace -undefined suppress
 
 all: Makefile Makedeps R
 
@@ -74,10 +77,16 @@ libappl.a: $(OBJECTS)
 stamp-lo: $(OBJECTS)
 	@touch $@
 
+blas.o: $(top_srcdir)/src/extra/blas/blas.f
+	$(F77) $(ALL_FFLAGS) -c $< -o $@
+cmplxblas.o: $(top_srcdir)/src/extra/blas/cmplxblas.f
+	$(F77) $(ALL_FFLAGS) -c $< -o $@
+
 mostlyclean: clean
 clean:
 	@-rm -rf .libs _libs
-	@-rm -f Makedeps *.d *.o *.a *.lo *.la stamp-lo
+	@-rm -f Makedeps *.d *.o *.a *.lo *.la stamp-lo $(Rblas_la)
+
 distclean: clean
 	@-rm -f Makefile
 maintainer-clean: distclean

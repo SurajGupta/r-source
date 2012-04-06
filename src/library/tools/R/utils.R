@@ -137,7 +137,7 @@ function(file, topic)
         else file(file, "r")
         on.exit(close(file))
     }
-    valid_lines <- lines <- readLines(file)
+    valid_lines <- lines <- readLines(file, warn = FALSE)
     valid_lines[is.na(nchar(lines, "c"))] <- ""
     patt <- paste("^% --- Source file:.*/", topic, ".Rd ---$", sep="")
     if(length(top <- grep(patt, valid_lines)) != 1)
@@ -231,6 +231,16 @@ function(x, ...)
     out
 }
 
+### ** .file_append_ensuring_LFs
+
+.file_append_ensuring_LFs <-
+function(file1, file2)
+{
+    ## Use a fast version of file.append() that ensures LF between
+    ## files.
+    .Internal(codeFiles.append(file1, file2))
+}
+
 ### ** .find_owner_env
 
 .find_owner_env <-
@@ -241,6 +251,17 @@ function(v, env, last = NA, default = NA) {
         else
             env <- parent.env(env)
     default
+}
+
+### ** .get_contains_from_package_db
+
+.get_contains_from_package_db <-
+function(db)
+{
+    if("Contains" %in% names(db))
+        unlist(strsplit(db["Contains"], " +"))
+    else
+        character()
 }
 
 ### ** .get_internal_S3_generics
@@ -257,6 +278,7 @@ function()
       "is.integer", "is.language", "is.logical", "is.list", "is.matrix",
       "is.na", "is.nan", "is.null", "is.numeric", "is.object",
       "is.pairlist", "is.recursive", "is.single", "is.symbol",
+      "rep", "seq.int",
       ## and also the members of the group generics from groupGeneric.Rd
       "abs", "sign", "sqrt", "floor", "ceiling", "trunc", "round", "signif",
       "exp", "log", "cos", "sin", "tan", "acos", "asin", "atan",
@@ -300,6 +322,24 @@ function(nsInfo)
     S3_methods_list
 }
 
+### ** .get_requires_from_package_db
+
+.get_requires_from_package_db <-
+function(db, category = c("Depends", "Imports", "Suggests", "Enhances"))
+{
+    category <- match.arg(category)
+    if(category %in% names(db)) {
+        requires <- unlist(strsplit(db[category], ","))
+        requires <-
+            sub("^[[:space:]]*([[:alnum:].]+).*$", "\\1", requires)
+        if(category == "Depends")
+            requires <- requires[requires != "R"]
+    }
+    else
+        requires <- character()
+    requires
+}
+
 ### ** .get_S3_group_generics
 
 .get_S3_group_generics <-
@@ -330,6 +370,19 @@ local({
         tolower(sub("^R_PKGS_([[:upper:]]+) *=.*", "\\1", lines))
     eval(substitute(function() {out}, list(out=out)), envir=NULL)
 })
+
+### ** .get_standard_repository_db_fields
+
+.get_standard_repository_db_fields <-
+function()
+    c("Package", "Version", "Priority", "Bundle",
+      "Contains", "Depends", "Imports", "Suggests")
+
+### ** .identity
+
+.identity <-
+function(x)
+    x
 
 ### ** .is_ASCII
 
@@ -432,16 +485,22 @@ function(fname, envir, mustMatch = TRUE)
 function(package, lib.loc)
 {
     ## Load (reload if already loaded) @code{package} from
-    ## @code{lib.loc}, capturing all output and messages.  All QC
-    ## functions use this for loading packages because R CMD check
-    ## interprets all output as indicating a problem.
-    .try_quietly({
-        pos <- match(paste("package", package, sep = ":"), search())
-        if(!is.na(pos))
-            detach(pos = pos)
-        library(package, lib.loc = lib.loc, character.only = TRUE,
-                verbose = FALSE)
-    })
+    ## @code{lib.loc}, capturing all output and messages.  Don't do
+    ## anything for base, and don't attempt reloading methods, as this
+    ## does not work (most likely a bug).
+    ##
+    ## All QC functions use this for loading packages because R CMD
+    ## check interprets all output as indicating a problem.
+    if(package != "base")
+        .try_quietly({
+            pos <- match(paste("package", package, sep = ":"), search())
+            if(!is.na(pos)) {
+                if(package == "methods") return()
+                detach(pos = pos)
+            }
+            library(package, lib.loc = lib.loc, character.only = TRUE,
+                    verbose = FALSE)
+        })
 }
 
 ### ** .make_file_exts
@@ -480,13 +539,15 @@ function(package)
              "kappa.tri",
              "max.col",
              "print.atomic", "print.coefmat",
-             "rep.int", "round.POSIXt"),
+             "rep.int", "round.POSIXt",
+             "seq.int", "sort.int", "sort.list"),
              Hmisc = "t.test.cluster",
              HyperbolicDist = "log.hist",
              MASS = c("frequency.polygon",
              "gamma.dispersion", "gamma.shape",
              "hist.FD", "hist.scott"),
              XML = "text.SAX",
+             ape = "sort.index",
              car = "scatterplot.matrix",
              grDevices = "boxplot.stats",
              graphics = c("close.screen",
@@ -533,7 +594,7 @@ function(con)
         con <- if(length(grep("\\.gz$", con))) gzfile(con, "r") else file(con, "r")
         on.exit(close(con))
     }
-    .try_quietly(readLines(con))
+    .try_quietly(readLines(con, warn=FALSE))
 }
 
 ### ** .read_description
@@ -571,7 +632,7 @@ function(file, envir)
     on.exit(options(oop))
     assignmentSymbolLM <- as.symbol("<-")
     assignmentSymbolEq <- as.symbol("=")
-    exprs <- try(parse(n = -1, file = file))
+    exprs <- parse(n = -1, file = file)
     if(length(exprs) == 0)
         return(invisible())
     for(e in exprs) {
@@ -593,9 +654,16 @@ function(dir, env)
     on.exit(unlink(con))
     if(!file.create(con))
         stop("unable to create ", con)
-    if(!all(file.append(con, list_files_with_type(dir, "code"))))
+    if(!all(.file_append_ensuring_LFs(con,
+                                      list_files_with_type(dir,
+                                                           "code"))))
         stop("unable to write code files")
-    .source_assignments(con, env)
+    tryCatch(.source_assignments(con, env),
+             error =
+             function(e)
+             stop("cannot source package code\n",
+                  conditionMessage(e),
+                  call. = FALSE))
 }
 
 ### * .split_dependencies
@@ -666,7 +734,7 @@ function(expr)
                                                collapse = "\n"),
                                          call. = FALSE)
                                 }),
-                   error = function(e) e,
+                   error = .identity,
                    finally = {
                        sink(type = "message")
                        sink(type = "output")

@@ -2,7 +2,7 @@ msgid ""
 msgstr ""
 "Project-Id-Version: R 2.3.0\n"
 "Report-Msgid-Bugs-To: bugs@r-project.org\n"
-"POT-Creation-Date: 2006-05-12 08:33\n"
+"POT-Creation-Date: 2006-09-22 12:35\n"
 "PO-Revision-Date: 2005-05-31 09:50+0900\n"
 "Last-Translator: Korean <uiami@hanmail.com>\n"
 "Language-Team: Korean <translation-team-ko@lists.sourceforge.net>\n"
@@ -106,6 +106,16 @@ msgstr "패키지 '%s'의  DESCRIPTION 파일에서 date 필드가 있습니다"
 
 msgid "could not determine year for '%s' from package DESCRIPTION file"
 msgstr "패키지 DESCRIPTION 파일로부터'%s'때문에 year를 결정할수 없었습니다"
+
+msgid "m < 0"
+msgstr ""
+
+msgid "n < m"
+msgstr ""
+
+#, fuzzy
+msgid "'FUN' must be a function or NULL"
+msgstr "'package'는 문자열이나 NULL이어야만 합니다"
 
 msgid "'package' must be a character string or NULL"
 msgstr "'package'는 문자열이나 NULL이어야만 합니다"
@@ -248,6 +258,9 @@ msgstr "라이브러리"
 msgid "Help on topic '%s' was found in the following packages:"
 msgstr "topic '%s'에서 help는 다음의 패키지로 검색되었습니다"
 
+msgid "Choose one"
+msgstr ""
+
 msgid "Using the first match ..."
 msgstr "첫번째 match를 사용해주십시오..."
 
@@ -313,6 +326,10 @@ msgstr ""
 msgid "removing all entries with invalid multi-byte character data"
 msgstr "무효의 다중 바이트 문자 데이터를 갖춘 엔트리가 모두 제거하였습니다"
 
+msgid ""
+"no information in the data base for package '%s': need 'rebuild = TRUE'?"
+msgstr ""
+
 msgid "incorrect 'agrep' specification"
 msgstr "'agrep' 명세는 적적하지 않습니다"
 
@@ -370,8 +387,15 @@ msgstr "수치의 색인만은 사용할 수 있습니다"
 msgid "cannot create directory '%s'"
 msgstr "디렉토리 '%s'를 작성할수 없습니다"
 
+#, fuzzy
+msgid "'code_files' should be a character vector"
+msgstr "'list'는 R를 오브젝트라고 명명하는 문자 벡터이어야만 합니다"
+
 msgid "'list' should be a character vector naming R objects"
 msgstr "'list'는 R를 오브젝트라고 명명하는 문자 벡터이어야만 합니다"
+
+msgid "'namespace' should be a single logical"
+msgstr ""
 
 msgid "cannot turn off locale-specific chars via LC_CTYPE"
 msgstr ""
@@ -379,8 +403,36 @@ msgstr ""
 msgid "no R objects specified or available"
 msgstr "지정된 R 오브젝트는 없거나 이용가능합니다"
 
+msgid "Creating directories ..."
+msgstr ""
+
 msgid "directory '%s' already exists"
 msgstr "디렉토리 '%s'는 이미 존재합니다"
+
+msgid "Creating DESCRIPTION ..."
+msgstr ""
+
+msgid "Creating NAMESPACE ..."
+msgstr ""
+
+msgid "Creating Read-and-delete-me ..."
+msgstr ""
+
+msgid "Saving functions and data ..."
+msgstr ""
+
+msgid "Copying code files ..."
+msgstr ""
+
+#, fuzzy
+msgid "Making help files ..."
+msgstr "첫번째 match를 사용해주십시오..."
+
+msgid "Done."
+msgstr ""
+
+msgid "Further steps are described in '%s'."
+msgstr ""
 
 msgid "unable to access index for repository %s"
 msgstr "reposityory %s를 위한 인덱스에 액세스 할수 없습니다"
@@ -524,7 +576,9 @@ msgstr ""
 msgid "simple examples of the most important functions"
 msgstr ""
 
-msgid "Optionally other keywords from doc/KEYWORDS, one per line"
+msgid ""
+"Optionally other standard keywords, one per line, from file KEYWORDS in the "
+"R documentation directory"
 msgstr ""
 
 msgid ""
@@ -555,6 +609,49 @@ msgstr "함수 '%s' 또는 기호 '%s' 때문에 정의된 메소드가 없습�
 msgid "no documentation for function '%s' and signature '%s'"
 msgstr "함수 '%s' 그리고 기호 '%s' 때문에 documentation이 없습니다"
 
+msgid "No DIF data on clipboard"
+msgstr ""
+
+msgid "row and column counts not found"
+msgstr ""
+
+msgid "Unrecognized special data value"
+msgstr ""
+
+msgid "Unrecognized value indicator"
+msgstr ""
+
+msgid "no lines available in input"
+msgstr ""
+
+msgid "header and 'col.names' are of different lengths"
+msgstr ""
+
+msgid "more columns than column names"
+msgstr ""
+
+msgid "more column names than columns"
+msgstr ""
+
+msgid "rows are empty: giving up"
+msgstr ""
+
+msgid "not all columns named in 'colClasses' exist"
+msgstr ""
+
+msgid "invalid numeric 'as.is' expression"
+msgstr ""
+
+msgid "not all columns named in 'as.is' exist"
+msgstr ""
+
+msgid "'as.is' has the wrong length %d  != cols = %d"
+msgstr ""
+
+#, fuzzy
+msgid "invalid 'row.names' specification"
+msgstr "'agrep' 명세는 적적하지 않습니다"
+
 msgid "missing lengths for some fields"
 msgstr "몇개의 필드가 잘못되어진 길이입니다"
 
@@ -564,8 +661,19 @@ msgstr "무효의 format입니다"
 msgid "last record incomplete, %d lines discarded"
 msgstr "마지막 불완전한 레코드 ,%d 라인이 없어져버렸습니다"
 
+#, fuzzy
+msgid "'file' must be a character string or connection"
+msgstr "'package'는 문자열이나 NULL이어야만 합니다"
+
 msgid "transfer failure"
 msgstr "전송이 실패했습니다"
+
+msgid "HTTPUserAgent"
+msgstr ""
+
+#, fuzzy
+msgid "option must be a length one character vector or NULL"
+msgstr "'package'는 문자열이나 NULL이어야만 합니다"
 
 msgid "invalid 'socket' argument"
 msgstr "무효의 'socket' 인수입니다"
@@ -585,17 +693,25 @@ msgstr "확립되지 않는 socket 입니다"
 msgid "str.data.frame() called with non-data.frame -- coercing to one."
 msgstr "str.data.frmae() data.frame로 호출되었던것입니다 -- 1까지 강제입니다"
 
+msgid "invalid options('str') -- using defaults instead"
+msgstr ""
+
 msgid "'object' does not have valid levels()"
 msgstr "'object'는 유효한 levels()을 가지고 있지 않습니다"
 
 msgid "'str.default': 'le' is NA"
 msgstr "'str.default': 'le'는 NA입니다"
 
+#, fuzzy
+msgid "profile does not contain memory information"
+msgstr "유형 정보를 회복할 수 없었습니다"
+
 msgid "no events were recorded"
 msgstr "events는 기록되지 않았습니다"
 
+#, fuzzy
 msgid ""
-"vignette '%d' found more than once,\n"
+"vignette '%s' found more than once,\n"
 "using the one found in '%s'"
 msgstr ""
 "vignette(당초무늬) '%d'로 검색된것을 사용하고,\n"
@@ -663,6 +779,12 @@ msgstr "HTML 패키지 인덱스를 작성할 수 없습니다"
 
 msgid "cannot create HTML search index"
 msgstr "HTML 탐색 인덱스를 작성할 수 없습니다"
+
+msgid "'memory.size()' is Windows-specific"
+msgstr ""
+
+msgid "'memory.limit()' is Windows-specific"
+msgstr ""
 
 msgid "unable to find the HTML help"
 msgstr "HTML help를 검색되지 못합니다"

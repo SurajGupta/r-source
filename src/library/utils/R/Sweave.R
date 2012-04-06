@@ -354,7 +354,8 @@ RweaveLatexSetup <-
                     fig=FALSE, pdf=pdf, eps=eps,
                     width=6, height=6, term=TRUE,
                     echo=echo, results="verbatim", split=split,
-                    strip.white="true", include=TRUE)
+                    strip.white="true", include=TRUE,
+                    pdf.version="1.1", pdf.encoding="default")
 
     ## to be on the safe side: see if defaults pass the check
     options <- RweaveLatexOptions(options)
@@ -500,22 +501,24 @@ RweaveLatexRuncode <- function(object, chunk, options)
 
     if(options$fig && options$eval){
         if(options$eps){
-            postscript(file=paste(chunkprefix, "eps", sep="."),
-                       width=options$width, height=options$height,
-                       paper="special", horizontal=FALSE)
+            grDevices::postscript(file=paste(chunkprefix, "eps", sep="."),
+                                  width=options$width, height=options$height,
+                                  paper="special", horizontal=FALSE)
 
             err <- try({SweaveHooks(options, run=TRUE);
                         eval(chunkexps, envir=.GlobalEnv)})
-            dev.off()
+            grDevices::dev.off()
             if(inherits(err, "try-error")) stop(err)
         }
         if(options$pdf){
-            pdf(file=paste(chunkprefix, "pdf", sep="."),
-                width=options$width, height=options$height)
+            grDevices::pdf(file=paste(chunkprefix, "pdf", sep="."),
+                           width=options$width, height=options$height,
+                           version=options$pdf.version,
+                           encoding=options$pdf.encoding)
 
             err <- try({SweaveHooks(options, run=TRUE);
                         eval(chunkexps, envir=.GlobalEnv)})
-            dev.off()
+            grDevices::dev.off()
             if(inherits(err, "try-error")) stop(err)
         }
         if(options$include)
@@ -531,7 +534,7 @@ RweaveLatexWritedoc <- function(object, chunk)
         object$havesty <- TRUE
 
     if(!object$havesty){
-        chunk <- gsub("\\\\begin\\{document\\}",
+        chunk <- sub("^[[:space:]]*\\\\begin\\{document\\}",
                       paste("\\\\usepackage{",
                             object$styfile,
                             "}\n\\\\begin{document}", sep=""),
@@ -594,7 +597,8 @@ RweaveLatexOptions <- function(options)
 
     NUMOPTS <- c("width", "height")
     NOLOGOPTS <- c(NUMOPTS, "results", "prefix.string",
-                   "engine", "label", "strip.white")
+                   "engine", "label", "strip.white",
+                   "pdf.version", "pdf.encoding")
 
     for(opt in names(options)){
         if(! (opt %in% NOLOGOPTS)){

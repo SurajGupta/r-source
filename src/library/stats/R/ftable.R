@@ -115,9 +115,9 @@ ftable.formula <- function(formula, data = NULL, subset, na.action, ...)
         if(!is.null(data) && is.environment(data)) {
             varnames <- names(data)
             if(rhs.has.dot)
-                rvars <- seq(along = varnames)[-cvars]
+                rvars <- seq_along(varnames)[-cvars]
             if(lhs.has.dot)
-                cvars <- seq(along = varnames)[-rvars]
+                cvars <- seq_along(varnames)[-rvars]
         }
         else {
             if(lhs.has.dot || rhs.has.dot)
@@ -151,12 +151,10 @@ as.table.ftable <- function(x, ...)
     x
 }
 
-write.ftable <- function(x, file = "", quote = TRUE, append = FALSE,
-                         digits = getOption("digits"))
+format.ftable <- function(x, quote = TRUE, digits = getOption("digits"), ...)
 {
     if(!inherits(x, "ftable"))
         stop("'x' must be an \"ftable\" object")
-    ox <- x
     charQuote <- function(s)
         if(quote) paste("\"", s, "\"", sep = "") else s
     makeLabels <- function(lst) {
@@ -164,7 +162,7 @@ write.ftable <- function(x, file = "", quote = TRUE, append = FALSE,
         cplensU <- c(1, cumprod(lens))
         cplensD <- rev(c(1, cumprod(rev(lens))))
         y <- NULL
-        for (i in rev(seq(along = lst))) {
+        for (i in rev(seq_along(lst))) {
             ind <- 1 + seq(from = 0, to = lens[i] - 1) * cplensD[i + 1]
             tmp <- character(length = cplensD[i])
             tmp[ind] <- charQuote(lst[[i]])
@@ -189,11 +187,17 @@ write.ftable <- function(x, file = "", quote = TRUE, append = FALSE,
     DATA <- rbind(if(length(xcv)) t(makeLabels(xcv)),
                   rep("", times = ncol(x)),
                   format(unclass(x), digits = digits))
-    x <- cbind(apply(LABS, 2, format, justify = "left"),
-               apply(DATA, 2, format, justify = "right"))
-    cat(t(x), file = file, append = append,
-        sep = c(rep(" ", ncol(x) - 1), "\n"))
-    invisible(ox)
+    cbind(apply(LABS, 2, format, justify = "left"),
+	  apply(DATA, 2, format, justify = "right"))
+}
+
+write.ftable <- function(x, file = "", quote = TRUE, append = FALSE,
+			 digits = getOption("digits"))
+{
+    r <- format.ftable(x, quote = quote, digits = digits)
+    cat(t(r), file = file, append = append,
+	sep = c(rep(" ", ncol(r) - 1), "\n"))
+    invisible(x)
 }
 
 print.ftable <- function(x, digits = getOption("digits"), ...)
@@ -293,7 +297,7 @@ read.ftable <- function(file, sep = "", quote = "\"", row.var.names,
             n.col.vars <- length(col.vars)
             if(is.null(names(col.vars)))
                 names(col.vars) <-
-                    paste("Factor", seq(along = col.vars), sep = ".")
+                    paste("Factor", seq_along(col.vars), sep = ".")
             else {
                 nam <- names(col.vars)
                 ind <- which(nchar(nam) == 0)
@@ -330,3 +334,6 @@ read.ftable <- function(file, sep = "", quote = "\"", row.var.names,
               col.vars = col.vars,
               class = "ftable")
 }
+
+as.data.frame.ftable <- function(x, row.names = NULL, optional = FALSE, ...)
+    as.data.frame(as.table(x), row.names, optional)

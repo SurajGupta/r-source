@@ -17,8 +17,9 @@ text(x, \dots)
   \item{labels}{one or more character strings or expressions specifying
     the \emph{text} to be written.  An attempt is made to coerce other
     vectors (and factors) to character, and other language objects
-    to expressions.  If \code{labels} is longer than \code{x} and
-    \code{y}, the coordinates are recycled to the length of \code{labels}.}
+    (names and calls) to expressions.  If \code{labels} is longer than
+    \code{x} and \code{y}, the coordinates are recycled to the length of
+    \code{labels}.}
   \item{adj}{one or two values in \eqn{[0,1]} which specify the x
     (and optionally y) adjustment of the labels.  On most devices values
     outside that interval will also work.}
@@ -85,8 +86,8 @@ text(x, \dots)
   select ISO-8895-15 (Latin-9) which has the Euro as character 165: this
   can also be used for \code{\link{postscript}} and \code{\link{pdf}}.
 #ifdef unix
-  
-  The Euro should be rendered correctly by \code{link{X11}} in UTF-8
+
+  The Euro should be rendered correctly by \code{\link{X11}} in UTF-8
   locales, but the corresponding single-byte encoding in
   \code{\link{postscript}} and \code{\link{pdf}} will be to be selected
   as \code{ISOLatin9.enc}.

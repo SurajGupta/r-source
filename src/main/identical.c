@@ -1,6 +1,6 @@
 /*
  *  R : A Computer Language for Statistical Data Analysis
- *  Copyright (C) 2001-4  R Development Core Team
+ *  Copyright (C) 2001-6  R Development Core Team
  *
  *  This program is free software; you can redistribute it and/or modify
  *  it under the terms of the GNU General Public License as published by
@@ -27,51 +27,76 @@
 
 /* Implementation of identical(x, y) */
 
-Rboolean compute_identical(SEXP x, SEXP y);
 static Rboolean neWithNaN(double x,  double y);
 
-SEXP attribute_hidden do_identical(SEXP x, SEXP y)
+/* primitive interface */
+
+SEXP attribute_hidden do_identical(SEXP call, SEXP op, SEXP args, SEXP env)
 {
     SEXP ans;
 
+    checkArity(op, args);
     PROTECT(ans = allocVector(LGLSXP, 1));
-    LOGICAL(ans)[0] = compute_identical(x, y);
+    LOGICAL(ans)[0] = compute_identical(CAR(args), CADR(args));
     UNPROTECT(1);
     return(ans);
 }
 
-/* primitive interface */
-
-SEXP attribute_hidden do_ident(SEXP call, SEXP op, SEXP args, SEXP env)
-{
-    checkArity(op, args);
-    return do_identical(CAR(args), CADR(args));
-}
-
 /* do the two objects compute as identical? */
-Rboolean compute_identical(SEXP x, SEXP y)
+Rboolean attribute_hidden compute_identical(SEXP x, SEXP y)
 {
-
+    SEXP ax, ay;
     if(x == y)
 	return TRUE;
     if(TYPEOF(x) != TYPEOF(y))
 	return FALSE;
     if(OBJECT(x) != OBJECT(y))
 	return FALSE;
-    if(ATTRIB(x) != R_NilValue || ATTRIB(y) != R_NilValue) {
-	if(ATTRIB(x) == R_NilValue || ATTRIB(y) == R_NilValue)
+
+    /* Attributes are special: they should be tagged pairlists.  We
+       don't test them if they are not, and we do not test the order
+       if they are.
+
+       This code is not very efficient, but then neither is using
+       pairlists for attributes.  If long attribute lists become more
+       common (and they are used for S4 slots) we should store them in a hash
+       table.
+    */
+    ax = ATTRIB(x); ay = ATTRIB(y);
+    if(ax != R_NilValue || ay != R_NilValue) {
+	if(ax == R_NilValue || ay == R_NilValue)
 	    return FALSE;
-	if(!compute_identical(ATTRIB(x),ATTRIB(y)))
-	    return FALSE;
+	/* if(!compute_identical(ATTRIB(x),ATTRIB(y))) return FALSE; */
+	if(TYPEOF(ax) != LISTSXP || TYPEOF(ay) != LISTSXP) {
+	    warning(_("ignoring non-pairlist attributes"));
+	} else {
+	    SEXP elx, ely;
+	    if(length(ax) != length(ay)) return FALSE;
+	    /* They are the same length and should have 
+	       unique non-empty non-NA tags */
+	    for(elx = ax; elx != R_NilValue; elx = CDR(elx)) {
+		char *tx = CHAR(PRINTNAME(TAG(elx)));
+		for(ely = ay; ely != R_NilValue; ely = CDR(ely))
+		    if(streql(tx, CHAR(PRINTNAME(TAG(ely))))) {
+			if(!compute_identical(CAR(elx), CAR(ely))) 
+			    return FALSE;
+			break;
+		    }
+		if(ely == R_NilValue) return FALSE;
+	    }
+	}
     }
     switch (TYPEOF(x)) {
     case NILSXP:
 	return TRUE;
     case LGLSXP:
+        if (length(x) != length(y)) return FALSE;
+        /* Use memcmp (which is ISO C) to speed up the comparison */
+        return memcmp((void *)LOGICAL(x), (void *)LOGICAL(y),
+                      length(x) * sizeof(int)) == 0 ? TRUE : FALSE;
     case INTSXP:
 	if (length(x) != length(y)) return FALSE;
 	/* Use memcmp (which is ISO C) to speed up the comparison */
-	/* Using INTEGER as data accessor works for both INTSXP and LGLSXP */
 	return memcmp((void *)INTEGER(x), (void *)INTEGER(y), 
 		      length(x) * sizeof(int)) == 0 ? TRUE : FALSE;
     case REALSXP:
@@ -111,6 +136,12 @@ Rboolean compute_identical(SEXP x, SEXP y)
 	}
 	return TRUE;
     }
+    case CHARSXP:
+    {
+	int n1 = LENGTH(x), n2 = LENGTH(y);
+	if (n1 != n2) return FALSE;
+	if(memcmp(CHAR(x), CHAR(y), n1) != 0) return FALSE;
+    }
     case VECSXP:
     case EXPRSXP: 
     {
@@ -128,6 +159,8 @@ Rboolean compute_identical(SEXP x, SEXP y)
 	    if(y == R_NilValue)
 		return FALSE;
 	    if(!compute_identical(CAR(x), CAR(y)))
+		return FALSE;
+	    if(!compute_identical(PRINTNAME(TAG(x)), PRINTNAME(TAG(y))))
 		return FALSE;
 	    x = CDR(x);
 	    y = CDR(y);
@@ -155,18 +188,20 @@ Rboolean compute_identical(SEXP x, SEXP y)
 	return memcmp((void *)RAW(x), (void *)RAW(y), 
 		      length(x) * sizeof(Rbyte)) == 0 ? TRUE : FALSE;
 
-	/*  case PROMSXP: */
+	/*  case PROMSXP: args are evaluated, so will not be seen */
 	/* test for equality of the substituted expression -- or should
 	   we require both expression and environment to be identical? */
 	/*#define PREXPR(x)	((x)->u.promsxp.expr)
 	  #define PRENV(x)	((x)->u.promsxp.env)
 	  return(compute_identical(subsititute(PREXPR(x), PRENV(x)),
 	  subsititute(PREXPR(y), PRENV(y))));*/
+    case S4SXP:
+        /* attributes already tested, so all slots identical */
+        return TRUE;
     default:
 	/* these are all supposed to be types that represent constant
 	   entities, so no further testing required ?? */
-	printf("Unknown Type: %s (%x)\n", CHAR(type2str(TYPEOF(x))), 
-	       TYPEOF(x));
+	printf("Unknown Type: %s (%x)\n", type2char(TYPEOF(x)), TYPEOF(x));
 	return TRUE;
     }
 }

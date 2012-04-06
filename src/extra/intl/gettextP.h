@@ -134,6 +134,9 @@ struct binding
   char *dirname;
   int codeset_cntr;	/* Incremented each time codeset changes.  */
   char *codeset;
+#ifdef __GNUC__
+  __extension__ 
+#endif
   char domainname[ZERO];
 };
 

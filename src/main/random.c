@@ -1,7 +1,7 @@
 /*
  *  R : A Computer Language for Statistical Data Analysis
  *  Copyright (C) 1995, 1996  Robert Gentleman and Ross Ihaka
- *  Copyright (C) 1997--2002  Robert Gentleman, Ross Ihaka and the
+ *  Copyright (C) 1997--2006  Robert Gentleman, Ross Ihaka and the
  *			      R Development Core Team
  *  Copyright (C) 2003-4      The R Foundation
  *
@@ -496,7 +496,8 @@ SEXP attribute_hidden do_sample(SEXP call, SEXP op, SEXP args, SEXP rho)
 	UNPROTECT(2);
     }
     else {
-	if (replace) SampleReplace(k, n, INTEGER(y));
+	/* avoid allocation for a single sample */
+	if (replace || k < 2) SampleReplace(k, n, INTEGER(y));
 	else {
 	    x = allocVector(INTSXP, n);
 	    SampleNoReplace(k, n, INTEGER(y), INTEGER(x));

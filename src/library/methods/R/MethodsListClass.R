@@ -23,7 +23,7 @@
     ## formal method definition for all but primitives
     setClass("MethodDefinition",
              representation("function", "PossibleMethod",
-                            target = "signature", defined = "signature"),
+                            target = "signature", defined = "signature", generic = "character"),
              where = envir); clList <- c(clList, "MethodDefinition")
     ## class for default methods made from ordinary functions
     setClass("derivedDefaultMethod", "MethodDefinition")
@@ -97,20 +97,29 @@
                   assign(".nextMethod", method@nextMethod, envir = envir)
                   method
               }, where = envir)
-    setGeneric("addNextMethod", function(method, f = "<unknown>", mlist, optional = FALSE, envir)
+    setGeneric("addNextMethod", function(method, f = "<unknown>",
+                                         mlist = getMethods(f), optional = FALSE, envir)
                standardGeneric("addNextMethod"), where = envir)
     setMethod("addNextMethod", "MethodDefinition",
               function(method, f, mlist, optional, envir) {
+                if(.UsingMethodsTables())
+                  value <- .findNextFromTable(method, f, optional, envir)
+                else {
                   value <- .findNextMethod(method, f, mlist, optional, list(method@defined), envir)
                   new("MethodWithNext", method, nextMethod = value,
                       excluded = list(method@defined))
+                }
               }, where = envir)
     setMethod("addNextMethod", "MethodWithNext",
               function(method, f, mlist, optional, envir) {
+                if(.UsingMethodsTables())
+                  .findNextFromTable(method, f, optional, envir, method@excluded)
+                else {
                   excluded <- c(method@excluded, list(method@defined))
                   value <- .findNextMethod(method, f, mlist, optional, excluded, envir)
                   new("MethodWithNext", method, nextMethod = value,
                       excluded = excluded)
+                }
               }, where = envir)
     .initGeneric <- function(.Object, ...) {
             value <- standardGeneric("initialize")
@@ -178,7 +187,7 @@
                   }
                   else {
                       mat <- rbind(data, pkg)
-		      dimnames(mat) <- list(c("Object:", "From:"),
+		      dimnames(mat) <- list(c("Object:", "Package:"),
 					    rep("", length(data)))
                       show(mat)
                   }
@@ -199,7 +208,7 @@
 	      function(x,y) .Internal(rbind(deparse.level = 0, x,y)))
     setMethod("rbind2", signature(x = "ANY", y = "missing"),
 	      function(x,y) .Internal(rbind(deparse.level = 0, x)))
-    
+
     ## a show() method for the signature class
     setMethod("show", "signature", function(object) {
       message("An object of class \"", class(object), "\"")
@@ -207,7 +216,7 @@
       names(val) <- object@names
       callNextMethod(val)
     } )
-    
+
 ### Uncomment next line if we want special initialize methods for basic classes
 ###    .InitBasicClassMethods(where)
 }
@@ -226,7 +235,7 @@
                 formalNames <- formalNames[-dots]
         }
         if(is.null(sigArgs))
-            names(signature) <- formalNames[seq(along = classes)]
+            names(signature) <- formalNames[seq_along(classes)]
         else if(length(sigArgs) > 0 && any(is.na(match(sigArgs, formalNames))))
             stop(gettextf("the names in signature for method (%s) do not match function's arguments (%s)",
                           paste(sigArgs, collapse = ", "),

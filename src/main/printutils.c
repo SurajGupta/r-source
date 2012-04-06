@@ -153,7 +153,6 @@ char *EncodeReal(double x, int w, int d, int e, char cdec)
 	else snprintf(buff, NB, "%*s", w, "-Inf");
     }
     else if (e) {
-#ifndef Win32
 	if(d) {
 	    sprintf(fmt,"%%#%d.%de", w, d);
 	    snprintf(buff, NB, fmt, x);
@@ -162,25 +161,6 @@ char *EncodeReal(double x, int w, int d, int e, char cdec)
 	    sprintf(fmt,"%%%d.%de", w, d);
 	    snprintf(buff, NB, fmt, x);
 	}
-#else
-	/* Win32 libraries always use e+xxx format so avoid them */
-	double X= x, xx = prec(x, (double)(d+1)); /* might have 9.99997e-7 */
-	int kp = (xx == 0.0) ? 0 : floor(log10(fabs(xx))+1e-12), ee = 1;
-	if(kp > 0) {
-	    x = x / pow(10.0, (double)kp);
-	} else if (kp < 0) {
-	    x = x * pow(10.0, (double)(-kp));
-	}
-	if(abs(kp) >= 100) {
-	    if(d) sprintf(fmt,"%%#%d.%de", w, d);
-	    else sprintf(fmt,"%%%d.%de", w, d);
-	    snprintf(buff, NB, fmt, X);
-	} else {
-	    if(d) sprintf(fmt, "%%#%d.%dfe%%+0%dd", w-ee-3, d, ee+2);
-	    else sprintf(fmt, "%%%d.%dfe%%+0%dd", w-ee-3, d, ee+2);
-	    snprintf(buff, NB, fmt, x, kp);
-	}
-#endif
     }
     else { /* e = 0 */
 	sprintf(fmt,"%%%d.%df", w, d);
@@ -194,12 +174,15 @@ char *EncodeReal(double x, int w, int d, int e, char cdec)
     return buff;
 }
 
+void z_prec_r(Rcomplex *r, Rcomplex *x, double digits);
+
 char *EncodeComplex(Rcomplex x, int wr, int dr, int er, int wi, int di, int ei,
 		    char cdec)
 {
     static char buff[NB];
     char Re[NB], *Im, *tmp;
     int  flagNegIm = 0;
+    Rcomplex y;
 
     /* IEEE allows signed zeros; strip these here */
     if (x.r == 0.0) x.r = 0.0;
@@ -209,29 +192,35 @@ char *EncodeComplex(Rcomplex x, int wr, int dr, int er, int wi, int di, int ei,
 	snprintf(buff, NB, "%*s%*s", R_print.gap, "", wr+wi+2,
 		CHAR(R_print.na_string));
     } else {
+	/* formatComplex rounded, but this does not, and we need to 
+	   keep it that way so we don't get strange trailing zeros.
+	   But we do want to avoid printing small exponentials that
+	   are probably garbage.
+	 */
+	z_prec_r(&y, &x, R_print.digits);
 	/* EncodeReal has static buffer, so copy */
-	tmp = EncodeReal(x.r, wr, dr, er, cdec);
+	if(y.r == 0.) tmp = EncodeReal(y.r, wr, dr, er, cdec);
+	else tmp = EncodeReal(x.r, wr, dr, er, cdec);
 	strcpy(Re, tmp);
 	if ( (flagNegIm = (x.i < 0)) ) x.i = -x.i;
-	Im = EncodeReal(x.i, wi, di, ei, cdec);
+	if(y.i == 0.) Im = EncodeReal(y.i, wi, di, ei, cdec);
+	else Im = EncodeReal(x.i, wi, di, ei, cdec);
 	snprintf(buff, NB, "%s%s%si", Re, flagNegIm ? "-" : "+", Im);
     }
     buff[NB-1] = '\0';
     return buff;
 }
 
-/* <FIXME> encodeString and Rstrwid make several assumptions which
-   may not be true.
+/* <FIXME>
+   encodeString and Rstrwid assume that the wchar_t representation
+   used to hold multibyte chars is Unicode.  This is usually true, and
+   we warn if it is not known to be true.  Potentially looking at
+   wchar_t ranges as we do is incorrect, but that is even less likely to
+   be problematic.
 
-   1) That the ASCII charset is embedded as single bytes 0-127.
-   2) All multi-byte chars start with a byte 128-255.
-   3) The wchar_t representation used to hold multibyte chars.
-      is UCS-2 or -4 (and not say UTF-16 with surrogates).
-   4) The encoding is stateless.
-   
-   These are all true for UTF-8 and the Windows DBCSes, so perhaps
-   it does not matter much.  But it would be better to convert the
-   whole string to UCS-4 and then handle a char at a time.
+   On Windows with surrogate pairs it will not be canonical, but AFAIK
+   they do not occur in any MBCS (so it would only matter if we implement
+   UTF-8).
 */
 
 #ifdef SUPPORT_MBCS
@@ -240,70 +229,111 @@ char *EncodeComplex(Rcomplex x, int wr, int dr, int er, int wi, int di, int ei,
 #include <wctype.h>
 #endif
 /* strlen() using escaped rather than literal form,
-   and allows for embedded nuls.
+   and allowing for embedded nuls.
    In MBCS locales it works in characters, and reports in display width.
  */
 int Rstrwid(char *str, int slen, int quote)
 {
     char *p = str;
-    int len, i;
+    int len = 0, i;
 
-    len = 0;
-    for (i = 0; i < slen; i++) {
-
-	/* ASCII */
-	if((unsigned char) *p < 0x80) {
-	    if(isprint((int)*p)) {
-		switch(*p) {
-		case '\\':
-		    len += 2; break;
-		case '\'':
-		case '"':
-		    len += (quote == *p)? 2 : 1; break;
-		default:
-		    len++; break;
-		}
-	    } else switch(*p) {
-	    case '\a':
-	    case '\b':
-	    case '\f':
-	    case '\n':
-	    case '\r':
-	    case '\t':
-	    case '\v':
-	    case '\0':
-		len += 2; break;
-	    default:
-		/* print in octal */
-		len += 4; break;
-	    }
-	    p++;
 #ifdef SUPPORT_MBCS
-	} else if(mbcslocale) { /* beginning of multibyte char */
-	    int res; wchar_t wc;
+    if(mbcslocale) {
+	int res;
+	mbstate_t mb_st;
+	wchar_t wc;
+	unsigned int k; /* not wint_t as it might be signed */
+
+	mbs_init(&mb_st);
+	for (i = 0; i < slen; i++) {
 	    res = mbrtowc(&wc, p, MB_CUR_MAX, NULL);
-	    if(res > 0) {
-		len += iswprint((wint_t)wc) ? Ri18n_wcwidth(wc) : 
+	    if(res >= 0) {
+		k = wc;
+		if(0x20 <= k && k < 0x7f && iswprint(wc)) {
+		    switch(wc) {
+		    case L'\\':
+			len += 2;
+			break;
+		    case L'\'':
+		    case L'"':
+			len += (quote == *p) ? 2 : 1;
+			break;
+		    default:
+			len++; /* assumes these are all width 1 */
+			break;
+		    }
+		    p++;
+		} else if (k < 0x80) {
+		    switch(wc) {
+		    case L'\a':
+		    case L'\b':
+		    case L'\f':
+		    case L'\n':
+		    case L'\r':
+		    case L'\t':
+		    case L'\v':
+		    case L'\0':
+			len += 2; break;
+		    default:
+			/* print in octal */
+			len += 4; break;
+		    }
+		    p++;
+		} else {
+		    len += iswprint((wint_t)wc) ? Ri18n_wcwidth(wc) :
 #ifdef Win32
-		    6;
+			6;
 #else
-		    (wc > 0xffff ? 10 : 6);
+		    (k > 0xffff ? 10 : 6);
 #endif
-		i += (res - 1);
-		p += res;
+		    i += (res - 1);
+		    p += res;
+		}
 	    } else {
-		p++; len +=4;
+		len += 4;
+		p++;
 	    }
-#endif
-	} else { /* 8 bit char */
-#ifdef Win32 /* It seems Windows does not know what is printable! */
-	    len++;
-#else
-	    len += isprint((int)*p) ? 1 : 4;
-#endif
-	    p++;
 	}
-    }
+    } else
+#endif
+	for (i = 0; i < slen; i++) {
+	    /* ASCII */
+	    if((unsigned char) *p < 0x80) {
+		if(isprint((int)*p)) {
+		    switch(*p) {
+		    case '\\':
+			len += 2; break;
+		    case '\'':
+		    case '"':
+			len += (quote == *p)? 2 : 1; break;
+		    default:
+			len++; break;
+		    }
+		} else switch(*p) {
+		case '\a':
+		case '\b':
+		case '\f':
+		case '\n':
+		case '\r':
+		case '\t':
+		case '\v':
+		case '\0':
+		    len += 2; break;
+		default:
+		    /* print in octal */
+		    len += 4; break;
+		}
+		p++;
+	    } else { /* 8 bit char */
+#ifdef Win32 /* It seems Windows does not know what is printable! */
+		len++;
+#else
+		len += isprint((int)*p) ? 1 : 4;
+#endif
+		p++;
+	    }
+	}
+
     return len;
 }
 
@@ -312,8 +342,8 @@ int Rstrlen(SEXP s, int quote)
     return Rstrwid(CHAR(s), LENGTH(s), quote);
 }
 
-/* Here w is the minimum field width 
-   If 'quote' is non-zero the result should be quoted (and internal quotes 
+/* Here w is the minimum field width
+   If 'quote' is non-zero the result should be quoted (and internal quotes
    escaped and NA strings handled differently).
  */
 char *EncodeString(SEXP s, int w, int quote, Rprt_adj justify)
@@ -326,7 +356,7 @@ char *EncodeString(SEXP s, int w, int quote, Rprt_adj justify)
        responsible for freeing it.  However, this is not thread-safe. */
     static R_StringBuffer gBuffer = {NULL, 0, BUFSIZE};
     R_StringBuffer *buffer = &gBuffer;
-    
+
     if (s == NA_STRING) {
 	p = quote ? CHAR(R_print.na_string) : CHAR(R_print.na_string_noquote);
 	cnt = i = quote ? strlen(CHAR(R_print.na_string)) :
@@ -340,8 +370,10 @@ char *EncodeString(SEXP s, int w, int quote, Rprt_adj justify)
 
     /* We need enough space for the encoded string, including escapes.
        Octal encoding turns one byte into four.
-       Unicode encoding can turn a multibyte into six.
-       Let's be wasteful here (but why 5 not MB_CUR_MAX?)
+       Unicode encoding can turn a multibyte into six or ten,
+       but it turns 2/3 into 6, and 4 (and perhaps 5/6) into 10.
+       Let's be wasteful here (the worst case appears to be an MBCS with
+       two bytes for an upper-plane Unicode point output as ten bytes).
      */
     R_AllocStringBuffer(imax2(5*cnt+2, w), buffer); /* +2 allows for quotes */
     q = buffer->data;
@@ -353,72 +385,125 @@ char *EncodeString(SEXP s, int w, int quote, Rprt_adj justify)
 	b -= b0;
     }
     if(quote) *q++ = quote;
-    for (i = 0; i < cnt; i++) {
-
-	/* ASCII */
-	if((unsigned char) *p < 0x80) {
-	    if(*p != '\t' && isprint((int)*p)) { /* Windows has \t as printable */
-		switch(*p) {
-		case '\\': *q++ = '\\'; *q++ = '\\'; break;
-		case '\'':
-		case '"':
-		    if(quote == *p)  *q++ = '\\'; *q++ = *p; break;
-		default: *q++ = *p; break;
-		}
-	    } else switch(*p) {
-	    /* ANSI Escapes */
-	    case '\a': *q++ = '\\'; *q++ = 'a'; break;
-	    case '\b': *q++ = '\\'; *q++ = 'b'; break;
-	    case '\f': *q++ = '\\'; *q++ = 'f'; break;
-	    case '\n': *q++ = '\\'; *q++ = 'n'; break;
-	    case '\r': *q++ = '\\'; *q++ = 'r'; break;
-	    case '\t': *q++ = '\\'; *q++ = 't'; break;
-	    case '\v': *q++ = '\\'; *q++ = 'v'; break;
-	    case '\0': *q++ = '\\'; *q++ = '0'; break;
-
-	    default:
-		/* print in octal */
-		snprintf(buf, 5, "\\%03o", (unsigned char) *p);
-		for(j = 0; j < 4; j++) *q++ = buf[j];
-		break;
-	    }
-	    p++;
 #ifdef SUPPORT_MBCS
-	} else if(mbcslocale) { /* beginning of multibyte char */
-	    int j, res; wchar_t wc;
-	    res = mbrtowc(&wc, p, MB_CUR_MAX, NULL);
-	    if(res > 0) {
-		if(iswprint(wc)) {
-		    for(j = 0; j < res; j++) *q++ = *p++;
+    if(mbcslocale) {
+	int j, res;
+	mbstate_t mb_st;
+	wchar_t wc;
+	unsigned int k; /* not wint_t as it might be signed */
+        Rboolean Unicode_warning=FALSE;
+
+	mbs_init(&mb_st);
+	for (i = 0; i < cnt; i++) {
+	    res = Mbrtowc(&wc, p, MB_CUR_MAX, &mb_st);
+	    if(res >= 0) { /* res = 0 is a terminator */
+		k = wc;
+		/* To be portable, treat \0 explicitly */
+		if(res == 0) {k = 0; wc = L'\0';}
+		if(0x20 <= k && k < 0x7f && iswprint(wc)) {
+		    switch(wc) {
+		    case L'\\': *q++ = '\\'; *q++ = '\\'; p++;
+			break;
+		    case L'\'':
+		    case L'"':
+			if(quote == *p)  *q++ = '\\'; *q++ = *p++;
+			break;
+		    default:
+			for(j = 0; j < res; j++) *q++ = *p++;
+			break;
+		    }
+		} else if (k < 0x80) {
+		    /* ANSI Escapes */
+		    switch(wc) {
+		    case L'\a': *q++ = '\\'; *q++ = 'a'; break;
+		    case L'\b': *q++ = '\\'; *q++ = 'b'; break;
+		    case L'\f': *q++ = '\\'; *q++ = 'f'; break;
+		    case L'\n': *q++ = '\\'; *q++ = 'n'; break;
+		    case L'\r': *q++ = '\\'; *q++ = 'r'; break;
+		    case L'\t': *q++ = '\\'; *q++ = 't'; break;
+		    case L'\v': *q++ = '\\'; *q++ = 'v'; break;
+		    case L'\0': *q++ = '\\'; *q++ = '0'; break;
+
+		    default:
+			/* print in octal */
+			snprintf(buf, 5, "\\%03o", k);
+			for(j = 0; j < 4; j++) *q++ = buf[j];
+			break;
+		    }
+		    p++;
 		} else {
+		    if(iswprint(wc)) {
+			for(j = 0; j < res; j++) *q++ = *p++;
+		    } else {
 #ifndef Win32
-		    if(wc > 0xffff)
-			snprintf(buf, 11, "\\U%08x", (unsigned int) wc);
-		    else
+			Unicode_warning = TRUE;
+			if(k > 0xffff)
+			    snprintf(buf, 11, "\\U%08x", k);
+			else
 #endif
-			snprintf(buf, 11, "\\u%04x", (unsigned int) wc);
-		    for(j = 0; j < strlen(buf); j++) *q++ = buf[j];
-		    p += res;
+			    snprintf(buf, 11, "\\u%04x", k);
+			for(j = 0; j < strlen(buf); j++) *q++ = buf[j];
+			p += res;
+		    }
+		    i += (res - 1);
 		}
-		i += (res - 1);
-	    } else {
+
+	    } else { /* invalid char */
 		snprintf(q, 5, "<%02x>", *((unsigned char *)p));
 		q += 4; p++;
 	    }
-#endif
-	} else {  /* 8 bit char */
-#ifdef Win32 /* It seems Windows does not know what is printable! */
-	    *q++ = *p++;
-#else
-	    if(!isprint((int)*p & 0xff)) {
-		/* print in octal */
-		snprintf(buf, 5, "\\%03o", (unsigned char) *p);
-		for(j = 0; j < 4; j++) *q++ = buf[j];
-		p++;
-	    } else *q++ = *p++;
-#endif
 	}
-    }
+#ifndef __STDC_ISO_10646__
+	if(Unicode_warning)
+	    warning(_("it is not known that wchar_t is Unicode on this platform"));
+#endif
+
+    } else
+#endif
+	for (i = 0; i < cnt; i++) {
+
+	    /* ASCII */
+	    if((unsigned char) *p < 0x80) {
+		if(*p != '\t' && isprint((int)*p)) { /* Windows has \t as printable */
+		    switch(*p) {
+		    case '\\': *q++ = '\\'; *q++ = '\\'; break;
+		    case '\'':
+		    case '"':
+			if(quote == *p)  *q++ = '\\'; *q++ = *p; break;
+		    default: *q++ = *p; break;
+		    }
+		} else switch(*p) {
+		    /* ANSI Escapes */
+		case '\a': *q++ = '\\'; *q++ = 'a'; break;
+		case '\b': *q++ = '\\'; *q++ = 'b'; break;
+		case '\f': *q++ = '\\'; *q++ = 'f'; break;
+		case '\n': *q++ = '\\'; *q++ = 'n'; break;
+		case '\r': *q++ = '\\'; *q++ = 'r'; break;
+		case '\t': *q++ = '\\'; *q++ = 't'; break;
+		case '\v': *q++ = '\\'; *q++ = 'v'; break;
+		case '\0': *q++ = '\\'; *q++ = '0'; break;
+
+		default:
+		    /* print in octal */
+		    snprintf(buf, 5, "\\%03o", (unsigned char) *p);
+		    for(j = 0; j < 4; j++) *q++ = buf[j];
+		    break;
+		}
+		p++;
+	    } else {  /* 8 bit char */
+#ifdef Win32 /* It seems Windows does not know what is printable! */
+		*q++ = *p++;
+#else
+		if(!isprint((int)*p & 0xff)) {
+		    /* print in octal */
+		    snprintf(buf, 5, "\\%03o", (unsigned char) *p);
+		    for(j = 0; j < 4; j++) *q++ = buf[j];
+		    p++;
+		} else *q++ = *p++;
+#endif
+	    }
+	}
+
     if(quote) *q++ = quote;
     if(b > 0 && justify != Rprt_adj_right) {
 	for(i = 0 ; i < b ; i++) *q++ = ' ';
@@ -434,8 +519,8 @@ char *EncodeElement(SEXP x, int indx, int quote, char dec)
 
     switch(TYPEOF(x)) {
     case LGLSXP:
-	formatLogical(&INTEGER(x)[indx], 1, &w);
-	res = EncodeLogical(INTEGER(x)[indx], w);
+	formatLogical(&LOGICAL(x)[indx], 1, &w);
+	res = EncodeLogical(LOGICAL(x)[indx], w);
 	break;
     case INTSXP:
 	formatInteger(&INTEGER(x)[indx], 1, &w);
@@ -466,7 +551,7 @@ char *EncodeElement(SEXP x, int indx, int quote, char dec)
 #if 0
 char *Rsprintf(char *format, ...)
 {
-    static char buffer[1001]; /* unsafe, as assuming max length, but all 
+    static char buffer[1001]; /* unsafe, as assuming max length, but all
 				 internal uses are for a few characters */
     va_list(ap);
 
@@ -546,7 +631,7 @@ void Rcons_vprintf(const char *format, va_list arg)
 #endif /* HAVE_VASPRINTF */
 #else
     res = vsnprintf(p, R_BUFSIZE, format, arg);
-    if(res >= R_BUFSIZE || res < 0) { 
+    if(res >= R_BUFSIZE || res < 0) {
 	/* res is the desired output length or just a failure indication */
 	    buf[R_BUFSIZE - 1] = '\0';
 	    warning(_("printing of extremely long output is truncated"));
@@ -564,8 +649,11 @@ void Rvprintf(const char *format, va_list arg)
 {
     int i=0, con_num=R_OutputCon;
     Rconnection con;
+#ifdef HAVE_VA_COPY
     va_list argcopy;
+#endif
     static int printcount = 0;
+
     if (++printcount > 100) {
 	R_CheckUserInterrupt();
 	printcount = 0 ;
@@ -573,20 +661,18 @@ void Rvprintf(const char *format, va_list arg)
 
     do{
       con = getConnection(con_num);
-      /* Parentheses added for FC4 with gcc4 and -D_FORTIFY_SOURCE=2 */
 #ifdef HAVE_VA_COPY
       va_copy(argcopy, arg);
+      /* Parentheses added for FC4 with gcc4 and -D_FORTIFY_SOURCE=2 */
       (con->vfprintf)(con, format, argcopy);
       va_end(argcopy);
 #else /* don't support sink(,split=TRUE) */
-      va_start(arg, format);
       (con->vfprintf)(con, format, arg);
-      va_end(arg);
 #endif
       con->fflush(con);
       con_num = getActiveSink(i++);
 #ifndef HAVE_VA_COPY
-      if (con_num>0) error("Internal error: this platform does not support split output")
+      if (con_num>0) error("Internal error: this platform does not support split output");
 #endif
     } while(con_num>0);
 

@@ -2,7 +2,7 @@ msgid ""
 msgstr ""
 "Project-Id-Version: R 2.3.0\n"
 "Report-Msgid-Bugs-To: bugs@r-project.org\n"
-"POT-Creation-Date: 2006-05-29 07:58\n"
+"POT-Creation-Date: 2006-09-26 14:33\n"
 "PO-Revision-Date: YEAR-MO-DA HO:MI+ZONE\n"
 "Last-Translator: FULL NAME <EMAIL@ADDRESS>\n"
 "Language-Team: LANGUAGE <LL@li.org>\n"
@@ -212,7 +212,7 @@ msgstr ""
 msgid "duplicate 'row.names' are not allowed"
 msgstr ""
 
-msgid "missing 'row.names' are not allowed"
+msgid "missing values in 'row.names' are not allowed"
 msgstr ""
 
 msgid "invalid 'dimnames' given for data frame"
@@ -225,6 +225,9 @@ msgid "invalid 'row.names', length %d for a data frame with %d rows"
 msgstr ""
 
 msgid "supplied %d row names for %d rows"
+msgstr ""
+
+msgid "options('stringsAsFactors') not set to TRUE or FALSE"
 msgstr ""
 
 msgid "mismatch of row names in arguments of 'data.frame', item %d"
@@ -623,6 +626,9 @@ msgstr ""
 msgid "matrix should be square"
 msgstr ""
 
+msgid "'object' must be a list"
+msgstr ""
+
 msgid "This is R %s, package '%s' needs %s %s"
 msgstr ""
 
@@ -645,6 +651,18 @@ msgid "See the Note in ?library"
 msgstr ""
 
 msgid "Attaching package: '%s'"
+msgstr ""
+
+msgid "The following object(s) are masked"
+msgstr ""
+
+msgid "_by_"
+msgstr ""
+
+msgid "from"
+msgstr ""
+
+msgid ":"
 msgstr ""
 
 msgid "package '%s' has been merged into '%s'"
@@ -761,10 +779,16 @@ msgstr ""
 msgid "input has been corrupted, with LF replaced by CR"
 msgstr ""
 
+msgid "file '%s' has magic number '%s'\n   Use of save versions prior to 2 is deprecated"
+msgstr ""
+
 msgid "bad 'file' argument"
 msgstr ""
 
 msgid "'file' must be specified"
+msgstr ""
+
+msgid "Use of save versions prior to 2 is deprecated"
 msgstr ""
 
 msgid "'file' must be non-empty string"
@@ -839,10 +863,22 @@ msgstr ""
 msgid "'by.x' and 'by.y' specify different numbers of columns"
 msgstr ""
 
+msgid "(loaded the methods namespace)"
+msgstr ""
+
 msgid "Tracing functions requires the methods package, but unable to load methods namespace"
 msgstr ""
 
+msgid "Expected a single logical value for the S4 object state"
+msgstr ""
+
 msgid "'%s' is not an exported object from 'namespace:%s'"
+msgstr ""
+
+msgid "package '%s' has no name space and"
+msgstr ""
+
+msgid "is not on the search path"
 msgstr ""
 
 msgid "%s failed in 'attachNamespace'"
@@ -890,6 +926,15 @@ msgstr ""
 msgid "in '%s' methods for export not found: %s"
 msgstr ""
 
+msgid "No methods table for \""
+msgstr ""
+
+msgid "\""
+msgstr ""
+
+msgid "Failed to find metadata object for \"%s\""
+msgstr ""
+
 msgid "in '%s' methods specified for export, but none defined: %s"
 msgstr ""
 
@@ -905,7 +950,7 @@ msgstr ""
 msgid "%s failed in unloadNamespace(%s)"
 msgstr ""
 
-msgid "name space '%s' is still used by:"
+msgid "name space '%s' is still used by: '%s'"
 msgstr ""
 
 msgid "imperative name space directives are disabled"
@@ -930,6 +975,9 @@ msgid "cannot import into a sealed name space"
 msgstr ""
 
 msgid "invalid import target"
+msgstr ""
+
+msgid "Found methods to import for function \"%s\" but not the generic itself"
 msgstr ""
 
 msgid "requested 'methods' objects not found in environment/package '%s': %s"
@@ -1136,6 +1184,9 @@ msgstr ""
 msgid "singular matrix 'a' in solve"
 msgstr ""
 
+msgid "'decreasing' must be a length-1 logical vector.\nDid you intend to set 'partial'?"
+msgstr ""
+
 msgid "'index.return' only for non-factors"
 msgstr ""
 
@@ -1154,6 +1205,9 @@ msgstr ""
 msgid "argument lengths differ"
 msgstr ""
 
+msgid "'x' must be atomic for 'sort.list'\nHave you called 'sort' on a list?"
+msgstr ""
+
 msgid "method=\"quick\" is only for numeric 'x'"
 msgstr ""
 
@@ -1170,6 +1224,9 @@ msgid "unable to find a plausible encoding"
 msgstr ""
 
 msgid "'chdir = TRUE' makes no sense for a URL"
+msgstr ""
+
+msgid "cannot 'chdir' as current directory is unknown"
 msgstr ""
 
 msgid "'chdir = TRUE' makes no sense for a connection"
@@ -1223,18 +1280,6 @@ msgstr ""
 msgid "'x' is not an array"
 msgstr ""
 
-msgid "invalid argument 'n'"
-msgstr ""
-
-msgid "invalid argument 'r'"
-msgstr ""
-
-msgid "invalid argument 'c'"
-msgstr ""
-
-msgid "arguments 'r' and 'c' must have the same sums"
-msgstr ""
-
 msgid "'bin' must be numeric or a factor"
 msgstr ""
 
@@ -1260,6 +1305,9 @@ msgid "No traceback available"
 msgstr ""
 
 msgid "argument to 'which' is not logical"
+msgstr ""
+
+msgid "'quote' must be 'TRUE', 'FALSE' or numeric"
 msgstr ""
 
 msgid "invalid numbers in 'quote'"

@@ -41,8 +41,8 @@ getFunction <-  function(name, generic = TRUE, mustFind = TRUE,
         where <- parent.env(where)
     }
     if(!found && mustFind)
-	if(generic) stop(gettextf("no function '%s' found", name), domain = NA)
-	else stop(gettextf("no non-generic function '%s' found", name),
+	if(generic) stop(gettextf("no function \"%s\" found", name), domain = NA)
+	else stop(gettextf("no non-generic function \"%s\" found", name),
 		  domain = NA)
     f
 }
@@ -66,7 +66,7 @@ elNamed <-
     i <- match(name, names(x))
     if(is.na(i)) {
         if(mustFind)
-            stop(gettextf("'%s' is not one of the element names", name),
+            stop(gettextf("\"%s\" is not one of the element names", name),
                  domain = NA)
         else NULL
     }
@@ -96,7 +96,7 @@ findFunction <-
 {
     allWhere <- .findAll(f, where)
     ok <- rep(FALSE, length(allWhere))
-    for(i in seq(along = ok)) {
+    for(i in seq_along(ok)) {
         wherei <- allWhere[[i]]
         if(exists(f, wherei, inherits = FALSE)) {
             fdef <-get(f, wherei)

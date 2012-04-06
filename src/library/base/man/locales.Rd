@@ -11,11 +11,18 @@ Sys.getlocale(category = "LC_ALL")
 Sys.setlocale(category = "LC_ALL", locale = "")
 }
 \arguments{
-  \item{category}{character string. Must be one of \code{"LC_ALL"},
+  \item{category}{character string.  The following categories should
+    always be supported: \code{"LC_ALL"},
     \code{"LC_COLLATE"}, \code{"LC_CTYPE"}, \code{"LC_MONETARY"},
-    \code{"LC_NUMERIC"} or \code{"LC_TIME"}.}
+    \code{"LC_NUMERIC"} and \code{"LC_TIME"}.  Some systems
+#ifdef windows
+    (not Windows)
+#endif
+    will also support \code{"LC_MESSAGES"}, \code{"LC_PAPER"}
+    and \code{"LC_MEASUREMENT"}.
+  }
   \item{locale}{character string.  A valid locale name on the system in
-    use. Normally \code{""} (the default) will pick up the default
+    use.  Normally \code{""} (the default) will pick up the default
     locale for the system.}
 }
 \details{
@@ -33,12 +40,13 @@ Sys.setlocale(category = "LC_ALL", locale = "")
   \R can be built with no support for locales, but it is normally
   available on Unix and is available on Windows.
 
-  Some systems will have other locale categories, but the six described
-  here are those specified by POSIX.
+  The first seven categories described here are those specified by
+  POSIX.  \code{"LC_MESSAGES"} will be \code{"C"} on systems that do not
+  support message translation, and is not supported on Windows.  Trying
+  to use an unsupported category is an error for \code{Sys.setlocale}.
 
-  Note that setting \code{"LC_ALL"} as from \R 2.1.0 sets only
-  \code{"LC_COLLATE"}, \code{"LC_CTYPE"}, \code{"LC_MONETARY"} and
-  \code{"LC_TIME"}.
+  Note that setting \code{"LC_ALL"} sets only \code{"LC_COLLATE"},
+  \code{"LC_CTYPE"}, \code{"LC_MONETARY"} and \code{"LC_TIME"}.
 }
 \value{
   A character string of length one describing the locale in use (after
@@ -64,7 +72,7 @@ Sys.setlocale(category = "LC_ALL", locale = "")
   anomalously, so gives a warning.  (The known problems are with
   input conversion in locales with \code{,} as the decimal point.)
   Setting it temporarily to produce graphical or text output may work
-  well enough.
+  well enough, but \code{\link{options}(OutDec)} is often preferable.
 }
 \seealso{
   \code{\link{strptime}} for uses of \code{category = "LC_TIME"}.
@@ -78,7 +86,8 @@ Sys.getlocale("LC_TIME")
 Sys.setlocale("LC_TIME", "de")     # Solaris: details are OS-dependent
 Sys.setlocale("LC_TIME", "German") # Windows
 }
+Sys.getlocale("LC_PAPER")          # may or may not be set
 
-Sys.setlocale("LC_COLLATE", "C")  # turn off locale-specific sorting
+Sys.setlocale("LC_COLLATE", "C")   # turn off locale-specific sorting
 }
 \keyword{utilities}

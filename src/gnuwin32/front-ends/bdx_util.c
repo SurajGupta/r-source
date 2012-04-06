@@ -1,6 +1,6 @@
 /*******************************************************************************
  *  BDX: Binary Data eXchange format library
- *  Copyright (C) 1999-2005 Thomas Baier
+ *  Copyright (C) 1999-2006 Thomas Baier
  *
  *  This library is free software; you can redistribute it and/or
  *  modify it under the terms of the GNU Library General Public
@@ -40,8 +40,8 @@ int bdx_trace_printf(char const* pFormat,...)
   static char __tracebuf[2048];
 
   va_list lArgs;
-  va_start(lArgs,pFormat);
-  vsprintf(__tracebuf,pFormat,lArgs);
+  va_start(lArgs, pFormat);
+  vsnprintf(__tracebuf, 2048, pFormat, lArgs);
   OutputDebugString(__tracebuf);
   return 0;
 }

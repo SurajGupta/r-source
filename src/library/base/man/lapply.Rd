@@ -1,19 +1,22 @@
 \name{lapply}
+\alias{lapply}
+\alias{sapply}
+\alias{replicate}
 \title{Apply a Function over a List or Vector}
 \usage{
 lapply(X, FUN, \dots)
+
 sapply(X, FUN, \dots, simplify = TRUE, USE.NAMES = TRUE)
 
 replicate(n, expr, simplify = TRUE)
 }
-\alias{lapply}
-\alias{sapply}
-\alias{replicate}
 \arguments{
-  \item{X}{list or (atomic) vector to be used.}
+  \item{X}{a vector (atomic or list) or an expressions vector.  Other
+    objects (including classed objects) will be coerced by
+    \code{\link{as.list}}.}
   \item{FUN}{the function to be applied to each element of \code{X}:
     see Details.  In the case of functions like \code{+}, \code{\%*\%}, etc.,
-    function name must be backquoted or quoted.}
+    the function name must be backquoted or quoted.}
   \item{\dots}{optional arguments to \code{FUN}.}
   \item{simplify}{logical; should the result be simplified to a vector
     or matrix if possible?}
@@ -21,10 +24,11 @@ replicate(n, expr, simplify = TRUE)
     use \code{X} as \code{\link{names}} for the result unless it had names
     already.}
   \item{n}{number of replications.}
-  \item{expr}{expression to evaluate repeatedly.}
+  \item{expr}{expression (language object, usually a call)
+    to evaluate repeatedly.}
 }
 \description{
-  \code{lapply} returns a list of the same length as \code{X}.  Each
+  \code{lapply} returns a list of the same length as \code{X}, each
   element of which is the result of applying \code{FUN} to the
   corresponding element of \code{X}.
 
@@ -37,14 +41,14 @@ replicate(n, expr, simplify = TRUE)
 }
 \details{
   \code{FUN} is found by a call to \code{\link{match.fun}} and typically
-  is either a function or a symbol (e.g. a backquoted name) or a
-  character string specifying a function to be searched for from the 
-  environment of the call to \code{lapply}. 
+  is specified as a function or a symbol (e.g. a backquoted name) or a
+  character string specifying a function to be searched for from the
+  environment of the call to \code{lapply}.
 
   Function \code{FUN} must be able to accept as input any of the
   elements of \code{X}.  If the latter is an atomic vector, \code{FUN}
-  will always be passed a length-one vector.
-  
+  will always be passed a length-one vector of the same type as \code{X}.
+
   Simplification in \code{sapply} is only attempted if \code{X} has
   length greater than zero and if the return values from all elements
   of \code{X} are all of the same (positive) length.  If the common
@@ -67,7 +71,10 @@ replicate(n, expr, simplify = TRUE)
   Wadsworth \& Brooks/Cole.
 }
 \seealso{
-  \code{\link{apply}}, \code{\link{tapply}}.
+  \code{\link{apply}}, \code{\link{tapply}},
+  \code{\link{mapply}} for applying a function to \bold{m}ultiple
+  arguments, and \code{\link{rapply}} for a \bold{r}ecursive version of
+  \code{lapply()}.
 }
 \examples{
 x <- list(a = 1:10, beta = exp(-3:3), logic = c(TRUE,FALSE,FALSE,TRUE))

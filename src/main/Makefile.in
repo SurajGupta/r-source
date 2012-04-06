@@ -7,6 +7,8 @@ top_srcdir = @top_srcdir@
 
 top_builddir = ../..
 subdir = src/main
+# next is needed for shared BLAS
+R_HOME=$(top_builddir)
 
 include $(top_builddir)/Makeconf
 
@@ -41,7 +43,7 @@ SOURCES_F = \
 ## If the substitutes are needed, the corresponding objects are put by
 ## configure in @LIBOBJS@ @ALLOCA@
 EXTRA_SOURCES_C = \
-	Rmain.c Rembedded.c \
+	Rmain.c \
 	alloca.c acosh.c asinh.c atanh.c \
 	mkdtemp.c \
 	snprintf.c strdup.c strncasecmp.c \
@@ -95,19 +97,18 @@ EXTRA_LIBS = $(BLAS_LIBS) $(FLIBS) $(R_XTRA_LIBS) $(R_ZLIBS) \
 
 ## find dependencies for both libR and standalone R.bin
 DEP_LIBINTL = @BUILD_LIBINTL_TRUE@ ../extra/intl/libintl.a
-DEP_AIX = @USE_EXPORTFILES_TRUE@ $(top_builddir)/etc/R.exp
 COMMON_DEPENDENCIES = \
 	$(R_XTRA_LIBS) $(R_ZLIBS) $(R_BZLIBS) $(R_PCRE) $(R_XDR) \
-	$(DEP_LIBINTL) $(DEP_AIX)
+	$(DEP_LIBINTL)
 
 R_binary = R.bin
 R_bin_OBJECTS = Rmain.o @WANT_R_SHLIB_FALSE@$(OBJECTS)
 @WANT_R_SHLIB_FALSE@R_bin_LDADD = $(RLIBS) $(EXTRA_LIBS)
-@WANT_R_SHLIB_TRUE@R_bin_LDADD = -L../../lib@R_ARCH@ -lR
+@WANT_R_SHLIB_TRUE@R_bin_LDADD = -L../../lib@R_ARCH@ -lR @BLAS_SHLIB_TRUE@-lRblas
 R_bin_DEPENDENCIES =@WANT_R_SHLIB_FALSE@ $(RLIBS) $(COMMON_DEPENDENCIES)
 
 libR_la = libR$(DYLIB_EXT)
-libR_la_OBJECTS = Rembedded.o $(OBJECTS)
+libR_la_OBJECTS = $(OBJECTS)
 ## <FIXME>
 ## This should also have `ls ../appl/*.lo ../nmath/*.lo ../unix/*.lo`, but
 ## of course this will not work when the files do not exist yet :-)
@@ -154,9 +155,6 @@ $(R_binary): $(R_bin_OBJECTS) $(R_bin_DEPENDENCIES)
 install-bin-local: $(R_binary)
 	@$(MAKE) rhome="$(abs_top_builddir)" install-bin
 
-$(top_builddir)/etc/R.exp: $(OBJECTS) $(RLIBS)
-	@$(SHELL) $(top_srcdir)/tools/ldAIX4 -o $@ $(OBJECTS) $(RLIBS)
-
 ## is this portable?  Documented as GNU extension.
 $(RLIBS):
 	(cd $(@D); $(MAKE) $(@F))
@@ -168,7 +166,7 @@ $(RLIBS):
 libR: $(libR_la)
 
 $(libR_la): $(libR_la_OBJECTS) $(libR_la_DEPENDENCIES)
-	$(DYLIB_LINK) $(LIBR_LDFLAGS) -o $@ $(libR_la_OBJECTS) `ls ../appl/*.o ../nmath/*.o ../unix/*.o  2>/dev/null` $(libR_la_LIBADD)
+	$(DYLIB_LINK) $(LIBR_LDFLAGS) -o $@ $(libR_la_OBJECTS) `ls ../appl/*.o ../nmath/*.o ../unix/*.o  2>/dev/null|grep -v /ext-` $(libR_la_LIBADD)
 
 install-lib-local: $(libR_la)
 	@$(MAKE) rhome="$(abs_top_builddir)" install-lib

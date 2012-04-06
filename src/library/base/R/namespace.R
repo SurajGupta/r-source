@@ -78,7 +78,16 @@ getExportedValue <- function(ns, name) {
 "::" <- function(pkg, name) {
     pkg <- as.character(substitute(pkg))
     name <- as.character(substitute(name))
-    getExportedValue(pkg, name)
+    ns <- tryCatch(asNamespace(pkg), hasNoNamespaceError = function(e) NULL)
+    if (is.null(ns)) {
+        pos <- match(paste("package", pkg, sep=":"), search(), 0)
+        if (pos == 0)
+            stop(gettextf(paste("package '%s' has no name space and",
+                                "is not on the search path"), pkg),
+                 domain = NA)
+        get(name,pos = pos, inherits = FALSE)
+    }
+    else getExportedValue(pkg, name)
 }
 
 ":::" <- function(pkg, name) {
@@ -234,7 +243,7 @@ loadNamespace <- function (package, lib.loc = NULL,
 
             symbols <- getNativeSymbolInfo(symNames, dll, unlist = FALSE,
                                                withRegistrationInfo = TRUE)
-            sapply(seq(along = symNames),
+            sapply(seq_along(symNames),
                     function(i) {
                         ## could vectorize this outside of the loop and assign to different
                         ## variable to maintain the original names.
@@ -266,9 +275,18 @@ loadNamespace <- function (package, lib.loc = NULL,
         bindTranslations(package, pkgpath)
         package.lib <- dirname(pkgpath)
         package <- basename(pkgpath) # need the versioned name
-        if (! packageHasNamespace(package, package.lib))
-            stop(gettextf("package '%s' does not have a name space", package),
-                 domain = NA)
+        if (! packageHasNamespace(package, package.lib)) {
+            hasNoNamespaceError <- function (package, package.lib,
+                                             call = NULL) {
+                class <- c("hasNoNamespaceError", "error", "condition")
+                msg <- gettextf("package '%s' does not have a name space",
+                                package)
+                structure(list(message = msg, package = package,
+                               package.lib = package.lib, call = call),
+                          class = class)
+            }
+            stop(hasNoNamespaceError(package, package.lib))
+        }
 
         ## create namespace; arrange to unregister on error
         ## <FIXME PRE-R-NG>
@@ -346,9 +364,9 @@ loadNamespace <- function (package, lib.loc = NULL,
         if(!nchar(Sys.getenv("R_CROSS_BUILD"))) {
             dlls <- list()
             dynLibs <- nsInfo$dynlibs
-            for (i in seq(along = dynLibs)) {
+            for (i in seq_along(dynLibs)) {
                lib <- dynLibs[i]
-               dlls[[ lib ]]  <- library.dynam(lib, package, package.lib)
+               dlls[[lib]]  <- library.dynam(lib, package, package.lib)
                assignNativeRoutines(dlls[[lib]], lib, env, nsInfo$nativeRoutines[[lib]])
 
                ## If the DLL has a name as in useDynLib( alias = foo ),
@@ -389,6 +407,7 @@ loadNamespace <- function (package, lib.loc = NULL,
             allMethods <- unique(c(methods:::.getGenerics(ns),
                                    methods:::.getGenerics(parent.env(ns))))
             expMethods <- nsInfo$exportMethods
+            expTables <- character()
             if(length(allMethods) > 0) {
                 expMethods <- unique(c(expMethods,
                                        exports[!is.na(match(exports, allMethods))]))
@@ -398,6 +417,12 @@ loadNamespace <- function (package, lib.loc = NULL,
                                   package,
                                   paste(expMethods[missingMethods], collapse = ", ")),
                          domain = NA)
+                mlistPattern <- methods:::mlistMetaName()
+                allMethodLists <- unique(c(methods:::.getGenerics(ns, mlistPattern),
+                                   methods:::.getGenerics(parent.env(ns), mlistPattern)))
+                tPrefix <- methods:::.TableMetaPrefix()
+                allMethodTables <- unique(c(methods:::.getGenerics(ns, tPrefix),
+                                   methods:::.getGenerics(parent.env(ns), tPrefix)))
                 needMethods <- (exports %in% allMethods) & !(exports %in% expMethods)
                 if(any(needMethods))
                     expMethods <- c(expMethods, exports[needMethods])
@@ -408,18 +433,30 @@ loadNamespace <- function (package, lib.loc = NULL,
                 pm <- allMethods[!(allMethods %in% expMethods)]
                 if(length(pm) > 0) {
                     prim <- logical(length(pm))
-                    for(i in seq(along = prim)) {
+                    for(i in seq_along(prim)) {
                         f <- methods::getFunction(pm[[i]], FALSE, FALSE, ns)
                         prim[[i]] <- is.primitive(f)
                     }
                     expMethods <- c(expMethods, pm[prim])
                 }
-                for(i in seq(along = expMethods)) {
+                for(i in seq_along(expMethods)) {
                     mi <- expMethods[[i]]
                     if(!(mi %in% exports) &&
                        exists(mi, envir = ns, mode = "function", inherits = FALSE))
                         exports <- c(exports, mi)
-                    expMethods[[i]] <- methods:::mlistMetaName(mi, ns)
+                    pattern <- paste(mlistPattern, mi, ":", sep="")
+                    ii <- grep(pattern, allMethodLists, fixed = TRUE)
+                    if(length(ii) > 0) {
+                      expMethods[[i]] <- allMethodLists[ii]
+                      if(exists(allMethodTables[[ii]], envir = ns))
+                        expTables <- c(expTables, allMethodTables[[ii]])
+                      else
+                        warning("No methods table for \"", mi, "\"")
+                    }
+                    else { ## but not possible?
+                      warning(gettextf("Failed to find metadata object for \"%s\"", mi))
+                      expMethods[[i]] <- methods:::mlistMetaName(mi, ns)
+                    }
                 }
             }
             else if(length(expMethods) > 0)
@@ -427,7 +464,7 @@ loadNamespace <- function (package, lib.loc = NULL,
                               package,
                               paste(expMethods, collapse = ", ")),
                      domain = NA)
-            exports <- c(exports, expClasses, expMethods)
+            exports <- c(exports, expClasses, expMethods, expTables)
         }
         namespaceExport(ns, exports)
         sealNamespace(ns)
@@ -495,7 +532,7 @@ unloadNamespace <- function(ns) {
     users <- getNamespaceUsers(ns)
     print(ns)
     if (length(users) != 0)
-        stop(gettextf("name space '%s' is still used by: ",
+        stop(gettextf("name space '%s' is still used by: '%s'",
                       getNamespaceName(ns),
                       paste(sQuote(users), collapse = ", ")),
              domain = NA)
@@ -620,7 +657,7 @@ namespaceImport <- function(self, ...) {
         namespaceImportFrom(self, asNamespace(ns))
 }
 
-namespaceImportFrom <- function(self, ns, vars) {
+namespaceImportFrom <- function(self, ns, vars, generics) {
     addImports <- function(ns, from, what) {
         imp <- structure(list(what), names = getNamespaceName(from))
         imports <- getNamespaceImports(ns)
@@ -636,21 +673,11 @@ namespaceImportFrom <- function(self, ns, vars) {
         names(old) <- new
         old
     }
-    mergeImportMethods <- function(impenv, expenv, metaname) {
-        expMethods <- get(metaname, envir = expenv)
-        if(exists(metaname, envir = impenv, inherits = FALSE)) {
-            impMethods <- get(metaname, envir = impenv)
-            assign(metaname, methods:::mergeMethods(impMethods, expMethods), envir = impenv)
-            TRUE
-        }
-        else
-            FALSE
-    }
     whichMethodMetaNames <- function(impvars) {
         if(!.isMethodsDispatchOn())
             return(numeric())
-        mm <- ".__M__" # methods:::mlistMetaName() is slow
-        seq(along = impvars)[substr(impvars, 1, nchar(mm, type = "c")) == mm]
+        mm <- ".__T__"
+        seq_along(impvars)[substr(impvars, 1, nchar(mm, type = "c")) == mm]
     }
     if (is.character(self))
         self <- getNamespace(self)
@@ -683,15 +710,36 @@ namespaceImportFrom <- function(self, ns, vars) {
     else stop("invalid import target")
     which <- whichMethodMetaNames(impvars)
     if(length(which)) {
-        ## If methods are already in impenv, merge and don't import
-        delete <- integer()
-        for(i in which)
-            if(mergeImportMethods(impenv, ns, impvars[[i]]))
-                delete <- c(delete, i)
-        if(length(delete) > 0) {
-            impvars <- impvars[-delete]
-            impnames <- impnames[-delete]
-        }
+	## If methods are already in impenv, merge and don't import
+	delete <- integer()
+	for(i in which) {
+	    methodsTable <- .mergeImportMethods(impenv, ns, impvars[[i]])
+	    if(is.null(methodsTable))
+	    {} ## first encounter, just import it
+	    else { ##
+		delete <- c(delete, i)
+		## eventually mlist objects will disappear, for now
+		## just don't import any duplicated names
+		mlname = sub("__T__", "__M__", impvars[[i]], fixed=TRUE)
+		ii = match(mlname, impvars, 0)
+		if(ii > 0)
+		    delete <- c(delete, ii)
+		if(!missing(generics)) {
+		    genName <- generics[[i]]
+		    fdef <- methods:::getGeneric(genName, where = impenv)
+		    if(is.null(fdef))
+			warning(gettextf(
+					 "Found methods to import for function \"%s\" but not the generic itself",
+					 genName))
+		    else
+			methods:::.updateMethodsInTable(fdef, ns, TRUE)
+		}
+	    }
+	}
+	if(length(delete) > 0) {
+	    impvars <- impvars[-delete]
+	    impnames <- impnames[-delete]
+	}
     }
     for (n in impnames)
         if (exists(n, env = impenv, inherits = FALSE))
@@ -704,32 +752,39 @@ namespaceImportFrom <- function(self, ns, vars) {
 }
 
 namespaceImportClasses <- function(self, ns, vars) {
-    for(i in seq(along = vars))
+    for(i in seq_along(vars))
         vars[[i]] <- methods:::classMetaName(vars[[i]])
     namespaceImportFrom(self, asNamespace(ns), vars)
 }
 
 namespaceImportMethods <- function(self, ns, vars) {
     allVars <- character()
-    allMlists <- methods:::.getGenerics(ns)
-    if(any(is.na(match(vars, allMlists))))
+    allFuns <- methods:::.getGenerics(ns)
+    packages <- attr(allFuns, "package")
+    tPrefix <- methods:::.TableMetaPrefix()
+    pkg <- methods:::getPackageName(ns)
+    allMethodTables <- methods:::.getGenerics(ns, tPrefix)
+    if(any(is.na(match(vars, allFuns))))
         stop(gettextf("requested 'methods' objects not found in environment/package '%s': %s",
-                      methods:::getPackageName(ns),
-                      paste(vars[is.na(match(vars, allMlists))],
+                      pkg,
+                      paste(vars[is.na(match(vars, allFuns))],
                             collapse = ", ")), domain = NA)
-    for(i in seq(along = allMlists)) {
+    for(i in seq_along(allFuns)) {
         ## import methods list objects if asked for
         ## or if the corresponding generic was imported
-        g <- allMlists[[i]]
+        g <- allFuns[[i]]
         if(exists(g, envir = self, inherits = FALSE) # already imported
-           || g %in% vars) # requested explicitly
-            allVars <- c(allVars, methods:::mlistMetaName(g, ns))
+           || g %in% vars) { # requested explicitly
+            tbl <- methods:::.TableMetaName(g, packages[[i]])
+            if(is.null(.mergeImportMethods(self, ns, tbl))) # a new methods table
+               allVars <- c(allVars, tbl) # import it;else, was merged
+        }
         if(g %in% vars && !exists(g, envir = self, inherits = FALSE) &&
            exists(g, envir = ns, inherits = FALSE) &&
            methods:::is(get(g, envir = ns), "genericFunction"))
             allVars <- c(allVars, g)
     }
-    namespaceImportFrom(self, asNamespace(ns), allVars)
+    namespaceImportFrom(self, asNamespace(ns), allVars, allFuns)
 }
 
 importIntoEnv <- function(impenv, impnames, expenv, expnames) {
@@ -769,7 +824,7 @@ namespaceExport <- function(ns, vars) {
                                          "previous exports %s are being replaced"),
                                 paste(sQuote(expnames[ex]), collapse = ", ")),
                         call. = FALSE, domain = NA)
-            for (i in seq(along = new))
+            for (i in seq_along(new))
                 assign(expnames[i], intnames[i], env = exports)
         }
         makeImportExportNames <- function(spec) {
@@ -926,14 +981,14 @@ parseNamespaceFile <- function(package, package.lib, mustExist = TRUE) {
                    importMethods <<- c(importMethods, list(imp))
                },
                useDynLib = {
-                    ## This attempts to process as much of the information as possible
-                    ## when NAMESPACE is parsed rather than when it is loaded and creates
-                    ## NativeRoutineMap objects to handle the mapping of symbols to R variable
-                    ## names.
+                   ## This attempts to process as much of the information as possible
+                   ## when NAMESPACE is parsed rather than when it is loaded and creates
+                   ## NativeRoutineMap objects to handle the mapping of symbols to R variable
+                   ## names.
 
-                    ## The name is the second element after useDynLib
+                   ## The name is the second element after useDynLib
                    dyl <- as.character(e[2])
-                    ## We ensure uniqueness at the end.
+                   ## We ensure uniqueness at the end.
                    dynlibs <<- structure(c(dynlibs, dyl),
                                          names = c(names(dynlibs),
                                                    ifelse(!is.null(names(e)) && names(e)[2] != "",
@@ -971,18 +1026,18 @@ parseNamespaceFile <- function(package, package.lib, mustExist = TRUE) {
                        fixes <- c("", "")
                        idx <- match(".fixes", names(symNames))
                        if(!is.na(idx)) {
-                         ## Take .fixes and treat it as a call, e.g. c("pre", "post")
-                         ## or a regular name as the prefix.
-                         if(symNames[idx] != "") {
-                           e <- parse(text = symNames[idx])[[1]]
-                           if(is.call(e))
-                             val <- eval(e)
-                           else
-                             val <- as.character(e)
-                           if(length(val))
-                             fixes[seq(along = val)] <- val
-                         }
-                         symNames <- symNames[-idx]
+                           ## Take .fixes and treat it as a call, e.g. c("pre", "post")
+                           ## or a regular name as the prefix.
+                           if(symNames[idx] != "") {
+                               e <- parse(text = symNames[idx])[[1]]
+                               if(is.call(e))
+                                   val <- eval(e)
+                               else
+                                   val <- as.character(e)
+                               if(length(val))
+                                   fixes[seq_along(val)] <- val
+                           }
+                           symNames <- symNames[-idx]
                        }
 
                        ## Deal with a .registration entry. It must be
@@ -991,8 +1046,8 @@ parseNamespaceFile <- function(package, package.lib, mustExist = TRUE) {
                        useRegistration <- FALSE
                        idx <- match(".registration", names(symNames))
                        if(!is.na(idx)) {
-                         useRegistration <- as.logical(symNames[idx])
-                         symNames <- symNames[-idx]
+                           useRegistration <- as.logical(symNames[idx])
+                           symNames <- symNames[-idx]
                        }
 
                        ## Now merge into the NativeRoutineMap.
@@ -1026,7 +1081,7 @@ parseNamespaceFile <- function(package, package.lib, mustExist = TRUE) {
          importClasses = importClasses, importMethods = importMethods,
          exportClasses = exportClasses, exportMethods = exportMethods,
          dynlibs = dynlibs, nativeRoutines = nativeRoutines,
-         S3methods = S3methods[seq(len = nS3), ,drop = FALSE])
+         S3methods = S3methods[seq_len(nS3), ,drop = FALSE])
 } ## end{parseNamespaceFile}
 
 registerS3method <- function(genname, class, method, envir = parent.frame()) {
@@ -1167,15 +1222,27 @@ registerS3methods <- function(info, package, env)
     if(any(localGeneric)) {
         lin <- Info[localGeneric, , drop = FALSE]
         S3MethodsTable <- get(".__S3MethodsTable__.", envir = env, inherits = FALSE)
-        for(i in seq(len = nrow(lin)))
+        for(i in seq_len(nrow(lin)))
             assign(lin[i,4], get(lin[i,3], envir = env), envir = S3MethodsTable)
     }
 
     ## now the rest
     fin <- Info[!l2, , drop = FALSE]
-    for(i in seq(len = nrow(fin)))
+    for(i in seq_len(nrow(fin)))
         .registerS3method(fin[i, 1], fin[i, 2], fin[i, 3], fin[i, 4], env)
 
     setNamespaceInfo(env, "S3methods",
                      rbind(info, getNamespaceInfo(env, "S3methods")))
 }
+
+.mergeImportMethods <- function(impenv, expenv, metaname) {
+        expMethods <- get(metaname, envir = expenv)
+        if(exists(metaname, envir = impenv, inherits = FALSE)) {
+            impMethods <- get(metaname, envir = impenv)
+            assign(metaname, methods:::.mergeMethodsTable2(impMethods,
+    expMethods, expenv, metaname), envir = impenv)
+            impMethods
+        }
+        else
+            NULL
+    }

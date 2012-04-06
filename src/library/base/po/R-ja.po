@@ -1,15 +1,16 @@
 msgid ""
 msgstr ""
-"Project-Id-Version: R 2.1.1\n"
+"Project-Id-Version: R 2.4.0\n"
 "Report-Msgid-Bugs-To: bugs@r-project.org\n"
-"POT-Creation-Date: 2006-05-29 07:58\n"
-"PO-Revision-Date: 2005-06-02 15:29+0900\n"
-"Last-Translator: Shigeru Mase\n"
+"POT-Creation-Date: 2006-09-26 14:33\n"
+"PO-Revision-Date: 2006-09-22 19:14+0900\n"
+"Last-Translator: Shigeru Mase <maseshigeru@gmail.com>\n"
 "Language-Team: RjpWiki Message Translation Team <mokada@md.tsukuba.ac.jp>\n"
 "MIME-Version: 1.0\n"
 "Content-Type: text/plain; charset=UTF-8\n"
 "Content-Transfer-Encoding: 8bit\n"
 "Plural-Forms: nplurals=1; plural=0;\n"
+"X-Generator: Pootle 0.10.1rc1\n"
 
 msgid "'%s' is defunct."
 msgstr "'%s' は廃止されました。"
@@ -213,8 +214,8 @@ msgstr "無効な 'row.names'長です"
 msgid "duplicate 'row.names' are not allowed"
 msgstr "重複した 'row.names' は許されません"
 
-msgid "missing 'row.names' are not allowed"
-msgstr "'row.names' が欠けていてはなりません"
+msgid "missing values in 'row.names' are not allowed"
+msgstr "'row.names' に欠損値があってはなりません"
 
 msgid "invalid 'dimnames' given for data frame"
 msgstr "データフレームに無効な 'dimnames' が与えられました"
@@ -228,6 +229,10 @@ msgstr ""
 
 msgid "supplied %d row names for %d rows"
 msgstr "%d 個の行名が %d 個の行に提供されました"
+
+msgid "options('stringsAsFactors') not set to TRUE or FALSE"
+msgstr ""
+"options('stringsAsFactors') は TRUE もしくは FALSE に設定されていません"
 
 msgid "mismatch of row names in arguments of 'data.frame', item %d"
 msgstr "'data.frame' の引数中の行名(項目 %d)が不適当です"
@@ -323,11 +328,9 @@ msgstr "以下の存在しない列中の要素の置き換えです："
 msgid "only a single element should be replaced"
 msgstr "ただ一つの要素しか置き換えられるべきではありません"
 
-#, fuzzy
 msgid "names do not match previous names"
-msgstr "名前が以下のような以前の名前と一致しません："
+msgstr "名前が以前の名前と一致しません"
 
-#, fuzzy
 msgid "names do not match previous names:"
 msgstr "名前が以下のような以前の名前と一致しません："
 
@@ -646,6 +649,9 @@ msgstr "'max.distance' 成分は非負でなければなりません"
 msgid "matrix should be square"
 msgstr "正方行列であるべきです"
 
+msgid "'object' must be a list"
+msgstr "'object' はリストでなければなりません"
+
 msgid "This is R %s, package '%s' needs %s %s"
 msgstr "これは R %s です。パッケージ '%s' は %s %s を必要とします"
 
@@ -670,6 +676,18 @@ msgstr "?library でライブラリのノートを見て下さい"
 
 msgid "Attaching package: '%s'"
 msgstr "次のパッケージを付け加えます: '%s'"
+
+msgid "The following object(s) are masked"
+msgstr "次のオブジェクトは"
+
+msgid "_by_"
+msgstr "以下により"
+
+msgid "from"
+msgstr "以下からマスクされています"
+
+msgid ":"
+msgstr " : "
 
 msgid "package '%s' has been merged into '%s'"
 msgstr "パッケージ '%s' は '%s' に併合されました"
@@ -797,11 +815,21 @@ msgstr ""
 msgid "input has been corrupted, with LF replaced by CR"
 msgstr "入力は混乱しています。LF が CR で置き換えられています"
 
+msgid ""
+"file '%s' has magic number '%s'\n"
+"   Use of save versions prior to 2 is deprecated"
+msgstr ""
+"ファイル '%s' はマジックナンバー '%s' を持ちます\n"
+"　　二度を越えるセーブバージョンの使用は廃止予定です"
+
 msgid "bad 'file' argument"
 msgstr "誤った 'file' 引数です"
 
 msgid "'file' must be specified"
 msgstr "'file' が指定されなければなりません"
+
+msgid "Use of save versions prior to 2 is deprecated"
+msgstr "二回以前の保存バージョンの使用は廃止予定です"
 
 msgid "'file' must be non-empty string"
 msgstr "'file' は空でない文字列でなければなりません"
@@ -863,9 +891,8 @@ msgstr "'by' は列数にマッチしなければなりません"
 msgid "'by' must match number of columns"
 msgstr "'by' は列数にマッチしなければなりません"
 
-#, fuzzy
 msgid "'by' must specify column(s) as numbers, names or logical"
-msgstr "'by' は列を指定しなければなりません"
+msgstr "'by' は列を数値、名前ラベルもしくは論理値で特定しなければなりません"
 
 msgid "'by' must specify valid column(s)"
 msgstr "'by' は有効な列を指定しなければなりません"
@@ -876,6 +903,9 @@ msgstr "マッチすべき行がありません"
 msgid "'by.x' and 'by.y' specify different numbers of columns"
 msgstr "'by.x' そして 'by.y' は異なった列数を指定しています"
 
+msgid "(loaded the methods namespace)"
+msgstr "(メソッドの名前空間をロードしました)"
+
 msgid ""
 "Tracing functions requires the methods package, but unable to load methods "
 "namespace"
@@ -883,9 +913,18 @@ msgstr ""
 "トレース関数は methods パッケージを必要としていますが、メソッドの名前空間を"
 "ロードできません"
 
+msgid "Expected a single logical value for the S4 object state"
+msgstr "この S4 オブジェクト状態に対しては単一の論理値が期待されています"
+
 msgid "'%s' is not an exported object from 'namespace:%s'"
 msgstr ""
 "'%s' は 'namespace:%s' からエクスポートされたオブジェクトではありません"
+
+msgid "package '%s' has no name space and"
+msgstr "パッケージ '%s' は名前空間を持っていませんし"
+
+msgid "is not on the search path"
+msgstr "検索パス上に見つかりませんでした"
 
 msgid "%s failed in 'attachNamespace'"
 msgstr "%s は 'attachNamespace' で失敗しました"
@@ -932,6 +971,15 @@ msgstr "'%s' 中にはエクスポートのためのクラスは見付かりま�
 msgid "in '%s' methods for export not found: %s"
 msgstr "'%s' 中にはエクスポートのためのメソッドは見付かりません： %s"
 
+msgid "No methods table for \""
+msgstr "以下に対するメソッドテーブルがありません \""
+
+msgid "\""
+msgstr "\""
+
+msgid "Failed to find metadata object for \"%s\""
+msgstr "\"%s\" に対する metadata を見付けることができません"
+
 msgid "in '%s' methods specified for export, but none defined: %s"
 msgstr ""
 "'%s' 中にエクスポートのためのメソッドが指定されていますが、定義されていませ"
@@ -949,8 +997,8 @@ msgstr "名前空間 '%s' がロードされました"
 msgid "%s failed in unloadNamespace(%s)"
 msgstr "%s は unloadNamespace(%s) で失敗しました"
 
-msgid "name space '%s' is still used by:"
-msgstr "名前空間 '%s' まだ以下により使用されています："
+msgid "name space '%s' is still used by: '%s'"
+msgstr "名前空間 '%s' まだ '%s' により使用されています"
 
 msgid "imperative name space directives are disabled"
 msgstr ""
@@ -976,6 +1024,10 @@ msgstr "封印された名前空間にはインポートできません"
 
 msgid "invalid import target"
 msgstr "無効なインポート対象です"
+
+msgid "Found methods to import for function \"%s\" but not the generic itself"
+msgstr ""
+"関数 \"%s\" に対するインポートメソッドをみつけましたが、総称的ではありません"
 
 msgid "requested 'methods' objects not found in environment/package '%s': %s"
 msgstr ""
@@ -1188,6 +1240,13 @@ msgstr ""
 msgid "singular matrix 'a' in solve"
 msgstr "solve 中に特異行列 'a' がありました"
 
+msgid ""
+"'decreasing' must be a length-1 logical vector.\n"
+"Did you intend to set 'partial'?"
+msgstr ""
+"'decreasing' は長さ length-1 の論理値ベクトルでなければなりません。\n"
+"'partial' を設定するつもりですか？"
+
 msgid "'index.return' only for non-factors"
 msgstr "'index.return' は非因子専用です"
 
@@ -1205,6 +1264,13 @@ msgstr "有限でない 'partial' です"
 
 msgid "argument lengths differ"
 msgstr "引数の長さが異なります"
+
+msgid ""
+"'x' must be atomic for 'sort.list'\n"
+"Have you called 'sort' on a list?"
+msgstr ""
+"'x' は 'sort.list' に対してはアトミックでなければなりません。\n"
+"'sort' をリストに対して呼び出しましたか？"
 
 msgid "method=\"quick\" is only for numeric 'x'"
 msgstr "method=\"quick は数値の 'x' 専用です"
@@ -1224,6 +1290,9 @@ msgstr "もっともらしいエンコーディングを見つけられません
 
 msgid "'chdir = TRUE' makes no sense for a URL"
 msgstr "'chdir = TRUE' は URL に対しては意味がありません"
+
+msgid "cannot 'chdir' as current directory is unknown"
+msgstr ""
 
 msgid "'chdir = TRUE' makes no sense for a connection"
 msgstr "'chdir = TRUE' はコネクションに対しては意味がありません"
@@ -1276,18 +1345,6 @@ msgstr "テーブルに強制変換できません"
 msgid "'x' is not an array"
 msgstr "'x' は配列ではありません"
 
-msgid "invalid argument 'n'"
-msgstr "無効な引数 'n' です"
-
-msgid "invalid argument 'r'"
-msgstr "無効な引数 'r' です"
-
-msgid "invalid argument 'c'"
-msgstr "無効な引数 'c' です"
-
-msgid "arguments 'r' and 'c' must have the same sums"
-msgstr "引数 'r' と 'c' は同じ総和を持たなければなりません"
-
 msgid "'bin' must be numeric or a factor"
 msgstr "'bin' は数値または因子でなければなりません"
 
@@ -1314,6 +1371,9 @@ msgstr "利用できる traceback がありません"
 
 msgid "argument to 'which' is not logical"
 msgstr "'which' への引数は論理値ではありません"
+
+msgid "'quote' must be 'TRUE', 'FALSE' or numeric"
+msgstr "'quote' は 'TRUE', 'FALSE' もしくは数値でなければなりません"
 
 msgid "invalid numbers in 'quote'"
 msgstr "'quote' 中に無効な数値があります"
@@ -1354,17 +1414,14 @@ msgstr "名前空間環境を見つけられません"
 msgid "deparse option %s is not recognized"
 msgid_plural "deparse options %s are not recognized"
 msgstr[0] "deparse オプション %s は認識できません"
-msgstr[1] "deparse オプション(複数) %s は認識できません"
 
 msgid "library %s contains no packages"
 msgid_plural "libraries %s contain no packages"
 msgstr[0] "ライブラリ %s はパッケージを含んでいません"
-msgstr[1] "ライブラリ(複数) %s はパッケージを含んでいません"
 
 msgid "package %s is not loaded"
 msgid_plural "packages %s are not loaded"
 msgstr[0] "パッケージ %s はロードされません"
-msgstr[1] "パッケージ(複数) %s はロードされません"
 
 msgid "there is no package called"
 msgid_plural "there are no packages called"
@@ -1373,22 +1430,32 @@ msgstr[0] "呼び出されたパッケージがありません"
 msgid "object %s is not exported by 'namespace:%s'"
 msgid_plural "objects %s are not exported by 'namespace:%s'"
 msgstr[0] "オブジェクト %s は 'namespace:%s' によってエクスポートされません"
-msgstr[1] ""
-"オブジェクト(複数) %s は 'namespace:%s' によってエクスポートされません"
 
 msgid "previous export %s is being replaced"
 msgid_plural "previous exports %s are being replaced"
 msgstr[0] "以前のエクスポート %s は置き換えられています"
-msgstr[1] "以前のエクスポート(複数) %s は置き換えられています"
 
 msgid "S3 method %s was declared in NAMESPACE but not found"
 msgid_plural "S3 methods %s were declared in NAMESPACE but not found"
 msgstr[0] ""
 "S3 メソッド %s は NAMESPACE で宣言されましたが、見つかりませんでした"
-msgstr[1] ""
-"S3 メソッド(複数) %s は NAMESPACE で宣言されましたが、見つかりませんでした"
 
 msgid "Warning message:\n"
 msgid_plural "Warning messages:\n"
 msgstr[0] "警告メッセージ：\n"
-msgstr[1] "警告メッセージ(複数)：\n"
+
+#, fuzzy
+#~ msgid "rows are empty: giving up"
+#~ msgstr "最初の 5 行が空です。お手上げです"
+
+#~ msgid "invalid argument 'n'"
+#~ msgstr "無効な引数 'n' です"
+
+#~ msgid "invalid argument 'r'"
+#~ msgstr "無効な引数 'r' です"
+
+#~ msgid "invalid argument 'c'"
+#~ msgstr "無効な引数 'c' です"
+
+#~ msgid "arguments 'r' and 'c' must have the same sums"
+#~ msgstr "引数 'r' と 'c' は同じ総和を持たなければなりません"

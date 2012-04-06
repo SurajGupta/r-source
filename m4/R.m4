@@ -903,6 +903,27 @@ if test "${r_cv_prog_f77_append_underscore}" = yes; then
             [Define if your Fortran compiler appends an underscore to
              external names.])
 fi
+AC_MSG_CHECKING([whether ${F77} appends extra underscores to external names])
+AC_CACHE_VAL([r_cv_prog_f77_append_second_underscore],
+[case "${ac_cv_f77_mangling}" in
+  *", extra underscore")
+    r_cv_prog_f77_append_second_underscore=yes
+    ;;
+  *", no extra underscore")
+    r_cv_prog_f77_append_second_underscore=no
+    ;;
+esac])
+if test -n "${r_cv_prog_f77_append_second_underscore}"; then
+  AC_MSG_RESULT([${r_cv_prog_f77_append_second_underscore}])
+else
+  AC_MSG_RESULT([unknown])
+  AC_MSG_ERROR([cannot use Fortran])
+fi
+if test "${r_cv_prog_f77_append_second_underscore}" = yes; then
+  AC_DEFINE(HAVE_F77_EXTRA_UNDERSCORE, 1,
+            [Define if your Fortran compiler appends an extra_underscore to
+             external names containing an underscore.])
+fi
 ])# R_PROG_F77_APPEND_UNDERSCORE
 
 ## R_PROG_F77_CAN_RUN
@@ -910,6 +931,9 @@ fi
 ## Check whether the C/Fortran set up produces runnable code, as
 ## a preliminary to the compatibility tests.
 ## May fail if Fortran shared libraries are not in the library path.
+## As from 2.4.0 use the same code as the compatibility test, as
+## on at least one system the latter actually used -lgfortran
+## (which was broken) and the previous test here did not.
 AC_DEFUN([R_PROG_F77_CAN_RUN],
 [AC_REQUIRE([AC_CHECK_LIBM])
 AC_MSG_CHECKING([whether mixed C/Fortran code can be run])
@@ -918,6 +942,12 @@ AC_CACHE_VAL([r_cv_prog_f77_can_run],
       subroutine cftest(a, b, x, y)
       integer a(3), b(2)
       double precision x(3), y(3)
+
+      b(1) = a(3)/a(2)
+      b(2) = a(3) - a(1)*a(2)
+      y(1) = dble(a(3))/x(2)
+      y(2) = x(3)*x(1)
+      y(3) = (x(2)/x(1)) ** a(1)
       end
 EOF
 ${F77} ${FFLAGS} -c conftestf.f 1>&AS_MESSAGE_LOG_FD 2>&AS_MESSAGE_LOG_FD
@@ -2317,24 +2347,14 @@ void blas_set () {
   F77_SYMBOL(drotmg)();
   F77_SYMBOL(dsbmv)();
   F77_SYMBOL(dscal)();
+  F77_SYMBOL(dsdot)();
   F77_SYMBOL(dspmv)();
   F77_SYMBOL(dspr)();
   F77_SYMBOL(dspr2)();
-  F77_SYMBOL(dspmv)();
+  F77_SYMBOL(dswap)();
   F77_SYMBOL(dsymm)();
   F77_SYMBOL(dsymv)();
   F77_SYMBOL(dsyr)();
-  F77_SYMBOL(dsyr2)();
-  F77_SYMBOL(dsyr2k)();
-  F77_SYMBOL(dsyrk)();
-  F77_SYMBOL(dtbmv)();
-  F77_SYMBOL(dtrsm)();
-  F77_SYMBOL(idamax)();
-  /* F77_SYMBOL(lsame)(); */
-  F77_SYMBOL(dcabs1)();
-  F77_SYMBOL(dgemv)();
-  F77_SYMBOL(dger)();
-  F77_SYMBOL(dsymv)();
   F77_SYMBOL(dsyr2)();
   F77_SYMBOL(dsyr2k)();
   F77_SYMBOL(dsyrk)();
@@ -2344,10 +2364,13 @@ void blas_set () {
   F77_SYMBOL(dtpsv)();
   F77_SYMBOL(dtrmm)();
   F77_SYMBOL(dtrmv)();
-  F77_SYMBOL(dtrsv)();
   F77_SYMBOL(dtrsm)();
   F77_SYMBOL(dtrsv)();
-/* cmplblas */
+  F77_SYMBOL(idamax)();
+  F77_SYMBOL(lsame)();
+#ifdef HAVE_FORTRAN_DOUBLE_COMPLEX
+/* cmplxblas */
+  F77_SYMBOL(dcabs1)();
   F77_SYMBOL(dzasum)();
   F77_SYMBOL(dznrm2)();
   F77_SYMBOL(izamax)();
@@ -2386,6 +2409,7 @@ void blas_set () {
   F77_SYMBOL(ztrmv)();
   F77_SYMBOL(ztrsm)();
   F77_SYMBOL(ztrsv)();
+#endif
 }
 int main ()
 {
@@ -2932,12 +2956,16 @@ if test "$want_mbcs_support" = yes ; then
 fi
 ## it seems IRIX has wctrans but not wctrans_t: we check this when we
 ## know we have the headers and wctrans().
+## Also Solaris 2.6 (very old) seems to be missing mbstate_t
 if test "$want_mbcs_support" = yes ; then
-  AC_CHECK_TYPES([wctrans_t], , , [#include <wchar.h>
+  AC_CHECK_TYPES([wctrans_t, mbstate_t], , , [#include <wchar.h>
        #include <wctype.h>])
   if test $ac_cv_type_wctrans_t != yes; then
     want_mbcs_support=no
   fi 
+  if test $ac_cv_type_mbstate_t != yes; then
+    want_mbcs_support=no
+  fi
 fi
 if test "x${want_mbcs_support}" = xyes; then
 AC_DEFINE(SUPPORT_UTF8, 1, [Define this to enable support for UTF-8 locales.])

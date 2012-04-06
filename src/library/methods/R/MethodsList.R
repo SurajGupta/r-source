@@ -39,7 +39,7 @@ makeMethodsList <-
     if(any(duplicated(mnames)))
         stop(gettextf("duplicate element names in 'MethodsList' at level %d: %s",
              level, paste("\"", unique(mnames[duplicated(mnames)]), "\"", collapse=", ")), domain = NA)
-    for(i in seq(along=object)) {
+    for(i in seq_along(object)) {
         eli <- el(object, i)
         if(is(eli, "function")
            || is(eli, "MethodsList")) {}
@@ -266,7 +266,7 @@ MethodsListSelect <-
         if(thisInherit)  {
             allSelections <- inheritedSubMethodLists(arg, fromClass, mlist, env)
             allClasses <- names(allSelections)
-            for(i in seq(along = allSelections)) {
+            for(i in seq_along(allSelections)) {
                 selection <- allSelections[[i]]
                 fromClass <- allClasses[[i]]
                 if(is(selection, "function"))
@@ -316,7 +316,7 @@ MethodsListSelect <-
 }
 
 emptyMethodsList <-
-  function(mlist, thisClass, sublist = list()) {
+  function(mlist, thisClass = "ANY", sublist = list()) {
     sublist[thisClass] <- list(NULL)
     new("EmptyMethodsList", argument = mlist@argument, sublist = sublist)
   }
@@ -341,11 +341,6 @@ finalDefaultMethod <-
   ## The real default method of this `MethodsList' object,
   ## found by going down the default branch (i.e., class `"ANY"')
   ## until either `NULL' or a function definition is found.
-  ##
-  ## Also works for non-generic functions, which have NULL methods list, by
-  ## returning the function definition.  (This feature is used in standardGeneric to
-  ## ensure that a definition for the function can be found when method searching is
-  ## turned off.)
   function(mlist, fname = "NULL")
 {
     value <- NULL
@@ -384,7 +379,7 @@ inheritedSubMethodLists <-
           ## the ordering of the superclasses of thisClass
           superClasses <- names(classDef@contains)
           classes <- superClasses[!is.na(match(superClasses, classes))]
-          for(which in seq(along=classes)) {
+          for(which in seq_along(classes)) {
               tryClass <- el(classes, which)
               ## TODO:  There is potential bug here:  If the is relation is conditional,
               ## we should not cache this selection.  Needs another trick in the environment
@@ -396,7 +391,7 @@ inheritedSubMethodLists <-
           }
       }
       else {
-          for(which in seq(along = classes)) {
+          for(which in seq_along(classes)) {
               tryClass <- el(classes, which)
               tryClassDef <- getClassDef(tryClass, ev)
               if(!is.null(tryClassDef) &&
@@ -431,8 +426,8 @@ matchSignature <-
         if(any(unknown)) {
             unknown <- unique(sigClasses[unknown])
             warning(sprintf(ngettext(length(unknown),
-                                     "in the method signature for function '%s' no definition for class: %s",
-                                     "in the method signature for function '%s' no definition for classes: %s"),
+                                     "in the method signature for function \"%s\" no definition for class: %s",
+                                     "in the method signature for function \"%s\" no definition for classes: %s"),
                             fun@generic,
                             paste(dQuote(unknown), collapse = ", ")),
                     domain = NA)
@@ -440,11 +435,11 @@ matchSignature <-
     }
     signature <- as.list(signature)
     if(length(sigClasses) != length(signature))
-        stop(gettextf("object to use as a method signature for function '%s' does not look like a legitimate signature (a vector of single class names): there were %d class names, but %d elements in the signature object",
+        stop(gettextf("object to use as a method signature for function \"%s\" does not look like a legitimate signature (a vector of single class names): there were %d class names, but %d elements in the signature object",
                       fun@generic, length(sigClasses), length(signature)),
              domain = NA)
     if(is.null(names(signature))) {
-        which <- seq(length = length(signature))
+        which <- seq_along(signature)
         if(length(which) > length(anames))
           stop(gettextf("more elements in the method signature (%s) than in the generic  %s(%s)",
                paste(signature, collapse=", "), fun@generic,
@@ -470,7 +465,7 @@ matchSignature <-
     ## order, from the matched args in the call object.
     sigClasses <- as.character(smatch)[-1]
     if(any(is.na(which)))
-        stop(gettextf("in the method signature for function '%s' invalid argument names in the signature: %s",
+        stop(gettextf("in the method signature for function \"%s\" invalid argument names in the signature: %s",
                       fun@generic,
                       paste(snames[is.na(which)], collapse = ", ")),
              domain = NA)
@@ -489,18 +484,19 @@ matchSignature <-
 
 showMlist <-
   ## Prints the contents of the MethodsList.  If `includeDefs' the signatures and the
-  ## corresonding definitions will be printed; otherwise, only the signatures.
+  ## corresponding definitions will be printed; otherwise, only the signatures.
   ##
   ## If `includeDefs' is `TRUE', the currently known inherited methods are included;
   ## otherwise, only the directly defined methods.
 function(mlist, includeDefs = TRUE, inherited = TRUE, classes = NULL, useArgNames = TRUE,
-         printTo = stdout()) {
-      if(identical(printTo, FALSE)) {
-          tmp <- tempfile()
-          con <- file(tmp, "w")
-      }
-      else
-          con <- printTo
+         printTo = stdout())
+{
+    if(identical(printTo, FALSE)) {
+        tmp <- tempfile()
+        con <- file(tmp, "w")
+    }
+    else
+        con <- printTo
   object <- linearizeMlist(mlist, inherited)
   methods <- object@methods
   signatures <- object@classes
@@ -527,7 +523,7 @@ function(mlist, includeDefs = TRUE, inherited = TRUE, classes = NULL, useArgName
       for(i in 1:n)
         labels[[i]] <- paste(signatures[[i]], collapse = ", ")
     }
-    for(i in seq(length=length(methods))) {
+    for(i in seq_along(methods)) {
       cat(file=con, (if(includeDefs) "## Signature:" else ""), labels[[i]])
       method <- methods[[i]]
       if(includeDefs) {
@@ -573,7 +569,7 @@ promptMethods <- function(f, filename = NULL, methods)
     if(missing(methods)) {
         where <- find(mlistMetaName(f))
         if(length(where) == 0)
-            stop(gettextf("no methods found for generic '%s'", f), domain = NA)
+            stop(gettextf("no methods found for generic \"%s\"", f), domain = NA)
         where <- where[1]
         methods <- getMethods(f, where)
         if(where != 1)
@@ -589,13 +585,14 @@ promptMethods <- function(f, filename = NULL, methods)
     signatures <- object@classes
     labels <- character(n)
     aliases <- character(n)
-    fullName <- topicName("methods", f)
-    for(i in seq(length = n)) {
+    fullName <- utils::topicName("methods", f)
+    for(i in seq_len(n)) {
         sigi <- paste("\"", signatures[[i]], "\"", sep ="")
         labels[[i]] <-
             paste(args[[i]], sigi, collapse = ", ", sep = " = ")
         aliases[[i]] <-
-            paste0("\\alias{", topicName("method", c(f, signatures[[i]])),
+            paste0("\\alias{",
+                   utils::topicName("method", c(f, signatures[[i]])),
                    "}")
     }
     text <- paste0("\n\\item{", labels, "}{ ~~describe this method here }")
@@ -653,7 +650,7 @@ linearizeMlist <-
         classes <- list()
         arguments <- list()
         argname <- as.character(mlist@argument)
-        for(i in seq(along = cnames)) {
+        for(i in seq_along(cnames)) {
             mi <- methods[[i]]
             if(is.function(mi)) {
                 value <- c(value, list(mi))
@@ -690,7 +687,7 @@ listFromMlist <-
     argName <- as.character(slot(mlist, "argument"))
     sigs <- list()
     methods <- list()
-    for(i in seq(along = methodSlot)) {
+    for(i in seq_along(methodSlot)) {
         thisMethod <- el(methodSlot, i)
         thisClass <- el(mnames, i)
         elNamed(prefix, argName) <- thisClass
@@ -713,7 +710,7 @@ listFromMlist <-
         newArg <- c(argName, as.character(def@argument))
         newDefs <- def@allMethods
         newSigs <- as.list(names(newDefs))
-        for(j in seq(along = newDefs))
+        for(j in seq_along(newDefs))
             mlist <- Recall(mlist, newArg, c(Class, newSigs[[j]]), fromClass,
                             newDefs[[j]])
     }
@@ -737,8 +734,18 @@ listFromMlist <-
 ## Define a trivial version of asMethodDefinition for bootstrapping.
 ## The real version requires several class definitions as well as
 ## methods for as<-
-asMethodDefinition <- function(def, signature = list(), sealed = FALSE)
+asMethodDefinition <- function(def, signature = list(), sealed = FALSE) {
+  if(is.primitive(def))
     def
+  else {
+    value = new("MethodDefinition")
+    value@.Data <- def
+    classes <- .MakeSignature(new("signature"),  def, signature)
+        value@target <- classes
+        value@defined <- classes
+    value
+  }
+  }
 
 .trimMlist <- function(mlist, fromClass) {
   mlist@methods <- mlist@methods[fromClass]

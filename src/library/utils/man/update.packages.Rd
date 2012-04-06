@@ -20,7 +20,7 @@ update.packages(lib.loc = NULL, repos = getOption("repos"),
                 type = getOption("pkgType"))
 
 available.packages(contriburl = contrib.url(getOption("repos")),
-                   method)
+                   method, fields = NULL)
 
 old.packages(lib.loc = NULL, repos = getOption("repos"),
              contriburl = contrib.url(repos),
@@ -60,12 +60,12 @@ contrib.url(repos, type = getOption("pkgType"))
     Can be \code{NULL} to install from local \file{.zip} files.
 #endif
   }
-  \item{contriburl}{URL(s) of the contrib section of the
-    repositories. Use this argument only if your CRAN mirror is
+  \item{contriburl}{URL(s) of the contrib sections of the
+    repositories.  Use this argument only if your repository mirror is
     incomplete, e.g., because you burned only the \file{contrib} section on a
     CD.  Overrides argument \code{repos}.
 #ifdef unix
-    Can be \code{NULL} to install from local \file{.tar.gz} files.
+    Can also be \code{NULL} to install from local \file{.tar.gz} files.
 #endif
 #ifdef windows
     Can also be \code{NULL} to install from local \file{.zip} files.
@@ -92,7 +92,7 @@ contrib.url(repos, type = getOption("pkgType"))
     as returned by \code{available.packages}.}
   \item{lib}{character vector giving the library directories where to
     install the packages.  Recycled as needed.  If missing, defaults to
-    \code{\link{.libPaths}()[1]} with a warning.}
+    \code{\link{.libPaths}()[1]}.}
   \item{ask}{logical indicating whether to ask user before packages
     are actually downloaded and installed, or the character string
     \code{"graphics"}, which brings up a widget to allow the user to
@@ -113,7 +113,7 @@ contrib.url(repos, type = getOption("pkgType"))
     Can also be a character vector, a subset of
     \code{c("Depends", "Imports", "Suggests")}.
 
-    Only supported if \code{lib} is of length one (or missing)
+    Only supported if \code{lib} is of length one (or missing),
     so it is unambiguous where to install the dependent packages.
   }
   \item{configure.args}{a character vector or a named list.
@@ -157,6 +157,13 @@ contrib.url(repos, type = getOption("pkgType"))
     This is sometimes used to perform additional operations at the end
     of the package installation in addition to removing intermediate files.
   }
+  \item{fields}{a character vector giving the fields to extract from
+    the \code{PACKAGES} file(s) in addition to the default ones, or
+    \code{NULL} (default).  Unavailable fields result in \code{NA}
+    values.
+  }
+}
+
 }
 \details{
   All of these functions work with the names of a package or bundle (and
@@ -252,7 +259,8 @@ contrib.url(repos, type = getOption("pkgType"))
   with one row per package/bundle, row names the package names and
   column names \code{"Package"}, \code{"Version"}, \code{"Priority"},
   \code{"Bundle"}, \code{"Depends"}, \code{"Imports"}, \code{"Suggests"}
-  \code{"Contains"} and \code{"Repository"}.
+  \code{"Contains"} and \code{"Repository"}.  Additional columns can
+  be specified using the \code{fields} argument.
 
   For \code{old.packages}, \code{NULL} or a matrix with one row per
   package/bundle, row names the package names and column names

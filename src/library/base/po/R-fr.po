@@ -7,7 +7,7 @@ msgid ""
 msgstr ""
 "Project-Id-Version: R 2.2.1\n"
 "Report-Msgid-Bugs-To: bugs@r-project.org\n"
-"POT-Creation-Date: 2006-05-29 07:58\n"
+"POT-Creation-Date: 2006-09-26 14:33\n"
 "PO-Revision-Date: 2006-04-18 08:33+0100\n"
 "Last-Translator: Philippe Grosjean <phgrosjean@sciviews.org>\n"
 "Language-Team: French <R-core@r-project.org>\n"
@@ -111,8 +111,9 @@ msgstr "est requis par"
 msgid "(still attached)"
 msgstr "(toujours attaché)"
 
+#, fuzzy
 msgid "replaced regular expression pattern '[' by  '\\\\['"
-msgstr "le motif d'expression régulière '[' est remplacé par '\\\\['"
+msgstr "le motif d'expression régulière '[' est remplacé par '\\\\\\\\"
 
 msgid "replaced '[<-' by '\\\\[<-' in regular expression pattern"
 msgstr ""
@@ -221,7 +222,7 @@ msgstr "longueur de 'row.names' incorrecte"
 msgid "duplicate 'row.names' are not allowed"
 msgstr "les duplications dans 'row.names' ne sont pas autorisées"
 
-msgid "missing 'row.names' are not allowed"
+msgid "missing values in 'row.names' are not allowed"
 msgstr "les valeurs manquantes dans 'row.names' ne sont pas autorisées"
 
 msgid "invalid 'dimnames' given for data frame"
@@ -238,6 +239,9 @@ msgstr ""
 
 msgid "supplied %d row names for %d rows"
 msgstr "%d noms de lignes donnés pour %d lignes"
+
+msgid "options('stringsAsFactors') not set to TRUE or FALSE"
+msgstr ""
 
 msgid "mismatch of row names in arguments of 'data.frame', item %d"
 msgstr ""
@@ -671,6 +675,10 @@ msgstr "les composantes 'max.distance' ne peuvent être négatives"
 msgid "matrix should be square"
 msgstr "la matrice doit être carrée"
 
+#, fuzzy
+msgid "'object' must be a list"
+msgstr "'subset' doit être une valeur logique"
+
 msgid "This is R %s, package '%s' needs %s %s"
 msgstr "Ceci est R %s, le package '%s' nécessite %s %s"
 
@@ -696,6 +704,18 @@ msgstr "Voyez la note dans ?library"
 
 msgid "Attaching package: '%s'"
 msgstr "Attachement du package : '%s'"
+
+msgid "The following object(s) are masked"
+msgstr ""
+
+msgid "_by_"
+msgstr ""
+
+msgid "from"
+msgstr ""
+
+msgid ":"
+msgstr ""
 
 msgid "package '%s' has been merged into '%s'"
 msgstr "le package '%s' a été fusionné avec '%s'"
@@ -821,11 +841,19 @@ msgstr "le package '%s' %s est chargé, mais %s %s est requis par '%s'"
 msgid "input has been corrupted, with LF replaced by CR"
 msgstr "l'entrée est corrompue, avec LF remplacé par CR"
 
+msgid ""
+"file '%s' has magic number '%s'\n"
+"   Use of save versions prior to 2 is deprecated"
+msgstr ""
+
 msgid "bad 'file' argument"
 msgstr "mauvais argument 'file'"
 
 msgid "'file' must be specified"
 msgstr "'file' doit être spécifié"
+
+msgid "Use of save versions prior to 2 is deprecated"
+msgstr ""
 
 msgid "'file' must be non-empty string"
 msgstr "'file' doit être une chaîne de caractères non vide"
@@ -902,6 +930,9 @@ msgstr "aucune ligne correspondante"
 msgid "'by.x' and 'by.y' specify different numbers of columns"
 msgstr "'by.x' et 'by.y' spécifient des nombres différents de colonnes"
 
+msgid "(loaded the methods namespace)"
+msgstr ""
+
 msgid ""
 "Tracing functions requires the methods package, but unable to load methods "
 "namespace"
@@ -909,8 +940,20 @@ msgstr ""
 "Les fonctions de traçage nécessite le package methods, mais impossible de "
 "charger l'espace de noms de methods"
 
+msgid "Expected a single logical value for the S4 object state"
+msgstr ""
+
 msgid "'%s' is not an exported object from 'namespace:%s'"
 msgstr "'%s' n'est pas un objet exporté depuis 'namespace:%s'"
+
+#, fuzzy
+msgid "package '%s' has no name space and"
+msgstr "le package '%s' n'a pas d'espace de noms"
+
+#, fuzzy
+msgid "is not on the search path"
+msgstr ""
+"'%s' n'est pas trouvé dans le chemin de recherche, utilisation de pos = 2"
 
 msgid "%s failed in 'attachNamespace'"
 msgstr "%s a échoué dans 'attachNamespace'"
@@ -957,6 +1000,15 @@ msgstr "classes à exporter non définies dans '%s' : %s"
 msgid "in '%s' methods for export not found: %s"
 msgstr "méthodes à exporter non trouvées dans '%s' : %s"
 
+msgid "No methods table for \""
+msgstr ""
+
+msgid "\""
+msgstr ""
+
+msgid "Failed to find metadata object for \"%s\""
+msgstr ""
+
 msgid "in '%s' methods specified for export, but none defined: %s"
 msgstr ""
 "des méthodes sont spécifées à l'exportation dans '%s', mais aucune n'est "
@@ -974,7 +1026,8 @@ msgstr "l'espace de noms '%s' est chargé"
 msgid "%s failed in unloadNamespace(%s)"
 msgstr "%s a échoué dans unloadNamespace(%s)"
 
-msgid "name space '%s' is still used by:"
+#, fuzzy
+msgid "name space '%s' is still used by: '%s'"
 msgstr "l'espace de noms '%s' est encore utilisé par :"
 
 msgid "imperative name space directives are disabled"
@@ -1001,6 +1054,9 @@ msgstr "impossible d'importer vers un espace de noms verouillé"
 
 msgid "invalid import target"
 msgstr "cible d'importation incorrecte"
+
+msgid "Found methods to import for function \"%s\" but not the generic itself"
+msgstr ""
 
 msgid "requested 'methods' objects not found in environment/package '%s': %s"
 msgstr ""
@@ -1211,6 +1267,11 @@ msgstr "solve.default appelé avec un objet \"qr\" : utilisation de 'qr.solve'"
 msgid "singular matrix 'a' in solve"
 msgstr "matrice 'a' singulière dans solve"
 
+msgid ""
+"'decreasing' must be a length-1 logical vector.\n"
+"Did you intend to set 'partial'?"
+msgstr ""
+
 msgid "'index.return' only for non-factors"
 msgstr "'index.return' seulement pour des variables autres que des facteurs"
 
@@ -1229,6 +1290,11 @@ msgstr "'partial' non fini"
 msgid "argument lengths differ"
 msgstr "la longueur des arguments diffère"
 
+msgid ""
+"'x' must be atomic for 'sort.list'\n"
+"Have you called 'sort' on a list?"
+msgstr ""
+
 msgid "method=\"quick\" is only for numeric 'x'"
 msgstr "method=\"quick\" est seulement pour des 'x' numériques"
 
@@ -1246,6 +1312,9 @@ msgstr "impossible de trouver un encodage plausible"
 
 msgid "'chdir = TRUE' makes no sense for a URL"
 msgstr "'chdir = TRUE' n'a pas de sens pour une URL"
+
+msgid "cannot 'chdir' as current directory is unknown"
+msgstr ""
 
 msgid "'chdir = TRUE' makes no sense for a connection"
 msgstr "'chdir = TRUE' n'a pas de sens pour une connection"
@@ -1298,18 +1367,6 @@ msgstr "impossible de convertir automatiquement en un tableau de contingence"
 msgid "'x' is not an array"
 msgstr "'x' n'est pas un tableau"
 
-msgid "invalid argument 'n'"
-msgstr "argument 'n' incorrect"
-
-msgid "invalid argument 'r'"
-msgstr "argument 'r' incorrect"
-
-msgid "invalid argument 'c'"
-msgstr "argument 'c' incorrect"
-
-msgid "arguments 'r' and 'c' must have the same sums"
-msgstr "les arguments 'r' et 'c' doivent avoir la même somme"
-
 msgid "'bin' must be numeric or a factor"
 msgstr "'bin' doit être numérique ou un facteur"
 
@@ -1336,6 +1393,9 @@ msgstr "Pas d'historique des fonctions appelées ('traceback') disponible"
 
 msgid "argument to 'which' is not logical"
 msgstr "l'argument pour 'which' n'est pas une valeur logique"
+
+msgid "'quote' must be 'TRUE', 'FALSE' or numeric"
+msgstr ""
 
 msgid "invalid numbers in 'quote'"
 msgstr "nombres incorrects dans 'quote'"
@@ -1414,6 +1474,22 @@ msgid "Warning message:\n"
 msgid_plural "Warning messages:\n"
 msgstr[0] "Message d'avis :\n"
 msgstr[1] "Messages d'avis :\n"
+
+#, fuzzy
+#~ msgid "rows are empty: giving up"
+#~ msgstr "les cinq premières lignes sont vides : abandon"
+
+#~ msgid "invalid argument 'n'"
+#~ msgstr "argument 'n' incorrect"
+
+#~ msgid "invalid argument 'r'"
+#~ msgstr "argument 'r' incorrect"
+
+#~ msgid "invalid argument 'c'"
+#~ msgstr "argument 'c' incorrect"
+
+#~ msgid "arguments 'r' and 'c' must have the same sums"
+#~ msgstr "les arguments 'r' et 'c' doivent avoir la même somme"
 
 #~ msgid ""
 #~ "replaced '[<-' by '\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\"

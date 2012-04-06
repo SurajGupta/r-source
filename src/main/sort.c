@@ -1,7 +1,7 @@
 /*
  *  R : A Computer Language for Statistical Data Analysis
  *  Copyright (C) 1995, 1996  Robert Gentleman and Ross Ihaka
- *  Copyright (C) 1998-2005   The R Development Core Team.
+ *  Copyright (C) 1998-2006   The R Development Core Team.
  *  Copyright (C) 2004        The R Foundation
  *
  *  This program is free software; you can redistribute it and/or modify
@@ -177,7 +177,8 @@ void R_csort(Rcomplex *x, int n)
 }
 
 
-void ssort(SEXP *x, int n)
+/* used in platform.c */
+void attribute_hidden ssort(SEXP *x, int n)
 {
     SEXP v;
 #define TYPE_CMP scmp
@@ -347,7 +348,7 @@ static void R_csort2(Rcomplex *x, int n, Rboolean decreasing)
 	}
 }
 
-void ssort2(SEXP *x, int n, Rboolean decreasing)
+static void ssort2(SEXP *x, int n, Rboolean decreasing)
 {
     SEXP v;
     int i, j, h, t;
@@ -663,14 +664,31 @@ static void orderVector(int *indx, int n, SEXP key, Rboolean nalast,
 /* Needs indx set to 1...n initially.
    Also used by do_options.
  */
-void orderVector1(int *indx, int n, SEXP key, Rboolean nalast,
-		  Rboolean decreasing)
+void attribute_hidden
+orderVector1(int *indx, int n, SEXP key, Rboolean nalast, Rboolean decreasing)
 {
     int c, i, j, h, t, lo = 0, hi = n-1;
     int itmp, *isna, numna = 0;
-    int *ix = INTEGER(key);
-    double *x = REAL(key);
-    SEXP *sx = STRING_PTR(key);
+    int *ix = NULL /* -Wall */;
+    double *x = NULL /* -Wall */;
+    Rcomplex *cx = NULL /* -Wall */;
+    SEXP *sx = NULL /* -Wall */;
+    
+    switch (TYPEOF(key)) {
+    case LGLSXP:
+    case INTSXP:
+	ix = INTEGER(key);
+	break;
+    case REALSXP:
+	x = REAL(key);
+	break;
+    case STRSXP:
+	sx = STRING_PTR(key);
+ 	break;
+    case CPLXSXP:
+	cx = COMPLEX(key);
+ 	break;
+    }
 
     /* First sort NAs to one end */
     isna = (int *) malloc(n * sizeof(int));
@@ -685,6 +703,9 @@ void orderVector1(int *indx, int n, SEXP key, Rboolean nalast,
     case STRSXP:
 	for (i = 0; i < n; i++) isna[i] = (sx[i] == NA_STRING);
 	break;
+    case CPLXSXP:
+	for (i = 0; i < n; i++) isna[i] = ISNAN(cx[i].r) || ISNAN(cx[i].i);
+ 	break;
     default:
 	UNIMPLEMENTED_TYPE("orderVector1", key);
     }
@@ -696,6 +717,7 @@ void orderVector1(int *indx, int n, SEXP key, Rboolean nalast,
 	case INTSXP:
 	case REALSXP:
 	case STRSXP:
+	case CPLXSXP:
 	    if (!nalast) for (i = 0; i < n; i++) isna[i] = !isna[i];
 	    for (t = 0; incs[t] > n; t++);
 #define less(a, b) (isna[a] > isna[b] || (isna[a] == isna[b] && a > b))
@@ -726,6 +748,17 @@ void orderVector1(int *indx, int n, SEXP key, Rboolean nalast,
 #undef less
         } else {
 #define less(a, b) (x[a] > x[b] || (x[a] == x[b] && a > b))
+	    sort2_with_index
+#undef less
+        }
+	break;
+    case CPLXSXP:
+	if (decreasing) {
+#define less(a, b) (ccmp(cx[a], cx[b], 0) < 0 || (cx[a].r == cx[b].r && cx[a].i == cx[b].i && a > b))
+	    sort2_with_index
+#undef less
+        } else {
+#define less(a, b) (ccmp(cx[a], cx[b], 0) > 0 || (cx[a].r == cx[b].r && cx[a].i == cx[b].i && a > b))
 	    sort2_with_index
 #undef less
         }

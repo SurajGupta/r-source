@@ -4,6 +4,10 @@ function (x, file = "", append = FALSE, quote = TRUE, sep = " ",
           col.names = TRUE, qmethod = c("escape", "double"))
 {
     qmethod <- match.arg(qmethod)
+    if(is.logical(quote) && (length(quote) != 1 || is.na(quote)))
+        stop("'quote' must be 'TRUE', 'FALSE' or numeric")
+    ## quote column names unless quote == FALSE (see help).
+    quoteC <- if(is.logical(quote)) quote else TRUE
 
     if(!is.data.frame(x) && !is.matrix(x)) x <- data.frame(x)
 
@@ -12,10 +16,10 @@ function (x, file = "", append = FALSE, quote = TRUE, sep = " ",
         p <- ncol(x)
         d <- dimnames(x)
         if(is.null(d)) d <- list(NULL, NULL)
-        if(is.null(d[[1]])) d[[1]] <- seq(length=nrow(x))
+        if(is.null(d[[1]])) d[[1]] <- seq_len(nrow(x))
         if(is.null(d[[2]]) && p > 0) d[[2]] <-  paste("V", 1:p, sep="")
         if(is.logical(quote) && quote)
-            quote <- if(is.character(x)) seq(length=p) else numeric(0)
+            quote <- if(is.character(x)) seq_len(p) else numeric(0)
     } else {
         qset <- FALSE
         if(is.logical(quote) && quote) {
@@ -86,7 +90,7 @@ function (x, file = "", append = FALSE, quote = TRUE, sep = " ",
     if(!is.null(col.names)) {
 	if(append)
 	    warning("appending column names to file")
-	if(length(quote))
+	if(quoteC)
 	    col.names <- paste("\"", gsub('"', qstring, col.names),
                                "\"", sep = "")
         writeLines(paste(col.names, collapse = sep), file, sep = eol)

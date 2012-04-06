@@ -140,16 +140,16 @@ SEXP attribute_hidden do_nchar(SEXP call, SEXP op, SEXP args, SEXP env)
 	    } else {
 #ifdef SUPPORT_MBCS
 		if(mbcslocale) {
-		xi = CHAR(STRING_ELT(x, i));
-		nc = mbstowcs(NULL, xi, 0);
-		if(nc >= 0) {
-		    AllocBuffer((nc+1)*sizeof(wchar_t), &cbuff);
-		    wc = (wchar_t *) cbuff.data;
-		    mbstowcs(wc, xi, nc + 1);
-		    INTEGER(s)[i] = Ri18n_wcswidth(wc, 2147483647);
-		    if(INTEGER(s)[i] < 1) INTEGER(s)[i] = nc;
-		} else
-		    INTEGER(s)[i] = NA_INTEGER;
+		    xi = CHAR(STRING_ELT(x, i));
+		    nc = mbstowcs(NULL, xi, 0);
+		    if(nc >= 0) {
+			AllocBuffer((nc+1)*sizeof(wchar_t), &cbuff);
+			wc = (wchar_t *) cbuff.data;
+			mbstowcs(wc, xi, nc + 1);
+			INTEGER(s)[i] = Ri18n_wcswidth(wc, 2147483647);
+			if(INTEGER(s)[i] < 1) INTEGER(s)[i] = nc;
+		    } else
+			INTEGER(s)[i] = NA_INTEGER;
 		} else
 #endif
 		INTEGER(s)[i] = strlen(CHAR(STRING_ELT(x, i)));
@@ -160,6 +160,8 @@ SEXP attribute_hidden do_nchar(SEXP call, SEXP op, SEXP args, SEXP env)
 #if defined(SUPPORT_MBCS)
     DeallocBuffer(&cbuff);
 #endif
+    if ((d = getAttrib(x, R_NamesSymbol)) != R_NilValue)
+	setAttrib(s, R_NamesSymbol, d);
     if ((d = getAttrib(x, R_DimSymbol)) != R_NilValue)
 	setAttrib(s, R_DimSymbol, d);
     if ((d = getAttrib(x, R_DimNamesSymbol)) != R_NilValue)
@@ -237,6 +239,9 @@ SEXP attribute_hidden do_substr(SEXP call, SEXP op, SEXP args, SEXP env)
 	}
 	Free(buff);
     }
+    SET_ATTRIB(s, duplicate(ATTRIB(x)));
+    /* This copied the class, if any */
+    SET_OBJECT(s, OBJECT(x));
     UNPROTECT(1);
     return s;
 }
@@ -356,7 +361,7 @@ SEXP attribute_hidden do_strsplit(SEXP call, SEXP op, SEXP args, SEXP env)
     if(perl == NA_INTEGER) perl = 0;
 
 #ifdef SUPPORT_MBCS
-    if(perl) {
+    if(!fixed && perl) {
 	if(utf8locale) options = PCRE_UTF8;
 	else if(mbcslocale)
 	    warning(_("perl = TRUE is only fully implemented in UTF-8 locales"));
@@ -693,29 +698,34 @@ donesc:
 
 SEXP attribute_hidden do_abbrev(SEXP call, SEXP op, SEXP args, SEXP env)
 {
-    SEXP ans;
+    SEXP x, ans;
     int i, len, minlen, uclass;
     Rboolean warn = FALSE;
 
     checkArity(op,args);
+    x = CAR(args);
 
-    if (!isString(CAR(args)))
-	errorcall_return(call, _("the first argument must be a string"));
-    len = length(CAR(args));
+    if (!isString(x))
+	errorcall_return(call, 
+			 _("the first argument must be a character vector"));
+    len = length(x);
 
     PROTECT(ans = allocVector(STRSXP, len));
     minlen = asInteger(CADR(args));
     uclass = asLogical(CAR(CDDR(args)));
     for (i = 0 ; i < len ; i++) {
-	if (STRING_ELT(CAR(args),i) == NA_STRING)
+	if (STRING_ELT(x, i) == NA_STRING)
 	    SET_STRING_ELT(ans, i, NA_STRING);
 	else {
-	    warn = warn | !utf8strIsASCII(CHAR(STRING_ELT(CAR(args), i)));
+	    warn = warn | !utf8strIsASCII(CHAR(STRING_ELT(x, i)));
 	    SET_STRING_ELT(ans, i,
-			   stripchars(STRING_ELT(CAR(args), i), minlen));
+			   stripchars(STRING_ELT(x, i), minlen));
 	}
     }
     if(warn) warningcall(call, _("abbreviate used with non-ASCII chars"));
+    SET_ATTRIB(ans, duplicate(ATTRIB(x)));
+    /* This copied the class, if any */
+    SET_OBJECT(ans, OBJECT(x));
     UNPROTECT(1);
     return(ans);
 }
@@ -724,7 +734,7 @@ SEXP attribute_hidden do_makenames(SEXP call, SEXP op, SEXP args, SEXP env)
 {
     SEXP arg, ans;
     int i, l, n, allow_;
-    char *p, *this;
+    char *p, *this, *tmp;
     Rboolean need_prefix;
 
     checkArity(op ,args);
@@ -765,46 +775,56 @@ SEXP attribute_hidden do_makenames(SEXP call, SEXP op, SEXP args, SEXP env)
 	    } else if (!isalpha(0xff & (int) this[0])) need_prefix = TRUE;
 	}
 	if (need_prefix) {
-	    SET_STRING_ELT(ans, i, allocString(l + 1));
-	    strcpy(CHAR(STRING_ELT(ans, i)), "X");
-	    strcat(CHAR(STRING_ELT(ans, i)), CHAR(STRING_ELT(arg, i)));
+	    tmp = Calloc(l+2, char);
+	    strcpy(tmp, "X");
+	    strcat(tmp, CHAR(STRING_ELT(arg, i)));
 	} else {
-	    SET_STRING_ELT(ans, i, allocString(l));
-	    strcpy(CHAR(STRING_ELT(ans, i)), CHAR(STRING_ELT(arg, i)));
+	    tmp = Calloc(l+1, char);
+	    strcpy(tmp, CHAR(STRING_ELT(arg, i)));
 	}
-	this = CHAR(STRING_ELT(ans, i));
 #ifdef SUPPORT_MBCS
 	if (mbcslocale) {
 	    /* This cannot lengthen the string, so safe to overwrite it.
 	       Would also be possible a char at a time.
 	     */
-	    int nc = mbstowcs(NULL, this, 0);
+	    int nc = mbstowcs(NULL, tmp, 0);
 	    wchar_t *wstr = Calloc(nc+1, wchar_t), *wc;
 	    if(nc >= 0) {
-		mbstowcs(wstr, this, nc+1);
+		mbstowcs(wstr, tmp, nc+1);
 		for(wc = wstr; *wc; wc++) {
 		    if (*wc == L'.' || (allow_ && *wc == L'_')) 
 			/* leave alone */;
 		    else if(!iswalnum((int)*wc)) *wc = L'.';
+		    /* If it changes into dot here,
+		     * length will become short on mbcs.
+		     * The name which became short will contain garbage.
+		     * cf. 
+		     *   >  make.names(c("\u30fb"))
+		     *   [1] "X.\0"
+		     */
 		}
-		wcstombs(this, wstr, strlen(this)+1);
+		wcstombs(tmp, wstr, strlen(tmp)+1);
 		Free(wstr);
 	    } else errorcall(call, _("invalid multibyte string %d"), i+1);
 	} else
 #endif
 	{
-	    for (p = this; *p; p++) {
+	    for (p = tmp; *p; p++) {
 		if (*p == '.' || (allow_ && *p == '_')) /* leave alone */;
 		else if(!isalnum(0xff & (int)*p)) *p = '.';
 		/* else leave alone */
 	    }
 	}
+	l = strlen(tmp);
+	SET_STRING_ELT(ans, i, allocString(l));
+	strcpy(CHAR(STRING_ELT(ans, i)), tmp);
 	/* do we have a reserved word?  If so the name is invalid */
-	if (!isValidName(this)) {
-	    SET_STRING_ELT(ans, i, allocString(strlen(this) + 1));
-	    strcpy(CHAR(STRING_ELT(ans, i)), this);
+	if (!isValidName(tmp)) {
+	    SET_STRING_ELT(ans, i, allocString(strlen(tmp) + 1));
+	    strcpy(CHAR(STRING_ELT(ans, i)), tmp);
 	    strcat(CHAR(STRING_ELT(ans, i)), ".");
 	}
+	Free(tmp);
     }
     UNPROTECT(1);
     return ans;
@@ -863,10 +883,6 @@ SEXP attribute_hidden do_grep(SEXP call, SEXP op, SEXP args, SEXP env)
     if (useBytes == NA_INTEGER || !fixed_opt) useBytes = 0;
 
     if (length(pat) < 1) errorcall(call, R_MSG_IA);
-    if (!isString(pat)) PROTECT(pat = coerceVector(pat, STRSXP));
-    else PROTECT(pat);
-    if (!isString(vec)) PROTECT(vec = coerceVector(vec, STRSXP));
-    else PROTECT(vec);
 
 #ifdef SUPPORT_MBCS
     if(!useBytes && mbcslocale && !mbcsValid(CHAR(STRING_ELT(pat, 0))))
@@ -939,7 +955,7 @@ SEXP attribute_hidden do_grep(SEXP call, SEXP op, SEXP args, SEXP env)
 	for (i = 0 ; i < n ; i++)
 	    if (LOGICAL(ind)[i]) INTEGER(ans)[j++] = i + 1;
     }
-    UNPROTECT(3);
+    UNPROTECT(1);
     return ans;
 }
 
@@ -1032,13 +1048,6 @@ SEXP attribute_hidden do_gsub(SEXP call, SEXP op, SEXP args, SEXP env)
 
     if (length(pat) < 1 || length(rep) < 1)
 	errorcall(call, R_MSG_IA);
-
-    if (!isString(pat)) PROTECT(pat = coerceVector(pat, STRSXP));
-    else PROTECT(pat);
-    if (!isString(rep)) PROTECT(rep = coerceVector(rep, STRSXP));
-    else PROTECT(rep);
-    if (!isString(vec)) PROTECT(vec = coerceVector(vec, STRSXP));
-    else PROTECT(vec);
 
     cflags = 0;
     if (extended_opt) cflags = cflags | REG_EXTENDED;
@@ -1175,7 +1184,10 @@ SEXP attribute_hidden do_gsub(SEXP call, SEXP op, SEXP args, SEXP env)
 	}
     }
     if (!fixed_opt) regfree(&reg);
-    UNPROTECT(4);
+    SET_ATTRIB(ans, duplicate(ATTRIB(vec)));
+    /* This copied the class, if any */
+    SET_OBJECT(ans, OBJECT(vec));
+    UNPROTECT(1);
     return ans;
 }
 
@@ -1199,12 +1211,8 @@ SEXP attribute_hidden do_regexpr(SEXP call, SEXP op, SEXP args, SEXP env)
 
     /* allow 'text' to be zero-length from 2.3.1 */
     if (length(pat) < 1) errorcall(call, R_MSG_IA);
-    if (!isString(pat)) PROTECT(pat = coerceVector(pat, STRSXP));
-    else PROTECT(pat);
     if ( STRING_ELT(pat,0) == NA_STRING)
 	errorcall(call, R_MSG_IA);
-    if (!isString(text)) PROTECT(text = coerceVector(text, STRSXP));
-    else PROTECT(text);
 
     cflags = extended_opt ? REG_EXTENDED : 0;
 
@@ -1281,7 +1289,7 @@ SEXP attribute_hidden do_regexpr(SEXP call, SEXP op, SEXP args, SEXP env)
 #endif
     if (!fixed_opt) regfree(&reg);
     setAttrib(ans, install("match.length"), matchlen);
-    UNPROTECT(4);
+    UNPROTECT(2);
     return ans;
 }
 
@@ -1325,7 +1333,10 @@ static SEXP gregexpr_Regexc(const regex_t *reg, const char *string,
             st = regmatch[0].rm_so;
             INTEGER(matchbuf)[matchIndex] = st + 1; /* index from one */
             INTEGER(matchlenbuf)[matchIndex] = regmatch[0].rm_eo - st;
-            offset = st + 1;
+            if (INTEGER(matchlenbuf)[matchIndex] == 0)
+                offset = st + 1;
+            else
+                offset = regmatch[0].rm_eo;
 #ifdef SUPPORT_MBCS
             if(!useBytes && mbcslocale) {
                 int mlen = regmatch[0].rm_eo - st;
@@ -1402,8 +1413,8 @@ static SEXP gregexpr_fixed(char *pattern, char *string, int useBytes)
         INTEGER(matchbuf)[matchIndex] = st + 1; /* index from one */
         INTEGER(matchlenbuf)[matchIndex] = patlen;
         while(!foundAll) {
-            string += st + 1;
-            curpos += st + 1;
+            string += st + patlen;
+            curpos += st + patlen;
             st = fgrep_one(pattern, string, useBytes);
             if (st >= 0) {
                 if ((matchIndex + 1) == bufsize) {
@@ -1489,12 +1500,8 @@ SEXP attribute_hidden do_gregexpr(SEXP call, SEXP op, SEXP args, SEXP env)
 
     if (length(pat) < 1 || length(text) < 1)
 	errorcall(call, R_MSG_IA);
-    if (!isString(pat)) PROTECT(pat = coerceVector(pat, STRSXP));
-    else PROTECT(pat);
     if ( STRING_ELT(pat,0) == NA_STRING)
 	errorcall(call, R_MSG_IA);
-    if (!isString(text)) PROTECT(text = coerceVector(text, STRSXP));
-    else PROTECT(text);
 
     cflags = extended_opt ? REG_EXTENDED : 0;
 
@@ -1536,7 +1543,7 @@ SEXP attribute_hidden do_gregexpr(SEXP call, SEXP op, SEXP args, SEXP env)
         UNPROTECT(1);
     } 
     if (!fixed_opt) regfree(&reg);
-    UNPROTECT(3);
+    UNPROTECT(1);
     return ansList;
 }
 
@@ -1596,6 +1603,9 @@ SEXP attribute_hidden do_tolower(SEXP call, SEXP op, SEXP args, SEXP env)
                 }
             }
         }
+    SET_ATTRIB(y, duplicate(ATTRIB(x)));
+    /* This copied the class, if any */
+    SET_OBJECT(y, OBJECT(x));
     UNPROTECT(1);
     return(y);
 }
@@ -1921,6 +1931,9 @@ SEXP attribute_hidden do_chartr(SEXP call, SEXP op, SEXP args, SEXP env)
             }
         }
 
+    SET_ATTRIB(y, duplicate(ATTRIB(x)));
+    /* This copied the class, if any */
+    SET_OBJECT(y, OBJECT(x));
     UNPROTECT(1);
     return(y);
 }
@@ -2019,7 +2032,7 @@ SEXP attribute_hidden do_agrep(SEXP call, SEXP op, SEXP args, SEXP env)
     nmatches = 0;
     for(i = 0 ; i < n ; i++) {
         if (STRING_ELT(vec, i) == NA_STRING) {
-            INTEGER(ind)[i] = 0;
+            LOGICAL(ind)[i] = 0;
             continue;
         }
         str = CHAR(STRING_ELT(vec, i));
@@ -2036,10 +2049,10 @@ SEXP attribute_hidden do_agrep(SEXP call, SEXP op, SEXP args, SEXP env)
         if(apse_match(aps,
                       (unsigned char *)str,
                       (apse_size_t)strlen(str))) {
-            INTEGER(ind)[i] = 1;
+            LOGICAL(ind)[i] = 1;
             nmatches++;
         }
-        else INTEGER(ind)[i] = 0;
+        else LOGICAL(ind)[i] = 0;
     }
     apse_destroy(aps);
 
@@ -2047,14 +2060,23 @@ SEXP attribute_hidden do_agrep(SEXP call, SEXP op, SEXP args, SEXP env)
             ? allocVector(STRSXP, nmatches)
             : allocVector(INTSXP, nmatches));
     if(value_opt) {
+	SEXP nmold = getAttrib(vec, R_NamesSymbol), nm;
         for(j = i = 0 ; i < n ; i++) {
-            if(INTEGER(ind)[i])
+            if(LOGICAL(ind)[i])
                 SET_STRING_ELT(ans, j++, STRING_ELT(vec, i));
         }
+	/* copy across names and subset */
+	if (!isNull(nmold)) {
+	    nm = allocVector(STRSXP, nmatches);
+	    for (i = 0, j = 0; i < n ; i++)
+		if (LOGICAL(ind)[i])
+		    SET_STRING_ELT(nm, j++, STRING_ELT(nmold, i));
+	    setAttrib(ans, R_NamesSymbol, nm);
+	}
     }
     else {
         for(j = i = 0 ; i < n ; i++) {
-            if(INTEGER(ind)[i]==1)
+            if(LOGICAL(ind)[i]==1)
                 INTEGER(ans)[j++] = i + 1;
         }
     }
@@ -2400,8 +2422,8 @@ SEXP attribute_hidden do_strtrim(SEXP call, SEXP op, SEXP args, SEXP env)
 #endif
 
     checkArity(op, args);
-    PROTECT(x = coerceVector(CAR(args), STRSXP));
-    if (!isString(x))
+    /* conversion happens at R level now */
+    if (!isString(x = CAR(args)))
         errorcall(call, _("strtrim() requires a character vector"));
     len = LENGTH(x);
     PROTECT(width = coerceVector(CADR(args), INTSXP));
@@ -2428,7 +2450,7 @@ SEXP attribute_hidden do_strtrim(SEXP call, SEXP op, SEXP args, SEXP env)
         for(p = this, w0 = 0, q = cbuff.data; *p ;) {
             nb =  Mbrtowc(&wc, p, MB_CUR_MAX, &mb_st);
             w0 = Ri18n_wcwidth(wc);
-            if(w0 < 0) { p += nb; continue; }/* skip non-printable chars */
+            if(w0 < 0) { p += nb; continue; } /* skip non-printable chars */
             wsum += w0;
             if(wsum <= w) {
                 for(k = 0; k < nb; k++) *q++ = *p++;
@@ -2447,7 +2469,9 @@ SEXP attribute_hidden do_strtrim(SEXP call, SEXP op, SEXP args, SEXP env)
         SET_STRING_ELT(s, i, mkChar(cbuff.data));
     }
     if(len > 0) DeallocBuffer(&cbuff);
-    copyMostAttrib(CAR(args), s);
-    UNPROTECT(3);
+    SET_ATTRIB(s, duplicate(ATTRIB(x)));
+    /* This copied the class, if any */
+    SET_OBJECT(s, OBJECT(x));
+    UNPROTECT(2);
     return s;
 }

@@ -294,17 +294,24 @@ SEXP doSetViewport(SEXP vp,
     return vp;
 }
 
-SEXP L_setviewport(SEXP vp, SEXP hasParent)
+SEXP L_setviewport(SEXP invp, SEXP hasParent)
 {
+    SEXP vp;
     /* Get the current device 
      */
     GEDevDesc *dd = getDevice();
+    /*
+     * Duplicate the viewport passed in because we are going
+     * to modify it to hell and gone.
+     */
+    PROTECT(vp = duplicate(invp));
     vp = doSetViewport(vp, !LOGICAL(hasParent)[0], TRUE, dd);
     /* Set the value of the current viewport for the current device
      * Need to do this in here so that redrawing via R BASE display
      * list works 
      */
     setGridStateElement(dd, GSS_VP, vp);
+    UNPROTECT(1);
     return R_NilValue;
 }
 
@@ -2365,12 +2372,10 @@ static SEXP gridCircle(SEXP x, SEXP y, SEXP r,
 	rr2 = transformHeighttoINCHES(r, i % nr, vpc, &gc,
 				      vpWidthCM, vpHeightCM,
 				      dd);
-	rr = fmin2(rr1, rr2);
 	/*
-	 * A negative radius is invalid
+	 * A negative radius is silently converted to absolute value
 	 */
-	if (rr < 0)
-	    error(_("Invalid circle radius (must be non-negative)"));
+	rr = fmin2(fabs(rr1), fabs(rr2));
 	if (R_FINITE(xx) && R_FINITE(yy) && R_FINITE(rr)) {
 	    if (draw) {
                 /* The graphics engine only takes device coordinates
@@ -2599,10 +2604,10 @@ static SEXP gridRect(SEXP x, SEXP y, SEXP w, SEXP h,
 		     * drawn on clipping boundary when there is a fill
 		     */
 		    tmpcol = gc.col;
-		    gc.col = NA_INTEGER;
+		    gc.col = R_TRANWHITE;
 		    GEPolygon(5, xxx, yyy, &gc, dd);
 		    gc.col = tmpcol;
-		    gc.fill = NA_INTEGER;
+		    gc.fill = R_TRANWHITE;
 		    GEPolygon(5, xxx, yyy, &gc, dd);
 		}
 	    }

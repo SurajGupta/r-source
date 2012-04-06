@@ -232,7 +232,7 @@ sealClass(Class, where)
   Certain slot names are not allowed in the current implementation, as
   they correspond to \link{attributes} which are treated
   specially.  These are \code{class}, \code{comment}, \code{dim},
-  \code{dimnames}, \code{names}
+  \code{dimnames}, \code{names}, (from \R 2.4.0) \code{row.names}
   and \code{tsp}.
 }
 
@@ -247,9 +247,8 @@ sealClass(Class, where)
   details in the reference that reflect the S4 implementation may appear
   differently in \R.  Also, there are extensions to the programming
   interface developed more recently than the reference.  For a
-  discussion of details and ongoing development, see the web page
-  \url{http://developer.r-project.org/methodsPackage.html} and the
-  pointers from that page.
+  discussion of details see \code{?\link{Methods}}
+  and the links from that documentation.
 }
 \seealso{
   \code{\link{setClassUnion}},

@@ -77,13 +77,11 @@ This FAQ is for the Windows port of R: it describes features specific to
 that version.  The main R FAQ can be found at
 
 @display
-@uref{http://www.ci.tuwien.ac.at/~hornik/R/R-FAQ.html}.
+@uref{http://CRAN.R-project.org/doc/FAQ/R-FAQ.html}.
 @end display
 
 The information here applies only to recent versions of R for Windows,
-(@samp{2.3.0} or later).  In particular, note that the details of
-Chinese/Japanese/Korean support changed in R @samp{2.3.0}.
-
+(@samp{2.3.0} or later).
 
 
 @newchap{}
@@ -111,7 +109,9 @@ Chinese/Japanese/Korean support changed in R @samp{2.3.0}.
 * Does R support automation?::  
 * The Internet download functions fail.::  
 * Entering certain characters crashes Rgui.::  
+* What does 'DLL attempted to change FPU control word' mean?::  
 * Other strange crashes.::      
+* Why does R never use more than 50% of my CPU?::  
 @end menu
 
 
@@ -121,7 +121,7 @@ Chinese/Japanese/Korean support changed in R @samp{2.3.0}.
 Go to any CRAN site (see @uref{http://cran.r-project.org/mirrors.html}
 for a list), navigate to the @file{bin/windows/base} directory and
 collect the file(s) you need.  The current release is distributed as an
-installer @samp{@RWVER@-win32.exe} of about 27Mb.  This contains all the
+installer @samp{@RWVER@-win32.exe} of about 28Mb.  This contains all the
 components and allows as complete as installation as you choose.
 
 There are also links on that page to the @samp{r-patched} and
@@ -134,8 +134,11 @@ release.
 @node How do I install R for Windows?, How do I check an installation?, Where can I find the latest version?, Installation and Usage
 @section How do I install R for Windows?
 
-You need Windows 95 or later.  There is no specific version for
-Windows64, but the standard 32-bit version should work.
+You need Windows 95 or later.  There is no specific version for Windows
+64, but the standard 32-bit version has been proven to work.  Some
+features only work on an NT-based version of Windows (and some work
+better on such an OS).  We do minimally test releases on Windows 98 and
+occasionally on NT4, but only test thoroughly on XP and later.
 
 Your file system must allow case-honouring long file names (as is likely
 except perhaps for some network-mounted systems).  A full installation
@@ -152,8 +155,9 @@ group for R).
 
 Choose a working directory for R.  You will have a shortcut to
 @file{@RWVER@\bin\Rgui.exe} on your desktop and/or somewhere on the
-Start menu file tree.  Right-click each shortcut, select
-Properties... and change the `Start in' field to your working directory.
+Start menu file tree, and perhaps also in the Quick Launch bar.
+Right-click each shortcut, select Properties... and change the `Start
+in' field to your working directory.
 
 You may also want to add command-line arguments at the end of the Target
 field (@emph{after} any final double quote), for example @code{--sdi
@@ -162,6 +166,10 @@ of the Target field, for example @code{R_LIBS=p:/myRlib}, and if you
 want to ensure that menus and messages are in (American) English,
 @code{LANGUAGE=en}.
 
+It is also possible to install from an MSI file, which will be of interest
+only for sysadmins.  For how to build an MSI file, see the `R
+Installation and Administration Manual'.
+
 
 @node How do I check an installation?, Can I customize the installation?, How do I install R for Windows?, Installation and Usage
 @section How do I check an installation is not corrupt?
@@ -169,6 +177,8 @@ want to ensure that menus and messages are in (American) English,
 Run the program @file{bin\md5check.exe}.
 This compares checksums on all the installed files with those put into
 the installer, and will report any changed or missing files.
+
+(It only works if R was installed from the Inno Setup installer.)
 
 @node Can I customize the installation?, How do I run it?, How do I check an installation?, Installation and Usage
 @section Can I customize the installation?
@@ -245,9 +255,6 @@ directory.  This should be no problem on a properly configured NT-based
 version of Windows, but otherwise does mean that it may not be possible
 to run R without creating a shortcut in a writable folder.
 
-R 2.0.x ran more slowly from a slow storage medium but this is no longer
-true.
-
 
 @node How do I UNinstall R?, What's the best way to upgrade?, Can I run R from a CD or USB drive?, Installation and Usage
 @section How do I UNinstall R?
@@ -288,7 +295,7 @@ their names and re-install them from CRAN.
 Indeed there is.  It is set by the command-line flag
 @option{--max-mem-size} (@pxref{How do I install R for Windows?}) and
 defaults to the smaller of the amount of physical RAM in the machine and
-1Gb.  It can be set to any amount between 32Mb and 3Gb.  Be aware though
+1.5Gb.  It can be set to any amount between 32Mb and 3Gb.  Be aware though
 that Windows has (in most versions) a maximum amount of user virtual
 memory of 2Gb.
 
@@ -300,9 +307,17 @@ R can be compiled to use a different memory manager which might be better
 at using large amounts of memory, but is substantially slower (making R
 several times slower on some tasks).
 
-In this version of R, the executables support up to 3Gb per process
-under suitably enabled versions of Windows (see
-@uref{http://www.microsoft.com/whdc/system/platform/server/PAE/PAEmem.mspx}).
+The executables @file{Rgui.exe} and @file{Rterm.exe} support up to 3Gb
+per process under suitably enabled versions of Windows (see
+@uref{http://www.microsoft.com/whdc/system/platform/server/PAE/PAEmem.mspx}:
+even where this is supported it has to be specifically enabled).
+On such systems, the default for @code{--max-mem-size} is the smaller of
+the amount of RAM and 2.5Gb.
+
+It is possible that the Windows API calls used will give misleading
+results on machines with more than 4Gb of physical RAM (and later ones
+cannot be used as R must run on Windows 2000 and earlier): for safety
+set @code{--max-mem-size} explicitly on such machines.
 
 
 @node How can I keep workspaces for different projects in different directories?, How do I print from R?, There seems to be a limit on the memory it uses!, Installation and Usage
@@ -508,7 +523,11 @@ There is a (D)COM server written by Thomas Baier available on CRAN
 @file{Rproxy.dll} (in the R distribution) and @file{R.dll} to support
 transfer of data to and from R and remote execution of R commands, as
 well as embedding of an R graphics window.  An R-Excel interface making
-use of the DCOM server is included in the distribution.
+use of the (D)COM server is included in the distribution.
+
+Thomas Baier also has a package @code{rcom} available on CRAN (in the
+usual way for a package) to provide COM client and server functionality
+from within R.
 
 Another (D)COM server is available from @uref{http://www.omegahat.org/},
 which allows R objects to be exported as COM values.  That site also
@@ -545,7 +564,7 @@ The second version will prompt the user for the proxy username and
 password when HTTP downloads are first used.
 
 
-@node Entering certain characters crashes Rgui., Other strange crashes., The Internet download functions fail., Installation and Usage
+@node Entering certain characters crashes Rgui., What does 'DLL attempted to change FPU control word' mean?, The Internet download functions fail., Installation and Usage
 @section Entering certain characters crashes Rgui.
 
 This used to happen occasionally, and all the occurrences we have solved
@@ -566,9 +585,22 @@ This fix has solved other problems too, for example incorrect results in
 the date-time functions.  However, you are probably better off
 re-installing Windows.
 
+@node What does 'DLL attempted to change FPU control word' mean?, Other strange crashes., Entering certain characters crashes Rgui., Installation and Usage
+@section What does 'DLL attempted to change FPU control word' mean?
 
+This is a @emph{warning} which indicates that R has taken action to
+correct the action of some (non-R) DLL which has just been loaded and
+has changed the floating point control word (in its initialization code)
+to a setting incompatible with that needed for R.  This is not good
+practice on the part of the DLL, and often indicates that it needs to be
+updated.  (It was common with DLLs compiled in early versions of Visual C++.)
 
-@node Other strange crashes.,  , Entering certain characters crashes Rgui., Installation and Usage
+Unfortunately, because DLLs may load other DLLs it is not possible for R
+to track which DLL caused the problem.
+
+See also @code{?dyn.load)}.
+
+@node Other strange crashes., Why does R never use more than 50% of my CPU?, What does 'DLL attempted to change FPU control word' mean?, Installation and Usage
 @section Other strange crashes.
 
 Some users have found that @code{Rgui.exe} fails to start, exiting with
@@ -584,9 +616,23 @@ crash.
 
 These errors are essentially impossible for us to fix or work around
 beyond the measures already taken (which were increased in R 2.3.0).
-The only solution we know of is for the user to replace the buggy driver
-that is causing the error.
+The only solution we know of is for the user to replace the buggy system
+component that is causing the error.
 
+
+@node Why does R never use more than 50% of my CPU?,  , Other strange crashes., Installation and Usage
+@section Why does R never use more than 50% of my CPU?
+
+This is a misreading of Windows' confusing Task Manager.  R's
+computation is single-threaded, and so it cannot use more than one CPU.
+What the task manager shows is not the usage in CPUs (as better written
+utilities do) but the usage as a percentage of the apparent total number
+of CPUs.  We say `apparent' as it treats so-called `hyperthreaded' CPUs
+as two CPUs even though there is only one physical CPU: dual-core CPUs
+will also show as two CPUs (which they genuinely are).
+
+Many benchmarks show hyperthreading reduces the overall workload, so you
+may want to experiment with disabling it.
 
 @newchap{}
 @node Languages and Internationalization, Packages, Installation and Usage, Top
@@ -636,23 +682,24 @@ and Spanish (Spain).
 
 The default behaviour of R is to try to run in the language you run
 Windows in.  Apparently some users want Windows in their native language,
-but not R.  To do so, set @code{LANGUAGE=en} as discussed in Q2.2 and Q2.15.
+but not R.  To do so, set @code{LANGUAGE=en} as discussed in Q2.2 and
+Q2.15, or in the @file{Rconsole} file.
 
 @node I want to run R in Chinese/Japanese/Korean, I selected English for installation but R runs in Chinese, I want R in English!, Languages and Internationalization
 @section I want to run R in Chinese/Japanese/Korean.
 
-As from R 2.3.0 all Windows versions of R support `East Asian' languages
+All recent Windows versions of R support `East Asian' languages
 (with a suitable version of Windows -- e.g. Western installations of
 Windows XP do not by default have such support).
 
-As from R 2.3.0 both @command{Rterm.exe} and @command{RGui.exe} support
-single- and double-width characters.  It will be necessary to select
-suitable fonts in files @file{Rconsole} and @file{Rdevga} (see
-@code{?Rconsole} or the comments in the files: the system versions are
-in the @file{etc} folder); in the latter you can replace @code{Arial} by
-@code{Arial Unicode MS}, and we tried @code{FixedSys} and @code{MS
-Mincho} in @file{Rconsole}.  (Note that @file{Rdevga} only applies to
-Windows graphics devices and not, say, to @code{pdf}.)
+Both @command{Rterm.exe} and @command{RGui.exe} support single- and
+double-width characters.  It will be necessary to select suitable fonts
+in files @file{Rconsole} and @file{Rdevga} (see @code{?Rconsole} or the
+comments in the files: the system versions are in the @file{etc}
+folder); in the latter you can replace @code{Arial} by @code{Arial
+Unicode MS}, and we tried @code{FixedSys} and @code{MS Mincho} in
+@file{Rconsole}.  (Note that @file{Rdevga} only applies to Windows
+graphics devices and not, say, to @code{pdf}.)
 
 You do need to ensure that R is running in a suitable locale: use
 @code{Sys.getlocale()} to find out.  (CJK users may be used to their
@@ -684,7 +731,7 @@ The language R uses for menus and messages is determined by the
 @emph{locale}: please read the appropriate manual (the @emph{R
 Installation and Administration Manual}) for the details.  You can
 ensure that R uses English messages by appending @code{LANGUAGE=en} to
-the shortcut you use to start R.
+the shortcut you use to start R, or setting it in the @file{Rconsole} file.
 
 @node I would like to be able to use Japanese fonts, I don't see characters with accents at the R console, I selected English for installation but R runs in Chinese, Languages and Internationalization
 @section I would like to be able to use Japanese fonts.
@@ -779,7 +826,7 @@ You can install pre-compiled packages either from CRAN or from a local
 There are menu items on the @code{Packages} menu to provide a
 point-and-click interface to package installation.  The packages for
 each minor (2.x) version will be stored in a separate area, so for R
-2.3.? the files are in @file{bin/windows/contrib/2.3}.  You can try
+2.4.? the files are in @file{bin/windows/contrib/2.4}.  You can try
 those compiled for earlier versions (but not before 2.0.0), at your own
 risk.
 
@@ -1017,7 +1064,7 @@ the @file{RHOME\etc} directory called @file{Rconsole} and @file{Rdevga};
 you can keep personal copies in your @file{HOME} directory.  They contain
 comments which should suffice for you to edit them to your
 preferences.  For more details see @code{?Rconsole}.
-There is a Preferences editor invoked from the @code{Edit} menu which
+There is a GUI preferences editor invoked from the @code{Edit} menu which
 can be used to edit the file @file{Rconsole}.
 
 
@@ -1144,7 +1191,11 @@ horizontally. (The @key{left/right arrow} keys work in the pager too.)
 See the `R Installation and Administration' manual.
 
 Note that building under Windows 64 is not supported as no suitable
-compiler is available.
+non-commercial compiler is yet available.  There is a glimmer of hope
+that this will change in the not too far distance future: see
+@url{http://sourceforge.net/mailarchive/forum.php?thread_id=30624855&forum_id=5119}.
+You are of course welcome to try a commercial compiler, but we will not
+be distributing a port for which users cannot easily add packages.
 
 @node Can I use a fast BLAS?, How do I include compiled C code?, How can I compile R from source?, Building from Source
 @section  Can I use a fast BLAS?
@@ -1157,27 +1208,20 @@ The savings can be appreciable: on a 2.6GHz P4 and a 1000 x 1000 matrix
 @code{svd} took 16.2 sec with the standard BLAS and 7.8 sec with ATLAS.
 Because ATLAS is tuned to a particular chip we can't use it generally:
 the optimal routines for a P4 or an Athlon XP are quite different and
-neither will not run at all on a PII.
+neither will run at all on a PII.
 
 BLAS support is supplied by the single DLL @file{R_HOME\bin\Rblas.dll},
 and you can add a fast BLAS just by replacing that.  Replacements for
 some of the more common chips are available on CRAN in directory
-@file{bin/windows/contrib/ATLAS}.
-
-If you are building R from source, in the file @file{MkRules} there
-are macros @code{USE_ATLAS} and @code{ATLAS_PATH}.  Set
-@code{USE_ATLAS = YES} and @code{ATLAS_PATH} to where the ATLAS
-libraries are located.  You will need to make the libraries yourself:
-none of the binaries we have seen are compiled for the correct
-compiler.
+@file{bin/windows/contrib/ATLAS}.  See the  @emph{R
+Installation and Administration Manual} for how to build an ATLAS
+@file{Rblas.dll} tuned to your system using the R sources.
 
 An alternative for those building from sources is to use AMD's Core Math
-Library (ACML) @url{http://www.amd.com/acml}.  See the
-@emph{R Installation and Administration Manual} for details.
-
-Hand-coded routines used to be available as DLLs from Dr Kazushige
-Goto for certain CPUs, but these have been withdrawn (as has the support
-in R).
+Library (ACML) @url{http://www.amd.com/acml} (see the @emph{R
+Installation and Administration Manual} for details).  This does seem to
+run on a wide range of CPUs at speeds comparable to ATLAS, but the
+license conditions mean we cannot redistribute it.
 
 
 @node  How do I include compiled C code?, How do I debug code that I have compiled and dyn.load-ed?, Can I use a fast BLAS?, Building from Source
@@ -1276,6 +1320,8 @@ package @code{stats} might be
      (gdb) break tukeyline
      (gdb) clear R_ReadConsole
      (gdb) continue
+     Rconsole> example(line)
+     ...
 @end example
 
 @noindent

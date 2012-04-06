@@ -1,7 +1,7 @@
 /*
  *  R : A Computer Language for Statistical Data Analysis
  *  Copyright (C) 1995, 1996  Robert Gentleman and Ross Ihaka
- *  Copyright (C) 1997--2005  The R Development Core Team
+ *  Copyright (C) 1997--2006  The R Development Core Team
  *  Copyright (C) 2003, 2004  The R Foundation
  *
  *  This program is free software; you can redistribute it and/or modify
@@ -25,9 +25,9 @@
 #include <config.h>
 #endif
 
-#define __R_Names__
-#include "Defn.h"
-#include "Print.h"
+#define __R_Names__ /* used in Defn.h for extern on R_FunTab */
+#include <Defn.h>
+#include <Print.h>
 #include "arithmetic.h"
 
 #include <R_ext/RConverters.h>
@@ -65,8 +65,8 @@
  *		Y=1 says that this is an internal function which must
  *		    be accessed with a	.Internal(.) call, any other value is
  *		    accessible directly and printed in R as ".Primitive(..)".
- *		Z=1 says evaluate arguments before calling and
- *		Z=0 says don't evaluate.
+ *		Z=1 says evaluate arguments before calling (BUILTINSXP) and
+ *		Z=0 says don't evaluate (SPECIALSXP).
  *
  * arity:	How many arguments are required/allowed;  "-1"	meaning ``any''
  *
@@ -81,7 +81,7 @@ attribute_hidden FUNTAB R_FunTab[] =
 {
 
 /* Language Related Constructs */
-
+\
 /* printname	c-entry		offset	eval	arity	pp-kind	     precedence	rightassoc
  * ---------	-------		------	----	-----	-------      ----------	----------*/
 {"if",		do_if,		0,	0,	-1,	{PP_IF,	     PREC_FN,	  1}},
@@ -96,7 +96,6 @@ attribute_hidden FUNTAB R_FunTab[] =
 {"gettext",	do_gettext,	0,	11,	2,	{PP_FUNCALL, PREC_FN,	  0}},
 {"ngettext",	do_ngettext,	0,	11,	4,	{PP_FUNCALL, PREC_FN,	  0}},
 {"bindtextdomain",do_bindtextdomain,0,	11,	2,	{PP_FUNCALL, PREC_FN,	  0}},
-#ifdef NEW_CONDITION_HANDLING
 {".addCondHands",do_addCondHands,	0,	111,	5,	{PP_FUNCALL, PREC_FN,	  0}},
 {".resetCondHands",do_resetCondHands,	0,	111,	1,	{PP_FUNCALL, PREC_FN,	  0}},
 {".signalCondition",do_signalCondition,	0,	11,	3,	{PP_FUNCALL, PREC_FN,	  0}},
@@ -105,7 +104,6 @@ attribute_hidden FUNTAB R_FunTab[] =
 {".addRestart",do_addRestart,	0,	11,	1,	{PP_FUNCALL, PREC_FN,	  0}},
 {".getRestart",do_getRestart,	0,	11,	1,	{PP_FUNCALL, PREC_FN,	  0}},
 {".invokeRestart",do_invokeRestart,	0,	11,	2,	{PP_FUNCALL, PREC_FN,	  0}},
-#endif
 {".addTryHandlers",do_addTryHandlers,	0,	111,	0,	{PP_FUNCALL, PREC_FN,	  0}},
 {"geterrmessage",do_geterrmessage, 0,	11,	0,	{PP_FUNCALL, PREC_FN,	  0}},
 {"restart",	do_restart,	0,	11,	1,	{PP_FUNCALL, PREC_FN,	  0}},
@@ -139,7 +137,7 @@ attribute_hidden FUNTAB R_FunTab[] =
 {"delayedAssign",do_delayed,	0,	111,	4,	{PP_FUNCALL, PREC_FN,	  0}},
 /*{".Alias",	do_alias,	0,	1,	1,	{PP_FUNCALL, PREC_FN,	  0}},*/
 {".Primitive",	do_primitive,	0,	1,	1,	{PP_FUNCALL, PREC_FN,	  0}},
-{"identical",	do_ident,	0,	11,	2,	{PP_FUNCALL, PREC_FN,	  0}},
+{"identical",	do_identical,	0,	11,	2,	{PP_FUNCALL, PREC_FN,	  0}},
 
 
 /* Binary Operators */
@@ -164,7 +162,7 @@ attribute_hidden FUNTAB R_FunTab[] =
 {"!",		do_logic,	3,	1,	1,	{PP_UNARY,   PREC_NOT,	  0}},
 {"&&",		do_logic2,	1,	0,	2,	{PP_BINARY,  PREC_AND,	  0}},
 {"||",		do_logic2,	2,	0,	2,	{PP_BINARY,  PREC_OR,	  0}},
-{":",		do_seq,		0,	1,	2,	{PP_BINARY2, PREC_COLON,  0}},
+{":",		do_colon,	0,	1,	2,	{PP_BINARY2, PREC_COLON,  0}},
 {"~",		do_tilde,	0,	0,	2,	{PP_BINARY,  PREC_TILDE,  0}},
 
 
@@ -587,8 +585,8 @@ attribute_hidden FUNTAB R_FunTab[] =
 {"aqua.custom.print", do_aqua_custom_print, 0, 11, 2,   {PP_FUNCALL, PREC_FN,   0}},
 #endif
 {"parse",	do_parse,	0,	11,	4,	{PP_FUNCALL, PREC_FN,	0}},
-{"save",	do_save,	0,	111,	5,	{PP_FUNCALL, PREC_FN,	0}},
-{"saveToConn",	do_saveToConn,	0,	111,	5,	{PP_FUNCALL, PREC_FN,	0}},
+{"save",	do_save,	0,	111,	6,	{PP_FUNCALL, PREC_FN,	0}},
+{"saveToConn",	do_saveToConn,	0,	111,	6,	{PP_FUNCALL, PREC_FN,	0}},
 {"load",	do_load,	0,	111,	2,	{PP_FUNCALL, PREC_FN,	0}},
 {"loadFromConn",do_loadFromConn,0,	111,	2,	{PP_FUNCALL, PREC_FN,	0}},
 {"loadFromConn2",do_loadFromConn2,0,	111,	2,	{PP_FUNCALL, PREC_FN,	0}},
@@ -603,14 +601,18 @@ attribute_hidden FUNTAB R_FunTab[] =
 {"interactive",	do_interactive,	0,	0,	0,	{PP_FUNCALL, PREC_FN,	0}},
 {"readline",	do_readln,	0,	11,	1,	{PP_FUNCALL, PREC_FN,	0}},
 {"menu",	do_menu,	0,	11,	1,	{PP_FUNCALL, PREC_FN,	0}},
-{"print.default",do_printdefault,0,	111,	7,	{PP_FUNCALL, PREC_FN,	0}},
+{"print.default",do_printdefault,0,	111,	8,	{PP_FUNCALL, PREC_FN,	0}},
 {"prmatrix", 	do_prmatrix, 	0,	111,	6,	{PP_FUNCALL, PREC_FN,	0}},
 {"invisible",	do_invisible,	0,	101,	1,	{PP_FUNCALL, PREC_FN,	0}},
 {"gc",		do_gc,		0,	11,	2,	{PP_FUNCALL, PREC_FN,	0}},
 {"gcinfo",	do_gcinfo,	0,	11,	1,	{PP_FUNCALL, PREC_FN,	0}},
 {"gctorture",	do_gctorture,	0,	11,	1,	{PP_FUNCALL, PREC_FN,	0}},
 {"memory.profile",do_memoryprofile, 0,	11,	0,	{PP_FUNCALL, PREC_FN,	0}},
-{"rep",		do_rep,		0,	11,	2,	{PP_FUNCALL, PREC_FN,	0}},
+{"rep",		do_rep,		0,	0,	-1,	{PP_FUNCALL, PREC_FN,	0}},
+{"rep.int",	do_rep_int,	0,	11,	2,	{PP_FUNCALL, PREC_FN,	0}},
+{"seq.int",	do_seq,		0,	0,	-1,	{PP_FUNCALL, PREC_FN,	0}},
+{"seq_len",	do_seq_len,	0,	1,	1,	{PP_FUNCALL, PREC_FN,	0}},
+{"seq_along",	do_seq_along,	0,	0,	1,	{PP_FUNCALL, PREC_FN,	0}},
 {"list",	do_makelist,	1,	1,	-1,	{PP_FUNCALL, PREC_FN,	0}},
 {"split",	do_split,	0,	11,	2,	{PP_FUNCALL, PREC_FN,	0}},
 {"symbol.C",	do_symbol,	0,	1,	1,	{PP_FOREIGN, PREC_FN,	0}},
@@ -667,7 +669,7 @@ attribute_hidden FUNTAB R_FunTab[] =
 {"environment",	do_envir,	0,	11,	1,	{PP_FUNCALL, PREC_FN,	0}},
 {"environment<-",do_envirgets,	0,	1,	2,	{PP_FUNCALL, PREC_LEFT,	1}},
 {"env2list",	do_env2list,	0,	11,	2,	{PP_FUNCALL, PREC_FN,	0}},
-{"reg.finalizer",do_regFinaliz,	0,	1,	2,	{PP_FUNCALL, PREC_FN,	0}},
+{"reg.finalizer",do_regFinaliz,	0,	11,	3,	{PP_FUNCALL, PREC_FN,	0}},
 {"options",	do_options,	0,	11,	1,	{PP_FUNCALL, PREC_FN,	0}},
 {"sink",	do_sink,	0,	111,	4,	{PP_FUNCALL, PREC_FN,	0}},
 {"sink.number",	do_sinknumber,	0,	11,	1,	{PP_FUNCALL, PREC_FN,	0}},
@@ -675,12 +677,17 @@ attribute_hidden FUNTAB R_FunTab[] =
 {"pos.to.env",	do_pos2env,	0,	1,	1,	{PP_FUNCALL, PREC_FN,	0}},
 {"eapply",	do_eapply,	0,	10,	3,	{PP_FUNCALL, PREC_FN,	0}},
 {"lapply",	do_lapply,	0,	10,	2,	{PP_FUNCALL, PREC_FN,	0}},
-{"apply",	do_apply,	0,	11,	3,	{PP_FUNCALL, PREC_FN,	0}},
+{"rapply",	do_rapply,	0,	11,	5,	{PP_FUNCALL, PREC_FN,	0}},
+{"islistfactor",do_islistfactor,0,	11,	2,	{PP_FUNCALL, PREC_FN,	0}},
 {"colSums",	do_colsum,	0,	11,	4,	{PP_FUNCALL, PREC_FN,	0}},
 {"colMeans",	do_colsum,	1,	11,	4,	{PP_FUNCALL, PREC_FN,	0}},
 {"rowSums",	do_colsum,	2,	11,	4,	{PP_FUNCALL, PREC_FN,	0}},
 {"rowMeans",	do_colsum,	3,	11,	4,	{PP_FUNCALL, PREC_FN,	0}},
-{"Rprof",	do_Rprof,	0,	11,	3,	{PP_FUNCALL, PREC_FN,	0}},
+{"Rprof",	do_Rprof,	0,	11,	4,	{PP_FUNCALL, PREC_FN,	0}},
+{"Rprofmem",	do_Rprofmem,	0,	11,	3,	{PP_FUNCALL, PREC_FN,	0}},
+{"memtrace",    do_memtrace,    0,      11,     1,      {PP_FUNCALL, PREC_FN,	0}},
+{"memretrace",  do_memretrace,  0,      11,     2,      {PP_FUNCALL, PREC_FN,	0}},
+{"memuntrace",  do_memuntrace,  0,      11,     1,      {PP_FUNCALL, PREC_FN,	0}},
 {"object.size",	do_objectsize,	0,	11,	1,	{PP_FUNCALL, PREC_FN,	0}},
 {"mem.limits",	do_memlimits,	0,	11,	2,	{PP_FUNCALL, PREC_FN,	0}},
 {"merge",	do_merge,	0,	11,	4,	{PP_FUNCALL, PREC_FN,	0}},
@@ -853,7 +860,7 @@ attribute_hidden FUNTAB R_FunTab[] =
 {"stdin", 	do_stdin,	0,      11,     0,      {PP_FUNCALL, PREC_FN,	0}},
 {"stdout", 	do_stdout,	0,      11,     0,      {PP_FUNCALL, PREC_FN,	0}},
 {"stderr", 	do_stderr,	0,      11,     0,      {PP_FUNCALL, PREC_FN,	0}},
-{"readLines", 	do_readLines,	0,      11,     3,      {PP_FUNCALL, PREC_FN,	0}},
+{"readLines", 	do_readLines,	0,      11,     4,      {PP_FUNCALL, PREC_FN,	0}},
 {"writeLines", 	do_writelines,	0,      11,     3,      {PP_FUNCALL, PREC_FN,	0}},
 {"readBin", 	do_readbin,	0,      11,     6,      {PP_FUNCALL, PREC_FN,	0}},
 {"writeBin", 	do_writebin,	0,      11,     4,      {PP_FUNCALL, PREC_FN,	0}},
@@ -875,11 +882,12 @@ attribute_hidden FUNTAB R_FunTab[] =
 {"seek", 	do_seek,	0,      11,     4,      {PP_FUNCALL, PREC_FN,	0}},
 {"truncate", 	do_truncate,	0,      11,     1,      {PP_FUNCALL, PREC_FN,	0}},
 {"pushBack", 	do_pushback,	0,      11,     3,      {PP_FUNCALL, PREC_FN,	0}},
-{"clearPushBack",do_clearpushback,0,  11,     1,      {PP_FUNCALL, PREC_FN,	0}},
+{"clearPushBack",do_clearpushback,0,    11,     1,      {PP_FUNCALL, PREC_FN,	0}},
 {"pushBackLength",do_pushbacklength,0,  11,     1,      {PP_FUNCALL, PREC_FN,	0}},
 {"textConnection",do_textconnection,0,	11,     4,      {PP_FUNCALL, PREC_FN,	0}},
+{"textConnectionValue",do_textconvalue,0,11,    1,      {PP_FUNCALL, PREC_FN,	0}},
 {"socketConnection",do_sockconn,0,	11,     6,      {PP_FUNCALL, PREC_FN,	0}},
-{"sockSelect",do_sockselect,0,	11,     3,      {PP_FUNCALL, PREC_FN,	0}},
+{"sockSelect",do_sockselect,	0,	11,     3,      {PP_FUNCALL, PREC_FN,	0}},
 {"getAllConnections",do_getallconnections,0,11, 0,      {PP_FUNCALL, PREC_FN,	0}},
 {"summary.connection",do_sumconnection,0,11,    1,      {PP_FUNCALL, PREC_FN,	0}},
 {"download", 	do_download,	0,      11,     5,      {PP_FUNCALL, PREC_FN,	0}},
@@ -979,6 +987,7 @@ static void SymbolShortcuts()
     R_DotEnvSymbol = install(".Environment");
     R_RecursiveSymbol = install("recursive");
     R_UseNamesSymbol = install("use.names");
+    R_RowNamesSymbol = install("row.names");
 }
 
 extern SEXP framenames; /* from model.c */
@@ -1004,7 +1013,6 @@ void InitNames()
     SET_ATTRIB(R_RestartToken, R_NilValue);
     /* Parser Structures */
     R_CommentSxp = R_NilValue;
-    R_ParseText = R_NilValue;
     /* String constants (CHARSXP values */
     /* Note: changed from mkChar so mkChar can see if it is getting
        "NA" and then return NA_STRING rather than alloc a new CHAR */
@@ -1082,17 +1090,14 @@ SEXP attribute_hidden do_internal(SEXP call, SEXP op, SEXP args, SEXP env)
 		  CHAR(PRINTNAME(fun)));
     args = CDR(s);
     if (TYPEOF(INTERNAL(fun)) == BUILTINSXP)
-	args = evalList(args, env);
+	args = evalList(args, env, op);
     PROTECT(args);
     flag = PRIMPRINT(INTERNAL(fun));
     R_Visible = 1 - flag;
     args = PRIMFUN(INTERNAL(fun)) (s, INTERNAL(fun), args, env);
     if (flag) R_Visible = 0;
     UNPROTECT(1);
-    if (save != R_PPStackTop) {
-	REprintf("stack imbalance in internal %s, %d then %d",
-	       PRIMNAME(INTERNAL(fun)), save, R_PPStackTop);
-    }
+    check_stack_balance(INTERNAL(fun), save);
     return (args);
 }
 #undef __R_Names__

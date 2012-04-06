@@ -15,8 +15,9 @@ any(\dots, na.rm = FALSE)
 }
 \details{
   This is a generic function: methods can be defined for it
-  directly or via the \code{\link{Summary}} group generic.
-  For this to work properly, the arguments \code{\dots} should be unnamed.
+  directly or via the \code{\link[base:groupGeneric]{Summary}} group generic.
+  For this to work properly, the arguments \code{\dots} should be
+  unnamed, and dispatch is on the first argument.
 }
 \value{
   Given a sequence of logical arguments, a logical value indicating
@@ -28,10 +29,6 @@ any(\dots, na.rm = FALSE)
 
   If \code{na.rm = FALSE} and \code{x} consists of a mix of \code{FALSE}
   and \code{NA} values, the value is \code{NA}.
-}
-\note{
-  Prior to \R 2.1.0, only \code{NULL} and logical, integer, numeric
-  and complex vectors were accepted.
 }
 \references{
   Becker, R. A., Chambers, J. M. and Wilks, A. R. (1988)

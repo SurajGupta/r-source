@@ -5,6 +5,7 @@
 legend(x, y = NULL, legend, fill = NULL, col = par("col"),
        lty, lwd, pch,
        angle = 45, density = NULL, bty = "o", bg = par("bg"),
+       box.lwd = par("lwd"), box.lty = par("lty"),
        pt.bg = NA, cex = 1, pt.cex = cex, pt.lwd = lwd,
        xjust = 0, yjust = 1, x.intersp = 1, y.intersp = 1,
        adj = c(0, 0.5), text.width = NULL, text.col = par("col"),
@@ -21,18 +22,18 @@ legend(x, y = NULL, legend, fill = NULL, col = par("col"),
   \item{x, y}{the x and y co-ordinates to be used to position the legend.
     They can be specified by keyword or in any way which is accepted by
     \code{\link{xy.coords}}: See Details.}
-  \item{legend}{a vector of text values or an \code{\link{expression}}
-    of length \eqn{\ge 1}{>= 1}, or a \code{\link{call}} (as resulting
-    from \code{\link{substitute}}) to appear in the legend.}
+  \item{legend}{a character vector or language object (a name, call or
+    \code{\link{expression}} vector)
+    of length \eqn{\ge 1}{>= 1} to appear in the legend.}
   \item{fill}{if specified, this argument will cause boxes filled
     with the specified colors (or shaded in the specified colors)
     to appear beside the legend text.}
   \item{col}{the color of points or lines appearing in the legend.}
-  \item{lty,lwd}{the line types and widths for lines appearing in the
+  \item{lty, lwd}{the line types and widths for lines appearing in the
     legend.  One of these two \emph{must} be specified for line drawing.}
   \item{pch}{the plotting symbols appearing in the legend, either as
     vector of 1-character strings, or one (multi character)
-    string. \emph{Must} be specified for symbol drawing.}
+    string.  \emph{Must} be specified for symbol drawing.}
   \item{angle}{angle of shading lines.}
   \item{density}{the density of shading lines, if numeric and
     positive. If \code{NULL} or negative or \code{NA} color filling
@@ -41,12 +42,14 @@ legend(x, y = NULL, legend, fill = NULL, col = par("col"),
     values are \code{"o"} (the default) and \code{"n"}.}
   \item{bg}{the background color for the legend box.  (Note that this is
     only used if \code{bty != "n"}.)}
+  \item{box.lty, box.lwd}{the line type and width for the legend box.}
   \item{pt.bg}{the background color for the \code{\link{points}},
     corresponding to its argument \code{bg}.}
   \item{cex}{character expansion factor \bold{relative} to current
     \code{par("cex")}.}
   \item{pt.cex}{expansion factor(s) for the points.}
-  \item{pt.lwd}{line width for the points, defaults to the one for lines.}
+  \item{pt.lwd}{line width for the points, defaults to the one for
+    lines, or if that is not set, to \code{par("lwd")}.}
   \item{xjust}{how the legend is to be justified relative to the legend
     x location.  A value of 0 means left justified, 0.5 means centered
     and 1 means right justified.}
@@ -57,7 +60,7 @@ legend(x, y = NULL, legend, fill = NULL, col = par("col"),
     text.  Useful for y-adjustment when \code{labels} are
     \link{plotmath} expressions.}
   \item{text.width}{the width of the legend text in x (\code{"user"})
-    coordinates.
+    coordinates.  (Should be positive even for a reversed x axis.)
     Defaults to the proper value computed by \code{\link{strwidth}(legend)}.}
   \item{text.col}{the color used for the legend text.}
   \item{merge}{logical; if \code{TRUE}, \dQuote{merge} points and lines but

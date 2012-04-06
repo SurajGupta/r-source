@@ -51,8 +51,22 @@
   \code{[0123456789]} matches any single digit, and \code{[^abc]} matches
   anything except the characters \code{a}, \code{b} or \code{c}.  A range
   of characters may be specified by giving the first and last characters,
-  separated by a hyphen.  (Character ranges are interpreted in the
-  collation order of the current locale.)
+  separated by a hyphen.  (Because their interpretation is so
+  system-dependent, they are best avoided.)
+
+  The precise way character ranges are interpreted depends on the values
+  of \code{perl} and \code{ignore.case}.  For basic and extended regular
+  expressions the the collation order is taken from the OS's
+  implementation of the setting of the locale category
+  \code{LC_COLLATE}, so \code{[W-Z]} may include \code{x} and if it
+  does may or may not include \code{w}.  (In most English locales the
+  collation order is \code{wWxXyYzZ}.)  For caseless matching the
+  characters in a range are interpreted as if in lower case, so in an
+  English locale \code{[W-z]} matches \code{WXYZwxyz}.
+
+  For Perl regexps, the ranges are interpreted in the numerical order of
+  the characters, either as bytes in an 8-bit locale or as Unicode
+  points in a UTF-8 locale.
 
   Certain named classes of characters are predefined.  Their
   interpretation depends on the \emph{locale} (see \link{locales}); the
@@ -160,11 +174,6 @@
   The backreference \code{\\N}, where N is a single digit, matches the
   substring previously matched by the Nth parenthesized subexpression of
   the regular expression.
-
-  Before \R 2.1.0 \R attempted to support traditional usage by assuming
-  that \code{\{} is not special if it would be the start of an invalid
-  interval specification.  (POSIX allows this behaviour as an extension but
-  we no longer support it.)
 }
 \section{Basic Regular Expressions}{
   This section covers the regular expressions allowed if \code{extended
@@ -188,7 +197,7 @@
   \code{man pcrepattern} and \code{man pcreapi}) on your system or from
   the sources at
   \url{ftp://ftp.csx.cam.ac.uk/pub/software/programming/pcre/}. If PCRE
-  support was compiled from the sources within \R, the PCRE version is 6.4
+  support was compiled from the sources within \R, the PCRE version is 6.7
   as described here (version \eqn{\ge}{>=} 4.0 is required if \R is
   configured to use the system's PCRE library).
 
@@ -273,22 +282,12 @@
   and recursive patterns are not covered here.
 }
 \author{
-  This help page is based on the documentation of GNU grep 2.4.2 (from
-  which the C code used by \R used to be taken) the \code{pcre} man
-  page from PCRE 3.9 and the \code{pcrepattern} man page from PCRE 4.4.
-}
-\note{
-  Prior to \R 2.1.0 the implementation used was that of GNU \code{grep 2.4.2}:
-  as from \R 2.1.0 it is that of \code{glibc 2.3.3}.  The latter is more
-  strictly compliant and rejects some extensions that used to be
-  allowed.
-
-  The change was made both because bugs were becoming apparent in the
-  previous code and to allow support of multibyte character sets.
+  This help page is based on the documentation of GNU grep 2.4.2 and the
+  \code{pcrepattern} man page from PCRE 6.7.
 }
 \seealso{
   \code{\link{grep}}, \code{\link{apropos}}, \code{\link{browseEnv}},
-  \code{\link{help.search}}, \code{\link{list.files}},
+  \code{\link{glob2rx}}, \code{\link{help.search}}, \code{\link{list.files}},
   \code{\link{ls}} and \code{\link{strsplit}}.
   
   \url{http://www.opengroup.org/onlinepubs/009695399/basedefs/xbd_chap09.html}

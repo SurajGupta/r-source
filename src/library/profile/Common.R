@@ -26,9 +26,11 @@ options(warn = 0)
 options(timeout = 60)
 options(encoding = "native.enc")
 options(show.error.messages = TRUE)
+## keep in sync with PrintDefaults() in  ../../main/print.c :
 options(scipen = 0)
-options(max.print = 10000)# not yet exercised in 'core R'
+options(max.print = 99999)# max. #{entries} in internal printMatrix()
 options(add.smooth = TRUE)# currently only used in 'plot.lm'
+options(stringsAsFactors = TRUE)
 
 local({dp <- as.vector(Sys.getenv("R_DEFAULT_PACKAGES"))
        if(identical(dp, "")) # marginally faster to do methods last
@@ -50,43 +52,7 @@ local({dp <- as.vector(Sys.getenv("R_DEFAULT_PACKAGES"))
                     ' in options("defaultPackages") was not found', call.=FALSE)
     }
     sch <- search()
-    if(! "package:utils" %in% sch) {
-        autoload("example", "utils")
-        autoload("methods", "utils")
-        autoload("str", "utils")
-    }
     if(! "package:stats" %in% sch) {
-        autoload("aov", "stats")
-        autoload("lm", "stats")
-        autoload("lowess", "stats")
-        autoload("model.frame", "stats")
-        autoload("predict", "stats")
-        autoload("quantile", "stats")
-        autoload("rexp", "stats")
-        autoload("rnorm", "stats")
-        autoload("rpois", "stats")
-        autoload("rt", "stats")
-        autoload("runif", "stats")
         autoload("ts", "stats")
-        autoload("var", "stats")
-    }
-    if(! "package:graphics" %in% sch) {
-        autoload("barplot", "graphics")
-        autoload("boxplot", "graphics")
-        autoload("contour", "graphics")
-        autoload("coplot", "graphics")
-        autoload("hist", "graphics")
-        autoload("identify", "graphics")
-        autoload("image", "graphics")
-        autoload("layout", "graphics")
-        autoload("lines", "graphics")
-        autoload("matplot", "graphics")
-        autoload("pairs", "graphics")
-        autoload("par", "graphics")
-        autoload("persp", "graphics")
-        autoload("plot", "graphics")
-        autoload("points", "graphics")
-        autoload("text", "graphics")
-        autoload("xy.coords", "graphics")
     }
 }

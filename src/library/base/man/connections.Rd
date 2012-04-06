@@ -180,10 +180,6 @@ isIncomplete(con)
   unflushed output.
 }
 \section{Encoding}{
-  \strong{Note:} prior to \R 2.1.0 there was a byte-by-byte encoding
-  option applied to input only.  This has been replaced by a more
-  comprehensive scheme.
-
   The encoding of the input/output stream of a connection in \emph{text}
   mode can be specified by name, in the same way as it would be given to
   \code{\link{iconv}}: see that help page for how to find out what names are
@@ -332,13 +328,15 @@ unlink("ex.data")
 zz <- gzfile("ex.gz", "w")  # compressed file
 cat("TITLE extra line", "2 3 5 7", "", "11 13 17", file = zz, sep = "\n")
 close(zz)
-readLines(gzfile("ex.gz"))
+readLines(zz <- gzfile("ex.gz"))
+close(zz)
 unlink("ex.gz")
 
 zz <- bzfile("ex.bz2", "w")  # bzip2-ed file
 cat("TITLE extra line", "2 3 5 7", "", "11 13 17", file = zz, sep = "\n")
 close(zz)
-print(readLines(bzfile("ex.bz2")))
+print(readLines(zz <- bzfile("ex.bz2")))
+close(zz)
 unlink("ex.bz2")
 
 ## An example of a file open for reading and writing

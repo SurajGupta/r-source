@@ -9,9 +9,8 @@
 \usage{
 bxp(z, notch = FALSE, width = NULL, varwidth = FALSE,
     outline = TRUE, notch.frac = 0.5, log = "", border = par("fg"),
-    col = par("bg"), pars = NULL, frame.plot = axes,
-    horizontal = FALSE, add = FALSE, at = NULL, show.names = NULL,
-    \dots)
+    pars = NULL, frame.plot = axes, horizontal = FALSE, add = FALSE,
+    at = NULL, show.names = NULL, \dots)
 }
 \arguments{
   \item{z}{a list containing data summaries to be used in constructing
@@ -34,9 +33,6 @@ bxp(z, notch = FALSE, width = NULL, varwidth = FALSE,
     the \code{boxcol}, \code{medcol}, \code{whiskcol}, \code{staplecol},
     and \code{outcol} options (see below).
   }
-  \item{col}{character or numeric; the color within the box; recycled for
-    multiple boxes.  Is only used as a default for \code{boxfill} and has
-    been deprecated.}
   \item{log}{character, indicating if any axis should be drawn in
     logarithmic scale, as in \code{\link{plot.default}}.}
   \item{frame.plot}{logical, indicating if a \dQuote{frame}
@@ -52,7 +48,8 @@ bxp(z, notch = FALSE, width = NULL, varwidth = FALSE,
     defaults on whether an x-axis label is printed for each group.}
   \item{pars,\dots}{graphical parameters (etc) can be passed as
     arguments to this function, either as a list (\code{pars}) or
-    normally(\code{\dots}), see the following.
+    normally(\code{\dots}), see the following.  (Those in \code{\dots}
+    take precedence over those in \code{pars}.)
 
     Currently, \code{yaxs} and \code{ylim} are used \sQuote{along the
       boxplot}, i.e., vertically, when \code{horizontal} is
@@ -83,8 +80,8 @@ bxp(z, notch = FALSE, width = NULL, varwidth = FALSE,
 	line width, point character, point size expansion, color, and
 	background color.  The default \code{medpch= NA} suppresses the
 	point, and \code{medlty="blank"} does so for the line.
-	Note that (since R 2.1.0) \code{medlwd} defaults to
-      \eqn{3\times}{3 *} the \dQuote{default} \code{lwd}.}
+	Note that\code{medlwd} defaults to
+	\eqn{3\times}{3 *} the \dQuote{default} \code{lwd}.}
       \item{whisklty, whisklwd, whiskcol:}{whisker line type, width, and
 	color.}
       \item{staplelty, staplelwd, staplecol:}{staple (= end of whisker) line

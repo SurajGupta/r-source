@@ -10,7 +10,7 @@
            genericFunction = NULL) {
       checkTrace <- function(fun, what, f) {
           if(is(fun, "traceable")) {
-              warning(gettextf("the function being used as %s in making a generic function for '%s' is currently traced; the function used will have tracing removed",
+              warning(gettextf("the function being used as %s in making a generic function for \"%s\" is currently traced; the function used will have tracing removed",
                                what, f), domain = NA)
               .untracedFunction(fun)
           }
@@ -59,11 +59,14 @@
           fdefault <- checkTrace(fdefault)
           if(!identical(formalArgs(fdefault), formalArgs(fdef)) &&
              !is.primitive(fdefault))
-              stop(gettextf("the formal arguments of the generic function for '%s' (%s) differ from those of the non-generic to be used as the default (%s)",
+              stop(gettextf("the formal arguments of the generic function for \"%s\" (%s) differ from those of the non-generic to be used as the default (%s)",
                             f, paste(formalArgs(fdef), collapse = ", "),
                             paste(formalArgs(fdefault), collapse = ", ")),
                    domain = NA)
-          methods <- MethodsList(name, asMethodDefinition(fdefault))
+          fdefault <- asMethodDefinition(fdefault)
+          if(is(fdefault, "MethodDefinition"))
+            fdefault@generic <- value@generic
+          methods <- MethodsList(name, fdefault)
       }
       value@default <- methods
       assign(".Methods", methods, envir = ev)
@@ -139,10 +142,10 @@ makeStandardGeneric <-
       ## methods are prohibited)
       fgen <- genericForPrimitive(f)
       if(identical(fgen, FALSE))
-        stop(gettextf("special function '%s' is not permitted to have methods",
+        stop(gettextf("special function \"%s\" is not permitted to have methods",
                       f), domain = NA)
       if(is.null(fgen)) {
-        warning(gettextf("special function '%s' has no known argument list; will assume '(x, ...)'", f), domain = NA)
+        warning(gettextf("special function \"%s\" has no known argument list; will assume '(x, ...)'", f), domain = NA)
         ## unknown
         fgen <- function(x, ...) {}
       }
@@ -170,7 +173,7 @@ generic.skeleton <-
     if(is.null(fdefault)) {
       fdefault <- fdef
       body(fdefault) <- substitute(stop(MESSAGE, domain = NA), list(MESSAGE=
-          gettextf("invalid call in method dispatch to '%s' (no default method)", name)))
+          gettextf("invalid call in method dispatch to \"%s\" (no default method)", name)))
       environment(fdefault) <- baseenv()
     }
     skeleton[[1]] <- fdefault
@@ -215,9 +218,12 @@ getAllMethods <-
       if(is.null(basicDef)) {
           gwhere <- findFunction(f, where = where)
           if(length(gwhere) == 0)
-              stop(gettextf("'%s' is not a function visible from '%s'",
-                            f, getPackageName(where)), domain = NA)
-          ## TODO: deal with multiple versions
+            return( get(".Methods", envir = environment(fdef)))
+            ##
+             ##  stop(gettextf("\"%s\" is not a function visible from \"%s\"",
+             ##              f, getPackageName(where)), domain = NA)
+          ## in detach cases, just return cached version (This code is
+          ## on the way out anyway, with the arrival of methods tables)
           gwhere <- gwhere[[1]]
           if(search)
               fdef <- get(f, gwhere)
@@ -235,11 +241,11 @@ getAllMethods <-
           fdef <- getGeneric(f, TRUE, where)
       }
       else if(is.function(fdef) && search) {
-          warning(gettextf("'%s' from '%s' is a non-generic function; no methods available", f, getPackageName(gwhere)), domain = NA)
+          warning(gettextf("\"%s\" from \"%s\" is a non-generic function; no methods available", f, getPackageName(gwhere)), domain = NA)
           return(NULL)
       }
       else
-          stop(gettextf("invalid 'fdef' for '%s' in 'getAllMethods'; expected either a 'genericFunction object' or a primitive function, got an object of class \"%s\"", f, class(fdef)), domain = NA)
+          stop(gettextf("invalid 'fdef' for \"%s\" in 'getAllMethods'; expected either a 'genericFunction object' or a primitive function, got an object of class \"%s\"", f, class(fdef)), domain = NA)
       metaname <- mlistMetaName(fdef@generic, where)
       primCase <- is.primitive(deflt)
       ## NOTE: getGroup & getGeneric have to be called with the default
@@ -289,7 +295,7 @@ mergeMethods <-
     tmp <- listFromMlist(m2)
     sigs <- el(tmp, 1)
     methods <- el(tmp, 2)
-    for(i in seq(along=sigs)) {
+    for(i in seq_along(sigs)) {
       sigi <- el(sigs, i)
       args <- names(sigi)
       m1 <- insertMethod(m1, as.character(sigi), args, el(methods, i), FALSE)
@@ -331,7 +337,7 @@ conformMethod <-
     if(!any(omitted))
         return(signature)
     label <- paste("In method for function \"", f,"\": ", sep="")
-    if(!all(diff(seq(along=fnames)[!omitted]) > 0))
+    if(!all(diff(seq_along(fnames)[!omitted]) > 0))
         stop(label, "formal arguments in method and function do not appear in the same order")
     signature <- c(signature, rep("ANY", length(fnames)-length(signature)))
     if(any(is.na(match(signature[omitted], c("ANY", "missing"))))) {
@@ -410,34 +416,170 @@ getGeneric <-
   ##
   ## If there is no definition, throws an error or returns
   ## NULL according to the value of mustFind.
-  function(f, mustFind = FALSE, where = .genEnv(f, topenv(parent.frame()))) {
-    if(is.function(f) && is(f, "genericFunction"))
-        return(f)
-    value <- if(identical(where, baseenv()))
-        NULL
-      else
-          .getGeneric( f, as.environment(where))
+  function(f, mustFind = FALSE, where = .genEnv(f, topenv(parent.frame()), package),
+           package = "")
+{
+    if(is.function(f)) {
+        if(is(f, "genericFunction"))
+            return(f)
+        else if(is.primitive(f))
+            return(genericForPrimitive(.primname(f)))
+        else
+            stop("Argument f must be a string, generic function, or primitive: got an ordinary function")
+    }
+    value <- .getGeneric( f, where, package)
     if(is.null(value) && exists(f, "package:base", inherits = FALSE)) {
-      ## check for primitives
-      baseDef <- get(f, "package:base")
-      if(is.primitive(baseDef)) {
-          value <- genericForPrimitive(f)
-          if(!is.function(value) && mustFind)
-              stop(gettextf("methods cannot be defined for the primitive function '%s'", f), domain = NA)
-      }
+        ## check for primitives
+        baseDef <- get(f, "package:base")
+        if(is.primitive(baseDef)) {
+            value <- genericForPrimitive(f)
+            if(!is.function(value) && mustFind)
+                stop(gettextf("methods cannot be defined for the primitive function \"%s\"", f), domain = NA)
+            if(is(value, "genericFunction"))
+                value <- .cacheGeneric(f, value)
+        }
   }
     if(is.function(value))
         value
     else if(mustFind)
         ## the C code will have thrown an error if f is not a single string
-        stop(gettextf("no generic function found for '%s'", f), domain = NA)
+        stop(gettextf("no generic function found for \"%s\"", f), domain = NA)
     else
-      NULL
-  }
+        NULL
+}
 
 ## low-level version
-.getGeneric <- function(f, where) {
-    .Call("R_getGeneric", f, FALSE, as.environment(where), PACKAGE = "methods")
+.getGeneric <- function(f, where, package = "") {
+    if(isNamespace(where))
+        value <-.Call("R_getGeneric", f, FALSE, where, package,
+                     PACKAGE = "methods")
+    else {
+        ## first look in the cache (which should eventually be done in C for speed perhaps)
+        value <- .getGenericFromCache(f, where, package)
+        if(is.null(value)) {
+            value <- .Call("R_getGeneric", f, FALSE, as.environment(where), package,
+                           PACKAGE = "methods")
+            ## cache public generics
+            if(!is.null(value))
+              .cacheGeneric(f, value)
+        }
+    }
+    value
+}
+
+## cache and retrieve generic functions.  If the same generic name
+## appears for multiple packages, a named list of the generics is cached.
+.genericTable <- new.env(TRUE, baseenv())
+
+.cacheGeneric <- function(name, def) {
+    fdef <- def
+    if(exists(name, envir = .genericTable, inherits = FALSE)) {
+        newpkg <- def@package
+        prev <- get(name, envir = .genericTable)
+        if(is.function(prev)) {
+            if(identical(prev, def))
+               return(fdef)
+### the following makes the cached version != package
+##                   fdef <- def <- .makeGenericForCache(def)
+            pkg <- prev@package
+            if(identical(pkg, newpkg)) {# redefinition
+                assign(name, def, envir = .genericTable)
+                return(fdef)
+            }
+            prev <- list(prev) # start a per-package list
+            names(prev) <- pkg
+        }
+        i <- match(newpkg, names(prev))
+        if(is.na(i))
+           prev[[newpkg]] <- def # or, .makeGenericForCache(def) as above
+        else if(identical(def, prev[[i]]))
+          return(fdef)
+        else
+            prev[[i]] <- def # or, .makeGenericForCache(def) as above
+        def <- prev
+    }
+    if(.UsingMethodsTables())
+      .getMethodsTable(fdef) # force initialization
+    assign(name, def, envir = .genericTable)
+    fdef
+}
+
+.uncacheGeneric <- function(name, def) {
+    if(exists(name, envir = .genericTable, inherits = FALSE)) {
+        newpkg <- def@package
+        prev <- get(name, envir = .genericTable)
+        if(is.function(prev))  # we might worry if  prev not identical
+            return(remove(list = name, envir = .genericTable))
+         i <- match(newpkg, names(prev))
+        if(!is.na(i))
+           prev[[i]] <- NULL
+        else # we might warn about unchaching more than once
+          return()
+        if(length(prev) == 0)
+          return(remove(list = name, envir = .genericTable))
+        else if(length(prev) == 1)
+          prev <- prev[[1]]
+        assign(name, prev, envir  = .GenericTable)
+    }
+}
+
+.getGenericFromCache <- function(name, where, pkg = "") {
+    if(exists(name, envir = .genericTable, inherits = FALSE)) {
+        value <- get(name, envir = .genericTable)
+        if(is.list(value)) { # multiple generics with this name
+            ## force a check of package name, even if argument is ""
+            if(nchar(pkg) == 0) {
+                if(is.character(where))
+                  pkg <- where
+                else {
+                  pkg <- attr(name, "package")
+                  if(is.null(pkg))
+                    pkg <- getPackageName(where)
+                }
+            }
+            pkgs <- names(value)
+            i <- match(pkg, pkgs,0)
+            if(i > 0)
+              return(value[[i]])
+            i <- match("methods", pkgs,0)
+            if(i > 0)
+               return(value[[i]])
+             i <- match("base", pkgs,0)
+            if(i > 0)
+               return(value[[i]])
+           else
+              return(NULL)
+        }
+        else if(nchar(pkg) && !identical(pkg, value@package))
+                NULL
+        else
+          value
+     }
+    else
+      NULL
+}
+
+## copy the environments in the generic function so later merging into
+## the cached generic will not modify the generic in the package.
+## NOT CURRENTLY USED: see comments in .getGeneric()
+.makeGenericForCache <- function(fdef) {
+    value <- fdef
+    ev <- environment(fdef)
+    environment(value) <- newEv <- new.env(TRUE, parent.env(ev))
+    for(what in objects(ev, all=TRUE)) {
+        obj <- get(what, envir = ev)
+        if(is.environment(obj))
+          obj <- .copyEnv(obj)
+        assign(what, obj, envir = newEv)
+    }
+    value
+}
+
+.copyEnv <- function(env) {
+    value <- new.env(TRUE, parent.env(env))
+    for(what in objects(env))
+      assign(what, get(what, envir = env), envir = value)
+    value
 }
 
 getGroup <-
@@ -484,6 +626,8 @@ assignMethodsMetaData <-
   function(f, value, fdef, where, deflt = finalDefaultMethod(value)) {
     assign(mlistMetaName(fdef) # use generic function to get package correct
            , value, where)
+    ## assign the table version too, if not there  TODO:  WHY??
+    .assignMethodsMetaTable(value, fdef, where, FALSE)
     if(is.primitive(deflt))
         setPrimitiveMethods(f, deflt, "reset", fdef, NULL)
     if(is(fdef, "groupGenericFunction")) # reset or turn on members of group
@@ -507,82 +651,165 @@ mlistMetaName <-
       else if(missing(name))
           methodsPackageMetaName("M","")
       else if(is.character(name)) {
+          if(nchar(package) == 0) {
+              pkg <- packageSlot(name)
+              if(!is.null(pkg))
+                package <- pkg
+          }
           if(length(name) > 1 && !identical(package, "")) {
               value <- name
               name <- paste(name, package, sep=":")
-              for(i in seq(along = value))
+              for(i in seq_along(value))
                   value[[i]] = methodsPackageMetaName("M", name[[i]])
           }
           else if(nchar(package))
-             methodsPackageMetaName("M", paste(name, package, sep=":"))
+             return(methodsPackageMetaName("M", paste(name, package, sep=":")))
           else {
               if(is.null(fdef)) {
                   if(nchar(package)>0)
-                      where <- .requirePackage(package)
-                  else
-                      where <- topenv(parent.frame())
-                  fdef <- getGeneric(name, where = where)
-              }
-              if(is(fdef, "genericFunction"))
-                  methodsPackageMetaName("M", paste(fdef@generic, fdef@package, sep=":"))
-              else
-                  stop(gettextf("the methods object name for '%s' must include the name of the package that contains the generic function, but there is no generic function of this name", name), domain = NA)
+                    return(methodsPackageMetaName("M",paste(name,package, sep=":")))
+                  fdef <- getGeneric(name)
+                  if(!is(fdef, "genericFunction"))
+                        stop(gettextf("the methods object name for \"%s\" must include the name of the package that contains the generic function, but no generic function of this name was found", name), domain = NA)
+                  }
           }
+          methodsPackageMetaName("M", paste(fdef@generic, fdef@package, sep=":"))
       }
       else
           stop(gettextf("no way to associate a generic function with an object of class \"%s\"", class(name)), domain = NA)
   }
 
+## utility for getGenerics to return package(s)
+.packageForGeneric <- function(object) {
+    if(is.list(object)) # a list of objects
+      lapply(object, .packageForGeneric)
+    else if(is(object, "genericFunction"))
+      object@package
+    else # ?? possibly a primitive
+      "base"
+}
+
 getGenerics <-
   function(where, searchForm = FALSE) {
-      if(missing(where))
-          where <- .envSearch(topenv(parent.frame()))
-      else if(is.environment(where)) where <- list(where)
-    these <- character()
-    for(i in where) {
-      these <- c(these, objects(i, all=TRUE))
-    }
-    metaNameUndo(unique(these), prefix = "M", searchForm = searchForm)
+      if(missing(where)) {
+          ## all the packages cached ==? all packages with methods
+          ## globally visible.  Assertion based on cacheMetaData + setMethod
+          fnames <- as.list(objects(.genericTable, all=TRUE))
+          packages <- vector("list", length(fnames))
+          for(i in seq(along = fnames)) {
+              obj <- get(fnames[[i]], envir = .genericTable)
+              if(is.list(obj))
+                fnames[[i]] <-  names(obj)
+              packages[[i]] <- .packageForGeneric(obj)
+          }
+          new("ObjectsWithPackage", unlist(fnames), package=unlist(packages))
+      }
+      else {
+          if(is.environment(where)) where <- list(where)
+          these <- character()
+          for(i in where)
+            these <- c(these, objects(i, all=TRUE))
+          metaNameUndo(unique(these), prefix = "M", searchForm = searchForm)
+      }
   }
 
 allGenerics <- getGenerics
 
-## faster version for use outside methods
-.getGenerics <- function(where)
+## Find the pattern for methods lists or tables
+## Currently driven by mlists, but eventually these will go away
+## in favor of tables.
+
+## always returns a compatible list, with an option of  prefix
+.getGenerics <- function(where, trim = TRUE)
 {
     if(missing(where)) where <- .envSearch(topenv(parent.frame()))
     else if(is.environment(where)) where <- list(where)
     these <- character()
     for(i in where) these <- c(these, objects(i, all=TRUE))
-    these <- unique(these)
-    these <- these[substr(these, 1, 6) == ".__M__"]
-    gsub(".__M__(.*):([^:]+)", "\\1", these)
+    these <- allThese <- unique(these)
+    these <- these[substr(these, 1, 6) == ".__T__"]
+    funNames <- gsub(".__T__(.*):([^:]+)", "\\1", these)
+    if(length(funNames)==0 &&
+       length(these[substr(these, 1, 6) == ".__M__"])>0)
+      warning(gettextf(
+      "Package \"%s\" seems to have out-of-date methods; need to reinstall from source",
+                       getPackageName(where[[1]])))
+    packageNames <- gsub(".__T__(.*):([^:]+(.*))", "\\2", these)
+    attr(funNames, "package") <- packageNames
+    ## Would prefer following, but may be trouble bootstrapping methods
+    ## funNames <- new("ObjectsWithPackage", funNames, package = packageNames)
+    if(identical(trim, TRUE))
+      funNames
+    else {
+      if(identical(trim, FALSE))
+        these
+      else
+        gsub(".__T__", as.character(trim), these)
+    }
 }
 
 cacheMetaData <- function(where, attach = TRUE, searchWhere = as.environment(where)) {
     ## a collection of actions performed on attach or detach
     ## to update class and method information.
     generics <- .getGenerics(where)
-    for(f in generics) {
-        fdef <- getGeneric(f, FALSE, searchWhere)
+    packages <- attr(generics, "package")
+    if(length(packages) <  length(generics))
+      packages <- rep(packages, length = length(generics))
+    pkg <- getPackageName(where)
+     for(i in seq(along = generics)) {
+         f <- generics[[i]]
+         pkg <- packages[[i]]
+        fdef <- getGeneric(f, FALSE, searchWhere, pkg)
         ## silently ignores all generics not visible from searchWhere
-        ## (certainly reasonable for attach=FALSE, maybe for namespaces ?)
         if(is(fdef, "genericFunction")) {
-            methods <- getAllMethods(f, fdef, searchWhere)
-            cacheGenericsMetaData(f, fdef, attach, where, fdef@package, methods)
+          if(attach) {
+              env <- as.environment(where)
+              ## all instances of this generic in different attached packages must
+              ## be the cached version of the generic for consistent
+               ## method selection.
+             if(exists(f, envir = env, inherits = FALSE)) {
+                  def <- get(f, envir = env)
+                  if(!identical(def, fdef))
+                    .assignOverBinding(f, fdef,  env, FALSE)
+              }
+          }
+          else if(identical(fdef@package, pkg))
+            .uncacheGeneric(f, fdef)
+          if(.UsingMethodsTables())
+            methods <- .updateMethodsInTable(fdef, where, attach)
+          else
+            methods <- getAllMethods(f, fdef, if(attach) searchWhere
+            else .GlobalEnv)
+          cacheGenericsMetaData(f, fdef, attach, where, fdef@package, methods)
+          }
+        }
+    classes <- getClasses(where)
+    for(cl in classes) {
+        cldef <- getClassDef(cl, searchWhere)
+        if(is(cldef, "classRepresentation")) {
+            if(attach) {
+              .cacheClass(cl, cldef)
+              if(is(cldef, "ClassUnionRepresentation"))
+                .scanUnionClass(cl, cldef) # incorporate subclass info
+             }
+            else if(identical(cldef@package, pkg))
+              .uncacheClass(cl, cldef)
         }
     }
-}
+  }
+
 
 cacheGenericsMetaData <- function(f, fdef, attach = TRUE, where = topenv(parent.frame()),
-                                  package, methods = getAllMethods(f, fdef, where)) {
+                                  package, methods) {
     if(!is(fdef, "genericFunction")) {
-        warning(gettextf("no methods found for '%s'; 'cacheGenericsMetaData' will have no effect", f), domain = NA)
+        warning(gettextf("no methods found for \"%s\"; cacheGenericsMetaData() will have no effect", f), domain = NA)
         return(FALSE)
     }
     if(missing(package))
         package <- fdef@package
-    deflt <- finalDefaultMethod(methods)
+### Assetion: methods argument unused except for primitives
+### and then only for the old non-table case.
+    deflt <- finalDefaultMethod(fdef@default) #only to detect primitives
     if(is.primitive(deflt)) {
         if(attach) {
             if(missing(methods))
@@ -610,10 +837,14 @@ cacheGenericsMetaData <- function(f, fdef, attach = TRUE, where = topenv(parent.
         for(ff in members) {
             ffdef <- getGeneric(ff, where = where)
             if(is(ffdef, "genericFunction")) {
+              if(.UsingMethodsTables())
+                Recall(ff,ffdef, attach, where, methods = .getMethodsTable(ffdef))
+              else {
                 ## reform the methods list for the group member, to include
                 ## any group-inherited methods
                 mm <- getAllMethods(ff, ffdef, where = where)
                 Recall(ff, ffdef, attach, where, methods = mm)
+              }
             }
         }
     }
@@ -630,12 +861,8 @@ findUnique <- function(what, message, where = topenv(parent.frame()))
 {
     where <- .findAll(what, where = where)
     if(length(where) > 1) {
-        if(missing(message)) {
-            if(identical(doFind, findFunction))
-                message <- paste("function ", sQuote(what))
-            else
-                message <- sQuote(what)
-        }
+        if(missing(message))
+            message <- sQuote(what)
         if(is.list(where))
             where <- unlist(where)
         if(is.numeric(where))
@@ -666,7 +893,7 @@ MethodAddCoerce <- function(method, argName, thisClass, methodClass)
         }
         else if(is(method, "MethodsList")) {
             methods <- method@allMethods
-            for(i in seq(along=methods))
+            for(i in seq_along(methods))
                 methods[[i]] <- Recall(methods[[i]], addExpr)
             method@allMethods <- methods
         }
@@ -704,7 +931,7 @@ balanceMethodsList <- function(mlist, args, check = TRUE) {
             ## add methods.  If you roll your own, tough luck!
             return(mlist)
     }
-    for(i in seq(along = methods)) {
+    for(i in seq_along(methods)) {
         el <- methods[[i]]
         if(is(el, "MethodsList"))
             el <- Recall(el, moreArgs, FALSE)
@@ -734,7 +961,7 @@ sigToEnv <- function(signature, generic) {
     value <- new.env(parent = parent)
     classes <- as.character(signature)
     args <- names(signature)
-    for(i in seq(along=args))
+    for(i in seq_along(args))
         assign(args[[i]], classes[[i]], envir = value)
     ## missing args in signature have class "ANY"
     if(length(args) < length(genericSig))
@@ -759,7 +986,7 @@ methodSignatureMatrix <- function(object, sigSlots = c("target", "defined")) {
         for(Cl in classes)
             if(is(object, Cl))
                return(object)
-        stop(gettextf("invalid value from generic function '%s', class \"%s\", expected %s", fname, class(object), paste("\"", classes, "\"", sep = "", collapse = " or ")), domain = NA)
+        stop(gettextf("invalid value from generic function \"%s\", class \"%s\", expected %s", fname, class(object), paste("\"", classes, "\"", sep = "", collapse = " or ")), domain = NA)
     }
     ## empty test is allowed
     object
@@ -846,7 +1073,7 @@ metaNameUndo <- function(strings, prefix = "M", searchForm = FALSE) {
     if(is(x, "call")) {
         if(identical(x[[1]], quote(standardGeneric))) {
             if(!identical(x[[2]], fname))
-                warning(gettextf("the body of the generic function for '%s' calls 'standardGeneric' to dispatch on a different name ('%s')!",
+                warning(gettextf("the body of the generic function for \"%s\" calls 'standardGeneric' to dispatch on a different name (\"%s\")!",
                                  fname,
                                  paste(as.character(x[[2]]), collapse = "\n")),
                         domain = NA)
@@ -883,7 +1110,7 @@ metaNameUndo <- function(strings, prefix = "M", searchForm = FALSE) {
 
 .GenericInPrimitiveMethods <- function(mlist, f) {
     methods <- mlist@methods
-    for(i in seq(along = methods)) {
+    for(i in seq_along(methods)) {
         mi <- methods[[i]]
         if(is(mi, "function")) {
             body(mi, envir = environment(mi)) <-
@@ -893,7 +1120,7 @@ metaNameUndo <- function(strings, prefix = "M", searchForm = FALSE) {
         else if(is(mi, "MethodsList"))
             mi <- Recall(mi, f)
         else
-            stop(gettextf("internal error: Bad methods list object in fixing methods for primitive function '%s'", f), domain = NA)
+            stop(gettextf("internal error: Bad methods list object in fixing methods for primitive function \"%s\"", f), domain = NA)
         methods[[i]] <- mi
     }
     mlist@methods <- methods
@@ -941,7 +1168,7 @@ metaNameUndo <- function(strings, prefix = "M", searchForm = FALSE) {
     slist <- lapply(c(old, new), as.name)
     names(slist) <- c(new, old)
     vlist <- dlist
-    for(i in seq(along = vlist))
+    for(i in seq_along(vlist))
         vlist[[i]] <- do.call("substitute", list(vlist[[i]], slist))
     dnames <- names(dlist)
     whereNames <- match(old, dnames)
@@ -955,7 +1182,7 @@ metaNameUndo <- function(strings, prefix = "M", searchForm = FALSE) {
 ## The search list, or a namespace's static search list, or an environment
 .envSearch <- function(env = topenv(parent.frame())) {
     if(identical(env, .GlobalEnv))
-        seq(along = search())
+        seq_along(search())
     else if(isNamespace(env) && !isBaseNamespace(env)) {
         ## the static environments for this namespace, ending with the base namespace
         value <- list(env)
@@ -1004,7 +1231,7 @@ metaNameUndo <- function(strings, prefix = "M", searchForm = FALSE) {
     ## called more than nmax levels in could supply this argument
     if(nmax < 1) stop("got a negative maximum number of frames to look at")
     ev <- topenv(parent.frame()) # .GlobalEnv or the environment in which methods is being built.
-    for(back in seq(start = -n, length = nmax)) {
+    for(back in seq(from = -n, length = nmax)) {
         fun <- sys.function(back)
         if(is(fun, "function")) {
             ## Note that "fun" may actually be a method definition, and still will be counted.
@@ -1038,7 +1265,6 @@ metaNameUndo <- function(strings, prefix = "M", searchForm = FALSE) {
 }
 
 .genericAssign <- function(f, fdef, methods, where, deflt) {
-    primCase <- is.primitive(deflt)
     ev <- environment(fdef)
     assign(".Methods", methods, ev)
 }
@@ -1096,7 +1322,7 @@ matchDefaults <- function(method, generic) {
 getGroupMembers <- function(group, recursive = FALSE, character = TRUE) {
     .recMembers <- function(members, where) {
         all = vector("list", length(members))
-        for(i in seq(along=members)) {
+        for(i in seq_along(members)) {
             what <- members[[i]]
             f <- getGeneric(what, FALSE, where)
             if(!is.null(f))
@@ -1110,7 +1336,7 @@ getGroupMembers <- function(group, recursive = FALSE, character = TRUE) {
     }
     f <- getGeneric(group)
     if(is.null(f)) {
-        warning(gettextf("'%s' is not a generic function (or not visible here)",
+        warning(gettextf("\"%s\" is not a generic function (or not visible here)",
                          f), domain = NA)
         return(character())
     }
@@ -1118,8 +1344,12 @@ getGroupMembers <- function(group, recursive = FALSE, character = TRUE) {
         character()
     else {
         members <- f@groupMembers
-        if(recursive)
-            members <- .recMembers(members, f@package)
+        if(recursive) {
+          where <- f@package
+          if(identical(where, "base"))
+            where <- "methods" # no generics actually on base
+            members <- .recMembers(members, .asEnvironmentPackage(where))
+        }
         if(character)
             sapply(members, function(x){
                 if(is(x, "character"))
@@ -1142,3 +1372,6 @@ deletePrimMethods <- function(f, env) {
         .genericAssign(f, fdef, mlist, .GlobalEnv, get(f))
     }
 }
+
+.primname <- function(object)
+    .Call("R_get_primname", object, PACKAGE = "base")

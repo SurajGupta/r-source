@@ -1,7 +1,7 @@
 /*
  *  R : A Computer Language for Statistical Data Analysis
  *  Copyright (C) 1995, 1996, 1997  Robert Gentleman and Ross Ihaka
- *  Copyright (C) 2000-5       	    The R Development Core Team.
+ *  Copyright (C) 2000-6       	    The R Development Core Team.
  *  Copyright (C) 2005		    The R Foundation
  *
  *  This program is free software; you can redistribute it and/or modify
@@ -42,7 +42,7 @@
 # define hypot pythag
 #endif
 
-SEXP complex_unary(ARITHOP_TYPE code, SEXP s1)
+SEXP attribute_hidden complex_unary(ARITHOP_TYPE code, SEXP s1)
 {
     int i, n;
 #ifndef HAVE_C99_COMPLEX
@@ -136,7 +136,7 @@ static void complex_pow(Rcomplex *r, Rcomplex *a, Rcomplex *b)
 #ifdef Win32
 /* Need this because the system one is explicitly linked 
    against MSVCRT's pow, and gets (0+0i)^Y as 0+0i for all Y */
-double complex mycpow (double complex X, double complex Y)
+static double complex mycpow (double complex X, double complex Y)
 {
   double complex Res;
   if (X == 0.0) {
@@ -164,7 +164,7 @@ double complex mycpow (double complex X, double complex Y)
 #else /* not Win32 */
 /* reason for this: glibc gets (0+0i)^y = Inf+NaNi for y < 0
 */
-double complex mycpow (double complex X, double complex Y)
+static double complex mycpow (double complex X, double complex Y)
 {
     double tmp = cimag(Y);
     if (X == 0.0 && tmp == 0) {
@@ -183,7 +183,7 @@ double complex mycpow (double complex X, double complex Y)
 	i2 = (++i2 == n2) ? 0 : i2,\
 	++i)
 
-SEXP complex_binary(ARITHOP_TYPE code, SEXP s1, SEXP s2)
+SEXP attribute_hidden complex_binary(ARITHOP_TYPE code, SEXP s1, SEXP s2)
 {
     int i,i1, i2, n, n1, n2;
 #ifndef HAVE_C99_COMPLEX
@@ -199,6 +199,20 @@ SEXP complex_binary(ARITHOP_TYPE code, SEXP s1, SEXP s2)
 
     n = (n1 > n2) ? n1 : n2;
     ans = allocVector(CPLXSXP, n);
+#ifdef R_MEMORY_PROFILING
+    if (TRACE(s1) || TRACE(s2)){
+       if (TRACE(s1) && TRACE(s2)){
+	  if (n1>n2)
+	      memtrace_report(s1,ans);
+	  else 
+	      memtrace_report(s2, ans);
+       } else if (TRACE(s1))
+	   memtrace_report(s1,ans);
+       else /* only s2 */
+	   memtrace_report(s2, ans);
+       SET_TRACE(ans, 1);
+    }
+#endif
 
     switch (code) {
     case PLUSOP:
@@ -392,7 +406,7 @@ static void z_rround(Rcomplex *r, Rcomplex *x, Rcomplex *p)
 }
 
 #define MAX_DIGITS 22
-void z_prec_r(Rcomplex *r, Rcomplex *x, double digits)
+void attribute_hidden z_prec_r(Rcomplex *r, Rcomplex *x, double digits)
 {
     double m = 0.0, m1, m2;
     int dig, mag;
@@ -773,7 +787,7 @@ static Rboolean cmath1(void (*f)(), Rcomplex *x, Rcomplex *y, int n)
     return(naflag);
 }
 
-SEXP complex_math1(SEXP call, SEXP op, SEXP args, SEXP env)
+SEXP attribute_hidden complex_math1(SEXP call, SEXP op, SEXP args, SEXP env)
 {
     SEXP x, y;
     int n;
@@ -867,7 +881,7 @@ static SEXP cmath2(SEXP op, SEXP sa, SEXP sb, void (*f)())
 
 	/* Complex Functions of Two Arguments */
 
-SEXP complex_math2(SEXP call, SEXP op, SEXP args, SEXP env)
+SEXP attribute_hidden complex_math2(SEXP call, SEXP op, SEXP args, SEXP env)
 {
     switch (PRIMVAL(op)) {
     case 10001:

@@ -2,7 +2,7 @@
 RLIB=../../../library
 DPKG=$(RLIB)/$(PKG)
 SPKG=.
-SAVE=CHECK
+SAVE=false
 LAZY=false
 LAZYDATA=false
 
@@ -102,7 +102,7 @@ endif
 
 ## used to build skeletal versions of packages, enough to run
 ## package tools to install them properly
-Rcode: Rcode0 Dynlib
+Rcode: Rcode0 Dynlib0
 
 Rcode0:
 	@$(MKDIR) -p $(DPKG) $(DPKG)/R
@@ -231,9 +231,36 @@ Dynlib: srcDynlib
 	  $(CP) $(SDYNLIB) $(DPKG)/libs ; \
 	fi
 
+Dynlib0:
+ifneq ($(strip $(LOBJS)),)
+	@$(ECHO) "  making DLL ..."
+	@$(MAKE) --no-print-directory -C $(SPKG)/src RHOME=$(RHOME) \
+	  DLLNAME=$(DLLNAME) -f $(RHOME)/src/gnuwin32/MakeDll
+	@$(ECHO) "  ... DLL made"
+	@if test -f $(SDYNLIB) ; then \
+	  $(ECHO) "  installing DLL" ; \
+	  $(MKDIR) -p $(DPKG)/libs ; \
+	  $(CP) $(SDYNLIB) $(DPKG)/libs ; \
+	fi
+endif
+
 srcDynlib:
 ifeq ($(strip $(SRCMAKE)),)
 ifneq ($(strip $(LOBJS)),)
+ifneq ($(strip $(BUILD)),CROSS)
+	@$(ECHO) "  making DLL ..."
+	@makefiles="-f $(RHOME)/src/gnuwin32/MakeDll" ; \
+	if test -r "${HOME}/.R/Makevars.win"; then \
+	  makefiles="$${makefiles} -f ${HOME}/.R/Makevars.win"; \
+	elif test -r "${HOME}/.R/Makevars"; then \
+	  makefiles="$${makefiles} -f \"${HOME}/.R/Makevars\""; \
+	fi; \
+	CLINK_CPPFLAGS=`echo "tools:::.find_cinclude_paths(file='DESCRIPTION')" | $(REXE) R_DEFAULT_PACKAGES=NULL`; \
+	$(MAKE) --no-print-directory -C $(SSPKG) RHOME=$(RHOME) \
+	  DLLNAME=$(DLLNAME) CLINK_CPPFLAGS=$${CLINK_CPPFLAGS} \
+	  $${makefiles}
+	@$(ECHO) "  ... DLL made"
+else
 	@$(ECHO) "  making DLL ..."
 	@makefiles="-f $(RHOME)/src/gnuwin32/MakeDll" ; \
 	if test -r "${HOME}/.R/Makevars.win"; then \
@@ -242,8 +269,9 @@ ifneq ($(strip $(LOBJS)),)
 	  makefiles="$${makefiles} -f \"${HOME}/.R/Makevars\""; \
 	fi; \
 	$(MAKE) --no-print-directory -C $(SSPKG) RHOME=$(RHOME) \
-	  $${makefiles} DLLNAME=$(DLLNAME)
+	  DLLNAME=$(DLLNAME) $${makefiles}
 	@$(ECHO) "  ... DLL made"
+endif
 endif
 else
 	@$(ECHO) "  running src/Makefile.win ..."
@@ -319,12 +347,12 @@ lazyload:
 	  if ! test -f $(DPKG)/R/$(PKG).rdb ; then \
 	    $(ECHO)  "  preparing package $(PKG) for lazy loading" ; \
             (if test -s $(SPKG0)/R_PROFILE.R; then cat $(SPKG0)/R_PROFILE.R; fi; \
-	      $(ECHO) "invisible(.libPaths(c(.Library,\"$(RLIB)\", .libPaths()))); .getRequiredPackages(\"$(SPKG0)/DESCRIPTION\",useImports=TRUE); Sys.putenv('R_CROSS_BUILD'='$(R_X_BUILD)'); tools:::makeLazyLoading(\"$(PKG)\", lib.loc=\"$(RLIB)\")") | \
+	      $(ECHO) "options(warn=1); invisible(.libPaths(c(.Library,\"$(RLIB)\", .libPaths()))); .getRequiredPackages(\"$(SPKG0)/DESCRIPTION\",useImports=TRUE); Sys.putenv('R_CROSS_BUILD'='$(R_X_BUILD)'); tools:::makeLazyLoading(\"$(PKG)\", lib.loc=\"$(RLIB)\")") | \
 	      R_DEFAULT_PACKAGES=$(R_START_PACKAGES) \
-	      LC_COLLATE=C R_OSTYPE=windows $(REXE) > /dev/null || exit 1; \
+	      LC_ALL=C R_OSTYPE=windows $(REXE) > /dev/null || exit 1; \
 	    rm -f $(DPKG)/R/all.rda ; \
 	    if test -r install.R ; then \
-	      cat install.R >> $(DPKG)/R/$(PKG) ; \
+	      echo "WARNING:use of install.R is no longer supported" ; \
 	    fi ; \
 	  fi ; \
 	fi
@@ -333,9 +361,9 @@ lazydata:
 	@if test -d $(DPKG)/data; then \
 	  if ! test -f $(DPKG)/data/Rdata.rdb ; then \
 	    $(ECHO)  "  preparing package $(PKG) for lazy data loading" ; \
-	    $(ECHO) "invisible(.libPaths(c(.Library,\"$(RLIB)\", .libPaths()))); tools:::data2LazyLoadDB(\"$(PKG)\", lib.loc=\"$(RLIB)\")" | \
-	      R_CROSS_BUILD=$(R_X_BUILD) R_DEFAULT_PACKAGES=NULL \
-	      LC_COLLATE=C R_OSTYPE=windows $(REXE) > /dev/null  || exit 1; \
+	    $(ECHO) "options(warn=1); invisible(.libPaths(c(.Library,\"$(RLIB)\", .libPaths()))); tools:::data2LazyLoadDB(\"$(PKG)\", lib.loc=\"$(RLIB)\")" | \
+	      R_CROSS_BUILD=$(R_X_BUILD) R_DEFAULT_PACKAGES=$(R_START_PACKAGES) \
+	      LC_ALL=C R_OSTYPE=windows $(REXE) > /dev/null  || exit 1; \
 	  fi ; \
 	fi
 

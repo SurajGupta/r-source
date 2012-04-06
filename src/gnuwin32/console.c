@@ -311,7 +311,7 @@ extern int R_HistorySize;  /* from Defn.h */
 
 ConsoleData
 newconsoledata(font f, int rows, int cols, int bufbytes, int buflines,
-	       rgb fg, rgb ufg, rgb bg, int kind)
+	       rgb fg, rgb ufg, rgb bg, int kind, int buffered)
 {
     ConsoleData p;
 
@@ -360,6 +360,7 @@ newconsoledata(font f, int rows, int cols, int bufbytes, int buflines,
     p->mx1 = 14;
     p->sel = 0;
     p->input = 0;
+    p->lazyupdate = buffered;
     return (p);
 }
 
@@ -1317,9 +1318,12 @@ static void consoleunputc(control c)
 {
     ConsoleData p = getdata(c);
 
-    p->numkeys += 1;
-    if (p->firstkey > 0) p->firstkey -= 1;
-    else p->firstkey = NKEYS - 1 ;
+    if(p->clp) p->pclp--;
+    else {
+	p->numkeys += 1;
+	if (p->firstkey > 0) p->firstkey -= 1;
+	else p->firstkey = NKEYS - 1;
+    }
 }
 
 /* This scrolls as far left as possible */
@@ -1416,7 +1420,8 @@ int consolereads(control c, char *prompt, char *buf, int len, int addtohistory)
 	    USER(NUMLINES - 1) = prompt_wid;
 	    p->needredraw = 1;
 	}
-        if(chtype && (max_byte < len - 2)) { /* not a control char */
+        if(chtype && (max_byte <= len - 2 - MB_CUR_MAX)) { 
+	    /* not a control char: we need to fit in the char\n\0 */
 	    int i;
 	    if(mbcslocale) {
 		char s[9];
@@ -1531,8 +1536,8 @@ int consolereads(control c, char *prompt, char *buf, int len, int addtohistory)
 		    cur_byte += r_len - l_len;
 		}
 		break;
-	    default:   /* An unknown control char */
-		if (chtype || (cur_char=='\n') || (cur_char==EOFKEY)) {
+	    default:   /* Another control char, or overflow */
+		if (chtype || (cur_char == '\n') || (cur_char == EOFKEY)) {
 		    if (chtype) {
 			if (cur_byte == max_byte) {
 			    consoleunputc(c);
@@ -1541,12 +1546,17 @@ int consolereads(control c, char *prompt, char *buf, int len, int addtohistory)
 			    break;
 			}
 		    }
-		    cur_line[max_byte] = '\n';
-		    cur_line[max_byte + 1] = '\0';
-		    strcpy(buf, cur_line);
+		    if((cur_char == '\n') || (cur_char == EOFKEY)) {
+			cur_line[max_byte] = '\n';
+			cur_line[max_byte + 1] = '\0';
+		    } else {
+			cur_line[max_byte] = '\0';
+		    }
+		    /* just to be safe */
+		    strncpy(buf, cur_line, len);
 		    p->r = -1;
 		    cur_line[max_byte] = '\0';
-		    if (max_byte && addtohistory)  gl_histadd(cur_line);
+		    if (max_byte && addtohistory) gl_histadd(cur_line);
 		    xbuffixl(p->lbuf);
 		    consolewrites(c, "\n");
 		    REDRAW;
@@ -1640,14 +1650,14 @@ int fontsty, pointsize;
 int consoler = 25, consolec = 80, consolex = 0, consoley = 0;
 int pagerrow = 25, pagercol = 80;
 int pagerMultiple = 1, haveusedapager = 0;
-int consolebufb = DIMLBUF, consolebufl = MLBUF;
+int consolebufb = DIMLBUF, consolebufl = MLBUF, consolebuffered = 1;
 
 void
 setconsoleoptions(char *fnname,int fnsty, int fnpoints,
                   int rows, int cols, int consx, int consy,
 		  rgb nfg, rgb nufg, rgb nbg, rgb high,
 		  int pgr, int pgc, int multiplewindows, int widthonresize,
-		  int bufbytes, int buflines)
+		  int bufbytes, int buflines, int buffered)
 {
     char msg[LF_FACESIZE + 128];
     strncpy(fontname, fnname, LF_FACESIZE);
@@ -1688,6 +1698,7 @@ setconsoleoptions(char *fnname,int fnsty, int fnpoints,
     setWidthOnResize = widthonresize;
     consolebufb = bufbytes;
     consolebufl = buflines;
+    consolebuffered = buffered;
 }
 
 void consoleprint(console c)
@@ -1724,8 +1735,8 @@ void consoleprint(console c)
     fh = fontheight(f);
     rr = getheight(lpr) - top;
     cc = getwidth(lpr) - 2*left;
-    strncpy(title, gettext(c), 59);
-    if (strlen(gettext(c)) > 59) strcpy(&title[56], "...");
+    strncpy(title, GA_gettext(c), 59);
+    if (strlen(GA_gettext(c)) > 59) strcpy(&title[56], "...");
     cur = currentcursor();
     setcursor(WatchCursor);
 
@@ -1878,7 +1889,7 @@ console newconsole(char *name, int flags)
     p = newconsoledata((consolefn) ? consolefn : FixedFont,
 		       consoler, consolec, consolebufb, consolebufl,
 		       consolefg, consoleuser, consolebg,
-		       CONSOLE);
+		       CONSOLE, consolebuffered);
     if (!p) return NULL;
     c = (console) newwindow(name, rect(consolex, consoley, WIDTH, HEIGHT),
 			    flags | TrackMouse | VScrollbar | HScrollbar);

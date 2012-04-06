@@ -1,6 +1,6 @@
 
-R : Copyright 2006, The R Foundation for Statistical Computing
-Version 2.3.0 Patched (2006-05-16 r38088)
+R version 2.4.0 beta (2005-09-25 r39509)
+Copyright (C)  The R Foundation for Statistical Computing
 ISBN 3-900051-07-0
 
 R is free software and comes with ABSOLUTELY NO WARRANTY.
@@ -22,6 +22,10 @@ Type 'q()' to quit R.
 > RNGversion("1.6.2")
 Warning message:
 Buggy version of Kinderman-Ramage generator used. in: RNGkind("Marsaglia-Multicarry", "Buggy Kinderman-Ramage") 
+> 
+> ## force standard handling for data frames
+> options(stringsAsFactors=TRUE)
+> 
 > 
 > ### moved from various .Rd files
 > ## abbreviate
@@ -90,7 +94,7 @@ Max.     3  5
 +          list(NULL,letters[1:d.arr[2]],NULL,paste("V",4+1:d.arr[4],sep="")))
 > aa <- array(1:20,c(2,2,5))
 > str(apply(aa[FALSE,,,drop=FALSE], 1, dim))# empty integer, `incorrect' dim.
- int[, 0 ] 
+ int(0) 
 > stopifnot(
 +        apply(arr, 1:2, sum) == t(apply(arr, 2:1, sum)),
 +        aa == apply(aa,2:3,function(x) x),
@@ -351,7 +355,7 @@ There were 22 warnings (use warnings() to see them)
 > set.seed(123)
 > L3 <- LETTERS[1:3]
 > str(d <- data.frame(cbind(x=1, y=1:10), fac=sample(L3, 10, repl=TRUE)))
-`data.frame':	10 obs. of  3 variables:
+'data.frame':	10 obs. of  3 variables:
  $ x  : num  1 1 1 1 1 1 1 1 1 1
  $ y  : num  1 2 3 4 5 6 7 8 9 10
  $ fac: Factor w/ 2 levels "A","C": 1 1 2 2 2 2 2 2 2 1
@@ -367,9 +371,9 @@ NULL data frame with 0 rows
 > !identical(d00, d000)
 [1] TRUE
 > dput(d00)
-structure(list(), .Names = character(0), row.names = character(0), class = "data.frame")
+structure(list(), .Names = character(0), row.names = integer(0), class = "data.frame")
 > dput(d000)
-structure(list(), row.names = character(0), class = "data.frame")
+structure(list(), .Names = character(0), row.names = character(0), class = "data.frame")
 > stopifnot(identical(d, cbind(d, d0)),
 +           identical(d, cbind(d0, d)),
 +           identical(d, rbind(d,d.0)),
@@ -1912,23 +1916,23 @@ y    2    5 8
 > test <- as.data.frame(matrix(1:25, 5, 5))
 > test1 <- matrix(-(1:10), 2, 5)
 > rbind(test, test1)
-   V1 V2 V3 V4  V5
-1   1  6 11 16  21
-2   2  7 12 17  22
-3   3  8 13 18  23
-4   4  9 14 19  24
-5   5 10 15 20  25
-11 -1 -3 -5 -7  -9
-21 -2 -4 -6 -8 -10
+  V1 V2 V3 V4  V5
+1  1  6 11 16  21
+2  2  7 12 17  22
+3  3  8 13 18  23
+4  4  9 14 19  24
+5  5 10 15 20  25
+6 -1 -3 -5 -7  -9
+7 -2 -4 -6 -8 -10
 > rbind(test1, test)
-   V1 V2 V3 V4  V5
-1  -1 -3 -5 -7  -9
-2  -2 -4 -6 -8 -10
-11  1  6 11 16  21
-21  2  7 12 17  22
-3   3  8 13 18  23
-4   4  9 14 19  24
-5   5 10 15 20  25
+  V1 V2 V3 V4  V5
+1 -1 -3 -5 -7  -9
+2 -2 -4 -6 -8 -10
+3  1  6 11 16  21
+4  2  7 12 17  22
+5  3  8 13 18  23
+6  4  9 14 19  24
+7  5 10 15 20  25
 > ## 1.6.1 treated matrix as a vector.
 > 
 > 
@@ -2453,7 +2457,7 @@ x3  0.81       -0.97
 14     71
 15     72
 Warning message:
-drop argument will be ignored in: "[.data.frame"(women, "height", drop = FALSE) 
+drop argument will be ignored in: `[.data.frame`(women, "height", drop = FALSE) 
 > women["height", drop = TRUE]   # ditto
    height
 1      58
@@ -2472,7 +2476,7 @@ drop argument will be ignored in: "[.data.frame"(women, "height", drop = FALSE)
 14     71
 15     72
 Warning message:
-drop argument will be ignored in: "[.data.frame"(women, "height", drop = TRUE) 
+drop argument will be ignored in: `[.data.frame`(women, "height", drop = TRUE) 
 > women[,"height", drop = FALSE] # no warning
    height
 1      58
@@ -2646,7 +2650,7 @@ character(0)
 9 
 10
 attr(,"assign")
-numeric(0)
+integer(0)
 > 
 > (fit <- lm(y ~ x + 0))
 
@@ -3163,19 +3167,19 @@ $wt.res
 > ## Indexing non-existent columns in a data frame
 > x <- data.frame(a = 1, b = 2)
 > try(x[c("a", "c")])
-Error in "[.data.frame"(x, c("a", "c")) : undefined columns selected
+Error in `[.data.frame`(x, c("a", "c")) : undefined columns selected
 > try(x[, c("a", "c")])
-Error in "[.data.frame"(x, , c("a", "c")) : 
+Error in `[.data.frame`(x, , c("a", "c")) : 
 	undefined columns selected
 > try(x[1, c("a", "c")])
-Error in "[.data.frame"(x, 1, c("a", "c")) : 
+Error in `[.data.frame`(x, 1, c("a", "c")) : 
 	undefined columns selected
 > ## Second succeeded, third gave uniformative error message in 1.7.x.
 > 
 > 
 > ## methods(class = ) with namespaces, .Primitives etc (many missing in 1.7.x):
 > meth2gen <- function(cl)
-+     noquote(sub(paste("\\.",cl,"$",sep=""),"", methods(class = cl)))
++     noquote(sub(paste("\\.",cl,"$",sep=""),"", c(methods(class = cl))))
 > meth2gen("data.frame")
  [1] $<-           Math          Ops           Summary       [            
  [6] [<-           [[            [[<-          aggregate     as.data.frame
@@ -3466,7 +3470,7 @@ onUnload 'stats4' A
 > 
 > ## rep(0-length-vector, length.out > 0)
 > rep(integer(0), length.out=0)
-numeric(0)
+integer(0)
 > rep(integer(0), length.out=10)
  [1] NA NA NA NA NA NA NA NA NA NA
 > typeof(.Last.value)
@@ -3929,11 +3933,11 @@ list(y, offset(x), z)
 attr(,"offset")
 [1] 2
 attr(,"factors")
-numeric(0)
+integer(0)
 attr(,"term.labels")
 character(0)
 attr(,"order")
-numeric(0)
+integer(0)
 attr(,"intercept")
 [1] 1
 attr(,"response")
@@ -4528,9 +4532,9 @@ Signif. codes:  0 '***' 0.001 '**' 0.01 '*' 0.05 '.' 0.1 ' ' 1
 > x[rbind(c(1,1), c(2,2), c(3,0))]
 [1] 1 5
 > x[rbind(c(1,0), c(0,2), c(3,0))]
-numeric(0)
+integer(0)
 > x[rbind(c(1,0), c(0,0), c(3,0))]
-numeric(0)
+integer(0)
 > x[rbind(c(1,1), c(2,2), c(1,2))]
 [1] 1 5 4
 > x[rbind(c(1,1), c(2,NA), c(1,2))]
@@ -4726,9 +4730,10 @@ out-of-range values treated as 0 in coercion to raw
 [1] 2 2
 > # but not allowed
 > try(df2[df2 == 2] <- 1:2)
-Error: NAs are not allowed in subscripted assignments
+Error in x[[v]][thisvar] <- if (N > 1) value[n + (1:nv)] else value : 
+	NAs are not allowed in subscripted assignments
 > try(m2[m2 == 2] <- 1:2)
-Error in try(m2[m2 == 2] <- 1:2) : NAs are not allowed in subscripted assignments
+Error in m2[m2 == 2] <- 1:2 : NAs are not allowed in subscripted assignments
 > ##
 > 
 > 
@@ -4797,7 +4802,7 @@ coef[0] = 1
 > ## using NULL as a replacement value
 > DF <- data.frame(A=1:2, B=3:4)
 > try(DF[2, 1:3] <- NULL)
-Error in "[<-.data.frame"(`*tmp*`, 2, 1:3, value = NULL) : 
+Error in `[<-.data.frame`(`*tmp*`, 2, 1:3, value = NULL) : 
 	replacement has 0 items, need 3
 > ## wrong error message in R < 2.2.0
 > 
@@ -5172,6 +5177,13 @@ Error in sum(..., na.rm = na.rm) : invalid 'type' (raw) of argument
 Error in prod(..., na.rm = na.rm) : invalid 'type' (raw) of argument
 > ## Inf, -Inf, list(NULL) etc in 2.2.1
 > 
+> r <- hist(rnorm(100), plot = FALSE, breaks = 12,
++           ## arguments which don't make sense for plot=FALSE - give a warning:
++           right = FALSE, col = "blue")
+Warning message:
+arguments 'right', 'col' are not made use of in: hist.default(rnorm(100), plot = FALSE, breaks = 12, right = FALSE,  
+> ## gave no warning in 2.3.0 and earlier
+> 
 > 
 > ## rbind.data.frame on permuted cols (PR#8868)
 > d1 <- data.frame(x=1:10, y=letters[1:10], z=1:10)
@@ -5189,19 +5201,374 @@ Error in prod(..., na.rm = na.rm) : invalid 'type' (raw) of argument
 9   9 i  9
 10 10 j 10
 11  7 A  5
-21  8 B  4
-31  9 C  3
-41 10 D  2
-51 11 E  1
+12  8 B  4
+13  9 C  3
+14 10 D  2
+15 11 E  1
 > # got factor y  wrong in 2.3.0
 > # and failed with duplicated col names.
 > d1 <- data.frame(x=1:2, y=5:6, x=8:9, check.names=FALSE)
 > d2 <- data.frame(x=3:4, x=-(1:2), y=8:9, check.names=FALSE)
 > rbind(d1, d2)
-   x y  x
-1  1 5  8
-2  2 6  9
-11 3 8 -1
-21 4 9 -2
+  x y  x
+1 1 5  8
+2 2 6  9
+3 3 8 -1
+4 4 9 -2
 > ## corrupt in 2.3.0
+> 
+> 
+> ## sort.list on complex vectors was unimplemented prior to 2.4.0
+> x <- rep(2:1, c(2, 2)) + 1i*c(4, 1, 2, 3)
+> (o <- sort.list(x))
+[1] 3 4 2 1
+> x[o]
+[1] 1+2i 1+3i 2+1i 2+4i
+> sort(x)  # for a cross-check
+[1] 1+2i 1+3i 2+1i 2+4i
+> ##
+> 
+> 
+> ## PR#9044 write.table(quote=TRUE, row.names=FALSE) did not quote column names
+> m <- matrix(1:9, nrow=3, dimnames=list(c("A","B","C"),  c("I","II","III")))
+> write.table(m)
+"I" "II" "III"
+"A" 1 4 7
+"B" 2 5 8
+"C" 3 6 9
+> write.table(m, col.names=FALSE)
+"A" 1 4 7
+"B" 2 5 8
+"C" 3 6 9
+> write.table(m, row.names=FALSE)
+"I" "II" "III"
+1 4 7
+2 5 8
+3 6 9
+> # wrong < 2.3.1 patched.
+> write.table(m, quote=FALSE)
+I II III
+A 1 4 7
+B 2 5 8
+C 3 6 9
+> write.table(m, col.names=FALSE, quote=FALSE)
+A 1 4 7
+B 2 5 8
+C 3 6 9
+> write.table(m, row.names=FALSE, quote=FALSE)
+I II III
+1 4 7
+2 5 8
+3 6 9
+> d <- as.data.frame(m)
+> write.table(d)
+"I" "II" "III"
+"A" 1 4 7
+"B" 2 5 8
+"C" 3 6 9
+> write.table(d, col.names=FALSE)
+"A" 1 4 7
+"B" 2 5 8
+"C" 3 6 9
+> write.table(d, row.names=FALSE)
+"I" "II" "III"
+1 4 7
+2 5 8
+3 6 9
+> write.table(d, quote=FALSE)
+I II III
+A 1 4 7
+B 2 5 8
+C 3 6 9
+> write.table(d, col.names=FALSE, quote=FALSE)
+A 1 4 7
+B 2 5 8
+C 3 6 9
+> write.table(d, row.names=FALSE, quote=FALSE)
+I II III
+1 4 7
+2 5 8
+3 6 9
+> write.table(m, quote=numeric(0)) # not the same as FALSE
+"I" "II" "III"
+"A" 1 4 7
+"B" 2 5 8
+"C" 3 6 9
+> ##
+> 
+> 
+> ## removing variable from baseenv
+> try(remove("ls", envir=baseenv()))
+Error in remove("ls", envir = baseenv()) : 
+	cannot remove variables from the base environment
+> try(remove("ls", envir=asNamespace("base")))
+Error in remove("ls", envir = asNamespace("base")) : 
+	cannot remove variables from base namespace
+> ## no message in 2.3.1
+> 
+> 
+> ## tests of behaviour of factors
+> (x <- factor(LETTERS[1:5])[2:4])
+[1] B C D
+Levels: A B C D E
+> x[2]
+[1] C
+Levels: A B C D E
+> x[[2]]
+[1] C
+Levels: A B C D E
+> stopifnot(identical(x[2], x[[2]]))
+> as.list(x)
+[[1]]
+[1] B
+Levels: A B C D E
+
+[[2]]
+[1] C
+Levels: A B C D E
+
+[[3]]
+[1] D
+Levels: A B C D E
+
+> unlist(as.list(x))
+[1] B C D
+Levels: A B C D E
+> stopifnot(identical(x, unlist(as.list(x))))
+> as.vector(x, "list")
+[[1]]
+[1] B
+Levels: A B C D E
+
+[[2]]
+[1] C
+Levels: A B C D E
+
+[[3]]
+[1] D
+Levels: A B C D E
+
+> sapply(x, na.pass)
+[1] B C D
+Levels: A B C D E
+> stopifnot(identical(x, sapply(x, na.pass)))
+> ## changed in 2.4.0
+> 
+> 
+> ## as.character on a factor with "NA" level
+> as.character(as.factor(c("AB", "CD", NA)))
+[1] "AB" "CD" NA  
+> as.character(as.factor(c("NA", "CD", NA)))  # use <NA> is 2.3.x
+[1] "NA" "CD" NA  
+> as.vector(as.factor(c("NA", "CD", NA)))     # but this did not
+[1] "NA" "CD" NA  
+> ## used <NA> before
+> 
+> 
+> ## [ on a zero-column data frame, names of such
+> data.frame()[FALSE]
+NULL data frame with 0 rows
+> names(data.frame())
+character(0)
+> # gave NULL names and hence spurious warning.
+> 
+> 
+> ## residuals from zero-weight glm fits
+> d.AD <- data.frame(treatment = gl(3,3), outcome = gl(3,1,9),
++                    counts = c(18,17,15,20,10,20,25,13,12))
+> fit <- glm(counts ~ outcome + treatment, family = poisson,
++            data = d.AD, weights = c(0, rep(1,8)))
+> residuals(fit, type="working") # first was NA < 2.4.0
+          1           2           3           4           5           6 
+-0.31250000  0.15546875 -0.13231383 -0.11111111 -0.20909091  0.34622824 
+          7           8           9 
+ 0.11111111  0.02818182 -0.19226306 
+> ## working residuals were NA for zero-weight cases.
+> fit2 <- glm(counts ~ outcome + treatment, family = poisson,
++            data = d.AD, weights = c(0, rep(1,8)), y = FALSE)
+> for(z in c("response", "working", "deviance", "pearson"))
++     stopifnot(all.equal(residuals(fit, type=z), residuals(fit2, type=z),
++                         scale = 1, tol = 1e-10))
+> 
+> ## apply on arrays with zero extents
+> ## Robin Hankin, R-help, 2006-02-13
+> A <- array(0, c(3, 0, 4))
+> dimnames(A) <- list(a = letters[1:3], b = NULL, c = LETTERS[1:4])
+> f <- function(x) 5
+> apply(A, 1:2, f)
+
+  a
+  b
+  c
+> apply(A, 1, f)
+a b c 
+5 5 5 
+> apply(A, 2, f)
+numeric(0)
+> ## dropped dims in 2.3.1
+> 
+> 
+> ## print a factor with names
+> structure(factor(1:4), names = letters[1:4])
+a b c d 
+1 2 3 4 
+Levels: 1 2 3 4
+> ## dropped names < 2.4.0
+> 
+> 
+> ## some tests of factor matrices
+> A <- factor(7:12)
+> dim(A) <- c(2, 3)
+> A
+     [,1] [,2] [,3]
+[1,] 7    9    11  
+[2,] 8    10   12  
+Levels: 7 8 9 10 11 12
+> str(A)
+ factor [1:2, 1:3] 7 8 9 10 ...
+ - attr(*, "levels")= chr [1:6] "7" "8" "9" "10" ...
+> A[, 1:2]
+     [,1] [,2]
+[1,] 7    9   
+[2,] 8    10  
+Levels: 7 8 9 10 11 12
+> A[, 1:2, drop=TRUE]
+[1] 7  8  9  10
+Levels: 7 8 9 10
+> A[1,1] <- "9"
+> A
+     [,1] [,2] [,3]
+[1,] 9    9    11  
+[2,] 8    10   12  
+Levels: 7 8 9 10 11 12
+> ## misbehaved < 2.4.0
+> 
+> 
+> ## [dpqr]t with vector ncp
+> nc <- c(0, 0.0001, 1)
+> dt(1.8, 10, nc)
+[1] 0.08311639 0.08312972 0.26650393
+> pt(1.8, 10, nc)
+[1] 0.9489739 0.9489641 0.7584267
+> qt(0.95, 10, nc)
+[1] 1.812461 1.812579 3.041742
+> ## gave warnings in 2.3.1, short answer for qt.
+> dt(1.8, 10, -nc[-1])
+[1] 0.08310306 0.01074629
+> pt(1.8, 10, -nc[-1])
+[1] 0.9489837 0.9949472
+> qt(0.95, 10, -nc[-1])
+[1] 1.8123429 0.6797902
+> ## qt in 2.3.1 did not allow negative ncp.
+> 
+> 
+> ## merge() used to insert row names as factor, not character, so
+> ## sorting was unexpected.
+> A <- data.frame(a = 1:4)
+> row.names(A) <- c("2002-11-15", "2002-12-15", "2003-01-15", "2003-02-15")
+> B <- data.frame(b = 1:4)
+> row.names(B) <- c("2002-09-15", "2002-10-15", "2002-11-15", "2002-12-15")
+> merge(A, B, by=0, all=TRUE)
+   Row.names  a  b
+1 2002-09-15 NA  1
+2 2002-10-15 NA  2
+3 2002-11-15  1  3
+4 2002-12-15  2  4
+5 2003-01-15  3 NA
+6 2003-02-15  4 NA
+> 
+> 
+> ## assigning to a list loop index could alter the index (PR#9216)
+> L <- list(a = list(txt = "original value"))
+> f <- function(LL) {
++     for (ll in LL) ll$txt <- "changed in f"
++     LL
++ }
+> f(L)
+$a
+$a$txt
+[1] "original value"
+
+
+> L
+$a
+$a$txt
+[1] "original value"
+
+
+> ## both were changed < 2.4.0
+> 
+> 
+> ## summary.mlm misbehaved with na.action = na.exclude
+> n <- 50
+> x <- runif(n=n)
+> y1 <- 2 * x + rnorm(n=n)
+> y2 <- 5 * x + rnorm(n=n)
+> y2[sample(1:n, size=5)] <- NA
+> y <- cbind(y1, y2)
+> fit <- lm(y ~ 1, na.action="na.exclude")
+> summary(fit)
+Response y1 :
+
+Call:
+lm(formula = y1 ~ 1, na.action = "na.exclude")
+
+Residuals:
+     Min       1Q   Median       3Q      Max 
+-3.28057 -0.90572  0.04996  0.80200  2.54584 
+
+Coefficients:
+     Estimate Std. Error t value Pr(>|t|)    
+[1,]   1.1866     0.1797   6.602  4.4e-08 ***
+---
+Signif. codes:  0 '***' 0.001 '**' 0.01 '*' 0.05 '.' 0.1 ' ' 1 
+
+Residual standard error: 1.206 on 44 degrees of freedom
+  (5 observations deleted due to missingness)
+
+
+Response y2 :
+
+Call:
+lm(formula = y2 ~ 1, na.action = "na.exclude")
+
+Residuals:
+    Min      1Q  Median      3Q     Max 
+-4.4712 -0.6591  0.3364  1.0945  3.6686 
+
+Coefficients:
+     Estimate Std. Error t value Pr(>|t|)    
+[1,]   2.8988     0.2586   11.21 1.75e-14 ***
+---
+Signif. codes:  0 '***' 0.001 '**' 0.01 '*' 0.05 '.' 0.1 ' ' 1 
+
+Residual standard error: 1.735 on 44 degrees of freedom
+  (5 observations deleted due to missingness)
+
+
+> ## failed < 2.4.0
+> 
+> 
+> ## prettyNum lost attributes (PR#8695)
+> format(matrix(1:16, 4), big.mark = ",")
+     [,1] [,2] [,3] [,4]
+[1,] " 1" " 5" " 9" "13"
+[2,] " 2" " 6" "10" "14"
+[3,] " 3" " 7" "11" "15"
+[4,] " 4" " 8" "12" "16"
+> ## was a vector < 2.4.0
+> 
+> 
+> ## printing of complex numbers of very different magnitudes
+> 1e100  + 1e44i
+[1] 1e+100+0e+00i
+> 1e100 + pi*1i*10^(c(-100,0,1,40,100))
+[1] 1e+100+ 0.000000e+00i 1e+100+ 0.000000e+00i 1e+100+ 0.000000e+00i
+[4] 1e+100+ 0.000000e+00i 1e+100+3.141593e+100i
+> ## first was silly, second not rounded correctly in 2.2.0 - 2.3.1
+> ## We don't get them lining up, but that is a printf issue
+> ## that only happens for very large complex nos.
+> 
+> 
+> ### end of tests added in 2.4.0 ###
 > 

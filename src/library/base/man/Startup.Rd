@@ -24,9 +24,12 @@
   variables.  The name of the site file is the one pointed to by the
   environment variable \env{R\_ENVIRON}; if this is unset or empty,
   \file{\$R\_HOME/etc/Renviron.site} is used (if it exists, which it
-  does not in a \dQuote{factory-fresh} installation except on Windows).
+  does not in a \dQuote{factory-fresh} installation).
   The user files searched for are \file{.Renviron} in the current or in
   the user's home directory (in that order).
+#ifdef windows
+  (See \sQuote{See also} for how the home directory is found on Windows.
+#endif
   See \bold{Details} for how the files are read.
 
   Then \R searches for the site-wide startup profile unless the command
@@ -113,23 +116,12 @@
   for Windows.
 #endif
 }
-\section{Historical notes}{
-  Prior to \R version 1.4.0, the environment files searched were
-  \file{.Renviron} in the current directory, the file pointed to by
-  \env{R\_ENVIRON} if set, and \file{.Renviron} in the user's home
-  directory.  What is now \file{Rprofile.site} was called \file{Rprofile}.
-
-  Prior to \R version 1.2.1, \file{.Rprofile} was sourced after
-  \file{.RData} was loaded, although the documented order was as here.
-
-  The format for site and user environment files was changed in version
-  1.2.0.  Older files are quite likely to work but may generate warnings
-  on startup if they contained unnecessary \code{export} statements.
-
-  Values in environment files were not processed prior to version
-  1.4.0.
-}
 \seealso{
+#ifdef windows
+  For the definition of the home directory see the rw-FAQ.  It can be
+  found from a running \R by \code{Sys.getenv("R_USER")}.
+
+#endif
   \code{\link{.Last}} for final actions before termination.
   \code{\link{commandArgs}} for accessing the command line arguments.
 

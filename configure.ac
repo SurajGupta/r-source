@@ -2,7 +2,7 @@
 ###
 ### Process this file with autoconf to produce a configure script.
 ###
-### Copyright (C) 1998-2005 R Core Team
+### Copyright (C) 1998-2006 R Core Team
 ###
 ### This file is part of R.
 ###
@@ -185,6 +185,19 @@ else
 fi],
 [want_R_profiling=yes])
 
+## Allow the user to specify support for memory profiling.
+AC_ARG_ENABLE([memory-profiling],
+[AC_HELP_STRING([--enable-memory-profiling],
+                [attempt to compile support for Rmemprof(), tracemem() @<:@yes@:>@])],
+[if test "${enableval}" = no; then
+  want_memory_profiling=no
+elif test "${enableval}" = yes; then
+  want_memory_profiling=yes
+else
+  want_memory_profiling=no
+fi],
+[want_memory_profiling=no])
+
 ## Allow the user to specify building an R framework (Darwin).
 AC_ARG_ENABLE([R-framework],
 [AC_HELP_STRING([--enable-R-framework@<:@=DIR@:>@],
@@ -232,7 +245,20 @@ AC_ARG_ENABLE([R-shlib],
                 [build the shared/dynamic library 'libR' @<:@no@:>@])],
 [want_R_shlib="${enableval}"],
 [want_R_shlib="${want_R_framework}"])
-## processed after GNOME, which can set this.
+AM_CONDITIONAL(WANT_R_SHLIB, [test "x${want_R_shlib}" = xyes])
+
+## Build separate shared library containing R's BLAS if desired 
+AC_ARG_ENABLE([BLAS-shlib],
+[AC_HELP_STRING([--enable-BLAS-shlib],
+                [build BLAS into a shared library @<:@perhaps@:>@])],
+[use_blas_shlib="${enableval}"],
+[use_blas_shlib="unset"])
+
+if test "${want_R_shlib}" = yes; then
+  LIBR="-L\$(R_HOME)/lib\$(R_ARCH) -lR"
+else
+  LIBR=
+fi
 
 ## Enable maintainer-specific portions of Makefiles.
 AC_ARG_ENABLE([maintainer-mode],
@@ -268,10 +294,10 @@ AC_ARG_ENABLE([mbcs],
 ## BLAS.
 AC_ARG_WITH([blas],
 [AC_HELP_STRING([--with-blas],
-                [use BLAS library, or specify it @<:@yes@:>@])],
+                [use BLAS library, or specify it @<:@no@:>@])],
 [R_ARG_USE(blas)],
 [use_blas=unset])
-# default is "yes" except on MacOS X
+# default is "no" except on MacOS X
 
 ## LAPACK.
 AC_ARG_WITH([lapack],
@@ -357,15 +383,6 @@ AC_ARG_WITH([valgrind-instrumentation],
                 [Level of additional instrumentation for Valgrind (0/1/2) @<:@0@:>@])],
 [valgrind_level=${withval}],
 [valgrind_level=0])
-
-## needs to come after GNOME
-AM_CONDITIONAL(WANT_R_SHLIB, [test "x${want_R_shlib}" = xyes])
-if test "${want_R_shlib}" = yes; then
-  LIBR="-L\$(R_HOME)/lib\$(R_ARCH) -lR"
-else
-  LIBR=
-fi
-AC_SUBST(LIBR)
 
 ## <FIXME>
 ## Completely disable using libtool for building shlibs until libtool
@@ -454,6 +471,7 @@ AC_ARG_VAR([SAFE_FFLAGS],
 	   [Safe Fortran 77 compiler flags for e.g. dlamc.f])
 AC_ARG_VAR([r_arch],
            [Use architecture-dependent subdirs with this name])
+AC_ARG_VAR([DEFS], [C defines for use when compiling R])
 
 if test -z "${r_arch}"; then
   R_ARCH=
@@ -524,6 +542,11 @@ R_PROG_F77
 AC_PROG_CXX
 AC_PROG_CXXCPP
 R_GCC4_VISIBILITY
+
+## This has to be R_DEFS as autoconf overrrides DEFS
+R_DEFS=${DEFS}
+AC_SUBST(R_DEFS)
+
 
 ## Libtool.
 ## (Run this after R_PROG_F77, as AC_PROG_LIBTOOL checks for a
@@ -1026,7 +1049,7 @@ AC_SUBST(R_XTRA_LIBS)
 ## user did not provide defaults, an error results.  A warning is given
 ## if nothing was obtained for SHLIB_CXXLDFLAGS.
 ##
-## Note also that some systems (notably AIX) do not allow for unresolved
+## Note also that some systems (formerly AIX) do not allow for unresolved
 ## symbols at link time.  For such systems, we link against -lm (in case
 ## it exists) when building a shlib module via SHLIB_LIBADD.
 
@@ -1110,23 +1133,33 @@ if test "${GXX}" = yes; then
 fi
 
 ## Step 3.  Individual platform overrides.
+dylib_undefined_allowed=yes
 case "${host_os}" in
+  aix[123]*|aix4.[01]*)
+    ## These need a form of linking we no longer support
+    AC_MSG_ERROR([AIX prior to 4.2 is not supported])
+    ;;
   aix*)
-    use_exportfiles=yes
+    ## now use run-time linking
+    # use_exportfiles=yes
     ## All AIX code is PIC.
     cpicflags=
     cxxpicflags=
     fpicflags=
+    ## not clear if this is correct for native compilers
     wl="-Wl,"
-    main_ldflags="${wl}-bdynamic ${wl}-bE:\$(top_builddir)/etc/R.exp ${wl}-bM:SRE"
-    shlib_ldflags="${wl}-bM:SRE ${wl}-H512 ${wl}-T512 ${wl}-bnoentry ${wl}-bexpall ${wl}-bI:\$(R_HOME)/etc/R.exp"
+    ## libtool suggests that ia64 needs -Bexport and not -brtl
+    ## but we have no confirmation.
+    main_ldflags="${wl}-brtl ${wl}-bexpall"
+    shlib_ldflags="${wl}-G ${wl}-bexpall ${wl}-bnoentry"
+#    main_ldflags="${wl}-bdynamic ${wl}-bE:\$(top_builddir)/etc/R.exp ${wl}-bM:SRE"
+#    shlib_ldflags="${wl}-bM:SRE ${wl}-H512 ${wl}-T512 ${wl}-bnoentry ${wl}-bexpall ${wl}-bI:\$(R_HOME)/etc/R.exp"
     SHLIB_LIBADD="\$(LIBM)"
     ;;
   darwin*)
-    cpicflags="-fPIC -fno-common"
-    cxxpicflags="-fPIC -fno-common"
-    fpicflags="-fPIC -fno-common"
-
+    darwin_pic="-fPIC"
+    dylib_undefined_allowed=no
+    darwin_dylib_ldflags="-dynamiclib"
     ## Used to need this for GUI and quartz device, but neither are in
     ## R or libR.dylib any longer (2.1.0).
     ## main_ldflags="-framework Carbon"
@@ -1145,11 +1178,63 @@ case "${host_os}" in
       ## the paths to these change when installing.
       ## The Darwin 1.[012] special casing is from libtool and could be
       ## eliminated ('-flat_namespace' is the default if available).
+      ## FIXME: Rblas is entirely untested and possibly doesn't work
+      ## for any darwin before darwin7!
       darwin1.[[012]]*)
-        shlib_ldflags="-bundle -undefined suppress" ;;
+        shlib_ldflags="-bundle -undefined suppress"
+        darwin_pic="${darwin_pic} -fno-common"
+        ;;
+      ## although OS X 10.3 (Panther = Darwin 7) has some useful features,
+      ## dlopen doesn't work with dylibs and RTLD_LOCAL, so we can't use them.
+      darwin[[567]]*)
+	shlib_ldflags="-flat_namespace -bundle -undefined suppress"
+        darwin_pic="${darwin_pic} -fno-common"
+        ;;
+      ## * recent ld has -single_module so it doesn't need -fno-common
+      ##   we have to use dylib instead of a bundle
+      ## * dylib+single_module+flat_namespace=pretty much what other platforms call .so
+      ##   but there can be no multiple symbols (due to flat namespace)
+      ## * since 10.3 we can also use -undefined dynamic_lookup which allows us to
+      ##   use two-level namespace and still have undefined symbols
       *)
-	shlib_ldflags="-flat_namespace -bundle -undefined suppress" ;;
+        ## FIXME: strictly speaking it should be "yes" but libRblas still
+	## needs -lgfortran because the sharing is a one-way street
+        ## dylib_undefined_allowed=yes
+	AC_MSG_CHECKING([whether linker supports dynamic lookup])
+	shlib_ldflags="-dynamiclib -Wl,-macosx_version_min -Wl,10.3 -undefined dynamic_lookup -single_module -multiply_defined suppress"
+	AC_CACHE_VAL([r_cv_has_dynlookup],[
+[cat > conftest.c <<EOF
+  void dummy() { }
+EOF]
+echo "${CC} ${CFLAGS} conftest.c ${shlib_ldflags} -o libconftest${DYLIB_EXT} ${LIBS}" >&AS_MESSAGE_LOG_FD
+if ${CC} ${CFLAGS} conftest.c ${shlib_ldflags} -o libconftest${DYLIB_EXT} ${LIBS} 1>&AS_MESSAGE_LOG_FD 2>&AS_MESSAGE_LOG_FD; then
+   r_cv_has_dynlookup=yes
+   AC_MSG_RESULT([yes])
+else
+   r_cv_has_dynlookup=no
+   AC_MSG_RESULT([no])
+   AC_MSG_WARN([***  Please consider updating your Xcode tools. ***])
+fi
+rm -f libconftest${DYLIB_EXT} conftest.c
+])
+	if test -n "${FORCE_FLAT_NAMESPACE}"; then
+	   AC_MSG_WARN([Use of flat namespace is requested by user.])
+	   r_cv_has_dynlookup=forced-no
+	fi
+	if test "${r_cv_has_dynlookup}" != "yes"; then
+	   shlib_ldflags="-dynamiclib -flat_namespace -undefined suppress -single_module -multiply_defined suppress"
+	   dylib_undefined_allowed=yes
+	fi
+	
+	## we use the same method for shlib and dylib now
+	darwin_dylib_ldflags="${shlib_ldflags}"
+	## side note: we could use flat namespace instead, but there is an exception:
+	## * libRblas must be 2-level, dyn lookup because of xerbla which is undefined
+        ;;
     esac
+    cpicflags="${darwin_pic}"
+    cxxpicflags="${darwin_pic}"
+    fpicflags="${darwin_pic}"
     shlib_cxxldflags="${shlib_ldflags}"
     if test "${ac_cv_lib_cc_dynamic_main}" = yes; then
       ## Could also try grepping LIBS for '-lcc_dynamic' ...
@@ -1252,6 +1337,7 @@ case "${host_os}" in
     fi
     ;;
   openbsd*)
+    ## looks like ${wl} is not defined here.  Perhaps in libtool code?
     if test -z "`echo __ELF__ | $CC -E - | grep __ELF__`"; then
       main_ldflags="${wl}-export-dynamic"
       shlib_ldflags="-shared -fPIC"
@@ -1382,18 +1468,21 @@ DYLIB_EXT="${SHLIB_EXT}"
 dylib_ldflags="${SHLIB_LDFLAGS}"
 LIBR_LDFLAGS=""
 RLAPACK_LDFLAGS=""
+RBLAS_LDFLAGS=""
 case "${host_os}" in
   aix*)
-    ## Pure guesswork so far
-    RLAPACK_LDFLAGS="${wl}-bE:\$(top_builddir)/etc/Rlapack.exp"
-    LAPACK_LDFLAGS="${wl}-bI:\$(R_HOME)/etc/Rlapack.exp"
+    ## Not needed for -brtl linking
+    # RLAPACK_LDFLAGS="${wl}-bE:\$(top_builddir)/etc/Rlapack.exp"
+    # LAPACK_LDFLAGS="${wl}-bI:\$(R_HOME)/etc/Rlapack.exp"
     ;;
   darwin*)
     DYLIB_EXT=".dylib"
-    dylib_ldflags="-dynamiclib"
+    dylib_ldflags="${darwin_dylib_ldflags}"
     MAJR_VERSION=`echo "${PACKAGE_VERSION}" | sed  -e "s/[[\.]][[1-9]]$/.0/"` 
-    LIBR_LDFLAGS="-dynamiclib -install_name libR.dylib -compatibility_version ${MAJR_VERSION}  -current_version ${PACKAGE_VERSION}  -headerpad_max_install_names"
-    RLAPACK_LDFLAGS="-install_name \$(Rexeclibdir)/libRlapack.dylib"
+    LIBR_LDFLAGS="-install_name libR.dylib -compatibility_version ${MAJR_VERSION}  -current_version ${PACKAGE_VERSION}  -headerpad_max_install_names"
+    RLAPACK_LDFLAGS="-install_name libRlapack.dylib -compatibility_version ${MAJR_VERSION} -current_version ${PACKAGE_VERSION}  -headerpad_max_install_names"
+    ## don't use version in libRblas so we can replace it with any BLAS implementation
+    RBLAS_LDFLAGS="-install_name libRblas.dylib -headerpad_max_install_names"
     ;;
   hpux*)
     ## Needs to avoid embedding a relative path ../../../bin.
@@ -1423,6 +1512,8 @@ else
   fi
 fi
 
+AM_CONDITIONAL(DYLIB_UNDEFINED_ALLOWED, [test "x${dylib_undefined_allowed}" = xyes])
+
 AC_SUBST(MAIN_LD)
 AC_SUBST(MAIN_LDFLAGS)
 AC_SUBST(CPICFLAGS)
@@ -1443,6 +1534,7 @@ system.])
 AM_CONDITIONAL(USE_EXPORTFILES, [test "x${use_exportfiles}" = xyes])
 AC_SUBST(DYLIB_EXT)
 AC_SUBST(LIBR_LDFLAGS)
+AC_SUBST(RBLAS_LDFLAGS)
 AC_SUBST(RLAPACK_LDFLAGS)
 AC_SUBST(LAPACK_LDFLAGS)
 AC_SUBST(FW_VERSION)
@@ -1483,7 +1575,7 @@ R_CHECK_FUNCS([getpwuid], [#include <pwd.h>])
 R_CHECK_FUNCS([sigaction sigaltstack sigemptyset], [#include <signal.h>])
 R_CHECK_FUNCS([va_copy __va_copy], [#include <stdarg.h>])
 R_CHECK_FUNCS([fdopen popen], [#include <stdio.h>])
-R_CHECK_FUNCS([realpath setenv system unsetenv], [#include <stdlib.h>])
+R_CHECK_FUNCS([setenv system unsetenv], [#include <stdlib.h>])
 R_CHECK_FUNCS([strcoll strerror], [#include <string.h>])
 R_CHECK_FUNCS([getrlimit getrusage], [#include <sys/resource.h>])
 R_CHECK_FUNCS([mkfifo stat], [#include <sys/stat.h>])
@@ -1500,6 +1592,11 @@ AC_CHECK_DECLS([putenv], , , [#include <stdlib.h>])
 ## this is a GNU extension so usually hidden
 AC_CHECK_FUNCS(vasprintf)
 AC_CHECK_DECLS([vasprintf], , , [#include <stdio.h>])
+## this is a BSD extension. Some systems have it in unistd.h.
+AC_CHECK_FUNCS(realpath)
+AC_CHECK_DECLS([realpath], , , [#include <stdlib.h>
+#include <unistd.h>])
+
 
 ## <NOTE>
 ## No need checking for bcopy bzero memcpy mempcpy even though ifnames
@@ -1571,25 +1668,126 @@ R_CHECK_FRAMEWORK(cblas_cdotu_sub, vecLib)
 ## This has to come *after* checking for Fortran 77 compiler/converter
 ## characteristics (notably name mangling and FLIBS).
 ## </NOTE>
-## The defaults are different on MacOS X
-if test "${use_blas}" = "unset"; then
-  use_blas=yes
+
+if test "${use_blas}" = yes; then
+  ## may acx_blas_ok to yes
+  R_BLAS_LIBS
+fi
+
+if test "${acx_blas_ok}" != "yes"; then
   case "${host_os}" in
-    darwin*)
-      if test "${have_vecLib_fw}" = "yes"; then
-        with_blas="-framework vecLib"
-        if test "${use_lapack}" = "unset"; then
-          use_lapack="yes"
-          with_lapack=""
-        fi
-      fi
+    darwin[[1-7]]*|aix*)
       ;;
     *)
+      if test "${use_blas_shlib}" = "unset"; then
+        use_blas_shlib="yes"
+      fi
       ;;
   esac
 fi
-if test "${use_blas}" = yes; then
-  R_BLAS_LIBS
+
+AM_CONDITIONAL(BLAS_SHLIB, [test "x${use_blas_shlib}" = xyes])
+
+case "${host_os}" in
+  darwin*)
+    ## In order to allow the R build to be relocatable, we strip paths
+    ## from all shlibs and rely on DYLD_LIBRARY_PATH. Unfortunately
+    ## Darwin linker ignores it at build-time and doesn't use -L to
+    ## resolve dylib dependencies, so libRblas will not be found unless
+    ## we tell ld where it lives. I don't know of any more elegant solution :/
+    if test "x${use_blas_shlib}" = xyes; then
+      LIBR="${LIBR} -dylib_file libRblas.dylib:\$(R_HOME)/lib\$(R_ARCH)/libRblas.dylib"
+    fi
+  ;;
+esac
+AC_SUBST(LIBR)
+
+## This version is used to build a shared BLAS lib
+BLAS_LIBS0=${BLAS_LIBS}
+
+## external BLAS + shared BLAS lib = we need to pass symbols through
+## this may require some magic
+if test "${acx_blas_ok}" = yes -a "${use_blas_shlib}" = yes; then
+  case "${host_os}" in
+    darwin*)
+    ## test whether we can see symbols through the proxy BLAS library
+    ## this test could be modified to not be Darwin-specific,
+    ## however the fix is darwin-specific
+    if test "${r_cv_prog_f77_append_underscore}" = yes; then
+      dgemm=dgemm_
+      xerbla=xerbla_
+    else
+      dgemm=dgemm
+      xerbla=xerbla
+    fi
+    AC_MSG_CHECKING([whether external BLAS is visible through libRblas])
+    AC_CACHE_VAL([r_cv_blas0_passthrough],[
+[cat > conftestl.c <<EOF
+  void ${dgemm}();
+  void dummy() { ${dgemm}(); }
+EOF]
+echo "${CC} ${CFLAGS} conftestl.c ${SHLIB_LDFLAGS} -o libconftest${DYLIB_EXT} ${LIBS} ${BLAS_LIBS}" >&AS_MESSAGE_LOG_FD
+${CC} ${CFLAGS} conftestl.c ${SHLIB_LDFLAGS} -o libconftest${DYLIB_EXT} ${LIBS} ${BLAS_LIBS} 1>&AS_MESSAGE_LOG_FD 2>&AS_MESSAGE_LOG_FD
+[cat > conftest.c <<EOF
+void ${dgemm}();
+void ${xerbla}(char *srname, int *info){};
+int main(int argc, char **argv) { if (argc<0) ${dgemm}(); return 0; }
+EOF]
+if ${CC} ${CFLAGS} -c conftest.c 1>&AS_MESSAGE_LOG_FD 2>&AS_MESSAGE_LOG_FD; then
+  if ${CC} ${LDFLAGS} -o conftest${ac_exeext} \
+       conftest.${ac_objext} -L. -lconftest \
+       1>&AS_MESSAGE_LOG_FD 2>&AS_MESSAGE_LOG_FD;
+  then
+    ## redirect error messages to config.log
+    output=`./conftest${ac_exeext} 2>&AS_MESSAGE_LOG_FD`
+    if test ${?} = 0; then
+	r_cv_blas0_passthrough=yes
+    fi
+  fi
+fi
+])
+if test -n "${r_cv_blas0_passthrough}"; then
+r_cv_blas0_passthrough=yes
+AC_MSG_RESULT([yes])
+else
+AC_MSG_RESULT([no])
+AC_MSG_CHECKING([can it be fixed by using -sub_umbrella])
+ac_test_BLAS_LIBS=`echo "${BLAS_LIBS}"|sed -e s/-framework/-sub_umbrella/`
+rm -f libconftest.dylib
+echo "${CC} ${CFLAGS} conftestl.c ${SHLIB_LDFLAGS} -o libconftest${DYLIB_EXT} ${LIBS} ${BLAS_LIBS} ${ac_test_BLAS_LIBS}" >&AS_MESSAGE_LOG_FD
+${CC} ${CFLAGS} conftestl.c ${SHLIB_LDFLAGS} -o libconftest${DYLIB_EXT} ${LIBS} ${BLAS_LIBS} ${ac_test_BLAS_LIBS} 1>&AS_MESSAGE_LOG_FD 2>&AS_MESSAGE_LOG_FD
+if ${CC} ${CFLAGS} -c conftest.c 1>&AS_MESSAGE_LOG_FD 2>&AS_MESSAGE_LOG_FD; then
+  if ${CC} ${LDFLAGS} -o conftest${ac_exeext} \
+       conftest.${ac_objext} -L. -lconftest \
+       1>&AS_MESSAGE_LOG_FD 2>&AS_MESSAGE_LOG_FD;
+  then
+    ## redirect error messages to config.log
+    output=`./conftest${ac_exeext} 2>&AS_MESSAGE_LOG_FD`
+    if test ${?} = 0; then
+        r_cv_blas0_passthrough=yes
+    fi
+  fi
+fi
+if test -n "${r_cv_blas0_passthrough}"; then
+r_cv_blas0_passthrough=yes
+AC_MSG_RESULT([yes])
+BLAS_LIBS0="${BLAS_LIBS} ${ac_test_BLAS_LIBS}"
+else
+AC_MSG_RESULT([no])
+AC_MSG_ERROR([Cannot build Rblas shared library such that it makes external BLAS visible.
+An alternative is to use internal BLAS instead and replace
+libRblas.dylib with the external BLAS library after R is built.])
+fi
+fi
+    rm -f conftest.c conftest.o conftestl.c libconftest.dylib
+    ;;
+  esac
+fi
+AC_SUBST(BLAS_LIBS0)
+
+if test "${use_blas_shlib}" = yes; then
+  ## set BLAS_LIBS to point at local version
+  BLAS_LIBS="-L\$(R_HOME)/lib\$(R_ARCH) -lRblas"
 fi
 
 AM_CONDITIONAL(USE_VECLIB_G95FIX, [test "x${use_veclib_g95fix}" = xyes])
@@ -1674,6 +1872,11 @@ if test "${want_R_profiling}" = yes; then
 fi
 AC_SUBST(R_PROFILING)
 
+## R profiling.
+if test "${want_memory_profiling}" = yes; then
+  AC_DEFINE(R_MEMORY_PROFILING, 1, [Define this to enable memory profiling.])
+fi
+
 ## Large-file-support
 AC_SYS_LARGEFILE
 AC_FUNC_FSEEKO
@@ -1686,6 +1889,27 @@ AC_DEFINE_UNQUOTED(VALGRIND_LEVEL, ${valgrind_level}, [Define as 1 or 2 to speci
 
 ## KERN_USRSTACK support (BSD, Darwin, ...)
 R_KERN_USRSTACK
+
+## check for visible __libc_stack_end on Linux
+case "${host_os}" in
+  linux*)
+    AC_CACHE_CHECK([for visible __lib_stack_end], 
+    [r_cv_libc_stack_end],
+    [AC_RUN_IFELSE([AC_LANG_SOURCE([[
+#include "confdefs.h"
+#include <stdlib.h>
+extern void * __libc_stack_end;
+
+int main () {
+    exit(0);
+}
+  ]])], [r_cv_libc_stack_end=yes], [r_cv_libc_stack_end=no], 
+    [r_cv_libc_stack_end=no])])
+
+  if test "${r_cv_libc_stack_end}" = yes; then
+    AC_DEFINE(HAVE_LIBC_STACK_END, 1, [Define if __libc_stack_end is visible.])
+  fi
+esac
 
 ### * Miscellaneous.
 
@@ -1818,7 +2042,7 @@ case "${host_os}" in
     ;;
 esac
 for arg in ${LDFLAGS} ${FLIBS} ${BLAS_LIBS} ${LAPACK_LIBS} ${X_LIBS} \
-           ${TCLTK_LIBS} ${GNOME_LIBS}; do
+           ${TCLTK_LIBS}; do
   case "${arg}" in
     -L*)
       lib=`echo ${arg} | sed "s/^-L//"`
@@ -1946,6 +2170,7 @@ AC_CONFIG_FILES(
   src/Makefile
   src/appl/Makefile
   src/extra/Makefile
+  src/extra/blas/Makefile
   src/extra/bzip2/Makefile
   src/extra/intl/Makefile
   src/extra/pcre/Makefile
@@ -2047,11 +2272,12 @@ if test "${use_readline}" = yes; then
 fi
 if test "${acx_blas_ok}" = "yes"; then
   ## Try to figure out which BLAS was used.
-  case "${BLAS_LIBS}" in
+  case "${BLAS_LIBS0}" in
     *-latlas*) r_blas=ATLAS ;;
     *-lsgemm*) r_blas=PhiPack ;;
     *sunperf*) r_blas=SunPerf ;;
     *-lessl*)  r_blas=ESSL ;;
+    *vecLib*)  r_blas=vecLib ;;
     "")        r_blas=none ;;
     *)         r_blas=generic ;;
   esac
@@ -2086,10 +2312,16 @@ r_options=
 if test "${want_R_framework}" = yes; then
   R_SH_VAR_ADD(r_options, [framework], [, ])
 elif test "${want_R_shlib}" = yes; then
-  R_SH_VAR_ADD(r_options, [shared library], [, ])
+  R_SH_VAR_ADD(r_options, [shared R library], [, ])
+fi
+if test "${use_blas_shlib}" = yes; then
+  R_SH_VAR_ADD(r_options, [shared BLAS], [, ])
 fi
 if test "${want_R_profiling}" = yes; then
   R_SH_VAR_ADD(r_options, [R profiling], [, ])
+fi
+if test "${want_memory_profiling}" = yes; then
+  R_SH_VAR_ADD(r_options, [memory profiling], [, ])
 fi
 if test "${use_maintainer_mode}" = yes; then
   R_SH_VAR_ADD(r_options, [maintainer mode], [, ])

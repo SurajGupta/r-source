@@ -2,7 +2,7 @@
 \title{Cross Tabulation and Table Creation}
 \alias{table}
 \alias{summary.table}
-\alias{print.summary.table}
+\alias{print.summary.table}%% {print.table} is in ./print.Rd
 \alias{as.data.frame.table}
 \alias{as.table}
 \alias{as.table.default}
@@ -23,14 +23,14 @@ table(\dots, exclude = c(NA, NaN), dnn = list.names(...),
 as.table(x, \dots)
 is.table(x)
 
-as.data.frame.table(x, row.names = NULL, optional = FALSE,
-                    responseName = "Freq")
+\method{as.data.frame}{table}(x, row.names = NULL, \dots,
+              responseName = "Freq")
 }
 \arguments{
   \item{\dots}{objects which can be interpreted as factors (including
     character strings), or a list (or data frame) whose components can
-    be so interpreted.  (For \code{as.table}, arguments passed to
-    specific methods.)}
+    be so interpreted.  (For \code{as.table} and \code{as.data.frame},
+    arguments passed to specific methods.)}
   \item{exclude}{values to use in the exclude argument of \code{\link{factor}}
     when interpreting non-factor objects; if specified, levels to remove
     from all factors in \code{\dots}.}
@@ -42,8 +42,6 @@ as.data.frame.table(x, row.names = NULL, optional = FALSE,
     \code{"table"} for the \code{as.data.frame} method.}
   \item{row.names}{a character vector giving the row names for the data
     frame.}
-  \item{optional}{a logical controlling whether row names are set.
-    Currently not used.}
   \item{responseName}{The name to be used for the column of
     table entries, usually counts.}
 }
@@ -75,13 +73,10 @@ as.data.frame.table(x, row.names = NULL, optional = FALSE,
 
   Only when \code{exclude} is specified (i.e., not by default), will
   \code{table} drop levels of factor arguments potentially.
-
-  Note that \code{as.data.frame.table} is also the \code{"table"} method
-  for \code{\link{as.data.frame}}, but the \code{responseName} argument
-  can only be given if it is called explicitly.
 }
 \seealso{Use \code{\link{ftable}} for printing (and more) of
-  multidimensional tables.
+  multidimensional tables.  \code{\link{margin.table}},
+  \code{\link{prop.table}}, \code{\link{addmargins}}.
 }
 \references{
   Becker, R. A., Chambers, J. M. and Wilks, A. R. (1988)
@@ -92,10 +87,8 @@ as.data.frame.table(x, row.names = NULL, optional = FALSE,
 require(stats) # for rpois and xtabs
 ## Simple frequency distribution
 table(rpois(100,5))
-attach(warpbreaks)
 ## Check the design:
-table(wool, tension)
-detach()
+with(warpbreaks, table(wool, tension))
 table(state.division, state.region)
 
 # simple two-way contingency table
@@ -122,11 +115,13 @@ table(b)
 table(b, exclude="B")
 d <- factor(rep(c("A","B","C"), 10), levels=c("A","B","C","D","E"))
 table(d, exclude="B")
+print(table(b,d), zero.print = ".")
 
 ## NA counting:
 is.na(d) <- 3:4
 d <- factor(d, exclude=NULL)
 d[1:7]
 table(d, exclude = NULL)
+
 }
 \keyword{category}

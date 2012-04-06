@@ -7,14 +7,14 @@
 \title{Default Printing}
 \usage{
 \method{print}{default}(x, digits = NULL, quote = TRUE, na.print = NULL,
-      print.gap = NULL, right = FALSE, \dots)
+      print.gap = NULL, right = FALSE, max = NULL, \dots)
 }
 \arguments{
   \item{x}{the object to be printed.}
   \item{digits}{a non-null value for \code{digits} specifies the minimum
     number of significant digits to be printed in values.  The default,
     \code{NULL}, uses \code{\link{getOption}(digits)}.  (For the
-    intepretation for complex numbers see \code{\link{signif}}.)
+    interpretation for complex numbers see \code{\link{signif}}.)
     Non-integer values will be rounded down, and only values
     greater than or equal to one are accepted.
   }
@@ -27,6 +27,10 @@
     \dQuote{columns} in printed vectors, matrices and arrays.}
   \item{right}{logical, indicating whether or not strings should be
     right aligned.  The default is left alignment.}
+  \item{max}{a non-null value for \code{max} specifies the approximate
+    maximum number of entries to be printed.  The default, \code{NULL},
+    uses \code{\link{getOption}(max.print)}; see that help page for more
+    details.}
   \item{\dots}{further arguments to be passed to or from other
     methods.  They are ignored in this function.}
 }
@@ -65,26 +69,42 @@
   locale.)
 #endif
 }
+#ifdef unix
 \section{Unicode and other multi-byte locales}{
+#endif
+#ifdef windows
+\section{Multi-byte locales}{
+#endif
   In all locales, the characters in the ASCII range (\code{0x00} to
   \code{0x7f}) are printed in the same way, as-is if printable, otherwise
   via ANSI escape sequences or 3-digit octal escapes as described for
   single-byte locales.
-  
+
   Multi-byte non-printing characters are printed as an escape sequence
   of the form \code{\uxxxx}
 #ifndef windows
   or \code{\Uxxxxxxxx}
 #endif
-  (in hexadecimal).  This is the internal code for the wide-character
-  representation of the character, which for all currently known
-  \R platforms is the Unicode code point.
+  (in hexadecimal).
+#ifdef windows
+  This is the Unicode point of the character.
+#endif
+#ifdef unix
+  This is the internal code for the wide-character representation of the
+  character.  If this is not known to be the Unicode point, a warning is
+  issued.  The only known exceptions are certain Japanese ISO2022
+  locales on commercial Unixes, which use a concatenation of the bytes:
+  it is unlikely that \R compiles on such a system.
+% http://www.cl.cam.ac.uk/~mgk25/ucs/iso2022-wc.html
+#endif
 
   It is possible to have a character string in a character vector that
   is not valid in the current locale.  If a byte is encountered that is
   not part of a valid character it is printed in hex in the form
   \code{<xx>} and this is repeated until the start of a valid character.
+#ifdef unix
   (This will rapidly recover from minor errors in UTF-8.)
+#endif
 }
 \seealso{
   The generic \code{\link{print}}, \code{\link{options}}.
@@ -98,5 +118,9 @@ pi
 print(pi, digits = 16)
 LETTERS[1:16]
 print(LETTERS, quote = FALSE)
+
+M <- cbind(I=1, matrix(1:10000, nc=10, dimnames=list(NULL, LETTERS[1:10])))
+head(M) # makes more sense than
+print(M, max= 1000)# prints 90 rows and a message about omitting 910
 }
 \keyword{print}

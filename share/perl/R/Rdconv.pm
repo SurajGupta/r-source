@@ -74,7 +74,10 @@ my @special_commands = ("command", "env", "file", "kbd", "option",
 sub Rdconv { # Rdconv(foobar.Rd, type, debug, filename, pkgname, version)
 
     $Rdname = $_[0];
-    open(rdfile, "<$Rdname") or die "Rdconv(): Couldn't open '$Rdname': $!\n";
+    open(my $rdfile, "<$Rdname") or 
+	die "Rdconv(): Couldn't open '$Rdname': $!\n";
+    ## This was not previously being closesd: now closed when
+    ## goes out of scope.
 
     $type = $_[1];
     $debug = $_[2];
@@ -120,7 +123,7 @@ sub Rdconv { # Rdconv(foobar.Rd, type, debug, filename, pkgname, version)
     my $skip_level;
     my @skip_state;
     my $skip;
-    while(<rdfile>){
+    while(<$rdfile>){
 	$_ = expand $_;
 	s/\r//;
 	## <FIXME>
@@ -2885,7 +2888,7 @@ sub rdoc2chm { # (filename) ; 0 for STDOUT
     }
     $using_chm = 1;
     $nlink = 0;
-    print $htmlout (chm_functionhead(html_striptitle($blocks{"title"}), 
+    print $htmlout (chm_functionhead(html_striptitle($blocks{"title"}),
 				     $pkgname,
 				     &html_escape_name($blocks{"name"})));
 
@@ -2965,7 +2968,7 @@ sub rdoc2Ssgm { # (filename) ; 0 for STDOUT
     Ssgm_print_block_named("references", "References");
     Ssgm_print_seealso();
     Ssgm_print_examples();
-    if ($#keywords > 0) {
+    if ($#keywords >= 0) {
 	print $sgmlout "<s-keywords>\n";
 	while ($#keywords >= 0) {
 	    print $sgmlout "<s-keyword>", shift( @keywords ),

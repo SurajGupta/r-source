@@ -7,7 +7,7 @@ msgid ""
 msgstr ""
 "Project-Id-Version: R 2.2.1\n"
 "Report-Msgid-Bugs-To: bugs@r-project.org\n"
-"POT-Creation-Date: 2006-05-12 08:33\n"
+"POT-Creation-Date: 2006-09-22 12:35\n"
 "PO-Revision-Date: 2006-04-18 09:04+0100\n"
 "Last-Translator: Philippe Grosjean <phgrosjean@sciviews.org>\n"
 "Language-Team: French <R-core@r-project.org>\n"
@@ -112,6 +112,16 @@ msgstr "pas de champ date dans le fichier DESCRIPTION du package '%s'"
 msgid "could not determine year for '%s' from package DESCRIPTION file"
 msgstr ""
 "impossible de déterminer l'année de '%s' du fichier DESCRIPTION du package "
+
+msgid "m < 0"
+msgstr ""
+
+msgid "n < m"
+msgstr ""
+
+#, fuzzy
+msgid "'FUN' must be a function or NULL"
+msgstr "'package' doit être une chaîne de caratcères ou NULL"
 
 msgid "'package' must be a character string or NULL"
 msgstr "'package' doit être une chaîne de caratcères ou NULL"
@@ -253,6 +263,9 @@ msgstr "Bibliothèque"
 msgid "Help on topic '%s' was found in the following packages:"
 msgstr "L'aide sur le thème '%s' a été trouvée dans les packages suivants :"
 
+msgid "Choose one"
+msgstr ""
+
 msgid "Using the first match ..."
 msgstr "Utilisation de la première correspondance ..."
 
@@ -319,6 +332,10 @@ msgstr ""
 "suppression de toutes les entrées ayant des données de type caractère multi-"
 "octets incorrectes"
 
+msgid ""
+"no information in the data base for package '%s': need 'rebuild = TRUE'?"
+msgstr ""
+
 msgid "incorrect 'agrep' specification"
 msgstr "spécification 'agrep' incorrecte"
 
@@ -373,8 +390,15 @@ msgstr "seuls les indices numériques peuvent être utilisés"
 msgid "cannot create directory '%s'"
 msgstr "impossible de créer le répertoire '%s'"
 
+#, fuzzy
+msgid "'code_files' should be a character vector"
+msgstr "'list' devrait être un vecteur de type caractère nommant des objets R"
+
 msgid "'list' should be a character vector naming R objects"
 msgstr "'list' devrait être un vecteur de type caractère nommant des objets R"
+
+msgid "'namespace' should be a single logical"
+msgstr ""
 
 msgid "cannot turn off locale-specific chars via LC_CTYPE"
 msgstr ""
@@ -384,8 +408,36 @@ msgstr ""
 msgid "no R objects specified or available"
 msgstr "aucun objet R spécifié ou disponible"
 
+msgid "Creating directories ..."
+msgstr ""
+
 msgid "directory '%s' already exists"
 msgstr "le répertoire '%s' existe déjà"
+
+msgid "Creating DESCRIPTION ..."
+msgstr ""
+
+msgid "Creating NAMESPACE ..."
+msgstr ""
+
+msgid "Creating Read-and-delete-me ..."
+msgstr ""
+
+msgid "Saving functions and data ..."
+msgstr ""
+
+msgid "Copying code files ..."
+msgstr ""
+
+#, fuzzy
+msgid "Making help files ..."
+msgstr "Utilisation de la première correspondance ..."
+
+msgid "Done."
+msgstr ""
+
+msgid "Further steps are described in '%s'."
+msgstr ""
 
 msgid "unable to access index for repository %s"
 msgstr "impossible d'accéder à l'index de l'entrepôt %s"
@@ -529,8 +581,10 @@ msgstr "Liens valides vers d'autres pages de manuel, par exemple"
 msgid "simple examples of the most important functions"
 msgstr "exemples simples des fonctions les plus importantes"
 
-msgid "Optionally other keywords from doc/KEYWORDS, one per line"
-msgstr "Eventuellement d'autres mots clefs de doc/KEYWORDS, un par line"
+msgid ""
+"Optionally other standard keywords, one per line, from file KEYWORDS in the "
+"R documentation directory"
+msgstr ""
 
 msgid ""
 "no documentation of type '%s' and topic '%s' (or error in processing help)"
@@ -561,6 +615,49 @@ msgstr "aucune méthode définie pour la fonction '%s' et pour la signature '%s'"
 msgid "no documentation for function '%s' and signature '%s'"
 msgstr "pas de documentation pour la fonction '%s' et pour la signature '%s'"
 
+msgid "No DIF data on clipboard"
+msgstr ""
+
+msgid "row and column counts not found"
+msgstr ""
+
+msgid "Unrecognized special data value"
+msgstr ""
+
+msgid "Unrecognized value indicator"
+msgstr ""
+
+msgid "no lines available in input"
+msgstr ""
+
+msgid "header and 'col.names' are of different lengths"
+msgstr ""
+
+msgid "more columns than column names"
+msgstr ""
+
+msgid "more column names than columns"
+msgstr ""
+
+msgid "rows are empty: giving up"
+msgstr ""
+
+msgid "not all columns named in 'colClasses' exist"
+msgstr ""
+
+msgid "invalid numeric 'as.is' expression"
+msgstr ""
+
+msgid "not all columns named in 'as.is' exist"
+msgstr ""
+
+msgid "'as.is' has the wrong length %d  != cols = %d"
+msgstr ""
+
+#, fuzzy
+msgid "invalid 'row.names' specification"
+msgstr "spécification 'agrep' incorrecte"
+
 msgid "missing lengths for some fields"
 msgstr "longueur manquante pour certains champs"
 
@@ -570,8 +667,19 @@ msgstr "format incorrect"
 msgid "last record incomplete, %d lines discarded"
 msgstr "dernier enregistrement incomplet, %d lignes ignorées"
 
+#, fuzzy
+msgid "'file' must be a character string or connection"
+msgstr "'package' doit être une chaîne de caratcères ou NULL"
+
 msgid "transfer failure"
 msgstr "erreur de transfert"
+
+msgid "HTTPUserAgent"
+msgstr ""
+
+#, fuzzy
+msgid "option must be a length one character vector or NULL"
+msgstr "'package' doit être une chaîne de caratcères ou NULL"
 
 msgid "invalid 'socket' argument"
 msgstr "argument 'socket' incorrect"
@@ -591,17 +699,25 @@ msgstr "socket non connecté"
 msgid "str.data.frame() called with non-data.frame -- coercing to one."
 msgstr "str.data.frame() appelé avec un non data.frame -- forçage du type"
 
+msgid "invalid options('str') -- using defaults instead"
+msgstr ""
+
 msgid "'object' does not have valid levels()"
 msgstr "'object' n'a pas d'attribut levels() correct"
 
 msgid "'str.default': 'le' is NA"
 msgstr "'str.default': 'le' est NA"
 
+#, fuzzy
+msgid "profile does not contain memory information"
+msgstr "impossible de restaurer l'information de type"
+
 msgid "no events were recorded"
 msgstr "aucun événement à enregistrer"
 
+#, fuzzy
 msgid ""
-"vignette '%d' found more than once,\n"
+"vignette '%s' found more than once,\n"
 "using the one found in '%s'"
 msgstr ""
 "la vignette '%d' a été trouvée plusieurs fois,\n"
@@ -669,6 +785,12 @@ msgstr "impossible de créer l'index HTML des packages"
 
 msgid "cannot create HTML search index"
 msgstr "impossible de créer l'index HTML de recherche"
+
+msgid "'memory.size()' is Windows-specific"
+msgstr ""
+
+msgid "'memory.limit()' is Windows-specific"
+msgstr ""
 
 msgid "unable to find the HTML help"
 msgstr "aide HTML introuvable"
@@ -751,3 +873,6 @@ msgid_plural "packages '%s' are in use and will not be installed"
 msgstr[0] "le package '%s' est en cours d'utilisation et ne sera pas installé"
 msgstr[1] ""
 "les packages '%s' sont en cours d'utilisation et ne seront pas installés"
+
+#~ msgid "Optionally other keywords from doc/KEYWORDS, one per line"
+#~ msgstr "Eventuellement d'autres mots clefs de doc/KEYWORDS, un par line"

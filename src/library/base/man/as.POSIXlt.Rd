@@ -11,7 +11,7 @@
 \title{Date-time Conversion Functions}
 \description{
   Functions to manipulate objects of classes \code{"POSIXlt"} and
-  \code{"POSIXct"} representing calendar dates and times. 
+  \code{"POSIXct"} representing calendar dates and times.
 }
 \usage{
 as.POSIXct(x, tz = "")
@@ -34,20 +34,24 @@ as.POSIXlt(x, tz = "")
   \code{"date"} (from package \pkg{\link[date:as.date]{date}} or
   \pkg{\link[survival:as.date]{survival}}), \code{"chron"} and
   \code{"dates"} (from package \pkg{\link[chron]{chron}}) to these
-  classes.  Dates are treated as being at midnight UTC.
+  classes.  Dates without times are treated as being at midnight UTC.
 
   They can also convert character strings of the formats
   \code{"2001-02-03"} and \code{"2001/02/03"} optionally followed by
   white space and a time in the format \code{"14:52"} or
   \code{"14:52:03"}.  (Formats such as \code{"01/02/03"} are ambiguous
   but can be converted via a format specification by
-  \code{\link{strptime}}.)
+  \code{\link{strptime}}.)  (As from \R 2.4.0 fractional seconds can be
+  converted.)
 
   Logical \code{NA}s can be converted to either of the classes, but no
   other logical vectors can be.
 
   The \code{as.numeric} method converts \code{"POSIXlt"} objects to
   \code{"POSIXct"}.
+
+  If you are given a numeric time as the number of seconds since an
+  epoch, see the examples.
 
   Where OSes describe their valid timezones can be obscure.  The help
   for \code{tzset} (or \code{_tzset} on Windows) can be helpful, but it
@@ -76,7 +80,7 @@ as.POSIXlt(x, tz = "")
   not, \code{HST10} for \sQuote{Hawaii-Aleutian Standard Time} (which has no
   DST), and \code{CST-9:30} for the Northern Territory of Australia.
   The abbreviations have to be exactly 3 letters, and have no meaning
-  other than a labels on the output.
+  other than as labels on the output.
 #endif
 }
 \value{
@@ -92,7 +96,7 @@ as.POSIXlt(x, tz = "")
   \code{\link{format.POSIXlt}} or \code{\link{format.POSIXct}}.
 
   If a timezone is needed and that specified is invalid on your system,
-  what happens is system-specific but it will probably be ignored. 
+  what happens is system-specific but it will probably be ignored.
 }
 \seealso{
   \link{DateTimeClasses} for details of the classes;
@@ -100,11 +104,17 @@ as.POSIXlt(x, tz = "")
   representations.
 }
 \examples{
-(z <- Sys.time())             # the current date, as class "POSIXct"
+(z <- Sys.time())             # the current datetime, as class "POSIXct"
 unclass(z)                    # a large integer
 floor(unclass(z)/86400)       # the number of days since 1970-01-01
-(z <- as.POSIXlt(Sys.time())) # the current date, as class "POSIXlt"
+(z <- as.POSIXlt(Sys.time())) # the current datetime, as class "POSIXlt"
 unlist(unclass(z))            # a list shown as a named vector
+
+## suppose we have a time in seconds since 1960-01-01 00:00:00 GMT
+z <- 1472562988
+# two ways to convert this
+ISOdatetime(1960,1,1,0,0,0) + z # late August 2006
+strptime("1960-01-01", "\%Y-\%m-\%d", tz="GMT") + z
 
 as.POSIXlt(Sys.time(), "GMT") # the current time in GMT
 #ifdef windows

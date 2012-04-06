@@ -1,6 +1,6 @@
 /*
   R : A Computer Language for Statistical Data Analysis
-  Copyright (C) 1997-2005   Robert Gentleman, Ross Ihaka
+  Copyright (C) 1997-2006   Robert Gentleman, Ross Ihaka
                             and the R Development Core Team
 
   This program is free software; you can redistribute it and/or modify
@@ -172,7 +172,6 @@ R_common_command_line(int *pac, char **argv, Rstart Rp)
 		} else {
 		    strncpy(R_StdinEnc, p, 30);
 		    R_StdinEnc[30] = '\0';
-		    break;
 		}
 	    }
 	    else if (!strcmp(*av, "-save") ||

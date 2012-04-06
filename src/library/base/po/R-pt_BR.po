@@ -7,8 +7,8 @@ msgid ""
 msgstr ""
 "Project-Id-Version: R 2.3.0\n"
 "Report-Msgid-Bugs-To: bugs@r-project.org\n"
-"POT-Creation-Date: 2006-05-29 07:58\n"
-"PO-Revision-Date: 2006-04-16 19:17-0300\n"
+"POT-Creation-Date: 2006-09-26 14:33\n"
+"PO-Revision-Date: 2005-12-17 10:55-0200\n"
 "Last-Translator: Fernando Henrique Ferraz P. da Rosa <feferraz@ime.usp.br>\n"
 "Language-Team: Portuguese <ldp-br@bazar.conectiva.com.br>\n"
 "MIME-Version: 1.0\n"
@@ -110,6 +110,7 @@ msgstr "é exigido por"
 msgid "(still attached)"
 msgstr "(ainda anexado)"
 
+#, fuzzy
 msgid "replaced regular expression pattern '[' by  '\\\\['"
 msgstr "padrão de expressão regular '[' trocado por '\\\\['"
 
@@ -218,7 +219,8 @@ msgstr "'row.names' com comprimento inválido"
 msgid "duplicate 'row.names' are not allowed"
 msgstr "'row.names' duplicados não são permitidos"
 
-msgid "missing 'row.names' are not allowed"
+#, fuzzy
+msgid "missing values in 'row.names' are not allowed"
 msgstr "'row.names' faltantes não são permitidos"
 
 msgid "invalid 'dimnames' given for data frame"
@@ -232,6 +234,9 @@ msgstr "'row.names' inválido, comprimento %d para um data frame com %d linhas"
 
 msgid "supplied %d row names for %d rows"
 msgstr "especificados %d nomes de linhas para %d linhas"
+
+msgid "options('stringsAsFactors') not set to TRUE or FALSE"
+msgstr ""
 
 msgid "mismatch of row names in arguments of 'data.frame', item %d"
 msgstr ""
@@ -617,11 +622,12 @@ msgstr "'flag' pode conter somente '0+- #'"
 msgid "corrupt data frame: columns will be truncated or padded with NAs"
 msgstr "data frame corrompido: colunas serão truncadas ou completadas com NAs"
 
+#, fuzzy
 msgid "'zero.print' has length > 1"
-msgstr "'zero.print' tem comprimento > 1"
+msgstr "'input' deve ter comprimento 1"
 
 msgid "'zero.print' must be character, logical or NULL"
-msgstr "'zero.print' deve ser do tipo caracter, lógico ou NULL"
+msgstr ""
 
 msgid "'subset' must evaluate to logical"
 msgstr "'subset' deve poder ser avaliado logicamente"
@@ -653,6 +659,10 @@ msgstr "componentes de 'max.distance' devem ser não negativos"
 msgid "matrix should be square"
 msgstr "matriz deve ser quadrada"
 
+#, fuzzy
+msgid "'object' must be a list"
+msgstr "'subset' deve ser lógico"
+
 msgid "This is R %s, package '%s' needs %s %s"
 msgstr "Esse é o R %s, o pacote '%s' precisa do %s %s"
 
@@ -666,8 +676,9 @@ msgstr "pacote '%s' foi compilado na versão do R %s"
 msgid "package '%s' was built for %s"
 msgstr "pacote '%s' foi compilado para %s"
 
+#, fuzzy
 msgid "package '%s' is not installed for 'arch=%s'"
-msgstr "pacote '%s' não está instalado para 'arch=%s'"
+msgstr "pacote '%s' não foi instalado corretamente"
 
 msgid "package '%s' has not been installed properly"
 msgstr "pacote '%s' não foi instalado corretamente"
@@ -677,6 +688,18 @@ msgstr "Veja a observação em ?library"
 
 msgid "Attaching package: '%s'"
 msgstr "Anexando pacote: '%s'"
+
+msgid "The following object(s) are masked"
+msgstr ""
+
+msgid "_by_"
+msgstr ""
+
+msgid "from"
+msgstr ""
+
+msgid ":"
+msgstr ""
 
 msgid "package '%s' has been merged into '%s'"
 msgstr "pacote '%s' foi incluído em '%s'"
@@ -799,11 +822,19 @@ msgstr "pacote '%s' %s está carregado, mas %s %s é exigido por '%s'"
 msgid "input has been corrupted, with LF replaced by CR"
 msgstr "entrada foi corrompida, com LF substituido por CR"
 
+msgid ""
+"file '%s' has magic number '%s'\n"
+"   Use of save versions prior to 2 is deprecated"
+msgstr ""
+
 msgid "bad 'file' argument"
 msgstr "argumento 'file' inválido"
 
 msgid "'file' must be specified"
 msgstr "'file' deve ser especificado"
+
+msgid "Use of save versions prior to 2 is deprecated"
+msgstr ""
 
 msgid "'file' must be non-empty string"
 msgstr "'file' deve ser uma string não vazia"
@@ -880,6 +911,9 @@ msgstr "nenhuma linha para parear"
 msgid "'by.x' and 'by.y' specify different numbers of columns"
 msgstr "'by.x' e 'by.y' especificam números de colunas diferentes"
 
+msgid "(loaded the methods namespace)"
+msgstr ""
+
 msgid ""
 "Tracing functions requires the methods package, but unable to load methods "
 "namespace"
@@ -887,8 +921,19 @@ msgstr ""
 "Rastreamento de funções requer o pacote methods, mas não foi possível "
 "carregar o seu espaço de nomes"
 
+msgid "Expected a single logical value for the S4 object state"
+msgstr ""
+
 msgid "'%s' is not an exported object from 'namespace:%s'"
 msgstr "'%s' não é um objeto exportado de 'namespace:%s'"
+
+#, fuzzy
+msgid "package '%s' has no name space and"
+msgstr "pacote '%s' não tem um espaõ de nomes"
+
+#, fuzzy
+msgid "is not on the search path"
+msgstr "'%s' não encontrado no caminho de procura, usando pos = 2"
 
 msgid "%s failed in 'attachNamespace'"
 msgstr "%s falhou em 'attachNamespace'"
@@ -908,8 +953,9 @@ msgstr "%s falhou em 'loadNamespace' para '%s'"
 msgid "namespace '%s' is already sealed in loadNamespace"
 msgstr "espaço de nomes '%s' já está selado em loadNamespace"
 
+#, fuzzy
 msgid "failed to assign RegisteredNativeSymbol for"
-msgstr "falha na atribuição de RegisteredNativeSymbol para"
+msgstr "falha na atribuição de NativeSymbolInfo para"
 
 msgid "to"
 msgstr "para"
@@ -935,6 +981,15 @@ msgstr "em '%s' classes para expor~tação não definidas: %s"
 msgid "in '%s' methods for export not found: %s"
 msgstr "em '%s' métodos para exportação não encontrados: %s"
 
+msgid "No methods table for \""
+msgstr ""
+
+msgid "\""
+msgstr ""
+
+msgid "Failed to find metadata object for \"%s\""
+msgstr ""
+
 msgid "in '%s' methods specified for export, but none defined: %s"
 msgstr "em '%s' métodos especificados para exportação, mas nenhum definido: %s"
 
@@ -950,7 +1005,8 @@ msgstr "espaço de nomes '%s' não carregado"
 msgid "%s failed in unloadNamespace(%s)"
 msgstr "%s falhou em unloadNamespace(%s)"
 
-msgid "name space '%s' is still used by:"
+#, fuzzy
+msgid "name space '%s' is still used by: '%s'"
 msgstr "espaço de nomes '%s' ainda em uso por:"
 
 msgid "imperative name space directives are disabled"
@@ -977,6 +1033,9 @@ msgstr "não é possível importar em um espaço de nomes selado"
 msgid "invalid import target"
 msgstr "alvo de importação inválido"
 
+msgid "Found methods to import for function \"%s\" but not the generic itself"
+msgstr ""
+
 msgid "requested 'methods' objects not found in environment/package '%s': %s"
 msgstr ""
 "objetos exigidos do 'methods' não encontrados no ambiente/pacote '%s': %s"
@@ -990,8 +1049,9 @@ msgstr "exportações não definidas:"
 msgid "package '%s' has no NAMESPACE file"
 msgstr "pacote '%s' não tem arquivo NAMESPACE"
 
+#, fuzzy
 msgid "empty name in directive '%s' in NAMESPACE file"
-msgstr "nome vazio na diretiva '%s' do arquivo NAMESPACE"
+msgstr "pacote '%s' não tem arquivo NAMESPACE"
 
 msgid "duplicated symbol names"
 msgstr "símbolos de importação duplicados"
@@ -1175,14 +1235,20 @@ msgstr "matriz singular 'a' em 'solve'"
 msgid "only square matrices can be inverted"
 msgstr "somente matrizes quadradas podem ser invertidas"
 
+#, fuzzy
 msgid "'b' must be compatible with 'a'"
-msgstr "'b' deve ser compatível com 'a'"
+msgstr "'by' deve ter comprimento 1"
 
 msgid "solve.default called with a \"qr\" object: use 'qr.solve'"
 msgstr "solve.default chamado com um objeto \"qr\": use 'qr.solve'"
 
 msgid "singular matrix 'a' in solve"
 msgstr "matriz singular 'a' em solve"
+
+msgid ""
+"'decreasing' must be a length-1 logical vector.\n"
+"Did you intend to set 'partial'?"
+msgstr ""
 
 msgid "'index.return' only for non-factors"
 msgstr "'index.return' somente para não fatores"
@@ -1202,6 +1268,11 @@ msgstr "'partial' não finito"
 msgid "argument lengths differ"
 msgstr "comprimentos dos argumentos diferem"
 
+msgid ""
+"'x' must be atomic for 'sort.list'\n"
+"Have you called 'sort' on a list?"
+msgstr ""
+
 msgid "method=\"quick\" is only for numeric 'x'"
 msgstr "method=\"quick\" somente para 'x' numérico"
 
@@ -1220,20 +1291,24 @@ msgstr "não foi possível achar uma codificação plausível"
 msgid "'chdir = TRUE' makes no sense for a URL"
 msgstr "'chdir = TRUE' não faz sentido para uma URL"
 
+msgid "cannot 'chdir' as current directory is unknown"
+msgstr ""
+
 msgid "'chdir = TRUE' makes no sense for a connection"
 msgstr "'chdir = TRUE' não faz sentido para uma conexão"
 
 msgid "'%s' is not an existing file"
 msgstr "'%s' não é um arquivo existente"
 
+#, fuzzy
 msgid "is not"
-msgstr "não é"
+msgstr "não é TRUE"
 
 msgid "all"
-msgstr "todo"
+msgstr ""
 
 msgid "TRUE"
-msgstr "TRUE"
+msgstr ""
 
 msgid "incorrect value for 'x'"
 msgstr "valor incorreto para 'x'"
@@ -1271,18 +1346,6 @@ msgstr "não é possível fazer coerção para tabela"
 msgid "'x' is not an array"
 msgstr "'x' não é um array"
 
-msgid "invalid argument 'n'"
-msgstr "argumento 'n' inválido"
-
-msgid "invalid argument 'r'"
-msgstr "argumento 'r' inválido"
-
-msgid "invalid argument 'c'"
-msgstr "argumento 'c' inválido"
-
-msgid "arguments 'r' and 'c' must have the same sums"
-msgstr "argumentos 'r' e 'c' devem ter a mesma soma"
-
 msgid "'bin' must be numeric or a factor"
 msgstr "'bin' deve ser numérico ou um fator"
 
@@ -1309,6 +1372,9 @@ msgstr "Nenhum rastreamento disponível"
 
 msgid "argument to 'which' is not logical"
 msgstr "argumento para 'which' não é lógico"
+
+msgid "'quote' must be 'TRUE', 'FALSE' or numeric"
+msgstr ""
 
 msgid "invalid numbers in 'quote'"
 msgstr "números inválidos em 'quote'"
@@ -1361,10 +1427,11 @@ msgid_plural "packages %s are not loaded"
 msgstr[0] "pacote %s não está carregado"
 msgstr[1] "pacotes %s não estão carregados"
 
+#, fuzzy
 msgid "there is no package called"
 msgid_plural "there are no packages called"
 msgstr[0] "não há nenhum pacote chamado '%s'"
-msgstr[1] "não há pacotes chamados '%s'"
+msgstr[1] "não há nenhum pacote chamado '%s'"
 
 msgid "object %s is not exported by 'namespace:%s'"
 msgid_plural "objects %s are not exported by 'namespace:%s'"
@@ -1385,3 +1452,38 @@ msgid "Warning message:\n"
 msgid_plural "Warning messages:\n"
 msgstr[0] "Mensagem de aviso:\n"
 msgstr[1] "Mensagens de aviso:\n"
+
+#, fuzzy
+#~ msgid "rows are empty: giving up"
+#~ msgstr "cinco primeiras linhas vazias: desistindo"
+
+#~ msgid "invalid argument 'n'"
+#~ msgstr "argumento 'n' inválido"
+
+#~ msgid "invalid argument 'r'"
+#~ msgstr "argumento 'r' inválido"
+
+#~ msgid "invalid argument 'c'"
+#~ msgstr "argumento 'c' inválido"
+
+#~ msgid "arguments 'r' and 'c' must have the same sums"
+#~ msgstr "argumentos 'r' e 'c' devem ter a mesma soma"
+
+#~ msgid "none of the packages were found"
+#~ msgstr "nenhum dos pacotes foi encontrado"
+
+#~ msgid "no input is available"
+#~ msgstr "nenhuma entrada disponível"
+
+#~ msgid ""
+#~ "the input does not start with a magic number compatible with loading from "
+#~ "a connection"
+#~ msgstr ""
+#~ "a entrada não começa com um número mágico compatível com carregamento a "
+#~ "partir de uma conexão"
+
+#~ msgid "calling wrong method"
+#~ msgstr "chamada do método errado"
+
+#~ msgid "format.char: coercing 'x' to 'character'"
+#~ msgstr "format.char: fazendo coerção de 'x' para 'character' "

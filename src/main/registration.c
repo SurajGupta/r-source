@@ -1,6 +1,6 @@
 /*
  *  R : A Computer Language for Statistical Data Analysis
- *  Copyright (C) 2002-2005	The R Development Core Team.
+ *  Copyright (C) 2002-2006	The R Development Core Team.
  *
  *  This program is free software; you can redistribute it and/or modify
  *  it under the terms of the GNU General Public License as published by
@@ -194,8 +194,8 @@ static R_CallMethodDef callMethods [] = {
     CALLDEF(det_ge_real, 2),
 
     /* In ../main/unique.c to use hashing. */
-    CALLDEF(Rrowsum_matrix, 4),
-    CALLDEF(Rrowsum_df, 4),
+    CALLDEF(Rrowsum_matrix, 5),
+    CALLDEF(Rrowsum_df, 5),
 
     /* Top-level task callbacks */
     CALLDEF(R_getTaskCallbackNames, 0),
@@ -218,6 +218,10 @@ static R_CallMethodDef callMethods [] = {
     /* Methods related routines. */
     CALLDEF(R_isMethodsDispatchOn, 1),
     CALLDEF(R_traceOnOff, 1),
+    CALLDEF(R_isS4Object, 1),
+    CALLDEF(R_setS4Object, 2),
+    CALLDEF(R_do_new_object, 1),
+    CALLDEF(R_get_primname, 1),
 
     /* compression and serialization routines */
     CALLDEF(R_compress1, 1),
@@ -237,6 +241,7 @@ static R_CallMethodDef callMethods [] = {
     CALLDEF(R_startbcprof, 0),
     CALLDEF(R_stopbcprof, 0),
 #endif
+
 
     {NULL, NULL, 0}
 };

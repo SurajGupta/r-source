@@ -143,7 +143,10 @@ rchisq <- function(n, df, ncp=0) {
     else .Internal(rnchisq(n, df, ncp))
 }
 
-df <- function(x, df1, df2, log = FALSE) .Internal(df(x, df1, df2, log))
+df <- function(x, df1, df2, ncp=0, log = FALSE) {
+    if(missing(ncp)) .Internal(df(x, df1, df2, log))
+    else .Internal(dnf(x, df1, df2, ncp, log))
+}
 pf <- function(q, df1, df2, ncp=0, lower.tail = TRUE, log.p = FALSE) {
     if(missing(ncp)) .Internal(pf(q, df1, df2, lower.tail, log.p))
     else .Internal(pnf(q, df1, df2, ncp, lower.tail, log.p))
@@ -155,7 +158,7 @@ qf <- function(p, df1, df2, ncp=0, lower.tail = TRUE, log.p = FALSE) {
 rf <- function(n, df1, df2, ncp = 0)
 {
     if(ncp == 0) .Internal(rf(n, df1, df2))
-    else rchisq(n, df1, ncp=ncp)/rchisq(n, df2)
+    else (rchisq(n, df1, ncp=ncp)/df1)/(rchisq(n, df2)/df2)
 }
 
 dgeom <- function(x, prob, log = FALSE) .Internal(dgeom(x, prob, log))
@@ -212,24 +215,21 @@ qpois <- function(p, lambda, lower.tail = TRUE, log.p = FALSE)
     .Internal(qpois(p, lambda, lower.tail, log.p))
 rpois <- function(n, lambda) .Internal(rpois(n, lambda))
 
-dt <- function(x, df, ncp=0, log = FALSE) {
-    if(missing(ncp))
-	.Internal(dt(x, df, log))
-    else
-	.Internal(dnt(x, df, ncp, log))
+dt <- function(x, df, ncp = 0, log = FALSE) {
+    if(missing(ncp)) .Internal(dt(x, df, log))
+    else .Internal(dnt(x, df, ncp, log))
 }
-
-pt <- function(q, df, ncp=0, lower.tail = TRUE, log.p = FALSE) {
+pt <- function(q, df, ncp = 0, lower.tail = TRUE, log.p = FALSE) {
     if(missing(ncp)) .Internal(pt(q, df, lower.tail, log.p))
     else .Internal(pnt(q, df, ncp, lower.tail, log.p))
 }
 qt <- function(p, df, ncp = 0, lower.tail = TRUE, log.p = FALSE) {
-    if(ncp == 0) .Internal(qt(p, df, lower.tail, log.p))
+    if(missing(ncp)) .Internal(qt(p, df, lower.tail, log.p))
     else .Internal(qnt(p, df, ncp, lower.tail, log.p))
 }
 rt <- function(n, df, ncp = 0) {
-    if(ncp == 0) .Internal(rt(n, df))
-    else rnorm(n, ncp)/(rchisq(n, df)/sqrt(df))
+    if(missing(ncp)) .Internal(rt(n, df))
+    else rnorm(n, ncp)/sqrt(rchisq(n, df)/df)
 }
 
 ptukey <- function(q, nmeans, df, nranges=1, lower.tail = TRUE, log.p = FALSE)

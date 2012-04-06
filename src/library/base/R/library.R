@@ -98,7 +98,7 @@ function(package, help, pos = 2, lib.loc = NULL, character.only = FALSE,
             ob <- ob[!(ob %in% gen)]
         }
         fst <- TRUE
-        ipos <- seq(along = sp)[-c(lib.pos, match(c("Autoloads", "CheckExEnv"), sp, 0))]
+        ipos <- seq_along(sp)[-c(lib.pos, match(c("Autoloads", "CheckExEnv"), sp, 0))]
         for (i in ipos) {
             obj.same <- match(objects(i, all = TRUE), ob, nomatch = 0)
             if (any(obj.same > 0)) {
@@ -118,11 +118,13 @@ function(package, help, pos = 2, lib.loc = NULL, character.only = FALSE,
                 if(length(same)) {
                     if (fst) {
                         fst <- FALSE
-                        cat(gettextf("\nAttaching package: '%s'\n\n", package))
+                        message(gettextf("\nAttaching package: '%s'\n",
+                                         package),
+                                domain = NA)
                     }
-                    cat("\n\tThe following object(s) are masked",
-                        if (i < lib.pos) "_by_" else "from", sp[i],
-                        ":\n\n\t", same, "\n\n")
+                    message(paste("\n\tThe following object(s) are masked",
+                                  if (i < lib.pos) "_by_" else "from", sp[i],
+                                  ":\n\n\t", same, "\n"))
                 }
             }
         }
@@ -559,7 +561,7 @@ function(chname, package = NULL, lib.loc = NULL,
         if(verbose)
             message(gettextf("shared library '%s' already loaded", chname),
                     domain = NA)
-        return(invisible(dll_list[[ seq(along = dll_list)[ind] ]]))
+        return(invisible(dll_list[[ seq_along(dll_list)[ind] ]]))
     }
     if(.Platform$OS.type == "windows") {
         ## Make it possible to find other DLLs in the same place as
@@ -636,7 +638,8 @@ function(package, lib.loc = NULL, quietly = FALSE, warn.conflicts = TRUE,
 
     if (!loaded) {
 	if (!quietly)
-            cat(gettextf("Loading required package: %s\n", package))
+            message(gettextf("Loading required package: %s", package),
+                    domain = NA)
 	value <- library(package, lib.loc = lib.loc, character.only = TRUE,
                          logical = TRUE, warn.conflicts = warn.conflicts,
                          keep.source = keep.source, version = version)
@@ -973,11 +976,10 @@ function(pkgInfo, quietly = FALSE, lib.loc = NULL, useImports = FALSE)
 {
     pkgs <- names(pkgInfo$Depends)
     if (length(pkgs)) {
-        sch <- search()
         pkgname <- pkgInfo$DESCRIPTION["Package"]
         for(pkg in pkgs) {
             z <- pkgInfo$Depends[[pkg]]
-            if ( !paste("package", pkg, sep = ":") %in% sch ) {
+            if ( !paste("package", pkg, sep = ":") %in% search() ) {
                 if (length(z) > 1) {
                     pfile <- system.file("Meta", "package.rds",
                                          package = pkg, lib.loc = lib.loc)
@@ -993,7 +995,9 @@ function(pkgInfo, quietly = FALSE, lib.loc = NULL, useImports = FALSE)
                 }
 
                 if (!quietly)
-                    cat(gettextf("Loading required package: %s\n", pkg))
+                    message(gettextf("Loading required package: %s",
+                                     pkg),
+                            domain = NA)
                 library(pkg, character.only = TRUE, logical = TRUE,
                         lib.loc = lib.loc) ||
                 stop(gettextf("package '%s' could not be loaded", pkg),

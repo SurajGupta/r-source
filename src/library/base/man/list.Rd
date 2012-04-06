@@ -6,12 +6,13 @@
 \alias{as.list.default}
 \alias{as.list.data.frame}
 \alias{as.list.environment}
+\alias{as.list.factor}
 \alias{as.pairlist}
 \alias{is.list}
 \alias{is.pairlist}
 \title{Lists -- Generic and Dotted Pairs}
 \description{
-  Functions to construct, coerce and check for all kinds of \R lists.
+  Functions to construct, coerce and check for both kinds of \R lists.
 }
 \usage{
 list(\dots)
@@ -27,7 +28,7 @@ is.pairlist(x)
 alist(\dots)
 }
 \arguments{
-  \item{\dots}{objects.}
+  \item{\dots}{objects, possibly named.}
   \item{x}{object to be coerced or tested.}
   \item{all.names}{a logical indicating whether to copy all values or
     (default) only those whose names do not begin with a dot.}
@@ -35,7 +36,7 @@ alist(\dots)
 \details{
   Most lists in \R internally are \emph{Generic Vectors}, whereas
   traditional \emph{dotted pair} lists (as in LISP) are available
-  but rarely seen by users (except as \code{\list{formals}} of functions).
+  but rarely seen by users (except as \code{\link{formals}} of functions).
 
   The arguments to \code{list} or \code{pairlist} are of the form
   \code{value} or \code{tag=value}.  The functions return a list or
@@ -47,10 +48,16 @@ alist(\dots)
   no value are allowed whereas \code{list} simply ignores them.
   \code{alist} is most often used in conjunction with \code{\link{formals}}.
 
-  \code{as.list} attempts to coerce its argument to list type.
-  For functions, this returns the concatenation of the list of formal
+  \code{as.list} attempts to coerce its argument to a list.  For
+  functions, this returns the concatenation of the list of formal
   arguments and the function body.  For expressions, the list of
-  constituent calls is returned.
+  constituent calls is returned.  \code{as.list} is generic, and as the
+  default method calls \code{\link{as.vector}(mode="list")} methods for
+  \code{as.vector} may be invoked.  As from \R 2.4.0, \code{as.list}
+  turns a factor into a list of one-element factors.  All attributes
+  will be dropped unless the argument already is a list.  (This is
+  inconsistent with functions such as \code{\link{as.character}}, and is
+  for efficiency since lists can be expensive to copy.)
 
   \code{is.list} returns \code{TRUE} iff its argument
   is a \code{list} \emph{or} a \code{pairlist} of \code{length} \eqn{> 0}.

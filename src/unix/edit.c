@@ -29,7 +29,6 @@
 #include "Defn.h"
 #include "Print.h"
 #include "Fileio.h"
-#include "IOStuff.h"
 #include "Parse.h"
 
 #include "Runix.h"
@@ -167,9 +166,10 @@ SEXP attribute_hidden do_edit(SEXP call, SEXP op, SEXP args, SEXP rho)
 	errorcall(call, _("problem with running editor %s"), cmd);
 #endif
 
+    /* <FIXME> setup a context to close the file, and parse and eval
+       line by line */
     if((fp = R_fopen(R_ExpandFileName(filename), "r")) == NULL)
 	errorcall(call, _("unable to open file to read"));
-    R_ParseCnt = 0;
     x = PROTECT(R_ParseFile(fp, -1, &status));
     fclose(fp);
     if (status != PARSE_OK)

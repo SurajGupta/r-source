@@ -62,7 +62,6 @@
 \concept{srt}
 \concept{tck}
 \concept{tcl}
-\concept{tmag}
 \concept{usr}
 \concept{xaxp}
 \concept{xaxs}
@@ -177,8 +176,11 @@ par(\dots, no.readonly = FALSE)
       functions calling \code{\link{plot.default}} do not annotate the
       plots they produce with axis titles and overall titles.  The
       default is to do annotation.}
-    \item{\code{ask}}{logical.  If \code{TRUE}, the user is asked for
-      input, before a new figure is drawn.}
+    \item{\code{ask}}{logical.  If \code{TRUE} (and the \R session is
+      interactive) the user is asked for input, before a new figure is
+      drawn.  As this applies to the device, it also affects output by
+      packages \pkg{grid} and \pkg{lattice}.  It can be set even on
+      non-screen devices.}
     \item{\code{bg}}{The color to be used for the background of plots.
       When called from \code{par()} it also sets \code{new=FALSE}.
       A description of how colors are specified is given below.
@@ -246,9 +248,9 @@ par(\dots, no.readonly = FALSE)
       default device fonts will be used.
       Standard values are \code{"serif"}, \code{"sans"},
       \code{"mono"}, and \code{"symbol"} and the \link{Hershey}
-      font families are also available.  Different devices
-      may define others.  Some devices will ignore this setting
-      completely.  As from \R 2.3.0 this can be specified inline for
+      font families are also available.  (Different devices
+      may define others, and some devices will ignore this setting
+      completely.)  This can be specified inline for
       \code{\link{text}}.}
     \item{\code{fg}}{The color to be used for the foreground of plots.
       This is the default color used for things like axes and boxes
@@ -306,7 +308,6 @@ par(\dots, no.readonly = FALSE)
 	\item{\code{1}}{and \code{"butt"} mean butt line caps;}
 	\item{\code{2}}{and \code{"square"} mean square line caps.}
       }
-      As from \R 2.3.0 this can be specified inline.
     }
     \item{\code{lheight}}{The line height multiplier.
       The height of a line of text (used to vertically space
@@ -321,16 +322,12 @@ par(\dots, no.readonly = FALSE)
 	\item{\code{1}}{and \code{"mitre"} mean mitred line joins;}
 	\item{\code{2}}{and \code{"bevel"} mean bevelled line joins.}
       }
-
-      As from \R 2.3.0 this can be specified inline.
     }
     \item{\code{lmitre}}{The line mitre limit.
       This controls when mitred line joins are automatically
       converted into bevelled line joins.  The
       value must be larger than 1 and the default is 10.  Not all
       devices will honour this setting.
-
-      As from \R 2.3.0 this can be specified inline.
     }
     \item{\code{lty}}{The line type.
       Line types can either be specified as an integer (0=blank,
@@ -449,7 +446,6 @@ par(\dots, no.readonly = FALSE)
     \item{\code{tcl}}{The length of tick marks as a fraction of the
       height of a line of text.  The default value is \code{-0.5};
       setting \code{tcl = NA} sets \code{tck = -0.01} which is S' default.}
-    \item{\code{tmag}}{Currently unused: defaults to \code{1.2}.}
     \item{\code{usr}}{A vector of the form \code{c(x1, x2, y1, y2)}
       giving the extremes of the user coordinates of the plotting
       region.  When a logarithmic scale is in use (i.e.,
@@ -562,11 +558,10 @@ par(\dots, no.readonly = FALSE)
 
   Note that \code{NA} is not a valid value for \code{lty}.
 
-  Currently zero hex digits are accepted and handled in a
-  device-dependent way, e.g. \code{X11()} maps them to one, \code{pdf()}
-  regards zero as terminating the string and \code{windows()} gives a
-  zero-length stretch.  Do not rely on such behaviour, which will change
-  in \R 2.4.0.
+  Prior to \R 2.4.0, zero hex digits were accepted and handled in a
+  device-dependent way, e.g. \code{X11()} mapped them to one, \code{pdf()}
+  regarded zero as terminating the string and \code{windows()} gave a
+  zero-length stretch.
 }
 
 \note{

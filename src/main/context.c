@@ -1,7 +1,7 @@
 /*
  *  R : A Computer Language for Statistical Data Analysis
  *  Copyright (C) 1995, 1996  Robert Gentleman and Ross Ihaka
- *  Copyright (C) 1998-2003   The R Development Core Team.
+ *  Copyright (C) 1998-2006   The R Development Core Team.
  *
  *  This program is free software; you can redistribute it and/or modify
  *  it under the terms of the GNU General Public License as published by
@@ -126,19 +126,15 @@ please bug.report() [R_run_onexits]"));
 	if (c->cend != NULL) {
 	    void (*cend)(void *) = c->cend;
 	    c->cend = NULL; /* prevent recursion */
-#ifdef NEW_CONDITION_HANDLING
 	    R_HandlerStack = c->handlerstack;
 	    R_RestartStack = c->restartstack;
-#endif
 	    cend(c->cenddata);
 	}
 	if (c->cloenv != R_NilValue && c->conexit != R_NilValue) {
 	    SEXP s = c->conexit;
 	    c->conexit = R_NilValue; /* prevent recursion */
-#ifdef NEW_CONDITION_HANDLING
 	    R_HandlerStack = c->handlerstack;
 	    R_RestartStack = c->restartstack;
-#endif
 	    PROTECT(s);
 	    eval(s, c->cloenv);
 	    UNPROTECT(1);
@@ -150,7 +146,7 @@ please bug.report() [R_run_onexits]"));
 /* R_restore_globals - restore global variables from a target context
    before a LONGJMP.  The target context itself is not restored here
    since this is done slightly differently in jumpfun below, in
-   errors.c:jump_now, and in main.c:ParseBrwoser.  Eventually these
+   errors.c:jump_now, and in main.c:ParseBrowser.  Eventually these
    three should be unified so there is only one place where a LONGJMP
    occurs. */
 
@@ -160,10 +156,8 @@ void attribute_hidden R_restore_globals(RCNTXT *cptr)
     R_EvalDepth = cptr->evaldepth;
     vmaxset(cptr->vmax);
     R_interrupts_suspended = cptr->intsusp;
-#ifdef NEW_CONDITION_HANDLING
     R_HandlerStack = cptr->handlerstack;
     R_RestartStack = cptr->restartstack;
-#endif
 #ifdef BYTECODE
     R_BCNodeStackTop = cptr->nodestack;
 # ifdef BC_INT_STACK
@@ -203,6 +197,7 @@ static void jumpfun(RCNTXT * cptr, int mask, SEXP val)
 
 /* begincontext - begin an execution context */
 
+/* begincontext and endcontext are used in dataentry.c and modules */
 void begincontext(RCNTXT * cptr, int flags,
 		  SEXP syscall, SEXP env, SEXP sysp,
 		  SEXP promargs, SEXP callfun)
@@ -220,10 +215,8 @@ void begincontext(RCNTXT * cptr, int flags,
     cptr->callfun = callfun;
     cptr->vmax = vmaxget();
     cptr->intsusp = R_interrupts_suspended;
-#ifdef NEW_CONDITION_HANDLING
     cptr->handlerstack = R_HandlerStack;
     cptr->restartstack = R_RestartStack;
-#endif
 #ifdef BYTECODE
     cptr->nodestack = R_BCNodeStackTop;
 # ifdef BC_INT_STACK
@@ -238,10 +231,8 @@ void begincontext(RCNTXT * cptr, int flags,
 
 void endcontext(RCNTXT * cptr)
 {
-#ifdef NEW_CONDITION_HANDLING
     R_HandlerStack = cptr->handlerstack;
     R_RestartStack = cptr->restartstack;
-#endif
     if (cptr->cloenv != R_NilValue && cptr->conexit != R_NilValue ) {
 	SEXP s = cptr->conexit;
 	int savevis = R_Visible;
@@ -487,7 +478,7 @@ SEXP attribute_hidden do_sys(SEXP call, SEXP op, SEXP args, SEXP rho)
     switch (PRIMVAL(op)) {
     case 1: /* parent */
 	if(n == NA_INTEGER)
-	    errorcall(call, _("invalid value for 'n'"));
+	    errorcall(call, _("invalid value for '%s'"), "n");
 	nframe = framedepth(cptr);
 	rval = allocVector(INTSXP,1);
 	i = nframe;
@@ -499,11 +490,11 @@ SEXP attribute_hidden do_sys(SEXP call, SEXP op, SEXP args, SEXP rho)
 	return rval;
     case 2: /* call */
 	if(n == NA_INTEGER)
-	    errorcall(call, _("invalid value for 'which'"));
+	    errorcall(call, _("invalid value for '%s'"), "which");
 	return R_syscall(n, cptr);
     case 3: /* frame */
 	if(n == NA_INTEGER)
-	    errorcall(call, _("invalid value for 'which'"));
+	    errorcall(call, _("invalid value for '%s'"), "which");
 	return R_sysframe(n, cptr);
     case 4: /* sys.nframe */
 	rval = allocVector(INTSXP, 1);

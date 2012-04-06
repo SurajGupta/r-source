@@ -30,10 +30,8 @@ Using Visual C++
 You may if you prefer use Visual C++ to make the DLLs (unless they use
 Fortran source!). First build the import library Rdll.lib by
 
-	pexports R.dll > R.exp
+	make R.exp
 	lib /def:R.exp /out:Rdll.lib
-
-(pexports is part of the mingw-utils bundle.)
 
 Then you can compile the objects and build the DLL by
 
@@ -53,8 +51,7 @@ executable to be debugged as the full path to the R front-end.
 
 Extra care is needed when referencing variables (rather than
 functions) exported from R.dll.  These must be declared
-__declspec(dllimport) (as in R's own header files).  The list of the
-relevant variables is at the end of the file 'R.exp'.
+__declspec(dllimport) (as in R's own header files).
 
 VC++ lacks some standard functions such as isnan and isfinite.  To use
 R's macros you will need
@@ -78,10 +75,10 @@ Builder 5.  The following will make convolve.dll from convolve.c (flag
 
 bcc32 -u- -6 -O2 -WDE convolve.c
 
-You can build an import library for R.dll by copying R.exp to R.def and
-using
+You can build an import library for R.dll by
 
-implib R.lib R.def
+make R.exp
+implib R.lib R.exp
 
 and then add R.lib to the bcc32 command line, for example (from
 Venables & Ripley's `S Programming')

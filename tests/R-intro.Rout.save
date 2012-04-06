@@ -1,6 +1,6 @@
 
-R : Copyright 2006, The R Foundation for Statistical Computing
-Version 2.3.0 Under development (unstable) (2006-02-15 r37368)
+R version 2.5.0 Under development (unstable) (2006-09-24 r39498)
+Copyright (C) 2006 The R Foundation for Statistical Computing
 ISBN 3-900051-07-0
 
 R is free software and comes with ABSOLUTELY NO WARRANTY.
@@ -19,6 +19,7 @@ Type 'q()' to quit R.
 > ####  -- in a way that this should be(come) an executable script.
 > 
 > options(digits=5, width=65)##--- for outputs !
+> options(stringsAsFactors=TRUE) ## factory-fresh defaults
 > 
 > ## 2. Simple Manipulations
 > 
@@ -171,7 +172,7 @@ $cat
 Levels: A B
 
 attr(,"row.names")
-[1] "1" "2" "3" "4"
+[1] 1 2 3 4
 > 
 > ###------------ Ordered and unordered factors --------
 > state <- c("tas", "sa",  "qld", "nsw", "nsw", "nt",  "wa",  "wa",
@@ -460,7 +461,7 @@ incomef   act nsw nt qld sa tas vic wa
 29  vic   58 (55,65]
 30  act   43 (35,45]
 > str(accountants)
-`data.frame':	30 obs. of  3 variables:
+'data.frame':	30 obs. of  3 variables:
  $ home: Factor w/ 8 levels "act","nsw","nt",..: 6 5 4 2 2 3 8 8 4 7 ...
  $ loot: num  60 49 40 61 64 60 59 54 62 69 ...
  $ shot: Factor w/ 4 levels "(35,45]","(45,55]",..: 3 2 1 3 3 3 3 2 3 4 ...
@@ -549,7 +550,7 @@ W = 0.9793, p-value = 0.01052
 
 data:  long 
 D = 0.0661, p-value = 0.4284
-alternative hypothesis: two.sided 
+alternative hypothesis: two-sided 
 
 Warning message:
 cannot compute correct p-values with ties in: ks.test(long, "pnorm", mean = mean(long), sd = sqrt(var(long))) 
@@ -619,7 +620,7 @@ mean of x mean of y
 
 data:  A and B 
 W = 89, p-value = 0.007497
-alternative hypothesis: true mu is not equal to 0 
+alternative hypothesis: true location shift is not equal to 0 
 
 Warning message:
 cannot compute exact p-value with ties in: wilcox.test.default(A, B) 

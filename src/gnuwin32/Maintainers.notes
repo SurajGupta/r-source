@@ -18,11 +18,17 @@ that differs only in that
 
  - SUPPORT_UTF8 is defined, but that is not true on Windows.
 
+ - HAVE_VASPRINTF is true thanks to the trio library.
+
+ - In mingw-runtime >= 3.10 it finds gettimeofday, but that is
+   less accurate than the GetSystemTime used already.
+
 Also, watch out for versions of the header files.  For example,
 <strings.h> was in mingw-runtime-1.2 and later, but not in the
 Mingw-1.1 bundle.  These days we tend to insist on a current MinGW.
 
-BDR 2002-04-15, 2003-02-10, 2004-06-28, 2005-11-25
+BDR 2002-04-15, 2003-02-10, 2004-06-28, 2005-11-25, 2006-07-06
+
 
 2) The Makefiles for building a distribution have been reorganized.  Now
 all of the decisions about what files go into the distributables are made
@@ -31,9 +37,10 @@ program each file goes into are made in installer/JRins.pl.
 
 DJM 2003-02-25
 
+
 3) Making Tcl/Tk.
 
-Get the Tcl/Tk sources (I used 8.4.5 when testing this).
+Get the Tcl/Tk sources (I used 8.4.13 when testing this).
 You need VC++6 and a Windows command-line window.
 
 Run "\Program Files\Microsoft Visual Studio\VC98\Bin\VCVARS32.BAT"
@@ -47,11 +54,12 @@ nmake -f makefile.vc install
 
 Now copy /Program Files/Tcl to say /R/Tcl and (in any reasonable shell)
 cd /R/Tcl
-rm bin/tclpip84.dll bin/tclsh84.exe bin/wish.exe
+rm bin/tclpip84.dll bin/tclsh84.exe bin/wish84.exe
 rm -rf lib/*.lib lib/tk8.4/demos lib/tk8.4/images
 cp .../tcl8.4.x/license.terms .
 
 BDR 2004-01-09
+
 
 4) Linking to DLLs.
 

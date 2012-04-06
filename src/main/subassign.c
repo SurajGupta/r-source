@@ -75,6 +75,7 @@
 #endif
 
 #include "Defn.h"
+#include <R_ext/RS.h> /* for test of S4 objects */
 
 #if 0
 static SEXP gcall;
@@ -161,6 +162,18 @@ static SEXP EnlargeVector(SEXP x, R_len_t newlen)
     copyMostAttrib(x, newx);
     UNPROTECT(2);
     return newx;
+}
+
+/* used instead of coerceVector to embed a non-vector in a list for
+   purposes of SubassignTypeFix, for cases in wich coerceVector should
+   fail; namely, S4SXP */
+static SEXP embedInVector(SEXP v)
+{
+    SEXP ans;
+    PROTECT(ans = allocVector(VECSXP, 1));
+    SET_VECTOR_ELT(ans, 0, v);
+    UNPROTECT(1);
+    return (ans);
 }
 
 /* Level 1 is used in VectorAssign, MatrixAssign, ArrayAssign.
@@ -264,6 +277,17 @@ static int SubassignTypeFix(SEXP *x, SEXP *y, int stretch, int level,
 	}
 	break;
 
+    case 1925: /* vector <- S4 */
+
+	if (level == 1) {
+	    /* Embed the RHS into a list */
+	    *y = embedInVector(*y);
+	} else {
+	    /* Nothing to do here: duplicate when used (if needed) */
+	    redo_which = FALSE;
+	}
+	break;
+
     case 1019:  /* logical    <- vector     */
     case 1319:  /* integer    <- vector     */
     case 1419:  /* real       <- vector     */
@@ -291,10 +315,20 @@ static int SubassignTypeFix(SEXP *x, SEXP *y, int stretch, int level,
 	}
 	break;
 
+    case 2025: /* expression <- S4 */
+
+	if (level == 1) {
+	    /* Embed the RHS into a list */
+	    *y = embedInVector(*y);
+	} else {
+	    /* Nothing to do here: duplicate when used (if needed) */
+	    redo_which = FALSE;
+	}
+	break;
+
     default:
-	errorcall(call, 
-		  _("incompatible types (from %s to %s) in subassignment type fix"),
-		  CHAR(type2str(which%100)), CHAR(type2str(which/100)));
+	error(_("incompatible types (from %s to %s) in subassignment type fix"),
+	      type2char(which%100), type2char(which/100));
     }
 
     if (stretch) {
@@ -360,7 +394,7 @@ static SEXP DeleteListElements(SEXP x, SEXP which)
 
 static SEXP VectorAssign(SEXP call, SEXP x, SEXP s, SEXP y)
 {
-    SEXP dim, indx;
+    SEXP dim, indx, newnames;
     int i, ii, iy, n, nx, ny, stretch, which;
     double ry;
 
@@ -399,7 +433,7 @@ static SEXP VectorAssign(SEXP call, SEXP x, SEXP s, SEXP y)
 
     if ((TYPEOF(x) != VECSXP && TYPEOF(x) != EXPRSXP) || y != R_NilValue) {
 	if (n > 0 && ny == 0)
-	    errorcall(call, _("nothing to replace with"));
+	    error(_("nothing to replace with"));
 	if (n > 0 && n % ny)
 	    warning(_("number of items to replace is not a multiple of replacement length"));
     }
@@ -593,11 +627,10 @@ static SEXP VectorAssign(SEXP call, SEXP x, SEXP s, SEXP y)
 	warningcall(call, "sub assignment (*[*] <- *) not done; __bug?__");
     }
     /* Check for additional named elements. */
-    /* Note we are using a horrible hack in makeSubscript */
-    /* Which passes the additional names back in the attribute */
-    /* slot of the generated subscript vector.  (Shudder!) */
-    if (ATTRIB(indx) != R_NilValue) {
-	SEXP newnames = ATTRIB(indx);
+    /* Note makeSubscript passes the additional names back as the names
+       attribute of the generated subscript vector */
+    newnames = getAttrib(indx, R_NamesSymbol);
+    if (newnames != R_NilValue) {
 	SEXP oldnames = getAttrib(x, R_NamesSymbol);
 	if (oldnames != R_NilValue) {
 	    for (i = 0; i < n; i++) {
@@ -670,9 +703,9 @@ static SEXP MatrixAssign(SEXP call, SEXP x, SEXP s, SEXP y)
        </TSL>  */
 
     if (n > 0 && ny == 0)
-	errorcall(call, _("nothing to replace with"));
+	error(_("nothing to replace with"));
     if (n > 0 && n % ny)
-	errorcall(call, _("number of items to replace is not a multiple of replacement length"));
+	error(_("number of items to replace is not a multiple of replacement length"));
 
     which = SubassignTypeFix(&x, &y, 0, 1, call);
 
@@ -889,7 +922,7 @@ static SEXP MatrixAssign(SEXP call, SEXP x, SEXP s, SEXP y)
 
     default:
 	error(_("incompatible types (from %s to %s) in matrix subset assignment"),
-		  CHAR(type2str(which%100)), CHAR(type2str(which/100)));
+		  type2char(which%100), type2char(which/100));
     }
     UNPROTECT(2);
     return x;
@@ -936,9 +969,9 @@ static SEXP ArrayAssign(SEXP call, SEXP x, SEXP s, SEXP y)
     }
 
     if (n > 0 && ny == 0)
-	errorcall(call, _("nothing to replace with"));
+	error(_("nothing to replace with"));
     if (n > 0 && n % ny)
-	errorcall(call, _("number of items to replace is not a multiple of replacement length"));
+	error(_("number of items to replace is not a multiple of replacement length"));
 
     if (ny > 1) { /* check for NAs in indices */
 	for (i = 0; i < k; i++)
@@ -1066,9 +1099,14 @@ static SEXP ArrayAssign(SEXP call, SEXP x, SEXP s, SEXP y)
 	    SET_VECTOR_ELT(x, ii, VECTOR_ELT(y, i % ny));
 	    break;
 
+	case 2424: /* raw <- raw */
+
+	    RAW(x)[ii] = RAW(y)[i % ny];
+	    break;
+	    
 	default:
 	error(_("incompatible types (from %s to %s) in array subset assignment"),
-		  CHAR(type2str(which%100)), CHAR(type2str(which/100)));
+		  type2char(which%100), type2char(which/100));
 	}
     next_i:
 	;
@@ -1118,9 +1156,9 @@ static SEXP SimpleListAssign(SEXP call, SEXP x, SEXP s, SEXP y)
     nx = length(x);
 
     if (n > 0 && ny == 0)
-	errorcall(call, _("nothing to replace with"));
+	error(_("nothing to replace with"));
     if (n > 0 && n % ny)
-	errorcall(call, _("number of items to replace is not a multiple of replacement length"));
+	error(_("number of items to replace is not a multiple of replacement length"));
 
     if (stretch) {
 	yi = allocList(stretch - nx);
@@ -1277,7 +1315,7 @@ SEXP attribute_hidden do_subassign(SEXP call, SEXP op, SEXP args, SEXP rho)
 SEXP attribute_hidden do_subassign_dflt(SEXP call, SEXP op, SEXP args, SEXP rho)
 {
     SEXP subs, x, y;
-    int nsubs, oldtype;
+    int nsubs, oldtype; Rboolean S4;
 
     PROTECT(args);
 
@@ -1285,12 +1323,13 @@ SEXP attribute_hidden do_subassign_dflt(SEXP call, SEXP op, SEXP args, SEXP rho)
     /* duplicate it so that only the local version is mutated. */
     /* This will duplicate more often than necessary, but saves */
     /* over always duplicating. */
-    /* FIXME: shouldn't x be protected? */
+    /* FIXME: shouldn't x be protected?  It is (as args is)! */
 
     if (NAMED(CAR(args)) == 2)
 	x = SETCAR(args, duplicate(CAR(args)));
 
     SubAssignArgs(args, &x, &subs, &y);
+    S4 = IS_S4_OBJECT(x);
     nsubs = length(subs);
 
     oldtype = 0;
@@ -1338,7 +1377,7 @@ SEXP attribute_hidden do_subassign_dflt(SEXP call, SEXP op, SEXP args, SEXP rho)
 	}
 	break;
     default:
-	errorcall(call, _("object is not subsettable"));
+	error(_("object is not subsettable"));
 	break;
     }
 
@@ -1356,6 +1395,7 @@ SEXP attribute_hidden do_subassign_dflt(SEXP call, SEXP op, SEXP args, SEXP rho)
 
     UNPROTECT(2);
     SET_NAMED(x, 0);
+    if(S4) SET_S4_OBJECT(x);
     return x;
 }
 
@@ -1406,10 +1446,12 @@ SEXP attribute_hidden do_subassign2_dflt(SEXP call, SEXP op, SEXP args, SEXP rho
 {
     SEXP dims, indx, names, newname, subs, x, xtop, xup, y;
     int i, ndims, nsubs, offset, off = -1 /* -Wall */, stretch, which;
+    Rboolean S4;
 
     PROTECT(args);
 
     SubAssignArgs(args, &x, &subs, &y);
+    S4 = IS_S4_OBJECT(x);
 
     /* Handle NULL left-hand sides.  If the right-hand side */
     /* is NULL, just return the left-hand size otherwise, */
@@ -1607,6 +1649,7 @@ SEXP attribute_hidden do_subassign2_dflt(SEXP call, SEXP op, SEXP args, SEXP rho
 	case 1922:  /* vector     <- external pointer */
 	case 1923:  /* vector     <- weak reference */
 	case 1924:  /* vector     <- raw */
+	case 1925:  /* vector     <- S4 */
 	case 1903: case 1907: case 1908: case 1999: /* functions */
 
 	    /* drop through: vectors and expressions are treated the same */
@@ -1618,6 +1661,8 @@ SEXP attribute_hidden do_subassign2_dflt(SEXP call, SEXP op, SEXP args, SEXP rho
 	case 2014:	/* expression <- real	    */
 	case 2015:	/* expression <- complex    */
 	case 2016:	/* expression <- character  */
+	case 2024:  /* expression     <- raw */
+	case 2025:  /* expression     <- S4 */
 	case 1919:      /* vector     <- vector     */
 	case 2020:	/* expression <- expression */
 
@@ -1632,7 +1677,7 @@ SEXP attribute_hidden do_subassign2_dflt(SEXP call, SEXP op, SEXP args, SEXP rho
 
 	default:
 	    error(_("incompatible types (from %s to %s) in [[ assignment"),
-		  CHAR(type2str(which%100)), CHAR(type2str(which/100)));
+		  type2char(which%100), type2char(which/100));
 	}
 	/* If we stretched, we may have a new name. */
 	/* In this case we must create a names attribute */
@@ -1691,10 +1736,11 @@ SEXP attribute_hidden do_subassign2_dflt(SEXP call, SEXP op, SEXP args, SEXP rho
 	xtop = x;
 	UNPROTECT(1);
     }
-    else errorcall(call, _("object is not subsettable"));
+    else error(_("object is not subsettable"));
 
     UNPROTECT(1);
     SET_NAMED(xtop, 0);
+    if(S4) SET_S4_OBJECT(xtop);
     return xtop;
 }
 
@@ -1720,7 +1766,7 @@ SEXP attribute_hidden do_subassign3(SEXP call, SEXP op, SEXP args, SEXP env)
     else if(isString(nlist) )
 	SET_STRING_ELT(input, 0, STRING_ELT(nlist, 0));
     else {
-	errorcall(call, _("invalid subscript type"));
+	error(_("invalid subscript type"));
 	return R_NilValue; /*-Wall*/
     }
 
@@ -1736,14 +1782,17 @@ SEXP attribute_hidden do_subassign3(SEXP call, SEXP op, SEXP args, SEXP env)
     return R_subassign3_dflt(call, CAR(ans), nlist, CADDR(ans));
 }
 
+/* used in methods_list_dispatch.c */
 SEXP R_subassign3_dflt(SEXP call, SEXP x, SEXP nlist, SEXP val)
 {
     SEXP t;
     PROTECT_INDEX pvalidx, pxidx;
     Rboolean maybe_duplicate=FALSE;
+    Rboolean S4;
 
     PROTECT_WITH_INDEX(x, &pxidx);
     PROTECT_WITH_INDEX(val, &pvalidx);
+    S4 = IS_S4_OBJECT(x);
 
     if (NAMED(x) == 2)
 	REPROTECT(x = duplicate(x), pxidx);
@@ -1882,5 +1931,6 @@ SEXP R_subassign3_dflt(SEXP call, SEXP x, SEXP nlist, SEXP val)
     }
     UNPROTECT(2);
     SET_NAMED(x, 0);
+    if(S4) SET_S4_OBJECT(x);
     return x;
 }

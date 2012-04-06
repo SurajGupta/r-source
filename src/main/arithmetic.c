@@ -62,7 +62,7 @@ int matherr(struct exception *exc)
     case UNDERFLOW:
 	exc->retval = 0.0;
 	break;
-	/* 
+	/*
 	   There are cases TLOSS and PLOSS which are ignored here.
 	   According to the Solaris man page, there are for
 	   trigonometric algorithms and not needed for good ones.
@@ -143,7 +143,7 @@ int R_IsNaN(double x)
     return 0;
 }
 
-/* ISNAN uses isnan, which is undefined by C++ headers 
+/* ISNAN uses isnan, which is undefined by C++ headers
    This workaround is called only when ISNAN() is used
    in a user code in a file with __cplusplus defined */
 
@@ -153,7 +153,7 @@ int R_isnancpp(double x)
 }
 
 
-/* <FIXME> Simplify this mess.  Not used inside R 
+/* <FIXME> Simplify this mess.  Not used inside R
    if isfinite works, and if finite works only in packages */
 int R_finite(double x)
 {
@@ -337,7 +337,7 @@ SEXP attribute_hidden do_arith(SEXP call, SEXP op, SEXP args, SEXP env)
     } \
 } while (0)
 
-SEXP R_binary(SEXP call, SEXP op, SEXP x, SEXP y)
+SEXP attribute_hidden R_binary(SEXP call, SEXP op, SEXP x, SEXP y)
 {
     SEXP class, dims, tsp, xnames, ynames, val;
     int mismatch = 0, nx, ny, xarray, yarray, xts, yts;
@@ -369,7 +369,7 @@ SEXP R_binary(SEXP call, SEXP op, SEXP x, SEXP y)
     else yarray = yts = yattr = FALSE;
 
     /* If either x or y is a matrix with length 1 and the other is a
-       vector, we want to coerce the matrix to be a vector. 
+       vector, we want to coerce the matrix to be a vector.
        Do we want to?  We don't do it!  BDR 2004-03-06
     */
 
@@ -455,7 +455,7 @@ SEXP R_binary(SEXP call, SEXP op, SEXP x, SEXP y)
     else class = tsp = NULL; /* -Wall */
 
     if (mismatch)
-	warningcall(lcall, 
+	warningcall(lcall,
 		    _("longer object length\n\tis not a multiple of shorter object length"));
 
     /* need to preserve object here, as *_binary copies class attributes */
@@ -509,7 +509,7 @@ SEXP R_binary(SEXP call, SEXP op, SEXP x, SEXP y)
     return val;
 }
 
-SEXP R_unary(SEXP call, SEXP op, SEXP s1)
+SEXP attribute_hidden R_unary(SEXP call, SEXP op, SEXP s1)
 {
     switch (TYPEOF(s1)) {
     case LGLSXP:
@@ -639,6 +639,20 @@ static SEXP integer_binary(ARITHOP_TYPE code, SEXP s1, SEXP s2, SEXP lcall)
 	    INTEGER(ans)[i] = NA_INTEGER;
 	return ans;
 	} */
+#ifdef R_MEMORY_PROFILING
+    if (TRACE(s1) || TRACE(s2)){
+       if (TRACE(s1) && TRACE(s2)){
+	  if (n1>n2)
+	      memtrace_report(s1,ans);
+	  else 
+	      memtrace_report(s2, ans);
+       } else if (TRACE(s1))
+	   memtrace_report(s1,ans);
+       else /* only s2 */
+	   memtrace_report(s2, ans);
+       SET_TRACE(ans, 1);
+    }
+#endif
 
     switch (code) {
     case PLUSOP:
@@ -779,6 +793,20 @@ static SEXP real_binary(ARITHOP_TYPE code, SEXP s1, SEXP s2)
 
     n = (n1 > n2) ? n1 : n2;
     PROTECT(ans = allocVector(REALSXP, n));
+#ifdef R_MEMORY_PROFILING
+    if (TRACE(s1) || TRACE(s2)){
+       if (TRACE(s1) && TRACE(s2)){
+	  if (n1>n2)
+	      memtrace_report(s1,ans);
+	  else 
+	      memtrace_report(s2, ans);
+       } else if (TRACE(s1))
+	   memtrace_report(s1,ans);
+       else /* only s2 */
+	   memtrace_report(s2, ans);
+       SET_TRACE(ans, 1);
+    }
+#endif
 
 /*    if (n1 < 1 || n2 < 1) {
       for (i = 0; i < n; i++)
@@ -829,7 +857,7 @@ static SEXP real_binary(ARITHOP_TYPE code, SEXP s1, SEXP s2)
 	UNPROTECT(1);
 	return ans;
     }
-    
+
     /* Copy attributes from longer argument. */
 
     if (n1 > n2)
@@ -862,6 +890,12 @@ static SEXP math1(SEXP sa, double(*f)(), SEXP lcall)
     /* coercion can lose the object bit */
     PROTECT(sa = coerceVector(sa, REALSXP));
     PROTECT(sy = allocVector(REALSXP, n));
+#ifdef R_MEMORY_PROFILING
+    if (TRACE(sa)){
+       memtrace_report(sa, sy);
+       SET_TRACE(sy, 1);
+    }
+#endif
     a = REAL(sa);
     y = REAL(sy);
     naflag = 0;
@@ -925,7 +959,7 @@ SEXP attribute_hidden do_math1(SEXP call, SEXP op, SEXP args, SEXP env)
     case 42: return MATH1(digamma);
     case 43: return MATH1(trigamma);
 	/* case 44: return MATH1(tetragamma);
-	   case 45: return MATH1(pentagamma); 
+	   case 45: return MATH1(pentagamma);
 	   removed in 2.0.0
 	*/
 
@@ -986,6 +1020,21 @@ static SEXP math2(SEXP sa, SEXP sb, double (*f)(), SEXP lcall)
 
     SETUP_Math2;
 
+#ifdef R_MEMORY_PROFILING
+    if (TRACE(sa) || TRACE(sb)){
+       if (TRACE(sa) && TRACE(sb)){
+	  if (na>nb)
+	      memtrace_report(sa, sy);
+	  else 
+	      memtrace_report(sb, sy);
+       } else if (TRACE(sa))
+	   memtrace_report(sa, sy);
+       else /* only s2 */
+	   memtrace_report(sb, sy);
+       SET_TRACE(sy, 1);
+    }
+#endif
+
     mod_iterate(na, nb, ia, ib) {
 	ai = a[ia];
 	bi = b[ib];
@@ -1029,6 +1078,21 @@ static SEXP math2_1(SEXP sa, SEXP sb, SEXP sI, double (*f)(), SEXP lcall)
     SETUP_Math2;
     m_opt = asInteger(sI);
 
+#ifdef R_MEMORY_PROFILING
+    if (TRACE(sa) || TRACE(sb)){
+       if (TRACE(sa) && TRACE(sb)){
+	  if (na>nb)
+	      memtrace_report(sa, sy);
+	  else 
+	      memtrace_report(sb, sy);
+       } else if (TRACE(sa))
+	   memtrace_report(sa, sy);
+       else /* only s2 */
+	   memtrace_report(sb, sy);
+       SET_TRACE(sy, 1);
+    }
+#endif
+
     mod_iterate(na, nb, ia, ib) {
 	ai = a[ia];
 	bi = b[ib];
@@ -1055,6 +1119,21 @@ static SEXP math2_2(SEXP sa, SEXP sb, SEXP sI1, SEXP sI2, double (*f)(), SEXP lc
     SETUP_Math2;
     i_1 = asInteger(sI1);
     i_2 = asInteger(sI2);
+
+#ifdef R_MEMORY_PROFILING
+    if (TRACE(sa) || TRACE(sb)){
+       if (TRACE(sa) && TRACE(sb)){
+	  if (na>nb)
+	      memtrace_report(sa, sy);
+	  else 
+	      memtrace_report(sb, sy);
+       } else if (TRACE(sa))
+	   memtrace_report(sa, sy);
+       else /* only s2 */
+	   memtrace_report(sb, sy);
+       SET_TRACE(sy, 1);
+    }
+#endif
 
     mod_iterate(na, nb, ia, ib) {
 	ai = a[ia];
@@ -1142,8 +1221,8 @@ SEXP attribute_hidden do_atan(SEXP call, SEXP op, SEXP args, SEXP env)
 	    return complex_math1(call, op, args, env);
 	else
 	    return math1(CAR(args), atan, call);
-    /* prior to 2.3.0, 2 args were allowed, 
-       but this was never documented */ 
+    /* prior to 2.3.0, 2 args were allowed,
+       but this was never documented */
     default:
 	error(_("%d arguments passed to 'atan' which requires 1"), n);
     }
@@ -1235,6 +1314,18 @@ static SEXP math3(SEXP sa, SEXP sb, SEXP sc, double (*f)(), SEXP lcall)
 
     SETUP_Math3;
 
+#ifdef R_MEMORY_PROFILING
+    if (TRACE(sa) || TRACE(sb) || TRACE(sc)){
+       if (TRACE(sa))
+	  memtrace_report(sa,sy);
+       else if (TRACE(sb))
+	  memtrace_report(sb, sy);
+       else if (TRACE(sc))
+	  memtrace_report(sc,sy);
+       SET_TRACE(sy, 1);
+    }
+#endif
+
     mod_iterate3 (na, nb, nc, ia, ib, ic) {
 	ai = a[ia];
 	bi = b[ib];
@@ -1281,6 +1372,18 @@ static SEXP math3_1(SEXP sa, SEXP sb, SEXP sc, SEXP sI, double (*f)(), SEXP lcal
     SETUP_Math3;
     i_1 = asInteger(sI);
 
+#ifdef R_MEMORY_PROFILING
+    if (TRACE(sa) || TRACE(sb) || TRACE(sc)){
+       if (TRACE(sa))
+	  memtrace_report(sa,sy);
+       else if (TRACE(sb))
+	  memtrace_report(sb, sy);
+       else if (TRACE(sc))
+	  memtrace_report(sc,sy);
+       SET_TRACE(sy, 1);
+    }
+#endif
+
     mod_iterate3 (na, nb, nc, ia, ib, ic) {
 	ai = a[ia];
 	bi = b[ib];
@@ -1308,6 +1411,19 @@ static SEXP math3_2(SEXP sa, SEXP sb, SEXP sc, SEXP sI, SEXP sJ, double (*f)(), 
     SETUP_Math3;
     i_1 = asInteger(sI);
     i_2 = asInteger(sJ);
+
+#ifdef R_MEMORY_PROFILING
+    if (TRACE(sa) || TRACE(sb) || TRACE(sc)){
+       if (TRACE(sa))
+	  memtrace_report(sa,sy);
+       else if (TRACE(sb))
+	  memtrace_report(sb, sy);
+       else if (TRACE(sc))
+	  memtrace_report(sc,sy);
+       SET_TRACE(sy, 1);
+    }
+#endif
+
 
     mod_iterate3 (na, nb, nc, ia, ib, ic) {
 	ai = a[ia];
@@ -1395,7 +1511,7 @@ SEXP attribute_hidden do_math3(SEXP call, SEXP op, SEXP args, SEXP env)
 
 
     default:
-	errorcall(call, 
+	errorcall(call,
 		  _("unimplemented real function of %d numeric arguments"), 3);
     }
     return op;			/* never used; to keep -Wall happy */
@@ -1574,9 +1690,7 @@ SEXP attribute_hidden do_math4(SEXP call, SEXP op, SEXP args, SEXP env)
     case  4: return Math4_1(args, dnbeta);
     case  5: return Math4_2(args, pnbeta);
     case  6: return Math4_2(args, qnbeta);
-#ifdef UNIMP
     case  7: return Math4_1(args, dnf);
-#endif
     case  8: return Math4_2(args, pnf);
     case  9: return Math4_2(args, qnf);
 #ifdef UNIMP
@@ -1714,7 +1828,7 @@ SEXP attribute_hidden do_math5(SEXP call, SEXP op, SEXP args, SEXP env)
     case  3: return Math5(args, q...);
 #endif
     default:
-	errorcall(call, 
+	errorcall(call,
 		  _("unimplemented real function of %d numeric arguments"), 5);
     }
     return op;			/* never used; to keep -Wall happy */

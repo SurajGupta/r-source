@@ -17,6 +17,9 @@
 package_version <-
 function(x, strict = TRUE)
 {
+    ## Special-case R version lists.
+    if(is.list(x) && all(c("major", "minor") %in% names(x)))
+        return(Recall(paste(x[c("major", "minor")], collapse = ".")))
     x <- as.character(x)
     y <- rep.int(list(integer()), length(x))
     valid_package_version_regexp <-
@@ -51,7 +54,7 @@ function(x, base = NULL)
     ## decrement by 1 one again.
     x <- as.numeric(sapply(x,
                            function(t)
-                           sum(t / base^seq(0, length = length(t)))))
+                           sum(t / base^seq.int(0, length = length(t)))))
     attr(x, "base") <- base
     attr(x, "lens") <- lens
     x
@@ -64,11 +67,11 @@ function(x, base = NULL)
     if(!is.numeric(base)) stop("wrong argument")
     lens <- attr(x, "lens")
     y <- vector("list", length = length(x))
-    for(i in seq(along = x)) {
+    for(i in seq_along(x)) {
         n <- lens[i]
         encoded <- x[i]
         decoded <- integer(n)
-        for(k in seq(length = n)) {
+        for(k in seq_len(n)) {
             decoded[k] <- encoded %/% 1
             encoded <- base * (encoded %% 1)
         }
@@ -107,12 +110,12 @@ function(e1, e2)
 }
 
 Summary.package_version <-
-function(x, ..., na.rm)
+function(..., na.rm)
 {
     ok <- switch(.Generic, max = , min = TRUE, FALSE)
     if(!ok)
         stop(.Generic, " not defined for package_version objects")
-    x <- list(x, ...)
+    x <- list(...)
     x <- do.call("c", lapply(x, as.package_version))
     ## <FIXME> which.max/min automatically remove NAs
     switch(.Generic,
@@ -165,4 +168,4 @@ function(x, name)
 as.data.frame.package_version <- as.data.frame.vector
 
 getRversion <- function()
-    package_version(paste(R.version[c("major", "minor")], collapse = "."))
+    package_version(R.version)

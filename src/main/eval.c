@@ -26,16 +26,14 @@
 #ifdef HAVE_CONFIG_H
 # include <config.h>
 #endif
+#include <Defn.h>
 
 #define ARGUSED(x) LEVELS(x)
-
-#include "Defn.h"
 
 
 #ifdef BYTECODE
 static SEXP bcEval(SEXP, SEXP);
 #endif
-
 
 /*#define BC_PROFILING*/
 #ifdef BC_PROFILING
@@ -99,6 +97,10 @@ static int R_Profiling = 0;
 #endif /* not Win32 */
 
 static FILE *R_ProfileOutfile = NULL;
+static int R_Mem_Profiling=0;
+extern void get_current_mem(unsigned long *,unsigned long *,unsigned long *); /* in memory.c */
+extern unsigned long get_duplicate_counter(void);  /* in duplicate.c */
+extern void reset_duplicate_counter(void);         /* in duplicate.c */
 
 #ifdef Win32
 HANDLE MainThread;
@@ -108,9 +110,19 @@ static void doprof()
 {
     RCNTXT *cptr;
     char buf[1100];
+    unsigned long bigv, smallv, nodes;
+    int len;
 
     buf[0] = '\0';
     SuspendThread(MainThread);
+    if (R_Mem_Profiling){
+	    get_current_mem(&smallv, &bigv, &nodes);
+	    if((len = strlen(buf)) < 1000) {
+	    	sprintf(buf+len, ":%ld:%ld:%ld:%ld:", smallv, bigv,
+                     nodes, get_duplicate_counter());
+            }      
+	    reset_duplicate_counter();
+    }
     for (cptr = R_GlobalContext; cptr; cptr = cptr->nextcontext) {
 	if ((cptr->callflag & (CTXT_FUNCTION | CTXT_BUILTIN))
 	    && TYPEOF(cptr->call) == LANGSXP) {
@@ -143,6 +155,14 @@ static void doprof(int sig)
 {
     RCNTXT *cptr;
     int newline = 0;
+    unsigned long bigv, smallv, nodes;
+    if (R_Mem_Profiling){
+	    get_current_mem(&smallv, &bigv, &nodes);
+	    if (!newline) newline = 1;
+	    fprintf(R_ProfileOutfile, ":%ld:%ld:%ld:%ld:", smallv, bigv,
+                     nodes, get_duplicate_counter());
+	    reset_duplicate_counter();
+    }
     for (cptr = R_GlobalContext; cptr; cptr = cptr->nextcontext) {
 	if ((cptr->callflag & (CTXT_FUNCTION | CTXT_BUILTIN))
 	    && TYPEOF(cptr->call) == LANGSXP) {
@@ -188,7 +208,7 @@ static void R_EndProfiling()
 double R_getClockIncrement(void);
 #endif
 
-static void R_InitProfiling(char * filename, int append, double dinterval)
+static void R_InitProfiling(char * filename, int append, double dinterval, int mem_profiling)
 {
 #ifndef Win32
     struct itimerval itv;
@@ -211,8 +231,15 @@ static void R_InitProfiling(char * filename, int append, double dinterval)
     R_ProfileOutfile = fopen(filename, append ? "a" : "w");
     if (R_ProfileOutfile == NULL)
 	error(_("Rprof: cannot open profile file '%s'"), filename);
-    fprintf(R_ProfileOutfile, "sample.interval=%d\n", interval);
+    if(mem_profiling)
+	fprintf(R_ProfileOutfile, "memory profiling: sample.interval=%d\n", interval);
+    else
+	fprintf(R_ProfileOutfile, "sample.interval=%d\n", interval);
 
+    R_Mem_Profiling=mem_profiling;
+    if (mem_profiling)
+	reset_duplicate_counter();
+    
 #ifdef Win32
     /* need to duplicate to make a real handle */
     DuplicateHandle(Proc, GetCurrentThread(), Proc, &MainThread,
@@ -238,7 +265,7 @@ static void R_InitProfiling(char * filename, int append, double dinterval)
 SEXP attribute_hidden do_Rprof(SEXP call, SEXP op, SEXP args, SEXP rho)
 {
     char *filename;
-    int append_mode;
+    int append_mode, mem_profiling;
     double dinterval;
 
 #ifdef BC_PROFILING
@@ -252,9 +279,10 @@ SEXP attribute_hidden do_Rprof(SEXP call, SEXP op, SEXP args, SEXP rho)
 	errorcall(call, _("invalid '%s' argument"), "filename");
     append_mode = asLogical(CADR(args));
     dinterval = asReal(CADDR(args));
+    mem_profiling = asLogical(CADDDR(args));
     filename = R_ExpandFileName(CHAR(STRING_ELT(CAR(args), 0)));
     if (strlen(filename))
-	R_InitProfiling(filename, append_mode, dinterval);
+	    R_InitProfiling(filename, append_mode, dinterval, mem_profiling);
     else
 	R_EndProfiling();
     return R_NilValue;
@@ -269,6 +297,13 @@ SEXP attribute_hidden do_Rprof(SEXP call, SEXP op, SEXP args, SEXP rho)
 
 /* NEEDED: A fixup is needed in browser, because it can trap errors,
  *	and currently does not reset the limit to the right value. */
+
+void attribute_hidden check_stack_balance(SEXP op, int save)
+{
+    if(save == R_PPStackTop) return;
+    REprintf("Warning: stack imbalance in '%s', %d then %d\n",
+	     PRIMNAME(op), save, R_PPStackTop);
+}
 
 
 /* Return value of "e" evaluated in "rho". */
@@ -316,6 +351,7 @@ SEXP eval(SEXP e, SEXP rho)
     case STRSXP:
     case CPLXSXP:
     case RAWSXP:
+    case S4SXP:
     case SPECIALSXP:
     case BUILTINSXP:
     case ENVSXP:
@@ -371,20 +407,17 @@ SEXP eval(SEXP e, SEXP rho)
 	    val = eval(PRCODE(e), PRENV(e));
 	    SET_PRSEEN(e, 0);
 	    SET_PRVALUE(e, val);
-	    /* allow GC to reclaim; useful for fancy games with delay() */
+	    /* allow GC to reclaim; 
+	       also useful for fancy games with delayedAssign() */
 	    SET_PRENV(e, R_NilValue);
 	}
 	tmp = PRVALUE(e);
 	break;
     case LANGSXP:
-	if (TYPEOF(CAR(e)) == SYMSXP) {
+	if (TYPEOF(CAR(e)) == SYMSXP)
+	    /* This will throw an error if the function is not found */
 	    PROTECT(op = findFun(CAR(e), rho));
-	    /* findFun will not normally fail, but will if R_BaseEnv 
-	       is not searched */
-	    if(op == R_UnboundValue)
-		error(_("could not find function \"%s\""),
-		      CHAR(PRINTNAME(CAR(e))));
-	} else
+	else
 	    PROTECT(op = eval(CAR(e), rho));
 
 	if(TRACE(op) && R_current_trace_state()) {
@@ -397,18 +430,15 @@ SEXP eval(SEXP e, SEXP rho)
 	    R_Visible = 1 - PRIMPRINT(op);
 	    tmp = PRIMFUN(op) (e, op, CDR(e), rho);
 	    UNPROTECT(1);
-	    if(save != R_PPStackTop) {
-		Rprintf("stack imbalance in %s, %d then %d\n",
-			PRIMNAME(op), save, R_PPStackTop);
-	    }
+	    check_stack_balance(op, save);
 	}
 	else if (TYPEOF(op) == BUILTINSXP) {
 	    int save = R_PPStackTop;
 	    RCNTXT cntxt;
-	    PROTECT(tmp = evalList(CDR(e), rho));
+	    PROTECT(tmp = evalList(CDR(e), rho, op));
 	    R_Visible = 1 - PRIMPRINT(op);
-	    /* We used to do insert a context only if profiling,
-	       but helps for tracebacks too. */
+	    /* We used to insert a context only if profiling,
+	       but helps for tracebacks on .C etc. */
 	    if (R_Profiling || (PPINFO(op).kind == PP_FOREIGN)) {
 		begincontext(&cntxt, CTXT_BUILTIN, e,
 			     R_BaseEnv, R_BaseEnv, R_NilValue, R_NilValue);
@@ -418,11 +448,7 @@ SEXP eval(SEXP e, SEXP rho)
 		tmp = PRIMFUN(op) (e, op, tmp, rho);		
 	    }
 	    UNPROTECT(1);
-
-	    if(save != R_PPStackTop) {
-		Rprintf("stack imbalance in %s, %d then %d\n",
-			PRIMNAME(op), save, R_PPStackTop);
-	    }
+	    check_stack_balance(op, save);
 	}
 	else if (TYPEOF(op) == CLOSXP) {
 	    PROTECT(tmp = promiseArgs(CDR(e), rho));
@@ -692,6 +718,7 @@ static SEXP R_dot_Methods = NULL;
 static SEXP R_dot_defined = NULL;
 static SEXP R_dot_target = NULL;
 
+/* called from methods_list_dispatch.c */
 SEXP R_execMethod(SEXP op, SEXP rho)
 {
     SEXP call, arglist, callerenv, newrho, next, val;
@@ -887,7 +914,7 @@ SEXP attribute_hidden do_if(SEXP call, SEXP op, SEXP args, SEXP rho)
 
 SEXP attribute_hidden do_for(SEXP call, SEXP op, SEXP args, SEXP rho)
 {
-    int dbg;
+    int dbg, nm;
     volatile int i, n, bgn;
     SEXP sym, body;
     volatile SEXP ans, v, val;
@@ -917,6 +944,7 @@ SEXP attribute_hidden do_for(SEXP call, SEXP op, SEXP args, SEXP rho)
     dbg = DEBUG(rho);
     bgn = BodyHasBraces(body);
 
+    nm = NAMED(val);
     PROTECT_WITH_INDEX(ans, &api);
     begincontext(&cntxt, CTXT_LOOP, R_NilValue, rho, R_BaseEnv, R_NilValue,
 		 R_NilValue);
@@ -959,17 +987,22 @@ SEXP attribute_hidden do_for(SEXP call, SEXP op, SEXP args, SEXP rho)
 	    break;
 	case EXPRSXP:
 	case VECSXP:
+	    /* make sure loop variable is a copy if needed */
+	    if(nm > 0) SET_NAMED(VECTOR_ELT(val, i), 2);
 	    setVar(sym, VECTOR_ELT(val, i), rho);
 	    break;
 	case LISTSXP:
+	    /* make sure loop variable is a copy if needed */
+	    if(nm > 0) SET_NAMED(CAR(val), 2);
 	    setVar(sym, CAR(val), rho);
 	    val = CDR(val);
 	    break;
-	default: errorcall(call, _("invalid for() loop sequence"));
+	default:
+	    errorcall(call, _("invalid for() loop sequence"));
 	}
 	REPROTECT(ans = eval(body, rho), api);
     for_next:
-	; /* needed for strict ISO C compilance, according to gcc 2.95.2 */
+	; /* needed for strict ISO C compliance, according to gcc 2.95.2 */
     }
  for_break:
     endcontext(&cntxt);
@@ -1198,12 +1231,18 @@ static SEXP evalseq(SEXP expr, SEXP rho, int forcelocal,  R_varloc_t tmploc)
 
 static const char * const asym[] = {":=", "<-", "<<-", "="};
 
+static void tmp_cleanup(void *data)
+{
+    unbindVar(R_TmpvalSymbol, (SEXP) data);
+}
+
 
 static SEXP applydefine(SEXP call, SEXP op, SEXP args, SEXP rho)
 {
     SEXP expr, lhs, rhs, saverhs, tmp, tmp2;
     R_varloc_t tmploc;
     char buf[32];
+    RCNTXT cntxt;
 
     expr = CAR(args);
 
@@ -1215,7 +1254,7 @@ static SEXP applydefine(SEXP call, SEXP op, SEXP args, SEXP rho)
 
     /*  FIXME: We need to ensure that this works for hashed
         environments.  This code only works for unhashed ones.  the
-        syntax error here is a delibrate marker so I don't forget that
+        syntax error here is a deliberate marker so I don't forget that
         this needs to be done.  The code used in "missing" will help
         here.  */
 
@@ -1233,6 +1272,13 @@ static SEXP applydefine(SEXP call, SEXP op, SEXP args, SEXP rho)
 	errorcall(call, _("cannot do complex assignments in base environment"));
     defineVar(R_TmpvalSymbol, R_NilValue, rho);
     tmploc = R_findVarLocInFrame(rho, R_TmpvalSymbol);
+    /* Now set up a context to remove it when we are done, even in the
+     * case of an error.  This all helps error() provide a better call.
+     */
+    begincontext(&cntxt, CTXT_CCODE, call, R_BaseEnv, R_BaseEnv,
+		 R_NilValue, R_NilValue);
+    cntxt.cend = &tmp_cleanup;
+    cntxt.cenddata = rho;
 
     /*  Do a partial evaluation down through the LHS. */
     lhs = evalseq(CADR(expr), rho,
@@ -1273,6 +1319,7 @@ static SEXP applydefine(SEXP call, SEXP op, SEXP args, SEXP rho)
 			      CDDR(expr), tmp));
     expr = eval(expr, rho);
     UNPROTECT(5);
+    endcontext(&cntxt); /* which does not run the remove */
     unbindVar(R_TmpvalSymbol, rho);
 #ifdef CONSERVATIVE_COPYING
     return duplicate(saverhs);
@@ -1284,7 +1331,7 @@ static SEXP applydefine(SEXP call, SEXP op, SEXP args, SEXP rho)
 #endif
 }
 
-/* Defunct in in 1.5.0
+/* Defunct in 1.5.0
 SEXP attribute_hidden do_alias(SEXP call, SEXP op, SEXP args, SEXP rho)
 {
     checkArity(op,args);
@@ -1367,9 +1414,25 @@ SEXP attribute_hidden do_set(SEXP call, SEXP op, SEXP args, SEXP rho)
 /* because it is does not cause growth of the pointer protection stack, */
 /* and because it is a little more efficient. */
 
-SEXP evalList(SEXP el, SEXP rho)
+static void PrintArgs(SEXP args, SEXP op)
 {
-    SEXP ans, h, tail;
+    if(op == R_NilValue)
+	REprintf("the part of the args list of a builtin being evaluated was:\n");
+    else
+	REprintf("the part of the args list of '%s' being evaluated was:\n",
+		 PRIMNAME(op));
+    REprintf("   %s\n", 
+	     CHAR(STRING_ELT(deparse1line(args, 0), 0))+4);
+}
+
+
+/* called in names.c and objects.c */
+
+/* Prior to 2.4.0 this dropped missing elements */
+SEXP attribute_hidden evalList(SEXP el, SEXP rho, SEXP op)
+{
+    SEXP ans, h, tail, orig = el;
+    int n = 1;
 
     PROTECT(ans = tail = CONS(R_NilValue, R_NilValue));
 
@@ -1400,8 +1463,22 @@ SEXP evalList(SEXP el, SEXP rho)
 	    SETCDR(tail, CONS(eval(CAR(el), rho), R_NilValue));
 	    tail = CDR(tail);
 	    SET_TAG(tail, CreateTag(TAG(el)));
+	} else if (CDR(el) == R_NilValue) {
+	    warningcall_immediate(R_NilValue,
+               "a final empty element has been omitted");
+	    PrintArgs(orig, op);
+	} else if(streql(PRIMNAME(op), "c")
+		  || streql(PRIMNAME(op), "list")) {
+	    /* temporarily special-case c() and list() */
+	    warningcall_immediate(R_NilValue,
+	        "an element is empty and has been omitted");
+	    PrintArgs(orig, op);
+	} else { /* It was a missing element */
+	    PrintArgs(orig, op);
+	    error(_("element %d is empty"), n);
 	}
 	el = CDR(el);
+	n++;
     }
     UNPROTECT(1);
     return CDR(ans);
@@ -1413,7 +1490,7 @@ SEXP evalList(SEXP el, SEXP rho)
 /* form below because it is does not cause growth of the pointer */
 /* protection stack, and because it is a little more efficient. */
 
-SEXP evalListKeepMissing(SEXP el, SEXP rho)
+SEXP attribute_hidden evalListKeepMissing(SEXP el, SEXP rho)
 {
     SEXP ans, h, tail;
 
@@ -1518,7 +1595,8 @@ SEXP attribute_hidden promiseArgs(SEXP el, SEXP rho)
 
 /* Check that each formal is a symbol */
 
-void CheckFormals(SEXP ls)
+/* used in coerce.c */
+void attribute_hidden CheckFormals(SEXP ls)
 {
     if (isList(ls)) {
 	for (; ls != R_NilValue; ls = CDR(ls))
@@ -1547,8 +1625,11 @@ SEXP attribute_hidden do_eval(SEXP call, SEXP op, SEXP args, SEXP rho)
     expr = CAR(args);
     env = CADR(args);
     encl = CADDR(args);
-    if (isNull(encl)) encl = R_BaseEnv;
-    else if ( !isEnvironment(encl) )
+    if (isNull(encl)) {
+	/* This is supposed to be defunct, but has been kept here
+	   (and documented as such */
+	encl = R_BaseEnv;
+    } else if ( !isEnvironment(encl) )
 	errorcall(call, _("invalid '%s' argument"), "enclos");
     switch(TYPEOF(env)) {
     case NILSXP:
@@ -1579,7 +1660,11 @@ SEXP attribute_hidden do_eval(SEXP call, SEXP op, SEXP args, SEXP rho)
     default:
 	errorcall(call, _("invalid '%s' argument"), "envir");
     }
-    if(isLanguage(expr) || isSymbol(expr) || isByteCode(expr)) {
+
+    /* isLanguage include NILSXP, and that does not need to be
+       evaluated 
+    if (isLanguage(expr) || isSymbol(expr) || isByteCode(expr)) { */
+    if (TYPEOF(expr) == LANGSXP || TYPEOF(expr) == SYMSXP || isByteCode(expr)) {
 	PROTECT(expr);
 	begincontext(&cntxt, CTXT_RETURN, call, env, rho, args, op);
 	if (!SETJMP(cntxt.cjmpbuf))
@@ -1594,14 +1679,14 @@ SEXP attribute_hidden do_eval(SEXP call, SEXP op, SEXP args, SEXP rho)
 	endcontext(&cntxt);
 	UNPROTECT(1);
     }
-    else if (isExpression(expr)) {
+    else if (TYPEOF(expr) == EXPRSXP) {
 	int i, n;
 	PROTECT(expr);
 	n = LENGTH(expr);
 	tmp = R_NilValue;
 	begincontext(&cntxt, CTXT_RETURN, call, env, rho, args, op);
 	if (!SETJMP(cntxt.cjmpbuf))
-	    for(i=0 ; i<n ; i++)
+	    for(i = 0 ; i < n ; i++)
 		tmp = eval(VECTOR_ELT(expr, i), env);
 	else {
 	    tmp = R_ReturnedValue;
@@ -1616,7 +1701,7 @@ SEXP attribute_hidden do_eval(SEXP call, SEXP op, SEXP args, SEXP rho)
     }
     else if( TYPEOF(expr) == PROMSXP ) {
         expr = eval(expr, rho);
-    }
+    } /* else expr is returned unchanged */
     if (PRIMVAL(op)) { /* eval.with.vis(*) : */
 	PROTECT(expr);
 	PROTECT(env = allocVector(VECSXP, 2));
@@ -1672,9 +1757,9 @@ SEXP attribute_hidden do_recall(SEXP call, SEXP op, SEXP args, SEXP rho)
 }
 
 
-SEXP EvalArgs(SEXP el, SEXP rho, int dropmissing)
+static SEXP evalArgs(SEXP el, SEXP rho, SEXP op, int dropmissing)
 {
-    if(dropmissing) return evalList(el, rho);
+    if(dropmissing) return evalList(el, rho, op);
     else return evalListKeepMissing(el, rho);
 }
 
@@ -1763,9 +1848,9 @@ int DispatchOrEval(SEXP call, SEXP op, char *generic, SEXP args, SEXP rho,
 		   multiple evaluation after the call to possible_dispatch.
 		*/
 		if (dots)
-		    argValue = EvalArgs(argValue, rho, dropmissing);
+		    argValue = evalArgs(argValue, rho, op, dropmissing);
 		else {
-		    argValue = CONS(x, EvalArgs(CDR(argValue), rho, dropmissing));
+		    argValue = CONS(x, evalArgs(CDR(argValue), rho, op, dropmissing));
 		    SET_TAG(argValue, CreateTag(TAG(args)));
 		}
 		PROTECT(args = argValue); nprotect++;
@@ -1793,16 +1878,16 @@ int DispatchOrEval(SEXP call, SEXP op, char *generic, SEXP args, SEXP rho,
 	}
     }
     if(!argsevald) {
-    if (dots)
-	/* The first call argument was ... and may contain more than the
-	   object, so it needs to be evaluated here.  The object should be
-	   in a promise, so evaluating it again should be no problem. */
-	*ans = EvalArgs(args, rho, dropmissing);
-    else {
-	PROTECT(*ans = CONS(x, EvalArgs(CDR(args), rho, dropmissing)));
-	SET_TAG(*ans, CreateTag(TAG(args)));
-	UNPROTECT(1);
-    }
+	if (dots)
+	    /* The first call argument was ... and may contain more than the
+	       object, so it needs to be evaluated here.  The object should be
+	       in a promise, so evaluating it again should be no problem. */
+	    *ans = evalArgs(args, rho, op, dropmissing);
+	else {
+	    PROTECT(*ans = CONS(x, evalArgs(CDR(args), rho, op, dropmissing)));
+	    SET_TAG(*ans, CreateTag(TAG(args)));
+	    UNPROTECT(1);
+	}
     }
     else *ans = args;
 #else
@@ -1833,7 +1918,7 @@ int DispatchOrEval(SEXP call, SEXP op, char *generic, SEXP args, SEXP rho,
 	}
     }
     /* else PROTECT(args); */
-    PROTECT(*ans = CONS(x, EvalArgs(CDR(args), rho, dropmissing)));
+    PROTECT(*ans = CONS(x, evalArgs(CDR(args), rho, op, dropmissing)));
     SET_TAG(*ans, CreateTag(TAG(args)));
     UNPROTECT(1);
 #endif
@@ -2015,10 +2100,8 @@ int DispatchGroup(char* group, SEXP call, SEXP op, SEXP args, SEXP rho,
 	SET_STRING_ELT(t, j, duplicate(STRING_ELT(lclass, lwhich++)));
     defineVar(install(".Class"), t, newrho);
     UNPROTECT(1);
-    if (R_UseNamespaceDispatch) {
-	defineVar(install(".GenericCallEnv"), rho, newrho);
-	defineVar(install(".GenericDefEnv"), R_BaseEnv, newrho);
-    }
+    defineVar(install(".GenericCallEnv"), rho, newrho);
+    defineVar(install(".GenericDefEnv"), R_BaseEnv, newrho);
 
     PROTECT(t = LCONS(lmeth,CDR(call)));
 
@@ -2206,16 +2289,18 @@ enum {
 
 SEXP R_unary(SEXP, SEXP, SEXP);
 SEXP R_binary(SEXP, SEXP, SEXP, SEXP);
-SEXP attribute_hidden do_math1(SEXP, SEXP, SEXP, SEXP);
-SEXP attribute_hidden do_relop_dflt(SEXP, SEXP, SEXP, SEXP);
-SEXP attribute_hidden do_logic(SEXP, SEXP, SEXP, SEXP);
-SEXP attribute_hidden do_subset_dflt(SEXP, SEXP, SEXP, SEXP);
-SEXP attribute_hidden do_subassign_dflt(SEXP, SEXP, SEXP, SEXP);
-SEXP attribute_hidden do_c_dflt(SEXP, SEXP, SEXP, SEXP);
-SEXP attribute_hidden do_subset2_dflt(SEXP, SEXP, SEXP, SEXP);
-SEXP attribute_hidden do_subassign2_dflt(SEXP, SEXP, SEXP, SEXP);
+SEXP do_math1(SEXP, SEXP, SEXP, SEXP);
+SEXP do_relop_dflt(SEXP, SEXP, SEXP, SEXP);
+SEXP do_logic(SEXP, SEXP, SEXP, SEXP);
+SEXP do_subset_dflt(SEXP, SEXP, SEXP, SEXP);
+SEXP do_subassign_dflt(SEXP, SEXP, SEXP, SEXP);
+SEXP do_c_dflt(SEXP, SEXP, SEXP, SEXP);
+SEXP do_subset2_dflt(SEXP, SEXP, SEXP, SEXP);
+SEXP do_subassign2_dflt(SEXP, SEXP, SEXP, SEXP);
+/* now in Defn.h 
 SEXP R_subset3_dflt(SEXP, SEXP);
 SEXP R_subassign3_dflt(SEXP, SEXP, SEXP, SEXP);
+*/
 
 #define DO_FAST_RELOP2(op,a,b) do { \
     double __a__ = (a), __b__ = (b); \
@@ -3410,7 +3495,7 @@ SEXP attribute_hidden do_bcclose(SEXP call, SEXP op, SEXP args, SEXP rho)
 	errorcall(call, _("invalid environment"));
 
     if (isNull(env)) {
-	warning(_("use of NULL environment is deprecated"));
+	error(_("use of NULL environment is defunct"));
 	env = R_BaseEnv;
     } else  
     if (!isEnvironment(env))

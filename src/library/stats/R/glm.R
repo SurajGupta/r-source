@@ -72,8 +72,16 @@ glm <- function(formula, family = gaussian, data, weights,
                    offset = offset, family = family, control = control,
                    intercept = attr(mt, "intercept") > 0)
 
-    ## empty models don't have an intercept!
-    if(any(offset) && attr(mt, "intercept") > 0) {
+    ## This calculated the null deviance from the intercept-only model
+    ## if there is one, otherwise from the offset-only model.
+    ## We need to recalculate by a proper fit if there is intercept and
+    ## offset.
+    ##
+    ## The glm.fit calculation could be wrong if the link depends on the
+    ## observations, so we allow the null deviance to be forced to be
+    ## re-calculated by setting an offset (provided there is an intercept).
+    ## Prior to 2.4.0 this was only done for non-zero offsets.
+    if(length(offset) && attr(mt, "intercept") > 0) {
 	fit$null.deviance <-
 	    glm.fit(x = X[,"(Intercept)",drop=FALSE], y = Y, weights = weights,
                     offset = offset, family = family,
@@ -299,8 +307,10 @@ glm.fit <-
         ## than 0 for non-estimable parameters
         if (fit$rank < nvars) coef[fit$pivot][seq(fit$rank+1, nvars)] <- NA
         xxnames <- xnames[fit$pivot]
-        residuals <- rep.int(NA, nobs)
-        residuals[good] <- z - (eta - offset)[good] # z does not have offset in.
+        ## update by accurate calculation, including 0-weight cases.
+        residuals <-  (y - mu)/mu.eta(eta)
+##        residuals <- rep.int(NA, nobs)
+##        residuals[good] <- z - (eta - offset)[good] # z does not have offset in.
         fit$qr <- as.matrix(fit$qr)
         nr <- min(sum(good), nvars)
         if (nr < nvars) {
@@ -325,7 +335,7 @@ glm.fit <-
     names(y) <- ynames
     if(!EMPTY)
         names(fit$effects) <-
-            c(xxnames[seq(len=fit$rank)], rep.int("", sum(good) - fit$rank))
+            c(xxnames[seq_len(fit$rank)], rep.int("", sum(good) - fit$rank))
     ## calculate null deviance -- corrected in glm() if offset and intercept
     wtdmu <-
 	if (intercept) sum(weights * y)/sum(weights) else linkinv(offset)
@@ -364,6 +374,7 @@ print.glm <- function(x, digits= max(3, getOption("digits") - 3), ...)
     } else cat("No coefficients\n\n")
     cat("\nDegrees of Freedom:", x$df.null, "Total (i.e. Null); ",
         x$df.residual, "Residual\n")
+    if(nchar(mess <- naprint(x$na.action))) cat("  (",mess, ")\n", sep="")
     cat("Null Deviance:	   ",	format(signif(x$null.deviance, digits)),
 	"\nResidual Deviance:", format(signif(x$deviance, digits)),
 	"\tAIC:", format(signif(x$aic, digits)), "\n")
@@ -594,8 +605,8 @@ summary.glm <- function(object, dispersion = NULL,
     ## return answer
 
     ans <- c(object[c("call","terms","family","deviance", "aic",
-		      "contrasts",
-		      "df.residual","null.deviance","df.null","iter")],
+		      "contrasts", "df.residual","null.deviance","df.null",
+                      "iter", "na.action")],
 	     list(deviance.resid = residuals(object, type = "deviance"),
 		  coefficients = coef.table,
                   aliased = aliased,
@@ -655,8 +666,9 @@ print.summary.glm <-
 			   digits= max(5, digits+1)), " on",
 		    format(unlist(x[c("df.null","df.residual")])),
 		    " degrees of freedom\n"),
-	      1, paste, collapse=" "),
-	"AIC: ", format(x$aic, digits= max(4, digits+1)),"\n\n",
+	      1, paste, collapse=" "), sep="")
+    if(nchar(mess <- naprint(x$na.action))) cat("  (",mess, ")\n", sep="")
+    cat("AIC: ", format(x$aic, digits= max(4, digits+1)),"\n\n",
 	"Number of Fisher Scoring iterations: ", x$iter,
 	"\n", sep="")
 
@@ -702,6 +714,13 @@ residuals.glm <-
     r <- object$residuals
     mu	<- object$fitted.values
     wts <- object$prior.weights
+    switch(type,
+           deviance=,pearson=,response=
+           if(is.null(y)) {
+               mu.eta <- object$family$mu.eta
+               eta <- object$linear.predictors
+               y <-  mu + r * mu.eta(eta)
+           })
     res <- switch(type,
 		  deviance = if(object$df.res > 0) {
 		      d.res <- sqrt(pmax((object$family$dev.resids)(y, mu, wts), 0))
@@ -713,9 +732,9 @@ residuals.glm <-
 		  partial = r
 		  )
     if(!is.null(object$na.action))
-      res<- naresid(object$na.action, res)
-    if (type=="partial") ## need to avoid doing naresid() twice.
-      res<-res+predict(object, type="terms")
+        res <- naresid(object$na.action, res)
+    if (type == "partial") ## need to avoid doing naresid() twice.
+        res <- res+predict(object, type="terms")
     res
 }
 

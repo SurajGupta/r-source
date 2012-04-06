@@ -55,7 +55,7 @@ smooth.spline <-
     x <- signif(x, 6)
     ux <- unique(sort(x))
     ox <- match(x, ux)
-    tmp <- matrix(unlist(tapply(seq(along=y), ox,
+    tmp <- matrix(unlist(tapply(seq_along(y), ox,
 				function(i,y,w)
 				c(sum(w[i]), sum(w[i]*y[i]),sum(w[i]*y[i]^2)),
 				y = y, w = w)),
@@ -97,6 +97,9 @@ smooth.spline <-
     iparms <- as.integer(c(icrit,ispar, contr.sp$maxit))
     names(iparms) <- c("icrit", "ispar", "iter")
 
+    ## This uses DUP = FALSE which is dangerous since it does change
+    ## its argument w.  We don't assume that as.double will
+    ## always duplicate, although it does in R 2.3.1.
     fit <- .Fortran(R_qsbart,		# code in ../src/qsbart.f
 		    as.double(penalty),
 		    as.double(dofoff),
@@ -121,6 +124,8 @@ smooth.spline <-
 		    ier = integer(1),
 		    DUP = FALSE
 		    )[c("coef","ty","lev","spar","parms","crit","iparms","ier")]
+    ## now we have clobbered wbar, recompute it.
+    wbar <- tmp[, 1]
 
     lev <- fit$lev
     df <- sum(lev)

@@ -153,8 +153,9 @@ buildVignettes <-function(package, dir, lib.loc = NULL, quiet=TRUE)
     }
 
     if(have.makefile) {
-        yy <- system(Sys.getenv("MAKE"))
-        if(yy>0) stop("running make failed")
+    	make <- Sys.getenv("MAKE")
+        yy <- system(make)
+        if(make == "" || yy>0) stop("running make failed")
     }
     else {
         f <- list.files()
@@ -171,7 +172,7 @@ vignetteMetaRE <- function(tag)
           "\\{([^}]*)\\}", sep = "")
 
 vignetteInfo <- function(file) {
-    lines <- readLines(file)
+    lines <- readLines(file, warn = FALSE)
     ## <FIXME>
     ## Can only proceed with lines with are valid in the current
     ## locale ... (or should we try to iconv() from latin1?)
@@ -213,16 +214,19 @@ function(vignetteDir)
     vignetteFiles <-
         path.expand(list_files_with_type(vignetteDir, "vignette"))
 
-    if(length(vignetteFiles) == 0)
-        return(data.frame(File = I(character(0)),
-                          Title = I(character(0)),
-                          Depends = I(list()),
-                          Keywords = I(list()),
-                          PDF = I(character())))
+    if(length(vignetteFiles) == 0) {
+        out <- data.frame(File = character(),
+                          Title = character(),
+                          PDF = character(),
+                          stringsAsFactors = FALSE)
+        out$Depends <- list()
+        out$Keywords <- list()
+        return(out)
+    }
 
     contents <- vector("list", length = length(vignetteFiles) * 4)
     dim(contents) <- c(length(vignetteFiles), 4)
-    for(i in seq(along = vignetteFiles))
+    for(i in seq_along(vignetteFiles))
         contents[i, ] <- vignetteInfo(vignetteFiles[i])
     colnames(contents) <- c("File", "Title", "Depends", "Keywords")
 
@@ -254,12 +258,15 @@ function(vignetteDir)
     vignettePDFs[!file_test("-f", vignettePDFs)] <- ""
     vignettePDFs <- basename(vignettePDFs)
 
-    data.frame(File = I(unlist(contents[, "File"])),
-               Title = I(vignetteTitles),
-               Depends = I(contents[, "Depends"]),
-               Keywords = I(contents[, "Keywords"]),
-               PDF = I(vignettePDFs),
-               row.names = NULL) # avoid trying to compute row names
+    out <- data.frame(File = unlist(contents[, "File"]),
+                      Title = vignetteTitles,
+                      PDF = vignettePDFs,
+                      row.names = NULL, # avoid trying to compute row
+                                        # names
+                      stringsAsFactors = FALSE)
+    out$Depends <- contents[, "Depends"]
+    out$Keywords <- contents[, "Keywords"]
+    out
 }
 
 ### * .check_vignette_index
@@ -300,13 +307,13 @@ function(x, ...)
               "</head><body>",
               paste("<h2>Vignettes of package", pkg,"</h2>"))
 
-    if(is.null(vignetteIndex) || nrow(vignetteIndex)==0){
+    if(is.null(vignetteIndex) || nrow(vignetteIndex)==0) {
         html <- c(html, "Sorry, the package contains no vignette meta-information or index.",
                   "Please browse the <a href=\".\">directory</a>.")
     }
     else{
         html <- c(html, "<dl>")
-        for(k in seq(1, nrow(vignetteIndex))){
+        for(k in seq_len(nrow(vignetteIndex))){
             html <- c(html,
                       paste("<dt><a href=\"", vignetteIndex[k, "PDF"], "\">",
                             vignetteIndex[k, "PDF"], "</a>:", sep=""),

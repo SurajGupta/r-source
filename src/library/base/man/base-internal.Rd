@@ -6,10 +6,7 @@
 \alias{.getRequiredPackages}
 \alias{.getRequiredPackages2}
 \alias{testPlatformEquivalence}
-\alias{sys.save.image}
-\alias{sys.load.image}
-\alias{sys.save.image}
-\alias{sys.load.image}
+\alias{.isMethodsDispatchOn}
 \alias{sys.save.image}
 \alias{sys.load.image}
 
@@ -34,11 +31,7 @@
 
 testPlatformEquivalence(built, run)
 
-sys.load.image(name, quiet)
-sys.save.image(name)
-
-sys.load.image(name, quiet)
-sys.save.image(name)
+.isMethodsDispatchOn(onOff = NULL)
 
 sys.load.image(name, quiet)
 sys.save.image(name)
@@ -103,23 +96,9 @@ sys.save.image(name)
   mismatches elsewhere.  Cognescenti can replace this function in the
   \code{base} namespace.
 
-  \code{sys.save.image} is a system function that is called by \code{q()}
-  and its GUI analogs; \code{sys.load.image} is called by the startup code.
-  These functions should not be called directly and are subject to change.
-
-  \code{sys.save.image} closes all connections first, to ensure that it
-  is able to open a connection to save the image.  This is appropriate
-  when called from \code{q()} and allies, but reinforces the warning
-  that it should not be called directly.
-
-  \code{sys.save.image} is a system function that is called by \code{q()}
-  and its GUI analogs; \code{sys.load.image} is called by the startup code.
-  These functions should not be called directly and are subject to change.
-
-  \code{sys.save.image} closes all connections first, to ensure that it
-  is able to open a connection to save the image.  This is appropriate
-  when called from \code{q()} and allies, but reinforces the warning
-  that it should not be called directly.
+  The function \code{.isMethodsDispatchOn()} returns \code{TRUE} if
+  the S4 method dispatch has been turned on in the evaluator (usually by
+  loading package \pkg{methods}).  It is meant for \R internal use only.
 
   \code{sys.save.image} is a system function that is called by \code{q()}
   and its GUI analogs; \code{sys.load.image} is called by the startup code.

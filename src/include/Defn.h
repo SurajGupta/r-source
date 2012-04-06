@@ -21,9 +21,12 @@
 #ifndef DEFN_H_
 #define DEFN_H_
 
+/* seems unused */
 #define COUNTING
 
 #define BYTECODE
+
+/* probably no longer needed */
 #define NEW_CONDITION_HANDLING
 
 /* To test the write barrier used by the generational collector,
@@ -48,6 +51,21 @@
 #endif
 
 #define MAXELTSIZE 8192 /* The largest string size */
+
+#include <R_ext/Complex.h>
+void Rf_CoercionWarning(int);/* warning code */
+int Rf_LogicalFromInteger(int, int*);
+int Rf_LogicalFromReal(double, int*);
+int Rf_LogicalFromComplex(Rcomplex, int*);
+int Rf_IntegerFromLogical(int, int*);
+int Rf_IntegerFromReal(double, int*);
+int Rf_IntegerFromComplex(Rcomplex, int*);
+double Rf_RealFromLogical(int, int*);
+double Rf_RealFromInteger(int, int*);
+double Rf_RealFromComplex(Rcomplex, int*);
+Rcomplex Rf_ComplexFromLogical(int, int*);
+Rcomplex Rf_ComplexFromInteger(int, int*);
+Rcomplex Rf_ComplexFromReal(double, int*);
 
 #define CALLED_FROM_DEFN_H 1
 #include <Rinternals.h>		/*-> Arith.h, Complex.h, Error.h, Memory.h
@@ -183,15 +201,6 @@ extern int vsnprintf (char *str, size_t count, const char *fmt, va_list arg);
 extern int putenv(char *string);
 #endif
 
-
-/* Getting the working directory */
-#if defined(HAVE_GETCWD)
-# define R_GETCWD(x, y) getcwd(x, y)
-#elif defined(Win32)
-# define R_GETCWD(x, y) GetCurrentDirectory(y, x)
-#else
-# undef R_GETCWD
-#endif
 
 /* Maximal length of an entire file name */
 #if !defined(PATH_MAX)
@@ -347,6 +356,16 @@ typedef struct {
 #define FLOAT2VEC(n)	(((n)>0)?(((n)*sizeof(double)-1)/sizeof(VECREC)+1):0)
 #define COMPLEX2VEC(n)	(((n)>0)?(((n)*sizeof(Rcomplex)-1)/sizeof(VECREC)+1):0)
 #define PTR2VEC(n)	(((n)>0)?(((n)*sizeof(SEXP)-1)/sizeof(VECREC)+1):0)
+/* Bindings */
+/* use the same bits (15 and 14) in symbols and bindings */
+#define ACTIVE_BINDING_MASK (1<<15)
+#define BINDING_LOCK_MASK (1<<14) 
+#define SPECIAL_BINDING_MASK (ACTIVE_BINDING_MASK | BINDING_LOCK_MASK)
+#define IS_ACTIVE_BINDING(b) ((b)->sxpinfo.gp & ACTIVE_BINDING_MASK)
+#define BINDING_IS_LOCKED(b) ((b)->sxpinfo.gp & BINDING_LOCK_MASK)
+#define SET_ACTIVE_BINDING_BIT(b) ((b)->sxpinfo.gp |= ACTIVE_BINDING_MASK)
+#define LOCK_BINDING(b) ((b)->sxpinfo.gp |= BINDING_LOCK_MASK)
+#define UNLOCK_BINDING(b) ((b)->sxpinfo.gp &= (~BINDING_LOCK_MASK))
 
 #else /* USE_RINTERNALS */
 
@@ -360,6 +379,12 @@ void (SET_PRIMOFFSET)(SEXP x, int v);
 #define PRIMARITY(x)	(R_FunTab[PRIMOFFSET(x)].arity)
 #define PPINFO(x)	(R_FunTab[PRIMOFFSET(x)].gram)
 #define PRIMPRINT(x)	(((R_FunTab[PRIMOFFSET(x)].eval)/100)%10)
+
+Rboolean (IS_ACTIVE_BINDING)(SEXP b);
+Rboolean (BINDING_IS_LOCKED)(SEXP b);
+void (SET_ACTIVE_BINDING_BIT)(SEXP b);
+void (LOCK_BINDING)(SEXP b);
+void (UNLOCK_BINDING)(SEXP b);
 
 #endif /* USE_RINTERNALS */
 
@@ -385,11 +410,9 @@ typedef struct RCNTXT {
     void (*cend)(void *);	/* C "on.exit" thunk */
     void *cenddata;		/* data for C "on.exit" thunk */
     char *vmax;		        /* top of R_alloc stack */
-    int intsusp;                /* interrupts enables */
-#ifdef NEW_CONDITION_HANDLING
+    int intsusp;                /* interrupts are suspended */
     SEXP handlerstack;          /* condition handler stack */
     SEXP restartstack;          /* stack of available restarts */
-#endif
 #ifdef BYTECODE
     SEXP *nodestack;
 # ifdef BC_INT_STACK
@@ -469,14 +492,6 @@ typedef enum {
 */
 #define R_EOF	-1
 
-/* MAGIC Numbers for files */
-#define R_MAGIC_BINARY 1975
-#define R_MAGIC_ASCII  1976
-#define R_MAGIC_XDR    1977
-
-#define R_MAGIC_BINARY_VERSION16 1971
-#define R_MAGIC_ASCII_VERSION16	 1972
-
 
 /*--- Global Variables ---------------------------------------------------- */
 
@@ -512,7 +527,7 @@ extern0 R_size_t R_VSize  INI_as(R_VSIZE);/* Size of the vector heap */
 extern0 SEXP	R_NHeap;	    /* Start of the cons cell heap */
 extern0 SEXP	R_FreeSEXP;	    /* Cons cell free list */
 extern0 R_size_t R_Collected;	    /* Number of free cons cells (after gc) */
-LibExtern SEXP	R_PreciousList;	    /* List of Persistent Objects */
+extern0 SEXP	R_PreciousList;	    /* List of Persistent Objects */
 LibExtern int	R_Is_Running;	    /* for Windows memory manager */
 
 /* The Pointer Protection Stack */
@@ -535,7 +550,6 @@ extern0 int	R_BrowseLines	INI_as(0);	/* lines/per call in browser */
 extern0 int	R_Expressions	INI_as(5000);	/* options(expressions) */
 extern0 int	R_Expressions_keep INI_as(5000);	/* options(expressions) */
 extern0 Rboolean R_KeepSource	INI_as(FALSE);	/* options(keep.source) */
-extern0 int	R_UseNamespaceDispatch INI_as(TRUE);
 extern0 int	R_WarnLength	INI_as(1000);	/* Error/warning max length */
 extern uintptr_t R_CStackLimit	INI_as((uintptr_t)-1);	/* C stack limit */
 extern uintptr_t R_CStackStart	INI_as((uintptr_t)-1);	/* Initial stack address */
@@ -553,12 +567,12 @@ extern FILE*	R_Consolefile	INI_as(NULL);	/* Console output file */
 extern FILE*	R_Outputfile	INI_as(NULL);	/* Output file */
 extern0 int	R_ErrorCon	INI_as(2);	/* Error connection */
 LibExtern char*	R_TempDir	INI_as(NULL);	/* Name of per-session dir */
+extern0 char*   Sys_TempDir	INI_as(NULL);	/* Name of per-session dir
+						   if set by R itself */
 extern0 char	R_StdinEnc[31]  INI_as("");	/* Encoding assumed for stdin */
 
 /* Objects Used In Parsing  */
 extern0 SEXP	R_CommentSxp;	    /* Comments accumulate here */
-extern0 SEXP	R_ParseText;	    /* Text to be parsed */
-extern0 int	R_ParseCnt;	    /* Count of lines of text to be parsed */
 extern0 int	R_ParseError	INI_as(0); /* Line where parse error occured */
 #define PARSE_CONTEXT_SIZE 256	    /* Recent parse context kept in a circular buffer */
 extern0 char	R_ParseContext[PARSE_CONTEXT_SIZE] INI_as("");
@@ -577,10 +591,8 @@ extern void 	R_setupHistory();
 extern0 int	R_CollectWarnings INI_as(0);	/* the number of warnings */
 extern0 SEXP	R_Warnings;	    /* the warnings and their calls */
 extern0 int	R_ShowErrorMessages INI_as(1);	/* show error messages? */
-#ifdef NEW_CONDITION_HANDLING
 extern0 SEXP	R_HandlerStack;	/* Condition handler stack */
 extern0 SEXP	R_RestartStack;	/* Stack of available restarts */
-#endif
 
 LibExtern Rboolean utf8locale  INI_as(FALSE);  /* is this a UTF-8 locale? */
 LibExtern Rboolean mbcslocale  INI_as(FALSE);  /* is this a MBCS locale? */
@@ -610,12 +622,14 @@ extern0 IStackval *R_BCIntStackBase, *R_BCIntStackTop, *R_BCIntStackEnd;
 typedef SEXP (*R_stdGen_ptr_t)(SEXP, SEXP, SEXP); /* typedef */
 R_stdGen_ptr_t R_get_standardGeneric_ptr(); /* get method */
 R_stdGen_ptr_t R_set_standardGeneric_ptr(R_stdGen_ptr_t, SEXP); /* set method */
-extern SEXP R_MethodsNamespace;
+LibExtern SEXP R_MethodsNamespace;
 SEXP R_deferred_default_method();
-SEXP R_set_prim_method(SEXP fname, SEXP op, SEXP code_vec, SEXP fundef, SEXP mlist);
+SEXP R_set_prim_method(SEXP fname, SEXP op, SEXP code_vec, SEXP fundef, 
+		       SEXP mlist);
 SEXP do_set_prim_method(SEXP op, char *code_string, SEXP fundef, SEXP mlist);
 void R_set_quick_method_check(R_stdGen_ptr_t);
 SEXP R_primitive_methods(SEXP op);
+SEXP R_primitive_generic(SEXP op);
 
 /* slot management (in attrib.c) */
 SEXP R_do_slot(SEXP obj, SEXP name);
@@ -632,6 +646,8 @@ typedef struct {
 
 LibExtern AccuracyInfo R_AccuracyInfo;
 
+extern0 unsigned int max_contour_segments INI_as(25000);
+
 
 #ifdef __MAIN__
 # undef extern
@@ -645,8 +661,17 @@ LibExtern AccuracyInfo R_AccuracyInfo;
 
 # define begincontext		Rf_begincontext
 # define checkArity		Rf_checkArity
+# define check_stack_balance	Rf_check_stack_balance
 # define CheckFormals		Rf_CheckFormals
 # define CleanEd		Rf_CleanEd
+# define CoercionWarning       	Rf_CoercionWarning
+# define ComplexFromInteger	Rf_ComplexFromInteger
+# define ComplexFromLogical	Rf_ComplexFromLogical
+# define ComplexFromReal	Rf_ComplexFromReal
+# define ComplexFromString	Rf_ComplexFromString
+# define copyListMatrix		Rf_copyListMatrix
+# define copyMostAttribNoTs	Rf_copyMostAttribNoTs
+# define CustomPrintValue	Rf_CustomPrintValue
 # define DataFrameClass		Rf_DataFrameClass
 # define ddfindVar		Rf_ddfindVar
 # define deparse1		Rf_deparse1
@@ -656,10 +681,13 @@ LibExtern AccuracyInfo R_AccuracyInfo;
 # define dynamicfindVar		Rf_dynamicfindVar
 # define EncodeRaw              Rf_EncodeRaw
 # define EncodeString           Rf_EncodeString
+# define EnsureString 		Rf_EnsureString
 # define endcontext		Rf_endcontext
+# define envlength		Rf_envlength
 # define ErrorMessage		Rf_ErrorMessage
+# define evalList		Rf_evalList
+# define evalListKeepMissing	Rf_evalListKeepMissing
 # define factorsConform		Rf_factorsConform
-# define FetchMethod		Rf_FetchMethod
 # define findcontext		Rf_findcontext
 # define findVar1		Rf_findVar1
 # define FrameClassFix		Rf_FrameClassFix
@@ -682,12 +710,26 @@ LibExtern AccuracyInfo R_AccuracyInfo;
 # define InitOptions		Rf_InitOptions
 # define InitTempDir		Rf_InitTempDir
 # define initStack		Rf_initStack
+# define IntegerFromComplex	Rf_IntegerFromComplex
+# define IntegerFromLogical	Rf_IntegerFromLogical
+# define IntegerFromReal	Rf_IntegerFromReal
+# define IntegerFromString	Rf_IntegerFromString
 # define internalTypeCheck	Rf_internalTypeCheck
 # define isValidName		Rf_isValidName
+# define ItemName		Rf_ItemName
 # define jump_to_toplevel	Rf_jump_to_toplevel
 # define levelsgets		Rf_levelsgets
+# define LogicalFromComplex	Rf_LogicalFromComplex
+# define LogicalFromInteger	Rf_LogicalFromInteger
+# define LogicalFromReal	Rf_LogicalFromReal
+# define LogicalFromString	Rf_LogicalFromString
 # define mainloop		Rf_mainloop
+# define makeSubscript		Rf_makeSubscript
 # define mat2indsub		Rf_mat2indsub
+# define matchArg		Rf_matchArg
+# define matchArgExact		Rf_matchArgExact
+# define matchArgs		Rf_matchArgs
+# define matchPar		Rf_matchPar
 # define Mbrtowc		Rf_mbrtowc
 # define mkCLOSXP		Rf_mkCLOSXP
 # define mkComplex              Rf_mkComplex
@@ -704,16 +746,26 @@ LibExtern AccuracyInfo R_AccuracyInfo;
 # define onsigusr1              Rf_onsigusr1
 # define onsigusr2              Rf_onsigusr2
 # define parse			Rf_parse
+# define PrintDefaults		Rf_PrintDefaults
 # define PrintGreeting		Rf_PrintGreeting
+# define PrintValueEnv		Rf_PrintValueEnv
+# define PrintValueRec		Rf_PrintValueRec
 # define PrintVersion		Rf_PrintVersion
 # define PrintVersionString    	Rf_PrintVersionString
 # define PrintWarnings		Rf_PrintWarnings
 # define promiseArgs		Rf_promiseArgs
+# define RealFromComplex	Rf_RealFromComplex
+# define RealFromInteger	Rf_RealFromInteger
+# define RealFromLogical	Rf_RealFromLogical
+# define RealFromString		Rf_RealFromString
 # define RemoveClass		Rf_RemoveClass
-# define setVarInFrame		Rf_setVarInFrame
 # define sortVector		Rf_sortVector
 # define ssort			Rf_ssort
 # define str2type		Rf_str2type
+# define StringFromComplex	Rf_StringFromComplex
+# define StringFromInteger	Rf_StringFromInteger
+# define StringFromLogical	Rf_StringFromLogical
+# define StringFromReal		Rf_StringFromReal
 # define StrToInternal		Rf_StrToInternal
 # define substituteList		Rf_substituteList
 # define tsConform		Rf_tsConform
@@ -723,8 +775,12 @@ LibExtern AccuracyInfo R_AccuracyInfo;
 # define type2symbol		Rf_type2symbol
 # define unbindVar		Rf_unbindVar
 # define usemethod		Rf_usemethod
+# define vectorSubscript	Rf_vectorSubscript
 # define warningcall		Rf_warningcall
 # define WarningMessage		Rf_WarningMessage
+# define yychar			Rf_yychar
+# define yylval			Rf_yylval
+# define yynerrs		Rf_yynerrs
 # define yyparse		Rf_yyparse
 
 /* Platform Dependent Gui Hooks */
@@ -733,6 +789,8 @@ LibExtern AccuracyInfo R_AccuracyInfo;
 #define	R_FILE		2
 #define R_TEXT		3
 
+/* The maximum length of input line which will be asked for */
+#define CONSOLE_BUFFER_SIZE 1024
 int	R_ReadConsole(char*, unsigned char*, int, int);
 void	R_WriteConsole(char*, int);
 void	R_ResetConsole(void);
@@ -767,13 +825,28 @@ void R_SetVarLocValue(R_varloc_t, SEXP);
 #define SIMPLEDEPARSE		0
 #define FORSOURCING		31
 
+/* Coercion functions */
+int Rf_LogicalFromString(SEXP, int*);
+int Rf_IntegerFromString(SEXP, int*);
+double Rf_RealFromString(SEXP, int*);
+Rcomplex Rf_ComplexFromString(SEXP, int*);
+SEXP Rf_StringFromLogical(int, int*);
+SEXP Rf_StringFromInteger(int, int*);
+SEXP Rf_StringFromReal(double, int*);
+SEXP Rf_StringFromComplex(Rcomplex, int*);
+SEXP Rf_EnsureString(SEXP);
+
 /* Other Internally Used Functions */
 
 SEXP Rf_append(SEXP, SEXP); /* apparently unused now */
 void begincontext(RCNTXT*, int, SEXP, SEXP, SEXP, SEXP, SEXP);
 void checkArity(SEXP, SEXP);
 void CheckFormals(SEXP);
+void check_stack_balance(SEXP op, int save);
 void CleanEd(void);
+void copyListMatrix(SEXP, SEXP, Rboolean);
+void copyMostAttribNoTs(SEXP, SEXP);
+void CustomPrintValue(SEXP,SEXP);
 void DataFrameClass(SEXP);
 SEXP ddfindVar(SEXP, SEXP);
 SEXP deparse1(SEXP,Rboolean,int);
@@ -784,8 +857,9 @@ SEXP duplicated(SEXP);
 SEXP dynamicfindVar(SEXP, RCNTXT*);
 void endcontext(RCNTXT*);
 int envlength(SEXP);
+SEXP evalList(SEXP, SEXP, SEXP);
+SEXP evalListKeepMissing(SEXP, SEXP);
 int factorsConform(SEXP, SEXP);
-SEXP FetchMethod(char *, char *, SEXP);
 void findcontext(int, SEXP, SEXP);
 SEXP findVar1(SEXP, SEXP, SEXPTYPE, int);
 void FrameClassFix(SEXP);
@@ -813,9 +887,7 @@ void InitOptions(void);
 void Init_R_Variables(SEXP);
 void InitTempDir(void);
 void initStack(void);
-#ifdef NEW_CONDITION_HANDLING
 void R_InsertRestartHandlers(RCNTXT *, Rboolean);
-#endif
 void internalTypeCheck(SEXP, SEXP, SEXPTYPE);
 Rboolean isMethodsDispatchOn(void);
 int isValidName(char *);
@@ -823,8 +895,13 @@ void R_JumpToContext(RCNTXT *, int, SEXP);
 void jump_to_toplevel(void);
 SEXP levelsgets(SEXP, SEXP);
 void mainloop(void);
+SEXP makeSubscript(SEXP, SEXP, int *);
 SEXP mat2indsub(SEXP, SEXP);
-SEXP match(SEXP, SEXP, int);
+SEXP matchArg(SEXP, SEXP*);
+SEXP matchArgExact(SEXP, SEXP*);
+SEXP matchArgs(SEXP, SEXP);
+SEXP matchPar(char*, SEXP*);
+void memtrace_report(SEXP, SEXP);
 SEXP mkCLOSXP(SEXP, SEXP, SEXP);
 /* SEXP mkComplex(char *s); */
 /* SEXP mkEnv(SEXP, SEXP, SEXP); */
@@ -842,7 +919,10 @@ RETSIGTYPE onsigusr1(int);
 RETSIGTYPE onsigusr2(int);
 int OneIndex(SEXP, SEXP, int, int, SEXP*, int);
 SEXP parse(FILE*, int);
+void PrintDefaults(SEXP);
 void PrintGreeting(void);
+void PrintValueEnv(SEXP, SEXP);
+void PrintValueRec(SEXP, SEXP);
 void PrintVersion(char *);
 void PrintVersionString(char *);
 void PrintWarnings(void);
@@ -869,7 +949,6 @@ SEXP R_set_class(SEXP, SEXP, SEXP);
 int R_SetOptionWarn(int);
 int R_SetOptionWidth(int);
 void R_Suicide(char*);
-SEXP setVarInFrame(SEXP, SEXP, SEXP);
 void sortVector(SEXP, Rboolean);
 void ssort(SEXP*,int);
 SEXPTYPE str2type(char*);
@@ -881,7 +960,7 @@ SEXP R_sysframe(int,RCNTXT*);
 SEXP R_sysfunction(int,RCNTXT*);
 Rboolean tsConform(SEXP,SEXP);
 SEXP tspgets(SEXP, SEXP);
-char *type2char(SEXPTYPE);
+char * type2char(SEXPTYPE);
 SEXP type2str(SEXPTYPE);
 SEXP type2symbol(SEXPTYPE);
 void unbindVar(SEXP, SEXP);
@@ -890,6 +969,11 @@ void unmarkPhase(void);
 #endif
 SEXP R_LookupMethod(SEXP, SEXP, SEXP, SEXP);
 int usemethod(char*, SEXP, SEXP, SEXP, SEXP, SEXP, SEXP, SEXP*);
+SEXP Rf_vectorSubscript(int, SEXP, int*, SEXP (*)(SEXP,SEXP),
+                        SEXP (*)(SEXP, int), SEXP);
+
+/* ../main/bind.c */
+SEXP ItemName(SEXP, int);
 
 /* ../main/errors.c : */
 void ErrorMessage(SEXP, int, ...);
@@ -906,6 +990,8 @@ void R_SetPPSize(R_size_t);
 void R_run_onexits(RCNTXT *);
 void R_restore_globals(RCNTXT *);
 
+/* ../main/identical.c : */
+Rboolean compute_identical(SEXP x, SEXP y);
 
 /* ../../main/printutils.c : */
 typedef enum {
@@ -922,6 +1008,12 @@ char *EncodeString(SEXP, int, int, Rprt_adj);
 /* main/sort.c */
 void orderVector1(int *indx, int n, SEXP key, Rboolean nalast,
 		  Rboolean decreasing);
+
+/* main/subset.c */
+SEXP R_subset3_dflt(SEXP, SEXP);
+
+/* main/subassign.c */
+SEXP R_subassign3_dflt(SEXP, SEXP, SEXP, SEXP);
 
 
 #ifdef SUPPORT_MBCS /* implies we have this header */

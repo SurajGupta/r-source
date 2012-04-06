@@ -24,6 +24,7 @@ function(package, dir, lib.loc = NULL)
         code_env <- .package_env(package)
 
         code_objs <- ls(envir = code_env, all.names = TRUE)
+        pkgname <- package
     }
     else {
         if(missing(dir))
@@ -34,17 +35,15 @@ function(package, dir, lib.loc = NULL)
                  domain = NA)
         else
             dir <- file_path_as_absolute(dir)
-        is_base <- basename(dir) == "base"
+        pkgname <- basename(dir)
+        is_base <- pkgname == "base"
 
         all_doc_topics <- Rd_aliases(dir = dir)
 
         code_env <- new.env()
         code_dir <- file.path(dir, "R")
         if(file_test("-d", code_dir)) {
-            yy <- try(.source_assignments_in_code_dir(code_dir, code_env))
-            if(inherits(yy, "try-error")) {
-                stop("cannot source package code")
-            }
+            .source_assignments_in_code_dir(code_dir, code_env)
             sys_data_file <- file.path(code_dir, "sysdata.rda")
             if(file_test("-f", sys_data_file))
                 load(sys_data_file, code_env)
@@ -139,27 +138,16 @@ function(package, dir, lib.loc = NULL)
         ## <FIXME>
         ## Need to do something about S4 generic functions 'created' by
         ## setGeneric() or setMethod() on 'ordinary' functions.
-        ## The test below exempts objects that are generic functions if
-        ## there is a visible nongeneric function and the default method
-        ## is "derived", by a call to setGeneric.  This test allows
-        ## nondocumentd generics in some cases (e.g., the generic was
-        ## created locally from an inconsistent version).
+        ## The test below exempts objects that are generic functions
+        ## which are 'derived', either by importing from another
+        ## package or from a default method.
         ## In the long run we need dynamic documentation.
         if(.isMethodsDispatchOn()) {
             code_objs <-
                 code_objs[sapply(code_objs, function(f) {
                     fdef <- get(f, envir = code_env)
-                    if(methods::is(fdef, "genericFunction")) {
-                        fOther <-
-                            methods::getFunction(f, generic = FALSE,
-                                                 mustFind = FALSE,
-                                                 where = topenv(environment(fdef)))
-                        if(is.null(fOther))
-                            TRUE
-                        else
-                            !methods::is(methods::finalDefaultMethod(methods::getMethodsMetaData(f, code_env)),
-                                         "derivedDefaultMethod")
-                    }
+                    if(methods::is(fdef, "genericFunction"))
+                        fdef@package == pkgname
                     else
                         TRUE
                 }) == TRUE]
@@ -267,7 +255,7 @@ function(package, dir, lib.loc = NULL)
             c(undoc_things,
               list("S4 methods" =
                    unique(sub("([^,]*),(.*)",
-                              "generic \\1 and siglist \\2",
+                              "generic '\\1' and siglist '\\2'",
                               S4_methods))))
     }
 
@@ -347,8 +335,8 @@ function(package, dir, lib.loc = NULL,
             S3Table <- get(".__S3MethodsTable__.", envir = ns_env)
             functions_in_S3Table <- ls(S3Table, all.names = TRUE)
             objects_in_ns <-
-                objects(envir = ns_env, all.names = TRUE) %w/o%
-            c(".__NAMESPACE__.", ".__S3MethodsTable__.")
+                (objects(envir = ns_env, all.names = TRUE) %w/o%
+                 c(".__NAMESPACE__.", ".__S3MethodsTable__."))
             objects_in_code_or_namespace <-
                 unique(c(objects_in_code, objects_in_ns))
             objects_in_ns <- objects_in_ns %w/o% objects_in_code
@@ -380,10 +368,7 @@ function(package, dir, lib.loc = NULL,
         is_base <- package_name == "base"
 
         code_env <- new.env()
-        yy <- try(.source_assignments_in_code_dir(code_dir, code_env))
-        if(inherits(yy, "try-error")) {
-            stop("cannot source package code")
-        }
+        .source_assignments_in_code_dir(code_dir, code_env)
         sys_data_file <- file.path(code_dir, "sysdata.rda")
         if(file_test("-f", sys_data_file)) load(sys_data_file, code_env)
 
@@ -563,11 +548,7 @@ function(package, dir, lib.loc = NULL,
 
         ## Get variable names and data set usages first, mostly for
         ## curiosity.
-        ## <NOTE>
-        ## Use '<=' as we could get 'NULL' ... although of course this
-        ## is not really a variable.
-        ind <- sapply(exprs, length) <= 1
-        ## </NOTE>
+        ind <- ! sapply(exprs, is.call)
         if(any(ind)) {
             variables_in_usages <-
                 c(variables_in_usages,
@@ -698,7 +679,7 @@ function(x, ...)
     ## in extract-usage.pl (now removed) only dealt with the *functions*
     ## so all variables would come out as 'without usage information' ...
     ## As we can always access the information via
-    ##    attr(codoc("foo"), "codeNotInUsages")
+    ##    attr(codoc("foo"), "objects_in_code_not_in_usages")
     ## disable reporting this for the time being ...
     ## <COMMENT>
     ##     objects_in_code_not_in_usages <-
@@ -746,28 +727,94 @@ function(x, ...)
     if(length(x) == 0)
         return(invisible(x))
     has_only_names <- is.character(x[[1]][[1]][["code"]])
+
     format_args <- function(s) {
-        if(has_only_names) {
+        if(length(s) == 0)
+            "function()"
+        else if(has_only_names)
             paste("function(", paste(s, collapse = ", "), ")", sep = "")
-        }
         else {
             s <- paste(deparse(s), collapse = "")
             s <- gsub(" = \([,\\)]\)", "\\1", s)
             gsub("^list", "function", s)
         }
     }
+
+    summarize_mismatches_in_names <- function(nfc, nfd) {
+        if(length(nms <- nfc %w/o% nfd))
+            writeLines(c(gettext("  Argument names in code not in docs:"),
+                         strwrap(paste(nms, collapse = " "),
+                                 indent = 4, exdent = 4)))
+        if(length(nms <- nfd %w/o% nfc))
+            writeLines(c(gettext("  Argument names in docs not in code:"),
+                         strwrap(paste(nms, collapse = " "),
+                                 indent = 4, exdent = 4)))
+        len <- min(length(nfc), length(nfd))
+        if(len) {
+            len <- seq_len(len)
+            nfc <- nfc[len]
+            nfd <- nfd[len]
+            ind <- which(nfc != nfd)
+            len <- length(ind)
+            if(len) {
+                if(len > 3) {
+                    writeLines(gettext("  Mismatches in argument names (first 3):"))
+                    ind <- ind[1 : 3]
+                } else {
+                    writeLines(gettext("  Mismatches in argument names:"))
+                }
+                for(i in ind) {
+                    writeLines(sprintf("    Position: %d Code: %s Docs: %s",
+                                       i, nfc[i], nfd[i]))
+                }
+            }
+        }
+    }
+
+    summarize_mismatches_in_values <- function(ffc, ffd) {
+        ## Be nice, and match arguments by names first.
+        nms <- intersect(names(ffc), names(ffd))
+        vffc <- as.character(ffc[nms])
+        vffd <- as.character(ffd[nms])
+        ind <- which(vffc != vffd)
+        len <- length(ind)
+        if(len) {
+            if(len > 3) {
+                writeLines(gettext("  Mismatches in argument default values (first 3):"))
+                ind <- ind[1 : 3]
+            } else {
+                writeLines(gettext("  Mismatches in argument default values:"))
+            }
+            for(i in ind) {
+                writeLines(sprintf("    Name: %s Code: %s Docs: %s",
+                                   nms[i], vffc[i], vffd[i]))
+            }
+        }
+    }
+
+    summarize_mismatches <- function(ffc, ffd) {
+        if(has_only_names)
+            summarize_mismatches_in_names(ffc, ffd)
+        else {
+            summarize_mismatches_in_names(names(ffc), names(ffd))
+            summarize_mismatches_in_values(ffc, ffd)
+        }
+    }
+
     for(fname in names(x)) {
         writeLines(gettextf("Codoc mismatches from documentation object '%s':",
                             fname))
         xfname <- x[[fname]]
-        for(i in seq(along = xfname))
+        for(i in seq_along(xfname)) {
+            ffc <- xfname[[i]][["code"]]
+            ffd <- xfname[[i]][["docs"]]
             writeLines(c(xfname[[i]][["name"]],
-                         strwrap(gettextf("Code: %s",
-                                          format_args(xfname[[i]][["code"]])),
+                         strwrap(gettextf("Code: %s", format_args(ffc)),
                                  indent = 2, exdent = 17),
-                         strwrap(gettextf("Docs: %s",
-                                          format_args(xfname[[i]][["docs"]])),
+                         strwrap(gettextf("Docs: %s", format_args(ffd)),
                                  indent = 2, exdent = 17)))
+            summarize_mismatches(ffc, ffd)
+        }
         writeLines("")
     }
 
@@ -1025,7 +1072,7 @@ function(package, lib.loc = NULL)
 
     ## Now go through the aliases.
     data_frames_checked <- character()
-    for(i in seq(along = aliases)) {
+    for(i in seq_along(aliases)) {
         ## Store the documented variable names.
         var_names_in_docs <- sort(Rd_var_names[[i]])
         ## Try finding the variable or data set given by the alias.
@@ -1396,10 +1443,7 @@ function(package, dir, lib.loc = NULL)
         is_base <- basename(dir) == "base"
 
         code_env <- new.env()
-        yy <- try(.source_assignments_in_code_dir(code_dir, code_env))
-        if(inherits(yy, "try-error")) {
-            stop("cannot source package code")
-        }
+        .source_assignments_in_code_dir(code_dir, code_env)
         sys_data_file <- file.path(code_dir, "sysdata.rda")
         if(file_test("-f", sys_data_file)) load(sys_data_file, code_env)
 
@@ -1622,7 +1666,9 @@ function(package, dir, file, lib.loc = NULL,
         file <- tempfile()
         on.exit(unlink(file))
         if(!file.create(file)) stop("unable to create ", file)
-        if(!all(file.append(file, list_files_with_type(code_dir, "code"))))
+        if(!all(.file_append_ensuring_LFs(file,
+                                          list_files_with_type(code_dir,
+                                                               "code"))))
             stop("unable to write code files")
     }
     else if(missing(file)) {
@@ -1685,7 +1731,7 @@ function(package, dir, file, lib.loc = NULL,
                     cat(deparse(e[[1]]), "(", deparse(e[[2]]),
                         ", ...): ", parg, "\n", sep = "")
             }
-            for(i in seq(along = e)) Recall(e[[i]])
+            for(i in seq_along(e)) Recall(e[[i]])
         }
     }
 
@@ -1741,7 +1787,7 @@ function(package, dir, file, lib.loc = NULL,
             stop(gettextf("parse error in file '%s'", file),
                  domain = NA)
     }
-    for(i in seq(along = exprs)) find_bad_exprs(exprs[[i]])
+    for(i in seq_along(exprs)) find_bad_exprs(exprs[[i]])
     class(bad_exprs) <- "checkFF"
     if(verbose)
         invisible(bad_exprs)
@@ -1754,7 +1800,7 @@ function(x, ...)
 {
     if(length(x) > 0) {
         writeLines(gettextf("Foreign function calls without 'PACKAGE' argument:"))
-        for(i in seq(along = x)) {
+        for(i in seq_along(x)) {
             writeLines(paste(deparse(x[[i]][[1]]),
                              "(",
                              deparse(x[[i]][[2]]),
@@ -1825,10 +1871,7 @@ function(package, dir, lib.loc = NULL)
         is_base <- basename(dir) == "base"
 
         code_env <- new.env()
-        yy <- try(.source_assignments_in_code_dir(code_dir, code_env))
-        if(inherits(yy, "try-error")) {
-            stop("cannot source package code")
-        }
+        .source_assignments_in_code_dir(code_dir, code_env)
         sys_data_file <- file.path(code_dir, "sysdata.rda")
         if(file_test("-f", sys_data_file)) load(sys_data_file, code_env)
 
@@ -1878,8 +1921,14 @@ function(package, dir, lib.loc = NULL)
             ## See registerS3method() in namespace.R.
             defenv <-
                 if (g %in% S3_group_generics) .BaseNamespaceEnv
-                else if (typeof(genfun) == "closure") environment(genfun)
-                else .BaseNamespaceEnv
+                else {
+                    if(.isMethodsDispatchOn()
+                       && methods::is(genfun, "genericFunction"))
+                        genfun <-
+                            methods::slot(genfun, "default")@methods$ANY
+                    if (typeof(genfun) == "closure") environment(genfun)
+                    else .BaseNamespaceEnv
+                }
             if(!exists(".__S3MethodsTable__.", envir = defenv,
                        inherits = FALSE)) {
                 ## Happens e.g. if for some reason, we get "plot" as
@@ -1908,13 +1957,14 @@ function(package, dir, lib.loc = NULL)
         }
         dotsPos <- which(gArgs == "...")
         ipos <- if(length(dotsPos) > 0)
-            seq(from = 1, length = dotsPos - 1)
+            seq.int(from = 1, length = dotsPos[1] - 1)
         else
-            seq(along = gArgs)
+            seq_along(gArgs)
 
+        ## careful, this could match multiply in incorrect funs.
         dotsPos <- which(mArgs == "...")
         if(length(dotsPos) > 0)
-            ipos <- ipos[seq(from = 1, length = dotsPos - 1)]
+            ipos <- ipos[seq.int(from = 1, length = dotsPos[1] - 1)]
         posMatchOK <- identical(gArgs[ipos], mArgs[ipos])
         argMatchOK <- all(gArgs %in% mArgs) || length(dotsPos) > 0
         if(posMatchOK && argMatchOK)
@@ -2111,10 +2161,7 @@ function(package, dir, lib.loc = NULL)
         is_base <- basename(dir) == "base"
 
         code_env <- new.env()
-        yy <- try(.source_assignments_in_code_dir(code_dir, code_env))
-        if(inherits(yy, "try-error")) {
-            stop("cannot source package code")
-        }
+        .source_assignments_in_code_dir(code_dir, code_env)
         sys_data_file <- file.path(code_dir, "sysdata.rda")
         if(file_test("-f", sys_data_file)) load(sys_data_file, code_env)
 
@@ -2245,7 +2292,7 @@ function(package, dir, file, lib.loc = NULL)
     }
     else if(!missing(file)) {
         if(!file_test("-f", file))
-            stop(gettext("file '%s' does not exist", file),
+            stop(gettextf("file '%s' does not exist", file),
                  domain = NA)
         else
             code_files <- file
@@ -2268,7 +2315,7 @@ function(package, dir, file, lib.loc = NULL)
                 matches <<- c(matches, list(p))
             }
             else if(is.recursive(e)) {
-                for(i in seq(along = e)) Recall(e[[i]], e)
+                for(i in seq_along(e)) Recall(e[[i]], e)
             }
         }
         if(missing(txt)) {
@@ -2284,7 +2331,7 @@ function(package, dir, file, lib.loc = NULL)
                               file),
                      domain = NA)
         }
-        for(i in seq(along = exprs))
+        for(i in seq_along(exprs))
             find_bad_exprs(exprs[[i]], NULL)
         matches
     }
@@ -2319,7 +2366,7 @@ function(x, ...)
     for(fname in names(x)) {
         writeLines(gettextf("File '%s':", fname))
         xfname <- x[[fname]]
-        for(i in seq(along = xfname)) {
+        for(i in seq_along(xfname)) {
             writeLines(strwrap(gettextf("found T/F in %s",
                                         paste(deparse(xfname[[i]]),
                                               collapse = "")),
@@ -2346,33 +2393,11 @@ function(dir)
     package_name <- basename(dir)
     ## (Should really use db["Package"], but then we need to check
     ## whether this is really there ...)
-    if("Depends" %in% names(db)) {
-        depends <- unlist(strsplit(db["Depends"], ","))
-        depends <-
-            sub("^[[:space:]]*([[:alnum:].]+).*$", "\\1", depends)
-        depends <- depends[depends != "R"]
-    }
-    else
-        depends <- character()
-    if("Suggests" %in% names(db)) {
-        suggests <- unlist(strsplit(db["Suggests"], ","))
-        suggests <-
-            sub("^[[:space:]]*([[:alnum:].]+).*$", "\\1", suggests)
-    }
-    else
-        suggests <- character()
-    if("Imports" %in% names(db)) {
-        imports <- unlist(strsplit(db["Imports"], ","))
-        imports <-
-            sub("^[[:space:]]*([[:alnum:].]+).*$", "\\1", imports)
-    }
-    else
-        imports <- character()
+    depends <- .get_requires_from_package_db(db, "Depends")
+    imports <- .get_requires_from_package_db(db, "Imports")
+    suggests <- .get_requires_from_package_db(db, "Suggests")
     ## Need this to handle bundles ...
-    if("Contains" %in% names(db))
-        contains <- unlist(strsplit(db["Contains"], " +"))
-    else
-        contains <- character()
+    contains <- .get_contains_from_package_db(db)
 
     standard_package_names <- .get_standard_package_names()
 
@@ -2394,14 +2419,14 @@ function(dir)
 
     ## Are all vignette dependencies at least suggested or equal to
     ## the package name?
-    vignette_dir <- file.path(dir, "doc")
+    vignette_dir <- file.path(dir, "inst", "doc")
     if(file_test("-d", vignette_dir)
        && length(list_files_with_type(vignette_dir, "vignette"))) {
-        reqs <- unlist(.build_vignette_index(vignette_dir)$Depends)
+        reqs <- unique(unlist(.build_vignette_index(vignette_dir)$Depends))
         ## For the time being, ignore base packages missing from the
         ## DESCRIPTION dependencies even if explicitly given as vignette
         ## dependencies.
-        reqs <- reqs %w/o% c(depends, suggests, package_name,
+        reqs <- reqs %w/o% c(depends, imports, suggests, package_name,
                              standard_package_names$base)
         if(length(reqs))
             bad_depends$missing_vignette_depends <- reqs
@@ -2414,8 +2439,11 @@ function(dir)
         ## Not clear whether we want to require *all* namespace package
         ## dependencies listed in DESCRIPTION, or e.g. just the ones on
         ## non-base packages.  Do the latter for time being ...
-        reqs <- reqs %w/o% c(contains, imports, depends,
-                             standard_package_names$base)
+        ## Actually we need to know at least about S4-using packages,
+        ## since we need to reinstall if those change.
+        allowed_imports <-
+            standard_package_names$base %w/o% c("methods", "stats4")
+        reqs <- reqs %w/o% c(contains, imports, depends, allowed_imports)
         ## Note that for bundles we currently cannot have package
         ## dependencies different from bundle ones, and clearly a bundle
         ## cannot depend on something it contains ...
@@ -2444,7 +2472,7 @@ function(x, ...)
     if(length(bad <- x$missing_vignette_depends)) {
         writeLines(gettext("Vignette dependencies not required:"))
         .pretty_print(bad)
-        msg <- gettext("Vignette dependencies (\\VignetteDepends{} entries) must be contained in the DESCRIPTION Depends/Suggests/Imports entries.")
+        msg <- gettext("Vignette dependencies (\\VignetteDepends{} entries) must be contained in the DESCRIPTION Depends/Suggests entries.")
         writeLines(strwrap(msg))
         writeLines("")
     }
@@ -2547,7 +2575,7 @@ function(db)
     names(db_aliases) <- names(db)
 
     for(f in names(db)) {
-        x <- tryCatch(Rd_parse(text = db[[f]]), error = function(e) e)
+        x <- tryCatch(Rd_parse(text = db[[f]]), error = .identity)
 
         if(inherits(x, "error")) {
             files_with_surely_bad_Rd[[f]] <- conditionMessage(x)
@@ -2666,7 +2694,7 @@ function(x, ...)
     if(length(x$files_with_surely_bad_Rd)) {
         writeLines(gettext("Rd files with syntax errors:"))
         bad <- x$files_with_surely_bad_Rd
-        for(i in seq(along = bad)) {
+        for(i in seq_along(bad)) {
             writeLines(c(paste("  ", names(bad)[i], ":", sep = ""),
                          strwrap(bad[[i]], indent = 4, exdent = 4)))
         }
@@ -2684,7 +2712,7 @@ function(x, ...)
         bad <- bad[sapply(bad, length) > 0]
         if(length(bad)) {
             writeLines(gettext("Rd files with likely Rd problems:"))
-            for(i in seq(along = bad)) {
+            for(i in seq_along(bad)) {
                 writeLines(gettextf("Unaccounted top-level text in file '%s':",
                                     names(bad)[i]))
                 tags <- names(bad[[i]])
@@ -2714,8 +2742,8 @@ function(x, ...)
         bad[ , 2] <- sub("aliases", "\\\\alias", bad[ , 2])
         bad[ , 2] <- sub("doc_type", "\\\\docType", bad[ , 2])
         bad[ , 2] <- sub("encoding", "\\\\encoding", bad[ , 2])
-        ind <- split(seq(length = NROW(bad)), bad[, 1])
-        for(i in seq(along = ind)) {
+        ind <- split(seq_len(NROW(bad)), bad[, 1])
+        for(i in seq_along(ind)) {
             writeLines(c(paste(" ", paste(names(ind)[i], ":", sep = "")),
                          paste("   ",
                                apply(bad[ind[[i]], -1, drop = FALSE],
@@ -2728,7 +2756,7 @@ function(x, ...)
         writeLines(gettext("Rd files with non-ASCII section titles:"))
         bad <- x$files_with_non_ASCII_section_titles
         bad <- split(bad[, 2], bad[, 1])
-        for(i in seq(along = bad)) {
+        for(i in seq_along(bad)) {
             writeLines(c(paste(" ", paste(names(bad)[i], ":", sep = "")),
                          strwrap(bad[[i]], indent = 4, exdent = 6),
                          ""))
@@ -2750,7 +2778,7 @@ function(x, ...)
     if(length(x$files_with_missing_mandatory_tags)) {
         bad <- x$files_with_missing_mandatory_tags
         bad <- split(bad[, 1], bad[, 2])
-        for(i in seq(along = bad)) {
+        for(i in seq_along(bad)) {
             writeLines(c(gettextf("Rd files without '%s':",
                                   names(bad)[i]),
                          paste(" ", bad[[i]])))
@@ -2761,7 +2789,7 @@ function(x, ...)
     if(length(x$files_with_duplicated_unique_tags)) {
         bad <- x$files_with_duplicated_unique_tags
         bad <- split(bad[, 1], bad[, 2])
-        for(i in seq(along = bad)) {
+        for(i in seq_along(bad)) {
             writeLines(c(gettextf("Rd files with duplicate '%s':",
                                   names(bad)[i]),
                          paste(" ", bad[[i]])))
@@ -2773,7 +2801,7 @@ function(x, ...)
         writeLines(gettextf("Rd files with unknown sections:"))
         bad <- x$files_with_unknown_tags
         bad <- split(bad[, 2], bad[, 1])
-        for(i in seq(along = bad)) {
+        for(i in seq_along(bad)) {
             writeLines(strwrap(paste(names(bad)[i], ": ",
                                      paste(bad[[i]], collapse = " "),
                                      "\n", sep = ""),
@@ -2786,13 +2814,14 @@ function(x, ...)
         writeLines(gettext("Rd files with non-standard keywords:"))
         bad <- x$files_with_bad_keywords
         bad <- split(bad[, 2], bad[, 1])
-        for(i in seq(along = bad)) {
+        for(i in seq_along(bad)) {
             writeLines(strwrap(paste(names(bad)[i], ": ",
                                      paste(bad[[i]], collapse = " "),
                                      "\n", sep = ""),
                                indent = 2, exdent = 4))
         }
-        msg <- gettext("Each '\\keyword' entry should specify one of the standard keywords (as listed in file 'KEYWORDS.db' in the 'doc' subdirectory of the R home directory).")
+        msg <-
+        gettext("Each '\\keyword' entry should specify one of the standard keywords (as listed in file 'KEYWORDS' in the R documentation directory).")
         writeLines(c(strwrap(msg), ""))
     }
 
@@ -2917,7 +2946,7 @@ function(dfile)
     ##   Depends/Suggests/Imports, Namespace, Priority.
     ## These must be correct if present.
 
-    val <- db[match(c("Depends", "Suggests", "Imports"),
+    val <- db[match(c("Depends", "Suggests", "Imports", "Enhances"),
                     names(db), nomatch = 0)]
     if(length(val)) {
         depends <- .strip_whitespace(unlist(strsplit(val, ",")))
@@ -2994,7 +3023,7 @@ function(x, ...)
 
     if(any(as.integer(sapply(x$bad_depends_or_suggests_or_imports, length)))) {
         bad <- x$bad_depends_or_suggests_or_imports
-        writeLines(gettext("Malformed Depends or Suggests or Imports field."))
+        writeLines(gettext("Malformed Depends or Suggests or Imports or Enhances field."))
         if(length(bad$bad_dep_entry)) {
             tmp <- c(gettext("Offending entries:"),
                      paste(" ", bad$bad_dep_entry),
@@ -3045,16 +3074,16 @@ function(dir)
     mfile <- paths[1]
 
     lines <-
-        try(system(sprintf("%s -f %s -f %s",
-                           Sys.getenv("MAKE"),
-                           shQuote(mfile),
-                           shQuote(file.path(R.home("share"),
-                                             "make", "check.mk"))),
-                   intern = TRUE,
-                   if(identical(.Platform$OS.type, "unix"))
-                   ignore.stderr = TRUE),
-            silent = TRUE)
-    if(!length(lines) || inherits(lines, "try-error"))
+        tryCatch(system(sprintf("%s -f %s -f %s",
+                                Sys.getenv("MAKE"),
+                                shQuote(mfile),
+                                shQuote(file.path(R.home("share"),
+                                                  "make", "check.mk"))),
+                        intern = TRUE,
+                        if(identical(.Platform$OS.type, "unix"))
+                        ignore.stderr = TRUE),
+                 error = .identity)
+    if(!length(lines) || inherits(lines, "error"))
         return(bad_flags)
 
     ## Try to be careful ...
@@ -3079,7 +3108,7 @@ function(dir)
                         "x",
                         "q"),
                       collapse = "|"))
-    for(i in seq(along = lines)) {
+    for(i in seq_along(lines)) {
         bad <- grep(bad_flags_regexp, flags[[i]], value = TRUE)
         if(length(bad))
             bad_flags <- c(bad_flags,
@@ -3094,7 +3123,7 @@ print.check_make_vars <-
 function(x, ...)
 {
     if(length(x) > 0) {
-        for(i in seq(along = x)) {
+        for(i in seq_along(x)) {
             writeLines(c(gettextf("Non-portable flags in variable '%s':",
                                   names(x)[i]),
                          sprintf("  %s", paste(x[[i]], collapse = " "))))
@@ -3126,10 +3155,10 @@ function(package, lib.loc = NULL)
     ## for checking.
     ## </NOTE>
 
-    codetools::checkUsagePackage(package,
-                                 report = foo,
-                                 suppressLocalUnused = TRUE,
-                                 skipWith = TRUE)
+    suppressMessages(codetools::checkUsagePackage(package,
+                                                  report = foo,
+                                                  suppressLocalUnused = TRUE,
+                                                  skipWith = TRUE))
     class(out) <- "check_code_usage_in_package"
     out
 }
@@ -3183,7 +3212,7 @@ print.check_Rd_xrefs <-
 function(x, ...)
 {
     if(length(x) > 0) {
-        for(i in seq(along = x)) {
+        for(i in seq_along(x)) {
             writeLines(gettextf("Missing link(s) in documentation object '%s':",
                                 names(x)[i]))
             .pretty_print(x[[i]])
@@ -3197,7 +3226,6 @@ function(x, ...)
     x
 }
 
-
 ### * as.alist.call
 
 as.alist.call <-
@@ -3205,7 +3233,7 @@ function(x)
 {
     y <- as.list(x)
     ind <- if(is.null(names(y)))
-        seq(along = y)
+        seq_along(y)
     else
         which(names(y) == "")
     if(any(ind)) {
@@ -3243,7 +3271,8 @@ function(package_name)
 {
     c("<-", "=",
       if(package_name == "base")
-      c("(", "{", "function", "if", "for", "while", "repeat"),
+      c("(", "{", "function", "if", "for", "while", "repeat",
+        "Math", "Ops", "Summary", "Complex"),
       if(package_name == "utils") "?",
       if(package_name == "methods") "@")
 }
@@ -3335,7 +3364,7 @@ function(txt)
         }
         else {
             exprs <- c(exprs, yy)
-            lines <- lines[-seq(length = i)]
+            lines <- lines[-seq_len(i)]
         }
     }
     attr(exprs, "bad_lines") <- bad_lines
@@ -3448,7 +3477,8 @@ function(x)
     code_dir <- file.path(dir, "R")
     if(file_test("-d", code_dir)) {
         all_files <- mydir(code_dir)
-        R_files <- c("sysdata.rda",
+        ## Under Windows, need a Makefile for methods.
+        R_files <- c("sysdata.rda", "Makefile.win",
                      list_files_with_type(code_dir, "code",
                                           full.names = FALSE,
                                           OS_subdirs = OS_subdirs))
@@ -3517,6 +3547,438 @@ function(x, ...)
     }
     invisible(x)
 }
+
+### * .check_package_ASCII_code
+
+.check_package_ASCII_code <-
+function(dir, respect_quotes = FALSE)
+{
+    OS_subdirs <- c("unix", "windows")
+    if(!file_test("-d", dir))
+        stop(gettextf("directory '%s' does not exist", dir), domain = NA)
+    else
+        dir <- file_path_as_absolute(dir)
+
+    code_dir <- file.path(dir, "R")
+    wrong_things <- character(0)
+    if(file_test("-d", code_dir)) {
+        R_files <- list_files_with_type(code_dir, "code",
+                                        full.names = FALSE,
+                                        OS_subdirs = OS_subdirs)
+        for(f in R_files) {
+            text <- readLines(file.path(code_dir, f), warn = FALSE)
+            if(.Call(check_nonASCII, text, !respect_quotes))
+                wrong_things <- c(wrong_things, f)
+        }
+    }
+    if(length(wrong_things)) cat(wrong_things, sep="\n")
+    invisible(wrong_things)
+}
+
+### * .check_package_code_syntax
+
+.check_package_code_syntax <-
+function(dir)
+{
+    for(f in list_files_with_type(dir, "code",
+                                  OS_subdirs = c("unix", "windows")))
+        tryCatch(parse(f),
+                 error = function(e)
+                 writeLines(c(sprintf("File '%s':", f),
+                              sprintf("  %s",
+                                      unlist(strsplit(conditionMessage(e),
+                                                      "\n"))))))
+}
+
+### * .check_package_code_shlib
+
+.check_package_code_shlib <-
+function(dir) {
+    ## <NOTE>
+    ## This is very similar to what happens with checkTnF() etc.
+    ## We should really have a more general-purpose tree walker.
+    ## </NOTE>
+
+    ## Workhorse function.
+    filter <- function(file) {
+        matches <- list()
+        walker <- function(e) {
+            if((length(e) > 1)
+               && is.call(e)
+               && as.character(e[[1]]) %in% c("library.dynam",
+                                              "library.dynam.unload")
+               && is.character(e[[2]])
+               && (regexpr("\\.(so|sl|dll)$", e[[2]]) > -1)
+               )
+                matches <<- c(matches, list(e))
+            if(is.recursive(e))
+                for(i in seq_along(e)) Recall(e[[i]])
+        }
+        exprs <- parse(file)
+        for(i in seq_along(exprs)) walker(exprs[[i]])
+        matches
+    }
+
+    code_files <-
+        list_files_with_type(dir, "code",
+                             OS_subdirs = c("unix", "windows"))
+    x <- lapply(code_files, filter)
+    names(x) <- code_files
+    x <- x[sapply(x, length) > 0]
+
+    ## Because we really only need this for calling from R CMD check, we
+    ## produce output here in case we found something.
+    for(fname in names(x)) {
+        writeLines(gettextf("File '%s':", fname))
+        xfname <- x[[fname]]
+        for(i in seq_along(xfname)) {
+            writeLines(strwrap(gettextf("found %s",
+                                        paste(deparse(xfname[[i]]),
+                                              collapse = "")),
+                               indent = 2, exdent = 4))
+        }
+    }
+
+    invisible(x)
+}
+
+
+### * .check_packages_used
+
+.check_packages_used <-
+function(package, dir, lib.loc = NULL)
+{
+    ## Argument handling.
+    if(!missing(package)) {
+        if(length(package) != 1)
+            stop("argument 'package' must be of length 1")
+        dir <- .find.package(package, lib.loc)
+        ## Using package installed in @code{dir} ...
+        code_dir <- file.path(dir, "R")
+        if(!file_test("-d", code_dir))
+            stop(gettextf("directory '%s' does not contain R code",
+                          dir),
+                 domain = NA)
+        if(basename(dir) != "base")
+            .load_package_quietly(package, lib.loc)
+        code_env <- if(packageHasNamespace(package, dirname(dir)))
+            asNamespace(package)
+        else
+            .package_env(package)
+        dfile <- file.path(dir, "DESCRIPTION")
+        db <- .read_description(dfile)
+     }
+    else if(!missing(dir)) {
+        ## Using sources from directory @code{dir} ...
+        if(!file_test("-d", dir))
+            stop(gettextf("directory '%s' does not exist", dir),
+                 domain = NA)
+        else
+            dir <- file_path_as_absolute(dir)
+        dfile <- file.path(dir, "DESCRIPTION")
+        db <- .read_description(dfile)
+        ## we need to check for a bundle here
+        ## Need this to handle bundles ...
+        contains <- .get_contains_from_package_db(db)
+        if(length(contains)) {
+            file <- tempfile()
+            on.exit(unlink(file))
+            if(!file.create(file)) stop("unable to create ", file)
+            for(pkg in contains) {
+                code_dir <- file.path(dir, pkg, "R")
+                if(file_test("-d", code_dir)) {
+                    if(!all(.file_append_ensuring_LFs(file,
+                                                      list_files_with_type(code_dir,
+                                                                           "code"))))
+                        stop("unable to write code files")
+                }
+            }
+        } else {
+            code_dir <- file.path(dir, "R")
+            if(file_test("-d", code_dir)) {
+                file <- tempfile()
+                on.exit(unlink(file))
+                if(!file.create(file)) stop("unable to create ", file)
+                if(!all(.file_append_ensuring_LFs(file,
+                                                  list_files_with_type(code_dir,
+                                                                       "code"))))
+                    stop("unable to write code files")
+            } else {
+                return(invisible())
+            }
+        }
+    }
+    pkg_name <- db["Package"]
+    depends <- .get_requires_from_package_db(db, "Depends")
+    imports <- .get_requires_from_package_db(db, "Imports")
+    suggests <- .get_requires_from_package_db(db, "Suggests")
+    enhances <- .get_requires_from_package_db(db, "Enhances")
+   
+    ## Need this to handle bundles ...
+    contains <- .get_contains_from_package_db(db)
+
+    ## it is OK to refer to yourself and non-S4 standard packages
+    standard_package_names <-
+        .get_standard_package_names()$base %w/o% c("methods", "stats4")
+    depends_suggests <- c(depends, suggests, pkg_name, contains,
+                          standard_package_names)
+    imports <- c(imports, depends_suggests, enhances)
+    ## the first argument could be named, or could be a variable name.
+    ## we just have a stop list here.
+    common_names <- c("pkg", "pkgName", "package", "pos")
+
+    bad_exprs <- character()
+    bad_imports <- character()
+    uses_methods <- FALSE
+    find_bad_exprs <- function(e) {
+        if(is.call(e) || is.expression(e)) {
+            Call <- deparse(e[[1]])[1]
+            if(length(e) >= 2) pkg <- deparse(e[[2]])
+            if(Call %in% c("library", "requires")) {
+                ## Zelig has library()
+                if(length(e) >= 2) {
+                    pkg <- sub('^"(.*)"$', '\\1', pkg)
+                    ## <FIXME> could be inside substitute or a variable
+                    ## and is in e.g. R.oo
+                    if(! pkg %in% c(depends_suggests, common_names))
+                        bad_exprs <<- c(bad_exprs, pkg)
+                }
+            } else if(Call %in%  "::") {
+                ## <FIXME> fathom out if this package has a namespace
+                if(! pkg %in% imports)
+                    bad_imports <<- c(bad_imports, pkg)
+            } else if(Call %in%  ":::") {
+                if(! pkg %in% imports)
+                    bad_imports <<- c(bad_imports, pkg)
+            } else if(Call %in% c("setClass", "setMethod")) {
+                uses_methods <<- TRUE
+            }
+            for(i in seq_along(e)) Recall(e[[i]])
+        }
+    }
+
+    if(!missing(package)) {
+        exprs <- lapply(ls(envir = code_env, all.names = TRUE),
+                        function(f) {
+                            f <- get(f, envir = code_env)
+                            if(typeof(f) == "closure")
+                                body(f)
+                            else
+                                NULL
+                        })
+        if(.isMethodsDispatchOn()) {
+            ## Also check the code in S4 methods.
+            ## This may find things twice.
+            for(f in methods::getGenerics(code_env)) {
+                meths <-
+                    methods::linearizeMlist(methods::getMethodsMetaData(f, code_env))
+                bodies <- lapply(methods::slot(meths, "methods"), body)
+                ## Exclude methods inherited from the 'appropriate'
+                ## parent environment.
+                ## <NOTE>
+                ## Keep this in sync with similar code in undoc().
+                ## Note that direct comparison of
+                ##   lapply(methods::slot(meths, "methods"), environment)
+                ## to code_env is not quite right ...
+                penv <- .Internal(getRegisteredNamespace(as.name(package)))
+                if(is.environment(penv))
+                    penv <- parent.env(penv)
+                else
+                    penv <- parent.env(code_env)
+                if((f %in% methods::getGenerics(penv))
+                    && !is.null(mlist_from_penv <-
+                                methods::getMethodsMetaData(f, penv))) {
+                    classes_from_cenv <-
+                        methods::slot(meths, "classes")
+                    classes_from_penv <-
+                        methods::slot(methods::linearizeMlist(mlist_from_penv),
+                                      "classes")
+                    ind <- is.na(match(.make_signatures(classes_from_cenv),
+                                       .make_signatures(classes_from_penv)))
+                    bodies <- bodies[ind]
+                }
+                ## </NOTE>
+                exprs <- c(exprs, bodies)
+            }
+        }
+    }
+    else {
+        exprs <- try(parse(file = file, n = -1))
+        if(inherits(exprs, "try-error"))
+            stop(gettextf("parse error in file '%s'", file),
+                 domain = NA)
+    }
+
+    for(i in seq_along(exprs)) find_bad_exprs(exprs[[i]])
+
+    methods_message <-
+        if(uses_methods && !"methods" %in% c(depends, imports))
+            gettext("package 'methods' is used but not declared")
+        else ""
+    res <- list(others = unique(bad_exprs),
+                imports = unique(bad_imports),
+                methods_message = methods_message)
+    class(res) <- "check_packages_used"
+    res
+}
+
+print.check_packages_used <-
+function(x, ...)
+{
+    if(length(x$imports) > 0) {
+        writeLines(gettext("'::' or ':::' imports not declared from:"))
+        .pretty_print(x$imports)
+    }
+    if(length(x$others) > 0) {
+        writeLines(gettext("'library' or 'require' calls not declared from:"))
+        .pretty_print(x$others)
+    }
+    if(nchar(x$methods_message))
+        writeLines(x$methods_message)
+    invisible(x)
+}
+
+
+### * .check_T_and_F
+
+## T and F checking, next generation.
+##
+## What are we really trying to do?
+##
+## In R, T and F are "just" variables which upon startup are bound to
+## TRUE and FALSE, respectively, in the base package/namespace.  Hence,
+## if code uses "global" variables T and F and dynamic lookup is in
+## place (for packages, if they do not have a namespace), there may be
+## trouble in case T or F were redefined.  So we'd like to warn about
+## these cases.
+##
+## A few things to note:
+## * Package code top-level bindings *to* T and F are not a problem for
+##   packages installed for lazy-loading (as the top-level T and F get
+##   evaluated "appropriately" upon installation.
+## * Code in examples using "global" T and F is always a problem, as
+##   this is evaluated in the global envionment by examples().
+## * There is no problem with package code using T and F as local
+##   variables.
+##
+## Our current idea is the following.  Function findGlobals() in
+## codetools already provides a way to (approximately) determine the
+## globals.  So we can try to get these and report them.
+##
+## Note that findGlobals() only works on closures, so we definitely miss
+## top-level assignments to T or F.  This could be taken care of rather
+## easily, though.
+##
+## Note also that we'd like to help people find where the offending
+## globals were found.  Seems that codetools currently does not offer a
+## way of recording e.g. the parent expression, so we do our own thing
+## based on the legacy checkTnF code.
+
+.check_T_and_F <-
+function(package, dir, lib.loc = NULL)
+{
+    bad_closures <- character()
+    bad_examples <- character()
+
+    find_bad_closures <- function(env) {
+        objects_in_env <- objects(env, all = TRUE)
+        x <- lapply(objects_in_env,
+                    function(o) {
+                        v <- get(o, env = env)
+                        if (typeof(v) == "closure")
+                            codetools::findGlobals(v)
+                    })
+        objects_in_env[sapply(x,
+                              function(s) any(s %in% c("T", "F")))]
+    }
+
+    find_bad_examples <- function(txts) {
+        env <- new.env()
+        x <- lapply(txts,
+                    function(txt) {
+                        eval(parse(text =
+                                   paste("FOO <- function() {",
+                                         paste(txt, collapse = "\n"),
+                                         "}",
+                                         collapse = "\n")),
+                             env)
+                        find_bad_closures(env)
+                    })
+        names(txts)[sapply(x, length) > 0]
+    }
+
+    if(!missing(package)) {
+        if(length(package) != 1)
+            stop("argument 'package' must be of length 1")
+        dir <- .find.package(package, lib.loc)
+        if((package != "base")
+           && !packageHasNamespace(package, dirname(dir))) {
+            .load_package_quietly(package, lib.loc)
+            code_env <- .package_env(package)
+            bad_closures <- find_bad_closures(code_env)
+        }
+        example_texts <-
+            .get_example_texts_from_example_dir(file.path(dir, "R-ex"))
+    }
+    else {
+        ## The dir case.
+        if(missing(dir))
+            stop("you must specify 'package' or 'dir'")
+        dir <- file_path_as_absolute(dir)
+        code_dir <- file.path(dir, "R")
+        if(!packageHasNamespace(basename(dir), dirname(dir))
+           && file_test("-d", code_dir)) {
+            code_env <- new.env()
+            .source_assignments_in_code_dir(code_dir, code_env)
+            bad_closures <- find_bad_closures(code_env)
+        }
+        example_texts <- .get_example_texts_from_source_dir(dir)
+    }
+
+    bad_examples <- find_bad_examples(example_texts)
+
+    out <- list(bad_closures = bad_closures,
+                bad_examples = bad_examples)
+    class(out) <- "check_T_and_F"
+    out
+}
+
+.get_example_texts_from_example_dir <-
+function(dir)
+{
+    if(!file_test("-d", dir)) return(NULL)
+    files <- list_files_with_exts(dir, "R")
+    texts <- lapply(files,
+                    function(f) paste(readLines(f, warn = FALSE),
+                                      collapse = "\n"))
+    names(texts) <- files
+    texts
+}
+
+.get_example_texts_from_source_dir <-
+function(dir)
+{
+    if(!file_test("-d", file.path(dir, "man"))) return(NULL)
+    sapply(Rd_db(dir = dir),
+           function(s) {
+               .get_Rd_example_code(paste(Rd_pp(s), collapse = "\n"))
+           })
+}
+
+print.check_T_and_F <- function(x, ...) {
+    if(length(x$bad_closures)) {
+        msg <- gettext("Found possibly global T or F in the following functions:")
+        writeLines(strwrap(msg))
+        .pretty_print(x$bad_closures)
+    }
+    if(length(x$bad_examples)) {
+        msg <- gettext("Found possibly global T or F in the following Rd example files:")
+        writeLines(strwrap(msg))
+        writeLines(paste(" ", x$bad_examples))
+    }
+    invisible(x)
+}
+
 
 ### Local variables: ***
 ### mode: outline-minor ***

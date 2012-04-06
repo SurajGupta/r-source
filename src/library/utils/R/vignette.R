@@ -32,7 +32,7 @@ function(topic, package = NULL, lib.loc = NULL)
                 if(sum(ok)>1){
                     ## <FIXME>
                     ## Should really offer a menu to select from.
-                    warning(gettextf("vignette '%d' found more than once,\nusing the one found in '%s'", topic, dirname(pdf[idx])),
+                    warning(gettextf("vignette '%s' found more than once,\nusing the one found in '%s'", topic, dirname(pdf[idx])),
                             call. = FALSE, domain = NA)
                     ## </FIXME>
                 }
@@ -65,10 +65,11 @@ function(topic, package = NULL, lib.loc = NULL)
                            file.path(dir, "Meta", "vignette.rds")))
                 entries <- .readRDS(INDEX)
             if(NROW(entries) > 0)
-                vDB <-
-                    rbind(vDB,
-                          cbind(Dir = I(dir),
-                                entries[c("File", "Title", "PDF")]))
+                vDB <- rbind(vDB,
+                             cbind(dir,
+                                   entries$File,
+                                   entries$Title,
+                                   entries$PDF))
         }
 
         ## Now compute info on available PDFs ...

@@ -34,7 +34,8 @@ atan2(y, x)
   \eqn{\pi/2}).
 
   All except \code{atan2} are generic functions: methods can be defined
-  for them individually or via the \code{\link{Math}} group generic.
+  for them individually or via the \code{\link[base:groupGeneric]{Math}}
+  group generic.
 }
 \section{Complex values}{
    For the inverse trigonometric functions, branch cuts are defined as in
@@ -42,7 +43,7 @@ atan2(y, x)
    branch cuts is standard.
 
    For \code{asin()} and \code{acos()}, there are two cuts, both along
-   the real axis: \eqn{\left(-\infty, -1\right]}{\(-Inf, 1\]} and
+   the real axis: \eqn{\left(-\infty, -1\right]}{\(-Inf, -1\]} and
    \eqn{\left[1, \infty\right)}{\[1, Inf\)}.  Functions \code{asin()}
    and \code{acos()} are continuous from above on the interval
    \eqn{\left(-\infty, -1\right]}{\(-Inf, -1\]} and continuous from

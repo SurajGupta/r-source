@@ -12,7 +12,7 @@ title(main = NULL, sub = NULL, xlab = NULL, ylab = NULL,
   \item{sub}{Sub-title (at bottom) using font and size
     \code{par("font.sub")} and color \code{par("col.sub")}.}
   \item{xlab}{X axis label using font and character expansion
-    \code{par("font.axis")} and color \code{par("col.axis")}.}
+    \code{par("font.lab")} and color \code{par("col.lab")}.}
   \item{ylab}{Y axis label, same font attributes as \code{xlab}.}
   \item{line}{specifying a value for \code{line} overrides the
     default placement of labels, and places them this many lines
@@ -36,10 +36,11 @@ title(main = NULL, sub = NULL, xlab = NULL, ylab = NULL,
   greek letters, fractions, etc.
 }
 \details{
-  The labels passed to title can be simple strings or expressions,
-  or they can be a list containing the string to be plotted, and
-  a selection of the optional modifying graphical parameters
-  \code{cex=}, \code{col=} and \code{font=}.
+  The labels passed to \code{title} can be a character vector or a
+  language object (names, calls or expressions), or a list
+  containing the string to be plotted, and a selection of the optional
+  modifying graphical parameters \code{cex=}, \code{col=} and
+  \code{font=}.
 }
 \references{
   Becker, R. A., Chambers, J. M. and Wilks, A. R. (1988)

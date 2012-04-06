@@ -2,13 +2,13 @@ stdin <- function() .Internal(stdin())
 stdout <- function() .Internal(stdout())
 stderr <- function() .Internal(stderr())
 
-readLines <- function(con = stdin(), n = -1, ok = TRUE)
+readLines <- function(con = stdin(), n = -1, ok = TRUE, warn = TRUE)
 {
     if(is.character(con)) {
         con <- file(con, "r")
         on.exit(close(con))
     }
-    .Internal(readLines(con, n, ok))
+    .Internal(readLines(con, n, ok, warn))
 }
 
 
@@ -84,10 +84,11 @@ socketConnection <- function(host= "localhost", port, server = FALSE,
     .Internal(socketConnection(host, port, server, blocking, open, encoding))
 
 textConnection <- function(object, open = "r", local = FALSE) {
-    if (local) env <- parent.frame()
-    else env <- .GlobalEnv
+    env <- if (local) parent.frame() else .GlobalEnv
     .Internal(textConnection(deparse(substitute(object)), object, open, env))
 }
+
+textConnectionValue <- function(con) .Internal(textConnectionValue(con))
 
 seek <- function(con, ...)
     UseMethod("seek")
@@ -130,7 +131,7 @@ showConnections <- function(all = FALSE)
     set <- getAllConnections()
     if(!all) set <- set[set > 2]
     ans <- matrix("", length(set), 7)
-    for(i in seq(along=set)) ans[i, ] <- unlist(summary.connection(set[i]))
+    for(i in seq_along(set)) ans[i, ] <- unlist(summary.connection(set[i]))
     rownames(ans) <- set
     colnames(ans) <- c("description", "class", "mode", "text", "isopen",
                        "can read", "can write")
@@ -160,7 +161,7 @@ closeAllConnections <- function()
     set <- getAllConnections()
     set <- set[set > 2]
     # and close all user connections.
-    for(i in seq(along=set)) close(getConnection(set[i]))
+    for(i in seq_along(set)) close(getConnection(set[i]))
     invisible()
 }
 

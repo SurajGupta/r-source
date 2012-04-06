@@ -65,7 +65,7 @@ static popup RConsolePopup;
 static menuitem msource, mdisplay, mload, msave, mloadhistory,
     msavehistory, mpaste, mpastecmds, mcopy, mcopypaste, mlazy, mconfig,
     mls, mrm, msearch, mde;
-static int lmanintro, lmanref, lmandata, lmanlang, lmanext, lmanadmin;
+static int lmanintro, lmanref, lmandata, lmanlang, lmanext, lmanint, lmanadmin;
 static menu m;
 static char cmd[1024];
 static HelpMenuItems hmenu;
@@ -75,16 +75,35 @@ static PkgMenuItems pmenu;
 
 /* menu callbacks */
 
-void fixslash(char *s)
-{
-    char *p;
+/* We need to handle \ in paths which are to be passed to R code.
+   Since these can include \\ for network drives, we cannot just use /,
+   although we did prior to R 2.4.0.
 
-    for (p = s; *p; p++)
-	if (*p == '\\') *p = '/';
-/* I don't know why we need this!!!! */
-    if (!strcmp(&s[strlen(s) - 2], ".*"))
-	s[strlen(s) - 2] = '\0';
+   MBCS-aware since 2.4.0.
+ */
+static void double_backslashes(char *s, char *out)
+{
+    char *p = s;
+
+#ifdef SUPPORT_MBCS
+    int i;
+    if(mbcslocale) {
+	mbstate_t mb_st; int used;
+	mbs_init(&mb_st);
+	while((used = Mbrtowc(NULL, p, MB_CUR_MAX, &mb_st))) {
+	    if(*p == '\\') *out++ = '\\';
+	    for(i = 0; i < used; i++) *out++ = *p++;
+	}
+    } else
+#endif
+    for (; *p; p++)
+	if (*p == '\\') {
+	    *out++ = *p;
+	    *out++ = *p;
+	} else *out++ = *p;
+    *out = '\0';
 }
+
 
 void Rconsolecmd(char *cmd)
 {
@@ -98,15 +117,15 @@ void closeconsole(control m)  /* can also be called from editor menus */
 
 static void menusource(control m)
 {
-    char *fn;
+    char *fn, local[MAX_PATH];
 
     if (!ConsoleAcceptCmd) return;
     setuserfilter("R files (*.R)\0*.R\0S files (*.q, *.ssc, *.S)\0*.q;*.ssc;*.S\0All files (*.*)\0*.*\0\0");
     fn = askfilename(G_("Select file to source"), "");
 /*    show(RConsole); */
     if (fn) {
-	fixslash(fn);
-	snprintf(cmd, 1024, "source(\"%s\")", fn);
+	double_backslashes(fn, local);
+	snprintf(cmd, 1024, "source(\"%s\")", local);
 	consolecmd(RConsole, cmd);
     }
 }
@@ -119,30 +138,31 @@ static void menudisplay(control m)
 
 static void menuloadimage(control m)
 {
-    char *fn;
+    char *fn, s[2*MAX_PATH];
 
     if (!ConsoleAcceptCmd) return;
     setuserfilter("R images (*.RData)\0*.RData\0R images - old extension (*.rda)\0*.rda\0All files (*.*)\0*.*\0\0");
     fn = askfilename(G_("Select image to load"), "");
 /*    show(RConsole); */
     if (fn) {
-	fixslash(fn);
-	snprintf(cmd, 1024, "load(\"%s\")", fn);
+	double_backslashes(fn, s);
+	snprintf(cmd, 1024, "load(\"%s\")", s);
 	consolecmd(RConsole, cmd);
     }
 }
 
 static void menusaveimage(control m)
 {
-    char *fn;
+    char *fn, s[2*MAX_PATH];
 
     if (!ConsoleAcceptCmd) return;
     setuserfilter("R images (*.RData)\0*.RData\0All files (*.*)\0*.*\0\0");
     fn = askfilesave(G_("Save image in"), ".RData");
 /*    show(RConsole); */
     if (fn) {
-	fixslash(fn);
-	snprintf(cmd, 1024, "save.image(\"%s\")", fn);
+	double_backslashes(fn, s);
+	if (!strcmp(&s[strlen(s) - 2], ".*")) s[strlen(s) - 2] = '\0';
+	snprintf(cmd, 1024, "save.image(\"%s\")", s);
 	consolecmd(RConsole, cmd);
     }
 }
@@ -153,24 +173,18 @@ static void menuloadhistory(control m)
 
     setuserfilter("All files (*.*)\0*.*\0\0");
     fn = askfilename(G_("Load history from"), R_HistoryFile);
-/*    show(RConsole); */
-    if (fn) {
-	fixslash(fn);
-	gl_loadhistory(fn);
-    }
+    if (fn) gl_loadhistory(fn);
 }
 
 static void menusavehistory(control m)
 {
-    char *fn;
+    char *s;
 
     setuserfilter("All files (*.*)\0*.*\0\0");
-    fn = askfilesave(G_("Save history in"), R_HistoryFile);
-/*    show(RConsole); */
-    if (fn) {
-	fixslash(fn);
+    s = askfilesave(G_("Save history in"), R_HistoryFile);
+    if (s) {
 	R_setupHistory(); /* re-read the history size */
-	gl_savehistory(fn, R_HistorySize);
+	gl_savehistory(s, R_HistorySize);
     }
 }
 
@@ -453,6 +467,11 @@ static void menumainext(control m)
     internal_shellexec("doc\\manual\\R-exts.pdf");
 }
 
+static void menumainint(control m)
+{
+    internal_shellexec("doc\\manual\\R-ints.pdf");
+}
+
 static void menumainlang(control m)
 {
     internal_shellexec("doc\\manual\\R-lang.pdf");
@@ -664,6 +683,8 @@ void readconsolecfg()
     strcpy(gui.style, "normal");
     gui.tt_font = 0;
     gui.pointsize = 12;
+    strcpy(gui.language, "");
+    gui.buffered = 1;
     
 #ifdef USE_MDI
     gui.toolbar = ((RguiMDI & RW_TOOLBAR) != 0);
@@ -706,31 +727,36 @@ void readconsolecfg()
     Rwin_graphicsx = gui.grx;
     Rwin_graphicsy = gui.gry;
 
+    if(strlen(gui.language)) {
+	char *buf = malloc(50);
+	sprintf(buf, "LANGUAGE=%s", gui.language);
+	putenv(buf);
+    }
     setconsoleoptions(fn, sty, gui.pointsize, gui.crows, gui.ccols,
 		      gui.cx, gui.cy,
 		      gui.fg, gui.user, gui.bg, gui.hlt,
 		      gui.prows, gui.pcols, gui.pagerMultiple, gui.setWidthOnResize,
-		      gui.cbb, gui.cbl);
+		      gui.cbb, gui.cbl, gui.buffered);
 }
 
 static void dropconsole(control m, char *fn)
 {
-    char *p;
+    char *p, local[MAX_PATH];
 
     p = Rf_strrchr(fn, '.');
     if(p) {
 	/* OK even in MBCS */
 	if(stricmp(p+1, "R") == 0) {
 	    if(ConsoleAcceptCmd) {
-		R_fixslash(fn);
-		snprintf(cmd, 1024, "source(\"%s\")", fn);
+		double_backslashes(fn, local);
+		snprintf(cmd, 1024, "source(\"%s\")", local);
 		consolecmd(RConsole, cmd);
 	    }
 	/* OK even in MBCS */
 	} else if(stricmp(p+1, "RData") == 0 || stricmp(p+1, "rda")) {
 	    if(ConsoleAcceptCmd) {
-		R_fixslash(fn);
-		snprintf(cmd, 1024, "load(\"%s\")", fn);
+		double_backslashes(fn, local);
+		snprintf(cmd, 1024, "load(\"%s\")", local);
 		consolecmd(RConsole, cmd);
 	    }
 	}
@@ -818,6 +844,7 @@ static void CheckForManuals()
     lmandata = check_doc_file("doc\\manual\\R-data.pdf");
     lmanlang = check_doc_file("doc\\manual\\R-lang.pdf");
     lmanext = check_doc_file("doc\\manual\\R-exts.pdf");
+    lmanint = check_doc_file("doc\\manual\\R-ints.pdf");
     lmanadmin = check_doc_file("doc\\manual\\R-admin.pdf");
 }
 
@@ -835,7 +862,7 @@ int RguiCommonHelp(menu m, HelpMenuItems hmenu)
 
 
     if (!lmanintro && !lmanref && !lmandata && !lmanlang && !lmanext 
-       && !lmanadmin) {
+       && !lmanint && !lmanadmin) {
 	MCHECK(hmenu->mman0 = newmenuitem(G_("Manuals (in PDF)"), 0, NULL));
 	disable(hmenu->mman0);
     } else {
@@ -855,6 +882,9 @@ int RguiCommonHelp(menu m, HelpMenuItems hmenu)
 	MCHECK(hmenu->mmanext = newmenuitem("Writing R Extensions", 0, 
 				     menumainext));
 	if (!lmanext) disable(hmenu->mmanext);
+	MCHECK(hmenu->mmanint = newmenuitem("R Internals", 0, 
+				     menumainint));
+	if (!lmanint) disable(hmenu->mmanint);
 	MCHECK(hmenu->mmanadmin = newmenuitem("R Installation and Administration", 0, 
 				       menumainadmin));	
 	if (!lmanadmin) disable(hmenu->mmanadmin);
@@ -1189,7 +1219,7 @@ int winaddmenu(char * name, char *errmsg)
     if (getMenu(name))
     	return 0;	/* Don't add repeats */
 
-    if (nmenus > alloc_menus) {
+    if (nmenus >= alloc_menus) {
 	if(alloc_menus <= 0) {
 	    alloc_menus = 10;
 	    usermenus = (menu *) malloc(sizeof(menu) * alloc_menus);

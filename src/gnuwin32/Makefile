@@ -35,12 +35,17 @@ PKGDIR = $(RHOME)/src/library
 OPTFLAGS=-O3 -Wall -pedantic -std=gnu99
 FOPTFLAGS=-O3 -Wall
 ifdef DEBUG
- OPTFLAGS+=-g
- FOPTFLAGS+=-g
+ OPTFLAGS+=$(G_FLAG)
+ FOPTFLAGS+=$(G_FLAG)
  DLLFLAGS=
 else
  DLLFLAGS=-s
 endif
+ifdef R_MEMORY_PROFILING
+ OPTFLAGS+=-DR_MEMORY_PROFILING
+endif
+
+# used when compiling src/main: needed for memory.c
 OPTFLAGS_M=$(OPTFLAGS)
 
 ifneq ($(strip $(BUILD)),CROSS)
@@ -52,14 +57,14 @@ endif
 R-DLLLIBS =-L. $(FLIBS) -lRblas -lcomctl32 -lversion $(LIBEXTRAS)
 dllversion-RESFLAGS =--include-dir ../include
 SOURCES = \
-  console.c dataentry.c dynload.c edit.c editor.c extra.c \
+  console.c dataentry.c dynload.c edit.c editor.c embeddedR.c extra.c \
   opt.c pager.c preferences.c psignal.c rhome.c rui.c run.c shext.c \
-  sys-win32.c system.c wcrtomb.c
+  sys-win32.c system.c
 OBJS = $(SOURCES:.c=.o) e_pow.o
 MAINLIBS = ../main/libmain.a ../appl/libappl.a ../nmath/libnmath.a
 EXTRALIBS = graphapp/ga.a getline/gl.a ../extra/xdr/libxdr.a \
    ../extra/zlib/libz.a ../extra/pcre/libpcre.a ../extra/bzip2/libbz2.a \
-   ../extra/intl/libintl.a
+   ../extra/intl/libintl.a ../extra/trio/libtrio.a
 
 R_PKGS0 = $(filter-out base tools, $(R_PKGS_BASE))
 PKGCLEAN = $(foreach i,$(R_PKGS_BASE),pkgclean-$i)
@@ -84,13 +89,14 @@ front-ends/Rpwd.exe:
 	$(MAKE) --no-print-directory -C front-ends Rpwd
 
 ## watch out: R.dll and Rblas.dll depend on each other.
+## so build import library R.dll then Rblas.dll
 rbuild:
 	@$(MAKE) --no-print-directory fixfiles
 	@$(MAKE) --no-print-directory -C ../include -f Makefile.win
 	@$(MAKE) --no-print-directory -C ../scripts -f Makefile.win
 	@$(MAKE) --no-print-directory libRblas.dll.a
 	@$(MAKE) --no-print-directory ../../bin/R.dll
-	@$(MAKE) --no-print-directory ../../bin/Rblas.dll CHTML
+	@$(MAKE) --no-print-directory Rblas CHTML
 	@$(MAKE) --no-print-directory front-ends COPYRIGHTS rmodules Rcode
 
 ## used to build skeletal versions of packages, enough to run
@@ -158,10 +164,10 @@ rlibs:
 	$(MAKE) --no-print-directory -C ../appl  OPTFLAGS='$(OPTFLAGS)' FOPTFLAGS='$(FOPTFLAGS)' -f Makefile.win
 	$(MAKE) --no-print-directory -C ../nmath OPTFLAGS='$(OPTFLAGS)' -f Makefile.win
 	$(MAKE) --no-print-directory -C ../main  OPTFLAGS='$(OPTFLAGS_M)' FFLAGS='$(FOPTFLAGS)' -f Makefile.win
-	$(MAKE) --no-print-directory -C ./graphapp
-	$(MAKE) --no-print-directory -C ./getline
-	@for ex in pcre bzip2 zlib xdr; do \
-	  $(MAKE) --no-print-directory -C ../extra/$${ex} -f Makefile.win || exit 1; \
+	$(MAKE) --no-print-directory -C ./graphapp OPTFLAGS='$(OPTFLAGS)'
+	$(MAKE) --no-print-directory -C ./getline OPTFLAGS='$(OPTFLAGS)'
+	@for ex in pcre bzip2 zlib xdr trio; do \
+	  $(MAKE) --no-print-directory -C ../extra/$${ex} OPTFLAGS='$(OPTFLAGS)' -f Makefile.win || exit 1; \
 	done
 
 rmodules:
@@ -182,8 +188,20 @@ fixed/fixdesc:
 
 dllversion.o: ../include/Rversion.h
 
-## this one needs R.dll as the name
 R.dll: $(OBJS) $(OBJS-EXTRA) $(MAINLIBS) $(EXTRALIBS) dllversion.o
+	@$(ECHO) EXPORTS > R.def
+	@$(NM) $^ | $(SED) -n 's/^........ [BCDRT] _/ /p' | sort | uniq > R0.def
+	@comm -23 R0.def Rdll.hide >> R.def
+	$(DLL) -shared $(DLLFLAGS) $($*-DLLFLAGS) -o $@ R.def $^ $($*-DLLLIBS) $(DLLLIBS)
+	@$(RM) R.def R0.def
+
+R.exp: $(OBJS) $(OBJS-EXTRA) $(MAINLIBS) $(EXTRALIBS) dllversion.o
+	@$(ECHO) LIBRARY R.dll > R.exp
+	@$(ECHO) EXPORTS >> R.exp
+	@$(NM) $^ | $(SED) -n 's/^........ [BCDRT] _/ /p' | sort | uniq > R0.def
+	@comm -23 R0.def Rdll.hide >> R.exp
+	@$(RM) R0.def
+
 
 Rdll: makeMakedeps libRblas.dll.a ../../bin/R.dll
 
@@ -216,6 +234,9 @@ front-ends:
 
 ../extra/bzip2/libbz2.a:
 	$(MAKE) --no-print-directory -C ../extra/bzip2  -f Makefile.win libbz2.a
+../extra/trio/libtrio.a:
+	$(MAKE) --no-print-directory -C ../extra/trio -f Makefile.win
+
 
 htmldocs:
 	@$(ECHO)
@@ -225,41 +246,16 @@ htmldocs:
 
 #                          ===== BLAS ======
 
-Rblas: ../../bin/Rblas.dll
+Rblas:
+	@$(MAKE) --no-print-directory -C ../extra/blas -f Makefile.win \
+	  FFLAGS='$(FOPTFLAGS)'
 
 Rblas-clean:
-	$(RM) ../../bin/Rblas.dll blas00.o blas00.d blas.o cmplxblas.o
+	@$(MAKE) --no-print-directory -C ../extra/blas -f Makefile.win clean
 
-libRblas.dll.a:  Rblas.def
+libRblas.dll.a:  ../extra/blas/Rblas.def
 	$(DLLTOOL) $(DLLTOOLFLAGS) $(R-DLLTOOLFLAGS) --dllname Rblas.dll \
-	  --def Rblas.def --output-lib $@
-
-## suppress lots of warnings: this is a dummy
-blas00.o: blas00.c
-	$(CC) -O3  -c $< -o $@
-blas.o: ../appl/blas.f
-	$(F77) $(FFLAGS) -c $< -o $@
-cmplxblas.o: ../appl/cmplxblas.f
-	$(F77) $(FOPTFLAGS) -c $< -o $@
-
-## Rblas.dll imports xerbla_ from R.dll
-ifeq ($(strip $(USE_ACML)),YES)
-../../bin/Rblas.dll: blas00.o dllversion.o
-	@$(ECHO) -------- Building $@ --------
-	$(DLL) -shared $(DLLFLAGS) -o $@ $^ Rblas.def \
-	   -L../../bin -lR  -L"$(ACML_PATH)" -lacml $(FLIBS)
-else
-ifeq ($(strip $(USE_ATLAS)),YES)
-../../bin/Rblas.dll: blas00.o dllversion.o
-	@$(ECHO) -------- Building $@ --------
-	$(DLL) -shared $(DLLFLAGS) -o $@ $^ Rblas.def \
-	   -L../../bin -lR  -L"$(ATLAS_PATH)" -lf77blas -latlas
-else
-../../bin/Rblas.dll: blas.o cmplxblas.o dllversion.o
-	@$(ECHO) -------- Building $@ --------
-	$(DLL) -shared $(DLLFLAGS) -o $@ $^ Rblas.def -L../../bin -lR $(FLIBS)
-endif
-endif
+	  --def $< --output-lib $@
 
 
 #                          ===== Packages ======
@@ -390,8 +386,13 @@ data-%:
 
 #                          ===== cleaning ======
 
+EXTRA_DIRS = blas bzip2 intl pcre trio xdr zlib
+
 clean: cleanwin $(PKGCLEAN)
 	$(RM) -f ../*/*.o ../*/*.a *.a ../*/*.d ../*/Makedeps fixed/fixdesc
+	@for d in $(EXTRA_DIRS); do \
+	  $(MAKE) -C ../extra/$${d} -f Makefile.win clean; \
+	done
 	-$(MAKE) --no-print-directory -C ../../doc/manual -f Makefile.win distclean
 	-$(MAKE) --no-print-directory -C ../nmath/standalone -f Makefile.win distclean
 	-$(MAKE) --no-print-directory -C ../modules -f Makefile.win clean
@@ -402,6 +403,9 @@ clean: cleanwin $(PKGCLEAN)
 	done
 
 distclean: clean clean-recommended
+	@for d in $(EXTRA_DIRS); do \
+	  $(MAKE) -C ../extra/$${d} -f Makefile.win distclean; \
+	done
 	$(RM) -r ../../bin ../../include ../../lib ../../library ../../modules
 	$(RM) ../include/config.h ../include/iconv.h ../include/psignal.h \
 	../include/Rconfig.h ../include/Rversion.h ../include/Rmath.h \
@@ -439,20 +443,13 @@ veryclean: distclean
 	$(RM) ../../doc/FAQ ../../doc/RESOURCES ../../doc/html/resources.html \
 	  ../../SVN-REVISION # not in SVN sources
 
-
 cleanwin:
-	$(RM) *.o *.dll *.a *~ \#*\# rw*.zip R.def R.exp1 \
-	   .RData .Rhistory Makedeps *.d
+	$(RM) *.o *.dll *.a *~ \#*\# .RData .Rhistory Makedeps *.d
 	$(MAKE) -C graphapp clean
 	$(MAKE) -C fixed clean
 	$(MAKE) -C getline clean
 	$(MAKE) -C help clean
 	$(MAKE) -C front-ends clean
-	$(MAKE) -C ../extra/xdr -f Makefile.win distclean
-	$(MAKE) -C ../extra/pcre -f Makefile.win distclean
-	$(MAKE) -C ../extra/bzip2 -f Makefile.win clean
-	$(MAKE) -C ../extra/zlib -f Makefile.win distclean
-	$(MAKE) -C ../extra/intl -f Makefile.win clean
 	$(MAKE) -C bitmap clean
 	-$(MAKE) -C installer clean
 
@@ -498,9 +495,20 @@ vignettes:
 
 RVER = $(shell cut -d' ' -f1 ../../VERSION | sed -n 1p)
 RVER-PAT = $(shell version=`cut -d' ' -f1 ../../VERSION | sed -n 1p`; if test "`cut -f2 -d' ' ../../VERSION`" = "Patched"; then version=`echo $${version} | sed 's/\.[0-9]*$$//'`; echo "$${version}-patched"; else echo "$${version}"; fi)
+SEDVER = -e s/@RVER@/$(RVER)/g -e s/@RWVER@/$(RPREFIX)/g
 
-docfiles:
-	$(MAKE) -f Makefile.docfiles
+docfiles: rw-FAQ ../../doc/html/rw-FAQ.html
+
+../../doc/html/rw-FAQ.html: rw-FAQ.texi ../../VERSION
+	@echo "making rw-FAQ.html"
+	@$(SED) $(SEDVER) $< | \
+	  makeinfo --no-split --html --no-headers --number-sections -o $@ 
+
+rw-FAQ: rw-FAQ.texi ../../VERSION
+	@echo "making rw-FAQ"
+	@$(SED) $(SEDVER) $< | \
+	  makeinfo --no-headers --number-sections -o $@
+
 
 bitmapdll:
 	$(MAKE) -C bitmap
@@ -583,7 +591,15 @@ crandir:
 	  -e s/@RVER@/$(RVER)/g \
 	  -e "s/@DATE@/$(DATE)/g" \
 	  -e "s/@FULLVERSION@/$(FULLVERSION)/g" cran/rpatched.in > cran/rpatched.html	  
+	$(SED) -e s/@RWVER@/$(RPREFIX)/g \
+	  -e s/@RVER@/$(RVER)/g \
+	  -e "s/@DATE@/$(DATE)/g" \
+	  -e "s/@FULLVERSION@/$(FULLVERSION)/g" cran/rtest.in > cran/rtest.html	  	  
 	$(SED) -e s/@RWVER@/$(RPREFIX)/g cran/release.in > cran/release.htm
+	(cd cran;\
+	 zip dosfiles.zip CHANGES.$(RPREFIX) NEWS.$(RPREFIX) README.$(RPREFIX) ReadMe;\
+	 unzip -ao dosfiles.zip;\
+	 $(RM) dosfiles.zip)
 
 distribution:
 	@$(MAKE) Rpwd.exe

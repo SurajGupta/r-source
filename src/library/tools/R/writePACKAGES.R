@@ -22,7 +22,7 @@ function(dir, fields = NULL,
         ## omit NA entries appropriately:
         out <- file(file.path(dir, "PACKAGES"), "wt")
         outgz <- gzfile(file.path(dir, "PACKAGES.gz"), "wt")
-        for(i in seq(length = nrow(desc))){
+        for(i in seq_len(nrow(desc))){
             desci <- desc[i, !(is.na(desc[i, ]) | (desc[i, ] == "")),
                           drop = FALSE]
             write.dcf(desci, file = out)
@@ -50,12 +50,10 @@ function(dir, fields = NULL,
 
     if(!length(files))
         return(list())
-    
+
     ## Add the standard set of fields required to build a repository's
     ## PACKAGES file:
-    fields <- unique(c("Package", "Bundle", "Priority", "Version",
-                       "Depends", "Suggests", "Imports", "Contains", 
-                       fields))
+    fields <- unique(c(.get_standard_repository_db_fields(), fields))
     packages <- sapply(strsplit(files, "_"), "[", 1)
     files <- file.path(dir, files)
     db <- vector(length(files), mode = "list")
@@ -65,7 +63,7 @@ function(dir, fields = NULL,
     on.exit(options(op))
     if(verbose) message("Processing packages:")
     if(type == "win.binary") {
-        for(i in seq(along = files)) {
+        for(i in seq_along(files)) {
             if(verbose) message(paste(" ", files[i]))
             ## for bundles:
             con <- unz(files[i], "DESCRIPTION")
@@ -92,7 +90,7 @@ function(dir, fields = NULL,
         if(!dir.create(td)) stop("unable to create ", td)
         on.exit(unlink(td, recursive = TRUE), add = TRUE)
         setwd(td)
-        for(i in seq(along = files)) {
+        for(i in seq_along(files)) {
             if(verbose) message(paste(" ", files[i]))
             p <- file.path(packages[i], "DESCRIPTION")
             temp <- try(system(paste("tar zxf", files[i], p)))
@@ -109,4 +107,4 @@ function(dir, fields = NULL,
 
     db
 }
-    
+

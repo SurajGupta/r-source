@@ -2,7 +2,7 @@ msgid ""
 msgstr ""
 "Project-Id-Version: R 2.3.0\n"
 "Report-Msgid-Bugs-To: bugs@r-project.org\n"
-"POT-Creation-Date: 2006-01-24 11:58\n"
+"POT-Creation-Date: 2006-09-19 11:55\n"
 "PO-Revision-Date: YEAR-MO-DA HO:MI+ZONE\n"
 "Last-Translator: FULL NAME <EMAIL@ADDRESS>\n"
 "Language-Team: LANGUAGE <LL@li.org>\n"
@@ -18,9 +18,6 @@ msgid "you must specify 'package' or 'dir'"
 msgstr ""
 
 msgid "directory '%s' does not exist"
-msgstr ""
-
-msgid "cannot source package code"
 msgstr ""
 
 msgid "neither code nor data objects found"
@@ -50,19 +47,31 @@ msgstr ""
 msgid "Functions/methods with usage in documentation object '%s' but not in code:"
 msgstr ""
 
+msgid "Argument names in code not in docs:"
+msgstr ""
+
+msgid "Argument names in docs not in code:"
+msgstr ""
+
+msgid "Mismatches in argument names (first 3):"
+msgstr ""
+
+msgid "Mismatches in argument names:"
+msgstr ""
+
+msgid "Mismatches in argument default values (first 3):"
+msgstr ""
+
+msgid "Mismatches in argument default values:"
+msgstr ""
+
 msgid "Codoc mismatches from documentation object '%s':"
 msgstr ""
 
 msgid "Code: %s"
 msgstr ""
 
-msgid "code"
-msgstr ""
-
 msgid "Docs: %s"
-msgstr ""
-
-msgid "docs"
 msgstr ""
 
 msgid "S4 class codoc mismatches from documentation object '%s':"
@@ -72,6 +81,12 @@ msgid "Slots for class '%s'"
 msgstr ""
 
 msgid "name"
+msgstr ""
+
+msgid "code"
+msgstr ""
+
+msgid "docs"
 msgstr ""
 
 msgid "Data codoc mismatches from documentation object '%s':"
@@ -140,7 +155,7 @@ msgstr ""
 msgid "Vignette dependencies not required:"
 msgstr ""
 
-msgid "Vignette dependencies (\\VignetteDepends{} entries) must be contained in the DESCRIPTION Depends/Suggests/Imports entries."
+msgid "Vignette dependencies (\\VignetteDepends{} entries) must be contained in the DESCRIPTION Depends/Suggests entries."
 msgstr ""
 
 msgid "Namespace dependencies not required:"
@@ -197,7 +212,7 @@ msgstr ""
 msgid "Rd files with non-standard keywords:"
 msgstr ""
 
-msgid "Each '\\keyword' entry should specify one of the standard keywords (as listed in file 'KEYWORDS.db' in the 'doc' subdirectory of the R home directory)."
+msgid "Each '\\keyword' entry should specify one of the standard keywords (as listed in file 'KEYWORDS' in the R documentation directory)."
 msgstr ""
 
 msgid "Rd files with duplicated alias '%s':"
@@ -248,7 +263,7 @@ msgstr ""
 msgid "Malformed maintainer field."
 msgstr ""
 
-msgid "Malformed Depends or Suggests or Imports field."
+msgid "Malformed Depends or Suggests or Imports or Enhances field."
 msgstr ""
 
 msgid "Offending entries:"
@@ -285,6 +300,24 @@ msgid "Non-portable flags in variable '%s':"
 msgstr ""
 
 msgid "Missing link(s) in documentation object '%s':"
+msgstr ""
+
+msgid "found %s"
+msgstr ""
+
+msgid "package 'methods' is used but not declared"
+msgstr ""
+
+msgid "'::' or ':::' imports not declared from:"
+msgstr ""
+
+msgid "'library' or 'require' calls not declared from:"
+msgstr ""
+
+msgid "Found possibly global T or F in the following functions:"
+msgstr ""
+
+msgid "Found possibly global T or F in the following Rd example files:"
 msgstr ""
 
 msgid "argument 'lines' must be a character vector"
@@ -486,6 +519,9 @@ msgid "running texi2dvi on '%s' failed"
 msgstr ""
 
 msgid "file '%s' is not in valid DCF format"
+msgstr ""
+
+msgid "cannot source package code"
 msgstr ""
 
 msgid "Call sequence:"

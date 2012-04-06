@@ -3,7 +3,7 @@ trace <- function(what, tracer, exit, at, print, signature, where = topenv(paren
     if(needsAttach) {
         ns <- try(loadNamespace("methods"))
         if(isNamespace(ns))
-            methods::message("(loaded the methods namespace)")
+            message("(loaded the methods namespace)")
         else
             stop("Tracing functions requires the methods package, but unable to load methods namespace")
     }
@@ -48,3 +48,13 @@ untrace <- function(what, signature = NULL, where = topenv(parent.frame())) {
 
 tracingState <- function( on = NULL)
     .Call("R_traceOnOff", on, PACKAGE = "base")
+
+isS4 <- function(object)
+    .Call("R_isS4Object", object, PACKAGE = "base")
+
+asS4 <- function(object, value = TRUE) {
+    value <- methods::as(value, "logical")
+    if(length(value) != 1 || is.na(value))
+      stop("Expected a single logical value for the S4 object state")
+    .Call("R_setS4Object", object, value, PACKAGE = "base")
+  }

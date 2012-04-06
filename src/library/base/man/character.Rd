@@ -21,7 +21,9 @@ is.character(x)
 \details{
   \code{as.character} and \code{is.character} are generic: you can
   write methods to handle specific classes of objects,
-  see \link{InternalMethods}.
+  see \link{InternalMethods}.  Further, for \code{as.character} the
+  default method calls \code{\link{as.vector}}, so dispatch is first on
+  methods for \code{as.character} and then for methods for \code{as.vector}.
 
   \code{as.character} represents real and complex numbers to 15 decimal
   places (technically the compiler's setting of the ISO C constant
@@ -39,9 +41,14 @@ is.character(x)
 
   \code{as.character} attempts to coerce its argument to character type;
   like \code{\link{as.vector}} it strips attributes including names.
+  For lists it deparses the elements individually, except that it
+  extracts the first element of length-one character vectors.
 
   \code{is.character} returns \code{TRUE} or \code{FALSE} depending on
-  whether its argument is of character type or not.
+  whether its argument is of character type or not.  (Methods should
+  always return \code{FALSE} for classes which are not based on a
+  character vector, but can return \code{FALSE} even for those which
+  are.)
 }
 \note{
   \code{as.character} truncates components of language objects to 500

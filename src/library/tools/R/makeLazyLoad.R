@@ -103,7 +103,7 @@ data2LazyLoadDB <- function(package, lib.loc = NULL, compress = TRUE)
         stop(gettextf("there is no package called '%s'", package),
              domain = NA)
     dataDir <- file.path(pkgpath, "data")
-    if(tools:::file_test("-d", dataDir)) {
+    if(file_test("-d", dataDir)) {
         if(file.exists(file.path(dataDir, "Rdata.rds")) &&
 	    file.exists(file.path(dataDir, paste(package, "rdx", sep="."))) &&
 	    file.exists(file.path(dataDir, paste(package, "rdb", sep="."))) ){
@@ -112,8 +112,8 @@ data2LazyLoadDB <- function(package, lib.loc = NULL, compress = TRUE)
 	else {
             dataEnv <- new.env(hash=TRUE)
             tmpEnv <- new.env()
-            f0 <- files <- tools:::list_files_with_type(dataDir, "data")
-            files <- unique(basename(tools:::file_path_sans_ext(files)))
+            f0 <- files <- list_files_with_type(dataDir, "data")
+            files <- unique(basename(file_path_sans_ext(files)))
             dlist <- vector("list", length(files))
             names(dlist) <- files
             loaded <- character(0)
@@ -137,7 +137,8 @@ data2LazyLoadDB <- function(package, lib.loc = NULL, compress = TRUE)
             if(length(loaded)) {
                 dbbase <- file.path(dataDir, "Rdata")
                 makeLazyLoadDB(dataEnv, dbbase, compress = compress)
-                .saveRDS(dlist, file.path(dataDir, "Rdata.rds"))
+                .saveRDS(dlist, file.path(dataDir, "Rdata.rds"),
+                         compress = compress)
                 print(f0)
                 unlink(f0)
                 if(file.exists(file.path(dataDir, "filelist")))
@@ -160,7 +161,7 @@ makeLazyLoadDB <- function(from, filebase, compress = TRUE, ascii = FALSE,
         envs <- NULL
         enames <- character(0)
         find <- function(v, keys, vals)
-            for (i in seq(along=keys))
+            for (i in seq_along(keys))
                 if (identical(v, keys[[i]]))
                     return(vals[i])
         getname <- function(e) find(e, envs, enames)
@@ -223,7 +224,7 @@ makeLazyLoadDB <- function(from, filebase, compress = TRUE, ascii = FALSE,
     }
     else stop("source must be an environment or a list");
 
-    for (i in seq(along = vars)) {
+    for (i in seq_along(vars)) {
         key <- if (is.null(from) || is.environment(from))
             lazyLoadDBinsertVariable(vars[i], from, datafile,
                                      ascii, compress,  envhook)

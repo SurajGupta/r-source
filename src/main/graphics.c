@@ -1,7 +1,7 @@
 /*
  *  R : A Computer Language for Statistical Data Analysis
  *  Copyright (C) 1995, 1996  Robert Gentleman and Ross Ihaka
- *  Copyright (C) 1997--2001  Robert Gentleman, Ross Ihaka and the
+ *  Copyright (C) 1997--2006  Robert Gentleman, Ross Ihaka and the
  *			      R Development Core Team
  *  Copyright (C) 2002--2005  The R Foundation
  *
@@ -2069,15 +2069,17 @@ void GSetupAxis(int axis, DevDesc *dd)
  * This initialises the plot state, plus the other graphical
  * parameters that are not the responsibility of the device initialisation.
 
- * Typically called from  do_<dev>(.)  as  GInit(&dd->dp)
+ * Called from baseCallback.
  */
+int Rf_GetOptionParAsk(); /* from options.c */
+
 void attribute_hidden GInit(GPar *dp)
 {
     dp->state = 0;
     dp->valid = FALSE;
 
     dp->ann = TRUE;
-    dp->ask = FALSE;
+    dp->ask = Rf_GetOptionParAsk();
     dp->err = 0;
     dp->bty = 'o';
 
@@ -2132,7 +2134,6 @@ void attribute_hidden GInit(GPar *dp)
     dp->las = 0;
     dp->tck = NA_REAL;
     dp->tcl = -0.5;
-    dp->tmag = 1.2;
     dp->xaxp[0] = 0.0;
     dp->xaxp[1] = 1.0;
     dp->xaxp[2] = 5.0;
@@ -2690,7 +2691,7 @@ void clipPoint (Edge b, double x, double y,
 		double *xout, double *yout, int *cnt, int store,
 		GClipRect *clip, GClipState *cs)
 {
-    double ix, iy;
+    double ix = 0.0, iy = 0.0 /* -Wall */;
 
     if (!cs[b].first) {
 	/* No previous point exists for this edge. */
@@ -2741,7 +2742,7 @@ static
 void closeClip (double *xout, double *yout, int *cnt, int store,
 		GClipRect *clip, GClipState *cs)
 {
-    double ix, iy;
+    double ix = 0.0, iy = 0.0 /* -Wall */;
     Edge b;
 
     for (b = Left; b <= Top; b++) {
@@ -4277,7 +4278,18 @@ unsigned int RGBpar(SEXP x, int i)
     if(isString(x)) {
 	return str2col(CHAR(STRING_ELT(x, i)));
     }
-    else if(isInteger(x) || isLogical(x)) {
+    else if(isLogical(x)) {
+        if(LOGICAL(x)[i] == NA_LOGICAL)
+            /*
+             * Paul 01/07/04
+             * Used to be set to NA_INTEGER (see comment in name2col).
+             */
+            return R_TRANWHITE;
+        indx = LOGICAL(x)[i] - 1;
+        if(indx < 0) return Rf_dpptr(CurrentDevice())->bg;
+        else return R_ColorTable[indx % R_ColorTableSize];
+    }
+    else if(isInteger(x)) {
 	if(INTEGER(x)[i] == NA_INTEGER)
 	    /*
 	     * Paul 01/07/04
@@ -4397,6 +4409,8 @@ unsigned int LTYpar(SEXP value, int ind)
 	    error(_("invalid line type: must be length 2, 4, 6 or 8"));
 	for(; *p; p++) {
 	    digit = hexdigit(*p);
+	    if(digit == 0)
+		error(_("invalid line type: zeroes are not allowed"));
 	    code  |= (digit<<shift);
 	    shift += 4;
 	}
@@ -4900,7 +4914,6 @@ void restoredpSaved(DevDesc *dd)
     Rf_dpptr(dd)->srt = Rf_dpSavedptr(dd)->srt;
     Rf_dpptr(dd)->tck = Rf_dpSavedptr(dd)->tck;
     Rf_dpptr(dd)->tcl = Rf_dpSavedptr(dd)->tcl;
-    Rf_dpptr(dd)->tmag = Rf_dpSavedptr(dd)->tmag;
     Rf_dpptr(dd)->xaxp[0] = Rf_dpSavedptr(dd)->xaxp[0];
     Rf_dpptr(dd)->xaxp[1] = Rf_dpSavedptr(dd)->xaxp[1];
     Rf_dpptr(dd)->xaxp[2] = Rf_dpSavedptr(dd)->xaxp[2];

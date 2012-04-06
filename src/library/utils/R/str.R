@@ -14,7 +14,7 @@ str.data.frame <- function(object, ...)
     cl <- oldClass(object); cl <- cl[cl != "data.frame"]  #- not THIS class
     if(0 < length(cl)) cat("Classes", cl, " and ")
 
-    cat("`data.frame':	", nrow(object), " obs. of  ",
+    cat("'data.frame':	", nrow(object), " obs. of  ",
 	(p <- length(object)), " variable", if(p != 1)"s", if(p > 0)":",
 	"\n",sep="")
 
@@ -24,19 +24,32 @@ str.data.frame <- function(object, ...)
     else invisible(NextMethod("str", give.length=FALSE,...))
 }
 
+strOptions <- function(strict.width = "no", digits.d = 3, vec.len = 4)
+    list(strict.width = strict.width, digits.d = digits.d, vec.len = vec.len)
+
 str.default <-
-    function(object, max.level = NA, vec.len = 4, digits.d = 3,
+    function(object, max.level = NA, vec.len = strO$vec.len,
+             digits.d = strO$digits.d,
 	     nchar.max = 128, give.attr = TRUE, give.length = TRUE,
 	     width = getOption("width"), nest.lev = 0,
 	     indent.str= paste(rep.int(" ", max(0,nest.lev+1)), collapse= ".."),
 	     comp.str="$ ", no.list = FALSE, envir = baseenv(),
-             strict.width = getOption("str")$strict.width,
+             strict.width = strO$strict.width,
 	     ...)
 {
     ## Purpose: Display STRucture of any R - object (in a compact form).
     ## --- see HELP file --
     ## ------------------------------------------------------------------------
     ## Author: Martin Maechler <maechler@stat.math.ethz.ch>	1990--1997
+
+    ## Get defaults for these
+    oDefs <- c("vec.len", "digits.d", "strict.width")
+    ## from
+    strO <- getOption("str")
+    if(!is.list(strO) || !all(names(strO) %in% oDefs)) {
+	warning("invalid options('str') -- using defaults instead")
+	strO <- strOptions()
+    }
 
     strict.width <- match.arg(strict.width, choices = c("no", "cut", "wrap"))
     if(strict.width != "no") {
@@ -47,8 +60,8 @@ str.default <-
 				 give.attr= give.attr, give.length= give.length,
 				 width = width, nest.lev = nest.lev,
 				 indent.str = indent.str, comp.str= comp.str,
-				 no.list= no.list, envir = envir,
-				 strict.width = "no", ...) )
+				 no.list= no.list || is.data.frame(object),
+				 envir = envir, strict.width = "no", ...) )
 	if(strict.width == "wrap") {
 	    nind <- nchar(indent.str) + 2
 	    ss <- strwrap(ss, width = width, exdent = nind)
@@ -83,12 +96,10 @@ str.default <-
     ## NON interesting attributes:
     std.attr <- "names"
 
-    #NOT yet:if(has.class <- !is.null(cl <- class(object)))
-    if(has.class <- !is.null(cl <- attr(object, "class"))) { # S3 or S4 class
-	## FIXME: a kludge
-	S4 <- !is.null(attr(cl, "package")) || cl == "classRepresentation"
-	## better, but needs 'methods':	  length(methods::getSlots(cl)) > 0
-    }
+    cl <-
+	if((S4 <- isS4(object)))
+	    class(object) else attr(object, "class")
+    has.class <- S4 || !is.null(cl) # S3 or S4
     mod <- ""; char.like <- FALSE
     if(give.attr) a <- attributes(object)#-- save for later...
 
@@ -97,7 +108,7 @@ str.default <-
 	else { dp <- deparse(ao); paste(dp[-length(dp)], collapse="\n") },"\n")
     } else if (is.null(object))
 	cat(" NULL\n")
-    else if(has.class && S4) {
+    else if(S4) {
 	a <- sapply(methods::.slotNames(object), methods::slot,
                     object=object, simplify = FALSE)
 	cat("Formal class", " '", paste(cl, collapse = "', '"),
@@ -152,8 +163,8 @@ str.default <-
     } else { #- not function, not list
 	if(is.vector(object)
 	   || (is.array(object) && is.atomic(object))
-	   || is.vector(object, mode='language')
-	   || is.vector(object, mode='symbol')## R bug(<=0.50-a4) should be part
+	   || is.vector(object, mode= "language")
+	   || is.vector(object, mode= "symbol")## R bug(<=0.50-a4) should be part
 	   ) { ##-- Splus: FALSE for 'named vectors'
 	    if(is.atomic(object)) {
 		##-- atomic:   numeric	complex	 character  logical
@@ -173,6 +184,12 @@ str.default <-
 		} else if(!is.null(names(object))) {
 		    mod <- paste("Named", mod)
 		    std.attr <- std.attr[std.attr != "names"]
+		}
+		if(has.class && length(cl) == 1) {
+		    if(cl != mod && substr(cl, 1,nchar(mod)) != mod)
+			mod <- P0("'",cl,"' ", mod)
+		    ## don't show the class *twice*
+		    std.attr <- c(std.attr, "class")
 		}
 		str1 <-
 		    if(le == 1 && !is.array(object)) paste(NULL, mod)
@@ -337,7 +354,7 @@ str.default <-
 		std.attr <- c(std.attr, "class")
 	    int.surv <- iSurv || is.integer(object)
 	    if(!int.surv) {
-		ob <- if(le > iv.len) object[seq(len=iv.len)] else object
+		ob <- if(le > iv.len) object[seq_len(iv.len)] else object
 		ao <- abs(ob <- ob[!is.na(ob)])
 	    }
 	    else if(iSurv)
@@ -364,19 +381,18 @@ str.default <-
 	    ## if object is very long, drop the rest which won't be used anyway:
 	    max.len <- max(100, width %/% 3 + 1, if(!missing(vec.len)) vec.len)
 	    if(le > max.len) object <- object[1:max.len]
-	    en_object <- encodeString(object)
+	    encObj <- encodeString(object, quote= '"', na= FALSE)
+					#O: encodeString(object)
 	    v.len <-
 		if(missing(vec.len)) {
-		    max(1,sum(cumsum(3 + if(le>0) nchar(en_object, type="w") else 0) <
+		    max(1,sum(cumsum(3 + if(le>0) nchar(encObj, type="w") else 0) <
 			      width - (4 + 5*nest.lev + nchar(str1, type="w"))))
-                }
-	    ## `5*ne..' above is fudge factor
+		}		      # '5*ne..' above is fudge factor
 		else round(v.len)
 	    ile <- min(le, v.len)
-	    if(ile >= 1)  # truncate if LONG char:
-		object <- maybe_truncate(encodeString(object,
-						      quote= '"', na= FALSE))
-					#en_object[1:ile]
+	    if(ile >= 1) ## truncate if LONG char:
+		object <- maybe_truncate(encObj[1:ile])
+					#O: encodeString(object, quote= '"', na= FALSE)
 	    formObj <- function(x) paste(as.character(x), collapse=" ")
 	}
 	else {
@@ -396,7 +412,7 @@ str.default <-
 
     if(give.attr) { ## possible: || has.class && any(cl == 'terms')
 	nam <- names(a)
-	for (i in seq(len=length(a)))
+	for (i in seq_along(a))
 	    if (all(nam[i] != std.attr)) {# only `non-standard' attributes:
 		cat(indent.str, P0('- attr(*, "',nam[i],'")='),sep="")
 		str(a[[i]],
@@ -415,10 +431,9 @@ ls.str <-
     function(pos = 1, pattern, ..., envir = as.environment(pos), mode = "any")
 {
     nms <- ls(..., envir = envir, pattern = pattern)
-    r <- sapply(nms, function(n)
-		if(exists(n, envir= envir, mode= mode, inherits=TRUE)) n else as.character(NA))
-    names(r) <- NULL
-    structure(r[!is.na(r)], envir = envir, mode = mode, class = "ls_str")
+    r <- unlist(lapply(nms, function(n)
+                       exists(n, envir= envir, mode= mode, inherits=FALSE)))
+    structure(nms[r], envir = envir, mode = mode, class = "ls_str")
 }
 
 lsf.str <- function(pos = 1, ..., envir = as.environment(pos))

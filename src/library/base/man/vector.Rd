@@ -20,11 +20,11 @@ is.vector(x, mode = "any")
 
   \code{as.vector}, a generic, attempts to coerce its argument into a
   vector of mode \code{mode} (the default is to coerce to whichever mode
-  is most convenient).  The attributes of \code{x} are removed.
+  is most convenient).
 
   \code{is.vector} returns \code{TRUE} if \code{x} is a vector (of mode
-  logical, integer, real, complex, character, raw or list if not specified)
-  and \code{FALSE} otherwise.
+  logical, integer, real, complex, character, raw or list if not
+  specified) or expression and \code{FALSE} otherwise.
 }
 \details{
   The atomic modes are \code{"logical"}, \code{"integer"}, \code{"numeric"},
@@ -32,22 +32,29 @@ is.vector(x, mode = "any")
 
   \code{is.vector} returns \code{FALSE} if \code{x} has any attributes
   except names.  (This is incompatible with S.)  On the other hand,
-  \code{as.vector} removes \emph{all} attributes including names.
+  \code{as.vector} removes \emph{all} attributes including names for
+  results of atomic mode.
   
   Note that factors are \emph{not} vectors;  \code{is.vector} returns
-  \code{FALSE} and \code{as.vector} converts to character mode.
+  \code{FALSE} and \code{as.vector} converts to a character vector for
+  \code{mode = "any"}.
 }
 \value{
   For \code{vector}, a vector of the given length and mode.  Logical
   vector elements are initialized to \code{FALSE}, numeric vector
   elements to \code{0}, character vector elements to \code{""}, raw
   vector elements to \code{nul} bytes and list elements to \code{NULL}.
+
+  All attributes are removed from the answer if it is of an atomic mode.
 }
 \note{
   \code{as.vector} and \code{is.vector} are quite distinct from the
   meaning of the formal class \code{"vector"} in the \pkg{methods}
   package, and hence \code{\link{as}(x, "vector")} and
   \code{\link{is}(x, "vector")}.
+
+  \code{mode}s of \code{"symbol"}, \code{"pairlist"} and
+  \code{"expression"} are allowed but have long been undocumented.
 }
 \references{
   Becker, R. A., Chambers, J. M. and Wilks, A. R. (1988)

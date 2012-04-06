@@ -4,7 +4,7 @@ table <- function (..., exclude = c(NA, NaN),
     list.names <- function(...) {
 	l <- as.list(substitute(list(...)))[-1]
 	nm <- names(l)
-	fixup <- if (is.null(nm)) seq(along = l) else nm == ""
+	fixup <- if (is.null(nm)) seq_along(l) else nm == ""
 	dep <- sapply(l[fixup], function(x)
 	    switch (deparse.level + 1,
 		    "", ## 0
@@ -82,9 +82,11 @@ function (x, digits = getOption("digits"), quote = FALSE, na.print = "",
     ## na.print handled here
     if(any(ina <- is.na(x)))
 	xx[ina] <- na.print
-    if(is.integer(x) && zero.print != "0" && any(i0 <- !ina & x == 0))
+
+    if(zero.print != "0" && any(i0 <- !ina & x == 0) && all(x == round(x)))
 	## MM thinks this should be an option for many more print methods...
 	xx[i0] <- sub("0", zero.print, xx[i0])
+
     ## Numbers get right-justified by format(), irrespective of 'justify'.
     ## We need to keep column headers aligned.
     if (is.numeric(x) || is.complex(x))
@@ -114,7 +116,7 @@ summary.table <- function(object, ...)
 	y <- c(y, list(statistic = statistic,
 		       parameter = parameter,
 		       approx.ok = all(expected >= 5),
-		       p.value = pchisq(statistic, parameter, lower.tail=FALSE),
+		       p.value = stats::pchisq(statistic, parameter, lower.tail=FALSE),
 		       call = attr(object, "call")))
     }
     class(y) <- "summary.table"
@@ -144,8 +146,8 @@ function(x, digits = max(1, getOption("digits") - 3), ...)
     invisible(x)
 }
 
-as.data.frame.table <- function(x, row.names = NULL, optional = FALSE,
-                                responseName = "Freq")
+as.data.frame.table <-
+    function(x, row.names = NULL, ..., responseName = "Freq")
 {
     x <- as.table(x)
     ex <- quote(data.frame(do.call("expand.grid", dimnames(x)),
@@ -171,7 +173,7 @@ as.table.default <- function(x, ...)
 	    dnx <- vector("list", length(dim(x)))
 	for(i in which(sapply(dnx, is.null)))
 	    dnx[[i]] <-
-                make.unique(LETTERS[seq(from=0, length = dim(x)[i]) %% 26 + 1],
+                make.unique(LETTERS[seq.int(from=0, length = dim(x)[i]) %% 26 + 1],
                             sep = "")
 	dimnames(x) <- dnx
 	class(x) <- c("table", oldClass(x))
@@ -200,20 +202,4 @@ margin.table <- function(x, margin = NULL)
     else return(sum(x))
     class(z) <- oldClass(x) # avoid adding "matrix"
     z
-}
-
-r2dtable <- function(n, r, c) {
-    if(length(n) == 0 || (n < 0) || is.na(n))
-	stop("invalid argument 'n'")
-    if((length(r) <= 1) || any(r < 0) || any(is.na(r)))
-	stop("invalid argument 'r'")
-    if((length(c) <= 1) || any(c < 0) || any(is.na(c)))
-	stop("invalid argument 'c'")
-    if(sum(r) != sum(c))
-	stop("arguments 'r' and 'c' must have the same sums")
-    .Call("R_r2dtable",
-	  as.integer(n),
-	  as.integer(r),
-	  as.integer(c),
-	  PACKAGE = "base")
 }

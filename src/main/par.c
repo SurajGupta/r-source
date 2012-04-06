@@ -1,7 +1,7 @@
 /*
  *  R : A Computer Language for Statistical Data Analysis
  *  Copyright (C) 1995, 1996  Robert Gentleman and Ross Ihaka
- *  Copyright (C) 1997-2005 Robert Gentleman, Ross Ihaka and the R core team.
+ *  Copyright (C) 1997-2006 Robert Gentleman, Ross Ihaka and the R core team.
  *
  *  This program is free software; you can redistribute it and/or modify
  *  it under the terms of the GNU General Public License as published by
@@ -120,7 +120,6 @@ ParTable[] = {
     { "srt",		 0 },
     { "tck",		 0 },
     { "tcl",		 0 },
-    { "tmag",		 0 },
     { "usr",		 1 },
     { "xaxp",		 0 },
     { "xaxs",		 0 },
@@ -133,6 +132,7 @@ ParTable[] = {
     { "ylog",		 1 },
     /* Obsolete pars */
     { "type",		-2},
+    { "tmag",           -2},
     /* Non-pars that might get passed to Specify2 */
     { "asp",		-3},
     { "main",		-3},
@@ -154,15 +154,16 @@ static int ParCode(char *what)
 }
 
 
+#ifdef UNUSED
 /* par(.)'s call */
 
 static SEXP gcall;
-
 
 void RecordGraphicsCall(SEXP call)
 {
     gcall = call;
 }
+#endif
 
 static void par_error(char *what)
 {
@@ -680,7 +681,7 @@ static void Specify(char *what, SEXP value, DevDesc *dd, SEXP call)
 /* Now defined differently in Specify2() : */
 #define R_DEV__(_P_) Rf_gpptr(dd)->_P_
 
-void Specify2(char *what, SEXP value, DevDesc *dd, SEXP call)
+void attribute_hidden Specify2(char *what, SEXP value, DevDesc *dd, SEXP call)
 {
     double x;
     int ix = 0, ptype = ParCode(what);
@@ -755,7 +756,7 @@ static SEXP Query(char *what, DevDesc *dd)
     }
     else if (streql(what, "ask")) {
 	value = allocVector(LGLSXP, 1);
-	INTEGER(value)[0] = Rf_dpptr(dd)->ask;
+	LOGICAL(value)[0] = Rf_dpptr(dd)->ask;
     }
     else if (streql(what, "bg")) {
 	PROTECT(value = allocVector(STRSXP, 1));
@@ -973,7 +974,7 @@ static SEXP Query(char *what, DevDesc *dd)
     }
     else if (streql(what, "new")) {
 	value = allocVector(LGLSXP, 1);
-	INTEGER(value)[0] = Rf_dpptr(dd)->new;
+	LOGICAL(value)[0] = Rf_dpptr(dd)->new;
     }
     else if (streql(what, "oma")) {
 	value = allocVector(REALSXP, 4);
@@ -1050,10 +1051,6 @@ static SEXP Query(char *what, DevDesc *dd)
 	value = allocVector(REALSXP, 1);
 	REAL(value)[0] = Rf_dpptr(dd)->tcl;
     }
-    else if (streql(what, "tmag")) {
-	value = allocVector(REALSXP, 1);
-	REAL(value)[0] = Rf_dpptr(dd)->tmag;
-    }
     else if (streql(what, "usr")) {
 	value = allocVector(REALSXP, 4);
 	if (Rf_gpptr(dd)->xlog) {
@@ -1097,14 +1094,14 @@ static SEXP Query(char *what, DevDesc *dd)
     }
     else if (streql(what, "xlog")) {
 	value = allocVector(LGLSXP, 1);
-	INTEGER(value)[0] = Rf_dpptr(dd)->xlog;
+	LOGICAL(value)[0] = Rf_dpptr(dd)->xlog;
     }
     else if (streql(what, "xpd")) {
 	value = allocVector(LGLSXP, 1);
 	if (Rf_dpptr(dd)->xpd == 2)
-	    INTEGER(value)[0] = NA_INTEGER;
+	    LOGICAL(value)[0] = NA_LOGICAL;
 	else
-	    INTEGER(value)[0] = Rf_dpptr(dd)->xpd;
+	    LOGICAL(value)[0] = Rf_dpptr(dd)->xpd;
     }
     else if (streql(what, "yaxp")) {
 	value = allocVector(REALSXP, 3);
@@ -1130,9 +1127,9 @@ static SEXP Query(char *what, DevDesc *dd)
     }
     else if (streql(what, "ylog")) {
 	value = allocVector(LGLSXP, 1);
-	INTEGER(value)[0] = Rf_dpptr(dd)->ylog;
+	LOGICAL(value)[0] = Rf_dpptr(dd)->ylog;
     }
-    else if (streql(what, "type")) {
+    else if (ParCode(what) == -2) { 
 	warning(_("graphical parameter \"%s\" is obsolete"), what);
 	value = R_NilValue;
     }

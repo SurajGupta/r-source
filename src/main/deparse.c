@@ -1,7 +1,7 @@
 /*
  *  R : A Computer Language for Statistical Data Analysis
  *  Copyright (C) 1995, 1996  Robert Gentleman and Ross Ihaka
- *  Copyright (C) 1997--2005  Robert Gentleman, Ross Ihaka and the
+ *  Copyright (C) 1997--2006  Robert Gentleman, Ross Ihaka and the
  *			      R Development Core Team
  *
  *  This program is free software; you can redistribute it and/or modify
@@ -141,7 +141,8 @@ static void vec2buff(SEXP, LocalParseData *);
 static void linebreak(Rboolean *lbreak, LocalParseData *);
 static void deparse2(SEXP, SEXP, LocalParseData *);
 
-void R_AllocStringBuffer(int blen, DeparseBuffer *buf)
+void attribute_hidden
+R_AllocStringBuffer(int blen, DeparseBuffer *buf)
 {
     if(blen >= 0) {
 	if(blen*sizeof(char) < buf->bufsize) return;
@@ -165,7 +166,8 @@ void R_AllocStringBuffer(int blen, DeparseBuffer *buf)
     }
 }
 
-void R_FreeStringBuffer(DeparseBuffer *buf)
+void attribute_hidden
+R_FreeStringBuffer(DeparseBuffer *buf)
 {
     if (buf->data != NULL) {
 	free(buf->data);
@@ -368,7 +370,7 @@ SEXP attribute_hidden do_dump(SEXP call, SEXP op, SEXP args, SEXP rho)
 		SET_STRING_ELT(outnames, nout++, STRING_ELT(names, i));
 		/* figure out if we need to quote the name */
 		if(!isValidName(obj_name))
-		    Rprintf("\"%s\" <-\n", obj_name);
+		    Rprintf("`%s` <-\n", obj_name);
 		else
 		    Rprintf("%s <-\n", obj_name);
 		tval = deparse1(CAR(o), 0, opts);
@@ -385,7 +387,7 @@ SEXP attribute_hidden do_dump(SEXP call, SEXP op, SEXP args, SEXP rho)
 	    for (i = 0, nout = 0; i < nobjs; i++) {
 		if (CAR(o) == R_UnboundValue) continue;
 		SET_STRING_ELT(outnames, nout++, STRING_ELT(names, i));
-		res = Rconn_printf(con, "\"%s\" <-\n", 
+		res = Rconn_printf(con, "`%s` <-\n", 
 				   CHAR(STRING_ELT(names, i)));
 		if(!havewarned &&
 		   res < strlen(CHAR(STRING_ELT(names, i))) + 4)
@@ -974,9 +976,9 @@ static void deparse2buff(SEXP s, LocalParseData *d)
 		    print2buff("next", d);
 		    break;
 		case PP_SUBASS:
-		    print2buff("\"", d);
+		    print2buff("`", d);
 		    print2buff(CHAR(PRINTNAME(op)), d);
-		    print2buff("\"(", d);
+		    print2buff("`(", d);
 		    args2buff(s, 0, 0, d);
 		    print2buff(")", d);
 		    break;
@@ -1026,9 +1028,9 @@ static void deparse2buff(SEXP s, LocalParseData *d)
 			if ( isSymbol(CAR(s)) ){
 			    if ( !isValidName(CHAR(PRINTNAME(CAR(s)))) ){
 
-				print2buff("\"", d);
+				print2buff("`", d);
 				print2buff(CHAR(PRINTNAME(CAR(s))), d);
-				print2buff("\"", d);
+				print2buff("`", d);
 			    } else
 				print2buff(CHAR(PRINTNAME(CAR(s))), d);
 			}
@@ -1085,6 +1087,12 @@ static void deparse2buff(SEXP s, LocalParseData *d)
 	sprintf(tpb, "<weak reference>");
 	print2buff(tpb, d);
 	break;
+    case S4SXP:
+      d->sourceable = FALSE;
+      print2buff("<S4 object of class ", d);
+      deparse2buff(getAttrib(s, R_ClassSymbol), d);
+      print2buff(">", d);
+      break;
     default:
     	d->sourceable = FALSE;
 	UNIMPLEMENTED_TYPE("deparse2buff", s);

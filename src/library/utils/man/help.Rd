@@ -75,12 +75,18 @@ type?topic
 \details{
   \code{topic} is not optional: if it is omitted \R will give a hint as
   to suitable topics if a package is specified, to available packages if
-  \code{\lib.loc} only is specified, and help on \code{help} itself if
+  \code{lib.loc} only is specified, and help on \code{help} itself if
   nothing is specified.  (In all cases this will be text help.)
   
   In the case of unary and binary operators and control-flow special
   forms (including \code{if}, \code{for} and \code{function}), the topic
   may need to be quoted.
+
+  If multiple help files matching \code{topic} are found, in interactive
+  use a menu is presented for the user to choose one: otherwise the
+  first on the search path is used.  (The menu will be a graphical menu
+  if possible if \code{\link{getOption}("menu.graphics")} is true, the
+  default.)
 
 #ifdef unix
   If \code{offline} is \code{TRUE}, hardcopy of the documentation is
@@ -99,9 +105,9 @@ type?topic
   produced by running the LaTeX version of the help page through
   \code{latex} (note that LaTeX 2e is needed).  You need to customize
   the file \file{R\_HOME/bin/helpPRINT.bat} which contains an example.
+#endif
   The appearance of the output can be customized through a file
   \file{Rhelp.cfg} somewhere in your LaTeX search path.
-#endif
 
   If LaTeX versions of help pages were not built at the installation of
   the package, the \code{print} method will ask if conversion with
@@ -132,7 +138,7 @@ type?topic
 #endif
 }
 
-\section{Method Documentation}{
+\section{S4 Method Documentation}{
   The authors of formal (\sQuote{S4}) methods can provide documentation
   on specific methods, as well as overall documentation on the methods
   of a particular function.  The \code{"?"} operator allows access to

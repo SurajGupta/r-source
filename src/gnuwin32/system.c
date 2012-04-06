@@ -51,7 +51,7 @@
 #endif
 
 
-void CleanTempDir();		/* from extra.c */
+void R_CleanTempDir();		/* from extra.c */
 void editorcleanall();                  /* from editor.c */
 
 int Rwin_graphicsx = -25, Rwin_graphicsy = 0;
@@ -62,6 +62,7 @@ Rboolean UseInternet2 = FALSE;
 extern SA_TYPE SaveAction; /* from ../main/startup.c */
 Rboolean DebugMenuitem = FALSE;  /* exported for rui.c */
 
+/* used in devWindows.c */
 int RbitmapAlreadyLoaded = 0;
 HINSTANCE hRbitmapDll;
 
@@ -77,8 +78,6 @@ void set_workspace_name(char *fn); /* ../main/startup.c */
 
 /* used to avoid some flashing during cleaning up */
 Rboolean AllDevicesKilled = FALSE;
-int   setupui(void);
-void  delui(void);
 int (*R_YesNoCancel)(char *s);
 
 static DWORD mainThreadId;
@@ -96,8 +95,7 @@ static void (*my_R_Busy)(int);
  *   Called at I/O, during eval etc to process GUI events.
  */
 
-void (* R_tcldo)();
-static void tcl_do_none() {}
+void (* R_tcldo)() = NULL; /* Initialized to be sure */
 
 void R_ProcessEvents(void)
 {
@@ -260,9 +258,9 @@ ThreadedReadConsole(char *prompt, char *buf, int len, int addtohistory)
 static int
 CharReadConsole(char *prompt, char *buf, int len, int addtohistory)
 {
-   int res = getline(prompt,buf,len);
-   if (addtohistory) gl_histadd(buf);
-   return !res;
+    int res = getline(prompt,buf,len);
+    if (addtohistory) gl_histadd(buf);
+    return !res;
 }
 
 /*3: (as InThreadReadConsole) and 4: non-interactive */
@@ -272,34 +270,37 @@ static int
 FileReadConsole(char *prompt, char *buf, int len, int addhistory)
 {
     int ll, err = 0;
-    char inbuf[1001];
+
     if (!R_Slave) {
 	fputs(prompt, stdout);
 	fflush(stdout);
     }
-    if (fgets(inbuf, len, stdin) == NULL)
-	return 0;
+    if (fgets(buf, len, stdin) == NULL) return 0;
     /* translate if necessary */
     if(strlen(R_StdinEnc) && strcmp(R_StdinEnc, "native.enc")) {
-	size_t res, inb = strlen(inbuf), onb = len;
-	char *ib = inbuf, *ob = buf;
+	size_t res, inb = strlen(buf), onb = len;
+	char *ib = buf, *ob, *obuf;
+	ob = obuf = alloca(len+1);
 	if(!cd) {
 	    cd = Riconv_open("", R_StdinEnc);
 	    if(!cd) error(_("encoding '%s' is not recognised"), R_StdinEnc);
 	}
 	res = Riconv(cd, &ib, &inb, &ob, &onb);
 	*ob = '\0';
-	err = res == (size_t)(-1);
+	err = (res == (size_t)(-1));
 	/* errors lead to part of the input line being ignored */
-	if(err) fputs(_("<ERROR: invalid input in encoding> "), stdout);
-    } else strncpy(buf, inbuf, strlen(inbuf)+1);
-    
+	if(err) fputs(_("<ERROR: invalid input in encoding>\n"), stdout);
+	strncpy((char *)buf, obuf, len);
+    }
+
 /* according to system.txt, should be terminated in \n, so check this
    at eof or error */
     ll = strlen((char *)buf);
-    if ((err || feof(stdin)) && buf[ll - 1] != '\n' && ll < len) {
+    if ((err || feof(stdin))
+	&& buf[ll - 1] != '\n' && ll < len) {
 	buf[ll++] = '\n'; buf[ll] = '\0';
     }
+
     if (!R_Interactive && !R_Slave)
 	fputs(buf, stdout);
     return 1;
@@ -358,13 +359,13 @@ void R_ClearerrConsole()
  *  3) ACTIONS DURING (LONG) COMPUTATIONS
  */
 
-void GuiBusy(int which)
+static void GuiBusy(int which)
 {
     if (which == 1) gsetcursor(RConsole, WatchCursor);
     if (which == 0) gsetcursor(RConsole, ArrowCursor);
 }
 
-void CharBusy(int which)
+static void CharBusy(int which)
 {
 }
 
@@ -431,7 +432,7 @@ void R_CleanUp(SA_TYPE saveact, int status, int runLast)
     R_RunExitFinalizers();
     editorcleanall();
     CleanEd();
-    CleanTempDir();
+    R_CleanTempDir();
     KillAllDevices();
     AllDevicesKilled = TRUE;
     if (R_Interactive && CharacterMode == RTerm)
@@ -514,15 +515,6 @@ int R_ShowFiles(int nfile, char **file, char **headers, char *wtitle,
     return 1;
 }
 
-int internal_ShowFile(char *file, char *header)
-{
-    SEXP pager = GetOption(install("pager"), R_BaseEnv);
-    char *files[1], *headers[1];
-
-    files[0] = file;
-    headers[0] = header;
-    return R_ShowFiles(1, files, headers, "File", 0, CHAR(STRING_ELT(pager, 0)));
-}
 
     /*
        This function can be used to open the named files in text editors, with the
@@ -641,7 +633,7 @@ void R_SetWin32(Rstart Rp)
 	R_CStackStart = top;
 	R_CStackLimit = top - bottom;
     }
-    
+
     R_CStackDir = 1;
     R_Home = Rp->rhome;
     if(strlen(R_Home) >= MAX_PATH) R_Suicide("Invalid R_HOME");
@@ -792,7 +784,11 @@ int cmdlineoptions(int ac, char **av)
     /* set defaults for R_max_memory. This is set here so that
        embedded applications get no limit */
     GlobalMemoryStatus(&ms);
-    R_max_memory = min(1024 * Mega, ms.dwTotalPhys);
+    /* As from 2.4.0, look at the virtual memsize */
+    if((unsigned int) ms.dwTotalVirtual > 2048*Mega)
+	R_max_memory = min(2560 * Mega, ms.dwTotalPhys);
+    else
+	R_max_memory = min(1536 * Mega, ms.dwTotalPhys);
     /* need enough to start R: fails on a 8Mb system */
     R_max_memory = max(32 * Mega, R_max_memory);
 
@@ -943,7 +939,6 @@ int cmdlineoptions(int ac, char **av)
     }
     Rp->rhome = R_Home;
 
-    R_tcldo = tcl_do_none;
     Rp->home = getRUser();
     R_SetParams(Rp);
 
@@ -951,7 +946,7 @@ int cmdlineoptions(int ac, char **av)
  *  Since users' expectations for save/no-save will differ, we decided
  *  that they should be forced to specify in the non-interactive case.
  */
-    if (!R_Interactive && Rp->SaveAction != SA_SAVE && 
+    if (!R_Interactive && Rp->SaveAction != SA_SAVE &&
 	Rp->SaveAction != SA_NOSAVE)
 	R_Suicide(_("you must specify '--save', '--no-save' or '--vanilla'"));
 
@@ -964,10 +959,10 @@ int cmdlineoptions(int ac, char **av)
     return 0;
 }
 
+/* only for back-compatibility */
 void setup_term_ui()
 {
     initapp(0, 0);
-    R_tcldo = tcl_do_none;
     readconsolecfg();
 }
 

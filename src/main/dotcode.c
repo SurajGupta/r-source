@@ -1,7 +1,7 @@
 /*
  *  R : A Computer Language for Statistical Data Analysis
  *  Copyright (C) 1995  Robert Gentleman and Ross Ihaka
- *  Copyright (C) 1997--2005  The R Development Core Team
+ *  Copyright (C) 1997--2006  The R Development Core Team
  *  Copyright (C) 2003	      The R Foundation
  *
  *  This program is free software; you can redistribute it and/or modify
@@ -166,7 +166,7 @@ checkValidSymbolId(SEXP op, SEXP call, DL_FUNC *fun, R_RegisteredNativeSymbol *s
   provided, we check whether the calling function is in a namespace
   and look there.
 */
-SEXP
+static SEXP
 resolveNativeRoutine(SEXP args, DL_FUNC *fun,
 		     R_RegisteredNativeSymbol *symbol, char *buf,
 		     int *nargs, int *naok, int *dup, SEXP call)
@@ -204,10 +204,15 @@ resolveNativeRoutine(SEXP args, DL_FUNC *fun,
 	p = CHAR(STRING_ELT(op, 0));
 	q = buf;
 	while ((*q = *p) != '\0') {
+	    if(symbol->type == R_FORTRAN_SYM) *q = tolower(*q);
 	    p++;
 	    q++;
 	}
     }
+    /*
+    if(symbol->type == R_FORTRAN_SYM && strchr(buf, '_'))
+	warningcall(call, _("Fortran symbol names contaning '_' are not portable"));
+    */
 
     if(!*fun) {
 	if(dll.type != FILENAME) {
@@ -221,26 +226,20 @@ resolveNativeRoutine(SEXP args, DL_FUNC *fun,
 	    */
 	}
 
+	/* NB: the actual conversion to the symbol is done in
+	   R_dlsym in Rdynload.c.  That prepends an underscore (usually),
+	   and may append one or more underscores.
+	*/
+
 	if (!*fun && !(*fun = R_FindSymbol(buf, dll.DLLname, symbol))) {
 	    if(strlen(dll.DLLname))
 		errorcall(call,
-			  _("%s entry point \"%s%s\" not in DLL for package \"%s\""),
+			  _("%s symbol name \"%s\" not in DLL for package \"%s\""),
 			  symbol->type == R_FORTRAN_SYM ? "Fortran" : "C", buf,
-#ifdef HAVE_F77_UNDERSCORE
-			  symbol->type == R_FORTRAN_SYM ? "_" : "",
-#else
-			  "",
-#endif
 			  dll.DLLname);
 	    else
-		errorcall(call, _("%s entry point \"%s%s\" not in load table"),
-			  symbol->type == R_FORTRAN_SYM ? "Fortran" : "C", buf,
-#ifdef HAVE_F77_UNDERSCORE
-			  symbol->type == R_FORTRAN_SYM ? "_" : ""
-#else
-			  ""
-#endif			  			  
-			  );
+		errorcall(call, _("%s symbol name \"%s\" not in load table"),
+			  symbol->type == R_FORTRAN_SYM ? "Fortran" : "C", buf);
 	}
     }
 
@@ -426,7 +425,9 @@ static void *RObjToCPtr(SEXP s, int naok, int dup, int narg, int Fort,
 	}
 	break;
     case VECSXP:
-	if (!dup) return (void*)VECTOR_PTR(s); /***** Dangerous to GC!!! */
+	if(!dup)
+	    error(_("lists must be duplicated in .C"));
+	/* if (!dup) return (void*)VECTOR_PTR(s); ***** Dangerous to GC!!! */
   	n = length(s);
 	lptr = (SEXP*)R_alloc(n, sizeof(SEXP));
 	for (i = 0 ; i < n ; i++) {
@@ -729,17 +730,30 @@ static SEXP enctrim(SEXP args, char *name, int len)
 SEXP attribute_hidden do_symbol(SEXP call, SEXP op, SEXP args, SEXP env)
 {
     char buf[128], *p, *q;
+
     checkArity(op, args);
+
     if(!isValidString(CAR(args)))
 	errorcall(call, R_MSG_IA);
+
+    warningcall(call, _("'%s' is deprecated"), 
+		PRIMVAL(op) ? "symbol.For" : "symbol.C");
     p = CHAR(STRING_ELT(CAR(args), 0));
     q = buf;
     while ((*q = *p) != '\0') {
+	if(PRIMVAL(op)) *q = tolower(*q);
 	p++;
 	q++;
     }
 #ifdef HAVE_F77_UNDERSCORE
     if(PRIMVAL(op)) {
+	*q++ = '_';
+	*q = '\0';
+    }
+#endif
+#ifdef HAVE_F77_EXTRA_UNDERSCORE
+    p = CHAR(STRING_ELT(CAR(args), 0));
+    if(strchr(p, '_') && PRIMVAL(op)) {
 	*q++ = '_';
 	*q = '\0';
     }
@@ -1700,6 +1714,10 @@ SEXP attribute_hidden do_dotCode(SEXP call, SEXP op, SEXP args, SEXP env)
 				  which, symName, argConverters + nargs,
 				  checkTypes ? checkTypes[nargs] : 0,
 				  encname);
+#ifdef R_MEMORY_PROFILING
+	if (TRACE(CAR(pargs)) && dup)
+		memtrace_report(CAR(pargs), cargs[nargs]);
+#endif
 	nargs++;
     }
 
@@ -2323,6 +2341,12 @@ SEXP attribute_hidden do_dotCode(SEXP call, SEXP op, SEXP args, SEXP env)
 		PROTECT(s = CPtrToRObj(cargs[nargs], CAR(pargs), which,
 				       checkTypes ? checkTypes[nargs] : TYPEOF(CAR(pargs)),
 				       encname));
+#if R_MEMORY_PROFILING
+		if (TRACE(CAR(pargs)) && dup){
+			memtrace_report(cargs[nargs], s);
+			SET_TRACE(s, 1);
+		}
+#endif		
 		SET_ATTRIB(s, duplicate(ATTRIB(CAR(pargs))));
 		SET_OBJECT(s, OBJECT(CAR(pargs)));
 	    }

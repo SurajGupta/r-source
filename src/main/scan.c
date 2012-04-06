@@ -1,7 +1,7 @@
 /*
  *  R : A Computer Language for Statistical Data Analysis
  *  Copyright (C) 1995, 1996  Robert Gentleman and Ross Ihaka
- *  Copyright (C) 1998-2005   The R Development Core Team.
+ *  Copyright (C) 1998-2006   The R Development Core Team.
  *
  *  This program is free software; you can redistribute it and/or modify
  *  it under the terms of the GNU General Public License as published by
@@ -45,7 +45,6 @@
 /* The size of vector initially allocated by scan */
 #define SCAN_BLOCKSIZE		1000
 /* The size of the console buffer */
-#define CONSOLE_BUFFER_SIZE	1024
 #define CONSOLE_PROMPT_SIZE	256
 
 #define NO_COMCHAR 100000 /* won't occur even in Unicode */
@@ -55,7 +54,7 @@
 #define MAX_STRINGS	10000
 
 
-static unsigned char  ConsoleBuf[CONSOLE_BUFFER_SIZE];
+static unsigned char  ConsoleBuf[CONSOLE_BUFFER_SIZE+1];
 static unsigned char *ConsoleBufp;
 static int  ConsoleBufCnt;
 static char  ConsolePrompt[CONSOLE_PROMPT_SIZE];
@@ -149,12 +148,12 @@ static SEXP insertString(char *str, HashData *d)
 static int ConsoleGetchar()
 {
     if (--ConsoleBufCnt < 0) {
+	ConsoleBuf[CONSOLE_BUFFER_SIZE] = '\0';
 	if (R_ReadConsole(ConsolePrompt, ConsoleBuf,
 			  CONSOLE_BUFFER_SIZE, 0) == 0) {
 	    R_ClearerrConsole();
 	    return R_EOF;
 	}
-	R_ParseCnt++;
 	ConsoleBufp = ConsoleBuf;
 	ConsoleBufCnt = strlen((char *)ConsoleBuf);
 	ConsoleBufCnt--;
@@ -1683,15 +1682,6 @@ no_more_lines:
    quote is a numeric vector
  */
 
-static void writecon(Rconnection con, char *format, ...)
-{
-    va_list(ap);
-    va_start(ap, format);
-    /* Parentheses added for FC4 with gcc4 and -D_FORTIFY_SOURCE=2 */
-    (con->vfprintf)(con, format, ap);
-    va_end(ap);
-}
-
 static Rboolean isna(SEXP x, int indx)
 {
     Rcomplex rc;
@@ -1859,12 +1849,12 @@ SEXP attribute_hidden do_writetable(SEXP call, SEXP op, SEXP args, SEXP rho)
 	for(i = 0; i < nr; i++) {
 	    if(i % 1000 == 999) R_CheckUserInterrupt();
 	    if(!isNull(rnames))
-		writecon(con, "%s%s",
-			 EncodeElement2(rnames, i, quote_rn, qmethod,
-					&strBuf, cdec), csep);
+		Rconn_printf(con, "%s%s",
+			     EncodeElement2(rnames, i, quote_rn, qmethod,
+					    &strBuf, cdec), csep);
 	    for(j = 0; j < nc; j++) {
 		xj = VECTOR_ELT(x, j);
-		if(j > 0) writecon(con, "%s", csep);
+		if(j > 0) Rconn_printf(con, "%s", csep);
 		if(isna(xj, i)) tmp = cna;
 		else {
 		    if(!isNull(levels[j])) {
@@ -1885,9 +1875,9 @@ SEXP attribute_hidden do_writetable(SEXP call, SEXP op, SEXP args, SEXP rho)
 		    }
 		    /* if(cdec) change_dec(tmp, cdec, TYPEOF(xj)); */
 		}
-		writecon(con, "%s", tmp);
+		Rconn_printf(con, "%s", tmp);
 	    }
-	    writecon(con, "%s", ceol);
+	    Rconn_printf(con, "%s", ceol);
 	}
 
     } else { /* A matrix */
@@ -1901,20 +1891,20 @@ SEXP attribute_hidden do_writetable(SEXP call, SEXP op, SEXP args, SEXP rho)
 	for(i = 0; i < nr; i++) {
 	    if(i % 1000 == 999) R_CheckUserInterrupt();
 	    if(!isNull(rnames))
-		writecon(con, "%s%s",
-			 EncodeElement2(rnames, i, quote_rn, qmethod,
-					&strBuf, cdec), csep);
+		Rconn_printf(con, "%s%s",
+			     EncodeElement2(rnames, i, quote_rn, qmethod,
+					    &strBuf, cdec), csep);
 	    for(j = 0; j < nc; j++) {
-		if(j > 0) writecon(con, "%s", csep);
+		if(j > 0) Rconn_printf(con, "%s", csep);
 		if(isna(x, i + j*nr)) tmp = cna;
 		else {
 		    tmp = EncodeElement2(x, i + j*nr, quote_col[j], qmethod,
 					&strBuf, cdec);
 		    /* if(cdec) change_dec(tmp, cdec, TYPEOF(x)); */
 		}
-		writecon(con, "%s", tmp);
+		Rconn_printf(con, "%s", tmp);
 	    }
-	    writecon(con, "%s", ceol);
+	    Rconn_printf(con, "%s", ceol);
 	}
 
     }

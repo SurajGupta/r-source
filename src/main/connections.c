@@ -1,6 +1,6 @@
 /*
  *  R : A Computer Language for Statistical Data Analysis
- *  Copyright (C) 2000-5   The R Development Core Team.
+ *  Copyright (C) 2000-6   The R Development Core Team.
  *
  *  This program is free software; you can redistribute it and/or modify
  *  it under the terms of the GNU General Public License as published by
@@ -62,7 +62,7 @@ typedef long long int _lli_t;
   extern UImode  CharacterMode;
 #endif
 
-#define NCONNECTIONS 50
+#define NCONNECTIONS 128 /* snow needs one per slave node */
 #define NSINKS 21
 
 static Rconnection Connections[NCONNECTIONS];
@@ -73,7 +73,7 @@ static int SinkCons[NSINKS], SinkConsClose[NSINKS], R_SinkSplit[NSINKS];
 
 /* ------------- admin functions (see also at end) ----------------- */
 
-int NextConnection()
+int attribute_hidden NextConnection()
 {
     int i;
     for(i = 3; i < NCONNECTIONS; i++)
@@ -223,14 +223,19 @@ int dummy_vfprintf(Rconnection con, const char *format, va_list ap)
     res = vsnprintf(buf, BUFSIZE, format, aq);
     va_end(aq);
 #ifdef HAVE_VASPRINTF
-    if(res >= BUFSIZE || res < 0)
+    if(res >= BUFSIZE || res < 0) {
 	vasprintf(&b, format, ap);
+	usedVasprintf = TRUE;
+    }
 #else
     if(res >= BUFSIZE) { /* res is the desired output length */
 	usedRalloc = TRUE;
-	b = R_alloc(res + 1, sizeof(char));
-	vsprintf(b, format, ap);
-    } else if(res < 0) { /* just a failure indication -- e.g. Windows */
+	/* apparently some implementations count short,
+	   <http://unixpapa.com/incnote/stdio.html>
+	   so add some margin here */
+	b = R_alloc(res + 101, sizeof(char));
+	vsnprintf(b, res+100, format, ap);
+    } else if(res < 0) { /* just a failure indication */
 	usedRalloc = TRUE;
 	b = R_alloc(10*BUFSIZE, sizeof(char));
 	res = vsnprintf(b, 10*BUFSIZE, format, ap);
@@ -241,7 +246,7 @@ int dummy_vfprintf(Rconnection con, const char *format, va_list ap)
 	}
     }
 #endif /* HAVE_VASPRINTF */
-#else
+#else  /* no VA_COPY */
     res = vsnprintf(buf, BUFSIZE, format, ap);
     if(res >= BUFSIZE || res < 0) { 
 	/* res is the desired output length or just a failure indication */
@@ -257,7 +262,7 @@ int dummy_vfprintf(Rconnection con, const char *format, va_list ap)
 	Rboolean again = FALSE;
 	int ninit = strlen(con->init_out);
 	do {
-	    onb = BUFSIZE; /* space for nul */
+	    onb = BUFSIZE; /* leave space for nul */
 	    ob = outbuf;
 	    if(ninit) {
 		strcpy(ob, con->init_out);
@@ -1364,7 +1369,7 @@ SEXP attribute_hidden do_bzfile(SEXP call, SEXP op, SEXP args, SEXP env)
 #ifdef Win32
 # define WIN32_LEAN_AND_MEAN 1
 #include <windows.h>
-extern int clipboardhastext(); /* from ga.h */
+extern int GA_clipboardhastext(); /* from ga.h */
 #endif
 
 #ifdef Unix
@@ -1384,7 +1389,7 @@ static Rboolean clp_open(Rconnection con)
 #ifdef Win32
 	HGLOBAL hglb;
 	char *pc;
-	if(clipboardhastext() &&
+	if(GA_clipboardhastext() &&
 	   OpenClipboard(NULL) &&
 	   (hglb = GetClipboardData(CF_TEXT)) &&
 	   (pc = (char *)GlobalLock(hglb))) {
@@ -1609,21 +1614,18 @@ static Rconnection newclp(char *url, char *mode)
 
 /* ------------------- terminal connections --------------------- */
 
-/* The size of the console buffer */
-#define CONSOLE_BUFFER_SIZE	1024
-
-static unsigned char  ConsoleBuf[CONSOLE_BUFFER_SIZE];
+static unsigned char  ConsoleBuf[CONSOLE_BUFFER_SIZE+1];
 static unsigned char *ConsoleBufp;
 static int  ConsoleBufCnt;
 
 static int ConsoleGetchar()
 {
     if (--ConsoleBufCnt < 0) {
+	ConsoleBuf[CONSOLE_BUFFER_SIZE] = '\0';
 	if (R_ReadConsole("", ConsoleBuf, CONSOLE_BUFFER_SIZE, 0) == 0) {
 	    R_ClearerrConsole();
 	    return R_EOF;
 	}
-	R_ParseCnt++;
 	ConsoleBufp = ConsoleBuf;
 	ConsoleBufCnt = strlen((char *)ConsoleBuf);
 	ConsoleBufCnt--;
@@ -1834,22 +1836,31 @@ static Rconnection newtext(char *description, SEXP text)
 static void outtext_close(Rconnection con)
 {
     Routtextconn this = (Routtextconn)con->private;
-    SEXP tmp;
     int idx = ConnIndex(con);
+    SEXP tmp, env = VECTOR_ELT(OutTextData, idx);
 
+    if(this->namesymbol &&
+       findVarInFrame3(env, this->namesymbol, FALSE) != R_UnboundValue)
+	R_unLockBinding(this->namesymbol, env);
     if(strlen(this->lastline) > 0) {
 	PROTECT(tmp = lengthgets(this->data, ++this->len));
 	SET_STRING_ELT(tmp, this->len - 1, mkChar(this->lastline));
-	defineVar(this->namesymbol, tmp, VECTOR_ELT(OutTextData, idx));
+	if(this->namesymbol) defineVar(this->namesymbol, tmp, env);
+	SET_NAMED(tmp, 2);
 	this->data = tmp;
 	UNPROTECT(1);
     }
-    SET_VECTOR_ELT(OutTextData, idx, R_NilValue);
 }
 
 static void outtext_destroy(Rconnection con)
 {
     Routtextconn this = (Routtextconn)con->private;
+    int idx = ConnIndex(con);
+    /* OutTextData is preserved, and that implies that the environment 
+       we are writing it and hence the character vector is protected.
+       However, this could be quite expensive.
+    */
+    SET_VECTOR_ELT(OutTextData, idx, R_NilValue);
     free(this->lastline); free(this);
 }
 
@@ -1900,11 +1911,18 @@ static int text_vfprintf(Rconnection con, const char *format, va_list ap)
 	q = Rf_strchr(p, '\n');
 	if(q) {
 	    int idx = ConnIndex(con);
+	    SEXP env = VECTOR_ELT(OutTextData, idx);
 	    *q = '\0';
 	    PROTECT(tmp = lengthgets(this->data, ++this->len));
 	    SET_STRING_ELT(tmp, this->len - 1, mkChar(p));
-	    defineVar(this->namesymbol, tmp, VECTOR_ELT(OutTextData, idx));
+	    if(this->namesymbol) {
+		if(findVarInFrame3(env, this->namesymbol, FALSE) 
+		   != R_UnboundValue) R_unLockBinding(this->namesymbol, env);
+		defineVar(this->namesymbol, tmp, env);
+		R_LockBinding(this->namesymbol, env);
+	    }
 	    this->data = tmp;
+	    SET_NAMED(tmp, 2);
 	    UNPROTECT(1);
 	} else {
 	    /* retain the last line */
@@ -1922,26 +1940,36 @@ static int text_vfprintf(Rconnection con, const char *format, va_list ap)
     return res;
 }
 
-static void outtext_init(Rconnection con, char *mode, int idx)
+static void outtext_init(Rconnection con, SEXP stext, char *mode, int idx)
 {
     Routtextconn this = (Routtextconn)con->private;
     SEXP val;
 
-    this->namesymbol = install(con->description);
-    if(strcmp(mode, "w") == 0) {
-	/* create variable pointed to by con->description */
-	PROTECT(val = allocVector(STRSXP, 0));
-	defineVar(this->namesymbol, val, VECTOR_ELT(OutTextData, idx));
-	UNPROTECT(1);
+    if(stext == R_NilValue) {
+	this->namesymbol = NULL;
+	    /* create variable pointed to by con->description */
+	val = allocVector(STRSXP, 0);
     } else {
-	/* take over existing variable */
-	val = findVar1(this->namesymbol, VECTOR_ELT(OutTextData, idx),
-		       STRSXP, FALSE);
-	if(val == R_UnboundValue) {
-	    warning(_("text connection: appending to a non-existent char vector"));
+	this->namesymbol = install(con->description);
+	if(strcmp(mode, "w") == 0) {
+	    /* create variable pointed to by con->description */
 	    PROTECT(val = allocVector(STRSXP, 0));
 	    defineVar(this->namesymbol, val, VECTOR_ELT(OutTextData, idx));
+	    /* Not clear if this is needed, but be conservative */
+	    SET_NAMED(val, 2);
 	    UNPROTECT(1);
+	} else {
+	    /* take over existing variable */
+	    val = findVar1(this->namesymbol, VECTOR_ELT(OutTextData, idx),
+			   STRSXP, FALSE);
+	    if(val == R_UnboundValue) {
+		warning(_("text connection: appending to a non-existent char vector"));
+		PROTECT(val = allocVector(STRSXP, 0));
+		defineVar(this->namesymbol, val, VECTOR_ELT(OutTextData, idx));
+		SET_NAMED(val, 2);
+		UNPROTECT(1);
+	    }
+	    R_LockBinding(this->namesymbol, VECTOR_ELT(OutTextData, idx));
 	}
     }
     this->len = LENGTH(val);
@@ -1951,7 +1979,7 @@ static void outtext_init(Rconnection con, char *mode, int idx)
 }
 
 
-static Rconnection newouttext(char *description, SEXP sfile, char *mode,
+static Rconnection newouttext(char *description, SEXP stext, char *mode,
 			      int idx)
 {
     Rconnection new;
@@ -1989,7 +2017,7 @@ static Rconnection newouttext(char *description, SEXP sfile, char *mode,
 	free(new->description); free(new->class); free(new);
 	error(_("allocation of text connection failed"));
     }
-    outtext_init(new, mode, idx);
+    outtext_init(new, stext, mode, idx);
     return new;
 }
 
@@ -2006,30 +2034,33 @@ SEXP attribute_hidden do_textconnection(SEXP call, SEXP op, SEXP args, SEXP env)
 	error(_("invalid '%s' argument"), "description");
     desc = CHAR(STRING_ELT(sfile, 0));
     stext = CADR(args);
-    if(!isString(stext))
-	error(_("invalid '%s' argument"), "text");
     sopen = CADDR(args);
     if(!isString(sopen) || length(sopen) != 1)
-    error(_("invalid '%s' argument"), "open");
+	error(_("invalid '%s' argument"), "open");
     open = CHAR(STRING_ELT(sopen, 0));
     venv = CADDDR(args);
-    if (isNull(venv)) {
-	warning(_("use of NULL environment is deprecated"));
-	venv = R_BaseEnv;
-    } else      
+    if (isNull(venv))
+	error(_("use of NULL environment is defunct"));
     if (!isEnvironment(venv))
 	error(_("invalid '%s' argument"), "environment");
     ncon = NextConnection();
-    if(!strlen(open) || strncmp(open, "r", 1) == 0)
+    if(!strlen(open) || strncmp(open, "r", 1) == 0) {
+	if(!isString(stext))
+	    error(_("invalid '%s' argument"), "text");
 	con = Connections[ncon] = newtext(desc, stext);
-    else if (strncmp(open, "w", 1) == 0 || strncmp(open, "a", 1) == 0) {
+    } else if (strncmp(open, "w", 1) == 0 || strncmp(open, "a", 1) == 0) {
 	if (OutTextData == NULL) {
 	    OutTextData = allocVector(VECSXP, NCONNECTIONS);
 	    R_PreserveObject(OutTextData);
 	}
 	SET_VECTOR_ELT(OutTextData, ncon, venv);
-	con = Connections[ncon] =
-	    newouttext(CHAR(STRING_ELT(stext, 0)), sfile, open, ncon);
+	if(stext == R_NilValue)
+	    con = Connections[ncon] = newouttext("NULL", stext, open, ncon);
+	else if(isString(stext) && length(stext) == 1)
+	    con = Connections[ncon] =
+		newouttext(CHAR(STRING_ELT(stext, 0)), stext, open, ncon);
+	else
+	    error(_("invalid '%s' argument"), "text");
     }
     else
 	errorcall(call, _("unsupported mode"));
@@ -2044,6 +2075,23 @@ SEXP attribute_hidden do_textconnection(SEXP call, SEXP op, SEXP args, SEXP env)
     UNPROTECT(2);
     return ans;
 }
+
+SEXP attribute_hidden do_textconvalue(SEXP call, SEXP op, SEXP args, SEXP env)
+{
+    Rconnection con=NULL;
+    Routtextconn this;
+    
+    checkArity(op, args);
+    if(!inherits(CAR(args), "textConnection"))
+	errorcall(call, _("'con' is not a textConnection"));
+    con = getConnection(asInteger(CAR(args)));
+    if(!con->canwrite)
+	error(_("'con' is not an output textConnection"));
+    this = (Routtextconn)con->private;
+    return this->data;
+}
+
+
 
 /* ------------------- socket connections  --------------------- */
 
@@ -2437,12 +2485,12 @@ int Rconn_printf(Rconnection con, const char *format, ...)
 }
 
 
-/* readLines(con = stdin(), n = 1, ok = TRUE) */
+/* readLines(con = stdin(), n = 1, ok = TRUE, warn = TRUE) */
 #define BUF_SIZE 1000
 SEXP attribute_hidden do_readLines(SEXP call, SEXP op, SEXP args, SEXP env)
 {
     SEXP ans = R_NilValue, ans2;
-    int i, n, nn, nnn, ok, nread, c, nbuf, buf_size = BUF_SIZE;
+    int i, n, nn, nnn, ok, warn, nread, c, nbuf, buf_size = BUF_SIZE;
     Rconnection con = NULL;
     Rboolean wasopen;
     char *buf;
@@ -2453,10 +2501,13 @@ SEXP attribute_hidden do_readLines(SEXP call, SEXP op, SEXP args, SEXP env)
     con = getConnection(asInteger(CAR(args)));
     n = asInteger(CADR(args));
     if(n == NA_INTEGER)
-	errorcall(call, _("invalid value for 'n'"));
+	errorcall(call, _("invalid value for '%s'"), "n");
     ok = asLogical(CADDR(args));
     if(ok == NA_LOGICAL)
-	errorcall(call, _("invalid value for 'ok'"));
+	errorcall(call, _("invalid value for '%s'"), "ok");
+    warn = asLogical(CADDDR(args));
+    if(warn == NA_LOGICAL)
+	errorcall(call, _("invalid value for '%s'"), "warn");
     if(!con->canread)
 	errorcall(call, _("cannot read from this connection"));
     wasopen = con->isopen;
@@ -2507,8 +2558,9 @@ no_more_lines:
     if(nbuf > 0) { /* incomplete last line */
 	if(con->text && con->blocking) {
 	    nread++;
-	    warning(_("incomplete final line found by readLines on '%s'"),
-		    con->description);
+	    if(warn)
+		warning(_("incomplete final line found by readLines on '%s'"),
+			con->description);
 	} else {
 	    /* push back the rest */
 	    con_pushback(con, 0, buf);
@@ -2523,15 +2575,6 @@ no_more_lines:
 	SET_STRING_ELT(ans2, i, STRING_ELT(ans, i));
     UNPROTECT(2);
     return ans2;
-}
-
-static void writecon(Rconnection con, char *format, ...)
-{
-    va_list(ap);
-    va_start(ap, format);
-    /* Parentheses added for FC4 with gcc4 and -D_FORTIFY_SOURCE=2 */
-    (con->vfprintf)(con, format, ap);
-    va_end(ap);
 }
 
 /* writeLines(text, con = stdout(), sep = "\n") */
@@ -2558,8 +2601,8 @@ SEXP attribute_hidden do_writelines(SEXP call, SEXP op, SEXP args, SEXP env)
 	if(!con->open(con)) error(_("cannot open the connection"));
     }
     for(i = 0; i < length(text); i++)
-	writecon(con, "%s%s", CHAR(STRING_ELT(text, i)),
-		 CHAR(STRING_ELT(sep, 0)));
+	Rconn_printf(con, "%s%s", CHAR(STRING_ELT(text, i)),
+		     CHAR(STRING_ELT(sep, 0)));
     if(!wasopen) con->close(con);
     return R_NilValue;
 }
@@ -2675,17 +2718,17 @@ SEXP attribute_hidden do_readbin(SEXP call, SEXP op, SEXP args, SEXP env)
     args = CDR(args);
     swhat = CAR(args); args = CDR(args);
     if(!isString(swhat) || length(swhat) != 1)
-	error(_("invalid value of 'what'"));
+	error(_("invalid value for '%s'"), "what");
     what = CHAR(STRING_ELT(swhat, 0));
     n = asInteger(CAR(args)); args = CDR(args);
-    if(n == NA_INTEGER || n < 0) error(_("invalid value of 'n'"));
+    if(n == NA_INTEGER || n < 0) error(_("invalid value for '%s'"), "n");
     size = asInteger(CAR(args)); args = CDR(args);
     signd = asLogical(CAR(args)); args = CDR(args);
     if(signd == NA_LOGICAL)
-	error(_("invalid value of 'signed'"));
+	error(_("invalid value for '%s'"), "signed");
     swap = asLogical(CAR(args));
     if(swap == NA_LOGICAL)
-	error(_("invalid value of 'swap'"));
+	error(_("invalid value for '%s'"), "swap");
     if(!isRaw) {
 	if(!con->canread)
 	    error(_("cannot read from this connection"));
@@ -2887,7 +2930,7 @@ SEXP attribute_hidden do_writebin(SEXP call, SEXP op, SEXP args, SEXP env)
     size = asInteger(CADDR(args));
     swap = asLogical(CADDDR(args));
     if(swap == NA_LOGICAL)
-	error(_("invalid value of 'swap'"));
+	error(_("invalid value for '%s'"), "swap");
     len = LENGTH(object);
     if(len == 0) {
 	if(isRaw) return allocVector(RAWSXP, 0); else return R_NilValue;
@@ -3145,7 +3188,7 @@ SEXP attribute_hidden do_readchar(SEXP call, SEXP op, SEXP args, SEXP env)
     for(i = 0, m = i+1; i < n; i++) {
 	len = INTEGER(nchars)[i];
 	if(len == NA_INTEGER || len < 0)
-	    error(_("supplied length is invalid"));
+	    error(_("invalid value for '%s'"), "nchar");
 	onechar = readFixedString(con, len);
 	if(onechar != R_NilValue) {
 	    SET_STRING_ELT(ans, i, onechar);
@@ -3177,6 +3220,8 @@ SEXP attribute_hidden do_writechar(SEXP call, SEXP op, SEXP args, SEXP env)
 
     checkArity(op, args);
     object = CAR(args);
+    if(TYPEOF(object) != STRSXP)
+	error(_("invalid value for '%s'"), "object");
     i = asInteger(CADR(args));
     if(i == NA_INTEGER || !(con = Connections[i]))
 	error(_("invalid connection"));
@@ -3191,12 +3236,14 @@ SEXP attribute_hidden do_writechar(SEXP call, SEXP op, SEXP args, SEXP env)
     } else {
 	usesep = TRUE;
 	if (!isString(sep) || length(sep) != 1)
-	    error(_("invalid value of 'sep'"));
+	    error(_("invalid value for '%s'"), "sep");
 	ssep = CHAR(STRING_ELT(sep, 0));
 	slen = strlen(ssep) + 1;
     }
     n = LENGTH(nchars);
     if(n == 0) return R_NilValue;
+    if(LENGTH(object) < n)
+	error(_("'object' is too short"));
 
     len = 0;
     for(i = 0; i < n; i++) {
@@ -3205,6 +3252,8 @@ SEXP attribute_hidden do_writechar(SEXP call, SEXP op, SEXP args, SEXP env)
 	tlen = strlen(CHAR(STRING_ELT(object, i)));
 	if (tlen > len) len = tlen;
 	tlen = INTEGER(nchars)[i];
+	if(tlen == NA_INTEGER || tlen < 0)
+	    error(_("invalid value for '%s'"), "nchar");
 	if (tlen > len) len = tlen;
     }
     buf = (char *) R_alloc(len + slen, sizeof(char));
@@ -3213,46 +3262,44 @@ SEXP attribute_hidden do_writechar(SEXP call, SEXP op, SEXP args, SEXP env)
     if(!wasopen)
 	if(!con->open(con)) error(_("cannot open the connection"));
 
-    if(TYPEOF(object) == STRSXP) {
-	for(i = 0; i < n; i++) {
-	    len = INTEGER(nchars)[i];
-	    s = CHAR(STRING_ELT(object, i));
-	    lenb = lenc = strlen(s);
+    for(i = 0; i < n; i++) {
+	len = INTEGER(nchars)[i];
+	s = CHAR(STRING_ELT(object, i));
+	lenb = lenc = strlen(s);
 #ifdef SUPPORT_MBCS
-	    if(mbcslocale) lenc = mbstowcs(NULL, s, 0);
+	if(mbcslocale) lenc = mbstowcs(NULL, s, 0);
 #endif
-	    /* As from 1.8.1, zero-pad if too many chars are requested. */
-	    if(len > lenc) {
-		warning(_("writeChar: more characters requested than are in the string - will zero-pad"));
-		lenb += (len - lenc);
-	    }
-	    if(len < lenc) {
+	/* As from 1.8.1, zero-pad if too many chars are requested. */
+	if(len > lenc) {
+	    warning(_("writeChar: more characters requested than are in the string - will zero-pad"));
+	    lenb += (len - lenc);
+	}
+	if(len < lenc) {
 #ifdef SUPPORT_MBCS
-		if(mbcslocale) {
-		    /* find out how many bytes we need to write */
-		    int i, used;
-		    char *p = s;
-		    mbs_init(&mb_st);
-		    for(i = 0, lenb = 0; i < len; i++) {
-			used = Mbrtowc(NULL, p, MB_CUR_MAX, &mb_st);
-			p += used;
-			lenb += used;
-		    }
-		} else
+	    if(mbcslocale) {
+		/* find out how many bytes we need to write */
+		int i, used;
+		char *p = s;
+		mbs_init(&mb_st);
+		for(i = 0, lenb = 0; i < len; i++) {
+		    used = Mbrtowc(NULL, p, MB_CUR_MAX, &mb_st);
+		    p += used;
+		    lenb += used;
+		}
+	    } else
 #endif
-		    lenb = len;
-	    }
-	    memset(buf, '\0', lenb + slen);
-	    strncpy(buf, s, lenb);
-	    if (usesep) {
-		strcat(buf, ssep);
-		lenb += slen;
-	    }
-	    nwrite = con->write(buf, sizeof(char), lenb, con);
-	    if(!nwrite) {
-		warning(_("problem writing to connection"));
-		break;
-	    }
+		lenb = len;
+	}
+	memset(buf, '\0', lenb + slen);
+	strncpy(buf, s, lenb);
+	if (usesep) {
+	    strcat(buf, ssep);
+	    lenb += slen;
+	}
+	nwrite = con->write(buf, sizeof(char), lenb, con);
+	if(!nwrite) {
+	    warning(_("problem writing to connection"));
+	    break;
 	}
     }
     vmaxset(vmax);
@@ -3370,7 +3417,8 @@ SEXP attribute_hidden do_clearpushback(SEXP call, SEXP op, SEXP args, SEXP env)
 /* Switch output to connection number icon, or popd stack if icon < 0
  */
 
-Rboolean switch_or_tee_stdout(int icon, int closeOnExit, int tee)
+static Rboolean
+switch_or_tee_stdout(int icon, int closeOnExit, int tee)
 {
     int toclose;
 
@@ -3414,9 +3462,13 @@ Rboolean switch_or_tee_stdout(int icon, int closeOnExit, int tee)
 }
 
 /* This is not only used by cat(), but is in a public
-   header, so we need a wrapper */
+   header, so we need a wrapper 
 
-Rboolean switch_stdout(int icon, int closeOnExit){
+   Mo, Rconnections.h is not public and not installed.
+*/
+
+Rboolean attribute_hidden switch_stdout(int icon, int closeOnExit)
+{
   return switch_or_tee_stdout(icon, closeOnExit, 0);
 }
 
@@ -3428,11 +3480,11 @@ SEXP attribute_hidden do_sink(SEXP call, SEXP op, SEXP args, SEXP rho)
     icon = asInteger(CAR(args));
     closeOnExit = asLogical(CADR(args));
     if(closeOnExit == NA_LOGICAL)
-	error(_("invalid value for 'closeOnExit'"));
+	error(_("invalid value for '%s'"), "closeOnExit");
     errcon = asLogical(CADDR(args));
-    if(errcon == NA_LOGICAL) error(_("invalid value for 'type'"));
+    if(errcon == NA_LOGICAL) error(_("invalid value for '%s'"), "type");
     tee = asLogical(CADDDR(args));
-    if(tee == NA_LOGICAL) error(_("invalid value for 'split'"));
+    if(tee == NA_LOGICAL) error(_("invalid value for '%s'"), "split");
 
 #ifndef HAVE_VA_COPY
     if(tee) error(_("this platform does not support 'split=TRUE'"));
@@ -3462,7 +3514,7 @@ SEXP attribute_hidden do_sinknumber(SEXP call, SEXP op, SEXP args, SEXP rho)
 
     errcon = asLogical(CAR(args));
     if(errcon == NA_LOGICAL)
-	error(_("invalid value for 'type'"));
+	error(_("invalid value for '%s'"), "type");
     PROTECT(ans = allocVector(INTSXP, 1));
     INTEGER(ans)[0] = errcon ? R_SinkNumber : R_ErrorCon;
     UNPROTECT(1);
@@ -4022,18 +4074,18 @@ SEXP R_compress1(SEXP in)
     Bytef *buf;
     SEXP ans;
 
-    if(!isString(in) || length(in) !=1)
-	error(_("R_compress1 requires a scalar string"));
-    inlen = LENGTH(STRING_ELT(in, 0));
+    if(TYPEOF(in) != RAWSXP)
+	error(_("R_decompress1 requires a raw vector"));
+    inlen = LENGTH(in);
     outlen = 1.001*inlen + 20;
     buf = (Bytef *) R_alloc(outlen, sizeof(Bytef));
     /* we want this to be system-independent */
     *((unsigned int *)buf) = (unsigned int) uiSwap(inlen);
-    res = compress(buf + 4, &outlen, (Bytef *)CHAR(STRING_ELT(in, 0)), inlen);
+    res = compress(buf + 4, &outlen, (Bytef *)RAW(in), inlen);
     if(res != Z_OK) error(_("internal error in R_compress1"));
-    ans = allocVector(CHARSXP, outlen + 4);
-    memcpy(CHAR(ans), buf, outlen + 4);
-    return ScalarString(ans);
+    ans = allocVector(RAWSXP, outlen + 4);
+    memcpy(RAW(ans), buf, outlen + 4);
+    return ans;
 }
 
 attribute_hidden
@@ -4042,19 +4094,19 @@ SEXP R_decompress1(SEXP in)
     uLong inlen, outlen;
     int res;
     Bytef *buf;
-    char *p = CHAR(STRING_ELT(in, 0));
+    unsigned char *p = RAW(in);
     SEXP ans;
 
-    if(!isString(in) || length(in) !=1)
-	error(_("R_decompress1 requires a scalar string"));
-    inlen = LENGTH(STRING_ELT(in, 0));
+    if(TYPEOF(in) != RAWSXP)
+	error(_("R_decompress1 requires a raw vector"));
+    inlen = LENGTH(in);
     outlen = (uLong) uiSwap(*((unsigned int *) p));
     buf = (Bytef *) R_alloc(outlen, sizeof(Bytef));
     res = uncompress(buf, &outlen, (Bytef *)(p + 4), inlen - 4);
     if(res != Z_OK) error(_("internal error in R_decompress1"));
-    ans = allocVector(CHARSXP, outlen);
-    memcpy(CHAR(ans), buf, outlen);
-    return ScalarString(ans);
+    ans = allocVector(RAWSXP, outlen);
+    memcpy(RAW(ans), buf, outlen);
+    return ans;
 }
 
 SEXP attribute_hidden do_sockselect(SEXP call, SEXP op, SEXP args, SEXP rho)

@@ -1,7 +1,7 @@
 /*
  *  R : A Computer Language for Statistical Data Analysis
  *  Copyright (C) 1995, 1996  Robert Gentleman and Ross Ihaka
- *  Copyright (C) 1997--2005  Robert Gentleman, Ross Ihaka and the
+ *  Copyright (C) 1997--2006  Robert Gentleman, Ross Ihaka and the
  *                            R Development Core Team
  *
  *  This program is free software; you can redistribute it and/or modify
@@ -280,13 +280,13 @@ static SEXP negativeSubscript(SEXP s, int ns, int nx)
     SEXP indx;
     int stretch = 0;
     int i, ix;
-    PROTECT(indx = allocVector(INTSXP, nx));
+    PROTECT(indx = allocVector(LGLSXP, nx));
     for (i = 0; i < nx; i++)
-	INTEGER(indx)[i] = 1;
+	LOGICAL(indx)[i] = 1;
     for (i = 0; i < ns; i++) {
 	ix = INTEGER(s)[i];
 	if (ix != 0 && ix != NA_INTEGER && -ix <= nx)
-	    INTEGER(indx)[-ix - 1] = 0;
+	    LOGICAL(indx)[-ix - 1] = 0;
     }
     s = logicalSubscript(indx, nx, nx, &stretch);
     UNPROTECT(1);
@@ -440,10 +440,10 @@ static SEXP stringSubscript(SEXP s, int ns, int nx, SEXP names,
 	}
 	INTEGER(indx)[i] = sub;
     }
-    /* Ghastly hack!  We attach the new names to the attribute */
-    /* slot on the returned subscript vector. */
+    /* We return the new names as the names attribute of the returned
+       subscript vector. */
     if (extra != nnames)
-	SET_ATTRIB(indx, indexnames);
+	setAttrib(indx, R_NamesSymbol, indexnames);
     if (canstretch)
 	*stretch = extra;
     UNPROTECT(4);
@@ -496,6 +496,8 @@ int_arraySubscript(int dim, SEXP s, SEXP dims, AttrGetter dng,
     return R_NilValue;
 }
 
+/* This is used by packages arules and cba. Seems dangerous as the 
+   typedef is not exported */
 SEXP
 arraySubscript(int dim, SEXP s, SEXP dims, AttrGetter dng,
 	       StringEltGetter strg, SEXP x)
@@ -511,7 +513,7 @@ arraySubscript(int dim, SEXP s, SEXP dims, AttrGetter dng,
    otherwise, stretch returns the new required length for x
 */
 
-SEXP makeSubscript(SEXP x, SEXP s, int *stretch)
+SEXP attribute_hidden makeSubscript(SEXP x, SEXP s, int *stretch)
 {
     int nx;
     SEXP ans;
@@ -538,7 +540,7 @@ int_vectorSubscript(int nx, SEXP s, int *stretch, AttrGetter dng,
 		    StringEltGetter strg, SEXP x, Rboolean in)
 {
     int ns;
-    SEXP ans=R_NilValue, tmp;
+    SEXP ans = R_NilValue, tmp;
 
     ns = length(s);
     /* special case for simple indices -- does not duplicate */
@@ -549,8 +551,9 @@ int_vectorSubscript(int nx, SEXP s, int *stretch, AttrGetter dng,
 	    return s;
 	}
     }
-    PROTECT(s=duplicate(s));
+    PROTECT(s = duplicate(s));
     SET_ATTRIB(s, R_NilValue);
+    SET_OBJECT(s, 0);
     switch (TYPEOF(s)) {
     case NILSXP:
 	*stretch = 0;
@@ -589,7 +592,7 @@ int_vectorSubscript(int nx, SEXP s, int *stretch, AttrGetter dng,
 }
 
 
-SEXP
+SEXP attribute_hidden
 vectorSubscript(int nx, SEXP s, int *stretch, AttrGetter dng,
 		StringEltGetter strg, SEXP x)
 {

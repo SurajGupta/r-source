@@ -1,6 +1,7 @@
 /*******************************************************************************
  *  RProxy: Connector implementation between application and R language
- *  Copyright (C) 1999--2005 Thomas Baier
+ *  Copyright (C) 1999--2006 Thomas Baier
+ *  Copyright 2006 R Development Core Team
  *
  *  R_Proxy_init based on rtest.c,  Copyright (C) 1998--2000
  *                                  R Development Core Team
@@ -23,54 +24,44 @@
  *
  ******************************************************************************/
 
-#define NONAMELESSUNION
 #include <windows.h>
-#include <assert.h>
 #include <stdio.h>
 #include <stdlib.h>
-/*#include "globalvar.h"
-#undef CharacterMode
-#undef R_Interactive*/
+
+#define NEW
 #include <config.h>
+
+#ifdef NEW
+# include <Rinternals.h>
+#else
+# include <Defn.h>
+#endif
 #include <Rversion.h>
-#include <Startup.h>
+#include <Rembedded.h>
+#include <R_ext/RStartup.h>
+#include <R_ext/GraphicsDevice.h>
+#include <graphapp.h>
+
 #include "bdx_SEXP.h"
+#include "bdx_util.h"
 #include "SC_proxy.h"
 #include "rproxy.h"
 #include "rproxy_impl.h"
-#include <IOStuff.h>
-#include <Parse.h>
-#include <Graphics.h>
 
-struct _R_Proxy_init_parameters
-{
-  int vsize;
-  int vsize_valid;
-  int nsize;
-  int nsize_valid;
-};
+#ifdef NEW
+# include <R_ext/Parse.h>
+#else
+/* <FIXME> Thees are private header files */
+# include <IOStuff.h>
+# include <Parse.h>
+#endif
 
-/* 01-12-07 | baier | no more extern for exported variables (crashes!) */
-/*#define R_GlobalEnv (*__imp_R_GlobalEnv)
-#define R_Visible (*__imp_R_Visible)
-#define R_EvalDepth (*__imp_R_EvalDepth)
-#define R_DimSymbol (*__imp_R_DimSymbol)*/
+#define TRCBUFSIZE 2048
 
-/*
-extern SEXP R_GlobalEnv;
-extern int R_Visible;
-extern int R_EvalDepth;
-extern SEXP R_DimSymbol;
-*/
+struct _R_Proxy_init_parameters g_R_Proxy_init_parameters = { 0 };
 
 /* calls into the R DLL */
-extern char *getDLLVersion();
-extern void R_DefParams(Rstart);
-extern void R_SetParams(Rstart);
-extern void setup_term_ui(void);
 extern char *getRHOME();
-extern void end_Rmainloop(), R_ReplDLLinit();
-extern void askok(char *);
 
 int R_Proxy_Graphics_Driver (NewDevDesc* pDD,
 			     char* pDisplay,
@@ -81,55 +72,57 @@ int R_Proxy_Graphics_Driver (NewDevDesc* pDD,
 extern SC_CharacterDevice* __output_device;
 
 /* trace to DebugView */
-
 int R_Proxy_printf(char const* pFormat,...)
 {
-  static char __tracebuf[2048];
+  static char __tracebuf[TRCBUFSIZE];
 
   va_list lArgs;
-  va_start(lArgs,pFormat);
-  vsprintf(__tracebuf,pFormat,lArgs);
+  va_start(lArgs, pFormat);
+  vsnprintf(__tracebuf,TRCBUFSIZE, pFormat, lArgs);
   OutputDebugString(__tracebuf);
   return 0;
 }
 
+#ifndef NEW
 static int s_EvalInProgress = 0;
+#endif
 
-void R_Proxy_askok (char* pMsg)
+static void R_Proxy_askok (char* pMsg)
 {
   askok(pMsg);
   return;
 }
 
-int R_Proxy_askyesnocancel (char* pMsg)
+static int R_Proxy_askyesnocancel (char* pMsg)
 {
-  return 1;
+  return YES;
 }
 
-int R_Proxy_ReadConsole(char *prompt, char *buf, int len, int addtohistory)
+static int 
+R_Proxy_ReadConsole(char *prompt, char *buf, int len, int addtohistory)
 {
   return 0;
 }
 
-void R_Proxy_WriteConsole(char *buf, int len)
+static void R_Proxy_WriteConsole(char *buf, int len)
 {
-  if (__output_device)
-    {
-      __output_device->vtbl->write_string (__output_device,buf);
-    }
+  if (__output_device) {
+    __output_device->vtbl->write_string (__output_device,buf);
+  }
 }
 
-void R_Proxy_CallBack()
+static void R_Proxy_CallBack()
 {
     /* called during i/o, eval, graphics in ProcessEvents */
 }
 
-void R_Proxy_Busy(int which)
+static void R_Proxy_Busy(int which)
 {
     /* set a busy cursor ... in which = 1, unset if which = 0 */
 }
 
 /* 00-02-18 | baier | parse parameter string and fill parameter structure */
+/* 06-06-18 | baier | parse parameter "dm" */
 int R_Proxy_parse_parameters (char const* pParameterString,
 			      struct _R_Proxy_init_parameters* pParameterStruct)
 {
@@ -138,19 +131,65 @@ int R_Proxy_parse_parameters (char const* pParameterString,
    *
    * currently recognized parameter names (case-sensitive):
    *
-   *   NSIZE ... number of cons cells, (unsigned int) parameter
-   *   VSIZE ... size of vector heap, (unsigned int) parameter
+   *   (obsolete) NSIZE ... number of cons cells, (unsigned int) parameter
+   *   (obsolete) VSIZE ... size of vector heap, (unsigned int) parameter
+   *   dm ...... data mode (unsigned long, see below)
    */
   int lDone = 0;
-#if 0
   char const* lParameterStart = pParameterString;
   int lIndexOfSemicolon = 0;
   char* lTmpBuffer = NULL;
   char* lPosOfSemicolon = NULL;
-#endif
 
-  while (!lDone)
-    {
+  RPROXY_TRACE(printf("R_Proxy_parse_parameters(\"%s\")\n",pParameterString));
+
+  while (!lDone) {
+    /*
+     * dm: data mode?
+     * --------------
+     *
+     *   0 ... default data transfer mode
+     *   1 ... read +Inf and -Inf in double representation
+     */
+    if(strncmp (lParameterStart,"dm=",3) == 0) {
+      RPROXY_TRACE(printf("param dm found, parsing\n"));
+      lParameterStart += 3;
+      
+      lPosOfSemicolon = strchr (lParameterStart,';');
+      lIndexOfSemicolon = lPosOfSemicolon - lParameterStart;
+      
+      if (lPosOfSemicolon) {
+	lTmpBuffer = malloc (lIndexOfSemicolon + 1); /* to catch NSIZE=; */
+	strncpy (lTmpBuffer,lParameterStart,lIndexOfSemicolon);
+	*(lTmpBuffer + lIndexOfSemicolon) = 0x0;
+	bdx_set_datamode(atol(lTmpBuffer));
+	if(pParameterStruct) {
+	  pParameterStruct->dm = atol (lTmpBuffer);
+	}
+	free (lTmpBuffer);
+	lParameterStart += lIndexOfSemicolon + 1;
+      } else {
+	bdx_set_datamode(atol(lParameterStart));
+	if(pParameterStruct) {
+	  pParameterStruct->dm = atol(lParameterStart);
+	}
+	lDone = 1;
+      }
+    } else if (strncmp (lParameterStart,"REUSER",6) == 0) {
+      if(pParameterStruct) {
+	pParameterStruct->reuseR = 1;
+      }
+      lParameterStart = lParameterStart + 6;
+      if(*lParameterStart == ';') {
+	lParameterStart++;
+      }
+      RPROXY_TRACE(printf("param REUSER, rest is \"%s\"\n",
+			  lParameterStart));
+    } else {
+      lDone = 1;
+    }
+  }
+
 #if 0
       /* NSIZE? */
       if (strncmp (lParameterStart,"NSIZE=",6) == 0)
@@ -166,14 +205,14 @@ int R_Proxy_parse_parameters (char const* pParameterString,
 	      strncpy (lTmpBuffer,lParameterStart,lIndexOfSemicolon);
 	      *(lTmpBuffer + lIndexOfSemicolon) = 0x0;
 	      pParameterStruct->nsize_valid = 1;
-	      pParameterStruct->nsize = atoi (lTmpBuffer);
+	      pParameterStruct->nsize = atoi(lTmpBuffer);
 	      free (lTmpBuffer);
 	      lParameterStart += lIndexOfSemicolon + 1;
 	    }
 	  else
 	    {
 	      pParameterStruct->nsize_valid = 1;
-	      pParameterStruct->nsize = atoi (lParameterStart);
+	      pParameterStruct->nsize = atoi(lParameterStart);
 	      lDone = 1;
 	    }
 	}
@@ -201,35 +240,30 @@ int R_Proxy_parse_parameters (char const* pParameterString,
 	      lDone = 1;
 	    }
 	}
-      else
 #endif
-	{
-	  lDone = 1;
-	}
-    }
 
   return 0;
 }
 
-#include "../shext.h" /* for ShellGetPersonalDirectory */
-
 /* 00-02-18 | baier | R_Proxy_init() now takes parameter string, parse it */
 /* 03-06-01 | baier | now we add %R_HOME%\bin to %PATH% */
+/* 06-06-18 | baier | parameter parsing enabled in parent function */
 int R_Proxy_init (char const* pParameterString)
 {
   structRstart rp;
   Rstart Rp = &rp;
   char Rversion[25];
-  static char RUser[MAX_PATH], RHome[MAX_PATH];
-  char *p, *q;
+  static char RHome[MAX_PATH];
 
-  sprintf(Rversion, "%s.%s", R_MAJOR, R_MINOR);
-  if(strcmp(getDLLVersion(), Rversion) != 0) {
+  snprintf(Rversion, 25, "%s.%s", R_MAJOR, R_MINOR);
+  if(strncmp(getDLLVersion(), Rversion, 25) != 0) {
     fprintf(stderr, "Error: R.DLL version does not match\n");
     return SC_PROXY_ERR_UNKNOWN;
   }
 
   R_DefParams(Rp);
+
+  /* <FIXME> the documented interface is get_R_HOME() */
 
   /* first, try process-local environment space (CRT) */
   if (getenv("R_HOME")) {
@@ -245,98 +279,70 @@ int R_Proxy_init (char const* pParameterString)
   /* now we add %R_HOME%\bin to %PATH% (for dynamically loaded modules there) */
   {
     char buf[2048];
-    sprintf(buf,"PATH=%s\\bin;%s",RHome,getenv("PATH"));
+    snprintf(buf, 2048, "PATH=%s\\bin;%s",RHome,getenv("PATH"));
     putenv(buf);
   }
 
   Rp->rhome = RHome;
-
-  /*
-   * try R_USER then HOME then Windows homes then working directory
-   */
-
-  if ((p = getenv("R_USER"))) {
-    if(strlen(p) >= MAX_PATH) R_Suicide("Invalid R_USER");
-    strcpy(RUser, p);
-  } else if ((p = getenv("HOME"))) {
-    if(strlen(p) >= MAX_PATH) R_Suicide("Invalid HOME");
-    strcpy(RUser, p);
-  } else if (ShellGetPersonalDirectory(RUser)) {
-    /* nothing to do */;
-  } else if ((p = getenv("HOMEDRIVE")) && (q = getenv("HOMEPATH"))) {
-    if(strlen(p) >= MAX_PATH) R_Suicide("Invalid HOMEDRIVE");
-    strcpy(RUser, p);
-    if(strlen(RUser) + strlen(q) >= MAX_PATH)
-      R_Suicide("Invalid HOMEDRIVE+HOMEPATH");
-    strcat(RUser, q);
-  } else {
-    GetCurrentDirectory(MAX_PATH, RUser);
-  }
-  
-  p = RUser + (strlen(RUser) - 1);
-
-  if (*p == '/' || *p == '\\') *p = '\0';
-  Rp->home = RUser;
+  Rp->home = getRUser();
   Rp->CharacterMode = LinkDLL;
   Rp->ReadConsole = R_Proxy_ReadConsole;
   Rp->WriteConsole = R_Proxy_WriteConsole;
   Rp->CallBack = R_Proxy_CallBack;
   Rp->ShowMessage = R_Proxy_askok;
-
   Rp->YesNoCancel = R_Proxy_askyesnocancel;
   Rp->Busy = R_Proxy_Busy;
   Rp->R_Quiet = 1;
-#if 1
-  /* run as "interactive", so server won't be killed after an error */
-  Rp->R_Slave = Rp->R_Verbose = 0;
-  Rp->R_Interactive = 1;
-#else
-  Rp->R_Slave = Rp->R_Interactive = Rp->R_Verbose = 0;
-#endif
-  Rp->RestoreAction = 0; /* no restore */
-  Rp->SaveAction = 2;    /* no save */
-
-/*  Rp->nsize = 300000;
-    Rp->vsize = 6e6;*/
-  R_SetParams(Rp); /* so R_ShowMessage is set */
-  R_SizeFromEnv(Rp);
-  R_set_command_line_arguments(0, NULL);
-
-  /* parse parameters */
-#if 0
-  {
-    struct _R_Proxy_init_parameters lParameterStruct =
-    {
-      0,0,0,0
-    };
-
-    R_Proxy_parse_parameters (pParameterString,&lParameterStruct);
-
-    if (lParameterStruct.nsize_valid)
-      {
-	Rp->nsize = lParameterStruct.nsize;
-      }
-    if (lParameterStruct.vsize_valid)
-      {
-	Rp->vsize = lParameterStruct.vsize;
-      }
-  }
-#endif
+  Rp->RestoreAction = SA_NORESTORE;
+  Rp->SaveAction = SA_NOSAVE; /* had 2, with comment 'no save' which is 3 */
 
   R_SetParams(Rp);
+  R_set_command_line_arguments(0, NULL);
 
-  setup_term_ui();
+  GA_initapp(0, 0);
+  readconsolecfg();
   setup_Rmainloop();
   R_ReplDLLinit();
 
   return SC_PROXY_OK;
 }
 
+#ifdef NEW
+int R_Proxy_evaluate (char const* pCmd, BDX_Data** pData)
+{
+    SEXP lSexp;
+    int lRc = SC_PROXY_OK, evalError = 0;
+    ParseStatus lStatus;
+    SEXP lResult;
+
+    lSexp = R_ParseVector(mkString(pCmd), 1, &lStatus);
+    /* This is an EXPRSXP: we assume just one expression */
+
+    switch (lStatus) {
+    case PARSE_OK:
+	PROTECT(lSexp);
+	lResult = R_tryEval(VECTOR_ELT(lSexp, 0), R_GlobalEnv, &evalError);
+	UNPROTECT(1);
+	if(evalError) lRc = SC_PROXY_ERR_EVALUATE_STOP;
+	else lRc = SEXP2BDX(lResult, pData);
+	break;
+    case PARSE_INCOMPLETE:
+	lRc = SC_PROXY_ERR_PARSE_INCOMPLETE;
+	break;
+    default:
+	lRc = SC_PROXY_ERR_PARSE_INVALID;
+	break;
+    }
+    return lRc;
+}
+
+#else
+
 /* 01-06-05 | baier | SETJMP and fatal error handling around eval() */
 /* 04-08-01 | baier | ref-counting in case of error */
 /* 04-10-11 | baier | restore original ref-counting */
 /* 05-05-15 | baier | rework SETJMP code (store/restore jmp_buf) */
-int R_Proxy_evaluate (char const* pCmd,BDX_Data** pData)
+int R_Proxy_evaluate (char const* pCmd, BDX_Data** pData)
 {
   SEXP rho = R_GlobalEnv;
   IoBuffer lBuffer;
@@ -349,66 +355,86 @@ int R_Proxy_evaluate (char const* pCmd,BDX_Data** pData)
   s_EvalInProgress = 0;
 
   R_IoBufferInit (&lBuffer);
-  R_IoBufferPuts ((char*) pCmd,&lBuffer);
-  R_IoBufferPuts ("\n",&lBuffer);
+  R_IoBufferPuts ((char*) pCmd, &lBuffer);
+  R_IoBufferPuts ("\n", &lBuffer);
 
-  /* don't generate code, just a try */
   R_IoBufferReadReset (&lBuffer);
-  lSexp = R_Parse1Buffer (&lBuffer,0,&lStatus);
+  lSexp = R_Parse1Buffer (&lBuffer, 1, &lStatus);
+  PrintValue(lSexp);
 
   switch (lStatus)
     {
-    case PARSE_NULL:
-      /* we forget the IoBuffer "lBuffer", so don't do anything here */
-      lRc = SC_PROXY_ERR_PARSE_INVALID;
-      break;
     case PARSE_OK:
-      /* now generate code */
-      R_IoBufferReadReset (&lBuffer);
-      lSexp = R_Parse1Buffer (&lBuffer,1,&lStatus);
-      R_Visible = 0;
+      R_Visible = 0; /* Not printing, so not used */
       R_EvalDepth = 0;
       PROTECT(lSexp);
       {
 	JMP_BUF lJmpBuf;
-	memcpy(lJmpBuf,R_Toplevel.cjmpbuf,sizeof(lJmpBuf));
+	memcpy(lJmpBuf, R_Toplevel.cjmpbuf, sizeof(lJmpBuf));
 	SETJMP (R_Toplevel.cjmpbuf);
 	R_GlobalContext = R_ToplevelContext = &R_Toplevel;
 
 	if (!s_EvalInProgress)
 	  {
+	      /* <FIXME> This does not set .Last.value, does not
+		 print result and does not print warnings */
 	    s_EvalInProgress = 1;
-	    lResult = eval (lSexp,rho);
-	    memcpy(R_Toplevel.cjmpbuf,lJmpBuf,sizeof(lJmpBuf));
+	    lResult = eval (lSexp, rho);
+	    memcpy(R_Toplevel.cjmpbuf, lJmpBuf, sizeof(lJmpBuf));
 	    s_EvalInProgress = 0;
 	  }
 	else
 	  {
-	    memcpy(R_Toplevel.cjmpbuf,lJmpBuf,sizeof(lJmpBuf));
+	    memcpy(R_Toplevel. cjmpbuf,lJmpBuf, sizeof(lJmpBuf));
 	    return SC_PROXY_ERR_EVALUATE_STOP;
 	  }
       }
-      lRc = SEXP2BDX(lResult,pData);
+      lRc = SEXP2BDX(lResult, pData);
       /* no last value */
       UNPROTECT(1);
-      break;
-    case PARSE_ERROR:
-      lRc = SC_PROXY_ERR_PARSE_INVALID;
       break;
     case PARSE_INCOMPLETE:
       lRc = SC_PROXY_ERR_PARSE_INCOMPLETE;
       break;
-    case PARSE_EOF:
-      lRc = SC_PROXY_ERR_PARSE_INVALID;
-      break;
     default:
-      /* never reached */
-      lRc = SC_PROXY_ERR_UNKNOWN;
+      lRc = SC_PROXY_ERR_PARSE_INVALID;
       break;
     }
 
   return lRc;
 }
+#endif
+
+#ifdef NEW
+int R_Proxy_evaluate_noreturn (char const* pCmd)
+{
+    SEXP lSexp;
+    int lRc = SC_PROXY_OK, evalError = 0;
+    ParseStatus lStatus;
+    SEXP lResult;
+
+    lSexp = R_ParseVector(mkString(pCmd), 1, &lStatus);
+    /* It would make sense to allow multiple expressions here */
+  
+    switch (lStatus) {
+    case PARSE_OK:
+	PROTECT(lSexp);
+	lResult = R_tryEval(VECTOR_ELT(lSexp, 0), R_GlobalEnv, &evalError);
+	UNPROTECT(1);
+	if(evalError) lRc = SC_PROXY_ERR_EVALUATE_STOP;
+	else lRc = SC_PROXY_OK;
+	break;
+    case PARSE_INCOMPLETE:
+	lRc = SC_PROXY_ERR_PARSE_INCOMPLETE;
+	break;
+    default:
+	lRc = SC_PROXY_ERR_PARSE_INVALID;
+	break;
+    }
+    return lRc;
+}
+
+#else
 
 /* 01-06-05 | baier | SETJMP and fatal error handling around eval() */
 /* 04-08-01 | baier | ref-counting in case of error */
@@ -426,43 +452,35 @@ int R_Proxy_evaluate_noreturn (char const* pCmd)
   s_EvalInProgress = 0;
 
   R_IoBufferInit (&lBuffer);
-  R_IoBufferPuts ((char*) pCmd,&lBuffer);
-  R_IoBufferPuts ("\n",&lBuffer);
+  R_IoBufferPuts ((char*) pCmd, &lBuffer);
+  R_IoBufferPuts ("\n", &lBuffer);
 
-  /* don't generate code, just a try */
   R_IoBufferReadReset (&lBuffer);
-  lSexp = R_Parse1Buffer (&lBuffer,0,&lStatus);
+  lSexp = R_Parse1Buffer (&lBuffer, 1, &lStatus);
+  PrintValue(lSexp);
 
   switch (lStatus)
     {
-    case PARSE_NULL:
-      /* we forget the IoBuffer "lBuffer", so don't do anything here */
-      lRc = SC_PROXY_ERR_PARSE_INVALID;
-      break;
     case PARSE_OK:
-      /* now generate code */
-      R_IoBufferReadReset (&lBuffer);
-      lSexp = R_Parse1Buffer (&lBuffer,1,&lStatus);
       R_Visible = 0;
       R_EvalDepth = 0;
       PROTECT(lSexp);
-      /* at the moment, discard the result of the eval */
       {
 	JMP_BUF lJmpBuf;
-	memcpy(lJmpBuf,R_Toplevel.cjmpbuf,sizeof(lJmpBuf));
+	memcpy(lJmpBuf, R_Toplevel.cjmpbuf, sizeof(lJmpBuf));
 	SETJMP (R_Toplevel.cjmpbuf);
 	R_GlobalContext = R_ToplevelContext = &R_Toplevel;
 
 	if (!s_EvalInProgress)
 	  {
 	    s_EvalInProgress = 1;
-	    eval (lSexp,rho);
-	    memcpy(R_Toplevel.cjmpbuf,lJmpBuf,sizeof(lJmpBuf));
+	    eval (lSexp, rho);
+	    memcpy(R_Toplevel.cjmpbuf, lJmpBuf, sizeof(lJmpBuf));
 	    s_EvalInProgress = 0;
 	  }
 	else
 	  {
-	    memcpy(R_Toplevel.cjmpbuf,lJmpBuf,sizeof(lJmpBuf));
+	    memcpy(R_Toplevel.cjmpbuf, lJmpBuf, sizeof(lJmpBuf));
 	    return SC_PROXY_ERR_EVALUATE_STOP;
 	  }
       }
@@ -470,25 +488,35 @@ int R_Proxy_evaluate_noreturn (char const* pCmd)
       UNPROTECT(1);
       lRc = SC_PROXY_OK;
       break;
-    case PARSE_ERROR:
-      lRc = SC_PROXY_ERR_PARSE_INVALID;
-      break;
     case PARSE_INCOMPLETE:
       lRc = SC_PROXY_ERR_PARSE_INCOMPLETE;
       break;
-    case PARSE_EOF:
-      lRc = SC_PROXY_ERR_PARSE_INVALID;
-      break;
     default:
-      /* never reached */
-      lRc = SC_PROXY_ERR_UNKNOWN;
+      lRc = SC_PROXY_ERR_PARSE_INVALID;
       break;
     }
 
   return lRc;
 }
+#endif
 
-int R_Proxy_get_symbol (char const* pSymbol,BDX_Data** pData)
+#ifdef NEW
+int R_Proxy_get_symbol (char const* pSymbol, BDX_Data** pData)
+{
+    SEXP lVar = findVar (install((char*) pSymbol), R_GlobalEnv);
+
+    if (lVar == R_UnboundValue) {
+	RPROXY_TRACE(printf(">> %s is an unbound value\n", pSymbol));
+	return SC_PROXY_ERR_INVALIDSYMBOL;
+    } else if(SEXP2BDX(lVar, pData) == 0)
+	return SC_PROXY_OK;
+    else
+	return SC_PROXY_ERR_UNSUPPORTEDTYPE;
+}
+
+#else
+
+int R_Proxy_get_symbol (char const* pSymbol, BDX_Data** pData)
 {
   IoBuffer lBuffer;
   SEXP lSexp;
@@ -496,18 +524,18 @@ int R_Proxy_get_symbol (char const* pSymbol,BDX_Data** pData)
   ParseStatus lStatus;
 
   R_IoBufferInit (&lBuffer);
-  R_IoBufferPuts ((char*) pSymbol,&lBuffer);
-  R_IoBufferPuts ("\n",&lBuffer);
+  R_IoBufferPuts ((char*) pSymbol, &lBuffer);
+  R_IoBufferPuts ("\n", &lBuffer);
 
   /* don't generate code, just a try */
   R_IoBufferReadReset (&lBuffer);
-  lSexp = R_Parse1Buffer (&lBuffer,0,&lStatus);
+  lSexp = R_Parse1Buffer (&lBuffer, 0, &lStatus);
 
   if (lStatus == PARSE_OK)
     {
       /* now generate code */
       R_IoBufferReadReset (&lBuffer);
-      lSexp = R_Parse1Buffer (&lBuffer,1,&lStatus);
+      lSexp = R_Parse1Buffer (&lBuffer, 1, &lStatus);
       R_Visible = 0;
       R_EvalDepth = 0;
       PROTECT(lSexp);
@@ -515,21 +543,21 @@ int R_Proxy_get_symbol (char const* pSymbol,BDX_Data** pData)
       /* check for valid symbol... */
       if (TYPEOF (lSexp) != SYMSXP)
 	{
-	  RPROXY_TRACE(printf(">> %s is not a symbol\n",pSymbol));
+	  RPROXY_TRACE(printf(">> %s is not a symbol\n", pSymbol));
 	  UNPROTECT (1);
 	  return SC_PROXY_ERR_INVALIDSYMBOL;
 	}
 
-      lVar = findVar (lSexp,R_GlobalEnv);
+      lVar = findVar (lSexp, R_GlobalEnv);
 
       if (lVar == R_UnboundValue)
 	{
-	  RPROXY_TRACE(printf(">> %s is an unbound value\n",pSymbol));
+	  RPROXY_TRACE(printf(">> %s is an unbound value\n", pSymbol));
 	  UNPROTECT (1);
 	  return SC_PROXY_ERR_INVALIDSYMBOL;
 	}
       {
-	int lRc = SEXP2BDX(lVar,pData);
+	int lRc = SEXP2BDX(lVar, pData);
 	UNPROTECT (1);
 
 	if(lRc == 0) {
@@ -539,21 +567,20 @@ int R_Proxy_get_symbol (char const* pSymbol,BDX_Data** pData)
 	}
       }
     }
-  return SC_PROXY_OK;
+  return SC_PROXY_OK; /* Really? - gets here on invalid input! */
 }
+#endif
 
 /* 04-02-19 | baier | don't PROTECT strings in a vector, new data structs */
 /* 04-03-02 | baier | removed traces */
 /* 04-10-15 | baier | no more BDX_VECTOR (only BDX_ARRAY) */
 /* 05-05-16 | baier | use BDX2SEXP, clean-up */
-int R_Proxy_set_symbol (char const* pSymbol,BDX_Data const* pData)
+int R_Proxy_set_symbol (char const* pSymbol, BDX_Data const* pData)
 {
   SEXP lSymbol = 0;
   SEXP lData = 0;
 
-  /*  RPROXY_TRACE(printf("calling BDX2SEXP\n")); */
   if(BDX2SEXP(pData,&lData) != 0) {
-    /*    RPROXY_TRACE(printf("error BDX2SEXP\n")); */
     return SC_PROXY_ERR_UNSUPPORTEDTYPE;
   }
   /*  RPROXY_TRACE(printf("ok BDX2SEXP\n")); */
@@ -562,14 +589,15 @@ int R_Proxy_set_symbol (char const* pSymbol,BDX_Data const* pData)
   lSymbol = install ((char*) pSymbol);
 
   /* and set the data to the symbol */
-  setVar(lSymbol,lData,R_GlobalEnv);
+  setVar(lSymbol, lData, R_GlobalEnv);
 
   return SC_PROXY_OK;
 }
 
 int R_Proxy_term ()
 {
-  end_Rmainloop();
+  /* end_Rmainloop(); note, this never returns */
+  Rf_endEmbeddedR(0);
 
   return SC_PROXY_OK;
 }

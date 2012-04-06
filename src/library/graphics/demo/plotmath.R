@@ -1,8 +1,7 @@
+require(datasets)
 require(graphics)
-if(dev.cur() <= 1) get(getOption("device"))()
+opar <- par(ask = dev.interactive(orNone = TRUE))
 
-opar <- par(ask = interactive() &&
-            (.Device %in% c("X11", "GTK", "gnome", "windows","quartz")))
 
 ## --- "math annotation" in plots :
 
@@ -55,6 +54,7 @@ draw.plotmath.cell(expression(x / y), i, nr); i <- i + 1
 draw.plotmath.cell(expression(x %+-% y), i, nr); i <- i + 1
 draw.plotmath.cell(expression(x %/% y), i, nr); i <- i + 1
 draw.plotmath.cell(expression(x %*% y), i, nr); i <- i + 1
+draw.plotmath.cell(expression(x %.% y), i, nr); i <- i + 1
 draw.plotmath.cell(expression(-x), i, nr); i <- i + 1
 draw.plotmath.cell(expression(+x), i, nr); i <- i + 1
 draw.title.cell("Sub/Superscripts", i, nr); i <- i + 1

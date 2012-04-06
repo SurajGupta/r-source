@@ -100,7 +100,7 @@ guessEncoding <- function(family)
                           "CP1251" = "CP1251.enc", # Cyrillic
                           "WinAnsi.enc")
                },
-               { lc <- localeToCharset()
+               { lc <- utils::localeToCharset()
                  if(length(lc) == 1)
                      switch(lc,
                             "ISO8859-1" = "ISOLatin1.enc",
@@ -126,12 +126,26 @@ guessEncoding <- function(family)
 
 ##--> source in devPS.c :
 
-postscript <- function (file = ifelse(onefile,"Rplots.ps", "Rplot%03d.ps"),
-                        onefile = TRUE, family,
-                        title = "R Graphics Output",
-                        fonts = NULL, ...)
+postscript <- function(file = ifelse(onefile, "Rplots.ps", "Rplot%03d.ps"),
+                       onefile = TRUE, family,
+                       title = "R Graphics Output", fonts = NULL,
+                       encoding, bg, fg,
+                       width, height, horizontal, pointsize,
+                       paper, pagecentre, print.it, command)
 {
-    new <- list(onefile=onefile, ...)# eval
+    new <- list(onefile = onefile)
+    if(!missing(paper)) new$paper <- paper
+    if(!missing(encoding)) new$encoding <- encoding
+    if(!missing(bg)) new$bg <- bg
+    if(!missing(fg)) new$fg <- fg
+    if(!missing(width)) new$width <- width
+    if(!missing(height)) new$height <- height
+    if(!missing(horizontal)) new$horizontal <- horizontal
+    if(!missing(pointsize)) new$pointsize <- pointsize
+    if(!missing(pagecentre)) new$pagecentre <- pagecentre
+    if(!missing(print.it)) new$print.it <- print.it
+    if(!missing(command)) new$command <- command
+
     old <- check.options(new = new, envir = .PSenv,
                          name.opt = ".PostScript.Options",
 			 reset = FALSE, assign.opt = FALSE)
@@ -164,7 +178,10 @@ postscript <- function (file = ifelse(onefile,"Rplots.ps", "Rplot%03d.ps"),
             ## and pass in a device-independent font name.
             ## NOTE that in order to match, we need both family name
             ## and encoding to match.
-            matchFont(postscriptFonts(family)[[1]], old$encoding)
+            pf <- postscriptFonts(family)[[1]]
+            if(is.null(pf))
+              stop(gettextf("unknown family '%s'", family), domain = NA)
+            matchFont(pf, old$encoding)
         } else
             stop("invalid 'family' argument")
         old$family <- family
@@ -194,13 +211,19 @@ xfig <- function (file = ifelse(onefile,"Rplots.fig", "Rplot%03d.fig"),
     invisible()
 }
 
-pdf <- function (file = ifelse(onefile, "Rplots.pdf", "Rplot%03d.pdf"),
-                 width = 6, height = 6, onefile = TRUE, family,
-                 title = "R Graphics Output", fonts = NULL, version="1.1",
-                 paper = "special", ...)
+pdf <- function(file = ifelse(onefile, "Rplots.pdf", "Rplot%03d.pdf"),
+                width = 6, height = 6, onefile = TRUE, family = "Helvetica",
+                title = "R Graphics Output", fonts = NULL, version = "1.1",
+                paper = "special", encoding, bg, fg, pointsize, pagecentre)
 {
-    # paper explicit because "special" (not "default") by default
-    new <- list(onefile=onefile, paper=paper, ...)# eval
+    new <- list(onefile = onefile)
+    new$paper <- paper
+    if(!missing(encoding)) new$encoding <- encoding
+    if(!missing(bg)) new$bg <- bg
+    if(!missing(fg)) new$fg <- fg
+    if(!missing(pointsize)) new$pointsize <- pointsize
+    if(!missing(pagecentre)) new$pagecentre <- pagecentre
+
     old <- check.options(new = new, envir = .PSenv,
                          name.opt = ".PostScript.Options",
 			 reset = FALSE, assign.opt = FALSE)
@@ -228,7 +251,10 @@ pdf <- function (file = ifelse(onefile, "Rplots.pdf", "Rplot%03d.pdf"),
             ## and pass in a device-independent font name.
             ## NOTE that in order to match, we need both family name
             ## and encoding to match.
-            matchFont(pdfFonts(family)[[1]], old$encoding)
+            pf <- pdfFonts(family)[[1]]
+            if(is.null(pf))
+              stop(gettextf("unknown family '%s'", family), domain = NA)
+            matchFont(pf, old$encoding)
         } else
             stop("invalid 'family' argument")
         old$family <- family
@@ -422,8 +448,7 @@ CIDFont <- function(family, cmap, cmapEncoding, pdfresource="")
 # Deprecated in favour of Type1Font()
 postscriptFont <- function(family, metrics, encoding="default")
 {
-    .Deprecated("Type1Font")
-    Type1Font(family, metrics, encoding)
+    .Defunct("Type1Font")
 }
 
 

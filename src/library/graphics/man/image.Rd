@@ -19,7 +19,7 @@ image(x, \dots)
     is used for \code{z}.}
   \item{z}{a matrix containing the values to be plotted (\code{NA}s are
     allowed).  Note that \code{x} can be used instead of \code{z} for
-    convenience.}    
+    convenience.}
   \item{zlim}{the minimum and maximum \code{z} values for which colors
     should be plotted, defaulting to the range of the finite values of
     \code{z}. Each of the given colors will be used to color an
@@ -44,9 +44,8 @@ image(x, \dots)
     breakpoint than colour.}
   \item{oldstyle}{logical. If true the midpoints of the colour intervals
     are equally spaced, and \code{zlim[1]} and \code{zlim[2]} were taken
-    to be midpoints. (This was the default prior to \R 1.1.0.)
-    The current default is to have colour intervals of equal lengths
-    between the limits.}
+    to be midpoints.  The default is to have colour intervals of equal
+    lengths between the limits.}
   \item{\dots}{graphical parameters for \code{\link{plot}} may also be
     passed as arguments to this function, as can the plot aspect ratio
     \code{asp} and \code{axes} (see \code{\link{plot.window}}).}
@@ -95,6 +94,8 @@ image(x, \dots)
   \code{\link{filled.contour}} or \code{\link{heatmap}} which can
   look nicer (but are less modular),
   \code{\link{contour}};
+  The \pkg{lattice} equivalent of \code{image} is
+  \code{\link[lattice]{levelplot}}.
 
   \code{\link{heat.colors}}, \code{\link{topo.colors}},
   \code{\link{terrain.colors}}, \code{\link{rainbow}},
@@ -109,7 +110,7 @@ image(z, axes = FALSE, main = "Math can be beautiful ...",
 contour(z, add = TRUE, drawlabels = FALSE)
 
 # Volcano data visualized as matrix. Need to transpose and flip
-# matrix horizontally. 
+# matrix horizontally.
 image(t(volcano)[ncol(volcano):1,])
 
 # A prettier display of the volcano

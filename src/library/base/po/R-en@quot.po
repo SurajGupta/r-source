@@ -22,10 +22,10 @@
 #
 msgid ""
 msgstr ""
-"Project-Id-Version: R 2.3.1\n"
+"Project-Id-Version: R 2.4.0\n"
 "Report-Msgid-Bugs-To: bugs@r-project.org\n"
-"POT-Creation-Date: 2006-05-29 07:58\n"
-"PO-Revision-Date: 2006-05-29 07:58\n"
+"POT-Creation-Date: 2006-09-26 14:33\n"
+"PO-Revision-Date: 2006-09-26 14:33\n"
 "Last-Translator: Automatically generated\n"
 "Language-Team: none\n"
 "MIME-Version: 1.0\n"
@@ -234,8 +234,8 @@ msgstr "invalid ‘row.names’ length"
 msgid "duplicate 'row.names' are not allowed"
 msgstr "duplicate ‘row.names’ are not allowed"
 
-msgid "missing 'row.names' are not allowed"
-msgstr "missing ‘row.names’ are not allowed"
+msgid "missing values in 'row.names' are not allowed"
+msgstr "missing values in ‘row.names’ are not allowed"
 
 msgid "invalid 'dimnames' given for data frame"
 msgstr "invalid ‘dimnames’ given for data frame"
@@ -248,6 +248,9 @@ msgstr "invalid 'row.names', length %d for a data frame with %d rows"
 
 msgid "supplied %d row names for %d rows"
 msgstr "supplied %d row names for %d rows"
+
+msgid "options('stringsAsFactors') not set to TRUE or FALSE"
+msgstr "options('stringsAsFactors') not set to TRUE or FALSE"
 
 msgid "mismatch of row names in arguments of 'data.frame', item %d"
 msgstr "mismatch of row names in arguments of 'data.frame', item %d"
@@ -651,6 +654,9 @@ msgstr "‘max.distance’ components must be non-negative"
 msgid "matrix should be square"
 msgstr "matrix should be square"
 
+msgid "'object' must be a list"
+msgstr "‘object’ must be a list"
+
 msgid "This is R %s, package '%s' needs %s %s"
 msgstr "This is R %s, package ‘%s’ needs %s %s"
 
@@ -674,6 +680,18 @@ msgstr "See the Note in ?library"
 
 msgid "Attaching package: '%s'"
 msgstr "Attaching package: ‘%s’"
+
+msgid "The following object(s) are masked"
+msgstr "The following object(s) are masked"
+
+msgid "_by_"
+msgstr "_by_"
+
+msgid "from"
+msgstr "from"
+
+msgid ":"
+msgstr ":"
 
 msgid "package '%s' has been merged into '%s'"
 msgstr "package ‘%s’ has been merged into ‘%s’"
@@ -797,11 +815,21 @@ msgstr "package ‘%s’ %s is loaded, but %s %s is required by ‘%s’"
 msgid "input has been corrupted, with LF replaced by CR"
 msgstr "input has been corrupted, with LF replaced by CR"
 
+msgid ""
+"file '%s' has magic number '%s'\n"
+"   Use of save versions prior to 2 is deprecated"
+msgstr ""
+"file ‘%s’ has magic number ‘%s’\n"
+"   Use of save versions prior to 2 is deprecated"
+
 msgid "bad 'file' argument"
 msgstr "bad ‘file’ argument"
 
 msgid "'file' must be specified"
 msgstr "‘file’ must be specified"
+
+msgid "Use of save versions prior to 2 is deprecated"
+msgstr "Use of save versions prior to 2 is deprecated"
 
 msgid "'file' must be non-empty string"
 msgstr "‘file’ must be non-empty string"
@@ -875,6 +903,9 @@ msgstr "no rows to match"
 msgid "'by.x' and 'by.y' specify different numbers of columns"
 msgstr "‘by.x’ and ‘by.y’ specify different numbers of columns"
 
+msgid "(loaded the methods namespace)"
+msgstr "(loaded the methods namespace)"
+
 msgid ""
 "Tracing functions requires the methods package, but unable to load methods "
 "namespace"
@@ -882,8 +913,17 @@ msgstr ""
 "Tracing functions requires the methods package, but unable to load methods "
 "namespace"
 
+msgid "Expected a single logical value for the S4 object state"
+msgstr "Expected a single logical value for the S4 object state"
+
 msgid "'%s' is not an exported object from 'namespace:%s'"
 msgstr "‘%s’ is not an exported object from ‘namespace:%s’"
+
+msgid "package '%s' has no name space and"
+msgstr "package ‘%s’ has no name space and"
+
+msgid "is not on the search path"
+msgstr "is not on the search path"
 
 msgid "%s failed in 'attachNamespace'"
 msgstr "%s failed in ‘attachNamespace’"
@@ -930,6 +970,15 @@ msgstr "in ‘%s’ classes for export not defined: %s"
 msgid "in '%s' methods for export not found: %s"
 msgstr "in ‘%s’ methods for export not found: %s"
 
+msgid "No methods table for \""
+msgstr "No methods table for \""
+
+msgid "\""
+msgstr "\""
+
+msgid "Failed to find metadata object for \"%s\""
+msgstr "Failed to find metadata object for “%s”"
+
 msgid "in '%s' methods specified for export, but none defined: %s"
 msgstr "in ‘%s’ methods specified for export, but none defined: %s"
 
@@ -945,8 +994,8 @@ msgstr "name space ‘%s’ is loaded"
 msgid "%s failed in unloadNamespace(%s)"
 msgstr "%s failed in unloadNamespace(%s)"
 
-msgid "name space '%s' is still used by:"
-msgstr "name space ‘%s’ is still used by:"
+msgid "name space '%s' is still used by: '%s'"
+msgstr "name space ‘%s’ is still used by: ‘%s’"
 
 msgid "imperative name space directives are disabled"
 msgstr "imperative name space directives are disabled"
@@ -971,6 +1020,9 @@ msgstr "cannot import into a sealed name space"
 
 msgid "invalid import target"
 msgstr "invalid import target"
+
+msgid "Found methods to import for function \"%s\" but not the generic itself"
+msgstr "Found methods to import for function “%s” but not the generic itself"
 
 msgid "requested 'methods' objects not found in environment/package '%s': %s"
 msgstr "requested ‘methods’ objects not found in environment/package '%s': %s"
@@ -1176,6 +1228,13 @@ msgstr "solve.default called with a “qr” object: use ‘qr.solve’"
 msgid "singular matrix 'a' in solve"
 msgstr "singular matrix ‘a’ in solve"
 
+msgid ""
+"'decreasing' must be a length-1 logical vector.\n"
+"Did you intend to set 'partial'?"
+msgstr ""
+"‘decreasing’ must be a length-1 logical vector.\n"
+"Did you intend to set 'partial'?"
+
 msgid "'index.return' only for non-factors"
 msgstr "‘index.return’ only for non-factors"
 
@@ -1194,6 +1253,13 @@ msgstr "non-finite ‘partial’"
 msgid "argument lengths differ"
 msgstr "argument lengths differ"
 
+msgid ""
+"'x' must be atomic for 'sort.list'\n"
+"Have you called 'sort' on a list?"
+msgstr ""
+"‘x’ must be atomic for ‘sort.list’\n"
+"Have you called ‘sort’ on a list?"
+
 msgid "method=\"quick\" is only for numeric 'x'"
 msgstr "method=“quick” is only for numeric ‘x’"
 
@@ -1211,6 +1277,9 @@ msgstr "unable to find a plausible encoding"
 
 msgid "'chdir = TRUE' makes no sense for a URL"
 msgstr "‘chdir = TRUE’ makes no sense for a URL"
+
+msgid "cannot 'chdir' as current directory is unknown"
+msgstr "cannot ‘chdir’ as current directory is unknown"
 
 msgid "'chdir = TRUE' makes no sense for a connection"
 msgstr "‘chdir = TRUE’ makes no sense for a connection"
@@ -1263,18 +1332,6 @@ msgstr "cannot coerce into a table"
 msgid "'x' is not an array"
 msgstr "‘x’ is not an array"
 
-msgid "invalid argument 'n'"
-msgstr "invalid argument ‘n’"
-
-msgid "invalid argument 'r'"
-msgstr "invalid argument ‘r’"
-
-msgid "invalid argument 'c'"
-msgstr "invalid argument ‘c’"
-
-msgid "arguments 'r' and 'c' must have the same sums"
-msgstr "arguments ‘r’ and ‘c’ must have the same sums"
-
 msgid "'bin' must be numeric or a factor"
 msgstr "‘bin’ must be numeric or a factor"
 
@@ -1301,6 +1358,9 @@ msgstr "No traceback available"
 
 msgid "argument to 'which' is not logical"
 msgstr "argument to ‘which’ is not logical"
+
+msgid "'quote' must be 'TRUE', 'FALSE' or numeric"
+msgstr "‘quote’ must be 'TRUE', ‘FALSE’ or numeric"
 
 msgid "invalid numbers in 'quote'"
 msgstr "invalid numbers in ‘quote’"

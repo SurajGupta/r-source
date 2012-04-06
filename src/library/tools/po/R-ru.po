@@ -7,10 +7,10 @@
 #
 msgid ""
 msgstr ""
-"Project-Id-Version: R 2.3.0\n"
+"Project-Id-Version: R 2.4.0\n"
 "Report-Msgid-Bugs-To: bugs@r-project.org\n"
-"POT-Creation-Date: 2006-01-24 11:58\n"
-"PO-Revision-Date: 2006-04-15 23:41-0800\n"
+"POT-Creation-Date: 2006-09-19 11:55\n"
+"PO-Revision-Date: 2006-09-25 04:17-0800\n"
 "Last-Translator: Alexey Shipunov <iit512@yandex.ru>\n"
 "Language-Team: Russian\n"
 "MIME-Version: 1.0\n"
@@ -26,9 +26,6 @@ msgstr "не могу определить 'package' или 'dir'"
 
 msgid "directory '%s' does not exist"
 msgstr "папка '%s' не существует"
-
-msgid "cannot source package code"
-msgstr "не могу выполнить код пакета"
 
 msgid "neither code nor data objects found"
 msgstr "ни кода, ни данных не найдено"
@@ -57,20 +54,32 @@ msgstr "папка '%s' не содержит Rd-исходников"
 msgid "Functions/methods with usage in documentation object '%s' but not in code:"
 msgstr "Функции/методы использованы в объекте документации '%s', но не в коде:"
 
+msgid "Argument names in code not in docs:"
+msgstr "Имена аргументов в коде, но не в документации:"
+
+msgid "Argument names in docs not in code:"
+msgstr "Имена аргументов в документации, но не в коде:"
+
+msgid "Mismatches in argument names (first 3):"
+msgstr "Несоответствия в именах аргументов (первые 3):"
+
+msgid "Mismatches in argument names:"
+msgstr "Несоответствия в именах аргументов:"
+
+msgid "Mismatches in argument default values (first 3):"
+msgstr "Несоответствия в значениях аргументов по умолчанию (первые 3): "
+
+msgid "Mismatches in argument default values:"
+msgstr "Несоответствия в значениях аргументов по умолчанию:"
+
 msgid "Codoc mismatches from documentation object '%s':"
 msgstr "Несоответствия структуры в объекте документации '%s':"
 
 msgid "Code: %s"
 msgstr "Код: %s"
 
-msgid "code"
-msgstr "код"
-
 msgid "Docs: %s"
 msgstr "Документы: %s"
-
-msgid "docs"
-msgstr "документы"
 
 msgid "S4 class codoc mismatches from documentation object '%s':"
 msgstr "Несоответствия структуры S4-класса в объекте документации '%s':"
@@ -80,6 +89,12 @@ msgstr "Слоты для класса '%s'"
 
 msgid "name"
 msgstr "имя"
+
+msgid "code"
+msgstr "код"
+
+msgid "docs"
+msgstr "документы"
 
 msgid "Data codoc mismatches from documentation object '%s':"
 msgstr "Несоответствия структуры данных в объекте документации '%s':"
@@ -147,8 +162,8 @@ msgstr "Бывший стандартный пакет требуется, который сейчас вышел из употребления
 msgid "Vignette dependencies not required:"
 msgstr "Зависимости очерка не требуются:"
 
-msgid "Vignette dependencies (\\VignetteDepends{} entries) must be contained in the DESCRIPTION Depends/Suggests/Imports entries."
-msgstr "Зависимости очерка (элементы \\VignetteDepends{}) должны содержаться в пунктах 'Depends/Suggests/Imports' файла DESCRIPTION."
+msgid "Vignette dependencies (\\VignetteDepends{} entries) must be contained in the DESCRIPTION Depends/Suggests entries."
+msgstr "Зависимости очерка (элементы \\VignetteDepends{}) должны содержаться в пунктах 'Depends/Suggests' файла DESCRIPTION."
 
 msgid "Namespace dependencies not required:"
 msgstr "Определения пространства имен не требуются:"
@@ -206,8 +221,8 @@ msgstr "Rd-файлы с неизвестными разделами:"
 msgid "Rd files with non-standard keywords:"
 msgstr "Rd-файлы с нестандартными ключевыми словами:"
 
-msgid "Each '\\keyword' entry should specify one of the standard keywords (as listed in file 'KEYWORDS.db' in the 'doc' subdirectory of the R home directory)."
-msgstr "Каждый вход '\\keyword' должен определять одно из стандартных ключевых слов (как перечислено в файле 'KEYWORDS.db' в папке 'doc', находящейся в домашней папке R)."
+msgid "Each '\\keyword' entry should specify one of the standard keywords (as listed in file 'KEYWORDS' in the R documentation directory)."
+msgstr "Каждый вход '\\keyword' должен определять одно из стандартных ключевых слов (как перечислено в файле 'KEYWORDS' в папке документации R)."
 
 msgid "Rd files with duplicated alias '%s':"
 msgstr "Rd-файлы с двойным псевдонимом '%s':"
@@ -257,8 +272,8 @@ msgstr "Неправильно созданная версия пакета."
 msgid "Malformed maintainer field."
 msgstr "Плохо сформированное поле разработчика."
 
-msgid "Malformed Depends or Suggests or Imports field."
-msgstr "Плохо сформированное поле Depends или Suggests или Imports."
+msgid "Malformed Depends or Suggests or Imports or Enhances field."
+msgstr "Плохо сформированное поле Depends, или Suggests, или Imports, или Enhances."
 
 msgid "Offending entries:"
 msgstr "Неправильные пункты:"
@@ -295,6 +310,24 @@ msgstr "Непереносимые флаги в переменной '%s':"
 
 msgid "Missing link(s) in documentation object '%s':"
 msgstr "Пропущенные связ(и) с объектом документации '%s':"
+
+msgid "found %s"
+msgstr "найден %s"
+
+msgid "package 'methods' is used but not declared"
+msgstr "пакет 'methods' используется, но не объявлен"
+
+msgid "'::' or ':::' imports not declared from:"
+msgstr "не объявлен импорт '::' или ':::' из:"
+
+msgid "'library' or 'require' calls not declared from:"
+msgstr "не объявлены вызовы 'library' или 'require' из:"
+
+msgid "Found possibly global T or F in the following functions:"
+msgstr "Найдены возможные глобальные T или F в следующих функциях:"
+
+msgid "Found possibly global T or F in the following Rd example files:"
+msgstr "Найдены возможные глобальные T или F в следующих Rd-файлах примеров:"
 
 msgid "argument 'lines' must be a character vector"
 msgstr "аргумент 'lines' должен быть текстовым вектором"
@@ -502,6 +535,9 @@ msgstr "запуск 'texi2dvi' на '%s' не удался"
 
 msgid "file '%s' is not in valid DCF format"
 msgstr "файл '%s' не является правильным форматом DCF"
+
+msgid "cannot source package code"
+msgstr "не могу выполнить код пакета"
 
 msgid "Call sequence:"
 msgstr "Последовательность вызова:"

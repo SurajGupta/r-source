@@ -4,8 +4,8 @@
  *  Copyright (C) 1999-2006   The R Development Core Team.
  *
  *  This program is free software; you can redistribute it and/or modify
- *  it under the terms of the GNU Lesser General Public License as published by
- *  the Free Software Foundation; either version 2.1 of the License, or
+ *  it under the terms of the GNU General Public License as published by
+ *  the Free Software Foundation; either version 2 of the License, or
  *  (at your option) any later version.
  *
  *  This program is distributed in the hope that it will be useful,
@@ -13,7 +13,7 @@
  *  MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
  *  GNU Lesser General Public License for more details.
  *
- *  You should have received a copy of the GNU Lesser General Public License
+ *  You should have received a copy of the GNU General Public License
  *  along with this program; if not, write to the Free Software
  *  Foundation, Inc., 51 Franklin Street, Fifth Floor, Boston, MA 02110-1301  USA
  */
@@ -38,14 +38,6 @@
 /* define inline-able functions */
 
 
-/* from memory.c */
-
-/* "allocString" allocate a string on the (vector) heap. */
-INLINE_FUN SEXP allocString(int length)
-{
-    return allocVector(CHARSXP, length);
-}
-
 /* from dstruct.c */
 
 /* mkChar - make a character (CHARSXP) variable */
@@ -59,7 +51,7 @@ INLINE_FUN SEXP mkChar(const char *name)
 
 /*  length - length of objects  */
 
-int envlength(SEXP rho);
+int Rf_envlength(SEXP rho);
 
 INLINE_FUN R_len_t length(SEXP s)
 {
@@ -87,7 +79,7 @@ INLINE_FUN R_len_t length(SEXP s)
 	}
 	return i;
     case ENVSXP:
-	return envlength(s);
+	return Rf_envlength(s);
     default:
 	return 1;
     }
@@ -250,6 +242,27 @@ INLINE_FUN Rboolean isObject(SEXP s)
 {
     return OBJECT(s);/* really '1-bit unsigned int' */
 }
+
+/*  The following should work but as of 06/09/04 it generates warnings about 
+    undeclared IS_S4_OBJECT, in spite of being apparently identical to the handling 
+    of isObject() above ------
+INLINE_FUN Rboolean isS4(SEXP s)
+{
+  return IS_S4_OBJECT(s);
+}
+
+INLINE_FUN SEXP asS4(SEXP s, Rboolean flag)
+{
+    if(flag == IS_S4_OBJECT(s))
+        return s;
+    if(NAMED(s) == 2)
+        s = duplicate(s);
+    if(flag) SET_S4_OBJECT(s);
+    else UNSET_S4_OBJECT(s);
+    return s;
+}
+
+*/
 
 INLINE_FUN Rboolean inherits(SEXP s, char *name)
 {
@@ -491,10 +504,12 @@ INLINE_FUN Rboolean isNumeric(SEXP s)
     }
 }
 
+/* As from R 2.4.0 we check that the value is allowed. */
 INLINE_FUN SEXP ScalarLogical(int x)
 {
     SEXP ans = allocVector(LGLSXP, 1);
-    INTEGER(ans)[0] = x;
+    if (x == NA_LOGICAL) LOGICAL(ans)[0] = NA_LOGICAL;
+    else LOGICAL(ans)[0] = (x != 0);
     return ans;
 }
 
@@ -561,108 +576,6 @@ INLINE_FUN Rboolean isVectorizable(SEXP s)
     else return FALSE;
 }
 
-void UNIMPLEMENTED_TYPE(char *s, SEXP x);
-
-/* int, not Rboolean, for NA_LOGICAL : */
-INLINE_FUN int asLogical(SEXP x)
-{
-    int warn = 0;
-
-    if (isVectorAtomic(x)) {
-	if (LENGTH(x) < 1)
-	    return NA_LOGICAL;
-	switch (TYPEOF(x)) {
-	case LGLSXP:
-	    return LOGICAL(x)[0];
-	case INTSXP:
-	    return LogicalFromInteger(INTEGER(x)[0], &warn);
-	case REALSXP:
-	    return LogicalFromReal(REAL(x)[0], &warn);
-	case CPLXSXP:
-	    return LogicalFromComplex(COMPLEX(x)[0], &warn);
-	default:
-	    UNIMPLEMENTED_TYPE("asLogical", x);
-	}
-    }
-    return NA_LOGICAL;
-}
-
-INLINE_FUN int asInteger(SEXP x)
-{
-    int warn = 0, res;
-
-    if (isVectorAtomic(x) && LENGTH(x) >= 1) {
-	switch (TYPEOF(x)) {
-	case LGLSXP:
-	    return IntegerFromLogical(LOGICAL(x)[0], &warn);
-	case INTSXP:
-	    return INTEGER(x)[0];
-	case REALSXP:
-	    res = IntegerFromReal(REAL(x)[0], &warn);
-	    CoercionWarning(warn);
-	    return res;
-	case CPLXSXP:
-	    res = IntegerFromComplex(COMPLEX(x)[0], &warn);
-	    CoercionWarning(warn);
-	    return res;
-	default:
-	    UNIMPLEMENTED_TYPE("asInteger", x);
-	}
-    }
-    return NA_INTEGER;
-}
-
-INLINE_FUN double asReal(SEXP x)
-{
-    int warn = 0;
-    double res;
-
-    if (isVectorAtomic(x) && LENGTH(x) >= 1) {
-	switch (TYPEOF(x)) {
-	case LGLSXP:
-	    res = RealFromLogical(LOGICAL(x)[0], &warn);
-	    CoercionWarning(warn);
-	    return res;
-	case INTSXP:
-	    res = RealFromInteger(INTEGER(x)[0], &warn);
-	    CoercionWarning(warn);
-	    return res;
-	case REALSXP:
-	    return REAL(x)[0];
-	case CPLXSXP:
-	    res = RealFromComplex(COMPLEX(x)[0], &warn);
-	    CoercionWarning(warn);
-	    return res;
-	default:
-	    UNIMPLEMENTED_TYPE("asReal", x);
-	}
-    }
-    return NA_REAL;
-}
-
-INLINE_FUN Rcomplex asComplex(SEXP x)
-{
-    int warn = 0;
-    Rcomplex z;
-
-    z.r = NA_REAL;
-    z.i = NA_REAL;
-    if (isVectorAtomic(x) && LENGTH(x) >= 1) {
-	switch (TYPEOF(x)) {
-	case LGLSXP:
-	    return ComplexFromLogical(LOGICAL(x)[0], &warn);
-	case INTSXP:
-	    return ComplexFromInteger(INTEGER(x)[0], &warn);
-	case REALSXP:
-	    return ComplexFromReal(REAL(x)[0], &warn);
-	case CPLXSXP:
-	    return COMPLEX(x)[0];
-	default:
-	    UNIMPLEMENTED_TYPE("asComplex", x);
-	}
-    }
-    return z;
-}
 
 /* from gram.y */
 

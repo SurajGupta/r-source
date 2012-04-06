@@ -3,7 +3,7 @@ contr.poly <- function (n, scores = 1:n, contrasts = TRUE)
     make.poly <- function(n, scores)
     {
 	y <- scores - mean(scores)
-	X <- outer(y, seq(length=n) - 1, "^")
+	X <- outer(y, seq_len(n) - 1, "^")
 	QR <- qr(X)
 	z <- QR$qr
 	z <- z *(row(z) == col(z))
@@ -46,11 +46,11 @@ poly <- function(x, ..., degree = 1, coefs = NULL, raw = FALSE)
     if(nd <- length(dots)) {
         if(nd == 1 && length(dots[[1]]) == 1) # unnamed degree
             degree <- dots[[1]]
-        else return(polym(x, ..., degree = degree))
+        else return(polym(x, ..., degree = degree, raw = raw))
     }
     if(is.matrix(x)) {
         m <- unclass(as.data.frame(cbind(x, ...)))
-        return(do.call("polym", c(m, degree=degree)))
+        return(do.call("polym", c(m, degree = degree, raw = raw)))
     }
     if(degree < 1)
         stop("'degree' must be at least 1")
@@ -70,7 +70,7 @@ poly <- function(x, ..., degree = 1, coefs = NULL, raw = FALSE)
             stop("'degree' must be less than number of points")
         xbar <- mean(x)
         x <- x - xbar
-        X <- outer(x, seq(length = n) - 1, "^")
+        X <- outer(x, seq_len(n) - 1, "^")
         QR <- qr(X)
         z <- QR$qr
         z <- z * (row(z) == col(z))
@@ -106,7 +106,7 @@ poly <- function(x, ..., degree = 1, coefs = NULL, raw = FALSE)
 predict.poly <- function(object, newdata, ...)
 {
     if(missing(newdata)) return(object)
-    if(is.null(coefs <- attr(object, "coefs")))
+    if(is.null(attr(object, "coefs")))
        poly(newdata, degree = max(attr(object, "degree")), raw = TRUE)
     else
        poly(newdata, degree = max(attr(object, "degree")),

@@ -1383,7 +1383,10 @@ static encodinglist addDeviceEncoding(encodinginfo encoding,
  * R database is "default"
  * (i.e., the graphics engine font family encoding is unspecified)
  * If it is "default" then check that the loaded encoding is the
- * same as the encoding we want.
+ * same as the encoding we want.  A matching encoding is defined
+ * as one which leads to the same iconvname (see seticonvName()).
+ * This could perhaps be made more rigorous by actually looking inside 
+ * the relevant encoding file for the encoding name.
  *
  * If the encoding we want is NULL, then we just don't care.
  *
@@ -1412,9 +1415,12 @@ static type1fontfamily findLoadedFont(char *name, char *encoding,
 	if (found) {
 	    font = fontlist->family;
 	    if (encoding) {
+                char encconvname[50]; 
 		char *encname = getFontEncoding(name, fontdbname);
+                seticonvName(encoding, encconvname);
 		if (!strcmp(encname, "default") &&
-		    strcmp(fontlist->family->encoding->name, encoding)) {
+		    strcmp(fontlist->family->encoding->convname, 
+                           encconvname)) {
 		    font = NULL;
 		    found = 0;
 		}
@@ -4539,14 +4545,17 @@ static void XFig_NewPage(R_GE_gcontext *gc,
 	if(pd->pageno > 1) XF_EndPage(pd->tmpfp);
     } else {
 	char buffer[CHUNK];
-	size_t nread;
+	size_t nread, res;
 	if(pd->pageno == 1) return;
 	XF_FileTrailer(pd->tmpfp);
 	fclose(pd->tmpfp);
 	pd->tmpfp = R_fopen(pd->tmpname, "r");
 	while(1) {
 	    nread = fread(buffer, 1, CHUNK, pd->tmpfp);
-	    if(nread > 0) fwrite(buffer, 1, nread, pd->psfp);
+	    if(nread > 0) {
+		res = fwrite(buffer, 1, nread, pd->psfp);
+		if(res != nread) error(_("write failed"));
+	    }
 	    if(nread < CHUNK) break;
 	}
 	fclose(pd->tmpfp);
@@ -4585,7 +4594,7 @@ static void XFig_NewPage(R_GE_gcontext *gc,
 static void XFig_Close(NewDevDesc *dd)
 {
     char buf[CHUNK];
-    size_t nread;
+    size_t nread, res;
     XFigDesc *pd = (XFigDesc *) dd->deviceSpecific;
 
     XF_FileTrailer(pd->tmpfp);
@@ -4593,7 +4602,10 @@ static void XFig_Close(NewDevDesc *dd)
     pd->tmpfp = R_fopen(pd->tmpname, "r");
     while(1) {
 	nread = fread(buf, 1, CHUNK, pd->tmpfp);
-	if(nread > 0) fwrite(buf, 1, nread, pd->psfp);
+	if(nread > 0) {
+	    res = fwrite(buf, 1, nread, pd->psfp);
+	    if(res != nread) error(_("write failed"));
+	}
 	if(nread < CHUNK) break;
     }
     fclose(pd->tmpfp);
@@ -5516,10 +5528,14 @@ static int fillAlphaIndex(int alpha, PDFDesc *pd) {
 
 /*
  * Does the version support alpha transparency?
+ * As from R 2.4.0 bump the version number so it does.
  */
 static int alphaVersion(PDFDesc *pd) {
-    return (pd->versionMajor > 1  ||
-	    (pd->versionMajor == 1 && pd->versionMinor >= 4));
+    if(pd->versionMajor == 1 && pd->versionMinor < 4) {
+	pd->versionMinor  = 4;
+	warning(_("increasing the PDF version to 1.4"));
+    }
+    return 1;
 }
 
 /*
@@ -5535,13 +5551,13 @@ static void PDF_SetLineColor(int color, NewDevDesc *dd)
     PDFDesc *pd = (PDFDesc *) dd->deviceSpecific;
 
     if(color != pd->current.col) {
-	if (alphaVersion(pd)) {
+	unsigned int alpha = R_ALPHA(color);
+	if (0 < alpha && alpha < 255 && alphaVersion(pd)) {
 	    /*
 	     * Apply graphics state parameter dictionary
 	     * to set alpha
 	     */
-	    fprintf(pd->pdffp, "/GS%i gs\n",
-		    colAlphaIndex(R_ALPHA(color), pd));
+	    fprintf(pd->pdffp, "/GS%i gs\n", colAlphaIndex(alpha, pd));
 	}
 	fprintf(pd->pdffp, "%.3f %.3f %.3f RG\n",
 		R_RED(color)/255.0,
@@ -5555,13 +5571,13 @@ static void PDF_SetFill(int color, NewDevDesc *dd)
 {
     PDFDesc *pd = (PDFDesc *) dd->deviceSpecific;
     if(color != pd->current.fill) {
-	if (alphaVersion(pd)) {
+	unsigned int alpha = R_ALPHA(color);
+	if (0 < alpha && alpha < 255 && alphaVersion(pd)) {
 	    /*
 	     * Apply graphics state parameter dictionary
 	     * to set alpha
 	     */
-	    fprintf(pd->pdffp, "/GS%i gs\n",
-		    fillAlphaIndex(R_ALPHA(color), pd));
+	    fprintf(pd->pdffp, "/GS%i gs\n", fillAlphaIndex(alpha, pd));
 	}
 	fprintf(pd->pdffp, "%.3f %.3f %.3f rg\n",
 		   R_RED(color)/255.0,
@@ -5985,6 +6001,10 @@ static void PDF_endfile(PDFDesc *pd)
     cidnfonts = 0;
     if (pd->cidfonts) {
 	cidfontlist fontlist = pd->cidfonts;
+	if(pd->versionMajor == 1 && pd->versionMinor < 3) {
+	    pd->versionMinor  = 3;
+	    warning(_("increasing the PDF version to 1.3"));
+	}
 	while (fontlist) {
 	    for (i = 0; i < 4; i++) {
 		pd->pos[++pd->nobjs] = (int) ftell(pd->pdffp);
@@ -6065,6 +6085,9 @@ static void PDF_endfile(PDFDesc *pd)
 	    pd->nobjs+1, startxref);
     fprintf(pd->pdffp, "%%%%EOF\n");
 
+    /* now seek back and update the header */
+    rewind(pd->pdffp);
+    fprintf(pd->pdffp, "%%PDF-%i.%i\n", pd->versionMajor, pd->versionMinor);
     fclose(pd->pdffp);
 }
 
@@ -6145,7 +6168,7 @@ static void PDF_NewPage(R_GE_gcontext *gc,
 	    snprintf(buf, 512, pd->filename, pd->fileno + 1); /* file 1 to start */
 	    pd->pdffp = R_fopen(R_ExpandFileName(buf), "wb");
 	    if (!pd->pdffp)
-		error(_("cannot open 'pdf' file argument '%s'\n  please shut down the PDFdevice"), buf);
+		error(_("cannot open 'pdf' file argument '%s'\n  please shut down the PDF device"), buf);
 	    PDF_startfile(pd);
 	}
     }
@@ -6197,12 +6220,7 @@ static void PDF_Rect(double x0, double y0, double x1, double y1,
     PDFDesc *pd = (PDFDesc *) dd->deviceSpecific;
     int code;
 
-    /*
-     * Only try to do real transparency if version at least 1.4
-     */
-    if ((semiTransparent(gc->col) ||
-	 semiTransparent(gc->fill)) &&
-	alphaVersion(pd)) {
+    if (semiTransparent(gc->col) || semiTransparent(gc->fill)) {
 	if(pd->inText) textoff(pd);
 	PDF_SetFill(gc->fill, dd);
 	PDF_SetLineColor(gc->col, dd);
@@ -6240,15 +6258,13 @@ static void PDF_Circle(double x, double y, double r,
     /*
      * Only try to do real transparency if version at least 1.4
      */
-    if ((semiTransparent(gc->col) ||
-	 semiTransparent(gc->fill)) &&
-	alphaVersion(pd)) {
+    if (semiTransparent(gc->col) || semiTransparent(gc->fill)) {
 	PDF_SetFill(gc->fill, dd);
 	PDF_SetLineColor(gc->col, dd);
 	PDF_SetLineStyle(gc, dd);
 	/*
 	 * Due to possible bug in Acrobat Reader for rendering
-	 * semi-transparent text, only every draw Bezier curves
+	 * semi-transparent text, only ever draw Bezier curves
 	 * regardless of circle size.
 	 */
 	{
@@ -6319,16 +6335,10 @@ static void PDF_Line(double x1, double y1, double x2, double y2,
 {
     PDFDesc *pd = (PDFDesc *) dd->deviceSpecific;
 
-    /*
-     * Only try to do real transparency if version at least 1.4
-     */
-    if ((semiTransparent(gc->col) && alphaVersion(pd)) ||
-	(R_OPAQUE(gc->col))) {
-	PDF_SetLineColor(gc->col, dd);
-	PDF_SetLineStyle(gc, dd);
-	if(pd->inText) textoff(pd);
-	fprintf(pd->pdffp, "%.2f %.2f m %.2f %.2f l S\n", x1, y1, x2, y2);
-    }
+    PDF_SetLineColor(gc->col, dd);
+    PDF_SetLineStyle(gc, dd);
+    if(pd->inText) textoff(pd);
+    fprintf(pd->pdffp, "%.2f %.2f m %.2f %.2f l S\n", x1, y1, x2, y2);
 }
 
 static void PDF_Polygon(int n, double *x, double *y,
@@ -6342,9 +6352,7 @@ static void PDF_Polygon(int n, double *x, double *y,
     /*
      * Only try to do real transparency if version at least 1.4
      */
-    if ((semiTransparent(gc->col) ||
-	 semiTransparent(gc->fill)) &&
-	alphaVersion(pd)) {
+    if (semiTransparent(gc->col) || semiTransparent(gc->fill)) {
 	if(pd->inText) textoff(pd);
 	PDF_SetFill(gc->fill, dd);
 	PDF_SetLineColor(gc->col, dd);
@@ -6396,9 +6404,7 @@ static void PDF_Polyline(int n, double *x, double *y,
     /*
      * Only try to do real transparency if version at least 1.4
      */
-    if ((semiTransparent(gc->col) ||
-	 semiTransparent(gc->fill)) &&
-	alphaVersion(pd)) {
+    if (semiTransparent(gc->col) || semiTransparent(gc->fill)) {
 	if(pd->inText) textoff(pd);
 	PDF_SetLineColor(gc->col, dd);
 	PDF_SetLineStyle(gc, dd);
@@ -6452,27 +6458,46 @@ static int PDFfontNumber(char *family, int face, PDFDesc *pd)
 	     */
 	    num = 1000 + (cidfontIndex - 1)*5 + 1 + face;
 	else {
-	    /*
-	     * Try to load the font
-	     */
-	    fontfamily = addFont(family, 1, pd->encodings);
-	    if (fontfamily) {
-		if (addPDFDevicefont(fontfamily, pd, &fontIndex)) {
-		    num = (fontIndex - 1)*5 + 1 + face;
-		} else {
-		    fontfamily = NULL;
-		}
-	    } else {
-		cidfontfamily = addCIDFont(family, 1);
-		if (cidfontfamily) {
+            /*
+             * Check whether the font is loaded and, if not,
+             * load it.
+             */
+            fontfamily = findLoadedFont(family, 
+                                        pd->encodings->encoding->encpath, 
+                                        TRUE);
+            cidfontfamily = findLoadedCIDFont(family, TRUE);
+            if (!(fontfamily || cidfontfamily)) {
+                if (isType1Font(family, PDFFonts, NULL)) {
+                    fontfamily = addFont(family, TRUE, pd->encodings);
+                } else if (isCIDFont(family, PDFFonts, NULL)) {
+                    cidfontfamily = addCIDFont(family, TRUE);
+                } else {
+                    /*
+                     * Should NOT get here.
+                     */
+                    error(_("Invalid font type"));
+                }
+            }
+            /*
+             * Once the font is loaded, add it to the device's
+             * list of fonts.
+             */
+            if (fontfamily || cidfontfamily) {
+                if (isType1Font(family, PDFFonts, NULL)) {
+                    if (addPDFDevicefont(fontfamily, pd, &fontIndex)) {
+                        num = (fontIndex - 1)*5 + 1 + face;
+                    } else {
+                        fontfamily = NULL;
+                    }
+                } else /* (isCIDFont(family, PDFFonts)) */ {
 		    if (addPDFDeviceCIDfont(cidfontfamily, pd,
 					    &cidfontIndex)) {
 			num = 1000 + (cidfontIndex - 1)*5 + 1 + face;
 		    } else {
 			cidfontfamily = NULL;
 		    }
-		}
-	    }
+                }
+            }
 	}
 	if (!(fontfamily || cidfontfamily))
 	    error(_("Failed to find or load PDF font"));
@@ -6508,17 +6533,12 @@ static void PDFSimpleText(double x, double y, char *str,
     if(fabs(a) < 0.01) a = 0.0;
     if(fabs(b) < 0.01) b = 0.0;
     if(!pd->inText) texton(pd);
-    /*
-     * Only try to do real transparency if version at least 1.4
-     */
-    if (alphaVersion(pd) || (R_OPAQUE(gc->col))) {
-	PDF_SetFill(gc->col, dd);
-	fprintf(pd->pdffp, "/F%d 1 Tf %.2f %.2f %.2f %.2f %.2f %.2f Tm ",
-		font,
-		a, b, -b, a, x, y);
-	PostScriptWriteString(pd->pdffp, str1);
-	fprintf(pd->pdffp, " Tj\n");
-    }
+    PDF_SetFill(gc->col, dd);
+    fprintf(pd->pdffp, "/F%d 1 Tf %.2f %.2f %.2f %.2f %.2f %.2f Tm ",
+	    font,
+	    a, b, -b, a, x, y);
+    PostScriptWriteString(pd->pdffp, str1);
+    fprintf(pd->pdffp, " Tj\n");
 }
 
 #ifndef SUPPORT_MBCS
@@ -6594,20 +6614,18 @@ static void PDF_Text(double x, double y, char *str,
 	if (!cidfont)
 	    error(_("Failed to find or load PDF CID font"));
         if(!strcmp(locale2charset(NULL), cidfont->encoding)) {
-            if (alphaVersion(pd) || (R_OPAQUE(gc->col))) {
-                PDF_SetFill(gc->col, dd);
-                fprintf(pd->pdffp,
-                        "/F%d 1 Tf %.2f %.2f %.2f %.2f %.2f %.2f Tm ",
-			PDFfontNumber(gc->fontfamily, face, pd),
-                        a, b, -b, a, x, y);
-
-                fprintf(pd->pdffp, "<");
-                p = (unsigned char *) str;
-                while(*p)
-                    fprintf(pd->pdffp, "%02x", *p++);
-                fprintf(pd->pdffp, ">");
-                fprintf(pd->pdffp, " Tj\n");
-            }
+	    PDF_SetFill(gc->col, dd);
+	    fprintf(pd->pdffp,
+		    "/F%d 1 Tf %.2f %.2f %.2f %.2f %.2f %.2f Tm ",
+		    PDFfontNumber(gc->fontfamily, face, pd),
+		    a, b, -b, a, x, y);
+	    
+	    fprintf(pd->pdffp, "<");
+	    p = (unsigned char *) str;
+	    while(*p)
+		fprintf(pd->pdffp, "%02x", *p++);
+	    fprintf(pd->pdffp, ">");
+	    fprintf(pd->pdffp, " Tj\n");
             return;
         }
 
@@ -6641,17 +6659,16 @@ static void PDF_Text(double x, double y, char *str,
 	    if(status == (size_t)-1)
                 warning(_("failed in text conversion to encoding '%s'"),
 			cidfont->encoding);
-	    else
-		if (alphaVersion(pd) || (R_OPAQUE(gc->col))) {
-		    PDF_SetFill(gc->col, dd);
-		    fprintf(pd->pdffp,
-			    "/F%d 1 Tf %.2f %.2f %.2f %.2f %.2f %.2f Tm <",
-			    PDFfontNumber(gc->fontfamily, face, pd),
-			    a, b, -b, a, x, y);
-		    for(i = 0, p = buf; i < nb - o_len; i++)
-			fprintf(pd->pdffp, "%02x", *p++);
-		    fprintf(pd->pdffp, "> Tj\n");
-		}
+	    else {
+		PDF_SetFill(gc->col, dd);
+		fprintf(pd->pdffp,
+			"/F%d 1 Tf %.2f %.2f %.2f %.2f %.2f %.2f Tm <",
+			PDFfontNumber(gc->fontfamily, face, pd),
+			a, b, -b, a, x, y);
+		for(i = 0, p = buf; i < nb - o_len; i++)
+		    fprintf(pd->pdffp, "%02x", *p++);
+		fprintf(pd->pdffp, "> Tj\n");
+	    }
 	    return;
 	} else {
 	    warning(_("invalid string in '%s'"), "PDF_Text");
@@ -6659,23 +6676,18 @@ static void PDF_Text(double x, double y, char *str,
 	}
     }
 
-    /*
-     * Only try to do real transparency if version at least 1.4
-     */
-    if (alphaVersion(pd) || (R_OPAQUE(gc->col))) {
-	PDF_SetFill(gc->col, dd);
-	fprintf(pd->pdffp, "/F%d 1 Tf %.2f %.2f %.2f %.2f %.2f %.2f Tm ",
-		PDFfontNumber(gc->fontfamily, face, pd),
-		a, b, -b, a, x, y);
-	if(utf8locale && !utf8strIsASCII(str1) && face < 5) {
-	    buff = alloca(strlen(str)+1); /* Output string cannot be longer */
-	    R_CheckStack();
-	    mbcsToSbcs(str, buff, PDFconvname(gc->fontfamily, pd));
-	    str1 = buff;
-	}
-	PostScriptWriteString(pd->pdffp, str1);
-	fprintf(pd->pdffp, " Tj\n");
+    PDF_SetFill(gc->col, dd);
+    fprintf(pd->pdffp, "/F%d 1 Tf %.2f %.2f %.2f %.2f %.2f %.2f Tm ",
+	    PDFfontNumber(gc->fontfamily, face, pd),
+	    a, b, -b, a, x, y);
+    if(utf8locale && !utf8strIsASCII(str1) && face < 5) {
+	buff = alloca(strlen(str)+1); /* Output string cannot be longer */
+	R_CheckStack();
+	mbcsToSbcs(str, buff, PDFconvname(gc->fontfamily, pd));
+	str1 = buff;
     }
+    PostScriptWriteString(pd->pdffp, str1);
+    fprintf(pd->pdffp, " Tj\n");
 }
 #endif
 
@@ -6741,17 +6753,26 @@ static FontMetricInfo *PDFmetricInfo(char *family, int face,
 	if (fontfamily)
 	    result = &(fontfamily->fonts[face-1]->metrics);
 	else {
-	    /*
-	     * Try to load the font
-	     */
-	    fontfamily = addFont(family, 1, pd->encodings);
-	    if (fontfamily) {
-		if (addPDFDevicefont(fontfamily, pd, &dontcare)) {
-		    result = &(fontfamily->fonts[face-1]->metrics);
-		} else {
-		    fontfamily = NULL;
-		}
-	    }
+            /*
+             * Check whether the font is loaded and, if not,
+             * load it.
+             */
+            fontfamily = findLoadedFont(family, 
+                                        pd->encodings->encoding->encpath, 
+                                        TRUE);
+            if (!fontfamily) {
+                fontfamily = addFont(family, TRUE, pd->encodings);
+            }
+            /*
+             * Once the font is loaded, add it to the device's
+             * list of fonts.
+             */
+            if (fontfamily) {
+                int dontcare;
+                if (!addPDFDevicefont(fontfamily, pd, &dontcare)) {
+                    fontfamily = NULL;
+                }
+            }
 	}
 	if (!fontfamily)
 	    error(_("Failed to find or load PDF font"));
@@ -6775,17 +6796,26 @@ static char *PDFconvname(char *family,
 	if (fontfamily)
 	    result = fontfamily->encoding->convname;
 	else {
-	    /*
-	     * Try to load the font
-	     */
-	    fontfamily = addFont(family, 1, pd->encodings);
-	    if (fontfamily) {
-		if (addPDFDevicefont(fontfamily, pd, &dontcare)) {
-		    result = fontfamily->encoding->convname;
-		} else {
-		    fontfamily = NULL;
-		}
-	    }
+            /*
+             * Check whether the font is loaded and, if not,
+             * load it.
+             */
+            fontfamily = findLoadedFont(family, 
+                                        pd->encodings->encoding->encpath, 
+                                        TRUE);
+            if (!fontfamily) {
+                fontfamily = addFont(family, TRUE, pd->encodings);
+            }
+            /*
+             * Once the font is loaded, add it to the device's
+             * list of fonts.
+             */
+            if (fontfamily) {
+                int dontcare;
+                if (!addPDFDevicefont(fontfamily, pd, &dontcare)) {
+                    fontfamily = NULL;
+                }
+            }
 	}
 	if (!fontfamily)
 	    error(_("Failed to find or load PDF font"));

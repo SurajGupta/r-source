@@ -6,14 +6,15 @@ menu <- function(choices, graphics = FALSE, title = "")
             res <- select.list(choices, multiple=FALSE, title=title)
             return(match(res, choices, nomatch = 0))
         } else if(.Platform$OS.type == "unix"
-                && capabilities("tcltk") && capabilities("X11")) {
+                && capabilities("tcltk") && capabilities("X11")
+                && nchar(Sys.getenv("DISPLAY"))) {
             res <- tcltk::tk_select.list(choices, multiple=FALSE, title=title)
             return(match(res, choices, nomatch = 0))
         }
     }
     nc <- length(choices)
     if(length(title) && nchar(title[1])) cat(title[1], "\n")
-    op <- paste(format(seq(length=nc)), ": ", choices, sep="")
+    op <- paste(format(seq_len(nc)), ": ", choices, sep="")
     if(nc > 10) {
         fop <- format(op)
         nw <- nchar(fop[1], "w") + 2

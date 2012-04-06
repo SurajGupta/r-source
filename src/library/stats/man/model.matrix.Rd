@@ -34,7 +34,10 @@ model.matrix(object, \dots)
   \code{model.frame(object)} or, more precisely, by evaluating
   \code{attr(terms(object), "variables")}.  If it is a data frame,
   there may be other columns and the order of columns is not important.
-
+  Any character variables are coerced to factors, with a warning.
+  After coercion, all the variables used in RHD of the formula must be
+  logical, integer, numeric or factor.
+  
   If \code{contrasts.arg} is specified for a factor it overrides the
   default factor coding for that variable and any \code{"contrasts"}
   attribute set by \code{\link{C}} or \code{\link{contrasts}}.
@@ -54,7 +57,10 @@ model.matrix(object, \dots)
 
   There is an attribute \code{"assign"}, an integer vector with an entry
   for each column in the matrix giving the term in the formula which
-  gave rise to the column.
+  gave rise to the column.  Value \code{0} corresponds to the intercept
+  (if any), and positive values to terms in the order given by the
+  \code{terms.labels} attribute of the \code{terms} structure
+  corresponding to \code{object}.
   
   If there are any factors in terms in the model, there is an attribute
   \code{"contrasts"}, a named list with an entry for each factor.  This

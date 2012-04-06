@@ -136,6 +136,18 @@ int GetOptionDigits(SEXP rho)
 }
 
 
+int attribute_hidden Rf_GetOptionParAsk()
+{
+    int ask;
+    ask = asLogical(GetOption(install("par.ask.default"), R_BaseEnv));
+    if(ask == NA_LOGICAL) {
+	warning(_("invalid par(\"par.ask.default\"), using FALSE"));
+	return FALSE;
+    }
+   return ask != 0;
+}
+
+
 /* Change the value of an option or add a new option or, */
 /* if called with value R_NilValue, remove that option. */
 
@@ -294,7 +306,7 @@ SEXP attribute_hidden do_options(SEXP call, SEXP op, SEXP args, SEXP rho)
 	PROTECT(names = allocVector(STRSXP, n));
 	i = 0;
 	while (options != R_NilValue) {
-	    SET_VECTOR_ELT(names, i, PRINTNAME(TAG(options)));
+	    SET_STRING_ELT(names, i, PRINTNAME(TAG(options)));
 	    SET_VECTOR_ELT(value, i, duplicate(CAR(options)));
 	    options = CDR(options); i++;
 	}
@@ -304,7 +316,7 @@ SEXP attribute_hidden do_options(SEXP call, SEXP op, SEXP args, SEXP rho)
 	PROTECT(value2 = allocVector(VECSXP, n));
 	PROTECT(names2 = allocVector(STRSXP, n));
 	for(i = 0; i < n; i++) {
-	    SET_VECTOR_ELT(names2, i, VECTOR_ELT(names, indx[i]));
+	    SET_STRING_ELT(names2, i, STRING_ELT(names, indx[i]));
 	    SET_VECTOR_ELT(value2, i, VECTOR_ELT(value, indx[i]));
 	}
 	setAttrib(value2, R_NamesSymbol, names2);
@@ -469,6 +481,14 @@ SEXP attribute_hidden do_options(SEXP call, SEXP op, SEXP args, SEXP rho)
 		    errorcall(call, _("OutDec parameter invalid"));
 		OutDec = CHAR(STRING_ELT(argi, 0))[0];
 		SET_VECTOR_ELT(value, i, SetOption(tag, duplicate(argi)));
+	    }
+	    else if (streql(CHAR(namei), "max.contour.segments")) {
+		k = asInteger(argi);
+		if (k < 0 || k  == NA_INTEGER)
+		    errorcall(call,
+			      _("max.contour.segment parameter invalid"));
+		max_contour_segments = k;
+		SET_VECTOR_ELT(value, i, SetOption(tag, ScalarInteger(k)));
 	    }
 	    else {
 		SET_VECTOR_ELT(value, i, SetOption(tag, duplicate(argi)));

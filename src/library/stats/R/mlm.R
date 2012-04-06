@@ -3,10 +3,9 @@ summary.mlm <- function(object, ...)
 {
     coef <- coef(object)
     ny <- ncol(coef)
-## Not right:    if(is.null(ny)) return(NextMethod("summary"))
     effects <- object$effects
-    resid <- residuals(object)
-    fitted <- fitted(object)
+    resid <- object$residuals
+    fitted <- object$fitted
     ynames <- colnames(coef)
     if(is.null(ynames)) {
 	lhs <- object$terms[[2]]
@@ -75,12 +74,12 @@ Rank  <- function(X, tol=1e-7) qr(X, tol=tol, LAPACK=FALSE)$rank
 
 Thin.row <- function(X, tol=1e-7) {
     QR <- qr(t(X), tol=tol, LAPACK=FALSE)
-    X[QR$pivot[seq(length=QR$rank)],,drop=FALSE]
+    X[QR$pivot[seq_len(QR$rank)],,drop=FALSE]
 }
 
 Thin.col <- function(X, tol=1e-7) {
     QR <- qr(X, tol=tol, LAPACK=FALSE)
-    X[,QR$pivot[seq(length=QR$rank)],drop=FALSE]
+    X[,QR$pivot[seq_len(QR$rank)],drop=FALSE]
 }
 
 
@@ -88,7 +87,7 @@ mauchly.test <- function(object, Sigma=diag(nrow=p),
                           T = Thin.row(proj(M)-proj(X)),
                           M = diag(nrow=p),
                           X = ~0,
-                          idata=data.frame(index=seq(length=p)),...)
+                          idata=data.frame(index=seq_len(p)),...)
 	 UseMethod("mauchly.test")
 
 mauchly.test.mlm <- function(object, ...)
@@ -99,7 +98,7 @@ mauchly.test.SSD <- function(object, Sigma=diag(nrow=p),
                           T = Thin.row(proj(M)-proj(X)),
                           M = diag(nrow=p),
                           X = ~0,
-                          idata=data.frame(index=seq(length=p)),...)
+                          idata=data.frame(index=seq_len(p)),...)
 {
     p <- ncol(object$SSD)
 
@@ -146,8 +145,8 @@ mauchly.test.SSD <- function(object, Sigma=diag(nrow=p),
             )
           )
 
-    retval <- list(statistic=z,p.value=pval,
-                   method=c("Mauchly's test of sphericity", transformnote),
+    retval <- list(statistic=c(W=exp(logW)),p.value=pval,
+                   method=c("Mauchley's test of sphericity", transformnote),
                    data.name=paste("SSD matrix from",
                    deparse(object$call), collapse=" "))
     class(retval) <- "htest"
@@ -158,7 +157,7 @@ sphericity <- function(object, Sigma=diag(nrow=p),
                           T = Thin.row(proj(M)-proj(X)),
                           M = diag(nrow=p),
                           X = ~0,
-                          idata=data.frame(index=seq(length=p)))
+                          idata=data.frame(index=seq_len(p)))
 {
     p <- ncol(object$SSD)
 
@@ -187,7 +186,7 @@ anova.mlm <-
              T = Thin.row(proj(M) - proj(X)),
              M = diag(nrow = p),
              X = ~0,
-             idata = data.frame(index = seq(length=p)))
+             idata = data.frame(index = seq_len(p)))
 {
     if(length(list(object, ...)) > 1){
         cl <- match.call()
@@ -230,11 +229,11 @@ anova.mlm <-
         pp <- nrow(T)
         if(rk > 0) {
             p1 <- 1:rk
-            comp <- object$effects[p1,]
+            comp <- object$effects[p1, , drop=FALSE]
             asgn <- object$assign[object$qr$pivot][p1]
             nmeffects <- c("(Intercept)", attr(object$terms, "term.labels"))
             tlabels <- nmeffects[1 + unique(asgn)]
-	    ix <- split(seq(length=nrow(comp)), asgn)
+	    ix <- split(seq_len(nrow(comp)), asgn)
             ss <- lapply(ix, function(i) crossprod(comp[i,,drop=FALSE]))
 # This was broken. Something similar might work if we implement
 #  split.matrix a la split.data.frame
@@ -375,7 +374,7 @@ anova.mlmlist <- function (object, ...,
                            T = Thin.row(proj(M)-proj(X)),
                            M = diag(nrow=p),
                            X = ~0,
-                           idata=data.frame(index=seq(length=p)))
+                           idata=data.frame(index=seq_len(p)))
 {
     objects <- list(object, ...)
     p <- ncol(SSD(object)$SSD)

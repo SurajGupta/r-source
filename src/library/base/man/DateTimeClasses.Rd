@@ -45,8 +45,8 @@
 
 \method{summary}{POSIXct}(object, digits = 15, \dots)
 
-\special{time + number}
-\special{time - number}
+\special{time + z}
+\special{time - z}
 \special{time1 lop time2}
 }
 \arguments{
@@ -56,8 +56,11 @@
     should be high enough to represent the least important time unit
     exactly.}
   \item{\dots}{Further arguments to be passed from or to other methods.}
-  \item{time, time1, time2}{date-time objects.}
-  \item{number}{a numeric object.}
+  \item{time}{date-time objects}
+  \item{time1, time2}{date-time objects or character vectors.  (Character
+    vectors are converted by \code{\link{as.POSIXct}}.}
+  \item{z}{a numeric vector (in seconds) \emph{or} an object of class
+    \code{"\link{difftime}"}.}
   \item{lop}{One of \code{==}, \code{!=}, \code{<}, \code{<=}, \code{>}
     or \code{>=}.}
 }
@@ -132,8 +135,8 @@
   current time zone.
 }
 \section{Sub-section Accuracy}{
-  Class \code{"POSIXct"} has always been able to express fractions of a
-  second, and as from \R 2.3.0, class \code{"POSIXlt"} can also.
+  Classes \code{"POSIXct"} and  \code{"POSIXlt"} are able to express
+  fractions of a second.
   (Conversion of fractions between the two forms may not be exact, but
   will have better than microsecond accuracy.)
 
@@ -163,7 +166,7 @@
   Some Unix-like systems (especially Linux ones) do not have \code{"TZ"}
   set, yet have internal code that expects it (as does POSIX).  We have
   tried to work around this, but if you get unexpected results try
-  setting \code{"TZ"}.
+  setting \code{"TZ"}.  See \code{\link{as.POSIXlt}} for valid settings.
 }
 \examples{
 (z <- Sys.time())             # the current date, as class "POSIXct"

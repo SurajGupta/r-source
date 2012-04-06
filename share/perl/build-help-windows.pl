@@ -299,10 +299,11 @@ sub open_hhp {
     "Display compile progress=No\n",
     "Full-text search=Yes\n",
     "Full text search stop list file=..\\..\\..\\gnuwin32\\help\\R.stp\n",
+    "Title=R Help for package $pkg\n",
     "\n\n[FILES]\n00Index.html\n";
 }
 
-sub foldorder {uc($a) cmp uc($b) or $a cmp $b;}
+sub foldorder {($b =~ /-package$/) cmp ($a =~ /-package$/) or uc($a) cmp uc($b) or $a cmp $b;}
 
 sub build_chm_toc {
     open(tocfile, ">../chm/$pkg.toc")

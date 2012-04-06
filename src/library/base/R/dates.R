@@ -112,7 +112,7 @@ summary.Date <- function(object, digits = 12, ...)
 {
     coerceTimeUnit <- function(x)
     {
-        round(switch(attr(x,"units"),
+        round(switch(attr(x, "units"),
                secs = x/86400, mins = x/1440, hours = x/24,
                days = x, weeks = 7*x))
     }
@@ -130,21 +130,25 @@ Ops.Date <- function(e1, e2)
 {
     if (nargs() == 1)
         stop("unary ", .Generic, " not defined for Date objects")
-    boolean <- switch(.Generic, "<" = , ">" = , "==" = ,
-                      "!=" = , "<=" = , ">=" = TRUE, FALSE)
+    boolean <- switch(.Generic, "<" =, ">" =, "==" =,
+                      "!=" =, "<=" =, ">=" = TRUE,
+                      FALSE)
     if (!boolean) stop(.Generic, " not defined for Date objects")
+    ## allow character args to be coerced to dates
+    if (is.character(e1)) e1 <- as.Date(e1)
+    if (is.character(e2)) e2 <- as.Date(e2)
     NextMethod(.Generic)
 }
 
 Math.Date <- function (x, ...)
     stop(.Generic, " not defined for Date objects")
 
-Summary.Date <- function (x, ...)
+Summary.Date <- function (..., na.rm)
 {
     ok <- switch(.Generic, max = , min = , range = TRUE, FALSE)
     if (!ok) stop(.Generic, " not defined for Date objects")
     val <- NextMethod(.Generic)
-    class(val) <- oldClass(x)
+    class(val) <- oldClass(list(...)[[1]])
     val
 }
 
@@ -198,7 +202,7 @@ seq.Date <- function(from, to, by, length.out=NULL, along.with=NULL, ...)
     }
     if (!missing(along.with)) {
         length.out <- length(along.with)
-    }  else if (!missing(length.out)) {
+    }  else if (!is.null(length.out)) {
         if (length(length.out) != 1) stop("'length.out' must be of length 1")
         length.out <- ceiling(length.out)
     }
@@ -208,7 +212,7 @@ seq.Date <- function(from, to, by, length.out=NULL, along.with=NULL, ...)
     if (missing(by)) {
         from <- unclass(as.Date(from))
         to <- unclass(as.Date(to))
-        res <- seq.default(from, to, length.out = length.out)
+        res <- seq.int(from, to, length.out = length.out)
         return(structure(res, class = "Date"))
     }
 
@@ -235,30 +239,30 @@ seq.Date <- function(from, to, by, length.out=NULL, along.with=NULL, ...)
     if(valid <= 2) {
         from <- unclass(as.Date(from))
         if(!is.null(length.out))
-            res <- seq.default(from, by=by, length.out=length.out)
+            res <- seq.int(from, by=by, length.out=length.out)
         else {
             to <- unclass(as.Date(to))
             ## defeat test in seq.default
-            res <- seq.default(0, to - from, by) + from
+            res <- seq.int(0, to - from, by) + from
         }
         return(structure(res, class="Date"))
     } else {  # months or years or DSTdays
         r1 <- as.POSIXlt(from)
         if(valid == 4) {
             if(missing(to)) { # years
-                yr <- seq(r1$year, by = by, length = length.out)
+                yr <- seq.int(r1$year, by = by, length = length.out)
             } else {
                 to <- as.POSIXlt(to)
-                yr <- seq(r1$year, to$year, by)
+                yr <- seq.int(r1$year, to$year, by)
             }
             r1$year <- yr
             res <- .Internal(POSIXlt2Date(r1))
         } else if(valid == 3) { # months
             if(missing(to)) {
-                mon <- seq(r1$mon, by = by, length = length.out)
+                mon <- seq.int(r1$mon, by = by, length = length.out)
             } else {
                 to <- as.POSIXlt(to)
-                mon <- seq(r1$mon, 12*(to$year - r1$year) + to$mon, by)
+                mon <- seq.int(r1$mon, 12*(to$year - r1$year) + to$mon, by)
             }
             r1$mon <- mon
             res <- .Internal(POSIXlt2Date(r1))
@@ -298,7 +302,7 @@ cut.Date <-
         start <- .Internal(POSIXlt2Date(start))
         if (length(by2) == 2) incr <- incr * as.integer(by2[1])
 	maxx <- max(x, na.rm = TRUE)
-	breaks <- seq(start, maxx + incr, breaks)
+	breaks <- seq.int(start, maxx + incr, breaks)
 	breaks <- breaks[1:(1+max(which(breaks < maxx)))]
     } else stop("invalid specification of 'breaks'")
     res <- cut(unclass(x), unclass(breaks), labels = labels,
@@ -338,7 +342,7 @@ round.Date <- function(x, ...)
 ## must avoid truncating dates prior to 1970-01-01 forwards.
 trunc.Date <- function(x) round(x - 0.4999999)
 
-rep.Date <- function(x, times, ...)
+rep.Date <- function(x, ...)
 {
     y <- NextMethod()
     structure(y, class="Date")

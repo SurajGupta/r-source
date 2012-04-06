@@ -29,13 +29,13 @@ xy.coords <- function(x, y=NULL, xlab=NULL, ylab=NULL, log=NULL, recycle = FALSE
 	    if(ncol(x) == 1) {
 		xlab <- "Index"
 		y <- x[,1]
-		x <- 1:length(y)
+		x <- seq_along(y)
 	    }
 	    else {
 		colnames <- dimnames(x)[[2]]
 		if(is.null(colnames)) {
-		    xlab <- paste(ylab,"[,1]",sep="")
-		    ylab <- paste(ylab,"[,2]",sep="")
+		    xlab <- paste(ylab, "[,1]", sep="")
+		    ylab <- paste(ylab, "[,2]", sep="")
 		}
 		else {
 		    xlab <- colnames[1]
@@ -46,8 +46,8 @@ xy.coords <- function(x, y=NULL, xlab=NULL, ylab=NULL, log=NULL, recycle = FALSE
 	    }
 	}
 	else if(is.list(x)) {
-	    xlab <- paste(ylab,"$x",sep="")
-	    ylab <- paste(ylab,"$y",sep="")
+	    xlab <- paste(ylab, "$x", sep="")
+	    ylab <- paste(ylab, "$y", sep="")
 	    y <- x[["y"]]
 	    x <- x[["x"]]
 	}
@@ -55,7 +55,7 @@ xy.coords <- function(x, y=NULL, xlab=NULL, ylab=NULL, log=NULL, recycle = FALSE
 	    if(is.factor(x)) x <- as.numeric(x)
 	    xlab <- "Index"
 	    y <- x
-	    x <- 1:length(x)
+	    x <- seq_along(x)
 	}
     }
     ## to allow e.g. lines, points, identify to be used with plot.POSIXlt
@@ -94,9 +94,6 @@ xy.coords <- function(x, y=NULL, xlab=NULL, ylab=NULL, log=NULL, recycle = FALSE
     return(list(x=as.real(x), y=as.real(y), xlab=xlab, ylab=ylab))
 }
 
-
-## the obvious analog of  xy.coords() -- in ./plot.R
-
 xyz.coords <- function(x, y=NULL, z=NULL, xlab=NULL, ylab=NULL, zlab=NULL,
 		       log = NULL, recycle = FALSE)
 {
@@ -122,7 +119,7 @@ xyz.coords <- function(x, y=NULL, z=NULL, xlab=NULL, ylab=NULL, zlab=NULL,
 		xlab <- "Index"
 		y <- x[,1]
 		z <- x[,2]
-		x <- seq(along=y)
+		x <- seq_along(y)
 	    }
 	    else { ## >= 3 columns
 		colnames <- dimnames(x)[[2]]
@@ -175,7 +172,7 @@ xyz.coords <- function(x, y=NULL, z=NULL, xlab=NULL, ylab=NULL, zlab=NULL,
 	    xlab <- "Index"
 	    z <- y
 	    y <- x
-	    x <- seq(along=x)
+	    x <- seq_along(x)
 	}
     }
 

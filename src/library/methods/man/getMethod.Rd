@@ -20,7 +20,7 @@
   The other functions are support functions: see the details below.
 }
 \usage{
-getMethod(f, signature=character(), where, optional=FALSE, mlist)
+getMethod(f, signature=character(), where, optional=FALSE, mlist, fdef)
 
 findMethod(f, signature, where)
 
@@ -65,10 +65,9 @@ MethodsListSelect(f, env, mlist, fEnv, finalDefault, evalArgs,
     \code{getMethodsMetaData(f,where)}.  For \code{selectMethod}, see
     the discussion of argument \code{fdef}.
     }
-  \item{fdef}{In \code{selectMethod}, the \code{MethodsList} object
-    and/or the generic function object can be explicitly supplied.
-    (Unlikely to be used, except in the recursive call that finds
-    matches to more than one argument.)}
+  \item{fdef}{Optionally, the generic function from which the method is 
+      to be retrieved.
+    (Unlikely to be used, except internally in the package source.)}
   \item{env}{The environment in which argument evaluations are done in
     \code{MethodsListSelect}.  Currently must be supplied, but should
     usually be \code{sys.frame(sys.parent())} when calling the function
@@ -181,9 +180,8 @@ MethodsListSelect(f, env, mlist, fEnv, finalDefault, evalArgs,
   details in the reference that reflect the S4 implementation may appear
   differently in R.  Also, there are extensions to the programming
   interface developed more recently than the reference.  For a
-  discussion of details and ongoing development, see the web page
-  \url{http://developer.r-project.org/methodsPackage.html} and the
-  pointers from that page.
+  discussion of details see \code{?\link{Methods}}
+  and the links from that documentation.
 }
 \seealso{\code{\link{GenericFunctions}}}
 \examples{

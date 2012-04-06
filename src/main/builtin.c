@@ -1,7 +1,7 @@
 /*
  *  R : A Computer Language for Statistical Data Analysis
  *  Copyright (C) 1995-1998  Robert Gentleman and Ross Ihaka
- *  Copyright (C) 1999-2004  The R Development Core Team.
+ *  Copyright (C) 1999-2006  The R Development Core Team.
  *
  *  This program is free software; you can redistribute it and/or modify
  *  it under the terms of the GNU General Public License as published by
@@ -31,6 +31,33 @@
 #include <Fileio.h>
 #include <Rconnections.h>
 
+static R_len_t asVecSize(SEXP x)
+{
+    int warn = 0, res;
+    double d;
+
+    if (isVectorAtomic(x) && LENGTH(x) >= 1) {
+	switch (TYPEOF(x)) {
+	case LGLSXP:
+	    res = IntegerFromLogical(LOGICAL(x)[0], &warn);
+	    if(res == NA_INTEGER) error(_("vector size cannot be NA"));
+	    return res;
+	case INTSXP:
+	    res = INTEGER(x)[0];
+	    if(res == NA_INTEGER) error(_("vector size cannot be NA"));
+	    return res;
+	case REALSXP:
+	    d = REAL(x)[0];
+	    if(d < 0) error(_("vector size cannot be negative"));
+	    if(d > R_LEN_T_MAX) error(_("vector size specified is too large"));
+	    return (R_size_t) d;
+	default:
+	    UNIMPLEMENTED_TYPE("asVecSize", x);
+	}
+    }
+    return -1;
+}
+
 SEXP attribute_hidden do_delay(SEXP call, SEXP op, SEXP args, SEXP rho)
 {
     SEXP expr, env;
@@ -38,7 +65,7 @@ SEXP attribute_hidden do_delay(SEXP call, SEXP op, SEXP args, SEXP rho)
     expr = CAR(args);
     env = eval(CADR(args), rho);
     if (isNull(env)) {
-	warning(_("use of NULL environment is deprecated"));
+	error(_("use of NULL environment is defunct"));
 	env = R_BaseEnv;
     } else    
     if (!isEnvironment(env))
@@ -61,7 +88,7 @@ SEXP attribute_hidden do_delayed(SEXP call, SEXP op, SEXP args, SEXP rho)
     args = CDR(args);
     eenv = CAR(args);
     if (isNull(eenv)) {
-	warning(_("use of NULL environment is deprecated"));
+	error(_("use of NULL environment is defunct"));
 	eenv = R_BaseEnv;
     } else
     if (!isEnvironment(eenv))
@@ -70,7 +97,7 @@ SEXP attribute_hidden do_delayed(SEXP call, SEXP op, SEXP args, SEXP rho)
     args = CDR(args);
     aenv = CAR(args);
     if (isNull(aenv)) {
-	warning(_("use of NULL environment is deprecated"));
+	error(_("use of NULL environment is defunct"));
 	aenv = R_BaseEnv;
     } else
     if (!isEnvironment(aenv))
@@ -189,23 +216,27 @@ SEXP attribute_hidden do_envir(SEXP call, SEXP op, SEXP args, SEXP rho)
 
 SEXP attribute_hidden do_envirgets(SEXP call, SEXP op, SEXP args, SEXP rho)
 {
-    SEXP env;
+    SEXP env, s = CAR(args);
     checkArity(op, args);
     env = CADR(args);
 
     if (TYPEOF(CAR(args)) == CLOSXP 
         && (isEnvironment(env) || isNull(env))) {
-	if (isNull(env)) {
-	    warning(_("use of NULL environment is deprecated"));
-	    env = R_BaseEnv;
-	}     
-	SET_CLOENV(CAR(args), env);
+	if (isNull(env))
+	    error(_("use of NULL environment is defunct"));
+	if(NAMED(s) > 1) {
+	    /* partial duplicate */
+	    s = allocSExp(CLOSXP);
+	    SET_FORMALS(s, FORMALS(CAR(args)));
+	    SET_BODY(s, BODY(CAR(args)));
+	}
+	SET_CLOENV(s, env);
     }
     else if (isNull(env) || isEnvironment(env))
-	setAttrib(CAR(args), R_DotEnvSymbol, env);
+	setAttrib(s, R_DotEnvSymbol, env);
     else
 	errorcall(call, _("replacement object is not an environment"));
-    return CAR(args);
+    return s;
 }
 
 
@@ -219,7 +250,7 @@ SEXP attribute_hidden do_newenv(SEXP call, SEXP op, SEXP args, SEXP rho)
     hash = asInteger(CAR(args));
     enclos = CADR(args);
     if (isNull(enclos)) {
-	warning(_("use of NULL environment is deprecated"));
+	error(_("use of NULL environment is defunct"));
 	enclos = R_BaseEnv;
     } else    
     if( !isEnvironment(enclos) )
@@ -249,7 +280,7 @@ SEXP attribute_hidden do_parentenvgets(SEXP call, SEXP op, SEXP args, SEXP rho)
 
     env = CAR(args);
     if (isNull(env)) {
-	warning(_("use of NULL environment is deprecated"));
+	error(_("use of NULL environment is defunct"));
 	env = R_BaseEnv;
     } else
     if( !isEnvironment(env) )
@@ -258,7 +289,7 @@ SEXP attribute_hidden do_parentenvgets(SEXP call, SEXP op, SEXP args, SEXP rho)
     	errorcall(call, _("can not set parent of the empty environment"));
     parent = CADR(args);
     if (isNull(parent)) {
-	warning(_("use of NULL environment is deprecated"));
+	error(_("use of NULL environment is defunct"));
 	parent = R_BaseEnv;
     } else    
     if( !isEnvironment(parent) )
@@ -389,12 +420,6 @@ SEXP attribute_hidden do_cat(SEXP call, SEXP op, SEXP args, SEXP rho)
     cntxt.cenddata = &ci;
 
     nobjs = length(objs);
-    /*
-    for (i = 0; i < nobjs; i++) {
-	if (!isVector(VECTOR_ELT(objs, i)) && !isNull(VECTOR_ELT(objs, i)))
-	    errorcall(call, "argument %d has invalid type", i + 1);
-    }
-    */
     width = 0;
     ntot = 0;
     nlines = 0;
@@ -537,7 +562,7 @@ SEXP attribute_hidden do_expression(SEXP call, SEXP op, SEXP args, SEXP rho)
 /* vector(mode="logical", length=0) */
 SEXP attribute_hidden do_makevector(SEXP call, SEXP op, SEXP args, SEXP rho)
 {
-    R_len_t len, i;
+    R_len_t len /*, i*/;
     SEXP s;
     SEXPTYPE mode;
     checkArity(op, args);
@@ -567,16 +592,19 @@ SEXP attribute_hidden do_makevector(SEXP call, SEXP op, SEXP args, SEXP rho)
 	      CHAR(STRING_ELT(s, 0)));
     }
     if (mode == INTSXP || mode == LGLSXP)
-	for (i = 0; i < len; i++)
-	    INTEGER(s)[i] = 0;
+	memset(INTEGER(s), 0, len*sizeof(int));
+        /*for (i = 0; i < len; i++) INTEGER(s)[i] = 0; */
     else if (mode == REALSXP)
-	for (i = 0; i < len; i++)
-	    REAL(s)[i] = 0.;
+	memset(REAL(s), 0, len*sizeof(double));
+	/*for (i = 0; i < len; i++) REAL(s)[i] = 0.;*/
     else if (mode == CPLXSXP)
+	memset(COMPLEX(s), 0, len*sizeof(Rcomplex));
+    /*
 	for (i = 0; i < len; i++) {
 	    COMPLEX(s)[i].r = 0.;
 	    COMPLEX(s)[i].i = 0.;
 	}
+    */
     else if (mode == RAWSXP)
 	memset(RAW(s), 0, len);
     /* other cases: list/expression have "NULL", ok */
@@ -603,6 +631,8 @@ SEXP lengthgets(SEXP x, R_len_t len)
 	names = allocVector(STRSXP, len);
     else names = R_NilValue;	/*- just for -Wall --- should we do this ? */
     switch (TYPEOF(x)) {
+    case NILSXP:
+	break;
     case LGLSXP:
     case INTSXP:
 	for (i = 0; i < len; i++)

@@ -7,10 +7,8 @@ lm <- function (formula, data, subset, weights, na.action,
     ret.y <- y
     cl <- match.call()
     mf <- match.call(expand.dots = FALSE)
-#    mf$singular.ok <- mf$model <- mf$method <- NULL
-#    mf$x <- mf$y <- mf$qr <- mf$contrasts <- mf$... <- NULL
-    m <- match(c("formula", "data", "subset", "weights", "na.action",
-                 "offset"), names(mf), 0)
+    m <- match(c("formula", "data", "subset", "weights", "na.action", "offset"),
+	       names(mf), 0)
     mf <- mf[c(1, m)]
     mf$drop.unused.levels <- TRUE
     mf[[1]] <- as.name("model.frame")
@@ -106,7 +104,7 @@ lm.fit <- function (x, y, offset = NULL, method = "qr", tol = 1e-07,
     coef <- z$coefficients
     pivot <- z$pivot
     ## careful here: the rank might be 0
-    r1 <- seq(len=z$rank)
+    r1 <- seq_len(z$rank)
     dn <- colnames(x); if(is.null(dn)) dn <- paste("x", 1:p, sep="")
     nmeffects <- c(dn[pivot[r1]], rep.int("", n - z$rank))
     r2 <- if(z$rank < p) (z$rank+1):p else integer(0)
@@ -188,7 +186,7 @@ lm.wfit <- function (x, y, w, offset = NULL, method = "qr", tol = 1e-7,
     if(!singular.ok && z$rank < p) stop("singular fit encountered")
     coef <- z$coefficients
     pivot <- z$pivot
-    r1 <- seq(len=z$rank)
+    r1 <- seq_len(z$rank)
     dn <- colnames(x); if(is.null(dn)) dn <- paste("x", 1:p, sep="")
     nmeffects <- c(dn[pivot[r1]], rep.int("", n - z$rank))
     r2 <- if(z$rank < p) (z$rank+1):p else integer(0)
@@ -329,6 +327,7 @@ summary.lm <- function (object, correlation = FALSE, symbolic.cor = FALSE, ...)
 	dimnames(ans$correlation) <- dimnames(ans$cov.unscaled)
         ans$symbolic.cor <- symbolic.cor
     }
+    if(!is.null(z$na.action)) ans$na.action <- z$na.action
     class(ans) <- "summary.lm"
     ans
 }
@@ -377,6 +376,7 @@ print.summary.lm <-
     ##
     cat("\nResidual standard error:",
 	format(signif(x$sigma, digits)), "on", rdf, "degrees of freedom\n")
+    if(nchar(mess <- naprint(x$na.action))) cat("  (",mess, ")\n", sep="")
     if (!is.null(x$fstatistic)) {
 	cat("Multiple R-Squared:", formatC(x$r.squared, digits=digits))
 	cat(",\tAdjusted R-squared:",formatC(x$adj.r.squared,digits=digits),
@@ -426,12 +426,12 @@ residuals.lm <-
 
 simulate.lm <- function(object, nsim = 1, seed = NULL, ...)
 {
-    if(!exists(".Random.seed", envir = .GlobalEnv))
-        runif(1) # initialize the RNG if necessary
+    if(!exists(".Random.seed", envir = .GlobalEnv, inherits = FALSE))
+        runif(1)                       # initialize the RNG if necessary
     if(is.null(seed))
-        RNGstate <- .Random.seed
+        RNGstate <- get(".Random.seed", envir = .GlobalEnv)
     else {
-        R.seed <- .Random.seed
+        R.seed <- get(".Random.seed", envir = .GlobalEnv)
 	set.seed(seed)
         RNGstate <- structure(seed, kind = as.list(RNGkind()))
         on.exit(assign(".Random.seed", R.seed, envir = .GlobalEnv))
@@ -493,7 +493,7 @@ model.frame.lm <- function(formula, ...)
 variable.names.lm <- function(object, full = FALSE, ...)
 {
     if(full)	dimnames(object$qr$qr)[[2]]
-    else if(object$rank) dimnames(object$qr$qr)[[2]][seq(len=object$rank)]
+    else if(object$rank) dimnames(object$qr$qr)[[2]][seq_len(object$rank)]
     else character(0)
 }
 
@@ -597,7 +597,8 @@ predict.lm <-
     function(object, newdata, se.fit = FALSE, scale = NULL, df = Inf,
 	     interval = c("none", "confidence", "prediction"),
 	     level = .95,  type = c("response", "terms"),
-	     terms = NULL, na.action = na.pass, ...)
+	     terms = NULL, na.action = na.pass, pred.var = res.var/weights,
+             weights = 1, ...)
 {
     tt <- terms(object)
     if(missing(newdata) || is.null(newdata)) {
@@ -619,7 +620,7 @@ predict.lm <-
     }
     n <- length(object$residuals) # NROW(object$qr$qr)
     p <- object$rank
-    p1 <- seq(len=p)
+    p1 <- seq_len(p)
     piv <- object$qr$pivot[p1]
     if(p < ncol(X) && !(missing(newdata) || is.null(newdata)))
 	warning("prediction from a rank-deficient fit may be misleading")
@@ -628,9 +629,32 @@ predict.lm <-
     predictor <- drop(X[, piv, drop = FALSE] %*% beta[piv])
     if (!is.null(offset))
 	predictor <- predictor + offset
+
     interval <- match.arg(interval)
-    if (missing(newdata) && interval == "prediction")
-        stop("prediction intervals are only relevant to new data")
+    if (interval == "prediction") {
+        if (missing(newdata))
+            warning("Predictions on current data refer to _future_ responses\n")
+        if (missing(newdata) && missing(weights))
+        {
+            w <-  weights.default(object)
+            if (!is.null(w)) {
+                weights <- w
+                warning("Assuming prediction variance inversely proportional to weights used for fitting\n")
+            }
+        }
+        if (!missing(newdata) && missing(weights) && !is.null(object$weights) && missing(pred.var))
+            warning("Assuming constant prediction variance even though model fit is weighted\n")
+        if (inherits(weights, "formula")){
+            if (length(weights) != 2)
+                stop("'weights' as formula should be one-sided")
+            d <- if(missing(newdata) || is.null(newdata))
+                model.frame(object)
+            else
+                newdata
+            weights <- eval(weights[[2]], d, environment(weights))
+        }
+    }
+
     type <- match.arg(type)
     if(se.fit || interval != "none") {
 	res.var <-
@@ -664,11 +688,11 @@ predict.lm <-
 	## asgn <- attrassign(mm, tt) :
 	aa <- attr(mm, "assign")
 	ll <- attr(tt, "term.labels")
-	if (attr(tt, "intercept") > 0)
+	hasintercept <- attr(tt, "intercept") > 0
+	if (hasintercept)
 	    ll <- c("(Intercept)", ll)
 	aaa <- factor(aa, labels = ll)
 	asgn <- split(order(aa), aaa)
-	hasintercept <- attr(tt, "intercept") > 0
 	if (hasintercept) {
 	    asgn$"(Intercept)" <- NULL
 	    if(!mmDone) { mm <- model.matrix(object); mmDone <- TRUE }
@@ -723,7 +747,7 @@ predict.lm <-
 	tfrac <- qt((1 - level)/2, df)
 	hwid <- tfrac * switch(interval,
 			       confidence = sqrt(ip),
-			       prediction = sqrt(ip+res.var)
+			       prediction = sqrt(ip+pred.var)
 			       )
 	if(type != "terms") {
 	    predictor <- cbind(predictor, predictor + hwid %o% c(1, -1))

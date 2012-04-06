@@ -35,7 +35,6 @@ extern "C" {
 
 #include <errno.h>
 #include <stdio.h>
-/* #include <fcntl.h> This is not ISO C */
 #include <stdlib.h>
 #include <stdarg.h>
 #include <string.h>
@@ -101,6 +100,7 @@ typedef unsigned int SEXPTYPE;
 #define EXTPTRSXP   22    /* external pointer */
 #define WEAKREFSXP  23    /* weak reference */
 #define RAWSXP      24    /* raw bytes */
+#define S4SXP       25    /* S4, non-vector */
 
 #define FUNSXP      99    /* Closure or Builtin or Special */
 
@@ -131,6 +131,7 @@ typedef enum {
     EXTPTRSXP   = 22,   /* external pointer */
     WEAKREFSXP  = 23,   /* weak reference */
     RAWSXP      = 24,   /* raw bytes */
+    S4SXP         = 25,   /* S4 non-vector */
 
     FUNSXP	= 99	/* Closure or Builtin */
 } SEXPTYPE;
@@ -154,8 +155,8 @@ struct sxpinfo_struct {
     unsigned int gp    : 16;
     unsigned int mark  :  1;
     unsigned int debug :  1;
-    unsigned int trace :  1;
-    unsigned int fin   :  1;  /* has finalizer installed */
+    unsigned int trace :  1;  /* functions and memory tracing */
+    unsigned int spare :  1;  /* currently unused */
     unsigned int gcgen :  1;  /* old generation number */
     unsigned int gccls :  3;  /* node class */
 }; /*		    Tot: 32 */
@@ -242,17 +243,25 @@ typedef union { VECTOR_SEXPREC s; double align; } SEXPREC_ALIGN;
 #define MARK(x)		((x)->sxpinfo.mark)
 #define TYPEOF(x)	((x)->sxpinfo.type)
 #define NAMED(x)	((x)->sxpinfo.named)
+#define TRACE(x)	((x)->sxpinfo.trace)
+#define LEVELS(x)	((x)->sxpinfo.gp)
 #define SET_OBJECT(x,v)	(((x)->sxpinfo.obj)=(v))
 #define SET_TYPEOF(x,v)	(((x)->sxpinfo.type)=(v))
 #define SET_NAMED(x,v)	(((x)->sxpinfo.named)=(v))
+#define SET_TRACE(x,v)	(((x)->sxpinfo.trace)=(v))
+#define SETLEVELS(x,v)	(((x)->sxpinfo.gp)=(v))
+
+/* S4 object bit, set by R_do_new_object for all new() calls */
+#define S4_OBJECT_MASK (1<<4)
+#define IS_S4_OBJECT(x) ((x)->sxpinfo.gp & S4_OBJECT_MASK)
+#define SET_S4_OBJECT(x) (((x)->sxpinfo.gp) |= S4_OBJECT_MASK)
+#define UNSET_S4_OBJECT(x) (((x)->sxpinfo.gp) &= ~S4_OBJECT_MASK)
 
 /* Vector Access Macros */
 #define LENGTH(x)	(((VECSEXP) (x))->vecsxp.length)
 #define TRUELENGTH(x)	(((VECSEXP) (x))->vecsxp.truelength)
 #define SETLENGTH(x,v)		((((VECSEXP) (x))->vecsxp.length)=(v))
 #define SET_TRUELENGTH(x,v)	((((VECSEXP) (x))->vecsxp.truelength)=(v))
-#define LEVELS(x)	((x)->sxpinfo.gp)
-#define SETLEVELS(x,v)	(((x)->sxpinfo.gp)=(v))
 
 /* Under the generational allocator the data for vector nodes comes
    immediately after the node structure, so the data address is a
@@ -296,9 +305,7 @@ typedef union { VECTOR_SEXPREC s; double align; } SEXPREC_ALIGN;
 #define BODY(x)		((x)->u.closxp.body)
 #define CLOENV(x)	((x)->u.closxp.env)
 #define DEBUG(x)	((x)->sxpinfo.debug)
-#define TRACE(x)	((x)->sxpinfo.trace)
 #define SET_DEBUG(x,v)	(((x)->sxpinfo.debug)=(v))
-#define SET_TRACE(x,v)	(((x)->sxpinfo.trace)=(v))
 
 /* Symbol Access Macros */
 #define PRINTNAME(x)	((x)->u.symsxp.pname)
@@ -342,6 +349,11 @@ void (SET_OBJECT)(SEXP x, int v);
 void (SET_TYPEOF)(SEXP x, int v);
 void (SET_NAMED)(SEXP x, int v);
 void SET_ATTRIB(SEXP x, SEXP v);
+
+/* S4 object testing */
+int (IS_S4_OBJECT)(SEXP x);
+void (SET_S4_OBJECT)(SEXP x);
+void (UNSET_S4_OBJECT)(SEXP x);
 
 /* Vector Access Functions */
 int  (LENGTH)(SEXP x);
@@ -511,6 +523,7 @@ LibExtern SEXP	R_SourceSymbol;     /* "source" */
 LibExtern SEXP	R_DotEnvSymbol;     /* ".Environment" */
 LibExtern SEXP	R_RecursiveSymbol;  /* "recursive" */
 LibExtern SEXP	R_UseNamesSymbol;   /* "use.names" */
+LibExtern SEXP	R_RowNamesSymbol;   /* "row.names" */
 
 /* Missing Values - others from Arith.h */
 #define NA_STRING	R_NaString
@@ -522,34 +535,14 @@ LibExtern SEXP	R_BlankString;	    /* "" as a CHARSXP */
 /* Type Coercions of all kinds */
 
 SEXP Rf_asChar(SEXP);
-SEXP Rf_ascommon(SEXP, SEXP, SEXPTYPE);
 SEXP Rf_coerceVector(SEXP, SEXPTYPE);
-SEXP Rf_coerceList(SEXP, SEXPTYPE);
-void Rf_CoercionWarning(int);/* warning code */
 SEXP Rf_PairToVectorList(SEXP x);
 SEXP Rf_VectorToPairList(SEXP x);
-
-int Rf_LogicalFromInteger(int, int*);
-int Rf_LogicalFromReal(double, int*);
-int Rf_LogicalFromComplex(Rcomplex, int*);
-int Rf_LogicalFromString(SEXP, int*);
-int Rf_IntegerFromLogical(int, int*);
-int Rf_IntegerFromReal(double, int*);
-int Rf_IntegerFromComplex(Rcomplex, int*);
-int Rf_IntegerFromString(SEXP, int*);
-double Rf_RealFromLogical(int, int*);
-double Rf_RealFromInteger(int, int*);
-double Rf_RealFromComplex(Rcomplex, int*);
-double Rf_RealFromString(SEXP, int*);
-Rcomplex Rf_ComplexFromLogical(int, int*);
-Rcomplex Rf_ComplexFromInteger(int, int*);
-Rcomplex Rf_ComplexFromReal(double, int*);
-Rcomplex Rf_ComplexFromString(SEXP, int*);
-SEXP Rf_StringFromLogical(int, int*);
-SEXP Rf_StringFromInteger(int, int*);
-SEXP Rf_StringFromReal(double, int*);
-SEXP Rf_StringFromComplex(Rcomplex, int*);
-SEXP Rf_EnsureString(SEXP);
+int Rf_asLogical(SEXP x);
+int Rf_asInteger(SEXP x);
+double Rf_asReal(SEXP x);
+Rcomplex Rf_asComplex(SEXP x);
+    
 
 
 /* Other Internally Used Functions */
@@ -557,33 +550,25 @@ SEXP Rf_EnsureString(SEXP);
 SEXP Rf_allocArray(SEXPTYPE, SEXP);
 SEXP Rf_allocMatrix(SEXPTYPE, int, int);
 SEXP Rf_allocList(int);
+SEXP Rf_allocS4Object();
 SEXP Rf_allocSExp(SEXPTYPE);
 SEXP Rf_allocVector(SEXPTYPE, R_len_t);
 SEXP Rf_applyClosure(SEXP, SEXP, SEXP, SEXP, SEXP);
 SEXP Rf_arraySubscript(int, SEXP, SEXP, SEXP (*)(SEXP,SEXP),
                        SEXP (*)(SEXP, int), SEXP);
-R_len_t Rf_asVecSize(SEXP);
 SEXP Rf_classgets(SEXP, SEXP);
 SEXP Rf_cons(SEXP, SEXP);
-void Rf_copyListMatrix(SEXP, SEXP, Rboolean);
 void Rf_copyMatrix(SEXP, SEXP, Rboolean);
 void Rf_copyMostAttrib(SEXP, SEXP);
-void Rf_copyMostAttribNoTs(SEXP, SEXP);
 void Rf_copyVector(SEXP, SEXP);
 SEXP Rf_CreateTag(SEXP);
-void Rf_CustomPrintValue(SEXP,SEXP);
 void Rf_defineVar(SEXP, SEXP, SEXP);
 SEXP Rf_dimgets(SEXP, SEXP);
 SEXP Rf_dimnamesgets(SEXP, SEXP);
 SEXP Rf_DropDims(SEXP);
 SEXP Rf_duplicate(SEXP);
 SEXP Rf_duplicated(SEXP);
-/* SEXP Rf_emptyEnv(void); */
 SEXP Rf_eval(SEXP, SEXP);
-SEXP Rf_EvalArgs(SEXP, SEXP, int);
-SEXP Rf_evalList(SEXP, SEXP);
-SEXP Rf_evalListKeepMissing(SEXP, SEXP);
-/* SEXP extendEnv(SEXP, SEXP, SEXP); */
 SEXP Rf_findFun(SEXP, SEXP);
 SEXP Rf_findVar(SEXP, SEXP);
 SEXP Rf_findVarInFrame(SEXP, SEXP);
@@ -595,23 +580,15 @@ void Rf_GetMatrixDimnames(SEXP, SEXP*, SEXP*, char**, char**);
 SEXP Rf_GetOption(SEXP, SEXP);
 int Rf_GetOptionDigits(SEXP);
 int Rf_GetOptionWidth(SEXP);
-/* SEXP Rf_GetPar(char*, SEXP); */
 SEXP Rf_GetRowNames(SEXP);
 void Rf_gsetVar(SEXP, SEXP, SEXP);
 SEXP Rf_install(char const *);
-/* Rboolean Rf_isExpressionObject(SEXP); */
 Rboolean Rf_isFree(SEXP);
 Rboolean Rf_isFunction(SEXP);
 Rboolean Rf_isUnsorted(SEXP);
-SEXP Rf_ItemName(SEXP, int);
 SEXP Rf_lengthgets(SEXP, R_len_t);
 SEXP R_lsInternal(SEXP, Rboolean);
-SEXP Rf_makeSubscript(SEXP, SEXP, int *);
 SEXP Rf_match(SEXP, SEXP, int);
-SEXP Rf_matchArg(SEXP, SEXP*);
-SEXP Rf_matchArgExact(SEXP, SEXP*);
-SEXP Rf_matchArgs(SEXP, SEXP);
-SEXP Rf_matchPar(char*, SEXP*);
 SEXP Rf_namesgets(SEXP, SEXP);
 Rboolean Rf_NonNullStringMatch(SEXP, SEXP);
 int Rf_ncols(SEXP);
@@ -619,10 +596,7 @@ int Rf_nrows(SEXP);
 SEXP Rf_nthcdr(SEXP, int);
 Rboolean Rf_pmatch(SEXP, SEXP, Rboolean);
 Rboolean Rf_psmatch(char *, char *, Rboolean);
-void Rf_PrintDefaults(SEXP);
 void Rf_PrintValue(SEXP);
-void Rf_PrintValueEnv(SEXP, SEXP);
-void Rf_PrintValueRec(SEXP, SEXP);
 SEXP Rf_protect(SEXP);
 SEXP Rf_rownamesgets(SEXP,SEXP);
 SEXP Rf_setAttrib(SEXP, SEXP, SEXP);
@@ -630,16 +604,13 @@ void Rf_setSVector(SEXP*, int, SEXP);
 void Rf_setVar(SEXP, SEXP, SEXP);
 Rboolean Rf_StringBlank(SEXP);
 SEXP Rf_substitute(SEXP,SEXP);
-SEXP R_tryEval(SEXP e, SEXP env, int *ErrorOccurred);
 void Rf_unprotect(int);
 void Rf_unprotect_ptr(SEXP);
-SEXP Rf_vectorSubscript(int, SEXP, int*, SEXP (*)(SEXP,SEXP),
-                        SEXP (*)(SEXP, int), SEXP);
 
 void R_ProtectWithIndex(SEXP, PROTECT_INDEX *);
 void R_Reprotect(SEXP, PROTECT_INDEX);
-SEXP R_subassign3_dflt(SEXP, SEXP, SEXP, SEXP);
-SEXP R_subset3_dflt(SEXP, SEXP);
+SEXP R_tryEval(SEXP, SEXP, int *);
+
 				/* return(.) NOT reached : for -Wall */
 #define error_return(msg)	{ Rf_error(msg);	   return R_NilValue; }
 #define errorcall_return(cl,msg){ Rf_errorcall(cl, msg);   return R_NilValue; }
@@ -700,6 +671,7 @@ SEXP R_FindNamespace(SEXP info);
 void R_LockEnvironment(SEXP env, Rboolean bindings);
 Rboolean R_EnvironmentIsLocked(SEXP env);
 void R_LockBinding(SEXP sym, SEXP env);
+void R_unLockBinding(SEXP sym, SEXP env);
 void R_MakeActiveBinding(SEXP sym, SEXP fun, SEXP env);
 Rboolean R_BindingIsLocked(SEXP sym, SEXP env);
 Rboolean R_BindingIsActive(SEXP sym, SEXP env);
@@ -710,9 +682,7 @@ Rboolean R_HasFancyBindings(SEXP rho);
 /* needed for R_load/savehistory handling in front ends */
 void Rf_errorcall(SEXP, const char*, ...);
 void Rf_warningcall(SEXP, const char*, ...);
-
-/* Experimental Changes in Dispatching */
-void R_SetUseNamespaceDispatch(Rboolean val);
+void Rf_warningcall_immediate(SEXP, const char*, ...);
 
 /* Save/Load Interface */
 #define R_XDR_DOUBLE_SIZE 8
@@ -813,40 +783,33 @@ FILE *R_popen(char *, char *);
 #endif
 int R_system(char *);
 
+/* now a macro */
+#define allocString(n)		Rf_allocVector(CHARSXP, n)
+#define Rf_allocString(n)      	Rf_allocVector(CHARSXP, n)
 
 #ifndef R_NO_REMAP
 #define allocArray		Rf_allocArray
 #define allocList		Rf_allocList
 #define allocMatrix		Rf_allocMatrix
+#define allocS4Object		Rf_allocS4Object
 #define allocSExp		Rf_allocSExp
-#define allocString		Rf_allocString
+/*#define allocString		Rf_allocString*/
 #define allocVector		Rf_allocVector
 #define applyClosure		Rf_applyClosure
 #define arraySubscript		Rf_arraySubscript
 #define asChar			Rf_asChar
-#define ascommon		Rf_ascommon
 #define asComplex		Rf_asComplex
 #define asInteger		Rf_asInteger
 #define asLogical		Rf_asLogical
 #define asReal			Rf_asReal
-#define asVecSize		Rf_asVecSize
 #define classgets		Rf_classgets
-#define coerceList		Rf_coerceList
 #define coerceVector		Rf_coerceVector
-#define CoercionWarning		Rf_CoercionWarning
-#define ComplexFromInteger	Rf_ComplexFromInteger
-#define ComplexFromLogical	Rf_ComplexFromLogical
-#define ComplexFromReal		Rf_ComplexFromReal
-#define ComplexFromString	Rf_ComplexFromString
 #define conformable		Rf_conformable
 #define cons			Rf_cons
-#define copyListMatrix		Rf_copyListMatrix
 #define copyMatrix		Rf_copyMatrix
 #define copyMostAttrib		Rf_copyMostAttrib
-#define copyMostAttribNoTs	Rf_copyMostAttribNoTs
 #define copyVector		Rf_copyVector
 #define CreateTag		Rf_CreateTag
-#define CustomPrintValue	Rf_CustomPrintValue
 #define defineVar		Rf_defineVar
 #define dimgets			Rf_dimgets
 #define dimnamesgets		Rf_dimnamesgets
@@ -854,13 +817,8 @@ int R_system(char *);
 #define duplicate		Rf_duplicate
 #define duplicated		Rf_duplicated
 #define elt			Rf_elt
-#define emptyEnv		Rf_emptyEnv
-#define EnsureString		Rf_EnsureString
-# define errorcall		Rf_errorcall
+#define errorcall		Rf_errorcall
 #define eval			Rf_eval
-#define EvalArgs		Rf_EvalArgs
-#define evalList		Rf_evalList
-#define evalListKeepMissing	Rf_evalListKeepMissing
 #define findFun			Rf_findFun
 #define findVar			Rf_findVar
 #define findVarInFrame		Rf_findVarInFrame
@@ -872,20 +830,14 @@ int R_system(char *);
 #define GetOption		Rf_GetOption
 #define GetOptionDigits		Rf_GetOptionDigits
 #define GetOptionWidth		Rf_GetOptionWidth
-#define GetPar			Rf_GetPar
 #define GetRowNames		Rf_GetRowNames
 #define gsetVar			Rf_gsetVar
 #define inherits		Rf_inherits
 #define install			Rf_install
-#define IntegerFromComplex	Rf_IntegerFromComplex
-#define IntegerFromLogical	Rf_IntegerFromLogical
-#define IntegerFromReal		Rf_IntegerFromReal
-#define IntegerFromString	Rf_IntegerFromString
 #define isArray			Rf_isArray
 #define isComplex		Rf_isComplex
 #define isEnvironment		Rf_isEnvironment
 #define isExpression		Rf_isExpression
-#define isExpressionObject	Rf_isExpressionObject
 #define isFactor		Rf_isFactor
 #define isFrame			Rf_isFrame
 #define isFree			Rf_isFree
@@ -899,6 +851,10 @@ int R_system(char *);
 #define isNull			Rf_isNull
 #define isNumeric		Rf_isNumeric
 #define isObject		Rf_isObject
+  /*see comment in Rinlinedfuns.h
+// #define isS4                     Rf_isS4
+// #define asS4                    Rf_asS4
+*/
 #define isOrdered		Rf_isOrdered
 #define isPairList		Rf_isPairList
 #define isPrimitive		Rf_isPrimitive
@@ -915,7 +871,6 @@ int R_system(char *);
 #define isVectorAtomic		Rf_isVectorAtomic
 #define isVectorizable		Rf_isVectorizable
 #define isVectorList		Rf_isVectorList
-#define ItemName		Rf_ItemName
 #define lang1			Rf_lang1
 #define lang2			Rf_lang2
 #define lang3			Rf_lang3
@@ -929,16 +884,7 @@ int R_system(char *);
 #define list3			Rf_list3
 #define list4			Rf_list4
 #define listAppend		Rf_listAppend
-#define LogicalFromComplex	Rf_LogicalFromComplex
-#define LogicalFromInteger	Rf_LogicalFromInteger
-#define LogicalFromReal		Rf_LogicalFromReal
-#define LogicalFromString	Rf_LogicalFromString
-#define makeSubscript		Rf_makeSubscript
 #define match			Rf_match
-#define matchArg		Rf_matchArg
-#define matchArgExact		Rf_matchArgExact
-#define matchArgs		Rf_matchArgs
-#define matchPar		Rf_matchPar
 #define mkChar			Rf_mkChar
 #define mkString		Rf_mkString
 #define namesgets		Rf_namesgets
@@ -950,15 +896,8 @@ int R_system(char *);
 #define PairToVectorList	Rf_PairToVectorList
 #define pmatch			Rf_pmatch
 #define psmatch			Rf_psmatch
-#define PrintDefaults		Rf_PrintDefaults
 #define PrintValue		Rf_PrintValue
-#define PrintValueEnv		Rf_PrintValueEnv
-#define PrintValueRec		Rf_PrintValueRec
 #define protect			Rf_protect
-#define RealFromComplex		Rf_RealFromComplex
-#define RealFromInteger		Rf_RealFromInteger
-#define RealFromLogical		Rf_RealFromLogical
-#define RealFromString		Rf_RealFromString
 #define rownamesgets		Rf_rownamesgets
 #define ScalarComplex		Rf_ScalarComplex
 #define ScalarInteger		Rf_ScalarInteger
@@ -970,23 +909,19 @@ int R_system(char *);
 #define setSVector		Rf_setSVector
 #define setVar			Rf_setVar
 #define StringBlank		Rf_StringBlank
-#define StringFromComplex	Rf_StringFromComplex
-#define StringFromInteger	Rf_StringFromInteger
-#define StringFromLogical	Rf_StringFromLogical
-#define StringFromReal		Rf_StringFromReal
 #define substitute		Rf_substitute
 #define unprotect		Rf_unprotect
 #define unprotect_ptr		Rf_unprotect_ptr
 #define VectorToPairList	Rf_VectorToPairList
-#define vectorSubscript         Rf_vectorSubscript
 #define warningcall		Rf_warningcall
+#define warningcall_immediate	Rf_warningcall_immediate
 #endif
 
 #if defined(CALLED_FROM_DEFN_H) && !defined(__MAIN__) && (defined(COMPILING_R) || ( __GNUC__ && !defined(__INTEL_COMPILER) ))
 #include "Rinlinedfuns.h"
 #else
 /* need remapped names here for use with R_NO_REMAP */
-SEXP Rf_allocString(int);
+/*SEXP Rf_allocString(int);*/
 Rcomplex Rf_asComplex(SEXP);
 int Rf_asInteger(SEXP);
 int Rf_asLogical(SEXP);
@@ -1014,6 +949,10 @@ Rboolean Rf_isOrdered(SEXP);
 Rboolean Rf_isPairList(SEXP);
 Rboolean Rf_isPrimitive(SEXP);
 Rboolean Rf_isReal(SEXP);
+  /* see comment in Rinlinedfuns.h 
+  // Rboolean Rf_isS4(SEXP);
+ // SEXP Rf_asS4(SEXP, Rboolean);
+  */
 Rboolean Rf_isString(SEXP);
 Rboolean Rf_isSymbol(SEXP);
 Rboolean Rf_isTs(SEXP);

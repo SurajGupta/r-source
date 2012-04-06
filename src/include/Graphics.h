@@ -166,7 +166,8 @@ typedef struct {
     double srt;		/* String Rotation */
     double tck;		/* Tick size as in S */
     double tcl;		/* Tick size in "lines" */
-    double tmag;	/* **R ONLY** Title Magnification */
+    /* kept to avoid changing the structure */
+    double tmag;	/* **DEFUNCT** Title Magnification */
     /* int	type;	    type of plot desired -- removed in 2.3.0 */
     double xaxp[3];	/* X Axis annotation */
 			/* [0] = coordinate of lower tick */
@@ -434,7 +435,9 @@ double R_Log10(double);
 
 void ProcessInlinePars(SEXP, DevDesc*, SEXP call);
 void Specify2(char*, SEXP, DevDesc*, SEXP call);
+#ifdef UNUSED
 void RecordGraphicsCall(SEXP);
+#endif
 
 SEXP FixupPch(SEXP, int);
 SEXP FixupLty(SEXP, int);

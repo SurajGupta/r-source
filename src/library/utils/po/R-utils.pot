@@ -2,7 +2,7 @@ msgid ""
 msgstr ""
 "Project-Id-Version: R 2.3.0\n"
 "Report-Msgid-Bugs-To: bugs@r-project.org\n"
-"POT-Creation-Date: 2006-05-12 08:33\n"
+"POT-Creation-Date: 2006-09-22 12:35\n"
 "PO-Revision-Date: YEAR-MO-DA HO:MI+ZONE\n"
 "Last-Translator: FULL NAME <EMAIL@ADDRESS>\n"
 "Language-Team: LANGUAGE <LL@li.org>\n"
@@ -96,6 +96,15 @@ msgid "no date field in DESCRIPTION file of package '%s'"
 msgstr ""
 
 msgid "could not determine year for '%s' from package DESCRIPTION file"
+msgstr ""
+
+msgid "m < 0"
+msgstr ""
+
+msgid "n < m"
+msgstr ""
+
+msgid "'FUN' must be a function or NULL"
 msgstr ""
 
 msgid "'package' must be a character string or NULL"
@@ -221,6 +230,9 @@ msgstr ""
 msgid "Help on topic '%s' was found in the following packages:"
 msgstr ""
 
+msgid "Choose one"
+msgstr ""
+
 msgid "Using the first match ..."
 msgstr ""
 
@@ -267,6 +279,9 @@ msgid "no hsearch.rds meta data for package"
 msgstr ""
 
 msgid "removing all entries with invalid multi-byte character data"
+msgstr ""
+
+msgid "no information in the data base for package '%s': need 'rebuild = TRUE'?"
 msgstr ""
 
 msgid "incorrect 'agrep' specification"
@@ -320,7 +335,13 @@ msgstr ""
 msgid "cannot create directory '%s'"
 msgstr ""
 
+msgid "'code_files' should be a character vector"
+msgstr ""
+
 msgid "'list' should be a character vector naming R objects"
+msgstr ""
+
+msgid "'namespace' should be a single logical"
 msgstr ""
 
 msgid "cannot turn off locale-specific chars via LC_CTYPE"
@@ -329,7 +350,34 @@ msgstr ""
 msgid "no R objects specified or available"
 msgstr ""
 
+msgid "Creating directories ..."
+msgstr ""
+
 msgid "directory '%s' already exists"
+msgstr ""
+
+msgid "Creating DESCRIPTION ..."
+msgstr ""
+
+msgid "Creating NAMESPACE ..."
+msgstr ""
+
+msgid "Creating Read-and-delete-me ..."
+msgstr ""
+
+msgid "Saving functions and data ..."
+msgstr ""
+
+msgid "Copying code files ..."
+msgstr ""
+
+msgid "Making help files ..."
+msgstr ""
+
+msgid "Done."
+msgstr ""
+
+msgid "Further steps are described in '%s'."
 msgstr ""
 
 msgid "unable to access index for repository %s"
@@ -455,7 +503,7 @@ msgstr ""
 msgid "simple examples of the most important functions"
 msgstr ""
 
-msgid "Optionally other keywords from doc/KEYWORDS, one per line"
+msgid "Optionally other standard keywords, one per line, from file KEYWORDS in the R documentation directory"
 msgstr ""
 
 msgid "no documentation of type '%s' and topic '%s' (or error in processing help)"
@@ -476,6 +524,48 @@ msgstr ""
 msgid "no documentation for function '%s' and signature '%s'"
 msgstr ""
 
+msgid "No DIF data on clipboard"
+msgstr ""
+
+msgid "row and column counts not found"
+msgstr ""
+
+msgid "Unrecognized special data value"
+msgstr ""
+
+msgid "Unrecognized value indicator"
+msgstr ""
+
+msgid "no lines available in input"
+msgstr ""
+
+msgid "header and 'col.names' are of different lengths"
+msgstr ""
+
+msgid "more columns than column names"
+msgstr ""
+
+msgid "more column names than columns"
+msgstr ""
+
+msgid "rows are empty: giving up"
+msgstr ""
+
+msgid "not all columns named in 'colClasses' exist"
+msgstr ""
+
+msgid "invalid numeric 'as.is' expression"
+msgstr ""
+
+msgid "not all columns named in 'as.is' exist"
+msgstr ""
+
+msgid "'as.is' has the wrong length %d  != cols = %d"
+msgstr ""
+
+msgid "invalid 'row.names' specification"
+msgstr ""
+
 msgid "missing lengths for some fields"
 msgstr ""
 
@@ -485,7 +575,16 @@ msgstr ""
 msgid "last record incomplete, %d lines discarded"
 msgstr ""
 
+msgid "'file' must be a character string or connection"
+msgstr ""
+
 msgid "transfer failure"
+msgstr ""
+
+msgid "HTTPUserAgent"
+msgstr ""
+
+msgid "option must be a length one character vector or NULL"
 msgstr ""
 
 msgid "invalid 'socket' argument"
@@ -506,16 +605,22 @@ msgstr ""
 msgid "str.data.frame() called with non-data.frame -- coercing to one."
 msgstr ""
 
+msgid "invalid options('str') -- using defaults instead"
+msgstr ""
+
 msgid "'object' does not have valid levels()"
 msgstr ""
 
 msgid "'str.default': 'le' is NA"
 msgstr ""
 
+msgid "profile does not contain memory information"
+msgstr ""
+
 msgid "no events were recorded"
 msgstr ""
 
-msgid "vignette '%d' found more than once,\nusing the one found in '%s'"
+msgid "vignette '%s' found more than once,\nusing the one found in '%s'"
 msgstr ""
 
 msgid "vignette '%s' *not* found"
@@ -570,6 +675,12 @@ msgid "cannot create HTML package index"
 msgstr ""
 
 msgid "cannot create HTML search index"
+msgstr ""
+
+msgid "'memory.size()' is Windows-specific"
+msgstr ""
+
+msgid "'memory.limit()' is Windows-specific"
 msgstr ""
 
 msgid "unable to find the HTML help"

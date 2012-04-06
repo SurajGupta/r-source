@@ -1,6 +1,7 @@
 legend <-
 function(x, y = NULL, legend, fill=NULL, col = par("col"), lty, lwd, pch,
 	 angle = 45, density = NULL, bty = "o", bg = par("bg"),
+         box.lwd = par("lwd"), box.lty = par("lty"),
 	 pt.bg = NA, cex = 1, pt.cex = cex, pt.lwd = lwd,
 	 xjust = 0, yjust = 1, x.intersp = 1, y.intersp = 1, adj = c(0, 0.5),
 	 text.width = NULL, text.col = par("col"),
@@ -64,18 +65,21 @@ function(x, y = NULL, legend, fill=NULL, col = par("col"), lty, lwd, pch,
     cin <- par("cin")
     Cex <- cex * par("cex")		# = the `effective' cex for text
 
+    ## at this point we want positive width even for reversed x axis.
     if(is.null(text.width))
-	text.width <- max(strwidth(legend, units="user", cex=cex))
+	text.width <- max(abs(strwidth(legend, units="user", cex=cex)))
     else if(!is.numeric(text.width) || text.width < 0)
 	stop("'text.width' must be numeric, >= 0")
 
     xc <- Cex * xinch(cin[1], warn.log=FALSE)# [uses par("usr") and "pin"]
     yc <- Cex * yinch(cin[2], warn.log=FALSE)
+    if(xc < 0) text.width <- -text.width
 
     xchar  <- xc
     xextra <- 0
     yextra <- yc * (y.intersp - 1)
-    ymax   <- max(yc, strheight(legend, units="user", cex=cex))
+    ## watch out for reversed axis here: heights can be negative
+    ymax   <- yc * max(1, strheight(legend, units="user", cex=cex)/yc)
     ychar <- yextra + ymax
     if(trace) catn("  xchar=", xchar, "; (yextra,ychar)=", c(yextra,ychar))
 
@@ -170,7 +174,8 @@ function(x, y = NULL, legend, fill=NULL, col = par("col"), lty, lwd, pch,
     if (plot && bty != "n") { ## The legend box :
 	if(trace)
 	    catn("  rect2(",left,",",top,", w=",w,", h=",h,", ...)",sep="")
-	rect2(left, top, dx = w, dy = h, col = bg, density = NULL)
+	rect2(left, top, dx = w, dy = h, col = bg, density = NULL,
+              lwd = box.lwd, lty = box.lty)
     }
 
     ## (xt[],yt[]) := `current' vectors of (x/y) legend text

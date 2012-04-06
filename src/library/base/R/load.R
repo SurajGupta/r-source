@@ -12,6 +12,9 @@ load <- function (file, envir = parent.frame())
             if(regexpr("RD[ABX][12]\r", magic) == 1)
                 stop("input has been corrupted, with LF replaced by CR")
             ## Not a version 2 magic number, so try the old way.
+            warning(gettextf("file '%s' has magic number '%s'\n   Use of save versions prior to 2 is deprecated",
+                             basename(file), gsub("[\n\r]*", "", magic)),
+                    domain = NA, call. = FALSE)
             return(.Internal(load(file, envir)))
         }
     } else if (inherits(file, "connection")) {
@@ -24,7 +27,7 @@ load <- function (file, envir = parent.frame())
 save <- function(..., list = character(0),
                  file = stop("'file' must be specified"),
                  ascii = FALSE, version = NULL, envir = parent.frame(),
-                 compress = !ascii)
+                 compress = !ascii, eval.promises = TRUE)
 {
     opts <- getOption("save.defaults")
     if (missing(compress) && ! is.null(opts$compress))
@@ -32,11 +35,14 @@ save <- function(..., list = character(0),
     if (missing(ascii) && ! is.null(opts$ascii))
         ascii <- opts$ascii
     if (missing(version)) version <- opts$version
+    if (!is.null(version) && version < 2)
+        warning("Use of save versions prior to 2 is deprecated")
 
     names <- as.character( substitute( list(...)))[-1]
     list<- c(list, names)
     if (! is.null(version) && version == 1)
-        invisible(.Internal(save(list, file, ascii, version, envir)))
+        invisible(.Internal(save(list, file, ascii, version, envir,
+                                 eval.promises)))
     else {
         if (is.character(file)) {
             if (file == "") stop("'file' must be non-empty string")
@@ -49,12 +55,13 @@ save <- function(..., list = character(0),
         else stop("bad file argument")
         if(isOpen(con) && summary(con)$text != "binary")
             stop("can only save to a binary connection")
-        invisible(.Internal(saveToConn(list, con, ascii, version, envir)))
+        invisible(.Internal(saveToConn(list, con, ascii, version, envir,
+                                       eval.promises)))
     }
 }
 
 save.image <- function (file = ".RData", version = NULL, ascii = FALSE,
-                        compress = FALSE, safe = TRUE) {
+                        compress = !ascii, safe = TRUE) {
     if (! is.character(file) || file == "")
         stop("'file' must be non-empty string")
 
@@ -63,10 +70,10 @@ save.image <- function (file = ".RData", version = NULL, ascii = FALSE,
 
     if (missing(safe) && ! is.null(opts$safe))
         safe <- opts$safe
-    if (missing(compress) && ! is.null(opts$compress))
-        compress <- opts$compress
     if (missing(ascii) && ! is.null(opts$ascii))
         ascii <- opts$ascii
+    if (missing(compress) && ! is.null(opts$compress))
+        compress <- opts$compress
     if (missing(version)) version <- opts$version
 
     if (safe) {

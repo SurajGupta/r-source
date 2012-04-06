@@ -348,7 +348,7 @@ SEXP attribute_hidden do_length(SEXP call, SEXP op, SEXP args, SEXP rho)
 
     ans = allocVector(INTSXP, 1);
     len = length(CAR(args));
-    INTEGER(ans)[0] = (len < INT_MAX) ? len : NA_INTEGER;
+    INTEGER(ans)[0] = (len <= INT_MAX) ? len : NA_INTEGER;
     return ans;
 }
 
@@ -919,8 +919,8 @@ SEXP attribute_hidden do_transpose(SEXP call, SEXP op, SEXP args, SEXP rho)
 	SET_VECTOR_ELT(dimnames, 1, rnames);
 	if(!isNull(dimnamesnames)) {
 	    PROTECT(ndimnamesnames = allocVector(VECSXP, 2));
-	    SET_STRING_ELT(ndimnamesnames, 1, STRING_ELT(dimnamesnames, 0));
-	    SET_STRING_ELT(ndimnamesnames, 0,
+	    SET_VECTOR_ELT(ndimnamesnames, 1, STRING_ELT(dimnamesnames, 0));
+	    SET_VECTOR_ELT(ndimnamesnames, 0,
 			   (ldim == 2) ? STRING_ELT(dimnamesnames, 1):
 			   R_BlankString);
 	    setAttrib(dimnames, R_NamesSymbol, ndimnamesnames);
@@ -1028,9 +1028,15 @@ SEXP attribute_hidden do_aperm(SEXP call, SEXP op, SEXP args, SEXP rho)
     switch (TYPEOF(a)) {
 
     case INTSXP:
+        for (j=0, i=0; i<len; i++) {
+            INTEGER(r)[i] = INTEGER(a)[j];
+            CLICKJ;
+        }
+        break;
+
     case LGLSXP:
 	for (j=0, i=0; i<len; i++) {
-	    INTEGER(r)[i] = INTEGER(a)[j];
+	    LOGICAL(r)[i] = LOGICAL(a)[j];
 	    CLICKJ;
 	}
 	break;
@@ -1076,7 +1082,7 @@ SEXP attribute_hidden do_aperm(SEXP call, SEXP op, SEXP args, SEXP rho)
     }
 
     /* handle the resize */
-    PROTECT(resize = coerceVector(CADDR(args), INTSXP));
+    PROTECT(resize = coerceVector(CADDR(args), LGLSXP));
     if (LOGICAL(resize)[0])
 	setAttrib(r, R_DimSymbol, dimsr);
     else

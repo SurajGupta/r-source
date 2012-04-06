@@ -42,37 +42,13 @@ static SEXP modLa_svd(SEXP jobu, SEXP jobv, SEXP x, SEXP s, SEXP u, SEXP v,
     if (!isString(method))
 	error(_("'method' must be a character string"));
     meth = CHAR(STRING_ELT(method, 0));
-/*#ifndef IEEE_754
-    if (strcmp(meth, "dgesdd") == 0)
-	error("method = \"dgesdd\" requires IEEE 754 arithmetic");
-#endif*/
     xdims = INTEGER(coerceVector(getAttrib(x, R_DimSymbol), INTSXP));
     n = xdims[0]; p = xdims[1];
     xvals = (double *) R_alloc(n * p, sizeof(double));
     /* work on a copy of x */
     Memcpy(xvals, REAL(x), (size_t) (n * p));
 
-    if(strcmp(meth, "dgesdd")) {
-	/* ask for optimal size of work array */
-	lwork = -1;
-	F77_CALL(dgesvd)(CHAR(STRING_ELT(jobu, 0)), CHAR(STRING_ELT(jobv, 0)),
-			 &n, &p, xvals, &n, REAL(s),
-			 REAL(u), INTEGER(getAttrib(u, R_DimSymbol)),
-			 REAL(v), INTEGER(getAttrib(v, R_DimSymbol)),
-			 &tmp, &lwork, &info);
-	if (info != 0)
-	    error(_("error code %d from Lapack routine '%s'"), info, "dgesvd");
-	lwork = (int) tmp;
-
-	work = (double *) R_alloc(lwork, sizeof(double));
-	F77_CALL(dgesvd)(CHAR(STRING_ELT(jobu, 0)), CHAR(STRING_ELT(jobv, 0)),
-			 &n, &p, xvals, &n, REAL(s),
-			 REAL(u), INTEGER(getAttrib(u, R_DimSymbol)),
-			 REAL(v), INTEGER(getAttrib(v, R_DimSymbol)),
-			 work, &lwork, &info);
-	if (info != 0)
-	    error(_("error code %d from Lapack routine '%s'"), info, "dgesvd");
-    } else {
+    {
 	int ldu = INTEGER(getAttrib(u, R_DimSymbol))[0],
 	    ldvt = INTEGER(getAttrib(v, R_DimSymbol))[0];
 	int *iwork= (int *) R_alloc(8*(n<p ? n : p), sizeof(int));
@@ -115,7 +91,7 @@ static SEXP modLa_rs(SEXP xin, SEXP only_values)
     int *xdims, n, lwork, info = 0, ov;
     char jobv[1], uplo[1], range[1];
     SEXP values, ret, nm, x, z = R_NilValue;
-    double *work, *rx, *rvalues, tmp;
+    double *work, *rx, *rvalues, tmp, *rz = NULL;
     int liwork, *iwork, itmp, m;
     double vl = 0.0, vu = 0.0, abstol = 0.0;
     /* valgrind seems to think vu should be set, but it is documented
@@ -137,13 +113,16 @@ static SEXP modLa_rs(SEXP xin, SEXP only_values)
     rvalues = REAL(values);
 
     range[0] = 'A';
-    if (!ov) PROTECT(z = allocMatrix(REALSXP, n, n));
+    if (!ov) {
+	PROTECT(z = allocMatrix(REALSXP, n, n));
+	rz = REAL(z);
+    }
     isuppz = (int *) R_alloc(2*n, sizeof(int));
     /* ask for optimal size of work arrays */
     lwork = -1; liwork = -1;
     F77_CALL(dsyevr)(jobv, range, uplo, &n, rx, &n,
 		     &vl, &vu, &il, &iu, &abstol, &m, rvalues,
-		     REAL(z), &n, isuppz,
+		     rz, &n, isuppz,
 		     &tmp, &lwork, &itmp, &liwork, &info);
     if (info != 0)
 	error(_("error code %d from Lapack routine '%s'"), info, "dsyevr");
@@ -154,7 +133,7 @@ static SEXP modLa_rs(SEXP xin, SEXP only_values)
     iwork = (int *) R_alloc(liwork, sizeof(int));
     F77_CALL(dsyevr)(jobv, range, uplo, &n, rx, &n,
 		     &vl, &vu, &il, &iu, &abstol, &m, rvalues,
-		     REAL(z), &n, isuppz,
+		     rz, &n, isuppz,
 		     work, &lwork, iwork, &liwork, &info);
     if (info != 0)
 	error(_("error code %d from Lapack routine '%s'"), info, "dsyevr");

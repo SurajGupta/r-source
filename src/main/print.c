@@ -1,7 +1,7 @@
 /*
  *  R : A Computer Language for Statistical Data Analysis
  *  Copyright (C) 1995-1998	Robert Gentleman and Ross Ihaka.
- *  Copyright (C) 2000-2005	The R Development Core Team.
+ *  Copyright (C) 2000-2006	The R Development Core Team.
  *
  *  This program is free software; you can redistribute it and/or modify
  *  it under the terms of the GNU General Public License as published by
@@ -78,6 +78,7 @@ static void printAttributes(SEXP, SEXP, Rboolean);
 static char tagbuf[TAGBUFLEN + 5];
 
 
+/* Used in X11 module for dataentry */
 void PrintDefaults(SEXP rho)
 {
     R_print.na_string = NA_STRING;
@@ -89,6 +90,8 @@ void PrintDefaults(SEXP rho)
     R_print.digits = GetOptionDigits(rho);
     R_print.scipen = asInteger(GetOption(install("scipen"), rho));
     if (R_print.scipen == NA_INTEGER) R_print.scipen = 0;
+    R_print.max = asInteger(GetOption(install("max.print"), rho));
+    if (R_print.max == NA_INTEGER) R_print.max = 99999;
     R_print.gap = 1;
     R_print.width = GetOptionWidth(rho);
 }
@@ -113,6 +116,7 @@ SEXP attribute_hidden do_visibleflag(SEXP call, SEXP op, SEXP args, SEXP rho)
 }
 #endif
 
+/* This is *only* called via outdated R_level prmatrix() : */
 SEXP attribute_hidden do_prmatrix(SEXP call, SEXP op, SEXP args, SEXP rho)
 {
     int quote;
@@ -152,7 +156,7 @@ SEXP attribute_hidden do_prmatrix(SEXP call, SEXP op, SEXP args, SEXP rho)
 
 
 /* .Internal(print.default(x, digits, quote, na.print, print.gap,
-                           right, useS4)) */
+                           right, max, useS4)) */
 SEXP attribute_hidden do_printdefault(SEXP call, SEXP op, SEXP args, SEXP rho)
 {
     SEXP x, naprint;
@@ -200,12 +204,19 @@ SEXP attribute_hidden do_printdefault(SEXP call, SEXP op, SEXP args, SEXP rho)
 	errorcall(call, _("invalid '%s' argument"), "right");
     args = CDR(args);
 
+    if(!isNull(CAR(args))) {
+	R_print.max = asInteger(CAR(args));
+	if(R_print.max == NA_INTEGER)
+	    errorcall(call, _("invalid '%s' argument"), "max");
+    }
+    args = CDR(args);
+
     tryS4 = asLogical(CAR(args));
     if(tryS4 == NA_LOGICAL)
 	errorcall(call, _("invalid 'tryS4' internal argument"));
 
-    if(tryS4 && isObject(x) && isMethodsDispatchOn())
-      callShow = R_seemsS4Object(x);
+    if(tryS4 && IS_S4_OBJECT(x) && isMethodsDispatchOn())
+      callShow = TRUE;
 
     if(callShow) {
 	SEXP call;
@@ -216,7 +227,7 @@ SEXP attribute_hidden do_printdefault(SEXP call, SEXP op, SEXP args, SEXP rho)
 	CustomPrintValue(x, rho);
     }
 
-    PrintDefaults(rho); /* reset, as na.print.etc may have been set */
+    PrintDefaults(rho); /* reset, as na.print etc may have been set */
     return x;
 }/* do_printdefault */
 
@@ -235,6 +246,7 @@ static void PrintGenericVector(SEXP s, SEXP env)
     if((dims = getAttrib(s, R_DimSymbol)) != R_NilValue && length(dims) > 1) {
 	PROTECT(dims);
 	PROTECT(t = allocArray(STRSXP, dims));
+	/* FIXME: check (ns <= R_print.max +1) ? ns : R_print.max; */
 	for (i = 0 ; i < ns ; i++) {
 	    switch(TYPEOF(PROTECT(tmp = VECTOR_ELT(s, i)))) {
 	    case NILSXP:
@@ -243,7 +255,7 @@ static void PrintGenericVector(SEXP s, SEXP env)
 	    case LGLSXP:
 		if (LENGTH(tmp) == 1) {
 		    formatLogical(LOGICAL(tmp), 1, &w);
-		    snprintf(pbuf, 115, "%s", 
+		    snprintf(pbuf, 115, "%s",
 			     EncodeLogical(LOGICAL(tmp)[0], w));
 		} else
 		    snprintf(pbuf, 115, "Logical,%d", LENGTH(tmp));
@@ -264,7 +276,7 @@ static void PrintGenericVector(SEXP s, SEXP env)
 	    case REALSXP:
 		if (LENGTH(tmp) == 1) {
 		    formatReal(REAL(tmp), 1, &w, &d, &e, 0);
-		    snprintf(pbuf, 115, "%s", 
+		    snprintf(pbuf, 115, "%s",
 			     EncodeReal(REAL(tmp)[0], w, d, e, OutDec));
 		} else
 		    snprintf(pbuf, 115, "Numeric,%d", LENGTH(tmp));
@@ -274,7 +286,7 @@ static void PrintGenericVector(SEXP s, SEXP env)
 		    Rcomplex *x = COMPLEX(tmp);
 		    formatComplex(x, 1, &wr, &dr, &er, &wi, &di, &ei, 0);
 		    if (ISNA(x[0].r) || ISNA(x[0].i))
-			snprintf(pbuf, 115, "%s", 
+			snprintf(pbuf, 115, "%s",
 				 EncodeReal(NA_REAL, w, 0, 0, OutDec));
 		    else
 			snprintf(pbuf, 115, "%s", EncodeComplex(x[0],
@@ -328,7 +340,7 @@ static void PrintGenericVector(SEXP s, SEXP env)
 	}
 	UNPROTECT(2);
     }
-    else {
+    else { /* .. no dim() .. */
 	names = getAttrib(s, R_NamesSymbol);
 	taglen = strlen(tagbuf);
 	ptag = tagbuf + taglen;
@@ -337,44 +349,49 @@ static void PrintGenericVector(SEXP s, SEXP env)
 	SET_TYPEOF(newcall, LANGSXP);
 
 	if(ns > 0) {
-	for (i = 0 ; i < ns ; i++) {
-	    if (i > 0) Rprintf("\n");
-	    if (names != R_NilValue &&
-		STRING_ELT(names, i) != R_NilValue &&
-		*CHAR(STRING_ELT(names, i)) != '\0') {
-		if (taglen + strlen(CHAR(STRING_ELT(names, i))) > TAGBUFLEN)
-		    sprintf(ptag, "$...");
-		else {
-		    /* we need to distinguish character NA from "NA", which
-		       is a valid (if non-syntactic) name */
-		    if (STRING_ELT(names, i) == NA_STRING)
-			sprintf(ptag, "$<NA>");
-		    else if( isValidName(CHAR(STRING_ELT(names, i))) )
-			sprintf(ptag, "$%s", CHAR(STRING_ELT(names, i)));
-		    else
-			sprintf(ptag, "$`%s`", CHAR(STRING_ELT(names, i)));
+	    int n_pr = (ns <= R_print.max +1) ? ns : R_print.max;
+	    /* '...max +1'  ==> will omit at least 2 ==> plural in msg below */
+	    for (i = 0 ; i < n_pr ; i++) {
+		if (i > 0) Rprintf("\n");
+		if (names != R_NilValue &&
+		    STRING_ELT(names, i) != R_NilValue &&
+		    *CHAR(STRING_ELT(names, i)) != '\0') {
+		    if (taglen + strlen(CHAR(STRING_ELT(names, i))) > TAGBUFLEN)
+			sprintf(ptag, "$...");
+		    else {
+			/* we need to distinguish character NA from "NA", which
+			   is a valid (if non-syntactic) name */
+			if (STRING_ELT(names, i) == NA_STRING)
+			    sprintf(ptag, "$<NA>");
+			else if( isValidName(CHAR(STRING_ELT(names, i))) )
+			    sprintf(ptag, "$%s", CHAR(STRING_ELT(names, i)));
+			else
+			    sprintf(ptag, "$`%s`", CHAR(STRING_ELT(names, i)));
+		    }
 		}
+		else {
+		    if (taglen + IndexWidth(i) > TAGBUFLEN)
+			sprintf(ptag, "$...");
+		    else
+			sprintf(ptag, "[[%d]]", i+1);
+		}
+		Rprintf("%s\n", tagbuf);
+		if(isObject(VECTOR_ELT(s, i))) {
+		    /* need to preserve tagbuf */
+		    strcpy(save, tagbuf);
+		    SETCADR(newcall, VECTOR_ELT(s, i));
+		    eval(newcall, env);
+		    strcpy(tagbuf, save);
+		}
+		else PrintValueRec(VECTOR_ELT(s, i), env);
+		*ptag = '\0';
 	    }
-	    else {
-		if (taglen + IndexWidth(i) > TAGBUFLEN)
-		    sprintf(ptag, "$...");
-		else
-		    sprintf(ptag, "[[%d]]", i+1);
-	    }
-	    Rprintf("%s\n", tagbuf);
-	    if(isObject(VECTOR_ELT(s, i))) {
-		/* need to preserve tagbuf */
-		strcpy(save, tagbuf);
-		SETCADR(newcall, VECTOR_ELT(s, i));
-		eval(newcall, env);
-		strcpy(tagbuf, save);
-	    }
-	    else PrintValueRec(VECTOR_ELT(s, i), env);
-	    *ptag = '\0';
+	    Rprintf("\n");
+	    if(n_pr < ns)
+		Rprintf(" [ reached getOption(\"max.print\") -- omitted %d entries ]]\n",
+			ns - n_pr);
 	}
-	Rprintf("\n");
-	}
-	else {
+	else { /* ns = length(s) == 0 */
 	    /* Formal classes are represented as empty lists */
 	    char *className = NULL;
 	    SEXP class;
@@ -539,7 +556,7 @@ static void PrintEnvir(SEXP rho)
     if (rho == R_GlobalEnv)
 	Rprintf("<environment: R_GlobalEnv>\n");
     else if (rho == R_BaseEnv)
-    	Rprintf("<environment: base>\n");	
+    	Rprintf("<environment: base>\n");
     else if (rho == R_EmptyEnv)
     	Rprintf("<environment: R_EmptyEnv>\n");
     else if (R_IsPackageEnv(rho))
@@ -551,7 +568,7 @@ static void PrintEnvir(SEXP rho)
     else Rprintf("<environment: %p>\n", rho);
 }
 
-void PrintValueRec(SEXP s,SEXP env)
+void attribute_hidden PrintValueRec(SEXP s,SEXP env)
 {
     int i;
     SEXP t;
@@ -567,6 +584,7 @@ void PrintValueRec(SEXP s,SEXP env)
 	break;
     case SPECIALSXP:
     case BUILTINSXP:
+	/* This is OK as .Internals are not visible to be printed */
 	Rprintf(".Primitive(\"%s\")\n", PRIMNAME(s));
 	break;
     case CHARSXP:
@@ -665,6 +683,11 @@ void PrintValueRec(SEXP s,SEXP env)
     case WEAKREFSXP:
 	Rprintf("<weak reference>\n");
 	break;
+    case S4SXP:
+      /*  we got here because no show method, usually no class.
+       Print the "slots" as attributes, since we don't know the class */
+	Rprintf("<S4 Type Object>\n");
+	break;
     default:
 	UNIMPLEMENTED_TYPE("PrintValueRec", s);
     }
@@ -720,6 +743,14 @@ static void printAttributes(SEXP s, SEXP env, Rboolean useSlots)
 		sprintf(ptag, "attr(,\"%s\")",
 			EncodeString(PRINTNAME(TAG(a)), 0, 0, Rprt_adj_left));
 	    Rprintf("%s", tagbuf); Rprintf("\n");
+	    if (TAG(a) == R_RowNamesSymbol) {
+		/* need special handling AND protection */
+		SEXP val;
+		PROTECT(val = getAttrib(s, R_RowNamesSymbol));
+		PrintValueRec(val, env);
+		UNPROTECT(1);
+		goto nextattr;
+	    }
 	    if (isObject(CAR(a))) {
 		/* Need to construct a call to
 		   print(CAR(a), digits)
@@ -775,7 +806,7 @@ static void printAttributes(SEXP s, SEXP env, Rboolean useSlots)
 /* Print an S-expression using (possibly) local options.
    This is used for auto-printing */
 
-void PrintValueEnv(SEXP s, SEXP env)
+void attribute_hidden PrintValueEnv(SEXP s, SEXP env)
 {
     SEXP call;
     char *autoprint = "print";
@@ -786,17 +817,12 @@ void PrintValueEnv(SEXP s, SEXP env)
     if(isObject(s)) {
 	/* The intention here is to call show() on S4 objects, otherwise
 	   print(), so S4 methods for show() have precedence over those for
-	   print(). We decided not to do this, at least for now.
+	   print(), to conform with the "green book", p. 332
 	*/
-        /*if(isMethodsDispatchOn()) {
-	    SEXP class = getAttrib(s, R_ClassSymbol);
-	    if(length(class) == 1) {
-		char str[201];
-		snprintf(str, 200, ".__C__%s", CHAR(STRING_ELT(class, 0)));
-		if(findVar(install(str), env) != R_UnboundValue)
+        if(isMethodsDispatchOn()) {
+	  if(IS_S4_OBJECT(s))
 		    autoprint = "show";
-	    }
-	}*/
+	}
 	PROTECT(call = lang2(install(autoprint), s));
 	eval(call, env);
 	UNPROTECT(1);
@@ -824,7 +850,7 @@ void R_PV(SEXP s)
 }
 
 
-void CustomPrintValue(SEXP s, SEXP env)
+void attribute_hidden CustomPrintValue(SEXP s, SEXP env)
 {
     tagbuf[0] = '\0';
     PrintValueRec(s, env);

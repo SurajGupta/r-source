@@ -2,7 +2,7 @@ include ../MkRules
 R_HOME = ../../..
 
 ifdef DEBUG
-  OPTFLAGS=-g
+  OPTFLAGS=$(G_FLAG) -O3 -Wall
   LINKFLAGS=
   DLLFLAGS=
 else
@@ -12,7 +12,11 @@ else
 endif
 CFLAGS=$(OPTFLAGS) -I../../include
 
-all: $(R_HOME)/bin/Rgui.exe $(R_HOME)/bin/Rterm.exe \
+
+.PHONY : all makeMakedeps
+
+all: makeMakedeps \
+     $(R_HOME)/bin/Rgui.exe $(R_HOME)/bin/Rterm.exe \
      $(R_HOME)/bin/Rcmd.exe  $(R_HOME)/bin/RSetReg.exe  \
      $(R_HOME)/bin/Rproxy.dll $(R_HOME)/bin/R.exe \
      $(R_HOME)/bin/md5check.exe
@@ -42,7 +46,7 @@ $(R_HOME)/bin/md5check.exe: md5check.exe
 	$(CP) $^ $@	
 
 graphappmain.o: ../graphapp/graphappmain.c
-	$(CC) -c -o $@ -I../graphapp $(CFLAGS) $^
+	$(CC) -c -o $@ -I../graphapp $(CFLAGS) ../graphapp/graphappmain.c
 
 rgui-CFLAGS=-DWin32
 rterm-CFLAGS=-DWin32
@@ -80,22 +84,33 @@ Rpwd.exe: rpwd.o rcico.o
 rcmd.o R.o rgui.o rterm.o RSetReg.o rproxy_impl.o rgico.o rtico.o rcico.o: ../../include/Rversion.h
 
 clean:
-	$(RM) *.o *.obj *.exe *~ *.exp *.def *.dll *.lib *.a
+	$(RM) *.o *.obj *.exe *~ *.exp *.dll *.lib *.a *.d Makedeps
 
 bdx_util-CFLAGS=-D_IN_RPROXY_
 bdx_com-CFLAGS=-D_IN_RPROXY_
 bdx_SEXP-CFLAGS=-D_IN_RPROXY_
+## for graphapp.h
+rproxy_impl-CFLAGS=-I../../../include
 Rproxy-DLLFLAGS=-mwindows
 Rproxy-DLLLIBS=-L../../../bin -lR -lole32 -luuid -loleaut32
 ## this one needs Rproxy.dll as the LIBRARY line
-Rproxy.dll: rproxy.o rproxy_dev.o rproxy_impl.o com_util.o \
+Rproxy.dll: Rproxy.def rproxy.o rproxy_dev.o rproxy_impl.o com_util.o \
 	bdx_util.o bdx_SEXP.o bdx_com.o rtico.o
-	@$(ECHO) LIBRARY $*.dll > $*.def
-	@$(ECHO) EXPORTS >> $*.def
-	@$(NM) $^ | $(SED) -n 's/^........ [BCDRT] _/ /p' >> $*.def
-	$(DLL) -shared $(DLLFLAGS) $($*-DLLFLAGS) -o $@ $*.def $^ $($*-DLLLIBS) $(DLLLIBS)
-	@$(RM) $*.def
+	$(DLL) -shared $(DLLFLAGS) $($*-DLLFLAGS) -o $@ $^ $($*-DLLLIBS) $(DLLLIBS)
+
 
 $(R_HOME)/bin/Rproxy.dll: Rproxy.dll
 	$(MKDIR) -p $(R_HOME)/bin
 	$(CP) Rproxy.dll $@	
+
+CSOURCES=$(filter-out R.c rcmd.c rpwd.c rtest.c, $(wildcard *.c)) \
+  ../graphapp/graphappmain.c
+DEPS=$(CSOURCES:.c=.d)
+
+makeMakedeps: $(DEPS)
+	@$(RM) Makedeps
+ifneq ($(strip $(DEPS)),)
+	@cat $(DEPS) >> Makedeps
+endif
+
+-include Makedeps

@@ -12,8 +12,12 @@
                               NULL, where = .GlobalEnv, edit = FALSE,
                               from = NULL, untrace = FALSE) {
     if(is.function(where)) {
-        ## start from the function's environment:  important for tracing from a namespace
-        where <- environment(where)
+        ## start from the function's environment:  important for
+        ## tracing from a namespace
+        if(is(where, "genericFunction"))
+            where <- parent.env(environment(where))
+        else
+            where <- environment(where)
         fromPackage <- getPackageName(where)
     }
     else fromPackage <- ""
@@ -76,24 +80,32 @@
     if(is.null(whereF)) {
         allWhere <- findFunction(what, where = where)
         if(length(allWhere)==0)
-            stop(gettextf("no function definition for '%s' found", what),
+            stop(gettextf("no function definition for \"%s\" found", what),
                  domain = NA)
         whereF <- as.environment(allWhere[[1]])
     }
+    ## detect use with no action specified (old-style R trace())
+    if(is.null(tracer) && is.null(exit) && identical(edit, FALSE))
+      tracer <- quote({})
         if(is.null(def))
             def <- getFunction(what, where = whereF)
         if(is(def, "traceable") && identical(edit, FALSE) && !untrace)
           def <- .untracedFunction(def)
         if(!is.null(signature)) {
             fdef <- if(is.primitive(def))  getGeneric(what, TRUE, where) else def
-            def <- selectMethod(what, signature, fdef = def)
+            def <- selectMethod(what, signature, fdef = fdef, optional = TRUE)
+            if(is.null(def)) {
+              warning(gettextf("Can't untrace method for \"%s\"; no method defined for this signature: %s",
+                               what, paste(signature, collapse = ", ")))
+              return(def)
+          }
         }
     if(untrace) {
      if(.traceTraceState) {
     message(".TraceWithMethods: untrace case")
     browser()
   }
-  
+
       if(is.null(signature)) {
         ## ensure that the version to assign is untraced
         if(is(def, "traceable")) {
@@ -131,8 +143,12 @@
             }
         }
         original <- .untracedFunction(def)
-         ## calls .makeTracedFunction via the initialize method for "traceable"
-        newFun <- new(.traceClassName(class(original)),
+         ## calls .makeTracedFunction via the initialize method for
+        ## "traceable"
+        traceClass <- .traceClassName(class(original))
+        if(is.null(getClassDef(traceClass)))
+          traceClass <- .makeTraceClass(traceClass, class(original))
+        newFun <- new(traceClass,
                       def = if(doEdit) def else original, tracer = tracer, exit = exit, at = at,
                       print = print, doEdit = edit)
     }
@@ -148,24 +164,42 @@
             assign(what, newFun, whereF)
     }
     else {
+        if(untrace && is(newFun, "MethodDefinition") &&
+           !identical(newFun@target, newFun@defined))
+          ## we promoted an inherited method for tracing, now we have
+          ## to remove that method.  Assertion is that there was no directly
+          ## specified method, or else defined, target would be identical
+          newFun <- NULL
         ## arrange for setMethod to put the new method in the generic
         ## but NOT to assign the methods list object (binding is ignored)
         setMethod(fdef, signature, newFun, where = baseenv())
     }
     if(!global) {
         action <- if(untrace)"Untracing" else "Tracing"
+        nameSpaceCase <- FALSE
         location <- if(.identC(fromPackage, "")) {
             if(length(pname)==0  && !is.null(whereF))
                 pname <- getPackageName(whereF)
-            if(length(pname)==0)
+            nameSpaceCase <- isNamespace(whereF) &&
+                !is.na(match(pname, loadedNamespaces())) &&
+                 identical(whereF, getNamespace(pname))
+            if(length(pname)==0)  # but not possible from getPackagename ?
                 "\""
-            else
-                paste("\" in package \"",
-                                                   pname, "\"", sep="")
+            else {
+                if(nameSpaceCase)
+                  paste("\" in environment <namespace:",  pname, ">", sep="")
+                else
+                  paste("\" in package \"",  pname, "\"", sep="")
+              }
         }
         else paste("\" as seen from package \"", fromPackage, "\"", sep="")
         object <- if(is.null(signature)) " function \"" else " specified method for function \""
         .message(action, object, what, location)
+        if(nameSpaceCase && !untrace && exists(what, envir = .GlobalEnv)) {
+          untcall<- paste("untrace(\"", what, "\", where = getNamespace(\"",
+                          pname, "\"))", sep="")
+          .message("Warning: Tracing only in the namespace; to untrace you will need:\n    ",untcall, "\n")
+        }
     }
     what
 }
@@ -202,7 +236,7 @@
         ## insert any requested automatic tracing expressions before editing
         if(!(is.null(tracer) && is.null(exit) && length(at)==0))
             def <- Recall(def, tracer, exit, at, print, FALSE)
-        def2 <- edit(def, editor = editor, file = file)
+        def2 <- utils::edit(def, editor = editor, file = file)
         if(!is.function(def2))
             stop(gettextf("the editing in trace() can only change the body of the function; got an object of class \"%s\"", class(def2)), domain = NA)
         if(!identical(args(def), args(def2)))
@@ -265,8 +299,7 @@
     for(cl in c("function", "MethodDefinition", "MethodWithNext", "genericFunction",
                 "standardGeneric", "nonstandardGeneric", "groupGenericFunction",
                 "derivedDefaultMethod")) {
-        setClass(.traceClassName(cl),
-                 representation(cl, "traceable"), where = envir)
+        .makeTraceClass(.traceClassName(cl), cl, FALSE)
         clList <- c(clList, .traceClassName(cl))
     }
     assign(".SealedClasses", c(get(".SealedClasses", envir), clList), envir);
@@ -284,12 +317,15 @@
               }, where = envir)
     if(!isGeneric("show", envir))
         setGeneric("show", where = envir)
-    setMethod("show", "traceable", function(object) {
-        cat("Object of class \"", class(object), "\"\n")
-        show(object@original)
-        cat("\n## (to see the tracing code, look at body(object))\n")
-    }, where = envir)
+    setMethod("show", "traceable", .showTraceable, where = envir)
 }
+
+.showTraceable <- function(object) {
+        cat("Object with tracing code, class \"", class(object),
+        "\"\nOriginal: \n", sep="")
+        callGeneric(object@original)
+        cat("\n## (to see the tracing code, look at body(object))\n")
+    }
 
 .doTracePrint <- function(msg = "") {
     call <- deparse(sys.call(sys.parent(1)))
@@ -313,7 +349,8 @@
 }
 
 .traceClassName <- function(className) {
-    paste(className, "WithTrace", sep="")
+    className[] <- paste(className, "WithTrace", sep="")
+    className
 }
 
 trySilent <- function(expr) {
@@ -350,14 +387,18 @@ trySilent <- function(expr) {
             lockBinding(what, fenv)
         }
     }
-    unlockBinding(what, where)
-    assign(what, value, where)
-    lockBinding(what, where)
+    if(exists(what, envir = where, inherits = FALSE) && bindingIsLocked(what, where)) {
+      unlockBinding(what, where)
+      assign(what, value, where)
+      lockBinding(what, where)
+    }
+    else
+      assign(what, value, where)
 }
 
 .setMethodOverBinding <- function(what, signature, method, where, verbose = TRUE) {
     if(verbose)
-        warning(gettextf("setting a method over the binding of symbol '%s' in environment/package '%s'", what, getPackageName(where)), domain = NA)
+        warning(gettextf("setting a method over the binding of symbol \"%s\" in environment/package \"%s\"", what, getPackageName(where)), domain = NA)
     if(exists(what, envir = where, inherits = FALSE)) {
         fdef <- get(what, envir = where)
         hasFunction <- is(fdef, "genericFunction")
@@ -416,3 +457,26 @@ trySilent <- function(expr) {
         pname <- .searchNamespaceNames(whereF)
     list(pname=pname, whereF = whereF)
 }
+
+.makeTraceClass <- function(traceClassName, className, verbose = TRUE) {
+  ## called because the traceClassName not a class
+  ## first check whether it may exist but not in the same package
+  if(isClass(as.character(traceClassName)))
+    return(as.character(traceClassName))
+  if(verbose)
+    message("Constructing traceable class \"",traceClassName, "\"")
+  env <- .classEnv(className)
+  if(environmentIsLocked(env)) {
+    message("Environment of class \"", className,
+            "\" is locked; using base environment for new class")
+    env <- baseenv()
+    packageSlot(traceClassName) <- NULL
+  }
+  setClass(traceClassName,
+                 contains = c(className, "traceable"), where = env)
+  if(existsMethod("show", className, env)) # override it for traceClassName
+    setMethod("show", traceClassName, .showTraceable)
+  traceClassName
+}
+
+

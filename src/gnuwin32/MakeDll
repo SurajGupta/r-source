@@ -14,13 +14,13 @@ CSOURCES=$(wildcard -f *.c)
 CXXSOURCES=$(wildcard -f *.cc *.cpp *.C)
 FSOURCES=$(wildcard -f *.f)
 FCSOURCES=$(wildcard -f *.f90 *.f95)
-OBJSA=$(foreach i,$(CSOURCES) $(FSOURCES) $(CXXSOURCES),$(basename $i).o)
+OBJSA=$(foreach i,$(CSOURCES) $(FSOURCES) $(CXXSOURCES) $(FCSOURCES),$(basename $i).o)
 
 include $(RHOME)/src/gnuwin32/MkRules
 
 ifneq ($(strip $(FCSOURCES)),)
 # don't assume F95 can be cross-compiled in the same way
-  DLL=$(F95)
+  DLL="$(F95)"
 else
 
 ifneq ($(strip $(CXXSOURCES)),)
@@ -34,16 +34,20 @@ endif
 
 ifdef DEBUG
   DLLFLAGS=
-  DEBUGFLAG=-g -Wall
+  DEBUGFLAG=$(G_FLAG) -Wall
 else
   DLLFLAGS=-s
   DEBUGFLAG=-Wall
 endif
 
-CPPFLAGS=$(PKG_CPPFLAGS) -I$(RHOME)/include
-CFLAGS=$(CPPFLAGS) $(DEBUGFLAG) -O2 $(PKG_CFLAGS)
-CXXFLAGS=$(CPPFLAGS) $(DEBUGFLAG) -O2 $(PKG_CXXFLAGS)
-FFLAGS=-O2 $(DEBUGFLAG) $(PKG_FFLAGS)
+COPTFLAG=-O2
+CXXOPTFLAG=-O2
+FOPTFLAG=-O2
+
+CPPFLAGS=$(PKG_CPPFLAGS) -I$(RHOME)/include $(CLINK_CPPFLAGS)
+CFLAGS=$(CPPFLAGS) $(DEBUGFLAG) $(COPTFLAG) -std=gnu99 $(PKG_CFLAGS)
+CXXFLAGS=$(CPPFLAGS) $(DEBUGFLAG) $(CXXOPTFLAG) $(PKG_CXXFLAGS)
+FFLAGS=$(FOPTFLAG) $(DEBUGFLAG) $(PKG_FFLAGS)
 DLLLIBS=-L$(RHOME)/bin $(PKG_LIBS) $(EXTRA_LIBS) -lR
 RESFLAGS=--include-dir $(RHOME)/include
 # for use by Makevars.win

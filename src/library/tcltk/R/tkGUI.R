@@ -48,7 +48,8 @@ tkStartGUI <- function() {
 
     CRANpackageWidget <- function()
     {
-	l <- CRAN.packages()[,1]
+        CRANurl <- utils::contrib.url(getOption("repos")["CRAN"])
+	l <- utils::available.packages(CRANurl)[,1]
         lvar <- tclVar()
 	tclObj(lvar) <- l
 	box <- tklistbox(tt<-tktoplevel(),
@@ -56,7 +57,7 @@ tkStartGUI <- function() {
 	gogetem <- function() {
             s <- as.integer(tkcurselection(box))
             if (length(s) == 0) return
-            install.packages(l[s+1])
+            utils::install.packages(l[s+1])
             tkdestroy(tt)
 	}
 	tkpack(box)

@@ -59,8 +59,10 @@ function(x, y,
     if(is.null(yaxlabels)) yaxlabels <- levels(y)
 
     ## unconditional density of x
-    dx <- if(is.null(from) & is.null(to)) density(x, bw = bw, n = n, ...)
-    else density(x, bw = bw, from = from, to = to, n = n, ...)
+    dx <- if(is.null(from) & is.null(to))
+        stats::density(x, bw = bw, n = n, ...)
+    else
+        stats::density(x, bw = bw, from = from, to = to, n = n, ...)
     x1 <- dx$x
 
     ## setup conditional values
@@ -72,9 +74,10 @@ function(x, y,
     rval <- list()
 
     for(i in 1:(ny-1)) {
-        dxi <- density(x[y %in% levels(y)[1:i]], bw = dx$bw, n = n, from = min(dx$x), to = max(dx$x), ...)
+        dxi <- stats::density(x[y %in% levels(y)[1:i]], bw = dx$bw, n = n,
+                              from = min(dx$x), to = max(dx$x), ...)
         y1[i,] <- dxi$y/dx$y * yprop[i]
-        rval[[i]] <- approxfun(x1, y1[i,], rule = 2)
+        rval[[i]] <- stats::approxfun(x1, y1[i,], rule = 2)
     }
     names(rval) <- levels(y)[1:(ny-1)]
 
@@ -101,7 +104,7 @@ function(x, y,
 
         equidist <- any(diff(y1[,1]) < tol.ylab)
         if(equidist)
-            axis(2, at = seq(1/(2*ny), 1-1/(2*ny), by = 1/ny), labels = yaxlabels, tick = FALSE)
+            axis(2, at = seq.int(1/(2*ny), 1-1/(2*ny), by = 1/ny), labels = yaxlabels, tick = FALSE)
         else
             axis(2, at = (y1[-1,1] + y1[-NROW(y1), 1])/2, labels = yaxlabels, tick = FALSE)
         axis(4)

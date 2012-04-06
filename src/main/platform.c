@@ -979,11 +979,12 @@ SEXP attribute_hidden do_filechoose(SEXP call, SEXP op, SEXP args, SEXP rho)
 }
 
 
-#ifdef HAVE_ACCESS
-# ifdef HAVE_UNISTD_H
-#  include <unistd.h>
-# endif
+/* needed for access, and perhaps for realpath */
+#ifdef HAVE_UNISTD_H
+# include <unistd.h>
+#endif
 
+#ifdef HAVE_ACCESS
 SEXP attribute_hidden do_fileaccess(SEXP call, SEXP op, SEXP args, SEXP rho)
 {
     SEXP fn, ans;
@@ -1027,7 +1028,7 @@ SEXP attribute_hidden do_getlocale(SEXP call, SEXP op, SEXP args, SEXP rho)
 #ifdef HAVE_LOCALE_H
     SEXP ans;
     int cat;
-    char *p;
+    char *p = NULL;
 
     checkArity(op, args);
     cat = asInteger(CAR(args));
@@ -1040,8 +1041,18 @@ SEXP attribute_hidden do_getlocale(SEXP call, SEXP op, SEXP args, SEXP rho)
     case 4: cat = LC_MONETARY; break;
     case 5: cat = LC_NUMERIC; break;
     case 6: cat = LC_TIME; break;
+#ifdef LC_MESSAGES
+    case 7: cat = LC_MESSAGES; break;
+#endif
+#ifdef LC_PAPER
+    case 8: cat = LC_PAPER; break;
+#endif
+#ifdef LC_MEASUREMENT
+    case 9: cat = LC_MEASUREMENT; break;
+#endif
+    default: cat = NA_INTEGER;
     }
-    p = setlocale(cat, NULL);
+    if(cat != NA_INTEGER) p = setlocale(cat, NULL);
     PROTECT(ans = allocVector(STRSXP, 1));
     if(p) SET_STRING_ELT(ans, 0, mkChar(p));
     else  SET_STRING_ELT(ans, 0, mkChar(""));
@@ -1109,6 +1120,27 @@ SEXP attribute_hidden do_setlocale(SEXP call, SEXP op, SEXP args, SEXP rho)
 	cat = LC_TIME;
 	p = setlocale(cat, CHAR(STRING_ELT(locale, 0)));
 	break;
+#ifdef LC_MESSAGES
+/* this seems to exist in MinGW, but it does not work in Windows */
+#ifndef Win32
+    case 7:
+	cat = LC_MESSAGES;
+	p = setlocale(cat, CHAR(STRING_ELT(locale, 0)));
+	break;
+#endif
+#endif
+#ifdef LC_PAPER
+    case 8:
+	cat = LC_PAPER;
+	p = setlocale(cat, CHAR(STRING_ELT(locale, 0)));
+	break;
+#endif
+#ifdef LC_MEASUREMENT
+    case 9:
+	cat = LC_MEASUREMENT;
+	p = setlocale(cat, CHAR(STRING_ELT(locale, 0)));
+	break;
+#endif
     default:
 	errorcall(call, _("invalid '%s' argument"), "category");
     }
@@ -1546,6 +1578,10 @@ SEXP attribute_hidden do_l10n_info(SEXP call, SEXP op, SEXP args, SEXP env)
 }
 
 #ifndef Win32 /* in src/gnuwin32/extra.c */
+#ifndef HAVE_DECL_REALPATH
+extern char *realpath(const char *path, char *resolved_path);
+#endif
+
 SEXP attribute_hidden do_normalizepath(SEXP call, SEXP op, SEXP args, SEXP rho)
 {
 #if defined(HAVE_GETCWD) && defined(HAVE_REALPATH)

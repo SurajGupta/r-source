@@ -175,15 +175,18 @@ function(RdFiles)
 
     RdFiles <- path.expand(RdFiles[file_test("-f", RdFiles)])
 
-    if(length(RdFiles) == 0)
-        return(data.frame(File = I(character(0)),
-                          Name = I(character(0)),
-                          Type = I(character(0)),
-                          Title = I(character(0)),
-                          Aliases = I(list()),
-                          Concepts = I(list()),
-                          Keywords = I(list()),
-                          Encoding = I(character())))
+    if(length(RdFiles) == 0) {
+        out <- data.frame(File = character(0),
+                          Name = character(0),
+                          Type = character(0),
+                          Title = character(0),
+                          Encoding = character(),
+                          stringsAsFactors = FALSE)
+        out$Aliases <- list()
+        out$Concepts <- list()
+        out$Keywords <- list()
+        return(out)
+    }
 
     entries <- c("Name", "Type", "Title", "Aliases", "Concepts",
                  "Keywords", "Encoding")
@@ -214,15 +217,18 @@ function(RdFiles)
     title <- sub("^[[:space:]]+", "", title)
     title <- sub("[[:space:]]+$", "", title)
 
-    data.frame(File = I(basename(RdFiles)),
-               Name = I(unlist(contents[ , "Name"])),
-               Type = I(unlist(contents[ , "Type"])),
-               Title = I(title),
-               Aliases = I(contents[ , "Aliases"]),
-               Concepts = I(contents[ , "Concepts"]),
-               Keywords = I(contents[ , "Keywords"]),
-               Encoding = I(unlist(contents[ , "Encoding"])),
-               row.names = NULL)  # avoid trying to compute row names
+    out <- data.frame(File = basename(RdFiles),
+                      Name = unlist(contents[ , "Name"]),
+                      Type = unlist(contents[ , "Type"]),
+                      Title = title,
+                      Encoding = unlist(contents[ , "Encoding"]),
+                      row.names = NULL, # avoid trying to compute row
+                                        # names
+                      stringsAsFactors = FALSE)
+    out$Aliases <- contents[ , "Aliases"]
+    out$Concepts <- contents[ , "Concepts"]
+    out$Keywords <- contents[ , "Keywords"]
+    out
 }
 
 ### * .write_contents_as_RDS
@@ -524,9 +530,9 @@ function(file, text = NULL)
         names(txt) <- paste(tag, collapse = " ")
         rest <- c(rest, txt)
     }
-    list(meta = meta,
-         data = data.frame(tags = I(tags), vals = I(vals)),
-         rest = rest)
+    data <- data.frame(vals = vals, stringsAsFactors = FALSE)
+    data$tags <- tags
+    list(meta = meta, data = data, rest = rest)
 }
 
 ### * Rd_aliases
@@ -564,6 +570,7 @@ function(package, dir, lib.loc = NULL)
     else {
         if(file_test("-d", file.path(dir, "man"))) {
             db <- Rd_db(dir = dir)
+            db <- lapply(db, Rd_pp)
             aliases <- lapply(db, .get_Rd_metadata_from_Rd_lines, "alias")
             sort(unique(unlist(aliases, use.names = FALSE)))
         }

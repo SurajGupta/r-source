@@ -66,7 +66,7 @@ static int R_unlink(char *names, int recursive)
     HANDLE fh;
     struct stat sb;
 
-    if(strlen(names) >= MAX_PATH) error(_("invalid 'names' in R_unlink"));
+    if(strlen(names) >= MAX_PATH) error(_("invalid 'names' in 'R_unlink'"));
     strcpy(tmp, names);
     for(p = tmp; *p != '\0'; p++) if(*p == '/') *p = '\\';
     if(stat(tmp, &sb) == 0) {
@@ -732,7 +732,7 @@ static void cancel(button b)
 
 static void finish(button b)
 {
-    strncpy(selected, gettext(f_list), 100);
+    strncpy(selected, GA_gettext(f_list), 100);
     done = 1;
 }
 
@@ -785,7 +785,7 @@ SEXP do_selectlist(SEXP call, SEXP op, SEXP args, SEXP rho)
     ymax = min(80+fht*n, h0-100); /* allow for window widgets, toolbar */
     ylist = ymax - 60;
     wselect = newwindow(haveTitle ? CHAR(STRING_ELT(CADDDR(args), 0)):
-			(multiple ? "Select one or more" : "Select one"),
+			(multiple ? _("Select one or more") : _("Select one")),
 			rect(0, 0, xmax, ymax),
 			Titlebar | Centered | Modal);
     setbackground(wselect, dialog_bg());
@@ -851,9 +851,9 @@ int Rwin_rename(char *from, char *to)
 }
 
 
-void CleanTempDir()
+void R_CleanTempDir()
 {
-    if(R_TempDir) R_unlink(R_TempDir, 1);
+    if(Sys_TempDir) R_unlink(Sys_TempDir, 1);
 }
 
 SEXP do_getClipboardFormats(SEXP call, SEXP op, SEXP args, SEXP rho)
@@ -1073,6 +1073,8 @@ SEXP do_shortpath(SEXP call, SEXP op, SEXP args, SEXP rho)
     PROTECT(ans = allocVector(STRSXP, n));
     for (i = 0; i < n; i++) {
 	GetShortPathName(CHAR(STRING_ELT(paths, i)), tmp, MAX_PATH);
+	/* documented to return paths using \, which the API call does
+	   not necessarily do */
 	R_fixbackslash(tmp);
 	SET_STRING_ELT(ans, i, mkChar(tmp));
     }
@@ -1217,8 +1219,9 @@ SEXP getWindowTitle()
     PROTECT(result = allocVector(STRSXP, 1));
     switch(CharacterMode) {
     case RGui:
-	if(RguiMDI & RW_MDI) SET_STRING_ELT(result, 0, mkChar(gettext(RFrame)));
-	else SET_STRING_ELT(result, 0, mkChar(gettext(RConsole)));
+	if(RguiMDI & RW_MDI) SET_STRING_ELT(result, 0, 
+					    mkChar(GA_gettext(RFrame)));
+	else SET_STRING_ELT(result, 0, mkChar(GA_gettext(RConsole)));
 	break;
     case RTerm:
     	GetConsoleTitle(buf, 512);
@@ -1328,7 +1331,7 @@ SEXP do_bringtotop(SEXP call, SEXP op, SEXP args, SEXP env)
 	if(CharacterMode == RGui) BringToTop(RConsole, stay);
     } else {
 	if(dev < 1 || dev > R_MaxDevices || dev == NA_INTEGER)
-	    errorcall(call, _("invalid value of 'which'"));
+	    errorcall(call, _("invalid value for '%s'"), "which");
 	gdd = (GEDevDesc *) GetDevice(dev - 1);
 	if(!gdd) errorcall(call, _("invalid device"));
 	xd = (gadesc *) gdd->dev->deviceSpecific;

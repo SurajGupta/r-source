@@ -23,12 +23,13 @@ axis.POSIXct <- function(side, x, at, format, labels = TRUE, ...)
         if(missing(format)) format <- "%a"
     } else { # days, up to a couple of months
         sc <- 60*60*24
+        if(missing(format)) format <- "%b %d"
     }
     if(d < 60*60*24*50) {
         zz <- pretty(z/sc)
         z <- zz*sc
         class(z) <- c("POSIXt", "POSIXct")
-        if(missing(format)) format <- "%b %d"
+        if(sc == 60*60*24) z <- as.POSIXct(round(z, "days"))
     } else if(d < 1.1*60*60*24*365) { # months
         class(z) <- c("POSIXt", "POSIXct")
         zz <- as.POSIXlt(z)
@@ -136,7 +137,7 @@ hist.POSIXt <- function(x, breaks, ..., xlab = deparse(substitute(x)),
             if(valid == 6) { start$mday <- 1; incr <- 31*86400 }
             if(valid == 7) { start$mon <- 0; incr <- 366*86400 }
             maxx <- max(x, na.rm = TRUE)
-            breaks <- seq(start, maxx + incr, breaks)
+            breaks <- seq.int(start, maxx + incr, breaks)
             breaks <- breaks[1:(1+max(which(breaks < maxx)))]
         }
         else stop("invalid specification of 'breaks'")
@@ -265,7 +266,7 @@ hist.Date <- function(x, breaks, ..., xlab = deparse(substitute(x)),
             if(valid == 4) { start$mon <- 0; incr <- 366 }
             start <- .Internal(POSIXlt2Date(start))
             maxx <- max(x, na.rm = TRUE)
-            breaks <- seq(start, maxx + incr, breaks)
+            breaks <- seq.int(start, maxx + incr, breaks)
             breaks <- breaks[1:(1+max(which(breaks < maxx)))]
         } else stop("invalid specification of 'breaks'")
     }

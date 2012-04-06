@@ -4,6 +4,10 @@
 postscript("reg-tests-2.ps", encoding = "ISOLatin1.enc")
 RNGversion("1.6.2")
 
+## force standard handling for data frames
+options(stringsAsFactors=TRUE)
+
+
 ### moved from various .Rd files
 ## abbreviate
 for(m in 1:5) {
@@ -1010,7 +1014,7 @@ try(x[1, c("a", "c")])
 
 ## methods(class = ) with namespaces, .Primitives etc (many missing in 1.7.x):
 meth2gen <- function(cl)
-    noquote(sub(paste("\\.",cl,"$",sep=""),"", methods(class = cl)))
+    noquote(sub(paste("\\.",cl,"$",sep=""),"", c(methods(class = cl))))
 meth2gen("data.frame")
 meth2gen("dendrogram")
 ## --> the output may need somewhat frequent updating..
@@ -1806,6 +1810,11 @@ try(sum(raw()))
 try(prod(raw()))
 ## Inf, -Inf, list(NULL) etc in 2.2.1
 
+r <- hist(rnorm(100), plot = FALSE, breaks = 12,
+          ## arguments which don't make sense for plot=FALSE - give a warning:
+          right = FALSE, col = "blue")
+## gave no warning in 2.3.0 and earlier
+
 
 ## rbind.data.frame on permuted cols (PR#8868)
 d1 <- data.frame(x=1:10, y=letters[1:10], z=1:10)
@@ -1817,3 +1826,165 @@ d1 <- data.frame(x=1:2, y=5:6, x=8:9, check.names=FALSE)
 d2 <- data.frame(x=3:4, x=-(1:2), y=8:9, check.names=FALSE)
 rbind(d1, d2)
 ## corrupt in 2.3.0
+
+
+## sort.list on complex vectors was unimplemented prior to 2.4.0
+x <- rep(2:1, c(2, 2)) + 1i*c(4, 1, 2, 3)
+(o <- sort.list(x))
+x[o]
+sort(x)  # for a cross-check
+##
+
+
+## PR#9044 write.table(quote=TRUE, row.names=FALSE) did not quote column names
+m <- matrix(1:9, nrow=3, dimnames=list(c("A","B","C"),  c("I","II","III")))
+write.table(m)
+write.table(m, col.names=FALSE)
+write.table(m, row.names=FALSE)
+# wrong < 2.3.1 patched.
+write.table(m, quote=FALSE)
+write.table(m, col.names=FALSE, quote=FALSE)
+write.table(m, row.names=FALSE, quote=FALSE)
+d <- as.data.frame(m)
+write.table(d)
+write.table(d, col.names=FALSE)
+write.table(d, row.names=FALSE)
+write.table(d, quote=FALSE)
+write.table(d, col.names=FALSE, quote=FALSE)
+write.table(d, row.names=FALSE, quote=FALSE)
+write.table(m, quote=numeric(0)) # not the same as FALSE
+##
+
+
+## removing variable from baseenv
+try(remove("ls", envir=baseenv()))
+try(remove("ls", envir=asNamespace("base")))
+## no message in 2.3.1
+
+
+## tests of behaviour of factors
+(x <- factor(LETTERS[1:5])[2:4])
+x[2]
+x[[2]]
+stopifnot(identical(x[2], x[[2]]))
+as.list(x)
+unlist(as.list(x))
+stopifnot(identical(x, unlist(as.list(x))))
+as.vector(x, "list")
+sapply(x, na.pass)
+stopifnot(identical(x, sapply(x, na.pass)))
+## changed in 2.4.0
+
+
+## as.character on a factor with "NA" level
+as.character(as.factor(c("AB", "CD", NA)))
+as.character(as.factor(c("NA", "CD", NA)))  # use <NA> is 2.3.x
+as.vector(as.factor(c("NA", "CD", NA)))     # but this did not
+## used <NA> before
+
+
+## [ on a zero-column data frame, names of such
+data.frame()[FALSE]
+names(data.frame())
+# gave NULL names and hence spurious warning.
+
+
+## residuals from zero-weight glm fits
+d.AD <- data.frame(treatment = gl(3,3), outcome = gl(3,1,9),
+                   counts = c(18,17,15,20,10,20,25,13,12))
+fit <- glm(counts ~ outcome + treatment, family = poisson,
+           data = d.AD, weights = c(0, rep(1,8)))
+residuals(fit, type="working") # first was NA < 2.4.0
+## working residuals were NA for zero-weight cases.
+fit2 <- glm(counts ~ outcome + treatment, family = poisson,
+           data = d.AD, weights = c(0, rep(1,8)), y = FALSE)
+for(z in c("response", "working", "deviance", "pearson"))
+    stopifnot(all.equal(residuals(fit, type=z), residuals(fit2, type=z),
+                        scale = 1, tol = 1e-10))
+
+## apply on arrays with zero extents
+## Robin Hankin, R-help, 2006-02-13
+A <- array(0, c(3, 0, 4))
+dimnames(A) <- list(a = letters[1:3], b = NULL, c = LETTERS[1:4])
+f <- function(x) 5
+apply(A, 1:2, f)
+apply(A, 1, f)
+apply(A, 2, f)
+## dropped dims in 2.3.1
+
+
+## print a factor with names
+structure(factor(1:4), names = letters[1:4])
+## dropped names < 2.4.0
+
+
+## some tests of factor matrices
+A <- factor(7:12)
+dim(A) <- c(2, 3)
+A
+str(A)
+A[, 1:2]
+A[, 1:2, drop=TRUE]
+A[1,1] <- "9"
+A
+## misbehaved < 2.4.0
+
+
+## [dpqr]t with vector ncp
+nc <- c(0, 0.0001, 1)
+dt(1.8, 10, nc)
+pt(1.8, 10, nc)
+qt(0.95, 10, nc)
+## gave warnings in 2.3.1, short answer for qt.
+dt(1.8, 10, -nc[-1])
+pt(1.8, 10, -nc[-1])
+qt(0.95, 10, -nc[-1])
+## qt in 2.3.1 did not allow negative ncp.
+
+
+## merge() used to insert row names as factor, not character, so
+## sorting was unexpected.
+A <- data.frame(a = 1:4)
+row.names(A) <- c("2002-11-15", "2002-12-15", "2003-01-15", "2003-02-15")
+B <- data.frame(b = 1:4)
+row.names(B) <- c("2002-09-15", "2002-10-15", "2002-11-15", "2002-12-15")
+merge(A, B, by=0, all=TRUE)
+
+
+## assigning to a list loop index could alter the index (PR#9216)
+L <- list(a = list(txt = "original value"))
+f <- function(LL) {
+    for (ll in LL) ll$txt <- "changed in f"
+    LL
+}
+f(L)
+L
+## both were changed < 2.4.0
+
+
+## summary.mlm misbehaved with na.action = na.exclude
+n <- 50
+x <- runif(n=n)
+y1 <- 2 * x + rnorm(n=n)
+y2 <- 5 * x + rnorm(n=n)
+y2[sample(1:n, size=5)] <- NA
+y <- cbind(y1, y2)
+fit <- lm(y ~ 1, na.action="na.exclude")
+summary(fit)
+## failed < 2.4.0
+
+
+## prettyNum lost attributes (PR#8695)
+format(matrix(1:16, 4), big.mark = ",")
+## was a vector < 2.4.0
+
+
+## printing of complex numbers of very different magnitudes
+1e100  + 1e44i
+1e100 + pi*1i*10^(c(-100,0,1,40,100))
+## first was silly, second not rounded correctly in 2.2.0 - 2.3.1
+## We don't get them lining up, but that is a printf issue
+## that only happens for very large complex nos.
+
+
+### end of tests added in 2.4.0 ###

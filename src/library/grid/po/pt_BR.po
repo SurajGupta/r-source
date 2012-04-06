@@ -7,7 +7,7 @@ msgid ""
 msgstr ""
 "Project-Id-Version: R 2.2.0\n"
 "Report-Msgid-Bugs-To: bugs@R-project.org\n"
-"POT-Creation-Date: 2006-04-10 14:49+0100\n"
+"POT-Creation-Date: 2006-09-22 09:08+0100\n"
 "PO-Revision-Date: 2006-04-16 19:17-0300\n"
 "Last-Translator: Fernando Henrique Ferraz P. da Rosa <feferraz@.ime.usp.br>\n"
 "Language-Team: Portuguese <ldp-br@bazar.conectiva.com.br>\n"
@@ -20,41 +20,37 @@ msgstr ""
 msgid "Cannot clip to rotated viewport"
 msgstr "Não é possível cortar sobre uma viewport rotacionada"
 
-#: grid.c:641 grid.c:646 grid.c:735 grid.c:740
+#: grid.c:648 grid.c:653 grid.c:742 grid.c:747
 msgid "Cannot pop the top-level viewport (grid and graphics output mixed?)"
 msgstr ""
 "Não é possível mostrar a viewport de nível máximo (saidas gráficas e grid "
 "misturadas?) "
 
-#: grid.c:931
+#: grid.c:938
 msgid "attempt to plot on null device"
 msgstr "tentativa de fazer um gráfico no dispositivo nulo"
 
-#: grid.c:1211
+#: grid.c:1218
 msgid "There is no layout defined"
 msgstr "Não há layout definido"
 
-#: grid.c:1431
+#: grid.c:1438
 msgid "Polygon edge not found (zero-width or zero-height?)"
 msgstr "Limite do polígono não encontrado (largura ou altura zero?)"
 
-#: grid.c:1440
+#: grid.c:1447
 msgid "Polygon edge not found"
 msgstr "Limite do polígono não encontrado"
 
-#: grid.c:1580
+#: grid.c:1587
 msgid "Require at least two points to draw arrow"
 msgstr "Pelo menos dois pontos são necessários para desenhar uma seta"
 
-#: grid.c:1894
+#: grid.c:1901
 msgid "Non-finite control point in Xspline"
 msgstr "Ponto de controle não-finito em Xspline"
 
-#: grid.c:2373
-msgid "Invalid circle radius (must be non-negative)"
-msgstr "Raio de círculo inválido (deve ser não negativo)"
-
-#: grid.c:3067
+#: grid.c:3072
 msgid "Unable to clip to rotated rectangle"
 msgstr "Não é possível cortar sobre um retângulo rotacionado"
 
@@ -75,26 +71,29 @@ msgid "Unable to store grid state.  Too many devices open?"
 msgstr ""
 "Não foi possível guardar o estado do grid. Muitos dispositivos abertos?"
 
-#: unit.c:258 unit.c:408 unit.c:1138 unit.c:1218 unit.c:1298 unit.c:1378
+#: unit.c:261 unit.c:411 unit.c:1141 unit.c:1221 unit.c:1301 unit.c:1381
 msgid "Unimplemented unit function"
 msgstr "Função unidade não implementada"
 
-#: unit.c:827 unit.c:1573
+#: unit.c:830 unit.c:1576
 msgid "Illegal unit or unit not yet implemented"
 msgstr "Unidade inválida ou unidade ainda não implementada"
 
-#: unit.c:1706
+#: unit.c:1709
 msgid "Invalid unit"
 msgstr "Unidade inválida"
 
-#: unit.c:1722
+#: unit.c:1725
 msgid "Units must be character"
 msgstr "Unidades devem ser do tipo caractere"
 
-#: unit.c:1725
+#: unit.c:1728
 msgid "Units must be of length > 0"
 msgstr "Unidades devem ter comprimento > 0"
 
 #: viewport.c:317
 msgid "Non-finite location and/or size for viewport"
 msgstr "Localização e/ou tamanhos não finitos para viewport"
+
+#~ msgid "Invalid circle radius (must be non-negative)"
+#~ msgstr "Raio de círculo inválido (deve ser não negativo)"

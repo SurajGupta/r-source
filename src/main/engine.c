@@ -1,6 +1,6 @@
 /*
  *  R : A Computer Language for Statistical Data Analysis
- *  Copyright (C) 2001-4   The R Development Core Team.
+ *  Copyright (C) 2001-6   The R Development Core Team.
  *
  *  This program is free software; you can redistribute it and/or modify
  *  it under the terms of the GNU General Public License as published by
@@ -983,7 +983,7 @@ void clipPoint (Edge b, double x, double y,
 		double *xout, double *yout, int *cnt, int store,
 		GClipRect *clip, GClipState *cs)
 {
-    double ix, iy;
+    double ix = 0.0, iy = 0.0 /* -Wall */;
 
     if (!cs[b].first) {
 	/* No previous point exists for this edge. */
@@ -1034,7 +1034,7 @@ static
 void closeClip (double *xout, double *yout, int *cnt, int store,
 		GClipRect *clip, GClipState *cs)
 {
-    double ix, iy;
+    double ix = 0.0, iy = 0.0 /* -Wall */;
     Edge b;
 
     for (b = Left; b <= Top; b++) {
@@ -1054,8 +1054,8 @@ void closeClip (double *xout, double *yout, int *cnt, int store,
     }
 }
 
-int clipPoly(double *x, double *y, int n, int store, int toDevice,
-	     double *xout, double *yout, GEDevDesc *dd)
+static int clipPoly(double *x, double *y, int n, int store, int toDevice,
+		    double *xout, double *yout, GEDevDesc *dd)
 {
     int i, cnt = 0;
     GClipState cs[4];
@@ -1894,6 +1894,8 @@ void GESymbol(double x, double y, int pch, double size,
 #ifdef SUPPORT_MBCS
 	    if(mbcslocale && gc->fontface != 5) {
 		int cnt = wcrtomb(str, pch, NULL);
+		if(cnt == -1)
+		    error("invalid multibyte string");
 		str[cnt] = 0;
 	    } else
 #endif
@@ -2479,7 +2481,7 @@ void GEplayDisplayList(GEDevDesc *dd)
 	    (dd->gesd[i]->callback)(GE_RestoreState, dd, R_NilValue);
     /* Play the display list
      */
-    theList = dd->dev->displayList;
+    PROTECT(theList = dd->dev->displayList);
     plotok = 1;
     if (theList != R_NilValue) {
 	savedDevice = curDevice();
@@ -2499,6 +2501,7 @@ void GEplayDisplayList(GEDevDesc *dd)
 	}
 	selectDevice(savedDevice);
     }
+    UNPROTECT(1);
 }
 
 /****************************************************************
@@ -2570,11 +2573,11 @@ SEXP GEcreateSnapshot(GEDevDesc *dd)
     PROTECT(snapshot = allocVector(VECSXP, 1 + numGraphicsSystems));
     /* The first element of the snapshot is the display list.
      */
-    tmp = dd->dev->displayList;
-    if(!isNull(tmp)) tmp = duplicate(tmp);
-    PROTECT(tmp);
-    SET_VECTOR_ELT(snapshot, 0, tmp);
-    UNPROTECT(1);
+    if(!isNull(dd->dev->displayList)) {
+        PROTECT(tmp = duplicate(dd->dev->displayList));
+        SET_VECTOR_ELT(snapshot, 0, tmp);
+        UNPROTECT(1);
+    }
     /* For each registered system, obtain state information,
      * and store that in the snapshot.
      */
@@ -2676,7 +2679,7 @@ SEXP attribute_hidden do_recordGraphics(SEXP call, SEXP op, SEXP args, SEXP env)
     if (TYPEOF(list) != VECSXP)
       errorcall(call, _("'list' argument must be a list"));
     if (isNull(parentenv)) {
-	warning(_("use of NULL environment is deprecated"));
+	error(_("use of NULL environment is defunct"));
 	parentenv = R_BaseEnv;
     } else        
     if (!isEnvironment(parentenv))

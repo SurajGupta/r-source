@@ -4,6 +4,142 @@
 See the file NEWS for changes that affect all versions of R.
 
 
+R 2.4.0
+=======
+
+The language for menus and messages can be set in the 'Rconsole' file and
+(for future messages/sessions) from the GUI preferences.
+
+The initial setting for console buffering can be set in the 'Rconsole'
+file and (for future sessions) from the GUI preferences.
+
+The installer can set defaults for MDI/SDI display, help style, and
+use of the --internet2 startup option.  Custom builds of R can change
+these defaults.
+
+If CHM help is selected, but is not present (e.g. a package was cross-
+compiled on Unix), the help system defaults to text help.
+
+getGraphicsEvent() now writes its prompt to the standard output stream,
+so it can be captured by sink() or capture.output().
+
+getGraphicsEvent() now leaves the standard graphics window menus in 
+place, so those functions are available while waiting for an event.
+
+iconv.dll has been updated to 1.11, which has some improvements for
+CJK languages under Windows (e.g. support for the Euro).
+
+Rcmd and R CMD check the name of Perl scripts, so errors like
+'R CMD install' are detected.
+
+The default limit for --max-mem-size has been changed: see the rw-FAQ.
+
+The .chm files are now given a title identifying the package.
+
+There are new utilities 'Rcmd Sweave' and 'Rcmd Stangle' for
+processing of Sweave documentation.
+
+
+Installing packages
+-------------------
+
+It is now possible to use relative paths as 'lib' in
+install.packages(), not just absolute ones.
+
+Installing packages (in particular saving an image and preparing for
+lazy-loading and lazydata) is now done in a C locale for consistency
+with Unix.  (This will only possibly affect CJK locales, where some
+checks on the validity of symbols and strings might be
+locale-dependent.)
+
+There is a new file etc/Makeconf that provides an approximation to the
+Unix version and may help with src/Makefile's.
+
+
+C-level changes
+---------------
+
+There is now a similar embedding interface to that under Unix, using
+Rf_initEmbeddedR / Rf_endEmbeddedR.
+
+The C-level *printf functions have been replaced by those from the trio
+library, which ensures a higher level of C99 compliance without the
+need for lots of Windows-specific workarounds.
+
+Entry points which are hidden in libR.so on Unix are now also hidden
+in R.dll.  (Just over half the entry points are hidden, which speeds up
+loading.)
+
+It is possible to select (in MkRules) the type of debug symbol used,
+and this now defaults to 'dwarf-2' (which is more efficient than the
+previous default of 'stabs').  More parts of R are now built with debug
+symbols when DEBUG=T.
+
+The symbols in graphapp are now remapped to start with GA_, so any
+code making use of graphapp will need to be recompiled.
+
+
+Building R
+----------
+
+mingw-runtime >= 3.10 is required to build R (a bug fix in the handling
+of MBCS code is required).  This is enforced by a check in building
+Rpwd.exe.
+
+At the time of writing mingw-runtime-3.10 was not listed on the MinGW
+downloads page, but it is available from
+
+http://prdownloads.sourceforge.net/mingw/mingw-runtime-3.10.tar.gz?download
+
+
+Bug fixes
+---------
+
+The menu items for source and load/save workspace/history and
+drag-and-drop can now be used for paths on network shares (starting
+with \\).
+
+Using lines of more than 1000 chars in an R file in batch mode could
+crash R.
+
+If the input line limit (1024 bytes) was exceeded whilst pasting in, a
+byte was lost and the last byte input from the keyboard was
+repeated after the paste.
+
+The script editor would only load 1000 bytes if the locale in use was 
+not the system locale.  (PR#9254)
+
+
+
+R 2.3.1 patched
+===============
+
+winMenuAdd() could crash when too many menus were added.  (PR#8961)
+
+The data editor could crash when too much was pasted into it.
+
+dirname() converted paths involving network shares to forward slashes.
+(PR#8892)
+
+R could crash when very low on memory. (PR#8981)
+
+Due to a typo, R CMD Rd2dvi would not work with MiKTeX.
+
+Objects from Fortran 9X sources no longer need to be declared to R CMD
+SHLIB/INSTALL via OBJS in Makevars.win.
+
+There is a new option to make a .msi Microsoft Installer, intended for
+use by sysadmins doing automated installs.  See the 'R Installation
+and Administration Manual'.  (Thanks to David del Campo (Dept of
+Statistics, University of Oxford) for suggesting WiX and building a
+prototype installer.)
+
+It was intended that saving the GUI preferences would default to the
+home directory, but Windows only accepted paths with \ separators at
+that point, ignoring others with no error message.
+
+
+
 R 2.3.1
 =======
 
@@ -23,7 +159,7 @@ a message about 'outer margins too large'. (PR#8857)
 
 Sys.setlocale() interprets LC_CTYPE=C as a request for CP1252, as the
 startup code long has.  (This is necessary to avoid various crashes
-in the runtime code.)
+in the MinGW runtime code.)
 
 
 

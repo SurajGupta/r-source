@@ -139,6 +139,12 @@ static int shash(SEXP x, int indx, HashData *d)
     return scatter(k, d);
 }
 
+static int lequal(SEXP x, int i, SEXP y, int j)
+{
+    return (LOGICAL(x)[i] == LOGICAL(y)[j]);
+}
+
+
 static int iequal(SEXP x, int i, SEXP y, int j)
 {
     return (INTEGER(x)[i] == INTEGER(y)[j]);
@@ -250,8 +256,6 @@ static int vhash(SEXP x, int indx, HashData *d)
     return scatter(key, d);
 }
 
-Rboolean compute_identical(SEXP x, SEXP y); /* from identical.c */
-
 static int vequal(SEXP x, int i, SEXP y, int j)
 {
     return compute_identical(VECTOR_ELT(x, i), VECTOR_ELT(y, j));
@@ -285,7 +289,7 @@ static void HashTableSetup(SEXP x, HashData *d)
     switch (TYPEOF(x)) {
     case LGLSXP:
 	d->hash = lhash;
-	d->equal = iequal;
+	d->equal = lequal;
 	MKsetup(3, d);
 	break;
     case INTSXP:
@@ -494,10 +498,6 @@ static SEXP HashLookup(SEXP table, SEXP x, HashData *d)
 
 SEXP attribute_hidden do_match(SEXP call, SEXP op, SEXP args, SEXP env)
 {
-#ifdef NOTMOVED
-    SEXP x, table;
-    SEXPTYPE type;
-#endif
     int nomatch;
 
     checkArity(op, args);
@@ -506,23 +506,8 @@ SEXP attribute_hidden do_match(SEXP call, SEXP op, SEXP args, SEXP env)
 	|| (!isVector(CADR(args)) && !isNull(CADR(args))))
 	error(_("'match' requires vector arguments"));
 
-    /* Coerce to a common type; type == NILSXP is ok here.
-     * Note that R's match() does only coerce factors (to character).
-     * Hence, coerce to character or to `higher' type
-     * (given that we have "Vector" or NULL) */
-#ifdef NOTMOVED
-    if(TYPEOF(CAR(args))  >= STRSXP || TYPEOF(CADR(args)) >= STRSXP)
-	type = STRSXP;
-    else type = TYPEOF(CAR(args)) < TYPEOF(CADR(args)) ?
-	     TYPEOF(CADR(args)) : TYPEOF(CAR(args));
-    x = SETCAR(args, coerceVector(CAR(args), type));
-    table = SETCADR(args, coerceVector(CADR(args), type));
-    nomatch = asInteger(CAR(CDDR(args)));
-    return match(table, x, nomatch);
-#else
     nomatch = asInteger(CAR(CDDR(args)));
     return match(CADR(args), CAR(args), nomatch);
-#endif
 }
 
 SEXP match(SEXP itable, SEXP ix, int nmatch)
@@ -536,10 +521,8 @@ SEXP match(SEXP itable, SEXP ix, int nmatch)
      * Note that R's match() does only coerce factors (to character).
      * Hence, coerce to character or to `higher' type
      * (given that we have "Vector" or NULL) */
-    if(TYPEOF(ix)  >= STRSXP || TYPEOF(itable) >= STRSXP)
-        type = STRSXP;
-    else type = TYPEOF(ix) < TYPEOF(itable) ?
-             TYPEOF(itable) : TYPEOF(ix);
+    if(TYPEOF(ix)  >= STRSXP || TYPEOF(itable) >= STRSXP) type = STRSXP;
+    else type = TYPEOF(ix) < TYPEOF(itable) ? TYPEOF(itable) : TYPEOF(ix);
     PROTECT(x = coerceVector(ix, type));
     PROTECT(table = coerceVector(itable, type));
 
@@ -942,48 +925,56 @@ SEXP attribute_hidden do_matchcall(SEXP call, SEXP op, SEXP args, SEXP env)
 #  define ZERODBL(X,N,I) for(I=0;I<N;I++) REAL(X)[I]=0
 #endif
 
-SEXP attribute_hidden Rrowsum_matrix(SEXP x, SEXP ncol, SEXP g, SEXP uniqueg)
+SEXP attribute_hidden 
+Rrowsum_matrix(SEXP x, SEXP ncol, SEXP g, SEXP uniqueg, SEXP snarm)
 {
     SEXP matches,ans;
-    int i, j, n, p,ng=0,offset,offsetg;
+    int i, j, n, p, ng = 0, offset, offsetg, narm;
     HashData data;
     data.nomatch = 0;
 
     n = LENGTH(g);
-    p= INTEGER(ncol)[0];
-    ng=length(uniqueg);
+    p = INTEGER(ncol)[0];
+    ng = length(uniqueg);
+    narm = asLogical(snarm);
+    if(narm == NA_LOGICAL) error("'na.rm' must be TRUE or FALSE");
 
     HashTableSetup(uniqueg, &data);
     PROTECT(data.HashTable);
     DoHashing(uniqueg, &data);
-    PROTECT(matches = HashLookup(uniqueg ,g, &data));
+    PROTECT(matches = HashLookup(uniqueg, g, &data));
 
-    PROTECT(ans=allocMatrix(TYPEOF(x),ng,p));
+    PROTECT(ans=allocMatrix(TYPEOF(x), ng, p));
 
-    offset=0; offsetg=0;
+    offset = 0; offsetg = 0;
 
     switch(TYPEOF(x)){
     case REALSXP:
-	ZERODBL(ans,ng*p,i);
-	for(i=0;i<p;i++){
-	    for(j=0;j<n;j++){
-		REAL(ans)[INTEGER(matches)[j]-1+offsetg]+=REAL(x)[j+offset];
-	    }
-	    offset+=n;
-	    offsetg+=ng;
+	ZERODBL(ans, ng*p, i);
+	for(i = 0; i < p; i++) {
+	    for(j = 0; j < n; j++)
+		if(!narm || !ISNAN(REAL(x)[j+offset]))
+		    REAL(ans)[INTEGER(matches)[j]-1+offsetg] 
+			+= REAL(x)[j+offset];
+	    offset += n;
+	    offsetg += ng;
 	}
 	break;
     case INTSXP:
-	ZEROINT(ans,ng*p,i);
-	for(i=0;i<p;i++){
-	    for(j=0;j<n;j++){
-		if (INTEGER(x)[j+offset]==NA_INTEGER)
-		    INTEGER(ans)[INTEGER(matches)[j]-1+offsetg]=NA_INTEGER;
-		else if  (INTEGER(ans)[INTEGER(matches)[j]-1+offsetg]!=NA_INTEGER)
-		    INTEGER(ans)[INTEGER(matches)[j]-1+offsetg]+=INTEGER(x)[j+offset];
+	ZEROINT(ans, ng*p, i);
+	for(i = 0; i < p; i++) {
+	    for(j = 0; j < n; j++) {
+		if (INTEGER(x)[j+offset] == NA_INTEGER) {
+		    if(!narm)
+			INTEGER(ans)[INTEGER(matches)[j]-1+offsetg] 
+			    = NA_INTEGER;
+		} else if (INTEGER(ans)[INTEGER(matches)[j]-1+offsetg] 
+			 != NA_INTEGER)
+		    INTEGER(ans)[INTEGER(matches)[j]-1+offsetg] 
+			+= INTEGER(x)[j+offset];
 	    }
-	    offset+=n;
-	    offsetg+=ng;
+	    offset += n;
+	    offsetg += ng;
 	}
 	break;
     default:
@@ -995,50 +986,54 @@ SEXP attribute_hidden Rrowsum_matrix(SEXP x, SEXP ncol, SEXP g, SEXP uniqueg)
     return ans;
 }
 
-SEXP attribute_hidden Rrowsum_df(SEXP x, SEXP ncol, SEXP g, SEXP uniqueg)
+SEXP attribute_hidden
+Rrowsum_df(SEXP x, SEXP ncol, SEXP g, SEXP uniqueg, SEXP snarm)
 {
     SEXP matches,ans,col,xcol;
-    int i, j, n, p,ng=0,offset,offsetg;
+    int i, j, n, p, ng = 0, offset, offsetg, narm;
     HashData data;
     data.nomatch = 0;
 
     n = LENGTH(g);
-    p= INTEGER(ncol)[0];
-    ng=length(uniqueg);
+    p = INTEGER(ncol)[0];
+    ng = length(uniqueg);
+    narm = asLogical(snarm);
+    if(narm == NA_LOGICAL) error("'na.rm' must be TRUE or FALSE");
 
     HashTableSetup(uniqueg, &data);
     PROTECT(data.HashTable);
     DoHashing(uniqueg, &data);
-    PROTECT(matches = HashLookup(uniqueg ,g, &data));
+    PROTECT(matches = HashLookup(uniqueg, g, &data));
 
-    PROTECT(ans=allocVector(VECSXP,p));
+    PROTECT(ans = allocVector(VECSXP, p));
 
-    offset=0; offsetg=0;
+    offset = 0; offsetg = 0;
 
-    for(i=0; i<p;i++){
-	xcol=VECTOR_ELT(x,i);
+    for(i = 0; i < p; i++) {
+	xcol = VECTOR_ELT(x,i);
 	if (!isNumeric(xcol))
 	    error(_("non-numeric data frame in rowsum"));
 	switch(TYPEOF(xcol)){
 	case REALSXP:
-	    PROTECT(col=allocVector(REALSXP,ng));
-	    ZERODBL(col,ng,i);
-	    for(j=0;j<n;j++){
-		REAL(col)[INTEGER(matches)[j]-1]+=REAL(xcol)[j];
-	    }
+	    PROTECT(col = allocVector(REALSXP,ng));
+	    ZERODBL(col, ng, i);
+	    for(j = 0; j < n; j++)
+		if(!narm || !ISNAN(REAL(xcol)[j]))
+		    REAL(col)[INTEGER(matches)[j]-1] += REAL(xcol)[j];
 	    SET_VECTOR_ELT(ans,i,col);
 	    UNPROTECT(1);
 	    break;
 	case INTSXP:
-	    PROTECT(col=allocVector(INTSXP,ng));
-	    ZEROINT(col,ng,i);
-	    for(j=0;j<n;j++){
-		if (INTEGER(xcol)[j]==NA_INTEGER)
-		    INTEGER(col)[INTEGER(matches)[j]-1]=NA_INTEGER;
-		else if (INTEGER(col)[INTEGER(matches)[j]-1]!=NA_INTEGER)
-		    INTEGER(col)[INTEGER(matches)[j]-1]+=INTEGER(xcol)[j];
+	    PROTECT(col = allocVector(INTSXP, ng));
+	    ZEROINT(col, ng, i);
+	    for(j = 0; j < n; j++) {
+		if (INTEGER(xcol)[j] == NA_INTEGER) {
+		    if(!narm)
+			INTEGER(col)[INTEGER(matches)[j]-1] = NA_INTEGER;
+		} else if (INTEGER(col)[INTEGER(matches)[j]-1] != NA_INTEGER)
+		    INTEGER(col)[INTEGER(matches)[j]-1] += INTEGER(xcol)[j];
 	    }
-	    SET_VECTOR_ELT(ans,i,col);
+	    SET_VECTOR_ELT(ans, i, col);
 	    UNPROTECT(1);
 	    break;
 
@@ -1046,7 +1041,7 @@ SEXP attribute_hidden Rrowsum_df(SEXP x, SEXP ncol, SEXP g, SEXP uniqueg)
 	    error(_("this cannot happen"));
 	}
     }
-    namesgets(ans,getAttrib(x,R_NamesSymbol));
+    namesgets(ans, getAttrib(x, R_NamesSymbol));
 
     UNPROTECT(2); /*HashTable, matches*/
     UNPROTECT(1); /*ans*/

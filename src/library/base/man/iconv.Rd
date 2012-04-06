@@ -13,7 +13,8 @@ iconvlist()
 }
 
 \arguments{
-  \item{x}{A character vector.}
+  \item{x}{A character vector, or an object to be converted to a character
+    vector by \code{\link{as.character}}.}
   \item{from}{A character string describing the current encoding.}
   \item{to}{A character string describing the target encoding.}
   \item{sub}{character string.  If not \code{NA} it is used to replace
@@ -48,7 +49,8 @@ iconvlist()
   \code{//TRANSLIT} to the \code{to} encoding: see the examples.
 }
 \value{
-  A character vector of the same length and the same attributes as \code{x}.
+  A character vector of the same length and the same attributes as
+  \code{x} (after conversion).
 }
 \note{
   Not all platforms support these functions.  See also

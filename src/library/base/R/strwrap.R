@@ -1,9 +1,14 @@
-strtrim <- function(x, width) .Internal(strtrim(x, width))
+strtrim <- function(x, width)
+{
+    if(!is.character(x)) x <- as.character(x)
+    .Internal(strtrim(x, width))
+}
 
 strwrap <-
 function(x, width = 0.9 * getOption("width"), indent = 0, exdent = 0,
-         prefix = "", simplify = TRUE) {
-
+         prefix = "", simplify = TRUE)
+{
+    if(!is.character(x)) x <- as.character(x)
     ## Useful variables.
     indentString <- paste(rep.int(" ", indent), collapse = "")
     exdentString <- paste(rep.int(" ", exdent), collapse = "")
@@ -12,9 +17,9 @@ function(x, width = 0.9 * getOption("width"), indent = 0, exdent = 0,
     ## Now z[[i]][[j]] is a character vector of all "words" in
     ## paragraph j of x[i].
 
-    for(i in seq(along = z)) {
+    for(i in seq_along(z)) {
         yi <- character(0)
-        for(j in seq(along = z[[i]])) {
+        for(j in seq_along(z[[i]])) {
             ## Format paragraph j in x[i].
             words <- z[[i]][[j]]
             nc <- nchar(words, type="w")
@@ -92,7 +97,10 @@ function(x, width = 0.9 * getOption("width"), indent = 0, exdent = 0,
                               sep = "")
             yi <- c(yi, s, prefix)
         }
-        y <- c(y, list(yi[-length(yi)]))
+        y <- if(length(yi))
+            c(y, list(yi[-length(yi)]))
+        else
+            c(y, "")
     }
 
     if(simplify) y <- unlist(y)

@@ -22,10 +22,10 @@
 #
 msgid ""
 msgstr ""
-"Project-Id-Version: R 2.3.1\n"
+"Project-Id-Version: R 2.4.0\n"
 "Report-Msgid-Bugs-To: bugs@r-project.org\n"
-"POT-Creation-Date: 2006-03-27 15:42\n"
-"PO-Revision-Date: 2006-03-27 15:42\n"
+"POT-Creation-Date: 2006-08-29 06:15\n"
+"PO-Revision-Date: 2006-08-29 06:15\n"
 "Last-Translator: Automatically generated\n"
 "Language-Team: none\n"
 "MIME-Version: 1.0\n"
@@ -159,6 +159,9 @@ msgstr "Invalid ‘ask’ value"
 
 msgid "Invalid object inserted on the display list"
 msgstr "Invalid object inserted on the display list"
+
+msgid "Invalid 'grob' argument"
+msgstr "Invalid ‘grob’ argument"
 
 msgid "Invalid 'vp' slot"
 msgstr "Invalid ‘vp’ slot"
@@ -382,6 +385,9 @@ msgstr "No ‘grob’ supplied for ‘grobwidth/height’ unit"
 
 msgid "'gPath' must have depth 1 in 'grobwidth/height' units"
 msgstr "‘gPath’ must have depth 1 in ‘grobwidth/height’ units"
+
+msgid "Non-NULL value supplied for plain unit"
+msgstr "Non-NULL value supplied for plain unit"
 
 msgid "Operator '%s' not meaningful for units"
 msgstr "Operator ‘%s’ not meaningful for units"

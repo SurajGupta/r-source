@@ -56,7 +56,8 @@ methods <- function (generic.function, class)
     knownGenerics <- c(names(.knownS3Generics),
                        tools:::.get_internal_S3_generics())
 
-    an <- lapply(seq(along=(sp <- search())), ls)
+    sp <- search()
+    an <- lapply(seq_along(sp), ls)
     names(an) <- sp
     an <- unlist(an)
     an <- an[!duplicated(an)] # removed masked objects, *keep* names
@@ -357,4 +358,15 @@ print.getAnywhere <- function(x, ...)
     if(!is.numeric(i)) stop("only numeric indices can be used")
     if(length(i) == 1) x$objs[[i]]
     else x$objs[i]
+}
+
+argsAnywhere <- function(x) {
+        name<-as.character(substitute(x))
+        fs<-do.call(getAnywhere, list(name))
+        if (sum(!fs$dups)==0)
+            return(NULL)
+        if (sum(!fs$dups)>1)
+            sapply(fs$objs[!fs$dups],
+                   function(f) if (is.function(f)) args(f))
+        else args(fs$objs[[1]])
 }

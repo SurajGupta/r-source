@@ -22,8 +22,8 @@ colnames(x) <- value
   \item{prefix}{for created names.}
   \item{value}{a valid value for that component of
     \code{\link{dimnames}(x)}.  For a matrix or array this is either
-    \code{NULL} or a character vector of length the appropriate
-    dimension.}
+    \code{NULL} or a character vector of non-zero length equal to the
+    appropriate dimension.}
 }
 \details{
   The extractor functions try to do something sensible for any
@@ -31,7 +31,8 @@ colnames(x) <- value
   the first component is used as the row names, and the second component
   (if any) is used for the col names.  For a data frame, \code{rownames}
   and \code{colnames} are equivalent to \code{\link{row.names}} and
-  \code{\link{names}} respectively.
+  \code{\link{names}} respectively, but the latter are preferred (and
+  can be much faster).
 
   If \code{do.NULL} is \code{FALSE}, a character vector (of length
   \code{\link{NROW}(x)} or \code{\link{NCOL}(x)}) is returned in any

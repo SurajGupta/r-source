@@ -41,6 +41,8 @@ extern UImode  CharacterMode;
 #include "rui.h"
 #include "editor.h"
 
+#define gettext GA_gettext
+
 #define MCHECK(a) if (!(a)) {del(c); return NULL;}
 RECT *RgetMDIsize();
 
@@ -413,8 +415,9 @@ static void editorreplace(control m)
 
 static void editorrunline(textbox t)
 {
-    int length = getlinelength(t);
-    char *line = malloc((length + 2) * sizeof(char)); /* Extra space for null and word length in getcurrentline */
+    int length = getlinelength(t); /* return character num */
+    char *line = malloc(length * sizeof(WCHAR) + 2); /* Extra space for null and word length in getcurrentline */
+    memset(line, 0, length * sizeof(WCHAR) + 2);
     getcurrentline(t, line, length);
     consolecmd(RConsole, line);
     free(line);

@@ -2,7 +2,7 @@ msgid ""
 msgstr ""
 "Project-Id-Version: R 2.3.0\n"
 "Report-Msgid-Bugs-To: bugs@r-project.org\n"
-"POT-Creation-Date: 2006-01-24 11:58\n"
+"POT-Creation-Date: 2006-09-19 11:55\n"
 "PO-Revision-Date: 2005-04-17 16:57+0200\n"
 "Last-Translator: stefano iacus <>\n"
 "Language-Team: Italian <it@li.org>\n"
@@ -19,9 +19,6 @@ msgstr "specificare 'package' o 'dir'"
 
 msgid "directory '%s' does not exist"
 msgstr "la directory '%s' non esiste"
-
-msgid "cannot source package code"
-msgstr "impossibile leggere codice sorgente del pacchetto"
 
 msgid "neither code nor data objects found"
 msgstr "non trovati codice o oggetti di tipo data"
@@ -51,6 +48,24 @@ msgid ""
 "Functions/methods with usage in documentation object '%s' but not in code:"
 msgstr ""
 
+msgid "Argument names in code not in docs:"
+msgstr ""
+
+msgid "Argument names in docs not in code:"
+msgstr ""
+
+msgid "Mismatches in argument names (first 3):"
+msgstr ""
+
+msgid "Mismatches in argument names:"
+msgstr ""
+
+msgid "Mismatches in argument default values (first 3):"
+msgstr ""
+
+msgid "Mismatches in argument default values:"
+msgstr ""
+
 #, fuzzy
 msgid "Codoc mismatches from documentation object '%s':"
 msgstr "Errore di sintassi nella documentazione dell'oggetto '%s':"
@@ -58,13 +73,7 @@ msgstr "Errore di sintassi nella documentazione dell'oggetto '%s':"
 msgid "Code: %s"
 msgstr ""
 
-msgid "code"
-msgstr ""
-
 msgid "Docs: %s"
-msgstr ""
-
-msgid "docs"
 msgstr ""
 
 #, fuzzy
@@ -75,6 +84,12 @@ msgid "Slots for class '%s'"
 msgstr ""
 
 msgid "name"
+msgstr ""
+
+msgid "code"
+msgstr ""
+
+msgid "docs"
 msgstr ""
 
 #, fuzzy
@@ -153,7 +168,7 @@ msgstr ""
 
 msgid ""
 "Vignette dependencies (\\VignetteDepends{} entries) must be contained in the "
-"DESCRIPTION Depends/Suggests/Imports entries."
+"DESCRIPTION Depends/Suggests entries."
 msgstr ""
 
 msgid "Namespace dependencies not required:"
@@ -221,8 +236,7 @@ msgstr ""
 
 msgid ""
 "Each '\\keyword' entry should specify one of the standard keywords (as "
-"listed in file 'KEYWORDS.db' in the 'doc' subdirectory of the R home "
-"directory)."
+"listed in file 'KEYWORDS' in the R documentation directory)."
 msgstr ""
 
 msgid "Rd files with duplicated alias '%s':"
@@ -273,7 +287,7 @@ msgstr ""
 msgid "Malformed maintainer field."
 msgstr ""
 
-msgid "Malformed Depends or Suggests or Imports field."
+msgid "Malformed Depends or Suggests or Imports or Enhances field."
 msgstr ""
 
 msgid "Offending entries:"
@@ -320,6 +334,24 @@ msgstr ""
 #, fuzzy
 msgid "Missing link(s) in documentation object '%s':"
 msgstr "Errore di sintassi nella documentazione dell'oggetto '%s':"
+
+msgid "found %s"
+msgstr ""
+
+msgid "package 'methods' is used but not declared"
+msgstr ""
+
+msgid "'::' or ':::' imports not declared from:"
+msgstr ""
+
+msgid "'library' or 'require' calls not declared from:"
+msgstr ""
+
+msgid "Found possibly global T or F in the following functions:"
+msgstr ""
+
+msgid "Found possibly global T or F in the following Rd example files:"
+msgstr ""
 
 msgid "argument 'lines' must be a character vector"
 msgstr "argomento 'lines' deve essere un vettore carattere"
@@ -532,6 +564,9 @@ msgstr "esecuzione texi2dvi su '%s' fallita"
 
 msgid "file '%s' is not in valid DCF format"
 msgstr "il fil e'%s' non è in formato DCF valido"
+
+msgid "cannot source package code"
+msgstr "impossibile leggere codice sorgente del pacchetto"
 
 msgid "Call sequence:"
 msgstr "Successione delle chiamate:"

@@ -24,8 +24,9 @@ x != y
 }
 \details{
   The binary comparison operators are generic functions: methods can be
-  written for them individually or via the \code{\link{Ops}}) group generic
-  function.
+  written for them individually or via the
+  \code{\link[base:groupGeneric]{Ops}}) group generic function.  (See
+  \code{\link[base:groupGeneric]{Ops}} for how dispatch is computed.)
 
   Comparison of strings in character vectors is lexicographic within the
   strings using the collating sequence of the locale in use: see
@@ -50,7 +51,9 @@ x != y
 
   Missing values (\code{\link{NA}}) and \code{\link{NaN}} values are
   regarded as non-comparable even to themselves, so comparisons
-  involving them will always result in \code{NA}.
+  involving them will always result in \code{NA}.  Missing values can
+  also result when character strings are compared and one is not valid
+  in the current collation locale. 
 }
 \value{
   A vector of logicals indicating the result of the element by element

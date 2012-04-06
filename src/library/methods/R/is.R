@@ -91,7 +91,7 @@ setIs <-
     where <- as.environment(where)
     classDef2 <- getClassDef(class2, where)
     if(is.null(classDef2))
-        stop(gettextf("class \"%s\" has no visible definition from package or environment '%s'", class2, getPackageName(where)), domain = NA)
+        stop(gettextf("class \"%s\" has no visible definition from package or environment \"%s\"", class2, getPackageName(where)), domain = NA)
     ## check some requirements:
     ## One of the classes must be on the target environment (so that the relation can
     ## be retained by saving the corresponding image)
@@ -127,14 +127,19 @@ setIs <-
         }
     }
     if(!classDef2@sealed) {
-        where2 <- findClass(class2, where)[[1]]
-        if(!bindingIsLocked(m2, where2)) {
+        where2 <- findClass(classDef2)
+        if(length(where2) > 0) {
+          where2 <- where2[[1]]
+          if(!bindingIsLocked(m2, where2)) {
             elNamed(classDef2@subclasses, class1) <- obj
             if(doComplete)
                 classDef2@subclasses <- completeSubclasses(classDef2, class1, obj, where)
             assignClassDef(class2, classDef2, where2)
+          }
+          .removePreviousCoerce(class1, class2, where, prevIs)
         }
-        .removePreviousCoerce(class1, class2, where, prevIs)
+        else
+          stop(gettextf("Unable to find package environment for class \"%s\" to revise subclass information", class2))
     }
     invisible(classDef)
 }

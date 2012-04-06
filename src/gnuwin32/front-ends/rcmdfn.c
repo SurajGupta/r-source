@@ -44,7 +44,7 @@ static int pwait(HANDLE p)
 
 void rcmdusage (char *RCMD)
 {
-    fprintf(stderr, "%s%s%s%s%s%s%s%s%s%s%s%s%s",
+    fprintf(stderr, "%s%s%s%s%s%s%s%s%s%s%s%s%s%s%s",
 	    "where 'command' is one of:\n",
 	    "  INSTALL  Install add-on packages.\n",
 	    "  REMOVE   Remove add-on packages.\n",
@@ -57,14 +57,17 @@ void rcmdusage (char *RCMD)
 	    "           LaTeX, plain text, and S documentation format.\n",
 	    "  Rd2dvi   Convert Rd format to DVI/PDF.\n",
 	    "  Rd2txt   Convert Rd format to text.\n",
-	    "  Sd2Rd    Convert S documentation to Rd format.\n");
+	    "  Sd2Rd    Convert S documentation to Rd format.\n",
+	    "  Stangle  Extract S/R code from Sweave documentation.\n",
+	    "  Sweave   Process Sweave documentation.\n"
+	    );
 
     fprintf(stderr, "\n%s%s%s%s",
 	    "Use\n  ", RCMD, " command --help\n",
 	    "for usage information for each command.\n\n");    
 }
 
-
+#define CMD_LEN 10000
 int rcmdfn (int cmdarg, int argc, char **argv)
 {
     /* tasks:
@@ -78,7 +81,7 @@ int rcmdfn (int cmdarg, int argc, char **argv)
      */
     int i, iused, res, status = 0;
     char *RHome, PERL5LIB[MAX_PATH], TEXINPUTS[MAX_PATH], PATH[10000],
-	RHOME[MAX_PATH], *p, cmd[10000], Rversion[25], HOME[MAX_PATH + 10],
+	RHOME[MAX_PATH], *p, cmd[CMD_LEN], Rversion[25], HOME[MAX_PATH + 10],
 	RSHARE[MAX_PATH];
     char RCMD[] = "R CMD";
     int len = strlen(argv[0]);
@@ -107,7 +110,7 @@ int rcmdfn (int cmdarg, int argc, char **argv)
 	    return(0);
 	}
 	/* R --help */
-	sprintf(cmd, "%s/bin/Rterm.exe --help", getRHOME());
+	snprintf(cmd, CMD_LEN, "%s/bin/Rterm.exe --help", getRHOME());
 	system(cmd);
 	fprintf(stderr, "%s", "\n\nOr: R CMD command args\n\n");
 	rcmdusage(RCMD);
@@ -125,7 +128,7 @@ int rcmdfn (int cmdarg, int argc, char **argv)
 
 
 	/* process the command line */
-	sprintf(cmd, "%s/bin/Rterm.exe --restore --save", getRHOME());
+	snprintf(cmd, CMD_LEN, "%s/bin/Rterm.exe --restore --save", getRHOME());
 	if((p = getenv("R_BATCH_OPTIONS")) && strlen(p)) {
 	    strcat(cmd, " ");
 	    strcat(cmd, p);
@@ -238,7 +241,7 @@ int rcmdfn (int cmdarg, int argc, char **argv)
 	strcat(RSHARE, RHome); strcat(RSHARE, "/share");
 	putenv(RSHARE);
 
-	sprintf(Rversion, "R_VERSION=%s.%s", R_MAJOR, R_MINOR);
+	snprintf(Rversion, 25, "R_VERSION=%s.%s", R_MAJOR, R_MINOR);
 	putenv(Rversion);
 
 	putenv("R_CMD=R CMD");
@@ -275,6 +278,12 @@ int rcmdfn (int cmdarg, int argc, char **argv)
 	    if (strcmp(p, "Rd2dvi") == 0) {
 		strcpy(cmd, "sh "); 
 		strcat(cmd, RHome); strcat(cmd, "/bin/Rd2dvi.sh");
+	    } else if (strcmp(p, "Sweave") == 0) {
+		strcpy(cmd, "sh "); 
+		strcat(cmd, RHome); strcat(cmd, "/bin/Sweave.sh");
+	    } else if (strcmp(p, "Stangle") == 0) {
+		strcpy(cmd, "sh "); 
+		strcat(cmd, RHome); strcat(cmd, "/bin/Stangle.sh");
 	    } else {
 		if (!strcmp(".sh", p + strlen(p) - 3)) {
 		    strcpy(cmd, "sh "); 
@@ -282,13 +291,27 @@ int rcmdfn (int cmdarg, int argc, char **argv)
 		} else if (!strcmp(".bat", p + strlen(p) - 4)) strcpy(cmd, "");
 		else if (!strcmp(".exe", p + strlen(p) - 4)) strcpy(cmd, "");
 		else {
+		    WIN32_FIND_DATA find_data;
+		    HANDLE fh;
+		    char tmp[MAX_PATH];
+		    strcpy(tmp, RHome); strcat(tmp, "/bin/"); strcat(tmp, p);
+		    fh = FindFirstFile(tmp, &find_data);
+		    if (fh == INVALID_HANDLE_VALUE) {
+			fprintf(stderr, "no Perl script '%s'\n", p);
+			return(28);
+		    }
+		    if(strcmp(p, find_data.cFileName)) {
+			fprintf(stderr, "no Perl script '%s'\n", p);
+			return(28);
+		    }
+		    FindClose(fh);
 		    strcpy(cmd, "perl ");
 		    strcat(cmd, RHome); strcat(cmd, "/bin/");
 		}
 		strcat(cmd, p);
 	    }
 	} else
-	    sprintf(cmd, "%s/bin/Rterm.exe", getRHOME());
+	    snprintf(cmd, CMD_LEN, "%s/bin/Rterm.exe", getRHOME());
 
 	for (i = cmdarg + 1; i < argc; i++){
 	    strcat(cmd, " ");

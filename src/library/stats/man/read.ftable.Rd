@@ -1,8 +1,8 @@
 \name{read.ftable}
+\title{Manipulate Flat Contingency Tables}
 \alias{read.ftable}
 \alias{write.ftable}
-\alias{as.table.ftable}
-\title{Manipulate Flat Contingency Tables}
+\alias{format.ftable}
 \description{Read, write and coerce \dQuote{flat} contingency tables.}
 \usage{
 read.ftable(file, sep = "", quote = "\"",
@@ -11,7 +11,7 @@ read.ftable(file, sep = "", quote = "\"",
 write.ftable(x, file = "", quote = TRUE, append = FALSE,
              digits = getOption("digits"))
 
-\method{as.table}{ftable}(x, \dots)
+\method{format}{ftable}(x, quote = TRUE, digits = getOption("digits"), \dots)
 }
 \arguments{
   \item{file}{either a character string naming a file or a connection
@@ -60,10 +60,6 @@ write.ftable(x, file = "", quote = TRUE, append = FALSE,
 
   \code{write.ftable} writes a flat table to a file, which is useful for
   generating \dQuote{pretty} ASCII representations of contingency tables.
-
-  \code{as.table.ftable} converts a contingency table in flat matrix
-  form to one in standard array form.  This is a method for the generic
-  function \code{as.table}.
 }
 \seealso{
   \code{\link{ftable}} for more information on flat contingency tables.
@@ -104,5 +100,13 @@ ft <- read.ftable(file, skip = 2,
                       c("Not Enl.", "Enl.", "Greatly Enl.")))
 ft
 unlink(file)
+
+ft22 <- ftable(Titanic, row.vars = 2:1, col.vars = 4:3)
+write.ftable(ft22, quote = FALSE)
+\dontshow{
+stopifnot(dim(format(ft)) == 4:5,
+          dim(format(ftable(UCBAdmissions))) == c(6,9),
+          dim(format(ft22)) == c(11,7))
+}
 }
 \keyword{category}

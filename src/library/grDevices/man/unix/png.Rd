@@ -10,18 +10,7 @@ jpeg(filename = "Rplot\%03d.jpeg", width = 480, height = 480,
      pointsize = 12, quality = 75, bg = "white", res = NA, \dots)
 
 png(filename = "Rplot\%03d.png", width = 480, height = 480,
-    pointsize = 12, bg = "white",  res = NA,\dots)
-}
-\synopsis{
-jpeg(filename = "Rplot\%03d.jpeg", width = 480, height = 480,
-     pointsize = 12, quality = 75, gamma = 1,
-     colortype = getOption("X11colortype"), maxcubesize = 256,
-     bg = "white", fonts = getOption("X11fonts"), res = NA)
-
-png(filename ="Rplot\%03d.png", width = 480, height = 480,
-    pointsize = 12, gamma = 1, colortype = getOption("X11colortype"),
-    maxcubesize = 256, bg = "white", fonts = getOption("X11fonts"),
-    res = NA)
+    pointsize = 12, bg = "white",  res = NA, \dots)
 }
 \arguments{
   \item{filename}{the name of the output file.
@@ -39,7 +28,8 @@ png(filename ="Rplot\%03d.png", width = 480, height = 480,
   \item{bg}{default background colour.}
  \item{res}{The nominal resolution in dpi which will be recorded in the
    bitmap file, if a positive integer.}
-  \item{\dots}{additional arguments to the \code{\link{X11}} device.}
+ \item{\dots}{additional arguments to the underlying
+   \code{\link{X11}} device.}
 }
 \details{
   Plots in PNG and JPEG format can easily be converted to many other

@@ -1,7 +1,7 @@
 /*
  *  R : A Computer Language for Statistical Data Analysis
  *  Copyright (C) 1995, 1996  Robert Gentleman and Ross Ihaka
- *  Copyright (C) 1997-2005   The R Development Core Team
+ *  Copyright (C) 1997-2006   The R Development Core Team
  *
  *  This program is free software; you can redistribute it and/or modify
  *  it under the terms of the GNU General Public License as published by
@@ -61,6 +61,11 @@ static SEXP ExtractSubset(SEXP x, SEXP result, SEXP indx, SEXP call)
 	    ii--;
 	switch (mode) {
 	case LGLSXP:
+            if (0 <= ii && ii < nx && ii != NA_LOGICAL)
+                LOGICAL(result)[i] = LOGICAL(x)[ii];
+            else
+                LOGICAL(result)[i] = NA_INTEGER;
+            break;
 	case INTSXP:
 	    if (0 <= ii && ii < nx && ii != NA_INTEGER)
 		INTEGER(result)[i] = INTEGER(x)[ii];
@@ -249,6 +254,8 @@ static SEXP MatrixSubset(SEXP x, SEXP s, SEXP call, int drop)
 		iijj = ii + jj * nr;
 		switch (TYPEOF(x)) {
 		case LGLSXP:
+                    LOGICAL(result)[ij] = LOGICAL(x)[iijj];
+                    break;
 		case INTSXP:
 		    INTEGER(result)[ij] = INTEGER(x)[iijj];
 		    break;
@@ -484,7 +491,8 @@ static SEXP ArraySubset(SEXP x, SEXP s, SEXP call, int drop)
 	setAttrib(result, R_DimNamesSymbol, xdims);
 	UNPROTECT(1);
     }
-    copyMostAttrib(x, result);
+    /* This was removed for matrices in 1998
+       copyMostAttrib(x, result); */
     /* Free temporary memory */
     vmaxset(vmaxsave);
     if (drop)
@@ -675,6 +683,7 @@ SEXP attribute_hidden do_subset_dflt(SEXP call, SEXP op, SEXP args, SEXP rho)
 	setAttrib(ans, R_DimSymbol, getAttrib(ax, R_DimSymbol));
 	setAttrib(ans, R_DimNamesSymbol, getAttrib(ax, R_DimNamesSymbol));
 	setAttrib(ans, R_NamesSymbol, getAttrib(ax, R_NamesSymbol));
+	SET_NAMED(ans, NAMED(ax)); /* PR#7924 */
     }
     else {
 	PROTECT(ans);
@@ -745,11 +754,13 @@ SEXP attribute_hidden do_subset2_dflt(SEXP call, SEXP op, SEXP args, SEXP rho)
 	error(_("wrong arguments for subsetting an environment"));
       ans = findVarInFrame(x, install(CHAR(STRING_ELT(CAR(subs),
 						      0))));
-        if( TYPEOF(ans) == PROMSXP ) {
+      if( TYPEOF(ans) == PROMSXP ) {
 	    PROTECT(ans);
 	    ans = eval(ans, R_GlobalEnv);
 	    UNPROTECT(1);
-      	}   	
+      } else {
+	    SET_NAMED(ans, 2);
+      }
       
       UNPROTECT(1);
       if(ans == R_UnboundValue )
@@ -824,7 +835,10 @@ SEXP attribute_hidden do_subset2_dflt(SEXP call, SEXP op, SEXP args, SEXP rho)
 	if (NAMED(x) > NAMED(ans))
 	    SET_NAMED(ans, NAMED(x));
     } else if(isVectorList(x)) {
-	ans = duplicate(VECTOR_ELT(x, offset));
+	/* did unconditional duplication before 2.4.0 */
+	ans = VECTOR_ELT(x, offset);
+	if (NAMED(x) > NAMED(ans))
+	    SET_NAMED(ans, NAMED(x));
     } else {
 	ans = allocVector(TYPEOF(x), 1);
 	switch (TYPEOF(x)) {
@@ -931,8 +945,8 @@ SEXP attribute_hidden do_subset3(SEXP call, SEXP op, SEXP args, SEXP env)
     return R_subset3_dflt(CAR(ans), STRING_ELT(input, 0));
 }
 
-/* in Rinternals.h */
-SEXP R_subset3_dflt(SEXP x, SEXP input)
+/* used in eval.c */
+SEXP attribute_hidden R_subset3_dflt(SEXP x, SEXP input)
 {
     SEXP y, nlist;
     int slen;
@@ -995,7 +1009,7 @@ SEXP R_subset3_dflt(SEXP x, SEXP input)
 		break;
 	    }
 	}
-	if(havematch ==1) {
+	if(havematch == 1) {
 	    y = VECTOR_ELT(x, imatch);
 	    if (NAMED(x) > NAMED(y))
 		SET_NAMED(y, NAMED(x));

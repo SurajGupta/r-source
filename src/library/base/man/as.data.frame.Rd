@@ -26,7 +26,12 @@
   Functions to check if an object is a data frame, or coerce it if possible.
 }
 \usage{
-as.data.frame(x, row.names = NULL, optional = FALSE)
+as.data.frame(x, row.names = NULL, optional = FALSE, \dots)
+\method{as.data.frame}{character}(x, \dots,
+              stringsAsFactors = default.stringsAsFactors())
+\method{as.data.frame}{matrix}(x, row.names = NULL, optional = FALSE, ..., 
+                                 stringsAsFactors = default.stringsAsFactors())              
+
 is.data.frame(x)
 }
 \arguments{
@@ -35,6 +40,9 @@ is.data.frame(x)
     names for the data frame.  Missing values are not allowed.}
   \item{optional}{logical. If \code{TRUE}, setting row names and
     converting column names (to syntactic names) is optional.}
+  \item{\dots}{additional arguments to be passed to or from methods.}
+  \item{stringsAsFactors}{logical: should the character vector be converted
+    to a factor?}
 }
 \value{
   \code{as.data.frame} returns a data frame, normally with all row names
@@ -57,7 +65,7 @@ is.data.frame(x)
   \code{"\link{POSIXlt}"} which are coerced to class
   \code{"\link{POSIXct}"}.
 
-  As from \R 1.9.0 arrays can be converted.  One-dimensional arrays are
+  Arrays can be converted to data frames.  One-dimensional arrays are
   treated like vectors and two-dimensional arrays like matrices.  Arrays
   with more than two dimensions are converted to matrices by
   \sQuote{flattening} all dimensions after the first and creating
@@ -73,10 +81,6 @@ is.data.frame(x)
   or dimnames of \code{x}, otherwise are the integer sequence
   starting at one.  Few of the methods check for duplicated row names.
   Names are removed from vector columns unless \code{\link{I}}.
-}
-\note{
-  In versions of \R prior to 1.4.0 logical columns were converted to
-  factors (as in S3 but not S4).
 }
 \references{
   Chambers, J. M. (1992)

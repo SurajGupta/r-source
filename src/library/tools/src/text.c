@@ -1,4 +1,4 @@
-/* <UTF8> OK, provided the delimiters are ASCII 
+/* <UTF8> OK, provided the delimiters are ASCII
    match length is in now in chars.
 */
 
@@ -22,12 +22,12 @@ delim_match(SEXP x, SEXP delims)
       -1 if there is none, with attribute "match.length" giving the
       length of the matched text (including the end delimiter), or -1
       for no match.
-    
+
       This is still very experimental.
-      
+
       Currently, the start and end delimiters must be single characters;
       it would be nice to allow for arbitrary regexps.
-      
+
       Currently, the only syntax supported is Rd ('\' is the escape
       character, '%' starts a comment extending to the next newline, no
       quote characters.  It would be nice to generalize this, too.
@@ -121,4 +121,49 @@ delim_match(SEXP x, SEXP delims)
     setAttrib(ans, install("match.length"), matchlen);
     UNPROTECT(2);
     return(ans);
+}
+
+SEXP
+check_nonASCII(SEXP text, SEXP ignore_quotes)
+{
+    /* Check if all the lines in 'text' are ASCII, after removing
+       comments and ignoring the contents of quotes (unless ignore_quotes)
+       (which might span more than one line and might be escaped).
+
+       This cannot be entirely correct, as quotes and \ might occur as
+       part of another character in a MBCS: but this does not happen
+       in UTF-8.
+    */
+    int i, nbslash = 0; /* number of preceding backslashes */
+    char *p, quote= '\0';
+    Rboolean ign, inquote = FALSE;
+
+    if(TYPEOF(text) != STRSXP) error("invalid input");
+    ign = asLogical(ignore_quotes);
+    if(ign == NA_LOGICAL) error("'ignore_quotes' must be TRUE or FALSE");
+
+    for (i = 0; i < LENGTH(text); i++) {
+	p = CHAR(STRING_ELT(text, i));
+	inquote =FALSE; /* avoid runaway quotes */
+	for(; *p; p++) {
+	    if(!inquote && *p == '#') break;
+	    if(!inquote || ign) {
+		if((unsigned int) *p > 127) {
+		    /* Rprintf("%s\n", CHAR(STRING_ELT(text, i)));
+		       Rprintf("found %x\n", (unsigned int) *p); */
+		    return ScalarLogical(TRUE);
+		}
+	    }
+	    if(nbslash % 2 && (*p == '"' || *p == '\'')) {
+		if(inquote && *p == quote) {
+		    inquote = FALSE;
+		} else if(!inquote) {
+		    quote = *p;
+		    inquote = TRUE;
+		}
+	    }
+	    if(*p == '\\') nbslash++; else nbslash = 0;
+	}
+    }
+    return ScalarLogical(FALSE);
 }

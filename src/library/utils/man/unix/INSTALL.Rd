@@ -18,7 +18,7 @@
 \details{
   This will stop at the first error, so if you want all the \code{pkgs}
   to be tried, call this via a shell \code{for} or \code{foreach} loop.
-  
+
   If used as \code{R CMD INSTALL pkgs} without explicitly specifying
   \code{lib}, packages are installed into the library tree rooted at the
   first directory given in the environment variable \env{R\_LIBS} if
@@ -34,7 +34,7 @@
   \file{pkg\_version.tar.gz} as obtained from CRAN: these are then
   extracted in a temporary directory.  Finally, binary package/bundle
   archive files (as created by \code{R CMD build --binary} can be supplied.
-  
+
   Some package sources contain a \file{configure} script that can be
   passed arguments or variables via the option \option{--configure-args}
   and \option{--configure-vars}, respectively, if necessary.  The latter
@@ -46,7 +46,7 @@
     Administration} for more information.  (If these are used more than
   once on the command line, only the last instance is used.)  One can
   bypass the configure mechanism using the option \option{--no-configure}.
-  
+
   If \option{--no-docs} is given, no help files are built.  Options
   \option{--no-text}, \option{--no-html}, and \option{--no-latex} suppress
   creating the text, HTML, and LaTeX versions, respectively.  The
@@ -61,58 +61,21 @@
   Use \code{R CMD INSTALL --help} for more usage information.
 }
 
-\section{Deprecated options}{
-  \strong{The following options are deprecated:} use the
-  \file{DESCRIPTION} fields such as \code{LazyLoad}, \code{LazyData} and
-  \code{SaveImage} instead.
-
-  If the option \option{--save} is used, the installation procedure
-  creates a binary image of the package code, which is then loaded when
-  the package is attached, rather than evaluating the package source at
-  that time.  Having a file \file{install.R} in the package directory
-  makes this the default behavior for the package (option
-  \option{--no-save} overrides).  You may need  \option{--save} if your
-  package requires other packages to evaluate its own source.  If the
-  file \file{install.R} is non-empty, it should contain R expressions to
-  be executed when the package is attached, after loading the saved
-  image.  Options to be passed to R when creating the save image can be
-  specified via \option{--save=ARGS}.
-
-  Options \option{--lazy}, \option{--no-lazy}, \option{--lazy-data} and
-  \option{--no-lazy-data} control where the \R objects and the datasets
-  are made available for lazy loading.  (These options are overridden by
-  any values set in the \file{DESCRIPTION} file.)  The default is
-  \option{--no-lazy --no-lazy-data} except that lazy-loading is used for
-  package with more than 25kB of \R code and no saved image.
-}
-
 \section{Packages using the methods package}{
   Packages that require the methods package, and that use functions such
   as \code{\link{setMethod}} or \code{\link{setClass}},
   should be installed either (preferably) using lazy-loading or by
-  creating a binary image.
-
-  \strong{The following mechanism is deprecated:} use the flags such as
-  \code{LazyLoad} and \code{SaveImage} instead.
-  The presence of a file named
-  \file{install.R} in the package's main directory causes an image to
-  be saved.  Note that the file is not in the \file{R} subdirectory: all
-  the code in that subdirectory is used to construct the binary image.
-  Normally, the file \file{install.R} will be empty; if it does contain
-  R expressions
-  these will be evaluated when the package is attached, e.g. by a call to
-  the function \code{\link{library}}.  (Specifically, the source code
-  evaluated for a package with a saved image consists of a suitable
-  definition of \code{.First.lib} to ensure loading of the saved
-  image, followed by the R code in file \file{install.R}, if any.)
-
+  creating a binary image: use the flags \code{LazyLoad} and
+  \code{SaveImage} in the \file{DESCRIPTION} file to ensure this.
 }
 
 \seealso{
   \code{\link{REMOVE}} and \code{\link{library}} for information on
   using several library trees;
   \code{\link{update.packages}} for automatic update of packages using
-  the internet;
+  the internet (or other \R level installation of packages, such as by
+  \code{install.packages});
+
   the section on \dQuote{Add-on packages} in \dQuote{R Installation and
     Administration} and
   the chapter on \dQuote{Creating R packages} in \dQuote{Writing \R

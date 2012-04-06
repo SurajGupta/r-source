@@ -44,12 +44,13 @@
 #endif
 
 #ifdef ENABLE_NLS
-void nl_Rdummy()
+void attribute_hidden nl_Rdummy()
 {
     /* force this in as packages use it */
     dgettext("R", "dummy - do not translate");
 }
 #endif
+
 
 /* The 'real' main() program is in ../<SYSTEM>/system.c */
 /* e.g. ../unix/system.c */
@@ -171,7 +172,7 @@ typedef struct {
   ParseStatus    status;
   int            prompt_type;
   int            browselevel;
-  unsigned char  buf[1025];
+  unsigned char  buf[CONSOLE_BUFFER_SIZE+1];
   unsigned char *bufp;
 } R_ReplState;
 
@@ -202,7 +203,8 @@ Rf_ReplIteration(SEXP rho, int savestack, int browselevel, R_ReplState *state)
     if(!*state->bufp) {
 	    R_Busy(0);
 	    if (R_ReadConsole(R_PromptString(browselevel, state->prompt_type),
-			      state->buf, 1024, 1) == 0) return(-1);
+			      state->buf, CONSOLE_BUFFER_SIZE, 1) == 0)
+		return(-1);
 	    state->bufp = state->buf;
     }
 #ifdef SHELL_ESCAPE
@@ -228,60 +230,60 @@ Rf_ReplIteration(SEXP rho, int savestack, int browselevel, R_ReplState *state)
 
     case PARSE_NULL:
 
-	    if (browselevel)
-		    return(-1);
-	    R_IoBufferWriteReset(&R_ConsoleIob);
-	    state->prompt_type = 1;
-	    return(1);
+	/* The intention here is to break on CR but not on other 
+	   null statements: see PR#9063 */
+	if (browselevel && !strcmp((char *) state->buf, "\n")) return -1;
+	R_IoBufferWriteReset(&R_ConsoleIob);
+	state->prompt_type = 1;
+	return(1);
 
     case PARSE_OK:
 
- 	    R_IoBufferReadReset(&R_ConsoleIob);
-	    R_CurrentExpr = R_Parse1Buffer(&R_ConsoleIob, 1, &state->status);
-	    if (browselevel) {
-		    browsevalue = ParseBrowser(R_CurrentExpr, rho);
-		    if(browsevalue == 1)
-			    return(-1);
-		    if(browsevalue == 2) {
-			    R_IoBufferWriteReset(&R_ConsoleIob);
-			    return(0);
-		    }
+	R_IoBufferReadReset(&R_ConsoleIob);
+	R_CurrentExpr = R_Parse1Buffer(&R_ConsoleIob, 1, &state->status);
+	if (browselevel) {
+	    browsevalue = ParseBrowser(R_CurrentExpr, rho);
+	    if(browsevalue == 1) return(-1);
+	    if(browsevalue == 2) {
+		R_IoBufferWriteReset(&R_ConsoleIob);
+		return(0);
 	    }
-	    R_Visible = 0;
-	    R_EvalDepth = 0;
-	    PROTECT(R_CurrentExpr);
-	    R_Busy(1);
-	    value = eval(R_CurrentExpr, rho);
-	    SET_SYMVALUE(R_LastvalueSymbol, value);
-	    wasDisplayed = R_Visible;
-	    if (R_Visible)
-		    PrintValueEnv(value, rho);
-	    if (R_CollectWarnings)
-		PrintWarnings();
-	    Rf_callToplevelHandlers(R_CurrentExpr, value, TRUE, wasDisplayed);
-	    R_CurrentExpr = value; /* Necessary? Doubt it. */
-	    UNPROTECT(1);
-	    R_IoBufferWriteReset(&R_ConsoleIob);
-	    state->prompt_type = 1;
-	    return(1);
+	}
+	R_Visible = 0;
+	R_EvalDepth = 0;
+	PROTECT(R_CurrentExpr);
+	R_Busy(1);
+	value = eval(R_CurrentExpr, rho);
+	SET_SYMVALUE(R_LastvalueSymbol, value);
+	wasDisplayed = R_Visible;
+	if (R_Visible)
+	    PrintValueEnv(value, rho);
+	if (R_CollectWarnings)
+	    PrintWarnings();
+	Rf_callToplevelHandlers(R_CurrentExpr, value, TRUE, wasDisplayed);
+	R_CurrentExpr = value; /* Necessary? Doubt it. */
+	UNPROTECT(1);
+	R_IoBufferWriteReset(&R_ConsoleIob);
+	state->prompt_type = 1;
+	return(1);
 
     case PARSE_ERROR:
 
-	    state->prompt_type = 1;
-	    parseError(R_NilValue, 0);
-	    R_IoBufferWriteReset(&R_ConsoleIob);
-	    return(1);
+	state->prompt_type = 1;
+	parseError(R_NilValue, 0);
+	R_IoBufferWriteReset(&R_ConsoleIob);
+	return(1);
 
     case PARSE_INCOMPLETE:
 
-	    R_IoBufferReadReset(&R_ConsoleIob);
-	    state->prompt_type = 2;
-	    return(2);
+	R_IoBufferReadReset(&R_ConsoleIob);
+	state->prompt_type = 2;
+	return(2);
 
     case PARSE_EOF:
 
-	    return(-1);
-	    break;
+	return(-1);
+	break;
     }
 
     return(0);
@@ -294,7 +296,8 @@ static void R_ReplConsole(SEXP rho, int savestack, int browselevel)
 
     R_IoBufferWriteReset(&R_ConsoleIob);
     state.buf[0] = '\0';
-    state.buf[1024] = '\0'; /* stopgap measure if line > 1024 chars */
+    state.buf[CONSOLE_BUFFER_SIZE] = '\0'; 
+    /* stopgap measure if line > CONSOLE_BUFFER_SIZE chars */
     state.bufp = state.buf;
     if(R_Verbose)
 	REprintf(" >R_ReplConsole(): before \"for(;;)\" {main.c}\n");
@@ -306,7 +309,7 @@ static void R_ReplConsole(SEXP rho, int savestack, int browselevel)
 }
 
 
-static unsigned char DLLbuf[1024], *DLLbufp;
+static unsigned char DLLbuf[CONSOLE_BUFFER_SIZE+1], *DLLbufp;
 
 void R_ReplDLLinit()
 {
@@ -314,7 +317,7 @@ void R_ReplDLLinit()
     R_GlobalContext = R_ToplevelContext = &R_Toplevel;
     R_IoBufferWriteReset(&R_ConsoleIob);
     prompt_type = 1;
-    DLLbuf[0] = '\0';
+    DLLbuf[0] = DLLbuf[CONSOLE_BUFFER_SIZE] = '\0';
     DLLbufp = DLLbuf;
 }
 
@@ -327,7 +330,8 @@ int R_ReplDLLdo1()
 
     if(!*DLLbufp) {
 	R_Busy(0);
-	if (R_ReadConsole(R_PromptString(0, prompt_type), DLLbuf, 1024, 1) == 0)
+	if (R_ReadConsole(R_PromptString(0, prompt_type), DLLbuf,
+			  CONSOLE_BUFFER_SIZE, 1) == 0)
 	    return -1;
 	DLLbufp = DLLbuf;
     }
@@ -433,12 +437,12 @@ static void win32_segv(int signum)
 
    2005-12-17 BDR */
 
-#define CONSOLE_BUFFER_SIZE 1024
-static unsigned char  ConsoleBuf[CONSOLE_BUFFER_SIZE];
+static unsigned char ConsoleBuf[CONSOLE_BUFFER_SIZE];
+extern void R_CleanTempDir();
 
 static void sigactionSegv(int signum, siginfo_t *ip, void *context)
 {
-    char *s, buf[1024];
+    char *s;
 
     /* First check for stack overflow if we know the stack position.
        We assume anything within 16Mb beyond the stack end is a stack overflow.
@@ -568,8 +572,7 @@ static void sigactionSegv(int signum, siginfo_t *ip, void *context)
 	}
     }
     REprintf("aborting ...\n");
-    snprintf(buf, 1024, "rm -rf %s", R_TempDir);
-    R_system(buf);
+    R_CleanTempDir();
     /* now do normal behaviour, e.g. core dump */
     signal(signum, SIG_DFL);
     raise(signum);
@@ -692,6 +695,12 @@ void setup_Rmainloop(void)
     setlocale(LC_MESSAGES,""); /* language for messages */
 #endif
     /* NB: we do not set LC_NUMERIC */
+#ifdef LC_PAPER
+    setlocale(LC_PAPER,"");
+#endif
+#ifdef LC_MEASUREMENT
+    setlocale(LC_MEASUREMENT,"");
+#endif
 #endif
 #ifdef ENABLE_NLS
     /* This ought to have been done earlier, but be sure */
@@ -764,14 +773,14 @@ void setup_Rmainloop(void)
 #endif
     R_Toplevel.cend = NULL;
     R_Toplevel.intsusp = FALSE;
-#ifdef NEW_CONDITION_HANDLING
     R_Toplevel.handlerstack = R_HandlerStack;
     R_Toplevel.restartstack = R_RestartStack;
-#endif
     R_GlobalContext = R_ToplevelContext = &R_Toplevel;
 
     R_Warnings = R_NilValue;
 
+    /* This is the same as R_BaseEnv, but this marks the environment
+       of functions as the namespace and not the package. */
     baseEnv = R_BaseNamespace;
 
     /* Set up some global variables */
@@ -803,6 +812,15 @@ void setup_Rmainloop(void)
     */
 
     R_LoadProfile(R_OpenSysInitFile(), baseEnv);
+    /* These are the same bindings, so only lock them once */
+    R_LockEnvironment(R_BaseNamespace, TRUE);
+#ifdef NOTYET
+    /* methods package needs to trample here */
+    R_LockEnvironment(R_BaseEnv, TRUE);
+#endif
+    /* At least temporarily unlock some bindings uses in graphics */
+    R_unLockBinding(install(".Device"), R_BaseEnv);
+    R_unLockBinding(install(".Devices"), R_BaseEnv);
 
     if (strcmp(R_GUIType, "Tk") == 0) {
 	char buf[256];
@@ -939,19 +957,20 @@ static int ParseBrowser(SEXP CExpr, SEXP rho)
 {
     int rval = 0;
     if (isSymbol(CExpr)) {
-	if (!strcmp(CHAR(PRINTNAME(CExpr)), "n")) {
+	char *expr = CHAR(PRINTNAME(CExpr));
+	if (!strcmp(expr, "n")) {
 	    SET_DEBUG(rho, 1);
 	    rval = 1;
 	}
-	if (!strcmp(CHAR(PRINTNAME(CExpr)), "c")) {
+	if (!strcmp(expr, "c")) {
 	    rval = 1;
 	    SET_DEBUG(rho, 0);
 	}
-	if (!strcmp(CHAR(PRINTNAME(CExpr)), "cont")) {
+	if (!strcmp(expr, "cont")) {
 	    rval = 1;
 	    SET_DEBUG(rho, 0);
 	}
-	if (!strcmp(CHAR(PRINTNAME(CExpr)), "Q")) {
+	if (!strcmp(expr, "Q")) {
 
 	    /* Run onexit/cend code for everything above the target.
                The browser context is still on the stack, so any error
@@ -967,7 +986,7 @@ static int ParseBrowser(SEXP CExpr, SEXP rho)
 
 	    jump_to_toplevel();
 	}
-	if (!strcmp(CHAR(PRINTNAME(CExpr)),"where")) {
+	if (!strcmp(expr, "where")) {
 	    printwhere();
 	    /* SET_DEBUG(rho, 1); */
 	    rval = 2;
@@ -1033,9 +1052,7 @@ SEXP attribute_hidden do_browser(SEXP call, SEXP op, SEXP args, SEXP rho)
 	    R_Visible = 0;
 	}
 	R_GlobalContext = &thiscontext;
-#ifdef NEW_CONDITION_HANDLING
 	R_InsertRestartHandlers(&thiscontext, TRUE);
-#endif
 	R_BrowseLevel = savebrowselevel;
 	R_ReplConsole(rho, savestack, R_BrowseLevel);
 	endcontext(&thiscontext);

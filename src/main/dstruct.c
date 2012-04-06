@@ -31,6 +31,7 @@
 /*           This operation is non-destructive     */
 /*           i.e. first and second are duplicated  */
 
+#ifdef UNUSED
 SEXP Rf_append(SEXP first, SEXP second)
 {
     SEXP e;
@@ -45,6 +46,7 @@ SEXP Rf_append(SEXP first, SEXP second)
     SETCDR(e, second);
     return first;
 }
+#endif
 
 
 /*  mkPRIMSXP - return a builtin function      */
@@ -108,11 +110,12 @@ Should NEVER happen; please bug.report() [mkCLOSXP]"));
 static int isDDName(SEXP name)
 {
     char *buf, *endp;
+    long val;
 
     buf = CHAR(name);
-    if( !strncmp(buf,"..",2) && strlen(buf) > 2 ) {
+    if( !strncmp(buf, "..", 2) && strlen(buf) > 2 ) {
         buf += 2;
-	strtol(buf, &endp, 10);
+	val = strtol(buf, &endp, 10);
         if( *endp != '\0')
 	    return 0;
 	else

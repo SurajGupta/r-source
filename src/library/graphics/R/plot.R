@@ -104,7 +104,7 @@ plot.table <-
 	if(is.null(ylab)) ylab <- xnam
 	ow <- options(warn = -1)
 	is.num <- !any(is.na(xx <- as.numeric(nx))); options(ow)
-	x0 <- if(is.num) xx else seq(x)
+	x0 <- if(is.num) xx else seq.int(x)
 	plot(x0, unclass(x), type = type,
 	     ylim = ylim, xlab = xlab, ylab = ylab, frame.plot = frame.plot,
 	     lwd = lwd, ..., xaxt = "n")
@@ -300,13 +300,13 @@ plot.data.frame <- function (x, ...)
 }
 
 ## unexported hook for testing
-.newplot.hook <- function()
-{
-    pp <- par(c("mfg","mfcol","oma","mar"))
-    if(all(pp$mfg[1:2] == c(1, pp$mfcol[2]))) {
-	outer <- (oma4 <- pp$oma[4]) > 0; mar4 <- pp$mar[4]
-	mtext(paste("help(", ..nameEx, ")"), side = 4,
-              line = if(outer)max(1, oma4 - 1) else min(1, mar4 - 1),
-              outer = outer, adj = 1, cex = .8, col = "orchid", las=3)
-    }
-}
+## .newplot.hook <- function()
+## {
+##     pp <- par(c("mfg","mfcol","oma","mar"))
+##     if(all(pp$mfg[1:2] == c(1, pp$mfcol[2]))) {
+## 	outer <- (oma4 <- pp$oma[4]) > 0; mar4 <- pp$mar[4]
+## 	mtext(paste("help(", ..nameEx, ")"), side = 4,
+##               line = if(outer)max(1, oma4 - 1) else min(1, mar4 - 1),
+##               outer = outer, adj = 1, cex = .8, col = "orchid", las=3)
+##     }
+## }

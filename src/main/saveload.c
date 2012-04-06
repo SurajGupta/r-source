@@ -1,7 +1,7 @@
 /*
  *  R : A Computer Language for Statistical Data Analysis
  *  Copyright (C) 1995, 1996  Robert Gentleman and Ross Ihaka
- *  Copyright (C) 1997--2004  Robert Gentleman, Ross Ihaka and the
+ *  Copyright (C) 1997--2006  Robert Gentleman, Ross Ihaka and the
  *			      R Development Core Team
  *
  *  This program is free software; you can redistribute it and/or modify
@@ -62,6 +62,14 @@
 #define R_MAGIC_EMPTY      999
 #define R_MAGIC_CORRUPT    998
 #define R_MAGIC_MAYBE_TOONEW 997
+
+/* pre-1 formats (R < 0.99.0) */
+#define R_MAGIC_BINARY 1975
+#define R_MAGIC_ASCII  1976
+#define R_MAGIC_XDR    1977
+#define R_MAGIC_BINARY_VERSION16 1971
+#define R_MAGIC_ASCII_VERSION16	 1972
+
 
 /* Static Globals, DIE, DIE, DIE! */
 
@@ -183,12 +191,14 @@ static void DummyTerm(FILE *fp, SaveLoadData *d)
 
 static int AsciiInInteger(FILE *fp, SaveLoadData *d)
 {
-    int x;
-    fscanf(fp, "%s", d->smbuf);
+    int x, res;
+    res = fscanf(fp, "%s", d->smbuf);
+    if(res != 1) error(_("read error"));
     if (strcmp(d->smbuf, "NA") == 0)
 	return NA_INTEGER;
     else {
-	sscanf(d->smbuf, "%d", &x);
+	res = sscanf(d->smbuf, "%d", &x);
+	if(res != 1) error(_("read error"));
 	return x;
     }
 }
@@ -196,7 +206,8 @@ static int AsciiInInteger(FILE *fp, SaveLoadData *d)
 static double AsciiInReal(FILE *fp, SaveLoadData *d)
 {
     double x;
-    fscanf(fp, "%s", d->smbuf);
+    int res = fscanf(fp, "%s", d->smbuf);
+    if(res != 1) error(_("read error"));
     if (strcmp(d->smbuf, "NA") == 0)
 	x = NA_REAL;
     else if (strcmp(d->smbuf, "Inf") == 0)
@@ -204,32 +215,40 @@ static double AsciiInReal(FILE *fp, SaveLoadData *d)
     else if (strcmp(d->smbuf, "-Inf") == 0)
 	x = R_NegInf;
     else
-	sscanf(d->smbuf, "%lg", &x);
+	res  = sscanf(d->smbuf, "%lg", &x);
+	if(res != 1) error(_("read error"));
     return x;
 }
 
 static Rcomplex AsciiInComplex(FILE *fp, SaveLoadData *d)
 {
     Rcomplex x;
-    fscanf(fp, "%s", d->smbuf);
+    int res;
+    res = fscanf(fp, "%s", d->smbuf);
+    if(res != 1) error(_("read error"));
     if (strcmp(d->smbuf, "NA") == 0)
 	x.r = NA_REAL;
     else if (strcmp(d->smbuf, "Inf") == 0)
 	x.r = R_PosInf;
     else if (strcmp(d->smbuf, "-Inf") == 0)
 	x.r = R_NegInf;
-    else
-	sscanf(d->smbuf, "%lg", &x.r);
-
-    fscanf(fp, "%s", d->smbuf);
+    else {
+	res  = sscanf(d->smbuf, "%lg", &x.r);
+	if(res != 1) error(_("read error"));
+    }
+    
+    res = fscanf(fp, "%s", d->smbuf);
+    if(res != 1) error(_("read error"));
     if (strcmp(d->smbuf, "NA") == 0)
 	x.i = NA_REAL;
     else if (strcmp(d->smbuf, "Inf") == 0)
 	x.i = R_PosInf;
     else if (strcmp(d->smbuf, "-Inf") == 0)
 	x.i = R_NegInf;
-    else
-	sscanf(d->smbuf, "%lg", &x.i);
+    else {
+	res = sscanf(d->smbuf, "%lg", &x.i);
+	if(res != 1) error(_("read error"));
+    }
     return x;
 }
 
@@ -603,12 +622,15 @@ static void RestoreSEXP(SEXP s, FILE *fp, InputRoutines *m, NodeInfo *node, int 
 	    INTEGER(s)[j] = m->InInteger(fp, d);
 	break;
     case STRSXP:
+	len = m->InInteger(fp, d);
+	for (j = 0; j < len; j++)
+	    SET_STRING_ELT(s, j, OffsetToNode(m->InInteger(fp, d), node));
+	break;
     case VECSXP:
     case EXPRSXP:
 	len = m->InInteger(fp, d);
-	for (j = 0; j < len; j++) {
+	for (j = 0; j < len; j++)
 	    SET_VECTOR_ELT(s, j, OffsetToNode(m->InInteger(fp, d), node));
-	}
 	break;
     default: error(_("bad SEXP type in data file"));
     }
@@ -711,6 +733,7 @@ static SEXP DataLoad(FILE *fp, int startup, InputRoutines *m, int version, SaveL
     return OffsetToNode(i, &node);
 }
 
+#ifdef UNUSED
 /* These functions convert old (pairlist) lists into new */
 /* (vectorlist) lists.	The conversion can be defeated by */
 /* hiding things inside closures, but it is doubtful that */
@@ -748,7 +771,7 @@ static SEXP ConvertPairToVector(SEXP obj)
     SET_ATTRIB(obj, ConvertAttributes(ATTRIB(obj)));
     return obj;
 }
-
+#endif
 
 /* ----- V e r s i o n -- O n e -- S a v e / R e s t o r e ----- */
 
@@ -1206,9 +1229,9 @@ static SEXP NewReadVec(SEXPTYPE type, SEXP sym_table, SEXP env_table, FILE *fp, 
 	break;
     case STRSXP:
 	do {								
-		int cnt;						
-		for (cnt = 0; cnt < length(my_vec); ++cnt)
-			SET_STRING_ELT(my_vec, cnt, InCHARSXP(fp, m, d));
+	    int cnt;						
+	    for (cnt = 0; cnt < length(my_vec); ++cnt)
+		SET_STRING_ELT(my_vec, cnt, InCHARSXP(fp, m, d));
 	} while (0);
 	break;
     case VECSXP:
@@ -1223,7 +1246,8 @@ static SEXP NewReadVec(SEXPTYPE type, SEXP sym_table, SEXP env_table, FILE *fp, 
     return my_vec;
 }
 
-static SEXP NewReadItem (SEXP sym_table, SEXP env_table, FILE *fp, InputRoutines *m, SaveLoadData *d)
+static SEXP NewReadItem (SEXP sym_table, SEXP env_table, FILE *fp, 
+			 InputRoutines *m, SaveLoadData *d)
 {
     SEXPTYPE type;
     SEXP s;
@@ -1374,12 +1398,15 @@ static void OutIntegerAscii(FILE *fp, int x, SaveLoadData *unused)
 static int InIntegerAscii(FILE *fp, SaveLoadData *unused)
 {
     char buf[128];
-    int x;
-    fscanf(fp, "%s", buf);
+    int x, res;
+    res = fscanf(fp, "%s", buf);
+    if(res != 1) error(_("read error"));
     if (strcmp(buf, "NA") == 0)
 	return NA_INTEGER;
-    else
-	sscanf(buf, "%d", &x);
+    else {
+	res = sscanf(buf, "%d", &x);
+	if(res != 1) error(_("read error"));
+    }
     return x;
 }
 
@@ -1420,8 +1447,9 @@ static char *InStringAscii(FILE *fp, SaveLoadData *unused)
     static char *buf = NULL;
     static int buflen = 0;
     int c, d, i, j;
-    int nbytes;
-    fscanf(fp, "%d", &nbytes);
+    int nbytes, res;
+    res = fscanf(fp, "%d", &nbytes);
+    if(res != 1) error(_("read error"));
     /* FIXME : Ultimately we need to replace */
     /* this with a real string allocation. */
     /* All buffers must die! */
@@ -1487,15 +1515,19 @@ static double InDoubleAscii(FILE *fp, SaveLoadData *unused)
 {
     char buf[128];
     double x;
-    fscanf(fp, "%s", buf);
+    int res;
+    res = fscanf(fp, "%s", buf);
+    if(res != 1) error(_("read error"));
     if (strcmp(buf, "NA") == 0)
 	x = NA_REAL;
     else if (strcmp(buf, "Inf") == 0)
 	x = R_PosInf;
     else if (strcmp(buf, "-Inf") == 0)
 	x = R_NegInf;
-    else
-	sscanf(buf, "%lg", &x);
+    else {
+	res = sscanf(buf, "%lg", &x);
+	if(res != 1) error(_("read error"));
+    }
     return x;
 }
 
@@ -1734,6 +1766,8 @@ static SEXP NewXdrLoad(FILE *fp, SaveLoadData *d)
 static void R_WriteMagic(FILE *fp, int number)
 {
     unsigned char buf[5];
+    size_t res;
+
     number = abs(number);
     switch (number) {
     case R_MAGIC_ASCII_V1:   /* Version 1 - R Data, ASCII Format */
@@ -1761,7 +1795,8 @@ static void R_WriteMagic(FILE *fp, int number)
 	buf[3] = number % 10 + '0';
     }
     buf[4] = '\n';
-    fwrite((char*)buf, sizeof(char), 5, fp);
+    res = fwrite((char*)buf, sizeof(char), 5, fp);
+    if(res != 5) error(_("write failed"));
 }
 
 static int R_ReadMagic(FILE *fp)
@@ -1907,8 +1942,8 @@ SEXP attribute_hidden do_save(SEXP call, SEXP op, SEXP args, SEXP env)
 {
     /* save(list, file, ascii, version, environment) */
 
-    SEXP s, t, source;
-    int len, j, version;
+    SEXP s, t, source, tmp;
+    int len, j, version, ep;
     FILE *fp;
     RCNTXT cntxt;
 
@@ -1926,10 +1961,13 @@ SEXP attribute_hidden do_save(SEXP call, SEXP op, SEXP args, SEXP env)
     else
 	version = asInteger(CADDDR(args));
     if (version == NA_INTEGER || version <= 0)
-	error(_("bad version value"));
+	error(_("invalid value for '%s'"), "version");
     source = CAR(nthcdr(args,4));
     if (source != R_NilValue && TYPEOF(source) != ENVSXP)
-	error(_("bad environment"));
+	error(_("invalid value for '%s'"), "environment");
+    ep = asLogical(CAR(nthcdr(args,5)));
+    if (ep == NA_LOGICAL)
+	error(_("invalid value for '%s'"), "eval.promises");
 
     fp = R_fopen(R_ExpandFileName(CHAR(STRING_ELT(CADR(args), 0))), "wb");
     if (!fp)
@@ -1947,10 +1985,16 @@ SEXP attribute_hidden do_save(SEXP call, SEXP op, SEXP args, SEXP env)
     t = s;
     for (j = 0; j < len; j++, t = CDR(t)) {
 	SET_TAG(t, install(CHAR(STRING_ELT(CAR(args), j))));
-	SETCAR(t, findVar(TAG(t), source));
-	if (CAR(t) == R_UnboundValue)
+	tmp = findVar(TAG(t), source);
+	if (tmp == R_UnboundValue)
 	    error(_("object '%s' not found"), CHAR(PRINTNAME(TAG(t))));
-    }
+ 	if(ep && TYPEOF(tmp) == PROMSXP) {
+	    PROTECT(tmp);
+	    tmp = eval(tmp, source);
+	    UNPROTECT(1);
+	}
+	SETCAR(t, tmp);
+   }
 
     R_SaveToFileV(s, fp, INTEGER(CADDR(args))[0], version);
 
@@ -1980,7 +2024,7 @@ static SEXP RestoreToEnv(SEXP ans, SEXP aenv)
 	    error(_("not a valid named list"));
 	for (i = 0; i < LENGTH(ans); i++) {
 	    SEXP sym = install(CHAR(STRING_ELT(names, i)));
-	    defineVar(sym, ConvertPairToVector(VECTOR_ELT(ans, i)), aenv);
+	    defineVar(sym, VECTOR_ELT(ans, i), aenv);
 	}
 	UNPROTECT(2);
 	return names;
@@ -1995,8 +2039,8 @@ static SEXP RestoreToEnv(SEXP ans, SEXP aenv)
     cnt = 0;
     PROTECT(a = ans);
     while (a != R_NilValue) {
-	SET_VECTOR_ELT(names, cnt++, PRINTNAME(TAG(a)));
-        defineVar(TAG(a), ConvertPairToVector(CAR(a)), aenv);
+	SET_STRING_ELT(names, cnt++, PRINTNAME(TAG(a)));
+        defineVar(TAG(a), CAR(a), aenv);
         a = CDR(a);
     }
     UNPROTECT(2);
@@ -2025,7 +2069,7 @@ SEXP attribute_hidden do_load(SEXP call, SEXP op, SEXP args, SEXP env)
 
     aenv = CADR(args);
     if (TYPEOF(aenv) == NILSXP) {
-    	warning(_("use of NULL environment is deprecated"));
+    	error(_("use of NULL environment is defunct"));
     	aenv = R_BaseEnv;
     } else
     if (TYPEOF(aenv) != ENVSXP)
@@ -2170,9 +2214,9 @@ SEXP attribute_hidden do_saveToConn(SEXP call, SEXP op, SEXP args, SEXP env)
 {
     /* saveToConn(list, conn, ascii, version, environment) */
 
-    SEXP s, t, source, list;
+    SEXP s, t, source, list, tmp;
     Rboolean ascii, wasopen;
-    int len, j, version;
+    int len, j, version, ep;
     Rconnection con;
     struct R_outpstream_st out;
     R_pstream_format_t type;
@@ -2195,9 +2239,15 @@ SEXP attribute_hidden do_saveToConn(SEXP call, SEXP op, SEXP args, SEXP env)
     else
 	version = asInteger(CADDDR(args));
     if (version == NA_INTEGER || version <= 0)
-	error(_("bad version value"));
+	error(_("invalid value for '%s'"), "version");
     if (version < 2)
 	error(_("cannot save to connections in version %d format"), version);
+    source = CAR(nthcdr(args,4));
+    if (source != R_NilValue && TYPEOF(source) != ENVSXP)
+	error(_("invalid value for '%s'"), "environment");
+    ep = asLogical(CAR(nthcdr(args,5)));
+    if (ep == NA_LOGICAL)
+	error(_("invalid value for '%s'"), "eval.promises");
 
     source = CAR(nthcdr(args,4));
     if (source != R_NilValue && TYPEOF(source) != ENVSXP)
@@ -2235,8 +2285,15 @@ SEXP attribute_hidden do_saveToConn(SEXP call, SEXP op, SEXP args, SEXP env)
     for (j = 0; j < len; j++, t = CDR(t)) {
 	SET_TAG(t, install(CHAR(STRING_ELT(list, j))));
 	SETCAR(t, findVar(TAG(t), source));
-	if (CAR(t) == R_UnboundValue)
+	tmp = findVar(TAG(t), source);
+	if (tmp == R_UnboundValue)
 	    error(_("object '%s' not found"), CHAR(PRINTNAME(TAG(t))));
+ 	if(ep && TYPEOF(tmp) == PROMSXP) {
+	    PROTECT(tmp);
+	    tmp = eval(tmp, source);
+	    UNPROTECT(1);
+	}
+	SETCAR(t, tmp);
     }
 
     R_Serialize(s, &out);
@@ -2278,7 +2335,7 @@ SEXP attribute_hidden do_loadFromConn2(SEXP call, SEXP op, SEXP args, SEXP env)
 
     aenv = CADR(args);
     if (TYPEOF(aenv) == NILSXP) {
-    	warning(_("use of NULL environment is deprecated"));
+    	error(_("use of NULL environment is defunct"));
     	aenv = R_BaseEnv;
     } else if (TYPEOF(aenv) != ENVSXP)
 	error(_("invalid '%s' argument"), "envir");
@@ -2327,7 +2384,7 @@ SEXP attribute_hidden do_loadFromConn(SEXP call, SEXP op, SEXP args, SEXP env)
     con = getConnection(asInteger(CAR(args)));
     aenv = CADR(args);
     if (TYPEOF(aenv) == NILSXP) {
-    	warning(_("use of NULL environment is deprecated"));
+    	error(_("use of NULL environment is defunct"));
     	aenv = R_BaseEnv;
     } else if (TYPEOF(aenv) != ENVSXP)
 	error(_("invalid '%s' argument"), "envir");

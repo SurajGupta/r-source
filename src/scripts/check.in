@@ -29,7 +29,6 @@ use Getopt::Long;
 use IO::File;
 use R::Dcf;
 use R::Logfile;
-use R::Rdtools;
 use R::Utils;
 use R::Vars;
 use Text::Wrap;
@@ -37,7 +36,7 @@ use Text::Wrap;
 ## Don't buffer output.
 $| = 1;
 
-my $revision = ' $Rev: 37487 $ ';
+my $revision = ' $Rev: 39529 $ ';
 my $version;
 my $name;
 $revision =~ / ([\d\.]*) /;
@@ -111,6 +110,12 @@ my $R_check_weave_vignettes =
     &R_getenv("_R_CHECK_WEAVE_VIGNETTES_", "TRUE");
 my $R_check_subdirs_strict =
     &R_getenv("_R_CHECK_SUBDIRS_STRICT_", "default");
+my $R_check_Rd_xrefs =
+    &R_getenv("_R_CHECK_RD_XREFS_", "TRUE");
+my $R_check_use_codetools =
+    &R_getenv("_R_CHECK_USE_CODETOOLS_", "FALSE");
+my $R_check_force_suggests =
+    &R_getenv("_R_CHECK_FORCE_SUGGESTS_", "TRUE");
 
 ## Maybe move basic configuration (and documentation) to
 ##   &file_path($R::Vars::R_HOME, "etc", "check.conf")
@@ -143,6 +148,23 @@ $R_check_all_non_ISO_C =
     &config_val_to_logical($R_check_all_non_ISO_C);
 $R_check_weave_vignettes =
     &config_val_to_logical($R_check_weave_vignettes);
+$R_check_Rd_xrefs =
+    &config_val_to_logical($R_check_Rd_xrefs);
+$R_check_use_codetools =
+    &config_val_to_logical($R_check_use_codetools);
+## <NOTE>
+## This looks a bit strange, but tools:::.check_package_depends()
+## currently gets the information about forcing suggests via an
+## environment variable rather than an explicit argument.
+$R_check_force_suggests =
+    &config_val_to_logical($R_check_force_suggests);
+## And in fact, it gets even stranger ...
+## <FIXME>
+## Compatibility code for old-style interface: sanitize eventually.
+$R_check_force_suggests =
+    $R_check_force_suggests ? "true" : "false";
+$ENV{"_R_CHECK_FORCE_SUGGESTS_"} = $R_check_force_suggests;
+## </NOTE>
 
 $opt_subdirs = $R_check_subdirs_strict if $opt_subdirs eq "";
 
@@ -190,6 +212,10 @@ if($opt_latex) {
     chdir($startdir);
     $log->close();
 }
+
+my @msg_DESCRIPTION = ("See the information on DESCRIPTION files",
+		     "in the chapter 'Creating R packages'",
+		     "of the 'Writing R Extensions' manual.\n");
 
 ## This is the main loop over all packages to be checked.
 (scalar(@ARGV) > 0) or die "Error: no packages were specified\n";
@@ -259,7 +285,7 @@ foreach my $pkg (@ARGV) {
 
     $log = new R::Logfile(&file_path($pkgoutdir, "00check.log"));
     $log->message("using log directory '$pkgoutdir'");
-    my @out = R_runR("cat(R.version.string, '\n', sep='')",
+    my @out = R_runR("cat(R.version.string, '\\n', sep='')",
 		     "--slave --vanilla");
     $log->message("using @out");
 
@@ -368,6 +394,15 @@ foreach my $pkg (@ARGV) {
 		$log->print(join("\n", @out) . "\n");
 		$log->print(wrap("", "", @msg_DESCRIPTION));
 		exit(1);
+	    }
+	    my $Rcmd = "tools:::.check_packages_used(dir=\"${pkgdir}\")\n";
+	    my @out = R_runR($Rcmd, "${R_opts} --quiet",
+			     "R_DEFAULT_PACKAGES=NULL");
+	    @out = grep(!/^\>/, @out);
+	    if(scalar(@out) > 0) {
+		$log->warning();
+		$log->print(join("\n", @out) . "\n");
+		$log->print(wrap("", "", @msg_DESCRIPTION));
 	    } else {
 		$log->result("OK");
 	    }
@@ -552,6 +587,7 @@ foreach my $pkg (@ARGV) {
 			"(" . join("|", ("^WARNING:",
 					 "^Warning:",
 					 ": warning: .*ISO C",
+					 ": warning: implicit declaration of function",
 					 "missing link\\(s\\):")) . ")";
 		    @lines = grep(/$warn_re/, @lines);
 
@@ -576,6 +612,22 @@ foreach my $pkg (@ARGV) {
 				      @lines);
 			$warn_re = "warning: *ISO C forbids.*" .
 			    "function pointer";
+			@lines = grep(!/$warn_re/, @lines);
+		    }
+
+		    ## Warnings spotted by gcc with
+		    ## '-Wimplicit-function-declaration', which is
+		    ## implied by '-Wall'.  Currently only accessible
+		    ## via an internal environment variable.
+		    my $check_src_flag =
+			&R_getenv("_R_CHECK_SRC_MINUS_W_IMPLICIT_",
+				  "FALSE");
+		    ## (Not quite perfect, as the name should really
+		    ## include 'IMPLICIT_FUNCTION_DECLARATION'.)
+		    $check_src_flag =
+			&config_val_to_logical($check_src_flag);
+		    if(!$check_src_flag) {
+			my $warn_re = "warning: implicit declaration of function";
 			@lines = grep(!/$warn_re/, @lines);
 		    }
 
@@ -938,7 +990,7 @@ sub check_pkg {
 
     $log->checking("index information");
     my @msg_index = ("See the information on INDEX files and package",
-		     "subdirectories in section 'Creating R packages'",
+		     "subdirectories in the chapter 'Creating R packages'",
 		     "of the 'Writing R Extensions' manual.\n");
     my $any = 0;
     if(-z "INDEX") {
@@ -1040,6 +1092,18 @@ sub check_pkg {
 	$any++;
 	$log->print("Subdirectory 'demo' contains no demos.\n");
     }
+    ## Subdirectory 'exec' without files?
+    if((-d "exec") && !&list_files("exec")) {
+	$log->warning() unless $any;
+	$any++;
+	$log->print("Subdirectory 'exec' contains no files.\n");
+    }
+    ## Subdirectory 'inst' without files?
+    if((-d "inst") && scalar(&list_files("inst", 1) < 3)) {
+	$log->warning() unless $any;
+	$any++;
+	$log->print("Subdirectory 'inst' contains no files.\n");
+    }
     ## Subdirectory 'src' without sources?
     ## <NOTE>
     ## If there is a Makefile (or a Makefile.win), we cannot assume
@@ -1079,80 +1143,121 @@ sub check_pkg {
 			      "used by R.\n")));
 	}
     }
+    ## Valid CITATION metadata?
+    ## For the time being, only try parsing inst/CITATION ...
+    my $file = &file_path("inst", "CITATION");
+    if(-f $file) {
+	my $Rcmd = "invisible(tryCatch(parse(\"${file}\"), ";
+	$Rcmd .= "error = function(e) writeLines(conditionMessage(e))))";
+        my @out = R_runR($Rcmd, "${R_opts} --quiet",
+			 "R_DEFAULT_PACKAGES=NULL");
+	@out = grep(!/^\>/, @out);
+	if(scalar(@out) > 0) {
+	    $log->warning() unless $any;
+	    $any++;
+	    $log->print("Invalid citation information in 'inst/CITATION':\n");
+	    $log->print("  " . join("\n  ", @out) . "\n");
+	}
+    }
     $log->result("OK") unless $any;
 
-    ## Check R code for syntax errors.
+    ## Check R code for syntax errors and for non-ASCII chars which
+    ## might be syntax errors in some locales.
 
     if(!$is_base_pkg && (-d "R")) {
 	$log->checking("R files for syntax errors");
-	## <NOTE>
-	## We could/should really check *all* OS specific subdirs here.
-	my @R_files = &list_files_with_type("R", "code");
-	## </NOTE>
-	my $Rcmd = "RFiles <- c(\"";
-	$Rcmd .= join("\",\n\"", @R_files) . "\")\n";
-	$Rcmd .= "for(f in RFiles)\n";
-	$Rcmd .= "if(inherits(try(parse(f)), \"try-error\")) stop(f)\n";
-        my @out = R_runR($Rcmd, "${R_opts} --quiet");
-	@out = grep(/^Error:/, @out);
+	my $Rcmd = "tools:::.check_package_code_syntax(\"R\")";
+        my @out = R_runR($Rcmd, "${R_opts} --quiet",
+			 "R_DEFAULT_PACKAGES=NULL");
+	@out = grep(!/^\>/, @out);
 	if(scalar(@out) > 0) {
-	    my $Rfile = $out[0];
-	    $Rfile =~ s/^Error: *//;
 	    $log->error();
-	    $log->print("Syntax error in file '$Rfile'\n");
+	    $log->print(join("\n", @out) . "\n");
 	    exit(1);
 	}
+	else {
+	    $log->result("OK");
+	}
+	
+	$log->checking("R files for non-ASCII characters");
+	my @out = R_runR("tools:::.check_package_ASCII_code('.')",
+			 "${R_opts} --slave");
+	if(scalar(@out) > 0) {
+	    $log->warning();
+	    $log->print(wrap("", "",
+			     ("Found the following files with",
+			      "non-ASCII characters:\n")));
+	    $log->print("  " . join("\n  ", @out) . "\n");
+	    $log->print(wrap("", "",
+			     ("Portable packages must use only ASCII",
+			      "characters in their R code,\n",
+			      "except perhaps in comments.\n")));
+	}	
 	else {
 	    $log->result("OK");
 	}
     }
 
-    ## Check usage of library.dynam (if any).
+    
+    ## Check we can actually load the package
 
-    if(!$is_base_pkg && (-d "R")) {
-	$log->checking("R files for library.dynam");
-	my @R_files;
-	if($opt_install) {
-	    ## Only need to check the installed file (if installed).
-	    @R_files = (&file_path($library, $pkgname, "R", $pkgname));
-	}
-	else {
-	    ## Otherwise (if the package was not installed), we need to
-	    ## check all R code files.
-	    ## <NOTE>
-	    ## We could/should really check all OS specific subdirs here.
-	    @R_files = &list_files_with_type("R", "code");
-	    ## </NOTE>
-	}
-	my $any = 0;
-	my $ext;
-	foreach my $file (@R_files) {
-	    last if $any;
-	    open(FILE, "< $file")
-	      or die "Error: cannot open file '$file' for reading\n";
-	    while(<FILE>) {
-		if(/library.dynam\(\"(.*?)\"/o) {
-		    my $arg = $1;
-		    if($arg =~ /\.(so|sl|dll)$/) {
-			$ext = $1;
-			$any++;
-			last;
-		    }
-		}
-	    }
-	    close(FILE);
-	}
-	if($any == 0) {
+    if($opt_install) {
+	$log->checking("whether the package can be loaded");
+	my $Rcmd = "library(${pkgname})";
+	my @out = R_runR($Rcmd, "${R_opts} --quiet");
+	@out = grep(!/^\>/, @out);
+	if(scalar(grep(/^Error/, @out,)) > 0) {
+	    $log->error();
+	    $log->print(join("\n", @out) . "\n");
+	    $log->print(wrap("", "",
+			     ("\nIt looks like this package",
+			      "has a loading problem: see the messages",
+			      "for details.\n")));
+	    exit(1);
+	} else {
 	    $log->result("OK");
 	}
-	else {
-	    $log->error();
-	    $log->print("library.dynam() used with extension '.$ext'.\n");
+	$log->checking("whether the package can be loaded with stated dependencies");
+	my $Rcmd = "library(${pkgname})";
+	my @out = R_runR($Rcmd, "${R_opts} --quiet",
+			 "R_DEFAULT_PACKAGES=NULL");
+	@out = grep(!/^\>/, @out);
+	if(scalar(grep(/^Error/, @out,)) > 0) {
+	    $log->warning();
+	    $log->print(join("\n", @out) . "\n");
 	    $log->print(wrap("", "",
-			     ("The system-specific extension for",
-			      "shared libraries should not be added.\n",
-			      "See ?library.dynam\n")));
-	    exit(1);
+			     ("\nIt looks like this package",
+			      "(or one of its dependent packages)",
+			      "has an unstated dependence on a standard",
+			      "package.  All dependencies must be",
+			      "declared in DESCRIPTION.\n")));
+	    $log->print(wrap("", "", @msg_DESCRIPTION));
+	} else {
+	    $log->result("OK");
+	}
+    }
+
+    ## and if it has a namespace, that we can load just the namespace
+
+    if($opt_install && -f "${pkgdir}/NAMESPACE") {
+	$log->checking("whether the name space can be loaded with stated dependencies");
+	my $Rcmd = "loadNamespace(\"${pkgname}\")";
+	my @out = R_runR($Rcmd, "${R_opts} --quiet",
+			 "R_DEFAULT_PACKAGES=NULL");
+	@out = grep(!/^\>/, @out);
+	if(scalar(grep(/^Error/, @out,)) > 0) {
+	    $log->warning();
+	    $log->print(join("\n", @out) . "\n");
+	    $log->print(wrap("", "",
+			     ("\nA namespace must be able to be loaded",
+			      "with just the base namespace loaded:",
+			      "otherwise if the namespace gets loaded by a",
+			      "saved object, the session will be unable",
+			      "to start.\n\n",
+			      "Probably some imports need to be declared",
+			      "in the NAMESPACE file.\n")));
+	} else {
+	    $log->result("OK");
 	}
     }
 
@@ -1231,7 +1336,7 @@ sub check_pkg {
 	$log->checking("foreign function calls");
 
 	my @msg_ff_calls =
-	  ("See section 'System and foreign language interfaces'",
+	  ("See the chapter 'System and foreign language interfaces'",
 	   "of the 'Writing R Extensions' manual.\n");
 
 	my $Rcmd = "options(warn=1)\n";
@@ -1262,37 +1367,71 @@ sub check_pkg {
     ## Activated only via setting the internal environment variable
     ## _R_CHECK_USE_CODETOOLS_ to something "true".
 
-    my $R_check_use_codetools =
-	&R_getenv("_R_CHECK_USE_CODETOOLS_", "FALSE");
-    $R_check_use_codetools =
-	&config_val_to_logical($R_check_use_codetools);
+    ## Also do the library.dynam() tests here.
 
-    if($R_check_use_codetools && $opt_install && (-d "R")) {
+    if(-d "R") {
 	$log->checking("R code for possible problems");
 
-	my $Rcmd = "options(warn=1)\n";
-	$Rcmd .= "tools:::.check_code_usage_in_package(package = \"${pkgname}\")\n";
-	my @out = R_runR($Rcmd, "${R_opts} --quiet",
-                         "R_DEFAULT_PACKAGES='utils,grDevices,graphics,stats'");
-	@out = grep(!/^\>/, @out);
-	## <FIXME>
-	## Temporarily work around R 2.3.0 NULL environment changes.
-        @out = grep(!/^Warning: use of NULL environment is deprecated/,
-		    @out);
-	## </FIXME>
-	if(scalar(@out) > 0) {
-	    $log->warning();
-	    $log->print(join("\n", @out) . "\n");
+	my $any;
+
+	if(!$is_base_pkg) {
+	    my $Rcmd = "tools:::.check_package_code_shlib(\"R\")";
+	    my @out = R_runR($Rcmd, "${R_opts} --quiet",
+			     "R_DEFAULT_PACKAGES=NULL");
+	    @out = grep(!/^\>/, @out);
+	    if(scalar(@out) > 0) {
+		$log->error();
+		$log->print(wrap("", "",
+				 "Incorrect (un)loading of package",
+				 "shared libraries.\n"));
+		$log->print(join("\n", @out) . "\n");
+		$log->print(wrap("", "",
+				 ("The system-specific extension for",
+				  "shared libraries must not be added.\n",
+				  "See ?library.dynam.\n")));
+		
+		exit(1);
+	    }
 	}
-	else {
-	    $log->result("OK");
+
+	if($R_check_use_codetools && $opt_install) {
+	    my $Rcmd = "options(warn=1)\n";
+	    $Rcmd .= "tools:::.check_code_usage_in_package(package = \"${pkgname}\")\n";
+	    my @out = R_runR($Rcmd, "${R_opts} --quiet",
+			     "R_DEFAULT_PACKAGES=NULL");
+	    @out = grep(!/^\>/, @out);
+	    if(scalar(@out) > 0) {
+		$log->warning() unless $any;
+		$any++;
+		$log->print(join("\n", @out) . "\n");
+	    }
 	}
+
+	if($R_check_use_codetools) {
+	    my $Rcmd = "options(warn=1)\n";
+	    if($opt_install) {
+		$Rcmd .= "tools:::.check_T_and_F(package = \"${pkgname}\")\n";
+	    }
+	    else {
+		$Rcmd .= "tools:::.check_T_and_F(dir = \"${pkgdir}\")\n";
+	    }
+	    my @out = R_runR($Rcmd, "${R_opts} --quiet",
+			     "R_DEFAULT_PACKAGES=NULL");
+	    @out = grep(!/^\>/, @out);
+	    if(scalar(@out) > 0) {
+		$log->warning() unless $any;
+		$any++;
+		$log->print(join("\n", @out) . "\n");
+	    }
+	}
+	
+	$log->result("OK") unless $any;
     }
 
     ## Check R documentation files.
 
     my @msg_writing_Rd
-      = ("See chapter 'Writing R documentation files'",
+      = ("See the chapter 'Writing R documentation files'",
 	 "in manual 'Writing R Extensions'.\n");
 
     if(-d "man") {
@@ -1335,38 +1474,28 @@ sub check_pkg {
     ## quite clear about this, but CRAN policy has for a long time
     ## enforced anchoring links to targets (aliases) from non-base
     ## packages.
-    ##
-    ## For the time being, if the package is installed only run the test
-    ## if the internal environment variable _R_CHECK_RD_XREFS_ is set to
-    ## something "true".  Most likely one should always run the check if
-    ## no install log is used.
+    ## </NOTE>
 
-    if(-d "man") {
-	my $R_check_Rd_xrefs = &R_getenv("_R_CHECK_RD_XREFS_", "FALSE");
-	$R_check_Rd_xrefs = &config_val_to_logical($R_check_Rd_xrefs);
+    if($R_check_Rd_xrefs && (-d "man")) {
+	$log->checking("Rd cross-references");
 
-	if(($opt_install && $R_check_Rd_xrefs) || !$opt_install) {
-
-	    $log->checking("Rd cross-references");
-
-	    my $Rcmd = "options(warn=1)\n";
-	    if($opt_install) {
-		$Rcmd .= "tools:::.check_Rd_xrefs(package = \"${pkgname}\")\n";
-	    }
-	    else {
-		$Rcmd .= "tools:::.check_Rd_xrefs(dir = \"${pkgdir}\")\n";
-	    }
-
-	    my @out = R_runR($Rcmd, "${R_opts} --quiet",
-			     "R_DEFAULT_PACKAGES=NULL");
-	    @out = grep(!/^\>/, @out);
-	    if(scalar(@out) > 0) {
-		$log->warning();
-		$log->print(join("\n", @out) . "\n");
-	    }
-	    else {
-		$log->result("OK");
-	    }
+	my $Rcmd = "options(warn=1)\n";
+	if($opt_install) {
+	    $Rcmd .= "tools:::.check_Rd_xrefs(package = \"${pkgname}\")\n";
+	}
+	else {
+	    $Rcmd .= "tools:::.check_Rd_xrefs(dir = \"${pkgdir}\")\n";
+	}
+	
+	my @out = R_runR($Rcmd, "${R_opts} --quiet",
+			 "R_DEFAULT_PACKAGES=NULL");
+	@out = grep(!/^\>/, @out);
+	if(scalar(@out) > 0) {
+	    $log->warning();
+	    $log->print(join("\n", @out) . "\n");
+	}
+	else {
+	    $log->result("OK");
 	}
     }
 
@@ -1408,7 +1537,6 @@ sub check_pkg {
 	    $log->result("OK");
 	}
     }
-
     ## Check for code/documentation mismatches.
 
     if($opt_codoc && (-d "man")) {
@@ -1558,6 +1686,38 @@ sub check_pkg {
 	}
     }
 
+    ## check src/Makevar*, src/Makefile* for correct use of BLAS_LIBS
+    ## FLIBS is not needed on Windows, at least currently (as it is
+    ## statically linked).
+    if(-d "src") {
+	my $any;
+	$log->checking("for portable use of \$BLAS_LIBS");
+	my @makefiles;
+	push(@makefiles, &file_path("src", "Makevars")) 
+	    if (-f &file_path("src", "Makevars"));
+	push(@makefiles, &file_path("src", "Makevars.in")) 
+	    if (-f &file_path("src", "Makevars.in"));
+	push(@makefiles, &file_path("src", "Makefile")) 
+	    if (-f &file_path("src", "Makefile"));
+	push(@makefiles, &file_path("src", "Makefile.in")) 
+	    if (-f &file_path("src", "Makefile.in"));
+	foreach $f (@makefiles)
+	{
+	    open(FILE, "< $f")
+		or die("Error: cannot open file '$f' for reading\n");
+	    while(<FILE>) {
+		if(/PKG_LIBS/ && /\$[\{\(]{0,1}BLAS_LIBS/ && !/FLIBS/) {
+		    $log->warning();
+		    $any++;
+		    chomp;
+		    s/\r$//;  # some packages have CRLF terminators
+		    $log->print("apparently missing \$(FLIBS) in '".$_."'\n");
+		}
+	    }
+	    close(FILE);
+	}
+	$log->result("OK") unless($any);
+    }
 
     chdir($pkgoutdir);
 
@@ -1609,7 +1769,7 @@ sub check_pkg {
  	if(R_system($cmd)) {
   	    $log->error();
 	    $log->print("Running massage-Examples to create " .
-			"${pkgname}-Ex.R failed.\n");
+			"'${pkgname}-Ex.R' failed.\n");
   	    exit(1);
         }
         if($is_zipped) {
@@ -1635,7 +1795,7 @@ sub check_pkg {
 	}
 	if(R_system($cmd)) {
 	    $log->error();
-	    $log->print("Running examples in ${pkgname}-Ex.R failed.\n");
+	    $log->print("Running examples in '${pkgname}-Ex.R' failed.\n");
 	    ## Try to spot the offending example right away.
 	    my $txt = join("\n", &read_lines("${pkgname}-Ex.Rout"));
 	    ## Look for the header section anchored by a subsequent call
@@ -1751,6 +1911,25 @@ sub check_pkg {
         print "\n";
         if(R_system("${R::Vars::MAKE} $makefiles $makevars")) {
             $log->error();
+	    ## Don't just fail: try to log where the problem occurred.
+	    ## First, find the test which failed.
+	    my @bad_files = &list_files_with_exts($testdir,
+						  "Rout.fail");
+	    if(scalar(@bad_files) > 0) {
+		## Maybe there was an error without a failing test.
+		my $file = $bad_files[0];
+		## Read in output from the failed test and retain at
+		## most the last 13 lines (13? why not?).
+		my @lines = &read_lines($file);
+		my $to = $#{lines};
+		my $from = ($to >= 12) ? ($to - 12) : 0;
+		@lines = @lines[$from..$to];
+		$file =~ s/out\.fail//;
+		$file = &file_path("tests", basename($file));
+		$log->print("Running the tests in '$file' failed.\n");
+		$log->print("Last 13 lines of output:\n");
+		$log->print("  " . join("\n  ", @lines) . "\n");
+	    }
             exit(1);
         }
         chdir($pkgoutdir);

@@ -50,7 +50,7 @@ nlsModel.plinear <- function(form, data, start, wts)
         temp <- start[[i]]
         storage.mode(temp) <- "double"
         assign(i, temp, envir = env)
-        ind[[i]] <- p2 + seq(along = start[[i]])
+        ind[[i]] <- p2 + seq_along(start[[i]])
         p2 <- p2 + length(start[[i]])
     }
     lhs <- eval(form[[2]], envir = env)
@@ -232,7 +232,7 @@ nlsModel <- function(form, data, start, wts, upper=NULL)
         temp <- start[[i]]
         storage.mode(temp) <- "double"
         assign(i, temp, envir = env)
-        ind[[i]] <- parLength + seq(along = start[[i]])
+        ind[[i]] <- parLength + seq_along(start[[i]])
         parLength <- parLength + length(start[[i]])
     }
     getPars.noVarying <- function()
@@ -453,30 +453,60 @@ nls <-
     }
 
     ## get names of the parameters from the starting values or selfStart model
-    if (missing(start)) {
-        if(!is.null(attr(data, "parameters"))) {
-            pnames <- names(attr(data, "parameters"))
-        } else {
-            cll <- formula[[length(formula)]]
-            func <- get(as.character(cll[[1]]))
-            pnames <-
-                as.character(as.list(match.call(func, call = cll))[-1][attr(func,
-                                                      "pnames")])
-        }
-    } else {
-        pnames <- names(start)
-    }
+    pnames <-
+	if (missing(start)) {
+	    if(!is.null(attr(data, "parameters"))) {
+		names(attr(data, "parameters"))
+	    } else { ## try selfStart - like object
+		cll <- formula[[length(formula)]]
+		func <- get(as.character(cll[[1]]))
+		if(!is.null(pn <- attr(func, "pnames")))
+		    as.character(as.list(match.call(func, call = cll))[-1][pn])
+	    }
+	} else
+	    names(start)
+
+    env <- environment(formula)
+    if (is.null(env)) env <- parent.frame()
 
     ## Heuristics for determining which names in formula represent actual
-    ## variables
+    ## variables :
+
     ## If it is a parameter it is not a variable (nothing to guess here :-)
-    varNames <- varNames[is.na(match(varNames, pnames, nomatch = NA))]
+    if(length(pnames))
+        varNames <- varNames[is.na(match(varNames, pnames))]
+    ## This aux.function needs to be as complicated because
+    ## exists(var, data) does not work (with lists or dataframes):
+    lenVar <- function(var) tryCatch(length(eval(as.name(var), data, env)),
+				     error = function(e) -1)
+    n <- sapply(varNames, lenVar)
+    if(any(not.there <- n == -1)) {
+	nnn <- names(n[not.there])
+	if(missing(start)) {
+	    if(algorithm == "plinear")
+		## TODO: only specify values for the non-lin. parameters
+		stop("No starting values specified")
+	    ## Provide some starting values instead of erroring out later;
+	    ## '1' seems slightly better than 0 (which is often invalid):
+	    warning("No starting values specified for some parameters.\n",
+		    "Intializing ", paste(sQuote(nnn), collapse=", "),
+		    " to '1.'.\n",
+		    "Consider specifying 'start' or using a selfStart model")
+	    start <- as.list(rep(1., length(nnn)))
+	    names(start) <- nnn
+	    varNames <- varNames[i <- is.na(match(varNames, nnn))]
+	    n <- n[i]
+	}
+	else # has 'start' but forgot some
+	    stop("parameters without starting value in 'data': ",
+		 paste(nnn, collapse=", "))
+    }
+
     ## If its length is a multiple of the response or LHS of the formula,
-    ## then it is probably a variable
-    ## This may fail if evaluation of formula[[2]] fails
-    varIndex <- sapply(varNames, function(varName, data, respLength)
-                   { length(eval(as.name(varName), data)) %% respLength == 0
-                 }, data, length(eval(formula[[2]], data)))
+    ## then it is probably a variable.
+    ## This may fail (e.g. when LHS contains parameters):
+    respLength <- length(eval(formula[[2]], data, env))
+    varIndex <- n %% respLength == 0
 
     mf$formula <-                # replace RHS by linear model formula
         as.formula(paste("~", paste(varNames[varIndex], collapse = "+")),
@@ -489,7 +519,7 @@ nls <-
     mf <- as.list(mf)
     if (missing(start)) start <- getInitial(formula, mf)
     for(var in varNames[!varIndex])
-        mf[[var]] <- eval(as.name(var), data)
+        mf[[var]] <- eval(as.name(var), data, env)
     wts <- if(!mWeights) model.weights(mf) else rep(1, n)
     if (any(wts < 0 | is.na(wts)))
 	stop("missing or negative weights not allowed")
@@ -601,6 +631,7 @@ summary.nls <-
         ans$correlation <- (XtXinv * resvar)/outer(se, se)
         ans$symbolic.cor <- symbolic.cor
     }
+    ans$na.action <- object$na.action
     class(ans) <- "summary.nls"
     ans
 }
@@ -633,6 +664,7 @@ print.summary.nls <-
             }
         }
     }
+    if(nchar(mess <- naprint(x$na.action))) cat("  (", mess, ")\n", sep="")
     cat("\n")
     invisible(x)
 }

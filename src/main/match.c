@@ -50,6 +50,7 @@
 #include "Defn.h"
 
 
+/* used in subscript.c and subassign.c */
 Rboolean NonNullStringMatch(SEXP s, SEXP t)
 {
     /* "" or NA string matches nothing */
@@ -60,6 +61,7 @@ Rboolean NonNullStringMatch(SEXP s, SEXP t)
 	return FALSE;
 }
 
+/* currently unused outside this file */
 Rboolean psmatch(char *f, char *t, Rboolean exact)
 {
     if (exact)
@@ -146,7 +148,8 @@ static SEXP matchPar_int(char *tag, SEXP *list, Rboolean exact)
     }
 }
 
-SEXP matchPar(char *tag, SEXP * list)
+/* unused outside this file */
+SEXP attribute_hidden matchPar(char *tag, SEXP * list)
 {
     return matchPar_int(tag, list, FALSE);
 }
@@ -157,7 +160,7 @@ SEXP matchPar(char *tag, SEXP * list)
 /* Returns the first partially matching tag found. */
 /* Pattern is a symbol. */
 
-SEXP matchArg(SEXP tag, SEXP * list)
+SEXP attribute_hidden matchArg(SEXP tag, SEXP * list)
 {
     return matchPar(CHAR(PRINTNAME(tag)), list);
 }
@@ -167,7 +170,7 @@ SEXP matchArg(SEXP tag, SEXP * list)
 /* Returns the first exactly matching tag found. */
 /* Pattern is a symbol. */
 
-SEXP matchArgExact(SEXP tag, SEXP * list)
+SEXP attribute_hidden matchArgExact(SEXP tag, SEXP * list)
 {
       return matchPar_int(CHAR(PRINTNAME(tag)), list, TRUE);  
 }
@@ -180,9 +183,10 @@ SEXP matchArgExact(SEXP tag, SEXP * list)
 #define SET_ARGUSED(x,v) SETLEVELS(x,v)
 
 
-/* We need to leave supplied unchanged in case we call UseMethod */
+/* We need to leave 'supplied' unchanged in case we call UseMethod */
+/* MULTIPLE_MATCHES was added by RI in Jan 2005 but never activated */
 
-SEXP matchArgs(SEXP formals, SEXP supplied)
+SEXP attribute_hidden matchArgs(SEXP formals, SEXP supplied)
 {
     int i, seendots;
     SEXP f, a, b, dots, actuals;
@@ -362,12 +366,26 @@ nextarg2:
     }
     else {
 	/* Check that all arguments are used */
+	SEXP unused = R_NilValue, last = R_NilValue;
 	for (b = supplied; b != R_NilValue; b = CDR(b))
-	    if (!ARGUSED(b) && CAR(b) != R_MissingArg)
-		errorcall(R_GlobalContext->call,
-			  _("unused argument(s) (%s ...)"),
-			  /* anything better when b is "untagged" ? : */
-			  TAG(b) != R_NilValue ? CHAR(PRINTNAME(TAG(b))) : "");
+	    /* Uncomment to allow unmatched empty args, as done < 2.4.0 */
+	    if (!ARGUSED(b)/* && CAR(b) != R_MissingArg) */) {
+		if(last == R_NilValue) {
+		    PROTECT(unused = CONS(CAR(b), R_NilValue));
+		    SET_TAG(unused, TAG(b));
+		    last = unused;
+		} else {
+		    SETCDR(last, CONS(CAR(b), R_NilValue));
+		    last = CDR(last);
+		    SET_TAG(last, TAG(b));
+		}
+	    }
+
+	if(last != R_NilValue) {
+	    errorcall(R_GlobalContext->call,
+		      _("unused argument(s) %s"), 
+		      CHAR(STRING_ELT(deparse1line(unused, 0), 0)) + 4);
+	}
     }
     UNPROTECT(1);
     return(actuals);

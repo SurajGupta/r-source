@@ -175,9 +175,7 @@ static void yyerror(char *);
 static int yylex();
 int yyparse(void);
 
-#ifdef HAVE_ALLOCA_H
-#include <alloca.h>
-#endif
+/* alloca.h inclusion is now covered by Defn.h */
 
 #define yyconst const
 
@@ -2827,7 +2825,7 @@ static SEXP NextArg(SEXP l, SEXP s, SEXP tag)
  *  Parsing Entry Points:
  *
  *  The Following entry points provide language parsing facilities.
- *  Note that there are separate entry points for parsing IOBuffers
+ *  Note that there are separate entry points for parsing IoBuffers
  *  (i.e. interactve use), files and R character strings.
  *
  *  The entry points provide the same functionality, they just
@@ -2839,8 +2837,9 @@ static SEXP NextArg(SEXP l, SEXP s, SEXP tag)
  *	SEXP R_Parse1File(FILE *fp, int gencode, ParseStatus *status)
  *
  *	SEXP R_Parse1Vector(TextBuffer *text, int gencode, ParseStatus *status)
+ *      [Unused]
  *
- *	SEXP R_Parse1Buffer(IOBuffer *buffer, int gencode, ParseStatus *status)
+ *	SEXP R_Parse1Buffer(IoBuffer *buffer, int gencode, ParseStatus *status)
  *
  *
  *  The success of the parse is indicated as folllows:
@@ -2858,9 +2857,9 @@ static SEXP NextArg(SEXP l, SEXP s, SEXP tag)
  *
  *	SEXP R_ParseFile(FILE *fp, int n, ParseStatus *status)
  *
- *	SEXP R_ParseVector(TextBuffer *text, int n, ParseStatus *status)
+ *	SEXP R_ParseVector(SEXP *text, int n, ParseStatus *status)
  *
- *	SEXP R_ParseBuffer(IOBuffer *buffer, int n, ParseStatus *status)
+ *	SEXP R_ParseBuffer(IoBuffer *buffer, int n, ParseStatus *status)
  *
  *  Here, status is 1 for a successful parse and 0 if parsing failed
  *  for some reason.
@@ -2920,6 +2919,7 @@ static int file_getc(void)
     return R_fgetc(fp_parse);
 }
 
+/* used in main.c and this file */
 attribute_hidden
 SEXP R_Parse1File(FILE *fp, int gencode, ParseStatus *status)
 {
@@ -2939,6 +2939,7 @@ static int buffer_getc()
     return R_IoBufferGetc(iob);
 }
 
+/* Used only in main.c, rproxy_impl.c  and this file */
 attribute_hidden
 SEXP R_Parse1Buffer(IoBuffer *buffer, int gencode, ParseStatus *status)
 {
@@ -2958,7 +2959,9 @@ static int text_getc()
     return R_TextBufferGetc(txtb);
 }
 
-attribute_hidden
+
+/* unused */
+#ifdef PARSE_UNUSED
 SEXP R_Parse1Vector(TextBuffer *textb, int gencode, ParseStatus *status)
 {
     ParseInit();
@@ -2969,7 +2972,11 @@ SEXP R_Parse1Vector(TextBuffer *textb, int gencode, ParseStatus *status)
     R_Parse1(status);
     return R_CurrentExpr;
 }
+#endif
 
+
+#ifdef PARSE_UNUSED
+/* Not used, and note ungetc is no longer needed */
 attribute_hidden
 SEXP R_Parse1General(int (*g_getc)(), int (*g_ungetc)(),
 		     int gencode, ParseStatus *status)
@@ -2981,68 +2988,50 @@ SEXP R_Parse1General(int (*g_getc)(), int (*g_ungetc)(),
     R_Parse1(status);
     return R_CurrentExpr;
 }
+#endif
 
-attribute_hidden
-SEXP R_Parse(int n, ParseStatus *status)
+static SEXP R_Parse(int n, ParseStatus *status)
 {
+    volatile int savestack;
     int i;
     SEXP t, rval;
+
     ParseContextInit();
-    if (n >= 0) {
-        PROTECT(rval = allocVector(EXPRSXP, n));
-        for (i = 0 ; i < n ; i++) {
-        try_again:
-	    ParseInit();
-            t = R_Parse1(status);
-            switch(*status) {
-            case PARSE_NULL:
-                goto try_again;
-                break;
-            case PARSE_OK:
-                SET_VECTOR_ELT(rval, i, t);
-                break;
-            case PARSE_INCOMPLETE:
-            case PARSE_ERROR:
-            case PARSE_EOF:
-                rval = R_NilValue;
-                break;
-            }
-        }
-        UNPROTECT(1);
-        return rval;
+    savestack = R_PPStackTop;
+    PROTECT(t = NewList());
+    for(i = 0; ; ) {
+	if(n >= 0 && i >= n) break;
+	ParseInit();
+	rval = R_Parse1(status);
+	switch(*status) {
+	case PARSE_NULL:
+	    break;
+	case PARSE_OK:
+	    t = GrowList(t, rval);
+	    i++;
+	    break;
+	case PARSE_INCOMPLETE:
+	case PARSE_ERROR:
+	    R_PPStackTop = savestack;
+	    return R_NilValue;
+	    break;
+	case PARSE_EOF:
+	    goto finish;
+	    break;
+	}
     }
-    else {
-        PROTECT(t = NewList());
-        for(;;) {
-	    ParseInit();
-            rval = R_Parse1(status);
-            switch(*status) {
-            case PARSE_NULL:
-                break;
-            case PARSE_OK:
-                t = GrowList(t, rval);
-                break;
-            case PARSE_INCOMPLETE:
-            case PARSE_ERROR:
-                UNPROTECT(1);
-                return R_NilValue;
-                break;
-            case PARSE_EOF:
-                t = CDR(t);
-                rval = allocVector(EXPRSXP, length(t));
-                for (n = 0 ; n < LENGTH(rval) ; n++) {
-                    SET_VECTOR_ELT(rval, n, CAR(t));
-                    t = CDR(t);
-                }
-                UNPROTECT(1);
-                *status = PARSE_OK;
-                return rval;
-                break;
-            }
-        }
-    }
+
+finish:
+    t = CDR(t);
+    rval = allocVector(EXPRSXP, length(t));
+    for (n = 0 ; n < LENGTH(rval) ; n++, t = CDR(t))
+	SET_VECTOR_ELT(rval, n, CAR(t));
+    R_PPStackTop = savestack;
+    *status = PARSE_OK;
+    return rval;
 }
 
+/* used in edit.c */
 attribute_hidden
 SEXP R_ParseFile(FILE *fp, int n, ParseStatus *status)
 {
@@ -3067,6 +3056,7 @@ static int con_getc(void)
     return (last = c);
 }
 
+/* used in source.c */
 attribute_hidden
 SEXP R_ParseConn(Rconnection con, int n, ParseStatus *status)
 {
@@ -3077,7 +3067,7 @@ SEXP R_ParseConn(Rconnection con, int n, ParseStatus *status)
     return R_Parse(n, status);
 }
 
-/* This one is public */
+/* This one is public, and used in source.c */
 SEXP R_ParseVector(SEXP text, int n, ParseStatus *status)
 {
     SEXP rval;
@@ -3092,7 +3082,8 @@ SEXP R_ParseVector(SEXP text, int n, ParseStatus *status)
     return rval;
 }
 
-attribute_hidden
+#ifdef PARSE_UNUSED
+/* Not used, and note ungetc is no longer needed */
 SEXP R_ParseGeneral(int (*ggetc)(), int (*gungetc)(), int n,
 		    ParseStatus *status)
 {
@@ -3101,6 +3092,7 @@ SEXP R_ParseGeneral(int (*ggetc)(), int (*gungetc)(), int n,
     ptr_getc = ggetc;
     return R_Parse(n, status);
 }
+#endif
 
 static char *Prompt(SEXP prompt, int type)
 {
@@ -3118,94 +3110,60 @@ static char *Prompt(SEXP prompt, int type)
     }
 }
 
+/* used in source.c */
 attribute_hidden
 SEXP R_ParseBuffer(IoBuffer *buffer, int n, ParseStatus *status, SEXP prompt)
 {
     SEXP rval, t;
     char *bufp, buf[1024];
     int c, i, prompt_type = 1;
+    volatile int savestack;
 
     R_IoBufferWriteReset(buffer);
     buf[0] = '\0';
     bufp = buf;
-    if (n >= 0) {
-	PROTECT(rval = allocVector(EXPRSXP, n));
-	for (i = 0 ; i < n ; i++) {
-	try_again:
-	    if(!*bufp) {
-		if(R_ReadConsole(Prompt(prompt, prompt_type),
-				 (unsigned char *)buf, 1024, 1) == 0)
-		    return R_NilValue;
-		bufp = buf;
-	    }
-	    while ((c = *bufp++)) {
-		R_IoBufferPutc(c, buffer);
-		if (c == ';' || c == '\n') {
-		    break;
-		}
-	    }
-	    t = R_Parse1Buffer(buffer, 1, status);
-	    switch(*status) {
-	    case PARSE_NULL:
-		goto try_again;
-		break;
-	    case PARSE_OK:
-		SET_VECTOR_ELT(rval, i, t);
-		break;
-	    case PARSE_INCOMPLETE:
-	    case PARSE_ERROR:
-	    case PARSE_EOF:
-		rval = R_NilValue;
-		break;
-	    }
+    savestack = R_PPStackTop;
+    PROTECT(t = NewList());
+    for(i = 0; ; ) {
+	if(n >= 0 && i >= n) break;
+	if (!*bufp) {
+	    if(R_ReadConsole(Prompt(prompt, prompt_type),
+			     (unsigned char *)buf, 1024, 1) == 0)
+		goto finish;
+	    bufp = buf;
 	}
-	UNPROTECT(1);
-	R_IoBufferWriteReset(buffer);
-	return rval;
-    }
-    else {
-	PROTECT(t = NewList());
-	for (;;) {
-	    if (!*bufp) {
-		if(R_ReadConsole(Prompt(prompt, prompt_type),
-				 (unsigned char *)buf, 1024, 1) == 0)
-		   return R_NilValue;
-		bufp = buf;
-	    }
-	    while ((c = *bufp++)) {
-		R_IoBufferPutc(c, buffer);
-		if (c == ';' || c == '\n') {
-		    break;
-		}
-	    }
-	    rval = R_Parse1Buffer(buffer, 1, status);
-	    switch(*status) {
-	    case PARSE_NULL:
-		break;
-	    case PARSE_OK:
-		t = GrowList(t, rval);
-		break;
-	    case PARSE_INCOMPLETE:
-	    case PARSE_ERROR:
-		R_IoBufferWriteReset(buffer);
-		UNPROTECT(1);
-		return R_NilValue;
-		break;
-	    case PARSE_EOF:
-		R_IoBufferWriteReset(buffer);
-		t = CDR(t);
-		rval = allocVector(EXPRSXP, length(t));
-		for (n = 0 ; n < LENGTH(rval) ; n++) {
-		    SET_VECTOR_ELT(rval, n, CAR(t));
-		    t = CDR(t);
-		}
-		UNPROTECT(1);
-		*status = PARSE_OK;
-		return rval;
-		break;
-	    }
+	while ((c = *bufp++)) {
+	    R_IoBufferPutc(c, buffer);
+	    if (c == ';' || c == '\n') break;
+	}
+	rval = R_Parse1Buffer(buffer, 1, status);
+	switch(*status) {
+	case PARSE_NULL:
+	    break;
+	case PARSE_OK:
+	    t = GrowList(t, rval);
+	    i++;
+	    break;
+	case PARSE_INCOMPLETE:
+	case PARSE_ERROR:
+	    R_IoBufferWriteReset(buffer);
+	    R_PPStackTop = savestack;
+	    return R_NilValue;
+	    break;
+	case PARSE_EOF:
+	    goto finish;
+	    break;
 	}
     }
+finish:
+    R_IoBufferWriteReset(buffer);
+    t = CDR(t);
+    rval = allocVector(EXPRSXP, length(t));
+    for (n = 0 ; n < LENGTH(rval) ; n++, t = CDR(t))
+	SET_VECTOR_ELT(rval, n, CAR(t));
+    R_PPStackTop = savestack;
+    *status = PARSE_OK;
+    return rval;
 }
 
 
@@ -3557,7 +3515,7 @@ static int StringValue(int c)
 		error(_("\\uxxxx sequences not supported"));
 #else
 		wint_t val = 0; int i, ext; size_t res;
-		char buff[5]; Rboolean delim = FALSE;
+		char buff[16]; Rboolean delim = FALSE;
 		if((c = xxgetc()) == '{') delim = TRUE; else xxungetc(c);
 		for(i = 0; i < 4; i++) {
 		    c = xxgetc();
@@ -3591,7 +3549,7 @@ static int StringValue(int c)
 #ifdef SUPPORT_MBCS
 		else {
 		    wint_t val = 0; int i, ext; size_t res;
-		    char buff[9]; Rboolean delim = FALSE;
+		    char buff[16]; Rboolean delim = FALSE;
 		    if((c = xxgetc()) == '{') delim = TRUE; else xxungetc(c);
 		    for(i = 0; i < 8; i++) {
 			c = xxgetc();
@@ -3756,7 +3714,10 @@ static int SymbolValue(int c)
 	        c = xxgetc();
             }
 	    if(c == R_EOF) break;
-	    if(c == '.' || c == '_') continue;
+	    if(c == '.' || c == '_') {
+		clen = 1;
+		continue;
+	    }
 	    clen = mbcs_get_next(c, &wc);
 	    if(!iswalnum(wc)) break;
 	}

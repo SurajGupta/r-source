@@ -237,6 +237,9 @@ struct known_translation_t
   size_t translation_length;
 
   /* Pointer to the string in question.  */
+#ifdef __GNUC__
+  __extension__
+#endif
   char msgid[ZERO];
 };
 

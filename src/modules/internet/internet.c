@@ -1,6 +1,6 @@
 /*
  *  R : A Computer Language for Statistical Data Analysis
- *  Copyright (C) 2000-5   The R Development Core Team.
+ *  Copyright (C) 2000-6   The R Development Core Team.
  *
  *  This program is free software; you can redistribute it and/or modify
  *  it under the terms of the GNU General Public License as published by
@@ -28,7 +28,7 @@
 #include <Rconnections.h>
 #include <R_ext/R-ftp-http.h>
 
-static void *in_R_HTTPOpen(const char *url, const int cacheOK);
+static void *in_R_HTTPOpen(const char *url, const char *headers, const int cacheOK);
 static int   in_R_HTTPRead(void *ctx, char *dest, int len);
 static void  in_R_HTTPClose(void *ctx);
 
@@ -70,7 +70,7 @@ static Rboolean url_open(Rconnection con)
 
     switch(type) {
     case HTTPsh:
-	ctxt = in_R_HTTPOpen(url, 0);
+	ctxt = in_R_HTTPOpen(url, NULL, 0);
 	if(ctxt == NULL) {
 	  /* if we call error() we get a connection leak*/
 	  /* so do_url has to raise the error*/
@@ -238,14 +238,14 @@ static void doneprogressbar(void *data)
 }
 #endif
 
-/* download(url, destfile, quiet, mode, cacheOK) */
+/* download(url, destfile, quiet, mode, headers, cacheOK) */
 
 #define CPBUFSIZE 65536
 #define IBUFSIZE 4096
 static SEXP in_do_download(SEXP call, SEXP op, SEXP args, SEXP env)
 {
-    SEXP ans, scmd, sfile, smode;
-    char *url, *file, *mode;
+    SEXP ans, scmd, sfile, smode, sheaders, agentFun;
+    char *url, *file, *mode, *headers;
     int quiet, status = 0, cacheOK;
 
     checkArity(op, args);
@@ -271,6 +271,17 @@ static SEXP in_do_download(SEXP call, SEXP op, SEXP args, SEXP env)
     cacheOK = asLogical(CAR(args));
     if(cacheOK == NA_LOGICAL)
 	error(_("invalid '%s' argument"), "cacheOK");
+#ifdef USE_WININET
+    PROTECT(agentFun = lang2(install("makeUserAgent"), ScalarLogical(0)));
+#else
+    PROTECT(agentFun = lang1(install("makeUserAgent")));
+#endif
+    PROTECT(sheaders = eval(agentFun, R_FindNamespace(mkString("utils"))));
+    UNPROTECT(1);
+    if(TYPEOF(sheaders) == NILSXP)
+        headers = NULL;
+    else 
+        headers = CHAR(STRING_ELT(sheaders, 0));
 #ifdef Win32
     if (!pbar.wprog) {
 	pbar.wprog = newwindow(_("Download progress"), rect(0, 0, 540, 100),
@@ -296,8 +307,10 @@ static SEXP in_do_download(SEXP call, SEXP op, SEXP args, SEXP env)
 	if(!in) error(_("cannot open URL '%s'"), url);
 	out = R_fopen(R_ExpandFileName(file), mode);
 	if(!out) error(_("cannot open destfile '%s'"), file);
-	while((n = fread(buf, 1, CPBUFSIZE, in)) > 0)
-	    fwrite(buf, 1, n, out);
+	while((n = fread(buf, 1, CPBUFSIZE, in)) > 0) {
+	    size_t res = fwrite(buf, 1, n, out);
+	    if(res != n) error(_("write failed"));
+	}
 	fclose(out); fclose(in);
 
 #ifdef HAVE_INTERNET
@@ -319,7 +332,7 @@ static SEXP in_do_download(SEXP call, SEXP op, SEXP args, SEXP env)
 #ifdef Win32
 	R_FlushConsole();
 #endif
-	ctxt = in_R_HTTPOpen(url, cacheOK);
+	ctxt = in_R_HTTPOpen(url, headers, cacheOK);
 	if(ctxt == NULL) status = 1;
 	else {
 	    if(!quiet) REprintf(_("opened URL\n"), url);
@@ -341,7 +354,8 @@ static SEXP in_do_download(SEXP call, SEXP op, SEXP args, SEXP env)
 	    pbar.cntxt.cenddata = &pbar;
 #endif
 	    while ((len = in_R_HTTPRead(ctxt, buf, sizeof(buf))) > 0) {
-		fwrite(buf, 1, len, out);
+		size_t res = fwrite(buf, 1, len, out);
+		if(res != len) error(_("write failed"));
 		nbytes += len;
 #ifdef Win32
 		if(nbytes > guess) {
@@ -422,7 +436,8 @@ static SEXP in_do_download(SEXP call, SEXP op, SEXP args, SEXP env)
 	    
 #endif
 	    while ((len = in_R_FTPRead(ctxt, buf, sizeof(buf))) > 0) {
-		fwrite(buf, 1, len, out);
+		size_t res = fwrite(buf, 1, len, out);
+		if(res != len) error(_("write failed"));
 		nbytes += len;
 #ifdef Win32
 		if(nbytes > guess) {
@@ -466,14 +481,14 @@ static SEXP in_do_download(SEXP call, SEXP op, SEXP args, SEXP env)
 
     PROTECT(ans = allocVector(INTSXP, 1));
     INTEGER(ans)[0] = status;
-    UNPROTECT(1);
+    UNPROTECT(2);
     return ans;
 }
 
 
 #if defined(SUPPORT_LIBXML) && !defined(USE_WININET)
 
-void *in_R_HTTPOpen(const char *url, int cacheOK)
+void *in_R_HTTPOpen(const char *url, const char *headers, const int cacheOK)
 {
     inetconn *con;
     void *ctxt;
@@ -484,15 +499,13 @@ void *in_R_HTTPOpen(const char *url, int cacheOK)
     if(timeout == NA_INTEGER || timeout <= 0) timeout = 60;
 
     RxmlNanoHTTPTimeout(timeout);
-    ctxt = RxmlNanoHTTPOpen(url, NULL, cacheOK);
+    ctxt = RxmlNanoHTTPOpen(url, NULL, headers, cacheOK);
     if(ctxt != NULL) {
 	int rc = RxmlNanoHTTPReturnCode(ctxt);
 	if(rc != 200) {
-	    char *msg;
+	    warning(_("cannot open: HTTP status was '%d %s'"), rc,
+		    RxmlNanoHTTPStatusMsg(ctxt));
 	    RxmlNanoHTTPClose(ctxt);
-	    /* bug work-around: it will crash on OS X if passed directly */
-	    msg = _("cannot open: HTTP status was '%d %s'");
-	    warning(msg, rc, RxmlNanoHTTPStatusMsg(ctxt));
 	    return NULL;
 	} else {
 	    type = RxmlNanoHTTPContentType(ctxt);
@@ -605,7 +618,8 @@ InternetCallback(HINTERNET hInternet, DWORD context, DWORD Status,
 }
 #endif /* USE_WININET_ASYNC */
 
-static void *in_R_HTTPOpen(const char *url, const int cacheOK)
+static void *in_R_HTTPOpen(const char *url, const char *headers, 
+                           const int cacheOK)
 {
     WIctxt  wictxt;
     DWORD status, d1 = 4, d2 = 0, d3 = 100;
@@ -622,7 +636,7 @@ static void *in_R_HTTPOpen(const char *url, const int cacheOK)
     wictxt->length = -1;
     wictxt->type = NULL;
     wictxt->hand =
-	InternetOpen("R", INTERNET_OPEN_TYPE_PRECONFIG, NULL, NULL,
+	InternetOpen(headers, INTERNET_OPEN_TYPE_PRECONFIG, NULL, NULL,
 #ifdef USE_WININET_ASYNC
 		     INTERNET_FLAG_ASYNC
 #else
@@ -870,7 +884,8 @@ static void in_R_FTPClose(void *ctx)
 #endif
 
 #ifndef HAVE_INTERNET
-static void *in_R_HTTPOpen(const char *url, const int cacheOK)
+static void *in_R_HTTPOpen(const char *url, const char *headers, 
+                           const int cacheOK)
 {
     return NULL;
 }

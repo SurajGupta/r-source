@@ -11,23 +11,25 @@
 }
 \usage{
 read.table(file, header = FALSE, sep = "", quote = "\"'",
-           dec = ".", row.names, col.names, as.is = FALSE,
+           dec = ".", row.names, col.names,
+           as.is = !stringsAsFactors,
            na.strings = "NA", colClasses = NA, nrows = -1,
            skip = 0, check.names = TRUE, fill = !blank.lines.skip,
            strip.white = FALSE, blank.lines.skip = TRUE,
-           comment.char = "#", allowEscapes = FALSE, flush = FALSE)
+           comment.char = "#", allowEscapes = FALSE, flush = FALSE,
+           stringsAsFactors = default.stringsAsFactors())
 
 read.csv(file, header = TRUE, sep = ",", quote="\"", dec=".",
-         fill = TRUE, \dots)
+         fill = TRUE, comment.char="", \dots)
 
 read.csv2(file, header = TRUE, sep = ";", quote="\"", dec=",",
-          fill = TRUE, \dots)
+          fill = TRUE, comment.char="", \dots)
 
 read.delim(file, header = TRUE, sep = "\t", quote="\"", dec=".",
-           fill = TRUE, \dots)
+           fill = TRUE, comment.char="", \dots)
 
 read.delim2(file, header = TRUE, sep = "\t", quote="\"", dec=",",
-            fill = TRUE, \dots)
+            fill = TRUE, comment.char="", \dots)
 }
 \arguments{
   \item{file}{the name of the file which the data are to be read from.
@@ -157,6 +159,9 @@ read.delim2(file, header = TRUE, sep = "\t", quote="\"", dec=",",
     end of the line after reading the last of the fields requested.
     This allows putting comments after the last field.}
 
+  \item{stringsAsFactors}{logical: should character vectors be converted
+    to factors?}
+
   \item{\dots}{Further arguments to \code{read.table}.}
 }
 \value{
@@ -192,7 +197,8 @@ read.delim2(file, header = TRUE, sep = "\t", quote="\"", dec=",",
   as field separator.  Similarly, \code{read.delim} and
   \code{read.delim2} are for reading delimited files, defaulting to the
   TAB character for the delimiter.  Notice that \code{header = TRUE} and
-  \code{fill = TRUE} in these variants.
+  \code{fill = TRUE} in these variants, and that the comment character
+  is disabled.
 
   The rest of the line after a comment character is skipped; quotes
   are not processed in comments.  Complete comment lines are allowed
@@ -200,8 +206,8 @@ read.delim2(file, header = TRUE, sep = "\t", quote="\"", dec=",",
   to the header must have the comment character in the first non-blank
   column.
 
-  As from \R 1.9.0 quoted fields with embedded newlines are supported
-  except after a comment character.
+  Quoted fields with embedded newlines are supported except after a
+  comment character.
 }
 \note{
   The columns referred to in \code{as.is} and \code{colClasses} include

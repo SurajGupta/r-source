@@ -1,6 +1,9 @@
-dev.interactive <- function()
-  interactive() &&
-  .Device %in% c("X11", "GTK", "gnome", "quartz", "windows", "JavaGD")
+dev.interactive <- function(orNone = FALSE) {
+    iDevs <- c("X11", "GTK", "gnome", "quartz", "windows", "JavaGD")
+    interactive() &&
+    (.Device %in% iDevs ||
+     (orNone && .Device == "null device" && getOption("device") %in% iDevs))
+}
 
 dev.list <- function()
 {
@@ -97,7 +100,7 @@ dev.print <- function(device = postscript, ...)
     oc <- match.call()
     oc[[1]] <- as.name("dev.copy")
     oc$device <- device
-    din <- par("din"); w <- din[1]; h <- din[2]
+    din <- graphics::par("din"); w <- din[1]; h <- din[2]
     if(missing(device)) { ## safe way to recognize postscript
         if(is.null(oc$file)) oc$file <- ""
         hz0 <- oc$horizontal
@@ -160,7 +163,7 @@ dev.copy2eps <- function(...)
     oc$horizontal <- FALSE
     if(is.null(oc$paper))
         oc$paper <- "special"
-    din <- par("din"); w <- din[1]; h <- din[2]
+    din <- graphics::par("din"); w <- din[1]; h <- din[2]
     if(is.null(oc$width))
         oc$width <- if(!is.null(oc$height)) w/h * eval.parent(oc$height) else w
     if(is.null(oc$height))

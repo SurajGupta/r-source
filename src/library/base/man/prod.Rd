@@ -19,15 +19,16 @@ prod(\dots, na.rm = FALSE)
   \code{NA} values are ignored.
 
   This is a generic function: methods can be defined for it
-  directly or via the \code{\link{Summary}} group generic.
-  For this to work properly, the arguments \code{\dots} should be unnamed.
+  directly or via the \code{\link[base:groupGeneric]{Summary}} group generic.
+  For this to work properly, the arguments \code{\dots} should be
+  unnamed, and dispatch is on the first argument.
 
   Logical true values are regarded as one, false values as zero.
   For historical reasons, \code{NULL} is accepted and treated as if it
   were \code{numeric(0)}.
 }
 \value{
-  The product, a numeric or complex vector or length one.
+  The product, a numeric (of type \code{"double"}) or complex vector of length one.
   \strong{NB:} the product of an empty set is one, by definition.
 }
 \references{

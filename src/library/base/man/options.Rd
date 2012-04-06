@@ -52,13 +52,13 @@ getOption(x)
       many (simulated) smooths should be added.  This is currently only
       used by \code{\link[stats]{plot.lm}}.}
 
-    \item{\code{check.bounds}:}{logical, defaulting to \code{FALSE}.  If
+      \item{\code{check.bounds}:}{logical, defaulting to \code{FALSE}.  If
       true, a \link{warning} is produced whenever a \dQuote{generalized
       vector} (atomic or \code{\link{list}}) is extended, by something
       like \code{x <- 1:3; x[5] <- 6}.}
 
-    \item{\code{continue}:}{a string setting the prompt used for lines
-      which continue over one line.}
+    \item{\code{continue}:}{a non-empty string setting the prompt used
+      for lines which continue over one line.}
 
     \item{\code{defaultPackages}:}{the packages that are attached by
       default when \R starts up.  Initially set from value of the
@@ -137,12 +137,16 @@ getOption(x)
     \item{\code{mailer}:}{default mailer used by
       \code{\link{bug.report}()}.  Can be \code{"none"}.}
 
-    \item{\code{max.print}:}{integer, defaulting to \code{10000}.
+    \item{\code{max.contour.segments}:}{positive integer, defaulting to
+      \code{250000} and usually not set.  A limit on the number of
+      segments in a single contour line in \code{\link{contour}} or
+      \code{\link{contourLines}}.}
+
+    \item{\code{max.print}:}{integer, defaulting to \code{99999}.
       \code{\link{print}} or \code{\link{show}} methods can make use of
       this option, to limit the amount of information that is printed,
-      typically to something in the order \code{max.print} lines.
-
-      This is not yet used in base \R.}
+      to something in the order of (and typically slightly less than)
+      \code{max.print} \emph{entries}.}
 
     \item{\code{OutDec}:}{one-character string.  The character to be
       used as the decimal point in output conversions, that is in
@@ -165,10 +169,11 @@ getOption(x)
       \env{R\_PAPERSIZE} when \R is started: if that is unset or invalid
       it defaults to
 #ifdef unix
-      \code{"a4"}.}
+      a value derived from the locale category \code{LC_PAPER}, or
+      if that is unavailable to a default set when \R was built.}
 #endif
 #ifdef windows
-    \code{"a4"}, or \code{"letter"} in US and Canadian locales.}
+      \code{"a4"}, or \code{"letter"} in US and Canadian locales.}
 #endif
 
     \item{\code{printcmd}:}{the command used by \code{\link{postscript}}
@@ -177,8 +182,8 @@ getOption(x)
       to be piped to \file{stdin} or to be given a single filename
       argument.}
 
-    \item{\code{prompt}:}{a string, used for \R's prompt; should usually
-      end in a blank (\code{" "}).}
+    \item{\code{prompt}:}{a non-empty string to be used for \R's prompt;
+      should usually end in a blank (\code{" "}).}
 
     \item{\code{save.defaults}, \code{save.image.defaults}:}{
       see \code{\link{save}}.}
@@ -192,6 +197,9 @@ getOption(x)
     \item{\code{show.error.messages}:}{a logical.  Should error messages
       be printed?  Intended for use with \code{\link{try}} or a
       user-installed error handler.}
+
+    \item{\code{stringsAsFactors}:}{The default setting for arguments of
+      \code{\link{data.frame}} and \code{\link{read.table}}.}
 
     \item{\code{texi2dvi}:}{used by the unexported function
       \code{texi2dvi} in namespace \pkg{tools}.}
@@ -212,8 +220,8 @@ getOption(x)
       is zero (the default) warnings are stored until the top--level
       function returns.  If fewer than 10 warnings were signalled they
       will be printed otherwise a message saying how many (max 50) were
-      signalled.  A top--level variable called \code{last.warning} is
-      created and can be viewed through the function
+      signalled.  An object called \code{last.warning} is
+      created and can be printed through the function
       \code{\link{warnings}}.  If \code{warn} is one, warnings are
       printed as they occur.  If \code{warn} is two or larger all
       warnings are turned into errors.}
@@ -246,7 +254,7 @@ getOption(x)
     \code{expressions} \tab \code{5000}\cr
     \code{keep.source} \tab \code{interactive()}\cr
     \code{keep.source.pkgs} \tab \code{FALSE}\cr
-    \code{max.print} \tab \code{1000}\cr
+    \code{max.print} \tab \code{99999}\cr
     \code{OutDec} \tab \code{"."}\cr
     \code{prompt} \tab \code{"> "}\cr
     \code{scipen} \tab \code{0} \cr
@@ -272,6 +280,9 @@ getOption(x)
     \item{\code{locatorBell}:}{logical.  Should selection in \code{locator}
       and \code{identify} be confirmed by a bell.  Default \code{TRUE}.
       Honoured at least on \code{X11} and \code{windows} devices.}
+
+    \item{\code{par.ask.default}:}{logical.  The default for
+      \code{\link{par}("ask")} when a device is opened.}
 
 #ifdef unix
     \item{\code{X11colortype}:}{The default colour type for
@@ -351,16 +362,30 @@ getOption(x)
       If this is unset (the default), 0, negative or \code{NA}, variable
       cell widths are used.}
 
-    \item{\code{editor}:}{sets the default text editor, e.g., for
+    \item{\code{editor}:}{a non-empty string.
+      Sets the default text editor, e.g., for
       \code{\link{edit}}.  Set from the environment variable
       \code{VISUAL} on UNIX.}
+
+    \item{\code{example.ask}:}{default for the \code{ask} argument of
+      \code{\link{example}}.}
 
     \item{\code{help.try.all.packages}:}{default for an argument of
       \code{\link{help}}.}
 
+    \item{\code{HTTPUserAgent}:}{string used as the user agent in HTTP
+      requests.  If \code{NULL}, HTTP requests will be made without a
+      user agent header.  The default is \code{R (<version> <platform>
+      <arch> <os>)}}
+
     \item{\code{internet.info}:}{The minimum level of information to be
       printed on URL downloads etc.  Default is 2, for failure causes.
       Set to 1 or 0 to get more information.}
+
+    \item{\code{menu.graphics}:}{Logical: should graphical menus be
+      used if available?.  Defaults to \code{TRUE}.  Currently applies
+      to \code{\link{chooseCRANmirror}}, \code{\link{setRepositories}}
+      and to select from multiple help files in \code{\link{help}}.}
 
     \item{\code{pkgType}:}{The default type of packages to be downloaded
       and installed -- see \code{\link{install.packages}}.
