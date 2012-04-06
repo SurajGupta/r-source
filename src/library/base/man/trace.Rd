@@ -1,3 +1,8 @@
+% File src/library/base/man/trace.Rd
+% Part of the R package, http://www.R-project.org
+% Copyright 1995-2007 R Core Development Team
+% Distributed under GPL 2 or later
+
 \name{trace}
 \title{Interactive Tracing and Debugging of Calls to a Function or Method}
 \alias{trace}
@@ -173,7 +178,7 @@ tracingState(on = NULL)
   but they disappear when the browser exits.  This may be relevant in
   that the S-Plus version allows you to experiment with code changes
   interactively, but the \R version does not.  (A future revision may
-  include a \dQuote{destructive} browser for \R.)
+  include a \sQuote{destructive} browser for \R.)
 }
 \note{
   The version of function tracing that includes any of the arguments
@@ -202,9 +207,11 @@ tracingState(on = NULL)
   constructing general expressions.
 }
 \examples{
+require(graphics)
+
 ##  Very simple use
 trace(sum)
-hist(rnorm(100)) # shows about 3-4 calls to sum()
+hist(stats::rnorm(100)) # shows about 3-4 calls to sum()
 untrace(sum)
 
 if(.isMethodsDispatchOn()) { # non-simple use needs 'methods' package

@@ -1,3 +1,8 @@
+% File src/library/stats/man/princomp.Rd
+% Part of the R package, http://www.R-project.org
+% Copyright 1995-2007 R Core Development Team
+% Distributed under GPL 2 or later
+
 \name{princomp}
 \alias{princomp}
 \alias{princomp.formula}
@@ -29,7 +34,7 @@ princomp(x, \dots)
   \item{na.action}{a function which indicates what should happen
     when the data contain \code{NA}s.  The default is set by
     the \code{na.action} setting of \code{\link{options}}, and is
-    \code{\link{na.fail}} if that is unset. The \dQuote{factory-fresh}
+    \code{\link{na.fail}} if that is unset. The \sQuote{factory-fresh}
     default is \code{\link{na.omit}}.}
   \item{x}{a numeric matrix or data frame which provides the data for the
     principal components analysis.}
@@ -123,6 +128,8 @@ princomp(x, \dots)
   \code{\link{eigen}}.
 }
 \examples{
+require(graphics)
+
 ## The variances of the variables in the
 ## USArrests data vary by orders of magnitude, so scaling is appropriate
 (pc.cr <- princomp(USArrests))  # inappropriate

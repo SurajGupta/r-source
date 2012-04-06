@@ -1,3 +1,8 @@
+% File src/library/stats/man/t.test.Rd
+% Part of the R package, http://www.R-project.org
+% Copyright 1995-2007 R Core Development Team
+% Distributed under GPL 2 or later
+
 \name{t.test}
 \alias{t.test}
 \alias{t.test.default}
@@ -85,6 +90,8 @@ t.test(x, \dots)
   \code{\link{prop.test}}
 }
 \examples{
+require(graphics)
+
 t.test(1:10,y=c(7:20))      # P = .00001855
 t.test(1:10,y=c(7:20, 200)) # P = .1245    -- NOT significant anymore
 

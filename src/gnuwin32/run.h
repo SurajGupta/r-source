@@ -14,8 +14,8 @@
  *  GNU General Public License for more details.
  *
  *  You should have received a copy of the GNU General Public License
- *  along with this program; if not, write to the Free Software
- *  Foundation, Inc., 51 Franklin Street, Fifth Floor, Boston, MA 02110-1301  USA
+ *  along with this program; if not, a copy is available at
+ *  http://www.r-project.org/Licenses/
  */
 
 
@@ -35,9 +35,9 @@ typedef struct structRPIPE rpipe;
  * if runcmd return -1, problems in process start
 */
 #define runcmd Rf_runcmd
-int   runcmd(char *cmd, int wait, int visible, char *finput);
+int   runcmd(const char *cmd, int wait, int visible, const char *finput);
 
-rpipe *rpipeOpen(char *cmd, int visible, char *finput, int io);
+rpipe *rpipeOpen(const char *cmd, int visible, const char *finput, int io);
 char  *rpipeGets(rpipe *r, char *buf, int len);
 int rpipeGetc(rpipe *r);
 int rpipeClose(rpipe *r);

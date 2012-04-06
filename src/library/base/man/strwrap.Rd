@@ -1,3 +1,8 @@
+% File src/library/base/man/strwrap.Rd
+% Part of the R package, http://www.R-project.org
+% Copyright 1995-2007 R Core Development Team
+% Distributed under GPL 2 or later
+
 \name{strwrap}
 \alias{strwrap}
 \title{Wrap Character Strings to Format Paragraphs}
@@ -53,7 +58,7 @@ writeLines(strwrap(x, prefix = "THANKS> "))
 ## Note that messages are wrapped AT the target column indicated by
 ## 'width' (and not beyond it).
 ## From an R-devel posting by J. Hosking <jh910@juno.com>.
-x <- paste(sapply(sample(10, 100, rep=TRUE),
+x <- paste(sapply(sample(10, 100, replace=TRUE),
            function(x) substring("aaaaaaaaaa", 1, x)), collapse = " ")
 sapply(10:40,
        function(m)

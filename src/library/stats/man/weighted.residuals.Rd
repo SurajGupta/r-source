@@ -1,3 +1,8 @@
+% File src/library/stats/man/weighted.residuals.Rd
+% Part of the R package, http://www.R-project.org
+% Copyright 1995-2007 R Core Development Team
+% Distributed under GPL 2 or later
+
 \name{weighted.residuals}
 \alias{weighted.residuals}
 \title{Compute Weighted Residuals}
@@ -29,7 +34,7 @@ weighted.residuals(obj, drop0 = TRUE)
 }
 \seealso{\code{\link{residuals}}, \code{\link{lm.influence}}, etc.}
 \examples{
-example("lm")
+utils::example("lm")
 all.equal(weighted.residuals(lm.D9),
           residuals(lm.D9))
 x <- 1:10

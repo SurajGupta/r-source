@@ -1,6 +1,6 @@
 /*
  *  R : A Computer Language for Statistical Data Analysis
- *  Copyright (C) 1998, 1999  Guido Masarotto and Brian Ripley
+ *  Copyright (C) 1998, 1999, 2007  Guido Masarotto and Brian Ripley
  *
  *  This program is free software; you can redistribute it and/or modify
  *  it under the terms of the GNU General Public License as published by
@@ -13,12 +13,12 @@
  *  GNU General Public License for more details.
  *
  *  You should have received a copy of the GNU General Public License
- *  along with this program; if not, write to the Free Software
- *  Foundation, Inc., 51 Franklin Street, Fifth Floor, Boston, MA 02110-1301  USA
+ *  along with this program; if not, a copy is available at
+ *  http://www.r-project.org/Licenses/
  */
 
-int optopenfile(char *fname);
+int optopenfile(const char *fname);
 void optclosefile();
 char *optfile();
 int optline();
-int optread(char *opt[],char sep);
+int optread(char *opt[], char sep);

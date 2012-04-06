@@ -1,3 +1,8 @@
+% File src/library/stats/man/plot.ts.Rd
+% Part of the R package, http://www.R-project.org
+% Copyright 1995-2007 R Core Development Team
+% Distributed under GPL 2 or later
+
 \name{plot.ts}
 \alias{plot.ts}
 \alias{lines.ts}
@@ -49,7 +54,7 @@
   \code{plot.type}.
 
   If \code{y} is present, both \code{x} and \code{y} must be univariate,
-  and a \dQuote{scatter} plot \code{y ~ x} will be drawn, enhanced by
+  and a scatter plot \code{y ~ x} will be drawn, enhanced by
   using \code{\link{text}} if \code{xy.labels} is
   \code{\link{TRUE}} or \code{character}, and \code{\link{lines}} if
   \code{xy.lines} is \code{TRUE}.
@@ -59,11 +64,13 @@
   functionality.
 }
 \examples{
+require(graphics)
+
 ## Multivariate
 z <- ts(matrix(rt(200 * 8, df = 3), 200, 8), start=c(1961, 1), frequency=12)
 plot(z, yax.flip = TRUE)
-plot(z, axes= FALSE, ann= FALSE, frame.plot= TRUE,
-      mar.mult= c(0,0,0,0), oma.mult= c(1,1,5,1))
+plot(z, axes = FALSE, ann = FALSE, frame.plot = TRUE,
+     mar.multi = c(0,0,0,0), oma.multi = c(1,1,5,1))
 title("plot(ts(..), axes=FALSE, ann=FALSE, frame.plot=TRUE, mar..., oma...)")
 
 z <- window(z[,1:3], end = c(1969,12))

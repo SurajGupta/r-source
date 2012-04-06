@@ -1,3 +1,19 @@
+#  File src/library/base/R/datetime.R
+#  Part of the R package, http://www.R-project.org
+#
+#  This program is free software; you can redistribute it and/or modify
+#  it under the terms of the GNU General Public License as published by
+#  the Free Software Foundation; either version 2 of the License, or
+#  (at your option) any later version.
+#
+#  This program is distributed in the hope that it will be useful,
+#  but WITHOUT ANY WARRANTY; without even the implied warranty of
+#  MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
+#  GNU General Public License for more details.
+#
+#  A copy of the GNU General Public License is available at
+#  http://www.r-project.org/Licenses/
+
 Sys.time <- function()
     structure(.Internal(Sys.time()), class = c("POSIXt", "POSIXct"))
 
@@ -22,7 +38,7 @@ as.POSIXlt <- function(x, tz = "")
 	   !is.na(strptime(xx, f <- "%Y/%m/%d")))
         {
 	    res <- strptime(x, f)
-            if(nchar(tz)) attr(res, "tzone") <- tz
+            if(nzchar(tz)) attr(res, "tzone") <- tz
             return(res)
         }
 	stop("character string is not in a standard unambiguous format")
@@ -90,7 +106,7 @@ as.POSIXct.default <- function(x, tz = "")
                   deparse(substitute(x))))
 }
 
-as.numeric.POSIXlt <- function(x) as.POSIXct(x)
+as.double.POSIXlt <- function(x, ...) as.POSIXct(x)
 
 format.POSIXlt <- function(x, format = "", usetz = FALSE, ...)
 {
@@ -194,7 +210,7 @@ summary.POSIXlt <- function(object, digits = 15, ...)
 Ops.POSIXt <- function(e1, e2)
 {
     if (nargs() == 1)
-        stop("unary", .Generic, " not defined for \"POSIXt\" objects")
+        stop("unary ", .Generic, " not defined for \"POSIXt\" objects")
     boolean <- switch(.Generic, "<" = , ">" = , "==" = ,
                       "!=" = , "<=" = , ">=" = TRUE, FALSE)
     if (!boolean) stop(.Generic, " not defined for \"POSIXt\" objects")
@@ -441,7 +457,7 @@ Ops.difftime <- function(e1, e2)
     }
     if (nargs() == 1) {
         switch(.Generic, "+"= {}, "-" = {e1[] <- -unclass(e1)},
-               stop("unary", .Generic, " not defined for \"difftime\" objects")
+               stop("unary ", .Generic, " not defined for \"difftime\" objects")
                )
         return(e1)
     }
@@ -471,7 +487,7 @@ Ops.difftime <- function(e1, e2)
         }
     } else {
         ## '*' is covered by a specific method
-        stop(.Generic, "not defined for \"difftime\" objects")
+        stop(.Generic, " not defined for \"difftime\" objects")
     }
 }
 
@@ -496,7 +512,7 @@ Ops.difftime <- function(e1, e2)
 
 Math.difftime <- function (x, ...)
 {
-    stop(.Generic, "not defined for \"difftime\" objects")
+    stop(.Generic, " not defined for \"difftime\" objects")
 }
 
 mean.difftime <- function (x, ..., na.rm = FALSE)
@@ -599,7 +615,7 @@ seq.POSIXt <-
         r1 <- as.POSIXlt(from)
         if(valid == 7) {
             if(missing(to)) { # years
-                yr <- seq.int(r1$year, by = by, length = length.out)
+                yr <- seq.int(r1$year, by = by, length.out = length.out)
             } else {
                 to <- as.POSIXlt(to)
                 yr <- seq.int(r1$year, to$year, by)
@@ -609,7 +625,7 @@ seq.POSIXt <-
             res <- as.POSIXct(r1)
         } else if(valid == 6) { # months
             if(missing(to)) {
-                mon <- seq.int(r1$mon, by = by, length = length.out)
+                mon <- seq.int(r1$mon, by = by, length.out = length.out)
             } else {
                 to <- as.POSIXlt(to)
                 mon <- seq.int(r1$mon, 12*(to$year - r1$year) + to$mon, by)
@@ -623,7 +639,7 @@ seq.POSIXt <-
                 length.out <- 2 + floor((unclass(as.POSIXct(to)) -
                                          unclass(as.POSIXct(from)))/86400)
             }
-            r1$mday <- seq.int(r1$mday, by = by, length = length.out)
+            r1$mday <- seq.int(r1$mday, by = by, length.out = length.out)
             r1$isdst <- -1
             res <- as.POSIXct(r1)
             ## now correct if necessary.
@@ -682,6 +698,7 @@ julian <- function(x, ...) UseMethod("julian")
 
 julian.POSIXt <- function(x, origin = as.POSIXct("1970-01-01", tz="GMT"), ...)
 {
+    origin <- as.POSIXct(origin)
     if(length(origin) != 1) stop("'origin' must be of length one")
     res <- difftime(as.POSIXct(x), origin, units = "days")
     structure(res, "origin" = origin)
@@ -706,7 +723,7 @@ quarters.POSIXt <- function(x, ...)
     paste("Q", x+1, sep = "")
 }
 
-trunc.POSIXt <- function(x, units=c("secs", "mins", "hours", "days"))
+trunc.POSIXt <- function(x, units=c("secs", "mins", "hours", "days"), ...)
 {
     units <- match.arg(units)
     x <- as.POSIXlt(x)
@@ -806,3 +823,8 @@ unique.POSIXlt <- function(x, incomparables = FALSE, ...)
 
 sort.POSIXlt <- function(x, decreasing = FALSE, na.last = NA, ...)
     x[order(as.POSIXct(x), na.last = na.last, decreasing = decreasing)]
+
+
+# ---- additions in 2.6.0 -----
+
+is.numeric.POSIXt <- function(x) FALSE

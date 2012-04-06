@@ -1,3 +1,8 @@
+% File src/library/base/man/difftime.Rd
+% Part of the R package, http://www.R-project.org
+% Copyright 1995-2007 R Core Development Team
+% Distributed under GPL 2 or later
+
 \name{difftime}
 \alias{difftime}
 \alias{as.difftime}
@@ -36,8 +41,7 @@ as.difftime(tim, format = "\%X", units="auto")
 \method{as.double}{difftime}(x, units="auto", ...)
 }
 \arguments{
-  \item{time1, time2}{\link[base:DateTimeClasses]{date-time} or
-    \link[base:Dates]{date} objects.}
+  \item{time1, time2}{\link{date-time} or \link[base:Dates]{date} objects.}
   \item{tz}{a timezone specification to be used for the conversion.
     System-specific, but \code{""} is the current time zone, and
     \code{"GMT"} is UTC.}
@@ -77,7 +81,7 @@ as.difftime(tim, format = "\%X", units="auto")
   same units as the \code{"difftime"} object.
 
   The units of a \code{"difftime"} object can be extracted by the
-  \code{units} function, which also has an assignment form. If the units
+  \code{units} function, which also has an replacement form.  If the units
   are changed, the numerical value is scaled accordingly.
 
   The \code{as.double} method returns the numeric value expressed in
@@ -94,7 +98,7 @@ as.difftime(tim, format = "\%X", units="auto")
 (z <- Sys.time() - 3600)
 Sys.time() - z                # just over 3600 seconds.
 
-## time interval between releases of 1.2.2 and 1.2.3.
+## time interval between releases of R 1.2.2 and 1.2.3.
 ISOdate(2001, 4, 26) - ISOdate(2001, 2, 26)
 
 as.difftime(c("0:3:20", "11:23:15"))

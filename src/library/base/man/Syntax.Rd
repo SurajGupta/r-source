@@ -1,3 +1,8 @@
+% File src/library/base/man/Syntax.Rd
+% Part of the R package, http://www.R-project.org
+% Copyright 1995-2007 R Core Development Team
+% Distributed under GPL 2 or later
+
 \name{Syntax}
 \alias{Syntax}
 \title{Operator Syntax and Precedence}
@@ -30,7 +35,7 @@
   Within an expression operators of equal precedence are evaluated
   from left to right except where indicated.
 
-  The links in the \bold{See Also} section covers most other aspects of
+  The links in the \bold{See Also} section cover most other aspects of
   the basic syntax.
 }
 \note{
@@ -46,7 +51,8 @@
 \seealso{
   \code{\link{Arithmetic}}, \code{\link{Comparison}}, \code{\link{Control}},
   \code{\link{Extract}}, \code{\link{Logic}},
-  \code{\link{NumericConstants}}, \code{\link{Paren}}, \code{\link{Quotes}}.
+  \code{\link{NumericConstants}}, \code{\link{Paren}},
+  \code{\link{Quotes}}, \code{\link{Reserved}}.
 
   The \emph{R Language Definition} manual.
 }

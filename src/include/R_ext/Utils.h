@@ -14,8 +14,8 @@
  *  GNU Lesser General Public License for more details.
  *
  *  You should have received a copy of the GNU Lesser General Public License
- *  along with this program; if not, write to the Free Software
- *  Foundation, Inc., 51 Franklin Street, Fifth Floor, Boston, MA 02110-1301  USA
+ *  along with this program; if not, a copy is available at
+ *  http://www.r-project.org/Licenses/
  *
  *
  * Generally useful  UTILITIES  *NOT* relying on R internals (from Defn.h)
@@ -67,12 +67,12 @@ void F77_NAME(qsort3)(double *v,            int *ii, int *jj);
 /* ../../main/printutils.c : */
 int	IndexWidth(int);
 /* ../../main/util.c  and others : */
-char*	R_ExpandFileName(char*);
+const char *R_ExpandFileName(const char *);
 void	setIVector(int*, int, int);
 void	setRVector(double*, int, double);
-Rboolean StringFalse(char*);
-Rboolean StringTrue(char*);
-Rboolean isBlankString(char *);
+Rboolean StringFalse(const char *);
+Rboolean StringTrue(const char *);
+Rboolean isBlankString(const char *);
 
 double 	R_strtod(const char *c, char **end);
 char *  R_tmpnam(const char *prefix, const char *tempdir);

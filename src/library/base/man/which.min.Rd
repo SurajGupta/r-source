@@ -1,3 +1,8 @@
+% File src/library/base/man/which.min.Rd
+% Part of the R package, http://www.R-project.org
+% Copyright 1995-2007 R Core Development Team
+% Distributed under GPL 2 or later
+
 \name{which.min}
 \alias{which.min}
 \alias{which.max}
@@ -34,7 +39,7 @@ which.max(x)
   \code{\link{which}}, \code{\link{max.col}}, \code{\link{max}}, etc.
 
   \code{\link[nnet]{which.is.max}} in package \pkg{nnet} differs in
-  breaking ties at random (and having a \dQuote{fuzz} in the definition
+  breaking ties at random (and having a \sQuote{fuzz} in the definition
   of ties).
 }
 \examples{

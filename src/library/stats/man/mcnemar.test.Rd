@@ -1,3 +1,8 @@
+% File src/library/stats/man/mcnemar.test.Rd
+% Part of the R package, http://www.R-project.org
+% Copyright 1995-2007 R Core Development Team
+% Distributed under GPL 2 or later
+
 \name{mcnemar.test}
 \alias{mcnemar.test}
 \title{McNemar's Chi-squared Test for Count Data}
@@ -51,7 +56,7 @@ mcnemar.test(x, y = NULL, correct = TRUE)
 ##  one month apart, for a random sample of 1600 voting-age Americans.
 Performance <-
 matrix(c(794, 86, 150, 570),
-       nr = 2,
+       nrow = 2,
        dimnames = list("1st Survey" = c("Approve", "Disapprove"),
                        "2nd Survey" = c("Approve", "Disapprove")))
 Performance

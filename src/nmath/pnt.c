@@ -1,7 +1,7 @@
 /*
  *  Mathlib : A C Library of Special Functions
  *  Copyright (C) 1998 Ross Ihaka and the R Development Core Team
- *  Copyright (C) 2000-2006 The R Development Core Team
+ *  Copyright (C) 2000-2007 The R Development Core Team
  *  based on AS243 (C) 1989 Royal Statistical Society
  *
  *  This program is free software; you can redistribute it and/or modify
@@ -15,8 +15,8 @@
  *  GNU General Public License for more details.
  *
  *  You should have received a copy of the GNU General Public License
- *  along with this program; if not, write to the Free Software
- *  Foundation, Inc., 51 Franklin Street, Fifth Floor, Boston, MA 02110-1301 USA.
+ *  along with this program; if not, a copy is available at
+ *  http://www.r-project.org/Licenses/
  */
 
 /*  Algorithm AS 243  Lenth,R.V. (1989). Appl. Statist., Vol.38, 185-189.
@@ -52,8 +52,8 @@
 
 double pnt(double t, double df, double delta, int lower_tail, int log_p)
 {
-    double a, albeta, b, del, errbd, geven, godd,
-	lambda, p, q, rxb, s, tnc, tt, x, xeven, xodd;
+    double albeta, b, del, errbd, lambda, rxb, tt, x;
+    LDOUBLE a, geven, godd, p, q, s, tnc, xeven, xodd;
     int it, negdel;
 
     /* note - itrmax and errmax may be changed to suit one's needs. */

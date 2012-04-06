@@ -15,8 +15,8 @@
  *  GNU General Public License for more details.
  *
  *  You should have received a copy of the GNU General Public License
- *  along with this program; if not, write to the Free Software
- *  Foundation, Inc., 51 Franklin Street, Fifth Floor, Boston, MA 02110-1301  USA
+ *  along with this program; if not, a copy is available at
+ *  http://www.r-project.org/Licenses/
  */
 
 /* <UTF8> chars are only handled as a whole */
@@ -28,9 +28,6 @@
 #ifdef HAVE_CONFIG_H
 #include <config.h>
 #endif
-#ifdef HAVE_GLIBC2
-# define _POSIX_SOURCE
-#endif
 
 #include <stdio.h>
 #include <string.h>
@@ -41,7 +38,7 @@
 #endif
 
 #if defined(Win32)
-#  include <winsock.h>
+#  include <winsock2.h>
 #  include <io.h>
 #else
 #  ifdef HAVE_UNISTD_H
@@ -186,7 +183,7 @@ int Sock_listen(int fd, char *cname, int buflen, Sock_error_t perr)
 
     if (cname != NULL && buflen > 0) {
 	size_t nlen;
-	char *name;
+	const char *name;
 	struct in_addr *iaddr = &(net_client.sin_addr);
 	hostptr = gethostbyaddr((char *)iaddr, sizeof(struct in_addr), 
 				AF_INET);

@@ -1,3 +1,19 @@
+#  File src/library/utils/R/iconv.R
+#  Part of the R package, http://www.R-project.org
+#
+#  This program is free software; you can redistribute it and/or modify
+#  it under the terms of the GNU General Public License as published by
+#  the Free Software Foundation; either version 2 of the License, or
+#  (at your option) any later version.
+#
+#  This program is distributed in the hope that it will be useful,
+#  but WITHOUT ANY WARRANTY; without even the implied warranty of
+#  MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
+#  GNU General Public License for more details.
+#
+#  A copy of the GNU General Public License is available at
+#  http://www.r-project.org/Licenses/
+
 
 ## If you were wondering what these language codes stand for, see
 ## ftp://ftp.ilog.fr/pub/Users/haible/utf8/ISO_639
@@ -61,7 +77,7 @@ localeToCharset <- function(locale = Sys.getlocale("LC_CTYPE"))
         x <- strsplit(locale, ".", fixed=TRUE)[[1]]
         enc <- if(length(x) == 2) gsub("@.*$o", "", x[2]) else ""
         if(enc == "UTF-8") enc <- "utf8" # for AIX
-        if(nchar(enc) && enc != "utf8") {
+        if(nzchar(enc) && enc != "utf8") {
             enc <- tolower(enc)
             known <-
                 c("ISO8859-1", "ISO8859-2", "ISO8859-3", "ISO8859-6",

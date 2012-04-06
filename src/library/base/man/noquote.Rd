@@ -1,3 +1,8 @@
+% File src/library/base/man/noquote.Rd
+% Part of the R package, http://www.R-project.org
+% Copyright 1995-2007 R Core Development Team
+% Distributed under GPL 2 or later
+
 \name{noquote}
 \alias{noquote}
 \alias{print.noquote}
@@ -51,7 +56,7 @@ cmp.logical <- function(log.v)
   log.v <- as.logical(log.v)
   noquote(if(length(log.v)==0)"()" else c(".","|")[1+log.v])
 }
-cmp.logical(runif(20) > 0.8)
+cmp.logical(stats::runif(20) > 0.8)
 }
 \keyword{print}
 \keyword{methods}

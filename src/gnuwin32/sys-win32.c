@@ -15,8 +15,8 @@
  *  GNU General Public License for more details.
  *
  *  You should have received a copy of the GNU General Public License
- *  along with this program; if not, write to the Free Software
- *  Foundation, Inc., 51 Franklin Street, Fifth Floor, Boston, MA 02110-1301  USA
+ *  along with this program; if not, a copy is available at
+ *  http://www.r-project.org/Licenses/
  */
 
          /* See ../unix/system.txt for a description of functions */
@@ -61,7 +61,7 @@ FILE *R_OpenInitFile(void)
 static int HaveHOME=-1;
 static char UserHOME[PATH_MAX];
 static char newFileName[PATH_MAX];
-char *R_ExpandFileName(char *s)
+const char *R_ExpandFileName(const char *s)
 {
     char *p;
 
@@ -130,7 +130,7 @@ typedef struct _FILETIME {
  
 void R_getProcTime(double *data)
 {
-    long  elapsed;
+    DWORD elapsed;
     double kernel, user;
     OSVERSIONINFO verinfo;
     /* This is in msec, but to clock-tick accuracy,
@@ -186,7 +186,7 @@ SEXP do_system(SEXP call, SEXP op, SEXP args, SEXP rho)
     char  buf[INTERN_BUFSIZE];
     int   vis = 0, flag = 2, i = 0, j, ll, ignore_stderr = 0;
     SEXP  tlist = R_NilValue, tchar, rval;
-    HANDLE hERR;
+    HANDLE hERR = NULL /* -Wall */;
 
     checkArity(op, args);
     if (!isString(CAR(args)))
@@ -262,8 +262,7 @@ SEXP do_system(SEXP call, SEXP op, SEXP args, SEXP rho)
 	UNPROTECT(1);
 	return (rval);
     } else {
-	tlist = allocVector(INTSXP, 1);
-	INTEGER(tlist)[0] = ll;
+	tlist = ScalarInteger(ll);
 	R_Visible = 0;
 	return tlist;
     }

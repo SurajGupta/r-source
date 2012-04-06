@@ -1,3 +1,8 @@
+% File src/library/base/man/eigen.Rd
+% Part of the R package, http://www.R-project.org
+% Copyright 1995-2007 R Core Development Team
+% Distributed under GPL 2 or later
+
 \name{eigen}
 \alias{eigen}
 \title{Spectral Decomposition of a Matrix}
@@ -92,8 +97,6 @@ eigen(x, symmetric, only.values = FALSE, EISPACK = FALSE)
 
   To compute the determinant of a matrix, the \code{\link{qr}}
   decomposition is much more efficient: \code{\link{det}}.
-
-  \code{\link{capabilities}} to test for IEEE 754 arithmetic.
 }
 \examples{
 eigen(cbind(c(1,-1),c(-1,1)))

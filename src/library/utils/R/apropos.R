@@ -1,3 +1,19 @@
+#  File src/library/utils/R/apropos.R
+#  Part of the R package, http://www.R-project.org
+#
+#  This program is free software; you can redistribute it and/or modify
+#  it under the terms of the GNU General Public License as published by
+#  the Free Software Foundation; either version 2 of the License, or
+#  (at your option) any later version.
+#
+#  This program is distributed in the hope that it will be useful,
+#  but WITHOUT ANY WARRANTY; without even the implied warranty of
+#  MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
+#  GNU General Public License for more details.
+#
+#  A copy of the GNU General Public License is available at
+#  http://www.r-project.org/Licenses/
+
 apropos <- function (what, where = FALSE, ignore.case = TRUE, mode = "any")
 {
     stopifnot(is.character(what))
@@ -16,10 +32,10 @@ apropos <- function (what, where = FALSE, ignore.case = TRUE, mode = "any")
 	    x <- c(x, if(where) structure(li, names = rep.int(i, length(li))) else li)
 	}
     }
-    x
+    sort(x)
 }
 
-find <- function(what, mode = "any", numeric. = FALSE, simple.words=TRUE)
+find <- function(what, mode = "any", numeric = FALSE, simple.words=TRUE)
 {
     stopifnot(is.character(what))
     if(length(what) > 1) {
@@ -53,6 +69,6 @@ find <- function(what, mode = "any", numeric. = FALSE, simple.words=TRUE)
         }
     }
     ## found name in  search()[ ind ]
-    if(numeric.) structure(which(ind), names=sp[ind]) else sp[ind]
+    if(numeric) structure(which(ind), names=sp[ind]) else sp[ind]
 }
 

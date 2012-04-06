@@ -1,3 +1,8 @@
+% File src/library/graphics/man/polygon.Rd
+% Part of the R package, http://www.R-project.org
+% Copyright 1995-2007 R Core Development Team
+% Distributed under GPL 2 or later
+
 \name{polygon}
 \alias{polygon}
 \title{Polygon Drawing}
@@ -88,7 +93,7 @@ par(op)
 
 n <- 100
 xx <- c(0:n, n:0)
-yy <- c(c(0,cumsum(rnorm(n))), rev(c(0,cumsum(rnorm(n)))))
+yy <- c(c(0,cumsum(stats::rnorm(n))), rev(c(0,cumsum(stats::rnorm(n)))))
 plot   (xx, yy, type="n", xlab="Time", ylab="Distance")
 polygon(xx, yy, col="gray", border = "red")
 title("Distance Between Brownian Motions")

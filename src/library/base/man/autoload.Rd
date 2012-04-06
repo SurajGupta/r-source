@@ -1,3 +1,8 @@
+% File src/library/base/man/autoload.Rd
+% Part of the R package, http://www.R-project.org
+% Copyright 1995-2007 R Core Development Team
+% Distributed under GPL 2 or later
+
 \name{autoload}
 \title{On-demand Loading of Packages}
 \usage{
@@ -26,7 +31,7 @@ autoloader(name, package, \dots)
   package's environment.  The result is that \R behaves as if
   \code{file} was loaded but it does not occupy memory.
 
-  \code{.Autoloaded} contains the \dQuote{base names} of the packages for
+  \code{.Autoloaded} contains the names of the packages for
   which autoloading has been promised.
 }
 \value{
@@ -42,7 +47,7 @@ search()
 ls("Autoloads")
 .Autoloaded
 
-x <- sort(rnorm(12))
+x <- sort(stats::rnorm(12))
 y <- x^2
 is <- interpSpline(x,y)
 search() ## now has splines

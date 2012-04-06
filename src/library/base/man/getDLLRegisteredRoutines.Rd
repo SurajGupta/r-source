@@ -1,3 +1,8 @@
+% File src/library/base/man/getDLLRegisteredRoutines.Rd
+% Part of the R package, http://www.R-project.org
+% Copyright 1995-2007 R Core Development Team
+% Distributed under GPL 2 or later
+
 \name{getDLLRegisteredRoutines}
 \alias{getDLLRegisteredRoutines}
 \alias{getDLLRegisteredRoutines.character}
@@ -19,8 +24,22 @@
 getDLLRegisteredRoutines(dll, addNames = TRUE)
 }
 \arguments{
-  \item{dll}{a character string or \code{DLLInfo} object (as returned by
-    \code{\link{getLoadedDLLs}}).
+  \item{dll}{a character string or \code{DLLInfo} object.
+    The character string specifies the file name of the DLL
+    of interest, and is given without the file name extension (e.g. the
+    \code{.dll} or \code{.so}) and with no directory/path information.
+    So a file \code{MyPackage/libs/MyPackage.so} would be specified as
+    \code{MyPackage}.
+    
+    The \code{DLLInfo} objects can be obtained directly
+    in calls to \code{\link{dyn.load}} and  \code{\link{library.dynam}},
+    or can be found after the DLL has been loaded using
+    \code{\link{getLoadedDLLs}}, which returns a list of
+    \code{DLLInfo} objects (index-able by DLL file name).
+
+    The \code{DLLInfo} approach avoids any ambiguities related to two
+    DLLs having the same name but corresponding to files in different
+    directories.
   }
   \item{addNames}{a logical value. If this is \code{TRUE}, the elements
     of the returned lists are named using the names of the routines (as

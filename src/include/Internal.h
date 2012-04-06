@@ -1,7 +1,7 @@
 /*
  *  R : A Computer Language for Statistical Data Analysis
  *  Copyright (C) 1995, 1996  Robert Gentleman and Ross Ihaka
- *  Copyright (C) 1997--2006  Robert Gentleman, Ross Ihaka and the
+ *  Copyright (C) 1997--2007  Robert Gentleman, Ross Ihaka and the
  *                            R Development Core Team
  *
  *  This program is free software; you can redistribute it and/or modify
@@ -15,8 +15,8 @@
  *  GNU General Public License for more details.
  *
  *  You should have received a copy of the GNU General Public License
- *  along with this program; if not, write to the Free Software
- *  Foundation, Inc., 51 Franklin Street, Fifth Floor, Boston, MA 02110-1301  USA
+ *  along with this program; if not, a copy is available at
+ *  http://www.r-project.org/Licenses/
  */
 
 /* Names of  .Internal(.) and .Primitive(.)  R functions
@@ -65,7 +65,7 @@ SEXP do_setTitle(SEXP, SEXP, SEXP, SEXP);
 SEXP do_setStatusBar(SEXP, SEXP, SEXP, SEXP);
 SEXP do_shellexec(SEXP, SEXP, SEXP, SEXP);
 SEXP do_shortpath(SEXP, SEXP, SEXP, SEXP);
-SEXP do_unlink(SEXP, SEXP, SEXP, SEXP);
+SEXP do_syswhich(SEXP, SEXP, SEXP, SEXP);
 SEXP do_windialog(SEXP, SEXP, SEXP, SEXP);
 SEXP do_windialogstring(SEXP, SEXP, SEXP, SEXP);
 SEXP do_winmenuadd(SEXP, SEXP, SEXP, SEXP);
@@ -84,13 +84,11 @@ SEXP do_addCondHands(SEXP, SEXP, SEXP, SEXP);
 SEXP do_addRestart(SEXP, SEXP, SEXP, SEXP);
 SEXP do_addTryHandlers(SEXP, SEXP, SEXP, SEXP);
 SEXP do_agrep(SEXP, SEXP, SEXP, SEXP);
-SEXP do_alias(SEXP, SEXP, SEXP, SEXP);
 SEXP do_allnames(SEXP, SEXP, SEXP, SEXP);
 SEXP do_anydf(SEXP, SEXP, SEXP, SEXP);
 SEXP do_aperm(SEXP, SEXP, SEXP, SEXP);
 SEXP do_args(SEXP, SEXP, SEXP, SEXP);
 SEXP do_arith(SEXP, SEXP, SEXP, SEXP);
-SEXP do_array(SEXP, SEXP, SEXP, SEXP);
 SEXP do_arrows(SEXP, SEXP, SEXP, SEXP);
 SEXP do_asPOSIXct(SEXP, SEXP, SEXP, SEXP);
 SEXP do_asPOSIXlt(SEXP, SEXP, SEXP, SEXP);
@@ -152,7 +150,6 @@ SEXP do_dataframe(SEXP, SEXP, SEXP, SEXP);
 SEXP do_dataviewer(SEXP, SEXP, SEXP, SEXP);
 SEXP do_date(SEXP, SEXP, SEXP, SEXP);
 SEXP do_debug(SEXP, SEXP, SEXP, SEXP);
-SEXP do_delay(SEXP, SEXP, SEXP, SEXP);
 SEXP do_delayed(SEXP, SEXP, SEXP, SEXP);
 SEXP do_dend(SEXP, SEXP, SEXP, SEXP);
 SEXP do_dendwindow(SEXP, SEXP, SEXP, SEXP);
@@ -162,7 +159,6 @@ SEXP do_detach(SEXP,SEXP,SEXP,SEXP);
 SEXP do_devcontrol(SEXP,SEXP,SEXP,SEXP);
 SEXP do_devcopy(SEXP,SEXP,SEXP,SEXP);
 SEXP do_devcur(SEXP, SEXP, SEXP, SEXP);
-SEXP do_device(SEXP, SEXP, SEXP, SEXP);
 SEXP do_devnext(SEXP, SEXP, SEXP, SEXP);
 SEXP do_devoff(SEXP, SEXP, SEXP, SEXP);
 SEXP do_devprev(SEXP, SEXP, SEXP, SEXP);
@@ -179,7 +175,6 @@ SEXP do_docall(SEXP, SEXP, SEXP, SEXP);
 SEXP do_dotcall(SEXP, SEXP, SEXP, SEXP);
 SEXP do_dotcallgr(SEXP, SEXP, SEXP, SEXP);
 SEXP do_dotCode(SEXP, SEXP, SEXP, SEXP);
-SEXP do_dotplot(SEXP, SEXP, SEXP, SEXP);
 SEXP do_dput(SEXP, SEXP, SEXP, SEXP);
 SEXP do_drop(SEXP, SEXP, SEXP, SEXP);
 SEXP do_dumpb(SEXP, SEXP, SEXP, SEXP);
@@ -239,7 +234,6 @@ SEXP do_glob(SEXP, SEXP, SEXP, SEXP);
 SEXP do_globalenv(SEXP, SEXP, SEXP, SEXP);
 SEXP do_emptyenv(SEXP, SEXP, SEXP, SEXP);
 SEXP do_baseenv(SEXP, SEXP, SEXP, SEXP);
-SEXP do_gpregexpr(SEXP, SEXP, SEXP, SEXP);
 SEXP do_gray(SEXP, SEXP, SEXP, SEXP);
 SEXP do_gregexpr(SEXP, SEXP, SEXP, SEXP);
 SEXP do_grep(SEXP, SEXP, SEXP, SEXP);
@@ -271,6 +265,7 @@ SEXP do_isunsorted(SEXP, SEXP, SEXP, SEXP);
 SEXP do_isvector(SEXP, SEXP, SEXP, SEXP);
 SEXP do_lapply(SEXP, SEXP, SEXP, SEXP);
 SEXP do_layout(SEXP, SEXP, SEXP, SEXP);
+SEXP do_lazyLoadDBfetch(SEXP, SEXP, SEXP, SEXP);
 SEXP do_length(SEXP, SEXP, SEXP, SEXP);
 SEXP do_lengthgets(SEXP, SEXP, SEXP, SEXP);
 SEXP do_levelsgets(SEXP, SEXP, SEXP, SEXP);
@@ -283,6 +278,7 @@ SEXP do_loadhistory(SEXP, SEXP, SEXP, SEXP);
 SEXP do_localeconv(SEXP, SEXP, SEXP, SEXP);
 SEXP do_locator(SEXP, SEXP, SEXP, SEXP);
 SEXP do_log(SEXP, SEXP, SEXP, SEXP);
+SEXP do_log1arg(SEXP, SEXP, SEXP, SEXP);
 SEXP do_logic(SEXP, SEXP, SEXP, SEXP);
 SEXP do_logic2(SEXP, SEXP, SEXP, SEXP);
 SEXP do_logic3(SEXP, SEXP, SEXP, SEXP);
@@ -290,6 +286,7 @@ SEXP do_ls(SEXP, SEXP, SEXP, SEXP);
 SEXP do_l10n_info(SEXP, SEXP, SEXP, SEXP);
 /* R_lsInternal -> ./Rinternals.h */
 SEXP do_machine(SEXP, SEXP, SEXP, SEXP);
+SEXP do_makelazy(SEXP, SEXP, SEXP, SEXP);
 SEXP do_makelist(SEXP, SEXP, SEXP, SEXP);
 SEXP do_makenames(SEXP, SEXP, SEXP, SEXP);
 SEXP do_makeunique(SEXP, SEXP, SEXP, SEXP);
@@ -322,6 +319,7 @@ SEXP do_nextn(SEXP,SEXP,SEXP,SEXP);
 SEXP do_ngettext(SEXP, SEXP, SEXP, SEXP);
 SEXP do_nlm(SEXP, SEXP, SEXP, SEXP);
 SEXP do_normalizepath(SEXP, SEXP, SEXP, SEXP);
+SEXP do_nzchar(SEXP,SEXP,SEXP,SEXP);
 SEXP do_objectsize(SEXP, SEXP, SEXP, SEXP);
 SEXP do_onexit(SEXP, SEXP, SEXP, SEXP);
 SEXP do_optim(SEXP, SEXP, SEXP, SEXP);
@@ -341,8 +339,6 @@ SEXP do_paste(SEXP, SEXP, SEXP, SEXP);
 SEXP do_pathexpand(SEXP, SEXP, SEXP, SEXP);
 SEXP do_pause(SEXP, SEXP, SEXP, SEXP);
 SEXP do_persp(SEXP, SEXP, SEXP, SEXP);
-SEXP do_pgrep(SEXP, SEXP, SEXP, SEXP);
-SEXP do_pgsub(SEXP, SEXP, SEXP, SEXP);
 SEXP do_plot_new(SEXP, SEXP, SEXP, SEXP);
 SEXP do_plot_window(SEXP, SEXP, SEXP, SEXP);
 SEXP do_plot_xy(SEXP, SEXP, SEXP, SEXP);
@@ -352,7 +348,6 @@ SEXP do_polygon(SEXP, SEXP, SEXP, SEXP);
 SEXP do_polyroot(SEXP, SEXP, SEXP, SEXP);
 SEXP do_pos2env(SEXP, SEXP, SEXP, SEXP);
 SEXP do_POSIXlt2D(SEXP, SEXP, SEXP, SEXP);
-SEXP do_pregexpr(SEXP, SEXP, SEXP, SEXP);
 SEXP do_primitive(SEXP, SEXP, SEXP, SEXP);
 SEXP do_printdefault(SEXP, SEXP, SEXP, SEXP);
 SEXP do_printDeferredWarnings(SEXP, SEXP, SEXP, SEXP);
@@ -432,6 +427,7 @@ SEXP do_split(SEXP, SEXP, SEXP, SEXP);
 SEXP do_sprintf(SEXP, SEXP, SEXP, SEXP);
 SEXP do_standardGeneric(SEXP, SEXP, SEXP, SEXP);
 SEXP do_stop(SEXP, SEXP, SEXP, SEXP);
+SEXP do_storage_mode(SEXP, SEXP, SEXP, SEXP);
 SEXP do_strsplit(SEXP,SEXP,SEXP,SEXP);
 SEXP do_strptime(SEXP,SEXP,SEXP,SEXP);
 SEXP do_strtrim(SEXP,SEXP,SEXP,SEXP);
@@ -459,7 +455,6 @@ SEXP do_substrgets(SEXP,SEXP,SEXP,SEXP);
 SEXP do_summary(SEXP, SEXP, SEXP, SEXP);
 SEXP do_surface(SEXP, SEXP, SEXP, SEXP);
 SEXP do_switch(SEXP, SEXP, SEXP, SEXP);
-SEXP do_symbol(SEXP, SEXP, SEXP, SEXP);
 SEXP do_symbols(SEXP, SEXP, SEXP, SEXP);
 SEXP do_sys(SEXP, SEXP, SEXP, SEXP);
 SEXP do_sysgetpid(SEXP, SEXP, SEXP, SEXP);
@@ -474,9 +469,11 @@ SEXP do_title(SEXP, SEXP, SEXP, SEXP);
 SEXP do_tolower(SEXP, SEXP, SEXP, SEXP);
 SEXP do_trace(SEXP, SEXP, SEXP, SEXP);
 SEXP do_transpose(SEXP, SEXP, SEXP, SEXP);
+SEXP do_trunc(SEXP, SEXP, SEXP, SEXP);
 SEXP do_typecvt(SEXP, SEXP, SEXP, SEXP);
 SEXP do_typeof(SEXP, SEXP, SEXP, SEXP);
 SEXP do_unclass(SEXP, SEXP, SEXP, SEXP);
+SEXP do_unlink(SEXP, SEXP, SEXP, SEXP);
 SEXP do_unlist(SEXP, SEXP, SEXP, SEXP);
 SEXP do_unserializeFromConn(SEXP, SEXP, SEXP, SEXP);
 SEXP do_unsetenv(SEXP, SEXP, SEXP, SEXP);
@@ -487,10 +484,10 @@ SEXP do_version(SEXP, SEXP, SEXP, SEXP);
 SEXP do_warning(SEXP, SEXP, SEXP, SEXP);
 SEXP do_while(SEXP, SEXP, SEXP, SEXP);
 SEXP do_writetable(SEXP, SEXP, SEXP, SEXP);
+SEXP do_xspline(SEXP, SEXP, SEXP, SEXP);
 SEXP do_zeroin(SEXP, SEXP, SEXP, SEXP);
+SEXP do_zeroin2(SEXP, SEXP, SEXP, SEXP);
 
-/* SEXP do_getDL(SEXP, SEXP, SEXP, SEXP);
-   SEXP do_getGPar(SEXP, SEXP, SEXP, SEXP); */
 SEXP do_playDL(SEXP, SEXP, SEXP, SEXP);
 SEXP do_setGPar(SEXP, SEXP, SEXP, SEXP);
 SEXP do_getSnapshot(SEXP, SEXP, SEXP, SEXP);
@@ -538,6 +535,7 @@ SEXP do_pushbacklength(SEXP, SEXP, SEXP, SEXP);
 SEXP do_clearpushback(SEXP, SEXP, SEXP, SEXP);
 SEXP do_textconnection(SEXP, SEXP, SEXP, SEXP);
 SEXP do_textconvalue(SEXP, SEXP, SEXP, SEXP);
+SEXP do_getconnection(SEXP, SEXP, SEXP, SEXP);
 SEXP do_getallconnections(SEXP, SEXP, SEXP, SEXP);
 SEXP do_sumconnection(SEXP, SEXP, SEXP, SEXP);
 SEXP do_download(SEXP, SEXP, SEXP, SEXP);

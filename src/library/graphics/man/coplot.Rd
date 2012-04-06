@@ -1,3 +1,8 @@
+% File src/library/graphics/man/coplot.Rd
+% Part of the R package, http://www.R-project.org
+% Copyright 1995-2007 R Core Development Team
+% Distributed under GPL 2 or later
+
 \name{coplot}
 \title{Conditioning Plots}
 \usage{
@@ -88,7 +93,7 @@ co.intervals(x, number = 6, overlap = 0.5)
 }
 \details{
   In the case of a single conditioning variable \code{a}, when both
-  \code{rows} and \code{columns} are unspecified, a \dQuote{close to
+  \code{rows} and \code{columns} are unspecified, a \sQuote{close to
     square} layout is chosen with \code{columns >= rows}.
 
   In the case of multiple \code{rows}, the \emph{order} of the panel

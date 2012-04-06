@@ -1,3 +1,8 @@
+% File src/library/stats/man/poly.Rd
+% Part of the R package, http://www.R-project.org
+% Copyright 1995-2007 R Core Development Team
+% Distributed under GPL 2 or later
+
 \name{poly}
 \alias{poly}
 \alias{polym}
@@ -48,7 +53,7 @@ polym(\dots, degree = 1, raw = FALSE)
   
   The orthogonal polynomial is summarized by the coefficients, which can
   be used to evaluate it via the three-term recursion given in Kennedy
-  \& Gentle (1980, pp. 343--4), and used in the \dQuote{predict} part of
+  \& Gentle (1980, pp. 343--4), and used in the \code{predict} part of
   the code.
 }
 \note{

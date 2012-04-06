@@ -1,3 +1,8 @@
+% File src/library/stats/man/plot.acf.Rd
+% Part of the R package, http://www.R-project.org
+% Copyright 1995-2007 R Core Development Team
+% Distributed under GPL 2 or later
+
 \name{plot.acf}
 \alias{plot.acf}
 \title{Plot Autocovariance and Autocorrelation Functions}
@@ -53,6 +58,8 @@
 \seealso{\code{\link{acf}} which calls \code{plot.acf} by default.
 }
 \examples{
+require(graphics)
+
 %%-- FIXME: use less trivial data :
 z4  <- ts(matrix(rnorm(400), 100, 4), start=c(1961, 1), frequency=12)
 z7  <- ts(matrix(rnorm(700), 100, 7), start=c(1961, 1), frequency=12)

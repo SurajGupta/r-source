@@ -1,3 +1,8 @@
+% File src/library/base/man/Foreign.Rd
+% Part of the R package, http://www.R-project.org
+% Copyright 1995-2007 R Core Development Team
+% Distributed under GPL 2 or later
+
 \name{Foreign}
 \alias{Foreign}
 \alias{.C}
@@ -28,7 +33,7 @@
     \code{\link{NaN}} or \code{\link{Inf}} values in the arguments are
     passed on to the foreign function.  If \code{FALSE}, the presence of
     \code{NA} or \code{NaN} or \code{Inf} values is regarded as an error.}
-  \item{DUP}{if \code{TRUE} then arguments are \dQuote{duplicated} before
+  \item{DUP}{if \code{TRUE} then arguments are duplicated before
     their address is passed to C or Fortran.}
   \item{PACKAGE}{if supplied, confine the search for the \code{name} to
     the DLL given by this argument (plus the conventional extension,
@@ -63,15 +68,14 @@
   compiled code that uses \R objects in the same way as internal
   \R functions.
 
-  \code{.Call} and \code{.Call.graphics} can be used call compiled code
+  \code{.Call} and \code{.Call.graphics} can be used to call compiled code
   which makes use of internal \R objects.  The arguments are passed to
   the C code as a sequence of \R objects.  It is included to provide
   compatibility with S version 4.
 
   For details about how to write code to use with \code{.Call} and
   \code{.External}, see the chapter on \dQuote{System and foreign language
-  interfaces} in \dQuote{Writing \R Extensions} in the \file{doc/manual}
-  subdirectory of the \R source tree.
+    interfaces} in the \dQuote{Writing \R Extensions} manual.
 #ifdef windows
   
   For Windows-specific details on producing the external code, see the
@@ -186,9 +190,9 @@
   Symbol names containing underscores are not valid Fortran 77 (although
   they are valid in Fortran 9x).  Many Fortran 77 compilers (including
   \code{g77}) will allow them but translate them in a different way to
-  names not containing underscores.  As from \R 2.4.0 such names will
-  work with \code{.Fortran}, but portable code should not use Fortran
-  names containing underscores.
+  names not containing underscores.  Such names will work with
+  \code{.Fortran}, but portable code should not use Fortran names
+  containing underscores.
 
   Use \code{.Fortran} with care for compiled Fortran 9x code: it may not
   work if the Fortran 9x compiler used differs from the Fortran compiler

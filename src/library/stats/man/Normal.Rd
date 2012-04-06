@@ -1,3 +1,8 @@
+% File src/library/stats/man/Normal.Rd
+% Part of the R package, http://www.R-project.org
+% Copyright 1995-2007 R Core Development Team
+% Distributed under GPL 2 or later
+
 \name{Normal}
 \alias{Normal}
 \alias{dnorm}
@@ -84,6 +89,8 @@ rnorm(n, mean=0, sd=1)
   Wiley, New York.
 }
 \examples{
+require(graphics)
+
 dnorm(0) == 1/ sqrt(2*pi)
 dnorm(1) == exp(-1/2)/ sqrt(2*pi)
 dnorm(1) == 1/ sqrt(2*pi*exp(1))
@@ -96,7 +103,7 @@ curve(log(dnorm(x)), add=TRUE, col="red",lwd=2)
 mtext("dnorm(x, log=TRUE)", adj=0)
 mtext("log(dnorm(x))", col="red", adj=1)
 
-plot(function(x) pnorm(x, log=TRUE), -50, 10,
+plot(function(x) pnorm(x, log.p=TRUE), -50, 10,
      main = "log { Normal Cumulative }")
 curve(log(pnorm(x)), add=TRUE, col="red",lwd=2)
 mtext("pnorm(x, log=TRUE)", adj=0)

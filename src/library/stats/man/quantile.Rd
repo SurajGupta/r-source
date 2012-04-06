@@ -1,3 +1,8 @@
+% File src/library/stats/man/quantile.Rd
+% Part of the R package, http://www.R-project.org
+% Copyright 1995-2007 R Core Development Team
+% Distributed under GPL 2 or later
+
 \name{quantile}
 \title{Sample Quantiles}
 \alias{quantile}
@@ -119,9 +124,9 @@ quantile(x, \dots)
 }
 \seealso{
   \code{\link{ecdf}} for empirical distributions of which
-  \code{quantile} is the \dQuote{inverse};
+  \code{quantile} is an inverse;
   \code{\link{boxplot.stats}} and \code{\link{fivenum}} for computing
-  \dQuote{versions} of quartiles, etc.
+  other versions of quartiles, etc.
 }
 \examples{
 quantile(x <- rnorm(1001))# Extremes & Quartiles by default

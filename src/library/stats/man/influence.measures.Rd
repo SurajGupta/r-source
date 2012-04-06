@@ -1,3 +1,8 @@
+% File src/library/stats/man/influence.measures.Rd
+% Part of the R package, http://www.R-project.org
+% Copyright 1995-2007 R Core Development Team
+% Distributed under GPL 2 or later
+
 \name{influence.measures}
 \title{Regression Deletion Diagnostics}
 %
@@ -157,6 +162,8 @@ hat(x, intercept = TRUE)
 \seealso{\code{\link{influence}} (containing \code{\link{lm.influence}}).
 }
 \examples{
+require(graphics)
+
 ## Analysis of the life-cycle savings data
 ## given in Belsley, Kuh and Welsch.
 lm.SR <- lm(sr ~ pop15 + pop75 + dpi + ddpi, data = LifeCycleSavings)

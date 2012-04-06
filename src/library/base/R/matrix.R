@@ -1,3 +1,19 @@
+#  File src/library/base/R/matrix.R
+#  Part of the R package, http://www.R-project.org
+#
+#  This program is free software; you can redistribute it and/or modify
+#  it under the terms of the GNU General Public License as published by
+#  the Free Software Foundation; either version 2 of the License, or
+#  (at your option) any later version.
+#
+#  This program is distributed in the hope that it will be useful,
+#  but WITHOUT ANY WARRANTY; without even the implied warranty of
+#  MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
+#  GNU General Public License for more details.
+#
+#  A copy of the GNU General Public License is available at
+#  http://www.r-project.org/Licenses/
+
 matrix <- function(data=NA, nrow=1, ncol=1, byrow=FALSE, dimnames=NULL) {
     data <- as.vector(data)
     if(missing(nrow))
@@ -81,13 +97,13 @@ colnames <- function(x, do.NULL = TRUE, prefix = "col")
 }
 
 row <- function(x, as.factor=FALSE) {
-    if(as.factor) factor(.Internal(row(x)), labels=rownames(x))
-    else .Internal(row(x))
+    if(as.factor) factor(.Internal(row(dim(x))), labels=rownames(x))
+    else .Internal(row(dim(x)))
 }
 
 col <- function(x, as.factor=FALSE) {
-    if(as.factor) factor(.Internal(col(x)), labels=colnames(x))
-    else .Internal(col(x))
+    if(as.factor) factor(.Internal(col(dim(x))), labels=colnames(x))
+    else .Internal(col(dim(x)))
 }
 
 crossprod <- function(x, y=NULL) .Internal(crossprod(x,y))

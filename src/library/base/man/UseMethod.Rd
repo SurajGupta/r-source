@@ -1,3 +1,8 @@
+% File src/library/base/man/UseMethod.Rd
+% Part of the R package, http://www.R-project.org
+% Copyright 1995-2007 R Core Development Team
+% Distributed under GPL 2 or later
+
 \name{UseMethod}
 \title{Class Methods}
 \alias{UseMethod}
@@ -26,10 +31,10 @@ NextMethod(generic = NULL, object = NULL, \dots)
   \item{\dots}{further arguments to be passed to the next method.}
 }
 \details{
-  An \R \dQuote{object} is a data object which has a \code{class}
+  An \R object is a data object which has a \code{class}
   attribute (and this can be tested by \code{\link{is.object}}).
   A class attribute is a character vector giving the names of
-  the classes which the object \dQuote{inherits} from.
+  the classes from which the object \emph{inherits}.
   If the object does not have a class attribute, it has an implicit
   class.  Matrices and arrays have class \code{"matrix"}
   or\code{"array"} followed by the class of the underlying vector.
@@ -81,7 +86,7 @@ NextMethod(generic = NULL, object = NULL, \dots)
   Now for some obscure details that need to appear somewhere.  These
   comments will be slightly different than those in Chambers(1992).
   (See also the draft \sQuote{R Language Definition}.)
-  \code{UseMethod} creates a \dQuote{new} function call with
+  \code{UseMethod} creates a new function call with
   arguments matched as they came in to the generic.  Any local variables
   defined before the call to \code{UseMethod} are retained (unlike S).  Any
   statements after the call to \code{UseMethod} will not be evaluated as
@@ -159,12 +164,6 @@ NextMethod(generic = NULL, object = NULL, \dots)
   This scheme is called \emph{S3} (S version 3).  For new projects,
   it is recommended to use the more flexible and robust \emph{S4} scheme
   provided in the \pkg{methods} package.
-}
-\section{Historical note}{
-  Prior to \R 2.1.0 \code{UseMethod} accepted a call with no arguments
-  and tried to deduce the generic from the context.  This was
-  undocumented on the help page.  It is allowed but
-  \sQuote{strongly discouraged} in S-PLUS, and is no longer allowed in \R.
 }
 \seealso{
   The draft \sQuote{R Language Definition}.

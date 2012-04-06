@@ -1,0 +1,54 @@
+#-*- Makefile -*-
+include ../../gnuwin32/MkRules
+
+all: makeMakedeps DLL implib
+
+CPPFLAGS=-I. -I../../gnuwin32 -I../../include
+DEFS=-DGA_DLL_BUILD -DENABLE_NLS=1
+CPPFLAGS+=$(DEFS)
+CFLAGS=$(OPTFLAGS)
+# gives ICE in gcc 4.3.0
+gimage-CFLAGS=-O2
+image-CFLAGS=-O2
+
+SOURCES=$(wildcard *.c)
+OBJECTS=$(foreach i, $(SOURCES), $(basename $i).o)
+
+DLL: libR.dll.a graphapp.dll
+	@cp graphapp.dll ../../../bin
+
+
+ifeq ($(strip $(USE_IMPLIBS)),YES)
+implib: libgraphapp.dll.a
+	@$(MKDIR) -p ../../../lib
+	@$(CP) libgraphapp.dll.a ../../../lib
+else
+implib:
+endif
+
+libgraphapp.dll.a: graphapp.def
+
+graphapp.def: $(OBJECTS)
+	@$(ECHO) EXPORTS > $@
+	@$(NM) $^ | $(SED) -n 's/^.* [BCDRT] _/ /p' | $(SORT) | uniq >> $@
+
+
+graphapp.dll: $(OBJECTS) dllversion.o
+graphapp-DLLFLAGS=-mwindows
+graphapp-DLLLIBS=-L. -lR -lcomctl32
+
+## need to break mutual dependence with R.dll
+libR.dll.a: R.def
+
+clean:
+	$(RM) *.o *.a graphapp.def *.dll *~ \#*\# *.d Makedeps
+
+# Dependencies
+dllversion.o: ../../include/Rversion.h
+DEPS=$(SOURCES:.c=.d)
+
+makeMakedeps: $(DEPS)
+	@$(RM) Makedeps
+	@cat $(DEPS) >> Makedeps
+
+-include Makedeps

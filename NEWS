@@ -1,9 +1,830 @@
 			Dear Emacs, please make this -*-Text-*- mode!
 	**************************************************
 	*						 *
+	*	       2.6 SERIES NEWS			 *
+	*						 *
+	**************************************************
+
+
+		CHANGES IN R VERSION 2.6.0
+
+
+SIGNIFICANT USER-VISIBLE CHANGES
+
+    o	integrate(), nlm(), nlminb(), optim(), optimize() and uniroot()
+	now have '...' much earlier in their argument list.  This
+	reduces the chances of unintentional partial matching but
+	means that the later arguments must be named in full.
+
+    o	The default type for nchar() is now "chars".  This is almost
+	always what was intended, and differs from the previous default
+	only for non-ASCII strings in a MBCS locale.  There is a new
+	argument 'allowNA', and the default behaviour is now to throw
+	an error on an invalid multibyte string if type="chars" or
+	type="width".
+
+    o	Connections will be closed if there is no R object referring to
+	them.  A warning is issued if this is done, either at garbage
+	collection or if all the connection slots are in use.
+
+
+NEW FEATURES
+
+    o	abs(), sign(), sqrt(), floor(), ceiling(), exp() and the gamma,
+	trig and hyperbolic trig functions now only accept one
+	argument even when dispatching to a Math group method (which
+	may accept more than one argument for other group members).
+
+    o	abbreviate() gains a 'method' argument with a new option
+	"both.sides" which can make shorter abbreviations.
+
+    o	aggregate.data.frame() no longer changes the group variables
+	into factors, and leaves alone the levels of those which are
+	factors.  (Inter alia grants the wish of PR#9666.)
+
+    o	The default 'max.names' in all.names() and all.vars() is now
+	-1 which means unlimited.  This fixes PR#9873.
+
+    o	as.vector() and the default methods of as.character(),
+	as.complex(), as.double(), as.expression(), as.integer(),
+	as.logical() and as.raw() no longer duplicate in most cases
+	where the object is unchanged.  (Beware: some code has been
+	written that invalidly assumes that they do duplicate, often
+	when using .C/.Fortran(DUP=FALSE).)
+
+    o	as.complex(), as.double(), as.integer(), as.logical() and
+	as.raw() are now primitive and internally generic for
+	efficiency. They no longer dispatch on S3 methods for
+	as.vector() (which was never documented).  as.real() and
+	as.numeric() remain as alternative names for as.double().
+
+	expm1(), log(), log1p(), log2(), log10(), gamma(), lgamma(),
+	digamma() and trigamma() are now primitive.  (Note that logb()
+	is not.)
+
+	The Math2 and Summary groups (round, signif, all, any, max, min,
+	summ, prod, range) are now primitive.
+
+	See under METHODS PACKAGE below for some consquences for S4 methods.
+
+    o	apropos() now sorts by name and not by position on the search
+	path.
+
+    o	attr() gains an 'exact = TRUE' argument to disable partial
+	matching.
+
+    o   bxp() now allows 'xlim' to be specified. (PR#9754)
+
+    o	C(f, SAS) now works in the same way as C(f, treatment), etc.
+
+    o	chol() is now generic.
+
+    o	dev2bitmap() has a new option to go via PDF and so allow
+	semi-transparent colours to be used.
+
+    o	dev.interactive() regards devices with the displaylist enabled
+	as interactive, and packages can register the names of their
+	devices as interactive via deviceIsInteractive().
+
+    o	download.packages() and available.packages() (and functions
+	which use them) now support in 'repos' or 'contriburl' either
+	file: plus a general path (including drives on a UNC path on
+	Windows) or a file:/// URL in the same way as url().
+
+    o	dQuote() and sQuote() are more flexible, with rendering
+	controlled by the new option 'useFancyQuotes'.  This includes
+	the ability to have TeX-style rendering and directional quotes
+	(the so-called 'smart quotes') on Windows.  The default is to
+	use directional quotes in UTF-8 locales (as before) and in the
+	Rgui console on Windows (new).
+
+    o	duplicated() and unique() and their methods in base gain an
+	additional argument 'fromLast'.
+    o	fifo() no longer has a default 'description' argument.
+
+	fifo("") is now implemented, and works in the same way as file("").
+
+    o	file.edit() and file.show() now tilde-expand file paths on all
+	interfaces (they used to on some and not others).
+
+    o	The find() argument is now named 'numeric' and not 'numeric.':
+	the latter was needed to avoid warnings about name clashes
+	many years ago, but partial matching was used.
+
+    o	stats:::.getXlevels() confines attention to factors since some
+	users expected R to treat unclass(<a factor>) as a numeric
+	vector.
+
+    o	grep(), strsplit() and friends now warn if incompatible sets
+	of options are used, instead of silently using the documented
+	priority.
+
+    o	gsub()/sub() with perl = TRUE now preserves attributes from the
+        argument x on the result.
+
+    o	is.finite() and is.infinite() are now S3 and S4 generic.
+
+    o	jpeg(), png(), bmp() (Windows), dev2bitmap() and bitmap() have
+	a new argument 'units' to specify the units of 'width' and
+	'height'.
+
+    o	levels() is now generic (levels<- has been for a long time).
+
+    o   Loading serialized raw objects with load() is now considerably
+        faster.
+
+    o	New primitive nzchar() as a faster alternative to
+	nchar(x) > 0 (and avoids having to convert to wide chars in
+	a MBCS locale and hence consider validity).
+
+    o	The way old.packages() and hence update.packages() handle
+	packages with different versions in multiple package
+	repositories has been changed.  The first package encountered
+	was selected, now the one with highest version number.
+
+    o	optim(method = "L-BFGS-B") now accepts zero-length parameters,
+	like the other methods.  Also, method = "SANN" no longer
+	attempts to optimize in this case.
+
+    o	New options 'showWarnCalls' and 'showErrorCalls' to give a
+	concise traceback on warnings and errors.  showErrorCalls=TRUE
+	is the default for non-interactive sessions.  Option
+	'showNCalls' controls how abbreviated the call sequence is.
+
+    o	New options 'warnPartialMatchDollar', 'warnPartialMatchArgs'
+	and 'warnPartialMatchAttr' to help detect the unintended use
+	of partial matching in $, argument matching and attr()
+	respectively.
+
+    o	A device named as a character string in options(device =) is now
+	looked for in the grDevices name space if it is not visible
+	from the global environment.
+
+    o	pmatch(x, y, duplicates.ok = TRUE) now uses hashing and so is
+	much faster for large x and y when most matches are exact.
+
+    o	qr() is now generic.
+
+    o	It is now a warning to have an non-integer object for
+	.Random.seed: this indicates a user had been playing with it,
+	and it has always been documented that users should only save
+	and restore it.
+
+    o	New higher-order functions Reduce(), Filter() and Map().
+
+    o	[g]regexpr() gain an 'ignore.case' argument for consistency with
+	grep().  (This does change the positional matching
+	of arguments, but no instances of positional matching beyond
+	the second were found.)
+
+    o	relist() utility, an S3 generic with several methods, providing
+	an 'inverse' for unlist(); thanks to a code proposal from
+	Andrew Clausen.
+
+    o	require() now returns invisibly.
+
+    o	The interface to reshape() has been revised, allowing some
+        simplified forms that did not work before, and somewhat
+        improved error handling. A new argument 'sep' has been
+        introduced to replace simple usages of 'split' (the old
+        features are retained).
+
+    o	rmultinom() uses a high-precision accumulator where available,
+	and so is more likely to give the same result on different
+	platforms (although it is still possible to get different
+	results, and the result may differ from previous versions of R).
+
+    o	row() and col() now work on matrix-like objects such as data
+	frames, not just matrices.
+
+    o	Rprof() allows smaller values of 'interval' on machines that
+	support it: for example modern Linux systems support
+	interval = 0.001.
+
+    o	sample() now requires its first argument 'x' to be numeric
+	(in the sense of is.numeric()) as well as of length 1 and >= 1
+	before it is regarded as shorthand for 1:x.
+
+    o   sessionInfo() now provides details about package name spaces
+        that are loaded but not attached.  The output of sessionInfo
+        has been improved to make it easier to read when it is
+        inadvertently wrapped after being pasted into an email
+        message.
+
+    o	setRepositories() has a new argument 'ind' to allow selections
+	to be made programmatically.
+
+    o	showMethods() has a "smart" default for 'inherited' such that
+	showMethods(<genfun>, incl = TRUE)  becomes a useful short cut.
+
+    o	sprintf() no longer has a output string length limit.
+
+    o	storage.mode<- is now primitive, and hence makes fewer copies
+	of an object (none if the mode is unchanged).  It is a little
+	less general than mode<-, which remains available.  (See also
+	the entry under DEFUNCT below.)
+
+    o	sweep() gains an argument 'check.margin = TRUE' which warns
+	about mismatched dimensions.
+
+    o   The mathematical annotation facility (plotmath) now recognises
+        a symbol() function which forces the font to be a symbol font.
+        This allows access to all characters in the Adobe Symbol
+        encoding within plotmath expressions.
+
+    o	For OSes that cannot unset environment variables, Sys.unsetenv()
+	sets the value to "", with a warning.
+
+    o   New function Sys.which(), an interface to 'which' on
+	Unix-alikes and an emulation on Windows.
+
+    o	On Unix-alikes, system(, intern = TRUE) reports on very long
+        lines that may be truncated, giving the line number of the
+        content being read.
+
+    o   termplot() has a default for 'ask' that uses dev.interactive().
+
+	It allows 'ylim' to be set, or computed to cover all the
+	plots to be made (the new default) or computed for each plot
+	(the previous default).
+
+    o	uniroot(f, *) is slightly faster for non-trivial f() because it
+	computes f(lower) and f(upper) only once, and it has new optional
+	arguments 'f.lower' and 'f.upper' by which the caller can pass these.
+
+    o	unlink() is now internal, using common POSIX code on all platforms.
+
+    o	unsplit() now works with lists of dataframes.
+
+    o	The vcov() methods for classes "gls" and "nlme" have migrated to
+	package 'nlme'.
+
+    o	vignette() has a new argument 'all' to choose between showing
+    	vignettes in attached packages or in all installed packages.
+
+    o   New function within(), which is like with(), except that it
+        returns modified versions back of lists and data frames.
+
+    o	X11(), postscript() (and hence bitmap()), xfig(), jpeg(), png()
+	and the Windows devices win.print(), win.metafile() and bmp()
+	now warn (once at first use) if semi-transparent colours are
+	used (rather than silently treating them as fully
+	transparent).
+
+    o	New function xspline() to provide base graphics support of
+	X-splines (cf grid.xspline).
+
+    o	New function xyTable() does the 2D gridding "computations" used by
+	sunflowerplot().
+
+
+    o	Rd conversion to HTML and CHM now makes use of classes, which
+	are set in the stylesheets.  Editing R.css will change the
+	styles used for \env, \option, \pkg etc.  (CHM styles are set
+	at compilation time.)
+
+    o	The documented arguments of '%*%' have been changed to be x
+	and y, to match S and the implicit S4 generic.
+
+    o	If members of the Ops group (the arithmetic, logical and
+	comparison operators) and '%*%' are called as functions,
+	e.g. '>'(x, y), positional matching is always used.  (It used
+	to be the case that positional matching was used for the
+	default methods, but names would be matched for S3 and S4
+	methods and in the case of '!' the argument name differed
+	between S3 and S4 methods.)
+
+    o	Imports environments of name spaces are named (as
+	"imports:foo"), and so are known e.g. to environmentName().
+
+    o	Package 'stats4' uses lazy-loading not SaveImage (which is now
+	deprecated).
+
+    o	Installing help for a package now parses the .Rd file only
+	once, rather than once for each type.
+
+    o	PCRE has been updated to version 7.2.
+
+    o	bzip2 has been updated to version 1.0.4.
+
+    o	gettext has been updated to version 0.16.1.
+
+    o   There is now a global CHARSXP cache, R_StringHash.  CHARSXPs
+        are no longer duplicated and must not be modified in place.
+        Developers should strive to only use mkChar (and mkString) for
+        creating new CHARSXPs and avoid use of allocString.  A new
+        macro, CallocCharBuf, can be used to obtain a temporary char
+        buffer for manipulating character data.  This patch was
+        written by Seth Falcon.
+
+    o	The internal equivalents of as.complex, as.double, as.integer
+	and as.logical used to handle length-1 arguments now accept
+	character strings (rather than report that this is
+	'unimplemented').
+
+    o	Lazy-loading a package is now substantially more efficient (in
+	memory saved and load time).
+
+    o	Various performance improvements lead to a 45% reduction
+	in the startup time without 'methods' (and one-sixth with -
+	'methods' now takes 75% of the startup time of a default session).
+
+    o	The [[ subsetting operator now has an argument 'exact' that
+        allows programmers to disable partial matching (which will in
+        due course become the default).  The default value is exact=NA
+        which causes a warning to be issued when partial matching
+        occurs.  When exact = TRUE, no partial matching will be
+        performed.  When exact = FALSE, partial matching can occur and
+        no warning will be issued.  This patch was written by Seth
+        Falcon.
+
+    o	Many of the C-level warning / error messages (e.g. from
+	subscripting) have been re-worked to give more detailed
+	information on either the location or the cause of the
+	problem.
+
+    o	The S3 and S4 Math groups have been harmonized.  Functions
+	log1p(), expm1(), log10() and log2() are members of the S3
+	group, and sign(), log1p(), expm1(), log2(), cummax(),
+	cummin(), digamma(), trigamma() and trunk() are members of the
+	S4 group.  gammaCody() is no longer in the S3 Math group.
+	They are now all primitive.
+
+    o	The initialization of the random-number stream makes use of the
+	sub-second part of the current time where available.
+
+	Initialization of the 1997 Knuth TAOCP generator is now done
+	in R code, avoiding some C code whose licence status has been
+	questioned.
+
+    o	The reporting of syntax errors has been made more user-
+	friendly.
+
+
+METHODS PACKAGE
+
+    o	Packages using 'methods' have to have been installed in R 2.4.0
+	or later (when various internal representations were changed).
+
+    o	Internally generic primitives no longer dispatch S4 methods on
+	S3 objects.
+
+    o	load() and restoring a workspace attempt to detect and warn on
+	the loading of pre-2.4.0 S4 objects.
+
+    o	Making functions primitive changes the semantics of S4
+	dispatch: these no longer dispatch on classes based on types
+	but do dispatch whenever the function in the base name space is
+	called.
+
+	This applies to as.complex(), as.integer(), as.logical(),
+	as.numeric(), as.raw(), expm1(), log(), log1p(), log2(),
+	log10(), gamma(), lgamma(), digamma() and trigamma(), as
+	well as the Math2 and Summary groups.
+
+	Because all members of the group generics are now primitive,
+	they are all S4 generic and setting an S4 group generic does
+	at last apply to all members and not just those already made
+	S4 generic.
+
+	as.double() and as.real() are identical to as.numeric(), and
+	now remain so even if S4 methods are set on any of them.
+	Since 'as.numeric' is the traditional name used in S4,
+	currently methods must be exported from a NAMESPACE for
+	'as.numeric' only.
+
+    o	The S4 generic for '!' has been changed to have signature (x)
+	(was (e1)) to match the documentation and the S3 generic.
+	setMethod() will fix up methods defined for (e1), with a
+	warning.
+
+    o	The "structure" S4 class now has methods that implement the
+        concept of structures as described in the Blue Book--that
+        element-by-element functions and operators leave structure
+        intact unless they change the length.  The informal behavior
+        of R for vectors with attributes was inconsistent.
+
+    o	The implicitGeneric() function and relatives have been added to
+	specify how a function in a package should look when methods are
+	defined for it.  This will be used to ensure that generic versions
+	of functions in R core are consistent.  See ?implicitGeneric.
+
+    o	Error messages generated by some of the functions in the methods
+        package provide the name of the generic to provide more
+        contextual information.
+
+    o	It is now possible to use setGeneric(useAsDefault = FALSE) to
+	define a new generic with the name of a primitive function
+	(but having no connection with the primitive).
+
+
+DEPRECATED & DEFUNCT
+
+    o	$ on an atomic vector now gives a warning that it is 'invalid'.
+	It remains deprecated, but may be removed in R >= 2.7.0.
+
+    o	storage.mode(x) <- "real" and storage.mode(x) <- "single" are
+	defunct: use instead storage.mode(x) <- "double" and
+	mode(x) <- "single".
+
+    o	In package installation, SaveImage: yes is deprecated in
+	favour of LazyLoad: yes.
+
+    o	seemsS4Object (methods package) is deprecated in favour of isS4().
+
+    o	It is planned that [[exact=TRUE]] will become the default in
+	R 2.7.0.
+
+
+UTILITIES
+
+    o	checkS3methods() (invoked by R CMD check) now checks the
+	arguments of methods for primitive members of the S3 group
+	generics.
+
+    o	R CMD check now does a recursive copy on the 'tests' directory.
+
+    o	R CMD check now warns on non-ASCII .Rd files without an
+	\encoding field, rather than just on ones that are definitely
+	not from an ISO-8859 encoding.  This agrees with the
+	long-standing stipulation in 'Writing R Extensions', and
+	catches some packages with UTF-8 man pages.
+
+    o	R CMD check now warns on DESCRIPTION files with a non-portable
+	Encoding field, or with non-ASCII data and no Encoding field.
+
+    o	R CMD check now loads all the 'Suggests' and 'Enhances'
+	dependencies to reduce warnings about non-visible objects, and
+	also emulates standard functions (such as shell()) on
+	alternative R platforms.
+
+    o	R CMD check now (by default) attempts to latex the vignettes
+	rather than just weave and tangle them: this will give a NOTE
+	if there are latex errors.
+
+    o	R CMD check computations no longer ignore Rd \usage entries for
+    	functions for extracting or replacing parts of an object, so S3
+    	methods should use the appropriate \method{} markup.
+
+    o	R CMD check now checks for CR (as well as CRLF) line endings in
+	C/C++/Fortran source files, and for non-LF line endings in
+	Makefile[.in] and Makevars[.in] in the package 'src'
+	directory.  R CMD build will correct non-LF line endings in
+	source files and in the make files mentioned.
+
+    o	Rdconv now warns about unmatched braces rather than silently
+	omitting sections containing them.  (Suggestion by Bill
+	Dunlap, PR#9649)
+
+	Rdconv now renders (rather than ignores) \var{} inside \code{}
+	markup in latex conversion.
+
+	R CMD  Rdconv gains a --encoding argument to set the default
+	encoding for conversions.
+
+    o   The list of CRAN mirrors now has a new (manually maintained)
+        column "OK" which flags mirrors that seem to be OK, only those
+        are used by chooseCRANmirror(). The now exported function
+        getCRANmirrors() can be used to get all known mirrors or only
+        the ones that are OK.
+
+    o	R CMD SHLIB gains arguments --clean and --preclean to clean up
+	intermediate files after and before building.
+
+    o	R CMD config now knows about FC and FCFLAGS (used for F9x
+	compilation).
+
+    o	R CMD Rdconv now does a better job of rendering quotes in
+	titles in HTML, and \sQuote and \dQuote into text on Windows.
+
+
+C-LEVEL FACILITIES
+
+    o	New utility function alloc3DArray similar to allocMatrix.
+
+    o	The entry point R_seemsS4Object in Rinternals.h has not been
+	needed since R 2.4.0 and has been removed.  Use IS_S4_OBJECT
+	instead.
+
+    o	Applications embedding R can use R_getEmbeddingDllInfo() to
+	obtain DllInfo for registering symbols present in the
+	application itself.
+
+    o	The instructions for making and using standalone libRmath have
+	been moved to the R Installation and Administration manual.
+
+    o	CHAR() now returns (const char *) since CHARSXPs should no
+        longer be modified in place.  This change allows compilers to
+        warn or error about improper modification.  Thanks to Herve
+        Pages for the suggestion.
+
+    o	acopy_string is a (provisional) new helper function that
+        copies character data and returns a pointer to memory
+        allocated using R_alloc.  This can be used to create a copy of
+        a string stored in a CHARSXP before passing the data on to a
+        function that modifies its arguments.
+
+    o	asLogical, asInteger, asReal and asComplex now accept STRSXP
+	and CHARSXP arguments, and asChar accepts CHARSXP.
+
+    o	New R_GE_str2col() exported via R_ext/GraphicsEngine.h for
+        external device developers.
+
+    o   doKeybd and doMouseevent are now exported in GraphicsDevice.h.
+
+    o	R_alloc now has first argument of type 'size_t' to support
+	64-bit platforms (e.g. Win64) with a 32-bit 'long' type.
+
+    o	The type of the last two arguments of getMatrixDimnames (non-API
+	but mentioned in R-exts.texi and in Rinternals.h) has been
+	changed to 'const char **' (from char **).
+
+    o	R_FINITE now always resolves to the function call R_finite in
+	packages (rather than sometimes substituting isfinite).  This
+	avoids some issues where R headers are called from C++ code
+	using features tested on the C compiler.
+
+    o	The advice to include R headers from C++ inside extern "C" {}
+	has been changed.  It is nowadays better *not* to wrap the
+	headers, as they include other headers which on some OSes
+	should not be wrapped.
+
+    o	Rinternals.h no longer includes a substantial set of C headers.
+	All but ctype.h and errno.h are included by R.h which is supposed
+	to be used before Rinternals.h.
+
+    o	Including C system headers can be avoided by defining NO_C_HEADERS
+	before including R headers.  This is intended to be used from
+	C++ code, and you will need to include C++ equivalents such as
+	<cmath> before the R headers.
+
+
+INSTALLATION
+
+    o	The 'test-Lapack' test is now part of 'make check'.
+
+    o	The 'stat' system call is now required, along with 'opendir'
+	(which had long been used but not tested for).  ('make check'
+	would have failed in earlier versions without these calls.)
+
+    o	'evince' is now considered as a possible PDF viewer.
+
+    o	'make install-strip' now also strips the DLLs in the standard
+	packages.
+
+    o	Perl 5.8.0 (released in July 2002) or later is now required.
+	(R 2.4.0 and later have in fact required 5.6.1 or later.)
+
+    o	The C function 'finite' is no longer used: we expect a C99
+	compiler which will have 'isfinite'.  (If that is missing, we
+	test separately for NaN, Inf and -Inf.)
+
+    o	A script/executable 'texi2dvi' is now required on Unix-alikes:
+	it is part of the texinfo distribution.
+
+    o	Files texinfo.tex and txi-en.tex are no longer supplied in
+	doc/manual (as the latest versions have an incompatible
+	licence).  You will need to ensure that your texinfo and/or
+	TeX installations supply them.
+
+    o	wcstod is now required for MBCS support.
+
+    o	There are some experimental provisions for building on Cygwin.
+
+
+PACKAGE INSTALLATION
+
+    o	The encoding declared in the DESCRIPTION file is now used as
+	the default encoding for .Rd files.
+
+    o	A standard for specifying package license information in the
+    	DESCRIPTION License field was introduced, see 'Writing R
+    	Extensions'.  In addition, files LICENSE or LICENCE in a package
+    	top-level source directory are now installed (so putting copies
+    	into the 'inst' subdirectory is no longer necessary).
+
+    o	install.packages() on a Unix-alike now updates
+	doc/html/packages.html only if packages are installed to
+	.Library (by that exact name).
+
+    o	R CMD INSTALL --clean now runs SHLIB --clean to do the clean
+	up (unless there is a src/Makefile), and this will remove
+	$(OBJECTS) (which might have been redefined in Makevars).
+
+	R CMD INSTALL --preclean cleans up the sources after a
+	previous installation (as if that had used --clean) before
+	attempting to install.
+
+	R CMD INSTALL will now run R CMD SHLIB in the 'src' directory
+	if src/Makevars is present, even if there are no source files
+	with known extensions.
+
+    o	If there is a file src/Makefile, src/Makevars is now ignored
+	(it could be included by src/Makefile if desired), and it is
+	preceded by etc/Makeconf rather than share/make/shlib.mk.
+	Thus the makefiles read are R_HOME/etc/Makeconf, src/Makefile
+	in the package and then any personal Makevars files.
+
+    o	R CMD SHLIB used to support the use of 'OBJS' in Makevars, but
+	this was changed to 'OBJECTS' in 2001.  The undocumented
+	alternative of 'OBJS' has finally been removed.
+
+    o   R CMD check no longer issues a warning about no data sets
+        being present if a lazyload db is found (as determined by the
+        presence of Rdata.rdb, Rdata.rds, and Rdata.rdx in the 'data'
+        subdirectory.
+
+
+BUG FIXES
+
+    o	charmatch() and pmatch() used to accept non-integer values for
+	'nomatch' even though the return value was documented to be
+	integer.  Now 'nomatch' is coerced to integer (rather than the
+	result being coerced to the type of 'nomatch').
+
+    o	match.call() no longer 'works' outside a function unless
+	'definition' is supplied.  (Under some circumstances it used
+	to 'work', matching itself.)
+
+    o	The formula methods of boxplot, cdplot, pairs and spineplot
+	now attach 'stats' so that model.frame() is visible where
+	they evaluate it.
+
+    o	Date-time objects are no longer regarded as numeric by
+	is.numeric().
+
+    o	methods("Math") did not work if 'methods' was not attached.
+
+    o	readChar() read an extra empty item (or more than one) beyond
+	the end of the source; in some conditions it would terminate
+	early when reading an item of length 0.
+
+    o   Added a promise evaluation stack so interrupted promise
+        evaluations can be restarted.
+
+    o	R.version[1:10] now nicely prints.
+
+    o	In the methods package, prototypes are now inherited for the
+	.Data "slot"; i.e., for classes that contain one of the basic
+	data types.
+
+    o	<data frame>[[i, j]] now works if 'i' is character.
+
+    o	write.dcf() no longer writes NA fields (PR#9796), and works
+	correctly on empty descriptions.
+
+    o	pbeta(x, log.p = TRUE) now has improved accuracy in many cases,
+	and so have functions depending on it such as pt(), pf() and
+	pbinom().
+
+    o	mle() had problems with the L-BFGS-B in the no-parameter case
+	and consequentially also when profiling 1-parameter models
+	(fix thanks to Ben Bolker).
+
+    o	Two bugs fixed in methods that in involve the "..." argument in
+	the generic function: previously failed to catch methods that
+	just dropped the "..."; and use of callGeneric() with no arguments
+	failed in some circumstances when "..." was a formal argument.
+
+    o	sequence() now behaves more reasonably, although not
+	back-compatibly for zero or negative input.
+
+    o	nls() now allows more peculiar but reasonable ways of being called,
+	e.g., with data=list(<uneven lengths>) or a model without variables.
+
+    o	match.arg() was not behaving as documented when
+	several.ok=TRUE (PR#9859), gave spurious warnings when 'arg'
+	had the wrong length and was incorrectly documented (exact
+	matches are returned even when there is more than one partial
+	match).
+
+    o   The data.frame method for split<-() was broken.
+
+    o	The test for -D__NO_MATH_INLINES was badly broken and returned
+	true on all non-glibc platforms and false on all glibc ones
+	(whether they were broken or not).
+
+    o	LF was missing after the last prompt when --quiet was used without
+	--slave. Use --slave when no final LF is desired.
+
+    o   Fixed bug in initialisation code in 'grid' package for
+        determining the boundaries of shapes.  Problem reported
+        by Hadley Wickham;  symptom was error message:
+        "Polygon edge not found".
+
+    o	str() is no longer slow for large POSIXct objects.  Its output
+	is also slightly more compact for such objects; implementation
+	via new optional argument 'give.head'.
+
+    o	strsplit(*, fixed=TRUE), potentially iconv() and internal string
+	formatting is now faster for large strings, thanks to report
+	PR#9902 by John Brzustowski.
+
+    o	de.restore() gave a spurious warning for matrices (Ben Bolker)
+    
+    o	plot(fn, xlim=c(a,b)) would not set "from" and "to" properly
+	when plotting a function.  The argument lists to curve() and
+	plot.function() have been modified slightly as part of the
+	fix.
+
+    o	julian() was documented to work with POSIXt origins, but did
+	not work with POSIXlt ones.  (PR#9908)
+
+    o   Dataset HairEyeColor has been corrected to agree with
+	Friendly (2000): the change involves the breakdown of the
+	Brown hair / Brown eye cell by Sex, and only totals over Sex
+	are given in the original source.
+
+    o   Trailing spaces are now consistently stripped from \alias{}
+	entries in .Rd files, and this is now documented.  (PR#9915)
+
+    o	.find.packages(), packageDescription() and sessionInfo()
+	assumed that attached environments named "package:foo" were
+	package environments, although misguided users could use such
+	a name in attach().
+	
+    o	spline() and splinefun() with method = "periodic" could return
+    	incorrect results when length(x) was 2 or 3.
+    	
+    o	getS3method() could fail if the method name contained a regexp
+    	metacharacter such as "+".
+    	
+    o	help(<a character vector>) now uses the name and not the
+	value of the vector unless it has length exactly one, so
+	e.g. help(letters) now gives help on 'letters'.
+	(Related to PR#9927)
+
+    o	Ranges in chartr() now work better in CJK locales, thanks to
+	Ei-ji Nakama.
+
+
+
+
+	**************************************************
+	*						 *
 	*	       2.5 SERIES NEWS			 *
 	*						 *
 	**************************************************
+
+
+		CHANGES IN R VERSION 2.5.1 patched
+
+INSTALLATION
+
+    o	doc/manual now includes the texinfo support file epsf.tex which
+	basic TeX installations often omit.
+
+
+BUG FIXES
+
+    o   Attempting to do in-memory serialization of an object requiring
+	more than 1Gb might have failed.
+
+    o   Using formals<- on a function whose body was NULL worked
+	incorrectly.  (PR#9758)
+
+    o   logb() is now strictly a wrapper for log(), so if S4 methods
+	are set on log(), logb() will also dispatch on them.
+
+    o	conflicts(where=) did not work correctly. (PR#9760)
+
+    o	log(x, base) was intended to handle complex 'base' even for
+	real 'x', but there was a typo in the code to do so.
+
+    o	Syntax errors would sometimes misreport the error context.
+
+    o	qt(p, df=1) is now also correct for very small p. (PR#9804)
+	qt(p, df=2) ditto; also is more accurate for  0 < |p - 0.5| << 1.
+	qt(*, log.p=TRUE) now is finite and monotone (again!) where possible.
+
+    o	Several functions including those making use of printCoefmat(),
+	layout() and sortedXyData() now work correctly with
+	non-default settings of options("OutDec").
+
+    o	S4 method dispatch for group generics (and %*%) failed to pass
+	arguments to methods as promises and so in some circumstances
+	methods could change their arguments.  (Seen for the 'Math'
+	group with package Matrix.)
+
+    o	The print() method for "ts" now handles quarterly and monthly
+	series which do not start at the beginning of a quarter or
+	month respectively.
+
+    o	Deserializing raw objects saved using save(..., ascii=TRUE)
+        now works correctly.
+
+    o	ISOLatin7 encoding for postscript/PDF has been corrected.
+	(PR#9845)
+
+    o	rbind(x,y) and cbind(x,y) did not dispatch properly when x and
+    	y had multiple S3-style classes.
+
+    o	The workaround for seeking on > 2Gb files did not work correctly
+	on Unix-alike 32-bit systems.  (PR#9883)
+
+    o	We had identical(NaN, NA_real_) != identical(NA_real_, NaN),
+	spotted by Petr Savicky.
+
 
 
 		CHANGES IN R VERSION 2.5.1
@@ -202,7 +1023,7 @@ BUG FIXES
     o   [g]sub could confuse a trailing byte '\' for a backreference
 	in MBCSs where '\' can occur as a trailing byte (not UTF-8 nor
 	EUC-JP, but SJIS and the CJK character sets used on Windows).
-	(PR#9751) 
+	(PR#9751)
 
 
 
@@ -1009,7 +1830,7 @@ BUG FIXES
 	would not find show() for use on S4 objects, and did not have
 	the same search path (for show(), print() and print() methods)
 	as auto-printing.  Also, auto-printing and print() of S4
-	objects would fail to find 'show' if the methods namespace was
+	objects would fail to find 'show' if the methods name space was
 	loaded but the package was not attached (or otherwise not in
 	the search path).
 
@@ -1218,7 +2039,7 @@ BUG FIXES
 	Extra RPMS (PR#9339, Justin Harrington, analysis and fix from Bill
 	Dunlap).
 
-    o	Namespaces restored via a saved session silently failed to cache
+    o	Name spaces restored via a saved session silently failed to cache
 	their methods because the methods package was not yet
 	attached.  Fixed by attaching methods before restoring data.
 
@@ -1341,7 +2162,7 @@ USER-VISIBLE CHANGES
 	software, which might use the # character inside fields, but
 	are unlikely to use it for comments.)
 
-    o	The bindings in the base environment/namespace (currently the
+    o	The bindings in the base environment/name space (currently the
 	same thing) are now locked.  This means that the values of
 	base functions cannot be changed except via
 	assignInNamespace() and similar tricks.
@@ -1868,7 +2689,7 @@ UTILITIES
 	  (syntactically) valid CITATION metadata.
 
 	- tests that the package can be loaded, and that the package
-	  and namespace (if there is one) can each be loaded in
+	  and name space (if there is one) can each be loaded in
 	  startup code (before the standard packages are loaded).
 
 	- tests for empty 'exec' or 'inst' directories.
@@ -2006,7 +2827,7 @@ BUG FIXES
 	Now window() must be used.
 
     o	Function AIC() in package 'stats4' was not dispatching correctly
-	on S4 classes via logLik() because of namespace issues.
+	on S4 classes via logLik() because of name space issues.
 
     o	Subsetting LANGSXPs could break the call-by-value illusion.
 	(PR#7924) (patch from Kevin Hendricks).
@@ -2903,7 +3724,7 @@ DEPRECATED & DEFUNCT
 	of plot(), points() and lines().
 
     o	nlsMethod() and profiler() are no longer exported from the stats
-	namespace (and nlsMethod.plinear() is no longer registered as
+	name space (and nlsMethod.plinear() is no longer registered as
 	a method, as nlsMethod() was not generic).
 
     o	The re-named tcltk functions tkcmd, tkfile.tail, tkfile.dir,
@@ -3453,7 +4274,7 @@ BUG FIXES
 	to converge in 'maxiter' steps.	 (PR#8751)
 
     o	eapply() (and as.list.environment()) did not work for the base
-	environment/namespace.  (PR#8761)
+	environment/name space.  (PR#8761)
 
     o	Added protection in configure against systems for which using
 	xmkmf fails to report a C or C++ compiler.
@@ -3949,7 +4770,7 @@ NEW FEATURES
     o	library() now explicitly checks for the existence of
 	directories in 'lib.loc': this avoids some warning messages.
 
-    o	loadNamespace(keep.source=) now applies only to that namespace
+    o	loadNamespace(keep.source=) now applies only to that name space
 	and not others it might load to satisfy imports: this is now
 	consistent with library().
 
@@ -4262,12 +5083,12 @@ UTILITIES
 
     o	checkFF() used by R CMD check has since R 2.0.0 not reported
 	missing PACKAGE arguments when testing installed packages with
-	namespaces.  It now
+	name spaces.  It now
 
 	- treats installed and source packages in the same way.
 
 	- reports missing arguments unless they are in a function in
-	  the namespace with a useDynLib declaration (as the
+	  the name space with a useDynLib declaration (as the
 	  appropriate DLL for such calls can be searched for).
 
     o	Rd2dvi sets the encoding(s) used appropriately.	 If UTF-8
@@ -4286,8 +5107,8 @@ C-LEVEL FACILITIES
 	rather than as SEXPs.  (Wish of Keith Frost, PR#7853)
 
     o	The search for symbols in a .C/.Call/... call without a
-	package argument now searches for an enclosing namespace and
-	so finds functions defined within functions in a namespace.
+	package argument now searches for an enclosing name space and
+	so finds functions defined within functions in a name space.
 
     o	R_max_col() has new (5th) argument '*ties_meth' allowing
 	non-random behavior in the case of ties.
@@ -4382,7 +5203,7 @@ BUG FIXES
 	by Berwin Turlach.
 
     o	library(keep.source=) was ignored if the package had a
-	namespace (the setting of options("keep.source.pkgs") was
+	name space (the setting of options("keep.source.pkgs") was
 	always used).
 
     o	hist.POSIXct() and hist.Date() now respect par("xaxt").
@@ -4782,7 +5603,7 @@ BUG FIXES
     o	getCallingDLL()'s default first argument did not correspond to
 	its description and has been changed.  The mismatch caused
 	symbols in .C/.Call/.Fortran calls without a PACKAGE= argument
-	to be potentially looked up in the wrong namespace.
+	to be potentially looked up in the wrong name space.
 
     o	Binary save() of raw vectors was not working correctly on
 	big-endian platforms.  (PR#7812)
@@ -5602,7 +6423,7 @@ BUG FIXES
     o	Collected warnings had messages with unneeded trailing space.
 
     o	S4 methods for primitive functions must be exported from
-	namespaces; this is now done automatically.
+	name spaces; this is now done automatically.
 	Note that is.primitive() is now in "base", not "methods".
 
     o	Package grid:
@@ -5980,7 +6801,7 @@ BUG FIXES
 
     o	dlogis() gave NaN not 0 for large negative arguments.
 
-    o	Importing from another namespace was broken for versioned
+    o	Importing from another name space was broken for versioned
 	installs, incorrectly reporting something like
 	"package 'imported_from' does not have a name space".
 

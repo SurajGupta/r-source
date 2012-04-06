@@ -1,3 +1,19 @@
+#  File src/library/stats/R/spline.R
+#  Part of the R package, http://www.R-project.org
+#
+#  This program is free software; you can redistribute it and/or modify
+#  it under the terms of the GNU General Public License as published by
+#  the Free Software Foundation; either version 2 of the License, or
+#  (at your option) any later version.
+#
+#  This program is distributed in the hope that it will be useful,
+#  but WITHOUT ANY WARRANTY; without even the implied warranty of
+#  MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
+#  GNU General Public License for more details.
+#
+#  A copy of the GNU General Public License is available at
+#  http://www.r-project.org/Licenses/
+
 #### 'spline' and 'splinefun' are very similar --- keep in sync!
 ####  also consider ``compatibility'' with  'approx' and 'approxfun'
 
@@ -46,7 +62,7 @@ spline <-
 	    c=double(nx),
 	    d=double(nx),
 	    e=double(if(method == 1) nx else 0),
-	    PACKAGE="base")
+	    PACKAGE="stats")
     u <- seq(xmin, xmax, length.out=n)
 
     .C("spline_eval",
@@ -60,5 +76,5 @@ spline <-
        z$b,
        z$c,
        z$d,
-       PACKAGE="base")[c("x","y")]
+       PACKAGE="stats")[c("x","y")]
 }

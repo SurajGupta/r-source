@@ -1,3 +1,8 @@
+% File src/library/datasets/man/Puromycin.Rd
+% Part of the R package, http://www.R-project.org
+% Copyright 1995-2007 R Core Development Team
+% Distributed under GPL 2 or later
+
 \name{Puromycin}
 \docType{data}
 \alias{Puromycin}
@@ -25,11 +30,11 @@
   }
 }
 \details{
-  Data on the \dQuote{velocity} of an enzymatic reaction were obtained
+  Data on the velocity of an enzymatic reaction were obtained
   by Treloar (1974).  The number of counts per minute of radioactive
   product from the reaction was measured as a function of substrate
   concentration in parts per million (ppm) and from these counts the
-  initial rate, or \dQuote{velocity,} of the reaction was calculated
+  initial rate (or velocity) of the reaction was calculated
   (counts/min/min).  The experiment was conducted once with the enzyme
   treated with Puromycin, and once with the enzyme untreated.
 }
@@ -43,6 +48,7 @@
   Toronto. 
 }
 \examples{
+require(stats); require(graphics)
 plot(rate ~ conc, data = Puromycin, las = 1,
      xlab = "Substrate concentration (ppm)",
      ylab = "Reaction velocity (counts/min/min)",

@@ -1,3 +1,8 @@
+% File src/library/base/man/Sys.getenv.Rd
+% Part of the R package, http://www.R-project.org
+% Copyright 1995-2007 R Core Development Team
+% Distributed under GPL 2 or later
+
 \name{Sys.getenv}
 \title{Get Environment Variables}
 \usage{
@@ -34,7 +39,7 @@ Sys.getenv(x = NULL, unset = "")
 }
 \seealso{
   \code{\link{Sys.putenv}},
-  \code{\link{Sys.getlocale}} for the locale \dQuote{environment},
+  \code{\link{Sys.getlocale}} for the locale in use,
   \code{\link{getwd}} for the working directory.
 }
 \examples{

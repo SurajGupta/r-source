@@ -1,3 +1,19 @@
+#  File src/library/base/R/mode.R
+#  Part of the R package, http://www.R-project.org
+#
+#  This program is free software; you can redistribute it and/or modify
+#  it under the terms of the GNU General Public License as published by
+#  the Free Software Foundation; either version 2 of the License, or
+#  (at your option) any later version.
+#
+#  This program is distributed in the hope that it will be useful,
+#  but WITHOUT ANY WARRANTY; without even the implied warranty of
+#  MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
+#  GNU General Public License for more details.
+#
+#  A copy of the GNU General Public License is available at
+#  http://www.r-project.org/Licenses/
+
 mode <- function(x) {
     if(is.expression(x)) return("expression")
     if(is.call(x))
@@ -13,12 +29,10 @@ mode <- function(x) {
 	   tx)
 }
 
-"storage.mode<-" <-function(x, value)
+`mode<-` <- function(x, value)
 {
     if (storage.mode(x) == value) return(x)
     if(is.factor(x)) stop("invalid to change the storage mode of a factor")
-    if(value == "single")
-        warning('use of storage.mode(x) <- "single" is deprecated: use mode<- instead', domain=NA, call.=FALSE)
     mde <- paste("as.",value,sep="")
     atr <- attributes(x)
     isSingle <- !is.null(attr(x, "Csingle"))
@@ -31,23 +45,10 @@ mode <- function(x) {
     x
 }
 
-"mode<-" <- function(x, value)
-{
-    if (storage.mode(x) == value) return(x)
-    if(is.factor(x)) stop("invalid to change the storage mode of a factor")
-    mde <- paste("as.",value,sep="")
-    atr <- attributes(x)
-    isSingle <- !is.null(attr(x, "Csingle"))
-    setSingle <- value == "single"
-    x <- eval(call(mde,x), parent.frame())
-    attributes(x) <- atr
-    ## this avoids one copy
-    if(setSingle != isSingle)
-        attr(x, "Csingle") <- if(setSingle) TRUE # else NULL
-    x
-}
-storage.mode <- function(x) {
-    x <- typeof(x)
-    if (x == "closure" || x == "builtin" || x == "special") return("function")
-    x
-}
+storage.mode <- function(x)
+    switch(tx <- typeof(x),
+	   closure=, builtin=, special= "function",
+	   ## otherwise
+	   tx)
+
+### storage.mode<- is primitive as from R 2.6.0

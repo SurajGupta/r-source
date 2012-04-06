@@ -1,9 +1,14 @@
+% File src/library/stats/man/birthday.Rd
+% Part of the R package, http://www.R-project.org
+% Copyright 1995-2007 R Core Development Team
+% Distributed under GPL 2 or later
+
 \name{birthday}
 \alias{qbirthday}
 \alias{pbirthday}
 \title{Probability of coincidences}
 \description{
-  Computes approximate answers to a generalised \dQuote{birthday paradox}
+  Computes approximate answers to a generalised \emph{birthday paradox}
   problem. \code{pbirthday} computes the probability of a coincidence
   and \code{qbirthday} computes the number of observations needed to
   have a specified probability of coincidence.
@@ -41,6 +46,8 @@ pbirthday(n, classes = 365, coincident = 2)
   Diaconis P, Mosteller F., \dQuote{Methods for studying coincidences}.
   JASA 84:853-861}
 \examples{
+require(graphics)
+
  ## the standard version
 qbirthday()
  ## same 4-digit PIN number

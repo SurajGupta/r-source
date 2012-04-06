@@ -11,10 +11,8 @@
 # MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.	See the GNU
 # General Public License for more details.
 #
-# A copy of the GNU General Public License is available via WWW at
-# http://www.gnu.org/copyleft/gpl.html.	 You can also obtain it by
-# writing to the Free Software Foundation, Inc., 51 Franklin Street,
-# Fifth Floor, Boston, MA 02110-1301  USA.
+# A copy of the GNU General Public License is available at
+# http://www.r-project.org/Licenses/
 
 # Send any bug reports to r-bugs@r-project.org
 
@@ -25,7 +23,7 @@ use Getopt::Long;
 use R::Dcf;
 use R::Utils;
 
-my $revision = ' $Rev: 42057 $ ';
+my $revision = ' $Rev: 42655 $ ';
 my $version;
 my $name;
 $revision =~ / ([\d\.]*) /;
@@ -74,7 +72,7 @@ sub Cleanup {
 }
 
 my @knownoptions = ("help|h", "version|v", "debug|d", "library|l:s",
-		    "clean|c", "docs:s",
+		    "clean|c", "preclean", "docs:s",
 		    "with-package-versions",
 		    "use-zip", "use-zip-data", "use-zip-help",
 		    "auto-zip", "build", "fake", "unsafe");
@@ -122,14 +120,15 @@ if($opt_library){
     # remove quotes around the library path
     $opt_library =~ s/^['"]//; $opt_library =~ s/['"]$//; #'"
     chdir($opt_library) ||
-	die "Error: cannot change to library directory \$opt_library'\n";
+	die "Error: cannot change to library directory '$opt_library'\n";
     $library = cwd();
     $library = Win32::GetShortPathName($library) if $library =~ / /;
     my $R_LIBS = $ENV{'R_LIBS'};
     $ENV{'R_LIBS'} = join(";", $library, $R_LIBS);
     chdir($startdir);
 } else {
-    my @out = R_runR("cat('\n~~~', .libPaths()[1], '\n', sep = '')", "--slave");
+    my @out = R_runR("cat('\n~~~', .libPaths()[1], '\n', sep = '')",
+		     "--no-restore --slave");
     foreach $f (@out) {
 	if($f =~ /^~~~/) {
 	    $library = $f;
@@ -150,7 +149,7 @@ if($opt_docs) {
 	$helpflags = "HELP=NO";
     } elsif ($opt_docs eq "normal") {
 	$helpflags = "HELP=YES WINHELP=NO";
-    } elsif ($opt_docs eq "chm"|| ($opt_docs eq "all")) {
+    } elsif ($opt_docs eq "all") {
 	$helpflags = "HELP=YES WINHELP=CHM";
     } elsif ($opt_docs =~ /,/) {
 	@l = split /, */, $opt_docs;
@@ -163,11 +162,13 @@ if($opt_docs) {
 	    $tmp .= " -$f";
 	}
 	$helpflags = "HELP=YES WINHELP=$chm HELPTYPES='$tmp'";
-    } elsif ($opt_docs eq "txt"|| ($opt_docs eq "html")
-	     || ($opt_docs eq "latex")|| ($opt_docs eq "example")) {
-	$helpflags = "HELP=YES WINHELP=$chm HELPTYPES=-$opt_docs";
+    } elsif ($opt_docs eq "txt"|| $opt_docs eq "html"
+	     || $opt_docs eq "latex" || $opt_docs eq "example") {
+	$helpflags = "HELP=YES WINHELP=NO HELPTYPES=-$opt_docs";
+    } elsif ($opt_docs eq "chm") {
+	$helpflags = "HELP=YES WINHELP=CHM HELPTYPES=";
     } else {
-	die "ERROR: invalid --docs value `$opt_docs'\n";
+	die "ERROR: invalid --docs value '$opt_docs'\n";
     }
 }
 
@@ -191,7 +192,13 @@ foreach $pkg (@ARGV){
     $is_bundle = 0;
 
     if (!(-e $pkg)) {
-	warn "`$pkg' does not exist: skipping\n";
+	warn "'$pkg' does not exist: skipping\n";
+	next;
+    }
+
+## is someone trying to install a Windows binary package
+    if($pkgname =~ /\.zip$/) {
+	warn "'$pkg':Windows binary packages in zipfiles are not supported: skipping\n";
 	next;
     }
 
@@ -214,7 +221,7 @@ foreach $pkg (@ARGV){
 	$istar = 1;
     }
 
-    chdir($pkg) || die "Error: cannot change to directory \`$pkg'\n";;
+    chdir($pkg) || die "Error: cannot change to directory '$pkg'\n";;
     my $canonpkg = cwd();
     $pkgname = basename($canonpkg);
     chdir("..");
@@ -256,56 +263,30 @@ foreach $pkg (@ARGV){
     my $zippkgs = $pkgname;
     @bundlepkgs = ($pkgname);
     if($description->{"Contains"}) {
-	print "\nLooks like \`${pkg}' is a package bundle\n";
+	print "\nLooks like '${pkg}' is a package bundle\n";
 	$is_bundle = 1;
 	@bundlepkgs = split(/\s+/, $description->{"Contains"});
+	foreach $ppkg (@bundlepkgs) {
+	    die "ERROR: package $pkg/$ppkg does not exist\n" unless -d "$pkg/$ppkg";
+	}
 	$zippkgs = join(" ", @bundlepkgs);
 	## join up description files
-	foreach $ppkg (@bundlepkgs) {
-	    open pkgdesc, "> $pkg/$ppkg/DESCRIPTION"
-		|| die "cannot write $ppkg/DESCRIPTION";
-	    if (open pkgdescin, "< $pkg/$ppkg/DESCRIPTION.in") {
-		## the Unix version of INSTALL does discard blank lines,
-		## although ?read.dcf does not allow them. 
-		while(<pkgdescin>) {
-		    ## this is to cope with possibly missing final NL
-		    chomp;
-		    print pkgdesc "$_\n" if $_ =~ /\S/; 
-		}
-		close pkgdescin;
-	    } else {
-		print "no DESCRIPTION.in found for package $ppkg\n";
-		print pkgdesc "Package: $ppkg\n";
-	    }
-	    open bundledesc, "< $pkg/DESCRIPTION"
-		|| die "no DESCRIPTION found for bundle";
-	    while(<bundledesc>) {print pkgdesc $_;}
-	    close bundledesc;
-	    close pkgdesc;
-	}
+	R_runR("tools:::.vcreate_bundle_package_descriptions('${pkg}')",
+	       "--vanilla", "R_DEFAULT_PACKAGES=NULL LC_ALL=C");
 	$pkgdir .= "/$pkgname";
 	$intname = $description->{"Bundle"};
     }
     print "\n";
 
     if($description->{"Depends"}) {
-	my $depends = $description->{"Depends"};
-	if($depends =~ /\bR *\(([^\) ]+) *([^\) ]+)\)/) { # regexp from check
-            my $op = $1;
-            my $ver = $2;
-	    ## <FIXME> This thinks 1.9.1 > 1.10.0 </FIXME>
-	    if ($op eq ">=" && $ver) {
-		die "This R is version $Rversion\n".
-		    "    package \`$pkgname' requires R $ver or later\n"
-			unless $Rversion ge $ver;
-	    } elsif ($op eq "<=" && $ver) {
-		die "This R is version $Rversion\n".
-		    "     package \`$pkgname' requires R $ver or earlier\n"
-			unless $Rversion le $ver;
-	    } else {
-		printf "unsupported operator in dependence \"$depends\"\n";
-	    }
-        }
+	my %result = R_run_R("options(warn=1); tools:::.test_package_depends_R_version('$pkg')",
+			     "--vanilla --slave",
+			     "R_DEFAULT_PACKAGES=NULL LC_ALL=C");
+	if($result{"status"}) {
+	    my @out = grep(!/^\>/, @{$result{"out"}});
+	    print join("\n", @out) . "\n\n";
+	    next;
+	}
     }
     ## Now we are ready to install
     if($safe) {
@@ -336,6 +317,7 @@ foreach $pkg (@ARGV){
 	$dpkg = $library. "/" . $decpkgname;
 	# if exists, move existing installation to $lockdir
 	system("mv $dpkg $lockdir") if ($safe && -d $dpkg);
+	system("make --no-print-directory -C $R_HOME/src/gnuwin32 PKGDIR=$pkgdir RLIB=$library pkgclean-$pkgname") if ($opt_preclean);
 
 	$description = new R::Dcf("$pkgdir/$pkgname/DESCRIPTION");
 
@@ -348,6 +330,7 @@ foreach $pkg (@ARGV){
 	my $lazyload = -1;
 	my $tmp = parse_description_field("LazyLoad");
 	$lazyload = $tmp if($tmp >= 0);
+	warn "WARNING: true value of 'SaveImage' is deprecated in favour of 'LazyLoad: true'\n" if ($save eq "true");
 
 	my $lazydata = 0;
 	my $tmp = parse_description_field("LazyData");
@@ -375,7 +358,7 @@ foreach $pkg (@ARGV){
 			$line =~ s/\s*[0-9]+\ //;
 			$line =~ s/\.[a-zA-Z]+$//;
 			$nodups = 0 if $line eq $prev;
-			$prev = $_;
+			$prev = $line;
 		    }
 		}
 		# print ("out was $out, nodups was $nodups\n");
@@ -510,10 +493,9 @@ Then optionally pack the installed package into a zip file.
 Options:
   -h, --help		print short help message and exit
   -v, --version		print version info and exit
-  -c, --clean		remove all files created during installation
+  -c, --clean		remove files created during installation
+  --preclean		remove files created during a previous run
 
-  --fake		do minimal install for testing purposes
-  --unsafe		install on top of any existing installation
   -d, --debug		[x] turn on shell and build-help debugging
   -l, --library=LIB	install packages to library tree LIB
   --docs=TYPE	        type(s) of documentation to build and install
@@ -521,13 +503,15 @@ Options:
 			allow for multiple versions of the same package
   --use-zip-data	collect data files in zip archive
   --use-zip-help	collect help and examples into zip archives
-  --use-zip		combine \'--use-zip-data\' and \'--use-zip-help\'
+  --use-zip		combine '--use-zip-data' and '--use-zip-help'
   --auto-zip	        select whether to zip automatically
+  --fake		do minimal install for testing purposes
+  --unsafe		install on top of any existing installation
   --build		zip-up the installation.  Implies --auto-zip
 
 
-TYPE can be "none" or "normal" or "chm" (the default) or "all", or
-  a comma-separated list of one or more of 
+TYPE can be "none" or "normal" (everything but chm), or "all" (the default),
+  or a comma-separated list of one or more of 
   'txt', 'html', 'latex', "example' and 'chm'.
 
 Report bugs to <r-bugs\@r-project.org>.

@@ -15,8 +15,8 @@
  *  GNU General Public License for more details.
  *
  *  You should have received a copy of the GNU General Public License
- *  along with this program; if not, write to the Free Software
- *  Foundation, Inc., 51 Franklin Street Fifth Floor, Boston, MA 02110-1301  USA
+ *  along with this program; if not, a copy is available at
+ *  http://www.r-project.org/Licenses/
  */
 
 #ifdef HAVE_CONFIG_H
@@ -85,30 +85,30 @@ SEXP attribute_hidden do_fmin(SEXP call, SEXP op, SEXP args, SEXP rho)
 
     v = CAR(args);
     if (!isFunction(v))
-	errorcall(call, _("attempt to minimize non-function"));
+	error(_("attempt to minimize non-function"));
     args = CDR(args);
 
     /* xmin */
 
     xmin = asReal(CAR(args));
     if (!R_FINITE(xmin))
-	errorcall(call, _("invalid '%s' value"), "xmin");
+	error(_("invalid '%s' value"), "xmin");
     args = CDR(args);
 
     /* xmax */
 
     xmax = asReal(CAR(args));
     if (!R_FINITE(xmax))
-	errorcall(call, _("invalid '%s' value"), "xmax");
+	error(_("invalid '%s' value"), "xmax");
     if (xmin >= xmax)
-	errorcall(call, _("'xmin' not less than 'xmax'"));
+	error(_("'xmin' not less than 'xmax'"));
     args = CDR(args);
 
     /* tol */
 
     tol = asReal(CAR(args));
     if (!R_FINITE(tol) || tol <= 0.0)
-	errorcall(call, _("invalid '%s' value"), "tol");
+	error(_("invalid '%s' value"), "tol");
 
     info.R_env = rho;
     PROTECT(info.R_fcall = lang2(v, R_NilValue));
@@ -159,53 +159,55 @@ static double fcn2(double x, struct callinfo *info)
 /* zeroin(f, xmin, xmax, tol, maxiter) */
 SEXP attribute_hidden do_zeroin(SEXP call, SEXP op, SEXP args, SEXP rho)
 {
-    double xmin, xmax, tol;
-    int iter;
-    SEXP v, res;
-    struct callinfo info;
+#define DO_ZEROIN_part_1				\
+    double xmin, xmax, tol;				\
+    int iter;						\
+    SEXP v, res;					\
+    struct callinfo info;				\
+							\
+    checkArity(op, args);				\
+    PrintDefaults(rho);					\
+							\
+    /* the function to be minimized */			\
+    v = CAR(args);					\
+    if (!isFunction(v))					\
+	error(_("attempt to minimize non-function"));	\
+    args = CDR(args);					\
+							\
+    /* xmin */						\
+    xmin = asReal(CAR(args));				\
+    if (!R_FINITE(xmin))				\
+	error(_("invalid '%s' value"), "xmin");		\
+    args = CDR(args);					\
+							\
+    /* xmax */						\
+    xmax = asReal(CAR(args));				\
+    if (!R_FINITE(xmax))				\
+	error(_("invalid '%s' value"), "xmax");		\
+    if (xmin >= xmax)					\
+	error(_("'xmin' not less than 'xmax'"));	\
+    args = CDR(args)
 
-    checkArity(op, args);
-    PrintDefaults(rho);
+#define DO_ZEROIN_part_2						\
+    /* tol */								\
+    tol = asReal(CAR(args));						\
+    if (!R_FINITE(tol) || tol <= 0.0)					\
+	error(_("invalid '%s' value"), "tol");				\
+    args = CDR(args);							\
+									\
+    /* maxiter */							\
+    iter = asInteger(CAR(args));					\
+    if (iter <= 0)							\
+	error(_("'maxiter' must be positive"));				\
+									\
+    info.R_env = rho;							\
+    PROTECT(info.R_fcall = lang2(v, R_NilValue)); /* the info used in fcn2() */	\
+    SETCADR(info.R_fcall, allocVector(REALSXP, 1));			\
+    PROTECT(res = allocVector(REALSXP, 3))
 
-    /* the function to be minimized */
+    DO_ZEROIN_part_1;
+    DO_ZEROIN_part_2;
 
-    v = CAR(args);
-    if (!isFunction(v))
-	errorcall(call, _("attempt to minimize non-function"));
-    args = CDR(args);
-
-    /* xmin */
-
-    xmin = asReal(CAR(args));
-    if (!R_FINITE(xmin))
-	errorcall(call, _("invalid '%s' value"), "xmin");
-    args = CDR(args);
-
-    /* xmax */
-
-    xmax = asReal(CAR(args));
-    if (!R_FINITE(xmax))
-	errorcall(call, _("invalid '%s' value"), "xmax");
-    if (xmin >= xmax)
-	errorcall(call, _("'xmin' not less than 'xmax'"));
-    args = CDR(args);
-
-    /* tol */
-
-    tol = asReal(CAR(args));
-    if (!R_FINITE(tol) || tol <= 0.0)
-	errorcall(call, _("invalid '%s' value"), "tol");
-    args = CDR(args);
-
-    /* maxiter */
-    iter = asInteger(CAR(args));
-    if (iter <= 0)
-	errorcall(call, _("'maxiter' must be positive"));
-
-    info.R_env = rho;
-    PROTECT(info.R_fcall = lang2(v, R_NilValue)); /* the info used in fcn2() */
-    SETCADR(info.R_fcall, allocVector(REALSXP, 1));
-    PROTECT(res = allocVector(REALSXP, 3));
     REAL(res)[0] =
 	R_zeroin(xmin, xmax,   (double (*)(double, void*)) fcn2,
 		 (void *) &info, &tol, &iter);
@@ -214,6 +216,37 @@ SEXP attribute_hidden do_zeroin(SEXP call, SEXP op, SEXP args, SEXP rho)
     UNPROTECT(2);
     return res;
 }
+
+/* zeroin2(f, ax, bx, f.ax, f.bx, tol, maxiter) */
+SEXP attribute_hidden do_zeroin2(SEXP call, SEXP op, SEXP args, SEXP rho)
+{
+    double f_ax, f_bx;
+    DO_ZEROIN_part_1;
+
+    /* f(ax) = f(xmin) */
+    f_ax = asReal(CAR(args));
+    if (ISNA(f_ax))
+	error(_("NA value for '%s' is not allowed"), "f.lower");
+    args = CDR(args);
+
+    /* f(bx) = f(xmax) */
+    f_bx = asReal(CAR(args));
+    if (ISNA(f_bx))
+	error(_("NA value for '%s' is not allowed"), "f.upper");
+    args = CDR(args);
+
+    DO_ZEROIN_part_2;
+
+    REAL(res)[0] =
+	R_zeroin2(xmin, xmax, f_ax, f_bx, (double (*)(double, void*)) fcn2,
+		 (void *) &info, &tol, &iter);
+    REAL(res)[1] = (double)iter;
+    REAL(res)[2] = tol;
+    UNPROTECT(2);
+    return res;
+}
+#undef DO_ZEROIN_part_1
+#undef DO_ZEROIN_part_2
 
 
 
@@ -417,15 +450,15 @@ static double *fixparam(SEXP p, int *n, SEXP call)
     int i;
 
     if (!isNumeric(p))
-	errorcall(call, _("numeric parameter expected"));
+	error(_("numeric parameter expected"));
 
     if (*n) {
 	if (LENGTH(p) != *n)
-	    errorcall(call, _("conflicting parameter lengths"));
+	    error(_("conflicting parameter lengths"));
     }
     else {
 	if (LENGTH(p) <= 0)
-	    errorcall(call, _("invalid parameter length"));
+	    error(_("invalid parameter length"));
 	*n = LENGTH(p);
     }
 
@@ -435,19 +468,19 @@ static double *fixparam(SEXP p, int *n, SEXP call)
     case INTSXP:
 	for (i = 0; i < *n; i++) {
 	    if (INTEGER(p)[i] == NA_INTEGER)
-		errorcall(call, _("missing value in parameter"));
+		error(_("missing value in parameter"));
 	    x[i] = INTEGER(p)[i];
 	}
 	break;
     case REALSXP:
 	for (i = 0; i < *n; i++) {
 	    if (!R_FINITE(REAL(p)[i]))
-		errorcall(call, _("missing value in parameter"));
+		error(_("missing value in parameter"));
 	    x[i] = REAL(p)[i];
 	}
 	break;
     default:
-	errorcall(call, _("invalid parameter type"));
+	error(_("invalid parameter type"));
     }
     return x;
 }
@@ -455,7 +488,7 @@ static double *fixparam(SEXP p, int *n, SEXP call)
 
 static void invalid_na(SEXP call)
 {
-    errorcall(call, _("invalid NA value in parameter"));
+    error(_("invalid NA value in parameter"));
 }
 
 
@@ -533,7 +566,6 @@ SEXP attribute_hidden do_nlm(SEXP call, SEXP op, SEXP args, SEXP rho)
     int code, i, j, k, itnlim, method, iexp, omsg, msg,
 	n, ndigit, iagflg, iahflg, want_hessian, itncnt;
 
-    char *vmax;
 
 /* .Internal(
  *	nlm(function(x) f(x, ...), p, hessian, typsize, fscale,
@@ -543,7 +575,6 @@ SEXP attribute_hidden do_nlm(SEXP call, SEXP op, SEXP args, SEXP rho)
 
     checkArity(op, args);
     PrintDefaults(rho);
-    vmax = vmaxget();
 
     state = (function_info *) R_alloc(1, sizeof(function_info));
 
@@ -703,8 +734,7 @@ SEXP attribute_hidden do_nlm(SEXP call, SEXP op, SEXP args, SEXP rho)
     k = 0;
 
     SET_STRING_ELT(names, k, mkChar("minimum"));
-    SET_VECTOR_ELT(value, k, allocVector(REALSXP, 1));
-    REAL(VECTOR_ELT(value, k))[0] = fpls;
+    SET_VECTOR_ELT(value, k, ScalarReal(fpls));
     k++;
 
     SET_STRING_ELT(names, k, mkChar("estimate"));
@@ -739,7 +769,6 @@ SEXP attribute_hidden do_nlm(SEXP call, SEXP op, SEXP args, SEXP rho)
     k++;
 
     setAttrib(value, R_NamesSymbol, names);
-    vmaxset(vmax);
     UNPROTECT(3);
     return value;
 }

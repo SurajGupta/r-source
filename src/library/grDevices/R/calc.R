@@ -1,3 +1,19 @@
+#  File src/library/grDevices/R/calc.R
+#  Part of the R package, http://www.R-project.org
+#
+#  This program is free software; you can redistribute it and/or modify
+#  it under the terms of the GNU General Public License as published by
+#  the Free Software Foundation; either version 2 of the License, or
+#  (at your option) any later version.
+#
+#  This program is distributed in the hope that it will be useful,
+#  but WITHOUT ANY WARRANTY; without even the implied warranty of
+#  MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
+#  GNU General Public License for more details.
+#
+#  A copy of the GNU General Public License is available at
+#  http://www.r-project.org/Licenses/
+
 #### Functions that calculate useful stuff for plotting
 #### BUT which do not do any actual drawing
 #### Useful for both graphics and grid to have access to
@@ -25,7 +41,8 @@ boxplot.stats <- function(x, coef = 1.5, do.conf = TRUE, do.out = TRUE)
 
 ## Contour lines
 contourLines <-
-function (x = seq(0, 1, len = nrow(z)), y = seq(0, 1, len = ncol(z)),
+function (x = seq(0, 1, length.out = nrow(z)),
+          y = seq(0, 1, length.out = ncol(z)),
 	  z, nlevels = 10, levels = pretty(range(z, na.rm = TRUE), nlevels))
 {
     ## FIXME: This "validation" code for the x, y, z values
@@ -39,7 +56,7 @@ function (x = seq(0, 1, len = nrow(z)), y = seq(0, 1, len = ncol(z)),
 		z <- x$z; y <- x$y; x <- x$x
 	    } else {
 		z <- x
-		x <- seq(0, 1, len = nrow(z))
+		x <- seq.int(0, 1, length.out = nrow(z))
 	    }
 	} else stop("no 'z' matrix specified")
     } else if (is.list(x)) {
@@ -91,3 +108,29 @@ nclass.FD <- function(x)
 }
 
 
+## Sunflower Plot computation:
+## Used to be part of ../../graphics/R/sunflowerplot.R :
+xyTable <- function(x, y = NULL, digits)
+{
+    ## Compute number := multiplicities of (x[i], y[i])
+
+    x <- xy.coords(x, y)
+
+    ## get rid of rounding fuzz:
+    y <- signif(x$y, digits=digits)
+    x <- signif(x$x, digits=digits)
+    n <- length(x)
+    number <-
+	if(n > 0) {
+	    orderxy <- order(x, y)
+	    x <- x[orderxy]
+	    y <- y[orderxy]
+	    first <- c(TRUE, (x[-1] != x[-n]) | (y[-1] != y[-n]))
+	    x <- x[first]
+	    y <- y[first]
+	    diff(c((1:n)[first], n + 1L))
+	}
+	else integer(0)
+
+    list(x = x, y = y, number = number)
+}

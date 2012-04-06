@@ -1,3 +1,8 @@
+% File src/library/base/man/Sys.info.Rd
+% Part of the R package, http://www.R-project.org
+% Copyright 1995-2007 R Core Development Team
+% Distributed under GPL 2 or later
+
 \name{Sys.info}
 \alias{Sys.info}
 \title{Extract System and User Information}
@@ -39,7 +44,7 @@ Sys.info()
   built on: they may well be different.
 }
 \note{
-  The meaning of OS \dQuote{release} and \dQuote{version} is highly
+  The meaning of OS \sQuote{release} and \sQuote{version} is
   system-dependent and there is no guarantee that the node or
   login or user names will be what you might reasonably expect.
   (In particular on some Linux distributions the login name is unknown

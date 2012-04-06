@@ -14,8 +14,8 @@
  *  GNU General Public License for more details.
  *
  *  You should have received a copy of the GNU General Public License
- *  along with this program; if not, write to the Free Software
- *  Foundation, Inc., 51 Franklin Street, Fifth Floor, Boston, MA 02110-1301  USA
+ *  along with this program; if not, a copy is available at
+ *  http://www.r-project.org/Licenses/
  */
 
 /* <UTF8> char here is handled as a whole string */
@@ -58,7 +58,7 @@ static void *loadLibrary(const char *path, int asLocal, int now);
 static void closeLibrary(void *handle);
 static void deleteCachedSymbols(DllInfo *);
 static DL_FUNC R_local_dlsym(DllInfo *info, char const *name);
-static void getFullDLLPath(SEXP call, char *buf, char *path);
+static void getFullDLLPath(SEXP call, char *buf, const char *path);
 static void getSystemError(char *buf, int len);
 
 static int computeDLOpenFlag(int asLocal, int now);
@@ -156,7 +156,7 @@ static int computeDLOpenFlag(int asLocal, int now)
 # define DL_WARN(i) \
     if(asInteger(GetOption(install("warn"), R_BaseEnv)) == 1 || \
        asInteger(GetOption(install("verbose"), R_BaseEnv)) > 0) \
-        warning(_(warningMessages[i]));
+        warning(_(warningMessages[i]))
 #endif
 
     int openFlag = 0;		/* Default value so no-ops for undefined
@@ -165,29 +165,37 @@ static int computeDLOpenFlag(int asLocal, int now)
 
     if(asLocal != 0) {
 #ifndef RTLD_LOCAL
-	DL_WARN(0)
+# ifndef __CYGWIN__
+	DL_WARN(0);
+# endif
 #else
-	    openFlag = RTLD_LOCAL;
+	openFlag = RTLD_LOCAL;
 #endif
     } else {
 #ifndef RTLD_GLOBAL
-	DL_WARN(1)
+# ifndef __CYGWIN__
+	DL_WARN(1);
+# endif
 #else
-	    openFlag = RTLD_GLOBAL;
+	openFlag = RTLD_GLOBAL;
 #endif
     }
 
     if(now != 0) {
 #ifndef RTLD_NOW
-	DL_WARN(2)
+# ifndef __CYGWIN__
+	DL_WARN(2);
+# endif	
 #else
-	    openFlag |= RTLD_NOW;
+	openFlag |= RTLD_NOW;
 #endif
     } else {
 #ifndef RTLD_LAZY
-	DL_WARN(3)
+# ifndef __CYGWIN__
+	DL_WARN(3);
+# endif	
 #else
-	    openFlag |= RTLD_LAZY;
+	openFlag |= RTLD_LAZY;
 #endif
     }
 
@@ -197,11 +205,14 @@ static int computeDLOpenFlag(int asLocal, int now)
 
 /*
   This is the system/OS-specific version for resolving a
-  symbol in a shared library.
+  symbol in a shared library.  A cast would not be legal C.
  */
+typedef union {void *p; DL_FUNC fn;} fn_ptr;
 static DL_FUNC R_local_dlsym(DllInfo *info, char const *name)
 {
-    return (DL_FUNC) dlsym(info->handle, name);
+    fn_ptr tmp;
+    tmp.p = dlsym(info->handle, name);
+    return tmp.fn;
 }
 
 
@@ -216,7 +227,7 @@ static DL_FUNC R_local_dlsym(DllInfo *info, char const *name)
 
 
 
-static void getFullDLLPath(SEXP call, char *buf, char *path)
+static void getFullDLLPath(SEXP call, char *buf, const char *path)
 {
     if(path[0] == '~')
 	strcpy(buf, R_ExpandFileName(path));

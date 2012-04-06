@@ -1,6 +1,6 @@
 /*
  *  R : A Computer Language for Statistical Data Analysis
- *  Copyright (C) 1999-2001 The R Development Core Team.
+ *  Copyright (C) 1999-2007 The R Development Core Team.
  *
  *  This program is free software; you can redistribute it and/or modify
  *  it under the terms of the GNU Lesser General Public License as published by
@@ -13,14 +13,17 @@
  *  GNU Lesser General Public License for more details.
  *
  *  You should have received a copy of the GNU Lesser General Public License
- *  along with this program; if not, write to the Free Software
- *  Foundation, Inc., 51 Franklin Street, Fifth Floor, Boston, MA 02110-1301  USA
+ *  along with this program; if not, a copy is available at
+ *  http://www.r-project.org/Licenses/
  */
 
 #ifndef R_RS_H
 #define R_RS_H
 
-#include <string.h>		/* for memcpy */
+#ifndef NO_C_HEADERS
+# include <string.h>		/* for memcpy */
+#endif
+
 #include <Rconfig.h>		/* for F77_APPEND_UNDERSCORE */
 
 #ifdef  __cplusplus
@@ -63,6 +66,8 @@ extern void R_chk_free(void *);
 #define R_Free(p)      (R_chk_free( (void *)(p) ), (p) = NULL)
 
 #define Memcpy(p,q,n)  memcpy( p, q, (size_t)( (n) * sizeof(*p) ) )
+
+#define CallocCharBuf(n) (char *) R_chk_calloc((size_t) ((n)+1), sizeof(char))
 
 /* S Like Fortran Interface */
 /* These may not be adequate everywhere. Convex had _ prepending common

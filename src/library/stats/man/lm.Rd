@@ -1,3 +1,8 @@
+% File src/library/stats/man/lm.Rd
+% Part of the R package, http://www.R-project.org
+% Copyright 1995-2007 R Core Development Team
+% Distributed under GPL 2 or later
+
 \name{lm}
 \alias{lm}
 \alias{print.lm}
@@ -39,7 +44,7 @@ lm(formula, data, subset, weights, na.action,
   \item{na.action}{a function which indicates what should happen
     when the data contain \code{NA}s.  The default is set by
     the \code{na.action} setting of \code{\link{options}}, and is
-    \code{\link{na.fail}} if that is unset.  The \dQuote{factory-fresh}
+    \code{\link{na.fail}} if that is unset.  The \sQuote{factory-fresh}
     default is \code{\link{na.omit}}.  Another possible value is
     \code{NULL}, no action.  Value \code{\link{na.exclude}} can be useful.}
 
@@ -210,6 +215,8 @@ lm(formula, data, subset, weights, na.action,
   in the formula will be.
 }
 \examples{
+require(graphics)
+
 ## Annette Dobson (1990) "An Introduction to Generalized Linear Models".
 ## Page 9: Plant Weight Data.
 ctl <- c(4.17,5.58,5.18,6.11,4.50,4.61,5.17,4.53,5.33,5.14)

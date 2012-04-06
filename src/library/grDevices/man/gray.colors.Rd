@@ -1,3 +1,8 @@
+% File src/library/grDevices/man/gray.colors.Rd
+% Part of the R package, http://www.R-project.org
+% Copyright 1995-2007 R Core Development Team
+% Distributed under GPL 2 or later
+
 \name{gray.colors}
 \alias{gray.colors}
 \alias{grey.colors}
@@ -38,6 +43,8 @@ grey.colors(n, start = 0.3, end = 0.9, gamma = 2.2)
   \code{\link{palette}}.
 }
 \examples{
+require(graphics)
+
 pie(rep(1,12), col = gray.colors(12))
 barplot(1:12, col = gray.colors(12))
 }

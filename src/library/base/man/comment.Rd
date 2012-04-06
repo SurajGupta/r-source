@@ -1,3 +1,8 @@
+% File src/library/base/man/comment.Rd
+% Part of the R package, http://www.R-project.org
+% Copyright 1995-2007 R Core Development Team
+% Distributed under GPL 2 or later
+
 \name{comment}
 \title{Query or Set a `Comment' Attribute}
 \usage{
@@ -22,8 +27,7 @@ comment(x) <- value
   comment.
 }
 \seealso{
-  \code{\link{attributes}} and \code{\link{attr}} for \dQuote{normal}
-  attributes.
+  \code{\link{attributes}} and \code{\link{attr}} for other attributes.
 }
 \examples{
 x <- matrix(1:12, 3,4)

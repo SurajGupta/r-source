@@ -15,9 +15,10 @@
  *  GNU General Public License for more details.
  *
  *  You should have received a copy of the GNU General Public License
- *  along with this program; if not, write to the Free Software
- *  Foundation, Inc., 51 Franklin Street, Fifth Floor, Boston, MA 02110-1301  USA
+ *  along with this program; if not, a copy is available at
+ *  http://www.r-project.org/Licenses/
  */
+
 #ifdef HAVE_CONFIG_H
 #include <config.h>
 #endif
@@ -50,12 +51,12 @@ void editorsetfont(font f);
 
 static void showDialog(Gui gui);
 
-extern char *ColorName[]; /* from graphapp/rgb.c */
+extern __declspec(dllimport) const char *ColorName[]; /* from graphapp/rgb.c */
 
-static int cmatch(char *col, char **list)
+static int cmatch(char *col, const char **list)
 {
     int i=0;
-    char **pos = list;
+    const char **pos = list;
     while(*pos != NULL) {
 	if(strcmpi(*pos, col) == 0) return(i);
 	i++; pos++;
@@ -64,9 +65,9 @@ static int cmatch(char *col, char **list)
 }
 
 
-static char *StyleList[] = {"normal", "bold", "italic", NULL};
-static char *PointsList[] = {"6", "7", "8", "9", "10", "11", "12", "14", "16", "18", "20", "22", "24", "26", "28", "32", "36", NULL};
-static char *FontsList[] = {"Courier", "Courier New", "FixedSys", "FixedFont", "Lucida Console", "Terminal", "BatangChe", "DotumChe", "GulimChe", "MingLiU", "MS Gothic", "MS Mincho", "NSimSun", NULL};
+static const char *StyleList[] = {"normal", "bold", "italic", NULL};
+static const char *PointsList[] = {"6", "7", "8", "9", "10", "11", "12", "14", "16", "18", "20", "22", "24", "26", "28", "32", "36", NULL};
+static const char *FontsList[] = {"Courier", "Courier New", "FixedSys", "FixedFont", "Lucida Console", "Terminal", "BatangChe", "DotumChe", "GulimChe", "MingLiU", "MS Gothic", "MS Mincho", "NSimSun", NULL};
 
 
 static window wconfig;
@@ -449,7 +450,7 @@ static void load(button b) /* button callback */
     }
 }
 
-int loadRconsole(Gui gui, char *optf)
+int loadRconsole(Gui gui, const char *optf)
 {
     int ok, done, cfgerr;
     char *opt[2];    
@@ -786,11 +787,11 @@ static void showDialog(Gui gui)
     setlistitem(usercol, rgbtonum(gui->user));
     setlistitem(highlightcol, rgbtonum(gui->hlt));
 
-    bApply = newbutton(G_("Apply"), rect(50, 410, 70, 25), apply);
-    bSave = newbutton(G_("Save..."), rect(130, 410, 70, 25), save);
-    bLoad = newbutton(G_("Load..."), rect(210, 410, 70, 25), load);
-    bOK = newbutton(G_("OK"), rect(350, 410, 70, 25), ok);
-    bCancel = newbutton(G_("Cancel"), rect(430, 410, 70, 25), cancel);
+    bApply = newbutton("Apply", rect(50, 410, 70, 25), apply);
+    bSave = newbutton("Save...", rect(130, 410, 70, 25), save);
+    bLoad = newbutton("Load...", rect(210, 410, 70, 25), load);
+    bOK = newbutton("OK", rect(350, 410, 70, 25), ok);
+    bCancel = newbutton("Cancel", rect(430, 410, 70, 25), cancel);
     show(wconfig);
 }
 

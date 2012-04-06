@@ -13,8 +13,8 @@
  *  GNU General Public License for more details.
  *
  *  You should have received a copy of the GNU General Public License
- *  along with this program; if not, write to the Free Software
- *  Foundation, Inc., 51 Franklin Street, Fifth Floor, Boston, MA 02110-1301  USA
+ *  along with this program; if not, a copy is available at
+ *  http://www.r-project.org/Licenses/
  */
 
 /* <UTF8> the only interpretation of char is ASCII 
@@ -43,7 +43,7 @@
 
 #ifdef Win32
 #include <io.h>
-#include <winsock.h>
+#include <winsock2.h>
 #define _WINSOCKAPI_
 extern void R_ProcessEvents(void);
 #define R_SelectEx(n,rfd,wrd,efd,tv,ih) select(n,rfd,wrd,efd,tv)

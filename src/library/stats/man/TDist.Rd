@@ -1,3 +1,8 @@
+% File src/library/stats/man/TDist.Rd
+% Part of the R package, http://www.R-project.org
+% Copyright 1995-2007 R Core Development Team
+% Distributed under GPL 2 or later
+
 \name{TDist}
 \encoding{latin1}
 \alias{TDist}
@@ -119,6 +124,8 @@ rt(n, df, ncp)
 }
 \seealso{\code{\link{df}} for the F distribution.}
 \examples{
+require(graphics)
+
 1 - pt(1:5, df = 1)
 qt(.975, df = c(1:10,20,50,100,1000))
 

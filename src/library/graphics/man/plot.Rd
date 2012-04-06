@@ -1,3 +1,8 @@
+% File src/library/graphics/man/plot.Rd
+% Part of the R package, http://www.R-project.org
+% Copyright 1995-2007 R Core Development Team
+% Distributed under GPL 2 or later
+
 \name{plot}
 \title{Generic X-Y Plotting}
 \alias{plot}
@@ -20,9 +25,9 @@ plot(x, y, \dots)
 	\item \code{"l"} for \bold{l}ines,
 	\item \code{"b"} for \bold{b}oth,
 	\item \code{"c"} for the lines part alone of \code{"b"},
-	\item \code{"o"} for both \dQuote{\bold{o}verplotted},
-	\item \code{"h"} for \dQuote{\bold{h}istogram} like (or
-	\dQuote{high-density}) vertical lines,
+	\item \code{"o"} for both \sQuote{\bold{o}verplotted},
+	\item \code{"h"} for \sQuote{\bold{h}istogram} like (or
+	\sQuote{high-density}) vertical lines,
 	\item \code{"s"} for stair \bold{s}teps,
 	\item \code{"S"} for other \bold{s}teps, see \emph{Details} below,
 	\item \code{"n"} for no plotting.
@@ -60,6 +65,7 @@ plot(x, y, \dots)
   methods; \code{\link{points}}, \code{\link{lines}}, \code{\link{par}}.
 }
 \examples{
+require(stats)
 plot(cars)
 lines(lowess(cars))
 

@@ -1,3 +1,19 @@
+#  File src/library/stats/R/quantile.R
+#  Part of the R package, http://www.R-project.org
+#
+#  This program is free software; you can redistribute it and/or modify
+#  it under the terms of the GNU General Public License as published by
+#  the Free Software Foundation; either version 2 of the License, or
+#  (at your option) any later version.
+#
+#  This program is distributed in the hope that it will be useful,
+#  but WITHOUT ANY WARRANTY; without even the implied warranty of
+#  MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
+#  GNU General Public License for more details.
+#
+#  A copy of the GNU General Public License is available at
+#  http://www.r-project.org/Licenses/
+
 quantile <- function(x, ...) UseMethod("quantile")
 
 quantile.default <-
@@ -71,7 +87,7 @@ quantile.default <-
 	dig <- max(2, getOption("digits"))
 	names(qs) <- paste(## formatC is slow for long probs
 			   if(np < 100)
-			   formatC(100*probs, format="fg", wid = 1, digits=dig)
+			   formatC(100*probs, format="fg", width = 1, digits=dig)
 			   else format(100 * probs, trim=TRUE, digits=dig),
 			   "%", sep = "")
     }

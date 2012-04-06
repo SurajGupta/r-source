@@ -1,3 +1,19 @@
+#  File src/library/grid/R/unit.R
+#  Part of the R package, http://www.R-project.org
+#
+#  This program is free software; you can redistribute it and/or modify
+#  it under the terms of the GNU General Public License as published by
+#  the Free Software Foundation; either version 2 of the License, or
+#  (at your option) any later version.
+#
+#  This program is distributed in the hope that it will be useful,
+#  but WITHOUT ANY WARRANTY; without even the implied warranty of
+#  MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
+#  GNU General Public License for more details.
+#
+#  A copy of the GNU General Public License is available at
+#  http://www.r-project.org/Licenses/
+
 
 # Create an object of class "unit"
 # Simple units are of the form 'unit(1, "cm")' or 'unit(1:3, "cm")' or
@@ -206,8 +222,8 @@ Ops.unit <- function(e1, e2) {
          domain = NA)
   if (.Generic == "*")
     # can only multiply a unit by a scalar
-    if (nchar(.Method[1])) {
-      if (nchar(.Method[2]))
+    if (nzchar(.Method[1])) {
+      if (nzchar(.Method[2]))
         stop("Only one operand may be a unit")
       else if (is.numeric(e2))
         # NOTE that we always put the scalar first
@@ -224,7 +240,7 @@ Ops.unit <- function(e1, e2) {
     }
   else
     # Check that both arguments are units
-    if (nchar(.Method[1]) && nchar(.Method[2]))
+    if (nzchar(.Method[1]) && nzchar(.Method[2]))
       unit.arithmetic(.Generic, e1, e2)
     else
       stop("Both operands must be units")

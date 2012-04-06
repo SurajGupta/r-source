@@ -1,6 +1,8 @@
-% file MASS/rock.d
-% copyright (C) 1994-8 W. N. Venables and B. D. Ripley
-%
+% File src/library/datasets/man/rock.Rd
+% Part of the R package, http://www.R-project.org
+% Copyright 1994-8 W. N. Venables and B. D. Ripley
+% Distributed under GPL 2 or later
+
 % Manually converted to Rd data file description format by KH.
 \name{rock}
 \docType{data}

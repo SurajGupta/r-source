@@ -17,14 +17,14 @@
  *  GNU General Public License for more details.
  *
  *  You should have received a copy of the GNU General Public License
- *  along with this program; if not, write to the Free Software
- *  Foundation, Inc., 51 Franklin Street, Fifth Floor, Boston, MA 02110-1301  USA
+ *  along with this program; if not, a copy is available at
+ *  http://www.r-project.org/Licenses/
 
   
   
-  $Rev: 37352 $
+  $Rev: 42315 $
 
-  $LastChangedDate: 2006-02-14 15:04:38 +0100 (Tue, 14 Feb 2006) $
+  $LastChangedDate: 2007-07-25 12:27:41 +0200 (Wed, 25 Jul 2007) $
   
   $Author: ripley $
 

@@ -1,3 +1,8 @@
+% File src/library/stats/man/stl.Rd
+% Part of the R package, http://www.R-project.org
+% Copyright 1995-2007 R Core Development Team
+% Distributed under GPL 2 or later
+
 \name{stl}
 \alias{stl}
 % all methods -> ./stlmethods.Rd
@@ -9,7 +14,7 @@
 \usage{
 stl(x, s.window, s.degree = 0,
     t.window = NULL, t.degree = 1,
-    l.window = nextodd(period), l.degree = t.degree, 
+    l.window = nextodd(period), l.degree = t.degree,
     s.jump = ceiling(s.window/10),
     t.jump = ceiling(t.window/10),
     l.jump = ceiling(l.window/10),
@@ -26,7 +31,7 @@ stl(x, s.window, s.degree = 0,
     lags) of the loess window for seasonal extraction, which should
     be odd.  This has no default.}
   \item{s.degree}{degree of locally-fitted polynomial in seasonal
-    extraction.  Should be zero or one.} 
+    extraction.  Should be zero or one.}
   \item{t.window}{the span (in lags) of the loess window for trend
     extraction, which should be odd.  If \code{NULL}, the default,
     \code{nextodd(ceiling((1.5*period) / (1-(1.5/s.window))))}, is taken.}
@@ -75,7 +80,7 @@ stl(x, s.window, s.degree = 0,
     \code{"t"}, and \code{"l"} smoothers.}
   \item{deg}{integer (length 3) vector with the polynomial degrees for
     these smoothers.}
-  \item{jump}{integer (length 3) vector with the \dQuote{jumps} (skips)
+  \item{jump}{integer (length 3) vector with the \sQuote{jumps} (skips)
     used for these smoothers.}
   \item{ni}{number of \bold{i}nner iterations}
   \item{no}{number of \bold{o}uter robustness iterations}
@@ -96,27 +101,31 @@ stl(x, s.window, s.degree = 0,
   \code{\link{plot.stl}} for \code{stl} methods;
   \code{\link{loess}} in package \pkg{stats} (which is not actually
   used in \code{stl}).
-} 
+
+  \code{\link{StructTS}} for different kind of decomposition.
+}
 \examples{
+require(graphics)
+
 plot(stl(nottem, "per"))
-plot(stl(nottem, s.win = 4, t.win = 50, t.jump = 1))
-    
+plot(stl(nottem, s.window = 4, t.window = 50, t.jump = 1))
+
 plot(stllc <- stl(log(co2), s.window=21))
 summary(stllc)
 ## linear trend, strict period.
 plot(stl(log(co2), s.window="per", t.window=1000))
 
-## Two STL plotted side by side :    
-        stmd <- stl(mdeaths, s.w = "per") # un-robust
-summary(stmR <- stl(mdeaths, s.w = "per", robust = TRUE))
+## Two STL plotted side by side :
+        stmd <- stl(mdeaths, s.window = "per") # non-robust
+summary(stmR <- stl(mdeaths, s.window = "per", robust = TRUE))
 op <- par(mar = c(0, 4, 0, 3), oma = c(5, 0, 4, 0), mfcol = c(4, 2))
 plot(stmd, set.pars=NULL, labels = NULL,
      main = "stl(mdeaths, s.w = \"per\",  robust = FALSE / TRUE )")
 plot(stmR, set.pars=NULL)
-# mark the 'outliers' :    
+# mark the 'outliers' :
 (iO <- which(stmR $ weights  < 1e-8)) # 10 were considered outliers
 sts <- stmR$time.series
-points(time(sts)[iO], .8* sts[,"remainder"][iO], pch = 4, col = "red")
-par(op)# reset    
+points(time(sts)[iO], 0.8* sts[,"remainder"][iO], pch = 4, col = "red")
+par(op)# reset
 }
 \keyword{ts}

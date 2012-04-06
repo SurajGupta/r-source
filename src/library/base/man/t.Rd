@@ -1,3 +1,8 @@
+% File src/library/base/man/t.Rd
+% Part of the R package, http://www.R-project.org
+% Copyright 1995-2007 R Core Development Team
+% Distributed under GPL 2 or later
+
 \name{t}
 \alias{t}
 \alias{t.default}
@@ -18,7 +23,7 @@ t(x)
   description here applies to the default and \code{"data.frame"} methods.
   
   A data frame is first coerced to a matrix: see \code{\link{as.matrix}}.
-  When \code{x} is a vector, it is treated as \dQuote{column}, i.e., the
+  When \code{x} is a vector, it is treated as a column, i.e., the
   result is a 1-row matrix.
 }
 \value{

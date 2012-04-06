@@ -1,3 +1,19 @@
+#  File src/library/tools/R/encodings.R
+#  Part of the R package, http://www.R-project.org
+#
+#  This program is free software; you can redistribute it and/or modify
+#  it under the terms of the GNU General Public License as published by
+#  the Free Software Foundation; either version 2 of the License, or
+#  (at your option) any later version.
+#
+#  This program is distributed in the hope that it will be useful,
+#  but WITHOUT ANY WARRANTY; without even the implied warranty of
+#  MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
+#  GNU General Public License for more details.
+#
+#  A copy of the GNU General Public License is available at
+#  http://www.r-project.org/Licenses/
+
 get_IANA_character_sets <-
 function(file = NULL)
 {
@@ -15,38 +31,31 @@ function(file = NULL)
     if(any(ind <- grep("^[[:alnum:]]+:[[:space:]]+None[[:space:]]*$",
                        lines)))
         lines <- lines[-ind]
+    ## And be nice (version last updated 2007-05-14 was invalid DCF).
+    if(any(ind <- grep("^[^[:blank:]][^:]*$", lines)))
+        lines <- lines[-ind]
     entries <- paste(lines, collapse = "\n")
-    ## What we now have is in DCF format.  Ideally, we would like to use
-    ## read.dcf(), but this (currently?) allows only a single field
-    ## entry per record, and we have multiple aliases ...
+    ## What we now have is in DCF format, with multiple fields.
     con <- textConnection(entries)
     on.exit(close(con))
-    db <- read.dcf(con, fields = c("Name", "MIBenum", "Source"))
-    ## Now do the dirty work ...
-    entries <- strsplit(strsplit(entries, "\n[[:space:]]*\n")[[1]], "\n")
-    Aliases <-
-        lapply(entries,
-               function(u) {
-                   if(any(ind <- grep("^Alias:", u)))
-                       sapply(strsplit(u[ind], " +"), "[[", 2)
-                   else
-                       character()
-               })
-    MIME <-
-        sapply(entries,
-               function(u) {
-                   if(any(ind <- grep("preferred MIME name", u)))
-                       sapply(strsplit(u[ind], " +"), "[[", 2)
-                   else
-                       character()
-               })
-
-    out <- data.frame(Name = sub(" +.*", "", db[, "Name"]),
-                      MIBenum = as.integer(db[, "MIBenum"]),
-                      Source = db[, "Source"],
-                      stringsAsFactors = FALSE)
-    out$Aliases <- Aliases
+    out <- read.dcf(con,
+                    fields = c("Name", "MIBenum", "Source", "Alias"),
+                    all = TRUE)
+    ## Prefer 'Aliases' for historical reasons.
+    names(out)[names(out) == "Alias"] <- "Aliases"
+    ## Preferred MIME names.
+    MIME <- sapply(mapply("c", out$Name, out$Aliases),
+                   function(u) {
+                       if(any(ind <- grep("preferred MIME name", u)))
+                           sapply(strsplit(u[ind], " +"), "[[", 1)
+                       else
+                           character()
+                   })
     out$MIME <- MIME
+    out$Name <- sub(" +.*", "", out$Name)
+    out$Aliases <- lapply(out$Aliases, function(s) sub(" +.*", "", s))
+    out$MIBenum <- as.integer(out$MIBenum)
+
     out
 }
 

@@ -8,11 +8,14 @@ ifneq ($(strip $(BUILD)),CROSS)
 ifeq ($(strip $(shell latex --version | grep ^MiKTeX | wc -l)),1)
 # MiKTeX
 R_TEXOPTS=--include-directory=$(RHOME)/share/texmf
+TEXI2DVI=texi2dvi
 else
 R_TEXOPTS=
+TEXI2DVI=
 endif
 else # cross-builds
 R_TEXOPTS=
+TEXI2DVI=texi2dvi
 endif
 include ../../share/make/vars.mk
 
@@ -40,7 +43,7 @@ TEXINDEX = LC_ALL=C texindex
 ifneq ($(strip $(BUILD)),CROSS)
 RHOME=$(shell ../../src/gnuwin32/Rpwd.exe ../..)
 else
-RHOME=$(shell perl ../../src/gnuwin32/pwd.pl ../..)
+RHOME=$(shell $(PERL) ../../src/gnuwin32/pwd.pl ../..)
 endif
 
 MAKEINFO_HTML_OPTS = --html --no-split --css-include=Rman.css
@@ -72,9 +75,16 @@ texiincludes = version.texi R-defs.texi
 
 all: pdf
 
+ifeq ($(strip $(TEXI2DVI)),)
 .texi.dvi:
 	$(TEX) $<
+	$(TEXINDEX) $*.cp $*.fn $*.vr
 	$(TEX) $<
+	$(TEX) $<
+else
+.texi.dvi:
+	$(TEXI2DVI) $<
+endif
 
 .texi.html:
 	@echo "creating doc/manual/$@"
@@ -83,11 +93,18 @@ all: pdf
 .texi.info:
 	$(MAKEINFO) -D UseExternalXrefs $<
 
+ifeq ($(strip $(TEXI2DVI)),)
 .texi.pdf:
 	$(PDFTEX) $<
+	$(TEXINDEX) $*.cp $*.fn $*.vr
 	$(PDFTEX) $<
+	$(PDFTEX) $<
+else
+.texi.pdf:
+	$(TEXI2DVI) --pdf --texinfo="@set UseExternalXrefs " $<
+endif
 
-## we have to be careful not to install a local R-admin.html made prior to
+## We have to be careful not to install a local R-admin.html made prior to
 ## texinfo 4.7, as doc/html/SearchEngine.html links to it.
 ## So use that in the sources if we can -- it is not in the svn archive.
 ## There are no cross-references, external or not.
@@ -100,6 +117,7 @@ R-admin.html: R-admin.texi
 	fi
 
 dvi: refman.dvi $(OBJECTS_DVI)
+$(OBJECTS_DVI): $(texiincludes) 
 
 refman.dvi: $(refman_TEXINPUTS) $(refman_DEPENDENCIES) \
   refman.top refman.bot
@@ -112,22 +130,22 @@ refman.dvi: $(refman_TEXINPUTS) $(refman_DEPENDENCIES) \
 	  echo "\\usepackage[latin1]{inputenc}"; \
 	  cat refman.top; \
 	  texinputs=`(for f in $(refman_TEXINPUTS); \
-	    do echo $${f}; done) | LC_COLLATE=C sort`; \
+	    do echo $${f}; done) | LC_COLLATE=C $(SORT)`; \
 	  for f in $${texinputs}; do echo "\\input{$${f}}"; done; \
 	  cat refman.bot) > refman.tex
 	@$(RM) -f *.aux refman.toc refman.ind
 ifeq ($(strip $(BUILD)),CROSS)
 	@TEXINPUTS="../../share/texmf:$$TEXINPUTS" \
-	  $(LATEX) '\nonstopmode\input{refman.tex}'
+	  $(LATEX) -interaction=nonstopmode refman.tex 
 	@-$(MAKEINDEX) refman
 	@TEXINPUTS="../../share/texmf:$$TEXINPUTS" \
-	  $(LATEX) '\nonstopmode\input{refman.tex}'
+	  $(LATEX) -interaction=nonstopmode refman.tex 
 else
 	@TEXINPUTS="../../share/texmf;$$TEXINPUTS" \
-	  $(LATEX) '\nonstopmode\input{refman.tex}'
+	  $(LATEX) -interaction=nonstopmode refman.tex 
 	@-$(MAKEINDEX) refman
 	@TEXINPUTS="../../share/texmf;$$TEXINPUTS" \
-	  $(LATEX) '\nonstopmode\input{refman.tex}'
+	  $(LATEX) -interaction=nonstopmode refman.tex 
 endif
 
 fullrefman.dvi: $(fullrefman_TEXINPUTS) $(refman_DEPENDENCIES) \
@@ -142,72 +160,39 @@ fullrefman.dvi: $(fullrefman_TEXINPUTS) $(refman_DEPENDENCIES) \
 	  cat refman.top; \
 	  echo "\\part{}"; \
 	  texinputs=`(for f in $(refman_TEXINPUTS); \
-	    do echo $${f}; done) | LC_COLLATE=C sort`; \
+	    do echo $${f}; done) | LC_COLLATE=C $(SORT)`; \
 	  for f in $${texinputs}; do echo "\\input{$${f}}"; done; \
 	  echo "\\part{}"; \
 	  texinputs=`(for f in $(fullrefman_TEXINPUTS); \
-	    do echo $${f}; done) | LC_COLLATE=C sort`; \
+	    do echo $${f}; done) | LC_COLLATE=C $(SORT)`; \
 	  for f in $(refman_TEXINPUTS); do \
-	    texinputs=`echo "$${texinputs}" | sed "s/$${f}//"`; \
+	    texinputs=`echo "$${texinputs}" | sed "s/\\<$${f}\\>//"`; \
 	  done; \
 	  for f in $${texinputs}; do echo "\\input{$${f}}"; done; \
 	  cat $(srcdir)/refman.bot) > fullrefman.tex
 	@$(RM) -f *.aux fullrefman.toc fullrefman.ind
 ifeq ($(strip $(BUILD)),CROSS)
 	@TEXINPUTS="../../share/texmf:$$TEXINPUTS" \
-	  $(LATEX) '\nonstopmode\input{fullrefman.tex}'
+	  $(LATEX) -interaction=nonstopmode fullrefman.tex 
 	@-$(MAKEINDEX) fullrefman
 	@TEXINPUTS="../../share/texmf:$$TEXINPUTS" \
-	  $(LATEX) '\nonstopmode\input{fullrefman.tex}'
+	  $(LATEX) -interaction=nonstopmode fullrefman.tex 
 else
 	@TEXINPUTS="../../share/texmf;$$TEXINPUTS" \
-	  $(LATEX) '\nonstopmode\input{fullrefman.tex}'
+	  $(LATEX) -interaction=nonstopmode fullrefman.tex 
 	@-$(MAKEINDEX) fullrefman
 	@TEXINPUTS="../../share/texmf;$$TEXINPUTS" \
-	  $(LATEX) '\nonstopmode\input{fullrefman.tex}'
+	  $(LATEX) -interaction=nonstopmode fullrefman.tex 
 endif
 
-R-admin.dvi: R-admin.texi $(texiincludes) 
-	$(TEX) R-admin.texi
-	$(TEXINDEX) R-admin.cp R-admin.fn R-admin.vr
-	$(TEX) R-admin.texi
-	$(TEX) R-admin.texi
-
-R-data.dvi: R-data.texi $(texiincludes) 
-	$(TEX) R-data.texi
-	$(TEXINDEX) R-data.cp R-data.fn R-data.vr
-	$(TEX) R-data.texi
-	$(TEX) R-data.texi
-
-R-exts.dvi: R-exts.texi $(texiincludes) 
-	$(TEX) R-exts.texi
-	$(TEXINDEX) R-exts.cp R-exts.fn R-exts.vr
-	$(TEX) R-exts.texi
-	$(TEX) R-exts.texi
-
-R-intro.dvi: R-intro.texi $(texiincludes) 
-	$(TEX) R-intro.texi
-	$(TEXINDEX) R-intro.cp R-intro.fn R-intro.vr
-	$(TEX) R-intro.texi
-	$(TEX) R-intro.texi
-
 html: $(OBJECTS_HTML)
-R-admin.html: $(texiincludes) Rman.css
-R-data.html: $(texiincludes) Rman.css
-R-exts.html: $(texiincludes) Rman.css
-R-intro.html: $(texiincludes) Rman.css
-R-ints.html: $(texiincludes) Rman.css
-R-lang.html: $(texiincludes) Rman.css
+$(OBJECTS_HTML): $(texiincludes) Rman.css
 
 info: $(OBJECTS_INFO)
-R-admin.info: $(texiincludes)
-R-data.info: $(texiincludes)
-R-exts.info: $(texiincludes)
-R-intro.info: $(texiincludes)
-R-ints.info: $(texiincludes)
-R-lang.info: $(texiincludes)
+$(OBJECTS_INFO): $(texiincludes) 
 
 pdf: refman.pdf $(OBJECTS_PDF)
+$(OBJECTS_PDF): $(texiincludes) 
 
 refman.pdf: $(refman_TEXINPUTS) $(refman_DEPENDENCIES) \
    refman.top refman.bot
@@ -219,26 +204,26 @@ refman.pdf: $(refman_TEXINPUTS) $(refman_DEPENDENCIES) \
 	  echo "\\usepackage[latin1]{inputenc}"; \
 	  cat refman.top; \
 	  texinputs=`(for f in $(refman_TEXINPUTS); \
-	    do echo $${f}; done) | LC_COLLATE=C sort`; \
+	    do echo $${f}; done) | LC_COLLATE=C $(SORT)`; \
 	  for f in $${texinputs}; do echo "\\input{$${f}}"; done; \
 	  cat refman.bot) > refman.tex
 	@$(RM) -f *.aux refman.toc refman.ind
 ifeq ($(strip $(BUILD)),CROSS)
 	@TEXINPUTS="../../share/texmf:$$TEXINPUTS" \
-	  $(PDFLATEX) '\nonstopmode\input{refman.tex}'
+	  $(PDFLATEX) -interaction=nonstopmode refman.tex 
 	@$(MAKEINDEX) refman
 	@TEXINPUTS="../../share/texmf:$$TEXINPUTS" \
-	  $(PDFLATEX) '\nonstopmode\input{refman.tex}'
+	  $(PDFLATEX) -interaction=nonstopmode refman.tex 
 	@TEXINPUTS="../../share/texmf:$$TEXINPUTS" \
-	  $(PDFLATEX) '\nonstopmode\input{refman.tex}'
+	  $(PDFLATEX) -interaction=nonstopmode refman.tex 
 else
 	@TEXINPUTS="../../share/texmf;$$TEXINPUTS" \
-	  $(PDFLATEX) '\nonstopmode\input{refman.tex}'
+	  $(PDFLATEX) -interaction=nonstopmode refman.tex 
 	@$(MAKEINDEX) refman
 	@TEXINPUTS="../../share/texmf;$$TEXINPUTS" \
-	  $(PDFLATEX) '\nonstopmode\input{refman.tex}'
+	  $(PDFLATEX) -interaction=nonstopmode refman.tex 
 	@TEXINPUTS="../../share/texmf;$$TEXINPUTS" \
-	  $(PDFLATEX) '\nonstopmode\input{refman.tex}'
+	  $(PDFLATEX) -interaction=nonstopmode refman.tex 
 endif
 
 fullrefman.pdf: $(fullrefman_TEXINPUTS) $(refman_DEPENDENCIES) \
@@ -252,33 +237,33 @@ fullrefman.pdf: $(fullrefman_TEXINPUTS) $(refman_DEPENDENCIES) \
 	  cat refman.top; \
 	  echo "\\part{}"; \
 	  texinputs=`(for f in $(refman_TEXINPUTS); \
-	    do echo $${f}; done) | LC_COLLATE=C sort`; \
+	    do echo $${f}; done) | LC_COLLATE=C $(SORT)`; \
 	  for f in $${texinputs}; do echo "\\input{$${f}}"; done; \
 	  echo "\\part{}"; \
 	  texinputs=`(for f in $(fullrefman_TEXINPUTS); \
-	    do echo $${f}; done) | LC_COLLATE=C sort`; \
+	    do echo $${f}; done) | LC_COLLATE=C $(SORT)`; \
 	  for f in $(refman_TEXINPUTS); do \
-	    texinputs=`echo "$${texinputs}" | sed "s/$${f}//"`; \
+	    texinputs=`echo "$${texinputs}" | sed "s/\\<$${f}\\>//"`; \
 	  done; \
 	  for f in $${texinputs}; do echo "\\input{$${f}}"; done; \
 	  cat refman.bot) > fullrefman.tex
 	@$(RM) -f *.aux fullrefman.toc fullrefman.ind
 ifeq ($(strip $(BUILD)),CROSS)
 	@TEXINPUTS="../../share/texmf:$$TEXINPUTS" \
-	  $(PDFLATEX) '\nonstopmode\input{fullrefman.tex}'
+	  $(PDFLATEX) -interaction=nonstopmode fullrefman.tex 
 	@$(MAKEINDEX) fullrefman
 	@TEXINPUTS="../../share/texmf:$$TEXINPUTS" \
-	  $(PDFLATEX) '\nonstopmode\input{fullrefman.tex}'
+	  $(PDFLATEX) -interaction=nonstopmode fullrefman.tex 
 	@TEXINPUTS="../../share/texmf:$$TEXINPUTS" \
-	  $(PDFLATEX) '\nonstopmode\input{fullrefman.tex}'
+	  $(PDFLATEX) -interaction=nonstopmode fullrefman.tex 
 else
 	@TEXINPUTS="../../share/texmf;$$TEXINPUTS" \
-	  $(PDFLATEX) '\nonstopmode\input{fullrefman.tex}'
+	  $(PDFLATEX) -interaction=nonstopmode fullrefman.tex 
 	@$(MAKEINDEX) fullrefman
 	@TEXINPUTS="../../share/texmf;$$TEXINPUTS" \
-	  $(PDFLATEX) '\nonstopmode\input{fullrefman.tex}'
+	  $(PDFLATEX) -interaction=nonstopmode fullrefman.tex 
 	@TEXINPUTS="../../share/texmf;$$TEXINPUTS" \
-	  $(PDFLATEX) '\nonstopmode\input{fullrefman.tex}'
+	  $(PDFLATEX) -interaction=nonstopmode fullrefman.tex 
 endif
 
 version.tex: $(top_srcdir)/VERSION $(top_srcdir)/SVN-REVISION
@@ -291,55 +276,19 @@ version.tex: $(top_srcdir)/VERSION $(top_srcdir)/SVN-REVISION
 %-pkg.tex: FORCE
 	@echo "collecting LaTeX docs for package \`$*' ..."
 	@if test -f "$(top_srcdir)/library/$*/latex/Rhelp.zip" ; then \
-	  PERL5LIB=$(RHOME)/share/perl perl ../../tools/pkg2tex.pl $*; \
+	  PERL5LIB=$(RHOME)/share/perl $(PERL) ../../tools/pkg2tex.pl $*; \
 	else \
 	  if test -d "$(top_srcdir)/src/library/$*" ; then \
-	    if perl ../../tools/Rdnewer.pl \
+	    if $(PERL) ../../tools/Rdnewer.pl \
 		"$(top_srcdir)/src/library/$*" "$@"; then \
 	      (cd ../../src/gnuwin32/help && $(MAKE)  --no-print-directory RHOME=$(RHOME) latex-$*); \
-	      PERL5LIB=$(RHOME)/share/perl perl ../../tools/pkg2tex.pl $*; \
+	      PERL5LIB=$(RHOME)/share/perl $(PERL) ../../tools/pkg2tex.pl $*; \
 	    fi \
 	  else \
-	    PERL5LIB=$(RHOME)/share/perl perl ../../tools/pkg2tex.pl $*; \
+	    PERL5LIB=$(RHOME)/share/perl $(PERL) ../../tools/pkg2tex.pl $*; \
 	  fi \
 	fi
 FORCE:
-
-R-admin.pdf: R-admin.texi $(texiincludes) 
-	$(PDFTEX) R-admin.texi
-	$(TEXINDEX) R-admin.cp R-admin.fn R-admin.vr
-	$(PDFTEX) R-admin.texi
-	$(PDFTEX) R-admin.texi
-
-R-data.pdf: R-data.texi $(texiincludes) 
-	$(PDFTEX) R-data.texi
-	$(TEXINDEX) R-data.cp R-data.fn R-data.vr
-	$(PDFTEX) R-data.texi
-	$(PDFTEX) R-data.texi
-
-R-exts.pdf: R-exts.texi $(texiincludes) 
-	$(PDFTEX) R-exts.texi
-	$(TEXINDEX) R-exts.cp R-exts.fn R-exts.vr
-	$(PDFTEX) R-exts.texi
-	$(PDFTEX) R-exts.texi
-
-R-ints.pdf: R-ints.texi $(texiincludes) 
-	$(PDFTEX) R-ints.texi
-	$(TEXINDEX) R-ints.cp R-ints.fn R-ints.vr
-	$(PDFTEX) R-ints.texi
-	$(PDFTEX) R-ints.texi
-
-R-lang.pdf: R-lang.texi $(texiincludes) 
-	$(PDFTEX) R-lang.texi
-	$(TEXINDEX) R-lang.cp R-lang.fn R-lang.vr
-	$(PDFTEX) R-lang.texi
-	$(PDFTEX) R-lang.texi
-
-R-intro.pdf: R-intro.texi $(texiincludes) 
-	$(PDFTEX) R-intro.texi
-	$(TEXINDEX) R-intro.cp R-intro.fn R-intro.vr
-	$(PDFTEX) R-intro.texi
-	$(PDFTEX) R-intro.texi
 
 version.texi: Makefile.win $(top_srcdir)/VERSION $(top_srcdir)/SVN-REVISION
 	@echo "creating $(subdir)/$@"
@@ -347,7 +296,7 @@ version.texi: Makefile.win $(top_srcdir)/VERSION $(top_srcdir)/SVN-REVISION
 	  echo "@set VERSIONno $${v}" > $@; \
 	  v="$${v} (`sed -e 1d -e 's/^Last Changed Date: //' $(top_srcdir)/SVN-REVISION`)"; \
 	  echo "@set VERSION $${v}" >> $@; \
-	  rwv=$(shell perl $(top_srcdir)/src/gnuwin32/fixed/rwver.pl $(top_srcdir)/VERSION); \
+	  rwv=$(shell $(PERL) $(top_srcdir)/src/gnuwin32/fixed/rwver.pl $(top_srcdir)/VERSION); \
 	  echo "@set RWVERSION $${rwv}" >> $@ )
 	@if test "$(R_PAPERSIZE)" = "a4"; then \
 	  echo "@afourpaper" >> $@ ; \
@@ -357,7 +306,7 @@ version.texi: Makefile.win $(top_srcdir)/VERSION $(top_srcdir)/SVN-REVISION
 mostlyclean: clean
 clean:
 	@-rm -f *.aux *.toc *refman.i?? *.out *.log
-	@-rm -f *.cp *.cps *.en *.fn *.fns *.ky *.kys \
+	@-rm -f *.cp *.cps *.en *.ens *.fn *.fns *.ky *.kys \
 	  *.out *.pg *.pgs *.tmp *.tp *.vr *.vrs \
 	  version.tex version.texi refman.tex fullrefman.tex *-pkg.tex 
 distclean: clean

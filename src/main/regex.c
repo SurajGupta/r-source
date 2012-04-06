@@ -14,8 +14,8 @@
    Lesser General Public License for more details.
 
    You should have received a copy of the GNU Lesser General Public
-   License along with the GNU C Library; if not, write to the Free
-   Software Foundation, Inc., 51 Franklin Street, Fifth Floor, Boston, MA
+   License along with the GNU C Library; if not, a copy is available at
+   http://www.r-project.org/Licenses/ MA
    02111-1301 USA.  */
 
 /* constructed from glibc 2.5/posix via
@@ -116,9 +116,14 @@
 #if defined _LIBC
 # include <bits/libc-lock.h>
 #else
+/* gettext adds definitions to config.h for some of these */
+# undef __libc_lock_define
 # define __libc_lock_define(CLASS,NAME)
+# undef __libc_lock_init
 # define __libc_lock_init(NAME) do { } while (0)
+# undef __libc_lock_lock
 # define __libc_lock_lock(NAME) do { } while (0)
+# undef __libc_lock_unlock
 # define __libc_lock_unlock(NAME) do { } while (0)
 #endif
 
@@ -180,6 +185,7 @@
 #else
 # define BE(expr, val) (expr)
 #endif
+#undef inline
 #define inline R_INLINE
 
 /* Number of single byte character.  */
@@ -207,6 +213,18 @@
 # define __attribute(arg) __attribute__ (arg)
 #else
 # define __attribute(arg)
+#endif
+
+#if defined(Win32) && defined(LEA_MALLOC)
+#include <stddef.h>
+extern void *Rm_malloc(size_t n);
+extern void *Rm_calloc(size_t n_elements, size_t element_size);
+extern void Rm_free(void * p);
+extern void *Rm_realloc(void * p, size_t n);
+#define calloc Rm_calloc
+#define malloc Rm_malloc
+#define realloc Rm_realloc
+#define free Rm_free
 #endif
 
 /* extern const char __re_error_msgid[] attribute_hidden;
@@ -1333,7 +1351,7 @@ re_string_skip_chars (re_string_t *pstr, int new_raw_idx, wint_t *last_wc)
   mbstate_t prev_st;
   int rawbuf_idx;
   size_t mbclen;
-  wchar_t wc = WEOF;
+  wchar_t wc = (wchar_t) WEOF; /* R change, for Sun Studio 12 on Linux */
 
   /* Skip the characters which are not necessary to check.  */
   for (rawbuf_idx = pstr->raw_mbs_idx + pstr->valid_raw_len;
@@ -5072,7 +5090,7 @@ parse_dup_op (bin_tree_t *elem, re_string_t *regexp, re_dfa_t *dfa,
     old_tree = NULL;
 
   if (elem->token.type == SUBEXP)
-    postorder (elem, mark_opt_subexp, (void *) (long) elem->token.opr.idx);
+    postorder (elem, mark_opt_subexp, (void *) (uintptr_t) elem->token.opr.idx);
 
   tree = create_tree (dfa, elem, NULL, (end == -1 ? OP_DUP_ASTERISK : OP_ALT));
   if (BE (tree == NULL, 0))
@@ -6284,7 +6302,7 @@ create_token_tree (re_dfa_t *dfa, bin_tree_t *left, bin_tree_t *right,
 static reg_errcode_t
 mark_opt_subexp (void *extra, bin_tree_t *node)
 {
-  int idx = (int) (long) extra;
+  int idx = (int) (uintptr_t) extra;
   if (node->token.type == SUBEXP && node->token.opr.idx == idx)
     node->token.opt_subexp = 1;
 

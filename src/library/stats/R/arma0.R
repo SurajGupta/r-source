@@ -1,3 +1,19 @@
+#  File src/library/stats/R/arma0.R
+#  Part of the R package, http://www.R-project.org
+#
+#  This program is free software; you can redistribute it and/or modify
+#  it under the terms of the GNU General Public License as published by
+#  the Free Software Foundation; either version 2 of the License, or
+#  (at your option) any later version.
+#
+#  This program is distributed in the hope that it will be useful,
+#  but WITHOUT ANY WARRANTY; without even the implied warranty of
+#  MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
+#  GNU General Public License for more details.
+#
+#  A copy of the GNU General Public License is available at
+#  http://www.r-project.org/Licenses/
+
 arima0 <- function(x, order = c(0, 0, 0),
                    seasonal = list(order = c(0, 0, 0), period = NA),
                    xreg = NULL, include.mean = TRUE, delta = 0.01,
@@ -126,7 +142,7 @@ arima0 <- function(x, order = c(0, 0, 0),
         }
         fit <- lm(x ~ xreg - 1, na.action = na.omit)
         init0 <- c(init0, coef(fit))
-        ses <- summary(fit)$coef[,2]
+        ses <- summary(fit)$coefficients[,2]
         parscale <- c(parscale, ses)
     }
 
@@ -224,7 +240,7 @@ arima0 <- function(x, order = c(0, 0, 0),
 print.arima0 <- function(x, digits = max(3, getOption("digits") - 3),
                          se = TRUE, ...)
 {
-    cat("\nCall:", deparse(x$call, width = 75), "", sep = "\n")
+    cat("\nCall:", deparse(x$call, width.cutoff = 75), "", sep = "\n")
     cat("Coefficients:\n")
     coef <- round(x$coef, digits = digits)
     if (se && nrow(x$var.coef)) {
@@ -308,11 +324,11 @@ tsdiag.Arima <- tsdiag.arima0 <- function(object, gof.lag = 10, ...)
     ## plot standardized residuals, acf of residuals, Ljung-Box p-values
     oldpar<- par(mfrow = c(3, 1))
     on.exit(par(oldpar))
-    rs <- object$resid
+    rs <- object$residuals
     stdres <- rs/sqrt(object$sigma2)
     plot(stdres, type = "h", main = "Standardized Residuals", ylab = "")
     abline(h = 0)
-    acf(object$resid, plot = TRUE, main = "ACF of Residuals",
+    acf(object$residuals, plot = TRUE, main = "ACF of Residuals",
         na.action = na.pass)
     nlag <- gof.lag
     pval <- numeric(nlag)

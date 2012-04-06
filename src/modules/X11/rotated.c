@@ -31,10 +31,6 @@
 #include <config.h>
 #endif
 
-#ifdef HAVE_GLIBC2
-# define _BSD_SOURCE /* for M_PI */
-#endif
-
 #include <X11/Xlib.h>
 #include <X11/Xutil.h>
 #include <X11/Xatom.h>
@@ -609,7 +605,7 @@ static int XRotDrawHorizontalString(Display *dpy, XFontStruct *font,
 
     /* count number of sections in string */
     if(align!=NONE)
-	for(i=0; i<strlen(text)-1; i++)
+	for(i=strlen(text)-2; i >= 0; i--)
 	    if(text[i]=='\n')
 		nl++;
 
@@ -857,7 +853,7 @@ static RotatedTextItem *XRotCreateTextItem(Display *dpy, XFontStruct *font,
     /* count number of sections in string */
     item->nl=1;
     if(align!=NONE)
-	for(i=0; i<strlen(text)-1; i++)
+	for(i=strlen(text)-2; i >= 0; i--)
 	    if(text[i]=='\n')
 		item->nl++;
 
@@ -1400,7 +1396,7 @@ XPoint *XRotTextExtents(Display *dpy, XFontStruct *font, double angle,
     /* count number of sections in string */
     nl=1;
     if(align!=NONE)
-	for(i=0; i<strlen(text)-1; i++)
+	for(i=strlen(text)-2; i >= 0; i--)
 	    if(text[i]=='\n')
 		nl++;
 
@@ -1798,7 +1794,7 @@ static int XmbRotDrawHorizontalString(Display *dpy, XFontSet font,
 
     /* count number of sections in string */
     if(align!=NONE)
-	for(i=0; i<strlen(text)-1; i++)
+	for(i=strlen(text)-2; i >= 0; i--)
 	    if(text[i]=='\n')
 		nl++;
 
@@ -2046,7 +2042,7 @@ static RotatedTextItem
     /* count number of sections in string */
     item->nl=1;
     if(align!=NONE)
-	for(i=0; i<strlen(text)-1; i++)
+	for(i=strlen(text)-2; i >= 0; i--)
 	    if(text[i]=='\n')
 		item->nl++;
 
@@ -2340,7 +2336,7 @@ XPoint *XmbRotTextExtents(Display *dpy, XFontSet font, double angle,
     /* count number of sections in string */
     nl=1;
     if(align!=NONE)
-	for(i=0; i<strlen(text)-1; i++)
+	for(i=strlen(text)-2; i >= 0; i--)
 	    if(text[i]=='\n')
 		nl++;
 

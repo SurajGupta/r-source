@@ -1,3 +1,8 @@
+% File src/library/utils/man/browseURL.Rd
+% Part of the R package, http://www.R-project.org
+% Copyright 1995-2007 R Core Development Team
+% Distributed under GPL 2 or later
+
 \name{browseURL}
 \alias{browseURL}
 \title{Load URL into a WWW Browser}
@@ -49,12 +54,17 @@ browseURL(url, browser = getOption("browser"))
   It is the caller's responsibility to encode \code{url} if necessary
   (see \code{\link{URLencode}}).  This can be tricky for file URLs,
   where the format accepted can depend on the browser and OS.
+#ifdef windows
+  Some browsers have required \code{:} be replaced by \code{|} in file
+  paths: others do not accept that.  All seem to accept \code{\\} as a
+  path separator even though the RFC1738 standard requires \code{/}.
+#endif
 }
 #endif
 #ifdef windows
 \examples{
 \dontrun{browseURL("http://www.r-project.org")
-browseURL("file://c|/R/R-2.5.0/doc/html/index.html",
+browseURL("file://d:/R/R-2.5.1/doc/html/index.html",
           browser="C:/Program Files/Mozilla Firefox/firefox.exe")
 }}
 #endif

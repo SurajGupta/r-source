@@ -1,3 +1,8 @@
+% File src/library/base/man/Extremes.Rd
+% Part of the R package, http://www.R-project.org
+% Copyright 1995-2007 R Core Development Team
+% Distributed under GPL 2 or later
+
 \name{Extremes}
 \alias{max}
 \alias{min}
@@ -44,7 +49,7 @@ pmin.int(\dots, na.rm = FALSE)
   \code{na.rm = TRUE}.
 
   \code{pmax} and \code{pmin} take one or more vectors (or matrices) as
-  arguments and return a single vector giving the \dQuote{parallel}
+  arguments and return a single vector giving the \sQuote{parallel}
   maxima (or minima) of the vectors.  The first element of the result is
   the maximum (minimum) of the first elements of all the arguments, the
   second element of the result is the maximum (minimum) of the second
@@ -86,6 +91,11 @@ pmin.int(\dots, na.rm = FALSE)
   are empty (after possible removal of \code{NA}s), the result is double
   (\code{Inf} or \code{-Inf}).
 }
+\section{S4 methods}{
+  \code{max} and \code{min} are part of the S4
+  \code{\link[methods:S4groupGeneric]{Summary}} group generic.  Methods
+  for them must use the signature \code{x, \dots, na.rm}.
+}
 \references{
   Becker, R. A., Chambers, J. M. and Wilks, A. R. (1988)
   \emph{The New S Language}.
@@ -106,7 +116,7 @@ pmin.int(\dots, na.rm = FALSE)
   i.e., the location where an extreme value occurs.
 }
 \examples{
-require(stats)
+require(stats); require(graphics)
  min(5:1, pi) #-> one number
 pmin(5:1, pi) #->  5  numbers
 

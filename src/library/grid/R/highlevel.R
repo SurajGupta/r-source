@@ -1,3 +1,19 @@
+#  File src/library/grid/R/highlevel.R
+#  Part of the R package, http://www.R-project.org
+#
+#  This program is free software; you can redistribute it and/or modify
+#  it under the terms of the GNU General Public License as published by
+#  the Free Software Foundation; either version 2 of the License, or
+#  (at your option) any later version.
+#
+#  This program is distributed in the hope that it will be useful,
+#  but WITHOUT ANY WARRANTY; without even the implied warranty of
+#  MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
+#  GNU General Public License for more details.
+#
+#  A copy of the GNU General Public License is available at
+#  http://www.r-project.org/Licenses/
+
 ######################################
 ## Example applications of grid    #
 ######################################
@@ -80,7 +96,7 @@ grid.multipanel <- function(x = stats::runif(90), y = stats::runif(90),
     pushViewport(temp.vp)
     xscale <- extendrange(x)
     yscale <- extendrange(y)
-    breaks <- seq(min(z), max(z), length = nplots + 1)
+    breaks <- seq.int(min(z), max(z), length.out = nplots + 1)
     for (i in 1:nplots) {
         col <- (i - 1) %% ncol + 1
         row <- (i - 1) %/% ncol + 1
@@ -135,7 +151,7 @@ grid.show.layout <- function(l, newpage=TRUE,
       if (cell.label)
         grid.text(paste("(", i, ", ", j, ")", sep=""), gp=gpar(col=label.col))
       if (j==1)
-        # recycle heights if necessary 
+        # recycle heights if necessary
         grid.text(as.character("["(l$heights, i, top=FALSE)), gp=gp.red,
               just=c("right", "centre"),
               x=unit(-.05, "inches"), y=unit(.5, "npc"), rot=0)

@@ -1,3 +1,8 @@
+% File src/library/stats/man/isoreg.Rd
+% Part of the R package, http://www.R-project.org
+% Copyright 1995-2007 R Core Development Team
+% Distributed under GPL 2 or later
+
 \name{isoreg}
 \title{Isotonic / Monotone Regression}
 \alias{isoreg}
@@ -12,9 +17,9 @@
 isoreg(x, y = NULL)
 }
 \arguments{
-  \item{x, y}{in \code{isoreg}, coordinate vectors of the regression
-    points.  Alternatively a single \dQuote{plotting} structure can be
-    specified: see \code{\link{xy.coords}}.
+  \item{x, y}{%in \code{isoreg},
+    coordinate vectors of the regression points.  Alternatively a single
+    plotting structure can be specified: see \code{\link{xy.coords}}.
   }
 }
 \details{
@@ -44,7 +49,7 @@ isoreg(x, y = NULL)
 \note{
   The code should be improved to accept \emph{weights} additionally and
   solve the corresponding weighted least squares problem.\cr
-  \dQuote{Patches are welcome!}
+  \sQuote{Patches are welcome!}
 }
 \references{
   Barlow, R. E., Bartholomew, D. J., Bremner, J. M., and Brunk, H. D. (1972)
@@ -59,13 +64,15 @@ isoreg(x, y = NULL)
   uses isotonic regression.
 }
 \examples{
+require(graphics)
+
 (ir <- isoreg(c(1,0,4,3,3,5,4,2,0)))
 plot(ir, plot.type = "row")
 
 (ir3 <- isoreg(y3 <- c(1,0,4,3,3,5,4,2, 3)))# last "3", not "0"
 (fi3 <- as.stepfun(ir3))
 (ir4 <- isoreg(1:10, y4 <- c(5, 9, 1:2, 5:8, 3, 8)))
-cat("R^2 =", formatC(sum(residuals(ir4)^2) / (9*var(y4)), dig=2),"\n")
+cat("R^2 =", formatC(sum(residuals(ir4)^2) / (9*var(y4)), digits=2),"\n")
 }
 \keyword{regression}
 \keyword{smooth}

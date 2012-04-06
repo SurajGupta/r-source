@@ -1,7 +1,24 @@
-# file stats/R/ppr.R
-# copyright (C) 1998 B. D. Ripley
-# Copyright (C) 2000-3 The R Development Core Team
+#  File src/library/stats/R/ppr.R
+#  Part of the R package, http://www.R-project.org
 #
+#  This program is free software; you can redistribute it and/or modify
+#  it under the terms of the GNU General Public License as published by
+#  the Free Software Foundation; either version 2 of the License, or
+#  (at your option) any later version.
+#
+#  This program is distributed in the hope that it will be useful,
+#  but WITHOUT ANY WARRANTY; without even the implied warranty of
+#  MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
+#  GNU General Public License for more details.
+#
+#  A copy of the GNU General Public License is available at
+#  http://www.r-project.org/Licenses/
+
+## file stats/R/ppr.R
+## copyright (C) 1998 B. D. Ripley
+## Copyright (C) 2000-3 The R Development Core Team
+## This version distributed under GPL (version 2 or later)
+
 ppr <- function(x, ...) UseMethod("ppr")
 
 ppr.formula <-
@@ -9,7 +26,7 @@ function(formula, data, weights, subset,
 	 na.action, contrasts = NULL, ..., model = FALSE)
 {
     call <- match.call()
-    m <- match.call(expand = FALSE)
+    m <- match.call(expand.dots = FALSE)
     m$contrasts <- m$... <- NULL
     m[[1]] <- as.name("model.frame")
     m <- eval(m, parent.frame())
@@ -180,7 +197,7 @@ predict.ppr <- function(object, newdata, ...)
                          xlev = object$xlevels)
         if(!is.null(cl <- attr(Terms, "dataClasses"))) .checkMFClasses(cl, m)
         keep <- match(row.names(m), rn)
-        x <- model.matrix(Terms, m, contrasts = object$contrasts)
+        x <- model.matrix(Terms, m, contrasts.arg = object$contrasts)
     } else {
         x <- as.matrix(newdata)
         keep <- 1:nrow(x)

@@ -1,3 +1,19 @@
+#  File src/library/graphics/R/pairs.R
+#  Part of the R package, http://www.R-project.org
+#
+#  This program is free software; you can redistribute it and/or modify
+#  it under the terms of the GNU General Public License as published by
+#  the Free Software Foundation; either version 2 of the License, or
+#  (at your option) any later version.
+#
+#  This program is distributed in the hope that it will be useful,
+#  but WITHOUT ANY WARRANTY; without even the implied warranty of
+#  MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
+#  GNU General Public License for more details.
+#
+#  A copy of the GNU General Public License is available at
+#  http://www.r-project.org/Licenses/
+
 pairs <- function(x, ...) UseMethod("pairs")
 
 pairs.formula <-
@@ -9,6 +25,7 @@ function(formula, data = NULL, ..., subset, na.action = stats::na.pass)
     m$... <- NULL
     m$na.action <- na.action # force in even if  default
     m[[1]] <- as.name("model.frame")
+    require(stats, quietly=TRUE)
     mf <- eval(m, parent.frame())
     pairs(mf, ...)
 }
@@ -17,6 +34,7 @@ function(formula, data = NULL, ..., subset, na.action = stats::na.pass)
 ## some of the changes are from code
 ## Copyright 1999 Dr. Jens Oehlschlaegel-Akiyoshi
 ## Others are by BDR and MM
+## This version distributed under GPL (version 2 or later)
 #################################################
 
 pairs.default <-
@@ -51,7 +69,7 @@ function (x, labels, panel = points, ...,
     dots <- list(...); nmdots <- names(dots)
     if (!is.matrix(x)) {
         x <- as.data.frame(x)
-        for(i in seq(along=names(x))) {
+        for(i in seq_along(names(x))) {
             if(is.factor(x[[i]]) || is.logical(x[[i]]))
                x[[i]] <- as.numeric(x[[i]])
             if(!is.numeric(unclass(x[[i]])))

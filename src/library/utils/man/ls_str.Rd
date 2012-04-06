@@ -1,3 +1,8 @@
+% File src/library/utils/man/ls_str.Rd
+% Part of the R package, http://www.R-project.org
+% Copyright 1995-2007 R Core Development Team
+% Distributed under GPL 2 or later
+
 \name{ls.str}
 \title{List Objects and their Structure}
 \usage{
@@ -12,9 +17,8 @@ lsf.str(pos = 1, \dots, envir = as.environment(pos))
 \alias{lsf.str}
 \alias{print.ls_str}
 \description{
-  \code{ls.str} and \code{lsf.str} are \dQuote{variations}
-  of \code{\link{ls}} applying \code{\link{str}()} to each matched name, see
-  section \sQuote{Value}.
+  \code{ls.str} and \code{lsf.str} are variations of \code{\link{ls}}
+  applying \code{\link{str}()} to each matched name: see section Value.
 }
 \arguments{
   \item{pos}{integer indicating \code{\link{search}} path position.}
@@ -46,6 +50,8 @@ lsf.str(pos = 1, \dots, envir = as.environment(pos))
   \code{\link{str}}, \code{\link{summary}}, \code{\link{args}}.
 }
 \examples{
+require(stats)
+
 lsf.str()#- how do the functions look like which I am using?
 ls.str(mode = "list") #- what are the structured objects I have defined?
 

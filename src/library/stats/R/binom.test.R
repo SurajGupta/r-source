@@ -1,3 +1,19 @@
+#  File src/library/stats/R/binom.test.R
+#  Part of the R package, http://www.R-project.org
+#
+#  This program is free software; you can redistribute it and/or modify
+#  it under the terms of the GNU General Public License as published by
+#  the Free Software Foundation; either version 2 of the License, or
+#  (at your option) any later version.
+#
+#  This program is distributed in the hope that it will be useful,
+#  but WITHOUT ANY WARRANTY; without even the implied warranty of
+#  MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
+#  GNU General Public License for more details.
+#
+#  A copy of the GNU General Public License is available at
+#  http://www.r-project.org/Licenses/
+
 binom.test <-
 function(x, n, p = 0.5, alternative = c("two.sided", "less", "greater"),
          conf.level = 0.95)
@@ -35,7 +51,7 @@ function(x, n, p = 0.5, alternative = c("two.sided", "less", "greater"),
 
     PVAL <- switch(alternative,
                    less = pbinom(x, n, p),
-                   greater = pbinom(x - 1, n, p, lower = FALSE),
+                   greater = pbinom(x - 1, n, p, lower.tail = FALSE),
                    two.sided = {
                        if(p == 0)
                            (x == 0)
@@ -58,15 +74,15 @@ function(x, n, p = 0.5, alternative = c("two.sided", "less", "greater"),
 			   if (x == m)
 			   	1
                            else if (x < m) {
-                               i <- seq(from = ceiling(m), to = n)
+                               i <- seq.int(from = ceiling(m), to = n)
                                y <- sum(dbinom(i, n, p) <= d * relErr)
                                pbinom(x, n, p) +
-                                   pbinom(n - y, n, p, lower = FALSE)
+                                   pbinom(n - y, n, p, lower.tail = FALSE)
                            } else {
-                               i <- seq(from = 0, to = floor(m))
+                               i <- seq.int(from = 0, to = floor(m))
                                y <- sum(dbinom(i, n, p) <= d * relErr)
                                pbinom(y - 1, n, p) +
-                                   pbinom(x - 1, n, p, lower = FALSE)
+                                   pbinom(x - 1, n, p, lower.tail = FALSE)
                            }
                        }
                    })

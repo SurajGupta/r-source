@@ -113,6 +113,7 @@ The information here applies only to recent versions of R for Windows,
 * Other strange crashes.::      
 * Why does R never use more than 50% of my CPU?::  
 * Does R run under Windows Vista?::  
+* Quotes don't come out right on the console/terminal/pager::  
 @end menu
 
 
@@ -122,7 +123,7 @@ The information here applies only to recent versions of R for Windows,
 Go to any CRAN site (see @uref{http://cran.r-project.org/mirrors.html}
 for a list), navigate to the @file{bin/windows/base} directory and
 collect the file(s) you need.  The current release is distributed as an
-installer @samp{@RWVER@-win32.exe} of about 29Mb.  This contains all the
+installer @samp{@RWVER@-win32.exe} of about 30Mb.  This contains all the
 components and allows as complete as installation as you choose.
 
 There are also links on that page to the @samp{r-patched} and
@@ -139,8 +140,8 @@ You need Windows 95 or later.  There is no specific version for Windows
 64, but the standard 32-bit version has been proven to work.  Some
 features only work on an NT-based version of Windows (and some work
 better on such an OS).  We do minimally test most releases on Windows 98
-(2.5.0 was tested, for example) and sometimes on NT4, but only test
-thoroughly on XP.
+(2.5.0 was tested, for example), but only test thoroughly on XP and
+Vista 64.
 
 Your file system must allow case-honouring long file names (as is likely
 except perhaps for some network-mounted systems).  A full installation
@@ -148,15 +149,16 @@ takes up about 60Mb of disk space and a minimal one less than 20Mb.
 
 If you want to be able to build packages from sources, we recommend that
 you choose an installation path not containing spaces.  (Using a path
-with spaces in will probably work, but is little-tested.)
-Users of Vista installing for a single users using in an account with
-administrator rights should consider installing into a non-system area
-(such as @file{C:\R}).  If you are installing to a network drive, you
-should consider changing the default form of help during the
-install @strong{not} to be Compiled HTML help: @xref{Help is not shown
-for some of the packages}.  Installing to a network share (a filepath
-starting with @code{\\machine\...}) is not supported: such paths will
-need to mapped to a network drive.
+with spaces in will probably work, but is little-tested.)  Users of
+Vista installing for a single user using an account with administrator
+rights@footnote{Non-administrator accounts will automatically be offered
+a default installation directory in the user area.} should consider
+installing into a non-system area (such as @file{C:\R}).  If you are
+installing to a network drive, you should consider changing the default
+form of help during the install @strong{not} to be Compiled HTML help:
+@xref{Help is not shown for some of the packages}.  Installing to a
+network share (a filepath starting with @code{\\machine\...}) is not
+supported: such paths will need to mapped to a network drive.
 
 To install use @samp{@RWVER@-win32.exe}.  Just double-click on the
 icon and follow the instructions.  If you installed R this way you can
@@ -274,13 +276,14 @@ to run R without creating a shortcut in a writable folder.
 @node How do I UNinstall R?, What's the best way to upgrade?, Can I run R from a CD or USB drive?, Installation and Usage
 @section How do I UNinstall R?
 
-Normally you can do this from the R group on the Start Menu or from
-the @samp{Add/Remove Programs} in the Control Panel.  If it does not
-appear there or if you want to remove an old version, run
-@file{unins000.exe} in the top-level installation directory.  (There
-should be a separate uninstall item in the R group for each installed
-version of R. On Windows Vista, you may well be asked to confirm that
-you wish to run a program from an `unidentified publisher'.)
+Normally you can do this from the R group on the Start Menu or from the
+@samp{Add/Remove Programs}@footnote{@samp{Programs and Features} under
+Vista} in the Control Panel.  If it does not appear there or if you want
+to remove an old version, run @file{unins000.exe} in the top-level
+installation directory.  (There should be a separate uninstall item in
+the R group for each installed version of R. On Windows Vista, you may
+well be asked to confirm that you wish to run a program from an
+`unidentified publisher'.)
 
 Uninstalling R only removes files from the initial installation, not
 (for example) packages you have installed or updated.
@@ -312,9 +315,8 @@ their names and re-install them from CRAN.
 Indeed there is.  It is set by the command-line flag
 @option{--max-mem-size} (@pxref{How do I install R for Windows?}) and
 defaults to the smaller of the amount of physical RAM in the machine and
-1.5Gb.  It can be set to any amount between 32Mb and 3Gb.  Be aware though
-that Windows has (in most versions) a maximum amount of user virtual
-memory of 2Gb.
+0.5Gb less than the limit of user virtual memory for a process (most
+often 2GB).  It can be set to any amount between 32Mb and 4095Mb.
 
 Use @code{?Memory} and @code{?memory.size} for information about memory
 usage.  The limit can be raised by calling @code{memory.limit} within a
@@ -327,14 +329,12 @@ several times slower on some tasks).
 The executables @file{Rgui.exe} and @file{Rterm.exe} support up to 3Gb
 per process under suitably enabled versions of Windows (see
 @uref{http://www.microsoft.com/whdc/system/platform/server/PAE/PAEmem.mspx}
-: even where this is supported it has to be specifically enabled).
-On such systems, the default for @code{--max-mem-size} is the smaller of
-the amount of RAM and 2.5Gb.
-
-It is possible that the Windows API calls used will give misleading
-results on machines with more than 4Gb of physical RAM (and later ones
-cannot be used as R must run on Windows 2000 and earlier): for safety
-set @code{--max-mem-size} explicitly on such machines.
+and @uref{http://msdn2.microsoft.com/en-us/library/aa366778.aspx}: where
+this is supported it may need to be specifically enabled).  On such
+systems, the default for @code{--max-mem-size} is the smaller of the
+amount of RAM and 2.5Gb.  On some 64-bit versions of Windows (e.g.@:
+Vista) the limit is 4GB, and there the default for @code{--max-mem-size}
+is the smaller of the amount of RAM and 3.5Gb.
 
 
 @node How can I keep workspaces for different projects in different directories?, How do I print from R?, There seems to be a limit on the memory it uses!, Installation and Usage
@@ -417,11 +417,12 @@ The home directory is set as follows: If environment variable
 variable @env{HOME} is set, its value is used.  After those two
 user-controllable settings, R tries to find system-defined home
 directories.  It first tries to use the Windows "personal" directory
-(typically @file{C:\Documents and Settings\username\My Documents} in
-Windows XP).  If that fails, if both environment variables
-@env{HOMEDRIVE} and @env{HOMEPATH} are set (and they normally are under
-Windows NT/2000/XP/2003), the value is @file{$@{HOMEDRIVE@}$@{HOMEPATH@}}.
-If all of these fail, the current working directory is used.
+(typically @file{C:\Documents and Settings\username\My Documents} on
+Windows XP and @file{C:\Users\username\Documents} on Vista).  If that
+fails, if both environment variables @env{HOMEDRIVE} and @env{HOMEPATH}
+are set (and they normally are under Windows NT4, 2000 and later), the
+value is @file{$@{HOMEDRIVE@}$@{HOMEPATH@}}.  If all of these fail, the
+current working directory is used.
 
 You can find this from R code by @code{Sys.getenv("R_USER")}.
 
@@ -459,11 +460,13 @@ See @code{?Startup} for more details of environment files.
 For all applications via Windows.  How you set an environment variable
 is system specific: in Windows 9x you can set them in
 @file{autoexec.bat} or in an MS-DOS window from which you launch
-@command{Rgui} / @command{Rterm}.  Under Windows NT/2000/XP/2003 you can use
-the control panel or the properties of `My Computer'.  Under Windows ME
-you can use the System Configuration Utility (under Programs,
-Accessories, System Tools on the Start menu).  You may have to log out
-or reboot for such changes to take effect.
+@command{Rgui} / @command{Rterm}.  Under Windows NT/2000/XP/2003 you can
+use the control panel or the properties of `My Computer'.  Under Windows
+ME you can use the System Configuration Utility (under Programs,
+Accessories, System Tools on the Start menu).  Under Vista, go to `User
+Accounts' in the Control Panel, and select your account and then `Change
+my environment variables'.  You may have to log out or reboot for such
+changes to take effect.
 @end enumerate
 
 The order of precedence for environmental variables is the order in
@@ -479,7 +482,7 @@ strings, so for example one needs
 @samp{"d:\\@RWVER@\\library\\xgobi\\scripts\\xgobi.bat"}.  You can
 make life easier for yourself by using forward slashes as path
 separators: they do work under Windows.  You should include the file
-extension (e.g. @samp{"xgobi.bat"} rather than just @samp{"xgobi"});
+extension (e.g.@: @samp{"xgobi.bat"} rather than just @samp{"xgobi"});
 sometimes this isn't shown in Windows, but it is necessary in R.
 
 A simple way to avoid these problems is to use the function
@@ -581,8 +584,7 @@ password when HTTP downloads are first used.
 
 Another possibility is that firewall settings are blocking the R
 executables from contacting the Internet, but this should result in
-informative error messages from the firewall program (and it does from
-the Windows XP firewall).
+informative error messages from the firewall program.
 
 
 @node Entering certain characters crashes Rgui., What does 'DLL attempted to change FPU control word' mean?, The Internet download functions fail., Installation and Usage
@@ -620,7 +622,7 @@ updated.  (It was common with DLLs compiled in early versions of Visual C++.)
 Unfortunately, because DLLs may load other DLLs it is not possible for R
 to track which DLL caused the problem.
 
-See also @code{?dyn.load)}.
+See also @code{?dyn.load}.
 
 @node Other strange crashes., Why does R never use more than 50% of my CPU?, What does 'DLL attempted to change FPU control word' mean?, Installation and Usage
 @section Other strange crashes.
@@ -657,15 +659,14 @@ Many benchmarks show hyperthreading reduces the overall workload, so you
 may want to experiment with disabling it.
 
 
-@node Does R run under Windows Vista?,  , Why does R never use more than 50% of my CPU?, Installation and Usage
+@node Does R run under Windows Vista?, Quotes don't come out right on the console/terminal/pager, Why does R never use more than 50% of my CPU?, Installation and Usage
 @section Does R run under Windows Vista?
 
-It does.  Vista was launched in January 2007 and experience with it is
-still scanty.  A few issues have been reported that related to the way
+It does.  A few issues have been reported that related to the way
 accounts and file permissions work.  (These are not specifically R
-issues, but changes in user experiences.)  As there are many settings that
-system administrators can change, it is clear that only a tiny fraction
-of possibilities will have been explored.
+issues, but changes in user experiences.)  As there are many settings
+that system administrators can change, it is clear that only a tiny
+fraction of possibilities will have been explored.
 
 Earlier versions of Windows had user and Administrator accounts, and
 user accounts could be give administrative privileges (by being added to
@@ -750,17 +751,48 @@ This approach will not allow you to update the recommended packages.
 
 
 Another issue with Vista is that the standard POSIX ways that R uses
-(e.g. in @code{file.info} and @code{file.access}) to look at file
+(e.g.@: in @code{file.info} and @code{file.access}) to look at file
 permissions no longer work reliably.  @code{file.access} has been
 re-written for R 2.5.1 to work with Windows NT-based security and
-seems much more reliable with Vista.
+the new version seems much more reliable with Vista.
 
 On suitably recent hardware Vista can prevent the execution of code
 from data areas via `Data Execution Prevention' (from a tab in
 System Properties -> Advanced -> Performance), and sysadmins can turn
-this on for all programs.  R should (and in limited testing appears
-to) run with DEP enabled.
+this on for all programs.  R runs correctly with DEP enabled.
 
+
+@node Quotes don't come out right on the console/terminal/pager,  , Does R run under Windows Vista?, Installation and Usage
+@section Quotes don't come out right on the console/terminal/pager
+
+R version 2.6.0 and later will make use of directional quotes that are
+not always rendered correctly by Windows.
+
+Whether these are used in R output (from functions @code{sQuote} and
+@code{dQuote}) is controlled by @code{getOption("useFancyQuotes")} whose
+default is @code{FALSE} except for the @code{Rgui} console.  There are
+two potential problems with rendering directional quotes.  The first is
+that in European locales the `Windows Command Prompt' is by default set
+up to use MS-DOS and not Windows default encodings: this can be changed
+via @command{chcp}, with @command{chcp 1252} being appropriate for
+Western European (including English) locales.  The other is that the
+default raster fonts only include directional single quotes and not
+directional double quotes (which will probably be rendered as a filled
+rectangle).
+
+Directional quotes will also be used in text help which is normally
+displayed in R's internal pager: these may not be rendered correctly in
+an external pager.  They are also used in CHM and HTML help, where
+most browsers use fonts which render them correctly.
+
+The font used can affect whether quotes are rendered correctly.  The
+default font in the @code{Rgui} console and internal pager is
+@code{Courier New}, which has directional quotes on all the systems we
+tried.  @code{Lucida Console} has elegant glyphs for directional quotes,
+but seems rather light on Windows XP (it looks better than @code{Courier
+New} on Vista).  Non-TrueType fonts such as @code{Courier} and
+@code{FixedSys} lack directional double quotes on all the systems we
+tried.
 
 @newchap{}
 @node Languages and Internationalization, Packages, Installation and Usage, Top
@@ -817,7 +849,7 @@ Q2.15, or in the @file{Rconsole} file.
 @section I want to run R in Chinese/Japanese/Korean.
 
 All recent Windows versions of R support `East Asian' languages
-(with a suitable version of Windows -- e.g. Western installations of
+(with a suitable version of Windows -- e.g.@: Western installations of
 Windows XP do not by default have such support).
 
 Both @command{Rterm.exe} and @command{RGui.exe} support single- and
@@ -843,9 +875,10 @@ several places to select the language under the `Regional and Language
 Options' part of the control panel, and the appropriate language has to
 be set under @emph{both} the `Regional Options' and `Advanced' tabs.
 
-When using @command{Rterm} the window in which it is run has to be set up
-to use a suitable font and a suitable codepage (which for the Windows
-Cmd shell can be done by @command{chcp}).
+When using @command{Rterm} the window in which it is run has to be set
+up to use a suitable font (e.g. Lucida Console, not the OEM raster
+fonts) and a suitable codepage (which for the Windows Cmd shell can be
+done by @command{chcp}).
 
 @node I selected English for installation but R runs in Chinese, I would like to be able to use Japanese fonts, I want to run R in Chinese/Japanese/Korean, Languages and Internationalization
 @section I selected English for installation but R runs in Chinese.
@@ -916,12 +949,12 @@ XP there are three tabs on the @emph{Regional and Language Options}
 applet in the Control Panel.  The first tab controls the locale, the
 second the UI and the third the fonts used for `non-Unicode' programs
 (but apparently also for Unicode ones in many cases): see Q3.3.  Vista
-talks about the ' UI language', and the 'system locale' for setting
-the fonts used for `non-Unicode' programs.
+talks about the 'UI language' and the 'system locale' for setting
+the language used for `non-Unicode' programs.
 
 If you have Windows running completely in say French or Chinese these
 settings are likely to be consistent.  However, if you try to run
-Windows XP in one language and R in another, you may find the way Windows
+Windows in one language and R in another, you may find the way Windows
 handles internationalization slightly odd.  For further details see
 @uref{http://msdn.microsoft.com/library/default.asp?url=/library/en-us/intl/nls_0ddl.asp}.
 
@@ -995,7 +1028,7 @@ EITHER
 set the environment variable R_LIBS to p:\myRlib before starting R
 @end example
 
-OR use a package by, e.g.
+OR use a package by, e.g.@:
 
 @example
 library(mypkg, lib.loc="p:/myRlib")
@@ -1097,8 +1130,8 @@ to a non-empty value, it is assumed that you want to use a different
 Tcl/Tk 8.4.x installation, and that this is set up correctly (with the
 DLLs in your path and @env{TCL_LIBRARY} set).  In that case you do not
 need the Tcl/Tk support files installed (but they can be).  Note that
-you do need 8.4.x and not 8.3.x.  (If you build R from the sources
-yourself you can configure it to use 8.3.x.)
+you do need 8.4.x and not 8.5.x.  (If you build R from the sources
+yourself you can configure it to use 8.5.x.)
 
 
 @node  Hyperlinks in HTML do not work., update.packages() fails, Package TclTk does not work., Packages
@@ -1185,7 +1218,7 @@ requests to the browser: use @code{options(htmlhelp=TRUE)} to turn this on.
 
 @item The HTML help system has limitations in supporting cross-library links.
 
-@item Paths to files (e.g. in @code{source()}) can be specified with
+@item Paths to files (e.g.@: in @code{source()}) can be specified with
 either "/" or "\\".
 
 @item @code{system()} is slightly different: see its help page and that
@@ -1276,7 +1309,7 @@ What is it `completing'?  There are two modes: within an unterminated
 Otherwise, it is completing R expressions: most obviously it will match
 visible R object names and keywords, so @kbd{apr} folloed by @kbd{TAB}
 will (in a vanilla session) complete to @code{apropos}.  After a
-function name and paranthesis (e.g. @kbd{apropos(}) it will complete
+function name and parenthesis (e.g.@: @kbd{apropos(}) it will complete
 argument names (and @kbd{=}), and after @kbd{$} or @kbd{@@} it will
 complete list components or slot names respectively.
 
@@ -1394,10 +1427,12 @@ horizontally. (The @key{left/right arrow} keys work in the pager too.)
 
 See the `R Installation and Administration' manual.
 
-Note that building for Windows 64 is not supported as no suitable
-non-commercial compiler is yet available.  There is a glimmer of hope
-that this will change in the not too far distance future: see
-@url{http://sourceforge.net/mailarchive/forum.php?thread_name=460D8FC1.64E689DB%40dessent.net&forum_name=mingw-users}
+It is possible to cross-build R for Windows 64 using @code{binutils} and
+@code{gcc} with the @samp{x86_64-pc-mingw32} target, using suitable
+settings in @file{src/gnuwin32/MkRules} (see the comments there).
+However, at present that toolchain is experimental and the build does
+not run.
+ 
 You are of course welcome to try a commercial compiler, but we will not
 be distributing a port to which users cannot easily add packages.
 

@@ -1,3 +1,8 @@
+% File src/library/splines/man/predict.bs.Rd
+% Part of the R package, http://www.R-project.org
+% Copyright 1995-2007 R Core Development Team
+% Distributed under GPL 2 or later
+
 \name{predict.bs}
 \title{Evaluate a Spline Basis}
 \alias{predict.bs}
@@ -30,6 +35,7 @@
   \code{\link{bs}}, \code{\link{ns}}, \code{\link{poly}}.
 }
 \examples{
+require(stats)
 basis <- ns(women$height, df = 5)
 newX <- seq(58, 72, len = 51)
 # evaluate the basis at the new data

@@ -1,3 +1,8 @@
+% File src/library/grDevices/man/rgb2hsv.Rd
+% Part of the R package, http://www.R-project.org
+% Copyright 1995-2007 R Core Development Team
+% Distributed under GPL 2 or later
+
 \name{rgb2hsv}
 \alias{rgb2hsv}
 \title{RGB to HSV Conversion}
@@ -11,13 +16,13 @@
 rgb2hsv(r, g = NULL, b = NULL, gamma = 1, maxColorValue = 255)
 }
 \arguments{
-  \item{r}{vector of \dQuote{red} values in \eqn{[0,M]}, (\eqn{M
+  \item{r}{vector of \sQuote{red} values in \eqn{[0,M]}, (\eqn{M
       =}\code{maxColorValue}) or 3-row rgb matrix.}
-  \item{g}{vector of \dQuote{green} values, or \code{\link{NULL}} when
+  \item{g}{vector of \sQuote{green} values, or \code{\link{NULL}} when
     \code{r} is a matrix.}
-  \item{b}{vector of \dQuote{blue} values, or \code{\link{NULL}} when
+  \item{b}{vector of \sQuote{blue} values, or \code{\link{NULL}} when
     \code{r} is a matrix.}
-  \item{gamma}{a \dQuote{gamma correction} (supposedly applied to the
+  \item{gamma}{a gamma-correction (supposedly applied to the
     r,g,b values previously), see \code{\link{hsv}(...., gamma)}.}
   \item{maxColorValue}{number giving the maximum of the RGB color values
     range.  The default \code{255} corresponds to the typical \code{0:255}
@@ -47,11 +52,11 @@ rgb2hsv(r, g = NULL, b = NULL, gamma = 1, maxColorValue = 255)
 6 * hc["h",] # the hues are equispaced
 
 \testonly{set.seed(151)}
-(rgb3 <- floor(256 * matrix(runif(3*12), 3,12)))
+(rgb3 <- floor(256 * matrix(stats::runif(3*12), 3,12)))
 (hsv3 <- rgb2hsv(rgb3))
 ## Consistency :
 stopifnot(rgb3 == col2rgb(hsv(h=hsv3[1,], s=hsv3[2,], v=hsv3[3,])),
-          all.equal(hsv3, rgb2hsv(rgb3/255, maxC = 1)))
+          all.equal(hsv3, rgb2hsv(rgb3/255, maxColorValue = 1)))
 
 ## A (simplified) pure R version -- originally by Wolfram Fischer --
 ## showing the exact algorithm:

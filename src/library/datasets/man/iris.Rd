@@ -1,3 +1,8 @@
+% File src/library/datasets/man/iris.Rd
+% Part of the R package, http://www.R-project.org
+% Copyright 1995-2007 R Core Development Team
+% Distributed under GPL 2 or later
+
 \name{iris}
 \docType{data}
 \alias{iris}
@@ -52,7 +57,7 @@ ii <- data.frame(matrix(aperm(iris3, c(1,3,2)), ncol=4,
                         dimnames = list(NULL, sub(" L.",".Length",
                                         sub(" W.",".Width", dni3[[2]])))),
                  Species = gl(3, 50,
-                             lab=sub("S", "s", sub("V", "v", dni3[[3]]))))
+                             labels=sub("S", "s", sub("V", "v", dni3[[3]]))))
 all.equal(ii, iris) # TRUE
 }
 \keyword{datasets}

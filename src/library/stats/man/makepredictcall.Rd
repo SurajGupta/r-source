@@ -1,3 +1,8 @@
+% File src/library/stats/man/makepredictcall.Rd
+% Part of the R package, http://www.R-project.org
+% Copyright 1995-2007 R Core Development Team
+% Distributed under GPL 2 or later
+
 \name{makepredictcall}
 \alias{makepredictcall}
 \alias{makepredictcall.default}
@@ -42,6 +47,8 @@ makepredictcall(var, call)
   \pkg{splines}, \code{\link[datasets]{cars}}
 }
 \examples{
+require(graphics)
+
 ## using poly: this did not work in R < 1.5.0
 fm <- lm(weight ~ poly(height, 2), data = women)
 plot(women, xlab = "Height (in)", ylab = "Weight (lb)")

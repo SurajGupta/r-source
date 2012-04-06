@@ -14,8 +14,8 @@
  *  GNU General Public License for more details.
  *
  *  You should have received a copy of the GNU General Public License
- *  along with this program; if not, write to the Free Software
- *  Foundation, Inc., 51 Franklin Street Fifth Floor, Boston, MA 02110-1301  USA
+ *  along with this program; if not, a copy is available at
+ *  http://www.r-project.org/Licenses/
  *
  *
  *
@@ -88,7 +88,7 @@ static void namewalk(SEXP s, NameWalkData *d)
     }
 }
 
-/* Also does all.vars wiht functions=FALSE
+/* Also does all.vars with functions=FALSE
    .Internal(all.names(expr, functions, max.names, unique)) */
 SEXP attribute_hidden do_allnames(SEXP call, SEXP op, SEXP args, SEXP env)
 {
@@ -107,6 +107,7 @@ SEXP attribute_hidden do_allnames(SEXP call, SEXP op, SEXP args, SEXP env)
     args = CDR(args);
 
     data.MaxCount = asInteger(CAR(args));
+    if(data.MaxCount == -1) data.MaxCount = INT_MAX;
     if(data.MaxCount < 0 || data.MaxCount == NA_INTEGER)
 	data.MaxCount = 0;
     args = CDR(args);

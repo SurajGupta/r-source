@@ -19,7 +19,7 @@ C See comments in ./sbart.f from which this is called
       double precision bvalue
 C local variables
       double precision vnikx(4,1),work(16)
-      integer i,icoef,ileft,j,mflag, lenkno
+      integer i,ileft,j,mflag, lenkno
       double precision b0,b1,b2,b3,eps, xv,rss,df, sumw
 c
       integer interv
@@ -56,10 +56,9 @@ c     solve linear system (from factorize abd):
       call dpbsl(abd,ld4,nk,3,coef)
 
 C     Value of smooth at the data points
-      icoef = 1
       do 12 i=1,n
          xv = x(i)
- 12      sz(i) = bvalue(knot,lenkno,coef, nk,4,xv,0)
+ 12      sz(i) = bvalue(knot,coef,nk,4,xv,0)
 
 C     Compute the criterion function if requested
 
@@ -88,11 +87,11 @@ C           call bspvd(knot,4,1,xv,ileft,4,vnikx,work)
             b2=vnikx(3,1)
             b3=vnikx(4,1)
             lev(i) = (
-     &              p1ip(4,j)*b0**2   + 2.*p1ip(3,j)*b0*b1 +
-     *           2.*p1ip(2,j)*b0*b2   + 2.*p1ip(1,j)*b0*b3 +
-     *              p1ip(4,j+1)*b1**2 + 2.*p1ip(3,j+1)*b1*b2 +
-     *           2.*p1ip(2,j+1)*b1*b3 +    p1ip(4,j+2)*b2**2 +
-     &           2.*p1ip(3,j+2)*b2*b3 +    p1ip(4,j+3)*b3**2
+     &              p1ip(4,j)*b0**2   + 2.d0*p1ip(3,j)*b0*b1 +
+     *           2.d0*p1ip(2,j)*b0*b2   + 2.d0*p1ip(1,j)*b0*b3 +
+     *              p1ip(4,j+1)*b1**2 + 2.d0*p1ip(3,j+1)*b1*b2 +
+     *           2.d0*p1ip(2,j+1)*b1*b3 +    p1ip(4,j+2)*b2**2 +
+     &           2.d0*p1ip(3,j+2)*b2*b3 +    p1ip(4,j+3)*b3**2
      &           )*w(i)**2
  16      continue
 

@@ -1,3 +1,19 @@
+#  File src/library/graphics/R/stripchart.R
+#  Part of the R package, http://www.R-project.org
+#
+#  This program is free software; you can redistribute it and/or modify
+#  it under the terms of the GNU General Public License as published by
+#  the Free Software Foundation; either version 2 of the License, or
+#  (at your option) any later version.
+#
+#  This program is distributed in the hope that it will be useful,
+#  but WITHOUT ANY WARRANTY; without even the implied warranty of
+#  MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
+#  GNU General Public License for more details.
+#
+#  A copy of the GNU General Public License is available at
+#  http://www.r-project.org/Licenses/
+
 ## Dotplots a la Box, Hunter and Hunter
 
 stripchart <-
@@ -57,7 +73,6 @@ function(x, method="overplot", jitter=0.1, offset=1/3, vertical=FALSE,
     }
     csize <- cex*
 	if(vertical) xinch(par("cin")[1]) else yinch(par("cin")[2])
-    f <- function(x) seq.int(length=length(x))
     for(i in 1:n) {
 	x <- groups[[i]]
 	y <- rep.int(at[i], length(x))
@@ -65,7 +80,7 @@ function(x, method="overplot", jitter=0.1, offset=1/3, vertical=FALSE,
 	    y <- y + stats::runif(length(y), -jitter, jitter)
 	else if(method == 3) { ## stack
 	    xg <- split(x, factor(x))
-	    xo <- lapply(xg, f)
+	    xo <- lapply(xg, seq_along)
 	    x <- unlist(xg, use.names=FALSE)
 	    y <- rep.int(at[i], length(x)) +
 		(unlist(xo, use.names=FALSE) - 1) * offset * csize

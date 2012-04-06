@@ -14,8 +14,8 @@
  *  GNU General Public License for more details.
  *
  *  You should have received a copy of the GNU General Public License
- *  along with this program; if not, write to the Free Software
- *  Foundation, Inc., 51 Franklin Street Fifth Floor, Boston, MA 02110-1301  USA
+ *  along with this program; if not, a copy is available at
+ *  http://www.r-project.org/Licenses/
  */
 
 /* <UTF8> char here is handled as a whole string */
@@ -171,6 +171,19 @@ InitDynload()
    InitFunctionHashing();
 }
 
+/* returns DllInfo used by the embedding application.
+   the underlying "(embedding)" entry is created if not present */
+DllInfo *R_getEmbeddingDllInfo() {
+    DllInfo *dll = R_getDllInfo("(embedding)");
+    if (dll == NULL) {
+	int which = addDLL(strdup("(embedding)"), "(embedding)", NULL);
+	dll = &LoadedDLL[which];
+	/* make sure we don't attempt dynamic lookup */
+	R_useDynamicSymbols(dll, FALSE);
+    }
+    return dll;
+}
+
 #ifdef UNUSED
 DllInfo *
 getBaseDllInfo()
@@ -243,11 +256,12 @@ R_registerRoutines(DllInfo *info, const R_CMethodDef * const croutines,
     if(info == NULL)
 	error(_("R_RegisterRoutines called with invalid DllInfo object."));
 
-
-    info->useDynamicLookup = TRUE; /* Default is to look in registered and then dynamic.
-                                      Potentially change in the future to be only registered
-                                      if there are any registered values.
-                                    */
+    /* Default is to look in registered and then dynamic (unless
+       the is no handle such as in "base" or "embedded")
+       Potentially change in the future to be only registered
+       if there are any registered values.
+    */
+    info->useDynamicLookup = (info->handle)?TRUE:FALSE;
 
     if(croutines) {
 	for(num=0; croutines[num].name != NULL; num++) {;}
@@ -845,7 +859,7 @@ DL_FUNC R_FindSymbol(char const *name, char const *pkg,
 }
 
 
-static void GetFullDLLPath(SEXP call, char *buf, char *path)
+static void GetFullDLLPath(SEXP call, char *buf, const char *const path)
 {
     R_osDynSymbol->getFullDLLPath(call, buf, path);
 }
@@ -875,13 +889,12 @@ SEXP attribute_hidden do_dynload(SEXP call, SEXP op, SEXP args, SEXP env)
 
     checkArity(op,args);
     if (!isString(CAR(args)) || length(CAR(args)) < 1)
-	errorcall(call, _("character argument expected"));
+	error(_("character argument expected"));
     GetFullDLLPath(call, buf, translateChar(STRING_ELT(CAR(args), 0)));
     /* AddDLL does this DeleteDLL(buf); */
     info = AddDLL(buf, LOGICAL(CADR(args))[0], LOGICAL(CADDR(args))[0]);
     if(!info)
-	errorcall(call, _("unable to load shared library '%s':\n  %s"),
-		  buf, DLLerror);
+	error(_("unable to load shared library '%s':\n  %s"), buf, DLLerror);
     return(Rf_MakeDLLInfo(info));
 }
 
@@ -891,15 +904,15 @@ SEXP attribute_hidden do_dynunload(SEXP call, SEXP op, SEXP args, SEXP env)
 
     checkArity(op,args);
     if (!isString(CAR(args)) || length(CAR(args)) < 1)
-	errorcall(call, _("character argument expected"));
+	error(_("character argument expected"));
     GetFullDLLPath(call, buf, translateChar(STRING_ELT(CAR(args), 0)));
     if(!DeleteDLL(buf))
-	errorcall(call, _("dynamic/shared library '%s\' was not loaded"),
-		  buf);
+	error(_("dynamic/shared library '%s\' was not loaded"), buf);
     return R_NilValue;
 }
 
-int R_moduleCdynload(char *module, int local, int now)
+attribute_hidden
+int R_moduleCdynload(const char *module, int local, int now)
 {
     char dllpath[PATH_MAX], *p = getenv("R_HOME");
     DllInfo *res;
@@ -930,14 +943,10 @@ Rf_MakeNativeSymbolRef(DL_FUNC f)
 {                     
   SEXP ref, klass;
 
-  /* The (void *) here is illegal C */
-  PROTECT(ref = R_MakeExternalPtr((void *) f, Rf_install("native symbol"),
-				  R_NilValue));
-
-  PROTECT(klass = allocVector(STRSXP, 1));
-  SET_STRING_ELT(klass, 0, mkChar("NativeSymbol"));
+  PROTECT(ref = R_MakeExternalPtrFn(f, Rf_install("native symbol"),
+				    R_NilValue));
+  PROTECT(klass = mkString("NativeSymbol"));
   setAttrib(ref, R_ClassSymbol, klass);
-
   UNPROTECT(2);
   return(ref);
 }
@@ -963,13 +972,12 @@ Rf_MakeRegisteredNativeSymbol(R_RegisteredNativeSymbol *symbol)
   }
   *copy = *symbol;
 
-  PROTECT(ref = R_MakeExternalPtr((void *) copy, 
-                                  Rf_install("registered native symbol"),
-                                  R_NilValue));
+  PROTECT(ref = R_MakeExternalPtr(copy, 
+				  Rf_install("registered native symbol"),
+				  R_NilValue));
   R_RegisterCFinalizer(ref, freeRegisteredNativeSymbolCopy);
 
-  PROTECT(klass = allocVector(STRSXP, 1));
-  SET_STRING_ELT(klass, 0, mkChar("RegisteredNativeSymbol"));
+  PROTECT(klass = mkString("RegisteredNativeSymbol"));
   setAttrib(ref, R_ClassSymbol, klass);
 
   UNPROTECT(2);
@@ -1062,7 +1070,7 @@ Rf_MakeDLLInfo(DllInfo *info)
 SEXP attribute_hidden
 R_getSymbolInfo(SEXP sname, SEXP spackage, SEXP withRegistrationInfo)
 {
-    char *package, *name;
+    const char *package, *name;
     R_RegisteredNativeSymbol symbol = {R_ANY_SYM, {NULL}, NULL};
     SEXP sym = R_NilValue;
     DL_FUNC f = NULL;
@@ -1330,7 +1338,7 @@ R_getRegisteredRoutines(SEXP dll)
 
 static SEXP CEntryTable = NULL;
 
-static SEXP get_package_CEntry_table(char *package)
+static SEXP get_package_CEntry_table(const char *package)
 {
     SEXP penv, pname;
 
@@ -1348,16 +1356,16 @@ static SEXP get_package_CEntry_table(char *package)
 }
 
 
-void R_RegisterCCallable(char *package, char *name, DL_FUNC fptr)
+void R_RegisterCCallable(const char *package, const char *name, DL_FUNC fptr)
 {
     SEXP penv = get_package_CEntry_table(package);
-    SEXP eptr = R_MakeExternalPtr((void *) fptr, R_NilValue, R_NilValue);
+    SEXP eptr = R_MakeExternalPtrFn(fptr, R_NilValue, R_NilValue);
     PROTECT(eptr);
     defineVar(install(name), eptr, penv);
     UNPROTECT(1);
 }
 
-DL_FUNC R_GetCCallable(char *package, char *name)
+DL_FUNC R_GetCCallable(const char *package, const char *name)
 {
     SEXP penv = get_package_CEntry_table(package);
     SEXP eptr = findVarInFrame(penv, install(name));
@@ -1365,5 +1373,5 @@ DL_FUNC R_GetCCallable(char *package, char *name)
 	error(_("function '%s' not provided by package '%s'"), name, package);
     else if (TYPEOF(eptr) != EXTPTRSXP) 
 	error(_("table entry must be an external pointer"));
-    return (DL_FUNC) R_ExternalPtrAddr(eptr);
+    return R_ExternalPtrAddrFn(eptr);
 }

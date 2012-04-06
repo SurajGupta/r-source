@@ -1,3 +1,8 @@
+% File src/library/datasets/man/airquality.Rd
+% Part of the R package, http://www.R-project.org
+% Copyright 1995-2007 R Core Development Team
+% Distributed under GPL 2 or later
+
 \name{airquality}
 \docType{data}
 \alias{airquality}
@@ -45,6 +50,7 @@
   Belmont, CA: Wadsworth.
 }
 \examples{
+require(graphics)
 pairs(airquality, panel = panel.smooth, main = "airquality data")
 }
 \keyword{datasets}

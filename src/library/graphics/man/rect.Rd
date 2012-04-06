@@ -1,3 +1,8 @@
+% File src/library/graphics/man/rect.Rd
+% Part of the R package, http://www.R-project.org
+% Copyright 1995-2007 R Core Development Team
+% Distributed under GPL 2 or later
+
 \name{rect}
 \title{Draw One or More Rectangles}
 \usage{
@@ -45,13 +50,14 @@ rect(xleft, ybottom, xright, ytop, density = NULL, angle = 45,
   \code{\link{barplot}}, \code{\link{legend}}, etc.
 }
 \seealso{
-  \code{\link{box}} for the \dQuote{standard} box around the plot;
+  \code{\link{box}} for the standard box around the plot;
   \code{\link{polygon}} and \code{\link{segments}} for flexible line
   drawing.
 
   \code{\link{par}} for how to specify colors.
 }
 \examples{
+require(grDevices)
 ## set up the plot region:
 op <- par(bg = "thistle")
 plot(c(100, 250), c(300, 450), type = "n", xlab="", ylab="",

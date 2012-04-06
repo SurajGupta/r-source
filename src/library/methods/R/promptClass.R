@@ -1,3 +1,19 @@
+#  File src/library/methods/R/promptClass.R
+#  Part of the R package, http://www.R-project.org
+#
+#  This program is free software; you can redistribute it and/or modify
+#  it under the terms of the GNU General Public License as published by
+#  the Free Software Foundation; either version 2 of the License, or
+#  (at your option) any later version.
+#
+#  This program is distributed in the hope that it will be useful,
+#  but WITHOUT ANY WARRANTY; without even the implied warranty of
+#  MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
+#  GNU General Public License for more details.
+#
+#  A copy of the GNU General Public License is available at
+#  http://www.r-project.org/Licenses/
+
 promptClass <-
 function (clName, filename = NULL, type = "class",
 	  keywords = "classes", where = topenv(parent.frame()))
@@ -125,7 +141,7 @@ function (clName, filename = NULL, type = "class",
 	.slots <- character()
     .extends <- clDef@contains
     if(length(.extends) > 0) {
-	.extends <- showExtends(.extends, print = FALSE)
+	.extends <- showExtends(.extends, printTo = FALSE)
 	.extends <-
 	    c("\\section{Extends}{",
 	      paste0("Class \\code{\"\\linkS4class{",
@@ -215,7 +231,7 @@ function (clName, filename = NULL, type = "class",
 ## used in promptClass() above and in promptMethods() :
 .fileDesc <- function(file) {
     if(is.character(file)) {
-	if(nchar(file))
+	if(nzchar(file))
 	    paste(" to the file", sQuote(file))
 	else
 	    " to the standard output connection"

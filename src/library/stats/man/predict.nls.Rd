@@ -1,3 +1,8 @@
+% File src/library/stats/man/predict.nls.Rd
+% Part of the R package, http://www.R-project.org
+% Copyright 1995-2007 R Core Development Team
+% Distributed under GPL 2 or later
+
 \name{predict.nls}
 \title{Predicting from Nonlinear Least Squares Fits}
 \alias{predict.nls}
@@ -67,6 +72,8 @@
   if it was supplied.
 }
 \examples{
+require(graphics)
+
 fm <- nls(demand ~ SSasympOrig(Time, A, lrc), data = BOD)
 predict(fm)              # fitted values at observed times
 ## Form data plot and smooth line for the predictions

@@ -1,3 +1,8 @@
+% File src/library/base/man/base-internal.Rd
+% Part of the R package, http://www.R-project.org
+% Copyright 1995-2007 R Core Development Team
+% Distributed under GPL 2 or later
+
 \name{base-internal}
 \alias{.subset}
 \alias{.subset2}
@@ -14,6 +19,8 @@
 \alias{.ArgsEnv}
 \alias{.GenericArgsEnv}
 \alias{findPackageEnv}
+\alias{lazyLoadDBfetch}
+\alias{.TAOCP1997init}
 \title{Internal Functions in the Base Package}
 \description{
   Internal functions in the base package, which are only user-visible
@@ -44,6 +51,10 @@ sys.save.image(name)
 .set_row_names(n)
 
 findPackageEnv(info)
+
+lazyLoadDBfetch(key, file, compressed, hook)
+
+.TAOCP1997init(seed)
 }
 \arguments{
   \item{x}{object from which to extract elements.}
@@ -70,15 +81,20 @@ findPackageEnv(info)
     latter with a negative sign for \sQuote{automatic} row names.}
   \item{n}{integer.  The number of rows.}
   \item{info}{character string such as \code{"package:MASS"}.}
+  \item{key}{the object name in a lazyload database.}
+  \item{file}{the filepath to a lazyload database.}
+  \item{compressed}{logical: are the values in the database compressed?}
+  \item{refhook}{a load hook: see \code{\link{unserialize}}.}
+  \item{seed}{a length-one integer vector.}
 }
 \details{
   The functions \code{.subset} and \code{.subset2} are essentially
   equivalent to the \code{\link{[}} and \code{\link{[[}} operators,
-  except methods that dispatch does not take place.  This is to avoid
+  except that methods dispatch does not take place.  This is to avoid
   expensive unclassing when applying the default method to an object.  They
   should not normally be invoked by end users.  Note that unlike the
-  operators they are builtins and not specials and hence do not allow
-  missing values in their arguments.
+  operators they are builtins and not specials (all arguments are
+  evaluated) and hence do not allow missing arguments.
 
   \code{.find.package} returns the paths to the locations where the
   given packages can be found.  If \code{lib.loc} is \code{NULL}, then
@@ -147,6 +163,9 @@ findPackageEnv(info)
 
   \code{findPackageEnv} is invoked by the unserialize code to set a
   saved environment if possible.
+
+  \code{.TAOCP1997init} is the initialization code for the
+  \code{"Knuth-TAOCP"} \link{RNG}.
 }
 \value{
   \code{.find.package} and \code{.path.packages} return a character

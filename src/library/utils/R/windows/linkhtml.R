@@ -1,3 +1,19 @@
+#  File src/library/utils/R/windows/linkhtml.R
+#  Part of the R package, http://www.R-project.org
+#
+#  This program is free software; you can redistribute it and/or modify
+#  it under the terms of the GNU General Public License as published by
+#  the Free Software Foundation; either version 2 of the License, or
+#  (at your option) any later version.
+#
+#  This program is distributed in the hope that it will be useful,
+#  but WITHOUT ANY WARRANTY; without even the implied warranty of
+#  MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
+#  GNU General Public License for more details.
+#
+#  A copy of the GNU General Public License is available at
+#  http://www.r-project.org/Licenses/
+
 link.html.help <- function(verbose=FALSE, lib.loc=.libPaths())
 {
     if(!file.exists(file.path(R.home("doc"), "html", "search")))
@@ -43,7 +59,7 @@ make.packages.html <- function(lib.loc=.libPaths())
         cat("<p>\n<table width=\"100%\" summary=\"R Package list\">\n",
             file = out)
         for (i in  pg) {
-            title <- packageDescription(i, lib.loc = lib, field = "Title",
+            title <- packageDescription(i, lib.loc = lib, fields = "Title",
                                         encoding = "UTF-8")
             if (is.na(title)) title <- "-- Title is missing --"
             cat('<tr align="left" valign="top">\n',

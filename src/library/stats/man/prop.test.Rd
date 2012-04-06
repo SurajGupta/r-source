@@ -1,3 +1,8 @@
+% File src/library/stats/man/prop.test.Rd
+% Part of the R package, http://www.R-project.org
+% Copyright 1995-2007 R Core Development Team
+% Distributed under GPL 2 or later
+
 \name{prop.test}
 \title{Test of Equal or Given Proportions}
 \usage{
@@ -107,7 +112,7 @@ prop.test(x, n, p = NULL,
 \seealso{\code{\link{binom.test}} for an \emph{exact} test of a binomial
   hypothesis.}
 \examples{
-heads <- rbinom(1, size=100, pr = .5)
+heads <- rbinom(1, size=100, prob = .5)
 prop.test(heads, 100)          # continuity correction TRUE by default
 prop.test(heads, 100, correct = FALSE)
 

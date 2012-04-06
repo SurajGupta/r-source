@@ -1,21 +1,33 @@
+#  File src/library/base/R/license.R
+#  Part of the R package, http://www.R-project.org
+#
+#  This program is free software; you can redistribute it and/or modify
+#  it under the terms of the GNU General Public License as published by
+#  the Free Software Foundation; either version 2 of the License, or
+#  (at your option) any later version.
+#
+#  This program is distributed in the hope that it will be useful,
+#  but WITHOUT ANY WARRANTY; without even the implied warranty of
+#  MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
+#  GNU General Public License for more details.
+#
+#  A copy of the GNU General Public License is available at
+#  http://www.r-project.org/Licenses/
+
 licence <- license <- function() {
-    cat("\nThis software is distributed under the terms of the GNU GENERAL\n")
-    cat("PUBLIC LICENSE Version 2, June 1991.  The terms of this license\n")
+    cat("\nThis software is distributed under the terms of the GNU General\n")
+    cat("Public License Version 2, June 1991.  The terms of this license\n")
     cat("are in a file called COPYING which you should have received with\n")
-    cat("this software.\n")
+    cat("this software and which can be displayed by RShowDoc(\"COPYING\").\n")
     cat("\n")
     cat("If you have not received a copy of this file, you can obtain one\n")
-    cat("via WWW at http://www.gnu.org/copyleft/gpl.html, or by writing to:\n")
-    cat("\n")
-    cat("   The Free Software Foundation, Inc.,\n")
-    cat("   51 Franklin Street, Fifth Floor, Boston, MA 02110-1301, USA.\n")
+    cat("at http://www.R-project.org/licenses/.\n")
     cat("\n")
     cat("A small number of files (the API header files listed in\n")
     cat("R_DOC_DIR/COPYRIGHTS) are distributed under the\n")
-    cat("LESSER GNU GENERAL PUBLIC LICENSE version 2.1.\n")
-    cat("This can be obtained via WWW at\n")
-    cat("http://www.gnu.org/copyleft/lgpl.html, or by writing to the\n")
-    cat("address above\n")
+    cat("Lesser GNU General Public LIcense version 2.1.\n")
+    cat("This can be displayed by RShowDoc(\"COPYING.LIB\"),\n")
+    cat("or obtained at the URI given.\n")
     cat("\n")
-    cat("``Share and Enjoy.''\n\n")
+    cat("'Share and Enjoy.'\n\n")
 }

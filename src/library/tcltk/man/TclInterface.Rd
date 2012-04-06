@@ -1,3 +1,8 @@
+% File src/library/tcltk/man/TclInterface.Rd
+% Part of the R package, http://www.R-project.org
+% Copyright 1995-2007 R Core Development Team
+% Distributed under GPL 2 or later
+
 \name{TclInterface}
 \title{Low-level Tcl/Tk Interface}
 %
@@ -248,10 +253,6 @@ tclRequire(package, warn = TRUE)
 
   \code{\link{capabilities}("tcltk")} to see if Tcl/Tk support was
   compiled into this build of \R.
-#ifdef windows
-  (It is possible to build with Tcl/Tk support but not be able to run it,
-  if the DLLs are not available or \code{TCL_LIBRARY} is not set.)
-#endif
 }
 \examples{
 \dontrun{

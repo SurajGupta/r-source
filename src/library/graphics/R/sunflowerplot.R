@@ -1,3 +1,19 @@
+#  File src/library/graphics/R/sunflowerplot.R
+#  Part of the R package, http://www.R-project.org
+#
+#  This program is free software; you can redistribute it and/or modify
+#  it under the terms of the GNU General Public License as published by
+#  the Free Software Foundation; either version 2 of the License, or
+#  (at your option) any later version.
+#
+#  This program is distributed in the hope that it will be useful,
+#  but WITHOUT ANY WARRANTY; without even the implied warranty of
+#  MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
+#  GNU General Public License for more details.
+#
+#  A copy of the GNU General Public License is available at
+#  http://www.r-project.org/Licenses/
+
 sunflowerplot <-
     function(x, y = NULL, number, log = "", digits = 6,
              xlab = NULL, ylab = NULL, xlim = NULL, ylim = NULL,
@@ -6,9 +22,16 @@ sunflowerplot <-
              size = 1/8, seg.col = 2, seg.lwd = 1.5, ...)
 {
     ## Argument "checking" as plot.default:
+
     xlabel <- if (!missing(x)) deparse(substitute(x))
     ylabel <- if (!missing(y)) deparse(substitute(y))
-    xy <- xy.coords(x, y, xlabel, ylabel, log)
+    is.xyn <- (is.list(x) && all(c("x","y","number") %in% names(x)))
+                                        # as, e.g., from grDevices::xyTable(.)
+    xy <-
+        if(is.xyn) {
+            number <- x$number
+            x
+        } else xy.coords(x, y, xlabel, ylabel, log)
     if(!add) {
         xlab <- if (is.null(xlab)) xy$xlab else xlab
         ylab <- if (is.null(ylab)) xy$ylab else ylab
@@ -16,17 +39,11 @@ sunflowerplot <-
         ylim <- if (is.null(ylim)) range(xy$y[is.finite(xy$y)]) else ylim
     }
     n <- length(xy$x)
-    if(missing(number)) { # Compute number := multiplicities
-        ## must get rid of rounding fuzz
-        x <- signif(xy$x,digits=digits)
-        y <- signif(xy$y,digits=digits)
-        orderxy <- order(x, y)
-        x <- x[orderxy]
-        y <- y[orderxy]
-        first <- c(TRUE, (x[-1] != x[-n]) | (y[-1] != y[-n]))
-        x <- x[first]
-        y <- y[first]
-        number <- diff(c((1:n)[first], n + 1))
+    if(missing(number)) {
+	tt <- xyTable(xy, digits = digits)## in ../../grDevices/R/calc.R
+	x <- tt$x
+	y <- tt$y
+	number <- tt$number
     } else {
         if(length(number) != n)
             stop("'number' must have same length as 'x' and 'y'")

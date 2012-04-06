@@ -1,3 +1,19 @@
+#  File src/library/stats/R/stepfun.R
+#  Part of the R package, http://www.R-project.org
+#
+#  This program is free software; you can redistribute it and/or modify
+#  it under the terms of the GNU General Public License as published by
+#  the Free Software Foundation; either version 2 of the License, or
+#  (at your option) any later version.
+#
+#  This program is distributed in the hope that it will be useful,
+#  but WITHOUT ANY WARRANTY; without even the implied warranty of
+#  MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
+#  GNU General Public License for more details.
+#
+#  A copy of the GNU General Public License is available at
+#  http://www.r-project.org/Licenses/
+
 ## Constructor for  Step Functions:
 
 ## Given x[1] .. x[n] ;	 y[0] .. y[n]  (one value more !)
@@ -33,21 +49,21 @@ as.stepfun.default <- function(x, ...)
 
 ## Quite obvious  that I will want to have  knots.spline(..)  etc......
 knots         <- function(Fn, ...) UseMethod("knots")
-knots.stepfun <- function(Fn, ...) eval(expression(x), env=environment(Fn))
+knots.stepfun <- function(Fn, ...) eval(expression(x), envir=environment(Fn))
 
 
 print.stepfun <- function (x, digits = getOption("digits") - 2, ...)
 {
-    numform <- function(x) paste(formatC(x, dig = digits), collapse=", ")
+    numform <- function(x) paste(formatC(x, digits = digits), collapse=", ")
     i1 <- function(n) 1:min(3, n)
     i2 <- function(n) if(n >= 4) max(4, n-1):n else integer(0)
     cat("Step function\nCall: ")
     print(attr(x, "call"), ...)
     env <- environment(x)
-    n <- length(xx <- eval(expression(x), env = env))
+    n <- length(xx <- eval(expression(x), envir = env))
     cat(" x[1:", n, "] = ", numform(xx[i1(n)]),
 	if(n > 3) ", ", if(n > 5) " ..., ", numform(xx[i2(n)]), "\n", sep = "")
-    y <- eval(expression(c(yleft, y)), env = env)
+    y <- eval(expression(c(yleft, y)), envir = env)
     cat(n+1, " plateau levels = ", numform(y[i1(n+1)]),
 	if(n+1 > 3) ", ", if(n+1 > 5) " ..., ", numform(y[i2(n+1)]), "\n",
 	sep = "")
@@ -56,18 +72,18 @@ print.stepfun <- function (x, digits = getOption("digits") - 2, ...)
 
 summary.stepfun <- function(object, ...)
 {
-    n <- eval(expression(n),env = environment(object))
+    n <- eval(expression(n), envir = environment(object))
     if(!is.integer(n) || n < 1) stop("not a valid step function")
     ## n <- n-1
     cat("Step function with continuity 'f'=",
-	format(eval(expression(f),env = environment(object))),
+	format(eval(expression(f), envir = environment(object))),
 	", ", n, if(n <= 6) "knots at\n" else "knots with summary\n")
     summ <- if(n>6) summary else function(x) x
     print(summ(knots(object)))
     cat(if(n>6) "\n" else "  ", "and	", n+1,
         " plateau levels (y) ", if(n <= 6) "at\n" else "with summary\n",
         sep="")
-    print(summ(eval(expression(c(yleft,y)),env = environment(object))))
+    print(summ(eval(expression(c(yleft,y)), envir = environment(object))))
     invisible()
 }
 

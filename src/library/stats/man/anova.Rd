@@ -1,3 +1,8 @@
+% File src/library/stats/man/anova.Rd
+% Part of the R package, http://www.R-project.org
+% Copyright 1995-2007 R Core Development Team
+% Distributed under GPL 2 or later
+
 \name{anova}
 \alias{anova}
 \alias{print.anova}
@@ -25,7 +30,7 @@ anova(object, \dots)
   the models against one another in the order specified.
 
   The print method for \code{anova} objects prints
-  tables in a \dQuote{pretty} form.
+  tables in a \sQuote{pretty} form.
 }
 \section{Warning}{
   The comparison between two or more models will only be valid if they

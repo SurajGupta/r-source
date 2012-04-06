@@ -22,7 +22,8 @@
 #define F77_FUNC(name,NAME) name ## _
 
 /* As F77_FUNC, but for C identifiers containing underscores. */
-#define F77_FUNC_(name,NAME) name ## __
+/* should be name # __ for GCC3 */
+#define F77_FUNC_(name,NAME) name ## _
 
 /* Define if F77 and FC dummy `main' functions are identical. */
 /* #undef FC_DUMMY_MAIN_EQ_F77 */
@@ -44,8 +45,17 @@
    be built. */
 /* #undef HAVE_AQUA */
 
+/* Define to 1 if you have the `argz_count' function. */
+/* #undef HAVE_ARGZ_COUNT */
+
 /* Define to 1 if you have the <argz.h> header file. */
 /* #undef HAVE_ARGZ_H */
+
+/* Define to 1 if you have the `argz_next' function. */
+/* #undef HAVE_ARGZ_NEXT */
+
+/* Define to 1 if you have the `argz_stringify' function. */
+/* #undef HAVE_ARGZ_STRINGIFY */
 
 /* Define to 1 if you have the <arpa/inet.h> header file. */
 /* #undef HAVE_ARPA_INET_H */
@@ -61,6 +71,9 @@
 
 /* Define if you have BSD networking headers and libraries. */
 /* #undef HAVE_BSD_NETWORKING */
+
+/* Define to 1 if the compiler understands __builtin_expect. */
+#define HAVE_BUILTIN_EXPECT 1
 
 /* Define this if you have support for C99 complex types. */
 #define HAVE_C99_COMPLEX 1
@@ -195,7 +208,8 @@
 
 /* Define if your Fortran compiler appends an extra_underscore to external
    names containing an underscore. */
-#define HAVE_F77_EXTRA_UNDERSCORE 1
+/* needs to be set for GCC3 */
+/* #undef HAVE_F77_EXTRA_UNDERSCORE */
 
 /* Define if your Fortran compiler appends an underscore to external names. */
 #define HAVE_F77_UNDERSCORE 1
@@ -208,9 +222,6 @@
 
 /* Define to 1 if you have the `fdopen' function. */
 #define HAVE_FDOPEN 1
-
-/* Define to 1 if you have the `finite' function. */
-#define HAVE_FINITE 1
 
 /* Define to 1 if you have the <floatingpoint.h> header file. */
 /* #undef HAVE_FLOATINGPOINT_H */
@@ -265,7 +276,7 @@
 /* #undef HAVE_GETTEXT */
 
 /* Define to 1 if you have the `gettimeofday' function. */
-/* #undef HAVE_GETTIMEOFDAY */
+#define HAVE_GETTIMEOFDAY 1
 
 /* Define to 1 if you have the `getuid' function. */
 /* #undef HAVE_GETUID */
@@ -298,12 +309,6 @@
 /* Define to 1 if you have the <iconv.h> header file. */
 #define HAVE_ICONV_H 1
 
-/* Define to 1 if you have the <ieee754.h> header file. */
-/* #undef HAVE_IEEE754_H */
-
-/* Define to 1 if you have the <ieeefp.h> header file. */
-/* #undef HAVE_IEEEFP_H */
-
 /* Define if you have support for ftp/http access. */
 #define HAVE_INTERNET 1
 
@@ -313,7 +318,7 @@
 /* Define to 1 if the system has the type `intptr_t'. */
 #define HAVE_INTPTR_T 1
 
-/* Define if <inttypes.h> exists and doesn't clash with <sys/types.h>. */
+/* Define to 1 if you have the <inttypes.h> header file. */
 #define HAVE_INTTYPES_H 1
 
 /* Define if <inttypes.h> exists, doesn't clash with <sys/types.h>, and
@@ -392,11 +397,8 @@
 /* Define if you have the 'long double' type. */
 #define HAVE_LONG_DOUBLE 1
 
-/* Define if you have the 'long long' type. */
-#define HAVE_LONG_LONG 1
-
-/* Define to 1 if you have the <malloc.h> header file. */
-#define HAVE_MALLOC_H 1
+/* Define to 1 if the system has the type `long long int'. */
+#define HAVE_LONG_LONG_INT 1
 
 /* Define to 1 if you have the `matherr' function. */
 /* #undef HAVE_MATHERR */
@@ -437,8 +439,9 @@
 /* Define to 1 if you have the <netinet/in.h> header file. */
 /* #undef HAVE_NETINET_IN_H */
 
-/* Define to 1 if you have the <nl_types.h> header file. */
-/* #undef HAVE_NL_TYPES_H */
+/* Define if you have <langinfo.h> and it defines the NL_LOCALE_NAME macro if
+   _GNU_SOURCE is defined. */
+/* #undef HAVE_NL_LOCALE_NAME */
 
 /* Define if module-loading does not need an underscore to be prepended to
    external names. */
@@ -464,10 +467,16 @@
 #define HAVE_POSIX_LEAPSECONDS 1
 
 /* Define if your printf() function supports format strings with positions. */
-/* #undef HAVE_POSIX_PRINTF */
+#define HAVE_POSIX_PRINTF 1
 
 /* Define if you have POSIX.1 compatible sigsetjmp/siglongjmp. */
 #define HAVE_POSIX_SETJMP 1
+
+/* Define if the <pthread.h> defines PTHREAD_MUTEX_RECURSIVE. */
+#define HAVE_PTHREAD_MUTEX_RECURSIVE 1
+
+/* Define if the POSIX multithreading library has read/write locks. */
+#define HAVE_PTHREAD_RWLOCK 1
 
 /* Define to 1 if you have the `putenv' function. */
 #define HAVE_PUTENV 1
@@ -633,7 +642,7 @@
 #define HAVE_TIME_H 1
 
 /* Define to 1 if you have the `tsearch' function. */
-/* #undef HAVE_TSEARCH */
+#define HAVE_TSEARCH 1
 
 /* Define if you have the 'uintmax_t' type in <stdint.h> or <inttypes.h>. */
 #define HAVE_UINTMAX_T 1
@@ -650,6 +659,9 @@
 /* Define if you have the 'unsigned long long' type. */
 #define HAVE_UNSIGNED_LONG_LONG 1
 
+/* Define to 1 if the system has the type `unsigned long long int'. */
+#define HAVE_UNSIGNED_LONG_LONG_INT 1
+
 /* Define to 1 if you have the `vasprintf' function. */
 #define HAVE_VASPRINTF 1
 
@@ -658,6 +670,10 @@
 
 /* Defined if framework vecLib is present */
 /* #undef HAVE_VECLIB_FW */
+
+/* Define to 1 or 0, depending whether the compiler supports simple visibility
+   declarations. */
+#define HAVE_VISIBILITY 1
 
 /* Define to 1 if __attribute__((visibility())) is supported */
 /* #undef HAVE_VISIBILITY_ATTRIBUTE */
@@ -683,6 +699,9 @@
 /* Define to 1 if you have the `wcslen' function. */
 #define HAVE_WCSLEN 1
 
+/* Define to 1 if you have the `wcstod' function. */
+#define HAVE_WCSTOD 1
+
 /* Define to 1 if you have the `wcstombs' function. */
 #define HAVE_WCSTOMBS 1
 
@@ -704,17 +723,11 @@
 /* Define if calloc(0) returns a null pointer. */
 #define HAVE_WORKING_CALLOC 1
 
-/* Define if finite() is correct for -Inf/NaN/Inf. */
-#define HAVE_WORKING_FINITE 1
-
 /* Define if your ftell works correctly on files opened for append. */
 /* #undef HAVE_WORKING_FTELL */
 
 /* Define if isfinite() is correct for -Inf/NaN/Inf. */
 #define HAVE_WORKING_ISFINITE 1
-
-/* Define if log() is correct for 0/-1. */
-#define HAVE_WORKING_LOG 1
 
 /* Define if log1p() exists and is accurate enough. */
 #define HAVE_WORKING_LOG1P 1
@@ -729,15 +742,6 @@
 /* Define if you have the X11/Xmu headers and libraries. */
 /* #undef HAVE_X11_Xmu */
 
-/* Define to 1 if you have the `__argz_count' function. */
-/* #undef HAVE___ARGZ_COUNT */
-
-/* Define to 1 if you have the `__argz_next' function. */
-/* #undef HAVE___ARGZ_NEXT */
-
-/* Define to 1 if you have the `__argz_stringify' function. */
-/* #undef HAVE___ARGZ_STRINGIFY */
-
 /* Define to 1 if you have the `__fsetlocking' function. */
 /* #undef HAVE___FSETLOCKING */
 
@@ -745,7 +749,7 @@
 #define HAVE___VA_COPY 1
 
 /* Define as const if the declaration of iconv() needs const. */
-/* #undef ICONV_CONST */
+#define ICONV_CONST const
 
 /* Define if `iconv' accepts "UTF-8", "latin1" and "UCS-*". */
 #define ICONV_LATIN1 1
@@ -784,16 +788,19 @@
 #define PACKAGE_NAME "R"
 
 /* Define to the full name and version of this package. */
-#define PACKAGE_STRING "R 2.5.1"
+#define PACKAGE_STRING "R 2.6.0"
 
 /* Define to the one symbol short name of this package. */
 #define PACKAGE_TARNAME "R"
 
 /* Define to the version of this package. */
-#define PACKAGE_VERSION "2.5.1"
+#define PACKAGE_VERSION "2.6.0"
 
 /* Define if <inttypes.h> exists and defines unusable PRI* macros. */
 /* #undef PRI_MACROS_BROKEN */
+
+/* Define if the pthread_in_use() detection is hard. */
+/* #undef PTHREAD_IN_USE_DETECTION_HARD */
 
 /* Define as the return type of signal handlers (`int' or `void'). */
 #define RETSIGTYPE void
@@ -848,6 +855,9 @@
 /* The size of `long long', as computed by sizeof. */
 #define SIZEOF_LONG_LONG 8
 
+/* The size of `size_t', as computed by sizeof. */
+#define SIZEOF_SIZE_T 4
+
 /* Define as the maximum value of type 'size_t', if the system doesn't define
    it. */
 /* #undef SIZE_MAX */
@@ -882,6 +892,30 @@
    */
 /* #undef USE_BUILTIN_RINT */
 
+/* Define if the POSIX multithreading library can be used. */
+/* #define USE_POSIX_THREADS 1 */
+
+/* Define if references to the POSIX multithreading library should be made
+   weak. */
+/* #define USE_POSIX_THREADS_WEAK 1 */
+
+/* Define if the GNU Pth multithreading library can be used. */
+/* #undef USE_PTH_THREADS */
+
+/* Define if references to the GNU Pth multithreading library should be made
+   weak. */
+/* #undef USE_PTH_THREADS_WEAK */
+
+/* Define if the old Solaris multithreading library can be used. */
+/* #undef USE_SOLARIS_THREADS */
+
+/* Define if references to the old Solaris multithreading library should be
+   made weak. */
+/* #undef USE_SOLARIS_THREADS_WEAK */
+
+/* Define if the Win32 multithreading API can be used. */
+/* #undef USE_WIN32_THREADS */
+
 /* Define according to your operating system type. */
 /* #undef Unix */
 
@@ -889,7 +923,7 @@
 #define VALGRIND_LEVEL 0
 
 /* Version number of package */
-#define VERSION "2.5.1"
+#define VERSION "2.6.0"
 
 /* Define to 1 if your processor stores words with the most significant byte
    first (like Motorola and SPARC, unlike Intel and VAX). */
@@ -903,6 +937,11 @@
 
 /* Number of bits in a file offset, on hosts where this is settable. */
 /* #undef _FILE_OFFSET_BITS */
+
+/* Enable GNU extensions on systems that have them.  */
+#ifndef _GNU_SOURCE
+# define _GNU_SOURCE 1
+#endif
 
 /* Define to 1 to make fseeko visible on some hosts (e.g. glibc 2.2). */
 /* #undef _LARGEFILE_SOURCE */
@@ -923,18 +962,12 @@
 /* #undef inline */
 #endif
 
-/* Define to `long int' if <sys/types.h> does not define. */
-/* #undef off_t */
-
 /* Define to `int' if <sys/types.h> does not define. */
 /* #undef pid_t */
 
 /* Define as the type of the result of subtracting two pointers, if the system
    doesn't define it. */
 /* #undef ptrdiff_t */
-
-/* Define to empty if the C compiler doesn't support this keyword. */
-/* #undef signed */
 
 /* Define to `unsigned int' if <sys/types.h> does not define. */
 /* #undef size_t */
@@ -945,3 +978,35 @@
 
 
 #endif /* not R_CONFIG_H */
+
+
+#define __libc_lock_t                   gl_lock_t
+#define __libc_lock_define              gl_lock_define
+#define __libc_lock_define_initialized  gl_lock_define_initialized
+#define __libc_lock_init                gl_lock_init
+#define __libc_lock_lock                gl_lock_lock
+#define __libc_lock_unlock              gl_lock_unlock
+#define __libc_lock_recursive_t                   gl_recursive_lock_t
+#define __libc_lock_define_recursive              gl_recursive_lock_define
+#define __libc_lock_define_initialized_recursive  gl_recursive_lock_define_initialized
+#define __libc_lock_init_recursive                gl_recursive_lock_init
+#define __libc_lock_lock_recursive                gl_recursive_lock_lock
+#define __libc_lock_unlock_recursive              gl_recursive_lock_unlock
+#define glthread_in_use  libintl_thread_in_use
+#define glthread_lock_init     libintl_lock_init
+#define glthread_lock_lock     libintl_lock_lock
+#define glthread_lock_unlock   libintl_lock_unlock
+#define glthread_lock_destroy  libintl_lock_destroy
+#define glthread_rwlock_init     libintl_rwlock_init
+#define glthread_rwlock_rdlock   libintl_rwlock_rdlock
+#define glthread_rwlock_wrlock   libintl_rwlock_wrlock
+#define glthread_rwlock_unlock   libintl_rwlock_unlock
+#define glthread_rwlock_destroy  libintl_rwlock_destroy
+#define glthread_recursive_lock_init     libintl_recursive_lock_init
+#define glthread_recursive_lock_lock     libintl_recursive_lock_lock
+#define glthread_recursive_lock_unlock   libintl_recursive_lock_unlock
+#define glthread_recursive_lock_destroy  libintl_recursive_lock_destroy
+#define glthread_once                 libintl_once
+#define glthread_once_call            libintl_once_call
+#define glthread_once_singlethreaded  libintl_once_singlethreaded
+

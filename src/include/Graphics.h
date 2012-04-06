@@ -14,8 +14,8 @@
  *  GNU General Public License for more details.
  *
  *  You should have received a copy of the GNU General Public License
- *  along with this program; if not, write to the Free Software
- *  Foundation, Inc., 51 Franklin Street, Fifth Floor, Boston, MA 02110-1301  USA
+ *  along with this program; if not, a copy is available at
+ *  http://www.r-project.org/Licenses/
  */
 
 #ifndef GRAPHICS_H_
@@ -414,27 +414,27 @@ int devNumber(DevDesc *dd);
 
 		/* Miscellaneous (from graphics.c & colors.c) */
 
-unsigned int rgb2col(char *);
-unsigned int name2col(char *);
-unsigned int number2col(char *);
-unsigned int char2col(char *);/* rgb2col() or name2col() */
-unsigned int str2col(char *);
+unsigned int rgb2col(const char *);
+unsigned int name2col(const char *);
+unsigned int number2col(const char *);
+unsigned int char2col(const char *);/* rgb2col() or name2col() */
+unsigned int str2col(const char *);
 
-char* col2name(unsigned int);
+const char *col2name(unsigned int);
 
 unsigned int ScaleColor(double x);
 unsigned int CheckColor(int x);
 Rboolean isNAcol(SEXP col, int index, int ncol);
 
-char* RGB2rgb(unsigned int, unsigned int, unsigned int);
-char* RGBA2rgb(unsigned int, unsigned int, unsigned int, unsigned int);
+char *RGB2rgb(unsigned int, unsigned int, unsigned int);
+char *RGBA2rgb(unsigned int, unsigned int, unsigned int, unsigned int);
 
-int StrMatch(char *s, char *t);
+int StrMatch(const char *s, const char *t);
 
 double R_Log10(double);
 
 void ProcessInlinePars(SEXP, DevDesc*, SEXP call);
-void Specify2(char*, SEXP, DevDesc*, SEXP call);
+void Specify2(const char*, SEXP, DevDesc*, SEXP call);
 #ifdef UNUSED
 void RecordGraphicsCall(SEXP);
 #endif
@@ -461,24 +461,5 @@ GPar* Rf_dpptr(DevDesc *dd);
 GPar* Rf_dpSavedptr(DevDesc *dd);
 SEXP Rf_displayList(DevDesc *dd);
 
-/* Graphics events */
-
-/* These give the indices of some known keys */    
-
-typedef enum {knUNKNOWN = -1,
-              knLEFT = 0, knUP, knRIGHT, knDOWN,
-              knF1, knF2, knF3, knF4, knF5, knF6, knF7, knF8, knF9, knF10,
-              knF11, knF12,
-              knPGUP, knPGDN, knEND, knHOME, knINS, knDEL} R_KeyName;
-              
-/* These are the three possible mouse events */
-
-typedef enum {meMouseDown = 0,
-	      meMouseUp,
-	      meMouseMove} R_MouseEvent;
-
-SEXP doMouseEvent(SEXP eventRho, NewDevDesc *dd, R_MouseEvent event, 
-                  int buttons, double x, double y);
-SEXP doKeybd	(SEXP eventRho, NewDevDesc *dd, R_KeyName rkey, char *keyname);
 
 #endif /* GRAPHICS_H_ */

@@ -1,3 +1,19 @@
+#  File src/library/graphics/R/pie.R
+#  Part of the R package, http://www.R-project.org
+#
+#  This program is free software; you can redistribute it and/or modify
+#  it under the terms of the GNU General Public License as published by
+#  the Free Software Foundation; either version 2 of the License, or
+#  (at your option) any later version.
+#
+#  This program is distributed in the hope that it will be useful,
+#  but WITHOUT ANY WARRANTY; without even the implied warranty of
+#  MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
+#  GNU General Public License for more details.
+#
+#  A copy of the GNU General Public License is available at
+#  http://www.r-project.org/Licenses/
+
 pie <-
     function (x, labels = names(x), edges = 200, radius = 0.8,
               clockwise = FALSE, init.angle = if(clockwise) 90 else 0,
@@ -38,12 +54,12 @@ pie <-
     }
     for (i in 1:nx) {
 	n <- max(2, floor(edges * dx[i]))
-	P <- t2xy(seq(x[i], x[i + 1], length = n))
+	P <- t2xy(seq.int(x[i], x[i + 1], length.out = n))
 	polygon(c(P$x, 0), c(P$y, 0), density = density[i], angle = angle[i],
                 border = border[i], col = col[i], lty = lty[i])
 	P <- t2xy(mean(x[i + 0:1]))
         lab <-  as.character(labels[i])
-        if(!is.na(lab) && nchar(lab)) {
+        if(!is.na(lab) && nzchar(lab)) {
             lines(c(1, 1.05)*P$x, c(1, 1.05)*P$y)
             text(1.1*P$x, 1.1*P$y, labels[i], xpd = TRUE,
                  adj = ifelse(P$x < 0, 1, 0), ...)

@@ -3,15 +3,25 @@ include ../MkRules
 JPEGDIR=jpeg-6b
 PNGDIR=libpng
 
+.PHONY: all DLL buildzlib buildpng buildjpeg clean
+
 all:
-	@$(MAKE) --no-print-directory buildzlib buildpng buildjpeg rbitmap.o 
-	@$(MAKE) --no-print-directory ../../../modules/Rbitmap.dll
+	@$(MAKE) --no-print-directory buildzlib buildpng buildjpeg rbitmap.o
+	@$(MKDIR) -p ../../../library/grDevices/libs
+	@$(MAKE) --no-print-directory DLL
+
+DLL: ../../../library/grDevices/libs/Rbitmap.dll
 
 buildzlib:
 	@$(MAKE) -C ../../extra/zlib -f Makefile.win
 
+## There is a makefile.mingw these days, but .std has always worked
+## Neither the makefile.{mingw,std} build pnggccrd.c but it is needed if
+## the compiler defines __MMX__ , which the win64 gcc does.
+## So we need to explicitly disable it.
 buildpng:
-	@$(MAKE) CC='$(CC)' CFLAGS="-O3 -I../../../extra/zlib" \
+	@$(MAKE) CC='$(CC)' \
+	  CFLAGS="-O3 -I../../../extra/zlib -DPNG_NO_MMX_CODE" \
 	  RANLIB=$(RANLIB) ZLIBLIB=../../../extra/zlib -C $(PNGDIR) \
 	  -f scripts/makefile.std libpng.a
 
@@ -26,11 +36,10 @@ buildjpeg: $(JPEGDIR)/jconfig.h Makefile.jpeg
 $(JPEGDIR)/jconfig.h: jconfig.h 
 	$(CP) jconfig.h $(JPEGDIR)/jconfig.h
 
-rbitmap-CFLAGS=-O3 -Wall -pedantic -DHAVE_PNG -DHAVE_JPEG -I../../extra/zlib -I./libpng -I$(JPEGDIR) -I../../include
-# Rbitmap-DLLLIBS=-L../../../bin -lR
-# Rbitmap-DLLFLAGS=-s
+rbitmap-CPPFLAGS=-DHAVE_PNG -DHAVE_JPEG -I../../extra/zlib -I./libpng -I$(JPEGDIR) -I../../include
+CFLAGS=-O3 -Wall -pedantic 
 
-../../../modules/Rbitmap.dll: rbitmap.o $(PNGDIR)/libpng.a $(JPEGDIR)/libjpeg.a
+../../../library/grDevices/libs/Rbitmap.dll: rbitmap.o $(PNGDIR)/libpng.a $(JPEGDIR)/libjpeg.a
 	$(DLL) -shared -s -o $@ $^ -L../../../bin -lR
 
 clean:

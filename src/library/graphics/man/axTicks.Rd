@@ -1,3 +1,8 @@
+% File src/library/graphics/man/axTicks.Rd
+% Part of the R package, http://www.R-project.org
+% Copyright 1995-2007 R Core Development Team
+% Distributed under GPL 2 or later
+
 \name{axTicks}
 \alias{axTicks}
 \title{Compute Axis Tickmark Locations}
@@ -13,14 +18,13 @@ axTicks(side, axp = NULL, usr = NULL, log = NULL)
 \arguments{
   \item{side}{integer in 1:4, as for \code{\link{axis}}.}
   \item{axp}{numeric vector of length three, defaulting to
-    \code{\link{par}("Zaxp")} where \dQuote{Z} is \dQuote{x} or
-    \dQuote{y} depending on the \code{side} argument.}
+    \code{\link{par}("xaxp")} or \code{\link{par}("yaxp")}
+    depending on the \code{side} argument.}
   \item{usr}{numeric vector of length four, defaulting to
     \code{\link{par}("usr")} giving horizontal (\sQuote{x}) and vertical
     (\sQuote{y}) user coordinate limits.}
   \item{log}{logical indicating if log coordinates are active; defaults
-    to \code{\link{par}("Zlog")} where \sQuote{Z} is as for the
-    \code{axp} argument above.}
+    to \code{\link{par}("xlog")} or \code{\link{par}("ylog")}.}
 }
 \details{
   The \code{axp}, \code{usr}, and \code{log} arguments must be consistent
@@ -56,7 +60,7 @@ axTicks(side, axp = NULL, usr = NULL, log = NULL)
 op <- par(mfrow = c(3,1))
 for(x in 9999*c(1,2,8)) {
     plot(x,9, log = "x")
-    cat(formatC(par("xaxp"),wid=5),";",T <- axTicks(1),"\n")
+    cat(formatC(par("xaxp"), width=5),";", T <- axTicks(1),"\n")
     rug(T, col="red")
 }
 par(op)

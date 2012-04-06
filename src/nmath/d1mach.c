@@ -1,7 +1,7 @@
 /*
  *  Mathlib - A Mathematical Function Library
  *  Copyright (C) 1998  Ross Ihaka
- *  Copyright (C) 2000 The R Development Core Team
+ *  Copyright (C) 2000-7 The R Development Core Team
  *
  *  This program is free software; you can redistribute it and/or modify
  *  it under the terms of the GNU General Public License as published by
@@ -14,8 +14,8 @@
  *  GNU General Public License for more details.
  *
  *  You should have received a copy of the GNU General Public License
- *  along with this program; if not, write to the Free Software
- *  Foundation, Inc., 51 Franklin Street, Fifth Floor, Boston, MA 02110-1301  USA
+ *  along with this program; if not, a copy is available at
+ *  http://www.r-project.org/Licenses/
  */
 
 /* NaNs propagated correctly */
@@ -28,10 +28,8 @@
  */
 
 #include "nmath.h"
-#undef d1mach
 
-/* This is (naughtily) used by port.c in package stats */
-double Rf_d1mach(int i)
+attribute_hidden double Rf_d1mach(int i)
 {
     switch(i) {
     case 1: return DBL_MIN;
@@ -39,14 +37,13 @@ double Rf_d1mach(int i)
 
     case 3: /* = FLT_RADIX  ^ - DBL_MANT_DIG
 	      for IEEE:  = 2^-53 = 1.110223e-16 = .5*DBL_EPSILON */
-	return pow((double)i1mach(10), -(double)i1mach(14));
+	return 0.5*DBL_EPSILON;
 
     case 4: /* = FLT_RADIX  ^ (1- DBL_MANT_DIG) =
-	      for IEEE:  = 2^52 = 4503599627370496 = 1/DBL_EPSILON */
-	return pow((double)i1mach(10), 1-(double)i1mach(14));
+	      for IEEE:  = 2^-52 = DBL_EPSILON */
+	return DBL_EPSILON;
 
-    case 5: return log10(2.0);/* = M_LOG10_2 in Rmath.h */
-
+    case 5: return M_LOG10_2;
 
     default: return 0.0;
     }
@@ -55,9 +52,8 @@ double Rf_d1mach(int i)
 #ifdef __cplusplus
 extern "C" 
 #endif
+
 double F77_NAME(d1mach)(int *i)
 {
     return Rf_d1mach(*i);
 }
-
-

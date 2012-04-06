@@ -1,3 +1,8 @@
+% File src/library/graphics/man/lines.Rd
+% Part of the R package, http://www.R-project.org
+% Copyright 1995-2007 R Core Development Team
+% Distributed under GPL 2 or later
+
 \name{lines}
 \alias{lines}
 \alias{lines.default}
@@ -54,6 +59,6 @@ lines(x, \dots)
 \examples{
 # draw a smooth line through a scatter plot
 plot(cars, main="Stopping Distance versus Speed")
-lines(lowess(cars))
+lines(stats::lowess(cars))
 }
 \keyword{aplot}

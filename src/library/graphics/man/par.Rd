@@ -1,3 +1,8 @@
+% File src/library/graphics/man/par.Rd
+% Part of the R package, http://www.R-project.org
+% Copyright 1995-2007 R Core Development Team
+% Distributed under GPL 2 or later
+
 \name{par}
 \alias{par}
 \alias{.Pars}
@@ -153,7 +158,11 @@ par(\dots, no.readonly = FALSE)
   invisible named list.  Such a list can be passed as an argument to
   \code{par} to restore the parameter values.
   Use \code{par(no.readonly = TRUE)} for the full list of parameters
-  that can be restored.
+  that can be restored.  However, restoring all of these is not wise
+  since they contain several ways to set the same quantities, and these
+  can have conflicting effects if the graphics device has been resized
+  since the parameters were saved.  You will reset all of \code{mfrow},
+  \code{mfcol} and \code{mfg} and will find \code{mfrow} wins.
 
   When just one parameter is queried, the value of that parameter
   is returned as (atomic) vector.  When two or more parameters are
@@ -223,7 +232,7 @@ par(\dots, no.readonly = FALSE)
     \item{\code{col.main}}{The color to be used for plot main titles.}
     \item{\code{col.sub}}{The color to be used for plot sub-titles.}
     \item{\code{cra}}{\emph{\bold{R.O.}}; size of default character
-      \code{(width, height)} in \dQuote{rasters} (pixels).  Some devices
+      \code{(width, height)} in \sQuote{rasters} (pixels).  Some devices
       have no concept of pixels and so assume an arbitrary pixel size,
       usually 1/72 inch.}
     \item{\code{crt}}{A numerical value specifying (in degrees) how
@@ -300,8 +309,9 @@ par(\dots, no.readonly = FALSE)
 	\item{2:}{always perpendicular to the axis,}
 	\item{3:}{always vertical.}
       }
-      Note that other string/character rotation (via argument \code{srt}
-      to \code{par}) does \emph{not} affect the axis labels.
+      Also supported by \code{\link{mtext}}.  Note that other
+      string/character rotation (via argument \code{srt} to \code{par})
+      does \emph{not} affect the axis labels.
     }
     \item{\code{lend}}{The line end style.  This can be specified as an
       integer or string:
@@ -381,6 +391,9 @@ par(\dots, no.readonly = FALSE)
       \code{"cex"} is reduced by a factor of 0.83: if there are three or
       more of either rows or columns, the reduction factor is 0.66.
 
+      If either of these is queried it will give the current layout, so
+      querying cannot tell you the order the array will be filled.
+
       Consider the alternatives, \code{\link{layout}} and
       \code{\link{split.screen}}.
     }
@@ -406,7 +419,7 @@ par(\dots, no.readonly = FALSE)
     \item{\code{new}}{logical, defaulting to \code{FALSE}.  If set to
       \code{TRUE}, the next high-level plotting command (actually
       \code{\link{plot.new}}) should \emph{not clean} the frame before
-      drawing \dQuote{as if it was on a \bold{\emph{new}} device}.}
+      drawing \emph{as if it was on a \bold{\emph{new}} device}.}
     \item{\code{oma}}{A vector of the form \code{c(bottom, left, top,
 	right)} giving the size of the outer margins in lines of text.}
     \item{\code{omd}}{A vector of the form \code{c(x1, x2, y1, y2)}
@@ -438,7 +451,7 @@ par(\dots, no.readonly = FALSE)
     \item{\code{smo}}{(\emph{Unimplemented}) a value which indicates how
       smooth circles and circular arcs should be.}
     \item{\code{srt}}{The string rotation in degrees.  See the comment
-      about \code{crt}.
+      about \code{crt}.  Only supported by \code{\link{text}}.
       %% NOT true for R (but for S): Causes \code{srt} to be set to the
       %% same value. ?? Is `crt' meant here ??
     }
@@ -565,11 +578,6 @@ par(\dots, no.readonly = FALSE)
   \code{c("44", "13", "1343", "73", "2262")}.
 
   Note that \code{NA} is not a valid value for \code{lty}.
-
-  Prior to \R 2.4.0, zero hex digits were accepted and handled in a
-  device-dependent way, e.g. \code{X11()} mapped them to one, \code{pdf()}
-  regarded zero as terminating the string and \code{windows()} gave a
-  zero-length stretch.
 }
 
 \note{
@@ -610,6 +618,7 @@ par(op)
 op <- par(no.readonly = TRUE) # the whole list of settable par's.
 ## do lots of plotting and par(.) calls, then reset:
 par(op)
+## Note this is not in general good practice
 
 par("ylog") # FALSE
 plot(1 : 12, log = "y")
@@ -626,6 +635,7 @@ par(las = 3)
 barplot(rbind(nr.prof)) # R 0.63.2: shows alignment problem
 par(las = 0)# reset to default
 
+require(grDevices) # for gray
 ## 'fg' use:
 plot(1:12, type = "b", main="'fg' : axes, ticks and box in gray",
      fg = gray(0.7), bty="7" , sub=R.version.string)

@@ -1,3 +1,8 @@
+% File src/library/stats/man/ksmooth.Rd
+% Part of the R package, http://www.R-project.org
+% Copyright 1995-2007 R Core Development Team
+% Distributed under GPL 2 or later
+
 \name{ksmooth}
 \alias{ksmooth}
 \title{Kernel Regression Smoother}
@@ -30,6 +35,8 @@ ksmooth(x, y, kernel = c("box", "normal"), bandwidth = 0.5,
   although it is nowhere near as slow as the S function. Better kernel
   smoothers are available in other packages.}
 \examples{
+require(graphics)
+
 with(cars, {
     plot(speed, dist)
     lines(ksmooth(speed, dist, "normal", bandwidth=2), col=2)

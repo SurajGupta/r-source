@@ -1,3 +1,19 @@
+#  File src/library/graphics/R/stars.R
+#  Part of the R package, http://www.R-project.org
+#
+#  This program is free software; you can redistribute it and/or modify
+#  it under the terms of the GNU General Public License as published by
+#  the Free Software Foundation; either version 2 of the License, or
+#  (at your option) any later version.
+#
+#  This program is distributed in the hope that it will be useful,
+#  but WITHOUT ANY WARRANTY; without even the implied warranty of
+#  MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
+#  GNU General Public License for more details.
+#
+#  A copy of the GNU General Public License is available at
+#  http://www.r-project.org/Licenses/
+
 ### This code started life as spatial star plots by David A. Andrews.
 ### See http://www.udallas.edu:8080/~andrews/software/software.html
 ### T. Dye <tdye@lava.net>, July 1999;  many improvements by MM
@@ -66,11 +82,11 @@ function(x, full = TRUE, scale = TRUE, radius = TRUE,
     ## clock-wise in equal increments.
     angles <-
 	if(full)
-	    seq.int(0, 2*pi, length=n.seg+1)[-(n.seg+1)]
+	    seq.int(0, 2*pi, length.out=n.seg+1)[-(n.seg+1)]
 	else if (draw.segments)
-	    seq.int(0, pi, length=n.seg+1)[-(n.seg+1)]
+	    seq.int(0, pi, length.out=n.seg+1)[-(n.seg+1)]
 	else
-	    seq.int(0, pi, length=n.seg)
+	    seq.int(0, pi, length.out=n.seg)
 
     if (length(angles) != n.seg)
 	stop("length of 'angles' must equal 'ncol(x)'")

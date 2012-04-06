@@ -12,8 +12,8 @@
  *  GNU General Public License for more details.
  *
  *  You should have received a copy of the GNU General Public License
- *  along with this program; if not, write to the Free Software
- *  Foundation, Inc., 51 Franklin Street, Fifth Floor, Boston, MA 02110-1301  USA
+ *  along with this program; if not, a copy is available at
+ *  http://www.r-project.org/Licenses/
  */
 
 #include <config.h>
@@ -74,6 +74,15 @@ static void my_onintr(int sig)
 {
     UserBreak = 1;
 }
+static void wrap_askok(char *info)
+{
+    askok(info);
+}
+
+static int wrap_askyesnocancel(char *question)
+{
+    return askyesnocancel(question);    
+}
 
 int Rf_initialize_R(int argc, char **argv)
 {
@@ -100,8 +109,8 @@ int Rf_initialize_R(int argc, char **argv)
     Rp->ReadConsole = myReadConsole;
     Rp->WriteConsole = myWriteConsole;
     Rp->CallBack = myCallBack;
-    Rp->ShowMessage = askok;
-    Rp->YesNoCancel = askyesnocancel;
+    Rp->ShowMessage = wrap_askok;
+    Rp->YesNoCancel = wrap_askyesnocancel;
     Rp->Busy = myBusy;
 
     Rp->R_Quiet = TRUE;

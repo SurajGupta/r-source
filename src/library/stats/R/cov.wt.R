@@ -1,3 +1,19 @@
+#  File src/library/stats/R/cov.wt.R
+#  Part of the R package, http://www.R-project.org
+#
+#  This program is free software; you can redistribute it and/or modify
+#  it under the terms of the GNU General Public License as published by
+#  the Free Software Foundation; either version 2 of the License, or
+#  (at your option) any later version.
+#
+#  This program is distributed in the hope that it will be useful,
+#  but WITHOUT ANY WARRANTY; without even the implied warranty of
+#  MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
+#  GNU General Public License for more details.
+#
+#  A copy of the GNU General Public License is available at
+#  http://www.r-project.org/Licenses/
+
 cov.wt <- function(x, wt = rep(1/nrow(x), nrow(x)), cor = FALSE, center = TRUE,
                    method = c("unbiased", "ML"))
 {
@@ -21,7 +37,7 @@ cov.wt <- function(x, wt = rep(1/nrow(x), nrow(x)), cor = FALSE, center = TRUE,
 	if (length(center) != ncol(x))
 	    stop("length of 'center' must equal the number of columns in 'x'")
     }
-    x <- sqrt(wt) * sweep(x, 2, center)
+    x <- sqrt(wt) * sweep(x, 2, center, check.margin=FALSE)
     cov <-
         switch(match.arg(method),
                "unbiased" = crossprod(x) / (1 - sum(wt^2)),

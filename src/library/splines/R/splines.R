@@ -1,4 +1,18 @@
-### $Id: splines.R,v 1.6 2002/05/08 17:32:12 ripley Exp $
+#  File src/library/splines/R/splines.R
+#  Part of the R package, http://www.R-project.org
+#
+#  This program is free software; you can redistribute it and/or modify
+#  it under the terms of the GNU General Public License as published by
+#  the Free Software Foundation; either version 2 of the License, or
+#  (at your option) any later version.
+#
+#  This program is distributed in the hope that it will be useful,
+#  but WITHOUT ANY WARRANTY; without even the implied warranty of
+#  MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
+#  GNU General Public License for more details.
+#
+#  A copy of the GNU General Public License is available at
+#  http://www.r-project.org/Licenses/
 
 bs <- function(x, df = NULL, knots = NULL, degree = 3, intercept = FALSE,
                Boundary.knots = range(x))
@@ -24,8 +38,8 @@ bs <- function(x, df = NULL, knots = NULL, degree = 3, intercept = FALSE,
         }
         knots <-
             if(nIknots > 0) {
-                knots <- seq(from = 0, to = 1,
-                             length = nIknots + 2)[-c(1, nIknots + 2)]
+                knots <- seq.int(from = 0, to = 1,
+                                 length.out = nIknots + 2)[-c(1, nIknots + 2)]
                 stats::quantile(x[!outside], knots)
             }
     }
@@ -88,7 +102,8 @@ ns <- function(x, df = NULL, knots = NULL, intercept = FALSE,
             warning("'df' was too small; have used ", 1 + intercept)
         }
         knots <- if(nIknots > 0) {
-            knots <- seq(0, 1, length = nIknots + 2)[-c(1, nIknots + 2)]
+            knots <- seq.int(0, 1,
+                             length.out = nIknots + 2)[-c(1, nIknots + 2)]
             stats::quantile(x[!outside], knots)
         } ## else  NULL
     } else nIknots <- length(knots)

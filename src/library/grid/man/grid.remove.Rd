@@ -1,5 +1,11 @@
+% File src/library/grid/man/grid.remove.Rd
+% Part of the R package, http://www.R-project.org
+% Copyright 1995-2007 R Core Development Team
+% Distributed under GPL 2 or later
+
 \name{grid.remove}
 \alias{grid.remove}
+\alias{grid.gremove}
 \alias{removeGrob}
 \title{Remove a Grid Graphical Object}
 \description{
@@ -8,6 +14,8 @@
 \usage{
 grid.remove(gPath, warn = TRUE, strict  =  FALSE, grep = FALSE,
             global = FALSE, allDevices = FALSE, redraw = TRUE)
+
+grid.gremove <- function(..., grep = TRUE, global = TRUE)
 
 removeGrob(gTree, gPath, strict = FALSE, grep = FALSE,
            global = FALSE, warn = TRUE) 
@@ -46,6 +54,8 @@ removeGrob(gTree, gPath, strict = FALSE, grep = FALSE,
   If \code{redraw}
   is \code{TRUE} it then redraws everything to reflect the change.
 
+  \code{grid.gremove} (\code{g} for global) is just a convenience wrapper for
+  \code{grid.remove} with different defaults.
 }
 \value{
   \code{removeGrob} returns a grob object;  \code{grid.remove} returns

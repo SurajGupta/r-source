@@ -1,3 +1,8 @@
+% File src/library/base/man/groupGeneric.Rd
+% Part of the R package, http://www.R-project.org
+% Copyright 1995-2007 R Core Development Team
+% Distributed under GPL 2 or later
+
 \name{groupGeneric}
 \alias{S3groupGeneric}
 \alias{.Group}
@@ -53,11 +58,12 @@ Summary(\dots, na.rm = FALSE)
     \item Group \code{"Math"}:
     \itemize{
       \item
-      \code{abs}, \code{sign}, \code{sqrt}, \cr
+      \code{abs}, \code{sign}, \code{sqrt},\cr
       \code{floor}, \code{ceiling}, \code{trunc},\cr
       \code{round}, \code{signif}
 
-      \item \code{exp}, \code{log}, \cr
+      \item
+      \code{exp}, \code{log},  \code{expm1}, \code{log1p},\cr
       \code{cos}, \code{sin}, \code{tan},\cr
       \code{acos}, \code{asin}, \code{atan}
 
@@ -65,9 +71,8 @@ Summary(\dots, na.rm = FALSE)
       \code{acosh}, \code{asinh}, \code{atanh}
 
       \item
-      \code{lgamma}, \code{gamma}, \code{gammaCody},\cr
-      \code{digamma}, \code{trigamma}
-      %   do_math1() [arithmetic.c:794]: if (DispatchGroup("Math",...))
+      \code{lgamma}, \code{gamma}, \code{digamma}, \code{trigamma}
+      %   do_math1() [../../../main/arithmetic.c:794]: if (DispatchGroup("Math",...))
       %
       %
       % "atan", "round", "log", "signif":
@@ -79,11 +84,10 @@ Summary(\dots, na.rm = FALSE)
       \item \code{cumsum}, \code{cumprod}, \code{cummax}, \code{cummin}
       % do_cum()   [cum.c:140]:    if (DispatchGroup("Math", ...))
     }
-    Members of this group dispatch on \code{x}.  Not all members will
-    accept more than one argument: most members have default methods
-    expecting one argument.  (Specifically, \code{atan} and the gamma
-    functions accept only one argument and \code{log}, \code{round} and
-    \code{signif} accept one or two.)
+    Members of this group dispatch on \code{x}.  Most members accept
+    only one argument, but members \code{log}, \code{round} and
+    \code{signif} accept one or two arguments, and \code{trunc} accepts
+    one or more.
 
     \item Group \code{"Ops"}:
     \itemize{
@@ -112,6 +116,9 @@ Summary(\dots, na.rm = FALSE)
     If different methods are found, there is a warning about
     \sQuote{incompatible methods}: in that case or if no method is found
     for either argument the internal method is used.
+
+    If the members of this group are called as functions, any argument
+    names are removed to ensure that positional matching is always used.
 
     \item Group \code{"Summary"}:
     \itemize{
@@ -145,6 +152,8 @@ Summary(\dots, na.rm = FALSE)
   There is no lazy evaluation of arguments for group-generic functions.
 }
 \section{Technical Details}{
+  These functions are all primitive and \link{internal generic}.
+
   The details of method dispatch and variables such as \code{.Generic}
   are discussed in the help for \code{\link{UseMethod}}.  There are a
   few small differences:
@@ -169,7 +178,9 @@ Summary(\dots, na.rm = FALSE)
   \link[methods]{S4groupGeneric} for group generics for S4 methods.
 }
 \examples{
-d.fr <- data.frame(x=1:9, y=rnorm(9))
+require(utils)
+
+d.fr <- data.frame(x=1:9, y=stats::rnorm(9))
 class(1 + d.fr) == "data.frame" ##-- add to d.f. ...
 
 methods("Math")

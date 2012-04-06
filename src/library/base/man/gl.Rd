@@ -1,3 +1,8 @@
+% File src/library/base/man/gl.Rd
+% Part of the R package, http://www.R-project.org
+% Copyright 1995-2007 R Core Development Team
+% Distributed under GPL 2 or later
+
 \name{gl}
 \alias{gl}
 \title{Generate Factor Levels}
@@ -28,7 +33,7 @@ gl(n, k, length = n*k, labels = 1:n, ordered = FALSE)
 }
 \examples{
 ## First control, then treatment:
-gl(2, 8, label = c("Control", "Treat"))
+gl(2, 8, labels = c("Control", "Treat"))
 ## 20 alternating 1s and 2s
 gl(2, 1, 20)
 ## alternating pairs of 1s and 2s

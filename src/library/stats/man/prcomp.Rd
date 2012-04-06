@@ -1,3 +1,8 @@
+% File src/library/stats/man/prcomp.Rd
+% Part of the R package, http://www.R-project.org
+% Copyright 1995-2007 R Core Development Team
+% Distributed under GPL 2 or later
+
 \name{prcomp}
 \alias{prcomp}
 \alias{prcomp.formula}
@@ -33,7 +38,7 @@ prcomp(x, \dots)
   \item{na.action}{a function which indicates what should happen
     when the data contain \code{NA}s.  The default is set by
     the \code{na.action} setting of \code{\link{options}}, and is
-    \code{\link{na.fail}} if that is unset. The \dQuote{factory-fresh}
+    \code{\link{na.fail}} if that is unset. The \sQuote{factory-fresh}
     default is \code{\link{na.omit}}.}
   \item{\dots}{arguments passed to or from other methods. If \code{x} is
     a formula one might specify \code{scale.} or \code{tol}.}
@@ -119,6 +124,8 @@ prcomp(x, \dots)
   \code{\link{svd}}, \code{\link{eigen}}.
 }
 \examples{
+require(graphics)
+
 ## the variances of the variables in the
 ## USArrests data vary by orders of magnitude, so scaling is appropriate
 prcomp(USArrests)  # inappropriate

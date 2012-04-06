@@ -1,3 +1,8 @@
+% File src/library/grDevices/man/rgb.Rd
+% Part of the R package, http://www.R-project.org
+% Copyright 1995-2007 R Core Development Team
+% Distributed under GPL 2 or later
+
 \name{rgb}
 \title{RGB Color Specification}
 \usage{
@@ -5,7 +10,7 @@ rgb(red, green, blue, alpha, names = NULL, maxColorValue = 1)
 }
 \alias{rgb}
 \description{
-  This function creates \dQuote{colors} corresponding to the given
+  This function creates colors corresponding to the given
   intensities (between 0 and \code{max}) of the red, green and blue
   primaries.
 
@@ -36,10 +41,14 @@ rgb(red, green, blue, alpha, names = NULL, maxColorValue = 1)
   the \code{red}, \code{green} and \code{blue} values.
 
   Semi-transparent colors (\code{0 < alpha < 1}) are supported only on
-  some devices: at the time of writing only on the \code{\link{pdf}} and
-  (on MacOS X) \code{quartz} devices as well as several third-party
-  devices such as those in packages \pkg{Cairo}, \pkg{cairoDevice},
-  \pkg{JavaJD} and \pkg{RSvgDevice}.
+  some devices: at the time of writing only on the \code{\link{pdf}},
+  \code{windows} and \code{quartz} devices as well as
+  several third-party devices such as those in packages \pkg{Cairo},
+  \pkg{cairoDevice}, \pkg{JavaGD} and \pkg{RSvgDevice}.  On most of
+  these devices the actual alpha values used are multiples of 1/255.
+
+  Typically other graphics devices silently plot semi-transparent colors
+  as fully transparent.
 }
 \value{
   A character vector with elements of 7 or 9 characters, \code{"#"}
@@ -47,8 +56,7 @@ rgb(red, green, blue, alpha, names = NULL, maxColorValue = 1)
   hexadecimal (after rescaling to \code{0 ... 255}).
 }
 \seealso{
-  \code{\link{col2rgb}} the \dQuote{inverse} for translating \R colors
-  to RGB vectors;
+  \code{\link{col2rgb}}for translating \R colors to RGB vectors;
   \code{\link{rainbow}}, \code{\link{hsv}}, \code{\link{hcl}},
   \code{\link{gray}}.
 }
@@ -56,7 +64,7 @@ rgb(red, green, blue, alpha, names = NULL, maxColorValue = 1)
 rgb(0,1,0)
 (u01 <- seq(0,1, length=11))
 stopifnot(rgb(u01,u01,u01) == gray(u01))
-reds <- rgb((0:15)/15, g=0,b=0, names=paste("red",0:15,sep="."))
+reds <- rgb((0:15)/15, green=0, blue=0, names=paste("red",0:15,sep="."))
 reds
 
 rgb(0, 0:12, 0, max = 255)# integer input

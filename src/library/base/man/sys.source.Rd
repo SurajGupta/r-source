@@ -1,3 +1,8 @@
+% File src/library/base/man/sys.source.Rd
+% Part of the R package, http://www.R-project.org
+% Copyright 1995-2007 R Core Development Team
+% Distributed under GPL 2 or later
+
 \name{sys.source}
 \alias{sys.source}
 \title{Parse and Evaluate Expressions from a File}
@@ -18,8 +23,8 @@ sys.source(file, envir = baseenv(), chdir = FALSE,
     typically supply an explicit \code{envir} argument.}
   \item{chdir}{logical; if \code{TRUE}, the \R working directory is
     changed to the directory containing \code{file} for evaluating.}
-  \item{keep.source}{logical.  If \code{TRUE}, functions \dQuote{keep
-      their source} including comments, see
+  \item{keep.source}{logical.  If \code{TRUE}, functions keep
+    their source including comments, see
     \code{\link{options}(keep.source = *)} for more details.}
 }
 \details{

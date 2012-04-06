@@ -1,3 +1,19 @@
+#  File src/library/tools/R/admin.R
+#  Part of the R package, http://www.R-project.org
+#
+#  This program is free software; you can redistribute it and/or modify
+#  it under the terms of the GNU General Public License as published by
+#  the Free Software Foundation; either version 2 of the License, or
+#  (at your option) any later version.
+#
+#  This program is distributed in the hope that it will be useful,
+#  but WITHOUT ANY WARRANTY; without even the implied warranty of
+#  MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
+#  GNU General Public License for more details.
+#
+#  A copy of the GNU General Public License is available at
+#  http://www.r-project.org/Licenses/
+
 ### * .install_package_description
 
 .install_package_description <-
@@ -34,12 +50,12 @@ function(dir, outDir)
     }
 
     OS <- Sys.getenv("R_OSTYPE")
-    OStype <- if(nchar(OS) && OS == "windows")
+    OStype <- if(nzchar(OS) && OS == "windows")
         "i386-pc-mingw32"
     else
         R.version$platform
     if (length(grep("-apple-darwin",R.version$platform)) > 0 &&
-        nchar(Sys.getenv("R_ARCH")) > 0)
+        nzchar(Sys.getenv("R_ARCH")))
         OStype <- sub(".*-apple-darwin", "universal-apple-darwin", OStype)
     Built <-
         paste("R ",
@@ -57,10 +73,17 @@ function(dir, outDir)
               .OStype(),
               sep = "")
 
-    ## we must not split the Built: field across lines
-    writeLines(c(formatDL(names(db), db, style = "list"),
-                 paste("Built", Built, sep=": ")),
-               file.path(outDir, "DESCRIPTION"))
+    ## At some point of time, we had:
+    ##   We must not split the Built: field across lines.
+    ## Not sure if this is still true.  If not, the following could be
+    ## simplified to
+    ##   db["Built"] <- Built
+    ##   write.dcf(rbind(db), file.path(outDir, "DESCRIPTION"))
+    outConn <- file(file.path(outDir, "DESCRIPTION"), open = "w")
+    write.dcf(rbind(db), outConn)
+    writeLines(paste("Built", Built, sep = ": "), outConn)
+    close(outConn)
+
     db["Built"] <- Built
 
     outMetaDir <- file.path(outDir, "Meta")
@@ -77,7 +100,7 @@ function(dir, outDir)
 ### * .split_description
 
 .split_description <-
-function(db)
+function(db, verbose = FALSE)
 {
     if(!is.na(Built <- db["Built"])) {
         Built <- as.list(strsplit(Built, "; ")[[1]])
@@ -89,15 +112,28 @@ function(db)
             Built <- NULL
         } else {
             names(Built) <- c("R", "Platform", "Date", "OStype")
-            Built[["R"]] <- package_version(sub("^R ([0-9.]+)", "\\1",
-                                                Built[["R"]]))
+            Built[["R"]] <- R_system_version(sub("^R ([0-9.]+)", "\\1",
+                                                 Built[["R"]]))
         }
     } else Built <- NULL
     ## might perhaps have multiple entries
     Depends <- .split_dependencies(db[names(db) %in% "Depends"])
     if("R" %in% names(Depends)) {
-        Rdeps <- Depends[["R"]]
-        Depends <- Depends[-match("R", names(Depends))]
+        if(verbose && sum("R" == names(Depends)) > 1) {
+            entries <- Depends["R" == names(Depends)]
+            entries <- lapply(entries, function(x)
+                paste(lapply(x, as.character), collapse="")
+            )
+            message("WARNING: 'Depends' entry has multiple dependencies: ",
+                    paste(unlist(entries), collapse=', '),
+                    "\n\tonly the first will be used")
+        }
+        Rdeps <- Depends[["R", exact = TRUE]] # the first one
+        Depends <- Depends[names(Depends) != "R"]
+        ## several packages have 'Depends: R', which is a noop.
+        if(verbose && length(Rdeps) == 1)
+             message("WARNING: omitting pointless dependence on 'R' without a version requirement")
+        if(length(Rdeps) <= 1) Rdeps <- NULL
     } else Rdeps <- NULL
     Rdeps <- as.vector(Rdeps)
     Suggests <- .split_dependencies(db[names(db) %in% "Suggests"])
@@ -480,7 +516,7 @@ function(src_dir, out_dir, packages)
 }
 
 ### * .install_package_vignettes
-
+## this is only used when building R, to build the 'grid' vignettes.
 .install_package_vignettes <-
 function(dir, outDir, keep.source = FALSE)
 {
@@ -514,13 +550,12 @@ function(dir, outDir, keep.source = FALSE)
     cwd <- getwd()
     buildDir <- file.path(cwd, ".vignettes")
     if(!file_test("-d", buildDir) && !dir.create(buildDir))
-        stop(gettextf("cannot create directory '%s'", buildDir),
-             domain = NA)
+        stop(gettextf("cannot create directory '%s'", buildDir), domain = NA)
     on.exit(setwd(cwd))
     setwd(buildDir)
 
     ## Argh.  We need to ensure that vignetteDir is in TEXINPUTS and
-    ## BIBINPUTS.
+    ## BIBINPUTS.  Note that this does not work with MiKTeX.
     envSep <- if(.Platform$OS.type == "windows") ";" else ":"
     ## (Yes, it would be nice to have envPath() similar to file.path().)
     texinputs <- Sys.getenv("TEXINPUTS")
@@ -534,44 +569,18 @@ function(dir, outDir, keep.source = FALSE)
 
     for(srcfile in vignetteFiles[!upToDate]) {
         base <- basename(file_path_sans_ext(srcfile))
+        message("processing '", basename(srcfile), "'")
         texfile <- paste(base, ".tex", sep = "")
         yy <- try(utils::Sweave(srcfile, pdf = TRUE, eps = FALSE,
                                 quiet = TRUE, keep.source = keep.source))
-        if(inherits(yy, "try-error"))
-            stop(yy)
+        if(inherits(yy, "try-error")) stop(yy)
         ## In case of an error, do not clean up: should we point to
         ## buildDir for possible inspection of results/problems?
-        if(.Platform$OS.type == "windows") {
-            ## may not have texi2dvi
-            res <- system(paste("pdflatex", texfile))
-            if(res)
-                stop(gettextf("unable to run pdflatex on '%s'",
-                              texfile),
-                     domain = NA)
-            if(length(grep("\\bibdata",
-                           readLines(paste(base, ".aux", sep = ""))))) {
-                res <- system(paste("bibtex", base))
-                if(res)
-                    stop(gettextf("unable to run bibtex on '%s'", base),
-                         domain = NA)
-                res <- system(paste("pdflatex", texfile))
-                if(res)
-                    stop(gettextf("unable to run pdflatex on '%s'",
-                                  texfile),
-                         domain = NA)
-            }
-            res <- system(paste("pdflatex", texfile))
-            if(res)
-                stop(gettextf("unable to run pdflatex on '%s'",
-                              texfile),
-                     domain = NA)
-        } else
-            texi2dvi(texfile, pdf = TRUE, quiet = TRUE)
+        texi2dvi(texfile, pdf = TRUE, quiet = TRUE)
         pdffile <-
             paste(basename(file_path_sans_ext(srcfile)), ".pdf", sep = "")
         if(!file.exists(pdffile))
-            stop(gettextf("file '%s' was not created",
-                          pdffile),
+            stop(gettextf("file '%s' was not created", pdffile),
                  domain = NA)
         if(!file.copy(pdffile, outVignetteDir, overwrite = TRUE))
             stop(gettextf("cannot copy '%s' to '%s'",
@@ -579,8 +588,8 @@ function(dir, outDir, keep.source = FALSE)
                           outVignetteDir),
                  domain = NA)
     }
-    ## Need to change out of this dir before we delete it, at least on
-    ## Windows.
+    ## Need to change out of this dir before we delete it,
+    ## at least on Windows.
     setwd(cwd)
     unlink(buildDir, recursive = TRUE)
     ## Now you need to update the HTML index!
@@ -695,6 +704,96 @@ function(dir, packages)
         cat(paste(paste('-I"', paths, '/include"', sep=""), collapse=" "))
     return(invisible())
 }
+
+### * .vcreate_bundle_package_descriptions
+
+.vcreate_bundle_package_descriptions <-
+function(dir, packages)
+{
+    .canonicalize_metadata <- function(m) {
+        ## Drop entries which are NA or empty.
+        m[!is.na(m) & (regexpr("^[[:space:]]*$", m) < 0)]
+    }
+
+    dir <- file_path_as_absolute(dir)
+
+    ## Bundle level metadata.
+    meta <- .read_description(file.path(dir, "DESCRIPTION"))
+    meta <- .canonicalize_metadata(meta)
+    if(missing(packages)) packages <- meta[["Contains"]]
+
+    for(p in unlist(strsplit(.strip_whitespace(packages), "[[:space:]]+"))) {
+        bmeta <- meta
+        ## Package metadata.
+        this <- file.path(dir, p, "DESCRIPTION.in")
+        if(file_test("-f", this)) {
+            pmeta <- .read_description(this)
+            pmeta <- .canonicalize_metadata(pmeta)
+            ## Need to merge dependency fields in *both* metadata.
+            fields_to_merge <-
+                c("Depends", "Imports", "Suggests", "Enhances")
+            fields <- intersect(intersect(names(bmeta), fields_to_merge),
+                                intersect(names(pmeta), fields_to_merge))
+            if(length(fields)) {
+                bmeta[fields] <-
+                    paste(bmeta[fields], pmeta[fields], sep = ", ")
+                pmeta <- pmeta[!(names(pmeta) %in% fields)]
+            }
+        } else {
+            warning(gettextf("missing 'DESCRIPTION.in' for package '%s'", p),
+                    domain = NA)
+            d <- sprintf("Package '%s' from bundle '%s'", p, meta[["Bundle"]])
+            pmeta <- c(p, d, d)
+            names(pmeta) <- c("Package", "Description", "Title")
+        }
+        write.dcf(rbind(c(bmeta, pmeta)),
+                  file.path(dir, p, "DESCRIPTION"))
+    }
+
+    invisible()
+}
+
+### * .test_package_depends_R_version
+
+.test_package_depends_R_version <-
+function(dir)
+{
+    if(missing(dir)) dir <- "."
+    meta <- .read_description(file.path(dir, "DESCRIPTION"))
+    depends <- .split_description(meta, verbose = TRUE)$Rdepends
+    status <- 0
+    ## .split_description will have ensured that this is NULL or
+    ## of length 3.
+    if(length(depends) > 1) {
+        ## .check_package_description will insist on these operators
+        if(!depends$op %in% c("<=", ">="))
+            message("WARNING: malformed 'Depends' field in 'DESCRIPTION'")
+        else
+            status <- !do.call(depends$op,
+                               list(getRversion(), depends$version))
+        if(status != 0) {
+            package <- Sys.getenv("R_PACKAGE_NAME")
+            if(nzchar(package))
+                package <- meta["Package"]
+            if(nzchar(package))
+                msg <- gettextf("ERROR: this R is version %s, package '%s' requires R %s %s",
+                                getRversion(), package,
+                                depends$op, depends$version)
+            else if (nzchar(bundle <-  meta["Bundle"]))
+                msg <- gettextf("ERROR: this R is version %s, bundle '%s' requires R %s %s",
+                                getRversion(), bundle,
+                                depends$op, depends$version)
+            else
+                msg <- gettextf("ERROR: this R is version %s, required is R %s %s",
+                                getRversion(),
+                                depends$op, depends$version)
+            message(strwrap(msg, exdent = 2))
+        }
+    }
+    q(status = status)
+}
+
+
 
 ### Local variables: ***
 ### mode: outline-minor ***

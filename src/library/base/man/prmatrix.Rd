@@ -1,3 +1,8 @@
+% File src/library/base/man/prmatrix.Rd
+% Part of the R package, http://www.R-project.org
+% Copyright 1995-2007 R Core Development Team
+% Distributed under GPL 2 or later
+
 \name{prmatrix}
 \alias{prmatrix}
 \title{Print Matrices, Old-style}
@@ -37,7 +42,7 @@ prmatrix(x, rowlab =, collab =,
   \code{\link{print.default}}, and other \code{\link{print}} methods.
 }
 \examples{
-prmatrix(m6 <- diag(6), row = rep("",6), coll=rep("",6))
+prmatrix(m6 <- diag(6), rowlab = rep("",6), collab =rep("",6))
 
 chm <- matrix(scan(system.file("help", "AnIndex", package = "splines"),
                    what = ""), , 2, byrow = TRUE)

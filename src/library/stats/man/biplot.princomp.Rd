@@ -1,3 +1,8 @@
+% File src/library/stats/man/biplot.princomp.Rd
+% Part of the R package, http://www.R-project.org
+% Copyright 1995-2007 R Core Development Team
+% Distributed under GPL 2 or later
+
 \name{biplot.princomp}
 \alias{biplot.princomp}
 \alias{biplot.prcomp}
@@ -61,6 +66,7 @@ Biplot for Principal Components
     \code{\link{princomp}}.
 }
 \examples{
+require(graphics)
 biplot(princomp(USArrests))
 }
 \keyword{multivariate}

@@ -1,3 +1,8 @@
+% File src/library/datasets/man/sunspot.month.Rd
+% Part of the R package, http://www.R-project.org
+% Copyright 1995-2007 R Core Development Team
+% Distributed under GPL 2 or later
+
 \name{sunspot.month}
 \docType{data}
 \alias{sunspot.month}
@@ -25,7 +30,7 @@ sunspot.month
   \url{http://www.oma.be/KSB-ORB/SIDC/sidc_txt.html}
 }
 \examples{
-require(stats)
+require(stats); require(graphics)
 ## Compare the monthly series 
 plot (sunspot.month, main = "sunspot.month [stats]", col = 2)
 lines(sunspots) # "very barely" see something

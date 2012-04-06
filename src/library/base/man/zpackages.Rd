@@ -1,3 +1,8 @@
+% File src/library/base/man/zpackages.Rd
+% Part of the R package, http://www.R-project.org
+% Copyright 1995-2007 R Core Development Team
+% Distributed under GPL 2 or later
+
 \name{zpackages}
 \title{Listing of Packages}
 \alias{.packages}
@@ -15,7 +20,7 @@
     of \code{NULL} corresponds to all libraries currently known.}
 }
 \details{
-  \code{.packages()} returns the \dQuote{base names} of the currently
+  \code{.packages()} returns the base names of the currently
   attached packages \emph{invisibly} whereas
   \code{.packages(all.available = TRUE)} gives (visibly) \emph{all}
   packages available in the library location path \code{lib.loc}.
@@ -23,7 +28,7 @@
   \file{DESCRIPTION} file containing a valid \code{version} field.
 }
 \value{
-  A character vector of package \dQuote{base names}, invisible unless
+  A character vector of package base names, invisible unless
   \code{all.available = TRUE}.
 }
 \author{
@@ -36,8 +41,8 @@
 }
 \examples{
 (.packages())               # maybe just "base"
-.packages(all = TRUE)       # return all available as character vector
-require(splines)            # the same
+.packages(all.available = TRUE) # return all available as character vector
+require(splines)
 (.packages())               # "splines", too
 detach("package:splines")
 }

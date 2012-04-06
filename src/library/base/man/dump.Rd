@@ -1,3 +1,8 @@
+% File src/library/base/man/dump.Rd
+% Part of the R package, http://www.R-project.org
+% Copyright 1995-2007 R Core Development Team
+% Distributed under GPL 2 or later
+
 \name{dump}
 \title{Text Representations of R Objects}
 \usage{
@@ -94,7 +99,7 @@ dump(list, file = "dumpdata.R", append = FALSE,
 }
 \examples{
 x <- 1; y <- 1:10
-dump(ls(patt='^[xyz]'), "xyz.Rdmped")
+dump(ls(pattern = '^[xyz]'), "xyz.Rdmped")
 print(.Last.value)
 unlink("xyz.Rdmped")
 }

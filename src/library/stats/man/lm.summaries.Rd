@@ -1,3 +1,8 @@
+% File src/library/stats/man/lm.summaries.Rd
+% Part of the R package, http://www.R-project.org
+% Copyright 1995-2007 R Core Development Team
+% Distributed under GPL 2 or later
+
 \name{lm.summaries}
 \alias{family.lm}
 \alias{formula.lm}
@@ -34,7 +39,7 @@ weights(object, \dots)
   \code{fitted} and \code{residuals} can be used to extract
   various useful features of the value returned by \code{lm}.
 
-  The working and response residuals are \dQuote{observed - fitted}.  The
+  The working and response residuals are \sQuote{observed - fitted}.  The
   deviance and pearson residuals are weighted residuals, scaled by the
   square root of the weights used in fitting.  The partial residuals
   are a matrix with each column formed by omitting a term from the
@@ -75,7 +80,7 @@ weights(object, \dots)
   eds J. M. Chambers and T. J. Hastie, Wadsworth \& Brooks/Cole.
 }
 \examples{
-\dontshow{example("lm", echo = FALSE)}
+\dontshow{utils::example("lm", echo = FALSE)}
 ##-- Continuing the  lm(.) example:
 coef(lm.D90)# the bare coefficients
 

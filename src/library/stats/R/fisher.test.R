@@ -1,3 +1,19 @@
+#  File src/library/stats/R/fisher.test.R
+#  Part of the R package, http://www.R-project.org
+#
+#  This program is free software; you can redistribute it and/or modify
+#  it under the terms of the GNU General Public License as published by
+#  the Free Software Foundation; either version 2 of the License, or
+#  (at your option) any later version.
+#
+#  This program is distributed in the hope that it will be useful,
+#  but WITHOUT ANY WARRANTY; without even the implied warranty of
+#  MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
+#  GNU General Public License for more details.
+#
+#  A copy of the GNU General Public License is available at
+#  http://www.r-project.org/Licenses/
+
 fisher.test <-
 function(x, y = NULL, workspace = 200000, hybrid = FALSE,
          control = list(), or = 1, alternative = "two.sided",
@@ -186,7 +202,7 @@ function(x, y = NULL, workspace = 200000, hybrid = FALSE,
             PVAL <-
                 switch(alternative,
                        less = pnhyper(x, or),
-                       greater = pnhyper(x, or, upper = TRUE),
+                       greater = pnhyper(x, or, upper.tail = TRUE),
                        two.sided = {
                            if(or == 0)
                                as.numeric(x == lo)
@@ -240,14 +256,14 @@ function(x, y = NULL, workspace = 200000, hybrid = FALSE,
                 if(x == lo)
                     return(0)
 
-                p <- pnhyper(x, 1, upper = TRUE)
+                p <- pnhyper(x, 1, upper.tail = TRUE)
                 if(p > alpha)
                     uniroot(function(t)
-                            pnhyper(x, t, upper = TRUE) - alpha,
+                            pnhyper(x, t, upper.tail = TRUE) - alpha,
                             c(0, 1))$root
                 else if(p < alpha)
                     1 / uniroot(function(t)
-                                pnhyper(x, 1/t, upper = TRUE) - alpha,
+                                pnhyper(x, 1/t, upper.tail = TRUE) - alpha,
                                 c(.Machine$double.eps, 1))$root
                 else
                     1

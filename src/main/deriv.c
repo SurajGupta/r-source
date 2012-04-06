@@ -14,10 +14,9 @@
  *  MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
  *  GNU General Public License for more details.
  *
- *  A copy of the GNU General Public License is available via WWW at
- *  http://www.gnu.org/copyleft/gpl.html.  You can also obtain it by
- *  writing to the Free Software Foundation, Inc., 51 Franklin Street
- *  Fifth Floor, Boston, MA 02110-1301  USA.
+ *  You should have received a copy of the GNU General Public License
+ *  along with this program; if not, a copy is available at
+ *  http://www.r-project.org/Licenses/
  *
  *
  *  Symbolic Differentiation
@@ -586,10 +585,9 @@ SEXP attribute_hidden do_D(SEXP call, SEXP op, SEXP args, SEXP env)
     else expr = CAR(args);
     var = CADR(args);
     if (!isString(var) || length(var) < 1)
-	errorcall(call, _("variable must be a character string"));
+	error(_("variable must be a character string"));
     if (length(var) > 1)
-	warningcall(call,
-		    _("only the first element is used as variable name"));
+	warning(_("only the first element is used as variable name"));
     var = install(translateChar(STRING_ELT(var, 0)));
     InitDerivSymbols();
     PROTECT(expr = D(expr, var));
@@ -873,10 +871,8 @@ SEXP attribute_hidden do_deriv(SEXP call, SEXP op, SEXP args, SEXP env)
     SEXP ans, ans2, expr, funarg, names, s;
     int f_index, *d_index, *d2_index;
     int i, j, k, nexpr, nderiv=0, hessian;
-    char *vmax;
     SEXP exprlist, tag;
     checkArity(op, args);
-    vmax = vmaxget();
     InitDerivSymbols();
     PROTECT(exprlist = LCONS(install("{"), R_NilValue));
     /* expr: */
@@ -887,7 +883,7 @@ SEXP attribute_hidden do_deriv(SEXP call, SEXP op, SEXP args, SEXP env)
     /* namevec: */
     names = CAR(args);
     if (!isString(names) || (nderiv = length(names)) < 1)
-	errorcall(call, _("invalid variable names"));
+	error(_("invalid variable names"));
     args = CDR(args);
     /* function.arg: */
     funarg = CAR(args);
@@ -896,7 +892,7 @@ SEXP attribute_hidden do_deriv(SEXP call, SEXP op, SEXP args, SEXP env)
     tag = CAR(args);
     if (!isString(tag) || length(tag) < 1
 	|| length(STRING_ELT(tag, 0)) < 1 || length(STRING_ELT(tag, 0)) > 60)
-	errorcall(call, _("invalid tag"));
+	error(_("invalid tag"));
     args = CDR(args);
     /* hessian: */
     hessian = asLogical(CAR(args));
@@ -1060,6 +1056,5 @@ SEXP attribute_hidden do_deriv(SEXP call, SEXP op, SEXP args, SEXP env)
 	/* funarg = lang2(install("expression"), exprlist); */
     }
     UNPROTECT(2);
-    vmaxset(vmax);
     return funarg;
 }

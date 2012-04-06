@@ -14,8 +14,8 @@
  *  GNU General Public License for more details.
  *
  *  You should have received a copy of the GNU General Public License
- *  along with this program; if not, write to the Free Software
- *  Foundation, Inc., 51 Franklin Street, Fifth Floor, Boston, MA 02110-1301  USA
+ *  along with this program; if not, a copy is available at
+ *  http://www.r-project.org/Licenses/
  */
 
 /* This header file is to provide hooks for external GUIs such as
@@ -45,15 +45,15 @@ extern void R_SaveGlobalEnv(void);
 extern void R_SaveGlobalEnvToFile(const char *);
 extern void R_FlushConsole(void);
 extern void R_ClearerrConsole(void);
-extern void R_Suicide(char*);
-extern char* R_HomeDir(void);
+extern void R_Suicide(char *);
+extern char *R_HomeDir(void);
 extern int R_DirtyImage;	/* Current image dirty */
-extern char* R_GUIType;
+extern char *R_GUIType;
 extern void R_setupHistory();
-extern char* R_HistoryFile;	/* Name of the history file */
+extern char *R_HistoryFile;	/* Name of the history file */
 extern int R_HistorySize;	/* Size of the history file */
 extern int R_RestoreHistory;	/* restore the history file? */
-extern char* R_Home;		    /* Root of the R tree */
+extern char *R_Home;		    /* Root of the R tree */
 
 # define jump_to_toplevel	Rf_jump_to_toplevel
 # define mainloop		Rf_mainloop
@@ -115,7 +115,7 @@ extern void (*ptr_R_savehistory)(SEXP, SEXP, SEXP, SEXP);
 extern void (*ptr_R_addhistory)(SEXP, SEXP, SEXP, SEXP);
 
 #ifdef HAVE_AQUA
-extern int  (*ptr_R_EditFiles)(int, char **, char **, char *);
+extern int  (*ptr_R_EditFiles)(int, const char **, const char **, const char *);
 #endif
 
 /* These two are not used by R itself, but are used by the GNOME front-end

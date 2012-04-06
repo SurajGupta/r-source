@@ -1,3 +1,8 @@
+% File src/library/datasets/man/UKDriverDeaths.Rd
+% Part of the R package, http://www.R-project.org
+% Copyright 1995-2007 R Core Development Team
+% Distributed under GPL 2 or later
+
 \name{UKDriverDeaths}
 \docType{data}
 \alias{UKDriverDeaths}
@@ -47,7 +52,7 @@ Seatbelts
   series B, \bold{149}, 187--227.
 }
 \examples{
-require(stats)
+require(stats); require(graphics)
 ## work with pre-seatbelt period to identify a model, use logs
 work <- window(log10(UKDriverDeaths), end = 1982+11/12)
 par(mfrow = c(3,1))

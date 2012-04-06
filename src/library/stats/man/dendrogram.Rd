@@ -1,3 +1,8 @@
+% File src/library/stats/man/dendrogram.Rd
+% Part of the R package, http://www.R-project.org
+% Copyright 1995-2007 R Core Development Team
+% Distributed under GPL 2 or later
+
 \name{dendrogram}
 \title{General Tree Structures}
 \alias{dendrogram}% the class
@@ -118,8 +123,8 @@ is.leaf(object)
     \item{\code{label}}{character; the label of the node}
     \item{\code{x.member}}{for \code{cut()$upper},
       the number of \emph{former} members; more generally a substitute
-      for the \code{members} component used for \dQuote{horizontal}
-      (when \code{horiz = FALSE}, else \dQuote{vertical}) alignment.}
+      for the \code{members} component used for \sQuote{horizontal}
+      (when \code{horiz = FALSE}, else \sQuote{vertical}) alignment.}
     \item{\code{edgetext}}{character; the label for the edge leading to
       the node}
     \item{\code{nodePar}}{a named list (of length-1 components)
@@ -169,6 +174,8 @@ is.leaf(object)
   for dendrograms.
 }
 \examples{
+require(graphics); require(utils)
+
 hc <- hclust(dist(USArrests), "ave")
 (dend1 <- as.dendrogram(hc)) # "print()" method
 str(dend1)          # "str()" method

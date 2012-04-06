@@ -1,3 +1,19 @@
+#  File src/library/stats/R/power.anova.test.R
+#  Part of the R package, http://www.R-project.org
+#
+#  This program is free software; you can redistribute it and/or modify
+#  it under the terms of the GNU General Public License as published by
+#  the Free Software Foundation; either version 2 of the License, or
+#  (at your option) any later version.
+#
+#  This program is distributed in the hope that it will be useful,
+#  but WITHOUT ANY WARRANTY; without even the implied warranty of
+#  MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
+#  GNU General Public License for more details.
+#
+#  A copy of the GNU General Public License is available at
+#  http://www.r-project.org/Licenses/
+
 power.anova.test <-
 function (groups = NULL, n = NULL, between.var = NULL, within.var = NULL,
 	  sig.level = 0.05, power = NULL)
@@ -16,8 +32,8 @@ function (groups = NULL, n = NULL, between.var = NULL, within.var = NULL,
 
     p.body <- quote({
 	lambda <- (groups-1)*n*(between.var/within.var)
-	pf(qf(sig.level, groups-1, (n-1)*groups, lower = FALSE),
-	   groups-1, (n-1)*groups, lambda, lower = FALSE)
+	pf(qf(sig.level, groups-1, (n-1)*groups, lower.tail = FALSE),
+	   groups-1, (n-1)*groups, lambda, lower.tail = FALSE)
     })
 
     if (is.null(power))

@@ -1,3 +1,8 @@
+% File src/library/methods/man/GenericFunctions.Rd
+% Part of the R package, http://www.R-project.org
+% Copyright 1995-2007 R Core Development Team
+% Distributed under GPL 2 or later
+
 \name{GenericFunctions}
 \alias{GenericFunctions}
 \alias{isGeneric}
@@ -122,7 +127,8 @@ callGeneric(\dots)
       current generic function.  If no arguments are passed to
       \code{callGeneric}, the arguments to the current call are passed
       down; otherwise, the arguments are interpreted as in a call to the
-      generic function.
+      generic function.  If the generic is a primitive then arguments
+      must be supplied.
     }
   }
 }
@@ -263,6 +269,7 @@ callGeneric(\dots)
   \code{\link{showMethods}}
 }
 \examples{
+require(stats) # for lm
 
 ## get the function "myFun" -- throw an error if 0 or > 1 versions visible:
 findFuncStrict <- function(fName) {

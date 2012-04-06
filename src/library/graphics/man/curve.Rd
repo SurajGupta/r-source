@@ -1,12 +1,17 @@
+% File src/library/graphics/man/curve.Rd
+% Part of the R package, http://www.R-project.org
+% Copyright 1995-2007 R Core Development Team
+% Distributed under GPL 2 or later
+
 \name{curve}
 \title{Draw Function Plots}
 \alias{curve}
 \alias{plot.function}
 \usage{
-curve(expr, from, to, n = 101, add = FALSE, type = "l",
+curve(expr, from = NULL, to = NULL, n = 101, add = FALSE, type = "l",
       ylab = NULL, log = NULL, xlim = NULL, \dots)
 
-\method{plot}{function}(x, from = 0, to = 1, xlim = NULL, \dots)
+\method{plot}{function}(x, y = NULL, to = NULL, from = y, xlim = NULL, \dots)
 }
 \arguments{
   \item{expr}{an expression written as a function of \code{x}, or
@@ -18,6 +23,7 @@ curve(expr, from, to, n = 101, add = FALSE, type = "l",
   \item{xlim}{numeric of length 2; if specified, it serves as default
     for \code{c(from, to)}.}
   \item{type}{plot type: see \code{\link{plot.default}}.}
+  \item{y}{alias for \code{from} for compatibility with \code{plot()}}
   \item{ylab, log, \dots}{labels and graphical parameters can also be
     specified as arguments.
     \code{plot.function} passes all these to \code{curve}.}
@@ -33,14 +39,16 @@ curve(expr, from, to, n = 101, add = FALSE, type = "l",
   \code{x(t)} or \code{expr} (with \code{x} inside) must return a
   numeric of the same length as the argument \code{t} or \code{x}.
 
-  If \code{add = TRUE}, \code{c(from,to)} default to \code{xlim} which
-  defaults to the current x-limits.  Further, \code{log} is taken from the
-  current plot when \code{add} is true.
+  If either of \code{from} or \code{to} is \code{NULL}, it defaults to
+  the corresponding element of \code{xlim}, and \code{xlim} defaults to
+  the x-limits of the current plot.  \code{log} is taken from
+  the current plot only when \code{add} is true, and otherwise
+  defaults to \code{""} indicating linear scales on both axes.
 
   This used to be a quick hack which now seems to serve a useful purpose,
   but can give bad results for functions which are not smooth.
 
-  For \dQuote{expensive} \code{expr}essions, you should use smarter tools.
+  For expensive-to-compute \code{expr}essions, you should use smarter tools.
 }
 \seealso{
   \code{\link{splinefun}} for spline interpolation, \code{\link{lines}}.

@@ -7,10 +7,10 @@
 #
 msgid ""
 msgstr ""
-"Project-Id-Version: R 2.5.0\n"
+"Project-Id-Version: R 2.6.0\n"
 "Report-Msgid-Bugs-To: bugs@r-project.org\n"
-"POT-Creation-Date: 2007-06-12 18:46\n"
-"PO-Revision-Date: 2007-04-07 01:47-0800\n"
+"POT-Creation-Date: 2007-09-17 10:19\n"
+"PO-Revision-Date: 2007-09-18 00:33-0800\n"
 "Last-Translator: Alexey Shipunov <dactylorhiza@gmail.com>\n"
 "Language-Team: Russian\n"
 "MIME-Version: 1.0\n"
@@ -101,9 +101,6 @@ msgstr "в области действия нет выражений"
 msgid "no terms in scope for adding to object"
 msgstr "в области действия нет выражений для добавления к объекту"
 
-msgid "trying +"
-msgstr "пробую +"
-
 msgid "number of rows in use has changed: remove missing values?"
 msgstr "количество используемых строк изменилось: убраны пропущенные значения?"
 
@@ -119,9 +116,6 @@ msgstr "'add1'-метод для моделей \"mlm\" не разработан"
 msgid "scope is not a subset of term labels"
 msgstr "область действия не является подмножеством меток выражений"
 
-msgid "trying -"
-msgstr "пробую -"
-
 msgid "no 'drop1' method for \"mlm\" models"
 msgstr "'drop1'-метод для моделей \"mlm\" отсутствует"
 
@@ -136,12 +130,6 @@ msgstr "верхняя область действия не включает выражени(я) модели %s"
 
 msgid "AIC is not defined for this model, so 'step' cannot proceed"
 msgstr "AIC для этой модели не определена, поэтому 'step' не работает"
-
-msgid "Start:  AIC="
-msgstr "Старт:  AIC="
-
-msgid "Step:  AIC="
-msgstr "Ступень:  AIC="
 
 msgid "'A' must be an array or table"
 msgstr "'A' должен быть матрицей или таблицей"
@@ -376,11 +364,8 @@ msgstr "выборка слишком редка, чтобы найти alph2"
 msgid "no solution in the specified range of bandwidths"
 msgstr "в указанном диапазоне решений нет"
 
-msgid "increasing bw.SJ() search interval ("
-msgstr ""
-
-msgid ")"
-msgstr ""
+msgid "increasing bw.SJ() search interval (%d)"
+msgstr "увеличиваю bw.SJ() интервал поиска (%d)"
 
 msgid "minimum occurred at one end of the range"
 msgstr "минимум оказался в конце интервала"
@@ -1456,6 +1441,9 @@ msgstr "не-факторы проигнорированы:"
 msgid "eff.aovlist: non-orthogonal contrasts would give an incorrect answer"
 msgstr "eff.aovlist: не-ортогональные контрасты могут дать неправильный ответ"
 
+msgid "cannot create a formula from a zero-column data frame"
+msgstr "не могу создать формулу из таблицы данных без колонок"
+
 msgid "no terms component"
 msgstr "нет компонента выражений"
 
@@ -1465,12 +1453,11 @@ msgstr "'termlabels' должен быть текстовым вектором с длиной не меньше единицы"
 msgid "'termobj' must be a object of class \"terms\""
 msgstr "'termobj' должен быть объектом класса \"terms\""
 
-msgid ""
-"variable '%s' was fitted with class \"%s\" but class \"%s\" was supplied"
-msgstr "переменная '%s' была подогнана с классом \"%s\", а указан класс \"%s\""
+msgid "variable '%s' was fitted with type \"%s\" but type \"%s\" was supplied"
+msgstr "переменная '%s' была подогнана к типу \"%s\", а указан тип \"%s\""
 
-msgid "variables %s were specified with different classes from the fit"
-msgstr "переменные %s указаны с другим классом, чем в подгонке"
+msgid "variables %s were specified with different types from the fit"
+msgstr "переменные %s указаны с другими типами, чем в подгонке"
 
 msgid "'data' must be a data.frame, not a matrix or an array"
 msgstr "'data' должна быть таблицей данных, а не матрицей"
@@ -1528,6 +1515,12 @@ msgstr "'interval' должен быть вектором длины 2"
 msgid "lower < upper  is not fulfilled"
 msgstr "lower < upper не выполнено"
 
+msgid "f.lower = f(lower) is NA"
+msgstr ""
+
+msgid "f.upper = f(upper) is NA"
+msgstr ""
+
 msgid "f() values at end points not of opposite sign"
 msgstr "f() значений на концевых точках не противоположного знака"
 
@@ -1576,9 +1569,6 @@ msgstr "сингулярная градиентная матрица в оценке начальных параметров"
 msgid "'data' must be a list or an environment"
 msgstr "'data' должны быть списком либо окружением"
 
-msgid "no parameters to fit"
-msgstr "нет параметров для подгонки"
-
 msgid "No starting values specified"
 msgstr "Не заданы стартовые значения"
 
@@ -1596,6 +1586,15 @@ msgstr "Укажите 'start' или я использую модель 'selfStart'"
 
 msgid "parameters without starting value in 'data':"
 msgstr "параметры без стартового значения в 'data':"
+
+msgid "fitting parameters"
+msgstr "параметры для подгонки"
+
+msgid "without any variables"
+msgstr "безо всяких переменных"
+
+msgid "no parameters to fit"
+msgstr "нет параметров для подгонки"
 
 msgid "Upper or lower bounds ignored unless algorithm = \"port\""
 msgstr "Верхние и нижние границы игнорируются, пока алгоритм не = \"port\""
@@ -1807,6 +1806,9 @@ msgstr "'ref' должен быть существующим уровнем"
 msgid "ref = %d must be in 1:%d"
 msgstr "ref = %d должен быть в 1:%d"
 
+msgid "Failed to guess time-varying variables from their names"
+msgstr "Не получилось создать временнЫе переменные из их имен"
+
 msgid "'varying' arguments must be the same length"
 msgstr "аргументы 'varying' должны быть одной длины"
 
@@ -1819,8 +1821,20 @@ msgstr "здесь есть записи с пропущенными временами, они будут сброшены."
 msgid "some constant variables (%s) are really varying"
 msgstr "некоторая постоянная переменная (%s) на самом деле варьирует"
 
-msgid "no 'time' or 'id' specified"
-msgstr "не указан ни 'time', ни 'id'"
+msgid "no 'reshapeWide' attribute, must specify 'varying'"
+msgstr "нет атрибута 'reshapeWide', надо задать 'varying'"
+
+msgid "'varying' must be nonempty list or vector"
+msgstr "'varying' должен быть непустым списком или вектором"
+
+msgid "length of v.names does not evenly divide length of varying"
+msgstr "длина 'v.names' не делится без остатка длиной 'varying'"
+
+msgid ""
+"length of varying must be the product of length of v.names and length of "
+"times"
+msgstr ""
+"длина 'varying' должна быть произведением длины 'v.names' и длины 'times'"
 
 msgid "'k' must be positive"
 msgstr "'k' должен быть положителен"
@@ -2229,6 +2243,21 @@ msgid_plural "parameters %s do not occur in the model formula"
 msgstr[0] "параметр %s не встречается в формуле модели"
 msgstr[1] "параметры %s не встречаются в формуле модели"
 msgstr[2] "параметры %s не встречаются в формуле модели"
+
+#~ msgid "no 'time' or 'id' specified"
+#~ msgstr "не указан ни 'time', ни 'id'"
+
+#~ msgid "trying +"
+#~ msgstr "пробую +"
+
+#~ msgid "trying -"
+#~ msgstr "пробую -"
+
+#~ msgid "Start:  AIC="
+#~ msgstr "Старт:  AIC="
+
+#~ msgid "Step:  AIC="
+#~ msgstr "Ступень:  AIC="
 
 #~ msgid "contrasts not defined for 0 degrees of freedom"
 #~ msgstr "контрасты для 0 степеней свободы не определены"

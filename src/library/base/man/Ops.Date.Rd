@@ -1,3 +1,8 @@
+% File src/library/base/man/Ops.Date.Rd
+% Part of the R package, http://www.R-project.org
+% Copyright 1995-2007 R Core Development Team
+% Distributed under GPL 2 or later
+
 \name{Ops.Date}
 \alias{+.Date}
 \alias{-.Date}
@@ -18,7 +23,7 @@
 \arguments{
   \item{date}{date objects}
   \item{date1, date2}{date objects or character vectors.  (Character
-    vectors are converted by \code{\link{as.Date}}.}
+    vectors are converted by \code{\link{as.Date}}.)}
   \item{x}{a numeric vector (in days) \emph{or} an object of class
     \code{"\link{difftime}"}.}
   \item{lop}{One of \code{==}, \code{!=}, \code{<}, \code{<=}, \code{>}

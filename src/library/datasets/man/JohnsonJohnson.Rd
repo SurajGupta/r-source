@@ -1,3 +1,8 @@
+% File src/library/datasets/man/JohnsonJohnson.Rd
+% Part of the R package, http://www.R-project.org
+% Copyright 1995-2007 R Core Development Team
+% Distributed under GPL 2 or later
+
 \name{JohnsonJohnson}
 \docType{data}
 \alias{JohnsonJohnson}
@@ -15,7 +20,7 @@
   Second Edition.  Springer.  Example 1.1.
 }
 \examples{
-require(stats)
+require(stats); require(graphics)
 JJ <- log10(JohnsonJohnson)
 plot(JJ)
 (fit <- StructTS(JJ, type="BSM"))

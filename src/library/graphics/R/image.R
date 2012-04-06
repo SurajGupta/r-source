@@ -1,7 +1,23 @@
+#  File src/library/graphics/R/image.R
+#  Part of the R package, http://www.R-project.org
+#
+#  This program is free software; you can redistribute it and/or modify
+#  it under the terms of the GNU General Public License as published by
+#  the Free Software Foundation; either version 2 of the License, or
+#  (at your option) any later version.
+#
+#  This program is distributed in the hope that it will be useful,
+#  but WITHOUT ANY WARRANTY; without even the implied warranty of
+#  MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
+#  GNU General Public License for more details.
+#
+#  A copy of the GNU General Public License is available at
+#  http://www.r-project.org/Licenses/
+
 image <- function(x, ...) UseMethod("image")
 
-image.default <- function (x = seq(0, 1, len = nrow(z)),
-		   y = seq(0, 1, len = ncol(z)),
+image.default <- function (x = seq(0, 1, length.out = nrow(z)),
+		   y = seq(0, 1, length.out = ncol(z)),
 		   z,
 		   zlim = range(z[is.finite(z)]),
 		   xlim = range(x),
@@ -18,7 +34,7 @@ image.default <- function (x = seq(0, 1, len = nrow(z)),
 		if(is.null(dim(x)))
 		   stop("argument must be matrix-like")
 		z <- x
-		x <- seq(0, 1, len = nrow(z))
+		x <- seq.int(0, 1, length.out = nrow(z))
 	    }
 	    if (missing(xlab)) xlab <- ""
 	    if (missing(ylab)) ylab <- ""

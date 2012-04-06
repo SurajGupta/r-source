@@ -1,102 +1,61 @@
+#  File src/library/base/R/grep.R
+#  Part of the R package, http://www.R-project.org
+#
+#  This program is free software; you can redistribute it and/or modify
+#  it under the terms of the GNU General Public License as published by
+#  the Free Software Foundation; either version 2 of the License, or
+#  (at your option) any later version.
+#
+#  This program is distributed in the hope that it will be useful,
+#  but WITHOUT ANY WARRANTY; without even the implied warranty of
+#  MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
+#  GNU General Public License for more details.
+#
+#  A copy of the GNU General Public License is available at
+#  http://www.r-project.org/Licenses/
+
 grep <-
 function(pattern, x, ignore.case = FALSE, extended = TRUE, perl = FALSE,
          value = FALSE, fixed = FALSE, useBytes = FALSE)
 {
-    pattern <- as.character(pattern)
     ## when value = TRUE we return names
     if(!is.character(x)) x <- structure(as.character(x), names=names(x))
-    ## behaves like == for NA pattern
-    if (is.na(pattern)) {
-        if(value)
-            return(structure(rep.int(NA_character_, length(x)),
-                             names = names(x)))
-        else
-            return(rep.int(NA, length(x)))
-    }
-
-    if(fixed && perl)
-        warning(gettextf("argument '%s' will be ignored", "perl = TRUE"),
-                domain = NA)
-    if(!fixed && perl)
-        .Internal(grep.perl(pattern, x, ignore.case, value, useBytes))
-    else
-        .Internal(grep(pattern, x, ignore.case, extended, value, fixed,
-                       useBytes))
+    .Internal(grep(as.character(pattern), x, ignore.case, extended, value,
+                   perl, fixed, useBytes))
 }
 
 sub <-
 function(pattern, replacement, x, ignore.case = FALSE, extended = TRUE,
          perl = FALSE, fixed = FALSE, useBytes = FALSE)
 {
-    pattern <- as.character(pattern)
-    replacement <- as.character(replacement)
-    if(!is.character(x)) x <- as.character(x)
-    if (is.na(pattern))
-        return(rep.int(NA_character_, length(x)))
-
-    if(fixed && perl)
-        warning(gettextf("argument '%s' will be ignored", "perl = TRUE"),
-                domain = NA)
-    if(!fixed && perl)
-        .Internal(sub.perl(pattern, replacement, x, ignore.case, useBytes))
-    else
-        .Internal(sub(pattern, replacement, x, ignore.case,
-                      extended, fixed, useBytes))
+    if (!is.character(x)) x <- as.character(x)
+     .Internal(sub(as.character(pattern), as.character(replacement), x,
+                  ignore.case, extended, perl, fixed, useBytes))
 }
 
 gsub <-
 function(pattern, replacement, x, ignore.case = FALSE, extended = TRUE,
          perl = FALSE, fixed = FALSE, useBytes = FALSE)
 {
-    pattern <- as.character(pattern)
-    replacement <- as.character(replacement)
-    if(!is.character(x)) x <- as.character(x)
-    if (is.na(pattern))
-        return(rep.int(NA_character_, length(x)))
-
-    if(fixed && perl)
-        warning(gettextf("argument '%s' will be ignored", "perl = TRUE"),
-                domain = NA)
-    if(!fixed && perl)
-        .Internal(gsub.perl(pattern, replacement, x, ignore.case, useBytes))
-    else
-        .Internal(gsub(pattern, replacement, x, ignore.case,
-                       extended, fixed, useBytes))
+    if (!is.character(x)) x <- as.character(x)
+    .Internal(gsub(as.character(pattern), as.character(replacement), x,
+                   ignore.case, extended, perl, fixed, useBytes))
 }
 
 regexpr <-
-function(pattern, text, extended = TRUE, perl = FALSE,
+function(pattern, text, ignore.case = FALSE, extended = TRUE, perl = FALSE,
          fixed = FALSE, useBytes = FALSE)
-{
-    pattern <- as.character(pattern)
-    text <- as.character(text)
-    if(fixed && perl)
-        warning(gettextf("argument '%s' will be ignored", "perl = TRUE"),
-                domain = NA)
-    if(!fixed && perl)
-        .Internal(regexpr.perl(pattern, text, useBytes))
-    else
-        .Internal(regexpr(pattern, text, extended, fixed, useBytes))
-}
+    .Internal(regexpr(as.character(pattern), as.character(text),
+                      ignore.case, extended, perl, fixed, useBytes))
 
 gregexpr <-
-function(pattern, text, extended = TRUE, perl = FALSE,
+function(pattern, text, ignore.case = FALSE, extended = TRUE, perl = FALSE,
          fixed = FALSE, useBytes = FALSE)
-{
-    pattern <- as.character(pattern)
-    text <- as.character(text)
-    if(fixed && perl)
-        warning(gettextf("argument '%s' will be ignored", "perl = TRUE"),
-                domain = NA)
-    if(!fixed && perl)
-      .Internal(gregexpr.perl(pattern, text, useBytes))
-    else
-      .Internal(gregexpr(pattern, text, extended, fixed, useBytes))
-}
+    .Internal(gregexpr(as.character(pattern), as.character(text),
+                       ignore.case, extended, perl, fixed, useBytes))
 
 agrep <-
-function(pattern, x, ignore.case = FALSE, value = FALSE,
-         max.distance = 0.1)
+function(pattern, x, ignore.case = FALSE, value = FALSE, max.distance = 0.1)
 {
     pattern <- as.character(pattern)
     if(!is.character(x)) x <- as.character(x)
@@ -109,11 +68,11 @@ function(pattern, x, ignore.case = FALSE, value = FALSE,
             return(rep.int(NA, length(x)))
     }
 
-    if(!is.character(pattern)
-       || (length(pattern) < 1)
-       || ((n <- nchar(pattern)) == 0))
+    if(!is.character(pattern) || length(pattern) != 1 || !nzchar(pattern))
         stop("'pattern' must be a non-empty character string")
 
+    n <- nchar(pattern, "c")
+    if(is.na(n)) stop("invalid multibyte string for 'pattern'")
     if(!is.list(max.distance)) {
         if(!is.numeric(max.distance) || (max.distance < 0))
             stop("'max.distance' must be non-negative")

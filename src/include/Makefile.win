@@ -7,7 +7,7 @@ SRC_HEADERS = R.h S.h Rdefines.h Rdevices.h Rembedded.h Rgraphics.h \
   Rinternals.h
 ## this deliberately does not include Rinterfaces.h, which is Unix-only
 OBJ_HEADERS = Rconfig.h Rmath.h Rversion.h
-GW32_HEADERS = config.h psignal.h
+GW32_HEADERS = config.h iconv.h psignal.h
 RPROXY_HEADERS = SC_proxy.h SC_system.h rproxy.h bdx.h bdx_SEXP.h bdx_com.h bdx_util.h com_util.h
 
 all: fixh
@@ -15,7 +15,7 @@ all: fixh
 	@mkdir -p $(R_HOME)/include/R_ext
 	@cp -p $(SRC_HEADERS) $(OBJ_HEADERS) $(RPROXY_HEADERS) $(R_HOME)/include
 	@cp -p R_ext/*.h $(R_HOME)/include/R_ext
-	@cp -p ../gnuwin32/graphapp/graphapp.h ../gnuwin32/graphapp/ga.h \
+	@cp -p ../extra/graphapp/graphapp.h ../extra/graphapp/ga.h \
 	  $(R_HOME)/include
 
 version: Rversion.h
@@ -23,8 +23,13 @@ version: Rversion.h
 fixh: $(GW32_HEADERS) $(OBJ_HEADERS) $(RPROXY_HEADERS)
 	@$(ECHO) done > fixh
 
+ifeq ($(strip $(WIN)),64)
+config.h: ../gnuwin32/fixed/h/config64.h
+	@cp $< $@
+else
 config.h: ../gnuwin32/fixed/h/config.h
 	@cp $< $@
+endif
 
 iconv.h: ../gnuwin32/fixed/h/iconv.h
 	@cp $< $@

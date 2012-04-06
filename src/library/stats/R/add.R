@@ -1,3 +1,19 @@
+#  File src/library/stats/R/add.R
+#  Part of the R package, http://www.R-project.org
+#
+#  This program is free software; you can redistribute it and/or modify
+#  it under the terms of the GNU General Public License as published by
+#  the Free Software Foundation; either version 2 of the License, or
+#  (at your option) any later version.
+#
+#  This program is distributed in the hope that it will be useful,
+#  but WITHOUT ANY WARRANTY; without even the implied warranty of
+#  MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
+#  GNU General Public License for more details.
+#
+#  A copy of the GNU General Public License is available at
+#  http://www.r-project.org/Licenses/
+
 add1 <- function(object, scope, ...) UseMethod("add1")
 
 add1.default <- function(object, scope, scale = 0, test=c("none", "Chisq"),
@@ -88,7 +104,7 @@ add1.lm <- function(object, scope, scale = 0, test=c("none", "Chisq", "F"),
 	fob <- list(call = fc, terms = Terms)
 	class(fob) <- oldClass(object)
 	m <- model.frame(fob, xlev = object$xlevels)
-	x <- model.matrix(Terms, m, contrasts = object$contrasts)
+	x <- model.matrix(Terms, m, contrasts.arg = object$contrasts)
         offset <- model.offset(m)
         wt <- model.weights(m)
         oldn <- length(y)
@@ -148,7 +164,7 @@ add1.lm <- function(object, scope, scale = 0, test=c("none", "Chisq", "F"),
         dev[nas] <- pchisq(dev[nas], df[nas], lower.tail=FALSE)
         aod[, "Pr(Chi)"] <- dev
     } else if(test == "F") {
-	rdf <- object$df.resid
+	rdf <- object$df.residual
 	aod[, c("F value", "Pr(F)")] <- Fstat(aod, aod$RSS[1], rdf)
     }
     head <- c("Single term additions", "\nModel:",
@@ -196,7 +212,7 @@ add1.glm <- function(object, scope, scale = 0, test=c("none", "Chisq", "F"),
 	m <- model.frame(fob, xlev = object$xlevels)
         offset <- model.offset(m)
         wt <- model.weights(m)
-	x <- model.matrix(Terms, m, contrasts = object$contrasts)
+	x <- model.matrix(Terms, m, contrasts.arg = object$contrasts)
         oldn <- length(y)
         y <- model.response(m, "numeric")
         ## binomial case has adjusted y and weights
@@ -351,7 +367,7 @@ drop1.lm <- function(object, scope, scale = 0, all.cols = TRUE,
     }
     ndrop <- match(scope, tl)
     ns <- length(scope)
-    rdf <- object$df.resid
+    rdf <- object$df.residual
     chisq <- deviance.lm(object)
     dfs <- numeric(ns)
     RSS <- numeric(ns)
@@ -393,7 +409,7 @@ drop1.lm <- function(object, scope, scale = 0, all.cols = TRUE,
     } else if(test == "F") {
 	dev <- aod$"Sum of Sq"
 	dfs <- aod$Df
-	rdf <- object$df.resid
+	rdf <- object$df.residual
 	rms <- aod$RSS[1]/rdf
 	Fs <- (dev/dfs)/rms
 	Fs[dfs < 1e-4] <- NA
@@ -430,7 +446,7 @@ drop1.glm <- function(object, scope, scale = 0, test=c("none", "Chisq", "F"),
     }
     ndrop <- match(scope, tl)
     ns <- length(scope)
-    rdf <- object$df.resid
+    rdf <- object$df.residual
     chisq <- object$deviance
     dfs <- numeric(ns)
     dev <- numeric(ns)

@@ -1,3 +1,8 @@
+% File src/library/datasets/man/ToothGrowth.Rd
+% Part of the R package, http://www.R-project.org
+% Copyright 1995-2007 R Core Development Team
+% Distributed under GPL 2 or later
+
 \name{ToothGrowth}
 \docType{data}
 \alias{ToothGrowth}
@@ -28,6 +33,7 @@
   New York: Wiley.
 }
 \examples{
+require(graphics)
 coplot(len ~ dose | supp, data = ToothGrowth, panel = panel.smooth,
        xlab = "ToothGrowth data: length vs dose, given type of supplement")
 }

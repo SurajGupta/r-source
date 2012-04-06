@@ -1,3 +1,8 @@
+% File src/library/base/man/is.finite.Rd
+% Part of the R package, http://www.R-project.org
+% Copyright 1995-2007 R Core Development Team
+% Distributed under GPL 2 or later
+
 \name{is.finite}
 \title{Finite, Infinite and NaN Numbers}
 \alias{is.finite}
@@ -11,10 +16,11 @@
   length as \code{x}, indicating which elements are finite (not infinite
   and not missing).
 
-  \code{Inf} and \code{-Inf} are positive and negative \dQuote{infinity}
-  whereas \code{NaN} means \dQuote{Not a Number}.  (These apply to numeric
+  \code{Inf} and \code{-Inf} are positive and negative infinity
+  whereas \code{NaN} means \sQuote{Not a Number}.  (These apply to numeric
   values and real and imaginary parts of complex values but not to
-  values of integer vectors.)
+  values of integer vectors.)  All are \code{reserved} words in the \R
+  language.
 }
 \usage{
 is.finite(x)
@@ -44,11 +50,13 @@ is.nan(x)
   equality to \code{NaN}, or even use \code{\link{identical}}, since
   systems typically have many different NaN values.  One of these is used
   for the numeric missing value \code{NA}, and \code{is.nan} is false
-  for that value.  It is generic: you can write methods to handle
-  specific classes of objects, see \link{InternalMethods}.  The default
-  method handles real and complex vectors: a complex number is regarded
+  for that value.  A complex number is regarded
   as \code{NaN} if either the real or imaginary part is \code{NaN} but
   not \code{NA}.
+
+  All three functions are generic: you can write methods to handle
+  specific classes of objects, see \link{InternalMethods}.  The
+  default methods handle real and complex vectors.
 }
 \note{
   In \R, basically all mathematical functions (including basic
@@ -64,7 +72,7 @@ is.nan(x)
   modes, not just numeric.
 }
 \references{
-  The IEC 60559 standard, also know as the
+  The IEC 60559 standard, also known as the
   ANSI/IEEE 754 Floating-Point Standard.
 
   D. Goldberg (1991) \emph{What Every Computer Scientist Should Know

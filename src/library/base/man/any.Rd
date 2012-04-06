@@ -1,3 +1,8 @@
+% File src/library/base/man/any.Rd
+% Part of the R package, http://www.R-project.org
+% Copyright 1995-2007 R Core Development Team
+% Distributed under GPL 2 or later
+
 \name{any}
 \title{Are Some Values True?}
 \usage{
@@ -33,16 +38,21 @@ any(\dots, na.rm = FALSE)
   and \code{\dots} contains no \code{TRUE} values and at least one
   \code{NA} value).
 }
+\section{S4 methods}{
+  This is part of the S4 \code{\link[methods:S4groupGeneric]{Summary}}
+  group generic.  Methods for it must use the signature
+  \code{x, \dots, na.rm}.
+}
 \references{
   Becker, R. A., Chambers, J. M. and Wilks, A. R. (1988)
   \emph{The New S Language}.
   Wadsworth \& Brooks/Cole.
 }
 \seealso{
-  \code{\link{all}}, the \dQuote{complement} of \code{any}.
+  \code{\link{all}}, the \sQuote{complement} of \code{any}.
 }
 \examples{
-range(x <- sort(round(rnorm(10) - 1.2,1)))
+range(x <- sort(round(stats::rnorm(10) - 1.2,1)))
 if(any(x < 0)) cat("x contains negative values\n")
 }
 \keyword{logic}

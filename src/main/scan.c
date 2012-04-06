@@ -14,8 +14,8 @@
  *  GNU General Public License for more details.
  *
  *  You should have received a copy of the GNU General Public License
- *  along with this program; if not, write to the Free Software
- *  Foundation, Inc., 51 Franklin Street Fifth Floor, Boston, MA 02110-1301  USA
+ *  along with this program; if not, a copy is available at
+ *  http://www.r-project.org/Licenses/
  */
 
 /* <UTF8>
@@ -35,7 +35,12 @@
 #include <Defn.h>
 #include <Fileio.h>
 #include <Rconnections.h>
-#include <Rmath.h> /* for imin2 */
+#include <errno.h>
+
+static R_INLINE int imin2(int x, int y)
+{
+    return (x < y) ? x : y;
+}
 
 #ifdef SUPPORT_MBCS
 #include <wchar.h> /* for btowc */
@@ -54,106 +59,34 @@
 #define MAX_STRINGS	10000
 
 
-static unsigned char  ConsoleBuf[CONSOLE_BUFFER_SIZE+1];
-static unsigned char *ConsoleBufp;
+static unsigned char ConsoleBuf[CONSOLE_BUFFER_SIZE+1], *ConsoleBufp;
 static int  ConsoleBufCnt;
-static char  ConsolePrompt[CONSOLE_PROMPT_SIZE];
+static char ConsolePrompt[CONSOLE_PROMPT_SIZE];
 
 typedef struct {
     SEXP NAstrings;
     int quiet;
     int sepchar; /*  = 0 */      /* This gets compared to ints */
     char decchar; /* = '.' */    /* This only gets compared to chars */
-    char *quoteset;
-    char *quotesave; /* = NULL */
-    int comchar;
-    int ttyflag;
-    Rconnection con;
-    Rboolean wasopen;
-    Rboolean escapes;
+    char *quoteset; /* = NULL */
+    int comchar; /* = NO_COMCHAR */
+    int ttyflag; /* = 0 */
+    Rconnection con; /* = NULL */
+    Rboolean wasopen; /* = FALSE */
+    Rboolean escapes; /* = FALSE */
     int save; /* = 0; */
-    Rboolean isLatin1;
-    Rboolean isUTF8;
-    void *hash;
-
+    Rboolean isLatin1; /* = FALSE */
+    Rboolean isUTF8; /* = FALSE */
     char convbuf[100];
 } LocalData;
 
-/* Hashing structure for strings: not the same as in unique.c */
-typedef struct _HashData {
-  int K, M;
-  SEXP *HashTable;
-  int nins, maxstrings;
-} HashData;
-
-static R_INLINE int scatter(unsigned int key, HashData *d)
-{
-    return 3141592653U * key >> (32 - d->K);
-}
-
-static int shash(char *instr, HashData *d)
-{
-    unsigned int k;
-    char *p = instr;
-    k = 0;
-    while (*p++)
-	    k = 11 * k + *p; /* was 8 but 11 isn't a power of 2 */
-    return scatter(k, d);
-}
-
-static int sequal(char *str1, char *str2)
-{
-    return !strcmp(str1, str2);
-}
-
-static HashData *HashTableSetup(int maxstrings)
-{
-    int n4;
-    HashData *d;
-
-    maxstrings = imin2(maxstrings, 536870912); /* 2^29 */
-    n4 = 2 * maxstrings;
-    d = (HashData *) R_alloc(1, sizeof(HashData));
-    d->M = 2;
-    d->K = 1;
-    while (d->M < n4) {
-	d->M *= 2;
-	d->K += 1;
-    }
-    d->nins = 0;
-    d->maxstrings = maxstrings;
-
-    d->HashTable = (SEXP *) S_alloc(d->M, sizeof(SEXP));
-    return d;
-}
-
 static SEXP insertString(char *str, LocalData *l)
 {
-    HashData *d = l->hash;
-    int i;
-    SEXP tmp, *h = d->HashTable;
-
-    if(d->nins >= d->maxstrings) {
-	tmp = mkChar(str);
-	if(!utf8strIsASCII(str)) {
-	    if(l->isLatin1) SET_LATIN1(tmp);
-	    if(l->isUTF8) SET_UTF8(tmp);
-	}
-	return tmp;
+    if (!utf8strIsASCII(str)) {
+        if (l->isLatin1) return mkCharEnc(str, LATIN1_MASK);
+        if (l->isUTF8)   return mkCharEnc(str, UTF8_MASK);
     }
-    i = shash(str, d);
-    while (h[i] != NULL) {
-	if (sequal(str, CHAR(h[i]))) return h[i];
-	i = (i + 1) % d->M;
-    }
-    d->nins++;
-    tmp = mkChar(str);
-    if(!utf8strIsASCII(str)) {
-	if(l->isLatin1) SET_LATIN1(tmp);
-	if(l->isUTF8) SET_UTF8(tmp);
-    }
-    h[i] = tmp;
-    return tmp;
+    return mkCharEnc(str, 0);
 }
 
 #define Rspace(c) (c == ' ' || c == '\t' || c == '\n' || c == '\r')
@@ -172,7 +105,8 @@ static int ConsoleGetchar()
 	ConsoleBufCnt = strlen((char *)ConsoleBuf);
 	ConsoleBufCnt--;
     }
-    return *ConsoleBufp++;
+    /* at this point we need to use unsigned char or similar */
+    return (int) *ConsoleBufp++;
 }
 
 /* used by scan() */
@@ -294,7 +228,7 @@ strtoc(const char *nptr, char **endptr, Rboolean NA, LocalData *d)
 static Rbyte
 strtoraw (const char *nptr, char **endptr)
 {
-    char *p = (char *) nptr;
+    const char *p = nptr;
     int i, val = 0;
 
     /* should have whitespace plus exactly 2 hex digits */
@@ -306,7 +240,7 @@ strtoraw (const char *nptr, char **endptr)
 	else if (*p >= 'a' && *p <= 'f') val += *p - 'a' + 10;
 	else {val = 0; break;}
     }
-    *endptr = p;
+    *endptr = (char *) p;
     return (Rbyte) val;
 }
 
@@ -400,7 +334,7 @@ static void scan_cleanup(void *data)
 {
     LocalData *ld = data;
     if(!ld->ttyflag && !ld->wasopen) ld->con->close(ld->con);
-    if (ld->quotesave) free(ld->quotesave);
+    if (ld->quoteset[0]) free(ld->quoteset);
 }
 
 #include "RBufferUtils.h"
@@ -554,7 +488,7 @@ fillBuffer(SEXPTYPE type, int strip, int *bch, LocalData *d,
 /* If mode = 0 use for numeric fields where "" is NA
    If mode = 1 use for character fields where "" is verbatim unless
    na.strings includes "" */
-static R_INLINE int isNAstring(char *buf, int mode, LocalData *d)
+static R_INLINE int isNAstring(const char *buf, int mode, LocalData *d)
 {
     int i;
 
@@ -655,15 +589,6 @@ static SEXP scanVector(SEXPTYPE type, int maxitems, int maxlines,
     if (d->ttyflag) sprintf(ConsolePrompt, "1: ");
 
     strip = asLogical(stripwhite);
-
-    /* compute bound on number of distinct strings */
-    if (type == STRSXP) {
-	int maxstring;
-
-	maxstring = (maxlines > 0) ? maxlines : MAX_STRINGS;
-	if(maxitems > 0) maxstring = imin2(maxitems, maxstring);
-	d->hash = HashTableSetup(maxstring);
-    }
 
     for (;;) {
 	if(n % 10000 == 9999) R_CheckUserInterrupt();
@@ -786,14 +711,6 @@ static SEXP scanFrame(SEXP what, int maxitems, int maxlines, int flush,
 	}
     }
     setAttrib(ans, R_NamesSymbol, getAttrib(what, R_NamesSymbol));
-
-    /* compute bound on number of distinct strings */
-    if(nstring > 0) {
-	int maxstring;
-	maxstring = (maxlines > 0) ? maxlines*nstring : MAX_STRINGS;
-	if(maxitems > 0) maxstring = imin2(maxitems*nstring/nc, maxstring);
-	d->hash = HashTableSetup(maxstring);
-    }
 
     n = 0; linesread = 0; colsread = 0; ii = 0;
     badline = 0;
@@ -928,14 +845,13 @@ SEXP attribute_hidden do_scan(SEXP call, SEXP op, SEXP args, SEXP rho)
 {
     SEXP ans, file, sep, what, stripwhite, dec, quotes, comstr;
     int i, c, nlines, nmax, nskip, flush, fill, blskip, multiline, escapes;
-    char *p, *vmax, *encoding;
+    const char *p, *encoding;
     RCNTXT cntxt;
-    LocalData data = {NULL, 0, 0, 0, NULL, NULL, NO_COMCHAR, 0, 0, FALSE,
-		      FALSE, 0, FALSE, FALSE, NULL};
+    LocalData data = {NULL, 0, 0, '.', NULL, NO_COMCHAR, 0, NULL, FALSE,
+		      FALSE, 0, FALSE, FALSE};
     data.NAstrings = R_NilValue;
 
     checkArity(op, args);
-    vmax = vmaxget();
 
     file = CAR(args);		   args = CDR(args);
     what = CAR(args);		   args = CDR(args);
@@ -955,7 +871,7 @@ SEXP attribute_hidden do_scan(SEXP call, SEXP op, SEXP args, SEXP rho)
     comstr = CAR(args);            args = CDR(args);
     escapes = asLogical(CAR(args));args = CDR(args);
     if(!isString(CAR(args)) || LENGTH(CAR(args)) != 1)
-	errorcall(call, _("invalid '%s' value"), "encoding");
+	error(_("invalid '%s' value"), "encoding");
     encoding = CHAR(STRING_ELT(CAR(args), 0)); /* ASCII */
     if(streql(encoding, "latin1")) data.isLatin1 = TRUE;
     if(streql(encoding, "UTF-8"))  data.isUTF8 = TRUE;
@@ -968,63 +884,54 @@ SEXP attribute_hidden do_scan(SEXP call, SEXP op, SEXP args, SEXP rho)
     if (nmax < 0 || nmax == NA_INTEGER)		nmax = 0;
 
     if (TYPEOF(stripwhite) != LGLSXP)
-	errorcall(call, _("invalid '%s' value"), "strip.white");
+	error(_("invalid '%s' value"), "strip.white");
     if (length(stripwhite) != 1 && length(stripwhite) != length(what))
-	errorcall(call, _("invalid 'strip.white' length"));
+	error(_("invalid 'strip.white' length"));
     if (TYPEOF(data.NAstrings) != STRSXP)
-	errorcall(call, _("invalid '%s' value"), "na.strings");
+	error(_("invalid '%s' value"), "na.strings");
     if (TYPEOF(comstr) != STRSXP || length(comstr) != 1)
-	errorcall(call, _("invalid '%s' value"), "comment.char");
+	error(_("invalid '%s' value"), "comment.char");
 
     if (isString(sep) || isNull(sep)) {
 	if (length(sep) == 0) data.sepchar = 0;
 	else {
-	    char *sc = translateChar(STRING_ELT(sep, 0));
+	    const char *sc = translateChar(STRING_ELT(sep, 0));
 	    if(strlen(sc) > 1)
-		errorcall(call, _("invalid 'sep' value: must be one byte"));
+		error(_("invalid 'sep' value: must be one byte"));
 	    data.sepchar = (unsigned char) sc[0];
 	}
 	/* gets compared to chars: bug prior to 1.7.0 */
-    } else errorcall(call, _("invalid '%s' value"), "sep");
+    } else error(_("invalid '%s' value"), "sep");
 
     if (isString(dec) || isNull(dec)) {
 	if (length(dec) == 0)
 	    data.decchar = '.';
 	else {
-	    char *dc = translateChar(STRING_ELT(dec, 0));
+	    const char *dc = translateChar(STRING_ELT(dec, 0));
 	    if(strlen(dc) != 1)
-		errorcall(call,
-			  _("invalid decimal separator: must be one byte"));
+		error(_("invalid decimal separator: must be one byte"));
 	    data.decchar = dc[0];
 	}
     }
     else
-	errorcall(call, _("invalid decimal separator"));
+	error(_("invalid decimal separator"));
 
     if (isString(quotes)) {
-	/* This appears to be necessary to protect quoteset against GC */
-	data.quoteset = translateChar(STRING_ELT(quotes, 0));
-	/* Protect against broken realloc */
-	if(data.quotesave)
-	    data.quotesave = realloc(data.quotesave,
-				     strlen(data.quoteset) + 1);
-	else data.quotesave = malloc(strlen(data.quoteset) + 1);
-	if (!data.quotesave)
-	    errorcall(call, _("out of memory"));
-	strcpy(data.quotesave, data.quoteset);
-	data.quoteset = data.quotesave;
+	const char *sc = translateChar(STRING_ELT(quotes, 0));
+	if (strlen(sc)) data.quoteset = strdup(sc);
+	else data.quoteset = "";
     } else if (isNull(quotes))
 	data.quoteset = "";
     else
-	errorcall(call, _("invalid quote symbol set"));
+	error(_("invalid quote symbol set"));
 
     p = translateChar(STRING_ELT(comstr, 0));
     data.comchar = NO_COMCHAR; /*  here for -Wall */
     if (strlen(p) > 1)
-	errorcall(call, _("invalid '%s' value"), "comment.char");
+	error(_("invalid '%s' value"), "comment.char");
     else if (strlen(p) == 1) data.comchar = (unsigned char)*p;
     if(escapes == NA_LOGICAL)
-	errorcall(call, _("invalid '%s' value"), "allowEscapes");
+	error(_("invalid '%s' value"), "allowEscapes");
     data.escapes = escapes != 0;
 
     i = asInteger(file);
@@ -1069,7 +976,7 @@ SEXP attribute_hidden do_scan(SEXP call, SEXP op, SEXP args, SEXP rho)
 			blskip, multiline, &data);
 	break;
     default:
-	errorcall(call, _("invalid 'what' specified"));
+	error(_("invalid 'what' specified"));
     }
     endcontext(&cntxt);
 
@@ -1082,8 +989,7 @@ SEXP attribute_hidden do_scan(SEXP call, SEXP op, SEXP args, SEXP rho)
     }
     if (!data.ttyflag && !data.wasopen)
 	data.con->close(data.con);
-    if (data.quotesave) free(data.quotesave);
-    vmaxset(vmax);
+    if (data.quoteset[0]) free(data.quoteset);
     return ans;
 }
 
@@ -1092,12 +998,12 @@ SEXP attribute_hidden do_countfields(SEXP call, SEXP op, SEXP args, SEXP rho)
     SEXP ans, file, sep,  bns, quotes, comstr;
     int nfields, nskip, i, c, inquote, quote = 0;
     int blocksize, nlines, blskip;
-    char *p;
+    const char *p;
 #ifdef SUPPORT_MBCS
     Rboolean dbcslocale = (MB_CUR_MAX == 2);
 #endif
-    LocalData data = {NULL, 0, 0, 0, NULL, NULL, NO_COMCHAR, 0, 0, FALSE,
-		      FALSE, 0, FALSE, FALSE, NULL};
+    LocalData data = {NULL, 0, 0, '.', NULL, NO_COMCHAR, 0, NULL, FALSE,
+		      FALSE, 0, FALSE, FALSE};
     data.NAstrings = R_NilValue;
 
     checkArity(op, args);
@@ -1109,11 +1015,11 @@ SEXP attribute_hidden do_countfields(SEXP call, SEXP op, SEXP args, SEXP rho)
     blskip = asLogical(CAR(args)); args = CDR(args);
     comstr = CAR(args);
     if (TYPEOF(comstr) != STRSXP || length(comstr) != 1)
-	errorcall(call, _("invalid '%s' value"), "comment.char");
+	error(_("invalid '%s' value"), "comment.char");
     p = translateChar(STRING_ELT(comstr, 0));
     data.comchar = NO_COMCHAR; /*  here for -Wall */
     if (strlen(p) > 1)
-	errorcall(call, _("invalid '%s' value"), "comment.char");
+	error(_("invalid '%s' value"), "comment.char");
     else if (strlen(p) == 1) data.comchar = (unsigned char)*p;
 
     if (nskip < 0 || nskip == NA_INTEGER) nskip = 0;
@@ -1123,22 +1029,16 @@ SEXP attribute_hidden do_countfields(SEXP call, SEXP op, SEXP args, SEXP rho)
 	if (length(sep) == 0) data.sepchar = 0;
 	else data.sepchar = (unsigned char) translateChar(STRING_ELT(sep, 0))[0];
 	/* gets compared to chars: bug prior to 1.7.0 */
-    } else errorcall(call, _("invalid '%s' value"), "sep");
+    } else error(_("invalid '%s' value"), "sep");
 
     if (isString(quotes)) {
-	/* This appears to be necessary to protect quoteset against GC */
-	data.quoteset = translateChar(STRING_ELT(quotes, 0));
-	/* Protect against broken realloc */
-	if(data.quotesave) data.quotesave = realloc(data.quotesave, strlen(data.quoteset) + 1);
-	else data.quotesave = malloc(strlen(data.quoteset) + 1);
-	if (!data.quotesave)
-	    errorcall(call, _("out of memory"));
-	strcpy(data.quotesave, data.quoteset);
-	data.quoteset = data.quotesave;
+	const char *sc = translateChar(STRING_ELT(quotes, 0));
+	if (strlen(sc)) data.quoteset = strdup(sc);
+	else data.quoteset = "";
     } else if (isNull(quotes))
 	data.quoteset = "";
     else
-	errorcall(call, _("invalid quote symbol set"));
+	error(_("invalid quote symbol set"));
 
     i = asInteger(file);
     data.con = getConnection(i);
@@ -1194,7 +1094,7 @@ SEXP attribute_hidden do_countfields(SEXP call, SEXP op, SEXP args, SEXP rho)
 		nfields++;
 	    if (inquote && (c == R_EOF || c == '\n')) {
 		if(!data.wasopen) data.con->close(data.con);
-		errorcall(call, _("string terminated by newline or EOF"));
+		error(_("string terminated by newline or EOF"));
 	    }
 	    if (inquote && c == quote)
 		inquote = 0;
@@ -1212,8 +1112,7 @@ SEXP attribute_hidden do_countfields(SEXP call, SEXP op, SEXP args, SEXP rho)
 		while ((c = scanchar(inquote, &data)) != quote) {
 		    if (c == R_EOF || c == '\n') {
 			if(!data.wasopen) data.con->close(data.con);
-			errorcall(call,
-				  _("string terminated by newline or EOF"));
+			error(_("string terminated by newline or EOF"));
 		    }
 		}
 		inquote = 0;
@@ -1254,7 +1153,7 @@ SEXP attribute_hidden do_countfields(SEXP call, SEXP op, SEXP args, SEXP rho)
     for (i = 0; i <= nlines; i++)
 	INTEGER(bns)[i] = INTEGER(ans)[i];
     UNPROTECT(1);
-    if (data.quotesave) free(data.quotesave);
+    if (data.quoteset[0]) free(data.quoteset);
     return bns;
 }
 
@@ -1270,7 +1169,7 @@ typedef struct typecvt_possible_types {
  *
  * The typeInfo struct should be initialized with all fields TRUE.
  */
-void ruleout_types(char *s, Typecvt_Info *typeInfo, LocalData *data)
+static void ruleout_types(const char *s, Typecvt_Info *typeInfo, LocalData *data)
 {
     int res;
     char *endp;
@@ -1321,9 +1220,10 @@ SEXP attribute_hidden do_typecvt(SEXP call, SEXP op, SEXP args, SEXP env)
     SEXP rval = R_NilValue; /* -Wall */
     int i, j, len, numeric, asIs;
     Rboolean done = FALSE;
-    char *endp, *tmp = NULL;
-    LocalData data = {NULL, 0, 0, 0, NULL, NULL, NO_COMCHAR, 0, 0, FALSE,
-		      FALSE, 0, FALSE, FALSE, NULL};
+    char *endp;
+    const char *tmp = NULL;
+    LocalData data = {NULL, 0, 0, '.', NULL, NO_COMCHAR, 0, NULL, FALSE,
+		      FALSE, 0, FALSE, FALSE};
     Typecvt_Info typeInfo;      /* keep track of possible types of cvec */
     typeInfo.islogical = TRUE;  /* we can't rule anything out initially */
     typeInfo.isinteger = TRUE;
@@ -1334,11 +1234,11 @@ SEXP attribute_hidden do_typecvt(SEXP call, SEXP op, SEXP args, SEXP env)
     checkArity(op,args);
 
     if (!isString(CAR(args)))
-	errorcall(call, _("the first argument must be of mode character"));
+	error(_("the first argument must be of mode character"));
 
     data.NAstrings = CADR(args);
     if (TYPEOF(data.NAstrings) != STRSXP)
-	errorcall(call, _("invalid '%s' value"), "na.strings");
+	error(_("invalid '%s' value"), "na.strings");
 
     asIs = asLogical(CADDR(args));
     if (asIs == NA_LOGICAL) asIs = 0;
@@ -1464,7 +1364,7 @@ SEXP attribute_hidden do_typecvt(SEXP call, SEXP op, SEXP args, SEXP env)
 		    SET_STRING_ELT(rval, i, NA_STRING);
 	}
 	else {
-	    PROTECT(dup = duplicated(cvec));
+	    PROTECT(dup = duplicated(cvec, FALSE));
 	    j = 0;
 	    for (i = 0; i < len; i++) {
 		/* <NA> is never to be a level here */
@@ -1496,8 +1396,7 @@ SEXP attribute_hidden do_typecvt(SEXP call, SEXP op, SEXP args, SEXP env)
 		INTEGER(rval)[i] = INTEGER(a)[i];
 
 	    setAttrib(rval, R_LevelsSymbol, levs);
-	    PROTECT(a = allocVector(STRSXP, 1));
-	    SET_STRING_ELT(a, 0, mkChar("factor"));
+	    PROTECT(a = mkString("factor"));
 	    setAttrib(rval, R_ClassSymbol, a);
 	    UNPROTECT(3);
 	}
@@ -1557,15 +1456,14 @@ SEXP attribute_hidden do_menu(SEXP call, SEXP op, SEXP args, SEXP rho)
     int c, j;
     double first;
     char buffer[MAXELTSIZE], *bufp = buffer;
-    SEXP ans;
-    LocalData data = {NULL, 0, 0, 0, NULL, NULL, NO_COMCHAR, 0, 0, FALSE,
-		      FALSE, 0, FALSE, FALSE, NULL};
+    LocalData data = {NULL, 0, 0, '.', NULL, NO_COMCHAR, 0, NULL, FALSE,
+		      FALSE, 0, FALSE, FALSE};
     data.NAstrings = R_NilValue;
 
     checkArity(op,args);
 
     if (!isString(CAR(args)))
-	errorcall(call, _("invalid argument"));
+	error(_("invalid argument"));
 
     sprintf(ConsolePrompt, _("Selection: "));
 
@@ -1589,9 +1487,7 @@ SEXP attribute_hidden do_menu(SEXP call, SEXP op, SEXP args, SEXP rho)
 	    }
 	}
     }
-    ans = allocVector(INTSXP, 1);
-    INTEGER(ans)[0] = first;
-    return ans;
+    return ScalarInteger(first);
 }
 
 /* readTableHead(file, nlines, comment.char, blank.lines.skip, quote, sep) */
@@ -1602,10 +1498,10 @@ SEXP attribute_hidden do_readtablehead(SEXP call, SEXP op, SEXP args, SEXP rho)
 {
     SEXP file, comstr, ans = R_NilValue, ans2, quotes, sep;
     int nlines, i, c, quote=0, nread, nbuf, buf_size = BUF_SIZE, blskip;
-    char *p, *buf;
+    const char *p; char *buf;
     Rboolean empty, skip;
-    LocalData data = {NULL, 0, 0, 0, NULL, NULL, NO_COMCHAR, 0, 0, FALSE,
-		      FALSE, 0, FALSE, FALSE, NULL};
+    LocalData data = {NULL, 0, 0, '.', NULL, NO_COMCHAR, 0, NULL, FALSE,
+		      FALSE, 0, FALSE, FALSE};
     data.NAstrings = R_NilValue;
 
     checkArity(op, args);
@@ -1618,37 +1514,29 @@ SEXP attribute_hidden do_readtablehead(SEXP call, SEXP op, SEXP args, SEXP rho)
     sep = CAR(args);
 
     if (nlines <= 0 || nlines == NA_INTEGER)
-	errorcall(call, _("invalid '%s' value"), "nlines");
+	error(_("invalid '%s' value"), "nlines");
     if (blskip == NA_LOGICAL) blskip = 1;
     if (isString(quotes)) {
-	/* This appears to be necessary to protect quoteset against GC */
-	data.quoteset = translateChar(STRING_ELT(quotes, 0));
-	/* Protect against broken realloc */
-	if(data.quotesave)
-	    data.quotesave = realloc(data.quotesave,
-				     strlen(data.quoteset) + 1);
-	else data.quotesave = malloc(strlen(data.quoteset) + 1);
-	if (!data.quotesave)
-	    errorcall(call, _("out of memory"));
-	strcpy(data.quotesave, data.quoteset);
-	data.quoteset = data.quotesave;
+	const char *sc = translateChar(STRING_ELT(quotes, 0));
+	if (strlen(sc)) data.quoteset = strdup(sc);
+	else data.quoteset = "";
     } else if (isNull(quotes))
 	data.quoteset = "";
     else
-	errorcall(call, _("invalid quote symbol set"));
+	error(_("invalid quote symbol set"));
 
     if (TYPEOF(comstr) != STRSXP || length(comstr) != 1)
-	errorcall(call, _("invalid '%s' value"), "comment.char");
+	error(_("invalid '%s' value"), "comment.char");
     p = translateChar(STRING_ELT(comstr, 0));
     data.comchar = NO_COMCHAR; /*  here for -Wall */
     if (strlen(p) > 1)
-	errorcall(call, _("invalid '%s' value"), "comment.char");
+	error(_("invalid '%s' value"), "comment.char");
     else if (strlen(p) == 1) data.comchar = (int)*p;
     if (isString(sep) || isNull(sep)) {
 	if (length(sep) == 0) data.sepchar = 0;
 	else data.sepchar = (unsigned char) translateChar(STRING_ELT(sep, 0))[0];
 	/* gets compared to chars: bug prior to 1.7.0 */
-    } else errorcall(call, _("invalid '%s' value"), "sep");
+    } else error(_("invalid '%s' value"), "sep");
 
     i = asInteger(file);
     data.con = getConnection(i);
@@ -1665,7 +1553,7 @@ SEXP attribute_hidden do_readtablehead(SEXP call, SEXP op, SEXP args, SEXP rho)
 
     buf = (char *) malloc(buf_size);
     if(!buf)
-	error(_("cannot allocate buffer in readTableHead"));
+	error(_("cannot allocate buffer in 'readTableHead'"));
 
     PROTECT(ans = allocVector(STRSXP, nlines));
     for(nread = 0; nread < nlines; ) {
@@ -1677,7 +1565,7 @@ SEXP attribute_hidden do_readtablehead(SEXP call, SEXP op, SEXP args, SEXP rho)
 		buf_size *= 2;
 		buf = (char *) realloc(buf, buf_size);
 		if(!buf)
-		    error(_("cannot allocate buffer in readTableHead"));
+		    error(_("cannot allocate buffer in 'readTableHead'"));
 	    }
 	    /* Need to handle escaped embedded quotes, and how they are
 	       escaped depends on 'sep' */
@@ -1687,7 +1575,7 @@ SEXP attribute_hidden do_readtablehead(SEXP call, SEXP op, SEXP args, SEXP rho)
 		    buf[nbuf++] = c;
 		    c = scanchar(TRUE, &data);
 		    if(c == R_EOF)
-			errorcall(call, _("\\ followed by EOF"));
+			error(_("\\ followed by EOF"));
 		    buf[nbuf++] = c;
 		    continue;
 		} else if(quote && c == quote) {
@@ -1724,7 +1612,7 @@ SEXP attribute_hidden do_readtablehead(SEXP call, SEXP op, SEXP args, SEXP rho)
     UNPROTECT(1);
     free(buf);
     if(!data.wasopen) data.con->close(data.con);
-    if (data.quotesave) free(data.quotesave);
+    if (data.quoteset[0]) free(data.quoteset);
     return ans;
 
 no_more_lines:
@@ -1742,7 +1630,7 @@ no_more_lines:
     for(i = 0; i < nread; i++)
 	SET_STRING_ELT(ans2, i, STRING_ELT(ans, i));
     UNPROTECT(2);
-    if (data.quotesave) free(data.quotesave);
+    if (data.quoteset[0]) free(data.quoteset);
     return ans2;
 }
 
@@ -1798,11 +1686,13 @@ static void change_dec(char *tmp, char cdec, SEXPTYPE t)
 #endif
 
 /* a version of EncodeElement with different escaping of char strings */
-static char *EncodeElement2(SEXP x, int indx, Rboolean quote,
-			    Rboolean qmethod, R_StringBuffer *buff, char cdec)
+static const char 
+*EncodeElement2(SEXP x, int indx, Rboolean quote,
+		Rboolean qmethod, R_StringBuffer *buff, char cdec)
 {
     int nbuf;
-    char *p, *p0, *q;
+    char *q;
+    const char *p, *p0;
 
     if(TYPEOF(x) == STRSXP) {
 	p0 = translateChar(STRING_ELT(x, indx));
@@ -1843,7 +1733,8 @@ SEXP attribute_hidden do_writetable(SEXP call, SEXP op, SEXP args, SEXP rho)
     int nr, nc, i, j, qmethod;
     Rboolean wasopen, quote_rn = FALSE, *quote_col;
     Rconnection con;
-    char *csep, *ceol, *cna, cdec, *sdec, *tmp=NULL /* -Wall */;
+    const char *csep, *ceol, *cna, *sdec, *tmp=NULL /* -Wall */;
+    char cdec;
     SEXP *levels;
     R_StringBuffer strBuf = {NULL, 0, MAXELTSIZE};
     wt_info wi;
@@ -1854,7 +1745,7 @@ SEXP attribute_hidden do_writetable(SEXP call, SEXP op, SEXP args, SEXP rho)
     x = CAR(args);		   args = CDR(args);
     /* this is going to be a connection open or openable for writing */
     if(!inherits(CAR(args), "connection"))
-	errorcall(call, _("'file' is not a connection"));
+	error(_("'file' is not a connection"));
     con = getConnection(asInteger(CAR(args))); args = CDR(args);
     if(!con->canwrite)
 	error(_("cannot write to this connection"));
@@ -1873,21 +1764,21 @@ SEXP attribute_hidden do_writetable(SEXP call, SEXP op, SEXP args, SEXP rho)
     quote = CAR(args);		   args = CDR(args);
     qmethod = asLogical(CAR(args));
 
-    if(nr == NA_INTEGER) errorcall(call, _("invalid '%s' value"), "nr");
-    if(nc == NA_INTEGER) errorcall(call, _("invalid '%s' value"), "nc");
+    if(nr == NA_INTEGER) error(_("invalid '%s' value"), "nr");
+    if(nc == NA_INTEGER) error(_("invalid '%s' value"), "nc");
     if(!isNull(rnames) && !isString(rnames))
-	errorcall(call, _("invalid '%s' value"), "rnames");
-    if(!isString(sep)) errorcall(call, _("invalid '%s' value"), "sep");
-    if(!isString(eol)) errorcall(call, _("invalid '%s' value"), "eol");
-    if(!isString(na)) errorcall(call, _("invalid '%s' value"), "na");
-    if(!isString(dec)) errorcall(call, _("invalid '%s' value"), "dec");
-    if(qmethod == NA_LOGICAL) errorcall(call, _("invalid '%s' value"), "qmethod");
+	error(_("invalid '%s' value"), "rnames");
+    if(!isString(sep)) error(_("invalid '%s' value"), "sep");
+    if(!isString(eol)) error(_("invalid '%s' value"), "eol");
+    if(!isString(na)) error(_("invalid '%s' value"), "na");
+    if(!isString(dec)) error(_("invalid '%s' value"), "dec");
+    if(qmethod == NA_LOGICAL) error(_("invalid '%s' value"), "qmethod");
     csep = translateChar(STRING_ELT(sep, 0));
     ceol = translateChar(STRING_ELT(eol, 0));
     cna = translateChar(STRING_ELT(na, 0));
     sdec = translateChar(STRING_ELT(dec, 0));
     if(strlen(sdec) != 1)
-	errorcall(call, _("'dec' must be a single character"));
+	error(_("'dec' must be a single character"));
     cdec = sdec[0];
     quote_col = (Rboolean *) R_alloc(nc, sizeof(Rboolean));
     for(j = 0; j < nc; j++) quote_col[j] = FALSE;
@@ -1914,7 +1805,7 @@ SEXP attribute_hidden do_writetable(SEXP call, SEXP op, SEXP args, SEXP rho)
 	for(j = 0; j < nc; j++) {
 	    xj = VECTOR_ELT(x, j);
 	    if(LENGTH(xj) != nr)
-		errorcall(call, _("corrupt data frame -- length of column %d does not not match nrows"), j+1);
+		error(_("corrupt data frame -- length of column %d does not not match nrows"), j+1);
 	    if(inherits(xj, "factor")) {
 		levels[j] = getAttrib(xj, R_LevelsSymbol);
 	    } else levels[j] = R_NilValue;
@@ -1960,7 +1851,7 @@ SEXP attribute_hidden do_writetable(SEXP call, SEXP op, SEXP args, SEXP rho)
 	    UNIMPLEMENTED_TYPE("write.table, matrix method", x);
 	/* quick integrity check */
 	if(LENGTH(x) != nr * nc)
-	    errorcall(call, _("corrupt matrix -- dims not not match length"));
+	    error(_("corrupt matrix -- dims not not match length"));
 
 	for(i = 0; i < nr; i++) {
 	    if(i % 1000 == 999) R_CheckUserInterrupt();

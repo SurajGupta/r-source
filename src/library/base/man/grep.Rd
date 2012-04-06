@@ -1,3 +1,8 @@
+% File src/library/base/man/grep.Rd
+% Part of the R package, http://www.R-project.org
+% Copyright 1995-2007 R Core Development Team
+% Distributed under GPL 2 or later
+
 \name{grep}
 \title{Pattern Matching and Replacement}
 \alias{grep}
@@ -26,11 +31,11 @@ gsub(pattern, replacement, x,
      ignore.case = FALSE, extended = TRUE, perl = FALSE,
      fixed = FALSE, useBytes = FALSE)
 
-regexpr(pattern, text, extended = TRUE, perl = FALSE,
-        fixed = FALSE, useBytes = FALSE)
+regexpr(pattern, text, ignore.case = FALSE, extended = TRUE,
+        perl = FALSE, fixed = FALSE, useBytes = FALSE)
 
-gregexpr(pattern, text, extended = TRUE, perl = FALSE,
-         fixed = FALSE, useBytes = FALSE)
+gregexpr(pattern, text, ignore.case = FALSE, extended = TRUE,
+         perl = FALSE, fixed = FALSE, useBytes = FALSE)
 }
 \arguments{
   \item{pattern}{character string containing a \link{regular expression}
@@ -86,8 +91,8 @@ gregexpr(pattern, text, extended = TRUE, perl = FALSE,
   spurious matches, but for \code{regexpr} it changes the interpretation
   of the output.
 
-  The implementation of PCRE used in \R only supports caseless matching for
-  an ASCII pattern in a UTF-8 locale, even if \code{useBytes = TRUE}.
+  PCRE only supports caseless matching for a non-ASCII pattern in a
+  UTF-8 locale (and not for \code{useBytes = TRUE} in any locale).
 }
 \value{
   For \code{grep} a vector giving either the indices of the elements of
@@ -141,7 +146,7 @@ gregexpr(pattern, text, extended = TRUE, perl = FALSE,
   of the pattern specification.
 
   \code{\link{glob2rx}} to turn wildcard matches into regular expressions.
-  
+
   \code{\link{agrep}} for approximate matching.
 
   \code{\link{tolower}}, \code{\link{toupper}} and \code{\link{chartr}}
@@ -186,7 +191,7 @@ regexpr("en", txt)
 gregexpr("e", txt)
 
 ## trim trailing white space
-str = 'Now is the time      '
+str <- 'Now is the time      '
 sub(' +$', '', str)  ## spaces only
 sub('[[:space:]]+$', '', str) ## white space, POSIX-style
 sub('\\\\s+$', '', str, perl = TRUE) ## Perl-style white space

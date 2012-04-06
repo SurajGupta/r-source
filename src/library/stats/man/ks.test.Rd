@@ -1,3 +1,8 @@
+% File src/library/stats/man/ks.test.Rd
+% Part of the R package, http://www.R-project.org
+% Copyright 1995-2007 R Core Development Team
+% Distributed under GPL 2 or later
+
 \name{ks.test}
 \alias{ks.test}
 \title{Kolmogorov-Smirnov Tests}
@@ -86,8 +91,8 @@ ks.test(x, y, \dots, alternative = c("two.sided", "less", "greater"),
   William J. Conover (1971),
   \emph{Practical Nonparametric Statistics}.
   New York: John Wiley & Sons.
-  Pages 295--301 (one-sample \dQuote{Kolmogorov} test),
-  309--314 (two-sample \dQuote{Smirnov} test).
+  Pages 295--301 (one-sample Kolmogorov test),
+  309--314 (two-sample Smirnov test).
 
   Durbin, J. (1973)
   \emph{Distribution theory for tests based on the sample distribution
@@ -104,6 +109,8 @@ ks.test(x, y, \dots, alternative = c("two.sided", "less", "greater"),
   normality.
 }
 \examples{
+require(graphics)
+
 x <- rnorm(50)
 y <- runif(30)
 # Do x and y come from the same distribution?

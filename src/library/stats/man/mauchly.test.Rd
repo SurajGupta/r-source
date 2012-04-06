@@ -1,3 +1,8 @@
+% File src/library/stats/man/mauchly.test.Rd
+% Part of the R package, http://www.R-project.org
+% Copyright 1995-2007 R Core Development Team
+% Distributed under GPL 2 or later
+
 \name{mauchly.test}
 \alias{mauchly.test}
 \alias{mauchly.test.SSD}
@@ -60,7 +65,7 @@ mauchly.test(object, Sigma = diag(nrow = p),
 
 %% Probably use example from Baron/Li
 \examples{
-example(SSD) # Brings in the mlmfit and reacttime objects
+utils::example(SSD) # Brings in the mlmfit and reacttime objects
 
 ### traditional test of intrasubj. contrasts
 mauchly.test(mlmfit, X=~1) 

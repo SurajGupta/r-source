@@ -1,3 +1,8 @@
+% File src/library/utils/man/read.table.Rd
+% Part of the R package, http://www.R-project.org
+% Copyright 1995-2007 R Core Development Team
+% Distributed under GPL 2 or later
+
 \name{read.table}
 \alias{read.table}
 \alias{read.csv}
@@ -41,11 +46,12 @@ read.delim2(file, header = TRUE, sep = "\t", quote="\"", dec=",",
 
     Alternatively, \code{file} can be a readable
     \code{\link{connection}} (which will be opened for reading if
-    necessary, and if so closed at the end of the function call).  (If
-    \code{\link{stdin}()} is used, the prompts for lines may be somewhat
-    confusing.  Terminate input with a blank line or an EOF signal,
-    \code{Ctrl-D} on Unix and \code{Ctrl-Z} on Windows.  Any pushback on
-    \code{stdin()} will be cleared before return.)
+    necessary, and if so \code{\link{close}}d (and hence destroyed) at
+    the end of the function call).  (If \code{\link{stdin}()} is used,
+    the prompts for lines may be somewhat confusing.  Terminate input
+    with a blank line or an EOF signal, \code{Ctrl-D} on Unix and
+    \code{Ctrl-Z} on Windows.  Any pushback on \code{stdin()} will be
+    cleared before return.)
 
     \code{file} can also be a complete URL.
 
@@ -62,7 +68,7 @@ read.delim2(file, header = TRUE, sep = "\t", quote="\"", dec=",",
 
   \item{sep}{the field separator character.  Values on each line of the
     file are separated by this character.  If \code{sep = ""} (the
-    default for \code{read.table}) the separator is \dQuote{white space},
+    default for \code{read.table}) the separator is \sQuote{white space},
     that is one or more spaces, tabs, newlines or carriage returns.}
 
   \item{quote}{the set of quoting characters. To disable quoting
@@ -209,7 +215,7 @@ read.delim2(file, header = TRUE, sep = "\t", quote="\"", dec=",",
 
   \code{read.csv} and \code{read.csv2} are identical to
   \code{read.table} except for the defaults.  They are intended for
-  reading \dQuote{comma separated value} files (\file{.csv}) or
+  reading \sQuote{comma separated value} files (\file{.csv}) or
   (\code{read.csv2}) the variant
   used in countries that use a comma as decimal point and a semicolon
   as field separator.  Similarly, \code{read.delim} and
@@ -237,12 +243,16 @@ read.delim2(file, header = TRUE, sep = "\t", quote="\"", dec=",",
   the column of row names (if any).
 
   Less memory will be used if \code{colClasses} is specified as one of
-  the six atomic vector classes.
+  the six \link{atomic} vector classes.  This can be particularly so when
+  reading a column that takes many distinct numeric values, as storing
+  each distinct value as a character string can take up to 14 times as
+  much memory as storing it as an integer.
 
   Using \code{nrows}, even as a mild over-estimate, will help memory
   usage.
 
-  Using \code{comment.char = ""} will be appreciably faster.
+  Using \code{comment.char = ""} will be appreciably faster than the
+  \code{read.table} default.
 
   \code{read.table} is not the right tool for reading large matrices,
   especially those with many columns: it is designed to read

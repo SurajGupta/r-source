@@ -1,3 +1,8 @@
+% File src/library/stats/man/convolve.Rd
+% Part of the R package, http://www.R-project.org
+% Copyright 1995-2007 R Core Development Team
+% Distributed under GPL 2 or later
+
 \name{convolve}
 \alias{convolve}
 \title{Fast Convolution}
@@ -51,6 +56,8 @@ convolve(x, y, conj = TRUE, type = c("circular", "open", "filter"))
   more appropriate.
 }
 \examples{
+require(graphics)
+
 x <- c(0,0,0,100,0,0,0)
 y <- c(0,0,1, 2 ,1,0,0)/4
 zapsmall(convolve(x,y))         #  *NOT* what you first thought.

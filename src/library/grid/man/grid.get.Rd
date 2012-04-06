@@ -1,5 +1,11 @@
+% File src/library/grid/man/grid.get.Rd
+% Part of the R package, http://www.R-project.org
+% Copyright 1995-2007 R Core Development Team
+% Distributed under GPL 2 or later
+
 \name{grid.get}
 \alias{grid.get}
+\alias{grid.gget}
 \alias{getGrob}
 \title{Get a Grid Graphical Object}
 \description{
@@ -8,6 +14,8 @@
 \usage{
 grid.get(gPath, strict = FALSE, grep = FALSE, global = FALSE,
          allDevices = FALSE)
+
+grid.gget <- function(..., grep = TRUE, global = TRUE)
 
 getGrob(gTree, gPath, strict = FALSE, grep = FALSE, global = FALSE) 
 }
@@ -33,6 +41,10 @@ getGrob(gTree, gPath, strict = FALSE, grep = FALSE, global = FALSE)
     be searched for matches, or just the current device.
     NOT YET IMPLEMENTED.
   }
+}
+\details{
+  \code{grid.gget} (\code{g} for global) is just a convenience wrapper for
+  \code{grid.get} with different defaults.
 }
 \value{
   A grob object.

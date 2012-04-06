@@ -1,17 +1,22 @@
-##nlminb.control <-
-##    function(eval.max = NULL, iter.max = NULL, abs.tol = NULL, rel.tol = NULL,
-##             x.tol = NULL, step.min = NULL, step.max = NULL, scale.init = NULL,
-##             scale.upd = NULL, scale.fac = NULL, scale.tol = NULL, scale.mod = NULL,
-##             sing.tol = NULL, sing.step = NULL, rel.err = NULL, diff.g = NULL)
-##    list(eval.max = eval.max, iter.max = iter.max, abs.tol = abs.tol, rel.tol = 
-##         rel.tol, x.tol = x.tol, step.min = step.min, step.max = step.max, 
-##         scale.init = scale.init, scale.upd = scale.upd, scale.fac = scale.fac,
-##         scale.tol = scale.tol, scale.mod = scale.mod, sing.tol = sing.tol,
-##         sing.step = sing.step, rel.err = rel.err, diff.g = diff.g)
+#  File src/library/stats/R/nlminb.R
+#  Part of the R package, http://www.R-project.org
+#
+#  This program is free software; you can redistribute it and/or modify
+#  it under the terms of the GNU General Public License as published by
+#  the Free Software Foundation; either version 2 of the License, or
+#  (at your option) any later version.
+#
+#  This program is distributed in the hope that it will be useful,
+#  but WITHOUT ANY WARRANTY; without even the implied warranty of
+#  MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
+#  GNU General Public License for more details.
+#
+#  A copy of the GNU General Public License is available at
+#  http://www.r-project.org/Licenses/
 
 nlminb <-
-    function(start, objective, gradient = NULL, hessian = NULL,
-             scale = 1, control = list(), lower =  - Inf, upper = Inf, ...)
+    function(start, objective, gradient = NULL, hessian = NULL, ...,
+             scale = 1, control = list(), lower =  - Inf, upper = Inf)
 {
     ## Establish the working vectors and check and set options
     n <- length(par <- as.double(start))
@@ -39,7 +44,7 @@ nlminb <-
         if (any(!ivpars))
             v[cpos[pos[!ivpars]]] <- as.double(unlist(control[!ivpars]))
     }
-    
+
     ## Establish the objective function and its environment
     obj <- quote(objective(.par, ...))
     rho <- new.env(parent = environment())
@@ -55,14 +60,14 @@ nlminb <-
             hess <- quote(hessian(.par, ...))
         }
     }
-    if (any(lower != -Inf) || any(upper != Inf)) { 
-        low <- rep(as.double(lower), length = length(par))
-        upp <- rep(as.double(upper), length = length(par))
+    if (any(lower != -Inf) || any(upper != Inf)) {
+        low <- rep(as.double(lower), length.out = length(par))
+        upp <- rep(as.double(upper), length.out = length(par))
     } else low <- upp <- numeric(0)
-    
+
     ## Do the optimization
     .Call(R_port_nlminb, obj, grad, hess, rho, low, upp,
-          d = rep(as.double(scale), length = length(par)), iv, v)
+          d = rep(as.double(scale), length.out = length(par)), iv, v)
 
     ans <- list(par = get(".par", envir = rho))
     ans$objective <- v[10]

@@ -1,3 +1,8 @@
+% File src/library/datasets/man/airmiles.Rd
+% Part of the R package, http://www.R-project.org
+% Copyright 1995-2007 R Core Development Team
+% Distributed under GPL 2 or later
+
 \name{airmiles}
 \docType{data}
 \alias{airmiles}
@@ -17,6 +22,7 @@
   Prentice-Hall.
 }
 \examples{
+require(graphics)
 plot(airmiles, main = "airmiles data",
      xlab = "Passenger-miles flown by U.S. commercial airlines", col = 4)
 }

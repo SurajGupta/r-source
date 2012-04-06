@@ -1,3 +1,8 @@
+% File src/library/graphics/man/contour.Rd
+% Part of the R package, http://www.R-project.org
+% Copyright 1995-2007 R Core Development Team
+% Distributed under GPL 2 or later
+
 \name{contour}
 \alias{contour}
 \alias{contour.default}
@@ -8,8 +13,8 @@
 \usage{
 contour(x, \dots)
 
-\method{contour}{default}(x = seq(0, 1, len = nrow(z)),
-        y = seq(0, 1, len = ncol(z)),
+\method{contour}{default}(x = seq(0, 1, length.out = nrow(z)),
+        y = seq(0, 1, length.out = ncol(z)),
         z,
         nlevels = 10, levels = pretty(zlim, nlevels), labels = NULL,
         xlim = range(x, finite = TRUE),
@@ -100,12 +105,13 @@ contour(x, \dots)
   complexity of a single contour line.
 
   \code{\link[grDevices]{contourLines}},
-  \code{\link{filled.contour}} for \dQuote{color-filled} contours,
+  \code{\link{filled.contour}} for color-filled contours,
   \code{\link[lattice]{contourplot}} (and \code{\link[lattice]{levelplot}})
   from package \pkg{lattice}.  Further, \code{\link{image}} and the
   graphics demo which can be invoked as \code{demo(graphics)}.
 }
 \examples{
+require(grDevices) # for colours
 x <- -6:16
 op <- par(mfrow = c(2, 2))
 contour(outer(x, x), method = "edge", vfont = c("sans serif", "plain"))

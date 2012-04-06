@@ -1,3 +1,8 @@
+% File src/library/datasets/man/PlantGrowth.Rd
+% Part of the R package, http://www.R-project.org
+% Copyright 1995-2007 R Core Development Team
+% Distributed under GPL 2 or later
+
 \name{PlantGrowth}
 \docType{data}
 \alias{PlantGrowth}
@@ -20,7 +25,7 @@
 }
 \examples{
 ## One factor ANOVA example from Dobson's book, cf. Table 7.4:
-require(stats)
+require(stats); require(graphics)
 boxplot(weight ~ group, data = PlantGrowth, main = "PlantGrowth data",
         ylab = "Dried weight of plants", col = "lightgray",
         notch = TRUE, varwidth = TRUE)

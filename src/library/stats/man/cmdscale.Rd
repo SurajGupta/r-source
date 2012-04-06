@@ -1,3 +1,8 @@
+% File src/library/stats/man/cmdscale.Rd
+% Part of the R package, http://www.R-project.org
+% Copyright 1995-2007 R Core Development Team
+% Distributed under GPL 2 or later
+
 \name{cmdscale}
 \alias{cmdscale}
 \title{Classical (Metric) Multidimensional Scaling}
@@ -92,6 +97,8 @@ cmdscale(d, k = 2, eig = FALSE, add = FALSE, x.ret = FALSE)
   in package \pkg{MASS}.
 }
 \examples{
+require(graphics)
+
 loc <- cmdscale(eurodist)
 x <- loc[,1]
 y <- -loc[,2]
@@ -99,6 +106,6 @@ plot(x, y, type="n", xlab="", ylab="", main="cmdscale(eurodist)")
 text(x, y, rownames(loc), cex=0.8)
 
 cmdsE <- cmdscale(eurodist, k=20, add = TRUE, eig = TRUE, x.ret = TRUE)
-str(cmdsE)
+utils::str(cmdsE)
 }
 \keyword{multivariate}

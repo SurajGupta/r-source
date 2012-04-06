@@ -1,9 +1,14 @@
+% File src/library/base/man/Round.Rd
+% Part of the R package, http://www.R-project.org
+% Copyright 1995-2007 R Core Development Team
+% Distributed under GPL 2 or later
+
 \name{Round}
 \title{Rounding of Numbers}
 \usage{
 ceiling(x)
 floor(x)
-trunc(x)
+trunc(x, \dots)
 
 round(x, digits = 0)
 signif(x, digits = 6)
@@ -35,14 +40,15 @@ zapsmall(x, digits = getOption("digits"))
   number of significant digits.
 
   \code{zapsmall} determines a \code{digits} argument \code{dr} for
-  calling \code{round(x, digits = dr)} such that values \dQuote{close to
-    zero} (compared with the maximal absolute value) are \dQuote{zapped},
+  calling \code{round(x, digits = dr)} such that values close to
+  zero (compared with the maximal absolute value) are \sQuote{zapped},
   i.e., treated as \code{0}.
 }
 \arguments{
   \item{x}{a numeric vector.  A complex vector is allowed for
     \code{round}, \code{signif} and \code{zapsmall}.}
   \item{digits}{integer indicating the precision to be used.}
+  \item{\dots}{arguments to be passed to methods.}
 }
 \details{
   All but \code{zapsmall} are generic functions: methods can be
@@ -50,7 +56,7 @@ zapsmall(x, digits = getOption("digits"))
   \code{\link[base:groupGeneric]{Math}} group generic.
 
   Note that for rounding off a 5, the IEC 60559 standard is expected to
-  be used, \dQuote{\emph{go to the even digit}}.
+  be used, \sQuote{\emph{go to the even digit}}.
   Therefore \code{round(0.5)} is \code{0} and \code{round(-1.5)} is
   \code{-2}.  However, this is dependent on OS services and on
   representation error (since e.g. \code{0.15} is not represented
@@ -64,8 +70,9 @@ zapsmall(x, digits = getOption("digits"))
   element of the vector is rounded individually, unlike printing.
 }
 \section{S4 methods}{
-  \code{ceiling} and \code{floor} are S4 generic and members of the
-  \code{\link[methods:S4groupGeneric]{Math}} group generic.
+  \code{ceiling}, \code{floor} and \code{trunc} are S4 generic and
+  members of the \code{\link[methods:S4groupGeneric]{Math}} group
+  generic.  As an S4 generic, \code{trunc} has only one argument.
 
   \code{round} and \code{signif} are S4 generic and members of the
   \code{\link[methods:S4groupGeneric]{Math2}} group generic.

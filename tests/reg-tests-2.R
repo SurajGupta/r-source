@@ -6,7 +6,7 @@ RNGversion("1.6.2")
 
 ## force standard handling for data frames
 options(stringsAsFactors=TRUE)
-
+options(useFancyQuotes=FALSE)
 
 ### moved from various .Rd files
 ## abbreviate
@@ -705,7 +705,7 @@ A <- rep(c(0, 1), 9)
 B <- rep(c(1, 0), 9)
 set.seed(1); y <- rnorm(18)
 terms(y ~ A:U + A:V - 1)
-lm(y ~ A:U + A:V - 1)$coef  # 1.5.1 used dummies coding for V
+lm(y ~ A:U + A:V - 1)$coefficients  # 1.5.1 used dummies coding for V
 lm(y ~ (A + B) : (U + V) - 1) # 1.5.1 used dummies coding for A:V but not B:V
 options(oldcon)
 ## 1.5.1 miscomputed the first factor in the formula.
@@ -2223,3 +2223,12 @@ qr.fitted(qr(A), y)
 
 qr.coef(qr(matrix(0:1, 1, dimnames=list(NULL, c("zero","one")))), 5)
 ## coef names were returned unpivoted <= 2.5.0
+
+## readChar read extra items, terminated on zeros
+x <- as.raw(65:74)
+readChar(x, nchar=c(3,3,0,3,3,3))
+f <- tempfile()
+writeChar("ABCDEFGHIJ", con=f, eos=NULL)
+readChar(f, nchar=c(3,3,0,3,3,3))
+unlink(f)
+##

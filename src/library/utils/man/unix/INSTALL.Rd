@@ -1,3 +1,8 @@
+% File src/library/utils/man/unix/INSTALL.Rd
+% Part of the R package, http://www.R-project.org
+% Copyright 1995-2007 R Core Development Team
+% Distributed under GPL 2 or later
+
 \name{INSTALL}
 \alias{INSTALL}
 \title{Install Add-on Packages}
@@ -64,11 +69,11 @@
 }
 
 \section{Packages using the methods package}{
-  Packages that require the methods package, and that use functions such
-  as \code{\link{setMethod}} or \code{\link{setClass}},
-  should be installed either (preferably) using lazy-loading or by
-  creating a binary image: use the flags \code{LazyLoad} and
-  \code{SaveImage} in the \file{DESCRIPTION} file to ensure this.
+  Packages that require the methods package and make use functions such
+  as \code{\link{setMethod}} or \code{\link{setClass}}, should be
+  installed using lazy-loading (or, deprecated, by creating a binary
+  image): use the field \code{LazyLoad} in the \file{DESCRIPTION} file
+  to ensure this.
 }
 
 \seealso{

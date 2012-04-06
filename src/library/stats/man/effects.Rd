@@ -1,3 +1,8 @@
+% File src/library/stats/man/effects.Rd
+% Part of the R package, http://www.R-project.org
+% Copyright 1995-2007 R Core Development Team
+% Distributed under GPL 2 or later
+
 \name{effects}
 \title{Effects from Fitted Model}
 \usage{
@@ -40,7 +45,7 @@ effects(object, \dots)
 
   The first \eqn{r} rows are labelled by the corresponding coefficients,
   and the remaining rows are unlabelled.  Note that in rank-deficient
-  models the \dQuote{corresponding} coefficients will be in a different
+  models the corresponding coefficients will be in a different
   order if pivoting occurred.
 }
 \references{

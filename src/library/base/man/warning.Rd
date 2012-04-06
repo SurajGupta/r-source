@@ -1,3 +1,8 @@
+% File src/library/base/man/warning.Rd
+% Part of the R package, http://www.R-project.org
+% Copyright 1995-2007 R Core Development Team
+% Distributed under GPL 2 or later
+
 \name{warning}
 \alias{warning}
 \alias{suppressWarnings}
@@ -79,7 +84,7 @@ testit() ## shows call
 testit <- function() warning("problem in testit", call. = FALSE)
 testit() ## no call
 suppressWarnings(warning("testit"))
-\dontshow{eigenval <- 10 ^ -rnorm(1, m=6)
+\dontshow{eigenval <- 10 ^ -stats::rnorm(1, mean=6)
 if(eigenval < 1.e-7) warning("system near singular")
 options(oldopt)}
 }

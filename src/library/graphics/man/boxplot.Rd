@@ -1,3 +1,8 @@
+% File src/library/graphics/man/boxplot.Rd
+% Part of the R package, http://www.R-project.org
+% Copyright 1995-2007 R Core Development Team
+% Distributed under GPL 2 or later
+
 \name{boxplot}
 \alias{boxplot}
 \alias{boxplot.default}
@@ -167,7 +172,8 @@ boxplot(len ~ dose, data = ToothGrowth,
         subset = supp == "VC", col = "yellow",
         main = "Guinea Pigs' Tooth Growth",
         xlab = "Vitamin C dose mg",
-        ylab = "tooth length", ylim = c(0, 35), yaxs = "i")
+        ylab = "tooth length",
+        xlim = c(0.5, 3.5), ylim = c(0, 35), yaxs = "i")
 boxplot(len ~ dose, data = ToothGrowth, add = TRUE,
         boxwex = 0.25, at = 1:3 + 0.2,
         subset = supp == "OJ", col = "orange")

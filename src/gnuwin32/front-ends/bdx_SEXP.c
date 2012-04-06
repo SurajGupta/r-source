@@ -13,9 +13,8 @@
  *  Library General Public License for more details.
  * 
  *  You should have received a copy of the GNU Library General Public
- *  License along with this library; if not, write to the Free
- *  Software Foundation, Inc., 51 Franklin Street, Fifth Floor, Boston,
- *  MA 02110-1301, USA.
+ *  License along with this library; if not, a copy is available at
+ *  http://www.r-project.org/Licenses/
  *
  *  Conversion functions from SEXP to BDX and vice versa.
  *
@@ -60,7 +59,6 @@ int BDX2SEXP(BDX_Data const* pBDXData,SEXP* pSEXPData)
   int lTotalSize = 1;
   int lProtectCount = 0;
   int i;
-  SEXP lStringSEXP;
 
   assert(pSEXPData != NULL);
 
@@ -109,12 +107,8 @@ int BDX2SEXP(BDX_Data const* pBDXData,SEXP* pSEXPData)
   case BDX_STRING:
     lData = PROTECT(allocVector(STRSXP,lTotalSize));
     lProtectCount++;
-    for(i = 0;i < lTotalSize;i++) {
-      lStringSEXP = 
-	allocString(strlen(pBDXData->data.raw_data[i].string_value));
-      strcpy(CHAR(lStringSEXP),pBDXData->data.raw_data[i].string_value);
-      SET_STRING_ELT(lData,i,lStringSEXP);
-    }
+    for(i = 0;i < lTotalSize;i++)
+      SET_STRING_ELT(lData, i, mkChar(pBDXData->data.raw_data[i].string_value));
     break;
   case BDX_POINTER:
     /* BDX_POINTER not supported now, trace the contents */
@@ -195,12 +189,7 @@ int BDX2SEXP(BDX_Data const* pBDXData,SEXP* pSEXPData)
 	  pBDXData->data.raw_data_with_type[i].raw_data.double_value;
 	break;
       case BDX_STRING:
-	lSEXP = allocVector(STRSXP,1);
-	lStringSEXP = allocString(strlen(pBDXData->data.raw_data_with_type[i]
-					 .raw_data.string_value));
-	strcpy(CHAR(lStringSEXP),
-	       pBDXData->data.raw_data_with_type[i].raw_data.string_value);
-	SET_STRING_ELT(lSEXP,0,lStringSEXP);
+        lSEXP = mkString(pBDXData->data.raw_data_with_type[i].raw_data.string_value);
 	break;
       case BDX_SPECIAL:
 	lSEXP = allocVector(REALSXP,1);

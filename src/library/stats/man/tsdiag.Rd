@@ -1,3 +1,8 @@
+% File src/library/stats/man/tsdiag.Rd
+% Part of the R package, http://www.R-project.org
+% Copyright 1995-2007 R Core Development Team
+% Distributed under GPL 2 or later
+
 \name{tsdiag}
 \alias{tsdiag}
 \alias{tsdiag.arima0}
@@ -34,7 +39,9 @@ tsdiag(object, gof.lag, \dots)
 }
 
 \examples{
-\dontrun{fit <- arima(lh, c(1,0,0))
+\dontrun{require(graphics)
+
+fit <- arima(lh, c(1,0,0))
 tsdiag(fit)
 
 ## see also examples(arima)

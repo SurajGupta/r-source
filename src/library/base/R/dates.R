@@ -1,3 +1,19 @@
+#  File src/library/base/R/dates.R
+#  Part of the R package, http://www.R-project.org
+#
+#  This program is free software; you can redistribute it and/or modify
+#  it under the terms of the GNU General Public License as published by
+#  the Free Software Foundation; either version 2 of the License, or
+#  (at your option) any later version.
+#
+#  This program is distributed in the hope that it will be useful,
+#  but WITHOUT ANY WARRANTY; without even the implied warranty of
+#  MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
+#  GNU General Public License for more details.
+#
+#  A copy of the GNU General Public License is available at
+#  http://www.r-project.org/Licenses/
+
 ## First shot at adding a "Date" class to base R.
 ## Representation is the number of whole days since 1970-01-01.
 
@@ -250,7 +266,7 @@ seq.Date <- function(from, to, by, length.out=NULL, along.with=NULL, ...)
         r1 <- as.POSIXlt(from)
         if(valid == 4) {
             if(missing(to)) { # years
-                yr <- seq.int(r1$year, by = by, length = length.out)
+                yr <- seq.int(r1$year, by = by, length.out = length.out)
             } else {
                 to <- as.POSIXlt(to)
                 yr <- seq.int(r1$year, to$year, by)
@@ -259,7 +275,7 @@ seq.Date <- function(from, to, by, length.out=NULL, along.with=NULL, ...)
             res <- .Internal(POSIXlt2Date(r1))
         } else if(valid == 3) { # months
             if(missing(to)) {
-                mon <- seq.int(r1$mon, by = by, length = length.out)
+                mon <- seq.int(r1$mon, by = by, length.out = length.out)
             } else {
                 to <- as.POSIXlt(to)
                 mon <- seq.int(r1$mon, 12*(to$year - r1$year) + to$mon, by)
@@ -340,7 +356,7 @@ round.Date <- function(x, ...)
 }
 
 ## must avoid truncating dates prior to 1970-01-01 forwards.
-trunc.Date <- function(x) round(x - 0.4999999)
+trunc.Date <- function(x, ...) round(x - 0.4999999)
 
 rep.Date <- function(x, ...)
 {
@@ -364,3 +380,7 @@ diff.Date <- function (x, lag = 1, differences = 1, ...)
         r <- r[i1] - r[-length(r):-(length(r) - lag + 1)]
     r
 }
+
+# ---- additions in 2.6.0 -----
+
+is.numeric.Date <- function(x) FALSE

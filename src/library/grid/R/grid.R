@@ -1,3 +1,19 @@
+#  File src/library/grid/R/grid.R
+#  Part of the R package, http://www.R-project.org
+#
+#  This program is free software; you can redistribute it and/or modify
+#  it under the terms of the GNU General Public License as published by
+#  the Free Software Foundation; either version 2 of the License, or
+#  (at your option) any later version.
+#
+#  This program is distributed in the hope that it will be useful,
+#  but WITHOUT ANY WARRANTY; without even the implied warranty of
+#  MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
+#  GNU General Public License for more details.
+#
+#  A copy of the GNU General Public License is available at
+#  http://www.r-project.org/Licenses/
+
 
 # FIXME:  all grid functions should check that .grid.started is TRUE
 .grid.loaded <- FALSE
@@ -81,15 +97,15 @@ pushViewport <- function(..., recording=TRUE) {
 
 # Helper functions called from C
 no.children <- function(children) {
-  length(ls(env=children, all.names=TRUE)) == 0
+  length(ls(children, all.names=TRUE)) == 0
 }
 
 child.exists <- function(name, children) {
-  exists(name, env=children, inherits=FALSE)
+  exists(name, envir=children, inherits=FALSE)
 }
 
 child.list <- function(children) {
-  ls(env=children, all.names=TRUE)
+  ls(children, all.names=TRUE)
 }
 
 pathMatch <- function(path, pathsofar, strict) {
@@ -232,12 +248,12 @@ current.viewport <- function(vp=NULL) {
 }
 
 vpListFromNode <- function(node) {
-  childnames <- ls(env=node$children, all.names=TRUE)
+  childnames <- ls(node$children, all.names=TRUE)
   n <- length(childnames)
   children <- vector("list", n)
   index <- 1
   for (i in childnames) {
-    children[[index]] <- vpTreeFromNode(get(i, env=node$children))
+    children[[index]] <- vpTreeFromNode(get(i, envir=node$children))
     index <- index + 1
   }
   vpListFromList(children)
@@ -245,7 +261,7 @@ vpListFromNode <- function(node) {
 
 vpTreeFromNode <- function(node) {
   # If no children then just return viewport
-  if (length(ls(env=node$children, all.names=TRUE)) == 0)
+  if (length(ls(node$children, all.names=TRUE)) == 0)
     vpFromPushedvp(node)
   # Otherwise return vpTree
   else

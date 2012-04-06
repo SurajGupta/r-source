@@ -1,23 +1,22 @@
 /*
-  R : A Computer Language for Statistical Data Analysis
-  Copyright (C) 1995-1996   Robert Gentleman and Ross Ihaka
-  Copyright (C) 1997-2007   Robert Gentleman, Ross Ihaka
-                            and the R Development Core Team
-
-  This program is free software; you can redistribute it and/or modify
-  it under the terms of the GNU General Public License as published by
-  the Free Software Foundation; either version 2 of the License, or (at
-  your option) any later version.
-
-  This program is distributed in the hope that it will be useful, but
-  WITHOUT ANY WARRANTY; without even the implied warranty of
-  MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the GNU
-  General Public License for more details.
-
-  You should have received a copy of the GNU General Public License
-  along with this program; if not, write to the Free Software
-  Foundation, Inc., 51 Franklin Street Suite 330, Boston, MA 02111-1307,
-  U.S.A.
+ *  R : A Computer Language for Statistical Data Analysis
+ *  Copyright (C) 1995-1996   Robert Gentleman and Ross Ihaka
+ *  Copyright (C) 1997-2007   Robert Gentleman, Ross Ihaka
+ *                            and the R Development Core Team
+ *
+ *  This program is free software; you can redistribute it and/or modify
+ *  it under the terms of the GNU General Public License as published by
+ *  the Free Software Foundation; either version 2 of the License, or
+ *  (at your option) any later version.
+ *
+ *  This program is distributed in the hope that it will be useful,
+ *  but WITHOUT ANY WARRANTY; without even the implied warranty of
+ *  MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
+ *  GNU General Public License for more details.
+ *
+ *  You should have received a copy of the GNU General Public License
+ *  along with this program; if not, a copy is available at
+ *  http://www.r-project.org/Licenses/
  */
 
 /* <UTF8> char here is either ASCII or handled as a whole */
@@ -30,6 +29,7 @@
 #include <Defn.h>
 #include <R_ext/Riconv.h>
 #include <Rinterface.h>
+#include <errno.h>
 
 /*
   See ../unix/system.txt for a description of some of these functions.
@@ -46,50 +46,37 @@
  * This call provides a simple interface to the "stat" system call.
  */
 
-#ifdef HAVE_STAT
-# ifdef HAVE_SYS_TYPES_H
-#  include <sys/types.h>
-# endif
-# ifdef HAVE_SYS_STAT_H
-#  include <sys/stat.h>
-# endif
+#ifdef HAVE_SYS_TYPES_H
+# include <sys/types.h>
+#endif
+#ifdef HAVE_SYS_STAT_H
+# include <sys/stat.h>
+#endif
 
 #if HAVE_AQUA
 extern int (*ptr_CocoaSystem)(char*);
 extern	Rboolean useaqua;
 #endif
 
-Rboolean attribute_hidden R_FileExists(char *path)
+Rboolean attribute_hidden R_FileExists(const char *path)
 {
     struct stat sb;
     return stat(R_ExpandFileName(path), &sb) == 0;
 }
 
-double attribute_hidden R_FileMtime(char *path)
+double attribute_hidden R_FileMtime(const char *path)
 {
     struct stat sb;
     if (stat(R_ExpandFileName(path), &sb) != 0)
 	error(_("cannot determine file modification time of '%s'"), path);
     return sb.st_mtime;
 }
-#else
-Rboolean attribute_hidden R_FileExists(char *path)
-{
-    error(_("file existence is not available on this system"));
-}
-
-double attribute_hidden R_FileMtime(char *path)
-{
-    error(_("file modification time is not available on this system"));
-    return 0.0; /* not reached */
-}
-#endif
 
     /*
      *  Unix file names which begin with "." are invisible.
      */
 
-Rboolean attribute_hidden R_HiddenFile(char *name)
+Rboolean attribute_hidden R_HiddenFile(const char *name)
 {
     if (name && name[0] != '.') return 0;
     else return 1;
@@ -109,6 +96,7 @@ FILE *R_fopen(const char *filename, const char *mode)
 
    On NT-based versions of Windows, file names are stored in 'Unicode'
    (UCS-2), and _wfopen is provided to access them by UCS-2 names.
+   This requires NT, so is currently disabled.
 */
 
 #if 0 && defined(Win32)
@@ -139,7 +127,7 @@ FILE *RC_fopen(const SEXP fn, const char *mode, const Rboolean expand)
 #else
 FILE *RC_fopen(const SEXP fn, const char *mode, const Rboolean expand)
 {
-    char *filename = translateChar(fn);
+    const char *filename = translateChar(fn);
     if(!filename) return NULL;
     if(expand) return fopen(R_ExpandFileName(filename), mode);
     else return fopen(filename, mode);
@@ -160,41 +148,34 @@ char *R_HomeDir()
 
 SEXP attribute_hidden do_interactive(SEXP call, SEXP op, SEXP args, SEXP rho)
 {
-    SEXP rval;
-
-    rval=allocVector(LGLSXP, 1);
-    LOGICAL(rval)[0]= (R_Interactive) ? 1 : 0;
-    return rval;
+    return ScalarLogical( (R_Interactive) ? 1 : 0 );
 }
 
 SEXP attribute_hidden do_tempdir(SEXP call, SEXP op, SEXP args, SEXP env)
 {
-    SEXP  ans;
-
-    PROTECT(ans = allocVector(STRSXP, 1));
-    SET_STRING_ELT(ans, 0, mkChar(R_TempDir));
-    UNPROTECT(1);
-    return (ans);
+    checkArity(op, args);
+    return mkString(R_TempDir);
 }
 
 
 SEXP attribute_hidden do_tempfile(SEXP call, SEXP op, SEXP args, SEXP env)
 {
     SEXP  ans, pattern, tempdir;
-    char *tn, *td, *tm;
+    const char *tn, *td;
+    char *tm;
     int i, n1, n2, slen;
 
     checkArity(op, args);
     pattern = CAR(args); n1 = length(pattern);
     tempdir = CADR(args); n2 = length(tempdir);
     if (!isString(pattern))
-        errorcall(call, _("invalid filename pattern"));
+        error(_("invalid filename pattern"));
     if (!isString(tempdir))
-        errorcall(call, _("invalid '%s' value"), "tempdir");
+        error(_("invalid '%s' value"), "tempdir");
     if (n1 < 1)
-	errorcall(call, _("no 'pattern'"));
+	error(_("no 'pattern'"));
     if (n2 < 1)
-	errorcall(call, _("no 'tempdir'"));
+	error(_("no 'tempdir'"));
     slen = (n1 > n2) ? n1 : n2;
     PROTECT(ans = allocVector(STRSXP, slen));
     for(i = 0; i < slen; i++) {
@@ -210,7 +191,7 @@ SEXP attribute_hidden do_tempfile(SEXP call, SEXP op, SEXP args, SEXP env)
 }
 
 #ifdef HAVE_POPEN
-FILE *R_popen(char *command, char *type)
+FILE *R_popen(const char *command, const char *type)
 {
     FILE *fp;
 #ifdef __APPLE_CC__
@@ -228,7 +209,7 @@ FILE *R_popen(char *command, char *type)
 }
 #endif /* HAVE_POPEN */
 
-int R_system(char *command)
+int R_system(const char *command)
 {
     int val;
 #ifdef __APPLE_CC__
@@ -238,8 +219,12 @@ int R_system(char *command)
     sigaddset(&ss, SIGPROF);
     sigprocmask(SIG_BLOCK, &ss,  NULL);
 #ifdef HAVE_AQUA
-    if(useaqua)
-	val = ptr_CocoaSystem(command);
+    char *cmdcpy;
+    if(useaqua) {
+        /* FIXME, is Cocoa's interface not const char*? */
+        cmdcpy = acopy_string(command);
+	val = ptr_CocoaSystem(cmdcpy);
+    }
     else
 #endif
     val = system(command);
@@ -250,10 +235,7 @@ int R_system(char *command)
     return val;
 }
 
-#ifdef Win32
-# define WIN32_LEAN_AND_MEAN 1
-# include <windows.h>
-#elif defined(__APPLE__)
+#if defined(__APPLE__)
 # include <crt_externs.h>
 # define environ (*_NSGetEnviron())
 #else
@@ -269,26 +251,18 @@ SEXP attribute_hidden do_getenv(SEXP call, SEXP op, SEXP args, SEXP env)
     checkArity(op, args);
 
     if (!isString(CAR(args)))
-	errorcall(call, _("wrong type for argument"));
+	error(_("wrong type for argument"));
 
     if (!isString(CADR(args)) || LENGTH(CADR(args)) != 1)
-	errorcall(call, _("wrong type for argument"));
+	error(_("wrong type for argument"));
 
     i = LENGTH(CAR(args));
     if (i == 0) {
-#ifdef Win32
-	char **e;
-	for (i = 0, e = _environ; *e != NULL; i++, e++);
-	PROTECT(ans = allocVector(STRSXP, i));
-	for (i = 0, e = _environ; *e != NULL; i++, e++)
-	    SET_STRING_ELT(ans, i, mkChar(*e));
-#else
 	char **e;
 	for (i = 0, e = environ; *e != NULL; i++, e++);
 	PROTECT(ans = allocVector(STRSXP, i));
 	for (i = 0, e = environ; *e != NULL; i++, e++)
 	    SET_STRING_ELT(ans, i, mkChar(*e));
-#endif
     } else {
 	PROTECT(ans = allocVector(STRSXP, i));
 	for (j = 0; j < i; j++) {
@@ -308,7 +282,7 @@ SEXP attribute_hidden do_getenv(SEXP call, SEXP op, SEXP args, SEXP env)
 }
 
 #if !defined(HAVE_SETENV) && defined(HAVE_PUTENV)
-static int Rputenv(char *nm, char *val)
+static int Rputenv(const char *nm, const char *val)
 {
     char *buf;
     buf = (char *) malloc((strlen(nm) + strlen(val) + 2) * sizeof(char));
@@ -330,11 +304,11 @@ SEXP attribute_hidden do_setenv(SEXP call, SEXP op, SEXP args, SEXP env)
     checkArity(op, args);
 
     if (!isString(nm = CAR(args)))
-	errorcall(call, _("wrong type for argument"));
+	error(_("wrong type for argument"));
     if (!isString(vars = CADR(args)))
-	errorcall(call, _("wrong type for argument"));
+	error(_("wrong type for argument"));
     if(LENGTH(nm) != LENGTH(vars))
-	errorcall(call, _("wrong length for argument"));
+	error(_("wrong length for argument"));
 
     n = LENGTH(vars);
     PROTECT(ans = allocVector(LGLSXP, n));
@@ -358,96 +332,73 @@ SEXP attribute_hidden do_setenv(SEXP call, SEXP op, SEXP args, SEXP env)
 
 SEXP attribute_hidden do_unsetenv(SEXP call, SEXP op, SEXP args, SEXP env)
 {
-#if defined(HAVE_UNSETENV) || defined(HAVE_PUTENV_UNSET) || defined(HAVE_PUTENV_UNSET2)
     int i, n;
     SEXP ans, vars;
 
     checkArity(op, args);
 
     if (!isString(vars = CAR(args)))
-	errorcall(call, _("wrong type for argument"));
+        error(_("wrong type for argument"));
     n = LENGTH(vars);
+
+#if defined(HAVE_UNSETENV) || defined(HAVE_PUTENV_UNSET) || defined(HAVE_PUTENV_UNSET2)
 #ifdef HAVE_UNSETENV
     for (i = 0; i < n; i++) unsetenv(translateChar(STRING_ELT(vars, i)));
 #elif defined(HAVE_PUTENV_UNSET)
-    for (i = 0; i < n; i++) putenv(translateChar(STRING_ELT(vars, i)));
-#elif defined(HAVE_PUTENV_UNSET2)
-    {
+    for (i = 0; i < n; i++) {
 	char buf[1000];
-	for (i = 0; i < n; i++) {
-	    snprintf(buf, 1000, "%s=", translateChar(STRING_ELT(vars, i)));
-	    putenv(buf);
-	}
+	snprintf(buf, 1000, "%s",  translateChar(STRING_ELT(vars, i)));
+	putenv(buf);
+    }
+#elif defined(HAVE_PUTENV_UNSET2)
+    for (i = 0; i < n; i++) {
+	char buf[1000];
+	snprintf(buf, 1000, "%s=", translateChar(STRING_ELT(vars, i)));
+	putenv(buf);
     }
 #endif
-    ans = allocVector(LGLSXP, n);
-    for (i = 0; i < n; i++)
-	LOGICAL(ans)[i] = !getenv(translateChar(STRING_ELT(vars, i)));
-    return ans;
+
+#elif defined(HAVE_PUTENV) || defined(HAVE_SETENV)
+    warning(_("this system cannot unset environment variables: setting to \"\""));
+    n = LENGTH(vars);
+    for (i = 0; i < n; i++) {
+#ifdef HAVE_SETENV
+	setenv(translateChar(STRING_ELT(vars, i)), "", 1);
 #else
-        error(_("'Sys.unsetenv' is not available on this system"));
-    return R_NilValue; /* -Wall */
+	Rputenv(translateChar(STRING_ELT(vars, i)), "");
 #endif
+    }
+
+#else
+    warning(_("'Sys.unsetenv' is not available on this system"));
+#endif
+
+    PROTECT(ans = allocVector(LGLSXP, n));
+    for (i = 0; i < n; i++)
+        LOGICAL(ans)[i] = !getenv(translateChar(STRING_ELT(vars, i)));
+    UNPROTECT(1);
+    return ans;
 }
 
-
-#if defined(HAVE_ICONV_H) && defined(ICONV_LATIN1) && !defined(Win32)
+#if defined(HAVE_ICONV_H) && defined(ICONV_LATIN1)
 /* Unfortunately glibc and Solaris differ in the const in the iconv decl.
    libiconv agrees with Solaris here.
  */
-# define const
 # include <iconv.h>
-# undef const
 #endif
-
-#ifdef Win32
-static DL_FUNC ptr_iconv, ptr_iconv_open, ptr_iconv_close, ptr_iconvlist;
-
-static void iconv_Init(void)
-{
-    static int initialized = 0;
-    char dllpath[PATH_MAX];
-    snprintf(dllpath, PATH_MAX, "%s%smodules%s%s%s", getenv("R_HOME"),
-	     FILESEP, FILESEP, "iconv", SHLIB_EXT);
-    if(!initialized) {
-	int res = R_moduleCdynload("iconv", 1, 1);
-	initialized = res ? 1 : -1;
-	if(initialized > 0) {
-	    ptr_iconv = R_FindSymbol("libiconv", "iconv", NULL);
-	    ptr_iconv_open = R_FindSymbol("libiconv_open", "iconv", NULL);
-	    ptr_iconv_close = R_FindSymbol("libiconv_close", "iconv", NULL);
-	    ptr_iconvlist = R_FindSymbol("libiconvlist", "iconv", NULL);
-	    if(!ptr_iconv)
-		error(_("failed to find symbols in iconv.dll"));
-	}
-    }
-    if(initialized < 0)
-	error(_("iconv.dll is not available on this system"));
-}
-#undef iconv
-#undef iconv_open
-#undef iconv_close
-#undef iconvlist
-typedef void* iconv_t;
-#define iconv(a,b,c,d,e) ((size_t)(*ptr_iconv)(a,b,c,d,e))
-#define iconv_open(a, b) ((iconv_t)(*ptr_iconv_open)(a,b))
-#define iconv_close(a) ((int)(*ptr_iconv_close)(a))
-#define iconvlist (*ptr_iconvlist)
-#endif /* Win32 */
-
 
 #ifdef HAVE_ICONVLIST
 static unsigned int cnt;
 
 static int
-count_one (unsigned int namescount, char * *names, void *data)
+count_one (unsigned int namescount, const char * const *names, void *data)
 {
     cnt += namescount;
     return 0;
 }
 
 static int
-write_one (unsigned int namescount, char * *names, void *data)
+write_one (unsigned int namescount, const char * const *names, void *data)
 {
   unsigned int i;
   SEXP ans = (SEXP) data;
@@ -467,16 +418,13 @@ SEXP attribute_hidden do_iconv(SEXP call, SEXP op, SEXP args, SEXP env)
     SEXP ans, x = CAR(args);
     void * obj;
     int i, j;
-    char *inbuf; /* Solaris headers have const char*  here */
+    const char *inbuf;
     char *outbuf;
-    char *sub;
+    const char *sub;
     size_t inb, outb, res;
     R_StringBuffer cbuff = {NULL, 0, MAXELTSIZE};
 
     checkArity(op, args);
-#ifdef Win32
-    iconv_Init();
-#endif
     if(isNull(x)) {  /* list locales */
 #ifdef HAVE_ICONVLIST
 	cnt = 0;
@@ -485,20 +433,20 @@ SEXP attribute_hidden do_iconv(SEXP call, SEXP op, SEXP args, SEXP env)
 	cnt = 0;
 	iconvlist(write_one, (void *)ans);
 #else
-    PROTECT(ans = R_NilValue);
+	PROTECT(ans = R_NilValue);
 #endif
     } else {
-	char *from, *to;
+	const char *from, *to;
 	Rboolean isLatin1 = FALSE, isUTF8 = FALSE;
 
 	if(TYPEOF(x) != STRSXP)
-	    errorcall(call, _("'x' must be a character vector"));
+	    error(_("'x' must be a character vector"));
 	if(!isString(CADR(args)) || length(CADR(args)) != 1)
-	    errorcall(call, _("invalid '%s' argument"), "from");
+	    error(_("invalid '%s' argument"), "from");
 	if(!isString(CADDR(args)) || length(CADDR(args)) != 1)
-	    errorcall(call, _("invalid '%s' argument"), "to");
+	    error(_("invalid '%s' argument"), "to");
 	if(!isString(CADDDR(args)) || length(CADDDR(args)) != 1)
-	    errorcall(call, _("invalid '%s' argument"), "sub");
+	    error(_("invalid '%s' argument"), "sub");
 	if(STRING_ELT(CADDDR(args), 0) == NA_STRING) sub = NULL;
 	else sub = translateChar(STRING_ELT(CADDDR(args), 0));
 	from = CHAR(STRING_ELT(CADR(args), 0)); /* ASCII */
@@ -510,9 +458,9 @@ SEXP attribute_hidden do_iconv(SEXP call, SEXP op, SEXP args, SEXP env)
 	if(streql(to, "") && known_to_be_utf8) isUTF8 = TRUE;
 	obj = Riconv_open(to, from);
 	if(obj == (iconv_t)(-1))
-	    errorcall(call, _("unsupported conversion"));
+	    error(_("unsupported conversion"));
 	PROTECT(ans = duplicate(x));
-	R_AllocStringBuffer(0, &cbuff);  /* just default */
+	R_AllocStringBuffer(0, &cbuff);  /* 0 -> default */
 	for(i = 0; i < LENGTH(x); i++) {
 	top_of_loop:
 	    inbuf = CHAR(STRING_ELT(x, i)); inb = strlen(inbuf);
@@ -521,7 +469,7 @@ SEXP attribute_hidden do_iconv(SEXP call, SEXP op, SEXP args, SEXP env)
 	    Riconv (obj, NULL, NULL, &outbuf, &outb);
         next_char:
 	    /* Then convert input  */
-	    res = iconv(obj, &inbuf , &inb, &outbuf, &outb);
+	    res = Riconv(obj, &inbuf , &inb, &outbuf, &outb);
 	    *outbuf = '\0';
 	    /* other possible error conditions are incomplete
 	       and invalid multibyte chars */
@@ -542,8 +490,9 @@ SEXP attribute_hidden do_iconv(SEXP call, SEXP op, SEXP args, SEXP env)
 			R_AllocStringBuffer(2*cbuff.bufsize, &cbuff);
 			goto top_of_loop;
 		    }
-		    for(j = 0; j < strlen(sub); j++) *outbuf++ = sub[j];
-		    outb -= strlen(sub);
+		    memcpy(outbuf, sub, j = strlen(sub)); 
+		    outbuf += j;
+		    outb -= j;
 		}
 		inbuf++; inb--;
 		goto next_char;
@@ -568,11 +517,10 @@ SEXP attribute_hidden do_iconv(SEXP call, SEXP op, SEXP args, SEXP env)
 }
 
 #if defined(HAVE_ICONV) && defined(ICONV_LATIN1)
-void * Riconv_open (char* tocode, char* fromcode)
+void * Riconv_open (const char* tocode, const char* fromcode)
 {
 #ifdef Win32
-    char *cp = "UTF-8";
-    iconv_Init();
+    const char *cp = "UTF-8";
 #ifndef SUPPORT_UTF8
     cp = locale2charset(NULL);
 #endif
@@ -580,14 +528,21 @@ void * Riconv_open (char* tocode, char* fromcode)
     else if(strcmp(fromcode, "") == 0) return iconv_open(tocode, cp);
     else return iconv_open(tocode, fromcode);
 #else
+    /* const char * is right according to POSIX, but libiconv
+       plays games so that on Solaris 10 it needs the casts */
     return iconv_open(tocode, fromcode);
 #endif
 }
 
-size_t Riconv (void *cd, char **inbuf, size_t *inbytesleft,
+#ifndef ICONV_CONST
+# define ICONV_CONST
+#endif
+
+size_t Riconv (void *cd, const char **inbuf, size_t *inbytesleft,
 	       char **outbuf, size_t *outbytesleft)
 {
-    return iconv((iconv_t) cd, inbuf, inbytesleft, outbuf, outbytesleft);
+    /* here libiconv has const char **, glibc has const ** for inbuf */
+    return iconv((iconv_t) cd, (ICONV_CONST char **)inbuf, inbytesleft, outbuf, outbytesleft);
 }
 
 int Riconv_close (void *cd)
@@ -597,10 +552,11 @@ int Riconv_close (void *cd)
 
 static void *latin1_obj = NULL, *utf8_obj=NULL;
 
-char *translateChar(SEXP x)
+const char *translateChar(SEXP x)
 {
     void * obj;
-    char *inbuf, *outbuf, *ans = CHAR(x), *p;
+    const char *inbuf, *ans = CHAR(x);
+    char *outbuf, *p;
     size_t inb, outb, res;
     R_StringBuffer cbuff = {NULL, 0, MAXELTSIZE};
 
@@ -635,7 +591,7 @@ top_of_loop:
     Riconv (obj, NULL, NULL, &outbuf, &outb);
 next_char:
     /* Then convert input  */
-    res = iconv(obj, &inbuf , &inb, &outbuf, &outb);
+    res = Riconv(obj, &inbuf , &inb, &outbuf, &outb);
     if(res == -1 && errno == E2BIG) {
 	R_AllocStringBuffer(2*cbuff.bufsize, &cbuff);
 	goto top_of_loop;
@@ -657,14 +613,14 @@ next_char:
     return p;
 }
 #else
-void * Riconv_open (char* tocode, char* fromcode)
+void * Riconv_open (const char* tocode, const char* fromcode)
 {
     error(_("'iconv' is not available on this system"));
     return (void *)-1;
 }
 
-size_t Riconv (void *cd, char **inbuf, size_t *inbytesleft,
-	       char **outbuf, size_t *outbytesleft)
+size_t Riconv (void *cd, const char **inbuf, size_t *inbytesleft,
+               char **outbuf, size_t *outbytesleft)
 {
     error(_("'iconv' is not available on this system"));
     return 0;
@@ -676,7 +632,7 @@ int Riconv_close (void * cd)
     return -1;
 }
 
-char *translateChar(SEXP x)
+const char *translateChar(SEXP x)
 {
     return CHAR(x);
 }
@@ -690,6 +646,11 @@ char *translateChar(SEXP x)
 #   include <unistd.h>
 #  endif
 # endif
+
+#ifdef Win32
+# define WIN32_LEAN_AND_MEAN 1
+# include <windows.h> /* For GetShortPathName */
+#endif
 
 #if !defined(S_IFDIR) && defined(__S_IFDIR)
 # define S_IFDIR __S_IFDIR
@@ -789,34 +750,6 @@ void attribute_hidden InitTempDir()
 	Sys_TempDir = R_TempDir;
     }
 }
-
-#ifdef HAVE_GETTIMEOFDAY
-# if HAVE_SYS_TIME_H
-#  include <sys/time.h>
-# endif
-#else
-# ifdef HAVE_TIME_H
-# include <time.h>
-# endif
-#endif
-
-void attribute_hidden InitRand()
-{
-    unsigned int seed;
-#if HAVE_GETTIMEOFDAY
-  {
-    struct timeval tv;
-    gettimeofday (&tv, NULL);
-    seed = ((uint64_t) tv.tv_usec << 16) ^ tv.tv_sec;
-  }
-#elif HAVE_TIME
-    seed = (unsigned int) time(NULL);
-#else
-    /* unlikely, but use random contents */
-#endif
-    srand(seed);
-}
-
 
 char * R_tmpnam(const char * prefix, const char * tempdir)
 {

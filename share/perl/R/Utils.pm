@@ -1,3 +1,20 @@
+## Copyright (C) 2000-2007 R Development Core Team
+##
+## This program is free software; you can redistribute it and/or modify
+## it under the terms of the GNU General Public License as published by
+## the Free Software Foundation; either version 2, or (at your option)
+## any later version.
+##
+## This program is distributed in the hope that it will be useful, but
+## WITHOUT ANY WARRANTY; without even the implied warranty of
+## MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE. See the GNU
+## General Public License for more details.
+##
+## A copy of the GNU General Public License is available at
+## http://www.r-project.org/Licenses/
+
+## Send any bug reports to r-bugs@r-project.org.
+
 package R::Utils;
 
 use Carp;
@@ -198,12 +215,13 @@ sub list_files {
 ### * list_files_with_exts
 
 sub list_files_with_exts {
-    my ($dir, $exts) = @_;
+    my ($dir, $exts, $all_files) = @_;
     my @files;
     $exts = ".*" unless $exts;
     opendir(DIR, $dir) or die "cannot opendir $dir: $!";
     @files = grep { /\.$exts$/ && -f "$dir/$_" } readdir(DIR);
     closedir(DIR);
+    @files = grep(!/^\./, @files) unless($all_files);
     ## We typically want the paths to the files, see also the R variant
     ## list_files_with_exts() used in some of the QC tools.
     my @paths;
@@ -448,23 +466,41 @@ sub check_package_description {
 	}
     }
 
+    ## check the encoding
+    {
+	my $Rcmd = "tools:::.check_package_description_encoding(\"$dfile\")";
+	my @out = R_runR($Rcmd, "--vanilla --quiet",
+			 "R_DEFAULT_PACKAGES=NULL");
+	@out = grep(!/^\>/, @out);
+	if(scalar(@out) > 0) {
+	    rmtree(dirname($dir)) if($in_bundle);
+	    $log->warning();
+	    $log->print(join("\n", @out) . "\n");
+	}
+	else {
+	    $log->result("OK");
+	}
+    }
+
     rmtree(dirname($dir)) if($in_bundle);    
 
-    ## Also check whether the package name has two dots, which is not
-    ## portable as it is not guaranteed to work in Windows.  (Do this
-    ## here as R currently turns non-empty package meta data check
-    ## results into installation errors.)
-    if(grep(/\..*\./, $description->{"Package"})) {
-	$log->warning();
-	$log->print(wrap("", "",
-			 ("Package name contains more than one dot.\n",
-			  "Names should contain at most one dot to",
-			  "be guaranteed to portably work on all",
-			  "supported platforms.\n")));
-    }
-    else {
-	$log->result("OK");
-    }
+#     ## This is no longer needed
+#
+#     ## Also check whether the package name has two dots, which is not
+#     ## portable as it is not guaranteed to work in Windows.  (Do this
+#     ## here as R currently turns non-empty package meta data check
+#     ## results into installation errors.)
+#     if(grep(/\..*\./, $description->{"Package"})) {
+# 	$log->warning();
+# 	$log->print(wrap("", "",
+# 			 ("Package name contains more than one dot.\n",
+# 			  "Names should contain at most one dot to",
+# 			  "be guaranteed to portably work on all",
+# 			  "supported platforms.\n")));
+#     }
+#     else {
+# 	$log->result("OK");
+#     }
 }
 
 

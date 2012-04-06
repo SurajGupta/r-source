@@ -1,3 +1,8 @@
+% File src/library/graphics/man/plothistogram.Rd
+% Part of the R package, http://www.R-project.org
+% Copyright 1995-2007 R Core Development Team
+% Distributed under GPL 2 or later
+
 \name{plot.histogram}
 \alias{plot.histogram}
 \alias{lines.histogram}
@@ -24,7 +29,7 @@
   \item{freq}{logical; if \code{TRUE}, the
     histogram graphic is to present a representation of frequencies, i.e,
     \code{x$counts}; if \code{FALSE}, \emph{relative} frequencies
-    (\dQuote{probabilities}), i.e., \code{x$density}, are plotted.  The
+    (probabilities), i.e., \code{x$density}, are plotted.  The
     default is true for equidistant \code{breaks} and false otherwise.}
   \item{col}{a colour to be used to fill the bars.  The default of
     \code{NULL} yields unfilled bars.}
@@ -53,7 +58,7 @@
   \code{\link{density}}.
 }
 \examples{
-(wwt <- hist(women$weight, nc= 7, plot = FALSE))
+(wwt <- hist(women$weight, nclass = 7, plot = FALSE))
 plot(wwt, labels = TRUE) # default main & xlab using wwt$xname
 plot(wwt, border = "dark blue", col = "light blue",
      main = "Histogram of 15 women's weights", xlab = "weight [pounds]")

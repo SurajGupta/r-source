@@ -15,9 +15,8 @@
   General Public License for more details.
 
   You should have received a copy of the GNU General Public License
-  along with this program; if not, write to the Free Software
-  Foundation, Inc., 51 Franklin Street, Fifth Floor, Boston, MA 02110-1301,
-  USA.
+  along with this program; if not, a copy is available at
+  http://www.r-project.org/Licenses/
  */
 
 /* <UTF8> char here is handled as a whole string */
@@ -52,7 +51,8 @@ void attribute_hidden R_InitialData(void)
 }
 
 
-FILE *R_OpenLibraryFile(char *file)
+attribute_hidden
+FILE *R_OpenLibraryFile(const char *file)
 {
     char buf[256];
     FILE *fp;
@@ -62,13 +62,15 @@ FILE *R_OpenLibraryFile(char *file)
     return fp;
 }
 
-char *R_LibraryFileName(char *file, char *buf, size_t bsize)
+attribute_hidden
+char *R_LibraryFileName(const char *file, char *buf, size_t bsize)
 {
     if (snprintf(buf, bsize, "%s/library/base/R/%s", R_Home, file) < 0)
 	error(_("R_LibraryFileName: buffer too small"));
     return buf;
 }     
      
+attribute_hidden
 FILE *R_OpenSysInitFile(void)
 {
     char buf[256];
@@ -79,6 +81,7 @@ FILE *R_OpenSysInitFile(void)
     return fp;
 }
 
+attribute_hidden
 FILE *R_OpenSiteFile(void)
 {
     char buf[256];

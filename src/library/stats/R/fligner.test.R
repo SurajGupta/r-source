@@ -1,3 +1,19 @@
+#  File src/library/stats/R/fligner.test.R
+#  Part of the R package, http://www.R-project.org
+#
+#  This program is free software; you can redistribute it and/or modify
+#  it under the terms of the GNU General Public License as published by
+#  the Free Software Foundation; either version 2 of the License, or
+#  (at your option) any later version.
+#
+#  This program is distributed in the hope that it will be useful,
+#  but WITHOUT ANY WARRANTY; without even the implied warranty of
+#  MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
+#  GNU General Public License for more details.
+#
+#  A copy of the GNU General Public License is available at
+#  http://www.r-project.org/Licenses/
+
 fligner.test <- function(x, ...) UseMethod("fligner.test")
 
 fligner.test.default <-
@@ -44,7 +60,7 @@ function(x, g, ...)
     STATISTIC <- sum(tapply(a, g, "sum")^2 / tapply(a, g, "length"))
     STATISTIC <- (STATISTIC - n * mean(a)^2) / var(a)
     PARAMETER <- k - 1
-    PVAL <- pchisq(STATISTIC, PARAMETER, lower = FALSE)
+    PVAL <- pchisq(STATISTIC, PARAMETER, lower.tail = FALSE)
     names(STATISTIC) <- "Fligner-Killeen:med chi-squared"
     names(PARAMETER) <- "df"
     METHOD <- "Fligner-Killeen test of homogeneity of variances"

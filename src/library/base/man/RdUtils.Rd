@@ -1,3 +1,8 @@
+% File src/library/base/man/RdUtils.Rd
+% Part of the R package, http://www.R-project.org
+% Copyright 1995-2007 R Core Development Team
+% Distributed under GPL 2 or later
+
 \name{RdUtils}
 \alias{Rdconv}
 \alias{Rd2txt}
@@ -51,13 +56,7 @@
   They are intended as a starting point for hand-tuning.
 }
 \seealso{
-  The chapter \dQuote{Processing Rd format} in \dQuote{Writing \R
-    Extensions}
-#ifdef unix
-  (see the \file{doc/manual} subdirectory of the \R source tree).
-#endif
-#ifdef windows
-  (see the Manuals sub-menu of the Help menu on the console).
-#endif
+  The chapter \dQuote{Processing Rd format} in the \dQuote{Writing \R
+    Extensions} manual.
 }
 \keyword{utilities}

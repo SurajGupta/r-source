@@ -1,3 +1,8 @@
+% File src/library/datasets/man/swiss.Rd
+% Part of the R package, http://www.R-project.org
+% Copyright 1995-2007 R Core Development Team
+% Distributed under GPL 2 or later
+
 \name{swiss}
 \docType{data}
 \alias{swiss}
@@ -12,15 +17,14 @@
   is in percent, i.e., in \eqn{[0,100]}.
 
   \tabular{rll}{
-    [,1] \tab Fertility \tab \eqn{I_g}{Ig}, \dQuote{common standardized
+    [,1] \tab Fertility \tab \eqn{I_g}{Ig}, \sQuote{common standardized
     fertility measure}\cr
     [,2] \tab Agriculture\tab \% of males involved in agriculture
     as occupation\cr
-    [,3] \tab Examination\tab \% \dQuote{draftees} receiving highest mark
+    [,3] \tab Examination\tab \% draftees receiving highest mark
     on army examination\cr
-    [,4] \tab Education \tab \% education beyond primary school for
-    \dQuote{draftees}.\cr
-    [,5] \tab Catholic \tab \% catholic (as opposed to \dQuote{protestant}).\cr
+    [,4] \tab Education \tab \% education beyond primary school for draftees.\cr
+    [,5] \tab Catholic \tab \% \sQuote{catholic} (as opposed to \sQuote{protestant}).\cr
     [,6] \tab Infant.Mortality\tab live births who live less than 1
     year.
   }
@@ -32,7 +36,7 @@
   (paraphrasing Mosteller and Tukey):
 
   Switzerland, in 1888, was entering a period known as the
-  \dQuote{demographic transition}; i.e., its fertility was beginning to
+  \emph{demographic transition}; i.e., its fertility was beginning to
   fall from the high level typical of underdeveloped countries.
 
   The data collected are for 47 French-speaking \dQuote{provinces} at
@@ -67,6 +71,7 @@
   are averages for 1887, 1888 and 1889.
 }
 \examples{
+require(stats); require(graphics)
 pairs(swiss, panel = panel.smooth, main = "swiss data",
       col = 3 + (swiss$Catholic > 50))
 summary(lm(Fertility ~ . , data = swiss))

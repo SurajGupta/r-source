@@ -13,8 +13,8 @@
  *  GNU General Public License for more details.
  *
  *  You should have received a copy of the GNU General Public License
- *  along with this program; if not, write to the Free Software
- *  Foundation, Inc., 51 Franklin Street Fifth Floor, Boston, MA 02110-1301  USA
+ *  along with this program; if not, a copy is available at
+ *  http://www.r-project.org/Licenses/
  */
 
 /* <UTF8> char here is either ASCII or handled as a whole.
@@ -593,6 +593,20 @@ SEXP LJOINget(R_GE_linejoin ljoin)
 }
 
 /****************************************************************
+ * Code to convert string colour name/description to internal colour
+ ****************************************************************
+ */
+
+unsigned int R_GE_str2col(const char *s) {
+    /*
+     * Call the one in graphics.c 
+     * Ideally, move colour stuff from graphics.c to here
+     * and have the traditional graphics code call this.
+     */
+    return str2col(s);
+}
+
+/****************************************************************
  * Code to retrieve current clipping rect from device
  ****************************************************************
  */
@@ -809,7 +823,7 @@ static void CScliplines(int n, double *x, double *y,
     double *xx, *yy;
     double x1, y1, x2, y2;
     cliprect cr;
-    char *vmax = vmaxget();
+    void *vmax = vmaxget();
 
     if (toDevice)
 	getClipRectToDevice(&cr.xl, &cr.yb, &cr.xr, &cr.yt, dd);
@@ -1118,7 +1132,7 @@ void GEPolygon(int n, double *x, double *y,
      * Save (and reset below) the heap pointer to clean up
      * after any R_alloc's done by functions I call.
      */
-    char *vmaxsave = vmaxget();
+    void *vmaxsave = vmaxget();
     if (gc->lty == LTY_BLANK)
 	/* "transparent" border */
 	gc->col = R_TRANWHITE;
@@ -1219,7 +1233,7 @@ void GECircle(double x, double y, double radius,
 	      R_GE_gcontext *gc,
 	      GEDevDesc *dd)
 {
-    char *vmax;
+    void *vmax;
     double *xc, *yc;
     int result;
 
@@ -1341,7 +1355,7 @@ void GERect(double x0, double y0, double x1, double y1,
 	    R_GE_gcontext *gc,
 	    GEDevDesc *dd)
 {
-    char *vmax;
+    void *vmax;
     double *xc, *yc;
     int result;
 
@@ -1789,7 +1803,7 @@ SEXP GEXspline(int n, double *x, double *y, double *s, Rboolean open,
      * Save (and reset below) the heap pointer to clean up
      * after any R_alloc's done by functions I call.
      */
-    char *vmaxsave = vmaxget();
+    void *vmaxsave = vmaxget();
     if (open) {
       compute_open_spline(n, x, y, s, repEnds, LOW_PRECISION, dd);
       if (draw)
@@ -2274,7 +2288,7 @@ void GEMetricInfo(int c,
  * GEStrWidth
  ****************************************************************
  */
-double GEStrWidth(char *str,
+double GEStrWidth(const char *str,
 		  R_GE_gcontext *gc,
 		  GEDevDesc *dd)
 {
@@ -2285,13 +2299,14 @@ double GEStrWidth(char *str,
     if (vfontcode >= 0) {
 	gc->fontfamily[0] = vfontcode;
 	gc->fontface = VFontFaceCode(vfontcode, gc->fontface);
-	return R_GE_VStrWidth((unsigned char *) str, gc, dd);
+	return R_GE_VStrWidth(str, gc, dd);
     } else {
 	double w;
 	char *sbuf = NULL;
 	w = 0;
 	if(str && *str) {
-	    char *s, *sb;
+	    const char *s;
+	    char *sb;
 	    double wdash;
 	    sbuf = (char*) R_alloc(strlen(str) + 1, sizeof(char));
 	    sb = sbuf;
@@ -2320,7 +2335,7 @@ double GEStrWidth(char *str,
  * GEStrHeight
  ****************************************************************
  */
-double GEStrHeight(char *str,
+double GEStrHeight(const char *str,
 		   R_GE_gcontext *gc,
 		   GEDevDesc *dd)
 {
@@ -2331,10 +2346,10 @@ double GEStrHeight(char *str,
     if (vfontcode >= 0) {
 	gc->fontfamily[0] = vfontcode;
 	gc->fontface = VFontFaceCode(vfontcode, gc->fontface);
-	return R_GE_VStrHeight((unsigned char *) str, gc, dd);
+	return R_GE_VStrHeight(str, gc, dd);
     } else {
 	double h;
-	char *s;
+	const char *s;
 	double asc, dsc, wid;
 	int n;
 	/* Count the lines of text minus one */
@@ -2679,15 +2694,15 @@ SEXP attribute_hidden do_recordGraphics(SEXP call, SEXP op, SEXP args, SEXP env)
     SEXP list = CADR(args);
     SEXP parentenv = CADDR(args);
     if (!isLanguage(code))
-      errorcall(call, _("'expr' argument must be an expression"));
+	error(_("'expr' argument must be an expression"));
     if (TYPEOF(list) != VECSXP)
-      errorcall(call, _("'list' argument must be a list"));
+	error(_("'list' argument must be a list"));
     if (isNull(parentenv)) {
 	error(_("use of NULL environment is defunct"));
 	parentenv = R_BaseEnv;
     } else        
     if (!isEnvironment(parentenv))
-      errorcall(call, _("'env' argument must be an environment"));
+	error(_("'env' argument must be an environment"));
     /*
      * This conversion of list to env taken from do_eval
      */

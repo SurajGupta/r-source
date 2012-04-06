@@ -1,3 +1,8 @@
+% File src/library/graphics/man/hist.POSIXt.Rd
+% Part of the R package, http://www.R-project.org
+% Copyright 1995-2007 R Core Development Team
+% Distributed under GPL 2 or later
+
 \name{hist.POSIXt}
 \alias{hist.POSIXt}
 \alias{hist.Date}
@@ -34,7 +39,7 @@
   \item{freq}{logical; if \code{TRUE}, the
     histogram graphic is a representation of frequencies, i.e,
     the \code{counts} component of the result; if \code{FALSE},
-    \emph{relative} frequencies (\dQuote{probabilities}) are plotted.}
+    \emph{relative} frequencies (probabilities) are plotted.}
   \item{start.on.monday}{logical. If \code{breaks = "weeks"}, should the
     week start on Mondays or Sundays?}
   \item{format}{for the x-axis labels. See \code{\link{strptime}}.}
@@ -51,7 +56,7 @@ hist(.leap.seconds,
      seq(ISOdate(1970, 1, 1), ISOdate(2010, 1, 1), "5 years"))
 
 ## 100 random dates in a 10-week period
-random.dates <- as.Date("2001/1/1") + 70*runif(100)
+random.dates <- as.Date("2001/1/1") + 70*stats::runif(100)
 hist(random.dates, "weeks", format = "\%d \%b")
 }
 \keyword{chron}

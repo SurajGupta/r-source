@@ -1,3 +1,8 @@
+% File src/library/stats/man/acf.Rd
+% Part of the R package, http://www.R-project.org
+% Copyright 1995-2007 R Core Development Team
+% Distributed under GPL 2 or later
+
 \name{acf}
 \alias{acf}
 \alias{ccf}
@@ -103,6 +108,8 @@ ccf(x, y, lag.max = NULL, type = c("correlation", "covariance"),
   autocorrelations of a given ARMA process.
 }
 \examples{
+require(graphics)
+
 ## Examples from Venables & Ripley
 acf(lh)
 acf(lh, type = "covariance")

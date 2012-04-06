@@ -1,3 +1,19 @@
+#  File src/library/stats/R/chisq.test.R
+#  Part of the R package, http://www.R-project.org
+#
+#  This program is free software; you can redistribute it and/or modify
+#  it under the terms of the GNU General Public License as published by
+#  the Free Software Foundation; either version 2 of the License, or
+#  (at your option) any later version.
+#
+#  This program is distributed in the hope that it will be useful,
+#  but WITHOUT ANY WARRANTY; without even the implied warranty of
+#  MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
+#  GNU General Public License for more details.
+#
+#  A copy of the GNU General Public License is available at
+#  http://www.r-project.org/Licenses/
+
 chisq.test <- function(x, y = NULL, correct = TRUE,
 		       p = rep(1/length(x), length(x)),
 		       rescale.p = FALSE, simulate.p.value = FALSE, B = 2000)
@@ -77,7 +93,7 @@ chisq.test <- function(x, y = NULL, correct = TRUE,
 		YATES <- 0
 	    STATISTIC <- sum((abs(x - E) - YATES)^2 / E)
 	    PARAMETER <- (nr - 1) * (nc - 1)
-	    PVAL <- pchisq(STATISTIC, PARAMETER, lower = FALSE)
+	    PVAL <- pchisq(STATISTIC, PARAMETER, lower.tail = FALSE)
 	}
     }
     else {
@@ -105,7 +121,7 @@ chisq.test <- function(x, y = NULL, correct = TRUE,
 	    PVAL <- (1 + sum(ss >= almost.1 * STATISTIC))/(B + 1)
 	} else {
 	    PARAMETER <- length(x) - 1
-	    PVAL <- pchisq(STATISTIC, PARAMETER, lower = FALSE)
+	    PVAL <- pchisq(STATISTIC, PARAMETER, lower.tail = FALSE)
 	}
     }
 

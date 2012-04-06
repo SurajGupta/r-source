@@ -1,3 +1,8 @@
+% File src/library/stats/man/line.Rd
+% Part of the R package, http://www.R-project.org
+% Copyright 1995-2007 R Core Development Team
+% Distributed under GPL 2 or later
+
 \name{line}
 \alias{line}
 %\alias{coef.tukeyline}
@@ -31,6 +36,8 @@ line(x, y)
   \code{\link{lm}}.
 }
 \examples{
+require(graphics)
+
 plot(cars)
 (z <- line(cars))
 abline(coef(z))

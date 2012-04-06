@@ -1,3 +1,8 @@
+% File src/library/splines/man/asVector.Rd
+% Part of the R package, http://www.R-project.org
+% Copyright 1995-2007 R Core Development Team
+% Distributed under GPL 2 or later
+
 \name{asVector}
 \alias{asVector}
 %\alias{asVector.xyVector}
@@ -27,6 +32,7 @@ asVector(object)
   \code{\link{xyVector}}
 }
 \examples{
+require(stats)
 ispl <- interpSpline( weight ~ height,  women )
 pred <- predict(ispl)
 class(pred)

@@ -1,3 +1,8 @@
+% File src/library/methods/man/slot.Rd
+% Part of the R package, http://www.R-project.org
+% Copyright 1995-2007 R Core Development Team
+% Distributed under GPL 2 or later
+
 \name{slot}
 \alias{slot}
 \alias{slot<-}
@@ -98,7 +103,7 @@ setClass("track", representation(x="numeric", y="numeric"))
 myTrack <- new("track", x = -4:4, y = exp(-4:4))
 slot(myTrack, "x")
 slot(myTrack, "y") <- log(slot(myTrack, "y"))
-str(myTrack)
+utils::str(myTrack)
 
 slotNames("track") # is the same as
 slotNames(myTrack)

@@ -1,10 +1,15 @@
+% File src/library/graphics/man/text.Rd
+% Part of the R package, http://www.R-project.org
+% Copyright 1995-2007 R Core Development Team
+% Distributed under GPL 2 or later
+
 \name{text}
 \title{Add Text to a Plot}
 \encoding{latin1}
 \usage{
 text(x, \dots)
 
-\method{text}{default} (x, y = NULL, labels = seq(along = x), adj = NULL,
+\method{text}{default} (x, y = NULL, labels = seq_along(x), adj = NULL,
      pos = NULL, offset = 0.5, vfont = NULL,
      cex = 1, col = NULL, font = NULL, \dots)
 }
@@ -41,7 +46,7 @@ text(x, \dots)
     These default to the values of the global graphical parameters in
     \code{\link{par}()}.}
   \item{\dots}{further graphical parameters (from \code{\link{par}}),
-    such as \code{family} and \code{xpd}.}
+    such as \code{srt}, \code{family} and \code{xpd}.}
 }
 \description{
   \code{text} draws the strings given in the vector \code{labels} at the

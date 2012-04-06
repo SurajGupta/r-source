@@ -1,22 +1,21 @@
 /*
-  R : A Computer Language for Statistical Data Analysis
-  Copyright (C) 1997-2007   Robert Gentleman, Ross Ihaka
-                            and the R Development Core Team
-
-  This program is free software; you can redistribute it and/or modify
-  it under the terms of the GNU General Public License as published by
-  the Free Software Foundation; either version 2 of the License, or (at
-  your option) any later version.
-
-  This program is distributed in the hope that it will be useful, but
-  WITHOUT ANY WARRANTY; without even the implied warranty of
-  MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the GNU
-  General Public License for more details.
-
-  You should have received a copy of the GNU General Public License
-  along with this program; if not, write to the Free Software
-  Foundation, Inc., 51 Franklin Street, Fifth Floor, Boston, MA 02110-1301,
-  U.S.A.
+ *   R : A Computer Language for Statistical Data Analysis
+ *   Copyright (C) 1997-2007   Robert Gentleman, Ross Ihaka
+ *                             and the R Development Core Team
+ *
+ *  This program is free software; you can redistribute it and/or modify
+ *  it under the terms of the GNU General Public License as published by
+ *  the Free Software Foundation; either version 2 of the License, or
+ *  (at your option) any later version.
+ *
+ *  This program is distributed in the hope that it will be useful,
+ *  but WITHOUT ANY WARRANTY; without even the implied warranty of
+ *  MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
+ *  GNU General Public License for more details.
+ *
+ *  You should have received a copy of the GNU General Public License
+ *  along with this program; if not, a copy is available at
+ *  http://www.r-project.org/Licenses/
  */
 
 /* <UTF8> This does byte-level access, e.g. isspace, but is OK. */
@@ -27,19 +26,6 @@
 
 #ifdef HAVE_CONFIG_H
 #include <config.h>
-#endif
-
-#if defined(HAVE_GLIBC2)
-#include <features.h>
-# ifndef __USE_POSIX
-#  define __USE_POSIX           /* so that we get isnan */
-# endif
-# ifndef __USE_SVID
-#  define __USE_SVID             /* so that we get putenv */
-# endif
-# ifndef __USE_BSD
-#  define __USE_BSD             /* so that we get setenv() */
-# endif
 #endif
 
 #include <stdlib.h> /* for setenv or putenv */
@@ -187,7 +173,7 @@ static void Putenv(char *a, char *b)
 
 #define BUF_SIZE 255
 #define MSG_SIZE 2000
-static int process_Renviron(char *filename)
+static int process_Renviron(const char *filename)
 {
     FILE *fp;
     char *s, *p, sm[BUF_SIZE], *lhs, *rhs, msg[MSG_SIZE+50];
@@ -269,7 +255,7 @@ void process_site_Renviron ()
 /* try user Renviron: ./.Renviron, then ~/.Renviron */
 void process_user_Renviron()
 {
-    char *s;
+    const char *s;
 
     if(process_Renviron(".Renviron")) return;
 #ifdef Unix

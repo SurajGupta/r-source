@@ -1,6 +1,6 @@
 /*
  *  R : A Computer Language for Statistical Data Analysis
- *  Copyright (C) 2002-2006	The R Development Core Team.
+ *  Copyright (C) 2002-2007	The R Development Core Team.
  *
  *  This program is free software; you can redistribute it and/or modify
  *  it under the terms of the GNU General Public License as published by
@@ -13,8 +13,8 @@
  *  GNU General Public License for more details.
  *
  *  You should have received a copy of the GNU General Public License
- *  along with this program; if not, write to the Free Software
- *  Foundation, Inc., 51 Franklin Street Fifth Floor, Boston, MA 02110-1301  USA
+ *  along with this program; if not, a copy is available at
+ *  http://www.r-project.org/Licenses/
  *
  */
 /*
@@ -45,12 +45,9 @@
 #endif
 
 #include <Defn.h>
-#include <R.h>
-#include <Rdefines.h>
 #include <R_ext/Rdynload.h>
 #include <R_ext/Applic.h>
 #include <R_ext/Linpack.h>
-#include <Rmodules/Rlapack.h>
 
 
 /*  These get the declarations of some routines refernced here but
@@ -80,7 +77,6 @@
    Rdll.lib or libR.so or the equivalent on that platform.
 */
 
-static R_NativePrimitiveArgType R_approx_t[] = {REALSXP, REALSXP, INTSXP, REALSXP, INTSXP, INTSXP, REALSXP, REALSXP, REALSXP};
 static R_NativePrimitiveArgType bakslv_t[] = {REALSXP, INTSXP, INTSXP, REALSXP, INTSXP, INTSXP, REALSXP, INTSXP, INTSXP};
 
 static R_NativePrimitiveArgType bincode_t[] = {REALSXP, INTSXP, REALSXP, INTSXP, INTSXP, LGLSXP, LGLSXP, LGLSXP};
@@ -90,25 +86,11 @@ static R_NativePrimitiveArgType R_cumsum_t[] = {REALSXP, INTSXP, REALSXP, REALSX
 
 static R_NativePrimitiveArgType find_interv_vec_t[] = {REALSXP, INTSXP, REALSXP, INTSXP, LGLSXP, LGLSXP, INTSXP};
 
-static R_NativePrimitiveArgType loglin_t[] = {INTSXP, INTSXP, INTSXP, INTSXP, INTSXP,
-					      REALSXP, REALSXP, INTSXP, INTSXP, REALSXP,
-					      INTSXP, REALSXP, REALSXP, INTSXP, REALSXP,
-					      INTSXP, INTSXP};
-
-static R_NativePrimitiveArgType lowess_t[] = {REALSXP, REALSXP, INTSXP, REALSXP,
-				       INTSXP, REALSXP, REALSXP, REALSXP, REALSXP};
-
-
-static R_NativePrimitiveArgType massdist_t[] = {REALSXP, REALSXP, INTSXP, REALSXP, REALSXP, REALSXP, INTSXP};
 
 static R_NativePrimitiveArgType R_max_col_t[] = {REALSXP, INTSXP, INTSXP, INTSXP, INTSXP};
 
 static R_NativePrimitiveArgType R_pretty_t[] = {REALSXP, REALSXP, INTSXP, INTSXP, REALSXP, REALSXP, INTSXP};
 static R_NativePrimitiveArgType R_rowsum_t[] = {INTSXP, REALSXP, REALSXP, REALSXP};
-
-static R_NativePrimitiveArgType spline_coef_t[] = {INTSXP, INTSXP, REALSXP, REALSXP, REALSXP, REALSXP, REALSXP, REALSXP};
-static R_NativePrimitiveArgType spline_eval_t[] = {INTSXP, INTSXP, REALSXP, REALSXP,
-						   INTSXP, REALSXP, REALSXP, REALSXP, REALSXP, REALSXP};
 
 static R_NativePrimitiveArgType stemleaf_t[] = {REALSXP, INTSXP, REALSXP, INTSXP, REALSXP};
 
@@ -139,23 +121,15 @@ static R_NativePrimitiveArgType fdhess_t[] = {};
 #define CDEF(name)  {#name, (DL_FUNC) &name, sizeof(name ## _t)/sizeof(name ## _t[0]), name ##_t}
 
 static R_CMethodDef cMethods [] = {
-    CDEF(R_approx),
     CDEF(bakslv),
     CDEF(bincode),
     CDEF(bincount),
     CDEF(R_cumsum),
-
     CDEF(find_interv_vec),
-    CDEF(loglin),
-    CDEF(lowess),
-    CDEF(massdist),
     CDEF(R_max_col),
     CDEF(R_pretty),
     /* this is called by Hmisc, although no longer used in R */
     CDEF(R_rowsum),
-
-    CDEF(spline_coef),
-    CDEF(spline_eval),
     CDEF(stemleaf),
 #if 0
     CDEF(str_signif),
@@ -247,7 +221,6 @@ static R_CallMethodDef callMethods [] = {
     /* lazy loading support */
     CALLDEF(R_getVarsFromFrame, 3),
     CALLDEF(R_lazyLoadDBinsertValue, 5),
-    CALLDEF(R_lazyLoadDBfetch, 4),
     CALLDEF(R_lazyLoadDBflush, 1),
 
 #ifdef BYTECODE
@@ -272,13 +245,13 @@ static R_ExternalMethodDef externalMethods [] = {
 
 #define FDEF(name)  {#name, (DL_FUNC) &F77_SYMBOL(name), -1, NULL}
 static R_FortranMethodDef fortranMethods[] = {
-    /* Linpack */
     FDEF(ch2inv),
     FDEF(chol),
     FDEF(cg),
     FDEF(ch),
     FDEF(rg),
     FDEF(rs),
+    /* Linpack */
     FDEF(dchdc),
     FDEF(dpbfa),
     FDEF(dpbsl),
@@ -299,7 +272,6 @@ static R_FortranMethodDef fortranMethods[] = {
     FDEF(dsvdc),
     FDEF(dtrsl),
     FDEF(dtrco),
-    FDEF(lminfl),
     {NULL, NULL, 0}
 };
 

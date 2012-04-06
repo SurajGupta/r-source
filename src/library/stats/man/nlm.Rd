@@ -1,12 +1,17 @@
+% File src/library/stats/man/nlm.Rd
+% Part of the R package, http://www.R-project.org
+% Copyright 1995-2007 R Core Development Team
+% Distributed under GPL 2 or later
+
 \name{nlm}
 \alias{nlm}
 \title{Non-Linear Minimization}
 \concept{optimization}
 \usage{
-nlm(f, p, hessian = FALSE, typsize=rep(1, length(p)), fscale=1,
+nlm(f, p, \dots, hessian = FALSE, typsize=rep(1, length(p)), fscale=1,
     print.level = 0, ndigit=12, gradtol = 1e-6,
     stepmax = max(1000 * sqrt(sum((p/typsize)^2)), 1000),
-    steptol = 1e-6, iterlim = 100, check.analyticals = TRUE, \dots)
+    steptol = 1e-6, iterlim = 100, check.analyticals = TRUE)
 }
 \description{
   This function carries out a minimization of the function \code{f}
@@ -22,6 +27,7 @@ nlm(f, p, hessian = FALSE, typsize=rep(1, length(p)), fscale=1,
     the length of \code{p} followed by any other arguments specified
     by the \code{\dots} argument.}
   \item{p}{starting parameter values for the minimization.}
+  \item{\dots}{additional arguments to \code{f}.}
   \item{hessian}{if \code{TRUE}, the hessian of \code{f}
     at the minimum is returned.}
   \item{typsize}{an estimate of the size of each parameter
@@ -54,9 +60,10 @@ nlm(f, p, hessian = FALSE, typsize=rep(1, length(p)), fscale=1,
     checked against numerical derivatives at the initial parameter
     values. This can help detect incorrectly formulated gradients or
     Hessians.}
-  \item{\dots}{additional arguments to \code{f}.}
 }
 \details{
+  Note that arguments after \code{\dots} must be matched exactly.
+  
   If a gradient or hessian is supplied but evaluates to the wrong mode
   or length, it will be ignored if \code{check.analyticals = TRUE} (the
   default) with a warning.  The hessian is not even checked unless the
@@ -118,7 +125,7 @@ nlm(f, p, hessian = FALSE, typsize=rep(1, length(p)), fscale=1,
 f <- function(x) sum((x-1:length(x))^2)
 nlm(f, c(10,10))
 nlm(f, c(10,10), print.level = 2)
-str(nlm(f, c(5), hessian = TRUE))
+utils::str(nlm(f, c(5), hessian = TRUE))
 
 f <- function(x, a) sum((x-a)^2)
 nlm(f, c(10,10), a=c(3,5))

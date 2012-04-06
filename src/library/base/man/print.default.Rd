@@ -1,3 +1,8 @@
+% File src/library/base/man/print.default.Rd
+% Part of the R package, http://www.R-project.org
+% Copyright 1995-2007 R Core Development Team
+% Distributed under GPL 2 or later
+
 \name{print.default}
 \alias{print.default}
 \description{
@@ -24,7 +29,7 @@
     \code{\link{NA}} values in printed output, or \code{NULL} (see Details)}
   \item{print.gap}{a non-negative integer \eqn{\le 1024}{<= 1024},
     or \code{NULL} (meaning 1), giving the spacing between adjacent
-    \dQuote{columns} in printed vectors, matrices and arrays.}
+    columns in printed vectors, matrices and arrays.}
   \item{right}{logical, indicating whether or not strings should be
     right aligned.  The default is left alignment.}
   \item{max}{a non-null value for \code{max} specifies the approximate
@@ -62,7 +67,7 @@
   Using too large a value of \code{digits} may lead to representation
   errors in the calculation of the number of significant digits and the
   decimal representation: these are likely for \code{digits >= 16}, and
-  as from \R 2.5.0 these possible errors are taken into account in
+  these possible errors are taken into account in
   assessing the numher of significant digits to be printed in that case.
 
   Whereas earlier versions of \R might have printed further digits for
@@ -132,8 +137,8 @@ print(pi, digits = 16)
 LETTERS[1:16]
 print(LETTERS, quote = FALSE)
 
-M <- cbind(I=1, matrix(1:10000, nc=10, dimnames=list(NULL, LETTERS[1:10])))
-head(M) # makes more sense than
+M <- cbind(I=1, matrix(1:10000, ncol=10, dimnames=list(NULL, LETTERS[1:10])))
+utils::head(M) # makes more sense than
 print(M, max= 1000)# prints 90 rows and a message about omitting 910
 }
 \keyword{print}

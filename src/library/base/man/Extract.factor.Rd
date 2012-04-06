@@ -1,3 +1,8 @@
+% File src/library/base/man/Extract.factor.Rd
+% Part of the R package, http://www.R-project.org
+% Copyright 1995-2007 R Core Development Team
+% Distributed under GPL 2 or later
+
 \name{Extract.factor}
 \title{Extract or Replace Parts of a Factor}
 \alias{[.factor}
@@ -19,8 +24,7 @@
     character.}
 }
 \value{
-  A factor with the same set of levels as \code{x} unless
-  \code{drop=TRUE}.  (Prior to \R 2.4.0, \code{[[} returned the integer code.)
+  A factor with the same set of levels as \code{x} unless \code{drop=TRUE}.
 }
 \details{
   When unused levels are dropped the ordering of the remaining levels is

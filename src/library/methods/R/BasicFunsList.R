@@ -1,14 +1,32 @@
-## lists of functions and expressions used in dispatch of functions
+#  File src/library/methods/R/BasicFunsList.R
+#  Part of the R package, http://www.R-project.org
+#
+#  This program is free software; you can redistribute it and/or modify
+#  it under the terms of the GNU General Public License as published by
+#  the Free Software Foundation; either version 2 of the License, or
+#  (at your option) any later version.
+#
+#  This program is distributed in the hope that it will be useful,
+#  but WITHOUT ANY WARRANTY; without even the implied warranty of
+#  MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
+#  GNU General Public License for more details.
+#
+#  A copy of the GNU General Public License is available at
+#  http://www.r-project.org/Licenses/
+
+## Lists of functions and expressions used in dispatch of functions
 ## defined internally (as .Primitive's) for which formal argument lists
-## are not available, or for which a generic, if created, needs to have a special
-## form (e.g., belonging to one of the predefined groups of functions).
+## are not available, or for which a generic, if created,
+## needs to have a special form (e.g., belonging to one of the
+## predefined groups of functions).
+
+## The list is expanded in .makeBasicFuns by adding the S4 group generics
+## and the remaining primitives.
 
 .BasicFunsList <-
-list("!" = function(e1)
-{
-    standardGeneric("!")
-}
-, "$" = function(x, name)
+list(
+### subset/subassignment ops are regarded as language elements
+"$" = function(x, name)
 {
     name <- as.character(substitute(name))
     standardGeneric("$")
@@ -18,35 +36,6 @@ list("!" = function(e1)
     name <- as.character(substitute(name))
     standardGeneric("$<-")
 }
-, "%*%" = function(x, y)
-{
-    standardGeneric("%*%")
-}
-, "&" = function(e1, e2)
-{
-    standardGeneric("&")
-}
-, "&&" = function(e1, e2)
-{
-    standardGeneric("&&")
-}
-, ".C" = FALSE
-, ".Call" = FALSE
-, ".Fortran" = FALSE
-# not internally generic
-, ":" = function(e1, e2)
-{
-    standardGeneric(":")
-}
-, "<-" = function(x, value)
-{
-    standardGeneric("<-")
-}
-, "<<-" = function(x, value)
-{
-    standardGeneric("<<-")
-}
-, "UseMethod" = FALSE
 , "[" = function(x, i, j, ..., drop = TRUE)
 {
     standardGeneric("[")
@@ -63,248 +52,48 @@ list("!" = function(e1)
 {
     standardGeneric("[[<-")
 }
-, "attr" = function(x, which)
+### S4 generic via R_possible_dispatch in do_matprod
+, "%*%" = function(x, y)
 {
-    standardGeneric("attr")
+    standardGeneric("%*%")
 }
-, "attr<-" = function(x, which, value)
-{
-    standardGeneric("attr<-")
-}
-, "attributes<-" = function(x, value)
-{
-    standardGeneric("attributes<-")
-}
-, "browser" = function(object, ...)
-{
-    standardGeneric("browser")
-}
+### these have a different arglist from the primitives
 , "c" = function(x, ..., recursive = FALSE)
 {
     standardGeneric("c")
 }
-, "call" = function(x, ...)
+, "all" = function(x, ..., na.rm = FALSE)
 {
-    standardGeneric("call")
+    standardGeneric("all")
 }
-, "class<-" = function(x, value)
+, "any" = function(x, ..., na.rm = FALSE)
 {
-    standardGeneric("class<-")
+    standardGeneric("any")
 }
-, "dim<-" = function(x, value)
+, "sum" = function(x, ..., na.rm = FALSE)
 {
-    standardGeneric("dim<-")
+    standardGeneric("sum")
 }
-, "dimnames<-" = function(x, value)
+, "prod" = function(x, ..., na.rm = FALSE)
 {
-    standardGeneric("dimnames<-")
+    standardGeneric("prod")
 }
-, "names<-" = function(x, value)
+, "max" = function(x, ..., na.rm = FALSE)
 {
-    standardGeneric("names<-")
+    standardGeneric("max")
 }
-, "expression" = function(x, ...)
+, "min" = function(x, ..., na.rm = FALSE)
 {
-    standardGeneric("expression")
+    standardGeneric("min")
 }
-, "length<-" = function(x, value)
+, "range" = function(x, ..., na.rm = FALSE)
 {
-    standardGeneric("length<-")
+    standardGeneric("range")
 }
-, "levels<-" = function(x, value)
-{
-    standardGeneric("levels<-")
-}
-, "list" = function(x, ...)
-{
-    standardGeneric("list")
-}
-, "missing" = FALSE
-, "on.exit" = FALSE
-, "rep" = function(x, ...)
-{
-    standardGeneric("rep")
-}
-, "substitute" = FALSE
-# not primitive
-, "trace" = function(what = character(), tracer = TRUE, exit.tracer, at = numeric(), print
-	 = TRUE, signature)
-{
-    standardGeneric("trace")
-}
-# not primitive
-, "untrace" = function(what)
-{
-    standardGeneric("untrace")
-}
-, "|" = function(e1, e2)
-{
-    standardGeneric("|")
-}
-, "||" = function(e1, e2)
-{
-    standardGeneric("||")
-}
-, "~" = function(x, y)
-{
-    standardGeneric("~")
-}
-, "as.call" = function(x)
-{
-    standardGeneric("as.call")
-}
-, "as.character" = function(x, ...)
-{
-    standardGeneric("as.character")
-}
-, "attributes" = function(x)
-{
-    standardGeneric("attributes")
-}
-, "class" = function(x)
-{
-    standardGeneric("class")
-}
-, "cummax" = function(x)
-{
-    standardGeneric("cummax")
-}
-, "cummin" = function(x)
-{
-    standardGeneric("cummin")
-}
-, "cumprod" = function(x)
-{
-    standardGeneric("cumprod")
-}
-, "dim" = function(x)
-{
-    standardGeneric("dim")
-}
-, "dimnames" = function(x)
-{
-    standardGeneric("dimnames")
-}
-, "names" = function(x)
-{
-    standardGeneric("names")
-}
-, "invisible" = function(x)
-{
-    standardGeneric("invisible")
-}
-, "is.array" = function(x)
-{
-    standardGeneric("is.array")
-}
-, "is.atomic" = FALSE
-, "is.call" = FALSE
-, "is.character" = FALSE
-, "is.complex" = FALSE
-, "is.double" = FALSE
-, "is.environment" = FALSE
-, "is.expression" = FALSE
-, "is.finite" = FALSE
-, "is.function" = FALSE
-, "is.infinite" = FALSE
-, "is.integer" = FALSE
-, "is.language" = FALSE
-, "is.list" = FALSE
-, "is.logical" = FALSE
-, "is.matrix" = function(x)
-{
-    standardGeneric("is.matrix")
-}
-, "is.na" = function(x)
-{
-    standardGeneric("is.na")
-}
-, "is.name" = FALSE
-, "is.nan" = function(x)
-{
-    standardGeneric("is.nan")
-}
-, "is.null" = function(x)
-{
-    standardGeneric("is.null")
-}
-, "is.numeric" = function(x)
-{
-    standardGeneric("is.numeric")
-}
-, "is.object" = FALSE
-, "is.pairlist" = FALSE
-, "is.raw" = FALSE
-, "is.real" = FALSE
-, "is.recursive" = FALSE
-, "is.single" = FALSE
-, "is.symbol" = FALSE
-, "length" = function(x)
-{
-    standardGeneric("length")
-}
-, "sign" = function(x)
-{
-    standardGeneric("sign")
-}
-, "unclass" = function(x)
-{
-    standardGeneric("unclass")
-}
-, "(" = FALSE
-, ".Call.graphics" = FALSE
-, ".External" = FALSE
-, ".External.graphics" = FALSE
-, ".Internal" = FALSE
-, ".Primitive" = FALSE
-, "baseenv" = FALSE
-, "break" = FALSE
-# not internal generic
-, "debug" = function(fun)
-{
-    standardGeneric("debug")
-}
-, "emptyenv" = FALSE
-, "environment<-" = function(fun, value)
-{
-    standardGeneric("environment<-")
-}
-, "for" = FALSE
-, "function" = FALSE
-, "gc.time" = FALSE
-, "globalenv" = FALSE
-, "if" = FALSE
-, "interactive" = FALSE
-, "nargs" = FALSE
-, "next" = FALSE
-, "pos.to.env" = FALSE
-, "proc.time" = FALSE
-, "repeat" = FALSE
-, "return" = FALSE
-# not internal generic
-, "undebug" = function(fun)
-{
-    standardGeneric("undebug")
-}
-, "while" = FALSE
-, "{" = FALSE
-, "=" = FALSE
-, "@" = FALSE
-, ".primTrace" = FALSE
-, ".primUntrace" = FALSE
-, ".subset" = FALSE
-, ".subset2" = FALSE
-, "as.environment" = FALSE
-, "oldClass" = FALSE
-, "oldClass<-" = FALSE
-, "quote" = FALSE
-, "retracemem" = FALSE
-, "seq.int" = FALSE
-, "seq_along" = FALSE
-, "seq_len" = FALSE
-, "standardGeneric" = FALSE
-, "tracemem" = FALSE
-, "untracemem" = FALSE
+## , "!" = function(e1)
+## {
+##     standardGeneric("!")
+## }
 )
 
 ## the names of the basic funs with the style of "["
@@ -319,7 +108,7 @@ list("!" = function(e1)
 ## functions.
 
 .addBasicGeneric <-
-    function(funslist, f, fdef, group = list(), env)
+    function(funslist, f, fdef, group = list())
 {
     deflt <- get(f, "package:base")
     ## use the arguments of the base package function
@@ -360,15 +149,18 @@ list("!" = function(e1)
 # setGenericForPrimitive <-function(f, value, where = topenv(parent.frame()))
 #     assign(methodsPackageMetaName("G", f), value, where)
 
-## temporary versions while primitives are still handled by a global
-## table
+## temporary versions while primitives are still handled by a global table
 
 genericForPrimitive <- function(f, where = topenv(parent.frame())) {
-    if(.matchBasic(f, .ExcludePrimitiveGenerics, FALSE))
-        stop(gettextf("methods may not be defined for primitive function \"%s\" in this version of R", f), domain = NA)
+#    if(.matchBasic(f, .ExcludePrimitiveGenerics, FALSE))
+#        stop(gettextf("methods may not be defined for primitive function \"%s\" in this version of R", f), domain = NA)
     env <- .findBasicFuns(where)
     funs <- get(".BasicFunsList", envir = env)
-    elNamed(funs, f)
+    ans <- elNamed(funs, f)
+    ## this element may not exist (yet, during loading), dom't test null
+    if(identical(ans, FALSE))
+        stop(gettextf("methods may not be defined for primitive function \"%s\" in this version of R", f), domain = NA)
+    ans
 }
 
 setGenericForPrimitive <- function(f, value, where = topenv(parent.frame()),
@@ -391,85 +183,3 @@ setGenericForPrimitive <- function(f, value, where = topenv(parent.frame()),
     else
         as.environment(allWhere[[1]])
 }
-
-.ExcludePrimitiveGenerics <-
-    c(
-      ".C",
-      ".Call",
-      ".Call.graphics",
-      ".External",
-      ".External.graphics",
-      ".Fortran",
-      ".Internal",
-      ".Primitive",
-      ".primTrace",
-      ".primUntrace",
-      ".subset",
-      ".subset2",
-      "UseMethod",
-      "as.call",
-      "as.environment",
-      "attr",
-      "attr<-",
-      "attributes",
-      "attributes<-",
-      "baseenv",
-      "browser",
-      "as.call",
-      "call",
-      "class",
-      "class<-",
-      "debug",
-      "emptyenv",
-      "environment<-",
-      "expression",
-      "gc.time",
-      "globalenv",
-      "interactive",
-      "invisible",
-      "is.atomic",
-      "is.call",
-      "is.character",
-      "is.complex",
-      "is.double",
-      "is.environment",
-      "is.expression",
-      "is.finite",
-      "is.function",
-      "is.infinite",
-      "is.integer",
-      "is.language",
-      "is.list",
-      "is.logical",
-      "is.name",
-      "is.null",
-      "is.function",
-      "is.object",
-      "is.pairlist",
-      "is.raw",
-      "is.real",
-      "is.recursive",
-      "is.single",
-      "is.symbol",
-      "list",
-      "missing",
-      "nargs",
-      "oldClass",
-      "oldClass",
-      "oldClass<-",
-      "on.exit",
-      "pos.to.env",
-      "proc.time",
-      "quote",
-      "retracemem",
-      "seq.int",
-      "seq_along",
-      "seq_len",
-      "standardGeneric",
-      "storage.mode<-",
-      "substitute",
-      "tracemem",
-      "unclass",
-      "undebug",
-      "untracemem"
-      )

@@ -1,9 +1,14 @@
+% File src/library/base/man/Primitive.Rd
+% Part of the R package, http://www.R-project.org
+% Copyright 1995-2007 R Core Development Team
+% Distributed under GPL 2 or later
+
 \name{Primitive}
 \alias{.Primitive}
 \alias{primitive}
 \title{Call a ``Primitive'' Internal Function}
 \description{
-  \code{.Primitive} returns an entry point to a \dQuote{primitive}
+  \code{.Primitive} returns an entry point to a \sQuote{primitive}
   (internally implemented) function.
 }
 \usage{

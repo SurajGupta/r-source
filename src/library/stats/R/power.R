@@ -1,3 +1,19 @@
+#  File src/library/stats/R/power.R
+#  Part of the R package, http://www.R-project.org
+#
+#  This program is free software; you can redistribute it and/or modify
+#  it under the terms of the GNU General Public License as published by
+#  the Free Software Foundation; either version 2 of the License, or
+#  (at your option) any later version.
+#
+#  This program is distributed in the hope that it will be useful,
+#  but WITHOUT ANY WARRANTY; without even the implied warranty of
+#  MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
+#  GNU General Public License for more details.
+#
+#  A copy of the GNU General Public License is available at
+#  http://www.r-project.org/Licenses/
+
 power.t.test <-
     function(n=NULL, delta=NULL, sd=1, sig.level=0.05, power=NULL,
 	     type=c("two.sample", "one.sample", "paired"),
@@ -17,14 +33,14 @@ power.t.test <-
     if (tside == 2 && !is.null(delta)) delta <- abs(delta)
 
     p.body <- quote({nu <- (n - 1) * tsample
-		     pt(qt(sig.level/tside, nu, lower = FALSE),
-			nu, ncp = sqrt(n/tsample) * delta/sd, lower = FALSE)})
+		     pt(qt(sig.level/tside, nu, lower.tail = FALSE),
+			nu, ncp = sqrt(n/tsample) * delta/sd, lower.tail = FALSE)})
     if (strict & tside == 2) # count rejections in opposite tail
       p.body <- quote({
 	  nu <- (n - 1) * tsample
-	  qu<-qt(sig.level/tside, nu, lower = FALSE)
-	  pt(qu, nu, ncp = sqrt(n/tsample) * delta/sd, lower = FALSE) +
-	    pt(-qu, nu, ncp = sqrt(n/tsample) * delta/sd, lower = TRUE)
+	  qu<-qt(sig.level/tside, nu, lower.tail = FALSE)
+	  pt(qu, nu, ncp = sqrt(n/tsample) * delta/sd, lower.tail = FALSE) +
+	    pt(-qu, nu, ncp = sqrt(n/tsample) * delta/sd, lower.tail = TRUE)
       })
 
     if (is.null(power))
@@ -74,13 +90,13 @@ power.prop.test <-
     tside <- switch(alternative, one.sided = 1, two.sided = 2)
 
     p.body <- quote(pnorm(((sqrt(n) * abs(p1 - p2)
-			    - (qnorm(sig.level/tside, lower = FALSE)
+			    - (qnorm(sig.level/tside, lower.tail = FALSE)
 			       * sqrt((p1 + p2) * (1 - (p1 + p2)/2))))
 			   / sqrt(p1 * (1 - p1) + p2 * (1 - p2)))))
 
     if (strict & tside == 2) # count rejections in opposite tail
       p.body <- quote({
-	  qu <- qnorm(sig.level/tside, lower = FALSE)
+	  qu <- qnorm(sig.level/tside, lower.tail = FALSE)
 	  d <- abs(p1 - p2)
 	  q1 <- 1 - p1
 	  q2 <- 1 - p2
@@ -92,7 +108,7 @@ power.prop.test <-
 	  pnorm((sqrt(n)*d - qu * sqrt(2 * vbar) )
 		/ sqrt(v1 + v2)) +
 	  pnorm((sqrt(n)*d + qu * sqrt(2 * vbar) )
-		/ sqrt(v1 + v2), lower=FALSE)
+		/ sqrt(v1 + v2), lower.tail=FALSE)
       })
     if (is.null(power))
 	power <- eval(p.body)

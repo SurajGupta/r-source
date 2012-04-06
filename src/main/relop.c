@@ -14,8 +14,8 @@
  *  GNU General Public License for more details.
  *
  *  You should have received a copy of the GNU General Public License
- *  along with this program; if not, write to the Free Software
- *  Foundation, Inc., 51 Franklin Street Fifth Floor, Boston, MA 02110-1301  USA
+ *  along with this program; if not, a copy is available at
+ *  http://www.r-project.org/Licenses/
  */
 
 /* <UTF8> char here is handled as a whole.
@@ -69,8 +69,7 @@ SEXP attribute_hidden do_relop_dflt(SEXP call, SEXP op, SEXP x, SEXP y)
 	if (nx > 0 && ny > 0)
 	    mismatch = ((nx > ny) ? nx % ny : ny % nx) != 0;
 	if (mismatch)
-	    warningcall(call, _("longer object length\n\
- \tis not a multiple of shorter object length"));
+	    warningcall(call, _("longer object length is not a multiple of shorter object length"));
 	UNPROTECT(2);
 	return ans;
     }
@@ -163,7 +162,7 @@ SEXP attribute_hidden do_relop_dflt(SEXP call, SEXP op, SEXP x, SEXP y)
 	}
     }
     if (mismatch)
-	warningcall(call, _("longer object length\n\tis not a multiple of shorter object length"));
+	warningcall(call, _("longer object length is not a multiple of shorter object length"));
 
     if (isString(x) || isString(y)) {
 	REPROTECT(x = coerceVector(x, STRSXP), xpi);

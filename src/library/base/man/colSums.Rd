@@ -1,3 +1,8 @@
+% File src/library/base/man/colSums.Rd
+% Part of the R package, http://www.R-project.org
+% Copyright 1995-2007 R Core Development Team
+% Distributed under GPL 2 or later
+
 \name{colSums}
 \alias{colSums}
 \alias{rowSums}
@@ -18,8 +23,8 @@ rowMeans(x, na.rm = FALSE, dims = 1)
     complex, integer or logical values, or a numeric data frame.}
   \item{na.rm}{logical. Should missing values (including \code{NaN})
     be omitted from the calculations?}
-  \item{dims}{Which dimensions are regarded as \dQuote{rows} or
-    \dQuote{columns} to sum over.  For \code{row*}, the sum or mean is
+  \item{dims}{Which dimensions are regarded as \sQuote{rows} or
+    \sQuote{columns} to sum over.  For \code{row*}, the sum or mean is
     over dimensions \code{dims+1, \dots}; for \code{col*} it is over
     dimensions \code{1:dims}.}
 }
@@ -76,3 +81,4 @@ rowMeans(x, na.rm = TRUE); colMeans(x, na.rm = TRUE)
 }
 \keyword{array}
 \keyword{algebra}
+\keyword{arith}

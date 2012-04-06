@@ -1,3 +1,8 @@
+% File src/library/base/man/system.time.Rd
+% Part of the R package, http://www.R-project.org
+% Copyright 1995-2007 R Core Development Team
+% Distributed under GPL 2 or later
+
 \name{system.time}
 \title{CPU Time Used}
 \usage{
@@ -7,7 +12,7 @@ unix.time(expr, gcFirst = TRUE)
 \alias{system.time}
 \alias{unix.time}
 \arguments{
-  \item{expr}{Valid \R expression to be \dQuote{timed}}
+  \item{expr}{Valid \R expression to be timed.}
   \item{gcFirst}{Logical - should a garbage collection be performed
     immediately before the timing?  Default is \code{TRUE}.}
 }

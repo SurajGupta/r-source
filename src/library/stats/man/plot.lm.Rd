@@ -1,3 +1,8 @@
+% File src/library/stats/man/plot.lm.Rd
+% Part of the R package, http://www.R-project.org
+% Copyright 1995-2007 R Core Development Team
+% Distributed under GPL 2 or later
+
 \name{plot.lm}
 \alias{plot.lm}
 \alias{plot.mlm}%which is .NotYetImplemented()
@@ -63,8 +68,8 @@
   separate pages, or as a subtitle in the outer margin (if any) when
   there are multiple plots per page.
 
-  The \dQuote{Scale-Location} plot, also called \dQuote{Spread-Location} or
-  \dQuote{S-L} plot, takes the square root of the absolute residuals in
+  The \sQuote{Scale-Location} plot, also called \sQuote{Spread-Location} or
+  \sQuote{S-L} plot, takes the square root of the absolute residuals in
   order to diminish skewness (\eqn{\sqrt{| E |}} is much less skewed
   than \eqn{| E |} for Gaussian zero-mean \eqn{E}).
 
@@ -113,6 +118,8 @@
   \code{\link{cooks.distance}}, \code{\link{hatvalues}}.
 }
 \examples{
+require(graphics)
+
 ## Analysis of the life-cycle savings data
 ## given in Belsley, Kuh and Welsch.
 plot(lm.SR <- lm(sr ~ pop15 + pop75 + dpi + ddpi, data = LifeCycleSavings))

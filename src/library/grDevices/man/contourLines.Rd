@@ -1,3 +1,8 @@
+% File src/library/grDevices/man/contourLines.Rd
+% Part of the R package, http://www.R-project.org
+% Copyright 1995-2007 R Core Development Team
+% Distributed under GPL 2 or later
+
 \name{contourLines}
 \alias{contourLines}
 \title{Calculate Contour Lines}
@@ -5,8 +10,8 @@
   Calculate contour lines for a given set of data.
 }
 \usage{
-contourLines(x = seq(0, 1, len = nrow(z)),
-             y = seq(0, 1, len = ncol(z)),
+contourLines(x = seq(0, 1, length.out = nrow(z)),
+             y = seq(0, 1, length.out = ncol(z)),
 	     z, nlevels = 10,
              levels = pretty(range(z, na.rm=TRUE), nlevels))
 }

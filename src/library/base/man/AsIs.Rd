@@ -1,3 +1,8 @@
+% File src/library/base/man/AsIs.Rd
+% Part of the R package, http://www.R-project.org
+% Copyright 1995-2007 R Core Development Team
+% Distributed under GPL 2 or later
+
 \name{AsIs}
 \alias{I}
 \alias{AsIs}
@@ -6,7 +11,7 @@
 \title{Inhibit Interpretation/Conversion of Objects}
 \description{
   Change the class of an object to indicate that it should be treated
-  \dQuote{as is}.
+  \sQuote{as is}.
 }
 \usage{
 I(x)

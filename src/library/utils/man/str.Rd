@@ -1,3 +1,8 @@
+% File src/library/utils/man/str.Rd
+% Part of the R package, http://www.R-project.org
+% Copyright 1995-2007 R Core Development Team
+% Distributed under GPL 2 or later
+
 \name{str}
 \title{Compactly Display the Structure of an Arbitrary R Object}
 \alias{str}
@@ -11,7 +16,8 @@ str(object, \dots)
 
 \method{str}{default}(object, max.level = NA,
     vec.len  = strO$vec.len, digits.d = strO$digits.d,
-    nchar.max = 128, give.attr = TRUE, give.length = TRUE,
+    nchar.max = 128, give.attr = TRUE,
+    give.head = TRUE, give.length = give.head,
     width = getOption("width"), nest.lev = 0,
     indent.str = paste(rep.int(" ", max(0, nest.lev + 1)),
                        collapse = ".."),
@@ -22,9 +28,9 @@ strOptions(strict.width = "no", digits.d = 3, vec.len = 4)
 }
 \description{
   Compactly display the internal \bold{str}ucture of an \R object, a
-  \dQuote{diagnostic} function and an alternative to \code{\link{summary}}
+  diagnostic function and an alternative to \code{\link{summary}}
   (and to some extent, \code{\link{dput}}).  Ideally, only one line for
-  each \dQuote{basic} structure is displayed.  It is especially well suited
+  each \sQuote{basic} structure is displayed.  It is especially well suited
   to compactly display the (abbreviated) contents of (possibly nested)
   lists.  The idea is to give reasonable output for \bold{any} \R
   object.  It calls \code{\link{args}} for (non-primitive) function objects.
@@ -38,7 +44,7 @@ strOptions(strict.width = "no", digits.d = 3, vec.len = 4)
   \item{max.level}{maximal level of nesting which is applied for
     displaying nested structures, e.g., a list containing sub lists.
     Default NA: Display all nesting levels.}
-  \item{vec.len}{numeric (>= 0) indicating how many \dQuote{first few} elements
+  \item{vec.len}{numeric (>= 0) indicating how many \sQuote{first few} elements
     are displayed of each vector.  The number is multiplied by different
     factors (from .5 to 3) depending on the kind of vector.  Defaults to
     the \code{vec.len} component of option \code{"str"} (see
@@ -53,6 +59,8 @@ strOptions(strict.width = "no", digits.d = 3, vec.len = 4)
     as sub structures.}
   \item{give.length}{logical; if \code{TRUE} (default), indicate
     length (as \code{[1:\dots]}).}
+  \item{give.head}{logical; if \code{TRUE} (default), give (possibly
+    abbreviated) mode/class and length (as \code{<type>[1:\dots]}).}
   \item{width}{the page width to be used.  The default is the currently
     active \code{\link{options}("width")}; note that this has only a
     weak effect, unless \code{strict.width} is not \code{"no"}.}
@@ -60,8 +68,8 @@ strOptions(strict.width = "no", digits.d = 3, vec.len = 4)
     \code{str}.}
   \item{indent.str}{the indentation string to use.}
   \item{comp.str}{string to be used for separating list components.}
-  \item{no.list}{logical; if true, no \dQuote{list of ..} is nor the
-    class is printed.}
+  \item{no.list}{logical; if true, no \sQuote{list of \dots} nor the
+    class are printed.}
   \item{envir}{the environment to be used for \emph{promise} (see
     \code{\link{delayedAssign}}) objects only.}
   \item{strict.width}{string indicating if the \code{width} argument's
@@ -87,7 +95,7 @@ strOptions(strict.width = "no", digits.d = 3, vec.len = 4)
   \code{\link{summary}}, \code{\link{args}}.
 }
 \examples{
-require(stats)
+require(stats); require(grDevices); require(graphics)
 ## The following examples show some of 'str' capabilities
 str(1:12)
 str(ls)

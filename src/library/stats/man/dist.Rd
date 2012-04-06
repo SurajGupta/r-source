@@ -1,3 +1,8 @@
+% File src/library/stats/man/dist.Rd
+% Part of the R package, http://www.R-project.org
+% Copyright 1995-2007 R Core Development Team
+% Distributed under GPL 2 or later
+
 \name{dist}
 \alias{dist}
 \alias{print.dist}
@@ -136,6 +141,8 @@ as.dist(m, diag = FALSE, upper = FALSE)
   \code{\link{hclust}}.
 }
 \examples{
+require(graphics)
+
 x <- matrix(rnorm(100), nrow=5)
 dist(x)
 dist(x, diag = TRUE)
@@ -144,7 +151,7 @@ m <- as.matrix(dist(x))
 d <- as.dist(m)
 stopifnot(d == dist(x))
 
-## Use correlations between variables ``as distance''
+## Use correlations between variables "as distance"
 dd <- as.dist((1 - cor(USJudgeRatings))/2)
 round(1000 * dd) # (prints more nicely)
 plot(hclust(dd)) # to see a dendrogram of clustered variables

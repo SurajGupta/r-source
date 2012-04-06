@@ -1,3 +1,8 @@
+% File src/library/stats/man/extractAIC.Rd
+% Part of the R package, http://www.R-project.org
+% Copyright 1995-2007 R Core Development Team
+% Distributed under GPL 2 or later
+
 %-- This page by Martin Maechler,  improvements welcome!
 \name{extractAIC}
 \title{Extract AIC from a Fitted Model}
@@ -15,7 +20,7 @@ extractAIC(fit, scale, k = 2, \dots)
    of the error variance, and \code{scale = 0} indicates that it is to
    be estimated by maximum likelihood.
  }
- \item{k}{numeric specifying the \dQuote{weight} of the
+ \item{k}{numeric specifying the \sQuote{weight} of the
    \emph{equivalent degrees of freedom} (\eqn{\equiv}{=:} \code{edf})
    part in the AIC formula.}
  \item{\dots}{further arguments (currently unused in base \R).}
@@ -62,7 +67,7 @@ extractAIC(fit, scale, k = 2, \dots)
 \value{
   A numeric vector of length 2, giving
 
-  \item{edf}{the \dQuote{\bold{e}quivalent \bold{d}egrees of \bold{f}reedom}
+  \item{edf}{the \sQuote{\bold{e}quivalent \bold{d}egrees of \bold{f}reedom}
   for the fitted model \code{fit}.}
 
 \item{AIC}{the (generalized) Akaike Information Criterion for \code{fit}.}
@@ -79,7 +84,7 @@ extractAIC(fit, scale, k = 2, \dots)
   \code{\link{step}}
 }
 \examples{
-example(glm)
+utils::example(glm)
 extractAIC(glm.D93)#>>  5  15.129
 }
 \keyword{models}

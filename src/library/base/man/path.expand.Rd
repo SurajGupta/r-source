@@ -1,3 +1,8 @@
+% File src/library/base/man/path.expand.Rd
+% Part of the R package, http://www.R-project.org
+% Copyright 1995-2007 R Core Development Team
+% Distributed under GPL 2 or later
+
 \name{path.expand}
 \alias{path.expand}
 \title{Expand File Paths}
@@ -13,9 +18,10 @@ path.expand(path)
 }
 #ifdef unix
 \details{
-  On \emph{some Unix} versions, a leading \code{~user} will expand to
+  On \emph{some} Unix versions, a leading \code{~user} will expand to
   the home directory of \code{user}, but not on Unix versions without
-  \code{readline} installed.
+  \code{readline} installed, nor if \R is invoked with
+  \option{--no-readline}.
 }
 #endif
 #ifdef windows

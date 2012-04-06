@@ -1,3 +1,8 @@
+% File src/library/grid/man/grid.record.Rd
+% Part of the R package, http://www.R-project.org
+% Copyright 1995-2007 R Core Development Team
+% Distributed under GPL 2 or later
+
 \name{grid.record}
 \alias{grid.record}
 \alias{recordGrob}
@@ -18,7 +23,7 @@ grid.record(expr, list, name=NULL, gp=NULL, vp=NULL)
 %- maybe also 'usage' for other objects documented here.
 \arguments{
   \item{expr}{object of mode \code{\link{expression}} or \code{call} or
-    an \dQuote{unevaluated expression}.}
+    an unevaluated expression.}
   \item{list}{a list defining the environment in which \code{expr} is to
     be evaluated.}
   \item{name}{ A character identifier. }

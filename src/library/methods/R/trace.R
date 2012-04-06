@@ -1,3 +1,19 @@
+#  File src/library/methods/R/trace.R
+#  Part of the R package, http://www.R-project.org
+#
+#  This program is free software; you can redistribute it and/or modify
+#  it under the terms of the GNU General Public License as published by
+#  the Free Software Foundation; either version 2 of the License, or
+#  (at your option) any later version.
+#
+#  This program is distributed in the hope that it will be useful,
+#  but WITHOUT ANY WARRANTY; without even the implied warranty of
+#  MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
+#  GNU General Public License for more details.
+#
+#  A copy of the GNU General Public License is available at
+#  http://www.r-project.org/Licenses/
+
 ## some temporary (!) hooks to trace the tracing code
 .doTraceTrace <- function(on) {
  .assignOverBinding(".traceTraceState", on,
@@ -447,7 +463,7 @@ trySilent <- function(expr) {
 ### a table in this direction anywhere?
 .searchNamespaceNames <- function(env) {
     namespaces <- .Internal(getNamespaceRegistry())
-    names <- objects(namespaces, all = TRUE)
+    names <- objects(namespaces, all.names = TRUE)
     for(what in names)
         if(identical(get(what, envir=namespaces), env))
             return(paste("namespace", what, sep=":"))
@@ -461,15 +477,15 @@ trySilent <- function(expr) {
         if(length(whereF)>0)
             whereF <- whereF[[1]]
         else return(list(pname = pname, whereF = baseenv()))
-    }
-    else {
+    } else
         whereF <- .genEnv(what, where)
-    }
-    if(!is.null(attr(whereF, "name")))
+
+    ## avoid partial matches to "names"
+    if("name" %in% names(attributes(whereF)))
         pname <- gsub("^.*:", "", attr(whereF, "name"))
     else if(isNamespace(whereF))
         pname <- .searchNamespaceNames(whereF)
-    list(pname=pname, whereF = whereF)
+    list(pname = pname, whereF = whereF)
 }
 
 .makeTraceClass <- function(traceClassName, className, verbose = TRUE) {

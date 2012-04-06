@@ -1,3 +1,8 @@
+% File src/library/datasets/man/crimtab.Rd
+% Part of the R package, http://www.R-project.org
+% Copyright 1995-2007 R Core Development Team
+% Distributed under GPL 2 or later
+
 \name{crimtab}
 \alias{crimtab}
 \docType{data}
@@ -16,7 +21,7 @@
   The 42 \code{\link{rownames}} (\code{"9.4"}, \code{"9.5"}, \dots)
   correspond to midpoints of intervals of finger lengths
   whereas the 22 column names (\code{\link{colnames}})
-  (code{"142.24"}, \code{"144.78"}, \dots) correspond to (body) heights
+  (\code{"142.24"}, \code{"144.78"}, \dots) correspond to (body) heights
   of 3000 criminals, see also below.
 }
 \details{
@@ -48,7 +53,7 @@
 
   MacDonell credited the source of data (page 178) as follows:
   \emph{The data on which the memoir is based were obtained, through the
-    kindness of Dr Garson, from the Central Metric Office, New Scottland Yard...}
+    kindness of Dr Garson, from the Central Metric Office, New Scotland Yard...}
   He pointed out on page 179 that : \emph{The forms were drawn at random
     from the mass on the office shelves; we are therefore dealing with a
     random sampling.}
@@ -72,13 +77,13 @@
   \emph{Biometrika} \bold{6}, 1--25.
 }
 \examples{
-data(crimtab)
+require(stats)
 dim(crimtab)
-str(crimtab)
+utils::str(crimtab)
 ## for nicer printing:
 local({cT <- crimtab
        colnames(cT) <- substring(colnames(cT), 2,3)
-       print(cT, zero = " ")
+       print(cT, zero.print = " ")
 })
 
 ## Repeat Student's experiment:
@@ -117,7 +122,8 @@ zobs[infZ] <- 6 * sign(zobs[infZ])
 
 # 7) Plot the distribution:
 
-hist(x = zobs, probab = TRUE, xlab = "Student's z",
+require(grDevices); require(graphics)
+hist(x = zobs, probability = TRUE, xlab = "Student's z",
      col = grey(0.8), border = grey(0.5),
      main = "Distribution of Student's z score  for 'crimtab' data")
 }

@@ -15,8 +15,8 @@
  *  GNU General Public License for more details.
  *
  *  You should have received a copy of the GNU General Public License
- *  along with this program; if not, write to the Free Software
- *  Foundation, Inc., 51 Franklin Street, Fifth Floor, Boston, MA 02110-1301  USA
+ *  along with this program; if not, a copy is available at
+ *  http://www.r-project.org/Licenses/
  */
 
 /* <UTF8> char here is mainly handled as a whole string.
@@ -31,11 +31,6 @@
 
 #ifdef HAVE_CONFIG_H
 # include <config.h>
-#endif
-
-#if defined(HAVE_GLIBC2)
-/* for fileno */
-# define _POSIX_SOURCE 1
 #endif
 
 #include <Defn.h>
@@ -57,6 +52,10 @@
 
 #ifdef HAVE_SYS_TIME_H
 # include <sys/time.h>		/* for struct timeval */
+#endif
+
+#ifdef HAVE_SYS_SELECT_H
+# include <sys/select.h>	/* for select, according to recent POSIX */
 #endif
 
 extern SA_TYPE SaveAction;
@@ -152,7 +151,7 @@ int R_SelectEx(int  n,  fd_set  *readfds,  fd_set  *writefds,
 
 /*
    This object is used for the standard input and its file descriptor
-   value is reset by setSelectMask() each time to ensure that it points
+   value is reset by setSelectwblplotMask() each time to ensure that it points
    to the correct value of stdin.
  */
 static InputHandler BasicInputHandler = {StdinActivity, -1, NULL};
@@ -412,10 +411,12 @@ extern void rl_callback_read_char(void);
 extern char *tilde_expand (const char *);
 # endif
 
+#ifdef HAVE_RL_COMPLETION_MATCHES
 static void initialize_rlcompletion(void); /* forward declaration */
+#endif
 
-
-char attribute_hidden *R_ExpandFileName_readline(char *s, char *buff)
+attribute_hidden
+char *R_ExpandFileName_readline(const char *s, char *buff)
 {
     char *s2 = tilde_expand(s);
 
@@ -591,7 +592,8 @@ static SEXP
     RComp_getFileCompSym,
     RComp_retrieveCompsSym;
 
-void set_rl_word_breaks(char *str)
+attribute_hidden
+void set_rl_word_breaks(const char *str)
 {
     static char p1[201], p2[203];
     strncpy(p1, str, 200); p1[200]= '\0';
@@ -777,7 +779,8 @@ static char *R_completion_generator(const char *text, int state)
 
 /* ============================================================ */
 #else
-void set_rl_word_breaks(char *str)
+attribute_hidden
+void set_rl_word_breaks(const char *str)
 {
 }
 #endif /* HAVE_RL_COMPLETION_MATCHES */
@@ -800,8 +803,10 @@ Rstd_ReadConsole(char *prompt, unsigned char *buf, int len,
 {
     if(!R_Interactive) {
 	int ll, err = 0;
-	if (!R_Slave)
+	if (!R_Slave) {
 	    fputs(prompt, stdout);
+	    fflush(stdout); /* make sure prompt is output */
+	}
 	if (fgets((char *)buf, len, ifp ? ifp: stdin) == NULL)
 	    return 0;
 	ll = strlen((char *)buf);
@@ -815,7 +820,8 @@ Rstd_ReadConsole(char *prompt, unsigned char *buf, int len,
 #if defined(HAVE_ICONV) && defined(ICONV_LATIN1)
 	    size_t res, inb = strlen((char *)buf), onb = len;
 	    char obuf[CONSOLE_BUFFER_SIZE+1];
-	    char *ib = (char *)buf, *ob = obuf;
+	    const char *ib = (const char *)buf;
+            char *ob = obuf;
 	    if(!cd) {
 		cd = Riconv_open("", R_StdinEnc);
 		if(!cd) error(_("encoding '%s' is not recognised"), R_StdinEnc);
@@ -839,8 +845,10 @@ Rstd_ReadConsole(char *prompt, unsigned char *buf, int len,
 	    && (ll == 0 || buf[ll - 1] != '\n') && ll < len) {
 	    buf[ll++] = '\n'; buf[ll] = '\0';
 	}
-	if (!R_Slave)
+	if (!R_Slave) {
 	    fputs((char *)buf, stdout);
+	    fflush(stdout);
+	}
 	return 1;
     }
     else {
@@ -912,6 +920,7 @@ Rstd_ReadConsole(char *prompt, unsigned char *buf, int len,
 void attribute_hidden Rstd_WriteConsole(char *buf, int len)
 {
     printf("%s", buf);
+    fflush(stdout);
 }
 
 /* The extended version allows the distinction of errors and warnings.
@@ -922,6 +931,7 @@ void attribute_hidden Rstd_WriteConsoleEx(char *buf, int len, int otype)
       printf("\033[1m%s\033[0m", buf);
     else
       printf("%s", buf);
+    fflush(stdout);
 }
 
 
@@ -1086,6 +1096,8 @@ Rstd_ShowFiles(int nfile, 		/* number of files */
 		if (headers[i] && *headers[i])
 		    fprintf(tfp, "%s\n\n", headers[i]);
 		errno = 0; /* some systems require this */
+		/* File expansion is now done in file.show(), but
+		   left here in case other callers assumed it */
 		if ((fp = R_fopen(R_ExpandFileName(file[i]), "r"))
 		    != NULL) {
 		    while ((c = fgetc(fp)) != EOF)
@@ -1156,7 +1168,8 @@ void attribute_hidden Rstd_read_history(char *s)
 void attribute_hidden Rstd_loadhistory(SEXP call, SEXP op, SEXP args, SEXP env)
 {
     SEXP sfile;
-    char file[PATH_MAX], *p;
+    char file[PATH_MAX];
+    const char *p;
 
     sfile = CAR(args);
     if (!isString(sfile) || LENGTH(sfile) < 1)
@@ -1178,7 +1191,8 @@ void attribute_hidden Rstd_loadhistory(SEXP call, SEXP op, SEXP args, SEXP env)
 void attribute_hidden Rstd_savehistory(SEXP call, SEXP op, SEXP args, SEXP env)
 {
     SEXP sfile;
-    char file[PATH_MAX], *p;
+    char file[PATH_MAX];
+    const char *p;
 
     sfile = CAR(args);
     if (!isString(sfile) || LENGTH(sfile) < 1)

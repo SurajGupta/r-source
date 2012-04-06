@@ -1,3 +1,8 @@
+% File src/library/graphics/man/abline.Rd
+% Part of the R package, http://www.R-project.org
+% Copyright 1995-2007 R Core Development Team
+% Distributed under GPL 2 or later
+
 \name{abline}
 \alias{abline}
 \title{Add Straight Lines to a Plot}
@@ -77,7 +82,7 @@ abline(a=1, b=2, col = 2)
 text(1,3, "abline( 1, 2 )", col=2, adj=c(-.1,-.1))
 
 ## Simple Regression Lines:
-
+require(stats)
 sale5 <- c(6, 4, 9, 7, 6, 12, 8, 10, 9, 13)
 plot(sale5)
 abline(lsfit(1:10,sale5))

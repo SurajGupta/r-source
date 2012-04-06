@@ -1,3 +1,8 @@
+% File src/library/stats/man/ecdf.Rd
+% Part of the R package, http://www.R-project.org
+% Copyright 1995-2007 R Core Development Team
+% Distributed under GPL 2 or later
+
 \name{ecdf}
 \alias{ecdf}
 \alias{plot.ecdf}
@@ -12,8 +17,8 @@ ecdf(x)
 \method{print}{ecdf}(x, digits= getOption("digits") - 2, \dots)
 }
 \arguments{
-  \item{x}{numeric vector of \dQuote{observations} in \code{ecdf};  for
-    the methods, an object of class \code{"ecdf"}, typically.}
+  \item{x}{numeric vector of the observations for \code{ecdf};  for
+    the methods, an object inheriting from class \code{"ecdf"}.}
   \item{\dots}{arguments to be passed to subsequent methods, i.e.,
     \code{\link{plot.stepfun}} for the \code{plot} method.}
   \item{ylab}{label for the y-axis.}
@@ -60,7 +65,7 @@ ecdf(x)
 Fn <- ecdf(rnorm(12))
 Fn
 tt <- seq(-2,2, by = 0.1)
-12* Fn(tt) # Fn is a `simple' function {with values k/12}
+12* Fn(tt) # Fn is a 'simple' function {with values k/12}
 summary(Fn)
 knots(Fn)# the unique data values {12 of them if there were no ties}
 
@@ -72,12 +77,13 @@ summary(Fn12)
 summary.stepfun(Fn12)
 
 ## Advanced: What's inside the function closure?
-print(ls.Fn12 <- ls(env= environment(Fn12)))
+print(ls.Fn12 <- ls(environment(Fn12)))
 ##[1] "f"  "method"  "n"  "x"  "y"  "yleft"  "yright"
 utils::ls.str(environment(Fn12))
 
 
 ###----------------- Plotting --------------------------
+require(graphics)
 
 op <- par(mfrow=c(3,1), mgp=c(1.5, 0.8,0), mar= .1+c(3,3,2,1))
 
@@ -85,18 +91,19 @@ F10 <- ecdf(rnorm(10))
 summary(F10)
 
 plot(F10)
-plot(F10, verticals= TRUE, do.p = FALSE)
+plot(F10, verticals= TRUE, do.points = FALSE)
 
 plot(Fn12 , lwd = 2) ; mtext("lwd = 2", adj=1)
-xx <- unique(sort(c(seq(-3,2, length=201), knots(Fn12))))
+xx <- unique(sort(c(seq(-3, 2, length=201), knots(Fn12))))
 lines(xx, Fn12(xx), col='blue')
 abline(v=knots(Fn12),lty=2,col='gray70')
 
 plot(xx, Fn12(xx), type='o', cex=.1)#- plot.default {ugly}
-plot(Fn12, col.h='red', add= TRUE)  #- plot method
+plot(Fn12, col.hor='red', add= TRUE)  #- plot method
 abline(v=knots(Fn12),lty=2,col='gray70')
 ## luxury plot
-plot(Fn12, verticals=TRUE, col.p='blue', col.h='red',col.v='bisque')
+plot(Fn12, verticals=TRUE, col.points='blue',
+     col.hor='red', col.vert='bisque')
 
 ##-- this works too (automatic call to  ecdf(.)):
 plot.ecdf(rnorm(24))

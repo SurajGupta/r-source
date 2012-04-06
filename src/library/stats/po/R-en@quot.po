@@ -22,10 +22,10 @@
 #
 msgid ""
 msgstr ""
-"Project-Id-Version: R 2.5.0\n"
+"Project-Id-Version: R 2.6.0\n"
 "Report-Msgid-Bugs-To: bugs@r-project.org\n"
-"POT-Creation-Date: 2007-06-12 18:46\n"
-"PO-Revision-Date: 2007-06-12 18:46\n"
+"POT-Creation-Date: 2007-09-17 10:19\n"
+"PO-Revision-Date: 2007-09-17 10:19\n"
 "Last-Translator: Automatically generated\n"
 "Language-Team: none\n"
 "MIME-Version: 1.0\n"
@@ -111,9 +111,6 @@ msgstr "no terms in scope"
 msgid "no terms in scope for adding to object"
 msgstr "no terms in scope for adding to object"
 
-msgid "trying +"
-msgstr "trying +"
-
 msgid "number of rows in use has changed: remove missing values?"
 msgstr "number of rows in use has changed: remove missing values?"
 
@@ -129,9 +126,6 @@ msgstr "no ‘add1’ method implemented for “mlm” models"
 msgid "scope is not a subset of term labels"
 msgstr "scope is not a subset of term labels"
 
-msgid "trying -"
-msgstr "trying -"
-
 msgid "no 'drop1' method for \"mlm\" models"
 msgstr "no ‘drop1’ method for “mlm” models"
 
@@ -146,12 +140,6 @@ msgstr "upper scope does not include model term(s) %s"
 
 msgid "AIC is not defined for this model, so 'step' cannot proceed"
 msgstr "AIC is not defined for this model, so ‘step’ cannot proceed"
-
-msgid "Start:  AIC="
-msgstr "Start:  AIC="
-
-msgid "Step:  AIC="
-msgstr "Step:  AIC="
 
 msgid "'A' must be an array or table"
 msgstr "‘A’ must be an array or table"
@@ -383,11 +371,8 @@ msgstr "sample is too sparse to find alph2"
 msgid "no solution in the specified range of bandwidths"
 msgstr "no solution in the specified range of bandwidths"
 
-msgid "increasing bw.SJ() search interval ("
-msgstr "increasing bw.SJ() search interval ("
-
-msgid ")"
-msgstr ")"
+msgid "increasing bw.SJ() search interval (%d)"
+msgstr "increasing bw.SJ() search interval (%d)"
 
 msgid "minimum occurred at one end of the range"
 msgstr "minimum occurred at one end of the range"
@@ -1449,6 +1434,9 @@ msgstr "non-factors ignored:"
 msgid "eff.aovlist: non-orthogonal contrasts would give an incorrect answer"
 msgstr "eff.aovlist: non-orthogonal contrasts would give an incorrect answer"
 
+msgid "cannot create a formula from a zero-column data frame"
+msgstr "cannot create a formula from a zero-column data frame"
+
 msgid "no terms component"
 msgstr "no terms component"
 
@@ -1458,12 +1446,11 @@ msgstr "‘termlabels’ must be a character vector of length at least one"
 msgid "'termobj' must be a object of class \"terms\""
 msgstr "‘termobj’ must be a object of class “terms”"
 
-msgid ""
-"variable '%s' was fitted with class \"%s\" but class \"%s\" was supplied"
-msgstr "variable ‘%s’ was fitted with class “%s” but class “%s” was supplied"
+msgid "variable '%s' was fitted with type \"%s\" but type \"%s\" was supplied"
+msgstr "variable ‘%s’ was fitted with type “%s” but type “%s” was supplied"
 
-msgid "variables %s were specified with different classes from the fit"
-msgstr "variables %s were specified with different classes from the fit"
+msgid "variables %s were specified with different types from the fit"
+msgstr "variables %s were specified with different types from the fit"
 
 msgid "'data' must be a data.frame, not a matrix or an array"
 msgstr "‘data’ must be a data.frame, not a matrix or an array"
@@ -1519,6 +1506,12 @@ msgstr "‘interval’ must be a vector of length 2"
 msgid "lower < upper  is not fulfilled"
 msgstr "lower < upper  is not fulfilled"
 
+msgid "f.lower = f(lower) is NA"
+msgstr "f.lower = f(lower) is NA"
+
+msgid "f.upper = f(upper) is NA"
+msgstr "f.upper = f(upper) is NA"
+
 msgid "f() values at end points not of opposite sign"
 msgstr "f() values at end points not of opposite sign"
 
@@ -1567,9 +1560,6 @@ msgstr "singular gradient matrix at initial parameter estimates"
 msgid "'data' must be a list or an environment"
 msgstr "‘data’ must be a list or an environment"
 
-msgid "no parameters to fit"
-msgstr "no parameters to fit"
-
 msgid "No starting values specified"
 msgstr "No starting values specified"
 
@@ -1587,6 +1577,15 @@ msgstr "Consider specifying ‘start’ or using a selfStart model"
 
 msgid "parameters without starting value in 'data':"
 msgstr "parameters without starting value in 'data':"
+
+msgid "fitting parameters"
+msgstr "fitting parameters"
+
+msgid "without any variables"
+msgstr "without any variables"
+
+msgid "no parameters to fit"
+msgstr "no parameters to fit"
 
 msgid "Upper or lower bounds ignored unless algorithm = \"port\""
 msgstr "Upper or lower bounds ignored unless algorithm = “port”"
@@ -1795,6 +1794,9 @@ msgstr "‘ref’ must be an existing level"
 msgid "ref = %d must be in 1:%d"
 msgstr "ref = %d must be in 1:%d"
 
+msgid "Failed to guess time-varying variables from their names"
+msgstr "Failed to guess time-varying variables from their names"
+
 msgid "'varying' arguments must be the same length"
 msgstr "‘varying’ arguments must be the same length"
 
@@ -1807,8 +1809,21 @@ msgstr "there are records with missing times, which will be dropped."
 msgid "some constant variables (%s) are really varying"
 msgstr "some constant variables (%s) are really varying"
 
-msgid "no 'time' or 'id' specified"
-msgstr "no ‘time’ or ‘id’ specified"
+msgid "no 'reshapeWide' attribute, must specify 'varying'"
+msgstr "no ‘reshapeWide’ attribute, must specify ‘varying’"
+
+msgid "'varying' must be nonempty list or vector"
+msgstr "‘varying’ must be nonempty list or vector"
+
+msgid "length of v.names does not evenly divide length of varying"
+msgstr "length of v.names does not evenly divide length of varying"
+
+msgid ""
+"length of varying must be the product of length of v.names and length of "
+"times"
+msgstr ""
+"length of varying must be the product of length of v.names and length of "
+"times"
 
 msgid "'k' must be positive"
 msgstr "‘k’ must be positive"

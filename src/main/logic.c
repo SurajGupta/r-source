@@ -14,8 +14,8 @@
  *  GNU General Public License for more details.
  *
  *  You should have received a copy of the GNU General Public License
- *  along with this program; if not, write to the Free Software
- *  Foundation, Inc., 51 Franklin Street Fifth Floor, Boston, MA 02110-1301  USA
+ *  along with this program; if not, a copy is available at
+ *  http://www.r-project.org/Licenses/
  */
 
 #ifdef HAVE_CONFIG_H
@@ -116,7 +116,7 @@ static SEXP lbinary(SEXP call, SEXP op, SEXP args)
     }
     if(mismatch)
 	warningcall(call, 
-		    _("longer object length\n\tis not a multiple of shorter object length"));
+		    _("longer object length is not a multiple of shorter object length"));
 
     if (isRaw(x) && isRaw(y)) {
 	PROTECT(x = binaryLogic2(PRIMVAL(op), x, y));
@@ -346,17 +346,25 @@ static void checkValues(int * x, int n, Rboolean *haveFalse,
     }
 }
 
+extern SEXP fixup_NaRm(SEXP args); /* summary.c */
+
 /* all, any */
 SEXP attribute_hidden do_logic3(SEXP call, SEXP op, SEXP args, SEXP env)
 {
-    SEXP ans, s, t;
+    SEXP ans, s, t, call2;
     int narm;
     Rboolean haveTrue;
     Rboolean haveFalse;
     Rboolean haveNA;
 
-    if(DispatchGroup("Summary", call, op, args, env, &s))
-	return s;
+    PROTECT(args = fixup_NaRm(args));
+    PROTECT(call2 = duplicate(call));
+    SETCDR(call2, args);
+
+    if (DispatchGroup("Summary", call2, op, args, env, &ans)) {
+	UNPROTECT(2);
+	return(ans);
+    }
 
     ans = matchArgExact(R_NaRmSymbol, &args);
     narm = asLogical(ans);
@@ -380,5 +388,6 @@ SEXP attribute_hidden do_logic3(SEXP call, SEXP op, SEXP args, SEXP env)
     } else {			/* ANY */
 	LOGICAL(s)[0] = haveNA ? (haveTrue  ? TRUE  : NA_LOGICAL) : haveTrue;
     }
+    UNPROTECT(2);
     return s;
 }

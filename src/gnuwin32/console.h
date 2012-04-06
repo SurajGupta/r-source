@@ -15,8 +15,8 @@
  *  GNU General Public License for more details.
  *
  *  You should have received a copy of the GNU General Public License
- *  along with this program; if not, write to the Free Software
- *  Foundation, Inc., 51 Franklin Street, Fifth Floor, Boston, MA 02110-1301  USA
+ *  along with this program; if not, a copy is available at
+ *  http://www.r-project.org/Licenses/
  */
 
 typedef window console;
@@ -36,7 +36,7 @@ pager newpager(char *title, char *filename, char *header, int unlinkonexit);
 console newconsole(char *name, int flags);
 int  consolereads(console c, char *prompt, char *buf, int len,
 		  int addtohistory);
-int  consolewrites(console c, char *s);
+int  consolewrites(console c, const char *s);
 int  consolecancopy(console c);
 int  consolecanpaste(console c);
 void consolecopy(console c);

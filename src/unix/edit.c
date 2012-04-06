@@ -14,8 +14,8 @@
  *  GNU General Public License for more details.
  *
  *  You should have received a copy of the GNU General Public License
- *  along with this program; if not, write to the Free Software
- *  Foundation, Inc., 51 Franklin Street, Fifth Floor, Boston, MA 02110-1301  USA
+ *  along with this program; if not, a copy is available at
+ *  http://www.r-project.org/Licenses/
  */
 
 /* <UTF8> char here is handled as a whole string, but note that
@@ -88,7 +88,8 @@ SEXP attribute_hidden do_edit(SEXP call, SEXP op, SEXP args, SEXP rho)
     int   i, rc;
     ParseStatus status;
     SEXP  x, fn, envir, ti, ed, src, srcfile, Rfn;
-    char *filename, *editcmd, *vmaxsave, *cmd;
+    char *filename, *editcmd, *vmaxsave;
+    const char *cmd;
     FILE *fp;
 #ifdef Win32
     char *title;
@@ -108,7 +109,7 @@ SEXP attribute_hidden do_edit(SEXP call, SEXP op, SEXP args, SEXP rho)
 	error(_("invalid argument to edit()"));
 
     if (LENGTH(STRING_ELT(fn, 0)) > 0) {
-	char *ss = translateChar(STRING_ELT(fn, 0));
+	const char *ss = translateChar(STRING_ELT(fn, 0));
 	filename = R_alloc(strlen(ss), sizeof(char));
 	strcpy(filename, ss);
     }

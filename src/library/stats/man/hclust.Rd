@@ -1,3 +1,8 @@
+% File src/library/stats/man/hclust.Rd
+% Part of the R package, http://www.R-project.org
+% Copyright 1995-2007 R Core Development Team
+% Distributed under GPL 2 or later
+
 \name{hclust}
 \title{Hierarchical Clustering}
 \alias{hclust}
@@ -128,7 +133,7 @@ plclust(tree, hang = 0.1, unit = FALSE, level = FALSE, hmin = 0,
   dissimilarity matrix between clusters instead of dissimilarities
   between singletons and \code{members} gives the number of observations
   per cluster.  This way the hierarchical cluster algorithm can be
-  \dQuote{started in the middle of the dendrogram}, e.g., in order to
+  \sQuote{started in the middle of the dendrogram}, e.g., in order to
   reconstruct the part of the tree above a cut (see examples).
   Dissimilarities between clusters can be efficiently computed (i.e.,
   without \code{hclust} itself) only for a limited number of
@@ -198,6 +203,8 @@ plclust(tree, hang = 0.1, unit = FALSE, level = FALSE, hmin = 0,
   see \code{\link[cluster]{agnes}} from package \pkg{cluster}.
 }
 \examples{
+require(graphics)
+
 hc <- hclust(dist(USArrests), "ave")
 plot(hc)
 plot(hc, hang = -1)

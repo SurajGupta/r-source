@@ -1,3 +1,8 @@
+% File src/library/base/man/sys.parent.Rd
+% Part of the R package, http://www.R-project.org
+% Copyright 1995-2007 R Core Development Team
+% Distributed under GPL 2 or later
+
 \name{sys.parent}
 \alias{sys.parent}
 \alias{sys.call}
@@ -13,7 +18,7 @@
 \title{Functions to Access the Function Call Stack}
 \description{
   These functions provide access to \code{\link{environment}}s
-  (\dQuote{frames} in S terminology) associated with functions further
+  (\sQuote{frames} in S terminology) associated with functions further
   up the calling stack.
 }
 \usage{
@@ -103,6 +108,8 @@ parent.frame(n = 1)
   \code{\link{eval}} for a usage of \code{sys.frame} and \code{parent.frame}.
 }
 \examples{
+require(utils)
+
 ## Note: the first two examples will give different results
 ## if run by example().
 ff <- function(x) gg(x)

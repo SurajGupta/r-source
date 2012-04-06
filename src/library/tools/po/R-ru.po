@@ -7,10 +7,10 @@
 #
 msgid ""
 msgstr ""
-"Project-Id-Version: R 2.5.0\n"
+"Project-Id-Version: R 2.6.0\n"
 "Report-Msgid-Bugs-To: bugs@r-project.org\n"
-"POT-Creation-Date: 2007-02-24 16:01\n"
-"PO-Revision-Date: 2007-04-07 02:02-0800\n"
+"POT-Creation-Date: 2007-08-22 12:25\n"
+"PO-Revision-Date: 2007-09-18 00:42-0800\n"
 "Last-Translator: Alexey Shipunov <dactylorhiza@gmail.com>\n"
 "Language-Team: Russian\n"
 "MIME-Version: 1.0\n"
@@ -311,6 +311,12 @@ msgstr "Пакеты с привилегиями 'base' или 'recommended' или 'defunct-base' должны
 msgid "See the information on DESCRIPTION files in section 'Creating R packages' of the 'Writing R Extensions' manual."
 msgstr "См. информацию о файлах DESCRIPTION в секции  'Creating R пакетs' руководства 'Writing R Extensions'."
 
+msgid "Encoding '%s' is not portable"
+msgstr "Кодировка '%s' не переносима"
+
+msgid "Unknown encoding with non-ASCII data"
+msgstr "Неизвестная кодировка с не-ASCII данными"
+
 msgid "Non-portable flags in variable '%s':"
 msgstr "Непереносимые флаги в переменной '%s':"
 
@@ -404,6 +410,9 @@ msgstr "пропущенное/пустое поле \\имя Rd-файлы"
 msgid "unable to create temp directory"
 msgstr "не могу создать временную папку"
 
+msgid "--- running texi2dvi on vignettes"
+msgstr "--- запуск 'texi2dvi' на очерки"
+
 msgid ""
 "processing vignette '%s' failed with diagnostics:\n"
 "%s"
@@ -411,7 +420,7 @@ msgstr ""
 "выполнение очерка '%s' не удалось с диагностикой:\n"
 "%s"
 
-msgid "running make failed"
+msgid "running 'make' failed"
 msgstr "не удался запуск 'make'"
 
 msgid "cannot read index information in file '%s'"
@@ -431,6 +440,18 @@ msgstr "*** что-то сломалось в поле 'Built' пакета '%s'***"
 
 msgid "cannot open directory '%s'"
 msgstr "не могу открыть папку '%s'"
+
+msgid "WARNING: 'Depends' entry has multiple dependencies:"
+msgstr "ПРЕДУПРЕЖДЕНИЕ: У 'Depends' множественные зависимости:"
+
+msgid ","
+msgstr ","
+
+msgid "only the first will be used"
+msgstr "только первый будет использован"
+
+msgid "WARNING: omitting pointless dependence on 'R' without a version requirement"
+msgstr "ПРЕДУПРЕЖДЕНИЕ: пробускаю бессмысленную зависимость от 'R' без указания требуемой версии"
 
 msgid "cannot turn off locale-specific sorting via LC_COLLATE"
 msgstr "не могу включить локаль-специфичную сортировку через LC_COLLATE"
@@ -456,17 +477,32 @@ msgstr "не могу скопировать 'INDEX' в '%s'"
 msgid "cannot create directory '%s'"
 msgstr "Не могу создать папку '%s'"
 
-msgid "unable to run pdflatex on '%s'"
-msgstr "Не могу запустить 'pdflatex' на '%s'"
+msgid "processing '"
+msgstr "обрабытываю '"
 
-msgid "unable to run bibtex on '%s'"
-msgstr "не могу запустить 'bibtex' на '%s'"
+msgid "'"
+msgstr "'"
 
 msgid "file '%s' was not created"
 msgstr "файл '%s' не создан"
 
 msgid "cannot copy '%s' to '%s'"
 msgstr "не могу скопировать '%s' в '%s'"
+
+msgid "missing 'DESCRIPTION.in' for package '%s'"
+msgstr "пропущен 'DESCRIPTION.in' у пакета '%s'"
+
+msgid "WARNING: malformed 'Depends' field in 'DESCRIPTION'"
+msgstr "ПРЕДУПРЕЖДЕНИЕ: неправильное поле 'Depends' в 'DESCRIPTION'"
+
+msgid "ERROR: this R is version %s, package '%s' requires R %s %s"
+msgstr "ОШИБКА: это R версии %s, а пакет '%s' требует R %s %s"
+
+msgid "ERROR: this R is version %s, bundle '%s' requires R %s %s"
+msgstr "ОШИБКА: это R версии %s, а набор '%s' требует R %s %s"
+
+msgid "ERROR: this R is version %s, required is R %s %s"
+msgstr "ОШИБКА: это R версии %s, а требуется R %s %s"
 
 msgid "there is no package called '%s'"
 msgstr "нет пакета по имени '%s'"
@@ -540,8 +576,11 @@ msgstr "аргумент 'delim' должен определять два символа"
 msgid "only Rd syntax is currently supported"
 msgstr "сейчас поддерживается только Rd-синтаксис"
 
-msgid "running texi2dvi on '%s' failed"
+msgid "running 'texi2dvi' on '%s' failed"
 msgstr "запуск 'texi2dvi' на '%s' не удался"
+
+msgid "unable to run %s on '%s'"
+msgstr "не могу запустить %s на '%s'"
 
 msgid "file '%s' is not in valid DCF format"
 msgstr "файл '%s' не является правильным форматом DCF"
@@ -578,4 +617,7 @@ msgid_plural "Found possibly global 'T' or 'F' in the following Rd example files
 msgstr[0] "Найдены возможные глобальные T или F в следующем Rd-файле примеров:"
 msgstr[1] "Найдены возможные глобальные T или F в следующих Rd-файлах примеров:"
 msgstr[2] "Найдены возможные глобальные T или F в следующих Rd-файлах примеров:"
+
+#~ msgid "unable to run pdflatex on '%s'"
+#~ msgstr "Не могу запустить 'pdflatex' на '%s'"
 

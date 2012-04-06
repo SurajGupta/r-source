@@ -9,7 +9,7 @@ redistribute it.
 
 The status of files used only in the Windows port is in file
 src/gnuwin32/COPYRIGHTS.win, which is appended to this file in binary
-Wndows distributions.
+Windows distributions.
 
 	---------------------------------------------------
 
@@ -44,10 +44,19 @@ From the announcement of the change (2001-Feb-05)
     To avoid any anomalies, the versions of the same files in R versions
     1.0.0 to 1.2.1 may also be used under LGPL or GPL.
 
+As from R 2.3.0 import libraries are no longer used under Windows, and
+as from R 2.4.0 fewer export files are used under AIX.
+
+
+Some contributed files are also covered by the Library General Public License.
+These include (see also below)
+
+src/library/stats/R/embed.R
+src/library/stats/src/PPsum.c
+
 	---------------------------------------------------
 
-As from R 2.3.0 import libraries are no longer used under Windows, and
-as from R 2.4.0 export files are no longer used under AIX.
+
 
 
 Some of the code contains different copyright statements.  It is used
@@ -84,9 +93,12 @@ doc/html/search/*.java
 	Copyright (C), 1998 Thomas Baier
 or	Copyright (C), 1998-2000, Thomas Baier, R Core Development Team
 
-doc/manual/texinfo.tex
+doc/manual/R-intro.texi
 
-	Copyright (C) various dates Free Software Foundation, Inc.
+	Copyright (C) 1990 W. N. Venables
+	Copyright (C) 1992 W. N. Venables & D. M. Smith
+	Copyright (C) 1997 R. Gentleman & R. Ihaka
+	Copyright (C) 1997, 1998 M. Maechler
 
 share/texmf/upquote.sty
 
@@ -97,17 +109,16 @@ src/library/graphics/R/mosaicplot.R
 
 	Copyright (C) 1998 John W. Emerson
 
+src/library/graphics/R/pairs.R
 
-src/library/stats/R/aov.R
+	In part, Copyright 1999 Dr. Jens Oehlschlaegel-Akiyoshi
+
+src/library/graphics/R/polygon.R
+
+	Copyright (C) 2001 by Kevin Buhr <buhr@stat.wisc.edu>
+
 src/library/stats/R/bandwidths.R
-src/library/stats/R/contr.poly.R
-src/library/base/R/expand.grid.R
-src/library/stats/R/predict.glm.R
-src/library/stats/R/update.R
-src/library/stats/*/max.col.R*
-src/library/stats/R/biplot.R
-src/library/stats/R/princomp-add.R
-src/appl/bandwidths.c
+src/library/stats/src//bandwidths.c
 src/appl/maxcol.c
 
 	Copyright (C) various dates W. N. Venables and B. D. Ripley
@@ -136,7 +147,27 @@ src/library/stats/src/carray.c, mburg.c, myw.c, qr.c
 	Copyright (C) 1999 Martyn Plummer
 
 
-src/unix/rotated.[ch]
+src/library/stats/R/nls.R
+
+	In part, Copyright 1999-1999 Saikat DebRoy
+
+
+src/library/stats/R/nlsFunc.R
+src/library/stats/R/selfStart.R
+src/library/stats/R/zzModels.R
+
+	Copyright 1997,1999 Jose C. Pinheiro
+
+src/library/stats/src/Trunmed.c
+
+	In part Copyright (C) 1995 Berwin A. Turlach
+
+src/library/tcltk/exec/*.tcl
+
+	Copyright (c) various dates Jeffrey Hobbs
+
+
+src/modules/X11/rotated.[ch]
 
 	Copyright (c) 1993 Alan Richardson
 
@@ -166,23 +197,36 @@ src/nmath/dpois.c
   are partly based on Clive Loader's (1999) work,
   (C) 1999-2000 Lucent Technologies, Bell Laboratories.
 
+
 src/main/RNG.c
 
   The Mersenne-Twister part is
   Copyright (C) 1997, 1999 Makoto Matsumoto and Takuji Nishimura.
 
-  The Knuth-TAOCP part says
 
-    This program by D E Knuth is in the public domain and freely copyable
-    AS LONG AS YOU MAKE ABSOLUTELY NO CHANGES!
+src/main/xspline.c
 
-  and is used unchanged.
+ * Copyright (c) 1985-1988 by Supoj Sutanthavibul
+ * Parts Copyright (c) 1989-2002 by Brian V. Smith
+ * Parts Copyright (c) 1991 by Paul King
+ * Parts Copyright (c) 1992 by James Tough
+ * Parts Copyright (c) 1998 by Georg Stemmer
+ * Parts Copyright (c) 1995 by C. Blanc and C. Schlick
+  
+ * Any party obtaining a copy of these files is granted, free of charge, a
+ * full and unrestricted irrevocable, world-wide, paid up, royalty-free,
+ * nonexclusive right and license to deal in this software and
+ * documentation files (the "Software"), including without limitation the
+ * rights to use, copy, modify, merge, publish and/or distribute copies of
+ * the Software, and to permit persons who receive copies from any such 
+ * party to do so, with the only requirement being that this copyright 
+ * notice remain intact.
 
 
 src/modules/lapack/dlapack[0123].f, cmplx.f, dlamc.f
 
   Extracted from
-  *  -- LAPACK routine (version 3.0) --
+  *  -- LAPACK routine (version 3.1) --
   *     Univ. of Tennessee, Univ. of California Berkeley, NAG Ltd.,
   *     Courant Institute, Argonne National Lab, and Rice University
 
@@ -196,7 +240,7 @@ src/modules/lapack/dlapack[0123].f, cmplx.f, dlamc.f
 src/main/vsnprintf.c
 
   Taken from the wget 1.8.1 distribution: only used on platforms
-  without vnsprintf.
+  without vsnprintf.
   /*
    * Copyright Patrick Powell 1995
    * This code is based on code written by Patrick Powell (papowell@astart.com)
@@ -238,17 +282,32 @@ used as substitution code only.  Based on
   Cephes Math Library Release 2.8:  June, 2000
   Copyright 1984, 1995, 2000 by Stephen L. Moshier
 
+According to http://www.netlib.org/cephes/readme
+
+  What you see here may be used freely but it comes with no support or
+  guarantee.
+
 
 src/main/apse.c
 src/main/apse.h
 
   Copyright (C) Jarkko Hietaniemi, 1998,1999,2000,2001.
 
+  This program is free software; you can redistribute it and/or modify
+  it under the terms of either:
+
+  a) the GNU Library General Public License as published by the Free
+     Software Foundation; either version 2, or (at your option) any
+     later version, or
+
+  b) the "Artistic License" which comes with Perl source code.
+
+
 
 src/extra/pcre/LICENCE
 src/extra/pcre/*.[ch]
 
-   Copyright (c) 1997-2006 University of Cambridge
+   Copyright (c) 1997-2007 University of Cambridge
    All rights reserved.
 
 See file src/extra/pcre/LICENCE.  For binary builds of R that requires
@@ -293,7 +352,7 @@ src/extra/bzip2/decompress.c
 src/extra/bzip2/huffman.c
 src/extra/bzip2/randtable.c
 
-   copyright (C) 1996-2005 Julian R Seward.
+   copyright (C) 1996-2006 Julian R Seward.
 
 
 src/library/tools/src/md5.[ch]
@@ -303,9 +362,10 @@ src/library/tools/src/md5.[ch]
 
 src/extra/intl/*
 
-Based on gettextize from gettext 0.14.5
-   Copyright (C) 1995-1999, 2000-2005 Free Software Foundation, Inc.
-
+Based on gettextize from gettext 0.16.1
+   Copyright (C) various dates Free Software Foundation, Inc.
+   Distributed under the GNU Library General Public License
+   version 2 or later.
 
 src/include/memcheck.h
 src/include/valgrind.h
@@ -321,3 +381,58 @@ From glibc via
 http://lists.gnu.org/archive/html/bug-gnulib/2003-02/msg00019.html
 
    Copyright (C) 1999, 2001-2003 Free Software Foundation, Inc.
+   Distributed under the GNU Library General Public License
+   version 2 or later.
+
+src/main/Rstrptime.c
+
+   Copyright (C) 1996, 1997, 1998, 1999, 2000 Free Software Foundation, Inc.
+   Distributed under the GNU Library General Public License
+   version 2 or later.
+
+share/perl/File/Copy/Recursive.pm
+
+   Copyright 2004 by Daniel Muey
+
+   This library is free software; you can redistribute it and/or modify
+   it under the same terms as Perl itself.
+
+
+share/perl/Text/Delimiter.pm
+
+   Copyright (C) Small Planet Software and Norman Walsh.
+   All rights reserved.  This program is free software; you can
+   redistribute it and/or modify it under the same terms as Perl itself.
+
+po/*.po
+src/library/*/po/*.po
+
+   Some of the translations are (C) the translator as marked in the files.
+
+COPYING
+doc/COPYING
+doc/COPYING.LIB
+m4/codeset.m4
+m4/gettext.m4
+m4/gettext-lib.m4
+share/licenses/GPL-2
+share/licenses/GPL-3
+share/licenses/LGPL-2
+share/licenses/LGPL-2.1
+share/licenses/LGPL-3
+src/main/strdup.c
+tools/config.quess
+tools/config.rpath
+tools/config.sub
+tools/help2man.pl
+tools/ltmain.sh
+tools/mdate-sh
+tools/missing
+
+   Copyright various dates Free Software Foundation
+
+
+tools/install-sh:
+
+   Copyright (C) 1994 X Consortium
+

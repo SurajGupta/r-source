@@ -1,3 +1,8 @@
+% File src/library/stats/man/reorder.factor.Rd
+% Part of the R package, http://www.R-project.org
+% Copyright 1995-2007 R Core Development Team
+% Distributed under GPL 2 or later
+
 \name{reorder.factor}
 \alias{reorder}
 \alias{reorder.factor}
@@ -52,6 +57,8 @@ reorder(x, \dots)
 }
 
 \examples{
+require(graphics)
+
 bymedian <- with(InsectSprays, reorder(spray, count, median))
 boxplot(count ~ bymedian, data = InsectSprays,
         xlab = "Type of spray", ylab = "Insect count",

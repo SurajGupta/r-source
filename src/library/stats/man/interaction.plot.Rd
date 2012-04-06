@@ -1,3 +1,8 @@
+% File src/library/stats/man/interaction.plot.Rd
+% Part of the R package, http://www.R-project.org
+% Copyright 1995-2007 R Core Development Team
+% Distributed under GPL 2 or later
+
 \name{interaction.plot}
 \alias{interaction.plot}
 \title{Two-way Interaction Plot}
@@ -71,6 +76,8 @@ interaction.plot(x.factor, trace.factor, response, fun = mean,
 }
 
 \examples{
+require(graphics)
+
 with(ToothGrowth, {
 interaction.plot(dose, supp, len, fixed=TRUE)
 dose <- ordered(dose)

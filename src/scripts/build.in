@@ -1,23 +1,22 @@
 #! @PERL@
 #-*- perl -*-
-# Copyright (C) 2000-2006 R Development Core Team
-#
-# This program is free software; you can redistribute it and/or modify
-# it under the terms of the GNU General Public License as published by
-# the Free Software Foundation; either version 2, or (at your option)
-# any later version.
-#
-# This program is distributed in the hope that it will be useful, but
-# WITHOUT ANY WARRANTY; without even the implied warranty of
-# MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.	See the GNU
-# General Public License for more details.
-#
-# A copy of the GNU General Public License is available via WWW at
-# http://www.gnu.org/copyleft/gpl.html.	 You can also obtain it by
-## writing to the Free Software Foundation, Inc., 51 Franklin Street,
-## Fifth Floor, Boston, MA 02110-1301  USA.
 
-# Send any bug reports to r-bugs@r-project.org
+## Copyright (C) 2000-2007 R Development Core Team
+##
+## This program is free software; you can redistribute it and/or modify
+## it under the terms of the GNU General Public License as published by
+## the Free Software Foundation; either version 2, or (at your option)
+## any later version.
+##
+## This program is distributed in the hope that it will be useful, but
+## WITHOUT ANY WARRANTY; without even the implied warranty of
+## MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.	 See the GNU
+## General Public License for more details.
+##
+## A copy of the GNU General Public License is available at
+## http://www.r-project.org/Licenses/
+
+## Send any bug reports to r-bugs@r-project.org
 
 use Cwd;
 use File::Basename;
@@ -38,7 +37,7 @@ use Text::Wrap;
 ## Don't buffer output.
 $| = 1;
 
-my $revision = ' $Rev: 40047 $ ';
+my $revision = ' $Rev: 42671 $ ';
 my $version;
 my $name;
 $revision =~ / ([\d\.]*) /;
@@ -75,7 +74,11 @@ $ENV{"R_DEFAULT_PACKAGES"} = "";
 my $startdir = R_cwd();
 my $R_platform = R_getenv("R_PLATFORM", "unknown-binary");
 my $gzip = R_getenv("R_GZIPCMD", "gzip");
-my $tar = R_getenv("TAR", "tar");
+## The tar.exe in Rtools has --force-local by default, but this 
+## enables people to use Cygwin or MSYS tar. 
+my $tar_default = "tar";
+$tar_defualt = "tar --force-local" if $WINDOWS;
+my $tar = R_getenv("TAR", $tar_default);
 my $libdir = R_tempfile("Rinst");
 
 my $INSTALL_opts = "";
@@ -99,17 +102,26 @@ if(!$opt_binary && $INSTALL_opts ne "") {
 ## This is the main loop over all packages to be packaged.
 foreach my $pkg (@ARGV) {
     my $is_bundle = 0;
+
     $pkg =~ s/\/$//;
-    my $pkgname = basename($pkg);
-    my $intname;
+    ## Older versions used $pkg as absolute or relative to $startdir.
+    ## This does not easily work if $pkg is a symbolic link.
+    ## Hence, we now convert to absolute paths.
     chdir($startdir);
+    chdir($pkg) or die "Error: cannot change to directory '$pkg'\n";
+    ## (We could be nicer ...)
+    my $pkgdir = R_cwd();
+    my $pkgname = basename($pkgdir);
+    my $intname;
+    ## chdir($startdir);
+    ## (Does not hurt, but should no longer be necessary.)
 
     my $log = new R::Logfile();
 
     my $description;
     $log->checking("for file '$pkg/DESCRIPTION'");
-    if(-r &file_path($pkg, "DESCRIPTION")) {
-	$description = new R::Dcf(&file_path($pkg, "DESCRIPTION"));
+    if(-r &file_path($pkgdir, "DESCRIPTION")) {
+	$description = new R::Dcf(&file_path($pkgdir, "DESCRIPTION"));
 	$log->result("OK");
     }
     else {
@@ -119,45 +131,45 @@ foreach my $pkg (@ARGV) {
 
     my @bundlepkgs;
     if($description->{"Contains"}) {
-	$log->message("looks like '${pkg}' is a package bundle");
+	$log->message("looks like '${pkgname}' is a package bundle");
 	$is_bundle = 1;
 	$intname = $description->{"Bundle"};
 	@bundlepkgs = split(/\s+/, $description->{"Contains"});
 	foreach my $ppkg (@bundlepkgs) {
-	    $log->message("cleaning '$ppkg' in bundle '$pkg'");
+	    $log->message("cleaning '$ppkg' in bundle '$pkgname'");
 	    $log->setstars("**");
-	    chdir($startdir);
-	    cleanup_pkg(&file_path("$pkg", "$ppkg"), $log);
+	    ## chdir($startdir);
+	    cleanup_pkg(&file_path("$pkgdir", "$ppkg"), $log);
 	    $log->setstars("*");
 	}
 	foreach my $ppkg (@bundlepkgs) {
-	    $log->message("preparing '$ppkg' in bundle '$pkg':");
+	    $log->message("preparing '$ppkg' in bundle '$pkgname':");
 	    $log->setstars("**");
-	    chdir($startdir);
-	    prepare_pkg(&file_path("$pkg", "$ppkg"), $is_bundle,
+	    ## chdir($startdir);
+	    prepare_pkg(&file_path("$pkgdir", "$ppkg"), $is_bundle,
 			$description, $log);
 	    $log->setstars("*");
 	}
 	foreach my $ppkg (@bundlepkgs) {
-	    $log->message("cleaning '$ppkg' in bundle '$pkg'");
+	    $log->message("cleaning '$ppkg' in bundle '$pkgname'");
 	    $log->setstars("**");
-	    chdir($startdir);
-	    cleanup_pkg(&file_path("$pkg", "$ppkg"), $log);
+	    ## chdir($startdir);
+	    cleanup_pkg(&file_path("$pkgdir", "$ppkg"), $log);
 	    $log->setstars("*");
 	}
 	rmtree("$libdir") if (-d "$libdir");
     } else {
 	$is_bundle = 0;
-	chdir($startdir);
+	## chdir($startdir);
 	$log->message("preparing '$pkg':");
 	$intname = $description->{"Package"};
-	prepare_pkg("$pkg", $is_bundle, $description, $log);
+	prepare_pkg($pkgdir, $is_bundle, $description, $log);
     }
 
-    chdir($startdir);
+    ## chdir($startdir);
 
     $log->message("removing junk files");
-    find(\&unlink_junk_files, $pkg);
+    find(\&unlink_junk_files, $pkgdir);
 
     my $exclude = R_tempfile("Rbuild-exclude");
     open(EXCLUDE, "> $exclude")
@@ -167,8 +179,8 @@ foreach my $pkg (@ARGV) {
     ## For bundles, the .Rbuildignore mechanism is not consistent
     ## between build and check: the latter always works on a per
     ## package basis.
-    if(-f &file_path($pkg, ".Rbuildignore")) {
-	open(RBUILDIGNORE, &file_path($pkg, ".Rbuildignore"));
+    if(-f &file_path($pkgdir, ".Rbuildignore")) {
+	open(RBUILDIGNORE, &file_path($pkgdir, ".Rbuildignore"));
 	while(<RBUILDIGNORE>) {
 	    chop;
 	    push(@exclude_patterns, $_) if $_;
@@ -214,18 +226,12 @@ foreach my $pkg (@ARGV) {
 	    }
 	}
     }
-    chdir(&file_path("$pkg", ".."));
+    chdir(dirname($pkgdir));
     find(\&find_exclude_files, "$pkgname");
     close(EXCLUDE);
 
     my $filename = "${intname}_" . $description->{"Version"} . ".tar";
     my $filepath = &file_path($startdir, $filename);
-    ## under Windows, need separate Cygwin and Windows versions of path.
-    my $origfilepath = $filepath;
-    if($WINDOWS) {
-	## workaround for paths in Cygwin tar
-	$filepath =~ s+^([A-Za-z]):+/cygdrive/\1+;
-    }
     R_system(join(" ",
 		  ("$tar chf",
 		   &shell_quote_file_path($filepath),
@@ -248,7 +254,7 @@ foreach my $pkg (@ARGV) {
     }
     close(EXCLUDE);
     unlink($exclude);
-    unlink($origfilepath);
+    unlink($filepath);
     ## Now correct the package name (PR#9266)
     if($pkgname ne $intname) {
 	rename $pkgname, $intname 
@@ -269,7 +275,7 @@ foreach my $pkg (@ARGV) {
     }
     if($is_bundle) {
 	foreach $ppkg (@bundlepkgs) {
-	    &find_invalid_files("$pkgname/$ppkg");
+	    &find_invalid_files(&file_path($pkgname, $ppkg));
 	    chdir($tmpdir);
 	}
     } else {
@@ -295,13 +301,15 @@ foreach my $pkg (@ARGV) {
     ## Add build stamp to the DESCRIPTION file.
     &add_build_stamp_to_description_file(&file_path($pkgname,
 						    "DESCRIPTION"));
-    $log->message("checking for LF line-endings in source files");
+    $log->message("checking for LF line-endings in source and make files");
     if($is_bundle) {
 	foreach my $ppkg (@bundlepkgs) {
-	    &fix_CRLF_in_source_files(&file_path($pkgname, $ppkg), $log);
+	    &fix_nonLF_in_source_files(&file_path($pkgname, $ppkg), $log);
+	    &fix_nonLF_in_make_files(&file_path($pkgname, $ppkg), $log);
 	}
     } else {
-	&fix_CRLF_in_source_files($pkgname, $log);
+	&fix_nonLF_in_source_files($pkgname, $log);
+	&fix_nonLF_in_make_files($pkgname, $log);
     }
 
     sub empty_dir_check {
@@ -354,7 +362,7 @@ foreach my $pkg (@ARGV) {
 	my $srcdir = &file_path($tmpdir, $pkgname);
 	my $cmd;
 	if($WINDOWS) {
-	    $log->warning("some HTML links may not be found");
+	    $log->print("WARNING: some HTML links may not be found\n");
 	    $cmd = join(" ",
 			("Rcmd.exe INSTALL -l",
 			 &shell_quote_file_path($libdir),
@@ -373,8 +381,7 @@ foreach my $pkg (@ARGV) {
 			 &shell_quote_file_path($srcdir)));
 	    if(R_system($cmd)) { $log->error("installation failed"); }
 	    chdir("$libdir");
-	    copy(&file_path($startdir, $pkg, "DESCRIPTION"),
-		 "DESCRIPTION");
+	    copy(&file_path($pkgdir, "DESCRIPTION"), "DESCRIPTION");
 	    R_system(join(" ",
 			  ("$tar chf ",
 			   &shell_quote_file_path($filepath),
@@ -401,7 +408,7 @@ foreach my $pkg (@ARGV) {
 		       "$pkgname")));
 	R_system(join(" ",
 		      ("$gzip -9f",
-		       &shell_quote_file_path($origfilepath))));
+		       &shell_quote_file_path($filepath))));
     }
     chdir($startdir);
     rmtree($tmpdir);
@@ -435,10 +442,8 @@ sub add_build_stamp_to_description_file {
 
 
 sub prepare_pkg {
-    my ($pkg, $in_bundle, $description, $log) = @_;
+    my ($pkgdir, $in_bundle, $description, $log) = @_;
 
-    chdir($pkg);
-    my $pkgdir = R_cwd();
     my $pkgname = basename($pkgdir);
 
     &R::Utils::check_package_description($pkgdir, $pkgname, $log,
@@ -498,12 +503,11 @@ sub prepare_pkg {
 	    $log->creating("vignettes");
 	    my $Rcmd = "library(tools)\n";
 	    $Rcmd .= "buildVignettes(dir = '.')\n";
-	    my @out = R_runR($Rcmd, "--vanilla --no-save --quiet");
+	    my %result = R_run_R($Rcmd, "--vanilla --no-save --quiet");
 	    rmtree("$libdir") unless $in_bundle;
 	    $ENV{'R_LIBS'} = $R_LIBS;
-	    my @err = grep(/^Error/, @out);
-	    if(scalar(@err) > 0) {
-		@out = grep(!/^\>/, @out);
+	    if($result{"status"}) {
+		my @out = grep(!/^\>/, @{$result{"out"}});
 		$log->error();
 		$log->print(join("\n", @out) . "\n");
 		exit(1);
@@ -521,10 +525,8 @@ sub prepare_pkg {
 }
 
 sub cleanup_pkg {
-    my ($pkg, $log) = @_;
+    my ($pkgdir, $log) = @_;
 
-    chdir($pkg);
-    my $pkgdir = R_cwd();
     my $pkgname = basename($pkgdir);
 
     if(-d "src") {
@@ -634,14 +636,14 @@ sub update_Rd_index {
     1;
 }
 
-sub fix_CRLF_in_source_files {
+sub fix_nonLF_in_source_files {
     my ($pkgname, $log) = @_;
 
     if(-d "$pkgname/src") {
 	my @src_files = &list_files_with_type("$pkgname/src",
 					      "src_no_CRLF");
 	foreach my $file (@src_files) {
-	    my $has_CRLF = 0;
+	    my $has_nonLF = 0;
 	    open(FILE, "< $file")
 		or die "Error: cannot open '$file' for reading\n";
 	    open(TFILE, "> $file.tmp")
@@ -649,14 +651,52 @@ sub fix_CRLF_in_source_files {
             binmode(FILE); binmode(TFILE);	# for Windows
 	    while(<FILE>) {
 		chop;
-		$has_CRLF = 1 if $_ =~ /\r$/;
+		$has_nonLF = 1 if $_ =~ /\r/;
 		$_ =~ s/\r$//;
+		# any remaining CRs are internal and so line endings.
+		$_ =~ s/\r/\n/g;
 		print TFILE "$_\n";
 	    }
 	    close(TFILE); close(FILE);
-	    if ($has_CRLF) {
-		$log->print("    file '$file' had CRLF line endings\n");
+	    if ($has_nonLF) {
+		$log->print("    file '$file' had non-LF line endings\n");
 		unlink($file); # should not be necessary, but is on Windows
+		rename("$file.tmp", $file)
+		    or die "Error: cannot rename '$file.tmp'\n";
+	    } else {
+		unlink("$file.tmp");
+	    }
+	}
+    }
+}
+
+
+sub fix_nonLF_in_make_files {
+    my ($pkgname, $log) = @_;
+
+    if(-d "$pkgname/src") {
+	my $file;
+	foreach my $f ("Makefile", "Makefile.in", "Makevars", "Makevars.in")  {
+	    $file = "$pkgname/src/$f";
+	    next unless -f "$file";
+	    my $has_nonLF = 0;
+	    open(FILE, "< $file")
+		or die "Error: cannot open '$file' for reading\n";
+	    open(TFILE, "> $file.tmp")
+		or die "Error: cannot open '$file.tmp' for writing\n";
+            binmode(FILE); binmode(TFILE);	# for Windows
+	    while(<FILE>) {
+		chop;
+		$has_nonLF = 1 if $_ =~ /\r/;
+		$_ =~ s/\r$//;
+		# any remaining CRs are internal and so line endings.
+		$_ =~ s/\r/\n/g;
+		print TFILE "$_\n";
+	    }
+	    close(TFILE); close(FILE);
+	    if ($has_nonLF) {
+		$log->print("    file '$file' had non-LF line endings\n");
+		unlink("$file"); # should not be necessary, but is on Windows
 		rename("$file.tmp", $file)
 		    or die "Error: cannot rename '$file.tmp'\n";
 	    } else {

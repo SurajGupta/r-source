@@ -1,3 +1,8 @@
+% File src/library/base/man/paste.Rd
+% Part of the R package, http://www.R-project.org
+% Copyright 1995-2007 R Core Development Team
+% Distributed under GPL 2 or later
+
 \name{paste}
 \title{Concatenate Strings}
 \concept{combine strings}
@@ -20,6 +25,12 @@ paste(\dots, sep = " ", collapse = NULL)
   If the arguments are vectors, they are concatenated term-by-term to
   give a character vector result.  Vector arguments are recycled as
   needed, with zero-length arguments being recycled to \code{""}.
+
+  Note that \code{paste()} coerces \code{as.character(NA)} to \code{"NA"}
+  (a string with two characters rather than the \code{\link{character}}
+  missing value, \code{\link{NA_character_}}), which may seem
+  undesirable, e.g., when pasting two character vectors, but very
+  desirable in, e.g., \code{paste("the value of p is ", p)}.
 
   If a value is specified for \code{collapse}, the values in the result
   are then concatenated into a single string, with the elements being

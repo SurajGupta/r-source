@@ -1,3 +1,19 @@
+#  File src/library/stats/R/lsfit.R
+#  Part of the R package, http://www.R-project.org
+#
+#  This program is free software; you can redistribute it and/or modify
+#  it under the terms of the GNU General Public License as published by
+#  the Free Software Foundation; either version 2 of the License, or
+#  (at your option) any later version.
+#
+#  This program is distributed in the hope that it will be useful,
+#  but WITHOUT ANY WARRANTY; without even the implied warranty of
+#  MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
+#  GNU General Public License for more details.
+#
+#  A copy of the GNU General Public License is available at
+#  http://www.r-project.org/Licenses/
+
 lsfit <- function(x, y, wt=NULL, intercept=TRUE, tolerance=1e-07, yname=NULL)
 {
     ## find names of x variables (design matrix)
@@ -268,8 +284,8 @@ ls.print <- function(ls.out, digits=4, print.it=TRUE)
 
     m.y <- ncol(resids)
     coef.table <- as.list(1:m.y)
-    if(m.y==1) coef <- matrix(ls.out$coef, nc=1)
-    else coef <- ls.out$coef
+    if(m.y==1) coef <- matrix(ls.out$coefficients, ncol=1)
+    else coef <- ls.out$coefficients
     for(i in 1:m.y) {
 	covmat <- (resss[i]/(n[i]-p)) * (qrinv%*%t(qrinv))
 	se <- diag(covmat)^.5

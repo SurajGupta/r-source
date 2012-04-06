@@ -13,8 +13,8 @@
  *  GNU General Public License for more details.
  *
  *  You should have received a copy of the GNU General Public License
- *  along with this program; if not, write to the Free Software
- *  Foundation, Inc., 51 Franklin Street Fifth Floor, Boston, MA 02110-1301  USA
+ *  along with this program; if not, a copy is available at
+ *  http://www.r-project.org/Licenses/
  */
 
 /* <UTF8> char here is either ASCII or handled as a whole */
@@ -33,13 +33,8 @@ static Rboolean neWithNaN(double x,  double y);
 
 SEXP attribute_hidden do_identical(SEXP call, SEXP op, SEXP args, SEXP env)
 {
-    SEXP ans;
-
     checkArity(op, args);
-    PROTECT(ans = allocVector(LGLSXP, 1));
-    LOGICAL(ans)[0] = compute_identical(CAR(args), CADR(args));
-    UNPROTECT(1);
-    return(ans);
+    return ScalarLogical( compute_identical(CAR(args), CADR(args)) );
 }
 
 /* do the two objects compute as identical? */
@@ -75,7 +70,7 @@ Rboolean attribute_hidden compute_identical(SEXP x, SEXP y)
 	    /* They are the same length and should have 
 	       unique non-empty non-NA tags */
 	    for(elx = ax; elx != R_NilValue; elx = CDR(elx)) {
-		char *tx = CHAR(PRINTNAME(TAG(elx)));
+		const char *tx = CHAR(PRINTNAME(TAG(elx)));
 		for(ely = ay; ely != R_NilValue; ely = CDR(ely))
 		    if(streql(tx, CHAR(PRINTNAME(TAG(ely))))) {
 			/* We need to treat row.names specially here */
@@ -221,6 +216,8 @@ static Rboolean neWithNaN(double x,  double y)
 {
     if(R_IsNA(x))
 	return(R_IsNA(y) ? FALSE : TRUE);
+    if(R_IsNA(y))
+	return(R_IsNA(x) ? FALSE : TRUE);
     if(ISNAN(x))
 	return(ISNAN(y) ? FALSE : TRUE);
     return(x != y);

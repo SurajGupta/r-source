@@ -1,3 +1,8 @@
+% File src/library/splines/man/predict.bSpline.Rd
+% Part of the R package, http://www.R-project.org
+% Copyright 1995-2007 R Core Development Team
+% Distributed under GPL 2 or later
+
 \name{predict.bSpline}
 \alias{predict.bSpline}
 \alias{predict.nbSpline}
@@ -47,6 +52,7 @@
   \code{\link{periodicSpline}}
 }
 \examples{
+require(graphics); require(stats)
 ispl <- interpSpline( weight ~ height,  women )
 opar <- par(mfrow = c(2, 2), las = 1)
 plot(predict(ispl, nseg = 201),     # plots over the range of the knots

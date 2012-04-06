@@ -1,3 +1,8 @@
+% File src/library/stats/man/plot.isoreg.Rd
+% Part of the R package, http://www.R-project.org
+% Copyright 1995-2007 R Core Development Team
+% Distributed under GPL 2 or later
+
 \name{plot.isoreg}
 \alias{plot.isoreg}
 \alias{lines.isoreg}
@@ -35,7 +40,7 @@
     for the case of two plots.}
   \item{grid}{logical indicating if grid lines should be drawn.  If
     true, \code{\link{grid}()} is used for the first plot, where as
-    vertical lines are drawn at \dQuote{touching} points for the
+    vertical lines are drawn at \sQuote{touching} points for the
     cumulative plot.}
   \item{do.points}{for \code{lines()}: logical indicating if the step
     points should be drawn as well (and as they are drawn in \code{plot()}).}
@@ -47,13 +52,15 @@
 }
 \seealso{\code{\link{isoreg}} for computation of \code{isoreg} objects.}
 \examples{
-example(isoreg) # for the examples there
+require(graphics)
+
+utils::example(isoreg) # for the examples there
 
 plot(y3, main = "simple plot(.)  +  lines(<isoreg>)")
 lines(ir3)
 
 ## 'same' plot as above, "proving" that only ranks of 'x' are important
-plot(isoreg(2^(1:9), c(1,0,4,3,3,5,4,2,0)), plot.t = "row", log = "x")
+plot(isoreg(2^(1:9), c(1,0,4,3,3,5,4,2,0)), plot.type = "row", log = "x")
 
 plot(ir3, plot.type = "row", ylab = "y3")
 plot(isoreg(y3 - 4), plot.t="r", ylab = "y3 - 4")
@@ -63,7 +70,7 @@ plot(ir4, plot.type = "ro",  ylab = "y4", xlab = "x = 1:n")
 plot(isoreg(sample(9),  y3), plot.type="row")
 plot(isoreg(sample(9),  y3), plot.type="col.wise")
 
-plot(ir <- isoreg(sample(10), sample(10, replace = TRUE)), plot.t = "r")
+plot(ir <- isoreg(sample(10), sample(10, replace = TRUE)), plot.type = "r")
 }
 \keyword{hplot}
 \keyword{print}

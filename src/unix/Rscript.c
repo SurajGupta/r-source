@@ -13,8 +13,8 @@
  *  GNU General Public License for more details.
  *
  *  You should have received a copy of the GNU General Public License
- *  along with this program; if not, write to the Free Software
- *  Foundation, Inc., 51 Franklin Street, Fifth Floor, Boston, MA 02110-1301  USA
+ *  along with this program; if not, a copy is available at
+ *  http://www.r-project.org/Licenses/
  */
 
 /* This is intended to be used in scripts like
@@ -38,15 +38,6 @@ R --slave --no-restore --vanilla --file=foo [script_args]
 #ifdef HAVE_CONFIG_H
 # include <config.h>
 #endif
-
-#if defined(HAVE_GLIBC2)
-#include <features.h>
-# ifndef __USE_SVID
-#  define __USE_SVID             /* so that we get putenv declared */
-# endif
-#endif
-
-
 
 #include <stdio.h>
 #include <limits.h> /* for PATH_MAX */
@@ -78,7 +69,7 @@ static char rhome[] = R_HOME;
 # include "rterm.c"
 #endif
 
-#define RSVERSION "$Rev: 40601 $"
+#define RSVERSION "$Rev: 42724 $"
 
 #ifdef HAVE_EXECV
 static int verbose = 0;

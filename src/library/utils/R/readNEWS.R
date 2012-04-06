@@ -1,3 +1,19 @@
+#  File src/library/utils/R/readNEWS.R
+#  Part of the R package, http://www.R-project.org
+#
+#  This program is free software; you can redistribute it and/or modify
+#  it under the terms of the GNU General Public License as published by
+#  the Free Software Foundation; either version 2 of the License, or
+#  (at your option) any later version.
+#
+#  This program is distributed in the hope that it will be useful,
+#  but WITHOUT ANY WARRANTY; without even the implied warranty of
+#  MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
+#  GNU General Public License for more details.
+#
+#  A copy of the GNU General Public License is available at
+#  http://www.r-project.org/Licenses/
+
 readNEWS <- function(file = file.path(R.home(), "NEWS"),
                      trace = FALSE, chop = c("first", "1", "par1", "keepAll"))
 {
@@ -73,9 +89,8 @@ readNEWS <- function(file = file.path(R.home(), "NEWS"),
 	## entries have no labels !
 
 	iS <- c(iS, nl+1L)
-	for(i in seq(along = entries)) {
+	for(i in seq_along(entries))
 	    entries[[i]] <- parseEntry(ll[iS[i] : (iS[i+1] - 1L)])
-	}
 	entries
     }
 
@@ -91,10 +106,9 @@ readNEWS <- function(file = file.path(R.home(), "NEWS"),
 	sections <- as.list(iC)
 	names(sections) <- ll[iC]
 	iC <- c(iC, length(ll)+1L) # such that	 iC[i] : (iC[i+1]-1)  makes sense
-	for(i in seq(along = sections)) {
+	for(i in seq_along(sections))
 	    sections[[i]] <- parseSection(ll[(iC[i]+ 1L) : (iC[i+1] - 1L)],
 					  kind = names(sections)[i])
-	}
 	sections
     }
 
@@ -110,10 +124,9 @@ readNEWS <- function(file = file.path(R.home(), "NEWS"),
 	names(versions) <- sub(s.pre, '', ll[iC])
 
 	iC <- c(iC, length(ll)+1L) # such that	 iC[i] : (iC[i+1]-1)  makes sense
-	for(i in seq(along = versions)) {
+	for(i in seq_along(versions))
 	    versions[[i]] <- parseVersion(ll[(iC[i]+ 1L) : (iC[i+1] - 1L)],
 					  ver = names(versions)[i])
-	}
 	versions
     }
 
@@ -154,10 +167,9 @@ readNEWS <- function(file = file.path(R.home(), "NEWS"),
     }
 
     iS <- c(iS, nl+1L) # such that  iS[i] : (iS[i+1]-1)  makes sense
-    for(i in seq(along = series)) {
+    for(i in seq_along(series))
 	series[[i]] <- parseSeries(ll[(iS[i]+ 1L) : (iS[i+1] - 1L)],
 				   ver = names(series)[i])
-    }
     attr(series, "call") <- cl
     class(series) <- "newsTree"
     series

@@ -1,3 +1,8 @@
+% File src/library/base/man/rep.Rd
+% Part of the R package, http://www.R-project.org
+% Copyright 1995-2007 R Core Development Team
+% Distributed under GPL 2 or later
+
 \name{rep}
 \alias{rep}
 \alias{rep.factor}
@@ -41,7 +46,7 @@ rep.int(x, times)
 \details{
   The default behaviour is as if the call was \code{rep(x, times=1,
     length.out=NA, each=1)}.  Normally just one of the additional
-  arguments is specified, but if code{each} is specified with either
+  arguments is specified, but if \code{each} is specified with either
   of the other two, its replication is performed first, and then that
   implied by \code{times} or \code{length.out}.
 
@@ -79,7 +84,7 @@ rep.int(x, times)
   Function \code{rep.int} is a simple case handled by internal code, and
   provided as a separate function purely for S compatibility.
 
-  As from \R 2.4.0, function \code{rep} is a primitive, but (partial)
+  Function \code{rep} is a primitive, but (partial)
   matching of argument names is performed as for normal functions.
   You can no longer pass a missing argument to. e.g. \code{length.out}.
 }

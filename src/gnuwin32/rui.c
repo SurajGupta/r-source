@@ -14,8 +14,8 @@
  *  GNU General Public License for more details.
  *
  *  You should have received a copy of the GNU General Public License
- *  along with this program; if not, write to the Free Software
- *  Foundation, Inc., 51 Franklin Street, Fifth Floor, Boston, MA 02110-1301  USA
+ *  along with this program; if not, a copy is available at
+ *  http://www.r-project.org/Licenses/
  */
 
 #ifdef HAVE_CONFIG_H
@@ -34,11 +34,13 @@
 #include <stdio.h>
 #undef DEBUG /* needed for mingw-runtime 2.0 */
 /* the user menu code looks at the internal structure */
+#define GA_EXTERN
 #include "graphapp/internal.h"
 #include "graphapp/ga.h"
 #ifdef USE_MDI
 # include "graphapp/stdimg.h"
 #endif
+
 #include "console.h"
 #include "rui.h"
 #include "preferences.h"
@@ -54,12 +56,12 @@ console RConsole = NULL;
 #ifdef USE_MDI
 int   RguiMDI = RW_MDI | RW_TOOLBAR | RW_STATUSBAR;
 int   MDIset = 0;
-int   R_LoadRconsole = 1;
 window RFrame;
 rect MDIsize;
 #endif
 extern int ConsoleAcceptCmd, R_is_running;
 extern Rboolean DebugMenuitem;
+Rboolean R_LoadRconsole = TRUE; /* used in commandLineArgs */
 
 static menubar RMenuBar;
 static popup RConsolePopup;
@@ -1229,7 +1231,7 @@ char *getusermenuname(int pos) {
     return(usermenunames[pos]);
 }
 
-menuItems *wingetmenuitems(char *mname, char *errmsg) {
+menuItems *wingetmenuitems(const char *mname, char *errmsg) {
     menuItems *items;
     char mitem[1002], *p, *q, *r;
     int i,j=0;
@@ -1249,7 +1251,7 @@ menuItems *wingetmenuitems(char *mname, char *errmsg) {
     strcpy(mitem, mname); strcat(mitem, "/");
 
     for (i = 0; i < nitems; i++) {
-	p = (char *)strstr(umitems[i]->name, mitem);
+	p = strstr(umitems[i]->name, mitem);
 
 	if (p == NULL)
 	    continue;
@@ -1297,9 +1299,7 @@ void freemenuitems(menuItems *items) {
     free(items);
 }
 
-extern menu getGraphMenu(char *); /* from devga.c */
-
-static menu getMenu(char * name)
+static menu getMenu(const char * name)
 {
     int i;
     for (i = 0; i < nmenus; i++)
@@ -1313,9 +1313,10 @@ static menu getMenu(char * name)
     else return(NULL);
 }
 
-int winaddmenu(char * name, char *errmsg)
+int winaddmenu(const char *name, char *errmsg)
 {
-    char *p, *submenu = name, start[501];
+    const char *submenu = name;
+    char *p, start[501];
     menu parent;
 
     if (getMenu(name))
@@ -1354,7 +1355,7 @@ int winaddmenu(char * name, char *errmsg)
     }
     if (m) {
 	usermenus[nmenus] = m;
-	usermenunames[nmenus]= strdup(name);
+	usermenunames[nmenus] = strdup(name);
 	nmenus++;
 	show(RConsole);
 	return 0;
@@ -1364,7 +1365,8 @@ int winaddmenu(char * name, char *errmsg)
     }
 }
 
-int winaddmenuitem(char * item, char * menu, char * action, char *errmsg)
+int winaddmenuitem(const char * item, const char * menu, 
+		   const char * action, char *errmsg)
 {
     int i, im;
     menuitem m;
@@ -1445,7 +1447,7 @@ int winaddmenuitem(char * item, char * menu, char * action, char *errmsg)
     return 0;
 }
 
-int windelmenu(char * menu, char *errmsg)
+int windelmenu(const char * menu, char *errmsg)
 {
     int i, j, count = 0, len = strlen(menu);
 
@@ -1483,7 +1485,7 @@ int windelmenu(char * menu, char *errmsg)
     return 0;
 }
 
-void windelmenus(char * prefix)
+void windelmenus(const char * prefix)
 {
     int i, len = strlen(prefix);
 
@@ -1493,7 +1495,7 @@ void windelmenus(char * prefix)
     }
 }
 
-int windelmenuitem(char * item, char * menu, char *errmsg)
+int windelmenuitem(const char * item, const char * menu, char *errmsg)
 {
     int i;
     char mitem[1002];

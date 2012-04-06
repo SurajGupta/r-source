@@ -1,3 +1,8 @@
+% File src/library/graphics/man/bxp.Rd
+% Part of the R package, http://www.R-project.org
+% Copyright 1995-2007 R Core Development Team
+% Distributed under GPL 2 or later
+
 \name{bxp}
 \alias{bxp}
 \title{Draw Box Plots from Summaries}
@@ -35,7 +40,7 @@ bxp(z, notch = FALSE, width = NULL, varwidth = FALSE,
   }
   \item{log}{character, indicating if any axis should be drawn in
     logarithmic scale, as in \code{\link{plot.default}}.}
-  \item{frame.plot}{logical, indicating if a \dQuote{frame}
+  \item{frame.plot}{logical, indicating if a \sQuote{frame}
     (\code{\link{box}}) should be drawn; defaults to \code{TRUE}, unless
     \code{axes = FALSE} is specified.}
   \item{horizontal}{logical indicating if the  boxplots should be
@@ -53,7 +58,8 @@ bxp(z, notch = FALSE, width = NULL, varwidth = FALSE,
 
     Currently, \code{yaxs} and \code{ylim} are used \sQuote{along the
       boxplot}, i.e., vertically, when \code{horizontal} is
-    false.  \code{xaxt}, \code{yaxt}, \code{las}, \code{cex.axis}, and
+    false, and \code{xlim} horizontally.
+    \code{xaxt}, \code{yaxt}, \code{las}, \code{cex.axis}, and
     \code{col.axis} are passed to \code{\link{axis}}, and \code{main},
     \code{cex.main}, \code{col.main}, \code{sub}, \code{cex.sub},
     \code{col.sub}, \code{xlab}, \code{ylab}, \code{cex.lab}, and
@@ -61,7 +67,7 @@ bxp(z, notch = FALSE, width = NULL, varwidth = FALSE,
 
     In addition, \code{axes} is accepted (see
     \code{\link{plot.window}}), with default \code{TRUE}.
-    
+
     The following arguments (or \code{pars} components) allow further
     customization of the boxplot graphics.  Their defaults are typically
     determined from the non-prefixed version (e.g., \code{boxlty} from
@@ -70,9 +76,10 @@ bxp(z, notch = FALSE, width = NULL, varwidth = FALSE,
     \describe{
       \item{boxwex:}{a scale factor to be applied to all boxes.  When there
 	are only a few groups, the appearance of the plot can be improved by
-	making the boxes narrower.}
+	making the boxes narrower.  The default depends on \code{at} and
+	typically is \eqn{0.8}.}
       \item{staplewex, outwex:}{staple and outlier line width expansion,
-	proportional to box width.}
+	proportional to box width; both default to 0.5.}
       \item{boxlty, boxlwd, boxcol, boxfill:}{box outline type, width,
 	color, and fill color (which currently defaults to \code{col} and will
 	in future default to \code{par("bg")}).}
@@ -81,9 +88,9 @@ bxp(z, notch = FALSE, width = NULL, varwidth = FALSE,
 	background color.  The default \code{medpch= NA} suppresses the
 	point, and \code{medlty="blank"} does so for the line.
 	Note that\code{medlwd} defaults to
-	\eqn{3\times}{3 *} the \dQuote{default} \code{lwd}.}
-      \item{whisklty, whisklwd, whiskcol:}{whisker line type, width, and
-	color.}
+	\eqn{3\times}{3x} the default \code{lwd}.}
+      \item{whisklty, whisklwd, whiskcol:}{whisker line type (default:
+	\code{"dashed"}), width, and color.}
       \item{staplelty, staplelwd, staplecol:}{staple (= end of whisker) line
 	type, width, and color.}
       \item{outlty, outlwd, outpch, outcex, outcol, outbg:}{outlier line
@@ -93,12 +100,19 @@ bxp(z, notch = FALSE, width = NULL, varwidth = FALSE,
     }
   }%.../pars
 }
+\note{
+  if \code{add = FALSE}, the default is \code{xlim = c(0.5, n +0.5)}.
+  It will usually be a good idea to specify the latter if the "x" axis
+  has a log scale or \code{at} is specified or \code{width} is far from
+  uniform.
+}
 \value{
   An invisible vector, actually identical to the \code{at} argument,
   with the coordinates ("x" if horizontal is false, "y" otherwise) of
   box centers, useful for adding to the plot.
 }
-\author{The R Core development team and Arni Magnusson
+\author{
+  The R Core development team and Arni Magnusson
   \email{arnima@u.washington.edu} who has provided most changes for the
   box*, med*, whisk*, staple*, and out* arguments.
 }
@@ -108,6 +122,7 @@ bxp(z, notch = FALSE, width = NULL, varwidth = FALSE,
   Wadsworth \& Brooks/Cole.
 }
 \examples{
+require(stats)
 set.seed(753)
 (bx.p <- boxplot(split(rt(100, 4), gl(5,20))))
 op <- par(mfrow= c(2,2))

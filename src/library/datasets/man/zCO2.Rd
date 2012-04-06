@@ -1,3 +1,8 @@
+% File src/library/datasets/man/zCO2.Rd
+% Part of the R package, http://www.R-project.org
+% Copyright 1995-2007 R Core Development Team
+% Distributed under GPL 2 or later
+
 \name{CO2}
 \docType{data}
 \alias{CO2}
@@ -52,8 +57,8 @@
   \emph{Mixed-effects Models in S and S-PLUS}, Springer.
 }
 \examples{
-require(stats)
-coplot(uptake ~ conc | Plant, data = CO2, show = FALSE, type = "b")
+require(stats); require(graphics)
+coplot(uptake ~ conc | Plant, data = CO2, show.given = FALSE, type = "b")
 ## fit the data for the first plant
 fm1 <- nls(uptake ~ SSasymp(conc, Asym, lrc, c0),
    data = CO2, subset = Plant == 'Qn1')

@@ -1,3 +1,19 @@
+#  File src/library/stats/R/smooth.R
+#  Part of the R package, http://www.R-project.org
+#
+#  This program is free software; you can redistribute it and/or modify
+#  it under the terms of the GNU General Public License as published by
+#  the Free Software Foundation; either version 2 of the License, or
+#  (at your option) any later version.
+#
+#  This program is distributed in the hope that it will be useful,
+#  but WITHOUT ANY WARRANTY; without even the implied warranty of
+#  MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
+#  GNU General Public License for more details.
+#
+#  A copy of the GNU General Public License is available at
+#  http://www.r-project.org/Licenses/
+
 ## do.ends = TRUE  is compatible with older behavior in R
 ## --------------  but *NOT*  with Colin Goodalls "smoother" "spl()"
 
@@ -24,7 +40,8 @@ smooth <- function(x, kind = c("3RS3R", "3RSS", "3RSR", "3R", "3", "S"),
               y = double(n),
               n, iend,
               iter = integer(1),
-              DUP=FALSE, PACKAGE = "stats")[c("y","iter")]
+              DUP=FALSE,
+	      PACKAGE = "stats")[c("y","iter")]
 
     if(any(kind == c("R", "S"))) { # `iter' really was `changed'
         smo$iter <- as.logical(smo$iter)
@@ -42,7 +59,7 @@ smooth <- function(x, kind = c("3RS3R", "3RSS", "3RSR", "3R", "3", "S"),
             smo$changed <- smo$changed || attr(r,"changed")
     }
     if(is.ts(x))
-	smo$y <- ts(smo$y, start=start(x), freq=frequency(x))
+	smo$y <- ts(smo$y, start=start(x), frequency=frequency(x))
 
     structure(smo$y, kind = kind, twiced = twiceit,
               iter = smo$iter, changed = smo$changed,

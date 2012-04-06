@@ -1,3 +1,8 @@
+% File src/library/base/man/substitute.Rd
+% Part of the R package, http://www.R-project.org
+% Copyright 1995-2007 R Core Development Team
+% Distributed under GPL 2 or later
+
 \name{substitute}
 \title{Substituting and Quoting Expressions}
 \usage{
@@ -59,12 +64,13 @@ quote(expr)
   Wadsworth \& Brooks/Cole.
 }
 \seealso{
-  \code{\link{missing}} for argument \dQuote{missingness},
+  \code{\link{missing}} for argument \sQuote{missingness},
   \code{\link{bquote}} for partial substitution,
   \code{\link{sQuote}} and \code{\link{dQuote}} for adding quotation
   marks to strings.
 }
 \examples{
+require(graphics)
 (s.e <- substitute(expression(a + b), list(a = 1)))  #> expression(1 + b)
 (s.s <- substitute( a + b,            list(a = 1)))  #> 1 + b
 c(mode(s.e), typeof(s.e)) #  "call", "language"

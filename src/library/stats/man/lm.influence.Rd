@@ -1,3 +1,8 @@
+% File src/library/stats/man/lm.influence.Rd
+% Part of the R package, http://www.R-project.org
+% Copyright 1995-2007 R Core Development Team
+% Distributed under GPL 2 or later
+
 \name{lm.influence}
 \title{Regression Diagnostics}
 \usage{
@@ -45,7 +50,7 @@ lm.influence(model, do.coef = TRUE)
   Cases omitted in the fit are omitted unless a \code{\link{na.action}}
   method was used (such as \code{\link{na.exclude}}) which restores them.
   
-  \item{hat}{a vector containing the diagonal of the \dQuote{hat} matrix.}
+  \item{hat}{a vector containing the diagonal of the \sQuote{hat} matrix.}
   \item{coefficients}{(unless \code{do.coef} is false) a matrix whose
     i-th row contains the change in the estimated coefficients which
     results when the i-th case is dropped from the regression.  Note
@@ -97,7 +102,7 @@ lm.influence(model, do.coef = TRUE)
 summary(lm.SR <- lm(sr ~ pop15 + pop75 + dpi + ddpi,
                     data = LifeCycleSavings),
         corr = TRUE)
-str(lmI <- lm.influence(lm.SR))
+utils::str(lmI <- lm.influence(lm.SR))
 
 ## For more "user level" examples, use example(influence.measures)
 }

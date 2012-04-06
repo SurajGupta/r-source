@@ -1,3 +1,8 @@
+% File src/library/stats/man/heatmap.Rd
+% Part of the R package, http://www.R-project.org
+% Copyright 1995-2007 R Core Development Team
+% Distributed under GPL 2 or later
+
 \name{heatmap}
 \alias{heatmap}
 \title{ Draw a Heat Map }
@@ -80,7 +85,7 @@ heatmap(x, Rowv=NULL, Colv=if(symm)"Rowv" else NULL,
   \code{dd <- as.dendrogram(hclustfun(distfun(X)))} where \code{X} is
   either \code{x} or \code{t(x)}.
 
-  If either is a vector (of \dQuote{weights}) then the appropriate
+  If either is a vector (of \sQuote{weights}) then the appropriate
   dendrogram is reordered according to the supplied values subject to
   the constraints imposed by the dendrogram, by \code{\link{reorder}(dd,
     Rowv)}, in the row case.
@@ -128,25 +133,25 @@ heatmap(x, Rowv=NULL, Colv=if(symm)"Rowv" else NULL,
 \seealso{\code{\link{image}}, \code{\link{hclust}}}
 
 \examples{
-require(graphics)
+require(graphics); require(grDevices)
 x  <- as.matrix(mtcars)
 rc <- rainbow(nrow(x), start=0, end=.3)
 cc <- rainbow(ncol(x), start=0, end=.3)
 hv <- heatmap(x, col = cm.colors(256), scale="column",
-	      RowSideColors = rc, ColSideColors = cc, margin=c(5,10),
+	      RowSideColors = rc, ColSideColors = cc, margins=c(5,10),
 	      xlab = "specification variables", ylab= "Car Models",
 	      main = "heatmap(<Mtcars data>, ..., scale = \"column\")")
-str(hv) # the two re-ordering index vectors
+utils::str(hv) # the two re-ordering index vectors
 
 ## no column dendrogram (nor reordering) at all:
 heatmap(x, Colv = NA, col = cm.colors(256), scale="column",
-	RowSideColors = rc, margin=c(5,10),
+	RowSideColors = rc, margins=c(5,10),
 	xlab = "specification variables", ylab= "Car Models",
 	main = "heatmap(<Mtcars data>, ..., scale = \"column\")")
 \testonly{
 ## no row dendrogram (nor reordering) at all:
 heatmap(x, Rowv = NA, col = cm.colors(256), scale="column",
-	ColSideColors = cc, margin=c(5,10),
+	ColSideColors = cc, margins=c(5,10),
 	xlab = "xlab", ylab= "ylab")# no main
 }
 ## "no nothing"
@@ -156,8 +161,8 @@ heatmap(x, Rowv = NA, Colv = NA, scale="column",
 
 round(Ca <- cor(attitude), 2)
 symnum(Ca) # simple graphic
-heatmap(Ca,	        symm = TRUE, margin=c(6,6))# with reorder()
-heatmap(Ca, Rowv=FALSE, symm = TRUE, margin=c(6,6))# _NO_ reorder()
+heatmap(Ca,	        symm = TRUE, margins=c(6,6))# with reorder()
+heatmap(Ca, Rowv=FALSE, symm = TRUE, margins=c(6,6))# _NO_ reorder()
 
 ## For variable clustering, rather use distance based on cor():
 symnum( cU <- cor(USJudgeRatings) )
@@ -167,6 +172,6 @@ hU <- heatmap(cU, Rowv = FALSE, symm = TRUE, col = topo.colors(16),
 ## The Correlation matrix with same reordering:
 round(100 * cU[hU[[1]], hU[[2]]])
 ## The column dendrogram:
-str(hU$Colv)
+utils::str(hU$Colv)
 }
 \keyword{hplot}

@@ -1,3 +1,8 @@
+% File src/library/base/man/DateTimeClasses.Rd
+% Part of the R package, http://www.R-project.org
+% Copyright 1995-2007 R Core Development Team
+% Distributed under GPL 2 or later
+
 \name{DateTimeClasses}
 % implementation mostly in ../R/datetime.R
 \alias{DateTimeClasses}
@@ -35,6 +40,8 @@
 \alias{duplicated.POSIXlt}
 \alias{unique.POSIXlt}
 
+\alias{date-time} % linked to in difftime.Rd
+
 \title{Date-Time Classes}
 \description{
   Description of the classes \code{"POSIXlt"} and \code{"POSIXct"}
@@ -58,7 +65,7 @@
   \item{\dots}{Further arguments to be passed from or to other methods.}
   \item{time}{date-time objects}
   \item{time1, time2}{date-time objects or character vectors.  (Character
-    vectors are converted by \code{\link{as.POSIXct}}.}
+    vectors are converted by \code{\link{as.POSIXct}}.)}
   \item{z}{a numeric vector (in seconds) \emph{or} an object of class
     \code{"\link{difftime}"}.}
   \item{lop}{One of \code{==}, \code{!=}, \code{<}, \code{<=}, \code{>}
@@ -81,8 +88,8 @@
     \item{\code{isdst}}{Daylight savings time flag.  Positive if in
       force, zero if not, negative if unknown.}
   }
-  The classes correspond to the ANSI C constructs of \dQuote{calendar
-    time} (the \code{time\_t} data type) and \dQuote{local time} (or
+  The classes correspond to the POSIX/C99 constructs of \sQuote{calendar
+    time} (the \code{time\_t} data type) and \sQuote{local time} (or
   broken-down time, the \code{struct tm} data type), from which they
   also inherit their names.
 

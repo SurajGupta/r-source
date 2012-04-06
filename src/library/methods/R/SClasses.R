@@ -1,3 +1,19 @@
+#  File src/library/methods/R/SClasses.R
+#  Part of the R package, http://www.R-project.org
+#
+#  This program is free software; you can redistribute it and/or modify
+#  it under the terms of the GNU General Public License as published by
+#  the Free Software Foundation; either version 2 of the License, or
+#  (at your option) any later version.
+#
+#  This program is distributed in the hope that it will be useful,
+#  but WITHOUT ANY WARRANTY; without even the implied warranty of
+#  MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
+#  GNU General Public License for more details.
+#
+#  A copy of the GNU General Public License is available at
+#  http://www.r-project.org/Licenses/
+
 setClass <-
     ## Define Class to be an S-style class.
     function(Class, representation = list(), prototype = NULL,
@@ -22,7 +38,7 @@ setClass <-
         if(is.character(representation) && length(representation) == 1 &&
            is.null(names(representation)))
             representation <- list(representation)
-        slots <- nchar(allNames(representation)) > 0
+        slots <- nzchar(allNames(representation))
         superClasses <- c(as.character(representation[!slots]), contains)
         properties <- representation[slots]
         classDef <- makeClassRepresentation(Class, properties,superClasses, prototype, package,
@@ -81,13 +97,13 @@ representation <-
         if(!is.character(ei) || length(ei) != 1)
             stop(gettextf("element %d of the representation was not a single character string", i), domain = NA)
     }
-    includes <- as.character(value[nchar(anames)==0])
+    includes <- as.character(value[!nzchar(anames)])
     if(any(duplicated(includes)))
         stop(gettextf("duplicate class names among superclasses: %s",
                       paste(dQuote(includes[duplicated(includes)]),
                             collapse = ", ")),
              domain = NA)
-    slots <- anames[nchar(anames)>0]
+    slots <- anames[nzchar(anames)]
     if(any(duplicated(slots)))
        stop(gettextf("duplicated slot names: %s",
                      paste(sQuote(slots[duplicated(slots)]), collapse="")),
@@ -104,7 +120,7 @@ prototype <- function(...)
 .prototype <- function(...) {
     props <- list(...)
     names <- allNames(props)
-    data <- nchar(names) == 0
+    data <- !nzchar(names)
     dataPart <- any(data)
     if(dataPart) {
         if(sum(data) > 1)
@@ -134,7 +150,7 @@ makeClassRepresentation <-
         prototype <- pp$prototype
     }
     contains <- list()
-    if(nchar(package) > 0)
+    if(nzchar(package))
         packageSlot(name) <- package
     for(what in superClasses) {
         if(is(what, "classRepresentation"))
@@ -372,7 +388,7 @@ getClasses <-
         clNames <- objects(where, pattern = pat, all.names = TRUE)
     ## strip off the leading pattern (this implicitly assumes the characters
     ## in classMetaName("") are either "." or not metacharacters
-    substring(clNames, nchar(pat))
+    substring(clNames, nchar(pat, "c"))
 }
 
 
@@ -530,7 +546,7 @@ initialize <- function(.Object, ...) {
         ClassDef <- getClass(Class)
         ## separate the slots, superclass objects
         snames <- allNames(args)
-        which <- nchar(snames)>0
+        which <- nzchar(snames)
         elements <- args[which]
         supers <- args[!which]
         thisExtends <- names(ClassDef@contains)
@@ -620,13 +636,13 @@ findClass <- function(Class, where = topenv(parent.frame()), unique = "") {
     }
     else
         pkg <- ""
-    if(missing(where) && nchar(pkg))
+    if(missing(where) && nzchar(pkg))
             where <- .requirePackage(pkg)
     else
         where <- as.environment(where)
     what <- classMetaName(Class)
     where <- .findAll(what, where)
-    if(length(where) != 1 && nchar(unique)>0) {
+    if(length(where) != 1 && nzchar(unique)) {
             if(length(where) == 0)
                 stop(gettextf("no definition of \"%s\" to use for %s",
                               Class, unique), domain = NA)

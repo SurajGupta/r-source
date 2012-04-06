@@ -1,3 +1,8 @@
+% File src/library/datasets/man/presidents.Rd
+% Part of the R package, http://www.R-project.org
+% Copyright 1995-2007 R Core Development Team
+% Distributed under GPL 2 or later
+
 \name{presidents}
 \docType{data}
 \alias{presidents}
@@ -24,6 +29,7 @@
   New York: Wiley.
 }
 \examples{
+require(stats); require(graphics)
 plot(presidents, las = 1, ylab = "Approval rating (\%)",
      main = "presidents data")
 }

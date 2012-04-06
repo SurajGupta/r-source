@@ -1,3 +1,19 @@
+#  File src/library/base/R/windows/system.R
+#  Part of the R package, http://www.R-project.org
+#
+#  This program is free software; you can redistribute it and/or modify
+#  it under the terms of the GNU General Public License as published by
+#  the Free Software Foundation; either version 2 of the License, or
+#  (at your option) any later version.
+#
+#  This program is distributed in the hope that it will be useful,
+#  but WITHOUT ANY WARRANTY; without even the implied warranty of
+#  MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
+#  GNU General Public License for more details.
+#
+#  A copy of the GNU General Public License is available at
+#  http://www.r-project.org/Licenses/
+
 system <- function(command, intern = FALSE, ignore.stderr = FALSE,
                    wait = TRUE, input = NULL,
                    show.output.on.console = TRUE, minimized = FALSE,
@@ -23,16 +39,13 @@ system <- function(command, intern = FALSE, ignore.stderr = FALSE,
     .Internal(system(command, as.integer(flag), f))
 }
 
-unlink <- function(x, recursive=FALSE)
-    invisible(.Internal(unlink(Sys.glob(x), recursive)))
-
 shell <- function(cmd, shell, flag="/c", intern=FALSE,
                   wait=TRUE, translate=FALSE, mustWork=FALSE, ...)
 {
     if(missing(shell)) {
         shell <- Sys.getenv("R_SHELL")
-        if(!nchar(shell)) shell <- Sys.getenv("SHELL")
-        if(!nchar(shell)) shell <- Sys.getenv("COMSPEC")
+        if(!nzchar(shell)) shell <- Sys.getenv("SHELL")
+        if(!nzchar(shell)) shell <- Sys.getenv("COMSPEC")
     }
     if(missing(flag) && any(!is.na(pmatch(c("bash", "tcsh"), basename(shell)))))
         flag <- "-c"
@@ -61,3 +74,4 @@ Sys.timezone <- function()
     if(length(zz) == 3) zz[2 + z$isdst] else zz[1]
 }
 
+Sys.which <- function(names) .Internal(Sys.which(as.character(names)))

@@ -1,7 +1,7 @@
 /*
  *  R : A Computer Language for Statistical Data Analysis
  *  Copyright (C) 1995, 1996  Robert Gentleman and Ross Ihaka
- *  Copyright (C) 1998-2006   The R Development Core Team
+ *  Copyright (C) 1998-2007   The R Development Core Team
  *
  *  This program is free software; you can redistribute it and/or modify
  *  it under the terms of the GNU General Public License as published by
@@ -14,8 +14,8 @@
  *  GNU General Public License for more details.
  *
  *  You should have received a copy of the GNU General Public License
- *  along with this program; if not, write to the Free Software
- *  Foundation, Inc., 51 Franklin Street Fifth Floor, Boston, MA 02110-1301  USA
+ *  along with this program; if not, a copy is available at
+ *  http://www.r-project.org/Licenses/
  */
 
 #ifdef HAVE_CONFIG_H
@@ -31,7 +31,7 @@ void attribute_hidden PrintGreeting(void)
     
     Rprintf("\n");
     PrintVersionString(buf);
-    Rprintf(buf);
+    Rprintf("%s", buf);
     Rprintf("\nCopyright (C) %s The R Foundation for Statistical Computing\n",
 	    R_YEAR);
     
@@ -103,8 +103,9 @@ void attribute_hidden PrintVersion(char *s)
     strcat(s, "ISBN 3-900051-07-0\n\n");
     strcat(s, "R is free software and comes with ABSOLUTELY NO WARRANTY.\n");
     strcat(s, "You are welcome to redistribute it under the terms of the\n");
-    strcat(s, "GNU General Public License.  For more information about\n");
-    strcat(s, "these matters, see http://www.gnu.org/copyleft/gpl.html.\n");
+    strcat(s, "GNU General Public License version 2.\n");
+    strcat(s, "For more information about these matters see\n");
+    strcat(s, "http://www.gnu.org/licenses/.\n");
 }
 
 void attribute_hidden PrintVersionString(char *s)

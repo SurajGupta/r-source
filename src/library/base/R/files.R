@@ -1,11 +1,27 @@
+#  File src/library/base/R/files.R
+#  Part of the R package, http://www.R-project.org
+#
+#  This program is free software; you can redistribute it and/or modify
+#  it under the terms of the GNU General Public License as published by
+#  the Free Software Foundation; either version 2 of the License, or
+#  (at your option) any later version.
+#
+#  This program is distributed in the hope that it will be useful,
+#  but WITHOUT ANY WARRANTY; without even the implied warranty of
+#  MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
+#  GNU General Public License for more details.
+#
+#  A copy of the GNU General Public License is available at
+#  http://www.r-project.org/Licenses/
+
 R.home <- function(component="home")
 {
     rh <- .Internal(R.home())
     switch(component,
            "home" = rh,
-           "share"= if(nchar(p <- as.vector(Sys.getenv("R_SHARE_DIR")))) p
+           "share"= if(nzchar(p <- as.vector(Sys.getenv("R_SHARE_DIR")))) p
            else file.path(rh, component),
-	   "doc"=if(nchar(p <- as.vector(Sys.getenv("R_DOC_DIR")))) p
+	   "doc"=if(nzchar(p <- as.vector(Sys.getenv("R_DOC_DIR")))) p
            else file.path(rh, component),
            file.path(rh, component))
 }
@@ -13,7 +29,7 @@ file.show <-
     function (..., header = rep("", nfiles), title = "R Information",
               delete.file = FALSE, pager = getOption("pager"), encoding = "")
 {
-    files <- c(...)
+    files <- path.expand(c(...))
     nfiles <- length(files)
     if(nfiles == 0)
         return(invisible(NULL))
@@ -218,3 +234,7 @@ path.expand <- function(path)
 
 Sys.glob <- function(paths, dirmark = FALSE)
     .Internal(Sys.glob(paths, dirmark))
+
+unlink <- function(x, recursive = FALSE)
+    .Internal(unlink(as.character(x), recursive))
+

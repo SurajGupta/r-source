@@ -14,8 +14,8 @@
  *  GNU General Public License for more details.
  *
  *  You should have received a copy of the GNU General Public License
- *  along with this program; if not, write to the Free Software
- *  Foundation, Inc., 51 Franklin Street, Fifth Floor, Boston, MA 02110-1301  USA
+ *  along with this program; if not, a copy is available at
+ *  http://www.r-project.org/Licenses/
  */
 
 #define RW_MDI         0x0001
@@ -24,7 +24,6 @@
 #define RW_LARGEICONS   0x1000
 
 extern int MDIset;
-extern int R_LoadRconsole;
 
 #include <R_ext/Boolean.h>
 #include <R_ext/libextern.h>
@@ -62,18 +61,18 @@ struct structPkgMenuItems {
 typedef struct structPkgMenuItems *PkgMenuItems;
 
 #include <R_ext/Error.h> /* for R_ShowMessage */
-int check_doc_file(char *);
-void internal_shellexec(char *);
+int check_doc_file(const char *);
+void internal_shellexec(const char *);
 
-int winaddmenu(char * name, char *errmsg);
-int winaddmenuitem(char * item, char * menu, char * action, char *errmsg);
-int windelmenu(char * menu, char *errmsg); /* delete one menu and its items and submenus */
-void windelmenus(char * prefix); /* delete all menus which start with a certain prefix */
-int windelmenuitem(char * item, char * menu, char *errmsg);
+int winaddmenu(const char * name, char *errmsg);
+int winaddmenuitem(const char * item, const char * menu, const char * action, char *errmsg);
+int windelmenu(const char * menu, char *errmsg); /* delete one menu and its items and submenus */
+void windelmenus(const char * prefix); /* delete all menus which start with a certain prefix */
+int windelmenuitem(const char * item,const  char * menu, char *errmsg);
 
 int numwinmenus(void);
 char *getusermenuname(int pos);
-menuItems *wingetmenuitems(char *mname, char *errmsg);
+menuItems *wingetmenuitems(const char *mname, char *errmsg);
 void freemenuitems(menuItems *items);
 
 void Rwin_fpset();
@@ -97,3 +96,5 @@ int RguiCommonHelp();
 void helpmenuact(HelpMenuItems hmenu);
 void closeconsole(control m);
 void showstatusbar();
+
+menu getGraphMenu(const char *); /* from extra.c */

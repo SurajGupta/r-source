@@ -1,3 +1,8 @@
+% File src/library/stats/man/nlminb.Rd
+% Part of the R package, http://www.R-project.org
+% Copyright 1995-2007 R Core Development Team
+% Distributed under GPL 2 or later
+
 \name{nlminb}
 \alias{nlminb}
 \title{Optimization using PORT routines }
@@ -5,8 +10,8 @@
   Unconstrained and constrained optimization using PORT routines.
 }
 \usage{
-nlminb(start, objective, gradient = NULL, hessian = NULL,
-       scale = 1, control = list(), lower = -Inf, upper = Inf, \dots)
+nlminb(start, objective, gradient = NULL, hessian = NULL, \dots,
+       scale = 1, control = list(), lower = -Inf, upper = Inf)
 }
 \arguments{
   \item{start}{
@@ -31,6 +36,7 @@ nlminb(start, objective, gradient = NULL, hessian = NULL,
     return a square matrix of order \code{length(start)}.  Only the
     lower triangle is used.
   }
+  \item{\dots}{Further arguments to be supplied to \code{objective}.}
   \item{scale}{See PORT documentation (or leave alone).}
   \item{control}{A list of control parameters. See below for details.}
   \item{lower, upper}{
@@ -38,7 +44,6 @@ nlminb(start, objective, gradient = NULL, hessian = NULL,
     \code{start}.  If unspecified, all parameters are assumed to be
     unconstrained.
   }
-  \item{\dots}{Further arguments to be supplied to \code{objective}.}
 }
 \details{
   The PORT documentation is at
@@ -103,17 +108,17 @@ nlminb(c(20, 20), hdev, lower = 0.001, upper = Inf)
 sumsq <- function( x, y) {sum((x-y)^2)}
 y <- rep(1,5)
 x0 <- rnorm(length(y))
-nlminb(start = x0, obj = sumsq, y = y)
+nlminb(start = x0, sumsq, y = y)
 # now use bounds with a y that has some components outside the bounds
 y <- c( 0, 2, 0, -2, 0)
-nlminb(start = x0, obj = sumsq, lower = -1, upper = 1, y = y)
+nlminb(start = x0, sumsq, lower = -1, upper = 1, y = y)
 # try using the gradient
 sumsq.g <- function(x,y) 2*(x-y)
-nlminb(start = x0, obj = sumsq, grad = sumsq.g,
+nlminb(start = x0, sumsq, sumsq.g,
        lower = -1, upper = 1, y = y)
 # now use the hessian, too
 sumsq.h <- function(x,y) diag(2, nrow = length(x))
-nlminb(start = x0, obj = sumsq, grad = sumsq.g, hes = sumsq.h,
+nlminb(start = x0, sumsq, sumsq.g, sumsq.h,
        lower = -1, upper = 1, y = y)
 
 ## Rest lifted from optim help page

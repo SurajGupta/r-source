@@ -1,3 +1,8 @@
+% File src/library/stats/man/ls.diag.Rd
+% Part of the R package, http://www.R-project.org
+% Copyright 1995-2007 R Core Development Team
+% Distributed under GPL 2 or later
+
 \name{ls.diag}
 \title{Compute Diagnostics for `lsfit' Regression Results}
 \usage{
@@ -37,11 +42,11 @@ ls.diag(ls.out)
   \code{\link{anova}}.
 }
 \examples{
-\dontshow{example("lm", echo = FALSE)}
+\dontshow{utils::example("lm", echo = FALSE)}
 ##-- Using the same data as the lm(.) example:
 lsD9 <- lsfit(x = as.numeric(gl(2, 10, 20)), y = weight)
 dlsD9 <- ls.diag(lsD9)
-str(dlsD9, give.attr=FALSE)
+utils::str(dlsD9, give.attr=FALSE)
 abs(1 - sum(dlsD9$hat) / 2) < 10*.Machine$double.eps # sum(h.ii) = p
 plot(dlsD9$hat, dlsD9$stud.res, xlim=c(0,0.11))
 abline(h = 0, lty = 2, col = "lightgray")

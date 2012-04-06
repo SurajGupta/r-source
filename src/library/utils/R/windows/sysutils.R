@@ -1,3 +1,19 @@
+#  File src/library/utils/R/windows/sysutils.R
+#  Part of the R package, http://www.R-project.org
+#
+#  This program is free software; you can redistribute it and/or modify
+#  it under the terms of the GNU General Public License as published by
+#  the Free Software Foundation; either version 2 of the License, or
+#  (at your option) any later version.
+#
+#  This program is distributed in the hope that it will be useful,
+#  but WITHOUT ANY WARRANTY; without even the implied warranty of
+#  MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
+#  GNU General Public License for more details.
+#
+#  A copy of the GNU General Public License is available at
+#  http://www.r-project.org/Licenses/
+
 memory.size <- function(max = FALSE) .Internal(memory.size(max))
 
 memory.limit <- function(size = NA) .Internal(memory.size(size))
@@ -36,8 +52,8 @@ getWindowsHandle <- function(which = "Console") {
     if (is.numeric(which)) {
 	which <- as.integer(which)
         if(!exists(".Devices")) .Devices <- list("null device")
-        if(which > 0 && .Devices[[which]] != "windows")
-            return(0)
+        if(which > 0 && which <= length(.Devices) && .Devices[[which]] != "windows")
+            return(NULL)
     }
     .Internal(getWindowHandle(which))
 }

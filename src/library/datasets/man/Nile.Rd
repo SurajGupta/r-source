@@ -1,3 +1,8 @@
+% File src/library/datasets/man/Nile.Rd
+% Part of the R package, http://www.R-project.org
+% Copyright 1995-2007 R Core Development Team
+% Distributed under GPL 2 or later
+
 \name{Nile}
 \docType{data}
 \alias{Nile}
@@ -22,7 +27,7 @@
   change-point problem.  \emph{Biometrika} \bold{65}, 243--51.
 }
 \examples{
-require(stats)
+require(stats); require(graphics)
 par(mfrow = c(2,2))
 plot(Nile)
 acf(Nile)

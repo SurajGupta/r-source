@@ -1,3 +1,8 @@
+% File src/library/grDevices/man/recordGraphics.Rd
+% Part of the R package, http://www.R-project.org
+% Copyright 1995-2007 R Core Development Team
+% Distributed under GPL 2 or later
+
 \name{recordGraphics}
 \alias{recordGraphics}
 \title{ Record graphics operations }
@@ -12,7 +17,7 @@ recordGraphics(expr, list, env)
 }
 \arguments{
   \item{expr}{object of mode \code{\link{expression}} or \code{call} or
-    an \dQuote{unevaluated expression}.}
+    an unevaluated expression.}
   \item{list}{a list defining the environment in which \code{expr} is to
     be evaluated.}
   \item{env}{An \code{\link{environment}} specifying
@@ -45,6 +50,8 @@ recordGraphics(expr, list, env)
 } 
 \seealso{\code{\link{eval}} }
 \examples{
+require(graphics)
+
 plot(1:10)
 # This rectangle remains 1inch wide when the device is resized
 recordGraphics(

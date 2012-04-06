@@ -1,3 +1,8 @@
+% File src/library/stats/man/xtabs.Rd
+% Part of the R package, http://www.R-project.org
+% Copyright 1995-2007 R Core Development Team
+% Distributed under GPL 2 or later
+
 \name{xtabs}
 \alias{xtabs}
 \alias{print.xtabs}
@@ -49,7 +54,7 @@ xtabs(formula = ~., data = parent.frame(), subset, na.action,
     "table")}, with a \code{"call"} attribute storing the matched call.
 }
 \seealso{
-  \code{\link{table}} for \dQuote{traditional} cross-tabulation, and
+  \code{\link{table}} for traditional cross-tabulation, and
   \code{\link{as.data.frame.table}} which is the inverse operation of
   \code{xtabs} (see the \code{DF} example below).
 }

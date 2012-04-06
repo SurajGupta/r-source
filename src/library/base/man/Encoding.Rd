@@ -1,7 +1,13 @@
+% File src/library/base/man/Encoding.Rd
+% Part of the R package, http://www.R-project.org
+% Copyright 1995-2007 R Core Development Team
+% Distributed under GPL 2 or later
+
 \name{Encoding}
 \encoding{latin1}
 \alias{Encoding}
 \alias{Encoding<-}
+\concept{encoding}
 \title{Read or Set the Declared Encodings for a Character Vector}
 \description{
   Read or set the declared encodings for a character vector.
@@ -16,7 +22,7 @@ Encoding(x) <- value
   \item{value}{A character vector of positive length.}
 }
 \details{
-  As from \R 2.5.0, character strings in \R can be declared to be in
+  Character strings in \R can be declared to be in
   \code{"latin1"} or \code{"UTF-8"}.  These declarations can be read by
   \code{Encoding}, which will return a character vector of values
   \code{"latin1"}, \code{"UTF-8"} or \code{"unknown"}, or set, when
@@ -40,11 +46,9 @@ x <- "fa\xE7ile"
 Encoding(x)
 Encoding(x) <- "latin1"
 x
-if(capabilities("iconv")) {
-  xx <- iconv(x, "latin1", "UTF-8")
-  print(Encoding(c(x, xx)))
-  c(x, xx)
-}
+xx <- iconv(x, "latin1", "UTF-8")
+Encoding(c(x, xx))
+c(x, xx)
 }
 \keyword{utilities}
 \keyword{character}

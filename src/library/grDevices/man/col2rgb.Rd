@@ -1,8 +1,13 @@
+% File src/library/grDevices/man/col2rgb.Rd
+% Part of the R package, http://www.R-project.org
+% Copyright 1995-2007 R Core Development Team
+% Distributed under GPL 2 or later
+
 \name{col2rgb}
 \alias{col2rgb}
 \title{Color to RGB Conversion}
 \description{
-  \dQuote{Any \R color} to RGB (red/green/blue) conversion.
+  \R color to RGB (red/green/blue) conversion.
 }
 \usage{
 col2rgb(col, alpha = FALSE)
@@ -17,7 +22,7 @@ col2rgb(col, alpha = FALSE)
 }
 \details{
   For integer colors, \code{0} is shorthand for the current
-  \code{par("bg")}, and \code{\link{NA}} means \dQuote{nothing} which
+  \code{par("bg")}, and \code{\link{NA}} means \sQuote{nothing} which
   effectively does not draw the corresponding item.
 
   For character colors, \code{"NA"} is equivalent to \code{NA} above.

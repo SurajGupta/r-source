@@ -1,8 +1,26 @@
+#  File src/library/base/R/qr.R
+#  Part of the R package, http://www.R-project.org
+#
+#  This program is free software; you can redistribute it and/or modify
+#  it under the terms of the GNU General Public License as published by
+#  the Free Software Foundation; either version 2 of the License, or
+#  (at your option) any later version.
+#
+#  This program is distributed in the hope that it will be useful,
+#  but WITHOUT ANY WARRANTY; without even the implied warranty of
+#  MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
+#  GNU General Public License for more details.
+#
+#  A copy of the GNU General Public License is available at
+#  http://www.r-project.org/Licenses/
+
 #is.qr <- function(x) !is.null(x$qr) && !is.null(x$rank) && !is.null(x$qraux)
 
 is.qr <- function(x) inherits(x, "qr")
 
-qr <- function(x, tol = 1e-07, LAPACK = FALSE)
+qr <- function(x, ...) UseMethod("qr")
+
+qr.default <- function(x, tol = 1e-07, LAPACK = FALSE, ...)
 {
     x <- as.matrix(x)
     if(is.complex(x))
@@ -50,7 +68,7 @@ qr.coef <- function(qr, y)
     if (p == 0) return( if (im) matrix(0,p,ny) else numeric(0) )
     if(is.complex(qr$qr)) {
 	if(!is.complex(y)) y[] <- as.complex(y)
-	coef <- matrix(NA_complex_, nr=p, nc=ny)
+	coef <- matrix(NA_complex_, nrow = p, ncol = ny)
 	coef[qr$pivot,] <- .Call("qr_coef_cmplx", qr, y, PACKAGE = "base")
 	return(if(im) coef else c(coef))
     }
@@ -63,7 +81,7 @@ qr.coef <- function(qr, y)
             .Call("qr_coef_real", qr, y, PACKAGE = "base")[seq_len(p)]
 	return(if(im) coef else c(coef))
     }
-    if (k == 0) return( if (im) matrix(NA,p,ny) else rep.int(NA,p))
+    if (k == 0) return( if (im) matrix(NA, p, ny) else rep.int(NA, p))
 
     storage.mode(y) <- "double"
     if( nrow(y) != n )
@@ -74,12 +92,12 @@ qr.coef <- function(qr, y)
 		  as.double(qr$qraux),
 		  y,
 		  ny,
-		  coef=matrix(0,nr=k,nc=ny),
+		  coef=matrix(0, nrow=k,ncol=ny),
 		  info=integer(1),
 		  NAOK = TRUE, PACKAGE="base")[c("coef","info")]
     if(z$info != 0) stop("exact singularity in 'qr.coef'")
     if(k < p) {
-	coef <- matrix(NA_real_, nr=p, nc=ny)
+	coef <- matrix(NA_real_, nrow=p, ncol=ny)
 	coef[qr$pivot[1:k],] <- z$coef
     }
     else coef <- z$coef

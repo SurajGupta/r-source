@@ -4704,6 +4704,7 @@ stopifnot(result$y >= 0)
 ## bw.SJ() used too small search interval in rare cases:
 bw.SJ(1:20) # error: "no solution in the specified range of bandwidths" in < 2.5.1
 ## this is not ok when called as  density(1:20, bw = "SJ")
+## [that's a matter of opinion, since the example is ridiculous.]
 
 
 ## hexadecimal integer constants failed on some platforms (PR#9648)
@@ -4755,3 +4756,136 @@ stopifnot(all.equal(besselY(seq(0.5, 3, 0.5), nu),
 ## wrong numbers in 2.5.0
 
 ### end of tests added in 2.5.1 ###
+
+
+## regression tests for unlink and wildcards
+owd <- setwd(tempdir())
+f <- c("ftest1", "ftest2", "ftestmore", "ftest&more")
+file.create(f)
+stopifnot(file.exists(f))
+unlink("ftest?")
+stopifnot(file.exists(f) == c(FALSE, FALSE, TRUE, TRUE))
+unlink("ftest*", recursive = TRUE)
+stopifnot(!file.exists(f))
+
+stopifnot(unlink("no_such_file") == 0) # not an error
+
+dd <- c("dir1", "dir2", "dirs", "moredirs")
+for(d in dd) dir.create(d)
+dir(".")
+file.create(file.path(dd, "somefile"))
+dir(".", recursive=TRUE)
+stopifnot(unlink("dir?") == 1) # not an error
+unlink("dir?", recursive = TRUE)
+stopifnot(file.exists(dd) == c(FALSE, FALSE, FALSE, TRUE))
+unlink("*dir*", recursive = TRUE)
+stopifnot(!file.exists(dd))
+
+# Windows needs short path names for leading spaces
+dir.create(" test")
+dir(".", recursive=TRUE)
+unlink(" test", recursive = TRUE)
+stopifnot(!file.exists(" test"))
+setwd(owd)
+## wildcards were broken in 2.5.0 on Unix, and always on Windows
+
+
+## duplicated columns in a data frame
+x <- matrix(seq(1:12),ncol=3)
+colnames(x) <- c("A","B","A")   #a redundant name for column 2
+x.df <- as.data.frame(x)
+stopifnot(x.df[4,3] == x[4,3])
+## wrong column in 2.5.0
+
+
+## it really is unclear if this should work as the fit is to a
+## numeric variable with levels, and the prediction does not have
+## levels.  But some people expected it to.
+worms <- data.frame(sex=gl(2,6), Dose=factor(rep(2^(0:5),2)),
+                    deaths=c(1,4,9,13,18,20,0,2,6,10,12,16))
+worms$doselin <- unclass(worms$Dose)
+worms.glm <- glm(cbind(deaths, (20-deaths)) ~ sex+ doselin,
+                 data=worms, family=binomial)
+predict(worms.glm, new=data.frame(sex="1", doselin=6))
+## failed < 2.6.0
+
+
+## regression test for changes in aggregate.data.frame
+z <- aggregate(state.x77,
+               list(Region = state.region,
+                    Cold = state.x77[,"Frost"] > 130),
+               mean)
+stopifnot(sapply(z, class)[1:2] == c("factor", "logical"),
+          identical(levels(z[[1]]), levels(state.region)) )
+f1 <- c("a","b","a","b")
+f2 <- factor(f1, levels=c("b","c","a"), ordered=TRUE)
+z <- aggregate(1:4, list(groups=f1), sum)
+stopifnot(sapply(z, class) == c("character", "integer"))
+z <- aggregate(1:4, list(groups=f2), sum)
+stopifnot(identical(sapply(z, class), list(groups=class(f2), x="integer")),
+          identical(levels(z[[1]]), levels(f2)),
+          is.ordered(z[[1]]) )
+## converted to factors < 2.6.0
+
+
+## formals<- on function with NULL body (PR#9758)
+f <- function() NULL
+g <- alist(a=, b=4, c=)
+formals(f) <- g
+# identical(formals(f), g) is false as g has .Names attribute
+stopifnot(is.null(body(f)), identical(names(formals(f)), names(g)))
+## was function(a, b=4)  before 2.6.0
+
+
+## subsetting R.version
+stopifnot(identical("simple.list", class(R.version[1:7])))
+
+
+## <data frame>[[<character>, j]]
+swiss[["Broye", "Agriculture"]]
+swiss[[7, "Agriculture"]]
+swiss[["Broye", 2]]
+swiss[[7, 2]]
+## first and third failed < 2.6.0
+
+
+## load of raw vector from ASCII save
+s1 <- "this is a test string 123"
+r0 <- r1 <- charToRaw(s1)
+save(r1, file="r1-ascii.rda", ascii=TRUE)
+save(r1, file="r1.rda", ascii=FALSE)
+load("r1.rda")
+unlink("r1.rda")
+stopifnot(identical(r1, r0))
+# was OK, but add regression test
+load("r1-ascii.rda")
+unlink("r1-ascii.rda")
+stopifnot(identical(r1, r0))
+## wrong < 2.5.1 patched
+
+
+## match.arg with multiple values (PR#9859)
+x <- letters[1:3]
+y <- c('aa','bb')
+try(match.arg(x,y)) # gave spurious warning
+res <- match.arg(x,y, several.ok = TRUE) # error
+stopifnot(identical(res, y))
+## failed in 2.5.1
+
+
+## sweep() must work with 0-extent matrix/STATS :
+m <- matrix(1:5, 5,0)
+stopifnot(identical(m, sweep(m, 2, apply(m,2, min))))
+## failed in R-devel around 2007-08-31
+
+
+## julian with POSIXlt origin (PR#9908)
+julian(as.POSIXlt("1999-2-1"), origin=as.POSIXlt("1999-1-1"))
+## failed < 2.6.0
+
+
+## str() assumes a "sensical" '[[' for list-alikes :
+"[[.foo" <- function(x,i) x
+x <- structure(list(2), class="foo")
+str(x)
+## gave infinite recursion < 2.6.0

@@ -15,8 +15,8 @@
  *  GNU General Public License for more details.
  *
  *  You should have received a copy of the GNU General Public License
- *  along with this program; if not, write to the Free Software
- *  Foundation, Inc., 51 Franklin Street, Fifth Floor, Boston, MA 02110-1301  USA
+ *  along with this program; if not, a copy is available at
+ *  http://www.r-project.org/Licenses/
  */
 
 /* <UTF8> 
@@ -56,6 +56,7 @@ extern Rboolean LoadInitFile;
  *  4) INITIALIZATION AND TERMINATION ACTIONS
  */
 
+attribute_hidden
 FILE *R_OpenInitFile(void)
 {
     char buf[256], *home;
@@ -90,14 +91,14 @@ FILE *R_OpenInitFile(void)
      *   R_ChooseFile is interface-specific
      */
 
-char *R_ExpandFileName_readline(char *s, char *buff);  /* sys-std.c */
+char *R_ExpandFileName_readline(const char *s, char *buff);  /* sys-std.c */
 
 static char newFileName[PATH_MAX];
 static int HaveHOME=-1;
 static char UserHOME[PATH_MAX];
 
 /* Only interpret inputs of the form ~ and ~/... */
-static char *R_ExpandFileName_unix(char *s, char *buff)
+static const char *R_ExpandFileName_unix(const char *s, char *buff)
 {
     char *p;
 
@@ -131,11 +132,11 @@ static char *R_ExpandFileName_unix(char *s, char *buff)
 
 extern Rboolean UsingReadline;
 
-char *R_ExpandFileName(char *s)
+const char *R_ExpandFileName(const char *s)
 {
 #ifdef HAVE_LIBREADLINE
     if(UsingReadline) {
-        char * c = R_ExpandFileName_readline(s, newFileName);
+        const char * c = R_ExpandFileName_readline(s, newFileName);
 	/* we can return the result only if tilde_expand is not broken */
 	if (!c || c[0]!='~' || (c[1]!='\0' && c[1]!='/'))
 	    return c;
@@ -269,6 +270,8 @@ SEXP attribute_hidden do_system(SEXP call, SEXP op, SEXP args, SEXP rho)
 	fp = R_popen(translateChar(STRING_ELT(CAR(args), 0)), x);
 	for (i = 0; fgets(buf, INTERN_BUFSIZE, fp); i++) {
 	    read = strlen(buf);
+	    if(read >= INTERN_BUFSIZE - 1) 
+		warning(_("line %d may be truncated in call to system(, intern = TRUE)"), i + 1);
 	    if (read > 0 && buf[read-1] == '\n') 
 		buf[read - 1] = '\0'; /* chop final CR */
 	    tchar = mkChar(buf);

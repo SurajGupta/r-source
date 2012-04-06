@@ -1,3 +1,8 @@
+% File src/library/graphics/man/image.Rd
+% Part of the R package, http://www.R-project.org
+% Copyright 1995-2007 R Core Development Team
+% Distributed under GPL 2 or later
+
 \name{image}
 \alias{image}
 \alias{image.default}
@@ -34,7 +39,7 @@ image(x, \dots)
     functions.}
   \item{add}{logical; if \code{TRUE}, add to current plot (and disregard
     the following arguments).  This is rarely useful because
-    \code{image} \dQuote{paints} over existing graphics.}
+    \code{image} \sQuote{paints} over existing graphics.}
   \item{xaxs, yaxs}{style of x and y axis.  The default \code{"i"} is
     appropriate for images.  See \code{\link{par}}.}
   \item{xlab, ylab}{each a character string giving the labels for the x and
@@ -53,7 +58,7 @@ image(x, \dots)
 \description{
   Creates a grid of colored or gray-scale rectangles with colors
   corresponding to the values in \code{z}.  This can be used to display
-  three-dimensional or spatial data aka \dQuote{images}.
+  three-dimensional or spatial data aka \emph{images}.
   This is a generic function.
 
   The functions \code{\link{heat.colors}}, \code{\link{terrain.colors}}
@@ -102,6 +107,7 @@ image(x, \dots)
   \code{\link{hsv}}, \code{\link{par}}.
 }
 \examples{
+require(grDevices) # for colours
 x <- y <- seq(-4*pi, 4*pi, len=27)
 r <- sqrt(outer(x^2, y^2, "+"))
 image(z = z <- cos(r^2)*exp(-r/6), col=gray((0:32)/32))

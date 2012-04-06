@@ -1,3 +1,8 @@
+% File src/library/base/man/rowsum.Rd
+% Part of the R package, http://www.R-project.org
+% Copyright 1995-2007 R Core Development Team
+% Distributed under GPL 2 or later
+
 \name{rowsum}
 \alias{rowsum}
 \alias{rowsum.default}
@@ -51,6 +56,8 @@ rowsum(x, group, reorder = TRUE, \dots)
   \code{\link{tapply}}, \code{\link{aggregate}}, \code{\link{rowSums}}
 }
 \examples{
+require(stats)
+
 x <- matrix(runif(100), ncol=5)
 group <- sample(1:8, 20, TRUE)
 (xsum <- rowsum(x, group))

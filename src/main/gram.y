@@ -16,9 +16,8 @@
  *  GNU General Public License for more details.
  *
  *  You should have received a copy of the GNU General Public License
- *  along with this program; if not, write to the Free Software
- *  Foundation, Inc., 51 Franklin Street, Fifth Floor, Boston, MA 02110-1301
- *  USA.
+ *  along with this program; if not, a copy is available at
+ *  http://www.r-project.org/Licenses/
  */
 
 /* <UTF8>
@@ -68,16 +67,16 @@ static void	CheckFormalArgs(SEXP, SEXP);
 static SEXP	FirstArg(SEXP, SEXP);
 static SEXP	GrowList(SEXP, SEXP);
 static void	IfPush(void);
-static int	KeywordLookup(char*);
+static int	KeywordLookup(const char *);
 static SEXP	NewList(void);
 static SEXP	NextArg(SEXP, SEXP, SEXP);
 static SEXP	TagArg(SEXP, SEXP);
 
 /* These routines allocate constants */
 
-static SEXP	mkComplex(char *);
+static SEXP	mkComplex(const char *);
 SEXP		mkFalse(void);
-static SEXP     mkFloat(char *);
+static SEXP     mkFloat(const char *);
 static SEXP	mkNA(void);
 SEXP		mkTrue(void);
 
@@ -119,13 +118,13 @@ static const char UNICODE[] = "UCS-4LE";
 #endif
 #include <errno.h>
 
-static size_t ucstomb(char *s, wchar_t wc, mbstate_t *ps)
+static size_t ucstomb(char *s, const wchar_t wc, mbstate_t *ps)
 {
     char     tocode[128];
     char     buf[16];
     void    *cd = NULL ;
     wchar_t  wcs[2];
-    char    *inbuf = (char *) wcs;
+    const char *inbuf = (const char *) wcs;
     size_t   inbytesleft = sizeof(wchar_t);
     char    *outbuf = buf;
     size_t   outbytesleft = sizeof(buf);
@@ -141,11 +140,11 @@ static size_t ucstomb(char *s, wchar_t wc, mbstate_t *ps)
     memset(wcs, 0, sizeof(wcs));
     wcs[0] = wc;
 
-    if((void *)(-1) == (cd = Riconv_open("", (char *)UNICODE))) {
+    if((void *)(-1) == (cd = Riconv_open("", UNICODE))) {
 #ifndef  Win32
         /* locale set fuzzy case */
     	strncpy(tocode, locale2charset(NULL), sizeof(tocode));
-	if((void *)(-1) == (cd = Riconv_open(tocode, (char *)UNICODE)))
+	if((void *)(-1) == (cd = Riconv_open(tocode, UNICODE)))
             return (size_t)(-1); 
 #else
         return (size_t)(-1);
@@ -837,13 +836,11 @@ static SEXP xxfuncall(SEXP expr, SEXP args)
 
 static SEXP mkChar2(const char *name)
 {
-    SEXP c = allocString(strlen(name));
-    strcpy(CHAR(c), name);
-    if(!utf8strIsASCII((char *) name)) {
-	if(known_to_be_latin1) SET_LATIN1(c);
-	else if(known_to_be_utf8) SET_UTF8(c);
+    if(!utf8strIsASCII(name)) {
+	if(known_to_be_latin1) return mkCharEnc(name, LATIN1_MASK);
+	else if(known_to_be_utf8) return mkCharEnc(name, UTF8_MASK);
     }
-    return c;
+    return mkChar(name);
 }
 
 static SEXP mkString2(const char *s)
@@ -1410,19 +1407,19 @@ SEXP R_ParseGeneral(int (*ggetc)(), int (*gungetc)(), int n,
 }
 #endif
 
-static char *Prompt(SEXP prompt, int type)
+static const char *Prompt(SEXP prompt, int type)
 {
     if(type == 1) {
 	if(length(prompt) <= 0) {
-	    return (char*)CHAR(STRING_ELT(GetOption(install("prompt"),
-						    R_BaseEnv), 0));
+	    return CHAR(STRING_ELT(GetOption(install("prompt"),
+					     R_BaseEnv), 0));
 	}
 	else
 	    return CHAR(STRING_ELT(prompt, 0));
     }
     else {
-	return (char*)CHAR(STRING_ELT(GetOption(install("continue"),
-						R_BaseEnv), 0));
+	return CHAR(STRING_ELT(GetOption(install("continue"),
+					 R_BaseEnv), 0));
     }
 }
 
@@ -1452,7 +1449,7 @@ SEXP R_ParseBuffer(IoBuffer *buffer, int n, ParseStatus *status, SEXP prompt, SE
     for(i = 0; ; ) {
 	if(n >= 0 && i >= n) break;
 	if (!*bufp) {
-	    if(R_ReadConsole(Prompt(prompt, prompt_type),
+	    if(R_ReadConsole((char *) Prompt(prompt, prompt_type),
 			     (unsigned char *)buf, 1024, 1) == 0)
 		goto finish;
 	    bufp = buf;
@@ -1595,7 +1592,7 @@ static keywords[] = {
 
 /* KeywordLookup has side effects, it sets yylval */
 
-static int KeywordLookup(char *s)
+static int KeywordLookup(const char *s)
 {
     int i;
     for (i = 0; keywords[i].name; i++) {
@@ -1667,11 +1664,11 @@ static int KeywordLookup(char *s)
 }
 
 
-static SEXP mkFloat(char *s)
+static SEXP mkFloat(const char *s)
 {
     double f;
     if(strlen(s) > 2 && (s[1] == 'x' || s[1] == 'X')) {
-	double ret = 0; char *p = s + 2;
+	double ret = 0; const char *p = s + 2;
 	for(; p; p++) {
 	    if('0' <= *p && *p <= '9') ret = 16*ret + (*p -'0');
 	    else if('a' <= *p && *p <= 'f') ret = 16*ret + (*p -'a' + 10);
@@ -1683,11 +1680,11 @@ static SEXP mkFloat(char *s)
     return ScalarReal(f);
 }
 
-static SEXP mkInt(char *s)
+static SEXP mkInt(const char *s)
 {
     double f;
     if(strlen(s) > 2 && (s[1] == 'x' || s[1] == 'X')) {
-	double ret = 0; char *p = s + 2;
+	double ret = 0; const char *p = s + 2;
 	for(; p; p++) {
 	    if('0' <= *p && *p <= '9') ret = 16*ret + (*p -'0');
 	    else if('a' <= *p && *p <= 'f') ret = 16*ret + (*p -'a' + 10);
@@ -1699,7 +1696,7 @@ static SEXP mkInt(char *s)
     return ScalarInteger((int) f);
 }
 
-static SEXP mkComplex(char *s)
+static SEXP mkComplex(const char *s)
 {
     SEXP t = R_NilValue;
     double f;
@@ -1737,9 +1734,82 @@ SEXP mkFalse(void)
 
 static void yyerror(char *s)
 {
+    static const char *const yytname_translations[] =
+    {
+    /* the left column are strings coming from bison, the right
+       column are translations for users.
+       The first YYENGLISH from the right column are English to be translated,
+       the rest are to be copied literally.  The #if 0 block below allows xgettext
+       to see these.
+    */    
+#define YYENGLISH 8
+	"$undefined",	"input", 	
+	"END_OF_INPUT",	"end of input",
+	"ERROR",	"input", 	
+	"STR_CONST",	"string constant",
+	"NUM_CONST",	"numeric constant",
+	"SYMBOL",	"symbol",	
+	"LEFT_ASSIGN",	"assignment",	
+	"'\\n'",	"end of line",	
+	"NULL_CONST",	"'NULL'",
+	"FUNCTION",	"'function'",
+	"EQ_ASSIGN",	"'='",
+	"RIGHT_ASSIGN",	"'->'",
+	"LBB",		"'[['",
+	"FOR",		"'for'",
+	"IN",		"'in'",
+	"IF",		"'if'",
+	"ELSE",		"'else'",
+	"WHILE",	"'while'",
+	"NEXT",		"'next'",
+	"BREAK",	"'break'",
+	"REPEAT",	"'repeat'",
+	"GT",		"'>'",
+	"GE",		"'>='",
+	"LT",		"'<'",
+	"LE",		"'<='",
+	"EQ",		"'=='",
+	"NE",		"'!='",
+	"AND",		"'&&'",
+	"OR",		"'||'",
+	"NS_GET",	"'::'",
+	"NS_GET_INT",	"':::'",
+	0
+    };
+    static char const yyunexpected[] = "syntax error, unexpected ";
+    static char const yyexpecting[] = ", expecting ";
+    char *expecting;
+ #if 0
+ /* these are just here to trigger the internationalization */
+    _("input"); 	
+    _("end of input");
+    _("string constant");
+    _("numeric constant");
+    _("symbol");	
+    _("assignment");
+    _("end of line");
+#endif 
+   
     R_ParseError = xxlineno;
     R_ParseErrorFile = SrcFile;
-    strncpy(R_ParseErrorMsg, s, PARSE_ERROR_SIZE-1);
+    
+    if (!strncmp(s, yyunexpected, sizeof yyunexpected -1)) {
+	int i;
+    	/* Edit the error message */    
+    	expecting = strstr(s + sizeof yyunexpected -1, yyexpecting);
+    	if (expecting) *expecting = '\0';
+    	for (i=0; yytname_translations[i]; i += 2) {
+    	    if (!strcmp(s + sizeof yyunexpected - 1, yytname_translations[i])) {
+    	    	sprintf(R_ParseErrorMsg, _("unexpected %s"), 
+    	    	    i/2 < YYENGLISH ? _(yytname_translations[i+1])
+    	    	                    : yytname_translations[i+1]);
+    	    	return;
+    	    }
+    	}
+    	sprintf(R_ParseErrorMsg, _("unexpected %s"), s + sizeof yyunexpected - 1);
+    } else {
+    	strncpy(R_ParseErrorMsg, s, PARSE_ERROR_SIZE - 1);
+    }	
 }
 
 static void CheckFormalArgs(SEXP formlist, SEXP _new)
@@ -2107,9 +2177,9 @@ static int SpecialValue(int c)
 }
 
 /* return 1 if name is a valid name 0 otherwise */
-int isValidName(char *name)
+int isValidName(const char *name)
 {
-    char *p = name;
+    const char *p = name;
     int i;
 
 #ifdef SUPPORT_MBCS

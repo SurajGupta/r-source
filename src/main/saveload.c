@@ -15,8 +15,8 @@
  *  GNU General Public License for more details.
  *
  *  You should have received a copy of the GNU General Public License
- *  along with this program; if not, write to the Free Software
- *  Foundation, Inc., 51 Franklin Street Fifth Floor, Boston, MA 02110-1301  USA
+ *  along with this program; if not, a copy is available at
+ *  http://www.r-project.org/Licenses/
  */
 
 /* <UTF8> byte-level access is only to compare with chars <= 0x7F */
@@ -30,6 +30,7 @@
 #include <Rinterface.h>
 #include <Rmath.h>
 #include <Fileio.h>
+#include <R_ext/RS.h>
 
 /* From time to time changes in R, such as the addition of a new SXP,
  * may require changes in the save file format.  Here are some
@@ -134,7 +135,7 @@ typedef struct {
  void	(*OutInteger)(FILE*, int, SaveLoadData *);
  void	(*OutReal)(FILE*, double, SaveLoadData *);
  void	(*OutComplex)(FILE*, Rcomplex, SaveLoadData *);
- void	(*OutString)(FILE*, char*, SaveLoadData *);
+ void	(*OutString)(FILE*, const char*, SaveLoadData *);
  void	(*OutSpace)(FILE*, int, SaveLoadData *);
  void	(*OutNewline)(FILE*, SaveLoadData *);
  void	(*OutTerm)(FILE*, SaveLoadData *);
@@ -604,7 +605,7 @@ static void RestoreSEXP(SEXP s, FILE *fp, InputRoutines *m, NodeInfo *node, int 
     case CHARSXP:
 	len = m->InInteger(fp, d);
 	R_AllocStringBuffer(len, &(d->buffer));
-	strcpy(CHAR(s), m->InString(fp, d));
+	strcpy(CHAR_RW(s), m->InString(fp, d));
 	break;
     case REALSXP:
 	len = m->InInteger(fp, d);
@@ -637,18 +638,18 @@ static void RestoreSEXP(SEXP s, FILE *fp, InputRoutines *m, NodeInfo *node, int 
     }
 }
 
-static void RestoreError(char *msg, int startup)
+static void RestoreError(/* const */ char *msg, int startup)
 {
     if(startup)
 	R_Suicide(msg);
     else
-	error(msg);
+	error("%s", msg);
 }
   
 static SEXP DataLoad(FILE *fp, int startup, InputRoutines *m, int version, SaveLoadData *d)
 {
     int i, j;
-    char *vmaxsave;
+    void *vmaxsave;
     fpos_t savepos;
     NodeInfo node;
 
@@ -723,7 +724,7 @@ static SEXP DataLoad(FILE *fp, int startup, InputRoutines *m, int version, SaveL
     UNPROTECT(1);
 
     /* clean the string buffer */
-    R_AllocStringBuffer(-1, &(d->buffer));
+    R_FreeStringBufferL(&(d->buffer));
 
     /* return the "top-level" object */
     /* this is usually a list */
@@ -847,7 +848,7 @@ static SEXP NewLoadSpecialHook (SEXPTYPE type)
 
 #define HASHSIZE 1099
 
-#define PTRHASH(obj) (((unsigned long) (obj)) >> 2)
+#define PTRHASH(obj) (((uintptr_t) (obj)) >> 2)
 
 #define HASH_TABLE_KEYS_LIST(ht) CAR(ht)
 #define SET_HASH_TABLE_KEYS_LIST(ht, v) SETCAR(ht, v)
@@ -1202,8 +1203,7 @@ static SEXP InCHARSXP (FILE *fp, InputRoutines *m, SaveLoadData *d)
     tmp = m->InString(fp, d);
     len = strlen(tmp);
     R_AllocStringBuffer(len, &(d->buffer));
-    s = allocVector(CHARSXP, len);
-    memcpy(CHAR(s), tmp, len+1);
+    s = mkChar(tmp);
     return s;
 }
 
@@ -1411,7 +1411,7 @@ static int InIntegerAscii(FILE *fp, SaveLoadData *unused)
     return x;
 }
 
-static void OutStringAscii(FILE *fp, char *x, SaveLoadData *unused)
+static void OutStringAscii(FILE *fp, const char *x, SaveLoadData *unused)
 {
     int i, nbytes;
     nbytes = strlen(x);
@@ -1676,11 +1676,17 @@ static int InIntegerXdr(FILE *fp, SaveLoadData *d)
     return i;
 }
 
-static void OutStringXdr(FILE *fp, char *s, SaveLoadData *d)
+static void OutStringXdr(FILE *fp, const char *s, SaveLoadData *d)
 {
     unsigned int n = strlen(s);
+    char *t = CallocCharBuf(n);
+    bool_t res;
+    /* This copy may not be needed, will xdr_bytes ever modify 2nd arg? */
+    strcpy(t, s);
     OutIntegerXdr(fp, n, d);
-    if (!xdr_bytes(&d->xdrs, &s, &n, n))
+    res = xdr_bytes(&d->xdrs, &t, &n, n);
+    Free(t);
+    if (!res)
 	error(_("an xdr string data write error occurred"));
 }
 
@@ -1952,11 +1958,11 @@ SEXP attribute_hidden do_save(SEXP call, SEXP op, SEXP args, SEXP env)
 
 
     if (TYPEOF(CAR(args)) != STRSXP)
-	errorcall(call, _("first argument must be a character vector"));
+	error(_("first argument must be a character vector"));
     if (!isValidStringF(CADR(args)))
-	errorcall(call, _("'file' must be non-empty string"));
+	error(_("'file' must be non-empty string"));
     if (TYPEOF(CADDR(args)) != LGLSXP)
-	errorcall(call, _("'ascii' must be logical"));
+	error(_("'ascii' must be logical"));
     if (CADDDR(args) == R_NilValue)
 	version = R_DefaultSaveFormatVersion;
     else
@@ -1972,7 +1978,7 @@ SEXP attribute_hidden do_save(SEXP call, SEXP op, SEXP args, SEXP env)
 
     fp = RC_fopen(STRING_ELT(CADR(args), 0), "wb", TRUE);
     if (!fp)
-	errorcall(call, _("unable to open file"));
+	error(_("unable to open file"));
 
     /* set up a context which will close the file if there is an error */
     begincontext(&cntxt, CTXT_CCODE, R_NilValue, R_BaseEnv, R_BaseEnv,
@@ -2009,12 +2015,12 @@ SEXP attribute_hidden do_save(SEXP call, SEXP op, SEXP args, SEXP env)
 
 static SEXP RestoreToEnv(SEXP ans, SEXP aenv)
 {
-    SEXP a, names;
+    SEXP a, names, obj;
     int cnt = 0;
     /* Store the components of the list in aenv.  We either replace
      * the existing objects in aenv or establish new bindings for
-     * them.  Note that we try to convert old "pairlist" objects
-     * to new "pairlist" objects. */
+     * them.
+     */
 
     /* allow ans to be a vector-style list */
     if (TYPEOF(ans) == VECSXP) {
@@ -2025,7 +2031,12 @@ static SEXP RestoreToEnv(SEXP ans, SEXP aenv)
 	    error(_("not a valid named list"));
 	for (i = 0; i < LENGTH(ans); i++) {
 	    SEXP sym = install(CHAR(STRING_ELT(names, i)));
-	    defineVar(sym, VECTOR_ELT(ans, i), aenv);
+	    obj = VECTOR_ELT(ans, i);
+	    defineVar(sym, obj, aenv);
+	    if(R_seemsOldStyleS4Object(obj))
+		warningcall(R_NilValue,
+			    _("'%s' looks like a pre-2.4.0 S4 object: please recreate it"), 
+			    CHAR(STRING_ELT(names, i)));
 	}
 	UNPROTECT(2);
 	return names;
@@ -2042,6 +2053,10 @@ static SEXP RestoreToEnv(SEXP ans, SEXP aenv)
     while (a != R_NilValue) {
 	SET_STRING_ELT(names, cnt++, PRINTNAME(TAG(a)));
         defineVar(TAG(a), CAR(a), aenv);
+	if(R_seemsOldStyleS4Object(CAR(a)))
+	    warningcall(R_NilValue,
+			_("'%s' looks like a pre-2.4.0 S4 object: please recreate it"), 
+			CHAR(PRINTNAME(TAG(a))));
         a = CDR(a);
     }
     UNPROTECT(2);
@@ -2063,7 +2078,7 @@ SEXP attribute_hidden do_load(SEXP call, SEXP op, SEXP args, SEXP env)
     checkArity(op, args);
 
     if (!isValidString(fname = CAR(args)))
-	errorcall (call, _("first argument must be a file name"));
+	error(_("first argument must be a file name"));
 
     /* GRW 1/26/99 GRW : added environment parameter so that */
     /* the loaded objects can be placed where desired  */
@@ -2079,7 +2094,7 @@ SEXP attribute_hidden do_load(SEXP call, SEXP op, SEXP args, SEXP env)
     /* Process the saved file to obtain a list of saved objects. */
     fp = RC_fopen(STRING_ELT(fname, 0), "rb", TRUE);
     if (!fp)
-	errorcall(call, _("unable to open file"));
+	error(_("unable to open file"));
 
     /* set up a context which will close the file if there is an error */
     begincontext(&cntxt, CTXT_CCODE, R_NilValue, R_BaseEnv, R_BaseEnv,
@@ -2226,13 +2241,13 @@ SEXP attribute_hidden do_saveToConn(SEXP call, SEXP op, SEXP args, SEXP env)
     checkArity(op, args);
 
     if (TYPEOF(CAR(args)) != STRSXP)
-	errorcall(call, _("first argument must be a character vector"));
+	error(_("first argument must be a character vector"));
     list = CAR(args);
 
     con = getConnection(asInteger(CADR(args)));
 
     if (TYPEOF(CADDR(args)) != LGLSXP)
-	errorcall(call, _("'ascii' must be logical"));
+	error(_("'ascii' must be logical"));
     ascii = INTEGER(CADDR(args))[0];
 
     if (CADDDR(args) == R_NilValue)

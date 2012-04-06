@@ -1,7 +1,12 @@
 #-*- Makefile -*-
-all:  makeMakedeps $(DLLNAME).dll
 
-.PHONY : all makeMakedeps
+all:  before makeMakedeps $(DLLNAME).dll after
+
+## these targets are just here to allow packages to add to them.
+before:
+after:
+
+.PHONY: all before after shlib-clean makeMakedeps
 
 # set this in Makevars.win to supply your own resource file
 RCNAME=${DLLNAME}_res
@@ -20,11 +25,11 @@ include $(RHOME)/src/gnuwin32/MkRules
 
 ifneq ($(strip $(FCSOURCES)),)
 # don't assume F95 can be cross-compiled in the same way
-  DLL="$(F95)"
+  DLL="$(FC)"
 else
 
 ifneq ($(strip $(CXXSOURCES)),)
-  DLL_LDMAIN=g++
+  DLL_LDMAIN=$(CXX)
 endif
 ifneq ($(strip $(FSOURCES)),)
   EXTRA_LIBS+=$(FLIBS)
@@ -48,20 +53,22 @@ CXXOPTFLAG=-O2
 FOPTFLAG=-O3
 
 CPPFLAGS=$(PKG_CPPFLAGS) -I$(RHOME)/include $(CLINK_CPPFLAGS)
-CFLAGS=$(CPPFLAGS) $(DEBUGFLAG) $(COPTFLAG) $(C99FLAG) $(PKG_CFLAGS)
-CXXFLAGS=$(CPPFLAGS) $(DEBUGFLAG) $(CXXOPTFLAG) $(PKG_CXXFLAGS)
-FFLAGS=$(FOPTFLAG) $(DEBUGFLAG) $(PKG_FFLAGS)
-DLLLIBS=-L$(RHOME)/bin $(PKG_LIBS) $(PKG_LIBS2) $(EXTRA_LIBS) -lR
+CFLAGS=$(PKG_CFLAGS) $(DEBUGFLAG) $(COPTFLAG)
+CXXFLAGS=$(PKG_CXXFLAGS) $(DEBUGFLAG) $(CXXOPTFLAG)
+FFLAGS=$(PKG_FFLAGS) $(FOPTFLAG) $(DEBUGFLAG)
+DLLLIBS=-L$(RHOME)/$(IMPDIR) $(PKG_LIBS) $(PKG_LIBS2) $(EXTRA_LIBS) -lR
 RESFLAGS=-I $(RHOME)/include
+
 # for use by Makevars.win
 R_HOME=$(RHOME)
+SHLIB=$(DLLNAME).dll
+SAFE_FFLAGS=$(FOPTFLAG) $(DEBUGFLAG) -ffloat-store
 
-AA=$(wildcard Makefile)
-ifeq ($(AA),Makefile)
- include Makefile
-else
- OBJS=$(filter-out $(OBJS-NO),$(OBJSA))
-endif
+## can be overridden in Makevars[.win]
+OBJECTS=$(filter-out $(OBJS-NO),$(OBJSA))
+
+## these are documented (in R-admin) to come after MakeDll and MkRules,
+## unlike Unix.
 AA=$(wildcard Makevars.win)
 ifeq ($(AA),Makevars.win)
  include Makevars.win
@@ -70,16 +77,19 @@ else
 endif
 
 $(DLLNAME)_res.rc:
-	@PERL5LIB=$(RHOME)/share/perl perl $(RHOME)/src/gnuwin32/makeDllRes.pl $(DLLNAME) > $@
+	@PERL5LIB=$(RHOME)/share/perl $(PERL) $(RHOME)/src/gnuwin32/makeDllRes.pl $(DLLNAME) > $@
 
 $(DLLNAME)_res.o: $(DLLNAME)_res.rc $(RHOME)/include/Rversion.h
 
 ifeq ($(wildcard $(DLLNAME)-win.def),$(DLLNAME)-win.def)
-$(DLLNAME).dll : $(DLLNAME)-win.def $(OBJS) $(RCOBJ)
+$(DLLNAME).dll : $(DLLNAME)-win.def $(OBJECTS) $(RCOBJ)
 	$(DLL) -shared $(DLLFLAGS) $($*-DLLFLAGS) -o $@ $^ $($*-DLLLIBS) $(DLLLIBS)
 else
-$(DLLNAME).dll : $(OBJS) $(RCOBJ)
+$(DLLNAME).dll : $(OBJECTS) $(RCOBJ)
 endif
+
+shlib-clean:
+	@$(RM) -f $(DLLNAME)_res.rc $(OBJECTS) $(RCOBJ) *.d Makedeps
 
 # Dependencies
 CXXSOURCES1=$(wildcard -f *.cc)
@@ -90,7 +100,7 @@ DEPS=$(CSOURCES:.c=.d) $(CXXSOURCES1:.cc=.d) $(CXXSOURCES2:.cpp=.d) $(CXXSOURCES
 makeMakedeps: $(DEPS)
 	@$(RM) Makedeps
 ifneq ($(strip $(DEPS)),)
-	@cat $(DEPS) >> Makedeps
+	-@cat $(DEPS) >> Makedeps
 endif
 
 -include Makedeps

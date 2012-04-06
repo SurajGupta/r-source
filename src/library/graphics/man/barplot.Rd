@@ -1,3 +1,8 @@
+% File src/library/graphics/man/barplot.Rd
+% Part of the R package, http://www.R-project.org
+% Copyright 1995-2007 R Core Development Team
+% Distributed under GPL 2 or later
+
 \name{barplot}
 \alias{barplot}
 \alias{barplot.default}
@@ -26,13 +31,13 @@ barplot(height, \dots)
     given by the values in the vector.  If \code{height} is a matrix
     and \code{beside} is \code{FALSE} then each bar of the plot
     corresponds to a column of \code{height}, with the values in the
-    column giving the heights of stacked \dQuote{sub-bars} making up the
+    column giving the heights of stacked sub-bars making up the
     bar.  If \code{height} is a matrix and \code{beside} is
     \code{TRUE}, then the values in each column are juxtaposed
     rather than stacked.}
   \item{width}{optional vector of bar widths. Re-cycled to length the
-    number of bars drawn.  Specifying a single value will no visible
-    effect unless \code{xlim} is specified.}
+    number of bars drawn.  Specifying a single value will have no 
+    visible effect unless \code{xlim} is specified.}
   \item{space}{the amount of space (as a fraction of the average bar
     width) left before each bar.  May be given as a single number or
     one number per bar.  If \code{height} is a matrix and
@@ -131,7 +136,8 @@ barplot(height, \dots)
   \code{\link{hist}}.
 }
 \examples{
-tN <- table(Ni <- rpois(100, lambda=5))
+require(grDevices) # for colours
+tN <- table(Ni <- stats::rpois(100, lambda=5))
 r <- barplot(tN, col=rainbow(20))
 #- type = "h" plotting *is* 'bar'plot
 lines(r, tN, type='h', col='red', lwd=2)

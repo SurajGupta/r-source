@@ -1,3 +1,8 @@
+% File src/library/base/man/file.access.Rd
+% Part of the R package, http://www.R-project.org
+% Copyright 1995-2007 R Core Development Team
+% Distributed under GPL 2 or later
+
 \name{file.access}
 \alias{file.access}
 \title{Ascertain File Accessibility}
@@ -13,6 +18,8 @@ file.access(names, mode = 0)
   \item{mode}{integer specifying access mode required.}
 }
 \details{
+  Tilde-expansion is done on \code{names}: see \code{\link{path.expand}}.
+
   The \code{mode} value can be the exclusive or of the following values
   \describe{
     \item{0}{test for existence.}
@@ -25,21 +32,21 @@ file.access(names, mode = 0)
   than the effective IDs).
 #endif
 #ifdef windows
-  Execute permission is ignored under Windows (this function regards all
-  files as executable), and all directories are reported to have both
-  read and write permissions.  Write permission may be reported on
-  files that are not writeable due to ownership, Access Control Lists or
-  User Account Control settings (e.g. not owned by the user of the R
-  process).
+  As from \R 2.6.0 this function no longer uses the C function
+  \code{_access} in \file{msvcrt.dll}, but has been rewritten using
+  Win32 API functions.
+
+  Windows does not have the concept of an \sQuote{executable file}, so
+  this function regards directories and files with extension
+  \file{.exe}, \file{.bat}, \file{.cmd} and \file{.com} as executable.
+  (\code{\link{system}} makes the same assumption.)
 #endif
 
   Please note that it is not good to use this function to test before
   trying to open a file.  On a multi-tasking system, it is possible that
   the accessibility of a file will change between the time you call
-  \code{file.access()} and the time you try to open the file, and in
-  recent Windows versions the underlying function in \code{msvcrt.dll}
-  sometimes returns inaccurate values.  It is better to wrap
-  file open attempts in \code{\link{try}} instead.
+  \code{file.access()} and the time you try to open the file.  It is
+  better to wrap file open attempts in \code{\link{try}}.
 }
 \value{
   An integer vector with values \code{0} for success and \code{-1} for failure.
@@ -57,5 +64,13 @@ file.access(names, mode = 0)
 \examples{
 fa <- file.access(dir("."))
 table(fa) # count successes & failures
+#ifdef windows
+d <- dir(file.path(R.home(), "bin"))
+df <- dir(file.path(R.home(), "bin"), full.names = TRUE)
+d[file.access(df, 0) == 0] # all exist
+d[file.access(df, 1) == 0] # some are executable, some are not
+d[file.access(df, 2) == 0] # hopefully all are readable
+d[file.access(df, 4) == 0] # they may or may not be writeable
+#endif
 }
 \keyword{file}

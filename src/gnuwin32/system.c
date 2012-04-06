@@ -15,8 +15,8 @@
  *  GNU General Public License for more details.
  *
  *  You should have received a copy of the GNU General Public License
- *  along with this program; if not, write to the Free Software
- *  Foundation, Inc., 51 Franklin Street, Fifth Floor, Boston, MA 02110-1301  USA
+ *  along with this program; if not, a copy is available at
+ *  http://www.r-project.org/Licenses/
  */
 
 /* See ../unix/system.txt for a description of functions */
@@ -56,22 +56,12 @@ void editorcleanall();                  /* from editor.c */
 
 int Rwin_graphicsx = -25, Rwin_graphicsy = 0;
 
-R_size_t R_max_memory = INT_MAX;\
+R_size_t R_max_memory = INT_MAX;
 Rboolean UseInternet2 = FALSE;
 
 extern SA_TYPE SaveAction; /* from ../main/startup.c */
 Rboolean DebugMenuitem = FALSE;  /* exported for rui.c */
 static FILE *ifp = NULL;
-
-/* used in devWindows.c */
-int RbitmapAlreadyLoaded = 0;
-HINSTANCE hRbitmapDll;
-
-static void UnLoad_Rbitmap_Dll()
-{
-    if (RbitmapAlreadyLoaded) FreeLibrary(hRbitmapDll);
-    RbitmapAlreadyLoaded = 0;
-}
 
 __declspec(dllexport) UImode  CharacterMode;
 int ConsoleAcceptCmd;
@@ -79,7 +69,7 @@ void set_workspace_name(char *fn); /* ../main/startup.c */
 
 /* used to avoid some flashing during cleaning up */
 Rboolean AllDevicesKilled = FALSE;
-int (*R_YesNoCancel)(char *s);
+static int (*R_YesNoCancel)(char *s);
 
 static DWORD mainThreadId;
 
@@ -205,8 +195,8 @@ static int
 GuiReadConsole(char *prompt, char *buf, int len, int addtohistory)
 {
     int res;
-    char *NormalPrompt =
-	(char *) CHAR(STRING_ELT(GetOption(install("prompt"), R_BaseEnv), 0));
+    const char *NormalPrompt =
+	CHAR(STRING_ELT(GetOption(install("prompt"), R_BaseEnv), 0));
 
     if(!R_is_running) {
 	R_is_running = 1;
@@ -290,7 +280,7 @@ FileReadConsole(char *prompt, char *buf, int len, int addhistory)
     /* translate if necessary */
     if(strlen(R_StdinEnc) && strcmp(R_StdinEnc, "native.enc")) {
 	size_t res, inb = strlen(buf), onb = len;
-	char *ib = buf, *ob, *obuf;
+	const char *ib = buf; char *ob, *obuf;
 	ob = obuf = alloca(len+1);
 	if(!cd) {
 	    cd = Riconv_open("", R_StdinEnc);
@@ -301,12 +291,12 @@ FileReadConsole(char *prompt, char *buf, int len, int addhistory)
 	err = (res == (size_t)(-1));
 	/* errors lead to part of the input line being ignored */
 	if(err) fputs(_("<ERROR: invalid input in encoding>\n"), stdout);
-	strncpy((char *)buf, obuf, len);
+	strncpy(buf, obuf, len);
     }
 
 /* according to system.txt, should be terminated in \n, so check this
    at eof or error */
-    ll = strlen((char *)buf);
+    ll = strlen(buf);
     if ((err || feof(ifp ? ifp: stdin))
 	&& buf[ll - 1] != '\n' && ll < len) {
 	buf[ll++] = '\n'; buf[ll] = '\0';
@@ -448,7 +438,6 @@ void R_CleanUp(SA_TYPE saveact, int status, int runLast)
     AllDevicesKilled = TRUE;
     if (R_Interactive && CharacterMode == RTerm)
 	SetConsoleTitle(oldtitle);
-    UnLoad_Rbitmap_Dll();
     if (R_CollectWarnings && saveact != SA_SUICIDE
 	&& CharacterMode == RTerm)
 	PrintWarnings();
@@ -655,6 +644,11 @@ void R_SetWin32(Rstart Rp)
     strcat(UserRHome, Rp->home);
     putenv(UserRHome);
 
+    /* Rterm and Rgui set CharacterMode during startup, then set Rp->CharacterMode
+       from it in cmdlineoptions().  Rproxy never calls cmdlineoptions, so we need the 
+       line below */
+       
+    CharacterMode = Rp->CharacterMode;
     switch(CharacterMode) {
     case RGui:
 	R_GUIType = "Rgui";
@@ -700,13 +694,21 @@ static void env_command_line(int *pac, char **argv)
 {
     int ac = *pac, newac = 1; /* Remember argv[0] is process name */
     char **av = argv;
+    Rboolean hadE = FALSE;
 
+    /* We don't want to parse -e expressions */
     while(--ac) {
 	++av;
-	if(**av != '-' && Rf_strchr(*av, '='))
+	if(strcmp(*av, "-e") == 0) {
+	    hadE = TRUE;
+	    argv[newac++] = *av; 
+	    continue;
+	}
+	if(!hadE && **av != '-' && Rf_strchr(*av, '='))
 	    Putenv(*av);
 	else
 	    argv[newac++] = *av;
+	hadE = FALSE;
     }
     *pac = newac;
 }
@@ -756,18 +758,29 @@ void R_setupHistory()
     }
 }
 
+static void wrap_askok(char *info)
+{
+    askok(info);
+}
+
+static int wrap_askyesnocancel(char *question)
+{
+    return askyesnocancel(question);    
+}
+
+
 int cmdlineoptions(int ac, char **av)
 {
     int   i, ierr;
     R_size_t value;
     char *p;
     char  s[1024], cmdlines[10000];
+    R_size_t Virtual;
 #ifdef ENABLE_NLS
     char localedir[PATH_MAX+20];
 #endif
     structRstart rstart;
     Rstart Rp = &rstart;
-    MEMORYSTATUS ms;
     Rboolean usedRdata = FALSE, processing = TRUE;
 
     /* ensure R_Home gets set early: we are in rgui or rterm here */
@@ -797,13 +810,26 @@ int cmdlineoptions(int ac, char **av)
 
     /* set defaults for R_max_memory. This is set here so that
        embedded applications get no limit */
-    GlobalMemoryStatus(&ms);
-    /* As from 2.4.0, look at the virtual memsize */
-    if((unsigned int) ms.dwTotalVirtual > 2048*Mega)
-	R_max_memory = min(2560 * Mega, ms.dwTotalPhys);
-    else
-	R_max_memory = min(1536 * Mega, ms.dwTotalPhys);
-    /* need enough to start R: fails on a 8Mb system */
+#ifdef WIN64
+    {    
+	MEMORYSTATUSEX ms;
+	GlobalMemoryStatusEx(&ms); /* Win2k or later */
+	Virtual = ms.ullTotalVirtual; /* uint64 = DWORDLONG */
+	R_max_memory = ms.ullTotalPhys;
+    }
+#else
+    {
+	MEMORYSTATUS ms;
+	/* See http://support.microsoft.com/kb/274558
+	   Since our applications are large-addess aware, should return
+	   -1 on machines with >= 4Gb of RAM
+	*/
+	GlobalMemoryStatus(&ms);
+	Virtual = ms.dwTotalVirtual; /* uint32 = DWORD */
+	R_max_memory = min(Virtual - 512*Mega, ms.dwTotalPhys);
+    }
+#endif
+    /* need enough to start R, with some head room */
     R_max_memory = max(32 * Mega, R_max_memory);
 
     R_DefParams(Rp);
@@ -847,14 +873,15 @@ int cmdlineoptions(int ac, char **av)
 	Rp->R_Interactive = TRUE;
 	Rp->ReadConsole = GuiReadConsole;
 	Rp->WriteConsole = GuiWriteConsole;
-	Rp->ShowMessage = askok;
-	Rp->YesNoCancel = askyesnocancel;
+	Rp->ShowMessage = wrap_askok;
+	Rp->YesNoCancel = wrap_askyesnocancel;
 	Rp->Busy = GuiBusy;
     }
 
     pR_ShowMessage = Rp->ShowMessage; /* used here */
     TrueWriteConsole = Rp->WriteConsole;
-    /* Rp->WriteConsole is guaranteed to be set above, so we WriteConsoleEx is not used */
+    /* Rp->WriteConsole is guaranteed to be set above, 
+       so we know WriteConsoleEx is not used */
     R_CallBackHook = Rp->CallBack;
 
     /* process environment variables
@@ -866,7 +893,6 @@ int cmdlineoptions(int ac, char **av)
 	Rp->NoRenviron = TRUE;
     }
     env_command_line(&ac, av);
-/*    R_SizeFromEnv(Rp); */
 
     R_common_command_line(&ac, av, Rp);
 
@@ -904,15 +930,19 @@ int cmdlineoptions(int ac, char **av)
 		    if(ierr < 0)
 			sprintf(s, _("WARNING: --max-mem-size value is invalid: ignored\n"));
 		    else
-			sprintf(s, _("WARNING: --max-mem-size=%lu'%c': too large and ignored\n"),
+			sprintf(s, _("WARNING: --max-mem-size=%lu%c: too large and ignored\n"),
 				(unsigned long) value,
-				(ierr == 1) ? 'M': ((ierr == 2) ? 'K':'k'));
+				(ierr == 1) ? 'M': ((ierr == 2) ? 'K': 'G'));
 		    R_ShowMessage(s);
 		} else if (value < 32 * Mega) {
-		    sprintf(s, _("WARNING: max-mem-size =%4.1fM too small and ignored\n"), value/(1024.0 * 1024.0));
+		    sprintf(s, _("WARNING: --max-mem-size=%4.1fM: too small and ignored\n"), 
+			    value/(1024.0 * 1024.0));
 		    R_ShowMessage(s);
-		} else if (value >= 3072 * Mega) {
-		    sprintf(s, _("WARNING: max-mem-size =%4.1fM is too large and taken as 3Gb\n"), value/(1024.0 * 1024.0));
+		} else if (value > Virtual) {
+		    sprintf(s, _("WARNING: --max-mem-size=%4.0fM: too large and taken as %uM\n"), 
+			    value/(1024.0 * 1024.0), 
+			    (unsigned int) (Virtual/(1024.0 * 1024.0)));
+		    R_max_memory = Virtual;
 		    R_ShowMessage(s);
 		} else
 		    R_max_memory = value;
@@ -1016,7 +1046,7 @@ int cmdlineoptions(int ac, char **av)
     return 0;
 }
 
-/* only for back-compatibility */
+/* only for back-compatibility: used by Rserve */
 void setup_term_ui()
 {
     initapp(0, 0);

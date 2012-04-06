@@ -1,3 +1,8 @@
+% File src/library/base/man/tapply.Rd
+% Part of the R package, http://www.R-project.org
+% Copyright 1995-2007 R Core Development Team
+% Distributed under GPL 2 or later
+
 \name{tapply}
 \alias{tapply}
 \title{Apply a Function Over a ``Ragged'' Array}
@@ -64,7 +69,7 @@ tapply(X, INDEX, FUN = NULL, \dots, simplify = TRUE)
 }
 \examples{
 require(stats)
-groups <- as.factor(rbinom(32, n = 5, p = .4))
+groups <- as.factor(rbinom(32, n = 5, prob = 0.4))
 tapply(groups, groups, length) #- is almost the same as
 table(groups)
 
@@ -72,7 +77,7 @@ table(groups)
 tapply(warpbreaks$breaks, warpbreaks[,-1], sum)
 tapply(warpbreaks$breaks, warpbreaks[, 3, drop = FALSE], sum)
 
-n <- 17; fac <- factor(rep(1:3, len = n), levels = 1:5)
+n <- 17; fac <- factor(rep(1:3, length = n), levels = 1:5)
 table(fac)
 tapply(1:n, fac, sum)
 tapply(1:n, fac, sum, simplify = FALSE)

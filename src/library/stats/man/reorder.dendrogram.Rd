@@ -1,3 +1,8 @@
+% File src/library/stats/man/reorder.dendrogram.Rd
+% Part of the R package, http://www.R-project.org
+% Copyright 1995-2007 R Core Development Team
+% Distributed under GPL 2 or later
+
 \name{reorder.dendrogram}
 \alias{reorder.dendrogram}
 \title{Reorder a Dendrogram}
@@ -38,17 +43,19 @@
   order; \code{\link{heatmap}}, \code{\link{cophenetic}}.
 }
 \examples{
-  set.seed(123)
-  x <- rnorm(10)
-  hc <- hclust(dist(x))
-  dd <- as.dendrogram(hc)
-  dd.reorder <- reorder(dd, 10:1)
-  plot(dd, main = "random dendrogram `dd'")
+require(graphics)
 
-  op <- par(mfcol = 1:2)
-  plot(dd.reorder, main = "reorder(dd, 10:1)")
-  plot(reorder(dd,10:1, agglo.FUN= mean),
-       main = "reorder(dd, 10:1, mean)")
-  par(op)
+set.seed(123)
+x <- rnorm(10)
+hc <- hclust(dist(x))
+dd <- as.dendrogram(hc)
+dd.reorder <- reorder(dd, 10:1)
+plot(dd, main = "random dendrogram 'dd'")
+
+op <- par(mfcol = 1:2)
+plot(dd.reorder, main = "reorder(dd, 10:1)")
+plot(reorder(dd,10:1, agglo.FUN= mean),
+     main = "reorder(dd, 10:1, mean)")
+par(op)
 }
 \keyword{manip}

@@ -1,3 +1,8 @@
+% File src/library/base/man/cat.Rd
+% Part of the R package, http://www.R-project.org
+% Copyright 1995-2007 R Core Development Team
+% Distributed under GPL 2 or later
+
 \name{cat}
 \title{Concatenate and Print}
 \usage{
@@ -79,7 +84,7 @@ cat(\dots , file = "", sep = " ", fill = FALSE, labels = NULL,
   which concatenates into a string.
 }
 \examples{
-iter <- rpois(1, lambda=10)
+iter <- stats::rpois(1, lambda=10)
 ## print an informative message
 cat("iteration = ", iter <- iter + 1, "\n")
 

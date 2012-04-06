@@ -15,18 +15,28 @@
  *  GNU General Public License for more details.
  *
  *  You should have received a copy of the GNU General Public License
- *  along with this program; if not, write to the Free Software
- *  Foundation, Inc., 51 Franklin Street, Fifth Floor, Boston, MA 02110-1301  USA
+ *  along with this program; if not, a copy is available at
+ *  http://www.r-project.org/Licenses/
  */
 
 #ifdef HAVE_CONFIG_H
 #include <config.h>
 #endif
 
+#include <math.h>
+#include <limits.h> /* INT_MAX */
+#include <stdlib.h> /* abs */
 #include <Rmath.h> /* for imin2 and imax2 */
 #include <R_ext/Print.h> /* for Rprintf */
 #include <R_ext/Utils.h> /* for R_rsort */
 #include <R_ext/Applic.h>
+
+#ifdef HAVE_VISIBILITY_ATTRIBUTE
+# define attribute_hidden __attribute__ ((visibility ("hidden")))
+#else
+# define attribute_hidden
+#endif
+
 
 static void stem_print(int close, int dist, int ndigits)
 {
@@ -136,7 +146,8 @@ stem_leaf(double *x, int n, double scale, int width, double atom)
     return TRUE;
 }
 
-Rboolean stemleaf(double *x, int *n, double *scale, int *width, double *atom)
+Rboolean attribute_hidden
+stemleaf(double *x, int *n, double *scale, int *width, double *atom)
 {
     return stem_leaf(x, *n, *scale, *width, *atom);
 }

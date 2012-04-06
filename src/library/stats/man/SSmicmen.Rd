@@ -1,4 +1,8 @@
-% $Id: SSmicmen.Rd,v 1.1 2003/12/11 07:16:06 ripley Exp $
+% File src/library/stats/man/SSmicmen.Rd
+% Part of the R package, http://www.R-project.org
+% Copyright 1995-2007 R Core Development Team
+% Distributed under GPL 2 or later
+
 \name{SSmicmen}
 \title{Michaelis-Menten Model}
 \usage{
@@ -41,6 +45,8 @@ fm2 <- nls(rate ~ SSmicmen(conc, Vm, K), data = Puromycin,
            subset = state == "treated")
 summary(fm2)
 \dontshow{
+require(graphics)
+
   xx <- seq(0, 5, len = 101)
   yy <- 5 * xx/(1+xx)
   par(mar = c(0, 0, 3.5, 0))

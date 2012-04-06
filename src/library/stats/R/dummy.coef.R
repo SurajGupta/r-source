@@ -1,3 +1,19 @@
+#  File src/library/stats/R/dummy.coef.R
+#  Part of the R package, http://www.R-project.org
+#
+#  This program is free software; you can redistribute it and/or modify
+#  it under the terms of the GNU General Public License as published by
+#  the Free Software Foundation; either version 2 of the License, or
+#  (at your option) any later version.
+#
+#  This program is distributed in the hope that it will be useful,
+#  but WITHOUT ANY WARRANTY; without even the implied warranty of
+#  MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
+#  GNU General Public License for more details.
+#
+#  A copy of the GNU General Public License is available at
+#  http://www.r-project.org/Licenses/
+
 dummy.coef <- function(object, ...) UseMethod("dummy.coef")
 
 dummy.coef.lm <- function(object, use.na=FALSE, ...)
@@ -51,7 +67,7 @@ dummy.coef.lm <- function(object, use.na=FALSE, ...)
         warning("some terms will have NAs due to the limits of the method")
         mm[is.na(mm)] <- NA
     }
-    coef <- object$coef
+    coef <- object$coefficients
     if(!use.na) coef[is.na(coef)] <- 0
     asgn <- attr(mm,"assign")
     res <- vector("list", length(tl))
@@ -122,7 +138,7 @@ dummy.coef.aovlist <- function(object, use.na = FALSE, ...)
     tl <- c("(Intercept)", tl)
     allasgn <- attr(mm, "assign")
     for(i in names(object)) {
-	coef <- object[[i]]$coef
+	coef <- object[[i]]$coefficients
 	if(!use.na) coef[is.na(coef)] <- 0
 	asgn <- object[[i]]$assign
 	uasgn <- unique(asgn)

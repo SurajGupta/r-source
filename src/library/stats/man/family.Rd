@@ -1,3 +1,8 @@
+% File src/library/stats/man/family.Rd
+% Part of the R package, http://www.R-project.org
+% Copyright 1995-2007 R Core Development Team
+% Distributed under GPL 2 or later
+
 \name{family}
 \title{Family Objects for Models}
 \usage{
@@ -74,7 +79,7 @@ quasipoisson(link = "log")
 
   The \code{quasibinomial} and \code{quasipoisson} families differ from
   the \code{binomial} and \code{poisson} families only in that the
-  dispersion parameter is not fixed at one, so they can \dQuote{model}
+  dispersion parameter is not fixed at one, so they can model
   over-dispersion.  For the binomial case see McCullagh and Nelder
   (1989, pp. 124--8).  Although they show that there is (under some
   restrictions) a model with
@@ -146,6 +151,8 @@ quasipoisson(link = "log")
   \code{\link{glm}}, \code{\link{power}}, \code{\link{make.link}}.
 }
 \examples{
+require(utils) # for str
+
 nf <- gaussian()# Normal family
 nf
 str(nf)# internal STRucture
@@ -194,13 +201,13 @@ binomial(logexp(3))
 ## tests of quasi
 x <- rnorm(100)
 y <- rpois(100, exp(1+x))
-glm(y ~x, family=quasi(var="mu", link="log"))
+glm(y ~x, family=quasi(variance="mu", link="log"))
 # which is the same as
 glm(y ~x, family=poisson)
-glm(y ~x, family=quasi(var="mu^2", link="log"))
-\dontrun{glm(y ~x, family=quasi(var="mu^3", link="log")) # should fail}
+glm(y ~x, family=quasi(variance="mu^2", link="log"))
+\dontrun{glm(y ~x, family=quasi(variance="mu^3", link="log")) # should fail}
 y <- rbinom(100, 1, plogis(x))
 # needs to set a starting value for the next fit
-glm(y ~x, family=quasi(var="mu(1-mu)", link="logit"), start=c(0,1))
+glm(y ~x, family=quasi(variance="mu(1-mu)", link="logit"), start=c(0,1))
 }
 \keyword{models}

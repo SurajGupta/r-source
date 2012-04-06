@@ -1,3 +1,8 @@
+% File src/library/grDevices/man/palette.Rd
+% Part of the R package, http://www.R-project.org
+% Copyright 1995-2007 R Core Development Team
+% Distributed under GPL 2 or later
+
 \name{palette}
 \title{Set or View the Graphics Palette}
 \usage{
@@ -28,7 +33,7 @@ palette(value)
   unless the argument is omitted.
 }
 \seealso{
-  \code{\link{colors}} for the vector of built-in \dQuote{named} colors;
+  \code{\link{colors}} for the vector of built-in named colors;
   \code{\link{hsv}}, \code{\link{gray}}, \code{\link{rainbow}},
   \code{\link{terrain.colors}},\dots to construct colors.
 
@@ -36,6 +41,8 @@ palette(value)
   \code{\link{col2rgb}} for translating colors to RGB 3-vectors.
 }
 \examples{
+require(graphics)
+
 palette()               # obtain the current palette
 palette(rainbow(6))     # six color rainbow
 

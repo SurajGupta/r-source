@@ -1,3 +1,8 @@
+% File src/library/grDevices/man/hcl.Rd
+% Part of the R package, http://www.R-project.org
+% Copyright 1995-2007 R Core Development Team
+% Distributed under GPL 2 or later
+
 \name{hcl}
 \alias{hcl}
 \encoding{latin1}
@@ -72,19 +77,20 @@ Workshop on Distributed Statistical Computing (DSC 2003), March 20-22,
 \code{\link{rgb}}.
 }
 \examples{
+require(graphics)
+
 # The Foley and Van Dam PhD Data.
 csd <- matrix(c( 4,2,4,6, 4,3,1,4, 4,7,7,1,
                  0,7,3,2, 4,5,3,2, 5,4,2,2,
                  3,1,3,0, 4,4,6,7, 1,10,8,7,
                  1,5,3,2, 1,5,2,1, 4,1,4,3,
-                 0,3,0,6, 2,1,5,5), nr=4)
+                 0,3,0,6, 2,1,5,5), nrow=4)
 
-csphd =
-function(colors)
-barplot(csd, col = colors, ylim = c(0,30),
-        names = 72:85, xlab = "Year", ylab = "Students",
-        legend = c("Winter", "Spring", "Summer", "Fall"),
-        main = "Computer Science PhD Graduates", las = 1)
+csphd <- function(colors)
+  barplot(csd, col = colors, ylim = c(0,30),
+          names = 72:85, xlab = "Year", ylab = "Students",
+          legend = c("Winter", "Spring", "Summer", "Fall"),
+          main = "Computer Science PhD Graduates", las = 1)
 
 # The Original (Metaphorical) Colors (Ouch!)
 csphd(c("blue", "green", "yellow", "orange"))
@@ -112,7 +118,7 @@ csphd(hcl(h = seq(120, 0, length = 4) + 150))
 csphd(hcl(h = seq(120, 0, length = 4) - 30))
 
 # Single Color
-hist(rnorm(1000), col = hcl(240))
+hist(stats::rnorm(1000), col = hcl(240))
 }
 \keyword{color}
 \keyword{dplot}

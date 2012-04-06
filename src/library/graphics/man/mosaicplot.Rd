@@ -1,3 +1,8 @@
+% File src/library/graphics/man/mosaicplot.Rd
+% Part of the R package, http://www.R-project.org
+% Copyright 1995-2007 R Core Development Team
+% Distributed under GPL 2 or later
+
 \name{mosaicplot}
 \alias{mosaicplot}
 \alias{mosaicplot.default}
@@ -150,6 +155,7 @@ mosaicplot(x, \dots)
   \code{\link{loglin}}.
 }
 \examples{
+require(stats)
 mosaicplot(Titanic, main = "Survival on the Titanic", color = TRUE)
 ## Formula interface for tabulated data:
 mosaicplot(~ Sex + Age + Survived, data = Titanic, color = TRUE)

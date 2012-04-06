@@ -14,8 +14,8 @@
  *  GNU General Public License for more details.
  *
  *  You should have received a copy of the GNU General Public License
- *  along with this program; if not, write to the Free Software
- *  Foundation, Inc., 51 Franklin Street, Fifth Floor, Boston, MA 02110-1301
+ *  along with this program; if not, a copy is available at
+ *  http://www.r-project.org/Licenses/
  *  USA
  */
 
@@ -27,13 +27,12 @@
 /*--- The Dennis + Schnabel Minimizer -- used by R's  nlm() ---*/
 
 #include <math.h>
+#include <float.h> /* DBL_MAX */
 #include <R_ext/Applic.h>
 #include <R_ext/Boolean.h>
 #include <R_ext/PrtUtil.h> /* printRealVector */
 #include <R_ext/Linpack.h> /* ddot, dnrm2, dtrsl, dscal */
-#define MATHLIB_PRIVATE
-#include <Rmath.h> /* for dimach */
-#undef MATHLIB_PRIVATE
+#include <Rmath.h>
 
 /* CC	 subroutines  mvmlt[lsu] should be REPLACED by BLAS ones!
  * CC
@@ -2240,7 +2239,7 @@ optdrv(int nr, int n, double *x, fcn_p fcn, fcn_p d1fcn, d2fcn_p d2fcn,
 
     *itncnt = 0;
     iretcd = -1;
-    epsm = d1mach(4);
+    epsm = DBL_EPSILON;
     optchk(n, x, typsiz, sx, &fscale, gradtl, &itnlim, &ndigit, epsm,
 	   &dlt, &method, &iexp, &iagflg, &iahflg, &stepmx, msg);
     if (*msg < 0) return;
@@ -2485,7 +2484,7 @@ dfault(int n, double *x,
 
   /* set tolerances */
 
-  epsm = d1mach(4);		/* for IEEE : = 2^-52	  ~= 2.22  e-16 */
+  epsm = DBL_EPSILON;		/* for IEEE : = 2^-52	  ~= 2.22  e-16 */
   *gradtl = pow(epsm, 1./3.);	/* for IEEE : = 2^(-52/3) ~= 6.055 e-6 */
   *steptl = sqrt(epsm);		/* for IEEE : = 2^-26	  ~= 1.490 e-8 */
   *stepmx = 0.;/* -> compute default in optchk() */

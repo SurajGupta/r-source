@@ -1,3 +1,19 @@
+#  File src/library/stats/R/oneway.test.R
+#  Part of the R package, http://www.R-project.org
+#
+#  This program is free software; you can redistribute it and/or modify
+#  it under the terms of the GNU General Public License as published by
+#  the Free Software Foundation; either version 2 of the License, or
+#  (at your option) any later version.
+#
+#  This program is distributed in the hope that it will be useful,
+#  but WITHOUT ANY WARRANTY; without even the implied warranty of
+#  MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
+#  GNU General Public License for more details.
+#
+#  A copy of the GNU General Public License is available at
+#  http://www.r-project.org/Licenses/
+
 oneway.test <-
 function(formula, data, subset, na.action, var.equal = FALSE)
 {
@@ -36,7 +52,7 @@ function(formula, data, subset, na.action, var.equal = FALSE)
         STATISTIC <- ((sum(n.i * (m.i - mean(y))^2) / (k - 1)) /
                       (sum((n.i - 1) * v.i) / (n - k)))
         PARAMETER <- c(k - 1, n - k)
-        PVAL <- pf(STATISTIC, k - 1, n - k, lower = FALSE)
+        PVAL <- pf(STATISTIC, k - 1, n - k, lower.tail = FALSE)
     }
     else {
         ## STATISTIC <- sum(w.i * (m.i - mean(y))^2) /
@@ -45,7 +61,7 @@ function(formula, data, subset, na.action, var.equal = FALSE)
         STATISTIC <- sum(w.i * (m.i - m)^2) /
             ((k - 1) * (1 + 2 * (k - 2) * tmp))
         PARAMETER <- c(k - 1, 1 / (3 * tmp))
-        PVAL <- pf(STATISTIC, k - 1, 1 / (3 * tmp), lower = FALSE)
+        PVAL <- pf(STATISTIC, k - 1, 1 / (3 * tmp), lower.tail = FALSE)
         METHOD <- paste(METHOD, "(not assuming equal variances)")
     }
     names(STATISTIC) <- "F"

@@ -1,3 +1,8 @@
+% File src/library/stats/man/predict.HoltWinters.Rd
+% Part of the R package, http://www.R-project.org
+% Copyright 1995-2007 R Core Development Team
+% Distributed under GPL 2 or later
+
 \name{predict.HoltWinters}
 \alias{predict.HoltWinters}
 \title{prediction function for fitted Holt-Winters models}
@@ -39,6 +44,8 @@
 \seealso{\code{\link{HoltWinters}}}
 
 \examples{
+require(graphics)
+
 m <- HoltWinters(co2)
 p <- predict(m, 50, prediction.interval = TRUE)
 plot(m, p)

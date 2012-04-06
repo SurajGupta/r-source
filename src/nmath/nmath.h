@@ -13,33 +13,39 @@
  *  GNU General Public License for more details.
  *
  *  You should have received a copy of the GNU General Public License
- *  along with this program; if not, write to the Free Software
- *  Foundation, Inc., 51 Franklin Street, Fifth Floor, Boston, MA 02110-1301
- *  USA
- *
+ *  along with this program; if not, a copy is available at
+ *  http://www.r-project.org/Licenses/
  */
 
 /* Private header file for use during compilation of Mathlib */
 #ifndef MATHLIB_PRIVATE_H
 #define MATHLIB_PRIVATE_H
 
-
-#ifndef MATHLIB_STANDALONE
-/* Mathlib in R */
-# ifdef HAVE_CONFIG_H
+#ifdef HAVE_CONFIG_H
 #  include <config.h>
-# endif
-# if defined(HAVE_GLIBC2) && !defined(_BSD_SOURCE)
-/* ensure that finite and isnan are declared */
-#  define _BSD_SOURCE 1
-# endif
 #endif
 
+#ifdef HAVE_LONG_DOUBLE
+#  define LDOUBLE long double
+#else
+#  define LDOUBLE double
+#endif
+
+#include <math.h>
+#include <float.h> /* DBL_MIN etc */
+
 #include <Rconfig.h>
-#define MATHLIB_PRIVATE
 #include <Rmath.h>
-#undef  MATHLIB_PRIVATE
+
+double  Rf_d1mach(int);
+#define gamma_cody	Rf_gamma_cody
+double	gamma_cody(double);
+
 #include <R_ext/RS.h>
+
+/* possibly needed for debugging */
+#include <R_ext/Print.h>
+
 
 #ifndef MATHLIB_STANDALONE
 
@@ -55,8 +61,9 @@
 #define ML_NEGINF	R_NegInf
 #define ML_NAN		R_NaN
 
+
 void R_CheckUserInterrupt(void);
-/* Ei-ji Nakama reported that AIX 5.2 has calloc as macro and objected
+/* Ei-ji Nakama reported that AIX 5.2 has calloc as a macro and objected
    to redefining it.  Tests added for 2.2.1 */
 #ifdef calloc
 # undef calloc
@@ -78,6 +85,7 @@ void R_CheckUserInterrupt(void);
 /* Mathlib standalone */
 
 #include <stdio.h>
+#include <stdlib.h> /* for exit */
 #define MATHLIB_ERROR(fmt,x)	{ printf(fmt,x); exit(1); }
 #define MATHLIB_WARNING(fmt,x)		printf(fmt,x)
 #define MATHLIB_WARNING2(fmt,x,x2)	printf(fmt,x,x2)
@@ -95,7 +103,6 @@ int R_finite(double);
 #define _(String) String
 #endif /* standalone */
 
-#define ML_UNDERFLOW	(DBL_MIN * DBL_MIN)
 #define ML_VALID(x)	(!ISNAN(x))
 
 #define ME_NONE		0
@@ -165,8 +172,9 @@ int R_finite(double);
 #define lfastchoose	Rf_lfastchoose
 #define lgammacor	Rf_lgammacor
 #define stirlerr       	Rf_stirlerr
+/* in Rmath.h
 #define gamma_cody      Rf_gamma_cody
-
+*/
 
 	/* Chebyshev Series */
 
@@ -190,7 +198,7 @@ double  attribute_hidden pgamma_raw(double, double, int, int);
 double	attribute_hidden pbeta_raw(double, double, double, int, int);
 double  attribute_hidden qchisq_appr(double, double, double, int, int, double tol);
 
-int	i1mach(int);
+int	Rf_i1mach(int);
 
 /* From toms708.c */
 void attribute_hidden bratio(double a, double b, double x, double y,

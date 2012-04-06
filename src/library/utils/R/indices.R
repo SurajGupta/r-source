@@ -1,3 +1,19 @@
+#  File src/library/utils/R/indices.R
+#  Part of the R package, http://www.R-project.org
+#
+#  This program is free software; you can redistribute it and/or modify
+#  it under the terms of the GNU General Public License as published by
+#  the Free Software Foundation; either version 2 of the License, or
+#  (at your option) any later version.
+#
+#  This program is distributed in the hope that it will be useful,
+#  but WITHOUT ANY WARRANTY; without even the implied warranty of
+#  MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
+#  GNU General Public License for more details.
+#
+#  A copy of the GNU General Public License is available at
+#  http://www.r-project.org/Licenses/
+
 packageDescription <- function(pkg, lib.loc=NULL, fields=NULL, drop=TRUE,
 			       encoding = "")
 {
@@ -7,12 +23,41 @@ packageDescription <- function(pkg, lib.loc=NULL, fields=NULL, drop=TRUE,
         retval[fields] <- NA
     }
 
-    if(system.file(package = pkg, lib.loc = lib.loc) == "") {
-        warning(gettextf("no package '%s' was found", pkg), domain = NA)
-        return(NA)
+    pkgpath <- ""
+    ## If the NULL default for lib.loc is used, the loaded packages are
+    ## searched before the libraries.
+    if(is.null(lib.loc)) {
+        if(pkg == "base")
+            pkgpath <- file.path(.Library, "base")
+        else if((envname <- paste("package:", pkg, sep = ""))
+                %in% search()) {
+            pkgpath <- attr(as.environment(envname), "path")
+            ## could be NULL if a perverse user has been naming environmnents
+            ## to look like packages.
+            if(is.null(pkgpath)) pkgpath <- ""
+        }
+    }
+    if(pkgpath == "") {
+        libs <- if(is.null(lib.loc)) .libPaths() else lib.loc
+        for(lib in libs)
+            if(file.access(file.path(lib, pkg), 5) == 0) {
+                pkgpath <- file.path(lib, pkg)
+                break
+            }
+    }
+    if(pkgpath == "") {
+        ## This is slow and does a lot of checking we do here,
+        ## but is needed for versioned installs
+        pkgpath <- system.file(package = pkg, lib.loc = lib.loc)
+        if(pkgpath == "") {
+            warning(gettextf("no package '%s' was found", pkg), domain = NA)
+            return(NA)
+        }
     }
 
-    file <- system.file("DESCRIPTION", package = pkg, lib.loc = lib.loc)
+    file <- file.path(pkgpath,"DESCRIPTION")
+    if(!file.exists(file)) file <- ""
+
 
     if(file != "") {
         dcf <- read.dcf(file=file)
@@ -59,8 +104,10 @@ packageDescription <- function(pkg, lib.loc=NULL, fields=NULL, drop=TRUE,
 
 print.packageDescription <- function(x, ...)
 {
-    write.dcf(as.data.frame.list(x))
-    cat("-- File:", attr(x, "file"), "\n")
+    xx <- x
+    xx[] <- lapply(xx, function(x) if(is.na(x)) "NA" else x)
+    write.dcf(as.data.frame.list(xx))
+    cat("\n-- File:", attr(x, "file"), "\n")
     if(!is.null(attr(x, "fields"))){
         cat("-- Fields read: ")
         cat(attr(x, "fields"), sep=", ")
@@ -99,6 +146,8 @@ function(x, ...)
         close(outConn)
         unlink(outFile)
         writeLines(paste("no", tolower(x$title), "found"))
+        if(!is.null(x$footer))
+            writeLines(c("", x$footer))
     }
     else {
         if(!is.null(x$footer))

@@ -1,3 +1,8 @@
+% File src/library/stats/man/TukeyHSD.Rd
+% Part of the R package, http://www.R-project.org
+% Copyright 1995-2007 R Core Development Team
+% Distributed under GPL 2 or later
+
 \name{TukeyHSD}
 \alias{TukeyHSD}
 \alias{TukeyHSD.aov}
@@ -76,6 +81,8 @@ TukeyHSD(x, which, ordered = FALSE, conf.level = 0.95, \dots)
   \code{\link[multcomp]{simint}}
 }
 \examples{
+require(graphics)
+
 summary(fm1 <- aov(breaks ~ wool + tension, data = warpbreaks))
 TukeyHSD(fm1, "tension", ordered = TRUE)
 plot(TukeyHSD(fm1, "tension"))

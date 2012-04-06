@@ -1,9 +1,14 @@
+% File src/library/methods/man/LinearMethodsList-class.Rd
+% Part of the R package, http://www.R-project.org
+% Copyright 1995-2007 R Core Development Team
+% Distributed under GPL 2 or later
+
 \name{LinearMethodsList-class}
 \docType{class}
 \alias{LinearMethodsList-class}
 \title{Class "LinearMethodsList"}
 \description{
-  A version of methods lists that has been \dQuote{linearized}
+  A version of methods lists that has been \sQuote{linearized}
   for producing summary information.  The actual objects from class
   \code{"MethodsList"} used for method dispatch are defined recursively
   over the arguments involved.

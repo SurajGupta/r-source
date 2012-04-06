@@ -1,3 +1,8 @@
+% File src/library/base/man/NULL.Rd
+% Part of the R package, http://www.R-project.org
+% Copyright 1995-2007 R Core Development Team
+% Distributed under GPL 2 or later
+
 \name{NULL}
 \title{The Null Object}
 \usage{
@@ -10,10 +15,9 @@ is.null(x)
 \alias{as.null.default}
 \alias{is.null}
 \description{
-\code{NULL} represents the null object in R.
-NULL is used mainly to represent the lists with zero length,
-and is often returned by expressions and functions whose
-value is undefined.
+\code{NULL} represents the null object in R: it is a \link{reserved} word.
+NULL is often returned by expressions and functions whose
+value is undefined: it is also used as the empty \link{pairlist}.
 
 \code{as.null} ignores its argument and returns the value \code{NULL}.
 

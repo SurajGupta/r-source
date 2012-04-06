@@ -1,9 +1,24 @@
+#  File src/library/base/R/pretty.R
+#  Part of the R package, http://www.R-project.org
+#
+#  This program is free software; you can redistribute it and/or modify
+#  it under the terms of the GNU General Public License as published by
+#  the Free Software Foundation; either version 2 of the License, or
+#  (at your option) any later version.
+#
+#  This program is distributed in the hope that it will be useful,
+#  but WITHOUT ANY WARRANTY; without even the implied warranty of
+#  MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
+#  GNU General Public License for more details.
+#
+#  A copy of the GNU General Public License is available at
+#  http://www.r-project.org/Licenses/
+
 pretty <- function(x, n=5, min.n= n %/% 3, shrink.sml = 0.75,
                    high.u.bias = 1.5, u5.bias = .5 + 1.5*high.u.bias,
                    eps.correct = 0)
 {
-    if(!is.numeric(x))
-	stop("'x' must be numeric")
+    x <- as.numeric(x)
     if(length(x)==0)
 	return(x)
     x <- x[is.finite(x)]
@@ -26,7 +41,7 @@ pretty <- function(x, n=5, min.n= n %/% 3, shrink.sml = 0.75,
             high.u.fact = as.double(c(high.u.bias, u5.bias)),
             eps.correct,
             DUP = FALSE, PACKAGE = "base")
-    s <- seq.int(z$l, z$u, length = z$n+1)
+    s <- seq.int(z$l, z$u, length.out = z$n+1)
     if(!eps.correct && z$n) { # maybe zap smalls from seq() rounding errors
         ## better than zapsmall(s, digits = 14) :
         delta <- diff(range(z$l, z$u)) / z$n

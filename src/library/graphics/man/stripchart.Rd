@@ -1,3 +1,8 @@
+% File src/library/graphics/man/stripchart.Rd
+% Part of the R package, http://www.R-project.org
+% Copyright 1995-2007 R Core Development Team
+% Distributed under GPL 2 or later
+
 \name{stripchart}
 \title{1-D Scatter Plots}
 \alias{stripchart}
@@ -47,7 +52,7 @@ stripchart(x, method = "overplot", jitter = 0.1, offset = 1/3,
   Box, Hunter and Hunter or Seber and Wild.
 }
 \examples{
-x <- rnorm(50)
+x <- stats::rnorm(50)
 xr <- round(x, 1)
 stripchart(x) ; m <- mean(par("usr")[1:2])
 text(m, 1.04, "stripchart(x, \"overplot\")")

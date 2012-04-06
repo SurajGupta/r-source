@@ -1,4 +1,8 @@
-% $Id: SSasympOff.Rd,v 1.1 2003/12/11 07:16:06 ripley Exp $
+% File src/library/stats/man/SSasympOff.Rd
+% Part of the R package, http://www.R-project.org
+% Copyright 1995-2007 R Core Development Team
+% Distributed under GPL 2 or later
+
 \name{SSasympOff}
 \title{Asymptotic Regression Model with an Offset}
 \usage{
@@ -42,6 +46,8 @@ getInitial(uptake ~ SSasymp( conc, Asym, lrc, c0), data = CO2.Qn1)
 fm1 <- nls(uptake ~ SSasymp( conc, Asym, lrc, c0), data = CO2.Qn1)
 summary(fm1)
 \dontshow{
+require(graphics)
+
   xx <- seq(0.5, 5, len = 101)
   yy <- 5 * (1 -  exp(-(xx - 0.5)/(2*log(2))))
   par(mar = c(0, 0, 4.0, 0))

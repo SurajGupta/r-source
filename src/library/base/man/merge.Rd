@@ -1,3 +1,8 @@
+% File src/library/base/man/merge.Rd
+% Part of the R package, http://www.R-project.org
+% Copyright 1995-2007 R Core Development Team
+% Distributed under GPL 2 or later
+
 \name{merge}
 \alias{merge}
 \alias{merge.default}
@@ -6,7 +11,7 @@
 \title{Merge Two Data Frames}
 \description{
   Merge two data frames by common columns or row names, or do other
-  versions of database \dQuote{join} operations.
+  versions of database \emph{join} operations.
 }
 \usage{
 merge(x, y, \dots)
@@ -47,7 +52,7 @@ merge(x, y, \dots)
 
   If \code{by} or both \code{by.x} and \code{by.y} are of length 0 (a
   length zero vector or \code{NULL}), the result, \code{r}, is the
-  \dQuote{Cartesian product} of \code{x} and \code{y}, i.e.,
+  \emph{Cartesian product} of \code{x} and \code{y}, i.e.,
   \code{dim(r) = c(nrow(x)*nrow(y), ncol(x) + ncol(y))}.
 
   If \code{all.x} is true, all the non matching cases of \code{x} are
@@ -58,10 +63,8 @@ merge(x, y, \dots)
   these have \code{suffixes} (\code{".x"} and \code{".y"} by default)
   appended to make the names of the result unique.
 
-  Prior to \R 2.4.0 the complexity was proportional to the product of
-  the numbers of rows of \code{x} and \code{y}.  As from \R 2.4.0 it is
-  proportional to the length of the answer, which can be much less if
-  there are few matches (for example, only 1--1 matches).
+  The complexity of the algorithm used is proportional to the length of
+  the answer.
 }
 \value{
   A data frame.  The rows are by default lexicographically sorted on the

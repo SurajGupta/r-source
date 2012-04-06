@@ -1,3 +1,8 @@
+% File src/library/grDevices/man/convertColor.Rd
+% Part of the R package, http://www.R-project.org
+% Copyright 1995-2007 R Core Development Team
+% Distributed under GPL 2 or later
+
 \name{convertColor}
 \alias{convertColor}
 \alias{colorspaces}
@@ -42,7 +47,7 @@ convertColor(color, from, to, from.ref.white, to.ref.white,
   way.
 
   The \code{Lab} and \code{Luv} spaces describe colors of objects, and
-  so require the specification of a reference \dQuote{white light}
+  so require the specification of a reference \sQuote{white light}
   color.  Illuminant \code{D65} is a standard indirect daylight,
   Illuminant \code{D50} is close to direct sunlight, and Illuminant
   \code{A} is the light from a standard incandescent bulb. Other
@@ -75,7 +80,7 @@ convertColor(color, from, to, from.ref.white, to.ref.white,
   \code{\link{make.rgb}} for specifying other colour spaces.
 }
 \examples{
-
+require(graphics); require(stats) # for na.omit
 par(mfrow=c(2,2))
 ## The displayable colors from four planes of Lab space
 ab <- expand.grid(a=(-10:15)*10,b=(-15:10)*10)

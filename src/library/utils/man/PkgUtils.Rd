@@ -1,3 +1,8 @@
+% File src/library/utils/man/PkgUtils.Rd
+% Part of the R package, http://www.R-project.org
+% Copyright 1995-2007 R Core Development Team
+% Distributed under GPL 2 or later
+
 \name{PkgUtils}
 \alias{build}
 \alias{check}
@@ -25,7 +30,7 @@
   \code{R CMD build}
   builds \R source or binary packages from their sources.  The name(s)
   of the packages are taken from the \file{DESCRIPTION} files and not
-  from the directory names (as from \R 2.5.0).
+  from the directory names.
 
   Use
   \code{R CMD foo --help}

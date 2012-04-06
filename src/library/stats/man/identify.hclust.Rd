@@ -1,3 +1,8 @@
+% File src/library/stats/man/identify.hclust.Rd
+% Part of the R package, http://www.R-project.org
+% Copyright 1995-2007 R Core Development Team
+% Distributed under GPL 2 or later
+
 \name{identify.hclust}
 \alias{identify.hclust}
 \title{Identify Clusters in a Dendrogram}
@@ -52,6 +57,8 @@
 % get(devNam <- getOption("device"))()
 % if (dev.interactive()) {
 \dontrun{
+require(graphics)
+
 hca <- hclust(dist(USArrests))
 plot(hca)
 (x <- identify(hca)) ##  Terminate with 2nd mouse button !!

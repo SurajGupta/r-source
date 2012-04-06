@@ -1,7 +1,7 @@
 /*
  *  Mathlib : A C Library of Special Functions
  *  Copyright (C) 1998 Ross Ihaka
- *  Copyright (C) 2000-2001 the R Development Core Team
+ *  Copyright (C) 2000-2007 the R Development Core Team
  *  Copyright (C) 2004	    The R Foundation
  *
  *  This program is free software; you can redistribute it and/or modify
@@ -15,8 +15,8 @@
  *  GNU General Public License for more details.
  *
  *  You should have received a copy of the GNU General Public License
- *  along with this program; if not, write to the Free Software
- *  Foundation, Inc., 51 Franklin Street, Fifth Floor, Boston, MA 02110-1301 USA.
+ *  along with this program; if not, a copy is available at
+ *  http://www.r-project.org/Licenses/
  *
  *  SYNOPSIS
  *
@@ -135,10 +135,11 @@
  *    Derivatives of the Psi Function", Algorithm 610,
  *    TOMS 9(4), pp. 494-502.
  *
- *    Routines called: d1mach, i1mach.
+ *    Routines called: Rf_d1mach, Rf_i1mach.
  */
 
 #include "nmath.h"
+#include <errno.h>
 
 #define n_max (100)
 
@@ -168,8 +169,6 @@ void dpsifn(double x, int n, int kode, int m, double *ans, int *nz, int *ierr)
 	 4.88332318973593167e+14,
 	-1.92965793419400681e+16
     };
-    const static double *b = (double *)&bvalues -1; /* ==> b[1] = bvalues[0], etc */
-    const int nmax = n_max;
 
     int i, j, k, mm, mx, nn, np, nx, fn;
     double arg, den, elim, eps, fln, fx, rln, rxsq,
@@ -235,9 +234,9 @@ void dpsifn(double x, int n, int kode, int m, double *ans, int *nz, int *ierr)
 
     *nz = 0;
     mm = m;
-    nx = imin2(-i1mach(15), i1mach(16));/* = 1021 */
-    r1m5 = d1mach(5);
-    r1m4 = d1mach(4) * 0.5;
+    nx = imin2(-Rf_i1mach(15), Rf_i1mach(16));/* = 1021 */
+    r1m5 = Rf_d1mach(5);
+    r1m4 = Rf_d1mach(4) * 0.5;
     wdtol = fmax2(r1m4, 0.5e-18); /* 1.11e-16 */
 
     /* elim = approximate exponential over and underflow limit */
@@ -272,7 +271,7 @@ void dpsifn(double x, int n, int kode, int m, double *ans, int *nz, int *ierr)
 
 	    /* compute xmin and the number of terms of the series,  fln+1 */
 
-	    rln = r1m5 * i1mach(14);
+	    rln = r1m5 * Rf_i1mach(14);
 	    rln = fmin2(rln, 18.06);
 	    fln = fmax2(rln, 3.0) - 3.0;
 	    yint = 3.50 + 0.40 * fln;
@@ -363,12 +362,12 @@ void dpsifn(double x, int n, int kode, int m, double *ans, int *nz, int *ierr)
     rxsq = 1.0 / (xdmy * xdmy);
     ta = 0.5 * rxsq;
     t = (fn + 1) * ta;
-    s = t * b[3];
+    s = t * bvalues[2];
     if (fabs(s) >= tst) {
 	tk = 2.0;
 	for(k = 4; k <= 22; k++) {
 	    t = t * ((tk + fn + 1)/(tk + 1.0))*((tk + fn)/(tk + 2.0)) * rxsq;
-	    trm[k] = t * b[k];
+	    trm[k] = t * bvalues[k-1];
 	    if (fabs(trm[k]) < tst)
 		break;
 	    s += trm[k];
@@ -382,7 +381,7 @@ void dpsifn(double x, int n, int kode, int m, double *ans, int *nz, int *ierr)
 
 	nx = (int)xinc;
 	np = nn + 1;
-	if (nx > nmax) {
+	if (nx > n_max) {
 	    *nz = 0;
 	    *ierr = 3;
 	    return;
@@ -415,7 +414,7 @@ void dpsifn(double x, int n, int kode, int m, double *ans, int *nz, int *ierr)
 	if (fn!=0)
 	    t1 = tt + 1.0 / fn;
 	t = (fn + 1) * ta;
-	s = t * b[3];
+	s = t * bvalues[2];
 	if (fabs(s) >= tst) {
 	    tk = 4 + fn;
 	    for(k=4; k <= 22; k++) {

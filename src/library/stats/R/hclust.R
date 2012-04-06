@@ -1,3 +1,19 @@
+#  File src/library/stats/R/hclust.R
+#  Part of the R package, http://www.R-project.org
+#
+#  This program is free software; you can redistribute it and/or modify
+#  it under the terms of the GNU General Public License as published by
+#  the Free Software Foundation; either version 2 of the License, or
+#  (at your option) any later version.
+#
+#  This program is distributed in the hope that it will be useful,
+#  but WITHOUT ANY WARRANTY; without even the implied warranty of
+#  MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
+#  GNU General Public License for more details.
+#
+#  A copy of the GNU General Public License is available at
+#  http://www.r-project.org/Licenses/
+
 ## Hierarchical clustering, on raw input data; we will use Euclidean
 ## distance.  A range of criteria are supported; also there is a
 ## storage-economic option.
@@ -194,7 +210,7 @@ function(x)
     x <- as.hclust(x)
     nobs <- length(x$order)
     ilist <- vector("list", length = nobs)
-    out <- matrix(0, nr = nobs, nc = nobs)
+    out <- matrix(0, nrow = nobs, ncol = nobs)
     for(i in 1 : (nobs - 1)) {
         inds <- x$merge[i,]
         ids1 <- if(inds[1] < 0) -inds[1] else ilist[[inds[1]]]

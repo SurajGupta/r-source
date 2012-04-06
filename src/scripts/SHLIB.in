@@ -4,12 +4,12 @@
 
 # @configure_input@
 
-revision='$Rev: 40094 $'
+revision='$Rev: 42229 $'
 version=`set - ${revision}; echo ${2}`
 version="R shared library builder ${version}
 
-Copyright (C) 2000-2006 The R Core Development Team.
-This is free software; see the GNU General Public Licence version 2
+Copyright (C) 2000-2007 The R Core Development Team.
+This is free software; see the GNU General Public License version 2
 or later for copying conditions.  There is NO warranty."
 
 usage="Usage: R CMD SHLIB [options] files|linker options
@@ -17,12 +17,14 @@ usage="Usage: R CMD SHLIB [options] files|linker options
 Build a shared library for dynamic loading from the specified source or
 object files (which are automagically made from their sources) or 
 linker options.  If not given via '--output', the name for the shared
-library is determined from the first source of object file.
+library is determined from the first source or object file.
 
 Options:
   -h, --help		print short help message and exit
   -v, --version		print SHLIB version info and exit
   -o, --output=LIB	use LIB as (full) name for the built library
+  -c, --clean		remove files created during compilation
+  --preclean		remove files created during a previous run
 
 Report bugs to <r-bugs@r-project.org>."
 
@@ -38,6 +40,8 @@ with_f9x=false
 with_objc=false
 with_objcxx=false
 pkg_libs=
+clean=false
+preclean=false
 
 while test -n "${1}"; do
   case ${1} in
@@ -45,6 +49,10 @@ while test -n "${1}"; do
        echo "${usage}"; exit 0 ;;
     -v|--version)
        echo "${version}"; exit 0 ;;
+    -c|--clean)
+      clean=true ;;
+    --preclean)
+      preclean=true ;;
     -o)
       shlib=${2}; shift ;;
     --output=*)
@@ -110,9 +118,10 @@ fi
 makeobjs="OBJECTS=\"${objs}\""
 if test -r Makevars; then
   makefiles="-f Makevars ${makefiles}"
-  if grep '^ *OBJS *=' Makevars >/dev/null; then
-    makeobjs="OBJECTS='\$(OBJS)'"
-  fi
+  # use of OBJS was replaced by OBJECTS in Aug 2001
+  #if grep '^ *OBJS *=' Makevars >/dev/null; then
+  #  makeobjs="OBJECTS='\$(OBJS)'"
+  #fi
   if grep '^ *OBJECTS *=' Makevars >/dev/null; then
     makeobjs=
   fi
@@ -146,7 +155,15 @@ if test -n "${pkg_libs}"; then
   makeargs="${makeargs} PKG_LIBS='${pkg_libs}'"
 fi
 
+if ${preclean}; then
+   eval ${MAKE} ${makefiles} ${makeargs} ${makeobjs} shlib-clean
+fi
 eval ${MAKE} ${makefiles} ${makeargs} ${makeobjs}
+exitstatus=$?
+if ${clean}; then
+   eval ${MAKE} ${makefiles} ${makeargs} ${makeobjs} shlib-clean
+fi
+exit ${exitstatus}
 
 ### Local Variables: ***
 ### mode: sh ***

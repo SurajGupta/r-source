@@ -1,3 +1,8 @@
+% File src/library/stats/man/kmeans.Rd
+% Part of the R package, http://www.R-project.org
+% Copyright 1995-2007 R Core Development Team
+% Distributed under GPL 2 or later
+
 \name{kmeans}
 \alias{kmeans}
 \alias{print.kmeans}
@@ -81,6 +86,8 @@ kmeans(x, centers, iter.max = 10, nstart = 1,
   \bold{1}, pp. 281--297. Berkeley, CA: University of California Press.
 }
 \examples{
+require(graphics)
+
 # a 2-dimensional example
 x <- rbind(matrix(rnorm(100, sd = 0.3), ncol = 2),
            matrix(rnorm(100, mean = 1, sd = 0.3), ncol = 2))

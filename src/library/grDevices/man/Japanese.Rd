@@ -1,3 +1,8 @@
+% File src/library/grDevices/man/Japanese.Rd
+% Part of the R package, http://www.R-project.org
+% Copyright 1995-2007 R Core Development Team
+% Distributed under GPL 2 or later
+
 \name{Japanese}
 \alias{Japanese}
 \title{Japanese characters in R}
@@ -28,6 +33,8 @@
   \url{http://www.gnu.org/software/plotutils/plotutils.html}
 }
 \examples{
+require(graphics)
+
 plot(1:9, type="n", axes=FALSE, frame=TRUE, ylab="",
      main= "example(Japanese)", xlab= "using Hershey fonts")
 par(cex=3)

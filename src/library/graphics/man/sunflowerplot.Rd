@@ -1,9 +1,14 @@
+% File src/library/graphics/man/sunflowerplot.Rd
+% Part of the R package, http://www.R-project.org
+% Copyright 1995-2007 R Core Development Team
+% Distributed under GPL 2 or later
+
 \name{sunflowerplot}
 \alias{sunflowerplot}
 \title{Produce a Sunflower Scatter Plot}
 \description{
-  Multiple points are plotted as \dQuote{sunflowers} with multiple leaves
-  (\dQuote{petals}) such that overplotting is visualized instead of accidental and
+  Multiple points are plotted as \sQuote{sunflowers} with multiple leaves
+  (\sQuote{petals}) such that overplotting is visualized instead of accidental and
   invisible.
 }
 \usage{
@@ -21,7 +26,9 @@ sunflowerplot(x, y = NULL, number, log = "", digits = 6,
   \item{y}{numeric vector of \code{y}-coordinates of length \code{n}.}
   \item{number}{integer vector of length \code{n}. \code{number[i]} = number
     of replicates for \code{(x[i],y[i])}, may be 0.\cr
-    Default: compute the exact multiplicity of the points \code{x[],y[]}.}
+    Default (\code{missing(number)}): compute the exact multiplicity of
+    the points \code{x[],y[]}, via
+    \code{\link[grDevices]{xyTable}()}.}
   \item{log}{character indicating log coordinate scale, see
     \code{\link{plot.default}}.}
   \item{digits}{when \code{number} is computed (i.e., not specified),
@@ -56,7 +63,7 @@ sunflowerplot(x, y = NULL, number, log = "", digits = 6,
   For \code{number[i]==1}, a (slightly enlarged) usual plotting symbol
   (\code{pch}) is drawn.
   For \code{number[i] > 1}, a small plotting symbol is drawn and
-  \code{number[i]} equi-angular \dQuote{rays} emanate from it.
+  \code{number[i]} equi-angular \sQuote{rays} emanate from it.
 
   If \code{rotate=TRUE} and \code{number[i] >= 2}, a random direction
   is chosen (instead of the y-axis) for the first ray.  The goal is to
@@ -64,13 +71,16 @@ sunflowerplot(x, y = NULL, number, log = "", digits = 6,
   artefactual visual impressions.
 }
 \section{Side Effects}{
-  A scatter plot is drawn with \dQuote{sunflowers} as symbols.
+  A scatter plot is drawn with \sQuote{sunflowers} as symbols.
 }
 \value{
   A list with three components of same length,
   \item{x}{x coordinates}
   \item{y}{y coordinates}
   \item{number}{number}
+
+  Use \code{\link[grDevices]{xyTable}()} (from package
+  \pkg{grDevices}) if you are only interested in this return value.
 }
 \references{
   Chambers, J. M., Cleveland, W. S., Kleiner, B. and Tukey, P. A. (1983)
@@ -87,19 +97,29 @@ sunflowerplot(x, y = NULL, number, log = "", digits = 6,
   1989--1993.  Port to \R by Martin Maechler
   \email{maechler@stat.math.ethz.ch}.
 }
-\seealso{\code{\link{density}}}
+\seealso{\code{\link{density}}, \code{\link[grDevices]{xyTable}}
+}
 \examples{
+require(stats)
+require(grDevices)
+
 ## 'number' is computed automatically:
 sunflowerplot(iris[, 3:4])
 ## Imitating  Chambers et al., p.109, closely:
-sunflowerplot(iris[, 3:4],cex=.2, cex.f=1, size=.035, seg.lwd=.8)
+sunflowerplot(iris[, 3:4], cex=.2, cex.fact=1, size=.035, seg.lwd=.8)
 
 sunflowerplot(x=sort(2*round(rnorm(100))), y= round(rnorm(100),0),
               main = "Sunflower Plot of Rounded N(0,1)")
+## Similarly using a "xyTable" argument:
+xyT <- xyTable(x=sort(2*round(rnorm(100))), y= round(rnorm(100),0),
+               digits=3)
+utils::str(xyT, vec.len=20)
+sunflowerplot(xyT, main = "2nd Sunflower Plot of Rounded N(0,1)")
 
-## A 'point process' {explicit 'number' argument}:
-sunflowerplot(rnorm(100),rnorm(100), number=rpois(n=100,lambda=2),
-              rotate=TRUE, main="Sunflower plot", col = "blue4")
+## A 'marked point process' {explicit 'number' argument}:
+sunflowerplot(rnorm(100), rnorm(100), number = rpois(n=100,lambda=2),
+              main="Sunflower plot (marked point process)",
+              rotate=TRUE, col = "blue4")
 }
 \keyword{hplot}
 \keyword{smooth}

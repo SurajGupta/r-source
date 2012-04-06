@@ -1,3 +1,8 @@
+% File src/library/base/man/system.Rd
+% Part of the R package, http://www.R-project.org
+% Copyright 1995-2007 R Core Development Team
+% Distributed under GPL 2 or later
+
 \name{system}
 \alias{system}
 \title{Invoke a System Command}
@@ -123,7 +128,7 @@ system(command, intern = FALSE, ignore.stderr = FALSE,
 \value{
   If \code{intern = TRUE}, a character vector giving the output of the
   command, one line per character string.  (Output lines of more than
-  8095 characters will be split.) If the command could not be run or
+  8095 characters will be split.)  If the command could not be run or
   gives an error
 #ifdef unix
   this will be reported on the shell's \file{stderr} (unless
@@ -137,7 +142,7 @@ system(command, intern = FALSE, ignore.stderr = FALSE,
   \code{ignore.stderr = TRUE}.
 #endif
 
-  If \code{intern = FALSE}, the return value is an error code(\code{0}
+  If \code{intern = FALSE}, the return value is an error code (\code{0}
   for success), given the invisible attribute (so needs to be printed
   explicitly).  If the command could not be run for any reason, the
   value is
@@ -145,7 +150,7 @@ system(command, intern = FALSE, ignore.stderr = FALSE,
   \code{256*127 = 52512}.
 #endif
 #ifdef windows
-  \code{-1}. (An \R warning is also generated.)
+  \code{-1}.  (An \R warning is also generated.)
 #endif
   Otherwise if \code{wait = TRUE} the value is
 #ifdef unix
@@ -154,12 +159,18 @@ system(command, intern = FALSE, ignore.stderr = FALSE,
   the error code returned by the command, and if \code{wait = FALSE} it
   is \code{0} (the conventional success value).
 #ifdef windows
+  Some Windows commands return out-of-range error values (e.g. -1) and so
+  only the bottom 16 bits of the value are used.
 
   If \code{intern = FALSE} and \code{show.output.on.console = TRUE}
   the \file{stdout} and \file{stderr} (unless \code{ignore.stderr =
-    TRUE}) output from a command that is a console application will
+    TRUE}) output from a command that is a console application should
   appear in the \R console (\code{Rgui}) or the window running \R
   (\code{Rterm}).
+
+  Not all Windows executables properly respect redirection of output, or
+  may only do so from a console application such as \code{Rterm} and not
+  from \code{Rgui}: known examples include \file{fc.exe}.
 #endif
 }
 

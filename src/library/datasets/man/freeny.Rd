@@ -1,3 +1,8 @@
+% File src/library/datasets/man/freeny.Rd
+% Part of the R package, http://www.R-project.org
+% Copyright 1995-2007 R Core Development Team
+% Distributed under GPL 2 or later
+
 \name{freeny}
 \docType{data}
 \alias{freeny}
@@ -37,6 +42,7 @@ freeny.y
   Wadsworth \& Brooks/Cole.
 }
 \examples{
+require(stats); require(graphics)
 summary(freeny)
 pairs(freeny, main = "freeny data") # gives warning: freeny$y has class "ts"
 summary(fm1 <- lm(y ~ ., data = freeny))

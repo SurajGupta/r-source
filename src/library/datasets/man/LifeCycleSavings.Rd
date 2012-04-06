@@ -1,3 +1,8 @@
+% File src/library/datasets/man/LifeCycleSavings.Rd
+% Part of the R package, http://www.R-project.org
+% Copyright 1995-2007 R Core Development Team
+% Distributed under GPL 2 or later
+
 \name{LifeCycleSavings}
 \docType{data}
 \alias{LifeCycleSavings}
@@ -40,7 +45,7 @@
   New York: Wiley.
 }
 \examples{
-require(stats)
+require(stats); require(graphics)
 pairs(LifeCycleSavings, panel = panel.smooth,
       main = "LifeCycleSavings data")
 fm1 <- lm(sr ~ pop15 + pop75 + dpi + ddpi, data = LifeCycleSavings)

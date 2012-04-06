@@ -7,7 +7,7 @@ msgid ""
 msgstr ""
 "Project-Id-Version: R 2.3.0\n"
 "Report-Msgid-Bugs-To: bugs@r-project.org\n"
-"POT-Creation-Date: 2007-06-12 18:43\n"
+"POT-Creation-Date: 2007-09-17 10:18\n"
 "PO-Revision-Date: 2005-12-17 10:55-0200\n"
 "Last-Translator: Fernando Henrique Ferraz P. da Rosa <feferraz@ime.usp.br>\n"
 "Language-Team: Portuguese <ldp-br@bazar.conectiva.com.br>\n"
@@ -348,9 +348,8 @@ msgstr "somente um único elemento deve ser substituido"
 msgid "names do not match previous names"
 msgstr "nomes não pareiam com os nomes anteriores:"
 
-#, fuzzy
-msgid "names do not match previous names:"
-msgstr "nomes não pareiam com os nomes anteriores:"
+msgid "numbers of columns of arguments do not match"
+msgstr ""
 
 msgid "invalid list argument: all variables should have the same length"
 msgstr ""
@@ -365,7 +364,8 @@ msgstr "definido somente para data frames com tamanhos iguais"
 msgid "list of length %d not meaningful"
 msgstr "lista de comprimento %d sem sentido"
 
-msgid "only defined on a data frame with all numeric or complex variables"
+#, fuzzy
+msgid "only defined on a data frame with all numeric variables"
 msgstr ""
 "somente definido para um data frame com todas as variáveis numéricas ou "
 "complexas"
@@ -513,6 +513,9 @@ msgstr "'to' deve ser um objeto POSIXt"
 msgid "'file' must be a character string or connection"
 msgstr "'file' deve ser uma string de caracteres ou uma conexão"
 
+msgid "Invalid DCF format."
+msgstr ""
+
 msgid "'x' must be a square matrix"
 msgstr "'x' deve ser uma matriz quadrada"
 
@@ -527,6 +530,9 @@ msgstr "somente diagonais de matrizes podem ser substituidas"
 
 msgid "replacement diagonal has wrong length"
 msgstr "a diagonal substituta tem o comprimento errado"
+
+msgid "'fromLast' must be TRUE or FALSE"
+msgstr ""
 
 msgid "MARGIN ="
 msgstr "MARGIN ="
@@ -666,12 +672,12 @@ msgstr "' não encontrado"
 msgid "all arguments must be named"
 msgstr "todos os argumentos devem ter o mesmo comprimento"
 
-#, fuzzy
-msgid "argument '%s' will be ignored"
-msgstr "argumento 'drop' será ignorado"
-
 msgid "'pattern' must be a non-empty character string"
 msgstr "'pattern' deve ser uma string de caracteres não vazia"
+
+#, fuzzy
+msgid "invalid multibyte string for 'pattern'"
+msgstr "string inválida para 'by'"
 
 msgid "'max.distance' must be non-negative"
 msgstr "'max.distance' deve ser não negativo"
@@ -756,6 +762,11 @@ msgstr "'%s' não encontrado no caminho de procura, usando pos = 2"
 
 msgid "package/namespace load failed for '%s'"
 msgstr "carregamento do pacote/espaço de nomes falhou para '%s'"
+
+#, fuzzy
+msgid "package was installed prior to 2.4.0 and must be re-installed"
+msgstr ""
+"pacote '%s' foi compilado antes do R 2.0.0: por favor instale-o novamente"
 
 msgid "unable to load R code in package '%s'"
 msgstr "não foi possivel carregar código R do pacote '%s'"
@@ -877,6 +888,12 @@ msgstr "imagem não pôde ser renomeada e foi mantida"
 msgid "[Previously saved workspace restored]"
 msgstr "[Área de trabalho anterior carregada]"
 
+msgid "Attempting to load the environment '%s'"
+msgstr ""
+
+msgid "not found: using .GlobalEnv instead"
+msgstr ""
+
 msgid "invalid 'category' argument"
 msgstr "argumento 'category' inválido"
 
@@ -884,10 +901,19 @@ msgid "must specify formal argument names to vectorize"
 msgstr "nomes de argumentos formais devem ser especificados para vetorizar"
 
 #, fuzzy
-msgid "'arg' must be NULL or a character vector of length >= 1"
+msgid "'arg' must be NULL or a character vector"
 msgstr "'normal.kind' deve ser uma string de caractres de tamanho 1."
 
-msgid "'arg' should be one of"
+#, fuzzy
+msgid "'arg' must be of length 1"
+msgstr "'from' deve ter comprimento 1"
+
+#, fuzzy
+msgid "'arg' must be of length >= 1"
+msgstr "'from' deve ter comprimento 1"
+
+#, fuzzy
+msgid "'arg' should be one of %s"
 msgstr "'arg' deve ser um dentre"
 
 msgid "there is more than one match in 'match.arg'"
@@ -1018,6 +1044,12 @@ msgstr "em '%s' classes para expor~tação não definidas: %s"
 msgid "in '%s' methods for export not found: %s"
 msgstr "em '%s' métodos para exportação não encontrados: %s"
 
+msgid "Multiple methods lists found for '"
+msgstr ""
+
+msgid "'"
+msgstr ""
+
 msgid "No methods table for \""
 msgstr ""
 
@@ -1127,15 +1159,6 @@ msgstr "'%s' ainda não está implementado"
 
 msgid "argument '%s' is not used (yet)"
 msgstr "argumento '%s' (ainda) não é usado"
-
-msgid "invalid version specification"
-msgstr "especificação de versão inválida"
-
-msgid "wrong argument"
-msgstr "argumento errado"
-
-msgid "not defined for package_version objects"
-msgstr "não definido para objetos package_version"
 
 #, fuzzy
 msgid "no arguments"
@@ -1352,6 +1375,15 @@ msgstr "'nv' deve ser 0 ou ncol(x)"
 msgid "error %d in 'dsvdc'"
 msgstr "erro %d em 'dsvdc'"
 
+msgid "STATS is longer than the extent of 'dim(x)[MARGIN]'"
+msgstr ""
+
+msgid "STATS does not recycle exactly across MARGIN"
+msgstr ""
+
+msgid "length(STATS) or dim(STATS) do not match dim(x)[MARGIN]"
+msgstr ""
+
 msgid "nothing to tabulate"
 msgstr "nada para tabular"
 
@@ -1403,6 +1435,20 @@ msgstr "'width' deve ser positivo"
 msgid "No traceback available"
 msgstr "Nenhum rastreamento disponível"
 
+msgid "invalid version specification"
+msgstr "especificação de versão inválida"
+
+msgid "wrong argument"
+msgstr "argumento errado"
+
+#, fuzzy
+msgid "invalid value"
+msgstr "valor de 'n' inválido"
+
+#, fuzzy
+msgid "not defined for numeric_version objects"
+msgstr "não definido para objetos package_version"
+
 msgid "argument to 'which' is not logical"
 msgstr "argumento para 'which' não é lógico"
 
@@ -1417,9 +1463,6 @@ msgstr ""
 #, fuzzy
 msgid "'input' must be a character vector or 'NULL'"
 msgstr "'input' e 'target' devem ser vetores de caracteres"
-
-msgid "argument must be character"
-msgstr "argumento deve ser caracter"
 
 msgid "'cmd' could not be run"
 msgstr "'cmd' não pôde ser executado"
@@ -1454,13 +1497,15 @@ msgid_plural "there are no packages called"
 msgstr[0] "não há nenhum pacote chamado '%s'"
 msgstr[1] "não há nenhum pacote chamado '%s'"
 
-msgid "object %s is not exported by 'namespace:%s'"
-msgid_plural "objects %s are not exported by 'namespace:%s'"
+#, fuzzy
+msgid "object '%s' is not exported by 'namespace:%s'"
+msgid_plural "objects '%s' are not exported by 'namespace:%s'"
 msgstr[0] "objeto %s não está exportado por 'namespace:%s'"
 msgstr[1] "objetos %s não estão exportados por 'namespace:%s'"
 
-msgid "previous export %s is being replaced"
-msgid_plural "previous exports %s are being replaced"
+#, fuzzy
+msgid "previous export '%s' is being replaced"
+msgid_plural "previous exports '%s' are being replaced"
 msgstr[0] "exportação anterior %s substituida"
 msgstr[1] "exportações anteriores %s substituidas"
 
@@ -1473,6 +1518,17 @@ msgid "Warning message:\n"
 msgid_plural "Warning messages:\n"
 msgstr[0] "Mensagem de aviso:\n"
 msgstr[1] "Mensagens de aviso:\n"
+
+#, fuzzy
+#~ msgid "'data' must exist"
+#~ msgstr "'subset' deve ser lógico"
+
+#, fuzzy
+#~ msgid "names do not match previous names:"
+#~ msgstr "nomes não pareiam com os nomes anteriores:"
+
+#~ msgid "argument must be character"
+#~ msgstr "argumento deve ser caracter"
 
 #~ msgid "'all' can not be used with other deparse options"
 #~ msgstr "'all' não pode ser usado junto com outras opções de deparse"

@@ -28,13 +28,15 @@ src/gnuwin32/getline/*
 
 
 
-src/gnuwin32/graphapp/*
+src/extra/graphapp/*
+src/gnuwin32/front-ends/graphappmain.c
 
 The files {arith, array, bitmap, buttons, context, controls, cursors,
 drawing, drawtext, events, fonts, image, init, menus, objects,
-strings, windows, xredef}.c, {graphapp, internal}.h are
+strings, windows}.c, {graphapp, internal}.h are in part
 
 	Copyright (C) 1993-1998 Lachlan Patrick
+	Distributed under the GNU Library General Public License
 
 
 src/gnuwin32/psignal.[ch]
@@ -48,13 +50,14 @@ Based on files which are
 src/gnuwin32/front-ends/SC_*.h, bdx*.[ch], com_util.[ch], rproxy*.[ch]
 
 	Copyright (C) 1999-2005 Thomas Baier
+	Distributed under the GNU Library General Public License
+	version 2 or later.
 
-distributed under the LGPL.
 
 
 R_HOME/Tcl:
 
-Files compiled and installed from Tcl 8.4.13 and Tk 8.4.13.
+Files compiled and installed from Tcl 8.4.15 and Tk 8.4.15.
 see R_HOME/Tcl/license.terms for the license.
 
     This software is copyrighted by the Regents of the University of
@@ -112,3 +115,8 @@ Modified from perl's ext/File/Glob/bsd_glob.[ch].
  * OUT OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF
  * SUCH DAMAGE.
  */
+
+src/fixed/h/iconv.h
+
+From GNU libiconv-1.11, distributed under LGPL>=2,
+Copyright (C) 1999-2003, 2005-2006 Free Software Foundation, Inc.

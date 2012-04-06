@@ -1,3 +1,8 @@
+% File src/library/grDevices/man/chull.Rd
+% Part of the R package, http://www.R-project.org
+% Copyright 1995-2007 R Core Development Team
+% Distributed under GPL 2 or later
+
 \name{chull}
 \alias{chull}
 \title{Compute Convex Hull of a Set of Points}
@@ -39,6 +44,7 @@ chull(x, y = NULL)
 \seealso{\code{\link{xy.coords}},\code{\link{polygon}}}
 
 \examples{
+require(stats)
 X <- matrix(rnorm(2000), ncol = 2)
 chull(X)
 \dontrun{

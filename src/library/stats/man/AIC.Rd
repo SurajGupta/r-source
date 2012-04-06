@@ -1,3 +1,8 @@
+% File src/library/stats/man/AIC.Rd
+% Part of the R package, http://www.R-project.org
+% Copyright 1995-2007 R Core Development Team
+% Distributed under GPL 2 or later
+
 %% From package:nlme  AIC.Rd,v 1.4 2000/07/03 18:22:45 bates
 %% with additional "k = 2" argument (MM)
 \name{AIC}
@@ -23,7 +28,7 @@ AIC(object, \dots, k = 2)
     \code{logLik} method to extract the corresponding log-likelihood, or
     an object inheriting from class \code{logLik}.}
   \item{\dots}{optionally more fitted model objects.}
-  \item{k}{numeric, the \dQuote{penalty} per parameter to be used; the
+  \item{k}{numeric, the \emph{penalty} per parameter to be used; the
     default \code{k = 2} is the classical AIC.}
 }
 \details{
@@ -42,7 +47,7 @@ AIC(object, \dots, k = 2)
 \value{
   If just one object is provided, returns a numeric value
   with the corresponding AIC (or BIC, or \dots, depending on \code{k});
-  if more than one object are provided, returns a \code{data.frame} with
+  if multiple objects are provided, returns a \code{data.frame} with
   rows corresponding to the objects and columns representing the number
   of parameters in the model (\code{df}) and the AIC.
 }

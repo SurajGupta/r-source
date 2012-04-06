@@ -1,3 +1,19 @@
+#  File src/library/stats/R/ksmooth.R
+#  Part of the R package, http://www.R-project.org
+#
+#  This program is free software; you can redistribute it and/or modify
+#  it under the terms of the GNU General Public License as published by
+#  the Free Software Foundation; either version 2 of the License, or
+#  (at your option) any later version.
+#
+#  This program is distributed in the hope that it will be useful,
+#  but WITHOUT ANY WARRANTY; without even the implied warranty of
+#  MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
+#  GNU General Public License for more details.
+#
+#  A copy of the GNU General Public License is available at
+#  http://www.r-project.org/Licenses/
+
 ksmooth <-
   function(x, y, kernel=c("box", "normal"), bandwidth=0.5, range.x=range(x),
 	   n.points=max(100, length(x)), x.points)
@@ -9,7 +25,7 @@ ksmooth <-
     krn <- switch(kernel, "box" = 1, "normal" = 2)
     x.points <-
 	if(missing(x.points))
-	    seq(range.x[1], range.x[2], len=n.points)
+	    seq.int(range.x[1], range.x[2], length.out = n.points)
 	else {
 	    n.points <- length(x.points)
 	    sort(x.points)

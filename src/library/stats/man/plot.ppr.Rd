@@ -1,3 +1,8 @@
+% File src/library/stats/man/plot.ppr.Rd
+% Part of the R package, http://www.R-project.org
+% Copyright 1995-2007 R Core Development Team
+% Distributed under GPL 2 or later
+
 % file modreg/man/plot.ppr.Rd
 % copyright (C) 1995-8 B. D. Ripley
 %
@@ -38,6 +43,8 @@ Plot ridge functions for projection pursuit regression fit.
   \code{\link{ppr}}, \code{\link{par}}
 }
 \examples{
+require(graphics)
+
 with(rock, {
 area1 <- area/10000; peri1 <- peri/10000
 par(mfrow=c(3,2))# maybe: , pty="s")

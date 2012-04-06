@@ -1,3 +1,19 @@
+#  File src/library/methods/R/zzz.R
+#  Part of the R package, http://www.R-project.org
+#
+#  This program is free software; you can redistribute it and/or modify
+#  it under the terms of the GNU General Public License as published by
+#  the Free Software Foundation; either version 2 of the License, or
+#  (at your option) any later version.
+#
+#  This program is distributed in the hope that it will be useful,
+#  but WITHOUT ANY WARRANTY; without even the implied warranty of
+#  MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
+#  GNU General Public License for more details.
+#
+#  A copy of the GNU General Public License is available at
+#  http://www.r-project.org/Licenses/
+
 ..First.lib  <-
   ## Initialize the methods package:  the session table of method
   ## definitions.
@@ -20,7 +36,7 @@
     initMethodDispatch(where)
     ## temporary empty reference to the package's own namespace
     assign(".methodsNamespace", new.env(), envir = where)
-    useTables <-  (nchar(Sys.getenv("R_NO_METHODS_TABLES")) == 0)
+    useTables <-  !nzchar(Sys.getenv("R_NO_METHODS_TABLES"))
     .UsingMethodsTables(useTables) ## turn it on (or off)
     .Call("R_set_method_dispatch", useTables, PACKAGE = "methods")
     saved <- (if(exists(".saveImage", envir = where, inherits = FALSE))
@@ -59,8 +75,12 @@
             sealClass(cl, where)
         assign(".requirePackage", ..requirePackage, envir = where)
         assign(".addToMetaTable", ..addToMetaTable, envir = where)
+        ## initialize implicit generics for base package
+        ## Note that this is done before making a non-vacuous implicitGeneric()
+        ## so that non-default signatures are allowed in setGeneric()
+        .initImplicitGenerics(where)
+        assign("implicitGeneric", .implicitGeneric, envir = where)
         .makeGenericTables(where)
-        ## TO DO: .InitSubsetMethods(where)
         assign(".saveImage", TRUE, envir = where)
         on.exit()
         cat("done\n")

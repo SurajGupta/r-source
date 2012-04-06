@@ -1,3 +1,8 @@
+% File src/library/stats/man/na.action.Rd
+% Part of the R package, http://www.R-project.org
+% Copyright 1995-2007 R Core Development Team
+% Distributed under GPL 2 or later
+
 \name{na.action}
 \title{NA Action}
 \usage{
@@ -12,10 +17,10 @@ na.action(object, \dots)
 }
 \description{
   \code{na.action} is a generic function, and \code{na.action.default} its
-  default method.
+  default method (which extracts the \code{"na.action"} attribute).
 }
 \value{
-  The \dQuote{NA action} which should be applied to \code{object} whenever
+  The action which will be applied to \code{object} whenever
   \code{\link{NA}}s are not desired.
 }
 \references{

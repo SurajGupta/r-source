@@ -1,8 +1,13 @@
+% File src/library/stats/man/supsmu.Rd
+% Part of the R package, http://www.R-project.org
+% Copyright 1995-2007 R Core Development Team
+% Distributed under GPL 2 or later
+
 \name{supsmu}
 \alias{supsmu}
 \title{Friedman's SuperSmoother}
 \description{
-  Smooth the (x, y) values by Friedman's \dQuote{super smoother}.
+  Smooth the (x, y) values by Friedman's \sQuote{super smoother}.
 }
 \usage{
 supsmu(x, y, wt, span = "cv", periodic = FALSE, bass = 0)
@@ -58,6 +63,8 @@ supsmu(x, y, wt, span = "cv", periodic = FALSE, bass = 0)
 \seealso{\code{\link{ppr}}}
 
 \examples{
+require(graphics)
+
 with(cars, {
     plot(speed, dist)
     lines(supsmu(speed, dist))

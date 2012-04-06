@@ -1,3 +1,8 @@
+% File src/library/stats/man/kernel.Rd
+% Part of the R package, http://www.R-project.org
+% Copyright 1995-2007 R Core Development Team
+% Distributed under GPL 2 or later
+
 \name{kernel}
 \alias{kernel}
 \alias{bandwidth.kernel}
@@ -51,8 +56,8 @@ is.tskernel(k)
   with indices in \code{(-m) : m}.  The normalization is such that for
   \code{k <- kernel(*)}, \code{sum(k[ -k$m : k$m ])} is one.
 
-  \code{df.kernel} returns the \dQuote{equivalent degrees of freedom} of
-  a smoothing kernel as defined in Brockwell and Davies (1991), page
+  \code{df.kernel} returns the \sQuote{equivalent degrees of freedom} of
+  a smoothing kernel as defined in Brockwell and Davis (1991), page
   362, and \code{bandwidth.kernel} returns the equivalent bandwidth as
   defined in Bloomfield (1976), p. 201, with a continuity correction.
 }
@@ -75,6 +80,8 @@ is.tskernel(k)
   Second edition. Springer, pp. 350--365.
 }
 \examples{
+require(graphics)
+
 ## Demonstrate a simple trading strategy for the
 ## financial time series German stock index DAX.
 x <- EuStockMarkets[,1]
@@ -95,7 +102,7 @@ kd[-2:2]
 plot(kernel("fejer", 100, r=6))
 plot(kernel("modified.daniell", c(7,5,3)))
 
-# Reproduce example 10.4.3 from Brockwell and Davies (1991)
+# Reproduce example 10.4.3 from Brockwell and Davis (1991)
 spectrum(sunspot.year, kernel=kernel("daniell", c(11,7,3)), log="no")
 }
 \keyword{ts}

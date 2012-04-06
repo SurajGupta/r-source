@@ -1,3 +1,19 @@
+#  File src/library/stats/R/anova.R
+#  Part of the R package, http://www.R-project.org
+#
+#  This program is free software; you can redistribute it and/or modify
+#  it under the terms of the GNU General Public License as published by
+#  the Free Software Foundation; either version 2 of the License, or
+#  (at your option) any later version.
+#
+#  This program is distributed in the hope that it will be useful,
+#  but WITHOUT ANY WARRANTY; without even the implied warranty of
+#  MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
+#  GNU General Public License for more details.
+#
+#  A copy of the GNU General Public License is available at
+#  http://www.r-project.org/Licenses/
+
 ## utility for anova.FOO(), FOO in "lmlist", "glm", "glmlist"
 ## depending on the ordering of the models this might get called with
 ## negative deviance and df changes.
@@ -88,16 +104,22 @@ printCoefmat <-
         }
     }
     if(length(tst.ind)>0)
-	Cf[, tst.ind]<- format(round(xm[, tst.ind], dig = dig.tst),
+	Cf[, tst.ind]<- format(round(xm[, tst.ind], digits = dig.tst),
                                digits = digits)
     if(length(zap.ind)>0)
-	Cf[, zap.ind]<- format(zapsmall(xm[,zap.ind], dig = digits),
+	Cf[, zap.ind]<- format(zapsmall(xm[,zap.ind], digits = digits),
                                digits = digits)
     if(any(r.ind <- !((1:nc) %in%
                       c(cs.ind, tst.ind, zap.ind, if(has.Pvalue)nc))))
 	Cf[, r.ind] <- format(xm[, r.ind], digits=digits)
     okP <- if(has.Pvalue) ok[, -nc] else ok
-    x0 <- (xm[okP]==0) != (as.numeric(Cf[okP])==0)
+    ## we need to find out where Cf is zero.  We can't use as.numeric
+    ## directly as OutDec could have been set.
+    ## x0 <- (xm[okP]==0) != (as.numeric(Cf[okP])==0)
+    x1 <- Cf[okP]
+    dec <- getOption("OutDec")
+    if(dec != ".") x1 <- chartr(dec, ".", x1)
+    x0 <- (xm[okP] == 0) != (as.numeric(x1) == 0)
     if(length(not.both.0 <- which(x0 & !is.na(x0)))) {
 	## not.both.0==TRUE:  xm !=0, but Cf[] is: --> fix these:
 	Cf[okP][not.both.0] <- format(xm[okP][not.both.0],

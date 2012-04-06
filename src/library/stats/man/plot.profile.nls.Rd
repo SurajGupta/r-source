@@ -1,3 +1,8 @@
+% File src/library/stats/man/plot.profile.nls.Rd
+% Part of the R package, http://www.R-project.org
+% Copyright 1995-2007 R Core Development Team
+% Distributed under GPL 2 or later
+
 \name{plot.profile.nls}
 \alias{plot.profile.nls}
 \title{Plot a profile.nls Object}
@@ -38,6 +43,8 @@
   \code{\link{profile.nls}}
 }
 \examples{
+require(graphics)
+
 # obtain the fitted object
 fm1 <- nls(demand ~ SSasympOrig( Time, A, lrc ), data = BOD)
 # get the profile for the fitted model

@@ -1,3 +1,19 @@
+#  File src/library/stats/R/mcnemar.test.R
+#  Part of the R package, http://www.R-project.org
+#
+#  This program is free software; you can redistribute it and/or modify
+#  it under the terms of the GNU General Public License as published by
+#  the Free Software Foundation; either version 2 of the License, or
+#  (at your option) any later version.
+#
+#  This program is distributed in the hope that it will be useful,
+#  but WITHOUT ANY WARRANTY; without even the implied warranty of
+#  MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
+#  GNU General Public License for more details.
+#
+#  A copy of the GNU General Public License is available at
+#  http://www.r-project.org/Licenses/
+
 mcnemar.test <- function(x, y = NULL, correct = TRUE)
 {
     if (is.matrix(x)) {
@@ -36,7 +52,7 @@ mcnemar.test <- function(x, y = NULL, correct = TRUE)
     x <- x + t(x)
 
     STATISTIC <- sum(y[upper.tri(x)]^2 / x[upper.tri(x)])
-    PVAL <- pchisq(STATISTIC, PARAMETER, lower = FALSE)
+    PVAL <- pchisq(STATISTIC, PARAMETER, lower.tail = FALSE)
     names(STATISTIC) <- "McNemar's chi-squared"
     names(PARAMETER) <- "df"
 

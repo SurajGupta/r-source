@@ -14,8 +14,8 @@
  *  GNU General Public License for more details.
  *
  *  You should have received a copy of the GNU General Public License
- *  along with this program; if not, write to the Free Software
- *  Foundation, Inc., 51 Franklin Street Fifth Floor, Boston, MA 02110-1301  USA
+ *  along with this program; if not, a copy is available at
+ *  http://www.r-project.org/Licenses/
  */
 
 /* <UTF8>
@@ -47,7 +47,7 @@
  *
  * Here, the following UTILITIES are provided:
  *
- * The utilities EncodeLogical, EncodeFactor, EncodeInteger, EncodeReal
+ * The utilities EncodeLogical, EncodeInteger, EncodeReal
  * and EncodeString can be used to convert R objects to a form suitable
  * for printing.  These print the values passed in a formatted form
  * or, in the case of NA values, an NA indicator.  EncodeString takes
@@ -114,7 +114,7 @@ R_size_t R_Decode2Long(char *p, int *ierr)
 /* There is no documented (or enforced) limit on 'w' here,
    so use snprintf */
 #define NB 1000
-char *EncodeLogical(int x, int w)
+const char *EncodeLogical(int x, int w)
 {
     static char buff[NB];
     if(x == NA_LOGICAL) snprintf(buff, NB, "%*s", w, CHAR(R_print.na_string));
@@ -124,7 +124,7 @@ char *EncodeLogical(int x, int w)
     return buff;
 }
 
-char *EncodeInteger(int x, int w)
+const char *EncodeInteger(int x, int w)
 {
     static char buff[NB];
     if(x == NA_INTEGER) snprintf(buff, NB, "%*s", w, CHAR(R_print.na_string));
@@ -133,14 +133,14 @@ char *EncodeInteger(int x, int w)
     return buff;
 }
 
-char *EncodeRaw(Rbyte x)
+const char *EncodeRaw(Rbyte x)
 {
     static char buff[10];
     sprintf(buff, "%02x", x);
     return buff;
 }
 
-char *EncodeReal(double x, int w, int d, int e, char cdec)
+const char *EncodeReal(double x, int w, int d, int e, char cdec)
 {
     static char buff[NB];
     char *p, fmt[20];
@@ -175,7 +175,8 @@ char *EncodeReal(double x, int w, int d, int e, char cdec)
     return buff;
 }
 
-char *EncodeReal2(double x, int w, int d, int e)
+attribute_hidden
+const char *EncodeReal2(double x, int w, int d, int e)
 {
     static char buff[NB];
     char fmt[20];
@@ -208,12 +209,14 @@ char *EncodeReal2(double x, int w, int d, int e)
 
 void z_prec_r(Rcomplex *r, Rcomplex *x, double digits);
 
-char *EncodeComplex(Rcomplex x, int wr, int dr, int er, int wi, int di, int ei,
-		    char cdec)
+const char 
+*EncodeComplex(Rcomplex x, int wr, int dr, int er, int wi, int di, int ei,
+	       char cdec)
 {
     static char buff[NB];
-    char Re[NB], *Im, *tmp;
-    int  flagNegIm = 0;
+    char Re[NB];
+    const char *Im, *tmp;
+    int flagNegIm = 0;
     Rcomplex y;
 
     /* IEEE allows signed zeros; strip these here */
@@ -264,9 +267,9 @@ char *EncodeComplex(Rcomplex x, int wr, int dr, int er, int wi, int di, int ei,
    and allowing for embedded nuls.
    In MBCS locales it works in characters, and reports in display width.
  */
-int Rstrwid(char *str, int slen, int quote)
+int Rstrwid(const char *str, int slen, int quote)
 {
-    char *p = str;
+    const char *p = str;
     int len = 0, i;
 
 #ifdef SUPPORT_MBCS
@@ -378,10 +381,10 @@ int Rstrlen(SEXP s, int quote)
    If 'quote' is non-zero the result should be quoted (and internal quotes
    escaped and NA strings handled differently).
  */
-char *EncodeString(SEXP s, int w, int quote, Rprt_adj justify)
+const char *EncodeString(SEXP s, int w, int quote, Rprt_adj justify)
 {
     int b, b0, i, j, cnt;
-    char *p, *q, buf[11];
+    const char *p; char *q, buf[11];
 
     /* We have to do something like this as the result is returned, and
        passed on by EncodeElement -- so no way could be enduser be
@@ -411,9 +414,10 @@ char *EncodeString(SEXP s, int w, int quote, Rprt_adj justify)
        but it turns 2/3 into 6, and 4 (and perhaps 5/6) into 10.
        Let's be wasteful here (the worst case appears to be an MBCS with
        two bytes for an upper-plane Unicode point output as ten bytes).
+
+       +2 allows for quotes,
      */
-    R_AllocStringBuffer(imax2(5*cnt+2, w), buffer); /* +2 allows for quotes */
-    q = buffer->data;
+    q = R_AllocStringBuffer(imax2(5*cnt+2, w), buffer);
     b = w - i - (quote ? 2 : 0); /* total amount of padding */
     if(justify == Rprt_adj_none) b = 0;
     if(b > 0 && justify != Rprt_adj_left) {
@@ -479,7 +483,8 @@ char *EncodeString(SEXP s, int w, int quote, Rprt_adj justify)
 			else
 #endif
 			    snprintf(buf, 11, "\\u%04x", k);
-			for(j = 0; j < strlen(buf); j++) *q++ = buf[j];
+			memcpy(q, buf, j = strlen(buf));
+			q += j;
 			p += res;
 		    }
 		    i += (res - 1);
@@ -549,10 +554,10 @@ char *EncodeString(SEXP s, int w, int quote, Rprt_adj justify)
     return buffer->data;
 }
 
-char *EncodeElement(SEXP x, int indx, int quote, char dec)
+const char *EncodeElement(SEXP x, int indx, int quote, char dec)
 {
     int w, d, e, wi, di, ei;
-    char *res;
+    const char *res;
 
     switch(TYPEOF(x)) {
     case LGLSXP:
@@ -646,7 +651,7 @@ void Rcons_vprintf(const char *format, va_list arg)
     char buf[R_BUFSIZE], *p = buf;
     int res;
 #ifdef HAVE_VA_COPY
-    char *vmax = vmaxget();
+    void *vmax = vmaxget();
     int usedRalloc = FALSE, usedVasprintf = FALSE;
     va_list aq;
 
@@ -654,8 +659,10 @@ void Rcons_vprintf(const char *format, va_list arg)
     res = vsnprintf(buf, R_BUFSIZE, format, aq);
     va_end(aq);
 #ifdef HAVE_VASPRINTF
-    if(res >= R_BUFSIZE || res < 0)
+    if(res >= R_BUFSIZE || res < 0) {
 	vasprintf(&p, format, arg);
+	usedVasprintf = TRUE;
+    }
 #else
     if(res >= R_BUFSIZE) { /* res is the desired output length */
 	usedRalloc = TRUE;
@@ -748,6 +755,8 @@ void REvprintf(const char *format, va_list arg)
 	if(R_Outputfile && (R_Outputfile != R_Consolefile)) {
 	    fflush(R_Outputfile);
 	    vfprintf(R_Consolefile, format, arg);
+	    /* normally R_Consolefile is stderr and so unbuffered, but
+	       it can be something else (e.g. stdout on Win9x) */
 	    fflush(R_Consolefile);
 	} else vfprintf(R_Consolefile, format, arg);
     } else {
@@ -770,74 +779,3 @@ void attribute_hidden VectorIndex(int i, int w)
     Rprintf("%*s[%ld]", w-IndexWidth(i)-2, "", i);
 }
 
-void attribute_hidden MatrixColumnLabel(SEXP cl, int j, int w)
-{
-    int l;
-    SEXP tmp;
-
-    if (!isNull(cl)) {
-        tmp = STRING_ELT(cl, j);
-	if(tmp == NA_STRING) l = R_print.na_width_noquote;
-	else l = Rstrlen(tmp, 0);
-	Rprintf("%*s%s", w-l, "",
-		EncodeString(tmp, l, 0, Rprt_adj_left));
-    }
-    else {
-	Rprintf("%*s[,%ld]", w-IndexWidth(j+1)-3, "", j+1);
-    }
-}
-
-void attribute_hidden RightMatrixColumnLabel(SEXP cl, int j, int w)
-{
-    int l;
-    SEXP tmp;
-
-    if (!isNull(cl)) {
-        tmp = STRING_ELT(cl, j);
-	if(tmp == NA_STRING) l = R_print.na_width_noquote;
-	else l = Rstrlen(tmp, 0);
-	/* This does not work correctly at least on FC3
-	Rprintf("%*s", R_print.gap+w,
-		EncodeString(tmp, l, 0, Rprt_adj_right)); */
-	Rprintf("%*s%s", R_print.gap+w-l, "",
-	        EncodeString(tmp, l, 0, Rprt_adj_right));
-    }
-    else {
-	Rprintf("%*s[,%ld]%*s", R_print.gap, "", j+1, w-IndexWidth(j+1)-3, "");
-    }
-}
-
-void attribute_hidden LeftMatrixColumnLabel(SEXP cl, int j, int w)
-{
-    int l;
-    SEXP tmp;
-
-    if (!isNull(cl)) {
-        tmp= STRING_ELT(cl, j);
-	if(tmp == NA_STRING) l = R_print.na_width_noquote;
-	else l = Rstrlen(tmp, 0);
-	Rprintf("%*s%s%*s", R_print.gap, "",
-		EncodeString(tmp, l, 0, Rprt_adj_left), w-l, "");
-    }
-    else {
-	Rprintf("%*s[,%ld]%*s", R_print.gap, "", j+1, w-IndexWidth(j+1)-3, "");
-    }
-}
-
-void attribute_hidden MatrixRowLabel(SEXP rl, int i, int rlabw, int lbloff)
-{
-    int l;
-    SEXP tmp;
-
-    if (!isNull(rl)) {
-        tmp= STRING_ELT(rl, i);
-	if(tmp == NA_STRING) l = R_print.na_width_noquote;
-	else l = Rstrlen(tmp, 0);
-	Rprintf("\n%*s%s%*s", lbloff, "",
-		EncodeString(tmp, l, 0, Rprt_adj_left),
-		rlabw-l-lbloff, "");
-    }
-    else {
-	Rprintf("\n%*s[%ld,]", rlabw-3-IndexWidth(i + 1), "", i+1);
-    }
-}

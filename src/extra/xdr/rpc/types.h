@@ -59,11 +59,19 @@
 #	define NULL 0
 #endif
 
-#if !defined(WIN32) && !defined(macintosh)
+#if !defined(WIN32) && !defined(macintosh) && !defined(__CYGWIN__)
 extern char *malloc();
 #endif
+#if defined(WIN32) && defined(LEA_MALLOC)
+#include <stddef.h>
+extern void *Rm_malloc(size_t n);
+extern void Rm_free(void * p);
+#define mem_alloc	Rm_malloc
+#define mem_free(ptr, bsize)	Rm_free(ptr)
+#else
 #define mem_alloc	malloc
 #define mem_free(ptr, bsize)	free(ptr)
+#endif
 
 #ifndef makedev /* ie, we haven't already included it */
 #ifndef macintosh

@@ -1,3 +1,19 @@
+#  File src/library/base/R/strwrap.R
+#  Part of the R package, http://www.R-project.org
+#
+#  This program is free software; you can redistribute it and/or modify
+#  it under the terms of the GNU General Public License as published by
+#  the Free Software Foundation; either version 2 of the License, or
+#  (at your option) any later version.
+#
+#  This program is distributed in the hope that it will be useful,
+#  but WITHOUT ANY WARRANTY; without even the implied warranty of
+#  MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
+#  GNU General Public License for more details.
+#
+#  A copy of the GNU General Public License is available at
+#  http://www.r-project.org/Licenses/
+
 strtrim <- function(x, width)
 {
     if(!is.character(x)) x <- as.character(x)
@@ -25,7 +41,7 @@ function(x, width = 0.9 * getOption("width"), indent = 0, exdent = 0,
             nc <- nchar(words, type="w")
 	    if(any(is.na(nc))) {
 		## use byte count as a reasonable substitute
-		nc0 <- nchar(words)
+		nc0 <- nchar(words, type="b")
 		nc[is.na(nc)] <- nc0[is.na(nc)]
 	    }
 

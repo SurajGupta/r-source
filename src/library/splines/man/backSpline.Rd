@@ -1,3 +1,8 @@
+% File src/library/splines/man/backSpline.Rd
+% Part of the R package, http://www.R-project.org
+% Copyright 1995-2007 R Core Development Team
+% Distributed under GPL 2 or later
+
 \name{backSpline}
 \alias{backSpline}
 %\alias{backSpline.nbSpline}
@@ -32,6 +37,7 @@ backSpline(object)
   \code{\link{interpSpline}}
 }
 \examples{
+require(graphics)
 ispl <- interpSpline( women$height, women$weight )
 bspl <- backSpline( ispl )
 plot( bspl )                   # plots over the range of the knots

@@ -1,3 +1,19 @@
+#  File src/library/methods/R/is.R
+#  Part of the R package, http://www.R-project.org
+#
+#  This program is free software; you can redistribute it and/or modify
+#  it under the terms of the GNU General Public License as published by
+#  the Free Software Foundation; either version 2 of the License, or
+#  (at your option) any later version.
+#
+#  This program is distributed in the hope that it will be useful,
+#  but WITHOUT ANY WARRANTY; without even the implied warranty of
+#  MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
+#  GNU General Public License for more details.
+#
+#  A copy of the GNU General Public License is available at
+#  http://www.r-project.org/Licenses/
+
 is <-
   # With two arguments, tests whether `object' can be treated as from `class2'.
   #
@@ -52,7 +68,7 @@ extends <-
 	## the [[1]] below handles old-style classes & throws away package attributes
 	## {Really? :} A cleaner version needed, to also ignore attr's of class2
 	if(.identC(class1[[1]], class2) || .identC(class2, "ANY") ||
-	   class2 %in% names(classDef1@contains))
+	   (!is.null(classDef1) && class2 %in% names(classDef1@contains)))
 	    return(TRUE)
 	else
 	    classDef2 <- getClassDef(class2)

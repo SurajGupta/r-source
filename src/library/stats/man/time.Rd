@@ -1,3 +1,8 @@
+% File src/library/stats/man/time.Rd
+% Part of the R package, http://www.R-project.org
+% Copyright 1995-2007 R Core Development Team
+% Distributed under GPL 2 or later
+
 \name{time}
 \alias{time}
 \alias{cycle}
@@ -54,8 +59,10 @@ deltat(x, \dots)
   Wadsworth \& Brooks/Cole.
 }
 \examples{
+require(graphics)
+
 cycle(presidents)
-# a simple series plot: c() makes the x and y arguments into vectors
-plot(c(time(presidents)), c(presidents), type="l")
+# a simple series plot
+plot(as.vector(time(presidents)), as.vector(presidents), type="l")
 }
 \keyword{ts}

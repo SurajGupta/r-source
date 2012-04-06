@@ -1,3 +1,8 @@
+% File src/library/stats/man/HoltWinters.Rd
+% Part of the R package, http://www.R-project.org
+% Copyright 1995-2007 R Core Development Team
+% Distributed under GPL 2 or later
+
 \name{HoltWinters}
 \alias{HoltWinters}
 \title{Holt-Winters Filtering}
@@ -110,6 +115,8 @@ HoltWinters(x, alpha = NULL, beta = NULL, gamma = NULL,
 }
 
 \examples{
+require(graphics)
+
 ## Seasonal Holt-Winters
 (m <- HoltWinters(co2))
 plot(m)

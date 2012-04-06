@@ -1,9 +1,14 @@
+% File src/library/graphics/man/filled.contour.Rd
+% Part of the R package, http://www.R-project.org
+% Copyright 1995-2007 R Core Development Team
+% Distributed under GPL 2 or later
+
 \name{filled.contour}
 \alias{filled.contour}
 \title{Level (Contour) Plots}
 \usage{
-filled.contour(x = seq(0, 1, len = nrow(z)),
-               y = seq(0, 1, len = ncol(z)),
+filled.contour(x = seq(0, 1, length.out = nrow(z)),
+               y = seq(0, 1, length.out = ncol(z)),
                z,
                xlim = range(x, finite=TRUE),
                ylim = range(y, finite=TRUE),
@@ -87,6 +92,7 @@ filled.contour(x = seq(0, 1, len = nrow(z)),
   \code{\link{palette}}; \code{\link[lattice]{contourplot}} from package
   \pkg{lattice}.}
 \examples{
+require(grDevices) # for colours
 filled.contour(volcano, color = terrain.colors, asp = 1)# simple
 
 x <- 10*1:nrow(volcano)

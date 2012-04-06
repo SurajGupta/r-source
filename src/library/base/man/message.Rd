@@ -1,3 +1,8 @@
+% File src/library/base/man/message.Rd
+% Part of the R package, http://www.R-project.org
+% Copyright 1995-2007 R Core Development Team
+% Distributed under GPL 2 or later
+
 \name{message}
 \alias{message}
 \alias{suppressMessages}
@@ -29,7 +34,7 @@ suppressPackageStartupMessages(expr)
   \item{expr}{expression to evaluate.}
 }
 \details{
-  \code{message} is used for generating \dQuote{simple} diagnostic
+  \code{message} is used for generating \sQuote{simple} diagnostic
   messages which are neither warnings nor errors, but nevertheless
   represented as conditions.  Unlike warnings and errors, a final
   newline is regarded as part of the message, and is optional.
@@ -43,7 +48,7 @@ suppressPackageStartupMessages(expr)
   is available.
   
   \code{suppressMessages} evaluates its expression in a context that
-  ignores all \dQuote{simple} diagnostic messages.
+  ignores all \sQuote{simple} diagnostic messages.
 
   \code{packageStartupMessage} is a variant whose messages can be
   suppressed separately by \code{suppressPackageStartupMessages}.  (They

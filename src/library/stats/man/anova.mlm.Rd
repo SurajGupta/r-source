@@ -1,3 +1,8 @@
+% File src/library/stats/man/anova.mlm.Rd
+% Part of the R package, http://www.R-project.org
+% Copyright 1995-2007 R Core Development Team
+% Distributed under GPL 2 or later
+
 \name{anova.mlm}
 \alias{anova.mlm}
 \alias{anova.mlmlist}
@@ -80,7 +85,8 @@
   \code{\link{summary.manova}}
 }
 \examples{
-example(SSD) # Brings in the mlmfit and reacttime objects
+require(graphics)
+utils::example(SSD) # Brings in the mlmfit and reacttime objects
 
 mlmfit0 <- update(mlmfit, ~0)
 

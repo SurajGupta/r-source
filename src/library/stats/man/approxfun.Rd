@@ -1,3 +1,8 @@
+% File src/library/stats/man/approxfun.Rd
+% Part of the R package, http://www.R-project.org
+% Copyright 1995-2007 R Core Development Team
+% Distributed under GPL 2 or later
+
 \name{approxfun}
 \alias{approx}
 \alias{approxfun}
@@ -77,6 +82,8 @@ approxfun(x, y = NULL,       method="linear",
   Wadsworth \& Brooks/Cole.
 }
 \examples{
+require(graphics)
+
 x <- 1:10
 y <- rnorm(10)
 par(mfrow = c(2,1))

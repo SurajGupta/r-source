@@ -1,3 +1,8 @@
+% File src/library/datasets/man/nhtemp.Rd
+% Part of the R package, http://www.R-project.org
+% Copyright 1995-2007 R Core Development Team
+% Distributed under GPL 2 or later
+
 \name{nhtemp}
 \docType{data}
 \alias{nhtemp}
@@ -18,6 +23,7 @@
   New York: Wiley.
 }
 \examples{
+require(stats); require(graphics)
 plot(nhtemp, main = "nhtemp data",
   ylab = "Mean annual temperature in New Haven, CT (deg. F)")
 }

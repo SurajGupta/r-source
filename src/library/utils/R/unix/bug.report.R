@@ -1,3 +1,19 @@
+#  File src/library/utils/R/unix/bug.report.R
+#  Part of the R package, http://www.R-project.org
+#
+#  This program is free software; you can redistribute it and/or modify
+#  it under the terms of the GNU General Public License as published by
+#  the Free Software Foundation; either version 2 of the License, or
+#  (at your option) any later version.
+#
+#  This program is distributed in the hope that it will be useful,
+#  but WITHOUT ANY WARRANTY; without even the implied warranty of
+#  MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
+#  GNU General Public License for more details.
+#
+#  A copy of the GNU General Public License is available at
+#  http://www.r-project.org/Licenses/
+
 bug.report <- function(subject = "", ccaddress = Sys.getenv("USER"),
                        method = getOption("mailer"),
                        address = "r-bugs@r-project.org",
@@ -13,7 +29,7 @@ bug.report <- function(subject = "", ccaddress = Sys.getenv("USER"),
 		  "--please do not edit the information below--\\n\\n",
 		  "Version:\\n ",
 		  paste(names(R.version),R.version, sep=" = ",collapse="\\n "),
-                  if (nchar(Sys.getenv("R_GUI_APP_VERSION"))>0)
+                  if (nzchar(Sys.getenv("R_GUI_APP_VERSION")))
                       paste("\\n\\nGUI:\\n R-GUI ",Sys.getenv("R_GUI_APP_VERSION"),
                             " (",Sys.getenv("R_GUI_APP_REVISION"),")",sep='')
                   else
@@ -62,7 +78,7 @@ bug.report <- function(subject = "", ccaddress = Sys.getenv("USER"),
 	cat(body, file=file, append=FALSE)
 	system(paste(getOption("editor"), file))
 
-        if(is.character(ccaddress) && nchar(ccaddress)>0) {
+        if(is.character(ccaddress) && nzchar(ccaddress)) {
             cmdargs <- paste("-s '", subject, "' -c", ccaddress,
                              address, "<", file, "2>/dev/null")
         }

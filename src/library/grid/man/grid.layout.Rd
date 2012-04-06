@@ -1,3 +1,8 @@
+% File src/library/grid/man/grid.layout.Rd
+% Part of the R package, http://www.R-project.org
+% Copyright 1995-2007 R Core Development Team
+% Distributed under GPL 2 or later
+
 \name{grid.layout}
 \alias{grid.layout}
 \title{Create a Grid Layout}
@@ -79,7 +84,7 @@ layout.torture()
 grid.newpage()
 testlay <- function(just="centre") {
   pushViewport(viewport(layout=grid.layout(1, 1, widths=unit(1, "inches"),
-                          height=unit(0.25, "npc"),
+                          heights=unit(0.25, "npc"),
                           just=just)))
   pushViewport(viewport(layout.pos.col=1, layout.pos.row=1))
   grid.rect()

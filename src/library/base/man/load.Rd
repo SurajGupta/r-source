@@ -1,3 +1,8 @@
+% File src/library/base/man/load.Rd
+% Part of the R package, http://www.R-project.org
+% Copyright 1995-2007 R Core Development Team
+% Distributed under GPL 2 or later
+
 \name{load}
 \alias{load}
 \title{Reload Saved Datasets}
@@ -35,10 +40,6 @@ load(file, envir = parent.frame())
   \code{ascii = TRUE}, so ensure that they are transferred without
   conversion of end of line markers.  \code{load} tries to detect this
   case and give an informative error message.
-}
-\note{
-  Prior to  \R 2.4.0 an object saved as a \code{\link{pairlist}} was
-  coerced to a \code{list}, silently (and undocumented). 
 }
 \seealso{
   \code{\link{save}}, \code{\link{download.file}}.

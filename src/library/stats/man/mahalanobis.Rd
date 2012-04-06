@@ -1,3 +1,8 @@
+% File src/library/stats/man/mahalanobis.Rd
+% Part of the R package, http://www.R-project.org
+% Copyright 1995-2007 R Core Development Team
+% Distributed under GPL 2 or later
+
 \name{mahalanobis}
 \title{Mahalanobis Distance}
 \usage{
@@ -25,6 +30,8 @@ mahalanobis(x, center, cov, inverted=FALSE, ...)
 }
 \seealso{\code{\link{cov}}, \code{\link{var}}}
 \examples{
+require(graphics)
+
 ma <- cbind(1:6, 1:3)
 (S <-  var(ma))
 mahalanobis(c(0,0), 1:2, S)

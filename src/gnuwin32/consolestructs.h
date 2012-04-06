@@ -14,8 +14,8 @@
  *  GNU General Public License for more details.
  *
  *  You should have received a copy of the GNU General Public License
- *  along with this program; if not, write to the Free Software
- *  Foundation, Inc., 51 Franklin Street, Fifth Floor, Boston, MA 02110-1301  USA
+ *  along with this program; if not, a copy is available at
+ *  http://www.r-project.org/Licenses/
  */
 
 /* xbuf */
@@ -97,6 +97,7 @@ typedef struct structConsoleData *ConsoleData;
 #define cur_pos (p->cur_pos)
 #define prompt_len (p->prompt_len)
 #define prompt_wid (p->prompt_wid)
+#define CURROW  (p->r)  /* row of cursor */
 #define CURCOL  (p->c)  /* column of cursor on whole line */
 
 #define WRITELINE(i, j) writeline(p, i, j)

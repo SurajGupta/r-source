@@ -1,3 +1,8 @@
+% File src/library/base/man/formals.Rd
+% Part of the R package, http://www.R-project.org
+% Copyright 1995-2007 R Core Development Team
+% Distributed under GPL 2 or later
+
 \name{formals}
 \alias{formals}
 \alias{formals<-}
@@ -32,12 +37,13 @@ formals(fun, envir = environment(fun)) <- value
   environment of the function.
 }
 \seealso{
-  \code{\link{args}} for a \dQuote{human-readable} version,
+  \code{\link{args}} for a human-readable version,
   \code{\link{alist}},
   \code{\link{body}},
   \code{\link{function}}.
 }
 \examples{
+require(stats); require(graphics)
 length(formals(lm))      # the number of formal arguments
 names(formals(boxplot))  # formal arguments names
 

@@ -36,134 +36,13 @@
  BZ2_indexIntoF
  BZ2_rNums
  CPFun
- CharacterMode
  ColorDataBase
  ConsoleAcceptCmd
  DebugMenuitem
  DefaultPalette
  DialogSelectFile
  EhiWakeUp
- GA_MDIFrame
- GA_MDIStatus
- GA_MDIToolbar
- GA_TopmostDialogs
- GA_active_windows
- GA_add_context
- GA_add_strings
- GA_adjust_menu
- GA_app_doc_proc@16
- GA_app_drawstate
- GA_app_initialised
- GA_app_name
- GA_app_timer_procedure@16
- GA_app_win_proc@16
- GA_app_work_proc@16
- GA_apply_to_list
- GA_brighter
- GA_char_to_string
- GA_child_id
- GA_cmd_show
- GA_color_image
- GA_compare_strings
- GA_console1_image
- GA_copy1_image
- GA_copy_image
- GA_copy_string
- GA_copypaste_image
- GA_current
- GA_current_menu
- GA_current_menubar
- GA_current_window
- GA_cut_image
- GA_darker
- GA_dc
- GA_decrease_refcount
- GA_del_all_contexts
- GA_del_context
- GA_del_statusbar
- GA_del_string
- GA_deletion_traversal
- GA_erase_image
- GA_find_object
- GA_find_valid_sibling
- GA_finish_contexts
- GA_finish_events
- GA_finish_objects
- GA_fix_brush
- GA_float_to_string
- GA_getSysFontSize
- GA_get_context
- GA_get_grey_pixel
- GA_get_image_pixel
- GA_get_modeless
- GA_get_monochrome_pixel
- GA_getcliprect
- GA_getstringfromclipboard
- GA_goldfillellipse
- GA_hAccel
- GA_handle_control
- GA_handle_findreplace
- GA_handle_menu_id
- GA_handle_menu_key
- GA_has_transparent_pixels
- GA_help_image
- GA_hide_window
- GA_hwndClient
- GA_hwndFrame
- GA_hwndMain
- GA_imagedepth
- GA_imageheight
- GA_imagewidth
- GA_increase_refcount
- GA_init_contexts
- GA_init_cursors
- GA_init_events
- GA_init_fonts
- GA_init_menus
- GA_init_objects
- GA_int_to_string
- GA_isNT
- GA_keystate
- GA_load_gif
- GA_memalloc
- GA_memexpand
- GA_memfree
- GA_memjoin
- GA_memlength
- GA_memrealloc
- GA_menus_active
- GA_move_to_front
- GA_myAppendMenu
- GA_myMessageBox
- GA_new_font_object
- GA_new_object
- GA_new_string
- GA_oldfillellipse
- GA_open1_image
- GA_open_image
- GA_paste1_image
- GA_paste_image
- GA_prev_instance
- GA_protect_object
- GA_remove_context
- GA_richeditfind
- GA_richeditreplace
- GA_save_gif
- GA_save_image
- GA_screen_coords
- GA_show_window
- GA_simple_window
- GA_string_diff
- GA_string_length
- GA_the_brush
- GA_the_pen
- GA_this_instance
- GA_to_c_string
- GA_to_dos_string
- GA_toolbar_show
- GA_tree_search
- GA_updatestatus
- GA_win_rgb
+ EncodeReal2
  GRecording
  GetCurrentWinPos
  IS_ACTIVE_BINDING
@@ -172,15 +51,23 @@
  InitDynload
  Init_R_Variables
  LOCK_BINDING
- LeftMatrixColumnLabel
+ La_chol
+ La_chol2inv
+ La_dgeqp3
+ La_dgesv
+ La_rg
+ La_rg_cmplx
+ La_rs
+ La_rs_cmplx
+ La_svd_cmplx
+ La_zgeqp3
+ La_zgesv
  LoadInitFile
  MDIset
  MDIsize
  MainThread
- MatrixColumnLabel
- MatrixRowLabel
- NextConnection
  OutDec
+ PRIMOFFSET
  PrintUsage
  ProfileEvent
  R_AllocStringBuffer
@@ -195,16 +82,24 @@
  R_CollectWarnings
  R_Collected
  R_CommentSxp
+ R_CommentSymbol
  R_ConsoleIob
+ R_DotEnvSymbol
  R_EditFiles
  R_ErrorCon
+ R_ExactSymbol
  R_Expressions
  R_Expressions_keep
+ R_ExternalPtrAddrFn
  R_FileExists
  R_FileMtime
  R_FreeSEXP
  R_FreeStringBuffer
+ R_FreeStringBufferL
  R_FunTab
+ R_GE_VStrHeight
+ R_GE_VStrWidth
+ R_GE_VText
  R_GetMaxNSize
  R_GetMaxVSize
  R_HandlerStack
@@ -213,31 +108,44 @@
  R_InsertRestartHandlers
  R_IoBufferFree
  R_IoBufferGetc
+ R_IoBufferInit
  R_IoBufferPutc
+ R_IoBufferPuts
+ R_IoBufferReadReset
  R_IoBufferWriteReset
  R_JumpToContext
- R_KT_ran_arr_buf
- R_KT_ran_arr_cycle
- R_KT_ran_arr_ptr
- R_KT_ran_arr_sentinel
  R_KeepSource
+ R_LastvalueSymbol
+ R_LibraryFileName
  R_LoadFromFile
+ R_LoadRconsole
  R_Log10
  R_NHeap
+ R_NShowCalls
  R_NSize
+ R_NaRmSymbol
  R_Newhashpjw
+ R_OpenInitFile
+ R_OpenLibraryFile
+ R_OpenSiteFile
+ R_OpenSysInitFile
  R_OutputCon
  R_PPStack
  R_PPStackSize
  R_PPStackTop
+ R_Parse1Buffer
  R_Parse1File
  R_ParseBuffer
  R_ParseConn
  R_ParseContext
  R_ParseContextLast
  R_ParseError
+ R_ParseErrorFile
+ R_ParseErrorMsg
  R_ParseFile
+ R_PendingPromises
  R_Quiet
+ R_RecursiveSymbol
  R_RestartStack
  R_RestartToken
  R_ReturnedValue
@@ -248,14 +156,22 @@
  R_SetOptionWarn
  R_SetOptionWidth
  R_SetWin32
+ R_ShowErrorCalls
  R_ShowErrorMessages
+ R_ShowWarnCalls
  R_ShowFiles
+ R_SourceSymbol
+ R_SrcfileSymbol
+ R_SrcrefSymbol
  R_StdinEnc
+ R_StringHash
  R_SymbolTable
  R_TextBufferFree
  R_TextBufferGetc
  R_TextBufferInit
+ R_TmpvalSymbol
  R_ToplevelExec
+ R_UseNamesSymbol
  R_VSize
  R_Verbose
  R_Visible
@@ -270,6 +186,7 @@
  R_Zero_Hack
  R_binary
  R_compress1
+ R_cpolyroot
  R_current_trace_state
  R_data_class2
  R_dec_min_exponent
@@ -287,12 +204,14 @@
  R_getVarsFromFrame
  R_init_base
  R_initialize_bcode
+ R_isMissing
  R_is_running
  R_lazyLoadDBfetch
  R_lazyLoadDBflush
  R_lazyLoadDBinsertValue
  R_max_memory
  R_moduleCdynload
+ R_newsock
  R_newunz
  R_newurl
  R_osDynSymbol
@@ -300,6 +219,7 @@
  R_print
  R_restore_globals
  R_run_onexits
+ R_seemsOldStyleS4Object
  R_serializeb
  R_signgam
  R_subset3_dflt
@@ -308,6 +228,9 @@
  R_sysfunction
  R_sysparent
  R_unary
+ R_warn_partial_match_args
+ R_warn_partial_match_attr
+ R_warn_partial_match_dollar
  Rconsolesetwidth
  Rf_CheckFormals
  Rf_CoercionWarning
@@ -327,6 +250,9 @@
  Rf_FixupPch
  Rf_FixupVFont
  Rf_GInit
+ Rf_GVStrHeight
+ Rf_GVStrWidth
+ Rf_GVText
  Rf_GetOptionParAsk
  Rf_IndexWidth
  Rf_InitArithmetic
@@ -340,6 +266,7 @@
  Rf_InitMemory
  Rf_InitOptions
  Rf_InitRand
+ Rf_InitStringHash
  Rf_InitTempDir
  Rf_IntegerFromComplex
  Rf_IntegerFromLogical
@@ -378,6 +305,7 @@
  Rf_convertToC
  Rf_copyListMatrix
  Rf_copyMostAttribNoTs
+ Rf_d1mach
  Rf_dpSavedptr
  Rf_dpptr
  Rf_evalList
@@ -389,6 +317,7 @@
  Rf_gammalims
  Rf_get1index
  Rf_gpptr
+ Rf_i1mach
  Rf_internalTypeCheck
  Rf_isNAcol
  Rf_labelformat
@@ -427,6 +356,7 @@
  Rf_yylval
  Rf_yynerrs
  Rf_yyparse
+ RgetMDIsize
  RguiCommonHelp
  RguiPackageMenu
  Rgui_Edit
@@ -434,7 +364,6 @@
  Ri18n_iswctype
  Ri18n_wcswidth
  Ri18n_wctype
- RightMatrixColumnLabel
  Rm_calloc
  Rm_cfree
  Rm_free
@@ -447,9 +376,17 @@
  Rregexec
  Rrowsum_df
  Rrowsum_matrix
+ Rsockclose
+ Rsockconnect
+ Rsocklisten
+ Rsockopen
+ Rsockread
+ Rsockselect
+ Rsockwrite
  Rwin_rename
  SET_ACTIVE_BINDING_BIT
  SET_LATIN1
+ SET_PRIMOFFSET
  SET_UTF8
  Sys_TempDir
  UNLOCK_BINDING
@@ -457,6 +394,7 @@
  UNSET_UTF8
  UseInternet2
  WrongArgCount
+ __printf__
  _dist_code
  _getextradata
  _length_code
@@ -497,6 +435,7 @@
  _tr_init
  _tr_stored_block
  _tr_tally
+ _vsnprintf
  adler32
  adler32_combine
  app_control_proc
@@ -510,12 +449,18 @@
  apse_set_deletions
  apse_set_insertions
  apse_set_substitutions
+ bakslv
  baseRegisterIndex
+ bincode
+ bincount
  bratio
  breaktodebugger
  cbabk2_
  cbal_
- cdiv_
+ cdiv
+ cg_
+ ch2inv_
+ ch_
  check_doc_file
  closeconsole
  complex_binary
@@ -580,6 +525,7 @@
  deflateTune
  deflate_copyright
  deleditordata
+ det_ge_real
  do_AT
  do_Cstack_info
  do_D
@@ -671,7 +617,6 @@
  do_dataviewer
  do_date
  do_debug
- do_delay
  do_delayed
  do_dend
  do_dendwindow
@@ -762,6 +707,7 @@
  do_getWindowHandle
  do_getWindowTitle
  do_getallconnections
+ do_getconnection
  do_getenv
  do_geterrmessage
  do_getlocale
@@ -810,6 +756,7 @@
  do_l10n_info
  do_lapply
  do_layout
+ do_lazyLoadDBfetch
  do_length
  do_lengthgets
  do_levelsgets
@@ -826,11 +773,13 @@
  do_lockBnd
  do_lockEnv
  do_log
+ do_log1arg
  do_logic
  do_logic2
  do_logic3
  do_ls
  do_machine
+ do_makelazy
  do_makelist
  do_makenames
  do_makeunique
@@ -872,6 +821,7 @@
  do_nlm
  do_normalizepath
  do_nsl
+ do_nzchar
  do_objectsize
  do_onexit
  do_open
@@ -994,6 +944,7 @@
  do_stdin
  do_stdout
  do_stop
+ do_storage_mode
  do_strheight
  do_strptime
  do_strsplit
@@ -1023,6 +974,7 @@
  do_syssleep
  do_system
  do_systime
+ do_syswhich
  do_tempdir
  do_tempfile
  do_termsform
@@ -1034,6 +986,7 @@
  do_tolower
  do_trace
  do_transpose
+ do_trunc
  do_truncate
  do_typecvt
  do_typeof
@@ -1063,7 +1016,9 @@
  do_writechar
  do_writelines
  do_writetable
+ do_xspline
  do_zeroin
+ do_zeroin2
  dos_glob
  dos_globfree
  dpois_raw
@@ -1087,6 +1042,7 @@
  getGraphMenu
  getIdentification
  getParseContext
+ getParseFilename
  getWindowTitle
  get_crc_table
  get_current_mem
@@ -1157,6 +1113,7 @@
  libintl_gettext_free_exp
  libintl_gettext_germanic_plural
  libintl_gettextparse
+ libintl_hash_string
  libintl_ngettext
  libintl_nl_current_default_domain
  libintl_nl_default_default_domain
@@ -1244,11 +1201,19 @@
  pkgmenuact
  pnchisq_raw
  pointsize
+ process_site_Renviron
+ process_system_Renviron
+ process_user_Renviron
  pythag_
+ qr_coef_cmplx
+ qr_coef_real
+ qr_qy_cmplx
+ qr_qy_real
  raise
  realp0_
  reset_duplicate_counter
  restoredpSaved
+ rg_
  rpipeClose
  rpipeGetc
  rpipeGets
@@ -1277,6 +1242,8 @@
  sigrelse
  sigsetmask
  sigsuspend
+ stemleaf
+ str_signif
  switch_stdout
  tql1_
  tql2_
@@ -1453,7 +1420,7 @@
  trio_xstring_substring
  uncompress
  utf8clen
- wcrtomb
+ winAccess
  winNewFrameConfirm
  winaddmenu
  winaddmenuitem
@@ -1483,6 +1450,7 @@
  xdr_void
  xdr_wrapstring
  xdrstdio_create
+ yylloc
  zError
  z_errmsg
  z_prec_r

@@ -1,3 +1,8 @@
+% File src/library/base/man/class.Rd
+% Part of the R package, http://www.R-project.org
+% Copyright 1995-2007 R Core Development Team
+% Distributed under GPL 2 or later
+
 \name{class}
 \title{Object Classes}
 \alias{class}
@@ -29,21 +34,20 @@ oldClass(x) <- value
 
 \details{
   Many \R objects have a \code{class} attribute, a character vector
-  giving the names of the classes which the object \dQuote{inherits}
-  from.  If the object does not have a class attribute, it has an
-  implicit class, \code{"matrix"}, \code{"array"} or the result of
+  giving the names of the classes from which the object \emph{inherits}.
+  If the object does not have a class attribute, it has an implicit
+  class, \code{"matrix"}, \code{"array"} or the result of
   \code{\link{mode}(x)}.  (Functions \code{oldClass} and
   \code{oldClass<-} get and set the attribute, which can also be done
   directly.)
 
-  When a generic
-  function \code{fun} is applied to an object with class attribute
-  \code{c("first", "second")}, the system searches for a function called
-  \code{fun.first} and, if it finds it, applies it to the object.  If no
-  such function is found, a function called \code{fun.second} is tried.
-  If no class name produces a suitable function, the function
-  \code{fun.default} is used (if it exists).
-  If there is no class attribute, the implicit class is tried, then the
+  When a generic function \code{fun} is applied to an object with class
+  attribute \code{c("first", "second")}, the system searches for a
+  function called \code{fun.first} and, if it finds it, applies it to
+  the object.  If no such function is found, a function called
+  \code{fun.second} is tried.  If no class name produces a suitable
+  function, the function \code{fun.default} is used (if it exists).  If
+  there is no class attribute, the implicit class is tried, then the
   default method.
 
   The function \code{class} prints the vector of names of classes an
@@ -86,7 +90,10 @@ oldClass(x) <- value
   replacing the class this way is strongly deprecated.  The expression
   \code{\link[methods]{as}(object, value)} is the way to coerce an object to a
   particular class.
+
+  The analogue of \code{inherits} for formal classes is \code{\link{is}}.
 }
+
 \seealso{
   \code{\link{UseMethod}}, \code{\link{NextMethod}},
   \code{\link{group generic}}.

@@ -1,3 +1,22 @@
+/*
+ *  R : A Computer Language for Statistical Data Analysis
+ *  Copyright (C) 1997-2007  The R Core Development Team
+ *
+ *  This program is free software; you can redistribute it and/or modify
+ *  it under the terms of the GNU General Public License as published by
+ *  the Free Software Foundation; either version 2 of the License, or
+ *  (at your option) any later version.
+ *
+ *  This program is distributed in the hope that it will be useful,
+ *  but WITHOUT ANY WARRANTY; without even the implied warranty of
+ *  MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
+ *  GNU General Public License for more details.
+ *
+ *  You should have received a copy of the GNU General Public License
+ *  along with this program; if not, a copy is available at
+ *  http://www.r-project.org/Licenses/
+ */
+
 /* <UTF8> char here is either ASCII or handled as a whole */
 
 /* Graphical parameters which are treated identically by
@@ -121,7 +140,7 @@
 	if (((GEDevDesc*) dd)->dev->canChangeGamma)
 	    R_DEV__(gamma) = x;
 	else
-	    warningcall(call, _("'gamma' cannot be modified on this device"));
+	    warning(_("'gamma' cannot be modified on this device"));
     }
     else if (streql(what, "lab")) {
 	value = coerceVector(value, INTSXP);
@@ -178,7 +197,7 @@
 	naRealCheck(REAL(value)[2], what);
 	if(REAL(value)[0] * REAL(value)[1] < 0 ||
 	   REAL(value)[0] * REAL(value)[2] < 0)
-	    warningcall(call, "`mgp[1:3]' are of differing sign");
+	    warning("`mgp[1:3]' are of differing sign");
 	R_DEV__(mgp[0]) = REAL(value)[0];
 	R_DEV__(mgp[1]) = REAL(value)[1];
 	R_DEV__(mgp[2]) = REAL(value)[2];

@@ -1,3 +1,19 @@
+#  File src/library/base/R/table.R
+#  Part of the R package, http://www.R-project.org
+#
+#  This program is free software; you can redistribute it and/or modify
+#  it under the terms of the GNU General Public License as published by
+#  the Free Software Foundation; either version 2 of the License, or
+#  (at your option) any later version.
+#
+#  This program is distributed in the hope that it will be useful,
+#  but WITHOUT ANY WARRANTY; without even the implied warranty of
+#  MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
+#  GNU General Public License for more details.
+#
+#  A copy of the GNU General Public License is available at
+#  http://www.r-project.org/Licenses/
+
 table <- function (..., exclude = c(NA, NaN),
 		   dnn = list.names(...), deparse.level = 1)
 {
@@ -174,7 +190,7 @@ as.table.default <- function(x, ...)
 	    dnx <- vector("list", length(dim(x)))
 	for(i in which(sapply(dnx, is.null)))
 	    dnx[[i]] <-
-                make.unique(LETTERS[seq.int(from=0, length = dim(x)[i]) %% 26 + 1],
+                make.unique(LETTERS[seq.int(from=0, length.out = dim(x)[i]) %% 26 + 1],
                             sep = "")
 	dimnames(x) <- dnx
 	class(x) <- c("table", oldClass(x))
@@ -187,7 +203,7 @@ as.table.default <- function(x, ...)
 prop.table <- function(x, margin = NULL)
 {
     if(length(margin))
-	sweep(x, margin, margin.table(x, margin), "/")
+	sweep(x, margin, margin.table(x, margin), "/", check.margin=FALSE)
     else
 	x / sum(x)
 }

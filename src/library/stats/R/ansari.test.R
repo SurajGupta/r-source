@@ -1,3 +1,19 @@
+#  File src/library/stats/R/ansari.test.R
+#  Part of the R package, http://www.R-project.org
+#
+#  This program is free software; you can redistribute it and/or modify
+#  it under the terms of the GNU General Public License as published by
+#  the Free Software Foundation; either version 2 of the License, or
+#  (at your option) any later version.
+#
+#  This program is distributed in the hope that it will be useful,
+#  but WITHOUT ANY WARRANTY; without even the implied warranty of
+#  MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
+#  GNU General Public License for more details.
+#
+#  A copy of the GNU General Public License is available at
+#  http://www.r-project.org/Licenses/
+
 ansari.test <- function(x, ...) UseMethod("ansari.test")
 
 ansari.test.default <-
@@ -147,11 +163,11 @@ function(x, y, alternative = c("two.sided", "less", "greater"),
                 r <- rle(sort(pmin(r, N - r + 1)))
                 SIGMA <- if(EVEN)
                     sqrt(m * n
-                         * (16 * sum(r$l * r$v^2) - N * (N + 2)^2)
+                         * (16 * sum(r$lengths * r$values^2) - N * (N + 2)^2)
                          / (16 * N * (N - 1)))
                 else
                     sqrt(m * n
-                         * (16 * N * sum(r$l * r$v^2) - (N + 1)^4)
+                         * (16 * N * sum(r$lengths * r$values^2) - (N + 1)^4)
                          / (16 * N^2 * (N - 1)))
             }
             z / SIGMA
@@ -190,7 +206,7 @@ function(x, y, alternative = c("two.sided", "less", "greater"),
                     ## Check if the statistic exceeds both quantiles
                     ## first.
                     statu <- ab2(srange[1], zq=qnorm(alpha/2))
-                    statl <- ab2(srange[2], zq=qnorm(alpha/2, lower=FALSE))
+                    statl <- ab2(srange[2], zq=qnorm(alpha/2, lower.tail=FALSE))
                     if (statu > 0 || statl < 0) {
                         warning("samples differ in location: cannot compute confidence set, returning NA")
                         return(c(NA, NA))
@@ -198,7 +214,7 @@ function(x, y, alternative = c("two.sided", "less", "greater"),
                     u <- uniroot(ab2, srange, tol=1e-4,
                                  zq=qnorm(alpha/2))$root
                     l <- uniroot(ab2, srange, tol=1e-4,
-                                 zq=qnorm(alpha/2, lower=FALSE))$root
+                                 zq=qnorm(alpha/2, lower.tail=FALSE))$root
                     ## The process of the statistics does not need to be
                     ## monotone: sort is ok here.
                     sort(c(u, l))

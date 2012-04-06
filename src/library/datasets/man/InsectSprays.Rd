@@ -1,3 +1,8 @@
+% File src/library/datasets/man/InsectSprays.Rd
+% Part of the R package, http://www.R-project.org
+% Copyright 1995-2007 R Core Development Team
+% Distributed under GPL 2 or later
+
 \name{InsectSprays}
 \docType{data}
 \alias{InsectSprays}
@@ -24,7 +29,7 @@
   New York: Wiley.
 }
 \examples{
-require(stats)
+require(stats); require(graphics)
 boxplot(count ~ spray, data = InsectSprays,
         xlab = "Type of spray", ylab = "Insect count",
         main = "InsectSprays data", varwidth = TRUE, col = "lightgray")

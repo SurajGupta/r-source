@@ -1,3 +1,19 @@
+#  File src/library/graphics/R/axis.R
+#  Part of the R package, http://www.R-project.org
+#
+#  This program is free software; you can redistribute it and/or modify
+#  it under the terms of the GNU General Public License as published by
+#  the Free Software Foundation; either version 2 of the License, or
+#  (at your option) any later version.
+#
+#  This program is distributed in the hope that it will be useful,
+#  but WITHOUT ANY WARRANTY; without even the implied warranty of
+#  MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
+#  GNU General Public License for more details.
+#
+#  A copy of the GNU General Public License is available at
+#  http://www.r-project.org/Licenses/
+
 axis <- function(side, at = NULL, labels = TRUE, tick = TRUE, line = NA,
                  pos = NA, outer = FALSE, font = NA,
                  lty = "solid", lwd = 1, col = NULL,
@@ -58,6 +74,6 @@ axTicks <- function(side, axp = NULL, usr = NULL, log = NULL)
                     c(outer(c(1,2,5), x10))[-1])## 3
         r[usr[1] <= log10(r) & log10(r) <= usr[2]]
     } else { # linear
-        seq.int(axp[1], axp[2], length = 1 + abs(axp[3]))
+        seq.int(axp[1], axp[2], length.out = 1 + abs(axp[3]))
     }
 }

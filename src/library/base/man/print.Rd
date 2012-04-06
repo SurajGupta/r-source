@@ -1,3 +1,8 @@
+% File src/library/base/man/print.Rd
+% Part of the R package, http://www.R-project.org
+% Copyright 1995-2007 R Core Development Team
+% Distributed under GPL 2 or later
+
 \name{print}
 \title{Print Values}
 \usage{
@@ -68,12 +73,14 @@ print(x, \dots)
   \code{\link{cat}}, \code{\link{format}} or also \code{\link{write}}.
 }
 \examples{
+require(stats)
+
 ts(1:20)#-- print is the "Default function" --> print.ts(.) is called
 rr <- for(i in 1:3) print(1:i)
 rr
 
 ## Printing of factors
-attenu$station ## 117 levels -> `max.levels' depending on width
+attenu$station ## 117 levels -> 'max.levels' depending on width
 
 ## ordered factors: levels  "l1 < l2 < .."
 esoph$agegp[1:12]

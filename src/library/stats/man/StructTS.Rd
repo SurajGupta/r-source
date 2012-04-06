@@ -1,3 +1,8 @@
+% File src/library/stats/man/StructTS.Rd
+% Part of the R package, http://www.R-project.org
+% Copyright 1995-2007 R Core Development Team
+% Distributed under GPL 2 or later
+
 \name{StructTS}
 \alias{StructTS}
 \alias{print.StructTS}
@@ -126,11 +131,13 @@ StructTS(x, type = c("level", "trend", "BSM"), init = NULL,
 }
 
 \seealso{
-  \code{\link{KalmanLike}}, \code{\link{tsSmooth}}.
+  \code{\link{KalmanLike}}, \code{\link{tsSmooth}};
+  \code{\link{stl}} for different kind of (seasonal) decomposition.
 }
 
 \examples{
 ## see also JohnsonJohnson, Nile and AirPassengers
+require(graphics)
 
 trees <- window(treering, start=0)
 (fit <- StructTS(trees, type = "level"))

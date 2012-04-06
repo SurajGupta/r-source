@@ -14,10 +14,9 @@
  *  MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
  *  GNU General Public License for more details.
  *
- *  A copy of the GNU General Public License is available via WWW at
- *  http://www.gnu.org/copyleft/gpl.html.  You can also obtain it by
- *  writing to the Free Software Foundation, Inc., 51 Franklin Street
- *  Fifth Floor, Boston, MA 02110-1301  USA.
+ *  You should have received a copy of the GNU General Public License
+ *  along with this program; if not, a copy is available at
+ *  http://www.r-project.org/Licenses/
  */
 
 /* <UTF8-FIXME>
@@ -32,11 +31,11 @@
 #include <Defn.h>
 
 #include <string.h>
-#include <stdlib.h>
+#include <errno.h>
 
 #include <Rmath.h>
 
-#include <Graphics.h>
+#include <R_ext/GraphicsEngine.h> /* needed for GEDevDesc in do_Externalgr */
 
 #include <R_ext/RConverters.h>
 #ifdef HAVE_ICONV
@@ -66,6 +65,9 @@ typedef struct {
     int type;
 } DllReference;
 
+/* Maximum length of entry-point name, including nul terminator */
+#define MaxSymbolBytes 1024
+
 /* This looks up entry points in DLLs in a platform specific way. */
 #define MAX_ARGS 65
 
@@ -89,15 +91,16 @@ static SEXP enctrim(SEXP args, char *name, int len);
    NB: in the last two cases it sets fun as well!
  */
 static void
-checkValidSymbolId(SEXP op, SEXP call, DL_FUNC *fun, R_RegisteredNativeSymbol *symbol, char *buf)
+checkValidSymbolId(SEXP op, SEXP call, DL_FUNC *fun,
+		   R_RegisteredNativeSymbol *symbol, char *buf)
 {
     if (isValidString(op)) return;
 
     *fun = NULL;
     if(TYPEOF(op) == EXTPTRSXP) {
-	char *q, *p = NULL;
+	char *p = NULL;
 	if(R_ExternalPtrTag(op) == Rf_install("native symbol")) 
-   	   *fun = (DL_FUNC) R_ExternalPtrAddr(op);
+   	   *fun = R_ExternalPtrAddrFn(op);
 	else if(R_ExternalPtrTag(op) == Rf_install("registered native symbol")) {
    	   R_RegisteredNativeSymbol *tmp;
 	   tmp = (R_RegisteredNativeSymbol *) R_ExternalPtrAddr(op);
@@ -124,8 +127,8 @@ checkValidSymbolId(SEXP op, SEXP call, DL_FUNC *fun, R_RegisteredNativeSymbol *s
 		  break;
 	      default:
   	         /* Something unintended has happened if we get here. */
-	          error(_("Unimplemented type %d in createRSymbolObject"), 
-		         symbol->type);
+	          errorcall(call, _("Unimplemented type %d in createRSymbolObject"), 
+			    symbol->type);
   	          break;
 	      }
 	      *symbol = *tmp;
@@ -137,11 +140,15 @@ checkValidSymbolId(SEXP op, SEXP call, DL_FUNC *fun, R_RegisteredNativeSymbol *s
 
         /* copy the symbol name. */
 	if (p) {
+	    if (strlen(p) >= MaxSymbolBytes)
+		error(_("symbol '%s' is too long"), p);
+	    memcpy(buf, p, strlen(p)+1);
+	    /* Ouch, no length check
 	    q = buf;
 	    while ((*q = *p) != '\0') {
 	        p++;
 	        q++;
-	    }
+	    } */
 	}
 
 	return;
@@ -166,13 +173,14 @@ checkValidSymbolId(SEXP op, SEXP call, DL_FUNC *fun, R_RegisteredNativeSymbol *s
   provided, we check whether the calling function is in a namespace
   and look there.
 */
+
 static SEXP
 resolveNativeRoutine(SEXP args, DL_FUNC *fun,
 		     R_RegisteredNativeSymbol *symbol, char *buf,
 		     int *nargs, int *naok, int *dup, SEXP call)
 {
     SEXP op;
-    char *p, *q;
+    const char *p; char *q;
     DllReference dll = {"", NULL, NULL, NOT_DEFINED};
 
     op = CAR(args);
@@ -202,6 +210,8 @@ resolveNativeRoutine(SEXP args, DL_FUNC *fun,
 
     if(TYPEOF(op) == STRSXP) {
 	p = translateChar(STRING_ELT(op, 0));
+	if(strlen(p) >= MaxSymbolBytes)
+	    error(_("symbol '%s' is too long"), p);
 	q = buf;
 	while ((*q = *p) != '\0') {
 	    if(symbol->type == R_FORTRAN_SYM) *q = tolower(*q);
@@ -209,11 +219,7 @@ resolveNativeRoutine(SEXP args, DL_FUNC *fun,
 	    q++;
 	}
     }
-    /*
-    if(symbol->type == R_FORTRAN_SYM && strchr(buf, '_'))
-	warningcall(call, _("Fortran symbol names contaning '_' are not portable"));
-    */
-
+ 
     if(!*fun) {
 	if(dll.type != FILENAME) {
 	    /* no PACKAGE= arg, so see if we can identify a DLL
@@ -270,7 +276,7 @@ static void *RObjToCPtr(SEXP s, int naok, int dup, int narg, int Fort,
 			const char *name, R_toCConverter **converter,
 			int targetType, char* encname)
 {
-    unsigned char *rawptr;
+    Rbyte *rawptr;
     int *iptr;
     float *sptr;
     double *rptr;
@@ -313,7 +319,7 @@ static void *RObjToCPtr(SEXP s, int naok, int dup, int narg, int Fort,
     n = LENGTH(s);
     rawptr = RAW(s);
     if (dup) {
-        rawptr = (unsigned char *) R_alloc(n, sizeof(unsigned char));
+        rawptr = (Rbyte *) R_alloc(n, sizeof(Rbyte));
         for (i = 0; i < n; i++)
             rawptr[i] = RAW(s)[i];
     }
@@ -376,7 +382,7 @@ static void *RObjToCPtr(SEXP s, int naok, int dup, int narg, int Fort,
 	    error(_("character variables must be duplicated in .C/.Fortran"));
 	n = LENGTH(s);
 	if(Fort) {
-	    char *ss = translateChar(STRING_ELT(s, 0));
+	    const char *ss = translateChar(STRING_ELT(s, 0));
 	    if(n > 1)
 		warning(_("only first string in char vector used in .Fortran"));
 	    l = strlen(ss);
@@ -387,7 +393,8 @@ static void *RObjToCPtr(SEXP s, int naok, int dup, int narg, int Fort,
 	    cptr = (char**)R_alloc(n, sizeof(char*));
 	    if(strlen(encname)) {
 #ifdef HAVE_ICONV
-		char *inbuf, *outbuf;
+		char *outbuf;
+                const char *inbuf;
 		size_t inb, outb, outb0, res;
 		void *obj = Riconv_open("", encname); /* (to, from) */
 		if(obj == (void *)-1)
@@ -418,7 +425,7 @@ static void *RObjToCPtr(SEXP s, int naok, int dup, int narg, int Fort,
 #endif
 	    {
 		for (i = 0 ; i < n ; i++) {
-		    char *ss = translateChar(STRING_ELT(s, i));
+		    const char *ss = translateChar(STRING_ELT(s, i));
 		    l = strlen(ss);
 		    cptr[i] = (char*)R_alloc(l + 1, sizeof(char));
 		    strcpy(cptr[i], ss);
@@ -460,7 +467,7 @@ static void *RObjToCPtr(SEXP s, int naok, int dup, int narg, int Fort,
 static SEXP CPtrToRObj(void *p, SEXP arg, int Fort,
 		       R_NativePrimitiveArgType type, char *encname)
 {
-    unsigned char *rawptr;
+    Rbyte *rawptr;
     int *iptr, n=length(arg);
     float *sptr;
     double *rptr;
@@ -473,7 +480,7 @@ static SEXP CPtrToRObj(void *p, SEXP arg, int Fort,
     switch(type) {
     case RAWSXP:
     s = allocVector(type, n);
-    rawptr = (unsigned char *)p;
+    rawptr = (Rbyte *)p;
     for (i = 0; i < n; i++)
         RAW(s)[i] = rawptr[i];
     break;
@@ -515,7 +522,8 @@ static SEXP CPtrToRObj(void *p, SEXP arg, int Fort,
 	    cptr = (char**)p;
 	    if(strlen(encname)) {
 #ifdef HAVE_ICONV
-		char *inbuf, *outbuf, *p;
+                const char *inbuf;
+		char *outbuf, *p;
 		size_t inb, outb, outb0, res;
 		void *obj = Riconv_open(encname, ""); /* (to, from) */
 		if(obj == (void *)(-1))
@@ -601,7 +609,7 @@ static SEXP naokfind(SEXP args, int * len, int *naok, int *dup,
 {
     SEXP s, prev;
     int nargs=0, naokused=0, dupused=0, pkgused=0;
-    char *p;
+    const char *p;
 
     *naok = 0;
     *dup = 1;
@@ -658,7 +666,9 @@ static SEXP naokfind(SEXP args, int * len, int *naok, int *dup,
 
 static void setDLLname(SEXP s, char *DLLname)
 {
-    SEXP ss = CAR(s); char *name;
+    SEXP ss = CAR(s);
+    const char *name;
+
     if(TYPEOF(ss) != STRSXP || length(ss) != 1)
 	error(_("PACKAGE argument must be a single character string"));
     name = translateChar(STRING_ELT(ss, 0));
@@ -730,61 +740,27 @@ static SEXP enctrim(SEXP args, char *name, int len)
 }
 
 
-SEXP attribute_hidden do_symbol(SEXP call, SEXP op, SEXP args, SEXP env)
-{
-    char buf[128], *p, *q;
-
-    checkArity(op, args);
-
-    if(!isValidString(CAR(args)))
-	errorcall(call, R_MSG_IA);
-
-    warningcall(call, _("'%s' is deprecated"), 
-		PRIMVAL(op) ? "symbol.For" : "symbol.C");
-    p = translateChar(STRING_ELT(CAR(args), 0));
-    q = buf;
-    while ((*q = *p) != '\0') {
-	if(PRIMVAL(op)) *q = tolower(*q);
-	p++;
-	q++;
-    }
-#ifdef HAVE_F77_UNDERSCORE
-    if(PRIMVAL(op)) {
-	*q++ = '_';
-	*q = '\0';
-    }
-#endif
-#ifdef HAVE_F77_EXTRA_UNDERSCORE
-    p = translateChar(STRING_ELT(CAR(args), 0));
-    if(strchr(p, '_') && PRIMVAL(op)) {
-	*q++ = '_';
-	*q = '\0';
-    }
-#endif
-    return mkString(buf);
-}
 
 SEXP attribute_hidden do_isloaded(SEXP call, SEXP op, SEXP args, SEXP env)
 {
-    SEXP ans;
-    char *sym, *pkg= "", *type="";
+    const char *sym, *type="", *pkg = "";
     int val = 1, nargs = length(args);
     R_RegisteredNativeSymbol symbol = {R_FORTRAN_SYM, {NULL}, NULL};
 
-    if (nargs < 1) errorcall(call, _("no arguments supplied"));
-    if (nargs > 3) errorcall(call, _("too many arguments"));
+    if (nargs < 1) error(_("no arguments supplied"));
+    if (nargs > 3) error(_("too many arguments"));
 
     if(!isValidString(CAR(args)))
-	errorcall(call, R_MSG_IA);
+	error(R_MSG_IA);
     sym = translateChar(STRING_ELT(CAR(args), 0));
     if(nargs >= 2) {
 	if(!isValidString(CADR(args)))
-	    errorcall(call, R_MSG_IA);
+	    error(R_MSG_IA);
 	pkg = translateChar(STRING_ELT(CADR(args), 0));
     }
     if(nargs >= 3) {
 	if(!isValidString(CADDR(args)))
-	    errorcall(call, R_MSG_IA);
+	    error(R_MSG_IA);
 	type = CHAR(STRING_ELT(CADDR(args), 0)); /* ASCII */
 	if(strcmp(type, "C") == 0) symbol.type = R_C_SYM;
 	else if(strcmp(type, "Fortran") == 0) symbol.type = R_FORTRAN_SYM;
@@ -797,9 +773,7 @@ SEXP attribute_hidden do_isloaded(SEXP call, SEXP op, SEXP args, SEXP env)
 	if (!(R_FindSymbol(sym, pkg, NULL)) && 
 	    !(R_FindSymbol(sym, pkg, &symbol))) val = 0;
     }
-    ans = allocVector(LGLSXP, 1);
-    LOGICAL(ans)[0] = val;
-    return ans;
+    return ScalarLogical(val);
 }
 
 /*   Call dynamically loaded "internal" functions */
@@ -813,9 +787,8 @@ SEXP attribute_hidden do_External(SEXP call, SEXP op, SEXP args, SEXP env)
     R_ExternalRoutine fun = NULL;
     SEXP retval;
     R_RegisteredNativeSymbol symbol = {R_EXTERNAL_SYM, {NULL}, NULL};
-    /* I don't like this messing with vmax <TSL> */
-    /* But it is needed for clearing R_alloc and to be like .Call <BDR>*/
-    char *vmax = vmaxget(), buf[128];
+    void *vmax = vmaxget();
+    char buf[MaxSymbolBytes];
 
     args = resolveNativeRoutine(args, &ofun, &symbol, buf, NULL, NULL,
 				NULL, call);
@@ -830,9 +803,10 @@ SEXP attribute_hidden do_External(SEXP call, SEXP op, SEXP args, SEXP env)
 #ifdef CHECK_EXTERNAL_ARG_COUNT         /* Off by default. */
     if(symbol.symbol.external && symbol.symbol.external->numArgs > -1) {
 	if(symbol.symbol.external->numArgs != length(args))
-	    error(_("Incorrect number of arguments (%d), expecting %d for %s"),
-		  length(args), symbol.symbol.external->numArgs,
-		  translateChar(STRING_ELT(CAR(args), 0)));
+	    errorcall(call,
+		      _("Incorrect number of arguments (%d), expecting %d for %s"),
+		      length(args), symbol.symbol.external->numArgs,
+		      translateChar(STRING_ELT(CAR(args), 0)));
     }
 #endif
 
@@ -855,8 +829,8 @@ SEXP attribute_hidden do_dotcall(SEXP call, SEXP op, SEXP args, SEXP env)
     SEXP retval, nm, cargs[MAX_ARGS], pargs;
     R_RegisteredNativeSymbol symbol = {R_CALL_SYM, {NULL}, NULL};
     int nargs;
-    char *vmax = vmaxget();
-    char buf[128];
+    void *vmax = vmaxget();
+    char buf[MaxSymbolBytes];
 
     nm = CAR(args);
     args = resolveNativeRoutine(args, &ofun, &symbol, buf, NULL, NULL,
@@ -872,9 +846,10 @@ SEXP attribute_hidden do_dotcall(SEXP call, SEXP op, SEXP args, SEXP env)
     }
     if(symbol.symbol.call && symbol.symbol.call->numArgs > -1) {
 	if(symbol.symbol.call->numArgs != nargs)
-	    error(_("Incorrect number of arguments (%d), expecting %d for %s"),
-		  nargs, symbol.symbol.call->numArgs,
-		  translateChar(STRING_ELT(nm, 0)));
+	    errorcall(call,
+		      _("Incorrect number of arguments (%d), expecting %d for %s"),
+		      nargs, symbol.symbol.call->numArgs,
+		      translateChar(STRING_ELT(nm, 0)));
     }
 
     retval = R_NilValue;	/* -Wall */
@@ -1554,7 +1529,7 @@ SEXP attribute_hidden do_Externalgr(SEXP call, SEXP op, SEXP args, SEXP env)
     dd->recordGraphics = record;
     if (GErecording(call, dd)) {
 	if (!GEcheckState(dd))
-	    error(_("Invalid graphics state"));
+	    errorcall(call, _("Invalid graphics state"));
 	GErecordGraphicOperation(op, args, dd);
     }
     UNPROTECT(1);
@@ -1576,7 +1551,7 @@ SEXP attribute_hidden do_dotcallgr(SEXP call, SEXP op, SEXP args, SEXP env)
     dd->recordGraphics = record;
     if (GErecording(call, dd)) {
 	if (!GEcheckState(dd))
-	    error(_("Invalid graphics state"));
+	    errorcall(call, _("Invalid graphics state"));
 	GErecordGraphicOperation(op, args, dd);
     }
     UNPROTECT(1);
@@ -1674,9 +1649,8 @@ SEXP attribute_hidden do_dotCode(SEXP call, SEXP op, SEXP args, SEXP env)
     R_RegisteredNativeSymbol symbol = {R_C_SYM, {NULL}, NULL};
     R_NativePrimitiveArgType *checkTypes = NULL;
     R_NativeArgStyle *argStyles = NULL;
-    char *vmax, symName[128], encname[101];
-
-
+    void *vmax;
+    char symName[MaxSymbolBytes], encname[101];
 
     if (NaokSymbol == NULL || DupSymbol == NULL || PkgSymbol == NULL) {
 	NaokSymbol = install("NAOK");
@@ -1696,8 +1670,9 @@ SEXP attribute_hidden do_dotCode(SEXP call, SEXP op, SEXP args, SEXP env)
 
     if(symbol.symbol.c && symbol.symbol.c->numArgs > -1) {
 	if(symbol.symbol.c->numArgs != nargs)
-	    error(_("Incorrect number of arguments (%d), expecting %d for %s"),
-		  nargs, symbol.symbol.c->numArgs, symName);
+	    errorcall(call,
+		      _("Incorrect number of arguments (%d), expecting %d for %s"),
+		      nargs, symbol.symbol.c->numArgs, symName);
 
 	checkTypes = symbol.symbol.c->types;
 	argStyles = symbol.symbol.c->styles;
@@ -1722,8 +1697,8 @@ SEXP attribute_hidden do_dotCode(SEXP call, SEXP op, SEXP args, SEXP env)
                to RObjToCPtr(). We just have to sort out the ability
                to return the correct value which is complicated by
                dup, etc. */
-	    error(_("Wrong type for argument %d in call to %s"),
-		  nargs+1, symName);
+	    errorcall(call, _("Wrong type for argument %d in call to %s"),
+		      nargs+1, symName);
 	}
 #endif
 	cargs[nargs] = RObjToCPtr(CAR(pargs), naok, dup, nargs + 1,
@@ -2470,9 +2445,7 @@ void call_R(char *func, long nargs, void **arguments, char **modes,
 	    SETCAR(pcall, allocVector(STRSXP, n));
 	    for (j = 0 ; j < n ; j++) {
 		char *str = (char*)(arguments[i]);
-		s = allocString(strlen(str));
-		SET_STRING_ELT(CAR(pcall), i, s);
-		strcpy(CHAR(s), str);
+		SET_STRING_ELT(CAR(pcall), i, mkChar(str));
  	    }
 	    break;
 	    /* FIXME : This copy is unnecessary! */

@@ -16,8 +16,8 @@
  *  GNU General Public License for more details.
  *
  *  You should have received a copy of the GNU General Public License
- *  along with this program; if not, write to the Free Software
- *  Foundation, Inc., 51 Franklin Street, Fifth Floor, Boston, MA 02110-1301  USA
+ *  along with this program; if not, a copy is available at
+ *  http://www.r-project.org/Licenses/
  */
 
 
@@ -37,87 +37,7 @@
 #include <windows.h>
 #include "graphapp/ga.h"
 #include "rui.h"
-
-
-#include <sys/types.h>
-#include <sys/stat.h>
-
-static int R_unlink(char *names, int recursive);
-
-static int R_unlink_one(char *dir, char *name, int recursive)
-{
-    char tmp[MAX_PATH];
-
-    if(strcmp(name, ".") == 0) return 0;
-    if(strcmp(name, "..") == 0) return 0;
-    if(strlen(dir)) {
-	strcpy(tmp, dir);
-	if(*(dir + strlen(dir) - 1) != '\\') strcat(tmp, "\\");
-	strcat(tmp, name);
-    } else strcpy(tmp, name);
-    return (recursive ? R_unlink(tmp, 1): unlink(tmp)) !=0;
-}
-
-static int R_unlink(char *names, int recursive)
-{
-    int failures = 0;
-    char *p, tmp[MAX_PATH], dir[MAX_PATH+2];
-    WIN32_FIND_DATA find_data;
-    HANDLE fh;
-    struct stat sb;
-
-    if(strlen(names) >= MAX_PATH) error(_("invalid 'names' in 'R_unlink'"));
-    strcpy(tmp, names);
-    for(p = tmp; *p != '\0'; p++) if(*p == '/') *p = '\\';
-    if(stat(tmp, &sb) == 0) {
-	/* Is this a directory? */
-	if(sb.st_mode & _S_IFDIR) {
-	    if(recursive) {
-		strcpy(dir, tmp); strcat(tmp, "\\*");
-		fh = FindFirstFile(tmp, &find_data);
-		if (fh != INVALID_HANDLE_VALUE) {
-		    failures += R_unlink_one(dir, find_data.cFileName, 1);
-		    while(FindNextFile(fh, &find_data))
-			failures += R_unlink_one(dir, find_data.cFileName, 1);
-		    FindClose(fh);
-		}
-		/* Use short path as e.g. ' test' fails */
-		GetShortPathName(dir, tmp, MAX_PATH);
-		if(rmdir(tmp)) failures++;
-	    } else failures++; /* don't try to delete dirs */
-	} else {/* Regular file */
-	    failures += R_unlink_one("", names, 0);
-	}
-    }
-    return failures;
-}
-
-
-SEXP do_unlink(SEXP call, SEXP op, SEXP args, SEXP env)
-{
-    SEXP  fn, ans;
-    int i, nfiles, failures = 0, recursive;
-
-    checkArity(op, args);
-    fn = CAR(args);
-    nfiles = length(fn);
-    if (nfiles > 0) {
-    	if (!isString(fn))
-	    errorcall(call, _("invalid '%s' argument"), "x");
-	recursive = asLogical(CADR(args));
-    	if (recursive == NA_LOGICAL)
-	    errorcall(call, _("invalid '%s' argument"), "recursive");
-    	for(i = 0; i < nfiles; i++)
-	    failures += R_unlink(CHAR(STRING_ELT(fn, i)), recursive);
-    }
-    PROTECT(ans = allocVector(INTSXP, 1));
-    if (!failures)
-	INTEGER(ans)[0] = 0;
-    else
-	INTEGER(ans)[0] = 1;
-    UNPROTECT(1);
-    return (ans);
-}
+extern __declspec(dllimport) int  GA_isNT;
 
 SEXP do_flushconsole(SEXP call, SEXP op, SEXP args, SEXP env)
 {
@@ -222,15 +142,15 @@ SEXP do_winver(SEXP call, SEXP op, SEXP args, SEXP env)
 }
 
 /* also used in rui.c */
-void internal_shellexec(char * file)
+void internal_shellexec(const char * file)
 {
-    char *home;
-    unsigned int ret;
+    const char *home;
+    uintptr_t ret;
 
     home = getenv("R_HOME");
     if (home == NULL)
 	error(_("R_HOME not set"));
-    ret = (unsigned int) ShellExecute(NULL, "open", file, NULL, home, SW_SHOW);
+    ret = (uintptr_t) ShellExecute(NULL, "open", file, NULL, home, SW_SHOW);
     if(ret <= 32) { /* an error condition */
 	if(ret == ERROR_FILE_NOT_FOUND  || ret == ERROR_PATH_NOT_FOUND
 	   || ret == SE_ERR_FNF || ret == SE_ERR_PNF)
@@ -256,10 +176,12 @@ SEXP do_shellexec(SEXP call, SEXP op, SEXP args, SEXP env)
     return R_NilValue;
 }
 
-int check_doc_file(char * file)
+int winAccess(const char *path, int mode);
+
+int check_doc_file(const char * file)
 {
-    char *home, path[MAX_PATH];
-    struct stat sb;
+    const char *home;
+    char path[MAX_PATH];
 
     home = getenv("R_HOME");
     if (home == NULL)
@@ -268,13 +190,13 @@ int check_doc_file(char * file)
     strcpy(path, home);
     strcat(path, "/");
     strcat(path, file);
-    return stat(path, &sb) == 0;
+    return winAccess(path, 4) == 0;
 }
 
 SEXP do_windialog(SEXP call, SEXP op, SEXP args, SEXP env)
 {
     SEXP message;
-    char * type;
+    const char * type;
     int res=YES;
 
     checkArity(op, args);
@@ -301,7 +223,7 @@ SEXP do_windialog(SEXP call, SEXP op, SEXP args, SEXP env)
 SEXP do_windialogstring(SEXP call, SEXP op, SEXP args, SEXP env)
 {
     SEXP  message, def;
-    char *string;
+    const char *string;
 
     checkArity(op, args);
     message = CAR(args);
@@ -624,7 +546,6 @@ SEXP do_memsize(SEXP call, SEXP op, SEXP args, SEXP rho)
     checkArity(op, args);
     if(isLogical(CAR(args))) {
 	maxmem = asLogical(CAR(args));
-	/* changed to real in 1.8.1 as might exceed 2G */
 	PROTECT(ans = allocVector(REALSXP, 1));
 #ifdef LEA_MALLOC
 	if(maxmem == NA_LOGICAL)
@@ -633,6 +554,7 @@ SEXP do_memsize(SEXP call, SEXP op, SEXP args, SEXP rho)
 	    REAL(ans)[0] = mallinfo().usmblks;
 	else
 	    REAL(ans)[0] = mallinfo().uordblks;
+	REAL(ans)[0] /= 1048576.0;
 #else
 	REAL(ans)[0] = NA_REAL;
 #endif
@@ -648,8 +570,9 @@ SEXP do_memsize(SEXP call, SEXP op, SEXP args, SEXP rho)
 	    errorcall(call, _("don't be silly!: your machine has a 4Gb address limit"));
 	newmax = mem * 1048576.0;
 	if (newmax < R_max_memory)
-	    errorcall(call, _("cannot decrease memory limit"));
-	R_max_memory = newmax;
+	    warningcall(call, _("cannot decrease memory limit: ignored"));
+	else
+	    R_max_memory = newmax;
 #endif
     } else
 	errorcall(call, _("incorrect argument"));
@@ -659,7 +582,7 @@ SEXP do_memsize(SEXP call, SEXP op, SEXP args, SEXP rho)
 SEXP do_dllversion(SEXP call, SEXP op, SEXP args, SEXP rho)
 {
     SEXP path=R_NilValue, ans;
-    char *dll;
+    const char *dll;
     DWORD dwVerInfoSize;
     DWORD dwVerHnd;
 
@@ -743,7 +666,7 @@ RECT *RgetMDIsize(); /* in rui.c */
 SEXP do_selectlist(SEXP call, SEXP op, SEXP args, SEXP rho)
 {
     SEXP list, preselect, ans = R_NilValue;
-    char **clist;
+    const char **clist;
     int i, j = -1, n, mw = 0, multiple, nsel = 0;
     int xmax, ymax, ylist, fht, h0;
     Rboolean haveTitle;
@@ -761,7 +684,7 @@ SEXP do_selectlist(SEXP call, SEXP op, SEXP args, SEXP rho)
 	error(_("invalid '%s' argument"), "preselect");
 
     n = LENGTH(list);
-    clist = (char **) R_alloc(n + 1, sizeof(char *));
+    clist = (const char **) R_alloc(n + 1, sizeof(char *));
     for(i = 0; i < n; i++) {
 	clist[i] = CHAR(STRING_ELT(list, i));
 	mw = max(mw, gstrwidth(NULL, SystemFont, clist[i]));
@@ -816,17 +739,16 @@ SEXP do_selectlist(SEXP call, SEXP op, SEXP args, SEXP rho)
 	} else { /* cancel */
 	    PROTECT(ans = allocVector(STRSXP, 0));
 	}
-    } else {
-	PROTECT(ans = allocVector(STRSXP, 1));
-	SET_STRING_ELT(ans, 0, mkChar(selected));
-    }
+    } else
+	PROTECT(ans = mkString(selected));
+
     cleanup();
     show(RConsole);
     UNPROTECT(1);
     return ans;
 }
 
-int Rwin_rename(char *from, char *to)
+int Rwin_rename(const char *from, const char *to)
 {
     int res = 0;
     OSVERSIONINFO verinfo;
@@ -843,16 +765,6 @@ int Rwin_rename(char *from, char *to)
 	res = (MoveFile(from, to) == 0);
     }
     return res;
-}
-
-
-void R_CleanTempDir()
-{
-    if(Sys_TempDir) {
-	/* Windows cannot delete the current working directory */
-	SetCurrentDirectory(R_HomeDir());
-	R_unlink(Sys_TempDir, 1);
-    }
 }
 
 SEXP do_getClipboardFormats(SEXP call, SEXP op, SEXP args, SEXP rho)
@@ -879,7 +791,7 @@ SEXP do_readClipboard(SEXP call, SEXP op, SEXP args, SEXP rho)
 {
     SEXP ans = R_NilValue;
     HGLOBAL hglb;
-    char *pc;
+    const char *pc;
     int j, format, raw, size;
 
     checkArity(op, args);
@@ -889,10 +801,9 @@ SEXP do_readClipboard(SEXP call, SEXP op, SEXP args, SEXP rho)
     if(OpenClipboard(NULL)) {
     	if(IsClipboardFormatAvailable(format) &&
     	   	(hglb = GetClipboardData(format)) &&
-    	   	(pc = (char *)GlobalLock(hglb))) {
+    	   	(pc = (const char *)GlobalLock(hglb))) {
 	    if(!raw) {
-		PROTECT(ans = allocVector(STRSXP, 1));
-		SET_STRING_ELT(ans, 0, mkChar(pc));
+		PROTECT(ans = mkString(pc));
 	    } else {
 		size = GlobalSize(hglb);
 		PROTECT(ans = allocVector(RAWSXP, size));
@@ -911,7 +822,8 @@ SEXP do_writeClipboard(SEXP call, SEXP op, SEXP args, SEXP rho)
     SEXP text;
     int i, n, format;
     HGLOBAL hglb;
-    char *s, *p;
+    char *s;
+    const char *p;
     Rboolean success = FALSE, raw = FALSE;
 
     checkArity(op, args);
@@ -1081,7 +993,8 @@ SEXP do_shortpath(SEXP call, SEXP op, SEXP args, SEXP rho)
 SEXP do_chooseFiles(SEXP call, SEXP op, SEXP args, SEXP rho)
 {
     SEXP ans, def, caption, filters;
-    char *temp, *cfilters, list[65520],*p;
+    char *temp, *cfilters, list[65520];
+    const char *p;
     char path[MAX_PATH], filename[MAX_PATH];
     int multi, filterindex, i, count, lfilters, pathlen;
 
@@ -1164,7 +1077,8 @@ SEXP do_chooseFiles(SEXP call, SEXP op, SEXP args, SEXP rho)
 SEXP do_chooseDir(SEXP call, SEXP op, SEXP args, SEXP rho)
 {
     SEXP ans, def, caption;
-    char *p, path[MAX_PATH];
+    const char *p;
+    char path[MAX_PATH];
 
     checkArity(op, args);
     def = CAR(args);
@@ -1189,7 +1103,7 @@ extern window RFrame; /* from rui.c */
 
 SEXP getIdentification()
 {
-    char *res = "" /* -Wall */;
+    const char *res = "" /* -Wall */;
 
     switch(CharacterMode) {
     case RGui:
@@ -1226,7 +1140,7 @@ SEXP getWindowTitle()
     return mkString(res);
 }
 
-SEXP setTitle(char *title)
+SEXP setTitle(const char *title)
 {
     SEXP result = getWindowTitle();
 
@@ -1281,26 +1195,26 @@ SEXP do_setStatusBar(SEXP call, SEXP op, SEXP args, SEXP rho)
     return R_NilValue;
 }
 
+/* Note that a HANDLE is a pointer and hence will not necesarily fit into
+   an int, so this is fundamentally broken */
 
-int getConsoleHandle(char *which)
+static void * getConsoleHandle(const char *which)
 {
-    if (CharacterMode != RGui) return(0);
+    if (CharacterMode != RGui) return(NULL);
     else if (strcmp(which, "Console") == 0 && RConsole) 
 	return getHandle(RConsole);
     else if (strcmp(which, "Frame") == 0 && RFrame) 
 	return getHandle(RFrame);
     else if (strcmp(which, "Process") == 0) 
-	return (int)GetCurrentProcess();
-    else if (strcmp(which, "ProcessId") == 0) 
-	return (int)GetCurrentProcessId();
-    else return 0;
+	return GetCurrentProcess();
+    else return NULL;
 }
 
-static int getDeviceHandle(int);
+static void * getDeviceHandle(int);
 
 SEXP do_getWindowHandle(SEXP call, SEXP op, SEXP args, SEXP rho)
 {
-    int handle;
+    void * handle;
     SEXP which = CAR(args);
 
     checkArity(op, args);
@@ -1308,9 +1222,12 @@ SEXP do_getWindowHandle(SEXP call, SEXP op, SEXP args, SEXP rho)
 	errorcall(call, _("'which' must be length 1"));
     if (isString(which)) handle = getConsoleHandle(CHAR(STRING_ELT(which,0)));
     else if (isInteger(which)) handle = getDeviceHandle(INTEGER(which)[0]);
-    else handle = 0;
+    else handle = NULL;
 
-    return ScalarInteger(handle);
+    if (handle)
+	return R_MakeExternalPtr(handle,R_NilValue,R_NilValue);
+    else
+    	return R_NilValue;
 }
 
 #include "devWindows.h"
@@ -1342,7 +1259,7 @@ SEXP do_bringtotop(SEXP call, SEXP op, SEXP args, SEXP env)
     return R_NilValue;
 }
 
-static int getDeviceHandle(int dev)
+static void * getDeviceHandle(int dev)
 {
     GEDevDesc *gdd;
     gadesc *xd;
@@ -1350,17 +1267,17 @@ static int getDeviceHandle(int dev)
     if (dev == -1) return(getHandle(RConsole));
     if (dev < 1 || dev > R_MaxDevices || dev == NA_INTEGER) return(0);
     gdd = (GEDevDesc *) GetDevice(dev - 1);
-    if (!gdd) return(0);
+    if (!gdd) return(NULL);
     xd = (gadesc *) gdd->dev->deviceSpecific;
-    if (!xd) return(0);
-    return(getHandle(xd->gawin));
+    if (!xd) return(NULL);
+    return getHandle(xd->gawin);
 }
 
 /* This assumes a menuname of the form $Graph<nn>Main, $Graph<nn>Popup, $Graph<nn>LocMain,
    or $Graph<nn>LocPopup where <nn> is the
    device number.  We've already checked the $Graph prefix. */
 
-menu getGraphMenu(char* menuname)
+menu getGraphMenu(const char* menuname)
 {
     int devnum;
     GEDevDesc *gdd;
@@ -1398,8 +1315,6 @@ Rboolean winNewFrameConfirm(void)
    Coded looking at tcl's tclWinFile.c
 */
 
-extern int GA_isNT;
-
 int winAccess(const char *path, int mode)
 {
     DWORD attr = GetFileAttributes(path);
@@ -1419,7 +1334,7 @@ int winAccess(const char *path, int mode)
     if(GA_isNT) {
 	/* Now look for file security info, which is NT only */
 	SECURITY_DESCRIPTOR *sdPtr = NULL;
-	unsigned long size = 0;
+	DWORD size = 0;
 	GENERIC_MAPPING genMap;
 	HANDLE hToken = NULL;
 	DWORD desiredAccess = 0;

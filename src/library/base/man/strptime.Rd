@@ -1,3 +1,8 @@
+% File src/library/base/man/strptime.Rd
+% Part of the R package, http://www.R-project.org
+% Copyright 1995-2007 R Core Development Team
+% Distributed under GPL 2 or later
+
 \name{strptime}
 \alias{format.POSIXct}
 \alias{format.POSIXlt}
@@ -133,7 +138,7 @@ ISOdate(year, month, day, hour = 12, min = 0, sec = 0, tz = "GMT")
       divided by 100.}
     \item{\code{\%D}}{Locale-specific date format such as
       \code{\%m/\%d/\%y}: ISO C99 says it should be that exact format.}
-    \item{\code{\%e}}{Day of the month as decimal number ( 1--31), with
+    \item{\code{\%e}}{Day of the month as decimal number (1--31), with
       a leading space for a single-digit number.}
     \item{\code{\%F}}{Equivalent to \%Y-\%m-\%d (the ISO 8601 date
       format).}
@@ -169,7 +174,7 @@ ISOdate(year, month, day, hour = 12, min = 0, sec = 0, tz = "GMT")
   not followed by a digit, it uses the setting of
   \code{\link{getOption}("digits.secs")}, or if that is unset, \code{n = 3}).
   Further, for \code{strptime} \code{\%OS} will input seconds including
-  fractional seconds.
+  fractional seconds.  Note that \code{\%S} ignore fractional parts on output.
 
   The behaviour of other conversion specifications (and even if other
   character sequences commencing with \code{\%} \emph{are} conversion
@@ -191,8 +196,8 @@ ISOdate(year, month, day, hour = 12, min = 0, sec = 0, tz = "GMT")
 
   \code{strptime} turns character representations into an object of
   class \code{"\link{POSIXlt}"}.  The timezone is used to set the
-  \code{isdst} component and (as from \R 2.5.0) to set the
-  \code{"tzone"} attribute if \code{tz != ""}.
+  \code{isdst} component and to set the \code{"tzone"} attribute if
+  \code{tz != ""}.
 
   \code{ISOdatetime} and \code{ISOdate} return an object of class
   \code{"\link{POSIXct}"}.

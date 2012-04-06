@@ -14,8 +14,8 @@
  *  GNU General Public License for more details.
  *
  *  You should have received a copy of the GNU General Public License
- *  along with this program; if not, write to the Free Software
- *  Foundation, Inc., 51 Franklin Street Fifth Floor, Boston, MA 02110-1301  USA
+ *  along with this program; if not, a copy is available at
+ *  http://www.r-project.org/Licenses/
  */
 
 /* <UTF8> char here is handled as a whole string */
@@ -31,10 +31,14 @@
 #include <Defn.h>
 #include <Rmath.h>
 
+#include "RBufferUtils.h"
+static R_StringBuffer cbuff = {NULL, 0, MAXELTSIZE};
+
 static SEXP cross_colon(SEXP call, SEXP s, SEXP t)
 {
     SEXP a, la, ls, lt, rs, rt;
     int i, j, k, n, nls, nlt, vs, vt;
+    char *cbuf;
 
     if (length(s) != length(t))
 	errorcall(call, _("unequal factor lengths"));
@@ -63,23 +67,24 @@ static SEXP cross_colon(SEXP call, SEXP s, SEXP t)
 	    vs = strlen(CHAR(STRING_ELT(ls, i)));
 	    for (j = 0; j < nlt; j++) {
 		vt = strlen(CHAR(STRING_ELT(lt, j)));
-		SET_STRING_ELT(la, k, allocString(vs + vt + 1));
-		sprintf(CHAR(STRING_ELT(la, k)), "%s:%s",
+                cbuf = R_AllocStringBuffer(vs + vt + 1, &cbuff);
+		sprintf(cbuf, "%s:%s",
 			CHAR(STRING_ELT(ls, i)), CHAR(STRING_ELT(lt, j)));
+                SET_STRING_ELT(la, k, mkChar(cbuf));
 		k++;
 	    }
 	}
 	setAttrib(a, R_LevelsSymbol, la);
 	UNPROTECT(1);
     }
-    PROTECT(la = allocVector(STRSXP, 1));
-    SET_STRING_ELT(la, 0, mkChar("factor"));
+    PROTECT(la = mkString("factor"));
     setAttrib(a, R_ClassSymbol, la);
     UNPROTECT(2);
+    R_FreeStringBufferL(&cbuff);
     return(a);
 }
 
-static SEXP seq_colon(double n1, double n2)
+static SEXP seq_colon(double n1, double n2, SEXP call)
 {
     int i, n, in1;
     double r;
@@ -91,7 +96,7 @@ static SEXP seq_colon(double n1, double n2)
     if (n1 <= INT_MIN || n2 <= INT_MIN || n1 > INT_MAX || n2 > INT_MAX)
 	useInt = FALSE;
     r = fabs(n2 - n1);
-    if(r >= INT_MAX) error(_("result would be too long a vector"));
+    if(r >= INT_MAX) errorcall(call,_("result would be too long a vector"));
 
     n = r + 1 + FLT_EPSILON;
     if (useInt) {
@@ -123,8 +128,7 @@ SEXP attribute_hidden do_colon(SEXP call, SEXP op, SEXP args, SEXP rho)
     s2 = CADR(args);
     n1 = length(s1);
     if( n1 > 1 )
-	warningcall(call, 
-		    _("numerical expression has %d elements: only the first used"), (int) n1);
+	warningcall(call, _("numerical expression has %d elements: only the first used"), (int) n1);
     n2 = length(s2);
     if( n2 > 1 )
 	warningcall(call, _("numerical expression has %d elements: only the first used"), (int) n2);
@@ -132,7 +136,7 @@ SEXP attribute_hidden do_colon(SEXP call, SEXP op, SEXP args, SEXP rho)
     n2 = asReal(s2);
     if (ISNAN(n1) || ISNAN(n2))
 	errorcall(call, _("NA/NaN argument"));
-    return seq_colon(n1, n2);
+    return seq_colon(n1, n2, call);
 }
 
 static SEXP rep2(SEXP s, SEXP ncopy)
@@ -146,7 +150,7 @@ static SEXP rep2(SEXP s, SEXP ncopy)
     na = 0;
     for (i = 0; i < nc; i++) {
 	if (INTEGER(t)[i] == NA_INTEGER || INTEGER(t)[i]<0)
-	    error(_("invalid number of copies in rep.int()"));
+	    error(_("invalid '%s' value"), "times");
 	na += INTEGER(t)[i];
     }
 
@@ -212,8 +216,7 @@ static SEXP rep2(SEXP s, SEXP ncopy)
 	    SET_STRING_ELT(tmp, 1, mkChar("factor"));
 	}
 	else {
-	    PROTECT(tmp = allocVector(STRSXP, 1));
-	    SET_STRING_ELT(tmp, 0, mkChar("factor"));
+	    PROTECT(tmp = mkString("factor"));
 	}
 	setAttrib(a, R_ClassSymbol, tmp);
 	UNPROTECT(1);
@@ -229,7 +232,7 @@ static SEXP rep1(SEXP s, SEXP ncopy)
     SEXP a, t;
 
     if (!isVector(ncopy))
-	error(_("rep() incorrect type for second argument"));
+	error(_("incorrect type for second argument"));
 
     if (!isVector(s) && (!isList(s)))
 	error(_("attempt to replicate non-vector"));
@@ -238,10 +241,10 @@ static SEXP rep1(SEXP s, SEXP ncopy)
 	return rep2(s, ncopy);
 
     if ((length(ncopy) != 1))
-	error(_("invalid number of copies in rep.int()"));
+	error(_("invalid '%s' value"), "times");
 
     if ((nc = asInteger(ncopy)) == NA_INTEGER || nc < 0)/* nc = 0 ok */
-	error(_("invalid number of copies in rep.int()"));
+	error(_("invalid '%s' value"), "times");
 
     ns = length(s);
     na = nc * ns;
@@ -297,8 +300,7 @@ static SEXP rep1(SEXP s, SEXP ncopy)
 	    SET_STRING_ELT(tmp, 1, mkChar("factor"));
 	}
 	else {
-	    PROTECT(tmp = allocVector(STRSXP, 1));
-	    SET_STRING_ELT(tmp, 0, mkChar("factor"));
+	    PROTECT(tmp = mkString("factor"));
 	}
 	setAttrib(a, R_ClassSymbol, tmp);
 	UNPROTECT(1);
@@ -339,7 +341,7 @@ SEXP attribute_hidden do_rep(SEXP call, SEXP op, SEXP args, SEXP rho)
     SET_TAG(CDDR(ap), install("length.out"));
     SET_TAG(CDR(CDDR(ap)), install("each"));
     SET_TAG(CDDR(CDDR(ap)), R_DotsSymbol);
-    PROTECT(args = matchArgs(ap, args));
+    PROTECT(args = matchArgs(ap, args, call));
 
     x = CAR(args); 
     lx = length(x);
@@ -438,7 +440,7 @@ SEXP attribute_hidden do_seq(SEXP call, SEXP op, SEXP args, SEXP rho)
     SET_TAG(tmp, install("length.out")); tmp = CDR(tmp);
     SET_TAG(tmp, install("along.with")); tmp = CDR(tmp);
     SET_TAG(tmp, R_DotsSymbol);
-    PROTECT(args = matchArgs(ap, args));
+    PROTECT(args = matchArgs(ap, args, call));
 
     /* Manage 'along.with' prior to evaluation */
     ap = CDDR(CDDR(args));
@@ -455,9 +457,9 @@ SEXP attribute_hidden do_seq(SEXP call, SEXP op, SEXP args, SEXP rho)
     if(One && from != R_MissingArg) {
 	lf = length(from);
 	if(lf == 1 && (TYPEOF(from) == INTSXP || TYPEOF(from) == REALSXP))
-	    ans = seq_colon(1.0, asReal(from));
+	    ans = seq_colon(1.0, asReal(from), call);
 	else if (lf)
-	    ans = seq_colon(1.0, (double)lf);
+	    ans = seq_colon(1.0, (double)lf, call);
 	else
 	    ans = allocVector(INTSXP, 0);
 	goto done;
@@ -465,7 +467,7 @@ SEXP attribute_hidden do_seq(SEXP call, SEXP op, SEXP args, SEXP rho)
     if(along != R_MissingArg) {
 	lout = INTEGER(along)[0];
 	if(One) {
-	    ans = lout ? seq_colon(1.0, (double)lout) : allocVector(INTSXP, 0);
+	    ans = lout ? seq_colon(1.0, (double)lout, call) : allocVector(INTSXP, 0);
 	    goto done;
 	}
     } else if(len != R_MissingArg && len != R_NilValue) {
@@ -480,7 +482,7 @@ SEXP attribute_hidden do_seq(SEXP call, SEXP op, SEXP args, SEXP rho)
 	if(from == R_MissingArg) rfrom = 1.0;
 	if(to == R_MissingArg) rto = 1.0;
 	if(by == R_MissingArg) 
-	    ans = seq_colon(rfrom, rto);
+	    ans = seq_colon(rfrom, rto, call);
 	else {
 	    double del = rto - rfrom, n, dd;
 	    int nn;
@@ -518,7 +520,7 @@ SEXP attribute_hidden do_seq(SEXP call, SEXP op, SEXP args, SEXP rho)
     } else if (lout == 0) {
 	ans = allocVector(INTSXP, 0);
     } else if (One) {
-	ans = seq_colon(1.0, (double)lout);
+	ans = seq_colon(1.0, (double)lout, call);
     } else if (by == R_MissingArg) {
 	double rfrom = asReal(from), rto = asReal(to), rby;
 	if(to == R_MissingArg) rto = rfrom + lout - 1;

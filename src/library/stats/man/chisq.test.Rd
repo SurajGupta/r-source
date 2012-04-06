@@ -1,3 +1,8 @@
+% File src/library/stats/man/chisq.test.Rd
+% Part of the R package, http://www.R-project.org
+% Copyright 1995-2007 R Core Development Team
+% Distributed under GPL 2 or later
+
 \name{chisq.test}
 \alias{chisq.test}
 \concept{goodness-of-fit}
@@ -30,9 +35,9 @@ chisq.test(x, y = NULL, correct = TRUE,
 }
 \details{
   If \code{x} is a matrix with one row or column, or if \code{x} is a
-  vector and \code{y} is not given, then a \dQuote{goodness-of-fit test}
-  is performed (\dQuote{\code{x} is treated as a one-dimensional
-  contingency table}).  The entries of \code{x} must be non-negative
+  vector and \code{y} is not given, then a \emph{goodness-of-fit test}
+  is performed (\code{x} is treated as a one-dimensional
+  contingency table).  The entries of \code{x} must be non-negative
   integers.  In this case, the hypothesis tested is whether the
   population probabilities equal those in \code{p}, or are all equal if
   \code{p} is not given.
@@ -97,13 +102,13 @@ chisq.test(x, y = NULL, correct = TRUE,
 ## Not really a good example
 chisq.test(InsectSprays$count > 7, InsectSprays$spray)
 				# Prints test summary
-chisq.test(InsectSprays$count > 7, InsectSprays$spray)$obs
+chisq.test(InsectSprays$count > 7, InsectSprays$spray)$observed
 				# Counts observed
-chisq.test(InsectSprays$count > 7, InsectSprays$spray)$exp
+chisq.test(InsectSprays$count > 7, InsectSprays$spray)$expected
 				# Counts expected under the null
 
 ## Effect of simulating p-values
-x <- matrix(c(12, 5, 7, 7), nc = 2)
+x <- matrix(c(12, 5, 7, 7), ncol = 2)
 chisq.test(x)$p.value		# 0.4233
 chisq.test(x, simulate.p.value = TRUE, B = 10000)$p.value
 				# around 0.29!

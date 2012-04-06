@@ -1,3 +1,8 @@
+% File src/library/stats/man/spec.pgram.Rd
+% Part of the R package, http://www.R-project.org
+% Copyright 1995-2007 R Core Development Team
+% Distributed under GPL 2 or later
+
 \name{spec.pgram}
 \alias{spec.pgram}
 \title{Estimate Spectral Density of a Time Series by a Smoothed
@@ -87,6 +92,8 @@ spec.pgram(x, spans = NULL, kernel, taper = 0.1,
   \code{\link{plot.spec}}, \code{\link{fft}}}
 
 \examples{
+require(graphics)
+
 ## Examples from Venables & Ripley
 spectrum(ldeaths)
 spectrum(ldeaths, spans = c(3,5))

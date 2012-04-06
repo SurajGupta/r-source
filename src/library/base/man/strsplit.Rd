@@ -1,3 +1,8 @@
+% File src/library/base/man/strsplit.Rd
+% Part of the R package, http://www.R-project.org
+% Copyright 1995-2007 R Core Development Team
+% Distributed under GPL 2 or later
+
 \name{strsplit}
 \alias{strsplit}
 \title{Split the Elements of a Character Vector}
@@ -16,7 +21,7 @@ strsplit(x, split, extended = TRUE, fixed = FALSE, perl = FALSE)
   \item{split}{
     character vector (or object which can be coerced to such)
     containing \link{regular expression}(s) (unless \code{fixed = TRUE})
-    to use as \dQuote{split}.  If empty matches occur, in particular if
+    to use for splitting.  If empty matches occur, in particular if
     \code{split} has length 0, \code{x} is split into single characters.
     If \code{split} has length greater than 1, it is re-cycled along
     \code{x}.

@@ -1,3 +1,19 @@
+#  File src/library/utils/R/format.R
+#  Part of the R package, http://www.R-project.org
+#
+#  This program is free software; you can redistribute it and/or modify
+#  it under the terms of the GNU General Public License as published by
+#  the Free Software Foundation; either version 2 of the License, or
+#  (at your option) any later version.
+#
+#  This program is distributed in the hope that it will be useful,
+#  but WITHOUT ANY WARRANTY; without even the implied warranty of
+#  MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
+#  GNU General Public License for more details.
+#
+#  A copy of the GNU General Public License is available at
+#  http://www.r-project.org/Licenses/
+
 formatUL <-
 function(x, label = "*", offset = 0,
          width = 0.9 * getOption("width"))
@@ -16,10 +32,10 @@ function(x, type = "arabic", offset = 0, start = 1,
     type_tokens <- c("1", "A", "a", "I", "i")
     type_full_names <- c("arabic", "Alph", "alph", "Roman", "roman")
     type <- match.arg(type, c(type_tokens, type_full_names))
-    if(nchar(type) > 1)
+    if(nchar(type, "b") > 1)
         type <- type_tokens[match(type, type_full_names)]
     len <- length(x)
-    labels <- seq.int(start[1], length = len)
+    labels <- seq.int(start[1], length.out = len)
     upper <- labels[len]
     if(type %in% c("A", "a")) {
         if(upper > 26)
@@ -38,7 +54,7 @@ function(x, type = "arabic", offset = 0, start = 1,
     }
     .format_rl_table(sprintf("%s.", labels), x, offset, width)
 }
-         
+
 .format_rl_table <-
 function(labels, x, offset = 0, width = 0.9 * getOption("width"),
          sep = " ")

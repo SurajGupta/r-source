@@ -17,10 +17,8 @@
 ### License for more details.
 ###
 ### You should have received a copy of the GNU General Public License
-### along with R; if not, you can obtain it via the World Wide Web at
-### 'http://www.gnu.org/copyleft/gpl.html', or by writing to the Free
-### Software Foundation, Inc., 51 Franklin Street, Fifth Floor,
-### Boston, MA 02110-1301, USA
+### along with R; if not, a copy is available at
+### http://www.r-project.org/Licenses/
 
 AC_PREREQ(2.60)
 
@@ -58,6 +56,11 @@ AH_TOP([#ifndef R_CONFIG_H
 AH_BOTTOM([
 #endif /* not R_CONFIG_H */])
 
+## The gettext macros call AC_GNU_SOURCE early, so all the
+## C compiling makes use of that.  If it is ever removed, we
+## would need it or something similar here.
+
+
 ### ** Platform.
 
 AC_CANONICAL_HOST
@@ -74,7 +77,7 @@ R_PLATFORM="${host}"
 AC_SUBST(R_PLATFORM)
 
 case "${host_os}" in
-  cygwin*|mingw*|windows*|winnt)
+  mingw*|windows*|winnt)
     AC_DEFINE(Win32, 1,
               [Define according to your operating system type.])
     R_OSTYPE="windows"
@@ -479,6 +482,8 @@ AC_ARG_VAR([SAFE_FFLAGS],
 AC_ARG_VAR([r_arch],
            [Use architecture-dependent subdirs with this name])
 AC_ARG_VAR([DEFS], [C defines for use when compiling R])
+AC_ARG_VAR([JAVA_HOME],
+           [Path to the root of the Java environment])
 
 if test -z "${r_arch}"; then
   R_ARCH=
@@ -548,6 +553,7 @@ R_PROG_F77
 AC_PROG_CXX
 AC_PROG_CXXCPP
 R_GCC4_VISIBILITY
+AC_GNU_SOURCE ## needed to libintl
 
 AC_PROG_OBJC
 ## unfortunately autoconf sets OBJC to gcc even if there is no working compiler
@@ -568,6 +574,12 @@ AC_SUBST(R_DEFS)
 AC_DISABLE_STATIC
 AC_PROG_LIBTOOL
 AC_SUBST(LIBTOOL_DEPS)
+
+## cross-compiling
+R_CROSS_COMPILING
+AC_SUBST(BUILD_CC)
+AC_SUBST(BUILD_R)
+AM_CONDITIONAL(CROSS_COMPILING, [test "${cross_compiling}" = yes])
 
 ### * Checks for libraries.
 
@@ -691,7 +703,7 @@ AC_HEADER_SYS_WAIT
 ## Some of these are also checked for when Autoconf computes the default
 ## includes.
 AC_CHECK_HEADERS(arpa/inet.h dl.h dlfcn.h elf.h fcntl.h floatingpoint.h \
-  fpu_control.h glob.h grp.h ieee754.h ieeefp.h limits.h locale.h \
+  fpu_control.h glob.h grp.h limits.h locale.h \
   netdb.h netinet/in.h pwd.h stdbool.h strings.h \
   sys/param.h sys/select.h sys/socket.h sys/stat.h sys/resource.h \
   sys/time.h sys/times.h sys/utsname.h time.h unistd.h)
@@ -743,22 +755,18 @@ AC_CHECK_TYPES([intptr_t, uintptr_t], , , [#ifdef HAVE_INTTYPES_H
 AC_C_BIGENDIAN
 AC_C_CONST
 R_C_INLINE
-if test "${cross_compiling}" = yes; then
-  warn_xcompile_sizeof_int="assuming C ints are 4 byte on ${host}"
-  AC_MSG_WARN([${warn_xcompile_sizeof_int}])
-fi
-AC_CHECK_SIZEOF(int, 4)
-if test "${ac_cv_sizeof_int}" = 4; then
-  AC_DEFINE(INT_32_BITS, 1, [Define if you have 32 bit ints.])
-fi
-if test "${cross_compiling}" = yes; then
-  warn_xcompile_sizeof_long="assuming C longs are 4 byte on ${host}"
-  AC_MSG_WARN([${warn_xcompile_sizeof_long}])
-fi
-AC_CHECK_SIZEOF(long, 4)
-AC_CHECK_SIZEOF(long long, 0)
-AC_CHECK_SIZEOF(double, 8)
-AC_CHECK_SIZEOF(long double, 0)
+AC_CHECK_SIZEOF(int)
+## on some platforms this gives a trailing lf, so
+case "${ac_cv_sizeof_int}" in
+    4*)
+    AC_DEFINE(INT_32_BITS, 1, [Define if you have 32 bit ints.])
+    ;;
+esac
+AC_CHECK_SIZEOF(long)
+AC_CHECK_SIZEOF(long long)
+AC_CHECK_SIZEOF(double)
+AC_CHECK_SIZEOF(long double)
+AC_CHECK_SIZEOF(size_t)
 
 R_PROG_CC_MAKEFRAG
 R_PROG_CC_LO_MAKEFRAG
@@ -1145,6 +1153,7 @@ fi
 
 ## Step 3.  Individual platform overrides.
 dylib_undefined_allowed=yes
+is_cygwin=no
 case "${host_os}" in
   aix[123]*|aix4.[01]*)
     ## These need a form of linking we no longer support
@@ -1185,6 +1194,17 @@ case "${host_os}" in
 #    shlib_ldflags="${wl}-bM:SRE ${wl}-H512 ${wl}-T512 ${wl}-bnoentry ${wl}-bexpall ${wl}-bI:\$(R_HOME)/etc/R.exp"
     SHLIB_LIBADD="\$(LIBM)"
     shlib_cxxldflags="${shlib_ldflags}"
+    ;;
+  cygwin*)
+    ## All Windows code is PIC
+    cpicflags=
+    cxxpicflags=
+    fpicflags=
+    fcpicflags=
+    SHLIB_EXT=".dll"
+    dylib_undefined_allowed=no
+    is_cygwin=yes
+    main_ldflags="${wl}--large-address-aware ${wl}--stack=0xA00000"
     ;;
   darwin*)
     darwin_pic="-fPIC"
@@ -1357,6 +1377,7 @@ rm -f libconftest${DYLIB_EXT} conftest.c
     cpicflags=
     cxxpicflags=
     fpicflags=
+    fcpicflags=
     ;;
   netbsd*)
     if ${CPP} - -dM < /dev/null | grep __ELF__ >/dev/null ; then
@@ -1437,7 +1458,7 @@ fi
 : ${CPICFLAGS="${cpicflags}"}
 if test -z "${CPICFLAGS}"; then
   case "${host_os}" in
-    aix*|irix*|mingw*|osf*)
+    aix*|cygwin*|irix*|mingw*|osf*)
       ;;
     *)
       AC_MSG_WARN([I could not determine CPICFLAGS.])
@@ -1449,7 +1470,7 @@ fi
 : ${FPICFLAGS="${fpicflags}"}
 if test -z "${FPICFLAGS}"; then
   case "${host_os}" in
-    aix*|irix*|mingw*|osf*)
+    aix*|cygwin*|irix*|mingw*|osf*)
       ;;
     *)
       AC_MSG_WARN([I could not determine FPICFLAGS.])
@@ -1461,7 +1482,7 @@ fi
 : ${CXXPICFLAGS="${cxxpicflags}"}
 if test -z "${CXXPICFLAGS}"; then
   case "${host_os}" in
-    aix*|irix*|mingw*|osf*)
+    aix*|cygwin*|irix*|mingw*|osf*)
       ;;
     *)
       warn_cxxpicflags="I could not determine CXXPICFLAGS."
@@ -1543,6 +1564,7 @@ else
 fi
 
 AM_CONDITIONAL(DYLIB_UNDEFINED_ALLOWED, [test "x${dylib_undefined_allowed}" = xyes])
+AM_CONDITIONAL(BUILD_CYGWIN, [test "x${is_cygwin}" = xyes])
 
 AC_SUBST(MAIN_LD)
 AC_SUBST(MAIN_LDFLAGS)
@@ -1597,6 +1619,7 @@ AC_CHECK_DECLS([alloca], , ,
 # include <alloca.h>
 #endif])
 ## fseeko/ftello may be macros, matherr is redefined
+## is.blank should be a macro according to C99
 AC_CHECK_FUNCS(fseeko ftello isblank matherr)
 R_CHECK_FUNCS([fcntl], [#include <fcntl.h>])
 R_CHECK_FUNCS([getgrgid], [#include <grp.h>])
@@ -1632,6 +1655,13 @@ R_CHECK_FUNCS([glob], [#ifdef HAVE_GLOB_H
 # include <glob.h>
 #endif])
 
+## we can't use dir() or unlink(recursive=TRUE) without these
+if test "${ac_cv_have_decl_stat}" = "no"; then
+   AC_MSG_ERROR([Building R requires the 'stat' system call])
+fi
+if test "${ac_cv_search_opendir}" = "no"; then
+   AC_MSG_ERROR([Building R requires the 'opendir' system call])
+fi
 
 
 ## <NOTE>
@@ -1686,13 +1716,10 @@ AC_SEARCH_LIBS(gethostbyname, [nsl socket])
 AC_SEARCH_LIBS(xdr_string, [nsl])
 R_FUNC___SETFPUCW
 R_FUNC_CALLOC
-if test "${ac_cv_func_finite}" = "yes"; then
-R_FUNC_FINITE
-fi
 if test "${ac_cv_have_decl_isfinite}" = "yes"; then
 R_FUNC_ISFINITE
 fi
-R_FUNC_LOG
+## check accuracy of log1p
 R_FUNC_LOG1P
 R_FUNC_FTELL
 R_FUNC_SIGACTION
@@ -2044,7 +2071,7 @@ esac
 : ${FCPICFLAGS="${fcpicflags}"}
 if test -z "${FCPICFLAGS}"; then
   case "${host_os}" in
-    aix*|irix*|mingw*|osf*)
+    aix*|cygwin*|irix*|mingw*|osf*)
       ;;
     *)
       AC_MSG_WARN([I could not determine FCPICFLAGS.])
@@ -2120,37 +2147,35 @@ for arg in ${LDFLAGS} ${FLIBS} ${BLAS_LIBS} ${LAPACK_LIBS} ${X_LIBS} \
       ;;
   esac
 done
-## Handle JAVA_LIBS specially so that users can conveniently set just
+## Handle JAVA_LD_LIBRARY_PATH specially so that users can conveniently set just
 ## R_JAVA_LD_LIBRARY_PATH in their environment.
-for arg in ${JAVA_LIBS}; do
-  case "${arg}" in
-    -L*)
-      lib=`echo ${arg} | sed "s/^-L//"`
+if test -n "${JAVA_LD_LIBRARY_PATH}"; then
+   args=`echo ${JAVA_LD_LIBRARY_PATH} | sed -e s:\$\(JAVA_HOME\):${JAVA_HOME}:g`
+   r_save_IFS="${IFS}"; IFS="${PATH_SEPARATOR}"
+   for lib in ${args}; do
       r_want_lib=true
-      ## don't add anything for Darwin
-      case "${host_os}" in darwin*) r_want_lib=false ;; esac
       ## Do not add non-existent directories.
       test -d "${lib}" || r_want_lib=false
       if test x"${r_want_lib}" = xtrue; then
-        ## Canonicalize (/usr/lib/j2sdk1.5-sun/jre/../lib/i386).
-        lib=`cd "${lib}" && ${GETWD}`
+        ## do NOT Canonicalize (/usr/lib/j2sdk1.5-sun/jre/../lib/i386).
+	## because we may lose the reference to ${JAVA_HOME} if it is a symlink (it often is)
+        ##lib=`cd "${lib}" && ${GETWD}`
         ## Do not add something twice, or something already in
         ## R_LD_LIBRARY_PATH or the defaults.
-        r_save_IFS="${IFS}"; IFS="${PATH_SEPARATOR}"
         for dir in ${R_JAVA_LD_LIBRARY_PATH}${IFS}${R_LD_LIBRARY_PATH}${IFS}${r_ld_library_defaults}; do
           if test x"${dir}" = x"${lib}"; then
              r_want_lib=false
              break
           fi
         done
-        IFS="${r_save_IFS}"
         if test x"${r_want_lib}" = xtrue; then
+	  lib=`echo ${lib}|sed -e s:${JAVA_HOME}:\$\{JAVA_HOME\}:g`
           R_SH_VAR_ADD(R_JAVA_LD_LIBRARY_PATH, [${lib}], [${PATH_SEPARATOR}])
         fi
       fi
-      ;;
-  esac
-done
+   done
+   IFS="${r_save_IFS}"
+fi
 ## </FIXME>
 
 AC_SUBST(R_LD_LIBRARY_PATH)
@@ -2174,6 +2199,8 @@ if test "${USE_NLS}" = "yes"; then
   fi
 else
   USE_INCLUDED_LIBINTL=no
+  ## for ICONV_CONST
+  AM_ICONV
 fi
 AC_SUBST(XTRA_INTL_CPPFLAGS)
 
@@ -2192,6 +2219,7 @@ case "${host_os}" in
   ;;
 esac
 AC_SUBST(OSF_SH_BUG)
+
 
 ### * Win32 overrides
 case "${host_os}" in
@@ -2325,8 +2353,10 @@ r_f77_compiler="${F77} ${R_XTRA_FFLAGS} ${FFLAGS}"
 r_f95_compiler="${FC} ${FCFLAGS}"
 r_objc_compiler="${OBJC} ${OBJCFLAGS}"
 r_interfaces=
+## we will not have tested for X11 under some configure options, so
+## need to test protect the test.
 for item in X11 aqua tcltk; do
-  if eval "test \${use_${item}} = yes"; then
+  if eval "test x\${use_${item}} = xyes"; then
     R_SH_VAR_ADD(r_interfaces, [${item}], [, ])
   fi
 done

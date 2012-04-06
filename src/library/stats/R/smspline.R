@@ -1,3 +1,19 @@
+#  File src/library/stats/R/smspline.R
+#  Part of the R package, http://www.R-project.org
+#
+#  This program is free software; you can redistribute it and/or modify
+#  it under the terms of the GNU General Public License as published by
+#  the Free Software Foundation; either version 2 of the License, or
+#  (at your option) any later version.
+#
+#  This program is distributed in the hope that it will be useful,
+#  but WITHOUT ANY WARRANTY; without even the implied warranty of
+#  MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
+#  GNU General Public License for more details.
+#
+#  A copy of the GNU General Public License is available at
+#  http://www.r-project.org/Licenses/
+
 smooth.spline <-
     function(x, y = NULL, w = NULL, df, spar = NULL, cv = FALSE,
              all.knots = FALSE, nknots = NULL, keep.data = TRUE,
@@ -26,7 +42,7 @@ smooth.spline <-
         else if(!is.numeric(nk)) stop("'nknots' must be numeric <= n")
         else if(nk > n)
             stop("cannot use more inner knots than unique 'x' values")
-	c(rep(x[1], 3), x[seq(1,n, len= nk)], rep(x[n], 3))
+	c(rep(x[1], 3), x[seq.int(1,n, length.out= nk)], rep(x[n], 3))
     }
     contr.sp <- list(low = -1.5,## low = 0.      was default till R 1.3.x
                      high = 1.5,
@@ -232,8 +248,8 @@ predict.smooth.spline <- function(object, x, deriv = 0, ...)
 predict.smooth.spline.fit <- function(object, x, deriv = 0, ...)
 {
     if(missing(x))
-	x <- seq(from = object$min, to = object$min + object$range,
-		 length = length(object$coef) - 4)
+	x <- seq.int(from = object$min, to = object$min + object$range,
+                     length.out = length(object$coef) - 4)
     xs <- (x - object$min)/object$range # x scaled to [0,1]
     extrap.left <- xs < 0
     extrap.right <- xs > 1

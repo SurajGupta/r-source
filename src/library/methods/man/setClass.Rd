@@ -1,3 +1,8 @@
+% File src/library/methods/man/setClass.Rd
+% Part of the R package, http://www.R-project.org
+% Copyright 1995-2007 R Core Development Team
+% Distributed under GPL 2 or later
+
 \name{setClass}
 \alias{setClass}
 \alias{removeClass}
@@ -156,7 +161,7 @@ sealClass(Class, where)
   }
 }
 \section{Inheritance and Prototypes}{
-  Defining new classes that inherit from (\dQuote{extend}) other classes
+  Defining new classes that inherit from (\sQuote{extend}) other classes
   is a powerful technique, but has to be used carefully and not
   over-used.  Otherwise, you will often get unintended results when you
   start to compute with objects from the new class.
@@ -170,16 +175,16 @@ sealClass(Class, where)
   Another variety of extension starts with one of the built-in data types,
   perhaps with the intention of modifying R's standard behavior for that
   class.  In this case, the new class inherits the built-in data type
-  as its \dQuote{data} part.  See the \dQuote{numWithId} example below.
+  as its \sQuote{data} part.  See the \code{"numWithId"} example below.
 
   When such a class definition is printed, the data part shows up as a
-  pseudo-slot named \dQuote{.Data}.
+  pseudo-slot named \code{.Data}.
 }
 
 \section{S3 Classes}{
 
   Earlier, informal classes of objects (usually referred to as
-  \dQuote{S3} classes) are used by many R functions.  It's natural to
+  \sQuote{S3} classes) are used by many R functions.  It is natural to
   consider including them as the class for a slot in a formal class,
   or even as a class to be extended by the new class.  This isn't
   prohibited but there are some disadvantages, and if you do want to
@@ -232,8 +237,7 @@ sealClass(Class, where)
   Certain slot names are not allowed in the current implementation, as
   they correspond to \link{attributes} which are treated
   specially.  These are \code{class}, \code{comment}, \code{dim},
-  \code{dimnames}, \code{names}, (from \R 2.4.0) \code{row.names}
-  and \code{tsp}.
+  \code{dimnames}, \code{names}, \code{row.names} and \code{tsp}.
 }
 
 \references{
@@ -308,7 +312,7 @@ setClass("myMatrix", "matrix", prototype = matrix(0,0,0))
 nrow(new("myMatrix")) # 0
 nrow(new("matrix")) # 1
 ## simple test of prototype data
-xxx <- rnorm(3)
+xxx <- stats::rnorm(3)
 setClass("xNum", representation(x = "numeric"), prototype = list(x = xxx))
 stopifnot(identical(new("xNum")@x, xxx))
 ### tests of the C macros MAKE_CLASS and NEW

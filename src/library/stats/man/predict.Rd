@@ -1,3 +1,8 @@
+% File src/library/stats/man/predict.Rd
+% Part of the R package, http://www.R-project.org
+% Copyright 1995-2007 R Core Development Team
+% Distributed under GPL 2 or later
+
 \name{predict}
 \title{Model Predictions}
 \usage{
@@ -56,6 +61,8 @@ predict (object, \dots)
   Wadsworth \& Brooks/Cole.
 }
 \examples{
+require(utils)
+
 ## All the "predict" methods found
 ## NB most of the methods in the standard packages are hidden.
 for(fn in methods("predict"))

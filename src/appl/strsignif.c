@@ -1,6 +1,6 @@
 /*
  *  Copyright (C) Martin Maechler, 1994, 1998
- *  Copyright (C) 2001-2005 the R Development Core Team
+ *  Copyright (C) 2001-2007 the R Development Core Team
  *
  *  This program is free software; you can redistribute it and/or modify
  *  it under the terms of the GNU General Public License as published by
@@ -13,8 +13,8 @@
  *  GNU General Public License for more details.
  *
  *  You should have received a copy of the GNU General Public License
- *  along with this program; if not, write to the Free Software
- *  Foundation, Inc., 51 Franklin Street, Fifth Floor, Boston, MA 02110-1301  USA
+ *  along with this program; if not, a copy is available at
+ *  http://www.r-project.org/Licenses/
  *
  *  I want you to preserve the copyright of the original author(s),
  *  and encourage you to send me any improvements by e-mail. (MM).
@@ -76,6 +76,12 @@
 #include <R_ext/Applic.h>
 #include <Rmath.h>		/* fround */
 
+#ifdef HAVE_VISIBILITY_ATTRIBUTE
+# define attribute_hidden __attribute__ ((visibility ("hidden")))
+#else
+# define attribute_hidden
+#endif
+
 #ifdef ENABLE_NLS
 #include <libintl.h>
 #define _(String) gettext (String)
@@ -88,8 +94,9 @@
    casting in the code itself.  However, it does mean that we cannot
    use the argument type matching
  */
-void str_signif(char *x, int *n, char **type, int *width, int *digits,
-		char **format, char **flag, char **result)
+attribute_hidden
+void str_signif(char *x, int *n, const char **type, int *width, int *digits,
+		const char **format, const char **flag, char **result)
 {
     int wid = *width;
     int dig = *digits;

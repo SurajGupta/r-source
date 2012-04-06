@@ -1,25 +1,26 @@
+#  File src/library/stats/R/nls-profile.R
+#  Part of the R package, http://www.R-project.org
+#
+#  Copyright 1999-1999 Saikat DebRoy <saikat$stat.wisc.edu>,
+#                      Douglas M. Bates <bates$stat.wisc.edu>,
+#  Copyright 2005-6   The R Development Core Team
+#
+#  This program is free software; you can redistribute it and/or modify
+#  it under the terms of the GNU General Public License as published by
+#  the Free Software Foundation; either version 2 of the License, or
+#  (at your option) any later version.
+#
+#  This program is distributed in the hope that it will be useful,
+#  but WITHOUT ANY WARRANTY; without even the implied warranty of
+#  MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
+#  GNU General Public License for more details.
+#
+#  A copy of the GNU General Public License is available at
+#  http://www.r-project.org/Licenses/
+
 ###
 ### Profiling nonlinear least squares for R
 ###
-### Copyright 1999-1999 Saikat DebRoy <saikat$stat.wisc.edu>,
-###                     Douglas M. Bates <bates$stat.wisc.edu>,
-### Copyright 2005-6   The R Development Core Team
-###
-### This file is part of the nls library for R and related languages.
-### It is made available under the terms of the GNU General Public
-### License, version 2, or at your option, any later version,
-### incorporated herein by reference.
-###
-### This program is distributed in the hope that it will be
-### useful, but WITHOUT ANY WARRANTY; without even the implied
-### warranty of MERCHANTABILITY or FITNESS FOR A PARTICULAR
-### PURPOSE.  See the GNU General Public License for more
-### details.
-###
-### You should have received a copy of the GNU General Public
-### License along with this program; if not, write to the Free
-### Software Foundation, Inc., 51 Franklin Street, Fifth Floor,
-### Boston, MA 02110-1301, USA
 
 profiler <- function(fitted, ...) UseMethod("profiler")
 
@@ -32,11 +33,11 @@ profiler.nls <- function(fitted, ...)
     defaultPars <- fittedPars <- fittedModel$getPars()
     lower <- fitted$call$lower
     lower <- rep(if(!is.null(lower)) as.double(lower) else Inf,
-                 length = length(defaultPars))
+                 length.out = length(defaultPars))
     upper <- fitted$call$upper
     upper <- rep(if(!is.null(upper)) as.double(upper) else Inf,
-                 length = length(defaultPars))
-    defaultVary <- rep(TRUE, length(defaultPars))
+                 length.out = length(defaultPars))
+    defaultVary <- rep.int(TRUE, length(defaultPars))
     S.hat <- deviance(fitted) # need to allow for weights
     s2.hat <- summary(fitted)$sigma^2
     thisEnv <- environment()
@@ -49,7 +50,7 @@ profiler.nls <- function(fitted, ...)
                      fittedModel$setVarying()
                      fittedModel$setPars(fittedPars)
                      assign("defaultPars", fittedPars, envir = thisEnv)
-                     assign("defaultVary", rep(TRUE, length(defaultPars)),
+                     assign("defaultVary", rep.int(TRUE, length(defaultPars)),
                             envir = thisEnv)
                  } else {
                      if(!missing(params)) {
@@ -133,9 +134,9 @@ profile.nls <-
     pars <- prof$getFittedPars()
     npar <- length(pars)  # less in a partially linear model
     lower <- fitted$call$lower
-    lower <- rep(if(!is.null(lower)) as.double(lower) else -Inf, length = npar)
+    lower <- rep(if(!is.null(lower)) as.double(lower) else -Inf, length.out = npar)
     upper <- fitted$call$upper
-    upper <- rep(if(!is.null(upper)) as.double(upper) else Inf, length = npar)
+    upper <- rep(if(!is.null(upper)) as.double(upper) else Inf, length.out = npar)
     if(is.character(which)) which <- match(which, names(pars), 0)
     which <- which[which >= 1 & which <= npar]
     cutoff <- sqrt(npar * qf(1 - alphamax, npar, nobs - npar))
@@ -146,7 +147,7 @@ profile.nls <-
         prof$setDefault(varying = par)
         sgn <- -1
         count <- 1
-        varying <- rep(TRUE, npar)
+        varying <- rep.int(TRUE, npar)
         varying[par] <- FALSE
         tau <- double(2 * maxpts)
         par.vals <- array(0, c(2 * maxpts, npar), list(NULL, names(pars)))
@@ -253,8 +254,8 @@ plot.profile.nls <- function(x, levels, conf = c(99, 95, 90, 80, 50)/100,
             abline(v = predict(bsp, 0)$y , col = 3, lty = 2)
             for(lev in levels) {
                 pred <- predict(bsp, c(-lev, lev))$y
-                lines(pred, rep(lev, 2), type = "h", col = 6, lty = 2)
-                lines(pred, rep(lev, 2), type = "l", col = 6, lty = 2)
+                lines(pred, rep.int(lev, 2), type = "h", col = 6, lty = 2)
+                lines(pred, rep.int(lev, 2), type = "l", col = 6, lty = 2)
             }
         }
     } else {

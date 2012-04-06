@@ -7,10 +7,10 @@
 #
 msgid ""
 msgstr ""
-"Project-Id-Version: R 2.5.0\n"
+"Project-Id-Version: R 2.6.0\n"
 "Report-Msgid-Bugs-To: bugs@r-project.org\n"
-"POT-Creation-Date: 2007-02-24 16:00\n"
-"PO-Revision-Date: 2007-04-07 01:42-0800\n"
+"POT-Creation-Date: 2007-08-22 12:25\n"
+"PO-Revision-Date: 2007-09-18 00:14-0800\n"
 "Last-Translator: Alexey Shipunov <dactylorhiza@gmail.com>\n"
 "Language-Team: Russian\n"
 "MIME-Version: 1.0\n"
@@ -267,6 +267,21 @@ msgstr "Неправильное вертикальное выравнивание"
 
 msgid "'respect' must be logical or an 'nrow' by 'ncol' matrix"
 msgstr "'respect' должен быть логическим или матрицей 'nrow' x 'ncol'"
+
+msgid "Invalid"
+msgstr "Неправильный"
+
+msgid "print"
+msgstr "печать"
+
+msgid "argument"
+msgstr "аргумент"
+
+msgid "Invalid object in listing"
+msgstr "Неправильный объект в списке"
+
+msgid "Invalid listing"
+msgstr "Неправильный список"
 
 msgid "Invalid 'origin'"
 msgstr "Неправильный 'origin'"

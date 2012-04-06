@@ -1,3 +1,19 @@
+#  File src/library/utils/R/menu.R
+#  Part of the R package, http://www.R-project.org
+#
+#  This program is free software; you can redistribute it and/or modify
+#  it under the terms of the GNU General Public License as published by
+#  the Free Software Foundation; either version 2 of the License, or
+#  (at your option) any later version.
+#
+#  This program is distributed in the hope that it will be useful,
+#  but WITHOUT ANY WARRANTY; without even the implied warranty of
+#  MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
+#  GNU General Public License for more details.
+#
+#  A copy of the GNU General Public License is available at
+#  http://www.r-project.org/Licenses/
+
 menu <- function(choices, graphics = FALSE, title = "")
 {
     if(!interactive()) stop("menu() cannot be used non-interactively")
@@ -7,13 +23,13 @@ menu <- function(choices, graphics = FALSE, title = "")
             return(match(res, choices, nomatch = 0))
         } else if(.Platform$OS.type == "unix"
                 && capabilities("tcltk") && capabilities("X11")
-                && nchar(Sys.getenv("DISPLAY"))) {
+                && nzchar(Sys.getenv("DISPLAY"))) {
             res <- tcltk::tk_select.list(choices, multiple=FALSE, title=title)
             return(match(res, choices, nomatch = 0))
         }
     }
     nc <- length(choices)
-    if(length(title) && nchar(title[1])) cat(title[1], "\n")
+    if(length(title) && nzchar(title[1])) cat(title[1], "\n")
     op <- paste(format(seq_len(nc)), ": ", choices, sep="")
     if(nc > 10) {
         fop <- format(op)

@@ -1,7 +1,7 @@
 /*
  *  R : A Computer Language for Statistical Data Analysis
  *  Copyright (C) 2001-3 Paul Murrell
- *                2003-5 The R Development Core Team
+ *                2003-7 The R Development Core Team
  *
  *  This program is free software; you can redistribute it and/or modify
  *  it under the terms of the GNU General Public License as published by
@@ -13,13 +13,15 @@
  *  MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
  *  GNU General Public License for more details.
  *
- *  A copy of the GNU General Public License is available via WWW at
- *  http://www.gnu.org/copyleft/gpl.html.  You can also obtain it by
- *  writing to the Free Software Foundation, Inc., 51 Franklin Street
- *  Fifth Floor, Boston, MA 02110-1301  USA.
+ *  You should have received a copy of the GNU General Public License
+ *  along with this program; if not, a copy is available at
+ *  http://www.r-project.org/Licenses/
  */
 
 #include "grid.h"
+#include <math.h>
+#include <float.h>
+#include <string.h>
 
 int isUnitArithmetic(SEXP ua) {
     return inherits(ua, "unit.arithmetic");
@@ -35,15 +37,12 @@ int isUnitList(SEXP ul) {
 SEXP unit(double value, int unit) 
 {
     SEXP u, units, classname;
-    PROTECT(u = allocVector(REALSXP, 1));
-    REAL(u)[0] = value;
-    PROTECT(units = allocVector(INTSXP, 1));
-    INTEGER(units)[0] = unit;
+    PROTECT(u = ScalarReal(value));
+    PROTECT(units = ScalarInteger(unit));
     /* NOTE that we do not set the "unit" attribute */
     setAttrib(u, install("valid.unit"), units);
     setAttrib(u, install("data"), R_NilValue);
-    PROTECT(classname = allocVector(STRSXP, 1));
-    SET_STRING_ELT(classname, 0, mkChar("unit"));
+    PROTECT(classname = mkString("unit"));
     classgets(u, classname);
     UNPROTECT(3);
     return u;
@@ -91,7 +90,7 @@ SEXP unitData(SEXP unit, int index) {
 
 /* Accessor functions for unit arithmetic object
  */
-char* fName(SEXP ua) {
+const char* fName(SEXP ua) {
     return CHAR(STRING_ELT(getListElement(ua, "fname"), 0));
 }
 
@@ -560,8 +559,7 @@ double evaluateGrobUnit(double value, SEXP grob,
 	 */
 	{
 	    SEXP val;
-	    PROTECT(val = allocVector(REALSXP, 1));
-	    REAL(val)[0] = value;
+	    PROTECT(val = ScalarReal(value));
 	    PROTECT(R_fcall2x = lang3(evalFnx, grob, val));
 	    PROTECT(unitx = eval(R_fcall2x, R_gridEvalEnv));
 	    PROTECT(R_fcall2y = lang3(evalFny, grob, val));

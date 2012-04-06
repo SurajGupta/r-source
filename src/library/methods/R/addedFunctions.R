@@ -1,3 +1,19 @@
+#  File src/library/methods/R/addedFunctions.R
+#  Part of the R package, http://www.R-project.org
+#
+#  This program is free software; you can redistribute it and/or modify
+#  it under the terms of the GNU General Public License as published by
+#  the Free Software Foundation; either version 2 of the License, or
+#  (at your option) any later version.
+#
+#  This program is distributed in the hope that it will be useful,
+#  but WITHOUT ANY WARRANTY; without even the implied warranty of
+#  MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
+#  GNU General Public License for more details.
+#
+#  A copy of the GNU General Public License is available at
+#  http://www.r-project.org/Licenses/
+
 
 functionBody <- get("body", mode = "function")
 
@@ -120,9 +136,9 @@ Quote <- get("quote" , mode = "function")
       ## the junk below is just til cat honors fill=TRUE on a single string.
       text <- paste(..., collapse="", sep="")
       pos <- max(2 * getOption("width") %/% 3, 20)
-      while(nchar(text) > pos) {
+      while(nchar(text, "c") > pos) {
           line <- substr(text, 1, pos)
-          text <- substr(text, pos+1, nchar(text))
+          text <- substr(text, pos+1, nchar(text, "c"))
           word <- regexpr(" ", text)
           if(word < 0) {
               line <- paste(line, text, sep="")
@@ -130,11 +146,11 @@ Quote <- get("quote" , mode = "function")
           }
           else {
               line <- paste(line, substr(text, 1, word -1), sep="")
-              text <- substr(text, word+1, nchar(text))
+              text <- substr(text, word+1, nchar(text, "c"))
           }
           cat(line, "\n")
       }
-      if(nchar(text) > 0)
+      if(nzchar(text))
           cat(text, "\n")
   }
 

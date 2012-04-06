@@ -1,7 +1,7 @@
 /*
  *  R : A Computer Language for Statistical Data Analysis
  *  Copyright (C) 1995, 1996  Robert Gentleman and Ross Ihaka
- *  Copyright (C) 1998--2004  The R Development Core Team.
+ *  Copyright (C) 1998--2007  The R Development Core Team.
  *
  *  This program is free software; you can redistribute it and/or modify
  *  it under the terms of the GNU Lesser General Public License as published by
@@ -14,22 +14,25 @@
  *  GNU Lesser General Public License for more details.
  *
  *  You should have received a copy of the GNU Lesser General Public License
- *  along with this program; if not, write to the Free Software
- *  Foundation, Inc., 51 Franklin Street, Fifth Floor, Boston, MA 02110-1301  USA
+ *  along with this program; if not, a copy is available at
+ *  http://www.r-project.org/Licenses/
  */
 
 #ifndef R_ARITH_H_
 #define R_ARITH_H_
 
+/* Only for use where config.h has not already been included */
 #if defined(HAVE_GLIBC2) && !defined(_BSD_SOURCE)
 /* ensure that finite and isnan are declared */
 # define _BSD_SOURCE 1
 #endif
-#include <math.h>
 
 #include <R_ext/libextern.h>
 #ifdef  __cplusplus
 extern "C" {
+#elif !defined(NO_C_HEADERS)
+/* needed for isnan and isfinite, neither of which are used under C++ */
+# include <math.h>
 #endif
 
 /* implementation of these : ../../main/arithmetic.c */
@@ -67,19 +70,10 @@ int R_finite(double);		/* True if none of NA, NaN, +/-Inf */
 #  define ISNAN(x)     (isnan(x)!=0)
 #endif
 
+/* The following is only defined inside R */
 #ifdef HAVE_WORKING_ISFINITE
 /* isfinite is defined in <math.h> according to C99 */
 # define R_FINITE(x)    isfinite(x)
-#elif HAVE_WORKING_FINITE
-/* include header needed to define finite() */
-#  ifdef HAVE_IEEE754_H
-#   include <ieee754.h>		/* newer Linuxen */
-#  else
-#   ifdef HAVE_IEEEFP_H
-#    include <ieeefp.h>		/* others [Solaris], .. */
-#   endif
-#  endif
-# define R_FINITE(x)    finite(x)
 #else
 # define R_FINITE(x)    R_finite(x)
 #endif

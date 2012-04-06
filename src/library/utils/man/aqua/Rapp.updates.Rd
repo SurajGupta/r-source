@@ -1,3 +1,8 @@
+% File src/library/utils/man/aqua/Rapp.updates.Rd
+% Part of the R package, http://www.R-project.org
+% Copyright 1995-2007 R Core Development Team
+% Distributed under GPL 2 or later
+
 \name{Rapp.updates}
 \alias{Rapp.updates}
 \title{Checks for newer versions of R with Aqua GUI on CRAN}
@@ -13,7 +18,6 @@ Rapp.updates()
   CRAN url is opened in the favorite browser and no other action is taken.
   Is up to the user the final decision to download and install the new
   version of R with Aqua GUI.
-}
 }
 \keyword{connection}
 \keyword{utilities}

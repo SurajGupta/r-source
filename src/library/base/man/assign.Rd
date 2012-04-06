@@ -1,3 +1,8 @@
+% File src/library/base/man/assign.Rd
+% Part of the R package, http://www.R-project.org
+% Copyright 1995-2007 R Core Development Team
+% Distributed under GPL 2 or later
+
 \name{assign}
 \alias{assign}
 \title{Assign a Value to a Name}
@@ -52,10 +57,6 @@ assign(x, value, pos = -1, envir = as.environment(pos),
   initial frame of \code{envir}, unless an existing binding is locked or
   there is no existing binding and the environment is locked.
 }
-\note{
-  Prior to \R 2.4.0 the base environment was ignored in the search for a
-  binding by \code{inherits = TRUE}.
-}
 \references{
   Becker, R. A., Chambers, J. M. and Wilks, A. R. (1988)
   \emph{The New S Language}.
@@ -73,11 +74,11 @@ for(i in 1:6) { #-- Create objects  'r.1', 'r.2', ... 'r.6' --
  nam <- paste("r",i, sep=".")
  assign(nam, 1:i)
 }
-ls(pat="^r..$")
+ls(pattern = "^r..$")
 
 ##-- Global assignment within a function:
 myf <- function(x) {
- innerf <- function(x) assign("Global.res", x^2, env = .GlobalEnv)
+ innerf <- function(x) assign("Global.res", x^2, envir = .GlobalEnv)
  innerf(x+1)
 }
 myf(3)

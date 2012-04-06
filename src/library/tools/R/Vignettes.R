@@ -1,11 +1,27 @@
+#  File src/library/tools/R/Vignettes.R
+#  Part of the R package, http://www.R-project.org
+#
+#  This program is free software; you can redistribute it and/or modify
+#  it under the terms of the GNU General Public License as published by
+#  the Free Software Foundation; either version 2 of the License, or
+#  (at your option) any later version.
+#
+#  This program is distributed in the hope that it will be useful,
+#  but WITHOUT ANY WARRANTY; without even the implied warranty of
+#  MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
+#  GNU General Public License for more details.
+#
+#  A copy of the GNU General Public License is available at
+#  http://www.r-project.org/Licenses/
+
 ### * checkVignettes
 ###
 ### Run a tangle+source and a weave on all vignettes of a package.
 
 checkVignettes <-
 function(package, dir, lib.loc = NULL,
-         tangle=TRUE, weave=TRUE,
-         workdir=c("tmp", "src", "cur"),
+         tangle = TRUE, weave = TRUE, latex = FALSE,
+         workdir = c("tmp", "src", "cur"),
          keepfiles = FALSE)
 {
     vigns <- pkgVignettes(package=package, dir=dir, lib.loc=lib.loc)
@@ -15,8 +31,7 @@ function(package, dir, lib.loc = NULL,
     wd <- getwd()
     if(workdir == "tmp") {
         tmpd <- tempfile("Sweave")
-        if(!dir.create(tmpd))
-            stop("unable to create temp directory ", tmpd)
+        if(!dir.create(tmpd)) stop("unable to create temp directory ", tmpd)
         setwd(tmpd)
     }
     else {
@@ -32,10 +47,10 @@ function(package, dir, lib.loc = NULL,
         sink(type = "output")
         sink(type = "message")
         setwd(wd)
-        if(!keepfiles) unlink(tmpd, recursive=TRUE)
+        if(!keepfiles) unlink(tmpd, recursive = TRUE)
     })
 
-    result <- list(tangle=list(), weave=list(), source=list())
+    result <- list(tangle = list(), weave = list(), source = list())
 
     for(f in vigns$docs) {
         if(tangle) {
@@ -57,6 +72,25 @@ function(package, dir, lib.loc = NULL,
             yy <- try(source(f))
             if(inherits(yy, "try-error"))
                 result$source[[f]] <- yy
+        }
+    }
+    if(tangle && weave && latex) {
+        have.makefile <- "makefile" %in% tolower(list.files(vigns$dir))
+        if(!have.makefile) {
+            on.exit()
+            sink(type = "output")
+            sink(type = "message")
+            on.exit({
+                setwd(wd)
+                if(!keepfiles) unlink(tmpd, recursive = TRUE)
+            })
+            message("--- running texi2dvi on vignettes")
+            for(f in vigns$docs) {
+                f <- basename(f)
+                bf <- sub("\\..[^\\.]*$", "", f)
+                bft <- paste(bf, ".tex", sep="")
+                texi2dvi(file = bft, pdf = TRUE, clean = FALSE, quiet = TRUE)
+            }
         }
     }
 
@@ -89,7 +123,8 @@ function(x, ...)
 ### Get an object of class pkgVignettes which contains a list of Sweave
 ### files and the name of the directory which contains them.
 
-pkgVignettes <- function(package, dir, lib.loc = NULL)
+pkgVignettes <-
+function(package, dir, lib.loc = NULL)
 {
     ## Argument handling.
     if(!missing(package)) {
@@ -124,22 +159,21 @@ pkgVignettes <- function(package, dir, lib.loc = NULL)
 ### Run a weave and pdflatex on all vignettes of a package and try to
 ### remove all temporary files that were created.
 
-buildVignettes <-function(package, dir, lib.loc = NULL, quiet=TRUE)
+buildVignettes <-
+function(package, dir, lib.loc = NULL, quiet = TRUE)
 {
-    vigns <- pkgVignettes(package=package, dir=dir, lib.loc=lib.loc)
+    vigns <- pkgVignettes(package = package, dir = dir, lib.loc = lib.loc)
     if(is.null(vigns)) return(NULL)
 
     wd <- getwd()
-    setwd(vigns$dir)
-
     on.exit(setwd(wd))
+    setwd(vigns$dir)
 
     origfiles <- list.files()
     have.makefile <- "makefile" %in% tolower(origfiles)
 
     pdfs <- character(0)
-    for(f in vigns$docs){
-
+    for(f in vigns$docs) {
         f <- basename(f)
         bf <- sub("\\..[^\\.]*$", "", f)
         bft <- paste(bf, ".tex", sep="")
@@ -151,17 +185,16 @@ buildVignettes <-function(package, dir, lib.loc = NULL, quiet=TRUE)
                                    f, conditionMessage(e)),
                           domain = NA, call. = FALSE)
                  })
-        if(!have.makefile){
-            texi2dvi(file=bft, pdf=TRUE, clean=FALSE, quiet=quiet)
-        }
+        if(!have.makefile)
+            texi2dvi(file = bft, pdf = TRUE, clean = FALSE, quiet = quiet)
     }
 
     if(have.makefile) {
     	make <- Sys.getenv("MAKE")
+        if(!nzchar(make)) make <- "make"
         yy <- system(make)
-        if(make == "" || yy>0) stop("running make failed")
-    }
-    else {
+        if(make == "" || yy > 0) stop("running 'make' failed")
+    } else {
         f <- list.files()
         f <- f %w/o% c(pdfs, origfiles)
         file.remove(f)
@@ -171,36 +204,33 @@ buildVignettes <-function(package, dir, lib.loc = NULL, quiet=TRUE)
 
 ### * .build_vignette_index
 
-vignetteMetaRE <- function(tag)
-    paste("[[:space:]]*%+[[:space:]]*\\\\Vignette", tag,
-          "\\{([^}]*)\\}", sep = "")
+.get_vignette_metadata <-
+function(lines, tag)
+{
+    meta_RE <- paste("[[:space:]]*%+[[:space:]]*\\\\Vignette", tag,
+                     "\\{([^}]*)\\}", sep = "")
+    meta <- grep(meta_RE, lines, value = TRUE)
+    .strip_whitespace(gsub(meta_RE, "\\1", meta))
+}
 
 vignetteInfo <- function(file) {
     lines <- readLines(file, warn = FALSE)
     ## <FIXME>
     ## Can only proceed with lines with are valid in the current
     ## locale ... (or should we try to iconv() from latin1?)
-    lines[is.na(nchar(lines, "c"))] <- ""
+    lines[is.na(nchar(lines, "c", TRUE))] <- ""
     ## </FIXME>
     ## \VignetteIndexEntry
-    vignetteIndexEntryRE <- vignetteMetaRE("IndexEntry")
-    title <- grep(vignetteIndexEntryRE, lines, value = TRUE)
-    title <- c(gsub(vignetteIndexEntryRE, "\\1", title), "")[1]
+    title <- c(.get_vignette_metadata(lines, "IndexEntry"), "")[1]
     ## \VignetteDepends
-    vignetteDependsRE <- vignetteMetaRE("Depends")
-    depends <- grep(vignetteDependsRE, lines, value = TRUE)
-    depends <- gsub(vignetteDependsRE, "\\1", depends)
+    depends <- .get_vignette_metadata(lines, "Depends")
     if(length(depends) > 0)
         depends <- unlist(strsplit(depends[1], ", *"))
     ## \VignetteKeyword and old-style \VignetteKeywords
-    vignetteKeywordsRE <- vignetteMetaRE("Keywords")
-    keywords <- grep(vignetteKeywordsRE, lines, value = TRUE)
-    keywords <- gsub(vignetteKeywordsRE, "\\1", keywords)
+    keywords <- .get_vignette_metadata(lines, "Keywords")
     keywords <- if(length(keywords) == 0) {
         ## No old-style \VignetteKeywords entries found.
-        vignetteKeywordRE <- vignetteMetaRE("Keyword")
-        keywords <- grep(vignetteKeywordRE, lines, value = TRUE)
-        gsub(vignetteKeywordRE, "\\1", keywords)
+        .get_vignette_metadata(lines, "Keyword")
     }
     else
         unlist(strsplit(keywords[1], ", *"))
@@ -303,7 +333,8 @@ function(x, ...)
 
 ### * .writeVignetteHtmlIndex
 
-.writeVignetteHtmlIndex <- function(pkg, con, vignetteIndex=NULL)
+.writeVignetteHtmlIndex <-
+function(pkg, con, vignetteIndex = NULL)
 {
     html <- c('<!DOCTYPE html PUBLIC "-//W3C//DTD HTML 4.01 Transitional//EN">',
               paste("<html><head><title>R:", pkg, "vignettes</title>"),
@@ -329,8 +360,10 @@ function(x, ...)
     writeLines(html, con=con)
 }
 
-vignetteDepends <- function(vignette, recursive=TRUE, reduce=TRUE,
-                            local=TRUE, lib.loc=NULL) {
+vignetteDepends <-
+function(vignette, recursive = TRUE, reduce = TRUE,
+         local = TRUE, lib.loc = NULL)
+{
     if (length(vignette) != 1)
         stop("argument 'vignette' must be of length 1")
     if (!file.exists(vignette))
@@ -345,7 +378,9 @@ vignetteDepends <- function(vignette, recursive=TRUE, reduce=TRUE,
                lib.loc)
 }
 
-getVigDepMtrx <- function(vigDeps) {
+getVigDepMtrx <-
+function(vigDeps)
+{
     ## Taken almost directly out of 'package.dependencies'
     if (length(vigDeps) > 0) {
         z <- unlist(strsplit(vigDeps, ",", fixed=TRUE))
@@ -366,7 +401,6 @@ getVigDepMtrx <- function(vigDeps) {
     else
         NA
 }
-
 
 
 ### Local variables: ***

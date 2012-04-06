@@ -1,3 +1,19 @@
+#  File src/library/graphics/R/polygon.R
+#  Part of the R package, http://www.R-project.org
+#
+#  This program is free software; you can redistribute it and/or modify
+#  it under the terms of the GNU General Public License as published by
+#  the Free Software Foundation; either version 2 of the License, or
+#  (at your option) any later version.
+#
+#  This program is distributed in the hope that it will be useful,
+#  but WITHOUT ANY WARRANTY; without even the implied warranty of
+#  MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
+#  GNU General Public License for more details.
+#
+#  A copy of the GNU General Public License is available at
+#  http://www.r-project.org/Licenses/
+
 ### polyhatch -  a pure R implementation of polygon hatching
 ### Copyright (C) 2001 by Kevin Buhr <buhr@stat.wisc.edu>
 ### Provided to the R project for release under GPL.
@@ -251,4 +267,14 @@ polygon <-
         }
         .Internal(polygon(xy$x, xy$y, col, border, lty, ...))
     }
+}
+
+xspline <-
+  function(x, y = NULL, shape = 0, open = TRUE, repEnds = TRUE,
+           draw = TRUE, border = par("fg"), col = NA, ...)
+{
+    xy <- xy.coords(x, y)
+    s <- rep.int(shape, length(xy$x))
+    if(open) s[1] <- s[length(x)] <- 0
+    .Internal(xspline(xy$x, xy$y, s, open, repEnds, draw, col, border, ...))
 }

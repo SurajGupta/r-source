@@ -1,9 +1,9 @@
-revision='$Rev: 40235 $'
+revision='$Rev: 42192 $'
 version=`set - ${revision}; echo ${2}`
 version="Sweave front-end r${version}
 
 Copyright (C) 2006 The R Core Development Team.
-This is free software; see the GNU General Public Licence version 2
+This is free software; see the GNU General Public License version 2
 or later for copying conditions.  There is NO warranty."
 
 usage="Usage: R CMD Sweave file

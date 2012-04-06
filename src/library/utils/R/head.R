@@ -1,3 +1,19 @@
+#  File src/library/utils/R/head.R
+#  Part of the R package, http://www.R-project.org
+#
+#  This program is free software; you can redistribute it and/or modify
+#  it under the terms of the GNU General Public License as published by
+#  the Free Software Foundation; either version 2 of the License, or
+#  (at your option) any later version.
+#
+#  This program is distributed in the hope that it will be useful,
+#  but WITHOUT ANY WARRANTY; without even the implied warranty of
+#  MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
+#  GNU General Public License for more details.
+#
+#  A copy of the GNU General Public License is available at
+#  http://www.r-project.org/Licenses/
+
 ### placed in the public domain 2002
 ### Patrick Burns patrick@burns-stat.com
 ###
@@ -44,7 +60,7 @@ tail.default <- function(x, n = 6, ...)
     stopifnot(length(n) == 1)
     xlen <- length(x)
     n <- if (n < 0) max(xlen + n, 0) else min(n, xlen)
-    x[seq.int(to = xlen, length = n)]
+    x[seq.int(to = xlen, length.out = n)]
 }
 
 tail.data.frame <- function(x, n = 6, ...)
@@ -52,7 +68,7 @@ tail.data.frame <- function(x, n = 6, ...)
     stopifnot(length(n) == 1)
     nrx <- nrow(x)
     n <- if (n < 0) max(nrx + n, 0) else min(n, nrx)
-    x[seq.int(to = nrx, length = n), , drop = FALSE]
+    x[seq.int(to = nrx, length.out = n), , drop = FALSE]
 }
 
 tail.matrix <- function(x, n = 6, addrownums = TRUE, ...)
@@ -60,7 +76,7 @@ tail.matrix <- function(x, n = 6, addrownums = TRUE, ...)
     stopifnot(length(n) == 1)
     nrx <- nrow(x)
     n <- if (n < 0) max(nrx + n, 0) else min(n, nrx)
-    sel <- seq.int(to = nrx, length = n)
+    sel <- seq.int(to = nrx, length.out = n)
     ans <- x[sel, , drop = FALSE]
     if (addrownums && is.null(rownames(x)))
     	rownames(ans) <- paste("[", sel, ",]", sep="")

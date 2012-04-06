@@ -1,3 +1,19 @@
+#  File src/library/tools/R/writePACKAGES.R
+#  Part of the R package, http://www.R-project.org
+#
+#  This program is free software; you can redistribute it and/or modify
+#  it under the terms of the GNU General Public License as published by
+#  the Free Software Foundation; either version 2 of the License, or
+#  (at your option) any later version.
+#
+#  This program is distributed in the hope that it will be useful,
+#  but WITHOUT ANY WARRANTY; without even the implied warranty of
+#  MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
+#  GNU General Public License for more details.
+#
+#  A copy of the GNU General Public License is available at
+#  http://www.r-project.org/Licenses/
+
 write_PACKAGES <-
 function(dir, fields = NULL,
          type = c("source", "mac.binary", "win.binary"),
@@ -27,7 +43,9 @@ function(dir, fields = NULL,
             desci <- desc[i, !(is.na(desc[i, ]) | (desc[i, ] == "")),
                           drop = FALSE]
             write.dcf(desci, file = out)
+            cat("\n", file = out)
             write.dcf(desci, file = outgz)
+            cat("\n", file = outgz)
         }
         close(out)
         close(outgz)
@@ -123,7 +141,7 @@ function(dir, fields = NULL, verbose = getOption("verbose"))
 {
     dir <- file_path_as_absolute(dir)
     fields <- unique(c(.get_standard_repository_db_fields(), fields))
-    paths <- list.files(dir, full = TRUE)
+    paths <- list.files(dir, full.names = TRUE)
     paths <- paths[file_test("-d", paths) &
                    file_test("-f", file.path(paths, "DESCRIPTION"))]
     db <- vector(length(paths), mode = "list")

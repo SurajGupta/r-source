@@ -1,3 +1,8 @@
+% File src/library/base/man/missing.Rd
+% Part of the R package, http://www.R-project.org
+% Copyright 1995-2007 R Core Development Team
+% Distributed under GPL 2 or later
+
 \name{missing}
 \alias{missing}
 \title{Does a Formal Argument have a Value?}
@@ -37,7 +42,7 @@ as an argument to a function.
 }
 \seealso{
   \code{\link{substitute}} for argument expression;
-  \code{\link{NA}} for \dQuote{missing values} in data.
+  \code{\link{NA}} for missing values in data.
 }
 \examples{
 myplot <- function(x,y) {

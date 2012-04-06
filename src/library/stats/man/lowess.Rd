@@ -1,3 +1,8 @@
+% File src/library/stats/man/lowess.Rd
+% Part of the R package, http://www.R-project.org
+% Copyright 1995-2007 R Core Development Team
+% Distributed under GPL 2 or later
+
 \name{lowess}
 \title{Scatter Plot Smoothing}
 \description{
@@ -68,6 +73,8 @@ lowess(x, y = NULL, f = 2/3, iter = 3,
   formula based version of \code{lowess} (with different defaults!).
 }
 \examples{
+require(graphics)
+
 plot(cars, main = "lowess(cars)")
 lines(lowess(cars), col = 2)
 lines(lowess(cars, f=.2), col = 3)

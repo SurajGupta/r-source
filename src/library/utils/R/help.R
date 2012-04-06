@@ -1,3 +1,19 @@
+#  File src/library/utils/R/help.R
+#  Part of the R package, http://www.R-project.org
+#
+#  This program is free software; you can redistribute it and/or modify
+#  it under the terms of the GNU General Public License as published by
+#  the Free Software Foundation; either version 2 of the License, or
+#  (at your option) any later version.
+#
+#  This program is distributed in the hope that it will be useful,
+#  but WITHOUT ANY WARRANTY; without even the implied warranty of
+#  MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
+#  GNU General Public License for more details.
+#
+#  A copy of the GNU General Public License is available at
+#  http://www.r-project.org/Licenses/
+
 help <-
 function(topic, offline = FALSE, package = NULL, lib.loc = NULL,
          verbose = getOption("verbose"),
@@ -20,9 +36,14 @@ function(topic, offline = FALSE, package = NULL, lib.loc = NULL,
         return(help("help", package = "utils", lib.loc = .Library))
     }
 
-    ischar <- try(is.character(topic), silent = TRUE)
+    ischar <- try(is.character(topic) && length(topic) == 1, silent = TRUE)
     if(inherits(ischar, "try-error")) ischar <- FALSE
-    if(!ischar) topic <- deparse(substitute(topic))
+    ## if this was not a length-one character vector, try for the name.
+    if(!ischar) {
+        ## we only want names here, but some reserved words parse
+        ## to other types, e.g. NA, Inf
+        topic <- deparse(substitute(topic))
+    }
 
     type <- if(offline)
         "latex"
@@ -115,7 +136,7 @@ function(x, ...)
                 tp <- basename(p)
                 titles <- tp
                 if(type == "html") tp <- tools::file_path_sans_ext(tp)
-                for (i in seq(along = fp)) {
+                for (i in seq_along(fp)) {
                     tmp <- try(.readRDS(fp[i]))
                     titles[i] <- if(inherits(tmp, "try-error"))
                         "unknown title" else
@@ -169,6 +190,10 @@ function(x, ...)
                 enc <- if(length(grep("\\(.*\\)$", first)) > 0)
                     sub("[^(]*\\((.*)\\)$", "\\1", first) else ""
                 if(enc == "utf8") enc <- "UTF-8"
+                ## allow for 'smart' quotes on Windows, which work
+                ## in all but CJK encodings
+                if(.Platform$OS.type == "windows" && enc == ""
+                   && l10n_info()$codepage < 1000) enc <- "CP1252"
                 file.show(zfile,
                           title = gettextf("R Help on '%s'", topic),
                           delete.file = (zfile != file),

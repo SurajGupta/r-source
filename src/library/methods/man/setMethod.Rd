@@ -1,3 +1,8 @@
+% File src/library/methods/man/setMethod.Rd
+% Part of the R package, http://www.R-project.org
+% Copyright 1995-2007 R Core Development Team
+% Distributed under GPL 2 or later
+
 \name{setMethod}
 \alias{setMethod}
 \alias{removeMethod}
@@ -68,7 +73,7 @@ removeMethod(f, signature, where)
   appear in the call in order to match this signature.  Don't confuse
   these two:  if an argument isn't mentioned in a signature, it
   corresponds implicitly to class \code{"ANY"}, not to
-  \code{"missing"}.  See the example below.  Old-style (\dQuote{S3})
+  \code{"missing"}.  See the example below.  Old-style (\sQuote{S3})
   classes can also be used, if you need compatibility with these, but
   you should definitely declare these classes by calling
   \code{\link{setOldClass}} if you want S3-style inheritance to work.
@@ -80,7 +85,7 @@ removeMethod(f, signature, where)
   select and evaluate methods for \code{f}, the methods on the current
   search list are merged to form a single generic function and
   associated methods list.  When \code{f}
-  is called and a method is \dQuote{dispatched}, the evaluator matches the
+  is called and a method is dispatched, the evaluator matches the
   classes of the actual arguments to the signatures of the available
   methods.  When a match is found, the body of the corresponding
   method is evaluated, but without rematching the arguments to
@@ -139,6 +144,7 @@ removeMethod(f, signature, where)
   matrix(0,0,0)))
 }
 
+require(graphics)
 ## methods for plotting track objects (see the example for \link{setClass})
 ##
 ## First, with only one object as argument:
@@ -270,13 +276,13 @@ Nrow <- 1000 # at one time, values this large triggered a bug in gc/protect
 ## the loop here was a trigger for the bug
 Niter <- 10
 for(i in 1:Niter)  {
-    yy <- matrix(rnorm(10*Nrow), 10, Nrow)
+    yy <- matrix(stats::rnorm(10*Nrow), 10, Nrow)
     tDF <- as.data.frame(yy)
     testFunc(tDF)
 }
 
 
-tMC <- new("trackMultiCurve", x=seq(length=Nrow), y = yy)
+tMC <- new("trackMultiCurve", x=seq_len(Nrow), y = yy)
 ## not enough functions have methods for this class to use testFunc
 
 stopifnot(identical(tMC[1:10, 1:10]@y, yy[1:10, 1:10]))

@@ -1,3 +1,8 @@
+% File src/library/base/man/library.Rd
+% Part of the R package, http://www.R-project.org
+% Copyright 1995-2007 R Core Development Team
+% Distributed under GPL 2 or later
+
 \name{library}
 \title{Loading and Listing of Packages}
 \alias{library}
@@ -56,7 +61,7 @@ require(package, lib.loc = NULL, quietly = FALSE, warn.conflicts = TRUE,
     or a non-function masking a non-function.
   }
   \item{keep.source}{logical.  If \code{TRUE}, functions
-    \dQuote{keep their source} including comments, see argument
+    \sQuote{keep their source} including comments, see argument
     \code{keep.source} to \code{\link{options}}.  This applies only to
     the named package, and not to any packages or name spaces which might be
     loaded to satisfy dependencies or imports.
@@ -91,7 +96,9 @@ require(package, lib.loc = NULL, quietly = FALSE, warn.conflicts = TRUE,
   currently loaded packages and do not reload a package which is already
   loaded.  (Furthermore, if the package has a name space and a name
   space of that name is already loaded, they work from the existing
-  names space rather than reloading from the file system.)
+  name space rather than reloading from the file system.  If you want to
+  reload a package, call \code{\link{detach}} or
+  \code{\link{unloadNamespace}} first.)
 
   To suppress messages during the loading of packages use
   \code{\link{suppressPackageStartupMessages}}: this will suppress all
@@ -124,7 +131,7 @@ require(package, lib.loc = NULL, quietly = FALSE, warn.conflicts = TRUE,
   put calls to \code{\link{library.dynam}} which are needed when loading
   a package into this function (don't call \code{library.dynam}
   directly, as this will not work if the package is not installed in a
-  \dQuote{standard} location).  \code{.First.lib} is invoked after the
+  standard location).  \code{.First.lib} is invoked after the
   search path interrogated by \code{search()} has been updated, so
   \code{as.environment(match("package:name", search()))} will return the
   environment in which the package is stored.  If calling
@@ -133,7 +140,7 @@ require(package, lib.loc = NULL, quietly = FALSE, warn.conflicts = TRUE,
   option \code{".First.lib"} has a list element with the package's name,
   this element is called in the same manner as \code{.First.lib} when
   the package is loaded.  This mechanism allows the user to set package
-  \dQuote{load hooks} in addition to startup code as provided by the
+  \sQuote{load hooks} in addition to startup code as provided by the
   package maintainers, but \code{\link{setHook}} is preferred.
 
   \code{.Last.lib} is called when a package is detached.  Beware
@@ -145,7 +152,7 @@ require(package, lib.loc = NULL, quietly = FALSE, warn.conflicts = TRUE,
   \code{library} returns the list of loaded (or available) packages
   (or \code{TRUE} if \code{logical.return} is \code{TRUE}).
   \code{require} returns a logical indicating whether the required
-  package is available.
+  package is available, invisibly
 }
 \section{Packages that require other packages}{
   \bold{NB:} This mechanism has been almost entirely superseded by
@@ -233,7 +240,7 @@ require(package, lib.loc = NULL, quietly = FALSE, warn.conflicts = TRUE,
 }
 \examples{
 library()                   # list all available packages
-library(lib = .Library)     # list all packages in the default library
+library(lib.loc = .Library) # list all packages in the default library
 library(help = splines)     # documentation on package 'splines'
 library(splines)            # load package 'splines'
 require(splines)            # the same

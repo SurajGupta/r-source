@@ -381,7 +381,7 @@ symbol.  Symbols can be created through the functions @code{as.name} and
 
 @cindex symbol
 @cindex mode
-Symbol have mode @code{"name"}, storage mode @code{"symbol"}, and type
+Symbols have mode @code{"name"}, storage mode @code{"symbol"}, and type
 @code{"symbol"}.  They can be
 @cindex coercion
 coerced to and from character strings
@@ -1710,8 +1710,13 @@ selected values of @code{x} are those for which @code{i} is @code{TRUE}.
 names attribute of @code{x} and the resulting integers are used.  For
 @code{[[} and @code{$} partial matching is used if exact matching fails,
 so @code{x$aa} will match @code{x$aabb} if @code{x} does not a component
-named @code{"aa"} and @code{"aabb"} is the first name which has prefix
-@code{"aa"}.  However, @code{[} requires an exact match.  The string
+named @code{"aa"} and @code{"aabb"} is the only name which has prefix
+@code{"aa"}.  For @code{[[}, partial matching can be controlled via the
+@code{exact} argument which defaults to @code{NA} indicating that
+partial matching is allowed, but should result in a warning when it
+occurs.  Setting @code{exact} to @code{TRUE} prevents partial matching
+from occuring, a @code{FALSE} value allows it and does not issue any
+warnings.  Note that @code{[} always requires an exact match.  The string
 @code{""} is treated specially: it indicates `no name' and matches no
 element (not even those without a name).  Note that partial matching is
 only used when extracting and not when replacing.
@@ -1865,13 +1870,17 @@ x[3:5] <- 13:15
 The result of this commands is as if the following had been executed
 @example
 `*tmp*` <- x
-x <- "[<-"(`*tmp*`,3:5, value=13:15)
+x <- "[<-"(`*tmp*`, 3:5, value=13:15)
 @end example
 
-The same mechanism can be applied to other functions than @code{[}.  The
-assignment function has the same name with @code{<-} pasted on. Its last
+Note that the index is first converted to a numeric index and then the
+elements are replaced sequentially along the numeric index, as if a
+@code{for} loop had been used.
+
+The same mechanism can be applied to functions other than @code{[}.  The
+replacement function has the same name with @code{<-} pasted on.  Its last
 argument, which must be called @code{value}, is the new value to be
-assigned.
+assigned.  For example,
 @example
 names(x) <- c("a","b")
 @end example
@@ -2685,7 +2694,7 @@ The object system makes use of
 @emph{generic functions} via two
 dispatching functions, @code{UseMethod} and @code{NextMethod}.  The
 typical use of the object system is to begin by calling a generic
-function.  This is typically a function is very simple and consists of a
+function.  This is typically a very simple function and consists of a
 single line of code.  The system function @code{mean} is just such a
 function,
 
@@ -2825,10 +2834,10 @@ FIXME: something is missing here
 
 @cindex function, generic
 Generic functions should consist of a single statement.  They should
-always be of the form @code{foo <- function(x, ...) UseMethod("foo",
-x)}.  The semantics of @code{UseMethod} are an appropriate method is
-determined and then that method is invoked with the same arguments, in
-the same order as the call to the generic as if the call had been made
+usually be of the form @code{foo <- function(x, ...) UseMethod("foo",
+x)}.  When @code{UseMethod} is called, it determines the appropriate 
+method and then that method is invoked with the same arguments, in
+the same order as the call to the generic, as if the call had been made
 directly to the method.
 
 In order to determine the correct method the class attribute of the

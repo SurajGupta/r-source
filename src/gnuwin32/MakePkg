@@ -35,9 +35,9 @@ SDYNLIB=$(SSPKG)/$(DLLNAME).dll
 LSOURCES=$(wildcard $(SSPKG)/*.c $(SSPKG)/*.f $(SSPKG)/*.cc \
 	$(SSPKG)/*.cpp $(SSPKG)/*.C $(SSPKG)/*.f90  $(SSPKG)/*.f95)
 ifeq ($(strip $(LSOURCES)),)
-  LOBJS=
+  DO_SRC=$(wildcard $(SSPKG)/Makevars.win $(SSPKG)/Makevars)
 else
-  LOBJS=$(foreach i, $(LSOURCES), $(basename $i).o)
+  DO_SRC=$(foreach i, $(LSOURCES), $(basename $i).o)
 endif
 
 # data
@@ -68,6 +68,9 @@ EXECFILES=$(filter-out $(SPKG)/exec/CVS $(SPKG)/exec/.svn $(SPKG)/exec/.arch-ids
 # Others: we will remove CVS and subversion files later.
 INSTFILES=$(wildcard $(SPKG)/inst/*)
 
+.PHONY: all fake clean Rcode Rcode0 zzzfirst frontmatter nmspace nmspacefake
+.PHONY: Dynlib Dynlib0 srcDynlib mansrcs md5sums lazyload lazydata sysdata
+
 all:  
 	@$(MAKE) --no-print-directory -f $(RHOME)/src/gnuwin32/MakePkg $(DPKG)/zzzz 
 	@$(MAKE) --no-print-directory -f $(RHOME)/src/gnuwin32/MakePkg -s frontmatter
@@ -93,13 +96,21 @@ include $(RHOME)/src/gnuwin32/MkRules
 
 clean:
 ifeq ($(strip $(SRCMAKE)),)
-	$(RM) $(SDYNLIB) $(LOBJS) $(SSPKG)/$(DLLNAME).a \
-	  $(SSPKG)/$(DLLNAME).def $(SSPKG)/$(DLLNAME)_res.* \
-	  $(SSPKG)/*.d $(SSPKG)/Makedeps tests/*.Rout
+ifneq ($(strip $(DO_SRC)),)
+	@makefiles="-f $(RHOME)/src/gnuwin32/MakeDll" ; \
+	if test -r "${HOME}/.R/Makevars.win"; then \
+	  makefiles="$${makefiles} -f ${HOME}/.R/Makevars.win"; \
+	elif test -r "${HOME}/.R/Makevars"; then \
+	  makefiles="$${makefiles} -f \"${HOME}/.R/Makevars\""; \
+	fi; \
+	$(MAKE) --no-print-directory -C $(SSPKG) RHOME=$(RHOME) \
+	  DLLNAME=$(DLLNAME) $${makefiles} shlib-clean
+	@$(RM) $(SDYNLIB)
+endif
 else
 	$(MAKE) -C $(SSPKG) RHOME=$(RHOME) -f Makefile.win clean
 endif
-	$(RM) -rf $(SPKG)/chm $(SPKG)/check
+	@$(RM) -rf $(SPKG)/chm $(SPKG)/check tests/*.Rout
 
 ## used to build skeletal versions of packages, enough to run
 ## package tools to install them properly
@@ -157,9 +168,9 @@ $(DPKG)/inst: $(INSTFILES)
 ifneq ($(strip $(INSTFILES)),)
 	@$(ECHO) "  installing inst files"
 	-@$(CP) -r inst/* $(DPKG)
-	@find $(DPKG) -name CVS -type d -prune -exec rm -rf {} \;
-	@find $(DPKG) -name .svn -type d -prune -exec rm -rf {} \;
-	@find $(DPKG) -name .arch-ids -type d -prune -exec rm -rf {} \;
+	@$(FIND) $(DPKG) -name CVS -type d -prune -exec rm -rf {} \;
+	@$(FIND) $(DPKG) -name .svn -type d -prune -exec rm -rf {} \;
+	@$(FIND) $(DPKG) -name .arch-ids -type d -prune -exec rm -rf {} \;
 endif
 
 
@@ -203,9 +214,11 @@ frontmatter:
 	fi
 	@$(ECHO) "tools:::.install_package_description('.', '"$(DPKG)"')" | \
 	  R_DEFAULT_PACKAGES=NULL R_OSTYPE=windows $(REXE) > /dev/null
-	@if test -f ${SPKG}/COPYING; then \
-	  $(CP) ${SPKG}/COPYING $(DPKG)/COPYING; \
-	fi
+	@for f in LICENSE LICENCE COPYING; do \
+	  if test -f ${SPKG}/$${f}; then \
+	    $(CP) ${SPKG}/$${f} $(DPKG)/$${f}; \
+	  fi; \
+	done
 
 nmspace:
 	@if test -f ${SPKG}/NAMESPACE; then \
@@ -237,8 +250,9 @@ Dynlib: srcDynlib
 	  $(CP) $(SDYNLIB) $(DPKG)/libs ; \
 	fi
 
+## for bootstrapping tools, only
 Dynlib0:
-ifneq ($(strip $(LOBJS)),)
+ifneq ($(strip $(DO_SRC)),)
 	@$(ECHO) "  making DLL ..."
 	@$(MAKE) --no-print-directory -C $(SPKG)/src RHOME=$(RHOME) \
 	  DLLNAME=$(DLLNAME) -f $(RHOME)/src/gnuwin32/MakeDll
@@ -252,7 +266,7 @@ endif
 
 srcDynlib:
 ifeq ($(strip $(SRCMAKE)),)
-ifneq ($(strip $(LOBJS)),)
+ifneq ($(strip $(DO_SRC)),)
 ifneq ($(strip $(BUILD)),CROSS)
 	@$(ECHO) "  making DLL ..."
 	@makefiles="-f $(RHOME)/src/gnuwin32/MakeDll" ; \
@@ -281,8 +295,14 @@ endif
 endif
 else
 	@$(ECHO) "  running src/Makefile.win ..."
-	@$(MAKE) --no-print-directory -C $(SSPKG) RHOME=$(RHOME) \
-	  -f Makefile.win DLLNAME=$(DLLNAME)
+	@makefiles="-f Makefile.win" ; \
+	if test -r "${HOME}/.R/Makevars.win"; then \
+	  makefiles="$${makefiles} -f ${HOME}/.R/Makevars.win"; \
+	elif test -r "${HOME}/.R/Makevars"; then \
+	  makefiles="$${makefiles} -f \"${HOME}/.R/Makevars\""; \
+	fi; \
+	  $(MAKE) --no-print-directory -C $(SSPKG) RHOME=$(RHOME) \
+	    DLLNAME=$(DLLNAME) $${makefiles}
 	@$(ECHO) "  ... done"
 endif
 

@@ -1,6 +1,6 @@
 /*
  *  R : A Computer Language for Statistical Data Analysis
- *  Copyright (C) 1998--2001  Guido Masarotto and Brian Ripley
+ *  Copyright (C) 1998--2007  Guido Masarotto and Brian Ripley
  *
  *  This program is free software; you can redistribute it and/or modify
  *  it under the terms of the GNU General Public License as published by
@@ -13,8 +13,8 @@
  *  GNU General Public License for more details.
  *
  *  You should have received a copy of the GNU General Public License
- *  along with this program; if not, write to the Free Software
- *  Foundation, Inc., 51 Franklin Street, Fifth Floor, Boston, MA 02110-1301  USA
+ *  along with this program; if not, a copy is available at
+ *  http://www.r-project.org/Licenses/
  */
 
 #ifdef HAVE_CONFIG_H
@@ -25,6 +25,11 @@
 #include <stdlib.h>
 #include <string.h>
 #include <Fileio.h>
+
+#ifndef MAX_PATH
+# include <windows.h>
+#endif
+
 
 static FILE *ff = NULL;
 static char optfl[MAX_PATH];
@@ -38,7 +43,7 @@ void optclosefile()
 }
 
 
-int optopenfile(char *fname)
+int optopenfile(const char *fname)
 {
     optclosefile();
     if (!fname || !(ff = R_fopen(fname,"r"))) return 0;
@@ -73,7 +78,7 @@ static char *rmspace(char *s)
 }
 
 
-int optread(char *opt[],char sep)
+int optread(char *opt[], char sep)
 {
     static char sm[120];
     char *p, *s;

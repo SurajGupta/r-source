@@ -15,10 +15,8 @@
 ### License for more details.
 ###
 ### You should have received a copy of the GNU General Public License
-### along with R; if not, you can obtain it via the World Wide Web at
-### `http://www.gnu.org/copyleft/gpl.html', or by writing to the Free
-### Software Foundation, 51 Franklin Street, Fifth Floor, Boston, MA 
-### 02110-1301, USA.
+### along with R; if not, a copy is available at
+### http://www.r-project.org/Licenses/
 
 ### * General support macros
 
@@ -153,13 +151,13 @@ AC_SUBST(NO_PERL5)
 ## _R_PROG_PERL_VERSION
 ## --------------------
 ## Building the R documentation system (Rdconv and friends) requires
-## Perl version 5.004 or better.
+## Perl version 5.8.0 or better.
 ## Set shell variable r_cv_prog_perl_v5 to 'yes' if a recent enough
 ## Perl is found, and to 'no' otherwise.
 AC_DEFUN([_R_PROG_PERL_VERSION],
-[AC_CACHE_CHECK([whether perl version is at least 5.004],
+[AC_CACHE_CHECK([whether perl version is at least 5.8.0],
                 [r_cv_prog_perl_v5],
-[if ${PERL} -e 'require 5.004 or exit 1'; then
+[if ${PERL} -e 'require 5.8.0 or exit 1'; then
   r_cv_prog_perl_v5=yes
 else
   r_cv_prog_perl_v5=no
@@ -193,6 +191,7 @@ if test -n "${warn_pdf}"; then
   AC_MSG_WARN([${warn_pdf}])
 fi
 R_PROG_MAKEINFO
+AC_PATH_PROGS(TEXI2DVI, [${TEXI2DVI} texi2dvi], false)
 ## This test admittedly looks a bit strange ... see R_PROG_PERL.
 if test "${PERL}" = "${FALSE}"; then
   AC_PATH_PROGS(INSTALL_INFO, [${INSTALL_INFO} install-info], false)
@@ -270,7 +269,7 @@ AC_SUBST(R_BROWSER)
 ## the FreeBSD acroread port.
 AC_DEFUN([R_PROG_PDFVIEWER],
 [AC_PATH_PROGS(R_PDFVIEWER,
-               [${R_PDFVIEWER} acroread acroread4 xpdf gv gnome-gv ggv kghostview open gpdf])
+               [${R_PDFVIEWER} acroread acroread4 evince xpdf gv gnome-gv ggv kghostview open gpdf])
 if test -z "${R_PDFVIEWER}"; then
   warn_pdfviewer="I could not determine a PDF viewer"
   AC_MSG_WARN([${warn_pdfviewer}])
@@ -473,11 +472,11 @@ AC_DEFUN([R_PROG_CC_FLAG_D__NO_MATH_INLINES],
                 [r_cv_c_no_math_inlines],
 [AC_RUN_IFELSE([AC_LANG_SOURCE([[
 #include <math.h>
-#include <stdlib.h>
 #if defined(__GLIBC__)
+#include <math.h>
 int main () {
   double x, y;
-  x = -0./1.;
+  x = -1./0.;
   y = exp(x);
   exit (y != 0.);
 }
@@ -487,8 +486,8 @@ int main () {
 }
 #endif
 ]])],
-              [r_cv_c_no_math_inlines=yes],
               [r_cv_c_no_math_inlines=no],
+              [r_cv_c_no_math_inlines=yes],
               [r_cv_c_no_math_inlines=no])])
 if test "${r_cv_c_no_math_inlines}" = yes; then
   R_SH_VAR_ADD(R_XTRA_CFLAGS, [-D__NO_MATH_INLINES])
@@ -988,8 +987,12 @@ rm -rf conftest conftest.* conftestf.* core
 if test -n "${r_cv_prog_f77_can_run}"; then
   AC_MSG_RESULT([yes])
 else
-  AC_MSG_WARN([cannot run mixed C/Fortran code])
-  AC_MSG_ERROR([Maybe check LDFLAGS for paths to Fortran libraries?])
+  if test "${cross_compiling}" = yes; then
+    AC_MSG_RESULT([don't know (cross-compiling)])
+  else
+    AC_MSG_WARN([cannot run mixed C/Fortran code])
+    AC_MSG_ERROR([Maybe check LDFLAGS for paths to Fortran libraries?])
+  fi
 fi
 ])# R_PROG_F77_CAN_RUN
 
@@ -1073,8 +1076,12 @@ rm -rf conftest conftest.* conftestf.* core
 if test -n "${r_cv_prog_f77_cc_compat}"; then
   AC_MSG_RESULT([yes])
 else
-  AC_MSG_WARN([${F77} and ${CC} disagree on int and double])
-  AC_MSG_ERROR([Maybe change CFLAGS or FFLAGS?])
+  if test "${cross_compiling}" = yes; then
+    AC_MSG_RESULT([don't know (cross-compiling)])
+  else
+    AC_MSG_WARN([${F77} and ${CC} disagree on int and double])
+    AC_MSG_ERROR([Maybe change CFLAGS or FFLAGS?])
+  fi
 fi
 ])# R_PROG_F77_CC_COMPAT
 
@@ -1196,18 +1203,16 @@ fi
 ## -------------------
 ## Check for ObjC runtime and style.
 ## Effects:
-##  * ac_cv_objc_runtime
+##  * r_cv_objc_runtime
 ##    either "none" or flags necessary to link ObjC runtime
 ##    in the latter case they are also appended to OBJC_LIBS
-##  * ac_cv_objc_runtime_style
+##  * r_cv_objc_runtime_style
 ##    one of: unknown, gnu, next
 ##  * conditionals OBJC_GNU_RUNTIME and OBJC_NEXT_RUNTIME
 AC_DEFUN([R_PROG_OBJC_RUNTIME],
 [
-  ac_has_objc_headers=no
-
   if test -z "${OBJC}"; then
-    ac_cv_objc_runtime=none
+    r_cv_objc_runtime=none
   else
 
   AC_LANG_PUSH([Objective C])
@@ -1221,10 +1226,10 @@ AC_DEFUN([R_PROG_OBJC_RUNTIME],
 
   # FIXME: we don't check whether the runtime needs -lpthread which is possible
   #        (empirically Linux GNU and Apple runtime don't)
-  AC_CACHE_CHECK([for ObjC runtime library], [ac_cv_objc_runtime], [
+  AC_CACHE_CHECK([for ObjC runtime library], [r_cv_objc_runtime], [
     save_OBJCFLAGS="$OBJCFLAGS"
     save_LIBS="$LIBS"
-    ac_cv_objc_runtime=none
+    r_cv_objc_runtime=none
     for libobjc in objc objc-gnu objc-lf objc-lf2; do
       LIBS="${save_LIBS} -l${libobjc}"
       #OBJCFLAGS="$OBJCFLAGS $PTHREAD_CFLAGS -fgnu-runtime"
@@ -1235,8 +1240,7 @@ AC_DEFUN([R_PROG_OBJC_RUNTIME],
   @<:@Object class@:>@;
 			])
 		      ], [
-		        ac_cv_objc_runtime="-l${libobjc}"
-			OBJC_LIBS="${ac_cv_objc_runtime} ${OBJC_LIBS}"
+		        r_cv_objc_runtime="-l${libobjc}"
 			break
 		      ])
     done
@@ -1244,11 +1248,13 @@ AC_DEFUN([R_PROG_OBJC_RUNTIME],
     OBJCFLAGS="$save_OBJCFLAGS"
   ])
 
-  if test "${ac_cv_objc_runtime}" != none; then
-  AC_CACHE_CHECK([for ObjC runtime style], [ac_cv_objc_runtime_style], [
+  OBJC_LIBS="${r_cv_objc_runtime} ${OBJC_LIBS}"
+
+  if test "${r_cv_objc_runtime}" != none; then
+  AC_CACHE_CHECK([for ObjC runtime style], [r_cv_objc_runtime_style], [
     save_OBJCFLAGS="$OBJCFLAGS"
     save_LIBS="$LIBS"
-    ac_cv_objc_runtime_style=unknown
+    r_cv_objc_runtime_style=unknown
     LIBS="${OBJC_LIBS} $LIBS"
     for objc_lookup_class in objc_lookup_class objc_lookUpClass; do
       AC_LINK_IFELSE([
@@ -1260,9 +1266,9 @@ AC_DEFUN([R_PROG_OBJC_RUNTIME],
 			])
 		      ], [
 		        if test ${objc_lookup_class} = objc_lookup_class; then
-			  ac_cv_objc_runtime_style=gnu
+			  r_cv_objc_runtime_style=gnu
 			else
-			  ac_cv_objc_runtime_style=next
+			  r_cv_objc_runtime_style=next
 			fi
 			break
 		      ])
@@ -1272,10 +1278,10 @@ AC_DEFUN([R_PROG_OBJC_RUNTIME],
   ])
   fi
 
-  if test "${ac_cv_objc_runtime_style}" = gnu; then
+  if test "${r_cv_objc_runtime_style}" = gnu; then
     AC_DEFINE([OBJC_GNU_RUNTIME], 1, [Define if using GNU-style Objective C runtime.])
   fi
-  if test "${ac_cv_objc_runtime_style}" = next; then
+  if test "${r_cv_objc_runtime_style}" = next; then
     AC_DEFINE([OBJC_NEXT_RUNTIME], 1, [Define if using NeXT/Apple-style Objective C runtime.])
   fi
 
@@ -1335,6 +1341,12 @@ fi
 AC_DEFUN([R_PROG_OBJCXX],
 [AC_BEFORE([AC_PROG_CXX], [$0])
 AC_BEFORE([AC_PROG_OBJC], [$0])
+
+r_cached_objcxx=yes
+AC_MSG_CHECKING([for cached ObjC++ compiler])
+AC_CACHE_VAL([r_ac_OBJCXX],[
+ AC_MSG_RESULT([none])
+ r_cached_objcxx=no
 if test -n "${OBJCXX}"; then
   AC_MSG_RESULT([defining OBJCXX to be ${OBJCXX}])
   R_PROG_OBJCXX_WORKS(${OBJCXX},,OBJCXX='')
@@ -1353,6 +1365,12 @@ if test -z "${OBJCXX}"; then
 else
   AC_MSG_RESULT([${OBJCXX}])
 fi
+r_ac_OBJCXX="${OBJCXX}"
+if test "${r_cached_objcxx}" = yes; then
+  AC_MSG_RESULT(["${r_ac_OBJCXX}"])
+fi
+])
+OBJCXX="${r_ac_OBJCXX}"
 AC_SUBST(OBJCXX)
 ])# R_PROG_OBJCXX
 
@@ -1409,30 +1427,6 @@ if test "x${r_cv_func_calloc_works}" = xyes; then
 fi
 ])# R_FUNC_CALLOC
 
-## R_FUNC_FINITE
-## -------------
-AC_DEFUN([R_FUNC_FINITE],
-[AC_CACHE_CHECK([for working finite], [r_cv_func_finite_works],
-[AC_RUN_IFELSE([AC_LANG_SOURCE([[
-#include <math.h>
-#include <stdlib.h>
-#include "confdefs.h"
-int main () {
-#ifdef HAVE_FINITE
-  exit(finite(1./0.) | finite(0./0.) | finite(-1./0.));
-#else
-  exit(1);
-#endif
-}
-]])],
-               [r_cv_func_finite_works=yes],
-               [r_cv_func_finite_works=no],
-               [r_cv_func_finite_works=no])])
-if test "x${r_cv_func_finite_works}" = xyes; then
-  AC_DEFINE(HAVE_WORKING_FINITE, 1,
-            [Define if finite() is correct for -Inf/NaN/Inf.])
-fi
-])# R_FUNC_FINITE
 
 ## R_FUNC_ISFINITE
 ## ---------------
@@ -1458,32 +1452,6 @@ if test "x${r_cv_func_isfinite_works}" = xyes; then
             [Define if isfinite() is correct for -Inf/NaN/Inf.])
 fi
 ])# R_FUNC_ISFINITE
-
-## R_FUNC_LOG
-## ----------
-AC_DEFUN([R_FUNC_LOG],
-[AC_CACHE_CHECK([for working log], [r_cv_func_log_works],
-[AC_RUN_IFELSE([AC_LANG_SOURCE([[
-#include <math.h>
-#include <stdlib.h>
-#include "confdefs.h"
-int main () {
-/* we require isnan as from R 2.0.0 */
-  exit(!(log(0.) == -1. / 0. && isnan(log(-1.))));
-}
-]])],
-               [r_cv_func_log_works=yes],
-               [r_cv_func_log_works=no],
-               [r_cv_func_log_works=no])])
-if test "x${r_cv_func_log_works}" = xyes; then
-  AC_DEFINE(HAVE_WORKING_LOG, 1,
-            [Define if log() is correct for 0/-1.])
-  RMATH_HAVE_WORKING_LOG="# define HAVE_WORKING_LOG 1"
-else
-  RMATH_HAVE_WORKING_LOG="# undef HAVE_WORKING_LOG"
-fi
-AC_SUBST(RMATH_HAVE_WORKING_LOG)
-])# R_FUNC_LOG
 
 ## R_FUNC_LOG1P
 ## ------------
@@ -1683,6 +1651,7 @@ fi])# R_TYPE_KEYSYM
 ## Updated for R 2.5.0.  We need -lXt, and nowadays that is unbundled.
 AC_DEFUN([R_X11],
 [AC_PATH_XTRA			# standard X11 search macro
+use_X11="no"
 if test -z "${no_x}"; then
   ## now we look for Xt and its header: it seems Intrinsic.h is key.
   r_save_CFLAGS="${CFLAGS}"
@@ -1817,6 +1786,20 @@ AC_DEFUN([R_OBJC_FOUNDATION],
   ac_objc_foundation=no
   if test -n "${OBJC}"; then
 
+  r_foundation_cached=yes
+  AC_MSG_CHECKING([for cached Foundation settings])
+  AC_CACHE_VAL([r_cv_cache_foundation_flags], [
+      r_cv_cache_foundation_flags=yes
+      r_foundation_cached=no])
+  AC_MSG_RESULT([${r_foundation_cached}])
+  # if so, fetch them from the cache                                                                                                          
+  if test "${r_foundation_cached}" = yes; then
+    AC_CACHE_CHECK([FOUNDATION_LIBS], [r_cv_FOUNDATION_LIBS])
+    FOUNDATION_LIBS="${r_cv_FOUNDATION_LIBS}"
+    AC_CACHE_CHECK([FOUNDATION_CPPFLAGS], [r_cv_FOUNDATION_CPPFLAGS])
+    FOUNDATION_CPPFLAGS="${r_cv_FOUNDATION_CPPFLAGS}"
+  else
+
   AC_LANG_PUSH([Objective C])
   rof_save_LIBS="${LIBS}"
   rof_save_CPPFLAGS="${CPPFLAGS}"
@@ -1878,27 +1861,28 @@ EOF
   CPPFLAGS="${rof_save_CPPFLAGS}"
   AC_SUBST(FOUNDATION_CPPFLAGS)
   AC_SUBST(FOUNDATION_LIBS)
+  AC_CACHE_VAL([r_cv_FOUNDATION_CPPFLAGS],[r_cv_FOUNDATION_CPPFLAGS="${FOUNDATION_CPPFLAGS}"])
+  AC_CACHE_VAL([r_cv_FOUNDATION_LIBS],[r_cv_FOUNDATION_LIBS="${FOUNDATION_LIBS}"])
   AC_LANG_POP([Objective C])
   ac_objc_foundation=${ac_objc_foundation_works}
 
+  fi # not cached flags
+
   fi # -n ${OBJC}
-  AC_MSG_CHECKING([for working Foundation implementation])
-  AC_MSG_RESULT(${ac_objc_foundation})
+
+  AC_CACHE_CHECK([for working Foundation implementation], [r_cv_objc_foundation], [r_cv_objc_foundation="${ac_objc_foundation}"])
 ])
 
 ## R_IEEE_754
 ## ----------
 ## According to C99, isnan and isfinite are macros in math.h, 
 ## but some older systems have isnan as a function (possibly as well).
-## On the other hand, finite is a BSD function.
 AC_DEFUN([R_IEEE_754],
-[AC_CHECK_FUNCS([finite isnan])
+[AC_CHECK_FUNCS([isnan])
 AC_CHECK_DECLS([isfinite, isnan], , , [#include <math.h>])
 AC_CACHE_CHECK([whether you have IEEE 754 floating-point arithmetic],
                [r_cv_ieee_754],
-[if (test "${ac_cv_func_finite}" = yes \
-      || test "${ac_cv_have_decl_isfinite}" = yes) \
-    && (test "${ac_cv_func_isnan}" = yes \
+[if (test "${ac_cv_func_isnan}" = yes \
       || test "${ac_cv_have_decl_isnan}" = yes); then
   r_cv_ieee_754=yes
 else
@@ -3200,7 +3184,7 @@ int main () {
   exit(0);
 }
   ]])], [r_cv_iconv_latin1=yes], [r_cv_iconv_latin1=no], 
-    [r_cv_iconv_latin1=no])])
+    [r_cv_iconv_latin1=yes])])
 
   if test "$r_cv_iconv_latin1" = yes; then
     AC_DEFINE(ICONV_LATIN1, 1,
@@ -3249,13 +3233,13 @@ if test "$want_mbcs_support" = yes ; then
 fi
 if test "$want_mbcs_support" = yes ; then
 ## Solaris 8 is missing iswblank, but we can make it from iswctype.
-  R_CHECK_FUNCS([mbrtowc wcrtomb wcscoll wcsftime], [#include <wchar.h>])
+  R_CHECK_FUNCS([mbrtowc wcrtomb wcscoll wcsftime wcstod], [#include <wchar.h>])
   R_CHECK_FUNCS([mbstowcs wcstombs], [#include <stdlib.h>])
   R_CHECK_FUNCS([wctrans iswblank wctype iswctype], [#include <wctype.h>])
-  for ac_func in mbrtowc mbstowcs wcrtomb wcscoll wcsftime wcstombs \
+  for ac_func in mbrtowc mbstowcs wcrtomb wcscoll wcsftime wcstod wcstombs \
                  wctrans wctype iswctype
   do
-    as_ac_var=`echo "ac_cv_func_$ac_func"`
+    as_ac_var=`echo "ac_cv_have_decl_$ac_func"`
     this=`eval echo '${'$as_ac_var'}'`
     if test "x$this" = xno; then
       want_mbcs_support=no
@@ -3575,6 +3559,42 @@ int main ()
   fi
 ])# R_FUNC_SIGACTION
 
+## R_CROSS_COMPILING
+## ---------
+## check for tools necessary for cross-compiling,
+## namely BUILD_CC and BUILD_R
+## This macro does nothing for native builds
+AC_DEFUN([R_CROSS_COMPILING],
+[
+if test "${cross_compiling}" = yes; then
+  AC_MSG_CHECKING([for build C compiler])
+  build_cc_works=no
+  echo "int main(void) { return 0; }" > conftest.c
+  if test -n "${BUILD_CC}" && "${BUILD_CC}" conftest.c -o conftest && ./conftest; then
+      build_cc_works=yes;
+  fi
+  if test "${build_cc_works}" = no; then
+    for prog in gcc cc; do
+      if "${prog}" conftest.c -o conftest >/dev/null 2>&1 && ./conftest; then
+        BUILD_CC="${prog}"; build_cc_works=yes; break
+      fi
+    done
+  fi
+  if test "${build_cc_works}" = no; then
+    AC_MSG_RESULT(none)
+    AC_MSG_ERROR([Build C compiler doesn't work. Set BUILD_CC to a compiler capable of creating a binary native to the build machine.])
+  fi
+  AC_MSG_RESULT([${BUILD_CC}])
+  AC_MSG_CHECKING([for build R])
+  : ${BUILD_R=R}
+  if echo 'cat(R.home())'|"${BUILD_R}" --vanilla --slave >/dev/null 2>&1; then
+    AC_MSG_RESULT([${BUILD_R}])
+  else
+    AC_MSG_RESULT(none)
+    AC_MSG_ERROR([Build R doesn't work. Set BUILD_R to a native build of the same R version that you want to cross-compile.])
+  fi
+fi
+])
 
 ### Local variables: ***
 ### mode: outline-minor ***

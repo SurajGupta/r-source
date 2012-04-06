@@ -1,3 +1,8 @@
+% File src/library/methods/man/Classes.Rd
+% Part of the R package, http://www.R-project.org
+% Copyright 1995-2007 R Core Development Team
+% Distributed under GPL 2 or later
+
 \name{Classes}
 \alias{Classes}
 \alias{__ClassMetaData}
@@ -39,7 +44,7 @@
       definition.
 
       One class name is special, \code{.Data}.  This stands for the
-      \dQuote{data part} of the object.  Any class that contains one
+      \sQuote{data part} of the object.  Any class that contains one
       of the basic data types in \R{}, has implicitly a corresponding
       \code{.Data} slot of that type, allowing computations to extract
       or replace the data part while leaving other slots
@@ -140,7 +145,7 @@
       definition of the class can specify any valid object for any of
       the slots.
 
-      There are a number of \dQuote{basic} classes, corresponding to the
+      There are a number of \sQuote{basic} classes, corresponding to the
       ordinary kinds of data occurring in R.  For example,
       \code{"numeric"} is a class corresponding to numeric vectors.
       There are also basic classes corresponding to objects in the

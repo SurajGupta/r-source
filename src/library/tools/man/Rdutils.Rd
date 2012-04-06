@@ -1,3 +1,8 @@
+% File src/library/tools/man/Rdutils.Rd
+% Part of the R package, http://www.R-project.org
+% Copyright 1995-2007 R Core Development Team
+% Distributed under GPL 2 or later
+
 \name{Rdutils}
 \alias{Rd_db}
 \alias{Rd_parse}
@@ -23,7 +28,7 @@ Rd_parse(file, text = NULL)
     Elements are treated as if they were lines of a file.}
 }
 \details{
-  \code{Rd_db} builds a simple \dQuote{data base} of all Rd sources in a
+  \code{Rd_db} builds a simple database of all Rd sources in a
   package, as a list of character vectors with the lines of the Rd files
   in the package.  This is particularly useful for working on installed
   packages, where the individual Rd files in the sources are no longer

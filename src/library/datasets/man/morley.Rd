@@ -1,3 +1,8 @@
+% File src/library/datasets/man/morley.Rd
+% Part of the R package, http://www.R-project.org
+% Copyright 1995-2007 R Core Development Team
+% Distributed under GPL 2 or later
+
 \name{morley}
 \docType{data}
 \alias{morley}
@@ -30,7 +35,7 @@
   London: Edward Arnold.
 }
 \examples{
-require(stats)
+require(stats); require(graphics)
 morley$Expt <- factor(morley$Expt)
 morley$Run <- factor(morley$Run)
 attach(morley)

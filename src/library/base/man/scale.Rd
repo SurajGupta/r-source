@@ -1,3 +1,8 @@
+% File src/library/base/man/scale.Rd
+% Part of the R package, http://www.R-project.org
+% Copyright 1995-2007 R Core Development Team
+% Distributed under GPL 2 or later
+
 \name{scale}
 \alias{scale}
 \alias{scale.default}
@@ -58,7 +63,7 @@ scale(x, center = TRUE, scale = TRUE)
 }
 \examples{
 require(stats)
-x <- matrix(1:10, nc=2)
+x <- matrix(1:10, ncol=2)
 (centered.x <- scale(x, scale=FALSE))
 cov(centered.scaled.x <- scale(x))# all 1
 }

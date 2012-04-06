@@ -20,15 +20,14 @@
  *  details.
  *
  *  You should have received a copy of the GNU General Public
- *  License along with this program; if not, write to the Free
- *  Software Foundation, Inc.,
- *  51 Franklin Street, Fifth Floor, Boston, MA 02110-1301  USA.
- *
+ *  License along with this program; if not, a copy is available at
+ *  http://www.r-project.org/Licenses/
  */
 
 #include <R.h>
 #include <Rinternals.h>
 #include <stdlib.h>
+#include <float.h>
 #include "nls.h"
 
 #ifndef MIN
@@ -40,10 +39,10 @@
  */
 
 static SEXP
-getListElement(SEXP list, SEXP names, char *str)
+getListElement(SEXP list, SEXP names, const char *str)
 {
     SEXP elmt = (SEXP) NULL;
-    char *tempChar;
+    const char *tempChar;
     int i;
 
     for (i = 0; i < length(list); i++) {
@@ -320,7 +319,7 @@ numeric_deriv(SEXP expr, SEXP theta, SEXP rho, SEXP dir)
 	    error(_("Missing value or an infinity produced when evaluating the model"));
     }
     for(i = 0; i < LENGTH(theta); i++) {
-	char *name = translateChar(STRING_ELT(theta, i));
+	const char *name = translateChar(STRING_ELT(theta, i));
 	SEXP temp = findVar(install(name), rho);
 	if(isInteger(temp))
 	    error(_("variable '%s' is integer, not numeric"), name);

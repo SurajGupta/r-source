@@ -1,3 +1,8 @@
+% File src/library/base/man/ns-topenv.Rd
+% Part of the R package, http://www.R-project.org
+% Copyright 1995-2007 R Core Development Team
+% Distributed under GPL 2 or later
+
 \name{ns-topenv}
 \title{Top Level Environment}
 \alias{topenv}
@@ -13,7 +18,7 @@ topenv(envir = parent.frame(),
 
   \item{matchThisEnv}{return this environment, if it matches before
       any other criterion is satisfied.  The default, the option
-      \dQuote{topLevelEnvironment}, is set by \code{\link{sys.source}},
+      \sQuote{topLevelEnvironment}, is set by \code{\link{sys.source}},
       which treats a specific environment as the top level environment.
       Supplying the argument as \code{NULL} means it will never match.}
 }

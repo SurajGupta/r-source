@@ -1,6 +1,8 @@
-% file austres.Rd
-% copyright (C) 1994-9 W. N. Venables and B. D. Ripley
-%
+% File src/library/datasets/man/austres.Rd
+% Part of the R package, http://www.R-project.org
+% Copyright 1994-9 W. N. Venables and B. D. Ripley
+% Distributed under GPL 2 or later
+
 \name{austres}
 \docType{data}
 \alias{austres}

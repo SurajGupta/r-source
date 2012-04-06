@@ -1,3 +1,8 @@
+% File src/library/stats/man/bartlett.test.Rd
+% Part of the R package, http://www.R-project.org
+% Copyright 1995-2007 R Core Development Team
+% Distributed under GPL 2 or later
+
 \name{bartlett.test}
 \alias{bartlett.test}
 \alias{bartlett.test.default}
@@ -71,6 +76,8 @@ bartlett.test(x, \dots)
   \bold{160}, 268--282.
 }
 \examples{
+require(graphics)
+
 % FIXME: could use something more interesting here
 plot(count ~ spray, data = InsectSprays)
 bartlett.test(InsectSprays$count, InsectSprays$spray)

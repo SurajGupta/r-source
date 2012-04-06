@@ -14,8 +14,8 @@
  *  GNU General Public License for more details.
  *
  *  You should have received a copy of the GNU General Public License
- *  along with this program; if not, write to the Free Software
- *  Foundation, Inc., 51 Franklin Street, Fifth Floor, Boston, MA 02110-1301  USA
+ *  along with this program; if not, a copy is available at
+ *  http://www.r-project.org/Licenses/
  */
 
 /*  Dynamic Loading Support: See ../main/Rdynload.c and ../include/Rdynpriv.h
@@ -53,7 +53,7 @@ static DL_FUNC getRoutine(DllInfo *info, char const *name);
 static void R_deleteCachedSymbols(DllInfo *dll);
 
 static void R_getDLLError(char *buf, int len);
-static void GetFullDLLPath(SEXP call, char *buf, char *path);
+static void GetFullDLLPath(SEXP call, char *buf, const char *path);
 
 static void closeLibrary(HINSTANCE handle)
 {
@@ -142,7 +142,7 @@ static void R_getDLLError(char *buf, int len)
     LocalFree(lpMsgBuf);
 }
 
-static void GetFullDLLPath(SEXP call, char *buf, char *path)
+static void GetFullDLLPath(SEXP call, char *buf, const char *path)
 {
     char *p;
 

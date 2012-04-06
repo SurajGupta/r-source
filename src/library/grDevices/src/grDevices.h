@@ -13,8 +13,8 @@
  *  GNU General Public License for more details.
  *
  *  You should have received a copy of the GNU General Public License
- *  along with this program; if not, write to the Free Software
- *  Foundation, Inc., 51 Franklin Street, Fifth Floor, Boston, MA 02110-1301  USA
+ *  along with this program; if not, a copy is available at
+ *  http://www.r-project.org/Licenses/
  */
 
 #include <Rinternals.h>
@@ -44,15 +44,16 @@ SEXP Quartz(SEXP);
 
 SEXP R_GD_nullDevice();
 
-Rboolean 
-PSDeviceDriver(NewDevDesc*, char*, char*, char*, char**,
-	       char*, char*, char*, double, double, Rboolean, double, 
-	       Rboolean, Rboolean, Rboolean, char*, char*, SEXP, char*);
+Rboolean
+PSDeviceDriver(NewDevDesc*, const char*, const char*, const char*,
+	       const char**, const char*, const char*, const char*,
+	       double, double, Rboolean, double, Rboolean, Rboolean,
+	       Rboolean, const char*, const char*, SEXP, const char*);
 
 Rboolean
-PDFDeviceDriver(NewDevDesc*, char *, char *, char *, char**, char *, 
-		char *, char *, double, double, double,
-		int, int, char*, SEXP, int, int);
+PDFDeviceDriver(NewDevDesc*, const char *, const char *, const char *,
+		const char**, const char *, const char *, const char *,
+		double, double, double, int, int, const char*, SEXP, int, int);
 
 #ifdef WIN32
 SEXP devga(SEXP);

@@ -1,3 +1,8 @@
+% File src/library/base/man/builtins.Rd
+% Part of the R package, http://www.R-project.org
+% Copyright 1995-2007 R Core Development Team
+% Distributed under GPL 2 or later
+
 \name{builtins}
 \alias{builtins}
 \title{Returns the Names of All Built-in Objects}
@@ -7,7 +12,7 @@
 }
 \usage{builtins(internal = FALSE)}
 \arguments{
-  \item{internal}{a logical indicating whether only \dQuote{internal}
+  \item{internal}{a logical indicating whether only \sQuote{internal}
     functions (which can be called via \code{\link{.Internal}}) should
     be returned.}
 }

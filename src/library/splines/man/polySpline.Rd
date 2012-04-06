@@ -1,3 +1,8 @@
+% File src/library/splines/man/polySpline.Rd
+% Part of the R package, http://www.R-project.org
+% Copyright 1995-2007 R Core Development Team
+% Distributed under GPL 2 or later
+
 \name{polySpline}
 \alias{polySpline}
 %\alias{polySpline.bSpline}
@@ -37,6 +42,7 @@ as.polySpline(object, \dots)
   \code{\link{splineOrder}}
 }
 \examples{
+require(graphics)
 ispl <- polySpline( interpSpline( weight ~ height,  women, bSpline = TRUE ) )
 print( ispl )   # print the piecewise polynomial representation
 plot( ispl )    # plots over the range of the knots

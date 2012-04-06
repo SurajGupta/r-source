@@ -1,3 +1,8 @@
+% File src/library/stats/man/glm.Rd
+% Part of the R package, http://www.R-project.org
+% Copyright 1995-2007 R Core Development Team
+% Distributed under GPL 2 or later
+
 \name{glm}
 \title{Fitting Generalized Linear Models}
 \alias{glm}
@@ -53,7 +58,7 @@ glm.fit(x, y, weights = rep(1, nobs),
   \item{na.action}{a function which indicates what should happen
     when the data contain \code{NA}s.  The default is set by
     the \code{na.action} setting of \code{\link{options}}, and is
-    \code{\link{na.fail}} if that is unset.  The \dQuote{factory-fresh}
+    \code{\link{na.fail}} if that is unset.  The \sQuote{factory-fresh}
     default is \code{\link{na.omit}}.  Another possible value is
     \code{NULL}, no action.  Value \code{\link{na.exclude}} can be useful.}
 
@@ -275,7 +280,7 @@ anova(glm.D93)
 summary(glm.D93)
 
 ## an example with offsets from Venables & Ripley (2002, p.189)
-data(anorexia, package="MASS")
+utils::data(anorexia, package="MASS")
 
 anorex.1 <- glm(Postwt ~ Prewt + Treat + offset(Prewt),
                 family = gaussian, data = anorexia)

@@ -1,3 +1,8 @@
+% File src/library/stats/man/arima.Rd
+% Part of the R package, http://www.R-project.org
+% Copyright 1995-2007 R Core Development Team
+% Distributed under GPL 2 or later
+
 \name{arima}
 \alias{arima}
 %\alias{print.Arima}
@@ -32,10 +37,9 @@ arima(x, order = c(0, 0, 0),
   \item{xreg}{Optionally, a vector or matrix of external regressors,
     which must have the same number of rows as \code{x}.}
 
-  \item{include.mean}{Should the ARIMA model include
-    a mean term? The default is \code{TRUE} for undifferenced series,
-    \code{FALSE} for differenced ones (where a mean would not affect
-    the fit nor predictions).}
+  \item{include.mean}{Should the ARMA model include a mean/intercept term?  The
+    default is \code{TRUE} for undifferenced series, and it is ignored
+    for ARIMA models with differencing.}
 
   \item{transform.pars}{Logical.  If true, the AR parameters are
     transformed to ensure that they remain in the region of
@@ -71,22 +75,23 @@ arima(x, order = c(0, 0, 0),
 }
 \details{
   Different definitions of ARMA models have different signs for the
-  AR and/or MA coefficients. The definition here has
+  AR and/or MA coefficients.  The definition used here has
 
   \deqn{X_t = a_1X_{t-1} + \cdots + a_pX_{t-p} + e_t + b_1e_{t-1} + \dots + b_qe_{t-q}}{\code{X[t] = a[1]X[t-1] + \dots + a[p]X[t-p] + e[t] + b[1]e[t-1] + \dots + b[q]e[t-q]}}
 
-  and so the MA coefficients differ in sign from those of
-  S-PLUS.  Further, if \code{include.mean} is true, this formula
-  applies to \eqn{X-m} rather than \eqn{X}.  For ARIMA models with
-  differencing, the differenced series follows a zero-mean ARMA model.
-  If a \code{xreg} term is included, a linear regression (with a
-  constant term if \code{include.mean} is true) is fitted with an ARMA
-  model for the error term.
+  and so the MA coefficients differ in sign from those of S-PLUS.
+  Further, if \code{include.mean} is true (the default for an ARMA
+  model), this formula applies to \eqn{X - m} rather than \eqn{X}.  For
+  ARIMA models with differencing, the differenced series follows a
+  zero-mean ARMA model. If am \code{xreg} term is included, a linear
+  regression (with a constant term if \code{include.mean} is true and
+  there is no differencing) is fitted with an ARMA model for the error
+  term.
 
   The variance matrix of the estimates is found from the Hessian of
   the log-likelihood, and so may only be a rough guide.
 
-  Optimization is done by \code{\link{optim}}. It will work
+  Optimization is done by \code{\link{optim}}.  It will work
   best if the columns in \code{xreg} are roughly scaled to zero mean
   and unit variance, but does attempt to estimate suitable scalings.
 }
@@ -119,7 +124,7 @@ arima(x, order = c(0, 0, 0),
   from observation \code{n.cond} on, (where \code{n.cond} is at least
   the maximum lag of an AR term), treating all earlier innovations to
   be zero.  Argument \code{n.cond} can be used to allow comparability
-  between different fits.  The \dQuote{part log-likelihood} is the first
+  between different fits.  The \sQuote{part log-likelihood} is the first
   term, half the log of the estimated mean square.  Missing values
   are allowed, but will cause many of the innovations to be missing.
 
@@ -216,6 +221,7 @@ arima(LakeHuron, order = c(2,0,0), xreg = time(LakeHuron)-1920)
 
 ## presidents contains NAs
 ## graphs in example(acf) suggest order 1 or 3
+require(graphics)
 (fit1 <- arima(presidents, c(1, 0, 0)))
 tsdiag(fit1)
 (fit3 <- arima(presidents, c(3, 0, 0)))  # smaller AIC

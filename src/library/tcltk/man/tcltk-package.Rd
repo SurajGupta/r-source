@@ -1,3 +1,8 @@
+% File src/library/tcltk/man/tcltk-package.Rd
+% Part of the R package, http://www.R-project.org
+% Copyright 1995-2007 R Core Development Team
+% Distributed under GPL 2 or later
+
 \name{tcltk-package}
 \alias{tcltk-package}
 \alias{tcltk}
@@ -16,7 +21,7 @@ and references in those files for more.
 
 The Tcl/Tk documentation is in
 #ifdef windows
-directory \code{\link{R_HOME}/Tcl/doc} in Windows help format.
+in the directory \code{\link{R_HOME}/Tcl/doc}.
 #endif
 #ifdef unix
 the system man pages.

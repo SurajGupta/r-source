@@ -1,8 +1,13 @@
+% File src/library/utils/man/read.fwf.Rd
+% Part of the R package, http://www.R-project.org
+% Copyright 1995-2007 R Core Development Team
+% Distributed under GPL 2 or later
+
 \name{read.fwf}
 \alias{read.fwf}
 \title{Read Fixed Width Format Files}
 \description{
-  Read a \dQuote{table} of \bold{f}ixed \bold{w}idth \bold{f}ormatted
+  Read a table of \bold{f}ixed \bold{w}idth \bold{f}ormatted
   data into a \code{\link{data.frame}}.
 }
 \usage{
@@ -64,14 +69,14 @@ read.fwf(file, widths, header = FALSE, sep = "\t", as.is = FALSE,
 \examples{
 ff <- tempfile()
 cat(file=ff, "123456", "987654", sep="\n")
-read.fwf(ff, width=c(1,2,3))    #> 1 23 456 \\ 9 87 654
-read.fwf(ff, width=c(1,-2,3))   #> 1 456 \\ 9 654
+read.fwf(ff, widths=c(1,2,3))    #> 1 23 456 \\ 9 87 654
+read.fwf(ff, widths=c(1,-2,3))   #> 1 456 \\ 9 654
 unlink(ff)
 cat(file=ff, "123", "987654", sep="\n")
-read.fwf(ff, width=c(1,0, 2,3))    #> 1 NA 23 NA \\ 9 NA 87 654
+read.fwf(ff, widths=c(1,0, 2,3))    #> 1 NA 23 NA \\ 9 NA 87 654
 unlink(ff)
 cat(file=ff, "123456", "987654", sep="\n")
-read.fwf(ff, width=list(c(1,0, 2,3), c(2,2,2)))    #> 1 NA 23 456 98 76 54
+read.fwf(ff, widths=list(c(1,0, 2,3), c(2,2,2)))    #> 1 NA 23 456 98 76 54
 unlink(ff)
 }
 \keyword{file}

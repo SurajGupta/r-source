@@ -1,3 +1,19 @@
+#  File src/library/methods/R/MethodsListClass.R
+#  Part of the R package, http://www.R-project.org
+#
+#  This program is free software; you can redistribute it and/or modify
+#  it under the terms of the GNU General Public License as published by
+#  the Free Software Foundation; either version 2 of the License, or
+#  (at your option) any later version.
+#
+#  This program is distributed in the hope that it will be useful,
+#  but WITHOUT ANY WARRANTY; without even the implied warranty of
+#  MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
+#  GNU General Public License for more details.
+#
+#  A copy of the GNU General Public License is available at
+#  http://www.r-project.org/Licenses/
+
 .InitMethodsListClass <- function(envir)
 {
     if(exists(classMetaName("MethodsList"), envir))
@@ -58,7 +74,7 @@
 ## some initializations that need to be done late
 .InitMethodDefinitions <- function(envir) {
     assign("asMethodDefinition",
-           function(def, signature = list(), sealed = FALSE) {
+           function(def, signature = list(), sealed = FALSE, functionName = character()) {
         ## primitives can't take slots, but they are only legal as default methods
         ## and the code will just have to accomodate them in that role, w/o the
         ## MethodDefinition information.
@@ -73,12 +89,16 @@
             value <- def
         else
             value <- new("MethodDefinition", def)
+
+        if(length(functionName) == 0)
+          functionName = value@generic
+        
         if(sealed)
             value <- new("SealedMethodDefinition", value)
         ## this is really new("signature",  def, signature)
         ## but bootstrapping problems force us to make
         ## the initialize method explicit here
-        classes <- .MakeSignature(new("signature"),  def, signature)
+        classes <- .MakeSignature(new("signature"),  def, signature, functionName)
         value@target <- classes
         value@defined <- classes
         value
@@ -152,11 +172,11 @@
                   if(nargs() < 2)
                       .Object
                   else if(missing(functionDef))
-                      .MakeSignature(.Object, , list(...))
+                      .MakeSignature(.Object, , list(...), "initialize")
                   else if(!is(functionDef, "function"))
-                      .MakeSignature(.Object, , list(functionDef, ...))
+                      .MakeSignature(.Object, , list(functionDef, ...), "initialize")
                   else
-                      .MakeSignature(.Object, functionDef, list(...))
+                      .MakeSignature(.Object, functionDef, list(...), "initialize")
               }, where = envir)
     setMethod("initialize", "environment",
               function(.Object, ...) {
@@ -208,20 +228,64 @@
 	      function(x,y) .Internal(rbind(deparse.level = 0, x,y)))
     setMethod("rbind2", signature(x = "ANY", y = "missing"),
 	      function(x,y) .Internal(rbind(deparse.level = 0, x)))
-
-    ## a show() method for the signature class
-    setMethod("show", "signature", function(object) {
-      message("An object of class \"", class(object), "\"")
-      val <- object@.Data
-      names(val) <- object@names
-      callNextMethod(val)
-    } )
-
+    .InitStructureMethods(envir)
 ### Uncomment next line if we want special initialize methods for basic classes
 ###    .InitBasicClassMethods(where)
 }
 
-.MakeSignature <- function(object, def, signature) {
+.InitStructureMethods <- function(where) {
+    setMethod("Ops", c("structure", "vector"), where = where,
+              function(e1, e2) {
+                  value <- callGeneric(e1@.Data, e2)
+                  if(length(value) == length(e1)) {
+                      e1@.Data <- value
+                      e1
+                  }
+                  else
+                    value
+              })
+    setMethod("Ops", c("vector", "structure"), where = where,
+              function(e1, e2) {
+                  value <- callGeneric(e1, e2@.Data)
+                  if(length(value) == length(e2)) {
+                      e2@.Data <- value
+                      e2
+                  }
+                  else
+                    value
+              })
+    setMethod("Ops", c("structure", "structure"), where = where,
+              function(e1, e2)
+                 callGeneric(e1@.Data, e2@.Data)
+              )
+    ## We need some special cases for matrix and array.
+    ## Although they extend "structure", their .Data "slot" is the matrix/array
+    ## So op'ing them with a structure gives the matrix/array:  Not good?
+    ## Following makes them obey the structure rule.
+    setMethod("Ops", c("structure", "array"), where = where,
+              function(e1, e2)
+                 callGeneric(e1@.Data, as.vector(e2))
+              )
+    setMethod("Ops", c("array", "structure"), where = where,
+              function(e1, e2)
+                 callGeneric(as.vector(e1), e2@.Data)
+              )
+    ## but for two array-based strucures, we let the underlying
+    ## code for matrix/array stand.
+    setMethod("Ops", c("array", "array"), where = where,
+              function(e1, e2)
+                 callGeneric(e1@.Data, e2@.Data)
+              )
+    
+    setMethod("Math", "structure", where = where,
+              function(x) {
+                  x@.Data <- callGeneric(x@.Data)
+                  x
+              })
+}
+
+
+.MakeSignature <- function(object, def, signature, functionName = "function") {
     signature <- unlist(signature)
     if(length(signature)>0) {
         classes <- as.character(signature)
@@ -237,8 +301,9 @@
         if(is.null(sigArgs))
             names(signature) <- formalNames[seq_along(classes)]
         else if(length(sigArgs) > 0 && any(is.na(match(sigArgs, formalNames))))
-            stop(gettextf("the names in signature for method (%s) do not match function's arguments (%s)",
+            stop(gettextf("the names in signature for method (%s) do not match %s's arguments (%s)",
                           paste(sigArgs, collapse = ", "),
+                          functionName,                          
                           paste(formalNames, collapse = ", ")),
                  domain = NA)
         ## the named classes become the signature object

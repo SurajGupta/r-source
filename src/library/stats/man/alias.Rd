@@ -1,3 +1,8 @@
+% File src/library/stats/man/alias.Rd
+% Part of the R package, http://www.R-project.org
+% Copyright 1995-2007 R Core Development Team
+% Distributed under GPL 2 or later
+
 \name{alias}
 \title{Find Aliases (Dependencies) in a Model}
 \usage{
@@ -64,7 +69,7 @@ alias(object, \dots)
 }
 \examples{
 ## From Venables and Ripley (2002) p.165.
-data(npk, package="MASS")
+utils::data(npk, package="MASS")
 
 op <- options(contrasts=c("contr.helmert", "contr.poly"))
 npk.aov <- aov(yield ~ block + N*P*K, npk)

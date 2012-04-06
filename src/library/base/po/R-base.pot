@@ -2,7 +2,7 @@ msgid ""
 msgstr ""
 "Project-Id-Version: R 2.3.0\n"
 "Report-Msgid-Bugs-To: bugs@r-project.org\n"
-"POT-Creation-Date: 2007-06-12 18:43\n"
+"POT-Creation-Date: 2007-09-17 10:18\n"
 "PO-Revision-Date: YEAR-MO-DA HO:MI+ZONE\n"
 "Last-Translator: FULL NAME <EMAIL@ADDRESS>\n"
 "Language-Team: LANGUAGE <LL@li.org>\n"
@@ -329,7 +329,7 @@ msgstr ""
 msgid "names do not match previous names"
 msgstr ""
 
-msgid "names do not match previous names:"
+msgid "numbers of columns of arguments do not match"
 msgstr ""
 
 msgid "invalid list argument: all variables should have the same length"
@@ -344,7 +344,7 @@ msgstr ""
 msgid "list of length %d not meaningful"
 msgstr ""
 
-msgid "only defined on a data frame with all numeric or complex variables"
+msgid "only defined on a data frame with all numeric variables"
 msgstr ""
 
 msgid "character string is not in a standard unambiguous format"
@@ -485,6 +485,9 @@ msgstr ""
 msgid "'file' must be a character string or connection"
 msgstr ""
 
+msgid "Invalid DCF format."
+msgstr ""
+
 msgid "'x' must be a square matrix"
 msgstr ""
 
@@ -498,6 +501,9 @@ msgid "only matrix diagonals can be replaced"
 msgstr ""
 
 msgid "replacement diagonal has wrong length"
+msgstr ""
+
+msgid "'fromLast' must be TRUE or FALSE"
 msgstr ""
 
 msgid "MARGIN ="
@@ -629,10 +635,10 @@ msgstr ""
 msgid "all arguments must be named"
 msgstr ""
 
-msgid "argument '%s' will be ignored"
+msgid "'pattern' must be a non-empty character string"
 msgstr ""
 
-msgid "'pattern' must be a non-empty character string"
+msgid "invalid multibyte string for 'pattern'"
 msgstr ""
 
 msgid "'max.distance' must be non-negative"
@@ -714,6 +720,9 @@ msgid "'%s' not found on search path, using pos = 2"
 msgstr ""
 
 msgid "package/namespace load failed for '%s'"
+msgstr ""
+
+msgid "package was installed prior to 2.4.0 and must be re-installed"
 msgstr ""
 
 msgid "unable to load R code in package '%s'"
@@ -827,16 +836,28 @@ msgstr ""
 msgid "[Previously saved workspace restored]"
 msgstr ""
 
+msgid "Attempting to load the environment '%s'"
+msgstr ""
+
+msgid "not found: using .GlobalEnv instead"
+msgstr ""
+
 msgid "invalid 'category' argument"
 msgstr ""
 
 msgid "must specify formal argument names to vectorize"
 msgstr ""
 
-msgid "'arg' must be NULL or a character vector of length >= 1"
+msgid "'arg' must be NULL or a character vector"
 msgstr ""
 
-msgid "'arg' should be one of"
+msgid "'arg' must be of length 1"
+msgstr ""
+
+msgid "'arg' must be of length >= 1"
+msgstr ""
+
+msgid "'arg' should be one of %s"
 msgstr ""
 
 msgid "there is more than one match in 'match.arg'"
@@ -956,6 +977,12 @@ msgstr ""
 msgid "in '%s' methods for export not found: %s"
 msgstr ""
 
+msgid "Multiple methods lists found for '"
+msgstr ""
+
+msgid "'"
+msgstr ""
+
 msgid "No methods table for \""
 msgstr ""
 
@@ -1059,15 +1086,6 @@ msgid "'%s' is not implemented yet"
 msgstr ""
 
 msgid "argument '%s' is not used (yet)"
-msgstr ""
-
-msgid "invalid version specification"
-msgstr ""
-
-msgid "wrong argument"
-msgstr ""
-
-msgid "not defined for package_version objects"
 msgstr ""
 
 msgid "no arguments"
@@ -1277,6 +1295,15 @@ msgstr ""
 msgid "error %d in 'dsvdc'"
 msgstr ""
 
+msgid "STATS is longer than the extent of 'dim(x)[MARGIN]'"
+msgstr ""
+
+msgid "STATS does not recycle exactly across MARGIN"
+msgstr ""
+
+msgid "length(STATS) or dim(STATS) do not match dim(x)[MARGIN]"
+msgstr ""
+
 msgid "nothing to tabulate"
 msgstr ""
 
@@ -1328,6 +1355,18 @@ msgstr ""
 msgid "No traceback available"
 msgstr ""
 
+msgid "invalid version specification"
+msgstr ""
+
+msgid "wrong argument"
+msgstr ""
+
+msgid "invalid value"
+msgstr ""
+
+msgid "not defined for numeric_version objects"
+msgstr ""
+
 msgid "argument to 'which' is not logical"
 msgstr ""
 
@@ -1338,9 +1377,6 @@ msgid "arguments 'show.output.on.console', 'minimized' and 'invisible' are for W
 msgstr ""
 
 msgid "'input' must be a character vector or 'NULL'"
-msgstr ""
-
-msgid "argument must be character"
 msgstr ""
 
 msgid "'cmd' could not be run"
@@ -1375,13 +1411,13 @@ msgid_plural "there are no packages called"
 msgstr[0]    ""
 msgstr[1]    ""
 
-msgid        "object %s is not exported by 'namespace:%s'"
-msgid_plural "objects %s are not exported by 'namespace:%s'"
+msgid        "object '%s' is not exported by 'namespace:%s'"
+msgid_plural "objects '%s' are not exported by 'namespace:%s'"
 msgstr[0]    ""
 msgstr[1]    ""
 
-msgid        "previous export %s is being replaced"
-msgid_plural "previous exports %s are being replaced"
+msgid        "previous export '%s' is being replaced"
+msgid_plural "previous exports '%s' are being replaced"
 msgstr[0]    ""
 msgstr[1]    ""
 

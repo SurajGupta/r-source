@@ -1,3 +1,19 @@
+#  File src/library/tools/R/read.00Index.R
+#  Part of the R package, http://www.R-project.org
+#
+#  This program is free software; you can redistribute it and/or modify
+#  it under the terms of the GNU General Public License as published by
+#  the Free Software Foundation; either version 2 of the License, or
+#  (at your option) any later version.
+#
+#  This program is distributed in the hope that it will be useful,
+#  but WITHOUT ANY WARRANTY; without even the implied warranty of
+#  MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
+#  GNU General Public License for more details.
+#
+#  A copy of the GNU General Public License is available at
+#  http://www.r-project.org/Licenses/
+
 read.00Index <-
 function(file)
 {
@@ -13,7 +29,7 @@ function(file)
                       file),
              domain = NA)
 
-    y <- matrix("", nr = 0, nc = 2)
+    y <- matrix("", nrow = 0, ncol = 2)
     x <- paste(readLines(file), collapse = "\n")
 
     ## <FIXME>
@@ -49,8 +65,7 @@ function(file)
                 x <- strsplit(unlist(strsplit(chunk, "\n")), "[ \t]")
                 cbind(unlist(lapply(x, "[[", 1)),
                       unlist(lapply(x, function(t) {
-                          paste(t[-c(1, which(nchar(t) == 0))],
-                                collapse = " ")
+                          paste(t[-c(1, which(!nzchar(t)))], collapse = " ")
                       })))
             }
         },

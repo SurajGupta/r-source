@@ -1,3 +1,8 @@
+% File src/library/datasets/man/faithful.Rd
+% Part of the R package, http://www.R-project.org
+% Copyright 1995-2007 R Core Development Team
+% Distributed under GPL 2 or later
+
 \name{faithful}
 \docType{data}
 \alias{faithful}
@@ -29,7 +34,7 @@
   A closer look at \code{faithful$eruptions} reveals that these are
   heavily rounded times originally in seconds, where multiples of 5 are
   more frequent than expected under non-human measurement.  For a
-  \dQuote{better} version of the eruptions times, see the example below.
+  better version of the eruption times, see the example below.
 
   There are many versions of this dataset around: Azzalini and Bowman
   (1990) use a more complete version.
@@ -38,6 +43,7 @@
   \code{geyser} in package \pkg{MASS} for the Azzalini--Bowman version.
 }
 \examples{
+require(stats); require(graphics)
 f.tit <-  "faithful data: Eruptions of Old Faithful"
 
 ne60 <- round(e60 <- 60 * faithful$eruptions)

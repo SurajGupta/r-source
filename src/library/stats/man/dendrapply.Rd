@@ -1,3 +1,8 @@
+% File src/library/stats/man/dendrapply.Rd
+% Part of the R package, http://www.R-project.org
+% Copyright 1995-2007 R Core Development Team
+% Distributed under GPL 2 or later
+
 \name{dendrapply}
 \alias{dendrapply}
 \title{Apply a Function to All Nodes of a Dendrogram}
@@ -31,12 +36,14 @@ dendrapply(X, FUN, ...)
   a function to each component of a  \code{list}.
 }
 \examples{
+require(graphics)
+
 ## a smallish simple dendrogram
 dhc <- as.dendrogram(hc <- hclust(dist(USArrests), "ave"))
 (dhc21 <- dhc[[2]][[1]])
 
 ## too simple:
-dendrapply(dhc21, function(n) str(attributes(n)))
+dendrapply(dhc21, function(n) utils::str(attributes(n)))
 
 ## toy example to set colored leaf labels :
 local({

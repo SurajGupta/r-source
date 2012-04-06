@@ -15,8 +15,8 @@
  *  GNU General Public License for more details.
  *
  *  You should have received a copy of the GNU General Public License
- *  along with this program; if not, write to the Free Software
- *  Foundation, Inc., 51 Franklin Street, Fifth Floor, Boston, MA 02110-1301  USA
+ *  along with this program; if not, a copy is available at
+ *  http://www.r-project.org/Licenses/
  */
 
 
@@ -34,7 +34,7 @@
 #ifdef SUPPORT_MBCS
 #include <wchar.h>
 #include <wctype.h>
-static void mbcsToSbcs(char *in, char *out, char *encoding);
+static void mbcsToSbcs(const char *in, char *out, const char *encoding);
 #endif
 
 #if defined(HAVE_ICONV) && defined(ICONV_LATIN1)
@@ -54,6 +54,13 @@ static void mbcsToSbcs(char *in, char *out, char *encoding);
 extern int errno;
 #endif
 
+#ifdef Win32
+# define USE_GZIO
+#endif
+
+#ifdef USE_GZIO
+#include <zlib.h>
+#endif
 
 #define INVALID_COL 0xff0a0b0c
 
@@ -69,7 +76,7 @@ static char PS_hyphen = 173;
 /* Part 0.  AFM File Names */
 
 #ifdef SUPPORT_MBCS
-static char *CIDBoldFontStr1 =
+static const char *CIDBoldFontStr1 =
 "16 dict begin\n"
 "  /basecidfont exch def\n"
 "  /basefont-H /.basefont-H /Identity-H [ basecidfont ] composefont def\n"
@@ -85,7 +92,7 @@ static char *CIDBoldFontStr1 =
 "    4 2 roll basecidfont /FontMatrix get transform\n"
 "  ] def\n"
 "  /cid 2 string def\n";
-static char *CIDBoldFontStr2 =
+static const char *CIDBoldFontStr2 =
 "  /BuildGlyph {\n"
 "    gsave\n"
 "    exch begin\n"
@@ -256,7 +263,7 @@ static char *SkipToNextKey(char *p)
     return p;
 }
 
-static int GetFontBBox(char *buf, FontMetricInfo *metrics)
+static int GetFontBBox(const char *buf, FontMetricInfo *metrics)
 {
     if (sscanf(buf, "FontBBox %hd %hd %hd %hd",
 	      &(metrics->FontBBox[0]),
@@ -426,7 +433,7 @@ static int GetNextItem(FILE *fp, char *dest, int c, EncodingInputState *state)
  *         (not required by R interface)
  */
 #ifdef SUPPORT_MBCS
-static int pathcmp(char *encpath, char *comparison) {
+static int pathcmp(const char *encpath, const char *comparison) {
     char pathcopy[PATH_MAX];
     char *p1, *p2;
     strcpy(pathcopy, encpath);
@@ -447,7 +454,7 @@ static int pathcmp(char *encpath, char *comparison) {
 }
 #endif
 
-static void seticonvName(char *encpath, char *convname) {
+static void seticonvName(const char *encpath, char *convname) {
     /*
      * Default to "latin1"
      */
@@ -488,7 +495,7 @@ static void seticonvName(char *encpath, char *convname) {
  * enccode is filled with the raw source of the file
  */
 static int
-LoadEncoding(char *encpath, char *encname,
+LoadEncoding(const char *encpath, char *encname,
 	     char *encconvname, CNAME *encnames,
 	     char *enccode, Rboolean isPDF)
 {
@@ -539,17 +546,31 @@ PostScriptLoadFontMetrics(const char * const fontpath,
 {
     char buf[BUFSIZE], *p, truth[10];
     int mode, i = 0, j, ii, nKPX=0;
+#ifdef USE_GZIO
+    gzFile fp;
+#else
     FILE *fp;
+#endif
 
     if(strchr(fontpath, FILESEP[0])) strcpy(buf, fontpath);
-    else snprintf(buf, BUFSIZE,"%s%slibrary%sgrDevices%safm%s%s",
-		  R_Home, FILESEP, FILESEP, FILESEP, FILESEP, fontpath);
+    else 
+#ifdef USE_GZIO
+	snprintf(buf, BUFSIZE,"%s%slibrary%sgrDevices%safm%s%s.gz",
+		 R_Home, FILESEP, FILESEP, FILESEP, FILESEP, fontpath);
+#else
+	snprintf(buf, BUFSIZE,"%s%slibrary%sgrDevices%safm%s%s",
+		 R_Home, FILESEP, FILESEP, FILESEP, FILESEP, fontpath);
+#endif
 #ifdef DEBUG_PS
     Rprintf("afmpath is %s\n", buf);
     Rprintf("reencode is %d\n", reencode);
 #endif
 
+#ifdef USE_GZIO
+    if (!(fp = gzopen(R_ExpandFileName(buf), "rb"))) {
+#else
     if (!(fp = R_fopen(R_ExpandFileName(buf), "r"))) {
+#endif
 	warning(_("afm file '%s' could not be opened"),
 		R_ExpandFileName(buf));
 	return 0;
@@ -566,7 +587,11 @@ PostScriptLoadFontMetrics(const char * const fontpath,
 	metrics->CharInfo[ii].WX = NA_SHORT;
 	for(j = 0; j < 4; j++) metrics->CharInfo[ii].BBox[j] = 0;
     }
+#ifdef USE_GZIO
+    while (gzgets(fp, buf, BUFSIZE)) {
+#else
     while (fgets(buf, BUFSIZE, fp)) {
+#endif
 	switch(KeyType(buf)) {
 
 	case StartFontMetrics:
@@ -672,7 +697,11 @@ PostScriptLoadFontMetrics(const char * const fontpath,
 	}
     }
     metrics->nKP = i;
+#ifdef USE_GZIO
+    gzclose(fp);
+#else
     fclose(fp);
+#endif
     /* Make an index for kern-pair searches: relies on having contiguous
        blocks by first char for efficiency, but works in all cases. */
     {
@@ -691,7 +720,11 @@ PostScriptLoadFontMetrics(const char * const fontpath,
     }
     return 1;
 pserror:
+#ifdef USE_GZIO
+    gzclose(fp);
+#else
     fclose(fp);
+#endif
     return 0;
 }
 
@@ -701,13 +734,13 @@ extern int Ri18n_wcwidth(wchar_t c);
 
 
 static double
-PostScriptStringWidth(unsigned char *str,
+PostScriptStringWidth(const unsigned char *str,
 		      FontMetricInfo *metrics,
-		      int face, char *encoding)
+		      int face, const char *encoding)
 {
     int sum = 0, i;
     short wx;
-    unsigned char *p = NULL, *str1 = str;
+    const unsigned char *p = NULL, *str1 = str;
     unsigned char p1, p2;
 
 #ifdef SUPPORT_MBCS
@@ -798,7 +831,7 @@ static void
 PostScriptMetricInfo(int c, double *ascent, double *descent, double *width,
 		     FontMetricInfo *metrics,
 		     Rboolean isSymbol,
-		     char *encoding)
+		     const char *encoding)
 {
     if (c == 0) {
 	*ascent = 0.001 * metrics->FontBBox[3];
@@ -812,11 +845,11 @@ PostScriptMetricInfo(int c, double *ascent, double *descent, double *width,
        convert from  UCS4ENC, but there are no language chars about 65536. */
     if(mbcslocale && !isSymbol && c >= 128 && c < 65536) { /* Unicode */
 	void *cd = NULL;
-	char *i_buf, *o_buf, out[2];
+	const char *i_buf; char *o_buf, out[2];
 	size_t i_len, o_len, status;
 	unsigned short w[2];
 
-	if ((void*)-1 == (cd = Riconv_open(encoding, (char *)UCS2ENC)))
+	if ((void*)-1 == (cd = Riconv_open(encoding, UCS2ENC)))
 	    error(_("unknown encoding '%s' in 'PostScriptMetricInfo'"),
 		  encoding);
 
@@ -826,7 +859,7 @@ PostScriptMetricInfo(int c, double *ascent, double *descent, double *width,
 	i_len = 4;
 	o_buf = out;
 	o_len = 2;
-	status = Riconv(cd, (char **)&i_buf, (size_t *)&i_len,
+	status = Riconv(cd, &i_buf, (size_t *)&i_len,
 			(char **)&o_buf, (size_t *)&o_len);
 	Riconv_close(cd);
 	if (status == (size_t)-1) {
@@ -1253,8 +1286,8 @@ void freeType1Fonts()
  * Given a path to an encoding file,
  * find an EncodingInfo that corresponds
  */
-static encodinginfo 
-findEncoding(char *encpath, encodinglist deviceEncodings, Rboolean isPDF)
+static encodinginfo
+findEncoding(const char *encpath, encodinglist deviceEncodings, Rboolean isPDF)
 {
     encodinglist enclist = isPDF ? PDFloadedEncodings : loadedEncodings;
     encodinginfo encoding = NULL;
@@ -1280,8 +1313,8 @@ findEncoding(char *encpath, encodinglist deviceEncodings, Rboolean isPDF)
 /*
  * Find an encoding in device encoding list
  */
-static encodinginfo findDeviceEncoding(char *encpath, encodinglist enclist,
-				       int *index)
+static encodinginfo
+findDeviceEncoding(const char *encpath, encodinglist enclist, int *index)
 {
     encodinginfo encoding = NULL;
     int found = 0;
@@ -1299,7 +1332,7 @@ static encodinginfo findDeviceEncoding(char *encpath, encodinglist enclist,
 /*
  * Utility to avoid string overrun
  */
-static void safestrcpy(char *dest, char *src, int maxlen)
+static void safestrcpy(char *dest, const char *src, int maxlen)
 {
     if (strlen(src) < maxlen)
 	strcpy(dest, src);
@@ -1315,8 +1348,7 @@ static void safestrcpy(char *dest, char *src, int maxlen)
  *
  * ... and return the new encoding
  */
-static encodinginfo addEncoding(char* encpath,
-				Rboolean isPDF)
+static encodinginfo addEncoding(const char *encpath, Rboolean isPDF)
 {
     encodinginfo encoding = makeEncoding();
     if (encoding) {
@@ -1331,7 +1363,7 @@ static encodinginfo addEncoding(char* encpath,
 		freeEncoding(encoding);
 		encoding = NULL;
 	    } else {
-		encodinglist enclist = 
+		encodinglist enclist =
 		    isPDF ? PDFloadedEncodings : loadedEncodings;
 		safestrcpy(encoding->encpath, encpath, PATH_MAX);
 		newenc->encoding = encoding;
@@ -1389,7 +1421,7 @@ static encodinglist addDeviceEncoding(encodinginfo encoding,
  * If it is "default" then check that the loaded encoding is the
  * same as the encoding we want.  A matching encoding is defined
  * as one which leads to the same iconvname (see seticonvName()).
- * This could perhaps be made more rigorous by actually looking inside 
+ * This could perhaps be made more rigorous by actually looking inside
  * the relevant encoding file for the encoding name.
  *
  * If the encoding we want is NULL, then we just don't care.
@@ -1397,10 +1429,10 @@ static encodinglist addDeviceEncoding(encodinginfo encoding,
  * Returns NULL if can't find font in loadedFonts
  */
 
-static char* getFontEncoding(char *family, char *fontdbname);
+static const char *getFontEncoding(const char *family, const char *fontdbname);
 
-static type1fontfamily findLoadedFont(char *name, char *encoding,
-				      Rboolean isPDF)
+static type1fontfamily
+findLoadedFont(const char *name, const char *encoding, Rboolean isPDF)
 {
     type1fontlist fontlist;
     type1fontfamily font = NULL;
@@ -1419,11 +1451,11 @@ static type1fontfamily findLoadedFont(char *name, char *encoding,
 	if (found) {
 	    font = fontlist->family;
 	    if (encoding) {
-                char encconvname[50]; 
-		char *encname = getFontEncoding(name, fontdbname);
+                char encconvname[50];
+		const char *encname = getFontEncoding(name, fontdbname);
                 seticonvName(encoding, encconvname);
 		if (!strcmp(encname, "default") &&
-		    strcmp(fontlist->family->encoding->convname, 
+		    strcmp(fontlist->family->encoding->convname,
                            encconvname)) {
 		    font = NULL;
 		    found = 0;
@@ -1437,20 +1469,14 @@ static type1fontfamily findLoadedFont(char *name, char *encoding,
 
 SEXP Type1FontInUse(SEXP name, SEXP isPDF)
 {
-    SEXP result;
-
     if (!isString(name) || LENGTH(name) > 1)
 	error(_("Invalid font name or more than one font name"));
-    PROTECT(result = allocVector(LGLSXP, 1));
-    if (findLoadedFont(CHAR(STRING_ELT(name, 0)), NULL, asLogical(isPDF)))
-	LOGICAL(result)[0] = TRUE;
-    else
-	LOGICAL(result)[0] = FALSE;
-    UNPROTECT(1);
-    return result;
+    return ScalarLogical( 
+	findLoadedFont(CHAR(STRING_ELT(name, 0)), NULL, asLogical(isPDF)) 
+	!= NULL);
 }
 
-static cidfontfamily findLoadedCIDFont(char* family, Rboolean isPDF)
+static cidfontfamily findLoadedCIDFont(const char *family, Rboolean isPDF)
 {
     cidfontlist fontlist;
     cidfontfamily font = NULL;
@@ -1476,23 +1502,18 @@ static cidfontfamily findLoadedCIDFont(char* family, Rboolean isPDF)
 
 SEXP CIDFontInUse(SEXP name, SEXP isPDF)
 {
-    SEXP result;
     if (!isString(name) || LENGTH(name) > 1)
 	error(_("Invalid font name or more than one font name"));
-    PROTECT(result = allocVector(LGLSXP, 1));
-    if (findLoadedCIDFont(CHAR(STRING_ELT(name, 0)), asLogical(isPDF)))
-	LOGICAL(result)[0] = TRUE;
-    else
-	LOGICAL(result)[0] = FALSE;
-    UNPROTECT(1);
-    return result;
+    return ScalarLogical(
+	findLoadedCIDFont(CHAR(STRING_ELT(name, 0)), asLogical(isPDF)) 
+	!= NULL);
 }
 
 /*
  * Find a font in device font list
  */
-static cidfontfamily findDeviceCIDFont(char *name, cidfontlist fontlist,
-				       int *index)
+static cidfontfamily
+findDeviceCIDFont(const char *name, cidfontlist fontlist, int *index)
 {
     cidfontfamily font = NULL;
     int found = 0;
@@ -1537,8 +1558,8 @@ static cidfontfamily findDeviceCIDFont(char *name, cidfontlist fontlist,
  * Must only be called once a device has at least one font added
  * (i.e., after the default font has been added)
  */
-static type1fontfamily findDeviceFont(char *name, type1fontlist fontlist,
-				      int *index)
+static type1fontfamily
+findDeviceFont(const char *name, type1fontlist fontlist, int *index)
 {
     type1fontfamily font = NULL;
     int found = 0;
@@ -1567,7 +1588,7 @@ static type1fontfamily findDeviceFont(char *name, type1fontlist fontlist,
 /*
  * Get an R-level font database
  */
-static SEXP getFontDB(char *fontdbname) {
+static SEXP getFontDB(const char *fontdbname) {
     SEXP graphicsNS, PSenv;
     SEXP fontdb;
     PROTECT(graphicsNS = R_FindNamespace(ScalarString(mkChar("grDevices"))));
@@ -1586,7 +1607,7 @@ static SEXP getFontDB(char *fontdbname) {
 /*
  * Get an R-level font object
  */
-static SEXP getFont(char *family, char *fontdbname) {
+static SEXP getFont(const char *family, const char *fontdbname) {
     int i, nfonts;
     SEXP result = R_NilValue;
     int found = 0;
@@ -1595,7 +1616,7 @@ static SEXP getFont(char *family, char *fontdbname) {
     PROTECT(fontnames = getAttrib(fontdb, R_NamesSymbol));
     nfonts = LENGTH(fontdb);
     for (i=0; i<nfonts && !found; i++) {
-	char* fontFamily = CHAR(STRING_ELT(fontnames, i));
+	const char *fontFamily = CHAR(STRING_ELT(fontnames, i));
 	if (strcmp(family, fontFamily) == 0) {
 	    found = 1;
 	    result = VECTOR_ELT(fontdb, i);
@@ -1615,18 +1636,19 @@ static SEXP getFont(char *family, char *fontdbname) {
  * Do this by looking up the font name in the PostScript
  * font database
  */
-static char* fontMetricsFileName(char *family, int faceIndex,
-				 char *fontdbname)
+static const char*
+fontMetricsFileName(const char *family, int faceIndex,
+		    const char *fontdbname)
 {
     int i, nfonts;
-    char* result = NULL;
+    const char *result = NULL;
     int found = 0;
     SEXP fontdb = getFontDB(fontdbname);
     SEXP fontnames;
     PROTECT(fontnames = getAttrib(fontdb, R_NamesSymbol));
     nfonts = LENGTH(fontdb);
     for (i = 0; i < nfonts && !found; i++) {
-	char* fontFamily = CHAR(STRING_ELT(fontnames, i));
+	const char *fontFamily = CHAR(STRING_ELT(fontnames, i));
 	if (strcmp(family, fontFamily) == 0) {
 	    found = 1;
 	    /* 1 means vector of font afm file paths */
@@ -1640,14 +1662,15 @@ static char* fontMetricsFileName(char *family, int faceIndex,
     return result;
 }
 
-static char* getFontType(char *family, char* fontdbname) {
-    char *result = CHAR(STRING_ELT(getAttrib(getFont(family, fontdbname),
-					     R_ClassSymbol), 0));
-    return result;
+static const char *getFontType(const char *family, const char *fontdbname)
+{
+    return CHAR(STRING_ELT(getAttrib(getFont(family, fontdbname),
+				     R_ClassSymbol), 0));
 }
 
-static Rboolean isType1Font(char *family, char *fontdbname,
-			    type1fontfamily defaultFont) {
+static Rboolean isType1Font(const char *family, const char *fontdbname,
+			    type1fontfamily defaultFont)
+{
     /*
      * If family is "" then we're referring to the default device
      * font, so the test is just whether the default font is
@@ -1665,7 +1688,7 @@ static Rboolean isType1Font(char *family, char *fontdbname,
 		       "Type1Font");
 }
 
-static Rboolean isCIDFont(char *family, char *fontdbname,
+static Rboolean isCIDFont(const char *family, const char *fontdbname,
 			  cidfontfamily defaultCIDFont) {
     /*
      * If family is "" then we're referring to the default device
@@ -1687,16 +1710,17 @@ static Rboolean isCIDFont(char *family, char *fontdbname,
 /*
  * Get encoding name from font database
  */
-static char* getFontEncoding(char *family, char *fontdbname) {
+static const char *getFontEncoding(const char *family, const char *fontdbname)
+{
     SEXP fontnames;
     int i, nfonts;
-    char* result = NULL;
+    const char *result = NULL;
     int found = 0;
     SEXP fontdb = getFontDB(fontdbname);
     PROTECT(fontnames = getAttrib(fontdb, R_NamesSymbol));
     nfonts = LENGTH(fontdb);
     for (i=0; i<nfonts && !found; i++) {
-	char* fontFamily = CHAR(STRING_ELT(fontnames, i));
+	const char *fontFamily = CHAR(STRING_ELT(fontnames, i));
 	if (strcmp(family, fontFamily) == 0) {
 	    found = 1;
 	    /* 2 means 'encoding' element */
@@ -1712,16 +1736,17 @@ static char* getFontEncoding(char *family, char *fontdbname) {
 /*
  * Get Font name from font database
  */
-static char* getFontName(char *family, char *fontdbname) {
+static const char *getFontName(const char *family, const char *fontdbname)
+{
     SEXP fontnames;
     int i, nfonts;
-    char* result = NULL;
+    const char *result = NULL;
     int found = 0;
     SEXP fontdb = getFontDB(fontdbname);
     PROTECT(fontnames = getAttrib(fontdb, R_NamesSymbol));
     nfonts = LENGTH(fontdb);
     for (i=0; i<nfonts && !found; i++) {
-	char* fontFamily = CHAR(STRING_ELT(fontnames, i));
+	const char *fontFamily = CHAR(STRING_ELT(fontnames, i));
 	if (strcmp(family, fontFamily) == 0) {
 	    found = 1;
 	    /* 0 means 'family' element */
@@ -1737,16 +1762,17 @@ static char* getFontName(char *family, char *fontdbname) {
 /*
  * Get CMap name from font database
  */
-static char* getFontCMap(char *family, char *fontdbname) {
+static const char *getFontCMap(const char *family, const char *fontdbname)
+{
     SEXP fontnames;
     int i, nfonts;
-    char* result = NULL;
+    const char *result = NULL;
     int found = 0;
     SEXP fontdb = getFontDB(fontdbname);
     PROTECT(fontnames = getAttrib(fontdb, R_NamesSymbol));
     nfonts = LENGTH(fontdb);
     for (i=0; i<nfonts && !found; i++) {
-	char* fontFamily = CHAR(STRING_ELT(fontnames, i));
+	const char *fontFamily = CHAR(STRING_ELT(fontnames, i));
 	if (strcmp(family, fontFamily) == 0) {
 	    found = 1;
 	    /* 2 means 'cmap' element */
@@ -1762,16 +1788,18 @@ static char* getFontCMap(char *family, char *fontdbname) {
 /*
  * Get Encoding name from CID font in font database
  */
-static char* getCIDFontEncoding(char *family, char *fontdbname) {
+static const char *
+getCIDFontEncoding(const char *family, const char *fontdbname)
+{
     SEXP fontnames;
     int i, nfonts;
-    char* result = NULL;
+    const char *result = NULL;
     int found = 0;
     SEXP fontdb = getFontDB(fontdbname);
     PROTECT(fontnames = getAttrib(fontdb, R_NamesSymbol));
     nfonts = LENGTH(fontdb);
     for (i=0; i<nfonts && !found; i++) {
-	char* fontFamily = CHAR(STRING_ELT(fontnames, i));
+	const char *fontFamily = CHAR(STRING_ELT(fontnames, i));
 	if (strcmp(family, fontFamily) == 0) {
 	    found = 1;
 	    /* 3 means 'encoding' element */
@@ -1787,16 +1815,17 @@ static char* getCIDFontEncoding(char *family, char *fontdbname) {
 /*
  * Get Encoding name from CID font in font database
  */
-static char* getCIDFontPDFResource(char *family) {
+static const char *getCIDFontPDFResource(const char *family)
+{
     SEXP fontnames;
     int i, nfonts;
-    char* result = NULL;
+    const char *result = NULL;
     int found = 0;
     SEXP fontdb = getFontDB(PDFFonts);
     PROTECT(fontnames = getAttrib(fontdb, R_NamesSymbol));
     nfonts = LENGTH(fontdb);
     for (i=0; i<nfonts && !found; i++) {
-	char* fontFamily = CHAR(STRING_ELT(fontnames, i));
+	const char *fontFamily = CHAR(STRING_ELT(fontnames, i));
 	if (strcmp(family, fontFamily) == 0) {
 	    found = 1;
 	    /* 4 means 'pdfresource' element */
@@ -1871,7 +1900,7 @@ static type1fontfamily addLoadedFont(type1fontfamily font,
 /*
  * Add a font from a graphics engine font family name
  */
-static cidfontfamily addCIDFont(char *name, Rboolean isPDF)
+static cidfontfamily addCIDFont(const char *name, Rboolean isPDF)
 {
     cidfontfamily fontfamily = makeCIDFontFamily();
     char *fontdbname;
@@ -1881,7 +1910,7 @@ static cidfontfamily addCIDFont(char *name, Rboolean isPDF)
 	fontdbname = PostScriptFonts;
     if (fontfamily) {
 	int i;
-	char *cmap = getFontCMap(name, fontdbname);
+	const char *cmap = getFontCMap(name, fontdbname);
 	if (!cmap) {
 	    freeCIDFontFamily(fontfamily);
 	    fontfamily = NULL;
@@ -1921,7 +1950,7 @@ static cidfontfamily addCIDFont(char *name, Rboolean isPDF)
 	     */
 	    for (i = 0; i < 1; i++) {
 	        type1fontinfo font = makeType1Font();
-		char *afmpath = fontMetricsFileName(name, 4, fontdbname);
+		const char *afmpath = fontMetricsFileName(name, 4, fontdbname);
 		if (!font) {
 		    freeCIDFontFamily(fontfamily);
 		    fontfamily = NULL;
@@ -1963,7 +1992,7 @@ static cidfontfamily addCIDFont(char *name, Rboolean isPDF)
     return fontfamily;
 }
 
-static type1fontfamily addFont(char *name, Rboolean isPDF,
+static type1fontfamily addFont(const char *name, Rboolean isPDF,
 			       encodinglist deviceEncodings)
 {
     type1fontfamily fontfamily = makeFontFamily();
@@ -1975,7 +2004,7 @@ static type1fontfamily addFont(char *name, Rboolean isPDF,
     if (fontfamily) {
 	int i;
 	encodinginfo encoding;
-	char *encpath = getFontEncoding(name, fontdbname);
+	const char *encpath = getFontEncoding(name, fontdbname);
 	if (!encpath) {
 	    freeFontFamily(fontfamily);
 	    fontfamily = NULL;
@@ -1999,7 +2028,7 @@ static type1fontfamily addFont(char *name, Rboolean isPDF,
 		fontfamily->encoding = encoding;
 		for(i = 0; i < 5 ; i++) {
 		    type1fontinfo font = makeType1Font();
-		    char *afmpath = fontMetricsFileName(name, i, fontdbname);
+		    const char *afmpath = fontMetricsFileName(name, i, fontdbname);
 		    if (!font) {
 			freeFontFamily(fontfamily);
 			fontfamily = NULL;
@@ -2047,9 +2076,10 @@ static type1fontfamily addFont(char *name, Rboolean isPDF,
  * ... and return the new font
  */
 
-static type1fontfamily addDefaultFontFromAFMs(char *encpath, char **afmpaths,
-					      Rboolean isPDF,
-					      encodinglist deviceEncodings)
+static type1fontfamily
+addDefaultFontFromAFMs(const char *encpath, const char **afmpaths,
+		       Rboolean isPDF,
+		       encodinglist deviceEncodings)
 {
     encodinginfo encoding;
     type1fontfamily fontfamily = makeFontFamily();
@@ -2192,6 +2222,7 @@ typedef struct {
 
     Rboolean onefile;	/* EPSF header etc*/
     Rboolean paperspecial;	/* suppress %%Orientation */
+    Rboolean warn_trans; /* have we warned about translucent cols? */
 
     /* This group of variables track the current device status.
      * They should only be set by routines that emit PostScript code. */
@@ -2495,11 +2526,11 @@ static void PSEncodeFonts(FILE *fp, PostScriptDesc *pd)
 /* region box is for the rotated page. */
 
 static void PSFileHeader(FILE *fp,
-			 char *papername, double paperwidth,
+			 const char *papername, double paperwidth,
 			 double paperheight, Rboolean landscape,
 			 int EPSFheader, Rboolean paperspecial,
 			 double left, double bottom, double right, double top,
-			 char *title,
+			 const char *title,
 			 PostScriptDesc *pd)
 {
     int i;
@@ -2649,7 +2680,7 @@ static void PostScriptSetFont(FILE *fp, int fontnum, double size)
 }
 
 static void
-PostScriptSetLineTexture(FILE *fp, char *dashlist, int nlty, double lwd)
+PostScriptSetLineTexture(FILE *fp, const char *dashlist, int nlty, double lwd)
 {
 /* use same macro for Postscript and PDF */
 #define PP_SetLineTexture(_CMD_)						\
@@ -2711,7 +2742,7 @@ static void PostScriptCircle(FILE *fp, double x, double y, double r)
     fprintf(fp, "%.2f %.2f %.2f c ", x, y, r);
 }
 
-static void PostScriptWriteString(FILE *fp, char *str)
+static void PostScriptWriteString(FILE *fp, const char *str)
 {
     fputc('(', fp);
     for ( ; *str; str++)
@@ -2742,7 +2773,7 @@ static void PostScriptWriteString(FILE *fp, char *str)
 }
 
 static void PostScriptText(FILE *fp, double x, double y,
-			   char *str, double xc, double yc, double rot)
+			   const char *str, double xc, double yc, double rot)
 {
     fprintf(fp, "%.2f %.2f ", x, y);
     PostScriptWriteString(fp, str);
@@ -2766,7 +2797,7 @@ static void PostScriptText(FILE *fp, double x, double y,
 
 #ifdef SUPPORT_MBCS
 static void PostScriptHexText(FILE *fp, double x, double y,
-			      char *str, int strlen,
+			      const char *str, int strlen,
 			      double xc, double yc, double rot)
 {
     unsigned char *p = (unsigned char *)str;
@@ -2830,23 +2861,24 @@ static void PS_Rect(double x0, double y0, double x1, double y1,
 static void PS_Size(double *left, double *right,
 		     double *bottom, double *top,
 		     NewDevDesc *dd);
-static double PS_StrWidth(char *str,
+static double PS_StrWidth(const char *str,
 			  R_GE_gcontext *gc,
 			  NewDevDesc *dd);
-static void PS_Text(double x, double y, char *str,
+static void PS_Text(double x, double y, const char *str,
 		    double rot, double hadj,
 		    R_GE_gcontext *gc,
 		    NewDevDesc *dd);
 
 /* PostScript Support (formerly in PostScript.c) */
 
-static void PostScriptSetCol(FILE *fp, double r, double g, double b, char *mm)
+static void PostScriptSetCol(FILE *fp, double r, double g, double b,
+			     const char *mm)
 {
     if(r == g && g == b && !(streql(mm, "cmyk") || streql(mm, "rgb-nogray"))) { /* grey */
 	if(r == 0) fprintf(fp, "0");
 	else if (r == 1) fprintf(fp, "1");
 	else fprintf(fp, "%.4f", r);
-	fprintf(fp," setgray");	
+	fprintf(fp," setgray");
     } else {
 	if(strcmp(mm, "gray") == 0)
 	    error(_("only gray colors are allowed in this color model"));
@@ -2884,7 +2916,8 @@ static void PostScriptSetCol(FILE *fp, double r, double g, double b, char *mm)
     }
 }
 
-static void PostScriptSetFill(FILE *fp, double r, double g, double b, char *m)
+static void PostScriptSetFill(FILE *fp, double r, double g, double b,
+			      const char *m)
 {
     fprintf(fp,"/bg { ");
     PostScriptSetCol(fp, r, g, b, m);
@@ -2903,14 +2936,13 @@ static void Invalidate(NewDevDesc*);
 
 
 Rboolean
-PSDeviceDriver(NewDevDesc *dd, char *file, char *paper, char *family,
-	       char **afmpaths, char *encoding,
-	       char *bg, char *fg,
-	       double width, double height,
+PSDeviceDriver(NewDevDesc *dd, const char *file, const char *paper,
+	       const char *family, const char **afmpaths, const char *encoding,
+	       const char *bg, const char *fg, double width, double height,
 	       Rboolean horizontal, double ps,
-	       Rboolean onefile, Rboolean pagecentre,
-	       Rboolean printit, char *cmd, char *title,
-	       SEXP fonts, char *colormodel)
+	       Rboolean onefile, Rboolean pagecentre, Rboolean printit,
+	       const char *cmd, const char *title, SEXP fonts,
+	       const char *colormodel)
 {
     /* If we need to bail out with some sort of "error"
        then we must free(dd) */
@@ -3045,7 +3077,7 @@ PSDeviceDriver(NewDevDesc *dd, char *file, char *paper, char *family,
 	cidfontlist cidfontlist;
 	for (i=0; i<nfonts; i++) {
 	    int index, cidindex;
-	    char *name = CHAR(STRING_ELT(fonts, i));
+	    const char *name = CHAR(STRING_ELT(fonts, i));
 	    /*
 	     * Check first whether this device is already
 	     * using this font.
@@ -3218,6 +3250,7 @@ PSDeviceDriver(NewDevDesc *dd, char *file, char *paper, char *family,
     pd->maxpointsize = 72.0 * ((pd->pageheight > pd->pagewidth) ?
 			       pd->pageheight : pd->pagewidth);
     pd->pageno = pd->fileno = 0;
+    pd->warn_trans = FALSE;
 
     /* Base Pointsize */
     /* Nominal Character Sizes in Pixels */
@@ -3306,6 +3339,15 @@ PSDeviceDriver(NewDevDesc *dd, char *file, char *paper, char *family,
     dd->deviceSpecific = (void *) pd;
     dd->displayListOn = FALSE;
     return TRUE;
+}
+
+static void CheckAlpha(int color, PostScriptDesc *pd)
+{
+    unsigned int alpha = R_ALPHA(color);
+    if (alpha > 0 && alpha < 255 && !pd->warn_trans) {
+	warning(_("semi-transparency is not supported on this device: reported only once per page"));
+	pd->warn_trans = TRUE;
+    }
 }
 
 static void SetColor(int color, NewDevDesc *dd)
@@ -3521,7 +3563,7 @@ static void PS_NewPage(R_GE_gcontext *gc,
     } else pd->pageno++;
     PostScriptStartPage(pd->psfp, pd->pageno);
     Invalidate(dd);
-
+    CheckAlpha(gc->fill, pd);
     if(R_OPAQUE(gc->fill)) {
 	/*
 	 * Override some gc settings
@@ -3529,10 +3571,11 @@ static void PS_NewPage(R_GE_gcontext *gc,
 	gc->col = R_TRANWHITE;
 	PS_Rect(0, 0, 72.0 * pd->pagewidth, 72.0 * pd->pageheight, gc, dd);
     }
+    pd->warn_trans = FALSE;
 }
 
 #ifdef Win32
-int   Rf_runcmd(char *cmd, int wait, int visible, char *finput);
+#include "run.h" /* for runcmd */
 #endif
 static void PostScriptClose(NewDevDesc *dd)
 {
@@ -3587,7 +3630,8 @@ static void PS_Close(NewDevDesc *dd)
 static void PS_Activate(NewDevDesc *dd) {}
 static void PS_Deactivate(NewDevDesc *dd) {}
 
-static FontMetricInfo *CIDsymbolmetricInfo(char *family, PostScriptDesc *pd)
+static FontMetricInfo
+*CIDsymbolmetricInfo(const char *family, PostScriptDesc *pd)
 {
     FontMetricInfo *result = NULL;
     int fontIndex;
@@ -3603,7 +3647,7 @@ static FontMetricInfo *CIDsymbolmetricInfo(char *family, PostScriptDesc *pd)
     return result;
 }
 
-static FontMetricInfo *metricInfo(char *family, int face,
+static FontMetricInfo *metricInfo(const char *family, int face,
 				  PostScriptDesc *pd) {
     FontMetricInfo *result = NULL;
     int fontIndex;
@@ -3615,7 +3659,7 @@ static FontMetricInfo *metricInfo(char *family, int face,
     return result;
 }
 
-static char *convname(char *family, PostScriptDesc *pd) {
+static char *convname(const char *family, PostScriptDesc *pd) {
     char *result = NULL;
     int fontIndex;
     type1fontfamily fontfamily = findDeviceFont(family, pd->fonts, &fontIndex);
@@ -3626,7 +3670,7 @@ static char *convname(char *family, PostScriptDesc *pd) {
     return result;
 }
 
-static double PS_StrWidth(char *str,
+static double PS_StrWidth(const char *str,
 			  R_GE_gcontext *gc,
 			  NewDevDesc *dd)
 {
@@ -3636,19 +3680,19 @@ static double PS_StrWidth(char *str,
     if(face < 1 || face > 5) face = 1;
     if (isType1Font(gc->fontfamily, PostScriptFonts, pd->defaultFont)) {
 	return floor(gc->cex * gc->ps + 0.5) *
-	    PostScriptStringWidth((unsigned char *)str,
+	    PostScriptStringWidth((const unsigned char *)str,
 				  metricInfo(gc->fontfamily, face, pd),
 				  face,
 				  convname(gc->fontfamily, pd));
     } else { /* cidfont(gc->fontfamily, PostScriptFonts) */
         if (face < 5) {
 	    return floor(gc->cex * gc->ps + 0.5) *
-	      PostScriptStringWidth((unsigned char *)str,
+	      PostScriptStringWidth((const unsigned char *)str,
 				    NULL,
 				    face, NULL);
 	} else {
 	    return floor(gc->cex * gc->ps + 0.5) *
-	      PostScriptStringWidth((unsigned char *)str,
+	      PostScriptStringWidth((const unsigned char *)str,
 				    /* Send symbol face metric info */
 				    CIDsymbolmetricInfo(gc->fontfamily, pd),
 				    face, NULL);
@@ -3697,6 +3741,8 @@ static void PS_Rect(double x0, double y0, double x1, double y1,
     /* code == 2, fill only */
     /* code == 3, outline and fill */
 
+    CheckAlpha(gc->fill, pd);
+    CheckAlpha(gc->col, pd);
     code = 2 * (R_OPAQUE(gc->fill)) + (R_OPAQUE(gc->col));
 
     if (code) {
@@ -3724,6 +3770,8 @@ static void PS_Circle(double x, double y, double r,
     /* code == 2, fill only */
     /* code == 3, outline and fill */
 
+    CheckAlpha(gc->fill, pd);
+    CheckAlpha(gc->col, pd);
     code = 2 * (R_OPAQUE(gc->fill)) + (R_OPAQUE(gc->col));
 
     if (code) {
@@ -3744,6 +3792,7 @@ static void PS_Line(double x1, double y1, double x2, double y2,
 {
     PostScriptDesc *pd = (PostScriptDesc *) dd->deviceSpecific;
 
+    CheckAlpha(gc->col, pd);
     /* FIXME : clip to the device extents here */
     if(R_OPAQUE(gc->col)) {
 	SetColor(gc->col, dd);
@@ -3771,6 +3820,8 @@ static void PS_Polygon(int n, double *x, double *y,
     /* code == 2, fill only */
     /* code == 3, outline and fill */
 
+    CheckAlpha(gc->fill, pd);
+    CheckAlpha(gc->col, pd);
     code = 2 * (R_OPAQUE(gc->fill)) + (R_OPAQUE(gc->col));
 
     if (code) {
@@ -3799,6 +3850,7 @@ static void PS_Polyline(int n, double *x, double *y,
     int i;
 
     pd = (PostScriptDesc*) dd->deviceSpecific;
+    CheckAlpha(gc->col, pd);
     if(R_OPAQUE(gc->col)) {
 	SetColor(gc->col, dd);
 	SetLineStyle(gc, dd);
@@ -3817,7 +3869,7 @@ static void PS_Polyline(int n, double *x, double *y,
     }
 }
 
-static int translateFont(char* family, int style, PostScriptDesc *pd)
+static int translateFont(char *family, int style, PostScriptDesc *pd)
 {
     int result = style;
     type1fontfamily fontfamily;
@@ -3845,7 +3897,7 @@ static int numFonts(type1fontlist fonts) {
     return i;
 }
 
-static int translateCIDFont(char* family, int style, PostScriptDesc *pd)
+static int translateCIDFont(char *family, int style, PostScriptDesc *pd)
 {
     int result = style;
     cidfontfamily fontfamily;
@@ -3867,7 +3919,7 @@ static int translateCIDFont(char* family, int style, PostScriptDesc *pd)
 }
 #endif
 
-static void drawSimpleText(double x, double y, char *str,
+static void drawSimpleText(double x, double y, const char *str,
 			   double rot, double hadj,
 			   int font,
 			   R_GE_gcontext *gc,
@@ -3876,6 +3928,7 @@ static void drawSimpleText(double x, double y, char *str,
 
     SetFont(font,
 	    (int)floor(gc->cex * gc->ps + 0.5),dd);
+    CheckAlpha(gc->col, pd);
     if(R_OPAQUE(gc->col)) {
 	SetColor(gc->col, dd);
 	PostScriptText(pd->psfp, x, y, str, hadj, 0.0, rot);
@@ -3883,7 +3936,7 @@ static void drawSimpleText(double x, double y, char *str,
 }
 
 #ifndef SUPPORT_MBCS
-static void PS_Text(double x, double y, char *str,
+static void PS_Text(double x, double y, const char *str,
 		    double rot, double hadj,
 		    R_GE_gcontext *gc,
 		    NewDevDesc *dd)
@@ -3898,10 +3951,10 @@ static void PS_Text(double x, double y, char *str,
    need to know if the current locale's charset changes.  However,
    currently this is only called in a UTF-8 locale.
  */
-static void mbcsToSbcs(char *in, char *out, char *encoding)
+static void mbcsToSbcs(const char *in, char *out, const char *encoding)
 {
     void *cd = NULL;
-    char *i_buf, *o_buf;
+    const char *i_buf; char *o_buf;
     size_t i_len, o_len, status;
 
     if(strcmp(encoding, "latin1") == 0 || strcmp(encoding, "ISOLatin1") == 0) {
@@ -3912,23 +3965,23 @@ static void mbcsToSbcs(char *in, char *out, char *encoding)
     if ((void*)-1 == (cd = Riconv_open(encoding, "")))
 	error(_("unknown encoding '%s' in 'mbcsToSbcs'"), encoding);
 
-    i_buf = in;
+    i_buf = (char *)in;
     i_len = strlen(in)+1; /* include terminator */
     o_buf = (char *)out;
     o_len = i_len; /* must be the same or fewer chars */
-    status = Riconv(cd, (char **)&i_buf, (size_t *)&i_len,
+    status = Riconv(cd, &i_buf, (size_t *)&i_len,
 		    (char **)&o_buf, (size_t *)&o_len);
 
     Riconv_close(cd);
     if (status == (size_t)-1) error(_("conversion failure in 'mbcsToSbcs'"));
 }
 
-static void PS_Text(double x, double y, char *str,
+static void PS_Text(double x, double y, const char *str,
 		    double rot, double hadj,
 		    R_GE_gcontext *gc,
 		    NewDevDesc *dd)
 {
-    char *str1 = str;
+    const char *str1 = str;
     char *buff;
 
     PostScriptDesc *pd = (PostScriptDesc *) dd->deviceSpecific;
@@ -3964,6 +4017,7 @@ static void PS_Text(double x, double y, char *str,
 		    cidfont->encoding)) {
 	    SetFont(translateCIDFont(gc->fontfamily, gc->fontface, pd),
 		    (int)floor(gc->cex * gc->ps + 0.5),dd);
+	    CheckAlpha(gc->col, pd);
 	    if(R_OPAQUE(gc->col)) {
 		SetColor(gc->col, dd);
 		PostScriptHexText(pd->psfp, x, y, str, strlen(str), hadj,
@@ -3979,7 +4033,7 @@ static void PS_Text(double x, double y, char *str,
         if (ucslen != (size_t)-1) {
 	    void *cd;
 	    unsigned char *buf;
-	    char  *i_buf, *o_buf;
+	    const char  *i_buf; char *o_buf;
 	    size_t nb, i_len,  o_len, buflen = ucslen * sizeof(ucs2_t);
 	    size_t status;
 
@@ -3989,12 +4043,12 @@ static void PS_Text(double x, double y, char *str,
             buf = (unsigned char *) alloca(buflen);
 	    R_CheckStack();
 
-            i_buf = str;
+            i_buf = (char *)str;
             o_buf = (char *)buf;
             i_len = strlen(str); /* do not include terminator */
             nb = o_len = buflen;
 
-            status = Riconv(cd, (char **)&i_buf, (size_t *)&i_len,
+            status = Riconv(cd, &i_buf, (size_t *)&i_len,
                             (char **)&o_buf, (size_t *)&o_len);
 
             Riconv_close(cd);
@@ -4004,6 +4058,7 @@ static void PS_Text(double x, double y, char *str,
             else {
 		SetFont(translateCIDFont(gc->fontfamily, gc->fontface, pd),
 			(int)floor(gc->cex * gc->ps + 0.5), dd);
+		CheckAlpha(gc->col, pd);
 		if(R_OPAQUE(gc->col)) {
 		    SetColor(gc->col, dd);
 		    PostScriptHexText(pd->psfp, x, y, (char *)buf,
@@ -4089,6 +4144,7 @@ typedef struct {
     char tmpname[PATH_MAX];
 
     Rboolean onefile;
+    Rboolean warn_trans; /* have we warned about translucent cols? */
     int ymax;            /* used to invert coord system */
     char encoding[50];   /* for writing text */
 
@@ -4102,7 +4158,8 @@ typedef struct {
 } XFigDesc;
 
 static void
-XF_FileHeader(FILE *fp, char *papername, Rboolean landscape, Rboolean onefile)
+XF_FileHeader(FILE *fp, const char *papername, Rboolean landscape,
+	      Rboolean onefile)
 {
     fprintf(fp, "#FIG 3.2\n");
     fprintf(fp, landscape ? "Landscape\n" : "Portrait\n");
@@ -4126,7 +4183,7 @@ static void XF_EndPage(FILE *fp)
     fprintf(fp, "# end of XFig page\n");
 }
 
-static void XF_WriteString(FILE *fp, char *str)
+static void XF_WriteString(FILE *fp, const char *str)
 {
     unsigned int c;
     for ( ; *str; str++) {
@@ -4149,11 +4206,20 @@ static void XF_WriteString(FILE *fp, char *str)
     }
 }
 
+static void XF_CheckAlpha(int color, XFigDesc *pd)
+{
+    unsigned int alpha = R_ALPHA(color);
+    if (alpha > 0 && alpha < 255 && !pd->warn_trans) {
+	warning(_("semi-transparency is not supported on this device: reported only once per page"));
+	pd->warn_trans = TRUE;
+    }
+}
+
+
 static int XF_SetColor(int color, XFigDesc *pd)
 {
     int i;
-    unsigned int alpha = color & 0xff000000;
-    if(alpha < 0xff)  return -1;
+    if(!R_OPAQUE(color))  return -1;
     color = color & 0xffffff;
     for (i = 0; i < pd->nXFigColors; i++)
 	if(color == pd->XFigColors[i]) return i;
@@ -4226,10 +4292,10 @@ static void XFig_Rect(double x0, double y0, double x1, double y1,
 static void XFig_Size(double *left, double *right,
 		     double *bottom, double *top,
 		     NewDevDesc *dd);
-static double XFig_StrWidth(char *str,
+static double XFig_StrWidth(const char *str,
 			    R_GE_gcontext *gc,
 			    NewDevDesc *dd);
-static void XFig_Text(double x, double y, char *str,
+static void XFig_Text(double x, double y, const char *str,
 		      double rot, double hadj,
 		      R_GE_gcontext *gc,
 		      NewDevDesc *dd);
@@ -4238,7 +4304,7 @@ static Rboolean XFig_Open(NewDevDesc*, XFigDesc*);
 /*
  * Values taken from FIG format definition
  */
-static int XFigBaseNum(char *name)
+static int XFigBaseNum(const char *name)
 {
     int i;
     if (!strcmp(name, "Times"))
@@ -4276,11 +4342,13 @@ static void XF_resetColors(XFigDesc *pd)
 /* Driver Support Routines */
 
 static Rboolean
-XFigDeviceDriver(NewDevDesc *dd, char *file, char *paper, char *family,
-		 char *bg, char *fg,
+XFigDeviceDriver(NewDevDesc *dd, const char *file, const char *paper,
+		 const char *family,
+		 const char *bg, const char *fg,
 		 double width, double height,
 		 Rboolean horizontal, double ps,
-		 Rboolean onefile, Rboolean pagecentre, char *encoding)
+		 Rboolean onefile, Rboolean pagecentre,
+		 const char *encoding)
 {
     /* If we need to bail out with some sort of "error" */
     /* then we must free(dd) */
@@ -4324,6 +4392,7 @@ XFigDeviceDriver(NewDevDesc *dd, char *file, char *paper, char *family,
 	free(pd);
 	error(_("invalid foreground/background color (xfig)"));
     }
+    pd->warn_trans = FALSE;
 
     /*
      * Load the default encoding AS THE FIRST ENCODING FOR THIS DEVICE.
@@ -4602,6 +4671,7 @@ static void XFig_NewPage(R_GE_gcontext *gc,
 	XF_FileHeader(pd->psfp, pd->papername, pd->landscape, pd->onefile);
 	XF_resetColors(pd);
     }
+    XF_CheckAlpha(gc->fill, pd);
     if(R_OPAQUE(gc->fill)) {
 	FILE *fp = pd->tmpfp;
 	int cbg = XF_SetColor(gc->fill, pd);
@@ -4621,6 +4691,7 @@ static void XFig_NewPage(R_GE_gcontext *gc,
 	fprintf(fp, "%d %d ", ix1, iy0);
 	fprintf(fp, "%d %d\n", ix0, iy0);
     }
+    pd->warn_trans = FALSE;
 }
 
 #ifdef HAVE_UNISTD_H
@@ -4665,6 +4736,8 @@ static void XFig_Rect(double x0, double y0, double x1, double y1,
 
     if(lty < 0) return;
 
+    XF_CheckAlpha(gc->col, pd);
+    XF_CheckAlpha(gc->fill, pd);
     cpen = (R_OPAQUE(gc->col))? cfg: -1;
     dofill = (R_OPAQUE(gc->fill))? 20: -1;
 
@@ -4696,6 +4769,8 @@ static void XFig_Circle(double x, double y, double r,
 
     if(lty < 0) return;
 
+    XF_CheckAlpha(gc->col, pd);
+    XF_CheckAlpha(gc->fill, pd);
     cpen = (R_OPAQUE(gc->col))? cfg: -1;
     dofill = (R_OPAQUE(gc->fill))? 20: -1;
 
@@ -4723,6 +4798,7 @@ static void XFig_Line(double x1, double y1, double x2, double y2,
 
     XFconvert(&x1, &y1, pd);
     XFconvert(&x2, &y2, pd);
+    XF_CheckAlpha(gc->col, pd);
     if(R_OPAQUE(gc->col)) {
 	fprintf(fp, "2 1 "); /* Polyline */
 	fprintf(fp, "%d %d ", lty, lwd>0?lwd:1); /* style, thickness */
@@ -4748,6 +4824,8 @@ static void XFig_Polygon(int n, double *x, double *y,
 
     if(lty < 0) return;
 
+    XF_CheckAlpha(gc->col, pd);
+    XF_CheckAlpha(gc->fill, pd);
     cpen = (R_OPAQUE(gc->col))? cfg: -1;
     dofill = (R_OPAQUE(gc->fill))? 20: -1;
 
@@ -4775,6 +4853,7 @@ static void XFig_Polyline(int n, double *x, double *y,
     double xx, yy;
     int i, lty = XF_SetLty(gc->lty), lwd = gc->lwd*0.833 + 0.5;
 
+    XF_CheckAlpha(gc->col, pd);
     if(R_OPAQUE(gc->col) && lty >= 0) {
 	fprintf(fp, "2 1 "); /* Polyline */
 	fprintf(fp, "%d %d ", lty, lwd>0?lwd:1); /* style, thickness */
@@ -4793,7 +4872,7 @@ static void XFig_Polyline(int n, double *x, double *y,
 
 static const int styles[4] = {0,2,1,3};
 
-static void XFig_Text(double x, double y, char *str,
+static void XFig_Text(double x, double y, const char *str,
 		      double rot, double hadj,
 		      R_GE_gcontext *gc,
 		      NewDevDesc *dd)
@@ -4802,7 +4881,7 @@ static void XFig_Text(double x, double y, char *str,
     FILE *fp = pd->tmpfp;
     int fontnum, style = gc->fontface;
     double size = floor(gc->cex * gc->ps + 0.5);
-    char *str1 = str;
+    const char *str1 = str;
 #if defined(HAVE_ICONV) && defined(ICONV_LATIN1)
     char *buf;
 #endif
@@ -4825,6 +4904,7 @@ static void XFig_Text(double x, double y, char *str,
 #endif /* SUPPORT_MBCS */
 
     XFconvert(&x, &y, pd);
+    XF_CheckAlpha(gc->col, pd);
     if(R_OPAQUE(gc->col)) {
 	fprintf(fp, "4 %d ", (int)floor(2*hadj)); /* Text, how justified */
 	fprintf(fp, "%d 100 0 ", XF_SetColor(gc->col, pd));
@@ -4846,7 +4926,7 @@ static void XFig_Text(double x, double y, char *str,
 #if defined(HAVE_ICONV) && defined(ICONV_LATIN1)
 	    /* reencode the text */
 	    void *cd;
-	    char  *i_buf, *o_buf;
+	    const char *i_buf; char *o_buf;
 	    size_t i_len, o_len, status;
 	    int buflen = MB_LEN_MAX*strlen(str) + 1;
 
@@ -4856,7 +4936,7 @@ static void XFig_Text(double x, double y, char *str,
 	    } else {
 		buf = (char *) alloca(buflen);
 		R_CheckStack();
-		i_buf = str;
+		i_buf = (char *) str;
 		o_buf = buf;
 		i_len = strlen(str) + 1; /* including terminator */
 		o_len = buflen;
@@ -4889,7 +4969,7 @@ static void XFig_Hold(NewDevDesc *dd)
 {
 }
 
-static double XFig_StrWidth(char *str,
+static double XFig_StrWidth(const char *str,
 			    R_GE_gcontext *gc,
 			    NewDevDesc *dd)
 {
@@ -4899,7 +4979,7 @@ static double XFig_StrWidth(char *str,
     if(face < 1 || face > 5) face = 1;
 
     return floor(gc->cex * gc->ps + 0.5) *
-	PostScriptStringWidth((unsigned char *)str,
+	PostScriptStringWidth((const unsigned char *)str,
 			      &(pd->fonts->family->fonts[face-1]->metrics),
 			      face, "latin1");
 }
@@ -5046,10 +5126,10 @@ static void PDF_Rect(double x0, double y0, double x1, double y1,
 static void PDF_Size(double *left, double *right,
 		     double *bottom, double *top,
 		     NewDevDesc *dd);
-static double PDF_StrWidth(char *str,
+static double PDF_StrWidth(const char *str,
 			   R_GE_gcontext *gc,
 			   NewDevDesc *dd);
-static void PDF_Text(double x, double y, char *str,
+static void PDF_Text(double x, double y, const char *str,
 		     double rot, double hadj,
 		     R_GE_gcontext *gc,
 		     NewDevDesc *dd);
@@ -5118,11 +5198,12 @@ static Rboolean addPDFDevicefont(type1fontfamily family,
 }
 
 Rboolean
-PDFDeviceDriver(NewDevDesc* dd, char *file, char *paper,
-		char *family, char **afmpaths, char *encoding,
-		char *bg, char *fg, double width, double height,
+PDFDeviceDriver(NewDevDesc* dd, const char *file, const char *paper,
+		const char *family, const char **afmpaths, 
+		const char *encoding,
+		const char *bg, const char *fg, double width, double height,
 		double ps, int onefile, int pagecentre,
-		char *title, SEXP fonts,
+		const char *title, SEXP fonts,
 		int versionMajor, int versionMinor)
 {
     /* If we need to bail out with some sort of "error" */
@@ -5274,7 +5355,7 @@ PDFDeviceDriver(NewDevDesc* dd, char *file, char *paper,
 	int i, dontcare, gotFonts = 0, nfonts = LENGTH(fonts);
 	for (i=0; i<nfonts; i++) {
 	    int index, cidindex;
-	    char *name = CHAR(STRING_ELT(fonts, i));
+	    const char *name = CHAR(STRING_ELT(fonts, i));
 	    if (findDeviceFont(name, pd->fonts, &index) ||
 		findDeviceCIDFont(name, pd->cidfonts, &cidindex))
 		gotFonts++;
@@ -5678,7 +5759,8 @@ static void PDFSetLineJoin(FILE *fp, R_GE_linejoin ljoin)
 }
 
 /* Note that the line texture is scaled by the line width.*/
-static void PDFSetLineTexture(FILE *fp, char *dashlist, int nlty, double lwd)
+static void PDFSetLineTexture(FILE *fp, const char *dashlist, int nlty,
+			      double lwd)
 {
     PP_SetLineTexture("d");
 }
@@ -5843,7 +5925,7 @@ static void PDF_startfile(PDFDesc *pd)
     fprintf(pd->pdffp, "5 0 obj\n<<\n/Type /Font\n/Subtype /Type1\n/Name /F1\n/BaseFont /ZapfDingbats\n>>\nendobj\n");
 }
 
-static char *Base14[] =
+static const char *Base14[] =
 {
     "Courier", "Courier-Oblique", "Courier-Bold", "Courier-BoldOblique",
     "Helvetica", "Helvetica-Oblique", "Helvetica-Bold",
@@ -5851,7 +5933,7 @@ static char *Base14[] =
     "Times-Bold", "Times-BoldItalic", "ZapfDingbats"
 };
 
-static int isBase14(char *name)
+static int isBase14(const char *name)
 {
     int i;
     for(i = 0; i < 14; i++)
@@ -5859,13 +5941,13 @@ static int isBase14(char *name)
     return 0;
 }
 
-static char *KnownSanSerif[] =
+static const char *KnownSanSerif[] =
 {
     "AvantGarde", "Helvetica-Narrow", "URWGothic", "NimbusSan"
 };
 
 
-static int isSans(char *name)
+static int isSans(const char *name)
 {
     int i;
     for(i = 0; i < 4; i++)
@@ -6427,7 +6509,7 @@ static void PDF_Polyline(int n, double *x, double *y,
     }
 }
 
-static int PDFfontNumber(char *family, int face, PDFDesc *pd)
+static int PDFfontNumber(const char *family, int face, PDFDesc *pd)
 {
     /* DingBats is font 1 */
     int num = 1;
@@ -6454,8 +6536,8 @@ static int PDFfontNumber(char *family, int face, PDFDesc *pd)
              * Check whether the font is loaded and, if not,
              * load it.
              */
-            fontfamily = findLoadedFont(family, 
-                                        pd->encodings->encoding->encpath, 
+            fontfamily = findLoadedFont(family,
+                                        pd->encodings->encoding->encpath,
                                         TRUE);
             cidfontfamily = findLoadedCIDFont(family, TRUE);
             if (!(fontfamily || cidfontfamily)) {
@@ -6503,7 +6585,7 @@ static int PDFfontNumber(char *family, int face, PDFDesc *pd)
     return num;
 }
 
-static void PDFSimpleText(double x, double y, char *str,
+static void PDFSimpleText(double x, double y, const char *str,
 			  double rot, double hadj,
 			  int font,
 			  R_GE_gcontext *gc,
@@ -6512,7 +6594,7 @@ static void PDFSimpleText(double x, double y, char *str,
     int size = (int)floor(gc->cex * gc->ps + 0.5);
     int face = gc->fontface;
     double a, b, rot1;
-    char *str1 = str;
+    const char *str1 = str;
 
     if(!R_VIS(gc->col)) return;
 
@@ -6536,7 +6618,7 @@ static void PDFSimpleText(double x, double y, char *str,
 }
 
 #ifndef SUPPORT_MBCS
-static void PDF_Text(double x, double y, char *str,
+static void PDF_Text(double x, double y, const char *str,
 		     double rot, double hadj,
 		     R_GE_gcontext *gc,
 		     NewDevDesc *dd)
@@ -6548,9 +6630,9 @@ static void PDF_Text(double x, double y, char *str,
 }
 
 #else
-static char *PDFconvname(char *family, PDFDesc *pd);
+static char *PDFconvname(const char *family, PDFDesc *pd);
 
-static void PDF_Text(double x, double y, char *str,
+static void PDF_Text(double x, double y, const char *str,
 		     double rot, double hadj,
 		     R_GE_gcontext *gc,
 		     NewDevDesc *dd)
@@ -6559,7 +6641,7 @@ static void PDF_Text(double x, double y, char *str,
     int size = (int) floor(gc->cex * gc->ps + 0.5);
     int face = gc->fontface;
     double a, b, rot1;
-    char *str1 = str;
+    const char *str1 = str;
     char *buff;
 
     if(!R_VIS(gc->col)) return;
@@ -6615,7 +6697,7 @@ static void PDF_Text(double x, double y, char *str,
 		    "/F%d 1 Tf %.2f %.2f %.2f %.2f %.2f %.2f Tm ",
 		    PDFfontNumber(gc->fontfamily, face, pd),
 		    a, b, -b, a, x, y);
-	    
+
 	    fprintf(pd->pdffp, "<");
 	    p = (unsigned char *) str;
 	    while(*p)
@@ -6631,7 +6713,7 @@ static void PDF_Text(double x, double y, char *str,
 	ucslen = mbstowcs(NULL, str, 0);
         if (ucslen != (size_t)-1) {
 	    void *cd;
-	    char  *i_buf, *o_buf;
+	    const char *i_buf; char *o_buf;
 	    size_t i, nb, i_len,  o_len, buflen = ucslen*sizeof(ucs2_t);
 	    size_t status;
 	    unsigned char *p;
@@ -6642,13 +6724,13 @@ static void PDF_Text(double x, double y, char *str,
 	    buf = (unsigned char *) alloca(buflen);
 	    R_CheckStack();
 
-	    i_buf = str;
+	    i_buf = (char *)str;
 	    o_buf = (char *)buf;
 	    i_len = strlen(str); /* no terminator,
 				    as output a byte at a time */
 	    nb = o_len = buflen;
 
-	    status = Riconv(cd, (char **)&i_buf, (size_t *)&i_len,
+	    status = Riconv(cd, &i_buf, (size_t *)&i_len,
 			    (char **)&o_buf, (size_t *)&o_len);
 
 	    Riconv_close(cd);
@@ -6700,8 +6782,8 @@ static void PDF_Hold(NewDevDesc *dd)
 {
 }
 
-static FontMetricInfo *PDFCIDsymbolmetricInfo(char *family,
-					      PDFDesc *pd)
+static FontMetricInfo
+*PDFCIDsymbolmetricInfo(const char *family, PDFDesc *pd)
 {
     FontMetricInfo *result = NULL;
     if (strlen(family) > 0) {
@@ -6735,8 +6817,8 @@ static FontMetricInfo *PDFCIDsymbolmetricInfo(char *family,
     return result;
 }
 
-static FontMetricInfo *PDFmetricInfo(char *family, int face,
-				     PDFDesc *pd)
+static FontMetricInfo
+*PDFmetricInfo(const char *family, int face, PDFDesc *pd)
 {
     FontMetricInfo *result = NULL;
     if (strlen(family) > 0) {
@@ -6753,8 +6835,8 @@ static FontMetricInfo *PDFmetricInfo(char *family, int face,
              * Check whether the font is loaded and, if not,
              * load it.
              */
-            fontfamily = findLoadedFont(family, 
-                                        pd->encodings->encoding->encpath, 
+            fontfamily = findLoadedFont(family,
+                                        pd->encodings->encoding->encpath,
                                         TRUE);
             if (!fontfamily) {
                 fontfamily = addFont(family, TRUE, pd->encodings);
@@ -6778,8 +6860,8 @@ static FontMetricInfo *PDFmetricInfo(char *family, int face,
     return result;
 }
 
-static char *PDFconvname(char *family,
-			 PDFDesc *pd)
+static char
+*PDFconvname(const char *family, PDFDesc *pd)
 {
     char *result = pd->fonts->family->encoding->convname;
     if (strlen(family) > 0) {
@@ -6796,8 +6878,8 @@ static char *PDFconvname(char *family,
              * Check whether the font is loaded and, if not,
              * load it.
              */
-            fontfamily = findLoadedFont(family, 
-                                        pd->encodings->encoding->encpath, 
+            fontfamily = findLoadedFont(family,
+                                        pd->encodings->encoding->encpath,
                                         TRUE);
             if (!fontfamily) {
                 fontfamily = addFont(family, TRUE, pd->encodings);
@@ -6819,7 +6901,7 @@ static char *PDFconvname(char *family,
     return result;
 }
 
-static double PDF_StrWidth(char *str,
+static double PDF_StrWidth(const char *str,
 			   R_GE_gcontext *gc,
 			   NewDevDesc *dd)
 {
@@ -6829,7 +6911,7 @@ static double PDF_StrWidth(char *str,
     if(gc->fontface < 1 || gc->fontface > 5) gc->fontface = 1;
     if (isType1Font(gc->fontfamily, PDFFonts, pd->defaultFont)) {
 	return floor(gc->cex * gc->ps + 0.5) *
-	    PostScriptStringWidth((unsigned char *)str,
+	    PostScriptStringWidth((const unsigned char *)str,
 				  PDFmetricInfo(gc->fontfamily,
 						gc->fontface, pd),
 				  gc->fontface,
@@ -6837,12 +6919,12 @@ static double PDF_StrWidth(char *str,
     } else { /* cidfont(gc->fontfamily) */
         if (face < 5) {
 	    return floor(gc->cex * gc->ps + 0.5) *
-	        PostScriptStringWidth((unsigned char *)str,
+	        PostScriptStringWidth((const unsigned char *)str,
 				      NULL,
 				      gc->fontface, NULL);
 	} else {
 	    return floor(gc->cex * gc->ps + 0.5) *
-	        PostScriptStringWidth((unsigned char *)str,
+	        PostScriptStringWidth((const unsigned char *)str,
 				      PDFCIDsymbolmetricInfo(gc->fontfamily,
 							     pd),
 				      gc->fontface, NULL);
@@ -6904,8 +6986,9 @@ SEXP PostScript(SEXP args)
     NewDevDesc *dev = NULL;
     GEDevDesc *dd;
     char *vmax;
-    char *file, *paper, *family=NULL, *bg, *fg, *cmd;
-    char *afms[5], *encoding, *title, call[] = "postscript", *colormodel;
+    const char *file, *paper, *family=NULL, *bg, *fg, *cmd;
+    const char *afms[5];
+    const char *encoding, *title, call[] = "postscript", *colormodel;
     int i, horizontal, onefile, pagecentre, printit;
     double height, width, ps;
     SEXP fam, fonts;
@@ -6994,7 +7077,7 @@ SEXP XFig(SEXP args)
     NewDevDesc *dev = NULL;
     GEDevDesc *dd;
     char *vmax;
-    char *file, *paper, *family, *bg, *fg, *encoding;
+    const char *file, *paper, *family, *bg, *fg, *encoding;
     int horizontal, onefile, pagecentre;
     double height, width, ps;
 
@@ -7064,8 +7147,9 @@ SEXP PDF(SEXP args)
     NewDevDesc *dev = NULL;
     GEDevDesc *dd;
     char *vmax;
-    char *file, *paper, *encoding, *family = NULL /* -Wall */,
-	*bg, *fg, *title, call[] = "PDF", *afms[5];
+    const char *file, *paper, *encoding, *family = NULL /* -Wall */,
+	*bg, *fg, *title, call[] = "PDF";
+    const char *afms[5];
     double height, width, ps;
     int i, onefile, pagecentre, major, minor;
     SEXP fam, fonts;

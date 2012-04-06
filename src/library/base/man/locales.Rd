@@ -1,3 +1,8 @@
+% File src/library/base/man/locales.Rd
+% Part of the R package, http://www.R-project.org
+% Copyright 1995-2007 R Core Development Team
+% Distributed under GPL 2 or later
+
 \name{locales}
 \alias{locales}
 \alias{Sys.getlocale}
@@ -48,9 +53,8 @@ Sys.setlocale(category = "LC_ALL", locale = "")
   Note that setting \code{"LC_ALL"} sets only \code{"LC_COLLATE"},
   \code{"LC_CTYPE"}, \code{"LC_MONETARY"} and \code{"LC_TIME"}.
 
-  Attempts to set an invalid locale are (silently) ignored.  (Most OSes
-  give no indication if the request succeeded, and the name of the
-  locale set need bear little resemblance to that asked for.)
+  Attempts to set an invalid locale are ignored.  There may or may not
+  be a warning, depending on the OS.
 }
 \value{
   A character string of length one describing the locale in use (after
@@ -67,11 +71,6 @@ Sys.setlocale(category = "LC_ALL", locale = "")
   machine.
 }
 \section{Warning}{
-#ifdef windows
-  Setting \code{"LC_CTYPE"} to \code{"C"} causes problems in the C
-  runtime support code, so it is interpreted as an English locale in CP1252.
-  
-#endif
   Setting \code{"LC_NUMERIC"} may cause \R to function
   anomalously, so gives a warning.  (The known problems are with
   input conversion in locales with \code{,} as the decimal point.)
@@ -80,15 +79,18 @@ Sys.setlocale(category = "LC_ALL", locale = "")
   well enough, but \code{\link{options}(OutDec)} is often preferable.
 #endif
 #ifdef windows
-  (Almost all the output routines used by \R itself ignore the setting of
-  \code{"LC_NUMERIC"} since they make use of the Trio library which is
-  not internationalized.)
+  Almost all the output routines used by \R itself under Windows ignore
+  the setting of \code{"LC_NUMERIC"} since they make use of the Trio
+  library which is not internationalized.
 #endif
 }
 \seealso{
   \code{\link{strptime}} for uses of \code{category = "LC_TIME"}.
   \code{\link{Sys.localeconv}} for details of numerical and monetary
   representations.
+
+  \code{\link{l10n_info}} gives some summary facts about the locale and
+  its encoding.
 }
 \examples{
 Sys.getlocale()

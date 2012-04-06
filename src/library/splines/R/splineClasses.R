@@ -1,3 +1,20 @@
+#  File src/library/splines/R/splineClasses.R
+#  Part of the R package, http://www.R-project.org
+#  Copyright (C) 1998 Douglas M. Bates and William N. Venables.
+#
+#  This program is free software; you can redistribute it and/or modify
+#  it under the terms of the GNU General Public License as published by
+#  the Free Software Foundation; either version 2 of the License, or
+#  (at your option) any later version.
+#
+#  This program is distributed in the hope that it will be useful,
+#  but WITHOUT ANY WARRANTY; without even the implied warranty of
+#  MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
+#  GNU General Public License for more details.
+#
+#  A copy of the GNU General Public License is available at
+#  http://www.r-project.org/Licenses/
+
 #### Classes and methods for determining and manipulating interpolation
 #### splines.
 
@@ -16,22 +33,6 @@
 ###   pbSpline - periodic bSplines
 ###   ppolySpline - periodic polynomial splines
 ###   backSpline - "splines" for inverse interpolation
-
-##     Copyright (C) 1998 Douglas M. Bates and William N. Venables.
-##
-## This program is free software; you can redistribute it and/or modify it
-## under the terms of the GNU General Public License as published by the
-## Free Software Foundation; either version 2, or (at your option) any
-## later version.
-##
-## These functions are distributed in the hope that they will be useful,
-## but WITHOUT ANY WARRANTY; without even the implied warranty of
-## MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.	 See the
-## GNU General Public License for more details.
-##
-## The text of the GNU General Public License, version 2, is available
-## as http://www.gnu.org/copyleft or by writing to the Free Software
-## Foundation, 51 Franklin Street, Fifth Floor, Boston, MA 02110-1301  USA.
 
 splineDesign <-
     ## Creates the "design matrix" for a collection of B-splines.
@@ -251,7 +252,7 @@ polySpline.bSpline <- function(object, ...)
     coeff[, 1] <- asVector(predict(object, knots))
     if(ord > 1) {
 	for(i in 2:ord) {
-	    coeff[, i] <- asVector(predict(object, knots, der = i - 1))/
+	    coeff[, i] <- asVector(predict(object, knots, deriv = i - 1))/
 		prod(1:(i - 1))
 	}
     }
@@ -327,9 +328,8 @@ predict.polySpline <- function(object, x, nseg = 50, deriv = 0, ...)
     coeff <- coef(object)
     cdim <- dim(coeff)
     ord <- cdim[2]
-    if(missing(x)) {
-	x <- seq(knots[1], knots[cdim[1]], length = nseg + 1)
-    }
+    if(missing(x))
+	x <- seq.int(knots[1], knots[cdim[1]], length.out = nseg + 1)
     i <- as.numeric(cut(x, knots))
     i[x == knots[1]] <- 1
     delx <- x - knots[i]
@@ -361,7 +361,7 @@ predict.bSpline <- function(object, x, nseg = 50, deriv = 0, ...)
              domain = NA)
     ncoeff <- length(coeff <- coef(object))
     if(missing(x)) {
-	x <- seq(knots[ord], knots[ncoeff + 1], length = nseg + 1)
+	x <- seq.int(knots[ord], knots[ncoeff + 1], length.out = nseg + 1)
 	accept <- TRUE
     } else accept <- knots[ord] <= x & x <= knots[ncoeff + 1]
     y <- x
@@ -412,7 +412,7 @@ predict.pbSpline <- function(object, x, nseg = 50, deriv = 0, ...)
     period <- object$period
     ncoeff <- length(coef(object))
     if(missing(x))
-	x <- seq(knots[ord], knots[ord] + period, length = nseg + 1)
+	x <- seq.int(knots[ord], knots[ord] + period, length.out = nseg + 1)
     x.original <- x
     if(any(ind <- x < knots[ord]))
 	x[ind] <- x[ind] + period * (1 + (knots[ord] - x[ind]) %/% period)
@@ -460,7 +460,7 @@ predict.ppolySpline <- function(object, x, nseg = 50, deriv = 0, ...)
     nknot <- length(knots)
     period <- object$period
     if(missing(x))
-	x <- seq(knots[1], knots[1] + period, length = nseg + 1)
+	x <- seq.int(knots[1], knots[1] + period, length.out = nseg + 1)
     x.original <- x
 
     if(any(ind <- x < knots[1]))

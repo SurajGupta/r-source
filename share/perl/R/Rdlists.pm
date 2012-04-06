@@ -12,10 +12,8 @@
 ## MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE. See the GNU
 ## General Public License for more details.
 ##
-## A copy of the GNU General Public License is available via WWW at
-## http://www.gnu.org/copyleft/gpl.html.  You can also obtain it by
-## writing to the Free Software Foundation, Inc., 51 Franklin Street,
-## Fifth Floor, Boston, MA 02110-1301  USA.
+## A copy of the GNU General Public License is available at
+## http://www.r-project.org/Licenses/
 
 ## Send any bug reports to r-bugs@r-project.org.
 
@@ -204,6 +202,12 @@ sub striptitle { # text
     $text =~ s/\\//go;
     $text =~ s/---/-/go;
     $text =~ s/--/-/go;
+    $text =~ s/\`\`/&ldquo;/g;
+    $text =~ s/\'\'/&rdquo;/g;
+    $text =~ s/\`([^']+)'/&lsquo;$1&rsquo;/g;
+    $text =~ s/\`/\'/g;		# @samp{'} could be an apostrophe ...
+    $text =~ s/</&lt;/g;
+    $text =~ s/>/&gt;/g;
     return $text;
 }
 
@@ -281,7 +285,7 @@ sub build_index { # lib, dest, version, [chmdir]
 
     foreach $manfile (@mandir) {
 	## Should only process files starting with [A-Za-z0-9] and with
-	## suffix .Rd or .rd, according to `Writing R Extensions'.
+	## suffix .Rd or .rd, according to 'Writing R Extensions'.
 	if($manfile =~ /\.[Rr]d$/){
 
 	    my $rdname = basename($manfile, (".Rd", ".rd"));
@@ -325,10 +329,11 @@ sub build_index { # lib, dest, version, [chmdir]
 		$main::title2file{$rdtitle} = $manfilebase;
 	    }
 
-	    while($text =~ s/\\alias\{\s*(.*)\s*\}//){
+	    while($text =~ s/\\alias\{\s*(.*)\}//){
 		$alias = $1;
 		$alias =~ s/\\%/%/g;
-		if ($internal){
+		$alias =~ s/\s*$//;
+		if ($internal) {
 		    $internal{$alias} = 1;
 		}
 		my $an = $main::aliasnm{$alias};
@@ -377,12 +382,12 @@ sub build_index { # lib, dest, version, [chmdir]
 
     if($main::opt_chm) {
 	print chmfile chm_pagehead("$title");
-	print chmfile "<h2>Help pages for package `", $pkg_name, "'"; 
+	print chmfile "<h2>Help pages for package &lsquo;", $pkg_name, "&rsquo;"; 
 	print chmfile " version ", $version if $version != "";
 	print chmfile "</h2>\n\n";
     }
 
-    print htmlfile "<h2>Documentation for package `", $pkg_name, "'"; 
+    print htmlfile "<h2>Documentation for package &lsquo;", $pkg_name, "&rsquo;"; 
     print htmlfile " version ", $version if $version != "";
     print htmlfile "</h2>\n\n";
 
@@ -455,7 +460,7 @@ sub build_index { # lib, dest, version, [chmdir]
 
 
 
-## return ``true'' if file exists and is older than $age
+## return true if file exists and is older than $age
 sub fileolder {
     my($file, $age) = @_;
     (! ((-f $file) && ((-M $file) < $age)));

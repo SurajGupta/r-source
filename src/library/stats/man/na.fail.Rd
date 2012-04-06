@@ -1,3 +1,8 @@
+% File src/library/stats/man/na.fail.Rd
+% Part of the R package, http://www.R-project.org
+% Copyright 1995-2007 R Core Development Team
+% Distributed under GPL 2 or later
+
 \name{na.fail}
 \alias{na.fail}
 \alias{na.fail.default}
@@ -49,8 +54,7 @@ na.pass(object, \dots)
 }
 \seealso{
   \code{\link{na.action}};
-  \code{\link{options}} with argument \code{na.action} for setting
-  \dQuote{NA actions};
+  \code{\link{options}} with argument \code{na.action} for setting NA actions;
   and \code{\link{lm}} and \code{\link{glm}} for functions using these.
   \code{\link{na.contiguous}} as alternative for time series.
 }

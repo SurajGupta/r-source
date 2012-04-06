@@ -1,3 +1,8 @@
+% File src/library/splines/man/splines-package.Rd
+% Part of the R package, http://www.R-project.org
+% Copyright 1995-2007 R Core Development Team
+% Distributed under GPL 2 or later
+
 \name{splines-package}
 \alias{splines-package}
 \alias{splines}
@@ -10,8 +15,8 @@ Regression spline functions and classes.
 }
 \details{
 This package provides functions for working with regression
-splines using the \link[splines:bs]{B-spline} basis, the
-\link[splines:ns]{natural cubic spline} basis.  
+splines using the B-spline basis, \code{\link{bs}}, and the
+natural cubic spline basis, \code{\link{ns}}.  
 
 For a complete list of functions, use \code{library(help="splines")}.
 

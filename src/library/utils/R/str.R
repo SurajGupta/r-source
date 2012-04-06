@@ -1,3 +1,19 @@
+#  File src/library/utils/R/str.R
+#  Part of the R package, http://www.R-project.org
+#
+#  This program is free software; you can redistribute it and/or modify
+#  it under the terms of the GNU General Public License as published by
+#  the Free Software Foundation; either version 2 of the License, or
+#  (at your option) any later version.
+#
+#  This program is distributed in the hope that it will be useful,
+#  but WITHOUT ANY WARRANTY; without even the implied warranty of
+#  MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
+#  GNU General Public License for more details.
+#
+#  A copy of the GNU General Public License is available at
+#  http://www.r-project.org/Licenses/
+
 ####------ str : show STRucture of an R object
 str <- function(object, ...) UseMethod("str")
 
@@ -26,8 +42,32 @@ str.data.frame <- function(object, ...)
 
 str.POSIXt <- function(object, ...) {
     cl <- oldClass(object)
-    cat("'", cl[min(2, length(cl))],"', format:", sep = "")
-    str(format(object), ...)
+    ## be careful to be fast for large object:
+    n <- length(object)
+    if(n >= 1000) object <- object[1:1000]
+
+    give.length <- TRUE ## default
+    ## use 'give.length' when specified, else default = give.head
+    if(length(larg <- list(...))) {
+	nl <- names(larg)
+	iGiveHead <- which(nl == "give.head")
+	if (any(Bgl <- nl == "give.length"))
+	    give.length <- larg[[which(Bgl)]]
+	else if(length(iGiveHead))
+	    give.length <- larg[[iGiveHead]]
+	if(length(iGiveHead)) # eliminate it from arg.list
+	    larg <- larg[ - iGiveHead ]
+	if(is.numeric(larg[["nest.lev"]]) &&
+	   is.numeric(v.len <- larg[["vec.len"]])) # typical call from data.frame
+	    ## diminuish length for typical call:
+	    larg[["vec.len"]] <-
+		min(larg[["vec.len"]],
+		    (larg[["width"]]- nchar(larg[["indent.str"]]) -31)%/% 19)
+    }
+
+    le.str <- if(give.length) paste("[1:",as.character(n),"]", sep="")
+    cat(" ", cl[min(2, length(cl))], le.str,", format: ", sep = "")
+    do.call(str, c(list(format(object), give.head = FALSE), larg))
 }
 
 strOptions <- function(strict.width = "no", digits.d = 3, vec.len = 4)
@@ -36,7 +76,8 @@ strOptions <- function(strict.width = "no", digits.d = 3, vec.len = 4)
 str.default <-
     function(object, max.level = NA, vec.len = strO$vec.len,
              digits.d = strO$digits.d,
-	     nchar.max = 128, give.attr = TRUE, give.length = TRUE,
+	     nchar.max = 128, give.attr = TRUE,
+             give.head = TRUE, give.length = give.head,
 	     width = getOption("width"), nest.lev = 0,
 	     indent.str= paste(rep.int(" ", max(0,nest.lev+1)), collapse= ".."),
 	     comp.str="$ ", no.list = FALSE, envir = baseenv(),
@@ -63,7 +104,7 @@ str.default <-
 	ss <- capture.output(str(object, max.level = max.level,
 				 vec.len = vec.len, digits.d = digits.d,
 				 nchar.max = nchar.max,
-				 give.attr= give.attr, give.length= give.length,
+				 give.attr= give.attr, give.head= give.head, give.length= give.length,
 				 width = width, nest.lev = nest.lev,
 				 indent.str = indent.str, comp.str= comp.str,
 				 no.list= no.list || is.data.frame(object),
@@ -91,6 +132,9 @@ str.default <-
 	if(any(ii)) x[ii] <- P0(trimmed[ii], Sep, ch)
 	x
     }
+    pClass <- function(cls)
+	paste("Class", if(length(cls) > 1) "es",
+              " '", paste(cls, collapse = "', '"), "' ", sep="")
 
     ## le.str: not used for arrays:
     le.str <-
@@ -133,7 +177,11 @@ str.default <-
 	if(le == 0) {
 	    if(is.d.f) std.attr <- c(std.attr, "class", "row.names")
 	    else cat(" ", if(i.pl)"pair", "list()\n",sep="")
-	} else {
+	} else { # list, length >= 1 :
+	    if(irregCl <- has.class && identical(object[[1]], object)) {
+		le <- length(object <- unclass(object))
+		std.attr <- c(std.attr, "class")
+	    }
 	    if(no.list || (has.class &&
 			   any(sapply(paste("str", cl, sep="."),
 					#use sys.function(.) ..
@@ -142,7 +190,8 @@ str.default <-
 		## str.default is a 'NextMethod' : omit the 'List of ..'
 		std.attr <- c(std.attr, "class", if(is.d.f) "row.names")
 	    } else {
-		cat(if(i.pl) "Dotted pair list" else "List",
+		cat(if(i.pl) "Dotted pair list" else
+		    if(irregCl) paste(pClass(cl), "hidden list") else "List",
 		    " of ", le, "\n", sep="")
 	    }
 	    if (is.na(max.level) || nest.lev < max.level) {
@@ -161,7 +210,7 @@ str.default <-
                         indent.str = paste(indent.str,".."),
                         nchar.max = nchar.max, max.level = max.level,
                         vec.len = vec.len, digits.d = digits.d,
-                        give.attr = give.attr, give.length = give.length,
+                        give.attr = give.attr, give.head= give.head, give.length = give.length,
                         width = width, envir = envir)
 		}
 	    }
@@ -242,7 +291,7 @@ str.default <-
 	    if(!is.character(lev.att)) {# should not happen..
 		warning("'object' does not have valid levels()")
 		nl <- 0
-	    } else lev.att <- encodeString(lev.att, na = FALSE, quote = '"')
+	    } else lev.att <- encodeString(lev.att, na.encode = FALSE, quote = '"')
 	    ord <- is.ordered(object)
 	    object <- unclass(object)
 	    if(nl) {
@@ -270,8 +319,7 @@ str.default <-
 		  c("externalptr", "weakref", "environment")) {
 	    ## Careful here, we don't want to change pointer objects
 	    if(has.class)
-		cat("Class", if(length(cl) > 1) "es",
-		" '", paste(cl, collapse = "', '"), "' ", sep="")
+                cat(pClass(cl))
 	    le <- v.len <- 0
 	    str1 <- paste("<", typeof(object), ">", sep="")
 	    if(typeof(object) == "environment") {
@@ -390,7 +438,7 @@ str.default <-
 	    ## if object is very long, drop the rest which won't be used anyway:
 	    max.len <- max(100, width %/% 3 + 1, if(!missing(vec.len)) vec.len)
 	    if(le > max.len) object <- object[1:max.len]
-	    encObj <- encodeString(object, quote= '"', na= FALSE)
+	    encObj <- encodeString(object, quote= '"', na.encode= FALSE)
 					#O: encodeString(object)
 	    v.len <-
 		if(missing(vec.len)) {
@@ -401,7 +449,7 @@ str.default <-
 	    ile <- min(le, v.len)
 	    if(ile >= 1) ## truncate if LONG char:
 		object <- maybe_truncate(encObj[1:ile])
-					#O: encodeString(object, quote= '"', na= FALSE)
+					#O: encodeString(object, quote= '"', na.encode= FALSE)
 	    formObj <- function(x) paste(as.character(x), collapse=" ")
 	}
 	else {
@@ -413,8 +461,8 @@ str.default <-
 	    formObj <- function(x) paste(format.fun(x), collapse = " ")
 	}
 
-	cat(str1, " ", formObj(if(ile >= 1) object[1:ile] else
-			       if(v.len > 0) object),
+	cat(if(give.head) P0(str1, " "),
+	    formObj(if(ile >= 1) object[1:ile] else if(v.len > 0) object),
 	    if(le > v.len) " ...", "\n", sep="")
 
     } ## else (not function nor list)----------------------------------------
@@ -429,7 +477,7 @@ str.default <-
 		    max.level = max.level, digits.d = digits.d,
 		    nchar.max = nchar.max,
 		    vec.len = if(nam[i] == "source") 1 else vec.len,
-		    give.attr= give.attr, give.length= give.length, width= width)
+		    give.attr= give.attr, give.head= give.head, give.length= give.length, width= width)
 	    }
     }
     invisible()	 ## invisible(object)#-- is SLOOOOW on large objects

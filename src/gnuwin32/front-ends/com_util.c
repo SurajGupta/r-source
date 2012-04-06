@@ -13,9 +13,8 @@
  *  Library General Public License for more details.
  * 
  *  You should have received a copy of the GNU Library General Public
- *  License along with this library; if not, write to the Free
- *  Software Foundation, Inc., 51 Franklin Street, Fifth Floor, Boston,
- *  MA 02110-1301, USA.
+ *  License along with this library; if not, a copy is available at
+ *  http://www.r-project.org/Licenses/
  *
  *  basic COM utility functions
  *
@@ -77,7 +76,6 @@ RCOM_OBJHANDLE com_addObject(LPDISPATCH object)
 SEXP com_createSEXP(RCOM_OBJHANDLE handle)
 {
   SEXP sexp = R_NilValue;
-  SEXP cls;
   SEXP strsexp;
 
   if (handle == RCOM_NULLHANDLE) {
@@ -88,12 +86,8 @@ SEXP com_createSEXP(RCOM_OBJHANDLE handle)
   R_RegisterCFinalizerEx(sexp,_com_object_finalizer,(Rboolean) TRUE);
   RPROXY_TRACE(printf("COM object watcher: finalizer for object at %p registered\n",
 		    handle));
-  cls = allocString(strlen(RCOM_CLSNAME));
-  PROTECT (cls);
-  strcpy (CHAR(cls),RCOM_CLSNAME);
-  strsexp = PROTECT (allocVector (STRSXP,1));
-  SET_STRING_ELT(strsexp,0,cls);
-  setAttrib (sexp,R_ClassSymbol,strsexp);
-  UNPROTECT(2);
+  PROTECT(strsexp = mkString(RCOM_CLSNAME));
+  setAttrib (sexp, R_ClassSymbol, strsexp);
+  UNPROTECT(1);
   return sexp;
 }

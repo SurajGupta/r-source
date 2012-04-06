@@ -1,3 +1,19 @@
+#  File src/library/methods/R/packageName.R
+#  Part of the R package, http://www.R-project.org
+#
+#  This program is free software; you can redistribute it and/or modify
+#  it under the terms of the GNU General Public License as published by
+#  the Free Software Foundation; either version 2 of the License, or
+#  (at your option) any later version.
+#
+#  This program is distributed in the hope that it will be useful,
+#  but WITHOUT ANY WARRANTY; without even the implied warranty of
+#  MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
+#  GNU General Public License for more details.
+#
+#  A copy of the GNU General Public License is available at
+#  http://www.r-project.org/Licenses/
+
 ## utilities to manage package names
 
 getPackageName <- function(where = topenv(parent.frame())) {
@@ -6,7 +22,7 @@ getPackageName <- function(where = topenv(parent.frame())) {
         pkg <- get(".packageName", where)
     else  if(identical(where, 1) || identical(as.environment(where), topenv(parent.frame())))
         pkg <- Sys.getenv("R_PACKAGE_NAME")
-    if(nchar(pkg) == 0) {
+    if(!nzchar(pkg)) {
         env <- as.environment(where)
         if(identical(env, .GlobalEnv))
             pkg <- ".GlobalEnv"
@@ -24,7 +40,7 @@ getPackageName <- function(where = topenv(parent.frame())) {
             else
                 pkg <- as.character(where)
             if(identical(substr(pkg, 1, 8), "package:"))
-                pkg <- substr(pkg, 9, nchar(pkg))
+                pkg <- substr(pkg, 9, nchar(pkg, "c"))
         }
 #  Problem:  the library() function should now be putting .packageName in package environments
 #   but namespace makes them invisible from outside.

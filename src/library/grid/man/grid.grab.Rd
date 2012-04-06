@@ -1,3 +1,8 @@
+% File src/library/grid/man/grid.grab.Rd
+% Part of the R package, http://www.R-project.org
+% Copyright 1995-2007 R Core Development Team
+% Distributed under GPL 2 or later
+
 \name{grid.grab}
 \alias{grid.grab}
 \alias{grid.grabExpr}
@@ -67,7 +72,7 @@ grid.grabExpr(expr, warn = 2, wrap = FALSE, ...)
 \examples{
 pushViewport(viewport(w=.5, h=.5))
 grid.rect()
-grid.points(runif(10), runif(10))
+grid.points(stats::runif(10), stats::runif(10))
 popViewport()
 grab <- grid.grab()
 grid.newpage()

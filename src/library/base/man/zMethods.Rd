@@ -1,3 +1,8 @@
+% File src/library/base/man/zMethods.Rd
+% Part of the R package, http://www.R-project.org
+% Copyright 1995-2007 R Core Development Team
+% Distributed under GPL 2 or later
+
 \name{InternalMethods}
 \alias{InternalMethods}
 \alias{InternalGenerics}
@@ -38,6 +43,11 @@
   \code{\link{rbind}},
 
   \code{\link{as.character}},
+  \code{\link{as.complex}},
+  \code{\link{as.double}},
+  \code{\link{as.integer}},
+  \code{\link{as.logical}},
+  \code{\link{as.raw}},
   \code{\link{as.vector}},%   % do_asvector()        [coerce.c]
   \code{\link{is.array}},
   \code{\link{is.matrix}},
@@ -51,7 +61,7 @@
   In addition, \code{is.name} is a synonym for \code{is.symbol} and
   dispatches methods for the latter.
 
-  Note that most of the \link{group generic} functions are also
+  Note that all of the \link{group generic} functions are also
   internal/primitive and allow methods to be written for them.
 
   \code{.S3PrimitiveGenerics} is a character vector listing the

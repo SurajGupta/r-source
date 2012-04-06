@@ -1,3 +1,19 @@
+#  File src/library/stats/R/ecdf.R
+#  Part of the R package, http://www.R-project.org
+#
+#  This program is free software; you can redistribute it and/or modify
+#  it under the terms of the GNU General Public License as published by
+#  the Free Software Foundation; either version 2 of the License, or
+#  (at your option) any later version.
+#
+#  This program is distributed in the hope that it will be useful,
+#  but WITHOUT ANY WARRANTY; without even the implied warranty of
+#  MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
+#  GNU General Public License for more details.
+#
+#  A copy of the GNU General Public License is available at
+#  http://www.r-project.org/Licenses/
+
 #### Empirical Cumulative Distribution Functions :  "ecdf"
 ##--  inherit from  "stepfun"
 
@@ -7,7 +23,7 @@ ecdf <- function (x)
     x <- sort(x) # drops NAs
     n <- length(x)
     if(n < 1) stop("'x' must have 1 or more non-missing values")
-    vals <- sort(unique(x))
+    vals <- unique(x)
     rval <- approxfun(vals, cumsum(tabulate(match(x, vals)))/n,
 		      method = "constant", yleft = 0, yright = 1, f = 0,
                       ties = "ordered")
@@ -18,12 +34,12 @@ ecdf <- function (x)
 
 print.ecdf <- function (x, digits= getOption("digits") - 2, ...)
 {
-    numform <- function(x) paste(formatC(x, dig=digits), collapse=", ")
+    numform <- function(x) paste(formatC(x, digits=digits), collapse=", ")
     cat("Empirical CDF \nCall: ")
     print(attr(x, "call"), ...)
-    n <- length(xx <- eval(expression(x),env = environment(x)))
+    n <- length(xx <- eval(expression(x), envir = environment(x)))
     i1 <- 1:min(3,n)
-    i2 <- if(n>=4) max(4,n-1):n else integer(0)
+    i2 <- if(n >= 4) max(4,n-1):n else integer(0)
     cat(" x[1:",n,"] = ", numform(xx[i1]),
 	if(n>3) ", ", if(n>5) " ..., ", numform(xx[i2]), "\n", sep = "")
     invisible(x)
@@ -32,7 +48,7 @@ print.ecdf <- function (x, digits= getOption("digits") - 2, ...)
 summary.ecdf <- function(object, ...)
 {
     cat("Empirical CDF:	 ",
-	eval(expression(n), env = environment(object)),
+	eval(expression(n), envir = environment(object)),
         "unique values with summary\n")
     summary(knots(object), ...)
 }

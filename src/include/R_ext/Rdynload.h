@@ -13,8 +13,8 @@
  *  GNU Lesser General Public License for more details.
  *
  *  You should have received a copy of the GNU Lesser General Public License
- *  along with this program; if not, write to the Free Software
- *  Foundation, Inc., 51 Franklin Street, Fifth Floor, Boston, MA 02110-1301  USA
+ *  along with this program; if not, a copy is available at
+ *  http://www.r-project.org/Licenses/
  */
 
 #ifndef  R_EXT_DYNLOAD_H_
@@ -92,13 +92,12 @@ int R_registerRoutines(DllInfo *info, const R_CMethodDef * const croutines,
                        const R_ExternalMethodDef * const externalRoutines);
 
 Rboolean R_useDynamicSymbols(DllInfo *info, Rboolean value);
-#ifdef __cplusplus 
-}
-#endif
-
 
 DllInfo *R_getDllInfo(const char *name);
 
+/* to be used by applications embedding R to register their symbols
+   that are not related to any dynamic module */
+DllInfo *R_getEmbeddingDllInfo();
 
 typedef struct Rf_RegisteredNativeSymbol R_RegisteredNativeSymbol;
 typedef enum {R_ANY_SYM=0, R_C_SYM, R_CALL_SYM, R_FORTRAN_SYM, R_EXTERNAL_SYM} NativeSymbolType;
@@ -107,8 +106,7 @@ typedef enum {R_ANY_SYM=0, R_C_SYM, R_CALL_SYM, R_FORTRAN_SYM, R_EXTERNAL_SYM} N
 DL_FUNC R_FindSymbol(char const *, char const *, 
                        R_RegisteredNativeSymbol *symbol);
 
-int R_moduleCdynload(char *module, int local, int now);
-
+int R_moduleCdynload(const char *module, int local, int now);
 
 
 /* Experimental interface for exporting and importing functions from
@@ -116,7 +114,11 @@ int R_moduleCdynload(char *module, int local, int now);
    part probably ought to be integrated with the other registrations.
    The naming of these routines may be less than ideal. */
 
-void R_RegisterCCallable(char *package, char *name, DL_FUNC fptr);
-DL_FUNC R_GetCCallable(char *package, char *name);
+void R_RegisterCCallable(const char *package, const char *name, DL_FUNC fptr);
+DL_FUNC R_GetCCallable(const char *package, const char *name);
+
+#ifdef __cplusplus 
+}
+#endif
 
 #endif /* R_EXT_DYNLOAD_H_ */

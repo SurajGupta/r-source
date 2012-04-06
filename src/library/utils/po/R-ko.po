@@ -2,7 +2,7 @@ msgid ""
 msgstr ""
 "Project-Id-Version: R 2.3.0\n"
 "Report-Msgid-Bugs-To: bugs@r-project.org\n"
-"POT-Creation-Date: 2007-06-12 18:48\n"
+"POT-Creation-Date: 2007-09-19 09:18\n"
 "PO-Revision-Date: 2005-05-31 09:50+0900\n"
 "Last-Translator: Korean <uiami@hanmail.com>\n"
 "Language-Team: Korean <translation-team-ko@lists.sourceforge.net>\n"
@@ -256,6 +256,9 @@ msgstr ""
 msgid "'form' must be a two-sided formula"
 msgstr ""
 
+msgid "'form' must be a two-sided formula with one term on each side"
+msgstr ""
+
 msgid "No documentation for '%s' in specified packages and libraries:"
 msgstr "지정된 패키지 및 라이브러리에서 '%s'때문에 documentation는 없습니다"
 
@@ -502,6 +505,10 @@ msgid "'destdir' is not a directory"
 msgstr "'destdir'는 디렉토리가 아닙니다"
 
 msgid "no package '%s' at the repositories"
+msgstr "repository로의 패키지 '%s'는 없습니다"
+
+#, fuzzy
+msgid "package '%s' does not exist on the local repository"
 msgstr "repository로의 패키지 '%s'는 없습니다"
 
 msgid "download of package '%s' failed"
@@ -762,11 +769,26 @@ msgstr ""
 msgid "first five rows are empty: giving up"
 msgstr ""
 
+msgid "relist() requires recursively unlisted objects."
+msgstr ""
+
+msgid "The flesh argument does not contain a skeleton attribute."
+msgstr ""
+
+msgid ""
+"Either ensure you unlist a relistable object, or specify the skeleton "
+"separately."
+msgstr ""
+
 msgid "cannot coerce 'x' to roman"
 msgstr ""
 
 msgid "Invalid roman numeral(s): %s"
 msgstr ""
+
+#, fuzzy
+msgid "no valid packages were specified"
+msgstr "패키지는 지정되지 않았습니다"
 
 msgid "invalid 'socket' argument"
 msgstr "무효의 'socket' 인수입니다"
@@ -900,6 +922,10 @@ msgstr "HTML 패키지 인덱스를 작성할 수 없습니다"
 
 msgid "cannot create HTML search index"
 msgstr "HTML 탐색 인덱스를 작성할 수 없습니다"
+
+#, fuzzy
+msgid "Updating HTML index of packages in '.Library'"
+msgstr "HTML 패키지의 리스트를 갱신합니다"
 
 msgid "'memory.size()' is Windows-specific"
 msgstr ""

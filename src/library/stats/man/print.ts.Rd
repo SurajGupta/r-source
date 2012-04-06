@@ -1,3 +1,8 @@
+% File src/library/stats/man/print.ts.Rd
+% Part of the R package, http://www.R-project.org
+% Copyright 1995-2007 R Core Development Team
+% Distributed under GPL 2 or later
+
 \name{print.ts}
 \title{Printing Time-Series Objects}
 \alias{print.ts}
@@ -23,6 +28,6 @@
   \code{\link{ts}}.
 }
 \examples{
-print(ts(1:10, freq = 7, start = c(12, 2)), calendar = TRUE)
+print(ts(1:10, frequency = 7, start = c(12, 2)), calendar = TRUE)
 }
 \keyword{ts}

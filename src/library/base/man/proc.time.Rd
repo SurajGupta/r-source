@@ -1,3 +1,8 @@
+% File src/library/base/man/proc.time.Rd
+% Part of the R package, http://www.R-project.org
+% Copyright 1995-2007 R Core Development Team
+% Distributed under GPL 2 or later
+
 \name{proc.time}
 \alias{proc.time}
 \alias{print.proc_time}
@@ -11,7 +16,7 @@ proc.time()
 }
 \details{
   \code{proc.time} returns five elements for backwards compatibility,
-  but as from \R 2.5.0 its \code{print} method prints a named vector of
+  but its \code{print} method prints a named vector of
   length 3.  The first two entries are the total user and system CPU
   times of the current \R process and any child processes on which it
   has waited, and the third entry is the \sQuote{real} elapsed time
@@ -35,8 +40,8 @@ proc.time()
   and times are typically available to 10ms on NT-based versions of Windows.
 #endif
 
-  It is most useful for \dQuote{timing} the evaluation of \R expressions,
-  which can be done conveniently with \code{\link{system.time}}.
+  It is useful for timing the evaluation of \R expressions,
+  which can be done more conveniently with \code{\link{system.time}}.
 }
 \note{
 #ifdef unix
@@ -62,7 +67,7 @@ proc.time()
 \examples{\dontrun{
 ## a way to time an R expression: system.time is preferred
 ptm <- proc.time()
-for (i in 1:50) mad(runif(500))
+for (i in 1:50) mad(stats::runif(500))
 proc.time() - ptm
 }}
 \keyword{utilities}

@@ -1,3 +1,8 @@
+% File src/library/datasets/man/trees.Rd
+% Part of the R package, http://www.R-project.org
+% Copyright 1995-2007 R Core Development Team
+% Distributed under GPL 2 or later
+
 \name{trees}
 \docType{data}
 \alias{trees}
@@ -30,6 +35,7 @@
   Oxford University Press.
 }
 \examples{
+require(stats); require(graphics)
 pairs(trees, panel = panel.smooth, main = "trees data")
 plot(Volume ~ Girth, data = trees, log = "xy")
 coplot(log(Volume) ~ log(Girth) | Height, data = trees,

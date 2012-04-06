@@ -1,3 +1,8 @@
+% File src/library/stats/man/Hypergeometric.Rd
+% Part of the R package, http://www.R-project.org
+% Copyright 1995-2007 R Core Development Team
+% Distributed under GPL 2 or later
+
 \name{Hypergeometric}
 \alias{Hypergeometric}
 \alias{dhyper}
@@ -75,6 +80,6 @@ x <- 0:(k+1)
 rbind(phyper(x, m, n, k), dhyper(x, m, n, k))
 all(phyper(x, m, n, k) == cumsum(dhyper(x, m, n, k)))# FALSE
 ## but error is very small:
-signif(phyper(x, m, n, k) - cumsum(dhyper(x, m, n, k)), dig=3)
+signif(phyper(x, m, n, k) - cumsum(dhyper(x, m, n, k)), digits=3)
 }
 \keyword{distribution}

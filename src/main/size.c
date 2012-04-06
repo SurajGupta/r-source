@@ -13,8 +13,8 @@
  *  GNU General Public License for more details.
  *
  *  You should have received a copy of the GNU General Public License
- *  along with this program; if not, write to the Free Software
- *  Foundation, Inc., 51 Franklin Street Fifth Floor, Boston, MA 02110-1301  USA
+ *  along with this program; if not, a copy is available at
+ *  http://www.r-project.org/Licenses/
  */
 
 
@@ -145,13 +145,6 @@ static R_size_t objectsize(SEXP s)
 
 SEXP attribute_hidden do_objectsize(SEXP call, SEXP op, SEXP args, SEXP env)
 {
-    SEXP ans;
-    R_size_t cnt = 0;
-    
     checkArity(op, args);
-    cnt = objectsize(CAR(args));
-    PROTECT(ans = allocVector(REALSXP, 1));
-    REAL(ans)[0] = (double) cnt;
-    UNPROTECT(1);
-    return ans;
+    return ScalarReal( (double) objectsize(CAR(args)) );
 }

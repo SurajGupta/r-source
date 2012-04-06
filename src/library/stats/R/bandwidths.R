@@ -1,4 +1,22 @@
-#### copyright (C) 1994-2001 W. N. Venables and B. D. Ripley
+#  File src/library/stats/R/bandwidths.R
+#  Part of the R package, http://www.R-project.org
+#
+#  This program is free software; you can redistribute it and/or modify
+#  it under the terms of the GNU General Public License as published by
+#  the Free Software Foundation; either version 2 of the License, or
+#  (at your option) any later version.
+#
+#  This program is distributed in the hope that it will be useful,
+#  but WITHOUT ANY WARRANTY; without even the implied warranty of
+#  MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
+#  GNU General Public License for more details.
+#
+#  A copy of the GNU General Public License is available at
+#  http://www.r-project.org/Licenses/
+
+### copyright (C) 1994-2001 W. N. Venables and B. D. Ripley
+### This version distributed under GPL (version 2 or later)
+
 
 #====           bandwidth selection rules              ====
 
@@ -76,7 +94,8 @@ bw.SJ <- function(x, nb = 1000, lower = 0.1*hmax, upper = hmax,
 		upper <- upper * 1.2
 	    else lower <- lower / 1.2
 	    if(getOption("verbose"))
-		message("increasing bw.SJ() search interval (",itry,")", sep='')
+		message(gettextf("increasing bw.SJ() search interval (%d)",
+                        itry), sep='', domain = NA)
 	    itry <- itry + 1
 	}
         res <- uniroot(fSD, c(lower, upper), tol=0.1*lower,

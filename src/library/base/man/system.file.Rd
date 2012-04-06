@@ -1,3 +1,8 @@
+% File src/library/base/man/system.file.Rd
+% Part of the R package, http://www.R-project.org
+% Copyright 1995-2007 R Core Development Team
+% Distributed under GPL 2 or later
+
 \name{system.file}
 \title{Find Names of R System Files}
 \usage{
@@ -27,7 +32,9 @@ system.file(\dots, package = "base", lib.loc = NULL)
   As a special case, \code{system.file()} gives the root of the
   \pkg{base} package only.
 }
-\seealso{\code{\link{list.files}}}
+\seealso{\code{\link{R.home}} for the root directory of the \R
+  installation, \code{\link{list.files}}
+}
 \examples{
 system.file()                  # The root of the 'base' package
 system.file(package = "stats") # The root of package 'stats'

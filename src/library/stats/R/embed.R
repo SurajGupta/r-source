@@ -1,3 +1,6 @@
+#  File src/library/stats/R/embed.R
+#  Part of the R package, http://www.R-project.org
+#
 # Copyright (C) 1997-1999  Adrian Trapletti
 #
 # Rewritten to use R indexing (C) 1999, 2006 R Core Development Team
@@ -12,9 +15,9 @@
 # MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the GNU
 # Library General Public License for more details.
 #
-# You should have received a copy of the GNU Library General Public
-# License along with this library; if not, write to the Free
-# Foundation, Inc., 51 Franklin Street, Fifth Floor, Boston, MA 02110-1301 USA.
+# You should have received a copy of the GNU General Public License
+# along with this program; if not, a copy is available at
+# http://www.r-project.org/Licenses/
 
 embed <- function (x, dimension = 1)
 {
@@ -25,7 +28,7 @@ embed <- function (x, dimension = 1)
             stop ("wrong embedding dimension")
         y <- matrix(0.0, n - dimension + 1, dimension * m)
         for (i in (1:m))
-            y[, seq(i, by = m,length = dimension)] <-
+            y[, seq.int(i, by = m, length.out = dimension)] <-
                 Recall (as.vector(x[,i]), dimension)
         return (y)
     } else if (is.vector(x) || is.ts(x)) {

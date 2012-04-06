@@ -1,6 +1,6 @@
 /*
  *  R : A Computer Language for Statistical Data Analysis
- *  Copyright (C) 1999-2006  the R Development Core Team
+ *  Copyright (C) 1999-2007  the R Development Core Team
  *
  *  This program is free software; you can redistribute it and/or modify
  *  it under the terms of the GNU General Public License as published by
@@ -13,8 +13,8 @@
  *  GNU General Public License for more details.
  *
  *  You should have received a copy of the GNU General Public License
- *  along with this program; if not, write to the Free Software
- *  Foundation, Inc., 51 Franklin Street Fifth Floor, Boston, MA 02110-1301  USA
+ *  along with this program; if not, a copy is available at
+ *  http://www.r-project.org/Licenses/
  */
 
 /* <UTF8> char here is either ASCII or handled as a whole */
@@ -210,23 +210,21 @@ SEXP attribute_hidden do_optim(SEXP call, SEXP op, SEXP args, SEXP rho)
     int i, npar=0, *mask, trace, maxit, fncount, grcount, nREPORT, tmax;
     int ifail = 0;
     double *dpar, *opar, val, abstol, reltol, temp;
-    char *tn;
+    const char *tn;
     OptStruct OS;
-    char *vmax;
 
     checkArity(op, args);
-    vmax = vmaxget();
     OS = (OptStruct) R_alloc(1, sizeof(opt_struct));
     OS->usebounds = 0;
     OS->R_env = rho;
     par = CAR(args);
     OS->names = getAttrib(par, R_NamesSymbol);
     args = CDR(args); fn = CAR(args);
-    if (!isFunction(fn)) errorcall(call, _("'fn' is not a function"));
+    if (!isFunction(fn)) error(_("'fn' is not a function"));
     args = CDR(args); gr = CAR(args);
     args = CDR(args); method = CAR(args);
     if (!isString(method)|| LENGTH(method) != 1)
-	errorcall(call, _("invalid '%s' argument"), "method");
+	error(_("invalid '%s' argument"), "method");
     tn = CHAR(STRING_ELT(method, 0));
     args = CDR(args); options = CAR(args);
     PROTECT(OS->R_fcall = lang2(fn, R_NilValue));
@@ -238,7 +236,7 @@ SEXP attribute_hidden do_optim(SEXP call, SEXP op, SEXP args, SEXP rho)
     OS->fnscale = asReal(getListElement(options, "fnscale"));
     tmp = getListElement(options, "parscale");
     if (LENGTH(tmp) != npar)
-	errorcall(call, _("'parscale' is of the wrong length"));
+	error(_("'parscale' is of the wrong length"));
     PROTECT(tmp = coerceVector(tmp, REALSXP));
     OS->parscale = vect(npar);
     for (i = 0; i < npar; i++) OS->parscale[i] = REAL(tmp)[i];
@@ -280,7 +278,7 @@ SEXP attribute_hidden do_optim(SEXP call, SEXP op, SEXP args, SEXP rho)
         samin (npar, dpar, &val, fminfn, maxit, tmax, temp, trace, (void *)OS);
         for (i = 0; i < npar; i++)
             REAL(par)[i] = dpar[i] * (OS->parscale[i]);
-        fncount = maxit;
+        fncount = npar > 0 ? maxit : 1;
         grcount = NA_INTEGER;
         UNPROTECT(1);  /* OS->R_gcall */
 
@@ -376,12 +374,11 @@ SEXP attribute_hidden do_optim(SEXP call, SEXP op, SEXP args, SEXP rho)
 	for (i = 0; i < npar; i++)
 	    REAL(par)[i] = dpar[i] * (OS->parscale[i]);
 	UNPROTECT(1); /* OS->R_gcall */
-	PROTECT(smsg = allocVector(STRSXP, 1));
-	SET_STRING_ELT(smsg, 0, mkChar(msg));
+	PROTECT(smsg = mkString(msg));
 	SET_VECTOR_ELT(res, 4, smsg);
 	UNPROTECT(1);
     } else
-	errorcall(call, _("unknown 'method'"));
+	error(_("unknown 'method'"));
 
     REAL(value)[0] = val * (OS->fnscale);
     SET_VECTOR_ELT(res, 0, par); SET_VECTOR_ELT(res, 1, value);
@@ -389,7 +386,6 @@ SEXP attribute_hidden do_optim(SEXP call, SEXP op, SEXP args, SEXP rho)
     SET_VECTOR_ELT(res, 2, counts);
     INTEGER(conv)[0] = ifail;
     SET_VECTOR_ELT(res, 3, conv);
-    vmaxset(vmax);
     UNPROTECT(6);
     return res;
 }
@@ -401,10 +397,8 @@ SEXP attribute_hidden do_optimhess(SEXP call, SEXP op, SEXP args, SEXP rho)
     OptStruct OS;
     int npar, i , j;
     double *dpar, *df1, *df2, eps;
-    char *vmax;
 
     checkArity(op, args);
-    vmax = vmaxget();
     OS = (OptStruct) R_alloc(1, sizeof(opt_struct));
     OS->usebounds = 0;
     OS->R_env = rho;
@@ -412,13 +406,13 @@ SEXP attribute_hidden do_optimhess(SEXP call, SEXP op, SEXP args, SEXP rho)
     npar = LENGTH(par);
     OS->names = getAttrib(par, R_NamesSymbol);
     args = CDR(args); fn = CAR(args);
-    if (!isFunction(fn)) errorcall(call, _("'fn' is not a function"));
+    if (!isFunction(fn)) error(_("'fn' is not a function"));
     args = CDR(args); gr = CAR(args);
     args = CDR(args); options = CAR(args);
     OS->fnscale = asReal(getListElement(options, "fnscale"));
     tmp = getListElement(options, "parscale");
     if (LENGTH(tmp) != npar)
-	errorcall(call, _("'parscale' is of the wrong length"));
+	error(_("'parscale' is of the wrong length"));
     PROTECT(tmp = coerceVector(tmp, REALSXP));
     OS->parscale = vect(npar);
     for (i = 0; i < npar; i++) OS->parscale[i] = REAL(tmp)[i];
@@ -454,7 +448,6 @@ SEXP attribute_hidden do_optimhess(SEXP call, SEXP op, SEXP args, SEXP rho)
 		(2 * eps * (OS->parscale[i]) * (OS->parscale[j]));
 	dpar[i] = dpar[i] + eps;
     }
-    vmaxset(vmax);
     UNPROTECT(4);
     return ans;
 }
@@ -1021,6 +1014,14 @@ void lbfgsb(int n, int m, double *x, double *l, double *u, int *nbd,
     double f, *g, dsave[29], *wa;
     int tr = -1, iter = 0, *iwa, isave[44], lsave[4];
 
+    if(n == 0) { /* not handled in setulb */
+	*fncount = 1;
+	*grcount = 0;
+	*Fmin = fminfn(n, u, ex);
+	strcpy(msg, "NOTHING TO DO");
+	*fail = 0;
+	return;
+    }
     if (nREPORT <= 0)
 	error(_("REPORT must be > 0 (method = \"L-BFGS-B\")"));
     switch(trace) {
@@ -1100,6 +1101,10 @@ void samin(int n, double *pb, double *yb, optimfn fminfn, int maxit,
     double t, y, dy, ytry, scale;
     double *p, *dp, *ptry;
 
+    if(n == 0) { /* don't even attempt to optimize */
+	*yb = fminfn(n, pb, ex);
+	return;
+    }
     p = vect (n); dp = vect (n); ptry = vect (n);
     GetRNGstate();
     *yb = fminfn (n, pb, ex);  /* init best system state pb, *yb */

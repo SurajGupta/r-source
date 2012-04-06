@@ -2,7 +2,7 @@ msgid ""
 msgstr ""
 "Project-Id-Version: R 2.3.0\n"
 "Report-Msgid-Bugs-To: bugs@r-project.org\n"
-"POT-Creation-Date: 2007-06-12 18:46\n"
+"POT-Creation-Date: 2007-09-17 10:19\n"
 "PO-Revision-Date: 2005-05-26 15:05+0900\n"
 "Last-Translator: Korean <uiami@hanmail.com>\n"
 "Language-Team: Korean <translation-team-ko@lists.sourceforge.net>\n"
@@ -92,9 +92,6 @@ msgstr "scope에 항이 없습니다"
 msgid "no terms in scope for adding to object"
 msgstr "오브젝트에 첨가해야 할 항이 scope중에 있지 않습니다"
 
-msgid "trying +"
-msgstr ""
-
 msgid "number of rows in use has changed: remove missing values?"
 msgstr "사용중의 행수가 변했습니다: 결손값을 제거합니까?"
 
@@ -109,9 +106,6 @@ msgstr "\"mlm\" 모델에서 'add1'메소드는 실제 적용되지 않습니다
 
 msgid "scope is not a subset of term labels"
 msgstr "scope는 label항의 부분 집합이 아닙니다"
-
-msgid "trying -"
-msgstr ""
 
 msgid "no 'drop1' method for \"mlm\" models"
 msgstr "메소드 'drop1'는 mlm 모델에서 실제 적용되어 있지 않습니다"
@@ -131,12 +125,6 @@ msgstr "상위의 scope는 모델을 포함하고 있지 않습니다"
 msgid "AIC is not defined for this model, so 'step' cannot proceed"
 msgstr ""
 "AIC는 이 모델에서 정의 되지 않습니다, 따라서 'step'를 진행시킬 수가 없습니다"
-
-msgid "Start:  AIC="
-msgstr ""
-
-msgid "Step:  AIC="
-msgstr ""
 
 #, fuzzy
 msgid "'A' must be an array or table"
@@ -372,10 +360,7 @@ msgstr "sample이 너무 부족하기 때문에 alph2를 검색해낼 수가 없
 msgid "no solution in the specified range of bandwidths"
 msgstr "지정된 bandwidth의 범위내에서 해법은 없습니다"
 
-msgid "increasing bw.SJ() search interval ("
-msgstr ""
-
-msgid ")"
+msgid "increasing bw.SJ() search interval (%d)"
 msgstr ""
 
 msgid "minimum occurred at one end of the range"
@@ -1485,6 +1470,9 @@ msgstr "인자가 아닌 겻은 무시 되었습니다"
 msgid "eff.aovlist: non-orthogonal contrasts would give an incorrect answer"
 msgstr "eff.aovlist: non-orthogonal의 차이는 올바르지 않게 반응할것입니다"
 
+msgid "cannot create a formula from a zero-column data frame"
+msgstr ""
+
 msgid "no terms component"
 msgstr "terms 요소가 없습니다"
 
@@ -1496,11 +1484,12 @@ msgstr "'ColSideColors'는 길이가 ncol(x)의 문자 벡터가 아니면 되�
 msgid "'termobj' must be a object of class \"terms\""
 msgstr "중심('centers')은 수치 또는 행렬이 아니면 되지 않습니다"
 
-msgid ""
-"variable '%s' was fitted with class \"%s\" but class \"%s\" was supplied"
+#, fuzzy
+msgid "variable '%s' was fitted with type \"%s\" but type \"%s\" was supplied"
 msgstr "변수 '%s'에 클래스 \"%s\" 이지만, 클래스 \"%s\"가 주어졌습니다"
 
-msgid "variables %s were specified with different classes from the fit"
+#, fuzzy
+msgid "variables %s were specified with different types from the fit"
 msgstr "변수 %s는 적용시키기 위한 것과는 다른 클래스로서 지정되었습니다"
 
 msgid "'data' must be a data.frame, not a matrix or an array"
@@ -1561,6 +1550,12 @@ msgstr "'margins'는 길이 2의 수치 벡터가 아니면 되지 않습니다"
 msgid "lower < upper  is not fulfilled"
 msgstr "lower < upper가 되어 있지 않습니다"
 
+msgid "f.lower = f(lower) is NA"
+msgstr ""
+
+msgid "f.upper = f(upper) is NA"
+msgstr ""
+
 msgid "f() values at end points not of opposite sign"
 msgstr "f()의 end point에서의 값이 다른 부호를 가지지 않습니다"
 
@@ -1614,10 +1609,6 @@ msgid "'data' must be a list or an environment"
 msgstr "'newdata'는 행렬 또는 데이터 프레임이 아니면 되지 않습니다"
 
 #, fuzzy
-msgid "no parameters to fit"
-msgstr "모든 파라미터가 고정되어 있었습니다"
-
-#, fuzzy
 msgid "No starting values specified"
 msgstr "초기값이 주어지고 있지 않습니다"
 
@@ -1636,6 +1627,17 @@ msgstr ""
 
 msgid "parameters without starting value in 'data':"
 msgstr ""
+
+#, fuzzy
+msgid "fitting parameters"
+msgstr "모든 파라미터가 고정되어 있었습니다"
+
+msgid "without any variables"
+msgstr ""
+
+#, fuzzy
+msgid "no parameters to fit"
+msgstr "모든 파라미터가 고정되어 있었습니다"
 
 msgid "Upper or lower bounds ignored unless algorithm = \"port\""
 msgstr ""
@@ -1855,6 +1857,9 @@ msgstr "'ref'는 기존의 수준이 아니면 되지 않습니다"
 msgid "ref = %d must be in 1:%d"
 msgstr "ref = %d는 1:%d에 없으면 되지 않습니다"
 
+msgid "Failed to guess time-varying variables from their names"
+msgstr ""
+
 msgid "'varying' arguments must be the same length"
 msgstr "'varying' 인수는 동일 길이가 나오지 않으면 되지 않습니다"
 
@@ -1867,8 +1872,21 @@ msgstr "시간이 결손한 기록이 있기 때문에 제거합니다"
 msgid "some constant variables (%s) are really varying"
 msgstr "다음의 정수 변수(%s)s는 실제로 변화하고 있습니다"
 
-msgid "no 'time' or 'id' specified"
-msgstr "'time' 또는 'id'도 지정되어 있지 않습니다"
+msgid "no 'reshapeWide' attribute, must specify 'varying'"
+msgstr ""
+
+#, fuzzy
+msgid "'varying' must be nonempty list or vector"
+msgstr "'varying'는 논리값, 정수 또는 문자가 아니면 되지 않습니다"
+
+#, fuzzy
+msgid "length of v.names does not evenly divide length of varying"
+msgstr "FUN 길이 %d는 마진의 길이%d와 match하지 않습니다"
+
+msgid ""
+"length of varying must be the product of length of v.names and length of "
+"times"
+msgstr ""
 
 #, fuzzy
 msgid "'k' must be positive"
@@ -2267,6 +2285,9 @@ msgid_plural "parameters %s do not occur in the model formula"
 msgstr[0] ""
 "모델식에서 파라미터 %s가 없습니다\n"
 "모델식에서 파라미터(복수) %s가 없습니다"
+
+#~ msgid "no 'time' or 'id' specified"
+#~ msgstr "'time' 또는 'id'도 지정되어 있지 않습니다"
 
 #~ msgid "contrasts not defined for 0 degrees of freedom"
 #~ msgstr "대비는 자유도 0에서는 정의 되지 않습니다"

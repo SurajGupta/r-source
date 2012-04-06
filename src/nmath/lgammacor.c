@@ -14,8 +14,8 @@
  *  GNU General Public License for more details.
  *
  *  You should have received a copy of the GNU General Public License
- *  along with this program; if not, write to the Free Software
- *  Foundation, Inc., 51 Franklin Street, Fifth Floor, Boston, MA 02110-1301 USA.
+ *  along with this program; if not, a copy is available at
+ *  http://www.r-project.org/Licenses/
  *
  *  SYNOPSIS
  *
@@ -65,37 +65,22 @@ double attribute_hidden lgammacor(double x)
 
     double tmp;
 
-#ifdef NOMORE_FOR_THREADS
-    static int nalgm = 0;
-    static double xbig = 0, xmax = 0;
-
-    /* Initialize machine dependent constants, the first time gamma() is called.
-	FIXME for threads ! */
-    if (nalgm == 0) {
-	/* For IEEE double precision : nalgm = 5 */
-	nalgm = chebyshev_init(algmcs, 15, DBL_EPSILON/2);/*was d1mach(3)*/
-	xbig = 1 / sqrt(DBL_EPSILON/2); /* ~ 94906265.6 for IEEE double */
-	xmax = exp(fmin2(log(DBL_MAX / 12), -log(12 * DBL_MIN)));
-	/*   = DBL_MAX / 48 ~= 3.745e306 for IEEE double */
-    }
-#else
 /* For IEEE double precision DBL_EPSILON = 2^-52 = 2.220446049250313e-16 :
  *   xbig = 2 ^ 26.5
  *   xmax = DBL_MAX / 48 =  2^1020 / 3 */
-# define nalgm 5
-# define xbig  94906265.62425156
-# define xmax  3.745194030963158e306
-#endif
+#define nalgm 5
+#define xbig  94906265.62425156
+#define xmax  3.745194030963158e306
 
     if (x < 10)
 	ML_ERR_return_NAN
     else if (x >= xmax) {
 	ML_ERROR(ME_UNDERFLOW, "lgammacor");
-	return ML_UNDERFLOW;
+	/* allow to underflow below */
     }
     else if (x < xbig) {
 	tmp = 10 / x;
 	return chebyshev_eval(tmp * tmp * 2 - 1, algmcs, nalgm) / x;
     }
-    else return 1 / (x * 12);
+    return 1 / (x * 12);
 }

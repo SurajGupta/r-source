@@ -7,12 +7,12 @@
 ## Trap interrupts, most importantly 2 (^C from keyboard)
 trap do_exit_on_error 1 2 15
 
-revision='$Rev: 41735 $'
+revision='$Rev: 42779 $'
 version=`set - ${revision}; echo ${2}`
 version="R add-on package installer ${version}
 
 Copyright (C) 2000-2007 The R Core Development Team.
-This is free software; see the GNU General Public Licence version 2
+This is free software; see the GNU General Public License version 2
 or later for copying conditions.  There is NO warranty."
 
 usage="Usage: R CMD INSTALL [options] pkgs
@@ -32,7 +32,8 @@ Options:
 			(if any)
       --configure-vars=VARS
                         set variables for the configure script (if any)
-  -c, --clean		remove all files created during installation
+  -c, --clean		remove files created during installation
+      --preclean	remove files created during a previous run
   -d, --debug		turn on shell and build-help debugging
   -l, --library=LIB	install packages to library tree LIB
       --no-configure    do not use the package's configure script
@@ -130,16 +131,32 @@ get_packages () {
   ## get the full path names to all packages contained in $1.
   ## NOTE: modifies pkgs!
   if grep "^Contains:" "${1}/DESCRIPTION" >/dev/null; then
-    bundlepkg=`get_dcf_field Contains "${1}/DESCRIPTION"`
-    for p in ${bundlepkg}; do
-      pkgs="${pkgs} \"`cd "${1}/${p}" && ${GETWD}`\""
-      if test -f "${1}/${p}/DESCRIPTION.in"; then
-        ## Try being defensive about missing final newlines, or extra
-	## empty lines.
-        (cat "${1}/${p}/DESCRIPTION.in" "${1}/DESCRIPTION"
-	 echo) | tr '\r' ' ' | ${SED} '/^ *$/d' > "${1}/${p}/DESCRIPTION"
+    contains=`get_dcf_field Contains "${1}/DESCRIPTION"`
+    ## Be careful whether package listed in the Contains field really
+    ## "exist".  Refrain from installing the bundle in case of an entry
+    ## without corresponding package subdirectory, but be nice in case
+    ## of a subdirectorues without DESCRIPTION.in files (handled by the
+    ## R code).
+    bundle_name=`get_dcf_field Bundle "${1}/DESCRIPTION"`
+    bundle_pkgs=
+    for p in ${contains}; do
+      if test -d "${1}/${p}"; then
+	bundle_pkgs="${bundle_pkgs} \"`cd "${1}/${p}" && ${GETWD}`\""
+      else
+        warning "incorrect Contains metadata for bundle '${bundle_name}': there is no package '${p}'"
+	warning "skipping installation of bundle '${bundle_name}'"
+	bundle_pkgs=
+	break
       fi
     done
+    if test -n "${bundle_pkgs}"; then
+      ## Create the package level DESCRIPTION files from the bundle
+      ## level DESCRIPTION and the package level DESCRIPTION.in ones.
+      echo "tools:::.vcreate_bundle_package_descriptions(\"${1}\", \"${contains}\")" | \
+        R_DEFAULT_PACKAGES=NULL LC_ALL=C "${R_EXE}" --vanilla >/dev/null
+      ## Should really check on the exit status ...
+      pkgs="${pkgs} ${bundle_pkgs}"
+    fi
   else
     pkgs="${pkgs} \"`cd "${1}" && ${GETWD}`\""
   fi
@@ -179,6 +196,7 @@ do_cleanup_tmpdir () {
 pkgs=
 lib=
 clean=false
+preclean=false
 debug=false
 build_text=true
 build_html=true
@@ -193,13 +211,13 @@ configure_args=
 configure_vars=
 with_package_versions=false
 save=false
-save_args=
 fake=false
 lazy="auto"
 lazy_data=false
 lock=true
 libs_only=false
 tar_up=false
+shargs=
 
 while test -n "${1}"; do
   ##DBG echo "   in 'R INSTALL' --arg checking-- \$1 = '${1}'" # Debugging
@@ -209,7 +227,13 @@ while test -n "${1}"; do
     -v|--version)
       echo "${version}"; do_cleanup_tmpdir; exit 0 ;;
     -c|--clean)
-      clean=true ;;
+      clean=true
+      shargs="${shargs} ${1}"
+      ;;
+    --preclean)
+      preclean=true 
+      shargs="${shargs} --preclean"
+      ;;
     -d|--debug)
       debug=true ;;
     --with-package-versions)
@@ -298,7 +322,7 @@ done
 lib=`tilde_expand "${lib}"`
 if test -z "${lib}"; then
   lib=`echo "cat('\n~~~', .libPaths()[1], '\n', sep = '')" | \
-    R_DEFAULT_PACKAGES=NULL "${R_EXE}" --no-save --slave | \
+    R_DEFAULT_PACKAGES=NULL "${R_EXE}" --no-restore --slave | \
     grep '^~~~' | sed 's/.*~~~//'`
   message "Installing to library '$lib'"
   ## $lib gets checked later.
@@ -335,7 +359,7 @@ else
 fi
 
 if ${debug} ; then
-  echo "'Rcmd INSTALL': in startdir= $startdir with tmpdir= $tmpdir"
+  echo "'R CMD INSTALL': in startdir= $startdir with tmpdir= $tmpdir"
   echo "   lib= '$lib', pkgs= '$pkgs'"
 fi
 
@@ -467,6 +491,9 @@ do_install_source () {
   Type=`get_dcf_field Type DESCRIPTION`
   if test "$Type" = "Frontend" ; then
     message "Installing *Frontend* package '${pkg_name}' ..."
+    if ${preclean}; then
+      ${MAKE} clean
+    fi
     if ${use_configure} && test -x ./configure ; then
       eval ${configure_vars} ./configure ${configure_args}
       if test ${?} -ne 0; then
@@ -536,6 +563,22 @@ do_install_source () {
     fi
   fi
 
+  if ${preclean}; then
+    if test -d src; then
+      cd src
+      if test -f Makefile; then
+        ${MAKE} clean
+      else
+	## we will be using SHLIB --preclean
+        rm -f *@SHLIB_EXT@
+      fi
+      cd ..
+    fi
+    if test -x ./cleanup ; then
+      ./cleanup
+    fi
+  fi
+
   if ${use_configure} && test -x ./configure ; then
     eval ${configure_vars} ./configure ${configure_args}
     if test ${?} -ne 0; then
@@ -546,7 +589,7 @@ do_install_source () {
 
 
   if ${more_than_libs}; then
-    for f in COPYING NAMESPACE; do
+    for f in NAMESPACE LICENSE LICENCE COPYING; do
       if test -f "${f}"; then
 	cp "${f}" "${R_PACKAGE_DIR}"
 	chmod 644 "${R_PACKAGE_DIR}/${f}"
@@ -562,6 +605,9 @@ do_install_source () {
     fi
   fi
 
+  ## changed in 2.6.0
+  # system_makefile = "${R_SHARE_DIR}/make/shlib.mk"
+  system_makefile="${R_HOME}/etc${R_ARCH}/Makeconf"
   if test -d src && test "${fake}" != "true"; then
     message "libs"
     has_error=false
@@ -574,15 +620,16 @@ do_install_source () {
       arch=`echo ${R_ARCH} | ${SED} -e 's+^/++'`
       message "arch - ${arch}"
       cd src;
-      makefiles="-f \"${R_SHARE_DIR}\"/make/shlib.mk -f Makefile"
+      makefiles="-f \"${system_makefile}\" -f Makefile"
       if test -r "${HOME}/.R/Makevars-${R_PLATFORM}"; then
 	  makefiles="${makefiles} -f \"${HOME}/.R/Makevars-${R_PLATFORM}\""
       elif test -r "${HOME}/.R/Makevars"; then
 	  makefiles="${makefiles} -f \"${HOME}/.R/Makevars\""
       fi
-      if test -r Makevars; then
-	makefiles="-f Makevars ${makefiles}"
-      fi
+      ## removed in 2.6.0
+#      if test -r Makevars; then
+#	makefiles="-f Makevars ${makefiles}"
+#      fi
       eval ${MAKE} ${makefiles} \
 	&& cp *@SHLIB_EXT@ "${R_PACKAGE_DIR}/libs${R_ARCH}" \
         || has_error=true; \
@@ -590,9 +637,15 @@ do_install_source () {
     else
       cd src;
       srcs=`ls *.[cfmCM] *.cc *.cpp *.f90 *.f95 *.mm 2>/dev/null`
+      ## This allows Makevars to set OBJECTS or its own targets.
+      if test -r Makevars; then
+	allfiles="Makevars ${srcs}"
+      else
+        allfiles=${srcs}
+      fi
       archs=`(cd ${R_HOME}/bin/exec; ls)`
       R_ARCH_keep=${R_ARCH}
-      if test -n "${srcs}"; then
+      if test -n "${allfiles}"; then
 	## if there is a configure script we install only the main
 	## sub-architecture
 	if test -x ../configure; then
@@ -600,7 +653,7 @@ do_install_source () {
 	    arch=`echo ${R_ARCH} | ${SED} -e 's+^/++'`
 	    message "arch - ${arch}"
 	  fi
-	  sh "${R_HOME}/bin/SHLIB" -o "${pkg_name}@SHLIB_EXT@" ${srcs} \
+	  sh "${R_HOME}/bin/SHLIB" ${shargs} -o "${pkg_name}@SHLIB_EXT@" ${srcs} \
 	    && cp *@SHLIB_EXT@ "${R_PACKAGE_DIR}/libs${R_ARCH}" \
 	    || has_error=true;
 	  chmod 755 "${R_PACKAGE_DIR}/libs${R_ARCH}/"*
@@ -610,7 +663,7 @@ do_install_source () {
 	    if test "${arch}" = "R"; then
 	      R_ARCH=${R_ARCH_keep}
 	      export R_ARCH
-	      sh "${R_HOME}/bin/SHLIB" -o "${pkg_name}@SHLIB_EXT@" ${srcs} \
+	      sh "${R_HOME}/bin/SHLIB" ${shargs} -o "${pkg_name}@SHLIB_EXT@" ${srcs} \
 		&& cp *@SHLIB_EXT@ "${R_PACKAGE_DIR}/libs" \
 		|| has_error=true;
 	    elif test "${arch}" = "Rgnome"; then
@@ -620,7 +673,7 @@ do_install_source () {
 	      R_ARCH="/${arch}"
 	      export R_ARCH
 	      ${MKDIR_P} "${R_PACKAGE_DIR}/libs${R_ARCH}"
-	      sh "${R_HOME}/bin/SHLIB" -o "${pkg_name}@SHLIB_EXT@" ${srcs} \
+	      sh "${R_HOME}/bin/SHLIB" ${shargs} -o "${pkg_name}@SHLIB_EXT@" ${srcs} \
 		&& cp *@SHLIB_EXT@ "${R_PACKAGE_DIR}/libs${R_ARCH}" \
 		|| has_error=true;
 	      chmod 755 "${R_PACKAGE_DIR}/libs${R_ARCH}/"*
@@ -760,6 +813,9 @@ do_install_source () {
     R_SAVE_IMAGE=${save}
   fi
   export R_SAVE_IMAGE
+  if ${R_SAVE_IMAGE}; then
+    warning "true value of 'SaveImage' is deprecated in favour of 'LazyLoad: true'"
+  fi
 
   if ${R_SAVE_IMAGE}; then
     message "save image"
@@ -787,7 +843,7 @@ do_install_source () {
     (echo "options(save.image.defaults=${save_image_defaults})"; \
       echo "invisible(.libPaths(c(\"${lib}\", .libPaths()))); .getRequiredPackages()"; \
       ${code_cmd}) | \
-        R_DEFAULT_PACKAGES= LC_ALL=C "${R_EXE}" ${R_save_args} ${save_args}
+        R_DEFAULT_PACKAGES= LC_ALL=C "${R_EXE}" ${R_save_args}
     if test ${?} -ne 0; then
       error "execution of package source for '${pkg_name}' failed"
       do_exit_on_error
@@ -912,8 +968,8 @@ do_install_source () {
       if test -f Makefile; then
         ${MAKE} clean
       else
-        rm -rf .libs _libs
-        rm -f *.o *@SHLIB_EXT@
+	## we used SHLIB --clean
+        rm -f *@SHLIB_EXT@
       fi
       cd ..
     fi
@@ -968,27 +1024,10 @@ do_install () {
   export R_PACKAGE_DIR
   export R_PACKAGE_NAME
 
-  depends=`get_dcf_field Depends DESCRIPTION`
-  depends=`echo "${depends}" | grep 'R *('`
-  if test "${depends}"; then
-    depends=`echo "${depends}" | ${SED} 's/.*R *(\([^)]*\)).*/\1/;s/=/= /'`
-    dep_operator=`set - ${depends}; echo ${1}`
-    dep_version=`set - ${depends}; echo ${2}`
-    ## Currently, only operators '<=' and '>=' are supported.  Hence we
-    ## check this, and also whether we found a version string.
-    ## <FIXME> This thinks 1.9.1 > 1.10.0 </FIXME>
-    if (test "${dep_operator}" = "<=" \
-           || test "${dep_operator}" = ">=") \
-         && test -n "${dep_version}"; then
-      dep_ok=`expr ${R_VERSION} ${dep_operator} ${dep_version} `
-      if test ${dep_ok} -eq 0; then
-        error "This R is version ${R_VERSION}"
-        echo "       package '${pkg_name}' needs R ${dep_operator} ${dep_version}" >&2
-        do_exit_on_error
-      fi
-    else
-      warning "malformed 'Depends' field in 'DESCRIPTION'"
-    fi
+  echo "options(warn=1); tools:::.test_package_depends_R_version()" | \
+    R_DEFAULT_PACKAGES=NULL LC_ALL=C "${R_EXE}" --vanilla --slave
+  if test ${?} -ne 0; then
+    do_exit_on_error
   fi
 
   ${MKDIR_P} "${R_PACKAGE_DIR}" || do_exit_on_error no
@@ -1087,7 +1126,7 @@ do_cleanup () {
 ### 
 ### Main loop.
 if ${debug} ; then
-    echo "'Rcmd INSTALL': now doing 'eval ... do_install':"
+    echo "'R CMD INSTALL': now doing 'eval ... do_install':"
 fi
 eval "for pkg in ${pkgs}; do do_install \"\${pkg}\"; done"
 do_cleanup

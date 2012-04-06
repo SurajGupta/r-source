@@ -1,3 +1,8 @@
+% File src/library/stats/man/spectrum.Rd
+% Part of the R package, http://www.R-project.org
+% Copyright 1995-2007 R Core Development Team
+% Distributed under GPL 2 or later
+
 \name{spectrum}
 \alias{spectrum}
 \alias{spec}
@@ -86,6 +91,8 @@ spectrum(x, \dots, method = c("pgram", "ar"))
   \code{\link{plot.spec}}.
 }
 \examples{
+require(graphics)
+
 ## Examples from Venables & Ripley
 ## spec.pgram
 par(mfrow=c(2,2))

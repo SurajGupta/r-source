@@ -1,3 +1,8 @@
+% File src/library/methods/man/validObject.Rd
+% Part of the R package, http://www.R-project.org
+% Copyright 1995-2007 R Core Development Team
+% Distributed under GPL 2 or later
+
 \name{validObject}
 \alias{validObject}
 \alias{setValidity}
@@ -49,10 +54,10 @@ setValidity(Class, method, where = topenv(parent.frame()) )
   should \emph{not} call \code{validObject}.
 }
 \details{
-  Validity testing takes place \dQuote{bottom up}: Optionally, if
+  Validity testing takes place \sQuote{bottom up}: Optionally, if
   \code{complete=TRUE}, the validity of the object's slots, if any, is
   tested.  Then, in all cases, for each of the classes that this class
-  extends (the \dQuote{superclasses}), the explicit validity method of
+  extends (the \sQuote{superclasses}), the explicit validity method of
   that class is called, if one exists.  Finally, the validity method of
   \code{object}'s class is called, if there is one.
 
@@ -93,7 +98,7 @@ setValidity(Class, method, where = topenv(parent.frame()) )
 \examples{
 setClass("track",
           representation(x="numeric", y = "numeric"))
-t1 <- new("track", x=1:10, y=sort(rnorm(10)))
+t1 <- new("track", x=1:10, y=sort(stats::rnorm(10)))
 ## A valid "track" object has the same number of x, y values
 validTrackObject <- function(object) {
     if(length(object@x) == length(object@y)) TRUE

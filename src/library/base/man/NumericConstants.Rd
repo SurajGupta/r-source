@@ -1,3 +1,8 @@
+% File src/library/base/man/NumericConstants.Rd
+% Part of the R package, http://www.R-project.org
+% Copyright 1995-2007 R Core Development Team
+% Distributed under GPL 2 or later
+
 \name{NumericConstants}
 \alias{NumericConstants}
 \title{Numeric Constants}
@@ -46,7 +51,7 @@
 2.1
 typeof(2)
 sqrt(1i) # remember elementary math?
-str(0xA0)
+utils::str(0xA0)
 identical(1L, as.integer(1))
 
 ## You can combine the "0x" prefix with the "L" suffix :

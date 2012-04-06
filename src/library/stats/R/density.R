@@ -1,3 +1,19 @@
+#  File src/library/stats/R/density.R
+#  Part of the R package, http://www.R-project.org
+#
+#  This program is free software; you can redistribute it and/or modify
+#  it under the terms of the GNU General Public License as published by
+#  the Free Software Foundation; either version 2 of the License, or
+#  (at your option) any later version.
+#
+#  This program is distributed in the hope that it will be useful,
+#  but WITHOUT ANY WARRANTY; without even the implied warranty of
+#  MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
+#  GNU General Public License for more details.
+#
+#  A copy of the GNU General Public License is available at
+#  http://www.r-project.org/Licenses/
+
 density <- function(x, ...) UseMethod("density")
 
 density.default <-
@@ -118,8 +134,8 @@ density.default <-
 	    xhi = as.double(up),
 	    y = double(2 * n),
 	    ny = as.integer(n),
-            PACKAGE = "base" )$y * totMass
-    kords <- seq(0, 2*(up-lo), length = 2 * n)
+            PACKAGE = "stats" )$y * totMass
+    kords <- seq.int(0, 2*(up-lo), length.out = 2 * n)
     kords[(n + 2):(2 * n)] <- -kords[n:2]
     kords <- switch(kernel,
 		    gaussian = dnorm(kords, sd = bw),
@@ -144,11 +160,11 @@ density.default <-
                         a <- bw/sqrt(1-8/pi^2)
                         ifelse(abs(kords) < a, pi/4*cos(pi*kords/(2*a))/a, 0)}
                     )
-    kords <- fft( fft(y)* Conj(fft(kords)), inv=TRUE)
+    kords <- fft( fft(y)* Conj(fft(kords)), inverse=TRUE)
     kords <- pmax.int(0, Re(kords)[1:n]/length(y))
-    xords <- seq(lo, up, length = n)
+    xords <- seq.int(lo, up, length.out = n)
 #    keep <- (xords >= from) & (xords <= to)
-    x <- seq(from, to, length = n.user)
+    x <- seq.int(from, to, length.out = n.user)
     structure(list(x = x, y = approx(xords, kords, x)$y, bw = bw, n = N,
 		   call=match.call(), data.name=name, has.na = FALSE),
 	      class="density")

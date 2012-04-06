@@ -1,3 +1,8 @@
+% File src/library/stats/man/ts.plot.Rd
+% Part of the R package, http://www.R-project.org
+% Copyright 1995-2007 R Core Development Team
+% Distributed under GPL 2 or later
+
 \name{ts.plot}
 \alias{ts.plot}
 \title{Plot Multiple Time Series}
@@ -26,6 +31,8 @@ ts.plot(\dots, gpars = list())
 \seealso{\code{\link{plot.ts}}}
 
 \examples{
+require(graphics)
+
 ts.plot(ldeaths, mdeaths, fdeaths,
         gpars=list(xlab="year", ylab="deaths", lty=c(1:3)))
 }

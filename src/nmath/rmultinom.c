@@ -1,6 +1,6 @@
 /*
  *  Mathlib : A C Library of Special Functions
- *  Copyright (C) 2003-2006     The R Foundation
+ *  Copyright (C) 2003-2007     The R Foundation
  *
  *  This program is free software; you can redistribute it and/or modify
  *  it under the terms of the GNU General Public License as published by
@@ -12,10 +12,9 @@
  *  MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
  *  GNU General Public License for more details.
  *
- *  A copy of the GNU General Public License is available via WWW at
- *  http://www.gnu.org/copyleft/gpl.html.  You can also obtain it by
- *  writing to the Free Software Foundation, Inc.,
- *  51 Franklin Street, Fifth Floor, Boston, MA 02110-1301  USA.
+ *  You should have received a copy of the GNU General Public License
+ *  along with this program; if not, a copy is available at
+ *  http://www.r-project.org/Licenses/
  *
  *
  *  SYNOPSIS
@@ -51,7 +50,12 @@ void rmultinom(int n, double* prob, int K, int* rN)
  */
 {
     int k;
-    double pp, p_tot = 0.;
+    double pp;
+    LDOUBLE p_tot = 0.;
+    /* This calculation is sensitive to exact values, so we try to
+       ensure that the calculations are as accurate as possible
+       so different platforms are more likely to give the same
+       result. */
 
 #ifdef MATHLIB_STANDALONE
     if (K < 1) { ML_ERROR(ME_DOMAIN, "rmultinom"); return;}
@@ -72,7 +76,7 @@ void rmultinom(int n, double* prob, int K, int* rN)
     }
     if(fabs(p_tot - 1.) > 1e-7)
 	MATHLIB_ERROR(_("rbinom: probability sum should be 1, but is %g"), 
-		      p_tot);
+		      (double) p_tot);
     if (n == 0) return;
     if (K == 1 && p_tot == 0.) return;/* trivial border case: do as rbinom */
 
@@ -81,6 +85,7 @@ void rmultinom(int n, double* prob, int K, int* rN)
     for(k = 0; k < K-1; k++) { /* (p_tot, n) are for "remaining binomial" */
 	if(prob[k]) {
 	    pp = prob[k] / p_tot;
+	    /* printf("[%d] %.17f\n", k+1, pp); */
 	    rN[k] = ((pp < 1.) ? (int) rbinom((double) n,  pp) :
 		     /*>= 1; > 1 happens because of rounding */
 		     n);

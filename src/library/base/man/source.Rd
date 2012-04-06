@@ -1,3 +1,8 @@
+% File src/library/base/man/source.Rd
+% Part of the R package, http://www.R-project.org
+% Copyright 1995-2007 R Core Development Team
+% Distributed under GPL 2 or later
+
 \name{source}
 \title{Read R Code from a File or a Connection}
 \usage{
@@ -27,12 +32,12 @@ source(file, local = FALSE, echo = verbose, print.eval = echo,
   \item{prompt.echo}{character; gives the prompt to be used if
     \code{echo = TRUE}.}
   \item{max.deparse.length}{integer; is used only if \code{echo} is
-    \code{TRUE} and gives the maximal length of the \dQuote{echo} of a
+    \code{TRUE} and gives the maximal length of the printout of a
     single expression.}
   \item{chdir}{logical; if \code{TRUE} and \code{file} is a pathname,
     the \R working directory is temporarily changed to the directory
     containing \code{file} for evaluating.}
-  \item{encoding}{character string.  The encoding to be assumed when
+  \item{encoding}{character vector.  The encoding(x) to be assumed when
     \code{file} is a character string: see \code{\link{file}}.  A
     possible value is \code{"unknown"}: see the Details.}
   \item{continue.echo}{character; gives the prompt to use on
@@ -62,7 +67,7 @@ source(file, local = FALSE, echo = verbose, print.eval = echo,
   This paragraph applies if \code{file} is a filename (rather than a
   connection).  If \code{encoding = "unknown"}, an attempt is made to
   guess the encoding.  The result of \code{\link{localeToCharset}()} is
-  used a guide.  If \code{encoding} has two or more elements, they are
+  used as a guide.  If \code{encoding} has two or more elements, they are
   tried in turn until the file/URL can be read without error in the
   trial encoding.
 

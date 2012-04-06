@@ -1,3 +1,8 @@
+% File src/library/stats/man/model.frame.Rd
+% Part of the R package, http://www.R-project.org
+% Copyright 1995-2007 R Core Development Team
+% Distributed under GPL 2 or later
+
 \name{model.frame}
 \alias{model.frame}
 \alias{model.frame.default}
@@ -38,7 +43,7 @@ get_all_vars(formula, data, \dots)
   \item{na.action}{how \code{NA}s are treated.  The default is first,
     any \code{na.action} attribute of \code{data}, second
     a \code{na.action} setting of \code{\link{options}}, and third
-    \code{\link{na.fail}} if that is unset.  The \dQuote{factory-fresh}
+    \code{\link{na.fail}} if that is unset.  The \sQuote{factory-fresh}
     default is \code{\link{na.omit}}.  Another possible value is \code{NULL}.}
 
   \item{drop.unused.levels}{should factors have unused levels dropped?
@@ -104,7 +109,7 @@ get_all_vars(formula, data, \dots)
   variables such as factors (whose underlying type is integer), but
   excludes lists.
 
-  \code{get_all_vars} returns a code{\link{data.frame}} containing the
+  \code{get_all_vars} returns a \code{\link{data.frame}} containing the
   variables used in \code{formula} plus those specified \code{\dots}.
   Unlike \code{model.frame.default}, it returns the input variables and
   not those resulting from function calls in \code{formula}.
@@ -113,7 +118,7 @@ get_all_vars(formula, data, \dots)
   A \code{\link{data.frame}} containing the variables used in
   \code{formula} plus those specified \code{\dots}.
 }
-\seealso{\code{\link{model.matrix}} for the \dQuote{design matrix},
+\seealso{\code{\link{model.matrix}} for the \sQuote{design matrix},
   \code{\link{formula}} for formulas  and
   \code{\link{expand.model.frame}} for model.frame manipulation.
 }

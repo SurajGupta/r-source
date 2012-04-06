@@ -1,3 +1,8 @@
+% File src/library/base/man/data.frame.Rd
+% Part of the R package, http://www.R-project.org
+% Copyright 1995-2007 R Core Development Team
+% Distributed under GPL 2 or later
+
 \name{data.frame}
 \title{Data Frames}
 \alias{data.frame}
@@ -104,10 +109,10 @@ default.stringsAsFactors()
 }
 \examples{
 L3 <- LETTERS[1:3]
-(d <- data.frame(cbind(x=1, y=1:10), fac=sample(L3, 10, repl=TRUE)))
+(d <- data.frame(cbind(x=1, y=1:10), fac=sample(L3, 10, replace=TRUE)))
 
 ## The same with automatic column names:
-data.frame(cbind(  1,   1:10),     sample(L3, 10, repl=TRUE))
+data.frame(cbind(  1,   1:10),     sample(L3, 10, replace=TRUE))
 
 is.data.frame(d)
 

@@ -1,3 +1,8 @@
+% File src/library/stats/man/smooth.spline.Rd
+% Part of the R package, http://www.R-project.org
+% Copyright 1995-2007 R Core Development Team
+% Distributed under GPL 2 or later
+
 \name{smooth.spline}
 \alias{smooth.spline}
 %\alias{print.smooth.spline}% is not exported
@@ -25,7 +30,7 @@ smooth.spline(x, y = NULL, w = NULL, df, spar = NULL,
    squared second derivative in the fit (penalized log likelihood)
    criterion is a monotone function of \code{spar}, see the details
    below.}
- \item{cv}{ordinary (\code{TRUE}) or \dQuote{generalized} cross-validation
+ \item{cv}{ordinary (\code{TRUE}) or \sQuote{generalized} cross-validation
    (GCV) when \code{FALSE}.}
  \item{all.knots}{if \code{TRUE}, all distinct points in \code{x} are used as
    knots.  If \code{FALSE} (default), a subset of \code{x[]} is used,
@@ -66,7 +71,7 @@ smooth.spline(x, y = NULL, w = NULL, df, spar = NULL,
 }
 \details{
   The \code{x} vector should contain at least four distinct values.
-  \emph{Distinct} here means \dQuote{distinct after rounding to 6 significant
+  \emph{Distinct} here means \sQuote{distinct after rounding to 6 significant
   digits}, i.e., \code{x} will be transformed to
   \code{unique(sort(signif(x, 6)))}, and \code{y} and \code{w} are
   pooled accordingly.
@@ -93,7 +98,7 @@ smooth.spline(x, y = NULL, w = NULL, df, spar = NULL,
 
   If \code{spar} is missing or \code{NULL}, the value of \code{df} is used to
   determine the degree of smoothing.  If both are missing, leave-one-out
-  cross-validation (ordinary or \dQuote{generalized} as determined by
+  cross-validation (ordinary or \sQuote{generalized} as determined by
   \code{cv}) is used to determine \eqn{\lambda}.
   Note that from the above relation,
 %%  lam      = r * 256^(3s - 1)
@@ -116,7 +121,7 @@ smooth.spline(x, y = NULL, w = NULL, df, spar = NULL,
   \code{spar} or the controls \code{low} and \code{high} outside such a
   safe range, unless you know what you are doing!
 
-  The \dQuote{generalized} cross-validation method will work correctly when
+  The \sQuote{generalized} cross-validation method will work correctly when
   there are duplicated points in \code{x}.  However, it is ambiguous what
   leave-one-out cross-validation means with duplicated points, and the
   internal code uses an approximation that involves leaving out groups
@@ -148,7 +153,7 @@ smooth.spline(x, y = NULL, w = NULL, df, spar = NULL,
     hence be longer than the above \code{x} component; see details.
     }
   \item{lev}{leverages, the diagonal values of the smoother matrix.}
-  \item{cv.crit}{cross-validation score, \dQuote{generalized} or true, depending
+  \item{cv.crit}{cross-validation score, \sQuote{generalized} or true, depending
     on \code{cv}.}
   \item{pen.crit}{penalized criterion}
   \item{crit}{the criterion value minimized in the underlying
@@ -167,7 +172,7 @@ smooth.spline(x, y = NULL, w = NULL, df, spar = NULL,
     \describe{
       \item{knot:}{the knot sequence (including the repeated boundary
 	knots).}
-      \item{nk:}{number of coefficients or number of \dQuote{proper}
+      \item{nk:}{number of coefficients or number of \sQuote{proper}
 	knots plus 2.}
       \item{coef:}{coefficients for the spline basis used.}
       \item{min, range:}{numbers giving the corresponding quantities of
@@ -201,6 +206,8 @@ smooth.spline(x, y = NULL, w = NULL, df, spar = NULL,
   and its derivatives.
 }
 \examples{
+require(graphics)
+
 attach(cars)
 plot(speed, dist, main = "data(cars)  &  smoothing splines")
 cars.spl <- smooth.spline(speed, dist)
@@ -208,7 +215,7 @@ cars.spl <- smooth.spline(speed, dist)
 ## This example has duplicate points, so avoid cv=TRUE
 \dontshow{
   stopifnot(cars.spl $ w == table(speed)) # weights = multiplicities
-  str(cars.spl, digits=5, vec.len=6)
+  utils::str(cars.spl, digits=5, vec.len=6)
   cars.spl$fit
 }
 lines(cars.spl, col = "blue")
@@ -237,21 +244,21 @@ lines(s2, col = "gray"); lines(predict(s2, xx), col = 2)
 lines(predict(s02, xx), col = 3); mtext(deparse(s02$call), col = 3)
 
 ## The following shows the problematic behavior of 'spar' searching:
-(s2  <- smooth.spline(y18, con = list(trace=TRUE,tol=1e-6, low= -1.5)))
+(s2  <- smooth.spline(y18, control = list(trace=TRUE,tol=1e-6, low= -1.5)))
 (s2m <- smooth.spline(y18, cv = TRUE,
-                      con = list(trace=TRUE,tol=1e-6, low= -1.5)))
+                      control = list(trace=TRUE,tol=1e-6, low= -1.5)))
 ## both above do quite similarly (Df = 8.5 +- 0.2)
 
 \dontshow{
 % not for the user
   s2. <- smooth.spline(y18, cv=TRUE,
-                       con=list(trace=TRUE, tol=1e-6,low= -3,maxit=20))
+                       control=list(trace=TRUE, tol=1e-6,low= -3,maxit=20))
   s2. ## Intel-Linux: Df ~= (even! > ) 18 : interpolating -- much smaller PRESS
      ## {others, e.g., may end quite differently!}
   lines(predict(s2., xx), col = 4)
   mtext(deparse(s2.$call,200), side= 1, line= -1, cex= 0.8, col= 4)
 
-  sdf8 <- smooth.spline(y18, df = 8, con=list(trace=TRUE))
+  sdf8 <- smooth.spline(y18, df = 8, control=list(trace=TRUE))
   sdf8 ; sdf8$df - 8
 
   try(smooth.spline(y18, spar = 50)) #>> error : spar 'way too large'

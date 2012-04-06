@@ -1,3 +1,19 @@
+#  File src/library/stats/R/spectrum.R
+#  Part of the R package, http://www.R-project.org
+#
+#  This program is free software; you can redistribute it and/or modify
+#  it under the terms of the GNU General Public License as published by
+#  the Free Software Foundation; either version 2 of the License, or
+#  (at your option) any later version.
+#
+#  This program is distributed in the hope that it will be useful,
+#  but WITHOUT ANY WARRANTY; without even the implied warranty of
+#  MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
+#  GNU General Public License for more details.
+#
+#  A copy of the GNU General Public License is available at
+#  http://www.r-project.org/Licenses/
+
 ## based on code by Martyn Plummer, plus kernel code by Adrian Trapletti
 spectrum<- function (x, ..., method = c("pgram", "ar"))
 {
@@ -23,7 +39,7 @@ spec.taper <- function (x, p = 0.1)
     for (i in 1:nc) {
         m <- floor(nr * p[i])
         if(m == 0) next
-        w <- 0.5 * (1 - cos(pi * seq(1, 2 * m - 1, by = 2)/(2 * m)))
+        w <- 0.5 * (1 - cos(pi * seq.int(1, 2 * m - 1, by = 2)/(2 * m)))
         x[, i] <- c(w, rep(1, nr - 2 * m), rev(w)) * x[, i]
     }
     attributes(x) <- a
@@ -50,7 +66,7 @@ spec.ar <- function(x, n.freq, order = NULL, plot = TRUE,
     }
     order <- x$order
     if(missing(n.freq)) n.freq <- 500
-    freq <- seq(0, 0.5, length = n.freq)
+    freq <- seq.int(0, 0.5, length.out = n.freq)
     if (nser == 1) {
         coh <- phase <- NULL
         if(order >= 1) {
@@ -98,7 +114,7 @@ spec.pgram <-
             x[, i] <- x[, i] - mean(x[, i]) - sum(x[, i] * t) * t/sumt2
     }
     else if (demean) {
-        x <- sweep(x, 2, colMeans(x))
+	x <- sweep(x, 2, colMeans(x), check.margin=FALSE)
     }
     ## apply taper:
     x <- spec.taper(x, taper)
@@ -114,7 +130,7 @@ spec.pgram <-
     x <- rbind(x, matrix(0, nrow = (NewN - N), ncol = ncol(x)))
     N <- nrow(x)
     Nspec <- floor(N/2)
-    freq <- seq(from = xfreq/N, by = xfreq/N, length = Nspec)
+    freq <- seq.int(from = xfreq/N, by = xfreq/N, length.out = Nspec)
     xfft <- mvfft(x)
     pgram <- array(NA, dim = c(N, ncol(x), ncol(x)))
     for (i in 1:ncol(x)) {

@@ -1,9 +1,14 @@
+% File src/library/stats/man/runmed.Rd
+% Part of the R package, http://www.R-project.org
+% Copyright 1995-2007 R Core Development Team
+% Distributed under GPL 2 or later
+
 \name{runmed}
 \title{Running Medians -- Robust Scatter Plot Smoothing}
 \alias{runmed}
 \encoding{latin1}
 \description{
-  Compute running medians of odd span.  This is the \dQuote{most robust}
+  Compute running medians of odd span.  This is the \sQuote{most robust}
   scatter plot smoothing possible.  For efficiency (and historical
   reason), you can use one of two different algorithms giving identical
   results.
@@ -13,11 +18,11 @@ runmed(x, k, endrule = c("median", "keep", "constant"),
        algorithm = NULL, print.level = 0)
 }
 \arguments{
-  \item{x}{numeric vector, the \dQuote{dependent} variable to be
+  \item{x}{numeric vector, the \sQuote{dependent} variable to be
     smoothed.}
   \item{k}{integer width of median window; must be odd.  Turlach had a
     default of \code{k <- 1 + 2 * min((n-1)\%/\% 2, ceiling(0.1*n))}.
-    Use \code{k = 3} for \dQuote{minimal} robust smoothing eliminating
+    Use \code{k = 3} for \sQuote{minimal} robust smoothing eliminating
     isolated outliers.}
   \item{endrule}{character string indicating how the values at the
     beginning and the end (of the data) should be treated.
@@ -90,7 +95,9 @@ runmed(x, k, endrule = c("median", "keep", "constant"),
   medians of 3 for its compound smoothers.
 }
 \examples{
-example(nhtemp)
+require(graphics)
+
+utils::example(nhtemp)
 myNHT <- as.vector(nhtemp)
 myNHT[20] <- 2 * nhtemp[20]
 plot(myNHT, type="b", ylim = c(48,60), main = "Running Medians Example")

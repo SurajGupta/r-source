@@ -13,8 +13,8 @@
  *  GNU General Public License for more details.
  *
  *  You should have received a copy of the GNU General Public License
- *  along with this program; if not, write to the Free Software
- *  Foundation, Inc., 51 Franklin Street, Fifth Floor, Boston, MA 02110-1301  USA
+ *  along with this program; if not, a copy is available at
+ *  http://www.r-project.org/Licenses/
  */
 
 /* <UTF8> OK, provided the delimiters are ASCII
@@ -25,6 +25,7 @@
 #include "tools.h"
 
 #ifdef SUPPORT_MBCS
+#include <stdlib.h> /* for MB_CUR_MAX */
 #include <wchar.h>
 LibExtern Rboolean mbcslocale;
 size_t Rf_mbrtowc(wchar_t *wc, const char *s, size_t n, mbstate_t *ps);
@@ -54,7 +55,8 @@ delim_match(SEXP x, SEXP delims)
       Nevertheless, this is already useful for parsing Rd.
     */
 
-    char c, *s, *s0, *delim_start, *delim_end;
+    char c;
+    const char *s, *s0, *delim_start, *delim_end;
     Sint n, i, pos, start, end, delim_depth;
     int lstart, lend;
     Rboolean is_escaped, equal_start_and_end_delims;
@@ -154,7 +156,8 @@ check_nonASCII(SEXP text, SEXP ignore_quotes)
        in UTF-8.
     */
     int i, nbslash = 0; /* number of preceding backslashes */
-    char *p, quote= '\0';
+    const char *p;
+    char quote= '\0';
     Rboolean ign, inquote = FALSE;
 
     if(TYPEOF(text) != STRSXP) error("invalid input");

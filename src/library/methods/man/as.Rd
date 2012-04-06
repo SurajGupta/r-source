@@ -1,3 +1,8 @@
+% File src/library/methods/man/as.Rd
+% Part of the R package, http://www.R-project.org
+% Copyright 1995-2007 R Core Development Team
+% Distributed under GPL 2 or later
+
 \name{as}
 \alias{as}
 \alias{as<-}
@@ -140,7 +145,7 @@ setAs(from, to, def, replace, where = topenv(parent.frame()))
   As a first step in conversion, the \code{as} function determines
   whether \code{is(object, Class)} is \code{TRUE}.  This can be the case
   either because the class definition of \code{object} includes
-  \code{Class} as a \dQuote{super class} (directly or indirectly), or because
+  \code{Class} as a \sQuote{super class} (directly or indirectly), or because
   a call to \code{\link{setIs}} established the relationship.
 
   Either way, the inheritance relation defines a method to coerce
@@ -198,7 +203,7 @@ setAs(from, to, def, replace, where = topenv(parent.frame()))
 %% <FIXME>
 %% Currently Rdconv cannot deal with markup in section titles.
 %% \section{The Function \code{as} Used in Replacements}{
-\section{The Function `as' Used in Replacements}{
+\section{The Function 'as' Used in Replacements}{
   %% </FIXME>
   When \code{as} appears on the left of an assignment, the intuitive
   meaning is \dQuote{Replace the part of \code{object} that was inherited from

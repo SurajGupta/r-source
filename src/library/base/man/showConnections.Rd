@@ -1,3 +1,8 @@
+% File src/library/base/man/showConnections.Rd
+% Part of the R package, http://www.R-project.org
+% Copyright 1995-2007 R Core Development Team
+% Distributed under GPL 2 or later
+
 \name{showConnections}
 \alias{showConnections}
 \alias{getConnection}
@@ -21,7 +26,7 @@ stderr()
 }
 \arguments{
   \item{all}{logical: if true all connections, including closed ones
-    and the standard ones are displayed. If false only open user-created
+    and the standard ones are displayed.  If false only open user-created
     connections are included.}
 
   \item{what}{integer: a row number of the table given by
@@ -43,9 +48,11 @@ stderr()
   connection object has been lost or forgotten, \code{getConnection}
   will take a row number from the table and return a connection object
   for that connection, which can be used to close the connection,
-  for example.
+  for example.  However, if there is no \R level object referring to the
+  connection it will be closed automatically at the next garbage
+  collection.
 
-  \code{closeAllConnections} closes (and destroys) all open user
+  \code{closeAllConnections} closes (and destroys) all user
   connections, restoring all \code{\link{sink}} diversions as it does so.
 }
 \note{
@@ -58,7 +65,7 @@ stderr()
 
   When \R is reading a script from a file, the \emph{file} is the
   \sQuote{console}: this is traditional usage to allow in-line data (see
-  \sQuote{An Introduction to R} for an example.
+  \sQuote{An Introduction to R} for an example).
 }
 \value{
   \code{stdin()}, \code{stdout()} and \code{stderr()} return connection

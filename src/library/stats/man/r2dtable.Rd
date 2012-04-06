@@ -1,3 +1,8 @@
+% File src/library/stats/man/r2dtable.Rd
+% Part of the R package, http://www.R-project.org
+% Copyright 1995-2007 R Core Development Team
+% Distributed under GPL 2 or later
+
 \name{r2dtable}
 \alias{r2dtable}
 \title{Random 2-way Tables with Given Marginals}
@@ -31,7 +36,7 @@ r2dtable(n, r, c)
 ## Fisher's Tea Drinker data.
 TeaTasting <-
 matrix(c(3, 1, 1, 3),
-       nr = 2,
+       nrow = 2,
        dimnames = list(Guess = c("Milk", "Tea"),
                        Truth = c("Milk", "Tea")))
 ## Simulate permutation test for independence based on the maximum

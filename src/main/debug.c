@@ -14,8 +14,8 @@
  *  GNU General Public License for more details.
  *
  *  You should have received a copy of the GNU General Public License
- *  along with this program; if not, write to the Free Software
- *  Foundation, Inc., 51 Franklin Street Fifth Floor, Boston, MA 02110-1301  USA
+ *  along with this program; if not, a copy is available at
+ *  http://www.r-project.org/Licenses/
  */
 
 #ifdef HAVE_CONFIG_H
@@ -37,7 +37,7 @@ SEXP attribute_hidden do_debug(SEXP call, SEXP op, SEXP args, SEXP rho)
     find_char_fun
 
     if (TYPEOF(CAR(args)) != CLOSXP)
-	errorcall(call, _("argument must be a function"));
+	errorcall(call, _("argument must be a closure"));
     switch(PRIMVAL(op)) {
     case 0:
 	SET_DEBUG(CAR(args), 1);
@@ -80,8 +80,8 @@ static Rboolean tracing_state = TRUE;
 #define GET_TRACE_STATE tracing_state
 #define SET_TRACE_STATE(value) tracing_state = value
 
-SEXP R_traceOnOff(SEXP onOff) {
-    SEXP value;
+SEXP R_traceOnOff(SEXP onOff)
+{
     Rboolean prev = GET_TRACE_STATE;
     if(length(onOff) > 0) {
         Rboolean _new = asLogical(onOff);
@@ -90,9 +90,7 @@ SEXP R_traceOnOff(SEXP onOff) {
         else
             error("Value for tracingState must be TRUE or FALSE");
     }
-    value = allocVector(LGLSXP, 1);
-    LOGICAL(value)[0] = prev;
-    return value;
+    return ScalarLogical(prev);
 }
 
 Rboolean attribute_hidden

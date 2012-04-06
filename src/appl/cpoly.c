@@ -14,8 +14,8 @@
  *  GNU General Public License for more details.
  *
  *  You should have received a copy of the GNU General Public License
- *  along with this program; if not, write to the Free Software
- *  Foundation, Inc., 51 Franklin Street, Fifth Floor, Boston, MA 02110-1301  USA
+ *  along with this program; if not, a copy is available at
+ *  http://www.r-project.org/Licenses/
 
  *
  *	cpoly finds the zeros of a complex polynomial.
@@ -64,6 +64,12 @@
 #include <Rmath.h> /* for R_pow_di */
 #include <R_ext/Applic.h>
 
+#ifdef HAVE_VISIBILITY_ATTRIBUTE
+# define attribute_hidden __attribute__ ((visibility ("hidden")))
+#else
+# define attribute_hidden
+#endif
+
 
 #ifndef HAVE_HYPOT
 # define hypot pythag
@@ -107,6 +113,7 @@ static const double are = /* eta = */DBL_EPSILON;
 static const double mre = 2. * M_SQRT2 * /* eta, i.e. */DBL_EPSILON;
 static const double infin = DBL_MAX;
 
+attribute_hidden
 void R_cpolyroot(double *opr, double *opi, int *degree,
 		 double *zeror, double *zeroi, Rboolean *fail)
 {

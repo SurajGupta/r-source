@@ -1,3 +1,8 @@
+% File src/library/base/man/all.equal.Rd
+% Part of the R package, http://www.R-project.org
+% Copyright 1995-2007 R Core Development Team
+% Distributed under GPL 2 or later
+
 \name{all.equal}
 \title{Test if Two Objects are (Nearly) Equal}
 \alias{all.equal}
@@ -40,7 +45,7 @@ attr.all.equal(target, current,
 }
 \description{
     \code{all.equal(x,y)} is a utility to compare \R objects \code{x}
-    and \code{y} testing \dQuote{near equality}.  If they are different,
+    and \code{y} testing \sQuote{near equality}.  If they are different,
     comparison is still made to some extent, and a report of the
     differences is returned.    Don't use \code{all.equal} directly in
     \code{if} expressions---either use \code{isTRUE(all.equal(....))} or

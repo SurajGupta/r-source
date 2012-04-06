@@ -1,4 +1,8 @@
-% $Id: SSfpl.Rd,v 1.1 2003/12/11 07:16:06 ripley Exp $
+% File src/library/stats/man/SSfpl.Rd
+% Part of the R package, http://www.R-project.org
+% Copyright 1995-2007 R Core Development Team
+% Distributed under GPL 2 or later
+
 \name{SSfpl}
 \title{Four-parameter Logistic Model}
 \usage{
@@ -42,6 +46,8 @@ getInitial(weight ~ SSfpl(Time, A, B, xmid, scal), data = Chick.1)
 fm1 <- nls(weight ~ SSfpl(Time, A, B, xmid, scal), data = Chick.1)
 summary(fm1)
 \dontshow{
+require(graphics)
+
   xx <- seq(-0.5, 5, len = 101)
   yy <- 1 + 4 / ( 1 + exp((2-xx)))
   par(mar = c(0, 0, 3.5, 0))

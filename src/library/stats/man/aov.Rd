@@ -1,3 +1,8 @@
+% File src/library/stats/man/aov.Rd
+% Part of the R package, http://www.R-project.org
+% Copyright 1995-2007 R Core Development Team
+% Distributed under GPL 2 or later
+
 \name{aov}
 \alias{aov}
 \alias{print.aov}
@@ -80,7 +85,7 @@ aov(formula, data = NULL, projections = FALSE, qr = TRUE,
 }
 \examples{
 ## From Venables and Ripley (2002) p.165.
-data(npk, package="MASS")
+utils::data(npk, package="MASS")
 
 ## Set orthogonal contrasts.
 op <- options(contrasts=c("contr.helmert", "contr.poly"))

@@ -1,3 +1,8 @@
+% File src/library/datasets/man/attenu.Rd
+% Part of the R package, http://www.R-project.org
+% Copyright 1995-2007 R Core Development Team
+% Distributed under GPL 2 or later
+
 \name{attenu}
 \docType{data}
 \alias{attenu}
@@ -49,11 +54,12 @@
   Manuscript.
 }
 \examples{
+require(graphics)
 ## check the data class of the variables
 sapply(attenu, data.class)
 summary(attenu)
 pairs(attenu, main = "attenu data")
-coplot(accel ~ dist | as.factor(event), data = attenu, show = FALSE)
+coplot(accel ~ dist | as.factor(event), data = attenu, show.given = FALSE)
 coplot(log(accel) ~ log(dist) | as.factor(event),
        data = attenu, panel = panel.smooth, show.given = FALSE)
 }

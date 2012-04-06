@@ -24,7 +24,7 @@ SOURCES_C = \
 	engine.c envir.c errors.c eval.c \
 	format.c fourier.c \
 	gevents.c gram.c gram-ex.c graphics.c \
-	identical.c internet.c iosupport.c \
+	identical.c inlined.c internet.c iosupport.c \
 	lapack.c list.c localecharset.c logic.c \
 	main.c mapply.c match.c memory.c model.c \
 	names.c \
@@ -40,7 +40,7 @@ SOURCES_C = \
 SOURCES_F = \
 	xxxpr.f
 
-## If the substitutes are needed, the corresponding objects are put by
+## If the substitubtes are needed, the corresponding objects are put by
 ## configure in @LIBOBJS@ @ALLOCA@
 EXTRA_SOURCES_C = \
 	Rmain.c \
@@ -228,6 +228,9 @@ distdir: $(DISTFILES)
 	    || ln $(srcdir)/$${f} $(distdir)/$${f} 2>/dev/null \
 	    || cp -p $(srcdir)/$${f} $(distdir)/$${f}; \
 	done
+	@if test -f $(srcdir)/TAOCP1997.c ; then \
+	  cp -p $(srcdir)/TAOCP1997.c $(distdir)/TAOCP1997.c; \
+	fi
 
 ## Automagically generated dependencies:
 

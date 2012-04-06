@@ -1,3 +1,8 @@
+% File src/library/stats/man/bandwidth.Rd
+% Part of the R package, http://www.R-project.org
+% Copyright 1995-2007 R Core Development Team
+% Distributed under GPL 2 or later
+
 \name{bandwidth}
 \alias{bw.nrd0}
 \alias{bw.nrd}
@@ -37,7 +42,7 @@ bw.SJ(x, nb = 1000, lower = 0.1 * hmax, upper = hmax,
   It defaults to 0.9 times the
   minimum of the standard deviation and the interquartile range divided by
   1.34 times the sample size to the negative one-fifth power
-  (= Silverman's \dQuote{rule of thumb}, Silverman (1986, page 48, eqn (3.31))
+  (= Silverman's \sQuote{rule of thumb}, Silverman (1986, page 48, eqn (3.31))
   \emph{unless} the quartiles coincide when a positive result
   will be guaranteed.
 
@@ -86,6 +91,8 @@ bw.SJ(x, nb = 1000, lower = 0.1 * hmax, upper = hmax,
   Springer.
 }
 \examples{
+require(graphics)
+
 plot(density(precip, n = 1000))
 rug(precip)
 lines(density(precip, bw="nrd"), col = 2)

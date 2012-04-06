@@ -1,3 +1,8 @@
+% File src/library/grDevices/man/Type1Font.Rd
+% Part of the R package, http://www.R-project.org
+% Copyright 1995-2007 R Core Development Team
+% Distributed under GPL 2 or later
+
 \name{Type1Font}
 \alias{Type1Font}
 \alias{CIDFont}
@@ -32,13 +37,11 @@ CIDFont(family, cmap, cmapEncoding, pdfresource = "")
 #endif
     Otherwise, a file name in the \file{enc} directory of the
     \pkg{grDevices} package, which is used if the path does not contain a
-    path separator.  An extension \code{".enc"} can be omitted.
-  }
+    path separator.  An extension \code{".enc"} can be omitted.}
   \item{cmapEncoding}{
-    The name of a charset encoding to be used with
-    the named CMap file: strings will be translated to this encoding
-    when written to the file.
-  }
+    The name of a character encoding to be used with the named CMap
+    file: strings will be translated to this encoding when written to
+    the file.}
   \item{pdfresource}{A chunk of PDF code;  only required for using
     a CID-keyed font on \code{pdf}; users should not be expected to
     provide this.}

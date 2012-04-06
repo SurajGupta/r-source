@@ -1,3 +1,8 @@
+% File src/library/stats/man/stat.anova.Rd
+% Part of the R package, http://www.R-project.org
+% Copyright 1995-2007 R Core Development Team
+% Distributed under GPL 2 or later
+
 \name{stat.anova}
 \title{GLM Anova Statistics}
 \usage{
@@ -31,10 +36,11 @@ stat.anova(table, test = c("Chisq", "F", "Cp"), scale, df.scale, n)
 \seealso{\code{\link{anova.lm}}, \code{\link{anova.glm}}.}
 \examples{
 ##-- Continued from '?glm':
-\dontshow{example("glm", echo = FALSE)}
+\dontshow{utils::example("glm", echo = FALSE)}
 print(ag <- anova(glm.D93))
 stat.anova(ag$table, test = "Cp",
-           scale = sum(resid(glm.D93, "pearson")^2)/4, df = 4, n = 9)
+           scale = sum(resid(glm.D93, "pearson")^2)/4,
+           df.scale = 4, n = 9)
 }
 \keyword{regression}
 \keyword{models}

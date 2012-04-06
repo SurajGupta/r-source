@@ -1,3 +1,8 @@
+% File src/library/graphics/man/segments.Rd
+% Part of the R package, http://www.R-project.org
+% Copyright 1995-2007 R Core Development Team
+% Distributed under GPL 2 or later
+
 \name{segments}
 \alias{segments}
 \title{Add Line Segments to a Plot}
@@ -38,7 +43,7 @@ segments(x0, y0, x1, y1,
   \code{\link{lines}} for the usual polygons.
 }
 \examples{
-x <- runif(12); y <- rnorm(12)
+x <- stats::runif(12); y <- stats::rnorm(12)
 i <- order(x,y); x <- x[i]; y <- y[i]
 plot(x, y, main="arrows(.) and segments(.)")
 ## draw arrows from point to point :

@@ -2,7 +2,7 @@ msgid ""
 msgstr ""
 "Project-Id-Version: R 2.3.0\n"
 "Report-Msgid-Bugs-To: bugs@r-project.org\n"
-"POT-Creation-Date: 2007-06-12 18:48\n"
+"POT-Creation-Date: 2007-09-19 09:18\n"
 "PO-Revision-Date: YEAR-MO-DA HO:MI+ZONE\n"
 "Last-Translator: FULL NAME <EMAIL@ADDRESS>\n"
 "Language-Team: LANGUAGE <LL@li.org>\n"
@@ -227,6 +227,9 @@ msgstr ""
 msgid "'form' must be a two-sided formula"
 msgstr ""
 
+msgid "'form' must be a two-sided formula with one term on each side"
+msgstr ""
+
 msgid "No documentation for '%s' in specified packages and libraries:"
 msgstr ""
 
@@ -443,6 +446,9 @@ msgstr ""
 msgid "no package '%s' at the repositories"
 msgstr ""
 
+msgid "package '%s' does not exist on the local repository"
+msgstr ""
+
 msgid "download of package '%s' failed"
 msgstr ""
 
@@ -656,10 +662,22 @@ msgstr ""
 msgid "first five rows are empty: giving up"
 msgstr ""
 
+msgid "relist() requires recursively unlisted objects."
+msgstr ""
+
+msgid "The flesh argument does not contain a skeleton attribute."
+msgstr ""
+
+msgid "Either ensure you unlist a relistable object, or specify the skeleton separately."
+msgstr ""
+
 msgid "cannot coerce 'x' to roman"
 msgstr ""
 
 msgid "Invalid roman numeral(s): %s"
+msgstr ""
+
+msgid "no valid packages were specified"
 msgstr ""
 
 msgid "invalid 'socket' argument"
@@ -774,6 +792,9 @@ msgid "cannot create HTML package index"
 msgstr ""
 
 msgid "cannot create HTML search index"
+msgstr ""
+
+msgid "Updating HTML index of packages in '.Library'"
 msgstr ""
 
 msgid "'memory.size()' is Windows-specific"

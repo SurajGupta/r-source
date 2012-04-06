@@ -1,3 +1,8 @@
+% File src/library/datasets/man/co2.Rd
+% Part of the R package, http://www.R-project.org
+% Copyright 1995-2007 R Core Development Team
+% Distributed under GPL 2 or later
+
 \name{co2}
 \docType{data}
 \alias{co2}
@@ -30,6 +35,7 @@
   New Jersey: Summit Press.
 }
 \examples{
+require(graphics)
 plot(co2, ylab = expression("Atmospheric concentration of CO"[2]),
      las = 1)
 title(main = "co2 data set")

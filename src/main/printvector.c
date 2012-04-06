@@ -14,8 +14,8 @@
  *  GNU General Public License for more details.
  *
  *  You should have received a copy of the GNU General Public License
- *  along with this program; if not, write to the Free Software
- *  Foundation, Inc., 51 Franklin Street Fifth Floor, Boston, MA 02110-1301  USA
+ *  along with this program; if not, a copy is available at
+ *  http://www.r-project.org/Licenses/
  *
  *  EXPORTS	printVector()
  *		printNamedVector()
@@ -311,7 +311,7 @@ static void printNamedRawVector(Rbyte * x, int n, SEXP * names)
     PRINT_N_VECTOR(formatRaw(x, n, &w),
                    Rprintf("%s%*s", EncodeRaw(x[k]), R_print.gap,""))
 
-void printNamedVector(SEXP x, SEXP names, int quote, char *title)
+void printNamedVector(SEXP x, SEXP names, int quote, const char *title)
 {
     int n;
 

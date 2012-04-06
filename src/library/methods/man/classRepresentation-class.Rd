@@ -1,3 +1,8 @@
+% File src/library/methods/man/classRepresentation-class.Rd
+% Part of the R package, http://www.R-project.org
+% Copyright 1995-2007 R Core Development Team
+% Distributed under GPL 2 or later
+
 \name{classRepresentation-class}
 \docType{class}
 \alias{classRepresentation-class}
@@ -14,7 +19,7 @@
       belong (or extend), and the names of the list gives the
       corresponding slot names.}
     \item{\code{contains}:}{A named list of the classes this class
-      \dQuote{contains}; the elements of the list are objects of
+      \sQuote{contains}; the elements of the list are objects of
       \code{\link{SClassExtension-class}}. The list may be only the
       direct extensions or all the currently known extensions (see the
       details).}

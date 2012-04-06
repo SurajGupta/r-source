@@ -1,3 +1,19 @@
+#  File src/library/stats/R/ks.test.R
+#  Part of the R package, http://www.R-project.org
+#
+#  This program is free software; you can redistribute it and/or modify
+#  it under the terms of the GNU General Public License as published by
+#  the Free Software Foundation; either version 2 of the License, or
+#  (at your option) any later version.
+#
+#  This program is distributed in the hope that it will be useful,
+#  but WITHOUT ANY WARRANTY; without even the implied warranty of
+#  MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
+#  GNU General Public License for more details.
+#
+#  A copy of the GNU General Public License is available at
+#  http://www.r-project.org/Licenses/
+
 ks.test <-
 function(x, y, ..., alternative = c("two.sided", "less", "greater"),
          exact = NULL)
@@ -8,7 +24,7 @@ function(x, y, ..., alternative = c("two.sided", "less", "greater"),
         ## statistics, based on the formula of Birnbaum & Tingey (1951).
         if(x <= 0) return(0)
         if(x >= 1) return(1)
-        j <- seq(from = 0, to = floor(n * (1 - x)))
+        j <- seq.int(from = 0, to = floor(n * (1 - x)))
         1 - x * sum(exp(lchoose(n, j)
                         + (n - j) * log(1 - x - j / n)
                         + (j - 1) * log(x + j / n)))

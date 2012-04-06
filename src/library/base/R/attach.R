@@ -1,3 +1,19 @@
+#  File src/library/base/R/attach.R
+#  Part of the R package, http://www.R-project.org
+#
+#  This program is free software; you can redistribute it and/or modify
+#  it under the terms of the GNU General Public License as published by
+#  the Free Software Foundation; either version 2 of the License, or
+#  (at your option) any later version.
+#
+#  This program is distributed in the hope that it will be useful,
+#  but WITHOUT ANY WARRANTY; without even the implied warranty of
+#  MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
+#  GNU General Public License for more details.
+#
+#  A copy of the GNU General Public License is available at
+#  http://www.r-project.org/Licenses/
+
 attach <- function(what, pos = 2, name = deparse(substitute(what)),
                    warn.conflicts = TRUE)
 {
@@ -14,9 +30,9 @@ attach <- function(what, pos = 2, name = deparse(substitute(what)),
                 break
             }
         }
-        ob <- objects(db.pos, all = TRUE)
+        ob <- objects(db.pos, all.names = TRUE)
         if(.isMethodsDispatchOn()) {
-            these <- objects(db.pos, all = TRUE)
+            these <- objects(db.pos, all.names = TRUE)
             these <- these[substr(these, 1, 6) == ".__M__"]
             gen <- gsub(".__M__(.*):([^:]+)", "\\1", these)
             from <- gsub(".__M__(.*):([^:]+)", "\\2", these)
@@ -25,7 +41,7 @@ attach <- function(what, pos = 2, name = deparse(substitute(what)),
         }
         ipos <- seq_along(sp)[-c(db.pos, match(c("Autoloads", "CheckExEnv"), sp, 0))]
         for (i in ipos) {
-            obj.same <- match(objects(i, all = TRUE), ob, nomatch = 0)
+            obj.same <- match(objects(i, all.names = TRUE), ob, nomatch = 0)
             if (any(obj.same > 0)) {
                 same <- ob[obj.same]
                 same <- same[!(same %in% dont.mind)]
@@ -68,7 +84,7 @@ attach <- function(what, pos = 2, name = deparse(substitute(what)),
        !exists(".conflicts.OK", envir = value, inherits = FALSE)) {
         checkConflicts(value)
     }
-    if((length(objects(envir = value, all=TRUE)) > 0)
+    if((length(objects(envir = value, all.names = TRUE)) > 0)
        && .isMethodsDispatchOn())
       methods:::cacheMetaData(value, TRUE)
     invisible(value)

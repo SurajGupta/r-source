@@ -1,3 +1,8 @@
+% File src/library/datasets/man/ChickWeight.Rd
+% Part of the R package, http://www.R-project.org
+% Copyright 1995-2007 R Core Development Team
+% Distributed under GPL 2 or later
+
 \name{ChickWeight}
 \docType{data}
 \alias{ChickWeight}
@@ -47,9 +52,9 @@
     S and S-PLUS}, Springer.
 }
 \examples{
-require(stats)
+require(stats); require(graphics)
 coplot(weight ~ Time | Chick, data = ChickWeight,
-    type = "b", show = FALSE)
+    type = "b", show.given = FALSE)
 ## fit a representative chick
 fm1 <- nls(weight ~ SSlogis( Time, Asym, xmid, scal ),
     data = ChickWeight, subset = Chick == 1)

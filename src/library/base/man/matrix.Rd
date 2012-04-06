@@ -1,3 +1,8 @@
+% File src/library/base/man/matrix.Rd
+% Part of the R package, http://www.R-project.org
+% Copyright 1995-2007 R Core Development Team
+% Distributed under GPL 2 or later
+
 \name{matrix}
 \alias{matrix}
 \alias{as.matrix}
@@ -38,9 +43,9 @@ is.matrix(x)
     zero-row data frame.}
 }
 \details{
-  If either of \code{nrow} or \code{ncol} is not given, an attempt is
+  If one of \code{nrow} or \code{ncol} is not given, an attempt is
   made to infer it from the length of \code{data} and the other
-  parameter.
+  parameter.  If neither is given, a one-column matrix is returned.
 
   If there are too few elements in \code{data} to fill the array,
   then the elements in \code{data} are recycled.  If \code{data} has

@@ -1,3 +1,8 @@
+% File src/library/stats/man/power.t.test.Rd
+% Part of the R package, http://www.R-project.org
+% Copyright 1995-2007 R Core Development Team
+% Distributed under GPL 2 or later
+
 \name{power.t.test}
 \alias{power.t.test}
 \encoding{latin1}
@@ -54,7 +59,7 @@ power.t.test(n = NULL, delta = NULL, sd = 1, sig.level = 0.05,
 \examples{
  power.t.test(n = 20, delta = 1)
  power.t.test(power = .90, delta = 1)
- power.t.test(power = .90, delta = 1, alt = "one.sided")
+ power.t.test(power = .90, delta = 1, alternative = "one.sided")
 }
 \keyword{htest}
 

@@ -14,8 +14,8 @@
  *  GNU General Public License for more details.
  *
  *  You should have received a copy of the GNU General Public License
- *  along with this program; if not, write to the Free Software
- *  Foundation, Inc., 51 Franklin Street Fifth Floor, Boston, MA 02110-1301  USA
+ *  along with this program; if not, a copy is available at
+ *  http://www.r-project.org/Licenses/
 
 
  *  Matching and Partial Matching for Strings
@@ -63,7 +63,7 @@ Rboolean NonNullStringMatch(SEXP s, SEXP t)
 }
 
 /* currently unused outside this file */
-Rboolean psmatch(char *f, char *t, Rboolean exact)
+Rboolean psmatch(const char *f, const char *t, Rboolean exact)
 {
     if (exact)
 	return (Rboolean)!strcmp(f, t);
@@ -83,7 +83,7 @@ Rboolean psmatch(char *f, char *t, Rboolean exact)
 
 Rboolean pmatch(SEXP formal, SEXP tag, Rboolean exact)
 {
-    char *f, *t;
+    const char *f, *t;
     switch (TYPEOF(formal)) {
     case SYMSXP:
 	f = CHAR(PRINTNAME(formal));
@@ -121,7 +121,7 @@ Rboolean pmatch(SEXP formal, SEXP tag, Rboolean exact)
 /* Returns the first partially matching tag found. */
 /* Pattern is a C string. */
 
-static SEXP matchPar_int(char *tag, SEXP *list, Rboolean exact)
+static SEXP matchPar_int(const char *tag, SEXP *list, Rboolean exact)
 {
     if (*list == R_NilValue)
 	return R_MissingArg;
@@ -150,7 +150,7 @@ static SEXP matchPar_int(char *tag, SEXP *list, Rboolean exact)
 }
 
 /* unused outside this file */
-SEXP attribute_hidden matchPar(char *tag, SEXP * list)
+SEXP attribute_hidden matchPar(const char *tag, SEXP * list)
 {
     return matchPar_int(tag, list, FALSE);
 }
@@ -187,7 +187,7 @@ SEXP attribute_hidden matchArgExact(SEXP tag, SEXP * list)
 /* We need to leave 'supplied' unchanged in case we call UseMethod */
 /* MULTIPLE_MATCHES was added by RI in Jan 2005 but never activated */
 
-SEXP attribute_hidden matchArgs(SEXP formals, SEXP supplied)
+SEXP attribute_hidden matchArgs(SEXP formals, SEXP supplied, SEXP call)
 {
     int i, seendots;
     SEXP f, a, b, dots, actuals;
@@ -282,6 +282,12 @@ nextarg1:
 #ifdef MULTIPLE_MATCHES
 			}
 #endif
+			if (R_warn_partial_match_args) {
+			    warningcall(call, 
+					_("partial argument match of '%s' to '%s'"),
+					CHAR(PRINTNAME(TAG(b))), 
+					CHAR(PRINTNAME(TAG(f))) );
+			}
 			SETCAR(a, CAR(b));
 			if (CAR(b) != R_MissingArg)
 			    SET_MISSING(a, 0);       /* not missing this arg */

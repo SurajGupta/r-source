@@ -13,8 +13,8 @@
  *  GNU General Public License for more details.
  *
  *  You should have received a copy of the GNU General Public License
- *  along with this program; if not, write to the Free Software
- *  Foundation, Inc., 51 Franklin Street, Fifth Floor, Boston, MA 02110-1301 USA.
+ *  along with this program; if not, a copy is available at
+ *  http://www.r-project.org/Licenses/
  */
 
 #ifdef HAVE_CONFIG_H
@@ -29,29 +29,12 @@
  *  used only in standalone Rmath lib.
  */
 
-/* Include the header file defining finite() */
-#ifdef HAVE_IEEE754_H
-# include <ieee754.h>		/* newer Linuxen */
-#else
-# ifdef HAVE_IEEEFP_H
-#  include <ieeefp.h>		/* others [Solaris], .. */
-# endif
-#endif
-
 int R_finite(double x)
 {
 #ifdef HAVE_WORKING_ISFINITE
     return isfinite(x);
-#elif HAVE_WORKING_FINITE
-    return finite(x);
-# else
-/* neither finite nor isfinite work */
-# ifdef _AIX
-#  include <fp.h>
-     return FINITE(x);
 # else
     return (!isnan(x) & (x != ML_POSINF) & (x != ML_NEGINF));
-# endif
 #endif
 }
 
@@ -59,8 +42,7 @@ int R_finite(double x)
    doesn't get C++ headers and so is safe. */
 int R_isnancpp(double x)
 {
-	return (isnan(x) != 0);
-
+    return (isnan(x) != 0);
 }
 
 static double myfmod(double x1, double x2)
@@ -68,12 +50,6 @@ static double myfmod(double x1, double x2)
     double q = x1 / x2;
     return x1 - floor(q) * x2;
 }
-
-#ifdef HAVE_WORKING_LOG
-# define R_log	log
-#else
-double R_log(double x) { return(x > 0 ? log(x) : x < 0 ? ML_NAN : ML_NEGINF); }
-#endif
 
 double R_pow(double x, double y) /* = x ^ y */
 {

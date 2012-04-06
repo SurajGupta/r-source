@@ -1,3 +1,19 @@
+#  File src/library/tcltk/R/utils.R
+#  Part of the R package, http://www.R-project.org
+#
+#  This program is free software; you can redistribute it and/or modify
+#  it under the terms of the GNU General Public License as published by
+#  the Free Software Foundation; either version 2 of the License, or
+#  (at your option) any later version.
+#
+#  This program is distributed in the hope that it will be useful,
+#  but WITHOUT ANY WARRANTY; without even the implied warranty of
+#  MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
+#  GNU General Public License for more details.
+#
+#  A copy of the GNU General Public License is available at
+#  http://www.r-project.org/Licenses/
+
 tk_select.list <-
     function(list, preselect = NULL, multiple = FALSE, title = NULL)
 {
@@ -8,7 +24,7 @@ tk_select.list <-
     tkwm.deiconify(dlg)
     tkgrab.set(dlg)
     tkfocus(dlg)
-    if(!is.null(title) && nchar(title)) {
+    if(!is.null(title) && nzchar(title)) {
         lab <- tklabel(dlg, text = title, fg = "blue")
         tkpack(lab, side="top")
     }

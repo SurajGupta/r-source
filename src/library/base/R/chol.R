@@ -1,4 +1,22 @@
-chol <- function(x, pivot = FALSE, LINPACK = pivot)
+#  File src/library/base/R/chol.R
+#  Part of the R package, http://www.R-project.org
+#
+#  This program is free software; you can redistribute it and/or modify
+#  it under the terms of the GNU General Public License as published by
+#  the Free Software Foundation; either version 2 of the License, or
+#  (at your option) any later version.
+#
+#  This program is distributed in the hope that it will be useful,
+#  but WITHOUT ANY WARRANTY; without even the implied warranty of
+#  MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
+#  GNU General Public License for more details.
+#
+#  A copy of the GNU General Public License is available at
+#  http://www.r-project.org/Licenses/
+
+chol <- function(x, ...) UseMethod("chol")
+
+chol.default <- function(x, pivot = FALSE, LINPACK = pivot, ...)
 {
     if (is.complex(x))
         stop("complex matrices not permitted at present")
@@ -47,7 +65,7 @@ chol <- function(x, pivot = FALSE, LINPACK = pivot)
                       x = x,
                       n,
                       n,
-                      v = matrix(0, nr=n, nc=n),
+                      v = matrix(0, nrow=n, ncol=n),
                       info = integer(1),
                       DUP = FALSE, PACKAGE = "base")
         if(z$info)
@@ -78,7 +96,7 @@ chol2inv <- function(x, size=NCOL(x), LINPACK=FALSE)
 		  x=x,
 		  nr,
 		  size,
-		  v=matrix(0, nr=size, nc=size),
+		  v=matrix(0, nrow=size, ncol=size),
 		  info=integer(1),
 		  DUP=FALSE, PACKAGE="base")
     if(z$info)

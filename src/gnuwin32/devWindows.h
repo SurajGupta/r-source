@@ -14,8 +14,8 @@
  *  GNU General Public License for more details.
  *
  *  You should have received a copy of the GNU General Public License
- *  along with this program; if not, write to the Free Software
- *  Foundation, Inc., 51 Franklin Street, Fifth Floor, Boston, MA 02110-1301  USA
+ *  along with this program; if not, a copy is available at
+ *  http://www.r-project.org/Licenses/
  */
 
 #include <Graphics.h>
@@ -57,7 +57,7 @@ typedef struct {
     menuitem mrec, madd, mreplace, mprev, mnext, mclear, msvar, mgvar;
     menuitem mR, mfit, mfix, grmenustayontop, mnextplot;
     Rboolean recording, replaying, needsave;
-    bitmap bm;
+    bitmap bm, bm2;
   /* PNG and JPEG section */
     FILE *fp;
     char filename[512];
@@ -98,4 +98,6 @@ typedef struct {
     Rboolean (*newFrameConfirm)();
     double lwdscale;   /* scale factor for lwd */
     RCNTXT *cntxt;     /* context for unwinding on error */
+    Rboolean have_alpha; /* support for AlphaBlend */
+    Rboolean warn_trans; /* Warn on use of translucency if not supported */
 } gadesc;

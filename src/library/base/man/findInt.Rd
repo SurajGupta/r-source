@@ -1,3 +1,8 @@
+% File src/library/base/man/findInt.Rd
+% Part of the R package, http://www.R-project.org
+% Copyright 1995-2007 R Core Development Team
+% Distributed under GPL 2 or later
+
 \name{findInterval}
 \alias{findInterval}
 \title{Find Interval Numbers or Indices}
@@ -58,7 +63,7 @@ findInterval(x, vec, rightmost.closed = FALSE, all.inside = FALSE)
 }
 \examples{
 N <- 100
-X <- sort(round(rt(N, df=2), 2))
+X <- sort(round(stats::rt(N, df=2), 2))
 tt <- c(-100, seq(-2,2, len=201), +100)
 it <- findInterval(tt, X)
 tt[it < 1 | it >= N] # only first and last are outside range(X)

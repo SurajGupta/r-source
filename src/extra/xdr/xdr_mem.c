@@ -2,8 +2,20 @@
 #include <config.h>
 #endif
 
+#ifdef HAVE_INTTYPES_H
+# include <inttypes.h>
+#endif
+
+#if !defined(HAVE_UINTPTR_T) && !defined(uintptr_t)
+ typedef unsigned long uintptr_t;
+#endif
+
+#if SIZEOF_LONG > 4
+#error This XDR implementation assumes 4-byte longs
+#endif
+
 /* Local mod: assumes WIN32 is i386 and little-endian generic is 32-bit */
-#ifdef WIN32
+#if defined(WIN32) || defined(__CYGWIN__)
 static unsigned long int
 ntohl(unsigned long int x)
 { /* could write VC++ inline assembler, but not worth it for now */
@@ -90,6 +102,9 @@ static char sccsid[] = "@(#)xdr_mem.c 1.19 87/08/11 Copyr 1984 Sun Micro";
 #include <string.h> /* for memcpy */
 #include <rpc/types.h>
 #include <rpc/xdr.h>
+
+/* The use of 'long' here would be problematic if it were ever to be
+   used on a 64-bit system */
 
 static bool_t	xdrmem_getlong();
 static bool_t	xdrmem_putlong();
@@ -194,7 +209,7 @@ xdrmem_getpos(xdrs)
 	register XDR *xdrs;
 {
 
-	return ((u_int)xdrs->x_private - (u_int)xdrs->x_base);
+	return ((uintptr_t)xdrs->x_private - (uintptr_t)xdrs->x_base);
 }
 
 static bool_t
@@ -205,10 +220,10 @@ xdrmem_setpos(xdrs, pos)
 	register caddr_t newaddr = xdrs->x_base + pos;
 	register caddr_t lastaddr = xdrs->x_private + xdrs->x_handy;
 
-	if ((long)newaddr > (long)lastaddr)
+	if ((uintptr_t)newaddr > (uintptr_t)lastaddr)
 		return (FALSE);
 	xdrs->x_private = newaddr;
-	xdrs->x_handy = (int)lastaddr - (int)newaddr;
+	xdrs->x_handy = (uintptr_t)lastaddr - (uintptr_t)newaddr;
 	return (TRUE);
 }
 

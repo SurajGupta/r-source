@@ -1,3 +1,8 @@
+% File src/library/splines/man/ns.Rd
+% Part of the R package, http://www.R-project.org
+% Copyright 1995-2007 R Core Development Team
+% Distributed under GPL 2 or later
+
 \name{ns}
 \alias{ns}
 %\alias{makepredictcall.ns}
@@ -58,7 +63,7 @@ ns(x, df = NULL, knots = NULL, intercept = FALSE,
   eds J. M. Chambers and T. J. Hastie, Wadsworth \& Brooks/Cole.
 }
 \examples{
-require(stats)
+require(stats); require(graphics)
 ns(women$height, df = 5)
 summary(fm1 <- lm(weight ~ ns(height, df = 5), data = women))
 

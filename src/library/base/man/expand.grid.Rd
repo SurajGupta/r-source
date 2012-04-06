@@ -1,3 +1,8 @@
+% File src/library/base/man/expand.grid.Rd
+% Part of the R package, http://www.R-project.org
+% Copyright 1995-2007 R Core Development Team
+% Distributed under GPL 2 or later
+
 \name{expand.grid}
 \title{Create a Data Frame from All Combinations of Factors}
 \usage{
@@ -35,6 +40,8 @@ expand.grid(\dots, KEEP.OUT.ATTRS = TRUE)
   of all combinations of n elements, taken m at a time.
 }
 \examples{
+require(utils)
+
 expand.grid(height = seq(60, 80, 5), weight = seq(100, 300, 50),
             sex = c("Male","Female"))
 

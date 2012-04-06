@@ -1,3 +1,8 @@
+% File src/library/base/man/deparse.Rd
+% Part of the R package, http://www.R-project.org
+% Copyright 1995-2007 R Core Development Team
+% Distributed under GPL 2 or later
+
 \name{deparse}
 \alias{deparse}
 \title{Expression Deparsing}
@@ -19,7 +24,7 @@ deparse(expr, width.cutoff = 60,
     \code{\link{.deparseOpts}}.}
 }
 \details{
-  This function turns unevaluated expressions (where \dQuote{expression}
+  This function turns unevaluated expressions (where \sQuote{expression}
   is taken in a wider sense than the strict concept of a vector of mode
   \code{"expression"} used in \code{\link{expression}}) into character
   strings (a kind of inverse \code{\link{parse}}).
@@ -41,6 +46,11 @@ deparse(expr, width.cutoff = 60,
 
   Numeric and complex vectors are converted using 15 significant digits:
   see \code{\link{as.character}} for more details.
+
+  \code{width.cutoff} is a lower bound for the line lengths: deparsing a
+  line proceeds until at least \code{width.cutoff} \emph{bytes} have
+  been output and e.g. \code{arg = value} expressions will not be split
+  across lines.
 }
 \note{
   To avoid the risk of a source attribute out of sync with the actual
@@ -60,7 +70,8 @@ deparse(expr, width.cutoff = 60,
   \code{Quotes} for quoting conventions, including backticks.
 }
 \examples{
-require(stats)
+require(stats); require(graphics)
+
 deparse(args(lm))
 deparse(args(lm), width = 500)
 myplot <-

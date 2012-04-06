@@ -1,3 +1,8 @@
+% File src/library/stats/man/ppr.Rd
+% Part of the R package, http://www.R-project.org
+% Copyright 1995-2007 R Core Development Team
+% Distributed under GPL 2 or later
+
 % file stats/man/ppr.Rd
 % copyright (C) 1995-8 B. D. Ripley
 % copyright (C) 2000-3   The R Core Development Team
@@ -136,7 +141,7 @@ method functions.
   The algorithm first adds up to \code{max.terms} ridge terms one at a
   time; it will use less if it is unable to find a term to add that makes
   sufficient difference.  It then removes the least
-  \dQuote{\emph{important}} term at each step until \code{nterms} terms
+  important term at each step until \code{nterms} terms
   are left.
 
   The levels of optimization (argument \code{optlevel})
@@ -168,6 +173,8 @@ method functions.
   \code{\link{plot.ppr}}, \code{\link{supsmu}}, \code{\link{smooth.spline}}
 }
 \examples{
+require(graphics)
+
 # Note: your numerical values may differ
 attach(rock)
 area1 <- area/10000; peri1 <- peri/10000

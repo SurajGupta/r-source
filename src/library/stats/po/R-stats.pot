@@ -2,7 +2,7 @@ msgid ""
 msgstr ""
 "Project-Id-Version: R 2.3.0\n"
 "Report-Msgid-Bugs-To: bugs@r-project.org\n"
-"POT-Creation-Date: 2007-06-12 18:46\n"
+"POT-Creation-Date: 2007-09-17 10:19\n"
 "PO-Revision-Date: YEAR-MO-DA HO:MI+ZONE\n"
 "Last-Translator: FULL NAME <EMAIL@ADDRESS>\n"
 "Language-Team: LANGUAGE <LL@li.org>\n"
@@ -89,9 +89,6 @@ msgstr ""
 msgid "no terms in scope for adding to object"
 msgstr ""
 
-msgid "trying +"
-msgstr ""
-
 msgid "number of rows in use has changed: remove missing values?"
 msgstr ""
 
@@ -107,9 +104,6 @@ msgstr ""
 msgid "scope is not a subset of term labels"
 msgstr ""
 
-msgid "trying -"
-msgstr ""
-
 msgid "no 'drop1' method for \"mlm\" models"
 msgstr ""
 
@@ -123,12 +117,6 @@ msgid "upper scope does not include model term(s) %s"
 msgstr ""
 
 msgid "AIC is not defined for this model, so 'step' cannot proceed"
-msgstr ""
-
-msgid "Start:  AIC="
-msgstr ""
-
-msgid "Step:  AIC="
 msgstr ""
 
 msgid "'A' must be an array or table"
@@ -356,10 +344,7 @@ msgstr ""
 msgid "no solution in the specified range of bandwidths"
 msgstr ""
 
-msgid "increasing bw.SJ() search interval ("
-msgstr ""
-
-msgid ")"
+msgid "increasing bw.SJ() search interval (%d)"
 msgstr ""
 
 msgid "minimum occurred at one end of the range"
@@ -1379,6 +1364,9 @@ msgstr ""
 msgid "eff.aovlist: non-orthogonal contrasts would give an incorrect answer"
 msgstr ""
 
+msgid "cannot create a formula from a zero-column data frame"
+msgstr ""
+
 msgid "no terms component"
 msgstr ""
 
@@ -1388,10 +1376,10 @@ msgstr ""
 msgid "'termobj' must be a object of class \"terms\""
 msgstr ""
 
-msgid "variable '%s' was fitted with class \"%s\" but class \"%s\" was supplied"
+msgid "variable '%s' was fitted with type \"%s\" but type \"%s\" was supplied"
 msgstr ""
 
-msgid "variables %s were specified with different classes from the fit"
+msgid "variables %s were specified with different types from the fit"
 msgstr ""
 
 msgid "'data' must be a data.frame, not a matrix or an array"
@@ -1448,6 +1436,12 @@ msgstr ""
 msgid "lower < upper  is not fulfilled"
 msgstr ""
 
+msgid "f.lower = f(lower) is NA"
+msgstr ""
+
+msgid "f.upper = f(upper) is NA"
+msgstr ""
+
 msgid "f() values at end points not of opposite sign"
 msgstr ""
 
@@ -1496,9 +1490,6 @@ msgstr ""
 msgid "'data' must be a list or an environment"
 msgstr ""
 
-msgid "no parameters to fit"
-msgstr ""
-
 msgid "No starting values specified"
 msgstr ""
 
@@ -1515,6 +1506,15 @@ msgid "Consider specifying 'start' or using a selfStart model"
 msgstr ""
 
 msgid "parameters without starting value in 'data':"
+msgstr ""
+
+msgid "fitting parameters"
+msgstr ""
+
+msgid "without any variables"
+msgstr ""
+
+msgid "no parameters to fit"
 msgstr ""
 
 msgid "Upper or lower bounds ignored unless algorithm = \"port\""
@@ -1712,6 +1712,9 @@ msgstr ""
 msgid "ref = %d must be in 1:%d"
 msgstr ""
 
+msgid "Failed to guess time-varying variables from their names"
+msgstr ""
+
 msgid "'varying' arguments must be the same length"
 msgstr ""
 
@@ -1724,7 +1727,16 @@ msgstr ""
 msgid "some constant variables (%s) are really varying"
 msgstr ""
 
-msgid "no 'time' or 'id' specified"
+msgid "no 'reshapeWide' attribute, must specify 'varying'"
+msgstr ""
+
+msgid "'varying' must be nonempty list or vector"
+msgstr ""
+
+msgid "length of v.names does not evenly divide length of varying"
+msgstr ""
+
+msgid "length of varying must be the product of length of v.names and length of times"
 msgstr ""
 
 msgid "'k' must be positive"

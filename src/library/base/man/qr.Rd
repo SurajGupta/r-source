@@ -1,5 +1,11 @@
+% File src/library/base/man/qr.Rd
+% Part of the R package, http://www.R-project.org
+% Copyright 1995-2007 R Core Development Team
+% Distributed under GPL 2 or later
+
 \name{qr}
 \alias{qr}
+\alias{qr.default}
 \alias{qr.coef}
 \alias{qr.qy}
 \alias{qr.qty}
@@ -11,7 +17,9 @@
 \alias{solve.qr}
 \title{The QR Decomposition of a Matrix}
 \usage{
-qr(x, tol = 1e-07 , LAPACK = FALSE)
+qr(x, \dots)
+\method{qr}{default}(x, tol = 1e-07 , LAPACK = FALSE, \dots)
+
 qr.coef(qr, y)
 qr.qy(qr, y)
 qr.qty(qr, y)

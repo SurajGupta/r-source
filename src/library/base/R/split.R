@@ -1,3 +1,19 @@
+#  File src/library/base/R/split.R
+#  Part of the R package, http://www.R-project.org
+#
+#  This program is free software; you can redistribute it and/or modify
+#  it under the terms of the GNU General Public License as published by
+#  the Free Software Foundation; either version 2 of the License, or
+#  (at your option) any later version.
+#
+#  This program is distributed in the hope that it will be useful,
+#  but WITHOUT ANY WARRANTY; without even the implied warranty of
+#  MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
+#  GNU General Public License for more details.
+#
+#  A copy of the GNU General Public License is available at
+#  http://www.r-project.org/Licenses/
+
 split <- function(x, f, drop = FALSE, ...) UseMethod("split")
 
 split.default <- function(x, f, drop = FALSE, ...)
@@ -51,7 +67,7 @@ split.data.frame <- function(x, f, drop = FALSE, ...)
 
 "split<-.data.frame" <- function(x, f, drop = FALSE, ..., value)
 {
-    ix <- split(seq_along(x), f, drop = drop, ...)
+    ix <- split(seq_len(nrow(x)), f, drop = drop, ...)
     n <- length(value)
     j <- 0
     for (i in ix) {
@@ -61,10 +77,23 @@ split.data.frame <- function(x, f, drop = FALSE, ...)
     x
 }
 
-unsplit <- function(value, f, drop = FALSE)
+## unsplit <- function(value, f, drop = FALSE)
+## {
+##     len <- length(if (is.list(f)) f[[1]] else f)
+##     x <- vector(mode = typeof(value[[1]]), length = len)
+##     split(x, f, drop = drop) <- value
+##     x
+## }
+
+unsplit <-function (value, f, drop = FALSE)
 {
     len <- length(if (is.list(f)) f[[1]] else f)
-    x <- vector(mode = typeof(value[[1]]), length = len)
+    if (is.data.frame(value[[1]])) {
+        x <- value[[1]][rep(NA,len),]
+        rownames(x) <- unsplit(lapply(value, rownames), f)
+    }
+    else
+        x <- value[[1]][rep(NA,len)]
     split(x, f, drop = drop) <- value
     x
 }

@@ -1,3 +1,8 @@
+% File src/library/stats/man/kruskal.test.Rd
+% Part of the R package, http://www.R-project.org
+% Copyright 1995-2007 R Core Development Team
+% Distributed under GPL 2 or later
+
 \name{kruskal.test}
 \alias{kruskal.test}
 \alias{kruskal.test.default}
@@ -88,6 +93,7 @@ g <- factor(rep(1:3, c(5, 4, 5)),
 kruskal.test(x, g)
 
 ## Formula interface.
+require(graphics)
 boxplot(Ozone ~ Month, data = airquality)
 kruskal.test(Ozone ~ Month, data = airquality)
 }

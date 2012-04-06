@@ -1,9 +1,14 @@
+% File src/library/stats/man/lag.plot.Rd
+% Part of the R package, http://www.R-project.org
+% Copyright 1995-2007 R Core Development Team
+% Distributed under GPL 2 or later
+
 \name{lag.plot}
 \alias{lag.plot}
 \title{Time Series Lag Plots}
 \description{
   Plot time series against lagged versions of themselves.
-  Helps visualizing \dQuote{auto-dependence} even when auto-correlations
+  Helps visualizing \sQuote{auto-dependence} even when auto-correlations
   vanish. 
 }
 \usage{
@@ -57,6 +62,8 @@ lag.plot(x, lags = 1, layout = NULL, set.lags = 1:lags,
   \code{\link{plot.ts}} which is the basic work horse.
 }
 \examples{
+require(graphics)
+
 lag.plot(nhtemp, 8, diag.col = "forest green")
 lag.plot(nhtemp, 5, main="Average Temperatures in New Haven")
 ## ask defaults to TRUE when we have more than one page:
@@ -64,7 +71,7 @@ lag.plot(nhtemp, 6, layout = c(2,1), asp = NA,
          main = "New Haven Temperatures", col.main = "blue")
 
 ## Multivariate (but non-stationary! ...)
-lag.plot(freeny.x, lag = 3)
+lag.plot(freeny.x, lags = 3)
 \dontrun{
 no lines for long series :
 lag.plot(sqrt(sunspots), set = c(1:4, 9:12), pch = ".", col = "gold")

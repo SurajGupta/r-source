@@ -1,5 +1,22 @@
-# Copyright (C) 1997-1999  Adrian Trapletti
+#  File src/library/stats/R/diffinv.R
+#  Part of the R package, http://www.R-project.org
 #
+#  This program is free software; you can redistribute it and/or modify
+#  it under the terms of the GNU General Public License as published by
+#  the Free Software Foundation; either version 2 of the License, or
+#  (at your option) any later version.
+#
+#  This program is distributed in the hope that it will be useful,
+#  but WITHOUT ANY WARRANTY; without even the implied warranty of
+#  MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
+#  GNU General Public License for more details.
+#
+#  A copy of the GNU General Public License is available at
+#  http://www.r-project.org/Licenses/
+
+## Copyright (C) 1997-1999  Adrian Trapletti
+## Cppyright (C) 2003-2007  R Core Development Team
+## This version distributed under GPL (version 2 or later)
 
 diffinv <- function (x, ...) { UseMethod("diffinv") }
 
@@ -29,7 +46,7 @@ diffinv.default <- function (x, lag = 1, differences = 1, xi, ...)
     if (is.matrix(x)) {
         n <- nrow(x)
         m <- ncol(x)
-        y <- matrix(0, nr=n+lag*differences, nc=m)
+        y <- matrix(0, nrow = n+lag*differences, ncol = m)
         if(m >= 1) {
             if(missing(xi)) xi <- matrix(0.0, lag*differences, m)
             if(NROW(xi) != lag*differences || NCOL(xi) != m)

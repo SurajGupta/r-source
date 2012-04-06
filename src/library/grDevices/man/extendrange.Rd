@@ -1,3 +1,8 @@
+% File src/library/grDevices/man/extendrange.Rd
+% Part of the R package, http://www.R-project.org
+% Copyright 1995-2007 R Core Development Team
+% Distributed under GPL 2 or later
+
 \name{extendrange}
 \alias{extendrange}
 \title{Extend a Numerical Range by a Small Percentage}
@@ -19,8 +24,7 @@ extendrange(x, r = range(x, na.rm = TRUE), f = 0.05)
   considered a sophisticated extension of \code{extendrange}.
 }
 \value{
-  numeric vector of length 2, \dQuote{\code{r} extended},
-  namely simply \code{r + c(-f,f) * diff(r)}.
+  A numeric vector of length 2, \code{r + c(-f,f) * diff(r)}.
 }
 \examples{
 x <- 1:5

@@ -1,3 +1,8 @@
+% File src/library/graphics/man/legend.Rd
+% Part of the R package, http://www.R-project.org
+% Copyright 1995-2007 R Core Development Team
+% Distributed under GPL 2 or later
+
 \name{legend}
 \alias{legend}
 \title{Add Legends to Plots}
@@ -63,7 +68,7 @@ legend(x, y = NULL, legend, fill = NULL, col = par("col"),
     coordinates.  (Should be positive even for a reversed x axis.)
     Defaults to the proper value computed by \code{\link{strwidth}(legend)}.}
   \item{text.col}{the color used for the legend text.}
-  \item{merge}{logical; if \code{TRUE}, \dQuote{merge} points and lines but
+  \item{merge}{logical; if \code{TRUE}, merge points and lines but
     not filled boxes.  Defaults to \code{TRUE} if there are points and lines.}
   \item{trace}{logical; if \code{TRUE}, shows how \code{legend} does all
     its magical computations.}
@@ -106,8 +111,8 @@ legend(x, y = NULL, legend, fill = NULL, col = par("col"),
   both margins; if two values are given, the first is used for \code{x}-
   distance, the second for \code{y}-distance.
 
-  \dQuote{Attribute} arguments such as \code{col}, \code{pch}, \code{lty},
-  etc, are recycled if necessary.  \code{merge} is not.
+  Attribute arguments such as \code{col}, \code{pch}, \code{lty},
+  etc, are recycled if necessary: \code{merge} is not.
 
   Points are drawn \emph{after} lines in order that they can cover the
   line with their background color \code{pt.bg}, if applicable.
@@ -207,6 +212,7 @@ utils::str(legend(-3, .9, ex.cs1, lty=1:2, plot=FALSE,
            adj = c(0, .6)))# adj y !
 legend(-3, .9, ex.cs1, lty=1:2, col=2:3,    adj = c(0, .6))
 
+require(stats)
 x <- rexp(100, rate = .5)
 hist(x, main = "Mean and Median of a Skewed Distribution")
 abline(v = mean(x),   col=2, lty=2, lwd=2)

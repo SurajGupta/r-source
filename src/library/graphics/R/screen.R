@@ -1,3 +1,19 @@
+#  File src/library/graphics/R/screen.R
+#  Part of the R package, http://www.R-project.org
+#
+#  This program is free software; you can redistribute it and/or modify
+#  it under the terms of the GNU General Public License as published by
+#  the Free Software Foundation; either version 2 of the License, or
+#  (at your option) any later version.
+#
+#  This program is distributed in the hope that it will be useful,
+#  but WITHOUT ANY WARRANTY; without even the implied warranty of
+#  MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
+#  GNU General Public License for more details.
+#
+#  A copy of the GNU General Public License is available at
+#  http://www.r-project.org/Licenses/
+
 ## An environment not exported from namespace:graphics used to
 ## store the split.screen settings
 .SSenv <- new.env()
@@ -33,12 +49,12 @@ split.screen <-
 	    stop("'figs' must be a vector or a matrix with 4 columns")
 	nr <- figs[1]
 	nc <- figs[2]
-	x <- seq.int(0, 1, len=nc+1)
-	y <- seq.int(1, 0, len=nr+1)
+	x <- seq.int(0, 1, length.out=nc+1)
+	y <- seq.int(1, 0, length.out=nr+1)
 	figs <- matrix(c(rep.int(x[-(nc+1)], nr), rep.int(x[-1], nr),
 			 rep.int(y[-1], rep.int(nc, nr)),
 			 rep.int(y[-(nr+1)], rep.int(nc, nr))),
-		       nc = 4)
+		       ncol = 4)
     }
     num.screens <- nrow(figs)
     if (num.screens < 1)

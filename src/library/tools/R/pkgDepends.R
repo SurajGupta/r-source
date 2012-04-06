@@ -1,3 +1,19 @@
+#  File src/library/tools/R/pkgDepends.R
+#  Part of the R package, http://www.R-project.org
+#
+#  This program is free software; you can redistribute it and/or modify
+#  it under the terms of the GNU General Public License as published by
+#  the Free Software Foundation; either version 2 of the License, or
+#  (at your option) any later version.
+#
+#  This program is distributed in the hope that it will be useful,
+#  but WITHOUT ANY WARRANTY; without even the implied warranty of
+#  MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
+#  GNU General Public License for more details.
+#
+#  A copy of the GNU General Public License is available at
+#  http://www.r-project.org/Licenses/
+
 pkgDepends <- function(pkg, recursive=TRUE, local=TRUE,
                        reduce=TRUE, lib.loc=NULL) {
     if (length(pkg) != 1)
@@ -231,7 +247,7 @@ reduceDepends <- function(depMtrx, quietly=TRUE) {
 
     pkgList <- split(depMtrx, depMtrx[,1])
     out <- lapply(pkgList, function(x, quietly) {
-        pkgMtrx <- matrix(x,nc=3)
+        pkgMtrx <- matrix(x,ncol=3)
         ## there are no version requirements so just return
         ## the pkg name
         if (all(is.na(pkgMtrx[,2])))
@@ -278,7 +294,7 @@ reduceDepends <- function(depMtrx, quietly=TRUE) {
 	pkgMtrx[outRow,]
     }, quietly)
 
-    matrix(unlist(out), nc=3, byrow=TRUE)
+    matrix(unlist(out), ncol=3, byrow=TRUE)
 }
 
 depMtrxToStrings <- function(depMtrx) {

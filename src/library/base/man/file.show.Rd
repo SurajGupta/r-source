@@ -1,3 +1,8 @@
+% File src/library/base/man/file.show.Rd
+% Part of the R package, http://www.R-project.org
+% Copyright 1995-2007 R Core Development Team
+% Distributed under GPL 2 or later
+
 \name{file.show}
 \alias{file.show}
 \title{Display One or More Files}
@@ -8,7 +13,8 @@ file.show(\dots, header = rep("", nfiles), title = "R Information",
 }
 \arguments{
   \item{\dots}{one or more character vectors containing the names of the
-    files to be displayed.}
+    files to be displayed.  These will be tilde-expanded: see
+    \code{\link{path.expand}}.}
   \item{header}{character vector (of the same length as the number of files
     specified in \code{\dots}) giving a header for each file being
     displayed.  Defaults to empty strings.}
@@ -19,7 +25,8 @@ file.show(\dots, header = rep("", nfiles), title = "R Information",
   \item{delete.file}{should the files be deleted after display?  Used
     for temporary files.}
   \item{pager}{the pager to be used.}
-  \item{encoding}{charset to be assumed for the file(s).}
+  \item{encoding}{character string giving the encoding to be assumed for
+    the file(s).}
 }
 \details{
   This function provides the core of the R help system, but it can be
@@ -32,14 +39,13 @@ file.show(\dots, header = rep("", nfiles), title = "R Information",
   \code{pager} argument, which is a character vector specifying a system
   command (usually \code{less}) to run on the set of files.
 
-  Most GUI systems will use a separate pager window for each file,
-  and let the user leave it up while \R
-  continues running.  The selection of such pagers could either be done
-  using \dQuote{magic} pager names being intercepted by lower-level code
-  (such as \code{"internal"} and \code{"console"} on Windows), or
-  by letting \code{pager} be an R function which will be called with the
-  same first four arguments as \code{file.show} and take care of
-  interfacing to the GUI.
+  Most GUI systems will use a separate pager window for each file, and
+  let the user leave it up while \R continues running.  The selection of
+  such pagers could either be done using special pager names being
+  intercepted by lower-level code (such as \code{"internal"} and
+  \code{"console"} on Windows), or by letting \code{pager} be an R
+  function which will be called with the same first four arguments as
+  \code{file.show} and take care of interfacing to the GUI.
 
   Not all implementations will honour \code{delete.file}.
 #ifdef windows

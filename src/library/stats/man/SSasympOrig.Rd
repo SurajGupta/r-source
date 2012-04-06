@@ -1,4 +1,8 @@
-% $Id: SSasympOrig.Rd,v 1.1 2003/12/11 07:16:06 ripley Exp $
+% File src/library/stats/man/SSasympOrig.Rd
+% Part of the R package, http://www.R-project.org
+% Copyright 1995-2007 R Core Development Team
+% Distributed under GPL 2 or later
+
 \name{SSasympOrig}
 \title{Asymptotic Regression Model through the Origin}
 \usage{
@@ -37,6 +41,8 @@ getInitial(height ~ SSasympOrig(age, Asym, lrc), data = Lob.329)
 fm1 <- nls(height ~ SSasympOrig( age, Asym, lrc), data = Lob.329)
 summary(fm1)
 \dontshow{
+require(graphics)
+
   xx <- seq(0, 5, len = 101)
   yy <- 5 * (1- exp(-xx/(2*log(2))))
   par(mar = c(0, 0, 3.5, 0))

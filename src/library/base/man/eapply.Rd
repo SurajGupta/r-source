@@ -1,3 +1,8 @@
+% File src/library/base/man/eapply.Rd
+% Part of the R package, http://www.R-project.org
+% Copyright 1995-2007 R Core Development Team
+% Distributed under GPL 2 or later
+
 \name{eapply}
 \title{Apply a Function over values in an environment}
 \usage{
@@ -16,7 +21,7 @@ eapply(env, FUN, \dots, all.names = FALSE)
 }
 \description{
   \code{eapply} applies \code{FUN} to the named values from an
-  environment and returns the results as a list. The user can request
+  environment and returns the results as a list.  The user can request
   that all named objects are used (normally names that begin with a
   dot are not). The output is not sorted and no parent environments are
   searched.
@@ -25,6 +30,8 @@ eapply(env, FUN, \dots, all.names = FALSE)
   \code{\link{lapply}}.
 }
 \examples{
+require(utils); require(stats)
+
 env <- new.env()
 env$a <- 1:10
 env$beta <- exp(-3:3)

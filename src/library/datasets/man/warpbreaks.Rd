@@ -1,3 +1,8 @@
+% File src/library/datasets/man/warpbreaks.Rd
+% Part of the R package, http://www.R-project.org
+% Copyright 1995-2007 R Core Development Team
+% Distributed under GPL 2 or later
+
 \name{warpbreaks}
 \docType{data}
 \alias{warpbreaks}
@@ -36,6 +41,7 @@
   \code{\link{xtabs}} for ways to display these data as a table.
 }
 \examples{
+require(stats); require(graphics)
 summary(warpbreaks)
 opar <- par(mfrow = c(1,2), oma = c(0, 0, 1.1, 0))
 plot(breaks ~ tension, data = warpbreaks, col = "lightgray",

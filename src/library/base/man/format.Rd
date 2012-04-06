@@ -1,3 +1,8 @@
+% File src/library/base/man/format.Rd
+% Part of the R package, http://www.R-project.org
+% Copyright 1995-2007 R Core Development Team
+% Distributed under GPL 2 or later
+
 \name{format}
 \alias{format}
 \alias{format.AsIs}
@@ -145,7 +150,7 @@ format(c(6.0, 13.1), digits = 2, nsmall = 1)
 
 ## use of scientific
 format(2^31-1)
-format(2^31-1, sci = TRUE)
+format(2^31-1, scientific = TRUE)
 
 ## a list
 z <- list(a=letters[1:3], b=(-pi+0i)^((-2:2)/2), c=c(1,10,100,1000),

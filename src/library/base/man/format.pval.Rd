@@ -1,3 +1,8 @@
+% File src/library/base/man/format.pval.Rd
+% Part of the R package, http://www.R-project.org
+% Copyright 1995-2007 R Core Development Team
+% Distributed under GPL 2 or later
+
 \name{format.pval}
 \title{Format P Values}
 \description{
@@ -21,11 +26,11 @@ format.pval(pv, digits = max(1, getOption("digits") - 2),
   \code{format.pval} is mainly an auxiliary function for
   \code{\link{print.summary.lm}} etc., and does separate formatting for
   fixed, floating point and very small values; those less than
-  \code{eps} are formatted as \code{"< [eps]"} (where \dQuote{[eps]}
+  \code{eps} are formatted as \code{"< [eps]"} (where \sQuote{[eps]}
   stands for \code{format(eps, digits)}).
 }
 \examples{
-format.pval(c(runif(5), pi^-100, NA))
+format.pval(c(stats::runif(5), pi^-100, NA))
 format.pval(c(0.1, 0.0001, 1e-27))
 }
 \keyword{print}

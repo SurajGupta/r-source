@@ -1,3 +1,8 @@
+% File src/library/base/man/Hyperbolic.Rd
+% Part of the R package, http://www.R-project.org
+% Copyright 1995-2007 R Core Development Team
+% Distributed under GPL 2 or later
+
 \name{Hyperbolic}
 \title{Hyperbolic Functions}
 \usage{
@@ -17,7 +22,7 @@ atanh(x)
 \description{
   These functions give the obvious hyperbolic functions.  They
   respectively compute the hyperbolic cosine, sine, tangent, and their
-  inverses, arc-cosine, arc-sine, arc-tangent (or \dQuote{\emph{area cosine}},
+  inverses, arc-cosine, arc-sine, arc-tangent (or \sQuote{\emph{area cosine}},
   etc).
 }
 \arguments{

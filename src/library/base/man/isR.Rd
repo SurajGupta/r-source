@@ -1,3 +1,8 @@
+% File src/library/base/man/isR.Rd
+% Part of the R package, http://www.R-project.org
+% Copyright 1995-2007 R Core Development Team
+% Distributed under GPL 2 or later
+
 \name{is.R}
 \title{Are we using R, rather than S?}
 \usage{
@@ -26,7 +31,7 @@ is.R()
 }
 \seealso{\code{\link{R.version}}, \code{\link{system}}.}
 \examples{
-x <- runif(20); small <- x < 0.4
+x <- stats::runif(20); small <- x < 0.4
 ## In the early years of R, 'which()' only existed in R:
 if(is.R()) which(small) else seq(along=small)[small]
 }

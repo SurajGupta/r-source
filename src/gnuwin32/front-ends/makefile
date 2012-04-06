@@ -10,8 +10,15 @@ else
   LINKFLAGS=-s
   DLLFLAGS=-s
 endif
-CFLAGS=$(OPTFLAGS) -I../../include
+CPPFLAGS=-I../../include
+CFLAGS=$(OPTFLAGS)
 
+## Increase stack size to 10Mb
+LARGE_STACK=-Wl,--stack=0xA00000
+## allow 32-bit builds to address over 2Gb
+ifeq ($(strip $(WIN)),32)
+LARGE_ADDR=-Wl,--large-address-aware
+endif
 
 .PHONY : all makeMakedeps
 
@@ -49,24 +56,18 @@ $(R_HOME)/bin/Rscript.exe: Rscript.exe
 	$(MKDIR) -p $(R_HOME)/bin
 	$(CP) $^ $@	
 
-graphappmain.o: ../graphapp/graphappmain.c
-	$(CC) -c -o $@ -I../graphapp $(CFLAGS) ../graphapp/graphappmain.c
+#graphappmain-CPPFLAGS=-I../../extra
+rgui-CPPFLAGS=-DWin32
+rterm-CPPFLAGS=-DWin32
 
-rgui-CFLAGS=-DWin32
-rterm-CFLAGS=-DWin32
-Rgui-LINKFLAGS=-mwindows
+## -luser32 -lkernel32 -ladvapi32 -lshell32 are now standard
+Rgui-LIBS=-L../../../$(IMPDIR) -lR -lgraphapp
+Rscript-LIBS=-L../../../$(IMPDIR) -lR -lgraphapp
+Rterm-LIBS=-L../../../$(IMPDIR) -lR -lgraphapp
 
-Rterm-LIBS=-luser32 -L../../../bin -lR
-Rgui-LIBS=-L../../../bin -lR
-Rpwd-LIBS=-lkernel32
-
-Rgui-LINKFLAGS+=-Wl,--large-address-aware
-Rterm-LINKFLAGS+=-Wl,--large-address-aware
-## Increase stack size to 10Mb
-Rgui-LINKFLAGS+=-Wl,--stack=0xA00000
-Rterm-LINKFLAGS+=-Wl,--stack=0xA00000
-Rscript-LINKFLAGS=-Wl,--large-address-aware -Wl,--stack=0xA00000
-Rscript-LIBS=-luser32 -L../../../bin -lR
+Rgui-LINKFLAGS=-mwindows $(LARGE_ADDR) $(LARGE_STACK)
+Rterm-LINKFLAGS=$(LARGE_ADDR) $(LARGE_STACK)
+Rscript-LINKFLAGS=$(LARGE_ADDR) $(LARGE_STACK)
 
 Rgui.exe: graphappmain.o  rgui.o rgico.o
 
@@ -78,7 +79,7 @@ R.exe: R.o ../rhome.o ../shext.o rcico.o rcmdfn.o
 
 RSetReg.exe: RSetReg.o ../rhome.o rcico.o
 
-md5check-CFLAGS=-I../../../include -I../../library/tools/src
+md5check-CPPFLAGS=-I../../../include -I../../library/tools/src
 md5check.exe : md5check.o md5ico.o ../../library/tools/src/md5.o
 
 Rscript.o: ../../unix/Rscript.c
@@ -106,7 +107,7 @@ bdx_SEXP-CFLAGS=-D_IN_RPROXY_
 ## for graphapp.h
 rproxy_impl-CFLAGS=-I../../../include
 Rproxy-DLLFLAGS=-mwindows
-Rproxy-DLLLIBS=-L../../../bin -lR -lole32 -luuid -loleaut32
+Rproxy-DLLLIBS=-L../../../$(IMPDIR) -lR -lgraphapp -lole32 -luuid -loleaut32
 ## this one needs Rproxy.dll as the LIBRARY line
 Rproxy.dll: Rproxy.def rproxy.o rproxy_dev.o rproxy_impl.o com_util.o \
 	bdx_util.o bdx_SEXP.o bdx_com.o rtico.o
@@ -114,11 +115,10 @@ Rproxy.dll: Rproxy.def rproxy.o rproxy_dev.o rproxy_impl.o com_util.o \
 
 
 $(R_HOME)/bin/Rproxy.dll: Rproxy.dll
-	$(MKDIR) -p $(R_HOME)/bin
+	@$(MKDIR) -p $(R_HOME)/bin
 	$(CP) Rproxy.dll $@	
 
-CSOURCES=$(filter-out R.c rcmd.c rpwd.c rtest.c, $(wildcard *.c)) \
-  ../graphapp/graphappmain.c
+CSOURCES=$(filter-out R.c rcmd.c rpwd.c rtest.c, $(wildcard *.c))
 DEPS=$(CSOURCES:.c=.d)
 
 makeMakedeps: $(DEPS)

@@ -16,8 +16,8 @@
  *  GNU General Public License for more details.
  *
  *  You should have received a copy of the GNU General Public License
- *  along with this program; if not, write to the Free Software
- *  Foundation, Inc., 51 Franklin Street, Fifth Floor, Boston, MA 02110-1301  USA
+ *  along with this program; if not, a copy is available at
+ *  http://www.r-project.org/Licenses/
  */
 
 #ifdef HAVE_CONFIG_H
@@ -28,6 +28,7 @@
 
 #include <R.h>
 #include <Rmath.h>
+#include <float.h>
 #include "mva.h"
 #include "stats.h"
 
@@ -148,7 +149,7 @@ static double R_dist_binary(double *x, int nr, int nc, int i1, int i2)
     for(j = 0 ; j < nc ; j++) {
 	if(both_non_NA(x[i1], x[i2])) {
 	    if(!both_FINITE(x[i1], x[i2])) {
-		warning(_("dist(.,\"binary\"): treating non-finite values as NA"));
+		warning(_("treating non-finite values as NA"));
 	    }
 	    else {
 		if(x[i1] || x[i2]) {

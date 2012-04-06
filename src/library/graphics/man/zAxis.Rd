@@ -1,3 +1,8 @@
+% File src/library/graphics/man/zAxis.Rd
+% Part of the R package, http://www.R-project.org
+% Copyright 1995-2007 R Core Development Team
+% Distributed under GPL 2 or later
+
 \name{Axis}
 \alias{Axis}
 \title{Generic function to add an Axis to a Plot}
@@ -47,7 +52,7 @@ Axis(x = NULL, at = NULL, \dots, side, labels = NULL)
 
   There are \code{"Date"}, \code{"POSIXct"} and \code{"POSIXlt"}
   methods which can pass an argument \code{format} onto the
-  \link[graphics:axis.POSIXct]{appropriate} \code{axis} method.
+  appropriate \code{axis} method (see \code{\link{axis.POSIXct}}).
 }
 \seealso{
   \code{\link{axis}}.

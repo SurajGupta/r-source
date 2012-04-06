@@ -1,3 +1,19 @@
+#  File src/library/stats/R/StructTS.R
+#  Part of the R package, http://www.R-project.org
+#
+#  This program is free software; you can redistribute it and/or modify
+#  it under the terms of the GNU General Public License as published by
+#  the Free Software Foundation; either version 2 of the License, or
+#  (at your option) any later version.
+#
+#  This program is distributed in the hope that it will be useful,
+#  but WITHOUT ANY WARRANTY; without even the implied warranty of
+#  MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
+#  GNU General Public License for more details.
+#
+#  A copy of the GNU General Public License is available at
+#  http://www.r-project.org/Licenses/
+
 StructTS <- function(x, type = c("level", "trend", "BSM"),
                      init = NULL, fixed = NULL, optim.control = NULL)
 {
@@ -135,7 +151,7 @@ StructTS <- function(x, type = c("level", "trend", "BSM"),
 
 print.StructTS <- function(x, digits = max(3, getOption("digits") - 3), ...)
 {
-    cat("\nCall:", deparse(x$call, width = 75), "", sep = "\n")
+    cat("\nCall:", deparse(x$call, width.cutoff = 75), "", sep = "\n")
     cat("Variances:\n")
     print.default(x$coef, print.gap = 2, digits=digits)
     invisible(x)
@@ -159,11 +175,11 @@ tsdiag.StructTS <- function(object, gof.lag = 10, ...)
     ## plot standardized residuals, acf of residuals, Ljung-Box p-values
     oldpar<- par(mfrow = c(3, 1))
     on.exit(par(oldpar))
-    rs <- object$resid
+    rs <- object$residuals
     stdres <- rs
     plot(stdres, type = "h", main = "Standardized Residuals", ylab = "")
     abline(h = 0)
-    acf(object$resid, plot = TRUE, main = "ACF of Residuals",
+    acf(object$residuals, plot = TRUE, main = "ACF of Residuals",
         na.action = na.pass)
     nlag <- gof.lag
     pval <- numeric(nlag)

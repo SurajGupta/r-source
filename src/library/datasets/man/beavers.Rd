@@ -1,6 +1,8 @@
-% file beavers.Rd
-% copyright (C) 1994-9 W. N. Venables and B. D. Ripley
-%
+% File src/library/datasets/man/beavers.Rd
+% Part of the R package, http://www.R-project.org
+% Copyright 1994-9 W. N. Venables and B. D. Ripley
+% Distributed under GPL 2 or later
+
 \name{beavers}
 \docType{data}
 \alias{beavers}
@@ -47,6 +49,7 @@ beaver2
   New York: John Wiley and Sons.
 }
 \examples{
+require(graphics)
 %% consider converting times to POSIXct (using 'yday' ?)
 (yl <- range(beaver1$temp, beaver2$temp))
 

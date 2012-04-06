@@ -1,4 +1,5 @@
 ##--- S4 Methods (and Classes)
+options(useFancyQuotes=FALSE)
 library(methods)
 ##too fragile: showMethods(where = "package:methods")
 
@@ -164,6 +165,7 @@ setClass("C", contains = c("A", "B"), representation(z = "logical"),
 (cc <- new("C"))
 ## failed reconcilePropertiesAndPrototype(..) after svn r37018
 
+
 ## "Logic" group -- was missing in R <= 2.4.0
 stopifnot(all(getGroupMembers("Logic") %in% c("&", "|")),
 	  any(getGroupMembers("Ops") == "Logic"))
@@ -180,6 +182,7 @@ assertError <- function(expr)
 assertError(b & b)
 assertError(b | 1)
 assertError(TRUE & b)
+
 
 ## methods' hidden cbind() / rbind:
 cBind <- methods:::cbind
@@ -221,8 +224,16 @@ setMethod(Gfun, signature(x = "mmat3"),
 	      x <- as(x, "mmat2")
 	      callGeneric()
 	  })
+wrapG <- function(x, a1, a2) {
+    myextra <- missing(a1) && missing(a2)
+    Gfun(x, extrarg = myextra)
+}
+
 (mm <- new("myMat", diag(3)))
 Gfun(mm)
+stopifnot(identical(wrapG(mm),    Gfun(mm, TRUE)),
+          identical(wrapG(mm,,2), Gfun(mm, FALSE)))
+
 Gfun(mm, extrarg = FALSE)
 m2 <- new("mmat2", diag(3))
 Gfun(m2)
@@ -232,3 +243,80 @@ Gfun(m2, extrarg = FALSE)
 Gfun(m3)
 Gfun(m3, extrarg = FALSE) # used to not pass 'extrarg'
 
+## -- a variant of the above which failed in version <= 2.5.1 :
+setGeneric("Gf", function(x, ...) standardGeneric("Gf"))
+setMethod(Gf, signature(x = "mmat2"),
+          function(x, ...) {
+              cat("in 'mmat2' method for 'Gf()\n")
+              x <- unclass(x)
+              callGeneric()
+          })
+setMethod(Gf, signature(x = "mmat3"),
+          function(x, ...) {
+              cat("in 'mmat3' method for 'Gf()\n")
+              x <- as(x, "mmat2")
+              callGeneric()
+          })
+setMethod(Gf, signature(x = "matrix"),
+	  function(x, a1, ...) {
+              cat(sprintf("matrix %d x %d ...\n", nrow(x), ncol(x)))
+              list(x=x, a1=a1, ...)
+          })
+
+wrap2 <- function(x, a1, ...) {
+    A1 <- if(missing(a1)) "A1" else as.character(a1)
+    Gf(x, ..., a1 = A1)
+}
+## Gave errors in R 2.5.1 :
+wrap2(m2, foo = 3.14)
+wrap2(m2, 10, answer.all = 42)
+
+
+## regression tests of dispatch: most of these became primitive in 2.6.0
+setClass("c1", "numeric")
+setClass("c2", "numeric")
+x_c1 <- new("c1")
+# the next failed < 2.5.0 as the signature in .BasicFunsList was wrong
+setMethod("as.character", "c1", function(x, ...) "fn test")
+as.character(x_c1)
+
+setMethod("as.integer", "c1", function(x, ...) 42)
+as.integer(x_c1)
+
+setMethod("as.logical", "c1", function(x, ...) NA)
+as.logical(x_c1)
+
+setMethod("as.complex", "c1", function(x, ...) pi+0i)
+as.complex(x_c1)
+
+setMethod("as.raw", "c1", function(x) as.raw(10))
+as.raw(x_c1)
+
+# as.numeric sets methods on all the equivalent functions
+setMethod("as.numeric", "c1", function(x, ...) 42+pi)
+as.numeric(x_c1)
+as.double(x_c1)
+as.real(x_c1)
+showMethods(as.numeric)
+showMethods(as.double)
+showMethods(as.real)
+
+setMethod(as.double, "c2", function(x, ...) x@.Data+pi)
+x_c2 <- new("c2", pi)
+as.numeric(x_c2)
+showMethods(as.numeric)
+
+promptClass("c1", stdout())# want all methods
+
+## '!' changed signature from 'e1' to 'x' in 2.6.0
+setClass("foo", "logical")
+setMethod("!", "foo", function(e1) e1+NA)
+selectMethod("!", "foo")
+xx <- new("foo", FALSE)
+!xx
+
+## This failed for about one day -- as.vector(x, mode) :
+setMethod("as.vector", signature(x = "foo", mode = "missing"),
+          function(x) unclass(x))
+## whereas this fails in R versions earlier than 2.6.0:
+setMethod("as.vector", "foo", function(x) unclass(x))# gives message

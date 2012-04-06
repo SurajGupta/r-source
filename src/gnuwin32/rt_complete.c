@@ -1,7 +1,7 @@
 /*
  *  R : A Computer Language for Statistical Data Analysis
  *  file rt_complete.c
- *  Copyright (C) 2007 The R Core Developmen Team.
+ *  Copyright (C) 2007 The R Core Development Team.
  *
  *  This program is free software; you can redistribute it and/or modify
  *  it under the terms of the GNU General Public License as published by
@@ -14,8 +14,8 @@
  *  GNU General Public License for more details.
  *
  *  You should have received a copy of the GNU General Public License
- *  along with this program; if not, write to the Free Software
- *  Foundation, Inc., 51 Franklin Street, Fifth Floor, Boston, MA 02110-1301  USA
+ *  along with this program; if not, a copy is available at
+ *  http://www.r-project.org/Licenses/
  */
 
 
@@ -24,9 +24,14 @@
 #endif
 
 #include <getline/getline.h>
-#include <strings.h>
+#include <string.h>
+#include <stdlib.h> /* for getenv */
+
 extern char *alloca(size_t);
-#define min(a, b) (a < b ? a : b)
+#ifndef min
+/* in stdlib.h in Win64 headers */
+# define min(a, b) (a < b ? a : b)
+#endif
 
 #include <Rinternals.h>
 #include <R_ext/Parse.h>
@@ -37,7 +42,7 @@ static int rt_completion(char *buf, int offset, int *loc)
 {
     int i, alen, cursor_position = *loc;
     char *partial_line = buf;
-    char *additional_text;
+    const char *additional_text;
     char *pline, *cmd;
     SEXP cmdSexp, cmdexpr, ans = R_NilValue;
     ParseStatus status;
@@ -76,8 +81,7 @@ static int rt_completion(char *buf, int offset, int *loc)
     strcpy(pline, partial_line);
     /* poor attempt at escaping quotes that sort of works */
     alen = strlen(pline);
-    for (i = 0; i < alen; i++)
-        if (pline[i] == '"') pline[i] = '\'';
+    for (i = 0; i < alen; i++) if (pline[i] == '"') pline[i] = '\'';
 
     cmd = alloca(strlen(pline) + 100);
     sprintf(cmd, "rcompgen:::.win32consoleCompletion(\"%s\", %d)",
@@ -91,7 +95,7 @@ static int rt_completion(char *buf, int offset, int *loc)
 	/* otherwise pretend that nothing happened and return */
 	return -1; /* no change */
     }
-    /* Loop is needed here as EXPSEXP will be of length > 1 */
+    /* Loop is needed here as EXPRSEXP will be of length > 1 */
     for(i = 0; i < length(cmdexpr); i++)
 	ans = eval(VECTOR_ELT(cmdexpr, i), R_GlobalEnv);
     UNPROTECT(2);

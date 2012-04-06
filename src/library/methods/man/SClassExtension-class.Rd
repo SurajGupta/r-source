@@ -1,8 +1,13 @@
+% File src/library/methods/man/SClassExtension-class.Rd
+% Part of the R package, http://www.R-project.org
+% Copyright 1995-2007 R Core Development Team
+% Distributed under GPL 2 or later
+
 \name{SClassExtension-class}
 \docType{class}
 \alias{SClassExtension-class}
 \title{Class to Represent Inheritance (Extension) Relations }
-\description{  An object from this class represents a single \dQuote{is}
+\description{  An object from this class represents a single \sQuote{is}
   relationship; lists of these objects are used to represent all the
   extensions (superclasses) and subclasses for a given class.  The
   object contains information about how the relation is defined and

@@ -1,3 +1,8 @@
+% File src/library/splines/man/periodicSpline.Rd
+% Part of the R package, http://www.R-project.org
+% Copyright 1995-2007 R Core Development Team
+% Distributed under GPL 2 or later
+
 \name{periodicSpline}
 \alias{periodicSpline}
 %\alias{periodicSpline.default}
@@ -34,6 +39,7 @@ periodicSpline(obj1, obj2, knots, period = 2*pi, ord = 4)
   \code{\link{interpSpline}}
 }
 \examples{
+require(graphics); require(stats)
 xx <- seq( -pi, pi, len = 16 )[-1]
 yy <- sin( xx )
 frm <- data.frame( xx, yy )

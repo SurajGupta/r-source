@@ -1,3 +1,8 @@
+% File src/library/stats/man/medpolish.Rd
+% Part of the R package, http://www.R-project.org
+% Copyright 1995-2007 R Core Development Team
+% Distributed under GPL 2 or later
+
 \name{medpolish}
 \alias{medpolish}
 %\alias{plot.medpolish}
@@ -50,6 +55,8 @@ medpolish(x, eps = 0.01, maxiter = 10, trace.iter = TRUE,
   Reading Massachusetts: Addison-Wesley.
 }
 \examples{
+require(graphics)
+
 ## Deaths from sport parachuting;  from ABC of EDA, p.224:
 deaths <-
     rbind(c(14,15,14),
@@ -63,6 +70,7 @@ deaths
 (med.d <- medpolish(deaths))
 plot(med.d)
 ## Check decomposition:
-all(deaths == med.d$overall + outer(med.d$row,med.d$col, "+") + med.d$resid)
+all(deaths ==
+    med.d$overall + outer(med.d$row,med.d$col, "+") + med.d$residuals)
 }
 \keyword{robust}

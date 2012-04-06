@@ -1,3 +1,8 @@
+% File src/library/base/man/environment.Rd
+% Part of the R package, http://www.R-project.org
+% Copyright 1995-2007 R Core Development Team
+% Distributed under GPL 2 or later
+
 \name{environment}
 \alias{environment}
 \alias{environment<-}
@@ -125,7 +130,7 @@ env.profile(env)
   \code{\link{ls}} may be used to view the objects in an environment,
   and hence \code{\link{ls.str}} may be useful for an overview.
 
-  \code{\link{sys.source}} can be used to \dQuote{fill} an environment.
+  \code{\link{sys.source}} can be used to populate an environment.
 }
 \examples{
 f <- function() "top level function"
@@ -135,18 +140,18 @@ environment()
 environment(f)
 .GlobalEnv
 
-ls(envir=environment(approxfun(1:2,1:2, method="const")))
+ls(envir=environment(stats::approxfun(1:2,1:2, method="const")))
 
 is.environment(.GlobalEnv) # TRUE
 
 e1 <- new.env(parent = baseenv())  # this one has enclosure package:base.
 e2 <- new.env(parent = e1)
-assign("a", 3, env=e1)
+assign("a", 3, envir=e1)
 ls(e1)
 ls(e2)
-exists("a", env=e2)	# this succeeds by inheritance
-exists("a", env=e2, inherits = FALSE)
-exists("+", env=e2)	# this succeeds by inheritance
+exists("a", envir=e2)	# this succeeds by inheritance
+exists("a", envir=e2, inherits = FALSE)
+exists("+", envir=e2)	# this succeeds by inheritance
 }
 \keyword{data}
 \keyword{programming}

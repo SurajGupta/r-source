@@ -1,3 +1,19 @@
+#  File src/library/graphics/R/fourfoldplot.R
+#  Part of the R package, http://www.R-project.org
+#
+#  This program is free software; you can redistribute it and/or modify
+#  it under the terms of the GNU General Public License as published by
+#  the Free Software Foundation; either version 2 of the License, or
+#  (at your option) any later version.
+#
+#  This program is distributed in the hope that it will be useful,
+#  but WITHOUT ANY WARRANTY; without even the implied warranty of
+#  MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
+#  GNU General Public License for more details.
+#
+#  A copy of the GNU General Public License is available at
+#  http://www.r-project.org/Licenses/
+
 fourfoldplot <-
 function(x, color = c("#99CCFF", "#6699CC"), conf.level = 0.95,
          std = c("margins", "ind.max", "all.max"), margin = c(1, 2),
@@ -82,14 +98,14 @@ function(x, color = c("#99CCFF", "#6699CC"), conf.level = 0.95,
             C <- - t * n
             x <- (- B + sqrt(B ^ 2 - 4 * A * C)) / (2 * A)
         }
-        matrix(c(t - x, x, m - t + x, n - x), nr = 2)
+        matrix(c(t - x, x, m - t + x, n - x), nrow = 2)
     }
 
-    drawPie <- function(r, from, to, n = 500, color = NA) {
-        p <- 2 * pi * seq.int(from, to, length = n) / 360
+    drawPie <- function(r, from, to, n = 500, col = NA) {
+        p <- 2 * pi * seq.int(from, to, length.out = n) / 360
         x <- c(cos(p), 0) * r
         y <- c(sin(p), 0) * r
-        polygon(x, y, col = color)
+        polygon(x, y, col = col)
         invisible(NULL)
     }
 
@@ -100,7 +116,7 @@ function(x, color = c("#99CCFF", "#6699CC"), conf.level = 0.95,
                 ## standardize to equal row and col margins
                 u <- sqrt(odds(tab)$or)
                 u <- u / (1 + u)
-                y <- matrix(c(u, 1 - u, 1 - u, u), nr = 2)
+                y <- matrix(c(u, 1 - u, 1 - u, u), nrow = 2)
             }
             else if(margin %in% c(1, 2))
                 y <- prop.table(tab, margin)

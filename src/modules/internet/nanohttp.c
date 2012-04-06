@@ -13,8 +13,8 @@
  *  GNU General Public License for more details.
  *
  *  You should have received a copy of the GNU General Public License
- *  along with this program; if not, write to the Free Software
- *  Foundation, Inc., 51 Franklin Street, Fifth Floor, Boston, MA 02110-1301  USA
+ *  along with this program; if not, a copy is available at
+ *  http://www.r-project.org/Licenses/
  */
 
 /* <UTF8> the only interpretation of char is ASCII 
@@ -58,7 +58,7 @@
 
 #ifdef Win32
 #include <io.h>
-#include <winsock.h>
+#include <winsock2.h>
 #define EWOULDBLOCK             WSAEWOULDBLOCK
 #define EINPROGRESS             WSAEINPROGRESS
 #define EALREADY                WSAEALREADY
@@ -237,7 +237,7 @@ static int socket_errno(void)
  */
 
 #ifdef Win32
-# include "graphapp/graphapp.h"
+# include "graphapp.h"
 #endif
 
 static void
@@ -1062,8 +1062,8 @@ RxmlNanoHTTPConnectAttempt(struct sockaddr *addr)
 #endif
 	}
     }
-    /* not reached */
-    return(-1);
+    /* not reached
+    return(-1); */
 }
 
 /**
@@ -1099,7 +1099,7 @@ RxmlNanoHTTPConnectHost(const char *host, int port)
     h=gethostbyname(host);
     if (h==NULL)
     {
-	RxmlMessage(2, _("unable to resolve '%s'."), host);
+	RxmlMessage(2, _("unable to resolve '%s'"), host);
 	return(-1);
     }
 

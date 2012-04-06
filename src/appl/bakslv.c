@@ -14,8 +14,8 @@
  *  GNU General Public License for more details.
  *
  *  You should have received a copy of the GNU General Public License
- *  along with this program; if not, write to the Free Software
- *  Foundation, Inc., 51 Franklin Street, Fifth Floor, Boston, MA 02110-1301  USA
+ *  along with this program; if not, a copy is available at
+ *  http://www.r-project.org/Licenses/
  */
 
 /* ../appl/bakslv.f
@@ -31,7 +31,13 @@
 #include <Rinternals.h>
 #include <R_ext/Linpack.h>
 #include <R_ext/Applic.h>
+#ifdef HAVE_VISIBILITY_ATTRIBUTE
+# define attribute_hidden __attribute__ ((visibility ("hidden")))
+#else
+# define attribute_hidden
+#endif
 
+attribute_hidden
 void bakslv(double *t, int *ldt, int *n,
 	    double *b, int *ldb, int *nb,
 	    double *x, int *job, int *info)

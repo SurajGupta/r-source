@@ -1,3 +1,8 @@
+% File src/library/utils/man/methods.Rd
+% Part of the R package, http://www.R-project.org
+% Copyright 1995-2007 R Core Development Team
+% Distributed under GPL 2 or later
+
 \name{methods}
 \title{List Methods for S3 Generic Functions or Classes}
 \alias{methods}
@@ -58,6 +63,8 @@ methods(generic.function, class)
   eds J. M. Chambers and T. J. Hastie, Wadsworth \& Brooks/Cole.
 }
 \examples{
+require(stats)
+
 methods(summary)
 methods(class = "aov")
 methods("[[")    # uses C-internal dispatching
@@ -65,6 +72,7 @@ methods("$")
 methods("$<-")   # replacement function
 methods("+")     # binary operator
 methods("Math")  # group generic
+require(graphics)
 methods("axis")  # looks like it has methods, but not generic
 \dontrun{methods(print)   # over 100
 }}

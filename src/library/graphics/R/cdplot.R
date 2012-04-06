@@ -1,3 +1,19 @@
+#  File src/library/graphics/R/cdplot.R
+#  Part of the R package, http://www.R-project.org
+#
+#  This program is free software; you can redistribute it and/or modify
+#  it under the terms of the GNU General Public License as published by
+#  the Free Software Foundation; either version 2 of the License, or
+#  (at your option) any later version.
+#
+#  This program is distributed in the hope that it will be useful,
+#  but WITHOUT ANY WARRANTY; without even the implied warranty of
+#  MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
+#  GNU General Public License for more details.
+#
+#  A copy of the GNU General Public License is available at
+#  http://www.r-project.org/Licenses/
+
 ## CD plots
 ## written by Achim Zeileis <Achim.Zeileis@R-project.org>
 
@@ -7,7 +23,7 @@ cdplot <- function(x, ...) {
 
 cdplot.formula <-
 function(formula, data = list(),
-         plot = TRUE, tol.ylab = 0.05,
+         plot = TRUE, tol.ylab = 0.05, ylevels = NULL,
          bw = "nrd0", n = 512, from = NULL, to = NULL,
          col = NULL, border = 1, main = "", xlab = NULL, ylab = NULL,
          yaxlabels = NULL, xlim = NULL, ylim = c(0, 1), ...,
@@ -16,6 +32,7 @@ function(formula, data = list(),
     ## extract x, y from formula
     m <- match.call(expand.dots = FALSE)
     m <- m[c(1, match(c("formula", "data", "subset"), names(m), 0))]
+    require(stats, quietly=TRUE)
     m[[1]] <- as.name("model.frame")
     mf <- eval.parent(m)
     if(NCOL(mf) != 2)
@@ -23,6 +40,8 @@ function(formula, data = list(),
     y <- mf[,1]
     if(!is.factor(y))
         stop("dependent variable should be a factor")
+    if(!is.null(ylevels))
+      y <- factor(y, levels = if(is.numeric(ylevels)) levels(y)[ylevels] else ylevels)
     x <- mf[,2]
     if(!is.numeric(x))
         stop("explanatory variable should be numeric")
@@ -33,7 +52,6 @@ function(formula, data = list(),
     if(is.null(yaxlabels)) yaxlabels <- levels(y)
 
     ## call default interface
-
     cdplot(x, y, plot = plot, tol.ylab = tol.ylab, bw = bw, n = n,
            from = from, to = to, col = col, border = border, main = main,
            xlab = xlab, ylab = ylab, yaxlabels = yaxlabels, xlim = xlim,
@@ -42,7 +60,7 @@ function(formula, data = list(),
 
 cdplot.default <-
 function(x, y,
-         plot = TRUE, tol.ylab = 0.05,
+         plot = TRUE, tol.ylab = 0.05, ylevels = NULL,
          bw = "nrd0", n = 512, from = NULL, to = NULL,
          col = NULL, border = 1, main = "", xlab = NULL, ylab = NULL,
          yaxlabels = NULL, xlim = NULL, ylim = c(0, 1), ...)
@@ -50,6 +68,8 @@ function(x, y,
     ## check x and y
     if(!is.numeric(x)) stop("explanatory variable should be numeric")
     if(!is.factor(y)) stop("dependent variable should be a factor")
+    if(!is.null(ylevels))
+      y <- factor(y, levels = if(is.numeric(ylevels)) levels(y)[ylevels] else ylevels)
 
     ## graphical parameters
     if(is.null(xlab)) xlab <- deparse(substitute(x))
@@ -97,9 +117,9 @@ function(x, y,
     if(plot) {
         plot(0, 0, xlim = xlim, ylim = ylim, type = "n", axes = FALSE,
              xaxs = "i", yaxs = "i", xlab = xlab, ylab = ylab, main = main)
-        for(i in 1:(NROW(y1)-1)) {
-            polygon(c(x1, rev(x1)), c(y1[i+1,], rev(y1[i,])), col = col[i], border = border)
-        }
+        for(i in 1:(NROW(y1)-1))
+            polygon(c(x1, rev(x1)), c(y1[i+1,], rev(y1[i,])), col = col[i],
+                    border = border)
         axis(1)
 
         equidist <- any(diff(y1[,1]) < tol.ylab)

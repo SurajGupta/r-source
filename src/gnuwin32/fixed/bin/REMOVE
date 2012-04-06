@@ -11,10 +11,8 @@
 # MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.	See the GNU
 # General Public License for more details.
 #
-# A copy of the GNU General Public License is available via WWW at
-# http://www.gnu.org/copyleft/gpl.html.	 You can also obtain it by
-# writing to the Free Software Foundation, Inc., 51 Franklin Street,
-# Fifth Floor, Boston, MA 02110-1301  USA.
+# A copy of the GNU General Public License is available at
+# http://www.r-project.org/Licenses/
 
 # Send any bug reports to r-bugs@r-project.org
 
@@ -26,7 +24,7 @@ use R::Dcf;
 use R::Utils;
 
 
-my $revision = ' $Rev: 40279 $ ';
+my $revision = ' $Rev: 42298 $ ';
 my $version;
 my $name;
 $revision =~ / ([\d\.]*) /;
@@ -46,7 +44,7 @@ usage() if $opt_help;
 my $startdir = cwd();
 if($opt_library){
     chdir($opt_library) ||
-	die "Error: cannot change to directory \`$opt_library'\n";
+	die "Error: cannot change to library directory '$opt_library'\n";
     $library = cwd();
     chdir($startdir);
 } else {
@@ -62,7 +60,7 @@ foreach $pkg (@ARGV) {
       if (-d "$library/$pkg") {
   	rmtree("$library/$pkg");
       } else {
-  	print "WARNING: there is no pkg \`${pkg}' in lib \`${library}'\n";
+  	print "WARNING: there is no pkg '${pkg}' in lib '${library}'\n";
       }
 }
 

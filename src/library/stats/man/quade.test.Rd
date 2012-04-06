@@ -1,3 +1,8 @@
+% File src/library/stats/man/quade.test.Rd
+% Part of the R package, http://www.R-project.org
+% Copyright 1995-2007 R Core Development Team
+% Distributed under GPL 2 or later
+
 \name{quade.test}
 \alias{quade.test}
 \alias{quade.test.default}
@@ -85,7 +90,7 @@ y <- matrix(c( 5,  4,  7, 10, 12,
               10,  9,  7, 13, 10,
               19, 18, 28, 37, 58,
               10,  7,  6,  8,  7),
-            nr = 7, byrow = TRUE,
+            nrow = 7, byrow = TRUE,
             dimnames =
             list(Store = as.character(1:7),
                  Brand = LETTERS[1:5]))

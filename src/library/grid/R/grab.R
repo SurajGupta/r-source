@@ -1,3 +1,19 @@
+#  File src/library/grid/R/grab.R
+#  Part of the R package, http://www.R-project.org
+#
+#  This program is free software; you can redistribute it and/or modify
+#  it under the terms of the GNU General Public License as published by
+#  the Free Software Foundation; either version 2 of the License, or
+#  (at your option) any later version.
+#
+#  This program is distributed in the hope that it will be useful,
+#  but WITHOUT ANY WARRANTY; without even the implied warranty of
+#  MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
+#  GNU General Public License for more details.
+#
+#  A copy of the GNU General Public License is available at
+#  http://www.r-project.org/Licenses/
+
 #########
 # Generate a gTree from the current display list
 #
@@ -11,14 +27,14 @@ rootVP <- function(pvp) {
 # List the children of the current vp (as a vpList)
 current.vpList <- function() {
   cpvp <- grid.Call("L_currentViewport")
-  if (length(ls(env=cpvp$children, all.names=TRUE)) == 0)
+  if (length(ls(cpvp$children, all.names=TRUE)) == 0)
     NULL
   else
     vpListFromNode(cpvp)
 }
 
 current.vpNames <-function() {
-  ls(env=grid.Call("L_currentViewport")$children)
+  ls(grid.Call("L_currentViewport")$children)
 }
 
 # vp might be a viewport, or a vpList, or a vpStack, or a vpTree
@@ -27,7 +43,7 @@ vpExists <- function(vp) {
 }
 
 vpExists.viewport <- function(vp) {
-  vp$name %in% ls(env=.Call(L_currentViewport)$children)
+  vp$name %in% ls(.Call(L_currentViewport)$children)
 }
 
 vpExists.vpStack <- function(vp) {

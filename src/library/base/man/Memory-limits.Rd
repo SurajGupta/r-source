@@ -1,3 +1,8 @@
+% File src/library/base/man/Memory-limits.Rd
+% Part of the R package, http://www.R-project.org
+% Copyright 1995-2007 R Core Development Team
+% Distributed under GPL 2 or later
+
 \name{Memory-limits}
 \alias{Memory-limits}
 \concept{memory}
@@ -28,9 +33,10 @@
     as the \R executable.  This is 2Gb under 32-bit Windows unless
     the OS's default has been changed to allow more (up to 3Gb).
     See
-    \url{http://www.microsoft.com/whdc/system/platform/server/PAE/PAEmem.mspx}.
-    (\R can be run under Win64 but the 2GB limit applies there and it
-    cannot be increased to 3GB.)
+    \url{http://www.microsoft.com/whdc/system/platform/server/PAE/PAEmem.mspx}
+    and \url{http://msdn2.microsoft.com/en-us/library/aa366778.aspx}.
+    (Under some 64-bit versions of Windows the limit is 4Gb: for others
+    it is 2Gb.)
     \item Under Windows, \R does impose limits on the total memory
     allocation available to a single run, as the OS provides no way to
     do so.  See \code{\link{memory.size}} and \code{\link{memory.limit}}.

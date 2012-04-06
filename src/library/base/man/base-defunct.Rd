@@ -1,3 +1,8 @@
+% File src/library/base/man/base-defunct.Rd
+% Part of the R package, http://www.R-project.org
+% Copyright 1995-2007 R Core Development Team
+% Distributed under GPL 2 or later
+
 \name{base-defunct}
 \alias{base-defunct}
 \title{Defunct Functions in Base Package}
@@ -189,7 +194,7 @@ unix(call, intern = FALSE)
   \code{loadURL} has been superseded by \code{\link{load}(url())}.
   
   \code{delay} has been replaced by \code{\link{delayedAssign}}. 
-  As from \R 2.1.0 promises should never be visible unevaluated.
+  Unevaluated promises should never be visible.
 
   \code{write.table0} was an \R-level version of \code{write.table}
   provided for temporary back-compatibility.

@@ -1,7 +1,12 @@
+% File src/library/base/man/pmatch.Rd
+% Part of the R package, http://www.R-project.org
+% Copyright 1995-2007 R Core Development Team
+% Distributed under GPL 2 or later
+
 \name{pmatch}
 \title{Partial String Matching}
 \usage{
-pmatch(x, table, nomatch = NA, duplicates.ok = FALSE)
+pmatch(x, table, nomatch = NA_integer_, duplicates.ok = FALSE)
 }
 \alias{pmatch}
 \arguments{
@@ -9,8 +14,8 @@ pmatch(x, table, nomatch = NA, duplicates.ok = FALSE)
     \code{\link{as.character}}.}
   \item{table}{the values to be matched against: converted to a character
     vector.}
-  \item{nomatch}{the (integer) value to be returned at non-matching or
-    multiply partially matching positions.}
+  \item{nomatch}{the value to be returned at non-matching or multiply
+    partially matching positions.  Note that it is coerced to \code{integer}.}
   \item{duplicates.ok}{should elements be in \code{table} be used more
     than once?}
 }

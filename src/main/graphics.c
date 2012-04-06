@@ -15,10 +15,9 @@
  *  MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
  *  GNU General Public License for more details.
  *
- *  A copy of the GNU General Public License is available via WWW at
- *  http://www.gnu.org/copyleft/gpl.html.  You can also obtain it by
- *  writing to the Free Software Foundation, Inc., 51 Franklin Street
- *  Fifth Floor, Boston, MA 02110-1301  USA.
+ *  You should have received a copy of the GNU General Public License
+ *  along with this program; if not, a copy is available at
+ *  http://www.r-project.org/Licenses/
 
 
  *  This is an extensive reworking by Paul Murrell of an original
@@ -43,7 +42,7 @@
 #include <Rmath.h>		/* eg. fmax2() */
 #include <R_ext/Applic.h>	/* pretty0() */
 
-#include <string.h>
+#include <strings.h>
 #include <stdlib.h>
 
 extern int baseRegisterIndex;
@@ -299,7 +298,7 @@ static double yDevtoCharUnits(double y, DevDesc *dd)
     return yDevtoNDCUnits(y, dd)/(Rf_gpptr(dd)->cex * Rf_gpptr(dd)->yNDCPerChar);
 }
 
-static void BadUnitsError(char *where)
+static void BadUnitsError(const char *where)
 {
     error(_("bad units specified in %s, please report!"), where);
 }
@@ -1741,7 +1740,7 @@ static Rboolean validFigureMargins(DevDesc *dd)
 	    (Rf_gpptr(dd)->plt[2] < Rf_gpptr(dd)->plt[3]));
 }
 
-static void invalidError(char* message, DevDesc *dd)
+static void invalidError(const char *message, DevDesc *dd)
 {
     Rf_dpptr(dd)->currentFigure -= 1;
     if (Rf_dpptr(dd)->currentFigure < 1)
@@ -2811,7 +2810,7 @@ void GPolygon(int n, double *x, double *y, int coords,
     int i;
     double *xx;
     double *yy;
-    char *vmaxsave = vmaxget();
+    void *vmaxsave = vmaxget();
     R_GE_gcontext gc; gcontextFromGP(&gc, dd);
 
     if (Rf_gpptr(dd)->lty == LTY_BLANK)
@@ -2850,7 +2849,7 @@ void GPolyline(int n, double *x, double *y, int coords, DevDesc *dd)
     int i;
     double *xx;
     double *yy;
-    char *vmaxsave = vmaxget();
+    void *vmaxsave = vmaxget();
     R_GE_gcontext gc; gcontextFromGP(&gc, dd);
 
     /*
@@ -2935,7 +2934,7 @@ void GRect(double x0, double y0, double x1, double y1, int coords,
 }
 
 /* Compute string width. */
-double GStrWidth(char *str, GUnit units, DevDesc *dd)
+double GStrWidth(const char *str, GUnit units, DevDesc *dd)
 {
     double w;
     R_GE_gcontext gc; gcontextFromGP(&gc, dd);
@@ -2948,7 +2947,7 @@ double GStrWidth(char *str, GUnit units, DevDesc *dd)
 
 /* Compute string height. */
 
-double GStrHeight(char *str, GUnit units, DevDesc *dd)
+double GStrHeight(const char *str, GUnit units, DevDesc *dd)
 {
     double h;
     R_GE_gcontext gc; gcontextFromGP(&gc, dd);
@@ -2961,7 +2960,7 @@ double GStrHeight(char *str, GUnit units, DevDesc *dd)
 /* Draw text in a plot. */
 /* If you want EXACT centering of text (e.g., like in GSymbol) */
 /* then pass NA_REAL for xc and yc */
-void GText(double x, double y, int coords, char *str,
+void GText(double x, double y, int coords, const char *str,
 	   double xc, double yc, double rot, DevDesc *dd)
 {
     R_GE_gcontext gc; gcontextFromGP(&gc, dd);
@@ -3199,8 +3198,8 @@ void GSymbol(double x, double y, int coords, int pch, DevDesc *dd)
 
 
 /* Draw text in plot margins. */
-void GMtext(char *str, int side, double line, int outer, double at, int las,
-	    double yadj, DevDesc *dd)
+void GMtext(const char *str, int side, double line, int outer, double at,
+	    int las, double yadj, DevDesc *dd)
 {
 /* "las" gives the style of axis labels:
 	 0 = always parallel to the axis [= default],
@@ -3390,7 +3389,7 @@ void rgb2hsv(double r, double g, double b,
  */
 
 attribute_hidden
-char *DefaultPalette[] = {
+const char *DefaultPalette[] = {
     "black",
     "red",
     "green3",
@@ -4099,7 +4098,7 @@ static unsigned int digithex(int digit)
 
 
 /* String Comparison Ignoring Case and Squeezing Out Blanks */
-int StrMatch(char *s, char *t)
+int StrMatch(const char *s, const char *t)
 {
     for(;;) {
 	if(*s == '\0' && *t == '\0') {
@@ -4121,7 +4120,7 @@ int StrMatch(char *s, char *t)
 /*
  * Paul:  Add ability to handle #RRGGBBAA
  */
-unsigned int rgb2col(char *rgb)
+unsigned int rgb2col(const char *rgb)
 {
     unsigned int r=0, g=0, b=0, a=0; /* -Wall */
     if(rgb[0] != '#')
@@ -4145,7 +4144,7 @@ unsigned int rgb2col(char *rgb)
 
 /* External Color Name to Internal Color Code */
 
-unsigned int attribute_hidden name2col(char *nm)
+unsigned int attribute_hidden name2col(const char *nm)
 {
     int i;
     if(strcmp(nm, "NA") == 0 || strcmp(nm, "transparent") == 0)
@@ -4174,7 +4173,7 @@ unsigned int attribute_hidden name2col(char *nm)
 
 /* Index (as string) to Internal Color Code */
 
-unsigned int attribute_hidden number2col(char *nm)
+unsigned int attribute_hidden number2col(const char *nm)
 {
     int indx;
     char *ptr;
@@ -4222,7 +4221,7 @@ attribute_hidden char *RGBA2rgb(unsigned int r, unsigned int g, unsigned int b,
 /* If this fails, create an #RRGGBB string */
 
 /* used in grid */
-char *col2name(unsigned int col)
+const char *col2name(unsigned int col)
 {
     int i;
 
@@ -4262,7 +4261,7 @@ char *col2name(unsigned int col)
 /* assumes that `s' is a name */
 
 /* used in grDevices */
-unsigned int str2col(char *s)
+unsigned int str2col(const char *s)
 {
     if(s[0] == '#') return rgb2col(s);
     else if(isdigit((int)s[0])) return number2col(s);
@@ -4391,7 +4390,7 @@ static int nlinetype = (sizeof(linetype)/sizeof(LineTYPE)-2);
 
 unsigned int LTYpar(SEXP value, int ind)
 {
-    char *p;
+    const char *p;
     int i, code, shift, digit, len;
     double rcode;
 
@@ -4441,29 +4440,21 @@ unsigned int LTYpar(SEXP value, int ind)
 
 SEXP LTYget(unsigned int lty)
 {
-    SEXP ans;
     int i, ndash;
     unsigned char dash[8];
     unsigned int l;
+    char cbuf[17]; /* 8 hex digits plus nul */
 
-    for (i = 0; linetype[i].name; i++) {
-	if(linetype[i].pattern == lty)
-	    return mkString(linetype[i].name);
-    }
+    for (i = 0; linetype[i].name; i++)
+	if(linetype[i].pattern == lty) return mkString(linetype[i].name);
 
     l = lty; ndash = 0;
     for (i = 0; i < 8 && l & 15; i++) {
-	dash[ndash++] = l&15;
+	dash[ndash++] = l & 15;
 	l = l >> 4;
     }
-    PROTECT(ans = allocVector(STRSXP, 1));
-    SET_STRING_ELT(ans, 0, allocString(ndash));
-    for(i=0 ; i<ndash ; i++) {
-	CHAR(STRING_ELT(ans, 0))[i] = HexDigits[dash[i]];
-    }
-    CHAR(STRING_ELT(ans,0))[ndash] = '\0';
-    UNPROTECT(1);
-    return ans;
+    for(i = 0 ; i < ndash ; i++) cbuf[i] = HexDigits[dash[i]];
+    return mkString(cbuf);
 }
 
 /*
@@ -4552,14 +4543,39 @@ DevDesc* CurrentDevice(void)
      * If there is one, start it up. */
     if (NoDevices()) {
 	SEXP defdev = GetOption(install("device"), R_BaseEnv);
-	if (isString(defdev) && length(defdev) > 0)
-	    PROTECT(defdev = lang1(install(CHAR(STRING_ELT(defdev, 0)))));
-	else if(TYPEOF(defdev) == CLOSXP) 
+	if (isString(defdev) && length(defdev) > 0) {
+	    SEXP devName = install(CHAR(STRING_ELT(defdev, 0)));
+	    /*  Not clear where this should be evaluated, since
+		grDevices need not be in the search path.
+		So we look for it first on the global search path.
+	    */
+	    defdev = findVar(devName, R_GlobalEnv);
+	    if(defdev != R_UnboundValue) {
+		PROTECT(defdev = lang1(devName));
+		eval(defdev, R_GlobalEnv);
+		UNPROTECT(1);
+	    } else {
+		/* Not globally visible: 
+		   try grDevices namespace if loaded.
+		   The option is unlikely to be set if it is not loaded,
+		   as the default setting is in grDevices:::.onLoad.
+		*/
+		SEXP ns = findVarInFrame(R_NamespaceRegistry, 
+					 install("grDevices"));
+		if(ns != R_UnboundValue && 
+		   findVar(devName, ns) != R_UnboundValue) {
+		    PROTECT(defdev = lang1(devName));
+		    eval(defdev, ns);
+		    UNPROTECT(1);
+		} else
+		    error(_("no active or default device"));
+	    }
+	} else if(TYPEOF(defdev) == CLOSXP) {
 	    PROTECT(defdev = lang1(defdev));
-	else
+	    eval(defdev, R_GlobalEnv);
+	    UNPROTECT(1);
+	} else
 	    error(_("no active or default device"));
-	eval(defdev, R_GlobalEnv);
-	UNPROTECT(1);
     }
     return R_Devices[R_CurrentDevice];
 }

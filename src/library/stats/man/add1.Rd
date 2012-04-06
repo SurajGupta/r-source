@@ -1,3 +1,8 @@
+% File src/library/stats/man/add1.Rd
+% Part of the R package, http://www.R-project.org
+% Copyright 1995-2007 R Core Development Team
+% Distributed under GPL 2 or later
+
 \name{add1}
 \alias{add1}
 \alias{add1.default}
@@ -120,6 +125,7 @@ drop1(object, scope, \dots)
   \code{\link{extractAIC}}, \code{\link{anova}}
 }
 \examples{
+require(graphics); require(utils)
 example(step)#-> swiss
 add1(lm1, ~ I(Education^2) + .^2)
 drop1(lm1, test="F")  # So called 'type II' anova

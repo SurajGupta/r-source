@@ -14,10 +14,9 @@
  *  MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
  *  GNU General Public License for more details.
  *
- *  A copy of the GNU General Public License is available via WWW at
- *  http://www.gnu.org/copyleft/gpl.html.  You can also obtain it by
- *  writing to the Free Software Foundation, Inc., 51 Franklin Street
- *  Fifth Floor, Boston, MA 02110-1301  USA.
+ *  You should have received a copy of the GNU General Public License
+ *  along with this program; if not, a copy is available at
+ *  http://www.r-project.org/Licenses/
  */
 
 /* <UTF8> char here is either ASCII or handled as a whole */
@@ -25,6 +24,12 @@
 #ifdef HAVE_CONFIG_H
 #include <config.h>
 #endif
+
+#include <math.h> /* avoid redefinition of extern in Defn.h */
+#include <float.h>
+#include <ctype.h>
+#include <stdlib.h>
+#include <string.h>
 
 #define __MAIN__
 #include "Defn.h"
@@ -53,8 +58,9 @@ void attribute_hidden nl_Rdummy()
 #endif
 
 
-/* The 'real' main() program is in ../<SYSTEM>/system.c */
-/* e.g. ../unix/system.c */
+/* The 'real' main() program is in Rmain.c on Unix-alikes, and
+   src/gnuwin/front-ends/graphappmain.c on Windows, unless of course
+   R is embedded */
 
 /* Global Variables:  For convenience, all interpeter global symbols
  * ================   are declared in Defn.h as extern -- and defined here.
@@ -132,12 +138,12 @@ char *R_PromptString(int browselevel, int type)
 		sprintf(BrowsePrompt, "Browse[%d]> ", browselevel);
 		return BrowsePrompt;
 	    }
-	    return (char*)CHAR(STRING_ELT(GetOption(install("prompt"),
-						    R_BaseEnv), 0));
+	    return (char *)CHAR(STRING_ELT(GetOption(install("prompt"),
+						     R_BaseEnv), 0));
 	}
 	else {
-	    return (char*)CHAR(STRING_ELT(GetOption(install("continue"),
-						    R_BaseEnv), 0));
+	    return (char *)CHAR(STRING_ELT(GetOption(install("continue"),
+						     R_BaseEnv), 0));
 	}
     }
 }
@@ -387,11 +393,6 @@ int R_ReplDLLdo1()
 /* We can now print a greeting, run the .First function and then enter */
 /* the read-eval-print loop. */
 
-
-FILE* R_OpenSysInitFile(void);
-FILE* R_OpenSiteFile(void);
-FILE* R_OpenInitFile(void);
-
 static RETSIGTYPE handleInterrupt(int dummy)
 {
     R_interrupts_pending = 1;
@@ -449,12 +450,12 @@ static void sigactionSegv(int signum, siginfo_t *ip, void *context)
        We assume anything within 16Mb beyond the stack end is a stack overflow.
      */
     if(signum == SIGSEGV && (ip != (siginfo_t *)0) && 
-       (long) R_CStackStart != -1) {
-	long addr = (long) ip->si_addr;
-	long diff = (R_CStackDir > 0) ? R_CStackStart - addr:
+       (intptr_t) R_CStackStart != -1) {
+	uintptr_t addr = (uintptr_t) ip->si_addr;
+	intptr_t diff = (R_CStackDir > 0) ? R_CStackStart - addr:
 	    addr - R_CStackStart;
-	long upper = 0x1000000;  /* 16Mb */
-	if((long) R_CStackLimit != -1) upper += R_CStackLimit;
+	uintptr_t upper = 0x1000000;  /* 16Mb */
+	if((intptr_t) R_CStackLimit != -1) upper += R_CStackLimit;
 	if(diff > 0 && diff < upper) {
 	    REprintf(_("Error: segfault from C stack overflow\n"));
 	    jump_to_toplevel();	
@@ -462,7 +463,7 @@ static void sigactionSegv(int signum, siginfo_t *ip, void *context)
     }
 
     /* need to take off stack checking as stack base has changed */
-    R_CStackLimit = (unsigned long)-1;
+    R_CStackLimit = (uintptr_t)-1;
 
     /* Do not translate these messages */
     REprintf("\n *** caught %s ***\n", 
@@ -663,6 +664,10 @@ void setup_Rmainloop(void)
 #ifdef ENABLE_NLS
     char localedir[PATH_MAX+20];
 #endif
+#ifdef Win32
+    char deferred_warnings[4][250];
+    int ndeferred_warnings = 0;
+#endif
 
     InitConnections(); /* needed to get any output at all */
 
@@ -673,21 +678,31 @@ void setup_Rmainloop(void)
     {
 	char *p, Rlocale[1000]; /* Windows' locales can be very long */
 	p = getenv("LC_ALL");
-	if(p) strcpy(Rlocale, p); else strcpy(Rlocale, "");
-	if((p = getenv("LC_CTYPE"))) setlocale(LC_CTYPE, p);
-	else setlocale(LC_CTYPE, Rlocale);
-	/* LC_CTYPE=C bombs in mingwex */
-	if(strcmp(setlocale(LC_CTYPE, NULL), "C") == 0) 
-	    setlocale(LC_CTYPE, "en");
-	if((p = getenv("LC_COLLATE"))) setlocale(LC_COLLATE, p);
-	else setlocale(LC_COLLATE, Rlocale);
-	if((p = getenv("LC_TIME"))) setlocale(LC_TIME, p);
-	else setlocale(LC_TIME, Rlocale);
-	if((p = getenv("LC_MONETARY"))) setlocale(LC_MONETARY, p);
-	else setlocale(LC_MONETARY, Rlocale);
+	strncpy(Rlocale, p ? p : "", 1000);
+	if(!(p = getenv("LC_CTYPE"))) p = Rlocale;
+	/* We'd like to use warning, but need to defer. 
+	   Also cannot translate. */
+	if(!setlocale(LC_CTYPE, p))
+	    snprintf(deferred_warnings[ndeferred_warnings++], 250,
+		     "Setting LC_CTYPE=%s failed\n", p);
+	if((p = getenv("LC_COLLATE"))) {
+	    if(!setlocale(LC_COLLATE, p))
+		snprintf(deferred_warnings[ndeferred_warnings++], 250,
+			 "Setting LC_COLLATE=%s failed\n", p);
+	} else setlocale(LC_COLLATE, Rlocale);
+	if((p = getenv("LC_TIME"))) {
+	    if(!setlocale(LC_TIME, p))
+		snprintf(deferred_warnings[ndeferred_warnings++], 250,
+			 "Setting LC_TIME=%s failed\n", p);
+	} else setlocale(LC_TIME, Rlocale);
+	if((p = getenv("LC_MONETARY"))) {
+	    if(!setlocale(LC_MONETARY, p))
+		snprintf(deferred_warnings[ndeferred_warnings++], 250,
+			 "Setting LC_MONETARY=%s failed\n", p);
+	} else setlocale(LC_MONETARY, Rlocale);
 	/* Windows does not have LC_MESSAGES */
     }
-#else
+#else /* not Win32 */
     setlocale(LC_CTYPE, "");/*- make ISO-latin1 etc. work for LOCALE users */
     setlocale(LC_COLLATE, "");/*- alphabetically sorting */
     setlocale(LC_TIME, "");/*- names and defaults for date-time formats */
@@ -702,7 +717,7 @@ void setup_Rmainloop(void)
 #ifdef LC_MEASUREMENT
     setlocale(LC_MEASUREMENT,"");
 #endif
-#endif
+#endif /* not Win32 */
 #ifdef ENABLE_NLS
     /* This ought to have been done earlier, but be sure */
     textdomain(PACKAGE);
@@ -722,9 +737,9 @@ void setup_Rmainloop(void)
 #endif
 #endif
 
-    InitRand();
     InitTempDir(); /* must be before InitEd */
     InitMemory();
+    InitStringHash(); /* must be before InitNames */
     InitNames();
     InitBaseEnv();
     InitGlobalEnv();
@@ -750,8 +765,8 @@ void setup_Rmainloop(void)
     {
 	char *ctype = setlocale(LC_CTYPE, NULL), *p;
 	p = strrchr(ctype, '.');
-	if(p && isdigit(p[1])) localeCP = atoi(p+1); else localeCP = 1252;
-	/* Not 100% correct */
+	if(p && isdigit(p[1])) localeCP = atoi(p+1); else localeCP = 0;
+	/* Not 100% correct, but CP1252 is a superset */
 	known_to_be_latin1 = latin1locale = (localeCP == 1252);
     }
 #endif
@@ -827,7 +842,7 @@ void setup_Rmainloop(void)
     /* methods package needs to trample here */
     R_LockEnvironment(R_BaseEnv, TRUE);
 #endif
-    /* At least temporarily unlock some bindings uses in graphics */
+    /* At least temporarily unlock some bindings used in graphics */
     R_unLockBinding(install(".Device"), R_BaseEnv);
     R_unLockBinding(install(".Devices"), R_BaseEnv);
     R_unLockBinding(install(".Library.site"), R_BaseEnv);
@@ -925,6 +940,13 @@ void setup_Rmainloop(void)
 	UNPROTECT(1);
     }
     /* gc_inhibit_torture = 0; */
+#ifdef Win32
+    {
+	int i;
+	for(i = 0 ; i < ndeferred_warnings; i++)
+	    warning(deferred_warnings[i]);
+    }
+#endif
     if (R_CollectWarnings) {
 	REprintf(_("During startup - "));
 	PrintWarnings();
@@ -935,10 +957,8 @@ extern SA_TYPE SaveAction; /* from src/main/startup.c */
 
 void end_Rmainloop(void)
 {
-    /* refrain from printing trailing '\n' only if quiet flag is on and
-       the save action is known (e.g. implied by --slave) */
-    if (!R_Quiet ||
-	(SaveAction != SA_NOSAVE && SaveAction != SA_SAVE))
+    /* refrain from printing trailing '\n' in slave mode */
+    if (!R_Slave)
         Rprintf("\n");
     /* run the .Last function. If it gives an error, will drop back to main
        loop. */
@@ -985,7 +1005,7 @@ static int ParseBrowser(SEXP CExpr, SEXP rho)
 {
     int rval = 0;
     if (isSymbol(CExpr)) {
-	char *expr = CHAR(PRINTNAME(CExpr));
+	const char *expr = CHAR(PRINTNAME(CExpr));
 	if (!strcmp(expr, "n")) {
 	    SET_DEBUG(rho, 1);
 	    rval = 1;
@@ -1127,7 +1147,7 @@ void R_dot_Last(void)
 
 SEXP attribute_hidden do_quit(SEXP call, SEXP op, SEXP args, SEXP rho)
 {
-    char *tmp;
+    const char *tmp;
     SA_TYPE ask=SA_DEFAULT;
     int status, runLast;
 
@@ -1141,7 +1161,7 @@ SEXP attribute_hidden do_quit(SEXP call, SEXP op, SEXP args, SEXP rho)
     if( !strcmp(tmp, "ask") ) {
 	ask = SA_SAVEASK;
 	if(!R_Interactive)
-	    warningcall(call, _("save=\"ask\" in non-interactive use: command-line default will be used"));
+	    warning(_("save=\"ask\" in non-interactive use: command-line default will be used"));
     } else if( !strcmp(tmp, "no") )
 	ask = SA_NOSAVE;
     else if( !strcmp(tmp, "yes") )
@@ -1152,12 +1172,12 @@ SEXP attribute_hidden do_quit(SEXP call, SEXP op, SEXP args, SEXP rho)
 	errorcall(call, _("unrecognized value of 'save'"));
     status = asInteger(CADR(args));
     if (status == NA_INTEGER) {
-        warningcall(call, _("invalid 'status', 0 assumed"));
+        warning(_("invalid 'status', 0 assumed"));
 	runLast = 0;
     }
     runLast = asLogical(CADDR(args));
     if (runLast == NA_LOGICAL) {
-        warningcall(call, _("invalid 'runLast', FALSE assumed"));
+        warning(_("invalid 'runLast', FALSE assumed"));
 	runLast = 0;
     }
     /* run the .Last function. If it gives an error, will drop back to main
@@ -1311,7 +1331,6 @@ R_removeTaskCallback(SEXP which)
 {
     int id;
     Rboolean val;
-    SEXP status;
 
     if(TYPEOF(which) == STRSXP) {
 	val = Rf_removeTaskCallbackByName(CHAR(STRING_ELT(which, 0)));
@@ -1319,10 +1338,7 @@ R_removeTaskCallback(SEXP which)
 	id = asInteger(which) - 1;
 	val = Rf_removeTaskCallbackByIndex(id);
     }
-    status = allocVector(LGLSXP, 1);
-    LOGICAL(status)[0] = val;
-
-    return(status);
+    return ScalarLogical(val);
 }
 
 SEXP
@@ -1341,8 +1357,7 @@ R_getTaskCallbackNames()
     n = 0;
     el = Rf_ToplevelTaskHandlers;
     while(el) {
-	SET_STRING_ELT(ans, n, allocString(strlen(el->name)));
-	strcpy(CHAR(STRING_ELT(ans, n)), el->name);
+	SET_STRING_ELT(ans, n, mkChar(el->name));
 	n++;
 	el = el->next;
     }
@@ -1424,11 +1439,9 @@ R_taskCallbackRoutine(SEXP expr, SEXP value, Rboolean succeeded,
     cur = CDR(cur);
     SETCAR(cur, value);
     cur = CDR(cur);
-    SETCAR(cur, tmp = allocVector(LGLSXP, 1));
-    LOGICAL(tmp)[0] = succeeded;
+    SETCAR(cur, ScalarLogical(succeeded));
     cur = CDR(cur);
-    SETCAR(cur, tmp = allocVector(LGLSXP, 1));
-    LOGICAL(tmp)[0] = visible;
+    SETCAR(cur, tmp = ScalarLogical(visible));
     if(useData) {
 	cur = CDR(cur);
 	SETCAR(cur, VECTOR_ELT(f, 1));
@@ -1456,7 +1469,7 @@ R_addTaskCallback(SEXP f, SEXP data, SEXP useData, SEXP name)
     SEXP internalData;
     SEXP index;
     R_ToplevelCallbackEl *el;
-    char *tmpName = NULL;
+    const char *tmpName = NULL;
 
     internalData = allocVector(VECSXP, 3);
     R_PreserveObject(internalData);
@@ -1473,10 +1486,7 @@ R_addTaskCallback(SEXP f, SEXP data, SEXP useData, SEXP name)
 			    INTEGER(index));
 
     if(length(name) == 0) {
-	PROTECT(name = allocVector(STRSXP, 1));
-        SET_STRING_ELT(name, 0, allocString(strlen(el->name)));
-	strcpy(CHAR(STRING_ELT(name, 0)), el->name);
-
+	PROTECT(name = mkString(el->name));
         setAttrib(index, R_NamesSymbol, name);
 	UNPROTECT(1);
     } else {

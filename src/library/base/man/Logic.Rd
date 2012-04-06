@@ -1,3 +1,8 @@
+% File src/library/base/man/Logic.Rd
+% Part of the R package, http://www.R-project.org
+% Copyright 1995-2007 R Core Development Team
+% Distributed under GPL 2 or later
+
 \name{Logic}
 \title{Logical Operators}
 \usage{
@@ -80,14 +85,13 @@ isTRUE(x)
 
   For \code{||}, \code{&&} and \code{isTRUE}, a length-one logical vector.
 }
-\section{S4 Methods}{
+\section{S4 methods}{
   \code{!}, \code{&} and \code{|} are S4 generics, the latter two part
-  of the \code{Logic} group generic.  For historical reasons, the
-  methods need argument names \code{e1} for \code{!} and \code{e1, e2}
-  for the other two.
+  of the \code{Logic} group generic (and hence methods need argument names
+  \code{e1, e2}).
 
-  \strong{NB} the signature for \code{!} methods will change to \code{x}
-  in \R 2.6.0.
+  Prior to \R 2.6.0 S4 methods for \code{!} needed argument name
+  \code{e1}, but now \code{x} is correct.
 }
 \references{
   Becker, R. A., Chambers, J. M. and Wilks, A. R. (1988)
@@ -103,7 +107,7 @@ isTRUE(x)
   \code{\link{Syntax}} for operator precedence.
 }
 \examples{
-y <- 1 + (x <- rpois(50, lambda=1.5) / 4 - 1)
+y <- 1 + (x <- stats::rpois(50, lambda=1.5) / 4 - 1)
 x[(x > 0) & (x < 1)]    # all x values between 0 and 1
 if (any(x == 0) || any(y == 0)) "zero encountered"
 

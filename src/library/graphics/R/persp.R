@@ -1,12 +1,29 @@
+#  File src/library/graphics/R/persp.R
+#  Part of the R package, http://www.R-project.org
+#
+#  This program is free software; you can redistribute it and/or modify
+#  it under the terms of the GNU General Public License as published by
+#  the Free Software Foundation; either version 2 of the License, or
+#  (at your option) any later version.
+#
+#  This program is distributed in the hope that it will be useful,
+#  but WITHOUT ANY WARRANTY; without even the implied warranty of
+#  MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
+#  GNU General Public License for more details.
+#
+#  A copy of the GNU General Public License is available at
+#  http://www.r-project.org/Licenses/
+
 persp <- function(x, ...) UseMethod("persp")
 
 persp.default <-
-function (x = seq(0, 1, len = nrow(z)), y = seq(0, 1, len = ncol(z)),
-    z, xlim = range(x), ylim = range(y), zlim = range(z, na.rm = TRUE),
-    xlab = NULL, ylab = NULL, zlab = NULL, main = NULL, sub = NULL,
-    theta = 0, phi = 15, r = sqrt(3), d = 1, scale = TRUE, expand = 1,
-    col = "white", border = NULL, ltheta = -135, lphi = 0, shade = NA,
-    box = TRUE, axes = TRUE, nticks = 5, ticktype = "simple", ...)
+function (x = seq(0, 1, length.out = nrow(z)),
+          y = seq(0, 1, length.out = ncol(z)),
+          z, xlim = range(x), ylim = range(y), zlim = range(z, na.rm = TRUE),
+          xlab = NULL, ylab = NULL, zlab = NULL, main = NULL, sub = NULL,
+          theta = 0, phi = 15, r = sqrt(3), d = 1, scale = TRUE, expand = 1,
+          col = "white", border = NULL, ltheta = -135, lphi = 0, shade = NA,
+          box = TRUE, axes = TRUE, nticks = 5, ticktype = "simple", ...)
 {
     if (is.null(xlab))
         xlab <- if (!missing(x)) deparse(substitute(x)) else "X"
@@ -24,7 +41,7 @@ function (x = seq(0, 1, len = nrow(z)), y = seq(0, 1, len = ncol(z)),
             }
             else {
                 z <- x
-                x <- seq(0, 1, len = nrow(z))
+                x <- seq.int(0, 1, length.out = nrow(z))
             }
         }
         else stop("no 'z' matrix specified")

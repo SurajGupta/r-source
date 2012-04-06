@@ -1,3 +1,8 @@
+% File src/library/stats/man/Binomial.Rd
+% Part of the R package, http://www.R-project.org
+% Copyright 1995-2007 R Core Development Team
+% Distributed under GPL 2 or later
+
 \name{Binomial}
 \alias{Binomial}
 \alias{dbinom}
@@ -71,6 +76,7 @@ rbinom(n, size, prob)
   \emph{Communications of the ACM}, \bold{31}, 216--222.
 }
 \examples{
+require(graphics)
 # Compute P(45 < X < 55) for X Binomial(100,0.5)
 sum(dbinom(46:54, 100, 0.5))
 

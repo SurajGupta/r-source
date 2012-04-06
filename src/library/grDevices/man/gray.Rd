@@ -1,3 +1,8 @@
+% File src/library/grDevices/man/gray.Rd
+% Part of the R package, http://www.R-project.org
+% Copyright 1995-2007 R Core Development Team
+% Distributed under GPL 2 or later
+
 \name{gray}
 \alias{gray}
 \alias{grey}
@@ -21,7 +26,7 @@ grey(level)
   \code{grey} is an alias for \code{gray}.
 }
 \value{
-  A vector of \dQuote{colors} of the same length as \code{level}.
+  A vector of colors of the same length as \code{level}.
 }
 \seealso{
   \code{\link{rainbow}},

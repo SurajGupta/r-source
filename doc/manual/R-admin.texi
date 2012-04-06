@@ -72,6 +72,7 @@ The current version of this document is @value{VERSION}.
 * Add-on packages::             
 * Internationalization::        
 * Choosing between 32- and 64-bit builds::  
+* The standalone Rmath library::  
 * Essential and useful other programs under Unix::  
 * Configuration on Unix::       
 * Platform notes::              
@@ -302,8 +303,10 @@ make check
 Failures are not necessarily problems as they might be caused by missing
 functionality, but you should look carefully at any reported
 discrepancies.  (Note that the tests may not run successfully in all
-locales: if you have problems try @code{C} or an English locale -- a
-UTF-8 locale if you usually use UTF-8.)
+locales: we expect them to do so using an 8-bit or UTF-8 character set,
+but probably not using other multibyte character sets.  If you have
+problems try @code{C} or an English locale -- a UTF-8 locale if you
+usually use UTF-8.)
 
 To re-run the tests including those successfully run you would need
 
@@ -362,8 +365,8 @@ pathname of the build directory should not contain spaces.)
 Make will also build plain text help pages as well as @HTML{} and
 @LaTeX{} versions of the @R{} object documentation (the three kinds can
 also be generated separately using @code{make help}, @code{make html}
-and @code{make latex}).  Note that you need Perl version 5: if this is
-not available on your system, you can obtain PDF versions of the
+and @code{make latex}).  Note that you need Perl version 5.8.x: if this
+is not available on your system, you can obtain PDF versions of the
 documentation files via @acronym{CRAN}.
 
 For those obtaining @R{} @emph{via} Subversion, one additional step is
@@ -418,8 +421,12 @@ make pdf      @r{to create PDF versions}
 make info     @r{to create info files (not @samp{refman}).}
 @end example
 
-You will not be able to build the info files unless you have
-@command{makeinfo} version 4.7 or later installed.
+You will not be able to build any of these unless you have
+@command{makeinfo} version 4.7 or later installed, and for DVI or PDF
+you must have @command{texi2dvi} and @file{texinfo.tex} installed
+(which are part of the GNU @pkg{texinfo} distribution but are,
+especially @file{texinfo.tex}, often made part of the TeX package in
+re-distributions).
 
 The DVI versions can be previewed and printed using standard programs
 such as @command{xdvi} and @command{dvips}.  The PDF versions can be
@@ -435,12 +442,6 @@ environment and using @command{make -e}.  (If re-making the manuals for
 a different papersize, you should first delete the file
 @file{doc/manual/version.texi}.)
 
-The @file{R-intro.texi} manual needs @file{epsf.tex}.  This is part of
-the @code{texinfo} distribution but often not installed as part of a
-@TeX{} installation: it can be obtained from
-@url{http://www.ctan.org/tex-archive/macros/generic/epsf/epsf.tex,
-@code{www.ctan.org/@/tex-archive/@/macros/@/generic/@/epsf/@/epsf.tex}}.
-
 There are some issues with making the reference manual, and in
 particular with the PDF version @file{refman.pdf}.  The help files
 contain both ISO Latin1 characters (e.g.@: in @file{text.Rd}) and
@@ -450,7 +451,7 @@ Computer Modern fonts.  We have provided four alternatives:
 @table @code
 @item times
 (The default for PDF.) Using standard PostScript fonts.  This works
-well both for on-screen viewing and for printing, and is the default.
+well both for on-screen viewing and for printing.
 The one disadvantage is that the Usage and Examples sections may come
 out rather wide.
 
@@ -597,7 +598,8 @@ make install-strip
 
 @noindent
 will install stripped executables, and on platforms where this is
-supported, stripped libraries in directories @file{lib} and @file{modules}.
+supported, stripped libraries in directories @file{lib} and
+@file{modules} and in the standard packages.
 
 @cindex Manuals, installing
 
@@ -743,6 +745,9 @@ the extra files into your intended @R{} source directory, e.g.
 @file{C:/R}. The directory name @emph{should not contain spaces}. We
 will call this directory @var{R_HOME} below.
 
+To avoid warnings you may want to set the environment variable
+@env{CYGWIN} to @samp{nodosfilewarning}.
+
 @node Getting the source files, Building the core files, Getting the tools, Building from source
 @subsection Getting the source files
 
@@ -813,21 +818,20 @@ in future only to be offered via a source-code licence.
 
 @end itemize
 
-The following additional items are normally installed by @file{Rtools.exe}.
-If instead you choose to do a completely manual build, you will also need
+The following additional items are normally installed by
+@file{Rtools.exe}.  If instead you choose to do a completely manual
+build (or a cross-build), you will also need
 
 @itemize
 
 @item
-Extract the international character support file @file{iconv.dll} from
-@url{http://www.murdoch-sutherland.com/Rtools/iconv.zip,
-@code{www.@/murdoch-@/sutherland.com/@/Rtools/@/iconv.zip}} and put it in
+Get @file{iconv.dll} from
+@url{http://www.stats.ox.ac.uk/pub/Rtools/iconv.dll} and put it in
 @file{@var{R_HOME}/@/src/@/gnuwin32/@/unicode}.
 
 @item
 The Tcl/Tk support files are in
-@url{http://www.murdoch-sutherland.com/Rtools/R_Tcl.zip,
-@code{www.murdoch-sutherland.com/@/Rtools/@/R_Tcl.zip}}: unzip this in
+@url{http://www.stats.ox.ac.uk/pub/Rtools/R_Tcl.zip}: unzip this in
 @var{R_HOME}, and it will add directories @file{@var{R_HOME}/Tcl},
 @file{@var{R_HOME}/Tcl/bin}, etc.
 
@@ -835,7 +839,7 @@ The Tcl/Tk support files are in
 You need @code{libpng} and @code{jpeg} sources (available, e.g., from
 @url{http://www.libpng.org, @code{www.libpng.org}},
 @url{ftp://ftp.uu.net/graphics/}[png,jpeg].  You will need files
-@file{libpng-1.2.8.tar.gz} and @file{jpegsrc.v6b.tar.gz} or later.
+@file{libpng-1.2.18.tar.gz} and @file{jpegsrc.v6b.tar.gz} or later.
 
 Working in the directory @file{@var{R_HOME}
 /src/gnuwin32/bitmap}, install the @code{libpng} and
@@ -848,8 +852,8 @@ and change the definition of @code{JPEGDIR}.
 Example:
 
 @example
-> tar xzvf libpng-1.2.8.tar.gz
-> mv libpng-1.2.8 libpng
+> tar xzvf libpng-1.2.20.tar.gz
+> mv libpng-1.2.20 libpng
 > tar xzvf jpegsrc.v6b.tar.gz
 @end example
 
@@ -1088,7 +1092,7 @@ make msi
 
 @noindent
 which will results in a file of about 40Mb with a name like
-@file{R-2.4.0-win32.msi}.  This can be double-clicked to be installed,
+@file{R-2.6.0-win32.msi}.  This can be double-clicked to be installed,
 but those who need it will know what to do with it.
 
 Thanks to David del Campo (Dept of Statistics, University of Oxford)
@@ -1102,28 +1106,39 @@ It is possible to cross-build @R{} or packages on (at least)
 cross-compilers have also been used successfully on @cputype{x86_64}
 Linux.
 
+The preferred build environment is to use @command{gcc} 4.2.1: this can
+easily be built from the sources as a cross-compiler, but the
+MinGW-specific patches are not yet stable (and not needed to build @R{}).
+
 You will need suitable cross-compilers installed and in your path.
-There is currently a complete set of tools at
-@url{http://www.stats.ox.ac.uk/pub/Rtools/i586-cross-tools.tar.bz2,
-@code{www.stats.ox.ac.uk/pub/Rtools/mingw-cross5.tar.bz2}} (Just
-unpack this somewhere and put its @file{bin} directory in your path.)
-It is also straightforward to build a set of cross-compilers via the
-scripts available at
+There is currently a complete set of tools based on @command{gcc} 3.4.5
+at @url{http://www.stats.ox.ac.uk/pub/Rtools/i586-cross-tools.tar.bz2,
+@code{www.stats.ox.ac.uk/pub/Rtools/mingw-cross5.tar.bz2}} (Just unpack
+this into a directory somewhere and put its @file{bin} directory in your
+path.)  It is also straightforward to build a set of cross-compilers via
+the scripts available at
 @url{http://sourceforge.net/forum/forum.php?forum_id=632611}.
+Cross-compilers based on both @command{gcc 3} and @command{gcc 4} are
+supported: the flavour is selected by the macro @code{CROSS-GCC}.
 
-You will need Perl, @command{zip} and @command{unzip} installed and
-@command{makeinfo} version 4.7 or later (part of GNU @code{texinfo}).
+You will need Perl, @command{zip} and @command{unzip} installed and (to
+make the manuals) @command{makeinfo} version 4.7 or later (part of GNU
+@code{texinfo}) as well as @file{texinfo.tex}.
 
-You also need the R source (@file{R-@value{VERSIONno}.tar.gz}).
+You also need the R source (@file{R-@value{VERSIONno}.tar.gz}),
+@file{R_Tcl.zip} and @file{iconv.dll} (see above).
 
-Then: untar @file{R-@value{VERSIONno}.tar.gz} somewhere, and
+Then: untar @file{R-@value{VERSIONno}.tar.gz} somewhere, unpack
+@file{R_Tcl.zip} at the top level and put @file{iconv.dll} in
+@file{src/gnuwin32/unicode}, then
 
 @example
 cd /somewhere/R-@value{VERSIONno}/src/gnuwin32
 @end example
 
-Edit @file{MkRules} to set @code{BUILD=CROSS} and the appropriate
-paths (including @code{HEADER}) as needed.
+Edit @file{MkRules} to set @code{BUILD=CROSS}, @code{CROSS-GCC} as
+appropriate and the appropriate paths (including @code{HEADER} if
+needed).
 
 Edit @file{MkRules} to set the type(s) of help that you want built. (You
 will not be able to cross-build @file{.chm} files, so @code{WINHELP} is
@@ -1164,10 +1179,8 @@ make imagedir
 zip -r9X R-@value{VERSIONno}.zip R-@value{VERSIONno}  # or something similar
 @end example
 
-We have not found a reliable way to convert base to lazy-loading when
-cross-building, so it is left in the old format.  Note too that
-@file{.chm} help files (the default for a vanilla binary installation)
-will not be made when cross-building.
+Note that @file{.chm} help files (the default for a vanilla binary
+installation) will not be made when cross-building.
 
 Also based on this facility is
 @url{http://cran.r-project.org/doc/contrib/Makefile-rcb,
@@ -1311,8 +1324,8 @@ ensures that only package @pkg{base} is loaded.
 
 Changing the set of default packages is normally used to reduce the set
 for speed when scripting: in particular not using @pkg{methods} will
-typically halve the start-up time.  But it can also be used to customize
-@R{}, e.g.@: for class use.
+reduce the start-up time by a factor of three or more.  But it can also
+be used to customize @R{}, e.g.@: for class use.
 
 
 @node Managing libraries, Installing packages, Default packages, Add-on packages
@@ -1335,13 +1348,13 @@ the current collection.
 @cindex Site libraries
 As from @R{} 2.5.0 @R{} will automatically make use of a site-specific
 library @file{R_HOME/site-library} if this exists (it does not in a
-vanilla @R{} installation).  This location cna be overridden by
+vanilla @R{} installation).  This location can be overridden by
 setting@footnote{its binding is looked once that files has been read,
 so users cannot easily change it.} @samp{.Library.site} in
 @file{R_HOME/etc/Rprofile.site}, or (not recommended) by setting the
 @enindex R_LIBS_SITE
 environment variable @env{R_LIBS_SITE}.  Like @samp{.Library}, the
-site libraries are always include by @samp{.libPaths()}.
+site libraries are always included by @samp{.libPaths()}.
 
 @cindex Libraries, user
 @cindex User libraries
@@ -1370,7 +1383,7 @@ library paths, separated by colons (semicolons on Windows).
 
 Packages may be distributed in source form or compiled binary form.
 Installing source packages requires that compilers and tools (including
-Perl 5.004 or later) be installed.  Binary packages are
+Perl 5.8.0 or later) be installed.  Binary packages are
 platform-specific and generally need no special tools to install, but
 see the documentation for your platform for details.
 
@@ -1551,9 +1564,6 @@ of @code{$HOME}.)  For the record, the order of precedence is (last wins)
 @file{MakeDll} and @file{MkRules}
 
 @item
-@file{src/Makefile}
-
-@item
 @file{src/Makevars.win} if it exists, otherwise @file{src/Makevars}
 
 @item
@@ -1561,13 +1571,9 @@ of @code{$HOME}.)  For the record, the order of precedence is (last wins)
 @file{$HOME/.R/Makevars}.
 
 @item
-@file{src/Makefile.win} if present causes all of the above to be ignored.
+@file{src/Makefile.win} if present causes all but the last of the above
+to be ignored.
 @end itemize
-
-@strong{Beware}: files @file{src/Makefile} or @file{src/Makevars} will
-be used if they exist and the @file{.win} equivalents do not.  Such
-files included in package sources are usually designed for use under
-Unix and are best removed.
 
 @strong{Beware}: references to variables in @file{R.dll} are converted to the
 right form by using the header files.  You must include them.
@@ -1919,7 +1925,7 @@ See @url{http://developer.r-project.org/Translations.html,
 @code{developer.r-project.org/@/Translations.html}} for how to prepare
 and install translation catalogues.
 
-@node Choosing between 32- and 64-bit builds, Essential and useful other programs under Unix, Internationalization, Top
+@node Choosing between 32- and 64-bit builds, The standalone Rmath library, Internationalization, Top
 @chapter Choosing between 32- and 64-bit builds
 
 @menu
@@ -2002,7 +2008,198 @@ do not work in the same way as the MinGW compilers so extensive changes
 to the build system would be needed.  Also, end users would need to have
 the same compilers to install extension packages.}
 
-@node Essential and useful other programs under Unix, Configuration on Unix, Choosing between 32- and 64-bit builds, Top
+
+@node The standalone Rmath library, Essential and useful other programs under Unix, Choosing between 32- and 64-bit builds, Top
+@chapter The standalone Rmath library
+
+The routines supporting the distribution and
+special@footnote{e.g. Bessel, beta and gamma function} functions in @R{}
+and a few others are declared in C header file @file{Rmath.h}.  These
+can be compiled into a standalone library for linking to other
+applications.  (Note that they are not a separate library when @R{} is
+built, and the standalone version differs in several ways.)
+
+The makefiles and other sources needed are in directory
+@file{src/nmath/standalone}, so the following instructions assume that
+is the current working directory (in the build directory tree on Unix if
+that is separate from the sources).
+
+@file{Rmath.h} contains @samp{R_VERSION_STRING}, which is a character
+string containing the current @R{} version, for example @code{"2.6.0"}.
+
+There is full access to @R{}'s handling of @code{NaN}s, @code{Inf} and
+@code{-Inf} via special versions of the macros and functions
+
+@example
+    ISNAN, R_FINITE, R_log, R_pow and R_pow_di
+@end example
+
+@noindent
+and (extern) constants @code{R_PosInf}, @code{R_NegInf} and @code{NA_REAL}.
+
+There is no support for @R{}'s notion of missing values, in particular
+not for @code{NA_INTEGER} nor the distinction between @code{NA} and
+@code{NaN} for doubles.
+
+A little care is needed to use the random-number routines. You will
+need to supply the uniform random number generator 
+
+@example
+    double unif_rand(void)
+@end example
+
+@noindent
+or use the one supplied (and with a shared library or DLL you will
+have to use the one supplied, which is the Marsaglia-multicarry with
+an entry point
+
+@example
+    set_seed(unsigned int, unsigned int)
+@end example
+
+@noindent
+to set its seeds).
+
+The facilties to change the normal random number generator are
+available through the constant N01_kind. This takes values
+from the enumeration type
+
+@example
+typedef enum @{
+    BUGGY_KINDERMAN_RAMAGE,
+    AHRENS_DIETER,
+    BOX_MULLER,
+    USER_NORM,
+    INVERSION,
+    KINDERMAN_RAMAGE
+@} N01type;
+@end example
+
+@noindent
+(and @samp{USER_NORM} is not available).
+
+
+@menu
+* Unix standalone::             
+* Windows standalone::          
+@end menu
+
+@node Unix standalone, Windows standalone, The standalone Rmath library, The standalone Rmath library
+@section Unix
+
+If @R{} has not already be made in the directory tree,
+@command{configure} must tbe run as described in the main build
+instructions.
+
+Then
+
+@example
+make
+@end example
+
+will make standalone libraries @file{libRmath.a} and @file{libRmath.so}.
+@samp{make static} and @code{make shared} will create just one of them.
+
+@strong{NB:} certain compilers are unable to do compile-time IEEE-754
+arithmetic and so cannot compile @file{mlutils.c} and several other
+files.  The known example is earlier versions of Sun's @code{cc}
+(e.g. Forte 6 and 7): the Sun Studio 11 suite does work.
+
+
+To use the routines in your own C or C++ programs, include
+
+@example
+#define MATHLIB_STANDALONE
+#include <Rmath.h>
+@end example
+
+and link against @code{-lRmath} (and @code{-lm} if needed on your OS).
+The example file @file{test.c} does nothing useful, but is provided to
+test the process (via @command{make test}.  Note that you will probably
+not be able to run it unless you add the directory containing
+@file{libRmath.so} to the @env{LD_LIBRARY_PATH} environment variable.
+
+The targets
+
+@example
+make install
+make uninstall
+@end example
+
+@noindent
+will (un)install the header @file{Rmath.h} and shared and static
+libraries (if built).  Both @code{prefix=} and @env{DESTDIR} are
+supported, together with more precise control as described for the main
+build.
+
+@samp{make install} installs a file for @command{pkg-config} to use by
+e.g.
+
+@example
+$(CC) pkg-config --cflags libRmath` -c test.c
+$(CC) `pkg-config --libs libRmath` test.o -o test
+@end example
+
+On some systems @samp{make install-strip} will install a stripped shared
+library.
+
+
+
+@node Windows standalone,  , Unix standalone, The standalone Rmath library
+@section Windows
+
+You need to set up almost all the tools to make @R{} and then run
+
+@example
+(cd ../../include; make -f Makefile.win config.h Rconfig.h Rmath.h)
+make -f Makefile.win
+@end example
+
+@noindent
+This creates a static library @file{libRmath.a} and a DLL
+@file{Rmath.dll}.  If you want an import library @file{libRmath.dll.a}
+(you don't need one), use
+
+@example
+make -f Makefile.win shared implib
+@end example
+
+To use the routines in your own C or C++ programs, include
+
+@example
+#define MATHLIB_STANDALONE
+#include <Rmath.h>
+@end example
+
+and link against @code{-lRmath}.  This will use the first found of
+@file{libRmath.dll.a}, @file{libRmath.a} and @file{Rmath.dll} in that
+order, so the result depends on which files are present.  You should be
+able to force static or dynamic linking  @emph{via}
+
+@example
+-Wl,-Bstatic -lRmath -Wl,dynamic
+-Wl,-Bdynamic -lRmath
+@end example
+
+or by linking to explicit files (as in the @samp{test} target in
+@file{Makefile.win}: this makes two executable @file{test.exe} which is
+dynamically linked, and @code{test-static}, which is statically
+linked).
+
+If you make use of dynamic linking you should use
+
+@example
+#define MATHLIB_STANDALONE
+#define RMATH_DLL
+#include <Rmath.h>
+@end example
+
+@noindent
+to ensure that the constant like @code{NA_REAL} are linked correctly.
+(Auto-import will probably work, but it is better to be sure.)
+
+
+@node Essential and useful other programs under Unix, Configuration on Unix, The standalone Rmath library, Top
 @appendix Essential and useful other programs under Unix
 
 This appendix gives details of programs you will need to build @R{} on
@@ -2031,14 +2228,11 @@ compiler should be @acronym{IEC}@tie{}60059@footnote{also known as
 possible.  @R{} tries to choose suitable flags for the C compilers it
 knows about, but you may have to set @code{CC} or @code{CFLAGS}
 suitably.  For recent versions of @command{gcc} with @code{glibc} this
-means including @option{-std=gnu99} (@option{-std=c99} excludes POSIX
-functionality).  If the compiler is detected as @command{gcc},
-@code{-std=gnu99} will be appended to @code{CC} unless it conflicts with
-a setting of @code{CFLAGS}.  (For future versions of @command{gcc} this
-may cause problems with the semantics of @code{inline} for various
-OSes: these may fixed by including in @code{CFLAGS} the flag
-@option{-fgnu89-inline} which will be available as from @command{gcc
-4.2.0}.)
+means including @option{-std=gnu99}@footnote{@option{-std=c99}
+excludes POSIX functionality, but @file{config.h} will turn on all GNU
+extensions include the POSIX functuonality.}.  If the compiler is
+detected as @command{gcc}, @code{-std=gnu99} will be appended to
+@code{CC} unless it conflicts with a setting of @code{CFLAGS}.
 
 Unless you do not want to view graphs on-screen you need @samp{X11}
 installed, including its headers and client libraries.  (On Fedora
@@ -2070,18 +2264,23 @@ This is regarded as essential from @R{} 2.5.0: if you do not have it
 will need to configure with @option{--without-iconv} (or equivalent),
 and @command{make check} (and other checks) are likely to fail.
 
-You will need Perl version 5.004 or later, available via
+You will need Perl version 5.8.0 or later, available via
 @url{http://www.perl.com/CPAN/, @code{www.perl.com/CPAN}}, to build any
 of the on-line documentation.
 
-You will not be able to build the info files unless you have
+You will not be able to build the manuals unless you have
 @command{makeinfo} version 4.7 or later installed, and if not some of
 the @HTML{} manuals will be linked to @acronym{CRAN}.  (Version 4.6 is
-known to create incorrect @HTML{} files.)
+known to create incorrect @HTML{} files.)  To make DVI or PDF versions
+of the manuals you will also need @file{texinfo.tex} installed (which is
+part of the GNU @samp{texinfo} distribution but is often made part of
+the TeX package in re-distributions) as well as @command{texi2dvi} (part of
+the GNU @pkg{texinfo} distribution).
+
 
 @cindex Vignettes
-The typeset documentation and building vignettes needs @command{tex} and
-@command{latex}, or @command{pdftex} and @command{pdflatex}.
+The DVI and PDF documentation and building vignettes needs @command{tex}
+and @command{latex}, or @command{pdftex} and @command{pdflatex}.
 
 If you want to build from the R Subversion repository you need Perl,
 @command{makeinfo} and @command{pdflatex}.
@@ -2329,9 +2528,10 @@ the source files} when building from source, and
 @node ACML, Goto BLAS, ATLAS, BLAS
 @subsubsection ACML
 
-For @cputype{x86_64} and @cputype{ix86} processors under Linux there is
-the AMD Core Math Library (ACML) @url{http://www.amd.com/acml,
-@code{www.amd.com/acml}}.  For the @command{gcc} version we could use
+For @cputype{x86_64} and @cputype{ix86} processors under Linux and
+Solaris 10 there is the AMD Core Math Library (ACML)
+@url{http://www.amd.com/acml, @code{www.amd.com/acml}}.  For the
+@command{gcc} version we could use
 
 @example
 --with-blas="-lacml"
@@ -2340,18 +2540,17 @@ the AMD Core Math Library (ACML) @url{http://www.amd.com/acml,
 @noindent
 if the appropriate library directory (such as
 @enindex LD_LIBRRARY_PATH
-@file{/opt/acml3.6.1/gfortran64/lib}) is in the
-@env{LD_LIBRRARY_PATH}.  For other compilers, see the ACML
-documentation.  Although the documentation is unclear, 32-bit versions
-of ACML do run on other @cputype{ia32} chips such as AthlonMP and P4.
-There is a multithreaded version of ACML available for
-@command{gfortran} which needs @command{gcc} >= 4.2.0.  To make use of
-this you will need something like
+@file{/opt/acml3.6.1/gfortran64/lib}) is in the @env{LD_LIBRRARY_PATH}.
+For other compilers, see the ACML documentation.  Although the
+documentation is unclear, 32-bit versions of ACML do run on other
+@cputype{ia32} chips such as AthlonMP and P4.  There is a multithreaded
+Linux version of ACML available for @command{gfortran} which needs
+@command{gcc} >= 4.2.0 (or possibly some RedHat versions of 4.1.1 or
+4.1.2).  To make use of this you will need something like
 
 @example
 --with-blas="-L/opt/acml3.6.1/gfortran64_mp/lib -lacml_mp"
 @end example
-
 
 See @pxref{Shared BLAS} for an alternative way to use ACML.
 
@@ -2472,11 +2671,11 @@ appropriate @file{lib} directory is in the run-time library path or
 Provision is made for using an external LAPACK library, principally to
 cope with BLAS libraries which contain a copy of LAPACK (such as
 @code{libsunperf} on Solaris, @code{vecLib} on Mac OS X and ACML on
-@cputype{ix86}/@cputype{x86_64} Linux).  However, the likely performance
-gains are thought to be small (and may be negative), and the default is
-not to search for a suitable LAPACK library, and this is definitely
-@strong{not} recommended.  You can specify a specific LAPACK library or
-a search for a generic library by the configuration option
+@cputype{ix86}/@cputype{x86_64} Linux and Solaris).  However, the likely
+performance gains are thought to be small (and may be negative), and the
+default is not to search for a suitable LAPACK library, and this is
+definitely @strong{not} recommended.  You can specify a specific LAPACK
+library or a search for a generic library by the configuration option
 @option{--with-lapack}.  The default for @option{--with-lapack} is to
 check the BLAS library and then look for an external library
 @code{-llapack}.  Sites searching for the fastest possible linear
@@ -2775,6 +2974,8 @@ To build in a separate directory you need a @command{make} that uses the
 @code{VPATH} variable, for example @acronym{GNU} @command{make}, or Sun
 @command{make} on Solaris 2.7 or later.
 
+@command{dmake} has also been used. e.g,@: on Solaris 10.
+
 If you want to use a @command{make} by another name, for example if your
 @acronym{GNU} @command{make} is called @samp{gmake}, you need to set the
 variable @code{MAKE} at configure time, for example
@@ -2862,7 +3063,7 @@ appropriately.
 
 @command{gfortran} is the F95 compiler that is part of
 @command{gcc}@tie{}4.@var{x}.@var{y}.  There were problems compiling
-@R{} with the first release (@command{gcc}@tie{}4.0.0) and more
+@R{} with the first release (@command{gcc}@tie{}4.0.0) and more with
 pre-releases, but these are resolved in later versions.
 
 On Linux @cputype{x86_64} systems there is an incompatibility in the
@@ -2975,6 +3176,7 @@ of compilers and support libraries.
 * Alpha/OSF1::                  
 * Alpha/FreeBSD::               
 * AIX::                         
+* Cygwin::                      
 * New platforms::               
 @end menu
 
@@ -3151,6 +3353,31 @@ It has been reported that using @command{gcc}@tie{}4.0.3 on
 @cputype{ppc64} needed the compiler flag @option{-mminimal-toc} to avoid
 errors when linking @R{} as a shared library.
 
+To build a 64-bit version of @R{} on @cputype{ppc64} (also known as
+@cputype{powerpc64}) with @command{gcc}@tie{}4.1.1, Ei-Ji Nakama used
+
+@example
+CC="gcc -m64"
+CXX="gxx -m64"
+F77="gfortran -m64"
+FC="gfortran -m64"
+CFLAGS="-mminimal-toc -fno-optimize-sibling-calls -g -O2"
+FFLAGS="-mminimal-toc -fno-optimize-sibling-calls -g -O2"
+@end example
+
+@noindent
+the additional flags being needed to problems linking against
+@file{libnmath.a} and when linking @R{} as a shared library.
+
+@menu
+* Intel compilers::             
+* PGI compilers::               
+* SunPro compilers::            
+@end menu
+
+@node Intel compilers, PGI compilers, Linux, Linux
+@subsection Intel compilers
+
 Intel compilers have been used under @cputype{ix86} and @cputype{x86_64}
 Linux and @R{} contains code to set the FPU options suitably.  Brian
 Ripley tried version 9.0 of the compilers for @cputype{ix86} on
@@ -3159,10 +3386,11 @@ Fedora Core 3 @emph{via}
 @example
 CC=icc
 F77=ifort
-CXX=icc
+CXX=icpc
 ICC_LIBS=/opt/compilers/intel/cc/9.0/lib
 IFC_LIBS=/opt/compilers/intel/fc/9.0/lib
 LDFLAGS="-L$ICC_LIBS -L$IFC_LIBS -L/usr/local/lib"
+SHLIB_CXXLD=icpc
 @end example
 
 @noindent
@@ -3172,14 +3400,17 @@ optimization.  For @cputype{x86_64} on Fedora Core 5 he used
 
 @example
 CC=icc
-CFLAGS="-g -O3 -wd188"
+CFLAGS="-g -O3 -wd188 -ip"
 F77=ifort
 FLAGS="-g -O3"
-CXX=icc
+CXX=icpc
+CXXFLAGS="-g -O3"
 FC=ifort
+FCFLAGS="-g -O3 -mp"
 ICC_LIBS=/opt/compilers/intel/cce/9.1.039/lib
 IFC_LIBS=/opt/compilers/intel/fce/9.1.033/lib
 LDFLAGS="-L$ICC_LIBS -L$IFC_LIBS -L/usr/local/lib64"
+SHLIB_CXXLD=icpc
 @end example
 
 @noindent
@@ -3195,6 +3426,10 @@ For some comments on building on an Itanium (@cputype{ia64}) Linux
 system with @command{gcc} or the Intel compilers see
 @url{http://www.nakama.ne.jp/memo/ia64_linux/,
 @code{www.nakama.ne.jp/memo/ia64_linux}}.
+
+
+@node PGI compilers, SunPro compilers, Intel compilers, Linux
+@subsection PGI compilers
 
 Jennifer Lai used the Portland Group compilers on @cputype{x86_64} to
 build pre-2.2.0.  Updated versions of the settings she used are
@@ -3222,21 +3457,39 @@ compliance to IEC60659.  Also,
 @url{http://@/www.amd.com/@/us-en/@/assets/@/content_type/@/DownloadableAssets/@/dwamd_PGI_nov603.pdf}
 suggests that @option{-pc64} may be desirable.
 
-To build a 64-bit version of @R{} on @cputype{powerpc64} with
-@command{gcc 4.1.1}, Ei-Ji Nakama used
+@node SunPro compilers,  , PGI compilers, Linux
+@subsection SunPro compilers
+
+Brian Ripley tested the SunPro Studio 12 compilers
+(@uref{http://developers.sun.com/sunstudio/index.jsp}) on
+@cputype{x86_64} Linux with
 
 @example
-CC="gcc -m64"
-CXX="gxx -m64"
-F77="gfortran -m64"
-FC="gfortran -m64"
-CFLAGS="-mminimal-toc -fno-optimize-sibling-calls -g -O2"
-FFLAGS="-mminimal-toc -fno-optimize-sibling-calls -g -O2"
+CC=cc
+CFLAGS="-xO5 -xc99 -xlibmil -nofstore"
+CPICFLAGS=-Kpic
+F77=f95
+FFLAGS="-O5 -libmil -nofstore"
+FPICFLAGS=-Kpic
+CXX=CC
+CXXFLAGS="-xO5 -xlibmil -nofstore"
+CXXPICFLAGS=-Kpic
+FC=f95
+FCFLAGS=$FFLAGS
+FCPICFLAGS=-Kpic
+LDFLAGS=-L/opt/sunstudio12/lib/amd64
+SHLIB_LDFLAGS=-shared
+SHLIB_CXXLDFLAGS="-G -lCstd"
+SHLIB_FCLDFLAGS=-G
+SAFE_FFLAGS="-O5 -libmil"
 @end example
 
 @noindent
-the additional flags being needed to problems linking against
-@file{libnmath.a}.
+@code{-m64} could be added, but was the default.  Do not use
+@code{-fast}: see the warnings under Solaris.
+
+The resulting build of @R{} was not quite as fast as that built with
+@command{gcc}@tie{}4.2.1 at @code{-O3}.
 
 
 @node Mac OS X, Solaris, Linux, Platform notes
@@ -3298,12 +3551,13 @@ with @command{gcc}@tie{}3.3 and later.
 @node Solaris 10 and Open Solaris, Sparc Solaris 9 and earlier, Solaris, Solaris
 @subsection Solaris 10 and Open Solaris
 
-@R{} has been built successfully on Sparc Solaris 10 using
-@command{gcc}@tie{}3/@command{g77},
-@command{gcc}@tie{}4/@command{gfortran} and the (free) Sun Studio 11
-compilers.  Sun packages are available from
-@uref{http://www.sunfreeware.com/} for both Sparc and
-@cputype{x86} (and for earlier versions of Solaris).
+@R{} has been built successfully on Solaris 10 (both Sparc and
+@cputype{x86}) using @command{gcc}@tie{}3/@command{g77},
+@command{gcc}@tie{}4/@command{gfortran} and the (free) Sun Studio 11/12
+compilers.  Sun packages for @R{} are available from
+@uref{http://www.sunfreeware.com/} for both architectures.  (Recent Sun
+machines are Opterons (@cputype{x86-64}) rather than @cputype{x86}, but
+32-bit @cputype{x86} executables are the default.)
 
 There are also reports of success on OpenSolaris (aka Solaris Express
 Community Edition, and sometimes as Solaris 11) on @cputype{x86}.
@@ -3317,20 +3571,22 @@ Modern Solaris systems allow a large selection of Open Source software
 to be installed via @command{pkg-get}: a Sparc Solaris 10 system came
 with @code{libreadline} and @code{libiconv} and a choice of @code{gcc3}
 and @code{gcc4} compilers, installed under @file{/opt/csw}.  (You will
-need @code{libiconv}: the Solaris version of @code{iconv} is not
+need GNU @code{libiconv}: the Solaris version of @code{iconv} is not
 sufficiently powerful.)
 
 If using @command{gcc}, do ensure that the compiler was compiled for the
 version of Solaris in use.  (This can be ascertained from @command{gcc
 -v}.)  @command{gcc} makes modified versions of some header files, and
 several reports of problems were due to using @command{gcc} compiled on
-one version of Solaris on a later version.
+one version of Solaris on a later version.  A version of @command{gcc}
+optimized for Sparc (using technology from Sun's compilers) is available
+from Sun.@footnote{@url{http://www.sun.com/download/index.jsp?cat=Application%20Development&tab=3&subcat=Development%20Tools}}
 
-When using the Sun compilers do @emph{not} specify @option{-fast}, as
-this disables @acronym{IEEE} arithmetic and @command{make check} will
-fail.
+When using the Sun compilers@footnote{including @command{gcc} for Sparc
+from Sun.} do @emph{not} specify @option{-fast}, as this disables
+@acronym{IEEE} arithmetic and @command{make check} will fail.
 
-To compile for a 64-bit target with @command{gcc}@tie{}4 we used
+To compile for a 64-bit Sparc target with @command{gcc}@tie{}4 we used
 
 @example
 CC="gcc -m64"
@@ -3347,33 +3603,68 @@ be in the
 @enindex LD_LIBRARY_PATH
 @env{LD_LIBRARY_PATH} during configuration.
 
-For the Sun Studio 11 compilers a little juggling of paths is needed to
+For the Sun Studio compilers a little juggling of paths is needed to
 ensure GNU @code{libiconv} is used rather than the Solaris @code{iconv}:
 we used
 
 @example
 CC="cc -xc99"
 CPPFLAGS=-I/opt/csw/include
-CFLAGS=-O
+CFLAGS="-O -xlibmieee"
 F77=f95
 FFLAGS=-O4
 CXX=CC
 CXXFLAGS=-O
 FC=f95
-FCFLAGS=-O4
+FCFLAGS=$FFLAGS
 LDFLAGS=-L/opt/csw/lib
+SHLIB_CXXLDFLAGS=-G -lCstd
 @end example
 
 @noindent
 to ensure that the @code{libiconv} version of @file{iconv.h} was found.
-For a 64-bit target add @code{-xarch=v9} (or @code{v9b}) to each of the
-compiler commands.
+For a 64-bit target add @code{-xarch=v9} (or @code{v9b}, or
+@code{amd64}) to each of the compiler commands, or for Sun Studio 12 add
+@code{-m64}.  You can target specific Sparc architectures for (slightly)
+higher performance: Sun recommend
+
+@example
+32-bit: -xtarget=ultra3 -xarch=v8plusa
+64-bit: -xtarget=ultra3 -xarch=v9a
+@end example
+
+@noindent
+(in @code{CFLAGS} etc.) as a good compromise for recent Sparc chipsets.
+
+By default the Sun Studio compilers do not conform to the C99 standard
+(appendix F 8.9) on the return values of functions such as @code{log}:
+use @code{-xlibmieee} to ensure this.
+
+On @cputype{x86} you will get marginally higher performance @emph{via}
+
+@example
+CFLAGS="-xO5 -xc99 -xlibmieee -xlibmil -nofstore"
+FFLAGS="-O5 -libmil -nofstore"
+CXXFLAGS="-xO5 -xlibmil -nofstore"
+SAFE_FFLAGS="-O5 -libmil -fstore"
+@end example
+
+
+Building on @cputype{x86} with @command{gcc}@tie{}4 failed @command{make
+check} in the complex LAPACK tests: using Sun Studio 11 worked
+correctly.
+
+There is limited support for @cputype{x86-64} builds in the pre-built
+GNU software repositories, with 64-bit libraries (which are in
+@file{/opt/csw/lib/amd64} and so on) being scarce (and not including the
+@command{gcc} support libraries).  The Sun Studio compilers do support
+64-bit builds via @code{-xarch=amd64}.
 
 @cindex BLAS library
 @cindex LAPACK library
 
 The Sun performance library @code{libsunperf} is available with the Sun
-Studio 11 compilers.  If selected as a BLAS, it must also be selected as
+Studio compilers.  If selected as a BLAS, it must also be selected as
 LAPACK via
 
 @example
@@ -3381,15 +3672,20 @@ LAPACK via
 @end example
 
 @noindent
-However, our tests were none too successful: 64-bit builds crashed, and
-32-bit builds needed @samp{HAVE_WORKING_LOG} unset in @file{config.h} as
-whereas the @code{log} in Solaris' @code{libm} works correctly, that in
-@code{libsunperf} is found (and does not).
+However, our tests were none too successful: Sparc 64-bit builds
+crashed.
+
 
 @node Sparc Solaris 9 and earlier,  , Solaris 10 and Open Solaris, Solaris
 @subsection Sparc Solaris 9 and earlier
 
-@R{} 2.5.0 was built successfully on Sparc Solaris 8 (aka Solaris 2.8
+These are now obsolete operating systems, so this subsection refers to
+equally old compiler versions.
+
+Sun packages for @R{} are available from
+@uref{http://www.sunfreeware.com/} for both Sparc and @cputype{x86}.
+
+@R{} 2.5.1 was built successfully on Sparc Solaris 8 (aka Solaris 2.8
 aka SunOS 5.8) using @command{gcc}@tie{}3/@command{g77},
 @command{gcc}@tie{}4/@command{gfortran} and the `Sun ONE Studio 7
 Compiler Suite' (aka Forte@tie{}7).
@@ -3428,7 +3724,8 @@ Solaris 8 is
 
 @noindent
 (@cputype{x86} versions do not need @samp{-dalign}, and some do not
-support it.)
+support it.)  To get correct results for @code{log} requires
+@code{-xlibmieee}, but @R{} works around that.
 
 We have found little performance difference between @command{gcc} and
 @command{cc} but considerable benefit from using a SunPro Fortran
@@ -3698,19 +3995,18 @@ rather than suppressing them entirely.  Advice on how to complete this
 port would be greatly appreciated.
 
 
-@node AIX, New platforms, Alpha/FreeBSD, Platform notes
+@node AIX, Cygwin, Alpha/FreeBSD, Platform notes
 @section AIX
 @cindex AIX
 
 We no longer support AIX prior to 4.2, and @command{configure} will
-throw an error on such systems.  The only recent testing has been under
-AIX 5.2 on @cputype{powerpc}, where Ei-ji Nakama was able to build
-pre-2.5.0 with @command{gcc 4.0.3} in several configurations.
+throw an error on such systems.  The recent testing has been under AIX
+5.2 on @cputype{powerpc}, where Ei-ji Nakama was able to build pre-2.5.0
+with @command{gcc 4.0.3} in several configurations.
 
 Mr Nakama found 32-bit versions of @R{} could be built with
-@command{configure --without-iconv} as well as @option{--enable-R-shlib}
-and @option{--enable-R-shlib --enable-BLAS-shlib}.  For 64-bit versions
-he used
+@command{configure --without-iconv} as well as
+@option{--enable-R-shlib}.  For 64-bit versions he used
 
 @example
 OBJECT_MODE=64
@@ -3734,11 +4030,50 @@ FLIBS="-L/opt/ofort90/lib -lhf90vecmath -lhf90math -lf90"
 @end example
 
 The AIX native @code{iconv} does not support encodings @samp{latin1} nor
-@samp{""} and so cannot be used.  (GNU @code{libiconv} appears to
-conflict with the native iconv which is used by X11.)
+@samp{""} and so cannot be used.  (As far as we know GNU @code{libiconv}
+could be installed.)
+
+@node Cygwin, New platforms, AIX, Platform notes
+@section Cygwin
+
+The Cygwin emulation layer on Windows can be treated as a Unix-alike OS.
+This is unsupported, but experiments have been conducted and a few
+workarounds added for @R{} 2.6.0.
+
+Only building as a shared library works,@footnote{DLLs need to have all
+links resolved at build time and so cannot resolve against
+@file{R.bin}.} so use
+
+@example
+./configure --disable-nls --disable-mbcs --enable-R-shlib
+make
+@end example
+
+@noindent
+MBCS does not work---@code{wcstod} is missing---but would only be of any
+use in a CJK locale.  NLS does work, although
+@option{--with-included-gettext} is preferable.  You will see many
+warnings about the use of auto-import.
+
+It almost passes @command{make check}: FIFOs are supposedly supported
+but hung in @samp{example(fifo)}.
+
+Note that this gives you a command-line application using @pkg{readline}
+for command editing.  The @samp{X11} graphics device will work if a
+suitable X server is running, and the standard Unix-alike ways of
+installing source packages work.  There was a bug in the
+@file{/usr/lib/tkConfig.sh} script in the version we looked at, which
+needs to have
+
+@example
+TK_LIB_SPEC='-ltk84'
+@end example
+
+The overhead of using shell scripts makes this noticeably slower than a
+native build of @R{} on Windows.
 
 
-@node New platforms,  , AIX, Platform notes
+@node New platforms,  , Cygwin, Platform notes
 @section New platforms
 
 There are a number of sources of problems when installing @R {} on a new
@@ -3915,15 +4250,18 @@ substitute for the Java search.
 @node The Windows toolset, Function and variable index, Enabling search in HTML help, Top
 @appendix The Windows toolset
 
-If you want to build @R{} or add-on packages from source in Windows,
-you will need to collect, install and test an extensive set of tools.
-See @url{http://www.murdoch-sutherland.com/Rtools/, @code{www.murdoch-
-sutherland.com/Rtools}} for the current locations and other updates to
-these instructions.  (Most Windows users will not need to build add-on
-packages from source; see @ref{Add-on packages} for details.)
+If you want to build @R{} or add-on packages from source in Windows, you
+will need to collect, install and test an extensive set of tools.  See
+@url{http://www.murdoch-sutherland.com/Rtools/,
+@code{www.murdoch-sutherland.com/Rtools}} for the current locations and
+other updates to these instructions.  (Most Windows users will not need
+to build add-on packages from source; see @ref{Add-on packages} for
+details.)
 
-There are known problems with this toolset on Windows Vista and
-especially Vista 64, so those are not currently supported.
+There are known problems with one of the compilers sets in this toolset
+on Windows Vista: see the workaround below. (With that workaround it has
+been used on both 32- and 64-bit versions of Vista: the recommended
+@command{gcc 4.2.1} does not need the workaround.)
 
 We have found that the build process for @R{} is quite sensitive to
 the choice of tools: please follow our instructions @strong{exactly},
@@ -3937,18 +4275,19 @@ substituting other tools once you are familiar with the process.
 here as a result of bitter experience.  Please do not report problems
 to R-help unless you have followed all the prescriptions.}
 
-We have collected some of the necessary tools (unfortunately not all,
+We have collected most of the necessary tools (unfortunately not all,
 due to license or size limitations) into an executable installer named
-@file{Rtools.exe}, available from @url{http://www.murdoch-
-sutherland.com/Rtools}. You should download and run it, choosing the
-default ``Package authoring installation'' to build add-on packages,
-or the ``full installation'' if you intend to build @R{}.
+@file{Rtools.exe}, available from
+@url{http://www.murdoch-sutherland.com/Rtools}. You should download and
+run it, choosing the default ``Package authoring installation'' to build
+add-on packages, or the ``full installation'' if you intend to build
+@R{}.
 
 You will need the following items to build @R{} and packages.
 See the subsections below for detailed descriptions.
 @itemize
 @item
-Perl
+Perl (in @file{Rtools.exe})
 @item
 The command line tools (in @file{Rtools.exe})
 @item
@@ -3969,15 +4308,18 @@ The Microsoft @HTML{} Help Workshop
 The Inno Setup installer
 @end itemize
 
-It is important to set your @env{PATH} properly.
-Your @env{PATH} may include @file{.} first, then the @file{bin} directories
-of the tools, Perl, MinGW and @LaTeX{}, as well as the Help Workshop
-directory.  Do not use filepaths containing spaces or on network shares
-(starting @code{\\}): you can always use the short forms (found by
-@code{dir /x} at the Windows command line).  For example, all on one line,
+It is important to set your @env{PATH} properly.  The @file{Rtools.exe}
+optionally sets the path to components that it installs.
+
+Your @env{PATH} may include @file{.} first, then the @file{bin}
+directories of the tools, Perl, MinGW and @LaTeX{}, as well as the Help
+Workshop directory.  Do not use filepaths containing spaces: you can
+always use the short forms (found by @code{dir /x} at the Windows
+command line).  Network shares (with paths starting @code{\\}) are not
+supported.  For example, all on one line,
 
 @example
-PATH=c:\Rtools\bin;c:\perl\bin;c:\Rtools\MinGW\bin;c:\texmf\miktex\bin;
+PATH=c:\Rtools\bin;c:\Rtools\perl\bin;c:\Rtools\MinGW\bin;c:\texmf\miktex\bin;
      c:\progra~1\htmhe~1;c:\R\bin;c:\windows;c:\windows\system32
 @end example
 
@@ -3986,6 +4328,15 @@ comes first or second in the path: there are typically like-named
 tools in other directories, and they will @strong{not} work.  The
 ordering of the other directories is less important, but if in doubt,
 use the order above.
+
+On Vista systems when using the @command{gcc 3.4.5} compilers you will
+need to add
+@example
+c:\Rtools\MinGW\libexec\gcc\mingw\3.4.5
+@end example
+
+@noindent
+to the path.
 
 Edit @file{@var{R_HOME}/src/gnuwin32/MkRules} to set the appropriate
 paths as needed and to set the type(s) of help that you want built.
@@ -4013,13 +4364,18 @@ path.
 @node Perl, The Microsoft HTML Help Workshop, The Windows toolset, The Windows toolset
 @section Perl
 
-You will need the Windows port of @code{perl5}.  A package containing
-this is available from
+You will need a Windows port of @code{perl5} (but only the basic
+functionality, not any of the third-party Win32 extensions).  The
+Vanilla Perl package is included in @file{Rtools.exe}. A more full-
+featured distribution is available from
 @url{http://www.activestate.com/Products/ActivePerl/,
-@code{www.activestate.com/@/Products/@/ActivePerl}}.  Perl is @emph{not}
-included in @file{Rtools.exe}.
+@code{www.activestate.com/@/Products/@/ActivePerl}}, and this was used
+in releases of @R{} up to @R{} 2.5.1.  Alternatives are listed at
+@url{http://win32.perl.org, @code{win32.perl.org}}.
 
-@strong{Beware}: you do need the @emph{Windows} port and not the Cygwin one.
+@strong{Beware}: you do need a @emph{Windows} port and not the Cygwin
+one.  Users of 64-bit Windows can use a Win64 Perl (such as that from
+ActiveState) if they prefer.
 
 @node The Microsoft HTML Help Workshop, LaTeX, Perl, The Windows toolset
 @section The Microsoft @HTML{} Help Workshop
@@ -4045,18 +4401,10 @@ will not be needed (but it will be needed for installing packages by
 @section @LaTeX{}
 
 The @samp{MiKTeX} (@url{http://www.miktex.org, @code{www.miktex.org}})
-distribution of @LaTeX{} includes a suitable port of @code{pdftex}, as
-does the @samp{ProText} (@url{http://www.tug.org/protext/,
-@code{www.tug.org/@/protext}}) enhanced version.  We have also used
-the @samp{fptex} distribution (available from any CTAN node such as
-@url{http://www.ctan.org/tex-archive/systems/windows/fptex/,
-@code{www.ctan.org/@/tex-archive/@/systems/@/windows/@/fptex}} and as
-part of TexLive (@url{http://www.tug.org/texlive/,
-@code{www.tug.org/@/texlive}}).  Another actively-maintained version
-is available from
-@url{http://www.fsci.fuk.kindai.ac.jp/kakuto/win32-ptex/,
-@code{www.fsci.fuk.kindai.ac.jp/@/kakuto/@/win32-ptex}}.  The
-@file{Rtools.exe} installer does @emph{not} include any version of
+distribution of @LaTeX{} includes a suitable port of @code{pdftex}.  The
+`basic' version of @samp{MiKTeX} suffices, but it will install the 15Mb
+@samp{lm} package if allowed to (although that is not actually used).
+The @file{Rtools.exe} installer does @emph{not} include any version of
 @LaTeX{}.
 
 @enindex R_RD4DVI
@@ -4069,7 +4417,7 @@ suitably; ensure you have the required fonts installed.
 @section The Inno Setup installer
 
 To make the installer package (@file{@value{RWVERSION}-win32.exe}) we require
-Inno Setup 5.1.7 or later from @url{http://jrsoftware.org,
+Inno Setup 5.1.7 or later (including 5.2.x) from @url{http://jrsoftware.org,
 @code{jrsoftware.org}}.  This is @emph{not} included in @file{Rtools.exe}.
 
 Edit file @file{src/gnuwin32/MkRules} and change @code{ISDIR} to the
@@ -4091,13 +4439,11 @@ from the Cygwin distribution (@url{http://www.cygwin.com,
 @code{www.cygwin.com}}) or compiled from the sources.  You will also
 need @code{zip} and @code{unzip} from the Info-ZIP project
 (@url{http://www.info-zip.org, @code{www.info-zip.org}}).  All of
-these tools are in @file{Rtools.exe}; they are also available at
-@url{http://www.murdoch-sutherland.com/Rtools/tools.zip,
-@code{www.murdoch-sutherland.com/@/Rtools/@/tools.zip}}.
+these tools are in @file{Rtools.exe}.
 
 @strong{Beware}: `Native' ports of make are @strong{not} suitable
 (including that at the mingw site).  There were also problems with
-several earlier versions of the cygwin tools and DLL.  To avoid
+several earlier versions of the cygwin tools and DLLs.  To avoid
 frustration, please use our tool set, and make sure it is at the front
 of your path (including before the Windows system directories).  If you
 are using a Windows shell, type @code{PATH} at the prompt to find out.
@@ -4105,61 +4451,60 @@ are using a Windows shell, type @code{PATH} at the prompt to find out.
 @node The MinGW compilers,  , The command line tools, The Windows toolset
 @section The MinGW compilers
 
-The @file{Rtools.exe} installer includes the currently used version of
-the MinGW port of @command{gcc} from
-@url{http://sourceforge.net/project/showfiles.php?group_id=2435}.  
+This version of @R{} is set up to use @command{gcc} @code{4.2.1} for
+which MinGW compilers were released in August 2007.  For those
+compilers, use the default setting of @code{BUILD=GCC4} in file
+@file{src/gnuwin32/MkRules}.  For earlier MinGW compilers set
+@code{BUILD=GCC3} in file @file{src/gnuwin32/MkRules}.
+
+The @file{Rtools.exe} installer currently includes both versions @code{3.4.5} and
+@code{4.2.1} of the MinGW port of @command{gcc} from
+@url{http://sourceforge.net/project/showfiles.php?group_id=2435}.
 
 If you would like to install your own copy, we recommed downloading from
-the URL above, as the download links from @url{www.mingw.org} currently
-lead to obsolete versions. See the notes on
+the URL above, as the download links from @url{www.mingw.org} have
+led to obsolete versions. See the notes on
 @url{http://www.murdoch-sutherland.com/Rtools/,
 @code{www.murdoch-sutherland.com/@/Rtools}} for updates.
 
-There may be an installer in the `Current' section, which can be used
-if it gives the @samp{Candidate} compilers (@code{gcc-3.4.5}).  (If
-using this, select the @samp{Candidate} package and add the @code{g++}
-and @code{g77} compilers to the @samp{MinGW base tools}: components will
-be downloaded from Sourceforge and unpacked.)
+@c There may be an installer in the `Current' section, which can be used
+@c if it gives the @samp{Candidate} compilers (@code{gcc-3.4.5}).  (If
+@c using this, select the @samp{Candidate} package and add the @code{g++}
+@c and @code{g77} compilers to the @samp{MinGW base tools}: components will
+@c be downloaded from Sourceforge and unpacked.)
 
-An alternative is to download the components individually, currently
+To download the components individually, currently you need
 
 @example
-mingw-runtime-3.12.tar.gz
-w32api-3.9.tar.gz
+mingw-runtime-3.13.tar.gz
+w32api-3.10.tar.gz
 binutils-2.17.50-20060824-1.tar.gz  
-gcc-core-3.4.5-20060117-1.tar.gz
-gcc-g++-3.4.5-20060117-1.tar.gz
-gcc-g77-3.4.5-20060117-1.tar.gz
+gcc-core-4.2.1-sjlj-2.tar.gz
+gcc-g++-4.2.1-sjlj-2.tar.gz
+gcc-gfortran-4.2.1-sjlj-2.tar.gz
 @end example
 
 @noindent
-(and @code{gcc-objc-3.4.5-20060117-1.tar.gz} if you want Objective C support)
-and unpack these into the same directory (using @command{tar zxf
-tarball_name}).  Note that @code{mingw-runtime-3.11.tar.gz} or later is
-required to build @R{}, @code{gcc-g77-3.4.4} or later to build some
-contributed packages, and @code{gcc-3.4.5} is needed to get a correct
-build of @R{} itself.  (The `Snapshot'
-@code{binutils-2.17.50-20070129-1.tar.gz} has also be used.)
+(and @code{gcc-objc-4.2.1-sjlj-2.tar.gz} if you want Objective C
+support).  Unpack these into the same directory (using @command{tar zxf
+tarball_name}).  (You may need to copy @file{bin/gcc-sjlj.exe} to
+@file{bin/gcc.exe} and a few badly-written packages need
+@file{bin/g++-sjlj.exe} copied to @file{bin/g++.exe}.)  This compiler
+should work on Windows Vista without any workarounds.
 
-Note that there are known problems with using this compiler set (and all
-others available at the time of writing) on Windows Vista
+Note that @code{mingw-runtime-3.13.tar.gz} or later and @code{gcc-3.4.5}
+or later are needed to get a correct build of @R{} itself.  (The
+`Snapshot' @code{binutils-2.17.50-20070129-1.tar.gz} has also be
+tested.)  There are known problems with using other compiler sets on
+Windows Vista
 (@url{http://www.nabble.com/environment-hosed-during-upgrade-tf3305745.html#a9195667}
-and that some updates are needed (see the URL above).
+and that a suitable @code{PATH} needs to be set to include the path to
+@file{cc1}.
 
-During the lifetime of this release of @R{} it is likely that
-@command{gcc 4.2.0} and an official MinGW build will be released.
-Unofficial builds from the @code{gcc} trunk were working in April 2007,
-provided @code{mingw-runtime-3.12.tar.gz} was used (and
-@code{BUILD=GFORTRAN} is set in @file{MkRules}).  One such build is
-available from @url{http://gcc.gnu.org/wiki/GFortranBinaries}, and can
-be used when a Fortran 90 compiler is required.  (Another
-MinGW-compatible Fortran 90 compiler is available via
-@url{http://www.g95.org, @code{www.g95.org}}.  Note that these compilers
-are not completely compatible with @code{gcc3} so mixing them with the
-recommended tools is unsupported.)
-
-
-
+Other builds of @command{gcc} 4 are available from
+@url{http://gcc.gnu.org/wiki/GFortranBinaries} and
+@uref{http://www.tdragon.net/recentgcc/}: these need the @code{PATH}
+workaround on Vista.
 
 @node Function and variable index, Concept index, The Windows toolset, Top
 @unnumbered Function and variable index

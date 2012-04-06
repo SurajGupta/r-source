@@ -1,3 +1,8 @@
+% File src/library/utils/man/help.search.Rd
+% Part of the R package, http://www.R-project.org
+% Copyright 1995-2007 R Core Development Team
+% Distributed under GPL 2 or later
+
 \name{help.search}
 \alias{help.search}
 \alias{print.hsearch}
@@ -112,8 +117,5 @@ file.show(file.path(R.home(), "doc", "KEYWORDS"))  # show all keywords
 
 ## Help pages with documented topics starting with 'try'.
 help.search("\\\\btry", fields = "alias")
-## Do not use '^' or '$' when matching aliases or keywords
-## (unless all packages were installed using R 1.7 or newer).
-}
-}
+}}
 \keyword{documentation}

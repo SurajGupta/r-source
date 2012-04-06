@@ -1,3 +1,8 @@
+% File src/library/datasets/man/discoveries.Rd
+% Part of the R package, http://www.R-project.org
+% Copyright 1995-2007 R Core Development Team
+% Distributed under GPL 2 or later
+
 \name{discoveries}
 \docType{data}
 \alias{discoveries}
@@ -17,6 +22,7 @@
   Wiley.
 }
 \examples{
+require(graphics)
 plot(discoveries, ylab = "Number of important discoveries",
      las = 1)
 title(main = "discoveries data set")

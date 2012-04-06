@@ -1,3 +1,8 @@
+% File src/library/datasets/man/pressure.Rd
+% Part of the R package, http://www.R-project.org
+% Copyright 1995-2007 R Core Development Team
+% Distributed under GPL 2 or later
+
 \name{pressure}
 \docType{data}
 \alias{pressure}
@@ -25,6 +30,7 @@
   New York: Wiley.
 }
 \examples{
+require(graphics)
 plot(pressure, xlab = "Temperature (deg C)",
      ylab = "Pressure (mm of Hg)",
      main = "pressure data: Vapor Pressure of Mercury")

@@ -1,3 +1,8 @@
+% File src/library/base/man/lapply.Rd
+% Part of the R package, http://www.R-project.org
+% Copyright 1995-2007 R Core Development Team
+% Distributed under GPL 2 or later
+
 \name{lapply}
 \alias{lapply}
 \alias{sapply}
@@ -32,7 +37,7 @@ replicate(n, expr, simplify = TRUE)
   element of which is the result of applying \code{FUN} to the
   corresponding element of \code{X}.
 
-  \code{sapply} is a \dQuote{user-friendly} version of \code{lapply}
+  \code{sapply} is a user-friendly version of \code{lapply}
   by default returning a vector or matrix if appropriate.
 
   \code{replicate} is a wrapper for the common use of \code{sapply} for
@@ -60,6 +65,11 @@ replicate(n, expr, simplify = TRUE)
 
   if \code{X} has length 0, the return value of \code{sapply} is always
   a 0-length list.
+
+  Users of S4 classes should pass a list to \code{lapply}: the internal
+  coercion is done by the system \code{as.list} in the base namespace
+  and not one defined by a user (e.g. by setting S4 methods on the
+  system function).
 }
 \note{
   \code{sapply(*, simplify = FALSE, USE.NAMES = FALSE)} is
@@ -78,6 +88,8 @@ replicate(n, expr, simplify = TRUE)
   entry in an \code{\link{environment}}.
 }
 \examples{
+require(stats); require(graphics)
+
 x <- list(a = 1:10, beta = exp(-3:3), logic = c(TRUE,FALSE,FALSE,TRUE))
 # compute the list mean for each list element
 lapply(x,mean)

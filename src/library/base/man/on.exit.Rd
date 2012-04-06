@@ -1,3 +1,8 @@
+% File src/library/base/man/on.exit.Rd
+% Part of the R package, http://www.R-project.org
+% Copyright 1995-2007 R Core Development Team
+% Distributed under GPL 2 or later
+
 \name{on.exit}
 \alias{on.exit}
 \title{Function Exit Code}
@@ -36,6 +41,8 @@ on.exit(expr, add = FALSE)
   evaluated.  
 }
 \examples{
+require(graphics)
+
 opar <- par(mai = c(1,1,1,1))
 on.exit(par(opar))
 \dontshow{par(opar)}

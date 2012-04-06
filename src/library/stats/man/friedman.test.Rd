@@ -1,3 +1,8 @@
+% File src/library/stats/man/friedman.test.Rd
+% Part of the R package, http://www.R-project.org
+% Copyright 1995-2007 R Core Development Team
+% Distributed under GPL 2 or later
+
 \name{friedman.test}
 \alias{friedman.test}
 \alias{friedman.test.default}
@@ -98,7 +103,7 @@ matrix(c(5.40, 5.50, 5.55,
          5.65, 5.60, 5.40,
          5.70, 5.65, 5.55,
          6.30, 6.30, 6.25),
-       nr = 22,
+       nrow = 22,
        byrow = TRUE,
        dimnames = list(1 : 22,
                        c("Round Out", "Narrow Angle", "Wide Angle")))

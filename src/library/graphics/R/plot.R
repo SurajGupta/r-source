@@ -1,15 +1,27 @@
+#  File src/library/graphics/R/plot.R
+#  Part of the R package, http://www.R-project.org
+#
+#  This program is free software; you can redistribute it and/or modify
+#  it under the terms of the GNU General Public License as published by
+#  the Free Software Foundation; either version 2 of the License, or
+#  (at your option) any later version.
+#
+#  This program is distributed in the hope that it will be useful,
+#  but WITHOUT ANY WARRANTY; without even the implied warranty of
+#  MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
+#  GNU General Public License for more details.
+#
+#  A copy of the GNU General Public License is available at
+#  http://www.r-project.org/Licenses/
+
 ### xy.coords() is now in the imported 'grDevices' package
 
 plot <- function (x, y, ...)
 {
     if (is.null(attr(x, "class")) && is.function(x)) {
-	nms <- names(list(...))
-	## need to pass 'y' to plot.function() when positionally matched
-	if(missing(y)) # set to defaults {could use formals(plot.default)}:
-	    y <- { if (!"from" %in% nms) 0 else
-		   if (!"to"   %in% nms) 1 else
-		   if (!"xlim" %in% nms) NULL }
-	if ("ylab" %in% nms)
+    	if (missing(y)) y <- NULL
+        hasylab <- function(ylab, ...) !missing(ylab)
+	if (hasylab(...))
 	    plot.function(x,  y, ...)
 	else
 	    plot.function(x, y, ylab=paste(deparse(substitute(x)),"(x)"), ...)
@@ -18,11 +30,7 @@ plot <- function (x, y, ...)
 }
 
 ## xlim = NULL (instead of "missing", since it will be passed to plot.default:
-plot.function <- function(x, from = 0, to = 1, xlim = NULL, ...) {
-    if(!is.null(xlim)) {
-	if(missing(from)) from <- xlim[1]
-	if(missing(to))	  to   <- xlim[2]
-    }
+plot.function <- function(x, y = NULL, to = NULL, from = y, xlim = NULL, ...) {
     curve(x, from, to, xlim = xlim, ...)
 }
 
@@ -129,6 +137,8 @@ function(formula, data = parent.frame(), ..., subset,
     m$ylab <- m$... <- m$ask <- NULL
     subset.expr <- m$subset
     m$subset <- NULL
+    ## FIXME: model.frame is in stats
+    require(stats, quietly=TRUE)
     m[[1]] <- as.name("model.frame")
     m <- as.call(c(as.list(m), list(na.action = NULL)))
     mf <- eval(m, parent.frame())

@@ -1,3 +1,8 @@
+% File src/library/stats/man/vcov.Rd
+% Part of the R package, http://www.R-project.org
+% Copyright 1995-2007 R Core Development Team
+% Distributed under GPL 2 or later
+
 \name{vcov}
 \alias{vcov}
 \alias{vcov.lm}
@@ -33,9 +38,11 @@ vcov(object, \dots)
   Functions with names beginning in \code{vcov.} will be
   methods for this function.
   Classes with methods for this function include:
-  \code{lm}, \code{mlm}, \code{glm}, \code{nls}, \code{lme}, 
-  \code{gls}, \code{coxph}
-  and \code{survreg} (the last two in package \pkg{survival}).
+  \code{lm}, \code{mlm}, \code{glm}, \code{nls},
+  \code{negbin}, \code{polr}, \code{rlm} (in package \pkg{MASS}),
+  \code{multinom} (in package \code{nnet})
+  \code{gls}, \code{lme} (in package \pkg{nlme},
+  \code{coxph} and \code{survreg} (in package \pkg{survival}).
 }
 \keyword{models}
 \keyword{nonlinear}

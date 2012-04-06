@@ -1,3 +1,8 @@
+% File src/library/datasets/man/volcano.Rd
+% Part of the R package, http://www.R-project.org
+% Copyright 1995-2007 R Core Development Team
+% Distributed under GPL 2 or later
+
 \name{volcano}
 \docType{data}
 \alias{volcano}
@@ -19,8 +24,8 @@
 % FIXME: missing \references{}
 \seealso{\code{\link{filled.contour}} for a nice plot.}
 \examples{
-require(graphics)
-filled.contour(volcano, color = terrain.colors, asp = 1)
+require(grDevices); require(graphics)
+filled.contour(volcano, color.palette = terrain.colors, asp = 1)
 title(main = "volcano data: filled contour map")
 }
 \keyword{datasets}

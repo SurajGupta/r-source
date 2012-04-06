@@ -1,3 +1,8 @@
+% File src/library/stats/man/numericDeriv.Rd
+% Part of the R package, http://www.R-project.org
+% Copyright 1995-2007 R Core Development Team
+% Distributed under GPL 2 or later
+
 \name{numericDeriv}
 \alias{numericDeriv}
 \title{Evaluate derivatives numerically}
@@ -32,9 +37,9 @@ numericDeriv(expr, theta, rho = parent.frame(), dir = 1)
 \author{Saikat DebRoy \email{saikat@stat.wisc.edu}}
 \examples{
 myenv <- new.env()
-assign("mean", 0., env = myenv)
-assign("sd", 1., env = myenv)
-assign("x", seq(-3., 3., len = 31), env = myenv)
+assign("mean", 0., envir = myenv)
+assign("sd", 1., envir = myenv)
+assign("x", seq(-3., 3., len = 31), envir = myenv)
 numericDeriv(quote(pnorm(x, mean, sd)), c("mean", "sd"), myenv)
 }
 \keyword{models}

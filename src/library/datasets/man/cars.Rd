@@ -1,3 +1,8 @@
+% File src/library/datasets/man/cars.Rd
+% Part of the R package, http://www.R-project.org
+% Copyright 1995-2007 R Core Development Team
+% Distributed under GPL 2 or later
+
 \name{cars}
 \docType{data}
 \alias{cars}
@@ -25,7 +30,7 @@
   Wiley.
 }
 \examples{
-require(stats)
+require(stats); require(graphics)
 plot(cars, xlab = "Speed (mph)", ylab = "Stopping distance (ft)",
      las = 1)
 lines(lowess(cars$speed, cars$dist, f = 2/3, iter = 3), col = "red")

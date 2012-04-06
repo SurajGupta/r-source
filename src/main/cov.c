@@ -14,10 +14,9 @@
  *  MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
  *  GNU General Public License for more details.
  *
- *  A copy of the GNU General Public License is available via WWW at
- *  http://www.gnu.org/copyleft/gpl.html.  You can also obtain it by
- *  writing to the Free Software Foundation, Inc., 51 Franklin Street
- *  Fifth Floor, Boston, MA 02110-1301  USA.
+ *  You should have received a copy of the GNU General Public License
+ *  along with this program; if not, a copy is available at
+ *  http://www.r-project.org/Licenses/
  */
 
 #ifdef HAVE_CONFIG_H
@@ -410,13 +409,13 @@ SEXP attribute_hidden do_cov(SEXP call, SEXP op, SEXP args, SEXP env)
 	y = SETCAR(args, coerceVector(CAR(args), REALSXP));
 	if (isMatrix(y)) {
 	    if (nrows(y) != n)
-		errorcall(call, _("incompatible dimensions"));
+		error(_("incompatible dimensions"));
 	    ncy = ncols(y);
 	    ansmat = (1);
 	}
 	else {
 	    if (length(y) != n)
-		errorcall(call, _("incompatible dimensions"));
+		error(_("incompatible dimensions"));
 	    ncy = 1;
 	}
     }
@@ -441,7 +440,7 @@ SEXP attribute_hidden do_cov(SEXP call, SEXP op, SEXP args, SEXP env)
 	pair = TRUE;
 	break;
     default:
-	errorcall(call, _("invalid 'use' (computational method)"));
+	error(_("invalid 'use' (computational method)"));
     }
     if (ansmat) PROTECT(ans = allocMatrix(REALSXP, ncx, ncy));
     else PROTECT(ans = allocVector(REALSXP, ncx * ncy));
@@ -501,7 +500,7 @@ SEXP attribute_hidden do_cov(SEXP call, SEXP op, SEXP args, SEXP env)
 	}
     }
     if(sd_0)/* only in cor() */
-	warningcall(call, _("the standard deviation is zero"));
+	warning(_("the standard deviation is zero"));
     UNPROTECT(1);
     return ans;
 }

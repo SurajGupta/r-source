@@ -1,3 +1,8 @@
+% File src/library/utils/man/dataentry.Rd
+% Part of the R package, http://www.R-project.org
+% Copyright 1995-2007 R Core Development Team
+% Distributed under GPL 2 or later
+
 \name{dataentry}
 \title{Spreadsheet Interface for Entering Data}
 \usage{
@@ -27,7 +32,7 @@ de(\dots, Modes = list(), Names = NULL)
   The data entry editor is only available on some platforms and GUIs.
   Where available it provides a means to visually edit a matrix or
   a collection of variables (including a data frame) as described in the
-  \dQuote{Notes} section.
+  Notes section.
   
   \code{data.entry} has side
   effects, any changes made in the spreadsheet are reflected in the

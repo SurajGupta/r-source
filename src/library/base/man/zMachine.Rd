@@ -1,3 +1,8 @@
+% File src/library/base/man/zMachine.Rd
+% Part of the R package, http://www.R-project.org
+% Copyright 1995-2007 R Core Development Team
+% Distributed under GPL 2 or later
+
 \name{.Machine}
 \title{Numerical Characteristics of the Machine}
 \usage{
@@ -10,7 +15,7 @@
   double or integer and the machine's precision.
 }
 \value{
-  A list with components (for simplicity, the prefix \dQuote{double} is
+  A list with components (for simplicity, the prefix \sQuote{double} is
   omitted in the explanations)
   \item{double.eps}{the smallest positive floating-point number
     \code{x} such that \code{1 + x != 1}.  It equals

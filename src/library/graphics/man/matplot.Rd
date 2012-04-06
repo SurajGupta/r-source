@@ -1,3 +1,8 @@
+% File src/library/graphics/man/matplot.Rd
+% Part of the R package, http://www.R-project.org
+% Copyright 1995-2007 R Core Development Team
+% Distributed under GPL 2 or later
+
 \name{matplot}
 \alias{matplot}
 \alias{matpoints}
@@ -47,7 +52,7 @@ matlines (x, y, type = "l", lty = 1:5, lwd = 1, pch = NULL,
   \item{cex}{vector of character expansion sizes, used cyclically.
     This works as a multiple of \code{\link{par}("cex")}.  \code{NULL} is
     equivalent to \code{1.0}. }
-  \item{bg}{vector of (\dQuote{fill}) colors for the open plot
+  \item{bg}{vector of background (fill) colors for the open plot
     symbols given by \code{pch=21:25} as in \code{\link{points}}.  The
     default \code{NA} corresponds to the one of the underlying function
     \code{\link{plot.xy}}.}
@@ -95,6 +100,7 @@ matlines (x, y, type = "l", lty = 1:5, lwd = 1, pch = NULL,
   \code{\link{matrix}}, \code{\link{par}}.
 }
 \examples{
+require(grDevices)
 matplot((-4:5)^2, main = "Quadratic") # almost identical to plot(*)
 sines <- outer(1:20, 1:4, function(x, y) sin(x / 20 * pi * y))
 matplot(sines, pch = 1:4, type = "o", col = rainbow(ncol(sines)))

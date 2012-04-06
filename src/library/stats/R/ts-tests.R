@@ -1,3 +1,19 @@
+#  File src/library/stats/R/ts-tests.R
+#  Part of the R package, http://www.R-project.org
+#
+#  This program is free software; you can redistribute it and/or modify
+#  it under the terms of the GNU General Public License as published by
+#  the Free Software Foundation; either version 2 of the License, or
+#  (at your option) any later version.
+#
+#  This program is distributed in the hope that it will be useful,
+#  but WITHOUT ANY WARRANTY; without even the implied warranty of
+#  MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
+#  GNU General Public License for more details.
+#
+#  A copy of the GNU General Public License is available at
+#  http://www.r-project.org/Licenses/
+
 Box.test <- function (x, lag = 1, type=c("Box-Pierce", "Ljung-Box"))
 {
     if (NCOL(x) > 1)
@@ -17,7 +33,7 @@ Box.test <- function (x, lag = 1, type=c("Box-Pierce", "Ljung-Box"))
     else
     {
         METHOD <- "Box-Ljung test"
-        STATISTIC <- n*(n+2)*sum(1/seq(n-1,n-lag)*obs^2)
+        STATISTIC <- n*(n+2)*sum(1/seq.int(n-1, n-lag)*obs^2)
         PVAL <- 1-pchisq(STATISTIC,lag)
     }
     names(STATISTIC) <- "X-squared"

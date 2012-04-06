@@ -1,10 +1,15 @@
+% File src/library/base/man/options.Rd
+% Part of the R package, http://www.R-project.org
+% Copyright 1995-2007 R Core Development Team
+% Distributed under GPL 2 or later
+
 \name{options}
 \alias{options}
 \alias{.Options}
 \alias{getOption}
 \title{Options Settings}
 \description{
-  Allow the user to set and examine a variety of global \dQuote{options}
+  Allow the user to set and examine a variety of global \emph{options}
   which affect the way in which \R computes and displays its results.
 }
 \usage{
@@ -19,7 +24,7 @@ getOption(x)
 \arguments{
   \item{\dots}{any options can be defined, using \code{name = value} or
     by passing a list of such tagged values.  However, only the ones
-    below are used in \dQuote{base \R}.
+    below are used in base \R.
     Further, \code{options('name') == options()['name']}, see the example.
   }
   \item{x}{a character string holding an option name.}
@@ -53,8 +58,8 @@ getOption(x)
       used by \code{\link[stats]{plot.lm}}.}
 
       \item{\code{check.bounds}:}{logical, defaulting to \code{FALSE}.  If
-      true, a \link{warning} is produced whenever a \dQuote{generalized
-      vector} (atomic or \code{\link{list}}) is extended, by something
+      true, a \link{warning} is produced whenever a
+      vector (atomic or \code{\link{list}}) is extended, by something
       like \code{x <- 1:3; x[5] <- 6}.}
 
     \item{\code{continue}:}{a non-empty string setting the prompt used
@@ -108,7 +113,9 @@ getOption(x)
       value is \code{NULL}: see \code{\link{stop}} for the behaviour in
       that case.  The functions \code{\link{dump.frames}} and
       \code{\link{recover}} provide alternatives that allow post-mortem
-      debugging.}
+      debugging.  Note that these need to specified as e.g.
+      \code{options=utils::recover} in startup files such as
+      \file{\link{.Rprofile}}.}
 
     \item{\code{expressions}:}{sets a limit on the number of nested
       expressions that will be evaluated.  Valid values are
@@ -212,6 +219,15 @@ getOption(x)
       scientific notation: fixed notation will be preferred unless it is
       more than \code{scipen} digits wider.}
 
+    \item{\code{showWarnCalls}, \code{showErrorCalls}:}{a logical.
+      Should warning and error messages show a summary of the call
+      stack?  By default error calls are shown in non-interactive
+      sessions.}
+
+    \item{\code{showNCalls}:}{a integer.  Controls how long the sequence
+      of calls must be (in bytes) before ellipses are used.  Defaults to
+      40 and should be at least 30 and no more than 500.}
+
     \item{\code{show.error.messages}:}{a logical.  Should error messages
       be printed?  Intended for use with \code{\link{try}} or a
       user-installed error handler.}
@@ -229,6 +245,8 @@ getOption(x)
     \item{\code{topLevelEnvironment}:}{see \code{\link{topenv}} and
       \code{\link{sys.source}}.}
 
+    \item{\code{useFancyQuotes}:}{see \code{\link{sQuote}}.}
+
     \item{\code{verbose}:}{logical.  Should \R report extra information
       on progress?  Set to \code{TRUE} by the command-line option
       \option{--verbose}.}
@@ -243,6 +261,16 @@ getOption(x)
       \code{\link{warnings}}.  If \code{warn} is one, warnings are
       printed as they occur.  If \code{warn} is two or larger all
       warnings are turned into errors.}
+
+    \item{\code{warnPartialMatchArgs}:}{logical.  If true, warns if
+      partial matching is used in argument matching.}
+
+    \item{\code{warnPartialMatchAttr}:}{logical.  If true, warns if
+      partial matching is used in extracting attributes via
+      \code{\link{attr}}.}
+
+    \item{\code{warnPartialMatchDollar}:}{logical.  If true, warns if
+      partial matching is used for extraction by \code{$}.}
 
     \item{\code{warning.expression}:}{an \R code expression to be called
       if a warning is generated, replacing the standard message.  If
@@ -302,7 +330,9 @@ getOption(x)
       type for that session.  The value of this option defaults to the
       normal screen device (e.g., \code{x11}, \code{windows} or
       \code{quartz}) for an interactive session, and \code{postscript}
-      in batch use or if a screen is not available.}
+      in batch use or if a screen is not available.  If named, it is
+      looked for first from the global environment and then in the
+      \pkg{grDevices} namespace.}
 
     \item{\code{locatorBell}:}{logical.  Should selection in \code{locator}
       and \code{identify} be confirmed by a bell?  Default \code{TRUE}.
@@ -481,7 +511,7 @@ getOption(x)
 }
 \examples{
 options() # printing all current options
-op <- options(); str(op) # nicer printing
+op <- options(); utils::str(op) # nicer printing
 
 getOption("width") == options()$width # the latter needs more memory
 options(digits = 15)

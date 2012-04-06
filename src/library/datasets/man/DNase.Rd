@@ -1,3 +1,8 @@
+% File src/library/datasets/man/DNase.Rd
+% Part of the R package, http://www.R-project.org
+% Copyright 1995-2007 R Core Development Team
+% Distributed under GPL 2 or later
+
 \name{DNase}
 \docType{data}
 \alias{DNase}
@@ -34,11 +39,11 @@
     S and S-PLUS}, Springer.
 }
 \examples{
-require(stats)
+require(stats); require(graphics)
 coplot(density ~ conc | Run, data = DNase,
-    show = FALSE, type = "b")
+       show.given = FALSE, type = "b")
 coplot(density ~ log(conc) | Run, data = DNase,
-    show = FALSE, type = "b")
+       show.given = FALSE, type = "b")
 ## fit a representative run
 fm1 <- nls(density ~ SSlogis( log(conc), Asym, xmid, scal ),
     data = DNase, subset = Run == 1)

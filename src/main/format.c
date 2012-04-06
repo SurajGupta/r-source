@@ -15,8 +15,8 @@
  *  GNU General Public License for more details.
  *
  *  You should have received a copy of the GNU General Public License
- *  along with this program; if not, write to the Free Software
- *  Foundation, Inc., 51 Franklin Street Fifth Floor, Boston, MA 02110-1301  USA
+ *  along with this program; if not, a copy is available at
+ *  http://www.r-project.org/Licenses/
  *
  *
  * Object Formatting
@@ -28,7 +28,6 @@
  * Exports
  *	formatString
  *	formatLogical
- *	formatFactor
  *	formatInteger
  *	formatReal
  *	formatComplex
@@ -83,37 +82,6 @@ void formatLogical(int *x, int n, int *fieldwidth)
 	    /* this is the widest it can be,  so stop */
 	}
     }
-}
-
-void formatFactor(int *x, int n, int *fieldwidth, SEXP levels, int nlevs)
-{
-    int xmax = INT_MIN, naflag = 0;
-    int i, l = 0;
-
-    if(isNull(levels)) {
-	for(i=0 ; i<n ; i++) {
-	    if (x[i] == NA_INTEGER || x[i] < 1 || x[i] > nlevs)
-		naflag = 1;
-	    else if (x[i] > xmax)
-		xmax = x[i];
-	}
-	if (xmax > 0)
-	    l = IndexWidth(xmax);
-    }
-    else {
-	l = 0;
-	for(i=0 ; i<n ; i++) {
-	    if (x[i] == NA_INTEGER || x[i] < 1 || x[i] > nlevs)
-		naflag = 1;
-	    else {
-		xmax = strlen(translateChar(STRING_ELT(levels, x[i]-1)));
-		if (xmax > l) l = xmax;
-	    }
-	}
-    }
-    if (naflag) *fieldwidth = R_print.na_width;
-    else *fieldwidth = 1;
-    if (l > *fieldwidth) *fieldwidth = l;
 }
 
 void formatInteger(int *x, int n, int *fieldwidth)

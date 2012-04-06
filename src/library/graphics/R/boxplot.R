@@ -1,3 +1,19 @@
+#  File src/library/graphics/R/boxplot.R
+#  Part of the R package, http://www.R-project.org
+#
+#  This program is free software; you can redistribute it and/or modify
+#  it under the terms of the GNU General Public License as published by
+#  the Free Software Foundation; either version 2 of the License, or
+#  (at your option) any later version.
+#
+#  This program is distributed in the hope that it will be useful,
+#  but WITHOUT ANY WARRANTY; without even the implied warranty of
+#  MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
+#  GNU General Public License for more details.
+#
+#  A copy of the GNU General Public License is available at
+#  http://www.r-project.org/Licenses/
+
 boxplot <- function(x, ...) UseMethod("boxplot")
 
 boxplot.default <-
@@ -30,8 +46,8 @@ function(x, ..., range = 1.5, width = NULL, varwidth = FALSE,
     cl <- if(all(cls == cls[1])) cls[1] else NULL
     for(i in 1:n)
 	groups[i] <- list(boxplot.stats(unclass(groups[[i]]), range)) # do.conf=notch)
-    stats <- matrix(0, nr=5, nc=n)
-    conf  <- matrix(0, nr=2, nc=n)
+    stats <- matrix(0, nrow=5, ncol=n)
+    conf  <- matrix(0, nrow=2, ncol=n)
     ng <- out <- group <- numeric(0)
     ct <- 1
     for(i in groups) {
@@ -69,6 +85,7 @@ boxplot.formula <-
 	m$data <- as.data.frame(data)
     m$... <- NULL
     m$na.action <- na.action # force use of default for this method
+    require(stats, quietly = TRUE)
     m[[1]] <- as.name("model.frame")
     mf <- eval(m, parent.frame())
     response <- attr(attr(mf, "terms"), "response")
@@ -171,6 +188,13 @@ bxp <- function(z, notch=FALSE, width=NULL, varwidth=FALSE, outline = TRUE,
 	pars$ylim <- NULL
     }
 
+    if(is.null(pars$xlim))
+        xlim <- c(0.5, n + 0.5)
+    else {
+	xlim <- pars$xlim
+	pars$xlim <- NULL
+    }
+
     if(length(border) == 0) border <- par("fg")
 
     if (!add) {
@@ -178,21 +202,17 @@ bxp <- function(z, notch=FALSE, width=NULL, varwidth=FALSE, outline = TRUE,
 	## shall we switch log for horizontal with
 	## switch(log, x="y", y="x", log) ??
 	if (horizontal)
-	    plot.window(ylim = c(0.5, n + 0.5), xlim = ylim, log = log,
-			xaxs = pars$yaxs)
+	    plot.window(ylim = xlim, xlim = ylim, log = log, xaxs = pars$yaxs)
 	else
-	    plot.window(xlim = c(0.5, n + 0.5), ylim = ylim, log = log,
-			yaxs = pars$yaxs)
+	    plot.window(xlim = xlim, ylim = ylim, log = log, yaxs = pars$yaxs)
     }
     xlog <- (par("ylog") && horizontal) || (par("xlog") && !horizontal)
 
-    pcycle <- function(p, def1, def2=NULL)# or rather NA {to be rep()ed}?
+    pcycle <- function(p, def1, def2 = NULL)# or rather NA {to be rep()ed}?
 	rep(if(length(p)) p else if(length(def1)) def1 else def2,
 	    length.out = n)
     ## we have to be careful to avoid partial matching here
-    nmpars <- names(pars)
-    p <- function(sym)
-        if(match(sym, nmpars, 0) > 0) pars[[sym]] else NULL
+    p <- function(sym) pars[[sym, exact = TRUE]]
 
     boxlty    <- pcycle(pars$boxlty,	p("lty"), par("lty"))
     boxlwd    <- pcycle(pars$boxlwd,	p("lwd"), par("lwd"))
@@ -245,7 +265,7 @@ bxp <- function(z, notch=FALSE, width=NULL, varwidth=FALSE, outline = TRUE,
 
     ok <- TRUE
     for(i in 1:n)
-	ok <- ok & bplt(at[i], wid=width[i],
+	ok <- ok & bplt(at[i], wid = width[i],
 			stats= z$stats[,i],
 			out  = z$out[z$group==i],
 			conf = z$conf[,i],

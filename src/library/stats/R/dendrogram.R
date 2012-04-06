@@ -1,3 +1,19 @@
+#  File src/library/stats/R/dendrogram.R
+#  Part of the R package, http://www.R-project.org
+#
+#  This program is free software; you can redistribute it and/or modify
+#  it under the terms of the GNU General Public License as published by
+#  the Free Software Foundation; either version 2 of the License, or
+#  (at your option) any later version.
+#
+#  This program is distributed in the hope that it will be useful,
+#  but WITHOUT ANY WARRANTY; without even the implied warranty of
+#  MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
+#  GNU General Public License for more details.
+#
+#  A copy of the GNU General Public License is available at
+#  http://www.r-project.org/Licenses/
+
 as.dendrogram <- function(object, ...) UseMethod("as.dendrogram")
 
 as.dendrogram.dendrogram <- function(object, ...) object
@@ -153,7 +169,7 @@ function (object, max.level = NA, digits.d = 3, give.attr = FALSE,
     if(!is.leaf(object)) {
 	le <- length(object)
 	if(give.attr) {
-	    if(nchar(at <- pasteLis(at, c("class", "height", "members"))))
+	    if(nzchar(at <- pasteLis(at, c("class", "height", "members"))))
 		at <- paste(",", at)
 	}
 	cat("[dendrogram w/ ", le, " branches and ", memb, " members at h = ",
@@ -177,7 +193,7 @@ function (object, max.level = NA, digits.d = 3, give.attr = FALSE,
 	if(memb != 1) #MM: when can this happen?
 	    cat(if(any.at)", " else {any.at <- TRUE; "("}, "memb= ",memb,sep="")
 	at <- pasteLis(at, c("class", "height", "members", "leaf", "label"))
-	if(any.at || nchar(at)) cat(if(!any.at)"(", at, ")")
+	if(any.at || nzchar(at)) cat(if(!any.at)"(", at, ")")
 	cat("\n")
     }
 }
@@ -261,8 +277,8 @@ plotNode <-
 	cat(if(inner)"inner node" else "leaf", ":")
 	if(!is.null(nPar)) { cat(" with node pars\n"); str(nPar) }
 	cat(if(inner)paste(" height", formatC(yTop),"; "),
-	    "(x1,x2)= (",formatC(x1,wid=4),",",formatC(x2,wid=4),")",
-	    "--> xTop=", formatC(xTop, wid=8),"\n", sep="")
+	    "(x1,x2)= (",formatC(x1,width=4),",",formatC(x2,width=4),")",
+	    "--> xTop=", formatC(xTop, width=8),"\n", sep="")
     }
 
     Xtract <- function(nam, L, default, indx)
@@ -619,14 +635,14 @@ function (x, Rowv=NULL, Colv=if(symm)"Rowv" else NULL,
 	else labCol[colInd]
 
     if(scale == "row") {
-	x <- sweep(x, 1, rowMeans(x, na.rm = na.rm))
+	x <- sweep(x, 1, rowMeans(x, na.rm = na.rm), check.margin=FALSE)
 	sx <- apply(x, 1, sd, na.rm = na.rm)
-	x <- sweep(x, 1, sx, "/")
+	x <- sweep(x, 1, sx, "/", check.margin=FALSE)
     }
     else if(scale == "column") {
-	x <- sweep(x, 2, colMeans(x, na.rm = na.rm))
+	x <- sweep(x, 2, colMeans(x, na.rm = na.rm), check.margin=FALSE)
 	sx <- apply(x, 2, sd, na.rm = na.rm)
-	x <- sweep(x, 2, sx, "/")
+	x <- sweep(x, 2, sx, "/", check.margin=FALSE)
     }
 
     ## Calculate the plot layout

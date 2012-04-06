@@ -1,20 +1,22 @@
-as.logical <- function(x,...) UseMethod("as.logical")
-as.logical.default<-function(x,...) .Internal(as.vector(x,"logical"))
-
-as.integer <- function(x,...) UseMethod("as.integer")
-as.integer.default <- function(x,...) .Internal(as.vector(x,"integer"))
-
-as.double <- function(x,...) UseMethod("as.double")
-as.double.default <- function(x,...) .Internal(as.vector(x,"double"))
-as.real <- as.double
-
-as.complex <- function(x,...) UseMethod("as.complex")
-as.complex.default <- function(x,...) .Internal(as.vector(x, "complex"))
+#  File src/library/base/R/as.R
+#  Part of the R package, http://www.R-project.org
+#
+#  This program is free software; you can redistribute it and/or modify
+#  it under the terms of the GNU General Public License as published by
+#  the Free Software Foundation; either version 2 of the License, or
+#  (at your option) any later version.
+#
+#  This program is distributed in the hope that it will be useful,
+#  but WITHOUT ANY WARRANTY; without even the implied warranty of
+#  MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
+#  GNU General Public License for more details.
+#
+#  A copy of the GNU General Public License is available at
+#  http://www.r-project.org/Licenses/
 
 as.single <- function(x,...) UseMethod("as.single")
-as.single.default <- function(x,...) {
+as.single.default <- function(x,...)
     structure(.Internal(as.vector(x,"double")), Csingle=TRUE)
-}
 
 # as.character is now internal.  The default method remains here to
 # preserve the semantics that for a call with an object argument
@@ -75,6 +77,4 @@ as.name <- as.symbol
 ## would work too: as.name <- function(x) .Internal(as.vector(x, "name"))
 
 ## as.call <- function(x) stop("type call cannot be assigned")
-as.numeric <- as.double
 as.qr <- function(x) stop("you cannot be serious")
-## as.ts <- function(x) if(is.ts(x)) x else ts(x) # in ts.R

@@ -1,3 +1,8 @@
+% File src/library/base/man/dynload.Rd
+% Part of the R package, http://www.R-project.org
+% Copyright 1995-2007 R Core Development Team
+% Distributed under GPL 2 or later
+
 \name{dyn.load}
 \alias{dyn.load}
 \alias{dyn.unload}
@@ -70,7 +75,7 @@ is.loaded(symbol, PACKAGE = "", type = "")
   The \code{local} argument allows one to control whether the symbols in
   the DLL being attached are visible to other DLLs.  While maintaining
   the symbols in their own name space is good practice, the ability to
-  share symbols across related \dQuote{chapters} is useful in many
+  share symbols across related \sQuote{chapters} is useful in many
   cases.  Additionally, on certain platforms and versions of an
   operating system, certain libraries must have their symbols loaded
   globally to successfully resolve all symbols.
@@ -133,21 +138,23 @@ is.loaded(symbol, PACKAGE = "", type = "")
 
   \code{is.loaded} checks if the symbol name is loaded and hence
   available for use in \code{.C} or \code{.Fortran} or \code{.Call} or
-  \code{.External}: it requires the name you would give to \code{.C} etc
-  and \strong{not} (as in S) that remapped by defunct functions
-  \code{\link{symbol.C}} or \code{\link{symbol.For}}.  It will succeed
-  if any one of the four calling functions would succeed in using the
-  entry point unless \code{type} is specified.  (See
-  \code{\link{.Fortran}} for how Fortran symbols are mapped.)
+  \code{.External}.  It will succeed if any one of the four calling
+  functions would succeed in using the entry point unless \code{type} is
+  specified.  (See \code{\link{.Fortran}} for how Fortran symbols are
+  mapped.)
 }
 \note{
+  \code{is.loaded} requires the name you would give to \code{.C} etc
+  and \strong{not} (as in S) that remapped by defunct functions
+  \code{symbol.C} or \code{symbol.For}.
+
   The creation of shared libraries and the runtime linking of them into
   executing programs is very platform dependent.  In recent years there
   has been some simplification in the process because the C subroutine
   call \code{dlopen} has become the standard for doing this under UNIX.
   Under UNIX \code{dyn.load} uses the \code{dlopen} mechanism and should
   work on all platforms which support it.  On Windows it uses the
-  standard mechanisms for loading 32-bit DLLs.
+  standard mechanisms for loading DLLs.
 
   The original code for loading DLLs in UNIX was provided by Heiner
   Schwarte.  The compatibility code for HP-UX was provided by Luke

@@ -1,3 +1,8 @@
+% File src/library/stats/man/Logistic.Rd
+% Part of the R package, http://www.R-project.org
+% Copyright 1995-2007 R Core Development Team
+% Distributed under GPL 2 or later
+
 \name{Logistic}
 \alias{Logistic}
 \alias{dlogis}
@@ -54,10 +59,10 @@ rlogis(n, location = 0, scale = 1)
 \note{
   \code{qlogis(p)} is the same as the well known \sQuote{\emph{logit}}
   function, \eqn{logit(p) = \log(p/(1-p))}, and \code{plogis(x)} has
-  consequently been called the \dQuote{inverse logit}.
+  consequently been called the \sQuote{inverse logit}.
 
   The distribution function is a rescaled hyperbolic tangent,
-  \code{plogis(x) == (1+ \link{tanh}(x/2))/2}, and it is called
+  \code{plogis(x) == (1+ \link{tanh}(x/2))/2}, and it is called a
   \emph{sigmoid function} in contexts such as neural networks.
 }
 \source{
@@ -75,7 +80,7 @@ rlogis(n, location = 0, scale = 1)
   Wiley, New York.
 }
 \examples{
-var(rlogis(4000, 0, s = 5))# approximately (+/- 3)
+var(rlogis(4000, 0, scale = 5))# approximately (+/- 3)
 pi^2/3 * 5^2
 }
 \keyword{distribution}

@@ -1,3 +1,8 @@
+% File src/library/base/man/Dates.Rd
+% Part of the R package, http://www.R-project.org
+% Copyright 1995-2007 R Core Development Team
+% Distributed under GPL 2 or later
+
 \name{Dates}
 \alias{Date}
 \alias{Dates}
@@ -57,7 +62,7 @@
 \examples{
 (today <- Sys.Date())
 format(today, "\%d \%b \%Y")  # with month as a word
-(tenweeks <- seq(today, len=10, by="1 week")) # next ten weeks
+(tenweeks <- seq(today, length.out=10, by="1 week")) # next ten weeks
 weekdays(today)
 months(tenweeks)
 as.Date(.leap.seconds)

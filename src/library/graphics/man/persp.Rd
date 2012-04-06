@@ -1,3 +1,8 @@
+% File src/library/graphics/man/persp.Rd
+% Part of the R package, http://www.R-project.org
+% Copyright 1995-2007 R Core Development Team
+% Distributed under GPL 2 or later
+
 \name{persp}
 \alias{persp}
 \alias{persp.default}
@@ -9,7 +14,8 @@
 \usage{
 persp(x, \dots)
 
-\method{persp}{default}(x = seq(0, 1, len = nrow(z)), y = seq(0, 1, len = ncol(z)),
+\method{persp}{default}(x = seq(0, 1, length.out = nrow(z)),
+      y = seq(0, 1, length.out = ncol(z)),
       z, xlim = range(x), ylim = range(y),
       zlim = range(z, na.rm = TRUE),
       xlab = NULL, ylab = NULL, zlab = NULL, main = NULL, sub = NULL,
@@ -123,6 +129,7 @@ persp(x, \dots)
   \code{\link{contour}} and \code{\link{image}}; \code{\link{trans3d}}.
 }
 \examples{
+require(grDevices) # for trans3d
 ## More examples in  demo(persp) !!
 ##                   -----------
 
@@ -145,8 +152,8 @@ round(res, 3)
 # (2) Add to existing persp plot - using trans3d() :
 
 xE <- c(-10,10); xy <- expand.grid(xE, xE)
-points(trans3d(xy[,1], xy[,2], 6, pm = res), col = 2, pch =16)
-lines (trans3d(x, y=10, z= 6 + sin(x), pm = res), col = 3)
+points(trans3d(xy[,1], xy[,2], 6, pmat = res), col = 2, pch =16)
+lines (trans3d(x, y=10, z= 6 + sin(x), pmat = res), col = 3)
 
 phi <- seq(0, 2*pi, len = 201)
 r1 <- 7.725 # radius of 2nd maximum

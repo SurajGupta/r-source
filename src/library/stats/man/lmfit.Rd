@@ -1,3 +1,8 @@
+% File src/library/stats/man/lmfit.Rd
+% Part of the R package, http://www.R-project.org
+% Copyright 1995-2007 R Core Development Team
+% Distributed under GPL 2 or later
+
 \name{lm.fit}
 \title{Fitter Functions for Linear Models}
 \usage{
@@ -56,6 +61,7 @@ lm.wfit(x, y, w, offset = NULL, method = "qr", tol = 1e-7,
   unless you know better.
 }
 \examples{
+require(utils)
 %% FIXME: Do something more sensible (non-random data) !!
 set.seed(129)
 n <- 7 ; p <- 2

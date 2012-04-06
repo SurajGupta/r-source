@@ -1,8 +1,14 @@
+% File src/library/base/man/vector.Rd
+% Part of the R package, http://www.R-project.org
+% Copyright 1995-2007 R Core Development Team
+% Distributed under GPL 2 or later
+
 \name{vector}
 \alias{vector}
 \alias{as.vector}
 \alias{as.vector.factor}
 \alias{is.vector}
+\alias{atomic} % for read.table.Rd
 \title{Vectors}
 \usage{
 vector(mode = "logical", length = 0)

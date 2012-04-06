@@ -1,3 +1,19 @@
+#  File src/library/utils/R/Sweave.R
+#  Part of the R package, http://www.R-project.org
+#
+#  This program is free software; you can redistribute it and/or modify
+#  it under the terms of the GNU General Public License as published by
+#  the Free Software Foundation; either version 2 of the License, or
+#  (at your option) any later version.
+#
+#  This program is distributed in the hope that it will be useful,
+#  but WITHOUT ANY WARRANTY; without even the implied warranty of
+#  MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
+#  GNU General Public License for more details.
+#
+#  A copy of the GNU General Public License is available at
+#  http://www.r-project.org/Licenses/
+
 Sweave <- function(file, driver=RweaveLatex(),
                    syntax=getOption("SweaveSyntax"), ...)
 {
@@ -23,7 +39,7 @@ Sweave <- function(file, driver=RweaveLatex(),
     chunk <- NULL
 
     namedchunks <- list()
-    for(linenum in seq(along=text)){
+    for(linenum in seq_along(text)) {
     	line <- text[linenum]
         if(any(grep(syntax$doc, line))){
             if(mode=="doc"){
@@ -115,7 +131,7 @@ SweaveReadFile <- function(file, syntax)
     text <- readLines(f[1])
     ## <FIXME>
     ## This needs to be more refined eventually ...
-    if(any(is.na(nchar(text, "c")))) {
+    if(any(is.na(nchar(text, "c", TRUE)))) {
         ## Ouch, invalid in the current locale.
         ## (Can only happen in a MBCS locale.)
         ## Try re-encoding from Latin1.
@@ -428,7 +444,7 @@ makeRweaveLatexCodeRunner <- function(evalFunc=RweaveEvalWithOpt)
           srclines <- attr(chunk, "srclines")
           linesout <- integer(0)
           srcline <- srclines[1]
-  
+
 	  srcrefs <- attr(chunkexps, "srcref")
 	  if (options$expand)
 	    lastshown <- 0
@@ -481,7 +497,7 @@ makeRweaveLatexCodeRunner <- function(evalFunc=RweaveEvalWithOpt)
                     	cat("\n", paste(getOption("continue"), dce[-(1:leading)], sep="", collapse="\n"),
                     	    file=chunkout, append=TRUE, sep="")
 		    linesout[thisline + 1:length(dce)] <- srcline
-		    thisline <- thisline + length(dce)                   	
+		    thisline <- thisline + length(dce)
                 }
 
                                         # tmpcon <- textConnection("output", "w")
@@ -596,7 +612,7 @@ makeRweaveLatexCodeRunner <- function(evalFunc=RweaveEvalWithOpt)
                   cat("\\includegraphics{", chunkprefix, "}\n", sep="",
                       file=object$output, append=TRUE)
                   linesout[thisline + 1] <- srcline
-                  thisline <- thisline + 1    
+                  thisline <- thisline + 1
               }
           }
           object$linesout <- c(object$linesout, linesout)
@@ -610,7 +626,7 @@ RweaveLatexRuncode <- makeRweaveLatexCodeRunner()
 RweaveLatexWritedoc <- function(object, chunk)
 {
     linesout <- attr(chunk, "srclines")
-    
+
     if(any(grep("\\usepackage[^\\}]*Sweave.*\\}", chunk)))
         object$havesty <- TRUE
 
@@ -624,7 +640,7 @@ RweaveLatexWritedoc <- function(object, chunk)
                                 "}\n\\\\begin{document}", sep=""),
                                 chunk[which])
             linesout <- linesout[c(1:which, which, seq(from=which+1, len=length(linesout)-which))]
-            object$havesty <- TRUE        
+            object$havesty <- TRUE
         }
     }
 
@@ -650,24 +666,24 @@ RweaveLatexWritedoc <- function(object, chunk)
                     "\\1", chunk[pos[1]])
         object$options <- SweaveParseOptions(opts, object$options,
                                              RweaveLatexOptions)
-        if (isTRUE(object$options$concordance) 
+        if (isTRUE(object$options$concordance)
               && !object$haveconcordance) {
             savelabel <- object$options$label
             object$options$label <- "concordance"
             prefix <- RweaveChunkPrefix(object$options)
             object$options$label <- savelabel
             object$concordfile <- paste(prefix, "tex", sep=".")
-            chunk[pos[1]] <- sub(object$syntax$docopt, 
+            chunk[pos[1]] <- sub(object$syntax$docopt,
                                  paste("\\\\input{", prefix, "}", sep=""),
                                  chunk[pos[1]])
             object$haveconcordance <- TRUE
         } else
             chunk[pos[1]] <- sub(object$syntax$docopt, "", chunk[pos[1]])
     }
-    
+
     cat(chunk, sep="\n", file=object$output, append=TRUE)
     object$linesout <- c(object$linesout, linesout)
-    
+
     return(object)
 }
 
@@ -690,7 +706,7 @@ RweaveLatexFinish <- function(object, error=FALSE)
     	# 3.  The input line numbers corresponding to each output line.
     	#     This are compressed using the following simple scheme:
     	#     The first line number, followed by
-    	#     a run-length encoded diff of the rest of the line numbers. 
+    	#     a run-length encoded diff of the rest of the line numbers.
         linesout <- object$linesout
         vals <- rle(diff(linesout))
         vals <- c(linesout[1], as.numeric(rbind(vals$lengths, vals$values)))

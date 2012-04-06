@@ -1,3 +1,19 @@
+#  File src/library/stats/R/wilcox.test.R
+#  Part of the R package, http://www.R-project.org
+#
+#  This program is free software; you can redistribute it and/or modify
+#  it under the terms of the GNU General Public License as published by
+#  the Free Software Foundation; either version 2 of the License, or
+#  (at your option) any later version.
+#
+#  This program is distributed in the hope that it will be useful,
+#  but WITHOUT ANY WARRANTY; without even the implied warranty of
+#  MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
+#  GNU General Public License for more details.
+#
+#  A copy of the GNU General Public License is available at
+#  http://www.r-project.org/Licenses/
+
 wilcox.test <- function(x, ...) UseMethod("wilcox.test")
 
 wilcox.test.default <-
@@ -61,11 +77,11 @@ function(x, y = NULL, alternative = c("two.sided", "less", "greater"),
                 switch(alternative,
                        "two.sided" = {
                            p <- if(STATISTIC > (n * (n + 1) / 4))
-                                psignrank(STATISTIC - 1, n, lower = FALSE)
+                                psignrank(STATISTIC - 1, n, lower.tail = FALSE)
                            else psignrank(STATISTIC, n)
                            min(2 * p, 1)
                        },
-                       "greater" = psignrank(STATISTIC - 1, n, lower = FALSE),
+                       "greater" = psignrank(STATISTIC - 1, n, lower.tail = FALSE),
                        "less" = psignrank(STATISTIC, n))
             if(conf.int) {
                 ## Exact confidence interval for the median in the
@@ -184,7 +200,7 @@ function(x, y = NULL, alternative = c("two.sided", "less", "greater"),
                 ## As in the exact case, interchange quantiles.
                 cint <- switch(alternative, "two.sided" = {
                   repeat({
-                    mindiff<-wdiff(mumin,zq=qnorm(alpha/2,lower=FALSE))
+                    mindiff<-wdiff(mumin,zq=qnorm(alpha/2, lower.tail=FALSE))
                     maxdiff<-wdiff(mumax,zq=qnorm(alpha/2))
                     if(mindiff<0 || maxdiff>0){
                       alpha<-alpha*2
@@ -195,13 +211,13 @@ function(x, y = NULL, alternative = c("two.sided", "less", "greater"),
                     warning("Requested conf.level not achievable")
                   }
                   l <- uniroot(wdiff, c(mumin, mumax), tol=1e-4,
-                               zq=qnorm(alpha/2, lower=FALSE))$root
+                               zq=qnorm(alpha/2, lower.tail=FALSE))$root
                   u <- uniroot(wdiff, c(mumin, mumax), tol=1e-4,
                                zq=qnorm(alpha/2))$root
                   c(l, u)
                 }, "greater"= {
                   repeat({
-                    mindiff<-wdiff(mumin,zq=qnorm(alpha,lower=FALSE))
+                    mindiff<-wdiff(mumin,zq=qnorm(alpha, lower.tail=FALSE))
                     if(mindiff<0){
                       alpha<-alpha*2
                     } else break
@@ -211,7 +227,7 @@ function(x, y = NULL, alternative = c("two.sided", "less", "greater"),
                     warning("Requested conf.level not achievable")
                   }
                   l <- uniroot(wdiff, c(mumin, mumax), tol=1e-4,
-                               zq=qnorm(alpha, lower=FALSE))$root
+                               zq=qnorm(alpha, lower.tail=FALSE))$root
                     c(l, +Inf)
                 }, "less"= {
                   repeat({
@@ -266,14 +282,14 @@ function(x, y = NULL, alternative = c("two.sided", "less", "greater"),
                        "two.sided" = {
                            p <- if(STATISTIC > (n.x * n.y / 2))
                                pwilcox(STATISTIC - 1, n.x, n.y,
-                                       lower = FALSE)
+                                       lower.tail = FALSE)
                            else
                                pwilcox(STATISTIC, n.x, n.y)
                            min(2 * p, 1)
                        },
                        "greater" = {
                            pwilcox(STATISTIC - 1, n.x, n.y,
-                                   lower = FALSE)
+                                   lower.tail = FALSE)
                        },
                        "less" = pwilcox(STATISTIC, n.x, n.y))
             if(conf.int) {
@@ -377,13 +393,13 @@ function(x, y = NULL, alternative = c("two.sided", "less", "greater"),
                 }
                 cint <- switch(alternative, "two.sided" = {
                     l <- uniroot(wdiff, c(mumin, mumax), tol=1e-4,
-                                  zq=qnorm(alpha/2, lower=FALSE))$root
+                                  zq=qnorm(alpha/2, lower.tail=FALSE))$root
                     u <- uniroot(wdiff, c(mumin, mumax), tol=1e-4,
                                   zq=qnorm(alpha/2))$root
                     c(l, u)
                 }, "greater"= {
                     l <- uniroot(wdiff, c(mumin, mumax), tol=1e-4,
-                                  zq=qnorm(alpha, lower=FALSE))$root
+                                  zq=qnorm(alpha, lower.tail=FALSE))$root
                     c(l, +Inf)
                 }, "less"= {
                     u <- uniroot(wdiff, c(mumin, mumax), tol=1e-4,

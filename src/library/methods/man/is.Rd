@@ -1,3 +1,8 @@
+% File src/library/methods/man/is.Rd
+% Part of the R package, http://www.R-project.org
+% Copyright 1995-2007 R Core Development Team
+% Distributed under GPL 2 or later
+
 \name{is}
 \alias{is}
 \alias{extends}
@@ -76,7 +81,7 @@ setIs(class1, class2, test=NULL, coerce=NULL, replace=NULL,
   first class extends the second; that is, it does for class names
   what \code{is} does for an object and a class.  Given one class
   name, it returns all the classes that class extends (the
-  \dQuote{superclasses} of that class), including the class itself.  If
+  \sQuote{superclasses} of that class), including the class itself.  If
   the flag \code{fullInfo} is \code{TRUE}, the result is a list, each
   element of which is an object describing the relationship;
   otherwise, and by default, the value returned is only the names of

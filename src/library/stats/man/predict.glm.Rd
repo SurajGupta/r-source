@@ -1,3 +1,8 @@
+% File src/library/stats/man/predict.glm.Rd
+% Part of the R package, http://www.R-project.org
+% Copyright 1995-2007 R Core Development Team
+% Distributed under GPL 2 or later
+
 \name{predict.glm}
 \alias{predict.glm}
 \concept{regression}
@@ -66,6 +71,8 @@
 }
 
 \examples{
+require(graphics)
+
 ## example from Venables and Ripley (2002, pp. 190-2.)
 ldose <- rep(0:5, 2)
 numdead <- c(1, 4, 9, 13, 18, 20, 0, 2, 6, 10, 12, 16)

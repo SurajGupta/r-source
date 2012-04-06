@@ -1,3 +1,8 @@
+% File src/library/graphics/man/points.Rd
+% Part of the R package, http://www.R-project.org
+% Copyright 1995-2007 R Core Development Team
+% Distributed under GPL 2 or later
+
 \name{points}
 \alias{points}
 \alias{points.default}
@@ -26,7 +31,7 @@ points(x, \dots)
 
   Graphical parameters commonly used are
   \describe{
-    \item{\code{pch}}{plotting \dQuote{character}, i.e., symbol to use.  This can
+    \item{\code{pch}}{plotting \sQuote{character}, i.e., symbol to use.  This can
       either be a single character or an integer code for one of a set of
       graphics symbols.  The full set of S symbols is available with
       \code{pch=0:18}, see the last picture from \code{example(points)},
@@ -50,10 +55,10 @@ points(x, \dots)
       such as UTF-8, numeric values of \code{pch} greater than or equal to
       32 specify a Unicode code point (except for the symbol font as
       selected by \code{\link{par}(font = 5)}).
-      
+
       If \code{pch} is an integer or character \code{NA} or an empty
       character string, the point is omitted from the plot.
-      
+
       Value \code{pch="."} is handled specially.  It is a rectangle of
       side 0.01 inch (scaled by \code{cex}).  In addition, if \code{cex =
 	1} (the default), each side is at least one pixel (1/72 inch on
@@ -61,7 +66,7 @@ points(x, \dots)
       \code{\link{xfig}} devices).
     }
     \item{\code{col}}{color code or name, see \code{\link{par}}.}
-    \item{\code{bg}}{background (\dQuote{fill}) color for the open plot
+    \item{\code{bg}}{background (fill) color for the open plot
       symbols given by \code{pch=21:25}.}
     \item{\code{cex}}{character (or symbol) expansion: a numerical vector.
       This works as a multiple of \code{\link{par}("cex")}.}
@@ -69,7 +74,7 @@ points(x, \dots)
   }
   Others less commonly used are \code{lty} and \code{lwd} for
   types such as \code{"b"} and \code{"l"}.
-  
+
   Graphical parameters \code{pch}, \code{col}, \code{bg}, \code{cex} and
   \code{lwd} can be vectors (which will be recycled as needed) giving a
   value for each point plotted.  If lines are to be plotted (e.g. for
@@ -82,7 +87,7 @@ points(x, \dots)
   What is meant by \sQuote{a single character} is locale-dependent.
 
   The encoding may not have symbols for some or all of the characters in
-  \code{pch=128:255} 
+  \code{pch=128:255}
 }
 \references{
   Becker, R. A., Chambers, J. M. and Wilks, A. R. (1988)
@@ -94,6 +99,7 @@ points(x, \dots)
   workhorse function \code{\link{plot.xy}}.
 }
 \examples{
+require(stats) # for rnorm
 plot(-4:4, -4:4, type = "n")# setting up coord. system
 points(rnorm(200), rnorm(200), col = "red")
 points(rnorm(100)/2, rnorm(100)/2, col = "blue", cex = 1.5)
@@ -106,20 +112,34 @@ plot(x, sin(x), type="o", pch=21, bg=par("bg"), col = "blue", cex=.6,
 par(op)
 
 ##-------- Showing all the extra & some char graphics symbols ------------
-Pex <- 3 ## good for both .Device=="postscript" and "x11"
-ipch <- 0:35; np <- length(ipch); k <- floor(sqrt(np)); dd <- c(-1,1)/2
-rx <- dd + range(ix <- ipch \%/\% k)
-ry <- dd + range(iy <- 3 + (k-1)- ipch \%\% k)
-pch <- as.list(ipch)
-pch[26+ 1:10] <- as.list(c("*",".", "o","O","0","+","-","|","\%","#"))
-plot(rx, ry, type="n", axes = FALSE, xlab = "", ylab = "",
-     main = paste("plot symbols :  points (...  pch = *, cex =", Pex,")"))
-abline(v = ix, h = iy, col = "lightgray", lty = "dotted")
-for(i in 1:np) {
-  pc <- pch[[i]]
-  points(ix[i], iy[i], pch = pc, col = "red", bg = "yellow", cex = Pex)
-  ## red symbols with a yellow interior (where available)
-  text(ix[i] - .3, iy[i], pc, col = "brown", cex = 1.2)
-}
+pchShow <-
+  function(extras = c("*",".", "o","O","0","+","-","|","\%","#"),
+           cex = 3, ## good for both .Device=="postscript" and "x11"
+           col = "red3", bg = "gold", coltext = "brown", cextext = 1.2,
+           main = paste("plot symbols :  points (...  pch = *, cex =", cex,")"))
+  {
+    nex <- length(extras)
+    np  <- 26 + nex
+    ipch <- 0:(np-1)
+    k <- floor(sqrt(np))
+    dd <- c(-1,1)/2
+    rx <- dd + range(ix <- ipch \%/\% k)
+    ry <- dd + range(iy <- 3 + (k-1)- ipch \%\% k)
+    pch <- as.list(ipch) # list with integers & strings
+    if(nex > 0) pch[26+ 1:nex] <- as.list(extras)
+    plot(rx, ry, type="n", axes = FALSE, xlab = "", ylab = "", main = main)
+    abline(v = ix, h = iy, col = "lightgray", lty = "dotted")
+    for(i in 1:np) {
+      pc <- pch[[i]]
+      ## 'col' symbols with a 'bg'-colored interior (where available) :
+      points(ix[i], iy[i], pch = pc, col = col, bg = bg, cex = cex)
+      if(cextext > 0)
+          text(ix[i] - .3, iy[i], pc, col = coltext, cex = cextext)
+    }
+  }
+
+pchShow()
+pchShow(c("o","O","0"), cex = 2.5)
+pchShow({}, cex = 4, cextext=0, main=NULL)
 }
 \keyword{aplot}

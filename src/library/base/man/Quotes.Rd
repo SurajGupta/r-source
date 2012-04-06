@@ -1,3 +1,8 @@
+% File src/library/base/man/Quotes.Rd
+% Part of the R package, http://www.R-project.org
+% Copyright 1995-2007 R Core Development Team
+% Distributed under GPL 2 or later
+
 \name{Quotes}
 \alias{Quotes}
 \alias{backtick}
@@ -27,9 +32,8 @@
   Backslash is used to start an escape sequence inside character constants.
   Unless specified in the following table, an escaped character is
   interpreted as the character itself.  (Note that the parser will warn
-  about most such uses as from \R 2.5.0, as they are most often
-% pace R-exts, we do need to double these.
-  erroneous, e.g. using \code{\\.} where \code{\\\\.} was intended.)
+  about most such uses, as they are most often erroneous, e.g.
+  using \code{\\.} where \code{\\\\.} was intended.)
   
   Single quotes need to be escaped by backslash in single-quoted
   strings, and double quotes in double-quoted strings.
@@ -49,11 +53,12 @@
     \code{\\Unnnnnnnn}\tab Unicode character with given code (1--8 hex digits)\cr
   }
   The last two are only supported on versions of \R built with MBCS
-  support, and the last is not supported on Windows.  (They are an error
-  if used where not supported.)  All except the Unicode escape sequences
-  are also supported when reading character strings by
-  \code{\link{scan}} and \code{\link{read.table}} if
-  \code{allowEscapes = TRUE}.
+  support, and the last is only supported in MBCS locales, and not on
+  Windows.  Alternative forms are \code{\\u\{nnnn\}} and
+  \code{\\U\{nnnnnnnn\}}.  (They are an error if used where not
+  supported.)  All except the Unicode escape sequences are also
+  supported when reading character strings by \code{\link{scan}} and
+  \code{\link{read.table}} if \code{allowEscapes = TRUE}.
 
   These forms will also be used by \code{\link{print.default}}
   when outputting non-printable characters (including backslash).

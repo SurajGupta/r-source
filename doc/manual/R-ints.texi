@@ -68,6 +68,7 @@ The current version of this document is @value{VERSION}.
 @menu
 * R Internal Structures::       
 * .Internal vs .Primitive::     
+* Internationaliation in the R sources::  
 * R coding standards::          
 * Testing R code::              
 * Function and variable index::  
@@ -93,7 +94,9 @@ checked against the current version of the source code.
 * The write barrier::           
 * Serialization Formats::       
 * Encodings for CHARSXPs::      
+* Warnings and errors::         
 * S4 objects::                  
+* Memory allocators::           
 * Internal use of global and base environments::  
 * Modules::                     
 @end menu
@@ -193,7 +196,9 @@ reference@footnote{a pointer to a function or a symbol to look up the
 function by name, or a language object to be evaluated to give a
 function.} to the function to be called with remaining elements the
 actual arguments for the call (and with the tags if present giving the
-specified argument names).
+specified argument names).  Although this is not enforced, many places
+in the code assume that the pairlist is of length one or more, often
+without checking.
 
 @cindex expression
 Expressions are of type @code{EXPRSXP}: they are a vector of (usually
@@ -392,7 +397,7 @@ length and `true length'@footnote{This is almost unused.  The only
 current use is for hash tables of environments (@code{VECSXP}s), where
 @code{length} is the size of the table and @code{truelength} is the
 number of primary slots in use, and for the reference hash tables in
-serialization(@code{VECSXP}s), where @code{truelength} is the number of
+serialization (@code{VECSXP}s), where @code{truelength} is the number of
 slots in use.} of the vector, and then followed by the data (aligned as
 required: on most 32-bit systems with a 24-byte @code{VECTOR_SEXPREC}
 node the data can follow immediately after the node).  The data are a
@@ -760,6 +765,7 @@ typedef struct RCNTXT @{
     int intsusp;                /* @r{Interrupts are suspended} */
     SEXP handlerstack;          /* @r{Condition handler stack} */
     SEXP restartstack;          /* @r{Stack of available restarts} */
+    struct RPRSTACK *prstack;   /* @r{Stack of pending promises} */
 @} RCNTXT, *context;
 @end example
 
@@ -842,7 +848,11 @@ all the matched values are promises, the defaults as promises to be
 evaluated in the environment just created.  That environment is then
 used for the evaluation of the body of the function, and promises will
 be forced (and hence actual or default arguments evaluated) when they
-are encountered.
+are encountered. 
+@findex NAMED
+(Evaluating a promise sets @code{NAMED = 2} on its value, so if the
+argument was a symbol its binding is regarded as having multiple
+references during the evaluation of the closure call.)
 
 If the closure is an S3 generic (that is, contains a call to
 @code{UseMethod}) the evaluation process is the same until the
@@ -894,8 +904,8 @@ their arguments), and contain a call to the C function
 @code{DispatchGeneric}.  There are some peculiarities over the number of
 arguments for the @code{"Math"} group generic, with some members
 allowing only one argument, some having two (with a default for the
-second) but the primitive members (mostly) allowing one or more
-arguments for the generic but only one if the default method is used.
+second) and @code{trunc} allows one or more but the default only
+accepts one.
 
 @menu
 * Missingness::                 
@@ -1115,7 +1125,9 @@ references after the first are written out as a reference marker indexed
 by the table entry.
 
 Serialization first writes a header indicating the format (normally
-@samp{X\n} for an XDR format binary save) and the version number of the
+@samp{X\n} for an XDR format binary save, but @samp{A\n}, ASCII, and
+@samp{B\n}, native word-order binary@footnote{there is no R-level
+interface to this format}, can also occur) and the version number of the
 format and of two @R{} versions (as integers).  (Unserialization
 interprets the two versions as the version of @R{} which wrote the file
 followed by the minimal version of @R{} needed to read the format.)
@@ -1148,9 +1160,21 @@ written as specific pseudo-@code{SEXPTYPE}s.  Package and name space
 environments are written with pseudo-@code{SEXPTYPE}s followed by the
 name.  `Normal' environments are written out as @code{ENVSXP}s with an
 integer indicating if the environment is locked followed by the
-enclosure, frame, tag and attributes.
+enclosure, frame, `tag' (the hash table) and attributes.
 
-@node Encodings for CHARSXPs, S4 objects, Serialization Formats, R Internal Structures
+In the `XDR' format integers and doubles are written in bigendian
+order: however the format is not fully XDR as defind in RFC 1832 as byte
+quantities (such as the contents of @code{CHARSXP} and @code{RAWSXP}
+types) are written as-is and not padded to a multiple of four bytes.
+
+The `ASCII' format writes 7-bit characters.  Integers are formatted with
+@code{%d} (except that @code{NA_integer_} is written as @code{NA}),
+doubles formatted with @code{%.16g} (plus @code{NA}, @code{Inf} and
+@code{-Inf}) and bytes with @code{%02x}.  Strings are written using
+standard escapes (e.g.@: @code{\t} and @code{\013} for non-printing and
+non-ASCII bytes.
+
+@node Encodings for CHARSXPs, Warnings and errors, Serialization Formats, R Internal Structures
 @section Encodings for CHARSXPs
 
 Character data in @R{} are stored in the sexptype @code{CHARSXP}.  Until
@@ -1174,9 +1198,9 @@ declare the encoding to be either Latin-1 or UTF-8.  (Note that it is
 possible for a character vector to contain elements in different
 encodings.)  Both printing and plotting notice the declaration and
 convert the string to the current locale (possibly using @code{<xx>} to
-display bytes that are not valid in the current locale).  Many (but not
-all) of the character manipulation functions will either preserve the
-declaration or re-encode the character string.
+display in hexadecimal bytes that are not valid in the current locale).
+Many (but not all) of the character manipulation functions will either
+preserve the declaration or re-encode the character string.
 
 Eventually strings that refer to the OS such as file names will need to
 be passed through a wide-character interface on some OSes
@@ -1201,24 +1225,79 @@ we have to a universal format.  For those that do not (for example those
 lacking a powerful enough @code{iconv}), it is likely that they work in
 Latin-1, the old @R{} assumption.
 
-@node S4 objects, Internal use of global and base environments, Encodings for CHARSXPs, R Internal Structures
+@node Warnings and errors, S4 objects, Encodings for CHARSXPs, R Internal Structures
+@section Warnings and errors
+
+@findex warning
+@findex warningcall
+@findex error
+@findex errorcall
+
+Each of @code{warning} and @code{stop} have two C-level equivalents,
+@code{warning}, @code{warningcall}, @code{error} and @code{errorcall}.
+The relationship between the pairs is similar: @code{warning} tries to
+fathom out a suitable call, and then calls @code{warningcall} with that
+call as the first argument if it succeeds, and with @code{call =
+R_NilValue} it is does not.  When @code{warningcall} is called, it
+includes the deparsed call in its printout unless @code{call =
+R_NilValue}.
+
+@code{warning} and @code{error} look at the context stack.  If the
+topmost context is not of type @code{CTXT_BUILTIN}, it is used to
+provide the call, otherwise the next context provides the call.
+This means that when these function are called from a primitive or
+@code{.Internal}, the imputed call will not be to
+primitive/@code{.Internal} but to the function calling the
+primitive/@code{.Internal} .  This is exactly what one wants for a
+@code{.Internal}, as this will give the call to the closure wrapper.
+(Further, for a @code{.Internal}, the call is the argument to
+@code{.Internal}, and so may not correspond to any @R{} function.)
+However, it is unlikely to be what is needed for a primitive.
+
+The upshot is that that @code{warningcall} and @code{errorcall} should
+normally be used for code called from a primitive, and @code{warning}
+and @code{error} should be used for code called from a @code{.Internal}
+(and necessarily from @code{.Call}, @code{.C} and so on, where the call
+is not passed down).  However, there are two complications.  One is that
+code might be called from either a primitive or a @code{.Internal}, in
+which case probably @code{warningcall} is more appropriate.  The other
+involves replacement functions, where the call will be of the form
+(fron @R{} < 2.6.0)
+@example
+> length(x) <- y ~ x
+Error in "length<-"(`*tmp*`, value = y ~ x) : invalid value
+@end example
+
+@noindent
+which is unpalatable to the end user.  For replacement functions there
+will be a suitable context at the top of the stack, so @code{warning}
+should be used.  (The results for @code{.Internal} replacement functions
+such as @code{substr<-} are not ideal.)
+
+
+
+@node S4 objects, Memory allocators, Warnings and errors, R Internal Structures
 @section S4 objects
 
-The internal representation of objects from S4 classes changed in @R{}
-2.4.0.  It is possible that objects from earlier representations still
-exist, but there is no guarantee that they will be handled
-correctly.
-
 [This section is currently a preliminary draft and should not be taken
-as definitive.]
+as definitive.  The description assumes that @env{R_NO_METHODS_TABLES}
+has not been set.]
 
 @menu
 * Representation of S4 objects::  
+* S4 classes::                  
+* S4 methods::                  
 * Mechanics of S4 dispatch::    
 @end menu
 
-@node Representation of S4 objects, Mechanics of S4 dispatch, S4 objects, S4 objects
+@node Representation of S4 objects, S4 classes, S4 objects, S4 objects
 @subsection Representation of S4 objects
+
+[The internal representation of objects from S4 classes changed in @R{}
+2.4.0.  It is possible that objects from earlier representations still
+exist, but there is no guarantee that they will be handled correctly.
+An attempt is made to detect old-style S4 objects and warn when binary
+objects are @code{load}ed or a workspace is restored.]
 
 S4 objects can be of any @code{SEXPTYPE}.  They are either an object of
 a simple type (such as an atomic vector or function) with S4 class
@@ -1238,7 +1317,75 @@ have a class attribute, the @code{OBJECT} bit is set.
 It is currently unclear what should happen if the class attribute is
 removed from an S4 object, or if this should be allowed.
 
-@node Mechanics of S4 dispatch,  , Representation of S4 objects, S4 objects
+@node S4 classes, S4 methods, Representation of S4 objects, S4 objects
+@subsection S4 classes 
+
+S4 classes are stored as @R{} objects in the environment in which they
+are created, with names @code{.__C__@var{classname}}: as such they are
+not listed by default by @code{ls}.
+
+The objects are S4 objects of class @code{"classRepresentation"} which
+is defined in the @pkg{methods} package.
+
+Since these are just objects, they are subject to the normal scoping
+rules and can be imported and exported from name spaces like other
+objects.  The directives @code{importClassesFrom} and
+@code{exportClasses} are merely convenient ways to refer to class
+objects without needing to know their internal `metaname' (although
+@code{exportClasses} does a little sanity checking via @code{isClass}).
+
+@node S4 methods, Mechanics of S4 dispatch, S4 classes, S4 objects
+@subsection S4 methods
+
+Details of methods are stored in S4 objects of class
+@code{"MethodsList"}.  They have a non-syntatic name of the form
+@code{.__M__@var{generic}:@var{package}} for all methods defined in the
+current environment for the named generic derived from a specific
+package (which might be @code{.GlobalEnv}).
+
+There is also environment @code{.__T__@var{generic}:@var{package}} which
+has names the signatures of the methods defined, and values the
+corresponding method functions.  This is often referred to as a `methods
+table'.
+
+When a package without a name space is attached these objects become
+visible on the search path.  @code{library} calls
+@code{methods:::cacheMetaData} to update the internal tables.
+
+During an @R{} session there is an environment associated with each
+non-primitive generic containing objects @code{.AllMTable},
+@code{.Generic}, @code{.Methods}, @code{.MTable}, @code{.SigArgs} and
+@code{.SigLength}.  @code{.MTable} and @code{AllMTable} are merged
+methods tables containing all the methods defined directly and via
+inheritance respectively.  @code{.Methods} is a merged methods list.
+
+Exporting methods from a name space is more complicated than exporting a
+class.  Note first that you do not export a method, but rather the
+directive @code{exportMethods} will export all the methods defined in
+the name space for a specified generic: the code also adds to the list
+of generics any that are exported directly.  For generics which are
+listed via @code{exportMethods} or exported themselves, the
+corresponding @code{"MethodsList"} and environment are exported and so
+will appear (as hidden objects) in the package environment.
+
+Methods for primitives which are internally S4 generic (see below) are
+always exported, whether mentioned in the @code{NAMESPACE} file or not.
+
+Methods can be imported either via the directive
+@code{importMethodsFrom} or via importing a namespace by @code{import}.
+Also, if a generic is imported via @code{importFrom}, its methods are
+also imported.  In all cases the generic will be imported if it is in
+the namespace, so @code{importMethodsFrom} is most appropriate for
+methods defined on generics in other packages.  Since methods for a
+generic could be imported from several different packages, the methods
+tables are merged.
+
+When a package with a name space is attached
+@code{methods:::cacheMetaData} is called to update the internal tables:
+only the visible methods will be cached.
+
+
+@node Mechanics of S4 dispatch,  , S4 methods, S4 objects
 @subsection Mechanics of S4 dispatch
 
 This subsection does not discuss how S4 methods are chosen: see
@@ -1261,37 +1408,200 @@ other package with a name space.
 
 Primitive functions are treated quite differently, for efficiency
 reasons: this results in different semantics.  @code{setGeneric} is
-disallowed for primitive functions.  The @pkg{methods} package contains
-a character vector @code{.ExcludePrimitiveGenerics} of primitives which
-are not internally generic, and S4 methods cannot be set on these.  Then
-there is a list @code{.BasicFunsList} named by primitive functions in
-@code{.BasicFunsList}: the entries are either @code{FALSE} or a standard
-S4 generic showing the effective definition.  When @code{setMethod} is
-called, either it fails if setting is disallowed or a method is set on
-the effective generic.
+disallowed for primitive functions.  The @pkg{methods} namespace
+contains a list @code{.BasicFunsList} named by primitive functions:
+the entries are either @code{FALSE} or a standard S4 generic showing
+the effective definition.  When @code{setMethod} (or
+@code{setReplaceMethod}) is called, it either fails (if the list entry
+is @code{FALSE}) or a method is set on the effective generic given in
+the list.
 
-Actual dispatch of S4 methods for primitives (with one exception)
-piggy-backs on the S3 dispatch mechanism, so S4 methods can only be
-dispatched for primitives which are internally S3 generic.  When a
-primitive that is internally S3 generic is called with a first argument
-which is an object and S4 dispatch is on (that is, the @pkg{methods}
-name space is loaded), @code{DispatchOrEval} (or for S3 group generics,
-@code{DispatchGroup}) calls @code{R_possible_dispatch} (defined in
-@file{src/main/objects.c}).  The latter first checks an internal table
-to see if any S4 methods are set for that generic (and S4 dispatch is
-currently enabled for that generic), and if so proceeds to S4 dispatch
-using methods stored in another internal table.  Note that this means
-that dispatch will not occur for the pseudo-classes like
-@code{"function"} and @code{"matrix"}, but that it will occur for non-S4
-objects which have an S3 class.  All primitives are in the base name
-space, and this mechanism means that S4 methods can be set for (some)
-primitives and will always be used, in contrast to setting methods on
-non-primitives.
+Actual dispatch of S4 methods for almost all primitives piggy-backs on
+the S3 dispatch mechanism, so S4 methods can only be dispatched for
+primitives which are internally S3 generic.  When a primitive that is
+internally S3 generic is called with a first argument which is an S4
+object and S4 dispatch is on (that is, the @pkg{methods} name space is
+loaded), @code{DispatchOrEval} calls @code{R_possible_dispatch} (defined
+in @file{src/main/objects.c}).  (Members of the S3 group generics, which
+includes all the generic operators, are treated slightly differently:
+the first two arguments are checked and @code{DispatchGroup} is called.)
+@code{R_possible_dispatch} first checks an internal table to see if any
+S4 methods are set for that generic (and S4 dispatch is currently
+enabled for that generic), and if so proceeds to S4 dispatch using
+methods stored in another internal table.  All primitives are in the
+base name space, and this mechanism means that S4 methods can be set for
+(some) primitives and will always be used, in contrast to setting
+methods on non-primitives.
 
 The exception is @code{%*%}, which is S4 generic but not S3 generic as
 its C code contains a direct call to @code{R_possible_dispatch}.
 
-@node Internal use of global and base environments, Modules, S4 objects, R Internal Structures
+The primitive @code{as.double} is special, as @code{as.numeric} and
+@code{as.real} are copies of it.  The @pkg{methods} package code partly
+refers to generics by name and partly by function, and was modified in
+@R{} 2.6.0 to map @code{as.double} and @code{as.real} to
+@code{as.numeric} (since that is the name used by packages exporting
+methods for it).
+
+Some elements of the language are implemented as primitives, for example
+@code{@}}.  This includes the subset and subassignment `functions' and
+they are S4 generic, again piggybacking on S3 dispatch.
+
+@code{.BasicFunsList} is generated when @pkg{methods} is installed, by
+computing all primitives, initially disallowing methods on all and then
+setting generics for members of @code{.GenericArgsEnv}, the S4 group
+generics and a short exceptions list in @file{BasicFunsList.R}: this
+currently contains the subsetting and subassignment operators and an
+override for @code{c}.
+
+@node Memory allocators, Internal use of global and base environments, S4 objects, R Internal Structures
+@section Memory allocators
+
+@R{}'s memory allocation is almost all done via routines in
+@file{src/main/memory.c}.  It is important to keep track of where memory
+is allocated, as the Windows port (by default) makes use of a memory
+allocator that differs from @code{malloc} etc as provided by MinGW.
+Specifically, there are entry points @code{Rm_malloc}, @code{Rm_free},
+@code{Rm_calloc} and @code{Rm_free} provided by
+@code{src/gnuwin32/malloc.c}.  This was done for two reasons.  The
+primary motivation was performance: the allocator provided by MSVCRT
+@emph{via} MinGW was far too slow at handling the many small allocations
+that the current (since @R{} 1.2.0) allocation system for
+@code{SEXPREC}s uses.  As a side benefit, we can set a limit on the
+amount of allocated memory: this is useful as whereas Windows does
+provide virtual memory it is relatively far slower than many other @R{}
+platforms and so limiting @R{}'s use of swapping is highly advantageous.
+The high-performance allocator is only called from
+@file{src/main/memory.c}, @file{src/main/regex.c}, @file{src/extra/pcre}
+and @file{src/extra/xdr}: note that this means that it is not used in
+packages.
+
+The rest of @R{} should where possible make use of the allocators made
+available by @file{src/main/memory.c}, which are also the methods
+recommended in 
+@ifset UseExternalXrefs
+@ref{Memory allocation, , Memory allocation, R-exts, Writing R Extensions}
+@end ifset
+@ifclear UseExternalXrefs
+`Writing R Extensions'
+@end ifclear
+@findex R_alloc
+@findex Calloc
+@findex Realloc
+@findex Free
+for use in @R{} packages, namely the use of @code{R_alloc},
+@code{Calloc}, @code{Realloc} and @code{Free}.  Memory allocated by
+@code{R_alloc} is freed by the garbage collector once the `watermark'
+has been reset by calling
+@findex vmaxset
+@code{vmaxset}.  This is done automatically by the wrapper code calling
+primitives and @code{.Internal} functions (and also by the wrapper code
+to @code{.Call} and @code{.External}), but
+@findex vmaxget 
+@code{vmaxget} and @code{vmaxset} can be used to reset the watermark
+from within internal code if the memory is only required for a short
+time.
+
+@findex alloca
+All of the methods of memory allocation mentioned so far are relatively
+expensive.  All @R{} platforms support @code{alloca}, and in almost all
+cases@footnote{but apparently not on Windows.} this is managed by the
+compiler, allocates memory on the C stack and is very efficient.
+
+There are two disadvantages in using @code{alloca}.  First, it is
+fragile and care is needed to avoid writing (or even reading) outside
+the bounds of the allocation block returned.  Second, it increases the
+danger of overflowing the C stack.   It is suggested that it is only
+used for smallish allocations (up to tens of thousands of bytes), and
+that
+
+@findex R_CheckStack
+@example
+    R_CheckStack();
+@end example
+
+@noindent
+is called immediately after the allocation (as @R{}'s stack checking
+mechanism will warn far enough from the stack limit to allow for modest
+use of alloca).  (@code{do_makeunique} in @file{src/main/unique.c}
+provides an example of both points.)
+
+An alternative strategy has been used for various functions which
+require intermediate blocks of storage of varying but usually small
+size, and this has been consolidated into the routines in the header
+file @file{src/main/RBufferUtils.h}.  This uses a structure which
+contains a buffer, the current size and the default size. A call to
+@findex R_AllocStringBuffer
+@example
+    R_AllocStringBuffer(size_t blen, R_StringBuffer *buf);
+@end example
+
+@noindent
+sets @code{buf->data} to a memory area of at least @code{blen+1} bytes.
+At least the default size is used, which means that for small
+allocations the same buffer can be reused.  A call to
+@findex R_FreeStringBufferL
+@findex R_FreeStringBuffer
+@code{R_FreeStringBufferL} releases memory if more than the default has
+been allocated whereas a call to @code{R_FreeStringBuffer} frees any
+memory allocated.
+
+The @code{R_StringBuffer} structure needs to be initialized, for example by
+
+@example
+static R_StringBuffer ex_buff = @{NULL, 0, MAXELTSIZE@};
+@end example
+
+@noindent
+which uses a default size of @code{MAXELTSIZE = 8192} bytes.  Most
+current uses have a static @code{ R_StringBuffer} structure, which
+allows the (default-sized) buffer to be shared between calls to e.g.@:
+@code{grep} and even between functions: this will need to be changed if
+@R{} ever allows concurrent evaluation threads.  So the idiom is
+
+@example
+static R_StringBuffer ex_buff = @{NULL, 0, MAXELTSIZE@};
+...
+    char *buf;
+    for(i = 0; i < n; i++) @{
+        compute len
+        buf = R_AllocStringBuffer(len, &ex_buff);
+        use buf
+    @}
+    /*  free allocation if larger than the default, but leave
+        default allocated for future use */
+   R_FreeStringBufferL(&ex_buff);
+@end example
+
+
+@menu
+* Internals of R_alloc::        
+@end menu
+
+@node Internals of R_alloc,  , Memory allocators, Memory allocators
+@subsection Internals of R_alloc
+
+The memory used by @code{R_alloc} is allocated as @R{} vectors, of type
+@code{RAWSXP} for `small' allocations (less than 2^31 - 1 bytes) and of
+type @code{REALSXP} for allocations up to 2^34 - 1 bytes on 64-bit
+machines.  Thus the allocation is in units of 8 bytes, and is rounded
+up.  (Prior to @R{} 2.6.0 @code{CHARSXP}s were used, and so one byte was
+added prior to rounding up.  This had the effect of over-allocating
+areas for @code{double}s by one and thereby masked several subtle
+programming errors.)
+
+The vectors allocated are protected via the setting of @code{R_VStack},
+as the garbage collector marks everything that can be reached from that
+location.  When a vector is @code{R_alloc}ated, its @code{ATTRIB}
+pointer is set to the current @code{R_VStack}, and @code{R_VStack} is
+set to the latest allocation.  Thus @code{R_VStack} is a single-linked
+chain of vectors currently allocated via @code{R_alloc}.  Function
+@code{vmaxset} resets the location @code{R_VStack}, and should be to a
+value that has previously be obtained @emph{via} @code{vmaxget}:
+allocations after the value was obtained will no longer be protected and
+hence available for garbage collection.
+
+@node Internal use of global and base environments, Modules, Memory allocators, R Internal Structures
 @section Internal use of global and base environments
 
 This section notes known use by the system of these environments: the
@@ -1402,7 +1712,7 @@ compiled against Internet Explorer internals (and so loads
 @file{wininet.dll} and @file{wsock32.dll}).
 @end table
 
-@node .Internal vs .Primitive, R coding standards, R Internal Structures, Top
+@node .Internal vs .Primitive, Internationaliation in the R sources, R Internal Structures, Top
 @chapter @code{.Internal} vs @code{.Primitive}
 
 @findex .Internal
@@ -1485,46 +1795,40 @@ Basic mathematical functions with a single argument, i.e.,
 
 @example
 @group
-sign    abs
+abs     sign    sqrt
 floor   ceiling
 @end group
 
 @group
-sqrt    exp
-cos     sin      tan
-acos    asin     atan
-cosh    sinh     tanh
-acosh   asinh    atanh
+exp     expm1
+log2    log10   log1p
+cos     sin     tan
+acos    asin    atan
+cosh    sinh    tanh
+acosh   asinh   atanh
 @end group
+
+@group
+gamma   lgamma  digamma trigamma
+@end group
+
 
 @group
 cumsum  cumprod cummax  cummin
 @end group
 
 @group
-Im      Re     Arg     Conj     Mod
+Im  Re  Arg  Conj  Mod
 @end group
 @end example
 
-@noindent Note however that the @R{} function @code{log} has an optional
-named argument @code{base}, and therefore is defined as
+@code{log} is a function of one or two arguments, but was made
+primitive as from @R{} 2.6.0 and so has named rather than positional
+matching for back compatibility.
 
-@example
-@group
-log <- function(x, base = exp(1)) @{
-  if(missing(base))
-    .Internal(log(x))
-  else
-    .Internal(log(x, base))
-@}
-@end group
-@end example
-
-@noindent in order to ensure that @code{log(x = pi, base = 2)} is
-identical to @code{log(base = 2, x = pi)}.
-
-Function @code{trunc} is a difficult case: it is a primitive and is
-currently treated as @code{trunc(x, ..)}.
+@code{trunc} is a difficult case: it is a primitive that can have zero
+or more arguments: the default method handled in the primitive has
+only one.
 
 @item
 Functions rarely used outside of ``programming'' (i.e., mostly used
@@ -1573,6 +1877,7 @@ dim         dim<-
 dimnames    dimnames<-
             environment<-
             levels<-
+            storage.mode<-
 @end group
 @end example
 
@@ -1580,9 +1885,9 @@ dimnames    dimnames<-
 @noindent
 Note that optimizing @code{NAMED = 1} is only effective within a
 primitive (as the closure wrapper of a @code{.Internal} will set
-@code{NAMED = 2} on the argument) and hence replacement functions should
-where possible be primitive to avoid copying (at least in their default
-methods).
+@code{NAMED = 2} when the promise to the argument is evaluated) and
+hence replacement functions should where possible be primitive to avoid
+copying (at least in their default methods).
 
 @item
 The following few @math{N}-argument functions are ``primitive'' for
@@ -1591,13 +1896,15 @@ efficiency reasons:
 @example
 @group
 :          ~          c           list
-call       as.call    as.character
+call       as.call    as.character as.complex  as.double
+as.integer as.logical as.raw
 expression substitute as.environment
 UseMethod  invisible  standardGeneric
 .C         .Fortran   .Call       .External
 .Call.graphics        .External.graphics
 .subset    .subset2   .primTrace  .primUntrace
 rep        seq.int
+lazyLoadDBfetch
 @end group
 @end example
 
@@ -1695,12 +2002,143 @@ defined with argument list @code{(x, ...)}, but most of the members only
 allow one argument when used as the default method (and @code{round} and
 @code{signif} allow two as default methods): again fix-ups are used.
 
-There is no way to know if a @code{.Internal} or primitive function is
-internally generic except by reading the source code: do not rely on the
-help pages (or even the presence or not in @code{.GenericArgsEnv}) as
-they cannot be checked automatically.
+Those primitives which are in @code{.GenericArgsEnv} are checked (via
+@file{tests/primitives.R} to be generic @emph{via} defining methods for
+them, and a check is made that the remaining primitives are probably not
+generic, by setting a method and checking it is not dispatched to (but
+this can fail for other reasons).  However, there is no certain way to
+know that if other @code{.Internal} or primitive functions are not
+internally generic except by reading the source code.
 
-@node R coding standards, Testing R code, .Internal vs .Primitive, Top
+
+@node Internationaliation in the R sources, R coding standards, .Internal vs .Primitive, Top
+@chapter Internationaliation in the R sources
+
+The process of marking messages (errors, warnings etc) for translation
+in an @R{} package is described in 
+@ifset UseExternalXrefs
+@ref{Localization, , Localization, R-exts, Writing R Extensions},
+@end ifset
+@ifclear UseExternalXrefs
+`Writing R Extensions',
+@end ifclear
+and the standard packages included with @R{} have (with an exception in
+@pkg{grDevices}) been internationalized in the same way as other
+packages.
+
+@menu
+* R code::                      
+* Main C code::                 
+* Windows-GUI-specific code::   
+* MacOS X GUI::                 
+* Updating::                    
+@end menu
+
+@node R code, Main C code, Internationaliation in the R sources, Internationaliation in the R sources
+@section R code
+
+Internationalization for @R{} code is done in exactly the same way as
+for extension packages.  As all standard packages which have @R{} code
+also have a namespace, it is never necessary to specify @code{domain},
+but for efficiency calls to @code{message}, @code{warning} and
+@code{stop} should include @code{domain = NA} when the message is
+constructed @emph{via} @code{gettextf}, @code{gettext} or
+@code{ngettext}.
+
+For each package, the extracted messages and translation sources are
+stored under package directory @file{po} in the source package, and compiled
+translations under @file{inst/po} for installation to package directory
+@file{po} in the installed package.  This also applies to C code in
+packages.
+
+@node Main C code, Windows-GUI-specific code, R code, Internationaliation in the R sources
+@section Main C code
+
+The main C code (e.g.@: that in @file{src/*/*.c} and in
+the modules) is where @R{} is closest to the sort of application for
+which @samp{gettext} was written.  Messages in the main C code are in
+domain @code{R} and stored in the top-level directory @file{po} with
+compiled translations under @file{share/locale}.
+
+The list of files covered by the @R{} domain is specified in file
+@file{po/POTFILES.in}.
+
+The normal way to mark messages for translation is via @code{_("msg")}
+just as for packages.  However, sometimes one needs to mark passages for
+translation without wanting them translated at the time, for example
+when declaring string constants.  This is the purpose of the @code{N_}
+macro, for example
+
+@example
+@{ ERROR_ARGTYPE,           N_("invalid argument type")@},
+@end example
+
+@noindent
+from @file{src/main/errors.c}.
+
+A macro
+
+@example
+#ifdef ENABLE_NLS
+#define P_(StringS, StringP, N) ngettext (StringS, StringP, N)
+#else
+#define P_(String, StringP, N) (N > 1 ? StringP: String)
+#endif
+@end example
+
+@noindent
+as a wrapper for @code{ngettext}: however in some cases the preferred
+approach has been to conditionalize (on @code{ENABLE_NLS}) code using
+@code{ngettext}.
+
+The macro @code{_("msg")} can safely be used in @file{src/appl}; the
+header for standalone @samp{nmath} skips possible translation.  (This
+does not apply to @code{N_} or @code{P_}).
+
+
+@node Windows-GUI-specific code, MacOS X GUI, Main C code, Internationaliation in the R sources
+@section Windows-GUI-specific code
+
+Messages for the Windows GUI are in a separate domain @samp{RGui}.  This
+was done for two reasons:
+
+@itemize
+@item
+The translators for the Windows version of @R{} might be separate from
+those for the rest of @R{} (familiarity with the GUI helps), and
+
+@item
+Messages for Windows are most naturally handled in the native charset
+for the language, and in the case of CJK languages the charset is
+Windows-specific.  (It transpires that as the @code{iconv} we ported
+works well under Windows, this is less important than anticipated.)
+@end itemize
+
+Messages for the @samp{RGui} domain are marked by @code{G_("msg")}, a
+macro that is defined in @file{src/gnuwin32/win-nls.h}.  The list of
+files that are considered is hardcoded in the @code{RGui.pot-update}
+target of @file{po/Makefile.in.in}: note that this includes
+@file{devWindows.c} as the menus on the @code{windows} device are
+considered to be part of the GUI.  (There is also @code{GN_("msg")}, the
+analogue of @code{N_("msg")}.)
+
+The template and message catalogs for the @samp{RGui} domain are in the
+top-level @file{po} directory.
+
+
+@node MacOS X GUI, Updating, Windows-GUI-specific code, Internationaliation in the R sources
+@section MacOS X GUI
+
+This is handled separately: see
+@uref{http://developer.r-project.org/Translations.html}.
+
+
+@node Updating,  , MacOS X GUI, Internationaliation in the R sources
+@section Updating
+
+See @file{po/README} for how to update the message templates and catalogs.
+
+@node R coding standards, Testing R code, Internationaliation in the R sources, Top
 @chapter R coding standards
 
 @cindex coding standards

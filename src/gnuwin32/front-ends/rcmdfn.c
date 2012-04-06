@@ -13,8 +13,8 @@
  *  GNU General Public License for more details.
  *
  *  You should have received a copy of the GNU General Public License
- *  along with this program; if not, write to the Free Software
- *  Foundation, Inc., 51 Franklin Street, Fifth Floor, Boston, MA 02110-1301  USA
+ *  along with this program; if not,  a copy is available at
+ *  http://www.r-project.org/Licenses/
  */
 
 #define NONAMELESSUNION
@@ -44,7 +44,7 @@ static int pwait(HANDLE p)
 
 void rcmdusage (char *RCMD)
 {
-    fprintf(stderr, "%s%s%s%s%s%s%s%s%s%s%s%s%s%s%s%s",
+    fprintf(stderr, "%s%s%s%s%s%s%s%s%s%s%s%s%s%s%s%s%s",
 	    "where 'command' is one of:\n",
 	    "  INSTALL  Install add-on packages.\n",
 	    "  REMOVE   Remove add-on packages.\n",
@@ -60,7 +60,8 @@ void rcmdusage (char *RCMD)
 	    "  Rd2txt   Convert Rd format to text.\n",
 	    "  Sd2Rd    Convert S documentation to Rd format.\n",
 	    "  Stangle  Extract S/R code from Sweave documentation.\n",
-	    "  Sweave   Process Sweave documentation.\n"
+	    "  Sweave   Process Sweave documentation.\n",
+	    "  config   Obtain configuration information about R.\n"
 	    );
 
     fprintf(stderr, "\n%s%s%s%s",
@@ -81,7 +82,7 @@ int rcmdfn (int cmdarg, int argc, char **argv)
        launch %R_HOME%\bin\$*
      */
     int i, iused, res, status = 0;
-    char *RHome, PERL5LIB[MAX_PATH], TEXINPUTS[MAX_PATH], PATH[10000],
+    char *RHome, PERL5LIB[MAX_PATH], TEXINPUTS[MAX_PATH], BUFFER[10000],
 	RHOME[MAX_PATH], *p, cmd[CMD_LEN], Rversion[25], HOME[MAX_PATH + 10],
 	RSHARE[MAX_PATH];
     char RCMD[] = "R CMD";
@@ -253,15 +254,20 @@ int rcmdfn (int cmdarg, int argc, char **argv)
 	putenv("R_CMD=R CMD");
 	putenv("R_OSTYPE=windows");
 
-	strcpy(PATH, "PATH=");
-	strcat(PATH, RHome); strcat(PATH, "\\bin;");
-	strcat(PATH, getenv("PATH"));
-	putenv(PATH);
+	strcpy(BUFFER, "PATH=");
+	strcat(BUFFER, RHome); strcat(BUFFER, "\\bin;");
+	strcat(BUFFER, getenv("PATH"));
+	putenv(BUFFER);
 
 	if ( (p = getenv("TMPDIR")) && strlen(p)) {
 	    /* TMPDIR is already set */
 	} else {
-	    putenv("TMPDIR=c:/TEMP");
+	    if ( (p = getenv("TEMP")) && strlen(p)) {
+	        strcpy(BUFFER, "TMPDIR=");
+	        strcat(BUFFER, p);
+	        putenv(BUFFER);
+	    } else
+	        putenv("TMPDIR=c:/TEMP");
 	}
 
 	strcpy(PERL5LIB, "PERL5LIB=");
@@ -293,6 +299,9 @@ int rcmdfn (int cmdarg, int argc, char **argv)
 	    } else if (strcmp(p, "Stangle") == 0) {
 		strcpy(cmd, "sh ");
 		strcat(cmd, RHome); strcat(cmd, "/bin/Stangle.sh");
+	    } else if (strcmp(p, "config") == 0) {
+		strcpy(cmd, "sh ");
+		strcat(cmd, RHome); strcat(cmd, "/bin/config.sh");
 	    } else {
 		if (!strcmp(".sh", p + strlen(p) - 3)) {
 		    strcpy(cmd, "sh ");

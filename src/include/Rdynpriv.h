@@ -13,8 +13,8 @@
  *  GNU Lesser General Public License for more details.
  *
  *  You should have received a copy of the GNU General Public License
- *  along with this program; if not, write to the Free Software
- *  Foundation, Inc., 51 Franklin Street, Fifth Floor, Boston, MA 02110-1301  USA
+ *  along with this program; if not, a copy is available at
+ *  http://www.r-project.org/Licenses/
  */
 
 #ifndef R_DYNPRIV_H
@@ -167,7 +167,7 @@ typedef struct {
     DL_FUNC (*lookupCachedSymbol)(const char *name, const char *pkg, int all);
 
     void     (*fixPath)(char *path);
-    void     (*getFullDLLPath)(SEXP call, char *buf, char *path);
+    void     (*getFullDLLPath)(SEXP call, char *buf, const char * const path);
 
 } OSDynSymbol;
 
@@ -196,6 +196,9 @@ extern int nCPFun;
 DL_FUNC Rf_lookupCachedSymbol(const char *name, const char *pkg, int all);
 
 DL_FUNC R_dlsym(DllInfo *info, char const *name, R_RegisteredNativeSymbol *symbol);
+
+SEXP R_MakeExternalPtrFn(DL_FUNC p, SEXP tag, SEXP prot);
+DL_FUNC R_ExternalPtrAddrFn(SEXP s);
 
 #ifdef __cplusplus
 }

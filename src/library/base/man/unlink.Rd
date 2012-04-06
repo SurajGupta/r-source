@@ -1,3 +1,8 @@
+% File src/library/base/man/unlink.Rd
+% Part of the R package, http://www.R-project.org
+% Copyright 1995-2007 R Core Development Team
+% Distributed under GPL 2 or later
+
 \name{unlink}
 \title{Delete Files and Directories}
 \usage{unlink(x, recursive = FALSE)}
@@ -19,7 +24,14 @@
   \code{\link{file.remove}} can only remove files, but gives more
   detailed error information.
 
-  Wildcard expansion is done by \code{\link{Sys.glob}}.
+  Wildcard expansion is done by the internal code of
+  \code{\link{Sys.glob}}.
+#ifdef unix
+  Wildcards will only be expanded if the system supports it.
+
+  \code{recursive = TRUE} is not supported on all platforms, and may be
+  ignored, with a warning.
+#endif
 #ifdef Windows
 
   Windows cannot remove the current working directory, nor any file
@@ -27,14 +39,9 @@
 #endif
 }
 \value{
-#ifdef unix
-  The return value of the corresponding system command, \code{rm -f},
-  normally \code{0} for success, \code{1} for failure.
-#endif
-#ifdef windows
   \code{0} for success, \code{1} for failure.
-#endif
-  Not deleting a non-existent file is not a failure.
+  Not deleting a non-existent file is not a failure, nor is being unable
+  to delete a directory if \code{recursive = FALSE}.
 }
 \references{
   Becker, R. A., Chambers, J. M. and Wilks, A. R. (1988)

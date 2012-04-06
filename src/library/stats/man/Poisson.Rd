@@ -1,3 +1,8 @@
+% File src/library/stats/man/Poisson.Rd
+% Part of the R package, http://www.R-project.org
+% Copyright 1995-2007 R Core Development Team
+% Distributed under GPL 2 or later
+
 \name{Poisson}
 \alias{Poisson}
 \alias{dpois}
@@ -73,11 +78,13 @@ rpois(n, lambda)
   the negative binomial distribution.
 }
 \examples{
--log(dpois(0:7, lambda=1) * gamma(1+ 0:7)) # == 1
-Ni <- rpois(50, lam= 4); table(factor(Ni, 0:max(Ni)))
+require(graphics)
 
-1 - ppois(10*(15:25), lambda=100)		# becomes 0 (cancellation)
-    ppois(10*(15:25), lambda=100, lower=FALSE)	# no cancellation
+-log(dpois(0:7, lambda=1) * gamma(1+ 0:7)) # == 1
+Ni <- rpois(50, lambda = 4); table(factor(Ni, 0:max(Ni)))
+
+1 - ppois(10*(15:25), lambda=100)  # becomes 0 (cancellation)
+    ppois(10*(15:25), lambda=100, lower.tail=FALSE)	# no cancellation
 
 par(mfrow = c(2, 1))
 x <- seq(-0.01, 5, 0.01)

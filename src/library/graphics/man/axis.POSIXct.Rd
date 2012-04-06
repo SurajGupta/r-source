@@ -1,3 +1,8 @@
+% File src/library/graphics/man/axis.POSIXct.Rd
+% Part of the R package, http://www.R-project.org
+% Copyright 1995-2007 R Core Development Team
+% Distributed under GPL 2 or later
+
 \name{axis.POSIXct}
 \alias{axis.POSIXct}
 \alias{plot.POSIXct}
@@ -69,7 +74,7 @@ plot(lps, 1:23, type="n", yaxt="n", xlab="leap seconds", ylab="", bty="n")
 rug(lps)
 
 ## 100 random dates in a 10-week period
-random.dates <- as.Date("2001/1/1") + 70*sort(runif(100))
+random.dates <- as.Date("2001/1/1") + 70*sort(stats::runif(100))
 plot(random.dates, 1:100)
 # or for a better axis labelling
 plot(random.dates, 1:100, xaxt="n")

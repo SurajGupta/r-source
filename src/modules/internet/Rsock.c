@@ -16,8 +16,8 @@
  *  GNU General Public License for more details.
  *
  *  You should have received a copy of the GNU General Public License
- *  along with this program; if not, write to the Free Software
- *  Foundation, Inc., 51 Franklin Street, Fifth Floor, Boston, MA 02110-1301  USA
+ *  along with this program; if not, a copy is available at
+ *  http://www.r-project.org/Licenses/
  */
 
 /* <UTF8> chars are handled as a whole */
@@ -134,7 +134,7 @@ void in_Rsockwrite(int *sockp, char **buf, int *start, int *end, int *len)
 #include <R_ext/R-ftp-http.h>
 
 #ifdef Win32
-#include <winsock.h>
+#include <winsock2.h>
 #include <io.h>
 #define EWOULDBLOCK             WSAEWOULDBLOCK
 #define EINPROGRESS             WSAEINPROGRESS
@@ -500,8 +500,8 @@ int R_SockConnect(int port, char *host)
 #endif
 	}
     }
-    /* not reached */
-    return(-1);
+    /* not reached
+    return(-1); */
 }
 
 int R_SockClose(int sockp)

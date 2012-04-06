@@ -1,3 +1,8 @@
+% File src/library/graphics/man/layout.Rd
+% Part of the R package, http://www.R-project.org
+% Copyright 1995-2007 R Core Development Team
+% Distributed under GPL 2 or later
+
 \name{layout}
 \alias{layout}
 \alias{layout.show}
@@ -96,8 +101,8 @@ layout.show(nf)
 
 ##-- Create a scatterplot with marginal histograms -----
 
-x <- pmin(3, pmax(-3, rnorm(50)))
-y <- pmin(3, pmax(-3, rnorm(50)))
+x <- pmin(3, pmax(-3, stats::rnorm(50)))
+y <- pmin(3, pmax(-3, stats::rnorm(50)))
 xhist <- hist(x, breaks=seq(-3,3,0.5), plot=FALSE)
 yhist <- hist(y, breaks=seq(-3,3,0.5), plot=FALSE)
 top <- max(c(xhist$counts, yhist$counts))

@@ -1,3 +1,8 @@
+% File src/library/stats/man/decompose.Rd
+% Part of the R package, http://www.R-project.org
+% Copyright 1995-2007 R Core Development Team
+% Distributed under GPL 2 or later
+
 \name{decompose}
 \alias{decompose}
 \alias{plot.decomposed.ts}
@@ -47,6 +52,8 @@ Y[t] = T[t] * S[t] + e[t]
 \seealso{\code{\link{stl}}}
 
 \examples{
+require(graphics)
+
 m <- decompose(co2)
 m$figure
 plot(m)

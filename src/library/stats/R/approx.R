@@ -1,3 +1,19 @@
+#  File src/library/stats/R/approx.R
+#  Part of the R package, http://www.R-project.org
+#
+#  This program is free software; you can redistribute it and/or modify
+#  it under the terms of the GNU General Public License as published by
+#  the Free Software Foundation; either version 2 of the License, or
+#  (at your option) any later version.
+#
+#  This program is distributed in the hope that it will be useful,
+#  but WITHOUT ANY WARRANTY; without even the implied warranty of
+#  MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
+#  GNU General Public License for more details.
+#
+#  A copy of the GNU General Public License is available at
+#  http://www.r-project.org/Licenses/
+
 ### approx() and approxfun() are *very similar* -- keep in sync!
 
 approx <- function(x, y = NULL, xout, method = "linear", n = 50,
@@ -41,12 +57,12 @@ approx <- function(x, y = NULL, xout, method = "linear", n = 50,
     if (missing(xout)) {
 	if (n <= 0)
 	    stop("'approx' requires n >= 1")
-	xout <- seq(x[1], x[nx], length = n)
+	xout <- seq.int(x[1], x[nx], length.out = n)
     }
     y <- .C("R_approx", as.double(x), as.double(y), as.integer(nx),
 	    xout = as.double(xout), as.integer(length(xout)),
 	    as.integer(method), as.double(yleft), as.double(yright),
-	    as.double(f), NAOK = TRUE, PACKAGE = "base")$xout
+	    as.double(f), NAOK = TRUE, PACKAGE = "stats")$xout
     list(x = xout, y = y)
 }
 
@@ -94,7 +110,7 @@ approxfun <- function(x, y = NULL, method = "linear",
     function(v) .C("R_approx", as.double(x), as.double(y), as.integer(n),
 		   xout = as.double(v), as.integer(length(v)),
 		   as.integer(method), as.double(yleft), as.double(yright),
-		   as.double(f), NAOK = TRUE, PACKAGE = "base")$xout
+		   as.double(f), NAOK = TRUE, PACKAGE = "stats")$xout
 }
 
 ### This is a `variant' of  approx( method = "constant" ) :

@@ -1,3 +1,8 @@
+% File src/library/grDevices/man/n2mfrow.Rd
+% Part of the R package, http://www.R-project.org
+% Copyright 1995-2007 R Core Development Team
+% Distributed under GPL 2 or later
+
 \name{n2mfrow}
 \alias{n2mfrow}
 \title{Compute Default mfrow From Number of Plots}
@@ -19,6 +24,8 @@ n2mfrow(nr.plots)
 \author{Martin Maechler}
 \seealso{\code{\link{par}}, \code{\link{layout}}.}
 \examples{
+require(graphics)
+
 n2mfrow(8) # 3 x 3
 
 n <- 5 ; x <- seq(-2,2, len=51)

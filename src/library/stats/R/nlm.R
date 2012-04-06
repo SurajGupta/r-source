@@ -1,7 +1,23 @@
-nlm <- function(f, p, hessian=FALSE, typsize=rep(1,length(p)),
+#  File src/library/stats/R/nlm.R
+#  Part of the R package, http://www.R-project.org
+#
+#  This program is free software; you can redistribute it and/or modify
+#  it under the terms of the GNU General Public License as published by
+#  the Free Software Foundation; either version 2 of the License, or
+#  (at your option) any later version.
+#
+#  This program is distributed in the hope that it will be useful,
+#  but WITHOUT ANY WARRANTY; without even the implied warranty of
+#  MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
+#  GNU General Public License for more details.
+#
+#  A copy of the GNU General Public License is available at
+#  http://www.r-project.org/Licenses/
+
+nlm <- function(f, p, ..., hessian=FALSE, typsize=rep(1,length(p)),
 		fscale=1, print.level=0, ndigit=12, gradtol=1e-6,
 		stepmax=max(1000 * sqrt(sum((p/typsize)^2)), 1000),
-		steptol=1e-6, iterlim=100, check.analyticals=TRUE, ...)
+		steptol=1e-6, iterlim=100, check.analyticals=TRUE)
 {
 
     print.level <- as.integer(print.level)
@@ -14,8 +30,9 @@ nlm <- function(f, p, hessian=FALSE, typsize=rep(1,length(p)),
                   msg, ndigit, gradtol, stepmax, steptol, iterlim))
 }
 
-optimize <- function(f, interval, lower=min(interval), upper=max(interval),
-		     maximum=FALSE, tol=.Machine$double.eps^0.25, ...)
+optimize <- function(f, interval, ...,
+		     lower=min(interval), upper=max(interval),
+		     maximum=FALSE, tol=.Machine$double.eps^0.25)
 {
     if(maximum) {
 	val <- .Internal(fmin(function(arg) -f(arg, ...), lower, upper, tol))
@@ -29,17 +46,22 @@ optimize <- function(f, interval, lower=min(interval), upper=max(interval),
 ##nice to the English (or rather the Scots)
 optimise <- optimize
 
-uniroot <- function(f, interval, lower = min(interval), upper = max(interval),
-		    tol = .Machine$double.eps^0.25, maxiter = 1000, ...)
+uniroot <- function(f, interval, ...,
+                    lower = min(interval), upper = max(interval),
+                    f.lower = f(lower, ...), f.upper = f(upper, ...),
+		    tol = .Machine$double.eps^0.25, maxiter = 1000)
 {
     if(!missing(interval) && length(interval) != 2)
         stop("'interval' must be a vector of length 2")
     if(!is.numeric(lower) || !is.numeric(upper) || lower >= upper)
         stop("lower < upper  is not fulfilled")
-    if(f(lower, ...) * f(upper, ...) > 0)
+    if(is.na(f.lower)) stop("f.lower = f(lower) is NA")
+    if(is.na(f.upper)) stop("f.upper = f(upper) is NA")
+    if(f.lower * f.upper > 0)
 	stop("f() values at end points not of opposite sign")
-    val <- .Internal(zeroin(function(arg) f(arg, ...), lower, upper, tol,
-			    as.integer(maxiter)))
+    val <- .Internal(zeroin2(function(arg) f(arg, ...),
+                             lower, upper, f.lower, f.upper,
+			     tol, as.integer(maxiter)))
     iter <- as.integer(val[2])
     if(iter < 0) {
 	warning("_NOT_ converged in ", maxiter, " iterations")

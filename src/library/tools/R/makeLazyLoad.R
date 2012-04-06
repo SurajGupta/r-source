@@ -1,3 +1,19 @@
+#  File src/library/tools/R/makeLazyLoad.R
+#  Part of the R package, http://www.R-project.org
+#
+#  This program is free software; you can redistribute it and/or modify
+#  it under the terms of the GNU General Public License as published by
+#  the Free Software Foundation; either version 2 of the License, or
+#  (at your option) any later version.
+#
+#  This program is distributed in the hope that it will be useful,
+#  but WITHOUT ANY WARRANTY; without even the implied warranty of
+#  MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
+#  GNU General Public License for more details.
+#
+#  A copy of the GNU General Public License is available at
+#  http://www.r-project.org/Licenses/
+
 code2LazyLoadDB <-
     function(package, lib.loc = NULL,
              keep.source = getOption("keep.source.pkgs"),
@@ -88,7 +104,7 @@ list_data_in_pkg <- function(package, lib.loc = NULL, dataDir = NULL)
             for(f in files) {
                 utils::data(list = f, package = package, lib.loc = lib.loc,
                             envir = dataEnv)
-                ans[[f]] <- ls(envir = dataEnv, all = TRUE)
+                ans[[f]] <- ls(envir = dataEnv, all.names = TRUE)
                 rm(list = ans[[f]], envir = dataEnv)
             }
         }
@@ -156,7 +172,7 @@ makeLazyLoadDB <- function(from, filebase, compress = TRUE, ascii = FALSE,
                            variables)
 {
     envlist <- function(e) {
-        names <- ls(e, all=TRUE)
+        names <- ls(e, all.names=TRUE)
         .Call("R_getVarsFromFrame", names, e, FALSE, PACKAGE="base")
     }
 
@@ -210,7 +226,7 @@ makeLazyLoadDB <- function(from, filebase, compress = TRUE, ascii = FALSE,
                              enclos = parent.env(e))
                 key <- lazyLoadDBinsertValue(data, datafile, ascii,
                                              compress, envhook)
-                assign(name, key, env = envenv)
+                assign(name, key, envir = envenv)
             }
             name
         }
@@ -219,11 +235,11 @@ makeLazyLoadDB <- function(from, filebase, compress = TRUE, ascii = FALSE,
     if (is.null(from) || is.environment(from)) {
         if (! missing(variables))
             vars <- variables
-        else vars <- ls(from, all = TRUE)
+        else vars <- ls(from, all.names = TRUE)
     }
     else if (is.list(from)) {
         vars <- names(from)
-        if (length(vars) != length(from) || any(nchar(vars) == 0))
+        if (length(vars) != length(from) || any(!nzchar(vars)))
             stop("source list must have names for all elements")
     }
     else stop("source must be an environment or a list")
@@ -234,14 +250,14 @@ makeLazyLoadDB <- function(from, filebase, compress = TRUE, ascii = FALSE,
                                      ascii, compress,  envhook)
         else lazyLoadDBinsertListElement(from, i, datafile, ascii,
                                          compress, envhook)
-        assign(vars[i], key, env = varenv)
+        assign(vars[i], key, envir = varenv)
     }
 
-    vals <- lapply(vars, get, env = varenv, inherits = FALSE)
+    vals <- lapply(vars, get, envir = varenv, inherits = FALSE)
     names(vals) <- vars
 
-    rvars <- ls(envenv, all = TRUE)
-    rvals <- lapply(rvars, get, env = envenv, inherits = FALSE)
+    rvars <- ls(envenv, all.names = TRUE)
+    rvals <- lapply(rvars, get, envir = envenv, inherits = FALSE)
     names(rvals) <- rvars
 
     val <- list(variables = vals, references = rvals,

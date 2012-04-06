@@ -1,3 +1,8 @@
+% File src/library/base/man/match.Rd
+% Part of the R package, http://www.R-project.org
+% Copyright 1995-2007 R Core Development Team
+% Distributed under GPL 2 or later
+
 \name{match}
 \alias{match}
 \alias{\%in\%}
@@ -11,7 +16,7 @@
   for its left operand.
 }
 \usage{
-match(x, table, nomatch = NA, incomparables = FALSE)
+match(x, table, nomatch = NA_integer_, incomparables = FALSE)
 
 x \%in\% table
 }

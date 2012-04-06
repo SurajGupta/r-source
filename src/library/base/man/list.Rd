@@ -1,3 +1,8 @@
+% File src/library/base/man/list.Rd
+% Part of the R package, http://www.R-project.org
+% Copyright 1995-2007 R Core Development Team
+% Distributed under GPL 2 or later
+
 \name{list}
 \alias{list}
 \alias{pairlist}
@@ -53,7 +58,7 @@ alist(\dots)
   arguments and the function body.  For expressions, the list of
   constituent elements is returned.  \code{as.list} is generic, and as the
   default method calls \code{\link{as.vector}(mode="list")} methods for
-  \code{as.vector} may be invoked.  As from \R 2.4.0, \code{as.list}
+  \code{as.vector} may be invoked.  \code{as.list}
   turns a factor into a list of one-element factors.  All attributes
   will be dropped unless the argument already is a list.  (This is
   inconsistent with functions such as \code{\link{as.character}}, and is
@@ -74,6 +79,9 @@ alist(\dots)
 
   An empty pairlist, \code{pairlist()} is the same as \code{NULL}.  This
   is different from \code{list()}.
+
+  \code{as.pairlist} is implemented as \code{\link{as.vector}(x, "pairlist")},
+  and hence will dispatch methods for the generic function \code{as.vector}.
 }
 \references{
   Becker, R. A., Chambers, J. M. and Wilks, A. R. (1988)
@@ -86,6 +94,8 @@ alist(\dots)
   \code{\link{unlist}} is an approximate inverse to \code{as.list()}.
 }
 \examples{
+require(graphics)
+
 # create a plotting structure
 pts <- list(x=cars[,1], y=cars[,2])
 plot(pts)

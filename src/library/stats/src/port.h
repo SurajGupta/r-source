@@ -13,8 +13,8 @@
  *  GNU General Public License for more details.
  *
  *  You should have received a copy of the GNU General Public License
- *  along with this program; if not, write to the Free Software
- *  Foundation, Inc., 51 Franklin Street, Fifth Floor, Boston, MA 02110-1301  USA
+ *  along with this program; if not, a copy is available at
+ *  http://www.r-project.org/Licenses/
  */
 
 #ifndef PORT_PORT_H
@@ -29,7 +29,8 @@
 
 #include <Rinternals.h>
 #include <R_ext/RS.h>
-#include <Rmath.h>  /* for d1mach and i1mach */
+int Rf_i1mach(int); /* from private part of nmath! */
+
 #ifdef ENABLE_NLS
 #include <libintl.h>
 #define _(String) dgettext ("stats", String)

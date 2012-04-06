@@ -1,17 +1,49 @@
+#  File src/library/grDevices/R/device.R
+#  Part of the R package, http://www.R-project.org
+#
+#  This program is free software; you can redistribute it and/or modify
+#  it under the terms of the GNU General Public License as published by
+#  the Free Software Foundation; either version 2 of the License, or
+#  (at your option) any later version.
+#
+#  This program is distributed in the hope that it will be useful,
+#  but WITHOUT ANY WARRANTY; without even the implied warranty of
+#  MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
+#  GNU General Public License for more details.
+#
+#  A copy of the GNU General Public License is available at
+#  http://www.r-project.org/Licenses/
+
+
+.known_interactive.devices <-
+    c("X11", "GTK", "quartz", "windows", "JavaGD", "CairoWin", "CairoX11")
 dev.interactive <- function(orNone = FALSE) {
-    iDevs <- c("X11", "GTK", "gnome", "quartz", "windows", "JavaGD")
+    iDevs <- .known_interactive.devices
     interactive() &&
     (.Device %in% iDevs ||
+     (dev.cur() > 1 && dev.displaylist()) ||
      (orNone && .Device == "null device" &&
       is.character(newdev <- getOption("device")) &&
       newdev %in% iDevs))
 }
 
+deviceIsInteractive <- function(name)
+{
+    if(length(name)) {
+        if(!is.character(name)) stop("'name' must be a character vector")
+        unlockBinding(".known_interactive.devices", asNamespace("grDevices"))
+        .known_interactive.devices <<- c(.known_interactive.devices, name)
+        lockBinding(".known_interactive.devices", asNamespace("grDevices"))
+    }
+    invisible(.known_interactive.devices)
+}
+
+
 dev.list <- function()
 {
     n <- if(exists(".Devices")) get(".Devices") else list("null device")
     n <- unlist(n)
-    i <- seq(along = n)[n != ""]
+    i <- seq_along(n)[n != ""]
     names(i) <- n[i]
     i <- i[-1]
     if(length(i) == 0) NULL else i
@@ -30,12 +62,6 @@ dev.set <-
     function(which = dev.next())
 {
     which <- .Internal(dev.set(as.integer(which)))
-#     if(exists(".Devices")) {
-# 	assign(".Device", get(".Devices")[[which]])
-#     }
-#     else {
-# 	.Devices <- list("null device")
-#     }
     names(which) <- .Devices[[which]]
     which
 }

@@ -1,3 +1,8 @@
+% File src/library/base/man/identical.Rd
+% Part of the R package, http://www.R-project.org
+% Copyright 1995-2007 R Core Development Team
+% Distributed under GPL 2 or later
+
 \name{identical}
 \alias{identical}
 \title{Test Objects for Exact Equality}
@@ -28,10 +33,9 @@ identical(x, y)
   the result is also \code{NA}.  In either case, the expression
   \code{if(x == y)....} won't work as expected.
 
-  The function \code{all.equal} is also
-  sometimes used to test equality this way, but was intended for
-  something different:  It allows for \dQuote{reasonable}
-  differences in numeric results.
+  The function \code{all.equal} is also sometimes used to test equality
+  this way, but was intended for something different:  it allows for
+  small differences in numeric results.
 
   The computations in \code{identical} are also reliable and usually
   fast.  There should never be an error.  The only known way to kill
@@ -42,8 +46,8 @@ identical(x, y)
   independent copies.  For most applications, however, the computational cost
   should be negligible.
 
-  \code{identical} sees \code{NaN} as different from
-  \code{as.double(NA)}, but all \code{NaN}s are equal (and all \code{NA}
+  \code{identical} sees \code{\link{NaN}} as different from
+  \code{\link{NA_real_}}, but all \code{NaN}s are equal (and all \code{NA}
   of the same type are equal).
 
   Comparison of character strings allows for embedded \code{nul}
@@ -54,7 +58,7 @@ identical(x, y)
   A single logical value, \code{TRUE} or \code{FALSE}, never \code{NA}
   and never anything other than a single value.
 }
-\author{John Chambers}
+\author{John Chambers and R Core}
 
 \references{
   Chambers, J. M. (1998)

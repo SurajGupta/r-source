@@ -1,3 +1,8 @@
+% File src/library/base/man/match.arg.Rd
+% Part of the R package, http://www.R-project.org
+% Copyright 1995-2007 R Core Development Team
+% Distributed under GPL 2 or later
+
 \name{match.arg}
 \title{Argument Verification Using Partial Matching}
 \usage{
@@ -19,16 +24,22 @@ match.arg(arg, choices, several.ok = FALSE)
 \details{
   In the one-argument form \code{match.arg(arg)}, the choices are
   obtained from a default setting for the formal argument \code{arg} of
-  the function from which \code{match.arg} was called.
+  the function from which \code{match.arg} was called.  (Since default
+  argument matching will set \code{arg} to \code{choices}, this is
+  allowed as an exception to the \sQuote{length one unless
+    \code{several.ok} is \code{TRUE}} rule, and returns the first
+  element.)
 
   Matching is done using \code{\link{pmatch}}, so \code{arg} may be
   abbreviated.
+
 }
 \value{
-  The unabbreviated version of the unique partial match if there is one;
-  otherwise, an error is signalled if \code{several.ok} is false, as per
-  default.  When \code{several.ok} is true and there is more than one
-  match, all unabbreviated versions of matches are returned.
+  The unabbreviated version of the exact or unique partial match if
+  there is one; otherwise, an error is signalled if \code{several.ok} is
+  false, as per default.  When \code{several.ok} is true and more than
+  one element of \code{arg} has a match, all unabbreviated versions of
+  matches are returned.
 }
 \seealso{
   \code{\link{pmatch}},

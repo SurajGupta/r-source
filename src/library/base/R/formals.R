@@ -1,3 +1,19 @@
+#  File src/library/base/R/formals.R
+#  Part of the R package, http://www.R-project.org
+#
+#  This program is free software; you can redistribute it and/or modify
+#  it under the terms of the GNU General Public License as published by
+#  the Free Software Foundation; either version 2 of the License, or
+#  (at your option) any later version.
+#
+#  This program is distributed in the hope that it will be useful,
+#  but WITHOUT ANY WARRANTY; without even the implied warranty of
+#  MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
+#  GNU General Public License for more details.
+#
+#  A copy of the GNU General Public License is available at
+#  http://www.r-project.org/Licenses/
+
 formals <- function(fun = sys.function(sys.parent())) {
     if(is.character(fun))
 	fun <- get(fun, mode = "function", envir = parent.frame())
@@ -12,11 +28,13 @@ body <- function(fun = sys.function(sys.parent())) {
 
 alist <- function (...) as.list(sys.call())[-1]
 
-"body<-" <- function (fun, envir = environment(fun), value) {
+`body<-` <- function (fun, envir = environment(fun), value) {
     if (is.expression(value)) value <- value[[1]]
     as.function(c(formals(fun), value), envir)
 }
 
-"formals<-" <- function (fun, envir = environment(fun), value)
-    as.function(c(value, body(fun)), envir)
-
+`formals<-` <- function (fun, envir = environment(fun), value)
+{
+    bd <- body(fun)
+    as.function(c(value, if(is.null(bd)) list(bd) else bd), envir)
+}

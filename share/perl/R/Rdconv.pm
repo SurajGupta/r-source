@@ -1,7 +1,7 @@
 ## Subroutines for converting R documentation into text, HTML, LaTeX and
 ## R (Examples) format
 
-## Copyright (C) 1997-2006 R Development Core Team
+## Copyright (C) 1997-2007 R Development Core Team
 ##
 ## This program is free software; you can redistribute it and/or modify
 ## it under the terms of the GNU General Public License as published by
@@ -13,10 +13,8 @@
 ## MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE. See the GNU
 ## General Public License for more details.
 ##
-## A copy of the GNU General Public License is available via WWW at
-## http://www.gnu.org/copyleft/gpl.html.  You can also obtain it by
-## writing to the Free Software Foundation, Inc., 51 Franklin Street,
-## Fifth Floor, Boston, MA 02110-1301  USA.
+## A copy of the GNU General Public License is available at
+## http://www.r-project.org/Licenses/
 
 ## Send any bug reports to r-bugs@r-project.org.
 
@@ -26,6 +24,7 @@ require  Exporter;
 @ISA     = qw(Exporter);
 @EXPORT  = qw(Rdconv);
 
+use File::Basename;
 use FileHandle;
 use Text::DelimMatch;
 use Text::Tabs;
@@ -66,24 +65,31 @@ $MAXLOOPS = 10000;
 my $EDASH = "escaped-dash";	# maybe something better?
 my $ECMD = "escaped-command";	# maybe something better?
 
+
 ## In addition to \code, the following commands are special: dashes in
 ## their arguments need to be left alone (otherwise, e.g. \samp{--no}
 ## would give '-no' when converted to text).
 my @special_commands = ("command", "env", "file", "kbd", "option",
 			"samp", "url", "var");
 
-sub Rdconv { # Rdconv(foobar.Rd, type, debug, filename, pkgname, version)
+sub isNonASCII {
+    return $_[0] =~ /[^A-Za-z0-9[:punct:][:space:]]/
+}
+
+sub Rdconv { # Rdconv(foobar.Rd, type, debug, filename, pkgname, version, def_encoding)
 
     $Rdname = $_[0];
     open(my $rdfile, "<$Rdname") or 
 	die "Rdconv(): Couldn't open '$Rdname': $!\n";
-    ## This was not previously being closesd: now closed when
+    ## This was not previously being closed: now closed when
     ## goes out of scope.
 
     $type = $_[1];
     $debug = $_[2];
     $pkgname = $_[4];
     $version = $_[5];
+    $def_encoding = $_[6];
+    $def_encoding = "unknown" unless $def_encoding;
 
     if($type !~ /,/) {
 	## Trivial (R 0.62 case): Only 1 $type at a time ==> one
@@ -97,6 +103,7 @@ sub Rdconv { # Rdconv(foobar.Rd, type, debug, filename, pkgname, version)
                           # '<Rlib>/library/<pkg>'
 	die "Rdconv(): '$dirname' is NOT a valid directory: $!\n"
 	  unless -d $dirname;
+	$Rdname = basename($Rdname, (".Rd", ".rd"));
 	$htmlfile = file_path($dirname, "html", $Rdname . $HTML)
 	  if $type =~ /html/i;
 	$txtfile= file_path($dirname, "help", $Rdname)
@@ -158,6 +165,9 @@ sub Rdconv { # Rdconv(foobar.Rd, type, debug, filename, pkgname, version)
     }
     printf STDERR "-- read file '%s';\n",$_[0] if $debug;
 
+    ## don't want encoding unless non-ASCII
+    $def_encoding = "unknown" unless &isNonASCII($complete_text);
+
     macro_subs();
     mark_brackets();
     ##HARD Debug:print "$complete_text\n"; exit;
@@ -189,12 +199,12 @@ sub Rdconv { # Rdconv(foobar.Rd, type, debug, filename, pkgname, version)
 	    warn "\n** Rdconv --type '..' : no valid type specified\n";
 	}
 
-	rdoc2html($htmlfile)	if $type =~ /html/i;
-	rdoc2txt($txtfile)	if $type =~ /txt/i;
+	rdoc2html($htmlfile, $def_encoding)	if $type =~ /html/i;
+	rdoc2txt($txtfile, $def_encoding)	if $type =~ /txt/i;
 	rdoc2Sd($Sdfile)	if $type =~ /Sd/;
 	rdoc2Ssgm($Sdfile)	if $type =~ /Ssgm/;
-	rdoc2latex($latexfile)	if $type =~ /tex/i;
-	rdoc2chm($chmfile)	if $type =~ /chm/i;
+	rdoc2latex($latexfile, $def_encoding)	if $type =~ /tex/i;
+	rdoc2chm($chmfile, $def_encoding)	if $type =~ /chm/i;
 
 	while($text =~ /$EPREFORMAT($ID)/){
 	    my $id = $1;
@@ -253,6 +263,29 @@ sub mark_brackets {
 	  if $max_bracket > $MAXLOOPS;
 	$complete_text =~ s/{([^{}]*)}/$id$1$id/s;
 	print STDERR "." if $debug;
+    }
+    # Any remaining brackets must be unmatched ones.
+    # However, unmatched brackets are sometimes legal,
+    # (e.g. \alias{{}), so only warn. # matching } for editors
+    if ($complete_text =~ /([{}])/s) {
+        # Would like to tell which which line has unmatched { or },
+        # but lines starting with % have already been removed.
+        # Hence the 'on or after' in the message.
+        my $badlineno = 0 ;
+	foreach my $line (split /\n/, $complete_text) {
+	    $badlineno++;
+	    if ($line =~ /([{}])/) {
+		my $extra_info = "\'$1\'" ;
+		$extra_info = "\'$1\'" if $line =~ /(\\\w+{)/ ; # }
+		if( $extra_info =~ /^'}'$/ ) {
+		    warn "Note: unmatched right brace in '$Rdname'".
+			" on or after line $badlineno\n";
+		} elsif(! ($extra_info =~ /\\alias{/) ) { # }
+		    warn "Warning: unmatched brace ($extra_info) in '$Rdname'".
+			" on or after line $badlineno\n"; 
+		}
+	    }
+ 	}
     }
 }
 
@@ -619,7 +652,7 @@ sub transform_S3method {
 	}
     }
     ## Also try to handle markup for S3 methods for subscripting and
-    ## subassigning.  (Still nothing for S3 Ops group methods.)
+    ## subassigning.
     $S3method_RE = "([ \t]*)\\\\(S3)?method" .
 	"\{(\\\$|\\\[\\\[?)\}\{([\\w.]+)\}\\\(([^)]+)\\\)";
     my ($str, $name, @args);
@@ -650,21 +683,33 @@ sub transform_S3method {
 	
 	$text =~ s/$S3method_RE.*/$str$rest/s;
     }
-    ## Also try to handle markup for S3 methods for binary ops.
+    ## Also try to handle markup for S3 methods for binary ops and S3
+    ## Ops group methods.
     $S3method_RE = "([ \t]*)\\\\(S3)?method" .
 	"\{(" .
 	join("|",
 	     ("\\\+", "\\\-", "\\\*", "\\\/", "\\\^",
-	      "<=?", ">=?", "!=", "==", "\\\&", "\\\|",
+	      "<=?", ">=?", "!=?", "==", "\\\&", "\\\|",
 	      "\\\%[[:alnum:][:punct:]]*\\\%")) .
 	")\}\{([\\w.]+)\}\\\(([^)]+)\\\)";
     while($text =~ /$S3method_RE/) {
 	$str = "$1\#\# S3 method for class '$4':\n$1";
 	$name = $3;
 	@args = split(/,\s*/, $5);
-	## These are all binary ops, so we should really check on
-	## scalar(@args) to be 2 ...
-	$str .= "$args[0] $name $args[1]";
+	my $nargs = scalar(@args);
+	if(($nargs == 1) && ($name eq "!")) {
+	    ## Unary: !.
+	    $str .= "$name $args[0]";
+	}
+	elsif(($nargs == 2) && ($name ne "!")) {
+	    ## Binary: everything but !.
+	    $str .= "$args[0] $name $args[1]";
+	}
+	else {
+	    ## 
+	    warn "Warning: arity problem for \\$2method{$name}{$4}?\n";
+	    $str .= "`$name`($5)";
+	}
 	$text =~ s/$S3method_RE/$str/s;
     }
     $text;
@@ -700,7 +745,7 @@ sub striptitle { # text
 sub rdoc2html { # (filename) ; 0 for STDOUT
 
     local $htmlout;
-    local $encoding = "iso-8859-1";
+    local $encoding = $_[1];
     if($_[0]) {
 	$htmlout = new FileHandle;
 	open $htmlout, "> $_[0]";  # will be closed when goes out of scope
@@ -708,8 +753,9 @@ sub rdoc2html { # (filename) ; 0 for STDOUT
 	$htmlout = "STDOUT";
     }
     $using_chm = 0;
-    $encoding = mime_canonical_encoding($blocks{"encoding"})
-	if defined $blocks{"encoding"};
+    $encoding = $blocks{"encoding"} if defined $blocks{"encoding"};
+    $encoding = mime_canonical_encoding($encoding) unless $encoding eq "unknown";
+    $encoding = "iso-8859-1" if $encoding eq "unknown";
     print $htmlout (html_functionhead(html_striptitle($blocks{"title"}),
 				      $pkgname,
 				      &html_escape_name($blocks{"name"}),
@@ -744,7 +790,8 @@ sub html_striptitle {
     $text =~ s/--/&ndash;/go;
     $text =~ s/\`\`/&ldquo;/g;
     $text =~ s/\'\'/&rdquo;/g;
-    $text =~ s/\`/\'/g;		# @samp{'} could be an apostroph ...
+    $text =~ s/\`([^']+)'/&lsquo;$1&rsquo;/g;
+    $text =~ s/\`/\'/g;		# @samp{'} could be an apostrophe ...
     $text =~ s/</&lt;/g;
     $text =~ s/>/&gt;/g;
     $text;
@@ -821,19 +868,19 @@ sub text2html {
 
     $text = replace_command($text, "emph", "<EM>", "</EM>");
     $text = replace_command($text, "bold", "<B>", "</B>");
-    $text = replace_command($text, "file", "&lsquo;<TT>", "</TT>&rsquo;");
+    $text = replace_command($text, "file", "&lsquo;<span class=\"file\">", "</span>&rsquo;");
 
     $text = replace_command($text, "strong", "<STRONG>", "</STRONG>");
 
-    $text = replace_command($text, "acronym", "<SMALL>", "</SMALL>");
+    $text = replace_command($text, "acronym", "<acronym><span class=\"acronym\">", "</span></acronym>");
     $text = replace_command($text, "cite", "<CITE>", "</CITE>");
     $text = replace_command($text, "command", "<CODE>", "</CODE>");
     $text = replace_command($text, "dfn", "<DFN>", "</DFN>");
-    $text = replace_command($text, "env", "<CODE>", "</CODE>");
+    $text = replace_command($text, "env", "<span class=\"env\">", "</span>");
     $text = replace_command($text, "kbd", "<KBD>", "</KBD>");
-    $text = replace_command($text, "option", "<SAMP>", "</SAMP>");
-    $text = replace_command($text, "pkg", "<STRONG>", "</STRONG>");
-    $text = replace_command($text, "samp", "<SAMP>", "</SAMP>");
+    $text = replace_command($text, "option", "<span class=\"option\">", "</span>");
+    $text = replace_command($text, "pkg", "<span class=\"pkg\">", "</span>");
+    $text = replace_command($text, "samp", "<span class=\"samp\">", "</span>");
     $text = replace_command($text, "var", "<VAR>", "</VAR>");
 
     $text = replace_command($text, "sQuote", "&lsquo;", "&rsquo;");
@@ -1355,7 +1402,7 @@ sub chm_functionhead
 
 use Text::Tabs qw(expand);
 
-sub rdoc2txt { # (filename); 0 for STDOUT
+sub rdoc2txt { # (filename, def_encoding); 0 for STDOUT
 
     local $txtout;
     if($_[0]) {
@@ -1364,9 +1411,10 @@ sub rdoc2txt { # (filename); 0 for STDOUT
     } else {
 	$txtout = "STDOUT";
     }
-    local $encoding = "unknown";
-    $encoding = latex_canonical_encoding($blocks{"encoding"})
-	if defined $blocks{"encoding"};
+    local $encoding = $_[1];
+    $encoding = $blocks{"encoding"} if defined $blocks{"encoding"};
+    $encoding = latex_canonical_encoding($encoding) 
+	unless $encoding eq "unknown";
 
     $INDENT = 3;  # indent for \itemize and \enumerate first line
     $INDENTD = 0; # indent for \describe list first line
@@ -1406,8 +1454,21 @@ sub txt_striptitle {
     ## Call striptitle(), and handle LaTeX style single/double quotes.
     my ($text) = @_;
     $text = striptitle($text);
-    $text =~ s/(\`\`|\'\')/\"/g;
-    $text =~ s/\`/\'/g;
+    if(($R::Vars::OSTYPE eq "windows") && 
+       ($encoding eq "unknown" || $encoding eq "latin1")) {
+	$text =~ s/\`\`/\x93/g;
+	$text =~ s/\'\'/\x94/g;
+	$text =~ s/\`([^']+)'/\x91$1\x92/g;
+	$text =~ s/\`/\'/g;
+#     } elsif (encoding eq "UTF-8") {
+# 	$text =~ s/\`\`/\xe2\x80\x9c/g;
+# 	$text =~ s/\'\'/\xe2\x80\xdc/g;
+# 	$text =~ s/`([^']+)'/\xe2\x80\x98$1\xe2\x80\x99/g; #` for emacs
+# 	$text =~ s/\`/\'/g;
+    } else {
+	$text =~ s/(\`\`|\'\')/\"/g;
+	$text =~ s/\`/\'/g;
+    }
     $text;
 }
 
@@ -1516,8 +1577,17 @@ sub text2txt {
     $text = undefine_command($text, "var");
     ## </FIXME>
 
-    $text = replace_command($text, "sQuote", "'", "'");
-    $text = replace_command($text, "dQuote", "\"", "\"");
+    if(($R::Vars::OSTYPE eq "windows") && 
+       ($encoding eq "unknown" || $encoding eq "latin1")) {
+	$text = replace_command($text, "sQuote", "\x91", "\x92");
+	$text = replace_command($text, "dQuote", "\x93", "\x94");
+#     } elsif (encoding eq "UTF-8") {
+# 	$text = replace_command($text, "sQuote", "\xe2\x80\x98", "\xe2\x80\x99");
+# 	$text = replace_command($text, "dQuote", "\xe2\x80\x9c", "\xe2\x80\x9d");
+    } else {
+	$text = replace_command($text, "sQuote", "'", "'");
+	$text = replace_command($text, "dQuote", "\"", "\"");
+    }
 
     ## Handle equations:
     my $loopcount = 0;
@@ -2483,9 +2553,10 @@ sub foldorder {uc($a) cmp uc($b) or $a cmp $b;}
 sub rdoc2latex {# (filename)
 
     my $c, $a, $blname;
-    local $encoding = "unknown";
-    $encoding = latex_canonical_encoding($blocks{"encoding"})
-	if defined $blocks{"encoding"};
+    local $encoding = $_[1];
+    $encoding = $blocks{"encoding"} if defined $blocks{"encoding"};
+    $encoding = latex_canonical_encoding($encoding) 
+	unless $encoding eq "unknown";
 
     local $latexout;
 
@@ -2517,7 +2588,7 @@ sub rdoc2latex {# (filename)
 	    $cmd = "methaliasA"
 	} else { $cmd = "aliasA"; $current = $a; }
 
-	$c = code2latex($_,0);
+	$c = code2latex($_,0, 1);
 	$a = latex_code_alias($c);
 	print STDERR "rdoc2l: alias='$_', code2l(.)='$c', latex_c_a(.)='$a'\n"
 	    if $debug;
@@ -2529,7 +2600,7 @@ sub rdoc2latex {# (filename)
 	printf $latexout "\\keyword\{%s\}\{%s\}\n", $_, $blname unless /^$/ ;
     }
     latex_print_block("description", "Description");
-    latex_print_codeblock("usage", "Usage");
+    latex_print_usageblock("usage", "Usage");
     latex_print_argblock("arguments", "Arguments");
     latex_print_block("format", "Format");
     latex_print_block("details", "Details");
@@ -2604,7 +2675,7 @@ sub text2latex {
     while(checkloop($loopcount++, $text, "escaped preformat")
 	  && $text =~ /$EPREFORMAT($ID)/){
 	my $id = $1;
-	my $ec = latex_preformat_cmd(code2latex($epreformats{$id},1));
+	my $ec = latex_preformat_cmd(code2latex($epreformats{$id},1,1));
 	$text =~ s/$EPREFORMAT$id/$ec/;
     }
 
@@ -2634,14 +2705,14 @@ sub text2latex {
 
 sub code2latex {
 
-    my ($text, $hyper) = @_;
+    my ($text, $hyper, $var) = @_;
 
     $text =~ s/\\%/%/go;
     $text =~ s/\\ldots/.../go;
     $text =~ s/\\dots/.../go;
 
     $text = undefine_command($text, "special");
-    $text = undefine_command($text, "var");
+    $text = undefine_command($text, "var") unless $var > 0;
 
     ##    $text =~ s/\\\\/\\bsl{}/go;
     if($hyper) {
@@ -2697,7 +2768,7 @@ sub latex_print_codeblock {
     if(defined $blocks{$block}){
 	print $latexout "\\begin\{$env\}\n";
 	print $latexout "\\begin\{verbatim\}";
-	my $out = &code2latex($blocks{$block},0);
+	my $out = &code2latex($blocks{$block},0,1);
 	$out =~ s/\\\\/\\/go;
 	print $latexout $out;
 	print $latexout "\\end\{verbatim\}\n";
@@ -2705,6 +2776,20 @@ sub latex_print_codeblock {
     }
 }
 
+sub latex_print_usageblock {
+
+    my ($block,$env) = @_;
+
+    if(defined $blocks{$block}){
+	print $latexout "\\begin\{$env\}\n";
+	print $latexout "\\begin\{verbatim\}";
+	my $out = &code2latex($blocks{$block},0,0);
+	$out =~ s/\\\\/\\/go;
+	print $latexout $out;
+	print $latexout "\\end\{verbatim\}\n";
+	print $latexout "\\end\{$env\}\n";
+    }
+}
 sub latex_print_exampleblock {
 
     my ($block,$env) = @_;
@@ -2712,7 +2797,7 @@ sub latex_print_exampleblock {
     if(defined $blocks{$block}){
 	print $latexout "\\begin\{$env\}\n";
 	print $latexout "\\begin\{ExampleCode\}";
-	my $out = &code2latex($blocks{$block},0);
+	my $out = &code2latex($blocks{$block},0,0);
 	$out =~ s/\\\\/\\/go;
 	print $latexout $out;
 	print $latexout "\\end\{ExampleCode\}\n";
@@ -2743,7 +2828,7 @@ sub latex_print_argblock {
 		  &&  $text =~ /\\item/s){
 		my ($id, $arg, $desc)  = get_arguments("item", $text, 2);
 		print $latexout "\\item\[";
-		print $latexout &latex_code_cmd(code2latex($arg,1));
+		print $latexout &latex_code_cmd(code2latex($arg,1,1));
 		print $latexout "\] ";
 		print $latexout &text2latex($desc), "\n";
 		$text =~ s/.*$id//s;
@@ -2786,7 +2871,7 @@ sub latex_unescape_codes {
     while(checkloop($loopcount++, $text, "escaped code")
 	  && $text =~ /$ECODE($ID)/) {
 	my $id = $1;
-	my $ec = latex_code_cmd(code2latex($ecodes{$id},1));
+	my $ec = latex_code_cmd(code2latex($ecodes{$id},1,1));
 	$text =~ s/$ECODE$id/$ec/;
     }
 
@@ -2794,7 +2879,7 @@ sub latex_unescape_codes {
     while(checkloop($loopcount++, $text, "escaped preformat")
 	  && $text =~ /$EPREFORMAT($ID)/){
 	my $id = $1;
-	my $ec = latex_preformat_cmd(code2latex($epreformats{$id},1));
+	my $ec = latex_preformat_cmd(code2latex($epreformats{$id},1,0));
 	$text =~ s/$EPREFORMAT$id/$ec/;
     }
 
@@ -2847,6 +2932,7 @@ sub latex_code_trans {
     $c0 = latex_link_trans0($c0);
     $c =~ s/HYPERLINK\([^)]*\)\([^)]*\)/\\LinkA{$link}{$c0}/go;
     $c =~ s/,,/,{},/g; # ,, is a ligature in the ae font.
+    $c =~ s/\\bsl{}var\\{([[:alpha:]]+)\\}/\\var{$1}/go;
     $c;
 }
 
@@ -2917,8 +3003,10 @@ sub rdoc2chm { # (filename) ; 0 for STDOUT
     } else {
 	$htmlout = "STDOUT";
     }
-    $encoding = mime_canonical_encoding($blocks{"encoding"})
-	if defined $blocks{"encoding"};
+    $encoding = $_[1];
+    $encoding = $blocks{"encoding"} if defined $blocks{"encoding"};
+    $encoding = mime_canonical_encoding($encoding) unless $encoding eq "unknown";
+    $encoding = "iso-8859-1" if $encoding eq "unknown";
     $using_chm = 1;
     $nlink = 0;
     print $htmlout (chm_functionhead(html_striptitle($blocks{"title"}),

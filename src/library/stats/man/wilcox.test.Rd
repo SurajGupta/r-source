@@ -1,3 +1,8 @@
+% File src/library/stats/man/wilcox.test.Rd
+% Part of the R package, http://www.R-project.org
+% Copyright 1995-2007 R Core Development Team
+% Distributed under GPL 2 or later
+
 \name{wilcox.test}
 \alias{wilcox.test}
 \alias{wilcox.test.default}
@@ -153,6 +158,7 @@ wilcox.test(x, \dots)
   assumptions [or large samples]
 }
 \examples{
+require(graphics)
 ## One-sample test.
 ## Hollander & Wolfe (1973), 29f.
 ## Hamilton depression scale factor measurements in 9 patients with

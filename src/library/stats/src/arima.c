@@ -13,8 +13,8 @@
  *  GNU General Public License for more details.
  *
  *  You should have received a copy of the GNU General Public License
- *  along with this program; if not, write to the Free Software
- *  Foundation, Inc., 51 Franklin Street, Fifth Floor, Boston, MA 02110-1301  USA
+ *  along with this program; if not, a copy is available at
+ *  http://www.r-project.org/Licenses/
  */
 
 #ifdef HAVE_CONFIG_H
@@ -715,7 +715,7 @@ SEXP
 ARIMA_CSS(SEXP sy, SEXP sarma, SEXP sPhi, SEXP sTheta,
 	  SEXP sncond, SEXP giveResid)
 {
-    SEXP res, nres, sResid = R_NilValue;
+    SEXP res, sResid = R_NilValue;
     double ssq = 0.0, *y = REAL(sy), tmp;
     double *phi = REAL(sPhi), *theta = REAL(sTheta), *w, *resid;
     int n = LENGTH(sy), *arma = INTEGER(sarma), p = LENGTH(sPhi), 
@@ -748,16 +748,13 @@ ARIMA_CSS(SEXP sy, SEXP sarma, SEXP sPhi, SEXP sTheta,
     }
     if (useResid) {
 	PROTECT(res = allocVector(VECSXP, 2));
-	SET_VECTOR_ELT(res, 0, nres = allocVector(REALSXP, 1));
-	REAL(nres)[0] = ssq / (double) (nu);
+	SET_VECTOR_ELT(res, 0, ScalarReal(ssq / (double) (nu)));
 	SET_VECTOR_ELT(res, 1, sResid);
 	UNPROTECT(2);
 	return res;
     } else {
-	nres = allocVector(REALSXP, 1);
-	REAL(nres)[0] = ssq / (double) (nu);
 	UNPROTECT(1);
-	return nres;
+	return ScalarReal(ssq / (double) (nu));
     }
 }
 

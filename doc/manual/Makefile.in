@@ -16,7 +16,7 @@ SOURCES_TEXI = R-FAQ.texi R-admin.texi R-data.texi R-exts.texi \
 DISTFILES = \
 	README \
 	Makefile.in Makefile.win \
-	R-defs.texi dir pdfcolor.tex texinfo.tex txi-en.tex \
+	R-defs.texi dir epsf.tex pdfcolor.tex \
 	$(SOURCES_TEXI) \
 	resources.texi \
 	R-exts.R R-exts.c R-intro.R \
@@ -34,7 +34,7 @@ MAKEINFO_HTML_OPTS = --html --no-split --css-include=$(srcdir)/Rman.css
 MAKEINFO_TEXT_OPTS = --number-sections --fill-column=76 --no-split --no-headers
 TEXI2HTML = $(MAKEINFO) $(MAKEINFO_HTML_OPTS)
 TEXI2TEXT = $(MAKEINFO) $(MAKEINFO_TEXT_OPTS)
-TEXI2DVI = $(top_builddir)/bin/texi2dvi --texinfo="@set UseExternalXrefs "
+TEXI2DVI = @TEXI2DVI@ --texinfo="@set UseExternalXrefs "
 TEXI2PDF = $(TEXI2DVI) --pdf
 PDFLATEX = @PDFLATEX@
 PDFTEX = @PDFTEX@
@@ -74,6 +74,10 @@ docs: html
 	  echo "ERROR: 'tex' needed but missing on your system."; \
 	  exit 1; \
 	fi
+	@if test "$(TEXI2DVI)" = false; then \
+	  echo "ERROR: 'texi2dvi' needed but missing on your system."; \
+	  exit 1; \
+	fi
 	TEXINPUTS="$(srcdir):$$TEXINPUTS" $(TEXI2DVI) $<
 
 .texi.html:
@@ -95,6 +99,10 @@ docs: html
 .texi.pdf:
 	@if test "$(PDFTEX)" = false; then \
 	  echo "ERROR: 'pdftex' needed but missing on your system."; \
+	  exit 1; \
+	fi
+	@if test "$(TEXI2DVI)" = false; then \
+	  echo "ERROR: 'texi2dvi' needed but missing on your system."; \
 	  exit 1; \
 	fi
 	TEXINPUTS="$(srcdir):$$TEXINPUTS" $(TEXI2PDF) $<
@@ -196,7 +204,7 @@ fullrefman.dvi: $(refman_DEPENDENCIES) stamp-fullrefman-dvi
 	  texinputs=`(for f in $(fullrefman_TEXINPUTS); \
 	    do echo $${f}; done) | LC_COLLATE=C sort`; \
 	  for f in $(refman_TEXINPUTS); do \
-	    texinputs=`echo "$${texinputs}" | sed "s/$${f}//"`; \
+	    texinputs=`echo "$${texinputs}" | sed "s/\\<$${f}\\>//"`; \
 	  done; \
 	  for f in $${texinputs}; do echo "\\input{$${f}}"; done; \
 	  cat $(srcdir)/refman.bot) > fullrefman.tex
@@ -208,7 +216,6 @@ fullrefman.dvi: $(refman_DEPENDENCIES) stamp-fullrefman-dvi
 	@touch stamp-fullrefman-dvi
 stamp-fullrefman-dvi: $(fullrefman_TEXINPUTS)
 
-$(OBJECTS_DVI): $(srcdir)/texinfo.tex
 R-admin.dvi: $(texiincludes)
 R-data.dvi: $(texiincludes)
 R-exts.dvi: $(texiincludes)
@@ -307,7 +314,7 @@ fullrefman.pdf: $(refman_DEPENDENCIES) stamp-fullrefman-pdf
 	  texinputs=`(for f in $(fullrefman_TEXINPUTS); \
 	    do echo $${f}; done) | LC_COLLATE=C sort`; \
 	  for f in $(refman_TEXINPUTS); do \
-	    texinputs=`echo "$${texinputs}" | sed "s/$${f}//"`; \
+	    texinputs=`echo "$${texinputs}" | sed "s/\\<$${f}\\>//"`; \
 	  done; \
 	  for f in $${texinputs}; do echo "\\input{$${f}}"; done; \
 	  cat $(srcdir)/refman.bot) > fullrefman.tex
@@ -324,7 +331,6 @@ fullrefman.pdf: $(refman_DEPENDENCIES) stamp-fullrefman-pdf
 	@touch stamp-fullrefman-pdf
 stamp-fullrefman-pdf: $(fullrefman_TEXINPUTS)
 
-$(OBJECTS_PDF): $(srcdir)/texinfo.tex $(srcdir)/pdfcolor.tex
 R-admin.pdf: $(texiincludes)
 R-data.pdf: $(texiincludes)
 R-exts.pdf: $(texiincludes)
@@ -416,7 +422,7 @@ clean:
 	@if test "$(BUILDDIR_IS_SRCDIR)" = no ; then \
 	  rm -rf $(INSTFILES) images; \
 	fi
-	-@rm -f *.aux *.cp *.cps *.dvi *.en *.fn *.fns *.html *.info* \
+	-@rm -f *.aux *.cp *.cps *.dvi *.en *.ens *.fn *.fns *.html *.info* \
 	  *.ky *.kys *.log *.out *.pdf *.pg *.pgs *.ps *.ps-2 *.tmp \
 	  *.toc *.tp *.vr *.vrs \
 	  *-pkg.tex refman.i?? refman.tex fullrefman.i?? fullrefman.tex \

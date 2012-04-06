@@ -17,13 +17,13 @@ RHOME = $(shell ./Rpwd.exe ../..)
 PKGD = $(shell ./Rpwd.exe "$(PKGDIR)")
 R_EXE = $(RHOME)/bin/rterm.exe
 else
-RHOME = $(shell perl pwd.pl ../..)
-PKGD = $(shell perl pwd.pl $(PKGDIR))
+RHOME = $(shell $(PERL) pwd.pl ../..)
+PKGD = $(shell $(PERL) pwd.pl $(PKGDIR))
 endif
 
 REXE = $(R_EXE) --vanilla --slave
 
-RPREFIX = $(shell perl fixed/rwver.pl ../../VERSION)
+RPREFIX = $(shell $(PERL) fixed/rwver.pl ../../VERSION)
 
 FULLVERSION=`cat ../../VERSION`
 
@@ -32,7 +32,7 @@ DATE = $(shell date +%F)
 RLIB = $(RHOME)/library
 PKGDIR = $(RHOME)/src/library
 
-OPTFLAGS=-O3 -Wall -pedantic $(C99FLAG)
+OPTFLAGS=-O3 -Wall -pedantic
 FOPTFLAGS=-O3 -Wall
 ifdef DEBUG
  OPTFLAGS+=$(G_FLAG)
@@ -54,15 +54,18 @@ else
 R-DLLFLAGS = -mwindows
 endif
 
-R-DLLLIBS =-L. $(FLIBS) -lRblas -lcomctl32 -lversion $(LIBEXTRAS)
+R-DLLLIBS =-L. $(FLIBS) -lRblas -L../../$(IMPDIR) -lgraphapp -liconv -lcomctl32 -lversion $(LIBEXTRAS)
 dllversion-RESFLAGS =-I../include
 SOURCES = \
   console.c dataentry.c dynload.c edit.c editor.c embeddedR.c extra.c \
   opt.c pager.c preferences.c psignal.c rhome.c rt_complete.c \
   rui.c run.c shext.c sys-win32.c system.c dos_glob.c
-OBJS = $(SOURCES:.c=.o) e_pow.o
+OBJS = $(SOURCES:.c=.o)
+ifeq ($(strip $(WIN)),32)
+ OBJS += e_pow.o
+endif
 MAINLIBS = ../main/libmain.a ../appl/libappl.a ../nmath/libnmath.a
-EXTRALIBS = graphapp/ga.a getline/gl.a ../extra/xdr/libxdr.a \
+EXTRALIBS = getline/gl.a ../extra/xdr/libxdr.a \
    ../extra/zlib/libz.a ../extra/pcre/libpcre.a ../extra/bzip2/libbz2.a \
    ../extra/intl/libintl.a ../extra/trio/libtrio.a
 
@@ -79,7 +82,8 @@ endif
 .PHONY:  clean veryclean  rlibs fixfiles front-ends rmodules
 
 
-CFLAGS = $(OPTFLAGS) -I../include -I. -DHAVE_CONFIG_H -DR_DLL_BUILD
+CPPFLAGS = -I../include -I. -I../extra -DHAVE_CONFIG_H -DR_DLL_BUILD
+CFLAGS = $(OPTFLAGS)
 FFLAGS = $(FOPTFLAGS)
 
 Rpwd.exe: front-ends/Rpwd.exe
@@ -89,13 +93,18 @@ front-ends/Rpwd.exe:
 	$(MAKE) --no-print-directory -C front-ends Rpwd
 
 ## watch out: R.dll and Rblas.dll depend on each other.
-## so build import library R.dll then Rblas.dll
 rbuild:
 	@$(MAKE) --no-print-directory fixfiles
 	@$(MAKE) --no-print-directory -C ../include -f Makefile.win
 	@$(MAKE) --no-print-directory -C ../scripts -f Makefile.win
+ifeq ($(strip $(USE_IMPLIBS)),YES)
+	@$(MAKE) --no-print-directory libiconv.dll.a
+endif
 	@$(MAKE) --no-print-directory libRblas.dll.a
 	@$(MAKE) --no-print-directory ../../bin/R.dll
+ifeq ($(strip $(USE_IMPLIBS)),YES)
+	@$(MAKE) --no-print-directory implibs
+endif
 	@$(MAKE) --no-print-directory Rblas CHTML
 	@$(MAKE) --no-print-directory front-ends COPYRIGHTS rmodules Rcode
 
@@ -127,10 +136,18 @@ rpackage: ../../library/R.css rpackageindices
 	@R_START_PACKAGES=NULL $(MAKE) --no-print-directory pkg-base
 ifneq ($(strip $(BUILD)),CROSS)
 	@if ! test -f ../../library/base/R/base.rdb ; then \
-	  echo "preparing package base for lazy loading" ; \
+	  echo "  preparing package base for lazy loading" ; \
 	  (echo ".libPaths('../../library')"; \
 	    cat ../library/base/makebasedb.R) | \
 	    R_DEFAULT_PACKAGES=NULL LC_COLLATE=C $(REXE) > /dev/null; \
+          cp ../library/base/baseloader.R ../../library/base/R/base; \
+	fi
+else
+	@if ! test -f ../../library/base/R/base.rdb ; then \
+	  echo "  preparing package base for lazy loading" ; \
+	  (echo ".libPaths('../../library')"; \
+	    cat ../library/base/cross-makebasedb.R) | \
+	    R_CROSS_BUILD=yes R_DEFAULT_PACKAGES=NULL LC_COLLATE=C $(REXE); \
           cp ../library/base/baseloader.R ../../library/base/R/base; \
 	fi
 endif
@@ -139,12 +156,13 @@ endif
 	  echo "preparing package tools for lazy loading" ; \
 	  (cat ../library/tools/R/makeLazyLoad.R; \
 	    echo "makeLazyLoading(\"tools\", lib.loc=\"$(RLIB)\")") | \
-	    R_DEFAULT_PACKAGES=NULL LC_ALL=C $(R_EXE) --vanilla --slave > /dev/null ; \
+	    R_CROSS_BUILD=yes R_DEFAULT_PACKAGES=NULL LC_ALL=C $(R_EXE) --vanilla --slave > /dev/null ; \
 	fi
 	@$(ECHO)
 	@for pkg in $(R_PKGS0); do \
 	  R_START_PACKAGES=NULL $(MAKE) --no-print-directory pkg-$${pkg} || exit 1; \
 	done
+	@gzip -9f ../../library/grDevices/afm/*.afm
 	@$(CP) ../library/datasets/data/morley.tab ../../library/datasets/data
 
 rpackageindices:
@@ -161,21 +179,20 @@ endif
 
 rlibs:
 	$(MAKE) --no-print-directory -C ../extra/intl OPTFLAGS='$(OPTFLAGS)' -f Makefile.win
-	$(MAKE) --no-print-directory -C ../appl OPTFLAGS='$(OPTFLAGS)' FOPTFLAGS='$(FOPTFLAGS)' -f Makefile.win
+	$(MAKE) --no-print-directory -C ../appl RHOME=$(RHOME) OPTFLAGS='$(OPTFLAGS)' FOPTFLAGS='$(FOPTFLAGS)' -f Makefile.win
 	$(MAKE) --no-print-directory -C ../nmath OPTFLAGS='$(OPTFLAGS)' -f Makefile.win
-	$(MAKE) --no-print-directory -C ../main OPTFLAGS='$(OPTFLAGS_M)' FFLAGS='$(FOPTFLAGS)' -f Makefile.win
-	$(MAKE) --no-print-directory -C ./graphapp OPTFLAGS='$(OPTFLAGS)'
+	$(MAKE) --no-print-directory -C ../main RHOME=$(RHOME) OPTFLAGS='$(OPTFLAGS_M)' FFLAGS='$(FOPTFLAGS)' -f Makefile.win
 	$(MAKE) --no-print-directory -C ./getline OPTFLAGS='$(OPTFLAGS)'
-	@for ex in pcre bzip2 zlib xdr trio; do \
+	@for ex in graphapp pcre bzip2 zlib xdr trio; do \
 	  $(MAKE) --no-print-directory -C ../extra/$${ex} OPTFLAGS='$(OPTFLAGS)' -f Makefile.win || exit 1; \
 	done
 
 rmodules:
 	$(MAKE) --no-print-directory -C ../modules \
-	  OPTFLAGS='$(OPTFLAGS)' FOPTFLAGS='$(FOPTFLAGS)' -f Makefile.win
-	$(CP) unicode/iconv.dll ../../modules/
+	  RHOME=$(RHOME) OPTFLAGS='$(OPTFLAGS)' FOPTFLAGS='$(FOPTFLAGS)' \
+	  -f Makefile.win
 
-COPYRIGHTS: $(RHOME)/doc/COPYRIGHTS COPYRIGHTS.win
+COPYRIGHTS: ../../doc/COPYRIGHTS COPYRIGHTS.win
 	cat $^ > $@
 
 
@@ -190,7 +207,7 @@ dllversion.o: ../include/Rversion.h
 
 R.dll: $(OBJS) $(OBJS-EXTRA) $(MAINLIBS) $(EXTRALIBS) dllversion.o
 	@$(ECHO) EXPORTS > R.def
-	@$(NM) $^ | $(SED) -n 's/^.* [BCDRT] _/ /p' | sort | uniq > R0.def
+	@$(NM) $^ | $(SED) -n 's/^.* [BCDRT] _/ /p' | $(SORT) | uniq > R0.def
 	@comm -23 R0.def Rdll.hide >> R.def
 	$(DLL) -shared $(DLLFLAGS) $($*-DLLFLAGS) -o $@ R.def $^ $($*-DLLLIBS) $(DLLLIBS)
 	@$(RM) R.def R0.def
@@ -198,7 +215,7 @@ R.dll: $(OBJS) $(OBJS-EXTRA) $(MAINLIBS) $(EXTRALIBS) dllversion.o
 R.exp: $(OBJS) $(OBJS-EXTRA) $(MAINLIBS) $(EXTRALIBS) dllversion.o
 	@$(ECHO) LIBRARY R.dll > R.exp
 	@$(ECHO) EXPORTS >> R.exp
-	@$(NM) $^ | $(SED) -n 's/^.* [BCDRT] _/ /p' | sort | uniq > R0.def
+	@$(NM) $^ | $(SED) -n 's/^.* [BCDRT] _/ /p' | $(SORT) | uniq > R0.def
 	@comm -23 R0.def Rdll.hide >> R.exp
 	@$(RM) R0.def
 
@@ -219,6 +236,19 @@ ifdef USE_UNICOWS
 endif
 
 FORCE:
+
+implibs: libR.dll.a libRblas.dll.a
+	@$(MKDIR) -p ../../lib
+	@$(CP) $^ ../../lib
+
+libR.dll.a: R.exp
+	$(DLLTOOL) $(DLLTOOLFLAGS) $(R-DLLTOOLFLAGS) --dllname R.dll \
+	  --input-def $< --output-lib $@
+
+libiconv.dll.a: unicode/iconv.def
+	$(DLLTOOL) $(DLLTOOLFLAGS) $(R-DLLTOOLFLAGS) --dllname iconv.dll \
+	  --input-def $< --output-lib $@
+
 
 front-ends:
 	$(MAKE) --no-print-directory -C front-ends
@@ -248,14 +278,14 @@ htmldocs:
 
 Rblas:
 	@$(MAKE) --no-print-directory -C ../extra/blas -f Makefile.win \
-	  FFLAGS='$(FOPTFLAGS)'
+	  RHOME=$(RHOME) FFLAGS='$(FOPTFLAGS)'
 
 Rblas-clean:
 	@$(MAKE) --no-print-directory -C ../extra/blas -f Makefile.win clean
 
 libRblas.dll.a:  ../extra/blas/Rblas.def
-	$(DLLTOOL) $(DLLTOOLFLAGS) $(R-DLLTOOLFLAGS) --dllname Rblas.dll \
-	  --def $< --output-lib $@
+	@$(DLLTOOL) $(DLLTOOLFLAGS) --dllname Rblas.dll \
+	  --input-def $< --output-lib $@
 
 
 #                          ===== Packages ======
@@ -279,7 +309,7 @@ stats4-HELP = ziponly
 tcltk-HELP = ziponly
 tools-HELP = ziponly
 utils-HELP = ziponly
-stats4-SAVE = true
+stats4-LAZY = true
 
 KernSmooth-HELP = ziponly
 MASS-HELP = ziponly
@@ -332,7 +362,7 @@ pkgfake-%:
 
 
 pkgclean-%:
-	$(MAKE) --no-print-directory DLLNM=$($*-DLLNM) RHOME=$(RHOME) BUILD=$(BUILD) \
+	@$(MAKE) --no-print-directory DLLNM=$($*-DLLNM) RHOME=$(RHOME) BUILD=$(BUILD) \
 	  -C $(PKGD)/$* PKG=$* -f $(RHOME)/src/gnuwin32/MakePkg clean
 
 pkgcheck-%:
@@ -435,7 +465,7 @@ distclean: clean clean-recommended
 	$(RM) rw-FAQ fixed/html/rw-FAQ.html
 	$(RM) -r cran/*.html cran/*.htm cran/ReadMe cran/README* cran/*.exe \
 		cran/md5sum.txt cran/*.$(RPREFIX) 
-	$(RM) -r .vignettes # it gets left behind sometimes
+	$(RM) -r .vignettes # it gets left behind if there is an error
 	$(RM) -r ../../share/locale
 	$(RM) XINSTALL # from cross-building
 	$(RM) Rpwd.exe # do this last of all
@@ -446,7 +476,7 @@ veryclean: distclean
 
 cleanwin:
 	$(RM) *.o *.dll *.a *~ \#*\# .RData .Rhistory Makedeps *.d
-	$(MAKE) -C graphapp clean
+	$(MAKE) -C ../extra/graphapp -f Makefile.win clean
 	$(MAKE) -C fixed clean
 	$(MAKE) -C getline clean
 	$(MAKE) -C help clean
@@ -490,7 +520,6 @@ vignettes:
 	    (echo "tools:::.install_package_vignettes(\"../library/$${pkg}\", \"../../library/$${pkg}\")") | R_DEFAULT_PACKAGES="utils,tools" $(REXE) > /dev/null; \
 	  fi; \
 	done
-	@rm -rf .vignettes # force cleanup
 
 ## ===================== Maintainer targets ========================
 
@@ -541,7 +570,7 @@ clean-recommended:
 
 ifeq ($(strip $(HELP)),YES)
 ifeq ($(strip $(WINHELP)),CHM)
-DOCSTYPE=chm
+DOCSTYPE=all
 else
 DOCSTYPE=normal
 endif
@@ -553,7 +582,7 @@ recommended: unpack-recommended
 	@$(ECHO) "--- Making recommended packages"
 ifeq ($(strip $(BUILD)),CROSS)
 	@for p in $(R_PKGS_RECOMMENDED_SOURCES); do \
-          $(R_EXE) CMD perl XINSTALL --unsafe -l $(RHOME)/library --docs=normal ../library/$${p} || exit 1; \
+          $(R_EXE) CMD $(PERL) XINSTALL --unsafe -l $(RHOME)/library --docs=normal ../library/$${p} || exit 1; \
         done
 else
 	@for p in $(R_PKGS_RECOMMENDED_SOURCES); do \

@@ -19,17 +19,15 @@
 ## MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the GNU
 ## General Public License for more details.
 ##
-## A copy of the GNU General Public License is available via WWW at
-## http://www.gnu.org/copyleft/gpl.html.  You can also obtain it by
-## writing to the Free Software Foundation, Inc., 51 Franklin Street,
-## Fifth Floor, Boston, MA 02110-1301  USA.
+## A copy of the GNU General Public License is available at
+## http://www.r-project.org/Licenses/
 
-revision='$Revision: 41170 $'
+revision='$Revision: 42688 $'
 version=`set - ${revision}; echo ${2}`
 version="R configuration information retrieval script ${version}
 
 Copyright (C) 2002-6 The R Core Development Team.
-This is free software; see the GNU General Public Licence version 2
+This is free software; see the GNU General Public License version 2
 or later for copying conditions.  There is NO warranty."
 
 usage="Usage: R CMD config [options] [VAR]
@@ -167,7 +165,7 @@ ok_cxx_vars="CXX CXXCPP CXXFLAGS CXXPICFLAGS"
 ok_dylib_vars="DYLIB_LD DYLIB_LDFLAGS"
 ok_objc_vars="OBJC OBJCFLAGS"
 ok_java_vars="JAVA JAVAC JAVAH JAR JAVA_HOME JAVA_LIBS JAVA_CPPFLAGS"
-ok_f77_vars="F77 FFLAGS FPICFLAGS FLIBS SAFE_FFLAGS"
+ok_f77_vars="F77 FFLAGS FPICFLAGS FLIBS SAFE_FFLAGS GC FCFLAGS"
 ok_ld_vars="LDFLAGS"
 ok_shlib_vars="SHLIB_CFLAGS SHLIB_CXXLD SHLIB_CXXLDFLAGS SHLIB_FFLAGS SHLIB_LD SHLIB_LDFLAGS"
 ok_tcltk_vars="TCLTK_CPPFLAGS TCLTK_LIBS"

@@ -1,3 +1,8 @@
+% File src/library/utils/man/format.Rd
+% Part of the R package, http://www.R-project.org
+% Copyright 1995-2007 R Core Development Team
+% Distributed under GPL 2 or later
+
 \name{format}
 \alias{formatUL}
 \alias{formatOL}
@@ -18,7 +23,7 @@ formatOL(x, type = "arabic", offset = 0, start = 1,
     of the list.}
   \item{width}{a positive integer giving the target column for wrapping
     lines in the output.}
-  \item{type}{a character string specifying the \dQuote{type} of the
+  \item{type}{a character string specifying the \sQuote{type} of the
     labels in the ordered list.  If \code{"arabic"} (default), arabic
     numerals are used.  For \code{"Alph"} or \code{"alph"}, single upper
     or lower case letters are employed (in this case, the number of the

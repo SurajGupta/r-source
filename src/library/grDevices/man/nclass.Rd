@@ -1,3 +1,8 @@
+% File src/library/grDevices/man/nclass.Rd
+% Part of the R package, http://www.R-project.org
+% Copyright 1995-2007 R Core Development Team
+% Distributed under GPL 2 or later
+
 \name{nclass}
 \alias{nclass.Sturges}
 \alias{nclass.scott}
@@ -58,7 +63,7 @@ nclass.FD(x)
 }
 \examples{
 set.seed(1)
-x <- rnorm(1111)
+x <- stats::rnorm(1111)
 nclass.Sturges(x)
 
 ## Compare them:

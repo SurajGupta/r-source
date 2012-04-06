@@ -1,3 +1,8 @@
+% File src/library/stats/man/SSD.Rd
+% Part of the R package, http://www.R-project.org
+% Copyright 1995-2007 R Core Development Team
+% Distributed under GPL 2 or later
+
 \name{SSD}
 \alias{SSD}
 \alias{estVar}
@@ -29,7 +34,7 @@ estVar(object, ...)
   \code{estVar} returns a matrix with the estimated variances and
   covariances.
 }
-\seealso{\code{\link{mauchley.test}}, \code{\link{anova.mlm}}}
+\seealso{\code{\link{mauchly.test}}, \code{\link{anova.mlm}}}
 %% TODO: Have this in datasets w/full docs
 \examples{
 # Lifted from Baron+Li:

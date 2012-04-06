@@ -1,18 +1,38 @@
+/*
+ *  R : A Computer Language for Statistical Data Analysis
+ *  Copyright (C) 1998--2007	    The R Development Core Team.
+ *
+ *  This program is free software; you can redistribute it and/or modify
+ *  it under the terms of the GNU General Public License as published by
+ *  the Free Software Foundation; either version 2 of the License, or
+ *  (at your option) any later version.
+ *
+ *  This program is distributed in the hope that it will be useful,
+ *  but WITHOUT ANY WARRANTY; without even the implied warranty of
+ *  MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
+ *  GNU General Public License for more details.
+ *
+ *  You should have received a copy of the GNU General Public License
+ *  along with this program; if not, a copy is available at
+ *  http://www.r-project.org/Licenses/
+ */
+
 #ifndef R_BUFFER_UTILS
 #define R_BUFFER_UTILS
 
-/* used in character.c deparse.c, printutils.c, saveload.c scan.c */
+/* used in bind.c character.c deparse.c, printutils.c, saveload.c
+   scan.c seq.c sysutils.c */
 
-/* We can make these uint's rather than ordinary int's. */
 typedef struct {
  char *data; 
- int bufsize;
- int defaultSize;
+ size_t bufsize;
+ size_t defaultSize;
 } R_StringBuffer;
 
 /* code in deparse.c */
 /* Note that R_StringBuffer *buf needs to be initialized before call */
-void R_AllocStringBuffer(int blen, R_StringBuffer *buf);
+void *R_AllocStringBuffer(size_t blen, R_StringBuffer *buf);
 void R_FreeStringBuffer(R_StringBuffer *buf);
+void R_FreeStringBufferL(R_StringBuffer *buf);
 
 #endif

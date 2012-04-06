@@ -1,3 +1,19 @@
+#  File src/library/methods/R/as.R
+#  Part of the R package, http://www.R-project.org
+#
+#  This program is free software; you can redistribute it and/or modify
+#  it under the terms of the GNU General Public License as published by
+#  the Free Software Foundation; either version 2 of the License, or
+#  (at your option) any later version.
+#
+#  This program is distributed in the hope that it will be useful,
+#  but WITHOUT ANY WARRANTY; without even the implied warranty of
+#  MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
+#  GNU General Public License for more details.
+#
+#  A copy of the GNU General Public License is available at
+#  http://www.r-project.org/Licenses/
+
 as <-
   ## Returns the version of this object coerced to be the given `Class'.
   ## If the corresponding `is' relation is true, it will be used.  In particular,
@@ -23,8 +39,8 @@ as <-
         asMethod <- selectMethod("coerce", sig, TRUE,
                                  FALSE, #optional, no inheritance
                                  fdef = coerceFun, mlist = coerceMethods)
+        canCache <- TRUE
         if(is.null(asMethod)) {
-            canCache <- TRUE
             inherited <- FALSE
             if(is(object, Class)) {
                 ClassDef <- getClassDef(Class, where)
@@ -37,10 +53,7 @@ as <-
                   test <- ext@test
                   asMethod <- .makeAsMethod(ext@coerce, ext@simple, Class, ClassDef, where)
                   canCache <- (!is(test, "function")) || identical(body(test), TRUE)
-                  if(canCache) { # make into method definition
-                    asMethod <- .asCoerceMethod(asMethod, sig, FALSE)
-                  }
-                }
+                 }
             }
             if(is.null(asMethod) && extends(Class, thisClass)) {
                 ClassDef <- getClassDef(Class, where)
@@ -55,6 +68,8 @@ as <-
                                          coerceMethods)
                 inherited <- TRUE
             }
+            else if(canCache)  # make into method definition
+                asMethod <- .asCoerceMethod(asMethod, sig, FALSE)
             ## cache in the coerce function's environment
             if(canCache && !is.null(asMethod)) {
                 cacheMethod("coerce", sig, asMethod, fdef = coerceFun,
@@ -202,9 +217,9 @@ setAs <-
         args <- formalArgs(def)
         if(!is.na(match("strict", args))) args <- args[-match("strict", args)]
         if(length(args) == 1)
-            def <- substituteFunctionArgs(def, "from")
+            def <- substituteFunctionArgs(def, "from", functionName = "coerce")
         else if(length(args) == 2)
-            def <- substituteFunctionArgs(def, c("from", "to"))
+            def <- substituteFunctionArgs(def, c("from", "to"), functionName = "coerce")
         else stop(gettextf("'as' method must have one or two arguments, plus optional 'strict'; got (%s)",
                            paste(formalArgs(def), collapse = ", ")),
                   domain = NA)

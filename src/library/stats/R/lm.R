@@ -1,3 +1,19 @@
+#  File src/library/stats/R/lm.R
+#  Part of the R package, http://www.R-project.org
+#
+#  This program is free software; you can redistribute it and/or modify
+#  it under the terms of the GNU General Public License as published by
+#  the Free Software Foundation; either version 2 of the License, or
+#  (at your option) any later version.
+#
+#  This program is distributed in the hope that it will be useful,
+#  but WITHOUT ANY WARRANTY; without even the implied warranty of
+#  MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
+#  GNU General Public License for more details.
+#
+#  A copy of the GNU General Public License is available at
+#  http://www.r-project.org/Licenses/
+
 
 lm <- function (formula, data, subset, weights, na.action,
 		method = "qr", model = TRUE, x = FALSE, y = FALSE,
@@ -288,7 +304,7 @@ summary.lm <- function (object, correlation = FALSE, symbolic.cor = FALSE, ...)
     p1 <- 1:p
     ## do not want missing values substituted here
     r <- z$residuals
-    f <- z$fitted
+    f <- z$fitted.values
     w <- z$weights
     if (is.null(w)) {
         mss <- if (attr(z$terms, "intercept"))
@@ -380,7 +396,7 @@ print.summary.lm <-
     ##
     cat("\nResidual standard error:",
 	format(signif(x$sigma, digits)), "on", rdf, "degrees of freedom\n")
-    if(nchar(mess <- naprint(x$na.action))) cat("  (",mess, ")\n", sep="")
+    if(nzchar(mess <- naprint(x$na.action))) cat("  (",mess, ")\n", sep="")
     if (!is.null(x$fstatistic)) {
 	cat("Multiple R-Squared:", formatC(x$r.squared, digits=digits))
 	cat(",\tAdjusted R-squared:",formatC(x$adj.r.squared,digits=digits),
@@ -397,7 +413,7 @@ print.summary.lm <-
 	if (p > 1) {
 	    cat("\nCorrelation of Coefficients:\n")
 	    if(is.logical(symbolic.cor) && symbolic.cor) {# NULL < 1.7.0 objects
-		print(symnum(correl, abbr.col = NULL))
+		print(symnum(correl, abbr.colnames = NULL))
 	    } else {
                 correl <- format(round(correl, 2), nsmall = 2, digits = digits)
                 correl[!lower.tri(correl)] <- ""
@@ -446,7 +462,7 @@ simulate.lm <- function(object, nsim = 1, seed = NULL, ...)
                       matrix(rnorm(length(ftd) * nsim,
                                    sd = sqrt(deviance(object)/
                                    df.residual(object))),
-                             nr = length(ftd)))
+                             nrow = length(ftd)))
 
     attr(ans, "seed") <- RNGstate
     ans
@@ -513,7 +529,7 @@ anova.lm <- function(object, ...)
     if(length(list(object, ...)) > 1)
 	return(anova.lmlist(object, ...))
     w <- object$weights
-    ssr <- sum(if(is.null(w)) object$resid^2 else w*object$resid^2)
+    ssr <- sum(if(is.null(w)) object$residuals^2 else w*object$residuals^2)
     dfr <- df.residual(object)
     p <- object$rank
     if(p > 0) {
@@ -615,7 +631,7 @@ predict.lm <-
         m <- model.frame(Terms, newdata, na.action = na.action,
                          xlev = object$xlevels)
         if(!is.null(cl <- attr(Terms, "dataClasses"))) .checkMFClasses(cl, m)
-        X <- model.matrix(Terms, m, contrasts = object$contrasts)
+        X <- model.matrix(Terms, m, contrasts.arg = object$contrasts)
 	offset <- if (!is.null(off.num <- attr(tt, "offset")))
 	    eval(attr(tt, "variables")[[off.num+1]], newdata)
 	else if (!is.null(object$offset))
@@ -714,13 +730,13 @@ predict.lm <-
                 Rinv <- qr.solve(qr.R(object$qr)[p1, p1])
             }
             if(hasintercept)
-                X <- sweep(X, 2, avx)
+                X <- sweep(X, 2, avx, check.margin=FALSE)
             unpiv <- rep.int(0, NCOL(X))
             unpiv[piv] <- p1
             ## Predicted values will be set to 0 for any term that
             ## corresponds to columns of the X-matrix that are
             ## completely aliased with earlier columns.
-            for (i in seq(1, nterms, length = nterms)) {
+            for (i in seq.int(1L, nterms, length.out = nterms)) {
                 iipiv <- asgn[[i]]      # Columns of X, ith term
                 ii <- unpiv[iipiv]      # Corresponding rows of Rinv
                 iipiv[ii == 0] <- 0
@@ -804,7 +820,8 @@ model.matrix.lm <- function(object, ...)
     if(n_match <- match("x", names(object), 0)) object[[n_match]]
     else {
         data <- model.frame(object, xlev = object$xlevels, ...)
-        NextMethod("model.matrix", data = data, contrasts = object$contrasts)
+        NextMethod("model.matrix", data = data,
+                   contrasts.arg = object$contrasts)
     }
 }
 
@@ -812,7 +829,7 @@ model.matrix.lm <- function(object, ...)
 predict.mlm <-
     function(object, newdata, se.fit = FALSE, na.action = na.pass, ...)
 {
-    if(missing(newdata)) return(object$fitted)
+    if(missing(newdata)) return(object$fitted.values)
     if(se.fit)
 	stop("the 'se.fit' argument is not yet implemented for \"mlm\" objects")
     if(missing(newdata)) {
@@ -825,7 +842,7 @@ predict.mlm <-
         m <- model.frame(Terms, newdata, na.action = na.action,
                          xlev = object$xlevels)
         if(!is.null(cl <- attr(Terms, "dataClasses"))) .checkMFClasses(cl, m)
-        X <- model.matrix(Terms, m, contrasts = object$contrasts)
+        X <- model.matrix(Terms, m, contrasts.arg = object$contrasts)
 	offset <- if (!is.null(off.num <- attr(tt, "offset")))
 	    eval(attr(tt, "variables")[[off.num+1]], newdata)
 	else if (!is.null(object$offset))

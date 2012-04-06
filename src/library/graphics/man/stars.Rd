@@ -1,9 +1,14 @@
+% File src/library/graphics/man/stars.Rd
+% Part of the R package, http://www.R-project.org
+% Copyright 1995-2007 R Core Development Team
+% Distributed under GPL 2 or later
+
 \name{stars}
 \alias{stars}
 \title{Star (Spider/Radar) Plots and Segment Diagrams}
 \description{
   Draw star plots or segment diagrams of a multivariate data set.
-  With one single location, also draws \dQuote{spider} (or \dQuote{radar}) plots.
+  With one single location, also draws \sQuote{spider} (or \sQuote{radar}) plots.
 }
 \usage{
 stars(x, full = TRUE, scale = TRUE, radius = TRUE,
@@ -40,7 +45,7 @@ stars(x, full = TRUE, scale = TRUE, radius = TRUE,
     labels if \code{labels = NULL}.}
   \item{locations}{Either two column matrix with the x and y coordinates used
     to place each of the segment plots; or numeric of length 2 when all
-    plots should be superimposed (for a \dQuote{spider plot}).
+    plots should be superimposed (for a \sQuote{spider plot}).
     By default, \code{locations = NULL}, the segment plots will be
     placed in a rectangular grid.}
   \item{nrow, ncol}{integers giving the number of rows and columns to use when
@@ -96,6 +101,9 @@ stars(x, full = TRUE, scale = TRUE, radius = TRUE,
   Only one page of output is produced.
 }
 \author{Thomas S. Dye}
+\seealso{
+  \code{\link{symbols}} for another way to draw stars and other symbols.
+}
 \references{
   Becker, R. A., Chambers, J. M. and Wilks, A. R. (1988)
   \emph{The New S Language}.
@@ -109,6 +117,7 @@ stars(x, full = TRUE, scale = TRUE, radius = TRUE,
   documented as here.
 }
 \examples{
+require(grDevices)
 stars(mtcars[, 1:7], key.loc = c(14, 2),
       main = "Motor Trend Cars : stars(*, full = F)", full = FALSE)
 stars(mtcars[, 1:7], key.loc = c(14, 1.5),

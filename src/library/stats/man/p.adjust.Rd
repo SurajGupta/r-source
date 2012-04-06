@@ -1,3 +1,8 @@
+% File src/library/stats/man/p.adjust.Rd
+% Part of the R package, http://www.R-project.org
+% Copyright 1995-2007 R Core Development Team
+% Distributed under GPL 2 or later
+
 \name{p.adjust}
 \alias{p.adjust}
 \alias{p.adjust.methods}
@@ -106,8 +111,10 @@ p.adjust.methods
 }
 
 \examples{
+require(graphics)
+
 set.seed(123)
-x <- rnorm(50, m=c(rep(0,25),rep(3,25)))
+x <- rnorm(50, mean=c(rep(0,25),rep(3,25)))
 p <- 2*pnorm( sort(-abs(x)))
 
 round(p, 3)

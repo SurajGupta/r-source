@@ -1,10 +1,15 @@
+% File src/library/methods/man/isSealedMethod.Rd
+% Part of the R package, http://www.R-project.org
+% Copyright 1995-2007 R Core Development Team
+% Distributed under GPL 2 or later
+
 \name{isSealedMethod}
 \alias{isSealedMethod}
 \alias{isSealedClass}
 \title{ Check for a Sealed Method or Class }
 \description{
   These functions check for either a method or a class that has been
-  \dQuote{sealed} when it was defined, and which therefore cannot be
+  \emph{sealed} when it was defined, and which therefore cannot be
   re-defined.
 }
 \usage{
@@ -26,7 +31,7 @@ isSealedClass(Class, where)
     to one of the functions.}
 }
 \details{
-  In the R implementation of classes and methods, it is possible to
+  In the \R implementation of classes and methods, it is possible to
   seal the definition of either a class or a method.  The basic
   classes (numeric and other types of vectors, matrix and array data)
   are sealed.  So also are the methods for the primitive functions on

@@ -1,3 +1,19 @@
+#  File src/library/stats/R/acf.R
+#  Part of the R package, http://www.R-project.org
+#
+#  This program is free software; you can redistribute it and/or modify
+#  it under the terms of the GNU General Public License as published by
+#  the Free Software Foundation; either version 2 of the License, or
+#  (at your option) any later version.
+#
+#  This program is distributed in the hope that it will be useful,
+#  but WITHOUT ANY WARRANTY; without even the implied warranty of
+#  MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
+#  GNU General Public License for more details.
+#
+#  A copy of the GNU General Public License is available at
+#  http://www.r-project.org/Licenses/
+
 acf <-
     function (x, lag.max = NULL,
               type = c("correlation", "covariance", "partial"),
@@ -22,7 +38,8 @@ acf <-
         lag.max <- floor(10 * (log10(sampleT) - log10(nser)))
     lag.max <- min(lag.max, sampleT - 1)
     if (lag.max < 0) stop("'lag.max' must be at least 0")
-    if(demean) x <- sweep(x, 2, colMeans(x, na.rm = TRUE))
+    if(demean)
+	x <- sweep(x, 2, colMeans(x, na.rm = TRUE), check.margin=FALSE)
     lag <- matrix(1, nser, nser)
     lag[lower.tri(lag)] <- -1
     acf <- array(.C(R_acf,
@@ -59,7 +76,7 @@ pacf.default <- function(x, lag.max = NULL, plot = TRUE,
     if(is.matrix(x)) {
         if(any(is.na(x))) stop("NAs in 'x'")
         nser <- ncol(x)
-        x <- sweep(x, 2, colMeans(x))
+        x <- sweep(x, 2, colMeans(x), check.margin=FALSE)
         lag <- matrix(1, nser, nser)
         lag[lower.tri(lag)] <- -1
         pacf <- ar.yw(x, order.max = lag.max)$partialacf

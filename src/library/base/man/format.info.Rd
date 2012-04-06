@@ -1,3 +1,8 @@
+% File src/library/base/man/format.info.Rd
+% Part of the R package, http://www.R-project.org
+% Copyright 1995-2007 R Core Development Team
+% Distributed under GPL 2 or later
+
 \name{format.info}
 \alias{format.info}
 \title{format(.) Information}
@@ -45,7 +50,7 @@ format.info(1e8)   # 5 0 1 - exponential "1e+08"
 format.info(1e222) # 6 0 2 - exponential "1e+222"
 
 x <- pi*10^c(-10,-2,0:2,8,20)
-names(x) <- formatC(x,w=1,dig=3,format="g")
+names(x) <- formatC(x, width=1, digits=3, format="g")
 cbind(sapply(x,format))
 t(sapply(x, format.info))
 

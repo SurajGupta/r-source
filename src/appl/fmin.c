@@ -15,8 +15,8 @@
  *  GNU General Public License for more details.
  *
  *  You should have received a copy of the GNU General Public License
- *  along with this program; if not, write to the Free Software
- *  Foundation, Inc., 51 Franklin Street, Fifth Floor, Boston, MA 02110-1301  USA
+ *  along with this program; if not, a copy is available at
+ *  http://www.r-project.org/Licenses/
  */
 
 /* fmin.f -- translated by f2c (version 19990503).
@@ -61,10 +61,9 @@
     Minimization without Derivatives, Prentice-Hall, Inc. (1973).
 */
 #include <math.h>
+#include <float.h> /* DBL_EPSILON */
 
-#define MATHLIB_PRIVATE
-#include <Rmath.h> /* for dimach */
-#undef MATHLIB_PRIVATE
+#include <Rmath.h>
 #include <R_ext/Applic.h>
 
 double Brent_fmin(double ax, double bx, double (*f)(double, void *),
@@ -78,7 +77,7 @@ double Brent_fmin(double ax, double bx, double (*f)(double, void *),
     double t2, fu, fv, fw, fx, xm, eps, tol1, tol3;
 
 /*  eps is approximately the square root of the relative machine precision. */
-    eps = d1mach(4);
+    eps = DBL_EPSILON;
     tol1 = eps + 1.;/* the smallest 1.000... > 1 */
     eps = sqrt(eps);
 

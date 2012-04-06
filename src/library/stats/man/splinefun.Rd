@@ -1,3 +1,8 @@
+% File src/library/stats/man/splinefun.Rd
+% Part of the R package, http://www.R-project.org
+% Copyright 1995-2007 R Core Development Team
+% Distributed under GPL 2 or later
+
 \name{splinefun}
 \alias{spline}
 \alias{splinefun}
@@ -75,6 +80,8 @@ spline(x, y = NULL, n = 3*length(x), method = "fmm",
   \code{\link{smooth.spline}} for smoothing splines.
 }
 \examples{
+require(graphics)
+
 op <- par(mfrow = c(2,1), mgp = c(2,.8,0), mar = .1+c(3,3,3,1))
 n <- 9
 x <- 1:n

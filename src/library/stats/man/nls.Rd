@@ -1,3 +1,8 @@
+% File src/library/stats/man/nls.Rd
+% Part of the R package, http://www.R-project.org
+% Copyright 1995-2007 R Core Development Team
+% Distributed under GPL 2 or later
+
 \name{nls}
 \alias{nls}
 %\alias{anova.nls}
@@ -27,8 +32,8 @@ nls(formula, data, start, control, algorithm,
   \item{data}{an optional data frame in which to evaluate the variables in
     \code{formula}.  Can also be a list or an environment, but not a matrix.}
   \item{start}{a named list or named numeric vector of starting
-    estimates.  Since R 2.4.0, when \code{start} is missing, a very
-    cheap guess for \code{start} is tried (if \code{algorithm != "plinear"}).
+    estimates.  When \code{start} is missing, a very cheap guess for
+    \code{start} is tried (if \code{algorithm != "plinear"}).
   }
   \item{control}{an optional list of control settings.  See
     \code{\link{nls.control}} for the names of the settable control
@@ -54,7 +59,7 @@ nls(formula, data, start, control, algorithm,
   \item{na.action}{a function which indicates what should happen
     when the data contain \code{NA}s.  The default is set by
     the \code{na.action} setting of \code{\link{options}}, and is
-    \code{\link{na.fail}} if that is unset.  The \dQuote{factory-fresh}
+    \code{\link{na.fail}} if that is unset.  The \sQuote{factory-fresh}
     default is \code{\link{na.omit}}.  Value \code{\link{na.exclude}}
     can be useful.}
   \item{model}{logical.  If true, the model frame is returned as part of
@@ -143,6 +148,8 @@ nls(formula, data, start, control, algorithm,
   \code{\link{profile.nls}}.
 }
 \examples{
+require(graphics)
+
 DNase1 <- subset(DNase, Run == 1)
 
 ## using a selfStart model
@@ -157,7 +164,7 @@ coef(summary(fm1DNase1))
 fm2DNase1 <- nls(density ~ 1/(1 + exp((xmid - log(conc))/scal)),
                  data = DNase1,
                  start = list(xmid = 0, scal = 1),
-                 alg = "plinear", trace = TRUE)
+                 algorithm = "plinear", trace = TRUE)
 summary(fm2DNase1)
 
 ## without conditional linearity
@@ -194,6 +201,49 @@ Pur.wt <- nls( ~ weighted.MM(rate, conc, Vm, K), data = Treated,
               trace = TRUE)
 summary(Pur.wt)
 
+## Passing arguments using a list that can not be coerced to a data.frame
+lisTreat <- with(Treated,
+                 list(conc1 = conc[1], conc.1 = conc[-1], rate = rate))
+
+weighted.MM1 <- function(resp, conc1, conc.1, Vm, K)
+{
+     conc <- c(conc1, conc.1)
+     pred <- (Vm * conc)/(K + conc)
+    (resp - pred) / sqrt(pred)
+}
+Pur.wt1 <- nls( ~ weighted.MM1(rate, conc1, conc.1, Vm, K),
+               data = lisTreat, start = list(Vm = 200, K = 0.1))
+stopifnot(all.equal(coef(Pur.wt), coef(Pur.wt1)))
+
+## Chambers and Hastie (1992) Statistical Models in S  (p. 537):
+## If the value of the right side [of formula] has an attribute called
+## 'gradient' this should be a matrix with the number of rows equal
+## to the length of the response and one column for each parameter.
+
+weighted.MM.grad <- function(resp, conc1, conc.1, Vm, K)
+{
+  conc <- c(conc1, conc.1)
+
+  K.conc <- K+conc
+  dy.dV <- conc/K.conc
+  dy.dK <- -Vm*dy.dV/K.conc
+  pred <- Vm*dy.dV
+  pred.5 <- sqrt(pred)
+  dev <- (resp - pred) / pred.5
+  Ddev <- -0.5*(resp+pred)/(pred.5*pred)
+  attr(dev, "gradient") <- Ddev * cbind(Vm = dy.dV, K = dy.dK)
+  dev
+}
+
+Pur.wt.grad <- nls( ~ weighted.MM.grad(rate, conc1, conc.1, Vm, K),
+                   data = lisTreat, start = list(Vm = 200, K = 0.1))
+
+rbind(coef(Pur.wt), coef(Pur.wt1), coef(Pur.wt.grad))
+
+## In this example, there seems no advantage to providing the gradient.
+## In other cases, there might be.
+
+
 ## The two examples below show that you can fit a model to
 ## artificial data with noise but not to artificial data
 ## without noise.
@@ -208,7 +258,7 @@ nls(y ~ a + b*x, start = list(a = 0.12345, b = 0.54321),
      trace = TRUE)
 }
 
-## nls() internal very cheap guess for starting values can be sufficient:
+## the nls() internal cheap guess for starting values can be sufficient:
 
 x <- -(1:100)/10
 y <- 100 + 10 * exp(x / 2) + rnorm(x)/10

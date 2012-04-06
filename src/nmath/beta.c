@@ -14,8 +14,8 @@
  *  GNU General Public License for more details.
  *
  *  You should have received a copy of the GNU General Public License
- *  along with this program; if not, write to the Free Software
- *  Foundation, Inc., 51 Franklin Street, Fifth Floor, Boston, MA 02110-1301  USA
+ *  along with this program; if not, a copy is available at
+ *  http://www.r-project.org/Licenses/
  *
  *  SYNOPSIS
  *
@@ -81,7 +81,7 @@ double beta(double a, double b)
     if (val < lnsml) {
 	/* a and/or b so big that beta underflows */
 	ML_ERROR(ME_UNDERFLOW, "beta");
-	return ML_UNDERFLOW;
+	/* return ML_UNDERFLOW; pointless giving incorrect value */
     }
     return exp(val);
 }

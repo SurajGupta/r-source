@@ -1,3 +1,19 @@
+#  File src/library/stats/R/model.tables.R
+#  Part of the R package, http://www.R-project.org
+#
+#  This program is free software; you can redistribute it and/or modify
+#  it under the terms of the GNU General Public License as published by
+#  the Free Software Foundation; either version 2 of the License, or
+#  (at your option) any later version.
+#
+#  This program is distributed in the hope that it will be useful,
+#  but WITHOUT ANY WARRANTY; without even the implied warranty of
+#  MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
+#  GNU General Public License for more details.
+#
+#  A copy of the GNU General Public License is available at
+#  http://www.r-project.org/Licenses/
+
 model.tables <- function(x, ...) UseMethod("model.tables")
 
 model.tables.aov <- function(x, type = "effects", se = FALSE, cterms, ...)
@@ -62,7 +78,7 @@ model.tables.aov <- function(x, type = "effects", se = FALSE, cterms, ...)
 se.aov <- function(object, n, type = "means")
 {
     ## for balanced designs only
-    rdf <- object$df.resid
+    rdf <- object$df.residual
     rse <- sqrt(sum(object$residuals^2)/rdf)
     if(type == "effects") result <- rse/sqrt(n)
     if(type == "means")
@@ -101,7 +117,7 @@ model.tables.aovlist <- function(x, type = "effects", se = FALSE, ...)
 	    ## Elect to use the effects from the lowest stratum:
 	    ##	usually expect this to be highest efficiency
 	    eff.used <- apply(efficiency, 2,
-			      function(x, ind = seq(length(x))) {
+			      function(x, ind = seq_len(x)) {
 				  temp <- (x > 0)
 				  if(sum(temp) == 1) temp
 				  else max(ind[temp]) == ind
@@ -165,7 +181,7 @@ se.aovlist <- function(object, dn.proj, dn.strata, factors, mf, efficiency, n,
     if(type != "effects")
 	stop(gettextf("SEs for type '%s' are not yet implemented", type),
              domain = NA)
-    RSS <- sapply(object, function(x) sum(x$residuals^2)/x$df.resid)
+    RSS <- sapply(object, function(x) sum(x$residuals^2)/x$df.residual)
     res <- vector(length = length(n), mode = "list")
     names(res) <- names(n)
     for(i in names(n)) {
@@ -185,7 +201,7 @@ make.tables.aovproj <-
 {
     tables <- vector(mode = "list", length = length(proj.cols))
     names(tables) <- names(proj.cols)
-    for(i in seq(length(tables))) {
+    for(i in seq_along(tables)) {
 	terms <- proj.cols[[i]]
         terms <- terms[terms %in% colnames(prjs)]
 	data <-
@@ -207,7 +223,7 @@ make.tables.aovprojlist <-
     tables <- vector(mode = "list", length = length(proj.cols))
     names(tables) <- names(proj.cols)
     if(!missing(eff)) {
-	for(i in seq(length(tables))) {
+	for(i in seq_along(tables)) {
 	    terms <- proj.cols[[i]]
 	    if(all(is.na(eff.i <- match(terms, names(eff)))))
 		eff.i <- rep.int(1, length(terms))
@@ -232,7 +248,7 @@ make.tables.aovprojlist <-
 	    class(tables[[i]]) <- "mtable"
 	    if(prt) print(tables[i], ..., quote = FALSE)
 	}
-    } else for(i in seq(length(tables))) {
+    } else for(i in seq_along(tables)) {
 	terms <- proj.cols[[i]]
 	if(length(terms) == 1) data <- projections[[strata.cols[i]]][, terms]
 	else {
@@ -449,9 +465,9 @@ model.frame.aovlist <- function(formula, data = NULL, ...)
     indError <- attr(Terms, "specials")$Error
     errorterm <-  attr(Terms, "variables")[[1 + indError]]
     form <- update.formula(Terms,
-                           paste(". ~ .-", deparse(errorterm, width=500,
+                           paste(". ~ .-", deparse(errorterm, width.cutoff=500,
                                                    backtick = TRUE),
-                                 "+", deparse(errorterm[[2]], width=500,
+                                 "+", deparse(errorterm[[2]], width.cutoff=500,
                                               backtick = TRUE)))
     nargs <- as.list(call)
     oargs <- as.list(oc)

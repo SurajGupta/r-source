@@ -1,3 +1,8 @@
+% File src/library/stats/man/mad.Rd
+% Part of the R package, http://www.R-project.org
+% Copyright 1995-2007 R Core Development Team
+% Distributed under GPL 2 or later
+
 \name{mad}
 \title{Median Absolute Deviation}
 \usage{
@@ -11,10 +16,10 @@ mad(x, center = median(x), constant = 1.4826, na.rm = FALSE,
   \item{constant}{scale factor.}
   \item{na.rm}{if \code{TRUE} then \code{NA} values are stripped
     from \code{x} before computation takes place.}
-  \item{low}{if \code{TRUE}, compute the \dQuote{lo-median}, i.e., for even
+  \item{low}{if \code{TRUE}, compute the \sQuote{lo-median}, i.e., for even
     sample size, do not average the two middle values, but take the
     smaller one.}
-  \item{high}{if \code{TRUE}, compute the \dQuote{hi-median}, i.e., take the
+  \item{high}{if \code{TRUE}, compute the \sQuote{hi-median}, i.e., take the
     larger of the two middle values for even sample size.}
 }
 \description{
@@ -25,7 +30,7 @@ mad(x, center = median(x), constant = 1.4826, na.rm = FALSE,
 \details{
   The actual value calculated is \code{constant * cMedian(abs(x - center))}
   with the default value of \code{center} being \code{median(x)}, and
-  \code{cMedian} being the usual, the \dQuote{low} or \dQuote{high} median, see
+  \code{cMedian} being the usual, the \sQuote{low} or \sQuote{high} median, see
   the arguments description for \code{low} and \code{high} above.
 
   The default \code{constant = 1.4826} (approximately
@@ -49,7 +54,9 @@ print(mad(c(1:9),     constant=1)) ==
       mad(c(1:8,100), constant=1)       # = 2 ; TRUE
 x <- c(1,2,3, 5,7,8)
 sort(abs(x - median(x)))
-c(mad(x, co=1), mad(x, co=1, lo = TRUE), mad(x, co=1, hi = TRUE))
+c(mad(x, constant=1),
+  mad(x, constant=1, low = TRUE),
+  mad(x, constant=1, high = TRUE))
 }
 \keyword{univar}
 \keyword{robust}

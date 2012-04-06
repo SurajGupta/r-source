@@ -1,3 +1,8 @@
+% File src/library/datasets/man/longley.Rd
+% Part of the R package, http://www.R-project.org
+% Copyright 1995-2007 R Core Development Team
+% Distributed under GPL 2 or later
+
 \name{longley}
 \docType{data}
 \alias{longley}
@@ -37,6 +42,7 @@
   Wadsworth \& Brooks/Cole.
 }
 \examples{
+require(stats); require(graphics)
 ## give the data set in the form it is used in S-PLUS:
 longley.x <- data.matrix(longley[, 1:6])
 longley.y <- longley[, "Employed"]

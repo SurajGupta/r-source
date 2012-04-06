@@ -13,8 +13,8 @@
  *  GNU General Public License for more details.
  *
  *  You should have received a copy of the GNU General Public License
- *  along with this program; if not, write to the Free Software
- *  Foundation, Inc., 51 Franklin Street Fifth Floor, Boston, MA 02110-1301  USA
+ *  along with this program; if not, a copy is available at
+ *  http://www.r-project.org/Licenses/
  */
 
 /* **********************************************************************
@@ -47,7 +47,7 @@ SEXP attribute_hidden do_qsort(SEXP call, SEXP op, SEXP args, SEXP rho)
     checkArity(op, args);
     x = CAR(args);
     if (!isNumeric(x))
-	errorcall(call, _("argument is not a numeric vector"));
+	error(_("argument is not a numeric vector"));
     x_real= TYPEOF(x) == REALSXP;
     x_int = !x_real && (TYPEOF(x) == INTSXP || TYPEOF(x) == LGLSXP);
     PROTECT(sx = (x_real || x_int) ? duplicate(x) : coerceVector(x, REALSXP));

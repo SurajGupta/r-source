@@ -1,3 +1,19 @@
+#  File src/library/grDevices/R/unix/x11.R
+#  Part of the R package, http://www.R-project.org
+#
+#  This program is free software; you can redistribute it and/or modify
+#  it under the terms of the GNU General Public License as published by
+#  the Free Software Foundation; either version 2 of the License, or
+#  (at your option) any later version.
+#
+#  This program is distributed in the hope that it will be useful,
+#  but WITHOUT ANY WARRANTY; without even the implied warranty of
+#  MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
+#  GNU General Public License for more details.
+#
+#  A copy of the GNU General Public License is available at
+#  http://www.r-project.org/Licenses/
+
 ## An environment not exported from namespace:grDevices used to
 ## pass .X11.Fonts to the X11 device.
 .X11env <- new.env()
@@ -23,9 +39,14 @@ x11 <- X11
 
 
 png <- function(filename = "Rplot%03d.png",
-                width = 480, height = 480, pointsize = 12,
-                bg = "white",  res = NA, ...)
+                width = 480, height = 480, units = "px",
+                pointsize = 12, bg = "white",  res = NA, ...)
 {
+    units <- match.arg(units, c("in", "px", "cm", "mm"))
+    if(units != "px" && is.na(res))
+        stop("'res' must be specified unless 'units = \"px\"'")
+    height <- switch(units, "in"=res, "cm"=res/2.54, "mm"=res/25.4, "px"=1) * height
+    width <- switch(units, "in"=res, "cm"=res/2.54, "mm"=1/25.4, "px"=1) * width
     dots <- list(...)
     d <- list(gamma = 1, colortype = getOption("X11colortype"),
               maxcubesize = 256, fonts = getOption("X11fonts"))
@@ -36,9 +57,15 @@ png <- function(filename = "Rplot%03d.png",
 }
 
 jpeg <- function(filename = "Rplot%03d.jpeg",
-                 width = 480, height = 480, pointsize = 12, quality = 75,
+                 width = 480, height = 480, units = "px",
+                 pointsize = 12, quality = 75,
                  bg = "white", res = NA, ...)
 {
+    units <- match.arg(units, c("in", "px", "cm", "mm"))
+    if(units != "px" && is.na(res))
+        stop("'res' must be specified unless 'units = \"px\"'")
+    height <- switch(units, "in"=res, "cm"=res/2.54, "mm"=res/25.4, "px"=1) * height
+    width <- switch(units, "in"=res, "cm"=res/2.54, "mm"=1/25.4, "px"=1) * width
     dots <- list(...)
     d <- list(gamma = 1, colortype = getOption("X11colortype"),
               maxcubesize = 256, fonts = getOption("X11fonts"))
@@ -47,24 +74,6 @@ jpeg <- function(filename = "Rplot%03d.jpeg",
                   width, height, pointsize, d$gamma,
                   d$colortype, d$maxcubesize, bg, bg, d$fonts, res, 0, 0))
 }
-## png <- function(filename = "Rplot%03d.png",
-##                 width=480, height=480, pointsize=12,
-##                 gamma = 1, colortype = getOption("X11colortype"),
-##                 maxcubesize = 256, bg = "white",
-##                 fonts = getOption("X11fonts"), res = NA)
-##     .Internal(X11(paste("png::", filename, sep=""),
-##                   width, height, pointsize, gamma,
-##                   colortype, maxcubesize, bg, bg, fonts, res, 0, 0))
-
-## jpeg <- function(filename = "Rplot%03d.jpeg",
-##                  width=480, height=480, pointsize=12,
-##                  quality = 75,
-##                  gamma = 1, colortype = getOption("X11colortype"),
-##                  maxcubesize = 256, bg = "white",
-##                  fonts = getOption("X11fonts"), res = NA)
-##     .Internal(X11(paste("jpeg::", quality, ":", filename, sep=""),
-##                   width, height, pointsize, gamma,
-##                   colortype, maxcubesize, bg, bg, fonts, res, 0, 0))
 
 ####################
 # X11 font database

@@ -1,3 +1,8 @@
+% File src/library/utils/man/package.skeleton.Rd
+% Part of the R package, http://www.R-project.org
+% Copyright 1995-2007 R Core Development Team
+% Distributed under GPL 2 or later
+
 \name{package.skeleton}
 \alias{package.skeleton}
 \title{Create a Skeleton for a New Source Package}
@@ -62,6 +67,7 @@ package.skeleton(name = "anRpackage", list, environment = .GlobalEnv,
 }
 
 \examples{
+require(stats)
 ## two functions and two "data sets" :
 f <- function(x,y) x+y
 g <- function(x,y) x-y

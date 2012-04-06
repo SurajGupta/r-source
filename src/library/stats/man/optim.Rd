@@ -1,3 +1,8 @@
+% File src/library/stats/man/optim.Rd
+% Part of the R package, http://www.R-project.org
+% Copyright 1995-2007 R Core Development Team
+% Distributed under GPL 2 or later
+
 \name{optim}
 \alias{optim}
 \title{General-purpose Optimization}
@@ -9,10 +14,10 @@
   box-constrained optimization and simulated annealing.
 }
 \usage{
-optim(par, fn, gr = NULL,
+optim(par, fn, gr = NULL, \dots,
       method = c("Nelder-Mead", "BFGS", "CG", "L-BFGS-B", "SANN"),
       lower = -Inf, upper = Inf,
-      control = list(), hessian = FALSE, \dots)
+      control = list(), hessian = FALSE)
 }
 \arguments{
  \item{par}{Initial values for the parameters to be optimized over.}
@@ -25,17 +30,17 @@ optim(par, fn, gr = NULL,
 
    For the \code{"SANN"} method it specifies a function to generate a new
    candidate point.  If it is \code{NULL} a default Gaussian Markov
-   kernel is used.
- }
+   kernel is used.}
+ \item{\dots}{Further arguments to be passed to \code{fn} and \code{gr}.}
  \item{method}{The method to be used. See \bold{Details}.}
  \item{lower, upper}{Bounds on the variables for the \code{"L-BFGS-B"} method.}
  \item{control}{A list of control parameters. See \bold{Details}.}
  \item{hessian}{Logical. Should a numerically differentiated Hessian
    matrix be returned?}
- \item{\dots}{Further arguments to be passed to \code{fn} and \code{gr}.
-   Beware of partial matching to earlier arguments.}
 }
 \details{
+  Note that arguments after \code{\dots} must be matched exactly.
+  
   By default this function performs minimization, but it will maximize
   if \code{control$fnscale} is negative.
 
@@ -90,7 +95,8 @@ optim(par, fn, gr = NULL,
   finite.)
 
   \code{optim} can be used recursively, and for a single parameter
-  as well as many.
+  as well as many.  It also accepts a zero-length \code{par}, and just
+  evaluates the function with that argument.
 
   The \code{control} argument is a list that can supply any of the
   following components:
@@ -227,6 +233,8 @@ optim(par, fn, gr = NULL,
 }
 
 \examples{
+require(graphics)
+
 fr <- function(x) {   ## Rosenbrock Banana function
     x1 <- x[1]
     x2 <- x[2]
@@ -261,7 +269,7 @@ res <- optim(50, fw, method="SANN",
 res
 ## Now improve locally
 (r2 <- optim(res$par, fw, method="BFGS"))
-points(r2$par, r2$val, pch = 8, col = "red", cex = 2)
+points(r2$par, r2$value, pch = 8, col = "red", cex = 2)
 
 ## Combinatorial optimization: Traveling salesman problem
 library(stats) # normally loaded

@@ -1,3 +1,19 @@
+#  File src/library/utils/R/de.R
+#  Part of the R package, http://www.R-project.org
+#
+#  This program is free software; you can redistribute it and/or modify
+#  it under the terms of the GNU General Public License as published by
+#  the Free Software Foundation; either version 2 of the License, or
+#  (at your option) any later version.
+#
+#  This program is distributed in the hope that it will be useful,
+#  but WITHOUT ANY WARRANTY; without even the implied warranty of
+#  MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
+#  GNU General Public License for more details.
+#
+#  A copy of the GNU General Public License is available at
+#  http://www.r-project.org/Licenses/
+
 de.ncols <- function(inlist)
 {
     ncols <- matrix(0, nrow=length(inlist), ncol=2)
@@ -86,7 +102,7 @@ de.restore <- function(inlist, ncols, coltypes, argnames, args)
 		cnames[ind1] <- lnames[j]
 		j <- j+1
 	    }
-	    if( dim(x) == dim(args[[i]]) )
+	    if( nrow(x) == nrow(args[[i]]) )
 		rn <- dimnames(args[[i]])[[1]]
 	    else rn <- NULL
 	    if( any(cnames!="") )
@@ -167,7 +183,7 @@ data.entry <- function(..., Modes=NULL, Names=NULL)
     j <- 1
     nn <- names(tmp1)
     for(i in nn) {
-	assign(i, tmp1[[j]], env=.GlobalEnv)
+	assign(i, tmp1[[j]], envir=.GlobalEnv)
 	j <- j+1
     }
     if(j==1) warning("did not assign() anything")

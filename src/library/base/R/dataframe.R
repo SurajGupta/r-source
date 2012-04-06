@@ -1,3 +1,19 @@
+#  File src/library/base/R/dataframe.R
+#  Part of the R package, http://www.R-project.org
+#
+#  This program is free software; you can redistribute it and/or modify
+#  it under the terms of the GNU General Public License as published by
+#  the Free Software Foundation; either version 2 of the License, or
+#  (at your option) any later version.
+#
+#  This program is distributed in the hope that it will be useful,
+#  but WITHOUT ANY WARRANTY; without even the implied warranty of
+#  MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
+#  GNU General Public License for more details.
+#
+#  A copy of the GNU General Public License is available at
+#  http://www.r-project.org/Licenses/
+
 ## As from R 2.4.0, row.names can be either character or integer.
 ## row.names() will always return character.
 ## attr(, "row.names") will return either character or integer.
@@ -210,7 +226,7 @@ as.data.frame.matrix <- function(x, row.names = NULL, optional = FALSE, ...,
     ## changed in 1.8.0
     if(is.null(row.names)) row.names <- dn[[1L]]
     collabs <- dn[[2L]]
-    if(any(empty <- nchar(collabs) == 0L))
+    if(any(empty <- !nzchar(collabs)))
 	collabs[empty] <- paste("V", ic, sep = "")[empty]
     value <- vector("list", ncols)
     if(mode(x) == "character" && stringsAsFactors) {
@@ -353,7 +369,7 @@ data.frame <-
     vnames <- names(x)
     if(length(vnames) != n)
 	vnames <- character(n)
-    no.vn <- nchar(vnames) == 0L
+    no.vn <- !nzchar(vnames)
     vlist <- vnames <- as.list(vnames)
     nrows <- ncols <- integer(n)
     for(i in seq_len(n)) {
@@ -376,7 +392,7 @@ data.frame <-
             else if (no.vn[[i]]) {
                 tmpname <- deparse(object[[i]])[1L]
                 if( substr(tmpname, 1L, 2L) == "I(" ) {
-                    ntmpn <- nchar(tmpname)
+                    ntmpn <- nchar(tmpname, "c")
                     if(substr(tmpname, ntmpn, ntmpn) == ")")
                         tmpname <- substr(tmpname, 3L, ntmpn - 1L)
                 }
@@ -414,7 +430,7 @@ data.frame <-
     value <- unlist(vlist, recursive=FALSE, use.names=FALSE)
     ## unlist() drops i-th component if it has 0 columns
     vnames <- unlist(vnames[ncols > 0L])
-    noname <- nchar(vnames) == 0L
+    noname <- !nzchar(vnames)
     if(any(noname))
 	vnames[noname] <- paste("Var", seq_along(vnames), sep = ".")[noname]
     if(check.names)
@@ -508,7 +524,16 @@ data.frame <-
 
     if(!missing(j)) { # df[i, j]
         x <- x[j]
-        cols <- names(x)  # also needed for 'drop'
+        cols <- names(x)  # needed for 'drop'
+        if(drop && length(x) == 1L) {
+            ## for consistency with [, <length-1>]
+            if(is.character(i)) {
+                rows <- attr(xx, "row.names")
+                i <- pmatch(i, rows, duplicates.ok = TRUE)
+            }
+            xj <- .subset2(xx, j)
+            return(if(length(dim(xj)) != 2L) xj[i] else xj[i, , drop = FALSE])
+        }
         if(any(is.na(cols))) stop("undefined columns selected")
         ## sxx <- match(cols, names(xx)) fails with duplicate names
         nxx <- structure(seq_along(xx), names=names(xx))
@@ -567,8 +592,13 @@ data.frame <-
 	(function(x, i)
 	  if(is.matrix(i)) as.matrix(x)[[i]]
  	  else .subset2(x, i))(x, ...)
-    else
-        .subset2(.subset2(x, ..2), ..1)
+    else {
+        col <- .subset2(x, ..2)
+        i <- if(is.character(..1))
+            pmatch(..1, row.names(x), duplicates.ok = TRUE)
+        else ..1
+        .subset2(col, i)
+    }
 }
 
 "[<-.data.frame" <- function(x, i, j, value)
@@ -642,7 +672,7 @@ data.frame <-
 	    ii <- match(i, rows)
 	    nextra <- sum(new.rows <- is.na(ii))
 	    if(nextra > 0L) {
-		ii[new.rows] <- seq.int(from = nrows + 1L, length = nextra)
+		ii[new.rows] <- seq.int(from = nrows + 1L, length.out = nextra)
 		new.rows <- i[new.rows]
 	    }
 	    i <- ii
@@ -855,7 +885,7 @@ data.frame <-
 	ii <- match(i, rows)
 	n <- sum(new.rows <- is.na(ii))
 	if(n > 0L) {
-	    ii[new.rows] <- seq.int(from = nrows + 1L, length = n)
+	    ii[new.rows] <- seq.int(from = nrows + 1L, length.out = n)
 	    new.rows <- i[new.rows]
 	}
 	i <- ii
@@ -977,7 +1007,7 @@ rbind.data.frame <- function(..., deparse.level = 1)
     {
 	if(identical(clabs, nmi)) NULL
 	else if(length(nmi) == length(clabs) && all(match(nmi, clabs, 0L))) {
-            ## we need unique matches here
+            ## we need 1-1 matches here
 	    m <- pmatch(nmi, clabs, 0L)
             if(any(m == 0L))
                 stop("names do not match previous names")
@@ -986,13 +1016,13 @@ rbind.data.frame <- function(..., deparse.level = 1)
     }
     Make.row.names <- function(nmi, ri, ni, nrow)
     {
-	if(nchar(nmi) > 0L) {
+	if(nzchar(nmi)) {
             if(ni == 0L) character(0L)  # PR8506
 	    else if(ni > 1L) paste(nmi, ri, sep = ".")
 	    else nmi
 	}
 	else if(nrow > 0L && identical(ri, seq_len(ni)))
-	    as.integer(seq.int(from = nrow + 1L, length = ni))
+	    as.integer(seq.int(from = nrow + 1L, length.out = ni))
 	else ri
     }
     allargs <- list(...)
@@ -1034,11 +1064,12 @@ rbind.data.frame <- function(..., deparse.level = 1)
 	    if(is.null(clabs))
 		clabs <- names(xi)
 	    else {
+                if(length(xi) != length(clabs))
+                    stop("numbers of columns of arguments do not match")
 		pi <- match.names(clabs, names(xi))
-		if( !is.null(pi) )
-		    perm[[i]] <- pi
+		if( !is.null(pi) ) perm[[i]] <- pi
 	    }
-	    rows[[i]] <- seq.int(from = nrow + 1L, length = ni)
+	    rows[[i]] <- seq.int(from = nrow + 1L, length.out = ni)
 	    rlabs[[i]] <- Make.row.names(nmi, ri, ni, nrow)
 	    nrow <- nrow + ni
 	    if(is.null(value)) {
@@ -1076,22 +1107,23 @@ rbind.data.frame <- function(..., deparse.level = 1)
 		ni <- ni[1L]
 	    else stop("invalid list argument: all variables should have the same length")
 	    rows[[i]] <- ri <-
-                as.integer(seq.int(from = nrow + 1L, length = ni))
+                as.integer(seq.int(from = nrow + 1L, length.out = ni))
 	    nrow <- nrow + ni
 	    rlabs[[i]] <- Make.row.names(nmi, ri, ni, nrow)
 	    if(length(nmi <- names(xi)) > 0L) {
 		if(is.null(clabs))
 		    clabs <- nmi
 		else {
-		    tmp<-match.names(clabs, nmi)
-		    if( !is.null(tmp) )
-			perm[[i]] <- tmp
+                    if(length(xi) != length(clabs))
+                        stop("numbers of columns of arguments do not match")
+		    pi <- match.names(clabs, nmi)
+		    if( !is.null(pi) ) perm[[i]] <- pi
 		}
 	    }
 	}
 	else if(length(xi) > 0L) {
 	    rows[[i]] <- nrow <- nrow + 1L
-	    rlabs[[i]] <- if(nchar(nmi) > 0L) nmi else as.integer(nrow)
+	    rlabs[[i]] <- if(nzchar(nmi)) nmi else as.integer(nrow)
 	}
     }
     nvar <- length(clabs)
@@ -1247,25 +1279,11 @@ as.matrix.data.frame <- function (x, rownames.force = NA, ...)
 
 Math.data.frame <- function (x, ...)
 {
-    f <- get(.Generic, mode = "function")
-    if (is.null(formals(f)))
-	f <- function(x, ...) {
-	}
-    call <- match.call(f, sys.call())
-    call[[1L]] <- as.name(.Generic)
-    arg <- names(formals(f))[1L]
-    call[[arg]] <- as.name("xx")
-    encl <- parent.frame()
-    var.f <- function(x) eval(call, list(xx = x), encl)
-    mode.ok <- sapply(x, is.numeric) & !sapply(x, is.factor) |
-	sapply(x, is.complex)
+    mode.ok <- sapply(x, function(x) is.numeric(x) || is.complex(x))
     if (all(mode.ok)) {
-	r <- lapply(x, var.f)
-	class(r) <- oldClass(x)
-	attr(r, "row.names") <- attr(x, "row.names")
-	return(r)
-    }
-    else {
+	x[] <- lapply(x, .Generic, ...)
+	return(x)
+    } else {
 	vnames <- names(x)
 	if (is.null(vnames)) vnames <- seq_along(x)
 	stop("non-numeric variable in data frame: ", vnames[!mode.ok])
@@ -1276,8 +1294,8 @@ Ops.data.frame <- function(e1, e2 = NULL)
 {
     isList <- function(x) !is.null(x) && is.list(x)
     unary <- nargs() == 1L
-    lclass <- nchar(.Method[1L]) > 0L
-    rclass <- !unary && (nchar(.Method[2L]) > 0L)
+    lclass <- nzchar(.Method[1L])
+    rclass <- !unary && (nzchar(.Method[2L]))
     value <- list()
     rn <- NULL
     ## set up call as op(left, right)
@@ -1345,7 +1363,7 @@ Summary.data.frame <- function(..., na.rm)
     args <- lapply(args, function(x) {
         x <- as.matrix(x)
         if(!is.numeric(x) && !is.complex(x))
-            stop("only defined on a data frame with all numeric or complex variables")
+            stop("only defined on a data frame with all numeric variables")
         x
     })
     do.call(.Generic, c(args, na.rm=na.rm))

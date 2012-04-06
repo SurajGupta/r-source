@@ -1,6 +1,8 @@
-% file UKLungDeaths.Rd
-% copyright (C) 1994-9 W. N. Venables and B. D. Ripley
-%
+% File src/library/datasets/man/UKLungDeaths.Rd
+% Part of the R package, http://www.R-project.org
+% Copyright  1994-9 W. N. Venables and B. D. Ripley
+% Distributed under GPL 2 or later
+
 \name{UKLungDeaths}
 \docType{data}
 \alias{UKLungDeaths}
@@ -27,7 +29,7 @@ P. J. Diggle (1990)
 Oxford, table A.3
 }
 \examples{
-require(stats) # for time
+require(stats); require(graphics) # for time
 plot(ldeaths) 
 plot(mdeaths, fdeaths) 
 ## Better labels:

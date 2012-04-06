@@ -1,3 +1,19 @@
+#  File src/library/stats/R/loglin.R
+#  Part of the R package, http://www.R-project.org
+#
+#  This program is free software; you can redistribute it and/or modify
+#  it under the terms of the GNU General Public License as published by
+#  the Free Software Foundation; either version 2 of the License, or
+#  (at your option) any later version.
+#
+#  This program is distributed in the hope that it will be useful,
+#  but WITHOUT ANY WARRANTY; without even the implied warranty of
+#  MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
+#  GNU General Public License for more details.
+#
+#  A copy of the GNU General Public License is available at
+#  http://www.r-project.org/Licenses/
+
 loglin <- function(table, margin, start = rep(1, length(table)), fit =
                    FALSE, eps = 0.1, iter = 20, param = FALSE, print =
                    TRUE) {
@@ -46,7 +62,7 @@ loglin <- function(table, margin, start = rep(1, length(table)), fit =
             dev = double(iter),
             nlast = integer(1),
             ifault = integer(1),
-            PACKAGE = "base")
+            PACKAGE = "stats")
     switch(z$ifault,
            stop("this should not happen"),
            stop("this should not happen"),
@@ -90,7 +106,7 @@ loglin <- function(table, margin, start = rep(1, length(table)), fit =
     }
 
     ## Rewrite margin numbers to names if possible
-    if (!is.null(varnames) && all(nchar(varnames) > 0)) {
+    if (!is.null(varnames) && all(nzchar(varnames))) {
         for (k in seq_along(margin))
             margin[[k]] <- varnames[margin[[k]]]
     } else {
@@ -129,7 +145,7 @@ loglin <- function(table, margin, start = rep(1, length(table)), fit =
             vars <- which(dyadic[i - 1, ] > 0)
             parval[[i]] <- apply(fit, vars, mean)
             parnam[i] <- paste(varnames[vars], collapse = ".")
-            fit <- sweep(fit, vars, parval[[i]])
+            fit <- sweep(fit, vars, parval[[i]], check.margin=FALSE)
         }
 
         names(parval) <- parnam

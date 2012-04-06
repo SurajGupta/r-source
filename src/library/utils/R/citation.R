@@ -1,3 +1,19 @@
+#  File src/library/utils/R/citation.R
+#  Part of the R package, http://www.R-project.org
+#
+#  This program is free software; you can redistribute it and/or modify
+#  it under the terms of the GNU General Public License as published by
+#  the Free Software Foundation; either version 2 of the License, or
+#  (at your option) any later version.
+#
+#  This program is distributed in the hope that it will be useful,
+#  but WITHOUT ANY WARRANTY; without even the implied warranty of
+#  MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
+#  GNU General Public License for more details.
+#
+#  A copy of the GNU General Public License is available at
+#  http://www.r-project.org/Licenses/
+
 
 citEntry <- function(entry, textVersion, header=NULL, footer=NULL, ...)
 {
@@ -156,7 +172,7 @@ as.personList.default <- function(x)
 
     ## first split into individual persons
     x <- unlist(strsplit(x,"[[:space:]]?(,|[[:space:]]and)[[:space:]]+"))
-    x <- x[nchar(x)>0]
+    x <- x[nzchar(x)]
 
     z <- list()
     for(k in seq_along(x)) z[[k]] <- as.person(x[k])
@@ -166,7 +182,7 @@ as.personList.default <- function(x)
 
 as.character.person <- function(x, ...)
 {
-    paste(x$name[nchar(x$name)>0], collapse=" ")
+    paste(x$name[nzchar(x$name)], collapse=" ")
 }
 
 as.character.personList <- function(x, ...)
@@ -216,9 +232,7 @@ citation <- function(package="base", lib.loc = NULL)
 {
     ## if we have a CITATION file, use it
     citfile <- system.file("CITATION", package=package, lib.loc=lib.loc)[1]
-    if(nchar(citfile)>0){
-        return(readCitationFile(citfile))
-    }
+    if(nzchar(citfile)) return(readCitationFile(citfile))
     else if(package=="base"){
         ## avoid infinite recursion for broken installation
         stop("broken installation, no CITATION file in the base package.")

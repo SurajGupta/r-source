@@ -4,9 +4,190 @@
 	*	 See the file NEWS for changes that	 * 
 	*        affect all versions of R.		 *
 	*						 *
+	*	       2.6 SERIES NEWS			 *
+	*						 *
+	**************************************************
+
+
+		CHANGES IN R VERSION 2.6.0
+		
+GUI CHANGES
+
+    o	The console now handles cut and paste and mouse clicks in the
+	input line in a more Windows standard way.  It also indicates
+	insert and overwrite mode with different cursors.
+
+
+FUNCTION CHANGES
+
+    o	embedFonts() now accepts paths in 'GS_CMD' which contain spaces.
+
+    o	The windows() device supports semi-transparent colours under
+	Windows 2000 and later, for lines, fills and text.
+
+    o	file.info() has an additional column 'exe' saying if the file
+	is executable and if so what subsystem would be used to
+	execute it.
+	
+    o	getWindowsHandle() now returns the handle as an external pointer.
+    	It no longer returns the process ID.
+
+    o	system() (and hence shell()) now reports as the return value
+	only the bottom 16 bits of process error codes to protect
+	against executables with invalid error codes (such as -1 from
+	fc.exe, PR#9868).
+	
+    o	pipe() in Rgui now runs the command through the shell specified
+    	by the COMSPEC environment variable, as Rterm has always done.
+
+    o	l10n_info() reports the codepage in current use.
+
+    o	dQuote() and sQuote() now use directional quotes by
+	default.  You might prefer options(useFancyQuotes=FALSE) when
+	running Rterm.
+
+
+INSTALLER
+
+    o	The components now have two levels, and the Tcl/Tk docs can be
+	deselected independently.  Only CHM help for Tcl/Tk is shipped
+	(since Winhelp does not work on Vista).
+
+
+PACKAGE INSTALLATION
+
+    o	The undocumented use of 'OBJS' in src/Makevars.win has been
+	removed: use 'OBJECTS' (as documented in 'Writing R
+	Extensions') instead.
+
+    o	PKG_CFLAGS, PKG_CXXFLAGS, PKG_FCFLAGS and PKG_FFLAGS now
+	precede the system equivalents, as they have long done on
+	Unix-alikes.
+
+    o	FC is used rather than F95 for consistency with Unix-alikes.
+
+    o	A file src/Makefile will now be ignored: use src/Makefile.win.
+	(All packages known to build on Windows which have a
+	src/Makefile also have a src/Makefile.win.)
+
+    o	The src/Makevars flag SAFE_FFLAGS (documented in 'Writing R
+	Extensions') is now available on Windows.
+
+    o	There are dummy targets 'before' and 'after' in MakeDll which
+	can be overidden in src/Makevars.win.
+
+    o	graphapp is now in a separate DLL, so packages making direct use
+	of it need to link against -lgraphapp.  This is the value of
+	the macro GRAPHAPP_LIB that you can include in PKG_LIBS in
+	Makevars.win (etc).  (GRAPHAPP_LIB is undefined in earlier
+	versions, so this is backwards compatible).
+	
+    o	If the HTML Help Workshop fails when chm help is requested,
+	package installation will continue with a warning.
+	
+    o	The C99 flag (-std=gnu99) is now used for compiling packages
+	as well as R itself.
+	
+    o	If the TMPDIR environment variable is not set, Rcmd now tries
+    	the TEMP variable before setting TMPDIR to C:/temp.
+
+
+BUILDING R
+
+    o	Cross-building does now lazy-load the base package.
+
+    o	The Lea malloc is now used by regex.c, src/extra/pcre and
+	src/extra/xdr.  (This is for potential performance gains.)
+
+    o	There is an experimental option BUILD=F2C for use when there is
+	no Fortran compiler installed, but there is a compatible f2c
+	installed.  Set CC in the environment to point to the C
+	compiler to be used.  (Some binary builds of gcc omit the
+	Fortran compiler, and commercial C compilers generally do not
+	have matching Fortran compilers.)
+
+
+OTHERS
+
+    o	Some 64-bit versions of Windows (e.g. Vista 64) allocate 4GB
+	user address space to each process that is large-address aware
+	(as the R processes are), and on those systems the default
+	memory limit will be the smaller of the amount of RAM and
+	3.5GB.
+
+    o	Rcmd INSTALL --docs=chm now means 'CHM only' and not 'all' as
+	in earlier versions of R.
+
+    o	The afm files in library/grDevices/afm are now compressed,
+	which reduces the installation size by ca 2Mb.
+
+    o	Installing a package with 'SaveImage: yes' no longer looks at
+	the .Renviron startup files, and so takes R_LIBS from the
+	environnment.  This is consistent with lazyloading a package.
+
+    o	The preferred build environment is to use gcc >= 4.2.1,
+	specified via BUILD=GCC4 in MkRules (the default).  Set
+	BUILD=GCC3 in MkRules if you have gcc 3.4.5.  There is support
+	for a gcc4 cross-compiler via the CROSS-GCC macro in MkRules.
+
+    o	Rcmd build now uses 'tar --force-local' so it should work with
+	Cygwin and MSYS tar as well as that in Rtools.  This replaces
+	a workaround for Cygwin tar only.
+
+    o	Rcmd config is now implemented.
+
+    o	More Windows locale names set via LC_ALL etc work to set the
+	message language, needed under Vista (which is picker than XP
+	about such names, so LC_ALL=ru no longer works and LC_ALL=rus
+	is required).
+
+    o	There are now warnings on startup if locale categories cannot
+	be set (a warning for LC_CTYPE may apply to all categories).
+	This has become much more common under Vista.
+
+    o	Single and double quotations are now rendered using directional
+	quotes in text conversions of R help (as they always have been
+	in HTML, CHM and latex versions of the help).  Note that
+	directional double quotes are missing in FixedSys on most
+	versions of Windows, and although the files will be rendered
+	correctly in CJK locales using the builtin pager, they may not
+	be in external pagers.
+
+    o	Rcmd Rdiff now ignores the difference between smart single quotes
+	and '.  This will probably only work correctly in single-byte
+	locales.  (This is in addition to UTF-8 directional single
+	quotes which the Unix version has for some time equated to '.)
+
+    o	locale category LC_CTYPE="C" is now supported: it was previously
+	remapped to 'en' (that is US English) due to problems in the
+	MinGW runtime which have since been resolved.
+
+
+BUG FIXES
+
+    o	Pasting into the script editor would sometimes change fonts and
+    	lose line breaks. (Reported by Bob Muenchen.)
+
+
+
+
+	**************************************************
+	*						 *
 	*	       2.5 SERIES NEWS			 *
 	*						 *
 	**************************************************
+
+
+		CHANGES IN R VERSION 2.5.1 patched
+		
+BUG FIXES
+
+    o	.Platform$GUI would report "Rgui" when no GUI was present in
+	R(D)COM.
+
+    o	'=' within -e expression is no longer interpreted as setting
+	an environment variable.
+
 
 
 		CHANGES IN R VERSION 2.5.1
@@ -67,7 +248,7 @@ BUG FIXES
 	doc/manual/Makefile.win.  This avoids error messages if 'latex'
 	is not in the path.
 
-    o	Rcmd INSTALL now sets up lazloading earlier if explicitly
+    o	Rcmd INSTALL now sets up lazyloading earlier if explicitly
 	requested in the DESCRIPTION file.  This is needed for
 	packages that use 'methods' and need to load themselves to
 	process their data.

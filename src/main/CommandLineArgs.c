@@ -1,22 +1,21 @@
 /*
-  R : A Computer Language for Statistical Data Analysis
-  Copyright (C) 1997-2006   Robert Gentleman, Ross Ihaka
-                            and the R Development Core Team
-
-  This program is free software; you can redistribute it and/or modify
-  it under the terms of the GNU General Public License as published by
-  the Free Software Foundation; either version 2 of the License, or (at
-  your option) any later version.
-
-  This program is distributed in the hope that it will be useful, but
-  WITHOUT ANY WARRANTY; without even the implied warranty of
-  MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the GNU
-  General Public License for more details.
-
-  You should have received a copy of the GNU General Public License
-  along with this program; if not, write to the Free Software
-  Foundation, Inc., 51 Franklin Street Suite 330, Boston, MA 02111-1307,
-  U.S.A.
+ *  R : A Computer Language for Statistical Data Analysis
+ *  Copyright (C) 1997-2007   Robert Gentleman, Ross Ihaka
+ *                            and the R Development Core Team
+ *
+ *  This program is free software; you can redistribute it and/or modify
+ *  it under the terms of the GNU General Public License as published by
+ *  the Free Software Foundation; either version 2 of the License, or
+ *  (at your option) any later version.
+ *
+ *  This program is distributed in the hope that it will be useful,
+ *  but WITHOUT ANY WARRANTY; without even the implied warranty of
+ *  MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
+ *  GNU General Public License for more details.
+ *
+ *  You should have received a copy of the GNU General Public License
+ *  along with this program; if not, a copy is available at
+ *  http://www.r-project.org/Licenses/
  */
 
 /* <UTF8> char here is handled as a whole string,
@@ -26,6 +25,8 @@
 #ifdef HAVE_CONFIG_H
 #include <config.h>
 #endif
+
+#include <string.h>
 
 #include <Defn.h>
 #include <R_ext/RStartup.h>
@@ -86,7 +87,7 @@ do_commandArgs(SEXP call, SEXP op, SEXP args, SEXP env)
 }
 
 #ifdef Win32
-extern int R_LoadRconsole;
+extern Rboolean R_LoadRconsole;
 #endif
 
 void
@@ -94,9 +95,7 @@ R_common_command_line(int *pac, char **argv, Rstart Rp)
 {
     int ac = *pac, newac = 1;	/* argv[0] is process name */
     int ierr;
-    /* <FIXME> 'long' would need to be something else on Win64.
-       Perhaps use doubles? */
-    long lval;
+    long lval; /* this is only used for ppval, so 32-bit long is fine */
     R_size_t value;
     char *p, **av = argv, msg[1024];
     Rboolean processing = TRUE;
@@ -146,7 +145,7 @@ R_common_command_line(int *pac, char **argv, Rstart Rp)
 		R_RestoreHistory = 0;     /* --no-restore-history */
 		Rp->NoRenviron = TRUE;
 #ifdef Win32
-		R_LoadRconsole = 0;
+		R_LoadRconsole = FALSE;
 #endif
 	    }
 	    else if (!strcmp(*av, "--no-environ")) {

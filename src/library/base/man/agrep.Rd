@@ -1,3 +1,8 @@
+% File src/library/base/man/agrep.Rd
+% Part of the R package, http://www.R-project.org
+% Copyright 1995-2007 R Core Development Team
+% Distributed under GPL 2 or later
+
 \name{agrep}
 \alias{agrep}
 \alias{fuzzy matching}
@@ -48,7 +53,7 @@ agrep(pattern, x, ignore.case = FALSE, value = FALSE,
 }
 \value{
   Either a vector giving the indices of the elements that yielded a
-  match, of, if \code{value} is \code{TRUE}, the matched elements (after
+  match, or, if \code{value} is \code{TRUE}, the matched elements (after
   coercion, preserving names but no other attributes).
 }
 \author{

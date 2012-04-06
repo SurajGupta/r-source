@@ -17,8 +17,8 @@
  *  GNU General Public License for more details.
  *
  *  You should have received a copy of the GNU General Public License
- *  along with this program; if not, write to the Free Software
- *  Foundation, Inc., 51 Franklin Street, Fifth Floor, Boston, MA 02110-1301 USA.
+ *  along with this program; if not, a copy is available at
+ *  http://www.r-project.org/Licenses/
  *
  *
  * DESCRIPTION
@@ -41,7 +41,7 @@ double attribute_hidden dpois_raw(double x, double lambda, int give_log)
         lambda >= 0
     */
     if (lambda == 0) return( (x == 0) ? R_D__1 : R_D__0 );
-    if (!R_finite(lambda)) return R_D__0;
+    if (!R_FINITE(lambda)) return R_D__0;
     if (x < 0) return( R_D__0 );
     if (x <= lambda * DBL_MIN) return(R_D_exp(-lambda) );
     if (lambda < x * DBL_MIN) return(R_D_exp(-lambda + x*log(lambda) -lgammafn(x+1)));

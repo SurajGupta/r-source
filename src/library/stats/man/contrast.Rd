@@ -1,3 +1,8 @@
+% File src/library/stats/man/contrast.Rd
+% Part of the R package, http://www.R-project.org
+% Copyright 1995-2007 R Core Development Team
+% Distributed under GPL 2 or later
+
 \name{contrast}
 \alias{contr.helmert}
 \alias{contr.poly}
@@ -63,7 +68,7 @@ contr.SAS(n, contrasts = TRUE)
 }
 \seealso{
   \code{\link{contrasts}},
-  \code{\link{C}},
+  \code{\link{C}},% ./zC.Rd
   and
   \code{\link{aov}},
   \code{\link{glm}},
@@ -78,11 +83,11 @@ contr.helmert(4, contrasts = FALSE) # just the 4 x 4 identity matrix
 (cT <- contr.treatment(5))
 all(crossprod(cT) == diag(4)) # TRUE: even orthonormal
 
-(cP <- contr.SAS(5))
-all(crossprod(cP) == diag(4)) # TRUE: even orthonormal
+(cT. <- contr.SAS(5))
+all(crossprod(cT.) == diag(4))# TRUE
 
 (cP <- contr.poly(3)) # Linear and Quadratic
-zapsmall(crossprod(cP), dig=15) # orthonormal up to fuzz
+zapsmall(crossprod(cP), digits=15) # orthonormal up to fuzz
 }
 \keyword{design}
 \keyword{regression}

@@ -13,8 +13,8 @@
  *  GNU Lesser General Public License for more details.
  *
  *  You should have received a copy of the GNU Lesser General Public License
- *  along with this program; if not, write to the Free Software
- *  Foundation, Inc., 51 Franklin Street, Fifth Floor, Boston, MA 02110-1301  USA
+ *  along with this program; if not, a copy is available at
+ *  http://www.r-project.org/Licenses/
  */
 
 #ifndef R_ICONV_H
@@ -28,8 +28,8 @@ extern "C" {
 #undef Riconv_open
 #undef Riconv
 #undef Riconv_close
-void * Riconv_open (char* tocode, char* fromcode);
-size_t Riconv (void * cd, char **inbuf, size_t *inbytesleft,
+void * Riconv_open (const char* tocode, const char* fromcode);
+size_t Riconv (void * cd, const char **inbuf, size_t *inbytesleft,
 	       char  **outbuf, size_t *outbytesleft);
 int Riconv_close (void * cd);
 

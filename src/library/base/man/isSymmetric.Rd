@@ -1,3 +1,8 @@
+% File src/library/base/man/isSymmetric.Rd
+% Part of the R package, http://www.R-project.org
+% Copyright 1995-2007 R Core Development Team
+% Distributed under GPL 2 or later
+
 \name{isSymmetric}
 \alias{isSymmetric}
 \alias{isSymmetric.matrix}
@@ -22,7 +27,7 @@ isSymmetric(object, \dots)
 }
 \details{
   The \code{\link{matrix}} method is used inside \code{\link{eigen}} by
-  default to test symmetry of matrices ``up to rounding error'', using
+  default to test symmetry of matrices \emph{up to rounding error}, using
   \code{\link{all.equal}}.  It might not be appropriate in all
   situations.
 }

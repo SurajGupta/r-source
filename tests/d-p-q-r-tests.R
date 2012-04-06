@@ -26,8 +26,7 @@ All.eq <- function(x,y) {
     all.equal.numeric(x,y, tolerance= 64*.Machine$double.eps,
                       scale = max(0, mean(abs(x), na.rm=TRUE)))
 }
-if(!interactive())
-    .Random.seed <- c(0,rep(7654, 3))
+if(!interactive()) set.seed(123)
 
 ## The prefixes of ALL the PDQ & R functions
 PDQRinteg <- c("binom", "geom", "hyper", "nbinom", "pois","signrank","wilcox")
@@ -260,7 +259,8 @@ all.equal(z[ok], qnorm(pz[ok]), tol= 1e-12)
 
 ###===== Random numbers -- first, just output:
 
-.Random.seed <- c(0, 17292, 29447, 24113)
+set.seed(123)
+# .Random.seed <- c(0L, 17292L, 29447L, 24113L)
 n <- 20
 ## for(pre in PDQR) { n <- paste("r",pre,sep=""); cat(n,": "); str(get(n))}
 (Rbeta	  <- rbeta    (n, shape1 = .8, shape2 = 2) )
@@ -521,14 +521,15 @@ cbind(x = sml.x, `dt(x,*)` = dt(sml.x, df = 2, ncp=1))
 ## small 'x' used to suffer from cancellation
 options(oo)
 
-## PR#7099 : pf() with large df1 or df2:
-nu <- 2^seq(25,34, 0.5)
-y <- 1e9*(pf(1,1,nu) - 0.68268949)
-stopifnot(All.eq(pf(1,1,Inf), 0.68268949213708596),
-          diff(y) > 0, # i.e. pf(1,1, *) is monotone increasing
-          All.eq(y [1], -5.07420372386491),
-          All.eq(y[19],  2.12300110824515))
-## not at all in R 2.1.0 or earlier
+## pf() with large df1 or df2
+## (was said to be PR#7099, but that is about non-central pchisq)
+nu <- 2^seq(25, 34, 0.5)
+target <- pchisq(1, 1) # 0.682...
+y <- pf(1, 1, nu)
+stopifnot(All.eq(pf(1, 1, Inf), target),
+          diff(c(y, target)) > 0, # i.e. pf(1, 1, *) is monotone increasing
+          abs(y[1] - (target - 7.21129e-9)) < 1e-11) # computed value
+## non-monotone in R <= 2.1.0
 
 stopifnot(pgamma(Inf, 1.1) == 1)
 ## didn't not terminate in R 2.1.x (only)
@@ -564,5 +565,51 @@ dx.h <- (pf(x+h, 7, 5, ncp= 2.5) - pf(x-h, 7, 5, ncp= 2.5)) / (2*h)
 stopifnot(all.equal(dx.h, df(x, 7, 5, ncp= 2.5), tol = 1e-6),# (1.50 | 1.65)e-8
           All.eq(df(0, 2, 4, ncp=x), df(1e-300, 2, 4, ncp=x))
           )
+
+## qt(p ~ 0, df=1) - PR#9804
+p <- 10^(-10:-20)
+qtp <- qt(p, df = 1)
+## relative error < 10^-14 :
+stopifnot(abs(1 - p / pt(qtp, df=1)) < 1e-14)
+
+## Similarly for df = 2 --- both for p ~ 0  *and*  p ~ 1/2
+## P ~ 0
+stopifnot(all.equal(qt(-740, df=2, log=TRUE), -exp(370)/sqrt(2)))
+## P ~ 1 (=> p ~ 0.5):
+p.5 <- 0.5 + 2^(-5*(5:8))
+p.5 - 0.5
+stopifnot(all.equal(qt(p.5, df = 2),
+		    c(8.429369702179e-08, 2.634178031931e-09,
+		      8.231806349784e-11, 2.572439484308e-12)))
+## qt(<large>, log = TRUE)  is now more finite and monotone (again!):
+stopifnot(all.equal(qt(-1000, df = 4, log=TRUE),
+                    -4.930611e108, tol = 1e-6))
+qtp <- qt(-(20:850), df=1.2, log=TRUE, lower=FALSE)
+##almost: stopifnot(all(abs(5/6 - diff(log(qtp))) < 1e-11))
+stopifnot(abs(5/6 - quantile(diff(log(qtp)), pr=c(0,0.995))) < 1e-11)
+
+## close to df=1 (where Taylor steps are important!):
+all.equal(-20, pt(qt(-20, df=1.02, log=TRUE),
+                          df=1.02, log=TRUE), tol = 1e-12)
+stopifnot(diff(lq <- log(qt(-2^-(10:600), df=1.1, log=TRUE))) > 0.6)
+lq1 <- log(qt(-2^-(20:600), df=1, log=TRUE))
+lq2 <- log(qt(-2^-(20:600), df=2, log=TRUE))
+stopifnot(mean(abs(diff(lq1) - log(2)      )) < 1e-8,
+	  mean(abs(diff(lq2) - log(sqrt(2)))) < 4e-8)
+
+## pbeta(*, log=TRUE) {toms708} -- now improved tail behavior
+x <- c(.01, .10, .25, .40, .55, .71, .98)
+pbval <- c(-0.04605755624088, -0.3182809860569, -0.7503593555585,
+           -1.241555830932, -1.851527837938, -2.76044482378, -8.149862739881)
+all.equal(pbeta(x, 0.8, 2, lower=FALSE, log=TRUE), pbval)
+all.equal(pbeta(1-x, 2, 0.8, log=TRUE), pbval)
+qq <- 2^(0:1022)
+df.set <- c(0.1, 0.2, 0.5, 1, 1.2, 2.2, 5, 10, 20, 50, 100, 500)
+for(nu in df.set) {
+    pqq <- pt(-qq, df = nu, log=TRUE)
+    stopifnot(is.finite(pqq))
+}
+
+
 
 cat("Time elapsed: ", proc.time() - .ptime,"\n")

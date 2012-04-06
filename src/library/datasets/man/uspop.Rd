@@ -1,3 +1,8 @@
+% File src/library/datasets/man/uspop.Rd
+% Part of the R package, http://www.R-project.org
+% Copyright 1995-2007 R Core Development Team
+% Distributed under GPL 2 or later
+
 \name{uspop}
 \docType{data}
 \alias{uspop}
@@ -15,6 +20,7 @@
 }
 % FIXME: missing \references{}
 \examples{
+require(graphics)
 plot(uspop, log = "y", main = "uspop data", xlab = "Year",
      ylab = "U.S. Population (millions)")
 }

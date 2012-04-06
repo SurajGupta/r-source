@@ -7,7 +7,7 @@ msgid ""
 msgstr ""
 "Project-Id-Version: R 2.3.0\n"
 "Report-Msgid-Bugs-To: bugs@r-project.org\n"
-"POT-Creation-Date: 2007-06-12 18:46\n"
+"POT-Creation-Date: 2007-09-17 10:19\n"
 "PO-Revision-Date: 2006-04-16 19:17-0300\n"
 "Last-Translator: Fernando Henrique Ferraz P. da Rosa <feferraz@.ime.usp.br>\n"
 "Language-Team: Portuguese <ldp-br@bazar.conectiva.com.br>\n"
@@ -100,9 +100,6 @@ msgstr "nenhum termo no escopo"
 msgid "no terms in scope for adding to object"
 msgstr "nenhum termo no escopo para adicionar ao objeto"
 
-msgid "trying +"
-msgstr ""
-
 msgid "number of rows in use has changed: remove missing values?"
 msgstr "número de linhas em uso mudou: remover valores ausentes?"
 
@@ -118,9 +115,6 @@ msgstr "nenhum método 'add1' implementado para modelos \"mlm\""
 msgid "scope is not a subset of term labels"
 msgstr "escopo não é um subconjunto dos rótulos dos termos"
 
-msgid "trying -"
-msgstr ""
-
 msgid "no 'drop1' method for \"mlm\" models"
 msgstr "nenhum método 'drop1' para modelos \"mlm\""
 
@@ -135,12 +129,6 @@ msgstr "escopo superior não inclui termos do modelo %s"
 
 msgid "AIC is not defined for this model, so 'step' cannot proceed"
 msgstr "AIC não definido para esse modelo, então 'step' não pode continuar"
-
-msgid "Start:  AIC="
-msgstr ""
-
-msgid "Step:  AIC="
-msgstr ""
 
 #, fuzzy
 msgid "'A' must be an array or table"
@@ -376,10 +364,7 @@ msgstr "amostra é muito esparsa para encontrar alph2"
 msgid "no solution in the specified range of bandwidths"
 msgstr "nenhuma solução no intervalo larguras de banda"
 
-msgid "increasing bw.SJ() search interval ("
-msgstr ""
-
-msgid ")"
+msgid "increasing bw.SJ() search interval (%d)"
 msgstr ""
 
 msgid "minimum occurred at one end of the range"
@@ -1480,6 +1465,9 @@ msgstr "não fatores ignorados:"
 msgid "eff.aovlist: non-orthogonal contrasts would give an incorrect answer"
 msgstr "eff.aovlist: contrastes não ortogonais dariam uma resposta incorreta"
 
+msgid "cannot create a formula from a zero-column data frame"
+msgstr ""
+
 msgid "no terms component"
 msgstr "nenhum componente de termos"
 
@@ -1491,13 +1479,14 @@ msgstr "'ColSideColors' deve ser um vetor de caracteres de comprimento ncol(x)"
 msgid "'termobj' must be a object of class \"terms\""
 msgstr "'centers' deve ser um número ou uma matriz"
 
-msgid ""
-"variable '%s' was fitted with class \"%s\" but class \"%s\" was supplied"
+#, fuzzy
+msgid "variable '%s' was fitted with type \"%s\" but type \"%s\" was supplied"
 msgstr ""
 "variável '%s' foi ajustada com a classe \"%s\" mas a classe \"%s\" foi "
 "especificada"
 
-msgid "variables %s were specified with different classes from the fit"
+#, fuzzy
+msgid "variables %s were specified with different types from the fit"
 msgstr "variáveis %s foram especificadas com classes diferentes do ajuste"
 
 msgid "'data' must be a data.frame, not a matrix or an array"
@@ -1557,6 +1546,12 @@ msgstr "'margins' deve ser um vetor numérico de comprimento 2"
 msgid "lower < upper  is not fulfilled"
 msgstr "lower < upper não satisfeito"
 
+msgid "f.lower = f(lower) is NA"
+msgstr ""
+
+msgid "f.upper = f(upper) is NA"
+msgstr ""
+
 msgid "f() values at end points not of opposite sign"
 msgstr "valores de f() nos pontos extremos não têm sinal oposto"
 
@@ -1609,10 +1604,6 @@ msgid "'data' must be a list or an environment"
 msgstr "'newdata' deve ser uma matriz um data frame"
 
 #, fuzzy
-msgid "no parameters to fit"
-msgstr "todos os parâmetros foram fixados"
-
-#, fuzzy
 msgid "No starting values specified"
 msgstr "nenhum valor de início especificado"
 
@@ -1631,6 +1622,17 @@ msgstr ""
 
 msgid "parameters without starting value in 'data':"
 msgstr ""
+
+#, fuzzy
+msgid "fitting parameters"
+msgstr "todos os parâmetros foram fixados"
+
+msgid "without any variables"
+msgstr ""
+
+#, fuzzy
+msgid "no parameters to fit"
+msgstr "todos os parâmetros foram fixados"
 
 msgid "Upper or lower bounds ignored unless algorithm = \"port\""
 msgstr ""
@@ -1846,6 +1848,9 @@ msgstr "'ref' deve ser um nível existente"
 msgid "ref = %d must be in 1:%d"
 msgstr "ref = %d  deve estar em 1:%d"
 
+msgid "Failed to guess time-varying variables from their names"
+msgstr ""
+
 msgid "'varying' arguments must be the same length"
 msgstr "argumentos 'variying' devem ter o mesmo comprimento"
 
@@ -1858,8 +1863,23 @@ msgstr "há registros com tempos faltantes, que serão descartados"
 msgid "some constant variables (%s) are really varying"
 msgstr "algumas variáveis constantes (%s) estão variando"
 
-msgid "no 'time' or 'id' specified"
-msgstr "nem 'time' nem 'id' especificado"
+msgid "no 'reshapeWide' attribute, must specify 'varying'"
+msgstr ""
+
+#, fuzzy
+msgid "'varying' must be nonempty list or vector"
+msgstr "'varying' deve ser lógico, inteiro ou caractere"
+
+#, fuzzy
+msgid "length of v.names does not evenly divide length of varying"
+msgstr ""
+"comprimento de FUN, %d,\n"
+" não corresponde ao comprimento das margens, %d"
+
+msgid ""
+"length of varying must be the product of length of v.names and length of "
+"times"
+msgstr ""
 
 msgid "'k' must be positive"
 msgstr "'k' deve ser positivo"
@@ -2270,6 +2290,9 @@ msgid "parameter %s does not occur in the model formula"
 msgid_plural "parameters %s do not occur in the model formula"
 msgstr[0] "parâmetro %s não ocorre na fórmula do modelo"
 msgstr[1] "parâmetros %s não ocorrem na fórmula do modelo"
+
+#~ msgid "no 'time' or 'id' specified"
+#~ msgstr "nem 'time' nem 'id' especificado"
 
 #~ msgid "contrasts not defined for 0 degrees of freedom"
 #~ msgstr "contrastes não definidos para 0 graus de liberdade"

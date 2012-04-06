@@ -1,3 +1,19 @@
+#  File src/library/stats/R/lm.influence.R
+#  Part of the R package, http://www.R-project.org
+#
+#  This program is free software; you can redistribute it and/or modify
+#  it under the terms of the GNU General Public License as published by
+#  the Free Software Foundation; either version 2 of the License, or
+#  (at your option) any later version.
+#
+#  This program is distributed in the hope that it will be useful,
+#  but WITHOUT ANY WARRANTY; without even the implied warranty of
+#  MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
+#  GNU General Public License for more details.
+#
+#  A copy of the GNU General Public License is available at
+#  http://www.r-project.org/Licenses/
+
 ### "lm"  *and*	 "glm"	 leave-one-out influence measures
 
 ## this is mainly for back-compatibility (from "lsfit" time) -- use hatvalues()!
@@ -52,7 +68,7 @@ lm.influence <- function (model, do.coef = TRUE)
                         coefficients= if(do.coef) matrix(0, n, k) else double(0),
                         sigma = double(n),
                         tol = 10 * .Machine$double.eps,
-                        DUP = FALSE, PACKAGE="base"
+                        DUP = FALSE, PACKAGE="stats"
                         )[c("hat", "coefficients", "sigma","wt.res")]
         if(!is.null(model$na.action)) {
             hat <- naresid(model$na.action, res$hat)

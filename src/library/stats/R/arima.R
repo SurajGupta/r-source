@@ -1,3 +1,19 @@
+#  File src/library/stats/R/arima.R
+#  Part of the R package, http://www.R-project.org
+#
+#  This program is free software; you can redistribute it and/or modify
+#  it under the terms of the GNU General Public License as published by
+#  the Free Software Foundation; either version 2 of the License, or
+#  (at your option) any later version.
+#
+#  This program is distributed in the hope that it will be useful,
+#  but WITHOUT ANY WARRANTY; without even the implied warranty of
+#  MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
+#  GNU General Public License for more details.
+#
+#  A copy of the GNU General Public License is available at
+#  http://www.r-project.org/Licenses/
+
 arima <- function(x, order = c(0, 0, 0),
                   seasonal = list(order = c(0, 0, 0), period = NA),
                   xreg = NULL, include.mean = TRUE,
@@ -176,7 +192,7 @@ arima <- function(x, order = c(0, 0, 0),
         fit <- lm(x ~ xreg - 1, na.action = na.omit)
         n.used <- sum(!is.na(resid(fit))) - length(Delta)
         init0 <- c(init0, coef(fit))
-        ses <- summary(fit)$coef[, 2]
+        ses <- summary(fit)$coefficients[, 2]
         parscale <- c(parscale, 10 * ses)
     }
     if (n.used <= 0) stop("too few non-missing observations")
@@ -334,7 +350,7 @@ arima <- function(x, order = c(0, 0, 0),
 print.Arima <-
     function (x, digits = max(3, getOption("digits") - 3), se = TRUE, ...)
 {
-    cat("\nCall:", deparse(x$call, width = 75), "", sep = "\n")
+    cat("\nCall:", deparse(x$call, width.cutoff = 75), "", sep = "\n")
     if (length(x$coef) > 0) {
         cat("Coefficients:\n")
         coef <- round(x$coef, digits = digits)
@@ -396,7 +412,7 @@ predict.Arima <-
         if (any(Mod(polyroot(c(1, ma))) < 1))
             warning("seasonal MA part of model is not invertible")
     }
-    z <- KalmanForecast(n.ahead, object$mod)
+    z <- KalmanForecast(n.ahead, object$model)
     pred <- ts(z[[1]] + xm, start = xtsp[2] + deltat(rsd),
                frequency = xtsp[3])
     if (se.fit) {

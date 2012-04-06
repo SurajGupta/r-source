@@ -1,3 +1,8 @@
+% File src/library/base/man/seq.Rd
+% Part of the R package, http://www.R-project.org
+% Copyright 1995-2007 R Core Development Team
+% Distributed under GPL 2 or later
+
 \name{seq}
 \title{Sequence Generation}
 \alias{seq}
@@ -103,7 +108,7 @@ seq(length.out= )
 }
 \examples{
 seq(0, 1, length=11)
-seq(rnorm(20))
+seq(stats::rnorm(20))
 seq(1, 9, by = 2) # match
 seq(1, 9, by = pi)# stay below
 seq(1, 6, by = 3)

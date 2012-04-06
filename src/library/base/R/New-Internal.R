@@ -1,3 +1,19 @@
+#  File src/library/base/R/New-Internal.R
+#  Part of the R package, http://www.R-project.org
+#
+#  This program is free software; you can redistribute it and/or modify
+#  it under the terms of the GNU General Public License as published by
+#  the Free Software Foundation; either version 2 of the License, or
+#  (at your option) any later version.
+#
+#  This program is distributed in the hope that it will be useful,
+#  but WITHOUT ANY WARRANTY; without even the implied warranty of
+#  MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
+#  GNU General Public License for more details.
+#
+#  A copy of the GNU General Public License is available at
+#  http://www.r-project.org/Licenses/
+
 geterrmessage <- function() .Internal(geterrmessage())
 
 try <- function(expr, silent = FALSE) {
@@ -12,9 +28,11 @@ try <- function(expr, silent = FALSE) {
                 call <- sys.call(-4)
             dcall <- deparse(call)[1]
             prefix <- paste("Error in", dcall, ": ")
-            LONGCALL <- 30 # to match value in errors.c
-            if (nchar(dcall) > LONGCALL)
-                prefix <- paste(prefix, "\n\t", sep = "")
+            LONG <- 75 # to match value in errors.c
+            msg <- conditionMessage(e)
+            sm <- strsplit(msg, "\n")[[1]]
+            if (14 + nchar(dcall, type="w") + nchar(sm[1], type="w") > LONG)
+                prefix <- paste(prefix, "\n  ", sep = "")
         }
         else prefix <- "Error : "
         msg <- paste(prefix, conditionMessage(e), "\n", sep="")
@@ -32,24 +50,14 @@ try <- function(expr, silent = FALSE) {
 comment <- function(x).Internal(comment(x))
 "comment<-" <- function(x,value).Internal("comment<-"(x,value))
 
-round <- function(x, digits = 0).Internal(round(x,digits))
-signif <- function(x, digits = 6).Internal(signif(x,digits))
-logb <- log <- function(x, base=exp(1))
-    if(missing(base)).Internal(log(x)) else .Internal(log(x,base))
-log1p <- function(x).Internal(log1p(x))
-expm1 <- function(x).Internal(expm1(x))
+logb <- function(x, base=exp(1)) if(missing(base)) log(x) else log(x,base)
 
 atan2 <- function(y, x).Internal(atan2(y, x))
 
 beta <- function(a, b).Internal( beta(a, b))
 lbeta <- function(a, b).Internal(lbeta(a, b))
 
-gamma <- function(x).Internal( gamma(x))
-lgamma <- function(x).Internal(lgamma(x))
-digamma <- function(x).Internal(   digamma(x))
-trigamma <- function(x).Internal(  trigamma(x))
-psigamma <- function(x, deriv=0) .Internal(psigamma(x, deriv))
-## tetragamma, pentagamma : deprecated in 1.9.0
+psigamma <- function(x, deriv = 0) .Internal(psigamma(x, deriv))
 
 factorial <- function(x) gamma(x + 1)
 lfactorial <- function(x) lgamma(x + 1)
@@ -69,10 +77,6 @@ commandArgs <- function(trailingOnly = FALSE) {
 }
 
 args <- function(name).Internal(args(name))
-
-##=== Problems here [[	attr(f, "class") <- "factor"  fails in factor(..)  ]]:
-##- attr <- function(x, which).Internal(attr(x, which))
-##- "attr<-" <- function(x, which, value).Internal("attr<-"(x, which, value))
 
 cbind <- function(..., deparse.level = 1)
     .Internal(cbind(deparse.level, ...))
@@ -152,13 +156,11 @@ is.unsorted <- function(x, na.rm = FALSE) {
 }
 
 mem.limits <- function(nsize=NA, vsize=NA)
-{
     structure(.Internal(mem.limits(as.integer(nsize), as.integer(vsize))),
               names=c("nsize", "vsize"))
-}
 
-nchar <- function(x, type = "bytes")
-    .Internal(nchar(x, type))
+nchar <- function(x, type = "chars", allowNA = FALSE)
+    .Internal(nchar(x, type, allowNA))
 
 polyroot <- function(z).Internal(polyroot(z))
 
@@ -239,7 +241,8 @@ iconvlist <- function()
     int <- .Internal(iconv(NULL, "", "", ""))
     if(length(int)) return(sort.int(int))
     icfile <- system.file("iconvlist", package="utils")
-    if(!nchar(icfile)) stop("'iconvlist' is not available on this system")
+    if(!nchar(icfile, type="bytes"))
+        stop("'iconvlist' is not available on this system")
     ext <- readLines(icfile)
     if(!length(ext)) stop("'iconvlist' is not available on this system")
     ## glibc has lines ending //, some versions with a header and some without.

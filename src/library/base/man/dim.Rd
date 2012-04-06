@@ -1,3 +1,8 @@
+% File src/library/base/man/dim.Rd
+% Part of the R package, http://www.R-project.org
+% Copyright 1995-2007 R Core Development Team
+% Distributed under GPL 2 or later
+
 \name{dim}
 \alias{dim}
 \alias{dim.data.frame}
@@ -20,7 +25,7 @@ dim(x) <- value
 
   \code{dim} has a method for \code{\link{data.frame}}s, which returns
   the length of the \code{row.names} attribute of \code{x} and the
-  length of \code{x} (the numbers of \dQuote{rows} and \dQuote{columns}).
+  length of \code{x} (the numbers of rows and columns).
 }
 \value{
   For an array (and hence in particular, for a matrix) \code{dim} retrieves

@@ -14,10 +14,9 @@
  *  MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
  *  GNU General Public License for more details.
  *
- *  A copy of the GNU General Public License is available via WWW at
- *  http://www.gnu.org/copyleft/gpl.html.  You can also obtain it by
- *  writing to the Free Software Foundation, Inc.,
- *  51 Franklin Street, Fifth Floor, Boston, MA 02110-1301  USA
+ *  You should have received a copy of the GNU General Public License
+ *  along with this program; if not, a copy is available at
+ *  http://www.r-project.org/Licenses/
  *
  *  SYNOPSIS
  *
@@ -55,7 +54,6 @@
 /*----------- DEBUGGING -------------
  *	make CFLAGS='-DDEBUG_p -g -I/usr/local/include -I../include'
  */
-
 
 /* Scalefactor:= (2^32)^8 = 2^256 = 1.157921e+77 */
 #define SQR(x) ((x)*(x))
@@ -403,7 +401,8 @@ pd_lower_cf (double i, double d)
 	}
     }
 
-    REprintf(" ** NON-convergence in pgamma()'s pd_lower_cf() f= %g.\n", f);
+    MATHLIB_WARNING(" ** NON-convergence in pgamma()'s pd_lower_cf() f= %g.\n",
+		    f);
     return f;/* should not happen ... */
 } /* pd_lower_cf() */
 #undef NEEDED_SCALE

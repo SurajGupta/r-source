@@ -1,3 +1,8 @@
+% File src/library/base/man/range.Rd
+% Part of the R package, http://www.R-project.org
+% Copyright 1995-2007 R Core Development Team
+% Distributed under GPL 2 or later
+
 \name{range}
 \alias{range}
 \alias{range.default}
@@ -35,6 +40,11 @@ range(\dots, na.rm = FALSE)
   A special situation occurs when there is no (after omission
   of \code{NA}s) nonempty argument left, see \code{\link{min}}.% Extremes.Rd
 }
+\section{S4 methods}{
+  This is part of the S4 \code{\link[methods:S4groupGeneric]{Summary}}
+  group generic.  Methods for it must use the signature
+  \code{x, \dots, na.rm}.
+}
 \references{
   Becker, R. A., Chambers, J. M. and Wilks, A. R. (1988)
   \emph{The New S Language}.
@@ -46,7 +56,7 @@ range(\dots, na.rm = FALSE)
   \code{\link[base]{Methods}}.
 }
 \examples{
-(r.x <- range(rnorm(100)))
+(r.x <- range(stats::rnorm(100)))
 diff(r.x) # the SAMPLE range
 
 x <- c(NA, 1:3, -1:1/0); x

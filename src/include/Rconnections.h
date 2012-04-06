@@ -13,13 +13,17 @@
  *  GNU General Public License for more details.
  *
  *  You should have received a copy of the GNU General Public License
- *  along with this program; if not, write to the Free Software
- *  Foundation, Inc., 51 Franklin Street, Fifth Floor, Boston, MA 02110-1301  USA
+ *  along with this program; if not, a copy is available at
+ *  http://www.r-project.org/Licenses/
  */
 
 #ifndef R_CONNECTIONS_H_
 #define R_CONNECTIONS_H_
 #include <R_ext/Boolean.h>
+
+#if defined(HAVE_OFF_T) && defined(HAVE_FSEEKO) && defined(HAVE_SYS_TYPES_H)
+#include <sys/types.h>
+#endif
 
 /* until we make connections more public this allows the opaque
    pointer definition to be made available in Rinternals.h */
@@ -56,12 +60,14 @@ struct Rconn {
     char iconvbuff[25], oconvbuff[50], *next, init_out[25];
     short navail, inavail;
     Rboolean EOF_signalled;
+    void *id;
+    void *ex_ptr;
     void *private;
 };
 
 typedef struct fileconn {
     FILE *fp;
-#if defined(HAVE_OFF_T) && defined(HAVE_SEEKO)
+#if defined(HAVE_OFF_T) && defined(HAVE_FSEEKO)
     off_t rpos, wpos;
 #else
 #ifdef Win32
@@ -157,11 +163,11 @@ Rconnection getConnection(int n);
 Rconnection getConnection_no_err(int n);
 Rboolean switch_stdout(int icon, int closeOnExit);
 void con_close(int i);
-void init_con(Rconnection new, char *description, const char * const mode);
-Rconnection R_newurl(char *description, const char * const mode);
-Rconnection R_newsock(char *host, int port, int server, char *mode);
-Rconnection in_R_newsock(char *host, int port, int server, char *mode);
-Rconnection R_newunz(char *description, char *mode);
+void init_con(Rconnection new, const char *description, const char * const mode);
+Rconnection R_newurl(const char *description, const char * const mode);
+Rconnection R_newsock(const char *host, int port, int server, const char * const mode);
+Rconnection in_R_newsock(const char *host, int port, int server, const char *const mode);
+Rconnection R_newunz(const char *description, const char * const mode);
 int dummy_fgetc(Rconnection con);
 int dummy_vfprintf(Rconnection con, const char *format, va_list ap);
 int getActiveSink(int n);

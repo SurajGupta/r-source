@@ -1,3 +1,8 @@
+% File src/library/graphics/man/plotfactor.Rd
+% Part of the R package, http://www.R-project.org
+% Copyright 1995-2007 R Core Development Team
+% Distributed under GPL 2 or later
+
 \name{plot.factor}
 \title{Plotting Factor Variables}
 \usage{
@@ -13,7 +18,7 @@
         \code{\link{par}}.}
 }
 \description{
-  This functions implements a \dQuote{scatterplot} method for
+  This functions implements a scatterplot method for
   \code{\link{factor}} arguments of the \emph{generic}
   \code{\link{plot}} function.
   Actually, \code{\link{boxplot}} is used when \code{y} is numeric
@@ -26,6 +31,7 @@
     \code{\link{barplot}}, \code{\link{boxplot}}, \code{\link{spineplot}}.
 }
 \examples{
+require(grDevices)
 plot(PlantGrowth)                                # -> plot.data.frame
 plot(weight ~ group, data = PlantGrowth)         # numeric vector ~ factor
 plot(cut(weight, 2) ~ group, data = PlantGrowth) # factor ~ factor

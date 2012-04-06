@@ -1,3 +1,8 @@
+% File src/library/stats/man/ave.Rd
+% Part of the R package, http://www.R-project.org
+% Copyright 1995-2007 R Core Development Team
+% Distributed under GPL 2 or later
+
 \name{ave}
 \title{Group Averages Over Level Combinations of Factors}
 \usage{
@@ -22,6 +27,8 @@ ave(x, \dots, FUN = mean)
 }
 \seealso{\code{\link{mean}}, \code{\link{median}}.}
 \examples{
+require(graphics)
+
 ave(1:3)# no grouping -> grand mean
 
 attach(warpbreaks)

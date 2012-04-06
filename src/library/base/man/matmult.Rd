@@ -1,3 +1,8 @@
+% File src/library/base/man/matmult.Rd
+% Part of the R package, http://www.R-project.org
+% Copyright 1995-2007 R Core Development Team
+% Distributed under GPL 2 or later
+
 \name{matmult}
 \alias{\%*\%}
 \alias{matmult}
@@ -9,17 +14,17 @@
   If both are vectors it will return the inner product.
 }
 \usage{
-a \%*\% b
+x \%*\% y
 }
 \arguments{
-  \item{a, b}{numeric or complex matrices or vectors.}
+  \item{x, y}{numeric or complex matrices or vectors.}
 }
 \details{
   When a vector is promoted to a matrix, its names are not
   promoted to row or column names, unlike \code{\link{as.matrix}}.
 
   This operator is S4 generic but not S3 generic.  S4 methods need to be
-  written for arguments named \code{x} and \code{y}.
+  written for a function of two arguments named \code{x} and \code{y}.
 }
 \value{
   The matrix product.  Use \code{\link{drop}} to get rid of dimensions

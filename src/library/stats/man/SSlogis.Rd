@@ -1,4 +1,8 @@
-% $Id: SSlogis.Rd,v 1.1 2003/12/11 07:16:06 ripley Exp $
+% File src/library/stats/man/SSlogis.Rd
+% Part of the R package, http://www.R-project.org
+% Copyright 1995-2007 R Core Development Team
+% Distributed under GPL 2 or later
+
 \name{SSlogis}
 \title{Logistic Model}
 \usage{
@@ -39,6 +43,8 @@ getInitial(weight ~ SSlogis(Time, Asym, xmid, scal), data = Chick.1)
 fm1 <- nls(weight ~ SSlogis(Time, Asym, xmid, scal), data = Chick.1)
 summary(fm1)
 \dontshow{
+require(graphics)
+
   xx <- seq(-0.5, 5, len = 101)
   yy <- 5 / ( 1 + exp((2-xx)))
   par(mar = c(0, 0, 3.5, 0))

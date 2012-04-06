@@ -1,3 +1,8 @@
+% File src/library/datasets/man/WorldPhones.Rd
+% Part of the R package, http://www.R-project.org
+% Copyright 1995-2007 R Core Development Team
+% Distributed under GPL 2 or later
+
 \name{WorldPhones}
 \docType{data}
 \alias{WorldPhones}
@@ -25,6 +30,7 @@
   New York: Wiley.
 }
 \examples{
+require(graphics)
 matplot(rownames(WorldPhones), WorldPhones, type = "b", log = "y",
         xlab = "Year", ylab = "Number of telephones (1000's)")
 legend(1951.5, 80000, colnames(WorldPhones), col = 1:6, lty = 1:5, 

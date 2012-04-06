@@ -1,3 +1,8 @@
+% File src/library/base/man/cbind.Rd
+% Part of the R package, http://www.R-project.org
+% Copyright 1995-2007 R Core Development Team
+% Distributed under GPL 2 or later
+
 \name{cbind}
 \alias{cbind}%%--do C-internal method dispatching !!
 \alias{rbind}
@@ -23,8 +28,7 @@ rbind(\dots, deparse.level = 1)
     \code{cbind} these can be further arguments to
     \code{\link{data.frame}} such as \code{stringsAsFactors}.)}
   \item{deparse.level}{integer controlling the construction of labels in
-    the case of \dQuote{non-matrix-like} arguments (for the
-    default method):\cr
+    the case of non-matrix-like arguments (for the default method):\cr
     \code{deparse.level = 0} constructs no labels; the default,
     \code{deparse.level = 1 or 2} constructs labels from the argument
     names, see the \sQuote{Value} section below.}

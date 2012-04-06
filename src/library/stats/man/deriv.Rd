@@ -1,3 +1,8 @@
+% File src/library/stats/man/deriv.Rd
+% Part of the R package, http://www.R-project.org
+% Copyright 1995-2007 R Core Development Team
+% Distributed under GPL 2 or later
+
 \name{deriv}
 \alias{D}
 \alias{deriv}
@@ -48,9 +53,9 @@ deriv3(expr, \dots)
   \code{deriv} is a \emph{generic} function with a default and a
   \code{\link{formula}} method.  It returns a \code{\link{call}} for
   computing the \code{expr} and its (partial) derivatives,
-  simultaneously.  It uses so-called \dQuote{\emph{algorithmic
-      derivatives}}.  If \code{function.arg} is a function,
-  its arguments can have default values, see the \code{fx} example below.
+  simultaneously.  It uses so-called \emph{algorithmic derivatives}.  If
+  \code{function.arg} is a function, its arguments can have default
+  values, see the \code{fx} example below.
 
   Currently, \code{deriv.formula} just calls \code{deriv.default} after
   extracting the expression to the right of \code{~}.

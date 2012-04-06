@@ -1,3 +1,19 @@
+#  File src/library/utils/R/windows/winDialog.R
+#  Part of the R package, http://www.R-project.org
+#
+#  This program is free software; you can redistribute it and/or modify
+#  it under the terms of the GNU General Public License as published by
+#  the Free Software Foundation; either version 2 of the License, or
+#  (at your option) any later version.
+#
+#  This program is distributed in the hope that it will be useful,
+#  but WITHOUT ANY WARRANTY; without even the implied warranty of
+#  MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
+#  GNU General Public License for more details.
+#
+#  A copy of the GNU General Public License is available at
+#  http://www.r-project.org/Licenses/
+
 winDialog <- function(type = c("ok", "okcancel", "yesno", "yesnocancel"),
                        message)
 {
@@ -10,12 +26,6 @@ winDialog <- function(type = c("ok", "okcancel", "yesno", "yesnocancel"),
 winDialogString <- function(message, default)
     .Internal(winDialogString(message, default))
 
-winMenuAdd <- function(menuname)
-    invisible(.Internal(winMenuAdd(menuname, NULL, NULL)))
-
-winMenuAddItem <- function(menuname, itemname, action)
-    invisible(.Internal(winMenuAdd(menuname, itemname, action)))
-
 winMenuDel <- function(menuname)
     invisible(.Internal(winMenuDel(menuname, NULL)))
 
@@ -27,16 +37,12 @@ winMenuAdd <- function(menuname)
 
 winMenuAddItem <- function(menuname, itemname, action) {
     ## If specified menu does not exist, add it
-    z <- winMenuNames()
-    if (! menuname %in% z)
-        winMenuAdd(menuname)
+    if (! menuname %in% winMenuNames()) winMenuAdd(menuname)
 
     invisible(.Internal(winMenuAdd(menuname, itemname, action)))
 }
-winMenuNames <- function() {
-    .Internal(winMenuNames())
-}
 
-winMenuItems <- function(menuname) {
-    .Internal(winMenuItems(menuname))
-}
+winMenuNames <- function() .Internal(winMenuNames())
+
+winMenuItems <- function(menuname) .Internal(winMenuItems(menuname))
+

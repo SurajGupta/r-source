@@ -1,3 +1,8 @@
+% File src/library/grDevices/man/pictex.Rd
+% Part of the R package, http://www.R-project.org
+% Copyright 1995-2007 R Core Development Team
+% Distributed under GPL 2 or later
+
 \name{pictex}
 \alias{pictex}
 \title{A PicTeX Graphics Driver}
@@ -51,6 +56,8 @@ pictex(file = "Rplots.tex", width = 5, height = 4, debug = FALSE,
   \code{\link{postscript}}, \code{\link{Devices}}.
 }
 \examples{
+require(graphics)
+
 pictex()
 plot(1:11,(-5:5)^2, type='b', main="Simple Example Plot")
 dev.off()

@@ -7,7 +7,7 @@ msgid ""
 msgstr ""
 "Project-Id-Version: R 2.2.1\n"
 "Report-Msgid-Bugs-To: bugs@r-project.org\n"
-"POT-Creation-Date: 2007-06-12 18:48\n"
+"POT-Creation-Date: 2007-09-19 09:18\n"
 "PO-Revision-Date: 2007-04-13 12:56+0100\n"
 "Last-Translator: Philippe Grosjean <phgrosjean@sciviews.org>\n"
 "Language-Team: French <R-core@r-project.org>\n"
@@ -252,6 +252,10 @@ msgid "too many list items (at most up to number 3899)"
 msgstr "trop d'entrées de liste (3899 maximum)"
 
 msgid "'form' must be a two-sided formula"
+msgstr "'form' doit être une formule à deux membres"
+
+#, fuzzy
+msgid "'form' must be a two-sided formula with one term on each side"
 msgstr "'form' doit être une formule à deux membres"
 
 msgid "No documentation for '%s' in specified packages and libraries:"
@@ -500,6 +504,10 @@ msgid "'destdir' is not a directory"
 msgstr "'destdir' n'est pas un répertoire"
 
 msgid "no package '%s' at the repositories"
+msgstr "pas de package '%s' dans les entrepôts"
+
+#, fuzzy
+msgid "package '%s' does not exist on the local repository"
 msgstr "pas de package '%s' dans les entrepôts"
 
 msgid "download of package '%s' failed"
@@ -756,11 +764,26 @@ msgstr "début de fichier vide"
 msgid "first five rows are empty: giving up"
 msgstr "les premières cinq lignes sont vides : abandon"
 
+msgid "relist() requires recursively unlisted objects."
+msgstr ""
+
+msgid "The flesh argument does not contain a skeleton attribute."
+msgstr ""
+
+msgid ""
+"Either ensure you unlist a relistable object, or specify the skeleton "
+"separately."
+msgstr ""
+
 msgid "cannot coerce 'x' to roman"
 msgstr "impossible de convertir 'x' en roman"
 
 msgid "Invalid roman numeral(s): %s"
 msgstr "Nombre(s) roman(s) incorrect(s) : %s"
+
+#, fuzzy
+msgid "no valid packages were specified"
+msgstr "aucun package spécifié"
 
 msgid "invalid 'socket' argument"
 msgstr "argument 'socket' incorrect"
@@ -888,6 +911,10 @@ msgstr "impossible de créer l'index HTML des packages"
 
 msgid "cannot create HTML search index"
 msgstr "impossible de créer l'index HTML de recherche"
+
+#, fuzzy
+msgid "Updating HTML index of packages in '.Library'"
+msgstr "mise à jour de la liste HTML des packages"
 
 msgid "'memory.size()' is Windows-specific"
 msgstr "'memory.size()' est spécifique à Windows"

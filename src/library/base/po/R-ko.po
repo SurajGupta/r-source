@@ -2,7 +2,7 @@ msgid ""
 msgstr ""
 "Project-Id-Version: R 2.3.0\n"
 "Report-Msgid-Bugs-To: bugs@r-project.org\n"
-"POT-Creation-Date: 2007-06-12 18:43\n"
+"POT-Creation-Date: 2007-09-17 10:18\n"
 "PO-Revision-Date: 2005-05-31 09:39+0900\n"
 "Last-Translator: Korean <uiami@hanmail.com>\n"
 "Language-Team: Korean <translation-team-ko@lists.sourceforge.net>\n"
@@ -338,9 +338,8 @@ msgstr "다만 하나의 요소만에 옮겨놓을수 있어야 할것이 아닙
 msgid "names do not match previous names"
 msgstr "전이 이하와 같은 이전의 이름과 match하지 않습니다 :"
 
-#, fuzzy
-msgid "names do not match previous names:"
-msgstr "전이 이하와 같은 이전의 이름과 match하지 않습니다 :"
+msgid "numbers of columns of arguments do not match"
+msgstr ""
 
 msgid "invalid list argument: all variables should have the same length"
 msgstr "무효인 리스트의 인수입니다. 모든 변수는 동일길이를 가져야 합니다"
@@ -354,7 +353,8 @@ msgstr "(은)는 동일한 size의 데이터 프레임에 대해서만 정의 �
 msgid "list of length %d not meaningful"
 msgstr "길이 %d 의 리스트는 의미가 없습니다"
 
-msgid "only defined on a data frame with all numeric or complex variables"
+#, fuzzy
+msgid "only defined on a data frame with all numeric variables"
 msgstr "모든 수치 또는 복소수값의 변수는 데이터 프레임에 대해서만 정의 됩니다"
 
 msgid "character string is not in a standard unambiguous format"
@@ -500,6 +500,9 @@ msgstr "'to'는  POSIXt 오브젝트가 아니면 되지 않습니다"
 msgid "'file' must be a character string or connection"
 msgstr "'file'는 문자열 또는 connection가 아니면 되지 않습니다"
 
+msgid "Invalid DCF format."
+msgstr ""
+
 msgid "'x' must be a square matrix"
 msgstr "'x' 정방 행렬이 아니면 되지 않습니다"
 
@@ -514,6 +517,9 @@ msgstr "행렬의 대각성분만을 옮겨놓을수가 있습니다"
 
 msgid "replacement diagonal has wrong length"
 msgstr "치환대각 성분의 길이가 잘못되어 있습니다"
+
+msgid "'fromLast' must be TRUE or FALSE"
+msgstr ""
 
 msgid "MARGIN ="
 msgstr "MARGIN ="
@@ -657,12 +663,12 @@ msgstr "(을)를 찾아낼수가 없습니다"
 msgid "all arguments must be named"
 msgstr "모든 인수는 동일 길이가 나오지 않으면 되지 않습니다"
 
-#, fuzzy
-msgid "argument '%s' will be ignored"
-msgstr "drop인수는 무시됩니다"
-
 msgid "'pattern' must be a non-empty character string"
 msgstr "'pattern'는 비어 있지 않는 문자열이 아니면 되지 않습니다"
+
+#, fuzzy
+msgid "invalid multibyte string for 'pattern'"
+msgstr "'by'에 대한 무효인 문자열입니다"
 
 msgid "'max.distance' must be non-negative"
 msgstr "'max.distance'는 non-negative이 나오지 않으면 되지 않습니다"
@@ -748,6 +754,10 @@ msgstr "'%s'는 탐색 패스에서는 검색되지 않았습니다. pos = 2를 
 
 msgid "package/namespace load failed for '%s'"
 msgstr "'%s'에 대한 패키지 또는 이름 공간의 적재가 실패했습니다"
+
+#, fuzzy
+msgid "package was installed prior to 2.4.0 and must be re-installed"
+msgstr "패키지 '%s' R 2.0.0 이전 것입니다. 그것을 다시 인스톨을 해주십시오"
 
 msgid "unable to load R code in package '%s'"
 msgstr "패키지 '%s'에서의 R 코드를 적재할수가 없습니다"
@@ -871,6 +881,12 @@ msgstr ""
 msgid "[Previously saved workspace restored]"
 msgstr "[이전에 저장된 workspace를 복귀합니다]"
 
+msgid "Attempting to load the environment '%s'"
+msgstr ""
+
+msgid "not found: using .GlobalEnv instead"
+msgstr ""
+
 msgid "invalid 'category' argument"
 msgstr "무효인 'category' 인수입니다"
 
@@ -878,10 +894,19 @@ msgid "must specify formal argument names to vectorize"
 msgstr ""
 
 #, fuzzy
-msgid "'arg' must be NULL or a character vector of length >= 1"
+msgid "'arg' must be NULL or a character vector"
 msgstr "'normal.kind'는 길이1의 문자열이 아니면 안됩니다"
 
-msgid "'arg' should be one of"
+#, fuzzy
+msgid "'arg' must be of length 1"
+msgstr "'from'는 길이 1이 나오지 않으면 되지 않습니다"
+
+#, fuzzy
+msgid "'arg' must be of length >= 1"
+msgstr "'from'는 길이 1이 나오지 않으면 되지 않습니다"
+
+#, fuzzy
+msgid "'arg' should be one of %s"
 msgstr "'arg'는 이하의 하나가 아니면 되지 않습니다"
 
 msgid "there is more than one match in 'match.arg'"
@@ -1011,6 +1036,12 @@ msgstr "'%s'에는 export를 위한 클래스는 검색되지 않습니다"
 msgid "in '%s' methods for export not found: %s"
 msgstr "'%s'에는 export를 위한 메소드는 검색되지 않습니다"
 
+msgid "Multiple methods lists found for '"
+msgstr ""
+
+msgid "'"
+msgstr ""
+
 msgid "No methods table for \""
 msgstr ""
 
@@ -1122,15 +1153,6 @@ msgstr "'%s'는 아직 실제로 적용되지 않습니다"
 
 msgid "argument '%s' is not used (yet)"
 msgstr "인수'%s'는 사용되어 있지 않습니다"
-
-msgid "invalid version specification"
-msgstr "무효 버전의 지정입니다"
-
-msgid "wrong argument"
-msgstr "잘못된 인수입니다"
-
-msgid "not defined for package_version objects"
-msgstr "(은)는 package_version 오브젝트에 대해서는 정의 되어 있지 않습니다"
 
 #, fuzzy
 msgid "no arguments"
@@ -1350,6 +1372,15 @@ msgstr "'nv'는 0 또는 ncol(x)가 나오지 않으면 되지 않습니다"
 msgid "error %d in 'dsvdc'"
 msgstr "'dsvdc'에서 에러 %d가 있습니다"
 
+msgid "STATS is longer than the extent of 'dim(x)[MARGIN]'"
+msgstr ""
+
+msgid "STATS does not recycle exactly across MARGIN"
+msgstr ""
+
+msgid "length(STATS) or dim(STATS) do not match dim(x)[MARGIN]"
+msgstr ""
+
 msgid "nothing to tabulate"
 msgstr "외부에서 하는것이 아무것도 없습니다"
 
@@ -1401,6 +1432,20 @@ msgstr "'width'는 positive이 아니면 되지 않습니다"
 msgid "No traceback available"
 msgstr "이용 할수 있는 traceback가 없습니다"
 
+msgid "invalid version specification"
+msgstr "무효 버전의 지정입니다"
+
+msgid "wrong argument"
+msgstr "잘못된 인수입니다"
+
+#, fuzzy
+msgid "invalid value"
+msgstr "무효인 'n'값입니다"
+
+#, fuzzy
+msgid "not defined for numeric_version objects"
+msgstr "(은)는 package_version 오브젝트에 대해서는 정의 되어 있지 않습니다"
+
 msgid "argument to 'which' is not logical"
 msgstr "'which'에서 인수는 논리값이 아닙니다"
 
@@ -1415,9 +1460,6 @@ msgstr ""
 #, fuzzy
 msgid "'input' must be a character vector or 'NULL'"
 msgstr "'input' 그리고 'target'는 문자 벡터가 아니면 되지 않습니다"
-
-msgid "argument must be character"
-msgstr "인수는 문자가 아니면 되지 않습니다"
 
 msgid "'cmd' could not be run"
 msgstr "'cmd'는 실행할수가 없었습니다"
@@ -1456,14 +1498,16 @@ msgid "there is no package called"
 msgid_plural "there are no packages called"
 msgstr[0] "'%s'라는 이름의 패키지는 없습니다"
 
-msgid "object %s is not exported by 'namespace:%s'"
-msgid_plural "objects %s are not exported by 'namespace:%s'"
+#, fuzzy
+msgid "object '%s' is not exported by 'namespace:%s'"
+msgid_plural "objects '%s' are not exported by 'namespace:%s'"
 msgstr[0] ""
 "오브젝트%s는 'namespace:%s'에 의해 export되지 않습니다 \n"
 "오브젝트(복수)%s는 'namespace:%s'에 의해 export되지 않습니다"
 
-msgid "previous export %s is being replaced"
-msgid_plural "previous exports %s are being replaced"
+#, fuzzy
+msgid "previous export '%s' is being replaced"
+msgid_plural "previous exports '%s' are being replaced"
 msgstr[0] ""
 "이전의 export %s는 옮겨 놓을수 있습니다 \n"
 "이전의 exports %s는 옮겨 놓을수 있습니다"
@@ -1479,6 +1523,17 @@ msgid_plural "Warning messages:\n"
 msgstr[0] ""
 "경고 메세지:\n"
 "경고 메세지(복수)\n"
+
+#, fuzzy
+#~ msgid "'data' must exist"
+#~ msgstr "'subset'는 논리값이 아니면 되지 않습니다"
+
+#, fuzzy
+#~ msgid "names do not match previous names:"
+#~ msgstr "전이 이하와 같은 이전의 이름과 match하지 않습니다 :"
+
+#~ msgid "argument must be character"
+#~ msgstr "인수는 문자가 아니면 되지 않습니다"
 
 #~ msgid "'all' can not be used with other deparse options"
 #~ msgstr "deparse 옵션에서 모든것을 사용할수가 없습니다"

@@ -1,3 +1,8 @@
+% File src/library/graphics/man/hist.Rd
+% Part of the R package, http://www.R-project.org
+% Copyright 1995-2007 R Core Development Team
+% Distributed under GPL 2 or later
+
 \name{hist}
 \title{Histograms}
 \usage{
@@ -77,7 +82,7 @@ hist(x, \dots)
   \code{\link{plot.histogram}}, before it is returned.
 }
 \details{
-  The definition of \dQuote{histogram} differs by source (with
+  The definition of \emph{histogram} differs by source (with
   country-specific biases).  \R's default with equi-spaced breaks (also
   the default) is to plot the counts in the cells defined by
   \code{breaks}.  Thus the height of a rectangle is proportional to
@@ -94,8 +99,7 @@ hist(x, \dots)
   \code{include.lowest} is \code{TRUE}.
 
   For \code{right = FALSE}, the intervals are of the form \code{[a, b)},
-  and \code{include.lowest} really has the meaning of
-  \dQuote{\emph{include highest}}.
+  and \code{include.lowest} means \sQuote{\emph{include highest}}.
 
   A numerical tolerance of \eqn{10^{-7}}{1e-7} times the median bin size
   is applied when counting entries on the edges of bins.
@@ -127,15 +131,6 @@ hist(x, \dots)
   \item{equidist}{logical, indicating if the distances between
     \code{breaks} are all the same.}
 }
-\note{
-  The resulting value does \emph{not} depend on the values of
-  the arguments \code{freq} (or \code{probability})
-  or \code{plot}.  This is intentionally different from S.
-
-  Prior to \R 1.7.0, the element \code{breaks} of the result was
-  adjusted for numerical tolerances.  The nominal values are now
-  returned even though tolerances are still used when counting.
-}
 
 \references{
   Becker, R. A., Chambers, J. M. and Wilks, A. R. (1988)
@@ -160,21 +155,22 @@ op <- par(mfrow=c(2, 2))
 hist(islands)
 utils::str(hist(islands, col="gray", labels = TRUE))
 
-hist(sqrt(islands), br = 12, col="lightblue", border="pink")
+hist(sqrt(islands), breaks = 12, col="lightblue", border="pink")
 ##-- For non-equidistant breaks, counts should NOT be graphed unscaled:
-r <- hist(sqrt(islands), br = c(4*0:5, 10*3:5, 70, 100, 140), col='blue1')
+r <- hist(sqrt(islands), breaks = c(4*0:5, 10*3:5, 70, 100, 140), col='blue1')
 text(r$mids, r$density, r$counts, adj=c(.5, -.5), col='blue3')
 sapply(r[2:3], sum)
 sum(r$density * diff(r$breaks)) # == 1
 lines(r, lty = 3, border = "purple") # -> lines.histogram(*)
 par(op)
 
-utils::str(hist(islands, br=12, plot= FALSE)) #-> 10 (~= 12) breaks
-utils::str(hist(islands, br=c(12,20,36,80,200,1000,17000), plot = FALSE))
+utils::str(hist(islands, breaks=12, plot= FALSE)) #-> 10 (~= 12) breaks
+utils::str(hist(islands, breaks=c(12,20,36,80,200,1000,17000), plot = FALSE))
 
-hist(islands, br=c(12,20,36,80,200,1000,17000), freq = TRUE,
+hist(islands, breaks=c(12,20,36,80,200,1000,17000), freq = TRUE,
      main = "WRONG histogram") # and warning
 
+require(stats)
 set.seed(14)
 x <- rchisq(100, df = 4)
 \dontshow{op <- par(mfrow = 2:1, mgp = c(1.5, 0.6, 0), mar = .1 + c(3,3:1))}

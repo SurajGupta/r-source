@@ -1,3 +1,8 @@
+% File src/library/datasets/man/quakes.Rd
+% Part of the R package, http://www.R-project.org
+% Copyright 1995-2007 R Core Development Team
+% Distributed under GPL 2 or later
+
 \name{quakes}
 \docType{data}
 \alias{quakes}
@@ -29,6 +34,7 @@
   observations.
 }
 \examples{
+require(graphics)
 pairs(quakes, main = "Fiji Earthquakes, N = 1000", cex.main=1.2, pch=".")
 }
 \keyword{datasets}

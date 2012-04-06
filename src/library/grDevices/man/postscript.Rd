@@ -1,3 +1,8 @@
+% File src/library/grDevices/man/postscript.Rd
+% Part of the R package, http://www.R-project.org
+% Copyright 1995-2007 R Core Development Team
+% Distributed under GPL 2 or later
+
 \name{postscript}
 \alias{postscript}
 \alias{.ps.prolog}
@@ -79,7 +84,7 @@ postscript(file = ifelse(onefile, "Rplots.ps", "Rplot\%03d.ps"),
     page? -- defaults to true.}
   \item{print.it}{logical: should the file be printed when the device is
     closed?  (This only applies if \code{file} is a real file name.)}
-  \item{command}{the command to be used for \dQuote{printing}.  Defaults to
+  \item{command}{the command to be used for \sQuote{printing}.  Defaults to
     option \code{"printcmd"}; this can also be selected as
     \code{"default"}. The length limit is \code{2*PATH_MAX},
 #ifdef unix
@@ -307,6 +312,7 @@ postscript(file = ifelse(onefile, "Rplots.ps", "Rplot\%03d.ps"),
   Brian D'Urso \email{durso@hussle.harvard.edu}.
 }
 \examples{
+require(graphics)
 \dontrun{
 # open the file "foo.ps" for graphics output
 postscript("foo.ps")

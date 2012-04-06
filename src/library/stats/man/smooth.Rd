@@ -1,3 +1,8 @@
+% File src/library/stats/man/smooth.Rd
+% Part of the R package, http://www.R-project.org
+% Copyright 1995-2007 R Core Development Team
+% Distributed under GPL 2 or later
+
 \name{smooth}
 \alias{smooth}
 %\alias{print.tukeysmooth}
@@ -14,14 +19,14 @@ smooth(x, kind = c("3RS3R", "3RSS", "3RSR", "3R", "3", "S"),
   \item{x}{a vector or time series}
   \item{kind}{a character string indicating the kind of smoother required;
     defaults to \code{"3RS3R"}.}
-  \item{twiceit}{logical, indicating if the result should be \dQuote{twiced}.
+  \item{twiceit}{logical, indicating if the result should be \sQuote{twiced}.
     Twicing a smoother \eqn{S(y)} means \eqn{S(y) + S(y - S(y))}, i.e.,
     adding smoothed residuals to the smoothed values.  This decreases
     bias (increasing variance).}
   \item{endrule}{a character string indicating the rule for smoothing at the
     boundary.  Either \code{"Tukey"} (default) or \code{"copy"}.}
   \item{do.ends}{logical, indicating if the 3-splitting of ties should
-    also happen at the boundaries (\dQuote{ends}).  This is only used for
+    also happen at the boundaries (ends).  This is only used for
     \code{kind = "S"}.}
 }
 \details{
@@ -72,6 +77,8 @@ smooth(x, kind = c("3RS3R", "3RSS", "3RSR", "3R", "3", "S"),
   \code{\link{smooth.spline}}.
 }
 \examples{
+require(graphics)
+
 ## see also   demo(smooth) !
 
 x1 <- c(4, 1, 3, 6, 6, 4, 1, 6, 2, 4, 2) # very artificial

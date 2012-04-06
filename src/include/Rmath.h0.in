@@ -1,6 +1,6 @@
 /* -*- C -*-
  *  Mathlib : A C Library of Special Functions
- *  Copyright (C) 1998-2003  The R Development Core Team
+ *  Copyright (C) 1998-2007  The R Development Core Team
  *  Copyright (C) 2004       The R Foundation
  *
  *  This program is free software; you can redistribute it and/or modify
@@ -14,8 +14,8 @@
  *  GNU Lesser General Public License for more details.
  *
  *  You should have received a copy of the GNU Lesser General Public License
- *  along with this program; if not, write to the Free Software
- *  Foundation, Inc., 51 Franklin Street, Fifth Floor, Boston, MA 02110-1301  USA
+ *  along with this program; if not, a copy is available at
+ *  http://www.r-project.org/Licenses/
  *
 
  * Rmath.h  should contain ALL headers from R's C code in `src/nmath'
@@ -28,8 +28,10 @@
 #ifndef RMATH_H
 #define RMATH_H
 
-#ifdef  __cplusplus
-extern "C" {
+/* Note that on some systems we need to include math.h before the
+   defines below, to avoid redefining ftrunc */
+#ifndef NO_C_HEADERS
+# include <math.h>
 #endif
 
 /*-- Mathlib as part of R --  define this for standalone : */
@@ -49,14 +51,13 @@ extern "C" {
 @RMATH_HAVE_WORKING_LOG1P@
 #endif
 
-#ifndef HAVE_WORKING_LOG
-@RMATH_HAVE_WORKING_LOG@
-#endif
-
+/* not really appropriate
 #include <errno.h>
 #include <limits.h>
 #include <float.h>
 #include <math.h>
+#include <stdlib.h>
+*/
 
 #if defined(HAVE_LOG1P) && !defined(HAVE_WORKING_LOG1P)
 /* remap to avoid problems with getting the right entry point */
@@ -64,7 +65,6 @@ double  Rlog1p(double);
 #define log1p Rlog1p
 #endif
 
-#include <stdlib.h>
 
 	/* Undo SGI Madness */
 
@@ -329,17 +329,11 @@ double  Rlog1p(double);
 #undef trunc
 #define	trunc	ftrunc
 
-
-/* log(1 - exp(x))  in stable form: */
-#define R_Log1_Exp(x)   ((x) > -M_LN2 ? log(-expm1(x)) : log1p(-exp(x)))
-
+#ifdef  __cplusplus
+extern "C" {
+#endif
 	/* R's versions with !R_FINITE checks */
 
-#if defined(MATHLIB_STANDALONE) && defined(HAVE_WORKING_LOG)
-#define R_log log
-#else
-double R_log(double x);
-#endif
 double R_pow(double x, double y);
 double R_pow_di(double, int);
 
@@ -594,52 +588,41 @@ double  logspace_sub(double logx, double logy);
 
 	/* old-R Compatibility */
 
-#define snorm	norm_rand
-#define sunif	unif_rand
-#define sexp	exp_rand
+#ifdef OLD_RMATH_COMPAT
+# define snorm	norm_rand
+# define sunif	unif_rand
+# define sexp	exp_rand
+#endif
 
-#ifdef MATHLIB_PRIVATE
-#define d1mach		Rf_d1mach
-#define i1mach          Rf_i1mach
-#define gamma_cody	Rf_gamma_cody
-
-double	gamma_cody(double); /* used in arithmetic.c */
-
-#endif /* MATHLIB_PRIVATE */
-
-double  Rf_d1mach(int); /* used in port.c in package stats */
-int     Rf_i1mach(int); /* used in port.c in package stats */
-
-#ifdef MATHLIB_STANDALONE
-#ifndef MATHLIB_PRIVATE_H
+#if defined(MATHLIB_STANDALONE) && !defined(MATHLIB_PRIVATE_H)
+/* second is defined by nmath.h */
 
 /* If isnan is a macro, as C99 specifies, the C++
    math header will undefine it. This happens on OS X */
-#ifdef __cplusplus
+# ifdef __cplusplus
   int R_isnancpp(double); /* in mlutils.c */
 #  define ISNAN(x)     R_isnancpp(x)
-#else
+# else
 #  define ISNAN(x)     (isnan(x)!=0)
-#endif
-
-
-/* We don't have config information available to do anything else */
-#define R_FINITE(x)    R_finite(x)
-int R_finite(double);
-
-#ifdef WIN32  /* not Win32 as no config information */
-# define NA_REAL (*_imp__NA_REAL)
-# define R_NegInf (*_imp__R_NegInf)
-# define R_PosInf (*_imp__R_PosInf)
-# define N01_kind (*_imp__N01_kind)
 # endif
 
-#endif /* not MATHLIB_PRIVATE_H */
-#endif /* MATHLIB_STANDALONE */
+# define R_FINITE(x)    R_finite(x)
+int R_finite(double);
 
-#ifndef R_EXT_PRINT_H_
-void REprintf(char*, ...);
-#endif
+# ifdef WIN32  /* not Win32 as no config information */
+#  ifdef RMATH_DLL
+#   define R_EXTERN extern __declspec(dllimport)
+#  else
+#   define R_EXTERN extern
+#  endif
+R_EXTERN double NA_REAL;
+R_EXTERN double R_PosInf;
+R_EXTERN double R_NegInf;
+R_EXTERN int N01_kind;
+#  undef R_EXTERN
+# endif
+
+#endif /* MATHLIB_STANDALONE */
 
 #ifdef  __cplusplus
 }

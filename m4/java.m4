@@ -1,6 +1,6 @@
 ### java.m4 -- macros for Java environment detection    -*- Autoconf -*-
 ###
-### Copyright (C) 2005 R Core Team
+### Copyright (C) 2005-7 R Core Team
 ###
 ### This file is part of R.
 ###
@@ -15,10 +15,8 @@
 ### License for more details.
 ###
 ### You should have received a copy of the GNU General Public License
-### along with R; if not, you can obtain it via the World Wide Web at
-### `http://www.gnu.org/copyleft/gpl.html', or by writing to the Free
-### Software Foundation, Inc., 51 Franklin Street, Fifth Floor,
-### Boston, MA 02110-1301, USA
+### along with R; if not, a copy is available at
+### http://www.r-project.org/Licenses/
 
 
 ## R_RUN_JAVA(variable for the result, parameters)
@@ -79,55 +77,61 @@ AC_PATH_PROGS(JAVAH,javah,,${JAVA_PATH})
 AC_PATH_PROGS(JAR,jar,,${JAVA_PATH})
 
 ## we don't require a compiler, but it would be useful
-AC_MSG_CHECKING([whether Java compiler works])
-acx_javac_works=no
+AC_CACHE_CHECK([whether Java compiler works], [r_cv_javac_works],
+[r_cv_javac_works=no
 if test -n "${JAVAC}"; then
   rm -f A.java A.class
   echo "public class A { }" > A.java
   if "${JAVAC}" A.java 2>&AS_MESSAGE_LOG_FD; then
     if test -e A.class; then
-      acx_javac_works=yes
+      r_cv_javac_works=yes
     fi
   fi
   rm -rf A.java A.class
-fi
-if test "${acx_javac_works}" = yes; then
-  AC_MSG_RESULT([yes])
-else
-  JAVAC=
-  AC_MSG_RESULT([no])
-fi
+fi])
 
 ## this is where our test-class lives (in tools directory)
 getsp_cp=${ac_aux_dir}
 
-AC_MSG_CHECKING([whether Java interpreter works])
-acx_java_works=no
+AC_CACHE_CHECK([whether Java interpreter works], [r_cv_java_works],
+[r_cv_java_works=no
 if test -n "${JAVA}" ; then
   R_RUN_JAVA(acx_jc_result,[-classpath ${getsp_cp} getsp -test])
   if test "${acx_jc_result}" = "Test1234OK"; then
-    acx_java_works=yes
+    r_cv_java_works=yes
   fi
   acx_jc_result=
-fi
+fi])
 
-if test ${acx_java_works} = yes; then
-  AC_MSG_RESULT([yes])
-
-  AC_MSG_CHECKING([for Java environment])
-
-  ## find JAVA_HOME from Java itself unless specified
-  if test -z "${JAVA_HOME}" ; then
-    R_RUN_JAVA(JAVA_HOME,[-classpath ${getsp_cp} getsp java.home])
-  fi
-
-  ## the availability of JAVA_HOME will tell us whether it's supported
-  if test -z "${JAVA_HOME}" ; then
-    if test x$acx_java_env_msg != xyes; then
-      AC_MSG_RESULT([not found])
+if test ${r_cv_java_works} = yes; then
+  AC_CACHE_CHECK([Java environment], [r_cv_java_home], [
+    ## find JAVA_HOME from Java itself unless specified
+    if test -z "${JAVA_HOME}" ; then
+      R_RUN_JAVA(JAVA_HOME,[-classpath ${getsp_cp} getsp java.home])
     fi
-  else
-    AC_MSG_RESULT([in ${JAVA_HOME}])
+    r_cv_java_home="${JAVA_HOME}"
+  ])
+  JAVA_HOME="${r_cv_java_home}"
+
+  # we have Java support, detect flags
+  if test -n "${JAVA_HOME}"; then
+    # find out whether all settings are already cached
+    r_java_settings_cached=yes
+    AC_MSG_CHECKING([for cached Java settings])
+    AC_CACHE_VAL([r_cv_cache_java_flags], [
+      r_cv_cache_java_flags=yes
+      r_java_settings_cached=no])
+    AC_MSG_RESULT([${r_java_settings_cached}])
+    # if so, fetch them from the cache
+    if test "${r_java_settings_cached}" = yes; then
+      AC_CACHE_CHECK([JAVA_LIBS], [r_cv_JAVA_LIBS])
+      JAVA_LIBS0="${r_cv_JAVA_LIBS}"
+      AC_CACHE_CHECK([JAVA_CPPFLAGS],[r_cv_JAVA_CPPFLAGS])
+      JAVA_CPPFLAGS0="${r_cv_JAVA_CPPFLAGS}"
+      AC_CACHE_CHECK([JAVA_LD_LIBRARY_PATH],[r_cv_JAVA_LD_LIBRARY_PATH])
+      JAVA_LD_LIBRARY_PATH="${r_cv_JAVA_LD_LIBRARY_PATH}"
+    else
+    # otherwise detect all Java-relevant flags
 
     : ${JAVA_LIBS=~autodetect~}
     : ${JAVA_CPPFLAGS=~autodetect~}
@@ -207,7 +211,8 @@ if test ${acx_java_works} = yes; then
     fi
 
     ## try to link a simple JNI program
-    AC_MSG_CHECKING([whether JNI programs can be compiled])
+    AC_CACHE_CHECK([whether JNI programs can be compiled], [r_cv_jni],
+    [r_cv_jni=
     j_save_LIBS="${LIBS}"
     j_save_CPPF="${CPPFLAGS}"
     LIBS="${JAVA_LIBS}"
@@ -218,12 +223,9 @@ int main(void) {
     JNI_CreateJavaVM(0, 0, 0);
     return 0;
 }
-],[AC_MSG_RESULT(yes)
-    LIBS="${j_save_LIBS}"
-    CPPFLAGS="${j_save_CPPF}"
-],[
+],[r_cv_jni="yes"],[
     if test "${acx_java_uses_custom_flags}" = yes; then
-      AC_MSG_RESULT(no)
+      r_cv_jni=no
       AC_MSG_ERROR([Failed to compile a JNI program with custom JAVA_LIBS/JAVA_CPPFLAGS.
 See config.log for details.
 Do NOT set JAVA_LIBS/JAVA_CPPFLAGS unless you are sure they are correct!
@@ -237,22 +239,29 @@ int main(void) {
     JNI_CreateJavaVM(0, 0, 0);
     return 0;
 }
-],[AC_MSG_RESULT([yes (with pthreads)])
-    JAVA_LIBS0="${JAVA_LIBS0} -lpthread"
-],[AC_MSG_RESULT(no)])
+],[r_cv_jni="yes (with pthreads)"],[r_cv_jni="no"])])
     LIBS="${j_save_LIBS}"
     CPPFLAGS="${j_save_CPPF}"
 ])
+    ##AC_MSG_RESULT([$r_cv_jni])
+    if test "${r_cv_jni}" = "yes (with pthreads)"; then
+      JAVA_LIBS0="${JAVA_LIBS0} -lpthread"
+    fi
+
+    # cache all detected flags
+      AC_CACHE_VAL([r_cv_JAVA_LIBS],[r_cv_JAVA_LIBS="${JAVA_LIBS0}"])
+      AC_CACHE_VAL([r_cv_JAVA_CPPFLAGS],[r_cv_JAVA_CPPFLAGS="${JAVA_CPPFLAGS0}"])      
+      AC_CACHE_VAL([r_cv_JAVA_LD_LIBRARY_PATH],[r_cv_JAVA_LD_LIBRARY_PATH="${JAVA_LD_LIBRARY_PATH}"])
+    fi # cached flags
 
     have_java=yes
   fi
-else
-  AC_MSG_RESULT([no])
+else  ## not r_cv_java_works
   JAVA=
   JAVA_HOME=
 fi
 
-AC_SUBST(JAVA_HOME)
+## AC_SUBST(JAVA_HOME) # not needed? is precious now
 AC_SUBST(JAVA)
 AC_SUBST(JAVAC)
 AC_SUBST(JAVAH)

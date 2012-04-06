@@ -1,3 +1,8 @@
+% File src/library/base/man/Constants.Rd
+% Part of the R package, http://www.R-project.org
+% Copyright 1995-2007 R Core Development Team
+% Distributed under GPL 2 or later
+
 \name{Constants}
 \alias{LETTERS}
 \alias{letters}
@@ -16,7 +21,7 @@ month.name
 pi
 }
 \details{
-  \R has a limited number of built-in constants (there is also a rather
+  \R has a small number of built-in constants (there is also a rather
   larger library of data sets which can be loaded with the function
   \code{\link{data}}).
 
@@ -33,6 +38,9 @@ pi
     \item \code{pi}: the ratio of the circumference of a circle to its
     diameter.
   }
+
+  These are implemented as variables in the base name space taking
+  appropriate values. 
 }
 \references{
   Becker, R. A., Chambers, J. M. and Wilks, A. R. (1988)
@@ -45,8 +53,9 @@ pi
   \code{\link{Quotes}} for the parsing of character constants,
   \code{\link{NumericConstants}} for numeric constants.
 }
-\examples{
-# John Machin (1705) computed 100 decimals of pi :
+\examples{% earlier R versions said 1705, but most refs say 1706.
+## John Machin (ca 1706) computed pi to over 100 decimal places
+## using the Taylor series expansion of the second term of
 pi - 4*(4*atan(1/5) - atan(1/239))
 
 ## months in English

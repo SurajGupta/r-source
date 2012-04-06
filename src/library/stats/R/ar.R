@@ -1,3 +1,19 @@
+#  File src/library/stats/R/ar.R
+#  Part of the R package, http://www.R-project.org
+#
+#  This program is free software; you can redistribute it and/or modify
+#  it under the terms of the GNU General Public License as published by
+#  the Free Software Foundation; either version 2 of the License, or
+#  (at your option) any later version.
+#
+#  This program is distributed in the hope that it will be useful,
+#  but WITHOUT ANY WARRANTY; without even the implied warranty of
+#  MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
+#  GNU General Public License for more details.
+#
+#  A copy of the GNU General Public License is available at
+#  http://www.r-project.org/Licenses/
+
 ## based on, especially multivariate case, code by Martyn Plummer
 ar <-
     function (x, aic = TRUE, order.max = NULL,
@@ -38,7 +54,7 @@ ar.yw.default <-
     nser <- ncol(x)
     if (demean) {
         xm <- colMeans(x)
-        x <- sweep(x, 2, xm)
+        x <- sweep(x, 2, xm, check.margin=FALSE)
     } else xm <- rep(0, nser)
     n.used <- nrow(x)
     order.max <- if (is.null(order.max)) floor(10 * log10(n.used))
@@ -197,7 +213,7 @@ predict.ar <- function(object, newdata, n.ahead = 1, se.fit=TRUE, ...)
     if(nser > 1) {
         if(is.null(object$x.intercept)) xint <- rep(0, nser)
         else xint <- object$x.intercept
-        x <- rbind(sweep(newdata, 2, object$x.mean),
+        x <- rbind(sweep(newdata, 2, object$x.mean, check.margin=FALSE),
                    matrix(rep(0, nser), n.ahead, nser, byrow=TRUE))
         if(p > 0) {
             for(i in 1:n.ahead) {

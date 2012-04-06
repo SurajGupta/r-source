@@ -1,3 +1,8 @@
+% File src/library/datasets/man/Theoph.Rd
+% Part of the R package, http://www.R-project.org
+% Copyright 1995-2007 R Core Development Team
+% Distributed under GPL 2 or later
+
 \name{Theoph}
 \docType{data}
 \alias{Theoph}
@@ -55,8 +60,8 @@
 }
 \seealso{\code{\link{SSfol}}}
 \examples{
-require(stats)
-coplot(conc ~ Time | Subject, data = Theoph, show = FALSE)
+require(stats); require(graphics)
+coplot(conc ~ Time | Subject, data = Theoph, show.given = FALSE)
 Theoph.4 <- subset(Theoph, Subject == 4)
 fm1 <- nls(conc ~ SSfol(Dose, Time, lKe, lKa, lCl),
            data = Theoph.4)
