@@ -18,7 +18,6 @@
 # writing to the Free Software Foundation, Inc., 59 Temple Place,
 # Suite 330, Boston, MA  02111-1307  USA.
 
-
 use File::Basename;
 use Cwd;
 use Getopt::Long;
@@ -61,8 +60,6 @@ if($opt_htmllists){
     %anindex = read_anindex("$R_HOME/library");
     %htmlindex = read_htmlindex("$R_HOME/library");
 
-    build_htmlfctlist("$R_HOME/library");
-
     exit 0;
 }
 
@@ -81,7 +78,7 @@ print STDERR "Destination `dest'= `$dest'\n" if $opt_debug;
 
 if($opt_chm) {
     $chmdir = "../chm";
-    mkdir($chmdir, 755);
+    mkdir $chmdir, $dir_mod;
     open_hhp($pkg);
 }
 build_index($lib, $dest, $chmdir);
@@ -115,7 +112,6 @@ print "\n";
 %anindex = read_anindex($lib);
 if($opt_html){
     %htmlindex = read_htmlindex($lib);
-    build_htmlfctlist($lib);
 } elsif ($opt_chm) {
     %htmlindex = read_htmlindex($lib);
 }
@@ -197,7 +193,7 @@ if($opt_txt){
     closedir dest;
     foreach $destfile (@destdir) {
 	if($destfile eq "." || $destfile eq ".." ||
-	   $destfile eq "AnIndex" || $destfile eq "00Titles") { next; }
+	   $destfile eq "AnIndex") { next; }
 #	print "$dest/help/$destfile\n" unless defined $manfiles{$destfile};
 	unlink "$dest/help/$destfile" unless defined $manfiles{$destfile};
     }

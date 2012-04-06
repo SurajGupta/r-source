@@ -1,11 +1,16 @@
-svd <- function(x, nu=min(n,p), nv=min(n,p)) {
-    if(!is.numeric(x))
-	stop("argument to svd must be numeric")
+svd <- function(x, nu=min(n,p), nv=min(n,p))
+{
     x <- as.matrix(x)
     dx <- dim(x)
     n <- dx[1]
     p <- dx[2]
     if(!n || !p) stop("0 extent dimensions")
+    if (is.complex(x)) {
+        res <- La.svd(x, nu, nv)
+        return(list(d = res$d, u = if(nu) res$u, v = if(nv) Conj(t(res$vt))))
+    }
+    if(!is.numeric(x))
+	stop("argument to svd must be numeric")
 
     if(nu == 0) {
 	job <- 0
@@ -48,6 +53,6 @@ svd <- function(x, nu=min(n,p), nv=min(n,p)) {
     if(z$info)
 	stop(paste("error ",z$info," in dsvdc"))
     z$d <- z$d[1:mn]
-    if(nv && nv < p) z$v <- z$v[, 1:nv]
+    if(nv && nv < p) z$v <- z$v[, 1:nv, drop = FALSE]
     z[c("d", if(nu) "u", if(nv) "v")]
 }

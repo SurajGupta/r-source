@@ -11,7 +11,7 @@ top_builddir = ../../../..
 subdir = src/library/$(pkg)/src
 R_HOME = $(top_builddir)
 
-OBJS = dblcen.o hclust.o hclust-utils.o kmns.o
+OBJS = dblcen.o distance.o hclust.o hclust-utils.o init.o kmns.o
 SHLIB = $(pkg).@SHLIB_EXT@
 
 ## FIXME:
@@ -32,7 +32,7 @@ Makefile: $(srcdir)/Makefile.in $(top_builddir)/config.status
 	  CONFIG_FILES=$(subdir)/$@ CONFIG_HEADERS= \
 	  $(SHELL) ./config.status
 
-include $(top_builddir)/etc/Makeconf
+include $(top_builddir)/share/make/shlib.mk
 
 mostlyclean: clean
 clean:

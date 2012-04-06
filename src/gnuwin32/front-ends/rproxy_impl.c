@@ -21,7 +21,7 @@
  *  Software Foundation, Inc., 59 Temple Place - Suite 330, Boston,
  *  MA 02111-1307, USA
  *
- *  $Id: rproxy_impl.c,v 1.11.4.2 2001/04/05 09:32:52 ripley Exp $
+ *  $Id: rproxy_impl.c,v 1.12 2001/04/05 09:42:35 ripley Exp $
  */
 
 #define NONAMELESSUNION

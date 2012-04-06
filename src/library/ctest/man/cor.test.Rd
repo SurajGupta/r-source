@@ -1,5 +1,6 @@
 \name{cor.test}
 \alias{cor.test}
+\alias{cor.test.default}
 \title{Test for Zero Correlation}
 \description{
   Tests whether two samples come from uncorrelated (independent)
@@ -7,7 +8,7 @@
   Kendall's tau, or Spearman's rho.
 }
 \usage{
-cor.test(x, y,
+\method{cor.test}{default}(x, y,
          alternative = c("two.sided", "less", "greater"),
          method = c("pearson", "kendall", "spearman"), exact = NULL)
 }

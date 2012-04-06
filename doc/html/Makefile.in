@@ -11,22 +11,24 @@ subdir = doc/html
 include $(top_builddir)/Makeconf
 
 distdir = $(top_builddir)/$(PACKAGE)-$(VERSION)/$(subdir)
+## <FIXME>
+## Remove function.html eventually ...
 INSTFILES = \
 	R.css \
 	left.jpg logo.jpg logosm.jpg right.jpg up.jpg \
 	about.html \
 	faq.html \
+	function.html \
 	packages-head.html \
 	resources.html \
 	template.html \
 	thanks.html
-## FIXME:
-## Remove resources.html when releasing 1.3.0
-## build-help really should not create function.html and package.html
-## in *this* directory.
-CLEANFILES = $(INSTFILES) function.html packages.html resource.html
 ## </FIXME>
-DISTFILES = Makefile.in $(INSTFILES) index-default.html
+## FIXME:
+## build-help really should not create package.html in *this* directory.
+CLEANFILES = packages.html packages-foot.html
+## </FIXME>
+DISTFILES = Makefile.in $(INSTFILES) index-default.html R-admin.html
 SUBDIRS = search
 
 OBJECTS = index.html
@@ -39,7 +41,7 @@ Makefile: $(srcdir)/Makefile.in $(top_builddir)/config.status
 	  $(SHELL) ./config.status
 
 R: Makefile $(OBJECTS)
-	@if [ "$(srcdir)" != "." ]; then \
+	@if test "$(BUILDDIR_IS_SRCDIR)" = no ; then \
 	  $(MAKE) rhome=$(top_builddir) install-sources; \
 	fi
 	@for d in $(SUBDIRS); do \
@@ -68,13 +70,12 @@ install-sources:
 	  $(INSTALL_DATA) $(srcdir)/$${f} $(rhome)/$(subdir); \
 	done
 install-strip: install
-
 uninstall:
 	@echo "uninstalling $(subdir) ..."
 	@for d in $(SUBDIRS); do \
 	  (cd $${d} && $(MAKE) $@); \
 	done
-	@for f in $(CLEANFILES) $(OBJECTS); do \
+	@for f in $(CLEANFILES) $(INSTFILES) $(OBJECTS); do \
 	  rm -f $(rhome)/$(subdir)/$${f}; \
 	done
 	@rmdir $(rhome)/$(subdir) 2>/dev/null \
@@ -85,10 +86,10 @@ clean:
 	@for d in $(SUBDIRS); do \
 	  (cd $${d} && $(MAKE) $@); \
 	done
-	@if [ "$(srcdir)" != "." ]; then \
-	  rm -f $(CLEANFILES); \
+	@if test "$(BUILDDIR_IS_SRCDIR)" = no ; then \
+	  rm -f $(INSTFILES); \
 	fi
-	@rm -f $(OBJECTS)
+	@rm -f $(CLEANFILES) $(OBJECTS)
 distclean: clean
 	@for d in $(SUBDIRS); do \
 	  (cd $${d} && $(MAKE) $@); \

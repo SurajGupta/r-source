@@ -11,7 +11,8 @@ subdir = doc/manual
 include $(top_builddir)/Makeconf
 
 distdir = $(top_builddir)/$(PACKAGE)-$(VERSION)/$(subdir)
-SOURCES_TEXI = R-FAQ.texi R-data.texi R-exts.texi R-intro.texi R-lang.texi
+SOURCES_TEXI = R-FAQ.texi R-admin.texi R-data.texi R-exts.texi \
+  R-intro.texi R-lang.texi
 DISTFILES = \
 	README \
 	Makefile.in Makefile.win \
@@ -19,8 +20,6 @@ DISTFILES = \
 	$(SOURCES_TEXI) \
 	resources.texi \
 	R-exts.R R-exts.c R-intro.R \
-	Rd.sty hyperref.cfg \
-	omsaer.fd omsaett.fd omscmtt.fd \
 	refman.top refman.bot
 SUBDIRS = images
 
@@ -50,17 +49,14 @@ texiincludes = version.texi $(srcdir)/R-defs.texi
 .SUFFIXES:
 .SUFFIXES: .dvi .html .info .texi .pdf
 
-all: Makefile R docs @MAINTAINER_MODE_TRUE@ maintainer-build
+all: Makefile R docs
 
 Makefile: $(srcdir)/Makefile.in $(top_builddir)/config.status
 	@cd $(top_builddir) && \
 	  CONFIG_FILES=$(subdir)/$@ CONFIG_HEADERS= \
 	  $(SHELL) ./config.status
 
-R: Makefile
-	@if [ "$(srcdir)" != "." ]; then \
-	  $(MAKE) rhome=$(top_builddir) install-tex; \
-	fi
+R: Makefile @MAINTAINER_MODE_TRUE@ maintainer-build
 
 docs: html
 
@@ -86,7 +82,7 @@ docs: html
 	TEXINPUTS="$(srcdir):$$TEXINPUTS" $(TEXI2PDF) $<
 
 dvi: refman.dvi $(OBJECTS_DVI)
-refman.dvi: version.tex $(srcdir)/Rd.sty stamp-refman-dvi
+refman.dvi: version.tex $(top_srcdir)/share/texmf/Rd.sty stamp-refman-dvi
 	@if test "$(LATEX)" = false; then \
 	  echo "ERROR: \`latex' needed but missing on your system."; \
 	  exit 1; \
@@ -100,10 +96,10 @@ refman.dvi: version.tex $(srcdir)/Rd.sty stamp-refman-dvi
 	  cat $(srcdir)/refman.top; \
 	  for p in $(R_PKGS); do echo "\\input{$${p}-pkg.tex}"; done; \
 	  cat $(srcdir)/refman.bot) > refman.tex
-	@TEXINPUTS="$(srcdir):$$TEXINPUTS" \
+	@TEXINPUTS="$(top_srcdir)/share/texmf:$$TEXINPUTS" \
 	  $(LATEX) '\nonstopmode\input{refman.tex}'
 	@-$(MAKEINDEX) refman
-	@TEXINPUTS="$(srcdir):$$TEXINPUTS" \
+	@TEXINPUTS="$(top_srcdir)/share/texmf:$$TEXINPUTS" \
 	  $(LATEX) '\nonstopmode\input{refman.tex}'
 	@touch stamp-refman-dvi
 version.tex: Makefile $(top_srcdir)/date-stamp $(top_srcdir)/VERSION
@@ -113,7 +109,7 @@ version.tex: Makefile $(top_srcdir)/date-stamp $(top_srcdir)/VERSION
 	  echo "$${v}") > $@
 stamp-refman-dvi: $(pkgsrcs)
 	@touch $@
-$(pkgsrcs): FORCE $(top_builddir)/bin/build-help
+$(pkgsrcs): FORCE $(top_srcdir)/share/perl/build-help.pl
 	@(pkg=`basename $@ -pkg.tex`; \
 	if $(PERL) $(top_srcdir)/tools/Rdnewer.pl \
 	    "$(top_srcdir)/src/library/$${pkg}" "$@"; then \
@@ -123,11 +119,9 @@ $(pkgsrcs): FORCE $(top_builddir)/bin/build-help
 	  $(PERL) $(top_srcdir)/tools/pkg2tex.pl $${pkg}; \
 	fi)
 FORCE:
-$(top_builddir)/bin/build-help: $(top_srcdir)/src/scripts/build-help.in
-	@echo "creating $@"
-	@(cd $(top_builddir)/src/scripts; $(MAKE))
 
 $(OBJECTS_DVI): $(srcdir)/texinfo.tex
+R-admin.dvi: $(texiincludes)
 R-data.dvi: $(texiincludes)
 R-exts.dvi: $(texiincludes)
 version.texi: Makefile $(top_srcdir)/VERSION $(top_srcdir)/date-stamp
@@ -137,7 +131,7 @@ version.texi: Makefile $(top_srcdir)/VERSION $(top_srcdir)/date-stamp
 	  echo "@set VERSION $${v}" > $@)
 R-intro.dvi: stamp-images-eps $(texiincludes)
 stamp-images-eps:
-	@if [ "$(srcdir)" != "." ]; then \
+	@if test "$(BUILDDIR_IS_SRCDIR)" = no ; then \
 	  $(MAKE) rhome=$(top_builddir) install-images-eps; \
 	fi
 	@touch $@
@@ -146,19 +140,21 @@ R-lang.dvi: $(texiincludes)
 html: $(OBJECTS_HTML)
 	@(cd ../html; $(MAKE) index.html)
 
+R-admin.html: $(texiincludes)
 R-data.html: $(texiincludes)
 R-exts.html: $(texiincludes)
 R-intro.html: $(texiincludes)
 R-lang.html: $(texiincludes)
 
 info: $(OBJECTS_INFO)
+R-admin.info: $(texiincludes)
 R-data.info: $(texiincludes)
 R-exts.info: $(texiincludes)
 R-intro.info: $(texiincludes)
 R-lang.info: $(texiincludes)
 
 pdf: refman.pdf $(OBJECTS_PDF)
-refman.pdf: version.tex $(srcdir)/Rd.sty stamp-refman-pdf
+refman.pdf: version.tex $(top_srcdir)/share/texmf/Rd.sty stamp-refman-pdf
 	@if test "$(PDFLATEX)" = false; then \
 	  echo "ERROR: \`pdflatex' needed but missing on your system."; \
 	  exit 1; \
@@ -172,14 +168,14 @@ refman.pdf: version.tex $(srcdir)/Rd.sty stamp-refman-pdf
 	  cat $(srcdir)/refman.top; \
 	  for p in $(R_PKGS); do echo "\\input{$${p}-pkg.tex}"; done; \
 	  cat $(srcdir)/refman.bot) > refman.tex
-	@TEXINPUTS="$(srcdir):$(srcdir):$$TEXINPUTS" \
+	@TEXINPUTS="$(top_srcdir)/share/texmf:$$TEXINPUTS" \
 	  pool_size=500000 max_strings=50000 \
 	  $(PDFLATEX) '\nonstopmode\input{refman.tex}'
 	@-$(MAKEINDEX) refman
-	@TEXINPUTS="$(srcdir):$(srcdir):$$TEXINPUTS" \
+	@TEXINPUTS="$(top_srcdir)/share/texmf:$$TEXINPUTS" \
 	  pool_size=500000 max_strings=50000 \
 	  $(PDFLATEX) '\nonstopmode\input{refman.tex}'
-	@TEXINPUTS="$(srcdir):$(srcdir):$$TEXINPUTS" \
+	@TEXINPUTS="$(top_srcdir)/share/texmf:$$TEXINPUTS" \
 	  pool_size=500000 max_strings=50000 \
 	  $(PDFLATEX) '\nonstopmode\input{refman.tex}'
 	@touch stamp-refman-pdf
@@ -187,17 +183,18 @@ stamp-refman-pdf: $(pkgsrcs)
 	@touch $@
 
 $(OBJECTS_PDF): $(srcdir)/texinfo.tex
+R-admin.pdf: $(texiincludes)
 R-data.pdf: $(texiincludes)
 R-exts.pdf: $(texiincludes)
 R-intro.pdf: stamp-images-pdf $(texiincludes)
 stamp-images-pdf:
-	@if [ "$(srcdir)" != "." ]; then \
+	@if test "$(BUILDDIR_IS_SRCDIR)" = no ; then \
 	  $(MAKE) rhome=$(top_builddir) install-images-pdf; \
 	fi
 	@touch $@
 R-lang.pdf: $(texiincludes)
 
-install: install-message installdirs install-html install-tex
+install: install-message installdirs install-html
 install-message:
 	@echo "installing $(subdir) ..."
 installdirs:
@@ -237,13 +234,9 @@ install-pdf: pdf installdirs
 	@for f in *.pdf; do \
 	  $(INSTALL_DATA) $${f} $(rhome)/$(subdir); \
 	done
-install-tex:
-	@for f in $(srcdir)/Rd.sty; do \
-	  $(INSTALL_DATA) $${f} $(rhome)/$(subdir) ; \
-	done
 
 $(infodir)/dir:
-	@$(MKINSTALLDIRS) -p $(infodir)
+	@$(MKINSTALLDIRS) $(infodir)
 	$(INSTALL_DATA) $(srcdir)/dir $(infodir)
 
 uninstall:
@@ -272,8 +265,8 @@ uninstall-pdf:
 
 mostlyclean: clean
 clean:
-	@if [ "$(srcdir)" != "." ]; then \
-	  rm -rf Rd.sty images; \
+	@if test "$(BUILDDIR_IS_SRCDIR)" = no ; then \
+	  rm -rf $(INSTFILES) images; \
 	fi
 	@-rm -f *.aux *.cp *.cps *.dvi *.fn *.fns *.html *.info* \
 	  *.ky *.kys *.log *.out *.pdf *.pg *.pgs *.ps *.ps-2 *.tmp \
@@ -290,7 +283,8 @@ maintainer-build: \
   $(top_srcdir)/FAQ \
   $(top_srcdir)/RESOURCES \
   $(top_srcdir)/doc/html/faq.html \
-  $(top_srcdir)/doc/html/resources.html
+  $(top_srcdir)/doc/html/resources.html \
+  $(top_srcdir)/doc/html/R-admin.html
 $(top_srcdir)/FAQ: @MAINTAINER_MODE_TRUE@ $(srcdir)/R-FAQ.texi
 	@if test "$(MAKEINFO)" = false; then \
 	  echo "ERROR: \`makeinfo' v4 needed but missing on your system."; \
@@ -315,6 +309,12 @@ $(top_srcdir)/doc/html/resources.html: @MAINTAINER_MODE_TRUE@ $(srcdir)/resource
 	  exit 1; \
 	fi
 	$(MAKEINFO) --html --no-headers $< -o $@
+$(top_srcdir)/doc/html/R-admin.html: @MAINTAINER_MODE_TRUE@ $(srcdir)/R-admin.texi $(texiincludes)
+	@if test "$(MAKEINFO)" = false; then \
+	  echo "ERROR: \`makeinfo' v4 needed but missing on your system."; \
+	  exit 1; \
+	fi
+	$(MAKEINFO) --html --no-headers --number-sections -I$(srcdir) $< -o $@
 
 distdir: $(DISTFILES)
 	@for f in $(DISTFILES); do \

@@ -362,7 +362,7 @@ char *EncodeElement(SEXP x, int indx, int quote)
 	EncodeInteger(INTEGER(x)[indx], w);
 	break;
     case REALSXP:
-	formatReal(&REAL(x)[indx], 1, &w, &d, &e);
+	formatReal(&REAL(x)[indx], 1, &w, &d, &e, 0);
 	EncodeReal(REAL(x)[indx], w, d, e);
 	break;
     case STRSXP:
@@ -371,7 +371,7 @@ char *EncodeElement(SEXP x, int indx, int quote)
 	break;
     case CPLXSXP:
 	formatComplex(&COMPLEX(x)[indx], 1,
-		      &w, &d, &e, &wi, &di, &ei);
+		      &w, &d, &e, &wi, &di, &ei, 0);
 	EncodeComplex(COMPLEX(x)[indx],
 		      w, d, e, wi, di, ei);
 	break;
@@ -452,16 +452,29 @@ void Rvprintf(const char *format, va_list arg)
    REvprintf is part of the error handler.
    Do not change it unless you are SURE that
    your changes are compatible with the
-   error handling mechanism
+   error handling mechanism.
+
+   It is also used in R_Suicide on Unix.
 */
 
 void REvprintf(const char *format, va_list arg)
 {
+    if(R_ErrorCon != 2) {
+	Rconnection con = getConnection_no_err(R_ErrorCon);
+	if(con == NULL) {
+	    /* should never happen, but in case of corruption... */
+	    R_ErrorCon = 2;
+	} else {
+	    con->vfprintf(con, format, arg);
+	    con->fflush(con);
+	    return;
+	}
+    }
     if(R_Consolefile) {
 	vfprintf(R_Consolefile, format, arg);
-    }
-    else {
+    } else {
 	char buf[BUFSIZE]; int slen;
+
 	vsprintf(buf, format, arg);
 	slen = strlen(buf);
 	R_WriteConsole(buf, slen);

@@ -1,5 +1,5 @@
 /*
- *  $Id: nls.c,v 1.8.2.2 2001/02/21 10:59:47 ripley Exp $
+ *  $Id: nls.c,v 1.14 2001/06/08 20:48:32 duncan Exp $
  *
  *  Routines used in calculating least squares solutions in a
  *  nonlinear model in nls library for R.
@@ -71,9 +71,9 @@ nls_iter(SEXP m, SEXP control, SEXP doTraceArg) {
     doTrace = asLogical(doTraceArg);
     
     if(!isNewList(control))
-	error("control must be a list\n");
+	error("control must be a list");
     if(!isNewList(m))
-	error("m must be a list\n");
+	error("m must be a list");
     
     PROTECT(tmp = getAttrib(control, R_NamesSymbol));
     
@@ -144,8 +144,8 @@ nls_iter(SEXP m, SEXP control, SEXP doTraceArg) {
 	PROTECT(newIncr = eval(incr,R_GlobalEnv));
 	
 	while(fac >= minFac) {
-	    for(j = 0; j < nPars; j++) REAL(newPars)[j] = REAL(pars)[j] +
-					   fac * REAL(newIncr)[j];
+	    for(j = 0; j < nPars; j++) 
+		REAL(newPars)[j] = REAL(pars)[j] + fac * REAL(newIncr)[j];
 	    
 	    PROTECT(tmp = lang2(setPars, newPars));
 	    if (asLogical(eval(tmp, R_GlobalEnv))) { /* singular gradient */
@@ -169,14 +169,15 @@ nls_iter(SEXP m, SEXP control, SEXP doTraceArg) {
 	UNPROTECT(1);
 	if( fac < minFac ) {
 	    UNPROTECT(9);
-	    error("step factor reduced below minimum");
+	    error("step factor %g reduced below `minFactor' of %g", 
+		  fac, minFac);
 	}
 	if(doTrace) eval(trace,R_GlobalEnv);
     }
     
     if(!hasConverged) {
 	UNPROTECT(9);
-	error("maximum number of iterations exceeded");
+	error("number of iterations exceeded maximum of %g", maxIter);
     }
     
     UNPROTECT(9);
@@ -245,3 +246,18 @@ numeric_deriv(SEXP expr, SEXP theta, SEXP rho)
     UNPROTECT(3);
     return ans;
 }
+
+#include "R_ext/Rdynload.h"
+
+const static R_CallMethodDef R_CallDef  [] = {
+   {"numeric_deriv", (DL_FUNC)&numeric_deriv, 3},
+   {"nls_iter", (DL_FUNC)&nls_iter, 3},
+   {NULL, NULL, 0},
+};
+
+void
+R_init_nls(DllInfo *info)
+{
+    R_registerRoutines(info, NULL, R_CallDef, NULL, NULL);
+}
+

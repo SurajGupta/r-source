@@ -89,45 +89,8 @@ Family[] = {
     { NULL }
 };
 
-static char *ISOLatin1Encoding[] =
-{
-"space", "exclam", "quotedbl", "numbersign", "dollar", "percent",
-"ampersand", "quoteright", "parenleft", "parenright", "asterisk",
-"plus", "comma", "minus", "period", "slash", "zero", "one", "two",
-"three", "four", "five", "six", "seven", "eight", "nine", "colon",
-"semicolon", "less", "equal", "greater", "question", "at",
-"A", "B", "C", "D", "E", "F", "G", "H", "I", "J", "K", "L", "M", "N",
-"O", "P", "Q", "R", "S", "T", "U", "V", "W", "X", "Y", "Z",
-"bracketleft", "backslash", "bracketright", "asciicircum", "underscore",
-"quoteleft",
-"a", "b", "c", "d", "e", "f", "g", "h", "i", "j", "k", "l", "m", "n",
-"o", "p", "q", "r", "s", "t", "u", "v", "w", "x", "y", "z",
-"braceleft", "bar", "braceright", "asciitilde", ".notdef", ".notdef",
-".notdef", ".notdef", ".notdef", ".notdef", ".notdef", ".notdef",
-".notdef", ".notdef", ".notdef", ".notdef", ".notdef", ".notdef",
-".notdef", ".notdef", ".notdef", "dotlessi", "grave", "acute",
-"circumflex", "tilde", "macron", "breve", "dotaccent", "dieresis",
-".notdef", "ring", "cedilla", ".notdef", "hungarumlaut", "ogonek",
-"caron", "space", "exclamdown", "cent", "sterling", "currency",
-"yen", "brokenbar", "section", "dieresis", "copyright", "ordfeminine",
-"guillemotleft", "logicalnot", "hyphen", "registered", "macron", 
-"degree", "plusminus", "twosuperior", "threesuperior", "acute", "mu",
-"paragraph", "periodcentered", "cedilla", "onesuperior", "ordmasculine",
-"guillemotright", "onequarter", "onehalf", "threequarters", "questiondown",
-"Agrave", "Aacute", "Acircumflex", "Atilde", "Adieresis", "Aring", "AE",
-"Ccedilla", "Egrave", "Eacute", "Ecircumflex", "Edieresis", "Igrave",
-"Iacute", "Icircumflex", "Idieresis", "Eth", "Ntilde", "Ograve", "Oacute",
-"Ocircumflex", "Otilde", "Odieresis", "multiply", "Oslash", "Ugrave",
-"Uacute", "Ucircumflex", "Udieresis", "Yacute", "Thorn", "germandbls",
-"agrave", "aacute", "acircumflex", "atilde", "adieresis", "aring", "ae",
-"ccedilla", "egrave", "eacute", "ecircumflex", "edieresis", "igrave",
-"iacute", "icircumflex", "idieresis", "eth", "ntilde", "ograve", "oacute",
-"ocircumflex", "otilde", "odieresis", "divide", "oslash", "ugrave", "uacute",
-"ucircumflex", "udieresis", "yacute", "thorn", "ydieresis"
-};
 
 static char familyname[5][50];
-
 
 /* Part 1.  AFM File Parsing.  */
 
@@ -282,9 +245,10 @@ static int GetFontBBox(char *buf, FontMetricInfo *metrics)
 }
 
 static char charnames[256][25];
+static char encnames[256][25];
 
-/* If ISOLatin1 > 0, remap to ISOLatin1 encoding */
-static int GetCharInfo(char *buf, FontMetricInfo *metrics, int ISOLatin1)
+/* If reencode > 0, remap to new encoding */
+static int GetCharInfo(char *buf, FontMetricInfo *metrics, int reencode)
 {
     char *p = buf, charname[25];
     int nchar, nchar2=-1, i;
@@ -293,7 +257,7 @@ static int GetCharInfo(char *buf, FontMetricInfo *metrics, int ISOLatin1)
     if (!MatchKey(buf, "C ")) return 0;
     p = SkipToNextItem(p);
     sscanf(p, "%d", &nchar);
-    if (nchar < 0 && !ISOLatin1) return 1;
+    if (nchar < 0 && !reencode) return 1;
     p = SkipToNextKey(p);
 
     if (!MatchKey(p, "WX")) return 0;
@@ -303,15 +267,15 @@ static int GetCharInfo(char *buf, FontMetricInfo *metrics, int ISOLatin1)
 
     if (!MatchKey(p, "N ")) return 0;
     p = SkipToNextItem(p);
-    if(ISOLatin1) {
+    if(reencode) {
 	sscanf(p, "%s", charname);
 #ifdef DEBUG_PS
 	Rprintf("char name %s\n", charname);
 #endif
 	/* a few chars appear twice in ISOLatin1 */
 	nchar = nchar2 = -1;
-	for (i = 32; i < 256; i++)
-	    if(!strcmp(charname, ISOLatin1Encoding[i-32])) {
+	for (i = 0; i < 256; i++)
+	    if(!strcmp(charname, encnames[i])) {
 		strcpy(charnames[i], charname); 
 		if(nchar == -1) nchar = i; else nchar2 = i;
 	    }
@@ -381,12 +345,75 @@ static int GetKPX(char *buf, int nkp, FontMetricInfo *metrics)
     return (done==2);
 }
 
+/* Encode File Parsing.  */
+/* Statics here are OK, as all the calls are in one initialization
+   so no concurrency (until threads?) */
 
-/* Load Fontmetrics from a file: defaults to the R_HOME/afm directory */
+/* read in the next encoding item, separated by white space. */
+static int GetNextItem(FILE *fp, char *dest, int c)
+{
+    static char buf[1000], *p = NULL, *p0;
+
+    if (c < 0) p = NULL;
+    while (1) {
+	if (feof(fp)) { p = NULL; return 1; }
+	if (!p || *p == '\n' || *p == '\0') {
+	    p = fgets(buf, 1000, fp);
+	}
+	while (isspace((int)*p)) p++;
+	if (p == '\0' || *p == '%'|| *p == '\n') { p = NULL; continue; }
+	p0 = p;
+	while (!isspace((int)*p)) p++;
+	if (p != '\0') *p++ = '\0';
+	if(c == 45) strcpy(dest, "/minus"); else strcpy(dest, p0);
+	break;
+    }
+    return 0;
+}
+
+static char enccode[5000];
+
+/* Load encoding array from a file: defaults to the R_HOME/afm directory */
+static int
+LoadEncoding(char *encpath, char *encname, Rboolean isPDF)
+{
+    char buf[BUFSIZE];
+    int i;
+    FILE *fp;
+
+    if(strchr(encpath, FILESEP[0])) strcpy(buf, encpath);
+    else sprintf(buf, "%s%safm%s%s", R_Home, FILESEP, FILESEP, encpath);
+#ifdef DEBUG_PS
+    Rprintf("encoding path is %s\n", buf);
+#endif
+    if (!(fp = R_fopen(R_ExpandFileName(buf), "r"))) {
+	strcat(buf, ".enc");
+	if (!(fp = R_fopen(R_ExpandFileName(buf), "r"))) return 0;
+    }
+    if (GetNextItem(fp, buf, -1)) return 0; /* encoding name */
+    strcpy(encname, buf+1); 
+    if (!isPDF) sprintf(enccode, "/%s [\n", encname);
+    else enccode[0] = '\0';
+    if (GetNextItem(fp, buf, 0)) { fclose(fp); return 0;} /* [ */
+    for(i = 0; i < 256; i++) {
+	if (GetNextItem(fp, buf, i)) { fclose(fp); return 0; }
+	strcpy(encnames[i], buf+1);
+	strcat(enccode, " /"); strcat(enccode, encnames[i]);
+	if(i%8 == 7) strcat(enccode, "\n");
+    }
+    if (GetNextItem(fp, buf, 0)) { fclose(fp); return 0;} /* ] */
+    fclose(fp);
+    if (!isPDF) strcat(enccode,"]\n");
+    return 1;
+}
+
+
+
+/* Load font metrics from a file: defaults to the R_HOME/afm directory */
 
 static int
 PostScriptLoadFontMetrics(char *fontpath, FontMetricInfo *metrics,
-			  char *fontname, int ISOLatin1)
+			  char *fontname, int reencode)
 {
     char buf[BUFSIZE], *p;
     int mode, i = 0, j, ii, nKPX=0;
@@ -398,7 +425,7 @@ PostScriptLoadFontMetrics(char *fontpath, FontMetricInfo *metrics,
     Rprintf("afmpath is %s\n", buf);
 #endif
     
-    if (!(fp = R_fopen(buf, "r"))) return 0;
+    if (!(fp = R_fopen(R_ExpandFileName(buf), "r"))) return 0;
 
     mode = 0;
     for (ii = 0; ii < 256; ii++) {
@@ -423,7 +450,7 @@ PostScriptLoadFontMetrics(char *fontpath, FontMetricInfo *metrics,
 
 	case C:
 	    if (mode != StartFontMetrics) goto error;
-	    if (!GetCharInfo(buf, metrics, ISOLatin1)) goto error;
+	    if (!GetCharInfo(buf, metrics, reencode)) goto error;
 	    break;
 
 	case StartKernData:
@@ -544,14 +571,18 @@ PostScriptMetricInfo(int c, double *ascent, double *descent,
 
 static char *TypeFaceDef[] = { "R", "B", "I", "BI", "S" };
 
-static void PSEncodeFont(FILE *fp, int encoding)
+static void PSEncodeFont(FILE *fp, char *encname)
 {
     int i;
+
+    /* include encoding unless it is ISOLatin1Encoding, which is predefined */
+    if (strcmp(encname, "ISOLatin1Encoding")) 
+	fprintf(fp, "%% begin encoding\n%s def\n%% end encoding\n", enccode);
     for (i = 0; i < 4 ; i++) {
 	fprintf(fp, "/%s findfont\n", familyname[i]);
 	fprintf(fp, "dup length dict begin\n");
 	fprintf(fp, "  {1 index /FID ne {def} {pop pop} ifelse} forall\n");
-	if (encoding) fprintf(fp, "  /Encoding ISOLatin1Encoding def\n");
+	fprintf(fp, "  /Encoding %s def\n", encname);
 	fprintf(fp, "  currentdict\n");
 	fprintf(fp, "  end\n");
 	fprintf(fp, "/Font%d exch definefont pop\n", i + 1);
@@ -568,8 +599,9 @@ static void PSEncodeFont(FILE *fp, int encoding)
 /* of the (unrotated) printer page in points whereas the graphics */
 /* region box is for the rotated page. */
 
-static void PSFileHeader(FILE *fp, int encoding, char *papername,
-			 double paperwidth, double paperheight, Rboolean landscape,
+static void PSFileHeader(FILE *fp, char* encname, 
+			 char *papername, double paperwidth, 
+			 double paperheight, Rboolean landscape,
 			 int EPSFheader,
 			 double left, double bottom, double right, double top)
 {
@@ -610,7 +642,7 @@ static void PSFileHeader(FILE *fp, int encoding, char *papername,
     for (i = 0; i < length(prolog); i++)
 	fprintf(fp, "%s\n", CHAR(STRING_ELT(prolog, i)));
     fprintf(fp, "%% end   .ps.prolog\n");
-    PSEncodeFont(fp, encoding);
+    PSEncodeFont(fp, encname);
     fprintf(fp, "%%%%EndProlog\n");
 }
 
@@ -746,7 +778,8 @@ typedef struct {
     int pageno;		/* page number */
 			
     int fontfamily;	/* font family */
-    int encoding;	/* font encoding */
+    char encpath[PATH_MAX]; /* font encoding file */
+    char encname[100]; /* font encoding */
     char **afmpaths;	/* for user-specified family */
     int maxpointsize;
 
@@ -828,7 +861,7 @@ static int  MatchFamily(char *name);
 
 Rboolean
 PSDeviceDriver(DevDesc *dd, char *file, char *paper, char *family,
-	       char **afmpaths,
+	       char **afmpaths, char *encoding,
 	       char *bg, char *fg,
 	       double width, double height,
 	       Rboolean horizontal, double ps,
@@ -861,7 +894,7 @@ PSDeviceDriver(DevDesc *dd, char *file, char *paper, char *family,
     strcpy(pd->filename, file);
     strcpy(pd->papername, paper);
     pd->fontfamily = strcmp(family, "User") ? MatchFamily(family) : USERAFM;
-    pd->encoding = 1;
+    strcpy(pd->encpath, encoding);
     pd->afmpaths = afmpaths;
 
     setbg = str2col(bg);
@@ -1105,16 +1138,20 @@ static Rboolean PS_Open(DevDesc *dd, PostScriptDesc *pd)
     char buf[512], *p;
     int i;
 
+    if (!LoadEncoding(pd->encpath, pd->encname, FALSE)) {
+	warning("problem loading encoding file");
+	return FALSE;
+    }
     for(i = 0; i < 4 ; i++) {
 	if(pd->fontfamily == USERAFM) p = pd->afmpaths[i];
 	else p = Family[pd->fontfamily].afmfile[i];
-	if(!PostScriptLoadFontMetrics(p, &(pd->metrics[i]), 
+	if(!PostScriptLoadFontMetrics(p, &(pd->metrics[i]),
 				      familyname[i], 1)) {
 	    warning("cannot read afm file %s", buf);
 	    return FALSE;
 	}
     }
-    if(!PostScriptLoadFontMetrics("sy______.afm", &(pd->metrics[4]), 
+    if(!PostScriptLoadFontMetrics("sy______.afm", &(pd->metrics[4]),
 				  familyname[4], 0)) {
 	warning("cannot read afm file %s", buf);
 	return FALSE;
@@ -1122,7 +1159,7 @@ static Rboolean PS_Open(DevDesc *dd, PostScriptDesc *pd)
 
     if (strlen(pd->filename) == 0) {
 #ifndef HAVE_POPEN
-	error("printing via file = \"\" is not implemented in this version");
+	warning("printing via file = \"\" is not implemented in this version");
 	return FALSE;
 #else
 	if(strlen(pd->command) == 0) return FALSE;
@@ -1131,7 +1168,7 @@ static Rboolean PS_Open(DevDesc *dd, PostScriptDesc *pd)
 #endif
     } else if (pd->filename[0] == '|') {
 #ifndef HAVE_POPEN
-	error("file = \"|cmd\" is not implemented in this version");
+	warning("file = \"|cmd\" is not implemented in this version");
 	return FALSE;
 #else
 	pd->psfp = popen(pd->filename + 1, "w");
@@ -1153,7 +1190,7 @@ static Rboolean PS_Open(DevDesc *dd, PostScriptDesc *pd)
 
     if(pd->landscape)
 	PSFileHeader(pd->psfp,
-		     pd->encoding,
+		     pd->encname,
 		     pd->papername,
 		     pd->paperwidth,
 		     pd->paperheight,
@@ -1165,7 +1202,7 @@ static Rboolean PS_Open(DevDesc *dd, PostScriptDesc *pd)
 		     dd->dp.right);
     else
 	PSFileHeader(pd->psfp,
-		     pd->encoding,
+		     pd->encname,
 		     pd->papername,
 		     pd->paperwidth,
 		     pd->paperheight,
@@ -1408,7 +1445,7 @@ static void PS_Polygon(int n, double *x, double *y, int coords,
     /* code == 0, nothing to draw */
     /* code == 1, outline only */
     /* code == 2, fill only */
-    /* code == 3, outine and fill */
+    /* code == 3, outline and fill */
 
     code = 2 * (bg != NA_INTEGER) + (fg != NA_INTEGER);
 
@@ -1503,7 +1540,6 @@ typedef struct {
 
     int fontfamily;	 /* font family */
     int fontnum;	 /* font number in XFig */
-    int encoding;	 /* font encoding */
     int fontstyle;	 /* font style, R, B, I, BI, S */
     int fontsize;	 /* font size in points */
     int maxpointsize;
@@ -1682,7 +1718,6 @@ XFigDeviceDriver(DevDesc *dd, char *file, char *paper, char *family,
     strcpy(pd->papername, paper);
     pd->fontfamily = MatchFamily(family);
     pd->fontnum = XFig_basenums[pd->fontfamily];
-    pd->encoding = 1;
     pd->bg = str2col(bg);
     pd->col = str2col(fg);
     pd->fill = NA_INTEGER;
@@ -1854,8 +1889,10 @@ static Rboolean XFig_Open(DevDesc *dd, XFigDesc *pd)
     char buf[512], name[50];
     int i;
 
+    if (!LoadEncoding("ISOLatin1.enc", buf, FALSE))
+	error("problem loading encoding file");
     for(i = 0; i < 4 ; i++) {
-	if(!PostScriptLoadFontMetrics(Family[pd->fontfamily].afmfile[i], 
+	if(!PostScriptLoadFontMetrics(Family[pd->fontfamily].afmfile[i],
 				      &(pd->metrics[i]), name, 1)) {
 	    warning("cannot read afm file %s", buf);
 	    return FALSE;
@@ -2161,6 +2198,719 @@ static void XFig_MetricInfo(int c, double *ascent, double *descent,
 			  double *width, DevDesc *dd)
 {
     XFigDesc *pd = (XFigDesc *) dd->deviceSpecific;
+
+    PostScriptMetricInfo(c, ascent, descent, width,
+			 &(pd->metrics[dd->gp.font-1]));
+    *ascent = floor(dd->gp.cex * dd->gp.ps + 0.5) * *ascent;
+    *descent = floor(dd->gp.cex * dd->gp.ps + 0.5) * *descent;
+    *width = floor(dd->gp.cex * dd->gp.ps + 0.5) * *width;
+}
+
+
+/***********************************************************************
+
+                 PDF driver also shares font handling
+
+************************************************************************/
+
+/* TODO
+   Flate encoding?
+   clipping?
+*/
+
+
+typedef struct {
+    char filename[PATH_MAX];
+
+    int pageno;		/* page number */
+			
+    int fontfamily;	/* font family */
+    char encpath[PATH_MAX]; /* font encoding */
+    char encname[100]; 
+    char **afmpaths;	/* for user-specified family */
+    int maxpointsize;
+
+    double width;	/* plot width in inches */
+    double height;	/* plot height in inches */
+    Rboolean onefile;	/* one file or one file per page? */
+
+    FILE *pdffp;		/* output file */
+
+    FontMetricInfo metrics[5];	/* font metrics */
+
+    /* This group of variables track the current device status.
+     * They should only be set by routines that emit PDF. */
+    struct {
+	double lwd;		 /* line width */
+	int lty;		 /* line type */
+	int fontstyle;	         /* font style, R, B, I, BI, S */
+	int fontsize;	         /* font size in points */
+	rcolor col;		 /* color */
+	rcolor fill;	         /* fill color */
+	rcolor bg;		 /* color */
+    } current;
+
+    int nobjs;  /* number of objects */
+    int pos[1100]; /* object positions */
+    int pageobj[500]; /* page object numbers */
+    int startstream; /* position of start of current stream */
+    Rboolean inText;
+}
+PDFDesc;
+
+/* Device Driver Actions */
+
+static void   PDF_Activate(DevDesc*);
+static void   PDF_Circle(double, double, int, double, int, int, DevDesc*);
+static void   PDF_Clip(double, double, double, double, DevDesc*);
+static void   PDF_Close(DevDesc*);
+static void   PDF_Deactivate(DevDesc*);
+static void   PDF_Hold(DevDesc*);
+static void   PDF_Line(double, double, double, double, int, DevDesc*);
+static Rboolean PDF_Locator(double*, double*, DevDesc*);
+static void   PDF_Mode(int, DevDesc*);
+static void   PDF_NewPage(DevDesc*);
+static Rboolean PDF_Open(DevDesc*, PDFDesc*);
+static void   PDF_Polygon(int, double*, double*, int, int, int, DevDesc*);
+static void   PDF_Polyline(int, double*, double*, int, DevDesc*);
+static void   PDF_Rect(double, double, double, double, int, int, int, DevDesc*);
+static void   PDF_Resize(DevDesc*);
+static double PDF_StrWidth(char*, DevDesc*);
+static void   PDF_MetricInfo(int, double*, double*, double*, DevDesc*);
+static void   PDF_Text(double, double, int, char*, double, double, DevDesc*);
+
+Rboolean
+PDFDeviceDriver(DevDesc* dd, char *file, char *family, char *encoding, 
+		char *bg, char *fg, double width, double height, double ps,
+		int onefile)
+{
+    /* If we need to bail out with some sort of "error" */
+    /* then we must free(dd) */
+
+    double xoff = 0.0, yoff = 0.0, pointsize;
+    rcolor setbg, setfg;
+
+    PDFDesc *pd;
+
+    /* Check and extract the device parameters */
+
+    if(strlen(file) > PATH_MAX - 1) {
+	free(dd);
+	error("filename too long in pdf");
+    }
+
+    /* allocate new PDF device description */
+    if (!(pd = (PDFDesc *) malloc(sizeof(PDFDesc))))
+	return 0;
+
+    /* from here on, if need to bail out with "error", must also */
+    /* free(pd) */
+
+    /* initialize PDF device description */
+    strcpy(pd->filename, file);
+    pd->fontfamily = MatchFamily(family);
+    strcpy(pd->encpath, encoding);
+    setbg = str2col(bg);
+    setfg = str2col(fg);
+
+    pd->width = width;
+    pd->height = height;
+    pointsize = floor(ps);
+    if(setbg == NA_INTEGER && setfg  == NA_INTEGER) {
+	free(dd);
+	free(pd);
+	error("invalid foreground/background color (pdf)");
+    }
+
+    pd->onefile = onefile;
+    pd->maxpointsize = 72.0 * ((height > width) ? height : width);
+    pd->pageno = 0;
+    dd->dp.lty = 0;
+
+    /* Set graphics parameters that must be set by device driver. */
+    /* Page dimensions in points. */
+
+    dd->dp.bg = setbg;
+    dd->dp.fg = dd->dp.col = setfg;
+    dd->dp.left = 72 * xoff;			/* left */
+    dd->dp.right = 72 * (xoff + pd->width);	/* right */
+    dd->dp.bottom = 72 * yoff;			/* bottom */
+    dd->dp.top = 72 * (yoff + pd->height);	/* top */
+
+    /* Base Pointsize */
+    /* Nominal Character Sizes in Pixels */
+    /* Only right for 12 point font. */
+    /* Max pointsize suggested by Peter Dalgaard */
+
+    if(pointsize < 6.0) pointsize = 6.0;
+    if(pointsize > pd->maxpointsize) pointsize = pd->maxpointsize;
+    dd->dp.ps = pointsize;
+    dd->dp.cra[0] = 0.9 * pointsize;
+    dd->dp.cra[1] = 1.2 * pointsize;
+
+    /* Character Addressing Offsets */
+    /* These offsets should center a single */
+    /* plotting character over the plotting point. */
+    /* Pure guesswork and eyeballing ... */
+
+    dd->dp.xCharOffset =  0.4900;
+    dd->dp.yCharOffset =  0.3333;
+    dd->dp.yLineBias = 0.2;
+
+    /* Inches per Raster Unit */
+    /* 1200 dpi */
+    dd->dp.ipr[0] = 1.0/72.0;
+    dd->dp.ipr[1] = 1.0/72.0;
+
+    dd->dp.canResizePlot = 0;
+    dd->dp.canChangeFont = 1;
+    dd->dp.canRotateText = 1;
+    dd->dp.canResizeText = 1;
+    dd->dp.canClip = 0;
+    dd->dp.canHAdj = 0; 
+
+    /*	Start the driver */
+
+    if(!PDF_Open(dd, pd)) {
+	free(pd);
+	return 0;
+    }
+
+    dd->dp.open	      = PDF_Open;
+    dd->dp.close      = PDF_Close;
+    dd->dp.activate   = PDF_Activate;
+    dd->dp.deactivate = PDF_Deactivate;
+    dd->dp.resize     = PDF_Resize;
+    dd->dp.newPage    = PDF_NewPage;
+    dd->dp.clip	      = PDF_Clip;
+    dd->dp.text	      = PDF_Text;
+    dd->dp.strWidth   = PDF_StrWidth;
+    dd->dp.metricInfo = PDF_MetricInfo;
+    dd->dp.rect	      = PDF_Rect;
+    dd->dp.circle     = PDF_Circle;
+    dd->dp.line	      = PDF_Line;
+    dd->dp.polygon    = PDF_Polygon;
+    dd->dp.polyline   = PDF_Polyline;
+    dd->dp.locator    = PDF_Locator;
+    dd->dp.mode	      = PDF_Mode;
+    dd->dp.hold	      = PDF_Hold;
+
+    dd->deviceSpecific = (void *) pd;
+    dd->displayListOn = FALSE;
+    return 1;
+}
+
+static void PDF_Invalidate(DevDesc *dd)
+{
+    PDFDesc *pd = (PDFDesc *) dd->deviceSpecific;
+
+    pd->current.fontsize = -1;
+    pd->current.fontstyle = -1;
+    pd->current.lwd = 1;
+    pd->current.lty = -1;
+    /* page starts with black as the default fill and stroke colours */
+    pd->current.col = 0;
+    pd->current.fill = 0;
+    pd->current.bg = 0xffffffff;
+}
+
+static void PDF_SetLineColor(int color, DevDesc *dd)
+{
+    PDFDesc *pd = (PDFDesc *) dd->deviceSpecific;
+
+    if(color != pd->current.col) {
+	fprintf(pd->pdffp, "%.3f %.3f %.3f RG\n",
+		R_RED(color)/255.0,
+		R_GREEN(color)/255.0,
+		R_BLUE(color)/255.0);
+	pd->current.col = color;
+    }
+}
+
+static void PDF_SetFill(int color, DevDesc *dd)
+{
+    PDFDesc *pd = (PDFDesc *) dd->deviceSpecific;
+    if(color != pd->current.fill) {
+	fprintf(pd->pdffp, "%.3f %.3f %.3f rg\n",
+		   R_RED(color)/255.0,
+		   R_GREEN(color)/255.0,
+		   R_BLUE(color)/255.0);
+	pd->current.fill = color;
+    }
+}
+
+/* Note that the line texture is scaled by the line width.
+   Almost the same as PS, but the operator has a short name */
+
+static void PDFSetLineTexture(FILE *fp, int *lty, int nlty, double lwd)
+{
+    double dash;
+    int i;
+    fprintf(fp,"[");
+    for (i = 0; i < nlty; i++) {
+        dash = (lwd >= 1 ? lwd:1) * ((i % 2) ? lty[i] + 1 : lty[i] - 1);
+	if (dash < 0) dash = 0;
+	fprintf(fp," %.2f", dash);
+    }
+    fprintf(fp,"] 0 d\n");
+}
+
+static void PDF_SetLineStyle(int newlty, double newlwd, DevDesc *dd)
+{
+    PDFDesc *pd = (PDFDesc *) dd->deviceSpecific;
+    int i, ltyarray[8];
+
+    if (pd->current.lty != newlty || pd->current.lwd != newlwd) {
+	pd->current.lwd = newlwd;
+	pd->current.lty = newlty;
+	fprintf(pd->pdffp, "%.2f w\n", newlwd * 0.75);
+	/* process lty : */
+	for(i = 0; i < 8 && newlty & 15 ; i++) {
+	    ltyarray[i] = newlty & 15;
+	    newlty = newlty >> 4;
+	}
+	PDFSetLineTexture(pd->pdffp, ltyarray, i, newlwd * 0.75);
+    }
+}
+
+static void texton(PDFDesc *pd)
+{
+    fprintf(pd->pdffp, "BT\n");
+    pd->inText = TRUE;
+}
+
+static void textoff(PDFDesc *pd)
+{
+    fprintf(pd->pdffp, "ET\n");
+    pd->inText = FALSE;
+}
+
+static void PDF_EncodeFont(PDFDesc *pd, int nobj)
+{
+    char *encname = pd->encname;
+
+    fprintf(pd->pdffp, "%d 0 obj\n<<\n/Type /Encoding\n", nobj);
+    if (strcmp(encname, "WinAnsiEncoding") == 0 || 
+	strcmp(encname, "MacRomanEncoding") == 0 ||
+	strcmp(encname, "PDFDocEncoding") == 0) {
+	fprintf(pd->pdffp, "/BaseEncoding /%s\n", encname);
+	fprintf(pd->pdffp, "/Differences [ 45/minus ]\n");
+    } else if (strcmp(encname, "ISOLatin1Encoding") == 0) {
+	fprintf(pd->pdffp, "/BaseEncoding /PDFDocEncoding\n");
+	fprintf(pd->pdffp, "/Differences [ 45/minus 96/quoteleft\n144/dotlessi /grave /acute /circumflex /tilde /macron /breve /dotaccent\n/dieresis /.notdef /ring /cedilla /.notdef /hungarumlaut /ogonek /caron /space]\n");
+    } else {
+	fprintf(pd->pdffp, "/BaseEncoding /PDFDocEncoding\n");
+	fprintf(pd->pdffp, "/Differences [ 0 %s ]\n", enccode);
+    }
+    fprintf(pd->pdffp, ">>\nendobj\n");
+}
+
+#include <time.h>
+
+static void PDF_startfile(PDFDesc *pd)
+{
+    int i;
+    struct tm *ltm;
+    time_t ct;
+
+    pd->nobjs = 0;
+    pd->pageno = 0;
+    fprintf(pd->pdffp, "%%PDF-1.1\n%%âãÏÓ\r\n");
+    pd->pos[++pd->nobjs] = (int) ftell(pd->pdffp);
+
+    /* Object 1 is Info node. Date format is from the PDF manual */
+
+    ct = time(NULL);
+    ltm = localtime(&ct);
+    fprintf(pd->pdffp, 
+	    "1 0 obj\n<<\n/CreationDate (D:%04d%02d%02d%02d%02d%02d)\n",
+	    1900 + ltm->tm_year, ltm->tm_mon+1, ltm->tm_mday, 
+	    ltm->tm_hour, ltm->tm_min, ltm->tm_sec);
+    fprintf(pd->pdffp, "/Producer (R Graphics)\n>>\nendobj\n");
+
+    /* Object 2 is the Catalog, pointing to pages list in object 3 (at end) */
+
+    pd->pos[++pd->nobjs] = (int) ftell(pd->pdffp);
+    fprintf(pd->pdffp, "2 0 obj\n<<\n/Type /Catalog\n/Pages 3 0 R\n>>\nendobj\n");
+
+    /* Object 3 will be at the end */
+
+    /* Object 4 is the standard resources dict for each page */
+
+    ++pd->nobjs;
+    pd->pos[++pd->nobjs] = (int) ftell(pd->pdffp);
+    fprintf(pd->pdffp, 
+	    "4 0 obj\n<<\n/ProcSet [/PDF /Text]\n/Font << %s %s %s %s %s %s >>\n>>\nendobj\n",
+	    "/F1 6 0 R","/F2 7 0 R","/F3 8 0 R","/F4 9 0 R","/F5 10 0 R",
+	    "/F6 11 0 R");
+
+    /* Object 5 is the encoding for text fonts */
+
+    pd->pos[++pd->nobjs] = (int) ftell(pd->pdffp);
+    PDF_EncodeFont(pd, pd->nobjs);
+
+    /* Objects 6, 7, 8, 9 are the fonts for the text family */
+    /* Object 10 is the Symbol font */
+    /* Object 11 is Dingbats, used for (small) circles */
+
+    for (i = 0; i < 4; i++) {
+	pd->pos[++pd->nobjs] = (int) ftell(pd->pdffp);
+	fprintf(pd->pdffp, "%d 0 obj\n<<\n/Type /Font\n/Subtype /Type1\n/Name /F%d\n/BaseFont /%s\n/Encoding 5 0 R\n>>\nendobj\n", 
+		i+6, i+1, familyname[i]);
+    }
+    pd->pos[++pd->nobjs] = (int) ftell(pd->pdffp);
+    fprintf(pd->pdffp, "10 0 obj\n<<\n/Type /Font\n/Subtype /Type1\n/Name /F5\n/BaseFont /Symbol\n>>\nendobj\n");
+    pd->pos[++pd->nobjs] = (int) ftell(pd->pdffp);
+    fprintf(pd->pdffp, "11 0 obj\n<<\n/Type /Font\n/Subtype /Type1\n/Name /F6\n/BaseFont /ZapfDingbats\n>>\nendobj\n");
+}
+
+static void PDF_endfile(PDFDesc *pd)
+{
+    int i, startxref;
+    /* object 3 lists all the pages */
+
+    pd->pos[3] = (int) ftell(pd->pdffp);
+    fprintf(pd->pdffp, "3 0 obj\n<<\n/Type /Pages\n/Kids [\n");
+    for(i = 0; i < pd->pageno; i++)
+	fprintf(pd->pdffp, "%d 0 R\n", pd->pageobj[i]);
+    
+    fprintf(pd->pdffp, 
+	    "]\n/Count %d\n/MediaBox [0 0 %d %d]\n>>\nendobj\n", 
+	    pd->pageno, 
+	    (int) (0.5 + 72*pd->width), (int) (0.5 + 72*pd->height));
+
+    /* write out xref table */
+
+    startxref = (int) ftell(pd->pdffp);
+    /* items here must be exactly 20 bytes including terminator */
+    fprintf(pd->pdffp, "xref\n0 %d\n", pd->nobjs+1);
+    fprintf(pd->pdffp, "0000000000 65535 f \n");
+    for(i = 1; i <= pd->nobjs; i++) {
+	fprintf(pd->pdffp, "%010d 00000 n \n", pd->pos[i]);
+    }
+    fprintf(pd->pdffp, 
+	    "trailer\n<<\n/Size %d\n/Info 1 0 R\n/Root 2 0 R\n>>\nstartxref\n%d\n", 
+	    pd->nobjs+1, startxref);
+    fprintf(pd->pdffp, "%%%%EOF\n");
+
+    fclose(pd->pdffp);
+}
+
+
+static Rboolean PDF_Open(DevDesc *dd, PDFDesc *pd)
+{
+    char buf[512], *p;
+    int i;
+
+    if (!LoadEncoding(pd->encpath, pd->encname, TRUE)) {
+	warning("problem loading encoding file");
+	return FALSE;
+    }
+    for(i = 0; i < 4 ; i++) {
+	p = Family[pd->fontfamily].afmfile[i];
+	if(!PostScriptLoadFontMetrics(p, &(pd->metrics[i]),
+				      familyname[i], 1)) {
+	    warning("cannot read afm file %s", buf);
+	    return FALSE;
+	}
+    }
+    if(!PostScriptLoadFontMetrics("sy______.afm", &(pd->metrics[4]),
+				  familyname[4], 0)) {
+	warning("cannot read afm file %s", buf);
+	return FALSE;
+    }
+
+    /* NB: this must be binary to get tell positions and line endings right */
+
+    sprintf(buf, pd->filename, pd->pageno + 1); /* page 1 to start */
+    pd->pdffp = R_fopen(R_ExpandFileName(buf), "wb");
+    if (!pd->pdffp) {
+	warning("cannot open `pdf' file argument `%s'", buf);
+	return FALSE;
+    }
+
+    PDF_startfile(pd);
+    return TRUE;
+}
+
+
+static void PDF_Clip(double x0, double x1, double y0, double y1, DevDesc *dd)
+{
+/*    PDFDesc *pd = (PDFDesc *) dd->deviceSpecific;
+
+    fprintf(pd->pdffp, "Q q %.2f %.2f %.2f %.2f re W\n", 
+	    x0, y0, x1 - x0, y1 - y0);    
+    PDF_Invalidate(dd); */
+}
+
+static void PDF_Resize(DevDesc *dd)
+{
+}
+
+static void PDF_endpage(PDFDesc *pd)
+{
+    int here;
+    if(pd->inText) textoff(pd);
+    fprintf(pd->pdffp, "Q\n");
+    here = (int) ftell(pd->pdffp);
+    fprintf(pd->pdffp, "endstream\nendobj\n");
+    pd->pos[++pd->nobjs] = (int) ftell(pd->pdffp);
+    fprintf(pd->pdffp, "%d 0 obj\n%d\nendobj\n", pd->nobjs,
+	    here - pd->startstream);   
+}
+
+static void PDF_NewPage(DevDesc *dd)
+{
+    PDFDesc *pd = (PDFDesc *) dd->deviceSpecific;
+    char buf[512];
+
+    if(pd->pageno > 499 || pd->nobjs > 1099)
+	error("limit on pages or objects exceeded:please shut down the PDFdevice");
+
+    if(pd->pageno > 0) {
+	PDF_endpage(pd);
+	if(!pd->onefile) {
+	    PDF_endfile(pd);
+	    sprintf(buf, pd->filename, pd->pageno + 1); /* page 1 to start */
+	    pd->pdffp = R_fopen(R_ExpandFileName(buf), "wb");
+	    if (!pd->pdffp)
+		error("cannot open `pdf' file argument `%s'\n  please shut down the PDFdevice", buf);
+	    PDF_startfile(pd);
+	}
+    }
+    
+    pd->pos[++pd->nobjs] = (int) ftell(pd->pdffp);
+    pd->pageobj[pd->pageno++] = pd->nobjs;
+    fprintf(pd->pdffp, "%d 0 obj\n<<\n/Type /Page\n/Parent 3 0 R\n/Contents %d 0 R\n/Resources 4 0 R\n>>\nendobj\n", 
+	    pd->nobjs, pd->nobjs+1);
+    pd->pos[++pd->nobjs] = (int) ftell(pd->pdffp);
+    fprintf(pd->pdffp, "%d 0 obj\n<<\n/Length %d 0 R\n>>\nstream\r\n", 
+	    pd->nobjs, pd->nobjs + 1);
+    pd->startstream = (int) ftell(pd->pdffp);
+    fprintf(pd->pdffp, "1 J 1 j 10 M q\n");
+    PDF_Invalidate(dd);
+
+    if(dd->gp.bg != R_RGB(255,255,255)) {
+	PDF_SetFill(dd->gp.bg, dd);
+	fprintf(pd->pdffp, "0 0 %.2f %.2f re f\n",
+		72.0 * pd->width, 72.0 * pd->height);
+    }
+    pd->inText = FALSE;
+}
+
+static void PDF_Close(DevDesc *dd)
+{
+    PDFDesc *pd = (PDFDesc *) dd->deviceSpecific;
+    
+    if(pd->pageno > 0) PDF_endpage(pd);
+    PDF_endfile(pd);
+    free(pd); 
+}
+
+static void PDF_Activate(DevDesc *dd) {}
+static void PDF_Deactivate(DevDesc *dd) {}
+
+static void PDF_Rect(double x0, double y0, double x1, double y1, int coords,
+		      int bg, int fg, DevDesc *dd)
+{
+    PDFDesc *pd = (PDFDesc *) dd->deviceSpecific;
+    int code;
+
+    code = 2 * (bg != NA_INTEGER) + (fg != NA_INTEGER);
+    if (code) {
+	if(pd->inText) textoff(pd);
+	if(code & 2)
+	    PDF_SetFill(bg, dd);
+	if(code & 1) {
+	    PDF_SetLineColor(fg, dd);
+	    PDF_SetLineStyle(dd->gp.lty, dd->gp.lwd, dd);
+	}
+	GConvert(&x0, &y0, coords, DEVICE, dd);
+	GConvert(&x1, &y1, coords, DEVICE, dd);
+	fprintf(pd->pdffp, "%.2f %.2f %.2f %.2f re", x0, y0, x1-x0, y1-y0);
+	switch(code){
+	case 1: fprintf(pd->pdffp, " S\n"); break;
+	case 2: fprintf(pd->pdffp, " f\n"); break;
+	case 3: fprintf(pd->pdffp, " B\n"); break;
+	}
+    }
+}
+
+/* r is in device coords */
+static void PDF_Circle(double x, double y, int coords, double r,
+		      int bg, int fg, DevDesc *dd)
+{
+    PDFDesc *pd = (PDFDesc *) dd->deviceSpecific;
+    int code, tr;
+    double xx, yy, a;
+
+    GConvert(&x, &y, coords, DEVICE, dd);
+
+    code = 2 * (bg != NA_INTEGER) + (fg != NA_INTEGER);
+
+    if (code) {
+	if(code & 2)
+	    PDF_SetFill(bg, dd);
+	if(code & 1) {
+	    PDF_SetLineColor(fg, dd);
+	    PDF_SetLineStyle(dd->gp.lty, dd->gp.lwd, dd);
+	}
+	if(r > 10) { /* somewhat arbitrary, use font up to 20pt */
+            /* Use four Bezier curves, hand-fitted to quadrants */
+	    double s = 0.55 * r;
+	    if(pd->inText) textoff(pd);
+	    fprintf(pd->pdffp, "  %.2f %.2f m\n", x - r, y);
+	    fprintf(pd->pdffp, "  %.2f %.2f %.2f %.2f %.2f %.2f c\n", 
+		   x - r, y + s, x - s, y + r, x, y + r);
+	    fprintf(pd->pdffp, "  %.2f %.2f %.2f %.2f %.2f %.2f c\n", 
+		   x + s, y + r, x + r, y + s, x + r, y);
+	    fprintf(pd->pdffp, "  %.2f %.2f %.2f %.2f %.2f %.2f c\n", 
+		   x + r, y - s, x + s, y - r, x, y - r);
+	    fprintf(pd->pdffp, "  %.2f %.2f %.2f %.2f %.2f %.2f c\n", 
+		   x - s, y - r, x - r, y - s, x - r, y);
+	    switch(code){
+	    case 1: fprintf(pd->pdffp, "S\n"); break;
+	    case 2: fprintf(pd->pdffp, "f\n"); break;
+	    case 3: fprintf(pd->pdffp, "B\n"); break;
+	    }
+	} else {
+	    /* Use char 108 in Dingbats, which is a solid disc
+	       afm is C 108 ; WX 791 ; N a71 ; B 35 -14 757 708 ;
+	       so diameter = 0.722 * size
+	       centre = (0.396, 0.347) * size
+	    */
+	    a = 2./0.722 * r;
+	    xx = x - 0.396*a;
+	    yy = y - 0.347*a;
+	    tr = (bg != NA_INTEGER) + 2 * (fg != NA_INTEGER) - 1;
+	    if(!pd->inText) texton(pd);
+	    fprintf(pd->pdffp, 
+		    "/F6 1 Tf %d Tr %.2f 0 0 %.2f %.2f %.2f Tm", 
+		    tr, a, a, xx, yy);
+	    fprintf(pd->pdffp, " (l) Tj 0 Tr\n");	    
+	}
+    }
+}
+
+static void PDF_Line(double x1, double y1, double x2, double y2,
+		    int coords, DevDesc *dd)
+{
+    PDFDesc *pd = (PDFDesc *) dd->deviceSpecific;
+
+    PDF_SetLineColor(dd->gp.col, dd);
+    PDF_SetLineStyle(dd->gp.lty, dd->gp.lwd, dd);
+    GConvert(&x1, &y1, coords, DEVICE, dd);
+    GConvert(&x2, &y2, coords, DEVICE, dd);
+    if(pd->inText) textoff(pd);
+    fprintf(pd->pdffp, "%.2f %.2f m %.2f %.2f l S\n", x1, y1, x2, y2);
+}
+
+static void PDF_Polygon(int n, double *x, double *y, int coords,
+			 int bg, int fg, DevDesc *dd)
+{
+    PDFDesc *pd = (PDFDesc *) dd->deviceSpecific;
+    double xx, yy;
+    int i, code;
+
+    code = 2 * (bg != NA_INTEGER) + (fg != NA_INTEGER);
+
+    if (code) {
+	if(pd->inText) textoff(pd);
+	if(code & 2)
+	    PDF_SetFill(bg, dd);
+	if(code & 1) {
+	    PDF_SetLineColor(fg, dd);
+	    PDF_SetLineStyle(dd->gp.lty, dd->gp.lwd, dd);
+	}
+	xx = x[0];
+	yy = y[0];
+	GConvert(&xx, &yy, coords, DEVICE, dd);
+	fprintf(pd->pdffp, "  %.2f %.2f m\n", xx, yy);
+	for(i = 1 ; i < n ; i++) {
+	    xx = x[i];
+	    yy = y[i];
+	    GConvert(&xx, &yy, coords, DEVICE, dd);
+	    fprintf(pd->pdffp, "  %.2f %.2f l\n", xx, yy);
+	}
+	switch(code){
+	case 1: fprintf(pd->pdffp, "s\n"); break;
+	case 2: fprintf(pd->pdffp, "h f\n"); break;
+	case 3: fprintf(pd->pdffp, "b\n"); break;
+	}
+    }
+
+}
+
+static void PDF_Polyline(int n, double *x, double *y, int coords,
+			DevDesc *dd)
+{
+    PDFDesc *pd = (PDFDesc*) dd->deviceSpecific;
+    double xx, yy;
+    int i;
+
+    if(pd->inText) textoff(pd);
+    PDF_SetLineColor(dd->gp.col, dd);
+    PDF_SetLineStyle(dd->gp.lty, dd->gp.lwd, dd);
+    xx = x[0];
+    yy = y[0];
+    GConvert(&xx, &yy, coords, DEVICE, dd);
+    fprintf(pd->pdffp, "%.2f %.2f m\n", xx, yy);
+    for(i = 1 ; i < n ; i++) {
+	xx = x[i];
+	yy = y[i];
+	GConvert(&xx, &yy, coords, DEVICE, dd);
+	fprintf(pd->pdffp, "%.2f %.2f l\n", xx, yy);
+    }
+    fprintf(pd->pdffp, "S\n");
+}
+
+
+static void PDF_Text(double x, double y, int coords,
+		     char *str, double rot, double hadj, DevDesc *dd)
+{
+    PDFDesc *pd = (PDFDesc *) dd->deviceSpecific;
+    int size = (int)floor(dd->gp.cex * dd->gp.ps + 0.5);
+    int face = dd->gp.font;
+    double a, b, rot1;
+
+    rot1 = rot * DEG2RAD;
+    a = size * cos(rot1);
+    b = size * sin(rot1);
+    GConvert(&x, &y, coords, DEVICE, dd);
+    if(!pd->inText) texton(pd);
+    PDF_SetFill(dd->gp.col, dd);
+    fprintf(pd->pdffp, "/F%d 1 Tf %.2f %.2f %.2f %.2f %.2f %.2f Tm ", 
+	    face, a, b, -b, a, x, y);
+    PostScriptWriteString(pd->pdffp, str);
+    fprintf(pd->pdffp, " Tj\n");
+}
+
+static Rboolean PDF_Locator(double *x, double *y, DevDesc *dd)
+{
+    return FALSE;
+}
+
+static void PDF_Mode(int mode, DevDesc* dd)
+{
+}
+
+static void PDF_Hold(DevDesc *dd)
+{
+}
+
+static double PDF_StrWidth(char *str, DevDesc *dd)
+{
+    PDFDesc *pd = (PDFDesc *) dd->deviceSpecific;
+
+    return floor(dd->gp.cex * dd->gp.ps + 0.5) *
+	PostScriptStringWidth((unsigned char *)str,
+			      &(pd->metrics[dd->gp.font-1]));
+}
+
+static void PDF_MetricInfo(int c, double *ascent, double *descent,
+			  double *width, DevDesc *dd)
+{
+    PDFDesc *pd = (PDFDesc *) dd->deviceSpecific;
 
     PostScriptMetricInfo(c, ascent, descent, width,
 			 &(pd->metrics[dd->gp.font-1]));

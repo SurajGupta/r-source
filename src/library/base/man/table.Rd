@@ -1,11 +1,16 @@
 \name{table}
 \title{Cross Tabulation}
 \alias{table}
+\alias{summary.table}
+\alias{print.summary.table}
 \alias{as.data.frame.table}
 \alias{as.table}
 \alias{as.table.default}
 \alias{is.table}
-\alias
+\description{
+  \code{table} uses the cross-classifying factors to build a contingency
+  table of the counts at each combination of factor levels.
+}
 \usage{
 table(\dots, exclude = c(NA, NaN), dnn, deparse.level = 1)
 as.table(x, \dots)
@@ -19,7 +24,7 @@ as.data.frame.table(x, row.names = NULL, optional = FALSE)
   \item{exclude}{values to use in the exclude argument of \code{factor}
     when interpreting non-factor objects}
   \item{dnn}{the names to be given to the dimensions in the result (`the
-    dimname names'}
+    dimname names').}
   \item{deparse.level}{controls how the default \code{dnn} is
     constructed.  See details.}
   \item{x}{an arbitrary \R object.}
@@ -28,10 +33,6 @@ as.data.frame.table(x, row.names = NULL, optional = FALSE)
   \item{optional}{a logical controlling whether row names are set.
     Currently not used.}
 }
-\description{
-  \code{table} uses the cross-classifying factors to build a contingency
-  table of the counts at each combination of factor levels.
-}
 \details{
   If the argument \code{dnn} is not supplied, the internal function
   \code{list.names} is called to compute the `dimname names'.  If the
@@ -39,6 +40,12 @@ as.data.frame.table(x, row.names = NULL, optional = FALSE)
   remaining arguments, \code{deparse.level = 0} gives an empty name,
   \code{deparse.level = 1} uses the supplied argument if it is a symbol,
   and \code{deparse.level = 2} will deparse the argument.
+
+  There is a \code{summary} method for contingency table objects created
+  by \code{table} or \code{xtabs}, which gives basic information and
+  performs a chi-squared test for independence of factors (note that the
+  function \code{\link[ctest]{chisq.test}} in package \bold{ctest}
+  currently only handles 2-d tables).
 
   \code{as.table} and \code{is.table} coerce to and test for contingency
   table, respectively.
@@ -49,7 +56,6 @@ as.data.frame.table(x, row.names = NULL, optional = FALSE)
   and the corresponding counts (the latter as component \code{Freq}).
   This is the inverse of \code{\link{xtabs}}.
 }
-\seealso{
 \examples{
 ## Simple frequency distribution
 table(rpois(100,5))

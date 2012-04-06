@@ -1,4 +1,4 @@
-% $Id: SSfpl.Rd,v 1.1.24.1 2001/03/24 00:08:06 bates Exp $
+% $Id: SSfpl.Rd,v 1.2 2001/03/24 06:57:57 ripley Exp $
 \name{SSfpl}
 \title{Four-parameter Logistic Model}
 \usage{

@@ -4,15 +4,16 @@
 \description{
   Plotting method for objects of class \code{"acf"}.
 }
-\synopsis{
-plot.acf(x, ci = 0.95, type = "h",
-     xlab = "Lag", ylab = NULL, ylim = NULL, main = NULL,
-     ci.col="blue", ci.type=c("white", "ma"), \dots)
-}
 \usage{
-plot(x, ci = 0.95, type = "h",
+\method{plot}{acf}(x, ci = 0.95, type = "h",
      xlab = "Lag", ylab = NULL, ylim = NULL, main = NULL,
-     ci.col="blue", ci.type=c("white", "ma"), \dots)
+     ci.col="blue", ci.type = c("white", "ma"), max.mfrow = 5,
+     ask = Npgs > 1 && dev.interactive(),
+     mar = if(nser > 2) c(3,3,2,1.2) else par("mar"),
+     oma = if(nser > 2) c(1, 1.2, 1, 1) else par("oma"),
+     mgp = if(nser > 2) c(1.5,0.6,0) else par("mgp"),
+     cex.main = if(nser > 2) 1 else par("cex.main"),
+     verbose = getOption("verbose"), \dots)
 }
 \arguments{
   \item{x}{an object of class \code{"acf"}.}
@@ -28,6 +29,16 @@ plot(x, ci = 0.95, type = "h",
   \item{ci.col}{colour to plot the confidence interval lines.}
   \item{ci.type}{should the confidence limits assume a white noise
     input or for lag \eqn{k} an MA(\eqn{k-1}) input?}
+  \item{max.mfrow}{positive integer; for multivariate \code{x}
+    indicating how many rows and columns of plots should be put on one
+    page, using \code{\link{par}(mfrow = c(m,m))}.}
+  \item{ask}{logical; if \code{TRUE}, the user is asked before a new
+    page is started.}
+  \item{mar, oma, mgp, cex.main}{graphics parameters as in
+    \code{\link{par}(*)}, by default adjusted to use smaller than
+    default margins for multivariate \code{x} only.}
+  \item{verbose}{logical.  Should \R report extra information on
+    progress?}
   \item{\dots}{graphics parameters to be passed to the plotting
     routines.}
 }
@@ -37,8 +48,15 @@ plot(x, ci = 0.95, type = "h",
   caution.  Using \code{ci.type = "ma"} may be less potentially
   misleading.
 }
-\seealso{
-  \code{\link{acf}}
+\seealso{\code{\link{acf}} which calls \code{plot.acf} by default.
+}
+\examples{
+%%-- FIXME: use less trivial data :
+z4  <- ts(matrix(rnorm(400), 100, 4), start=c(1961, 1), frequency=12)
+z7  <- ts(matrix(rnorm(700), 100, 7), start=c(1961, 1), frequency=12)
+acf(z4)
+acf(z7, max.mfrow = 7)# squeeze on 1 page
+acf(z7) # multi-page
 }
 \keyword{hplot}
 \keyword{ts}

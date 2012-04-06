@@ -12,6 +12,10 @@
 #undef Win32
 #undef Macintosh
 
+/* Define if C's Rcomplex and Fortran's COMPLEX*16 can be interchanged,
+   and can do arithmetic on the latter */
+#undef HAVE_DOUBLE_COMPLEX
+
 /* Define if calloc(0) does not return a null pointer. */
 #undef CALLOC_BROKEN
 
@@ -20,6 +24,15 @@
 
 /* Define if you have BSD networking headers and libraries. */
 #undef HAVE_BSD_NETWORKING
+
+/* Define if you have support for sockets. */
+#undef HAVE_SOCKETS
+
+/* Define if you have support for ftp/http access. */
+#undef HAVE_INTERNET
+
+/* Define if you provide support for libxml's ftp/http functions. */
+#undef SUPPORT_LIBXML
 
 /* Define if your Fortran compiler appends an underscore to external
    names. */
@@ -54,6 +67,9 @@
 /* Define if you have the X11 headers and libraries, and want the X11
    GUI to be built. */
 #undef HAVE_X11
+
+/* Define if you have the zlib headers and libraries. */
+#undef HAVE_ZLIB
 
 /* Define if you have IEEE 754 floating point arithmetic. */
 #undef IEEE_754
@@ -111,6 +127,9 @@
 /* Define to `long' if <sys/types.h> does not define.
    Apparently necessary to fix a GCC bug on AIX? */
 #undef blkcnt_t
+
+/* Type for socket lengths: socklen_t, sock_t, int? */
+#undef SOCKLEN_T
 
 @BOTTOM@
 

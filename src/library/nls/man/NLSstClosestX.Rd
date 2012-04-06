@@ -1,4 +1,4 @@
-% $Id: NLSstClosestX.Rd,v 1.2.14.1 2001/03/24 00:08:06 bates Exp $
+% $Id: NLSstClosestX.Rd,v 1.4 2001/03/24 06:57:57 ripley Exp $
 \name{NLSstClosestX}
 \title{Inverse Interpolation}
 \alias{NLSstClosestX}
@@ -26,5 +26,4 @@ DNase.2 <- DNase[ DNase$Run == "2", ]
 DN.srt <- sortedXyData( expression(log(conc)), expression(density), DNase.2 )
 NLSstClosestX( DN.srt, 1.0 )
 }
-\keyword{data}
 \keyword{manip}

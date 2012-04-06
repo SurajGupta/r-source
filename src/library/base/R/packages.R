@@ -1,4 +1,4 @@
-CRAN.packages <- function(CRAN=getOption("CRAN"), method="auto",
+CRAN.packages <- function(CRAN=getOption("CRAN"), method,
                           contriburl=contrib.url(CRAN))
 {
     localcran <- length(grep("^file:", contriburl)) > 0
@@ -10,14 +10,13 @@ CRAN.packages <- function(CRAN=getOption("CRAN"), method="auto",
         download.file(url=paste(contriburl, "PACKAGES", sep="/"),
                       destfile=tmpf, method=method)
     }
-    parse.dcf(file=tmpf, fields=c("Package", "Version",
-                         "Priority", "Bundle", "Depends"),
-              versionfix=TRUE)
+    read.dcf(file=tmpf, fields=c("Package", "Version",
+                       "Priority", "Bundle", "Depends"))
 }
 
 update.packages <- function(lib.loc=.lib.loc, CRAN=getOption("CRAN"),
                             contriburl=contrib.url(CRAN),
-                            method="auto", instlib=NULL, ask=TRUE,
+                            method, instlib=NULL, ask=TRUE,
                             available=NULL, destdir=NULL)
 {
     if(is.null(available))
@@ -58,7 +57,7 @@ update.packages <- function(lib.loc=.lib.loc, CRAN=getOption("CRAN"),
 
 old.packages <- function(lib.loc=.lib.loc, CRAN=getOption("CRAN"),
                          contriburl=contrib.url(CRAN),
-                         method="auto", available=NULL)
+                         method, available=NULL)
 {
     instp <- installed.packages(lib.loc=lib.loc)
     if(is.null(available))
@@ -82,7 +81,28 @@ old.packages <- function(lib.loc=.lib.loc, CRAN=getOption("CRAN"),
     available[ok,"Package"] <- available[ok,"Bundle"]
 
     update <- NULL
-        
+
+    newerVersion <- function(a, b){
+        a <- as.integer(strsplit(a, "[\\.-]")[[1]])
+        b <- as.integer(strsplit(b, "[\\.-]")[[1]])
+        if(is.na(a))
+            return(FALSE)
+        if(is.na(b))
+            return(TRUE)
+        for(k in 1:length(a)){
+            if(k <= length(b)){
+                if(a[k]>b[k])
+                    return(TRUE)
+                else if(a[k]<b[k])
+                    return(FALSE)
+            }
+            else{
+                return(TRUE)
+            }
+        }
+        return(FALSE)
+    }
+
     for(k in 1:nrow(instp)){
         ok <- (instp[k, "Priority"] != "base") &
                 (available[,"Package"] == instp[k, "Package"])
@@ -102,58 +122,37 @@ old.packages <- function(lib.loc=.lib.loc, CRAN=getOption("CRAN"),
     update
 }
 
-newerVersion <- function(a, b){
-    a <- as.integer(strsplit(a, "[\\.-]")[[1]])
-    b <- as.integer(strsplit(b, "[\\.-]")[[1]])
-    if(is.na(a))
-        return(FALSE)
-    if(is.na(b))
-        return(TRUE)
-    for(k in 1:length(a)){
-        if(k <= length(b)){
-            if(a[k]>b[k])
-                return(TRUE)
-            else if(a[k]<b[k])
-                return(FALSE)
-        }
-        else{
-            return(TRUE)
-        }
-    }
-    return(FALSE)
-}
-                        
-
 package.contents <- function(pkg, lib=.lib.loc){
 
-    file <- system.file("CONTENTS", pkg=pkg, lib=lib)
-    if(file == ""){
+    file <- system.file("CONTENTS", package = pkg, lib.loc = lib)
+    if(file == "") {
         warning(paste("Cannot find CONTENTS file of package", pkg))
         return(NA)
     }
 
-    contents <- scan("", file=file, quote="", sep="\n", quiet=TRUE)
-    parse.dcf(contents, fields=c("Entry", "Keywords", "Description"))
+    read.dcf(file=file, fields=c("Entry", "Keywords", "Description"))
 }
 
 
-package.description <- function(pkg, lib=.lib.loc, fields=NULL){
+package.description <- function(pkg, lib=.lib.loc, fields=NULL)
+{
+    file <- system.file("DESCRIPTION", package = pkg, lib.loc = lib)
+    if(file != "") {
+        retval <- read.dcf(file=file, fields=fields)[1,]
+    }
 
-    file <- system.file("DESCRIPTION", pkg=pkg, lib=lib)
-    if(file == ""){
-        warning(paste("Cannot find DESCRIPTION file of package", pkg))
+    if((file == "") || (length(retval) == 0)){
+        warning(paste("DESCRIPTION file of package", pkg,
+                      "missing or broken"))
         if(!is.null(fields)){
             retval <- rep(NA, length(fields))
             names(retval) <- fields
         }
         else
             retval <- NA
-
-        return(retval)
     }
 
-    contents <- scan("", file=file, quote="", sep="\n", quiet=TRUE)
-    parse.dcf(contents, fields=fields, versionfix=TRUE)
+    retval
 }
 
 
@@ -177,11 +176,10 @@ installed.packages <- function(lib.loc = .lib.loc)
     retval
 }
 
-
-package.dependencies <- function(x, check=FALSE)
+package.dependencies <- function(x, check = FALSE)
 {
     if(!is.matrix(x))
-        x <- matrix(x, nrow=1, dimnames=list(NULL, names(x)))
+        x <- matrix(x, nrow = 1, dimnames = list(NULL, names(x)))
 
     deps <- list()
     for(k in 1:nrow(x)){
@@ -193,17 +191,18 @@ package.dependencies <- function(x, check=FALSE)
             z <- sub("(.*)[[:space:]]*$", "\\1", z)
 
             ## split into package names and version
-            deps[[k]] <- cbind(sub("^([^[:space:]\\(]*).*", "\\1", z),
-                               sub(".*\\((.*)\\).*", "\\1", z), NA)
+            pat <- "^([^\\([:space:]]+)[[:space:]]*\\(([^\\)]+)\\).*"
+            deps[[k]] <-
+                cbind(sub(pat, "\\1", z), sub(pat, "\\2", z), NA)
 
             noversion <- deps[[k]][,1] == deps[[k]][,2]
             deps[[k]][noversion,2] <- NA
 
             ## split version dependency into operator and version number
-            pat <- "[[:space:]]*([[<>=]*)[[:space:]]*(.*)"
-            deps[[k]][!noversion,2:3] <-
-                c(sub(pat,"\\1", deps[[k]][!noversion,2]),
-                  sub(pat,"\\2", deps[[k]][!noversion,2]))
+            pat <- "[[:space:]]*([[<>=]+)[[:space:]]+(.*)"
+            deps[[k]][!noversion, 2:3] <-
+                c(sub(pat, "\\1", deps[[k]][!noversion, 2]),
+                  sub(pat, "\\2", deps[[k]][!noversion, 2]))
         }
         else
             deps[[k]] <- NA
@@ -214,16 +213,19 @@ package.dependencies <- function(x, check=FALSE)
         for(k in 1:nrow(x)){
             ## currently we only check the version of R itself
             if(!is.na(deps[[k]]) &&
-               any(ok <- deps[[k]][,1] == "R"))
-            {
-                if(!is.na(deps[[k]][ok,2])){
+               any(ok <- deps[[k]][,1] == "R")) {
+                ## NOTE: currently operators must be `<=' or `>='.
+                if(!is.na(deps[[k]][ok, 2])
+                   && deps[[k]][ok, 2] %in% c("<=", ">=")) {
                     comptext <-
                         paste('"', R.version$major, ".",
                               R.version$minor, '" ',
                               deps[[k]][ok,2], ' "',
-                              deps[[k]][ok,3], '"', sep="")
+                              deps[[k]][ok,3], '"', sep = "")
+                    compres <- try(eval(parse(text = comptext)))
+                    if(!inherits(compres, "try-error"))
+                        z[k] <- compres
                 }
-                z[k] <- eval(parse(text=comptext))
             }
         }
         names(z) <- x[,"Package"]
@@ -235,4 +237,28 @@ package.dependencies <- function(x, check=FALSE)
     }
 }
 
+remove.packages <- function(pkgs, lib) {
 
+    updateIndices <- function(lib) {
+        ## This should eventually be made public, as it could also be
+        ## used by install.packages() && friends.
+        if(lib == .Library) {
+            ## R version of
+            ##   ${R_HOME}/bin/build-help --htmllists
+            ##   cat ${R_HOME}/library/*/CONTENTS \
+            ##     > ${R_HOME}/doc/html/search/index.txt
+            if(exists("link.html.help", mode = "function"))
+                link.html.help()
+        }
+    }
+
+    if(missing(lib) || is.null(lib)) {
+        lib <- .lib.loc[1]
+        warning(paste("argument `lib' is missing: using", lib))
+    }
+
+    paths <- .find.package(pkgs, lib)
+    unlink(paths, TRUE)
+    for(lib in unique(dirname(paths)))
+        updateIndices(lib)
+}

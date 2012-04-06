@@ -7,15 +7,19 @@
 \alias{.First.lib}
 \alias{.Last.lib}
 \alias{.Library}
+\alias{.find.package}
 \alias{.packages}
 \alias{.path.package}
 \alias{.lib.loc}
 \description{
   \code{library} and \code{require} load add-on packages.
   \code{.First.lib} is called when a package is loaded;
+  \code{.Last.lib} is called when a package is loaded.
   \code{.packages} returns information about package availability.
   \code{.path.package} returns information about where a package was
   loaded from.
+  \code{.find.package} returns the directory paths of installed
+  packages.
 }
 \usage{
 library(package, help = NULL, lib.loc = .lib.loc,
@@ -29,6 +33,7 @@ require(package, quietly = FALSE, warn.conflicts = TRUE,
 
 .packages(all.available = FALSE, lib.loc = .lib.loc)
 .path.package(package = .packages(), quiet = FALSE)
+.find.package(package, lib.loc = .lib.loc, use.attached, quiet = FALSE)
 .lib.loc
 .Library
 .Autoloaded
@@ -56,8 +61,14 @@ require(package, quietly = FALSE, warn.conflicts = TRUE,
     package.}
   \item{all.available}{logical; if \code{TRUE} return a character vector
     of all available packages in \code{lib.loc}.}
-  \item{quiet}{logical.  Should \code{.path.package} not give warnings or
-    an error if the package(s) are not loaded?}
+  \item{quiet}{logical.
+    For \code{.path.package}, should this not give warnings or an error
+    if the package(s) are not loaded?
+    For \code{.find.package}, should this not give warnings or an error
+    if the package(s) are not found?}
+  \item{use.attached}{a logical indicating whether attached packages
+    should be considered in addition to the ones installed in the given
+    libraries.}
 }
 \details{
   \code{library(package)} and \code{require(package)} both load the
@@ -83,11 +94,12 @@ require(package, quietly = FALSE, warn.conflicts = TRUE,
   \code{library}.  It is called with two arguments, the name of the
   library directory where the package was found (i.e., the corresponding
   element of \code{lib.loc}), and the name of the package (in that
-  order).  It is a good place to put calls to \code{library.dynam()}
+  order).  It is a good place to put calls to \code{\link{library.dynam}}
   which are needed when loading a package into this function (don't call
-  \code{library.dynam()} directly, as this will not work if the package
+  \code{library.dynam} directly, as this will not work if the package
   is not installed in a ``standard'' location).  \code{.First.lib}
-  is invoked after \code{search()} has been updated, so
+  is invoked after the search path interrogated by \code{search()}
+  has been updated, so
   \code{pos.to.env(match("package:name"), search())} will return the
   environment in which the package is stored.  If calling
   \code{.First.lib} gives an error the loading of the package is
@@ -108,10 +120,19 @@ require(package, quietly = FALSE, warn.conflicts = TRUE,
   \code{.packages(all.available = TRUE)} gives (visibly) \emph{all}
   packages available in the library location path \code{lib.loc}.
 
-  \code{.path.package} returns the paths from which the named packages were
-  loaded, or if none were named, for all currently loaded packages.
+  \code{.path.package} returns the paths from which the named packages
+  were loaded, or if none were named, for all currently loaded packages.
   Unless \code{quiet = TRUE} it will warn if some of the packages named
   are not loaded, and given an error if none are.
+
+  \code{.find.package} returns the paths to the locations where the
+  names packages can be found.  If \code{lib.loc} is not given or
+  \code{use.attached} is \code{TRUE}, then attached packages are
+  searched before the libraries.  If a package is found more than once,
+  the first match is used.  Unless \code{quiet = TRUE} a warning will be
+  given about the named packages which are not found, and an error if
+  none are.  This function is not meant to be called by users, and its
+  interface might change in future versions.
 
   \code{.Autoloaded} contains the ``base names'' of the packages for
   which autoloading has been promised.
@@ -120,8 +141,7 @@ require(package, quietly = FALSE, warn.conflicts = TRUE,
   default library, the ``library'' subdirectory of \code{R_HOME}.
   \code{.lib.loc} is a character vector with the locations of all
   library trees that \R should use.  It is initialized at startup from
-  the environment variable \code{R_LIBS} (\code{RLIBS} as used by older
-  versions of \R is no longer accepted) (which should be a
+  the environment variable \code{R_LIBS} (which should be a
 #ifdef unix
   colon-separated
 #endif
@@ -143,10 +163,8 @@ require(package, quietly = FALSE, warn.conflicts = TRUE,
   \code{\link{attach}}, \code{\link{detach}}, \code{\link{search}},
   \code{\link{objects}}, \code{\link{autoload}},
   \code{\link{library.dynam}},
-  \code{\link{data}}, \code{\link{install.packages}}.
-#ifdef unix
-  \code{\link{INSTALL}}, \code{\link{REMOVE}}
-#endif
+  \code{\link{data}}, \code{\link{install.packages}},
+  \code{\link{INSTALL}}, \code{\link{REMOVE}}.
 }
 \examples{
 (.packages())		    # maybe just "base"
@@ -164,7 +182,7 @@ require(eda)                # the same
 .Library == .lib.loc[length(.lib.loc)]  # `by definition'
 
 require(nonexistent)        # FALSE
-\dontrun{## Suppose a package needs to call a shared library named `foo.EXT',
+\dontrun{## Suppose a package needs to call a shared library named `fooEXT',
 ## where `EXT' is the system-specific extension.  Then you should use
 .First.lib <- function(lib, pkg) {
   library.dynam("foo", pkg, lib)

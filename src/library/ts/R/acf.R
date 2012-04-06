@@ -110,49 +110,92 @@ pacf.mts <- function(x, lag.max = NULL, plot = TRUE, na.action = na.fail, ...)
 plot.acf <-
     function (x, ci = 0.95, type = "h", xlab = "Lag", ylab = NULL,
               ylim = NULL, main = NULL, ci.col="blue",
-              ci.type=c("white", "ma"), ...)
+              ci.type = c("white", "ma"),
+              max.mfrow = 6,
+              ask = Npgs > 1 && dev.interactive(),
+              mar = if(nser > 2) c(3,2,2,0.8) else par("mar"),
+              oma = if(nser > 2) c(1,1.2,1,1) else par("oma"),
+              mgp = if(nser > 2) c(1.5,0.6,0) else par("mgp"),
+              cex.main = if(nser > 2) 1 else par("cex.main"),
+              verbose = getOption("verbose"),
+              ...)
 {
     ci.type <- match.arg(ci.type)
-    nser <- ncol(x$lag)
-    if(nser > 1) {
-        opar <- par(mfrow = rep(min(nser, 5), 2))
-        on.exit(par(opar))
-    }
+    if((nser <- ncol(x$lag)) < 1) stop("x$lag must have at least 1 column")
     if (is.null(ylab))
-        ylab <- switch(x$type, correlation = "ACF", covariance = "ACF",
-            partial = "Partial ACF")
-    if (is.null(snames <- x$snames)) {
-        snames <- if (nser == 1)
-            paste("Series ", x$series)
-        else paste("Series ", 1:nser)
-    }
-    with.ci <- (ci > 0) && (x$type != "covariance")
+        ylab <- switch(x$type,
+                       correlation = "ACF",
+                       covariance = "ACF (cov)",
+                       partial = "Partial ACF")
+    if (is.null(snames <- x$snames))
+        snames <- paste("Series ", if (nser == 1) x$series else 1:nser)
+
+    with.ci <- ci > 0 && x$type != "covariance"
     with.ci.ma <- with.ci && ci.type == "ma" && x$type == "correlation"
-    for (i in 1:nser) for (j in 1:nser) {
-        clim <- c(0, 0)
-        if (with.ci)
-            clim <- qnorm((1 + ci)/2)/sqrt(x$n.used)
-        if (with.ci.ma && i == j)
-            clim <- clim * sqrt(cumsum(c(1, 2*x$acf[-1, i, j]^2)))
-        if (is.null(ylim)) {
-            ymin <- min(c(x$acf[, i, j], -clim))
-            ymax <- max(c(x$acf[, i, j], clim))
-            ylim <- c(ymin, ymax)
+    clim0 <- if (with.ci) qnorm((1 + ci)/2)/sqrt(x$n.used) else c(0, 0)
+
+    Npgs <- 1 ## we will do [ Npgs x Npgs ] pages !
+    nr <- nser
+    if(nser > 1) { ## at most m x m (m := max.mfrow)  panels per page
+        sn.abbr <- if(nser > 2) abbreviate(snames) else .Alias(snames)
+
+        if(nser > max.mfrow) {
+            ##  We need more than one page: The plots are laid out
+            ##  such that we can manually paste the paper pages and get a
+            ##  nice square layout with diagonal !   
+            ## NB: The same applies to pairs() where we'd want several pages
+            Npgs <- ceiling(nser / max.mfrow)
+            nr <- ceiling(nser / Npgs)  # <= max.mfrow
         }
-        plot(x$lag[, i, j], x$acf[, i, j], type = type, xlab = xlab,
-            ylab = if(j==1) ylab else "", ylim = ylim, ...)
-        abline(h = 0)
-        if (with.ci && ci.type == "white")
-            abline(h = c(clim, -clim), col = ci.col, lty = 2)
-        if (with.ci.ma && i == j) {
-            lines(x$lag[, i, j], clim, col = ci.col, lty = 2)
-            lines(x$lag[, i, j], -clim, col = ci.col, lty = 2)
+        opar <- par(mfrow = rep(nr, 2), mar = mar, oma = oma, mgp = mgp,
+                    ask = ask, xpd = NA, cex.main = cex.main)
+        on.exit(par(opar))
+        if(verbose) {
+            cat("par(*) : ")
+            str(par("mfrow","cex", "cex.main","cex.axis","cex.lab","cex.sub"))
         }
-        if (!is.null(main))
-            title(main)
-        else if (i == j)
-            title(snames[i])
-        else title(paste(snames[i], "&", snames[j]))
+    }
+    
+    for (I in 1:Npgs) for (J in 1:Npgs) {
+        ## Page [ I , J ] : Now do   nr x nr  `panels' on this page
+        iind <- (I-1)*nr + 1:nr
+        jind <- (J-1)*nr + 1:nr
+        if(verbose)
+            cat("Page [",I,",",J,"]: i =",
+                paste(iind,collapse=","),"; j =",
+                paste(jind,collapse=","),"\n")
+        for (i in iind) for (j in jind)
+            if(max(i,j) > nser) {
+                frame(); box(col = "light gray")
+                ## the above is EXTREMELY UGLY; should have a version
+                ## of frame() that really does advance a frame !!
+            }
+            else {
+                clim <- if (with.ci.ma && i == j)
+                    clim0 * sqrt(cumsum(c(1, 2*x$acf[-1, i, j]^2))) else clim0
+                if (is.null(ylim)) {
+                    ymin <- min(c(x$acf[, i, j], -clim))
+                    ymax <- max(c(x$acf[, i, j], clim))
+                    ylim <- c(ymin, ymax)
+                }
+                plot(x$lag[, i, j], x$acf[, i, j], type = type, xlab = xlab,
+                     ylab = if(j==1) ylab else "", ylim = ylim, ...)
+                abline(h = 0)
+                if (with.ci && ci.type == "white")
+                    abline(h = c(clim, -clim), col = ci.col, lty = 2)
+                else if (with.ci.ma && i == j) {
+                    lines(x$lag[, i, j], clim, col = ci.col, lty = 2)
+                    lines(x$lag[, i, j], -clim, col = ci.col, lty = 2)
+                }
+                title(if (!is.null(main)) main else
+                      if (i == j) snames[i]
+                      else paste(sn.abbr[i], "&", sn.abbr[j]),
+                      line = if(nser > 2) 1 else 2)
+            }
+        if(Npgs > 1) {                  # label the page
+            mtext(paste("[",I,",",J,"]"), side=1, line = -0.2, adj=1,
+                  col = "dark gray", cex = 1, outer = TRUE)
+        }
     }
 }
 
@@ -167,7 +210,7 @@ ccf <- function(x, y, lag.max = NULL,
     colnames(X) <- c(deparse(substitute(x)), deparse(substitute(y)))
     acf.out <- acf(X, lag.max = lag.max, plot = FALSE, type = type)
     lag <- c(rev(acf.out$lag[-1,2,1]), 0, acf.out$lag[,1,2])
-    y <- c(rev(acf.out$acf[-1,2,1]), 0, acf.out$acf[,1,2])
+    y   <- c(rev(acf.out$acf[-1,2,1]), 0, acf.out$acf[,1,2])
     acf.out$acf <- array(y, dim=c(length(y),1,1))
     acf.out$lag <- array(lag, dim=c(length(y),1,1))
     acf.out$snames <- paste(acf.out$snames, collapse = " & ")

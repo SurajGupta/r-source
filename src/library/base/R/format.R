@@ -8,7 +8,7 @@ format <- function(x, ...) UseMethod("format")
 ### The new (1.2) switch "character" would be faster in .Internal()
 ### combine with "width = ", and format.char() below!
 
-format.default <- function(x, trim = FALSE, digits = NULL,
+format.default <- function(x, trim = FALSE, digits = NULL, nsmall = 0,
 			   justify = c("left", "right", "none"))
 {
     f.char <- function(x, justify) {
@@ -16,9 +16,10 @@ format.default <- function(x, trim = FALSE, digits = NULL,
 	nc <- nchar(x)
 	w <- max(nc)
 	all <- substring(paste(rep(" ", w), collapse=""), 1, w-nc)
-	if(justify == "left")
-	     paste(x, all, sep="")
+	res <- if(justify == "left") paste(x, all, sep="")
 	else paste(all, x, sep="")
+        dim(res) <- dim(x)
+        res
     }
     if(!is.null(digits)) {
 	op <- options(digits=digits)
@@ -35,9 +36,10 @@ format.default <- function(x, trim = FALSE, digits = NULL,
 			 paste, collapse=", "),
 	   call=, expression=, "function"=, "(" = deparse(x),
 	   ##else: numeric, complex, ??? :
-	   structure(.Internal(format(x, trim = trim)), names=names(x)))
+	   structure(.Internal(format(x, trim = trim, small=nsmall)),
+                     names=names(x)))
 }
-## NOTE: Currently need non-default format.dist() -> ../../mva/R/dist.R 
+## NOTE: Currently need non-default format.dist() -> ../../mva/R/dist.R
 
 
 ## MM: This should also happen in C(.) :
@@ -200,10 +202,15 @@ format.data.frame <- function(x, ..., justify = "none")
     for(i in 1:nc)
 	rval[[i]] <- format(x[[i]], ..., justify = justify)
     dn <- dimnames(x)
-    names(rval) <- dn[[2]]
+    cn <- dn[[2]]
+    m <- match(c("row.names", "check.rows", "check.names"), cn, 0)
+    if(any(m > 0)) cn[m] <- paste(".", m[m>0], sep="")
+    names(rval) <- cn
     rval$check.names <- FALSE
     rval$row.names <- dn[[1]]
-    do.call("data.frame", rval)
+    x <- do.call("data.frame", rval)
+    if(any(m > 0)) names(x) <- dn[[2]]
+    x
 }
 
 format.AsIs <- function(x, width = 12, ...)

@@ -33,6 +33,7 @@ open.connection <- function(con, open = "r", blocking = TRUE)
 isOpen <- function(con, rw = "")
 {
     if(!inherits(con, "connection")) stop("argument is not a connection")
+    rw <- pmatch(rw, c("read", "write"), 0)
     .Internal(isOpen(con, rw))
 }
 
@@ -51,11 +52,29 @@ close.connection <- function (con, type = "rw")
     invisible(.Internal(close(con, type)))
 }
 
-file <- function(description, open = "", blocking = TRUE)
-    .Internal(file(description, open, blocking))
+file <- function(description = "", open = "", blocking = TRUE,
+                 encoding = getOption("encoding"))
+    .Internal(file(description, open, blocking, encoding))
 
-pipe <- function(description, open = "")
-    .Internal(pipe(description, open))
+pipe <- function(description, open = "", encoding = getOption("encoding"))
+    .Internal(pipe(description, open, encoding))
+
+fifo <- function(description = "", open = "", blocking = FALSE,
+                 encoding = getOption("encoding"))
+    .Internal(fifo(description, open, blocking, encoding))
+
+url <- function(description, open = "", blocking = TRUE,
+                encoding = getOption("encoding"))
+    .Internal(url(description, open, blocking, encoding))
+
+gzfile <- function(description, open = "",
+                   encoding = getOption("encoding"), compression = 6)
+    .Internal(gzfile(description, open, encoding, compression))
+
+socketConnection <- function(host= "localhost", port, server = FALSE,
+                             blocking = FALSE, open = "a+",
+                             encoding = getOption("encoding"))
+    .Internal(socketConnection(host, port, server, blocking, open, encoding))
 
 textConnection <- function(object, open = "r")
     .Internal(textConnection(deparse(substitute(object)), object, open))
@@ -63,8 +82,23 @@ textConnection <- function(object, open = "r")
 seek <- function(con, ...)
     UseMethod("seek")
 
-seek.connection <- function(con, where = NA, rw = "")
-    .Internal(seek(con, as.integer(where), rw))
+seek.connection <- function(con, where = NA, origin = "start", rw = "", ...)
+{
+    origin <- pmatch(origin, c("start", "current", "end"))
+    rw <- pmatch(rw, c("read", "write"), 0)
+    if(is.na(origin))
+        stop("`origin' must be one of `start', `current` or `end'")
+    .Internal(seek(con, as.integer(where), origin, rw))
+}
+
+truncate <- function(con, ...)
+    UseMethod("truncate")
+
+truncate.connection <- function(con, ...)
+{
+    if(!isOpen(con)) stop("can only truncate an open connection")
+    .Internal(truncate(con))
+}
 
 pushBack <- function(data, connection, newLine = TRUE)
     invisible(.Internal(pushBack(data, connection, newLine)))
@@ -134,4 +168,28 @@ writeBin <- function(object, con, size = NA, endian = .Platform$endian)
         on.exit(close(con))
     }
     invisible(.Internal(writeBin(object, con, size, swap)))
+}
+
+## encoding vectors
+native.enc <- 0:255
+# rest in Rprofile.*
+
+readChar <- function(con, nchars)
+{
+    if(is.character(con)) {
+        con <- file(con, "rb")
+        on.exit(close(con))
+    }
+    .Internal(readChar(con, as.integer(nchars)))
+}
+
+writeChar <- function(object, con, nchars = nchar(object), eos = "")
+{
+    if(!is.character(object))
+        stop("can only write character objects")
+    if(is.character(con)) {
+        con <- file(con, "wb")
+        on.exit(close(con))
+    }
+    invisible(.Internal(writeChar(object, con, as.integer(nchars), eos)))
 }

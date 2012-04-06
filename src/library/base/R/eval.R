@@ -7,9 +7,6 @@ eval <-
                        parent.frame())
     .Internal(eval(expr, envir,enclos))
 
-quote <- function(expr) substitute(expr)
-
-
 eval.parent <- function(expr, n = 1){
     p <- parent.frame(n + 1)
     eval(expr , p)

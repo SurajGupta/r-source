@@ -5,22 +5,20 @@ all: makeMakedeps ../gnuwin32/libmain.a
 
 CFLAGS=$(OPTFLAGS) -I../include -DHAVE_CONFIG_H
 FFLAGS=$(OPTFLAGS)
-SOURCES=$(filter-out strdup.c, $(wildcard *.c *.f))
-OBJS=$(foreach i, $(SOURCES), $(basename $i).o)
+CSOURCES=$(filter-out strdup.c, $(wildcard *.c))
+FSOURCES=$(wildcard *.f)
+OBJS=$(CSOURCES:.c=.o) $(FSOURCES:.f=.o) 
 
 gram.c: ;
 
-saveload-CFLAGS=-I../gnuwin32/xdr
+saveload-CFLAGS=-I../extra/xdr
+connections-CFLAGS=-I../gnuwin32/bitmap/zlib
+#internet-CFLAGS=-I../gnuwin32
 
 ../gnuwin32/libmain.a: $(OBJS)
 
 # Dependencies
-CSOURCES=$(wildcard *.c)
-DEPS=$(foreach i, $(CSOURCES), $(basename $i).d)
-
-.c.d:
-	@echo "making $@ from $<"
-	@$(CC)  -M $(CFLAGS) $($*-CFLAGS) $< -o $@
+DEPS=$(CSOURCES:.c=.d)
 
 makeMakedeps: $(DEPS)
 	@$(RM) Makedeps

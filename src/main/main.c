@@ -543,8 +543,18 @@ static int ParseBrowser(SEXP CExpr, SEXP rho)
 	    SET_DEBUG(rho, 0);
 	}
 	if (!strcmp(CHAR(PRINTNAME(CExpr)),"Q")) {
+
+	    /* Run onexit/cend code for everything above the target.
+               The browser context is still on the stack, so any error
+               will drop us back to the current browser.  */
+	    R_run_onexits(R_ToplevelContext);
+
+	    /* this is really dynamic state that should be managed as such */
 	    R_BrowseLevel = 0;
-            LONGJMP(R_Toplevel.cjmpbuf, CTXT_TOPLEVEL);
+
+	    R_restore_globals(R_ToplevelContext);
+	    R_GlobalContext = R_ToplevelContext;
+            LONGJMP(R_ToplevelContext->cjmpbuf, CTXT_TOPLEVEL);
 	}
 	if (!strcmp(CHAR(PRINTNAME(CExpr)),"where")) {
 	    printwhere();
@@ -553,6 +563,14 @@ static int ParseBrowser(SEXP CExpr, SEXP rho)
 	}
     }
     return rval;
+}
+
+/* registering this as a cend exit procedure makes sure R_BrowseLevel
+   is maintained across LONGJMP's */
+static void browser_cend(void *data)
+{
+    int *psaved = data;
+    R_BrowseLevel = *psaved - 1;
 }
 
 SEXP do_browser(SEXP call, SEXP op, SEXP args, SEXP rho)
@@ -591,11 +609,17 @@ SEXP do_browser(SEXP call, SEXP op, SEXP args, SEXP rho)
 
     begincontext(&returncontext, CTXT_BROWSER, call, rho,
 		 R_NilValue, R_NilValue);
+    returncontext.cend = browser_cend;
+    returncontext.cenddata = &savebrowselevel;
     if (!SETJMP(returncontext.cjmpbuf)) {
-	begincontext(&thiscontext, CTXT_TOPLEVEL, R_NilValue, rho,
+	begincontext(&thiscontext, CTXT_RESTART, R_NilValue, rho,
 		     R_NilValue, R_NilValue);
-	SETJMP(thiscontext.cjmpbuf);
-	R_GlobalContext = R_ToplevelContext = &thiscontext;
+	if (SETJMP(thiscontext.cjmpbuf)) {
+	    SET_RESTART_BIT_ON(thiscontext.callflag);
+	    R_ReturnedValue = R_NilValue;
+	    R_Visible = 0;
+	}
+	R_GlobalContext = &thiscontext;
 	signal(SIGINT, onintr);
 	R_BrowseLevel = savebrowselevel;
         signal(SIGINT, onintr);

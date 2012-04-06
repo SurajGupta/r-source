@@ -1,4 +1,4 @@
-### $Id: pkg2tex.pl,v 1.1.2.1 2000/12/16 22:48:52 hornik Exp $
+### $Id: pkg2tex.pl,v 1.2 2001/01/15 14:52:16 pd Exp $
 
 ## Create a single pkgname-pkg.tex file from the Latex subdirectories
 ## Copyright (C) 1998 Douglas M. Bates <bates@stat.wisc.edu>
@@ -27,7 +27,7 @@ use Getopt::Long;
 
 my $help;
 
-my $revision = ' $Revision: 1.1.2.1 $ ';
+my $revision = ' $Revision: 1.2 $ ';
 my $version;
 my $name;
 

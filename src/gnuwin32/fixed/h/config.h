@@ -64,6 +64,10 @@
 #define Win32 1
 /* #undef Macintosh */
 
+/* Define if C's Rcomplex and Fortran's COMPLEX*16 can be interchanged,
+   and can do arithmetic on the latter */
+#define HAVE_DOUBLE_COMPLEX 1
+
 /* Define if calloc(0) does not return a null pointer. */
 #undef CALLOC_BROKEN
 
@@ -72,6 +76,15 @@
 
 /* Define if you have BSD networking headers and libraries. */
 #undef HAVE_BSD_NETWORKING
+
+/* Define if you have support for sockets. */
+#define HAVE_SOCKETS 1
+
+/* Define if you have support for ftp/http access. */
+#define HAVE_INTERNET 1
+
+/* Define if you provide support for libxml's ftp/http functions. */
+#define SUPPORT_LIBXML 1
 
 /* Define if your Fortran compiler appends an underscore to external
    names. */
@@ -91,7 +104,7 @@
 
 /* Define if your C compiler does not prepend an underscore to external
    names. */
-#undef HAVE_NO_SYMBOL_UNDERSCORE
+#define HAVE_NO_SYMBOL_UNDERSCORE 1
 
 /* Define if you have the PNG headers and libraries. */
 #define HAVE_PNG 1
@@ -106,6 +119,9 @@
 /* Define if you have the X11 headers and libraries, and want the X11
    GUI to be built. */
 #undef HAVE_X11
+
+/* Define if you have the zlib headers and libraries. */
+#define HAVE_ZLIB 1
 
 /* Define if you have IEEE 754 floating point arithmetic. */
 #define IEEE_754 1
@@ -133,7 +149,7 @@
 #define R_PRINTCMD  "UNKNOWN"
 
 /* Define this to enable R-level profiling. */
-#undef R_PROFILING
+#define R_PROFILING 1
 
 /* Define this to be the name of the vendor of your system. */
 #define R_VENDOR "pc"
@@ -164,6 +180,9 @@
    Apparently necessary to fix a GCC bug on AIX? */
 #undef blkcnt_t
 
+/* Type for socket lengths: socklen_t, sock_t, int? */
+#define SOCKLEN_T int
+
 /* The number of bytes in a long.  */
 #define SIZEOF_LONG 4
 
@@ -190,6 +209,9 @@
 
 /* Define if you have the finite function.  */
 #define HAVE_FINITE 1
+
+/* Define if you have the ftruncate function.  */
+#undef HAVE_FTRUNCATE
 
 /* Define if you have the getcwd function.  */
 #undef HAVE_GETCWD
@@ -218,6 +240,9 @@
 /* Define if you have the memmove function.  */
 #undef HAVE_MEMMOVE
 
+/* Define if you have the mkfifo function.  */
+#undef HAVE_MKFIFO
+
 /* Define if you have the popen function.  */
 #undef HAVE_POPEN
 
@@ -232,6 +257,9 @@
 
 /* Define if you have the setitimer function.  */
 #undef HAVE_SETITIMER
+
+/* Define if you have the snprintf function.  */
+#define HAVE_SNPRINTF 1
 
 /* Define if you have the stat function.  */
 #define HAVE_STAT 1
@@ -268,6 +296,12 @@
 
 /* Define if you have the <elf.h> header file.  */
 #undef HAVE_ELF_H
+
+/* Define if you have the <errno.h> header file.  */
+#define HAVE_ERRNO_H 1
+
+/* Define if you have the <fcntl.h> header file.  */
+#undef HAVE_FCNTL_H
 
 /* Define if you have the <floatingpoint.h> header file.  */
 #undef HAVE_FLOATINGPOINT_H
@@ -326,6 +360,9 @@
 /* Define if you have the <sys/param.h> header file.  */
 #undef HAVE_SYS_PARAM_H
 
+/* Define if you have the <sys/select.h> header file.  */
+#undef HAVE_SYS_SELECT_H
+
 /* Define if you have the <sys/socket.h> header file.  */
 #undef HAVE_SYS_SOCKET_H
 
@@ -344,16 +381,23 @@
 /* Define if you have the <unistd.h> header file.  */
 #define HAVE_UNISTD_H 1
 
+/* Define if you have the <zlib.h> header file.  */
+#define HAVE_ZLIB_H 1
+
+/* Define if you have the z library (-lz).  */
+#define HAVE_LIBZ 1
+
 /* Name of package */
 #define PACKAGE "R"
 
 /* Version number of package */
-#define VERSION "1.2.0"
+#define VERSION "1.3.0"
 
 /* Windows-specific */
 #define PSIGNAL
 #define PLOTHISTORY
 
+#define snprintf  _snprintf
 #define vsnprintf  _vsnprintf
 
 double asinh(double);
@@ -370,6 +414,7 @@ extern int _finite(double);
 #define min(a,b)	(((a)<(b))?(a):(b))
 #endif
 
+void R_ProcessEvents(void);
 
 /* 27/03/2000 win32-api needs this for ANSI compliance */
 #define NONAMELESSUNION

@@ -32,7 +32,7 @@
 /* routines to ensure consistency. */
 
 
-static char *truenames[] = {
+const static char * const truenames[] = {
     "T",
     "True",
     "TRUE",
@@ -40,7 +40,7 @@ static char *truenames[] = {
     (char *) 0,
 };
 
-static char *falsenames[] = {
+const static char * const falsenames[] = {
     "F",
     "False",
     "FALSE",
@@ -130,13 +130,9 @@ int IntegerFromReal(double x, int *warn)
 {
     if (ISNAN(x))
 	return NA_INTEGER;
-    else if (x > INT_MAX) {
-	*warn |= WARN_INACC;
-	return INT_MAX;
-    }
-    else if (x <= INT_MIN) {
-	*warn |= WARN_INACC;
-	return INT_MIN+1;
+    else if (x > INT_MAX || x <= INT_MIN ) {
+	*warn |= WARN_NA;
+	return NA_INTEGER;
     }
     return x;
 }
@@ -145,13 +141,9 @@ int IntegerFromComplex(Rcomplex x, int *warn)
 {
     if (ISNAN(x.r) || ISNAN(x.i))
 	return NA_INTEGER;
-    else if (x.r > INT_MAX) {
-	*warn |= WARN_INACC;
-	return INT_MAX;
-    }
-    else if (x.r <= INT_MIN) {
-	*warn |= WARN_INACC;
-	return INT_MIN+1;
+    else if (x.r > INT_MAX || x.r <= INT_MIN ) {
+	*warn |= WARN_NA;
+	return NA_INTEGER;;
     }
     if (x.i != 0)
 	*warn |= WARN_IMAG;
@@ -198,7 +190,7 @@ double RealFromInteger(int x, int *warn)
 double RealFromComplex(Rcomplex x, int *warn)
 {
     if (ISNAN(x.r) || ISNAN(x.i))
-	return NA_INTEGER;
+	return NA_REAL;
     if (x.i != 0)
 	*warn |= WARN_IMAG;
     return x.r;
@@ -302,14 +294,14 @@ SEXP StringFromInteger(int x, int *warn)
 SEXP StringFromReal(double x, int *warn)
 {
     int w, d, e;
-    formatReal(&x, 1, &w, &d, &e);
+    formatReal(&x, 1, &w, &d, &e, 0);
     return mkChar(EncodeReal(x, w, d, e));
 }
 
 SEXP StringFromComplex(Rcomplex x, int *warn)
 {
     int wr, dr, er, wi, di, ei;
-    formatComplex(&x, 1, &wr, &dr, &er, &wi, &di, &ei);
+    formatComplex(&x, 1, &wr, &dr, &er, &wi, &di, &ei, 0);
     return mkChar(EncodeComplex(x, wr, dr, er, wi, di, ei));
 }
 
@@ -1231,7 +1223,8 @@ SEXP do_is(SEXP call, SEXP op, SEXP args, SEXP rho)
 
     case 200:		/* is.atomic */
 	switch(TYPEOF(CAR(args))) {
-	case NILSXP:
+	case NILSXP: 
+	    /* NULL is atomic (S compatibly), but not in isVectorAtomic(.) */
 	case CHARSXP:
 	case LGLSXP:
 	case INTSXP:
@@ -1346,7 +1339,7 @@ SEXP do_isna(SEXP call, SEXP op, SEXP args, SEXP rho)
 #endif
     x = CAR(args);
     n = length(x);
-    ans = allocVector(LGLSXP, n);
+    PROTECT(ans = allocVector(LGLSXP, n));
     if (isVector(x)) {
 	PROTECT(dims = getAttrib(x, R_DimSymbol));
 	if (isArray(x))
@@ -1426,6 +1419,7 @@ SEXP do_isna(SEXP call, SEXP op, SEXP args, SEXP rho)
     if (isVector(x))
 	UNPROTECT(2);
     UNPROTECT(1);
+    UNPROTECT(1); /*ans*/
     return ans;
 }
 
@@ -1446,7 +1440,7 @@ SEXP do_isnan(SEXP call, SEXP op, SEXP args, SEXP rho)
 #endif
     x = CAR(args);
     n = length(x);
-    ans = allocVector(LGLSXP, n);
+    PROTECT(ans = allocVector(LGLSXP, n));
     if (isVector(x)) {
 	PROTECT(dims = getAttrib(x, R_DimSymbol));
 	if (isArray(x))
@@ -1522,6 +1516,7 @@ SEXP do_isnan(SEXP call, SEXP op, SEXP args, SEXP rho)
     if (isVector(x))
 	UNPROTECT(2);
     UNPROTECT(1);
+    UNPROTECT(1); /*ans*/
     return ans;
 }
 
@@ -1806,4 +1801,11 @@ SEXP do_substitute(SEXP call, SEXP op, SEXP args, SEXP rho)
     s = substituteList(t, env);
     UNPROTECT(2);
     return CAR(s);
+}
+
+SEXP do_quote(SEXP call, SEXP op, SEXP args, SEXP rho)
+{
+    checkArity(op, args);
+
+    return(CAR(args));
 }

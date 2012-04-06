@@ -29,7 +29,7 @@ codoc <- function(dir, use.values = FALSE, use.positions = TRUE,
     if(!file.exists(docsDir <- file.path(dir, "man")))
         stop(paste("directory", fQuote(dir),
                    "does not contain Rd sources"))
-    
+
     FILES <- NULL
     if(!keep.tempfiles)
         on.exit(unlink(FILES))
@@ -60,12 +60,7 @@ codoc <- function(dir, use.values = FALSE, use.positions = TRUE,
     docsList <- tempfile("Rdocs")
     FILES <- c(FILES, docsList)
     cat(files, sep = "\n", file = docsList)
-    if(.Platform$OS.type == "windows")
-        system(paste("Rcmd extract-usage", docsList, docsFile),
-               invisible = TRUE)
-    else
-        system(paste(file.path(R.home(), "bin", "R"),
-                     "CMD extract-usage", docsList, docsFile))
+    .Script("perl", "extract-usage.pl", paste(docsList, docsFile))
 
     lib.source <- function(file, env) {
         oop <- options(keep.source = FALSE)
@@ -90,7 +85,7 @@ codoc <- function(dir, use.values = FALSE, use.positions = TRUE,
     funs <- sapply(lsCode,
                    function(f) is.function(get(f, envir = .CodeEnv)))
     ## Undocumented variables?
-    vars <- lsCode[!funs]
+    vars <- lsCode[funs == FALSE]
     undocVars <- vars[!vars %in% lsDocs]
     if(verbose) {
         cat("\nVariables without usage information:\n")
@@ -114,7 +109,7 @@ codoc <- function(dir, use.values = FALSE, use.positions = TRUE,
             any(grep("UseMethod",
                      deparse(body(get(f, envir = .CodeEnv)))))
         }
-        funs <- funs[!sapply(funs, isGeneric)]
+        funs <- funs[sapply(funs, isGeneric) == FALSE]
     }
 
     getCoDoc <- function(f) {
@@ -133,9 +128,9 @@ codoc <- function(dir, use.values = FALSE, use.positions = TRUE,
     wrongfuns <- lapply(funs, getCoDoc)
     names(wrongfuns) <- funs
     wrongfuns <-
-        wrongfuns[!sapply(wrongfuns,
+        wrongfuns[sapply(wrongfuns,
                           function(u) {
                               all(all.equal(u$code, u$docs) == TRUE)
-                          })]
+                          }) == FALSE]
     wrongfuns
 }

@@ -13,11 +13,6 @@ if(-r "../DESCRIPTION"){
 if($description->{"Version"}) {
     $pkgversion = $description->{"Version"};
 }
-if(-r "../DESCRIPTION"){
-    $description = new R::Dcf("../DESCRIPTION");
-} elsif(-r "../DESCRIPTION.in"){
-    $description = new R::Dcf("../DESCRIPTION");
-}
 if($description->{"Package"}) {
     $pkgname = $description->{"Package"};
 }
@@ -28,7 +23,7 @@ print <<ENDF;
 #include "Rversion.h"
 
 VS_VERSION_INFO VERSIONINFO
-FILEVERSION 1,1,0,0
+FILEVERSION R_FILEVERSION
 PRODUCTVERSION 3,0,0,0
 FILEFLAGSMASK 0x3L
 FILEOS VOS__WINDOWS32

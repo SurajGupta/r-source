@@ -1,6 +1,6 @@
 include ../MkRules
 
-all: profiles fixh fixr fixbin fixetc
+all: profiles fixh fixhtml fixbin fixetc fixshare
 
 profiles: ../../../library/base/R/Rprofile
 
@@ -39,8 +39,8 @@ fixh: h/config.h ../FFDecl.h ../FFTab.h \
 	sh ../../../tools/GV > $@
 	$(RM) ../../../tools/GV
 
-../../../bin/massage-Examples.sh: ../../scripts/massage-Examples
-	$(SED) -e 1d  -e 's/"contr.poly")/"contr.poly"), pager="console"'/ $< > $@
+../../../bin/massage-Examples.sh: ../../../share/sh/massage-Examples.sh
+	$(SED) -e 1d  -e 's/"contr.poly")/"contr.poly"), pager="console"/' $< > $@
 
 ../../../bin/check: ../../scripts/check.in
 	$(SED) -e 1d -e "s/R CMD/Rcmd/" $< > $@
@@ -57,16 +57,15 @@ fixh: h/config.h ../FFDecl.h ../FFTab.h \
 ../../../bin/Rdindex: ../../scripts/Rdindex.in
 	$(SED) -e 1d -e s/\"unix\"/\"windows\"/ -e "s/R CMD/Rcmd/" $< > $@
 
-../../../bin/extract-usage: ../../scripts/extract-usage.in
-	$(SED) -e 1d -e s/unix/windows/  $< > $@
-
 ../../../bin/Rdiff.sh: ../../scripts/Rdiff
 	$(SED) -e 1d $< > $@
 
+../../../bin/Rprof: ../../scripts/Rprof.in
+	$(SED) -e 1d -e "s/R CMD/Rcmd/" $< > $@
+
 fixbin: ../../../bin/massage-Examples.sh ../../../bin/build \
 	   ../../../bin/check ../../../bin/Rdconv ../../../bin/Rdindex \
-	   ../../../bin/Sd2Rd ../../../bin/extract-usage \
-	   ../../../bin/Rdiff.sh cp2bin
+	   ../../../bin/Sd2Rd ../../../bin/Rdiff.sh ../../../bin/Rprof cp2bin
 	$(ECHO) done > fixbin
 
 cp2bin: $(filter-out ./bin/CVS, $(wildcard ./bin/*))
@@ -74,16 +73,21 @@ cp2bin: $(filter-out ./bin/CVS, $(wildcard ./bin/*))
 	unzip -oaq bins -d  ../../..
 	$(RM) bins.zip
 
-fixr: $(wildcard ./r/*.html) ../../../doc/html/search/SearchEngine.html
-	$(CP) -p ./r/*.html ../../../doc/html
-	$(ECHO) done > fixr
+fixhtml: $(wildcard ./html/*.html) ../../../doc/html/search/SearchEngine.html
+	$(CP) -p ./html/*.html ../../../doc/html
+	$(ECHO) done > fixhtml
 
 fixetc: $(filter-out ./etc/CVS, $(wildcard ./etc/*))
 	$(CP) -p $^ ../../../etc
 	$(ECHO) done > fixetc
 
+fixshare: ./share/tests.mk
+	$(MKDIR) -p ../../../share/make
+	$(CP) -p $^ ../../../share/make
+	$(ECHO) done > fixshare	
+
 clean:
-	$(RM) *~ */*~ fixr fixh fixbin fixetc
+	$(RM) *~ */*~ fixhtml fixh fixbin fixetc fixshare
 
 ../../../doc/html/search/SearchEngine.html:../../../doc/KEYWORDS.db
 	(cd ../../../doc; \

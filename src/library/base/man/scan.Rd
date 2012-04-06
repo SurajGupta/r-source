@@ -9,7 +9,7 @@ scan(file = "", what = double(0), nmax = -1, n = -1, sep = "",
      quote = if (sep=="\n") "" else "'\"", dec = ".",
      skip = 0, nlines = 0, na.strings = "NA",
      flush = FALSE, fill = FALSE, strip.white = FALSE, quiet = FALSE,
-     blank.lines.skip = TRUE)
+     blank.lines.skip = TRUE, multi.line = TRUE)
 }
 \arguments{
   \item{file}{the name of a file to read data values from.  If the
@@ -24,6 +24,8 @@ scan(file = "", what = double(0), nmax = -1, n = -1, sep = "",
     Alternatively, \code{file} can be a \code{\link{connection}}, which
     will be opened if necessary, and if so closed at the end of the
     function call.
+
+    \code{file} can also be a complete URL.
   }
   \item{what}{the type of \code{what} gives the type of data to be
     read.  If \code{what} is a list, it is assumed that the lines of the
@@ -82,6 +84,12 @@ scan(file = "", what = double(0), nmax = -1, n = -1, sep = "",
 
   \item{blank.lines.skip}{logical: if \code{TRUE} blank lines in the
     input are ignored, except when counting \code{nlines}.}
+
+  \item{multi.line}{logical. Only used if \code{what} is a list.
+    If \code{FALSE}, all of a record must appear on one line (but more
+    than one record can appear on a single line).  Note that using
+    \code{fill = TRUE} implies that a record will terminated at the end
+    of a line.}
 }
 \details{
   The value of \code{what} can be a list of types, in which case
@@ -111,6 +119,9 @@ scan(file = "", what = double(0), nmax = -1, n = -1, sep = "",
   \code{\link{readLines}}.
 }
 \note{
+  The default for \code{multi.line} differs from S.  To read one record
+  per line, use \code{flush = TRUE} and \code{multi.line = FALSE}.
+  
   If number of items is not specified, the internal
   mechanism re-allocates memory in powers of two and so could use up
   to three times as much memory as needed.  (It needs both old and new

@@ -85,6 +85,8 @@ int main(int ac, char **av)
 {
     Rf_initialize_R(ac, av);
 
+
+
     mainloop();
     /*++++++  in ../main/main.c */
     return 0;
@@ -211,7 +213,6 @@ int Rf_initialize_R(int ac, char **av)
     R_Interactive = isatty(0);
     R_Consolefile = stdout;
     R_Outputfile = stdout;
-    R_Sinkfile = NULL;
 /*
  *  Since users' expectations for save/no-save will differ, we decided
  *  that they should be forced to specify in the non-interactive case.

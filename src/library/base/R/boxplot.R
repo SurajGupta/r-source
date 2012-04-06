@@ -5,7 +5,7 @@ function(x, ..., range = 1.5, width = NULL, varwidth = FALSE,
          notch = FALSE, names, boxwex = 0.8,
 	 data = parent.frame(), plot = TRUE,
          border = par("fg"), col = NULL, log = "", pars = NULL,
-         horizontal = FALSE, add = FALSE)
+         horizontal = FALSE, add = FALSE, at = NULL)
 {
     args <- list(x, ...)
     namedargs <-
@@ -16,7 +16,8 @@ function(x, ..., range = 1.5, width = NULL, varwidth = FALSE,
     pars <- c(args[namedargs], pars)
     groups <-
 	if(is.language(x)) {
-            warning("Using `formula' in boxplot.default -- shouldn't boxplot.formula be called?")
+            warning(paste("Using `formula' in boxplot.default --",
+                          "shouldn't boxplot.formula be called?"))
 	    if(inherits(x, "formula") && length(x) == 3) {
 		groups <- eval(x[[3]], data, parent.frame())
 		x <- eval(x[[2]], data, parent.frame())
@@ -59,13 +60,14 @@ function(x, ..., range = 1.5, width = NULL, varwidth = FALSE,
     if(plot) {
 	bxp(z, width, varwidth = varwidth, notch = notch, boxwex = boxwex,
             border = border, col = col, log = log, pars = pars,
-            horizontal = horizontal, add = add)
+            horizontal = horizontal, add = add, at = at)
 	invisible(z)
     }
     else z
 }
 
-boxplot.formula <- function(formula, data = NULL, subset, na.action, ...)
+boxplot.formula <-
+function(formula, data = NULL, ..., subset, na.action)
 {
     if(missing(formula) || (length(formula) != 3))
         stop("formula missing or incorrect")
@@ -78,18 +80,19 @@ boxplot.formula <- function(formula, data = NULL, subset, na.action, ...)
     m[[1]] <- as.name("model.frame")
     mf <- eval(m, parent.frame())
     response <- attr(attr(mf, "terms"), "response")
-    boxplot(split(mf[[response]], mf[[-response]]), ...)
+    boxplot(split(mf[[response]], mf[-response]), ...)
 }
 
 boxplot.stats <- function(x, coef = 1.5, do.conf=TRUE, do.out=TRUE)
 {
     nna <- !is.na(x)
-    n <- length(nna) # including +/- Inf
+    n <- sum(nna) # including +/- Inf
     stats <- fivenum(x, na.rm = TRUE)
     iqr <- diff(stats[c(2, 4)])
+    if(coef < 0) stop("`coef' must not be negative")
     if(coef == 0)
 	do.out <- FALSE
-    else if(do.out) {
+    else { # coef > 0
 	out <- x < (stats[2] - coef * iqr) | x > (stats[4] + coef * iqr)
 	if(any(out[nna])) stats[c(1, 5)] <- range(x[!out], na.rm = TRUE)
     }
@@ -103,7 +106,7 @@ bxp <- function(z, notch=FALSE, width=NULL, varwidth=FALSE,
 	        notch.frac = 0.5, boxwex = 0.8,
 		border=par("fg"), col=NULL, log="", pars=NULL,
                 frame.plot = axes,
-                horizontal = FALSE, add = FALSE, ...)
+                horizontal = FALSE, add = FALSE, at = NULL, ...)
 {
     pars <- c(pars, list(...))
 
@@ -173,6 +176,10 @@ bxp <- function(z, notch=FALSE, width=NULL, varwidth=FALSE,
 
     if(!is.list(z) || 0 == (n <- length(z$n)))
 	stop("invalid first argument")
+    if(is.null(at))
+        at <- 1:n
+    else if(length(at) != n)
+        stop(paste("`at' must have same length as `z $ n', i.e.",n))
     ## just for compatibility with S
     if(is.null(z$out))	 z$out	 <- vector(length=0)
     if(is.null(z$group)) z$group <- vector(length=0)
@@ -208,7 +215,7 @@ bxp <- function(z, notch=FALSE, width=NULL, varwidth=FALSE,
             plot.window(xlim = c(0.5, n + 0.5), ylim = ylim, log = log)
     }
     for(i in 1:n)
-	bplt(i, wid=width[i],
+	bplt(at[i], wid=width[i],
 	     stats= z$stats[,i],
 	     out  = z$out[z$group==i],
 	     conf = z$conf[,i],
@@ -220,14 +227,14 @@ bxp <- function(z, notch=FALSE, width=NULL, varwidth=FALSE,
     axes <- is.null(pars$axes)
     if(!axes) { axes <- pars$axes; pars$axes <- NULL }
     if(axes) {
+        ax.pars <- pars[names(pars) %in% c("xaxt", "yaxt", "las")]
         if (n > 1)
-            do.call("axis", c(list(side = 1 + horizontal, at = 1:n, labels
-                 = z$names), pars[names(pars) %in% c("xaxt", "yaxt", "las")]))
-        do.call("axis", c(list(side = 2 - horizontal),
-                          pars[names(pars) %in% c("xaxt", "yaxt", "las")]))
+            do.call("axis", c(list(side = 1 + horizontal,
+                                   at = at, labels = z$names), ax.pars))
+        do.call("axis", c(list(side = 2 - horizontal), ax.pars))
     }
     do.call("title", pars)
     if(frame.plot)
         box()
-    invisible(1:n)
+    invisible(at)
 }

@@ -32,24 +32,25 @@ read.delim2(file, header = TRUE, sep = "\t", quote="\"", dec=",",
     Each row of the table appears as one line of the file.  If it does
     not contain an \emph{absolute} path, the file name is
     \emph{relative} to the current working directory,
-    \code{\link{getwd}()}.
+    \code{\link{getwd}()}. Tilde-expansion is performed where supported.
 
     Alternatively, \code{file} can be a \code{\link{connection}}, which
     will be opened if necessary, and if so closed at the end of the
-    function call.  However, since the file must be read twice, this
-    will be resource-intensive except on seekable connections.
+    function call.
+
+    \code{file} can also be a complete URL.
   }
 
   \item{header}{a logical value indicating whether the file contains the
     names of the variables as its first line.  If missing, the value is
     determined from the file format: \code{header} is set to \code{TRUE}
     if and only if the first row contains one fewer field than the
-    second.}
+    number of columns.}
 
   \item{sep}{the field separator character.  Values on each line of the
-    file are separated by this character.  If \code{sep = ""} the
-    separator is ``white space'', that is one or more spaces, tabs or
-    newlines.}
+    file are separated by this character.  If \code{sep = ""} (the
+    default for \code{read.table}) the separator is ``white space'',
+    that is one or more spaces, tabs or newlines.}
 
   \item{quote}{the set of quoting characters. To disable quoting
     altogether, use \code{quote=""}.  See \code{\link{scan}} for the
@@ -98,7 +99,9 @@ read.delim2(file, header = TRUE, sep = "\t", quote="\"", dec=",",
 }
 \value{
   A data frame (\code{\link{data.frame}}) containing a representation of
-  the data in the file.
+  the data in the file.  Empty input is an error unless \code{col.names}
+  is specified, when a 0-row data frame is returned: similarly giving
+  just a header line if \code{header = TRUE} results in a 0-row data frame.
 
   This function is the principal means of reading tabular data into \R.
 }
@@ -106,8 +109,15 @@ read.delim2(file, header = TRUE, sep = "\t", quote="\"", dec=",",
   If \code{row.names} is not specified and the header line has one less
   entry than the number of columns, the first column is taken to be the
   row names.  This allows data frames to be read in from the format in
-  which they are printed.
+  which they are printed.  If  \code{row.names} is specified and does
+  not refer to the first column, that column is discarded from such files.
 
+  The number of data columns is determined by looking at the first five lines
+  of input (or the whole file if it has less than five lines), or from
+  the length of \code{col.names} if it is specified and
+  is longer.  This could conceivably be wrong if \code{fill} or
+  \code{blank.lines.skip} are true.
+  
   \code{read.csv} and \code{read.csv2} are identical to
   \code{read.table} except for the defaults.  They are intended for
   reading ``comma separated value'' files (\file{.csv}) or the variant
@@ -134,6 +144,9 @@ read.delim2(file, header = TRUE, sep = "\t", quote="\"", dec=",",
   \code{\link{read.table.url}} for ``reading'' data from the internet;
   \code{\link{write.table}};
   \code{\link{data.frame}}.
+
+  \code{\link{count.fields}} can be useful to determine problems with
+  reading files which result in reports of incorrect record lengths.
 }
 \keyword{file}
 \keyword{connection}

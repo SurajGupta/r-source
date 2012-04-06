@@ -416,7 +416,7 @@ static double xOMA1toDev(double x, DevDesc *dd)
 
 static double yOMA1toDev(double y, DevDesc *dd)
 {
-    return yLinetoDev((dd->gp.oma[0] - y - 1), dd);
+    return yLinetoDev((dd->gp.oma[0] - y), dd);
 }
 
 static double xOMA2toyDev(double x, DevDesc *dd)
@@ -447,7 +447,7 @@ static double xOMA4toyDev(double x, DevDesc *dd)
 
 static double yOMA4toxDev(double y, DevDesc *dd)
 {
-    double ndc = 1.0-xDevtoNDC(xLinetoDev(dd->gp.oma[3]-y-1, dd), dd);
+    double ndc = 1.0-xDevtoNDC(xLinetoDev(dd->gp.oma[3]-y, dd), dd);
     return xNDCtoDev(ndc, dd);
 }
 
@@ -1761,6 +1761,13 @@ DevDesc *GNewPlot(Rboolean recording)
     dd = CurrentDevice();
     GRestore(dd);
 
+    /* GNewPlot always starts a new plot UNLESS the user has set 
+     * dd->gp.new to TRUE by par(new=TRUE)
+     * If dd->gp.new is FALSE, we leave it that way (further GNewPlot's
+     * will move on to subsequent plots)
+     * If dd->gp.new is TRUE, any subsequent drawing will dirty the plot
+     * and reset dd->gp.new to FALSE
+     */
     if (!dd->gp.new) {
 	dd->dp.currentFigure += 1;
 	dd->gp.currentFigure = dd->dp.currentFigure;
@@ -1786,7 +1793,6 @@ DevDesc *GNewPlot(Rboolean recording)
 	    dd->dp.currentFigure = dd->gp.currentFigure = 1;
 	}
 
-	dd->gp.new = dd->gp.new = TRUE;
 	GReset(dd);
 	if (dd->dp.canClip)
 	    GForceClip(dd);
@@ -2387,7 +2393,7 @@ static void setClipRect(double *x1, double *y1, double *x2, double *y2,
 /* Update the device clipping region (depends on GP->xpd). */
 void GClip(DevDesc *dd)
 {
-    if (dd->gp.xpd != dd->gp.oldxpd) {
+    if (dd->gp.xpd != dd->gp.oldxpd) { 
 	double x1, y1, x2, y2;
 	setClipRect(&x1, &y1, &x2, &y2, DEVICE, dd);
 	dd->dp.clip(x1, x2, y1, y2, dd);
@@ -3716,13 +3722,27 @@ void GPretty(double *lo, double *up, int *ndiv)
 		     2, /* do eps_correction in any case */
 		     0 /* return (ns,nu) in  (lo,up) */);
     /* ==> ../appl/pretty.c */
+
+    /* The following is ugly since it kind of happens already in Rpretty0(..):
+     */
+#define rounding_eps 1e-7
     if(nu >= ns + 1) {
-	if(ns * unit < *lo) ns++;
-	if(nu > ns + 1 && nu * unit > *up) nu--;
+	if(               ns * unit < *lo - rounding_eps*unit) 
+	    ns++;
+	if(nu > ns + 1 && nu * unit > *up + rounding_eps*unit) 
+	    nu--;
 	*ndiv = nu - ns;
     }
     *lo = ns * unit;
     *up = nu * unit;
+#ifdef non_working_ALTERNATIVE
+    if(ns * unit > *lo)     
+	*lo = ns * unit;
+    if(nu * unit < *up)     
+	*up = nu * unit;
+    if(nu - ns >= 1) 
+	*ndiv = nu - ns;
+#endif
 
 #ifdef DEBUG_PLOT
     if(*lo < x1)
@@ -4032,7 +4052,7 @@ void GMtext(char *str, int side, double line, int outer, double at, int las,
 	 3 = always vertical.
 */
     double angle, xadj, yadj;
-    int coords;
+    int coords, subcoords;
 
     /* Init to keep -Wall happy: */
     angle = 0.;
@@ -4042,64 +4062,67 @@ void GMtext(char *str, int side, double line, int outer, double at, int las,
     yadj = 0.;		/* Default; currently all cases */
     if(outer) {
 	switch(side) {
-	case 1:	    angle = 0;	    coords = OMA1;	break;
-	case 2:	    angle = 90;	    coords = OMA2;	break;
-	case 3:	    angle = 0;	    coords = OMA3;	break;
-	case 4:	    angle = 90;	    coords = OMA4;	break;
+	case 1:	    coords = OMA1;	break;
+	case 2:	    coords = OMA2;	break;
+	case 3:	    coords = OMA3;	break;
+	case 4:	    coords = OMA4;	break;
 	}
-	GText(at, line, coords, str, xadj, yadj, angle, dd);
+	subcoords = NIC;
     }
     else {
-	/* Note: I changed dd->gp.yLineBias to 0.3 here. */
-	/* Purely visual tuning. RI */
 	switch(side) {
-	case 1:
-	    if(las == 2 || las == 3) {
-		at = at + GConvertXUnits(0.3, LINES, USER, dd);
-		angle = 90;
-	    }
-	    else {
-		line = line + 1 - dd->gp.yLineBias;
-		angle = 0;
-	    }
-	    coords = MAR1;
-	    break;
-	case 2:
-	    if(las == 1 || las == 2) {
-		at = at - GConvertYUnits(0.3, LINES, USER, dd);
-		angle = 0;
-	    }
-	    else {
-		line = line + dd->gp.yLineBias;
-		angle = 90;
-	    }
-	    coords = MAR2;
-	    break;
-	case 3:
-	    if(las == 2 || las == 3) {
-		at = at + GConvertXUnits(0.3, LINES, USER, dd);
-		angle = 90;
-	    }
-	    else {
-		line = line + dd->gp.yLineBias;
-		angle = 0;
-	    }
-	    coords = MAR3;
-	    break;
-	case 4:
-	    if(las == 1 || las == 2) {
-		at = at - GConvertYUnits(0.3, LINES, USER, dd);
-		angle = 0;
-	    }
-	    else {
-		line = line + 1 - dd->gp.yLineBias;
-		angle = 90;
-	    }
-	    coords = MAR4;
-	    break;
+	case 1:	    coords = MAR1;	break;
+	case 2:	    coords = MAR2;	break;
+	case 3:	    coords = MAR3;	break;
+	case 4:	    coords = MAR4;	break;
 	}
-	GText(at, line, coords, str, xadj, yadj, angle, dd);
+	subcoords = USER;
     }
+    /* Note: I changed dd->gp.yLineBias to 0.3 here. */
+    /* Purely visual tuning. RI */
+    switch(side) {
+    case 1:
+	if(las == 2 || las == 3) {
+	    at = at + GConvertXUnits(0.3, LINES, subcoords, dd);
+	    angle = 90;
+	}
+	else {
+	    line = line + 1 - dd->gp.yLineBias;
+	    angle = 0;
+	}
+	break;
+    case 2:
+	if(las == 1 || las == 2) {
+	    at = at - GConvertYUnits(0.3, LINES, subcoords, dd);
+	    angle = 0;
+	}
+	else {
+	    line = line + dd->gp.yLineBias;
+	    angle = 90;
+	}
+	break;
+    case 3:
+	if(las == 2 || las == 3) {
+	    at = at + GConvertXUnits(0.3, LINES, subcoords, dd);
+	    angle = 90;
+	}
+	else {
+	    line = line + dd->gp.yLineBias;
+	    angle = 0;
+	}
+	break;
+    case 4:
+	if(las == 1 || las == 2) {
+	    at = at - GConvertYUnits(0.3, LINES, subcoords, dd);
+	    angle = 0;
+	}
+	else {
+	    line = line + 1 - dd->gp.yLineBias;
+	    angle = 90;
+	}
+	break;
+    }
+    GText(at, line, coords, str, xadj, yadj, angle, dd);
 }/* GMtext */
 
 

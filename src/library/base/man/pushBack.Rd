@@ -25,13 +25,18 @@ pushBackLength(connection)
   \code{\link{readLines}} and \code{\link{scan}}.
 
   Pushback is only allowed for readable connections.
+
+  Not all uses of connections respect pushbacks, in particular the input
+  connection is still wired directly, so for example parsing
+  commands from the console and \code{\link{scan}("")} ignore pushbacks on
+  \code{\link{stdin}}.
 }
 \value{
   \code{pushBack} returns nothing.
 
   \code{pushBackLength} returns number of lines currently pushed back.
 }
-\seealso{\code{\link{connection}}, \code{\link{readLines}}.}
+\seealso{\code{\link{connections}}, \code{\link{readLines}}.}
 
 \examples{
 zz <- textConnection(LETTERS)

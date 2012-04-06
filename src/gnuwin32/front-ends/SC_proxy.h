@@ -17,7 +17,7 @@
  *  Software Foundation, Inc., 59 Temple Place - Suite 330, Boston,
  *  MA 02111-1307, USA
  *
- *  $Id: SC_proxy.h,v 1.3.16.1 2001/04/04 10:09:49 ripley Exp $
+ *  $Id: SC_proxy.h,v 1.4 2001/04/05 09:42:35 ripley Exp $
  */
 
 #ifndef _STATCONN_H_

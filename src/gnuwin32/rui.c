@@ -1,6 +1,6 @@
 /*
  *  R : A Computer Langage for Statistical Data Analysis
- *  Copyright (C) 1998--2000  Guido Masarotto and Brian Ripley
+ *  Copyright (C) 1998--2001  Guido Masarotto and Brian Ripley
  *
  *  This program is free software; you can redistribute it and/or modify
  *  it under the terms of the GNU General Public License as published by
@@ -51,12 +51,13 @@ int   RguiMDI = RW_MDI | RW_TOOLBAR | RW_STATUSBAR;
 int   MDIset = 0;
 static window RFrame;
 #endif
-extern int ConsoleAcceptCmd;
+extern int ConsoleAcceptCmd, R_is_running;
 static menubar RMenuBar;
 static menuitem msource, mdisplay, mload, msave, mloadhistory,
     msavehistory, mpaste, mcopy, mcopypaste, mlazy, mconfig,
     mls, mrm, msearch, mhelp, mmanintro, mmanref, mmandata,
-    mmanext, mmanlang, mapropos, mhelpstart, mFAQ, mrwFAQ;
+    mmanext, mmanlang, mapropos, mhelpstart, mFAQ, mrwFAQ, 
+    mpkgl, mpkgi, mpkgil, mpkgu;
 static int lmanintro, lmanref, lmandata, lmanlang, lmanext;
 static menu m, mman;
 static char cmd[1024];
@@ -98,16 +99,11 @@ static void menudisplay(control m)
 {
     char *fn;
 
-    if (!ConsoleAcceptCmd) return;
     setuserfilter("All files (*.*)\0*.*\0\0");
     fn = askfilename("Select file to show", "");
     show(RConsole);
     if (fn) {
 	fixslash(fn);
-/*	sprintf(cmd, 
-		"file.show(\"%s\", title=\"File\", header=\"%s\")",
-		fn, fn);
-		consolecmd(RConsole, cmd);*/
 	internal_ShowFile(fn, fn);
     }
 }
@@ -146,7 +142,6 @@ static void menuloadhistory(control m)
 {
     char *fn;
 
-    if (!ConsoleAcceptCmd) return;
     setuserfilter("All files (*.*)\0*.*\0\0");
     fn = askfilename("Load history from", R_HistoryFile);
     show(RConsole);
@@ -160,7 +155,6 @@ static void menusavehistory(control m)
 {
     char *fn;
 
-    if (!ConsoleAcceptCmd) return;
     setuserfilter("All files (*.*)\0*.*\0\0");
     fn = askfilesave("Save history in", R_HistoryFile);
     show(RConsole);
@@ -273,6 +267,44 @@ static void menusearch(control m)
     show(RConsole);
 }
 
+static void menupkgload(control m)
+{
+    if (!ConsoleAcceptCmd) return;
+    consolecmd(RConsole, 
+	       "{pkg <- select.list(sort(.packages(all.available = TRUE)))\nif(nchar(pkg)) library(pkg, character.only=TRUE)}");
+    show(RConsole);
+}
+
+static void menupkgupdate(control m)
+{
+    if (!ConsoleAcceptCmd) return;
+    consolecmd(RConsole, "update.packages()");
+    show(RConsole);
+}
+
+static void menupkginstallcran(control m)
+{
+    if (!ConsoleAcceptCmd) return;
+    consolecmd(RConsole, 
+	       "{a <- CRAN.packages()\ninstall.packages(select.list(a[,1],,TRUE), .lib.loc[1], available=a)}");
+    show(RConsole);
+}
+
+static void menupkginstalllocal(control m)
+{
+    char *fn;
+
+    if (!ConsoleAcceptCmd) return;
+    setuserfilter("zip files (*.zip)\0*.zip\0\0All files (*.*)\0*.*\0\0");
+    fn = askfilename("Select zip file to install", "");
+    show(RConsole);
+    if (fn) {
+	fixslash(fn);
+	sprintf(cmd, "install.packages(\"%s\", .lib.loc[1], CRAN = NULL)", fn);
+	consolecmd(RConsole, cmd);
+    }
+}
+
 static void menuconsolehelp(control m)
 {
     consolehelp();
@@ -366,13 +398,14 @@ static void menuabout(control m)
     show(RConsole);
 }
 
-/* some menu command can be issue only if R is waiting for input */
+/* some menu commands can be issued only if R is waiting for input */
 static void menuact(control m)
 {
-    if (consolegetlazy(RConsole))
-	check(mlazy);
-    else
-	uncheck(mlazy);
+    if (consolegetlazy(RConsole)) check(mlazy); else uncheck(mlazy);
+
+    /* dispaly needs pager set */
+    if (R_is_running) enable(mdisplay); else disable(mdisplay);
+    
     if (ConsoleAcceptCmd) {
 	enable(msource);
 	enable(mload);
@@ -382,19 +415,11 @@ static void menuact(control m)
 	enable(msearch);
 	enable(mhelp);
 	enable(mapropos);
-    }
-    if (consolecancopy(RConsole)) {
-	enable(mcopy);
-	enable(mcopypaste);
+	enable(mpkgl);
+	enable(mpkgi);
+	enable(mpkgil);
+	enable(mpkgu);
     } else {
-	disable(mcopy);
-	disable(mcopypaste);
-    }
-    if (consolecanpaste(RConsole))
-	enable(mpaste);
-    else
-	disable(mpaste);
-    if (!ConsoleAcceptCmd) {
 	disable(msource);
 	disable(mload);
 	disable(msave);
@@ -403,7 +428,22 @@ static void menuact(control m)
 	disable(msearch);
 	disable(mhelp);
 	disable(mapropos);
+	disable(mpkgl);
+	disable(mpkgi);
+	disable(mpkgil);
+	disable(mpkgu);
     }
+    
+    if (consolecancopy(RConsole)) {
+	enable(mcopy);
+	enable(mcopypaste);
+    } else {
+	disable(mcopy);
+	disable(mcopypaste);
+    }
+
+    if (consolecanpaste(RConsole)) enable(mpaste); else disable(mpaste);
+
     draw(RMenuBar);
 }
 
@@ -588,6 +628,30 @@ static void closeconsole(control m)
     R_CleanUp(SA_DEFAULT, 0, 1);
 }
 
+static void dropconsole(control m, char *fn)
+{
+    char *p;
+
+    p = strrchr(fn, '.');
+    if(p) {
+	if(stricmp(p+1, "R") == 0) {
+	    if(ConsoleAcceptCmd) {
+		fixslash(fn);
+		sprintf(cmd, "source(\"%s\")", fn);
+		consolecmd(RConsole, cmd);
+	    }
+	} else if(stricmp(p+1, "RData") == 0 || stricmp(p+1, "rda")) {
+	    if(ConsoleAcceptCmd) {
+		fixslash(fn);
+		sprintf(cmd, "load(\"%s\")", fn);
+		consolecmd(RConsole, cmd);
+	    }
+	}
+	return;
+    }
+    askok("Can only drop .R, .RData and .rda files");
+}
+
 static MenuItem ConsolePopup[] = {
     {"Copy", menucopy, 0},
     {"Paste", menupaste, 0},
@@ -694,6 +758,7 @@ int setupui()
 #endif
     addto(RConsole);
     setclose(RConsole, closeconsole);
+    setdrop(RConsole, dropconsole);
     MCHECK(gpopup(popupact, ConsolePopup));
     MCHECK(RMenuBar = newmenubar(menuact));
     MCHECK(newmenu("File"));
@@ -731,6 +796,16 @@ int setupui()
     MCHECK(mrm = newmenuitem("Remove all objects", 0, menurm));
     MCHECK(msearch = newmenuitem("List &search path", 0, menusearch));
 
+    MCHECK(newmenu("Packages"));
+    MCHECK(mpkgl = newmenuitem("Load package", 0, menupkgload));
+    MCHECK(newmenuitem("-", 0, NULL));
+    MCHECK(mpkgi = newmenuitem("Install package from CRAN", 0, 
+			       menupkginstallcran));
+    MCHECK(mpkgil = newmenuitem("Install package from local zip file", 0, 
+				menupkginstalllocal));
+    MCHECK(newmenuitem("-", 0, NULL));
+    MCHECK(mpkgu = newmenuitem("Update packages from CRAN", 0, 
+			       menupkgupdate));
 #ifdef USE_MDI
     newmdimenu();
 #endif

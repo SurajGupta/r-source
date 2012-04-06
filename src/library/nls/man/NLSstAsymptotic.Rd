@@ -1,4 +1,4 @@
-% $Id: NLSstAsymptotic.Rd,v 1.3.14.3 2001/03/24 07:05:30 ripley Exp $
+% $Id: NLSstAsymptotic.Rd,v 1.8 2001/03/31 16:07:00 pd Exp $
 \name{NLSstAsymptotic}
 \title{Fit the Asymptotic Regression Model}
 \alias{NLSstAsymptotic}

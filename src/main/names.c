@@ -28,6 +28,8 @@
 #include "Print.h"
 #include "arithmetic.h"
 
+#include "R_ext/RConverters.h"
+
 /* Table of  .Internal(.) and .Primitive(.)  R functions
  * =====     =========	      ==========
  *
@@ -44,7 +46,7 @@
  * printname:	The function name in R
  *
  * c-entry:	The name of the corresponding C function,
- *		actually declared in names.h.
+ *		actually declared in ../include/Internal.h .
  *		Convention:
  *		 - all start with "do_",
  *		 - all return SEXP.
@@ -66,7 +68,7 @@
  *
  * arity:	How many arguments are required/allowed;  "-1"	meaning ``any''
  *
- * pp-info:	Deparsing Info (-> names.h )
+ * pp-info:	Deparsing Info (-> PPinfo in ../include/Defn.h )
  *
  */
 FUNTAB R_FunTab[] =
@@ -186,7 +188,6 @@ FUNTAB R_FunTab[] =
 {"unique",	do_duplicated,	1,	11,	1,	PP_FUNCALL},
 {"which.min",	do_first_min,	1,	11,	1,	PP_FUNCALL},
 {"which.max",	do_first_max,	1,	11,	1,	PP_FUNCALL},
-{"unique",	do_duplicated,	1,	11,	1,	PP_FUNCALL},
 {"match",	do_match,	0,	11,	3,	PP_FUNCALL},
 {"pmatch",	do_pmatch,	0,	11,	3,	PP_FUNCALL},
 {"charmatch",	do_charmatch,	0,	11,	2,	PP_FUNCALL},
@@ -427,6 +428,7 @@ FUNTAB R_FunTab[] =
 
 {"nchar",	do_nchar,	1,	11,	1,	PP_FUNCALL},
 {"substr",	do_substr,	1,	11,	3,	PP_FUNCALL},
+{"substrgets",	do_substrgets,	1,	11,	4,	PP_FUNCALL},
 {"strsplit",	do_strsplit,	1,	11,	3,	PP_FUNCALL},
 {"abbreviate",	do_abbrev,	1,	11,	3,	PP_FUNCALL},
 {"make.names",	do_makenames,	0,	11,	1,	PP_FUNCALL},
@@ -510,6 +512,7 @@ FUNTAB R_FunTab[] =
 {"memory.size",	do_memsize,	0,	11,	1,	PP_FUNCALL},
 {"DLL.version",	do_dllversion,	0,	11,	1,	PP_FUNCALL},
 {"bringToTop",	do_bringtotop,	0,	11,	1,	PP_FUNCALL},
+{"select.list",	do_selectlist,	0,	11,	3,	PP_FUNCALL},
 #endif
 #ifdef Macintosh
 {"unlink",	do_unlink,	0,	11,	2,	PP_FUNCALL},
@@ -525,6 +528,7 @@ FUNTAB R_FunTab[] =
 {"dput",	do_dput,	0,	111,	2,	PP_FUNCALL},
 {"dump",	do_dump,	0,	111,	2,	PP_FUNCALL},
 {"substitute",	do_substitute,	0,	0,	-1,	PP_FUNCALL},
+{"quote",	do_quote,	0,	0,	1,	PP_FUNCALL},
 {"quit",	do_quit,	0,	111,	3,	PP_FUNCALL},
 {"interactive",	do_interactive,	0,	0,	0,	PP_FUNCALL},
 {"readline",	do_readln,	0,	11,	1,	PP_FUNCALL},
@@ -541,7 +545,7 @@ FUNTAB R_FunTab[] =
 {"split",	do_split,	0,	11,	2,	PP_FUNCALL},
 {"symbol.C",	do_symbol,	0,	1,	1,	PP_FOREIGN},
 {"symbol.For",	do_symbol,	1,	1,	1,	PP_FOREIGN},
-{"is.loaded",	do_isloaded,	0,	1,	1,	PP_FOREIGN},
+{"is.loaded",	do_isloaded,	0,	1,	-1,	PP_FOREIGN},
 {".C",		do_dotCode,	0,	1,	-1,	PP_FOREIGN},
 {".Fortran",	do_dotCode,	1,	1,	-1,	PP_FOREIGN},
 {".External",   do_External,    0,      1,      -1,     PP_FOREIGN},
@@ -566,12 +570,13 @@ FUNTAB R_FunTab[] =
 {"sys.function",do_sys,		9,	10,	-1,	PP_FUNCALL},
 {"parent.frame",do_parentframe,	0,	10,	-1,	PP_FUNCALL},
 {"sort",	do_sort,	1,	11,	1,	PP_FUNCALL},
+{"is.unsorted",	do_isunsorted,	0,	11,	1,	PP_FUNCALL},
 {"psort",	do_psort,	0,	11,	2,	PP_FUNCALL},
 {"order",	do_order,	0,	11,	-1,	PP_FUNCALL},
 {"rank",	do_rank,	0,	11,	1,	PP_FUNCALL},
 {"missing",	do_missing,	1,	0,	1,	PP_FUNCALL},
 {"nargs",	do_nargs,	1,	0,	0,	PP_FUNCALL},
-{"scan",	do_scan,	0,	11,	14,	PP_FUNCALL},
+{"scan",	do_scan,	0,	11,	15,	PP_FUNCALL},
 {"count.fields",do_countfields,	0,	11,	5,	PP_FUNCALL},
 {"t.default",	do_transpose,	0,	11,	1,	PP_FUNCALL},
 {"aperm",	do_aperm,	0,	11,	3,	PP_FUNCALL},
@@ -586,6 +591,7 @@ FUNTAB R_FunTab[] =
 {"environment<-",do_envirgets,	0,	1,	2,	PP_FUNCALL},
 {"options",	do_options,	0,	11,	1,	PP_FUNCALL},
 {"sink",	do_sink,	0,	111,	3,	PP_FUNCALL},
+{"sink.number",	do_sinknumber,	0,	111,	1,	PP_FUNCALL},
 {"lib.fixup",	do_libfixup,	0,	111,	2,	PP_FUNCALL},
 {"pos.to.env",	do_pos2env,	0,	1,	1,	PP_FUNCALL},
 {"lapply",	do_lapply,	0,	10,	2,	PP_FUNCALL},
@@ -593,7 +599,8 @@ FUNTAB R_FunTab[] =
 {"Rprof",	do_Rprof,	0,	11,	3,	PP_FUNCALL},
 {"object.size",	do_objectsize,	0,	11,	1,	PP_FUNCALL},
 {"mem.limits",	do_memlimits,	0,	11,	2,	PP_FUNCALL},
-{"merge",	do_merge,	0,	11,	2,	PP_FUNCALL},
+{"merge",	do_merge,	0,	11,	4,	PP_FUNCALL},
+{"capabilities",do_capabilities,0,	11,	0,	PP_FUNCALL},
 #if 0
 {"visibleflag", do_visibleflag,	0,	1,	0,	PP_FUNCALL},
 #endif
@@ -635,11 +642,12 @@ FUNTAB R_FunTab[] =
 
 /* Device Drivers */
 
-{"PS",		do_PS,		0,	111,   14,	PP_FUNCALL},
+{"PS",		do_PS,		0,	111,   15,	PP_FUNCALL},
 {"PicTeX",	do_PicTeX,	0,	111,	6,	PP_FUNCALL},
-{"XFig",	do_XFig,	0,	111,   12,	PP_FUNCALL},
+{"XFig",	do_XFig,	0,	111,   11,	PP_FUNCALL},
+{"PDF",		do_PDF,		0,	111,    9,	PP_FUNCALL},
 #ifdef Win32
-{"devga",	do_devga,	0,	111,	7,	PP_FUNCALL},
+{"devga",	do_devga,	0,	111,	5,	PP_FUNCALL},
 #endif
 #ifdef Unix
 {"X11",		do_X11,		0,	111,	7,	PP_FUNCALL},
@@ -648,6 +656,7 @@ FUNTAB R_FunTab[] =
 #endif
 #ifdef Macintosh
 {"Macintosh",	do_Macintosh,	0,	111,	4,	PP_FUNCALL},
+{"applescript",	do_applescript,	0,	111,	2,	PP_FUNCALL},
 #endif
 
 /* Graphics */
@@ -666,6 +675,7 @@ FUNTAB R_FunTab[] =
 {"hsv",		do_hsv,		0,	11,	4,	PP_FUNCALL},
 {"gray",	do_gray,	0,	11,	1,	PP_FUNCALL},
 {"colors",	do_colors,	0,	11,	0,	PP_FUNCALL},
+{"col2rgb",	do_col2RGB,	0,	11,	1,	PP_FUNCALL},
 {"palette",	do_palette,	0,	11,	1,	PP_FUNCALL},
 {"plot.new",	do_plot_new,	0,	111,	0,	PP_FUNCALL},
 {"plot.window",	do_plot_window,	0,	111,	3,	PP_FUNCALL},
@@ -719,7 +729,7 @@ FUNTAB R_FunTab[] =
 {"model.matrix",do_modelmatrix,	0,	11,	2,	PP_FUNCALL},
 
 {"D",		do_D,		0,	11,	2,	PP_FUNCALL},
-{"deriv.default",do_deriv,	0,	11,	4,	PP_FUNCALL},
+{"deriv.default",do_deriv,	0,	11,	5,	PP_FUNCALL},
 
 /* History manipulation */
 {"loadhistory", do_loadhistory,	0,	11,	1,	PP_FUNCALL},
@@ -740,19 +750,36 @@ FUNTAB R_FunTab[] =
 {"writeLines", 	do_writelines,	0,      11,     3,      PP_FUNCALL},
 {"readBin", 	do_readbin,	0,      11,     5,      PP_FUNCALL},
 {"writeBin", 	do_writebin,	0,      11,     4,      PP_FUNCALL},
+{"readChar", 	do_readchar,	0,      11,     2,      PP_FUNCALL},
+{"writeChar", 	do_writechar,	0,      11,     4,      PP_FUNCALL},
 {"open", 	do_open,	0,      11,     3,      PP_FUNCALL},
 {"isOpen", 	do_isopen,	0,      11,     2,      PP_FUNCALL},
 {"isIncomplete",do_isincomplete,0,      11,     1,      PP_FUNCALL},
 {"isSeekable", 	do_isseekable,	0,      11,     1,      PP_FUNCALL},
 {"close", 	do_close,	0,      11,     2,      PP_FUNCALL},
-{"file", 	do_file,	0,      11,     3,      PP_FUNCALL},
-{"pipe", 	do_pipe,	0,      11,     2,      PP_FUNCALL},
-{"seek", 	do_seek,	0,      11,     3,      PP_FUNCALL},
+{"file", 	do_url,		1,      11,     4,      PP_FUNCALL},
+{"url", 	do_url,		0,      11,     4,      PP_FUNCALL},
+{"pipe", 	do_pipe,	0,      11,     3,      PP_FUNCALL},
+{"fifo", 	do_fifo,	0,      11,     4,      PP_FUNCALL},
+{"gzfile", 	do_gzfile,	0,      11,     4,      PP_FUNCALL},
+{"seek", 	do_seek,	0,      11,     4,      PP_FUNCALL},
+{"truncate", 	do_truncate,	0,      11,     1,      PP_FUNCALL},
 {"pushBack", 	do_pushback,	0,      11,     3,      PP_FUNCALL},
 {"pushBackLength",do_pushbacklength,0,  11,     1,      PP_FUNCALL},
 {"textConnection",do_textconnection,0,	11,     3,      PP_FUNCALL},
+{"socketConnection",do_sockconn,0,	11,     6,      PP_FUNCALL},
 {"getAllConnections",do_getallconnections,0,	11,     0,      PP_FUNCALL},
 {"summary.connection",do_sumconnection,0,	11,     1,      PP_FUNCALL},
+{"download", 	do_download,	0,      11,     4,      PP_FUNCALL},
+
+
+{"readDCF", 	do_readDCF,	0,      11,     2,      PP_FUNCALL},
+
+{"getNumRtoCConverters", do_getNumRtoCConverters, 0, 11, 0, PP_FUNCALL},
+{"getRtoCConverterDescriptions", do_getRtoCConverterDescriptions, 0, 11, 0, PP_FUNCALL},
+{"getRtoCConverterStatus", do_getRtoCConverterStatus, 0, 11, 0, PP_FUNCALL},
+{"setToCConverterActiveStatus", do_setToCConverterActiveStatus, 0, 11, 2, PP_FUNCALL},
+{"removeToCConverterActiveStatus", do_setToCConverterActiveStatus, 1, 11, 1, PP_FUNCALL},
 
 {NULL,		NULL,		0,	0,	0,	0},
 };

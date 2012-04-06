@@ -38,16 +38,34 @@ as.dist(m, diag = NULL, upper = NULL)
   Available distance measures are (written for two vectors \eqn{x} and
   \eqn{y}): 
   \describe{
-    \item{\code{euclidean}:}{Usual square distance between the two vectors (2 norm).}
+    \item{\code{euclidean}:}{Usual square distance between the two
+      vectors (2 norm).}
+
     \item{\code{maximum}:}{Maximum distance between two components of \eqn{x}
-    and \eqn{y} (supremum norm)}
-    \item{\code{manhattan}:}{Absolute distance between the two vectors (1 norm).}
+      and \eqn{y} (supremum norm)}
+
+    \item{\code{manhattan}:}{Absolute distance between the two vectors
+      (1 norm).}
+
     \item{\code{canberra}:}{\eqn{\sum_i |x_i - y_i| / |x_i + y_i|}{%
-	                           sum(|x_i - y_i| / |x_i + y_i|)}}
-    \item{\code{binary}:}{(aka \emph{asymmetric binary}): Count the number of
-    different bits in \eqn{x} and \eqn{y} where at least one of the two
-    bits is 1, i.e., components where both bits are zero are ignored.}
+	sum(|x_i - y_i| / |x_i + y_i|)}.  Terms with zero numerator and
+      denominator are omitted from the sum and treated as if the values
+      were missing.
+    }
+    
+    \item{\code{binary}:}{(aka \emph{asymmetric binary}): The vectors
+      are regarded as binary bits, so non-zero elements are `on' and zero
+      elements are `off'.  The distance is the \emph{proportion} of
+      bits in which only one is on amongst those in which at least one is on.}
   }
+
+  Missing values are allowed, and are excluded from all computations
+  involving the rows within which they occur.  If some columns are
+  excluded in calculating a Euclidean, Manhattan or Canberra distance,
+  the sum is scaled up proportionally to the number of columns used.
+  If all pairs are excluded when calculating a particular distance,
+  the value is \code{NA}. 
+  
   The functions \code{as.matrix.dist()} and \code{as.dist()} can be used
   for conversion between objects of class \code{"dist"} and conventional
   distance matrices and vice versa.
@@ -75,6 +93,14 @@ dist(x, upper = TRUE)
 m <- as.matrix(dist(x))
 d <- as.dist(m)
 print(d, digits = 3)
+
+## example of binary and canberra distances.
+x <- c(0, 0, 1, 1, 1, 1)
+y <- c(1, 0, 1, 1, 0, 1)
+dist(rbind(x,y), method="binary")
+## answer 0.4 = 2/5
+dist(rbind(x,y), method="canberra")
+## answer 2 * (6/5)
 }
 \keyword{multivariate}
 \keyword{cluster}

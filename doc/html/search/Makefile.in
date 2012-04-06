@@ -18,8 +18,9 @@ SOURCES_JAVA = \
 	SearchEngine.java \
 	Tracer.java \
 	Value.java
+OBJECTS_JAVA = $(SOURCES_JAVA:.java=.class)
 INSTFILES = \
-	$(SOURCES_JAVA:.java=.class) \
+	$(OBJECTS_JAVA) \
 	SearchEngine-foot.html \
 	SearchEngine-head.html \
 	SearchObject.html
@@ -29,6 +30,12 @@ OBJECTS = \
 	SearchEngine.html \
 	index.txt
 
+.SUFFIXES:
+.SUFFIXES: .class .java
+
+.java.class:
+	(cd $(srcdir) && $(JAVAC) $(<F))
+
 all: Makefile R
 
 Makefile: $(srcdir)/Makefile.in $(top_builddir)/config.status
@@ -36,8 +43,8 @@ Makefile: $(srcdir)/Makefile.in $(top_builddir)/config.status
 	  CONFIG_FILES=$(subdir)/$@ CONFIG_HEADERS= \
 	  $(SHELL) ./config.status
 
-R: Makefile $(OBJECTS)
-	@if [ "$(srcdir)" != "." ]; then \
+R: Makefile $(OBJECTS) @MAINTAINER_MODE_TRUE@ $(OBJECTS_JAVA)
+	@if test "$(BUILDDIR_IS_SRCDIR)" = no ; then \
 	  $(MAKE) rhome=$(top_builddir) install-sources; \
 	fi
 
@@ -75,7 +82,7 @@ uninstall:
 
 mostlyclean:
 clean:
-	@if [ "$(srcdir)" != "." ]; then \
+	@if test "$(BUILDDIR_IS_SRCDIR)" = no ; then \
 	  rm -f $(INSTFILES); \
 	fi
 	@rm -f $(OBJECTS)

@@ -57,13 +57,17 @@ $(EX_IN): FORCE
 	@(pkg=`basename $@ -Ex.R`; \
 	if $(PERL) $(top_srcdir)/tools/Rdnewer.pl \
 	    "$(top_srcdir)/src/library/$${pkg}" "$@"; then \
-	  if test -f $@.bak ; then mv $@.bak $@.bakk ; fi; \
-	  if test -f $@     ; then cp -p $@  $@.bak  ; fi; \
+	  if test -f $@ ; then \
+	    if test -n "`tail -6 $@ | grep '^Time elapsed'`" ; then \
+	      if test -f $@.bak ; then mv $@.bak $@.bakk ; fi; \
+	      cp -p $@ $@.bak; \
+	    fi; \
+	  fi; \
 	  echo "collecting examples for package \`$${pkg}' ..."; \
 	  (cd $(top_builddir)/src/library && \
 	    OPTS="--txt --example" $(MAKE) R_PKGS="$${pkg}" DOCS); \
 	  f=$${TMPDIR-/tmp}/R$$$$; \
-	  $(top_builddir)/bin/massage-Examples $${pkg} \
+	  $(SHELL) $(top_srcdir)/share/sh/massage-Examples.sh $${pkg} \
 	    $(top_builddir)/library/$${pkg}/R-ex/*.R > $${f}; \
 	  $(top_srcdir)/tools/move-if-change $${f} $@; \
 	fi)
@@ -71,7 +75,10 @@ FORCE:
 
 $(EX_OUT): Makefile \
   $(top_builddir)/bin/R.bin \
-  $(top_builddir)/library/base/R/base
+  $(top_builddir)/library/base/R/base \
+  $(top_builddir)/modules/lapack.$(SHLIB_EXT)
+
+base-Ex.Rout: $(top_builddir)/modules/vfonts.$(SHLIB_EXT)
 
 mostlyclean: clean
 clean:

@@ -52,7 +52,7 @@ double gamma_cody(double x)
 /* ----------------------------------------------------------------------
    Mathematical constants
    ----------------------------------------------------------------------*/
-    static double sqrtpi = .9189385332046727417803297; /* == ??? */
+    const double sqrtpi = .9189385332046727417803297; /* == ??? */
 
 /* *******************************************************************
 
@@ -105,22 +105,22 @@ double gamma_cody(double x)
    */
 
 
-    static double xbig = 171.624;
-    /* ML_POSINF ==   static double xinf = 1.79e308;*/
-    /* DBL_EPSILON = static double eps = 2.22e-16;*/
-    /* DBL_MIN ==   static double xminin = 2.23e-308;*/
+    const double xbig = 171.624;
+    /* ML_POSINF ==   const double xinf = 1.79e308;*/
+    /* DBL_EPSILON = const double eps = 2.22e-16;*/
+    /* DBL_MIN ==   const double xminin = 2.23e-308;*/
 
     /*----------------------------------------------------------------------
       Numerator and denominator coefficients for rational minimax
       approximation over (1,2).
       ----------------------------------------------------------------------*/
-    static double p[8] = {
+    const double p[8] = {
 	-1.71618513886549492533811,
 	24.7656508055759199108314,-379.804256470945635097577,
 	629.331155312818442661052,866.966202790413211295064,
 	-31451.2729688483675254357,-36144.4134186911729807069,
 	66456.1438202405440627855 };
-    static double q[8] = {
+    const double q[8] = {
 	-30.8402300119738975254353,
 	315.350626979604161529144,-1015.15636749021914166146,
 	-3107.77167157231109440444,22538.1184209801510330112,
@@ -129,7 +129,7 @@ double gamma_cody(double x)
     /*----------------------------------------------------------------------
       Coefficients for minimax approximation over (12, INF).
       ----------------------------------------------------------------------*/
-    static double c[7] = {
+    const double c[7] = {
 	-.001910444077728,8.4171387781295e-4,
 	-5.952379913043012e-4,7.93650793500350248e-4,
 	-.002777777777777681622553,.08333333333333333331554247,
@@ -138,7 +138,7 @@ double gamma_cody(double x)
     /* Local variables */
     long i, n;
     long int parity;/*logical*/
-    double fact, xden, xnum, y, z, y1, res, sum, ysq;
+    double fact, xden, xnum, y, z, yi, res, sum, ysq;
 
     parity = (0);
     fact = 1.;
@@ -149,16 +149,15 @@ double gamma_cody(double x)
 	   Argument is negative
 	   ------------------------------------------------------------- */
 	y = -x;
-	y1 = ftrunc(y);
-	res = y - y1;
+	yi = ftrunc(y);
+	res = y - yi;
 	if (res != 0.) {
-	    if (y1 != ftrunc(y1 * .5) * 2.)
+	    if (yi != ftrunc(yi * .5) * 2.)
 		parity = (1);
 	    fact = -M_PI / sin(M_PI * res);
 	    y += 1.;
 	} else {
-	    res = ML_POSINF;
-	    goto L_end;
+	    return(ML_POSINF);
 	}
     }
     /* -----------------------------------------------------------------
@@ -171,11 +170,10 @@ double gamma_cody(double x)
 	if (y >= DBL_MIN) {
 	    res = 1. / y;
 	} else {
-	    res = ML_POSINF;
-	    goto L_end;
+	    return(ML_POSINF);
 	}
     } else if (y < 12.) {
-	y1 = y;
+	yi = y;
 	if (y < 1.) {
 	    /* ---------------------------------------------------------
 	       EPS < argument < 1
@@ -191,7 +189,7 @@ double gamma_cody(double x)
 	    z = y - 1.;
 	}
 	/* ---------------------------------------------------------
-	   Evaluate approximation for 1.0 < argument < 2.0
+	   Evaluate approximation for 1. < argument < 2.
 	   ---------------------------------------------------------*/
 	xnum = 0.;
 	xden = 1.;
@@ -200,14 +198,14 @@ double gamma_cody(double x)
 	    xden = xden * z + q[i];
 	}
 	res = xnum / xden + 1.;
-	if (y1 < y) {
+	if (yi < y) {
 	    /* --------------------------------------------------------
-	       Adjust result for case  0.0 < argument < 1.0
+	       Adjust result for case  0. < argument < 1.
 	       -------------------------------------------------------- */
-	    res /= y1;
-	} else if (y1 > y) {
+	    res /= yi;
+	} else if (yi > y) {
 	    /* ----------------------------------------------------------
-	       Adjust result for case  2.0 < argument < 12.0
+	       Adjust result for case  2. < argument < 12.
 	       ---------------------------------------------------------- */
 	    for (i = 0; i < n; ++i) {
 		res *= y;
@@ -216,7 +214,7 @@ double gamma_cody(double x)
 	}
     } else {
 	/* -------------------------------------------------------------
-	   Evaluate for argument >= 12.0,
+	   Evaluate for argument >= 12.,
 	   ------------------------------------------------------------- */
 	if (y <= xbig) {
 	    ysq = y * y;
@@ -228,8 +226,7 @@ double gamma_cody(double x)
 	    sum += (y - .5) * log(y);
 	    res = exp(sum);
 	} else {
-	    res = ML_POSINF;
-	    goto L_end;
+	    return(ML_POSINF);
 	}
     }
     /* ----------------------------------------------------------------------
@@ -239,8 +236,6 @@ double gamma_cody(double x)
 	res = -res;
     if (fact != 1.)
 	res = fact / res;
-
-L_end:
     return res;
 }
 

@@ -1,7 +1,8 @@
-cor.test <- function(x, y,
-		     alternative = c("two.sided", "less", "greater"),
-		     method = c("pearson", "kendall", "spearman"),
-		     exact = NULL)
+cor.test <- function(x, ...) UseMethod("cor.test")
+
+cor.test.default <-
+function(x, y, alternative = c("two.sided", "less", "greater"),
+         method = c("pearson", "kendall", "spearman"), exact = NULL)
 {
     alternative <- match.arg(alternative)
     method <- match.arg(method)
@@ -111,7 +112,7 @@ cor.test <- function(x, y,
 	}
     }
 
-    if(is.null(PVAL)) # for "pearson" (and when else ??)
+    if(is.null(PVAL))                   # for "pearson" (and when else ??)
 	PVAL <- switch(alternative,
 		       "less" = p,
 		       "greater" = 1 - p,

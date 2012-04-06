@@ -33,7 +33,7 @@ use R::Rd;
 ## don't buffer output
 $|=1;
 
-my $revision = ' $Revision: 1.19.2.9 $ ';
+my $revision = ' $Revision: 1.25 $ ';
 my $version;
 my $name;
 $revision =~ / ([\d\.]*) /;
@@ -45,7 +45,7 @@ $make = '@MAKE@';
 my @knownoptions = ("help|h", "version|v", "binary", "no-docs",
 		    "use-zip", "use-zip-help", "use-zip-data", "force");
 
-my $WINDOWS = R_getenv("R_UNDER_WINDOWS", 0);
+my $WINDOWS = (R_getenv("R_OSTYPE", "") eq "windows");
 my $tmpdir = R_getenv("TMPDIR", "/tmp");
 my $R_exe = "${R_HOME}/bin/R";
 
@@ -65,7 +65,7 @@ GetOptions (@knownoptions) || usage();
 R_version("R add-on package builder", $version) if $opt_version;
 usage() if $opt_help;
 
-my $startdir=getcwd();
+my $startdir=cwd();
 
 my $R_platform = R_getenv("R_PLATFORM", "unknown-binary");
 
@@ -137,7 +137,7 @@ foreach $pkg (@ARGV){
 	    chdir($startdir);
 	} else {
 	    my $filename =  "${pkgname}_" . $description->{"Version"} .
-		"_${R_platform}.tar";
+		"_R_${R_platform}.tar";
 	    $log->message("building \`$filename.gz'");
 	    system("tar chf $startdir/$filename $pkgs");
 	    chdir($startdir);
@@ -176,7 +176,7 @@ foreach $pkg (@ARGV){
 	open exclude, "> $exclude" ||
 	    die "Cannot write to \`$exclude'\n";
 	binmode exclude if $WINDOWS;
-	@excludepatterns = ("^.Rbuildignore\$", "\~\$");
+	@excludepatterns = ("^.Rbuildignore\$", "\~\$", "\.swp\$");
 	if(-f "$pkg/.Rbuildignore") {
 	    open(RBUILDIGNORE, "$pkg/.Rbuildignore");
 	    while(<RBUILDIGNORE>) {
@@ -234,7 +234,7 @@ sub prepare_pkg {
     my ($pkg, $in_bundle, $description, $log) = @_;
 
     chdir($pkg);
-    my $pkgdir = getcwd();
+    my $pkgdir = cwd();
     my $pkgname = basename($pkg);
 
     if(-d "src"){

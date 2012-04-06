@@ -1,19 +1,14 @@
-dev.list <-
-    function()
+dev.interactive <- function()
+    interactive() && .Device %in% c("X11", "GTK", "gnome", "windows", "Macintosh")
+
+dev.list <- function()
 {
-    if(exists(".Devices")) {
-	n <- get(".Devices")
-    }
-    else {
-	n <- list("null device")
-    }
+    n <- if(exists(".Devices")) get(".Devices") else list("null device")
     n <- unlist(n)
     i <- seq(along = n)[n != ""]
     names(i) <- n[i]
     i <- i[-1]
-    if(length(i) == 0)
-	return(NULL)
-    else i
+    if(length(i) == 0) NULL else i
 }
 
 dev.cur <-
@@ -107,7 +102,7 @@ dev.print <- function(device = postscript, ...)
     current.device <- dev.cur()
     nm <- names(current.device)[1]
     if(nm == "null device") stop("no device to print from")
-    if(nm != "X11" && nm != "windows" && nm != "gtk"  && nm != "gnome")
+    if(!(nm %in% c("X11", "GTK", "gnome", "windows", "Macintosh")))
         stop("can only print from screen device")
     oc <- match.call()
     oc[[1]] <- as.name("dev.copy")
@@ -162,7 +157,7 @@ dev.copy2eps <- function(...)
     current.device <- dev.cur()
     nm <- names(current.device)[1]
     if(nm == "null device") stop("no device to print from")
-    if(nm != "X11" && nm != "windows" && nm != "gtk"  && nm != "gnome")
+    if(!(nm %in% c("X11", "GTK", "gnome", "windows", "Macintosh")))
         stop("can only print from screen device")
     oc <- match.call()
     oc[[1]] <- as.name("dev.copy")

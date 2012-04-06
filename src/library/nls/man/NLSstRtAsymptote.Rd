@@ -1,4 +1,4 @@
-% $Id: NLSstRtAsymptote.Rd,v 1.2.14.1 2001/03/24 00:08:06 bates Exp $
+% $Id: NLSstRtAsymptote.Rd,v 1.4 2001/03/24 06:57:57 ripley Exp $
 \name{NLSstRtAsymptote}
 \title{Horizontal Asymptote on the Right Side}
 \alias{NLSstRtAsymptote}
@@ -28,5 +28,4 @@ DNase.2 <- DNase[ DNase$Run == "2", ]
 DN.srt <- sortedXyData( expression(log(conc)), expression(density), DNase.2 )
 NLSstRtAsymptote( DN.srt )
 }
-\keyword{data}
 \keyword{manip}

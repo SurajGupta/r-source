@@ -11,9 +11,9 @@ subdir = tools
 include $(top_builddir)/Makeconf
 
 distdir = $(top_builddir)/$(PACKAGE)-$(VERSION)/$(subdir)
-DISTFILES = Makefile.in \
+DISTFILES = README \
+	Makefile.in \
 	GETCONFIG GETMAKEVAL GETSYMBOLS GETVERSION \
-	Rd.files \
 	Rdnewer.pl \
 	config.guess \
 	config.sub \
@@ -49,6 +49,8 @@ clean:
 distclean: clean
 	@rm -f Makefile
 maintainer-clean: distclean
+
+install install-strip uninstall TAGS info dvi check:
 
 distdir: $(DISTFILES)
 	@for f in $(DISTFILES); do \

@@ -46,6 +46,7 @@ R.Version <- function().Internal(Version())
 machine <- function().Internal(machine())
 colors <- function().Internal(colors())
 colours <- .Alias(colors)
+col2rgb <- function(col).Internal(col2rgb(col))
 commandArgs <- function() .Internal(commandArgs())
 
 args <- function(name).Internal(args(name))
@@ -97,6 +98,17 @@ gctorture <- function(on=TRUE)invisible(.Internal(gctorture(on)))
 gray <- function(level).Internal(gray(level))
 grey <- .Alias(gray)
 
+is.unsorted <- function(x, na.rm = FALSE) {
+    if(is.null(x)) return(FALSE)
+    if(!is.atomic(x) ||
+       (!na.rm && any(is.na(x))))
+	return(NA)
+    ## else
+    if(na.rm && any(ii <- is.na(x)))
+	x <- x[!ii]
+    .Internal(is.unsorted(x))
+}
+
 mem.limits <- function(nsize=NA, vsize=NA)
 {
     structure(.Internal(mem.limits(as.integer(nsize), as.integer(vsize))),
@@ -138,17 +150,6 @@ searchpaths <- function()
     unlist(paths)
 }
 
-sink <- function(file=NULL, append = FALSE)
-{
-    closeOnExit <- FALSE
-    if(is.null(file)) file <- 1
-    else if(is.character(file)) {
-        file <- file(file, ifelse(append, "a", "w"))
-        closeOnExit <- TRUE
-    } else if(!inherits(file, "connection"))
-        stop("`file' must be NULL, a connection or a character string")
-    .Internal(sink(file, append, closeOnExit))
-}
 
 ##-- DANGER ! ---   substitute(list(...))  inside functions !!!
 ##substitute <- function(expr, env=NULL).Internal(substitute(expr, env))
@@ -165,4 +166,13 @@ unique <- function(x, incomparables = FALSE) {
     z
 }
 
-memory.profile <- function().Internal(memory.profile())
+memory.profile <- function() .Internal(memory.profile())
+
+capabilities <- function(what = NULL)
+{
+    z  <- .Internal(capabilities())
+    if(is.null(what)) return(z)
+    nm <- names(z)
+    i <- pmatch(what, nm)
+    if(is.na(i)) logical(0) else z[i]
+}

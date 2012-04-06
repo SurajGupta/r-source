@@ -7,11 +7,11 @@
 ##  R CMD Rd2dvi `grep -l "\\keyword{distr" \
 ##                  /path/to/Rsrc/src/library/base/man/*.Rd | sort | uniq`
 
-revision='$Revision: 1.25.2.1 $'
+revision='$Revision: 1.33 $'
 version=`set - ${revision}; echo ${2}`
 version="Rd2dvi ${version}
 
-Copyright (C) 2000 The R Core Development Team.
+Copyright (C) 2000-2001 The R Core Development Team.
 This is free software; see the GNU General Public Licence version 2
 or later for copying conditions.  There is NO warranty." 
 
@@ -27,12 +27,17 @@ Options:
       --debug		turn on shell debugging (set -x)
       --no-clean	do not remove created temporary files
       --no-preview	do not preview generated output file
+      --os=NAME		use OS subdir \`NAME\' (unix, mac or windows)
+      --OS=NAME		the same as \`--os\'
   -o, --output=FILE	write output to FILE
       --pdf		generate PDF output
       --title=NAME	use NAME as the title of the document
   -V, --verbose		report on what is done
 
 Report bugs to <r-bugs@r-project.org>."
+
+TEXINPUTS=.:${R_HOME}/share/texmf:${TEXINPUTS}
+export TEXINPUTS
 
 start_dir=`pwd`
 
@@ -42,10 +47,7 @@ out_ext="dvi"
 output=""
 preview=xdvi
 verbose=false
-
-TEXINPUTS=.:${R_HOME}/doc/manual:${TEXINPUTS}
-
-file_sed='s/[_$]/\\&/g'
+OSdir=${R_OSTYPE-"unix"}
 
 while test -n "${1}"; do
   case ${1} in
@@ -63,7 +65,7 @@ while test -n "${1}"; do
       out_ext="pdf";
       preview=false;
       R_RD4DVI=${R_RD4PDF-"ae,hyper"};
-      R_LATEXCMD=${PDFLATEX-pdflatex};;
+      R_LATEXCMD=${PDFLATEX-pdflatex} ;;
     --title=*)
       title=`echo "${1}" | sed -e 's/[^=]*=//'` ;;
     -o)
@@ -76,6 +78,8 @@ while test -n "${1}"; do
       ;;
     --output=*)
       output=`echo "${1}" | sed -e 's/[^=]*=//'` ;;
+    --OS=*|--os=*)
+      OSdir=`echo "${1}" | sed -e 's/[^=]*=//'` ;;
     -V|--verbose)
       verbose=echo ;;
     --|*)
@@ -90,21 +94,90 @@ fi
 
 if ${debug}; then set -x; fi
 
+. ${R_HOME}/share/sh/dcf.sh	# get_dcf_field()
+
+Rdconv_dir_or_files_to_LaTeX () {
+  ## Convert Rd files in a dir or a list of Rd files to LaTeX, appending
+  ## the result to OUTFILE.
+  ## Usage:
+  ##   Rdconv_dir_or_files_to_LaTeX OUTFILE DIR
+  ##   Rdconv_dir_or_files_to_LaTeX OUTFILE FILES
+
+  ${verbose} $@
+
+  out="${1}"
+  shift
+
+  if test -d ${1}; then
+    files=`ls ${1}/*.[Rr]d`
+    if test -d ${1}/${OSdir}; then
+      files="${files} `ls ${1}/${OSdir}/*.[Rr]d`"
+    fi
+    files=`LC_ALL=C echo ${files} | sort`
+  else
+    files="${@}"
+  fi
+
+  echo "Converting Rd files to LaTeX ..."
+
+  for f in ${files}; do
+    echo ${f}
+    ${R_CMD} Rdconv -t latex ${f} >> ${out}
+  done
+
+}
+
+Rd_DESCRIPTION_to_LaTeX () {
+  ## Typeset the contents of a DESCRIPTION file in a LaTeX description
+  ## list.
+  ## Usage:
+  ##   Rd_DESCRIPTION_to_LaTeX FILE
+  fields=`sed '/^[ 	]/d; s/^\([^:]*\):.*$/\1/' $1`
+  echo "\\begin{description}"
+  echo "\\raggedright{}"
+  for f in `echo "${fields}" | sed '/Package/d; /Bundle/d;'`; do
+    text=`get_dcf_field ${f} ${1}`
+    echo "\\item[${f}] \\AsIs{${text}}"
+  done
+  echo "\\end{description}"
+}
+
+is_bundle=no
+is_base_package=no
+file_sed='s/[_$]/\\&/g'
+
 toc="\\Rdcontents{\\R{} topics documented:}"
-if [ ${#} -eq 1 -a -d "${1}" ]; then
-  if test -d ${1}/man; then
+if test -d "${1}"; then
+  if test -f ${1}/DESCRIPTION; then
+    if test -n "`grep '^Bundle:' ${1}/DESCRIPTION`"; then
+      echo "Hmm ... looks like a package bundle"
+      is_bundle=yes
+      bundle_name=`get_dcf_field Bundle "${1}/DESCRIPTION"`
+      bundle_pkgs=`get_dcf_field Contains "${1}/DESCRIPTION"`
+      title=${title-"Bundle \`${bundle_name}'"}
+    else
+      echo "Hmm ... looks like a package"
+      package_name=`get_dcf_field Package "${1}/DESCRIPTION"`
+      title=${title-"Package \`${package_name}'"}
+      dir=${1}/man
+    fi
+  elif test -f ${1}/DESCRIPTION.in && \
+       test -n "`grep '^Priority: *base' ${1}/DESCRIPTION.in`"; then
+    is_base_package=yes
+    echo "Hmm ... looks like a package from the R distribution"
+    package_name=`get_dcf_field Package "${1}/DESCRIPTION.in"`
+    title=${title-"Package \`${package_name}'"}
     dir=${1}/man
   else
-    dir=${1}
+    if test -d ${1}/man; then
+      dir=${1}/man
+    else
+      dir=${1}
+    fi
+    subj="all in \\file{`echo ${dir} | sed ${file_sed}`}"
   fi
-  ${verbose} "Rd2dvi: \`Rdconv -t latex' ${dir}/ Rd files ..."
-  files=`LC_ALL=C find ${dir} -name "*.[Rr]d" -print | \
-    sed -e '/windows\//d' | sort`
-  subj="all in \\file{`echo ${dir} | sed ${file_sed}`}"
-  ${verbose} "files = ${files}"
 else
-  files="${@}"
-  if [ ${#} -gt 1 ]; then
+  if test ${#} -gt 1 ; then
     subj=" etc.";
   else
     subj=
@@ -112,11 +185,9 @@ else
   fi
   subj="\\file{`echo ${1} | sed ${file_sed}`}${subj}"
 fi
+title=${title-"\\R{} documentation}} \\par\\bigskip{{\\Large of ${subj}"}
 
-${verbose} ""
-${verbose} "subj: ${subj}"
-${verbose} ""
-
+## Prepare for building the documentation.
 if test -f ${output}; then
   echo "file \`${output}' exists; please remove first"
   exit 1
@@ -127,33 +198,79 @@ if test -d ${build_dir}; then
 fi
 mkdir ${build_dir}
 
-sed 's/markright{#1}/markboth{#1}{#1}/' \
-  ${R_HOME}/doc/manual/Rd.sty > ${build_dir}/Rd.sty
-
-title=${title-"\\R{} documentation}} \\par\\bigskip{{\\Large of ${subj}"}
-
+## Rd2.tex part 1: header
 cat > ${build_dir}/Rd2.tex <<EOF
 \\documentclass[${R_PAPERSIZE}paper]{book}
 \\usepackage[${R_RD4DVI-ae}]{Rd}
 \\usepackage{makeidx}
-\\makeindex
+\\makeindex{}
 \\begin{document}
+EOF
+if test ${is_bundle} = no; then
+  cat >> ${build_dir}/Rd2.tex <<EOF
 \\chapter*{}
 \\begin{center}
 {\\textbf{\\huge ${title}}}
-\\par\\medskip{\\large \\today}
+\\par\\bigskip{\\large \\today}
 \\end{center}
-${toc}
 EOF
+  if test -f ${1}/DESCRIPTION; then
+    Rd_DESCRIPTION_to_LaTeX ${1}/DESCRIPTION >> ${build_dir}/Rd2.tex
+  fi
+  if test ${is_base_package} = yes; then
+    R_version=unknown
+    if test -f ${1}/../../../VERSION; then
+      R_version=`cat ${1}/../../../VERSION`
+    fi
+    echo "`pwd`: ${1} ${R_version}"
+    Rd_DESCRIPTION_to_LaTeX ${1}/DESCRIPTION.in | \
+      sed "s/@VERSION@/${R_version}/" >> ${build_dir}/Rd2.tex
+  fi
+else
+  cat >> ${build_dir}/Rd2.tex <<EOF
+\\pagenumbering{Roman}
+\\begin{titlepage}
+\\strut\\vfill
+\\begin{center}
+{\\textbf{\\Huge ${title}}}
+\\par\\bigskip{\\large \\today}
+\\end{center}
+\\par\\bigskip
+EOF
+  Rd_DESCRIPTION_to_LaTeX ${1}/DESCRIPTION >> ${build_dir}/Rd2.tex
+  cat >> ${build_dir}/Rd2.tex <<EOF
+\\vfill\\vfill
+\\end{titlepage}
+EOF
+fi
+  
+## Rd2.tex part 2: body
+if test ${is_bundle} = no; then
+  echo ${toc} >> ${build_dir}/Rd2.tex
+  Rdconv_dir_or_files_to_LaTeX ${build_dir}/Rd2.tex ${dir-${@}}
+else
+  cat >> ${build_dir}/Rd2.tex <<EOF
+\\pagenumbering{roman}
+\\tableofcontents{}
+\\cleardoublepage{}
+\\pagenumbering{arabic}
+EOF
+  for p in ${bundle_pkgs}; do
+    echo "Bundle package: \`${p}'"
+    echo "\\chapter{Package \`${p}'}" >> ${build_dir}/Rd2.tex
+    if test -f ${1}/${p}/DESCRIPTION.in; then
+      Rd_DESCRIPTION_to_LaTeX ${1}/${p}/DESCRIPTION.in \
+        >> ${build_dir}/Rd2.tex
+    fi
+    Rdconv_dir_or_files_to_LaTeX ${build_dir}/Rd2.tex ${1}/${p}/man
+    echo "\\clearpage{}" >> ${build_dir}/Rd2.tex
+  done
+  echo "\\cleardoublepage{}" >> ${build_dir}/Rd2.tex
+fi
 
-echo "Converting Rd files to LaTeX ..."
-for f in ${files}; do
-  echo ${f}
-  ${R_CMD} Rdconv -t latex ${f} >> ${build_dir}/Rd2.tex
-done
-
+## Rd2.tex part 3: footer
 cat >> ${build_dir}/Rd2.tex <<EOF
-\\printindex
+\\printindex{}
 \\end{document}
 EOF
 
@@ -162,8 +279,13 @@ cd ${build_dir}
 ${R_LATEXCMD-latex} Rd2
 ${R_MAKEINDEXCMD-makeindex} Rd2
 ${R_LATEXCMD-latex} Rd2
+if test ${out_ext} = pdf; then
+  ${R_LATEXCMD-latex} Rd2
+fi
 cd ${start_dir}
 cp ${build_dir}/Rd2.${out_ext} ${output}
+echo "Done"
+
 if ${clean}; then
   rm -rf ${build_dir}
 else

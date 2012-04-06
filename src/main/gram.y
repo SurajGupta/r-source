@@ -146,7 +146,7 @@ static int	xxvalue(SEXP, int);
 %left		UNOT NOT
 %left   	GT GE LT LE EQ NE
 %left		'+' '-'
-%left		'*' '/' '%'
+%left		'*' '/'
 %left		SPECIAL
 %left		':'
 %left		UMINUS UPLUS
@@ -1613,28 +1613,22 @@ int isValidName(char *name)
     if( c != '.' && !isalpha(c) )
         return 0;
 
-    for (i = 0; keywords[i].name; i++)
-        if (strcmp(keywords[i].name, name) == 0 && !(strcmp(name, "...")==0))
-                return 0;
+    if (c == '.' && isdigit(*p)) 
+	return 0;
 
-    if (c == '.' ) {
-	if( strlen(name)==1 )
-	    return 1;
-        while ( (c = *p++) )
-	    if( !isdigit(c) ) {
-		if( !isalpha(c) )
-		    return 0;
-		else
-		    break;
-	    };
-	if( c == '\0' )
- 	    return 0;
-    }
-    while ( c = *p++, (isalnum(c) || c=='.') );
-    if (c == '\0')
-        return 1;
-    else
-        return 0;
+    while ( c = *p++, (isalnum(c) || c=='.') )
+	;
+
+    if (c != '\0') return 0;
+
+    if (strcmp(name, "...") == 0) 
+	return 1;
+
+    for (i = 0; keywords[i].name != NULL; i++)
+        if (strcmp(keywords[i].name, name) == 0)
+                return 0;
+    
+    return 1;
 }
 
 

@@ -5,7 +5,8 @@
   Performs one or two sample Kolmogorov-Smirnov tests.
 }
 \usage{
-ks.test(x, y, \dots, alternative = c("two.sided", "less", "greater"))
+ks.test(x, y, \dots, alternative = c("two.sided", "less", "greater"),
+        exact = NULL)
 }
 \arguments{
   \item{x}{a numeric vector of data values.}
@@ -13,8 +14,11 @@ ks.test(x, y, \dots, alternative = c("two.sided", "less", "greater"))
     naming a distribution function.}
   \item{\dots}{parameters of the distribution specified by \code{y}.}
   \item{alternative}{indicates the alternative hypothesis and must be
-    one of \code{"two.sided"} (default), \code{"greater"} or \code{"less"}.
-    You can specify just the initial letter.}
+    one of \code{"two.sided"} (default), \code{"less"}, or
+    \code{"greater"}.  You can specify just the initial letter.}
+  \item{exact}{a logical indicating whether an exact p-value should be
+    computed.  Only used in the two-sided two-sample case.}
+  
 }
 \details{
   If \code{y} is numeric, a two sample test of the null that \code{x}
@@ -23,10 +27,20 @@ ks.test(x, y, \dots, alternative = c("two.sided", "less", "greater"))
   Alternatively, \code{y} can be a character string naming a
   distribution function.  In this case, a one sample test of the null
   that the distribution function underlying \code{x} is \code{y} with
-  parameters specified by \dots{} is carried out.
+  parameters specified by \code{\dots} is carried out.
 
-  Currently, no exact p-values are available.  The approximation by the
-  limiting distribution may be inaccurate in small samples.
+  The possible values \code{"two.sided"}, \code{"less"} and
+  \code{"greater"} of \code{alternative} specify the null hypothesis
+  that the true distribution function of \code{x} is equal to, not less
+  than or not greater than the hypothesized distribution function
+  (one-sample case) or the distribution function of \code{y} (two-sample
+  case), respectively.
+
+  Currently, exact p-value are only available for the two-sided
+  two-sample test.  In this case, by default (if \code{exact} is not
+  specified), an exact p-value is computed if the product of the sample
+  sizes is less than 10000.  Otherwise, the asymptotic distributions are
+  used.  This approximation may be inaccurate in small samples.
 }
 \value{
   A list with class \code{"htest"} containing the following components:

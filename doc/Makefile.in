@@ -17,25 +17,25 @@ SUBDIRS = html manual
 
 HELP2MAN = $(PERL) $(top_srcdir)/tools/help2man.pl
 
-all: Makefile R docs @MAINTAINER_MODE_TRUE@ maintainer-build
+all: Makefile R docs
 
 Makefile: $(srcdir)/Makefile.in $(top_builddir)/config.status
 	@cd $(top_builddir) && \
 	  CONFIG_FILES=$(subdir)/$@ CONFIG_HEADERS= \
 	  $(SHELL) ./config.status
 
-R: Makefile
+R: Makefile @MAINTAINER_MODE_TRUE@ maintainer-build
 	@for d in $(SUBDIRS); do \
 	  (cd $${d} && $(MAKE) $@) || exit 1; \
 	done
+	@if test "$(BUILDDIR_IS_SRCDIR)" = no ; then \
+	  $(MAKE) rhome=$(top_builddir) install-sources; \
+	fi
 
 docs:
 	@(cd manual && $(MAKE) $@)
 
-install: install-message installdirs install-man
-	@for f in $(INSTFILES); do \
-	  $(INSTALL_DATA) $(srcdir)/$${f} $(rhome)/$(subdir); \
-	done
+install: install-message installdirs install-sources install-man
 	@for d in $(SUBDIRS); do \
 	  (cd $${d} && $(MAKE) $@) || exit 1; \
 	done
@@ -47,13 +47,17 @@ install-man:
 	@$(INSTALL_DATA) $(srcdir)/R.1 $(mandir)/man1
 install-message:
 	@echo "installing $(subdir) ..."
+install-sources:
+	@for f in $(INSTFILES); do \
+	  $(INSTALL_DATA) $(srcdir)/$${f} $(rhome)/$(subdir); \
+	done
 install-strip: install
 
 uninstall:
 	@echo "uninstalling $(subdir) ..."
 	@if test -d $(rhome)/$(subdir) \
-	  && test "`cd $(rhome); pwd`" != "`cd $(top_builddir); pwd`"; \
-	then \
+	  && test "`cd $(rhome); $(GETWD)`" \
+	       != "`cd $(top_builddir); $(GETWD)`"; then \
 	  for d in $(SUBDIRS); do \
 	    (cd $${d} && $(MAKE) $@) || exit 1; \
 	  done; \

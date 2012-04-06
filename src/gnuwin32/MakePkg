@@ -2,6 +2,7 @@
 RLIB=../../../library
 DPKG=$(RLIB)/$(PKG)
 SPKG=.
+SAVE=CHECK
 
 ifeq ($(strip $(DLLNM)),)
   DLLNAME=$(PKG)
@@ -43,10 +44,14 @@ else
   PKGRFILES=$(filter-out $(R1), $(PKGRFILES0)) $(RWIN32)
 endif
 
+# demos
+PKGDEMOS0=$(wildcard $(SPKG)/demo/*)
+PKGDEMOS=$(filter-out $(SPKG)/demo/CVS, $(PKGDEMOS0))
+
 # Others
 OFILES0=$(wildcard $(SPKG)/*)
-OFILES1= DESCRIPTION INDEX TITLE
-OFILES-NO= R r chm data man src src-c Makefile.in inst check orig tests \
+OFILES1= INDEX TITLE
+OFILES-NO= R r chm data man src src-c demo Makefile.in inst check orig tests \
 	DESCRIPTION DESCRIPTION.in INDEX TITLE index title \
 	configure configure.in cleanup CVS cvs
 OFILES3=$(foreach i, $(OFILES1), $(SPKG)/$i)
@@ -58,7 +63,7 @@ INSTFILES=$(wildcard $(SPKG)/inst/*)
 SRCMAKE=$(wildcard $(SSPKG)/Makefile.win)
 
 all:  bare  $(DATA) $(DYNLIB)
-bare: $(DPKG)/zzzz $(DPKG)/R/$(PKG)
+bare: $(DPKG)/zzzz $(DPKG)/R/$(PKG) $(DPKG)/demo
 
 include $(RHOME)/src/gnuwin32/MkRules
 
@@ -70,7 +75,7 @@ else
 endif
 	$(RM) -rf $(SPKG)/chm $(SPKG)/check
 
-SEDP='/^[	 ]*$$/d;s/$(DLLNAME).so/$(DLLNAME).dll/'
+#SEDP='/^[	 ]*$$/d;s/$(DLLNAME).so/$(DLLNAME).dll/'
 
 $(DPKG)/R/$(PKG): $(PKGRFILES)
 ifneq ($(strip $(PKGRFILES)),)
@@ -78,8 +83,16 @@ ifneq ($(strip $(PKGRFILES)),)
 	@$(MKDIR) -p $(DPKG)/R
 #	$(CAT) $(PKGRFILES) | $(SED) $(SEDP)  > $@
 	@$(CAT) $(PKGRFILES)   > $@
+	@sh $(RHOME)/src/gnuwin32/install-save.sh $(SAVE) $(RLIB) $(PKG) $(RHOME)
 else
 	@$(ECHO) "  no R files in this package"
+endif
+
+$(DPKG)/demo: $(PKGDEMOS)
+ifneq ($(strip $(PKGDEMOS)),)
+	@echo "  installing demos"
+	@$(MKDIR) -p $@
+	@$(CP) $(PKGDEMOS)   $@
 endif
 
 $(SPKG)/TITLE:
@@ -98,8 +111,11 @@ ifeq ($(strip $(INSTFILES)),)
 else
 	-$(CP) -r $(OFILES3) inst/* $(DPKG)/
 endif
+	@if test -f ${SPKG}/DESCRIPTION; then \
+	$(SED) '/^\s*$$/d' ${SPKG}/DESCRIPTION  > ${DPKG}/DESCRIPTION; \
+	fi
 ifeq ($(strip $(STAMP)),YES)
-	@echo "   adding build stamp to DESCRIPTION"
+	@echo "  adding build stamp to DESCRIPTION"
 	@echo  "cat('Built: R ', R.version[['major']], '.', R.version[['minor']], ';  Win32;  ', format(Sys.time()), sep='')" | $(RHOME)/bin/Rterm --slave >> ${DPKG}/DESCRIPTION
 endif
 

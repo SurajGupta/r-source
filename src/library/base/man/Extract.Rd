@@ -1,13 +1,5 @@
 \name{Extract}
 \title{Extract or Replace Parts of an Object}
-\usage{
-x[i]
-x[i, j, \dots]
-x[i, j, \dots , drop=TRUE]
-x[[i]]
-x[[i, j, \dots]]
-x$name
-}
 \alias{Extract}
 \alias{Subscript}
 \alias{[}
@@ -30,6 +22,20 @@ x$name
 \description{
   Operators act on vectors, arrays, dataframes and lists to extract or
   replace subsets.
+}
+\usage{
+x[i]
+x[i, j, \dots]
+x[i, j, \dots , drop=TRUE]
+x[[i]]
+x[[i, j, \dots]]
+x$name
+}
+\arguments{
+  \item{i,j,name}{elements to extract or replace}
+  \item{drop}{For data frames, matrices, and arrays.  If \code{TRUE} the
+    result is coerced to the lowest possible dimension (see examples
+    below).}
 }
 \details{
   If one of these expressions appears on the left side of an assignment

@@ -15,17 +15,15 @@ include $(top_builddir)/Makeconf
 ## see `../unix/dynload.c'.
 
 SOURCES_C = \
-	Rsock.c \
 	approx.c \
 	bakslv.c binning.c \
-	chisqsim.c chull.c cpoly.c cumsum.c \
-	distance.c \
-	fft.c fmin.c fortran.c \
+	chull.c cpoly.c cumsum.c \
+	fft.c fmin.c integrate.c\
 	lbfgsb.c loglin.c lowess.c \
 	machar.c maxcol.c massdist.c \
 	pretty.c \
 	rowsum.c \
-	sock.c splines.c stem.c strsignif.c \
+	splines.c stem.c strsignif.c \
 	tabulate.c \
 	uncmin.c \
 	zeroin.c
@@ -37,7 +35,7 @@ SOURCES_F = \
 	lminfl.f
 DEPENDS = $(SOURCES_C:.c=.d)
 OBJECTS = $(SOURCES_C:.c=.o) $(SOURCES_F:.f=.o) $(BLAS)
-HEADERS = Rsock.h sock.h
+HEADERS =
 
 distdir = $(top_builddir)/$(PACKAGE)-$(VERSION)/$(subdir)
 DISTFILES = COPYRIGHT COPYRIGHT.ftn README ROUTINES lowess.doc \
@@ -52,7 +50,7 @@ libappl_a_SOURCES = $(SOURCES)
 libappl_a_OBJECTS = $(OBJECTS)
 
 ## FIXME:
-## We most likely will not want a seperate shared library.
+## We most likely will not want a separate shared library.
 ## If we have a final decision, remove libappl.la target.
 ## </FIXME>
 noinst_LTLIBRARIES = libappl.la
@@ -92,6 +90,8 @@ clean:
 distclean: clean
 	@-rm -f Makefile
 maintainer-clean: distclean
+
+install install-strip uninstall TAGS info dvi check:
 
 distdir: $(DISTFILES)
 	@for f in $(DISTFILES); do \

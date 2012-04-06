@@ -31,8 +31,12 @@ all: Makefile DESCRIPTION
 	    $(top_builddir)/library/base; \
 	fi
 	@$(MKINSTALLDIRS) $(top_builddir)/library/base/data
-	@for f in `ls -d $(srcdir)/data/* | sed '/data\/CVS/d'`; do \
+	@for f in `ls -d $(srcdir)/data/* | sed '/CVS/d'`; do \
 	  $(INSTALL_DATA) $${f} $(top_builddir)/library/base/data; \
+	done
+	@$(MKINSTALLDIRS) $(top_builddir)/library/base/demo
+	@for f in `ls -d $(srcdir)/demo/* | sed '/CVS/d'`; do \
+	  $(INSTALL_DATA) $${f} $(top_builddir)/library/base/demo; \
 	done
 
 Makefile: $(srcdir)/Makefile.in $(top_builddir)/config.status
@@ -56,7 +60,7 @@ distdir: $(DISTFILES)
 	    || ln $(srcdir)/$${f} $(distdir)/$${f} 2>/dev/null \
 	    || cp -p $(srcdir)/$${f} $(distdir)/$${f}; \
 	done
-	@for d in R data exec man src; do \
+	@for d in R data demo exec man src; do \
 	  if test -d $(srcdir)/$${d}; then \
 	    ((cd $(srcdir); \
 	          $(TAR) -c -f - $(DISTDIR_TAR_EXCLUDE) $${d}) \

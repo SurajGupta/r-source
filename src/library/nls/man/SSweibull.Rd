@@ -1,4 +1,4 @@
-% $Id: SSweibull.Rd,v 1.1.2.1 2001/03/27 15:41:03 bates Exp $
+% $Id: SSweibull.Rd,v 1.2 2001/03/27 16:12:17 bates Exp $
 \name{SSweibull}
 \title{Weibull growth curve model}
 \usage{

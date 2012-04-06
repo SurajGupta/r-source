@@ -12,10 +12,10 @@
 \usage{
                 .C(name, \dots, NAOK = FALSE, DUP = TRUE, PACKAGE)
           .Fortran(name, \dots, NAOK = FALSE, DUP = TRUE, PACKAGE)
-         .External(name, \dots)
-             .Call(name, \dots)
-.External.graphics(name, \dots)
-    .Call.graphics(name, \dots)
+         .External(name, \dots, PACKAGE)
+             .Call(name, \dots, PACKAGE)
+.External.graphics(name, \dots, PACKAGE)
+    .Call.graphics(name, \dots, PACKAGE)
 }
 \arguments{
   \item{name}{a character string giving the name of a C function or
@@ -30,8 +30,8 @@
   \item{PACKAGE}{if supplied, confine the search for the \code{name} to
     the DLL given by this argument (plus the conventional extension,
     \code{.so}, \code{.sl}, \code{.dll}, \dots).  This is intended to
-    add safety for packages, which can ensure that no other package can
-    override their external symbols by using this argument.  Use
+    add safety for packages, which can ensure by using this argument
+    that no other package can override their external symbols.  Use
     \code{PACKAGE="base"} for symbols linked in to \R.}
 }
 \value{
@@ -125,7 +125,7 @@
   The first is that if you pass a local variable to
   \code{.C}/\code{.Fortran} with \code{DUP=FALSE}, your compiled code
   can alter the local variable and not just the copy in the return list.
-  Worse, if you pss a local variable that is a formal parameter of
+  Worse, if you pass a local variable that is a formal parameter of
   the calling function, you may be able to change not only the local
   variable but the variable one level up.  This will be very hard to trace.
 

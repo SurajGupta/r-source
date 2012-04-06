@@ -4,19 +4,16 @@ include ../gnuwin32/MkRules
 CFLAGS=$(OPTFLAGS) -I../include -DHAVE_CONFIG_H
 FFLAGS=$(OPTFLAGS)
 CSOURCES=$(wildcard *.c)
-FSOURCES=$(filter-out $(wildcard z*.f), $(wildcard *.f))
-OBJS=$(foreach i, $(CSOURCES) $(FSOURCES), $(basename $i).o)
+FSOURCES=$(wildcard *.f)
+OBJS=$(CSOURCES:.c=.o) $(FSOURCES:.f=.o)
 
 all: makeMakedeps ../gnuwin32/libappl.a
 
 ../gnuwin32/libappl.a: $(OBJS)
 
 # Dependencies
-DEPS=$(foreach i, $(CSOURCES), $(basename $i).d)
+DEPS=$(CSOURCES:.c=.d)
 
-.c.d:
-	@echo "making $@ from $<"
-	@$(CC)  -M $(CFLAGS) $($*-CFLAGS) $< -o $@
 
 makeMakedeps: $(DEPS)
 	@$(RM) Makedeps

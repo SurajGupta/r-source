@@ -1,7 +1,7 @@
-R 1.2.2 for Windows
+R 1.3.0 for Windows
 ====================
 
-This distribution contains the sources to build a port of R-1.2.2 to
+This distribution contains the sources to build a port of R-1.3.0 to
 run on Windows 95, 98, ME, NT4 and 2000 on Intel/clone chips. See the
 file `readme' for fuller details, including how to install the binary
 versions.
@@ -22,7 +22,7 @@ Collect the tools
 You will need suitable versions of at least make, sh, cat, cp, cut,
 diff, echo, egrep, expr, g(awk), grep, ls, mkdir, mv, rm, sed, touch;
 we use those from the cygwin distribution
-(http:/www.cygwin.com/mirrors.html) or (gzip, makeinfo, texindex)
+(http://www.cygwin.com/mirrors.html) or (gzip, makeinfo, texindex)
 compiled from the sources.  We have packaged a set at
 http://www.stats.ox.ac.uk/pub/Rtools/tools.zip.
 
@@ -32,13 +32,17 @@ versions of the cygwin tools and dll.  To avoid frustration, please
 use our tool set.
 
 
-We recommend that you use the mingw32 port of gcc-2.95.2-1 by Mumit
+We recommend that you use the mingw port of gcc-2.95.2-1 by Mumit
 Khan from http://www.mingw.org/.  (The `portal' gives more precise
 instructions on the current locations.)  You can build R against
 either the crtdll.dll or msvcrt.dll runtime systems, and we strongly
 recommend the latter.  (In particular, locale support is poor with
 crtdll.dll, non-existent under Win9x and crtdll.dll has many memory
 leaks.)
+
+BEWARE: you *cannot* use earlier versions of the mingw compilers, for
+example gcc-2.95.2 (no -1): the symptom is a report that `-shared' is
+not understood.
 
 An alternative is to use a more recent snapshot of the mingw compiler
 set from http://prdownloads.sourceforge.net/mingw/.  You will need the
@@ -57,6 +61,11 @@ perl5, available via http://www.activestate.com/Products/ActivePerl/
 zip and unzip from the Info-ZIP project (http://www.info-zip.org and
 mirrors, and included in our tools.zip).
 
+The zlib-1.1.3 sources from http://www.info-zip.org/pub/infozip/zlib/
+and mirror.  Unpack this from this directory by 
+
+unzip zlib113.zip -d bitmap/zlib
+
 If you want to make compiled html (.chm) files you will need the
 Microsoft HTML Help Workshop, available for download at 
 http://msdn.microsoft.com/library/tools/htmlhelp/wkshp/download.htm
@@ -74,16 +83,13 @@ appropriate environment variables set.
 Building
 --------
 
-You also need: the R source (R-1.2.2.tgz), and to build the
-installer, unzip541.zip or unzip542.zip from any Info-ZIP mirror.
+You also need the R source (R-1.3.0.tgz).
 
-Then: untar R-1.2.2.tgz somewhere (with no spaces in the path names),
+Then: untar R-1.3.0.tgz somewhere (with no spaces in the path names),
 
-	cd /somewhere/R-1.2.2/src/gnuwin32
+	cd /somewhere/R-1.3.0/src/gnuwin32
 
-IMPORTANT: edit MkRules to set the appropriate paths as needed.  If
-you have Mingw32/cross-compiler and gcc-2.95.2.1 or later you can set
-HAVE_SHARED=YES which will speed up the process considerably.
+IMPORTANT: edit MkRules to set the appropriate paths as needed.
 
 Edit Makefile to set the type(s) of help that you want built.
 
@@ -92,30 +98,24 @@ and run
 	make BUILD=MINGW32 or CYGWIN
 
 
-Note 1: the file rw1023\unzip\unzip32.dll is not in the source
+Note 1: the file rw1030\unzip\unzip32.dll is not in the source
 distribution. It can be found in file unz542dN.zip at any Info-ZIP
 mirror, or you can copy it from a binary distribution.
 
-The file rw1023\bin\Rchtml.dll is only built if CHM help is specified
+The file rw1030\bin\Rchtml.dll is only built if CHM help is specified
 in the main Makefile. Its source is the help directory, and you need
 the HTML Help Workshop files to build it. It contains instructions
 to build it under VC++6, and it is preferable to use that as the 
 VC++ library will check versions of the components needed. You can just
 copy this from a binary distribution.
 
-Note 2: building libR.a is highly disk intensive and can take several
-minutes even on a local disc. We have seen times from 30 secs to 20
-minutes. Using a network file system is likely to take longer.  It is
-done in memory and is *much* faster with gcc-2.95.2.1 or later on
-mingw32.
+Note 2: we have had reports that Norton Anti-Virus locks up the
+machine when windres is run, so you may need to disable it.
 
-Note 3: we have had a report that a version of Norton Anti-Virus
-locks up the machine when windres is run.
-
-Note 4: By default Doug Lea's malloc in the file src/gnuwin32/malloc.c is
+Note 3: By default Doug Lea's malloc in the file src/gnuwin32/malloc.c is
 used.  You can opt out of this by commenting the line LEA_MALLOC=YES
 in the Makefile, in which case the Windows malloc is used.  The one
-in crtdll.dll is unlikely to be satisfactory, but the one in msvcrt.dll
+in crtdll.dll is unlikely to be satisfactory: the one in msvcrt.dll
 does work but imposes a considerable performance penalty.
 
 You can test a build by `make check': expect some differences in the
@@ -126,7 +126,7 @@ temporary directory: the default is c:\TEMP.
 Building bitmap device support
 ------------------------------
 
-The file rw1023\bin\Rbitmap.dll is not built automatically:
+The file rw1030\bin\Rbitmap.dll is not built automatically:
 instructions on how to build it are in the file bitmap\INSTALL.  You
 can just copy this from a binary distribution.
 
@@ -135,13 +135,59 @@ Building Tcl/Tk support
 -----------------------
 
 The TclTk support package is not built automatically.  To use this you
-need to install tcl832.exe (or tcl831.exe if you already have it) from
-dev.scriptics.com, and set TCL_HOME in MkRules to where you installed
-it (perhaps c:/Program Files/Tcl).  Then
+need to download and install either ActiveTcl 8.3.3 from
+http://aspn.activestate.com/ASPN/Downloads/ActiveTcl/ or tcl832.exe
+from dev.scriptics.com, and set TCL_HOME in MkRules to where you
+installed it (perhaps c:/Program Files/Tcl).  Then
 
 	make tcl
 
 will make the library.
+
+
+
+Building the Manuals
+====================
+
+To make the PDF versions of the manuals you will need pdftex installed
+and configured to work with a large file: see doc/manual/README.  You
+also need texindex (included in our tool set).  Then the pdf manuals
+can be made by
+
+	make docs
+
+If you want to make the info versions (not the Reference Manual), you
+will need a version of makeinfo 4.0 (included in our tool set). Then
+
+	cd ../../doc/manual
+	make -f Makefile.win info
+
+will make the info files.
+
+To make DVI versions of the manuals use
+
+	cd ../../doc/manual
+	make -f Makefile.win dvi
+
+(assuming you have tex and latex installed and in your path).
+
+To make HTML versions of the manuals (not the Reference Manual) use
+
+	cd ../../doc/manual
+	make -f Makefile.win html
+
+This makes use of tidy.exe, from http://www.w3.org/.
+
+The fptex distribution of TeX (via www.fptex.org) includes a suitable
+port of pdftex.
+
+
+Building the installers
+=======================
+
+See installer/INSTALL.  You need a complete R build first, including 
+bitmap and Tcl/Tk support and the manuals.
+
 
 
 Cross-building on ix86 Linux
@@ -164,24 +210,23 @@ at
 
     http://www.devolution.com/%7Eslouken/SDL/Xmingw32/
 
-which is targetted at msvcrt.dll.  (There is also a cross-compiler
-there, but omitting g77 which you will need.)
+(There is also a cross-compiler there, but omitting g77 which you will
+need.)
 
 Apart from the compiler, you need the mingw32 runtime system and a
 cross-built version of binutils 2.9.4.
 
 You will need Perl, zip and unzip installed.
 
-You also need: the R source (R-1.2.2.tgz), and to build the installer,
+You also need: the R source (R-1.3.0.tgz), and to build the installer,
 unzip542.zip from any Info-ZIP mirror.
 
-Then: untar R-1.2.2.tgz somewhere, and
+Then: untar R-1.3.0.tgz somewhere, and
 
-	cd /somewhere/R-1.2.2/src/gnuwin32
+	cd /somewhere/R-1.3.0/src/gnuwin32
 
 Edit MkRules to set BUILD=CROSS and the appropriate paths (including
-HEADER) as needed.  With our set of cross-compilers you can uncomment
-HAVE_SHARED.
+HEADER) as needed.
 
 Edit Makefile to set the type(s) of help that you want built. (You
 will not be able to cross-build .chm or .hlp files, nor Rchtml.dll,
@@ -191,42 +236,6 @@ Packages can be made in the same way as natively: see the file
 readme.packages.  You will need to set STAMP=NO, e.g.
 
 	make STAMP=NO pkg-foo
-
-
-Building the Manuals
-====================
-
-To make the PDF versions of the manuals you will need pdftex installed
-and configured to work with a large file: see doc/manual/README.  You
-also need texindex (included in our tool set).  Then the pdf manuals
-can be made by
-
-	make docs
-
-If you want to make the info versions (not the Reference Manual), you
-will need a version of makeinfo 4.0 (included in our tool set). Then
-
-	cd ../../doc/manuals
-	make -f Makefile.win info
-
-will make the info files.
-
-To make DVI versions of the manuals use
-
-	cd ../../doc/manuals
-	make -f Makefile.win dvi
-
-(assuming you have tex and latex installed and in your path).
-
-To make HTML versions of the manuals (not the Reference Manual) use
-
-	cd ../../doc/manuals
-	make -f Makefile.win html
-
-This make use of tidy.exe, from http://www.w3c.org/.
-
-The fptex distribution of TeX (via www.fptex.org) includes a suitable
-port of pdftex.
 
 
 

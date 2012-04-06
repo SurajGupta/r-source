@@ -1,14 +1,17 @@
 contributors <- function()
 {
-    FILE <- tempfile()
-    on.exit(unlink(FILE))
-    cat("R is a project which is attempting to provide a modern piece",
-        "of statistical software for the GNU suite of software.\n",
-        "The current R is the result of a collaborative effort with",
-        "contributions from all over the world.\n\n",
-        file = FILE, sep = "\n")
-    file.append(FILE, file.path(R.home(), "AUTHORS"))
-    cat("\n", file = FILE, append = TRUE)
-    file.append(FILE, file.path(R.home(), "THANKS"))
-    file.show(FILE)
+    outFile <- tempfile()
+    outConn <- file(outFile, open = "w")
+    writeLines(paste("R is a project which is attempting to provide a ",
+                     "modern piece of\nstatistical software for the ",
+                     "GNU suite of software.\n\n",
+                     "The current R is the result of a collaborative ",
+                     "effort with\ncontributions from all over the ",
+                     "world.\n\n",
+                     sep = ""), outConn)
+    writeLines(readLines(file.path(R.home(), "AUTHORS")), outConn)
+    writeLines("", outConn)
+    writeLines(readLines(file.path(R.home(), "THANKS")), outConn)
+    close(outConn)
+    file.show(outFile, delete.file = TRUE)
 }

@@ -39,6 +39,11 @@ typedef struct spl_struct {
 	*a;			/* scratch array */
 } *splPTR;
 
+/* Exports */
+SEXP spline_basis(SEXP knots, SEXP order, SEXP xvals, SEXP derivs);
+SEXP spline_value(SEXP knots, SEXP coeff, SEXP order, SEXP x, SEXP deriv);
+
+
 static void			/* free storage from a spl_struct */
 splFree(splPTR this)
 {
@@ -48,9 +53,9 @@ splFree(splPTR this)
     Free(this);
 }
 
-static int			/* set sp->curs to the index of the first
-				   knot position > x.   Special handling
-				   for x == sp->knots[sp->nknots - sp-order + 1] */
+/* set sp->curs to the index of the first knot position > x.
+   Special handling for x == sp->knots[sp->nknots - sp-order + 1] */
+static int 
 set_cursor(splPTR sp, double x)
 {
     int i;
@@ -121,7 +126,7 @@ evaluate(splPTR sp, double x, int nder)
 }  
   
 SEXP
-spline_value(SEXP knots,  SEXP coeff, SEXP order, SEXP x, SEXP deriv)
+spline_value(SEXP knots, SEXP coeff, SEXP order, SEXP x, SEXP deriv)
 {
     SEXP val;
     splPTR sp;
@@ -215,16 +220,17 @@ spline_basis(SEXP knots, SEXP order, SEXP xvals, SEXP derivs)
     return val;
 }
 
-void lin_interp(double *x, double *y, double *x0, double *y0, int *nvals)
-{
-  int n = *nvals;
-  double *firstx = x;
+#include "R_ext/Rdynload.h"
 
-  while(n--) {
-    while (*x < *x0) {x++; y++;}
-    if (x > firstx) {x--; y--;}
-    if (*x > *x0) *y0++ = *y + (*(y+1) - *y)*(*x0 - *x)/(*(x+1) - *x);
-    else *y0++ = *y;
-    x0++;
-  }
+
+const static R_CallMethodDef R_CallDef[] = {
+   {"spline_basis", (DL_FUNC)&spline_basis, 4},
+   {"spline_value", (DL_FUNC)&spline_value, 5},
+   {NULL, NULL, 0},
+};
+
+void
+R_init_splines(DllInfo *info)
+{
+    R_registerRoutines(info, NULL, R_CallDef, NULL, NULL);
 }

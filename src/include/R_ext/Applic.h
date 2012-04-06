@@ -46,11 +46,6 @@ void bincount(double *x, int *n, double *breaks, int *nb, int *count,
 /*unused*/
 void bincode2(double *, int *, double *, int *, int *, int *, int *);
 
-/* chisqsim.c: */
-void chisqsim(int *nrow, int *ncol, int *nrowt, int *ncolt, int *n,
-	      int *b, double *expected, int *observed, double *fact,
-	      int *jwork, double *results);
-
 /* chull.c -- comments in the source */
 void R_chull(int *n, double *x, int *m, int *in,
 	   int *ia, int *ib,
@@ -71,15 +66,6 @@ void R_cpolyroot(double *opr, double *opi, int *degree,
 
 /* cumsum.c : */
 void R_cumsum(double *, int *, double *, double *);
-
-/* distance.c */
-double R_euclidean(double *, int, int, int, int);
-double R_maximum(double *, int, int, int, int);
-double R_manhattan(double *, int, int, int, int);
-double R_canberra(double *, int, int, int, int);
-double R_dist_binary(double *, int, int, int, int);
-enum { EUCLIDEAN=1, MAXIMUM, MANHATTAN, CANBERRA, BINARY };/* == 1,2,... */
-void R_distance(double *, int *, int *, double *, int *, int *);
 
 /* eigen.c */
 int F77_NAME(cg)(int *nm, int *n, double *ar, double *ai,
@@ -172,9 +158,9 @@ void fdhess(int n, double *x, double fval, fcn_p fun, void *state,
 	    double *h, int nfd, double *step, double *f, int ndigit,
 	    double *typx);
 
-void optif9(int nr, int n, double *x, 
+void optif9(int nr, int n, double *x,
 	    fcn_p fcn, fcn_p d1fcn, d2fcn_p d2fcn,
-	    void *state, double *typsiz, double fscale, int method, 
+	    void *state, double *typsiz, double fscale, int method,
 	    int iexp, int *msg, int ndigit, int itnlim, int iagflg,
 	    int iahflg, double dlt, double gradtl, double stepmx,
 	    double steptl, double *xpls, double *fpls, double *gpls,
@@ -205,6 +191,14 @@ int F77_NAME(drotg)(double *da, double *db, double *c__, double *s);
 int F77_NAME(dscal)(int *n, double *da, double *dx, int *incx);
 int F77_NAME(dswap)(int *n, double *dx, int *incx, double *dy, int *incy);
 int F77_NAME(idamax)(int *n, double *dx, int *incx);
+int F77_NAME(dgemm)(char *transa, char *transb, int *m, int *n, int *k,
+		    double *alpha, double *a, int *lda, double *b, int *ldb,
+		    double *beta, double *c, int *ldc);
+int F77_NAME(dtrsm)(const char* side, const char* uplo,
+		    const char* transa, const char* diag,
+		    const int* m, const int* n,
+		    const double* alpha, const double *a, const int* lda,
+		    double *b, const int* ldb);
 /*----*/
 int F77_NAME(ch2inv)(double *x, int *ldx, int *n, double *v, int *info);
 int F77_NAME(chol)(double *a, int *lda, int *n, double *v, int *info);
@@ -259,7 +253,7 @@ int F77_NAME(lminfl)(double *x, int *ldx, int *n, int *k, double *qraux,
 
 /* ../appl/zeroin.c */
 double R_zeroin(double ax, double bx, double (*f)(double, void *), void *info,
-		double *tol, int *maxit);
+		double *Tol, int *Maxit);
 
 /* ../appl/lbfgsb.c */
 void setulb(int n, int m, double *x, double *l, double *u, int *nbd,

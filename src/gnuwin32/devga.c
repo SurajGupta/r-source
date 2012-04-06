@@ -111,7 +111,7 @@ typedef struct {
     menubar mbar, mbarloc;
     menu  msubsave;
     menuitem mpng, mbmp, mjpeg50, mjpeg75, mjpeg100;
-    menuitem mps, mwm, mclpbm, mclpwm, mprint, mclose;
+    menuitem mps, mpdf, mwm, mclpbm, mclpwm, mprint, mclose;
     menuitem mrec, madd, mreplace, mprev, mnext, mclear, msvar, mgvar;
     menuitem mR, mfit, mfix;
     Rboolean recording, replaying, needsave;
@@ -195,7 +195,6 @@ static void SaveAsPng(DevDesc *dd,char *fn);
 static void SaveAsJpeg(DevDesc *dd,int quality,char *fn);
 static void SaveAsBmp(DevDesc *dd,char *fn);
 static void SaveAsBitmap(DevDesc *dd);
-void  R_ProcessEvents();
 
 static void PrivateCopyDevice(DevDesc *dd,DevDesc *ndd, char *name)
 {
@@ -240,7 +239,8 @@ static void SaveAsPostscript(DevDesc *dd, char *fn)
 {
     SEXP s = findVar(install(".PostScript.Options"), R_GlobalEnv);
     DevDesc *ndd = (DevDesc *) malloc(sizeof(DevDesc));
-    char family[256], paper[256], bg[256], fg[256], **afmpaths = NULL;
+    char family[256], encoding[256], paper[256], bg[256], fg[256], 
+	**afmpaths = NULL;
 
     if (!ndd) {
 	R_ShowMessage("Not enough memory to copy graphics window");
@@ -257,6 +257,7 @@ static void SaveAsPostscript(DevDesc *dd, char *fn)
 
     /* Set default values... */
     strcpy(family, "Helvetica");
+    strcpy(encoding, "ISOLatin1.enc");
     strcpy(paper, "default");
     strcpy(bg, "white");
     strcpy(fg, "black");
@@ -283,12 +284,63 @@ static void SaveAsPostscript(DevDesc *dd, char *fn)
 	    }
 	}
     }
-    if (PSDeviceDriver(ndd, fn, paper, family, afmpaths, bg, fg,
+    if (PSDeviceDriver(ndd, fn, paper, family, afmpaths, encoding, bg, fg,
 		       GConvertXUnits(1.0, NDC, INCHES, dd),
 		       GConvertYUnits(1.0, NDC, INCHES, dd),
 		       (double)0, dd->gp.ps, 0, 1, 0, ""))
 	/* horizontal=F, onefile=F, pagecentre=T, print.it=F */
 	PrivateCopyDevice(dd, ndd, "postscript");
+}
+
+
+static void SaveAsPDF(DevDesc *dd, char *fn)
+{
+    SEXP s = findVar(install(".PostScript.Options"), R_GlobalEnv);
+    DevDesc *ndd = (DevDesc *) malloc(sizeof(DevDesc));
+    char family[256], encoding[256], bg[256], fg[256];
+
+    if (!ndd) {
+	R_ShowMessage("Not enough memory to copy graphics window");
+	return;
+    }
+    if(!R_CheckDeviceAvailableBool()) {
+	free(ndd);
+	R_ShowMessage("No device available to copy graphics window");
+	return;
+    }
+
+    ndd->displayList = R_NilValue;
+    GInit(&ndd->dp);
+
+    /* Set default values... */
+    strcpy(family, "Helvetica");
+    strcpy(encoding, "ISOLatin1.enc");
+    strcpy(bg, "white");
+    strcpy(fg, "black");
+    /* and then try to get it from .PostScript.Options */
+    if ((s!=R_UnboundValue) && (s!=R_NilValue)) {
+	SEXP names = getAttrib(s, R_NamesSymbol);
+	int i,done;
+	for (i=0, done=0; (done<4) && (i<length(s)) ; i++) {
+	    if(!strcmp("family", CHAR(STRING_ELT(names, i)))) {
+		strcpy(family, CHAR(STRING_ELT(VECTOR_ELT(s, i), 0)));
+		done += 1;
+	    }
+	    if(!strcmp("bg", CHAR(STRING_ELT(names, i)))) {
+		strcpy(bg, CHAR(STRING_ELT(VECTOR_ELT(s, i), 0)));
+		done += 1;
+	    }
+	    if(!strcmp("fg", CHAR(STRING_ELT(names, i)))) {
+		strcpy(fg, CHAR(STRING_ELT(VECTOR_ELT(s, i), 0)));
+		done += 1;
+	    }
+	}
+    }
+    if (PDFDeviceDriver(ndd, fn, family, encoding, bg, fg,
+			GConvertXUnits(1.0, NDC, INCHES, dd),
+			GConvertYUnits(1.0, NDC, INCHES, dd),
+			dd->gp.ps, 1))
+	PrivateCopyDevice(dd, ndd, "PDF");
 }
 
 
@@ -635,7 +687,20 @@ static void menups(control m)
     fn = askfilesave("Postscript file", "");
     if (!fn) return;
     fixslash(fn);
-    SaveAsPostscript(dd,fn);
+    SaveAsPostscript(dd, fn);
+}
+
+
+static void menupdf(control m)
+{
+    DevDesc *dd = (DevDesc *) getdata(m);
+    char  *fn;
+
+    setuserfilter("PDF files (*.pdf)\0*.pdf\0All files (*.*)\0*.*\0\0");
+    fn = askfilesave("PDF file", "");
+    if (!fn) return;
+    fixslash(fn);
+    SaveAsPDF(dd, fn);
 }
 
 
@@ -649,15 +714,14 @@ static void menuwm(control m)
     if (!fn) return;
     fixslash(fn);
     sprintf(display, "win.metafile:%s", fn);
-    SaveAsWin(dd,display);
+    SaveAsWin(dd, display);
 }
-
 
 
 static void menuclpwm(control m)
 {
     DevDesc *dd = (DevDesc *) getdata(m);
-    SaveAsWin(dd,"win.metafile");
+    SaveAsWin(dd, "win.metafile");
 }
 
 static void menuclpbm(control m)
@@ -674,7 +738,7 @@ static void menuclpbm(control m)
 static void menuprint(control m)
 {
     DevDesc *dd = (DevDesc *) getdata(m);
-    SaveAsWin(dd,"win.print");
+    SaveAsWin(dd, "win.print");
 }
 
 
@@ -1033,6 +1097,7 @@ static void mbarf(control m)
 	enable(xd->mjpeg100);
 	enable(xd->mwm);
 	enable(xd->mps);
+	enable(xd->mpdf);
 	enable(xd->mclpwm);
 	enable(xd->mclpbm);
     } else {
@@ -1046,6 +1111,7 @@ static void mbarf(control m)
 	disable(xd->mjpeg100);
 	disable(xd->mwm);
 	disable(xd->mps);
+	disable(xd->mpdf);
 	disable(xd->mclpwm);
 	disable(xd->mclpbm);
     }
@@ -1186,6 +1252,7 @@ setupScreenDevice(DevDesc *dd, gadesc *xd, double w, double h,
     MCHECK(xd->msubsave = newsubmenu(m, "Save as"));
     MCHECK(xd->mwm = newmenuitem("Metafile", 0, menuwm));
     MCHECK(xd->mps = newmenuitem("Postscript", 0, menups));
+    MCHECK(xd->mpdf = newmenuitem("PDF", 0, menupdf));
     MCHECK(xd->mpng = newmenuitem("Png", 0, menufilebitmap));
     MCHECK(xd->mbmp = newmenuitem("Bmp", 0, menufilebitmap));
     MCHECK(newsubmenu(xd->msubsave,"Jpeg"));
@@ -1251,6 +1318,7 @@ setupScreenDevice(DevDesc *dd, gadesc *xd, double w, double h,
     setdata(xd->mjpeg75, (void *) dd);
     setdata(xd->mjpeg100, (void *) dd);
     setdata(xd->mps, (void *) dd);
+    setdata(xd->mpdf, (void *) dd);
     setdata(xd->mwm, (void *) dd);
     setdata(xd->mclpwm, (void *) dd);
     setdata(xd->mclpbm, (void *) dd);
@@ -1311,36 +1379,42 @@ static Rboolean GA_Open(DevDesc *dd, gadesc *xd, char *dsp,
     } else if (!strncmp(dsp, "png:", 4) || !strncmp(dsp,"bmp:",4)) {
         xd->kind = (dsp[0]=='p') ? PNG : BMP;
 	if (!Load_Rbitmap_Dll()) {
-	  warning("Impossible to load Rbitmap.dll");
-	  return FALSE;
+	    warning("Unable to load Rbitmap.dll");
+	    return FALSE;
 	}
 	/*
 	  Observe that given actual graphapp implementation 256 is 
 	  irrelevant,i.e., depth of the bitmap is the one of graphic card
 	  if required depth > 1
 	*/
-	if (((xd->gawin = newbitmap(w,h,256)) == NULL) || 
-	    ((xd->fp=fopen(&dsp[4],"wb")) == NULL )) {
-	  if (xd->gawin != NULL) del(xd->gawin);
-	  if (xd->fp != NULL) fclose(xd->fp);
-	  return FALSE;
+	if ((xd->gawin = newbitmap(w, h, 256)) == NULL) {
+	    warning("Unable to allocate bitmap");
+	    return FALSE;
+	}  
+	if ((xd->fp = fopen(&dsp[4],"wb")) == NULL) {
+	    del(xd->gawin);
+	    warning("Unable to open file `%s' for writing", &dsp[4]);
+	    return FALSE;
 	}
     } else if (!strncmp(dsp, "jpeg:", 5)) {
         char *p = strchr(&dsp[5], ':');
         xd->kind = JPEG;
 	if (!p) return FALSE;
 	if (!Load_Rbitmap_Dll()) {
-	  warning("Impossible to load Rbitmap.dll");
-	  return FALSE;
+	    warning("Unable to load Rbitmap.dll");
+	    return FALSE;
 	}
 	*p = '\0';
 	xd->quality = atoi(&dsp[5]);
 	*p = ':' ;
-	if (((xd->gawin = newbitmap(w,h,256)) == NULL) || 
-	    ((xd->fp = fopen(p+1, "wb")) == NULL )) {
-	  if (xd->gawin != NULL) del(xd->gawin);
-	  if (xd->fp != NULL) fclose(xd->fp);
-	  return FALSE;
+	if((xd->gawin = newbitmap(w, h, 256)) == NULL) {
+	    warning("Unable to allocate bitmap");
+	    return FALSE;
+	}  
+	if ((xd->fp = fopen(p+1, "wb")) == NULL) {
+	    del(xd->gawin);
+	    warning("Unable to open file `%s' for writing", p+1);
+	    return FALSE;
 	}
     } else {
 	/*
@@ -1360,7 +1434,14 @@ static Rboolean GA_Open(DevDesc *dd, gadesc *xd, char *dsp,
 				MM_PER_INCH * w, MM_PER_INCH * h);
 	xd->kind = METAFILE;
 	xd->fast = 0; /* use scalable line widths */
-	if (!xd->gawin) return FALSE;
+	if (!xd->gawin) {
+	    if(ld > ls)
+		warning("Unable to open metafile `%s' for writing", 
+			&dsp[ls + 1]);
+	    else
+		warning("Unable to open clipboard to write metafile");
+	    return FALSE;
+	}
     }
     xd->truedpi = devicepixelsy(xd->gawin);
     if ((xd->kind == PNG) || (xd->kind == JPEG) || (xd->kind == BMP)) 
@@ -1368,7 +1449,7 @@ static Rboolean GA_Open(DevDesc *dd, gadesc *xd, char *dsp,
     else
       xd->wanteddpi = xd->truedpi;
     if (!SetBaseFont(xd)) {
-	Rprintf("can't find any fonts\n");
+	warning("can't find any fonts");
 	del(xd->gawin);
 	if (xd->kind == SCREEN) del(xd->bm);
 	return FALSE;
@@ -1897,7 +1978,7 @@ static Rboolean GA_Locator(double *x, double *y, DevDesc *dd)
 {
     gadesc *xd = (gadesc *) dd->deviceSpecific;
 
-    if (xd->kind!=SCREEN)
+    if (xd->kind != SCREEN)
 	return FALSE;
     xd->locator = TRUE;
     xd->clicked = 0;
@@ -2291,6 +2372,9 @@ static void SaveAsBmp(DevDesc *dd,char *fn)
     fclose(fp);
 }
 
+#include "Startup.h"
+extern UImode CharacterMode;
+
 SEXP do_bringtotop(SEXP call, SEXP op, SEXP args, SEXP env)
 {
     int dev;
@@ -2299,12 +2383,16 @@ SEXP do_bringtotop(SEXP call, SEXP op, SEXP args, SEXP env)
 
     checkArity(op, args);
     dev = asInteger(CAR(args));
-    if(dev < 1 || dev > NumDevices() || dev == NA_INTEGER)
-	errorcall(call, "invalid value of `which'");
-    dd = GetDevice(dev - 1);
-    if(!dd) errorcall(call, "invalid device");
-    xd = (gadesc *) dd->deviceSpecific;
-    if(!xd) errorcall(call, "invalid device");
-    BringToTop(xd->gawin);
+    if(dev == -1) { /* console */
+	if(CharacterMode == RGui) BringToTop(RConsole);
+    } else {
+	if(dev < 1 || dev > NumDevices() || dev == NA_INTEGER)
+	    errorcall(call, "invalid value of `which'");
+	dd = GetDevice(dev - 1);
+	if(!dd) errorcall(call, "invalid device");
+	xd = (gadesc *) dd->deviceSpecific;
+	if(!xd) errorcall(call, "invalid device");
+	BringToTop(xd->gawin);
+    }
     return R_NilValue;
 }

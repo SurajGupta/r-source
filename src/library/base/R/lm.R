@@ -6,9 +6,10 @@ lm <- function (formula, data = list(), subset, weights, na.action,
     ret.x <- x
     ret.y <- y
     mt <- terms(formula, data = data)
-    mf <- cl <- match.call()
+    cl <- match.call()
+    mf <- match.call(expand.dots = FALSE)
     mf$singular.ok <- mf$model <- mf$method <- NULL
-    mf$x <- mf$y <- mf$qr <- mf$contrasts <- NULL
+    mf$x <- mf$y <- mf$qr <- mf$contrasts <- mf$... <- NULL
     mf$drop.unused.levels <- TRUE
     mf[[1]] <- as.name("model.frame")
     mf <- eval(mf, parent.frame())
@@ -17,6 +18,7 @@ lm <- function (formula, data = list(), subset, weights, na.action,
     else if (method != "qr")
 	warning(paste("method =", method,
 		      "is not supported. Using \"qr\"."))
+    na.act <- attr(mf, "na.action")
     xvars <- as.character(attr(mt, "variables"))[-1]
     if((yvar <- attr(mt, "response")) > 0) xvars <- xvars[-yvar]
     xlev <-
@@ -24,9 +26,6 @@ lm <- function (formula, data = list(), subset, weights, na.action,
 	    xlev <- lapply(mf[xvars], levels)
 	    xlev[!sapply(xlev, is.null)]
 	}
-    if (length(list(...)))
-	warning(paste("Extra arguments", deparse(substitute(...)),
-		      "are just disregarded."))
     if (!singular.ok)
 	warning("only `singular.ok = TRUE' is currently implemented.")
     y <- model.response(mf, "numeric")
@@ -48,10 +47,11 @@ lm <- function (formula, data = list(), subset, weights, na.action,
     }
     else {
 	x <- model.matrix(mt, mf, contrasts)
-	z <- if(is.null(w)) lm.fit(x, y, offset=offset)
-	else lm.wfit(x, y, w, offset=offset)
+	z <- if(is.null(w)) lm.fit(x, y, offset=offset, ...)
+	else lm.wfit(x, y, w, offset=offset, ...)
 	class(z) <- c(if(is.matrix(y)) "mlm", "lm")
     }
+    if(!is.null(na.act)) z$na.action <- na.act
     z$offset <- offset
     z$contrasts <- attr(x, "contrasts")
     z$xlevels <- xlev
@@ -249,9 +249,10 @@ summary.lm <- function (object, correlation = FALSE, ...)
     if(rdf != z$df.residual)
         warning("inconsistent residual degrees of freedom. -- please report!")
     p1 <- 1:p
-    r <- resid(z)
-    f <- fitted(z)
-    w <- weights(z)
+    ## do not want missing values substuted here
+    r <- z$resid
+    f <- z$fitted
+    w <- z$weights
     if (is.null(w)) {
         mss <- if (attr(z$terms, "intercept"))
             sum((f - mean(f))^2) else sum(f^2)
@@ -296,7 +297,8 @@ summary.lm <- function (object, correlation = FALSE, ...)
 }
 
 print.summary.lm <-
-    function (x, digits = max(3, getOption("digits") - 3), symbolic.cor = p > 4,
+    function (x, digits = max(3, getOption("digits") - 3),
+              symbolic.cor = p > 4,
 	      signif.stars= getOption("show.signif.stars"),	...)
 {
     cat("\nCall:\n")#S: ' ' instead of '\n'
@@ -333,7 +335,7 @@ print.summary.lm <-
 	cat(",\tAdjusted R-squared:",formatC(x$adj.r.squared,d=digits),
 	    "\nF-statistic:", formatC(x$fstatistic[1], digits=digits),
 	    "on", x$fstatistic[2], "and",
-	    x$fstatistic[3], "degrees of freedom,\tp-value:",
+	    x$fstatistic[3], "DF,  p-value:",
 	    formatC(1 - pf(x$fstatistic[1], x$fstatistic[2],
 			   x$fstatistic[3]), dig=digits),
 	    "\n")
@@ -365,21 +367,39 @@ residuals.lm <-
 {
     type <- match.arg(type)
     r <- .Alias(object$residuals)
-    switch(type,
-           working =, response = r,
-           deviance=,
-           pearson =if(is.null(object$weights)) r else r * sqrt(object$weights),
-	   partial = r + predict(object,type="terms")
+    res <- switch(type,
+                  working =, response = r,
+                  deviance=,
+                  pearson =if(is.null(object$weights)) r else r * sqrt(object$weights),
+                  partial = r + predict(object,type="terms")
            )
+    if(is.null(object$na.action)) res
+    else naresid(object$na.action, res)
 }
-fitted.lm <- function(object, ...) object$fitted.values
+fitted.lm <- function(object, ...)
+{
+    if(is.null(object$na.action)) object$fitted.values
+    else napredict(object$na.action, object$fitted.values)
+}
 coef.lm <- function(object, ...) object$coefficients
 ## need this for results of lm.fit() in drop1():
-weights.default <- function(object, ...) object$weights
+weights.default <- function(object, ...)
+{
+    if(is.null(object$na.action)) object$weights
+    else naresid(object$na.action, object$weights)
+}
+
 weights.lm <- .Alias(weights.default)
 df.residual.lm <- function(object, ...) object$df.residual
 deviance.lm <- function(object, ...) sum(weighted.residuals(object)^2)
-formula.lm <- function(object, ...) formula(object$terms)
+formula.lm <- function(object, ...)
+{
+    form <- object$formula
+    if( !is.null(form) )
+        return(form)
+    formula(object$terms)
+}
+
 family.lm <- function(object, ...) { gaussian() }
 
 model.frame.lm <- function(formula, data, na.action, ...) {
@@ -411,8 +431,8 @@ anova.lm <- function(object, ...)
 {
     if(length(list(object, ...)) > 1)
 	return(anova.lmlist(object, ...))
-    w <- weights(object)
-    ssr <- sum(if(is.null(w)) resid(object)^2 else w*resid(object)^2)
+    w <- object$weights
+    ssr <- sum(if(is.null(w)) object$resid^2 else w*object$resid^2)
     p1 <- 1:object$rank
     comp <- object$effects[p1]
     asgn <- object$assign[object$qr$pivot][p1]
@@ -542,11 +562,12 @@ anovalist.lm <- function (object, ..., test = NULL)
 }
 
 ## code from John Maindonald 26Jul2000
-"predict.lm" <- function(object, newdata,
-		       se.fit = FALSE, scale = NULL, df = Inf,
-		       interval = c("none", "confidence", "prediction"),
-                       level = .95,  type = c("response", "terms"),
-                       terms = NULL, ...)
+predict.lm <-
+    function(object, newdata,
+             se.fit = FALSE, scale = NULL, df = Inf,
+             interval = c("none", "confidence", "prediction"),
+             level = .95,  type = c("response", "terms"),
+             terms = NULL, ...)
 {
 ## june 24 2000 (3 minor changes from JM's May 7 version)
     attrassign <- function (object, ...) UseMethod("attrassign")
@@ -589,9 +610,9 @@ anovalist.lm <- function (object, ..., test = NULL)
     type <- match.arg(type)
     if(se.fit || interval != "none") {
 	if (is.null(scale)) {
-	    r <- resid(object)
-	    f <- fitted(object)
-	    w <- weights(object)
+	    r <- object$resid
+	    f <- object$fitted
+	    w <- object$weights
 	    rss <- sum(if(is.null(w)) r^2 else r^2 * w)
 	    df <- n - p
 	    res.var <- rss/df
@@ -664,7 +685,7 @@ anovalist.lm <- function (object, ..., test = NULL)
 			    confidence=sqrt(ip),
 			    prediction=sqrt(ip+res.var)
 			    )
-        if(type!="terms"){
+        if(type!="terms") {
             predictor <- cbind(predictor, predictor + w %o% c(1, -1))
             colnames(predictor) <- c("fit", "lwr", "upr")
         }
@@ -673,17 +694,22 @@ anovalist.lm <- function (object, ..., test = NULL)
             upr <- predictor - w
         }
     }
-    if(type=="terms" && interval!="none")
+    if(missing(newdata) && !is.null(na.act <- object$na.action)) {
+        predictor <- napredict(na.act, predictor)
+        if(se.fit) se.fit <- napredict(na.act, sqrt(ip))
+    }
+    if(type == "terms" && interval != "none") {
+        if(missing(newdata) && !is.null(na.act)) {
+            lwr <- napredict(na.act, lwr)
+            upr <- napredict(na.act, upr)
+        }
 	list(fit = predictor, se.fit = sqrt(ip), lwr=lwr,upr=upr,
 	     df = df, residual.scale = sqrt(res.var))
-    else if (se.fit)
-              list(fit = predictor, se.fit = sqrt(ip),
+    } else if (se.fit)
+        list(fit = predictor, se.fit = sqrt(ip),
 	     df = df, residual.scale = sqrt(res.var))
     else predictor
 }
-
-
-
 
 effects.lm <- function(object, set.sign = FALSE)
 {

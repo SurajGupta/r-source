@@ -1,13 +1,16 @@
 \name{ansari.test}
 \alias{ansari.test}
+\alias{ansari.test.default}
+\alias{ansari.test.formula}
 \title{Ansari-Bradley Test}
 \description{
   Performs the Ansari-Bradley two-sample test for a difference in scale
   parameters.
 }
 \usage{
-ansari.test(x, y, alternative = c("two.sided", "less", "greater"),
+\method{ansari.test}{default}(x, y, alternative = c("two.sided", "less", "greater"),
             exact = NULL, conf.int = TRUE, conf.level = 0.95)
+\method{ansari.test}{formula}(formula, data, subset, na.action, \dots)
 }
 \arguments{
   \item{x}{numeric vector of data values.}
@@ -20,6 +23,17 @@ ansari.test(x, y, alternative = c("two.sided", "less", "greater"),
   \item{conf.int}{a logical,indicating whether a confidence interval
     should be computed.}
   \item{conf.level}{confidence level of the interval.}
+  \item{formula}{a formula of the form \code{lhs ~ rhs} where \code{lhs}
+    is a numeric variable giving the data values and \code{rhs} a factor
+    with two levels giving the corresponding groups.}
+  \item{data}{an optional data frame containing the variables in the
+    model formula.}
+  \item{subset}{an optional vector specifying a subset of observations
+    to be used.}
+  \item{na.action}{a function which indicates what should happen when
+    the data contain \code{NA}s.  Defaults to
+    \code{getOption("na.action")}.}
+  \item{\dots}{further arguments to be passed to the default method.}
 }
 \details{
   Suppose that \code{x} and \code{y} are independent samples from
@@ -36,10 +50,12 @@ ansari.test(x, y, alternative = c("two.sided", "less", "greater"),
   computed if both samples contain less than 50 finite values and there
   are no ties.  Otherwise, a normal approximation is used.
 
-  Optionally, a nonparametric confidence interval for \eqn{s} is
-  computed.  If exact p-values are available, an exact confidence
-  interval is obtained by the algorithm described in Bauer (1972).
-  Otherwise, an asymptotic confidence interval is returned.
+  Optionally, a nonparametric confidence interval and an estimator for
+  \eqn{s} are computed.  If exact p-values are available, an exact
+  confidence interval is obtained by the algorithm described in Bauer
+  (1972), and the Hodges-Lehmann estimator is employed.  Otherwise, the
+  returned confidence interval and point estimate are based on normal
+  approximations.
 }
 \value{
   A list with class \code{"htest"} containing the following components:
@@ -51,6 +67,8 @@ ansari.test(x, y, alternative = c("two.sided", "less", "greater"),
   \item{method}{the string \code{"Ansari-Bradley test"}.}
   \item{data.name}{a character string giving the names of the data.}
   \item{conf.int}{a confidence interval for the scale parameter.
+    (Only present if argument \code{conf.int = TRUE}.)}
+  \item{estimate}{an estimate of the ratio of scales.
     (Only present if argument \code{conf.int = TRUE}.)}
 }
 \note{

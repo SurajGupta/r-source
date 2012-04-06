@@ -1,6 +1,6 @@
 install.packages <- function(pkgs, lib, CRAN=getOption("CRAN"),
                              contriburl=contrib.url(CRAN),
-                             method="auto", available=NULL, destdir=NULL)
+                             method, available=NULL, destdir=NULL)
 {
     if(missing(lib) || is.null(lib)) {
         lib <- .lib.loc[1]
@@ -60,7 +60,7 @@ install.packages <- function(pkgs, lib, CRAN=getOption("CRAN"),
 download.packages <- function(pkgs, destdir, available=NULL,
                               CRAN=getOption("CRAN"),
                               contriburl=contrib.url(CRAN),
-                              method="auto")
+                              method)
 {
     localcran <- length(grep("^file:", contriburl)) > 0
     if(is.null(available))
@@ -82,7 +82,7 @@ download.packages <- function(pkgs, destdir, available=NULL,
                 url <- paste(contriburl, fn, sep="/")
                 destfile <- file.path(destdir, fn)
 
-                if(download.file(url, destfile, method) == 0)
+                if(download.file(url, destfile, method, mode="wb") == 0)
                     retval <- rbind(retval, c(p, destfile))
                 else
                     warning(paste("Download of package", p, "failed"))

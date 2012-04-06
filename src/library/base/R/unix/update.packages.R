@@ -1,6 +1,6 @@
 install.packages <- function(pkgs, lib, CRAN=getOption("CRAN"),
                              contriburl=contrib.url(CRAN),
-                             method="auto", available=NULL, destdir=NULL)
+                             method, available=NULL, destdir=NULL)
 {
     if(missing(lib) || is.null(lib)) {
         lib <- .lib.loc[1]
@@ -30,7 +30,7 @@ install.packages <- function(pkgs, lib, CRAN=getOption("CRAN"),
                 okp <- p == foundpkgs[, 1]
                 if(length(okp) > 0){
                     cmd <- paste(file.path(R.home(),"bin","R"),
-                                 "INSTALL -l", lib,
+                                 "CMD INSTALL -l", lib,
                                  foundpkgs[okp, 2])
                     status <- system(cmd)
                     if(status>0){
@@ -60,7 +60,7 @@ install.packages <- function(pkgs, lib, CRAN=getOption("CRAN"),
 download.packages <- function(pkgs, destdir, available=NULL,
                               CRAN=getOption("CRAN"),
                               contriburl=contrib.url(CRAN),
-                              method="auto")
+                              method)
 {
     localcran <- length(grep("^file:", contriburl)) > 0
     if(is.null(available))

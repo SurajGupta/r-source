@@ -413,6 +413,79 @@ EOF
     AC_MSG_ERROR([Maybe change CFLAGS or FFLAGS?])
   fi
 ])
+AC_DEFUN([R_PROG_F77_CC_COMPAT_COMPLEX],
+ [AC_REQUIRE([AC_CHECK_LIBM])
+  AC_MSG_CHECKING([whether ${F77-f77} and ${CC-cc} agree on double complex])
+  AC_CACHE_VAL(r_cv_prog_complex_compat,
+    [ cat > conftestf.f <<EOF
+      subroutine cftest(x)
+      complex*16 x(3)
+      integer i
+
+c a few tests of constructs that are sometimes missing
+      if(x(1) .eq. x(1)) i = 0
+      x(1) = x(1)*x(2) + x(3)
+      end
+EOF
+      ${F77} ${FFLAGS} -c conftestf.f 1>&AC_FD_CC 2>&AC_FD_CC
+      changequote(, )
+      cat > conftest.c <<EOF
+#include <math.h>
+#include "confdefs.h"
+#ifdef HAVE_F77_UNDERSCORE
+# define F77_SYMBOL(x)   x ## _
+#else
+# define F77_SYMBOL(x)   x
+#endif
+
+typedef struct {
+        double r;
+        double i;
+} Rcomplex;
+
+extern void F77_SYMBOL(cftest)(Rcomplex *x);
+
+int main () {
+    Rcomplex z[3];
+    
+    z[0].r = 3.14159265;
+    z[0].i = 2.172;
+    z[1].i = 3.14159265;
+    z[1].r = 2.172;
+    z[2].r = 123.456;
+    z[2].i = 0.123456;
+    F77_SYMBOL(cftest)(z);
+    printf("%f %f\n", z[0].r, z[0].i);
+    if(fabs(z[0].r - 123.456) < 1e-4 && fabs(z[0].i - 14.71065) < 1e-4)
+	return 0;
+    else return 1;
+}
+EOF
+      changequote([, ])
+      if ${CC-cc} ${CFLAGS} -c conftest.c 1>&AC_FD_CC 2>&AC_FD_CC; then
+	## FIXME
+	## This should really use MAIN_LD, and hence come after this is
+	## determined.  Or maybe we can always use ${CC} eventually?
+	## Also, this used to have `-lm' hardwired ...
+	if ${CC-cc} ${LDFLAGS} ${MAIN_LDFLAGS} -o conftest${ac_exeext} \
+	    conftest.${ac_objext} conftestf.${ac_objext} ${FLIBS} \
+	    ${LIBM} 1>&AC_FD_CC 2>&AC_FD_CC; then
+          output=`./conftest${ac_exeext} 2>&1`
+	  if test ${?} = 0; then
+	    r_cv_prog_complex_compat=yes
+	  fi
+	fi
+      fi
+    ])
+  rm -rf conftest conftest.* conftestf.* core
+  if test -n "${r_cv_prog_complex_compat}"; then
+    AC_MSG_RESULT([yes])
+    AC_DEFINE(HAVE_DOUBLE_COMPLEX)
+  else
+    AC_MSG_WARN([${F77-f77} and ${CC-cc} disagree on double complex])
+  fi
+    AC_SUBST(HAVE_DOUBLE_COMPLEX)
+])
 AC_DEFUN([R_PROG_F77_C_O_LO],
 [AC_CACHE_CHECK([whether ${F77} supports -c -o FILE.lo],
   r_cv_prog_f77_c_o_lo,
@@ -593,6 +666,28 @@ AC_DEFUN([R_HEADER_GLIBC2],
   if test "${r_cv_header_glibc2}" = yes; then
     AC_DEFINE(HAVE_GLIBC2)
   fi])
+AC_DEFUN([R_TYPE_SOCKLEN], [
+AC_CHECK_HEADER(sys/socket.h)
+AC_MSG_CHECKING([for type of socket length])
+if test "${ac_cv_header_sys_socket_h}" = yes; then
+  AC_CACHE_VAL(r_cv_type_socklen, [
+    for t in socklen_t size_t int; do
+      AC_TRY_COMPILE([
+#include <stddef.h>
+#include <sys/types.h>
+#include <sys/socket.h>], [
+          (void)getsockopt (1, 1, 1, NULL, (${t} *)NULL)],
+	[ r_cv_type_socklen=${t}; break ],
+	[ r_cv_type_socklen= ])
+    done])
+fi
+if test "x${r_cv_type_socklen}" = x; then
+  AC_MSG_WARN(could not determine)
+else
+  AC_MSG_RESULT([${r_cv_type_socklen} *])
+fi
+AC_DEFINE_UNQUOTED(SOCKLEN_T, ${r_cv_type_socklen})
+])
 AC_DEFUN([R_C_IEEE_754],
  [AC_CHECK_FUNCS(finite isnan)
   AC_CACHE_CHECK([whether you have IEEE 754 floating-point arithmetic],
@@ -642,8 +737,8 @@ AC_DEFUN([R_GNOME], [
       AM_PATH_LIBGLADE(
         [use_gnome="yes"
 	  GNOME_IF_FILES="gnome-interface.glade"],
-        [ warn_libglade="GNOME support requires libglade version >= 0.3"
-	  AC_MSG_WARN(${warn_libglade})],
+        [ warn_libglade_version="GNOME support requires libglade version >= 0.3"
+	  AC_MSG_WARN(${warn_libglade_version})],
         gnome)
     fi
   fi
@@ -655,20 +750,62 @@ AC_DEFUN([R_GNOME], [
   fi
   AC_SUBST(HAVE_GNOME)
   AC_SUBST(GNOME_IF_FILES)])
+AC_DEFUN([R_BSD_NETWORKING], [
+AC_CACHE_CHECK([for BSD networking],
+  r_cv_bsd_networking,
+  [ if test "${ac_cv_header_netdb_h}" = yes \
+        && test "${ac_cv_header_netinet_in_h}" = yes \
+        && test "${ac_cv_header_netinet_tcp_h}" = yes \
+        && test "${ac_cv_header_sys_socket_h}" = yes \
+        && (test "${ac_cv_func_connect}" = yes \
+          || test "${ac_cv_lib_socket_connect}" = yes) \
+        && (test "${ac_cv_func_gethostbyname}" = yes \
+          || test "${ac_cv_lib_nsl_gethostbyname}" = yes); then
+      r_cv_bsd_networking=yes
+    else
+      r_cv_bsd_networking=no
+    fi])
+if test "${r_cv_bsd_networking}" = yes; then
+  AC_DEFINE(HAVE_BSD_NETWORKING)
+  AC_DEFINE(HAVE_SOCKETS)
+  AC_DEFINE(HAVE_INTERNET)
+  AC_DEFINE(SUPPORT_LIBXML)
+fi
+])
 AC_DEFUN([R_BITMAPS], [
   BITMAP_LIBS=
-  AC_EGREP_HEADER(jpeg_error_mgr, jpeglib.h, [
-    AC_CHECK_LIB(jpeg, jpeg_destroy_compress, [
-      BITMAP_LIBS=-ljpeg
-      AC_DEFINE(HAVE_JPEG)
-    ], , ${LIBS})
+  AC_CHECK_HEADER(jpeglib.h, [
+    AC_MSG_CHECKING([if jpeglib version >= 6b])
+    AC_EGREP_CPP(yes, 
+      [
+#include "confdefs.h"
+#include <jpeglib.h>
+#if (JPEG_LIB_VERSION >= 62)
+  yes
+#endif], [
+      AC_MSG_RESULT([yes])
+      AC_CHECK_LIB(jpeg, jpeg_destroy_compress, [
+        BITMAP_LIBS=-ljpeg
+        AC_DEFINE(HAVE_JPEG)
+      ], , ${LIBS})
+    ], AC_MSG_RESULT([no]))
   ])
   AC_CHECK_LIB(z, main, [
     AC_CHECK_HEADER(png.h, [
-      AC_CHECK_LIB(png, png_create_write_struct, [
-        BITMAP_LIBS="${BITMAP_LIBS} -lpng -lz"
-	AC_DEFINE(HAVE_PNG)
-      ], , ${LIBS})
+      AC_MSG_CHECKING([if libpng version >= 1.0.5])
+      AC_EGREP_CPP(yes, 
+        [
+#include "confdefs.h"
+#include <png.h>
+#if (PNG_LIBPNG_VER >= 10005)
+  yes
+#endif], [
+        AC_MSG_RESULT([yes])
+        AC_CHECK_LIB(png, png_create_write_struct, [
+          BITMAP_LIBS="${BITMAP_LIBS} -lpng -lz"
+	  AC_DEFINE(HAVE_PNG)
+        ], , ${LIBS})
+      ], AC_MSG_RESULT([no]))
     ])
   ])
   AC_SUBST(BITMAP_LIBS)])
@@ -872,15 +1009,15 @@ if test "x$BLAS_LIBS" = x; then
   fi
 fi
 
-if test "x$BLAS_LIBS" = x; then
-  # BLAS in Alpha CXML library?
-  AC_CHECK_LIB(cxml, $dgemm_func, BLAS_LIBS="-lcxml", , $FLIBS)
-fi
+# if test "x$BLAS_LIBS" = x; then
+#   # BLAS in Alpha CXML library?
+#   AC_CHECK_LIB(cxml, $dgemm_func, BLAS_LIBS="-lcxml", , $FLIBS)
+# fi
 
-if test "x$BLAS_LIBS" = x; then
-  # BLAS in Alpha DXML library? (now called CXML, see above)
-  AC_CHECK_LIB(dxml, $dgemm_func, BLAS_LIBS="-ldxml", , $FLIBS)
-fi
+# if test "x$BLAS_LIBS" = x; then
+#   # BLAS in Alpha DXML library? (now called CXML, see above)
+#   AC_CHECK_LIB(dxml, $dgemm_func, BLAS_LIBS="-ldxml", , $FLIBS)
+# fi
 
 if test "x$BLAS_LIBS" = x; then
   if test "x$GCC" != xyes; then
@@ -921,9 +1058,34 @@ fi
 AC_SUBST(BLAS_LIBS)
 ])
 
+AC_DEFUN([R_ZLIB], [
+  have_zlib=no
+  AC_CHECK_LIB(z, main, [
+    AC_CHECK_HEADER(zlib.h, [
+      AC_MSG_CHECKING([if zlib version >= 1.1.3])
+      AC_TRY_RUN([
+#include "confdefs.h"
+#include <string.h>
+#include <zlib.h>
+int main() {
+#ifdef ZLIB_VERSION
+  return(strcmp(ZLIB_VERSION, "1.1.3") < 0);
+#else
+  return(1);
+#endif
+}],     [AC_MSG_RESULT([yes])
+          have_zlib=yes],
+        AC_MSG_RESULT([no]),
+        AC_MSG_RESULT([no]))
+    ])
+  ])
+  if test "${have_zlib}" = yes; then
+    AC_DEFINE(HAVE_ZLIB)
+  fi
+])
 AC_DEFUN([R_USES_LEAPSECONDS],
  [AC_MSG_CHECKING([whether leap seconds are counted])
-  AC_CACHE_VAL(uses_leapseconds,
+  AC_CACHE_VAL(r_cv_uses_leapseconds,
     [ cat > conftest.c <<EOF
 #include <time.h>
 #include <stdio.h>
@@ -944,22 +1106,137 @@ EOF
           output=`./conftest${ac_exeext}`
 	  if test ${?} -eq 0; then
             if test ${output} -gt 0; then
-	      uses_leapseconds=yes
+	      r_cv_uses_leapseconds=yes
             fi
 	  fi
       fi
     ])
   rm -rf conftest conftest.* core
-  if test -n "${uses_leapseconds}"; then
+  if test -n "${r_cv_uses_leapseconds}"; then
     AC_MSG_RESULT([yes])
     AC_DEFINE(USING_LEAPSECONDS, 1)
   else
     AC_MSG_RESULT([no])
   fi
 ])
+dnl Usage:
+dnl AM_INIT_AUTOMAKE(package,version, [no-define])
+
+AC_DEFUN(AM_INIT_AUTOMAKE,
+[AC_REQUIRE([AC_PROG_INSTALL])
+PACKAGE=[$1]
+AC_SUBST(PACKAGE)
+VERSION=[$2]
+AC_SUBST(VERSION)
+dnl test to see if srcdir already configured
+if test "`cd $srcdir && pwd`" != "`pwd`" && test -f $srcdir/config.status; then
+  AC_MSG_ERROR([source directory already configured; run "make distclean" there 
+first])
+fi
+ifelse([$3],,
+AC_DEFINE_UNQUOTED(PACKAGE, "$PACKAGE", [Name of package])
+AC_DEFINE_UNQUOTED(VERSION, "$VERSION", [Version number of package]))
+AC_REQUIRE([AM_SANITY_CHECK])
+AC_REQUIRE([AC_ARG_PROGRAM])
+dnl FIXME This is truly gross.
+missing_dir=`CDPATH=${ZSH_VERSION+.}: && cd $ac_aux_dir && pwd`
+AM_MISSING_PROG(ACLOCAL, aclocal, $missing_dir)
+AM_MISSING_PROG(AUTOCONF, autoconf, $missing_dir)
+AM_MISSING_PROG(AUTOMAKE, automake, $missing_dir)
+AM_MISSING_PROG(AUTOHEADER, autoheader, $missing_dir)
+AM_MISSING_PROG(MAKEINFO, makeinfo, $missing_dir)
+AC_REQUIRE([AC_PROG_MAKE_SET])])
+
+dnl AM_MISSING_PROG(NAME, PROGRAM, DIRECTORY)
+dnl The program must properly implement --version.
+AC_DEFUN(AM_MISSING_PROG,
+[AC_MSG_CHECKING(for working $2)
+# Run test in a subshell; some versions of sh will print an error if
+# an executable is not found, even if stderr is redirected.
+# Redirect stdin to placate older versions of autoconf.  Sigh.
+if ($2 --version) < /dev/null > /dev/null 2>&1; then
+   $1=$2
+   AC_MSG_RESULT(found)
+else
+   $1="$3/missing $2"
+   AC_MSG_RESULT(missing)
+fi
+AC_SUBST($1)])
 
 
-
+
+dnl Local Variables: ***
+dnl mode: sh ***
+dnl sh-indentation: 2 ***
+dnl End: ***
+dnl
+dnl GNOME_GNORBA_HOOK (script-if-gnorba-found, failflag)
+dnl
+dnl if failflag is "failure" it aborts if gnorba is not found.
+dnl
+
+AC_DEFUN([GNOME_GNORBA_HOOK],[
+	GNOME_ORBIT_HOOK([],$2)
+	AC_CACHE_CHECK([for gnorba libraries],gnome_cv_gnorba_found,[
+		gnome_cv_gnorba_found=no
+		if test x$gnome_cv_orbit_found = xyes; then
+			GNORBA_CFLAGS="`gnome-config --cflags gnorba gnomeui`"
+			GNORBA_LIBS="`gnome-config --libs gnorba gnomeui`"
+			if test -n "$GNORBA_LIBS"; then
+				gnome_cv_gnorba_found=yes
+			fi
+		fi
+	])
+	AM_CONDITIONAL(HAVE_GNORBA, test x$gnome_cv_gnorba_found = xyes)
+	if test x$gnome_cv_orbit_found = xyes; then
+		$1
+		GNORBA_CFLAGS="`gnome-config --cflags gnorba gnomeui`"
+		GNORBA_LIBS="`gnome-config --libs gnorba gnomeui`"
+		AC_SUBST(GNORBA_CFLAGS)
+		AC_SUBST(GNORBA_LIBS)
+	else
+	    	if test x$2 = xfailure; then
+			AC_MSG_ERROR(gnorba library not installed or installation problem)
+	    	fi
+	fi
+])
+
+AC_DEFUN([GNOME_GNORBA_CHECK], [
+	GNOME_GNORBA_HOOK([],failure)
+])
+dnl
+dnl GNOME_ORBIT_HOOK (script-if-orbit-found, failflag)
+dnl
+dnl if failflag is "failure" it aborts if orbit is not found.
+dnl
+
+AC_DEFUN([GNOME_ORBIT_HOOK],[
+	AC_PATH_PROG(ORBIT_CONFIG,orbit-config,no)
+	AC_PATH_PROG(ORBIT_IDL,orbit-idl,no)
+	AC_CACHE_CHECK([for working ORBit environment],gnome_cv_orbit_found,[
+		if test x$ORBIT_CONFIG = xno -o x$ORBIT_IDL = xno; then
+			gnome_cv_orbit_found=no
+		else
+			gnome_cv_orbit_found=yes
+		fi
+	])
+	AM_CONDITIONAL(HAVE_ORBIT, test x$gnome_cv_orbit_found = xyes)
+	if test x$gnome_cv_orbit_found = xyes; then
+		$1
+		ORBIT_CFLAGS=`orbit-config --cflags client server`
+		ORBIT_LIBS=`orbit-config --use-service=name --libs client server`
+		AC_SUBST(ORBIT_CFLAGS)
+		AC_SUBST(ORBIT_LIBS)
+	else
+    		if test x$2 = xfailure; then
+			AC_MSG_ERROR(ORBit not installed or installation problem)
+    		fi
+	fi
+])
+
+AC_DEFUN([GNOME_ORBIT_CHECK], [
+	GNOME_ORBIT_HOOK([],failure)
+])
 dnl
 dnl GNOME_INIT_HOOK (script-if-gnome-enabled, [failflag], [additional-inits])
 dnl
@@ -1066,83 +1343,6 @@ dnl
 AC_DEFUN([GNOME_INIT],[
 	GNOME_INIT_HOOK([],fail,$1)
 ])
-
-
-
-dnl
-dnl GNOME_GNORBA_HOOK (script-if-gnorba-found, failflag)
-dnl
-dnl if failflag is "failure" it aborts if gnorba is not found.
-dnl
-
-AC_DEFUN([GNOME_GNORBA_HOOK],[
-	GNOME_ORBIT_HOOK([],$2)
-	AC_CACHE_CHECK([for gnorba libraries],gnome_cv_gnorba_found,[
-		gnome_cv_gnorba_found=no
-		if test x$gnome_cv_orbit_found = xyes; then
-			GNORBA_CFLAGS="`gnome-config --cflags gnorba gnomeui`"
-			GNORBA_LIBS="`gnome-config --libs gnorba gnomeui`"
-			if test -n "$GNORBA_LIBS"; then
-				gnome_cv_gnorba_found=yes
-			fi
-		fi
-	])
-	AM_CONDITIONAL(HAVE_GNORBA, test x$gnome_cv_gnorba_found = xyes)
-	if test x$gnome_cv_orbit_found = xyes; then
-		$1
-		GNORBA_CFLAGS="`gnome-config --cflags gnorba gnomeui`"
-		GNORBA_LIBS="`gnome-config --libs gnorba gnomeui`"
-		AC_SUBST(GNORBA_CFLAGS)
-		AC_SUBST(GNORBA_LIBS)
-	else
-	    	if test x$2 = xfailure; then
-			AC_MSG_ERROR(gnorba library not installed or installation problem)
-	    	fi
-	fi
-])
-
-AC_DEFUN([GNOME_GNORBA_CHECK], [
-	GNOME_GNORBA_HOOK([],failure)
-])
-
-
-
-dnl
-dnl GNOME_ORBIT_HOOK (script-if-orbit-found, failflag)
-dnl
-dnl if failflag is "failure" it aborts if orbit is not found.
-dnl
-
-AC_DEFUN([GNOME_ORBIT_HOOK],[
-	AC_PATH_PROG(ORBIT_CONFIG,orbit-config,no)
-	AC_PATH_PROG(ORBIT_IDL,orbit-idl,no)
-	AC_CACHE_CHECK([for working ORBit environment],gnome_cv_orbit_found,[
-		if test x$ORBIT_CONFIG = xno -o x$ORBIT_IDL = xno; then
-			gnome_cv_orbit_found=no
-		else
-			gnome_cv_orbit_found=yes
-		fi
-	])
-	AM_CONDITIONAL(HAVE_ORBIT, test x$gnome_cv_orbit_found = xyes)
-	if test x$gnome_cv_orbit_found = xyes; then
-		$1
-		ORBIT_CFLAGS=`orbit-config --cflags client server`
-		ORBIT_LIBS=`orbit-config --use-service=name --libs client server`
-		AC_SUBST(ORBIT_CFLAGS)
-		AC_SUBST(ORBIT_LIBS)
-	else
-    		if test x$2 = xfailure; then
-			AC_MSG_ERROR(ORBit not installed or installation problem)
-    		fi
-	fi
-])
-
-AC_DEFUN([GNOME_ORBIT_CHECK], [
-	GNOME_ORBIT_HOOK([],failure)
-])
-
-
-
 # a macro to get the libs/cflags for libglade
 # serial 1
 
@@ -1167,6 +1367,9 @@ for module in . $3; do
     bonobo)
       module_args="$module_args bonobo"
       ;;
+    gnomedb)
+      module_args="$module_args gnomedb"
+      ;;
   esac
 done
 
@@ -1190,8 +1393,7 @@ fi
 AC_SUBST(LIBGLADE_CFLAGS)
 AC_SUBST(LIBGLADE_LIBS)
 ])
-
-
+# libtool.m4 - Configure libtool for the host system. -*-Shell-script-*-
 
 # serial 46 AC_PROG_LIBTOOL
 AC_DEFUN([AC_PROG_LIBTOOL],
@@ -1359,7 +1561,7 @@ cygwin* | mingw* | pw32*)
   [symcode='[ABCDGISTW]']
   ;;
 hpux*) # Its linker distinguishes data from code symbols
-  lt_cv_global_symbol_to_cdecl="sed -n -e 's/^T .* \(.*\)$/extern char \1();/p' -e 's/^. .* \(.*\)$/extern char \1;/p'"
+  lt_cv_global_symbol_to_cdecl="sed -n -e 's/^T .* \(.*\)$/extern char \1();/p' -e 's/^$symcode* .* \(.*\)$/extern char \1;/p'"
   ;;
 irix*)
   [symcode='[BCDEGRST]']
@@ -1389,7 +1591,7 @@ fi
 for ac_symprfx in "" "_"; do
 
   # Write the raw and C identifiers.
-[lt_cv_sys_global_symbol_pipe="sed -n -e 's/^.*[ 	]\($symcode\)[ 	][ 	]*\($ac_symprfx\)$sympat$opt_cr$/$symxfrm/p'"]
+[lt_cv_sys_global_symbol_pipe="sed -n -e 's/^.*[ 	]\($symcode$symcode*\)[ 	][ 	]*\($ac_symprfx\)$sympat$opt_cr$/$symxfrm/p'"]
 
   # Check to see that the pipe works correctly.
   pipe_works=no
@@ -1445,7 +1647,7 @@ const struct {
 [lt_preloaded_symbols[] =]
 {
 EOF
-	  sed 's/^. \(.*\) \(.*\)$/  {"\2", (lt_ptr_t) \&\2},/' < "$nlist" >> conftest.$ac_ext
+	  sed "s/^$symcode$symcode* \(.*\) \(.*\)$/  {\"\2\", (lt_ptr_t) \&\2},/" < "$nlist" >> conftest.$ac_ext
 	  cat <<\EOF >> conftest.$ac_ext
   {0, (lt_ptr_t) 0}
 };
@@ -1608,7 +1810,7 @@ else
       echo='print -r'
     elif (test -f /bin/ksh || test -f /bin/ksh$ac_exeext) &&
 	 test "X$CONFIG_SHELL" != X/bin/ksh; then
-      # If we have ksh, try running ltconfig again with it.
+      # If we have ksh, try running configure again with it.
       ORIGINAL_CONFIG_SHELL=${CONFIG_SHELL-/bin/sh}
       export ORIGINAL_CONFIG_SHELL
       CONFIG_SHELL=/bin/ksh
@@ -2012,9 +2214,15 @@ AC_CACHE_VAL(lt_cv_prog_cc_pic,
   else
     # PORTME Check for PIC flags for the system compiler.
     case $host_os in
-    aix3* | aix4*)
-     # All AIX code is PIC.
-      lt_cv_prog_cc_static='-bnso -bI:/lib/syscalls.exp'
+    aix3* | aix4* | aix5*)
+      # All AIX code is PIC.
+      if test "$host_cpu" = ia64; then
+        # AIX 5 now supports IA64 processor
+        lt_cv_prog_cc_static='-Bstatic'
+        lt_cv_prog_cc_wl='-Wl,'
+      else
+        lt_cv_prog_cc_static='-bnso -bI:/lib/syscalls.exp'
+      fi
       ;;
 
     hpux9* | hpux10* | hpux11*)
@@ -2337,8 +2545,9 @@ if test "$with_gnu_ld" = yes; then
 
   # See if GNU ld supports shared libraries.
   case $host_os in
-  aix3* | aix4*)
+  aix3* | aix4* | aix5*)
     # On AIX, the GNU linker is very broken
+    # Note:Check GNU linker on AIX 5-IA64 when/if it becomes available.
     ld_shlibs=no
     cat <<EOF 1>&2
 
@@ -2458,8 +2667,8 @@ EOF
       archive_cmds='$LD -Bshareable $libobjs $deplibs $linker_flags -o $lib'
       wlarc=
     else
-      archive_cmds='$CC -shared $libobjs $deplibs $compiler_flags ${wl}-soname $wl$soname -o $lib'
-      archive_expsym_cmds='$CC -shared $libobjs $deplibs $compiler_flags ${wl}-soname $wl$soname ${wl}-retain-symbols-file $wl$export_symbols -o $lib'
+      archive_cmds='$CC -shared -nodefaultlibs $libobjs $deplibs $compiler_flags ${wl}-soname $wl$soname -o $lib'
+      archive_expsym_cmds='$CC -shared -nodefaultlibs $libobjs $deplibs $compiler_flags ${wl}-soname $wl$soname ${wl}-retain-symbols-file $wl$export_symbols -o $lib'
     fi
     ;;
 
@@ -2537,8 +2746,14 @@ else
     fi
     ;;
 
-  aix4*)
-    hardcode_libdir_flag_spec='${wl}-b ${wl}nolibpath ${wl}-b ${wl}libpath:$libdir:/usr/lib:/lib'
+  aix4* | aix5*)
+    # When large executables or shared objects are built, AIX ld can
+    # have problems creating the table of contents.  If linking a library
+    # or program results in "error TOC overflow" add -mminimal-toc to
+    # CXXFLAGS/CFLAGS for g++/gcc.  In the cases where that is not
+    # enough to fix the problem, add -Wl,-bbigtoc to LDFLAGS.
+
+    archive_cmds=''
     hardcode_libdir_separator=':'
     if test "$GCC" = yes; then
       collect2name=`${CC} -print-prog-name=collect2`
@@ -2548,34 +2763,67 @@ else
 	# We have reworked collect2
 	hardcode_direct=yes
       else
-	# We have old collect2
-	hardcode_direct=unsupported
-	# It fails to find uninstalled libraries when the uninstalled
-	# path is not listed in the libpath.  Setting hardcode_minus_L
-	# to unsupported forces relinking
-	hardcode_minus_L=yes
-	hardcode_libdir_flag_spec='-L$libdir'
-	hardcode_libdir_separator=
+        # We have old collect2
+        hardcode_direct=unsupported
+        # It fails to find uninstalled libraries when the uninstalled
+        # path is not listed in the libpath.  Setting hardcode_minus_L
+        # to unsupported forces relinking
+        hardcode_minus_L=yes
+        hardcode_libdir_flag_spec='-L$libdir'
+        hardcode_libdir_separator=
       fi
       shared_flag='-shared'
     else
-      shared_flag='${wl}-bM:SRE'
+      if test "$host_cpu" = ia64; then
+        shared_flag='-G'
+      else
+        shared_flag='${wl}-bM:SRE'
+      fi
       hardcode_direct=yes
     fi
-    allow_undefined_flag=' ${wl}-berok'
-    archive_cmds="\$CC $shared_flag"' -o $output_objdir/$soname $libobjs $deplibs $compiler_flags ${wl}-bexpall ${wl}-bnoentry${allow_undefined_flag}'
-    archive_expsym_cmds="\$CC $shared_flag"' -o $output_objdir/$soname $libobjs $deplibs $compiler_flags ${wl}-bE:$export_symbols ${wl}-bnoentry${allow_undefined_flag}'
-    case $host_os in [aix4.[01]|aix4.[01].*])
-      # According to Greg Wooledge, -bexpall is only supported from AIX 4.2 on
-      always_export_symbols=yes ;;
-    esac
 
-    # We don't want to build shared libraries on unknown CPU types.
-    case $host_cpu in
-    powerpc | rs6000) ;;
-    *) ld_shlibs=no ;;
-    esac
-   ;;
+    if test "$host_cpu" = ia64; then
+      # On IA64, the linker does run time linking by default, so we don't
+      # have to do anything special.
+      aix_use_runtimelinking=no
+      exp_sym_flag='-Bexport'
+      no_entry_flag=""
+    else
+      # Test if we are trying to use run time linking, or normal AIX style linking.
+      # If -brtl is somewhere in LDFLAGS, we need to do run time linking.
+      aix_use_runtimelinking=no
+      for ld_flag in $LDFLAGS; do
+        if (test $ld_flag = "-brtl" || test $ld_flag = "-Wl,-brtl" ); then
+          aix_use_runtimelinking=yes
+          break
+        fi
+      done
+      exp_sym_flag='-bexport'
+      no_entry_flag='-bnoentry'
+    fi
+    # It seems that -bexpall can do strange things, so it is better to
+    # generate a list of symbols to export.
+    always_export_symbols=yes
+    if test "$aix_use_runtimelinking" = yes; then
+      hardcode_libdir_flag_spec='${wl}-blibpath:$libdir:/usr/lib:/lib'
+      allow_undefined_flag=' -Wl,-G'
+      archive_expsym_cmds="\$CC $shared_flag"' -o $output_objdir/$soname $libobjs $deplibs $compiler_flags ${allow_undefined_flag} '"\${wl}$no_entry_flag \${wl}$exp_sym_flag:\$export_symbols"
+    else
+      if test "$host_cpu" = ia64; then
+        hardcode_libdir_flag_spec='${wl}-R $libdir:/usr/lib:/lib'
+       allow_undefined_flag="-znodefs"
+        archive_expsym_cmds="\$CC $shared_flag"' -o $output_objdir/$soname ${wl}-h$soname $libobjs $deplibs $compiler_flags ${wl}${allow_undefined_flag} '"\${wl}$no_entry_flag \${wl}$exp_sym_flag:\$export_symbols"
+      else
+        hardcode_libdir_flag_spec='${wl}-bnolibpath ${wl}-blibpath:$libdir:/usr/lib:/lib'
+        # Warning - without using the other run time loading flags, -berok will
+        #           link without error, but may produce a broken library.
+        allow_undefined_flag='${wl}-berok"
+        # This is a bit strange, but is similar to how AIX traditionally builds
+        # it's shared libraries.
+        archive_expsym_cmds="\$CC $shared_flag"' -o $output_objdir/$soname $libobjs $deplibs $compiler_flags ${allow_undefined_flag} '"\${wl}$no_entry_flag \${wl}$exp_sym_flag:\$export_symbols"' ~$AR -crlo $objdir/$libname$release.a $objdir/$soname'
+      fi
+    fi
+    ;;
 
   amigaos*)
     archive_cmds='$rm $output_objdir/a2ixlibrary.data~$echo "#define NAME $libname" > $output_objdir/a2ixlibrary.data~$echo "#define LIBRARY_ID 1" >> $output_objdir/a2ixlibrary.data~$echo "#define VERSION $major" >> $output_objdir/a2ixlibrary.data~$echo "#define REVISION $revision" >> $output_objdir/a2ixlibrary.data~$AR $AR_FLAGS $lib $libobjs~$RANLIB $lib~(cd $output_objdir && a2ixlibrary -32)'
@@ -2605,7 +2853,10 @@ else
 
   darwin* | rhapsody*)
     allow_undefined_flag='-undefined suppress'
-    archive_cmds='$CC `test .$module = .yes && echo -bundle || echo -dynamiclib` $allow_undefined_flag -o $lib $libobjs $deplibs$linkopts -install_name $rpath/$soname `test -n "$verstring" -a x$verstring != x0.0 && echo $verstring`'
+    # FIXME: Relying on posixy $() will cause problems for
+    #        cross-compilation, but unfortunately the echo tests do not
+    #        yet detect zsh echo's removal of \ escapes.
+    archive_cmds='$CC $(test .$module = .yes && echo -bundle || echo -dynamiclib) $allow_undefined_flag -o $lib $libobjs $deplibs$linkopts -install_name $rpath/$soname $(test -n "$verstring" -a x$verstring != x0.0 && echo $verstring)'
     # We need to add '_' to the symbols in $export_symbols first
     #archive_expsym_cmds="$archive_cmds"' && strip -s $export_symbols'
     hardcode_direct=yes
@@ -2718,14 +2969,16 @@ else
     if test "$GCC" = yes; then
       allow_undefined_flag=' ${wl}-expect_unresolved ${wl}\*'
       archive_cmds='$CC -shared${allow_undefined_flag} $libobjs $deplibs $compiler_flags ${wl}-msym ${wl}-soname ${wl}$soname `test -n "$verstring" && echo ${wl}-set_version ${wl}$verstring` ${wl}-update_registry ${wl}${output_objdir}/so_locations -o $lib'
+      hardcode_libdir_flag_spec='${wl}-rpath ${wl}$libdir'
     else
       allow_undefined_flag=' -expect_unresolved \*'
       archive_cmds='$LD -shared${allow_undefined_flag} $libobjs $deplibs $linker_flags -msym -soname $soname `test -n "$verstring" && echo -set_version $verstring` -update_registry ${output_objdir}/so_locations -o $lib'
       archive_expsym_cmds='for i in `cat $export_symbols`; do printf "-exported_symbol " >> $lib.exp; echo "\$i" >> $lib.exp; done; echo "-hidden">> $lib.exp~
       $LD -shared${allow_undefined_flag} -input $lib.exp $linker_flags $libobjs $deplibs -soname $soname `test -n "$verstring" && echo -set_version $verstring` -update_registry ${objdir}/so_locations -o $lib~$rm $lib.exp'
+
+      #Both c and cxx compiler support -rpath directly
+      hardcode_libdir_flag_spec='-rpath $libdir'
     fi
-#Both c and cxx compiler support -rpath directly
-    hardcode_libdir_flag_spec='-rpath $libdir'
     hardcode_libdir_separator=:
     ;;
 
@@ -2737,7 +2990,7 @@ else
     ;;
 
   solaris*)
-    no_undefined_flag=' -z text'
+    no_undefined_flag=' -z defs'
     # $CC -shared without GNU ld will not create a library from C++
     # object files and a static libstdc++, better avoid it by now
     archive_cmds='$LD -G${allow_undefined_flag} -h $soname -o $lib $libobjs $deplibs $linker_flags'
@@ -2828,8 +3081,13 @@ else
     runpath_var=LD_RUN_PATH
     ;;
 
-  unixware7*)
-    archive_cmds='$LD -G -h $soname -o $lib $libobjs $deplibs $linker_flags'
+  sysv5uw7* | unixware7*)
+    no_undefined_flag='${wl}-z ${wl}text'
+    if test "$GCC" = yes; then
+      archive_cmds='$CC -shared ${wl}-h ${wl}$soname -o $lib $libobjs $deplibs $compiler_flags'
+    else
+      archive_cmds='$CC -G ${wl}-h ${wl}$soname -o $lib $libobjs $deplibs $compiler_flags'
+    fi
     runpath_var='LD_RUN_PATH'
     hardcode_shlibpath_var=no
     ;;
@@ -2908,31 +3166,45 @@ aix3*)
   soname_spec='${libname}${release}.so$major'
   ;;
 
-aix4*)
+aix4* | aix5*)
   version_type=linux
-  # AIX has no versioning support, so currently we can not hardcode correct
-  # soname into executable. Probably we can add versioning support to
-  # collect2, so additional links can be useful in future.
-  # We preserve .a as extension for shared libraries though AIX4.2
-  # and later linker supports .so
-  library_names_spec='${libname}${release}.so$versuffix ${libname}${release}.so$major $libname.a'
-  shlibpath_var=LIBPATH
-  case $host_os in
-[  aix4 | aix4.[01] | aix4.[01].*)]
-    if { echo '#if __GNUC__ > 2 || (__GNUC__ == 2 && __GNUC_MINOR__ >= 97)'
-	 echo ' yes '
-	 echo '#endif'; } | ${CC} -E - | grep yes > /dev/null; then
-      :
+  if test "$host_cpu" = ia64; then
+    # AIX 5 supports IA64
+    library_names_spec='${libname}${release}.so$major ${libname}${release}.so$versuffix $libname.so'
+    shlibpath_var=LD_LIBRARY_PATH
+  else
+    # With GCC up to 2.95.x, collect2 would create an import file
+    # for dependence libraries.  The import file would start with
+    # the line `#! .'.  This would cause the generated library to
+    # depend on `.', always an invalid library.  This was fixed in
+    # development snapshots of GCC prior to 3.0.
+    case $host_os in
+      [ aix4 | aix4.[01] | aix4.[01].*)]
+      if { echo '#if __GNUC__ > 2 || (__GNUC__ == 2 && __GNUC_MINOR__ >= 97)'
+           echo ' yes '
+           echo '#endif'; } | ${CC} -E - | grep yes > /dev/null; then
+        :
+      else
+        can_build_shared=no
+      fi
+      ;;
+    esac
+    # AIX (on Power*) has no versioning support, so currently we can not hardcode correct
+    # soname into executable. Probably we can add versioning support to
+    # collect2, so additional links can be useful in future.
+    if test "$aix_use_runtimelinking" = yes; then
+      # If using run time linking (on AIX 4.2 or later) use lib<name>.so instead of
+      # lib<name>.a to let people know that these are not typical AIX shared libraries.
+      library_names_spec='${libname}${release}.so$versuffix ${libname}${release}.so$major $libname.so'
     else
-      # With GCC up to 2.95.x, collect2 would create an import file
-      # for dependence libraries.  The import file would start with
-      # the line `#! .'.  This would cause the generated library to
-      # depend on `.', always an invalid library.  This was fixed in
-      # development snapshots of GCC prior to 3.0.
-      can_build_shared=no
+      # We preserve .a as extension for shared libraries through AIX4.2
+      # and later when we are not doing run time linking.
+      library_names_spec='${libname}${release}.a $libname.a'
+      soname_spec='${libname}${release}.so$major'
     fi
-    ;;
-  esac
+    shlibpath_var=LIBPATH
+    deplibs_check_method=pass_all
+  fi
   ;;
 
 amigaos*)
@@ -2999,8 +3271,11 @@ darwin* | rhapsody*)
   version_type=darwin
   need_lib_prefix=no
   need_version=no
-  library_names_spec='${libname}${release}${versuffix}.`test .$module = .yes && echo so || echo dylib` ${libname}${release}${major}.`test .$module = .yes && echo so || echo dylib` ${libname}.`test .$module = .yes && echo so || echo dylib`'
-  soname_spec='${libname}${release}${major}.`test .$module = .yes && echo so || echo dylib`'
+  # FIXME: Relying on posixy $() will cause problems for
+  #        cross-compilation, but unfortunately the echo tests do not
+  #        yet detect zsh echo's removal of \ escapes.
+  library_names_spec='${libname}${release}${versuffix}.$(test .$module = .yes && echo so || echo dylib) ${libname}${release}${major}.$(test .$module = .yes && echo so || echo dylib) ${libname}.$(test .$module = .yes && echo so || echo dylib)'
+  soname_spec='${libname}${release}${major}.$(test .$module = .yes && echo so || echo dylib)'
   shlibpath_overrides_runpath=yes
   shlibpath_var=DYLD_LIBRARY_PATH
   ;;
@@ -3116,6 +3391,8 @@ linux-gnu*)
 
 netbsd*)
   version_type=sunos
+  need_lib_prefix=no
+  need_version=no
   if echo __ELF__ | $CC -E - | grep __ELF__ >/dev/null; then
     library_names_spec='${libname}${release}.so$versuffix ${libname}.so$versuffix'
     finish_cmds='PATH="\$PATH:/sbin" ldconfig -m $libdir'
@@ -4169,7 +4446,7 @@ lt_cv_deplibs_check_method='unknown'
 # whether `pass_all' will *always* work, you probably want this one.
 
 case $host_os in
-aix4*)
+aix4* | aix5*)
   lt_cv_deplibs_check_method=pass_all
   ;;
 
@@ -4189,6 +4466,7 @@ cygwin* | mingw* | pw32*)
   ;;
 
 darwin* | rhapsody*)
+  lt_cv_deplibs_check_method='file_magic Mach-O dynamically linked shared library'
   lt_cv_file_magic_cmd='/usr/bin/file -L'
   case "$host_os" in
   rhapsody* | darwin1.[012])
@@ -4287,6 +4565,10 @@ sco3.2v5*)
 solaris*)
   lt_cv_deplibs_check_method=pass_all
   lt_cv_file_magic_test_file=/lib/libc.so
+  ;;
+
+[sysv5uw[78]* | sysv4*uw2*)]
+  lt_cv_deplibs_check_method=pass_all
   ;;
 
 sysv4 | sysv4.2uw2* | sysv4.3* | sysv5*)
@@ -4435,57 +4717,6 @@ AC_DEFUN([AM_PROG_NM],        [AC_PROG_NM])
 # This is just to silence aclocal about the macro not being used
 ifelse([AC_DISABLE_FAST_INSTALL])
 
-dnl Local Variables: ***
-dnl mode: sh ***
-dnl sh-indentation: 2 ***
-dnl End: ***
-
-# Define a conditional.
-
-AC_DEFUN(AM_CONDITIONAL,
-[AC_SUBST($1_TRUE)
-AC_SUBST($1_FALSE)
-if $2; then
-  $1_TRUE=
-  $1_FALSE='#'
-else
-  $1_TRUE='#'
-  $1_FALSE=
-fi])
-
-# Do all the work for Automake.  This macro actually does too much --
-# some checks are only needed if your package does certain things.
-# But this isn't really a big deal.
-
-# serial 1
-
-dnl Usage:
-dnl AM_INIT_AUTOMAKE(package,version, [no-define])
-
-AC_DEFUN(AM_INIT_AUTOMAKE,
-[AC_REQUIRE([AC_PROG_INSTALL])
-PACKAGE=[$1]
-AC_SUBST(PACKAGE)
-VERSION=[$2]
-AC_SUBST(VERSION)
-dnl test to see if srcdir already configured
-if test "`cd $srcdir && pwd`" != "`pwd`" && test -f $srcdir/config.status; then
-  AC_MSG_ERROR([source directory already configured; run "make distclean" there first])
-fi
-ifelse([$3],,
-AC_DEFINE_UNQUOTED(PACKAGE, "$PACKAGE", [Name of package])
-AC_DEFINE_UNQUOTED(VERSION, "$VERSION", [Version number of package]))
-AC_REQUIRE([AM_SANITY_CHECK])
-AC_REQUIRE([AC_ARG_PROGRAM])
-dnl FIXME This is truly gross.
-missing_dir=`cd $ac_aux_dir && pwd`
-AM_MISSING_PROG(ACLOCAL, aclocal, $missing_dir)
-AM_MISSING_PROG(AUTOCONF, autoconf, $missing_dir)
-AM_MISSING_PROG(AUTOMAKE, automake, $missing_dir)
-AM_MISSING_PROG(AUTOHEADER, autoheader, $missing_dir)
-AM_MISSING_PROG(MAKEINFO, makeinfo, $missing_dir)
-AC_REQUIRE([AC_PROG_MAKE_SET])])
-
 #
 # Check to make sure that the build environment is sane.
 #
@@ -4529,21 +4760,18 @@ fi
 rm -f conftest*
 AC_MSG_RESULT(yes)])
 
-dnl AM_MISSING_PROG(NAME, PROGRAM, DIRECTORY)
-dnl The program must properly implement --version.
-AC_DEFUN(AM_MISSING_PROG,
-[AC_MSG_CHECKING(for working $2)
-# Run test in a subshell; some versions of sh will print an error if
-# an executable is not found, even if stderr is redirected.
-# Redirect stdin to placate older versions of autoconf.  Sigh.
-if ($2 --version) < /dev/null > /dev/null 2>&1; then
-   $1=$2
-   AC_MSG_RESULT(found)
+# Define a conditional.
+
+AC_DEFUN(AM_CONDITIONAL,
+[AC_SUBST($1_TRUE)
+AC_SUBST($1_FALSE)
+if $2; then
+  $1_TRUE=
+  $1_FALSE='#'
 else
-   $1="$3/missing $2"
-   AC_MSG_RESULT(missing)
-fi
-AC_SUBST($1)])
+  $1_TRUE='#'
+  $1_FALSE=
+fi])
 
 # Like AC_CONFIG_HEADER, but automatically create stamp file.
 

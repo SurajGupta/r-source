@@ -1,7 +1,7 @@
-fourfoldplot <- function(x, color = c("red", "blue"), conf.level = 0.95,
-                         std = c("margins", "ind.max", "all.max"),
-                         margin = c(1, 2), space = 0.2, main = NULL,
-                         mfrow = NULL, mfcol = NULL)
+fourfoldplot <-
+function(x, color = c("#99CCFF", "#6699CC"), conf.level = 0.95,
+         std = c("margins", "ind.max", "all.max"), margin = c(1, 2),
+         space = 0.2, main = NULL, mfrow = NULL, mfcol = NULL)
 {
     ## Code for producing fourfold displays.
     ## Reference:
@@ -34,8 +34,12 @@ fourfoldplot <- function(x, color = c("red", "blue"), conf.level = 0.95,
     
     if(!is.array(x))
         stop("x must be an array")
-    if(length(dim(x)) == 2)
-        x <- array(x, dim = c(dim(x), 1))
+    if(length(dim(x)) == 2) {
+        x <- if(is.null(dimnames(x)))
+            array(x, c(dim(x), 1))
+        else
+            array(x, c(dim(x), 1), c(dimnames(x), list(NULL)))
+    }
     if(length(dim(x)) != 3)
         stop("x must be 2- or 3-dimensional")        
     if(any(dim(x)[1:2] != 2))
@@ -92,7 +96,7 @@ fourfoldplot <- function(x, color = c("red", "blue"), conf.level = 0.95,
     stdize <- function(tab, std, x) {
         ## Standardize the 2 x 2 table `tab'.
         if(std == "margins") {
-            if(margin == c(1, 2)) {
+            if(all(sort(margin) == c(1, 2))) {
                 ## standardize to equal row and col margins
                 u <- sqrt(odds(tab)$or)
                 u <- u / (1 + u)

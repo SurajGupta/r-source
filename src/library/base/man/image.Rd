@@ -1,18 +1,13 @@
 \name{image}
+\alias{image}
+\alias{image.default}
 \title{Display a Color Image}
 \usage{
-image(x, y, z, zlim, xlim, ylim, col = heat.colors(12),
+image(x, \dots)
+image.default(x, y, z, zlim, xlim, ylim, col = heat.colors(12),
       add = FALSE, xaxs = "i", yaxs = "i", xlab, ylab,
       breaks, oldstyle = FALSE, \dots)
 }
-\synopsis{
-image(x = seq(0, 1, len = nrow(z)), y = seq(0, 1, len = ncol(z)), 
-    z, zlim = range(z[is.finite(z)]), xlim = range(x[is.finite(x)]), 
-    ylim = range(y[is.finite(y)]), col = heat.colors(12), add = FALSE, 
-    xaxs = "i", yaxs = "i", xlab, ylab, breaks, oldstyle = FALSE, 
-    ...) 
-}
-\alias{image}
 \arguments{
   \item{x,y}{locations of grid lines at which the values in \code{z} are
     measured.  These must be in ascending order.  By default, equally
@@ -56,6 +51,7 @@ image(x = seq(0, 1, len = nrow(z)), y = seq(0, 1, len = ncol(z)),
   Creates a grid of colored or gray-scale rectangles with colors
   corresponding to the values in \code{z}.  This can be used to display
   three-dimensional or spatial data aka ``images''.
+  This is a generic function.
 
   The functions \code{\link{heat.colors}}, \code{\link{terrain.colors}}
   and \code{\link{topo.colors}} create heat-spectrum (red to white) and
@@ -79,10 +75,6 @@ image(x = seq(0, 1, len = nrow(z)), y = seq(0, 1, len = ncol(z)),
 \note{
   Based on a function by Thomas Lumley
   \email{tlumley@u.washington.edu}.
-
-  The way in which \code{zlim} is divided into colours will be changed
-  for the next major release (1.1.0) to divide the range into
-  equal-length intervals.
 }
 \seealso{
   \code{\link{contour}},

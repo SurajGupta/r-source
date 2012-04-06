@@ -69,7 +69,7 @@ SEXP ScalarString(SEXP x)
     return ans;
 }
 
-static char *truenames[] = {
+const static char * const truenames[] = {
     "T",
     "True",
     "TRUE",
@@ -77,7 +77,7 @@ static char *truenames[] = {
     (char *) 0,
 };
 
-static char *falsenames[] = {
+const static char * const falsenames[] = {
     "F",
     "False",
     "FALSE",
@@ -88,6 +88,8 @@ static char *falsenames[] = {
 /* int, not Rboolean, for NA_LOGICAL : */
 int asLogical(SEXP x)
 {
+    int warn = 0;
+
     if (isVectorAtomic(x)) {
 	if (LENGTH(x) < 1)
 	    return NA_LOGICAL;
@@ -95,19 +97,40 @@ int asLogical(SEXP x)
 	case LGLSXP:
 	    return LOGICAL(x)[0];
 	case INTSXP:
-	    return (INTEGER(x)[0] == NA_INTEGER) ?
-		NA_LOGICAL : (INTEGER(x)[0]) != 0;
+	    return LogicalFromInteger(INTEGER(x)[0], &warn);
 	case REALSXP:
-	    return R_FINITE(REAL(x)[0]) ?
-		(REAL(x)[0] != 0.0) : NA_LOGICAL;
+	    return LogicalFromReal(REAL(x)[0], &warn);
 	case CPLXSXP:
-	    return R_FINITE(COMPLEX(x)[0].r) ?
-		(COMPLEX(x)[0].r != 0.0) : NA_LOGICAL;
+	    return LogicalFromComplex(COMPLEX(x)[0], &warn);
 	}
     }
     return NA_LOGICAL;
 }
 
+int asInteger(SEXP x)
+{
+    int warn = 0, res;
+    
+    if (isVectorAtomic(x) && LENGTH(x) >= 1) {
+	switch (TYPEOF(x)) {
+	case LGLSXP:
+	    return IntegerFromLogical(LOGICAL(x)[0], &warn);
+	case INTSXP:
+	    return INTEGER(x)[0];
+	case REALSXP:
+	    res = IntegerFromReal(REAL(x)[0], &warn);
+	    CoercionWarning(warn);
+	    return res;
+	case CPLXSXP:
+	    res = IntegerFromComplex(COMPLEX(x)[0], &warn);
+	    CoercionWarning(warn);
+	    return res;
+	}
+    }
+    return NA_INTEGER;
+}
+
+#ifdef OLD
 int asInteger(SEXP x)
 {
     if (isVectorAtomic(x) && LENGTH(x) >= 1) {
@@ -127,7 +150,9 @@ int asInteger(SEXP x)
     }
     return NA_INTEGER;
 }
+#endif
 
+#ifdef OLD
 double asReal(SEXP x)
 {
     if (isVectorAtomic(x) && LENGTH(x) >= 1) {
@@ -144,8 +169,35 @@ double asReal(SEXP x)
     }
     return NA_REAL;
 }
+#endif
 
+double asReal(SEXP x)
+{
+    int warn = 0;
+    double res;
+    
+    if (isVectorAtomic(x) && LENGTH(x) >= 1) {
+	switch (TYPEOF(x)) {
+	case LGLSXP:
+	    res = RealFromLogical(LOGICAL(x)[0], &warn);
+	    CoercionWarning(warn);
+	    return res;	    
+	case INTSXP:
+	    res = RealFromInteger(INTEGER(x)[0], &warn);
+	    CoercionWarning(warn);
+	    return res;	    
+	case REALSXP:
+	    return REAL(x)[0];
+	case CPLXSXP:
+	    res = RealFromComplex(COMPLEX(x)[0], &warn);
+	    CoercionWarning(warn);
+	    return res;	    
+	}
+    }
+    return NA_REAL;
+}
 
+#ifdef OLD
 Rcomplex asComplex(SEXP x)
 {
     Rcomplex z;
@@ -166,6 +218,29 @@ Rcomplex asComplex(SEXP x)
 		z.i = 0;
 	    }
 	    return z;
+	case CPLXSXP:
+	    return COMPLEX(x)[0];
+	}
+    }
+    return z;
+}
+#endif
+
+Rcomplex asComplex(SEXP x)
+{
+    int warn = 0;
+    Rcomplex z;
+
+    z.r = NA_REAL;
+    z.i = NA_REAL;
+    if (isVectorAtomic(x) && LENGTH(x) >= 1) {
+	switch (TYPEOF(x)) {
+	case LGLSXP:
+	    return ComplexFromLogical(LOGICAL(x)[0], &warn);
+	case INTSXP:
+	    return ComplexFromInteger(INTEGER(x)[0], &warn);
+	case REALSXP:
+	    return ComplexFromReal(REAL(x)[0], &warn);
 	case CPLXSXP:
 	    return COMPLEX(x)[0];
 	}
@@ -194,7 +269,7 @@ SEXP asChar(SEXP x)
 	    sprintf(buf, "%d", INTEGER(x)[0]);
 	    return mkChar(buf);
 	case REALSXP:
-	    formatReal(REAL(x), 1, &w, &d, &e);
+	    formatReal(REAL(x), 1, &w, &d, &e, 0);
 #ifdef OLD
 	    if (e)
 		sprintf(buf, "%*.*e", w, d, REAL(x)[0]);
@@ -205,7 +280,7 @@ SEXP asChar(SEXP x)
 	    return mkChar(EncodeReal(REAL(x)[0], w, d, e));
 #endif
         case CPLXSXP:
-	    formatComplex(COMPLEX(x), 1, &w, &d, &e, &wi, &di, &ei);
+	    formatComplex(COMPLEX(x), 1, &w, &d, &e, &wi, &di, &ei, 0);
 	    return mkChar(EncodeComplex(COMPLEX(x)[0], w, d, e, wi, di, ei));
 	case STRSXP:
 	    return STRING_ELT(x, 0);
@@ -217,7 +292,7 @@ SEXP asChar(SEXP x)
 }
 
 
-static char type_msg[] = "invalid type passed to internal function\n";
+const static char type_msg[] = "invalid type passed to internal function\n";
 
 
 void internalTypeCheck(SEXP call, SEXP s, SEXPTYPE type)
@@ -251,7 +326,7 @@ Rboolean isUserBinop(SEXP s)
 {
     if (isSymbol(s)) {
 	char *str = CHAR(PRINTNAME(s));
-	if (str[0] == '%' && str[strlen(str)-1] == '%')
+	if (strlen(str) >= 2 && str[0] == '%' && str[strlen(str)-1] == '%')
 	    return TRUE;
     }
     return FALSE;
@@ -316,7 +391,7 @@ Rboolean isVectorAtomic(SEXP s)
     case CPLXSXP:
     case STRSXP:
 	return TRUE;
-    default:
+    default: /* including NULL */
 	return FALSE;
     }
 }
@@ -339,7 +414,6 @@ Rboolean isVector(SEXP s)/* === isVectorList() or isVectorAtomic() */
 }
 
 
-
 Rboolean isFrame(SEXP s)
 {
     SEXP class;
@@ -352,18 +426,15 @@ Rboolean isFrame(SEXP s)
     return FALSE;
 }
 
-
 Rboolean isEnvironment(SEXP s)
 {
     return (TYPEOF(s) == NILSXP || TYPEOF(s) == ENVSXP);
 }
 
-
 Rboolean isExpression(SEXP s)
 {
     return TYPEOF(s) == EXPRSXP;
 }
-
 
 Rboolean isLanguage(SEXP s)
 {
@@ -382,7 +453,6 @@ Rboolean isMatrix(SEXP s)
     return FALSE;
 }
 
-
 Rboolean isArray(SEXP s)
 {
     SEXP t;
@@ -399,7 +469,6 @@ Rboolean isTs(SEXP s)
 {
     return (isVector(s) && getAttrib(s, R_TspSymbol) != R_NilValue);
 }
-
 
 Rboolean tsConform(SEXP x, SEXP y)
 {
@@ -598,9 +667,9 @@ double realNA()
 }
 #endif
 
-static struct {
-    char *str;
-    int type;
+const static struct {
+    const char * const str;
+    const int type;
 }
 TypeTable[] = {
     { "NULL",		NILSXP	   },  /* real types */
@@ -805,10 +874,12 @@ SEXP dcdr(SEXP l)
     return(CDR(l));
 }
 
+/* merge(xinds, yinds, all.x, all.y) */
 SEXP do_merge(SEXP call, SEXP op, SEXP args, SEXP rho)
 {
-    SEXP xi, yi, ansx, ansy, ans, ansnames;
-    int y, nx = 0, ny = 0, i, j, k, nans = 0;
+    SEXP xi, yi, ansx, ansy, ans, ansnames, x_lone, y_lone;
+    int y, nx = 0, ny = 0, i, j, k, nans = 0, nx_lone = 0, ny_lone = 0;
+    int all_x = 0, all_y = 0, ll = 0/* "= 0" : for -Wall */;
 
     checkArity(op, args);
     xi = CAR(args);
@@ -817,26 +888,52 @@ SEXP do_merge(SEXP call, SEXP op, SEXP args, SEXP rho)
     yi = CADR(args);
     if ( !isInteger(yi) || !(ny = LENGTH(yi)) )
 	error("invalid `yinds' argument");
+    if(!LENGTH(ans = CADDR(args)) || NA_LOGICAL == (all_x = asLogical(ans)))
+	errorcall(call, "`all.x' must be TRUE or FALSE");		 
+    if(!LENGTH(ans = CADDDR(args))|| NA_LOGICAL == (all_y = asLogical(ans)))
+	errorcall(call, "`all.y' must be TRUE or FALSE");
+    /* 1. determine result sizes */
+    if(all_x) { 
+	for (i = 0; i < nx; i++)
+	    if (INTEGER(xi)[i] == 0) nx_lone++;
+    }
     for (j = 0; j < ny; j++)
-	if ((y = INTEGER(yi)[j]) > 0)
+	if ((y = INTEGER(yi)[j]) > 0) {
 	    for (i = 0; i < nx; i++) {
 		if (INTEGER(xi)[i] == y) nans++;
 	    }
-    PROTECT(ans = allocVector(VECSXP, 2));
-    ansx = allocVector(INTSXP, nans);
-    SET_VECTOR_ELT(ans, 0, ansx);
-    ansy = allocVector(INTSXP, nans);
-    SET_VECTOR_ELT(ans, 1, ansy);
+        } else /* y == 0 */ if (all_y) ny_lone++;
+    /* 2. allocate and store result components */
+    PROTECT(ans = allocVector(VECSXP, 4));
+    ansx = allocVector(INTSXP, nans);    SET_VECTOR_ELT(ans, 0, ansx);
+    ansy = allocVector(INTSXP, nans);    SET_VECTOR_ELT(ans, 1, ansy);
+    if(all_x) { 
+	x_lone = allocVector(INTSXP, nx_lone);    
+	SET_VECTOR_ELT(ans, 2, x_lone);
+	ll = 0;
+	for (i = 0; i < nx; i++)
+	    if (INTEGER(xi)[i] == 0) INTEGER(x_lone)[ll++] = i + 1;
+    }
+    if(all_y) { 
+	y_lone = allocVector(INTSXP, ny_lone);    
+	SET_VECTOR_ELT(ans, 3, y_lone);
+	ll = 0;
+    } else
+	y_lone = R_NilValue;
     for (j = 0, k = 0; j < ny; j++)
-	if ((y = INTEGER(yi)[j]) > 0)
+	if ((y = INTEGER(yi)[j]) > 0) {
 	    for (i = 0; i < nx; i++) 
 		if (INTEGER(xi)[i] == y) {
 		INTEGER(ansx)[k]   = i + 1;
 		INTEGER(ansy)[k++] = j + 1;
 	    }
-    PROTECT(ansnames = allocVector(STRSXP, 2));
+	} else /* y == 0 */ if (all_y) INTEGER(y_lone)[ll++] = j + 1;
+
+    PROTECT(ansnames = allocVector(STRSXP, 4));
     SET_STRING_ELT(ansnames, 0, mkChar("xi"));
     SET_STRING_ELT(ansnames, 1, mkChar("yi"));
+    SET_STRING_ELT(ansnames, 2, mkChar("x.alone"));
+    SET_STRING_ELT(ansnames, 3, mkChar("y.alone"));
     setAttrib(ans, R_NamesSymbol, ansnames);
     UNPROTECT(2);
     return ans;
@@ -922,12 +1019,21 @@ SEXP do_dirname(SEXP call, SEXP op, SEXP args, SEXP rho)
 	if(*p == '\\') *p = '/';
 #endif
     /* remove trailing file separator(s) */
-    while ( *(p = buf + strlen(buf) - 1) == fsp ) *p = '\0';
-    if((p = strrchr(buf, fsp))) {
-	*p = '\0';
-	/* remove excess trailing file separator(s), as in /a///b  */
-	while ( *(--p) == fsp ) *p = '\0';
-    } else
+    while ( *(p = buf + strlen(buf) - 1) == fsp  && p > buf
+#ifdef Win32
+	    && *(p-1) != ':'
+#endif
+	) *p = '\0';
+    p = strrchr(buf, fsp);
+    if(p == NULL)
 	strcpy(buf, ".");
+    else {
+	while(p > buf && *p == fsp
+#ifdef Win32
+	      && *(p-1) != ':'
+#endif
+	    ) --p;
+	p[1] = '\0';
+    }
     return(mkString(buf));
 }

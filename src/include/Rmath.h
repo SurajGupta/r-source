@@ -35,10 +35,6 @@
 #endif
 
 
-#ifdef FORTRAN_H
-#error __MUST__include "Mathlib.h"  _before_  "Fortran.h"
-#endif
-
 #include <errno.h>
 #include <limits.h>
 #include <float.h>
@@ -93,6 +89,10 @@
 
 #ifndef M_PI
 #define M_PI		3.141592653589793238462643383280	/* pi */
+#endif
+
+#ifndef M_2PI
+#define M_2PI		6.283185307179586476925286766559	/* 2*pi */
 #endif
 
 #ifndef M_PI_2

@@ -431,6 +431,7 @@ extern SEXP	R_BlankString;	    /* "" as a CHARSXP */
 #define evalListKeepMissing	Rf_evalListKeepMissing
 #define findFun			Rf_findFun
 #define findVar			Rf_findVar
+#define findVarInFrame		Rf_findVarInFrame
 #define GetArrayDimnames	Rf_GetArrayDimnames
 #define getAttrib		Rf_getAttrib
 #define GetColNames		Rf_GetColNames
@@ -472,6 +473,7 @@ extern SEXP	R_BlankString;	    /* "" as a CHARSXP */
 #define isSymbol		Rf_isSymbol
 #define isTs			Rf_isTs
 #define isUnordered		Rf_isUnordered
+#define isUnsorted		Rf_isUnsorted
 #define isUserBinop		Rf_isUserBinop
 #define isValidString		Rf_isValidString
 #define isValidStringF		Rf_isValidStringF
@@ -609,6 +611,7 @@ SEXP evalList(SEXP, SEXP);
 SEXP evalListKeepMissing(SEXP, SEXP);
 /* SEXP extendEnv(SEXP, SEXP, SEXP); */
 SEXP findVar(SEXP, SEXP);
+SEXP findVarInFrame(SEXP, SEXP);
 SEXP findFun(SEXP, SEXP);
 SEXP getAttrib(SEXP, SEXP);
 void GetMatrixDimnames(SEXP, SEXP*, SEXP*, char**, char**);
@@ -647,6 +650,7 @@ Rboolean isString(SEXP);
 Rboolean isSymbol(SEXP);
 Rboolean isTs(SEXP);
 Rboolean isUnordered(SEXP);
+Rboolean isUnsorted(SEXP);
 Rboolean isUserBinop(SEXP);
 Rboolean isValidString(SEXP);
 Rboolean isValidStringF(SEXP);
@@ -834,4 +838,6 @@ typedef void (*R_CFinalizer_t)(SEXP);
 void R_RegisterFinalizer(SEXP s, SEXP fun);
 void R_RegisterCFinalizer(SEXP s, R_CFinalizer_t fun);
 
+/* Protected evaluation */
+Rboolean R_ToplevelExec(void (*fun)(void *), void *data);
 #endif /* _R_INTERNALS_H_ */

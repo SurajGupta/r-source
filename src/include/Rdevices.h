@@ -55,12 +55,17 @@ PicTeXDeviceDriver(DevDesc*, char*, char*, char*, double, double, Rboolean);
 
 Rboolean 
 PSDeviceDriver(DevDesc*, char*, char*, char*, char**,
-	       char*, char*, double, double, Rboolean, double, 
+	       char*, char*, char*, double, double, Rboolean, double, 
 	       Rboolean, Rboolean, Rboolean, char*);
 Rboolean 
 XFigDeviceDriver(DevDesc*, char*, char*, char*,
 		 char*, char*, double, double, 
 		 Rboolean, double, Rboolean, Rboolean);
+Rboolean
+PDFDeviceDriver(DevDesc* dd, char *, char *, char *, 
+		char *, char *, double, double, double,
+		int);
+
 
 
 /*-------------------------------------------------------------------

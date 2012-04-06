@@ -34,6 +34,7 @@ glm <- function(formula, family=gaussian, data=list(), weights=NULL,
 	   "glm.fit.null"= 1,
 	   ## else
 	   stop(paste("invalid `method':", method)))
+    na.act <- attr(mf, "na.action")
     xvars <- as.character(attr(mt, "variables"))[-1]
     if((yvar <- attr(mt, "response")) > 0) xvars <- xvars[-yvar]
     xlev <- if(length(xvars) > 0) {
@@ -68,6 +69,7 @@ glm <- function(formula, family=gaussian, data=list(), weights=NULL,
 			 control=control, intercept=TRUE)$deviance
     }
     if(model) fit$model <- mf
+    if(!is.null(na.act)) fit$na.action <- na.act
     if(x) fit$x <- X
     if(!y) fit$y <- NULL
     fit <- c(fit, list(call=call, formula=formula,
@@ -626,7 +628,11 @@ print.summary.glm <- function (x, digits = max(3, getOption("digits") - 3),
 coef.glm <- function(object, ...) object$coefficients
 deviance.glm <- function(object, ...) object$deviance
 effects.glm <- function(object, ...) object$effects
-fitted.glm <- function(object, ...) object$fitted.values
+fitted.glm <- function(object, ...)
+{
+    if(is.null(object$na.action)) object$fitted.values
+    else napredict(object$na.action, object$fitted.values)
+}
 
 family.glm <- function(object, ...) object$family
 
@@ -640,16 +646,18 @@ residuals.glm <-
     r <- .Alias(object$residuals)
     mu	<- .Alias(object$fitted.values)
     wts <- .Alias(object$prior.weights)
-    switch(type,
-	   deviance = if(object$df.res > 0) {
-	       d.res <- sqrt(pmax((object$family$dev.resids)(y, mu, wts), 0))
-	       ifelse(y > mu, d.res, -d.res)
-	   } else rep(0, length(mu)),
-	   pearson = r * sqrt(object$weights),
-	   working = r,
-	   response = y - mu,
-	   partial = r + predict(object,type="terms")
-	   )
+    res <- switch(type,
+                  deviance = if(object$df.res > 0) {
+                      d.res <- sqrt(pmax((object$family$dev.resids)(y, mu, wts), 0))
+                      ifelse(y > mu, d.res, -d.res)
+                  } else rep(0, length(mu)),
+                  pearson = (y-mu)/sqrt(object$weights),
+                  working = r,
+                  response = y - mu,
+                  partial = r + predict(object,type="terms")
+                  )
+    if(is.null(object$na.action)) res
+    else naresid(object$na.action, res)
 }
 
 ## KH on 1998/06/22: update.default() is now used ...
@@ -671,5 +679,7 @@ model.frame.glm <-
 weights.glm <- function(object, type = c("prior", "working"), ...)
 {
     type <- match.arg(type)
-    if(type == "prior") object$prior.weights else object$weights
+    res <- if(type == "prior") object$prior.weights else object$weights
+    if(is.null(object$na.action)) res
+    else naresid(object$na.action, res)
 }

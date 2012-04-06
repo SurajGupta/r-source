@@ -1,4 +1,6 @@
-wilcox.test <-
+wilcox.test <- function(x, ...) UseMethod("wilcox.test")
+
+wilcox.test.default <-
 function(x, y = NULL, alternative = c("two.sided", "less", "greater"), 
          mu = 0, paired = FALSE, exact = NULL, correct = TRUE,
          conf.int = FALSE, conf.level = 0.95) 
@@ -95,6 +97,14 @@ function(x, y = NULL, alternative = c("two.sided", "less", "greater"),
                                c(-Inf, lci)        
                            })
                 attr(cint, "conf.level") <- conf.level    
+                wmean <- n*(n+1)/4
+                if(floor(wmean) != wmean)
+                    ESTIMATE <- mean(c(diffs[floor(wmean)],
+                                       diffs[ceiling(wmean)]))
+                else 
+                    ESTIMATE <- mean(c(diffs[wmean-1], diffs[wmean+1]))
+                names(ESTIMATE) <- "(pseudo)median"
+
             }
         } else {
             NTIES <- table(r)
@@ -176,6 +186,10 @@ function(x, y = NULL, alternative = c("two.sided", "less", "greater"),
                     c(-Inf, u)
                 })
                 attr(cint, "conf.level") <- conf.level    
+                ESTIMATE <- uniroot(wdiff, c(mumin, mumax), tol=1e-4,
+                                    zq=0)$root
+		names(ESTIMATE) <- "(pseudo)median"
+
             }
 
             if(exact && TIES) {
@@ -250,7 +264,14 @@ function(x, y = NULL, alternative = c("two.sided", "less", "greater"),
                                lci <- diffs[ql + 1]
                                c(-Inf, lci)
                            })
-                attr(cint, "conf.level") <- conf.level    
+                attr(cint, "conf.level") <- conf.level
+                wmean <- n.x*n.y/2
+                if(floor(wmean) != wmean)
+                    ESTIMATE <- mean(c(diffs[floor(wmean)],
+                                       diffs[ceiling(wmean)]))
+                else 
+                    ESTIMATE <- mean(c(diffs[wmean-1], diffs[wmean+1]))
+                names(ESTIMATE) <- "difference in location"
             }
         }
         else {
@@ -318,7 +339,10 @@ function(x, y = NULL, alternative = c("two.sided", "less", "greater"),
                                   zq=qnorm(alpha))$root
                     c(-Inf, u)
                 })
-                attr(cint, "conf.level") <- conf.level    
+                attr(cint, "conf.level") <- conf.level
+                ESTIMATE <- uniroot(wdiff, c(mumin, mumax), tol=1e-4,
+                                    zq=0)$root
+                names(ESTIMATE) <- "difference in location"
             }
 
             if(exact && TIES) {
@@ -337,8 +361,39 @@ function(x, y = NULL, alternative = c("two.sided", "less", "greater"),
                  alternative = alternative,
                  method = METHOD, 
                  data.name = DNAME)
-    if(conf.int)
+    if(conf.int) {
         RVAL$conf.int <- cint
+        RVAL$estimate <- ESTIMATE
+    }
     class(RVAL) <- "htest"
     return(RVAL)
+}
+
+wilcox.test.formula <-
+function(formula, data, subset, na.action, ...)
+{
+    if(missing(formula)
+       || (length(formula) != 3)
+       || (length(attr(terms(formula[-2]), "term.labels")) != 1)
+       || (length(attr(terms(formula[-3]), "term.labels")) != 1))
+        stop("formula missing or incorrect")
+    if(missing(na.action))
+        na.action <- getOption("na.action")
+    m <- match.call(expand.dots = FALSE)
+    if(is.matrix(eval(m$data, parent.frame())))
+        m$data <- as.data.frame(data)
+    m[[1]] <- as.name("model.frame")
+    m$... <- NULL
+    mf <- eval(m, parent.frame())
+    DNAME <- paste(names(mf), collapse = " by ")
+    names(mf) <- NULL
+    response <- attr(attr(mf, "terms"), "response")
+    g <- as.factor(mf[[-response]])
+    if(nlevels(g) != 2)
+        stop("grouping factor must have exactly 2 levels")
+    DATA <- split(mf[[response]], g)
+    names(DATA) <- c("x", "y")
+    y <- do.call("wilcox.test", c(DATA, list(...)))
+    y$data.name <- DNAME
+    y
 }

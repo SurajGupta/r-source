@@ -22,9 +22,10 @@
 #include <config.h>
 #endif
 
-#include "Defn.h"
+#include <Defn.h>
 /* -> Errormsg.h */
-#include "Startup.h" /* rather cleanup ..*/
+#include <Startup.h> /* rather cleanup ..*/
+#include <Rconnections.h>
 
 /* limit on call length at which errorcall/warningcall is split over
    two lines */
@@ -60,9 +61,9 @@ static int inWarning = 0;
 			     /
 		    warning /
 
-  ErrorMessage	 : similar to errorcall()   but with message from ErrorDB[]
+  ErrorMessage()-> errorcall   (but with message from ErrorDB[])
 
-  WarningMessage : similar to warningcall() but with message from WarningDB[].
+  WarningMessage()-> warningcall (but with message from WarningDB[]).
 */
 
 
@@ -75,10 +76,10 @@ void onintr()
 /* SIGUSR1: save and quit
    SIGUSR2: save and quit, don't run .Last or on.exit().
 */
+
 void onsigusr1()
 {
     RCNTXT *c;
-    int nback=0;
 
     inError = 1;
 
@@ -96,20 +97,24 @@ void onsigusr1()
     R_FlushConsole();
     R_ClearerrConsole();
     R_ParseError = 0;
-    vmaxset(NULL);
-    if (R_GlobalContext->cend != NULL)
-	(R_GlobalContext->cend) ();
+
+    /* Bail out if there is a CTXT_RESTART on the stack--do we really
+       want this? */
     for (c = R_GlobalContext; c; c = c->nextcontext) {
-	if (c->cloenv != R_NilValue && c->conexit != R_NilValue)
-	    eval(c->conexit, c->cloenv);
-	if (c->callflag == CTXT_RETURN || c->callflag == CTXT_GENERIC )
-	    nback++;
-	if (c->callflag == CTXT_RESTART) {
-		inError=0;
-		findcontext(CTXT_RESTART, c->cloenv, R_DollarSymbol);
+	if (IS_RESTART_BIT_SET(c->callflag)) {
+	    inError=0;
+	    findcontext(CTXT_RESTART, c->cloenv, R_DollarSymbol);
 	}
     }
-	R_CleanUp(SA_SAVE, 2, 1); /* quit, save,  .Last, status=2 */
+
+    /* Run all onexit/cend code on the stack (without stopping at
+       intervening CTXT_TOPLEVEL's.  Since intervening CTXT_TOPLEVEL's
+       get used by what are conceptually concurrent computations, this
+       is a bit like telling all active threads to terminate and clean
+       up on the way out. */
+    R_run_onexits(NULL);
+
+    R_CleanUp(SA_SAVE, 2, 1); /* quit, save,  .Last, status=2 */
 }
 
 
@@ -131,7 +136,6 @@ void onsigusr2()
     R_FlushConsole();
     R_ClearerrConsole();
     R_ParseError = 0;
-    vmaxset(NULL);
     R_CleanUp(SA_SAVE, 0, 0);
 }
 
@@ -142,6 +146,19 @@ static void setupwarnings(void)
     setAttrib(R_Warnings, R_NamesSymbol, allocVector(STRSXP, 50));
 }
 
+/* Rvsnprintf: like vsnprintf, but guaranteed to null-terminate. */
+static int Rvsnprintf(char *buf, size_t size, const char  *format, va_list ap)
+{
+    int val;
+#ifdef HAVE_VSNPRINTF
+    val = vsnprintf(buf, size, format, ap);
+    buf[size-1] = '\0';
+#else
+    val = vsprintf(buf, format, ap);
+#endif
+    return val;
+}
+
 #define BUFSIZE 8192
 void warning(const char *format, ...)
 {
@@ -149,24 +166,31 @@ void warning(const char *format, ...)
 
     va_list(ap);
     va_start(ap, format);
-#ifdef HAVE_VSNPRINTF
-    vsnprintf(buf, BUFSIZE, format, ap);
-    buf[BUFSIZE-1] = '\0';
-#else
-    vsprintf(buf, format, ap);
-#endif
+    Rvsnprintf(buf, BUFSIZE, format, ap);
     va_end(ap);
     p = buf + strlen(buf) - 1;
     if(strlen(buf) > 0 && *p == '\n') *p = '\0';
     warningcall(R_NilValue, buf);
 }
 
-void warningcall(SEXP call, char *format, ...)
+/* temporary hook to allow experimenting with alternate warning mechanisms */
+static void (*R_WarningHook)(SEXP, char *) = NULL;
+
+void warningcall(SEXP call, const char *format, ...)
 {
     int w;
     SEXP names, s;
     char *dcall, buf[BUFSIZE];
     RCNTXT *cptr;
+
+    if (R_WarningHook != NULL) {
+	va_list(ap);
+	va_start(ap, format);
+	Rvsnprintf(buf, BUFSIZE, format, ap);
+	va_end(ap);
+	R_WarningHook(call, buf);
+	return;
+    }
 
     s = GetOption(install("warning.expression"), R_NilValue);
     if( s!= R_NilValue ) {
@@ -192,12 +216,7 @@ void warningcall(SEXP call, char *format, ...)
     if(w >= 2) { /* make it an error */
 	va_list(ap);
 	va_start(ap, format);
-#ifdef HAVE_VSNPRINTF
-	vsnprintf(buf, BUFSIZE, format, ap);
-	buf[BUFSIZE-1] = '\0';
-#else
-	vsprintf(buf, format, ap);
-#endif
+	Rvsnprintf(buf, BUFSIZE, format, ap);
 	va_end(ap);
 	errorcall(call, "(converted from warning) %s", buf);
     }
@@ -223,12 +242,7 @@ void warningcall(SEXP call, char *format, ...)
 	if( R_CollectWarnings > 49 )
 	    return;
 	SET_VECTOR_ELT(R_Warnings, R_CollectWarnings, call);
-#ifdef HAVE_VSNPRINTF
-	vsnprintf(buf, BUFSIZE, format, ap);
-	buf[BUFSIZE-1] = '\0';
-#else
-	vsprintf(buf, format, ap);
-#endif
+	Rvsnprintf(buf, BUFSIZE, format, ap);
 	va_end(ap);
 	names = CAR(ATTRIB(R_Warnings));
 	SET_STRING_ELT(names, R_CollectWarnings++, mkChar(buf));
@@ -289,30 +303,60 @@ void PrintWarnings(void)
 
 static char errbuf[BUFSIZE];
 
-void errorcall(SEXP call, char *format,...)
+/* temporary hook to allow experimenting with alternate error mechanisms */
+static void (*R_ErrorHook)(SEXP, char *) = NULL;
+
+void errorcall(SEXP call, const char *format,...)
 {
     char *p, *dcall;
 
     va_list(ap);
 
+    if (R_ErrorHook != NULL) {
+	char buf[BUFSIZE];
+	void (*hook)(SEXP, char *) = R_ErrorHook;
+	R_ErrorHook = NULL; /* to avoid recursion */
+	va_start(ap, format);
+	Rvsnprintf(buf, BUFSIZE, format, ap);
+	va_end(ap);
+	hook(call, buf);
+    }
+
     if (inError) {
-	if(inError == 3)
-	    REprintf("Error during wrapup \n");
+	if(inError == 3) {
+	     /* Can REprintf generate an error? If so we should guard for it */
+	    REprintf("Error during wrapup: ");
+	    /* this does NOT try to print the call since that could
+               cause a cascade of error calls */
+	    va_start(ap, format);
+	    Rvsnprintf(errbuf, sizeof(errbuf), format, ap);
+	    va_end(ap);
+	    REprintf("%s\n", errbuf);
+	}
 	jump_now();
     }
 
     if(call != R_NilValue) {
+	char *head = "Error in ";
+	char *mid = " : ";
+	char *tail = "\n\t";/* <- TAB */
+	int len = strlen(head) + strlen(mid) + strlen(tail);
+
 	inError = 1;
 	dcall = CHAR(STRING_ELT(deparse1(call, 0), 0));
-	sprintf(errbuf, "Error in %s : ", dcall);
-	if (strlen(dcall) > LONGCALL) strcat(errbuf, "\n	");/* <- TAB */
+	if (strlen(dcall) + len < BUFSIZE) {
+	    sprintf(errbuf, "%s%s%s", head, dcall, mid);
+	    if (strlen(dcall) > LONGCALL) strcat(errbuf, tail);
+	}
+	else
+	    sprintf(errbuf, "Error: ");
     }
     else
 	sprintf(errbuf, "Error: ");
 
     p = errbuf + strlen(errbuf);
     va_start(ap, format);
-    vsprintf(p, format, ap);
+    Rvsnprintf(p, BUFSIZE - strlen(errbuf), format, ap);
     va_end(ap);
     p = errbuf + strlen(errbuf) - 1;
     if(*p != '\n') strcat(errbuf, "\n");
@@ -333,20 +377,13 @@ SEXP do_geterrmessage(SEXP call, SEXP op, SEXP args, SEXP env)
 
 void error(const char *format, ...)
 {
-    char buf[BUFSIZE], *p;
+    char buf[BUFSIZE];
 
     va_list(ap);
     va_start(ap, format);
-#ifdef HAVE_VSNPRINTF
-    vsnprintf(buf, BUFSIZE, format, ap);
-    buf[BUFSIZE-1] = '\0';
-#else
-    vsprintf(buf, format, ap);
-#endif
+    Rvsnprintf(buf, BUFSIZE, format, ap);
     va_end(ap);
-    p = buf + strlen(buf) - 1;
-    if(*p != '\n') strcat(buf, "\n");
-    errorcall(R_GlobalContext->call, buf);
+    errorcall(R_GlobalContext->call, "%s", buf);
 }
 
 /* Unwind the call stack in an orderly fashion */
@@ -362,7 +399,7 @@ void jump_to_toplevel()
 
     inError = 1;
 
-    if( R_CollectWarnings ) {
+    if( R_ShowErrorMessages && R_CollectWarnings ) {
 	inError = 2;
 	REprintf("In addition: ");
 	PrintWarnings();
@@ -389,40 +426,40 @@ void jump_to_toplevel()
 	}
     }
 
+    /* reset some stuff--not sure (all) this belongs here */
     if (R_Inputfile != NULL)
 	fclose(R_Inputfile);
     R_ResetConsole();
     R_FlushConsole();
     R_ClearerrConsole();
     R_ParseError = 0;
-    if (R_GlobalContext->cend != NULL)
-	(R_GlobalContext->cend) ();
+
+    /* find the jump target; do the jump if target is a CTXT_RESTART */
     for (c = R_GlobalContext; c; c = c->nextcontext) {
-	if (c->cloenv != R_NilValue && c->conexit != R_NilValue)
-	    eval(c->conexit, c->cloenv);
-	if (c->callflag == CTXT_RETURN || c->callflag == CTXT_GENERIC )
+	if (c->callflag & CTXT_FUNCTION )
 	    nback++;
-	if (c->callflag == CTXT_RESTART) {
-		inError=0;
-		findcontext(CTXT_RESTART, c->cloenv, R_DollarSymbol);
+	if (IS_RESTART_BIT_SET(c->callflag)) {
+	    inError=0;
+	    findcontext(CTXT_RESTART, c->cloenv, R_DollarSymbol);
 	}
 	if (c->callflag == CTXT_TOPLEVEL)
 	    break;
     }
-    vmaxset(NULL);
+
+    /* run onexit/cend code for all contexts down to but not including
+       the jump target */
+    R_run_onexits(c);
+
     if ( !R_Interactive && !haveHandler && inError ) {
 	REprintf("Execution halted\n");
 	R_CleanUp(SA_NOSAVE, 1, 0); /* quit, no save, no .Last, status=1 */
     }
-#ifdef OLD
-    if (R_Sinkfile) R_Outputfile = R_Sinkfile;
-    else R_Outputfile = R_Consolefile;
-#endif
-    R_OutputCon = R_SinkCon;
 
     PROTECT(s = allocList(nback));
     t = s;
-    for (c = R_GlobalContext ; c ; c = c->nextcontext)
+    for (c = R_GlobalContext ;
+	 c != NULL && c->callflag != CTXT_TOPLEVEL;
+	 c = c->nextcontext)
 	if (c->callflag & CTXT_FUNCTION ) {
 	    SETCAR(t, deparse1(c->call, 0));
 	    t = CDR(t);
@@ -433,15 +470,40 @@ void jump_to_toplevel()
 }
 
 /*
-   Absolutely no allocation can be triggered in jump_now.
-   The error could be an out of memory error and any allocation
-   could result in an infinite-loop condition. All you can do
-   is reset things and exit.
-*/
+   Absolutely no allocation can be triggered in jump_now except
+   whatever happens in R_run_onexits.  The error could be an out of
+   memory error and any allocation could result in an infinite-loop
+   condition. All you can do is reset things and exit.  */
 void jump_now()
 {
-  Rf_resetStack(0);
-  LONGJMP(R_ToplevelContext->cjmpbuf, 0);
+    RCNTXT *c;
+
+    /* find the jump target; do the jump if target is a CTXT_RESTART */
+    for (c = R_GlobalContext; c; c = c->nextcontext) {
+	if (IS_RESTART_BIT_SET(c->callflag)) {
+	    inError=0;
+	    findcontext(CTXT_RESTART, c->cloenv, R_DollarSymbol);
+	}
+	if (c->callflag == CTXT_TOPLEVEL)
+	    break;
+    }
+    /* at this point we should have c == R_TopLevelContext */
+
+    /* Run onexit/cend code for all contexts down to but not including
+       the jump target.  Ordinarily this will already have been done,
+       but it may not have been completed in a recursive error
+       situation.  This may cause recursive calls to jump_now, but the
+       possible number of such recursive calls is limited since each
+       exit function is removed before it its executed.  This is not a
+       great design because we could run out of other resources that
+       are on the stack (like C stack for example).  The right thing
+       to do is arrange execute exit *after* the LONGJMP, but that
+       requires a more extensive redesign of the non-local transfer of
+       control mechanism.  LT. */
+    R_run_onexits(R_ToplevelContext);
+
+    Rf_resetStack(0);
+    LONGJMP(R_ToplevelContext->cjmpbuf, 0);
 }
 
 
@@ -458,10 +520,11 @@ void Rf_resetStack(int topLevelReset) {
 	REprintf("Lost warning messages\n");
     inError=0;
     inWarning=0;
-    R_PPStackTop = R_ToplevelContext->cstacktop;
-    R_EvalDepth = R_ToplevelContext->evaldepth;
     R_Warnings = R_NilValue;
     R_CollectWarnings = 0;
+
+    R_restore_globals(R_ToplevelContext);
+
     if(topLevelReset) {
         R_GlobalContext = R_ToplevelContext;
     }
@@ -535,23 +598,23 @@ SEXP do_warning(SEXP call, SEXP op, SEXP args, SEXP rho)
 }
 
 /* Error recovery for incorrect argument count error. */
-void WrongArgCount(char *s)
+void WrongArgCount(const char *s)
 {
     error("incorrect number of arguments to \"%s\"", s);
 }
 
 
-void UNIMPLEMENTED(char *s)
+void UNIMPLEMENTED(const char *s)
 {
     error("Unimplemented feature in %s", s);
 }
 
 /* ERROR_.. codes in Errormsg.h */
 static struct {
-    R_WARNING code;
-    char* format;
+    const R_WARNING code;
+    const char* const format;
 }
-ErrorDB[] = {
+const ErrorDB[] = {
     { ERROR_NUMARGS,		"invalid number of arguments"		},
     { ERROR_ARGTYPE,		"invalid argument type"			},
 
@@ -578,49 +641,152 @@ WarningDB[] = {
 void ErrorMessage(SEXP call, int which_error, ...)
 {
     int i;
+    char buf[BUFSIZE];
     va_list(ap);
-    char *dcall;
-    if (inError)
-	jump_now();
-    if (call != R_NilValue) {
-	dcall = CHAR(STRING_ELT(deparse1(call, 0), 0));
-	REprintf("Error in %s : ", dcall);
-	if (strlen(dcall) > LONGCALL) REprintf("\n   ");
-    }
-    else
-	REprintf("Error: ");	/* -- dcall = ??? */
+
     i = 0;
     while(ErrorDB[i].code != ERROR_UNKNOWN) {
 	if (ErrorDB[i].code == which_error)
 	    break;
 	i++;
     }
+
     va_start(ap, which_error);
-    REvprintf(ErrorDB[i].format, ap);
+    Rvsnprintf(buf, BUFSIZE, ErrorDB[i].format, ap);
     va_end(ap);
-    jump_to_toplevel();
+    errorcall(call, "%s", buf);
 }
 
 void WarningMessage(SEXP call, R_WARNING which_warn, ...)
 {
     int i;
+    char buf[BUFSIZE];
     va_list(ap);
-    char *dcall;
-    if (inError)
-	jump_now();
-    if (call != R_NilValue) {
-	dcall = CHAR(STRING_ELT(deparse1(call, 0), 0));
-	REprintf("Warning in %s : ", dcall);
-    }
-    else
-	REprintf("Warning: ");	/* -- dcall = ??? */
+
     i = 0;
     while(WarningDB[i].code != WARNING_UNKNOWN) {
 	if (WarningDB[i].code == which_warn)
 	    break;
 	i++;
     }
+
     va_start(ap, which_warn);
-    REvprintf(WarningDB[i].format, ap);
+    Rvsnprintf(buf, BUFSIZE, WarningDB[i].format, ap);
     va_end(ap);
+    warningcall(call, "%s", buf);
 }
+
+
+/* Temporary hooks to allow experimenting with alternate error and
+   warning mechanisms.  They are not in the header files for now, but
+   the following snippet can serve as a header file: */
+
+void R_ReturnOrRestart(SEXP val, SEXP env, Rboolean restart);
+void R_PrintDeferredWarnings(void);
+SEXP R_GetTraceback(int);
+void R_SetErrmessage(char *s);
+void R_SetErrorHook(void (*hook)(SEXP, char *));
+void R_SetWarningHook(void (*hook)(SEXP, char *));
+void R_JumpToToplevel(Rboolean restart);
+
+
+void R_SetWarningHook(void (*hook)(SEXP, char *))
+{
+    R_WarningHook = hook;
+}
+
+void R_SetErrorHook(void (*hook)(SEXP, char *))
+{
+    R_ErrorHook = hook;
+}
+
+void R_ReturnOrRestart(SEXP val, SEXP env, Rboolean restart)
+{
+    int mask;
+    RCNTXT *c;
+
+    if (R_BrowseLevel > 0)
+	mask = CTXT_BROWSER | CTXT_FUNCTION;
+    else
+	mask = CTXT_FUNCTION;
+
+    for (c = R_GlobalContext; c; c = c->nextcontext) {
+	if (c->callflag & mask && c->cloenv == env)
+	    findcontext(mask, env, val);
+	else if (restart && IS_RESTART_BIT_SET(c->callflag))
+	    findcontext(CTXT_RESTART, c->cloenv, R_DollarSymbol);
+	else if (c->callflag == CTXT_TOPLEVEL)
+	    error("No function to return from, jumping to top level");
+    }
+}
+
+void R_JumpToToplevel(Rboolean restart)
+{
+    RCNTXT *c;
+
+    /* Find the target for the jump */
+    for (c = R_GlobalContext; c != NULL; c = c->nextcontext) {
+	if (restart && IS_RESTART_BIT_SET(c->callflag))
+	    findcontext(CTXT_RESTART, c->cloenv, R_DollarSymbol);
+	else if (c->callflag == CTXT_TOPLEVEL)
+	    break;
+    }
+    if (c != R_ToplevelContext)
+	warning("top level inconsistency?");
+
+    /* Run onexit/cend code for everything above the target. */
+    R_run_onexits(c);
+
+    R_restore_globals(c);
+    R_ToplevelContext = R_GlobalContext = c;
+    LONGJMP(c->cjmpbuf, CTXT_TOPLEVEL);
+}
+
+void R_SetErrmessage(char *s)
+{
+    strncpy(errbuf, s, sizeof(errbuf));
+    errbuf[sizeof(errbuf) - 1] = 0;
+}
+
+void R_PrintDeferredWarnings(void)
+{
+    if( R_ShowErrorMessages && R_CollectWarnings ) {
+        REprintf("In addition: ");
+        PrintWarnings();
+    }
+}    
+
+/* doesn't stop at TOPLEVEL--should once browser is changed to use RESTART */
+SEXP R_GetTraceback(int skip)
+{
+    int nback = 0, ns;
+    RCNTXT *c;
+    SEXP s, t;
+
+    for (c = R_GlobalContext, ns = skip;
+	 c != NULL && c->callflag != CTXT_TOPLEVEL;
+	 c = c->nextcontext)
+	if (c->callflag & CTXT_FUNCTION ) {
+	    if (ns > 0)
+		ns--;
+	    else
+		nback++;
+	}
+
+    PROTECT(s = allocList(nback));
+    t = s;
+    for (c = R_GlobalContext ;
+	 c != NULL && c->callflag != CTXT_TOPLEVEL;
+	 c = c->nextcontext)
+	if (c->callflag & CTXT_FUNCTION ) {
+	    if (skip > 0)
+		skip--;
+	    else {
+		SETCAR(t, deparse1(c->call, 0));
+		t = CDR(t);
+	    }
+	}
+    UNPROTECT(1);
+    return s;
+}
+

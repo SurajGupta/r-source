@@ -98,7 +98,7 @@ void   GWdoConcatPStrings		  (Str255,Str255);
 void   doSetStandardState                 (WindowPtr);
 void   RnWrite                            (char*, SInt16);
 
-
+extern Boolean              Have_Console;
 // Function with empty content
 void R_ResetConsole(void);
 void R_FlushConsole(void);
@@ -135,7 +135,7 @@ void RWrite(char* buf)
 void RnWrite(char* buf, SInt16 len)
 {
     SInt32 i,my_len;
-    char *buf2=NULL;
+    char *buf2=NULL; 
     
     
     if(fileno(stdout)>1){
@@ -402,7 +402,12 @@ void maintain_cmd_History(char *buf)
 /* R_WriteConsole
 This function writes the given buffer out to the console. No special actions are required. (Specify
 the length of the buffer)
+
+Now user can break lengthy output
+Jago 4 June 2001, Stefano M. Iacus
 */
+
+
 void R_WriteConsole1(char *buf, SInt32 buflen)
 {
     SInt32 i;
@@ -410,6 +415,8 @@ void R_WriteConsole1(char *buf, SInt32 buflen)
     Boolean ended = false;
     WEReference we;
     char *stringona=NULL;
+    Boolean gotEvent;
+    EventRecord event;
 
     outlen =   strlen(buf);
 
@@ -422,73 +429,15 @@ void R_WriteConsole1(char *buf, SInt32 buflen)
     we = GetWindowWE ( Console_Window );
 
     if(we)
+    { 
      WEPut(kCurrentSelection,kCurrentSelection, stringona, outlen,kTextEncodingMultiRun, 0,0,nil,nil,we );
+      QDFlushPortBuffer(GetWindowPort(Console_Window), NULL);
+    }
+    isintrpt();
      
     if(stringona)
      free(stringona);
     }
-}
-
-// Updated for Waste 2.X  Jago
-void R_WriteConsoleX(Ptr buf, SInt32 buflen)
-{
-    SInt32 i, selStart, selEnd;
-    WEReference pWE;
-    SInt32 outLen, lastLen;
-    Boolean ended = false;
-    WEReference we;
-
-    lastLen = outLen = 0;
-    we = GetWindowWE ( Console_Window);
-    WESetSelection ( WEGetTextLength(we), WEGetTextLength(we), we );
-    for ( i=0; i < buflen; i++){
-	if (buf[i] == '\n'){
-	    if (outLen != 0){
-		WEPut(kCurrentSelection,kCurrentSelection, &buf[lastLen], outLen,kTextEncodingMultiRun, 0,0,nil,nil,GetWindowWE(Console_Window) );
-		outLen =0;
-	    }
-	    WEKey ('\r', NULL,  GetWindowWE (Console_Window));
-	    lastLen = i+1;
-	}
-	else{
-	    outLen++;
-	}
-    }
-    WEPut(kCurrentSelection,kCurrentSelection, &buf[lastLen],
-	  outLen,kTextEncodingMultiRun, 0,0,nil,nil,
-	  GetWindowWE(Console_Window) );
-
-}
-
-
-
-/* R_WriteConsole2
-Experimental code to use only Sioux
-This function writes the given buffer out to the console. No special actions are required. (Specify
-the length of the buffer)
-*/
-void R_WriteConsole2(char *buf, SInt32 buflen)
-{
-    SInt32 i;
-    SInt32 outlen, lastLen;
-    Boolean ended = false;
-    WEReference we;
-    char stringona[1000];
-
-
-    WriteCharsToConsole(buf,buflen);
-
-    return;
-
-    outlen =   strlen(buf);
-
-    strncpy(stringona,buf,outlen);
-    for ( i=0; i < outlen; i++)
-	if (buf[i] == '\n') stringona[i]='\r';
-
-    we = GetWindowWE ( Console_Window );
-//   WESetSelection ( WEGetTextLength(we), WEGetTextLength(we), we );
-    WEPut(kCurrentSelection,kCurrentSelection, stringona, outlen,kTextEncodingMultiRun, 0,0,nil,nil,we );
 }
 
 Boolean inRange(int start, int end , int back, int length)

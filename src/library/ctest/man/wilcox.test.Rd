@@ -1,13 +1,16 @@
 \name{wilcox.test}
 \alias{wilcox.test}
+\alias{wilcox.test.default}
+\alias{wilcox.test.formula}
 \title{Wilcoxon Rank Sum and Signed Rank Tests}
 \description{
   Performs one and two sample Wilcoxon tests on vectors of data.
 }
 \usage{
-wilcox.test(x, y = NULL, alternative = c("two.sided", "less", "greater"),
+\method{wilcox.test}{default}(x, y = NULL, alternative = c("two.sided", "less", "greater"),
             mu = 0, paired = FALSE, exact = NULL, correct = TRUE, 
             conf.int = FALSE, conf.level = 0.95)
+\method{wilcox.test}{formula}(formula, data, subset, na.action, \dots)
 }
 \arguments{
   \item{x}{numeric vector of data values.}
@@ -25,13 +28,26 @@ wilcox.test(x, y = NULL, alternative = c("two.sided", "less", "greater"),
   \item{conf.int}{a logical indicating whether a confidence interval
     should be computed.}
   \item{conf.level}{confidence level of the interval.}
+  \item{formula}{a formula of the form \code{lhs ~ rhs} where \code{lhs}
+    is a numeric variable giving the data values and \code{rhs} a factor
+    with two levels giving the corresponding groups.}
+  \item{data}{an optional data frame containing the variables in the
+    model formula.}
+  \item{subset}{an optional vector specifying a subset of observations
+    to be used.}
+  \item{na.action}{a function which indicates what should happen when
+    the data contain \code{NA}s.  Defaults to
+    \code{getOption("na.action")}.}
+  \item{\dots}{further arguments to be passed to the default method.}
 }
 \details{
+  The formula interface is only applicable for the 2-sample tests.
+  
   If only \code{x} is given, or if both \code{x} and \code{y} are given
   and \code{paired} is \code{TRUE}, a Wilcoxon signed rank test of the
-  null that the median of \code{x} (in the one sample case) or of
-  \code{x-y} (in the paired two sample case) equals \code{mu} is
-  performed.
+  null that the distribution of \code{x} (in the one sample case) or of
+  \code{x-y} (in the paired two sample case) is symmetric about
+  \code{mu} is performed.
 
   Otherwise, if both \code{x} and \code{y} are given and \code{paired}
   is \code{FALSE}, a Wilcoxon rank sum test (equivalent to the
@@ -44,11 +60,17 @@ wilcox.test(x, y = NULL, alternative = c("two.sided", "less", "greater"),
   are no ties.  Otherwise, a normal approximation is used.
 
   Optionally (if argument \code{conf.int} is true), a nonparametric
-  confidence interval for the median (one-sample case) or for the
-  difference of the location parameters \code{x-y} is computed.  If
-  exact p-values are available, an exact confidence interval is obtained
-  by the algorithm described in Bauer (1972).  Otherwise, an asymptotic
-  confidence interval is returned.
+  confidence interval and an estimator for the pseudomedian (one-sample
+  case) or for the difference of the location parameters \code{x-y} is
+  computed.  (The pseudomedian of a distribution \eqn{F} is the median
+  of the distribution of \eqn{(u+v)/2}, where \eqn{u} and \eqn{v} are
+  independent, each with distribution \eqn{F}.  If \eqn{F} is symmetric,
+  then the pseudomedian and median coincide.  See Hollander & Wolfe
+  (1973), page 34.)  If exact p-values are available, an exact
+  confidence interval is obtained by the algorithm described in Bauer
+  (1972), and the Hodges-Lehmann estimator is employed.  Otherwise, the
+  returned confidence interval and point estimate are based on normal
+  approximations.
 }
 \value{
   A list with class \code{"htest"} containing the following components:
@@ -63,6 +85,8 @@ wilcox.test(x, y = NULL, alternative = c("two.sided", "less", "greater"),
   \item{method}{the type of test applied.}
   \item{data.name}{a character string giving the names of the data.}
   \item{conf.int}{a confidence interval for the location parameter.
+    (Only present if argument \code{conf.int = TRUE}.)}
+  \item{estimate}{an estimate of the location parameter.
     (Only present if argument \code{conf.int = TRUE}.)}
 }
 \references{
@@ -111,5 +135,11 @@ wilcox.test(x, y, alternative = "greater",
                                             # approximation
 
 wilcox.test(rnorm(10), rnorm(10, 2), conf.int = TRUE)
+
+## Formula interface.
+data(airquality)
+boxplot(Ozone ~ Month, data = airquality)
+wilcox.test(Ozone ~ Month, data = airquality,
+            subset = Month \%in\% c(5, 8))
 }
 \keyword{htest}

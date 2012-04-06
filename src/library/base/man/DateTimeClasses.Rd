@@ -1,18 +1,16 @@
 \name{DateTimeClasses}
+% implementation mostly in ../R/datetime.R 
 \alias{POSIXct}
 \alias{POSIXlt}
 \alias{print.POSIXct}
 \alias{print.POSIXlt}
 \alias{summary.POSIXct}
 \alias{summary.POSIXlt}
-\alias{+.POSIXct}
-\alias{-.POSIXct}
-\alias{Ops.POSIXct}
-\alias{Math.POSIXct}
+\alias{+.POSIXt}
+\alias{-.POSIXt}
+\alias{Ops.POSIXt}
+\alias{Math.POSIXt}
 \alias{Summary.POSIXct}
-\alias{+.POSIXlt}
-\alias{-.POSIXlt}
-\alias{Ops.POSIXlt}
 \alias{Math.POSIXlt}
 \alias{Summary.POSIXlt}
 \alias{[.POSIXct}
@@ -27,6 +25,14 @@
 \alias{as.matrix.POSIXlt}
 \alias{mean.POSIXct}
 \alias{mean.POSIXlt}
+\alias{str.POSIXt}
+
+% back-compatibility functions
+\alias{-.POSIXct}
+\alias{-.POSIXlt}
+\alias{Ops.POSIXct}
+\alias{Ops.POSIXlt}
+
 \title{Date-Time Classes}
 \description{
   Description of the classes \code{"POSIXlt"} and \code{"POSIXct"}
@@ -43,7 +49,7 @@ time + number
 time - number
 time1 lop time2
 
-c(time1, ...)
+c(time1, ..., recursive = FALSE)
 mean(time)
 }
 \arguments{
@@ -80,11 +86,18 @@ mean(time)
   their names.
 
   \code{"POSIXct"} is more convenient for including in data frames, and
-  \code{"POSIXlt"} is closer to human-readable forms.  Logical
-  comparisons and limited arithmetic are available for both classes.
-  Differences between objects are returned as the number of (non-leap)
-  seconds between them.  One can add or subtract a number of seconds
-  from a date-time object, but not add two date-time objects.
+  \code{"POSIXlt"} is closer to human-readable forms.
+  A virtual class \code{"POSIXt"} inherits from both of the classes: it
+  is used to allow operations such as subtraction to mix the two classes.
+
+  Logical comparisons and limited arithmetic are available for both classes.
+  One can add or subtract a number of seconds or a
+  \code{\link{difftime}} object from a date-time object,
+  but not add two date-time objects.  Subtraction of two date-time objects
+  is equivalent to using \code{\link{difftime}}.  Be aware
+  that \code{"POSIXlt"} objects will be interpreted as being in the
+  current timezone for these operations, unless a timezone has been
+  specified.
 
   \code{"POSIXlt"} objects will often have an attribute \code{"tzone"},
   a character vector of length 3 giving the timezone name from the
@@ -110,6 +123,7 @@ mean(time)
 
   Using \code{c} on \code{"POSIXlt"} objects converts them to the
   current time zone.
+
 }
 \seealso{
   \code{\link{as.POSIXct}} and \code{\link{as.POSIXlt}} for conversion
@@ -119,6 +133,14 @@ mean(time)
   representations.
 
   \code{\link{Sys.time}} for clock time as a \code{"POSIXct"} object.
+
+  \code{\link{difftime}} for time intervals.
+
+  \code{\link{cut.POSIXt}}, \code{\link{seq.POSIXt}},
+  \code{\link{round.POSIXt}} and \code{\link{trunc.POSIXt}} for methods
+  for these classes.
+
+  \code{weekday.POSIXt} for convenience extraction functions.
 }
 \section{Warning}{
   Some Unix-like systems (especially Linux ones) do not have \code{"TZ"}
@@ -129,11 +151,19 @@ mean(time)
 \examples{
 (z <- Sys.time())             # the current date, as class "POSIXct"
 
-(z <- Sys.time() - 3600)      # an hour ago
-Sys.time() - z                # just over 3600 seconds.
+Sys.time() - 3600             # an hour ago
 
 as.POSIXlt(Sys.time(), "GMT") # the current time in GMT
 format(.leap.seconds)         # all 22 leapseconds in your timezone
+
+%% `advanced' examples:
+\testonly{
+str(.leap.seconds)
+
+## Wouldn't we want a  diff.POSIXt()  method ?
+(dls <- .leap.seconds[-1] - .leap.seconds[-22])
+table(dls)
+}
 }
 \keyword{utilities}
 \keyword{chron}

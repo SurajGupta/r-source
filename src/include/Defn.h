@@ -75,7 +75,7 @@
 #ifdef Macintosh
 # define OSTYPE      "mac"
 # define FILESEP     ":"
-#endif /* macintosh */
+#endif /* Macintosh */
 
 #ifdef Win32
 # define OSTYPE      "windows"
@@ -161,9 +161,7 @@
 # define LONGJMP(x,i) longjmp(x,i)
 #endif
 
-/* Dynamic loaded functions */
-typedef void * (*DL_FUNC)();
-DL_FUNC R_FindSymbol(char const *, char const *);
+#include "R_ext/Rdynload.h"
 
 #define HSIZE	   4119	/* The size of the hash table for symbols */
 #define MAXELTSIZE 8192 /* The largest string size */
@@ -280,7 +278,9 @@ typedef struct RCNTXT {
     SEXP call;			/* The call that effected this context*/
     SEXP cloenv;		/* The environment */
     SEXP conexit;		/* Interpreted "on.exit" code */
-    void (*cend)();		/* C "on.exit" thunk */
+    void (*cend)(void *);	/* C "on.exit" thunk */
+    void *cenddata;		/* data for C "on.exit" thunk */
+    char *vmax;		        /* top of R_alloc stack */
 } RCNTXT, *context;
 
 /* The Various Context Types.
@@ -303,8 +303,8 @@ enum {
     CTXT_RETURN	  = 12,
     CTXT_BROWSER  = 16,
     CTXT_GENERIC  = 20,
-    CTXT_RESTART  = 28,
-    CTXT_BUILTIN  = 32  /* used in profiling */
+    CTXT_RESTART  = 32,
+    CTXT_BUILTIN  = 64  /* used in profiling */
 };
 
 /*
@@ -317,8 +317,14 @@ CCO   0 0 0 1 0 0  = 8
 BRO   0 0 0 0 1 0  = 16
 RET   0 0 1 1 0 0  = 12
 GEN   0 0 1 0 1 0  = 20
-RES   0 0 1 1 1 0  = 28
+RES   0 0 0 0 0 0 1 = 32
+BUI   0 0 0 0 0 0 0 1 = 64
 */
+
+#define IS_RESTART_BIT_SET(flags) ((flags) & CTXT_RESTART)
+#define SET_RESTART_BIT_ON(flags) (flags |= CTXT_RESTART)
+#define SET_RESTART_BIT_OFF(flags) (flags &= ~CTXT_RESTART)
+
 /* Miscellaneous Definitions */
 #define streql(s, t)	(!strcmp((s), (t)))
 
@@ -428,10 +434,7 @@ extern Rboolean	R_Verbose	INI_as(FALSE);	/* Be verbose */
 extern FILE*	R_Inputfile	INI_as(NULL);	/* Current input flag */
 extern FILE*	R_Consolefile	INI_as(NULL);	/* Console output file */
 extern FILE*	R_Outputfile	INI_as(NULL);	/* Output file */
-extern FILE*	R_Sinkfile	INI_as(NULL);	/* Sink file */
-extern int	R_OutputCon	INI_as(1);	/* Output connection */
-extern int	R_SinkCon	INI_as(1);	/* Sink connection */
-extern int	R_SinkCon_to_close	INI_as(0);
+extern int	R_ErrorCon	INI_as(2);	/* Error connection */
 
 /* Objects Used In Parsing  */
 extern SEXP	R_CommentSxp;	    /* Comments accumulate here */
@@ -489,7 +492,6 @@ extern char*	R_GUIType	INI_as("unknown");
 #define FetchMethod		Rf_FetchMethod
 #define findcontext		Rf_findcontext
 #define findVar1		Rf_findVar1
-#define findVarInFrame		Rf_findVarInFrame
 #define findVarLocInFrame	Rf_findVarLocInFrame
 #define FrameClassFix		Rf_FrameClassFix
 #define framedepth		Rf_framedepth
@@ -597,7 +599,6 @@ int factorsConform(SEXP, SEXP);
 SEXP FetchMethod(char *, char *, SEXP);
 void findcontext(int, SEXP, SEXP);
 SEXP findVar1(SEXP, SEXP, SEXPTYPE, int);
-SEXP findVarInFrame(SEXP, SEXP);
 SEXP findVarLocInFrame(SEXP, SEXP);
 void FrameClassFix(SEXP);
 int framedepth(RCNTXT*);
@@ -606,6 +607,7 @@ int get1index(SEXP, SEXP, int, Rboolean);
 SEXP getVar(SEXP, SEXP);
 SEXP getVarInFrame(SEXP, SEXP);
 int hashpjw(char*);
+Rboolean InheritsClass(SEXP, char*);
 void InitArithmetic(void);
 void InitColors(void);
 void InitConnections(void);
@@ -679,8 +681,8 @@ void unmarkPhase(void);
 #endif
 int usemethod(char*, SEXP, SEXP, SEXP, SEXP, SEXP*);
 /* ../main/errors.c : */
-void errorcall(SEXP, char*, ...);
-void warningcall(SEXP, char*,...);
+void errorcall(SEXP, const char*, ...);
+void warningcall(SEXP, const char*,...);
 void ErrorMessage(SEXP, int, ...);
 void WarningMessage(SEXP, R_WARNING, ...);
 
@@ -688,6 +690,9 @@ int R_GetMaxVSize(void);
 void R_SetMaxVSize(int);
 int R_GetMaxNSize(void);
 void R_SetMaxNSize(int);
+
+void R_run_onexits(RCNTXT *);
+void R_restore_globals(RCNTXT *);
 
 
 /* gram.y & gram.c : */

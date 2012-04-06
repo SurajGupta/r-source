@@ -108,8 +108,8 @@ src/unix/rotated.[ch]
 	Copyright (c) 1993 Alan Richardson
 
 
-src/appl/chisqsim.c
 src/appl/loglin.c
+src/library/ctest/src/chisqsim.c
 src/library/ctest/src/nscor.c
 src/library/ctest/src/prho.c
 src/library/ctest/src/swilk.c
@@ -156,3 +156,16 @@ src/main/RNG.c
     AS LONG AS YOU MAKE ABSOLUTELY NO CHANGES!
 
   and is used unchanged.
+
+src/modules/lapack/double.f, cmplx.f
+
+  Extracted from
+  *  -- LAPACK routine (version 3.0) --
+  *     Univ. of Tennessee, Univ. of California Berkeley, NAG Ltd.,
+  *     Courant Institute, Argonne National Lab, and Rice University
+
+  The README says
+
+    It is freely-available software, and is copyrighted.
+
+  although no actual copyright statement appears in the code.

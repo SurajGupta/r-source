@@ -33,20 +33,35 @@ SEXP do_browser(SEXP, SEXP, SEXP, SEXP);
 
 #ifdef Macintosh
 
-/* The universe will end if the Stack on the Mac grows til it hits the heap. */
 /* This code places a limit on the depth to which eval can recurse. */
 
-void isintrpt(){}
+/* Now R correctly handles user breaks
+   This is the fastest way to do handle user breaks
+   and performance are no rather good. 
+   Jago, 13 Jun 2001, Stefano M. Iacus
+*/
+extern Boolean Interrupt;
+
+void isintrpt()
+{
+   if(!Interrupt)
+     return;
+     
+   if(CheckEventQueueForUserCancel()){  
+	Rprintf("\n");
+	error("user break");
+	raise(SIGINT);
+	return;
+    }
+
+}
 
 #endif
 
-#ifdef Win32
-extern void R_ProcessEvents();
-#endif
 
 #ifdef R_PROFILING
 
-/* BDR 2000/7/15
+/* BDR 2000-07-15
    Profiling is now controlled by the R function Rprof(), and should
    have negligible cost when not enabled.
 */
@@ -86,28 +101,73 @@ extern void R_ProcessEvents();
 
    L. T.  */
 
+#ifdef Win32
+#include <windows.h>  /* for CreateEvent, SetEvent */
+#include <process.h> /* for _beginthread, _endthread */
+#else
 #include <sys/time.h>
 #include <signal.h>
+#endif
 
 FILE *R_ProfileOutfile = NULL;
 static int R_Profiling = 0;
 
+#ifdef Win32
+HANDLE MainThread;
+HANDLE ProfileEvent;
+
+static void doprof()
+{
+    RCNTXT *cptr;
+    char buf[1100];
+
+    buf[0] = '\0';
+    SuspendThread(MainThread);
+    for (cptr = R_GlobalContext; cptr; cptr = cptr->nextcontext) {
+	if (((cptr->callflag & CTXT_FUNCTION) ||
+	     (cptr->callflag & CTXT_BUILTIN))
+	    && TYPEOF(cptr->call) == LANGSXP) {
+	    SEXP fun = CAR(cptr->call);
+	    if(strlen(buf) < 1000) {
+		strcat(buf, TYPEOF(fun) == SYMSXP ? CHAR(PRINTNAME(fun)) :
+		       "<Anonymous>");
+		strcat(buf, " ");
+	    }
+	}
+    }
+    ResumeThread(MainThread);
+    if(strlen(buf))
+	fprintf(R_ProfileOutfile, "%s\n", buf);
+}
+
+
+/* Profiling thread main function */
+static void __cdecl ProfileThread(void *pwait)
+{
+    int wait = *((int *)pwait);
+
+    SetThreadPriority(GetCurrentThread(), THREAD_PRIORITY_HIGHEST);
+    while(WaitForSingleObject(ProfileEvent, wait) != WAIT_OBJECT_0) {
+	doprof();
+    }
+}
+#else /* Unix */
 static void doprof(int sig)
 {
     RCNTXT *cptr;
     int newline = 0;
     for (cptr = R_GlobalContext; cptr; cptr = cptr->nextcontext) {
-	if (((cptr->callflag & CTXT_FUNCTION) || (cptr->callflag & CTXT_BUILTIN))
+	if (((cptr->callflag & CTXT_FUNCTION) ||
+	     (cptr->callflag & CTXT_BUILTIN))
 	    && TYPEOF(cptr->call) == LANGSXP) {
 	    SEXP fun = CAR(cptr->call);
-	    if (! newline)
-		newline = 1;
+	    if (!newline) newline = 1;
 	    fprintf(R_ProfileOutfile, "\"%s\" ",
-		    TYPEOF(fun) == SYMSXP ? CHAR(PRINTNAME(fun)) : "<Anonymous>");
+		    TYPEOF(fun) == SYMSXP ? CHAR(PRINTNAME(fun)) :
+		    "<Anonymous>");
 	}
     }
-    if (newline)
-	fprintf(R_ProfileOutfile, "\n");
+    if (newline) fprintf(R_ProfileOutfile, "\n");
     signal(SIGPROF, doprof);
 }
 
@@ -115,9 +175,15 @@ static void doprof_null(int sig)
 {
     signal(SIGPROF, doprof_null);
 }
+#endif
+
 
 static void R_EndProfiling()
 {
+#ifdef Win32
+    SetEvent(ProfileEvent);
+    CloseHandle(MainThread);
+#else
     struct itimerval itv;
 
     itv.it_interval.tv_sec = 0;
@@ -126,14 +192,20 @@ static void R_EndProfiling()
     itv.it_value.tv_usec = 0;
     setitimer(ITIMER_PROF, &itv, NULL);
     signal(SIGPROF, doprof_null);
+#endif
     fclose(R_ProfileOutfile);
     R_ProfileOutfile = NULL;
     R_Profiling = 0;
 }
 
 static void R_InitProfiling(char * filename, int append, double dinterval)
-{	
+{
+#ifndef Win32
     struct itimerval itv;
+#else
+    int wait;
+    HANDLE Proc = GetCurrentProcess();
+#endif
     int interval = 1e6 * dinterval+0.5;
 
     if(R_ProfileOutfile != NULL) R_EndProfiling();
@@ -141,6 +213,16 @@ static void R_InitProfiling(char * filename, int append, double dinterval)
     if (R_ProfileOutfile == NULL)
 	R_Suicide("can't open profile file");
     fprintf(R_ProfileOutfile, "sample.interval=%d\n", interval);
+
+#ifdef Win32
+    /* need to duplicate to make a real handle */
+    DuplicateHandle(Proc, GetCurrentThread(), Proc, &MainThread,
+		    0, FALSE, DUPLICATE_SAME_ACCESS);
+    wait = interval/1000;
+    if(!(ProfileEvent = CreateEvent(NULL, FALSE, FALSE, NULL)) ||
+       (_beginthread(ProfileThread, 0, &wait) == -1))
+	R_Suicide("unable to create profiling thread");
+#else
     signal(SIGPROF, doprof);
 
     itv.it_interval.tv_sec = 0;
@@ -149,6 +231,7 @@ static void R_InitProfiling(char * filename, int append, double dinterval)
     itv.it_value.tv_usec = interval;
     if (setitimer(ITIMER_PROF, &itv, NULL) == -1)
 	R_Suicide("setting profile timer failed");
+#endif
     R_Profiling = 1;
 }
 
@@ -200,6 +283,7 @@ SEXP eval(SEXP e, SEXP rho)
     /* check for a user abort */
     if ((R_EvalCount++ % 100) == 0) {
 	isintrpt();
+	R_EvalCount = 0 ;
     }
 #endif
 #ifdef Win32
@@ -635,7 +719,7 @@ SEXP do_for(SEXP call, SEXP op, SEXP args, SEXP rho)
 	    PrintValue(body);
 	    do_browser(call,op,args,rho);
 	}
-	begincontext(&cntxt, CTXT_LOOP, R_NilValue, R_NilValue,
+	begincontext(&cntxt, CTXT_LOOP, R_NilValue, rho,
 		     R_NilValue, R_NilValue);
 	if ((tmp = SETJMP(cntxt.cjmpbuf))) {
 	    if (tmp == CTXT_BREAK) break;	/* break */
@@ -717,7 +801,7 @@ SEXP do_while(SEXP call, SEXP op, SEXP args, SEXP rho)
 	    PrintValue(CAR(args));
 	    do_browser(call,op,args,rho);
 	}
-	begincontext(&cntxt, CTXT_LOOP, R_NilValue, R_NilValue,
+	begincontext(&cntxt, CTXT_LOOP, R_NilValue, rho,
 		     R_NilValue, R_NilValue);
 	if ((cond = SETJMP(cntxt.cjmpbuf))) {
 	    if (cond == CTXT_BREAK) break;	/* break */
@@ -756,7 +840,7 @@ SEXP do_repeat(SEXP call, SEXP op, SEXP args, SEXP rho)
 	    PrintValue(CAR(args));
 	    do_browser(call, op, args, rho);
 	}
-	begincontext(&cntxt, CTXT_LOOP, R_NilValue, R_NilValue,
+	begincontext(&cntxt, CTXT_LOOP, R_NilValue, rho,
 		     R_NilValue, R_NilValue);
 	if ((cond = SETJMP(cntxt.cjmpbuf))) {
 	    if (cond == CTXT_BREAK) break;	/*break */
@@ -1388,7 +1472,7 @@ int DispatchOrEval(SEXP call, char *generic, SEXP args, SEXP rho,
 	}
     }
     PROTECT(x);
-  
+
     /* try to dispatch on the object */
     if( isObject(x)) {
 	char *pt;

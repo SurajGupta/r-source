@@ -3,6 +3,7 @@ is.qr <- function(x) !is.null(x$qr) && !is.null(x$rank) && !is.null(x$qraux)
 qr <- function(x, tol= 1e-07)
 {
     x <- as.matrix(x)
+    if(is.complex(x)) return(.Call("La_zgeqp3", x, PACKAGE = "base"))
     p <- as.integer(ncol(x))
     n <- as.integer(nrow(x))
     if(!is.double(x))
@@ -31,6 +32,12 @@ qr.coef <- function(qr, y)
     if (!im) y <- as.matrix(y)
     ny <- as.integer(ncol(y))
     if (p==0) return( if (im) matrix(0,p,ny) else numeric(0) )
+    if(is.complex(qr$qr)) {
+        if(!is.complex(y)) y[] <- as.complex(y)
+	coef <- matrix(as.double(NA),nr=p,nc=ny)
+        coef[qr$pivot,] <- .Call("qr_coef_cmplx", qr, y, PACKAGE = "base")
+        if(im) return(coef) else return(c(coef))
+    }
     if (k==0) return( if (im) matrix(NA,p,ny) else rep(NA,p))
     storage.mode(y) <- "double"
     if( nrow(y) != n )
@@ -57,6 +64,11 @@ qr.coef <- function(qr, y)
 qr.qy <- function(qr, y)
 {
     if(!is.qr(qr)) stop("argument is not a QR decomposition")
+    if(is.complex(qr$qr)){
+        y <- as.matrix(y)
+        if(!is.complex(y)) y[] <- as.complex(y)
+        return(.Call("qr_qy_cmplx", qr, y, 0, PACKAGE = "base"))
+    }
     n <- as.integer(nrow(qr$qr))
     p <- as.integer(ncol(qr$qr))
     k <- as.integer(qr$rank)
@@ -78,6 +90,11 @@ qr.qy <- function(qr, y)
 qr.qty <- function(qr, y)
 {
     if(!is.qr(qr)) stop("argument is not a QR decomposition")
+    if(is.complex(qr$qr)){
+        y <- as.matrix(y)
+        if(!is.complex(y)) y[] <- as.complex(y)
+        return(.Call("qr_qy_cmplx", qr, y, 1, PACKAGE = "base"))
+    }
     n <- as.integer(nrow(qr$qr))
     p <- as.integer(ncol(qr$qr))
     k <- as.integer(qr$rank)
@@ -99,6 +116,7 @@ qr.qty <- function(qr, y)
 qr.resid <- function(qr, y)
 {
     if(!is.qr(qr)) stop("argument is not a QR decomposition")
+    if(is.complex(qr$qr)) stop("implemented for complex qr")
     k <- as.integer(qr$rank)
     if (k==0) return(y)
     n <- as.integer(nrow(qr$qr))
@@ -121,6 +139,7 @@ qr.resid <- function(qr, y)
 qr.fitted <- function(qr, y, k=qr$rank)
 {
     if(!is.qr(qr)) stop("argument is not a QR decomposition")
+    if(is.complex(qr$qr)) stop("implemented for complex qr")
     n <- as.integer(nrow(qr$qr))
     p <- as.integer(ncol(qr$qr))
     k <- as.integer(k)
@@ -183,5 +202,7 @@ qr.X <- function (qr, complete = FALSE,
 	tmp[, 1:p] <- R
 	R <- tmp
     }
-    qr.qy(qr, R)
+    res <- qr.qy(qr, R)
+    res[, qr$pivot] <- res[, seq(along=qr$pivot)]
+    res
 }

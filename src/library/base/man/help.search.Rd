@@ -11,7 +11,7 @@
 \usage{
 help.search(pattern, fields = c("alias", "title"),
             apropos, keyword, whatis, ignore.case = TRUE,
-            packages = NULL, lib.loc = .lib.loc,
+            package = NULL, lib.loc = .lib.loc,
             help.db = getOption("help.db"),
             verbose = getOption("verbose"),
             rebuild = FALSE)
@@ -34,7 +34,7 @@ help.search(pattern, fields = c("alias", "title"),
     matched in the help page topics.}
   \item{ignore.case}{a logical.  If \code{TRUE}, case is ignored during
     matching; if \code{FALSE}, pattern matching is case sensitive.}
-  \item{packages}{a character vector with the names of packages to
+  \item{package}{a character vector with the names of packages to
     search through, or \code{NULL} in which case \emph{all} available
     packages in the specified library trees \code{lib.loc} are
     searched.}
@@ -47,7 +47,7 @@ help.search(pattern, fields = c("alias", "title"),
     be rebuilt.}
 }
 \details{
-  Upon installation of a package, the Perl script \code{Rd2contents}
+  Upon installation of a package, the Perl script \file{Rd2contents.pl}
   creates a \file{CONTENTS} data base which contains the information on
   name, aliases, title and keywords (as well as the URL of the HTML
   version of the help file) in Debian Control Format.  This is the data

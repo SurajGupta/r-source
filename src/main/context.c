@@ -46,6 +46,8 @@
  *			at exit from the closure (normal or abnormal).
  *	cend		a pointer to function which executes if there is
  *			non-local return (i.e. an error)
+ *	cenddata	a void pointer do data for cend to use
+ *	vmax		the current setting of the R_alloc stack
  *
  *  Context types can be one of:
  *
@@ -104,12 +106,67 @@
 
 #include "Defn.h"
 
+
+/* R_run_onexits - runs the conexit/cend code for all contexts from
+   R_GlobalContext down to but not including the argument context.
+   This routine does not stop at a CTXT_TOPLEVEL--the code that
+   determines the argument is responsible for making sure
+   CTXT_TOPLEVEL's are not crossed unless appropriate. */
+
+void R_run_onexits(RCNTXT *cptr)
+{
+    RCNTXT *c;
+
+    for (c = R_GlobalContext; c != cptr; c = c->nextcontext) {
+	if (c == NULL)
+	    error("bad target context--should NEVER happen;\n"
+		  "please bug.report() [R_run_onexits]");
+	if (c->cend != NULL) {
+	    void (*cend)(void *) = c->cend;
+	    c->cend = NULL; /* prevent recursion */
+	    cend(c->cenddata);
+	}
+	if (c->cloenv != R_NilValue && c->conexit != R_NilValue) {
+	    SEXP s = c->conexit;
+	    c->conexit = R_NilValue; /* prevent recursion */
+	    PROTECT(s);
+	    eval(s, c->cloenv);
+	    UNPROTECT(1);
+	}
+    }
+}
+
+
+/* R_restore_globals - restore global variables from a target context
+   before a LONGJMP.  The target context itself is not restored here
+   since this is done slightly differently in jumpfun below, in
+   errors.c:jump_now, and in main.c:ParseBrwoser.  Eventually these
+   three should be unified so there is only one place where a LONGJMP
+   occurs. */
+
+void R_restore_globals(RCNTXT *cptr)
+{
+    R_PPStackTop = cptr->cstacktop;
+    R_EvalDepth = cptr->evaldepth;
+    vmaxset(cptr->vmax);
+}
+
+
 /* jumpfun - jump to the named context */
 
 static void jumpfun(RCNTXT * cptr, int mask, SEXP val)
 {
-    R_PPStackTop = cptr->cstacktop;
-    R_EvalDepth = cptr->evaldepth;
+    int savevis = R_Visible;
+
+    /* run onexit/cend code for all contexts down to but not including
+       the jump target */
+    PROTECT(val);
+    R_run_onexits(cptr);
+    UNPROTECT(1);
+    R_Visible = savevis;
+
+    R_restore_globals(cptr);
+
     R_ReturnedValue = val;
     if (cptr != R_ToplevelContext)
 	R_GlobalContext = cptr->nextcontext;
@@ -134,6 +191,7 @@ void begincontext(RCNTXT * cptr, int flags,
     cptr->conexit = R_NilValue;
     cptr->cend = NULL;
     cptr->promargs = promargs;
+    cptr->vmax = vmaxget();
     R_GlobalContext = cptr;
 }
 
@@ -157,13 +215,17 @@ void findcontext(int mask, SEXP env, SEXP val)
     RCNTXT *cptr;
     cptr = R_GlobalContext;
     if (mask & CTXT_LOOP) {		/* break/next */
-	if (cptr->callflag & CTXT_LOOP)
-	    jumpfun(cptr, mask, val);
-	else
-	    error("No loop to break from, jumping to top level");
+	for (cptr = R_GlobalContext;
+	     cptr != NULL && cptr->callflag != CTXT_TOPLEVEL;
+	     cptr = cptr->nextcontext)
+	    if (cptr->callflag & CTXT_LOOP && cptr->cloenv == env )
+	        jumpfun(cptr, mask, val);
+        error("No loop to break from, jumping to top level");
     }
     else {				/* return; or browser */
-	for (cptr = R_GlobalContext; cptr; cptr = cptr->nextcontext)
+	for (cptr = R_GlobalContext;
+	     cptr != NULL && cptr->callflag != CTXT_TOPLEVEL;
+	     cptr = cptr->nextcontext)
 	    if ((cptr->callflag & mask) && cptr->cloenv == env)
 		jumpfun(cptr, mask, val);
 	error("No function to return from, jumping to top level");
@@ -299,6 +361,8 @@ SEXP R_sysfunction(int n, RCNTXT *cptr)
 		    t = findVar(s, cptr->sysparent);
 		else if( isLanguage(s) )
 		    t = eval(s, cptr->sysparent);
+		else if( isFunction(s) )
+		    t = s;
 		else
 		    t = R_NilValue;
 		while (TYPEOF(t) == PROMSXP) 
@@ -322,6 +386,10 @@ SEXP R_sysfunction(int n, RCNTXT *cptr)
 
 /* some real insanity to keep Duncan sane */
 
+/* This should find the caller's environment (it's a .Internal) and
+   then get the context of the call that owns the environment.  As it
+   is, it will restart the wrong function if used in a promise.
+   L.T. */
 SEXP do_restart(SEXP call, SEXP op, SEXP args, SEXP rho)
 {
     RCNTXT *cptr;
@@ -332,8 +400,8 @@ SEXP do_restart(SEXP call, SEXP op, SEXP args, SEXP rho)
 	return(R_NilValue);
     for(cptr = R_GlobalContext->nextcontext; cptr!= R_ToplevelContext;
 	    cptr = cptr->nextcontext) {
-	if (cptr->callflag & CTXT_FUNCTION) {
-		cptr->callflag = CTXT_RESTART;
+        if (cptr->callflag & CTXT_FUNCTION) {
+		SET_RESTART_BIT_ON(cptr->callflag);
 		break;
 	}
     }
@@ -456,3 +524,37 @@ SEXP do_parentframe(SEXP call, SEXP op, SEXP args, SEXP rho)
     return R_GlobalEnv;
 }
 
+/* R_ToplevelExec - call fun(data) within a top level context to
+   insure that this functin cannot be left by a LONGJMP.  R errors in
+   the call to fun will result in a jump to top level. The return
+   value is TRUE if fun returns normally, FALSE if it results in a
+   jump to top level. */
+
+Rboolean R_ToplevelExec(void (*fun)(void *), void *data)
+{
+    RCNTXT thiscontext;
+    RCNTXT * volatile saveToplevelContext;
+    volatile SEXP topExp;
+    Rboolean result;
+
+
+    PROTECT(topExp = R_CurrentExpr);
+    saveToplevelContext = R_ToplevelContext;
+
+    begincontext(&thiscontext, CTXT_TOPLEVEL, R_NilValue, R_GlobalEnv,
+		 R_NilValue, R_NilValue);
+    if (SETJMP(thiscontext.cjmpbuf))
+	result = FALSE;
+    else {
+	R_GlobalContext = R_ToplevelContext = &thiscontext;
+	fun(data);
+	result = TRUE;
+    }
+    endcontext(&thiscontext);
+
+    R_ToplevelContext = saveToplevelContext;
+    R_CurrentExpr = topExp;
+    UNPROTECT(1);
+
+    return result;
+}

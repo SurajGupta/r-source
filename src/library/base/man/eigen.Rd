@@ -1,9 +1,11 @@
 \name{eigen}
+\alias{eigen}
+\alias{La.eigen}
 \title{Spectral Decomposition of a Matrix}
 \usage{
-eigen(x, symmetric, only.values=FALSE)
+eigen(x, symmetric, only.values = FALSE)
+La.eigen(x, symmetric, only.values = FALSE)
 }
-\alias{eigen}
 \arguments{
   \item{x}{a matrix whose spectral decomposition is to be computed.}
   \item{symmetric}{if \code{TRUE}, the matrix is assumed to be symmetric
@@ -15,23 +17,40 @@ eigen(x, symmetric, only.values=FALSE)
     returned.}
 }
 \description{
-  This function computes eigenvalues and eigenvectors by providing an
+  Function \code{eigen} computes eigenvalues and eigenvectors by providing an
   interface to the EISPACK routines \code{RS}, \code{RG}, \code{CH}
   and \code{CG}.
+
+  Function \code{La.eigen} uses the LAPACK routines DSYEV, DGEEV, ZHEEV
+  and ZGEEV.
+}
+\details{
+  If \code{symmetric} is unspecified, the code attempts to
+  determine if the matrix is symmetric up to plausible numerical
+  inaccuracies.  It is faster and surer to set the value yourself.
+
+  \code{La.eigen} is preferred to \code{eigen} for new projects, but
+  its eigenvectors may differ in sign and (in the asymmetric case) in
+  normalization.
 }
 \value{
   The spectral decomposition of \code{x} is returned
   as components of a list.
   \item{values}{a vector containing the \eqn{p} eigenvalues of \code{x},
     sorted in \emph{decreasing} order, according to \code{Mod(values)}
-    if they are complex. Complex conjugate pairs have the eigenvalue
-    with the positive imaginary part first.
+    if they are complex.
   }
   \item{vectors}{a \eqn{p\times p}{p * p} matrix whose columns contain the
     eigenvectors of \code{x}, or \code{NULL} if \code{only.values} is
-    \code{TRUE}.  When \code{symmetric = TRUE} the vectors are
-    normalized to unit length.  Otherwise the choice of length of the
-    eigenvectors is not defined in the underlying Fortran code.}
+    \code{TRUE}.
+    
+    For \code{eigen(, symmetric = FALSE)} the choice of length of the
+    eigenvectors is not defined by LINPACK. In all other cases the
+    vectors are normalized to unit length.
+
+    Recall that the eigenvectors are only defined up to a constant: even
+    when the length is specified they are still only defined up to a
+    scalar of modulus one (the sign for real matrices).
   }
 }
 \references{
@@ -39,6 +58,9 @@ eigen(x, symmetric, only.values=FALSE)
   Klema, V., and  Moler, C. B. (1976).
   \emph{Matrix Eigensystems Routines -- EISPACK Guide}.
   Springer-Verlag Lecture Notes in Computer Science.
+
+  Anderson. E. and ten others (1995)
+  \emph{LAPACK Users' Guide}. Second Edition. SIAM.
 }
 \seealso{
   \code{\link{svd}}, a generalization of \code{eigen}; \code{\link{qr}}, and
@@ -74,7 +96,7 @@ em <- eigen(sm, symmetric = FALSE); V2 <- em$vect
 print(lam2 <- em$values) # ordered decreasingly in ABSolute value !
                          # and V2 is not normalized (where V is):
 print(i <- rev(order(lam2)))
-stopifnot(abs(1 - lam2[i] / lam) < 60 * Meps)
+stopifnot(abs(lam - lam2[i]) < 60 * Meps)
 
 zapsmall(Diag <- t(V2) \%*\% V2) # orthogonal, but not normalized
 print(norm2V <- apply(V2 * V2, 2, sum))
@@ -95,6 +117,7 @@ all(abs(sm \%*\% sV -  sV \%*\% diag(slam))             < 60*Meps)
 all(abs(sm        -  sV \%*\% diag(slam) \%*\% t(sV)) < 60*Meps)
 ## sV  *is* now equal to V  -- up to sign (+-) and rounding errors
 all(abs(c(1 - abs(sV / V)))       <     1000*Meps) # TRUE (P ~ 0.95)
+
 }
 \keyword{algebra}
 \keyword{array}

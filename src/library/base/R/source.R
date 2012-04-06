@@ -1,7 +1,8 @@
 source <-
-  function (file, local = FALSE, echo = verbose, print.eval = echo,
-	    verbose = getOption("verbose"), prompt.echo = getOption("prompt"),
-	    max.deparse.length = 150, chdir = FALSE)
+function(file, local = FALSE, echo = verbose, print.eval = echo,
+         verbose = getOption("verbose"),
+         prompt.echo = getOption("prompt"), 
+         max.deparse.length = 150, chdir = FALSE)
 {
 ##-     if(!(is.character(file) && file.exists(file)))
 ##- 	stop(paste('"',file,'" is not an existing file', sep=""))
@@ -109,51 +110,87 @@ sys.source <-
     invisible()
 }
 
-demo <- function(topic, device = getOption("device")) {
-    if (is.character(device)) device <- get(device)
-    Topics <-cbind(graphics	= c("graphics", "graphics.R",	"G"),
-		   image	= c("graphics", "image.R",	"G"),
-		   lm.glm	= c("models",	"lm+glm.R",	"G"),
-		   glm.vr	= c("models",	"glm-v+r.R",	""),
-		   nlm		= c("nlm",	"valley.R",	""),
-		   recursion	= c("language", "recursion.R",	"G"),
-		   scoping	= c("language", "scoping.R",	""),
-		   is.things	= c("language", "is-things.R",	""),
-		   tkttest	= c("tcltk",	"tkttest.R",	""),
-		   tkfaq	= c("tcltk",	"tkfaq.R",	""),
-		   tkdensity	= c("tcltk",	"tkdensity.R",	"G"),
-		   tkfilefind	= c("tcltk",	"tkfilefind.R",	""),
-		   tkcanvas	= c("tcltk",	"tkcanvas.R",	"")
-		   )
-    dimnames(Topics)[[1]] <- c("dir", "file", "flag")
-    topic.names <- dimnames(Topics)[[2]]
-    demo.help <- function() {
-	cat("Use `demo(topic)' where choices for argument `topic' are:\n")
-	cbind(topics = topic.names)
-    }
-    if(missing(topic)) return(demo.help())
-    topic <- substitute(topic)
-    if (!is.character(topic)) topic <- deparse(topic)[1]
-    i.top <- pmatch(topic, topic.names)
-    if (is.na(i.top) || i.top == 0) {
-	cat("unimplemented `topic' in demo.\n")
-	print(demo.help())
-	stop()
-    } else {
-	topic <- topic.names[i.top]
-	cat("\n\n\tdemo(",topic,")\n\t---- ",rep("~",nchar(topic)),
-	    "\n\nType  <Return>	 to start : ",sep="")
-	readline()
-	if(dev.cur()<=1 && Topics["flag",i.top] == "G")
-	    device()
-	source(file.path(R.home(),
-		     "demos",
-		     Topics["dir",  i.top],
-		     Topics["file", i.top]),
-	       echo = TRUE, max.deparse.length=250)
-    }
-}
+demo <- function(topic, device = getOption("device"),
+                 package = .packages(), lib.loc = .lib.loc,
+                 character.only = FALSE)
+{
+    fQuote <- function(s) paste("`", s, "'", sep = "")
+    
+    paths <- .find.package(package, lib.loc, missing(lib.loc),
+                           quiet = TRUE)
 
+    if(missing(topic)) {
+        ## List all available demos.
+        ## This code could be made more similar to data().
+        first <- TRUE
+        outFile <- tempfile("Rdemo.")
+        outConn <- file(outFile, open = "w")
+        for(path in paths) {
+            INDEX <- file.path(path, "demo", "00Index")
+            if(file.exists(INDEX)) {
+                writeLines(paste(ifelse(first, "", "\n"),
+                                 "Demos in package ",
+                                 fQuote(basename(path)),
+                                 ":\n\n", sep = ""),
+                           outConn)
+                writeLines(readLines(INDEX), outConn)
+                first <- FALSE
+            }
+        }
+        if(first) {
+            warning("no demo listings found")
+            close(outConn)
+            unlink(outFile)
+        }
+        else {
+            if(missing(package))
+                writeLines(paste("\n",
+                                 "Use `demo(package = ",
+                                 ".packages(all.available = TRUE))'\n",
+                                 "to list the demos in all ",
+                                 "*available* packages.", sep = ""),
+                           outConn)
+            close(outConn)
+            file.show(outFile, delete.file = TRUE, title = "R demos")
+        }
+        return(invisible(character(0)))
+    }
+            
+    if(!character.only)
+        topic <- as.character(substitute(topic))
+    available <- character(0)
+    for(p in paths) {
+        if(file.exists(p <- file.path(p, "demo"))) {
+            files <- list.files(p)
+            ## Files with extension `R' or `r'
+            files <- files[sub(".*\\.", "", files) %in% c("R", "r")]
+            ## Files with base names matching topic
+            files <- files[grep(topic, files)]
+            if(length(files) > 0)
+                available <- c(available, file.path(p, files))
+        }
+    }
+    if(length(available) == 0)
+        stop(paste("No demo found for topic", fQuote(topic)))
+    if(length(available) > 1) {
+        available <- available[1]
+        warning("Demo for topic",
+                fQuote(topic),
+                "found more than once,\n",
+                "using the one found in",
+                fQuote(dirname(available[1])))
+    }
+    cat("\n\n",
+        "\tdemo(", topic, ")\n",
+        "\t---- ", rep("~", nchar(topic)), "\n",
+        sep="")
+    if(interactive()) {
+        cat("\nType  <Return>	 to start : ")
+        readline()
+    }
+    source(available, echo = TRUE, max.deparse.length = 250)
+}
+                
 example <-
 function (topic, package = .packages(), lib.loc = .lib.loc, echo = TRUE,
 	  verbose = getOption("verbose"),
@@ -162,11 +199,8 @@ function (topic, package = .packages(), lib.loc = .lib.loc, echo = TRUE,
     topic <- substitute(topic)
     if (!is.character(topic))
 	topic <- deparse(topic)[1]
-    INDICES <-
-        if(missing(lib.loc))
-            c(.path.package(package, TRUE),
-              system.file(pkg = package, lib = lib.loc))
-        else system.file(pkg = package, lib = lib.loc)
+    INDICES <- .find.package(package, lib.loc, missing(lib.loc),
+                             quiet = TRUE)
     file <- index.search(topic, INDICES, "AnIndex", "R-ex")
     if (file == "") {
 	warning(paste("No help file found for `", topic, "'", sep = ""))
