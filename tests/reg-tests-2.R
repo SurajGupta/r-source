@@ -58,7 +58,7 @@ test.list
 # $B$subset
 # [1] TRUE
 
-## Marc Feldesman 2001-Feb-1.  Precision in summary.data.frame & *.matric
+## Marc Feldesman 2001-Feb-01.  Precision in summary.data.frame & *.matrix
 data(attenu)
 summary(attenu)
 summary(attenu, digits = 5)
@@ -72,7 +72,7 @@ summary(data.frame(x))
 ## Comments:
 ## All entries show all 3 digits after the decimal point now.
 
-## Chong Gu 2000-Feb-16.  step on binomials
+## Chong Gu 2001-Feb-16.  step on binomials
 "detg1" <-
 structure(list(Temp = structure(c(2, 1, 2, 1, 2, 1, 2, 1, 2,
 1, 2, 1), .Label = c("High", "Low"), class = "factor"), M.user = structure(c(1,
@@ -136,7 +136,20 @@ gofX.df<-
 
 gofX.manova <- manova(formula = cbind(A, B, C, D) ~ groups, data = gofX.df)
 try(summary(gofX.manova))
-## should fail with error message
+## should fail with an error message `residuals have rank 3 < 4'
+
+## F. Tusell 2001-03-07.  printing kernels.
+library(ts)
+kernel("daniell", m=5)
+kernel("modified.daniell", m=5)
+kernel("daniell", m=c(3,5,7))
+## fixed by patch from Adrian Trapletti 2001-03-08
 
 
-## summary.matrix(*, digits) 
+## PR 883 (cor(x,y) when is.null(y))
+try(cov(rnorm(10), NULL))
+try(cor(rnorm(10), NULL))
+## gave the variance and 1 respectively in 1.2.2.
+try(var(NULL))
+try(var(numeric(0)))
+## gave NA in 1.2.2

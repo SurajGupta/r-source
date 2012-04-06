@@ -40,6 +40,16 @@
 extern console RConsole;
 extern Rboolean AllDevicesKilled;
 
+/* these really are globals: per machine, not per window */
+static double user_xpinch = 0.0, user_ypinch = 0.0;
+
+void GAsetunits(double xpinch, double ypinch)
+{
+    user_xpinch = xpinch;
+    user_ypinch = ypinch;
+}
+
+
 
 	/********************************************************/
 	/* This device driver has been documented so that it be	*/
@@ -1079,7 +1089,7 @@ static void devga_sbf(control c, int pos)
 
 
 static int 
-setupScreenDevice(DevDesc *dd, gadesc *xd, int w, int h, 
+setupScreenDevice(DevDesc *dd, gadesc *xd, double w, double h, 
 		  Rboolean recording, int resize) 
 {
     menu  m;
@@ -1087,8 +1097,14 @@ setupScreenDevice(DevDesc *dd, gadesc *xd, int w, int h,
     double dw, dw0, dh, d;
 
     xd->kind = SCREEN;
-    dw = dw0 = w / pixelWidth(NULL);
-    dh = h / pixelHeight(NULL);
+    if (R_finite(user_xpinch) && user_xpinch > 0.0)
+	dw = dw0 = (int) (w * user_xpinch);
+    else
+	dw = dw0 = (int) (w / pixelWidth(NULL));
+    if (R_finite(user_ypinch) && user_ypinch > 0.0)
+	dh = (int) (w * user_ypinch);
+    else
+	dh = (int) (h / pixelHeight(NULL));
     if (resize != 3) {
 	if ((dw / devicewidth(NULL)) > 0.85) {
 	    d = dh / dw;
@@ -2065,8 +2081,14 @@ Rboolean GADeviceDriver(DevDesc *dd, char *display, double width,
 
     /* Inches per raster unit */
 
-    dd->dp.ipr[0] = pixelWidth(xd->gawin);
-    dd->dp.ipr[1] = pixelHeight(xd->gawin);
+    if (R_finite(user_xpinch) && user_xpinch > 0.0)
+	dd->dp.ipr[0] = 1.0/user_xpinch;
+    else
+	dd->dp.ipr[0] = pixelWidth(xd->gawin);
+    if (R_finite(user_ypinch) && user_ypinch > 0.0)
+	dd->dp.ipr[1] = 1.0/user_ypinch;
+    else
+	dd->dp.ipr[1] = pixelHeight(xd->gawin);
 
     /* Device capabilities */
     /* Clipping is problematic for X11 */

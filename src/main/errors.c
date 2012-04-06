@@ -149,7 +149,12 @@ void warning(const char *format, ...)
 
     va_list(ap);
     va_start(ap, format);
+#ifdef HAVE_VSNPRINTF
+    vsnprintf(buf, BUFSIZE, format, ap);
+    buf[BUFSIZE-1] = '\0';
+#else
     vsprintf(buf, format, ap);
+#endif
     va_end(ap);
     p = buf + strlen(buf) - 1;
     if(strlen(buf) > 0 && *p == '\n') *p = '\0';
@@ -187,7 +192,12 @@ void warningcall(SEXP call, char *format, ...)
     if(w >= 2) { /* make it an error */
 	va_list(ap);
 	va_start(ap, format);
+#ifdef HAVE_VSNPRINTF
+	vsnprintf(buf, BUFSIZE, format, ap);
+	buf[BUFSIZE-1] = '\0';
+#else
 	vsprintf(buf, format, ap);
+#endif
 	va_end(ap);
 	errorcall(call, "(converted from warning) %s", buf);
     }
@@ -213,7 +223,12 @@ void warningcall(SEXP call, char *format, ...)
 	if( R_CollectWarnings > 49 )
 	    return;
 	SET_VECTOR_ELT(R_Warnings, R_CollectWarnings, call);
+#ifdef HAVE_VSNPRINTF
+	vsnprintf(buf, BUFSIZE, format, ap);
+	buf[BUFSIZE-1] = '\0';
+#else
 	vsprintf(buf, format, ap);
+#endif
 	va_end(ap);
 	names = CAR(ATTRIB(R_Warnings));
 	SET_STRING_ELT(names, R_CollectWarnings++, mkChar(buf));
@@ -322,7 +337,12 @@ void error(const char *format, ...)
 
     va_list(ap);
     va_start(ap, format);
+#ifdef HAVE_VSNPRINTF
+    vsnprintf(buf, BUFSIZE, format, ap);
+    buf[BUFSIZE-1] = '\0';
+#else
     vsprintf(buf, format, ap);
+#endif
     va_end(ap);
     p = buf + strlen(buf) - 1;
     if(*p != '\n') strcat(buf, "\n");
@@ -375,7 +395,6 @@ void jump_to_toplevel()
     R_FlushConsole();
     R_ClearerrConsole();
     R_ParseError = 0;
-    vmaxset(NULL);
     if (R_GlobalContext->cend != NULL)
 	(R_GlobalContext->cend) ();
     for (c = R_GlobalContext; c; c = c->nextcontext) {
@@ -390,6 +409,7 @@ void jump_to_toplevel()
 	if (c->callflag == CTXT_TOPLEVEL)
 	    break;
     }
+    vmaxset(NULL);
     if ( !R_Interactive && !haveHandler && inError ) {
 	REprintf("Execution halted\n");
 	R_CleanUp(SA_NOSAVE, 1, 0); /* quit, no save, no .Last, status=1 */
@@ -438,7 +458,8 @@ void Rf_resetStack(int topLevelReset) {
 	REprintf("Lost warning messages\n");
     inError=0;
     inWarning=0;
-    R_PPStackTop = 0;
+    R_PPStackTop = R_ToplevelContext->cstacktop;
+    R_EvalDepth = R_ToplevelContext->evaldepth;
     R_Warnings = R_NilValue;
     R_CollectWarnings = 0;
     if(topLevelReset) {

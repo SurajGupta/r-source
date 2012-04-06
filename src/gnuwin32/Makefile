@@ -5,7 +5,7 @@ WINHELP = BOTH# NO, CHM, BOTH
 
 PACKAGES = base ctest eda lqs modreg mva nls splines stepfun ts
 ALLPACKAGES = $(PACKAGES) tcltk
-RPREFIX = rw1022
+RPREFIX = rw1023
 
 RHOME = $(shell perl pwd.pl ../..)# must be absolute path
 RLIB = $(RHOME)/library
@@ -210,6 +210,7 @@ distclean veryclean: clean
 	../../etc/rgb.txt ../../etc/Makeconf-tests \
 	../include/FFDecl.h ../include/FFTab.h ../include/Platform.h \
 	../include/globalvar.h ../../tests/*.Rout ../../tests/*.Rout.fail
+	-$(MAKE) -C installer ISdistclean
 
 cleanwin:
 	$(RM) *.o *.exe *.dll *.a *~ \#*\# *.zip R.def R.exp1 \
@@ -222,7 +223,7 @@ cleanwin:
 	$(MAKE) -C xdr clean
 	$(MAKE) -C math clean
 	$(MAKE) -C bitmap clean
-	-$(MAKE) -C installer clean
+	-$(MAKE) -C installer clean ISclean
 
 
 #                          ===== testing ======
@@ -326,6 +327,9 @@ endif
 	-zip -rm9X $(RPREFIX)wh.zip $(RPREFIX)/library/*/winhlp
 	zip -rm9X $(RPREFIX)l.zip $(RPREFIX)/library/*/latex $(RPREFIX)/doc/manual
 	$(RM) -r $(RPREFIX)/doc
+	mkdir -p  $(RPREFIX)/doc/html
+	$(CP) -p ../../doc/html/faq.html ../../doc/html/rw-FAQ.html \
+	  $(RPREFIX)/doc/html
 	zip -rm9X $(RPREFIX)b2.zip $(RPREFIX)/library
 	zip -r9X $(RPREFIX)b1.zip $(RPREFIX)
 	$(RM) -rf $(RPREFIX)
@@ -362,13 +366,13 @@ packagedist:
 	$(CP) ../../bin/INSTALL ../../bin/REMOVE ../../bin/SHLIB \
 	  ../../bin/build ../../bin/check ../../bin/massage-Examples.sh \
 	  ../../bin/Rd2dvi.sh ../../bin/Rd2txt ../../bin/Rdconv \
-	  ../../bin/Rdindex ../../bin/Rdiff.sh ../../bin/Sd2Rd \
-	  ../../bin/Rcmd.exe \
+	  ../../bin/Rdindex ../../bin/Rdiff.sh ../../bin/extract-usage \
+	  ../../bin/Sd2Rd ../../bin/Rcmd.exe \
           $(RPREFIX)/bin
 	$(CP) ../../etc/Makeconf-tests $(RPREFIX)/etc
 	$(CP) -p graphapp/graphapp.h $(RPREFIX)/src/include
 	$(CP) -pr windlgs $(RPREFIX)/src/library
-	zip -rX $(RPREFIX)sp.zip $(RPREFIX)
+	zip -r9X $(RPREFIX)sp.zip $(RPREFIX)
 	$(RM) -r $(RPREFIX)
 
 docsdist: docs

@@ -1260,6 +1260,7 @@ assignment operator @code{<-}.   This tidied version is much easier to
 read, not least by other users who are used to the standard format.
 
 We can subvert the keeping of source in two ways.
+
 @enumerate
 @item The option @code{keep.source} can be set to @code{FALSE} before
 the code is loaded into @R{}.
@@ -1305,8 +1306,8 @@ recommended for the source code of @R{} itself.
 As from @R{} version 1.2.0 it is possible to profile @R{} code on most
 Unix-like versions of @R{}.  @R{} has to be built to enable this, by
 supplying the option @option{--enable-R-profiling}, profiling being
-enabled in a default build.  Unfortunately, the way profiling is
-currently implemented relies on OS facilities not available on Windows.
+enabled in a default build.  Unfortunately, this is not yet available on
+Windows, but will be from version 1.3.0.
 
 The command @code{Rprof} is used to control profiling, and its help page
 can be consulted for full details.  Profiling works by recording at
@@ -1333,7 +1334,7 @@ storm.bf <- function(rs, i) @{
 rs <- scale(resid(storm.fm), scale = FALSE) # remove the mean
 Rprof("boot.out")
 storm.boot <- boot(rs, storm.bf, R = 4999) # pretty slow
-Rprof()
+Rprof(NULL)
 @end example
 
 @noindent
@@ -2321,13 +2322,17 @@ void setVar(SEXP symbol, SEXP value, SEXP rho)
 @noindent
 can be used to assign values to @R{} variables.  @code{defineVar}
 creates a new binding or changes the value of an existing binding in the
-specified environment frame; it is the equivalent of
-@code{assign(symbol, value, envir = rho, inherits = FALSE)}.
-@code{setVar} searches for an existing binding for @code{symbol} in
-@code{rho} or its enclosing environments.  If a binding is found, its
-value is changed to @code{value}.  Otherwise, a new binding with the
-specified value is created in the global environment.  This corresponds
-to @code{assign(symbol, value, envir = rho, inherits = TRUE)}.
+specified environment frame; it is the analogue of @code{assign(symbol,
+value, envir = rho, inherits = FALSE)}, but unlike @code{assign},
+@code{defineVar} does not make a copy of the object
+@code{value}.@footnote{You can assign a @emph{copy} of the object in the
+environment frame @code{rho} using @code{defineVar(symbol,
+duplicate(value), rho)}).}  @code{setVar} searches for an existing
+binding for @code{symbol} in @code{rho} or its enclosing environments.
+If a binding is found, its value is changed to @code{value}.  Otherwise,
+a new binding with the specified value is created in the global
+environment.  This corresponds to @code{assign(symbol, value, envir =
+rho, inherits = TRUE)}.
 
 @node Changes in R version 1.2,  , Finding and setting variables, Handling R objects in C
 @subsection Changes in R version 1.2
@@ -2758,10 +2763,6 @@ In this section we re-work the example of @code{call_S} in Becker,
 Chambers & Wilks (1988) on finding a zero of a univariate function,
 which used to be used as an example for @code{call_R} in the now defunct
 @code{demo(dynload)}.  The @R{} code and an example are
-In this section we re-work the example formerly in @file{demos/dynload}
-of @code{call_R} (based on that for @code{call_S} in Becker, Chambers &
-Wilks (1988)) on finding a zero of a univariate function.  The @R{} code
-and an example are
 
 @smallexample
 zero <- function(f, guesses, tol = 1e-7) @{
@@ -3755,10 +3756,6 @@ Returns the value of @var{x} rounded to @var{digits} @emph{significant}
 decimal digits.
 
 This is the function used by @R{}'s @code{signif()}.
-@end deftypefun
-
-@deftypefun double fmod (double @var{x})
-Returns the absolute value of value of @var{x}.
 @end deftypefun
 
 @deftypefun double ftrunc (double @var{x})

@@ -4,8 +4,8 @@
 @settitle R FAQ
 @setchapternewpage on
 @set FAQ-YEAR 2001
-@set FAQ-VERSION 1.2-29, 2001-02-25
-@set REL-VERSION 1.2.2
+@set FAQ-VERSION 1.2-46, 2001-04-24
+@set REL-VERSION 1.2.3
 @set DEV-VERSION 1.3.0
 @c %**end of header
 
@@ -219,9 +219,9 @@ by sending code and bug reports.
 Since mid-1997 there has been a core group (the ``R Core Team'') who can
 modify the R source code CVS archive.  The group currently consists of
 Doug Bates, John Chambers, Peter Dalgaard, Robert Gentleman, Kurt
-Hornik, Ross Ihaka, Friedrich Leisch, Thomas Lumley, Martin Maechler,
-Guido Masarotto, Paul Murrell, Brian Ripley, Duncan Temple Lang, and
-Luke Tierney.
+Hornik, Stefano Iacus, Ross Ihaka, Friedrich Leisch, Thomas Lumley,
+Martin Maechler, Guido Masarotto, Paul Murrell, Brian Ripley, Duncan
+Temple Lang, and Luke Tierney.
 
 R has a home page at @uref{http://www.r-project.org/}.  It is free
 software distributed under a @acronym{GNU}-style copyleft, and an
@@ -388,40 +388,39 @@ See the @uref{http://www.stats.ox.ac.uk/pub/R/rw-FAQ.html, R Windows
 @node How can R be installed (Macintosh),  , How can R be installed (Windows), How can R be installed?
 @subsection How can R be installed (Macintosh)
 
-A binhexed self-extracting archive containing a binary distribution of R
-for the Mac (to run under MacOS 8.6 to MacOS 9.1 or MacOS X under
-Classic Environment) has been made available by
-@email{stefano.iacus@@unimi.it, Stefano Iacus} at
-@uref{http://www.eco-dip.unimi.it/R/}.
+The @file{bin/macos} directory of a @acronym{CRAN} site contains
+bin-hexed (@file{hqx}) and stuffit (@file{sit}) self-extracting binaries
+for a base distribution and a large number of add-on packages to run
+under MacOS 8.6 to MacOS 9.1 or MacOS X under Classic Environment.  The
+Mac version of R and the Mac binaries are maintained by
+@email{stefano.iacus@@unimi.it, Stefano Iacus}.
 
-In the near future, Mac binaries will also be made available in the
-@file{bin/macos} directory of a @acronym{CRAN} site.
+Binaries of base distributions for MacOS X (Darwin) with X11 are made
+available by @email{deleeuw@@stat.ucla.edu, Jan de Leeuw} at
+@uref{http://www.stat.ucla.edu/~deleeuw/R/}.
 
 @node Are there Unix binaries for R?, What documentation exists for R?, How can R be installed?, R Basics
 @section Are there Unix binaries for R?
 
-@c Linux binaries as of 2001-01-17:
+@c Linux binaries as of 2001-04-20:
 @c
-@c debian   2.2 i386  1.2.1  Doug Bates <bates@stat.wisc.edu>
-@c          2.3 i386  1.2.1  Doug Bates <bates@stat.wisc.edu>
-@c linuxppc 5.0 ppc   1.2.1  Alex Buerkle <buerkle@hawaii.edu>
-@c mandrake 7.2 i386  1.2.1  Michele Alzetta <mikalzet@libero.it>
-@c redhat   6.x alpha 1.1.1  Naoki Takebayashi <ntakebay@bio.indiana.edu>
-@c              i386  1.2.1  Martyn Plummer <plummer@iarc.fr>
-@c              sparc 1.1.1  Vin Everett <vin.everett@mrc-bsu.cam.ac.uk>
+@c debian   2.2 i386  1.2.2  Doug Bates <bates@stat.wisc.edu>
+@c          2.3 i386  1.2.2  Doug Bates <bates@stat.wisc.edu>
+@c linuxppc 5.0 ppc   1.2.2  Alex Buerkle <buerkle@hawaii.edu>
+@c mandrake 7.2 i386  1.2.2  Michele Alzetta <mikalzet@libero.it>
+@c redhat   6.x alpha 1.2.2  Naoki Takebayashi <ntakebay@bio.indiana.edu>
+@c              i386  1.2.2  Martyn Plummer <plummer@iarc.fr>
 @c          7.x alpha 1.2.1  Naoki Takebayashi <ntakebay@bio.indiana.edu>
-@c              i386  1.2.1  Martyn Plummer <plummer@iarc.fr>
-@c suse     6.4 i386  1.2.1  A Gebhardt <albrecht.gebhardt@uni-klu.ac.at>
-@c          7.0 i386  1.2.1  A Gebhardt <albrecht.gebhardt@uni-klu.ac.at>
+@c              i386  1.2.2  Martyn Plummer <plummer@iarc.fr>
+@c suse     7.0 i386  1.2.2  A Gebhardt <albrecht.gebhardt@uni-klu.ac.at>
 
 The @file{bin/linux} directory of a @acronym{CRAN} site contains Debian
 2.2/2.3 packages for the i386 platform (now part of the Debian
 distribution and maintained by Doug Bates), Red Hat 6.x/7.x packages for
-the alpha and i386 platforms and 6.x packages for the sparc platform
-(maintained by Naoki Takebayashi, Martyn Plummer, and Vin Everett,
-respectively), SuSE 6.4/7.0 i386 packages by Albrecht Gebhardt, Mandrake
-7.2 i386 packages by Michele Alzetta, and Linuxppc 5.0 RPMs by Alex
-Buerkle.
+the alpha and i386 platforms (maintained by Naoki Takebayashi and Martyn
+Plummer, respectively), SuSE 7.0 i386 packages by Albrecht Gebhardt,
+Mandrake 7.2 i386 packages by Michele Alzetta, and LinuxPPC 5.0 RPMs by
+Alex Buerkle.
 
 The Debian packages can be accessed through APT, the Debian package
 maintenance tool.  Simply add the line
@@ -553,6 +552,13 @@ for Data Analysis and Graphics'',
 @uref{http://www.amstat.org/publications/jcgs/, , @emph{Journal of
 Computational and Graphical Statistics}}, @strong{5}, 299--314.
 @xref{Citing R}.
+
+An annotated bibliography (Bib@TeX{} format) of R-related publications
+which includes most of the above references can be found at
+
+@display
+@uref{http://www.r-project.org/doc/bib/R.bib}
+@end display
 
 @node Citing R, What mailing lists exist for R?, What documentation exists for R?, R Basics
 @section Citing R
@@ -716,6 +722,7 @@ Please always use the @acronym{URL} of the master site when referring to
 * What is S-PLUS?::             
 * What are the differences between R and S?::  
 * Is there anything R can do that S-PLUS cannot?::  
+* What is R-plus?::             
 @end menu
 
 @node What is S?, What is S-PLUS?, R and S, R and S
@@ -1245,6 +1252,10 @@ the @code{Sys.setlocale()} function.
 In S, @code{missing(@var{arg})} remains @code{TRUE} if @var{arg} is
 subsequently modified; in R it doesn't.
 
+@item
+From R version 1.3.0, @code{data.frame} strips @code{I()} when creating
+(column) names.
+
 @end itemize
 
 There are also differences which are not intentional, and result from
@@ -1254,7 +1265,7 @@ documenting the difference as you see it).  Of course, it would be
 useful if you were to implement the change yourself and make sure it
 works.
 
-@node Is there anything R can do that S-PLUS cannot?,  , What are the differences between R and S?, R and S
+@node Is there anything R can do that S-PLUS cannot?, What is R-plus?, What are the differences between R and S?, R and S
 @section Is there anything R can do that @sc{S-Plus} cannot?
 
 Since almost anything you can do in R has source code that you could
@@ -1272,6 +1283,11 @@ and Ross Ihaka (2000), ``An Approach to Providing Mathematical
 Annotation in Plots'', @uref{http://www.amstat.org/publications/jcgs/, ,
 @emph{Journal of Computational and Graphical Statistics}}, @strong{9},
 582--599.
+
+@node What is R-plus?,  , Is there anything R can do that S-PLUS cannot?, R and S
+@section What is R-plus?
+
+There is no such thing.
 
 @node R Web Interfaces, R Add-On Packages, R and S, Top
 @chapter R Web Interfaces
@@ -1351,6 +1367,8 @@ The following packages are available from the @acronym{CRAN}
 @file{src/contrib} area.
 
 @table @strong
+@item CoCoAn
+Constrained Correspondence Analysis.
 @item Devore5
 Data sets and sample analyses from ``Probability and Statistics for
 Engineering and the Sciences (5th ed)'' by Jay L. Devore, 2000, Duxbury.
@@ -1375,6 +1393,12 @@ U.S. National Institute for Standards and Technology.
 Manipulation and analysis of phylogenetically simulated data sets (as
 obtained from PDSIMUL in package PDAP) and phylogenetically-based
 analyses using GLS.
+@item PTAk
+A multiway method to decompose a tensor (array) of any order, as a
+generalisation of SVD also supporting non-identity metrics and
+penalisations.  Also includes some other multiway methods.
+@item RMySQL
+An interface between R and the MySQL database system.
 @item RODBC
 An @acronym{ODBC} database interface.
 @item RPgSQL
@@ -1390,6 +1414,12 @@ Binary file stream support functions.
 Data sets and sample linear mixed effects analyses corresponding to the
 examples in ``SAS System for Mixed Models'' by R. C. Littell,
 G. A. Milliken, W. W. Stroup and R. D. Wolfinger, 1996, SAS Institute.
+@item SuppDists
+Ten distributions supplementing those built into R (Inverse Gauss,
+Kruskal-Wallis, Kendall's Tau, Friedman's chi squared, Spearman's rho,
+maximum F ratio, the Pearson product moment correlation coefficiant,
+Johnson distributions, normal scores and generalized hypergeometric
+distributions).
 @item XML
 Facilities for reading @acronym{XML} documents and DTDs.
 @item acepack
@@ -1402,6 +1432,8 @@ Linear or cubic spline interpolation for irregularly gridded data.
 David Scott's ASH routines for 1D and 2D density estimation.
 @item bindata
 Generation of correlated artificial binary data.
+@item blighty
+Function for drawing the coastline of the United Kingdom.
 @item boot
 Functions and datasets for bootstrapping from the book ``Bootstrap
 Methods and Their Applications'' by A. C. Davison and D. V. Hinkley,
@@ -1410,6 +1442,9 @@ Methods and Their Applications'' by A. C. Davison and D. V. Hinkley,
 Software (bootstrap, cross-validation, jackknife), data and errata for
 the book ``An Introduction to the Bootstrap'' by B. Efron and
 R. Tibshirani, 1993, Chapman and Hall.
+@item bqtl
+QTL mapping toolkit for inbred crosses and recombinant inbred lines.
+Includes maximum likelihood and Bayesian tools.
 @item cclust
 Convex clustering methods, including @math{k}-means algorithm, on-line
 update algorithm (Hard Competitive Learning) and Neural Gas algorithm
@@ -1430,6 +1465,8 @@ simulations.
 @item conf.design
 A series of simple tools for constructing and manipulating confounded
 and fractional factorial designs.
+@item cramer
+Routine for the multivariate nonparametric Cramer test.
 @item date
 Functions for dealing with dates.  The most useful of them accepts a
 vector of input dates in any of the forms @samp{8/30/53},
@@ -1537,9 +1574,6 @@ Analysis of multivariate normal datasets with missing values.
 @item odesolve
 An interface for the Ordinary Differential Equation (ODE) solver lsoda.
 ODEs are expressed as R functions.
-@item optimal
-Functions for optimal design of two-stage-studies using the Mean Score
-method.
 @item oz
 Functions for plotting Australia's coastline and state boundaries.
 @item pls
@@ -1574,6 +1608,8 @@ An object-oriented framework for geostatistical modeling.
 Software linked to the book ``Applied Smoothing Techniques for Data
 Analysis:  The Kernel Approach with @SPLUS{} Illustrations'' by
 A. W. Bowman and A. Azzalini (1997), Oxford University Press.
+@item sma
+Functions for exploratory (statistical) microarray analysis.
 @item sn
 Functions for manipulating skew-normal probability distributions and for
 fitting them to data, in the scalar and the multivariate case.
@@ -1604,6 +1640,9 @@ Classification and regression trees.
 A constrained two-dimensional Delaunay triangulation package.
 @item tseries
 Package for time series analysis with emphasis on non-linear modelling.
+@item twostage
+Functions for optimal design of two-stage-studies using the Mean Score
+method.
 @item wavethresh
 Software to perform 1-d and 2-d wavelet statistics and transforms.
 @item wle
@@ -1633,8 +1672,6 @@ MAPSET.  Wrapper and helper functions are provided for a range of R
 functions to match the interface metadata structures.
 @item R2HTML
 Functions for exporting R objects & graphics in an @HTML{} document.
-@item RMySQL
-An interface between R and the MySQL database system.
 @item StatDataML
 Read and write StatDataML.
 @item cmprsk
@@ -1654,6 +1691,9 @@ An integrated set of functions for fitting curves and surfaces including
 thin plate splines, kriging and neural networks.
 @item hdf5
 Interface to the @acronym{NCSA} HDF5 library.
+@item maxstat
+Maximally selected rank and Gauss statistics with several p-value
+approximations.
 @item multidim
 Code for correspondence analysis and other multidimensional descriptive
 statistics.
@@ -1676,9 +1716,10 @@ Dynamic CORBA client/server facilities for R.  Connects to other
 CORBA-aware applications developed in arbitrary languages, on different
 machines and allows R functionality to be exported in the same way to
 other applications.
-@item Java
-An interface from R to Java to create and call Java objects and
-methods.
+@item OOP
+OOP style classes and methods for R and @SPLUS{}.  Object references and
+class-based method definition are supported in the style of languages
+such as Java and C++.
 @item RSMethods
 An implementation of S version 4 methods and classes for R, consistent
 with the basic material in ``Programming with data'' by John
@@ -1686,9 +1727,14 @@ M. Chambers, 1998, Springer NY.
 @item RSPerl
 An interface from R to an embedded, persistent Perl interpreter,
 allowing one to call arbitrary Perl subroutines, classes and methods.
+@item SJava
+An interface from R to Java to create and call Java objects and
+methods.
 @item SLanguage
 Functions and C support utilities to support S language programming
 that can work in both R and @SPLUS{}.
+@item SNetscape
+Plugin for Netscape and JavaScript.
 @end table
 
 @email{jlindsey@@luc.ac.be, Jim Lindsey} has written a collection of R
@@ -2043,6 +2089,7 @@ dir /opt/R/src/unix
 * How can I substitute into a plot label?::  
 * What are valid names?::       
 * Are GAMs implemented in R?::  
+* Why is the output not printed when I source() a file?::  
 @end menu
 
 @node Why does R run out of memory?, Why does sourcing a correct file fail?, R Miscellanea, R Miscellanea
@@ -2365,14 +2412,15 @@ In any case, do not call @code{as.numeric()} or their likes directly.
 @section Are Trellis displays implemented in R?
 
 Not yet.  Meanwhile, you could look at @code{coplot()} and
-@code{dotplot()} which might do at least some of what you want.  Note
+@code{dotchart()} which might do at least some of what you want.  Note
 also that the R version of @code{pairs()} is fairly general and provides
 most of the functionality of @code{splom()}, and that R's default plot
 method has an argument @code{asp} allowing to specify (and fix against
 device resizing) the aspect ratio of the plot.
 
-(By the way, ``Trellis'' is a trademark which cannot be used in R;
-instead, the term ``lattice'' has been proposed for the R equivalent.)
+(Because the word ``Trellis'' has been claimed as a trademark we do not
+use it in R.  The name ``lattice'' has been proposed for the R
+equivalent.)
 
 @node What are the enclosing and parent environments?, How can I substitute into a plot label?, Are Trellis displays implemented in R?, R Miscellanea
 @section What are the enclosing and parent environments?
@@ -2488,7 +2536,7 @@ to do with names in the language, but it is traditional to call these
 strings file ``names''.
 @end enumerate
 
-@node Are GAMs implemented in R?,  , What are valid names?, R Miscellanea
+@node Are GAMs implemented in R?, Why is the output not printed when I source() a file?, What are valid names?, R Miscellanea
 @section Are GAMs implemented in R?
 
 There is a @code{gam()} function for Generalized Additive Models in
@@ -2496,15 +2544,57 @@ package @strong{mgcv}, but it is not an exact clone of what is described
 in the White Book (no @code{lo()} for example).  Package @strong{gss}
 can fit spline-based GAMs too.  And if you can accept regression splines
 you can use @code{glm()}.  For gaussian GAMs you can use @code{bruto()}
-from package @strong{mda}.  The long-term plan is to have something
-better than @code{gam()} for additive models, perhaps along the lines of
-BRUTO.
+from package @strong{mda}.
 
 @c FIXME:
 @c Simon Wood <snw@mcs.st-and.ac.uk> says that for GAMs,
 @c   You might want to try the packages mgcv, which has a version of
 @c   gam(), or gss which will fit a wide range of spline models.
 @c Something about this should be added once it is proven to work.
+
+@node Why is the output not printed when I source() a file?,  , Are GAMs implemented in R?, R Miscellanea
+@section Why is the output not printed when I source() a file?
+
+Most R commands do not generate any output. The command
+
+@smallexample
+1+1
+@end smallexample
+
+@noindent
+computes the value 2 and returns it; the command
+
+@smallexample
+summary(glm(y~x+z, family=binomial))
+@end smallexample
+
+@noindent
+fits a logistic regression model, computes some summary information and
+returns an object of class @code{"summary.glm"} (@pxref{How should I
+write summary methods?}).
+
+If you type @code{1+1} or @code{summary(glm(y~x+z,family=binomial))} at
+the command line the returned value is automatically printed (unless it
+is @code{invisible()}), but in other circumstances, such as in a
+@code{source()}d file or inside a function it isn't printed unless you
+specifically print it.
+
+To print the value use
+
+@smallexample
+print(1+1)
+@end smallexample
+
+@noindent
+or
+
+@smallexample
+print(summary(glm(y~x+z, family=binomial)))
+@end smallexample
+
+@noindent
+instead, or use @code{source(@var{file}, echo=TRUE)}.
+
 
 @node R Programming, R Bugs, R Miscellanea, Top
 @chapter R Programming
