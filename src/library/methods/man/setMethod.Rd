@@ -46,8 +46,8 @@ For \code{setMethod}, it is recommended to omit this argument and to include the
 \details{
 The call to \code{setMethod} stores the supplied method definition  in
 the metadata table for this generic function in the environment,
-typically the global environment or the namespace of a package.
-In the case of a package, the table object becomes part of the namespace or environment of the
+typically the global environment or the name space of a package.
+In the case of a package, the table object becomes part of the name space or environment of the
 package.
 When the package is loaded into a later session, the
 methods will be merged into the table of methods in the corresponding
@@ -315,7 +315,7 @@ length(ISOdate(1990, 12, 1)- ISOdate(1980, 12, 1))
 
 removeMethods("length")
 
-## methods for %*%, which isn't done by the same C code as other ops
+## methods for \%*\%, which isn't done by the same C code as other ops
 
 setClass("foo", representation(m="matrix"))
 m1 <- matrix(1:12,3,4)

@@ -25,9 +25,13 @@ use R::Rdconv;
 use R::Utils;
 use R::Vars;
 
-my $revision = ' $Rev: 42314 $ ';
+my $revision = ' $Rev: 47126 $ ';
 my $version;
 my $name;
+
+## switch on autoflushing for STDOUT.  We want this as we
+## write to both STDERR (warnings) and STDOUT.
+$| = 1;
 
 $revision =~ / ([\d\.]*) /;
 $version = $1;

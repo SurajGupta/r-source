@@ -7,7 +7,7 @@
 ## Trap interrupts, most importantly 2 (^C from keyboard)
 trap do_exit_on_error 1 2 15
 
-revision='$Rev: 46354 $'
+revision='$Rev: 47236 $'
 version=`set - ${revision}; echo ${2}`
 version="R add-on package installer ${version}
 
@@ -63,6 +63,9 @@ Report bugs to <r-bugs@r-project.org>."
 ## </NOTE>
 
 umask 022
+
+## workaround the export of CDPATH, which may cause 'cd' to echo
+unset CDPATH
 
 R_VERSION='@VERSION@'
 GETWD='@GETWD@'
@@ -227,7 +230,9 @@ while test -n "${1}"; do
     -d|--debug)
       debug=true ;;
     --with-package-versions)
-      with_package_versions=true ;;
+      with_package_versions=true
+      warning "Use of --with-package-versions is deprecated"
+      ;;
     --no-configure)
       use_configure=false ;;
     --no-docs)
@@ -617,7 +622,7 @@ do_install_source () {
   system_makefile="${R_HOME}/etc${R_ARCH}/Makeconf"
   if test -d src && test "${fake}" != "true"; then
     message "libs"
-    if ! test -f "${R_INCLUDE_DIR}/R.h" ; then
+    if test ! -f "${R_INCLUDE_DIR}/R.h" ; then
       ## maybe even an error?  But installing Fortran-based packages should work
       warning "R include directory is empty -- perhaps need to install R-devel.rpm or similar"
     fi

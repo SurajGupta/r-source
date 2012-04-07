@@ -35,7 +35,7 @@ use Text::Wrap;
 ## Don't buffer output.
 $| = 1;
 
-my $revision = ' $Rev: 46686 $ ';
+my $revision = ' $Rev: 46996 $ ';
 my $version;
 my $name;
 $revision =~ / ([\d\.]*) /;
@@ -610,7 +610,11 @@ foreach my $pkg (@ARGV) {
 		   -f "$pkgdir/BinaryFiles") {
 		    my %bin;
 		    open FILE, "< $pkgdir/BinaryFiles";
-		    while (<FILE>) { chomp; $bin{$_} = $_; }
+		    while (<FILE>) { 
+			chomp; 
+			s/\r$//;  # careless people get Windows files on other OSes
+			$bin{$_} = $_;
+		    }
 		    close(FILE);
 		    my @exec_files0 = @exec_files;
 		    @exec_files = ();
@@ -645,7 +649,11 @@ foreach my $pkg (@ARGV) {
 		   -f "$pkgdir/BinaryFiles") {
 		    my %bin;
 		    open FILE, "< $pkgdir/BinaryFiles";
-		    while (<FILE>) { chomp; $bin{$_} = $_; }
+		    while (<FILE>) { 
+			chomp; 
+			s/\r$//;
+			$bin{$_} = $_;
+		    }
 		    close(FILE);
 		    my @exec_files0 = @exec_files;
 		    @exec_files = ();
@@ -964,6 +972,7 @@ sub check_pkg {
 	open(RBUILDIGNORE, "< $exclude_file");
 	while(<RBUILDIGNORE>) {
 	    chomp;
+	    s/\r$//;  # careless people get Windows files on other OSes
 	    push(@exclude_patterns, $_) if $_;
 	}
 	close(RBUILDIGNORE);
@@ -2606,7 +2615,7 @@ sub check_pkg {
 	}
 	else { # no latex dir
 	    if($HAVE_LATEX) {
-		my $Rd2dvi_opts = "--batch --no-preview";
+		my $Rd2dvi_opts = "--batch --no-preview --no-index";
 		my $fmt;
 		if($HAVE_PDFLATEX) {
 		    $Rd2dvi_opts = $Rd2dvi_opts . " --pdf";
@@ -2621,14 +2630,14 @@ sub check_pkg {
 		    $cmd = join(" ",
 				("Rcmd.exe Rd2dvi $Rd2dvi_opts",
 				 "--build-dir=${build_dir} --no-clean",
-				 "-o ${pkgname}-manual.dvi >/dev/null 2>&1",
+				 "-o ${pkgname}-manual.${fmt} >/dev/null 2>&1",
 				 "$pkgdir"));
 		} else {
 		    $cmd = join(" ",
 				(&shell_quote_file_path("${R::Vars::R_EXE}"),
 				 "CMD Rd2dvi $Rd2dvi_opts",
 				 "--build-dir=${build_dir} --no-clean",
-				 "-o ${pkgname}-manual.dvi >/dev/null 2>&1",
+				 "-o ${pkgname}-manual.${fmt} >/dev/null 2>&1",
 				 "$pkgdir"));
 		}
 		if(R_system($cmd)) {

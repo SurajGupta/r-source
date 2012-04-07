@@ -845,6 +845,11 @@ SEXP dimnamesgets(SEXP vec, SEXP val)
     if ((k = LENGTH(dims)) < length(val))
 	error(_("length of 'dimnames' [%d] must match that of 'dims' [%d]"),
 	      length(val), k);
+    if (length(val) == 0) {
+	removeAttrib(vec, R_DimNamesSymbol);
+	UNPROTECT(2);
+	return vec;
+    }
     /* Old list to new list */
     if (isList(val)) {
 	newval = allocVector(VECSXP, k);
@@ -860,6 +865,9 @@ SEXP dimnamesgets(SEXP vec, SEXP val)
 	UNPROTECT(1);
 	PROTECT(val = newval);
     }
+    if (k != length(val))
+	error(_("length of 'dimnames' [%d] must match that of 'dims' [%d]"),
+	      length(val), k);
     for (i = 0; i < k; i++) {
 	SEXP _this = VECTOR_ELT(val, i);
 	if (_this != R_NilValue) {
@@ -880,7 +888,7 @@ SEXP dimnamesgets(SEXP vec, SEXP val)
 	    SET_TAG(val, install(translateChar(STRING_ELT(top, i++))));
     }
     UNPROTECT(2);
-    return (vec);
+    return vec;
 }
 
 SEXP attribute_hidden do_dimnames(SEXP call, SEXP op, SEXP args, SEXP env)

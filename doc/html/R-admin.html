@@ -220,7 +220,7 @@ span.env{font-family: monospace}
 
 <p>This is a guide to installation and administration for R.
 
-   <p>The current version of this document is 2.8.0 (2008-10-20).
+   <p>The current version of this document is 2.8.1 (2008-12-22).
 
    <p>ISBN 3-900051-09-7
 
@@ -404,7 +404,7 @@ functionality,<a rel="footnote" href="#fn-1" name="fnd-1"><sup>1</sup></a> but y
 should look carefully at any reported discrepancies.  (Some non-fatal
 errors are expected in locales that do not support Latin-1, in
 particular in true <code>C</code> locales and non-UTF-8 non-European locales.) 
-A falure in <samp><span class="file">tests/ok-errors.R</span></samp> may indicate inadequate resource
+A failure in <samp><span class="file">tests/ok-errors.R</span></samp> may indicate inadequate resource
 limits (see <a href="#Running-R">Running R</a>).
 
    <p>To re-run the tests including those successfully run you would need
@@ -623,7 +623,7 @@ specified on the <samp><span class="command">make install</span></samp> command 
 <code>libdir</code>.  The C header files can be installed to the value of
 <code>rincludedir</code>: note that as the headers are not installed into a
 subdirectory you probably want something like
-<code>rincludedir=/usr/local/include/R-2.8.0</code>.
+<code>rincludedir=/usr/local/include/R-2.8.1</code>.
 
    <p>If you want the R home to be something other than
 <samp><var>libdir</var><span class="file">/R</span></samp>, use <samp><span class="option">rhome</span></samp>: for example
@@ -757,7 +757,7 @@ sessions in which packages are to be installed, even if that is the only
 version of R installed (since this tells the package installation
 code the architecture needed).
 
-   <p>At present there is a protential problem with packages using Java, as
+   <p>At present there is a potential problem with packages using Java, as
 the post-install for a `<samp><span class="samp">i386</span></samp>' RPM on `<samp><span class="samp">x86_64</span></samp>' Linux
 reconfigures Java and will find the `<samp><span class="samp">x86_64</span></samp>' Java.  If you know
 where a 32-bit Java is installed you may be able to run (as root)
@@ -787,7 +787,7 @@ from <acronym>CRAN</acronym> to run on Windows 2000 or later on ix86 CPUs
    <p>Your file system must allow long file names (as is likely except
 perhaps for some network-mounted systems).
 
-   <p>Installation is <em>via</em> the installer <samp><span class="file">R-2.8.0-win32.exe</span></samp>. 
+   <p>Installation is <em>via</em> the installer <samp><span class="file">R-2.8.1-win32.exe</span></samp>. 
 Just double-click on the icon and follow the instructions.  You can
 uninstall R from the Control Panel.  (Note that you will probably
 (depending on the Windows language settings) be asked to choose a
@@ -824,11 +824,11 @@ will call this directory <var>R_HOME</var> below.
 
 <p>You need to collect the following sets of files:
      <ul>
-<li>Get the R source code <samp><span class="file">R-2.8.0.tar.gz</span></samp> from
+<li>Get the R source code <samp><span class="file">R-2.8.1.tar.gz</span></samp> from
 <acronym>CRAN</acronym>.  Open a command window (or another shell) at
 directory <var>R_HOME</var>, and run
 
-     <pre class="example">          tar zxvf R-2.8.0.tar.gz
+     <pre class="example">          tar zxvf R-2.8.1.tar.gz
      </pre>
      <p class="noindent">to create the source tree in <var>R_HOME</var>.  <strong>Beware</strong>: do use
 <samp><span class="command">tar</span></samp> to extract the sources rather than tools such as WinZip
@@ -1074,7 +1074,7 @@ customizations to that installation.  Then in
 </pre>
    <p class="noindent">where <samp><span class="file">rootdir</span></samp> is the path to the root of the customized
 installation (forward slashes and no spaces, please).  This creates an
-executable with the standard name, <samp><span class="file">R-2.8.0-win32.exe</span></samp>, so
+executable with the standard name, <samp><span class="file">R-2.8.1-win32.exe</span></samp>, so
 please rename it to indicate that it is customized.
 
    <p>The defaults for the startup parameters may also be customized.  For example
@@ -1152,14 +1152,14 @@ versions have C/C++ (but it seems not Fortran) cross-compilers based on
 make the manuals) <samp><span class="command">makeinfo</span></samp> version 4.7 or later (part of GNU
 <code>texinfo</code>) as well as <samp><span class="file">texinfo.tex</span></samp>.
 
-   <p>You also need the R source (<samp><span class="file">R-2.8.0.tar.gz</span></samp>),
+   <p>You also need the R source (<samp><span class="file">R-2.8.1.tar.gz</span></samp>),
 the Tcl/Tk support files and <samp><span class="file">iconv.dll</span></samp> (see above).
 
-   <p>Then: untar <samp><span class="file">R-2.8.0.tar.gz</span></samp> somewhere, unpack
+   <p>Then: untar <samp><span class="file">R-2.8.1.tar.gz</span></samp> somewhere, unpack
 <samp><span class="file">R_Tcl.zip</span></samp> at the top level and put <samp><span class="file">iconv.dll</span></samp> in
 <samp><span class="file">src/gnuwin32/unicode</span></samp>, then
 
-<pre class="example">     cd /somewhere/R-2.8.0/src/gnuwin32
+<pre class="example">     cd /somewhere/R-2.8.1/src/gnuwin32
 </pre>
    <p>Edit <samp><span class="file">MkRules</span></samp> to set <code>BUILD=CROSS</code> and the appropriate paths
 (including <code>HEADER</code> if needed).
@@ -1195,7 +1195,7 @@ for testing) use
 <pre class="example">     make all recommended manuals
      cd installer
      make imagedir
-     zip -r9X R-2.8.0.zip R-2.8.0  # or something similar
+     zip -r9X R-2.8.1.zip R-2.8.1  # or something similar
 </pre>
    <p>Note that <samp><span class="file">.chm</span></samp> help files (the default for a vanilla binary
 installation) will not be made when cross-building.
@@ -1215,7 +1215,7 @@ binaries for Mac OS X for a base distribution and a large number of
 add-on packages from <acronym>CRAN</acronym> to run on Mac OS X version 10.4.4 or
 higher.
 
-   <p>The simplest way is to use <samp><span class="file">R-2.8.0.dmg</span></samp>.  Just
+   <p>The simplest way is to use <samp><span class="file">R-2.8.1.dmg</span></samp>.  Just
 double-click on the icon and the disk image file will be mounted. Read
 the <samp><span class="file">ReadMe.txt</span></samp> inside the disk image and follow the instructions.
 
@@ -1230,8 +1230,8 @@ mentioned <a href="http://CRAN.R-project.org/bin/macosx/RMacOSX-FAQ.html">R for 
 and install some tools as explained in the document.  Then you have to
 expand the R sources and configure R appropriately, for example
 
-<pre class="example">     tar zxvf R-2.8.0.tar.gz
-     cd R-2.8.0
+<pre class="example">     tar zxvf R-2.8.1.tar.gz
+     cd R-2.8.1
      ./configure --with-blas='-framework vecLib' --with-lapack \
        --with-aqua --enable-R-framework
      make
@@ -1487,7 +1487,19 @@ reasonable amount of diagnostic messaging (&ldquo;warnings&rdquo;) when compilin
 such as e.g. <samp><span class="option">-Wall -pedantic</span></samp> for tools from GCC, the Gnu
 Compiler Collection.
 
-<p><a name="Customizing-package-compilation-under-Windows"></a>
+   <p>Note that this mechanism can also be used when it necessary to change
+the optimization level for a particular package.  For example
+
+<pre class="example">     ## for C code
+     CFLAGS=-g -O
+     ## for C++ code
+     CXXFLAGS=-g -O
+     ## for Fortran code
+     FFLAGS=-g -O
+     ## for Fortran 95 code
+     FCFLAGS=-g -O
+</pre>
+   <p><a name="Customizing-package-compilation-under-Windows"></a>
 
 <h4 class="subsection">6.3.4 Customizing package compilation under Windows</h4>
 
@@ -1720,7 +1732,7 @@ agreement on schemes, but not on the details of their implementation.  A
 locale needs to specify
      <ul>
 <li>A human language.  These are generally specified by a lower-case two-character
-abbreviation following ISO 639.
+abbreviation following ISO 639 (see e.g. <a href="http://en.wikipedia.org/wiki/ISO_639-1">http://en.wikipedia.org/wiki/ISO_639-1</a>).
 
      <li>A `territory', used mainly to specify the currency. These are generally
 specified by an upper-case two-character abbreviation following ISO
@@ -2177,7 +2189,7 @@ sources will be used if no suitable external <code>gettext</code> is found.
 
    <p>The `modern' version of <code>X11</code>, <code>jpeg()</code>, <code>png()</code> and
 <code>tiff()</code> uses the <code>cairo</code> and (optionally) <code>Pango</code>
-libraries.  Cairo version 1.0 or later is required<a rel="footnote" href="#fn-14" name="fnd-14"><sup>14</sup></a>, and some features reguire 1.2
+libraries.  Cairo version 1.0 or later is required<a rel="footnote" href="#fn-14" name="fnd-14"><sup>14</sup></a>, and some features require 1.2
 or later (and may not work before 1.4).  Pango needs to be at least
 version 1.10, and 1.12 is the earliest version we have tested.  (For
 Fedora users we believe the <code>pango-devel</code> RPM and its dependencies
@@ -2442,31 +2454,64 @@ multi-threaded Goto BLAS, but ours run happily with multiple threads.
 
 <h5 class="subsubsection">A.3.1.4 Intel MKL</h5>
 
-<p>For Intel processors under Linux, Intel's Math Kernel Library
-(<a href="http://www.intel.com/software/products/mkl/"><code>www.intel.com/software/products/mkl</code></a>) version 9 can be used
-by
+<p>For Intel processors under Linux, there is Intel's Math Kernel Library
+(<a href="http://www.intel.com/software/products/mkl/"><code>www.intel.com/software/products/mkl</code></a>).  You are strongly
+encouraged to read the MKL User's Guide, which is installed with the
+library, before attempting to link to MKL.
 
-<pre class="example">     --with-blas="-lmkl -lguide -lpthread"
+   <p>Version 10 of MKL supports two linking models: the default model,
+which is backward compatible with version 9 (see below),  and the pure
+layered model.  The layered model gives the user fine-grained control
+over four different library layers: interface, threading, computation,
+and run-time library support. Some examples of linking to MKL using this
+layered model are given below. These examples are for GCC compilers on
+`<samp><span class="samp">x86_64</span></samp>'.  The choice of interface layer is important on
+`<samp><span class="samp">x86_64</span></samp>' since the Intel Fortran compiler returns complex
+values differently from the GNU fortran compiler. You must therefore
+use the interface layer that matches your compiler (<code>mkl_intel*</code>
+or <code>mkl_gf*</code>).
+
+   <p>R can be linked to a sequential version of MKL by
+
+<pre class="example">     MKL_LIB_PATH=/opt/intel/mkl/10.0.3.020/lib/em64t/
+     export LD_LIBRARY_PATH=$MKL_LIB_PATH
+     MKL="-L${MKL_LIB_PATH} -lmkl_gf_lp64 -lmkl_sequential -lmkl_lapack -lmkl_core"
+     ./configure --with-blas="$MKL" --with-lapack
 </pre>
-   <p class="noindent">This is multi-threaded, but the number of threads defaults to 1 (and can
-be increased by setting <code>OMP_NUM_THREADS</code>). 
-(Thanks to Andy Liaw for the information.)
+   <p class="noindent">The order of the libraries is important.  The option
+<samp><span class="option">--with-lapack</span></samp> is used since MKL contains a copy of LAPACK as
+well as BLAS (see <a href="#LAPACK">LAPACK</a>).
 
-   <p>For version 10 on `<samp><span class="samp">x86_64</span></samp>', Ei-Ji Nakama used GCC compilers and
+   <p>Threaded MKL may be used by replacing the line defining the variable <code>MKL</code>
+with
 
-<pre class="example">     MKL_LIB_PATH=/opt/intel/mkl/10.0.1.014/lib/em64t
-     MKL="   -L${MKL_LIB_PATH}                               \
+<pre class="example">     MKL="-L${MKL_LIB_PATH} -lmkl_gf_lp64 -lmkl_gnu_thread \
+          -lmkl_lapack -lmkl_core -liomp5 -lpthread"
+</pre>
+   <p class="noindent">The default number of threads will be chosen by the OpenMP* software,
+but can be controlled by setting <code>OMP_NUM_THREADS</code> or
+<code>MKL_NUM_THREADS</code>.
+
+   <p>Static MKL may be used with
+
+<pre class="example">     MKL="   -L${MKL_LIB_PATH}                               \
              -Wl,--start-group                               \
                      ${MKL_LIB_PATH}/libmkl_gf_lp64.a        \
                      ${MKL_LIB_PATH}/libmkl_gnu_thread.a     \
                      ${MKL_LIB_PATH}/libmkl_core.a           \
              -Wl,--end-group                                 \
-             -liomp5 -lguide -lpthread -lgomp"
-     
-     ./configure --with-lapack="$MKL" --with-blas="$MKL"
+             -liomp5 -lpthread"
 </pre>
-   <p>See see <a href="#Shared-BLAS">Shared BLAS</a> for an alternative (and in many ways preferable)
-way to use MKL.
+   <p class="noindent">(Thanks to Ei-Ji Nakama).
+
+   <p>The default linking model, which is also used by version 9 of MKL, can
+be used by
+
+<pre class="example">     --with-blas="-lmkl -lguide -lpthread"
+</pre>
+   <p class="noindent">This is multi-threaded, but in version 9 the number of threads defaults
+to 1.  It can be increased by setting <code>OMP_NUM_THREADS</code>.  (Thanks to
+Andy Liaw for the information.)
 
 <p><a name="Shared-BLAS"></a>
 
@@ -2549,13 +2594,6 @@ does not contain LAPACK.
 
    <p>Since ACML contains a full LAPACK, if selected as the BLAS it can be
 used as the LAPACK <em>via</em> <samp><span class="option">--with-lapack</span></samp>.
-
-   <p>Intel's Math Kernel Library suppies a full LAPACK which can be used via
-<pre class="example">     --with-lapack="-L/path/to/libs -lmkl_lapack64"
-</pre>
-   <p class="noindent">or `<samp><span class="samp">-lmkl_lapack32</span></samp>': library <code>mkl_lapack</code> is static and not
-PIC.  However, the version 8.0.1.006 we tested failed a regression test
-in the complex LAPACK.
 
    <p>If you do use <samp><span class="option">--with-lapack</span></samp>, be aware of potential problems
 with bugs in the LAPACK 3.0 sources (or in the posted corrections to those
@@ -2793,8 +2831,9 @@ variable <code>MAKE</code> at configure time, for example
    <p><a name="index-configure-79"></a>
 <pre class="example">     ./configure MAKE=gmake
 </pre>
-   <p>Note the comment above about using a parallel <samp><span class="command">make</span></samp>: this works
-for building R but not for installing nor checking.
+   <p>Note the comment in <a href="#Installation">Installation</a> about using a parallel
+<samp><span class="command">make</span></samp>: this works for building R but not for installing nor
+checking.
 
 <p><a name="Using-FORTRAN"></a>
 
@@ -3143,9 +3182,11 @@ optimization.  For `<samp><span class="samp">x86_64</span></samp>' on Fedora Cor
      LDFLAGS="-L$ICC_LIBS -L$IFC_LIBS -L/usr/local/lib64"
      SHLIB_CXXLD=icpc
 </pre>
-   <p class="noindent"><samp><span class="command">configure</span></samp> will add `<samp><span class="samp">-c99</span></samp>' to <code>CC</code> for C99-compliance. 
-R will add `<samp><span class="samp">-mp</span></samp>' in <code>R_XTRA_{C,F,CXX}FLAGS</code> to maintain
-correct <acronym>IEC</acronym>&nbsp;<!-- /@w -->60559 arithmetic.  The flag <samp><span class="option">-wd188</span></samp>
+   <p class="noindent"><samp><span class="command">configure</span></samp> will add `<samp><span class="samp">-c99</span></samp>' to <code>CC</code> for
+C99-compliance.  This causes warnings with <code>icc</code> 10, so use
+<code>CC="icc -std=c99"</code> there.  R will add `<samp><span class="samp">-mp</span></samp>' in
+<code>R_XTRA_{C,F,CXX}FLAGS</code> to maintain correct
+<acronym>IEC</acronym>&nbsp;<!-- /@w -->60559 arithmetic.  The flag <samp><span class="option">-wd188</span></samp>
 suppresses a large number of warnings about the enumeration type
 `<samp><span class="samp">Rboolean</span></samp>'.  Because the Intel C compiler sets `<samp><span class="samp">__GNUC__</span></samp>'
 without complete emulation of <samp><span class="command">gcc</span></samp>, we suggest adding
@@ -3233,7 +3274,7 @@ typically not pre-installed prior to 10.5 (Leopard).
 <code>xterm</code>, you should be aware that R, like many Unix tools, uses
 <a name="index-DISPLAY-86"></a>the existence of a <samp><span class="env">DISPLAY</span></samp> environment variable to determine
 whether an X system is running.  This affects the default graphics
-device for the commmand-line version of R and the behaviour of the
+device for the command-line version of R and the behaviour of the
 <code>png</code> and <code>jpeg</code> devices.
 
    <p><a name="index-BLAS-library-87"></a><a name="index-LAPACK-library-88"></a>The <code>vecLib</code> library can be used <em>via</em> the (default)
@@ -3498,7 +3539,7 @@ alignment of doubles (which <samp><span class="command">gcc</span></samp> genera
 <h3 class="section">C.5 HP-UX</h3>
 
 <p><a name="index-HP_002dUX-96"></a>
-% R-help 2007 Nov 1/2, and follow up to BDR Nov 6. 
+<!-- R-help 2007 Nov 1/2, and follow up to BDR Nov 6. -->
 Fan Long built R 2.6.0 on HP-UX 11.23 on `<samp><span class="samp">ia64</span></samp>' using the
 native compilers via
 
@@ -3743,10 +3784,9 @@ use in a CJK locale.  NLS does work, although
 <samp><span class="option">--with-included-gettext</span></samp> is preferable.  You will see many
 warnings about the use of auto-import.
 
-   <p>%It almost passes <samp><span class="command">make check</span></samp>: FIFOs are supposedly supported
-%but hung in `<samp><span class="samp">example(fifo)</span></samp>'.
-
-   <p>Note that this gives you a command-line application using <code>readline</code>
+<!-- It almost passes @command{make check}: FIFOs are supposedly supported -->
+<!-- but hung in @samp{example(fifo)}. -->
+<p>Note that this gives you a command-line application using <code>readline</code>
 for command editing.  The `<samp><span class="samp">X11</span></samp>' graphics device will work if a
 suitable X server is running, and the standard Unix-alike ways of
 installing source packages work.  There was a bug in the
@@ -3843,12 +3883,12 @@ become inactive if you return to it: to work around this you can open
 a link in a new tab or window.
 
 <!-- https://stat.ethz.ch/pipermail/r-help/2008-July/169521.html -->
-<p>There is a known issue with Firefox 3 (and 3.0.1).  The links in the
-results page may point to the wrong directory level.  This is a bug in
-the way Firefox is interpreting relative URLs, and can be circumvented
-by opening the HTML search page (<samp><span class="file">.../doc/html/SearchEngine.html</span></samp>)
-directly rather than from <samp><span class="file">.../doc/html/index.html</span></samp> as shown by
-<code>help.start()</code>.
+<p>There is a known issue with Firefox 3.0.x (at least for x &lt;= 4).  The
+links in the results page may point to the wrong directory level.  This
+is a bug in the way Firefox is interpreting relative URLs, and can be
+circumvented by opening the HTML search page
+(<samp><span class="file">.../doc/html/SearchEngine.html</span></samp>) directly rather than from
+<samp><span class="file">.../doc/html/index.html</span></samp> as shown by <code>help.start()</code>.
 
    <p>Many thanks to Marc Schwartz in tracking down many of these issues with
 enabling the Java search engine.
@@ -3972,7 +4012,7 @@ but no compiled code, only the first two of these are needed.
 
    <p>A complete build of R including compiled <acronym>HTML</acronym> help files and
 PDF manuals, and producing the standalone installer
-<samp><span class="file">R-2.8.0-win32.exe</span></samp> will also need the following:
+<samp><span class="file">R-2.8.1-win32.exe</span></samp> will also need the following:
      <ul>
 <li>The Microsoft <acronym>HTML</acronym> Help Workshop
 <li>LaTeX
@@ -4067,7 +4107,7 @@ suitably; ensure you have the required fonts installed.
 
 <h3 class="section">E.4 The Inno Setup installer</h3>
 
-<p>To make the installer package (<samp><span class="file">R-2.8.0-win32.exe</span></samp>) we require
+<p>To make the installer package (<samp><span class="file">R-2.8.1-win32.exe</span></samp>) we require
 Inno Setup 5.1.7 or later (including 5.2.x) from <a href="http://jrsoftware.org"><code>jrsoftware.org</code></a>.  This is <em>not</em> included in <samp><span class="file">Rtools.exe</span></samp>.
 
    <p>Edit file <samp><span class="file">src/gnuwin32/MkRules</span></samp> and change <code>ISDIR</code> to the
@@ -4310,7 +4350,7 @@ enough to build a working R.</p>
 
    <p class="footnote"><small>[<a name="fn-13" href="#fnd-13">13</a>]</small> <samp><span class="option">-std=c99</span></samp>
 excludes POSIX functionality, but <samp><span class="file">config.h</span></samp> will turn on all GNU
-extensions include the POSIX functuonality.</p>
+extensions include the POSIX functionality.</p>
 
    <p class="footnote"><small>[<a name="fn-14" href="#fnd-14">14</a>]</small> We recommend
 that people with cairo 1.0.x, e.g. on Fedora Core 5, install 1.4.x or

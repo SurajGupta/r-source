@@ -1,3 +1,8 @@
+% File src/library/base/man/icuSetCollate.Rd
+% Part of the R package, http://www.R-project.org
+% Copyright 2008 R Core Development Team
+% Distributed under GPL 2 or later
+
 \name{icuSetCollate}
 \alias{icuSetCollate}
 \title{ Setup Collation by ICU }
@@ -18,7 +23,7 @@ icuSetCollate(...)
   On other builds calling this function does nothing, with a warning.
   
   Possible arguments are
-  \itemize{
+  \describe{
     \item{\code{locale}:}{A character string such as \code{"da_DK"} giving the
       country whose collation rules are to be used.  If present, this
       should be the first argument.}

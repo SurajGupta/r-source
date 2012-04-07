@@ -92,14 +92,21 @@ proj.matrix <- function(X, orth=FALSE){
     if (orth) diag(nrow=nrow(X)) - P else P
 }
 
-Rank  <- function(X, tol=1e-7) qr(X, tol=tol, LAPACK=FALSE)$rank
+## qr() will miss the cases where a row has all near-zeros,
+## sensibly in some ways, annoying in others...
+
+Rank  <- function(X, tol=1e-7)
+    qr(zapsmall(X, digits=-log10(tol)+5),
+       tol=tol, LAPACK=FALSE)$rank
 
 Thin.row <- function(X, tol=1e-7) {
+    X <- zapsmall(X, digits=-log10(tol)+5)
     QR <- qr(t(X), tol=tol, LAPACK=FALSE)
     X[QR$pivot[seq_len(QR$rank)],,drop=FALSE]
 }
 
 Thin.col <- function(X, tol=1e-7) {
+    X <- zapsmall(X, digits=-log10(tol)+5)
     QR <- qr(X, tol=tol, LAPACK=FALSE)
     X[,QR$pivot[seq_len(QR$rank)],drop=FALSE]
 }
@@ -294,8 +301,8 @@ anova.mlm <-
             ## Try to distinguish bad scaling and near-perfect fit
             ## Notice that we must transform by T before scaling
             sc <- sqrt(diag(T %*% ssd$SSD %*% t(T)))
-            D <- sqrt(sc^2 + rowSums(sapply(ss, function(X)
-                                            diag(T %*% X %*% t(T)))))
+            D <- sqrt(sc^2 + rowSums(as.matrix(sapply(ss, function(X)
+                                            diag(T %*% X %*% t(T))))))
             sc <- ifelse(sc/D < 1e-6, 1, 1/sc)
             scm <- tcrossprod(sc)
 

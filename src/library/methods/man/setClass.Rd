@@ -24,7 +24,7 @@ elements for superclasses, but the recommended style is to use the
 \code{contains=} argument instead.}
   \item{prototype}{ an object providing the default
     data for the slots in this class.  Usually and preferably the
-    result of a call to \code{\llink{prototype}}. }
+    result of a call to \code{\link{prototype}}. }
   \item{contains}{ what classes does this class extend?  (These are
     called \emph{superclasses} in some languages.)  When these classes
     have slots, all their slots will be contained in the new class as
@@ -125,13 +125,13 @@ different packages, for most purposes.
 
 When a class name is supplied for a slot or a superclass, a
 corresponding class definition will be found, looking from the
-namespace or environment of the current package, assuming the call to
+name space or environment of the current package, assuming the call to
 \code{setClass} in question appears directly in the source for the
 package.  That's where it should appear, to avoid ambiguity.
 
-In particular, if the current package has a namespace then the  class
-must be found in the current package itself, in the imports defined by that namespace, or in the base
-package.
+In particular, if the current package has a name space then the  class
+must be found in the current package itself, in the imports defined by that
+name space, or in the base package.
 
 When this rule does not identify a class uniquely (because it appears
 in more than one imported package) then the \code{\link{packageSlot}}

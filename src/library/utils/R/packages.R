@@ -387,7 +387,13 @@ new.packages <- function(lib.loc = NULL, repos = getOption("repos"),
         if(file.access(pkgpath, 5)) next
         pkgpath <- file.path(pkgpath, "DESCRIPTION")
         if(file.access(pkgpath, 4)) next
-        desc <- read.dcf(pkgpath, fields = fields)[1,]
+        desc <- try(read.dcf(pkgpath, fields = fields), silent = TRUE)
+        if(inherits(desc, "try-error")) {
+            warning(gettextf("read.dcf() error on file '%s'", pkgpath),
+                    domain=NA, call.=FALSE)
+            next
+        }
+        desc <- desc[1,]
         Rver <- strsplit(strsplit(desc["Built"], ";")[[1]][1],
                          "[ \t]+")[[1]][2]
         desc["Built"] <- Rver
@@ -439,7 +445,7 @@ installed.packages <-
     if(length(mat) && !is.null(priority)) {
 	keep <- !is.na(pmatch(mat[,"Priority"], priority,
 			      duplicates.ok = TRUE))
-	mat <- mat[keep, ]
+	mat <- mat[keep, , drop=FALSE]
     }
     if (length(mat)) {
 	rownames(mat) <- mat[, "Package"]
@@ -583,7 +589,7 @@ contrib.url <- function(repos, type = getOption("pkgType"))
     ver <- paste(R.version$major,
                  strsplit(R.version$minor, ".", fixed=TRUE)[[1]][1], sep = ".")
     mac.subtype <- "universal"
-    if (substr(type, 1, 10) == "mac.binary") {
+    if (substr(type, 1, 11) == "mac.binary.") {
         mac.subtype <- substring(type, 12)
         type <- "mac.binary"
     }
@@ -637,7 +643,9 @@ setRepositories <-
         p <- file.path(R.home("etc"), "repositories")
     a <- read.delim(p, header=TRUE, comment.char="#",
                     colClasses=c(rep("character", 3), rep("logical", 4)))
-    thisType <- a[[getOption("pkgType")]]
+    pkgType <- getOption("pkgType")
+    if(length(grep("^mac\\.binary", pkgType))) pkgType <- "mac.binary"
+    thisType <- a[[pkgType]]
     a <- a[thisType, 1:3]
     repos <- getOption("repos")
     ## Now look for CRAN and any others in getOptions("repos")
@@ -742,8 +750,12 @@ compareVersion <- function(a, b)
     if(is.null(available))
         stop(gettextf("'%s' must be supplied", available), domain = NA)
     info <- available[pkgs, c("Depends", "Imports"), drop = FALSE]
-    x <- apply(info, 1, .clean_up_dependencies)
-    if(length(pkgs) == 1) {x <- list(as.vector(x)); names(x) <- pkgs}
+    ## we always want a list here, but apply can simplify to a matrix.
+    ## x <- apply(info, 1, .clean_up_dependencies)
+    ## if(length(pkgs) == 1) {x <- list(as.vector(x)); names(x) <- pkgs}
+    x <- vector("list", length(pkgs)); names(x) <- pkgs
+    for (i in seq_along(pkgs))
+        x[[i]] <- .clean_up_dependencies(info[i, ])
     bundles <- .find_bundles(available)
     x <- lapply(x, function(x) if(length(x)) {
         for(bundle in names(bundles))

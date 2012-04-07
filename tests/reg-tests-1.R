@@ -5141,6 +5141,7 @@ if(.Platform$OS.type == "unix") {
     system("rm -rf myLib")
     dir.create("myLib")
     install.packages("myTst", lib = "myLib", repos=NULL, type = "source") # with warnings
+    print(installed.packages(lib.loc= "myLib", priority= "NA"))## (PR#13332)
     stopifnot(require("myTst",lib = "myLib"))
     sm <- getMethods(show, where= as.environment("package:myTst"))
     stopifnot(names(sm@methods) == "foo")
@@ -5409,3 +5410,14 @@ stopifnot(x1 == x1[1], x2 == 0, x3 == 0)
 fit <- glm(1:10 ~ I(1:10) + I((1:10)^2), y = FALSE)
 anova(fit)
 ## obscure errors < 2.8.0
+
+
+## boundary case in cut.Date (PR#13159)
+d <- as.Date("2008-07-07")
+cut(d, "weeks")
+d <- as.POSIXct("2008-07-07", tz="UTC")
+cut(d, "weeks")
+## failed < 2.8.0
+
+
+### end of tests added for 2.8.x

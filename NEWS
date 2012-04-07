@@ -6,6 +6,259 @@
 	**************************************************
 
 
+		CHANGES IN R VERSION 2.8.1
+
+
+NEW FEATURES
+
+    o	sum() now has a method for "difftime" objects (via the Summary
+	group).
+
+	max(), min() and range() applied to "difftime" object(s) now
+	return a result in the common units of the objects, if there
+	is one.
+
+    o	installed.packages() is now tolerant of malformed DESCRIPTION
+	files in installed packages (it ignores them, with a warning).
+
+    o	qt() now works for 0 < df < 1.
+
+    o	For consistency with matrix() and array(), dimnames(x) <-
+	list() removes the dimnames (as assigning NULL would do).
+	It was previously an error.
+
+    o	nlminb() copies names from 'start' to the parameter vector
+	used (for consistency with optim()).
+
+    o	legend() gains a 'title.col' argument: the title colour was
+	previously set from the first element of 'text.col' (which
+	remains the default).
+
+    o	In an Rd file, use of top-level \itemize{} inside a \value{}
+	block is unnecessary and almost always gave a faulty
+	conversion.  Most cases are now detected and corrected, but
+	give a warning as such code will not work correctly in earlier
+	versins of R.
+
+	Also, use of \code{} inside a code block such as \examples{}
+	will give a erroneous conversion that is now detected and
+	warned against.
+
+    o	Autoflushing of stdout is turned on when Rd processing, so
+	warnings/error are likely to appear in the right place in
+	redirected output (such as that from R CMD check).
+
+
+UTILITIES
+
+    o	R_PDFLATEXCMD is added to the environment variables set by
+    	'R CMD' and is used by R CMD Rd2dvi.
+
+	R_LATEXCMD, R_PDFLATEXCMD, R_MAKEINDEXCMD and R_DVIPSCMD
+	default to 'latex', 'pdflatex', 'makeindex' and 'dvips'
+	respectively if no suitable executable was found at configure
+	time (since they might well be available at run time,
+	particularly for binary installations of R).  This affects
+	R CMD Rd2dvi and help(offline=TRUE).
+
+	R CMD Rd2dvi now gives an explicit error message if latex (or
+	pdflatex) fails.
+
+	R CMD Rd2dvi gains a --no-index argument: processing some
+	special characters on PDF indices gave errors which used to be
+	ignored.
+
+
+DEPRECATED & DEFUNCT
+
+    o	R CMD INSTALL --with-package-versions is deprecated (and
+	support has always been incomplete on Windows).
+
+	So is install.packages(installWithVers = TRUE).
+
+    o	Rd conversion to Sd and Ssgm is now deprecated as we no longer
+	have any means to check the results (and Sd is long obsolete).
+
+
+BUG FIXES
+
+    o	add1.glm() no longer warns if applied to a binomial glm with a
+	factor response.
+
+    o	aggregate.data.frame() now does something sensible with a
+	zero-column 'x' rather than failing with an obscure error
+	message.  It gives an explicit error message if called with a
+	zero-row 'x'.
+
+    o	integrate() now accepts integer results from f(): as documented,
+	but only double was accepted.
+
+    o	contrib.url() produced an incorrect URL for the type
+        "mac.binary".
+
+    o   pairwise.wilcox.test() did not pass on the 'paired' argument
+        (caught by Matthias Kohl)
+
+    o	bmp(), jpeg(), and png() on unix with type="cairo" would segfault
+	on closure if the output file could not be opened.
+
+    o	tiff() on unix would not write the output file for the first page
+	when multiple pages were plotted.
+
+    o   str(1 + structure(1, class = "test")) no longer recurses indefinitely.
+
+    o	pf(x, .., ncp, lower.tail=FALSE, log=TRUE) is much more accurate
+	for large x now.
+
+    o	dev2bitmap() failed in 2.8.0 if 'taa' and 'gaa' were both NA.
+
+    o	Under rare circumstances equality tests for character strings
+    	could fail to report equality in 2.8.0 in the same way as
+    	2.7.2.  (This needed a current encoding of Latin-1 or UTF-8,
+    	one string whose encoding was marked as that encoding and one
+    	that was marked as "unknown".  In that circumstance the two
+    	strings are not actually known to be equal, but earlier
+    	versions of R assumed that "unknown" meant the current
+    	encoding, and this is done once again.)
+
+    o	R CMD config could echo messages from GNU make if called from
+	within a Makefile (as e.g. package Rcpp did), especially from
+	within a parallel make run.
+
+    o	Rounding error could affect window(extend=TRUE) when applied
+	to monthly series.  (PR#13272)
+
+    o	Offline help on a Unix-alike now works even if options
+	"latexcmd" and "dvipscmd" contain spaces
+	(e.g. "dvips -Pmy_printer").
+
+	Informative error messages are given if running latex or dvips
+	fail.
+
+    o	Using plot.lm() on a "glm" object since 2.7.1 with which=5
+	caused the Pearson rather than deviance residuals to be used
+	in which=2 or 3 (including in the default case).  (Thanks to
+	Effie Greathouse and Greg Snow.)
+
+	plot.lm() did not report on omitting observations with
+	leverage one if they also had residual exactly zero.  This was
+	seen in example(occupationalStatus).
+
+    o	deparse(nlines=) no longer pads short results with blank
+	lines. (PR#13299)
+
+    o	legend(xpd=) now restores 'xpd' correctly.  (PR#12756)
+
+    o	The "formula" method for lines() now works if 'subset' is
+	supplied and no 'data' argument (as that for points() did).
+
+    o	Sweave() now takes the defaults for the options 'pdf.version'
+	and 'pdf.encoding' of its RweaveLatex driver from pdf.options().
+
+    o	prettyNum(x, drop0trailing=TRUE) treated "1.1e20" as "1.1e2"
+	and hence str() did as well, in 2.8.0 only.
+
+    o	dchisq(x, df, ncp) no longer hangs for large x and ncp > 0,
+	and is more accurate in some cases (PR#13309).
+
+    o	installed.packages(lib.loc = D, priority="NA") now also works when
+	D contains a single package.  (PR#13332)
+
+    o	legend(...., merge=TRUE) now warns and has no effect in the
+	case where no line segments are drawn.  (PR#13340)
+
+    o 	transform.data.frame() works better when two or more columns are
+	added.
+
+    o	Deparsing argument lists with non-syntactic names (e.g. that for
+	transform()) now uses backticks rather than double quotes to
+	produce syntactically valid output.
+
+    o	matrix() failed to check for 0-length 'dimnames': it now
+	treats them as NULL (as array did).  (PR#13361)
+
+    o	0^NA is now NA, not Inf, consistent with x^NA, x != 1.
+
+    o	anova.mlm() did not work if T had only one row (including
+	e.g. the case M = ~1).
+
+    o	axis.POSIXct() mislabelled for some time ranges of a few hours
+	(reported by Martin Becker).
+
+    o	mantelhaen.test() with 'exact=FALSE' was not respecting
+	'alternative'. It now does one-sided tests similarly to
+	prop.test().
+
+    o	anova.mlm() had trouble with some designs where near-zero rows of
+	the tranformation matrix were not removed (caught by Nils Skutara).
+
+    o	Rd conversion was handling expressions like
+	'\item{foo}{see \eqn{x}}' (with one argument to \eqn
+	immediately followed by a right brace) incorrectly, sometimes
+	giving a spurious warning about 'missing text'.
+
+    o	R CMD INSTALL used the C locale to install the DESCRIPTION
+	file, and so escaped non-ASCII characters in packages with a
+	declared encoding of "latin1" or "UTF-8".  (However, the
+	installed DESCRIPTION file was rarely used since the dumped
+	metadata are available.)
+
+    o	xspline() now respects inline par settings.
+
+	It and grid.xspline() now handle the special case of only two
+	control points, and splines with control points that are
+	located well outside the device (e.g., a zoomed view of a
+	larger curve).	(Both cases were giving the error "reached
+	MAXNUMPTS").
+
+    o	In setClass("C", contains="list"); x <- new("C", 1:3), x[2:3] now
+        remains of class "C".  So does rep(x, 2) or rep.int(x, 3).
+
+    o	median.default() now also works for "numeric"-like vectors.
+
+    o	The pdf() device can now handle the case where an image uses a
+	very large number of colours with different levels of
+	semi-transparency (alpha-values).  It used to segfault.
+	(Also PR#13264.)
+
+    o	window() failed to apply a fuzz to 'start' or 'end' and so
+	sometimes warned incorrectly for time series with 'freq' not a
+	power of two (e.g. 12 or 24).
+
+    o	unique.default() now preserves the "tzone" attribute on
+	"POSIXct" objects.
+
+    o	If all the packages had dependency lists of equal lengths,
+	occasionally install.packages() would compute an incorrect
+	sort order.
+
+    o	col(x, as.factor=TRUE) and row(x, as.factor=TRUE) would fail
+	if x had no column (row) names.  It was documented
+	incorrectly, and now returns a matrix factor.
+
+    o	setRepositories() failed if "pkgType" was set to
+	"mac.binary.leopard".
+
+    o	formals<-() changed the body of the function if this was a
+    	length-one list.
+
+    o	body<-() failed if the function had no arguments.  It now
+	warns if discarding elements from a 'value' of type "expression".
+
+    o	qr.coef() failed in the complex case for non-square systems.
+    	(PR#13305)
+
+    o	plot.dendrogram(horizontal=TRUE) did not not plot 'edgetext'
+	at the correct locations.  (PR#13313)
+
+    o	The starting point for plot.acf(ci.type="ma") was lag 0 when it
+	should have been lag 1.  (PR#13071)
+
+    o   There was an obscure bug with srcrefs, which could put the
+        parser into a condition giving "Error: bad value" on any input
+
+
+
 		CHANGES IN R VERSION 2.8.0
 
 
@@ -142,6 +395,9 @@ NEW FEATURES
     o	plot.dendrogram() has new arguments (xlim, ylim) which allows
 	zooming into a hiearchical clustering dendrogram.
 
+    o	plot.ecdf() now defaults to pch=19 so as to better convey the
+	left-closed line segments.
+
     o	plot.histogram() gains an 'ann' argument. (Wish from Ben Bolker.)
 
     o	plot(<lm_obj>) now warns when it omits points with leverage one
@@ -194,7 +450,7 @@ NEW FEATURES
 	longer draws an axis line.
 
     o	save() (optionally, but by default) checks for the existence
-	of objects before opening the file/connections (wish of
+	of objects before opening the file/connection (wish of
 	PR#12543).
 
     o	segments(), arrows() and rect() allow zero-length
@@ -224,8 +480,7 @@ NEW FEATURES
 
     o	str()'s default method gains a 'formatNum' function argument which
 	is used for formatting numeric vectors.	 Note that this is very
-	slightly not backward compatible, and that its default may change
-	before release.
+	slightly not backward compatible.
 
     o	The summary() method for class "ecdf" now uses a print()
 	method rather than printing directly.
@@ -254,8 +509,9 @@ NEW FEATURES
 	which previously needed to be unlink("a\\[b").
 
     o	update.packages() gains an argument 'oldPkgs', where
-	new.packages() and old.packages() get 'instPkgs'.  These allow to
-	consider only subsets of packages instead of all installed ones.
+	new.packages() and old.packages() get 'instPkgs'.  These allow
+	consideration of only subsets of packages instead of all
+	installed ones.
 
     o	which(b) is somewhat faster now, notably for named vectors, thanks
 	to a suggestion by Henrik Bengtsson.
@@ -312,9 +568,6 @@ NEW FEATURES
 	contain a decimal point.
 
     o	PCRE has been updated to version 7.8 (mainly bug fixes).
-
-    o	plot.ecdf() now defaults to pch=19 so as to better convey the
-	left-closed line segments.
 
 
 NEW FEATURES IN PACKAGE 'methods'
@@ -532,7 +785,7 @@ BUG FIXES
 	work properly when evaluated via method dispatch for internal
 	S3 generics.
 
-    o	The default pkgType option for non-CRAN builds of R on Mac OS X
+    o	The default "pkgType" option for non-CRAN builds of R on Mac OS X
 	is now correctly "source" as documented.
 
     o	The default R_LIBS_USER path in AQUA builds now matches the

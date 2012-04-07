@@ -23,7 +23,7 @@ function(x, y = NULL, legend, fill=NULL, col = par("col"), lty, lwd, pch,
 	 text.width = NULL, text.col = par("col"),
 	 merge = do.lines && has.pch, trace = FALSE,
 	 plot = TRUE, ncol = 1, horiz = FALSE, title = NULL,
-	 inset = 0, xpd)
+	 inset = 0, xpd, title.col = text.col)
 {
     ## the 2nd arg may really be `legend'
     if(missing(legend) && !missing(y) &&
@@ -35,7 +35,7 @@ function(x, y = NULL, legend, fill=NULL, col = par("col"), lty, lwd, pch,
 
     if(!missing(xpd)) {
         op <- par("xpd")
-        on.exit(par(op))
+        on.exit(par(xpd=op))
         par(xpd=xpd)
     }
     title <- as.graphicsAnnot(title)
@@ -126,7 +126,15 @@ function(x, y = NULL, legend, fill=NULL, col = par("col"), lty, lwd, pch,
 	    1
 	} else ceiling(n.leg / ncol)
 
-    if(has.pch <- !missing(pch) && length(pch) > 0) {
+    has.pch <- !missing(pch) && length(pch) > 0 # -> default 'merge' is available
+    if(do.lines) {
+	x.off <- if(merge) -0.7 else 0
+    } else if(merge) {
+	warning("'merge = TRUE' has no effect when no line segments are drawn")
+        merge <- FALSE # only in R 2.8.1
+    }
+
+    if(has.pch) {
 	if(is.character(pch) && !is.na(pch[1]) &&
            nchar(pch[1], type="c") > 1) {
 	    if(length(pch) > 1)
@@ -136,7 +144,6 @@ function(x, y = NULL, legend, fill=NULL, col = par("col"), lty, lwd, pch,
 	}
 	if(!merge) dx.pch <- x.intersp/2 * xchar
     }
-    x.off <- if(merge) -0.7 else 0
 
     if (is.na(auto)) {
 	##- Adjust (x,y) :
@@ -254,8 +261,9 @@ function(x, y = NULL, legend, fill=NULL, col = par("col"), lty, lwd, pch,
 
     xt <- xt + x.intersp * xchar
     if(plot) {
-	if (!is.null(title)) text2(left + w/2, top - ymax, labels = title,
-				  adj = c(0.5, 0), cex = cex, col = text.col)
+	if (!is.null(title))
+            text2(left + w/2, top - ymax, labels = title,
+                  adj = c(0.5, 0), cex = cex, col = title.col)
 
 	text2(xt, yt, labels = legend, adj = adj, cex = cex, col = text.col)
     }

@@ -252,11 +252,12 @@ URL: http://www.r-project.org, http://www.another.url
 @end quotation
 
 @noindent
-Continuation lines (for example, for descriptions longer than one line)
-start with a space or tab.  The @samp{Package}, @samp{Version},
-@samp{License}, @samp{Description}, @samp{Title}, @samp{Author}, and
-@samp{Maintainer} fields are mandatory, the remaining fields
-(@samp{Date}, @samp{Depends}, @samp{URL}, @dots{}) are optional.
+The format is that of a `Debian Control File' (see the help for
+@samp{read.dcf}).  Continuation lines (for example, for descriptions
+longer than one line) start with a space or tab.  The @samp{Package},
+@samp{Version}, @samp{License}, @samp{Description}, @samp{Title},
+@samp{Author}, and @samp{Maintainer} fields are mandatory, the remaining
+fields (@samp{Date}, @samp{Depends}, @samp{URL}, @dots{}) are optional.
 
 The @file{DESCRIPTION} file should be written entirely in
 @acronym{ASCII} for maximal portability.
@@ -360,7 +361,7 @@ should be listed in the @samp{SystemRequirements} field or a separate
 @file{README} file.  The @R{} @command{INSTALL} facilities check if the
 version of @R{} used is recent enough for the package being installed,
 and the list of packages which is specified will be attached (after
-checking version dependencies) before the current package, both when
+checking version requirements) before the current package, both when
 @code{library} is called and when saving an image of the package's code
 or preparing for lazy-loading.
 
@@ -376,7 +377,9 @@ or in @samp{Suggests} or @samp{Enhances} (see below).  Ideally this
 field will include all the standard packages, and it is important to
 include S4-using packages (as their class definitions can change and the
 @file{DESCRIPTION} file is used to decide which packages to re-install
-when this happens).
+when this happens).  Packages declared in the @samp{Depends} field
+should not also be in the @samp{Imports} field.  Versions can be
+specified, but will not be checked when the namespace is loaded.
 
 The optional @samp{Suggests} field uses the same syntax as
 @samp{Depends} and lists packages that are not necessarily needed.  This
@@ -397,11 +400,11 @@ The general rules are
 @item
 Packages whose name space only is needed to load the package using
 @code{library(@var{pkgname})} must be listed in the @samp{Imports}
-field.
+field and not in the @samp{Depends} field.
 @item
 Packages that need to be attached to successfully load the package using
 @code{library(@var{pkgname})} must be listed in the @samp{Depends}
-field.
+field, only.
 @item
 All packages that are needed to successfully run @code{R CMD check} on
 the package must be listed in one of @samp{Depends} or @samp{Suggests}
@@ -412,6 +415,11 @@ or @samp{Imports}.
 In particular, large packages providing ``only'' data for examples or
 vignettes should be listed in @samp{Suggests} rather than @samp{Depends}
 in order to make lean installations possible.
+
+Currently adding version dependencies for packages only makes sense for
+the @samp{Depends} field, as only @code{library} checks version
+requirements, and only for the packages it loads via the @samp{Depends}
+field.
 
 The optional @samp{URL} field may give a list of @acronym{URL}s
 separated by commas or whitespace, for example the homepage of the
@@ -1064,7 +1072,7 @@ than dependencies)
 
 There are two another targets, @samp{before} and @samp{after}, which by
 default have neither dependencies nor commands so can be overridden in a
-@file{Makevars.win}.  See the example in @ref{Linking to other packages on Windows}.
+@file{Makevars.win}.  See the example in @ref{Linking to other packages}.
 
 
 
@@ -1483,7 +1491,8 @@ files for building source packages (which is the default), as well as
 the Windows toolset (see the ``R Installation and Administration''
 manual).  You may need to set @env{TMPDIR} to point to a suitable
 writeable directory with a path not containing spaces -- use forward
-slashes for the separators. 
+slashes for the separators.   Also, the directory needs to be on a
+case-honouring file system (some network-mounted file systems are not).
 @end quotation
 
 @node Customizing checking and building,  , Building packages, Checking and building packages
@@ -1532,7 +1541,7 @@ positives).
 Default: true.
 @item $R_check_Rd_style
 If true, check whether Rd usage entries for S3 methods use the full
-function name rather than the appropiate @code{\method} markup.
+function name rather than the appropriate @code{\method} markup.
 Default: true.
 @item $R_check_Rd_xrefs
 If true, check the cross-references in @file{.Rd} files.
@@ -1636,7 +1645,7 @@ packages to @acronym{CRAN}.
 
 Before submitting a package @pkg{mypkg}, do run the following steps to
 test it is complete and will install properly.  (Unix procedures only,
-run from the directory containing @file{mypkg} as a subdirectory.)
+run from the directory containing @file{@var{mypkg}} as a subdirectory.)
 
 @enumerate
 @item
@@ -1651,13 +1660,36 @@ diagnostic messaging (``warnings'') when compiling, such as e.g.@:
 @option{-Wall -pedantic} for tools from GCC, the Gnu Compiler
 Collection.  (If @R{} was not configured accordingly, one can achieve
 this e.g.@: via @code{PKG_CFLAGS} and related variables.)
+
+@item
+Look for any problems with help file conversions.  For example, you
+should
+@itemize
+@item
+Read through the PDF manual that was produced by @code{R CMD check} at
+@file{@var{mypkg}.Rcheck/@var{mypkg}-manual.pdf}, or produce another copy by
+@code{R CMD Rd2dvi --pdf @var{mypkg}}.
+
+@item
+Check for any left-over internal constructs by
+@example
+grep -r 'normal-bracket' @var{mypkg}.Rcheck/@var{mypkg}/help
+@end example
+
+@noindent
+If any occurrences are found these almost always indicate errors in the
+help files, some of which are discussed in the next chapter.
+@end itemize
+
 @end enumerate
 
 @noindent
 Please ensure that you can run through the complete procedure with only
 warnings that you understand and have reasons not to eliminate.  In
 principle, packages must pass @code{R CMD check} without warnings to be
-admitted to the main @acronym{CRAN} package area.
+admitted to the main @acronym{CRAN} package area.  If there are warnings
+you cannot eliminate (for example because you believe them to be
+spurious) send an explanatory note with your submission.
 
 When all the testing is done, upload the @file{.tar.gz} file, using
 @samp{anonymous} as log-in name and your e-mail address as password, to
@@ -1836,9 +1868,9 @@ but not exported.
 However, packages with name spaces @emph{do} use the @code{.Last.lib}
 function.  There is also a hook @code{.onUnload} which is called when
 the name space is unloaded (via a call to @code{unloadNamespace}) with
-argument the full path to the directory in which the package was
-installed.  @code{.onUnload} should be defined in the name space and not
-exported, but @code{.Last.lib} does need to be exported.
+argument the full path to the installed package's directory.
+@code{.onUnload} should be defined in the name space and not exported,
+but @code{.Last.lib} does need to be exported.
 
 Packages are not likely to need @code{.onAttach} (except perhaps for a
 start-up banner); code to set options and load shared objects should be
@@ -2589,18 +2621,18 @@ explicitly in calls to @code{stop}, @code{warning}, @code{message},
 @node CITATION files, Package types, Internationalization, Creating R packages
 @section CITATION files
 
-An installed file named @file{CTIATION} will be used by the
+An installed file named @file{CITATION} will be used by the
 @code{citation()} function.  (To be installed, it needed to be in the
 @file{inst} subdirectory of the package sources.)
 
-The @file{CTIATION} file is parsed as @R{} code, currently in Latin-1.
+The @file{CITATION} file is parsed as @R{} code, currently in Latin-1.
 (This will change once there is a means to declare an encoding.)  If no
 such file is present, @code{citation} generates a standard contents, and
-an example of what that would look like as a @file{CTIATION} file can be
+an example of what that would look like as a @file{CITATION} file can be
 seen in recommended package @pkg{nlme} (see below): recommended packages
 @pkg{boot}, @pkg{cluster} and @pkg{mgcv} have further examples.
 
-A @file{CTIATION} file will contain calls to the functions
+A @file{CITATION} file will contain calls to the functions
 @code{citHeader}, @code{citEntry} and (optionally)
 @code{citFooter}. Here is that for @pkg{nlme}, re-formatted:
 
@@ -2746,6 +2778,7 @@ exchanging information between developers and/or interested useRs.
 * Platform-specific sections::  
 * Encoding::                    
 * Processing Rd format::        
+* Back-compatibility issues::   
 @end menu
 
 @node Rd format, Sectioning, Writing R documentation files, Writing R documentation files
@@ -2834,7 +2867,7 @@ particular, functions) are given in this subsection.
 @findex \name
 @var{name} typically@footnote{There can be exceptions: for example Rd
 files are not allowed to start with a dot, and have to be uniquely named
-on a case-insensitve file system.} is the basename of the Rd file
+on a case-insensitive file system.} is the basename of the Rd file
 containing the documentation.  It is the ``name'' of the Rd object
 represented by the file and has to be unique in a package.
 @c and must not contain @LaTeX{}
@@ -2997,7 +3030,9 @@ Description of the function's arguments, using an entry of the form
 
 @noindent
 for each element of the argument list.  There may be optional text
-before and after these entries.
+before and after these entries.  (Note that there is no whitespace
+between the three parts of the entry.)
+
 
 @item \details@{@dots{}@}
 @findex \details
@@ -3018,7 +3053,10 @@ form
 
 @noindent
 for each component of the list returned.  Optional text may precede this
-list (see the introductory example for @code{rle}).
+list (see the introductory example for @code{rle}).  Note that
+@code{\value} is implicitly a @code{\itemize} environment, so that
+environment should not be used for listing components, just individual
+@code{\item} entries.
 
 @item \references@{@dots{}@}
 @findex \references
@@ -3294,7 +3332,8 @@ For example
 @noindent
 For consistency with the pre-assigned sections, the section name (the
 first argument to @code{\section}) should be capitalized (but not all
-upper case).
+upper case).  Note that there is no whitespace between the first and
+second braced expressions.
 
 Note that additional named sections are always inserted at a fixed
 position in the output (before @code{\note}, @code{\seealso} and the
@@ -3451,7 +3490,8 @@ For example:
 @noindent
 There must be the same number of fields on each line as there are
 alignments in the first argument, and they must be non-empty (but can
-contain only spaces).
+contain only spaces).  (There is no whitespace between @code{\tabular}
+and the first argument, nor between the two arguments.)
 
 @node Cross-references, Mathematics, Lists and tables, Writing R documentation files
 @section Cross-references
@@ -3517,7 +3557,8 @@ is used for ``inline'' formulae (corresponding to @TeX{}'s
 
 Both commands can also be used as @code{\eqn@{@var{latexascii}@}} (only
 @emph{one} argument) which then is used for both @var{latex} and
-@var{ascii}.
+@var{ascii}.  No whitespace is allowed between command and the first
+argument, nor between the first and second arguments.
 
 The following example is from @file{Poisson.Rd}:
 
@@ -3553,6 +3594,9 @@ for x = 0, 1, 2, ....
 @end example
 @end cartouche
 @end quotation
+
+See @ref{Back-compatibility issues} for earlier problems with @code{\eqn}
+with one argument immediately followed by a right brace.
 
 @c  For historic reasons mostly, the @TeX{}/@LaTeX{} commands @code{\alpha},
 @c  @code{\Alpha}, @code{\beta}, @code{\Gamma}, @code{\epsilon},
@@ -3751,7 +3795,7 @@ symbol cannot be used in text.
 
 
 
-@node Processing Rd format,  , Encoding, Writing R documentation files
+@node Processing Rd format, Back-compatibility issues, Encoding, Writing R documentation files
 @section Processing Rd format
 @cindex Processing Rd format
 
@@ -3802,6 +3846,43 @@ files in the @R{} binary Windows distribution for installing source
 packages (this is true for a default installation), and for @code{R CMD
 Rd2dvi} also the tools to build packages from source as described in the
 ``R Installation and Administration'' manual.
+
+@node Back-compatibility issues,  , Processing Rd format, Writing R documentation files
+@section Back-compatibility issues
+
+Packages that are intended to work with earlier versions of @R{} need to
+be written in a rather stricter dialect, and some notes follow.
+
+Versions of @R{} prior to 2.8.1 failed to process correctly
+constructions such as
+
+@example
+\item@{name@}@{some text \eqn@{x@}@}
+@end example
+
+@noindent
+the problem being the one- or two-argument command @code{\eqn}
+immediately followed by a right brace.  In many cases this can be
+resolved by adding punctuation, and even space before the final brace
+sufficed.
+
+It was never intended to allow whitespace between arguments to
+two-argument commands, e.g.
+
+@example
+\item@{name@} @{some text@}
+@end example
+
+@noindent
+has always been an error.  However, this error is not looked for and
+results in incorrect output (often by omitting entirely the text for the
+item, sometimes with a warning).  Future versions of @R{} will detect
+and fixup most cases of this error, with a warning.
+
+A @code{\value} block is implicitly a @code{\itemize} environment, but
+quite a few package writers have ignored this.  As from @R{} 2.8.1 this
+is detected, and the @code{\itemize} command (but not its contents)
+removed, with a warning.
 
 
 @node Tidying and profiling R code, Debugging, Writing R documentation files, Top
@@ -4223,6 +4304,7 @@ The daemon must be started as root, e.g.
 @example
 % su
 % opcontrol --no-vmlinux
+% (optional, some platforms) opcontrol --callgraph=5
 % opcontrol --start
 % exit
 @end example
@@ -4261,7 +4343,8 @@ samples  %        symbol name
 Shutting down the profiler and clearing the records needs to be done as
 root.  You can use @command{opannotate} to annotate the source code with
 the times spent in each section, if the appropriate source code was
-compiled with debugging support.
+compiled with debugging support, and @command{opreport -c} to generate a
+callgraph (if collection was enabled and the platform supports this).
 
 @node Solaris, MacOS X, Linux, Profiling compiled code
 @subsection Solaris
@@ -4873,7 +4956,7 @@ the first.
 
 Another cause of a `crash' is to overrun the C stack.  @R{} tries to
 track that in its own code, but it may happen in third-party compiled
-code.  For modern POSIX-compilant OSes we can safely catch that and
+code.  For modern POSIX-compliant OSes we can safely catch that and
 return to the top-level prompt.
 
 @example
@@ -5079,7 +5162,7 @@ $7 = 5
 * Creating shared objects::     
 * Interfacing C++ code::        
 * Fortran I/O::                 
-* Linking to other packages on Windows::  
+* Linking to other packages::   
 * Handling R objects in C::     
 * Interface functions .Call and .External::  
 * Evaluating R expressions from C::  
@@ -5396,7 +5479,7 @@ environment variable, but with lowest priority: note that it does not
 include the directory from which the DLL was loaded.  On XP and later it
 is possible@footnote{and we provide an emulation on Windows 2000): see
 @samp{?dyn.oad}.} to add a single path with quite high priority via the
-@code{Dllpath} argument to @code{dyn.load}.  This is (by default) used
+@code{DLLpath} argument to @code{dyn.load}.  This is (by default) used
 by @code{library.dynam} to include the package's @file{libs} directory
 in the DLL search path.
 
@@ -5837,7 +5920,7 @@ some @R{} headers as they in turn include C header files that may cause
 conflicts---if this happens, define @samp{NO_C_HEADERS} before including
 the @R{} headers, and include the appropriate headers yourself.
 
-@node Fortran I/O, Linking to other packages on Windows, Interfacing C++ code, System and foreign language interfaces
+@node Fortran I/O, Linking to other packages, Interfacing C++ code, System and foreign language interfaces
 @section Fortran I/O
 
 We have already warned against the use of C++ iostreams not least
@@ -5858,22 +5941,99 @@ when running under the Windows GUI console (@code{Rgui}) would hang the
 @R{} session.  This is now avoided by ensuring that the Fortran output
 is written to a file (@file{fort.6} in the working directory).
 
-@node Linking to other packages on Windows, Handling R objects in C, Fortran I/O, System and foreign language interfaces
-@section Linking to other packages on Windows
+@node Linking to other packages, Handling R objects in C, Fortran I/O, System and foreign language interfaces
+@section Linking to other packages
 
-It is not in general possible to link a DLL in package @pkg{packA} to
-a DLL provided by package @pkg{packB} (for the security reasons
-mentioned in the previous section), but it is on Windows.  This DLL can
-be either the package's DLL @file{packB/libs/packB.dll} or some other
-DLL provided for other packages to link to (and perhaps also for
-@file{packB.dll} to link to).
+It is not in general possible to link a DLL in package @pkg{packA} to a
+DLL provided by package @pkg{packB} (for the security reasons mentioned
+in @ref{dyn.load and dyn.unload}, and also because some platforms
+distinguish between shared and dynamic libraries), but it is on Windows.
 
-To reiterate: the ideas of this section are not portable to any other OS.
+Note that there can be tricky versioning issues here, as package
+@pkg{packB} could be re-installed after package @pkg{packA} --- it is
+desirable that the API provided by package @pkg{packB} remains
+backwards-compatible.
+
+@menu
+* Unix-alikes::                 
+* Windows::                     
+@end menu
+
+@node Unix-alikes, Windows, Linking to other packages, Linking to other packages
+@subsection Unix-alikes
+
+It is possible to link a shared object in package @pkg{packA} to a
+library provided by package @pkg{packB} under limited circumstances
+on a Unix-alke OS.  There are severe portability issues, so this is not
+recommended for a distributed package.
+
+This is easiest if @pkg{packB} provides a static library
+@file{packB/libs/libpackB.a}.  (This will need to be comiled with
+@code{PIC} flags on platforms where it matters.)  Then as the code from
+package @pkg{packB} is incorporated when package @pkg{packA} is
+installed, we only need to find the static library at install time for
+package @pkg{packB}.  The only issue is to find package @pkg{packB}, and
+for that we can ask @R{} by something like
+
+@example
+PKGB_PATH=`echo 'library(packB); cat(system.file("libs", package="packB"))' \
+ | R --vanilla --slave`
+PKG_LIBS=$(PKGB_PATH)/libpackB.a
+@end example
+
+@noindent
+(If @file{libpackB.a} itself depends on other libraries these will need
+to be included in @code{PKG_LIBS}.)
+
+For a dynamic library @file{packB/libs/libpackB.so}
+(@file{packB/libs/libpackB.dylib} on Mac OS X) we could use
+
+@example
+PKGB_PATH=`echo 'library(packB); cat(system.file("libs", package="packB"))' \
+ | R --vanilla --slave`
+PKG_LIBS=-L"$(PKGB_PATH)" -lpackB 
+@end example
+
+@noindent
+This will work for installation, but very likely not when package
+@code{packB} is loaded, as the path to package @pkg{packB}'s @file{libs}
+directory is not in the @command{ld.so}@footnote{@command{dyld} on Mac
+OS X, and @env{DYLD_LIBRARY_PATHS} below.}  search path.  You can
+arrange to put it there @strong{before} @R{} is launched by setting (on
+some platforms) @env{LD_RUN_PATH} or @env{LD_LIBRARY_PATH} or adding to
+the @command{ld.so} cache (see @command{ldconfig}).  On platforms that
+support it, the path to the dynamic library can be hardcoded at install
+time (which assumes that the location of package @pkg{packB} will not be
+changed).  On systems with the GNU linker (e.g.@: Linux) and some others
+(e.g.@: Mac OS X) this can be done by
+
+@example
+PKGB_PATH=`echo 'library(packB); cat(system.file("libs", package="packB"))' \
+ | R --vanilla --slave`
+PKG_LIBS=-L"$(PKGB_PATH)" -rpath "$(PKGB_PATH)" -lpackB 
+@end example
+
+@noindent
+and on some other systems (e.g.@: Solaris with its native linker) use
+@code{-R} rather than @code{-rpath}.
+
+It may be possible to figure out what is required semi-automatically
+from the result of @command{R CMD libtool --config} (look for
+@samp{hardode}).
+
+Making headers provided by package @pkg{packB} available to the code to
+be compiled in package @pkg{packA} can be done by the @code{LinkingTo}
+mechanism (@pxref{Registering native routines}).
+
+
+@node Windows,  , Unix-alikes, Linking to other packages
+@subsection Windows
 
 Suppose package @pkg{packA} wants to make use of compiled code provided
-by @pkg{packB} in DLL @file{packB/libs/exB.dll}.  (This can be extended
-to linking to more than one package in the same way.)  There are three
-issues to be addressed:
+by @pkg{packB} in DLL @file{packB/libs/exB.dll}, possibly the package's
+DLL @file{packB/libs/packB.dll}.  (This can be extended to linking to
+more than one package in a similar way.)  There are three issues to be
+addressed:
 
 @itemize
 
@@ -5897,7 +6057,7 @@ installed @file{pkgB/libs} directory.  To find that we need to ask @R{}
 where it is by something like
 
 @example
-PKGB_PATH=`echo 'library(packB); cat(system.file("libs", package="packB"))'
+PKGB_PATH=`echo 'library(packB); cat(system.file("libs", package="packB"))' \
  | rterm --vanilla --slave`
 PKG_LIBS= -L"$(PKGB_PATH)" -lexB
 @end example
@@ -5925,13 +6085,13 @@ been loaded before @pkg{packA}, then nothing more needs to be done as
 @file{exB.dll} will already be loaded into the @R{} executable.  (This
 is the most common scenario).
 
-More generally, we can use the @code{Dllpath} argument to
+More generally, we can use the @code{DLLpath} argument to
 @code{library.dynam} to ensure that @code{exB.dll} is found, for example
 by setting
 
 @example
 library.dynam("packA", pkg, lib, 
-              Dllpath = system.file("libs", package="packB"))
+              DLLpath = system.file("libs", package="packB"))
 @end example
 
 Note that @code{DLLpath} can only set one path, and so for linking to
@@ -5939,7 +6099,7 @@ two or more packages you would need to resort to setting @env{PATH}.
 
 @end itemize
 
-@node Handling R objects in C, Interface functions .Call and .External, Linking to other packages on Windows, System and foreign language interfaces
+@node Handling R objects in C, Interface functions .Call and .External, Linking to other packages, System and foreign language interfaces
 @section Handling R objects in C
 @cindex Handling R objects in C
 
@@ -7711,7 +7871,7 @@ encoding (Latin-1 or UTF-8).  This is mainly intended for human-readable
 output, and most packages can just treat such @code{CHARSXP}s as a
 whole.  However, if they need to be interpreted as characters or output
 at C level then it would normally be correct to ensure that they are
-converted to the encoding of the currrent locale: this can be done by
+converted to the encoding of the current locale: this can be done by
 accessing the data in the @code{CHARSXP} by @code{translateChar} rather
 than by @code{CHAR}.  If re-encoding is needed this allocates memory
 with @code{R_alloc} which thus persists to the end of the
@@ -9982,9 +10142,8 @@ directory of the sources.  You may need to ensure that
 @file{@var{R_HOME}/bin} is in your @env{PATH} so the @R{} DLLs are found.
 
 Examples of calling @file{R.dll} directly are provided in the directory
-@file{src/@/gnuwin32/@/front-ends}, including @file{Rproxy.dll} used by
-@code{StatConnector} and a simple command-line front end @file{rtest.c}
-whose code is
+@file{src/@/gnuwin32/@/front-ends}, including a simple command-line
+front end @file{rtest.c} whose code is
 
 @smallexample
 #define Win32
@@ -9995,7 +10154,7 @@ whose code is
 #include <Rembedded.h>
 #include <R_ext/RStartup.h>
 /* for askok and askyesnocancel */
-#include <graphapp/graphapp.h>
+#include <graphapp.h>
 
 /* for signal-handling code */
 #include <psignal.h>
@@ -10018,7 +10177,7 @@ void myWriteConsole(const char *buf, int len)
     printf("%s", buf);
 @}
 
-void myCallBack()
+void myCallBack(void)
 @{
     /* called during i/o, eval, graphics in ProcessEvents */
 @}

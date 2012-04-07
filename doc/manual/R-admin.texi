@@ -306,7 +306,7 @@ functionality,@footnote{for example, if you configured @R{} with
 should look carefully at any reported discrepancies.  (Some non-fatal
 errors are expected in locales that do not support Latin-1, in
 particular in true @code{C} locales and non-UTF-8 non-European locales.)
-A falure in @file{tests/ok-errors.R} may indicate inadequate resource
+A failure in @file{tests/ok-errors.R} may indicate inadequate resource
 limits (@pxref{Running R}).
 
 To re-run the tests including those successfully run you would need
@@ -735,7 +735,7 @@ sessions in which packages are to be installed, even if that is the only
 version of @R{} installed (since this tells the package installation
 code the architecture needed).
 
-At present there is a protential problem with packages using Java, as
+At present there is a potential problem with packages using Java, as
 the post-install for a @cputype{i386} RPM on @cputype{x86_64} Linux
 reconfigures Java and will find the @cputype{x86_64} Java.  If you know
 where a 32-bit Java is installed you may be able to run (as root)
@@ -1604,6 +1604,20 @@ reasonable amount of diagnostic messaging (``warnings'') when compiling,
 such as e.g.@: @option{-Wall -pedantic} for tools from GCC, the Gnu
 Compiler Collection.
 
+Note that this mechanism can also be used when it necessary to change
+the optimization level for a particular package.  For example
+
+@example
+## for C code
+CFLAGS=-g -O
+## for C++ code
+CXXFLAGS=-g -O
+## for Fortran code
+FFLAGS=-g -O
+## for Fortran 95 code
+FCFLAGS=-g -O
+@end example
+
 @node Customizing package compilation under Windows,  , Customizing package compilation under Unix, Installing packages
 @subsection Customizing package compilation under Windows
 @findex MakeDll
@@ -1886,7 +1900,7 @@ locale needs to specify
 @itemize
 @item
 A human language.  These are generally specified by a lower-case two-character
-abbreviation following ISO 639.
+abbreviation following ISO 639 (see e.g.@: @url{http://en.wikipedia.org/wiki/ISO_639-1}).
 
 @item
 A `territory', used mainly to specify the currency. These are generally
@@ -2364,7 +2378,7 @@ knows about, but you may have to set @code{CC} or @code{CFLAGS}
 suitably.  For recent versions of @command{gcc} with @code{glibc} this
 means including @option{-std=gnu99}@footnote{@option{-std=c99}
 excludes POSIX functionality, but @file{config.h} will turn on all GNU
-extensions include the POSIX functuonality.}.  If the compiler is
+extensions include the POSIX functionality.}.  If the compiler is
 detected as @command{gcc}, @code{-std=gnu99} will be appended to
 @code{CC} unless it conflicts with a setting of @code{CFLAGS}.
 
@@ -2433,7 +2447,7 @@ The `modern' version of @code{X11}, @code{jpeg()}, @code{png()} and
 @code{tiff()} uses the @code{cairo} and (optionally) @code{Pango}
 libraries.  Cairo version 1.0 or later is required@footnote{We recommend
 that people with cairo 1.0.x, e.g.@: on Fedora Core 5, install 1.4.x or
-later from the sources, which works well}, and some features reguire 1.2
+later from the sources, which works well}, and some features require 1.2
 or later (and may not work before 1.4).  Pango needs to be at least
 version 1.10, and 1.12 is the earliest version we have tested.  (For
 Fedora users we believe the @code{pango-devel} RPM and its dependencies
@@ -2750,39 +2764,77 @@ multi-threaded Goto BLAS, but ours run happily with multiple threads.
 @node MKL, Shared BLAS, Goto BLAS, BLAS
 @subsubsection Intel MKL
 
-For Intel processors under Linux, Intel's Math Kernel Library
+For Intel processors under Linux, there is Intel's Math Kernel Library
 (@uref{http://www.intel.com/software/products/mkl/,
-@code{www.intel.com/@/software/@/products/@/mkl}}) version 9 can be used
-by
+@code{www.intel.com/@/software/@/products/@/mkl}}).  You are strongly
+encouraged to read the MKL User's Guide, which is installed with the
+library, before attempting to link to MKL.
+
+Version 10 of MKL supports two linking models: the default model,
+which is backward compatible with version 9 (see below),  and the pure
+layered model.  The layered model gives the user fine-grained control
+over four different library layers: interface, threading, computation,
+and run-time library support. Some examples of linking to MKL using this
+layered model are given below. These examples are for GCC compilers on
+@cputype{x86_64}.  The choice of interface layer is important on
+@cputype{x86_64} since the Intel Fortran compiler returns complex
+values differently from the GNU fortran compiler. You must therefore
+use the interface layer that matches your compiler (@code{mkl_intel*}
+or @code{mkl_gf*}).
+
+R can be linked to a sequential version of MKL by
 
 @example
---with-blas="-lmkl -lguide -lpthread"
+MKL_LIB_PATH=/opt/intel/mkl/10.0.3.020/lib/em64t/
+export LD_LIBRARY_PATH=$MKL_LIB_PATH
+MKL="-L$@{MKL_LIB_PATH@} -lmkl_gf_lp64 -lmkl_sequential -lmkl_lapack -lmkl_core"
+./configure --with-blas="$MKL" --with-lapack
 @end example
 
 @noindent
-This is multi-threaded, but the number of threads defaults to 1 (and can
-be increased by setting @code{OMP_NUM_THREADS}).
-(Thanks to Andy Liaw for the information.)
+The order of the libraries is important.  The option
+@option{--with-lapack} is used since MKL contains a copy of LAPACK as
+well as BLAS (@pxref{LAPACK}).
 
-For version 10 on @cputype{x86_64}, Ei-Ji Nakama used GCC compilers and
+Threaded MKL may be used by replacing the line defining the variable @code{MKL} 
+with
 
 @example
-MKL_LIB_PATH=/opt/intel/mkl/10.0.1.014/lib/em64t
+MKL="-L$@{MKL_LIB_PATH@} -lmkl_gf_lp64 -lmkl_gnu_thread \
+     -lmkl_lapack -lmkl_core -liomp5 -lpthread"
+@end example
+
+@noindent
+The default number of threads will be chosen by the OpenMP* software,
+but can be controlled by setting @code{OMP_NUM_THREADS} or
+@code{MKL_NUM_THREADS}.
+
+Static MKL may be used with
+
+@example
 MKL="   -L$@{MKL_LIB_PATH@}                               \
         -Wl,--start-group                               \
                 $@{MKL_LIB_PATH@}/libmkl_gf_lp64.a        \
                 $@{MKL_LIB_PATH@}/libmkl_gnu_thread.a     \
                 $@{MKL_LIB_PATH@}/libmkl_core.a           \
         -Wl,--end-group                                 \
-        -liomp5 -lguide -lpthread -lgomp"
-
-./configure --with-lapack="$MKL" --with-blas="$MKL"
+        -liomp5 -lpthread"
 @end example
 
+@noindent
+(Thanks to Ei-Ji Nakama).
 
-See @pxref{Shared BLAS} for an alternative (and in many ways preferable)
-way to use MKL.
+The default linking model, which is also used by version 9 of MKL, can
+be used by
 
+@example
+--with-blas="-lmkl -lguide -lpthread"
+@end example
+
+@noindent
+This is multi-threaded, but in version 9 the number of threads defaults
+to 1.  It can be increased by setting @code{OMP_NUM_THREADS}.  (Thanks to
+Andy Liaw for the information.)
 
 @node Shared BLAS,  , MKL, BLAS
 @subsubsection Shared BLAS
@@ -2874,16 +2926,6 @@ does not contain LAPACK.
 
 Since ACML contains a full LAPACK, if selected as the BLAS it can be
 used as the LAPACK @emph{via} @option{--with-lapack}.
-
-Intel's Math Kernel Library suppies a full LAPACK which can be used via
-@example
---with-lapack="-L/path/to/libs -lmkl_lapack64"
-@end example
-
-@noindent
-or @samp{-lmkl_lapack32}: library @code{mkl_lapack} is static and not
-PIC.  However, the version 8.0.1.006 we tested failed a regression test
-in the complex LAPACK.
 
 If you do use @option{--with-lapack}, be aware of potential problems
 with bugs in the LAPACK 3.0 sources (or in the posted corrections to those
@@ -3163,8 +3205,9 @@ variable @code{MAKE} at configure time, for example
 ./configure MAKE=gmake
 @end example
 
-Note the comment above about using a parallel @command{make}: this works
-for building @R{} but not for installing nor checking.
+Note the comment in @ref{Installation} about using a parallel
+@command{make}: this works for building @R{} but not for installing nor
+checking.
 
 @node Using FORTRAN, Compile and load flags, Using make, Configuration on Unix
 @section Using FORTRAN
@@ -3583,9 +3626,11 @@ SHLIB_CXXLD=icpc
 @end example
 
 @noindent
-@command{configure} will add @samp{-c99} to @code{CC} for C99-compliance.
-@R{} will add @samp{-mp} in @code{R_XTRA_@{C,F,CXX@}FLAGS} to maintain
-correct @acronym{IEC}@tie{}60559 arithmetic.  The flag @option{-wd188}
+@command{configure} will add @samp{-c99} to @code{CC} for
+C99-compliance.  This causes warnings with @code{icc} 10, so use
+@code{CC="icc -std=c99"} there.  @R{} will add @samp{-mp} in
+@code{R_XTRA_@{C,F,CXX@}FLAGS} to maintain correct
+@acronym{IEC}@tie{}60559 arithmetic.  The flag @option{-wd188}
 suppresses a large number of warnings about the enumeration type
 @samp{Rboolean}.  Because the Intel C compiler sets @samp{__GNUC__}
 without complete emulation of @command{gcc}, we suggest adding
@@ -3681,7 +3726,7 @@ If you use the X window manager and prefer @code{Terminal.app} to
 @enindex DISPLAY
 the existence of a @env{DISPLAY} environment variable to determine
 whether an X system is running.  This affects the default graphics
-device for the commmand-line version of R and the behaviour of the
+device for the command-line version of R and the behaviour of the
 @code{png} and @code{jpeg} devices.
 
 
@@ -3998,7 +4043,7 @@ alignment of doubles (which @command{gcc} generated by default, but
 @section HP-UX
 @cindex HP-UX
 
-% R-help 2007 Nov 1/2, and follow up to BDR Nov 6.
+@c R-help 2007 Nov 1/2, and follow up to BDR Nov 6.
 Fan Long built @R{} 2.6.0 on HP-UX 11.23 on @cputype{ia64} using the
 native compilers via
 
@@ -4282,8 +4327,8 @@ use in a CJK locale.  NLS does work, although
 @option{--with-included-gettext} is preferable.  You will see many
 warnings about the use of auto-import.
 
-%It almost passes @command{make check}: FIFOs are supposedly supported
-%but hung in @samp{example(fifo)}.
+@c It almost passes @command{make check}: FIFOs are supposedly supported
+@c but hung in @samp{example(fifo)}.
 
 Note that this gives you a command-line application using @code{readline}
 for command editing.  The @samp{X11} graphics device will work if a
@@ -4387,12 +4432,12 @@ become inactive if you return to it: to work around this you can open
 a link in a new tab or window.
 
 @c https://stat.ethz.ch/pipermail/r-help/2008-July/169521.html
-There is a known issue with Firefox 3 (and 3.0.1).  The links in the
-results page may point to the wrong directory level.  This is a bug in
-the way Firefox is interpreting relative URLs, and can be circumvented
-by opening the HTML search page (@file{.../doc/html/SearchEngine.html})
-directly rather than from @file{.../doc/html/index.html} as shown by
-@code{help.start()}.
+There is a known issue with Firefox 3.0.x (at least for x <= 4).  The
+links in the results page may point to the wrong directory level.  This
+is a bug in the way Firefox is interpreting relative URLs, and can be
+circumvented by opening the HTML search page
+(@file{.../doc/html/SearchEngine.html}) directly rather than from
+@file{.../doc/html/index.html} as shown by @code{help.start()}.
 
 Many thanks to Marc Schwartz in tracking down many of these issues with
 enabling the Java search engine.

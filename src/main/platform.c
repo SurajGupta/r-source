@@ -1654,7 +1654,7 @@ SEXP attribute_hidden do_capabilities(SEXP call, SEXP op, SEXP args, SEXP rho)
 # ifdef HAVE_X11
     int X11 = NA_LOGICAL;
 # else
-    int X11 = FALSE
+    int X11 = FALSE;
 # endif
 #endif
 
@@ -1930,7 +1930,7 @@ SEXP attribute_hidden do_dircreate(SEXP call, SEXP op, SEXP args, SEXP env)
     }
     res = _wmkdir(dir);
     if (show && res && errno == EEXIST)
-	warning(_("'%s' already exists"), dir);
+	warning(_("'%ls' already exists"), dir);
 end:
     return ScalarLogical(res == 0);
 }
