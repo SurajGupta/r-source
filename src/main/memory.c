@@ -1,3 +1,4 @@
+
 /*
  *  R : A Computer Language for Statistical Data Analysis
  *  Copyright (C) 1995, 1996  Robert Gentleman and Ross Ihaka
@@ -48,7 +49,11 @@
    level 0 is no additional instrumentation
    level 1 marks uninitialized numeric, logical, integer vectors
 	   and R_alloc memory
-   level 2 marks free memory as inaccessible
+   level 2 marks the data section of vector nodes as inaccessible
+           when they are freed.
+   level 3 marks the first three bytes of sxpinfo and the ATTRIB
+           field on both vector and non-vector nodes, and the
+           three words of data in non-vector nodes.
 
    It may be necessary to define NVALGRIND for a non-gcc
    compiler on a supported architecture if it has different
@@ -653,6 +658,12 @@ static void GetNewPage(int node_class)
 #if  VALGRIND_LEVEL > 1
 	if (NodeClassSize[node_class]>0)
 	    VALGRIND_MAKE_NOACCESS(DATAPTR(s), NodeClassSize[node_class]*sizeof(VECREC));
+#if  VALGRIND_LEVEL > 2
+        else 
+            VALGRIND_MAKE_NOACCESS(&(s->u), 3*(sizeof(void *)));
+        VALGRIND_MAKE_NOACCESS(s, 3); /* start of sxpinfo */	
+        VALGRIND_MAKE_NOACCESS(&ATTRIB(s), sizeof(void *));
+#endif
 #endif
 	s->sxpinfo = UnmarkedNodeTemplate.sxpinfo;
 	SET_NODE_CLASS(s, node_class);
@@ -1270,7 +1281,6 @@ static void RunGenCollect(R_size_t size_needed)
     FORWARD_NODE(R_UnboundValue);
     FORWARD_NODE(R_RestartToken);
     FORWARD_NODE(R_MissingArg);
-    FORWARD_NODE(R_CommentSxp);
 
     FORWARD_NODE(R_GlobalEnv);	           /* Global environment */
     FORWARD_NODE(R_BaseEnv);
@@ -1303,6 +1313,7 @@ static void RunGenCollect(R_size_t size_needed)
 	FORWARD_NODE(ctxt->cloenv);        /* the closure environment */
 	FORWARD_NODE(ctxt->handlerstack);  /* the condition handler stack */
 	FORWARD_NODE(ctxt->restartstack);  /* the available restarts stack */
+	FORWARD_NODE(ctxt->srcref);	   /* the current source reference */
     }
 
     FORWARD_NODE(framenames);		   /* used for interprocedure
@@ -1400,10 +1411,17 @@ static void RunGenCollect(R_size_t size_needed)
 	for(s=NEXT_NODE(R_GenHeap[i].New); s!=R_GenHeap[i].Free; s=NEXT_NODE(s)){
 	    VALGRIND_MAKE_NOACCESS(DATAPTR(s), NodeClassSize[i]*sizeof(VECREC));
 # if VALGRIND_LEVEL > 2
-	    VALGRIND_MAKE_NOACCESS(s,4); /* sizeof sxpinfo_struct */
+	    VALGRIND_MAKE_NOACCESS(&ATTRIB(s),sizeof(void *));
+            VALGRIND_MAKE_NOACCESS(s,3);
 # endif
 	}
     }
+#if VALGRIND_LEVEL > 2
+    for(s=NEXT_NODE(R_GenHeap[0].New);s!=R_GenHeap[0].Free; s=NEXT_NODE(s)){
+            VALGRIND_MAKE_NOACCESS(&(s->u),3*(sizeof(void *)));
+            VALGRIND_MAKE_NOACCESS(s,3);
+    }
+#endif
 #endif
 
     /* reset Free pointers */
@@ -1640,6 +1658,9 @@ void attribute_hidden InitMemory()
 
     /*  Unbound values which are to be preserved through GCs */
     R_PreciousList = R_NilValue;
+    
+    /*  The current source line */
+    R_Srcref = R_NilValue;
 }
 
 /* Since memory allocated from the heap is non-moving, R_alloc just
@@ -1684,6 +1705,8 @@ char *R_alloc(size_t nelem, int eltsize)
 	R_VStack = s;
 #if VALGRIND_LEVEL > 0
 	VALGRIND_MAKE_WRITABLE(DATAPTR(s), (int) dsize);
+        VALGRIND_MAKE_WRITABLE(&(ATTRIB(s)), sizeof(void *));
+        VALGRIND_MAKE_WRITABLE(s,3);
 #endif
 	return (char *)DATAPTR(s);
     }
@@ -1734,10 +1757,12 @@ SEXP allocSExp(SEXPTYPE t)
     CAR(s) = R_NilValue;
     CDR(s) = R_NilValue;
     TAG(s) = R_NilValue;
-    ATTRIB(s) = R_NilValue;
 #if VALGRIND_LEVEL > 2
-    VALGRIND_MAKE_READABLE(s, sizeof(*s));
+    VALGRIND_MAKE_WRITABLE(&ATTRIB(s), sizeof(void *));
+    VALGRIND_MAKE_WRITABLE(&(s->u), 3*(sizeof(void *)));
+    VALGRIND_MAKE_WRITABLE(s,3);
 #endif
+    ATTRIB(s) = R_NilValue;
     return s;
 }
 
@@ -1753,10 +1778,12 @@ static SEXP allocSExpNonCons(SEXPTYPE t)
     s->sxpinfo = UnmarkedNodeTemplate.sxpinfo;
     TYPEOF(s) = t;
     TAG(s) = R_NilValue;
-    ATTRIB(s) = R_NilValue;
 #if VALGRIND_LEVEL > 2
-    VALGRIND_MAKE_READABLE(s, sizeof(*s));
+    VALGRIND_MAKE_WRITABLE(&ATTRIB(s), sizeof(void *));
+    VALGRIND_MAKE_WRITABLE(&(s->u), 3*(sizeof(void *)));
+    VALGRIND_MAKE_WRITABLE(s,3);
 #endif
+    ATTRIB(s) = R_NilValue;
     return s;
 }
 
@@ -1775,7 +1802,9 @@ SEXP cons(SEXP car, SEXP cdr)
     }
     GET_FREE_NODE(s);
 #if VALGRIND_LEVEL > 2
-    VALGRIND_MAKE_READABLE(s, sizeof(*s));
+    VALGRIND_MAKE_WRITABLE(&ATTRIB(s), sizeof(void *));
+    VALGRIND_MAKE_WRITABLE(&(s->u), 3*(sizeof(void *)));
+    VALGRIND_MAKE_WRITABLE(s,3);
 #endif
     s->sxpinfo = UnmarkedNodeTemplate.sxpinfo;
     TYPEOF(s) = LISTSXP;
@@ -1819,7 +1848,9 @@ SEXP NewEnvironment(SEXP namelist, SEXP valuelist, SEXP rho)
     }
     GET_FREE_NODE(newrho);
 #if VALGRIND_LEVEL > 2
-    VALGRIND_MAKE_READABLE(newrho, sizeof(*newrho));
+    VALGRIND_MAKE_WRITABLE(&ATTRIB(newrho), sizeof(void *));
+    VALGRIND_MAKE_WRITABLE(&(newrho->u), 3*(sizeof(void *)));
+    VALGRIND_MAKE_WRITABLE(newrho,3);
 #endif
     newrho->sxpinfo = UnmarkedNodeTemplate.sxpinfo;
     TYPEOF(newrho) = ENVSXP;
@@ -1853,10 +1884,12 @@ SEXP attribute_hidden mkPROMISE(SEXP expr, SEXP rho)
     }
     GET_FREE_NODE(s);
 #if VALGRIND_LEVEL > 2
-    VALGRIND_MAKE_READABLE(s,sizeof(*s));
+    VALGRIND_MAKE_WRITABLE(&ATTRIB(s), sizeof(void *));
+    VALGRIND_MAKE_WRITABLE(&(s->u), 3*(sizeof(void *)));
+    VALGRIND_MAKE_WRITABLE(s,3);
 #endif
     /* precaution to ensure code does not get modified via
-       substitute() and the like */ 
+       substitute() and the like */
     if (NAMED(expr) < 2) SET_NAMED(expr, 2);
 
     s->sxpinfo = UnmarkedNodeTemplate.sxpinfo;
@@ -1873,13 +1906,10 @@ SEXP attribute_hidden mkPROMISE(SEXP expr, SEXP rho)
 /* bytes so that alignment is preserved for all objects */
 
 /* Allocate a vector object (and also list-like objects).
-   This ensures only validity of list-like
-   SEXPTYPES (as the elements must be initialized).  Initializing of
-   other vector types is done in do_makevector
-   [That comment seems outdated -- STRSXP, VECSXP, EXPRSXP
-   are initialized and CHARSXP are nul-terminated.]
+   This ensures only validity of list-like (LISTSXP, VECSXP, EXPRSXP),
+   STRSXP and CHARSXP types;  e.g., atomic types remain un-initialized
+   and must be initialized upstream, e.g., in do_makevector().
 */
-
 #define intCHARSXP 73
 
 SEXP allocVector(SEXPTYPE type, R_len_t length)
@@ -1999,7 +2029,8 @@ SEXP allocVector(SEXPTYPE type, R_len_t length)
 	if (node_class < NUM_SMALL_NODE_CLASSES) {
 	    CLASS_GET_FREE_NODE(node_class, s);
 #if VALGRIND_LEVEL > 2
-	    VALGRIND_MAKE_WRITABLE(s, 4); /* sizeof sxpinfo_struct */
+	    VALGRIND_MAKE_WRITABLE(&ATTRIB(s), sizeof(void *));
+            VALGRIND_MAKE_WRITABLE(s, 3);
 #endif
 #if VALGRIND_LEVEL > 1
 	    VALGRIND_MAKE_WRITABLE(DATAPTR(s), actual_size);
@@ -2533,7 +2564,7 @@ int (OBJECT)(SEXP x) { return OBJECT(x); }
 int (MARK)(SEXP x) { return MARK(x); }
 int (TYPEOF)(SEXP x) { return TYPEOF(x); }
 int (NAMED)(SEXP x) { return NAMED(x); }
-int (TRACE)(SEXP x) { return TRACE(x); }
+int (RTRACE)(SEXP x) { return RTRACE(x); }
 int (LEVELS)(SEXP x) { return LEVELS(x); }
 
 void (SET_ATTRIB)(SEXP x, SEXP v) {
@@ -2546,7 +2577,7 @@ void (SET_ATTRIB)(SEXP x, SEXP v) {
 void (SET_OBJECT)(SEXP x, int v) { SET_OBJECT(x, v); }
 void (SET_TYPEOF)(SEXP x, int v) { SET_TYPEOF(x, v); }
 void (SET_NAMED)(SEXP x, int v) { SET_NAMED(x, v); }
-void (SET_TRACE)(SEXP x, int v) { SET_TRACE(x, v); }
+void (SET_RTRACE)(SEXP x, int v) { SET_RTRACE(x, v); }
 int (SETLEVELS)(SEXP x, int v) { return SETLEVELS(x, v); }
 void DUPLICATE_ATTRIB(SEXP to, SEXP from) {
     SET_ATTRIB(to, duplicate(ATTRIB(from)));
@@ -2755,12 +2786,14 @@ void (SET_MISSING)(SEXP x, int v) { SET_MISSING(x, v); }
 SEXP (FORMALS)(SEXP x) { return FORMALS(x); }
 SEXP (BODY)(SEXP x) { return BODY(x); }
 SEXP (CLOENV)(SEXP x) { return CLOENV(x); }
-int (DEBUG)(SEXP x) { return DEBUG(x); }
+int (RDEBUG)(SEXP x) { return RDEBUG(x); }
+int (RSTEP)(SEXP x) { return RSTEP(x); }
 
 void (SET_FORMALS)(SEXP x, SEXP v) { CHECK_OLD_TO_NEW(x, v); FORMALS(x) = v; }
 void (SET_BODY)(SEXP x, SEXP v) { CHECK_OLD_TO_NEW(x, v); BODY(x) = v; }
 void (SET_CLOENV)(SEXP x, SEXP v) { CHECK_OLD_TO_NEW(x, v); CLOENV(x) = v; }
-void (SET_DEBUG)(SEXP x, int v) { SET_DEBUG(x, v); }
+void (SET_RDEBUG)(SEXP x, int v) { SET_RDEBUG(x, v); }
+void (SET_RSTEP)(SEXP x, int v) { SET_RSTEP(x, v); }
 
 /* Primitive Accessors */
 attribute_hidden int (PRIMOFFSET)(SEXP x) { return PRIMOFFSET(x); }
@@ -3014,18 +3047,6 @@ R_FreeStringBufferL(R_StringBuffer *buf)
 /* ======== These need direct access to gp field for efficiency ======== */
 
 /* FIXME: consider inlining here */
-#ifdef Win32
-int Seql(SEXP a, SEXP b)
-{
-    if (a == b) return 1;
-    if (LENGTH(a) != LENGTH(b)) return 0;
-    if (IS_CACHED(a) && IS_CACHED(b) && ENC_KNOWN(a) == ENC_KNOWN(b))
-	 return 0;
-    return !strcmp(translateCharUTF8(a), translateCharUTF8(b));
-}
-
-#else
-
 /* this has NA_STRING = NA_STRING */
 int Seql(SEXP a, SEXP b)
 {
@@ -3034,11 +3055,9 @@ int Seql(SEXP a, SEXP b)
       non-ASCII strings). Note that one of the strings could be marked
       as unknown. */
     if (a == b) return 1;
-    if (LENGTH(a) != LENGTH(b)) return 0;
     /* Leave this to compiler to optimize */
     if (IS_CACHED(a) && IS_CACHED(b) && ENC_KNOWN(a) == ENC_KNOWN(b))
 	return 0;
     return !strcmp(translateChar(a), translateChar(b));
 }
 
-#endif

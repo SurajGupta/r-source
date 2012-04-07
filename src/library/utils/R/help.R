@@ -15,12 +15,13 @@
 #  http://www.r-project.org/Licenses/
 
 help <-
-function(topic, offline = FALSE, package = NULL, lib.loc = NULL,
+function(topic, package = NULL, lib.loc = NULL,
          verbose = getOption("verbose"),
          try.all.packages = getOption("help.try.all.packages"),
+         help_type = getOption("help_type"),
          chmhelp = getOption("chmhelp"),
          htmlhelp = getOption("htmlhelp"),
-         pager = getOption("pager"))
+         offline = FALSE)
 {
     if(!missing(package))
         if(is.name(y <- substitute(package)))
@@ -33,11 +34,13 @@ function(topic, offline = FALSE, package = NULL, lib.loc = NULL,
                            character.only = TRUE))
         if(!missing(lib.loc))           # "Help" on library.
             return(library(lib.loc = lib.loc))
-        return(help("help", package = "utils", lib.loc = .Library))
+        ## ultimate default is to give help on help
+        topic <- "help"; package <- "utils"; lib.loc <- .Library
     }
 
-    ischar <- try(is.character(topic) && length(topic) == 1L, silent = TRUE)
-    if(inherits(ischar, "try-error")) ischar <- FALSE
+    ischar <- tryCatch(is.character(topic) && length(topic) == 1L,
+                       error = identity)
+    if(inherits(ischar, "error")) ischar <- FALSE
     ## if this was not a length-one character vector, try for the name.
     if(!ischar) {
         ## the reserved words that could be parsed as a help arg:
@@ -50,15 +53,27 @@ function(topic, offline = FALSE, package = NULL, lib.loc = NULL,
         topic <- stopic
     }
 
-    type <- if(offline)
-        "latex"
-    else if(.Platform$OS.type == "windows" &&
-            is.logical(chmhelp) && !is.na(chmhelp) && chmhelp)
-        "chm"
-    else if(is.logical(htmlhelp) && !is.na(htmlhelp) && htmlhelp)
-        "html"
-    else
-        "help"
+    help_type <- if(!length(help_type)) {
+        if(offline) {
+            warning('offline = TRUE is deprecated: use help_type ="postscript"')
+            "ps"
+        } else if(.Platform$OS.type == "windows" &&
+                is.logical(chmhelp) && !is.na(chmhelp) && chmhelp) {
+            warning('chmhelp = TRUE is no longer supported: use help_type ="text"')
+            "txt"
+        } else if(is.logical(htmlhelp) && !is.na(htmlhelp) && htmlhelp) {
+            warning('htmhelp = TRUE is deprecated: use help_type ="html"')
+            "html"
+        } else
+            "text"
+    } else match.arg(tolower(help_type),
+                     c("text", "html", "postscript", "ps", "pdf"))
+    type <- switch(help_type,
+                   "text" = "help",
+                   "postscript" =,
+                   "ps" =,
+                   "pdf" = "latex",
+                   help_type)
 
     ## Note that index.search() (currently?) only returns the first
     ## match for the given sequence of indices, and returns the empty
@@ -90,9 +105,10 @@ function(topic, offline = FALSE, package = NULL, lib.loc = NULL,
         tried_all_packages <- TRUE
     }
 
+    paths <- unique(paths)
     attributes(paths) <-
-        list(call = match.call(), pager = pager, topic = topic,
-             tried_all_packages = tried_all_packages, type = type)
+        list(call = match.call(), topic = topic,
+             tried_all_packages = tried_all_packages, type = help_type)
     class(paths) <- "help_files_with_topic"
     paths
 }
@@ -100,12 +116,15 @@ function(topic, offline = FALSE, package = NULL, lib.loc = NULL,
 print.help_files_with_topic <-
 function(x, ...)
 {
-    if (.Platform$GUI == "AQUA") {
-        .Internal(aqua.custom.print("help-files", x))
-	return(invisible(x))
-    }
+    browser <- getOption("browser")
     topic <- attr(x, "topic")
     type <- attr(x, "type")
+    if (.Platform$GUI == "AQUA" && type == "html") {
+        browser <- function(x, ...) {
+            .Internal(aqua.custom.print("help-files", x))
+    	    return(invisible(x))
+        }
+    }
     paths <- as.character(x)
     if(!length(paths)) {
         writeLines(c(gettextf("No documentation for '%s' in specified packages and libraries:",
@@ -114,19 +133,52 @@ function(x, ...)
                               topic)))
         return(invisible(x))
     }
+
+    if(type == "html")
+        if (tools:::httpdPort == 0L) tools::startDynamicHelp()
+
     if(attr(x, "tried_all_packages")) {
         paths <- unique(dirname(dirname(paths)))
         msg <- gettextf("Help for topic '%s' is not in any loaded package but can be found in the following packages:",
-                     topic)
-        writeLines(c(strwrap(msg), "",
-                     paste(" ",
-                           formatDL(c(gettext("Package"),
-                                      basename(paths)),
-                                    c(gettext("Library"),
-                                      dirname(paths)),
-                                    indent = 22))))
+                        topic)
+        if (type == "html" && tools:::httpdPort > 0L) {
+            path <- file.path(tempdir(), ".R/doc/html")
+            dir.create(path, recursive = TRUE, showWarnings = FALSE)
+            out <- paste('<!DOCTYPE html PUBLIC "-//W3C//DTD HTML 4.01 Transitional//EN">\n',
+                         '<html><head><title>R: help</title>\n',
+                         '<meta http-equiv="Content-Type" content="text/html; charset="UTF-8">\n',
+                         '<link rel="stylesheet" type="text/css" href="/doc/html/R.css">\n',
+                         '</head><body>\n\n<hr>\n', sep="")
+            out <- c(out, '<p>', msg, '</p><br>')
+            out <- c(out, '<table width="100%" summary="R Package list">\n',
+                     '<tr align="left" valign="top">\n',
+                     '<td width="25%">Package</td><td>Library</td></tr>\n')
+            pkgs <- basename(paths)
+            links <- paste('<a href="http://127.0.0.1:', tools:::httpdPort,
+                           '/library/', pkgs, '/help/', topic, '">',
+                           pkgs, '</a>', sep = "")
+            out <- c(out, paste('<tr align="left" valign="top">\n',
+                                '<td>', links, '</td><td>',
+                                dirname(paths), '</td></tr>\n',
+                                sep = ""))
+            out <- c(out, "</table>\n</p>\n<hr>\n</body></html>")
+            writeLines(out, file.path(path, "all.available.html"))
+            browseURL(paste("http://127.0.0.1:", tools:::httpdPort,
+                            "/doc/html/all.available.html", sep=""), browser)
+        } else {
+            writeLines(c(strwrap(msg), "",
+                         paste(" ",
+                               formatDL(c(gettext("Package"), basename(paths)),
+                                        c(gettext("Library"), dirname(paths)),
+                                        indent = 22))))
+        }
     } else {
         if(length(paths) > 1L) {
+            if (type == "html" && tools:::httpdPort > 0L) { # Redo the search if dynamic help is running
+		browseURL(paste("http://127.0.0.1:", tools:::httpdPort,
+                                "/library/NULL/help/", topic, sep=""), browser)
+		return(invisible(x))
+	    }
             file <- paths[1L]
             p <- paths
             msg <- gettextf("Help on topic '%s' was found in the following packages:",
@@ -161,79 +213,73 @@ function(x, ...)
             file <- paths
 
         if(type == "html") {
-            if(file.exists(file))
-                .show_help_on_topic_as_HTML(file, topic)
-            else
-                stop(gettextf("No HTML help for '%s' is available:\ncorresponding file is missing", topic), domain = NA)
-        }
-        else if(type == "chm") {
-            ## unneeded but harmless under Unix
-            chm.dll <- file.path(R.home("modules"), "Rchtml.dll")
-            if(!file.exists(chm.dll))
-                stop("Compiled HTML is not installed")
-            if(!is.loaded("Rchtml")) dyn.load(chm.dll)
-            wfile <- sub("/chm/([^/]*)$", "", file)
-            thispkg <- sub(".*/([^/]*)/chm/([^/]*)$", "\\1", file)
-            thispkg <- sub("_.*$", "", thispkg) # versioned installs.
-            hlpfile <- paste(wfile, "/chtml/", thispkg, ".chm", sep = "")
-            if(file.exists(hlpfile)) {
-                err <- .C("Rchtml", hlpfile, basename(file),
-                          err = integer(1), PACKAGE = "Rchtml")$err
-                if(err) stop("CHM file could not be displayed")
+            if (tools:::httpdPort > 0L) {
+		path <- dirname(file)
+		dirpath <- dirname(path)
+		pkgname <- basename(dirpath)
+		browseURL(paste("http://127.0.0.1:", tools:::httpdPort,
+                                "/library/", pkgname, "/html/", basename(file),
+                                sep=""), browser)
             } else {
-            	warning(gettextf("No CHM help for '%s' in package '%s' is available:\nthe CHM file for the package is missing", topic, thispkg), domain = NA)
-            	att <- attributes(x)
-            	x <- sub("/chm/([^/]*$)", "/help/\\1", x)
-            	attributes(x) <- att
-            	attr(x, "type") <- "help"
-            	print(x)
+                warning("HTML help is unavailable", call. = FALSE)
+                att <- attributes(x)
+                xx <- sub("/html/([^/]*)\\.html$", "/help/\\1", x)
+                attributes(xx) <- att
+                attr(xx, "type") <- "text"
+                print(xx)
+            }
+        } else if(type == "text") {
+            path <- dirname(file)
+            dirpath <- dirname(path)
+            pkgname <- basename(dirpath)
+            RdDB <- file.path(path, pkgname)
+            if(file.exists(paste(RdDB, "rdx", sep="."))) {
+                temp <- tools::Rd2txt(tools:::fetchRdDB(RdDB, basename(file)),
+                                      out=tempfile("Rtxt"), package=pkgname)
+                file.show(temp,
+                          title = gettextf("R Help on '%s'", topic),
+                          delete.file = TRUE)
+            } else {
+                ## Fallback to the old system with help pages
+                ## stored as plain text
+                zfile <- zip.file.extract(file, "Rhelp.zip")
+                if (file.exists(zfile)) {
+                    first <- readLines(zfile, n = 1L)
+                    enc <- if(length(grep("\\(.*\\)$", first)))
+                        sub("[^(]*\\((.*)\\)$", "\\1", first) else ""
+                    if(enc == "utf8") enc <- "UTF-8"
+                    ## allow for 'smart' quotes on Windows, which work
+                    ## in all but CJK encodings
+                    if(.Platform$OS.type == "windows" && enc == ""
+                       && l10n_info()$codepage < 1000) enc <- "CP1252"
+                    file.show(zfile,
+                              title = gettextf("R Help on '%s'", topic),
+                              delete.file = (zfile != file),
+                              encoding = enc)
+                } else
+		    stop(gettextf("No text help for '%s' is available:\ncorresponding file is missing", topic), domain = NA)
             }
         }
-        else if(type == "help") {
-            zfile <- zip.file.extract(file, "Rhelp.zip")
-            if(file.exists(zfile)) {
-                first <- readLines(zfile, n = 1L)
-                enc <- if(length(grep("\\(.*\\)$", first)))
-                    sub("[^(]*\\((.*)\\)$", "\\1", first) else ""
-                if(enc == "utf8") enc <- "UTF-8"
-                ## allow for 'smart' quotes on Windows, which work
-                ## in all but CJK encodings
-                if(.Platform$OS.type == "windows" && enc == ""
-                   && l10n_info()$codepage < 1000) enc <- "CP1252"
-                file.show(zfile,
-                          title = gettextf("R Help on '%s'", topic),
-                          delete.file = (zfile != file),
-                          pager = attr(x, "pager"), encoding = enc)
-            } else
-                stop(gettextf("No text help for '%s' is available:\ncorresponding file is missing", topic), domain = NA)
-        }
-        else if(type == "latex") {
+        else if(type %in% c("ps", "postscript", "pdf")) {
             ok <- FALSE
             zfile <- zip.file.extract(file, "Rhelp.zip")
             if(zfile != file) on.exit(unlink(zfile))
             if(file.exists(zfile)) {
-                .show_help_on_topic_offline(zfile, topic)
+                .show_help_on_topic_offline(zfile, topic, type)
                 ok <- TRUE
-            } else if(interactive()) {
+            } else {
                 ## look for stored Rd files
                 path <- dirname(file) # .../pkg/latex
                 dirpath <- dirname(path)
-                pkgname <- basename(dirpath) # versioning? ...
-                Rdpath <- file.path(dirpath, "man",
-                                    paste(pkgname, "Rd.gz", sep="."))
-                if(file.exists(Rdpath)) {
-                    ans <- readline("No latex file is available: shall I try to create it? (y/n) ")
-                    if (substr(ans, 1L, 1L) == "y") {
-                        lines <- tools:::extract_Rd_file(Rdpath, topic)
-                        tf <- tempfile("Rd")
-                        tf2 <- tempfile("Rlatex")
-                        writeLines(lines, tf)
-                        cmd <- paste("R CMD Rdconv -t latex", tf, ">", tf2)
-                        res <- system(cmd)
-                        if(res) stop("problems running R CMD Rdconv")
-                        .show_help_on_topic_offline(tf2, topic)
-                        ok <- TRUE
-                    }
+                pkgname <- basename(dirpath)
+                RdDB <- file.path(dirpath, "help", pkgname)
+                if(file.exists(paste(RdDB, "rdx", sep="."))) {
+                    ## message("on-demand Rd conversion for ", sQuote(topic))
+                    key <- sub("\\.tex$", "", basename(file))
+                    tf2 <- tempfile("Rlatex")
+                    tools::Rd2latex(tools:::fetchRdDB(RdDB, key), tf2)
+                    .show_help_on_topic_offline(tf2, topic, type)
+                    ok <- TRUE
                 }
             }
             if(!ok)
@@ -244,3 +290,32 @@ function(x, ...)
     invisible(x)
 }
 
+.show_help_on_topic_offline <- function(file, topic, type = "postscript")
+{
+    encoding <-""
+    lines <- readLines(file)
+    encpatt <- "^\\\\inputencoding\\{(.*)\\}$"
+    if(length(res <- grep(encpatt, lines, perl = TRUE, useBytes = TRUE)))
+        encoding <- sub(encpatt, "\\1", lines[res],
+                        perl = TRUE, useBytes = TRUE)
+    texfile <- paste(topic, ".tex", sep = "")
+    on.exit(unlink(texfile)) ## ? leave to helper
+    opt <- if(type == "PDF") {
+        if(nzchar(opt <- Sys.getenv("R_RD4PDF"))) opt else "times"
+    } else {
+        if(nzchar(opt <- Sys.getenv("R_RD4DVI"))) opt else "ae"
+    }
+    cat("\\documentclass[", getOption("papersize"), "paper]{article}\n",
+        "\\usepackage[", opt, "]{Rd}\n",
+        if(nzchar(encoding)) sprintf("\\usepackage[%s]{inputenc}\n", encoding),
+        "\\InputIfFileExists{Rhelp.cfg}{}{}\n",
+        "\\begin{document}\n",
+        file = texfile, sep = "")
+    file.append(texfile, file)
+    cat("\\end{document}\n", file = texfile, append = TRUE)
+    helper <- if (exists("offline_help_helper", envir = .GlobalEnv))
+        get("offline_help_helper", envir = .GlobalEnv)
+    else utils:::offline_help_helper
+    helper(texfile, type)
+    invisible()
+}

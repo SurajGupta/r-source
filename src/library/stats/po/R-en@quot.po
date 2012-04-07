@@ -22,10 +22,10 @@
 #
 msgid ""
 msgstr ""
-"Project-Id-Version: R 2.9.1\n"
+"Project-Id-Version: R 2.10.0\n"
 "Report-Msgid-Bugs-To: bugs@r-project.org\n"
-"POT-Creation-Date: 2009-06-16 12:29\n"
-"PO-Revision-Date: 2009-06-16 12:29\n"
+"POT-Creation-Date: 2009-10-08 08:29\n"
+"PO-Revision-Date: 2009-10-08 08:29\n"
 "Last-Translator: Automatically generated\n"
 "Language-Team: none\n"
 "MIME-Version: 1.0\n"
@@ -528,6 +528,9 @@ msgstr "singular contrast matrix"
 msgid "numeric contrasts or contrast name expected"
 msgstr "numeric contrasts or contrast name expected"
 
+msgid "contr*(.., sparse=TRUE) needs package \"Matrix\" correctly installed"
+msgstr "contr*(.., sparse=TRUE) needs package “Matrix” correctly installed"
+
 msgid "not enough degrees of freedom to define contrasts"
 msgstr "not enough degrees of freedom to define contrasts"
 
@@ -838,8 +841,8 @@ msgstr "link “%s” not available for gamma family; available links are %s"
 msgid "non-positive values not allowed for the gamma family"
 msgstr "non-positive values not allowed for the gamma family"
 
-msgid "using weights as shape paraneters"
-msgstr "using weights as shape paraneters"
+msgid "using weights as shape parameters"
+msgstr "using weights as shape parameters"
 
 msgid ""
 "link \"%s\" not available for inverse.gaussian family; available links are %s"
@@ -976,8 +979,11 @@ msgstr "‘col.vars’ missing or incorrect"
 msgid "'family' not recognized"
 msgstr "‘family’ not recognized"
 
-msgid "invalid 'method':"
-msgstr "invalid 'method':"
+msgid "invalid 'method': %s"
+msgstr "invalid 'method': %s"
+
+msgid "invalid 'method'"
+msgstr "invalid ‘method’"
 
 msgid "'weights' must be a numeric vector"
 msgstr "‘weights’ must be a numeric vector"
@@ -1503,6 +1509,9 @@ msgstr "‘data’ must be a data.frame, not a matrix or an array"
 msgid "'newdata' had %d rows but variable(s) found have %d rows"
 msgstr "‘newdata’ had %d rows but variable(s) found have %d rows"
 
+msgid "character variable '%s' changed to a factor"
+msgstr "character variable ‘%s’ changed to a factor"
+
 msgid "variable '%s' is not a factor"
 msgstr "variable ‘%s’ is not a factor"
 
@@ -1578,8 +1587,8 @@ msgstr "Logical ‘hessian’ argument not allowed.  See documentation."
 msgid "'params' has wrong length"
 msgstr "‘params’ has wrong length"
 
-msgid "'varying' must be in 1L:length(pars)"
-msgstr "‘varying’ must be in 1L:length(pars)"
+msgid "'varying' must be in seq_along(pars)"
+msgstr "‘varying’ must be in seq_along(pars)"
 
 msgid "'varying' has wrong length"
 msgstr "‘varying’ has wrong length"
@@ -1700,8 +1709,8 @@ msgstr "Not plotting observations with leverage one:"
 msgid "use only with \"lm\" objects"
 msgstr "use only with “lm” objects"
 
-msgid "'which' must be in 1L:6"
-msgstr "‘which’ must be in 1L:6"
+msgid "'which' must be in 1:6"
+msgstr "‘which’ must be in 1:6"
 
 msgid "'id.n' must be in {1,..,%d}"
 msgstr "‘id.n’ must be in {1,..,%d}"
@@ -2242,6 +2251,12 @@ msgstr "cannot compute exact confidence interval with zeroes"
 
 msgid "must supply either 'formula' or 'data'"
 msgstr "must supply either ‘formula’ or ‘data’"
+
+msgid "xtabs(*, sparse=TRUE) applies only to two-way tables"
+msgstr "xtabs(*, sparse=TRUE) applies only to two-way tables"
+
+msgid "xtabs(*, sparse=TRUE) needs package \"Matrix\" correctly installed"
+msgstr "xtabs(*, sparse=TRUE) needs package “Matrix” correctly installed"
 
 msgid "too few distinct input values to fit an asymptotic regression model"
 msgstr "too few distinct input values to fit an asymptotic regression model"

@@ -5,10 +5,10 @@
 #
 msgid ""
 msgstr ""
-"Project-Id-Version: R 2.9.1\n"
+"Project-Id-Version: R 2.10.0\n"
 "Report-Msgid-Bugs-To: bugs@r-project.org\n"
-"POT-Creation-Date: 2009-05-08 17:39\n"
-"PO-Revision-Date: 2009-06-16 11:09+0200\n"
+"POT-Creation-Date: 2009-09-25 12:13\n"
+"PO-Revision-Date: 2009-10-07 15:13+0200\n"
 "Last-Translator: Detlef Steuer <steuer@hsu-hh.de>\n"
 "Language-Team: R Core <r-core@r-project.org>\n"
 "MIME-Version: 1.0\n"
@@ -43,15 +43,6 @@ msgstr "keine Sweave-Datei namens '%s' gefunden"
 
 msgid "%d Sweave files for basename '%s' found:"
 msgstr "%d Sweave Dateien für Basisnamen '%s' gefunden:"
-
-msgid "Found invalid multi-byte character data."
-msgstr "Unzulässige multibyte Zeichenkettendaten gefunden"
-
-msgid "Cannot re-encode because 'iconv' is not available."
-msgstr "Kann nicht rekodieren, da 'iconv' nicht verfügbar."
-
-msgid "Try running R in a single-byte locale."
-msgstr "Versuchen Sie R in einer single-byte Lokalisierung auszuführen"
 
 msgid "more than one syntax specification found, using the first one"
 msgstr "mehr als eine Syntaxspezifikation gefunden, benutze die erste"
@@ -92,6 +83,19 @@ msgstr "Elemente von 'what' nach dem ersten werden ignoriert"
 
 msgid "%d occurrences in %s"
 msgstr "%d Vorkommen in %s"
+
+msgid "Invalid 'filter' argument."
+msgstr "unzulässiges 'filter' Argument"
+
+msgid "Could not find aspell or ispell executable."
+msgstr "Konnte weder aspell noch ispell finden"
+
+msgid ""
+"Running aspell failed with diagnostics:\n"
+"%s"
+msgstr ""
+"Ausführen von aspell ist fehlgeschlagen.\n"
+"Meldung: %s"
 
 msgid ""
 "Use <code> %s </code> \n"
@@ -254,11 +258,14 @@ msgstr "kein Hilfefile für '%s' gefunden"
 msgid "more than one help file found: using package '%s'"
 msgstr "mehr als ein Hilfefile gefunden: nutze Paket '%s'"
 
-msgid "'%s' has a help file but no examples file"
+msgid "'%s' has a help file but no examples"
 msgstr "'%s' hat eine Hilfe, aber keine Beispiele"
 
 msgid "test '%s' is not available"
 msgstr "test '%s' ist nicht verfügbar"
+
+msgid "Line number missing"
+msgstr "Zeilennummer fehlt"
 
 msgid "'fix' requires a name"
 msgstr "'fix' beötigt einen Namen"
@@ -280,6 +287,15 @@ msgid "'topic' should be a name, length-one character vector or reserved word"
 msgstr ""
 "'topic' sollte ein Name, ein Zeichenkettenvektor der Länge 1 oder ein "
 "reserviertes Word sein"
+
+msgid "offline = TRUE is deprecated: use help_type =\"postscript\""
+msgstr "offline = TRUE ist veraltet: nutzen sie help_type=\"postscript\""
+
+msgid "chmhelp = TRUE is no longer supported: use help_type =\"text\""
+msgstr "chmhelp = TRUE ist nicht mehr unterstützt: nutzen Sie help_type = \"text\""
+
+msgid "htmhelp = TRUE is deprecated: use help_type =\"html\""
+msgstr "htmlhelp = TRUE ist veraltet: nutzen sei help_type = \"html\""
 
 msgid "No documentation for '%s' in specified packages and libraries:"
 msgstr "Keine Dokumentation für '%s' in angegebenen Paketen und Bibliotheken:"
@@ -309,25 +325,8 @@ msgstr "Wähle eins"
 msgid "Using the first match ..."
 msgstr "Nutze ersten passenden ..."
 
-msgid ""
-"No HTML help for '%s' is available:\n"
-"corresponding file is missing"
-msgstr ""
-"Keine HTML Hilfe für '%s' verfügbar:\n"
-"zugehörige Datei fehlt"
-
-msgid "Compiled HTML is not installed"
-msgstr "Kompiliertes HTML nicht installiert"
-
-msgid "CHM file could not be displayed"
-msgstr "CHM Datei konnte nicht angezeigt werden"
-
-msgid ""
-"No CHM help for '%s' in package '%s' is available:\n"
-"the CHM file for the package is missing"
-msgstr ""
-"Keine CHM Hilfe für '%s' in Paket '%s' verfügbar:\n"
-"CHM Datei für das Paket fehlt"
+msgid "HTML help is unavailable"
+msgstr "HTML Hilfe ist nicht verfügbar"
 
 msgid "R Help on '%s'"
 msgstr "R Hilfe zu '%s'"
@@ -338,9 +337,6 @@ msgid ""
 msgstr ""
 "Keine Texthilfe für '%s' verfügbar:\n"
 "zugehörige Datei fehlt"
-
-msgid "problems running R CMD Rdconv"
-msgstr "Probleme bei R CMD Rdconv"
 
 msgid ""
 "No offline help for '%s' is available:\n"
@@ -361,11 +357,17 @@ msgstr "weiß nicht, wonach suchen"
 msgid "argument 'help.db' is deprecated"
 msgstr "Argument 'help.db' ist veraltet"
 
-msgid "Rebuilding the data base ..."
-msgstr "Neu-Erzeugung der Datenbank ..."
+msgid "Rebuilding the help.search() database"
+msgstr "Neu-Erzeugung der help.search() Datenbank"
+
+msgid "..."
+msgstr "..."
 
 msgid "Packages {.readRDS() sequentially}:"
 msgstr "Pakete {.readRDS() sequentiell}:"
+
+msgid "."
+msgstr "."
 
 msgid "could not find package '%s'"
 msgstr "konnte Paket '%s' nicht finden"
@@ -388,11 +390,11 @@ msgstr "entferne alle Ein<räge mit unzulässigen multi-byte Charakterdaten"
 msgid "saving the database ..."
 msgstr "speichere die Datenbank ..."
 
-msgid ""
-"no information in the data base for package '%s': need 'rebuild = TRUE'?"
-msgstr ""
-"keine Information in der Datenbank für Paket '%s': benötige 'rebuild = TRUE'?"
-"\""
+msgid "... database rebuilt"
+msgstr "... Datenbank erneuert"
+
+msgid "no information in the database for package '%s': need 'rebuild = TRUE'?"
+msgstr "keine Information in der Datenbank für Paket '%s': benötige 'rebuild = TRUE'?"
 
 msgid "incorrect 'agrep' specification"
 msgstr "falsche 'agrep' Spezifikation"
@@ -420,6 +422,9 @@ msgstr "menu() kann nicht nicht-interaktiv genutzt werden"
 
 msgid "Enter an item from the menu, or 0 to exit"
 msgstr "Geben Sie Menüpunkt ein oder 0 zum Abbruch"
+
+msgid "invalid query"
+msgstr "unzulässiges Anfrage"
 
 msgid "'%s' is a formal generic function; S3 methods will not likely be found"
 msgstr ""
@@ -518,6 +523,9 @@ msgstr "Die nächsten Schritte werden in '%s' beschrieben."
 msgid "unable to access index for repository %s"
 msgstr "kann nicht auf den Index für das Repository %s zugreifen"
 
+msgid "Invalid 'filters' argument."
+msgstr "unzulässiges 'filters' Argument"
+
 msgid "invalid 'oldPkgs'; must be a result from old.packages()"
 msgstr "unzulässige 'oldPkgs'; muss ein Ergebniss von old.packages() sein"
 
@@ -563,8 +571,9 @@ msgstr "kann keine Repositories nicht-interaktiv setzen"
 msgid "--- Please select repositories for use in this session ---"
 msgstr "--- Bitte Repositories für diese Sitzung auswählen ---"
 
-msgid "Enter one or more numbers separated by spaces"
-msgstr "Bitte eine oder mehrere durch Leerstellen getrennte Zahlen eingeben"
+msgid ""
+"Enter one or more numbers separated by spaces, or an empty line to cancel"
+msgstr "Bitte eine oder mehrere durch Leerstellen getrennte Zahlen oder eine leere Zeile eingeben, um abzubrechen"
 
 msgid "'%s' must be supplied"
 msgstr "'%s' muss angegeben werden"
@@ -830,11 +839,44 @@ msgstr "'object' hat keine gültigen levels()"
 msgid "'str.default': 'le' is NA"
 msgstr "'str.default': 'le' is NA"
 
+msgid "'digits' and 'digits.d' are both specified and the latter is not used"
+msgstr "'digits' und 'digits.d' sind beide angegeben und das letztere wird ignoriert"
+
 msgid "profile does not contain memory information"
 msgstr "Profil einthält keine Speicherinformation"
 
 msgid "no events were recorded"
 msgstr "keine Ereignisse aufgezeichnet"
+
+msgid "'compressed' must be logical or character"
+msgstr "'commpressed' muss Boole'sch oder ein Charakter sein"
+
+msgid "untar: using cmd ="
+msgstr "untar: benutze cmd ="
+
+msgid "invalid octal digit"
+msgstr "unzulässige Oktalziffer"
+
+msgid "'tarfile' must be a character string or a connection"
+msgstr "'tarfile' muss eine Zeichenkette oder eine Verbindung sein"
+
+msgid "incomplete block on file"
+msgstr "unvollständiger Block in Datei"
+
+msgid "checksum error for entry '%s'"
+msgstr "Checksummenfehler für Eintrag '%s'"
+
+msgid "unsupported entry type"
+msgstr "nicht unterstützter Eintragstyp"
+
+msgid "file '%s' not found"
+msgstr "File '%s' nicht gefunden"
+
+msgid "file path is too long"
+msgstr "Pfad ist zu lang"
+
+msgid "linked path is too long"
+msgstr "verlinkter Pfad ist zu lang"
 
 msgid ""
 "vignette '%s' found more than once,\n"
@@ -897,21 +939,23 @@ msgstr "Nutze ungelinktes HTML Datei: Hyperlinks evtl. falsch"
 msgid "options(\"browser\") not set"
 msgstr "options(\"browser\") nicht gesetzt"
 
-msgid "'latexcmd' is empty"
-msgstr "'latexcmd' ist leer"
+msgid "running '%s' failed"
+msgstr "Ausführen von '%s' fehlgeschlagen"
 
-msgid "'dvipscmd' is empty"
-msgstr "'dvipscmd'ist leer"
+msgid "'%s' produced no output file: sent to printer?"
+msgstr "'%s' hat keine Datei erzeugt: an den Drucker geschickt?"
+
+msgid "creation of '%s' failed"
+msgstr "Erzeugung von '%s' fehlgeschlagen"
+
+msgid "Saving help page to"
+msgstr "Sichere Hilfeseiten nach"
 
 msgid "invalid browser name, check options(\"browser\")."
 msgstr "ungültiger Browsername, überprüfen Sie options(\"browser\")."
 
-msgid ""
-"Changing the default browser (as specified by the 'browser' option) to the "
-"given browser so that it gets used for all future help requests."
-msgstr ""
-"Ändere Standardbrowser (wie in 'browser'-Option angegeben) auf den "
-"angegebenen, so dass dieser in Zukunft benutzt wird"
+msgid "help.start() requires the HTTP server to be running"
+msgstr "help.start() benötigt den laufenden HTTP Server"
 
 msgid ""
 "If '%s' is already running, it is *not* restarted, and you must switch to "
@@ -929,14 +973,8 @@ msgstr "'url' muss eine nicht-leere Zeichenkette sein"
 msgid "'browser' must be a non-empty character string"
 msgstr "'browser' muss eine nicht-leere Zeichenkette sein"
 
-msgid "Making links in per-session dir ..."
-msgstr "Lege Links im Sitzungsverzeichnis an ..."
-
-msgid "cannot create HTML package index"
-msgstr "kann HTML Paketindex nicht erzeugen"
-
-msgid "cannot create HTML search index"
-msgstr "kann HTML Suchindex nicht erzeugen"
+msgid "Making packages.html"
+msgstr "Erzeuge packages.html"
 
 msgid "Updating HTML index of packages in '.Library'"
 msgstr "Aktualisiere HTML Index der Pakete in '.Library'"
@@ -965,16 +1003,9 @@ msgstr "'memory.size()' ist spezifisch für Windows"
 msgid "'memory.limit()' is Windows-specific"
 msgstr "'memory.limit()' ist spezifisch für Windows"
 
-msgid "unable to find the HTML help"
-msgstr "kann HTML-Hilfe nicht finden"
-
-msgid "updating HTML package listing"
-msgstr "aktualisiere HTML Paketliste"
-
-msgid "fixing URLs in non-standard libraries"
-msgstr "korrigiere URLs in nicht-standard Bibliotheken"
-
-msgid "If nothing happens, you should open '%s' yourself"
+msgid ""
+"If nothing happens, you should open\n"
+"'%s' yourself"
 msgstr "Wenn nichts passiert, sollten Sie '%s' selbst öffnen"
 
 msgid "failed to create '%s'"
@@ -989,8 +1020,8 @@ msgstr "Zipfile '%s' nicht gefunden"
 msgid "updating HTML package descriptions"
 msgstr "aktualisiere HTML Paketbeschreibungen"
 
-msgid "cannot update '%s'"
-msgstr "kann '%s' nicht aktualisieren"
+msgid "cannot update HTML package index"
+msgstr "kann HTML Paketindex nicht aktualisieren"
 
 msgid "winDialog() cannot be used non-interactively"
 msgstr "winDialog() kann nicht nicht-interaktiv genutzt werden"
@@ -1035,6 +1066,69 @@ msgid "package '%s' is in use and will not be installed"
 msgid_plural "packages '%s' are in use and will not be installed"
 msgstr[0] "Paket '%s' wird gerade benutzt und deshab nicht installiert"
 msgstr[1] "Pakete '%s' werden gerade bennutzt und deshalb nicht installiert"
+
+#~ msgid ""
+#~ "No HTML help for '%s' is available:\n"
+#~ "corresponding file is missing"
+#~ msgstr ""
+#~ "Keine HTML Hilfe für '%s' verfügbar:\n"
+#~ "zugehörige Datei fehlt"
+
+#~ msgid "Compiled HTML is not installed"
+#~ msgstr "Kompiliertes HTML nicht installiert"
+
+#~ msgid "CHM file could not be displayed"
+#~ msgstr "CHM Datei konnte nicht angezeigt werden"
+
+#~ msgid ""
+#~ "No CHM help for '%s' in package '%s' is available:\n"
+#~ "the CHM file for the package is missing"
+#~ msgstr ""
+#~ "Keine CHM Hilfe für '%s' in Paket '%s' verfügbar:\n"
+#~ "CHM Datei für das Paket fehlt"
+
+#~ msgid "problems running R CMD Rdconv"
+#~ msgstr "Probleme bei R CMD Rdconv"
+
+#~ msgid "'latexcmd' is empty"
+#~ msgstr "'latexcmd' ist leer"
+
+#~ msgid "'dvipscmd' is empty"
+#~ msgstr "'dvipscmd'ist leer"
+
+#~ msgid ""
+#~ "Changing the default browser (as specified by the 'browser' option) to "
+#~ "the given browser so that it gets used for all future help requests."
+#~ msgstr ""
+#~ "Ändere Standardbrowser (wie in 'browser'-Option angegeben) auf den "
+#~ "angegebenen, so dass dieser in Zukunft benutzt wird"
+
+#~ msgid "Making links in per-session dir ..."
+#~ msgstr "Lege Links im Sitzungsverzeichnis an ..."
+
+#~ msgid "cannot create HTML search index"
+#~ msgstr "kann HTML Suchindex nicht erzeugen"
+
+#~ msgid "unable to find the HTML help"
+#~ msgstr "kann HTML-Hilfe nicht finden"
+
+#~ msgid "updating HTML package listing"
+#~ msgstr "aktualisiere HTML Paketliste"
+
+#~ msgid "fixing URLs in non-standard libraries"
+#~ msgstr "korrigiere URLs in nicht-standard Bibliotheken"
+
+#~ msgid "cannot update '%s'"
+#~ msgstr "kann '%s' nicht aktualisieren"
+
+#~ msgid "Found invalid multi-byte character data."
+#~ msgstr "Unzulässige multibyte Zeichenkettendaten gefunden"
+
+#~ msgid "Cannot re-encode because 'iconv' is not available."
+#~ msgstr "Kann nicht rekodieren, da 'iconv' nicht verfügbar."
+
+#~ msgid "Try running R in a single-byte locale."
+#~ msgstr "Versuchen Sie R in einer single-byte Lokalisierung auszuführen"
 
 #~ msgid "bundle '%s' is incompletely installed"
 #~ msgstr "Bundel '%s' ist nicht vollständig installiert"

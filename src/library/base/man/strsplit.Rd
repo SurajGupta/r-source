@@ -1,6 +1,6 @@
 % File src/library/base/man/strsplit.Rd
 % Part of the R package, http://www.R-project.org
-% Copyright 1995-2007 R Core Development Team
+% Copyright 1995-2009 R Core Development Team
 % Distributed under GPL 2 or later
 
 \name{strsplit}
@@ -8,10 +8,11 @@
 \title{Split the Elements of a Character Vector}
 \description{
   Split the elements of a character vector \code{x} into substrings
-  according to the presence of substring \code{split} within them.
+  according to the matches to substring \code{split} within them.
 }
 \usage{
-strsplit(x, split, extended = TRUE, fixed = FALSE, perl = FALSE)
+strsplit(x, split, extended = TRUE, fixed = FALSE, perl = FALSE,
+         useBytes = FALSE)
 }
 \arguments{
   \item{x}{
@@ -29,7 +30,7 @@ strsplit(x, split, extended = TRUE, fixed = FALSE, perl = FALSE)
   \item{extended}{
     logical.  If \code{TRUE} (the default), extended regular expression
     matching is used, and if \code{FALSE} basic regular expressions are
-    used.
+    used (these are deprecated).
   }
   \item{fixed}{
     logical.  If \code{TRUE} match \code{split} exactly, otherwise
@@ -40,18 +41,9 @@ strsplit(x, split, extended = TRUE, fixed = FALSE, perl = FALSE)
     logical.  Should perl-compatible regexps be used?
     Has priority over \code{extended}.
   }
-}
-\value{
-  A list of length \code{length(x)} the \code{i}-th element of which
-  contains the vector of splits of \code{x[i]}.
-
-  If \code{fixed = TRUE} or \code{perl = TRUE} and if any element of
-  \code{x} or \code{split} is declared to be in UTF-8 (see
-  \code{\link{Encoding}}, non-ASCII character strings in the result will
-  be in UTF-8 and have the encoding declared as UTF-8.  Otherwise they
-  will be in the current locale's encoding, and be declared to have the
-  encoding of the current locale if either Latin-1 or UTF-8 and  the
-  corresponding input had a declared encoding.
+  \item{useBytes}{logical.  If \code{TRUE} the matching is done
+    byte-by-byte rather than character-by-character, and inputs with
+    marked encodings are not converted.}
 }
 \details{
   Argument \code{split} will be coerced to character, so
@@ -59,11 +51,11 @@ strsplit(x, split, extended = TRUE, fixed = FALSE, perl = FALSE)
   \code{split = character(0)}, including in the examples below.
 
   Note that splitting into single characters can be done \emph{via}
-  \code{split=character(0)} or \code{split=""}; the two are
+  \code{split = character(0)} or \code{split = ""}; the two are
   equivalent. The definition of \sQuote{character} here depends on the
-  locale (and perhaps OS): in a single-byte locale it is a byte, and in
-  a multi-byte locale it is the unit represented by a \sQuote{wide
-    character} (almost always a Unicode point).
+  locale: in a single-byte locale it is a byte, and in a multi-byte
+  locale it is the unit represented by a \sQuote{wide character} (almost
+  always a Unicode point).
   
 
   A missing value of \code{split} does not split the corresponding
@@ -87,19 +79,20 @@ strsplit(x, split, extended = TRUE, fixed = FALSE, perl = FALSE)
   if there is a match at the end of the string, the output is the same
   as with the match removed. 
 }
-\section{Warning}{
-  The standard regular expression code has been reported to be very slow
-  when applied to extremely long character strings
-  (tens of thousands of characters or more): the code used when
-  \code{perl = TRUE} seems much faster and more reliable for such usages.
+\value{
+  A list of the same length as \code{x}, the \code{i}-th element of which
+  contains the vector of splits of \code{x[i]}.
 
-  The \code{perl = TRUE} option is only implemented for single-byte and
-  UTF-8 encodings, and will warn if used in a non-UTF-8 multibyte locale.
+  If any element of \code{x} or \code{split} is declared to be in UTF-8
+  (see \code{\link{Encoding}}, non-ASCII character strings in the result
+  will be in UTF-8 and have their encoding declared as UTF-8.  As from
+  \R 2.10.0, for \code{perl = TRUE, useBytes = FALSE} all strings in a
+  multibyte locale are translated to UTF-8.
 }
 \seealso{
   \code{\link{paste}} for the reverse,
   \code{\link{grep}} and \code{\link{sub}} for string search and
-  manipulation; further \code{\link{nchar}}, \code{\link{substr}}.
+  manipulation; also \code{\link{nchar}}, \code{\link{substr}}.
 
   \sQuote{\link{regular expression}} for the details of the pattern
   specification.
@@ -109,7 +102,7 @@ noquote(strsplit("A text I want to display with spaces", NULL)[[1]])
 
 x <- c(as = "asfef", qu = "qwerty", "yuiop[", "b", "stuff.blah.yech")
 # split x on the letter e
-strsplit(x,"e")
+strsplit(x, "e")
 
 unlist(strsplit("a.b.c", "."))
 ## [1] "" "" "" "" ""

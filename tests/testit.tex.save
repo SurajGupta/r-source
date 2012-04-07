@@ -1,39 +1,44 @@
-\HeaderA{testit}{}{testit}
+\inputencoding{latin1}
+\HeaderA{testit}{An Rd Regression Test}{testit}
+\aliasA{\{}{testit}{.Rlbrace.}
+%
 \begin{Usage}
 \begin{verbatim}
 \x \y %{}
 
 foo(x, y)
-a link
 \end{verbatim}
 \end{Usage}
+%
 \begin{Details}\relax
 Escaped backslash \code{\bsl{}x}.
-Unescaped backslash \code{\bsl{}y}.
 
 \code{\%\{\}}
+
+\LinkA{a link}{a link} and one to a known destination:
+\LinkA{weighted.mean}{weighted.mean}
 
 var in \var{text}.
 
 \code{foo(\var{x}, \var{y})}.
 \begin{alltt}
   Escaped backslash \bsl{}x.
-  Unescaped backslash \bsl{}y.
 
-  \%\{\}
+  %\{\}
 
-  var in \var{text}.
+  var in \bsl{}var\{text\}.
   
-  foo(\var{x}, \var{y}).
-\end{alltt}
+  foo(\bsl{}var\{x\}, \bsl{}var\{y\}).
+  
+  From gap: pedtodot.Rd -- n=split(m,par,"\bsl{}034")
+  \end{alltt}
+
 \end{Details}
+%
 \begin{Examples}
 \begin{ExampleCode}
 \x
-\y
 %{}
-a link
 foo(x, y)
 \end{ExampleCode}
 \end{Examples}
-

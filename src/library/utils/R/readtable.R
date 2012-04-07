@@ -47,13 +47,13 @@ function(file, header = FALSE, sep = "", quote = "\"'", dec = ".",
 {
     if(is.character(file)) {
         file <- if(nzchar(fileEncoding))
-            file(file, "r", encoding = fileEncoding) else file(file, "r")
+            file(file, "rt", encoding = fileEncoding) else file(file, "rt")
         on.exit(close(file))
     }
     if(!inherits(file, "connection"))
         stop("'file' must be a character string or connection")
-    if(!isOpen(file, "r")) {
-        open(file, "r")
+    if(!isOpen(file, "rt")) {
+        open(file, "rt")
         on.exit(close(file))
     }
 
@@ -238,7 +238,7 @@ function(file, header = FALSE, sep = "", quote = "\"'", dec = ".",
     if(!compactRN) {
         if (length(row.names) != nlines)
             stop("invalid 'row.names' length")
-        if (any(duplicated(row.names)))
+        if (anyDuplicated(row.names))
             stop("duplicate 'row.names' are not allowed")
         if (any(is.na(row.names)))
             stop("missing values in 'row.names' are not allowed")

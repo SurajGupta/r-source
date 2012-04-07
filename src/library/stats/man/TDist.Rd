@@ -1,6 +1,6 @@
 % File src/library/stats/man/TDist.Rd
 % Part of the R package, http://www.R-project.org
-% Copyright 1995-2007 R Core Development Team
+% Copyright 1995-2009 R Core Development Team
 % Distributed under GPL 2 or later
 
 \name{TDist}
@@ -63,8 +63,7 @@ rt(n, df, ncp)
   The general \emph{non-central} \eqn{t}
   with parameters \eqn{(\nu, \delta)}{(df, Del)} \code{= (df, ncp)}
   is defined as the distribution of
-  \eqn{T_{\nu}(\delta) := (U + \delta)/\sqrt{V/\nu}}{%
-      T(df, Del) := (U + Del) / sqrt(V/df) }
+  \eqn{T_{\nu}(\delta) := (U + \delta)/\sqrt{V/\nu}}{T(df, Del) := (U + Del) / sqrt(V/df) }
   where \eqn{U} and \eqn{V}  are independent random
   variables, \eqn{U \sim {\cal N}(0,1)}{U \~ N(0,1)} and
   \eqn{V \sim \chi^2_\nu}{V \~ Chi^2(df)} (see \link{Chisquare}).
@@ -75,7 +74,6 @@ rt(n, df, ncp)
   \eqn{\bar{X}}{mX} is the \code{\link{mean}} and \eqn{S} the sample standard
   deviation (\code{\link{sd}}) of \eqn{X_1, X_2, \dots, X_n} which are
   i.i.d. \eqn{{\cal N}(\mu, \sigma^2)}{N(mu, sigma^2)}
-%%        \eqn{       N(\mu, \sigma^2)}{N(mu, sigma^2)}.
   Then \eqn{T} is distributed as non-central \eqn{t} with
   \code{df}\eqn{{} = n-1}
   degrees of freedom and \bold{n}on-\bold{c}entrality \bold{p}arameter

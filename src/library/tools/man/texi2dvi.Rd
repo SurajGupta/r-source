@@ -4,7 +4,6 @@
 % Distributed under GPL 2 or later
 
 \name{texi2dvi}
-\Rdversion{1.1}
 \alias{texi2dvi}
 \title{Compile LaTeX Files}
 \description{
@@ -42,7 +41,7 @@ texi2dvi(file, pdf = FALSE, clean = FALSE, quiet = TRUE,
   then elements of \code{texinputs}, then
   \file{\var{R_HOME}/share/texmf} and finally the default
   path. Analogous changes are made to \env{BIBINPUTS} and
-  \env{BSTINPUTS}settings.
+  \env{BSTINPUTS} settings.
 #ifdef windows
   
   MiKTeX has a \code{texi2dvi} executable but no other Windows TeX

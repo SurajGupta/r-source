@@ -1,8 +1,8 @@
 msgid ""
 msgstr ""
-"Project-Id-Version: R 2.9.1\n"
+"Project-Id-Version: R 2.10.0\n"
 "Report-Msgid-Bugs-To: bugs@r-project.org\n"
-"POT-Creation-Date: 2009-06-16 12:31\n"
+"POT-Creation-Date: 2009-09-25 12:13\n"
 "PO-Revision-Date: YEAR-MO-DA HO:MI+ZONE\n"
 "Last-Translator: FULL NAME <EMAIL@ADDRESS>\n"
 "Language-Team: LANGUAGE <LL@li.org>\n"
@@ -33,15 +33,6 @@ msgid "no Sweave file with name '%s' found"
 msgstr ""
 
 msgid "%d Sweave files for basename '%s' found:"
-msgstr ""
-
-msgid "Found invalid multi-byte character data."
-msgstr ""
-
-msgid "Cannot re-encode because 'iconv' is not available."
-msgstr ""
-
-msgid "Try running R in a single-byte locale."
 msgstr ""
 
 msgid "more than one syntax specification found, using the first one"
@@ -78,6 +69,15 @@ msgid "elements of 'what' after the first will be ignored"
 msgstr ""
 
 msgid "%d occurrences in %s"
+msgstr ""
+
+msgid "Invalid 'filter' argument."
+msgstr ""
+
+msgid "Could not find aspell or ispell executable."
+msgstr ""
+
+msgid "Running aspell failed with diagnostics:\n%s"
 msgstr ""
 
 msgid "Use <code> %s </code> \n to list the vignettes in all <strong>available</strong> packages."
@@ -230,10 +230,13 @@ msgstr ""
 msgid "more than one help file found: using package '%s'"
 msgstr ""
 
-msgid "'%s' has a help file but no examples file"
+msgid "'%s' has a help file but no examples"
 msgstr ""
 
 msgid "test '%s' is not available"
+msgstr ""
+
+msgid "Line number missing"
 msgstr ""
 
 msgid "'fix' requires a name"
@@ -252,6 +255,15 @@ msgid "'form' must be a two-sided formula with one term on each side"
 msgstr ""
 
 msgid "'topic' should be a name, length-one character vector or reserved word"
+msgstr ""
+
+msgid "offline = TRUE is deprecated: use help_type =\"postscript\""
+msgstr ""
+
+msgid "chmhelp = TRUE is no longer supported: use help_type =\"text\""
+msgstr ""
+
+msgid "htmhelp = TRUE is deprecated: use help_type =\"html\""
 msgstr ""
 
 msgid "No documentation for '%s' in specified packages and libraries:"
@@ -278,25 +290,13 @@ msgstr ""
 msgid "Using the first match ..."
 msgstr ""
 
-msgid "No HTML help for '%s' is available:\ncorresponding file is missing"
-msgstr ""
-
-msgid "Compiled HTML is not installed"
-msgstr ""
-
-msgid "CHM file could not be displayed"
-msgstr ""
-
-msgid "No CHM help for '%s' in package '%s' is available:\nthe CHM file for the package is missing"
+msgid "HTML help is unavailable"
 msgstr ""
 
 msgid "R Help on '%s'"
 msgstr ""
 
 msgid "No text help for '%s' is available:\ncorresponding file is missing"
-msgstr ""
-
-msgid "problems running R CMD Rdconv"
 msgstr ""
 
 msgid "No offline help for '%s' is available:\ncorresponding file is missing"
@@ -314,10 +314,16 @@ msgstr ""
 msgid "argument 'help.db' is deprecated"
 msgstr ""
 
-msgid "Rebuilding the data base ..."
+msgid "Rebuilding the help.search() database"
+msgstr ""
+
+msgid "..."
 msgstr ""
 
 msgid "Packages {.readRDS() sequentially}:"
+msgstr ""
+
+msgid "."
 msgstr ""
 
 msgid "could not find package '%s'"
@@ -341,7 +347,10 @@ msgstr ""
 msgid "saving the database ..."
 msgstr ""
 
-msgid "no information in the data base for package '%s': need 'rebuild = TRUE'?"
+msgid "... database rebuilt"
+msgstr ""
+
+msgid "no information in the database for package '%s': need 'rebuild = TRUE'?"
 msgstr ""
 
 msgid "incorrect 'agrep' specification"
@@ -369,6 +378,9 @@ msgid "menu() cannot be used non-interactively"
 msgstr ""
 
 msgid "Enter an item from the menu, or 0 to exit"
+msgstr ""
+
+msgid "invalid query"
 msgstr ""
 
 msgid "'%s' is a formal generic function; S3 methods will not likely be found"
@@ -464,6 +476,9 @@ msgstr ""
 msgid "unable to access index for repository %s"
 msgstr ""
 
+msgid "Invalid 'filters' argument."
+msgstr ""
+
 msgid "invalid 'oldPkgs'; must be a result from old.packages()"
 msgstr ""
 
@@ -509,7 +524,7 @@ msgstr ""
 msgid "--- Please select repositories for use in this session ---"
 msgstr ""
 
-msgid "Enter one or more numbers separated by spaces"
+msgid "Enter one or more numbers separated by spaces, or an empty line to cancel"
 msgstr ""
 
 msgid "'%s' must be supplied"
@@ -743,10 +758,43 @@ msgstr ""
 msgid "'str.default': 'le' is NA"
 msgstr ""
 
+msgid "'digits' and 'digits.d' are both specified and the latter is not used"
+msgstr ""
+
 msgid "profile does not contain memory information"
 msgstr ""
 
 msgid "no events were recorded"
+msgstr ""
+
+msgid "'compressed' must be logical or character"
+msgstr ""
+
+msgid "untar: using cmd ="
+msgstr ""
+
+msgid "invalid octal digit"
+msgstr ""
+
+msgid "'tarfile' must be a character string or a connection"
+msgstr ""
+
+msgid "incomplete block on file"
+msgstr ""
+
+msgid "checksum error for entry '%s'"
+msgstr ""
+
+msgid "unsupported entry type"
+msgstr ""
+
+msgid "file '%s' not found"
+msgstr ""
+
+msgid "file path is too long"
+msgstr ""
+
+msgid "linked path is too long"
 msgstr ""
 
 msgid "vignette '%s' found more than once,\nusing the one found in '%s'"
@@ -806,16 +854,22 @@ msgstr ""
 msgid "options(\"browser\") not set"
 msgstr ""
 
-msgid "'latexcmd' is empty"
+msgid "running '%s' failed"
 msgstr ""
 
-msgid "'dvipscmd' is empty"
+msgid "'%s' produced no output file: sent to printer?"
+msgstr ""
+
+msgid "creation of '%s' failed"
+msgstr ""
+
+msgid "Saving help page to"
 msgstr ""
 
 msgid "invalid browser name, check options(\"browser\")."
 msgstr ""
 
-msgid "Changing the default browser (as specified by the 'browser' option) to the given browser so that it gets used for all future help requests."
+msgid "help.start() requires the HTTP server to be running"
 msgstr ""
 
 msgid "If '%s' is already running, it is *not* restarted, and you must switch to its window."
@@ -830,13 +884,7 @@ msgstr ""
 msgid "'browser' must be a non-empty character string"
 msgstr ""
 
-msgid "Making links in per-session dir ..."
-msgstr ""
-
-msgid "cannot create HTML package index"
-msgstr ""
-
-msgid "cannot create HTML search index"
+msgid "Making packages.html"
 msgstr ""
 
 msgid "Updating HTML index of packages in '.Library'"
@@ -866,16 +914,7 @@ msgstr ""
 msgid "'memory.limit()' is Windows-specific"
 msgstr ""
 
-msgid "unable to find the HTML help"
-msgstr ""
-
-msgid "updating HTML package listing"
-msgstr ""
-
-msgid "fixing URLs in non-standard libraries"
-msgstr ""
-
-msgid "If nothing happens, you should open '%s' yourself"
+msgid "If nothing happens, you should open\n'%s' yourself"
 msgstr ""
 
 msgid "failed to create '%s'"
@@ -890,7 +929,7 @@ msgstr ""
 msgid "updating HTML package descriptions"
 msgstr ""
 
-msgid "cannot update '%s'"
+msgid "cannot update HTML package index"
 msgstr ""
 
 msgid "winDialog() cannot be used non-interactively"

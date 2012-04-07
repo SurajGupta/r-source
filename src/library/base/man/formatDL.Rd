@@ -23,7 +23,7 @@ formatDL(x, y, style = c("table", "list"),
   \item{style}{a character string specifying the rendering style of the
     description information.  If \code{"table"}, a two-column table with
     items and descriptions as columns is produced (similar to Texinfo's
-    \code{@table} environment.  If \code{"list"}, a LaTeX-style tagged
+    \verb{@table} environment.  If \code{"list"}, a LaTeX-style tagged
     description list is obtained.}  
   \item{width}{a positive integer giving the target column for wrapping
     lines in the output.}
@@ -43,7 +43,7 @@ formatDL(x, y, style = c("table", "list"),
   In table style, items with more than \code{indent - 3} characters are
   displayed on a line of their own.
 }
-\examples{
+\examples{\dontrun{
 ## Use R to create the 'INDEX' for package 'splines' from its 'CONTENTS'
 x <- read.dcf(file = system.file("CONTENTS", package = "splines"),
                fields = c("Entry", "Description"))
@@ -53,5 +53,5 @@ writeLines(formatDL(x$Entry, x$Description))
 ## Same information in tagged description list style:
 writeLines(formatDL(x$Entry, x$Description, style = "list"))
 ## or equivalently: writeLines(formatDL(x, style = "list"))
-}
+}}
 \keyword{print}

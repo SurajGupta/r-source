@@ -8,7 +8,6 @@
 \alias{as.difftime}
 \alias{as.double.difftime}
 \alias{print.difftime}
-\alias{round.difftime}
 \alias{format.difftime}
 \alias{units.difftime}
 \alias{units<-.difftime}
@@ -24,7 +23,7 @@
 \alias{time interval} % used by mean.Rd
 \title{Time Intervals}
 \description{
-  Create, print and round time intervals.
+  Time intervals creation, printing, and some arithmetic.
 }
 \usage{
 \special{time1 - time2}
@@ -35,15 +34,17 @@ difftime(time1, time2, tz = "",
 
 as.difftime(tim, format = "\%X", units = "auto")
 
-
-\method{round}{difftime}(x, digits = 0, \dots)
 \method{format}{difftime}(x, ...)
 \method{units}{difftime}(x)
 \method{units}{difftime}(x) <- value
 \method{as.double}{difftime}(x, units = "auto", ...)
+
+## Group methods, notably for round(), signif(), floor(), ceiling(),
+## trunc(), abs(); called directly, *not* as Math():
+\method{Math}{difftime}(x, \dots)
 }
 \arguments{
-  \item{time1, time2}{\link{date-time} or \link[base:Dates]{date} objects.}
+  \item{time1, time2}{\link{date-time} or \link[=Dates]{date} objects.}
   \item{tz}{a timezone specification to be used for the conversion.
     System-specific, but \code{""} is the current time zone, and
     \code{"GMT"} is UTC.}
@@ -55,17 +56,20 @@ as.difftime(tim, format = "\%X", units = "auto")
   \item{format}{character specifying the format of \code{tim}: see
     \code{\link{strptime}}.  The default is a locale-specific time format.}
   \item{x}{an object inheriting from class \code{"difftime"}.}
-  \item{digits}{integer.  Number of significant digits to retain.}
+% round(), etc: \item{digits}{integer.  Number of significant digits to retain.}
   \item{\dots}{arguments to be passed to or from other methods.}
 }
 \details{
-
-  Function \code{difftime} calculates a difference of two date/time objects
-  and returns an object of class \code{"difftime"}
-  with an attribute indicating the units.  There is a \code{\link{round}}
-  method for objects of this class, as well as methods for the
-  group-generic (see \code{\link[base:groupGeneric]{Ops}}) logical and
-  arithmetic operations.
+  Function \code{difftime} calculates a difference of two date/time
+  objects and returns an object of class \code{"difftime"} with an
+  attribute indicating the units.  The
+  \code{\link[=S3groupGeneric]{Math}} group method provides
+  \code{\link{round}}, \code{\link{signif}}, \code{\link{floor}},
+  \code{\link{ceiling}}, \code{\link{trunc}}, \code{\link{abs}}, and
+  \code{\link{sign}} methods for objects of this class, and there are
+  methods for the group-generic (see
+  \code{\link[=S3groupGeneric]{Ops}}) logical and arithmetic
+  operations.
 
   If \code{units = "auto"}, a suitable set of units is chosen, the largest
   possible (excluding \code{"weeks"}) in which all the absolute
@@ -83,7 +87,7 @@ as.difftime(tim, format = "\%X", units = "auto")
   \code{"difftime"} object implicitly converts the numeric vector to a
   \code{"difftime"} object with the same units as the \code{"difftime"}
   object.  There are methods for \code{\link{mean}} and
-  \code{\link{sum}} (via the \code{\link[base:groupGeneric]{Summary}}
+  \code{\link{sum}} (via the \code{\link[=S3groupGeneric]{Summary}}
   group generic).
 
   The units of a \code{"difftime"} object can be extracted by the
@@ -93,7 +97,7 @@ as.difftime(tim, format = "\%X", units = "auto")
   The \code{as.double} method returns the numeric value expressed in
   the specified units.  Using  \code{units = "auto"} means the units of the
   object.
-  
+
   The \code{format} method simply formats the numeric value and appends
   the units as a text string.
 }

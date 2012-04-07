@@ -1,6 +1,6 @@
 % File src/library/grDevices/man/plotmath.Rd
 % Part of the R package, http://www.R-project.org
-% Copyright 1995-2008 R Core Development Team
+% Copyright 1995-2009 R Core Development Team
 % Distributed under GPL 2 or later
 
 \name{plotmath}
@@ -162,7 +162,7 @@
   special symbol name, for example, the universal, or forall, symbol is
   \code{symbol("\\042")}.
 
-  Note to TeX users: TeX's \code{\\Upsilon} is \code{Upsilon1}, TeX's
+  Note to TeX users: TeX's \samp{\\Upsilon} is \code{Upsilon1}, TeX's
   \samp{\\varepsilon} is close to \code{epsilon}, and there is no
   equivalent of TeX's \samp{\\epsilon}.  TeX's \samp{\\varpi} is close to
   \code{omega1}.  \code{vartheta}, \code{varphi} and \code{varsigma} are
@@ -191,7 +191,7 @@
 
 #ifdef unix
   In a UTF-8 locale any Unicode character can be entered, perhaps as a
-  \code{\\uxxxx} or \code{\\Uxxxxxxxx} escape sequence, but the issue is
+  \samp{\\uxxxx} or \samp{\\Uxxxxxxxx} escape sequence, but the issue is
   whether the graphics device is able to display the character.  The
   widest range of characters is likely to be available in the
   \code{\link{X11}} device using cairo: see its help page for how
@@ -202,7 +202,7 @@
 #endif
 #ifdef windows
   Any Unicode character can be entered into a text string \emph{via} a
-  \code{\\uxxxx} escape, or used by number in a call to
+  \samp{\\uxxxx} escape, or used by number in a call to
   \code{\link{points}}.  The \code{\link{windows}} family of devices can
   display such characters if they are available in the font in use.  A good
   way to both find out which characters are available in a font and to
@@ -253,11 +253,18 @@ axis(1, at = c(-pi, -pi/2, 0, pi/2, pi),
 
 ## How to combine "math" and numeric variables :
 plot(1:10, type="n", xlab="", ylab="", main = "plot math & numbers")
-theta <- 1.23 ; mtext(bquote(hat(theta) == .(theta)))
+theta <- 1.23 ; mtext(bquote(hat(theta) == .(theta)), line= .25)
 for(i in 2:9)
     text(i,i+1, substitute(list(xi,eta) == group("(",list(x,y),")"),
                            list(x=i, y=i+1)))
 ## note that both of these use calls rather than expressions.
+##
+text(1,10,  "Derivatives:", adj=0)
+text(1,9.6, expression(
+ "             first: {f * minute}(x) " == {f * minute}(x)), adj=0)
+text(1,9.0, expression(
+ "     second: {f * second}(x) "        == {f * second}(x)), adj=0)
+
 
 plot(1:10, 1:10)
 text(4, 9, expression(hat(beta) == (X^t * X)^{-1} * X^t * y))

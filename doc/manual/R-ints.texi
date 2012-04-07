@@ -69,6 +69,7 @@ The current version of this document is @value{VERSION}.
 * R Internal Structures::       
 * .Internal vs .Primitive::     
 * Internationalization in the R sources::  
+* Package Structure::           
 * Graphics Devices::            
 * Tools::                       
 * R coding standards::          
@@ -103,6 +104,7 @@ checked against the current version of the source code.
 * Internal use of global and base environments::  
 * Modules::                     
 * Visibility::                  
+* Lazy loading::                
 @end menu
 
 @node SEXPs, Environments and variable lookup, R Internal Structures, R Internal Structures
@@ -363,6 +365,9 @@ it is guaranteed that they will not be set for CHARSXPs created by @R{}
 itself.)  As from @R{} 2.8.0 bit 5 is used to indicate that a CHARSXP
 is hashed by its address, that is NA_STRING or in the CHARSXP cache.
 
+
+As for @R{} 2.6.0, but 5 is for a @code{CHARSXP} is used to indicate
+that it is part of the @code{CHARSXP} cache.
 
 @c Finally, @code{SETLEVELS} and @code{LEVELS} are used by that name for
 @c the internal code for @code{terms.formula} to compute the @code{order}
@@ -647,17 +652,20 @@ table.
 @findex SET_ATTRIB
 @findex DUPLICATE_ATTRIB
 As we have seen, every @code{SEXPREC} has a pointer to the attributes of
-the node (default @code{R_NilValue}).  The attributes can be accessed/set
-by the macros/functions @code{ATTRIB} and @code{SET_ATTRIB}, but such
-direct access is normally@footnote{An exception is the internal code for
-@code{terms.formula} which directly manipulates the attributes.} only
-used to check if the attributes are @code{NULL} or to reset them.
-Otherwise access goes through the functions @code{getAttrib} and
-@code{setAttrib} which impose restrictions on the attributes.  One thing
-to watch is that if you copy attributes from one object to another you
-may (un)set the @code{"class"} attribute and so need to copy the object
-and S4 bits as well.  There is a macro/function
-@code{DUPLICATE_ATTRIB} to automate this.
+the node (default @code{R_NilValue}).  The attributes can be
+accessed/set by the macros/functions @code{ATTRIB} and
+@code{SET_ATTRIB}, but such direct access is normally only used to check
+if the attributes are @code{NULL} or to reset them.  Otherwise access
+goes through the functions @code{getAttrib} and @code{setAttrib} which
+impose restrictions on the attributes.  One thing to watch is that if
+you copy attributes from one object to another you may (un)set the
+@code{"class"} attribute and so need to copy the object and S4 bits as
+well.  There is a macro/function @code{DUPLICATE_ATTRIB} to automate
+this.
+
+Note that the `attributes' of a @code{CHARSXP} are used as part of the
+management of the @code{CHARSXP} cache: of course @code{CHARSXP}'s are
+not user-visible but C-level code might look at their attributes.
 
 The code assumes that the attributes of a node are either
 @code{R_NilValue} or a pairlist of non-zero length (and this is checked
@@ -1178,7 +1186,7 @@ The `ASCII' format writes 7-bit characters.  Integers are formatted with
 @code{%d} (except that @code{NA_integer_} is written as @code{NA}),
 doubles formatted with @code{%.16g} (plus @code{NA}, @code{Inf} and
 @code{-Inf}) and bytes with @code{%02x}.  Strings are written using
-standard escapes (e.g.@: @code{\t} and @code{\013} for non-printing and
+standard escapes (e.g.@: @code{\t} and @code{\013}) for non-printing and
 non-ASCII bytes.
 
 @node Encodings for CHARSXPs, The CHARSXP cache, Serialization Formats, R Internal Structures
@@ -1234,9 +1242,16 @@ Latin-1, the old @R{} assumption.
 This was taken further in @R{} 2.7.0.  There the parser can return a
 UTF-8-encoded string if it encounters a @samp{\uxxx} escape for a
 Unicode point that cannot be represented in the current charset.  (This
-needs MBCS support, and is currently only enabled@footnote{See define
-@code{USE_UTF8_IF_POSSIBLE} in @file{gram.c}.} on Windows.)
-Many of the character manipulation functions now preserve UTF-8 encodings.
+needs MBCS support, and was only enabled@footnote{See define
+@code{USE_UTF8_IF_POSSIBLE} in @file{gram.c}.} on Windows.)  This was
+taken further in @R{} 2.10.0, where it is enabled for all platforms with
+MBCS support, and a @samp{\uxxx} or @samp{\Uxxxxxxxx} escape ensures
+that the parsed string will be marked as UTF-8.
+
+Most of the character manipulation functions now preserve UTF-8
+encodings: there are some notes as to which at the top of
+@file{src/main/character.c} and in
+@file{src/library/base/man/Encoding.Rd}.
 
 Graphics devices are offered the possibility of handing UTF-8-encoded
 strings without re-encoding to the native character set, by setting
@@ -1286,8 +1301,8 @@ the cache.  @code{CHARSXP}s reloaded from the @code{save} formats of
 few examples still exist).  Prior to @R{} 2.8.0, @code{CHARSXP}s were
 used to hold the finalizer function of a C finalizer (uncached) -- now
 @code{RAWSXP}s are used.  Finally, user code could create uncached
-@code{CHARSXP}s via @code{allocString} (removed in @R 2.8.0) and
-@code{allocVector(CHARSXP ...)} (deprecated in @R 2.8.0, removed in @R{}
+@code{CHARSXP}s via @code{allocString} (removed in @R{} 2.8.0) and
+@code{allocVector(CHARSXP ...)} (deprecated in @R{} 2.8.0, removed in @R{}
 2.9.0).
 
 @findex mkCharLenCE
@@ -1536,7 +1551,7 @@ is allocated, as the Windows port (by default) makes use of a memory
 allocator that differs from @code{malloc} etc as provided by MinGW.
 Specifically, there are entry points @code{Rm_malloc}, @code{Rm_free},
 @code{Rm_calloc} and @code{Rm_free} provided by
-@code{src/gnuwin32/malloc.c}.  This was done for two reasons.  The
+@file{src/gnuwin32/malloc.c}.  This was done for two reasons.  The
 primary motivation was performance: the allocator provided by MSVCRT
 @emph{via} MinGW was far too slow at handling the many small allocations
 that the current (since @R{} 1.2.0) allocation system for
@@ -1678,7 +1693,7 @@ hence available for garbage collection.
 @section Internal use of global and base environments
 
 This section notes known use by the system of these environments: the
-intention is to minimize or eliminate them.
+intention is to minimize or eliminate such uses.
 
 @menu
 * Base environment::            
@@ -1758,7 +1773,7 @@ The code which makes use of the LAPACK library, and is linked to
 @file{libRlapack} or an external LAPACK library.
 
 @item @code{vfonts}
-The Hershey font databases and the code to draw from them.
+The Hershey font databases and the code to draw with them.
 
 @item @code{X11}
 (Unix-alikes only.)  The @code{X11()}, @code{jpeg()}, @code{png()} and
@@ -1771,13 +1786,14 @@ and @code{libtiff} libraries.
 for saving on-screen graphs to those formats. This is technically
 optional, and needs source code not in the tarball.
 
-@item @file{Rchtml.dll}
-(Windows only.)  A link to an ActiveX control that displays Compiled
-@HTML{} help.  This is optional, and only compiled if CHTML is specified.
+@c @item @file{Rchtml.dll}
+@c (Windows only, up to @R{} 2.9.x.)  A link to an ActiveX control that
+@c displays Compiled @HTML{} help.  This is optional, and only compiled if
+@c CHTML is specified.
 
-@item @file{iconv.dll}
-(Windows only.)  A DLL compiled via Visual C++ which contains the
-routines to convert between character sets.
+@c @item @file{iconv.dll}
+@c (Windows only.)  A DLL compiled via Visual C++ which contains the
+@c routines to convert between character sets.
 
 @item @file{internet2.dll}
 (Windows only.)  An alternative version of the internet access routines,
@@ -1785,7 +1801,7 @@ compiled against Internet Explorer internals (and so loads
 @file{wininet.dll} and @file{wsock32.dll}).
 @end table
 
-@node Visibility,  , Modules, R Internal Structures
+@node Visibility, Lazy loading, Modules, R Internal Structures
 @section Visibility
 @cindex visibility
 
@@ -1871,6 +1887,59 @@ other Windows compiler suites.
 
 It is only possible to check if this has been handled correctly by
 compiling the @R{} sources on Windows.
+
+@node Lazy loading,  , Visibility, R Internal Structures
+@section Lazy loading
+
+Lazy loading was introduced in @R{} 2.0.0, for code in packages and for
+datasets in packages (both are optional).  When a package/name space
+which uses it is loaded, the package/name space environment is populated
+with promises for all the named objects: when these promises are
+evaluated they load the actual code from a database.
+
+There are separate databases for code and data, stored in the @file{R}
+and @file{data} subdirectories.  The database consists of two files,
+@file{@var{name}.rdb} and @file{@var{name}.rdx}.  The @file{.rdb} file
+is a concatenation of serialized objects, and the @file{.rdx} file
+contains an index.  The objects are stored in (usually) a
+@command{gzip}-compressed format with a 4-byte header giving the
+uncompressed serialized length (in XDR, that is big-endian, byte order)
+and read by a call to the primitive @code{lazyLoadDBfetch}.  (Note that
+this makes lazy-loading unsuitable for really large objects: the
+unserialized length of an R object can exceed 4GB.)
+
+The index or `map' file @file{@var{name}.rdx} is a compressed serialized
+@R{} object to be read by @code{.readRDS}.  It is a list with three
+elements @code{variables}, @code{references} and @code{compressed}.  The
+first two are named lists of integer vectors of length 2 giving the
+offset and length of the serialized object in the @file{@var{name}.rdb}
+file.  Element @code{variables} has an entry for each named object:
+@code{references} serializes a temporary environment used when named
+environments are added to the database.  @code{compressed} is a logical
+indicating if the serialized objects were compressed: compression is
+always used nowadays. @R{} 2.10.0 adds the values @code{compressed = 2}
+and @code{3} for @command{bzip2} and @command{xz} compression (with the
+possibility of future expansion to other methods): these formats add a
+fifth byte to the header for the type of compression, and stores
+serialized objects uncompressed if compression expands them.
+
+The loader for a lazy-load database of code or data is @code{lazyLoad}
+in base, but note that there is a separate copy to load @pkg{base}
+itself in @file{R_HOME/base/R/base}.
+
+Lazy-load databases are created by the code in
+@file{src/library/tools/R/makeLazyLoad.R}: the main tool is the
+unexported function @code{makeLazyLoadDB} and the insertion of database
+entries is done by calls to @code{.Call("R_lazyLoadDBinsertValue",
+...)}.
+
+Lazy-load databases of less than 10MB are cached in memory at first use:
+this was found necessary when using file systems with high latency
+(removable devices and network-mounted file systems on Windows).
+
+The same database mechanism is used to store parsed @file{Rd} files as
+from @R{} 2.10.0.  One or all of the parsed objects is fetched by a call
+to @code{tools:::fetchRdDB}.
 
 @node .Internal vs .Primitive, Internationalization in the R sources, R Internal Structures, Top
 @chapter @code{.Internal} vs @code{.Primitive}
@@ -2171,8 +2240,7 @@ this can fail for other reasons).  However, there is no certain way to
 know that if other @code{.Internal} or primitive functions are not
 internally generic except by reading the source code.
 
-
-@node Internationalization in the R sources, Graphics Devices, .Internal vs .Primitive, Top
+@node Internationalization in the R sources, Package Structure, .Internal vs .Primitive, Top
 @chapter Internationalization in the R sources
 
 The process of marking messages (errors, warnings etc) for translation
@@ -2300,7 +2368,165 @@ This is handled separately: see
 
 See @file{po/README} for how to update the message templates and catalogs.
 
-@node Graphics Devices, Tools, Internationalization in the R sources, Top
+@node Package Structure, Graphics Devices, Internationalization in the R sources, Top
+@chapter Structure of an Installed Package
+
+@menu
+* Metadata::                    
+* Help::                        
+@end menu
+
+The structure of a @emph{source} packages is described in @ref{Creating
+R packages, , Creating R packages, R-exts, Writing R Extensions}: this
+chapter is concerned with the structure of @emph{installed} packages.
+
+The description here is for @R{} 2.10.0 and later: the way help was
+installed differed in earlier versions.
+
+An installed package has a top-level file @file{DESCRIPTION}, a copy of
+the file of that name in the package sources with a @samp{Built} field
+appended, and file @file{INDEX}, usually describing the objects on which
+help is available, a file @file{NAMESPACE} is the package has a name
+space, files such as @file{CITATION}, @file{LICENCE} and @file{NEWS},
+and any other files copied in from @file{inst}.  It will have
+directories @file{Meta}, @file{help} and @file{html} (even if the
+package has no help), almost always has a directory @file{R} and often
+has a directory @file{libs} to contain compiled code.  Other
+directories with known meaning to @R{} are @file{data}, @file{demo},
+@file{doc} and @file{po}.
+
+Function @code{library} looks for a name space and if one is found
+passes control to @code{loadNamespace}.  Then @code{library} or
+@code{loadNamespace} looks for file @file{R/@var{pkgname}}, warns if it
+is not found and otherwise sources the code (using @code{sys.source})
+into the package's environment, then lazy-load a database
+@file{R/sysdata} if present.  So how @R{} code gets loaded depends on
+the contents of  @file{R/@var{pkgname}}: standard templates to load
+lazy-load databases are provided in @file{share/R/[ns]packloader.R}.
+
+How (and if) compiled code is loaded is down to the package's start-code
+such as @code{.First.lib} or @code{.onLoad}, although a @code{useDynlib}
+directive in a name space provides an alternative.
+Conventionally compiled code is loaded by a call to
+@code{library.dynam} and this looks in directory @file{libs} (and in an
+appropriate sub-directory if sub-architectures are in use) for a shared
+object (Unix-alike) or DLL (Windows).
+
+Subdirectory @file{data} serves two purposes. In a package using
+lazy-loading of data, it contains a lazy-load database @file{Rdata},
+plus a file @file{Rdata.rds} which contain a named character vector used
+by @code{data} in the (unusual) event that it is used for such a
+package.  Otherwise it is copy of the @file{data} directory in the
+sources, with saved images re-compressed if @command{R CMD INSTALL
+--resave-data} was used.  If @command{R CMD INSTALL --use-data-zip} was
+specified or selected @emph{via} @option{--auto-zip}, the contents of
+the directory are moved to a zip file @file{Rdata.zip} and a listing
+written in file @file{filelist}.
+
+Subdirectory @file{demo} supports the @code{demo} function, and is
+copied from the sources.
+
+Subdirectory @file{po} contains (in subdirectories) compiled message
+catalogs.
+
+@node Metadata, Help, Package Structure, Package Structure
+@section Metadata
+
+Directory @file{Meta} contains several files in @code{.rds} format, that
+is saved @R{} objects.  All packages have @file{Rd.rds},
+@file{hsearch.rds}, @file{links.rds} and @file{package.rds}.  Packages
+with name spaces have a file @file{nsInfo.rds}, and those with data,
+demos or vignettes have @file{data.rds}, @file{demo.rds} or
+@file{vignette.rds} files.
+
+The structure of these files (and their existence and names) is private
+to @R{}, so the description here is for those trying to follow the @R{}
+sources: there should be no reference to these files in non-base
+packages.
+
+File @file{package.rds} is a dump of information extracted from the
+@file{DESCRIPTION} file. It is a list of several components.  The first,
+@samp{DESCRIPTION}, is a character vector, the @file{DESCRIPTION} file
+as read by @code{read.dcf}.  Further elements @samp{Depends},
+@samp{Suggests}, @samp{Imports}, @samp{Rdepends} and @samp{Rdepends2}
+record the @samp{Depends}, @samp{Suggests} and @samp{Imports} fields.
+These are all lists, and can be empty.  The first three have an entry
+for each package named, each entry being a list of length 1 or 3, which
+element @samp{name} (the package name) and optional elements @samp{op}
+(a character string) and @samp{version} (an object of class
+@samp{"package_version"}).  Element @samp{Rdepends} is used for the
+first version dependency on @R{}, and @samp{Rdepends2} is a list of zero
+or more @R{} version dependencies---each is a three-element list of the
+form described for packages.  Element @samp{Rdepends} is no longer used,
+but it is still needed so @R{} < 2.7.0 can detect that the package was not
+installed for it.
+
+File @file{nsInfo.rds} records a list, a parsed version of the
+@file{NAMESPACE} file.
+
+File @file{Rd.rds} records a data frame with one row for each help file.
+The (character) columns are @samp{File} (the file name with extension),
+@samp{Name} (the @samp{\name} section), @samp{Type} (from the optional
+@samp{\docType} section), @samp{Title}, @samp{Encoding}, @samp{Aliases},
+@samp{Concepts} and @samp{Keywords}.  The last three are character
+strings with zero or more entries separated by @samp{, }.
+
+File @file{hsearch.rds} records the information to be used by
+@samp{help.search}.  This is a list of four unnamed elements which are
+character vectors for help files, aliases, keywords and concepts.  All
+the matrices have columns @samp{ID} and @samp{Package} which are used to
+tie the aliases, keywords and concepts (the remaining column of the last
+three elements) to a particular help file.  The first element has
+further columns @samp{LibPath} (empty since @R{} 2.3.0), @samp{name},
+@samp{title}, @samp{topic} (the first alias, used when presenting the
+results as @samp{@var{pkgname}::@var{topic}}) and @samp{Encoding}.
+
+File @file{links.rds} records a named character vector, the names being
+aliases and the values character strings of the form
+@example
+"../../@var{pkgname}/html/@var{filename}.html"
+@end example
+
+File @file{data.rds} records a two-column character matrix with columns
+of dataset names and titles from the corresponding help file.  File
+@file{demo.rds} has the same structure for package demos.
+
+File @file{vignette.rds} records a dataframe with one row for each
+`vignette' (@file{.[RS]nw} file in @file{inst/doc}) and with columns
+@samp{File} (the full file path in the sources), @samp{Title},
+@samp{PDF} (the pathless file name of the installed PDF version, if
+present), @samp{Depends}, @samp{Keywords} and @samp{R} (the pathless
+file name of the installed R code, if present).
+ 
+
+@node Help,  , Metadata, Package Structure
+@section Help
+
+All installed packages, whether they had an @file{.Rd} files or not,
+have @file{help} and @file{html} directories. The latter normally only
+contains the single file @file{00Index.html}, the package index which
+has hyperlinks to the help topics (if any).
+
+Directory @file{help} contains files @file{AnIndex}, @file{paths.rds}
+and @file{@var{pkgname}.rd[bx]}.  The latter two files are a lazy-load
+database of parsed @file{.Rd} files, accessed by
+@code{tools:::fetchRdDB}.  File @file{paths.rds} is a saved character
+vector of the original path names of the @file{.Rd} files, used when
+updating the database.
+
+File @file{AnIndex} is a two-column tab-delimited file: the first column
+contains the aliases defined in the help files and the second the
+basename (without the @file{.Rd} or @file{.rd} extension) of the file
+containing that alias.  It is read by @code{utils:::index.search} to
+search for files matching a topic (alias), and read by @code{scan} in
+@code{utils:::matchAvailableTopics}, part of the completion system.
+
+File @file{aliases.rds} is the same information as @file{AnIndex} as a
+named character vector (names the topics, values the file basename), for
+faster access by @R{} >= 2.11.0.
+
+
+@node Graphics Devices, Tools, Package Structure, Top
 @chapter Graphics
 
 @R{}'s graphics internals were revised for version 1.4.0 (and tidied up
@@ -2364,7 +2590,7 @@ inch), twips, @dots{}, and can differ@footnote{although that needs to be
 handled carefully, as for example the @code{xspline} functions used
 prior to @R{} 2.7.0 to depend on the aspect ratio of the pixels, and the
 @code{circle} callback is given a radius (and that should be interpreted
-as in the x units).}  in the @samp{x} and @samp{y} directions.
+as in the x units).} in the @samp{x} and @samp{y} directions.
 
 @c think of the engine as colors.c, devices.c, engine.c, plotmath.c, vfonts.c
 The next layer up is the graphics `engine' that is the main interface to
@@ -2447,8 +2673,8 @@ of a would-be writer of a graphics device.
 There are two types used internally which are pointers to structures
 related to graphics devices.
 
-The @code{DevDesc} type@footnote{@code{NewDevDesc} from @R 1.4.0,
-renamed in @R 2.8.0.} is a structure defined in the header file
+The @code{DevDesc} type@footnote{@code{NewDevDesc} from @R{} 1.4.0,
+renamed in @R{} 2.8.0.} is a structure defined in the header file
 @file{R_ext/GraphicsDevice.h} (which is included by
 @file{R_ext/GraphicsEngine.h}).  This describes the physical
 characteristics of a device, the capabilities of the device driver and
@@ -2875,7 +3101,7 @@ low coverage apart from a few monospaced fonts in a few sizes (which are
 not suitable for graph annotation), and where glyphs are missing what is
 plotted is often quite unsatisfactory.
 
-The approach being taken for @R 2.7.0 is to make use of more modern
+The approach being taken for @R{} 2.7.0 is to make use of more modern
 toolkits, namely @code{cairo} for rendering and @code{Pango} for font
 management---because these are associated with @code{Gtk+2} they are
 widely available.  Cairo supports translucent colours and alpha-blending
@@ -3149,9 +3375,9 @@ configuration variable.
 @vtable @code
 @item _R_CHECK_CODOC_S4_METHODS_
 Control whether @code{codoc()} testing is also performed on S4 methods.
-This is off by default because this can result in false positives, as
-@code{rematchDefinition()} currently does not preserve the given
-formals.
+This was off by default in R versions prior to 2.10.0 as it gave false
+positives.
+Default: true.
 @item _R_CHECK_DOT_INTERNAL_
 Control whether the package code is scanned for @code{.Internal} calls.
 Default: false.
@@ -3168,20 +3394,17 @@ removed eventually.
 Allows turning off @code{checkFF()} testing.  Legacy mostly.
 Default: true.
 @item _R_CHECK_LICENSE_
-Control whether license checks are performed.
-Default: false.
-@item _R_CHECK_RD_EMPTY_SECTIONS_
-Control whether @code{Rd_parse()} and @code{check_Rd_files_in_Rd_db()}
-worry about empty sections.  Of questionable use, as Rdconv drops empty
-sections anyways with a note.
-Default: false.
+Control whether/how license checks are performed.
+Default: maybe (warn in case of problems, but not about standardizable
+non-standard license specs).
 @item _R_CHECK_RD_EXAMPLES_T_AND_F_
 Control whether @code{check_T_and_F()} also looks for ``bad'' (global)
 @samp{T}/@samp{F} uses in examples.
 Off by default because this can result in false positives.
-@item _R_CHECK_RD_PARSE_
-Control whether Rd files are checked against the Rd version 2 parser.
-Default: true.
+@item _R_CHECK_RD_CHECKRD_MINLEVEL_
+New in @R{} 2.10.0.  Controls the minimum level for reporting warnings
+from @code{checkRd}.
+Default: -1.
 @item _R_CHECK_RD_USAGE_METHOD_BINOPS_
 Control whether binops generics are considered as allowing useful S3
 method markup. 
@@ -3192,6 +3415,11 @@ Control whether subset generics are considered as allowing useful S3
 method markup.
 Default: true (as this Rd feature was added some time ago).
 OBSOLETE.
+@item _R_CHECK_XREFS_REPOSITORIES_
+New in @R{} 2.10.0.  If set to a non-empty value, a space-separated list
+of repositories to use to determine known packages.
+Default: empty, when the CRAN, Omegahat and
+Bioconductor repositories known to @R{} is used.
 @item _R_CHECK_SRC_MINUS_W_IMPLICIT_
 Control whether installation output is checked for compilation warnings
 about implicit function declarations (as spotted by GCC with command

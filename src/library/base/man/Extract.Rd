@@ -40,11 +40,11 @@ x$name
     object (or for matrices/arrays, the \code{\link{dimnames}}):
     see \sQuote{Character indices} below for further details.
 
-    For \code{[}-indexing only: \code{i, j, \dots} can be logical
-    vectors, indicating elements/slices to select.  Such vectors are
-    recycled if necessary to match the corresponding extent.  \code{i, j,
-      \dots} can also be negative integers, indicating elements/slices
-    to leave out of the selection.
+    For \code{[}-indexing only: \code{i}, \code{j}, \code{\dots} can be
+    logical vectors, indicating elements/slices to select.  Such vectors
+    are recycled if necessary to match the corresponding extent.
+    \code{i}, \code{j}, \code{\dots} can also be negative integers,
+    indicating elements/slices to leave out of the selection.
 
     When indexing arrays by \code{[} a single argument \code{i} can be a
     matrix with as many columns as there are dimensions of \code{x}; the
@@ -205,7 +205,8 @@ x$name
 
   This may not be true for methods defined for them; for example it is
   not true for the \code{data.frame} methods described in
-  \code{\link{[.data.frame}}.
+  \code{\link{[.data.frame}} which warn if \code{i} or \code{j}
+  is named and have undocumented behaviour in that case.
 
   To avoid confusion, do not name index arguments (but \code{drop} and
   \code{exact} must be named).
@@ -258,9 +259,10 @@ x$name
 
   \code{\link{Syntax}} for operator precedence, and the
   \emph{R Language} reference manual about indexing details.
-  %% Fixme: Link (to html in 'help.start()', pdf from 'ref manual',
-  %% 'info' from ESS, see \url{http://cran.R-project.org/manuals.html}.
 }
+%% Fixme: Link (to html in 'help.start()', pdf from 'ref manual',
+%% 'info' from ESS, see \url{http://cran.R-project.org/manuals.html}.
+  
 \examples{
 x <- 1:12; m <- matrix(1:6, nrow=2); li <- list(pi=pi, e = exp(1))
 x[10]                 # the tenth element of x

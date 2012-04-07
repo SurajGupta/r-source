@@ -7,7 +7,6 @@ top_srcdir = ../..
 top_builddir = ../..
 
 include ../../share/make/vars.mk
-include ../gnuwin32/MkRules #for USE_CHM
 
 ECHO = echo
 MKINSTALLDIRS = mkdir -p
@@ -16,6 +15,8 @@ RVER = $(shell cut -d' ' -f1 ../../VERSION | sed -n 1p)
 RHOME = $(shell ../gnuwin32/Rpwd.exe ../..)
 
 R_EXE = $(top_builddir)/bin/R --vanilla --slave
+
+.SUFFIXES: .Rdts
 
 all: R
 
@@ -38,45 +39,45 @@ R:
 	  $(top_builddir)/library
 	@gzip -9f ../../library/grDevices/afm/*.afm
 	@cp -p ../library/datasets/data/morley.tab ../../library/datasets/data
+
+## do Rdobjects before metadata before help indices
+docs:
+	@$(MAKE) -f Makefile.win Rdobjects
+	@$(MAKE) -f Makefile.win metadata
+	@$(MAKE) -f Makefile.win help-indices
+	@touch stamp-docs
+
+# fix the order to make best use of parallel builds
+RD-TS = base.Rdts stats.Rdts utils.Rdts methods.Rdts graphics.Rdts grDevices.Rdts datasets.Rdts grid.Rdts tools.Rdts tcltk.Rdts splines.Rdts stats4.Rdts
+# RD-TS = $(R_PKGS_BASE:=.Rdts)
+Rd-ts: $(RD-TS)
+
+%.Rdts:
+	@$(ECHO) "tools:::.install_package_Rd_objects(\"$(srcdir)/$*\", \"$(top_builddir)/library/$*\")" | R_DEFAULT_PACKAGES=NULL $(R_EXE) || exit 1
+	@$(ECHO) -n " $*$(ECHO_C)"
+
+Rdobjects:
+	@$(ECHO) -n "installing parsed Rd:"
+	@$(MAKE) -f Makefile.win Rd-ts
+	@$(ECHO)
+
+help-indices:
+	@$(ECHO) -n "writing indices for package:"
+	@for pkg in $(R_PKGS_BASE); do \
+	  $(ECHO) -n " $${pkg}" ; \
+	  $(ECHO) "tools:::.writePkgIndices(\"$${pkg}\", \"$(top_builddir)/library/$${pkg}\")" | R_DEFAULT_PACKAGES=utils LC_ALL=C $(R_EXE) || exit 1; \
+	done
+	@$(ECHO)
+
+metadata:
 	@$(ECHO) "building/updating package metadata ..."
 	@$(ECHO) "tools:::.vinstall_package_indices(\"$(srcdir)\", \"$(top_builddir)/library\", \"$(R_PKGS_BASE)\")" | \
 	  R_DEFAULT_PACKAGES=tools LC_ALL=C $(R_EXE) > /dev/null
-	@cat $(top_builddir)/library/*/CONTENTS \
-	  > $(top_builddir)/doc/html/search/index.txt
-
-
-rpackageindices:
-	@$(ECHO)
-	@$(ECHO) -n "writing help indices for package:"
-	@for pkg in $(R_PKGS_BASE); do \
-	  $(ECHO) -n " $${pkg}" ; \
-	  $(ECHO) "tools:::.writePkgIndices(\"$${pkg}\", \"$(top_builddir)/library/$${pkg}\", CHM = $(USE_CHM))" | LC_ALL=C $(R_EXE) || exit 1; \
-	done
-	@$(ECHO)
-
-
-rpackagehelp: rpackageindices
-ifeq ($(strip $(USE_CHM)),TRUE)
-	@for pkg in $(R_PKGS_BASE); do \
-	  $(ECHO); \
-	  $(ECHO) "------ Installing help for package $${pkg}"; \
-	  $(MAKE) --no-print-directory -C ../gnuwin32/help -s RHOME=$(RHOME) \
-	    HELPTYPES='-txt -html -latex -example -chm' \
-	    chm-$${pkg} || exit 1; \
-	done
-else
-	@for pkg in $(R_PKGS_BASE); do \
-	  $(ECHO); \
-	  $(ECHO) "------ Installing help for package $${pkg}"; \
-	  $(MAKE) --no-print-directory -C ../gnuwin32/help -s RHOME=$(RHOME) \
-	    HELPTYPES='-txt -html -latex -example' \
-	    ziponlyhelp-$${pkg} || exit 1; \
-	done
-endif
 
 clean:
 	@for pkg in $(R_PKGS_BASE); do \
 	  $(MAKE) --no-print-directory -C $${pkg} \
 	    -f Makefile.win RHOME=$(RHOME) clean-win; \
 	done
+	-@rm -f stamp-*
 

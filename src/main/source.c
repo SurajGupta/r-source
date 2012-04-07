@@ -137,7 +137,6 @@ void attribute_hidden parseError(SEXP call, int linenum)
 	    break;
 	case 1:
 	    sprintf(buffer, "%d: %n", R_ParseContextLine, &width); 
-	    Rprintf("Context is '%s'", CHAR(STRING_ELT(context,0)));
 	    error(_("%s%d:%d: %s\n%d: %s\n%*s"),
 		  filename, linenum, R_ParseErrorCol, R_ParseErrorMsg,
 		  R_ParseContextLine, CHAR(STRING_ELT(context, 0)), 
@@ -210,11 +209,11 @@ SEXP attribute_hidden do_parse(SEXP call, SEXP op, SEXP args, SEXP env)
     if(streql(encoding, "latin1")) {
 	known_to_be_latin1 = TRUE;
 	allKnown = FALSE;
-    }
-    if(streql(encoding, "UTF-8"))  {
+    } else if(streql(encoding, "UTF-8"))  {
 	known_to_be_utf8 = TRUE;
 	allKnown = FALSE;
-    }
+    } else if(!streql(encoding, "unknown") && !streql(encoding, "native.enc")) 
+    	warning(_("argument '%s = \"%s\"' will be ignored"), "encoding", encoding);
 
     if (prompt == R_NilValue)
 	PROTECT(prompt);

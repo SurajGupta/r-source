@@ -24,7 +24,7 @@ else
 fi
 
 ## Append 'share/texmf' to TeX's input search path.
-if test -n "$TEXINPUTS}"; then
+if test -z "$TEXINPUTS}"; then
   TEXINPUTS=".:${R_SHARE_DIR}/texmf:"
 else
   TEXINPUTS=".:${TEXINPUTS}:${R_SHARE_DIR}/texmf:"
@@ -34,11 +34,21 @@ export TEXINPUTS
 . "${R_HOME}/etc${R_ARCH}/Renviron"
 export `sed 's/^ *#.*//; s/^\(.*\)=.*/\1/' "${R_HOME}/etc${R_ARCH}/Renviron"`
 
+extra=
 case "${1}" in
   perl)
     cmd="${PERL}" ;;
   awk)
     cmd="${AWK}"  ;;
+## this was a separate command prior to 2.10.0
+  Rd2txt)
+    cmd="${R_HOME}/bin/Rdconv"
+    extra="-t txt"
+    ;;
+  Rd2pdf)
+    cmd="${R_HOME}/bin/Rd2dvi"
+    extra="--pdf"
+    ;;
   *)
     if test -x "${R_HOME}/bin/${1}"; then
       cmd="${R_HOME}/bin/${1}"
@@ -49,7 +59,7 @@ case "${1}" in
 esac
 shift
 
-exec "${cmd}" "${@}"
+exec "${cmd}" ${extra} "${@}"
 
 ### Local Variables: ***
 ### mode: sh ***

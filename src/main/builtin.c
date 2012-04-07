@@ -74,7 +74,7 @@ SEXP attribute_hidden do_delayed(SEXP call, SEXP op, SEXP args, SEXP rho)
 	eenv = R_BaseEnv;
     } else
     if (!isEnvironment(eenv))
-	errorcall(call, R_MSG_IA);
+	errorcall(call, _("invalid '%s' argument"), "eval.env");
 
     args = CDR(args);
     aenv = CAR(args);
@@ -83,7 +83,7 @@ SEXP attribute_hidden do_delayed(SEXP call, SEXP op, SEXP args, SEXP rho)
 	aenv = R_BaseEnv;
     } else
     if (!isEnvironment(aenv))
-	errorcall(call, R_MSG_IA);
+	errorcall(call, _("invalid '%s' argument"), "assign.env");
 
     defineVar(name, mkPROMISE(expr, eenv), aenv);
     return R_NilValue;
@@ -102,9 +102,9 @@ SEXP attribute_hidden do_makelazy(SEXP call, SEXP op, SEXP args, SEXP rho)
     values = CAR(args); args = CDR(args);
     expr = CAR(args); args = CDR(args);
     eenv = CAR(args); args = CDR(args);
-    if (!isEnvironment(eenv)) error(R_MSG_IA);
+    if (!isEnvironment(eenv)) error(_("invalid '%s' argument"), "eval.env");
     aenv = CAR(args);
-    if (!isEnvironment(aenv)) error(R_MSG_IA);
+    if (!isEnvironment(aenv)) error(_("invalid '%s' argument"), "assign.env");
 
     for(i = 0; i < LENGTH(names); i++) {
 	SEXP name = install(CHAR(STRING_ELT(names, i)));
@@ -372,7 +372,7 @@ SEXP attribute_hidden do_envirName(SEXP call, SEXP op, SEXP args, SEXP rho)
 	    ans = ScalarString(STRING_ELT(R_PackageEnvName(env), 0));
 	else if (R_IsNamespaceEnv(env))
 	    ans = ScalarString(STRING_ELT(R_NamespaceEnvSpec(env), 0));
-	else if (!isNull(res = getAttrib(env, install("name")))) ans = res;
+	else if (!isNull(res = getAttrib(env, R_NameSymbol))) ans = res;
     }
     return ans;
 }
@@ -442,7 +442,8 @@ static void cat_cleanup(void *data)
 
     con->fflush(con);
     if(changedcon) switch_stdout(-1, 0);
-    if(!wasopen) con->close(con);
+    /* previous line might have closed it */
+    if(!wasopen && con->isopen) con->close(con);
 #ifdef Win32
     WinUTF8out = FALSE;
 #endif
@@ -464,9 +465,6 @@ SEXP attribute_hidden do_cat(SEXP call, SEXP op, SEXP args, SEXP rho)
 
     /* Use standard printing defaults */
     PrintDefaults(rho);
-#ifdef Win32
-    WinCheckUTF8();
-#endif
 
     objs = CAR(args);
     args = CDR(args);
@@ -516,6 +514,10 @@ SEXP attribute_hidden do_cat(SEXP call, SEXP op, SEXP args, SEXP rho)
 
     ci.changedcon = switch_stdout(ifile, 0);
     /* will open new connection if required, and check for writeable */
+#ifdef Win32
+    /* do this after re-sinking output */
+    WinCheckUTF8();
+#endif
 
     ci.con = con;
 

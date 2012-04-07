@@ -319,7 +319,6 @@ SEXP RTcl_ObjAsCharVector(SEXP args)
     return ans;
 }
 
-
 /* FIXME: we could look at encoding, and send UTF-8 in an
    MBCS-supporting environment.  In which case, could convert to
    UTF-8 and not UCS-2 on Windows. */
@@ -496,6 +495,38 @@ SEXP RTcl_ObjFromIntVector(SEXP args)
 
     return makeRTclObject(tclobj);
 }
+
+SEXP RTcl_ObjAsRawVector(SEXP args)
+{
+    int nb, count, i, j;
+    Tcl_Obj **elem, *obj;
+    unsigned char *ret;
+    SEXP ans, el;
+
+    obj = (Tcl_Obj *) R_ExternalPtrAddr(CADR(args));
+    if (!obj) error(_("invalid tclObj -- perhaps saved from another session?"));
+    ret = Tcl_GetByteArrayFromObj(obj, &nb);
+    if (ret) {
+	ans = allocVector(RAWSXP, nb);
+	for (j = 0 ; j < nb ; j++) RAW(ans)[j] = ret[j];
+	return ans;
+    }
+
+    /* Then try as list */
+    if (Tcl_ListObjGetElements(RTcl_interp, obj, &count, &elem)
+	!= TCL_OK) return R_NilValue;
+
+    PROTECT(ans = allocVector(VECSXP, count));
+    for (i = 0 ; i < count ; i++) {
+	el = allocVector(RAWSXP, nb);
+	SET_VECTOR_ELT(ans, i, el);
+	ret = Tcl_GetByteArrayFromObj(elem[i], &nb);
+	for (j = 0 ; j < nb ; j++) RAW(el)[j] = ret[j];
+    }
+    UNPROTECT(1);
+    return ans;
+}
+
 
 SEXP RTcl_GetArrayElem(SEXP args)
 {

@@ -37,7 +37,7 @@ as.Date.factor <- function(x, ...) as.Date(as.character(x), ...)
 
 as.Date.character <- function(x, format="", ...)
 {
-    fromchar <- function(x) {
+    charToDate <- function(x) {
 	xx <- x[1L]
         if(is.na(xx)) {
             j <- 1L
@@ -50,7 +50,7 @@ as.Date.character <- function(x, format="", ...)
            ) return(strptime(x, f))
 	stop("character string is not in a standard unambiguous format")
     }
-    res <- if(missing(format)) fromchar(x) else strptime(x, format, tz="GMT")
+    res <- if(missing(format)) charToDate(x) else strptime(x, format, tz="GMT")
     as.Date(res)
 }
 
@@ -350,7 +350,7 @@ cut.Date <-
         if (length(by2) == 2L) incr <- incr * as.integer(by2[1L])
         maxx <- max(x, na.rm = TRUE)
         breaks <- seq.int(start, maxx + incr, breaks)
-        breaks <- breaks[1L:(1+max(which(breaks <= maxx)))]
+        breaks <- breaks[seq_len(1L+max(which(breaks <= maxx)))]
       }
     } else stop("invalid specification of 'breaks'")
     res <- cut(unclass(x), unclass(breaks), labels = labels,
@@ -387,7 +387,7 @@ round.Date <- function(x, ...)
     val
 }
 
-## must avoid truncating dates prior to 1970-01-01 forwards.
+## must avoid truncating forards dates prior to 1970-01-01.
 trunc.Date <- function(x, ...) round(x - 0.4999999)
 
 rep.Date <- function(x, ...)
@@ -396,7 +396,7 @@ rep.Date <- function(x, ...)
     structure(y, class="Date")
 }
 
-diff.Date <- function (x, lag = 1, differences = 1, ...)
+diff.Date <- function (x, lag = 1L, differences = 1L, ...)
 {
     ismat <- is.matrix(x)
     xlen <- if (ismat) dim(x)[1L] else length(x)
@@ -405,10 +405,11 @@ diff.Date <- function (x, lag = 1, differences = 1, ...)
     if (lag * differences >= xlen)
         return(structure(numeric(0L), class="difftime", units="days"))
     r <- x
-    i1 <- -1L:-lag
-    if (ismat) for (i in 1L:differences) r <- r[i1, , drop = FALSE] -
+    i1 <- -seq_len(lag)
+    if (ismat)
+        for (i in seq_len(differences)) r <- r[i1, , drop = FALSE] -
             r[-nrow(r):-(nrow(r) - lag + 1L), , drop = FALSE]
-    else for (i in 1L:differences)
+    else for (i in seq_len(differences))
         r <- r[i1] - r[-length(r):-(length(r) - lag + 1L)]
     r
 }

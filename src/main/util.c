@@ -290,7 +290,6 @@ void UNIMPLEMENTED_TYPE(const char *s, SEXP x)
     UNIMPLEMENTED_TYPEt(s, TYPEOF(x));
 }
 
-#if defined(SUPPORT_MBCS)
 # include <R_ext/Riconv.h>
 # include <sys/param.h>
 # include <errno.h>
@@ -346,17 +345,13 @@ size_t mbcsToUcs2(const char *in, ucs2_t *out, int nout, int enc)
     }
     return wc_len; /* status would be better? */
 }
-#endif /* SUPPORT_MBCS */
 
 
-#ifdef SUPPORT_MBCS
 #include <wctype.h>
-#endif
 
 /* This one is not in Rinternals.h, but is used in internet module */
 Rboolean isBlankString(const char *s)
 {
-#ifdef SUPPORT_MBCS
     if(mbcslocale) {
 	wchar_t wc; int used; mbstate_t mb_st;
 	mbs_init(&mb_st);
@@ -365,7 +360,6 @@ Rboolean isBlankString(const char *s)
 	    s += used;
 	}
     } else
-#endif
 	while (*s)
 	    if (!isspace((int)*s++)) return FALSE;
     return TRUE;
@@ -548,10 +542,11 @@ static void isort_with_index(int *x, int *indx, int n)
 */
 SEXP attribute_hidden do_merge(SEXP call, SEXP op, SEXP args, SEXP rho)
 {
-    SEXP xi, yi, ansx, ansy, ans, ansnames, x_lone, y_lone;
+    SEXP xi, yi, ansx, ansy, ans, x_lone, y_lone;
     int nx = 0, ny = 0, i, j, k, nans = 0, nx_lone = 0, ny_lone = 0;
     int all_x = 0, all_y = 0, ll = 0/* "= 0" : for -Wall */;
     int *ix, *iy, tmp, nnx, nny, i0, j0;
+    const char *nms[] = {"xi", "yi", "x.alone", "y.alone", ""};
 
     checkArity(op, args);
     xi = CAR(args);
@@ -589,7 +584,8 @@ SEXP attribute_hidden do_merge(SEXP call, SEXP op, SEXP args, SEXP rho)
 
 
     /* 2. allocate and store result components */
-    PROTECT(ans = allocVector(VECSXP, 4));
+
+    PROTECT(ans = mkNamed(VECSXP, nms));
     ansx = allocVector(INTSXP, nans);    SET_VECTOR_ELT(ans, 0, ansx);
     ansy = allocVector(INTSXP, nans);    SET_VECTOR_ELT(ans, 1, ansy);
 
@@ -619,13 +615,7 @@ SEXP attribute_hidden do_merge(SEXP call, SEXP op, SEXP args, SEXP rho)
 	    }
     }
 
-    PROTECT(ansnames = allocVector(STRSXP, 4));
-    SET_STRING_ELT(ansnames, 0, mkChar("xi"));
-    SET_STRING_ELT(ansnames, 1, mkChar("yi"));
-    SET_STRING_ELT(ansnames, 2, mkChar("x.alone"));
-    SET_STRING_ELT(ansnames, 3, mkChar("y.alone"));
-    setAttrib(ans, R_NamesSymbol, ansnames);
-    UNPROTECT(2);
+    UNPROTECT(1);
     return ans;
 }
 
@@ -983,7 +973,6 @@ Rboolean strIsASCII(const char *str)
     return TRUE;
 }
 
-#ifdef SUPPORT_MBCS
 /* Number of additional bytes */
 static const unsigned char utf8_table4[] = {
   1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,
@@ -998,8 +987,8 @@ int attribute_hidden utf8clen(char c)
     return 1 + utf8_table4[c & 0x3f];
 }
 
-/* This returns the result in wchar_t, but does not assume
-   wchar_t is UCS-2/4 and so is for internal use only */
+/* These return the result in wchar_t, but does assume
+   wchar_t is UCS-2/4 and so are for internal use only */
 size_t attribute_hidden
 utf8toucs(wchar_t *wc, const char *s)
 {
@@ -1061,7 +1050,7 @@ utf8toucs(wchar_t *wc, const char *s)
     }
 }
 
-size_t 
+size_t
 utf8towcs(wchar_t *wc, const char *s, size_t n)
 {
     int m, res = 0;
@@ -1206,24 +1195,12 @@ char *Rf_strrchr(const char *s, int c)
     }
     return plast;
 }
-#else
-/* Dummy entry points so R.dll always has them */
-int utf8clen(char c) { return 1;}
-size_t Mbrtowc(wchar_t *wc, const char *s, size_t n, void *ps)
-{ return (size_t)(-1);}
-Rboolean mbcsValid(const char *str) { return TRUE; }
-#undef Rf_strchr
-char *Rf_strchr(const char *s, int c) {return strchr(s, c);}
-#undef Rf_strrchr
-char *Rf_strrchr(const char *s, int c) {return strrchr(s, c);}
-#endif
 
 #ifdef Win32
 void R_fixslash(char *s)
 {
     char *p = s;
 
-#ifdef SUPPORT_MBCS
     if(mbcslocale) {
 	mbstate_t mb_st; int used;
 	mbs_init(&mb_st);
@@ -1232,7 +1209,6 @@ void R_fixslash(char *s)
 	    p += used;
 	}
     } else
-#endif
 	for (; *p; p++) if (*p == '\\') *p = '/';
 	/* preserve network shares */
 	if(s[0] == '/' && s[1] == '/') s[0] = s[1] = '\\';
@@ -1261,7 +1237,6 @@ void R_fixbackslash(char *s)
 {
     char *p = s;
 
-#ifdef SUPPORT_MBCS
     if(mbcslocale) {
 	mbstate_t mb_st; int used;
 	mbs_init(&mb_st);
@@ -1270,7 +1245,6 @@ void R_fixbackslash(char *s)
 	    p += used;
 	}
     } else
-#endif
 	for (; *p; p++) if (*p == '/') *p = '\\';
 }
 #endif
@@ -1554,15 +1528,15 @@ typedef enum {
 typedef UColAttributeValue UCollationStrength;
 
 typedef enum {
-      UCOL_FRENCH_COLLATION, 
-      UCOL_ALTERNATE_HANDLING, 
-      UCOL_CASE_FIRST, 
+      UCOL_FRENCH_COLLATION,
+      UCOL_ALTERNATE_HANDLING,
+      UCOL_CASE_FIRST,
       UCOL_CASE_LEVEL,
-      UCOL_NORMALIZATION_MODE, 
+      UCOL_NORMALIZATION_MODE,
       UCOL_DECOMPOSITION_MODE = UCOL_NORMALIZATION_MODE,
       UCOL_STRENGTH,
       UCOL_HIRAGANA_QUATERNARY_MODE,
-      UCOL_NUMERIC_COLLATION, 
+      UCOL_NUMERIC_COLLATION,
       UCOL_ATTRIBUTE_COUNT
 } UColAttribute;
 
@@ -1579,7 +1553,7 @@ typedef struct UCharIterator {
 
 UCollator* ucol_open(const char *loc, UErrorCode *status);
 void ucol_close(UCollator *coll);
-void ucol_setAttribute(UCollator *coll, UColAttribute attr, 
+void ucol_setAttribute(UCollator *coll, UColAttribute attr,
 		       UColAttributeValue value, UErrorCode *status);
 void ucol_setStrength(UCollator *coll, UCollationStrength strength);
 UCollationResult ucol_strcollIter(const UCollator *coll,
@@ -1601,6 +1575,13 @@ void uloc_setDefault(const char* localeID, UErrorCode* status);
 #endif
 
 static UCollator *collator = NULL;
+
+/* called from platform.c */
+void attribute_hidden resetICUcollator(void)
+{
+    if (collator) ucol_close(collator);
+    collator = NULL;
+}
 
 static const struct {
     const char * const str;
@@ -1627,20 +1608,20 @@ static const struct {
     { "hiragana_quaternary", UCOL_HIRAGANA_QUATERNARY_MODE },
     { NULL,  0 }
 };
-    
 
-SEXP do_ICUset(SEXP call, SEXP op, SEXP args, SEXP rho)
+
+SEXP attribute_hidden do_ICUset(SEXP call, SEXP op, SEXP args, SEXP rho)
 {
     SEXP x;
     UErrorCode  status = U_ZERO_ERROR;
-    
+
     for (; args != R_NilValue; args = CDR(args)) {
 	const char *this = CHAR(PRINTNAME(TAG(args)));
 	const char *s;
 
 	x = CAR(args);
 	if (!isString(x) || LENGTH(x) != 1)
-	    error(_("invalid argument"));
+	    error(_("invalid '%s' argument"), this);
 	s = CHAR(STRING_ELT(x, 0));
 	if (streql(this, "locale")) {
 	    if (collator) ucol_close(collator);
@@ -1665,7 +1646,7 @@ SEXP do_ICUset(SEXP call, SEXP op, SEXP args, SEXP rho)
 		ucol_setStrength(collator, val);
 	    } else if (collator && at >= 0 && val >= 0) {
 		ucol_setAttribute(collator, at, val, &status);
-		if (U_FAILURE(status)) 
+		if (U_FAILURE(status))
 		    error("failed to set ICU collator attribute");
 	    }
 	}
@@ -1694,21 +1675,23 @@ int Scollate(SEXP a, SEXP b)
     }
     if (collator == NULL)
 	return strcoll(translateChar(a), translateChar(b));
-    
+
     uiter_setUTF8(&aIter, as, len1);
     uiter_setUTF8(&bIter, bs, len2);
-    result = ucol_strcollIter(collator, &aIter, &bIter, &status);   
+    result = ucol_strcollIter(collator, &aIter, &bIter, &status);
     if (U_FAILURE(status)) error("could not collate");
     return result;
 }
 
 #else /* not USE_ICU */
 
-SEXP do_ICUset(SEXP call, SEXP op, SEXP args, SEXP rho)
+SEXP attribute_hidden do_ICUset(SEXP call, SEXP op, SEXP args, SEXP rho)
 {
     warning(_("ICU is not supported on this build"));
     return R_NilValue;
 }
+
+void attribute_hidden resetICUcollator(void) {}
 
 # ifdef Win32
 

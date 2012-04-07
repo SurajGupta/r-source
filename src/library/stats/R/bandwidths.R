@@ -83,8 +83,8 @@ bw.SJ <- function(x, nb = 1000, lower = 0.1*hmax, upper = hmax,
     else {
         if(bnd.Miss <- missing(lower) || missing(upper)) {
             ## only used for  lower & upper  defaults :
-            hmax <- 1.144 * sd(x) * n^(-1/5)
-            ##              ^^^^ may be way off -- will use 'scale' from 2.10.0
+            hmax <- 1.144 * scale * n^(-1/5)
+            ##              ^^^^^ used to be  sd(x)  which maybe way off
         }
         alph2 <- 1.357*(SDh(cnt, a, n, d)/TD)^(1/7)
         if(!is.finite(alph2))

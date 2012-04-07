@@ -93,3 +93,22 @@ as.matrix(df.soa) # numeric result
 df.soac <- data.frame(soa, letters[1:5])
 as.matrix(df.soac) # character result
 ## failed in 2.8.1
+
+## wish of PR#13505
+utils::data(npk, package="MASS")
+npk.aov <- aov(yield ~ block + N * P + K, npk)
+foo <- proj(npk.aov)
+cbind(npk, foo)
+## failed in R < 2.10.0
+
+
+if(require("Matrix")) {
+  print(cS. <- contr.SAS(5, sparse = TRUE))
+  stopifnot(all(contr.SAS(5) == cS.),
+	    all(contr.helmert(5, sparse = TRUE) == contr.helmert(5)))
+}
+
+## regression tests for dimnames (broken on 2009-07-31)
+contr.sum(4)
+contr.helmert(4)
+contr.sum(2) # needed drop=FALSE at one point.

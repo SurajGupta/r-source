@@ -1,8 +1,8 @@
 msgid ""
 msgstr ""
-"Project-Id-Version: R 2.9.1\n"
+"Project-Id-Version: R 2.10.0\n"
 "Report-Msgid-Bugs-To: bugs@r-project.org\n"
-"POT-Creation-Date: 2009-06-16 12:29\n"
+"POT-Creation-Date: 2009-10-08 08:29\n"
 "PO-Revision-Date: YEAR-MO-DA HO:MI+ZONE\n"
 "Last-Translator: FULL NAME <EMAIL@ADDRESS>\n"
 "Language-Team: LANGUAGE <LL@li.org>\n"
@@ -497,6 +497,9 @@ msgstr ""
 msgid "numeric contrasts or contrast name expected"
 msgstr ""
 
+msgid "contr*(.., sparse=TRUE) needs package \"Matrix\" correctly installed"
+msgstr ""
+
 msgid "not enough degrees of freedom to define contrasts"
 msgstr ""
 
@@ -797,7 +800,7 @@ msgstr ""
 msgid "non-positive values not allowed for the gamma family"
 msgstr ""
 
-msgid "using weights as shape paraneters"
+msgid "using weights as shape parameters"
 msgstr ""
 
 msgid "link \"%s\" not available for inverse.gaussian family; available links are %s"
@@ -929,7 +932,10 @@ msgstr ""
 msgid "'family' not recognized"
 msgstr ""
 
-msgid "invalid 'method':"
+msgid "invalid 'method': %s"
+msgstr ""
+
+msgid "invalid 'method'"
 msgstr ""
 
 msgid "'weights' must be a numeric vector"
@@ -1433,6 +1439,9 @@ msgstr ""
 msgid "'newdata' had %d rows but variable(s) found have %d rows"
 msgstr ""
 
+msgid "character variable '%s' changed to a factor"
+msgstr ""
+
 msgid "variable '%s' is not a factor"
 msgstr ""
 
@@ -1508,7 +1517,7 @@ msgstr ""
 msgid "'params' has wrong length"
 msgstr ""
 
-msgid "'varying' must be in 1L:length(pars)"
+msgid "'varying' must be in seq_along(pars)"
 msgstr ""
 
 msgid "'varying' has wrong length"
@@ -1628,7 +1637,7 @@ msgstr ""
 msgid "use only with \"lm\" objects"
 msgstr ""
 
-msgid "'which' must be in 1L:6"
+msgid "'which' must be in 1:6"
 msgstr ""
 
 msgid "'id.n' must be in {1,..,%d}"
@@ -2151,6 +2160,12 @@ msgid "cannot compute exact confidence interval with zeroes"
 msgstr ""
 
 msgid "must supply either 'formula' or 'data'"
+msgstr ""
+
+msgid "xtabs(*, sparse=TRUE) applies only to two-way tables"
+msgstr ""
+
+msgid "xtabs(*, sparse=TRUE) needs package \"Matrix\" correctly installed"
 msgstr ""
 
 msgid "too few distinct input values to fit an asymptotic regression model"

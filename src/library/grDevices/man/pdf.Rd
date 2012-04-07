@@ -18,7 +18,7 @@
 pdf(file = ifelse(onefile, "Rplots.pdf", "Rplot\%03d.pdf"),
     width, height, onefile, family, title, fonts, version,
     paper, encoding, bg, fg, pointsize, pagecentre, colormodel,
-    useDingbats, useKerning)
+    useDingbats, useKerning, fillOddEven)
 }
 \arguments{
   \item{file}{a character string giving the name of the file.
@@ -33,7 +33,7 @@ pdf(file = ifelse(onefile, "Rplots.pdf", "Rplot\%03d.pdf"),
     number for each page.  Defaults to \code{TRUE}.}
   \item{family}{the font family to be used, see
     \code{\link{postscript}}.  Defaults to \code{"Helvetica"}.}
-  \item{title}{title string to embed as the \code{/Title} field in the
+  \item{title}{title string to embed as the \samp{/Title} field in the
     file.  Defaults to \code{"R Graphics Output"}.}
   \item{fonts}{a character vector specifying \R graphics font family
     names for fonts which will be included in the PDF file.  Defaults to
@@ -78,6 +78,8 @@ pdf(file = ifelse(onefile, "Rplots.pdf", "Rplot\%03d.pdf"),
     }
   \item{useKerning}{logical.  Should kerning corrections be included in
     setting text and calculating string widths?  Defaults to \code{TRUE}.}
+  \item{fillOddEven}{logical controlling the polygon fill mode:  see
+      \code{\link{polygon}} for details.  Default \code{FALSE}.}
 }
 \details{
   All arguments except \code{file} default to values given by
@@ -150,7 +152,7 @@ pdf(file = ifelse(onefile, "Rplots.pdf", "Rplot\%03d.pdf"),
   also the \sQuote{pixel} size assumed for graphics parameters such as
   \code{"cra"}.
 
-  The \code{paper} argument sets the \code{/MediaBox} entry in the file,
+  The \code{paper} argument sets the \samp{/MediaBox} entry in the file,
   which defaults to \code{width} by \code{height}.  If it is set to
   something other than \code{"special"}, a device region of the
   specified size is (by default) centred on the rectangle given by the

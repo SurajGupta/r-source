@@ -30,7 +30,7 @@ cut.default <-
 	breaks <- seq.int(rx[1L] - dx/1000,
                           rx[2L] + dx/1000, length.out = nb)
     } else nb <- length(breaks <- sort.int(as.double(breaks)))
-    if (any(duplicated(breaks))) stop("'breaks' are not unique")
+    if (anyDuplicated(breaks)) stop("'breaks' are not unique")
     codes.only <- FALSE
     if (is.null(labels)) {#- try to construct nice ones ..
 	for(dig in dig.lab:max(12, dig.lab)) {
@@ -41,13 +41,13 @@ cut.default <-
 	    if(ok) paste(if(right)"(" else "[",
 			 ch.br[-nb], ",", ch.br[-1L],
 			 if(right)"]" else ")", sep='')
-	    else paste("Range", 1L:(nb - 1L),sep="_")
+	    else paste("Range", seq_len(nb - 1L), sep="_")
         if (ok && include.lowest) {
             if (right)
                 substr(labels[1L], 1L, 1L) <- "[" # was "("
             else
-                substring(labels[nb-1],
-                          nchar(labels[nb-1], "c")) <- "]" # was ")"
+                substring(labels[nb-1L],
+                          nchar(labels[nb-1L], "c")) <- "]" # was ")"
         }
     } else if (is.logical(labels) && !labels)
         codes.only <- TRUE

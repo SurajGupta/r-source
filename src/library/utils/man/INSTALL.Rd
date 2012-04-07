@@ -4,7 +4,6 @@
 % Distributed under GPL 2 or later
 
 \name{INSTALL}
-\Rdversion{1.1}
 \alias{INSTALL}
 \title{Install Add-on Packages}
 \description{Utility for installing add-on packages.}
@@ -19,40 +18,45 @@
   \item{options}{a space-separated list of options through which in
     particular the process for building the help files can be controlled.
     Most options should only be given once, and paths including spaces should
-    be quoted.  Use \code{R CMD INSTALL --help} for the full current
+    be quoted.  Use \command{R CMD INSTALL --help} for the full current
     list of options.}
 }
 \details{
   This will stop at the first error, so if you want all the \code{pkgs}
   to be tried, call this via a shell loop.
 
-  If used as \code{R CMD INSTALL pkgs} without explicitly specifying
+  If used as \command{R CMD INSTALL pkgs} without explicitly specifying
   \code{lib}, packages are installed into the library tree rooted at the
   first directory in the library path which would be used by \R run in
   the current environment.
 
-  To install into the library tree \code{lib}, use \code{R CMD INSTALL
-  -l lib pkgs}.  This prepends \code{lib} to the library path for
+  To install into the library tree \code{lib}, use
+  \command{R CMD INSTALL -l lib pkgs}.
+  This prepends \code{lib} to the library path for
   duration of the install, so required packages in the installation
   directory will be found (and used in preference to those in other
   libraries).
 #ifdef windows
 
-  Windows Perl and the files for installing from source packages need to
-  be installed.  It is possible that environment variable \env{TMPDIR}
-  will need to be set (although \code{R CMD} tries to set it suitably
+  It is possible that environment variable \env{TMPDIR}
+  will need to be set (although \command{R CMD} tries to set it suitably
   otherwise): use forward slashes and no spaces for the path to a
   writable directory.
 #endif
   
   Both \code{lib} and the elements of \code{pkgs} may be absolute or
   relative path names of directories.  \code{pkgs} may also contain
-  names of package/bundle archive files of the form
-  \file{pkg_version.tar.gz} as obtained from CRAN: these are then
-  extracted to a temporary directory.
+  names of package/bundle archive files: these are then
+  extracted to a temporary directory.  Precisely what forms are accepted
+  depends on the system (see \code{\link{untar}}): this will certainly
+  include filenames of the form \file{pkg_version.tar.gz} as obtained
+  from CRAN, \file{pkg.tgz} and \file{pkg.tar.gz}, usually
+  \file{pkg_version.tar.bz2} and \file{pkg.tar.bz2}, and on systems with
+  recent toolsets, \file{pkg_version.ext} for any supported extension
+  such as \file{tar.lzma} and \file{tar.xz}.
 #ifdef unix
-  Finally, binary package/bundle archive files (as created by \code{R
-  CMD build --binary} can be supplied.
+  Finally, binary package/bundle archive files (as created by
+  \command{R CMD build --binary}) can be supplied.
 #endif
 
   The package sources can be cleaned up prior to installation by
@@ -70,16 +74,9 @@
   locations (and set these via \option{--configure-vars}), see section
   \dQuote{Configuration variables} in \dQuote{R Installation and
   Administration} for more information.  (If these are used more than
-  once on the command line they are concatenated.)  One can bypass the
-  configure mechanism using the option \option{--no-configure}.
+  once on the command line they are concatenated.)  The configure
+  mechanism can be bypassed using the option \option{--no-configure}.
 #endif
-
-  If \option{--no-docs} is given, no help files are built.  Options
-  \option{--no-text}, \option{--no-html}, and \option{--no-latex} suppress
-  creating the text, HTML, and LaTeX versions, respectively.  The
-  default is to build help files in all three versions.  Similarly,
-  \option{--no-example} suppresses extraction of the \R code for the
-  examples from the help files.
 
   If the attempt to install the package fails, leftovers are removed.
   If the package was already installed, the old version is restored.
@@ -100,17 +97,10 @@
   (two names for the same option).
 #ifdef windows
   
-  On Windows it can be helpful to store text, latex and example code
-  files and data files in zip archives since many small files can take
-  up an inordinate amount of disc space.  This is controlled by the
-  options \option{--use-zip-help} and \option{--use-zip-data}, and
-  \option{--use-zip} which implies both.  CRAN binaries are produced by
-  \option{--auto-zip} which chooses to zip help if there are more than
-  20 help files, and data if the sources are more than 100Kb and there
-  are no files with names differing only by extension.
-
-  Option \option{--build} can be used to zip up the installed package or
-  bundle for distribution: it implies \option{--auto-zip}.
+  Windows-only option \option{--build} can be used to zip up the
+  installed package or bundle for distribution: it implies
+  \option{--auto-zip} which selects if data file are zipped up to save
+  disc space.
 #endif
 #ifdef unix
   
@@ -125,10 +115,11 @@
   \option{--libs-only}.
 #endif
   
-  Use \code{R CMD INSTALL --help} for concise usage information,
+  Use \command{R CMD INSTALL --help} for concise usage information,
   including all the available options
 }
 
+#ifdef unix
 \note{
   Some parts of the operation of \code{INSTALL} depend on the \R
   temporary directory (see \code{\link{tempdir}}, usually under
@@ -137,13 +128,13 @@
   mounted as \code{noexec}, environment variable \env{TMPDIR} may need
   to be set to a directory from which execution is allowed.
 }
+#endif
 
 \section{Packages using the methods package}{
   Packages that require the methods package and make use functions such
   as \code{\link{setMethod}} or \code{\link{setClass}}, should be
-  installed using lazy-loading (or, deprecated, by creating a binary
-  image): use the field \code{LazyLoad} in the \file{DESCRIPTION} file
-  to ensure this.
+  installed using lazy-loading: use the field \code{LazyLoad} in the
+  \file{DESCRIPTION} file to ensure this.
 }
 
 \seealso{

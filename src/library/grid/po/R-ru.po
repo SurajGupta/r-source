@@ -3,15 +3,15 @@
 #
 # Copyright (C) 2008 The R Foundation
 # This file is distributed under the same license as the R package.
-# Alexey Shipunov <dactylorhiza at gmail> 2008
+# Alexey Shipunov <dactylorhiza at gmail> 2009
 #
 msgid ""
 msgstr ""
-"Project-Id-Version: R 2.9.0\n"
+"Project-Id-Version: R 2.10.0\n"
 "Report-Msgid-Bugs-To: bugs@r-project.org\n"
-"POT-Creation-Date: 2008-12-16 13:00\n"
-"PO-Revision-Date: 2009-03-28 22:27-0500\n"
-"Last-Translator: Alexey Shipunov <dactylorhiza@gmail.com>\n"
+"POT-Creation-Date: 2009-08-06 09:09\n"
+"PO-Revision-Date: 2009-10-15 02:19-0500\n"
+"Last-Translator: Alexey Shipunov <dactylorhiza at gmail>\n"
 "Language-Team: Russian\n"
 "MIME-Version: 1.0\n"
 "Content-Type: text/plain; charset=KOI8-R\n"
@@ -208,6 +208,9 @@ msgstr "Правильно лишь добавлять 'grob' к 'gTree'"
 msgid "It is only valid to add a child to a 'gTree'"
 msgstr "Правильно лишь добавлять 'child' к 'gTree'"
 
+msgid "'gPath' (%s) not found"
+msgstr "'gPath' (%s) не найден"
+
 msgid "It is only valid to remove a child from a 'gTree'"
 msgstr "Правильно лишь удалять 'child' из 'gTree'"
 
@@ -225,9 +228,6 @@ msgstr "Новый 'grob' должен иметь то же имя, как и старый 'grob'"
 
 msgid "Slot '%s' not found"
 msgstr "Слот '%s' не найден"
-
-msgid "'gPath' (%s) not found"
-msgstr "'gPath' (%s) не найден"
 
 msgid "gPath (%s) not found"
 msgstr "gPath (%s) не найден"
@@ -394,6 +394,9 @@ msgstr "Функция 'Summary' '%s' не имеет значения для единиц"
 msgid "Zero arguments where at least one expected"
 msgstr "Нет аргументов, ожидается хоть один"
 
+msgid "Cannot mix signs of indices"
+msgstr "Не могу смешивать знаки индексов"
+
 msgid "Index out of bounds (unit subsetting)"
 msgstr "Индекс за пределами (подмножество единиц)"
 
@@ -456,6 +459,12 @@ msgstr "Путь к оконнице должен должен содержать по меньшей мере одно имя оконниц
 
 msgid "Invalid viewport name(s)"
 msgstr "Неправильное име(на) оконницы"
+
+msgid "How did we get here?"
+msgstr "Как мы сюда попали?"
+
+msgid "Must start new page if showing leaves separately"
+msgstr "Если листья показываются отдельно, надо запустить новую страницу"
 
 msgid "Must specify at least one of 'x' or 'xscale'"
 msgstr "Надо задать по крайней мере одно из 'x' или 'xscale'"

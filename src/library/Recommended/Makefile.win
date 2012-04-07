@@ -7,14 +7,13 @@ include ../../../share/make/vars.mk
 include ../../gnuwin32/MkRules
 
 ## foo.ts is the timestamp for package foo;
-## foo.tgz is a symlink to foo_x.y-z.tar.gz in the source dir.
+## foo.tgz is a copy of foo_x.y-z.tar.gz.
 ## unfortunately package foo can be uninstalled and leave foo.ts
 
 ## For developers: A shell script, tools/rsync-recommended, updates
 ## packages from the CRAN master directory. 
 
-OBJECTS = $(R_PKGS_RECOMMENDED_SOURCES:=.ts)
-OBJECTS_SRC = $(R_PKGS_RECOMMENDED_SOURCES:=.tgz)
+OBJECTS = $(R_PKGS_RECOMMENDED:=.ts)
 
 CLEANFILES = $(OBJECTS) stamp-recommended
 
@@ -26,27 +25,22 @@ all: stamp-recommended
 stamp-recommended: $(OBJECTS)
 	@touch $@
 
-## need to allow parallel installs, modulo dependencies below
-INSTALL_OPTS=--pkglock --auto-zip --install-tests
-
-ifneq ($(strip $(USE_CHM)),TRUE)
-INSTALL_OPTS+=--no-chm
-endif
-
+## allow parallel installs, modulo dependencies below
+INSTALL_OPTS=--pkglock --install-tests --data-compress="xz"
 
 
 RCMD = ../../../bin/Rcmd
 
-## foo.tgz is a timestamp now, as symlinks fail.
 .tgz.ts:
 	@echo
 	@echo "----- installing recommended package" `basename $< .tgz`
-	$(RCMD) INSTALL $(INSTALL_OPTS) -l $(RHOME)/library `basename $< .tgz`_*.tar.gz
+	@$(RCMD) INSTALL $(INSTALL_OPTS) -l $(RHOME)/library `basename $< .tgz`_*.tar.gz
 	@touch $@
 
 clean:
 	@rm -f $(CLEANFILES)
 
 ## Hardcoded dependencies (see '../../../share/make/vars.mk')
-mgcv.ts: nlme.ts VR.ts
+mgcv.ts: nlme.ts MASS.ts
 nlme.ts: lattice.ts
+class.ts: MASS.ts

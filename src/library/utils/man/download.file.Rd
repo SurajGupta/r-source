@@ -4,7 +4,6 @@
 % Distributed under GPL 2 or later
 
 \name{download.file}
-\Rdversion{1.1}
 \alias{download.file}
 \concept{proxy}
 \concept{ftp}
@@ -49,11 +48,11 @@ download.file(url, destfile, method, quiet = FALSE, mode = "w",
   file as described by \code{url} from the internet and store it in
   \code{destfile}.
   The \code{url} must start with a scheme such as
-  \code{"http://"}, \code{"ftp://"} or \code{"file://"}.
+  \samp{http://}, \samp{ftp://} or \samp{file://}.
 
 #ifdef unix
   If \code{method = "auto"} is chosen (the default), the internal method
-  is chosen for \code{"file://"} URLs, and for the others provided
+  is chosen for \samp{file://} URLs, and for the others provided
   \code{\link{capabilities}("http/ftp")} is true (which it almost always
   is).  Otherwise methods \code{"wget"} and \code{"lynx"} are tried in turn.
 #endif
@@ -62,25 +61,25 @@ download.file(url, destfile, method, quiet = FALSE, mode = "w",
   is used on Windows.
 #endif
 
-  \code{cacheOK = FALSE} is useful for \code{"http://"} URLs, and will
+  \code{cacheOK = FALSE} is useful for \samp{http://} URLs, and will
   attempt to get a copy directly from the site rather than from an
   intermediate cache.  (Not all platforms support it.)
   It is used by \code{\link{available.packages}}.
 
   The remaining details apply to method \code{"internal"} only.
 
-  Note that \code{https://} connections are
+  Note that \samp{https://} connections are
 #ifdef unix
   not supported.
 #endif
 #ifdef windows
-  only supported if \code{--internet2} or \code{\link{setInternet2}(TRUE)}
-  was used (to make use of Internet
+  only supported if \option{--internet2} or
+  \code{\link{setInternet2}(TRUE)} was used (to make use of Internet
   Explorer internals), and then only if the certificate is considered to
   be valid.
 #endif
 
-  See \code{\link{url}} for how \code{"file://"} URLs are interpreted,
+  See \code{\link{url}} for how \samp{file://} URLs are interpreted,
   especially on Windows.  This function does decode encoded URLs.
 
   The timeout for many parts of the transfer can be set by the option

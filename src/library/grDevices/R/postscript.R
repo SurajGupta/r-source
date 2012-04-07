@@ -176,7 +176,7 @@ guessEncoding <- function(family)
                             "KOI8-R" = "KOI8-R.enc",
                             "KOI8-U" = "KOI8-U.enc",
                             "ISOLatin1.enc")
-                 else if(lc[1L] == "UTF-8" && capabilities("iconv"))
+                 else if(lc[1L] == "UTF-8")
                      switch(lc[2L],
                             "ISO8859-1" = "ISOLatin1.enc", # what about Euro?
                             "ISO8859-2" = "ISOLatin2.enc",
@@ -194,7 +194,7 @@ postscript <- function(file = ifelse(onefile, "Rplots.ps", "Rplot%03d.ps"),
                        onefile, family, title , fonts, encoding, bg, fg,
                        width, height, horizontal, pointsize,
                        paper, pagecentre, print.it, command, colormodel,
-                       useKerning)
+                       useKerning, fillOddEven)
 {
     ## do initialization if needed
     initPSandPDFfonts()
@@ -217,6 +217,7 @@ postscript <- function(file = ifelse(onefile, "Rplots.ps", "Rplot%03d.ps"),
     if(!missing(command)) new$command <- command
     if(!missing(colormodel)) new$colormodel <- colormodel
     if(!missing(useKerning)) new$useKerning <- useKerning
+    if(!missing(fillOddEven)) new$fillOddEven <- fillOddEven
 
     old <- check.options(new, name.opt = ".PostScript.Options", envir = .PSenv)
 
@@ -263,7 +264,8 @@ postscript <- function(file = ifelse(onefile, "Rplots.ps", "Rplot%03d.ps"),
               file, old$paper, old$family, old$encoding, old$bg, old$fg,
               old$width, old$height, old$horizontal, old$pointsize,
               onefile, old$pagecentre, old$print.it, old$command,
-              old$title, old$fonts, old$colormodel, old$useKerning)
+              old$title, old$fonts, old$colormodel, old$useKerning,
+              old$fillOddEven)
     # if .ps.prolog is searched for and fails, NULL got returned.
     invisible()
 }
@@ -289,7 +291,7 @@ xfig <- function (file = ifelse(onefile,"Rplots.fig", "Rplot%03d.fig"),
 pdf <- function(file = ifelse(onefile, "Rplots.pdf", "Rplot%03d.pdf"),
                 width, height, onefile, family, title, fonts, version,
                 paper, encoding, bg, fg, pointsize, pagecentre, colormodel,
-                useDingbats, useKerning)
+                useDingbats, useKerning, fillOddEven)
 {
     ## do initialization if needed
     initPSandPDFfonts()
@@ -311,6 +313,7 @@ pdf <- function(file = ifelse(onefile, "Rplots.pdf", "Rplot%03d.pdf"),
     if(!missing(colormodel)) new$colormodel <- colormodel
     if(!missing(useDingbats)) new$useDingbats <- useDingbats
     if(!missing(useKerning)) new$useKerning <- useKerning
+    if(!missing(fillOddEven)) new$fillOddEven <- fillOddEven
 
     old <- check.options(new, name.opt = ".PDF.Options", envir = .PSenv)
 
@@ -360,7 +363,7 @@ pdf <- function(file = ifelse(onefile, "Rplots.pdf", "Rplot%03d.pdf"),
               file, old$paper, old$family, old$encoding, old$bg, old$fg,
               old$width, old$height, old$pointsize, onefile, old$pagecentre,
               old$title, old$fonts, version[1L], version[2L],
-              old$colormodel, old$useDingbats, old$useKerning)
+              old$colormodel, old$useDingbats, old$useKerning, old$fillOddEven)
     invisible()
 }
 
@@ -379,6 +382,8 @@ pdf <- function(file = ifelse(onefile, "Rplots.pdf", "Rplot%03d.pdf"),
 "/p1  { stroke } def",
 "/p2  { gsave bg fill grestore newpath } def",
 "/p3  { gsave bg fill grestore stroke } def",
+"/p6  { gsave bg eofill grestore newpath } def",
+"/p7  { gsave bg eofill grestore stroke } def",
 "/t   { 5 -2 roll moveto gsave rotate",
 "       1 index stringwidth pop",
 "       mul neg 0 rmoveto show grestore } def",
@@ -458,6 +463,7 @@ checkFontInUse <- function(names, fontDBname) {
         if (.Call(Type1FontInUse, i, isPDF(fontDBname))
             || .Call(CIDFontInUse, i, isPDF(fontDBname)))
             stop(gettextf("font %s already in use", i), domain = NA)
+    invisible()
 }
 
 setFonts <- function(fonts, fontNames, fontDBname) {
@@ -630,7 +636,8 @@ assign(".PostScript.Options",
 	 print.it   = FALSE,
 	 command    = "default",
          colormodel = "rgb",
-         useKerning = TRUE), envir = .PSenv)
+         useKerning = TRUE,
+         fillOddEven= FALSE), envir = .PSenv)
 assign(".PostScript.Options.default",
        get(".PostScript.Options", envir = .PSenv),
        envir = .PSenv)
@@ -651,7 +658,8 @@ assign(".PDF.Options",
 	 pagecentre = TRUE,
          colormodel = "rgb",
          useDingbats = TRUE,
-         useKerning = TRUE), envir = .PSenv)
+         useKerning = TRUE,
+         fillOddEven = FALSE), envir = .PSenv)
 assign(".PDF.Options.default",
        get(".PDF.Options", envir = .PSenv),
        envir = .PSenv)

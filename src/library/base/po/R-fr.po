@@ -7,8 +7,8 @@ msgid ""
 msgstr ""
 "Project-Id-Version: R 2.2.1\n"
 "Report-Msgid-Bugs-To: bugs@r-project.org\n"
-"POT-Creation-Date: 2009-06-14 08:17\n"
-"PO-Revision-Date: 2009-03-29 21:29+0100\n"
+"POT-Creation-Date: 2009-10-09 08:02\n"
+"PO-Revision-Date: 2009-10-10 13:35+0100\n"
 "Last-Translator: Philippe Grosjean <phgrosjean@sciviews.org>\n"
 "Language-Team: French <R-core@r-project.org>\n"
 "MIME-Version: 1.0\n"
@@ -176,9 +176,6 @@ msgstr "'x' doit être un tableau ayant au moins 2 dimensions"
 msgid "invalid 'dims'"
 msgstr "'dims' incorrect"
 
-msgid "extra arguments ignored:"
-msgstr "l'argument supplémentaire sera ignoré :"
-
 msgid "bad handler specification"
 msgstr "mauvaise définition de manipulateur (handler)"
 
@@ -209,6 +206,9 @@ msgstr "seuls des objets de mode caractères peuvent être écrits"
 msgid "supplied timeout must be NULL or a non-negative number"
 msgstr "la valeur de délai maximal doit être soit NULL, soit un nombre postif"
 
+msgid "'from' must be raw or character"
+msgstr "'from' doit être 'raw' ou une chaîne de caractères"
+
 msgid "'x' must be numeric"
 msgstr "'x' doit être numérique"
 
@@ -233,10 +233,10 @@ msgstr "les valeurs manquantes dans 'row.names' ne sont pas autorisées"
 msgid "invalid 'dimnames' given for data frame"
 msgstr "'dimnames' incorrect pour ce tableau de données"
 
-msgid "cannot coerce class \"%s\" into a data.frame"
+msgid "cannot coerce class %s into a data.frame"
 msgstr ""
-"impossible de convertir automatiquement \"%s\" en un tableau de données "
-"(data.frame)"
+"impossible de convertir automatiquement la classe  %s en un tableau de "
+"données (data.frame)"
 
 msgid "invalid 'row.names', length %d for a data frame with %d rows"
 msgstr ""
@@ -280,11 +280,20 @@ msgid "row names were found from a short variable and have been discarded"
 msgstr ""
 "les noms de lignes sont trouvés dans une variable courte et ont été éliminés"
 
+msgid "named arguments other than 'drop' are discouraged"
+msgstr "les arguments nommés autres que 'drop' ne sont pas conseillés"
+
 msgid "drop argument will be ignored"
 msgstr "l'argument 'drop' sera ignoré"
 
 msgid "undefined columns selected"
 msgstr "colonnes non définies sélectionnées"
+
+msgid "named arguments other than 'exact' are discouraged"
+msgstr "les arguments nommés autres que 'exact' ne sont pas conseillés"
+
+msgid "named arguments are discouraged"
+msgstr "les arguments nommés ne sont pas conseillés"
 
 msgid "rhs is the wrong length for indexing by a logical matrix"
 msgstr ""
@@ -560,10 +569,10 @@ msgstr ""
 
 msgid "'nrow' or 'ncol' cannot be specified when 'x' is a matrix"
 msgstr ""
+"'nrow' et 'ncol' ne peuvent pas être spécifiés lorsque 'x' est une matrice"
 
-#, fuzzy
 msgid "'x' is an array, but not 1D."
-msgstr "le premier argument est un tableau, mais pas une matrice"
+msgstr "'x' est un tableau, mais pas à une dimension."
 
 msgid "only matrix diagonals can be replaced"
 msgstr "seules les diagonales des matrices peuvent être remplacées"
@@ -609,9 +618,6 @@ msgstr "matrice 0 x 0"
 
 msgid "non-square matrix in 'eigen'"
 msgstr "la matrice n'est pas carrée dans 'eigen'"
-
-msgid "numeric or complex values required in 'eigen'"
-msgstr "valeurs numériques ou complexes nécessaires dans 'eigen'"
 
 msgid "'ch' returned code %d in 'eigen'"
 msgstr "'ch' a renvoyé le code %d dans 'eigen'"
@@ -751,6 +757,9 @@ msgstr "composantes de distance sans correspondance ignorées"
 msgid "'max.distance' components must be non-negative"
 msgstr "les composantes 'max.distance' ne peuvent être négatives"
 
+msgid "norm '%s' currently always uses exact = FALSE"
+msgstr "norm '%s' utilise systématiquement 'exact = FALSE' pour l'instant"
+
 msgid "triangular matrix should be square"
 msgstr "la matrice triangulaire doit être carrée"
 
@@ -767,6 +776,29 @@ msgstr ""
 
 msgid "package '%s' was built under R version %s"
 msgstr "le package '%s' a été compilé avec la version R %s"
+
+msgid ""
+"package '%s' was built under R version %s and help will not work correctly\n"
+"Please re-install it"
+msgstr ""
+"le package '%s' a été compilé sous R version %s et l'aide ne fonctionnera "
+"pas correctement\n"
+"Veuillez le réinstaller, s'il-vous-plait"
+
+msgid ""
+"package '%s' was built under R version %s and help may not work correctly"
+msgstr ""
+"le package '%s' a été compilé avec la version R %s et l'aide ne fonctionnera "
+"pas correctement"
+
+#, fuzzy
+msgid ""
+"package '%s' claims to be built under R version %s but is missing some help "
+"files and needs to be re-installed"
+msgstr ""
+"le package '%s' a été compilé sous R version %s et l'aide ne fonctionnera "
+"pas correctement\n"
+"Veuillez le réinstaller, s'il-vous-plait"
 
 msgid "package '%s' was built for %s"
 msgstr "le package '%s' a été compilé pour %s"
@@ -1035,9 +1067,6 @@ msgstr "Une valeur logique unique est attendue pour l'état de l'objet S4"
 
 msgid "invalid to change the storage mode of a factor"
 msgstr "le mode de stockage d'un objet \"factor\" ne peut être modifié"
-
-msgid "package '%s' has been merged into '%s'"
-msgstr "le package '%s' a été fusionné avec '%s'"
 
 msgid "'%s' is not an exported object from 'namespace:%s'"
 msgstr "'%s' n'est pas un objet exporté depuis 'namespace:%s'"
@@ -1421,9 +1450,6 @@ msgstr "'x' et 'y' doivent avoir la même longueur"
 msgid "incorrect values of 'indent' and 'width'"
 msgstr "valeurs incorrectes de 'indent' et 'width'"
 
-msgid "argument to 'svd' must be numeric"
-msgstr "l'argument pour 'svd' doit être numérique"
-
 msgid "'nv' must be 0 or ncol(x)"
 msgstr "'nv' doit être 0 ou ncol(x)"
 
@@ -1609,6 +1635,18 @@ msgid "Warning message:\n"
 msgid_plural "Warning messages:\n"
 msgstr[0] "Message d'avis :\n"
 msgstr[1] "Messages d'avis :\n"
+
+#~ msgid "extra arguments ignored:"
+#~ msgstr "l'argument supplémentaire sera ignoré :"
+
+#~ msgid "numeric or complex values required in 'eigen'"
+#~ msgstr "valeurs numériques ou complexes nécessaires dans 'eigen'"
+
+#~ msgid "argument to 'svd' must be numeric"
+#~ msgstr "l'argument pour 'svd' doit être numérique"
+
+#~ msgid "package '%s' has been merged into '%s'"
+#~ msgstr "le package '%s' a été fusionné avec '%s'"
 
 #~ msgid "package 'lqs' has been moved back to package 'MASS'"
 #~ msgstr "le package 'lqs' est maintenant à nouveau dans le package 'MASS'"

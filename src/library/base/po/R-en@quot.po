@@ -22,10 +22,10 @@
 #
 msgid ""
 msgstr ""
-"Project-Id-Version: R 2.9.1\n"
+"Project-Id-Version: R 2.10.0\n"
 "Report-Msgid-Bugs-To: bugs@r-project.org\n"
-"POT-Creation-Date: 2009-06-16 12:28\n"
-"PO-Revision-Date: 2009-06-16 12:28\n"
+"POT-Creation-Date: 2009-10-09 08:02\n"
+"PO-Revision-Date: 2009-10-09 08:02\n"
 "Last-Translator: Automatically generated\n"
 "Language-Team: none\n"
 "MIME-Version: 1.0\n"
@@ -189,9 +189,6 @@ msgstr "‘x’ must be an array of at least two dimensions"
 msgid "invalid 'dims'"
 msgstr "invalid ‘dims’"
 
-msgid "extra arguments ignored:"
-msgstr "extra arguments ignored:"
-
 msgid "bad handler specification"
 msgstr "bad handler specification"
 
@@ -222,6 +219,9 @@ msgstr "can only write character objects"
 msgid "supplied timeout must be NULL or a non-negative number"
 msgstr "supplied timeout must be NULL or a non-negative number"
 
+msgid "'from' must be raw or character"
+msgstr "‘from’ must be raw or character"
+
 msgid "'x' must be numeric"
 msgstr "‘x’ must be numeric"
 
@@ -246,8 +246,8 @@ msgstr "missing values in ‘row.names’ are not allowed"
 msgid "invalid 'dimnames' given for data frame"
 msgstr "invalid ‘dimnames’ given for data frame"
 
-msgid "cannot coerce class \"%s\" into a data.frame"
-msgstr "cannot coerce class “%s” into a data.frame"
+msgid "cannot coerce class %s into a data.frame"
+msgstr "cannot coerce class %s into a data.frame"
 
 msgid "invalid 'row.names', length %d for a data frame with %d rows"
 msgstr "invalid 'row.names', length %d for a data frame with %d rows"
@@ -288,11 +288,20 @@ msgstr "row names supplied are of the wrong length"
 msgid "row names were found from a short variable and have been discarded"
 msgstr "row names were found from a short variable and have been discarded"
 
+msgid "named arguments other than 'drop' are discouraged"
+msgstr "named arguments other than ‘drop’ are discouraged"
+
 msgid "drop argument will be ignored"
 msgstr "drop argument will be ignored"
 
 msgid "undefined columns selected"
 msgstr "undefined columns selected"
+
+msgid "named arguments other than 'exact' are discouraged"
+msgstr "named arguments other than ‘exact’ are discouraged"
+
+msgid "named arguments are discouraged"
+msgstr "named arguments are discouraged"
 
 msgid "rhs is the wrong length for indexing by a logical matrix"
 msgstr "rhs is the wrong length for indexing by a logical matrix"
@@ -595,9 +604,6 @@ msgstr "0 x 0 matrix"
 msgid "non-square matrix in 'eigen'"
 msgstr "non-square matrix in ‘eigen’"
 
-msgid "numeric or complex values required in 'eigen'"
-msgstr "numeric or complex values required in ‘eigen’"
-
 msgid "'ch' returned code %d in 'eigen'"
 msgstr "‘ch’ returned code %d in ‘eigen’"
 
@@ -730,6 +736,9 @@ msgstr "unknown match distance components ignored"
 msgid "'max.distance' components must be non-negative"
 msgstr "‘max.distance’ components must be non-negative"
 
+msgid "norm '%s' currently always uses exact = FALSE"
+msgstr "norm ‘%s’ currently always uses exact = FALSE"
+
 msgid "triangular matrix should be square"
 msgstr "triangular matrix should be square"
 
@@ -744,6 +753,25 @@ msgstr "package ‘%s’ was built before R 2.0.0: please re-install it"
 
 msgid "package '%s' was built under R version %s"
 msgstr "package ‘%s’ was built under R version %s"
+
+msgid ""
+"package '%s' was built under R version %s and help will not work correctly\n"
+"Please re-install it"
+msgstr ""
+"package ‘%s’ was built under R version %s and help will not work correctly\n"
+"Please re-install it"
+
+msgid ""
+"package '%s' was built under R version %s and help may not work correctly"
+msgstr ""
+"package ‘%s’ was built under R version %s and help may not work correctly"
+
+msgid ""
+"package '%s' claims to be built under R version %s but is missing some help "
+"files and needs to be re-installed"
+msgstr ""
+"package ‘%s’ claims to be built under R version %s but is missing some help "
+"files and needs to be re-installed"
 
 msgid "package '%s' was built for %s"
 msgstr "package ‘%s’ was built for %s"
@@ -1006,9 +1034,6 @@ msgstr "Expected a single logical value for the S4 state flag"
 
 msgid "invalid to change the storage mode of a factor"
 msgstr "invalid to change the storage mode of a factor"
-
-msgid "package '%s' has been merged into '%s'"
-msgstr "package ‘%s’ has been merged into ‘%s’"
 
 msgid "'%s' is not an exported object from 'namespace:%s'"
 msgstr "‘%s’ is not an exported object from ‘namespace:%s’"
@@ -1380,9 +1405,6 @@ msgstr "‘x’ and ‘y’ must have the same length"
 
 msgid "incorrect values of 'indent' and 'width'"
 msgstr "incorrect values of ‘indent’ and ‘width’"
-
-msgid "argument to 'svd' must be numeric"
-msgstr "argument to ‘svd’ must be numeric"
 
 msgid "'nv' must be 0 or ncol(x)"
 msgstr "‘nv’ must be 0 or ncol(x)"

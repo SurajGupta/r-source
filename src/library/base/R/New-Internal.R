@@ -31,7 +31,11 @@ try <- function(expr, silent = FALSE) {
             LONG <- 75L # to match value in errors.c
             msg <- conditionMessage(e)
             sm <- strsplit(msg, "\n")[[1L]]
-            if (14L + nchar(dcall, type="w") + nchar(sm[1L], type="w") > LONG)
+            w <- 14L + nchar(dcall, type="w") + nchar(sm[1L], type="w")
+            ## this could be NA if any of this is invalid in a MBCS
+            if(is.na(w))
+                w <-  14L + nchar(dcall, type="b") + nchar(sm[1L], type="b")
+            if (w > LONG)
                 prefix <- paste(prefix, "\n  ", sep = "")
         }
         else prefix <- "Error : "
@@ -235,15 +239,15 @@ encodeString <- function(x, width = 0, quote = "", na.encode = TRUE,
 
 l10n_info <- function() .Internal(l10n_info())
 
-iconv <- function(x, from = "", to = "", sub = NA)
+iconv <- function(x, from = "", to = "", sub = NA, mark = TRUE)
 {
     if(!is.character(x)) x <- as.character(x)
-    .Internal(iconv(x, from, to, as.character(sub)))
+    .Internal(iconv(x, from, to, as.character(sub), mark))
 }
 
 iconvlist <- function()
 {
-    int <- .Internal(iconv(NULL, "", "", ""))
+    int <- .Internal(iconv(NULL, "", "", "", TRUE))
     if(length(int)) return(sort.int(int))
     icfile <- system.file("iconvlist", package="utils")
     if(!nchar(icfile, type="bytes"))

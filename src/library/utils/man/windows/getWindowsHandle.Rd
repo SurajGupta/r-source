@@ -14,7 +14,7 @@ getWindowsHandle(which = "Console")
 }
 \arguments{
   \item{which}{A string (see below), or the number of a 
-  		graphics device window}
+                graphics device window}
 }
 \details{
   \code{getWindowsHandle} gets the Windows handle.
@@ -44,7 +44,7 @@ getWindowsHandle(which = "Console")
 \value{
   An external pointer holding the Windows handle, or \code{NULL}.
 }
-\seealso{\code{\link{getIdentification}}}
+\seealso{\code{\link{getIdentification}}, \code{\link{getWindowsHandles}}}
 \examples{
 getWindowsHandle()
 }

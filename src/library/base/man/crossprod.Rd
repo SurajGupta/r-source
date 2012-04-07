@@ -32,10 +32,11 @@ tcrossprod(x, y = NULL)
   row matrices, but their \code{\link{names}} are usually \bold{not}
   promoted to \code{\link{dimnames}}.  Hence, currently, the last
   example has empty dimnames.
-  %% Consider using a new optional argument, say 'make.names = NA'
-  %% {as in kronecker} with possible values  FALSE / NA / TRUE  where
-  %% FALSE gives empty dimnames; NA = current behavior; TRUE gives "as much as sensible"
 }
+%% Consider using a new optional argument, say 'make.names = NA'
+%% {as in kronecker} with possible values  FALSE / NA / TRUE  where
+%% FALSE gives empty dimnames; NA = current behavior; TRUE gives "as much as sensible"
+
 \references{
   Becker, R. A., Chambers, J. M. and Wilks, A. R. (1988)
   \emph{The New S Language}.
@@ -52,6 +53,11 @@ tcrossprod(as.matrix(x)) # is
 identical(tcrossprod(as.matrix(x)),
           crossprod(t(x)))
 tcrossprod(x)            # no dimnames
+
+m <- matrix(1:6, 2,3) ; v <- 1:3; v2 <- 2:1
+stopifnot(identical(tcrossprod(v, m), v \%*\% t(m)),
+          identical(tcrossprod(v, m), crossprod(v, t(m))),
+          identical(crossprod(m, v2), t(m) \%*\% v2))
 }
 \keyword{algebra}
 \keyword{array}

@@ -1,5 +1,4 @@
 \name{nonStructure-class}
-\Rdversion{1.1}
 \docType{class}
 \alias{nonStructure-class}
 \alias{Math,nonStructure-method}
@@ -20,14 +19,14 @@
   defined to contain \code{nonStructure}.
 
  If neither of these strategies applies, the class likely needs some
- methods of its own for \code{\linkk{Ops}}, \code{\link{Math}}, and/or
+ methods of its own for \code{\link{Ops}}, \code{\link{Math}}, and/or
  other generic functions. What is not usually a good idea is to allow
  such computations to drop down to the default, base code.  This is
  inconsistent with most definitions of such classes.}
 
 \section{Methods}{
  Methods are defined for operators and math functions (groups
- \code{\linkk{Ops}}, \code{\link{Math}} and  \code{\link{Math2}}.  In
+ \code{\link{Ops}}, \code{\link{Math}} and  \code{\link{Math2}}.  In
  all cases the result is an ordinary vector of the appropriate type.
 }
 \references{
@@ -36,7 +35,7 @@
   Springer.
 }
 \seealso{
-	 \code{\linkS4class{structure}}
+         \code{\linkS4class{structure}}
 }
 \examples{
 setClass("NumericNotStructure", contains = c("numeric","nonStructure"))

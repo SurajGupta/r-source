@@ -27,6 +27,7 @@ Copyright @copyright{} 1990 W.@: N.@: Venables@*
 Copyright @copyright{} 1992 W.@: N.@: Venables & D.@: M.@: Smith@*
 Copyright @copyright{} 1997 R.@: Gentleman & R.@: Ihaka@*
 Copyright @copyright{} 1997, 1998 M.@: Maechler@*
+Copyright @copyright{} 1997-- R Core Development Team@*
 @Rcopyright{1999}
 @end macro
 @end ifnottex
@@ -38,6 +39,7 @@ Copyright @copyright{} 1990 W.@: N.@: Venables
 Copyright @copyright{} 1992 W.@: N.@: Venables & D.@: M.@: Smith
 Copyright @copyright{} 1997 R.@: Gentleman & R.@: Ihaka
 Copyright @copyright{} 1997, 1998 M.@: Maechler
+Copyright @copyright{} 1997-- R Core Development Team@*
 @Rcopyright{1999}
 @end macro
 @end iftex
@@ -132,10 +134,10 @@ The current version of this document is @value{VERSION}.
 @unnumbered Preface
 
 This introduction to @R{} is derived from an original set of notes
-describing the @Sl{} and @SPLUS{} environments written by Bill Venables
-and David M. Smith (Insightful Corporation).  We have made a number of
-small changes to reflect differences between the @R{} and @Sl{}
-programs, and expanded some of the material.
+describing the @Sl{} and @SPLUS{} environments written in 1990--2 by
+Bill Venables and David M. Smith when at the University of Adelaide.  We
+have made a number of small changes to reflect differences between the
+@R{} and @Sl{} programs, and expanded some of the material.
 
 We would like to extend warm thanks to Bill Venables (and David Smith)
 for granting permission to distribute this modified version of the notes
@@ -7044,16 +7046,26 @@ Check add-on packages.
 @item Rprof
 Post-process @R{} profiling files.
 @item Rdconv
-Convert Rd format to various other formats, including @HTML{}, Nroff,
-@LaTeX{}, plain text, and S documentation format.
+@itemx Rd2txt
+Convert Rd format to various other formats, including @HTML{}, @LaTeX{},
+plain text, and extracting the examples.  @code{Rd2txt} can be used as
+shorthand for @code{Rd2txt -t txt}.
 @item Rd2dvi
-Convert Rd format to DVI/PDF.
-@item Rd2txt
-Convert Rd format to text.
+@itemx Rd2pdf
+Convert Rd format to DVI/PDF.  @code{Rd2pdf} can be used as shorthand
+for @code{Rd2dvi --pdf}.
 @item Sd2Rd
 Convert S documentation to Rd format.
+@item Stangle
+Extract S/R code from Sweave documentation
+@item Sweave
+Process Sweave documentation
+@item Rdiff
+Diff @R{} output ignoring headers etc
 @item config
 Obtain configuration information.
+@item javareconf
+(Unix only) Update the Java configuration variables
 @end table
 
 Use
@@ -7065,6 +7077,20 @@ R CMD @var{command} --help
 @noindent
 to obtain usage information for each of the tools accessible via the
 @code{R CMD} interface.
+
+In addition, you can use
+
+@example
+R CMD @var{cmd} @var{args}
+@end example
+
+@noindent
+for any other executable @command{@var{cmd}} on the path: this is useful
+to have the same environment as @R{} or the specific commands run under,
+for example to run @command{ldd} or @command{pdflatex}.  Under a
+Unix-alike, if @var{cmd} is @samp{perl} or @samp{awk} it is replaced by
+the full path to the Perl or AWK command found when @R{} was configured.
+
 
 @node Invoking R under Windows, Invoking R under Mac OS X, Invoking R from the command line, Invoking R
 @appendixsec Invoking R under Windows
@@ -7121,26 +7147,28 @@ Enable the ``Break to debugger'' menu item in @code{Rgui}, and trigger
 a break to the debugger during command line processing.
 @end table
 
-In Windows with @code{R CMD} you may also specify your own @file{*.bat}
-or @file{*.exe} file instead of one of the built-in commands.  It will
-be run with several environment variables set appropriately, including
-@env{R_HOME}, @env{R_VERSION}, @env{R_CMD}, @env{R_OSTYPE}, @env{PATH},
-@env{PERL5LIB}, and @env{TEXINPUTS}.  For example, if you already have
-@file{latex.exe} on your path, then
+In Windows with @code{R CMD} you may also specify your own @file{.bat},
+@file{.exe}, @file{.sh} or @file{.pl} file.  It will be run under the
+appropriate interpreter (Perl for @file{.pl}) with several environment
+variables set appropriately, including @env{R_HOME}, @env{R_VERSION},
+@env{R_CMD}, @env{R_OSTYPE}, @env{PATH}, @env{PERL5LIB}, and
+@env{TEXINPUTS}.  For example, if you already have @file{latex.exe} on
+your path, then
 
 @example
 R CMD latex.exe mydoc
 @end example
 @noindent
 will run @LaTeX{} on @file{mydoc.tex}, with the path to @R{}'s
-@file{share/texmf} macros appended to @env{TEXINPUTS}.
+@file{share/texmf} macros appended to @env{TEXINPUTS}.  (Unfortunately,
+this does not help with the MiKTeX build of @LaTeX{}.)
 
 @node Invoking R under Mac OS X, Scripting with R, Invoking R under Windows, Invoking R
 @appendixsec Invoking R under Mac OS X
 
-There are two ways to run @R{} under Mac OS X.  Within a Terminal.app
-window by invoking @code{R}, the methods described in the previous
-sections apply.  There is also console-based GUI (@code{R.app}) that by
+There are two ways to run @R{} under Mac OS X.  Within a @code{Terminal.app}
+window by invoking @code{R}, the methods described in the first
+subsection apply.  There is also console-based GUI (@code{R.app}) that by
 default is installed in the @code{Applications} folder on your
 system.  It is a standard double-clickable Mac OS X application.
 

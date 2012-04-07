@@ -1,6 +1,6 @@
 % File src/library/base/man/writeLines.Rd
 % Part of the R package, http://www.R-project.org
-% Copyright 1995-2007 R Core Development Team
+% Copyright 1995-2009 R Core Development Team
 % Distributed under GPL 2 or later
 
 \name{writeLines}
@@ -10,13 +10,14 @@
   Write text lines to a connection.
 }
 \usage{
-writeLines(text, con = stdout(), sep = "\n")
+writeLines(text, con = stdout(), sep = "\n", useBytes = FALSE)
 }
 \arguments{
   \item{text}{A character vector}
   \item{con}{A connection object or a character string.}
   \item{sep}{character. A string to be written to the connection after
     each line of text.}
+  \item{useBytes}{logical.  See \sQuote{Details}.}
 }
 \details{
   If the \code{con} is a character string, the function calls
@@ -33,6 +34,14 @@ writeLines(text, con = stdout(), sep = "\n")
   a binary connection and specify the precise value you want written to
   the file in \code{sep}.  For even more control, use
   \code{\link{writeChar}} on a binary connection.
+
+  \code{useBytes} is for expert use.  Normally (when false) character
+  strings with marked encodings are converted to the current encoding
+  before being passed to the connection (which might do further
+  re-encoding).  \code{useBytes = TRUE} suppresses the re-encoding of
+  marked strings so they are passed byte-by-byte to the connection.:
+  this can be useful when strings have already been re-encoded by
+  e.g. \code{\link{iconv}}.
 }
 \seealso{
   \code{\link{connections}}, \code{\link{writeChar}}, \code{\link{writeBin}},

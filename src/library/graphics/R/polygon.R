@@ -21,7 +21,7 @@
 
 polygon <-
   function(x, y = NULL, density = NULL, angle = 45,
-           border = NULL, col = NA, lty = par("lty"), ...)
+           border = NULL, col = NA, lty = par("lty"), ..., fillOddEven=FALSE)
 {
     ## FIXME: remove this eventually
     ..debug.hatch <- FALSE
@@ -59,7 +59,7 @@ polygon <-
 
             cross <- halfplane[-1L] - halfplane[-length(halfplane)]
             does.cross <- cross != 0
-            if (!any(does.cross)) return(invisible(FALSE)) # nothing to draw?
+            if (!any(does.cross)) return() # nothing to draw?
 
             ## calculate where crossings occur
 
@@ -78,11 +78,15 @@ polygon <-
             tsort <- t[o]
 
             ## we draw the part of line from t[i] to t[i+1] whenever it lies
-            ##   "inside" the polygon --- we define this to mean we crossed
+            ##   "inside" the polygon --- the definition of this depends on
+            ##   fillOddEven:  if FALSE, we crossed
             ##   unequal numbers of left-to-right and right-to-left polygon
-            ##   segments to get there
+            ##   segments to get there.  if TRUE, an odd number of crossings.
+            ##
 
-            drawline <- cumsum(cross[does.cross][o]) != 0
+	    crossings <- cumsum(cross[does.cross][o])
+	    if (fillOddEven) crossings <- crossings %% 2
+            drawline <- crossings != 0
 
             ## draw those segments
 
@@ -109,7 +113,7 @@ polygon <-
 
             if (par("xlog") || par("ylog")) {
                 warning("cannot hatch with logarithmic scale active")
-                return(invisible(FALSE))
+                return()
             }
             usr <- par("usr"); pin <- par("pin")
 
@@ -223,7 +227,7 @@ polygon <-
         ## process multiple polygons separated by NAs
 
         start <- 1
-        ends <- c((1L:length(xy$x))[is.na(xy$x) | is.na(xy$y)], length(xy$x) + 1)
+        ends <- c(seq_along(xy$x)[is.na(xy$x) | is.na(xy$y)], length(xy$x) + 1)
 
         num.polygons <- length(ends)
         col <- rep(col, length.out = num.polygons)

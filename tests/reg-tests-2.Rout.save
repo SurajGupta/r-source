@@ -1,5 +1,5 @@
 
-R version 2.9.0 Patched (2009-05-20 r48584)
+R version 2.10.0 Under development (unstable) (2009-08-05 r49069)
 Copyright (C) 2009 The R Foundation for Statistical Computing
 ISBN 3-900051-07-0
 
@@ -1027,9 +1027,9 @@ Step:  AIC=71.35
 cbind(X, M) ~ M.user + Temp + M.user:Temp
 
               Df Deviance    AIC
-<none>              5.656 71.354
-- M.user:Temp  1    8.444 72.142
-+ Soft         2    5.495 75.193
+<none>             5.6560 71.354
+- M.user:Temp  1   8.4440 72.142
++ Soft         2   5.4952 75.193
 
 Call:  glm(formula = cbind(X, M) ~ M.user + Temp + M.user:Temp, family = binomial,      data = detg1) 
 
@@ -1499,8 +1499,9 @@ x    1  2
 > 
 > ## Chong Gu 2002-Feb-8: `.' not expanded in drop1
 > lab <- dimnames(HairEyeColor)
-> HairEye <- cbind(expand.grid(Hair=lab$Hair, Eye=lab$Eye, Sex=lab$Sex),
-+                  Fr=as.vector(HairEyeColor))
+> HairEye <- cbind(expand.grid(Hair=lab$Hair, Eye=lab$Eye, Sex=lab$Sex,
++ 			     stringsAsFactors = TRUE),
++ 		 Fr = as.vector(HairEyeColor))
 > HairEye.fit <- glm(Fr ~ . ^2, poisson, HairEye)
 > drop1(HairEye.fit)
 Single term deletions
@@ -1508,10 +1509,10 @@ Single term deletions
 Model:
 Fr ~ (Hair + Eye + Sex)^2
          Df Deviance    AIC
-<none>          6.76 191.64
-Hair:Eye  9   156.68 323.56
-Hair:Sex  3    18.33 197.21
-Eye:Sex   3    11.76 190.64
+<none>         6.761 191.64
+Hair:Eye  9  156.678 323.56
+Hair:Sex  3   18.327 197.21
+Eye:Sex   3   11.764 190.64
 > ## broken around 1.2.1 it seems.
 > 
 > 
@@ -2249,20 +2250,20 @@ Start:  AIC=26.94
 y ~ x1 + x2 + x3 + x4
 
        Df Sum of Sq    RSS    AIC
-- x3    1     0.109 47.973 24.974
-- x4    1     0.247 48.111 25.011
-- x2    1     2.972 50.836 25.728
+- x3    1    0.1091 47.973 24.974
+- x4    1    0.2470 48.111 25.011
+- x2    1    2.9725 50.836 25.728
 <none>              47.864 26.944
-- x1    1    25.951 73.815 30.576
+- x1    1   25.9509 73.815 30.576
 
 Step:  AIC=24.97
 y ~ x1 + x2 + x4
 
        Df Sum of Sq    RSS    AIC
-<none>               47.97  24.97
-- x4    1      9.93  57.90  25.42
-- x2    1     26.79  74.76  28.74
-- x1    1    820.91 868.88  60.63
+<none>               47.97 24.974
+- x4    1      9.93  57.90 25.420
+- x2    1     26.79  74.76 28.742
+- x1    1    820.91 868.88 60.629
 
 Call:
 lm(formula = y ~ x1 + x2 + x4, data = d2)
@@ -2572,8 +2573,8 @@ Residual standard error: 0.5235 on 10 degrees of freedom
 Analysis of Variance Table
 
 Response: y
-          Df  Sum Sq Mean Sq F value Pr(>F)
-Residuals 10 2.74036 0.27404               
+          Df Sum Sq Mean Sq F value Pr(>F)
+Residuals 10 2.7404 0.27404               
 > predict(fit)
  1  2  3  4  5  6  7  8  9 10 
  0  0  0  0  0  0  0  0  0  0 
@@ -2670,8 +2671,8 @@ Residual standard error: 0.5235 on 10 degrees of freedom
 Analysis of Variance Table
 
 Response: y
-          Df  Sum Sq Mean Sq F value Pr(>F)
-Residuals 10 2.74036 0.27404               
+          Df Sum Sq Mean Sq F value Pr(>F)
+Residuals 10 2.7404 0.27404               
 > predict(fit)
  1  2  3  4  5  6  7  8  9 10 
  0  0  0  0  0  0  0  0  0  0 
@@ -2875,7 +2876,7 @@ Terms added sequentially (first to last)
 
      Df Deviance Resid. Df Resid. Dev
 NULL                    10     2.7404
-x     0   0.0000        10     2.7404
+x     0        0        10     2.7404
 > predict(fit)
  1  2  3  4  5  6  7  8  9 10 
  0  0  0  0  0  0  0  0  0  0 
@@ -3714,8 +3715,8 @@ f1     2 483.96  241.98
 f1:f2  4 869.69  217.42
 
 Error: Within
-          Df  Sum Sq Mean Sq F value Pr(>F)
-Residuals 42 29204.1   695.3               
+          Df Sum Sq Mean Sq F value Pr(>F)
+Residuals 42  29204  695.34               
 > sample.aov <- aov(dep.variable ~ f1 * f2 + Error(subject/(f2+f1)), data=sample.df)
 Warning message:
 In aov(dep.variable ~ f1 * f2 + Error(subject/(f2 + f1)), data = sample.df) :
@@ -3769,8 +3770,8 @@ f1     2 483.96  241.98
 f1:f2  4 869.69  217.42
 
 Error: Within
-          Df  Sum Sq Mean Sq F value Pr(>F)
-Residuals 42 29204.1   695.3               
+          Df Sum Sq Mean Sq F value Pr(>F)
+Residuals 42  29204  695.34               
 > ## failed in 1.8.1
 > 
 > 
@@ -4422,9 +4423,9 @@ Single term deletions
 
 Model:
 y ~ x
-       Df Sum of Sq     RSS     AIC
-<none>              20.1913  5.1555
-x       1    1.4798 21.6711  4.4993
+       Df Sum of Sq    RSS    AIC
+<none>              20.191 5.1555
+x       1    1.4798 21.671 4.4993
 > res <-  try(stats:::drop1.default(fit))
 Error in stats:::drop1.default(fit) : 
   number of rows in use has changed: remove missing values?
@@ -4434,9 +4435,9 @@ Single term additions
 
 Model:
 y ~ x
-       Df Sum of Sq     RSS     AIC
-<none>              17.6049  3.6005
-x2      1    0.0117 17.5931  5.5885
+       Df Sum of Sq    RSS    AIC
+<none>              17.605 3.6005
+x2      1  0.011746 17.593 5.5885
 Warning message:
 In add1.lm(fit, ~. + x2) : using the 18/19 rows from a combined fit
 > res <-  try(stats:::add1.default(fit, ~ . +x2))
@@ -4644,9 +4645,9 @@ Single term additions
 
 Model:
 y ~ 1
-       Df Sum of Sq     RSS     AIC
-<none>               6.3161 -2.5948
-z       1    0.0003  6.3158 -0.5953
+       Df  Sum of Sq    RSS      AIC
+<none>               6.3161 -2.59479
+z       1 0.00029765 6.3158 -0.59526
 > anova(lm1, lm2)
 Analysis of Variance Table
 
@@ -4662,17 +4663,17 @@ Single term additions
 
 Model:
 y ~ 1
-       Df Sum of Sq    RSS    AIC
-<none>              89.130 23.875
-z       1    82.814  6.316 -0.595
+       Df Sum of Sq    RSS     AIC
+<none>              89.130 23.8751
+z       1    82.814  6.316 -0.5953
 > drop1(lm2)
 Single term deletions
 
 Model:
 y ~ z
-       Df Sum of Sq    RSS    AIC
-<none>               6.316 -0.595
-z       1    82.814 89.130 23.875
+       Df Sum of Sq    RSS     AIC
+<none>               6.316 -0.5953
+z       1    82.814 89.130 23.8751
 > ## Last two ignored the offset in 2.1.1
 > 
 > 
@@ -6252,12 +6253,12 @@ Error in .C(sym$address, NULL) :
   Incorrect number of arguments (1), expecting 5 for prho
 > ## were OK
 > 
-> 
+> options(keep.source = TRUE)
 > ## $<- on pairlists failed to duplicate (from Felix Andrews,
 > ## https://stat.ethz.ch/pipermail/r-devel/2009-January/051698.html)
 > foo <- function(given = NULL) {
 +     callObj <- quote(callFunc())
-+     if (!is.null(given)) callObj$given <- given
++     if(!is.null(given)) callObj$given <- given
 +     if (is.null(given)) callObj$default <- TRUE
 +     callObj
 + }
@@ -6273,4 +6274,205 @@ callFunc(default = TRUE, given = TRUE)
 > foo()
 callFunc(default = TRUE)
 > ## altered foo() in 2.8.1.
+> 
+> ## Using  '#' flag in  sprintf():
+> forms <- c("%#7.5g","%#5.f", "%#7x", "%#5d", "%#9.0e")
+> nums <- list(-3.145, -31,   0xabc,  -123L, 123456)
+> rbind(mapply(sprintf, forms,               nums),
++       mapply(sprintf, sub("#", '', forms), nums))
+     %#7.5g    %#5.f   %#7x      %#5d    %#9.0e     
+[1,] "-3.1450" " -31." "  0xabc" " -123" "   1.e+05"
+[2,] " -3.145" "  -31" "    abc" " -123" "    1e+05"
+> ## gave an error in pre-release versions of 2.9.0
+> 
+> ## (auto)printing of functions {with / without source attribute},
+> ## including primitives
+> sink(con <- textConnection("of", "w")) ; c ; sink(NULL); close(con)
+> of2 <- capture.output(print(c))
+> stopifnot(identical(of2, of),
++           identical(of2, "function (..., recursive = FALSE)  .Primitive(\"c\")"))
+> ## ^^ would have failed up to R 2.9.x
+> foo
+function(given = NULL) {
+    callObj <- quote(callFunc())
+    if(!is.null(given)) callObj$given <- given
+    if (is.null(given)) callObj$default <- TRUE
+    callObj
+}
+> print(foo, useSource = FALSE)
+function (given = NULL) 
+{
+    callObj <- quote(callFunc(default = TRUE))
+    if (!is.null(given)) 
+        callObj$given <- given
+    if (is.null(given)) 
+        callObj$default <- TRUE
+    callObj
+}
+> attr(foo, "source") <- NULL
+> foo
+function (given = NULL) 
+{
+    callObj <- quote(callFunc(default = TRUE))
+    if (!is.null(given)) 
+        callObj$given <- given
+    if (is.null(given)) 
+        callObj$default <- TRUE
+    callObj
+}
+> (f <- structure(function(){}, note = "just a note",
++                 yada = function() "not the same"))
+function(){}
+attr(,"note")
+[1] "just a note"
+attr(,"yada")
+function () 
+"not the same"
+> print(f, useSource = FALSE) # must print attributes
+function () 
+{
+}
+attr(,"note")
+[1] "just a note"
+attr(,"yada")
+function () 
+"not the same"
+> print.function <- function(x, ...) { str(x,...); invisible(x) }
+> print.function
+function (x, ...)  
+ - attr(*, "source")= chr "function(x, ...) { str(x,...); invisible(x) }"
+> f
+function ()  
+ - attr(*, "source")= chr "function(){}"
+ - attr(*, "note")= chr "just a note"
+ - attr(*, "yada")=function ()  
+  ..- attr(*, "source")= chr "function() \"not the same\""
+> rm(print.function)
+> ## auto-printing and printing differed up to R 2.9.x
+> 
+> printCoefmat(cbind(0,1))
+     [,1] [,2]
+[1,]    0    1
+> ## would print NaN up to R 2.9.0
+> 
+> 
+> ## continuity correction for Kendall's tau.  Improves this example.
+> cor.test(c(1, 2, 3, 4, 5), c(8, 6, 7, 5, 3), method = "kendall",
++          exact = TRUE)
+
+	Kendall's rank correlation tau
+
+data:  c(1, 2, 3, 4, 5) and c(8, 6, 7, 5, 3) 
+T = 1, p-value = 0.08333
+alternative hypothesis: true tau is not equal to 0 
+sample estimates:
+ tau 
+-0.8 
+
+> cor.test(c(1, 2, 3, 4, 5), c(8, 6, 7, 5, 3), method = "kendall",
++          exact = FALSE)
+
+	Kendall's rank correlation tau
+
+data:  c(1, 2, 3, 4, 5) and c(8, 6, 7, 5, 3) 
+z = -1.9596, p-value = 0.05004
+alternative hypothesis: true tau is not equal to 0 
+sample estimates:
+ tau 
+-0.8 
+
+> cor.test(c(1, 2, 3, 4, 5), c(8, 6, 7, 5, 3), method = "kendall",
++          exact = FALSE, continuity = TRUE)
+
+	Kendall's rank correlation tau
+
+data:  c(1, 2, 3, 4, 5) and c(8, 6, 7, 5, 3) 
+z = -1.7146, p-value = 0.08641
+alternative hypothesis: true tau is not equal to 0 
+sample estimates:
+ tau 
+-0.8 
+
+> # and a little for Spearman's
+> cor.test(c(1, 2, 3, 4, 5), c(8, 6, 7, 5, 3), method = "spearman",
++          exact = TRUE)
+
+	Spearman's rank correlation rho
+
+data:  c(1, 2, 3, 4, 5) and c(8, 6, 7, 5, 3) 
+S = 38, p-value = 0.08333
+alternative hypothesis: true rho is not equal to 0 
+sample estimates:
+ rho 
+-0.9 
+
+> cor.test(c(1, 2, 3, 4, 5), c(8, 6, 7, 5, 3), method = "spearman",
++          exact = FALSE)
+
+	Spearman's rank correlation rho
+
+data:  c(1, 2, 3, 4, 5) and c(8, 6, 7, 5, 3) 
+S = 38, p-value = 0.03739
+alternative hypothesis: true rho is not equal to 0 
+sample estimates:
+ rho 
+-0.9 
+
+> cor.test(c(1, 2, 3, 4, 5), c(8, 6, 7, 5, 3), method = "spearman",
++          exact = FALSE, continuity = TRUE)
+
+	Spearman's rank correlation rho
+
+data:  c(1, 2, 3, 4, 5) and c(8, 6, 7, 5, 3) 
+S = 38, p-value = 0.09689
+alternative hypothesis: true rho is not equal to 0 
+sample estimates:
+ rho 
+-0.9 
+
+> ## Kendall case is wish of PR#13691
+> 
+> 
+> ## corrupt data frame, PR#13724
+> foo <- matrix(1:12, nrow = 3)
+> bar <- as.data.frame(foo)
+> val <- integer(0)
+> try(bar$NewCol <- val)
+Error in `$<-.data.frame`(`*tmp*`, "NewCol", value = integer(0)) : 
+  replacement has 0 rows, data has 3
+> # similar, not in the report
+> try(bar[["NewCol"]] <- val)
+Error in `[[<-.data.frame`(`*tmp*`, "NewCol", value = integer(0)) : 
+  replacement has 0 rows, data has 3
+> # [ ] is tricker, so just check the result is reasonable and prints
+> bar["NewCol"] <- val
+> bar[, "NewCol2"] <- val
+> bar[FALSE, "NewCol3"] <- val
+> bar
+  V1 V2 V3 V4 NewCol NewCol2 NewCol3
+1  1  4  7 10     NA      NA      NA
+2  2  5  8 11     NA      NA      NA
+3  3  6  9 12     NA      NA      NA
+> ## Succeeded but gave corrupt result in 2.9.0
+> 
+> 
+> ## Printing NA_complex_
+> m22 <- matrix(list(NA_complex_, 3, "A string", NA_complex_), 2,2)
+> print(m22)
+     [,1] [,2]      
+[1,] NA   "A string"
+[2,] 3    NA        
+> print(m22, na.print="<missing value>")
+     [,1]            [,2]           
+[1,] <missing value> "A string"     
+[2,] 3               <missing value>
+> ## used uninitialized variable in C, noticably Windows, for R <= 2.9.0
+> 
+> 
+> ## non-standard variable names in update etc
+> ## never guaranteed to work, requested by Sundar Dorai-Raj in
+> ## https://stat.ethz.ch/pipermail/r-devel/2009-July/054184.html
+> update(`a: b` ~ x, ~ . + y)
+`a: b` ~ x + y
+> ## 2.9.1 dropped backticks
 > 

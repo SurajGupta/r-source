@@ -30,7 +30,7 @@ as.table(x, \dots)
 is.table(x)
 
 \method{as.data.frame}{table}(x, row.names = NULL, \dots,
-              responseName = "Freq")
+              responseName = "Freq", stringsAsFactors = TRUE)
 }
 \arguments{
   \item{\dots}{one of more objects which can be interpreted as factors
@@ -51,6 +51,8 @@ is.table(x)
     frame.}
   \item{responseName}{The name to be used for the column of
     table entries, usually counts.}
+  \item{stringsAsFactors}{logical: should the classifying factors be
+    returned as factors (the default) or character vectors?}
 }
 \details{
   If the argument \code{dnn} is not supplied, the internal function
@@ -65,8 +67,8 @@ is.table(x)
   arguments.
 
   Both \code{exclude} and \code{useNA} operate on an "all or none"
-  basis. If you want to control the dimensions of a multiway table
-  separately, modify each argument using \code{factor} or \code{addNA}
+  basis.  If you want to control the dimensions of a multiway table
+  separately, modify each argument using \code{factor} or \code{addNA}.
 
   The \code{summary} method for class \code{"table"} (used for objects
   created by \code{table} or \code{\link{xtabs}}) which gives basic
@@ -76,7 +78,7 @@ is.table(x)
 }
 \value{
   \code{table()} returns a \emph{contingency table}, an object of
-  \code{\link[base]{class}} \code{"table"}, an array of integer values.
+  class \code{"table"}, an array of integer values.
   Note that unlike S the result is always an array, a 1D array if one
   factor is given.
 

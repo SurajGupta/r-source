@@ -44,18 +44,18 @@ gettextf(fmt, \dots, domain = NULL)
   specifications which operate on the arguments provided through
   \code{\dots}.  The allowed conversion specifications start with a
   \code{\%} and end with one of the letters in the set
-  \code{difeEgGsxXaA\%}.  These letters denote the following types:
+  \code{aAdifeEgGosxX\%}.  These letters denote the following types:
 
   \describe{
-    \item{\code{d, i, x, X}}{Integer value, \code{x} and \code{X}
-      being hexadecimal (using the same case for \code{a-f} as the code).
-      Numeric variables with exactly integer values will be coerced to
-      integer. Formats \code{d} and \code{i} can also be used for
-      logical variables, which will be converted to \code{0}, \code{1}
-      or \code{NA}.
+    \item{\code{d, i, o, x, X}}{Integer value, \code{o} being octal,
+      \code{x} and \code{X} being hexadecimal (using the same case for
+      \code{a-f} as the code).  Numeric variables with exactly integer
+      values will be coerced to integer. Formats \code{d} and \code{i}
+      can also be used for logical variables, which will be converted to
+      \code{0}, \code{1} or \code{NA}.
     }
     \item{\code{f}}{Double precision value, in \dQuote{\bold{f}ixed
-	point} decimal notation of the form "[-]mmm.ddd".  The number of
+        point} decimal notation of the form "[-]mmm.ddd".  The number of
       decimal places ("d") is specified by the precision: the default is 6;
       a precision of 0 suppresses the decimal point.  Non-finite values
       are converted to \code{NA}, \code{NaN} or (perhaps a sign followed
@@ -119,8 +119,6 @@ gettextf(fmt, \dots, domain = NULL)
     \item{\code{0}}{For numbers, pad to the field width with leading zeros.}
     \item{\code{#}}{specifies \dQuote{alternate output} for numbers, its
       action depending on the type:
-      %% This is from Kernighan & Ritchie, p. 243:
-      %% For \code{o}, the first digit will be zero.
       For \code{x} or \code{X}, \code{0x} or \code{0X} will be prefixed
       to a non-zero result.  For \code{e}, \code{e}, \code{f}, \code{g}
       and \code{G}, the output will always have a decimal point; for
@@ -150,6 +148,9 @@ gettextf(fmt, \dots, domain = NULL)
   Field widths and precisions of \code{\%s} conversions are interpreted
   as bytes, not characters, as described in the C standard.
 }
+%% (for #) This is from Kernighan & Ritchie, p. 243:
+%% For \code{o}, the first digit will be zero.
+
 
 \value{
   A character vector of length that of the longest input.  If any

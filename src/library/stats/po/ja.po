@@ -7,7 +7,7 @@ msgid ""
 msgstr ""
 "Project-Id-Version: R 2.1.1 \n"
 "Report-Msgid-Bugs-To: bugs@R-project.org\n"
-"POT-Creation-Date: 2008-12-16 13:00+0000\n"
+"POT-Creation-Date: 2009-10-05 14:06+0100\n"
 "PO-Revision-Date: 2008-09-30 10:57+0900 \n"
 "Last-Translator: takahashi <takahashi.kohske@gmail.com> \n"
 "Language-Team: RjpWiki Message Translation Team <mokada@md.tsukuba.ac.jp> \n"
@@ -24,15 +24,15 @@ msgstr " 移動中央値のバンド幅・バンド範囲(span)が n より大�
 msgid "probabilities outside [0,1] in qansari()"
 msgstr " qansari() 中で確率が [0,1] の範囲外です "
 
-#: approx.c:110
+#: approx.c:110 approx.c:142
 msgid "approx(): invalid f value"
 msgstr " approx()：不正な f 値"
 
-#: approx.c:115
+#: approx.c:115 approx.c:145
 msgid "approx(): invalid interpolation method"
 msgstr " approx()：不正な補間法 "
 
-#: approx.c:121
+#: approx.c:121 approx.c:151
 msgid "approx(): attempted to interpolate NA values"
 msgstr " approx()：NA値を補間しようとしました "
 
@@ -99,64 +99,64 @@ msgstr " 不正な vmethod です "
 msgid "Burg's algorithm failed to find partial correlation"
 msgstr " Burg のアルゴリズムが偏相関を見つけ損ないました "
 
-#: nls.c:103
+#: nls.c:97
 msgid "'control' must be a list"
 msgstr " 'control' はリストでなければなりません "
 
-#: nls.c:105
+#: nls.c:99
 msgid "'m' must be a list"
 msgstr " 'm' はリストでなければなりません "
 
-#: nls.c:111 nls.c:116 nls.c:121 nls.c:126 nls.c:131 nls.c:172 nls.c:177
-#: nls.c:182 nls.c:187 nls.c:192 nls.c:197
+#: nls.c:105 nls.c:110 nls.c:115 nls.c:120 nls.c:125 nls.c:166 nls.c:171
+#: nls.c:176 nls.c:181 nls.c:186 nls.c:191
 #, c-format
 msgid "'%s' absent"
 msgstr " '%s' がありません "
 
-#: nls.c:238
+#: nls.c:232
 msgid "singular gradient"
 msgstr " 勾配が特異です "
 
-#: nls.c:259
+#: nls.c:253
 #, c-format
 msgid "step factor %g reduced below 'minFactor' of %g"
 msgstr " step 因子 %g は %g の 'minFactor' 以下に縮小しました "
 
-#: nls.c:268
+#: nls.c:262
 #, c-format
 msgid "number of iterations exceeded maximum of %d"
 msgstr " 繰り返し数が最大値 %d を超えました "
 
-#: nls.c:273
+#: nls.c:267
 msgid "converged"
 msgstr " 収束しました "
 
-#: nls.c:294
+#: nls.c:288
 msgid "'theta' should be of type character"
 msgstr " 'theta' は文字型でなければなりません "
 
-#: nls.c:296 port.c:380
+#: nls.c:290 port.c:380
 msgid "use of NULL environment is defunct"
 msgstr " NULL 環境の使用は廃止されました "
 
-#: nls.c:300
+#: nls.c:294
 msgid "'rho' should be an environment"
 msgstr " 'rho' は環境(environment)でなければなりません "
 
-#: nls.c:303
+#: nls.c:297
 msgid "'dir' is not a numeric vector of the correct length"
 msgstr " 'dir' は正しい長さの数値ベクトルではありません "
 
-#: nls.c:320 nls.c:348
+#: nls.c:314 nls.c:342
 msgid "Missing value or an infinity produced when evaluating the model"
 msgstr " モデルを評価する際，欠損値または無限大が生成されました "
 
-#: nls.c:326
+#: nls.c:320
 #, c-format
 msgid "variable '%s' is integer, not numeric"
 msgstr " 変数 '%s' は整数です、数値ではありません "
 
-#: nls.c:328
+#: nls.c:322
 #, c-format
 msgid "variable '%s' is not numeric"
 msgstr " 変数 '%s' は数値ではありません "

@@ -19,8 +19,7 @@ load <-
 {
     if (is.character(file)) {
         ## files are allowed to be of an earlier format
-        ## As zlib is available just open with gzfile, whether file
-        ## is compressed or not; zlib works either way.
+        ## gzfile can open gzip, bzip2, xz and uncompressed files.
         con <- gzfile(file)
         on.exit(close(con))
         magic <- readChar(con, 5L, useBytes = TRUE)
@@ -44,7 +43,8 @@ load <-
 save <- function(..., list = character(0L),
                  file = stop("'file' must be specified"),
                  ascii = FALSE, version = NULL, envir = parent.frame(),
-                 compress = !ascii, eval.promises = TRUE, precheck = TRUE)
+                 compress = !ascii, compression_level,
+                 eval.promises = TRUE, precheck = TRUE)
 {
     opts <- getOption("save.defaults")
     if (missing(compress) && ! is.null(opts$compress))
@@ -77,8 +77,19 @@ save <- function(..., list = character(0L),
         }
         if (is.character(file)) {
             if (file == "") stop("'file' must be non-empty string")
-            if (compress) con <- gzfile(file, "wb")
-            else con <- file(file, "wb")
+            con <- if (identical(compress, "bzip2")) {
+                if (!missing(compression_level))
+                    bzfile(file, "wb", compress = compression_level)
+                else bzfile(file, "wb")
+            } else if (identical(compress, "xz")) {
+                if (!missing(compression_level))
+                    xzfile(file, "wb", compress = compression_level)
+                else xzfile(file, "wb", compress = 9)
+            } else if (identical(compress, "gzip") || compress) {
+                if (!missing(compression_level))
+                    gzfile(file, "wb", compress = compression_level)
+                else gzfile(file, "wb")
+            } else file(file, "wb")
             on.exit(close(con))
         }
         else if (inherits(file, "connection"))

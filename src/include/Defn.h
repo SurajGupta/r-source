@@ -76,16 +76,13 @@ Rcomplex Rf_ComplexFromInteger(int, int*);
 Rcomplex Rf_ComplexFromReal(double, int*);
 
 #define CALLED_FROM_DEFN_H 1
-#include <Rinternals.h>		/*-> Arith.h, Complex.h, Error.h, Memory.h
-				  PrtUtil.h, Utils.h */
+#include <Rinternals.h>		/*-> Arith.h, Boolean.h, Complex.h, Error.h,
+				  Memory.h, PrtUtil.h, Utils.h */
 #undef CALLED_FROM_DEFN_H
 extern0 SEXP	R_CommentSymbol;    /* "comment" */
 extern0 SEXP	R_DotEnvSymbol;     /* ".Environment" */
 extern0 SEXP	R_ExactSymbol;	    /* "exact" */
-extern0 SEXP	R_LastvalueSymbol;  /* ".Last.value" */
-extern0 SEXP	R_NaRmSymbol;	    /* "na.rm" */
 extern0 SEXP	R_RecursiveSymbol;  /* "recursive" */
-extern0 SEXP	R_SourceSymbol;     /* "source" */
 extern0 SEXP	R_SrcfileSymbol;    /* "srcfile" */
 extern0 SEXP	R_SrcrefSymbol;     /* "srcref" */
 extern0 SEXP	R_TmpvalSymbol;     /* "*tmp*" */
@@ -101,6 +98,9 @@ extern0 SEXP	R_StringHash;       /* Global hash of CHARSXPs */
 #define LATIN1_MASK (1<<2)
 #define UTF8_MASK (1<<3)
 #define CACHED_MASK (1<<5)
+#define HASHASH_MASK 1
+/**** HASHASH uses the first bit -- see HASHAS_MASK defined below */
+
 #ifdef USE_RINTERNALS
 # define IS_LATIN1(x) ((x)->sxpinfo.gp & LATIN1_MASK)
 # define SET_LATIN1(x) (((x)->sxpinfo.gp) |= LATIN1_MASK)
@@ -403,9 +403,10 @@ typedef struct {
 #define SET_PRSEEN(x,v)	(((x)->sxpinfo.gp)=(v))
 
 /* Hashing Macros */
-#define HASHASH(x)      ((x)->sxpinfo.gp)
+#define HASHASH(x)      ((x)->sxpinfo.gp & HASHASH_MASK)
 #define HASHVALUE(x)    TRUELENGTH(x)
-#define SET_HASHASH(x,v) (((x)->sxpinfo.gp)=(v))
+#define SET_HASHASH(x,v) ((v) ? (((x)->sxpinfo.gp) |= HASHASH_MASK) : \
+			  (((x)->sxpinfo.gp) &= (~HASHASH_MASK)))
 #define SET_HASHVALUE(x,v) SET_TRUELENGTH(x, v)
 
 /* Vector Heap Structure */
@@ -496,6 +497,7 @@ typedef struct RCNTXT {
     IStackval *intstack;
 # endif
 #endif
+    SEXP srcref;	        /* The source line in effect */
 } RCNTXT, *context;
 
 /* The Various Context Types.
@@ -620,7 +622,6 @@ LibExtern RCNTXT* R_ToplevelContext;  /* The toplevel environment */
 LibExtern RCNTXT* R_GlobalContext;    /* The global environment */
 extern0 Rboolean R_Visible;	    /* Value visibility flag */
 LibExtern int	R_EvalDepth	INI_as(0);	/* Evaluation recursion depth */
-extern0 int	R_BrowseLevel	INI_as(0);	/* how deep the browser is */
 extern0 int	R_BrowseLines	INI_as(0);	/* lines/per call in browser */
 
 extern0 int	R_Expressions	INI_as(5000);	/* options(expressions) */
@@ -650,7 +651,6 @@ extern0 char   *Sys_TempDir	INI_as(NULL);	/* Name of per-session dir
 extern0 char	R_StdinEnc[31]  INI_as("");	/* Encoding assumed for stdin */
 
 /* Objects Used In Parsing  */
-extern0 SEXP	R_CommentSxp;	    /* Comments accumulate here */
 extern0 int	R_ParseError	INI_as(0); /* Line where parse error occurred */
 extern0 int	R_ParseErrorCol;    /* Column of start of token where parse error occurred */
 extern0 SEXP	R_ParseErrorFile;   /* Source file where parse error was seen */
@@ -682,6 +682,7 @@ extern0 Rboolean R_warn_partial_match_attr INI_as(FALSE);
 extern0 Rboolean R_ShowWarnCalls INI_as(FALSE);
 extern0 Rboolean R_ShowErrorCalls INI_as(FALSE);
 extern0 int R_NShowCalls INI_as(50);
+extern0 SEXP	R_Srcref;
 
 LibExtern Rboolean utf8locale  INI_as(FALSE);  /* is this a UTF-8 locale? */
 LibExtern Rboolean mbcslocale  INI_as(FALSE);  /* is this a MBCS locale? */
@@ -864,6 +865,7 @@ extern0 Rboolean known_to_be_utf8 INI_as(FALSE);
 # define Seql			Rf_Seql
 # define Scollate		Rf_Scollate
 # define sortVector		Rf_sortVector
+# define SrcrefPrompt		Rf_SrcrefPrompt
 # define ssort			Rf_ssort
 # define StringFromComplex	Rf_StringFromComplex
 # define StringFromInteger	Rf_StringFromInteger
@@ -881,6 +883,7 @@ extern0 Rboolean known_to_be_utf8 INI_as(FALSE);
 # define ucstoutf8		Rf_ucstoutf8
 # define utf8toucs		Rf_utf8toucs
 # define utf8towcs		Rf_utf8towcs
+# define vectorIndex		Rf_vectorIndex
 # define vectorSubscript	Rf_vectorSubscript
 # define warningcall		Rf_warningcall
 # define WarningMessage		Rf_WarningMessage
@@ -1068,6 +1071,7 @@ void R_Suicide(const char *);
 void R_getProcTime(double *data);
 int R_isMissing(SEXP symbol, SEXP rho);
 void sortVector(SEXP, Rboolean);
+void SrcrefPrompt(const char *, SEXP);
 void ssort(SEXP*,int);
 int StrToInternal(const char *);
 SEXP substituteList(SEXP, SEXP);
@@ -1084,6 +1088,7 @@ void unmarkPhase(void);
 #endif
 SEXP R_LookupMethod(SEXP, SEXP, SEXP, SEXP);
 int usemethod(const char *, SEXP, SEXP, SEXP, SEXP, SEXP, SEXP, SEXP*);
+SEXP vectorIndex(SEXP, SEXP, int, int, int, SEXP);
 SEXP Rf_vectorSubscript(int, SEXP, int*, SEXP (*)(SEXP,SEXP),
                         SEXP (*)(SEXP, int), SEXP, SEXP);
 
@@ -1107,9 +1112,6 @@ void R_restore_globals(RCNTXT *);
 
 /* ../main/devices.c, used in memory.c, gnuwin32/extra.c */
 #define R_MaxDevices 64
-
-/* ../main/identical.c : */
-Rboolean compute_identical(SEXP x, SEXP y);
 
 /* ../../main/printutils.c : */
 typedef enum {
@@ -1135,16 +1137,14 @@ SEXP R_subset3_dflt(SEXP, SEXP, SEXP);
 /* main/subassign.c */
 SEXP R_subassign3_dflt(SEXP, SEXP, SEXP, SEXP);
 
-#ifdef SUPPORT_MBCS /* implies we have this header */
 #include <wchar.h>
-#endif
 
 /* main/util.c */
 void UNIMPLEMENTED_TYPE(const char *s, SEXP x);
 void UNIMPLEMENTED_TYPEt(const char *s, SEXPTYPE t);
 Rboolean Rf_strIsASCII(const char *str);
 int utf8clen(char c);
-#ifdef SUPPORT_MBCS
+
 typedef unsigned short ucs2_t;
 size_t mbcsToUcs2(const char *in, ucs2_t *out, int nout, int enc);
 /* size_t mbcsMblen(char *in);
@@ -1159,20 +1159,16 @@ size_t wcstoutf8(char *s, const wchar_t *wc, size_t n);
 
 #define mbs_init(x) memset(x, 0, sizeof(mbstate_t))
 size_t Mbrtowc(wchar_t *wc, const char *s, size_t n, mbstate_t *ps);
-/* void mbcsToLatin1(const char *in, char *out); */
 Rboolean mbcsValid(const char *str);
 char *Rf_strchr(const char *s, int c);
 char *Rf_strrchr(const char *s, int c);
-#else
-#define Rf_strchr(s, c) strchr(s, c)
-#define Rf_strrchr(s, c) strrchr(s, c)
-#endif
+
 #ifdef Win32
 void R_fixslash(char *s);
 void R_fixbackslash(char *s);
 wchar_t *filenameToWchar(const SEXP fn, const Rboolean expand);
-#endif
-#if defined(Win32) && defined(SUPPORT_UTF8_WIN32)
+
+#if defined(SUPPORT_UTF8_WIN32)
 #define mbrtowc(a,b,c,d) Rmbrtowc(a,b)
 #define wcrtomb(a,b,c) Rwcrtomb(a,b)
 #define mbstowcs(a,b,c) Rmbstowcs(a,b,c)
@@ -1181,6 +1177,7 @@ size_t Rmbrtowc(wchar_t *wc, const char *s);
 size_t Rwcrtomb(char *s, const wchar_t wc);
 size_t Rmbstowcs(wchar_t *wc, const char *s, size_t n);
 size_t Rwcstombs(char *s, const wchar_t *wc, size_t n);
+#endif
 #endif
 
 FILE *RC_fopen(const SEXP fn, const char *mode, const Rboolean expand);

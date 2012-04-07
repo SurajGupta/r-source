@@ -465,3 +465,55 @@ setGeneric("rbind", function(..., deparse.level=1)
 	   standardGeneric("rbind"), signature = "...")
 stopifnot(identical(rbind(1), matrix(1,1,1)))
 ## gave Error in .Method( .... in R 2.8.0
+
+## median.default( <simple S4> )
+## FIXME: if we use "C" instead of "L", this fails because of caching
+setClass("L", contains = "list")
+## {simplistic, just for the sake of testing here} :
+setMethod("Compare", signature(e1="L", e2="ANY"),
+          function(e1,e2) sapply(e1, .Generic, e2=e2))
+## note the next does *not* return an object of the class.
+setMethod("Summary", "L",
+	  function(x, ..., na.rm=FALSE) {x <- unlist(x); callNextMethod()})
+setMethod("[", signature(x="L", i="ANY", j="missing",drop="missing"),
+          function(x,i,j,drop) new(class(x), x@.Data[i]))
+## This example requires a method for sort(), now that class "L"
+## inherits S3 methods for "list"; i.e., sort.list
+setMethod("sort", signature = "L", function(x, decreasing = FALSE, ...)
+          sort.L(x, decreasing, ...))
+##FIXME:  it should not be necessary to define an a S3 method, but
+## defining S4 methods for sort() has no effect currently on calls to
+## sort() from functions in base; e.g., median.default.
+sort.L <- function(x, ...) { x@.Data <- as.list(sort(unlist(x@.Data), ...)); x}
+
+## NB: median is documented to use mean(), but was incorrectly changed
+## to use sum() in 2.8.1.  So we need an S3 mean method:
+mean.L <- function(x, ...) new("L", mean(unlist(x@.Data), ...))
+x <- new("L", 1:3); x2 <- x[-2]
+stopifnot(unlist(x2) == (1:3)[-2],
+	  is(mx <- median(x), "L"), mx == 2,
+	  identical(mx, quantile(x, 0.5, names=FALSE)),
+	  ## median of two
+	  median(x2) == x[2])
+## median.default(x) was too stringent on x
+
+## Buglet in as() generation for class without own slots
+setClass("SIG", contains="signature")
+stopifnot(packageSlot(class(S <- new("SIG"))) == ".GlobalEnv",
+	  packageSlot(class(ss <- new("signature"))) == "methods",
+	  packageSlot(class(as(S, "signature"))) == "methods")
+## the 3rd did not have "methods"
+
+## Invalid "factor"s -- now "caught" by  validity check :
+ ok.f <- gl(3,5, labels = letters[1:3])
+bad.f <- structure(rep(1:3, each=5), levels=c("a","a","b"), class="factor")
+validObject(ok.f) ; assertError(validObject(bad.f))
+setClass("myF", contains = "factor")
+validObject(new("myF", ok.f))
+assertError(validObject(new("myF", bad.f)))
+removeClass("myF")
+## no validity check in R <= 2.9.0
+
+## as(x, .)   when x is from an "unregistered" S3 class :
+as(structure(1:3, class = "foobar"), "vector")
+## failed to work in R <= 2.9.0

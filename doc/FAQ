@@ -1,6 +1,6 @@
 R FAQ
 Frequently Asked Questions on R
-Version 2.9.2009-08-23
+Version 2.10.2009-10-23
 ISBN 3-900051-08-9
 Kurt Hornik
 
@@ -255,7 +255,7 @@ sparc-sun-solaris.
 2.3 What is the current version of R?
 =====================================
 
-The current released version is 2.9.2.  Based on this
+The current released version is 2.10.0.  Based on this
 `major.minor.patchlevel' numbering scheme, there are two development
 versions of R, a patched version of the current release (`r-patched') and
 one working towards the next minor or eventually major (`r-devel') releases
@@ -812,7 +812,7 @@ the S language.
 
 Contrary to other implementations of the S language, R has adopted an
 evaluation model in which nested function definitions are lexically scoped.
-This is analogous to the evalutation model in Scheme.
+This is analogous to the evaluation model in Scheme.
 
    This difference becomes manifest when _free_ variables occur in a
 function.  Free variables are those which are neither formal parameters
@@ -1219,7 +1219,7 @@ for pointers to commercialized versions of R.
 <jeff@math.montana.edu>.  The Rweb Home Page
 (http://www.math.montana.edu/Rweb/) provides access to all three versions
 of Rweb--a simple text entry form that returns output and graphs, a more
-sophisticated Javascript version that provides a multiple window
+sophisticated JavaScript version that provides a multiple window
 environment, and a set of point and click modules that are useful for
 introductory statistics courses and require no knowledge of the R language.
 All of the Rweb versions can analyze Web accessible datasets if a URL is
@@ -1269,7 +1269,7 @@ The package is now maintained by Duncan Temple Lang
 
    Rpad (http://www.rpad.org/Rpad), developed and actively maintained by
 Tom Short, provides a sophisticated environment which combines some of the
-features of the previous approaches with quite a bit of Javascript,
+features of the previous approaches with quite a bit of JavaScript,
 allowing for a GUI-like behavior (with sortable tables, clickable graphics,
 editable output), etc.
 
@@ -1374,7 +1374,8 @@ distributions of R.
 
 *MASS*
      Functions and datasets from the main package of Venables and Ripley,
-     "Modern Applied Statistics with S".  (Contained in the `VR' bundle.)
+     "Modern Applied Statistics with S".  (Contained in the `VR' bundle for
+     R versions prior to 2.10.0.)
 
 *Matrix*
      A Matrix package.  (Recommended for R 2.9.0 or later.)
@@ -1386,7 +1387,7 @@ distributions of R.
 
 *class*
      Functions for classification (k-nearest neighbor and LVQ).  (Contained
-     in the `VR' bundle.)
+     in the `VR' bundle for R versions prior to 2.10.0.)
 
 *cluster*
      Functions for cluster analysis.
@@ -1411,7 +1412,7 @@ distributions of R.
 *nnet*
      Software for single hidden layer perceptrons ("feed-forward neural
      networks"), and for multinomial log-linear models.  (Contained in the
-     `VR' bundle.)
+     `VR' bundle for R versions prior to 2.10.0.)
 
 *rpart*
      Recursive PARTitioning and regression trees.
@@ -1419,7 +1420,7 @@ distributions of R.
 *spatial*
      Functions for kriging and point pattern analysis from "Modern Applied
      Statistics with S" by W. Venables and B. Ripley.  (Contained in the
-     `VR' bundle.)
+     `VR' bundle for R versions prior to 2.10.0.)
 
 *survival*
      Functions for survival analysis, including penalized likelihood.
@@ -1434,9 +1435,9 @@ areas of interest.
 additional software, or are shipping third party libraries for Windows
 cannot be made available on CRAN in form of a Windows binary packages.
 Nevertheless, some of these packages are available at the "CRAN extras"
-repository at `http://www.stats.ox.ac.uk/pub/RWin/' kindly provided by
-Brian D. Ripley.  Note that this repository is a default repository for
-recent versions of R for Windows.
+repository at `http://www.stats.ox.ac.uk/pub/RWin/' kindly provided by Brian
+D. Ripley.  Note that this repository is a default repository for recent
+versions of R for Windows.
 
 5.1.3 Add-on packages from Omegahat
 -----------------------------------
@@ -1983,7 +1984,7 @@ compact form, e.g.,
 
 where subexpressions enclosed in `.()' are replaced by their values.
 
-   There are more worked examples in the mailing list achives.
+   There are more worked examples in the mailing list archives.
 
 7.14 What are valid names?
 ==========================
@@ -2037,7 +2038,7 @@ smoothing splines, and is extendable.  There is a `gam()' function for GAMs
 in package *mgcv*, but it is not an exact clone of what is described in the
 White Book (no `lo()' for example).  Package *gss* can fit spline-based
 GAMs too.  And if you can accept regression splines you can use `glm()'.
-For gaussian GAMs you can use `bruto()' from package *mda*.
+For Gaussian GAMs you can use `bruto()' from package *mda*.
 
 7.16 Why is the output not printed when I source() a file?
 ==========================================================
@@ -2294,7 +2295,7 @@ relative to the x axis.  See `?par' for more information.
 
 By default, `read.table()' needs to read in everything as character data,
 and then try to figure out which variables to convert to numerics or
-factors.  For a large data set, this takes condiderable amounts of time and
+factors.  For a large data set, this takes considerable amounts of time and
 memory.  Performance can substantially be improved by using the
 `colClasses' argument to specify the classes to be assumed for the columns
 of the table.

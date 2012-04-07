@@ -73,23 +73,28 @@
      VSECTIONHEADER = 262,
      SECTIONHEADER2 = 263,
      RCODEMACRO = 264,
-     LATEXMACRO = 265,
-     VERBMACRO = 266,
-     OPTMACRO = 267,
-     ESCAPE = 268,
-     LISTSECTION = 269,
-     ITEMIZE = 270,
-     DESCRIPTION = 271,
-     NOITEM = 272,
-     LATEXMACRO2 = 273,
-     VERBMACRO2 = 274,
-     IFDEF = 275,
-     ENDIF = 276,
-     TEXT = 277,
-     RCODE = 278,
-     VERB = 279,
-     COMMENT = 280,
-     UNKNOWN = 281
+     SEXPR = 265,
+     RDOPTS = 266,
+     LATEXMACRO = 267,
+     VERBMACRO = 268,
+     OPTMACRO = 269,
+     ESCAPE = 270,
+     LISTSECTION = 271,
+     ITEMIZE = 272,
+     DESCRIPTION = 273,
+     NOITEM = 274,
+     LATEXMACRO2 = 275,
+     VERBMACRO2 = 276,
+     LATEXMACRO3 = 277,
+     IFDEF = 278,
+     ENDIF = 279,
+     TEXT = 280,
+     RCODE = 281,
+     VERB = 282,
+     COMMENT = 283,
+     UNKNOWN = 284,
+     STARTFILE = 285,
+     STARTFRAGMENT = 286
    };
 #endif
 /* Tokens.  */
@@ -100,23 +105,28 @@
 #define VSECTIONHEADER 262
 #define SECTIONHEADER2 263
 #define RCODEMACRO 264
-#define LATEXMACRO 265
-#define VERBMACRO 266
-#define OPTMACRO 267
-#define ESCAPE 268
-#define LISTSECTION 269
-#define ITEMIZE 270
-#define DESCRIPTION 271
-#define NOITEM 272
-#define LATEXMACRO2 273
-#define VERBMACRO2 274
-#define IFDEF 275
-#define ENDIF 276
-#define TEXT 277
-#define RCODE 278
-#define VERB 279
-#define COMMENT 280
-#define UNKNOWN 281
+#define SEXPR 265
+#define RDOPTS 266
+#define LATEXMACRO 267
+#define VERBMACRO 268
+#define OPTMACRO 269
+#define ESCAPE 270
+#define LISTSECTION 271
+#define ITEMIZE 272
+#define DESCRIPTION 273
+#define NOITEM 274
+#define LATEXMACRO2 275
+#define VERBMACRO2 276
+#define LATEXMACRO3 277
+#define IFDEF 278
+#define ENDIF 279
+#define TEXT 280
+#define RCODE 281
+#define VERB 282
+#define COMMENT 283
+#define UNKNOWN 284
+#define STARTFILE 285
+#define STARTFRAGMENT 286
 
 
 
@@ -151,13 +161,17 @@
 
 #include <Defn.h>
 #include "Parse.h"
+#define STRICT_R_HEADERS
+#include <R_ext/RS.h>           /* for R_chk_* allocation */
 
 #define DEBUGVALS 0		/* 1 causes detailed internal state output to R console */	
 #define DEBUGMODE 0		/* 1 causes Bison output of parse state, to stdout or stderr */
 
+static Rboolean wCalls = TRUE;
+
 #define YYERROR_VERBOSE 1
 
-static void yyerror(char *);
+static void yyerror(const char *);
 static int yylex();
 static int yyparse(void);
 
@@ -209,6 +223,11 @@ static int	KeywordLookup(const char *);
 static SEXP	NewList(void);
 static SEXP     makeSrcref(YYLTYPE *, SEXP);
 
+/* Flags used to mark presence of IFDEF or Sexpr in the dynamicFlag attribute */
+
+#define STATIC 0
+#define HAS_IFDEF 1
+#define HAS_SEXPR 2
 
 /* Internal lexer / parser state variables */
 
@@ -222,11 +241,16 @@ static int	xxmode, xxitemType, xxbraceDepth;  /* context for lexer */
 static int	xxDebugTokens;  /* non-zero causes debug output to R console */
 static const char* xxBasename;     /* basename of file for error messages */
 static SEXP	Value;
+static int	xxinitvalue;
+static char const yyunknown[] = "unknown macro"; /* our message, not bison's */
+
 
 #define RLIKE 1		/* Includes R strings; xxinRString holds the opening quote char, or 0 outside a string */
 #define LATEXLIKE 2
 #define VERBATIM 3
 #define INOPTION 4
+#define COMMENTMODE 5   /* only used in deparsing */
+#define UNKNOWNMODE 6   /* ditto */
 
 static SEXP     SrcFile;  /* parse_Rd will *always* supply a srcfile */
 
@@ -236,9 +260,10 @@ static SEXP	xxpushMode(int, int, int);
 static void	xxpopMode(SEXP);
 static SEXP	xxnewlist(SEXP);
 static SEXP	xxlist(SEXP, SEXP);
-static SEXP	xxmarkup(SEXP, SEXP, YYLTYPE *);
-static SEXP	xxmarkup2(SEXP, SEXP, SEXP, int, YYLTYPE *);
-static SEXP	xxOptionmarkup(SEXP, SEXP, SEXP, YYLTYPE *);
+static SEXP	xxmarkup(SEXP, SEXP, int, YYLTYPE *);
+static SEXP	xxmarkup2(SEXP, SEXP, SEXP, int, int, YYLTYPE *);
+static SEXP	xxmarkup3(SEXP, SEXP, SEXP, SEXP, int, YYLTYPE *);
+static SEXP	xxOptionmarkup(SEXP, SEXP, SEXP, int, YYLTYPE *);
 static SEXP	xxtag(SEXP, int, YYLTYPE *);
 static void	xxsavevalue(SEXP, YYLTYPE *);
 static void	xxWarnNewline();
@@ -297,7 +322,7 @@ typedef struct YYLTYPE
 
 
 /* Line 216 of yacc.c.  */
-#line 301 "gramRd.c"
+#line 326 "gramRd.c"
 
 #ifdef short
 # undef short
@@ -512,22 +537,22 @@ union yyalloc
 #endif
 
 /* YYFINAL -- State number of the termination state.  */
-#define YYFINAL  24
+#define YYFINAL  21
 /* YYLAST -- Last index in YYTABLE.  */
-#define YYLAST   213
+#define YYLAST   490
 
 /* YYNTOKENS -- Number of terminals.  */
-#define YYNTOKENS  31
+#define YYNTOKENS  36
 /* YYNNTS -- Number of nonterminals.  */
-#define YYNNTS  26
+#define YYNNTS  30
 /* YYNRULES -- Number of rules.  */
-#define YYNRULES  56
+#define YYNRULES  73
 /* YYNRULES -- Number of states.  */
-#define YYNSTATES  89
+#define YYNSTATES  126
 
 /* YYTRANSLATE(YYLEX) -- Bison symbol number corresponding to YYLEX.  */
 #define YYUNDEFTOK  2
-#define YYMAXUTOK   281
+#define YYMAXUTOK   286
 
 #define YYTRANSLATE(YYX)						\
   ((unsigned int) (YYX) <= YYMAXUTOK ? yytranslate[YYX] : YYUNDEFTOK)
@@ -544,10 +569,10 @@ static const yytype_uint8 yytranslate[] =
        2,     2,     2,     2,     2,     2,     2,     2,     2,     2,
        2,     2,     2,     2,     2,     2,     2,     2,     2,     2,
        2,     2,     2,     2,     2,     2,     2,     2,     2,     2,
-       2,    29,     2,    30,     2,     2,     2,     2,     2,     2,
+       2,    34,     2,    35,     2,     2,     2,     2,     2,     2,
        2,     2,     2,     2,     2,     2,     2,     2,     2,     2,
        2,     2,     2,     2,     2,     2,     2,     2,     2,     2,
-       2,     2,     2,    27,     2,    28,     2,     2,     2,     2,
+       2,     2,     2,    32,     2,    33,     2,     2,     2,     2,
        2,     2,     2,     2,     2,     2,     2,     2,     2,     2,
        2,     2,     2,     2,     2,     2,     2,     2,     2,     2,
        2,     2,     2,     2,     2,     2,     2,     2,     2,     2,
@@ -563,7 +588,7 @@ static const yytype_uint8 yytranslate[] =
        2,     2,     2,     2,     2,     2,     1,     2,     3,     4,
        5,     6,     7,     8,     9,    10,    11,    12,    13,    14,
       15,    16,    17,    18,    19,    20,    21,    22,    23,    24,
-      25,    26
+      25,    26,    27,    28,    29,    30,    31
 };
 
 #if YYDEBUG
@@ -571,44 +596,54 @@ static const yytype_uint8 yytranslate[] =
    YYRHS.  */
 static const yytype_uint8 yyprhs[] =
 {
-       0,     0,     3,     6,     8,    10,    13,    16,    19,    22,
-      25,    29,    34,    36,    38,    40,    43,    45,    47,    49,
-      51,    53,    55,    57,    60,    64,    67,    70,    74,    79,
-      82,    85,    88,    92,    94,    99,   102,   105,   108,   111,
-     114,   117,   120,   123,   128,   132,   135,   136,   137,   138,
-     139,   140,   141,   142,   143,   147,   150
+       0,     0,     3,     7,    11,    13,    16,    18,    20,    23,
+      26,    29,    32,    35,    38,    42,    47,    51,    56,    58,
+      60,    63,    65,    68,    70,    72,    74,    76,    78,    80,
+      82,    85,    88,    92,    97,   100,   103,   107,   112,   115,
+     119,   124,   127,   130,   134,   136,   141,   144,   147,   150,
+     153,   156,   159,   164,   168,   171,   174,   179,   183,   186,
+     187,   188,   189,   190,   191,   192,   193,   194,   195,   199,
+     202,   207,   211,   216
 };
 
 /* YYRHS -- A `-1'-separated list of the rules' RHS.  */
 static const yytype_int8 yyrhs[] =
 {
-      32,     0,    -1,    33,     3,    -1,     1,    -1,    34,    -1,
-      33,    34,    -1,     7,    43,    -1,     6,    42,    -1,     5,
-      38,    -1,    14,    41,    -1,     8,    38,    39,    -1,    20,
-      46,    33,    21,    -1,    25,    -1,    22,    -1,    36,    -1,
-      35,    36,    -1,    22,    -1,    23,    -1,    24,    -1,    25,
-      -1,    26,    -1,    55,    -1,    37,    -1,    10,    38,    -1,
-      18,    38,    39,    -1,    15,    40,    -1,    16,    41,    -1,
-      12,    49,    38,    -1,    12,    49,    56,    38,    -1,     9,
-      42,    -1,    11,    43,    -1,    19,    44,    -1,    19,    44,
-      45,    -1,    13,    -1,    20,    46,    35,    21,    -1,    47,
-      55,    -1,    47,    55,    -1,    47,    22,    -1,    53,    55,
-      -1,    54,    55,    -1,    48,    55,    -1,    50,    55,    -1,
-      51,    55,    -1,    27,    52,    35,    28,    -1,    27,    52,
-      28,    -1,    47,    22,    -1,    -1,    -1,    -1,    -1,    -1,
-      -1,    -1,    -1,    27,    35,    28,    -1,    27,    28,    -1,
-      29,    36,    30,    -1
+      37,     0,    -1,    30,    39,     3,    -1,    31,    38,     3,
+      -1,     1,    -1,    55,    42,    -1,    40,    -1,    41,    -1,
+      40,    41,    -1,     7,    51,    -1,    11,    51,    -1,     6,
+      49,    -1,     5,    45,    -1,    16,    48,    -1,     8,    45,
+      46,    -1,    23,    54,    40,    24,    -1,    10,    58,    50,
+      -1,    10,    58,    65,    50,    -1,    28,    -1,    25,    -1,
+       1,    41,    -1,    43,    -1,    42,    43,    -1,    25,    -1,
+      26,    -1,    27,    -1,    28,    -1,    29,    -1,    64,    -1,
+      44,    -1,     1,    43,    -1,    12,    45,    -1,    20,    45,
+      46,    -1,    22,    45,    46,    46,    -1,    17,    47,    -1,
+      18,    48,    -1,    14,    58,    45,    -1,    14,    58,    65,
+      45,    -1,     9,    49,    -1,    10,    58,    50,    -1,    10,
+      58,    65,    50,    -1,    13,    51,    -1,    21,    52,    -1,
+      21,    52,    53,    -1,    15,    -1,    23,    54,    42,    24,
+      -1,    55,    64,    -1,    55,    64,    -1,    55,    25,    -1,
+      62,    64,    -1,    63,    64,    -1,    56,    64,    -1,    32,
+      57,    42,    33,    -1,    32,    57,    33,    -1,    59,    64,
+      -1,    60,    64,    -1,    32,    61,    42,    33,    -1,    32,
+      61,    33,    -1,    55,    25,    -1,    -1,    -1,    -1,    -1,
+      -1,    -1,    -1,    -1,    -1,    32,    42,    33,    -1,    32,
+      33,    -1,    32,    42,     1,    33,    -1,    32,     1,    33,
+      -1,    32,    42,     1,     3,    -1,    34,    43,    35,    -1
 };
 
 /* YYRLINE[YYN] -- source line where rule number YYN was defined.  */
-static const yytype_uint8 yyrline[] =
+static const yytype_uint16 yyrline[] =
 {
-       0,   146,   146,   147,   150,   151,   153,   154,   155,   156,
-     157,   158,   159,   160,   162,   163,   165,   166,   167,   168,
-     169,   170,   171,   173,   174,   175,   176,   177,   178,   179,
-     180,   181,   182,   183,   184,   186,   188,   189,   193,   195,
-     197,   199,   201,   205,   206,   208,   211,   213,   215,   217,
-     219,   221,   223,   225,   227,   228,   230
+       0,   177,   177,   178,   179,   182,   185,   188,   189,   191,
+     192,   193,   194,   195,   196,   197,   198,   199,   200,   201,
+     202,   204,   205,   207,   208,   209,   210,   211,   212,   213,
+     214,   216,   217,   218,   219,   220,   221,   222,   223,   224,
+     225,   226,   227,   228,   229,   230,   232,   234,   235,   244,
+     246,   248,   252,   253,   255,   257,   261,   262,   264,   267,
+     269,   271,   273,   275,   277,   279,   281,   283,   285,   286,
+     287,   288,   289,   291
 };
 #endif
 
@@ -619,14 +654,16 @@ static const char *const yytname[] =
 {
   "$end", "error", "$undefined", "END_OF_INPUT", "ERROR", "SECTIONHEADER",
   "RSECTIONHEADER", "VSECTIONHEADER", "SECTIONHEADER2", "RCODEMACRO",
-  "LATEXMACRO", "VERBMACRO", "OPTMACRO", "ESCAPE", "LISTSECTION",
-  "ITEMIZE", "DESCRIPTION", "NOITEM", "LATEXMACRO2", "VERBMACRO2", "IFDEF",
-  "ENDIF", "TEXT", "RCODE", "VERB", "COMMENT", "UNKNOWN", "'{'", "'}'",
-  "'['", "']'", "$accept", "RdFile", "SectionList", "Section", "ArgItems",
-  "Item", "Markup", "LatexArg", "LatexArg2", "Item0Arg", "Item2Arg",
-  "RLikeArg", "VerbatimArg", "VerbatimArg1", "VerbatimArg2", "IfDefTarget",
-  "goLatexLike", "goRLike", "goOption", "goVerbatim", "goVerbatim1",
-  "goVerbatim2", "goItem0", "goItem2", "Arg", "Option", 0
+  "SEXPR", "RDOPTS", "LATEXMACRO", "VERBMACRO", "OPTMACRO", "ESCAPE",
+  "LISTSECTION", "ITEMIZE", "DESCRIPTION", "NOITEM", "LATEXMACRO2",
+  "VERBMACRO2", "LATEXMACRO3", "IFDEF", "ENDIF", "TEXT", "RCODE", "VERB",
+  "COMMENT", "UNKNOWN", "STARTFILE", "STARTFRAGMENT", "'{'", "'}'", "'['",
+  "']'", "$accept", "Init", "RdFragment", "RdFile", "SectionList",
+  "Section", "ArgItems", "Item", "Markup", "LatexArg", "LatexArg2",
+  "Item0Arg", "Item2Arg", "RLikeArg", "RLikeArg2", "VerbatimArg",
+  "VerbatimArg1", "VerbatimArg2", "IfDefTarget", "goLatexLike", "goRLike",
+  "goRLike2", "goOption", "goVerbatim", "goVerbatim1", "goVerbatim2",
+  "goItem0", "goItem2", "Arg", "Option", 0
 };
 #endif
 
@@ -637,31 +674,35 @@ static const yytype_uint16 yytoknum[] =
 {
        0,   256,   257,   258,   259,   260,   261,   262,   263,   264,
      265,   266,   267,   268,   269,   270,   271,   272,   273,   274,
-     275,   276,   277,   278,   279,   280,   281,   123,   125,    91,
-      93
+     275,   276,   277,   278,   279,   280,   281,   282,   283,   284,
+     285,   286,   123,   125,    91,    93
 };
 # endif
 
 /* YYR1[YYN] -- Symbol number of symbol that rule YYN derives.  */
 static const yytype_uint8 yyr1[] =
 {
-       0,    31,    32,    32,    33,    33,    34,    34,    34,    34,
-      34,    34,    34,    34,    35,    35,    36,    36,    36,    36,
-      36,    36,    36,    37,    37,    37,    37,    37,    37,    37,
-      37,    37,    37,    37,    37,    38,    39,    39,    40,    41,
-      42,    43,    44,    45,    45,    46,    47,    48,    49,    50,
-      51,    52,    53,    54,    55,    55,    56
+       0,    36,    37,    37,    37,    38,    39,    40,    40,    41,
+      41,    41,    41,    41,    41,    41,    41,    41,    41,    41,
+      41,    42,    42,    43,    43,    43,    43,    43,    43,    43,
+      43,    44,    44,    44,    44,    44,    44,    44,    44,    44,
+      44,    44,    44,    44,    44,    44,    45,    46,    46,    47,
+      48,    49,    50,    50,    51,    52,    53,    53,    54,    55,
+      56,    57,    58,    59,    60,    61,    62,    63,    64,    64,
+      64,    64,    64,    65
 };
 
 /* YYR2[YYN] -- Number of symbols composing right hand side of rule YYN.  */
 static const yytype_uint8 yyr2[] =
 {
-       0,     2,     2,     1,     1,     2,     2,     2,     2,     2,
-       3,     4,     1,     1,     1,     2,     1,     1,     1,     1,
-       1,     1,     1,     2,     3,     2,     2,     3,     4,     2,
-       2,     2,     3,     1,     4,     2,     2,     2,     2,     2,
-       2,     2,     2,     4,     3,     2,     0,     0,     0,     0,
-       0,     0,     0,     0,     3,     2,     3
+       0,     2,     3,     3,     1,     2,     1,     1,     2,     2,
+       2,     2,     2,     2,     3,     4,     3,     4,     1,     1,
+       2,     1,     2,     1,     1,     1,     1,     1,     1,     1,
+       2,     2,     3,     4,     2,     2,     3,     4,     2,     3,
+       4,     2,     2,     3,     1,     4,     2,     2,     2,     2,
+       2,     2,     4,     3,     2,     2,     4,     3,     2,     0,
+       0,     0,     0,     0,     0,     0,     0,     0,     3,     2,
+       4,     3,     4,     3
 };
 
 /* YYDEFACT[STATE-NAME] -- Default rule to reduce with in state
@@ -669,119 +710,187 @@ static const yytype_uint8 yyr2[] =
    means the default is an error.  */
 static const yytype_uint8 yydefact[] =
 {
-       0,     3,    46,    47,    49,    46,    53,    46,    13,    12,
-       0,     0,     4,     8,     0,     7,     0,     6,     0,    46,
-       9,     0,     0,     0,     1,     2,     5,     0,    35,    40,
-      41,    10,     0,    39,     0,    45,    47,    46,    49,    48,
-      33,    52,    53,    46,    50,    46,    16,    17,    18,    19,
-      20,    55,     0,    14,    22,    21,    37,    36,    11,    29,
-      23,    30,    46,    25,     0,    26,    46,    31,     0,     0,
-      54,    15,     0,    27,    46,    38,    24,    51,    32,    42,
-       0,     0,    28,     0,    34,    56,    44,     0,    43
+       0,     4,     0,    59,     0,     0,    59,    60,    63,    59,
+      62,    63,    67,    59,    19,    18,     0,     0,     7,     0,
+       0,     1,    20,    12,     0,    11,     0,     9,     0,    59,
+       0,    10,    13,     0,     0,     0,     2,     8,     3,     0,
+      60,    62,    59,    63,    62,    44,    66,    67,    59,    64,
+      59,    59,    23,    24,    25,    26,    27,     0,     0,    21,
+      29,    28,    46,    51,    54,    14,     0,    61,     0,    16,
+       0,    50,     0,    58,    30,    38,     0,    31,    41,    59,
+      34,     0,    35,    59,    42,     0,    59,     0,     0,    69,
+       0,    22,    48,    47,     0,     0,    17,    15,    39,     0,
+      36,    59,    49,    32,    65,    43,    55,    59,     0,    71,
+       0,    68,    53,     0,    73,    40,    37,     0,    33,    45,
+      72,    70,    52,    57,     0,    56
 };
 
 /* YYDEFGOTO[NTERM-NUM].  */
 static const yytype_int8 yydefgoto[] =
 {
-      -1,    10,    11,    12,    52,    53,    54,    13,    31,    63,
-      20,    15,    17,    67,    78,    22,    14,    16,    62,    18,
-      68,    83,    64,    21,    55,    74
+      -1,     4,    19,    16,    17,    18,    58,    59,    60,    23,
+      65,    80,    32,    25,    69,    27,    84,   105,    34,    24,
+      26,    94,    30,    28,    85,   117,    81,    33,    61,    70
 };
 
 /* YYPACT[STATE-NUM] -- Index in YYTABLE of the portion describing
    STATE-NUM.  */
-#define YYPACT_NINF -63
+#define YYPACT_NINF -71
 static const yytype_int16 yypact[] =
 {
-       9,   -63,   -63,   -63,   -63,   -63,   -63,   -63,   -63,   -63,
-       8,    39,   -63,   -63,   -16,   -63,   -16,   -63,   -16,   -63,
-     -63,   -16,    70,   -10,   -63,   -63,   -63,    87,   -63,   -63,
-     -63,   -63,    -3,   -63,    60,   -63,   -63,   -63,   -63,   -63,
-     -63,   -63,   -63,   -63,   -63,   -63,   -63,   -63,   -63,   -63,
-     -63,   -63,   107,   -63,   -63,   -63,   -63,   -63,   -63,   -63,
-     -63,   -63,   -11,   -63,   -16,   -63,   -63,     0,   -16,   186,
-     -63,   -63,   186,   -63,   -63,   -63,   -63,   -63,   -63,   -63,
-     167,    -2,   -63,   127,   -63,   -63,   -63,   147,   -63
+      19,   -71,   462,   -71,     2,   462,   -71,   -71,   -71,   -71,
+     -71,   -71,   -71,   -71,   -71,   -71,     8,   412,   -71,    14,
+     382,   -71,   -71,   -71,    -9,   -71,    -9,   -71,    -9,   -71,
+      -1,   -71,   -71,    -9,   462,     4,   -71,   -71,   -71,   382,
+     -71,   -71,   -71,   -71,   -71,   -71,   -71,   -71,   -71,   -71,
+     -71,   -71,   -71,   -71,   -71,   -71,   -71,   117,   324,   -71,
+     -71,   -71,   -71,   -71,   -71,   -71,   -13,   -71,   382,   -71,
+      -2,   -71,   437,   -71,   -71,   -71,    -1,   -71,   -71,     5,
+     -71,    -9,   -71,   -71,     3,    -9,   -71,   382,   146,   -71,
+     175,   -71,   -71,   -71,   204,     6,   -71,   -71,   -71,    -2,
+     -71,   -71,   -71,   -71,   -71,   -71,   -71,   -71,   353,   -71,
+      88,   -71,   -71,   233,   -71,   -71,   -71,   262,   -71,   -71,
+     -71,   -71,   -71,   -71,   291,   -71
 };
 
 /* YYPGOTO[NTERM-NUM].  */
 static const yytype_int8 yypgoto[] =
 {
-     -63,   -63,    13,    -8,   -62,   -47,   -63,    -5,   -44,   -63,
-      -1,     1,     5,   -63,   -63,   -15,    -6,   -63,   -63,   -63,
-     -63,   -63,   -63,   -63,   -12,   -63
+     -71,   -71,   -71,   -71,     9,     1,   -49,   -36,   -71,    -8,
+     -70,   -71,    10,    11,   -55,    -7,   -71,   -71,    -5,    -3,
+     -71,   -71,   -17,   -71,   -71,   -71,   -71,   -71,   -19,   -51
 };
 
 /* YYTABLE[YYPACT[STATE-NUM]].  What to do in state STATE-NUM.  If
    positive, shift that token.  If negative, reduce the rule which
    number is the opposite.  If zero, do what YYDEFACT says.
    If YYTABLE_NINF, syntax error.  */
-#define YYTABLE_NINF -1
-static const yytype_uint8 yytable[] =
+#define YYTABLE_NINF -7
+static const yytype_int8 yytable[] =
 {
-      19,    23,    28,    26,    29,    71,    30,    80,    24,    33,
-       1,    27,    35,    32,     2,     3,     4,     5,    72,    56,
-      57,    87,    76,     6,    27,    81,    26,    77,    85,     7,
-      69,     8,    60,    71,     9,    34,     0,    59,    66,    23,
-      71,    65,    25,    61,     2,     3,     4,     5,     0,     0,
-       0,     0,    75,     6,     0,     0,    79,    73,     0,     7,
-      32,     8,     0,     0,     9,     2,     3,     4,     5,    82,
-       0,     0,     0,     0,     6,     2,     3,     4,     5,     0,
-       7,    58,     8,     0,     6,     9,     0,     0,     0,     0,
-       7,     0,     8,     0,     0,     9,    36,    37,    38,    39,
-      40,     0,    41,    42,     0,    43,    44,    45,     0,    46,
-      47,    48,    49,    50,    27,    51,    36,    37,    38,    39,
-      40,     0,    41,    42,     0,    43,    44,    45,     0,    46,
-      47,    48,    49,    50,    27,    70,    36,    37,    38,    39,
-      40,     0,    41,    42,     0,    43,    44,    45,     0,    46,
-      47,    48,    49,    50,    27,    86,    36,    37,    38,    39,
-      40,     0,    41,    42,     0,    43,    44,    45,     0,    46,
-      47,    48,    49,    50,    27,    88,    36,    37,    38,    39,
-      40,     0,    41,    42,     0,    43,    44,    45,    84,    46,
-      47,    48,    49,    50,    27,    36,    37,    38,    39,    40,
-       0,    41,    42,     0,    43,    44,    45,     0,    46,    47,
-      48,    49,    50,    27
+      20,    29,    21,    74,    31,    62,    22,    63,    90,    64,
+      35,    36,    92,   103,    71,    96,   107,    38,    37,    57,
+       1,    98,    91,    57,    76,    99,    66,    79,   101,    73,
+      67,    67,    95,    68,    77,   104,    78,   118,   108,    68,
+      83,   114,    86,    72,   115,   113,    87,    93,    35,     2,
+       3,    75,    74,     0,    91,     0,     0,    82,     0,     0,
+       0,     0,   102,     0,     0,     0,   106,     0,   124,     0,
+       0,   100,    91,    37,    74,     0,     0,    91,     0,     0,
+      66,     0,     0,    66,     0,     0,     0,     0,    91,    39,
+       0,   120,     0,   116,     0,     0,     0,    40,    41,     0,
+      42,    43,    44,    45,    66,    46,    47,     0,    48,    49,
+      50,    51,     0,    52,    53,    54,    55,    56,    88,     0,
+      57,   121,     0,     0,     0,     0,    40,    41,     0,    42,
+      43,    44,    45,     0,    46,    47,     0,    48,    49,    50,
+      51,     0,    52,    53,    54,    55,    56,    39,     0,    57,
+      89,     0,     0,     0,     0,    40,    41,     0,    42,    43,
+      44,    45,     0,    46,    47,     0,    48,    49,    50,    51,
+       0,    52,    53,    54,    55,    56,   110,     0,    57,   109,
+       0,     0,     0,     0,    40,    41,     0,    42,    43,    44,
+      45,     0,    46,    47,     0,    48,    49,    50,    51,     0,
+      52,    53,    54,    55,    56,    39,     0,    57,   111,     0,
+       0,     0,     0,    40,    41,     0,    42,    43,    44,    45,
+       0,    46,    47,     0,    48,    49,    50,    51,     0,    52,
+      53,    54,    55,    56,    39,     0,    57,   112,     0,     0,
+       0,     0,    40,    41,     0,    42,    43,    44,    45,     0,
+      46,    47,     0,    48,    49,    50,    51,     0,    52,    53,
+      54,    55,    56,    39,     0,    57,   122,     0,     0,     0,
+       0,    40,    41,     0,    42,    43,    44,    45,     0,    46,
+      47,     0,    48,    49,    50,    51,     0,    52,    53,    54,
+      55,    56,    39,     0,    57,   123,     0,     0,     0,     0,
+      40,    41,     0,    42,    43,    44,    45,     0,    46,    47,
+       0,    48,    49,    50,    51,     0,    52,    53,    54,    55,
+      56,     0,     0,    57,   125,    39,     0,    -5,     0,     0,
+       0,     0,     0,    40,    41,     0,    42,    43,    44,    45,
+       0,    46,    47,     0,    48,    49,    50,    51,     0,    52,
+      53,    54,    55,    56,    39,     0,    57,     0,     0,     0,
+       0,     0,    40,    41,     0,    42,    43,    44,    45,     0,
+      46,    47,     0,    48,    49,    50,    51,   119,    52,    53,
+      54,    55,    56,    39,     0,    57,     0,     0,     0,     0,
+       0,    40,    41,     0,    42,    43,    44,    45,     0,    46,
+      47,     0,    48,    49,    50,    51,     0,    52,    53,    54,
+      55,    56,     0,     5,    57,    -6,     0,     6,     7,     8,
+       9,     0,    10,    11,     0,     0,     0,     0,    12,     0,
+       0,     0,     0,     0,     0,    13,     0,    14,     5,     0,
+      15,     0,     6,     7,     8,     9,     0,    10,    11,     0,
+       0,     0,     0,    12,     0,     0,     0,     0,     0,     0,
+      13,    97,    14,     5,     0,    15,     0,     6,     7,     8,
+       9,     0,    10,    11,     0,     0,     0,     0,    12,     0,
+       0,     0,     0,     0,     0,    13,     0,    14,     0,     0,
+      15
 };
 
 static const yytype_int8 yycheck[] =
 {
-       5,     7,    14,    11,    16,    52,    18,    69,     0,    21,
-       1,    27,    22,    19,     5,     6,     7,     8,    29,    22,
-      32,    83,    66,    14,    27,    72,    34,    27,    30,    20,
-      45,    22,    37,    80,    25,    22,    -1,    36,    43,    45,
-      87,    42,     3,    38,     5,     6,     7,     8,    -1,    -1,
-      -1,    -1,    64,    14,    -1,    -1,    68,    62,    -1,    20,
-      66,    22,    -1,    -1,    25,     5,     6,     7,     8,    74,
-      -1,    -1,    -1,    -1,    14,     5,     6,     7,     8,    -1,
-      20,    21,    22,    -1,    14,    25,    -1,    -1,    -1,    -1,
-      20,    -1,    22,    -1,    -1,    25,     9,    10,    11,    12,
-      13,    -1,    15,    16,    -1,    18,    19,    20,    -1,    22,
-      23,    24,    25,    26,    27,    28,     9,    10,    11,    12,
-      13,    -1,    15,    16,    -1,    18,    19,    20,    -1,    22,
-      23,    24,    25,    26,    27,    28,     9,    10,    11,    12,
-      13,    -1,    15,    16,    -1,    18,    19,    20,    -1,    22,
-      23,    24,    25,    26,    27,    28,     9,    10,    11,    12,
-      13,    -1,    15,    16,    -1,    18,    19,    20,    -1,    22,
-      23,    24,    25,    26,    27,    28,     9,    10,    11,    12,
-      13,    -1,    15,    16,    -1,    18,    19,    20,    21,    22,
-      23,    24,    25,    26,    27,     9,    10,    11,    12,    13,
-      -1,    15,    16,    -1,    18,    19,    20,    -1,    22,    23,
-      24,    25,    26,    27
+       3,     9,     0,    39,    11,    24,     5,    26,    57,    28,
+      13,     3,    25,    83,    33,    70,    86,     3,    17,    32,
+       1,    76,    58,    32,    41,    76,    29,    44,    79,    25,
+      32,    32,    68,    34,    42,    32,    43,   107,    87,    34,
+      48,    35,    50,    34,    99,    94,    51,    66,    51,    30,
+      31,    40,    88,    -1,    90,    -1,    -1,    47,    -1,    -1,
+      -1,    -1,    81,    -1,    -1,    -1,    85,    -1,   117,    -1,
+      -1,    79,   108,    72,   110,    -1,    -1,   113,    -1,    -1,
+      83,    -1,    -1,    86,    -1,    -1,    -1,    -1,   124,     1,
+      -1,     3,    -1,   101,    -1,    -1,    -1,     9,    10,    -1,
+      12,    13,    14,    15,   107,    17,    18,    -1,    20,    21,
+      22,    23,    -1,    25,    26,    27,    28,    29,     1,    -1,
+      32,    33,    -1,    -1,    -1,    -1,     9,    10,    -1,    12,
+      13,    14,    15,    -1,    17,    18,    -1,    20,    21,    22,
+      23,    -1,    25,    26,    27,    28,    29,     1,    -1,    32,
+      33,    -1,    -1,    -1,    -1,     9,    10,    -1,    12,    13,
+      14,    15,    -1,    17,    18,    -1,    20,    21,    22,    23,
+      -1,    25,    26,    27,    28,    29,     1,    -1,    32,    33,
+      -1,    -1,    -1,    -1,     9,    10,    -1,    12,    13,    14,
+      15,    -1,    17,    18,    -1,    20,    21,    22,    23,    -1,
+      25,    26,    27,    28,    29,     1,    -1,    32,    33,    -1,
+      -1,    -1,    -1,     9,    10,    -1,    12,    13,    14,    15,
+      -1,    17,    18,    -1,    20,    21,    22,    23,    -1,    25,
+      26,    27,    28,    29,     1,    -1,    32,    33,    -1,    -1,
+      -1,    -1,     9,    10,    -1,    12,    13,    14,    15,    -1,
+      17,    18,    -1,    20,    21,    22,    23,    -1,    25,    26,
+      27,    28,    29,     1,    -1,    32,    33,    -1,    -1,    -1,
+      -1,     9,    10,    -1,    12,    13,    14,    15,    -1,    17,
+      18,    -1,    20,    21,    22,    23,    -1,    25,    26,    27,
+      28,    29,     1,    -1,    32,    33,    -1,    -1,    -1,    -1,
+       9,    10,    -1,    12,    13,    14,    15,    -1,    17,    18,
+      -1,    20,    21,    22,    23,    -1,    25,    26,    27,    28,
+      29,    -1,    -1,    32,    33,     1,    -1,     3,    -1,    -1,
+      -1,    -1,    -1,     9,    10,    -1,    12,    13,    14,    15,
+      -1,    17,    18,    -1,    20,    21,    22,    23,    -1,    25,
+      26,    27,    28,    29,     1,    -1,    32,    -1,    -1,    -1,
+      -1,    -1,     9,    10,    -1,    12,    13,    14,    15,    -1,
+      17,    18,    -1,    20,    21,    22,    23,    24,    25,    26,
+      27,    28,    29,     1,    -1,    32,    -1,    -1,    -1,    -1,
+      -1,     9,    10,    -1,    12,    13,    14,    15,    -1,    17,
+      18,    -1,    20,    21,    22,    23,    -1,    25,    26,    27,
+      28,    29,    -1,     1,    32,     3,    -1,     5,     6,     7,
+       8,    -1,    10,    11,    -1,    -1,    -1,    -1,    16,    -1,
+      -1,    -1,    -1,    -1,    -1,    23,    -1,    25,     1,    -1,
+      28,    -1,     5,     6,     7,     8,    -1,    10,    11,    -1,
+      -1,    -1,    -1,    16,    -1,    -1,    -1,    -1,    -1,    -1,
+      23,    24,    25,     1,    -1,    28,    -1,     5,     6,     7,
+       8,    -1,    10,    11,    -1,    -1,    -1,    -1,    16,    -1,
+      -1,    -1,    -1,    -1,    -1,    23,    -1,    25,    -1,    -1,
+      28
 };
 
 /* YYSTOS[STATE-NUM] -- The (internal number of the) accessing
    symbol of state STATE-NUM.  */
 static const yytype_uint8 yystos[] =
 {
-       0,     1,     5,     6,     7,     8,    14,    20,    22,    25,
-      32,    33,    34,    38,    47,    42,    48,    43,    50,    38,
-      41,    54,    46,    47,     0,     3,    34,    27,    55,    55,
-      55,    39,    47,    55,    33,    22,     9,    10,    11,    12,
-      13,    15,    16,    18,    19,    20,    22,    23,    24,    25,
-      26,    28,    35,    36,    37,    55,    22,    55,    21,    42,
-      38,    43,    49,    40,    53,    41,    38,    44,    51,    46,
-      28,    36,    29,    38,    56,    55,    39,    27,    45,    55,
-      35,    36,    38,    52,    21,    30,    28,    35,    28
+       0,     1,    30,    31,    37,     1,     5,     6,     7,     8,
+      10,    11,    16,    23,    25,    28,    39,    40,    41,    38,
+      55,     0,    41,    45,    55,    49,    56,    51,    59,    45,
+      58,    51,    48,    63,    54,    55,     3,    41,     3,     1,
+       9,    10,    12,    13,    14,    15,    17,    18,    20,    21,
+      22,    23,    25,    26,    27,    28,    29,    32,    42,    43,
+      44,    64,    64,    64,    64,    46,    55,    32,    34,    50,
+      65,    64,    40,    25,    43,    49,    58,    45,    51,    58,
+      47,    62,    48,    45,    52,    60,    45,    54,     1,    33,
+      42,    43,    25,    64,    57,    43,    50,    24,    50,    65,
+      45,    65,    64,    46,    32,    53,    64,    46,    42,    33,
+       1,    33,    33,    42,    35,    50,    45,    61,    46,    24,
+       3,    33,    33,    33,    42,    33
 };
 
 #define yyerrok		(yyerrstatus = 0)
@@ -1297,6 +1406,216 @@ yydestruct (yymsg, yytype, yyvaluep, yylocationp)
 
   switch (yytype)
     {
+      case 5: /* "SECTIONHEADER" */
+#line 167 "gramRd.y"
+	{ UNPROTECT_PTR((*yyvaluep)); };
+#line 1413 "gramRd.c"
+	break;
+      case 6: /* "RSECTIONHEADER" */
+#line 167 "gramRd.y"
+	{ UNPROTECT_PTR((*yyvaluep)); };
+#line 1418 "gramRd.c"
+	break;
+      case 7: /* "VSECTIONHEADER" */
+#line 167 "gramRd.y"
+	{ UNPROTECT_PTR((*yyvaluep)); };
+#line 1423 "gramRd.c"
+	break;
+      case 8: /* "SECTIONHEADER2" */
+#line 167 "gramRd.y"
+	{ UNPROTECT_PTR((*yyvaluep)); };
+#line 1428 "gramRd.c"
+	break;
+      case 9: /* "RCODEMACRO" */
+#line 167 "gramRd.y"
+	{ UNPROTECT_PTR((*yyvaluep)); };
+#line 1433 "gramRd.c"
+	break;
+      case 10: /* "SEXPR" */
+#line 167 "gramRd.y"
+	{ UNPROTECT_PTR((*yyvaluep)); };
+#line 1438 "gramRd.c"
+	break;
+      case 12: /* "LATEXMACRO" */
+#line 167 "gramRd.y"
+	{ UNPROTECT_PTR((*yyvaluep)); };
+#line 1443 "gramRd.c"
+	break;
+      case 13: /* "VERBMACRO" */
+#line 167 "gramRd.y"
+	{ UNPROTECT_PTR((*yyvaluep)); };
+#line 1448 "gramRd.c"
+	break;
+      case 14: /* "OPTMACRO" */
+#line 167 "gramRd.y"
+	{ UNPROTECT_PTR((*yyvaluep)); };
+#line 1453 "gramRd.c"
+	break;
+      case 15: /* "ESCAPE" */
+#line 167 "gramRd.y"
+	{ UNPROTECT_PTR((*yyvaluep)); };
+#line 1458 "gramRd.c"
+	break;
+      case 16: /* "LISTSECTION" */
+#line 167 "gramRd.y"
+	{ UNPROTECT_PTR((*yyvaluep)); };
+#line 1463 "gramRd.c"
+	break;
+      case 17: /* "ITEMIZE" */
+#line 167 "gramRd.y"
+	{ UNPROTECT_PTR((*yyvaluep)); };
+#line 1468 "gramRd.c"
+	break;
+      case 18: /* "DESCRIPTION" */
+#line 167 "gramRd.y"
+	{ UNPROTECT_PTR((*yyvaluep)); };
+#line 1473 "gramRd.c"
+	break;
+      case 19: /* "NOITEM" */
+#line 167 "gramRd.y"
+	{ UNPROTECT_PTR((*yyvaluep)); };
+#line 1478 "gramRd.c"
+	break;
+      case 20: /* "LATEXMACRO2" */
+#line 167 "gramRd.y"
+	{ UNPROTECT_PTR((*yyvaluep)); };
+#line 1483 "gramRd.c"
+	break;
+      case 21: /* "VERBMACRO2" */
+#line 167 "gramRd.y"
+	{ UNPROTECT_PTR((*yyvaluep)); };
+#line 1488 "gramRd.c"
+	break;
+      case 22: /* "LATEXMACRO3" */
+#line 167 "gramRd.y"
+	{ UNPROTECT_PTR((*yyvaluep)); };
+#line 1493 "gramRd.c"
+	break;
+      case 23: /* "IFDEF" */
+#line 167 "gramRd.y"
+	{ UNPROTECT_PTR((*yyvaluep)); };
+#line 1498 "gramRd.c"
+	break;
+      case 24: /* "ENDIF" */
+#line 167 "gramRd.y"
+	{ UNPROTECT_PTR((*yyvaluep)); };
+#line 1503 "gramRd.c"
+	break;
+      case 25: /* "TEXT" */
+#line 167 "gramRd.y"
+	{ UNPROTECT_PTR((*yyvaluep)); };
+#line 1508 "gramRd.c"
+	break;
+      case 26: /* "RCODE" */
+#line 167 "gramRd.y"
+	{ UNPROTECT_PTR((*yyvaluep)); };
+#line 1513 "gramRd.c"
+	break;
+      case 27: /* "VERB" */
+#line 167 "gramRd.y"
+	{ UNPROTECT_PTR((*yyvaluep)); };
+#line 1518 "gramRd.c"
+	break;
+      case 28: /* "COMMENT" */
+#line 167 "gramRd.y"
+	{ UNPROTECT_PTR((*yyvaluep)); };
+#line 1523 "gramRd.c"
+	break;
+      case 29: /* "UNKNOWN" */
+#line 167 "gramRd.y"
+	{ UNPROTECT_PTR((*yyvaluep)); };
+#line 1528 "gramRd.c"
+	break;
+      case 30: /* "STARTFILE" */
+#line 167 "gramRd.y"
+	{ UNPROTECT_PTR((*yyvaluep)); };
+#line 1533 "gramRd.c"
+	break;
+      case 31: /* "STARTFRAGMENT" */
+#line 167 "gramRd.y"
+	{ UNPROTECT_PTR((*yyvaluep)); };
+#line 1538 "gramRd.c"
+	break;
+      case 42: /* "ArgItems" */
+#line 167 "gramRd.y"
+	{ UNPROTECT_PTR((*yyvaluep)); };
+#line 1543 "gramRd.c"
+	break;
+      case 45: /* "LatexArg" */
+#line 167 "gramRd.y"
+	{ UNPROTECT_PTR((*yyvaluep)); };
+#line 1548 "gramRd.c"
+	break;
+      case 50: /* "RLikeArg2" */
+#line 167 "gramRd.y"
+	{ UNPROTECT_PTR((*yyvaluep)); };
+#line 1553 "gramRd.c"
+	break;
+      case 52: /* "VerbatimArg1" */
+#line 167 "gramRd.y"
+	{ UNPROTECT_PTR((*yyvaluep)); };
+#line 1558 "gramRd.c"
+	break;
+      case 53: /* "VerbatimArg2" */
+#line 167 "gramRd.y"
+	{ UNPROTECT_PTR((*yyvaluep)); };
+#line 1563 "gramRd.c"
+	break;
+      case 54: /* "IfDefTarget" */
+#line 167 "gramRd.y"
+	{ UNPROTECT_PTR((*yyvaluep)); };
+#line 1568 "gramRd.c"
+	break;
+      case 55: /* "goLatexLike" */
+#line 167 "gramRd.y"
+	{ UNPROTECT_PTR((*yyvaluep)); };
+#line 1573 "gramRd.c"
+	break;
+      case 56: /* "goRLike" */
+#line 167 "gramRd.y"
+	{ UNPROTECT_PTR((*yyvaluep)); };
+#line 1578 "gramRd.c"
+	break;
+      case 57: /* "goRLike2" */
+#line 167 "gramRd.y"
+	{ UNPROTECT_PTR((*yyvaluep)); };
+#line 1583 "gramRd.c"
+	break;
+      case 58: /* "goOption" */
+#line 167 "gramRd.y"
+	{ UNPROTECT_PTR((*yyvaluep)); };
+#line 1588 "gramRd.c"
+	break;
+      case 59: /* "goVerbatim" */
+#line 167 "gramRd.y"
+	{ UNPROTECT_PTR((*yyvaluep)); };
+#line 1593 "gramRd.c"
+	break;
+      case 60: /* "goVerbatim1" */
+#line 167 "gramRd.y"
+	{ UNPROTECT_PTR((*yyvaluep)); };
+#line 1598 "gramRd.c"
+	break;
+      case 61: /* "goVerbatim2" */
+#line 167 "gramRd.y"
+	{ UNPROTECT_PTR((*yyvaluep)); };
+#line 1603 "gramRd.c"
+	break;
+      case 62: /* "goItem0" */
+#line 167 "gramRd.y"
+	{ UNPROTECT_PTR((*yyvaluep)); };
+#line 1608 "gramRd.c"
+	break;
+      case 63: /* "goItem2" */
+#line 167 "gramRd.y"
+	{ UNPROTECT_PTR((*yyvaluep)); };
+#line 1613 "gramRd.c"
+	break;
+      case 65: /* "Option" */
+#line 167 "gramRd.y"
+	{ UNPROTECT_PTR((*yyvaluep)); };
+#line 1618 "gramRd.c"
+	break;
 
       default:
 	break;
@@ -1618,285 +1937,375 @@ yyreduce:
   switch (yyn)
     {
         case 2:
-#line 146 "gramRd.y"
-    { xxsavevalue((yyvsp[(1) - (2)]), &(yyloc)); return 0; ;}
+#line 177 "gramRd.y"
+    { xxsavevalue((yyvsp[(2) - (3)]), &(yyloc)); UNPROTECT_PTR((yyvsp[(1) - (3)])); return 0; ;}
     break;
 
   case 3:
-#line 147 "gramRd.y"
-    { PROTECT(Value = R_NilValue);  YYABORT; ;}
+#line 178 "gramRd.y"
+    { xxsavevalue((yyvsp[(2) - (3)]), &(yyloc)); UNPROTECT_PTR((yyvsp[(1) - (3)])); return 0; ;}
     break;
 
   case 4:
-#line 150 "gramRd.y"
-    { (yyval) = xxnewlist((yyvsp[(1) - (1)])); ;}
+#line 179 "gramRd.y"
+    { PROTECT(Value = R_NilValue);  YYABORT; ;}
     break;
 
   case 5:
-#line 151 "gramRd.y"
-    { (yyval) = xxlist((yyvsp[(1) - (2)]), (yyvsp[(2) - (2)])); ;}
+#line 182 "gramRd.y"
+    { (yyval) = (yyvsp[(2) - (2)]); UNPROTECT_PTR((yyvsp[(1) - (2)])); ;}
     break;
 
   case 6:
-#line 153 "gramRd.y"
-    { (yyval) = xxmarkup((yyvsp[(1) - (2)]), (yyvsp[(2) - (2)]), &(yyloc)); ;}
-    break;
-
-  case 7:
-#line 154 "gramRd.y"
-    { (yyval) = xxmarkup((yyvsp[(1) - (2)]), (yyvsp[(2) - (2)]), &(yyloc)); ;}
-    break;
-
-  case 8:
-#line 155 "gramRd.y"
-    { (yyval) = xxmarkup((yyvsp[(1) - (2)]), (yyvsp[(2) - (2)]), &(yyloc)); ;}
-    break;
-
-  case 9:
-#line 156 "gramRd.y"
-    { (yyval) = xxmarkup((yyvsp[(1) - (2)]), (yyvsp[(2) - (2)]), &(yyloc)); ;}
-    break;
-
-  case 10:
-#line 157 "gramRd.y"
-    { (yyval) = xxmarkup2((yyvsp[(1) - (3)]), (yyvsp[(2) - (3)]), (yyvsp[(3) - (3)]), 2, &(yyloc)); ;}
-    break;
-
-  case 11:
-#line 158 "gramRd.y"
-    { (yyval) = xxmarkup2((yyvsp[(1) - (4)]), (yyvsp[(2) - (4)]), (yyvsp[(3) - (4)]), 2, &(yyloc)); UNPROTECT_PTR((yyvsp[(4) - (4)])); ;}
-    break;
-
-  case 12:
-#line 159 "gramRd.y"
-    { (yyval) = xxtag((yyvsp[(1) - (1)]), COMMENT, &(yyloc)); ;}
-    break;
-
-  case 13:
-#line 160 "gramRd.y"
-    { (yyval) = xxtag((yyvsp[(1) - (1)]), TEXT, &(yyloc)); ;}
-    break;
-
-  case 14:
-#line 162 "gramRd.y"
-    { (yyval) = xxnewlist((yyvsp[(1) - (1)])); ;}
-    break;
-
-  case 15:
-#line 163 "gramRd.y"
-    { (yyval) = xxlist((yyvsp[(1) - (2)]), (yyvsp[(2) - (2)])); ;}
-    break;
-
-  case 16:
-#line 165 "gramRd.y"
-    { (yyval) = xxtag((yyvsp[(1) - (1)]), TEXT, &(yyloc)); ;}
-    break;
-
-  case 17:
-#line 166 "gramRd.y"
-    { (yyval) = xxtag((yyvsp[(1) - (1)]), RCODE, &(yyloc)); ;}
-    break;
-
-  case 18:
-#line 167 "gramRd.y"
-    { (yyval) = xxtag((yyvsp[(1) - (1)]), VERB, &(yyloc)); ;}
-    break;
-
-  case 19:
-#line 168 "gramRd.y"
-    { (yyval) = xxtag((yyvsp[(1) - (1)]), COMMENT, &(yyloc)); ;}
-    break;
-
-  case 20:
-#line 169 "gramRd.y"
-    { (yyval) = xxtag((yyvsp[(1) - (1)]), UNKNOWN, &(yyloc)); ;}
-    break;
-
-  case 21:
-#line 170 "gramRd.y"
-    { (yyval) = xxmarkup(R_NilValue, (yyvsp[(1) - (1)]), &(yyloc)); ;}
-    break;
-
-  case 22:
-#line 171 "gramRd.y"
+#line 185 "gramRd.y"
     { (yyval) = (yyvsp[(1) - (1)]); ;}
     break;
 
+  case 7:
+#line 188 "gramRd.y"
+    { (yyval) = xxnewlist((yyvsp[(1) - (1)])); ;}
+    break;
+
+  case 8:
+#line 189 "gramRd.y"
+    { (yyval) = xxlist((yyvsp[(1) - (2)]), (yyvsp[(2) - (2)])); ;}
+    break;
+
+  case 9:
+#line 191 "gramRd.y"
+    { (yyval) = xxmarkup((yyvsp[(1) - (2)]), (yyvsp[(2) - (2)]), STATIC, &(yyloc)); ;}
+    break;
+
+  case 10:
+#line 192 "gramRd.y"
+    { (yyval) = xxmarkup((yyvsp[(1) - (2)]), (yyvsp[(2) - (2)]), HAS_SEXPR, &(yyloc)); ;}
+    break;
+
+  case 11:
+#line 193 "gramRd.y"
+    { (yyval) = xxmarkup((yyvsp[(1) - (2)]), (yyvsp[(2) - (2)]), STATIC, &(yyloc)); ;}
+    break;
+
+  case 12:
+#line 194 "gramRd.y"
+    { (yyval) = xxmarkup((yyvsp[(1) - (2)]), (yyvsp[(2) - (2)]), STATIC, &(yyloc)); ;}
+    break;
+
+  case 13:
+#line 195 "gramRd.y"
+    { (yyval) = xxmarkup((yyvsp[(1) - (2)]), (yyvsp[(2) - (2)]), STATIC, &(yyloc)); ;}
+    break;
+
+  case 14:
+#line 196 "gramRd.y"
+    { (yyval) = xxmarkup2((yyvsp[(1) - (3)]), (yyvsp[(2) - (3)]), (yyvsp[(3) - (3)]), 2, STATIC, &(yyloc)); ;}
+    break;
+
+  case 15:
+#line 197 "gramRd.y"
+    { (yyval) = xxmarkup2((yyvsp[(1) - (4)]), (yyvsp[(2) - (4)]), (yyvsp[(3) - (4)]), 2, HAS_IFDEF, &(yyloc)); UNPROTECT_PTR((yyvsp[(4) - (4)])); ;}
+    break;
+
+  case 16:
+#line 198 "gramRd.y"
+    { (yyval) = xxmarkup((yyvsp[(1) - (3)]), (yyvsp[(3) - (3)]), HAS_SEXPR, &(yyloc)); xxpopMode((yyvsp[(2) - (3)])); ;}
+    break;
+
+  case 17:
+#line 199 "gramRd.y"
+    { (yyval) = xxOptionmarkup((yyvsp[(1) - (4)]), (yyvsp[(3) - (4)]), (yyvsp[(4) - (4)]), STATIC, &(yyloc)); xxpopMode((yyvsp[(2) - (4)])); ;}
+    break;
+
+  case 18:
+#line 200 "gramRd.y"
+    { (yyval) = xxtag((yyvsp[(1) - (1)]), COMMENT, &(yyloc)); ;}
+    break;
+
+  case 19:
+#line 201 "gramRd.y"
+    { (yyval) = xxtag((yyvsp[(1) - (1)]), TEXT, &(yyloc)); ;}
+    break;
+
+  case 20:
+#line 202 "gramRd.y"
+    { (yyval) = (yyvsp[(2) - (2)]); ;}
+    break;
+
+  case 21:
+#line 204 "gramRd.y"
+    { (yyval) = xxnewlist((yyvsp[(1) - (1)])); ;}
+    break;
+
+  case 22:
+#line 205 "gramRd.y"
+    { (yyval) = xxlist((yyvsp[(1) - (2)]), (yyvsp[(2) - (2)])); ;}
+    break;
+
   case 23:
-#line 173 "gramRd.y"
-    { (yyval) = xxmarkup((yyvsp[(1) - (2)]), (yyvsp[(2) - (2)]), &(yyloc)); ;}
+#line 207 "gramRd.y"
+    { (yyval) = xxtag((yyvsp[(1) - (1)]), TEXT, &(yyloc)); ;}
     break;
 
   case 24:
-#line 174 "gramRd.y"
-    { (yyval) = xxmarkup2((yyvsp[(1) - (3)]), (yyvsp[(2) - (3)]), (yyvsp[(3) - (3)]), 2, &(yyloc)); ;}
+#line 208 "gramRd.y"
+    { (yyval) = xxtag((yyvsp[(1) - (1)]), RCODE, &(yyloc)); ;}
     break;
 
   case 25:
-#line 175 "gramRd.y"
-    { (yyval) = xxmarkup((yyvsp[(1) - (2)]), (yyvsp[(2) - (2)]), &(yyloc)); ;}
+#line 209 "gramRd.y"
+    { (yyval) = xxtag((yyvsp[(1) - (1)]), VERB, &(yyloc)); ;}
     break;
 
   case 26:
-#line 176 "gramRd.y"
-    { (yyval) = xxmarkup((yyvsp[(1) - (2)]), (yyvsp[(2) - (2)]), &(yyloc)); ;}
+#line 210 "gramRd.y"
+    { (yyval) = xxtag((yyvsp[(1) - (1)]), COMMENT, &(yyloc)); ;}
     break;
 
   case 27:
-#line 177 "gramRd.y"
-    { (yyval) = xxmarkup((yyvsp[(1) - (3)]), (yyvsp[(3) - (3)]), &(yyloc)); xxpopMode((yyvsp[(2) - (3)])); ;}
+#line 211 "gramRd.y"
+    { (yyval) = xxtag((yyvsp[(1) - (1)]), UNKNOWN, &(yyloc)); yyerror(yyunknown); ;}
     break;
 
   case 28:
-#line 178 "gramRd.y"
-    { (yyval) = xxOptionmarkup((yyvsp[(1) - (4)]), (yyvsp[(3) - (4)]), (yyvsp[(4) - (4)]), &(yyloc)); xxpopMode((yyvsp[(2) - (4)])); ;}
+#line 212 "gramRd.y"
+    { (yyval) = xxmarkup(R_NilValue, (yyvsp[(1) - (1)]), STATIC, &(yyloc)); ;}
     break;
 
   case 29:
-#line 179 "gramRd.y"
-    { (yyval) = xxmarkup((yyvsp[(1) - (2)]), (yyvsp[(2) - (2)]), &(yyloc)); ;}
+#line 213 "gramRd.y"
+    { (yyval) = (yyvsp[(1) - (1)]); ;}
     break;
 
   case 30:
-#line 180 "gramRd.y"
-    { (yyval) = xxmarkup((yyvsp[(1) - (2)]), (yyvsp[(2) - (2)]), &(yyloc)); ;}
+#line 214 "gramRd.y"
+    { (yyval) = (yyvsp[(2) - (2)]); ;}
     break;
 
   case 31:
-#line 181 "gramRd.y"
-    { (yyval) = xxmarkup2((yyvsp[(1) - (2)]), (yyvsp[(2) - (2)]), R_NilValue, 1, &(yyloc)); ;}
+#line 216 "gramRd.y"
+    { (yyval) = xxmarkup((yyvsp[(1) - (2)]), (yyvsp[(2) - (2)]), STATIC, &(yyloc)); ;}
     break;
 
   case 32:
-#line 182 "gramRd.y"
-    { (yyval) = xxmarkup2((yyvsp[(1) - (3)]), (yyvsp[(2) - (3)]), (yyvsp[(3) - (3)]), 2, &(yyloc)); ;}
+#line 217 "gramRd.y"
+    { (yyval) = xxmarkup2((yyvsp[(1) - (3)]), (yyvsp[(2) - (3)]), (yyvsp[(3) - (3)]), 2, STATIC, &(yyloc)); ;}
     break;
 
   case 33:
-#line 183 "gramRd.y"
-    { (yyval) = xxmarkup((yyvsp[(1) - (1)]), R_NilValue, &(yyloc)); ;}
+#line 218 "gramRd.y"
+    { (yyval) = xxmarkup3((yyvsp[(1) - (4)]), (yyvsp[(2) - (4)]), (yyvsp[(3) - (4)]), (yyvsp[(4) - (4)]), STATIC, &(yyloc)); ;}
     break;
 
   case 34:
-#line 184 "gramRd.y"
-    { (yyval) = xxmarkup2((yyvsp[(1) - (4)]), (yyvsp[(2) - (4)]), (yyvsp[(3) - (4)]), 2, &(yyloc)); UNPROTECT_PTR((yyvsp[(4) - (4)])); ;}
+#line 219 "gramRd.y"
+    { (yyval) = xxmarkup((yyvsp[(1) - (2)]), (yyvsp[(2) - (2)]), STATIC, &(yyloc)); ;}
     break;
 
   case 35:
-#line 186 "gramRd.y"
-    { xxpopMode((yyvsp[(1) - (2)])); (yyval) = (yyvsp[(2) - (2)]); ;}
+#line 220 "gramRd.y"
+    { (yyval) = xxmarkup((yyvsp[(1) - (2)]), (yyvsp[(2) - (2)]), STATIC, &(yyloc)); ;}
     break;
 
   case 36:
-#line 188 "gramRd.y"
-    { xxpopMode((yyvsp[(1) - (2)])); (yyval) = (yyvsp[(2) - (2)]); ;}
+#line 221 "gramRd.y"
+    { (yyval) = xxmarkup((yyvsp[(1) - (3)]), (yyvsp[(3) - (3)]), STATIC, &(yyloc)); xxpopMode((yyvsp[(2) - (3)])); ;}
     break;
 
   case 37:
-#line 189 "gramRd.y"
-    { xxpopMode((yyvsp[(1) - (2)])); (yyval) = xxnewlist((yyvsp[(2) - (2)])); 
-    	    					  warning(_("bad markup (extra space?) at %s:%d:%d"), 
-    	    					            xxBasename, (yylsp[(2) - (2)]).first_line, (yylsp[(2) - (2)]).first_column); ;}
+#line 222 "gramRd.y"
+    { (yyval) = xxOptionmarkup((yyvsp[(1) - (4)]), (yyvsp[(3) - (4)]), (yyvsp[(4) - (4)]), STATIC, &(yyloc)); xxpopMode((yyvsp[(2) - (4)])); ;}
     break;
 
   case 38:
-#line 193 "gramRd.y"
-    { xxpopMode((yyvsp[(1) - (2)])); (yyval) = (yyvsp[(2) - (2)]); ;}
+#line 223 "gramRd.y"
+    { (yyval) = xxmarkup((yyvsp[(1) - (2)]), (yyvsp[(2) - (2)]), STATIC, &(yyloc)); ;}
     break;
 
   case 39:
-#line 195 "gramRd.y"
-    { xxpopMode((yyvsp[(1) - (2)])); (yyval) = (yyvsp[(2) - (2)]); ;}
+#line 224 "gramRd.y"
+    { (yyval) = xxmarkup((yyvsp[(1) - (3)]), (yyvsp[(3) - (3)]), HAS_SEXPR, &(yyloc)); xxpopMode((yyvsp[(2) - (3)])); ;}
     break;
 
   case 40:
-#line 197 "gramRd.y"
-    { xxpopMode((yyvsp[(1) - (2)])); (yyval) = (yyvsp[(2) - (2)]); ;}
+#line 225 "gramRd.y"
+    { (yyval) = xxOptionmarkup((yyvsp[(1) - (4)]), (yyvsp[(3) - (4)]), (yyvsp[(4) - (4)]), HAS_SEXPR, &(yyloc)); xxpopMode((yyvsp[(2) - (4)])); ;}
     break;
 
   case 41:
-#line 199 "gramRd.y"
-    { xxpopMode((yyvsp[(1) - (2)])); (yyval) = (yyvsp[(2) - (2)]); ;}
+#line 226 "gramRd.y"
+    { (yyval) = xxmarkup((yyvsp[(1) - (2)]), (yyvsp[(2) - (2)]), STATIC, &(yyloc)); ;}
     break;
 
   case 42:
-#line 201 "gramRd.y"
-    { xxpopMode((yyvsp[(1) - (2)])); (yyval) = (yyvsp[(2) - (2)]); ;}
+#line 227 "gramRd.y"
+    { (yyval) = xxmarkup2((yyvsp[(1) - (2)]), (yyvsp[(2) - (2)]), R_NilValue, 1, STATIC, &(yyloc)); ;}
     break;
 
   case 43:
-#line 205 "gramRd.y"
-    { xxpopMode((yyvsp[(2) - (4)])); (yyval) = (yyvsp[(3) - (4)]); ;}
+#line 228 "gramRd.y"
+    { (yyval) = xxmarkup2((yyvsp[(1) - (3)]), (yyvsp[(2) - (3)]), (yyvsp[(3) - (3)]), 2, STATIC, &(yyloc)); ;}
     break;
 
   case 44:
-#line 206 "gramRd.y"
-    { xxpopMode((yyvsp[(2) - (3)])); (yyval) = xxnewlist(NULL); ;}
+#line 229 "gramRd.y"
+    { (yyval) = xxmarkup((yyvsp[(1) - (1)]), R_NilValue, STATIC, &(yyloc)); ;}
     break;
 
   case 45:
-#line 208 "gramRd.y"
-    { xxpopMode((yyvsp[(1) - (2)])); (yyval) = xxnewlist((yyvsp[(2) - (2)])); ;}
+#line 230 "gramRd.y"
+    { (yyval) = xxmarkup2((yyvsp[(1) - (4)]), (yyvsp[(2) - (4)]), (yyvsp[(3) - (4)]), 2, HAS_IFDEF, &(yyloc)); UNPROTECT_PTR((yyvsp[(4) - (4)])); ;}
     break;
 
   case 46:
-#line 211 "gramRd.y"
-    { (yyval) = xxpushMode(LATEXLIKE, UNKNOWN, FALSE); ;}
+#line 232 "gramRd.y"
+    { xxpopMode((yyvsp[(1) - (2)])); (yyval) = (yyvsp[(2) - (2)]); ;}
     break;
 
   case 47:
-#line 213 "gramRd.y"
-    { (yyval) = xxpushMode(RLIKE, UNKNOWN, FALSE); ;}
+#line 234 "gramRd.y"
+    { xxpopMode((yyvsp[(1) - (2)])); (yyval) = (yyvsp[(2) - (2)]); ;}
     break;
 
   case 48:
-#line 215 "gramRd.y"
-    { (yyval) = xxpushMode(INOPTION, UNKNOWN, FALSE); ;}
+#line 235 "gramRd.y"
+    { xxpopMode((yyvsp[(1) - (2)])); (yyval) = xxnewlist((yyvsp[(2) - (2)])); 
+     						  if(wCalls)
+    	    					      warning(_("bad markup (extra space?) at %s:%d:%d"), 
+    	    					            xxBasename, (yylsp[(2) - (2)]).first_line, (yylsp[(2) - (2)]).first_column); 
+     						  else
+    	    					      warningcall(R_NilValue, _("bad markup (extra space?) at %s:%d:%d"), 
+    	    					            xxBasename, (yylsp[(2) - (2)]).first_line, (yylsp[(2) - (2)]).first_column); 
+						;}
     break;
 
   case 49:
-#line 217 "gramRd.y"
-    { (yyval) = xxpushMode(VERBATIM, UNKNOWN, FALSE); ;}
+#line 244 "gramRd.y"
+    { xxpopMode((yyvsp[(1) - (2)])); (yyval) = (yyvsp[(2) - (2)]); ;}
     break;
 
   case 50:
-#line 219 "gramRd.y"
-    { (yyval) = xxpushMode(VERBATIM, UNKNOWN, TRUE); ;}
+#line 246 "gramRd.y"
+    { xxpopMode((yyvsp[(1) - (2)])); (yyval) = (yyvsp[(2) - (2)]); ;}
     break;
 
   case 51:
-#line 221 "gramRd.y"
-    { xxbraceDepth--; (yyval) = xxpushMode(VERBATIM, UNKNOWN, FALSE); xxbraceDepth++; ;}
+#line 248 "gramRd.y"
+    { xxpopMode((yyvsp[(1) - (2)])); (yyval) = (yyvsp[(2) - (2)]); ;}
     break;
 
   case 52:
-#line 223 "gramRd.y"
-    { (yyval) = xxpushMode(LATEXLIKE, ESCAPE, FALSE); ;}
+#line 252 "gramRd.y"
+    { xxpopMode((yyvsp[(2) - (4)])); (yyval) = (yyvsp[(3) - (4)]); ;}
     break;
 
   case 53:
-#line 225 "gramRd.y"
-    { (yyval) = xxpushMode(LATEXLIKE, LATEXMACRO2, FALSE); ;}
+#line 253 "gramRd.y"
+    { xxpopMode((yyvsp[(2) - (3)])); (yyval) = xxnewlist(NULL); ;}
     break;
 
   case 54:
-#line 227 "gramRd.y"
-    { (yyval) = (yyvsp[(2) - (3)]); ;}
+#line 255 "gramRd.y"
+    { xxpopMode((yyvsp[(1) - (2)])); (yyval) = (yyvsp[(2) - (2)]); ;}
     break;
 
   case 55:
-#line 228 "gramRd.y"
-    { (yyval) = xxnewlist(NULL); ;}
+#line 257 "gramRd.y"
+    { xxpopMode((yyvsp[(1) - (2)])); (yyval) = (yyvsp[(2) - (2)]); ;}
     break;
 
   case 56:
-#line 230 "gramRd.y"
+#line 261 "gramRd.y"
+    { xxpopMode((yyvsp[(2) - (4)])); (yyval) = (yyvsp[(3) - (4)]); ;}
+    break;
+
+  case 57:
+#line 262 "gramRd.y"
+    { xxpopMode((yyvsp[(2) - (3)])); (yyval) = xxnewlist(NULL); ;}
+    break;
+
+  case 58:
+#line 264 "gramRd.y"
+    { xxpopMode((yyvsp[(1) - (2)])); (yyval) = xxnewlist((yyvsp[(2) - (2)])); ;}
+    break;
+
+  case 59:
+#line 267 "gramRd.y"
+    { (yyval) = xxpushMode(LATEXLIKE, UNKNOWN, FALSE); ;}
+    break;
+
+  case 60:
+#line 269 "gramRd.y"
+    { (yyval) = xxpushMode(RLIKE, UNKNOWN, FALSE); ;}
+    break;
+
+  case 61:
+#line 271 "gramRd.y"
+    { xxbraceDepth--; (yyval) = xxpushMode(RLIKE, UNKNOWN, FALSE); xxbraceDepth++; ;}
+    break;
+
+  case 62:
+#line 273 "gramRd.y"
+    { (yyval) = xxpushMode(INOPTION, UNKNOWN, FALSE); ;}
+    break;
+
+  case 63:
+#line 275 "gramRd.y"
+    { (yyval) = xxpushMode(VERBATIM, UNKNOWN, FALSE); ;}
+    break;
+
+  case 64:
+#line 277 "gramRd.y"
+    { (yyval) = xxpushMode(VERBATIM, UNKNOWN, TRUE); ;}
+    break;
+
+  case 65:
+#line 279 "gramRd.y"
+    { xxbraceDepth--; (yyval) = xxpushMode(VERBATIM, UNKNOWN, FALSE); xxbraceDepth++; ;}
+    break;
+
+  case 66:
+#line 281 "gramRd.y"
+    { (yyval) = xxpushMode(LATEXLIKE, ESCAPE, FALSE); ;}
+    break;
+
+  case 67:
+#line 283 "gramRd.y"
+    { (yyval) = xxpushMode(LATEXLIKE, LATEXMACRO2, FALSE); ;}
+    break;
+
+  case 68:
+#line 285 "gramRd.y"
+    { (yyval) = (yyvsp[(2) - (3)]); ;}
+    break;
+
+  case 69:
+#line 286 "gramRd.y"
+    { (yyval) = xxnewlist(NULL); ;}
+    break;
+
+  case 70:
+#line 287 "gramRd.y"
+    { (yyval) = (yyvsp[(2) - (4)]); ;}
+    break;
+
+  case 71:
+#line 288 "gramRd.y"
+    { (yyval) = xxnewlist(NULL); ;}
+    break;
+
+  case 72:
+#line 289 "gramRd.y"
+    { (yyval) = (yyvsp[(2) - (4)]); ;}
+    break;
+
+  case 73:
+#line 291 "gramRd.y"
     { (yyval) = (yyvsp[(2) - (3)]); ;}
     break;
 
 
 /* Line 1267 of yacc.c.  */
-#line 1900 "gramRd.c"
+#line 2309 "gramRd.c"
       default: break;
     }
   YY_SYMBOL_PRINT ("-> $$ =", yyr1[yyn], &yyval, &yyloc);
@@ -2116,7 +2525,7 @@ yyreturn:
 }
 
 
-#line 232 "gramRd.y"
+#line 293 "gramRd.y"
 
 
 static SEXP xxpushMode(int newmode, int newitem, int neweqn)
@@ -2162,6 +2571,19 @@ static void xxpopMode(SEXP oldmode)
     UNPROTECT_PTR(oldmode);
 }
 
+static int getDynamicFlag(SEXP item)
+{
+    SEXP flag = getAttrib(item, install("dynamicFlag"));
+    if (isNull(flag)) return 0;
+    else return INTEGER(flag)[0];
+}
+
+static void setDynamicFlag(SEXP item, int flag)
+{
+    if (flag)
+    	setAttrib(item, install("dynamicFlag"), ScalarInteger(flag));
+}
+
 static SEXP xxnewlist(SEXP item)
 {
     SEXP ans, tmp;
@@ -2170,7 +2592,9 @@ static SEXP xxnewlist(SEXP item)
 #endif    
     PROTECT(tmp = NewList());
     if (item) {
+    	int flag = getDynamicFlag(item);
     	PROTECT(ans = GrowList(tmp, item));
+    	setDynamicFlag(ans, flag);
     	UNPROTECT_PTR(tmp);
     	UNPROTECT_PTR(item);
     } else ans = tmp;
@@ -2183,19 +2607,21 @@ static SEXP xxnewlist(SEXP item)
 static SEXP xxlist(SEXP oldlist, SEXP item)
 {
     SEXP ans;
+    int flag = getDynamicFlag(oldlist) | getDynamicFlag(item);
 #if DEBUGVALS
     Rprintf("xxlist(oldlist=%p, item=%p)", oldlist, item);
 #endif
     PROTECT(ans = GrowList(oldlist, item));
     UNPROTECT_PTR(item);
     UNPROTECT_PTR(oldlist);
+    setDynamicFlag(ans, flag);
 #if DEBUGVALS
     Rprintf(" result: %p is length %d\n", ans, length(ans));
 #endif
     return ans;
 }
 
-static SEXP xxmarkup(SEXP header, SEXP body, YYLTYPE *lloc)
+static SEXP xxmarkup(SEXP header, SEXP body, int flag, YYLTYPE *lloc)
 {
     SEXP ans;
 #if DEBUGVALS
@@ -2204,6 +2630,7 @@ static SEXP xxmarkup(SEXP header, SEXP body, YYLTYPE *lloc)
     if (isNull(body)) 
         PROTECT(ans = allocVector(VECSXP, 0));
     else {
+        flag |= getDynamicFlag(body);
 	PROTECT(ans = PairToVectorList(CDR(body)));
     	UNPROTECT_PTR(body);	
     }
@@ -2213,32 +2640,36 @@ static SEXP xxmarkup(SEXP header, SEXP body, YYLTYPE *lloc)
     setAttrib(ans, install("Rd_tag"), header);
     setAttrib(ans, R_SrcrefSymbol, makeSrcref(lloc, SrcFile));
     UNPROTECT_PTR(header);
+    setDynamicFlag(ans, flag);
 #if DEBUGVALS
     Rprintf(" result: %p\n", ans);    
 #endif
     return ans;
 }
 
-static SEXP xxOptionmarkup(SEXP header, SEXP option, SEXP body, YYLTYPE *lloc)
+static SEXP xxOptionmarkup(SEXP header, SEXP option, SEXP body, int flag, YYLTYPE *lloc)
 {
     SEXP ans;
 #if DEBUGVALS
     Rprintf("xxOptionmarkup(header=%p, option=%p, body=%p)", header, option, body);    
 #endif
+    flag |= getDynamicFlag(body);
     PROTECT(ans = PairToVectorList(CDR(body)));
     UNPROTECT_PTR(body);	
     setAttrib(ans, install("Rd_tag"), header);
     UNPROTECT_PTR(header);
+    flag |= getDynamicFlag(option);
     setAttrib(ans, install("Rd_option"), option);
     UNPROTECT_PTR(option);
     setAttrib(ans, R_SrcrefSymbol, makeSrcref(lloc, SrcFile));
+    setDynamicFlag(ans, flag);    
 #if DEBUGVALS
     Rprintf(" result: %p\n", ans);    
 #endif
     return ans;
 }
 
-static SEXP xxmarkup2(SEXP header, SEXP body1, SEXP body2, int argcount, YYLTYPE *lloc)
+static SEXP xxmarkup2(SEXP header, SEXP body1, SEXP body2, int argcount, int flag, YYLTYPE *lloc)
 {
     SEXP ans;
 #if DEBUGVALS
@@ -2247,17 +2678,66 @@ static SEXP xxmarkup2(SEXP header, SEXP body1, SEXP body2, int argcount, YYLTYPE
     
     PROTECT(ans = allocVector(VECSXP, argcount));
     if (!isNull(body1)) {
+    	int flag1 = getDynamicFlag(body1);
     	SET_VECTOR_ELT(ans, 0, PairToVectorList(CDR(body1)));
     	UNPROTECT_PTR(body1);
+    	setDynamicFlag(VECTOR_ELT(ans, 0), flag1);
+    	flag |= flag1;
     }
     if (!isNull(body2)) {
+    	int flag2;
 	if (argcount < 2) error("internal error: inconsistent argument count");
+	flag2 = getDynamicFlag(body2);
     	SET_VECTOR_ELT(ans, 1, PairToVectorList(CDR(body2)));    
     	UNPROTECT_PTR(body2);
+    	setDynamicFlag(VECTOR_ELT(ans, 1), flag2);
+    	flag |= flag2;
     }
     setAttrib(ans, install("Rd_tag"), header);
     UNPROTECT_PTR(header);    
     setAttrib(ans, R_SrcrefSymbol, makeSrcref(lloc, SrcFile));
+    setDynamicFlag(ans, flag);
+#if DEBUGVALS
+    Rprintf(" result: %p\n", ans);    
+#endif
+    return ans;
+}
+
+static SEXP xxmarkup3(SEXP header, SEXP body1, SEXP body2, SEXP body3, int flag, YYLTYPE *lloc)
+{
+    SEXP ans;
+#if DEBUGVALS
+    Rprintf("xxmarkup2(header=%p, body1=%p, body2=%p, body3=%p)", header, body1, body2, body3);        
+#endif
+    
+    PROTECT(ans = allocVector(VECSXP, 3));
+    if (!isNull(body1)) {
+    	int flag1 = getDynamicFlag(body1);
+    	SET_VECTOR_ELT(ans, 0, PairToVectorList(CDR(body1)));
+    	UNPROTECT_PTR(body1);
+    	setDynamicFlag(VECTOR_ELT(ans, 0), flag1);
+    	flag |= flag1;
+    }
+    if (!isNull(body2)) {
+    	int flag2;
+	flag2 = getDynamicFlag(body2);
+    	SET_VECTOR_ELT(ans, 1, PairToVectorList(CDR(body2)));    
+    	UNPROTECT_PTR(body2);
+    	setDynamicFlag(VECTOR_ELT(ans, 1), flag2);
+    	flag |= flag2;
+    }
+    if (!isNull(body3)) {
+    	int flag3;
+	flag3 = getDynamicFlag(body3);
+    	SET_VECTOR_ELT(ans, 2, PairToVectorList(CDR(body3)));    
+    	UNPROTECT_PTR(body3);
+    	setDynamicFlag(VECTOR_ELT(ans, 2), flag3);
+    	flag |= flag3;
+    }    
+    setAttrib(ans, install("Rd_tag"), header);
+    UNPROTECT_PTR(header);    
+    setAttrib(ans, R_SrcrefSymbol, makeSrcref(lloc, SrcFile));
+    setDynamicFlag(ans, flag);
 #if DEBUGVALS
     Rprintf(" result: %p\n", ans);    
 #endif
@@ -2266,10 +2746,12 @@ static SEXP xxmarkup2(SEXP header, SEXP body1, SEXP body2, int argcount, YYLTYPE
 
 static void xxsavevalue(SEXP Rd, YYLTYPE *lloc)
 {
+    int flag = getDynamicFlag(Rd);
     PROTECT(Value = PairToVectorList(CDR(Rd)));
     if (!isNull(Value)) {
     	setAttrib(Value, R_ClassSymbol, mkString("Rd"));
     	setAttrib(Value, R_SrcrefSymbol, makeSrcref(lloc, SrcFile));
+    	setDynamicFlag(Value, flag);
     }
     UNPROTECT_PTR(Rd);
 }
@@ -2283,8 +2765,15 @@ static SEXP xxtag(SEXP item, int type, YYLTYPE *lloc)
 
 static void xxWarnNewline()
 {
-    if (xxNewlineInString)
-	warning(_("newline within quoted string at %s:%d"), xxBasename, xxNewlineInString);
+    if (xxNewlineInString) {
+	if(wCalls)
+	    warning(_("newline within quoted string at %s:%d"), 
+		    xxBasename, xxNewlineInString);
+	else
+	    warningcall(R_NilValue,
+			_("newline within quoted string at %s:%d"), 
+			xxBasename, xxNewlineInString);
+    }
 }
 
   
@@ -2332,7 +2821,7 @@ static int xxgetc(void)
     	xxbyteno++;
     }
     /* only advance column for 1st byte in UTF-8 */
-    if (0x80 <= (unsigned char)c && (unsigned char)c <= 0xBF && known_to_be_utf8) 
+    if (0x80 <= (unsigned char)c && (unsigned char)c <= 0xBF)
     	xxcolno--;
 
     if (c == '\t') xxcolno = ((xxcolno + 6) & ~7) + 1;
@@ -2381,10 +2870,7 @@ static SEXP makeSrcref(YYLTYPE *lloc, SEXP srcfile)
 static SEXP mkString2(const char *s, int len)
 {
     SEXP t;
-    cetype_t enc = CE_NATIVE;
-
-    if(known_to_be_latin1) enc= CE_LATIN1;
-    else if(known_to_be_utf8) enc = CE_UTF8;
+    cetype_t enc = CE_UTF8;
 
     PROTECT(t = allocVector(STRSXP, 1));
     SET_STRING_ELT(t, 0, mkCharLenCE(s, len, enc));
@@ -2433,7 +2919,7 @@ static SEXP GrowList(SEXP l, SEXP s)
  *
  */
  
-static SEXP ParseRd(ParseStatus *status, SEXP srcfile)
+static SEXP ParseRd(ParseStatus *status, SEXP srcfile, Rboolean fragment)
 {
     R_ParseContextLast = 0;
     R_ParseContext[0] = '\0';
@@ -2451,6 +2937,8 @@ static SEXP ParseRd(ParseStatus *status, SEXP srcfile)
     xxinRString = 0;
     xxNewlineInString = 0;
     xxinEqn = 0;
+    if (fragment) xxinitvalue = STARTFRAGMENT;
+    else	  xxinitvalue = STARTFILE;
     
     Value = R_NilValue;
     
@@ -2479,11 +2967,11 @@ static int con_getc(void)
 }
 
 attribute_hidden
-SEXP R_ParseRd(Rconnection con, ParseStatus *status, SEXP srcfile)
+SEXP R_ParseRd(Rconnection con, ParseStatus *status, SEXP srcfile, Rboolean fragment)
 {
     con_parse = con;
     ptr_getc = con_getc;
-    return ParseRd(status, srcfile);
+    return ParseRd(status, srcfile, fragment);
 }
 
 /*----------------------------------------------------------------------------
@@ -2531,12 +3019,12 @@ static keywords[] = {
     { "\\examples",RSECTIONHEADER },
     { "\\usage",   RSECTIONHEADER },
     
-    /* This section contains verbatim text */
+    /* These sections contain verbatim text */
     
     { "\\alias",   VSECTIONHEADER }, 
     { "\\name",    VSECTIONHEADER },
     { "\\synopsis",VSECTIONHEADER }, 
-    { "\\Rdversion",VSECTIONHEADER }, 
+    { "\\Rdversion",VSECTIONHEADER },
     
     /* These macros take no arguments.  One character non-alpha escapes get the
        same token value */
@@ -2552,6 +3040,7 @@ static keywords[] = {
     { "\\acronym", LATEXMACRO },
     { "\\bold",    LATEXMACRO },
     { "\\cite",    LATEXMACRO },
+    { "\\command", LATEXMACRO },
     { "\\dfn",     LATEXMACRO },
     { "\\dQuote",  LATEXMACRO },
     { "\\email",   LATEXMACRO },
@@ -2580,15 +3069,20 @@ static keywords[] = {
     /* These macros take two LaTeX-like arguments. */
     
     { "\\enc",     LATEXMACRO2 },
+    { "\\if",      LATEXMACRO2 },
     { "\\method",  LATEXMACRO2 },
     { "\\S3method",LATEXMACRO2 },
     { "\\S4method",LATEXMACRO2 },
     { "\\tabular", LATEXMACRO2 },
     
+    /* This macro takes three LaTeX-like arguments. */
+    
+    { "\\ifelse",  LATEXMACRO3 },
+    
     /* These macros take one optional bracketed option and always take 
        one LaTeX-like argument */
        
-    { "\\link",    OPTMACRO },       
+    { "\\link",    OPTMACRO },
        
     /* These markup macros require an R-like text argument */
     
@@ -2597,13 +3091,21 @@ static keywords[] = {
     { "\\donttest",RCODEMACRO },
     { "\\testonly",RCODEMACRO },
     
+    /* This macro take one optional bracketed option and one R-like argument */
+    
+    { "\\Sexpr",   SEXPR },
+    
+    /* This is just like a VSECTIONHEADER, but it needs SEXPR processing */
+    
+    { "\\RdOpts",   RDOPTS },
+    
     /* These macros take one verbatim arg and ignore everything except braces */
     
-    { "\\command", VERBMACRO },
     { "\\dontrun", VERBMACRO }, /* at least for now */    
     { "\\env",     VERBMACRO },
     { "\\kbd", 	   VERBMACRO },	
     { "\\option",  VERBMACRO },
+    { "\\out",     VERBMACRO },
     { "\\preformatted", VERBMACRO },
     
     { "\\samp",    VERBMACRO },
@@ -2640,7 +3142,7 @@ static int KeywordLookup(const char *s)
     return UNKNOWN;
 }
 
-static void yyerror(char *s)
+static void yyerror(const char *s)
 {
     static const char *const yytname_translations[] =
     {
@@ -2650,7 +3152,7 @@ static void yyerror(char *s)
        the rest are to be copied literally.  The #if 0 block below allows xgettext
        to see these.
     */    
-#define YYENGLISH 16
+#define YYENGLISH 17
 	"$undefined",	"input", 	
 	"SECTIONHEADER","section header",
 	"RSECTIONHEADER","section header",
@@ -2659,6 +3161,7 @@ static void yyerror(char *s)
 	
 	"LATEXMACRO",	"macro",
 	"LATEXMACRO2",  "macro",
+	"LATEXMACRO3",  "macro",
 	"RCODEMACRO",	"macro",
 	"VERBMACRO",    "macro",
 	"VERBMACRO2",	"macro",
@@ -2675,7 +3178,12 @@ static void yyerror(char *s)
     };
     static char const yyunexpected[] = "syntax error, unexpected ";
     static char const yyexpecting[] = ", expecting ";
+    static char const yyshortunexpected[] = "unexpected %s";
+    static char const yylongunexpected[] = "unexpected %s '%s'";
     char *expecting;
+    char ParseErrorMsg[PARSE_ERROR_SIZE];
+    SEXP filename;
+    char ParseErrorFilename[PARSE_ERROR_SIZE];
  #if 0
  /* these are just here to trigger the internationalization */
     _("input"); 	
@@ -2686,9 +3194,11 @@ static void yyerror(char *s)
    
     xxWarnNewline();	/* post newline warning if necessary */
     
+    /*
     R_ParseError     = yylloc.first_line;
     R_ParseErrorCol  = yylloc.first_column;
     R_ParseErrorFile = SrcFile;
+    */
     
     if (!strncmp(s, yyunexpected, sizeof yyunexpected -1)) {
 	int i, translated = FALSE;
@@ -2697,35 +3207,57 @@ static void yyerror(char *s)
     	if (expecting) *expecting = '\0';
     	for (i = 0; yytname_translations[i]; i += 2) {
     	    if (!strcmp(s + sizeof yyunexpected - 1, yytname_translations[i])) {
-    	    	sprintf(R_ParseErrorMsg, _("unexpected %s"), 
+    	        sprintf(ParseErrorMsg, yychar < 256 ? _(yyshortunexpected): _(yylongunexpected), 
     	    	        i/2 < YYENGLISH ? _(yytname_translations[i+1])
-    	    	                    : yytname_translations[i+1]);
+    	    	                    : yytname_translations[i+1], CHAR(STRING_ELT(yylval, 0)));
     	    	translated = TRUE;
     	    	break;
     	    }
     	}
     	if (!translated)
-    	    sprintf(R_ParseErrorMsg, _("unexpected %s"),
-    	                             s + sizeof yyunexpected - 1);
+    	    sprintf(ParseErrorMsg, yychar < 256 ? _(yyshortunexpected) : _(yylongunexpected),
+    	                             s + sizeof yyunexpected - 1, CHAR(STRING_ELT(yylval, 0)));
     	if (expecting) {
  	    translated = FALSE;
     	    for (i = 0; yytname_translations[i]; i += 2) {
     	    	if (!strcmp(expecting + sizeof yyexpecting - 1, yytname_translations[i])) {
-    	    	    strcat(R_ParseErrorMsg, _(yyexpecting));
-    	    	    strcat(R_ParseErrorMsg, i/2 < YYENGLISH ? _(yytname_translations[i+1])
+    	    	    strcat(ParseErrorMsg, _(yyexpecting));
+    	    	    strcat(ParseErrorMsg, i/2 < YYENGLISH ? _(yytname_translations[i+1])
     	    	                    : yytname_translations[i+1]);
     	    	    translated = TRUE;
 		    break;
 		}
 	    }
 	    if (!translated) {
-	    	strcat(R_ParseErrorMsg, _(yyexpecting));
-	    	strcat(R_ParseErrorMsg, expecting + sizeof yyexpecting - 1);
+	    	strcat(ParseErrorMsg, _(yyexpecting));
+	    	strcat(ParseErrorMsg, expecting + sizeof yyexpecting - 1);
 	    }
 	}
+    } else if (!strncmp(s, yyunknown, sizeof yyunknown-1)) {
+    	sprintf(ParseErrorMsg, "%s '%s'", s, CHAR(STRING_ELT(yylval, 0)));
     } else {
-    	sprintf(R_ParseErrorMsg, _("%s"),s);
-    }	
+    	sprintf(ParseErrorMsg, "%s", s);
+    }
+    filename = findVar(install("filename"), SrcFile);
+    if (!isNull(filename))
+    	strncpy(ParseErrorFilename, CHAR(STRING_ELT(filename, 0)), PARSE_ERROR_SIZE - 1);
+    else
+        ParseErrorFilename[0] = '\0';
+    if (wCalls) {
+	if (yylloc.first_line != yylloc.last_line)
+	    warning("%s:%d-%d: %s", 
+		    ParseErrorFilename, yylloc.first_line, yylloc.last_line, ParseErrorMsg);
+	else
+	    warning("%s:%d: %s", 
+		    ParseErrorFilename, yylloc.first_line, ParseErrorMsg);
+    } else {
+	if (yylloc.first_line != yylloc.last_line)
+	    warningcall(R_NilValue, "%s:%d-%d: %s", 
+		    ParseErrorFilename, yylloc.first_line, yylloc.last_line, ParseErrorMsg);
+	else
+	    warningcall(R_NilValue, "%s:%d: %s", 
+			ParseErrorFilename, yylloc.first_line, ParseErrorMsg);
+    }
 }
 
 #define TEXT_PUSH(c) do {                  \
@@ -2763,6 +3295,19 @@ static int token(void)
     int c, lookahead;
     int outsideLiteral = xxmode == LATEXLIKE || xxmode == INOPTION || xxbraceDepth == 0;
 
+    if (xxinitvalue) {
+        yylloc.first_line = 0;
+        yylloc.first_column = 0;
+        yylloc.first_byte = 0;
+        yylloc.last_line = 0;
+        yylloc.last_column = 0;
+        yylloc.last_byte = 0;
+    	PROTECT(yylval = mkString(""));
+        c = xxinitvalue;
+    	xxinitvalue = 0;
+    	return(c);
+    }
+    
     setfirstloc();    
     c = xxgetc();
 
@@ -2773,7 +3318,8 @@ static int token(void)
 	    if (!xxinEqn) {
 		lookahead = xxungetc(xxgetc());
 		if (isalpha(lookahead) && xxmode != VERBATIM 
-		    && (lookahead == 'l' || !xxinRString)) 
+		    /* In R strings, only link or var is allowed as markup */
+		    && (lookahead == 'l' || lookahead == 'v' || !xxinRString)) 
 		    return mkMarkup(c);
 	    }
 	    break;
@@ -2863,8 +3409,7 @@ static int mkComment(int c)
     do TEXT_PUSH(c);
     while ((c = xxgetc()) != '\n' && c != R_EOF);
     
-    if (c == R_EOF) xxungetc(c);
-    else TEXT_PUSH(c);
+    xxungetc(c);
     
     PROTECT(yylval = mkString2(stext,  bp - stext));
     if(stext != st0) free(stext);    
@@ -2902,12 +3447,16 @@ static int mkCode(int c)
     	    	    	TEXT_PUSH(c);
     	    	    	c = lookahead;
     	    	    	escaped = 1;
-    	    	    } else xxungetc(lookahead);
+    	    	    } else {
+    	    	    	xxungetc(lookahead); /* put back the 4th char */
+    	    	    	xxungetc('\\');	     /* and the 3rd */
+    	    	    }
     	    	} else if (lookahead == xxinRString) { /* There could be one or two before this */
     	    	    TEXT_PUSH(c);
     	    	    c = lookahead;
     	    	    escaped = 1;
-    	    	} else if (!escaped && lookahead == 'l') { /* assume \link */
+    	    	} else if (!escaped && (lookahead == 'l' || lookahead == 'v')) { 
+    	    	    /* assume \link or \var; this breaks vertical tab, but does anyone ever use that? */
     	    	    xxungetc(lookahead);
     	    	    break;
     	    	} else xxungetc(lookahead);
@@ -2974,7 +3523,7 @@ static int mkMarkup(int c)
     char st0[INITBUFSIZE];
     unsigned int nstext = INITBUFSIZE;
     char *stext = st0, *bp = st0;
-    int retval, attempt = 0;
+    int retval = 0, attempt = 0;
     
     TEXT_PUSH(c);
     while (isalnum((c = xxgetc()))) TEXT_PUSH(c);
@@ -3107,7 +3656,7 @@ static int yylex(void)
 
 /* "do_parseRd" 
 
- .Internal( parseRd(file, srcfile, encoding, verbose, basename) )
+ .Internal( parseRd(file, srcfile, encoding, verbose, basename, warningCalls) )
  If there is text then that is read and the other arguments are ignored.
 */
 
@@ -3115,9 +3664,8 @@ SEXP attribute_hidden do_parseRd(SEXP call, SEXP op, SEXP args, SEXP env)
 {
     SEXP s = R_NilValue, source;
     Rconnection con;
-    Rboolean wasopen, old_latin1=known_to_be_latin1,
-	old_utf8=known_to_be_utf8;
-    int ifile;
+    Rboolean wasopen, fragment;
+    int ifile, wcall;
     const char *encoding;
     ParseStatus status;
 
@@ -3137,13 +3685,15 @@ SEXP attribute_hidden do_parseRd(SEXP call, SEXP op, SEXP args, SEXP env)
     if(!isString(CAR(args)) || LENGTH(CAR(args)) != 1)
 	error(_("invalid '%s' value"), "encoding");
     encoding = CHAR(STRING_ELT(CAR(args), 0)); /* ASCII */ args = CDR(args);
-    known_to_be_latin1 = known_to_be_utf8 = FALSE;
-    if(streql(encoding, "latin1")) known_to_be_latin1 = TRUE;
-    if(streql(encoding, "UTF-8"))  known_to_be_utf8 = TRUE;
     if(!isLogical(CAR(args)) || LENGTH(CAR(args)) != 1)
     	error(_("invalid '%s' value"), "verbose");
     xxDebugTokens = asInteger(CAR(args));		args = CDR(args);
-    xxBasename = CHAR(STRING_ELT(CAR(args), 0));
+    xxBasename = CHAR(STRING_ELT(CAR(args), 0));	args = CDR(args);
+    fragment = asLogical(CAR(args));			args = CDR(args);
+    wcall = asLogical(CAR(args));
+    if (wcall == NA_LOGICAL)
+    	error(_("invalid '%s' value"), "warningCalls");
+    wCalls = wcall;
 
     if (ifile >= 3) {/* file != "" */
 	if(!wasopen) {
@@ -3154,13 +3704,112 @@ SEXP attribute_hidden do_parseRd(SEXP call, SEXP op, SEXP args, SEXP env)
 	    }
 	} else if(!con->canread)
 	    error(_("cannot read from this connection"));
-	s = R_ParseRd(con, &status, source);
+	s = R_ParseRd(con, &status, source, fragment);
 	if(!wasopen) con->close(con);
 	if (status != PARSE_OK) parseError(call, R_ParseError);
     }
     else error(_("invalid Rd file"));
-    known_to_be_latin1 = old_latin1;
-    known_to_be_utf8 = old_utf8;
     return s;
 }
+
+/* "do_deparseRd" 
+
+ .Internal( deparseRd(element, state) )
+*/
+
+SEXP attribute_hidden do_deparseRd(SEXP call, SEXP op, SEXP args, SEXP env)
+{
+    SEXP e, state, result;
+    int  outlen, *statevals, quoteBraces, inRComment;
+    const char *c;
+    char *outbuf, *out, lookahead;
+    Rboolean escape;
+
+    checkArity(op, args);
+    
+    e = CAR(args);                       args = CDR(args);
+    if(!isString(e) || length(e) != 1) 
+    	error(_("deparseRd only supports deparsing character elements"));
+    e = STRING_ELT(e, 0);
+    
+    state = CAR(args);
+    if(!isInteger(state) || length(state) != 5) error(_("bad state"));
+    xxbraceDepth = INTEGER(state)[0];
+    xxinRString = INTEGER(state)[1];
+    xxmode = INTEGER(state)[2];
+    xxinEqn = INTEGER(state)[3];
+    quoteBraces = INTEGER(state)[4];
+    
+    
+    if (xxmode != LATEXLIKE && xxmode != RLIKE && xxmode != VERBATIM && xxmode != COMMENTMODE 
+     && xxmode != INOPTION  && xxmode != UNKNOWNMODE)
+    	error(_("bad text mode %d in deparseRd"), xxmode);
+    
+    for (c = CHAR(e), outlen=0; *c; c++) {
+    	outlen++;
+    	/* any special char might be escaped */
+    	if (*c == '{' || *c == '}' || *c == '%' || *c == '\\') outlen++;
+    }
+    out = outbuf = R_chk_calloc(outlen+1, sizeof(char));
+    inRComment = FALSE;
+    for (c = CHAR(e); *c; c++) {
+    	escape = FALSE;
+    	if (xxmode != UNKNOWNMODE) {
+	    switch (*c) {
+	    case '\\':
+		if (xxmode == RLIKE && xxinRString) {
+		    lookahead = *(c+1);
+		    if (lookahead == '\\' || lookahead == xxinRString || lookahead == 'l') 
+		    	escape = TRUE;
+		    break;
+		}          /* fall through to % case for non-strings... */    
+	    case '%':
+		if (xxmode != COMMENTMODE && !xxinEqn)
+		    escape = TRUE;
+		break;
+	    case LBRACE:
+	    case RBRACE:
+		if (quoteBraces)
+		    escape = TRUE;
+		else if (!xxinRString && !xxinEqn && (xxmode == RLIKE || xxmode == VERBATIM)) {
+		    if (*c == LBRACE) xxbraceDepth++;
+		    else if (xxbraceDepth <= 0) escape = TRUE;
+		    else xxbraceDepth--;
+		}
+		break;
+	    case '\'':
+	    case '"':
+	    case '`':
+	    	if (xxmode == RLIKE) {
+		    if (xxinRString) {
+			if (xxinRString == *c) xxinRString = 0;
+		    } else if (!inRComment) xxinRString = *c;
+		}
+		break;
+	    case '#':
+	    	if (xxmode == RLIKE && !xxinRString) 
+	    	    inRComment = TRUE;
+	    	break;
+	    case '\n':
+	    	inRComment = FALSE;
+	    	break;
+	    }
+	}
+    	if (escape)
+    	    *out++ = '\\';
+    	*out++ = *c;
+    }
+    *out = '\0';
+    PROTECT(result = allocVector(VECSXP, 2));
+    SET_VECTOR_ELT(result, 0, ScalarString(mkChar(outbuf)));
+    SET_VECTOR_ELT(result, 1, duplicate(state));
+    R_chk_free(outbuf);
+
+    statevals = INTEGER( VECTOR_ELT(result, 1) );
+    statevals[0] = xxbraceDepth;
+    statevals[1] = xxinRString;
+    UNPROTECT(1);
+    return result;
+}
+
 

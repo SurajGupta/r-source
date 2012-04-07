@@ -1,10 +1,9 @@
 % File src/library/utils/man/help.start.Rd
 % Part of the R package, http://www.R-project.org
-% Copyright 1995-2008 R Core Development Team
+% Copyright 1995-2009 R Core Development Team
 % Distributed under GPL 2 or later
 
 \name{help.start}
-\Rdversion{1.1}
 \title{Hypertext Documentation}
 \alias{help.start}
 \description{
@@ -12,95 +11,59 @@
   documentation.
 }
 \usage{
-#ifdef unix  
-help.start(gui = "irrelevant", browser = getOption("browser"),
-           remote = NULL, searchEngine = FALSE)
-#endif
-#ifdef windows  
-help.start(update = TRUE, gui = "irrelevant",
-           browser = getOption("browser"), searchEngine = FALSE)
-#endif
+help.start(update = FALSE, gui = "irrelevant",
+           browser = getOption("browser"), remote = NULL)
 }
 \arguments{
+  \item{update}{logical: should this attempt to update the package index to
+    reflect the currently available packages.  (Not attempted if
+    \code{remote} is non-\code{NULL}.)}
   \item{gui}{just for compatibility with S-PLUS.}
   \item{browser}{the name of the program to be used as hypertext
-    browser. It should be in the \env{PATH}, or a full path specified.
-    Alternatively, it can be a function which will be called with an
+    browser.  It should be in the \env{PATH}, or a full path specified.
+    Alternatively, it can be an \R function which will be called with a
     URL as its only argument.
+#ifdef windows
+    This option is normally unset on Windows, when the file-association
+    mechanism will be used.
+#endif
   }
-#ifdef unix  
-  \item{remote}{A character giving a valid URL for the
-    \file{\var{\link[base:Rhome]{R_HOME}}} directory on a remote location.}
-#endif
-#ifdef windows  
-  \item{update}{logical: should this attempt to update the indices to
-    reflect the currently installed packages.}
-#endif
-  \item{searchEngine}{logical: if true go directly to the search engine
-    page.  A workaround for some Firefox 3 versions (see \sQuote{Notes}).}
+  \item{remote}{A character string giving a valid URL for the
+    \file{\var{\link{R_HOME}}} directory on a remote location.}
 }
 \details{
-#ifdef unix
-  All the packages in the known library trees are linked to directory
-  \file{.R} in the per-session temporary directory.  The links are
-  re-made each time \code{\link{make.packages.html}} or \code{help.start}
-  is run, which should be done after packages are installed, updated or
-  removed.
+  Unless \code{remote} is specified this requires the HTTP server to be
+  available (it will be started if possible: see
+  \code{\link{startDynamicHelp}}).
 
-  A side effect is to set \code{options(htmlhelp = TRUE)} so that future
-  help requests (by default) are sent to the browser.
+  One of the links on the index page is the HTML package index,
+  \file{R.home("docs")/html/packages.html}, which can be remade by
+  \code{\link{make.packages.html}(temp = FALSE)}.  For local operation,
+  the HTTP server will remake a temporary version of this list when the
+  link is first clicked, and each time thereafter check if updating is
+  needed (if \code{\link{.libPaths}} has changed or any of the
+  directories has been changed).  This can be slow, and using
+  \code{update = TRUE} will ensure that the packages list is updated
+  before launching the index page.
 
-  If the browser named by the \code{browser} argument is different from
-  the default browser as specified by \code{options("browser")}, the
-  default is changed to the given browser so that it gets used for all
-  future help requests.  (This only holds when \code{browser} is a name,
-  not a function.)
-#endif
-#ifdef windows
-  The Windows file association mechanism is used to send the HTML file
-  to a browser, launching one if necessary.
-
-  Unlike Unix systems, running \code{help.start} does not send all
-  future help requests to the browser: use \code{options(htmlhelp=TRUE)}
-  to set that.
-
-  Alternatively, a specific browser can be started if \code{browser} is
-  specified, but \code{help} will still use the file association mechanism.
-
-  \code{help.start} and the Java-based search engine have been tested
-  under Internet Explorer 6/7,  Opera 7.54,
-  Mozilla 1.7 and Firefox 1.5/2.0/3.0.  Users of IE
-  will probably need to allow \sQuote{active content} from the
-  \sQuote{information bar} before the search engine can be used.
-#endif
-}
-\note{
-  There is a Java-based search facility available from the HTML page
-  that \code{help.start} brings up.  Should this not work, please
-  consult the \sQuote{R Installation and Administration} manual which is
-  linked from that page.
-
-  Note to users of Firefox 3.0 to 3.0.6: the search results have links
-  that are resolved incorrectly by that browser if starting from the
-  normal HTML index page.  The workaround is to start with
-  \code{help.start(searchEngine = TRUE)}.  This was fixed in Firefox 3.0.7.
+  Argument \code{remote} can be used to point to HTML help published by
+  another \R installation: it will typically only show packages from the
+  main library of that installation.
 }
 
 \seealso{
-  \code{\link{help}()} for on- and off-line help in ASCII/Editor or
-  PostScript format.
+  \code{\link{help}()} for on- and off-line help in other formats.
 
   \code{\link{browseURL}} for how the help file is displayed.
 
   \code{\link{RSiteSearch}} to access an on-line search of \R resources.
 }
 \examples{
-\dontrun{help.start()
-#ifdef windows
-help.start(browser="C:\\\\Program Files\\\\Internet Explorer\\\\IEXPLORE.EXE")
-help.start(browser="C:/Program Files/Opera/Opera.exe")
-help.start(browser="C:/Program Files/mozilla.org/Mozilla/mozilla.exe")
-help.start(browser="C:/Program Files/Mozilla Firefox/firefox.exe")
+\donttest{help.start()}
+\dontrun{
+#ifdef unix
+## the 'remote' arg can be tested by
+help.start(remote=paste("file://", R.home(), sep=""))
 #endif
 }}
 \keyword{documentation}

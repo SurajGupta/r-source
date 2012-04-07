@@ -212,17 +212,15 @@ void attribute_hidden R_check_locale(void)
 	if (R_strieql(p, "UTF-8")) known_to_be_utf8 = utf8locale = TRUE;
 	if (streql(p, "ISO-8859-1")) known_to_be_latin1 = latin1locale = TRUE;
 	if (R_strieql(p, "ISO8859-1")) known_to_be_latin1 = latin1locale = TRUE;
-#if __APPLE__
+# if __APPLE__
 	/* On Darwin 'regular' locales such as 'en_US' are UTF-8 (hence
 	   MB_CUR_MAX == 6), but CODESET is "" */
 	if (*p == 0 && MB_CUR_MAX == 6)
 	    known_to_be_utf8 = utf8locale = TRUE;
-#endif
+# endif
     }
 #endif
-#ifdef SUPPORT_MBCS
     mbcslocale = MB_CUR_MAX > 1;
-#endif
 #ifdef Win32
     {
 	char *ctype = setlocale(LC_CTYPE, NULL), *p;
@@ -232,7 +230,7 @@ void attribute_hidden R_check_locale(void)
 	known_to_be_latin1 = latin1locale = (localeCP == 1252);
     }
 #endif
-#if defined(Win32) && defined(SUPPORT_UTF8_WIN32)
+#if defined(SUPPORT_UTF8_WIN32) /* never at present */
     utf8locale = mbcslocale = TRUE;
 #endif
 }
@@ -462,6 +460,12 @@ SEXP attribute_hidden do_fileappend(SEXP call, SEXP op, SEXP args, SEXP rho)
 	    status = 0;
 	    if (STRING_ELT(f2, i) == NA_STRING ||
 	       !(fp2 = RC_fopen(STRING_ELT(f2, i), "rb", TRUE))) continue;
+	    if (PRIMVAL(op) == 1) { /* codeFiles.append */
+	    	snprintf(buf, APPENDBUFSIZE, "#line 1 \"%s\"\n",
+			 CHAR(STRING_ELT(f2, i)));
+	    	if(fwrite(buf, 1, strlen(buf), fp1) != strlen(buf))
+		    goto append_error;
+	    }
 	    while ((nchar = fread(buf, 1, APPENDBUFSIZE, fp2)) == APPENDBUFSIZE)
 		if (fwrite(buf, 1, APPENDBUFSIZE, fp1) != APPENDBUFSIZE)
 		    goto append_error;
@@ -860,7 +864,11 @@ static SEXP filename(const char *dir, const char *file)
     return ans;
 }
 
-#include "Rregex.h"
+# include <tre/regex.h>
+# define regcomp tre_regcomp
+# define regexec tre_regexec
+# define regfree tre_regfree
+# define regerror tre_regerror
 
 static void count_files(const char *dnp, int *count,
 			Rboolean allfiles, Rboolean recursive,
@@ -1521,6 +1529,8 @@ SEXP attribute_hidden do_getlocale(SEXP call, SEXP op, SEXP args, SEXP rho)
 
 extern void invalidate_cached_recodings(void);  /* from sysutils.c */
 
+extern void resetICUcollator(void); /* from util.c */
+
 /* Locale specs are always ASCII */
 SEXP attribute_hidden do_setlocale(SEXP call, SEXP op, SEXP args, SEXP rho)
 {
@@ -1543,6 +1553,7 @@ SEXP attribute_hidden do_setlocale(SEXP call, SEXP op, SEXP args, SEXP rho)
 	/* assume we can set LC_CTYPE iff we can set the rest */
 	if ((p = setlocale(LC_CTYPE, l))) {
 	    setlocale(LC_COLLATE, l);
+	    resetICUcollator();
 	    setlocale(LC_MONETARY, l);
 	    setlocale(LC_TIME, l);
 	    /* Need to return value of LC_ALL */
@@ -1553,6 +1564,7 @@ SEXP attribute_hidden do_setlocale(SEXP call, SEXP op, SEXP args, SEXP rho)
     case 2:
 	cat = LC_COLLATE;
 	p = setlocale(cat, CHAR(STRING_ELT(locale, 0)));
+	resetICUcollator();
 	break;
     case 3:
 	cat = LC_CTYPE;
@@ -1852,12 +1864,9 @@ SEXP attribute_hidden do_capabilities(SEXP call, SEXP op, SEXP args, SEXP rho)
 #endif
     i++;
 
+/* always true as from R 2.10.0 */
     SET_STRING_ELT(ansnames, i, mkChar("iconv"));
-#if defined(HAVE_ICONV) && defined(ICONV_LATIN1)
     LOGICAL(ans)[i++] = TRUE;
-#else
-    LOGICAL(ans)[i++] = FALSE;
-#endif
 
     SET_STRING_ELT(ansnames, i, mkChar("NLS"));
 #ifdef ENABLE_NLS
@@ -2295,6 +2304,35 @@ SEXP attribute_hidden do_sysumask(SEXP call, SEXP op, SEXP args, SEXP env)
     return ans;
 }
 
+SEXP attribute_hidden do_readlink(SEXP call, SEXP op, SEXP args, SEXP env)
+{
+    SEXP paths, ans;
+    int n;
+#ifdef HAVE_READLINK
+    char buf[PATH_MAX+1];
+    ssize_t res;
+    int i;
+#endif
+
+    checkArity(op, args);
+    paths = CAR(args);
+    if(!isString(paths))
+	error(_("invalid '%s' argument"), "paths");
+    n = LENGTH(paths);
+    PROTECT(ans = allocVector(STRSXP, n));
+#ifdef HAVE_READLINK
+    for (i = 0; i < n; i++) {
+	memset(buf, 0, PATH_MAX+1);
+	res = readlink(translateChar(STRING_ELT(paths, i)), buf, PATH_MAX);
+	if (res >= 0) SET_STRING_ELT(ans, i, mkChar(buf));
+	else if (errno == EINVAL) SET_STRING_ELT(ans, i, mkChar(""));
+	else SET_STRING_ELT(ans, i,  NA_STRING);
+    }
+#endif
+    UNPROTECT(1);
+    return ans;
+}
+
 
 SEXP attribute_hidden do_Cstack_info(SEXP call, SEXP op, SEXP args, SEXP rho)
 {
@@ -2316,4 +2354,52 @@ SEXP attribute_hidden do_Cstack_info(SEXP call, SEXP op, SEXP args, SEXP rho)
     UNPROTECT(2);
     setAttrib(ans, R_NamesSymbol, nms);
     return ans;
+}
+
+#ifdef Win32 /* untested */
+static void winSetFileTime(const char *fn, time_t ftime)
+{
+    SYSTEMTIME st;
+    FILETIME modft;
+    struct tm *utctm;
+    HANDLE hFile;
+
+    utctm = gmtime(&ftime);
+    if (!utctm) return; 
+
+    st.wYear         = (WORD) utctm->tm_year + 1900;
+    st.wMonth        = (WORD) utctm->tm_mon + 1;
+    st.wDayOfWeek    = (WORD) utctm->tm_wday;
+    st.wDay          = (WORD) utctm->tm_mday;
+    st.wHour         = (WORD) utctm->tm_hour;
+    st.wMinute       = (WORD) utctm->tm_min;
+    st.wSecond       = (WORD) utctm->tm_sec;
+    st.wMilliseconds = 0;
+    if (!SystemTimeToFileTime(&st, &modft)) return;
+
+    hFile = CreateFile(fn, GENERIC_WRITE, 0, NULL, OPEN_EXISTING,
+		       FILE_FLAG_BACKUP_SEMANTICS, NULL);
+    if (hFile == INVALID_HANDLE_VALUE) return;
+    SetFileTime(hFile, NULL, NULL, &modft);
+    CloseHandle(hFile);
+}
+#else
+# include <sys/time.h>
+# include <utime.h>
+#endif
+
+SEXP attribute_hidden R_setFileTime(SEXP name, SEXP time)
+{
+    const char *fn = translateChar(STRING_ELT(name, 0));
+    int ftime = asInteger(time);
+
+#ifdef Win32
+    winSetFileTime(fn, (time_t)ftime);
+#else
+    struct utimbuf settime;
+
+    settime.actime = settime.modtime = ftime;
+    utime(fn, &settime);
+#endif
+    return R_NilValue;
 }

@@ -418,6 +418,12 @@
 /* Define to 1 if the system has the type `long long int'. */
 #undef HAVE_LONG_LONG_INT
 
+/* Define if your system has lzma >= 4.999. */
+#undef HAVE_LZMA
+
+/* Define to 1 if you have the <lzma.h> header file. */
+#undef HAVE_LZMA_H
+
 /* Define to 1 if you have the `matherr' function. */
 #undef HAVE_MATHERR
 
@@ -516,6 +522,9 @@
 
 /* Define to 1 if you have the <readline/readline.h> header file. */
 #undef HAVE_READLINE_READLINE_H
+
+/* Define to 1 if you have the `readlink' function. */
+#undef HAVE_READLINK
 
 /* Define to 1 if you have the `realpath' function. */
 #undef HAVE_REALPATH
@@ -781,9 +790,6 @@
 /* Define as const if the declaration of iconv() needs const. */
 #undef ICONV_CONST
 
-/* Define if `iconv' accepts "UTF-8", "latin1" and "UCS-*". */
-#undef ICONV_LATIN1
-
 /* Define if you have IEEE 754 floating point arithmetic. */
 #undef IEEE_754
 
@@ -912,12 +918,6 @@
 
 /* Define if you provide support for the libxml ftp/http functions. */
 #undef SUPPORT_LIBXML
-
-/* Define this to enable support for MBCS locales. */
-#undef SUPPORT_MBCS
-
-/* Define this to enable support for UTF-8 locales. */
-#undef SUPPORT_UTF8
 
 /* Define to enable provoking compile errors on write barrier violation. */
 #undef TESTING_WRITE_BARRIER

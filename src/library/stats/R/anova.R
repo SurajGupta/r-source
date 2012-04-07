@@ -94,6 +94,8 @@ printCoefmat <-
     Cf <- array("", dim=d, dimnames = dimnames(xm))
 
     ok <- !(ina <- is.na(xm))
+    ## zap before deciding any formats
+    for (i in zap.ind) xm[, i] <- zapsmall(xm[, i], digits)
     if(length(cs.ind)) {
 	acs <- abs(coef.se <- xm[, cs.ind, drop=FALSE])# = abs(coef. , stderr)
 	if(any(ia <- is.finite(acs))) {
@@ -107,12 +109,9 @@ printCoefmat <-
     if(length(tst.ind))
 	Cf[, tst.ind]<- format(round(xm[, tst.ind], digits = dig.tst),
                                digits = digits)
-    if(length(zap.ind))
-	Cf[, zap.ind]<- format(zapsmall(xm[,zap.ind], digits = digits),
-                               digits = digits)
     if(any(r.ind <- !((1L:nc) %in%
-                      c(cs.ind, tst.ind, zap.ind, if(has.Pvalue)nc))))
-	Cf[, r.ind] <- format(xm[, r.ind], digits=digits)
+                      c(cs.ind, tst.ind, if(has.Pvalue) nc))))
+	for(i in which(r.ind)) Cf[, i] <- format(xm[, i], digits=digits)
     okP <- if(has.Pvalue) ok[, -nc] else ok
     ## we need to find out where Cf is zero.  We can't use as.numeric
     ## directly as OutDec could have been set.

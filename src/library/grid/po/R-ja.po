@@ -2,8 +2,8 @@ msgid ""
 msgstr ""
 "Project-Id-Version: R 2.3.0 \n"
 "Report-Msgid-Bugs-To: bugs@r-project.org\n"
-"POT-Creation-Date: 2008-12-16 13:00\n"
-"PO-Revision-Date: 2009-03-31 20:58+0900 \n"
+"POT-Creation-Date: 2009-08-06 09:09\n"
+"PO-Revision-Date: 2009-10-09 13:05+0900 \n"
 "Last-Translator: Shigeru Mase <maseshigeru@gmail.com> \n"
 "Language-Team: RjpWiki Message Translation Team <mokada@md.tsukuba.ac.jp> \n"
 "MIME-Version: 1.0 \n"
@@ -217,6 +217,9 @@ msgstr " 'grob' を 'gTree' に加えることだけが有効です "
 msgid "It is only valid to add a child to a 'gTree'"
 msgstr " child を 'gTree' に加えることだけが有効です "
 
+msgid "'gPath' (%s) not found"
+msgstr " 'gPath'(%s) が見つかりません "
+
 msgid "It is only valid to remove a child from a 'gTree'"
 msgstr " child を 'gTree' から取り払うことだけが有効です "
 
@@ -234,9 +237,6 @@ msgstr " 新しい 'grob' は古い 'grob' と同じ名前でなければなり�
 
 msgid "Slot '%s' not found"
 msgstr " スロット '%s' が見つかりません "
-
-msgid "'gPath' (%s) not found"
-msgstr " 'gPath'(%s) が見つかりません "
 
 msgid "gPath (%s) not found"
 msgstr " gPath(%s) が見つかりません "
@@ -412,6 +412,9 @@ msgstr " 'Summary' 関数 '%s' は単位(units)として意味をなしません
 msgid "Zero arguments where at least one expected"
 msgstr " 引数が 0 個ですが，少なくとも 1 つの引数が必要です "
 
+msgid "Cannot mix signs of indices"
+msgstr " 添え字の符号は混在できません "
+
 msgid "Index out of bounds (unit subsetting)"
 msgstr " 添え字が範囲を超えています(unit subsetting） "
 
@@ -488,6 +491,14 @@ msgstr ""
 
 msgid "Invalid viewport name(s)"
 msgstr " 不正な viewport 名です "
+
+msgid "How did we get here?"
+msgstr " どうしてこうなったのかな？ "
+
+msgid "Must start new page if showing leaves separately"
+msgstr ""
+" もし提示したものが別々になったままなら、新しいページを開始する必要がありま"
+"す "
 
 msgid "Must specify at least one of 'x' or 'xscale'"
 msgstr " 'x' or 'xscale' のうち少なくとも一つを指定しなければなりません "

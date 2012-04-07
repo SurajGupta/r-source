@@ -4,7 +4,6 @@
 % Distributed under GPL 2 or later
 
 \name{contourLines}
-\Rdversion{1.1}
 \alias{contourLines}
 \title{Calculate Contour Lines}
 \description{
@@ -13,7 +12,7 @@
 \usage{
 contourLines(x = seq(0, 1, length.out = nrow(z)),
              y = seq(0, 1, length.out = ncol(z)),
-	     z, nlevels = 10,
+             z, nlevels = 10,
              levels = pretty(range(z, na.rm=TRUE), nlevels))
 }
 \arguments{
@@ -35,7 +34,7 @@ contourLines(x = seq(0, 1, length.out = nrow(z)),
   \code{contourLines} draws nothing, but returns a set of contour lines.
   
   There is currently no documentation about the algorithm.
-  The source code is in \file{\var{\link[base:Rhome]{R_HOME}}/src/main/plot3d.c}.
+  The source code is in \file{\var{\link{R_HOME}}/src/main/plot3d.c}.
 }
 \value{
   A list of contours.
@@ -48,7 +47,7 @@ contourLines(x = seq(0, 1, length.out = nrow(z)),
   \code{\link{options}("max.contour.segments")} for the maximal
   complexity of a single contour line.
 
-  \code{\link[graphics]{contour}}.
+  \code{\link{contour}}.
 }
 \examples{
 x <- 10*1:nrow(volcano)

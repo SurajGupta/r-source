@@ -1,9 +1,9 @@
 % File src/library/base/man/Sys.getpid.Rd
 % Part of the R package, http://www.R-project.org
-% Copyright 1995-2007 R Core Development Team
+% Copyright 1995-2009 R Core Development Team
 % Distributed under GPL 2 or later
 
-\name{getpid}
+\name{Sys.getpid}
 \alias{Sys.getpid}
 
 \title{Get the Process ID of the R Session}
@@ -17,8 +17,8 @@
 Sys.getpid()
 }
 \value{
-  An integer, usually a small integer between 0 and 32767 under
-  Unix-alikes and a much small integer under Windows.
+  An integer, usually an integer between 1 and 32767 under
+  Unix-alikes and a small positive integer under Windows.
 }
 \examples{
 Sys.getpid()

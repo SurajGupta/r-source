@@ -55,6 +55,9 @@ void Rsockwrite(int *sockp, char **buf, int *start, int *end, int *len)
 
 int Rsockselect(int nsock, int *insockfd, int *ready, int *write,
 		double timeout)
+
+int R_HTTPDCreate(const char *ip, int port);
+void R_HTTPDStop(void);
  */
 
 static int initialized = 0;
@@ -211,6 +214,48 @@ void  R_FTPClose(void *ctx)
 	(*ptr->FTPClose)(ctx);
     else
 	error(_("internet routines cannot be loaded"));
+}
+
+attribute_hidden
+int   R_HTTPDCreate(const char *ip, int port)
+{
+    if(!initialized) internet_Init();
+    if(initialized > 0)
+	return (*ptr->HTTPDCreate)(ip, port);
+    else
+	error(_("internet routines cannot be loaded"));
+    return -1;
+}
+
+attribute_hidden
+void R_HTTPDStop(void)
+{
+    if(!initialized) internet_Init();
+    if(initialized > 0)
+	(*ptr->HTTPDStop)();
+    else
+	error(_("internet routines cannot be loaded"));
+}
+
+SEXP attribute_hidden do_startHTTPD(SEXP call, SEXP op, SEXP args, SEXP env) 
+{
+    const char *ip = 0;
+    SEXP sIP, sPort;
+    checkArity(op, args);
+    sIP = CAR(args);
+    sPort = CADR(args);
+    if (sIP != R_NilValue && (TYPEOF(sIP) != STRSXP || LENGTH(sIP) != 1))
+	error(_("invalid bind address specification"));
+    if (sIP != R_NilValue)
+	ip = CHAR(STRING_ELT(sIP, 0));
+    return ScalarInteger(R_HTTPDCreate(ip, asInteger(sPort)));
+}
+
+SEXP attribute_hidden do_stopHTTPD(SEXP call, SEXP op, SEXP args, SEXP env) 
+{
+    checkArity(op, args);
+    R_HTTPDStop();
+    return R_NilValue;
 }
 
 attribute_hidden

@@ -1,8 +1,8 @@
 msgid ""
 msgstr ""
-"Project-Id-Version: R 2.9.1\n"
+"Project-Id-Version: R 2.10.0\n"
 "Report-Msgid-Bugs-To: bugs@r-project.org\n"
-"POT-Creation-Date: 2009-06-16 12:30\n"
+"POT-Creation-Date: 2009-10-09 08:04\n"
 "PO-Revision-Date: YEAR-MO-DA HO:MI+ZONE\n"
 "Last-Translator: FULL NAME <EMAIL@ADDRESS>\n"
 "Language-Team: LANGUAGE <LL@li.org>\n"
@@ -44,7 +44,7 @@ msgstr ""
 msgid "directory '%s' does not contain R code"
 msgstr ""
 
-msgid "directory '%s' does not contain Rd sources"
+msgid "directory '%s' does not contain Rd objects"
 msgstr ""
 
 msgid "Functions/methods with usage in documentation object '%s' but not in code:"
@@ -89,16 +89,16 @@ msgstr ""
 msgid "name"
 msgstr ""
 
-msgid "code"
-msgstr ""
-
-msgid "docs"
-msgstr ""
-
 msgid "Data codoc mismatches from documentation object '%s':"
 msgstr ""
 
 msgid "Variables in data frame '%s'"
+msgstr ""
+
+msgid "code"
+msgstr ""
+
+msgid "docs"
 msgstr ""
 
 msgid "Undocumented arguments in documentation object '%s'"
@@ -174,75 +174,6 @@ msgid "Vignette dependencies (\\VignetteDepends{} entries) must be contained in 
 msgstr ""
 
 msgid "Namespace dependencies not required:"
-msgstr ""
-
-msgid "Package Rd sources were installed without preserving Rd file names."
-msgstr ""
-
-msgid "Please reinstall using a current version of R."
-msgstr ""
-
-msgid "Rd files with syntax errors:"
-msgstr ""
-
-msgid "Rd files with likely Rd problems:"
-msgstr ""
-
-msgid "Unaccounted top-level text in file '%s':"
-msgstr ""
-
-msgid "Following section '%s'"
-msgstr ""
-
-msgid "Rd files with unknown encoding:"
-msgstr ""
-
-msgid "Rd files with invalid non-ASCII metadata:"
-msgstr ""
-
-msgid "Rd files with non-ASCII section titles:"
-msgstr ""
-
-msgid "Rd files with missing or empty '\\name':"
-msgstr ""
-
-msgid "Rd files with missing or empty '\\title':"
-msgstr ""
-
-msgid "Rd files without '%s':"
-msgstr ""
-
-msgid "These entries are required in an Rd file."
-msgstr ""
-
-msgid "Rd files with duplicate '%s':"
-msgstr ""
-
-msgid "These entries must be unique in an Rd file."
-msgstr ""
-
-msgid "Rd files with unknown sections:"
-msgstr ""
-
-msgid "Rd files with non-standard keywords:"
-msgstr ""
-
-msgid "Each '\\keyword' entry should specify one of the standard keywords (as listed in file 'KEYWORDS' in the R documentation directory)."
-msgstr ""
-
-msgid "Rd files with duplicated alias '%s':"
-msgstr ""
-
-msgid "Rd files with empty sections:"
-msgstr ""
-
-msgid "Found invalid multi-byte character data."
-msgstr ""
-
-msgid "Cannot re-encode because iconv is not available."
-msgstr ""
-
-msgid "Try running R in a single-byte locale."
 msgstr ""
 
 msgid "Malformed package name"
@@ -323,13 +254,13 @@ msgstr ""
 msgid "Non-standard license specification:"
 msgstr ""
 
-msgid "Invalid license file pointers: %s"
-msgstr ""
-
 msgid "Standardizable: %s"
 msgstr ""
 
 msgid "Standardized license specification:"
+msgstr ""
+
+msgid "Invalid license file pointers: %s"
 msgstr ""
 
 msgid "Non-portable flags in variable '%s':"
@@ -338,7 +269,19 @@ msgstr ""
 msgid "package must be loaded"
 msgstr ""
 
+msgid "Obsolete package(s) %s in Rd xrefs"
+msgstr ""
+
+msgid "Package(s) unavailable to check Rd xrefs: %s"
+msgstr ""
+
+msgid "Unknown package(s) %s in Rd xrefs"
+msgstr ""
+
 msgid "Missing link(s) in documentation object '%s':"
+msgstr ""
+
+msgid "See the information in section 'Cross-references' of the 'Writing R Extensions' manual."
 msgstr ""
 
 msgid "found %s"
@@ -353,7 +296,10 @@ msgstr ""
 msgid "'library' or 'require' calls not declared from:"
 msgstr ""
 
-msgid "*** error on file"
+msgid "Rd files with duplicated name '%s':"
+msgstr ""
+
+msgid "Rd files with duplicated alias '%s':"
 msgstr ""
 
 msgid "Generics g in env ="
@@ -383,12 +329,6 @@ msgstr ""
 msgid ":"
 msgstr ""
 
-msgid "argument 'lines' must be a character vector"
-msgstr ""
-
-msgid "encoding '%s' is not portable"
-msgstr ""
-
 msgid "argument 'file' must be a character string or connection"
 msgstr ""
 
@@ -410,40 +350,7 @@ msgstr ""
 msgid "argument 'outFile' must be a character string or connection"
 msgstr ""
 
-msgid "directory '%s' does not contain Rd objects"
-msgstr ""
-
-msgid "unterminated section '%s'"
-msgstr ""
-
-msgid "incomplete section 'section{%s}'"
-msgstr ""
-
-msgid "unterminated section 'section{%s}'"
-msgstr ""
-
-msgid "argument 'txt' must be a character string"
-msgstr ""
-
-msgid "unmatched \\item name in '\\item{%s'"
-msgstr ""
-
-msgid "no \\item description for item '%s'"
-msgstr ""
-
-msgid "unmatched \\item description for item '%s'"
-msgstr ""
-
-msgid "unclosed \\link"
-msgstr ""
-
-msgid "unclosed \\%s"
-msgstr ""
-
-msgid "Rd syntax errors found"
-msgstr ""
-
-msgid "Syntax error in documentation object '%s':"
+msgid "you must specify 'dir' or 'files'"
 msgstr ""
 
 msgid "cannot deal with Rd objects with missing/empty names"
@@ -452,13 +359,13 @@ msgstr ""
 msgid "missing/empty \\name field in Rd file(s)"
 msgstr ""
 
-msgid "should not get here"
-msgstr ""
-
-msgid "Rd2HTML is designed for Rd version 2 or higher."
+msgid "No help on %s found in RdDB %s"
 msgstr ""
 
 msgid "more than one \\examples section, using the first"
+msgstr ""
+
+msgid "invalid value for '%s' : %s"
 msgstr ""
 
 msgid "unable to create temp directory"
@@ -551,28 +458,64 @@ msgstr ""
 msgid "ERROR: this R is version %s, required is R %s %s"
 msgstr ""
 
+msgid "No files in this directory"
+msgstr ""
+
+msgid "No results found"
+msgstr ""
+
+msgid "No help found for topic %s in any package."
+msgstr ""
+
+msgid "Help on topic '%s' was found in the following packages:"
+msgstr ""
+
+msgid "No package index found for package %s"
+msgstr ""
+
+msgid "No package named %s could be found"
+msgstr ""
+
+msgid "No help found for package %s"
+msgstr ""
+
+msgid "Link %s in package %s could not be located"
+msgstr ""
+
+msgid "Unable to locate help document %s in package %s"
+msgstr ""
+
+msgid "No docs found for package %s"
+msgstr ""
+
+msgid "URL %s was not found"
+msgstr ""
+
+msgid "httpd server disabled by R_DISABLE_HTTPD"
+msgstr ""
+
+msgid "server already running"
+msgstr ""
+
+msgid "server could not be started on an earlier attempt"
+msgstr ""
+
+msgid "no running server to stop"
+msgstr ""
+
+msgid "starting httpd help server ..."
+msgstr ""
+
+msgid "done"
+msgstr ""
+
+msgid "failed to start the httpd server"
+msgstr ""
+
 msgid "cannot read index information in file '%s'"
 msgstr ""
 
 msgid "ERROR:"
-msgstr ""
-
-msgid "for package"
-msgstr ""
-
-msgid "incorrect Contains metadata for bundle"
-msgstr ""
-
-msgid ": there is no package '"
-msgstr ""
-
-msgid "skipping installation of bundle"
-msgstr ""
-
-msgid "problem installing per-package DESCRIPTION files"
-msgstr ""
-
-msgid "ERROR unable to create"
 msgstr ""
 
 msgid "packaged installation of"
@@ -581,37 +524,7 @@ msgstr ""
 msgid "as"
 msgstr ""
 
-msgid ".gz"
-msgstr ""
-
 msgid "'cleanup' exists but is not executable -- see the 'R Installation and Adminstration Manual'"
-msgstr ""
-
-msgid "about to run"
-msgstr ""
-
-msgid "R CMD SHLIB"
-msgstr ""
-
-msgid "Using auto-selected zip options '"
-msgstr ""
-
-msgid "--use-zip-data"
-msgstr ""
-
-msgid "--use-zip-help"
-msgstr ""
-
-msgid "**********************************************"
-msgstr ""
-
-msgid "WARNING: this package has a configure script"
-msgstr ""
-
-msgid "It probably needs manual configuration"
-msgstr ""
-
-msgid "configure command:"
 msgstr ""
 
 msgid "R include directory is empty -- perhaps need to install R-devel.rpm or similar"
@@ -632,22 +545,7 @@ msgstr ""
 msgid "empty 'data' directory"
 msgstr ""
 
-msgid "use of file 'install.R' is no longer supported"
-msgstr ""
-
-msgid "use of file 'R_PROFILE.R' is no longer supported"
-msgstr ""
-
-msgid "field 'SaveImage' is defunct: please remove it"
-msgstr ""
-
-msgid "cannot create temporary directory"
-msgstr ""
-
-msgid "Use of --with-package-versions is defunct"
-msgstr ""
-
-msgid "--auto-zip' is for Windows only"
+msgid "'--auto-zip' is for Windows only"
 msgstr ""
 
 msgid "-l option without value"
@@ -656,16 +554,7 @@ msgstr ""
 msgid "Warning: unknown option"
 msgstr ""
 
-msgid "processing"
-msgstr ""
-
-msgid "a file"
-msgstr ""
-
-msgid "unknown package layout"
-msgstr ""
-
-msgid "a directory"
+msgid "cannot create temporary directory"
 msgstr ""
 
 msgid "invalid package"
@@ -695,52 +584,28 @@ msgstr ""
 msgid "building a fake installation is disallowed"
 msgstr ""
 
-msgid "*** 'hhc.exe' not found: not building CHM help"
-msgstr ""
-
 msgid "-o option without value"
 msgstr ""
 
 msgid "Converting Rd files to LaTeX ..."
 msgstr ""
 
-msgid "this package does not have either a"
+msgid "finding HTML links ..."
 msgstr ""
 
-msgid "latex"
+msgid "finding level-2 HTML links ..."
 msgstr ""
 
-msgid "or a"
+msgid "-t option without value"
 msgstr ""
 
-msgid "man"
+msgid "exactly one Rd file must be specified"
 msgstr ""
 
-msgid "directory"
+msgid "no 'type' specified"
 msgstr ""
 
-msgid "no validly-named files in the"
-msgstr ""
-
-msgid "file"
-msgstr ""
-
-msgid "lacks a header: skipping"
-msgstr ""
-
-msgid "there are no help pages in this package"
-msgstr ""
-
-msgid "skipping repeated alias(es)"
-msgstr ""
-
-msgid "in file"
-msgstr ""
-
-msgid "there is a 'man' dir but no help pages in this package"
-msgstr ""
-
-msgid "problem in converting"
+msgid "'type' must be one of 'txt', 'html', 'latex' or 'example'"
 msgstr ""
 
 msgid "Bundle package:"
@@ -750,9 +615,6 @@ msgid "there is no package called '%s'"
 msgstr ""
 
 msgid "name space must not be loaded."
-msgstr ""
-
-msgid "package '%s' has no .rda file"
 msgstr ""
 
 msgid "package seems to be using lazy loading for data already"
@@ -776,6 +638,9 @@ msgstr ""
 msgid "package seems to be using lazy loading already"
 msgstr ""
 
+msgid "Cannot process chunk/lines:\n%s"
+msgstr ""
+
 msgid "cannot update HTML package index"
 msgstr ""
 
@@ -785,13 +650,7 @@ msgstr ""
 msgid "cannot create HTML package index"
 msgstr ""
 
-msgid "multiple \\encoding lines in file"
-msgstr ""
-
 msgid "found encoding"
-msgstr ""
-
-msgid "non-UTF-8 multibyte locales are not supported -- reencoding to UTF-8"
 msgstr ""
 
 msgid "argument 'pkg' must be of length 1"
@@ -813,6 +672,9 @@ msgid "'file' must be a character string or connection"
 msgstr ""
 
 msgid "unimplemented encoding"
+msgstr ""
+
+msgid "file"
 msgstr ""
 
 msgid "cannot be opened"
@@ -839,6 +701,9 @@ msgstr ""
 msgid "OK"
 msgstr ""
 
+msgid "no examples found"
+msgstr ""
+
 msgid "Running specific tests for package"
 msgstr ""
 
@@ -848,13 +713,13 @@ msgstr ""
 msgid "Running vignettes for package"
 msgstr ""
 
-msgid "Creating"
-msgstr ""
-
 msgid "creation of"
 msgstr ""
 
 msgid "failed"
+msgstr ""
+
+msgid "no parsed files found"
 msgstr ""
 
 msgid "creating"
@@ -908,12 +773,6 @@ msgstr ""
 msgid "test '%s' is not available"
 msgstr ""
 
-msgid "no or more than one match"
-msgstr ""
-
-msgid "'iconv' is required"
-msgstr ""
-
 msgid "argument 'x' must be a character vector"
 msgstr ""
 
@@ -951,9 +810,6 @@ msgid "Call sequence:"
 msgstr ""
 
 msgid "Processing packages:"
-msgstr ""
-
-msgid "done"
 msgstr ""
 
 msgid "parsing '%s'"

@@ -1,6 +1,6 @@
 % File src/library/base/man/dcf.Rd
 % Part of the R package, http://www.R-project.org
-% Copyright 1995-2007 R Core Development Team
+% Copyright 1995-2009 R Core Development Team
 % Distributed under GPL 2 or later
 
 \name{dcf}
@@ -21,7 +21,7 @@ write.dcf(x, file = "", append = FALSE,
 \arguments{
   \item{file}{either a character string naming a file or a connection.
     \code{""} indicates output to the console.  For \code{read.dcf} this
-    can name a \code{gzip}-compressed file.}
+    can name a compressed file (see \code{\link{gzfile}}).}
   \item{fields}{Fields to read from the DCF file.  Default is to read all
     fields.}
   \item{all}{a logical indicating whether in case of multiple
@@ -72,17 +72,22 @@ write.dcf(x, file = "", append = FALSE,
   record and one column per field, and columns lists of character
   vectors for fields with multiple occurrences, and character vectors
   otherwise.
+  
+  Note that \code{read.dcf(all = FALSE)} reads the file byte-by-byte.
+  This allows a \file{DESCRIPTION} file to be read and only its ASCII
+  fields used, or its \samp{Encoding} field used to re-encode the
+  remaining fields.
 
   \code{write.dcf} does not write \code{NA} fields.
-}    
+}
 \seealso{
   \code{\link{write.table}}.
 }
-\examples{
+\examples{\dontrun{
 ## Create a reduced version of the 'CONTENTS' file in package 'splines'
 x <- read.dcf(file = system.file("CONTENTS", package = "splines"),
               fields = c("Entry", "Description"))
 write.dcf(x)
-}
+}}
 \keyword{print}
 \keyword{file}

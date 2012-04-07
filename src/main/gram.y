@@ -88,6 +88,7 @@ static int	KeywordLookup(const char *);
 static SEXP	NewList(void);
 static SEXP	NextArg(SEXP, SEXP, SEXP);
 static SEXP	TagArg(SEXP, SEXP, YYLTYPE *);
+static int 	processLineDirective();
 
 /* These routines allocate constants */
 
@@ -105,14 +106,13 @@ static int	EndOfFile = 0;
 static int	xxgetc();
 static int	xxungetc(int);
 static int	xxcharcount, xxcharsave;
-static int	xxlineno, xxbyteno, xxcolno,  xxlinesave, xxbytesave, xxcolsave;
+static int	xxlinesave, xxbytesave, xxcolsave;
 
-static SEXP     SrcFile = NULL;
 static SEXP	SrcRefs = NULL;
+static SrcRefState ParseState;
 static PROTECT_INDEX srindex;
 
-#if defined(SUPPORT_MBCS)
-# include <R_ext/rlocale.h>
+#include <R_ext/rlocale.h>
 /* # include <sys/param.h> what was this for? */
 #ifdef HAVE_LANGINFO_CODESET
 # include <langinfo.h>
@@ -135,10 +135,10 @@ static int mbcs_get_next(int c, wchar_t *wc)
 	clen = utf8clen(c);
 	for(i = 1; i < clen; i++) {
 	    s[i] = xxgetc();
-	    if(s[i] == R_EOF) error(_("EOF whilst reading MBCS char at line %d"), xxlineno);
+	    if(s[i] == R_EOF) error(_("EOF whilst reading MBCS char at line %d"), ParseState.xxlineno);
 	}
 	res = mbrtowc(wc, s, clen, NULL);
-	if(res == -1) error(_("invalid multibyte character in parser at line %d"), xxlineno);
+	if(res == -1) error(_("invalid multibyte character in parser at line %d"), ParseState.xxlineno);
     } else {
 	/* This is not necessarily correct for stateful MBCS */
 	while(clen <= MB_CUR_MAX) {
@@ -146,18 +146,16 @@ static int mbcs_get_next(int c, wchar_t *wc)
 	    res = mbrtowc(wc, s, clen, &mb_st);
 	    if(res >= 0) break;
 	    if(res == -1)
-		error(_("invalid multibyte character in parser at line %d"), xxlineno);
+		error(_("invalid multibyte character in parser at line %d"), ParseState.xxlineno);
 	    /* so res == -2 */
 	    c = xxgetc();
-	    if(c == R_EOF) error(_("EOF whilst reading MBCS char at line %d"), xxlineno);
+	    if(c == R_EOF) error(_("EOF whilst reading MBCS char at line %d"), ParseState.xxlineno);
 	    s[clen++] = c;
 	} /* we've tried enough, so must be complete or invalid by now */
     }
     for(i = clen - 1; i > 0; i--) xxungetc(s[i]);
     return clen;
 }
-
-#endif
 
 /* Handle function source */
 
@@ -392,9 +390,9 @@ static int xxgetc(void)
     if(npush) c = pushback[--npush]; else  c = ptr_getc();
 
     prevpos = (prevpos + 1) % PUSHBACK_BUFSIZE;
-    prevcols[prevpos] = xxcolno;
-    prevbytes[prevpos] = xxbyteno;
-    prevlines[prevpos] = xxlineno;    
+    prevcols[prevpos] = ParseState.xxcolno;
+    prevbytes[prevpos] = ParseState.xxbyteno;
+    prevlines[prevpos] = ParseState.xxlineno;    
     
     if (c == EOF) {
 	EndOfFile = 1;
@@ -404,25 +402,25 @@ static int xxgetc(void)
     R_ParseContext[R_ParseContextLast] = c;
 
     if (c == '\n') {
-	xxlineno += 1;
-	xxcolno = 0;
-    	xxbyteno = 0;
+	ParseState.xxlineno += 1;
+	ParseState.xxcolno = 0;
+    	ParseState.xxbyteno = 0;
     } else {
-        xxcolno++;
-    	xxbyteno++;
+        ParseState.xxcolno++;
+    	ParseState.xxbyteno++;
     }
     /* only advance column for 1st byte in UTF-8 */
     if (0x80 <= (unsigned char)c && (unsigned char)c <= 0xBF && known_to_be_utf8) 
-    	xxcolno--;
+    	ParseState.xxcolno--;
 
-    if (c == '\t') xxcolno = ((xxcolno + 7) & ~7);
+    if (c == '\t') ParseState.xxcolno = ((ParseState.xxcolno + 7) & ~7);
     
-    R_ParseContextLine = xxlineno;    
+    R_ParseContextLine = ParseState.xxlineno;    
 
     if ( KeepSource && GenerateCode && FunctionLevel > 0 ) {
 	if(SourcePtr <  FunctionSource + MAXFUNSIZE)
 	    *SourcePtr++ = c;
-	else  error(_("function is too long to keep source (at line %d)"), xxlineno);
+	else  error(_("function is too long to keep source (at line %d)"), ParseState.xxlineno);
     }
     xxcharcount++;
     return c;
@@ -431,12 +429,12 @@ static int xxgetc(void)
 static int xxungetc(int c)
 {
     /* this assumes that c was the result of xxgetc; if not, some edits will be needed */
-    xxlineno = prevlines[prevpos];
-    xxbyteno = prevbytes[prevpos];
-    xxcolno  = prevcols[prevpos];
+    ParseState.xxlineno = prevlines[prevpos];
+    ParseState.xxbyteno = prevbytes[prevpos];
+    ParseState.xxcolno  = prevcols[prevpos];
     prevpos = (prevpos + PUSHBACK_BUFSIZE - 1) % PUSHBACK_BUFSIZE;
 
-    R_ParseContextLine = xxlineno;
+    R_ParseContextLine = ParseState.xxlineno;
     if ( KeepSource && GenerateCode && FunctionLevel > 0 )
 	SourcePtr--;
     xxcharcount--;
@@ -485,8 +483,8 @@ static SEXP attachSrcrefs(SEXP val, SEXP srcfile)
 static int xxvalue(SEXP v, int k, YYLTYPE *lloc)
 {
     if (k > 2) {
-	if (SrcFile)
-	    REPROTECT(SrcRefs = GrowList(SrcRefs, makeSrcref(lloc, SrcFile)), srindex);
+	if (ParseState.keepSrcRefs)
+	    REPROTECT(SrcRefs = GrowList(SrcRefs, makeSrcref(lloc, ParseState.SrcFile)), srindex);
 	UNPROTECT_PTR(v);
     }
     R_CurrentExpr = v;
@@ -557,7 +555,7 @@ static SEXP xxexprlist0(void)
     SEXP ans;
     if (GenerateCode) {
 	PROTECT(ans = NewList());
-	if (SrcFile) {
+	if (ParseState.keepSrcRefs) {
 	    setAttrib(ans, R_SrcrefSymbol, SrcRefs);
 	    REPROTECT(SrcRefs = NewList(), srindex);
 	}
@@ -572,10 +570,10 @@ static SEXP xxexprlist1(SEXP expr, YYLTYPE *lloc)
     SEXP ans,tmp;
     if (GenerateCode) {
 	PROTECT(tmp = NewList());
-	if (SrcFile) {
+	if (ParseState.keepSrcRefs) {
 	    setAttrib(tmp, R_SrcrefSymbol, SrcRefs);
 	    REPROTECT(SrcRefs = NewList(), srindex);
-	    REPROTECT(SrcRefs = GrowList(SrcRefs, makeSrcref(lloc, SrcFile)), srindex);
+	    REPROTECT(SrcRefs = GrowList(SrcRefs, makeSrcref(lloc, ParseState.SrcFile)), srindex);
 	}
 	PROTECT(ans = GrowList(tmp, expr));
 	UNPROTECT_PTR(tmp);
@@ -590,8 +588,8 @@ static SEXP xxexprlist2(SEXP exprlist, SEXP expr, YYLTYPE *lloc)
 {
     SEXP ans;
     if (GenerateCode) {
-	if (SrcFile)
-	    REPROTECT(SrcRefs = GrowList(SrcRefs, makeSrcref(lloc, SrcFile)), srindex);
+	if (ParseState.keepSrcRefs)
+	    REPROTECT(SrcRefs = GrowList(SrcRefs, makeSrcref(lloc, ParseState.SrcFile)), srindex);
 	PROTECT(ans = GrowList(exprlist, expr));
     }
     else
@@ -946,10 +944,10 @@ static SEXP xxexprlist(SEXP a1, YYLTYPE *lloc, SEXP a2)
     if (GenerateCode) {
 	SET_TYPEOF(a2, LANGSXP);
 	SETCAR(a2, a1);
-	if (SrcFile) {
+	if (ParseState.keepSrcRefs) {
 	    PROTECT(prevSrcrefs = getAttrib(a2, R_SrcrefSymbol));
-	    REPROTECT(SrcRefs = Insert(SrcRefs, makeSrcref(lloc, SrcFile)), srindex);
-	    PROTECT(ans = attachSrcrefs(a2, SrcFile));
+	    REPROTECT(SrcRefs = Insert(SrcRefs, makeSrcref(lloc, ParseState.SrcFile)), srindex);
+	    PROTECT(ans = attachSrcrefs(a2, ParseState.SrcFile));
 	    REPROTECT(SrcRefs = prevSrcrefs, srindex);
 	    /* SrcRefs got NAMED by being an attribute... */
 	    SET_NAMED(SrcRefs, 0);
@@ -1060,12 +1058,9 @@ static SEXP NextArg(SEXP l, SEXP s, SEXP tag)
  *  The following routines parse a single expression:
  *
  *
- *	SEXP R_Parse1File(FILE *fp, int gencode, ParseStatus *status)
+ *	SEXP R_Parse1File(FILE *fp, int gencode, ParseStatus *status, Rboolean first)
  *
- *	SEXP R_Parse1Vector(TextBuffer *text, int gencode, ParseStatus *status)
- *      [Unused]
- *
- *	SEXP R_Parse1Buffer(IoBuffer *buffer, int gencode, ParseStatus *status)
+ *	SEXP R_Parse1Buffer(IoBuffer *buffer, int gencode, ParseStatus *status, Rboolean first)
  *
  *
  *  The success of the parse is indicated as folllows:
@@ -1095,6 +1090,46 @@ static SEXP NextArg(SEXP l, SEXP s, SEXP tag)
 static int	SavedToken;
 static SEXP	SavedLval;
 static char	contextstack[CONTEXTSTACK_SIZE], *contextp;
+
+void R_InitSrcRefState(SrcRefState *state)
+{
+    state->keepSrcRefs = FALSE;
+    PROTECT_WITH_INDEX(state->SrcFile = R_NilValue, &(state->SrcFileProt));
+    state->xxlineno = 1;
+    state->xxcolno = 0;
+    state->xxbyteno = 0;
+}
+
+void R_FinalizeSrcRefState(SrcRefState *state)
+{
+    UNPROTECT_PTR(state->SrcFile);
+}
+
+static void UseSrcRefState(SrcRefState *state)
+{
+    if (state) {
+	ParseState.keepSrcRefs = state->keepSrcRefs;
+	ParseState.SrcFile = state->SrcFile;
+	ParseState.SrcFileProt = state->SrcFileProt;
+	ParseState.xxlineno = state->xxlineno;
+	ParseState.xxcolno = state->xxcolno;
+	ParseState.xxbyteno = state->xxbyteno;
+    } else 
+    	R_InitSrcRefState(&ParseState);
+}
+
+static void PutSrcRefState(SrcRefState *state)
+{
+    if (state) {
+	state->keepSrcRefs = ParseState.keepSrcRefs;
+	state->SrcFile = ParseState.SrcFile;
+	state->SrcFileProt = ParseState.SrcFileProt;
+	state->xxlineno = ParseState.xxlineno;
+	state->xxcolno = ParseState.xxcolno;
+	state->xxbyteno = ParseState.xxbyteno;
+    } else 
+    	R_FinalizeSrcRefState(&ParseState);
+}
 
 static void ParseInit(void)
 {
@@ -1148,14 +1183,16 @@ static int file_getc(void)
 
 /* used in main.c and this file */
 attribute_hidden
-SEXP R_Parse1File(FILE *fp, int gencode, ParseStatus *status)
+SEXP R_Parse1File(FILE *fp, int gencode, ParseStatus *status, SrcRefState *state)
 {
+    UseSrcRefState(state);
     ParseInit();
     ParseContextInit();
     GenerateCode = gencode;
     fp_parse = fp;
     ptr_getc = file_getc;
     R_Parse1(status);
+    PutSrcRefState(state);
     return R_CurrentExpr;
 }
 
@@ -1168,16 +1205,16 @@ static int buffer_getc(void)
 
 /* Used only in main.c, rproxy_impl.c */
 attribute_hidden
-SEXP R_Parse1Buffer(IoBuffer *buffer, int gencode, ParseStatus *status)
+SEXP R_Parse1Buffer(IoBuffer *buffer, int gencode, ParseStatus *status, SrcRefState *state)
 {
-    xxlineno = 1;
-    xxcolno = 0;
+    UseSrcRefState(state);
     ParseInit();
     ParseContextInit();
     GenerateCode = gencode;
     iob = buffer;
     ptr_getc = buffer_getc;
     R_Parse1(status);
+    PutSrcRefState(state);
     return R_CurrentExpr;
 }
 
@@ -1194,19 +1231,18 @@ static SEXP R_Parse(int n, ParseStatus *status, SEXP srcfile)
     int i;
     SEXP t, rval;
 
+    R_InitSrcRefState(&ParseState);
+    
     ParseContextInit();
     savestack = R_PPStackTop;
     PROTECT(t = NewList());
 
-    xxlineno = 1;
-    xxcolno = 0;
-    xxbyteno = 0;
-    if (!isNull(srcfile)) {
-	SrcFile = srcfile;
+    REPROTECT(ParseState.SrcFile = srcfile, ParseState.SrcFileProt);
+    if (!isNull(ParseState.SrcFile)) {
+    	ParseState.keepSrcRefs = TRUE;
 	PROTECT_WITH_INDEX(SrcRefs = NewList(), &srindex);
     }
-    else SrcFile = NULL;
-
+    
     for(i = 0; ; ) {
 	if(n >= 0 && i >= n) break;
 	ParseInit();
@@ -1221,7 +1257,7 @@ static SEXP R_Parse(int n, ParseStatus *status, SEXP srcfile)
 	case PARSE_INCOMPLETE:
 	case PARSE_ERROR:
 	    R_PPStackTop = savestack;
-	    SrcFile = NULL;
+	    R_FinalizeSrcRefState(&ParseState);	    
 	    return R_NilValue;
 	    break;
 	case PARSE_EOF:
@@ -1236,11 +1272,11 @@ finish:
     rval = allocVector(EXPRSXP, length(t));
     for (n = 0 ; n < LENGTH(rval) ; n++, t = CDR(t))
 	SET_VECTOR_ELT(rval, n, CAR(t));
-    if (SrcFile) {
-	rval = attachSrcrefs(rval, SrcFile);
-	SrcFile = NULL;
-    }
-    R_PPStackTop = savestack;
+    if (ParseState.keepSrcRefs) 
+	rval = attachSrcrefs(rval, ParseState.SrcFile);
+    R_PPStackTop = savestack;    
+    R_FinalizeSrcRefState(&ParseState);
+
     *status = PARSE_OK;
     return rval;
 }
@@ -1321,22 +1357,21 @@ SEXP R_ParseBuffer(IoBuffer *buffer, int n, ParseStatus *status, SEXP prompt, SE
     R_IoBufferWriteReset(buffer);
     buf[0] = '\0';
     bufp = buf;
+    R_InitSrcRefState(&ParseState);    
     savestack = R_PPStackTop;
     PROTECT(t = NewList());
-
-    xxlineno = 1;
-    xxcolno = 0;
-    xxbyteno = 0;
+    
     GenerateCode = 1;
     iob = buffer;
     ptr_getc = buffer_getc;
 
-    if (!isNull(srcfile)) {
-	SrcFile = srcfile;
+    REPROTECT(ParseState.SrcFile = srcfile, ParseState.SrcFileProt);
+    
+    if (!isNull(ParseState.SrcFile)) {
+    	ParseState.keepSrcRefs = TRUE;
 	PROTECT_WITH_INDEX(SrcRefs = NewList(), &srindex);
     }
-    else SrcFile = NULL;
-
+    
     for(i = 0; ; ) {
 	if(n >= 0 && i >= n) break;
 	if (!*bufp) {
@@ -1367,7 +1402,7 @@ SEXP R_ParseBuffer(IoBuffer *buffer, int n, ParseStatus *status, SEXP prompt, SE
 	case PARSE_ERROR:
 	    R_IoBufferWriteReset(buffer);
 	    R_PPStackTop = savestack;
-	    SrcFile = NULL;
+	    R_FinalizeSrcRefState(&ParseState);
 	    return R_NilValue;
 	    break;
 	case PARSE_EOF:
@@ -1381,11 +1416,11 @@ finish:
     rval = allocVector(EXPRSXP, length(t));
     for (n = 0 ; n < LENGTH(rval) ; n++, t = CDR(t))
 	SET_VECTOR_ELT(rval, n, CAR(t));
-    if (SrcFile) {
-	rval = attachSrcrefs(rval, SrcFile);
-	SrcFile = NULL;
+    if (ParseState.keepSrcRefs) {
+	rval = attachSrcrefs(rval, ParseState.SrcFile);
     }
     R_PPStackTop = savestack;
+    R_FinalizeSrcRefState(&ParseState);    
     *status = PARSE_OK;
     return rval;
 }
@@ -1668,7 +1703,7 @@ static void yyerror(char *s)
 
     R_ParseError     = yylloc.first_line;
     R_ParseErrorCol  = yylloc.first_column;
-    R_ParseErrorFile = SrcFile;
+    R_ParseErrorFile = ParseState.SrcFile;
 
     if (!strncmp(s, yyunexpected, sizeof yyunexpected -1)) {
 	int i;
@@ -1711,7 +1746,7 @@ static char yytext[MAXELTSIZE];
 #define DECLARE_YYTEXT_BUFP(bp) char *bp = yytext
 #define YYTEXT_PUSH(c, bp) do { \
     if ((bp) - yytext >= sizeof(yytext) - 1) \
-	error(_("input buffer overflow at line %d"), xxlineno); \
+	error(_("input buffer overflow at line %d"), ParseState.xxlineno); \
 	*(bp)++ = (c); \
 } while(0)
 
@@ -1739,7 +1774,7 @@ static int SkipSpace(void)
 	return c;
     }
 #endif
-#if defined(SUPPORT_MBCS) && defined(__STDC_ISO_10646__)
+#if defined(__STDC_ISO_10646__)
     if(mbcslocale) { /* wctype functions need Unicode wchar_t */
 	int i, clen;
 	wchar_t wc;
@@ -1766,8 +1801,22 @@ static int SkipSpace(void)
 
 static int SkipComment(void)
 {
-    int c;
-    while ((c = xxgetc()) != '\n' && c != R_EOF) ;
+    int c='#', i;
+    Rboolean maybeLine = (ParseState.xxcolno == 1);
+    if (maybeLine) {
+    	char lineDirective[] = "#line";
+    	for (i=1; i<5; i++) {
+    	    c = xxgetc();
+  	    if (c != (int)(lineDirective[i])) {
+  	    	maybeLine = FALSE;
+  	    	break;
+  	    }
+  	}
+  	if (maybeLine)     
+	    c = processLineDirective();
+    }
+    while (c != '\n' && c != R_EOF) 
+	c = xxgetc();
     if (c == R_EOF) EndOfFile = 2;
     return c;
 }
@@ -1891,7 +1940,7 @@ static int NumericValue(int c)
 	    char *old = stext;              \
 	    nstext *= 2;                    \
 	    stext = malloc(nstext);         \
-	    if(!stext) error(_("unable to allocate buffer for long string at line %d"), xxlineno);\
+	    if(!stext) error(_("unable to allocate buffer for long string at line %d"), ParseState.xxlineno);\
 	    memmove(stext, old, nc);        \
 	    if(old != st0) free(old);	    \
 	    bp = stext+nc; }		    \
@@ -1901,18 +1950,61 @@ static int NumericValue(int c)
 
 /* The idea here is that if a string contains \u escapes that are not
    valid in the current locale, we should switch to UTF-8 for that
-   string.  Needs wide-char support.
+   string.  Needs Unicode wide-char support.
 */
-#ifdef SUPPORT_MBCS
-# ifdef Win32
-#  define USE_UTF8_IF_POSSIBLE
-# endif
+
+#if defined(__APPLE_CC__)
+/* This may not be 100% true (see the comment in rlocales.h),
+   but it seems true in normal locales */
+# define __STDC_ISO_10646__
 #endif
 
-#ifdef USE_UTF8_IF_POSSIBLE
-#define WTEXT_PUSH(c) do { if(wcnt < 1000) wcs[wcnt++] = c; } while(0)
+#if defined(Win32) || defined(__STDC_ISO_10646__)
+typedef wchar_t ucs_t;
+# define mbcs_get_next2 mbcs_get_next
+#else
+typedef unsigned int ucs_t;
+# define WC_NOT_UNICODE 
+static int mbcs_get_next2(int c, ucs_t *wc)
+{
+    int i, res, clen = 1; char s[9];
 
-static SEXP mkStringUTF8(const wchar_t *wcs, int cnt)
+    s[0] = c;
+    /* This assumes (probably OK) that all MBCS embed ASCII as single-byte
+       lead bytes, including control chars */
+    if((unsigned int) c < 0x80) {
+	*wc = (wchar_t) c;
+	return 1;
+    }
+    if(utf8locale) {
+	clen = utf8clen(c);
+	for(i = 1; i < clen; i++) {
+	    s[i] = xxgetc();
+	    if(s[i] == R_EOF) error(_("EOF whilst reading MBCS char at line %d"), ParseState.xxlineno);
+	}
+	res = mbtoucs(wc, s, clen);
+	if(res == -1) error(_("invalid multibyte character in parser at line %d"), ParseState.xxlineno);
+    } else {
+	/* This is not necessarily correct for stateful MBCS */
+	while(clen <= MB_CUR_MAX) {
+	    res = mbtoucs(wc, s, clen);
+	    if(res >= 0) break;
+	    if(res == -1)
+		error(_("invalid multibyte character in parser at line %d"), ParseState.xxlineno);
+	    /* so res == -2 */
+	    c = xxgetc();
+	    if(c == R_EOF) error(_("EOF whilst reading MBCS char at line %d"), ParseState.xxlineno);
+	    s[clen++] = c;
+	} /* we've tried enough, so must be complete or invalid by now */
+    }
+    for(i = clen - 1; i > 0; i--) xxungetc(s[i]);
+    return clen;
+}
+#endif
+
+#define WTEXT_PUSH(c) do { if(wcnt < 10000) wcs[wcnt++] = c; } while(0)
+
+static SEXP mkStringUTF8(const ucs_t *wcs, int cnt)
 {
     SEXP t;
     char *s;
@@ -1927,15 +2019,19 @@ static SEXP mkStringUTF8(const wchar_t *wcs, int cnt)
     s = alloca(nb);
     R_CheckStack();
     memset(s, 0, nb); /* safety */
+#ifdef WC_NOT_UNICODE
+    {
+	char *ss;
+	for(ss = s; *wcs; wcs++) ss += ucstoutf8(ss, *wcs);
+    }
+#else
     wcstoutf8(s, wcs, nb);
+#endif
     PROTECT(t = allocVector(STRSXP, 1));
     SET_STRING_ELT(t, 0, mkCharCE(s, CE_UTF8));
     UNPROTECT(1);
     return t;
 }
-#else
-#define WTEXT_PUSH(c)
-#endif
 
 #define CTEXT_PUSH(c) do { \
 	if (ct - currtext >= 1000) {memmove(currtext, currtext+100, 901); memmove(currtext, "... ", 4); ct -= 100;} \
@@ -1944,6 +2040,7 @@ static SEXP mkStringUTF8(const wchar_t *wcs, int cnt)
 #define CTEXT_POP() ct--
 
 
+/* forSymbol is true when parsing backticked symbols */
 static int StringValue(int c, Rboolean forSymbol)
 {
     int quote = c;
@@ -1952,12 +2049,9 @@ static int StringValue(int c, Rboolean forSymbol)
     char st0[MAXELTSIZE];
     unsigned int nstext = MAXELTSIZE;
     char *stext = st0, *bp = st0;
-
-#ifdef USE_UTF8_IF_POSSIBLE
     int wcnt = 0;
-    wchar_t wcs[1001];
+    ucs_t wcs[10001];
     Rboolean use_wcs = FALSE;
-#endif
 
     while ((c = xxgetc()) != R_EOF && c != quote) {
 	CTEXT_PUSH(c);
@@ -2013,12 +2107,11 @@ static int StringValue(int c, Rboolean forSymbol)
 		c = val;
 	    }
 	    else if(c == 'u') {
-#ifndef SUPPORT_MBCS
-		error(_("\\uxxxx sequences not supported (line %d)"), xxlineno);
-#else
-		unsigned int val = 0; int i, ext; size_t res;
-		char buff[MB_CUR_MAX+1]; /* could be variable, and hence not legal C90 */
+		unsigned int val = 0; int i, ext; 
 		Rboolean delim = FALSE;
+
+		if(forSymbol) 
+		    error(_("\\uxxxx sequences not supported inside backticks (line %d)"), ParseState.xxlineno);
 		if((c = xxgetc()) == '{') {
 		    delim = TRUE;
 		    CTEXT_PUSH(c);
@@ -2044,35 +2137,19 @@ static int StringValue(int c, Rboolean forSymbol)
 		}
 		if(delim) {
 		    if((c = xxgetc()) != '}')
-			error(_("invalid \\u{xxxx} sequence (line %d)"), xxlineno);
+			error(_("invalid \\u{xxxx} sequence (line %d)"),
+			      ParseState.xxlineno);
 		    else CTEXT_PUSH(c);
 		}
-		WTEXT_PUSH(val);
-		res = ucstomb(buff, val);
-		if((int) res <= 0) {
-#ifdef USE_UTF8_IF_POSSIBLE
-		    if(!forSymbol) {
-			use_wcs = TRUE;
-		    } else
-#endif
-		    {
-			if(delim)
-			    error(_("invalid \\u{xxxx} sequence (line %d)"), xxlineno);
-			else
-			    error(_("invalid \\uxxxx sequence (line %d)"), xxlineno);
-		    }
-		} else
-		    for(i = 0; i <  res; i++) STEXT_PUSH(buff[i]);
+		WTEXT_PUSH(val); /* this assumes wchar_t is Unicode */
+		use_wcs = TRUE;
 		continue;
-#endif
 	    }
 	    else if(c == 'U') {
-#ifndef SUPPORT_MBCS
-		error(_("\\Uxxxxxxxx sequences not supported (line %d)"), xxlineno);
-#else
-		unsigned int val = 0; int i, ext; size_t res;
-		char buff[MB_CUR_MAX+1]; /* could be variable, and hence not legal C90 */
+		unsigned int val = 0; int i, ext;
 		Rboolean delim = FALSE;
+		if(forSymbol) 
+		    error(_("\\Uxxxxxxxx sequences not supported inside backticks (line %d)"), ParseState.xxlineno);
 		if((c = xxgetc()) == '{') {
 		    delim = TRUE;
 		    CTEXT_PUSH(c);
@@ -2098,20 +2175,12 @@ static int StringValue(int c, Rboolean forSymbol)
 		}
 		if(delim) {
 		    if((c = xxgetc()) != '}')
-			error(_("invalid \\U{xxxxxxxx} sequence (line %d)"), xxlineno);
+			error(_("invalid \\U{xxxxxxxx} sequence (line %d)"), ParseState.xxlineno);
 		    else CTEXT_PUSH(c);
 		}
-		res = ucstomb(buff, val);
-		if((int)res <= 0) {
-		    if(delim)
-			error(_("invalid \\U{xxxxxxxx} sequence (line %d)"), xxlineno);
-		    else
-			error(_("invalid \\Uxxxxxxxx sequence (line %d)"), xxlineno);
-		}
-		for(i = 0; i <  res; i++) STEXT_PUSH(buff[i]);
 		WTEXT_PUSH(val);
+		use_wcs = TRUE;
 		continue;
-#endif
 	    }
 	    else {
 		switch (c) {
@@ -2152,40 +2221,41 @@ static int StringValue(int c, Rboolean forSymbol)
 		    break;
 		}
 	    }
+	} else if(mbcslocale) {
+	    int i, clen;
+	    ucs_t wc;
+	    clen = mbcs_get_next2(c, &wc);
+	    WTEXT_PUSH(wc);
+	    for(i = 0; i < clen - 1; i++){
+		STEXT_PUSH(c);
+		c = xxgetc();
+		if (c == R_EOF) break;
+		CTEXT_PUSH(c);
+		if (c == '\n') {
+		    xxungetc(c); CTEXT_POP();
+		    c = '\\';
+		}
+	    }
+	    if (c == R_EOF) break;
+	    STEXT_PUSH(c);
+	    continue;
 	}
-#if defined(SUPPORT_MBCS)
-       else if(mbcslocale) {
-	   int i, clen;
-	   wchar_t wc = L'\0';
-	   /* We can't assume this is valid UTF-8 */
-	   clen = /* utf8locale ? utf8clen(c):*/ mbcs_get_next(c, &wc);
-	   WTEXT_PUSH(wc);
-	   for(i = 0; i < clen - 1; i++){
-	       STEXT_PUSH(c);
-	       c = xxgetc();
-	       if (c == R_EOF) break;
-	       CTEXT_PUSH(c);
-	       if (c == '\n') {
-		   xxungetc(c); CTEXT_POP();
-		   c = '\\';
-	       }
-	   }
-	   if (c == R_EOF) break;
-	   STEXT_PUSH(c);
-	   continue;
-       }
-#endif /* SUPPORT_MBCS */
 	STEXT_PUSH(c);
-#ifdef USE_UTF8_IF_POSSIBLE
 	if ((unsigned int) c < 0x80) WTEXT_PUSH(c);
 	else { /* have an 8-bit char in the current encoding */
+#ifdef WC_NOT_UNICODE
+	    ucs_t wc;
+	    char s[2] = " ";
+	    s[0] = c;
+	    mbtoucs(&wc, s, 2);
+#else
 	    wchar_t wc;
 	    char s[2] = " ";
 	    s[0] = c;
-	    mbrtowc(&wc, s, 1, NULL);
+	    mbrtowc(&wc, s, 2, NULL);
+#endif
 	    WTEXT_PUSH(wc);
 	}
-#endif
     }
     STEXT_PUSH('\0');
     WTEXT_PUSH(0);
@@ -2194,14 +2264,12 @@ static int StringValue(int c, Rboolean forSymbol)
 	if(stext != st0) free(stext);
 	return SYMBOL;
     } else {
-#ifdef USE_UTF8_IF_POSSIBLE
 	if(use_wcs) {
-	    if(wcnt < 1000)
+	    if(wcnt < 10000)
 		PROTECT(yylval = mkStringUTF8(wcs, wcnt)); /* include terminator */
 	    else
-		error(_("string at line %d containing Unicode escapes not in this locale\nis too long (max 1000 chars)"), xxlineno);
+		error(_("string at line %d containing Unicode escapes not in this locale\nis too long (max 10000 chars)"), ParseState.xxlineno);
 	} else
-#endif
 	    PROTECT(yylval = mkString2(stext,  bp - stext - 1));
 	if(stext != st0) free(stext);
 	if(have_warned) {
@@ -2245,7 +2313,6 @@ int isValidName(const char *name)
     const char *p = name;
     int i;
 
-#ifdef SUPPORT_MBCS
     if(mbcslocale) {
 	/* the only way to establish which chars are alpha etc is to
 	   use the wchar variants */
@@ -2264,9 +2331,7 @@ int isValidName(const char *name)
 	    p += used; n -= used;
 	}
 	if (*p != '\0') return 0;
-    } else
-#endif
-    {
+    } else {
 	int c = 0xff & *p++;
 	if (c != '.' && !isalpha(c) ) return 0;
 	if (c == '.' && isdigit(0xff & (int)*p)) return 0;
@@ -2287,11 +2352,9 @@ static int SymbolValue(int c)
 {
     int kw;
     DECLARE_YYTEXT_BUFP(yyp);
-#if defined(SUPPORT_MBCS)
     if(mbcslocale) {
 	wchar_t wc; int i, clen;
-	   /* We can't assume this is valid UTF-8 */
-	clen = /* utf8locale ? utf8clen(c) :*/ mbcs_get_next(c, &wc);
+	clen = mbcs_get_next(c, &wc);
 	while(1) {
 	    /* at this point we have seen one char, so push its bytes
 	       and get one more */
@@ -2308,7 +2371,6 @@ static int SymbolValue(int c)
 	    if(!iswalnum(wc)) break;
 	}
     } else
-#endif
 	do {
 	    YYTEXT_PUSH(c, yyp);
 	} while ((c = xxgetc()) != R_EOF &&
@@ -2318,7 +2380,7 @@ static int SymbolValue(int c)
     if ((kw = KeywordLookup(yytext))) {
 	if ( kw == FUNCTION ) {
 	    if (FunctionLevel >= MAXNEST)
-		error(_("functions nested too deeply in source code at line %d"), xxlineno);
+		error(_("functions nested too deeply in source code at line %d"), ParseState.xxlineno);
 	    if ( FunctionLevel++ == 0 && GenerateCode) {
 		strcpy((char *)FunctionSource, "function");
 		SourcePtr = FunctionSource + 8;
@@ -2334,15 +2396,45 @@ static int SymbolValue(int c)
     return SYMBOL;
 }
 
+static void setParseFilename(SEXP newname) {
+    if (isEnvironment(ParseState.SrcFile)) {
+    	SEXP oldname = findVar(install("filename"), ParseState.SrcFile);
+    	if (isString(oldname) && length(oldname) > 0 &&
+    	    strcmp(CHAR(STRING_ELT(oldname, 0)),
+    	           CHAR(STRING_ELT(newname, 0))) == 0) return;
+    }
+    REPROTECT(ParseState.SrcFile = NewEnvironment(R_NilValue, R_NilValue, R_EmptyEnv), ParseState.SrcFileProt);
+    
+    defineVar(install("filename"), newname, ParseState.SrcFile);
+    setAttrib(ParseState.SrcFile, R_ClassSymbol, mkString("srcfile"));
+    UNPROTECT_PTR(newname);
+}
+
+static int processLineDirective()
+{
+    int c, tok, linenumber;
+    c = SkipSpace();
+    if (!isdigit(c)) return(c);
+    tok = NumericValue(c);
+    linenumber = atoi(yytext);
+    c = SkipSpace();
+    if (c == '"') 
+	tok = StringValue(c, FALSE);
+    if (tok == STR_CONST) 
+	setParseFilename(yylval);
+    while ((c = xxgetc()) != '\n' && c != R_EOF) /* skip */ ;
+    ParseState.xxlineno = linenumber;
+    R_ParseContext[R_ParseContextLast] = '\0';  /* Context report shouldn't show the directive */
+    return(c);
+}
+
 /* Split the input stream into tokens. */
 /* This is the lowest of the parsing levels. */
 
 static int token(void)
 {
     int c;
-#if defined(SUPPORT_MBCS)
     wchar_t wc;
-#endif
 
     if (SavedToken) {
 	c = SavedToken;
@@ -2359,9 +2451,9 @@ static int token(void)
     c = SkipSpace();
     if (c == '#') c = SkipComment();
 
-    yylloc.first_line = xxlineno;
-    yylloc.first_column = xxcolno;
-    yylloc.first_byte = xxbyteno;
+    yylloc.first_line = ParseState.xxlineno;
+    yylloc.first_column = ParseState.xxcolno;
+    yylloc.first_byte = ParseState.xxbyteno;
 
     if (c == R_EOF) return END_OF_INPUT;
 
@@ -2394,12 +2486,10 @@ static int token(void)
  symbol:
 
     if (c == '.') return SymbolValue(c);
-#if defined(SUPPORT_MBCS)
     if(mbcslocale) {
 	mbcs_get_next(c, &wc);
 	if (iswalpha(wc)) return SymbolValue(c);
     } else
-#endif
 	if (isalpha(c)) return SymbolValue(c);
 
     /* compound tokens */
@@ -2541,9 +2631,9 @@ static int token(void)
 
 static void setlastloc(void)
 {
-    yylloc.last_line = xxlineno;
-    yylloc.last_column = xxcolno;
-    yylloc.last_byte = xxbyteno;
+    yylloc.last_line = ParseState.xxlineno;
+    yylloc.last_column = ParseState.xxcolno;
+    yylloc.last_byte = ParseState.xxbyteno;
 }
 
 static int yylex(void)
@@ -2716,27 +2806,27 @@ static int yylex(void)
 
     case LBB:
 	if(contextp - contextstack >= CONTEXTSTACK_SIZE - 1)
-	    error(_("contextstack overflow at line %d"), xxlineno);
+	    error(_("contextstack overflow at line %d"), ParseState.xxlineno);
 	*++contextp = '[';
 	*++contextp = '[';
 	break;
 
     case '[':
 	if(contextp - contextstack >= CONTEXTSTACK_SIZE)
-	    error(_("contextstack overflow at line %d"), xxlineno);
+	    error(_("contextstack overflow at line %d"), ParseState.xxlineno);
 	*++contextp = tok;
 	break;
 
     case LBRACE:
 	if(contextp - contextstack >= CONTEXTSTACK_SIZE)
-	    error(_("contextstack overflow at line %d"), xxlineno);
+	    error(_("contextstack overflow at line %d"), ParseState.xxlineno);
 	*++contextp = tok;
 	EatLines = 1;
 	break;
 
     case '(':
 	if(contextp - contextstack >= CONTEXTSTACK_SIZE)
-	    error(_("contextstack overflow at line %d"), xxlineno);
+	    error(_("contextstack overflow at line %d"), ParseState.xxlineno);
 	*++contextp = tok;
 	break;
 

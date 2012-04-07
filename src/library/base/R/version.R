@@ -109,7 +109,9 @@ function(x, strict = TRUE)
                           .standard_regexps()$valid_R_system_version,
                           c("R_system_version", "package_version"))
 
-getRversion <- function() package_version(R.version)
+getRversion <-
+function()
+    package_version(R.version)
 
 ## Workhorses.
 
@@ -133,10 +135,9 @@ function(x, base = NULL)
                            function(t)
                            sum(t / base^seq.int(0, length.out =
                                                 length(t)))))
-    structure(x, base = base, lens = lens, .classes = classes)
+    structure(ifelse(lens > 0L, x, NA_real_),
+              base = base, lens = lens, .classes = classes)
 }
-
-xtfrm.numeric_version <- function(x) .encode_numeric_version(x)
 
 ## <NOTE>
 ## Currently unused.
@@ -191,7 +192,7 @@ function(x, ..., exact = NA)
 }
 
 ## allowed forms
-## x[[i]] <- "1.2.3"; x[[i]] <- 1L:3; x[[c(i,j)]] <- <single integer>
+## x[[i]] <- "1.2.3"; x[[i]] <- 1L:3L; x[[c(i,j)]] <- <single integer>
 ## x[[i,j]] <- <single integer>
 `[[<-.numeric_version` <-
 function(x, ..., value)
@@ -238,20 +239,31 @@ function(e1, e2)
 Summary.numeric_version <-
 function(..., na.rm)
 {
-    ok <- switch(.Generic, max = , min = TRUE, FALSE)
+    ok <- switch(.Generic, max = , min = , range = TRUE, FALSE)
     if(!ok)
         stop(.Generic, " not defined for numeric_version objects")
     x <- list(...)
     x <- do.call("c", lapply(x, as.numeric_version))
-    ## <FIXME> which.max/min automatically remove NAs
-    switch(.Generic,
-           max = x[which.max(.encode_numeric_version(x))],
-           min = x[which.min(.encode_numeric_version(x))])
+    v <- .encode_numeric_version(x)
+    if(!na.rm && length(pos <- which(is.na(v)))) {
+        y <- x[pos[1L]]
+        if(as.character(.Generic) == "range")
+            c(y, y)
+        else
+            y
+    }
+    else
+        switch(.Generic,
+               max = x[which.max(v)],
+               min = x[which.min(v)],
+               range = x[c(which.min(v), which.max(v))])
 }
 
 as.character.numeric_version <-
 function(x, ...)
-    as.character(unlist(lapply(x, paste, collapse = ".")))
+    ifelse(as.numeric(sapply(x, length)) > 0,
+           as.character(unlist(lapply(x, paste, collapse = "."))),
+           NA_character_)
 
 as.data.frame.numeric_version <- as.data.frame.vector
 
@@ -280,10 +292,15 @@ function(x, incomparables = FALSE, ...)
     NextMethod("duplicated")
 }
 
+is.na.numeric_version <-
+function(x)
+    is.na(.encode_numeric_version(x))
+
 print.numeric_version <-
 function(x, ...)
 {
-    print(noquote(sQuote(as.character(x))), ...)
+    y <- as.character(x)
+    print(noquote(ifelse(is.na(y), NA_character_, sQuote(y))), ...)
     invisible(x)
 }
 
@@ -300,6 +317,10 @@ function(x, ...)
 unique.numeric_version <-
 function(x, incomparables = FALSE, ...)
     x[!duplicated(x, incomparables, ...)]
+
+xtfrm.numeric_version <-
+function(x)
+    .encode_numeric_version(x)
 
 ## <NOTE>
 ## Versions of R prior to 2.6.0 had only a package_version class.

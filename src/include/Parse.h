@@ -27,18 +27,25 @@
 /* SEXP R_ParseVector(SEXP, int, ParseStatus *, SEXP); in R_ext/Parse.h */
 
 /* Private interface */
-SEXP R_Parse1Buffer(IoBuffer*, int, ParseStatus *); /* in ReplIteration,
+
+typedef struct {
+
+    Rboolean keepSrcRefs;	/* Whether to attach srcrefs to objects as they are parsed */
+    SEXP SrcFile;		/* The srcfile object currently being parsed */
+    PROTECT_INDEX SrcFileProt;	/* The SrcFile may change */
+    int xxlineno;		/* Position information about the current parse */
+    int xxcolno;
+    int xxbyteno;
+} SrcRefState;
+
+void R_InitSrcRefState(SrcRefState *state);
+void R_FinalizeSrcRefState(SrcRefState *state);
+
+SEXP R_Parse1Buffer(IoBuffer*, int, ParseStatus *, SrcRefState *); /* in ReplIteration,
 						       R_ReplDLLdo1 */
 SEXP R_ParseBuffer(IoBuffer*, int, ParseStatus *, SEXP, SEXP); /* in source.c */
-SEXP R_Parse1File(FILE*, int, ParseStatus *); /* in R_ReplFile */
+SEXP R_Parse1File(FILE*, int, ParseStatus *, SrcRefState *); /* in R_ReplFile */
 SEXP R_ParseFile(FILE*, int, ParseStatus *, SEXP);  /* in edit.c */
-
-/* Unused */
-#ifdef PARSE_UNUSED
-SEXP R_Parse1General(int (*)(), int (*)(), int, ParseStatus *);
-SEXP R_ParseGeneral(int (*)(), int (*)(), int, ParseStatus *, SEXP);
-SEXP R_Parse1Vector(TextBuffer*, int, ParseStatus *);
-#endif
 
 #ifndef HAVE_RCONNECTION_TYPEDEF
 typedef struct Rconn  *Rconnection;

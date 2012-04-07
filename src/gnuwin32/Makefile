@@ -1,16 +1,22 @@
 include MkRules
 include ../../share/make/vars.mk
 
+MK = $(MAKE) --no-print-directory
+
 all:
-	@$(MAKE) --no-print-directory Rpwd.exe
+	@$(MK) Rpwd.exe
 	@if test -f  ../../SVN-REVISION ; then \
 	  cp ../../SVN-REVISION ../../SVN-REVISION.bak ; \
 	fi
-	@$(MAKE) --no-print-directory rbuild
-	@$(MAKE) --no-print-directory -C ../library -f Makefile.win all
-	@$(MAKE) --no-print-directory -C ../library -f Makefile.win rpackagehelp
-	@$(MAKE) --no-print-directory htmldocs
-	@$(MAKE) --no-print-directory  -C ../../po -f Makefile.win
+	@$(MK) rbuild
+	@$(MK) -C ../library -f Makefile.win all
+	@$(MK) -C ../library -f Makefile.win docs
+	@$(MK) htmldocs
+	@$(MK)  -C ../../po -f Makefile.win
+
+rpackages:
+	@$(MK) -C ../library -f Makefile.win all
+	@$(MK) -C ../library -f Makefile.win docs
 
 ## must be absolute and space-free.  
 ## NB: will not be set correctly first time through.
@@ -37,16 +43,13 @@ ifdef DEBUG
 else
  DLLFLAGS=-s
 endif
-ifdef R_MEMORY_PROFILING
- OPTFLAGS+=-DR_MEMORY_PROFILING
-endif
 
 # used when compiling src/main: needed for memory.c, regex.c
 OPTFLAGS_M=$(OPTFLAGS)
 
 R-DLLFLAGS=-mwindows
-ifeq ($(strip $(USE_ICU)),YES)
-LIBEXTRAS+=-licuin38 -licuuc38
+ifdef USE_ICU
+LIBEXTRAS+= -licuin38 -licuuc38
 endif
 
 R-DLLLIBS =-L. $(FLIBS) -lRblas -L../../$(IMPDIR) -lRzlib -lRgraphapp -lRiconv -lcomctl32 -lversion $(LIBEXTRAS)
@@ -62,7 +65,8 @@ endif
 MAINLIBS = ../main/libmain.a ../appl/libappl.a ../nmath/libnmath.a
 EXTRALIBS = getline/gl.a ../extra/xdr/libxdr.a \
    ../extra/pcre/libpcre.a ../extra/bzip2/libbz2.a \
-   ../extra/intl/libintl.a ../extra/trio/libtrio.a ../extra/tzone/libtz.a
+   ../extra/intl/libintl.a ../extra/trio/libtrio.a ../extra/tzone/libtz.a \
+   ../extra/tre/libtre.a ../extra/xz/liblzma.a
 
 # flags to ensure that Doug Lea's malloc is used:
 ifdef LEA_MALLOC
@@ -83,39 +87,38 @@ Rpwd.exe: front-ends/Rpwd.exe
 	$(CP) $< $@
 
 front-ends/Rpwd.exe:
-	$(MAKE) --no-print-directory -C front-ends Rpwd
+	$(MK) -C front-ends Rpwd
 
 ## watch out: R.dll and Rblas.dll depend on each other.
 rbuild:
-	@$(MAKE) --no-print-directory fixfiles
-	@$(MAKE) --no-print-directory -C ../include -f Makefile.win
-	@$(MAKE) --no-print-directory -C ../scripts -f Makefile.win
-ifeq ($(strip $(USE_IMPLIBS)),YES)
-	@$(MAKE) --no-print-directory libiconv.dll.a
+	@$(MK) fixfiles
+	@$(MK) -C ../include -f Makefile.win
+	@$(MK) -C ../scripts -f Makefile.win
+ifdef USE_IMPLIBS
+	@$(MK) libiconv.dll.a
 endif
-	@$(MAKE) --no-print-directory libRblas.dll.a
-	@$(MAKE) --no-print-directory ../../bin/R.dll
-ifeq ($(strip $(USE_IMPLIBS)),YES)
-	@$(MAKE) --no-print-directory implibs
+	@$(MK) libRblas.dll.a
+	@$(MK) ../../bin/R.dll
+ifdef USE_IMPLIBS
+	@$(MK) implibs
 endif
-	@$(MAKE) --no-print-directory Rblas CHTML
-	@$(MAKE) --no-print-directory front-ends COPYRIGHTS rmodules fixed/fixdesc
+	@$(MK) Rblas
+	@$(MK) front-ends COPYRIGHTS rmodules fixed/fixdesc
 
 
 rlibs:
-	$(MAKE) --no-print-directory -C ../extra/intl OPTFLAGS='$(OPTFLAGS)' -f Makefile.win
-	$(MAKE) --no-print-directory -C ../appl RHOME=$(RHOME) OPTFLAGS='$(OPTFLAGS)' FOPTFLAGS='$(FOPTFLAGS)' -f Makefile.win
-	$(MAKE) --no-print-directory -C ../nmath OPTFLAGS='$(OPTFLAGS)' -f Makefile.win
-	$(MAKE) --no-print-directory -C ../main RHOME=$(RHOME) OPTFLAGS='$(OPTFLAGS_M)' FFLAGS='$(FOPTFLAGS)' -f Makefile.win
-	$(MAKE) --no-print-directory -C ./getline OPTFLAGS='$(OPTFLAGS)'
-	@for ex in graphapp pcre bzip2 zlib xdr trio tzone win_iconv; do \
-	  $(MAKE) --no-print-directory -C ../extra/$${ex} OPTFLAGS='$(OPTFLAGS)' -f Makefile.win || exit 1; \
+	$(MK) -C ../extra/intl OPTFLAGS='$(OPTFLAGS)' -f Makefile.win
+	$(MK) -C ../appl RHOME=$(RHOME) OPTFLAGS='$(OPTFLAGS)' FOPTFLAGS='$(FOPTFLAGS)' -f Makefile.win
+	$(MK) -C ../nmath OPTFLAGS='$(OPTFLAGS)' -f Makefile.win
+	$(MK) -C ../main RHOME=$(RHOME) OPTFLAGS='$(OPTFLAGS_M)' FFLAGS='$(FOPTFLAGS)' -f Makefile.win
+	$(MK) -C ./getline OPTFLAGS='$(OPTFLAGS)'
+	@for ex in graphapp pcre bzip2 zlib xdr tre trio tzone win_iconv xz; do \
+	  $(MK) -C ../extra/$${ex} OPTFLAGS='$(OPTFLAGS)' -f Makefile.win || exit 1; \
 	done
 
 rmodules:
-	$(MAKE) --no-print-directory -C ../modules \
-	  RHOME=$(RHOME) OPTFLAGS='$(OPTFLAGS)' FOPTFLAGS='$(FOPTFLAGS)' \
-	  -f Makefile.win
+	$(MK) -C ../modules -f Makefile.win \
+	  RHOME=$(RHOME) OPTFLAGS='$(OPTFLAGS)' FOPTFLAGS='$(FOPTFLAGS)'
 
 COPYRIGHTS: ../../doc/COPYRIGHTS COPYRIGHTS.win
 	cat $^ > $@
@@ -123,7 +126,7 @@ COPYRIGHTS: ../../doc/COPYRIGHTS COPYRIGHTS.win
 
 fixfiles: docfiles 
 	@$(MKDIR) -p ../../bin
-	@$(MAKE) --no-print-directory -C ./fixed
+	@$(MK) -C ./fixed
 
 fixed/fixdesc:
 	@sh fixed/GETDESC $(R_PKGS_BASE)
@@ -148,11 +151,11 @@ R.exp: $(OBJS) $(OBJS-EXTRA) $(MAINLIBS) $(EXTRALIBS) dllversion.o
 Rdll: makeMakedeps libRblas.dll.a ../../bin/R.dll
 
 ../../bin/R.dll: FORCE
-	@$(MAKE) --no-print-directory fixfiles
-	@$(MAKE) --no-print-directory -C ../include -f Makefile.win
-	@$(MAKE) --no-print-directory rlibs
-	@$(MAKE) --no-print-directory makeMakedeps
-	@$(MAKE) --no-print-directory R.dll
+	@$(MK) fixfiles
+	@$(MK) -C ../include -f Makefile.win
+	@$(MK) rlibs
+	@$(MK) makeMakedeps
+	@$(MK) R.dll
 	@$(MKDIR) -p ../../bin
 	$(CP) R.dll ../../bin/
 	@$(MKDIR) -p ./../modules/
@@ -173,46 +176,46 @@ libiconv.dll.a: unicode/iconv.def
 
 
 front-ends:
-	$(MAKE) --no-print-directory -C front-ends
+	$(MK) -C front-ends
 
 ../extra/zlib/libz.a:
-	$(MAKE) --no-print-directory -C ../extra/zlib -f Makefile.win
+	$(MK) -C ../extra/zlib -f Makefile.win
 
 ../extra/pcre/libpcre.a:
-	$(MAKE) --no-print-directory -C ../extra/pcre -f Makefile.win
+	$(MK) -C ../extra/pcre -f Makefile.win
+
+../extra/tre/libtre.a:
+	$(MK) -C ../extra/tre -f Makefile.win
 
 ../extra/bzip2/libbz2.a:
-	$(MAKE) --no-print-directory -C ../extra/bzip2  -f Makefile.win libbz2.a
+	$(MK) -C ../extra/bzip2  -f Makefile.win libbz2.a
+
 ../extra/trio/libtrio.a:
-	$(MAKE) --no-print-directory -C ../extra/trio -f Makefile.win
+	$(MK) -C ../extra/trio -f Makefile.win
+
+../extra/xz/liblzma.a:
+	$(MK) -C ../extra/xz -f Makefile.win
 
 
 htmldocs:
 	@$(ECHO)
 	@$(ECHO) "------ Making HTML documentation ------"
-	@$(MAKE) --no-print-directory -C ../../doc/manual -f Makefile.win html
+	@$(MK) -C ../../doc/manual -f Makefile.win html
 
 
 #                          ===== BLAS ======
 
 Rblas:
-	@$(MAKE) --no-print-directory -C ../extra/blas -f Makefile.win \
+	@$(MK) -C ../extra/blas -f Makefile.win \
 	  RHOME=$(RHOME) FFLAGS='$(FOPTFLAGS)'
 
 Rblas-clean:
-	@$(MAKE) --no-print-directory -C ../extra/blas -f Makefile.win clean
+	@$(MK) -C ../extra/blas -f Makefile.win clean
 
 libRblas.dll.a:  ../extra/blas/Rblas.def
 	@$(DLLTOOL) $(DLLTOOLFLAGS) --dllname Rblas.dll \
 	  --input-def $< --output-lib $@
 
-
-#                          ===== Packages ======
-
-CHTML:
-ifeq ($(strip $(USE_CHM)),TRUE)
-	$(MAKE) --no-print-directory -C ./help -f MkChmDll
-endif
 
 #                          ===== cleaning ======
 
@@ -222,7 +225,7 @@ pkgclean-%:
 	@(cd $(PKGDIR)/$*/src; rm -f *.d *.o *.dll *_res.rc Makedeps)
 	@rm -rf $(PKGDIR)/$*/chm
 
-EXTRA_DIRS = blas bzip2 graphapp intl pcre trio tzone xdr win_iconv zlib
+EXTRA_DIRS = blas bzip2 graphapp intl pcre tre trio tzone xdr xz win_iconv zlib
 
 clean: cleanwin
 	@$(MAKE) -C ../library -f Makefile.win clean
@@ -230,11 +233,11 @@ clean: cleanwin
 	@for d in $(EXTRA_DIRS); do \
 	  $(MAKE) -C ../extra/$${d} -f Makefile.win clean; \
 	done
-	-$(MAKE) --no-print-directory -C ../../doc/manual -f Makefile.win distclean
-	-$(MAKE) --no-print-directory -C ../nmath/standalone -f Makefile.win distclean
-	-$(MAKE) --no-print-directory -C ../modules -f Makefile.win clean
-	-$(MAKE) --no-print-directory -C ../../tests -f Makefile.win clean
-	-$(MAKE) --no-print-directory -C ../library/Recommended -f Makefile.win clean
+	-$(MK) -C ../../doc/manual -f Makefile.win distclean
+	-$(MK) -C ../nmath/standalone -f Makefile.win distclean
+	-$(MK) -C ../modules -f Makefile.win clean
+	-$(MK) -C ../../tests -f Makefile.win clean
+	-$(MK) -C ../library/Recommended -f Makefile.win clean
 	$(RM) -f ../library/methods/all.R
 	for p in $(R_PKGS_RECOMMENDED); do \
 	  $(RM) -rf ../library/$$p; \
@@ -258,9 +261,9 @@ distclean: clean
 	$(RM) ../library/tcltk/src/tcl$(TCL_VERSION).def \
 	../library/tcltk//src/tk$(TCL_VERSION).def
 	$(RM) R.exp COPYRIGHTS
-	$(RM) ../../doc/html/search/index.txt ../../doc/html/index.html \
+	$(RM) ../../doc/html/index.html \
 	../../doc/html/packages.html ../../doc/html/rwin.html \
-	../../doc/html/rw-FAQ.html ../../doc/html/search/SearchEngine.html
+	../../doc/html/rw-FAQ.html
 	$(RM) ../../etc/Makeconf ../../etc/Rconsole ../../etc/Rdevga \
 	../../etc/Rprofile.site ../../etc/rgb.txt ../../etc/Rcmd_environ \
 	../../tests/*.Rout ../../tests/*.Rout.fail
@@ -288,7 +291,6 @@ cleanwin:
 	$(MAKE) -C ../extra/graphapp -f Makefile.win clean
 	$(MAKE) -C fixed clean
 	$(MAKE) -C getline clean
-	$(MAKE) -C help clean
 	$(MAKE) -C front-ends clean
 	$(MAKE) -C bitmap clean
 	-$(MAKE) -C installer clean
@@ -296,15 +298,14 @@ cleanwin:
 
 #                          ===== testing ======
 
-check check-devel check-all:
-	@$(MAKE) --no-print-directory -C ../../tests \
-	  -f Makefile.win RHOME=$(RHOME) $@
+check check-devel check-all check-recommended:
+	@$(MK) -C ../../tests -f Makefile.win RHOME=$(RHOME) $@
 
 #                          ===== documentation ======
 
 pdfdocs manuals:
-	@$(MAKE) --no-print-directory -C $(RHOME)/doc/manual -f Makefile.win clean
-	@$(MAKE) --no-print-directory -C $(RHOME)/doc/manual -f Makefile.win
+	@$(MK) -C $(RHOME)/doc/manual -f Makefile.win clean
+	@$(MK) -C $(RHOME)/doc/manual -f Makefile.win
 
 vignettes:
 	@for pkg in $(R_PKGS_BASE); do \
@@ -341,22 +342,24 @@ bitmapdll:
 CRANREC = cran.r-project.org::CRAN/src/contrib/$(RVER-PAT)/Recommended
 
 ## Use -c here to avoid re-downloading the same versions of files
+## A recent rsync seems to need -p
 rsync-recommended:
 	@(cd ../library; \
-	  rsync --timeout=60 -rcvC --delete \
+	  rsync --timeout=60 -rcvpC --delete \
 	    --exclude=Makefile.in --exclude=Makefile.win --exclude=.cvsignore \
-	    --include=*.tar.gz --exclude=*.tgz --exclude=".svn" $(CRANREC) . )
+	    --include=*.tar.gz --exclude=*.tgz --exclude=*.ts \
+	    --exclude=".svn" $(CRANREC) . )
 	@$(RM) ../library/Recommended/*.tgz
-	@(cd ../library/Recommended; for i in ${R_PKGS_RECOMMENDED_SOURCES}; do cp -p $${i}*.tar.gz $${i}.tgz ; done)
+	@(cd ../library/Recommended; for i in ${R_PKGS_RECOMMENDED}; do cp -p $${i}*.tar.gz $${i}.tgz ; done)
 
 link-recommended:
 	@$(RM) ../library/Recommended/*.tgz
-	@(cd ../library/Recommended; for i in ${R_PKGS_RECOMMENDED_SOURCES} ; do cp -p $${i}*.tar.gz $${i}.tgz ; done)
+	@(cd ../library/Recommended; for i in ${R_PKGS_RECOMMENDED} ; do cp -p $${i}*.tar.gz $${i}.tgz ; done)
 
 
 recommended:
 	@$(ECHO) "--- Making recommended packages"
-	@$(MAKE) --no-print-directory -C ../library/Recommended -f Makefile.win RHOME=$(RHOME)
+	@$(MK) -C ../library/Recommended -f Makefile.win RHOME=$(RHOME)
 
 EXTRA_PKGS=
 rinstaller:
@@ -404,13 +407,13 @@ crandir:
 	 $(RM) dosfiles.zip)
 
 distribution:
-	@$(MAKE) --no-print-directory all
-	@$(MAKE) --no-print-directory bitmapdll
-	@$(MAKE) --no-print-directory recommended
-	@$(MAKE) --no-print-directory vignettes
-	@$(MAKE) --no-print-directory manuals
-	@$(MAKE) --no-print-directory rinstaller
-	@$(MAKE) --no-print-directory crandir
+	@$(MK) all
+	@$(MK) bitmapdll
+	@$(MK) recommended
+	@$(MK) vignettes
+	@$(MK) manuals
+	@$(MK) rinstaller
+	@$(MK) crandir
 	@$(RM) -f $(RHOME)/SVN-REVISION.bak
 
 

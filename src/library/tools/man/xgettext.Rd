@@ -1,10 +1,9 @@
 % File src/library/tools/man/xgettext.Rd
 % Part of the R package, http://www.R-project.org
-% Copyright 1995-2007 R Core Development Team
+% Copyright 1995-2009 R Core Development Team
 % Distributed under GPL 2 or later
 
 \name{xgettext}
-\Rdversion{1.1}
 \alias{xgettext}
 \alias{xngettext}
 \alias{xgettext2pot}
@@ -30,8 +29,8 @@ xgettext2pot(dir, potFile)
     otherwise the strings within each argument are extracted.}
 
   \item{potFile}{name of \code{po} template file to be produced.
-    Defaults to \code{"R-\var{pkgname}.pot"} where
-    \var{pkgname} is the basename of \code{dir}.}
+    Defaults to \file{R-\var{pkgname}.pot} where
+    \var{pkgname} is the basename of \file{dir}.}
 }
 \details{
   Leading and trailing white space (space, tab and linefeed) is removed
@@ -52,7 +51,7 @@ xgettext2pot(dir, potFile)
   manual).
 
   If applied to the \pkg{base} package, this also looks in the \file{.R}
-  files in \file{\var{\link[base:Rhome]{R_HOME}}/share/R}.
+  files in \file{\var{\link{R_HOME}}/share/R}.
 }
 \value{
   For \code{xgettext}, a list of objects of class \code{"xgettext"}

@@ -5,14 +5,14 @@ Notes for Windows Maintainers
 achieved by overrides in the configure script.
 
 You will need a copy of sh.exe in /bin.  Then with the R sources in
-/R/R-2.9.0, I used in /TEMP/R (any other directory will do, except the
+/R/R-2.10.0, I used in /TEMP/R (any other directory will do, except the
 sources).
 
 To test trio set
 
 LIBS='<RHOME>/src/extra/trio/libtrio.a'
 
-sh /R/R-2.9.0/configure --build=i386-pc-mingw32 --with-readline=no --with-x=no
+sh /R/R-2.10.0/configure --build=i386-pc-mingw32 --with-readline=no --with-x=no
 
 This ran fairly slowly, currently producing a src/include/config.h
 that differs only in that

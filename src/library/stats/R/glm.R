@@ -37,24 +37,25 @@ glm <- function(formula, family = gaussian, data, weights,
     }
 
     ## extract x, y, etc from the model formula and frame
-#    mt <- terms(formula, data = data)
     if(missing(data)) data <- environment(formula)
     mf <- match.call(expand.dots = FALSE)
-#     mf$family <- mf$start <- mf$control <- mf$maxit <- NULL
-#     mf$model <- mf$method <- mf$x <- mf$y <- mf$contrasts <- NULL
-#     mf$... <- NULL
     m <- match(c("formula", "data", "subset", "weights", "na.action",
                  "etastart", "mustart", "offset"), names(mf), 0L)
     mf <- mf[c(1, m)]
     mf$drop.unused.levels <- TRUE
     mf[[1L]] <- as.name("model.frame")
     mf <- eval(mf, parent.frame())
-    switch(method,
-	   "model.frame" = return(mf),
-	   "glm.fit" = 1,
-	   ## else
-	   stop("invalid 'method': ", method))
-    mt <- attr(mf, "terms") # allow model.frame to update it
+    if(identical(method, "model.frame")) return(mf)
+    ## we use 'glm.fit' for the sake of error messages.
+    if(identical(method, "glm.fit")) {
+        ## OK
+    } else if(is.function(method)) {
+        glm.fit <- method
+    } else if(is.character(method)) {
+        if(exists(method)) glm.fit <- get(method)
+        else stop(gettextf("invalid 'method': %s", method), domain = NA)
+    } else stop("invalid 'method'")
+    mt <- attr(mf, "terms") # allow model.frame to have updated it
 
     Y <- model.response(mf, "any") # e.g. factors are allowed
     ## avoid problems with 1D arrays, but keep names
@@ -72,6 +73,7 @@ glm <- function(formula, family = gaussian, data, weights,
     ## check weights and offset
     if( !is.null(weights) && any(weights < 0) )
 	stop("negative weights not allowed")
+
     offset <- as.vector(model.offset(mf))
     if(!is.null(offset)) {
         if(length(offset) != NROW(Y))
@@ -150,18 +152,15 @@ glm.fit <-
 
     ## get family functions:
     variance <- family$variance
-    dev.resids <- family$dev.resids
-    aic <- family$aic
-    linkinv <- family$linkinv
-    mu.eta <- family$mu.eta
+    linkinv  <- family$linkinv
     if (!is.function(variance) || !is.function(linkinv) )
 	stop("'family' argument seems not to be a valid family object")
-    valideta <- family$valideta
-    if (is.null(valideta))
-	valideta <- function(eta) TRUE
-    validmu <- family$validmu
-    if (is.null(validmu))
-	validmu <- function(mu) TRUE
+    dev.resids <- family$dev.resids
+    aic <- family$aic
+    mu.eta <- family$mu.eta
+    unless.null <- function(x, if.null) if(is.null(x)) if.null else x
+    valideta <- unless.null(family$valideta, function(eta) TRUE)
+    validmu  <- unless.null(family$validmu,  function(mu) TRUE)
     if(is.null(mustart)) {
         ## calculates mustart and may change y and weights and set n (!)
         eval(family$initialize)

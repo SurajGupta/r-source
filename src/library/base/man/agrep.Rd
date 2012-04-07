@@ -1,6 +1,6 @@
 % File src/library/base/man/agrep.Rd
 % Part of the R package, http://www.R-project.org
-% Copyright 1995-2008 R Core Development Team
+% Copyright 1995-2009 R Core Development Team
 % Distributed under GPL 2 or later
 
 \name{agrep}
@@ -49,16 +49,9 @@ agrep(pattern, x, ignore.case = FALSE, value = FALSE,
   it is the total number of insertions, deletions and substitutions
   required to transform one string into another.
 
-  The function is a simple interface to the \code{apse} library
-  developed by Jarkko Hietaniemi (also used in the Perl String::Approx
-  module), modified to work with multibyte character sets.  To save
-  space it only supports the first 65536 characters of UTF-8 (where all
-  the characters for human languages lie).  Note that it can be quite
-  slow in UTF-8, and \code{useBytes = TRUE} will be much faster.
-  
-  How complex a match may be found can depend on the size of integers.
-  As from \R 2.9.2 this uses 64-bit integers where available (even on
-  32-bit platforms) to try to be consistent across platforms.
+  As from \R 2.10.0 this uses \code{tre} by Ville Laurikari
+  (\url{http://http://laurikari.net/tre/}), which supports MBCS
+  character matching much better than the previous version.
 }
 \value{
   Either a vector giving the indices of the elements that yielded a
@@ -66,7 +59,7 @@ agrep(pattern, x, ignore.case = FALSE, value = FALSE,
   coercion, preserving names but no other attributes).
 }
 \author{
-  Original version by David Meyer, based on C code by Jarkko Hietaniemi.
+  Original version by David Meyer. Current version by Brian Ripley.
 }
 \seealso{
   \code{\link{grep}}

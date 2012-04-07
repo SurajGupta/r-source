@@ -142,13 +142,13 @@ setGeneric <-
                 ## choose the implicit unless an explicit def was given
                 if(is.null(def) && is.null(signature)) {
                     message(gettextf(
-                       "Restoring the implicit generic function for \"%s\" from package \"%s\" into package \"%s\"; the generic differs from the default conversion (%s)",
+                       "Restoring the implicit generic function for \"%s\" from package \"%s\"\n    into package \"%s\"; the generic differs from the default conversion (%s)",
                                      name, package, thisPackage, cmp), domain = NA)
                     fdef <- implicit
                 }
                 else {
                     message(gettextf(
-                         "Creating a generic for \"%s\" in package  \"%s\"\n    (the supplied definition differs from and overrides the implicit generic in package \"%s\": %s)",
+                         "Creating a generic for \"%s\" in package \"%s\"\n    (the supplied definition differs from and overrides the implicit generic\n    in package \"%s\": %s)",
                                  name,  thisPackage, package,
                                  cmp),
                         domain = NA)
@@ -157,7 +157,7 @@ setGeneric <-
             }
             else { # generic prohibited
                 warning(gettextf(
-                                 "No generic version of  \"%s\" on package \"%s\" is allowed; a new generic will be assigned with package \"%s\"",
+			"No generic version of \"%s\" on package \"%s\" is allowed;\n   a new generic will be assigned with package \"%s\"",
                                  name, package, thisPackage),
                         domain = NA)
                 fdef@package <- attr(fdef@generic, "package") <- thisPackage
@@ -758,6 +758,7 @@ dumpMethods <- function(f, file = "", signature = character(), methods,
         else
             dumpMethods(f, "", c(signature, what), el, where)
     }
+    invisible()
 }
 
 
@@ -891,17 +892,22 @@ showMethods <-
     if(missing(showEmpty))
 	showEmpty <- !missing(f)
     if(identical(printTo, FALSE))
-      con <- textConnection("txtOut", "w", local = TRUE)
+        con <- textConnection(NULL, "w")
     else
-      con <- printTo
+        con <- printTo
     ## must resolve showEmpty in line; using an equivalent default
     ## fails because R resets the "missing()" result for f later on (grumble)
-    if(is(f, "function"))
-        f <- as.character(substitute(f))
+    if(is(f, "function")) {
+        fdef <- f ## note that this causes missing(fdef) to be FALSE below
+        if(missing(where))
+            where <- environment(f)
+        f <- deparse(substitute(f))
+        if(length(f) > 1L) f <- paste(f, collapse = "; ")
+    }
     if(!is(f, "character"))
         stop(gettextf("first argument should be the name(s) of generic functions (got object of class \"%s\")",
                       class(f)), domain = NA)
-    if(length(f) ==  0L) {
+    if(length(f) ==  0L) { ## usually, the default character()
         f <- if(missing(where)) getGenerics() else getGenerics(where)
     }
     if(length(f) == 0L)
@@ -911,31 +917,29 @@ showMethods <-
             ffdef <- getGeneric(ff, where = where)
             if(missing(where)) {
                 if(isGeneric(ff))
-                  Recall(ff, classes=classes,
-		   includeDefs=includeDefs, inherited=inherited,
-		   showEmpty=showEmpty, printTo=con, fdef = ffdef)
+		    Recall(ff, classes=classes,
+			   includeDefs=includeDefs, inherited=inherited,
+			   showEmpty=showEmpty, printTo=con, fdef = ffdef)
             }
             else if(isGeneric(ff, where)) {
                 Recall(ff, where=where, classes=classes,
-		   includeDefs=includeDefs, inherited=inherited,
-		   showEmpty=showEmpty, printTo=con, fdef = ffdef)
+                       includeDefs=includeDefs, inherited=inherited,
+                       showEmpty=showEmpty, printTo=con, fdef = ffdef)
             }
 	}
     }
     else { ## f of length 1 --- the "workhorse" :
         out <- paste("\nFunction \"", f, "\":\n", sep="")
-        isGen  <- if(missing(fdef)) {
-            (if(missing(where)) isGeneric(f) else isGeneric(f, where)) }
-                     else is(fdef, "genericFunction")
-        if(!isGen)
+        if(!is(fdef, "genericFunction"))
             cat(file = con, out, "<not a generic function>\n")
         else
             ## maybe no output for showEmpty=FALSE
             .showMethodsTable(fdef, includeDefs, inherited,
-				  classes = classes, showEmpty = showEmpty,
-				  printTo = con)
+                              classes = classes, showEmpty = showEmpty,
+                              printTo = con)
     }
     if(identical(printTo, FALSE)) {
+        txtOut <- textConnectionValue(con)
         close(con)
         txtOut
     }
@@ -1224,17 +1228,17 @@ implicitGeneric <- function(...) NULL
           if(is.primitive(fdefault)) {
               value <- genericForPrimitive(name)
               if(!missing(generic) && !identical(value, generic))
-                stop(gettextf('"%s" is a primitive function; its generic form cannot be redefined',name), domain = NA)
+                  stop(gettextf('"%s" is a primitive function; its generic form cannot be redefined',name), domain = NA)
               generic <- value
               package <- "base"
-               }
+          }
           else
-            package <- getPackageName(env)
+              package <- getPackageName(env)
           ## look for a group
-          if(identical(package,"base"))
-            group <- .getImplicitGroup(name, .methodsNamespace)
-          else
-            group <- .getImplicitGroup(name, environment(fdefault))
+          group <-
+              .getImplicitGroup(name,
+                                if(identical(package,"base"))
+                                .methodsNamespace else environment(fdefault))
           if(missing(generic)) {
             generic <- .getImplicitGeneric(name, env, package)
             if(is.null(generic))  { # make a new one
@@ -1282,6 +1286,7 @@ registerImplicitGenerics <- function(what = .ImplicitGenericsTable(where),
     objs <- objects(what, all=TRUE)
     for(f in objs)
         .cacheImplicitGeneric(f, get(f, envir = what))
+    NULL
 }
 
 
@@ -1360,10 +1365,11 @@ registerImplicitGenerics <- function(what = .ImplicitGenericsTable(where),
 .ImplicitGroupMetaName <- ".__IGM__table"
 .MakeImplicitGroupMembers <- function(group, members, where) {
     if(!exists(.ImplicitGroupMetaName, where, inherits = FALSE))
-      assign(.ImplicitGroupMetaName, new.env(TRUE), where)
+        assign(.ImplicitGroupMetaName, new.env(TRUE), where)
     tbl <- get(.ImplicitGroupMetaName, where)
     for(what in members)
-      assign(what, as.list(group), envir = tbl)
+        assign(what, as.list(group), envir = tbl)
+    NULL
 }
 
 .getImplicitGroup <- function(name, where) {

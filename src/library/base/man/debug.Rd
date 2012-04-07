@@ -1,23 +1,31 @@
 % File src/library/base/man/debug.Rd
 % Part of the R package, http://www.R-project.org
-% Copyright 1995-2007 R Core Development Team
+% Copyright 1995-2009 R Core Development Team
 % Distributed under GPL 2 or later
 
 \name{debug}
 \title{Debug a Function}
 \usage{
-debug(fun)
+debug(fun, text="", condition=NULL)
+debugonce(fun, text="", condition=NULL)
 undebug(fun)
 isdebugged(fun)
 }
 \alias{debug}
+\alias{debugonce}
 \alias{undebug}
 \alias{isdebugged}
 \arguments{
 \item{fun}{any interpreted \R function.}
+\item{text}{a text string that can be retrieved when the browser is entered.}
+\item{condition}{a condition that can be retrieved when the browser is entered.}
 }
 \description{
   Set, unset or query the debugging flag on a function.
+ The \code{text} and \code{condition} arguments are the same as those
+ that can be supplied via a call to \code{browser}. They can be retrieved
+ by the user once the browser has been entered, and provide a mechanism to
+ allow users to identify which breakpoint has been activated.
 }
 \details{
   When a function flagged for debugging is entered, normal execution
@@ -47,8 +55,14 @@ isdebugged(fun)
 
   If a function is defined inside a function, single-step though to the
   end of its definition, and then call \code{debug} on its name.
-  
-  In order to debug S4 methods (see \code{\link[methods]{Methods}}), you
+
+  Using \code{debug} is persistent, and unless debugging is turned off
+  the debugger will be entered on every invocation (note that if the
+  function is removed and replaced the debug state is not preserved).
+  Use \code{debugonce} to enter the debugger only the next time the
+  function is invoked.
+
+  In order to debug S4 methods (see \code{\link{Methods}}), you
   need to use \code{\link{trace}}, typically calling \code{\link{browser}},
   e.g., as \cr
   \code{trace("plot", browser, exit=browser, signature = c("track", "missing"))}

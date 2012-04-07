@@ -56,11 +56,13 @@ smoothScatter(x, y = NULL, nbin = 128, bandwidth,
   See the examples for how to use this function together with
   \code{\link{pairs}}.
 }
-\seealso{\code{\link[KernSmooth]{bkde2D}}
-  from package \pkg{KernSmooth};
-  \code{\link[grDevices]{densCols}} which uses the same smoothing
-  computations and \code{\link[grDevices]{blues9}} in package
-  \pkg{grDevices}.
+\seealso{
+  \code{\link[KernSmooth]{bkde2D}} from package \pkg{KernSmooth};
+  \code{\link{densCols}} which uses the same smoothing computations and
+  \code{\link{blues9}} in package \pkg{grDevices}.
+
+  \code{\link{scatter.smooth}} adds a \code{\link{loess}}
+  regression smoother to a scatter plot.
 }
 \author{Florian Hahne at FHCRC, originally}
 \examples{

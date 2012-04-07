@@ -2,9 +2,9 @@ msgid ""
 msgstr ""
 "Project-Id-Version: R 2.4.0 \n"
 "Report-Msgid-Bugs-To: bugs@r-project.org\n"
-"POT-Creation-Date: 2009-06-14 08:17\n"
-"PO-Revision-Date: 2009-03-31 13:18+0900 \n"
-"Last-Translator: Shigeru Mase <maseshigeru@gmail.com> \n"
+"POT-Creation-Date: 2009-10-09 08:02\n"
+"PO-Revision-Date: 2009-10-07 19:17+0900 \n"
+"Last-Translator: takahashi <takahashi.kohske@gmail.com> \n"
 "Language-Team: RjpWiki Message Translation Team <mokada@md.tsukuba.ac.jp> \n"
 "MIME-Version: 1.0 \n"
 "Content-Type: text/plain; charset=UTF-8 \n"
@@ -168,9 +168,6 @@ msgstr " 'x' は少なくとも二次元の配列でなければなりません 
 msgid "invalid 'dims'"
 msgstr " 無効な 'dims' です "
 
-msgid "extra arguments ignored:"
-msgstr " 余計な引数は無視されました: "
-
 msgid "bad handler specification"
 msgstr " 誤ったハンドラーの指定です "
 
@@ -202,6 +199,9 @@ msgstr " 文字オブジェクトしか書き込めません "
 msgid "supplied timeout must be NULL or a non-negative number"
 msgstr " タイムアウトは NULL か非負の数値でなければなりません "
 
+msgid "'from' must be raw or character"
+msgstr " 'from'はrawまたは文字でなければなりません "
+
 msgid "'x' must be numeric"
 msgstr " 'x' は数値でなければなりません "
 
@@ -226,7 +226,7 @@ msgstr " 'row.names' に欠損値があってはなりません "
 msgid "invalid 'dimnames' given for data frame"
 msgstr " データフレームに無効な 'dimnames' が与えられました "
 
-msgid "cannot coerce class \"%s\" into a data.frame"
+msgid "cannot coerce class %s into a data.frame"
 msgstr " クラス \"%s\" はデータフレームに強制変換できません "
 
 msgid "invalid 'row.names', length %d for a data frame with %d rows"
@@ -270,11 +270,20 @@ msgstr " 与えられた列名は誤った長さです "
 msgid "row names were found from a short variable and have been discarded"
 msgstr " 列名は短い変数から見つけられ、捨て去られました "
 
+msgid "named arguments other than 'drop' are discouraged"
+msgstr " 'drop'以外での名前付き引数は推奨されません "
+
 msgid "drop argument will be ignored"
 msgstr " drop 引数は無視されます "
 
 msgid "undefined columns selected"
 msgstr " 未定義の列が選ばれました "
+
+msgid "named arguments other than 'exact' are discouraged"
+msgstr " 'exact'以外での名前付き引数は推奨されません "
+
+msgid "named arguments are discouraged"
+msgstr "名前付き引数は推奨されません "
 
 msgid "rhs is the wrong length for indexing by a logical matrix"
 msgstr " 右辺は論理値行列によって添字操作するには間違った長さです "
@@ -535,11 +544,10 @@ msgid "determinant not currently defined for complex matrices"
 msgstr " 行列式は現在複素行列には定義されていません "
 
 msgid "'nrow' or 'ncol' cannot be specified when 'x' is a matrix"
-msgstr ""
+msgstr " 'x'が行列の時は'nrow'と'ncol'は指定できません "
 
-#, fuzzy
 msgid "'x' is an array, but not 1D."
-msgstr " 第一引数は配列ですが、行列ではありません "
+msgstr " 'x'は行列ですが、一次元ではありません "
 
 msgid "only matrix diagonals can be replaced"
 msgstr " 行列の対角成分だけが置き換えられます "
@@ -586,9 +594,6 @@ msgstr " 0 x 0 行列です "
 
 msgid "non-square matrix in 'eigen'"
 msgstr " 'eigen' に非正方行列が与えられました "
-
-msgid "numeric or complex values required in 'eigen'"
-msgstr " 'eigen' には数値か複素数値が必要です "
 
 msgid "'ch' returned code %d in 'eigen'"
 msgstr " 'eigen' で 'ch' がコード %d を返しました "
@@ -727,6 +732,9 @@ msgstr " 未知の一致距離成分は無視されました "
 msgid "'max.distance' components must be non-negative"
 msgstr " 'max.distance' 成分は非負でなければなりません "
 
+msgid "norm '%s' currently always uses exact = FALSE"
+msgstr " norm '%S'は現在は常に exact = FALSE を使います "
+
 msgid "triangular matrix should be square"
 msgstr " 三角行列は正方行列であるべきです "
 
@@ -742,6 +750,27 @@ msgstr ""
 
 msgid "package '%s' was built under R version %s"
 msgstr " パッケージ '%s' はバージョン %s の R の下で造られました "
+
+msgid ""
+"package '%s' was built under R version %s and help will not work correctly\n"
+"Please re-install it"
+msgstr ""
+"パッケージ '%s' はバージョン %s の R の下で造られました。ヘルプは正しく機能し"
+"ません。新しくインストールしてください "
+
+msgid ""
+"package '%s' was built under R version %s and help may not work correctly"
+msgstr ""
+" パッケージ '%s' はバージョン %s の R の下で造られました。ヘルプは正しく機能"
+"しないかもしれません "
+
+#, fuzzy
+msgid ""
+"package '%s' claims to be built under R version %s but is missing some help "
+"files and needs to be re-installed"
+msgstr ""
+"パッケージ '%s' はバージョン %s の R の下で造られました。ヘルプは正しく機能し"
+"ません。新しくインストールしてください "
 
 msgid "package '%s' was built for %s"
 msgstr " パッケージ '%s' は %s に対して造られました "
@@ -1009,9 +1038,6 @@ msgstr " S4 状態フラグに対しては単一の論理値が期待されて�
 
 msgid "invalid to change the storage mode of a factor"
 msgstr " factor　の格納モードを変えるのは不正です "
-
-msgid "package '%s' has been merged into '%s'"
-msgstr " パッケージ '%s' は '%s' に併合されました "
 
 msgid "'%s' is not an exported object from 'namespace:%s'"
 msgstr ""
@@ -1400,9 +1426,6 @@ msgstr " 'x' と 'y' は同じ長さを持たなければなりません "
 msgid "incorrect values of 'indent' and 'width'"
 msgstr " 'indent' と 'width' に対する値が不正です "
 
-msgid "argument to 'svd' must be numeric"
-msgstr " 'svd' への引数は数値でなければなりません "
-
 msgid "'nv' must be 0 or ncol(x)"
 msgstr " 'nv' は 0 か ncol(x) でなければなりません "
 
@@ -1579,6 +1602,18 @@ msgstr[0] ""
 msgid "Warning message:\n"
 msgid_plural "Warning messages:\n"
 msgstr[0] " 警告メッセージ： \n"
+
+#~ msgid "extra arguments ignored:"
+#~ msgstr " 余計な引数は無視されました: "
+
+#~ msgid "numeric or complex values required in 'eigen'"
+#~ msgstr " 'eigen' には数値か複素数値が必要です "
+
+#~ msgid "argument to 'svd' must be numeric"
+#~ msgstr " 'svd' への引数は数値でなければなりません "
+
+#~ msgid "package '%s' has been merged into '%s'"
+#~ msgstr " パッケージ '%s' は '%s' に併合されました "
 
 #~ msgid "package 'lqs' has been moved back to package 'MASS'"
 #~ msgstr " パッケージ 'lqs' はパッケージ 'MASS' へ戻さました "

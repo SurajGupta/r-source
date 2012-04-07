@@ -1,6 +1,6 @@
 % File src/library/tools/man/writePACKAGES.Rd
 % Part of the R package, http://www.R-project.org
-% Copyright 1995-2008 R Core Development Team
+% Copyright 1995-2009 R Core Development Team
 % Distributed under GPL 2 or later
 
 \name{write_PACKAGES}
@@ -13,7 +13,8 @@
 \usage{
 write_PACKAGES(dir = ".", fields = NULL,
                type = c("source", "mac.binary", "win.binary"),
-               verbose = FALSE, unpacked = FALSE, subdirs = FALSE)
+               verbose = FALSE, unpacked = FALSE, subdirs = FALSE,
+               latestOnly = TRUE, addFiles = FALSE)
 }
 \arguments{
   \item{dir}{Character vector describing the location of the repository
@@ -25,9 +26,14 @@ write_PACKAGES(dir = ".", fields = NULL,
     \file{PACKAGES} and \file{PACKAGES.gz} files in addition to the
     default ones, or \code{NULL} (default).  The default corresponds to
     the fields needed by \code{\link{available.packages}}:
-    \code{"Package"}, \code{"Bundle"}, \code{"Priority"},
-    \code{"Version"}, \code{"Depends"}, \code{"Suggests"},
-    \code{"Imports"} and \code{"Contains"}.
+    \code{"Package"}, \code{"Version"}, \code{"Priority"},
+    \code{"Bundle"}, \code{"Contains"},
+    \code{"Depends"}, \code{"Imports"}, \code{"LinkingTo"},
+    \code{"Suggests"}, \code{"Enhances"}, \code{"OS_type"},
+    and \code{"License"} and those fields will always be included, plus
+    the file name in field \code{"File"} if \code{addFile = TRUE}
+    and the path to the subdirectory in field \code{"Path"} if subdirectories
+    are used.
   }
   \item{type}{
     Type of packages: currently source \file{.tar.gz} archives, and Mac
@@ -40,17 +46,38 @@ write_PACKAGES(dir = ".", fields = NULL,
   \item{unpacked}{a logical indicating whether the package contents are
     available in unpacked form or not (default).}
   \item{subdirs}{either logical (to indicate if subdirectories should be
-    included) or a character vector of subdirectories to include.}
+    included, recursively) or a character vector of name of subdirectories
+    to include.}
+  \item{latestOnly}{logical: if multiple versions of a package are
+    available should only the latest version be included?}
+  \item{addFiles}{logical: should the filenames be included as field
+    \samp{File} in the \file{PACKAGES} file.}
 }
 \details{
+  Including non-latest versions of packages is only useful if they have
+  less constraining version requirements, so for example
+  \code{latestOnly = FALSE} could be used for a source repository when
+  \samp{foo_1.0} depends on \samp{R >= 2.10.0} but \samp{foo_0.9} is
+  available which depends on \samp{R >= 2.7.0}.
+
+  Support for repositories with subdirectories and hence for
+  \code{subdirs != FALSE} was added in \R 2.7.0: this depends on
+  recording a \code{"Path"} field in the \file{PACKAGES} file.
+
+  Support for more general file names (e.g. other types of compression)
+  \emph{via} a \code{"File"} field in the \file{PACKAGES} file was added
+  in \R 2.10.0 and can be used by \code{\link{download.packages}}.  If
+  the file names are not of the standard form, use
+  \code{addFiles = TRUE}.
+  
   \code{type = "win.binary"} uses \code{\link{unz}} connections to read
   all \file{DESCRIPTION} files contained in the (zipped) binary packages
-  for Windows in the given directory \code{dir}, and builds
+  for Windows in the given directory \code{dir}, and builds files
   \file{PACKAGES} and \file{PACKAGES.gz} files from this information.
 }
 \value{
   Invisibly returns the number of packages described in the resulting
-  \file{PACKAGES} and \file{PACKAGES.gz} files.  If 0, no packages were
+  \file{PACKAGES} and \file{PACKAGES.gz} files.  If \code{0}, no packages were
   found and no files were written.
 }
 \note{
@@ -72,7 +99,7 @@ write_PACKAGES(dir = ".", fields = NULL,
 \examples{
 \dontrun{
 write_PACKAGES("c:/myFolder/myRepository")  # on Windows
-write_PACKAGES("/pub/RWin/bin/windows/contrib/2.1",
+write_PACKAGES("/pub/RWin/bin/windows/contrib/2.9",
                type="win.binary")  # on Linux
 }}
 \keyword{file}

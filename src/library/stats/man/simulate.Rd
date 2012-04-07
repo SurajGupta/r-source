@@ -64,7 +64,7 @@ simulate(object, nsim, seed, \dots)
   Poisson, for which prior weights are ignored with a warning.
 
   For a gamma GLM the shape parameter is estimated by maximum likelihood
-  (using function \code{\link[MASS]{gamma.shape}} in package
+  (using function \code{\link[MASS:gamma.shape.glm]{gamma.shape}} in package
   \pkg{MASS}).  The interpretation of weights is as multipliers to a
   basic shape parameter, since dispersion is inversely proportional to
   shape.
@@ -75,7 +75,7 @@ simulate(object, nsim, seed, \dots)
   where \eqn{lambda} is estimated by the inverse of the dispersion
   estimate for the fit.  The variance is \eqn{\mu_i^3/(\lambda w_i)} and
   hence inversely proportional to the prior weights.  The simulation is
-  done by function \code{\link[SuppDists]{rinvGaussian}} from the
+  done by function \code{\link[SuppDists:invGauss]{rinvGauss}} from the
   \pkg{SuppDists} package, which must be installed.
 }
 \seealso{

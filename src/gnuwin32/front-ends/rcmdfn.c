@@ -59,7 +59,7 @@ static int isDir(char *path)
 
 void rcmdusage (char *RCMD)
 {
-    fprintf(stderr, "%s%s%s%s%s%s%s%s%s%s%s%s%s%s%s%s",
+    fprintf(stderr, "%s%s%s%s%s%s%s%s%s%s%s%s%s%s%s%s%s",
 	    "where 'command' is one of:\n",
 	    "  INSTALL  Install add-on packages.\n",
 	    "  REMOVE   Remove add-on packages.\n",
@@ -70,8 +70,9 @@ void rcmdusage (char *RCMD)
 	    "  Rprof    Post process R profiling files.\n",
 	    "  Rdconv   Convert Rd format to various other formats.\n",
 	    "  Rdiff    difference R output files.\n",
-	    "  Rd2dvi   Convert Rd format to DVI/PDF.\n",
-	    "  Rd2txt   Convert Rd format to text.\n",
+	    "  Rd2dvi   Convert Rd format to DVI.\n",
+	    "  Rd2pdf   Convert Rd format to PDF.\n",
+	    "  Rd2txt   Convert Rd format to pretty text.\n",
 	    "  Sd2Rd    Convert S documentation to Rd format.\n",
 	    "  Stangle  Extract S/R code from Sweave documentation.\n",
 	    "  Sweave   Process Sweave documentation.\n",
@@ -261,6 +262,22 @@ int rcmdfn (int cmdarg, int argc, char **argv)
 	CloseHandle(pi.hThread);
 	return(pwait(pi.hProcess));
     } else if (cmdarg > 0 && argc > cmdarg && 
+	      strcmp(argv[cmdarg], "INSTALL") == 0) {
+	/* handle Rcmd INSTALL internally */
+	snprintf(cmd, CMD_LEN, 
+		 "%s/bin/Rterm.exe -e tools:::.install_packages() R_DEFAULT_PACKAGES= LC_COLLATE=C --slave --args ",
+		 getRHOME());
+	for (i = cmdarg + 1; i < argc; i++) {
+	    strcat(cmd, "nextArg");
+	    if (strlen(cmd) + strlen(argv[i]) > 9900) {
+		fprintf(stderr, "command line too long\n");
+		return(27);
+	    }
+	    strcat(cmd, argv[i]);
+	}
+	status = system(cmd);
+	return(status);
+    } else if (cmdarg > 0 && argc > cmdarg && 
 	      strcmp(argv[cmdarg], "REMOVE") == 0) {
 	/* handle Rcmd REMOVE internally */
 	snprintf(cmd, CMD_LEN, 
@@ -350,22 +367,44 @@ int rcmdfn (int cmdarg, int argc, char **argv)
 	    } else if (strcmp(p, "config") == 0) {
 		strcpy(cmd, "sh ");
 		strcat(cmd, RHome); strcat(cmd, "/bin/config.sh");
-	    } else if (strcmp(p, "INSTALL") == 0) {
-		strcpy(cmd, "sh ");
-		strcat(cmd, RHome); strcat(cmd, "/bin/INSTALL.sh");
 	    } else if (strcmp(p, "SHLIB") == 0) {
 		strcpy(cmd, "sh ");
 		strcat(cmd, RHome); strcat(cmd, "/bin/SHLIB.sh");
+	    } else if (strcmp(p, "Rdconv") == 0) {
+		strcpy(cmd, "sh ");
+		strcat(cmd, RHome); strcat(cmd, "/bin/Rdconv.sh");
 	    } else if (strcmp(p, "Rd2txt") == 0) {
 		strcpy(cmd, "sh ");
-		strcat(cmd, RHome); strcat(cmd, "/bin/Rd2txt.sh");
+		strcat(cmd, RHome); strcat(cmd, "/bin/Rdconv.sh -t txt");
+	    } else if (strcmp(p, "Rd2pdf") == 0) {
+		strcpy(cmd, "sh ");
+		strcat(cmd, RHome); strcat(cmd, "/bin/Rd2dvi.sh --pdf");
+	    } else if (strcmp(p, "build") == 0) {
+		strcpy(cmd, "perl ");
+		strcat(cmd, RHome); strcat(cmd, "/bin/build.pl");
+	    } else if (strcmp(p, "check") == 0) {
+		strcpy(cmd, "perl ");
+		strcat(cmd, RHome); strcat(cmd, "/bin/check.pl");
+	    } else if (strcmp(p, "Rprof") == 0) {
+		strcpy(cmd, "perl ");
+		strcat(cmd, RHome); strcat(cmd, "/bin/Rprof.pl");
+	    } else if (strcmp(p, "Sd2Rd") == 0) {
+		strcpy(cmd, "perl ");
+		strcat(cmd, RHome); strcat(cmd, "/bin/Sd2Rd.pl");
+	    } else if (strcmp(p, "open") == 0) {
+		strcpy(cmd, RHome); strcat(cmd, "/bin/open.exe");
 	    } else {
+		/* RHOME/bin is first in the path, so looks there first
+		   for .sh, .pl, .bat, .exe
+		*/
 		if (!strcmp(".sh", p + strlen(p) - 3)) {
 		    strcpy(cmd, "sh ");
-		    strcat(cmd, RHome); strcat(cmd, "/bin/");
+		} else if (!strcmp(".pl", p + strlen(p) - 3)) {
+		    strcpy(cmd, "perl ");
 		} else if (!strcmp(".bat", p + strlen(p) - 4)) strcpy(cmd, "");
 		else if (!strcmp(".exe", p + strlen(p) - 4)) strcpy(cmd, "");
 		else {
+		    /* FIXME: is this still a sensible default? */
 		    strcpy(cmd, "perl ");
 		    strcat(cmd, RHome); strcat(cmd, "/bin/");
 		}

@@ -1,6 +1,6 @@
 % File src/library/stats/man/contrast.Rd
 % Part of the R package, http://www.R-project.org
-% Copyright 1995-2007 R Core Development Team
+% Copyright 1995-2009 R Core Development Team
 % Distributed under GPL 2 or later
 
 \name{contrast}
@@ -9,21 +9,24 @@
 \alias{contr.sum}
 \alias{contr.treatment}
 \alias{contr.SAS}
-\title{Contrast Matrices}
+\title{(Possibly Sparse) Contrast Matrices}
 \description{
   Return a matrix of contrasts.
 }
 \usage{
-contr.helmert(n, contrasts = TRUE)
-contr.poly(n, scores = 1:n, contrasts = TRUE)
-contr.sum(n, contrasts = TRUE)
-contr.treatment(n, base = 1, contrasts = TRUE)
-contr.SAS(n, contrasts = TRUE)
+contr.helmert(n, contrasts = TRUE, sparse = FALSE)
+contr.poly(n, scores = 1:n, contrasts = TRUE, sparse = FALSE)
+contr.sum(n, contrasts = TRUE, sparse = FALSE)
+contr.treatment(n, base = 1, contrasts = TRUE, sparse = FALSE)
+contr.SAS(n, contrasts = TRUE, sparse = FALSE)
 }
 \arguments{
   \item{n}{a vector of levels for a factor, or the number of levels.}
   \item{contrasts}{a logical indicating whether contrasts should be
     computed.}
+  \item{sparse}{logical indicating if the result should be sparse
+    (of class \code{\link[Matrix:dgCMatrix-class]{dgCMatrix}}), using
+    package \pkg{Matrix}.}
   \item{scores}{the set of values over which orthogonal polynomials are
     to be computed.}
   \item{base}{an integer specifying which group is considered the
@@ -54,6 +57,11 @@ contr.SAS(n, contrasts = TRUE)
   the base level to be the last level of the factor.  The coefficients
   produced when using these contrasts should be equivalent to those
   produced by many (but not all) SAS procedures.
+
+  For consistency, \code{sparse} is an argument to all these contrast
+  functions, however \code{sparse = TRUE} for \code{contr.poly}
+  is typically pointless and is rarely useful for
+  \code{contr.helmert}.
 }
 \value{
   A matrix with \code{n} rows and \code{k} columns, with \code{k=n-1} if
@@ -76,7 +84,7 @@ contr.SAS(n, contrasts = TRUE)
 }
 \examples{
 (cH <- contr.helmert(4))
-apply(cH, 2,sum) # column sums are 0!
+apply(cH, 2,sum) # column sums are 0
 crossprod(cH) # diagonal -- columns are orthogonal
 contr.helmert(4, contrasts = FALSE) # just the 4 x 4 identity matrix
 
@@ -84,7 +92,7 @@ contr.helmert(4, contrasts = FALSE) # just the 4 x 4 identity matrix
 all(crossprod(cT) == diag(4)) # TRUE: even orthonormal
 
 (cT. <- contr.SAS(5))
-all(crossprod(cT.) == diag(4))# TRUE
+all(crossprod(cT.) == diag(4)) # TRUE
 
 (cP <- contr.poly(3)) # Linear and Quadratic
 zapsmall(crossprod(cP), digits=15) # orthonormal up to fuzz

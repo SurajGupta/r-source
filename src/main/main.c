@@ -76,14 +76,18 @@ extern void InitDynload(void);
 
 	/* Read-Eval-Print Loop [ =: REPL = repl ] with input from a file */
 
-static void R_ReplFile(FILE *fp, SEXP rho, int savestack, int browselevel)
+static void R_ReplFile(FILE *fp, SEXP rho)
 {
     ParseStatus status;
     int count=0;
-
+    SrcRefState ParseState;
+    int savestack;
+    
+    R_InitSrcRefState(&ParseState);
+    savestack = R_PPStackTop;    
     for(;;) {
 	R_PPStackTop = savestack;
-	R_CurrentExpr = R_Parse1File(fp, 1, &status);
+	R_CurrentExpr = R_Parse1File(fp, 1, &status, &ParseState);
 	switch (status) {
 	case PARSE_NULL:
 	    break;
@@ -102,9 +106,10 @@ static void R_ReplFile(FILE *fp, SEXP rho, int savestack, int browselevel)
 		PrintWarnings();
 	    break;
 	case PARSE_ERROR:
-	    parseError(R_NilValue, count);
+	    parseError(R_NilValue, R_ParseError);
 	    break;
 	case PARSE_EOF:
+	    R_FinalizeSrcRefState(&ParseState);
 	    return;
 	    break;
 	case PARSE_INCOMPLETE:
@@ -224,8 +229,8 @@ Rf_ReplIteration(SEXP rho, int savestack, int browselevel, R_ReplState *state)
     }
 
     R_PPStackTop = savestack;
-    R_CurrentExpr = R_Parse1Buffer(&R_ConsoleIob, 0, &state->status);
-
+    R_CurrentExpr = R_Parse1Buffer(&R_ConsoleIob, 0, &state->status, NULL);
+    
     switch(state->status) {
 
     case PARSE_NULL:
@@ -240,7 +245,7 @@ Rf_ReplIteration(SEXP rho, int savestack, int browselevel, R_ReplState *state)
     case PARSE_OK:
 
 	R_IoBufferReadReset(&R_ConsoleIob);
-	R_CurrentExpr = R_Parse1Buffer(&R_ConsoleIob, 1, &state->status);
+	R_CurrentExpr = R_Parse1Buffer(&R_ConsoleIob, 1, &state->status, NULL);
 	if (browselevel) {
 	    browsevalue = ParseBrowser(R_CurrentExpr, rho);
 	    if(browsevalue == 1) return(-1);
@@ -315,6 +320,7 @@ static unsigned char DLLbuf[CONSOLE_BUFFER_SIZE+1], *DLLbufp;
 void R_ReplDLLinit(void)
 {
     R_IoBufferInit(&R_ConsoleIob);
+    SETJMP(R_Toplevel.cjmpbuf);
     R_GlobalContext = R_ToplevelContext = &R_Toplevel;
     R_IoBufferWriteReset(&R_ConsoleIob);
     prompt_type = 1;
@@ -341,7 +347,7 @@ int R_ReplDLLdo1(void)
 	if(c == ';' || c == '\n') break;
     }
     R_PPStackTop = 0;
-    R_CurrentExpr = R_Parse1Buffer(&R_ConsoleIob, 0, &status);
+    R_CurrentExpr = R_Parse1Buffer(&R_ConsoleIob, 0, &status, NULL);
 
     switch(status) {
     case PARSE_NULL:
@@ -350,7 +356,7 @@ int R_ReplDLLdo1(void)
 	break;
     case PARSE_OK:
 	R_IoBufferReadReset(&R_ConsoleIob);
-	R_CurrentExpr = R_Parse1Buffer(&R_ConsoleIob, 1, &status);
+	R_CurrentExpr = R_Parse1Buffer(&R_ConsoleIob, 1, &status, NULL);
 	R_Visible = FALSE;
 	R_EvalDepth = 0;
 	resetTimeLimits();
@@ -645,7 +651,7 @@ static void R_LoadProfile(FILE *fparg, SEXP env)
     if (fp != NULL) {
 	if (! SETJMP(R_Toplevel.cjmpbuf)) {
 	    R_GlobalContext = R_ToplevelContext = &R_Toplevel;
-	    R_ReplFile(fp, env, 0, 0);
+	    R_ReplFile(fp, env);
 	}
 	fclose(fp);
     }
@@ -789,6 +795,7 @@ void setup_Rmainloop(void)
     R_Toplevel.intsusp = FALSE;
     R_Toplevel.handlerstack = R_HandlerStack;
     R_Toplevel.restartstack = R_RestartStack;
+    R_Toplevel.srcref = R_NilValue;
     R_GlobalContext = R_ToplevelContext = &R_Toplevel;
 
     R_Warnings = R_NilValue;
@@ -816,7 +823,7 @@ void setup_Rmainloop(void)
     if (R_SignalHandlers) init_signal_handlers();
     if (!doneit) {
 	doneit = 1;
-	R_ReplFile(fp, baseEnv, 0, 0);
+	R_ReplFile(fp, baseEnv);
     }
     fclose(fp);
 
@@ -833,7 +840,7 @@ void setup_Rmainloop(void)
     R_LockEnvironment(R_BaseEnv, TRUE);
 #endif
     /* At least temporarily unlock some bindings used in graphics */
-    R_unLockBinding(install(".Device"), R_BaseEnv);
+    R_unLockBinding(R_DeviceSymbol, R_BaseEnv);
     R_unLockBinding(install(".Devices"), R_BaseEnv);
     R_unLockBinding(install(".Library.site"), R_BaseEnv);
 
@@ -864,17 +871,8 @@ void setup_Rmainloop(void)
     /* Print a platform and version dependent greeting and a pointer to
      * the copyleft.
      */
-    if(!R_Quiet) {
-	PrintGreeting();
-#ifndef SUPPORT_MBCS
-	if(utf8locale)
-	    R_ShowMessage(_("WARNING: UTF-8 locales are not supported in this build of R\n"));
-	else if(mbcslocale)
-	    R_ShowMessage(_("WARNING: multibyte locales are not supported in this build of R\n"));
-
-#endif
-    }
-
+    if(!R_Quiet) PrintGreeting();
+ 
     R_LoadProfile(R_OpenSiteFile(), baseEnv);
     R_LockBinding(install(".Library.site"), R_BaseEnv);
     R_LoadProfile(R_OpenInitFile(), R_GlobalEnv);
@@ -984,13 +982,13 @@ static void printwhere(void)
   for (cptr = R_GlobalContext; cptr; cptr = cptr->nextcontext) {
     if ((cptr->callflag & (CTXT_FUNCTION | CTXT_BUILTIN)) &&
 	(TYPEOF(cptr->call) == LANGSXP)) {
-	Rprintf("where %d: ", lct++);
+	Rprintf("where %d", lct++);
+	SrcrefPrompt("", cptr->srcref);
 	PrintValue(cptr->call);
     }
   }
   Rprintf("\n");
 }
-
 
 static int ParseBrowser(SEXP CExpr, SEXP rho)
 {
@@ -998,16 +996,16 @@ static int ParseBrowser(SEXP CExpr, SEXP rho)
     if (isSymbol(CExpr)) {
 	const char *expr = CHAR(PRINTNAME(CExpr));
 	if (!strcmp(expr, "n")) {
-	    SET_DEBUG(rho, 1);
+	    SET_RDEBUG(rho, 1);
 	    rval = 1;
 	}
 	if (!strcmp(expr, "c")) {
 	    rval = 1;
-	    SET_DEBUG(rho, 0);
+	    SET_RDEBUG(rho, 0);
 	}
 	if (!strcmp(expr, "cont")) {
 	    rval = 1;
-	    SET_DEBUG(rho, 0);
+	    SET_RDEBUG(rho, 0);
 	}
 	if (!strcmp(expr, "Q")) {
 
@@ -1020,26 +1018,98 @@ static int ParseBrowser(SEXP CExpr, SEXP rho)
 	    R_run_onexits(R_ToplevelContext);
 
 	    /* this is really dynamic state that should be managed as such */
-	    R_BrowseLevel = 0;
-	    SET_DEBUG(rho, 0); /*PR#1721*/
+	    SET_RDEBUG(rho, 0); /*PR#1721*/
 
 	    jump_to_toplevel();
 	}
 	if (!strcmp(expr, "where")) {
 	    printwhere();
-	    /* SET_DEBUG(rho, 1); */
+	    /* SET_RDEBUG(rho, 1); */
 	    rval = 2;
 	}
     }
     return rval;
 }
 
-/* registering this as a cend exit procedure makes sure R_BrowseLevel
-   is maintained across LONGJMP's */
-static void browser_cend(void *data)
+/* 
+   since users are unlikely to get this right we need to try
+   to do name/position matching - this is a bit rough
+*/
+static SEXP matchargs(SEXP args)
 {
-    int *psaved = (int *) data;
-    R_BrowseLevel = *psaved - 1;
+    int i, nargs = length(args), mt = 0, mc = 0, me = 0, nmatch = 0, pos[3];
+    SEXP tmp, tsym, csym, esym, argList;
+
+    /* set up argList and defaults */
+    PROTECT(argList = allocList(3));
+    PROTECT(tmp = allocVector(STRSXP, 3));
+    SET_STRING_ELT(tmp, 0, mkChar("text"));
+    SET_STRING_ELT(tmp, 0, mkChar("condition"));
+    SET_STRING_ELT(tmp, 0, mkChar("expr"));
+    setAttrib(argList, R_NamesSymbol, tmp);
+    UNPROTECT(1);
+
+    /* set default values */
+
+    SETCAR(argList, mkString(""));
+    SETCADR(argList, R_NilValue);
+    PROTECT(tmp = allocVector(LGLSXP, 1));
+    LOGICAL(tmp)[0] = 1; /*true*/
+    SETCADDR(argList, tmp);
+    UNPROTECT(1);
+
+    /* now match  */
+    if( nargs == 0 ) {
+	UNPROTECT(1);
+	return(argList);
+    }
+
+    /* we have at least one arg */
+    tsym = install("text"); csym = install("condition"); esym = install("expr");
+    tmp = args;
+
+    for(i = 0; i < nargs; i++) { 
+	pos[i] = 0;
+	if(TAG(tmp) == tsym) {
+	    if( mt == 0 ) {
+		nmatch++; pos[i] = 1; mt = 1; 
+		SETCAR(argList, CAR(tmp));
+	    } else error(_("duplicate '%s' argument"), "text");
+	}
+	if(TAG(tmp) == csym) {
+	    if( mc == 0 ) {
+		nmatch++; pos[i] = 1; mc = 1;
+		SETCADR(argList, CAR(tmp));
+	    } else error(_("duplicate '%s' argument"), "condition");
+	}
+	if(TAG(tmp) == esym) {
+	    if( me == 0 ) {
+		nmatch++; pos[i] = 1; me = 1;
+		SETCADDR(argList, CAR(tmp));
+	    } else error(_("duplicate '%s' argument"), "expr");
+	    tmp = CDR(tmp);
+	}
+    }
+    if (nmatch == nargs) {
+	UNPROTECT(1);
+	return(argList);
+    }
+    /* otherwise match by position */
+    /* reset tmp */
+    tmp = args;
+    for(i = 0; i < 3; i++) {
+	if( pos[i] == 0 ) {
+	    if( mt == 0 ) /* first non-named is text */
+		SETCAR(argList, tmp);
+	    else if(mc == 0)  /* second is condition */
+		SETCADR(argList, tmp);
+	    else /* third is expr */
+		SETCADDR(argList, tmp);
+	    nmatch++;
+	}
+    }
+    UNPROTECT(1);
+    return(argList);
 }
 
 SEXP attribute_hidden do_browser(SEXP call, SEXP op, SEXP args, SEXP rho)
@@ -1047,26 +1117,39 @@ SEXP attribute_hidden do_browser(SEXP call, SEXP op, SEXP args, SEXP rho)
     RCNTXT *saveToplevelContext;
     RCNTXT *saveGlobalContext;
     RCNTXT thiscontext, returncontext, *cptr;
-    int savestack, savebrowselevel, tmp;
-    SEXP topExp;
+    int savestack, browselevel, tmp;
+    SEXP topExp, argList;
+
+    /* argument matching */
+    PROTECT(argList = matchargs(args)); 
+
+    /* return if the expr is not TRUE */
+    if( !asLogical(CADDR(argList)) ) {
+        UNPROTECT(1);
+        return R_NilValue;
+    }
 
     /* Save the evaluator state information */
     /* so that it can be restored on exit. */
 
-    savebrowselevel = R_BrowseLevel + 1;
+    browselevel = countContexts(CTXT_BROWSER, 1);
     savestack = R_PPStackTop;
     PROTECT(topExp = R_CurrentExpr);
     saveToplevelContext = R_ToplevelContext;
     saveGlobalContext = R_GlobalContext;
 
-    if (!DEBUG(rho)) {
+    if (!RDEBUG(rho)) {
 	cptr = R_GlobalContext;
 	while ( !(cptr->callflag & CTXT_FUNCTION) && cptr->callflag )
 	    cptr = cptr->nextcontext;
 	Rprintf("Called from: ");
 	tmp = asInteger(GetOption(install("deparse.max.lines"), R_BaseEnv));
 	if(tmp != NA_INTEGER && tmp > 0) R_BrowseLines = tmp;
-	PrintValueRec(cptr->call,rho);
+        if( cptr != R_ToplevelContext )
+	    PrintValueRec(cptr->call,rho);
+        else
+            Rprintf("top level \n");
+
 	R_BrowseLines = 0;
     }
 
@@ -1079,9 +1162,7 @@ SEXP attribute_hidden do_browser(SEXP call, SEXP op, SEXP args, SEXP rho)
     /* acts as a target for error returns. */
 
     begincontext(&returncontext, CTXT_BROWSER, call, rho,
-		 R_BaseEnv, R_NilValue, R_NilValue);
-    returncontext.cend = browser_cend;
-    returncontext.cenddata = &savebrowselevel;
+		 R_BaseEnv, argList, R_NilValue);
     if (!SETJMP(returncontext.cjmpbuf)) {
 	begincontext(&thiscontext, CTXT_RESTART, R_NilValue, rho,
 		     R_BaseEnv, R_NilValue, R_NilValue);
@@ -1092,8 +1173,7 @@ SEXP attribute_hidden do_browser(SEXP call, SEXP op, SEXP args, SEXP rho)
 	}
 	R_GlobalContext = &thiscontext;
 	R_InsertRestartHandlers(&thiscontext, TRUE);
-	R_BrowseLevel = savebrowselevel;
-	R_ReplConsole(rho, savestack, R_BrowseLevel);
+	R_ReplConsole(rho, savestack, browselevel+1);
 	endcontext(&thiscontext);
     }
     endcontext(&returncontext);
@@ -1103,10 +1183,10 @@ SEXP attribute_hidden do_browser(SEXP call, SEXP op, SEXP args, SEXP rho)
     R_CurrentExpr = topExp;
     UNPROTECT(1);
     R_PPStackTop = savestack;
+    UNPROTECT(1);
     R_CurrentExpr = topExp;
     R_ToplevelContext = saveToplevelContext;
     R_GlobalContext = saveGlobalContext;
-    R_BrowseLevel--;
     return R_ReturnedValue;
 }
 
@@ -1142,7 +1222,8 @@ SEXP attribute_hidden do_quit(SEXP call, SEXP op, SEXP args, SEXP rho)
     SA_TYPE ask=SA_DEFAULT;
     int status, runLast;
 
-    if(R_BrowseLevel) {
+    /* if there are any browser contexts active don't quit */
+    if(countContexts(CTXT_BROWSER, 1)) {
 	warning(_("cannot quit from browser"));
 	return R_NilValue;
     }
@@ -1417,15 +1498,13 @@ R_taskCallbackRoutine(SEXP expr, SEXP value, Rboolean succeeded,
     SEXP f = (SEXP) userData;
     SEXP e, tmp, val, cur;
     int errorOccurred;
-    Rboolean again;
-    Rboolean useData;
-    useData = LOGICAL(VECTOR_ELT(f, 2))[0];
+    Rboolean again, useData = LOGICAL(VECTOR_ELT(f, 2))[0];
 
     PROTECT(e = allocVector(LANGSXP, 5 + useData));
     SETCAR(e, VECTOR_ELT(f, 0));
     cur = CDR(e);
     SETCAR(cur, tmp = allocVector(LANGSXP, 2));
-	SETCAR(tmp, install("quote"));
+	SETCAR(tmp, R_QuoteSymbol);
 	SETCAR(CDR(tmp), expr);
     cur = CDR(cur);
     SETCAR(cur, value);

@@ -1,4 +1,4 @@
-#  File src/library/tools/R/Rd2tex.R
+#  File src/library/tools/R/Rd2txt.R
 #  Part of the R package, http://www.R-project.org
 #
 #  This program is free software; you can redistribute it and/or modify
@@ -14,82 +14,209 @@
 #  A copy of the GNU General Public License is available at
 #  http://www.r-project.org/Licenses/
 
+## This stops on
+##  unrecognized tag
+##  \\tabular format must be simple text
+##  too many columns for format
+##  invalid markup in \[S3]method
+##  "Tag ", tag, " not expected in code block"
 
-## surplus whitespace
-## Listing environments are minimal at best, \\describe \\tabular
-## e.g. DateTimeClasses
-## \cr in arguments, cbind
-## getDLLRegisteedRoutines
-## c\car{x} in regex
-## spacing in zMethods
-
+tabExpand <- function(x) {
+    srcref <- attr(x, "srcref")
+    if (is.null(srcref)) start <- 0L
+    else start <- srcref[5L] - 1L
+    .Call(doTabExpand, x, start)
+}
 
 Rd2txt <-
-    function(Rd, out="", package = "", defines=.Platform$OS.type)
+    function(Rd, out="", package = "", defines=.Platform$OS.type,
+             stages = "render", outputEncoding = "",
+             width = getOption("help_text_width", 80L), ...)
 {
-    WIDTH <- 72L
-    HDR_WIDTH <- 70L
+    ## these attempt to mimic pre-2.10.0 layout
+    WIDTH <- 0.9 * width
+    HDR_WIDTH <- WIDTH - 2L
 
     ## we need to keep track of where we are.
-    nch <- 0L
-    text <- ""
-    indent <- 0L
+    buffer <- character()	# Buffer not yet written to con
+    				# Newlines have been processed, each line in buffer is
+    				# treated as a separate input line (but may be wrapped before output)
+    linestart <- TRUE		# At start of line?
+    indent <- 0L		# Default indent
+    wrapping <- TRUE		# Do word wrap?
+    keepFirstIndent <- FALSE	# Keep first line indent?
+    dropBlank <- FALSE		# Drop initial blank lines?
+    haveBlanks <- 0L		# How many blank lines have just been written?
+    enumItem <- 0L		# Last enumeration item number
+    inEqn <- FALSE		# Should we do edits needed in an eqn?
 
-    inEqn <- FALSE
-    DLlab <- character()
-    DLval <- character()
+    startCapture <- function() {
+    	save <- list(buffer=buffer, linestart=linestart, indent=indent,
+                     wrapping=wrapping, keepFirstIndent=keepFirstIndent,
+                     dropBlank=dropBlank, haveBlanks=haveBlanks,
+                     enumItem=enumItem, inEqn=inEqn)
+    	buffer <<- character()
+    	linestart <<- TRUE
+    	indent <<- 0L
+    	wrapping <<- TRUE
+    	keepFirstIndent <<- FALSE
+    	dropBlank <<- FALSE
+    	haveBlanks <<- 0L
+    	enumItem <<- 0L
+    	inEqn <<- FALSE
+    	save
+    }
 
-    Of <- function(text) writeLines(text, con)
-    of0 <- function(...)  of1(paste(..., sep=""))
-    of1 <- function(txt) {
-        txt <- as.character(txt)
-        if(!length(txt) || !nzchar(txt)) return()
-        ## are there any line breaks?
-        if (0 &&!length(grep("\n", txt))) {
-            pad <- if (nch) "" else paste(rep(" ", indent), collapse = "")
-            text <<- paste(text, pad, txt, sep = "")
-            nch <<- nch + nchar(txt)
-        } else {
-            ## was there a trailing \n?
-            trail <- length(grep("\n$", txt)) > 0L
-            lines <- strsplit(txt, "\n", fixed = TRUE)[[1L]]
-            nl <- length(lines)
-             if(!nl) return()
-            ind <- paste(rep(" ", indent), collapse = "")
-            pad <- rep(ind, nl)
-            if(nch) pad[1L] <- ""
-            eol <- rep("\n", nl)
-             if (!trail) eol[nl] <- ""
-            text <<- paste(text, paste(pad, lines, eol, sep=""), sep="")
-            nch <<- if(trail) 0L else nch + nchar(lines[nl])
-         }
+    endCapture <- function(saved) {
+    	result <- buffer
+    	buffer <<- saved$buffer
+    	linestart <<- saved$linestart
+    	indent <<- saved$indent
+    	wrapping <<- saved$wrapping
+    	keepFirstIndent <<- saved$keepFirstIndent
+    	dropBlank <<- saved$dropBlank
+    	haveBlanks <<- saved$haveBlanks
+    	enumItem <<- saved$enumItem
+    	inEqn <<- saved$inEqn
+    	result
+    }
+
+    ## for efficiency
+    WriteLines <-
+        if(outputEncoding == "UTF-8" ||
+           (outputEncoding == "" && l10n_info()[["UTF-8"]])) {
+        function(x, con, outputEncoding, ...)
+            writeLines(x, con, useBytes = TRUE, ...)
+    } else {
+        function(x, con, outputEncoding, ...) {
+            x <- iconv(x, "UTF-8", outputEncoding, sub="byte", mark=FALSE)
+            writeLines(x, con, useBytes = TRUE, ...)
+        }
+    }
+
+    wrap <- function(doWrap = TRUE)
+	if (doWrap != wrapping) { flushBuffer(); wrapping <<- doWrap }
+
+    putw <- function(...)  { wrap(TRUE); put(...) }
+
+    putf <- function(...)  { wrap(FALSE); put(...) }
+
+    put <- function(...) {
+        txt <- paste(..., collapse="", sep="")
+        trail <- grepl("\n$", txt)
+        # Convert newlines
+        txt <- strsplit(txt, "\n", fixed = TRUE)[[1]]
+        if (dropBlank) {
+            while(length(txt) && grepl("^[[:space:]]*$", txt[1L]))
+            	txt <- txt[-1L]
+            if (length(txt)) dropBlank <<- FALSE
+        }
+        if(!length(txt)) return()
+        haveBlanks <<- 0
+
+        if (linestart) buffer <<- c(buffer, txt)
+        else if (length(buffer)) {
+            buffer[length(buffer)] <<-
+                paste(buffer[length(buffer)], txt[1L], sep="")
+            buffer <<- c(buffer, txt[-1L])
+        }
+        else buffer <<- txt
+        linestart <<- trail
+    }
+
+    blanks <- function(n)
+	if (n) paste(rep(" ", n), collapse="") else ""
+
+    flushBuffer <- function() {
+    	if (!length(buffer)) return()
+
+    	if (wrapping) {
+	    if (keepFirstIndent) {
+		first <- nchar(psub1("[^ ].*", "", buffer[1]))
+		keepFirstIndent <<- FALSE
+	    } else
+		first <- indent
+
+	    buffer <<- c(buffer, "")  # Add an extra blank sentinel
+	    blankLines <- grep("^[[:space:]]*$", buffer)
+	    result <- character()
+	    start <- 1L
+	    for (i in seq_along(blankLines)) {
+		if (blankLines[i] > start) {
+		    result <- c(result,
+                                strwrap(paste(buffer[start:(blankLines[i]-1L)],
+                                              collapse = " "),
+                                        WIDTH, indent = first, exdent = indent))
+		    first <- indent
+                }
+                result <- c(result, "")
+		start <- blankLines[i]+1L
+	    }
+            ## we want to collapse multiple blank lines when wrapping
+            ## and to remove the sentinel (which we need to do first or
+            ## we will drop a single blank line)
+            buffer <<- result[-length(result)]
+            empty <- !nzchar(buffer)
+            drop <- empty & c(FALSE, empty[-length(empty)])
+            buffer <<- buffer[!drop]
+	} else {  # Not wrapping
+	    if (keepFirstIndent) {
+		if (length(buffer) > 1L)
+		    buffer[-1L] <<- paste(blanks(indent), buffer[-1L], sep="")
+		keepFirstIndent <- FALSE
+	    } else
+		buffer <<- paste(blanks(indent), buffer, sep="")
+	}
+
+    	if (length(buffer)) WriteLines(buffer, con, outputEncoding)
+    	buffer <<- character()
+    	linestart <<- TRUE
     }
 
     encoding <- "unknown"
 
+    li <- l10n_info()
+    ## See the comment in ?Rd2txt as to why we do not attempt fancy quotes
+    ## in Windows CJK locales -- and in any case they would need more work
+    ## This covers the common single-byte locales and Thai (874)
+    use_fancy_quotes <-
+        (.Platform$OS.type == "windows" &&
+         ((li$codepage >= 1250 && li$codepage <= 1258) || li$codepage == 874)) ||
+        li[["UTF-8"]]
+
+    if(getOption("useFancyQuotes") && use_fancy_quotes) {
+        ## On Windows, Unicode literals are translated to local code page
+    	LSQM <- intToUtf8("0x2018") # Left single quote
+    	RSQM <- intToUtf8("0x2019") # Right single quote
+    	LDQM <- intToUtf8("0x201c") # Left double quote
+    	RDQM <- intToUtf8("0x201d") # Right double quote
+    } else {
+        LSQM <- RSQM <- "'"
+        LDQM <- RDQM <- '"'
+    }
+
     trim <- function(x) {
-        x <- sub("^\\s*", "", x, perl = TRUE)
-        sub("\\s*$", "", x, perl = TRUE)
+        x <- psub1("^\\s*", "", x)
+        psub1("\\s*$", "", x)
     }
 
     striptitle <- function(text) {
-        text <- gsub("\\", "", text, fixed = TRUE)
-        text <- gsub("---", "_", text, fixed = TRUE)
-        text <- gsub("--", "-", text, fixed = TRUE)
+        text <- fsub("\\", "", text)
+        text <- fsub("---", "_", text)
+        text <- fsub("--", "-", text)
         text
     }
 
     txt_striptitle <- function(text) {
         text <- striptitle(text)
-        if (.Platform$OS.type == "windows" &&
-            Sys.getlocale("LC_CTYPE") != "C") {
-            text <- gsub("``", "\x93", text, fixed = TRUE)
-            text <- gsub("''", "\x94", text, fixed = TRUE)
-            text <- gsub("`([^']+)'", "\x93\\1\x94", text)
-            text <- gsub("`", "'", text, fixed = TRUE)
+        if(use_fancy_quotes) {
+            text <- fsub("``", LDQM, text)
+            text <- fsub("''", RDQM, text)
+            text <- psub("`([^']+)'", paste(LSQM, "\\1", RSQM, sep=""), text)
+            text <- fsub("`", "'", text)
         } else {
-            text <- gsub("(``|'')", '"', text)
-            text <- gsub("`", "'", text, fixed = TRUE)
+            text <- psub("(``|'')", '"', text)
+            text <- fsub("`", "'", text)
         }
         text
     }
@@ -97,376 +224,445 @@ Rd2txt <-
     ## underline via backspacing
     txt_header <- function(header) {
         header <- paste(strwrap(header, WIDTH), collapse="\n")
-        letters <- strsplit(header, "")[[1L]]
+        letters <- strsplit(header, "", fixed = TRUE)[[1L]]
         isaln <- grep("[[:alnum:]]", letters)
         letters[isaln] <- paste("_\b", letters[isaln], sep="")
         paste(letters, collapse = "")
     }
 
-    txt_sect <- function(header) paste(txt_header(header), ":", sep = "")
-
-    inCodeBlock <- FALSE ## used to indicate to texify where we are
-
-    addParaBreaks <- function(x, tag) {
-        if (inEqn) {
-            of1(txt_eqn(x))
-            return()
-        }
-        start <- attr(x, "srcref")[2L]
-        if (isBlankLineRd(x)) {
-            writePara()
-            Of("")
-	} else {
-            if (start == 1) x <- gsub("^\\s+", "", x, perl = TRUE)
-            of1(x)
-        }
-    }
-
     unescape <- function(x) {
-        x <- gsub("(---|--)", "-", x)
+        x <- psub("(---|--)", "-", x)
         x
     }
 
-    codeB <- function(x) {
+    writeCode <- function(x) {
         txt <- as.character(x)
         if(inEqn) txt <- txt_eqn(txt)
-        txt <- gsub('"\\{"', '"{"', txt, fixed = TRUE)
+        txt <- fsub('"\\{"', '"{"', txt)
         ## \dots gets left in noquote.Rd
-        txt <- gsub("\\dots",  "....", txt, fixed = TRUE)
-        of1(txt)
+        txt <-fsub("\\dots",  "....", txt)
+        put(txt)
+    }
+
+    # This function strips pending blank lines, then adds n new ones.
+    blankLine <- function(n = 1L) {
+    	while (length(buffer) &&
+               grepl("^[[:blank:]]*$", buffer[length(buffer)]))
+    	    buffer <<- buffer[-length(buffer)]
+	flushBuffer()
+	if (n > haveBlanks) {
+	    buffer <<- rep("", n - haveBlanks)
+	    flushBuffer()
+	}
+	haveBlanks <<- n
+	dropBlank <<- TRUE
     }
 
     txt_eqn <- function(x) {
-        x <- gsub("\\\\(Gamma|alpha|Alpha|pi|mu|sigma|Sigma|lambda|beta|epsilaon|psi)", "\\1", x)
-        x <- gsub("\\\\(bold|strong|emph|var)\\{([^}]*)\\}", "\\2", x)
-        x <- gsub("\\\\(ode|samp)\\{([^}]*)\\}", "'\\2'", x)
+        x <- psub("\\\\(Gamma|alpha|Alpha|pi|mu|sigma|Sigma|lambda|beta|epsilaon|psi)", "\\1", x)
+        x <- psub("\\\\(bold|strong|emph|var)\\{([^}]*)\\}", "\\2", x)
+        x <- psub("\\\\(ode|samp)\\{([^}]*)\\}", "'\\2'", x)
         x
-    }
-
-    writeComment <- function(txt) {
-	of1("\nn") ## FIXME, should include the \n?
     }
 
     writeDR <- function(block, tag) {
         if (length(block) > 1L) {
-            of1('## Not run: ') # had trailing space before: FIXME remove
+            putf('## Not run:\n')
             writeCodeBlock(block, tag)
-            ## FIXME only needs a \n here if not at left margin
-            of1('## End(Not run)')
+            blankLine(0L)
+            putf('## End(Not run)\n')
         } else {
-            of1('## Not run: ')
+            putf('## Not run: ')
             writeCodeBlock(block, tag)
+            blankLine(0L)
         }
     }
 
-
-    writeQ <- function(block, tag)
+    writeQ <- function(block, tag, quote=tag)
     {
-        if (.Platform$OS.type == "windows" && Sys.getlocale("LC_CTYPE") != "C") {
-            if (tag == "\\sQuote") {
-                of1("\x91"); writeContent(block, tag); of1("\x92")
+        if (use_fancy_quotes) {
+            if (quote == "\\sQuote") {
+                put(LSQM); writeContent(block, tag); put(RSQM)
             } else {
-                of1("\x93"); writeContent(block, tag); of1("\x94")
+                put(LDQM); writeContent(block, tag); put(RDQM)
             }
         } else {
-            if (tag == "\\sQuote") {
-                of1("'"); writeContent(block, tag); of1("'")
+            if (quote == "\\sQuote") {
+                put("'"); writeContent(block, tag); put("'")
             } else {
-                of1("\""); writeContent(block,tag); of1("\"")
+                put("\""); writeContent(block,tag); put("\"")
             }
         }
-    }
-
-    writeArgItem <- function(block, tag)
-    {
-        writePara()
-        text0 <- text
-        indent0 <- indent
-        text <<- ""; indent <<- 0
-        writeContent(block[[1L]], tag)
-        label <- strwrap(paste(text, ":", sep = ""),
-        		 indent = 0, exdent = 0, width = WIDTH)
-        if (length(label) == 1)
-     	    label <- format(label, justify = "right", width = 9)
-        else
-            label <- paste(label, collapse="\n")
-        ## Do this by paras
-        block <- block[[2L]]
-        parabreaks <- sapply(block,
-                             function(x) attr(x, "Rd_tag") == "TEXT"
-                             && as.character(x) == "\n"
-                             && attr(x, "srcref")[2L] == 1)
-        if (length(parabreaks) == 0) {
-            Of(label)
-        } else {
-            pb <- which(c(parabreaks, TRUE))
-	    first <-1
-	    for (i in pb) {
-		if(first > 1) Of("")
-		text <<- ""
-		writeContent(block[first:(i-1)], tag)
-		text1 <-
-		    if(first == 1)
-			paste(strwrap(text, indent = 0, exdent = 10,
-				      width = WIDTH,
-				      initial = paste(label,"")),
-			      collapse = "\n")
-		    else
-			paste(strwrap(text, indent = 10, exdent = 10,
-				      width = WIDTH),
-			      collapse = "\n")
-		Of(text1)
-		first <- i+1
-	    }
-	}
-        text <<- ""
-        indent <<- indent0
-        nch <<- 0L
-    }
-
-
-    writePara <- function()
-    {
-        ## This assumes that we have collected all the contents of a
-        ## running para for a section.
-        Of(strwrap(text, width = WIDTH, indent = indent, exdent = indent))
-        text <<- ""
-        nch <<- 0L
-    }
-
-    writeDeqn <- function()
-    {
-        ## FIXME: multi-line inputs
-        text <- trim(text)
-        text <- txt_eqn(text)
-        nc <- nchar(text)
-        pad <- paste(rep.int(" ", indent + (WIDTH - nc) %/% 2L), collapse = "")
-        Of(paste("\n", pad, text, "\n", sep = ""))
-        text <<- ""
-        nch <<- 0L
-    }
-
-    indentprev <- 0L
-    startEnumItem <- function(block, tag)
-    {
-        ## write out any previous one
-        writeEnumItem()
-        ## start collecting for one item
-        writePara()
-        of1("   *  ")
-        indentprev <<- indent
-        indent <<- indent + 6L
-    }
-
-    writeEnumItem <- function()
-    {
-        if(!indentprev) return()
-        writePara()
-        indent <<- indentprev
-        indentprev <<- 0L
     }
 
     writeBlock <- function(block, tag, blocktag) {
-	switch(tag,
+		switch(tag,
                UNKNOWN =,
                VERB =,
-               RCODE = codeB(block),
-               TEXT = addParaBreaks(unescape(block), blocktag),
+               RCODE = writeCode(tabExpand(block)),
+               TEXT = putw(unescape(tabExpand(block))),
                LIST =,
                COMMENT = {},
-               "\\describe"= {
-                   writePara()
-                   #print("in \\describe")
-                   indent0 <- indent; indent <<- 0L
+               "\\describe" = {
+               	   blankLine(0L)
                    writeContent(block, tag)
-                   tab <- formatDL(DLlab, DLval, style = "list")
+                   blankLine()
+               },
+               "\\itemize"=,
+               "\\enumerate"= {
+               	   blankLine(0L)
+                   enumItem0 <- enumItem
+                   enumItem <<- 0L
+                   indent0 <- indent
+                   indent <<- max(10L, indent+4L)
+                   dropBlank <<- TRUE
+                   writeContent(block, tag)
+                   blankLine()
                    indent <<- indent0
-                   text <- ""
-                   Of("")
-                   pad <- paste(rep.int(" ", indent), collapse = "")
-                   Of(paste(pad, tab, sep= "", collapse="\n\n"))
-                   DLlab <<-DLval <<- character()
+                   enumItem <<- enumItem0
                },
-               "\\enumerate"=,
-               "\\itemize"= {
-                   writePara()
-                   writeContent(block, tag)
-                   writeEnumItem()
-               },
-               ## FIXME: why not use smart quotes?
+               "\\code"=,
                "\\command"=,
                "\\env"=,
                "\\file"=,
                "\\kbd"=,
                "\\option"=,
                "\\pkg"=,
-               "\\samp" = { of1("'"); writeContent(block, tag); of1("'")},
-               "\\email"=  of0("<email: ", as.character(block), ">"),
-                "\\url"= of0("<URL: ", as.character(block), ">"),
+               "\\samp" = writeQ(block, tag, quote="\\sQuote"),
+               "\\email"=  put("<email: ",
+                               gsub("\n", "", paste(as.character(block), collapse="")),
+                               ">"),
+                "\\url"= put("<URL: ",
+                              gsub("\n", "", paste(as.character(block), collapse="")),
+                              ">") ,
+               "\\Sexpr"= put(as.character.Rd(block, deparse=TRUE)),
                "\\acronym" =,
                "\\cite"=,
                "\\dfn"= ,
                "\\special" = ,
                "\\var" = writeContent(block, tag),
 
-               "\\code" = { of1("'"); writeContent(block, tag); of1("'")},
-
                "\\bold"=,
                "\\strong"= {
-                   of1("*")
-                   writeContent(block, tab)
-                   of1("*")
+                   put("*")
+                   writeContent(block, tag)
+                   put("*")
                },
                "\\emph"= {
-                   of1("_")
+                   put("_")
                    writeContent(block, tag)
-                   of1("_")
+                   put("_")
                },
                "\\sQuote" =,
                "\\dQuote"= writeQ(block, tag) ,
                "\\preformatted"= {
-                   writePara()
+                   putf("\n")
                    writeCodeBlock(block, tag)
-                   Of(text)
-                   text <<- ""
                },
-               "\\verb"= of1(block),
+               "\\verb"= put(block),
                "\\linkS4class" =,
                "\\link" = writeContent(block, tag),
-               "\\cr" = of1("\n"),
+               "\\cr" = {
+                   ## we want to print out what we have, and if
+                   ## followed immediately by \n (as it usually is)
+                   ## discard that.  This is not entirely correct,
+                   ## but it is better than before ....
+                   flushBuffer()
+                   dropBlank <<- TRUE
+                   },
                "\\dots" =,
-               "\\ldots" = of1("..."),
-               "\\R" = of1("R"),
+               "\\ldots" = put("..."),
+               "\\R" = put("R"),
                "\\enc" = {
                    txt <- as.character(block[[2L]])
-                   of1(txt)
+                   put(txt)
                } ,
                "\\eqn" = {
                    block <- block[[length(block)]]
                    ## FIXME: treat 2 of 2 differently?
+                   inEqn0 <- inEqn
                    inEqn <<- TRUE
                    writeContent(block, tag)
-                   inEqn <<- FALSE
+                   inEqn <<- inEqn0
                },
                "\\deqn" = {
-                   writePara()
+                   blankLine()
                    block <- block[[length(block)]]
+                   save <- startCapture()
                    inEqn <<- TRUE
                    writeContent(block, tag)
-                   inEqn <<- FALSE
-                   writeDeqn()
+                   eqn <- endCapture(save)
+                   eqn <- format(eqn, justify="centre", width=WIDTH-indent)
+                   putf(eqn)
+    		   blankLine()
                },
                "\\tabular" = writeTabular(block),
-               stopRd(block, "Tag ", tag, " not recognized.")
+               "\\if"=,
+               "\\ifelse" =
+                   if (testRdConditional("text", block, Rdfile))
+               		writeContent(block[[2L]], tag)
+               	   else if (tag == "\\ifelse")
+               	   	writeContent(block[[3L]], tag),
+               "\\out" = for (i in seq_along(block))
+		   put(block[[i]]),
+               stopRd(block, Rdfile, "Tag ", tag, " not recognized")
                )
     }
 
     writeTabular <- function(table) {
-    	format <- table[[1L]]
+    	formats <- table[[1L]]
     	content <- table[[2L]]
-    	if (length(format) != 1 || RdTags(format) != "TEXT")
-    	    stopRd(table, "\\tabular format must be simple text")
-        content <- preprocessRd(content, defines)
-        tags <- attr(content, "RdTags")
-        of0('\n\\Tabular{', format, '}{')
+    	if (length(formats) != 1L || RdTags(formats) != "TEXT")
+    	    stopRd(table, Rdfile, "\\tabular format must be simple text")
+    	formats <- strsplit(formats[[1L]], "", fixed = TRUE)[[1L]]
+        tags <- RdTags(content)
+        entries <- list()
+        row <- 1L
+        col <- 1L
+        save <- startCapture()
+        dropBlank <<- TRUE
+        newEntry <- function() {
+            entries <<- c(entries, list(list(text=trim(endCapture(save)),
+	                   	             row=row, col=col)))
+            save <<- startCapture()
+            dropBlank <<- TRUE
+        }
         for (i in seq_along(tags)) {
             switch(tags[i],
-                   "\\tab" = of1("&"),
-                   "\\cr" = of1("\\\\"),
-                   writeBlock(content[[i]], tags[i], "\\tabular"))
+                  "\\tab" = {
+                  	newEntry()
+                   	col <- col + 1
+                   	if (col > length(formats))
+                   	    stopRd(content[[i]], Rdfile,
+                                   sprintf("too many columns for format '%s'",
+                                           table[[1L]]))
+                   },
+                   "\\cr" = {
+                   	newEntry()
+                   	row <- row + 1L
+			col <- 1L
+                    },
+                   writeBlock(content[[i]], tags[i], "\\tabular")
+                   )
         }
-        of1('}')
+        newEntry()
+        endCapture(save)
+        entries <- with(entries[[length(entries)]],
+        	    {
+                        if (!length(text) && col == 1L)
+                            entries[-length(entries)]
+                        else
+                            entries
+                    })
+        rows <- entries[[length(entries)]]$row
+        cols <- max(sapply(entries, function(e) e$col))
+        widths <- rep(0L, cols)
+        lines <- rep(1L, rows)
+        for (i in seq_along(entries)) {
+            e <- entries[[i]]
+            while(length(e$text) && !nzchar(e$text[length(e$text)])) {
+            	e$text <- e$text[-length(e$text)]
+            	entries[[i]] <- e
+            }
+            if (any(nzchar(e$text)))
+            	widths[e$col] <- max(widths[e$col], max(nchar(e$text)))
+            lines[e$row] <- max(lines[e$row], length(e$text))
+        }
+        result <- matrix("", sum(lines), cols)
+        for (i in seq_len(cols))
+            result[, i] <- blanks(widths[i])
+        firstline <- c(1L, 1L+cumsum(lines))
+        for (i in seq_along(entries)) {
+            e <- entries[[i]]
+            text <- format(e$text, justify=formats[e$col], width=widths[e$col])
+            for (j in seq_along(text))
+            	result[firstline[e$row] + j - 1L, e$col] <- text[j]
+        }
+        blankLine()
+        indent0 <- indent
+        indent <<- indent + 1L
+        for (i in seq_len(nrow(result))) {
+            for (j in seq_len(cols))
+            	putf(" ", result[i,j], " ")
+            putf("\n")
+        }
+        blankLine()
+        indent <<- indent0
     }
 
-    writeCodeBlock <- function(blocks, blocktag) {
-        blocks <- preprocessRd(blocks, defines)
-	tags <- attr(blocks, "RdTags")
+    writeCodeBlock <- function(blocks, blocktag)
+    {
+    	tags <- RdTags(blocks)
 
 	for (i in seq_along(tags)) {
-            tag <- tags[i]
             block <- blocks[[i]]
-            switch(tag<- attr(block, "Rd_tag"),
+            tag <- attr(block, "Rd_tag")
+            switch(tag,
                    "\\method" =,
                    "\\S3method" = {
                        class <- as.character(block[[2L]])
                        generic <- as.character(block[[1L]])
-                       if (generic %in% c("[", "[[", "$")) {
+                       if(generic %in% c("[", "[[", "$")) {
                            ## need to assemble the call
-                           j <- i + 1
+                           j <- i + 1L
                            txt <- ""
                            repeat {
                                this <- switch(tg <- attr(blocks[[j]], "Rd_tag"),
+                                              "\\ldots" =, # not really right
                                               "\\dots" = "...",
                                               RCODE = as.character(blocks[[j]]),
-                                              stop(tg, " should not get here"))
+                                              stopRd(block, Rdfile, sprintf("invalid markup '%s' in %s", tg, tag)))
                                txt <- paste(txt, this, sep = "")
                                blocks[[j]] <- structure("", Rd_tag = "COMMENT")
                                if(grepl("\n$", txt)) {
                                    res <- try(parse(text = paste("a", txt)))
                                    if(!inherits(res, "try-error")) break
                                }
-                               j <- j + 1
+                               j <- j + 1L
                            }
-                           #print(txt)
-                           txt <- sub("\\(([^,]*),\\s*", "\\1@generic@", txt)
-                           txt <- sub("@generic@", generic, txt, fixed = TRUE)
+                           txt <- psub1("\\(([^,]*),\\s*", "\\1@generic@", txt)
+                           txt <- fsub1("@generic@", generic, txt)
                            if (generic == "[")
-                               txt <- sub(")([^)]*)$", "]\\1", txt)
+                               txt <- psub1("\\)([^)]*)$", "]\\1", txt)
                            else if (generic == "[[")
-                               txt <- sub(")([^)]*)$", "]]\\1", txt)
+                               txt <- psub1("\\)([^)]*)$", "]]\\1", txt)
                            else if (generic == "$")
-                               txt <- sub(")([^)]*)$", "\\1", txt)
-                           #print(txt)
+                               txt <- psub1("\\)([^)]*)$", "\\1", txt)
                            if (grepl("<-\\s*value", txt))
-                               of1("## S3 replacement method for class '")
+                               putf("## S3 replacement method for class '")
                            else
-                               of1("## S3 method for class '")
+                               putf("## S3 method for class '")
                            writeCodeBlock(block[[2L]], tag)
-                           of1("':\n")
-                           blocks[[i+1]] <- structure(txt, Rd_tag = "RCODE")
+                           putf("':\n")
+                           blocks[[i + 1L]] <-
+                               structure(txt, Rd_tag = "RCODE")
+                       } else if(grepl(sprintf("^%s$",
+                                               paste(c("\\+", "\\-", "\\*",
+                                                       "\\/", "\\^", "<=?",
+                                                       ">=?", "!=?", "==",
+                                                       "\\&", "\\|",
+                                                       "\\%[[:alnum:][:punct:]]*\\%"),
+                                                     collapse = "|")),
+                                       generic)) {
+                           ## Binary operators and unary '!'.
+                           ## Need to assemble the call.
+                           j <- i + 1L
+                           txt <- ""
+                           repeat {
+                               this <- switch(tg <- attr(blocks[[j]], "Rd_tag"),
+                                              RCODE = as.character(tabExpand(blocks[[j]])),
+                                              stopRd(block, Rdfile, sprintf("invalid markup '%s' in %s", tg, tag)))
+                               txt <- paste(txt, this, sep = "")
+                               blocks[[j]] <- structure("", Rd_tag = "COMMENT")
+                               if(grepl("\n$", txt)) {
+                                   res <- try(parse(text = paste("a", txt)))
+                                   if(!inherits(res, "try-error")) break
+                               }
+                               j <- j + 1L
+                           }
+                           nms <- as.character(res[[1L]])[-1L]
+                           len <- length(nms)
+                           ## (There should be no default values).
+                           if((len == 1L) && (generic == "!")) {
+                               ## Unary: !.
+                               txt <- sprintf("! %s\n", nms[1L])
+                           } else if((len == 2L) && (generic != "!")) {
+                               ## Binary: everything but !.
+                               txt <- sprintf("%s %s %s\n",
+                                              nms[1L], generic, nms[2L])
+                           } else {
+                               warnRd(block, Rdfile,
+                                      sprintf("arity problem for \\method{%s}{%s}",
+                                              generic, class))
+                               txt <- paste(generic, txt)
+                           }
+                           putf("## S3 method for class '")
+                           writeCodeBlock(block[[2L]], tag)
+                           putf("':\n")
+                           blocks[[i + 1L]] <-
+                               structure(txt, Rd_tag = "RCODE")
                        } else {
                            if (class == "default")
-                               of1('## Default S3 method:\n')
+                               putf('## Default S3 method:\n')
                            else if (grepl("<-\\s*value", blocks[[i+1]][[1L]])) {
-                               of1("## S3 replacement method for class '")
+                               putf("## S3 replacement method for class '")
                                writeCodeBlock(block[[2L]], tag)
-                               of1("':\n")
-                           }else {
-                               of1("## S3 method for class '")
+                               putf("':\n")
+                           } else {
+                               putf("## S3 method for class '")
                                writeCodeBlock(block[[2L]], tag)
-                               of1("':\n")
+                               putf("':\n")
                            }
                            writeCodeBlock(block[[1L]], tag)
                        }
-                   },
-                   "\\special" =,
+                  },
                    UNKNOWN =,
                    VERB =,
                    RCODE =,
-                   TEXT = codeB(block),
+                   TEXT = writeCode(tabExpand(block)),
+                   "\\donttest" =,
+                   "\\special" =,
                    "\\var" = writeCodeBlock(block, tag),
-                   "\\dots" =,
-                   "\\ldots" = of1("..."),
-                   "\\donttest" = writeCodeBlock(block, tag),
+                   "\\dots" =, # \ldots is not really allowed
+                   "\\ldots" = put("..."),
                    "\\dontrun"= writeDR(block, tag),
                    COMMENT =,
                    "\\dontshow" =,
                    "\\testonly" = {}, # do nothing
                    "\\S4method" = {
-                       of1("## S4 method for signature '")
-                       writeCodeBlock(block[[2L]], tag)
-                       of1("':\n")
-                       writeCodeBlock(block[[1L]], tag)
+                       class <- as.character(block[[2L]])
+                       generic <- as.character(block[[1L]])
+                       if(generic %in% c("[", "[[", "$")) {
+                           ## need to assemble the call
+                           j <- i + 1L
+                           txt <- ""
+                           repeat {
+                               this <- switch(tg <- attr(blocks[[j]], "Rd_tag"),
+                                              "\\ldots" =, # not really right
+                                              "\\dots" = "...",
+                                              RCODE = as.character(tabExpand(blocks[[j]])),
+                                              stopRd(block, Rdfile, sprintf("invalid markup '%s' in %s", tg, tag)))
+                               txt <- paste(txt, this, sep = "")
+                               blocks[[j]] <- structure("", Rd_tag = "COMMENT")
+                               if(grepl("\n$", txt)) {
+                                   res <- try(parse(text = paste("a", txt)))
+                                   if(!inherits(res, "try-error")) break
+                               }
+                               j <- j + 1L
+                           }
+                           txt <- psub1("\\(([^,]*),\\s*", "\\1@generic@", txt)
+                           txt <- fsub1("@generic@", generic, txt)
+                           if (generic == "[")
+                               txt <- psub1("\\)([^)]*)$", "]\\1", txt)
+                           else if (generic == "[[")
+                               txt <- psub1("\\)([^)]*)$", "]]\\1", txt)
+                           else if (generic == "$")
+                               txt <- psub1("\\)([^)]*)$", "\\1", txt)
+                           if (grepl("<-\\s*value", txt))
+                               putf("## S4 replacement method for signature '")
+                           else
+                               putf("## S4 method for signature '")
+                           writeCodeBlock(block[[2L]], tag)
+                           putf("':\n")
+                           blocks[[i + 1L]] <-
+                               structure(txt, Rd_tag = "RCODE")
+                       } else {
+                           putf("## S4 method for signature '")
+                           writeCodeBlock(block[[2L]], tag)
+                           putf("':\n")
+                           writeCodeBlock(block[[1L]], tag)
+                       }
                    },
-                   stopRd(block, "Tag ", tag, " not expected in code block.")
+                   ## All the markup such as \emph
+                   stopRd(block, Rdfile, "Tag ", tag,
+                          " not expected in code block")
                    )
         }
     }
+
     writeContent <- function(blocks, blocktag) {
         itemskip <- FALSE
-
-	blocks <- preprocessRd(blocks, defines)
-	tags <- attr(blocks, "RdTags")
+	tags <- RdTags(blocks)
 
 	for (i in seq_along(tags)) {
             tag <- tags[i]
@@ -474,72 +670,124 @@ Rd2txt <-
             switch(tag,
                    "\\item" = {
                        switch(blocktag,
-                              "\\describe" = {
-                                  text <<- ""
+                              "\\describe"= {
+                                  blankLine()
+                                  save <- startCapture()
+                                  dropBlank <<- TRUE
                                   writeContent(block[[1L]], tag)
-                                  DLlab <<- c(DLlab, text)
-                                  ## FICME: handle paras here
-                                  text <<- ""
+                                  DLlab <- endCapture(save)
+                                  indent0 <- indent
+                                  indent <<- max(10L, indent + 4L)
+                                  keepFirstIndent <<- TRUE
+                                  putw(paste(rep(" ", indent0), collapse=""),
+                                       format(paste(DLlab,  sep=""),
+                                              justify="left", width=indent),
+                                       " ")
                                   writeContent(block[[2L]], tag)
-                                  DLval <<- c(DLval, text)
-                                  text <<- ""
+			  	  blankLine(0L)
+                                  indent <<- indent0
                               },
                               "\\value"=,
-                              "\\arguments"= writeArgItem(block, tag),
-                              "\\enumerate" =,
-                              "\\itemize"=  startEnumItem(block, tag)
-                              )
-                       itemskup <- TRUE
+                              "\\arguments"= {
+                                  blankLine()
+                                  save <- startCapture()
+                                  dropBlank <<- TRUE
+                                  writeContent(block[[1L]], tag)
+                                  DLlab <- endCapture(save)
+                                  indent0 <- indent
+                                  indent <<- max(10L, indent + 4L)
+                                  keepFirstIndent <<- TRUE
+                                  putw(format(paste(DLlab, ": ", sep=""),
+                                              justify="right", width=indent))
+                                  writeContent(block[[2L]], tag)
+			  	  blankLine(0L)
+                                  indent <<- indent0
+                              },
+                              "\\itemize" =,
+                              "\\enumerate" = {
+                              	  blankLine()
+                              	  keepFirstIndent <<- TRUE
+                              	  if (blocktag == "\\itemize")
+                              	      label <- "* "
+                              	  else {
+                              	      enumItem <<- enumItem + 1L
+                              	      label <- paste(enumItem, ". ", sep="")
+                              	  }
+                              	  putw(format(label, justify="right",
+                                              width=indent))
+                              })
+                       itemskip <- TRUE
                    },
                { # default
                    if (itemskip) {
                        ## The next item must be TEXT, and start with a space.
                        itemskip <- FALSE
                        if (tag == "TEXT") {
-                           txt <- gsub("^ ", "", as.character(block), perl = TRUE)
-                           of1(txt)
+                           txt <- psub("^ ", "", as.character(tabExpand(block)))
+                           put(txt)
                        } else writeBlock(block, tag, blocktag) # should not happen
                    } else writeBlock(block, tag, blocktag)
                })
 	}
     }
 
-    writeSection <- function(section, tag) {
-        text <<- ""; indent <<- 5L
-        if (tag == "\\section") {
-            Of(txt_sect(as.character(section[[1L]])))
-            Of("")
-    	    writeContent(section[[2L]], tag)
-            writePara()
-            Of("")
-    	} else if (tag %in% c("\\usage", "\\synopsis", "\\examples")) {
-            Of(txt_sect(sectionTitles[tag]))
-            writeCodeBlock(section, tag)
-            Of(text)
-        } else {
-            Of(c(txt_sect(sectionTitles[tag]), ""))
-            writeContent(section, tag)
-            writePara()
-            Of("")
+    toChar <- function(x)
+    {
+        out <- character()
+        for(i in seq_along(x)) {
+            this <- x[[i]]
+            out <- c(out,
+                     switch(attr(this, "Rd_tag"),
+                            "\\ldots" =,
+                            "\\dots" = "...",
+                            "\\R" = "R",
+                            "\\bold" =,
+                            "\\strong" =,
+                            "\\emph" = toChar(this),
+                            "\\code" = sQuote(toChar(this)),
+                            as.character(this))
+                     )
         }
+        paste(out, collapse = "")
     }
 
-    Rdfile <- "not known"
-
-    if (is.character(Rd)) {
-        Rdfile <- Rd
-        ## do it this way to get info in internal warnings
-        Rd <- eval(substitute(parse_Rd(f, encoding = enc),
-                              list(f = Rd, enc = encoding)))
-    } else if(inherits(Rd, "connection")) {
-        Rdfile <- summary(Rd)
-        Rd <- tools::parse_Rd(Rd, encoding = encoding)
+    writeSection <- function(section, tag) {
+        if (tag %in% c("\\alias", "\\concept", "\\encoding", "\\keyword"))
+            return()
+    	blankLine(0L)
+        indent <<- 5L
+        keepFirstIndent <<- TRUE
+        if (tag == "\\section") {
+            ## section header could have markup
+            putf(txt_header(toChar(section[[1L]])), ":")
+            blankLine()
+            dropBlank <<- TRUE
+            wrapping <<- TRUE
+            keepFirstIndent <<- FALSE
+    	    writeContent(section[[2L]], tag)
+    	} else if (tag %in% c("\\usage", "\\synopsis", "\\examples")) {
+            putf(txt_header(sectionTitles[tag]), ":")
+            blankLine()
+            dropBlank <<- TRUE
+            wrapping <<- FALSE
+            keepFirstIndent <<- FALSE
+            writeCodeBlock(section, tag)
+    	} else {
+            putf(txt_header(sectionTitles[tag]), ":")
+            blankLine()
+            dropBlank <<- TRUE
+            wrapping <<- TRUE
+            keepFirstIndent <<- FALSE
+            writeContent(section, tag)
+        }
+        blankLine()
     }
 
     if (is.character(out)) {
-        if(out == "") con <- stdout()
-        else {
-	    con <- file(out, "w")
+        if(out == "") {
+            con <- stdout()
+        } else {
+	    con <- file(out, "wt")
 	    on.exit(close(con))
 	}
     } else {
@@ -547,58 +795,16 @@ Rd2txt <-
     	out <- summary(con)$description
     }
 
-    ## Process top level ifdef's.
-    Rd <- preprocessRd(Rd, defines)
-    sections <- attr(Rd, "RdTags")
-
-    version <- which(sections == "\\Rdversion")
-    if (length(version) == 1L && as.numeric(version[[1L]]) < 2)
-    	warning("Rd2HTML is designed for Rd version 2 or higher.")
-    else if (length(version) > 1L)
-    	stopRd(Rd[[version[2L]]], "Only one \\Rdversion declaration is allowed")
-
-    enc <- which(sections == "\\encoding")
-    if (length(enc)) {
-    	if (length(enc) > 1L)
-    	    stopRd(Rd[[enc[2L]]], "Only one \\encoding declaration is allowed")
-    	encoding <- Rd[[enc]]
-    	if (!identical(RdTags(encoding), "TEXT"))
-    	    stopRd(encoding, "Encoding must be plain text")
-    	encoding <- trim(encoding[[1L]])
-        if (encoding != "unknown")
-            encoding <- latex_canonical_encoding(encoding)
-    }
-
-    ## Give error for nonblank text outside a section
-    if (length(bad <- grep("[^[:blank:][:cntrl:]]", unlist(Rd[sections == "TEXT"]), perl = TRUE )))
-    	stopRd(Rd[sections == "TEXT"][[bad[1L]]], "All text must be in a section")
-
-    ## Drop all the parts that are not rendered
-    drop <- sections %in% c("COMMENT", "TEXT", "\\concept", "\\docType", "\\encoding",
-                            "\\keyword", "\\alias", "\\Rdversion")
-    Rd <- Rd[!drop]
-    sections <- sections[!drop]
-
-    sortorder <- sectionOrder[sections]
-    if (any(bad <- is.na(sortorder)))
-    	stopRd(Rd[[which(bad)[1L]]], "Section ", sections[which(bad)[1L]], " unrecognized.")
-    sortorder <- order(sortorder)
-    Rd <- Rd[sortorder]
-    sections <- sections[sortorder]
-    if (!identical(sections[1:2], c("\\title", "\\name")))
-    	stopRd(Rd, "Sections \\title, and \\name must exist and be unique in Rd files.")
+    Rd <- prepare_Rd(Rd, defines=defines, stages=stages, ...)
+    Rdfile <- attr(Rd, "Rdfile")
+    sections <- RdTags(Rd)
 
     title <- as.character(Rd[[1L]])
     ## remove empty lines, leading and trailing whitespace, \n
-    title <- trim(paste(sub("^\\s+", "", title[nzchar(title)], perl = TRUE),
-                        collapse=" "))
-    title <- gsub("\n", "", title, fixed = TRUE)
+    title <- trim(paste(psub1("^\\s+", "", title[nzchar(title)]), collapse=" "))
+    title <- fsub("\n", "", title)
 
-    name <- Rd[[2L]]
-    tags <- RdTags(name)
-    if (length(tags) > 1L) stopRd(name, "\\name must only contain simple text.")
-
-    name <- trim(name[[1L]])
+    name <- trim(Rd[[2L]][[1L]])
 
     if(nzchar(package)) {
         left <- name
@@ -606,17 +812,19 @@ Rd2txt <-
         right <- "R Documentation"
         if(encoding != "unknown")
             right <- paste(right, "(", encoding, ")", sep="")
-        pad <- HDR_WIDTH - nchar(left, "w") - nchar(mid, "w") - nchar(right, "w")
+        pad <- max(HDR_WIDTH - nchar(left, "w") - nchar(mid, "w") - nchar(right, "w"), 0)
         pad0 <- pad %/% 2L
         pad1 <- paste(rep.int(" ", pad0), collapse = "")
         pad2 <- paste(rep.int(" ", pad - pad0), collapse = "")
-        Of(paste(left, pad1, mid, pad2, right, "\n", sep=""))
+        putf(paste(left, pad1, mid, pad2, right, "\n\n", sep=""))
     }
 
-    Of(c(txt_header(txt_striptitle(title)), ""))
+    putf(txt_header(txt_striptitle(title)))
+    blankLine()
 
     for (i in seq_along(sections)[-(1:2)])
         writeSection(Rd[[i]], sections[i])
 
-    out
+    blankLine(0L)
+    invisible(out)
 }

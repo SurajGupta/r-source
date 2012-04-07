@@ -15,19 +15,21 @@
 #  http://www.r-project.org/Licenses/
 
 available.packages <-
-    function(contriburl = contrib.url(getOption("repos")), method,
-             fields = NULL)
+function(contriburl = contrib.url(getOption("repos"), type), method,
+         fields = NULL, type = getOption("pkgType"), filters = NULL)
 {
     requiredFields <-
-        tools:::.get_standard_repository_db_fields()
+        c(tools:::.get_standard_repository_db_fields(), "File")
     if (is.null(fields))
 	fields <- requiredFields
     else {
 	stopifnot(is.character(fields))
 	fields <- unique(c(requiredFields, fields))
     }
+
     res <- matrix(NA_character_, 0L, length(fields) + 1L,
 		  dimnames = list(NULL, c(fields, "Repository")))
+
     for(repos in contriburl) {
         localcran <- length(grep("^file:", repos)) > 0L
         if(localcran) {
@@ -56,21 +58,21 @@ available.packages <-
                 op <- options("warn")
                 options(warn = -1)
                 ## This is a binary file
-                z <- try(download.file(url=paste(repos, "PACKAGES.gz", sep = "/"),
-                                       destfile = tmpf, method = method,
-                                       cacheOK = FALSE, quiet = TRUE, mode = "wb"),
-                         silent = TRUE)
-                if(inherits(z, "try-error")) {
+                z <- tryCatch(download.file(url = paste(repos, "PACKAGES.gz", sep = "/"),
+                                            destfile = tmpf, method = method,
+                                            cacheOK = FALSE, quiet = TRUE, mode = "wb"),
+                         error = identity)
+                if(inherits(z, "error")) {
                     ## read.dcf is going to interpret CRLF as LF, so use
                     ## binary mode to avoid CRCRLF.
-                    z <- try(download.file(url=paste(repos, "PACKAGES", sep = "/"),
-                                           destfile = tmpf, method = method,
-                                           cacheOK = FALSE, quiet = TRUE,
-                                           mode = "wb"),
-                             silent = TRUE)
+                    z <- tryCatch(download.file(url=paste(repos, "PACKAGES", sep = "/"),
+                                                destfile = tmpf, method = method,
+                                                cacheOK = FALSE, quiet = TRUE,
+                                                mode = "wb"),
+                             error = identity)
                 }
                 options(op)
-                if(inherits(z, "try-error")) {
+                if(inherits(z, "error")) {
                     warning(gettextf("unable to access index for repository %s", repos),
                             call. = FALSE, immediate. = TRUE, domain = NA)
                     next
@@ -99,34 +101,134 @@ available.packages <-
             res <- rbind(res, res0)
         }
     }
-    ## ignore packages which don't fit our version of R
-    if(length(res)) {
-        currentR <- getRversion()
-        .checkRversion <- function(x) {
-            if(is.na(xx <- x["Depends"])) return(TRUE)
-            xx <- tools:::.split_dependencies(xx)
-            ## R < 2.7.0 picked up only the first
-            zs <- xx[names(xx) == "R"]
-            r <- TRUE
-            for(z in zs)
-                if(length(z) > 1L)
-                    r <- r & eval(parse(text=paste("currentR", z$op, "z$version")))
-            r
-        }
-        res <- res[apply(res, 1L, .checkRversion), , drop=FALSE]
+
+    if(!length(res)) return(res)
+
+    if(is.null(filters)) {
+        filters <- getOption("available_packages_filters")
+        if(is.null(filters))
+            filters <- available_packages_filters_default
     }
-    ## and those that do not fit our OS
-    if(length(res)) {
-        current <- .Platform$OS.type
-        .checkOStype <- function(x) {
-            xx <- x["OS_type"]
-            is.na(xx) || xx == current
+    if(is.list(filters)) {
+        ## If filters is a list with an add = TRUE element, add the
+        ## given filters to the default ones.
+        if(identical(filters$add, TRUE)) {
+            filters$add <- NULL
+            filters <- c(available_packages_filters_default, filters)
         }
-        res <- res[apply(res, 1L, .checkOStype), , drop=FALSE]
     }
+    for(f in filters) {
+        if(!length(res)) break
+        if(is.character(f)) {
+            ## Look up the filters db.
+            ## Could be nice and allow abbrevs or ignore case.
+            f <- available_packages_filters_db[[f[1L]]]
+        }
+        if(!is.function(f))
+            stop("Invalid 'filters' argument.")
+        res <- f(res)
+    }
+
     res
 }
 
+available_packages_filters_default <-
+    c("R_version", "OS_type", "duplicates")
+
+available_packages_filters_db <- new.env()
+
+available_packages_filters_db$R_version <-
+function(db)
+{
+    ## Ignore packages which don't fit our version of R.
+    depends <- db[, "Depends"]
+    depends[is.na(depends)] <- ""
+    ## Collect the (versioned) R depends entries.
+    x <- lapply(strsplit(sub("^[[:space:]]*", "", depends),
+                             "[[:space:]]*,[[:space:]]*"),
+                function(s) s[grepl("^R[[:space:]]*\\(", s)])
+    lens <- sapply(x, length)
+    ## Unlist.
+    x <- unlist(x)
+    pat <- "^R[[:space:]]*\\(([[<>=!]+)[[:space:]]+(.*)\\)[[:space:]]*"
+    ## Extract ops.
+    ops <- sub(pat, "\\1", x)
+    ## Split target versions accordings to ops.
+    v_t <- split(sub(pat, "\\2", x), ops)
+    ## Current R version.
+    v_c <- getRversion()
+    ## Compare current to target grouped by op.
+    res <- logical(length(x))
+    for(op in names(v_t))
+        res[ops == op] <- do.call(op, list(v_c, v_t[[op]]))
+    ## And assemble test results according to the rows of db.
+    ind <- rep.int(TRUE, NROW(db))
+    pos <- which(lens > 0L)
+    lens <- lens[pos]
+    ind[pos] <- sapply(split(res, rep.int(seq_along(lens), lens)), all)
+    db[ind, , drop = FALSE]
+}
+
+available_packages_filters_db$OS_type <-
+function(db)
+{
+    ## Ignore packages that do not fit our OS.
+    OS_type <- db[, "OS_type"]
+    db[is.na(OS_type) | (OS_type == .Platform$OS.type), , drop = FALSE]
+}
+
+available_packages_filters_db$duplicates <-
+function(db)
+    tools:::.remove_stale_dups(db)
+
+available_packages_filters_db$`license/FOSS` <-
+function(db)
+{
+    ## What we need to do is find all non-FOSS-verifiable packages and
+    ## all their recursive dependencies.  Somewhat tricky because there
+    ## may be dependencies missing from the package db.
+    ## Hence, for efficiency reasons, do the following.
+    ## Create a data frame which already has Depends/Imports/LinkingTo
+    ## info in package list form, and use this to compute the out of db
+    ## packages.
+    db1 <- data.frame(Package = db[, "Package"],
+                      stringsAsFactors = FALSE)
+    fields <- c("Depends", "Imports", "LinkingTo")
+    for(f in fields)
+        db1[[f]] <-
+            lapply(db[, f], tools:::.extract_dependency_package_names)
+
+    all_packages <- unique(unlist(db1[fields], use.names = FALSE))
+    bad_packages <-
+        all_packages[is.na(match(all_packages, db1$Package))]
+    ## Dependency package names missing from the db can be
+    ## A. base packages
+    ## B. bundle packages
+    ## C. really missing.
+    ## We can ignore type A as these are known to be FOSS.
+    ## We cannot really fully fix bundles as metadata for bundle
+    ## packages (which might have license specs) are not recorded in the
+    ## PACKAGES files.  And as bundles on the way out ...
+    bad_packages <-
+        bad_packages[is.na(match(bad_packages,
+                                 unlist(tools:::.get_standard_package_names())))]
+    ## <FIXME>
+    ## Fix bundle packages ... maybe.
+    ## </FIXME>
+
+    ## Packages in the db not verifiable as FOSS.
+    ind <- !tools:::analyze_licenses(db[, "License"])$is_verified
+    ## Now find the recursive reverse dependencies of these and the
+    ## packages missing from the db.
+    depends <-
+        tools:::.package_dependencies(db1$Package[ind], db = db1,
+                                      reverse = TRUE, recursive = TRUE)
+    depends <- unique(unlist(depends))
+    ind[match(depends, db1$Package, nomatch = 0L)] <- TRUE
+
+    ## And drop these from the db.
+    db[!ind, , drop = FALSE]
+}
 
 ## unexported helper function
 simplifyRepos <- function(repos, type)
@@ -212,9 +314,10 @@ update.packages <- function(lib.loc = NULL, repos = getOption("repos"),
 }
 
 old.packages <- function(lib.loc = NULL, repos = getOption("repos"),
-                         contriburl = contrib.url(repos),
+                         contriburl = contrib.url(repos, type),
                          instPkgs = installed.packages(lib.loc = lib.loc),
-                         method, available = NULL, checkBuilt = FALSE)
+                         method, available = NULL, checkBuilt = FALSE,
+                         type = getOption("pkgType"))
 {
     if(is.null(lib.loc))
         lib.loc <- .libPaths()
@@ -227,7 +330,7 @@ old.packages <- function(lib.loc = NULL, repos = getOption("repos"),
 
     available <- if(is.null(available))
         available.packages(contriburl = contriburl, method = method)
-    else .remove_stale_dups(available)
+    else tools:::.remove_stale_dups(available)
 
     ## This should be true in the PACKAGES file, is on CRAN
     ok <- !is.na(available[, "Bundle"])
@@ -323,7 +426,8 @@ new.packages <- function(lib.loc = NULL, repos = getOption("repos"),
                             , res)]
     if(length(update)) {
         install.packages(update, lib = lib.loc[1L], contriburl = contriburl,
-                         method = method, available = available, ...)
+                         method = method, available = available,
+                         type = type, ...)
         # Now check if they were installed and update 'res'
         dirs <- list.files(lib.loc[1L])
         updated <- update[update %in% dirs]
@@ -356,8 +460,11 @@ new.packages <- function(lib.loc = NULL, repos = getOption("repos"),
 }
 
 
-##' Read Packages Description and aggregate 'fields' into character matrix
-.readPkgDesc <- function(lib, fields, pkgs = list.files(lib)) {
+## Read packages' Description and aggregate 'fields' into a character matrix
+## NB: this does not handle encodings, so only suitable for
+## ASCII-only fields.
+.readPkgDesc <- function(lib, fields, pkgs = list.files(lib))
+{
     ## to be used in installed.packages() and similar
     ret <- matrix(NA_character_, length(pkgs), 2L+length(fields))
     for(i in seq_along(pkgs)) {
@@ -365,8 +472,8 @@ new.packages <- function(lib.loc = NULL, repos = getOption("repos"),
         if(file.access(pkgpath, 5L)) next
         pkgpath <- file.path(pkgpath, "DESCRIPTION")
         if(file.access(pkgpath, 4L)) next
-        desc <- try(read.dcf(pkgpath, fields = fields), silent = TRUE)
-        if(inherits(desc, "try-error")) {
+        desc <- tryCatch(read.dcf(pkgpath, fields = fields), error = identity)
+        if(inherits(desc, "error")) {
             warning(gettextf("read.dcf() error on file '%s'", pkgpath),
                     domain=NA, call.=FALSE)
             next
@@ -499,12 +606,16 @@ download.packages <- function(pkgs, destdir, available = NULL,
                 ok[ok][!keep] <- FALSE
             }
             if (substr(type, 1L, 10L) == "mac.binary") type <- "mac.binary"
+            ## in Oct 2009 we introduced file names in PACKAGES files
+            File <- available[ok, "File"]
             fn <- paste(p, "_", available[ok, "Version"],
                         switch(type,
                                "source" = ".tar.gz",
                                "mac.binary" = ".tgz",
                                "win.binary" = ".zip"),
-                        sep="")
+                        sep = "")
+            have_fn <- !is.na(File)
+            fn[have_fn] <- File[have_fn]
             repos <- available[ok, "Repository"]
             if(length(grep("^file:", repos)) > 0L) { # local repository
                 ## This could be file: + file path or a file:/// URL.
@@ -614,8 +725,7 @@ setRepositories <-
     p <- file.path(Sys.getenv("HOME"), ".R", "repositories")
     if(!file.exists(p))
         p <- file.path(R.home("etc"), "repositories")
-    a <- read.delim(p, header=TRUE, comment.char="#",
-                    colClasses=c(rep("character", 3L), rep("logical", 4L)))
+    a <- tools:::.read_repositories(p)
     pkgType <- getOption("pkgType")
     if(length(grep("^mac\\.binary", pkgType))) pkgType <- "mac.binary"
     thisType <- a[[pkgType]]
@@ -651,16 +761,14 @@ setRepositories <-
                 res <- match(tcltk::tk_select.list(a[, 1L], a[default, 1L],
                                                    multiple = TRUE, "Repositories"),
                              a[, 1L])
-        }
-        if(!length(res)) {
-            ## text-mode fallback
+        } else {
             cat(gettext("--- Please select repositories for use in this session ---\n"))
             nc <- length(default)
             cat("", paste(seq_len(nc), ": ",
                           ifelse(default, "+", " "), " ", a[, 1L],
                           sep=""),
                 "", sep="\n")
-            cat(gettext("Enter one or more numbers separated by spaces\n"))
+            cat(gettext("Enter one or more numbers separated by spaces, or an empty line to cancel\n"))
             res <- scan("", what=0, quiet=TRUE, nlines=1L)
             if(!length(res) || (length(res) == 1L && !res[1L]))
                 return(invisible())
@@ -670,7 +778,7 @@ setRepositories <-
     if(length(res)) {
         repos <- a[["URL"]]
         names(repos) <- row.names(a)
-        options(repos=repos[res])
+        options(repos = repos[res])
     }
 }
 
@@ -684,13 +792,10 @@ compareVersion <- function(a, b)
     if(is.na(b)) return(1L)
     a <- as.integer(strsplit(a, "[\\.-]")[[1L]])
     b <- as.integer(strsplit(b, "[\\.-]")[[1L]])
-    for(k in 1L:length(a)) {
+    for(k in seq_along(a))
         if(k <= length(b)) {
             if(a[k] > b[k]) return(1) else if(a[k] < b[k]) return(-1L)
-        } else {
-            return(1L)
-        }
-    }
+        } else return(1L)
     if(length(b) > length(a)) return(-1L) else return(0L)
 }
 
@@ -782,7 +887,7 @@ compareVersion <- function(a, b)
 }
 
 .make_dependency_list <-
-function(pkgs, available, dependencies = c("Depends", "Imports"))
+function(pkgs, available, dependencies = c("Depends", "Imports", "LinkingTo"))
 {
     ## given a character vector of packages,
     ## return a named list of character vectors of their dependencies
@@ -834,25 +939,3 @@ function(pkgs, available, dependencies = c("Depends", "Imports"))
     done
 }
 
-.remove_stale_dups <- function(ap)
-{
-    ## Given a matrix from available.packages, return a copy
-    ## with no duplicate packages, being sure to keep the packages
-    ## with highest version number.
-    pkgs <- ap[ , "Package"]
-    dup_pkgs <- pkgs[duplicated(pkgs)]
-    stale_dups <- integer(length(dup_pkgs))
-    i <- 1L
-    for (dp in dup_pkgs) {
-        wh <- which(dp == pkgs)
-        vers <- package_version(ap[wh, "Version"])
-        keep_ver <- max(vers)
-        keep_idx = which(vers == keep_ver)[1L] # they might all be max
-        wh <- wh[-keep_idx]
-        end_i <- i + length(wh) - 1L
-        stale_dups[i:end_i] <- wh
-        i <- end_i + 1L
-    }
-    ## Possible to have only one package in a repository
-    if(length(stale_dups)) ap[-stale_dups, , drop = FALSE] else ap
-}

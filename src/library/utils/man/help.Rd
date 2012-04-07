@@ -1,98 +1,94 @@
 % File src/library/utils/man/help.Rd
 % Part of the R package, http://www.R-project.org
-% Copyright 1995-2008 R Core Development Team
+% Copyright 1995-2009 R Core Development Team
 % Distributed under GPL 2 or later
 
 \name{help}
-\Rdversion{1.1}
 \alias{help}
-\alias{?}
 \title{Documentation}
 \description{
-  These functions provide access to documentation.
-  Documentation on a topic with name \code{name} (typically, an \R
-  object or a data set) can be displayed with either \code{help("name")} or
-  \code{?name}.
+  \code{help} is the primary interface to the help systems.
 }
 \usage{
-help(topic, offline = FALSE, package = NULL,
-     lib.loc = NULL, verbose = getOption("verbose"),
+help(topic, package = NULL, lib.loc = NULL,
+     verbose = getOption("verbose"),
      try.all.packages = getOption("help.try.all.packages"),
+     help_type = getOption("help_type"),
      chmhelp = getOption("chmhelp"),
      htmlhelp = getOption("htmlhelp"),
-     pager = getOption("pager"))
-
-?topic
-
-type?topic
+     offline = FALSE)
 }
 \arguments{
-  \item{topic}{usually, a \link{name} or character string specifying the topic
-   for which help is sought.  A character string (enclosed in explicit
-   single or double quotes) is always taken as naming a topic.
+  \item{topic}{usually, a \link{name} or character string specifying the
+   topic for which help is sought.  A character string (enclosed in
+   explicit single or double quotes) is always taken as naming a topic.
 
-   For \code{help}, if the value of \code{topic} is a length-one
+   If the value of \code{topic} is a length-one
    character vector the topic is taken to be the value of the only
    element.  Otherwise \code{topic} must be a name or a \link{reserved}
    word (if syntactically valid) or character string.
-
-   For \code{?} the \code{topic} argument may also be a function call,
-   to ask for documentation on a corresponding method: see the section
-   on S4 method documentation.  Unlike \code{help}, all names are
-   deparsed to give the desired topic.  The forms
-   \code{pkg::topic} and \code{pkg:::topic} are treated specially, and
-   look for help on \code{topic} in package \pkg{package}.
-
-   See \sQuote{Details} for what happens if this is omitted for \code{help}.
+   
+   See \sQuote{Details} for what happens if this is omitted.
  }
- \item{offline}{a logical indicating whether documentation should be
-   displayed on-line to the screen (the default) or hardcopy of it
-   should be produced.}
  \item{package}{a name or character vector giving the packages to look
-   into for documentation, or \code{NULL}.  By default, all packages
-   in the search path are used.}
+   into for documentation, or \code{NULL}. By default, all packages in
+   the search path are used. To avoid a name being deparsed use e.g.
+   \code{(pkg_ref)}.}
  \item{lib.loc}{a character vector of directory names of \R libraries,
    or \code{NULL}.  The default value of \code{NULL} corresponds to all
    libraries currently known.  If the default is used, the loaded
    packages are searched before the libraries.}
  \item{verbose}{logical; if \code{TRUE}, the file name is reported.}
  \item{try.all.packages}{logical; see \code{Note}.}
- \item{chmhelp}{logical (or \code{NULL}). Only relevant under Windows.
-   If \code{TRUE} the Compiled HTML version of the help on the topic
-   will be shown in a help viewer.  If none is available, plain text
-   help will be shown.}
-#ifdef unix
- \item{htmlhelp}{logical (or \code{NULL}).  If \code{TRUE} (which is the
-   default after \code{\link{help.start}} has been called), the HTML
-   version (if available) of the help on the topic will be shown in the
-   browser specified by \code{options("browser")}.  See
-   \code{\link{browseURL}} for details of the browsers that are
-   supported.  Where possible an existing browser window is re-used.}
-#endif
-#ifdef windows
- \item{htmlhelp}{logical (or \code{NULL}).  If \code{TRUE}, the HTML
-   version (if available) of the help on the topic will be shown in a
-   browser specified by \code{options("browser")} or the
-   file-association mechanism.
-  }
-#endif
-  \item{pager}{the pager to be used for \code{\link{file.show}}.}
-  \item{type}{the special type of documentation to use for this topic;
-    for example, if the type is \code{class}, documentation is
-    provided for the class with name \code{topic}.  The function
-    \code{topicName} returns the actual name used in this case.
-    See the section on method documentation for the uses of
-    \code{type} to get help on formal methods.}
+ \item{help_type}{character string: the type of help required.
+   Possible values are \code{"text"}, \code{"html"},
+   \code{"postscript"}, \code{"ps"} and \code{"pdf"}.  Case is ignored,
+   and partial matching is allowed.}
+
+  \item{chmhelp}{a deprecated way to specify \code{help_type = "text"}.}
+  \item{htmlhelp}{a deprecated way to specify \code{help_type = "html"}.}
+  \item{offline}{a deprecated way to specify \code{help_type = "postscript"}.}
 }
 \details{
-  \code{topic} is not optional: if it is omitted \R will give a hint as
-  to suitable topics if a package is specified, to available packages if
+  The following types of help are available:
+  \itemize{
+    \item Plain text help
+    \item HTML help pages with hyperlinks to other topics, shown in a
+    browser by \code{\link{browseURL}}.
+#ifdef unix
+    (Where possible an existing browser window is re-used: the Mac OS X
+    GUI uses its own browser window.)
+#endif
+    If for some reason HTML help is unavailable (see
+    \code{\link{startDynamicHelp}}), plain text help will be used
+    instead.
+    \item For \code{help} only, typeset as a PostScript or PDF file --
+    see the section on \sQuote{Offline help}.
+  }
+#ifdef unix
+  The \sQuote{factory-fresh} default is text help except from the Mac OS
+  GUI, which uses HTML help displayed in its own browser window.
+#endif
+#ifdef windows
+  The defaults for the type of help are selected when \R is installed --
+  the \sQuote{factory-fresh} default is HTML help.
+#endif
+
+  With packages installed under \R{} 2.10.0 or later help pages are
+  generated when needed from parsed Rd files.  Packages installed under
+  earlier versions of \R do not have parsed Rd files, but do (by
+  default) have prebuilt text, html and latex help pages, and these are
+  used if parsed Rd files are not available.
+  
+  \code{topic} is not optional: if it is omitted \R will give (text)
+  information on the package (including hints to suitable help topics)
+  if a package is specified, a (text) list of available packages if
   \code{lib.loc} only is specified, and help on \code{help} itself if
-  nothing is specified.  (In all cases this will be text help.)
+  none of the first three arguments is specified.
 
   Some topics need to be quoted (by \link{backtick}s) or given as a
   character string.  There include those which cannot syntactically
-  appear on their own such  as unary and binary operators,
+  appear on their own such as unary and binary operators,
   \code{function} and control-flow \link{reserved} words (including
   \code{if}, \code{else} \code{for}, \code{in}, \code{repeat},
   \code{while}, \code{break} and \code{next}.  The other \code{reserved}
@@ -100,44 +96,34 @@ type?topic
   \code{NA} and \code{Inf}.
 
   If multiple help files matching \code{topic} are found, in interactive
-  use a menu is presented for the user to choose one: otherwise the
-  first on the search path is used.  (The menu will be a graphical menu
-  if possible if \code{\link{getOption}("menu.graphics")} is true, the
-  default.)
+  use a menu is presented for the user to choose one: in batch use the
+  first on the search path is used.  (For HTML help the menu will be an
+  HTML page, otherwise a graphical menu if possible if
+  \code{\link{getOption}("menu.graphics")} is true, the default.)
+}
 
-#ifdef unix
-  HTML help works best if \code{\link{help.start}()} has been called in
-  the session.  Otherwise there will be a warning about
-  \sQuote{Using non-linked HTML file: hyperlinks may be incorrect} and
-  cross-library links will most likely not be resolved.
- 
-  If \code{offline} is \code{TRUE}, hardcopy of the documentation is
-  produced by running the LaTeX version of the help page through
-  \code{latex} and \code{dvips}.  Depending on your \code{dvips}
-  configuration, hardcopy will be sent to the printer or saved in a
-  file.  If the programs are in non-standard locations and hence were
-  not found at compile time, you can either set the options
-  \code{latexcmd} and \code{dvipscmd}, or the environment variables
-  \env{R_LATEXCMD} and \env{R_DVIPSCMD} appropriately.
-#endif
-#ifdef windows
-  If \code{offline} is \code{TRUE}, hardcopy of the documentation is
-  produced by running the LaTeX version of the help page through
-  \code{latex}.  You will need to customize the file
-  \file{\var{\link[base:Rhome]{R_HOME}}/bin/helpPRINT.bat} which
-  examples.  A TeX file named \file{\var{topic}.tex} is created in the
-  current working directory and passed as an argument to \file{helpPRINT.bat}.
-#endif
+\section{Offline help}{
+  Typeset documentation is produced by running the LaTeX version of the
+  help page through \command{latex} and \command{dvips} or, if
+  \code{help_type = "PDF"}, \command{pdflatex}.  This will either
+  produce a PostScript or PDF file or (depending on the configuration of
+  \command{dvips}) send a PostScript file to a printer.
+
   The appearance of the output can be customized through a file
   \file{Rhelp.cfg} somewhere in your LaTeX search path: this will be
   input as a LaTeX style file after \code{Rd.sty}.  Some 
   \link{environment variables} are consulted, notably \env{R_PAPERSIZE}
-  (\emph{via} \code{getOption("papersize")}) and \env{R_RD4DVI}
+  (\emph{via} \code{getOption("papersize")}) and \env{R_RD4DVI} /
+  \env{R_RD4PDF} (see \sQuote{Making manuals} in the
+  \sQuote{R Installation and Administration Manual}).
 
-  If LaTeX versions of help pages were not built at the installation of
-  the package, the \code{print} method will ask if conversion with
-  \code{R CMD Rdconv} (which requires Perl) should be attempted.
+  If there is a function \code{offline_help_helper} in the workspace or
+  further down the search path it is used to do the typesetting,
+  otherwise the function of that name in the \code{utils} name space
+  (to which the first paragraph applies).  It should have two 
+  arguments, the name of the LaTeX file to be typeset and the type.
 }
+
 \note{
   Unless \code{lib.loc} is specified explicitly, the loaded packages are
   searched before those in the specified libraries.  This ensures that
@@ -149,86 +135,39 @@ type?topic
   \code{TRUE} and neither \code{packages} nor \code{lib.loc} is
   specified, then all the packages in the known library trees are
   searched for help on \code{topic} and a list of (any) packages where
-  help may be found is printed (but no help is shown).
-  \bold{N.B.} searching all packages can be slow.
-
-  The help files can be many small files.  On some file systems it is
-  desirable to save space, and the text files in the \file{help} directory
-  of an installed package can be zipped up as a zip archive
-  \file{Rhelp.zip}.  Ensure that file \file{AnIndex} remains un-zipped.
-  Similarly, all the files in the \file{latex} directory can be zipped
-  to \file{Rhelp.zip}.
-#ifdef windows
-  This is done on Windows for the larger packages.
-#endif
+  help may be found is displayed (with hyperlinks for \code{help_type =
+  "html"}).  \strong{NB:} searching all packages can be slow.
 }
 
-\section{S4 Method Documentation}{
-  The authors of formal (\sQuote{S4}) methods can provide documentation
-  on specific methods, as well as overall documentation on the methods
-  of a particular function.  The \code{"?"} operator allows access to
-  this documentation in three ways.
-
-  The expression \code{methods ? f} will look for the overall
-  documentation methods for the function \code{f}.  Currently, this
-  means the documentation file containing the alias \code{f-methods}.
-
-  There are two different ways to look for documentation on a
-  particular method.  The first is to supply the \code{topic} argument
-  in the form of a function call, omitting the \code{type} argument.
-  The effect is to look for documentation on the method that would be
-  used if this function call were actually evaluated. See the examples
-  below.  If the function is not a generic (no S4 methods are defined
-  for it), the help reverts to documentation on the function name.
-
-  The \code{"?"} operator can also be called with \code{type} supplied
-  as \code{"method"}; in this case also, the \code{topic} argument is
-  a function call, but the arguments are now interpreted as specifying
-  the class of the argument, not the actual expression that will
-  appear in a real call to the function.  See the examples below.
-
-  The first approach will be tedious if the actual call involves
-  complicated expressions, and may be slow if the arguments take a
-  long time to evaluate.  The second approach avoids these
-  difficulties, but you do have to know what the classes of the actual
-  arguments will be when they are evaluated.
-
-  Both approaches make use of any inherited methods; the signature of
-  the method to be looked up is found by using \code{selectMethod}
-  (see the documentation for  \code{\link{getMethod}}).
-}
 \references{
   Becker, R. A., Chambers, J. M. and Wilks, A. R. (1988)
   \emph{The New S Language}.
   Wadsworth & Brooks/Cole.
 }
 \seealso{
-  \code{\link{help.search}()} or \code{\link{??}} for finding help pages on a vague
-  topic;
+  \code{\link[=Question]{?}} for shortcuts to help topics.
+  
+  \code{\link{help.search}()} or \code{\link{??}} for finding help pages
+  on a vague topic;
   \code{\link{help.start}()} which opens the HTML version of the \R
   help pages;
   \code{\link{library}()} for listing available packages and the
-  user-level objects they contain;
+  help objects they contain;
   \code{\link{data}()} for listing available data sets;
   \code{\link{methods}()}.
 
-  See \code{\link{prompt}()} to get a prototype for writing \code{help}
-  pages of private packages.
+  Use \code{\link{prompt}()} to get a prototype for writing \code{help}
+  pages of your own package.
 }
 \examples{
 help()
 help(help)              # the same
 
 help(lapply)
-?lapply                 # the same
 
 help("for")             # or ?"for", but quotes/backticks are needed
-?`+`
 
 help(package="splines") # get help even when package is not loaded
-
-data()                  # list all available data sets
-?women                  # information about data set "women"
 
 topi <- "women"
 help(topi)
@@ -236,26 +175,5 @@ help(topi)
 try(help("bs", try.all.packages=FALSE)) # reports not found (an error)
 help("bs", try.all.packages=TRUE)       # reports can be found
                                         # in package 'splines'
-
-\dontrun{
-require(methods)
-## define a S4 generic function and some methods
-combo <- function(x, y) c(x, y)
-setGeneric("combo")
-setMethod("combo", c("numeric", "numeric"), function(x, y) x+y)
-
-## assume we have written some documentation
-## for combo, and its methods ....
-
-?combo  ## produces the function documentation
-
-methods?combo  ## looks for the overall methods documentation
-
-method?combo("numeric", "numeric")  ## documentation for the method above
-
-?combo(1:10, rnorm(10))  ## ... the same method, selected according to
-                         ## the arguments (one integer, the other numeric)
-
-?combo(1:10, letters)    ## documentation for the default method
-}}
+}
 \keyword{documentation}

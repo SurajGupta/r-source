@@ -2,7 +2,7 @@ msgid ""
 msgstr ""
 "Project-Id-Version: R 2.3.0\n"
 "Report-Msgid-Bugs-To: bugs@r-project.org\n"
-"POT-Creation-Date: 2009-06-14 08:29\n"
+"POT-Creation-Date: 2009-10-09 08:04\n"
 "PO-Revision-Date: 2005-05-26 17:33+0900\n"
 "Last-Translator: Korean <uiami@hanmail.com>\n"
 "Language-Team: Korean <translation-team-ko@lists.sourceforge.net>\n"
@@ -44,8 +44,8 @@ msgstr ""
 msgid "directory '%s' does not contain R code"
 msgstr "디렉토리 '%s'는 R code를 포함하고 있지 않습니다"
 
-msgid "directory '%s' does not contain Rd sources"
-msgstr "디렉토리 '%s'는 Rd sources를 포함하고 있지 않습니다"
+msgid "directory '%s' does not contain Rd objects"
+msgstr "디렉토리 '%s'는 Rd 오브젝트를 포함하고 있지 않습니다"
 
 msgid ""
 "Functions/methods with usage in documentation object '%s' but not in code:"
@@ -93,12 +93,6 @@ msgstr ""
 msgid "name"
 msgstr ""
 
-msgid "code"
-msgstr ""
-
-msgid "docs"
-msgstr ""
-
 #, fuzzy
 msgid "Data codoc mismatches from documentation object '%s':"
 msgstr "파일 '%s'에서 인덱스 정보를 읽을수가 없습니다"
@@ -106,6 +100,12 @@ msgstr "파일 '%s'에서 인덱스 정보를 읽을수가 없습니다"
 #, fuzzy
 msgid "Variables in data frame '%s'"
 msgstr "'%s'를 작성할수가 없습니다"
+
+msgid "code"
+msgstr ""
+
+msgid "docs"
+msgstr ""
 
 #, fuzzy
 msgid "Undocumented arguments in documentation object '%s'"
@@ -195,85 +195,6 @@ msgstr ""
 msgid "Namespace dependencies not required:"
 msgstr ""
 
-msgid "Package Rd sources were installed without preserving Rd file names."
-msgstr "패키지 Rd 소스는 Rd 파일명을 저장하지 않고 인스톨 되었습니다"
-
-msgid "Please reinstall using a current version of R."
-msgstr "R의 현재 버전을 사용해 reinstall를 해주십시오"
-
-#, fuzzy
-msgid "Rd files with syntax errors:"
-msgstr "Rd 구문 에러가 검색되어졌습니다"
-
-msgid "Rd files with likely Rd problems:"
-msgstr ""
-
-msgid "Unaccounted top-level text in file '%s':"
-msgstr ""
-
-#, fuzzy
-msgid "Following section '%s'"
-msgstr "'%s'의 section를 무한했습니다"
-
-msgid "Rd files with unknown encoding:"
-msgstr ""
-
-#, fuzzy
-msgid "Rd files with invalid non-ASCII metadata:"
-msgstr "Rd 파일은 비어 있는 \\\\title를 가지고 있어야만 합니다"
-
-#, fuzzy
-msgid "Rd files with non-ASCII section titles:"
-msgstr "Rd 파일은 비어 있는 \\\\title를 가지고 있어야만 합니다"
-
-#, fuzzy
-msgid "Rd files with missing or empty '\\name':"
-msgstr "Rd 파일은 비어있지 않은 \\\\name를 가지고 있어야만 합니다"
-
-#, fuzzy
-msgid "Rd files with missing or empty '\\title':"
-msgstr "Rd 파일은 비어 있는 \\\\title를 가지고 있어야만 합니다"
-
-msgid "Rd files without '%s':"
-msgstr ""
-
-msgid "These entries are required in an Rd file."
-msgstr ""
-
-msgid "Rd files with duplicate '%s':"
-msgstr ""
-
-msgid "These entries must be unique in an Rd file."
-msgstr ""
-
-#, fuzzy
-msgid "Rd files with unknown sections:"
-msgstr "Rd 파일은 비어 있는 \\\\title를 가지고 있어야만 합니다"
-
-msgid "Rd files with non-standard keywords:"
-msgstr ""
-
-msgid ""
-"Each '\\keyword' entry should specify one of the standard keywords (as "
-"listed in file 'KEYWORDS' in the R documentation directory)."
-msgstr ""
-
-msgid "Rd files with duplicated alias '%s':"
-msgstr ""
-
-#, fuzzy
-msgid "Rd files with empty sections:"
-msgstr "Rd 파일은 비어 있는 \\\\title를 가지고 있어야만 합니다"
-
-msgid "Found invalid multi-byte character data."
-msgstr "무효의 다중 바이트 문자 데이타를 검색해냈습니다"
-
-msgid "Cannot re-encode because iconv is not available."
-msgstr "iconv가 이용 가능하지 않기 때문에 re-encode할수가 없습니다"
-
-msgid "Try running R in a single-byte locale."
-msgstr "단일 바이트 locale의 R를 실행해 주십시오"
-
 msgid "Malformed package name"
 msgstr ""
 
@@ -361,13 +282,13 @@ msgstr ""
 msgid "Non-standard license specification:"
 msgstr ""
 
-msgid "Invalid license file pointers: %s"
-msgstr ""
-
 msgid "Standardizable: %s"
 msgstr ""
 
 msgid "Standardized license specification:"
+msgstr ""
+
+msgid "Invalid license file pointers: %s"
 msgstr ""
 
 msgid "Non-portable flags in variable '%s':"
@@ -377,9 +298,23 @@ msgstr ""
 msgid "package must be loaded"
 msgstr "name space를 적재해서는 안됩니다"
 
+msgid "Obsolete package(s) %s in Rd xrefs"
+msgstr ""
+
+msgid "Package(s) unavailable to check Rd xrefs: %s"
+msgstr ""
+
+msgid "Unknown package(s) %s in Rd xrefs"
+msgstr ""
+
 #, fuzzy
 msgid "Missing link(s) in documentation object '%s':"
 msgstr "파일 '%s'에서 인덱스 정보를 읽을수가 없습니다"
+
+msgid ""
+"See the information in section 'Cross-references' of the 'Writing R "
+"Extensions' manual."
+msgstr ""
 
 msgid "found %s"
 msgstr ""
@@ -394,8 +329,11 @@ msgid "'library' or 'require' calls not declared from:"
 msgstr ""
 
 #, fuzzy
-msgid "*** error on file"
-msgstr "파일 '%s'에 있어서 에러를 해석합니다"
+msgid "Rd files with duplicated name '%s':"
+msgstr "Rd 파일은 비어 있는 \\\\title를 가지고 있어야만 합니다"
+
+msgid "Rd files with duplicated alias '%s':"
+msgstr ""
 
 msgid "Generics g in env ="
 msgstr ""
@@ -424,13 +362,6 @@ msgstr ""
 msgid ":"
 msgstr ""
 
-msgid "argument 'lines' must be a character vector"
-msgstr "인수'lines'는 문자 벡터이어야만 합니다"
-
-#, fuzzy
-msgid "encoding '%s' is not portable"
-msgstr "test '%s'는 이용 가능하지 않습니다"
-
 msgid "argument 'file' must be a character string or connection"
 msgstr "인수'file'는 문자열 또는 connection이어야만 합니다"
 
@@ -454,43 +385,9 @@ msgstr "Rd 파일은 비어 있는 \\\\title를 가지고 있어야만 합니다
 msgid "argument 'outFile' must be a character string or connection"
 msgstr "인수'outFile'는 문자열 또는 connection이어야만 합니다"
 
-msgid "directory '%s' does not contain Rd objects"
-msgstr "디렉토리 '%s'는 Rd 오브젝트를 포함하고 있지 않습니다"
-
-msgid "unterminated section '%s'"
-msgstr "'%s'의 section를 무한했습니다"
-
-msgid "incomplete section 'section{%s}'"
-msgstr "'section{%s}'의 section는 완전하지 않습니다"
-
-msgid "unterminated section 'section{%s}'"
-msgstr "'section{%s}' section는 무한했습니다"
-
-msgid "argument 'txt' must be a character string"
-msgstr "인수의'txt'는 문자열이어야만 합니다"
-
-msgid "unmatched \\item name in '\\item{%s'"
-msgstr "'\\\\item{%s'에서 \\\\item명은 match이 되지 않습니다"
-
-msgid "no \\item description for item '%s'"
-msgstr "item '%s'때문에 \\\\item 기술은 없습니다"
-
-msgid "unmatched \\item description for item '%s'"
-msgstr "item '%s'때문에 \\\\item 기술은 match이 되지 않습니다"
-
 #, fuzzy
-msgid "unclosed \\link"
-msgstr "\\\\dontrun는 닫히고 있지 않습니다"
-
-#, fuzzy
-msgid "unclosed \\%s"
-msgstr "\\\\dontrun는 닫히고 있지 않습니다"
-
-msgid "Rd syntax errors found"
-msgstr "Rd 구문 에러가 검색되어졌습니다"
-
-msgid "Syntax error in documentation object '%s':"
-msgstr "파일 '%s'에서 인덱스 정보를 읽을수가 없습니다"
+msgid "you must specify 'dir' or 'files'"
+msgstr "'package' ,'dir' 또는 'file'를 지정하지 않으면 되지 않습니다"
 
 msgid "cannot deal with Rd objects with missing/empty names"
 msgstr "실패 또는 비어있는 이름을 구성된 Rd 오브젝트에 대처할 수가 없다"
@@ -498,13 +395,14 @@ msgstr "실패 또는 비어있는 이름을 구성된 Rd 오브젝트에 대처
 msgid "missing/empty \\name field in Rd file(s)"
 msgstr "Rd 파일에서 실패한 필드 또는 비어 있는 필드가 있습니다"
 
-msgid "should not get here"
-msgstr ""
-
-msgid "Rd2HTML is designed for Rd version 2 or higher."
-msgstr ""
+#, fuzzy
+msgid "No help on %s found in RdDB %s"
+msgstr "이것은 패키지 'base'를 위해서 사용할수가 없습니다"
 
 msgid "more than one \\examples section, using the first"
+msgstr ""
+
+msgid "invalid value for '%s' : %s"
 msgstr ""
 
 msgid "unable to create temp directory"
@@ -610,31 +508,71 @@ msgstr ""
 msgid "ERROR: this R is version %s, required is R %s %s"
 msgstr ""
 
+msgid "No files in this directory"
+msgstr ""
+
+msgid "No results found"
+msgstr ""
+
+#, fuzzy
+msgid "No help found for topic %s in any package."
+msgstr "이것은 패키지 'base'를 위해서 사용할수가 없습니다"
+
+msgid "Help on topic '%s' was found in the following packages:"
+msgstr ""
+
+#, fuzzy
+msgid "No package index found for package %s"
+msgstr "이것은 패키지 'base'를 위해서 사용할수가 없습니다"
+
+#, fuzzy
+msgid "No package named %s could be found"
+msgstr "name space를 적재해서는 안됩니다"
+
+#, fuzzy
+msgid "No help found for package %s"
+msgstr "이것은 패키지 'base'를 위해서 사용할수가 없습니다"
+
+#, fuzzy
+msgid "Link %s in package %s could not be located"
+msgstr "name space를 적재해서는 안됩니다"
+
+msgid "Unable to locate help document %s in package %s"
+msgstr ""
+
+msgid "No docs found for package %s"
+msgstr ""
+
+#, fuzzy
+msgid "URL %s was not found"
+msgstr "패키지 '%s'가 검색되지 않습니다"
+
+msgid "httpd server disabled by R_DISABLE_HTTPD"
+msgstr ""
+
+msgid "server already running"
+msgstr ""
+
+msgid "server could not be started on an earlier attempt"
+msgstr ""
+
+msgid "no running server to stop"
+msgstr ""
+
+msgid "starting httpd help server ..."
+msgstr ""
+
+msgid "done"
+msgstr "행해졌습니다"
+
+msgid "failed to start the httpd server"
+msgstr ""
+
 msgid "cannot read index information in file '%s'"
 msgstr "파일 '%s'에서 인덱스 정보를 읽을 수 있지 않습니다"
 
 msgid "ERROR:"
 msgstr ""
-
-msgid "for package"
-msgstr ""
-
-msgid "incorrect Contains metadata for bundle"
-msgstr ""
-
-#, fuzzy
-msgid ": there is no package '"
-msgstr "'%s'라고 불리는 패키지는 없습니다"
-
-msgid "skipping installation of bundle"
-msgstr ""
-
-msgid "problem installing per-package DESCRIPTION files"
-msgstr ""
-
-#, fuzzy
-msgid "ERROR unable to create"
-msgstr "작성할수가 없습니다"
 
 #, fuzzy
 msgid "packaged installation of"
@@ -643,39 +581,9 @@ msgstr "패키지는 R code를 포함하지 않습니다"
 msgid "as"
 msgstr ""
 
-msgid ".gz"
-msgstr ""
-
 msgid ""
 "'cleanup' exists but is not executable -- see the 'R Installation and "
 "Adminstration Manual'"
-msgstr ""
-
-msgid "about to run"
-msgstr ""
-
-msgid "R CMD SHLIB"
-msgstr ""
-
-msgid "Using auto-selected zip options '"
-msgstr ""
-
-msgid "--use-zip-data"
-msgstr ""
-
-msgid "--use-zip-help"
-msgstr ""
-
-msgid "**********************************************"
-msgstr ""
-
-msgid "WARNING: this package has a configure script"
-msgstr ""
-
-msgid "It probably needs manual configuration"
-msgstr ""
-
-msgid "configure command:"
 msgstr ""
 
 msgid ""
@@ -700,23 +608,7 @@ msgstr ""
 msgid "empty 'data' directory"
 msgstr ""
 
-msgid "use of file 'install.R' is no longer supported"
-msgstr ""
-
-msgid "use of file 'R_PROFILE.R' is no longer supported"
-msgstr ""
-
-msgid "field 'SaveImage' is defunct: please remove it"
-msgstr ""
-
-#, fuzzy
-msgid "cannot create temporary directory"
-msgstr "디렉토리 '%s'를 작성할 수가 없습니다"
-
-msgid "Use of --with-package-versions is defunct"
-msgstr ""
-
-msgid "--auto-zip' is for Windows only"
+msgid "'--auto-zip' is for Windows only"
 msgstr ""
 
 msgid "-l option without value"
@@ -726,17 +618,8 @@ msgid "Warning: unknown option"
 msgstr ""
 
 #, fuzzy
-msgid "processing"
-msgstr "분석 '%s'"
-
-msgid "a file"
-msgstr ""
-
-msgid "unknown package layout"
-msgstr ""
-
-msgid "a directory"
-msgstr ""
+msgid "cannot create temporary directory"
+msgstr "디렉토리 '%s'를 작성할 수가 없습니다"
 
 msgid "invalid package"
 msgstr ""
@@ -769,52 +652,28 @@ msgstr "temp 디렉토리를 작성할수가 없습니다"
 msgid "building a fake installation is disallowed"
 msgstr ""
 
-msgid "*** 'hhc.exe' not found: not building CHM help"
-msgstr ""
-
 msgid "-o option without value"
 msgstr ""
 
 msgid "Converting Rd files to LaTeX ..."
 msgstr ""
 
-msgid "this package does not have either a"
+msgid "finding HTML links ..."
 msgstr ""
 
-msgid "latex"
+msgid "finding level-2 HTML links ..."
 msgstr ""
 
-msgid "or a"
+msgid "-t option without value"
 msgstr ""
 
-msgid "man"
+msgid "exactly one Rd file must be specified"
 msgstr ""
 
-msgid "directory"
+msgid "no 'type' specified"
 msgstr ""
 
-msgid "no validly-named files in the"
-msgstr ""
-
-msgid "file"
-msgstr ""
-
-msgid "lacks a header: skipping"
-msgstr ""
-
-msgid "there are no help pages in this package"
-msgstr ""
-
-msgid "skipping repeated alias(es)"
-msgstr ""
-
-msgid "in file"
-msgstr ""
-
-msgid "there is a 'man' dir but no help pages in this package"
-msgstr ""
-
-msgid "problem in converting"
+msgid "'type' must be one of 'txt', 'html', 'latex' or 'example'"
 msgstr ""
 
 msgid "Bundle package:"
@@ -825,9 +684,6 @@ msgstr "'%s'라고 불리는 패키지는 없습니다"
 
 msgid "name space must not be loaded."
 msgstr "name space를 적재해서는 안됩니다"
-
-msgid "package '%s' has no .rda file"
-msgstr "패키지 '%s'는 .rdd 파일을 가지고 있지 않습니다"
 
 msgid "package seems to be using lazy loading for data already"
 msgstr ""
@@ -852,6 +708,11 @@ msgstr "패키지는 R code를 포함하지 않습니다"
 msgid "package seems to be using lazy loading already"
 msgstr "패키지는 이미 로드 하는것을 사용하고 있는 것처럼 보입니다"
 
+msgid ""
+"Cannot process chunk/lines:\n"
+"%s"
+msgstr ""
+
 #, fuzzy
 msgid "cannot update HTML package index"
 msgstr "source은 code로 패키지 할수가 없습니다"
@@ -863,13 +724,7 @@ msgstr ""
 msgid "cannot create HTML package index"
 msgstr "source은 code로 패키지 할수가 없습니다"
 
-msgid "multiple \\encoding lines in file"
-msgstr ""
-
 msgid "found encoding"
-msgstr ""
-
-msgid "non-UTF-8 multibyte locales are not supported -- reencoding to UTF-8"
 msgstr ""
 
 msgid "argument 'pkg' must be of length 1"
@@ -893,6 +748,9 @@ msgid "'file' must be a character string or connection"
 msgstr "인수'file'는 문자열 또는 connection이어야만 합니다"
 
 msgid "unimplemented encoding"
+msgstr ""
+
+msgid "file"
 msgstr ""
 
 msgid "cannot be opened"
@@ -920,6 +778,9 @@ msgstr ""
 msgid "OK"
 msgstr ""
 
+msgid "no examples found"
+msgstr ""
+
 msgid "Running specific tests for package"
 msgstr ""
 
@@ -929,13 +790,13 @@ msgstr ""
 msgid "Running vignettes for package"
 msgstr ""
 
-msgid "Creating"
-msgstr ""
-
 msgid "creation of"
 msgstr ""
 
 msgid "failed"
+msgstr ""
+
+msgid "no parsed files found"
 msgstr ""
 
 msgid "creating"
@@ -990,12 +851,6 @@ msgstr ""
 msgid "test '%s' is not available"
 msgstr "test '%s'는 이용 가능하지 않습니다"
 
-msgid "no or more than one match"
-msgstr "하나를 넘어가는 match이 없습니다"
-
-msgid "'iconv' is required"
-msgstr ""
-
 msgid "argument 'x' must be a character vector"
 msgstr "인수 'x'는 문자 벡터이어야만 합니다"
 
@@ -1038,9 +893,6 @@ msgstr "호출 sequence:"
 msgid "Processing packages:"
 msgstr "패키지 처리"
 
-msgid "done"
-msgstr "행해졌습니다"
-
 msgid "parsing '%s'"
 msgstr "분석 '%s'"
 
@@ -1063,8 +915,98 @@ msgid_plural "Found .Internal calls in the following functions:"
 msgstr[0] ""
 
 #, fuzzy
-#~ msgid "--- running texi2dvi on vignettes"
-#~ msgstr "'%s'에서 texi2dvi를 실행하는 것은 실패했습니다"
+#~ msgid "Suspect link(s) in documentation object '%s':"
+#~ msgstr "파일 '%s'에서 인덱스 정보를 읽을수가 없습니다"
 
-#~ msgid "unable to run pdflatex on '%s'"
-#~ msgstr "'%s'에서 pdflatex를 실행할 수 없습니다"
+#, fuzzy
+#~ msgid "No package of named %s could be found"
+#~ msgstr "name space를 적재해서는 안됩니다"
+
+#~ msgid "package '%s' has no .rda file"
+#~ msgstr "패키지 '%s'는 .rdd 파일을 가지고 있지 않습니다"
+
+#, fuzzy
+#~ msgid "Rd files with syntax errors:"
+#~ msgstr "Rd 구문 에러가 검색되어졌습니다"
+
+#, fuzzy
+#~ msgid "Following section '%s'"
+#~ msgstr "'%s'의 section를 무한했습니다"
+
+#, fuzzy
+#~ msgid "Rd files with invalid non-ASCII metadata:"
+#~ msgstr "Rd 파일은 비어 있는 \\\\title를 가지고 있어야만 합니다"
+
+#, fuzzy
+#~ msgid "Rd files with non-ASCII section titles:"
+#~ msgstr "Rd 파일은 비어 있는 \\\\title를 가지고 있어야만 합니다"
+
+#, fuzzy
+#~ msgid "Rd files with missing or empty '\\name':"
+#~ msgstr "Rd 파일은 비어있지 않은 \\\\name를 가지고 있어야만 합니다"
+
+#, fuzzy
+#~ msgid "Rd files with missing or empty '\\title':"
+#~ msgstr "Rd 파일은 비어 있는 \\\\title를 가지고 있어야만 합니다"
+
+#, fuzzy
+#~ msgid "Rd files with unknown sections:"
+#~ msgstr "Rd 파일은 비어 있는 \\\\title를 가지고 있어야만 합니다"
+
+#~ msgid "directory '%s' does not contain Rd sources"
+#~ msgstr "디렉토리 '%s'는 Rd sources를 포함하고 있지 않습니다"
+
+#~ msgid "Package Rd sources were installed without preserving Rd file names."
+#~ msgstr "패키지 Rd 소스는 Rd 파일명을 저장하지 않고 인스톨 되었습니다"
+
+#~ msgid "Please reinstall using a current version of R."
+#~ msgstr "R의 현재 버전을 사용해 reinstall를 해주십시오"
+
+#, fuzzy
+#~ msgid "*** error on file"
+#~ msgstr "파일 '%s'에 있어서 에러를 해석합니다"
+
+#~ msgid "argument 'lines' must be a character vector"
+#~ msgstr "인수'lines'는 문자 벡터이어야만 합니다"
+
+#, fuzzy
+#~ msgid "encoding '%s' is not portable"
+#~ msgstr "test '%s'는 이용 가능하지 않습니다"
+
+#~ msgid "unterminated section '%s'"
+#~ msgstr "'%s'의 section를 무한했습니다"
+
+#~ msgid "incomplete section 'section{%s}'"
+#~ msgstr "'section{%s}'의 section는 완전하지 않습니다"
+
+#~ msgid "unterminated section 'section{%s}'"
+#~ msgstr "'section{%s}' section는 무한했습니다"
+
+#~ msgid "argument 'txt' must be a character string"
+#~ msgstr "인수의'txt'는 문자열이어야만 합니다"
+
+#~ msgid "unmatched \\item name in '\\item{%s'"
+#~ msgstr "'\\\\item{%s'에서 \\\\item명은 match이 되지 않습니다"
+
+#~ msgid "no \\item description for item '%s'"
+#~ msgstr "item '%s'때문에 \\\\item 기술은 없습니다"
+
+#~ msgid "unmatched \\item description for item '%s'"
+#~ msgstr "item '%s'때문에 \\\\item 기술은 match이 되지 않습니다"
+
+#, fuzzy
+#~ msgid "unclosed \\link"
+#~ msgstr "\\\\dontrun는 닫히고 있지 않습니다"
+
+#, fuzzy
+#~ msgid "unclosed \\%s"
+#~ msgstr "\\\\dontrun는 닫히고 있지 않습니다"
+
+#~ msgid "Rd syntax errors found"
+#~ msgstr "Rd 구문 에러가 검색되어졌습니다"
+
+#~ msgid "Syntax error in documentation object '%s':"
+#~ msgstr "파일 '%s'에서 인덱스 정보를 읽을수가 없습니다"
+
+#~ msgid "no or more than one match"
+#~ msgstr "하나를 넘어가는 match이 없습니다"

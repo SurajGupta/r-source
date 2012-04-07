@@ -38,23 +38,38 @@ function(topic, package = NULL, lib.loc = NULL, local = FALSE,
     }
     pkg <- basename(packagePath)
     lib <- dirname(packagePath)
-    zfile <- zip.file.extract(file, "Rex.zip")
-    if(zfile != file) on.exit(unlink(zfile))
-    if(!file.exists(zfile)) {
-	warning(gettextf("'%s' has a help file but no examples file", topic),
-		domain = NA)
-	return(invisible())
+    encoding <- NULL
+    ## first step, on-demand conversion, then look for (possibly zipped) file
+    RdDB <- file.path(packagePath, "help", pkg)
+    if(file.exists(paste(RdDB, "rdx", sep="."))) {
+        zfile <- tempfile("Rex")
+        encoding <- "UTF-8"
+        ## FIXME: use outputEncoding="" ?
+        ## FUTURE: we already have the parsed file ....
+        tools::Rd2ex(tools:::fetchRdDB(RdDB, sub("\\.R$", "", basename(file))),
+                     zfile)
+    } else {
+	Rexdir <- file.path(tempdir(), "Rex")
+	dir.create(Rexdir, showWarnings=FALSE)
+	zfile <- zip.file.extract(file, "Rex.zip", dir=Rexdir)
     }
+    if(!file.exists(zfile)) {
+        warning(gettextf("'%s' has a help file but no examples", topic),
+                domain = NA)
+        return(invisible())
+    }
+    if(zfile != file) on.exit(unlink(zfile))
     if(pkg != "base")
 	library(pkg, lib.loc = lib, character.only = TRUE)
     if(!is.logical(setRNG) || setRNG) {
 	## save current RNG state:
 	if((exists(".Random.seed", envir = .GlobalEnv))) {
 	    oldSeed <- get(".Random.seed", envir = .GlobalEnv)
-	    on.exit(assign(".Random.seed", oldSeed, envir = .GlobalEnv))
+	    on.exit(assign(".Random.seed", oldSeed, envir = .GlobalEnv),
+                    add = TRUE)
 	} else {
 	    oldRNG <- RNGkind()
-	    on.exit(RNGkind(oldRNG[1L], oldRNG[2L]))
+	    on.exit(RNGkind(oldRNG[1L], oldRNG[2L]), add = TRUE)
 	}
 	## set RNG
 	if(is.logical(setRNG)) { # i.e. == TRUE: use the same as R CMD check
@@ -63,15 +78,17 @@ function(topic, package = NULL, lib.loc = NULL, local = FALSE,
 	    set.seed(1)
 	} else eval(setRNG)
     }
-    encoding <-
-	if(length(enc <- localeToCharset()) > 1L)
-	    c(enc[-length(enc)], "latin1")
-	else ""
-    ## peek at the file, but note we can't usefully translate to C.
     zz <- readLines(zfile, n=1L)
-    if(length(grep("^### Encoding: ", zz))  &&
-       !identical(Sys.getlocale("LC_CTYPE"), "C"))
-	encoding <- substring(zz, 15L)
+    if(is.null(encoding)) {
+        encoding <-
+            if(length(enc <- localeToCharset()) > 1L)
+                c(enc[-length(enc)], "latin1")
+            else ""
+        ## peek at the file, but note we can't usefully translate to C.
+        if(length(grep("^### Encoding: ", zz))  &&
+           !identical(Sys.getlocale("LC_CTYPE"), "C"))
+            encoding <- substring(zz, 15L)
+    }
     skips <- 0L
     if (echo) {
 	## skip over header

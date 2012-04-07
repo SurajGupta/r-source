@@ -1,6 +1,6 @@
 % File src/library/stats/man/dendrogram.Rd
 % Part of the R package, http://www.R-project.org
-% Copyright 1995-2007 R Core Development Team
+% Copyright 1995-2009 R Core Development Team
 % Distributed under GPL 2 or later
 
 \name{dendrogram}
@@ -99,8 +99,8 @@ is.leaf(object)
     other methods.}
   \item{digits}{integer specifying the precision for printing, see
     \code{\link{print.default}}.}
-  \item{max.level, digits.d, give.attr, wid, nest.lev, indent.str}{%
-    arguments to \code{str}, see \code{\link{str.default}()}.  Note that
+  \item{max.level, digits.d, give.attr, wid, nest.lev, indent.str}{arguments
+    to \code{str}, see \code{\link{str.default}()}.  Note that
     \code{give.attr = FALSE} still shows \code{height} and \code{members}
     attributes for each node.}
   \item{stem}{a string used for \code{str()} specifying the \emph{stem}
@@ -196,8 +196,7 @@ plot(dend1, nodePar=list(pch = 2:1,cex=.4*2:1, col = 2:3),
 
 dend2 <- cut(dend1, h=70)
 plot(dend2$upper)
-## leafs are wrong horizontally:
-%% FIXME ?!?
+## leaves are wrong horizontally:
 plot(dend2$upper, nodePar=list(pch = c(1,7), col = 2:1))
 ##  dend2$lower is *NOT* a dendrogram, but a list of .. :
 plot(dend2$lower[[3]], nodePar=list(col=4), horiz = TRUE, type = "tr")

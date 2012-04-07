@@ -20,23 +20,7 @@
 getNamespace <- function(name) {
     ns <- .Internal(getRegisteredNamespace(as.name(name)))
     if (! is.null(ns)) ns
-    else tryCatch(loadNamespace(name),
-		  error = function(e)
-	      {
-		  ## This assignment is needed because 'name' contains
-		  ## version as second component when called from internal
-		  ## serialization code
-		  name <- name[1L]
-		  if (name %in% c("ctest","eda","modreg","mva","nls",
-				  "stepfun","ts")) {
-		      old <- "stats"
-		      warning(gettextf("package '%s' has been merged into '%s'",
-				       name, old),
-			      call. = FALSE, domain = NA)
-		      return(getNamespace("stats"))
-		  }
-		  else stop(e)
-	      })
+    else tryCatch(loadNamespace(name), error = function(e) stop(e))
 }
 
 loadedNamespaces <- function()
@@ -433,7 +417,7 @@ loadNamespace <- function (package, lib.loc = NULL,
             expClasses <- nsInfo$exportClasses
             ##we take any pattern, but check to see if the matches are classes
             pClasses <- character(0L)
-            aClasses <- methods::getClasses(ns)
+            aClasses <- methods:::getClasses(ns)
             for (p in nsInfo$exportClassPatterns) {
                 pClasses <- c(aClasses[grep(p, aClasses)], pClasses)
             }
@@ -497,7 +481,7 @@ loadNamespace <- function (package, lib.loc = NULL,
                 if(length(pm)) {
                     prim <- logical(length(pm))
                     for(i in seq_along(prim)) {
-                        f <- methods::getFunction(pm[[i]], FALSE, FALSE, ns)
+                        f <- methods:::getFunction(pm[[i]], FALSE, FALSE, ns)
                         prim[[i]] <- is.primitive(f)
                     }
                     expMethods <- c(expMethods, pm[prim])
@@ -754,7 +738,7 @@ namespaceImportFrom <- function(self, ns, vars, generics, packages) {
     else impvars <- vars
     impvars <- makeImportExportNames(impvars)
     impnames <- names(impvars)
-    if (any(duplicated(impnames))) {
+    if (anyDuplicated(impnames)) {
         stop("duplicate import names ",
              paste(impnames[duplicated(impnames)], collapse = ", "))
     }
@@ -813,12 +797,22 @@ namespaceImportFrom <- function(self, ns, vars, generics, packages) {
 	}
     }
     for (n in impnames)
-        if (exists(n, envir = impenv, inherits = FALSE))
-            warning(msg, " ", n)
+	if (exists(n, envir = impenv, inherits = FALSE)) {
+	    if (.isMethodsDispatchOn() && methods:::isGeneric(n, ns)) {
+		## warn only if generic overwrites a function which
+		## it was not derived from
+		genNs <- methods:::slot(get(n, envir = ns), "package")
+		genImpenv <- environmentName(environment(get(n, envir = impenv)))
+		if (!identical(genNs, genImpenv) ||
+		    ## warning if generic overwrites another generic
+		    methods:::isGeneric(n, impenv))
+		    warning(msg, " ", n)
+	    } else warning(msg, " ", n)
+	}
     importIntoEnv(impenv, impnames, ns, impvars)
     if (register) {
-        if (missing(vars)) addImports(self, ns, TRUE)
-        else addImports(self, ns, impvars)
+        addImports(self, ns,
+                   if (missing(vars)) TRUE else impvars)
     }
 }
 
@@ -1168,7 +1162,7 @@ parseNamespaceFile <- function(package, package.lib, mustExist = TRUE)
                    nS3 <<- nS3 + 1L
                    if(nS3 > 500L)
                        stop("too many 'S3method' directives", call. = FALSE)
-                   S3methods[nS3, 1L:length(spec)] <<- asChar(spec)
+                   S3methods[nS3, seq_along(spec)] <<- asChar(spec)
                },
                stop(gettextf("unknown namespace directive: %s", deparse(e)),
                     call. = FALSE, domain = NA)
@@ -1196,8 +1190,8 @@ registerS3method <- function(genname, class, method, envir = parent.frame()) {
     defenv <- if(genname %in% groupGenerics) .BaseNamespaceEnv
     else {
         genfun <- get(genname, envir = envir)
-        if(.isMethodsDispatchOn() && methods::is(genfun, "genericFunction"))
-            genfun <- methods::slot(genfun, "default")@methods$ANY
+        if(.isMethodsDispatchOn() && methods:::is(genfun, "genericFunction"))
+            genfun <- methods:::slot(genfun, "default")@methods$ANY
         if (typeof(genfun) == "closure") environment(genfun)
         else .BaseNamespaceEnv
     }
@@ -1252,8 +1246,8 @@ registerS3methods <- function(info, package, env)
                 stop(gettextf("object '%s' not found whilst loading namespace '%s'",
                               genname, package), call. = FALSE, domain = NA)
             genfun <- get(genname, envir = parent.env(envir))
-            if(.isMethodsDispatchOn() && methods::is(genfun, "genericFunction")) {
-                genfun <- methods::slot(genfun, "default")@methods$ANY
+            if(.isMethodsDispatchOn() && methods:::is(genfun, "genericFunction")) {
+                genfun <- methods:::slot(genfun, "default")@methods$ANY
                 warning(gettextf("found an S4 version of '%s' so it has not been imported correctly",
                                  genname), call. = FALSE, domain = NA)
             }
@@ -1289,7 +1283,7 @@ registerS3methods <- function(info, package, env)
     if(.isMethodsDispatchOn())
         for(i in which(localGeneric)) {
             genfun <- get(Info[i, 1], envir = env)
-            if(methods::is(genfun, "genericFunction")) {
+            if(methods:::is(genfun, "genericFunction")) {
                 localGeneric[i] <- FALSE
                 registerS3method(Info[i, 1], Info[i, 2], Info[i, 3], env)
             }

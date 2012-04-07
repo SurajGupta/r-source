@@ -279,7 +279,6 @@ static void reset_inWarning(void *data)
     inWarning = 0;
 }
 
-#ifdef SUPPORT_MBCS
 #include <R_ext/rlocale.h>
 
 static int wd(const char * buf)
@@ -293,7 +292,6 @@ static int wd(const char * buf)
     }
     return nc;
 }
-#endif
 
 static void vwarningcall_dflt(SEXP call, const char *format, va_list ap)
 {
@@ -352,11 +350,9 @@ static void vwarningcall_dflt(SEXP call, const char *format, va_list ap)
 	    strcat(buf, " [... truncated]");
 	if(dcall[0] == '\0')
 	    REprintf(_("Warning: %s\n"), buf);
-#ifdef SUPPORT_MBCS
 	else if(mbcslocale &&
 		18 + wd(dcall) + wd(buf) <= LONGWARN)
 	    REprintf(_("Warning in %s : %s\n"), dcall, buf);
-#endif
 	else if(18+strlen(dcall)+strlen(buf) <= LONGWARN)
 	    REprintf(_("Warning in %s : %s\n"), dcall, buf);
 	else
@@ -463,7 +459,6 @@ void PrintWarnings(void)
 	else {
 	    const char *dcall, *sep = " ", *msg = CHAR(STRING_ELT(names, 0));
 	    dcall = CHAR(STRING_ELT(deparse1s(VECTOR_ELT(R_Warnings, 0)), 0));
-#ifdef SUPPORT_MBCS
 	    if (mbcslocale) {
 		int msgline1;
 		char *p = strchr(msg, '\n');
@@ -473,9 +468,7 @@ void PrintWarnings(void)
 		    *p = '\n';
 		} else msgline1 = wd(msg);
 		if (6 + wd(dcall) + msgline1 > LONGWARN) sep = "\n  ";
-	    } else
-#endif
-	    {
+	    } else {
 		int msgline1 = strlen(msg);
 		char *p = strchr(msg, '\n');
 		if (p) msgline1 = (int)(p - msg);
@@ -492,7 +485,6 @@ void PrintWarnings(void)
 	    else {
 		const char *dcall, *sep = " ", *msg = CHAR(STRING_ELT(names, i));
 		dcall = CHAR(STRING_ELT(deparse1s(VECTOR_ELT(R_Warnings, i)), 0));
-#ifdef SUPPORT_MBCS
 		if (mbcslocale) {
 		    int msgline1;
 		    char *p = strchr(msg, '\n');
@@ -502,9 +494,7 @@ void PrintWarnings(void)
 			*p = '\n';
 		    } else msgline1 = wd(msg);
 		    if (10 + wd(dcall) + msgline1 > LONGWARN) sep = "\n  ";
-		} else
-#endif
-		{
+		} else {
 		    int msgline1 = strlen(msg);
 		    char *p = strchr(msg, '\n');
 		    if (p) msgline1 = (int)(p - msg);
@@ -595,7 +585,6 @@ static void verrorcall_dflt(SEXP call, const char *format, va_list ap)
 	dcall = CHAR(STRING_ELT(deparse1s(call), 0));
 	if (len + strlen(dcall) + strlen(tmp) < BUFSIZE) {
 	    sprintf(errbuf, "%s%s%s", head, dcall, mid);
-#ifdef SUPPORT_MBCS
 	    if (mbcslocale) {
 		int msgline1;
 		char *p = strchr(tmp, '\n');
@@ -605,9 +594,7 @@ static void verrorcall_dflt(SEXP call, const char *format, va_list ap)
 		    *p = '\n';
 		} else msgline1 = wd(tmp);
 		if (14 + wd(dcall) + wd(tmp) > LONGWARN) strcat(errbuf, tail);
-	    } else
-#endif
-	    {
+	    } else {
 		int msgline1 = strlen(tmp);
 		char *p = strchr(tmp, '\n');
 		if (p) msgline1 = (int)(p - tmp);
@@ -1294,6 +1281,8 @@ SEXP R_GetTraceback(int skip)
 		skip--;
 	    else {
 		SETCAR(t, deparse1(c->call, 0, DEFAULTDEPARSE));
+		if (c->srcref && !isNull(c->srcref)) 
+		    setAttrib(CAR(t), R_SrcrefSymbol, duplicate(c->srcref));
 		t = CDR(t);
 	    }
 	}
@@ -1450,16 +1439,15 @@ static SEXP findSimpleErrorHandler(void)
 static void vsignalWarning(SEXP call, const char *format, va_list ap)
 {
     char buf[BUFSIZE];
-    SEXP hooksym, quotesym, hcall, qcall;
+    SEXP hooksym, hcall, qcall;
 
     hooksym = install(".signalSimpleWarning");
-    quotesym = install("quote");
     if (SYMVALUE(hooksym) != R_UnboundValue &&
-	SYMVALUE(quotesym) != R_UnboundValue) {
-	PROTECT(qcall = LCONS(quotesym, LCONS(call, R_NilValue)));
+	SYMVALUE(R_QuoteSymbol) != R_UnboundValue) {
+	PROTECT(qcall = LCONS(R_QuoteSymbol, LCONS(call, R_NilValue)));
 	PROTECT(hcall = LCONS(qcall, R_NilValue));
 	Rvsnprintf(buf, BUFSIZE - 1, format, ap);
-	hcall = LCONS(ScalarString(mkChar(buf)), hcall);
+	hcall = LCONS(mkString(buf), hcall);
 	PROTECT(hcall = LCONS(hooksym, hcall));
 	eval(hcall, R_GlobalEnv);
 	UNPROTECT(3);
@@ -1495,16 +1483,16 @@ static void vsignalError(SEXP call, const char *format, va_list ap)
 	    if (ENTRY_HANDLER(entry) == R_RestartToken)
 		return; /* go to default error handling; do not reset stack */
 	    else {
-		SEXP hooksym, quotesym, hcall, qcall;
+		SEXP hooksym, hcall, qcall;
 		/* protect oldstack here, not outside loop, so handler
 		   stack gets unwound in case error is protect stack
 		   overflow */
 		PROTECT(oldstack);
 		hooksym = install(".handleSimpleError");
-		quotesym = install("quote");
-		PROTECT(qcall = LCONS(quotesym, LCONS(call, R_NilValue)));
+		PROTECT(qcall = LCONS(R_QuoteSymbol,
+				      LCONS(call, R_NilValue)));
 		PROTECT(hcall = LCONS(qcall, R_NilValue));
-		hcall = LCONS(ScalarString(mkChar(buf)), hcall);
+		hcall = LCONS(mkString(buf), hcall);
 		hcall = LCONS(ENTRY_HANDLER(entry), hcall);
 		PROTECT(hcall = LCONS(hooksym, hcall));
 		eval(hcall, R_GlobalEnv);
@@ -1640,11 +1628,11 @@ R_InsertRestartHandlers(RCNTXT *cptr, Rboolean browser)
     entry = mkHandlerEntry(klass, rho, R_RestartToken, rho, R_NilValue, TRUE);
     R_HandlerStack = CONS(entry, R_HandlerStack);
     UNPROTECT(1);
-    PROTECT(name = ScalarString(mkChar(browser ? "browser" : "tryRestart")));
+    PROTECT(name = mkString(browser ? "browser" : "tryRestart"));
     PROTECT(entry = allocVector(VECSXP, 2));
     PROTECT(SET_VECTOR_ELT(entry, 0, name));
     SET_VECTOR_ELT(entry, 1, R_MakeExternalPtr(cptr, R_NilValue, R_NilValue));
-    setAttrib(entry, R_ClassSymbol, ScalarString(mkChar("restart")));
+    setAttrib(entry, R_ClassSymbol, mkString("restart"));
     R_RestartStack = CONS(entry, R_RestartStack);
     UNPROTECT(3);
 }
@@ -1700,11 +1688,11 @@ SEXP attribute_hidden do_getRestart(SEXP call, SEXP op, SEXP args, SEXP rho)
     else if (i == 1) {
 	/**** need to pre-allocate */
 	SEXP name, entry;
-	PROTECT(name = ScalarString(mkChar("abort")));
+	PROTECT(name = mkString("abort"));
 	entry = allocVector(VECSXP, 2);
 	SET_VECTOR_ELT(entry, 0, name);
 	SET_VECTOR_ELT(entry, 1, R_NilValue);
-	setAttrib(entry, R_ClassSymbol, ScalarString(mkChar("restart")));
+	setAttrib(entry, R_ClassSymbol, mkString("restart"));
 	UNPROTECT(1);
 	return entry;
     }
@@ -1794,9 +1782,9 @@ SEXP attribute_hidden
 do_interruptsSuspended(SEXP call, SEXP op, SEXP args, SEXP env)
 {
     int orig_value = R_interrupts_suspended;
-    if (args != R_NilValue) 
+    if (args != R_NilValue)
 	R_interrupts_suspended = asLogical(CAR(args));
     return ScalarLogical(orig_value);
 }
-	
-	
+
+

@@ -130,8 +130,7 @@
 
 static void setActiveValue(SEXP fun, SEXP val)
 {
-    SEXP s_quote = install("quote");
-    SEXP arg = LCONS(s_quote, LCONS(val, R_NilValue));
+    SEXP arg = LCONS(R_QuoteSymbol, LCONS(val, R_NilValue));
     SEXP expr = LCONS(fun, LCONS(arg, R_NilValue));
     PROTECT(expr);
     eval(expr, R_GlobalEnv);
@@ -1228,7 +1227,7 @@ SEXP ddfindVar(SEXP symbol, SEXP rho)
 	    error(_("The ... list does not contain %d elements"), i);
     }
     else error(_("..%d used in an incorrect context, no ... to look in"), i);
-    
+
     return R_NilValue;
 }
 
@@ -2114,7 +2113,7 @@ SEXP attribute_hidden do_attach(SEXP call, SEXP op, SEXP args, SEXP env)
 	setAttrib(s, R_ClassSymbol, getAttrib(HASHTAB(s), R_ClassSymbol));
     }
 
-    setAttrib(s, install("name"), name);
+    setAttrib(s, R_NameSymbol, name);
     for (t = R_GlobalEnv; ENCLOS(t) != R_BaseEnv && pos > 2; t = ENCLOS(t))
 	pos--;
 
@@ -2226,7 +2225,7 @@ SEXP attribute_hidden do_search(SEXP call, SEXP op, SEXP args, SEXP env)
     SET_STRING_ELT(ans, n-1, mkChar("package:base"));
     i = 1;
     for (t = ENCLOS(R_GlobalEnv); t != R_BaseEnv ; t = ENCLOS(t)) {
-	name = getAttrib(t, install("name"));
+	name = getAttrib(t, R_NameSymbol);
 	if (!isString(name) || length(name) < 1)
 	    SET_STRING_ELT(ans, i, mkChar("(unknown)"));
 	else
@@ -2510,11 +2509,11 @@ SEXP attribute_hidden do_env2list(SEXP call, SEXP op, SEXP args, SEXP rho)
  * results in a list.
  * Equivalent to lapply(as.list(env, all.names=all.names), FUN, ...)
  */
-
 SEXP attribute_hidden do_eapply(SEXP call, SEXP op, SEXP args, SEXP rho)
 {
-    SEXP env, ans, names, R_fcall, FUN, tmp, tmp2, ind;
-    int i, k, all;
+    SEXP env, ans, R_fcall, FUN, tmp, tmp2, ind;
+    int i, k, k2;
+    int /* boolean */ all, useNms;
 
     checkArity(op, args);
 
@@ -2528,8 +2527,13 @@ SEXP attribute_hidden do_eapply(SEXP call, SEXP op, SEXP args, SEXP rho)
     if (!isSymbol(FUN))
 	error(_("arguments must be symbolic"));
 
+    /* 'all.names' : */
     all = asLogical(eval(CADDR(args), rho));
     if (all == NA_LOGICAL) all = 0;
+
+    /* 'USE.NAMES' : */
+    useNms = asLogical(eval(CADDDR(args), rho));
+    if (useNms == NA_LOGICAL) useNms = 0;
 
     if (env == R_BaseEnv || env == R_BaseNamespace)
 	k = BuiltinSize(all, 0);
@@ -2538,38 +2542,44 @@ SEXP attribute_hidden do_eapply(SEXP call, SEXP op, SEXP args, SEXP rho)
     else
 	k = FrameSize(FRAME(env), all);
 
-    PROTECT(names = allocVector(STRSXP, k));
-    PROTECT(ans = allocVector(VECSXP, k));
+    PROTECT(ans  = allocVector(VECSXP, k));
     PROTECT(tmp2 = allocVector(VECSXP, k));
 
-    k = 0;
+    k2 = 0;
     if (env == R_BaseEnv || env == R_BaseNamespace)
-	BuiltinValues(all, 0, tmp2, &k);
+	BuiltinValues(all, 0, tmp2, &k2);
     else if (HASHTAB(env) != R_NilValue)
-	HashTableValues(HASHTAB(env), all, tmp2, &k);
+	HashTableValues(HASHTAB(env), all, tmp2, &k2);
     else
-	FrameValues(FRAME(env), all, tmp2, &k);
+	FrameValues(FRAME(env), all, tmp2, &k2);
 
     PROTECT(ind = allocVector(INTSXP, 1));
+    /* tmp :=  `[`(<elist>, i) */
     PROTECT(tmp = LCONS(R_Bracket2Symbol,
 			LCONS(tmp2, LCONS(ind, R_NilValue))));
+    /* fcall :=  <FUN>( tmp, ... ) */
     PROTECT(R_fcall = LCONS(FUN, LCONS(tmp, LCONS(R_DotsSymbol, R_NilValue))));
 
-    for(i = 0; i < k; i++) {
-      INTEGER(ind)[0] = i+1;
-      SET_VECTOR_ELT(ans, i, eval(R_fcall, rho));
+    for(i = 0; i < k2; i++) {
+	INTEGER(ind)[0] = i+1;
+	SET_VECTOR_ELT(ans, i, eval(R_fcall, rho));
     }
 
-    k = 0;
-    if (env == R_BaseEnv || env == R_BaseNamespace)
-	BuiltinNames(all, 0, names, &k);
-    else if(HASHTAB(env) != R_NilValue)
-	HashTableNames(HASHTAB(env), all, names, &k);
-    else
-	FrameNames(FRAME(env), all, names, &k);
+    if (useNms) {
+	SEXP names;
+	PROTECT(names = allocVector(STRSXP, k));
+	k = 0;
+	if (env == R_BaseEnv || env == R_BaseNamespace)
+	    BuiltinNames(all, 0, names, &k);
+	else if(HASHTAB(env) != R_NilValue)
+	    HashTableNames(HASHTAB(env), all, names, &k);
+	else
+	    FrameNames(FRAME(env), all, names, &k);
 
-    setAttrib(ans, R_NamesSymbol, names);
-    UNPROTECT(6);
+	setAttrib(ans, R_NamesSymbol, names);
+	UNPROTECT(1);
+    }
+    UNPROTECT(5);
     return(ans);
 }
 
@@ -2677,7 +2687,7 @@ static SEXP pos2env(int pos, SEXP call)
     RCNTXT *cptr;
 
     if (pos == NA_INTEGER || pos < -1 || pos == 0) {
-	errorcall(call, R_MSG_IA);
+	errorcall(call, _("invalid '%s' argument"), "pos");
 	env = call;/* just for -Wall */
     }
     else if (pos == -1) {
@@ -2691,14 +2701,14 @@ static SEXP pos2env(int pos, SEXP call)
 
 	env = cptr->sysparent;
 	if (R_GlobalEnv != R_NilValue && env == R_NilValue)
-	    errorcall(call, R_MSG_IA);
+	    errorcall(call, _("invalid '%s' argument"), "pos");
     }
     else {
 	for (env = R_GlobalEnv; env != R_EmptyEnv && pos > 1;
 	     env = ENCLOS(env))
 	    pos--;
 	if (pos != 1)
-	    errorcall(call, R_MSG_IA);
+	    errorcall(call, _("invalid '%s' argument"), "pos");
     }
     return env;
 }
@@ -2723,14 +2733,13 @@ SEXP attribute_hidden do_pos2env(SEXP call, SEXP op, SEXP args, SEXP rho)
 
 static SEXP matchEnvir(SEXP call, const char *what)
 {
-    SEXP t, name, nameSymbol;
+    SEXP t, name;
     if(!strcmp(".GlobalEnv", what))
 	return R_GlobalEnv;
     if(!strcmp("package:base", what))
 	return R_BaseEnv;
-    nameSymbol = install("name");
     for (t = ENCLOS(R_GlobalEnv); t != R_EmptyEnv ; t = ENCLOS(t)) {
-	name = getAttrib(t, nameSymbol);
+	name = getAttrib(t, R_NameSymbol);
 	if(isString(name) && length(name) > 0 &&
 	   !strcmp(translateChar(STRING_ELT(name, 0)), what))
 	    return t;
@@ -3064,9 +3073,8 @@ void R_RestoreHashCount(SEXP rho)
 
 Rboolean R_IsPackageEnv(SEXP rho)
 {
-    SEXP nameSymbol = install("name");
     if (TYPEOF(rho) == ENVSXP) {
-	SEXP name = getAttrib(rho, nameSymbol);
+	SEXP name = getAttrib(rho, R_NameSymbol);
 	char *packprefix = "package:";
 	int pplen = strlen(packprefix);
 	if(isString(name) && length(name) > 0 &&
@@ -3081,9 +3089,8 @@ Rboolean R_IsPackageEnv(SEXP rho)
 
 SEXP R_PackageEnvName(SEXP rho)
 {
-    SEXP nameSymbol = install("name");
     if (TYPEOF(rho) == ENVSXP) {
-	SEXP name = getAttrib(rho, nameSymbol);
+	SEXP name = getAttrib(rho, R_NameSymbol);
 	char *packprefix = "package:";
 	int pplen = strlen(packprefix);
 	if(isString(name) && length(name) > 0 &&

@@ -108,24 +108,6 @@ while(<tfile>) {
 }
 close tfile;
 
-
-my %develfiles=("doc\\html\\logo.jpg" => 1,
-		"doc\\COPYING.LIB" => 1,
-		"bin\\INSTALL.sh" => 1,
-		"bin\\SHLIB.sh" => 1,
-		"bin\\build" => 1,
-		"bin\\check" => 1,
-		"bin\\config.sh" => 1,
-		"bin\\Rd2dvi.sh" => 1,
-		"bin\\Rd2txt" => 1,
-		"bin\\Rdconv" => 1,
-		"bin\\Rdiff.sh" => 1,
-		"bin\\Rprof" => 1,
-		"bin\\Sd2Rd" => 1,
-		"bin\\Stangle.sh" => 1,
-		"bin\\Sweave.sh" => 1,
-		"etc\\Makeconf" => 1);
-		
 $path="${SRCDIR}";chdir($path);
 my %main;
 
@@ -234,15 +216,6 @@ foreach $n (sort values %main) {
 
 print insfile <<END;
     </Feature>
-    <Feature Id="chtml" Title="Compiled HTML Help Files" Description="Compiled HTML Help Files" Level="1" InstallDefault="local" AllowAdvertise="no">
-END
-
-foreach $n (sort values %chtml) {
-    print insfile "      <ComponentRef Id='$n' />\n";
-}
-
-print insfile <<END;
-    </Feature>
     <Feature Id="html" Title="HTML Help Files" Description="HTML Help Files" Level="1" InstallDefault="local" AllowAdvertise="no">
 END
 
@@ -273,46 +246,11 @@ END
 foreach $n (sort values %refman) {
     print insfile "      <ComponentRef Id='$n' />\n";
 }
-print insfile <<END;
-    </Feature>
-
-    <Feature Id="latex" Title="Latex Help Files"
-     Description="Latex Help Files" Level="1000" 
-     InstallDefault="local" AllowAdvertise="no">
-END
-
-foreach $n (sort values %latex) {
-    print insfile "      <ComponentRef Id='$n' />\n";
-}
 
 print insfile <<END;
     </Feature>
 
-    <Feature Id="devel" Title="Source Package Installation Files"
-     Description="Source Package Installation Files" Level="1"
-     InstallDefault="local" AllowAdvertise="no" Display="expand">
-END
-
-foreach $n (sort values %devel) {
-    print insfile "      <ComponentRef Id='$n' />\n";
-}
-
-print insfile <<END;
-    </Feature>
-
-    <Feature Id="Rd" Title="Source Files for Help Pages"
-     Description="Source Files for Help Pages" Level="1"
-     InstallDefault="local" AllowAdvertise="no" Display="expand">
-END
-
-foreach $n (sort values %Rd) {
-    print insfile "        <ComponentRef Id='$n' />\n";
-}
-
-print insfile <<END;
-    </Feature>
-
-    <Feature Id="libdocs" Title="Docs for Package grid" Description="Docs for Package grid" Level="1"
+    <Feature Id="libdocs" Title="Docs for Packages grid and Matrix" Description="Docs for Packages grid and Matrix" Level="1"
      InstallDefault="local" AllowAdvertise="no">
 END
 
@@ -341,7 +279,6 @@ END
 foreach $n (sort values %trans) {
     print insfile "      <ComponentRef Id='$n' />\n";
 }
-
 
 print insfile <<END;
     </Feature>
@@ -403,15 +340,11 @@ sub listFiles {
 	s+/+\\+g;
 	$fn =~ s+.*/++g;
 
-	if ($_ eq "bin\\Rchtml.dll" 
-	    || m/^library\\[^\\]*\\chtml/) {
-	    $component = "chtml";
-	#} elsif ($_ eq "doc\\html\\logo.jpg") {
-	#    $component = "html devel";
-	} elsif ($_ eq "doc\\manual\\R-FAQ.html"
+	if ($_ eq "doc\\manual\\R-FAQ.html"
 		 || $_ eq "doc\\html\\rw-FAQ.html"
 		 || $_ eq "share\\texmf\\Sweave.sty") {
 	    $component = "main";
+## FIXME: split out prebuilt HTML help pages
 	} elsif (m/^doc\\html/
 		 || m/^doc\\manual\\[^\\]*\.html/
 		 || m/^library\\[^\\]*\\html/
@@ -422,40 +355,16 @@ sub listFiles {
 	    $component = "refman";
 	} elsif (m/^doc\\manual/ && $_ ne "doc\\manual\\R-FAQ.pdf") {
 	    $component = "manuals";
-	} elsif (m/^library\\[^\\]*\\latex/) {
-	    	$component = "latex";
-	} elsif (m/^library\\[^\\]*\\man/) {
-	    	$component = "Rd";
 	} elsif (m/^library\\[^\\]*\\tests/) {
 	    	$component = "tests";
 	} elsif (m/^tests/) {
 	    	$component = "tests";
 	} elsif (m/^Tcl/) {
 	    $component = "tcl";
-	} elsif (exists($develfiles{$_})
-		 || m/^doc\\KEYWORDS/
-		 || m/^src\\gnuwin32/
-		 || m/^include/
-		 || m/^src\\library\\windlgs/
-		 || m/^share\\make/
-		 || m/^share\\perl/
-		 || m/^share\\R/
-		 || m/^share\\texmf/
-# 		 || m/^bin\\build/
-# 		 || m/^bin\\check/
-# 		 || m/^bin\\Rd2dvi.sh/
-# 		 || m/^bin\\Rdconv/
-# 		 || m/^bin\\Rdiff.sh/
-# 		 || m/^bin\\Rprof/
-# 		 || m/^bin\\Sd2Rd/
-		 || m/^lib\\/) {
-	    $component = "devel";
-	} elsif (m/^library\\grid\\doc/) {
+	} elsif (m/^library\\grid\\doc/ || m/^library\\Matrix\\doc/) {
 	    $component = "libdocs";
-	} elsif ($_ eq "modules\\iconv.dll") {
-	    $component = "main";
 	} elsif (m/^share\\locale/ 
-		 || m/^library\\[^\\]*\\po/) { # needs iconv
+		 || m/^library\\[^\\]*\\po/) {
 	    $component = "trans";
 	} else {
 	    $component = "main";
@@ -464,13 +373,9 @@ sub listFiles {
 	s+\\+/+g;
 	$ncomp = $comp{$_};
 	$main{$_} = $ncomp if $component eq "main";
-	$devel{$_} = $ncomp if $component eq "devel";
-	$chtml{$_} = $ncomp if $component eq "chtml";
 	$html{$_} = $ncomp if $component eq "html";
-	$latex{$_} = $ncomp if $component eq "latex";
 	$manuals{$_} = $ncomp if $component eq "manuals";
 	$refman{$_} = $ncomp if $component eq "refman";
-	$Rd{$_} = $ncomp if $component eq "Rd";
 	$libdocs{$_} = $ncomp if $component eq "libdocs";
 	$tcl{$_} = $ncomp if $component eq "tcl";
 	$trans{$_} = $ncomp if $component eq "trans";

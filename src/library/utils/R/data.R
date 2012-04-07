@@ -18,7 +18,12 @@ data <-
 function(..., list = character(0L), package = NULL, lib.loc = NULL,
          verbose = getOption("verbose"), envir = .GlobalEnv)
 {
-    fileExt <- function(x) sub(".*\\.", "", x)
+    fileExt <- function(x) {
+        db <- grepl("\\.[^.]+\\.(gz|bz2|xz)$", x)
+        ans <- sub(".*\\.", "", x)
+        ans[db] <-  sub(".*\\.([^.]+\\.)(gz|bz2|xz)$", "\\1\\2", x[db])
+        ans
+    }
 
     names <- c(as.character(substitute(list(...))[-1L]), list)
 
@@ -133,7 +138,8 @@ function(..., list = character(0L), package = NULL, lib.loc = NULL,
                 ## more than one candidate
                 o <- match(fileExt(files), dataExts, nomatch = 100L)
                 paths0 <- dirname(files)
-                paths0 <- factor(paths0, levels=paths0)
+		## Next line seems unnecessary to MM (FIXME?)
+		paths0 <- factor(paths0, levels= unique(paths0))
                 files <- files[order(paths0, o)]
             }
             if(length(files)) {
@@ -149,7 +155,9 @@ function(..., list = character(0L), package = NULL, lib.loc = NULL,
                         found <- FALSE
                     else {
                         found <- TRUE
-                        zfile <- zip.file.extract(file, "Rdata.zip")
+                        Rdatadir <- file.path(tempdir(), "Rdata")
+                        dir.create(Rdatadir, showWarnings=FALSE)
+                        zfile <- zip.file.extract(file, "Rdata.zip", dir=Rdatadir)
                         if(zfile != file) on.exit(unlink(zfile))
                         switch(ext,
                                R = , r = {
@@ -160,14 +168,16 @@ function(..., list = character(0L), package = NULL, lib.loc = NULL,
                                },
                                RData = , rdata = , rda =
                                load(zfile, envir = envir),
-                               TXT = , txt = , tab =
+                               TXT = , txt = , tab = ,
+                               tab.gz = , tab.bz2 = , tab.xz = ,
+                               txt.gz = , txt.bz2 = , txt.xz =
                                assign(name,
-                                      ## ensure default has not been
-                                      ## overridden by options(charToFactor)
-                                      read.table(zfile, header = TRUE,
-                                                 as.is = FALSE),
+                                      ## ensure default for as.is has not been
+                                      ## overridden by options(stringsAsFactor)
+                                      read.table(zfile, header = TRUE, as.is = FALSE),
                                       envir = envir),
-                               CSV = , csv =
+                               CSV = , csv = ,
+                               csv.gz = , csv.bz2 = , csv.xz =
                                assign(name,
                                       read.table(zfile, header = TRUE,
                                                  sep = ";", as.is = FALSE),

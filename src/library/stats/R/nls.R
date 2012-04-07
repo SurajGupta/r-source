@@ -133,14 +133,14 @@ nlsModel.plinear <- function(form, data, start, wts)
     {
         assign("internalPars", newPars, envir = thisEnv)
         for(i in names(ind)) {
-            assign(i, clearNames(newPars[ ind[[i]] ]), envir = env )
+            assign(i, unname(newPars[ ind[[i]] ]), envir = env )
         }
     }
     setPars.varying <- function(newPars)
     {
         internalPars[useParams] <- newPars
         for(i in names(ind))
-            assign(i, clearNames(internalPars[ ind[[i]] ]), envir = env)
+            assign(i, unname(internalPars[ ind[[i]] ]), envir = env)
     }
     setPars <- setPars.noVarying
     getPred <-
@@ -303,13 +303,13 @@ nlsModel <- function(form, data, start, wts, upper=NULL)
     {
         assign("internalPars", newPars, envir = thisEnv)
         for(i in names(ind))
-            assign(i, clearNames(newPars[ ind[[i]] ]), envir = env)
+            assign(i, unname(newPars[ ind[[i]] ]), envir = env)
     }
     setPars.varying <- function(newPars)
     {
         internalPars[useParams] <- newPars
         for(i in names(ind))
-            assign(i, clearNames(internalPars[ ind[[i]] ]), envir = env)
+            assign(i, unname(internalPars[ ind[[i]] ]), envir = env)
     }
     setPars <- setPars.noVarying
 
@@ -350,7 +350,8 @@ nlsModel <- function(form, data, start, wts, upper=NULL)
 		     assign("setPars", setPars.varying, envir = thisEnv)
 		     assign("getPars", getPars.varying, envir = thisEnv)
 		     assign("getRHS", getRHS.varying, envir = thisEnv)
-		     assign("npar", length((1L:length(useParams))[useParams]),
+                     ## FIXME this is which(useParams)
+		     assign("npar", length(seq_along(useParams)[useParams]),
 			    envir = thisEnv)
 		 }
 	     },

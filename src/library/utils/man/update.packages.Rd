@@ -1,6 +1,6 @@
 % File src/library/utils/man/update.packages.Rd
 % Part of the R package, http://www.R-project.org
-% Copyright 1995-2008 R Core Development Team
+% Copyright 1995-2009 R Core Development Team
 % Distributed under GPL 2 or later
 
 \name{update.packages}
@@ -22,16 +22,18 @@ update.packages(lib.loc = NULL, repos = getOption("repos"),
                 contriburl = contrib.url(repos, type),
                 method, instlib = NULL,
                 ask = TRUE, available = NULL,
-                oldPkgs = NULL, \dots,
-                checkBuilt = FALSE, type = getOption("pkgType"))
+                oldPkgs = NULL, \dots, checkBuilt = FALSE,
+                type = getOption("pkgType"))
 
-available.packages(contriburl = contrib.url(getOption("repos")),
-                   method, fields = NULL)
+available.packages(contriburl = contrib.url(getOption("repos"), type),
+                   method, fields = NULL, type = getOption("pkgType"),
+                   filters = NULL)
 
 old.packages(lib.loc = NULL, repos = getOption("repos"),
-             contriburl = contrib.url(repos),
+             contriburl = contrib.url(repos, type),
              instPkgs = installed.packages(lib.loc = lib.loc),
-             method, available = NULL, checkBuilt = FALSE)
+             method, available = NULL, checkBuilt = FALSE,
+             type = getOption("pkgType"))
 
 new.packages(lib.loc = NULL, repos = getOption("repos"),
              contriburl = contrib.url(repos, type),
@@ -82,7 +84,8 @@ contrib.url(repos, type = getOption("pkgType"))
 #endif
 #ifdef unix
     \file{.tar.gz} files.  These can be source archives or binary
-    package/bundle archive files (as created by \code{R CMD build --binary}).
+    package/bundle archive files (as created by
+    \command{R CMD build --binary}).
     Tilde-expansion will be done on the file paths.
 #endif
     If this is a zero-length character vector, a listbox of available
@@ -111,21 +114,22 @@ contrib.url(repos, type = getOption("pkgType"))
     packages on which these packages depend/suggest/import
     (and so on recursively).  Not used if \code{repos = NULL}.
     Can also be a character vector, a subset of
-    \code{c("Depends", "Imports", "Suggests", "Enhances")}.
+    \code{c("Depends", "Imports", "LinkingTo", "Suggests", "Enhances")}.
 
     Only supported if \code{lib} is of length one (or missing),
     so it is unambiguous where to install the dependent packages.
 
-    The default, \code{NA}, means \code{c("Depends", "Imports")} if
-    \code{lib} is unambiguous, and \code{FALSE} otherwise.
+    The default, \code{NA}, means
+    \code{c("Depends", "Imports", "LinkingTo")}
+    if \code{lib} is unambiguous, and \code{FALSE} otherwise.
   }
   \item{configure.args}{(not Windows) a character vector or a named list.
     If a character vector with no names is supplied, the elements are
     concatenated into a single string (separated by a space) and used
-    as the value for the \code{--configure-args}
+    as the value for the \option{--configure-args}
     flag in the call to \command{R CMD INSTALL}.
     If the character vector has names these are assumed to identify
-    values for \code{--configure-args} for individual packages.
+    values for \option{--configure-args} for individual packages.
     This allows one to specify settings for an entire collection of packages
     which will be used if any of those packages are to be installed.
     (These settings can therefore be reused and act as default settings.)
@@ -133,10 +137,10 @@ contrib.url(repos, type = getOption("pkgType"))
     A named list can be used also to the same effect, and that
     allows multi-element character strings for each package
     which are concatenated to a single string to be used as the
-    value for \code{--configure-args}.
+    value for \option{--configure-args}.
   }
   \item{configure.vars}{(not Windows) similar, for
-    \code{--configure-vars}, which is used to set environment variables
+    \option{--configure-vars}, which is used to set environment variables
     for the \command{configure} run.}
   \item{oldPkgs}{
     if specified as non-NULL, \code{update.packages()} only considers
@@ -174,7 +178,8 @@ contrib.url(repos, type = getOption("pkgType"))
 #endif
   }
   \item{clean}{a logical value indicating whether to specify
-    to add the \code{--clean} flag to the call to \code{R CMD INSTALL}.
+    to add the \option{--clean} flag to the call to
+    \command{R CMD INSTALL}.
     This is sometimes used to perform additional operations at the end
     of the package installation in addition to removing intermediate files.
   }
@@ -189,6 +194,26 @@ contrib.url(repos, type = getOption("pkgType"))
     \code{NULL} (default).  Unavailable fields result in \code{NA}
     values.
   }
+  \item{filters}{a character vector or list specifying the filter
+    operations to be performed on the packages found in the
+    repositories, or \code{NULL} (default).  Specified filters can be
+    one of the strings \code{"R_version"}, \code{"OS_type"},
+    \code{"duplicates"}, or \code{"license/FOSS"}, indicating built-in
+    filters which retain only packages whose version and OS type
+    requirements are met by the running version of \R, the latest
+    versions of packages, and packages for which installation can
+    proceed solely based on packages which can be verified as Free or
+    Open Source Software (FOSS, e.g.,
+    \url{http://en.wikipedia.org/wiki/FOSS}) employing the available
+    license specifications, respectively.  Filters can also be
+    user-defined functions which subscript the rows of objects returned
+    by \code{available.packages}.  The default corresponds to the
+    specification \code{c("R_version", "OS_type", "duplicates")}, and
+    may be changed by setting option \code{available_packages_filters}
+    to something non-\code{NULL}.  If the filters specification used is
+    a list with an \code{add = TRUE} element, the other elements are
+    used for filtering in addition to the default filters.
+  }
 }
 \details{
   All of these functions work with the names of a package or bundle (and
@@ -197,17 +222,18 @@ contrib.url(repos, type = getOption("pkgType"))
   information).
   
   \code{available.packages} returns a matrix of details corresponding to
-  packages/bundles currently available at  one or more repositories. The
+  packages/bundles currently available at one or more repositories. The
   current list of packages is downloaded over the internet (or copied
-  from a local mirror).  It returns only packages whose version
-  requirements are met by the running version of \R.
+  from a local mirror).  By default, it returns only packages whose
+  version and OS type requirements are met by the running version of \R,
+  and only information on the latest versions or packages.
   
   \code{old.packages} compares the information from
-  \code{available.packages} with that from \code{instPkgs}
-  (\code{\link{installed.packages}} by default) and reports installed
+  \code{available.packages} with that from \code{instPkgs} (computed by
+  \code{\link{installed.packages}} by default) and reports installed
   packages/bundles that have newer versions on the repositories or, if
   \code{checkBuilt = TRUE}, that were built under an earlier minor
-  version of \R (for example built under 2.0.x when running \R 2.1.1).
+  version of \R (for example built under 2.8.x when running \R 2.9.0).
 #ifdef windows
   (There is no check that the version on the repository was built under
   the current minor version of \R, but it is advertised as being
@@ -229,13 +255,13 @@ contrib.url(repos, type = getOption("pkgType"))
   downloaded but used directly.  Both \code{"file:"} and
   \code{"file:///"} are allowed as prefixes to a file path.  Use the
   latter only for URLs: see \code{\link{url}} for their interpretation.
-  (Other forms of \code{"file://"} URLs are not supported.)
+  (Other forms of \samp{file://} URLs are not supported.)
   
   The main function of the set is \code{update.packages}.  First a list
   of all packages/bundles found in \code{lib.loc} is created and
-  compared with those available at the repositories.  If \code{ask =
-    TRUE} (the default) packages/bundles with a newer version are
-  reported and for each one the user can specify if it should be
+  compared with those available at the repositories.  If
+  \code{ask = TRUE} (the default) packages/bundles with a newer version
+  are reported and for each one the user can specify if it should be
   updated.
 #ifdef unix
   If so, the package sources are downloaded from the repositories and
@@ -267,7 +293,7 @@ contrib.url(repos, type = getOption("pkgType"))
   an attempt is made to install the packages in an order that respects
   their dependencies.  This does assume that all the entries in
   \code{lib} are on the default library path for installs (set by
-  \code{R_LIBS}). 
+  \env{R_LIBS}). 
 #endif
 
   \code{contrib.url} adds the appropriate type-specific path within a
@@ -283,20 +309,25 @@ contrib.url(repos, type = getOption("pkgType"))
   one, the newest version of the package compatible with this version of \R
   is fetched from the first repository on the list within which it is found.
 #ifdef windows
-
-  In order to install packages with \code{type = "source"} on Windows,
-  you will need to have installed the Rtools collection as described
-  in the \sQuote{rw-FAQ}.  You must have the \code{PATH} set up as
-  required by the Rtools.
+  
+  Using packages with \code{type = "source"} works on Windows provided
+  the package contains no C/C++/Fortran code that needs compilation,
+  Otherwise you will need to have installed the Rtools collection as
+  described in the \sQuote{rw-FAQ}, \emph{and} you must have the
+  \code{PATH} set up as required by the Rtools.
 #endif
 }
 \value{
-  For \code{available.packages}, a matrix
-  with one row per package/bundle, row names the package names and
-  column names \code{"Package"}, \code{"Version"}, \code{"Priority"},
-  \code{"Bundle"}, \code{"Depends"}, \code{"Imports"}, \code{"Suggests"}
-  \code{"Contains"} and \code{"Repository"}.  Additional columns can
-  be specified using the \code{fields} argument.
+  For \code{available.packages}, a matrix with one row per
+  package/bundle, row names the package names and 
+  column names
+  \code{"Package"}, \code{"Version"}, \code{"Priority"},
+  \code{"Bundle"}, \code{"Contains"},
+  \code{"Depends"}, \code{"Imports"}, \code{"LinkingTo"},
+  \code{"Suggests"}, \code{"Enhances"},
+  \code{"OS_type"}, \code{"License"},
+  \code{"File"} and \code{"Repository"}.
+  Additional columns can be specified using the \code{fields} argument.
 
   For \code{old.packages}, \code{NULL} or a matrix with one row per
   package/bundle, row names the package names and column names
@@ -328,7 +359,7 @@ contrib.url(repos, type = getOption("pkgType"))
 \note{
   Some binary distributions of \R have \code{INSTALL} in a separate
   bundle, e.g. an \code{R-devel} RPM.  \code{install.packages} will
-  give an error if called on such a system.
+  give an error if called with \code{type = "source"} on such a system.
 }
 #endif
 #ifdef windows

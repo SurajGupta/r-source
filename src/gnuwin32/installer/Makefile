@@ -10,7 +10,7 @@ EXTRA_PKGS =
 ## Default display mode, 0=MDI, 1=SDI
 MDISDI = 0
 
-## Default help style, 0=plain text, 1=CHM, 2=HTML
+## Default help style, 0=plain text, 1=HTML
 HelpStyle = 1
 
 ## Default internet connection, 0=Standard, 1=Internet2
@@ -90,6 +90,8 @@ imagedir:
 #
 	$(FIND) $(RPREFIX) -name .svn -prune -exec rm -rf \{\} \;
 	$(FIND) $(RPREFIX) -name \*~ -delete
+#
+	$(RM) -r $(RPREFIX)/library/*/man
 
 md5sums:
 	@echo "adding MD5 checksums"
@@ -98,9 +100,7 @@ md5sums:
 	  ../../../../bin/Rterm.exe --vanilla --slave)
 
 fixups:
-	$(CAT) $(RPREFIX)/library/*/CONTENTS >  \
-	  $(RPREFIX)/doc/html/search/index.txt
-	echo "make.packages.html(.Library)" | $(RPREFIX)/bin/rterm --vanilla --slave LC_COLLATE=C
+	echo "make.packages.html(.Library, verbose=FALSE)" | $(RPREFIX)/bin/rterm --vanilla --slave LC_COLLATE=C
 	$(CP) -pr $(R_HOME)/Tcl $(RPREFIX)
 
 
@@ -144,8 +144,6 @@ distclean: clean
 	rm -f $(RPREFIX)-win32.*
 
 myR:
-	$(CAT) $(IMAGEDIR)/library/*/CONTENTS >  \
-	  $(IMAGEDIR)/doc/html/search/index.txt
 	echo "make.packages.html(.Library)" | $(IMAGEDIR)/bin/rterm --vanilla --slave LC_COLLATE=C
 	@echo "adding MD5 checksums"
 	@(cd $(IMAGEDIR); echo "tools:::.installMD5sums(\".\")" | \

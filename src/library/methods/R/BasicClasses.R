@@ -187,7 +187,16 @@
               },
               where = envir)
     setClass("factor", contains = "integer", representation(levels = "character"),
-             where = envir)
+	     validity = function(object) {
+		 levs <- levels(object)
+		 if (!is.character(levs))
+		     return("factor levels must be \"character\"")
+		 if (d <- anyDuplicated(levs))
+		     return(sprintf("duplicated level [%d] in factor", d))
+		 ## 'else'	ok :
+		 TRUE
+	     },
+	     where = envir)
     setOldClass("factor", S4Class = "factor", where = envir)
     setMethod("show", "oldClass", function(object) {
         if(!isS4(object))  {
@@ -197,7 +206,7 @@
         cl <- as.character(class(object))
         S3Class <- object@.S3Class
         if(length(S3Class)) S3Class <- S3Class[[1L]]
-        else S3Class <- "oldClass" # or error?
+        else S3Class <- "oldClass"      # or error?
         cat("Object of class \"", cl, "\"\n", sep = "")
         print(S3Part(object, strict = TRUE))
         otherSlots <- slotNames(cl)
@@ -208,6 +217,7 @@
             show(slot(object, what))
             cat("\n")
         }
+        NULL
     }, where = envir)
    .initS3 <- function(.Object, ...) {
          if(nargs() < 2)
@@ -418,7 +428,7 @@
     ## following should not be needed if data_class2 returns "array",...
 ##     setMethod("[", # a method to avoid invalid objects from an S4 class
 ##               signature(x = "array"), where = where,
-##               function (x, i, j, ..., drop = TRUE) 
+##               function (x, i, j, ..., drop = TRUE)
 ##               {
 ##                 value <- callNextMethod()
 ##                 if(is(value, class(x)))

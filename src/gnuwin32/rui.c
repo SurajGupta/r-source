@@ -1,7 +1,7 @@
 /*
  *  R : A Computer Langage for Statistical Data Analysis
  *  Copyright (C) 1998--2005  Guido Masarotto and Brian Ripley
- *  Copyright (C) 2004--2008  The R Foundation
+ *  Copyright (C) 2004--2009  The R Foundation
  *
  *  This program is free software; you can redistribute it and/or modify
  *  it under the terms of the GNU General Public License as published by
@@ -88,7 +88,6 @@ static void double_backslashes(char *s, char *out)
 {
     char *p = s;
 
-#ifdef SUPPORT_MBCS
     int i;
     if(mbcslocale) {
 	mbstate_t mb_st; int used;
@@ -98,12 +97,8 @@ static void double_backslashes(char *s, char *out)
 	    for(i = 0; i < used; i++) *out++ = *p++;
 	}
     } else
-#endif
-    for (; *p; p++)
-	if (*p == '\\') {
-	    *out++ = *p;
-	    *out++ = *p;
-	} else *out++ = *p;
+	for (; *p; p++)
+	    if (*p == '\\') {*out++ = *p; *out++ = *p;} else *out++ = *p;
     *out = '\0';
 }
 
@@ -525,6 +520,37 @@ static void menupkginstalllocal(control m)
     if (!ConsoleAcceptCmd) return;
     consolecmd(RConsole, "utils:::menuInstallLocal()");
 }
+ 
+ 
+static void menucascade(control m)
+{
+    if (!ConsoleAcceptCmd) return;
+    consolecmd(RConsole, "utils::arrangeWindows(action='cascade')");
+}
+
+static void menutilehoriz(control m)
+{
+    if (!ConsoleAcceptCmd) return;
+    consolecmd(RConsole, "utils::arrangeWindows(action='horizontal')");
+}
+
+static void menutilevert(control m)
+{
+    if (!ConsoleAcceptCmd) return;
+    consolecmd(RConsole, "utils::arrangeWindows(action='vertical')");
+}
+
+static void menuminimizegroup(control m)
+{
+    if (!ConsoleAcceptCmd) return;
+    consolecmd(RConsole, "utils::arrangeWindows(action='minimize')");
+}
+
+static void menurestoregroup(control m)
+{
+    if (!ConsoleAcceptCmd) return;
+    consolecmd(RConsole, "utils::arrangeWindows(action='restore')");
+}
 
 static void menuconsolehelp(control m)
 {
@@ -631,18 +657,10 @@ static void menuapropos(control m)
 
 static void menuhelpstart(control m)
 {
-/*    if (!ConsoleAcceptCmd) return;
+    if (!ConsoleAcceptCmd) return;
     consolecmd(RConsole, "help.start()");
-    show(RConsole);*/
-    internal_shellexec("doc\\html\\index.html");
-}
-
-static void menuhelpsearchstart(control m)
-{
-/*    if (!ConsoleAcceptCmd) return;
-    consolecmd(RConsole, "help.start()");
-    show(RConsole);*/
-    internal_shellexec("doc\\html\\search\\SearchEngine.html");
+/*    show(RConsole); 
+    internal_shellexec("doc\\html\\index.html"); */
 }
 
 static void menuFAQ(control m)
@@ -686,12 +704,14 @@ void helpmenuact(HelpMenuItems hmenu)
 {
     if (ConsoleAcceptCmd) {
 	enable(hmenu->mhelp);
+	enable(hmenu->mhelpstart);
 	enable(hmenu->mhelpsearch);
 	enable(hmenu->msearchRsite);
 	enable(hmenu->mapropos);
 	enable(hmenu->mCRAN);
     } else {
 	disable(hmenu->mhelp);
+	disable(hmenu->mhelpstart);
 	disable(hmenu->mhelpsearch);
 	disable(hmenu->msearchRsite);
 	disable(hmenu->mapropos);
@@ -983,9 +1003,6 @@ int RguiCommonHelp(menu m, HelpMenuItems hmenu)
 				      menuhelp));
     MCHECK(hmenu->mhelpstart = newmenuitem(G_("Html help"), 0, menuhelpstart));
     if (!check_doc_file("doc\\html\\index.html")) disable(hmenu->mhelpstart);
-    MCHECK(hmenu->mhelpsearchstart = newmenuitem(G_("Html search page"), 0, menuhelpsearchstart));
-    if (!check_doc_file("doc\\html\\search\\SearchEngine.html"))
-	disable(hmenu->mhelpsearchstart);
     MCHECK(hmenu->mhelpsearch = newmenuitem(G_("Search help..."), 0,
 					    menuhelpsearch));
     MCHECK(hmenu->msearchRsite = newmenuitem("search.r-project.org ...", 0,
@@ -997,6 +1014,24 @@ int RguiCommonHelp(menu m, HelpMenuItems hmenu)
     MCHECK(hmenu->mCRAN = newmenuitem(G_("CRAN home page"), 0, menuCRAN));
     MCHECK(newmenuitem("-", 0, NULL));
     MCHECK(newmenuitem(G_("About"), 0, menuabout));
+    return 0;
+}
+
+static int RguiWindowMenu()
+{
+#ifdef USE_MDI
+    if (ismdi())
+	newmdimenu();
+    else 
+#endif
+    {
+	MCHECK(newmenu(G_("Windows")));
+	MCHECK(newmenuitem(G_("Cascade"), 0, menucascade));
+	MCHECK(newmenuitem(G_("Tile &Horizontally"), 0, menutilehoriz));
+	MCHECK(newmenuitem(G_("Tile &Vertically"), 0, menutilevert));
+	MCHECK(newmenuitem(G_("Minimize group"), 0, menuminimizegroup));
+	MCHECK(newmenuitem(G_("Restore group"), 0, menurestoregroup));
+    }
     return 0;
 }
 
@@ -1158,9 +1193,7 @@ int setupui(void)
 
     pmenu = (PkgMenuItems) malloc(sizeof(struct structPkgMenuItems));
     RguiPackageMenu(pmenu);
-#ifdef USE_MDI
-    newmdimenu();
-#endif
+    RguiWindowMenu();
     MCHECK(m = newmenu(G_("Help")));
     MCHECK(newmenuitem(G_("Console"), 0, menuconsolehelp));
     MCHECK(newmenuitem("-", 0, NULL));

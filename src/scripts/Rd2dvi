@@ -5,7 +5,7 @@
 ##  R CMD Rd2dvi `grep -l "\\keyword{distr" \
 ##                  /path/to/Rsrc/src/library/stats/man/*.Rd | sort | uniq`
 
-revision='$Rev: 49329 $'
+revision='$Rev: 49334 $'
 version=`set - ${revision}; echo ${2}`
 version="Rd2dvi: ${R_VERSION} (r${version})
 
@@ -26,6 +26,7 @@ equals the basename of argument 'files' if this specifies a package
 The Rd sources are assumed to be ASCII unless they contain \encoding
 declarations (which take priority) or --encoding is supplied or if using
 package sources, if the package DESCRIPTION file has an Encoding field.
+The output encoding defaults to the package encoding then to 'latin1'.
 
 Options:
   -h, --help		print short help message and exit
@@ -33,8 +34,9 @@ Options:
       --batch		no interaction
       --debug		turn on shell debugging (set -x)
       --no-clean	do not remove created temporary files
-      --no-preview	do not preview generated DVI file
-      --encoding=enc    use 'enc' as the default encoding
+      --no-preview	do not preview generated DVI/PDF file
+      --encoding=enc    use 'enc' as the default input encoding
+      --outputEncoding=outenc use 'outenc' as the default output encoding
       --os=NAME		use OS subdir 'NAME' (unix or windows)
       --OS=NAME		the same as '--os'
   -o, --output=FILE	write output to FILE
@@ -66,6 +68,7 @@ out_ext="dvi"
 output=""
 verbose=false
 enc=unknown
+outenc=latin1
 index=true
 description=true
 internals=no
@@ -130,6 +133,8 @@ while test -n "${1}"; do
       OSdir=`echo "${1}" | ${SED} -e 's/[^=]*=//'` ;;
     --encoding=*)
       enc=`echo "${1}" | ${SED} -e 's/[^=]*=//'` ;;
+    --outputEncoding=*)
+      outenc=`echo "${1}" | ${SED} -e 's/[^=]*=//'` ;;
     --build-dir=*)
       build_dir=`echo "${1}" | ${SED} -e 's/[^=]*=//'` ;;
     -V|--verbose)
@@ -205,8 +210,8 @@ mkdir ${build_dir}
 
 echo "tools:::.Rd2dvi(\"${1}\",  \"${build_dir}/Rd2.tex\", \"$is_bundle\", \
 \"$title\", \"$batch\", \"$description\", \"$only_meta\",\
-\"$enc\", \"${dir-$@}\", \"OSdir\", \"$internals\", \"$index\")" \
-  | LC_ALL=C ${R_HOME}/bin/R --slave --vanilla || exit 1
+\"$enc\", \"$outenc\", \"${dir-$@}\", \"OSdir\", \"$internals\", \"$index\")" \
+  | LC_ALL=C ${R_HOME}/bin/R --slave --vanilla || exit 11
 
 ## <FIXME>
 ## Need to do something smarter about the exit status in batch mode.

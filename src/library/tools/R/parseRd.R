@@ -15,7 +15,8 @@
 #  http://www.r-project.org/Licenses/
 
 parse_Rd <- function(file, srcfile = NULL, encoding = "unknown",
-                     verbose = FALSE)
+                     verbose = FALSE, fragment = FALSE,
+                     warningCalls = TRUE)
 {
     if(is.character(file)) {
         file0 <- file
@@ -31,83 +32,129 @@ parse_Rd <- function(file, srcfile = NULL, encoding = "unknown",
     lines <- readLines(file, warn = FALSE)
     ## remove old-style marking for data, keep line nos
     lines[lines == "\\non_function{}"] <- ""
-    ## extract the encoding if marked in the file:
+    ## Extract the encoding if marked in the file:
     ## do this in two steps to minimize warnings in MBCS locales
     ## Note this is required to be on a line by itself,
-    ## although the author of 'resper' can't RTFM.
+    ## but some people have preceding whitespace
     enc <- grep("\\encoding{", lines, fixed = TRUE, useBytes=TRUE)
-    enc <- grep("^\\\\encoding\\{([^}]*)\\}.*", lines[enc], value=TRUE)
+    enc <- grep("^[[:space:]]*\\\\encoding\\{([^}]*)\\}.*", lines[enc], value=TRUE)
     if(length(enc)) {
         if(length(enc) > 1L)
-            warning("multiple \\encoding lines in file ", file0)
+            warning(file0, ": multiple \\encoding lines, using the first",
+                    domain = NA, call. = warningCalls)
         ## keep first one
         enc <- enc[1L]
-        enc <- sub("^\\\\encoding\\{([^}]*)\\}.*", "\\1", enc)
+        enc <- sub("^[[:space:]]*\\\\encoding\\{([^}]*)\\}.*", "\\1", enc)
         if(verbose) message("found encoding ", enc)
-        if(enc %in% c("UTF-8", "utf-8", "utf8")) {
-            encoding <- "UTF-8"
-        } else if(enc == "latin1") {
-            encoding <- enc
-        } else {
-            if(encoding == "unknown") encoding <- "UTF-8"
-            lines <- iconv(lines, enc, encoding, sub = "byte")
-        }
-    } else {
-    	enc <- encoding
-    	if (enc == "unknown") enc <- "native.enc"
+        encoding <- if(enc %in% c("UTF-8", "utf-8", "utf8")) "UTF-8" else enc
     }
-    ## The parser is fine with encodings in which ASCII bytes mean ASCII
-    ## All known 8-bit encodings and UTF-8 meet that requirement
-    l10n <- l10n_info()
-    if(encoding == "unknown" && l10n[["MBCS"]] && !l10n[["UTF-8"]]) {
-        warning("non-UTF-8 multibyte locales are not supported -- reencoding to UTF-8")
-        encoding <- "UTF-8"
-        lines <- iconv(lines, enc, encoding, sub = "byte")
-    }
-    tcon <- textConnection(lines)
-    on.exit(close(tcon))
-    # the internal function must get some sort of srcfile
-    if (!inherits(srcfile, "srcfile")) 
+    if (encoding == "unknown") encoding <- ""
+
+    ## the internal function must get some sort of srcfile
+    if (!inherits(srcfile, "srcfile"))
     	srcfile <- srcfile(file0)
     basename <- basename(srcfile$filename)
-    srcfile$encoding <- enc
-    .Internal(parse_Rd(tcon, srcfile, encoding, verbose, basename))
+    srcfile$encoding <- encoding
+
+    if (encoding == "ASCII") {
+        if (any(is.na(iconv(lines, "", "ASCII"))))
+            stop(file0, ": non-ASCII input and no declared encoding",
+                 domain = NA, call. = warningCalls)
+    } else if (encoding != "UTF-8")
+    	lines <- iconv(lines, encoding, "UTF-8", sub = "byte")
+
+    tcon <- file()
+    writeLines(lines, tcon, useBytes = TRUE)
+    on.exit(close(tcon))
+
+    .Internal(parse_Rd(tcon, srcfile, "UTF-8",
+                       verbose, basename, fragment, warningCalls))
 }
 
-print.Rd <- function(x, ...) {
-    cat(as.character.Rd(x), sep="", collapse="")
+print.Rd <- function(x, deparse = FALSE, ...)
+{
+    cat(as.character.Rd(x, deparse = deparse), sep = "", collapse = "")
+    invisible(x)
 }
 
-as.character.Rd <- function(x, ...) {
-    TWOARG <- c("\\section", "\\item", "\\enc", "\\method", "\\S3method", 
-                "\\S4method", "\\tabular", "\\deqn", "\\eqn")
-    pr <- function(x) {
+as.character.Rd <- function(x, deparse = FALSE, ...)
+{
+    ZEROARG <- c("\\cr", "\\dots", "\\ldots", "\\R", "\\tab") # Only these cause trouble when {} is added
+    TWOARG <- c("\\section", "\\item", "\\enc", "\\method", "\\S3method",
+                "\\S4method", "\\tabular")
+    EQN <- c("\\deqn", "\\eqn")
+    modes <- c(RLIKE=1L, LATEXLIKE=2L, VERBATIM=3L, INOPTION=4L, COMMENTMODE=5L, UNKNOWNMODE=6L)
+    tags  <- c(RCODE=1L, TEXT=2L,      VERB=3L,                  COMMENT=5L,     UNKNOWN=6L)
+    state <- c(braceDepth=0L, inRString=0L)
+    needBraces <- FALSE  # if next character is alphabetic, separate by braces.
+    inEqn <- 0L
+
+    pr <- function(x, quoteBraces) {
         tag <- attr(x, "Rd_tag")
         if (is.null(tag) || tag == "LIST") tag <- ""
     	if (is.list(x)) {
+    	    savestate <- state
+    	    state <<- c(0L, 0L)
+    	    needBraces <<- FALSE
     	    if (tag == "Rd") { # a whole file
-    	        result <- character(0)
-    	    	for (i in seq_along(x)) result <- c(result, pr(x[[i]]))
+    	        result <- character()
+    	    	for (i in seq_along(x))
+                    result <- c(result, pr(x[[i]], quoteBraces))
     	    } else if (length(grep("^#", tag))) {
-    	    	result <- c(tag, x[[1L]][[1L]])
-    	    	x <- x[[2L]]
-    	    	for (i in seq_along(x)) result <- c(result, pr(x[[i]]))
+    	    	if (deparse) {
+    	    	    dep <- deparseRdElement(x[[1L]][[1L]],
+                                            c(state, modes["LATEXLIKE"],
+                                              inEqn,
+                                              as.integer(quoteBraces)))
+    	    	    result <- c(tag, dep[[1L]])
+    	    	} else
+    	    	    result <- c(tag, x[[1L]][[1L]])
+    	    	for (i in seq_along(x[[2L]]))
+                    result <- c(result, pr(x[[2L]][[i]], quoteBraces))
     	    	result <- c(result, "#endif\n")
+    	    } else if (tag %in% ZEROARG) {
+    	    	result <- tag
+    	    	needBraces <<- TRUE
     	    } else if (tag %in% TWOARG) {
     	    	result <- tag
-    	    	for (i in seq_along(x)) result <- c(result, pr(x[[i]]))
+    	    	for (i in seq_along(x))
+                    result <- c(result, pr(x[[i]], quoteBraces))
+    	    } else if (tag %in% EQN) {
+    	    	result <- tag
+    	    	inEqn <<- 1L
+    	    	result <- c(result, pr(x[[1]], quoteBraces))
+    	    	inEqn <<- 0L
+    	    	if (length(x) > 1L)
+    	    	    result <- c(result, pr(x[[2]], quoteBraces))
     	    } else {
     	    	result <- tag
-    	    	if (!is.null(option <- attr(x, "Rd_option"))) 
-    	    	    result <- c(result, "[", pr(option), "]")
+    	    	if (!is.null(option <- attr(x, "Rd_option")))
+    	    	    result <- c(result, "[", pr(option, quoteBraces), "]")
     	    	result <- c(result, "{")
-    	    	for (i in seq_along(x)) result <- c(result, pr(x[[i]]))
+    	    	for (i in seq_along(x))
+                    result <- c(result, pr(x[[i]], quoteBraces))
     	    	result <- c(result, "}")
     	    }
-    	} else result <- as.character(x)
+    	    if (state[1L])  # If braces didn't match within the list, try again, quoting them
+    	    	result <- pr(x, TRUE)
+    	    state <<- savestate
+    	} else {
+    	    if (deparse) {
+    		dep <- deparseRdElement(as.character(x), c(state, tags[tag], inEqn, as.integer(quoteBraces)))
+    	    	result <- dep[[1L]]
+    	    	state <<- dep[[2L]][1L:2L]
+    	    } else
+    	    	result <- as.character(x)
+    	    if (needBraces) {
+    	    	if (grepl("^[[:alpha:]]", result)) result <- c("{}", result)
+    	    	needBraces <<- FALSE
+    	    }
+        }
     	result
     }
-    if (is.null(attr(x, "Rd_tag")))
-    	attr(x, "Rd_tag") <- "Rd"
-    pr(x)
+    if (is.null(attr(x, "Rd_tag"))) attr(x, "Rd_tag") <- "Rd"
+    pr(x, quoteBraces = FALSE)
 }
+
+deparseRdElement <- function(element, state)
+    .Internal(deparseRd(element, state))

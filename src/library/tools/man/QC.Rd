@@ -45,11 +45,11 @@ checkS3methods(package, dir, lib.loc = NULL)
 
   \code{checkDocStyle} investigates how (S3) methods are shown in the
   usages of the Rd files in a package.  It reports the methods shown by
-  their full name rather than using the Rd \code{\\method} markup for
+  their full name rather than using the Rd \verb{\method} markup for
   indicating S3 methods.  Earlier versions of \R also reported about
   methods shown along with their generic, which typically caused
   problems for the documentation of the primary argument in the generic
-  and its methods.  With \code{\\method} now being expanded in a way
+  and its methods.  With \verb{\method} now being expanded in a way
   that class information is preserved, joint documentation is
   no longer necessarily a problem.  (The corresponding information is
   still contained in the object returned by \code{checkDocStyle}.)
@@ -66,14 +66,14 @@ checkS3methods(package, dir, lib.loc = NULL)
   by the generic.  The rules when \code{\dots} is involved are subtle:
   see the source code.  Functions recognized as S3 generics are those
   with a call to \code{UseMethod} in their body, internal S3 generics
-  (see \link[base]{InternalMethods}), and S3 group generics (see
-  \code{\link[base]{Math}}).  Possible dispatch under a different name
-  is not taken into account.  The generics are sought first in the given
-  package, then in the \pkg{base} package and (currently) the packages 
-  \pkg{graphics}, \pkg{stats}, and \pkg{utils} added in R 1.9.0 by
-  splitting the former \pkg{base}, and, if an installed package is
-  tested, also in the loaded name spaces/packages listed in the package's
-  \file{DESCRIPTION} Depends field.
+  (see \link{InternalMethods}), and S3 group generics (see
+  \code{\link[=S3groupGeneric]{Math}}).  Possible dispatch under a
+  different name is not taken into account.  The generics are sought
+  first in the given package, then in the \pkg{base} package and
+  (currently) the packages \pkg{graphics}, \pkg{stats}, and \pkg{utils}
+  added in R 1.9.0 by splitting the former \pkg{base}, and, if an
+  installed package is tested, also in the loaded name spaces/packages
+  listed in the package's \file{DESCRIPTION} Depends field.
 
   If using an installed package, the checks needing access to all R
   objects of the package will load the package (unless it is the

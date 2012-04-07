@@ -106,7 +106,11 @@ SEXP attribute_hidden do_sprintf(SEXP call, SEXP op, SEXP args, SEXP env)
 
     /* record the args for possible coercion and later re-ordering */
     for(i = 0; i < nargs; i++, args = CDR(args)) {
+	SEXPTYPE t_ai;
 	a[i] = CAR(args);
+	if((t_ai = TYPEOF(a[i])) == LANGSXP || t_ai == SYMSXP) /* << maybe add more .. */
+	    error(_("invalid type of argument[%d]: '%s'"),
+		  i+1, CHAR(type2str(t_ai)));
 	lens[i] = length(a[i]);
 	if(lens[i] == 0) return allocVector(STRSXP, 0);
     }
@@ -157,7 +161,7 @@ SEXP attribute_hidden do_sprintf(SEXP call, SEXP op, SEXP args, SEXP env)
 		    /* recognise selected types from Table B-1 of K&R */
 		    /* NB: we deal with "%%" in branch above. */
 		    /* This is MBCS-OK, as we are in a format spec */
-		    chunk = strcspn(curFormat + 1, "disfeEgGxXaA") + 2;
+		    chunk = strcspn(curFormat + 1, "diosfeEgGxXaA") + 2;
 		    if (cur + chunk > n)
 			error(_("unrecognised format specification '%s'"), curFormat);
 
@@ -265,6 +269,7 @@ SEXP attribute_hidden do_sprintf(SEXP call, SEXP op, SEXP args, SEXP env)
 			    switch(*findspec(fmtp)) {
 			    case 'd':
 			    case 'i':
+			    case 'o':
 			    case 'x':
 			    case 'X':
 				if(TYPEOF(_this) == REALSXP) {
@@ -335,9 +340,9 @@ SEXP attribute_hidden do_sprintf(SEXP call, SEXP op, SEXP args, SEXP env)
 			case INTSXP:
 			    {
 				int x = INTEGER(_this)[ns % thislen];
-				if (checkfmt(fmtp, "dixX"))
+				if (checkfmt(fmtp, "dioxX"))
 				    error(_("invalid format '%s'; %s"), fmtp,
-					  _("use format %d, %i, %x or %X for integer objects"));
+					  _("use format %d, %i, %o, %x or %X for integer objects"));
 				if (x == NA_INTEGER) {
 				    fmtp[strlen(fmtp)-1] = 's';
 				    _my_sprintf("NA")

@@ -31,9 +31,8 @@
   are the membership and coercion functions for these classes.
 }
 \usage{
-factor(x = character(),
-       levels = sort(unique.default(x), na.last = TRUE),
-       labels = levels, exclude = NA, ordered = is.ordered(x))
+factor(x = character(), levels, labels = levels,
+       exclude = NA, ordered = is.ordered(x))
 
 ordered(x, \dots)
 
@@ -49,13 +48,15 @@ addNA(x, ifany=FALSE)
   \item{x}{a vector of data, usually taking a small number of distinct
     values.}
   \item{levels}{an optional vector of the values that \code{x} might
-    have taken. The default is the set of values taken by \code{x},
-    sorted into increasing order.}
+    have taken.  The default is the unique set of values taken by
+    \code{\link{as.character}(x)}, sorted into increasing order \emph{of
+      \code{x}}.  Note that this set can be smaller than
+    \code{sort(unique(x))}.}
   \item{labels}{\emph{either} an optional vector of labels for the
     levels (in the same order as \code{levels} after removing those in
     \code{exclude}), \emph{or} a character string of length 1.}
   \item{exclude}{a vector of values to be excluded when forming the
-    set of levels. This should be of the same type as \code{x}, and
+    set of levels.  This should be of the same type as \code{x}, and
     will be coerced if necessary.}
   \item{ordered}{logical flag to determine if the levels should be regarded
     as ordered (in the order given).}
@@ -67,7 +68,8 @@ addNA(x, ifany=FALSE)
 \value{
   \code{factor} returns an object of class \code{"factor"} which has a
   set of integer codes the length of \code{x} with a \code{"levels"}
-  attribute of mode \code{\link{character}}.  If \code{ordered} is true
+  attribute of mode \code{\link{character}} and unique
+  (\code{!\link{anyDuplicated}(.)}) entries.  If \code{ordered} is true
   (or \code{ordered} is used) the result has class
   \code{c("ordered", "factor")}.
 
@@ -90,7 +92,9 @@ addNA(x, ifany=FALSE)
   level (so that \code{NA} values are counted in tables, for instance).
 }
 \details{
-  The type of the vector \code{x} is not restricted.
+  The type of the vector \code{x} is not restricted; it only must have
+  an \code{\link{as.character}} method and be sortable (by
+  \code{\link{sort.list}}).
 
   Ordered factors differ from factors only in their class, but methods
   and the model-fitting functions treat the two classes quite differently.
@@ -103,7 +107,7 @@ addNA(x, ifany=FALSE)
 
   Normally the \sQuote{levels} used as an attribute of the result are
   the reduced set of levels after removing those in \code{exclude}, but
-  this can be altered by supplying \code{labels}. This should either
+  this can be altered by supplying \code{labels}.  This should either
   be a set of new labels for the levels, or a character string, in
   which case the levels are that character string with a sequence
   number appended.
@@ -134,25 +138,26 @@ addNA(x, ifany=FALSE)
   the same set of levels (in the same order).  In particular,
   \code{as.numeric} applied to a factor is meaningless, and may
   happen by implicit coercion.  To transform a factor \code{f} to
-  its original numeric values, \code{as.numeric(levels(f))[f]} is
-  recommended and slightly more efficient than
-  \code{as.numeric(as.character(f))}.
+  approximately its original numeric values,
+  \code{as.numeric(levels(f))[f]} is recommended and slightly more
+  efficient than \code{as.numeric(as.character(f))}.
 
   The levels of a factor are by default sorted, but the sort order
   may well depend on the locale at the time of creation, and should
   not be assumed to be ASCII.
 
-%% Is this still true, after Ops.factor (==, !=) is fixed ?
   There are some anomalies associated with factors that have
   \code{NA} as a level.  It is suggested to use them sparingly, e.g.,
   only for tabulation purposes.
 }
+%% Is this still true, after Ops.factor (==, !=) is fixed ?
+
 \section{Comparison operators and group generic methods}{
   There are \code{"factor"} and \code{"ordered"} methods for the
-  \link{group generic} \code{\link[base:groupGeneric]{Ops}}, which
+  \link{group generic} \code{\link[=S3groupGeneric]{Ops}}, which
   provide methods for the \link{Comparison} operators.  (The rest of the
-  group and the \code{\link[base:groupGeneric]{Math}} and
-  \code{\link[base:groupGeneric]{Summary}} groups generate an error as
+  group and the \code{\link[=S3groupGeneric]{Math}} and
+  \code{\link[=S3groupGeneric]{Summary}} groups generate an error as
   they are not meaningful for factors.)
 
   Only \code{==} and \code{!=} can be used for factors: a factor can

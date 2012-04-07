@@ -95,6 +95,7 @@
       remove(list = what, envir = table)
     ## else warning?
   }
+  NULL
 }
 
 
@@ -194,6 +195,7 @@
       remove(list=what, envir = table)
     }
   }
+  NULL
 }
 
 ### the tag associated with a method signature.
@@ -205,6 +207,7 @@
   ## BUT:  not until defined, target slots have classes with package attribute
   paste(sig, collapse = "#")
 
+## workhorse of selectMethod() [ -> ../Methods.R ] "
 .findInheritedMethods <-
     function(classes, fdef, mtable = NULL,
              table = get(".MTable", envir = environment(fdef)),
@@ -493,8 +496,11 @@
     sigs <- matrix("ANY", nArg, n)
     for(i in 1:n) {
       sig <- methods[[i]]@defined
-      if(length(sig) < nArg)  # is this still possible?
-        sigs[seq_along(sig), i] <- sig
+      if(length(sig) < nArg) { # is this still possible? --> show 'verbose'
+	if(verbose) cat(sprintf(" .. method %d: length(sig) = %d < nArg = %d\n",
+				i, length(sig), nArg))
+	sigs[seq_along(sig), i] <- sig
+      }
       else
         sigs[,i] <- sig
     }
@@ -621,6 +627,7 @@
                 .getMethodsTable(gpDef) # force initialization w. group methods
         }
     }
+    NULL
 }
 
 .updateMethodsInTable <- function(generic, where, attach) {
@@ -671,6 +678,7 @@
         for(what in direct)
           assign(what, get(what, envir = mtable), envir = allTable)
     }
+    NULL
 }
 
 ## In the following, consider separate "compute" and "print" functions/methods:
@@ -1169,11 +1177,9 @@ testInheritedMethods <- function(f, signatures, test = TRUE,  virtual = FALSE,
     if(length(sigs) == 0)
       return(new("MethodSelectionReport", generic = fname))
     ## possible selection of which args to include with inheritance
-    if(fname %in% c("coerce", "coerce<-"))
-      ok <- match(colnames(sigs), "from", 0) > 0
-    else
-      ok <- rep(TRUE, ncol(sigs))
-    for(j in seq(length = ncol(sigs))) {
+    ok <- if(fname %in% c("coerce", "coerce<-"))
+	match(colnames(sigs), "from", 0) > 0 else rep.int(TRUE, ncol(sigs))
+    for(j in seq_len(ncol(sigs))) {
       classesj <-unique(sigs[,j])
       .undefClasses <- character()
       subclasses <- .relevantClasses(classesj, !virtual, where, ok[[j]])
@@ -1207,7 +1213,7 @@ testInheritedMethods <- function(f, signatures, test = TRUE,  virtual = FALSE,
        && ncol(signatures) <= length(f@signature)) {
       ## turn signatures back into a list
       siglist <- vector("list", nrow(signatures))
-      for(i in seq(length = nrow(signatures)))
+      for(i in seq_len(nrow(signatures)))
         siglist[[i]] <- signatures[i,]
       signatures <- siglist
   }

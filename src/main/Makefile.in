@@ -15,7 +15,7 @@ include $(top_builddir)/Makeconf
 SOURCES_C = \
 	CConverters.c CommandLineArgs.c \
 	Rdynload.c Renviron.c RNG.c \
-	apply.c apse.c arithmetic.c array.c attrib.c \
+	agrep.c apply.c arithmetic.c array.c attrib.c \
 	base.c bind.c builtin.c \
 	character.c coerce.c colors.c complex.c connections.c context.c \
 	cov.c cum.c \
@@ -23,8 +23,8 @@ SOURCES_C = \
 	dotcode.c dounzip.c dstruct.c duplicate.c \
 	engine.c envir.c errors.c eval.c \
 	format.c fourier.c \
-	gevents.c gram.c gram-ex.c gramRd.c graphics.c \
-	identical.c inspect.c inlined.c internet.c iosupport.c \
+	gevents.c gram.c gram-ex.c gramRd.c graphics.c grep.c \
+	identical.c inlined.c inspect.c internet.c iosupport.c \
 	lapack.c list.c localecharset.c logic.c \
 	main.c mapply.c match.c memory.c model.c \
 	names.c \
@@ -32,13 +32,13 @@ SOURCES_C = \
 	par.c paste.c pcre.c platform.c \
 	plot.c plot3d.c plotmath.c \
 	print.c printarray.c printvector.c printutils.c qsort.c \
-	random.c regex.c registration.c relop.c rlocale.c \
+	random.c raw.c registration.c relop.c rlocale.c \
 	saveload.c scan.c seq.c serialize.c size.c sort.c source.c split.c \
 	sprintf.c startup.c subassign.c subscript.c subset.c summary.c sysutils.c \
 	unique.c util.c \
 	version.c vfonts.c
-SOURCES_F = \
-	xxxpr.f
+
+SOURCES_F =  xxxpr.f
 
 ## If the substitutes are needed, the corresponding objects are put by
 ## configure in @LIBOBJS@ @ALLOCA@
@@ -53,8 +53,8 @@ DEPENDS = $(SOURCES_C:.c=.d) $(EXTRA_SOURCES_C:.c=.d)
 SOURCES = $(SOURCES_C) $(SOURCES_F)
 OBJECTS = $(SOURCES_C:.c=.o) $(SOURCES_F:.f=.o) @LIBOBJS@ @ALLOCA@
 HEADERS = \
-	RBufferUtils.h Rregex.h Rstrptime.h \
-	arithmetic.h apse.h \
+	RBufferUtils.h Rstrptime.h \
+	arithmetic.h \
 	basedecl.h \
 	par-common.c \
 	qsort-body.c \
@@ -73,10 +73,12 @@ DISTFILES = Makefile.in Makefile.win \
 ZLIB_CPPFLAGS = @BUILD_ZLIB_TRUE@ -I$(top_srcdir)/src/extra/zlib
 BZLIB_CPPFLAGS = @BUILD_BZLIB_TRUE@ -I$(top_srcdir)/src/extra/bzip2
 PCRE_CPPFLAGS = @BUILD_PCRE_TRUE@ -I$(top_srcdir)/src/extra/pcre
+TRE_CPPFLAGS = -I$(top_srcdir)/src/extra
 XDR_CPPFLAGS = @BUILD_XDR_TRUE@ -I$(top_srcdir)/src/extra/xdr
+XZ_CPPFLAGS = @BUILD_XZ_TRUE@  -I$(top_srcdir)/src/extra/xz/api
 
 ALL_CPPFLAGS = $(ZLIB_CPPFLAGS) $(BZLIB_CPPFLAGS) $(PCRE_CPPFLAGS) \
-  $(XDR_CPPFLAGS) $(R_XTRA_CPPFLAGS) $(CPPFLAGS) $(DEFS)
+  $(TRE_CPPFLAGS) $(XDR_CPPFLAGS) $(XZ_CPPFLAGS) $(R_XTRA_CPPFLAGS) $(CPPFLAGS) $(DEFS)
 @WANT_R_SHLIB_TRUE@ALL_CFLAGS = $(ALL_CFLAGS_LO)
 @WANT_R_SHLIB_TRUE@ALL_FFLAGS = $(ALL_FFLAGS_LO)
 
@@ -85,11 +87,14 @@ ALL_CPPFLAGS = $(ZLIB_CPPFLAGS) $(BZLIB_CPPFLAGS) $(PCRE_CPPFLAGS) \
 R_ZLIBS = @BUILD_ZLIB_TRUE@ ../extra/zlib/libz.a
 R_BZLIBS = @BUILD_BZLIB_TRUE@ ../extra/bzip2/libbz2.a
 R_PCRE = @BUILD_PCRE_TRUE@ ../extra/pcre/libpcre.a
+R_TRE = ../extra/tre/libtre.a
 R_XDR = @BUILD_XDR_TRUE@ ../extra/xdr/libxdr.a
+R_XZ = @BUILD_XZ_TRUE@  ../extra/xz/liblzma.a
 R_LIBINTL = @BUILD_LIBINTL_TRUE@ ../extra/intl/libintl.a
 
 MAIN_LIBS = ../unix/libunix.a ../appl/libappl.a ../nmath/libnmath.a
-EXTRA_STATIC_LIBS = $(R_ZLIBS) $(R_BZLIBS) $(R_PCRE) $(R_XDR)$(R_LIBINTL)
+EXTRA_STATIC_LIBS = \
+  $(R_ZLIBS) $(R_BZLIBS) $(R_PCRE) $(R_TRE) $(R_XDR) $(R_XZ) $(R_LIBINTL)
 STATIC_LIBS = $(MAIN_LIBS) $(EXTRA_STATIC_LIBS)
 
 EXTRA_LIBS = $(BLAS_LIBS) $(FLIBS) $(R_XTRA_LIBS) @LIBINTL@ $(READLINE_LIBS) $(LIBS)
@@ -127,7 +132,7 @@ Makedeps: Makefile $(DEPENDS)
 ## This target has been changed to ensure that R.bin and libR get
 ## installed in the build tree if necessary, even if the corresponding 
 ## objects are not re-made.
-## Note that dependencies in the test Makefiles depend on these objects,
+## Note that dependencies in the test Makefiles used to depend on these objects,
 ## so copy-if-change is used.
 R: Makefile
 	@$(MAKE) Makedeps
@@ -164,7 +169,9 @@ $(top_builddir)/etc/R.exp: $(OBJECTS) $(MAIN_LIBS)
 $(MAIN_LIBS):
 	(cd $(@D); $(MAKE) $(@F))
 
-../extra/bzip2/libbz2.a ../extra/pcre/libpcre.a ../extra/xdr/libxdr.a ../extra/zlib/libz.a ../extra/intl/libintl.a:
+../extra/bzip2/libbz2.a ../extra/pcre/libpcre.a ../extra/pcre/libtre.a\
+  ../extra/xdr/libxdr.a ../extra/zlib/libz.a ../extra/xv/liblzma.a \
+  ../extra/intl/libintl.a:
 	(cd $(@D); $(MAKE))
 
 

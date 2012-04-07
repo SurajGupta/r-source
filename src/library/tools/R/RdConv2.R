@@ -14,81 +14,12 @@
 #  A copy of the GNU General Public License is available at
 #  http://www.r-project.org/Licenses/
 
-get_link <- function(arg, tag) {
-    ## 'topic' is the name to display, 'dest' is the topic to link to
-    ## optionaly in package 'pkg'.  If 'target' is set it is the file
-    ## to link to in HTML help
 
-    ## \link[=bar]{foo} means shows foo but treat this as a link to bar.
-    ## \link[pkg]{foo} means show foo and link to *file* foo in package pkg
-    ## \link{pkg:bar]{foo} means show foo and link to file bar in package pkg.
-
-    if (!all(RdTags(arg) == "TEXT"))
-    	stopRd(arg, "Bad \\link text")
-
-    option <- attr(arg, "Rd_option")
-
-    dest <- paste(unlist(arg), collapse = "")
-    topic <- dest
-    targetfile <- NULL
-    pkg <- NULL
-    if (!is.null(option)) {
-        if (!identical(attr(option, "Rd_tag"), "TEXT"))
-    	    stopRd(option, "Bad \\link option")
-    	if (length(grep("^=", option, perl = TRUE)))
-    	    dest <- sub("^=", "", option, perl = TRUE)
-    	else if (length(grep(":", option, perl = TRUE))) {
-    	    targetfile <- sub("^[^:]*:", "", option, perl = TRUE)
-    	    pkg <- sub(":.*", "", option, perl = TRUE)
-    	} else {
-            targetfile <- dest
-    	    pkg <- option
-    	}
-    }
-    if (tag == "\\linkS4class") dest <- paste(dest, "-class", sep="")
-    list(topic = topic, dest = dest, pkg = pkg, targetfile = targetfile)
+RdTags <- function(Rd) {
+    res <- sapply(Rd, attr, "Rd_tag")
+    if (!length(res)) res <- character(0)
+    res
 }
-
-transform_S3_method  <- function(x)
-{
-    ## should take a call such as \method{foo}{bar}
-    ## and convert it to a parse_Rd version of the required line(s)
-    x
-}
-
-transform_S4_method  <- function(x)
-{
-    ## should take a call such as \S4method{foo}{bar}
-    ## and convert it to a parse_Rd version of the required line(s)
-    x
-}
-
-
-# translation of Utils.pm function of the same name, plus "unknown"
-mime_canonical_encoding <- function(encoding)
-{
-    encoding <- tolower(encoding)
-    encoding <- sub("iso_8859-([0-9]+)", "iso-8859-\\1", encoding)
-    encoding[encoding == "latin1"] <-  "iso-8859-1"
-    encoding[encoding == "latin2"] <-  "iso-8859-2"
-    encoding[encoding == "latin3"] <-  "iso-8859-3"
-    encoding[encoding == "latin4"] <-  "iso-8859-4"
-    encoding[encoding == "cyrillic"] <-"iso-8859-5"
-    encoding[encoding == "arabic"] <-  "iso-8859-6"
-    encoding[encoding == "greek"] <-   "iso-8859-7"
-    encoding[encoding == "hebrew"] <-  "iso-8859-8"
-    encoding[encoding == "latin5"] <-  "iso-8859-9"
-    encoding[encoding == "latin6"] <-  "iso-8859-10"
-    encoding[encoding == "latin8"] <-  "iso-8859-14"
-    encoding[encoding == "latin-9"] <- "iso-8859-15"
-    encoding[encoding == "latin10"] <- "iso-8859-16"
-    encoding[encoding == "utf8"] <-    "utf-8"
-    encoding[encoding == "unknown"] <- "iso-8859-1"
-    encoding
-}
-
-RdTags <- function(Rd)
-    sapply(Rd, function(element) attr(element, "Rd_tag"))
 
 isBlankRd <- function(x)
     length(grep("^[[:blank:]]*\n?$", x, perl = TRUE)) == length(x) # newline optional
@@ -98,60 +29,447 @@ isBlankLineRd <- function(x) {
     length(grep("^[[:blank:]]*\n", x, perl = TRUE)) == length(x)   # newline required
 }
 
-stopRd <- function(block, ...)
+stopRd <- function(block, Rdfile, ...)
 {
     srcref <- attr(block, "srcref")
-    if (is.null(srcref)) stop(..., call. = FALSE, domain = NA)
-    else {
-    	loc <- paste(attr(srcref, "srcfile")$filename,
-                     ":", srcref[1L], sep = "")
-    	if (srcref[1L] != srcref[3L]) loc <- paste(loc, "-", srcref[3L], sep="")
-    	stop(call.=FALSE, loc, ": ", ..., domain = NA)
+    if (missing(Rdfile) && !is.null(srcref)) {
+    	srcfile <- attr(srcref, "srcfile")
+    	if (is.environment(srcfile))
+    	    Rdfile <- srcfile$filename
     }
+    if (missing(Rdfile) || is.null(Rdfile)) Rdfile <- ""
+    else Rdfile <- paste(Rdfile, ":", sep="")
+
+    msg <- if (is.null(srcref))
+        paste(Rdfile, " ", ..., sep = "")
+    else {
+    	loc <- paste(Rdfile, srcref[1L], sep = "")
+    	if (srcref[1L] != srcref[3L]) loc <- paste(loc, "-", srcref[3L], sep="")
+    	paste(loc, ": ", ..., sep="")
+    }
+    stop(msg, call. = FALSE, domain = NA)
 }
 
 warnRd <- function(block, Rdfile, ...)
 {
     srcref <- attr(block, "srcref")
-    if (is.null(srcref))
-        warning("file '", Rdfile, "': ", ...,
-                call. = FALSE, domain = NA, immediate. = TRUE)
+    if (missing(Rdfile) && !is.null(srcref)) {
+    	srcfile <- attr(srcref, "srcfile")
+    	if (is.environment(srcfile))
+    	    Rdfile <- srcfile$filename
+    }
+    if (missing(Rdfile) || is.null(Rdfile)) Rdfile <- ""
+    else Rdfile <- paste(Rdfile, ":", sep="")
+
+    msg <- if (is.null(srcref))
+        paste(Rdfile, " ", ..., sep = "")
     else {
-    	loc <- paste(attr(srcref, "srcfile")$filename,
-                     ":", srcref[1L], sep = "")
+    	loc <- paste(Rdfile, srcref[1L], sep = "")
     	if (srcref[1L] != srcref[3L]) loc <- paste(loc, "-", srcref[3L], sep="")
-    	warning(loc, ": ", ..., call. = FALSE, domain = NA, immediate. = TRUE)
+        paste(loc, ": ", ..., sep = "")
     }
+    warning(msg, call. = FALSE, domain = NA, immediate. = TRUE)
 }
 
-preprocessRd <- function(blocks, defines)
+RweaveRdDefaults <- list(
+    width = 6,
+    height = 6,
+    eval = TRUE,
+    fig = FALSE,
+    echo = FALSE,
+    keep.source = TRUE,
+    results = "text",
+    strip.white = "true",
+    stage = "install")
+
+RweaveRdOptions <- function(options)
 {
-    if (is.null(blocks)) return(blocks)
-    ## Process ifdef's.
-    tags <- RdTags(blocks)
-    while (length(ifdef <- which(tags %in% c("#ifdef", "#ifndef")))) {
-	ifdef <- ifdef[1L]
-	target <- blocks[[ifdef]][[1L]][[1L]]
-	# The target will have picked up some whitespace and a newline
-	target <- gsub("[[:blank:][:cntrl:]]*", "", target)
-	all <- seq_along(tags)
-	before <- all[all < ifdef]
-	after <- all[all > ifdef]
 
-	if ((target %in% defines) == (tags[ifdef] == "#ifdef")) {
-	    tags <- c(tags[before], RdTags(blocks[[ifdef]][[2L]]), tags[after])
-	    blocks <- c(blocks[before], blocks[[ifdef]][[2L]], blocks[after])
-	} else {
-	    tags <- c(tags[before], tags[after])
-	    blocks <- c(blocks[before], blocks[after])
-	}
+    ## convert a character string to logical
+    c2l <- function(x){
+        if(is.null(x)) return(FALSE)
+        else return(as.logical(toupper(as.character(x))))
     }
-    # Save the tags
-    attr(blocks, "RdTags") <- tags
-    blocks
+
+    NUMOPTS <- c("width", "height")
+    NOLOGOPTS <- c(NUMOPTS, "results", "stage", "strip.white")
+
+    for(opt in names(options)){
+        if(! (opt %in% NOLOGOPTS)){
+            oldval <- options[[opt]]
+            if(!is.logical(options[[opt]])){
+                options[[opt]] <- c2l(options[[opt]])
+            }
+            if(is.na(options[[opt]]))
+                stop(gettextf("invalid value for '%s' : %s", opt, oldval),
+                     domain = NA)
+        }
+        else if(opt %in% NUMOPTS){
+            options[[opt]] <- as.numeric(options[[opt]])
+        }
+    }
+
+    if(!is.null(options$results))
+        options$results <- tolower(as.character(options$results))
+    options$results <- match.arg(options$results,
+                                 c("text", "verbatim", "rd", "hide"))
+    if(!is.null(options$stage))
+    	options$stage <- tolower(as.character(options$stage))
+    options$stage <- match.arg(options$stage,
+    				 c("build", "install", "render"))
+    options
 }
 
-sectionOrder <- c("\\title"=1, "\\name"=2, "\\alias"=2.1, "\\keyword"=2.2,
+tagged <- function(x, tag) structure(x, Rd_tag=tag)
+
+evalWithOpt <- function(expr, options, env)
+{
+    res <- structure("", Rd_tag="COMMENT")
+    if(options$eval){
+        result <- tryCatch(withVisible(eval(expr, env)), error=function(e) e)
+
+        if(inherits(result, "error")) return(result)
+        switch(options$results,
+        "text" = if (result$visible)
+		    res <- paste(as.character(result$value), collapse=" "),
+        "verbatim" = if (result$visible) print(result$value),
+        "rd" = res <- result$value)
+    }
+    return(res)
+}
+
+getDynamicFlags <- function(block) {
+    flag <- attr(block, "dynamicFlag")
+    if (is.null(flag)) c("#ifdef"=FALSE, "\\Sexpr"=FALSE)
+    else c("#ifdef" = flag %% 2 > 0, "\\Sexpr" = flag %/% 2 > 0)
+}
+
+setDynamicFlags <- function(block, flags) {  # flags in format coming from getDynamicFlags
+    flag <- sum(flags * c(1,2))
+    if (flag == 0) flag <- NULL
+    attr(block, "dynamicFlag") <- flag
+    block
+}
+
+processRdChunk <- function(code, stage, options, env, Rdfile)
+{
+    if (is.null(opts <- attr(code, "Rd_option"))) opts <- ""
+    codesrcref <- attr(code, "srcref")
+    options <- utils:::SweaveParseOptions(opts, options, RweaveRdOptions)
+    if (stage == options$stage) {
+        #  The code below is very similar to RWeaveLatexRuncode, but simplified
+
+        # Results as a character vector for now; convert to list later
+        res <- character(0)
+        code <- code[RdTags(code) != "COMMENT"]
+	chunkexps <- tryCatch(parse(text = code), error = identity)
+	if (inherits(chunkexps, "error")) stopRd(code, Rdfile, chunkexps)
+
+	if(length(chunkexps) == 0L)
+	    return(tagged(code, "LIST"))
+
+	srcrefs <- attr(chunkexps, "srcref")
+	lastshown <- 0L
+	thisline <- 0
+	err <- NULL
+	for(nce in seq_along(chunkexps))
+	{
+	    ce <- chunkexps[[nce]]
+	    if (nce <= length(srcrefs) && !is.null(srcref <- srcrefs[[nce]])) {
+		srcfile <- attr(srcref, "srcfile")
+		showfrom <- srcref[1L]
+		showto <- srcref[3L]
+		dce <- getSrcLines(srcfile, lastshown+1, showto)
+		leading <- showfrom-lastshown
+		lastshown <- showto
+		while (length(dce) && grepl("^[[:blank:]]*$", dce[1L])) {
+		    dce <- dce[-1L]
+		    leading <- leading - 1L
+		}
+	    } else {
+		dce <- deparse(ce, width.cutoff=0.75*getOption("width"))
+		leading <- 1L
+	    }
+	    if(options$echo && length(dce)) {
+		res <- c(res,"\n",
+                         paste(getOption("prompt"), dce[1L:leading],
+                               sep="", collapse="\n"))
+		if (length(dce) > leading)
+		    res <- c(res, "\n",
+                             paste(getOption("continue"), dce[-(1L:leading)],
+                                   sep="", collapse="\n"))
+		thisline <- thisline + length(dce)
+	    }
+
+	    tmpcon <- file()
+	    sink(file = tmpcon)
+	    if(options$eval) err <- evalWithOpt(ce, options, env)
+	    res <- c(res, "\n") # make sure final line is complete
+	    sink()
+	    output <- readLines(tmpcon)
+	    close(tmpcon)
+	    ## delete empty output
+	    if(length(output) == 1L & output[1L] == "") output <- NULL
+
+	    if (inherits(err, "error")) {
+	    	attr(code, "srcref") <- codesrcref
+	    	stopRd(code, Rdfile, err$message)
+	    }
+
+	    if(length(output) & (options$results != "hide")){
+
+		output <- paste(output, collapse="\n")
+		if(options$strip.white %in% c("all", "true")) {
+		    output <- sub("^[[:space:]]*\n", "", output)
+		    output <- sub("\n[[:space:]]*$", "", output)
+		    if(options$strip.white == "all")
+		      output <- sub("\n[[:space:]]*\n", "\n", output)
+		}
+		res <- c(res, output)
+		remove(output)
+	    }
+	}
+	if (options$results == "rd") {
+	    res <- err   # The last value of the chunk
+	    tmpcon <- file()
+	    writeLines(res, tmpcon, useBytes = TRUE)
+	    res <- parse_Rd(tmpcon, fragment=TRUE)
+	    flag <- getDynamicFlags(res)
+	    res <- tagged(res, "LIST")
+	    res <- setDynamicFlags(res, flag)
+	    close(tmpcon)
+	    res <- prepare_Rd(res, defines = .Platform$OS.type, options=options,
+	                           stage2 = FALSE, stage3 = FALSE)
+	} else if (options$results == "text")
+	    res <- tagged(err, "TEXT")
+	else if (length(res)) {
+	    res <- lapply(as.list(res), function(x) tagged(x, "VERB"))
+	    res <- tagged(res, "\\verb")
+	} else res <- tagged("", "COMMENT")
+    } else res <- code
+    attr(res, "srcref") <- codesrcref
+    res
+}
+
+processRdIfdefs <- function(blocks, defines)
+{
+    recurse <- function(block) {
+    	if (!(getDynamicFlags(block)["#ifdef"])) return(block)
+
+        if (!is.null(tag <- attr(block, "Rd_tag"))) {
+	    if (tag %in% c("#ifdef", "#ifndef")) {
+		target <- block[[1L]][[1L]]
+		# The target will have picked up some whitespace and a newline
+		target <- psub("[[:blank:][:cntrl:]]*", "", target)
+		if ((target %in% defines) == (tag == "#ifdef")) {
+		    flag <- getDynamicFlags(block[[2L]])
+		    block <- tagged(block[[2L]], "#expanded")
+		    block <- setDynamicFlags(block, flag)
+		} else
+		    block <- structure(tagged(paste(tag, target, "not active"),
+                                              "COMMENT"),
+		    		       srcref = attr(block, "srcref"))
+	    }
+	}
+	if (is.list(block)) {
+	    i <- 1L
+	    flags <- getDynamicFlags(NULL)
+	    while (i <= length(block)) {
+	    	newval <- recurse(block[[i]])
+	    	newtag <- attr(newval, "Rd_tag")
+	    	if (!is.null(newtag) && newtag == "#expanded") { # ifdef has expanded.
+	    	    all <- seq_along(block)
+	    	    before <- all[all < i]
+	    	    after <- all[all > i]
+	    	    block <- tagged(c(block[before], newval, block[after]), tag)
+	    	} else {
+	    	    flags <- flags | getDynamicFlags(newval)
+		    block[[i]] <- newval
+		    i <- i+1L
+		}
+	    }
+	    block <- setDynamicFlags(block, flags)
+	}
+	block
+    }
+
+    recurse(blocks)
+}
+
+processRdSexprs <-
+    function(block, stage, options = RweaveRdDefaults,
+             env = new.env(parent=globalenv()))
+{
+    recurse <- function(block) {
+    	if (!getDynamicFlags(block)["\\Sexpr"]) return(block)
+
+        if (is.list(block)) {
+            if (!is.null(tag <- attr(block, "Rd_tag"))) {
+        	if (tag == "\\Sexpr")
+            	    block <- processRdChunk(block, stage, options, env)
+            	else if (tag == "\\RdOpts")
+    	    	    options <<-
+                        utils:::SweaveParseOptions(block, options, RweaveRdOptions)
+    	    }
+	    for (i in seq_along(block))
+		block[[i]] <- recurse(block[[i]])
+	}
+	block
+    }
+    recurse(block)
+}
+
+prepare_Rd <-
+    function(Rd, encoding = "unknown", defines = NULL, stages = NULL,
+             options = RweaveRdDefaults,
+             stage2 = TRUE, stage3 = TRUE, ..., msglevel = 0)
+{
+    if (is.character(Rd)) {
+        Rdfile <- Rd
+        ## do it this way to get info in internal warnings
+        Rd <- eval(substitute(parse_Rd(f, encoding = enc, ...),
+                              list(f = Rd, enc = encoding)))
+    } else if(inherits(Rd, "connection")) {
+        Rdfile <- summary(Rd)
+        Rd <- parse_Rd(Rd, encoding = encoding, ...)
+    } else Rdfile <- attr(Rd, "Rdfile")
+    if (is.null(Rdfile) && !is.null(srcref <- attr(Rd, "srcref")))
+    	Rdfile <- attr(srcref, "srcfile")$filename
+    pratt <- attr(Rd, "prepared")
+    if (is.null(pratt)) pratt <- 0L
+    if ("build" %in% stages)
+    	Rd <- processRdSexprs(Rd, "build", options)
+    if (!is.null(defines))
+    	Rd <- processRdIfdefs(Rd, defines)
+    for (stage in c("install", "render"))
+    	if (stage %in% stages)
+    	    Rd <- processRdSexprs(Rd, stage, options)
+    if (pratt < 2L && stage2)
+        Rd <- prepare2_Rd(Rd, Rdfile)
+    meta <- attr(Rd, "meta")
+    if (pratt < 3L && stage3)
+        Rd <- prepare3_Rd(Rd, Rdfile, msglevel = msglevel)
+
+    # Restore flags from any sections that are left
+    Rd <- setDynamicFlags(Rd, apply(sapply(Rd, getDynamicFlags), 1, any))
+
+    structure(Rd, Rdfile = Rdfile, class = "Rd", meta = meta)
+}
+
+prepare2_Rd <- function(Rd, Rdfile)
+{
+    sections <- RdTags(Rd)
+
+    ## FIXME: we no longer make any use of \Rdversion
+    version <- which(sections == "\\Rdversion")
+    if (length(version) > 1L)
+    	stopRd(Rd[[version[2L]]], Rdfile,
+               "Only one \\Rdversion declaration is allowed")
+
+    ## Give warning (pro tem) for nonblank text outside a section
+    if (length(bad <- grep("[^[:blank:][:cntrl:]]",
+                           unlist(Rd[sections == "TEXT"]),
+                           perl = TRUE, useBytes = TRUE )))
+        for(s in bad)
+            warnRd(Rd[sections == "TEXT"][[s]], Rdfile,
+                   "All text must be in a section")
+
+    drop <- rep.int(FALSE, length(sections))
+
+    where <- which(sections == "\\examples")
+    if(length(where) > 1L) {
+        warnRd(Rd[where[[2L]]], Rdfile,
+               "Only one \\examples section is allowed: the first will be used")
+        drop[where[-1L]] <- TRUE
+    }
+
+    enc <- which(sections == "\\encoding")
+    if (length(enc)) {
+    	if (length(enc) > 1L) {
+    	    warnRd(Rd[[enc[2L]]], Rdfile,
+                   "Only one \\encoding declaration is allowed: the first will be used")
+            drop[enc[-1L]] <- TRUE
+            enc <- enc[[1L]]
+        }
+    	encoding <- Rd[[enc]]
+    	if (!identical(RdTags(encoding), "TEXT"))
+    	    stopRd(encoding, Rdfile, "'encoding' must be plain text")
+    }
+
+    dt <- which(sections == "\\docType")
+    docTypes <- character(length(dt))
+    if(length(dt)) {
+        for(i in seq_along(dt)) {
+            docType <- Rd[[dt[i]]]
+            if(!identical(RdTags(docType), "TEXT"))
+        	stopRd(docType, Rdfile, "'docType' must be plain text")
+            docTypes[i] <- docType[[1L]]
+         }
+    }
+
+    ## Drop all the parts that are not rendered
+    extras <- c("COMMENT", "TEXT", "\\docType", "\\Rdversion", "\\RdOpts")
+    drop <- drop | (sections %in% extras)
+    bad <- ! sections %in% c(names(sectionOrder), extras)
+    if (any(bad)) {
+        for(s in which(bad))
+            warnRd(Rd[[s]], Rdfile, "Section ",
+                   sections[s], " is unrecognized and will be dropped")
+        drop <- drop | bad
+    }
+    Rd <- Rd[!drop]
+    sections <- sections[!drop]
+    sortorder <- order(sectionOrder[sections])
+    Rd <- Rd[sortorder]
+    sections <- sections[sortorder]
+    if (!identical(sections[1:2], c("\\title", "\\name")))
+    	stopRd(Rd, Rdfile,
+               "Sections \\title, and \\name must exist and be unique in Rd files")
+    if (length(RdTags(Rd[[2L]])) > 1L)
+        stopRd(RdTags(Rd[[2L]]), Rdfile,"\\name must only contain simple text")
+
+    structure(Rd, meta = list(docType = docTypes))
+}
+
+prepare3_Rd <- function(Rd, Rdfile, msglevel = 0)
+{
+    ## Drop 'empty' sections: less rigorous than checkRd test
+    keep <- rep(TRUE, length(Rd))
+    checkEmpty <- function(x, this)
+    {
+        if(this) return(TRUE)
+        if(is.list(x))
+            for(xx in x) this <- checkEmpty(xx, this)
+        else {
+            tag <- attr(x, "Rd_tag")
+            switch(tag,
+                   COMMENT = {},
+                   VERB =,
+                   RCODE =,
+                   TEXT = if(any(grepl("[^[:space:]]", s, perl = TRUE, useBytes=TRUE))) return(TRUE),
+                   return(TRUE)
+                   )
+        }
+        this
+     }
+    for (i in seq_along(Rd)) {
+        this <- FALSE
+        s0 <- section <- Rd[[i]]
+        tag <- attr(section, "Rd_tag")
+        if(tag == "\\section") {
+            tagtitle <- sQuote(as.character(section[[1L]]))
+            section <- section[[2L]]
+        } else tagtitle <- tag
+        for(s in section) this <- checkEmpty(s, this)
+        keep[i] <- this
+        if(!this && msglevel > 0)
+            warnRd(s0, Rdfile, "Dropping empty section ", tagtitle)
+    }
+    Rd[keep]
+}
+
+sectionOrder <- c("\\title"=1, "\\name"=2, "\\alias"=2.1, "\\concept"=2.2,
+                  "\\keyword"=2.3, "\\encoding"=2.4,
     "\\description"=3, "\\usage"=4, "\\synopsis"=4, "\\arguments"=5,
     "\\format"=6, "\\details"=7, "\\value"=8, "\\section"=9,
     "\\note"=10, "\\author" = 11, "\\source"=12, "\\references"=13,
@@ -164,614 +482,233 @@ sectionTitles <-
       "\\references"="References", "\\source"="Source",
       "\\seealso"="See Also", "\\examples"="Examples", "\\value"="Value")
 
-## FIXME: better to really use XHTML
-Rd2HTML <-
-    function(Rd, out = "", package = "", defines = .Platform$OS.type,
-             encoding = "unknown", Links = NULL, CHM = FALSE)
+psub <- function(pattern, replacement, x)
+##    gsub(pattern, replacement, x, perl = TRUE, useBytes = TRUE)
+    .Internal(gsub(pattern, replacement, x, FALSE, TRUE, TRUE, FALSE, TRUE))
+
+psub1 <- function(pattern, replacement, x)
+##    sub(pattern, replacement, x, perl = TRUE, useBytes = TRUE)
+    .Internal(sub(pattern, replacement, x, FALSE, TRUE, TRUE, FALSE, TRUE))
+
+fsub <- function(pattern, replacement, x)
+##    gsub(pattern, replacement, x, fixed = TRUE, useBytes = TRUE)
+    .Internal(gsub(pattern, replacement, x, FALSE, TRUE, FALSE, TRUE, TRUE))
+
+fsub1 <- function(pattern, replacement, x)
+##    sub(pattern, replacement, x, fixed = TRUE, useBytes = TRUE)
+    .Internal(sub(pattern, replacement, x, FALSE, TRUE, FALSE, TRUE, TRUE))
+
+
+## for lists of messages, see ../man/checkRd.Rd
+checkRd <- function(Rd, defines=.Platform$OS.type, stages="render",
+                    unknownOK = TRUE, listOK = TRUE, ..., def_enc = FALSE)
 {
-    of <- function(...) writeLines(paste(...), con, sep = '')
-    of0 <- function(...) writeLines(paste(..., sep=""), con, sep ="")
-    of1 <- function(text) writeLines(text, con, sep = "")
-
-    nlinks <- 0L
-### These correspond to HTML wrappers
-    HTMLTags <- c("\\bold"="B",
-    	          "\\cite"="CITE",
-                  "\\code"="code",
-                  "\\command"="CODE",
-                  "\\dfn"="DFN",
-                  "\\emph"="EM",
-                  "\\kbd"="KBD",
-                  "\\preformatted"="pre",
-#                  "\\special"="PRE",
-                  "\\strong"="STRONG",
-                  "\\var"="VAR",
-                  "\\verb"="PRE")
-    # These have simple substitutions
-    HTMLEscapes <- c("\\R"='<font face="Courier New,Courier" color="#666666"><b>R</b></font>',
-    		     "\\cr"="<br>",
-    		     "\\dots"="...",
-    		     "\\ldots"="...")
-    ## These correspond to idiosyncratic wrappers
-    HTMLLeft <- c("\\acronym"='<acronym><span class="acronym">',
-    		  "\\donttest"="",
-    		  "\\env"='<span class="env">',
-                  "\\file"='&lsquo;<span class="file">',
-                  "\\option"='<span class="option">',
-                  "\\pkg"='<span class="pkg">',
-                  "\\samp"='<span class="samp">',
-                  "\\sQuote"="&lsquo;",
-                  "\\dQuote"="&ldquo;")
-    HTMLRight <- c("\\acronym"='</span></acronym>',
-    		   "\\donttest"="",
-    		   "\\env"="</span>",
-                   "\\file"='</span>&rsquo;',
-                   "\\option"="</span>",
-                   "\\pkg"="</span>",
-                   "\\samp"="</span>",
-                   "\\sQuote"="&rsquo;",
-                   "\\dQuote"="&rdquo;")
-
-    trim <- function(x) {
-        x <- sub("^\\s*", "", x, perl = TRUE)
-        sub("\\s*$", "", x, perl = TRUE)
-    }
-
-    addParaBreaks <- function(x, tag) {
-        start <- attr(x, "srcref")[2L] # FIXME: what if no srcref?, start col
-	if (isBlankLineRd(x)) "</p>\n<p>\n"
-	else if(start == 1) gsub("^\\s+", "", x, perl = TRUE)
-        else x
-    }
-
-    ## FIXME: what other substitutions do we need?
-    ## possibly quotes if the parser had left alone -- NA.Rd
-    htmlify <- function(x) {
-	x <- gsub("&", "&amp;", x, fixed = TRUE)
-	x <- gsub("---", "&mdash;", x, fixed = TRUE)
-	x <- gsub("--", "&ndash;", x, fixed = TRUE)
-	x <- gsub("``", "&ldquo;", x, fixed = TRUE)
-	x <- gsub("''", "&rdquo;", x, fixed = TRUE)
-        x <- gsub("`([^']+)'", "&lsquo;\\1&rsquo;", x, perl=TRUE)
-	x <- gsub("`", "'", x, fixed = TRUE)
-	x <- gsub("<", "&lt;", x, fixed = TRUE)
-	gsub(">", "&gt;", x, fixed = TRUE)
-    }
-    vhtmlify <- function(x) { # code version
-	x <- gsub("&", "&amp;", x, fixed = TRUE)
-	x <- gsub("<", "&lt;", x, fixed = TRUE)
-	gsub(">", "&gt;", x, fixed = TRUE)
-    }
-
-    HTMLeqn <- function(x)
+    warnRd <- function(block, Rdfile, ..., level=0)
     {
-        x <- htmlify(x)
-        ## historical escapes for math
-        x <- gsub("\\\\(Gamma|alpha|Alpha|pi|mu|sigma|Sigma|lambda|beta|epsilaon)", "&\\1;", x)
-        x <- gsub("\\\\left\\(", "(", x)
-        x <- gsub("\\\\right", "\\)", x)
-        x <- gsub("\\le", "&lt;=", x)
-        x <- gsub("\\ge", "&gt;=", x)
-        x
+        srcref <- attr(block, "srcref")
+        msg <- if (is.null(srcref))
+            paste("file '", Rdfile, "': ", ..., sep = "")
+        else {
+            loc <- paste(Rdfile, ":", srcref[1L], sep = "")
+            if (srcref[1L] != srcref[3L]) loc <- paste(loc, "-", srcref[3L], sep="")
+            paste(loc, ": ", ..., sep = "")
+        }
+        msg <- sprintf("checkRd: (%d) %s", level, msg)
+        .messages <<- c(.messages, msg)
     }
 
-    writeWrapped <- function(tag, block) {
-    	of0("<", HTMLTags[tag], ">")
-    	writeContent(block, tag)
-    	of0("</",  HTMLTags[tag], ">")
+    checkWrapped <- function(tag, block) checkContent(block, tag)
+
+    checkLink <- function(tag, block) {
+    	option <- attr(block, "Rd_option")
+    	if(!is.null(option)) checkContent(option, tag)
+    	checkContent(block, tag)
+        get_link(block, tag, Rdfile) ## to do the same as Rd2HTML
     }
 
-    topic2Path <- function(alias, package, type, lib.loc=NULL)
+    ## blocktag is unused
+    checkBlock <- function(block, tag, blocktag)
     {
-        paths <- sapply(.find.package(package, lib.loc, verbose = FALSE),
-                        function(p) index.search(alias, p, "AnIndex", type))
-        paths[paths != ""]
-    }
-
-    ## FIXME: depends on CHM or not
-    ## Cross-packages CHM links are of the form
-    ## <a onclick="findlink('stats', 'weighted.mean.html')" style="text-decoration: underline; color: blue; cursor: hand">weighted.mean</a>
-    writeLink <- function(tag, block) {
-	parts <- get_link(block, tag)
-
-    	if (is.null(parts$targetfile)) {
-            topic <- parts$dest
-            htmlfile <- paste(topic, ".html", sep = "") ## pro tem
-            ## should be <a href=\"..\/..\/..\/doc\/html\/search\/SearchObject.html?$argkey\">$arg<\/a>/s; where $argkey is the topic and $arg the HTMLiied version.
-            ## htmltfile <- paste("../../../doc/html/search\/SearchObject.html?", parts%dest, sep= "")
-            if (!is.null(Links)) {
-                tmp <- Links[topic]
-                if (is.na(tmp)) {
-                    warnRd(block, Rdfile, "missing link ", sQuote(topic))
-                } else htmlfile <- tmp
-            }
-    	} else if (is.null(parts$pkg) || parts$pkg == package)
-    	    htmlfile <- paste(parts$targetfile, ".html", sep="")
-    	else
-    	    htmlfile <- paste("../../", parts$pkg, "/html/",
-                              parts$targetfile, ".html", sep="")
-
-    	of0('<a href="', htmlfile, '">')
-    	writeContent(block, tag)
-    	of1('</a>')
-        nlinks <<- nlinks + 1L
-    }
-
-    writeComment <- function(txt) {
-       	txt <- sub("^%", "", txt, fixed = TRUE)
-       	txt <- sub("\n", "", txt)
-       	txt <- gsub("--", "- - ", txt, fixed = TRUE)
-       	txt <- gsub(">", "&gt;", txt, fixed = TRUE)
-	of("<!-- ", txt, " -->\n")
-    }
-
-    writeLR <- function(block, tag) {
-        of1(HTMLLeft[tag])
-        writeContent(block, tag)
-        of1(HTMLRight[tag])
-    }
-
-    writeDR <- function(block, tag) {
-        if (length(block) > 1L) {
-            of1('## Not run: ') # had trailing space before: FIXME remove
-            writeContent(block, tag)
-            ## FIXME only needs a \n here if not at left margin
-            of1('\n## End(Not run)')
-        } else {
-            of1('## Not run: ')
-            writeContent(block, tag)
-       }
-    }
-
-    writeBlock <- function(block, tag, blocktag) {
 	switch(tag,
-               UNKNOWN =,
-               VERB =,
-               RCODE = of1(vhtmlify(block)),
-               TEXT = of1(addParaBreaks(htmlify(block), blocktag)),
+               ## parser already warned here
+               UNKNOWN = if (!unknownOK)
+               stopRd(block, Rdfile, "Unrecognized macro ", block[[1L]]),
+               VERB = ,
+               RCODE = ,
+               TEXT = {
+                   if(!def_enc) {
+                       ## check for encoding; this is UTF-8 if known
+                       ## (but then def_enc = TRUE?)
+                       msg2 <- if(inEnc2) "in second part of \\enc" else "without declared encoding"
+                       if(Encoding(block) == "UTF-8")
+                           warnRd(block, Rdfile, level = -1,
+                                  "Non-ASCII contents ", msg2)
+                       if(grepl("<[0123456789abcdef][0123456789abcdef]>", block))
+                           warnRd(block, Rdfile, level = -3,
+                                  "Apparent non-ASCII contents ", msg2)
+                   }
+                   ## check if this renders as non-whitespace
+                   if(!grepl("^[[:space:]]*$", block)) has_text <<- TRUE
+               },
                COMMENT = {},
-               LIST =,
+               LIST = if (length(block)) {
+                   deparse <- sQuote(paste(as.character.Rd(block), collapse=""))
+                   if(!listOK)
+                       stopRd(block, Rdfile, "Unnecessary braces at ", deparse)
+                   else warnRd(block, Rdfile, level = -3,
+                               "Unnecessary braces at ", deparse)
+                   checkContent(block, tag)
+               },
                "\\describe"=,
                "\\enumerate"=,
-               "\\itemize"=writeContent(block, tag),
+               "\\itemize"=,
                "\\bold"=,
                "\\cite"=,
-               "\\code"=,
                "\\command"=,
                "\\dfn"=,
                "\\emph"=,
-               "\\kbd"=,
-               "\\preformatted"=,
+               "\\kbd"= checkContent(block, tag),
+               "\\code"=,
+               "\\preformatted"= checkCodeBlock(block, tag),
+               "\\Sexpr"=,
+               "\\special"=,
                "\\strong"=,
                "\\var" =,
-               "\\verb"= writeWrapped(tag, block),
-               "\\special"= writeContent(block, tag), ## FIXME, verbatim?
+               "\\verb"= checkContent(block, tag),
                "\\linkS4class" =,
-               "\\link" = writeLink(tag, block),
-               "\\email" = of0('<a href="mailto:', block[[1L]], '">', htmlify(block[[1L]]), '</a>'),
-               ## FIXME: encode, not htmlify
-               "\\url" = of0('<a href="', block[[1L]], '">', block[[1L]], '</a>'),
-               "\\cr" =,
+               "\\link" = checkLink(tag, block),
+               "\\email" =,
+               "\\url" = has_text <<- TRUE,
+               "\\cr" ={},
                "\\dots" =,
                "\\ldots" =,
-               "\\R" = of1(HTMLEscapes[tag]),
+               "\\R" = has_text <<- TRUE,
                "\\acronym" =,
-               "\\donttest" =,
                "\\env" =,
                "\\file" =,
                "\\option" =,
                "\\pkg" =,
                "\\samp" =,
                "\\sQuote" =,
-               "\\dQuote" =  writeLR(block, tag),
-               "\\dontrun"= writeDR(block, tag),
-               "\\enc" = writeContent(block[[1L]], tag),
-               "\\eqn" = {
-                   of1("<i>")
-                   block <- block[[length(block)]];
-                   ## FIXME: space stripping needed: see Special.html
-                   writeContent(block, tag)
-                   of1("</i>")
-               },
-               "\\deqn" = {
-                   of1('</p><p align="center"><i>')
-                   block <- block[[length(block)]];
-                   writeContent(block, tag)
-                   of1('</i></p><p>')
-               },
-               "\\dontshow" =,
-               "\\testonly" = {}, # do nothing
+               "\\dQuote" = checkContent(block, tag),
                "\\method" =,
-               "\\S3method" = {
-                   ## FIXME: special methods for [ [<- and operators
-                   class <- as.character(block[[2L]])
-                   if (class == "default")
-                       of1('## Default S3 method:\n')
-                   else {
-                       of1("## S3 method for class '")
-                       writeContent(block[[2L]], tag)
-                       of1("':\n")
-                   }
-                   writeContent(block[[1L]], tag)
+               "\\S3method" =,
+               "\\S4method" =
+                   warnRd(block, Rdfile, level = 7, "Tag ", tag,
+                          " not valid outside a code block"),
+               "\\enc" = {
+                   checkContent(block[[1L]], tag)
+                   ## second arg should always be ASCII
+                   save_enc <- def_enc
+                   def_enc <<- FALSE
+                   inEnc2 <<- TRUE
+                   checkContent(block[[2L]], tag)
+                   def_enc <<- save_enc
+                   inEnc2 <<- FALSE
                },
-               "\\S4method" = {
-                   of1("## S4 method for signature '")
-                   writeContent(block[[2L]], tag)
-                   of1("':\n")
-                   writeContent(block[[1L]], tag)
+               "\\eqn" =,
+               "\\deqn" = {
+                   checkContent(block[[1L]])
+                   if (length(block) > 1L) checkContent(block[[2L]])
                },
-               "\\tabular" = writeTabular(block),
-               stopRd(block, "Tag ", tag, " not recognized.")
-               )
+               "\\tabular" = checkTabular(block),
+               "\\if" =,
+               "\\ifelse" = {
+    		   condition <- block[[1L]]
+    		   tags <- RdTags(condition)
+    		   if (!all(tags %in% c("TEXT", "\\Sexpr"))) 
+    		       stopRd(block, Rdfile, "Condition must be \\Sexpr or plain text")
+    		   condition <- condition[tags == "TEXT"]
+    		   allow <- .strip_whitespace(strsplit(paste(condition, collapse=""), ",")[[1L]])
+    		   unknown <- allow[!(allow %in% 
+    		          c("", "latex", "example", "text", "html", "TRUE", "FALSE"))]
+    		   if (length(unknown)) 
+    		       warnRd(block, Rdfile, "Unrecognized format: ", unknown)
+                   checkContent(block[[2L]])
+                   if (tag == "\\ifelse")
+                       checkContent(block[[3L]])
+               },
+               "\\out" = {
+               	   tags <- RdTags(block)
+               	   if (!all(tags == "VERB"))
+               	       stopRd(block, Rdfile, "Must contain verbatim text")
+               },
+               warnRd(block, Rdfile, level = 7, "Tag ", tag, " not recognized"))
     }
 
-    writeTabular <- function(table) {
-    	format <- table[[1L]]
-    	content <- table[[2L]]
-    	if (length(format) != 1 || RdTags(format) != "TEXT")
-    	    stopRd(table, "\\tabular format must be simple text")
-    	format <- strsplit(format[[1L]], "")[[1L]]
-    	if (!all(format %in% c("l", "c", "r")))
-    	    stopRd(table, "Unrecognized \\tabular format: ", table[[1L]][[1L]])
-        format <- c(l="left", c="center", r="right")[format]
-
-        content <- preprocessRd(content, defines)
-        tags <- attr(content, "RdTags")
-
-        of1('\n</p>\n<table summary="Rd table">\n')
-        newrow <- TRUE
-        for (i in seq_along(tags)) {
-            if (newrow) {
-            	of1("<tr>\n ")
-            	newrow <- FALSE
-            	col <- 0
-            	newcol <- TRUE
-            }
-            if (newcol) {
-                col <- col + 1
-                if (col > length(format))
-                    stopRd(table, "Only ", length(format), " columns allowed in this table.")
-            	of0('<td align="', format[col], '">')
-            	newcol <- FALSE
-            }
-            switch(tags[i],
-            "\\tab" = {
-            	of1('</td>')
-            	newcol <- TRUE
-            },
-            "\\cr" = {
-            	if (!newcol) of1('</td>')
-            	of1('\n</tr>\n')
-            	newrow <- TRUE
-            },
-            writeBlock(content[[i]], tags[i], "\\tabular"))
-        }
-        if (!newcol) of1('</td>')
-        if (!newrow) of1('\n</tr>\n')
-        of1('\n</table><p>\n')
-    }
-
-    writeContent <- function(blocks, blocktag) {
-        inlist <- FALSE
-        itemskip <- FALSE
-
-	blocks <- preprocessRd(blocks, defines)
-	tags <- attr(blocks, "RdTags")
-
-	for (i in seq_along(tags)) {
-            tag <- tags[i]
-            block <- blocks[[i]]
+    checkCodeBlock <- function(blocks, blocktag)
+    {
+	for (block in blocks) {
+            tag <- attr(block, "Rd_tag")
             switch(tag,
-            "\\item" = {
-    	    	if (!inlist) {
-    	    	    switch(blocktag,
-                           "\\value" =  of1('<table summary="R valueblock">\n'),
-                           "\\arguments" = of1('<table summary="R argblock">\n'),
-                           "\\itemize" = of1("<ul>\n"),
-                           "\\enumerate" = of1("<ol>\n"),
-                           "\\describe" = of1("<dl>\n"))
-    	    	    inlist <- TRUE
-    		} else {
-    		    if (blocktag %in% c("\\itemize", "\\enumerate")) {
-    		    	of1("</li>\n")
-                        ## We have \item ..., so need to skip the space.
-                        itemskip <- TRUE
-                    }
-    		}
-    		switch(blocktag,
-   		"\\value"=,
-     		"\\arguments"={
-    		    of1('<tr valign="top"><td><code>')
-    		    writeContent(block[[1L]], tag)
-    		    of1('</code></td>\n<td>\n')
-    		    writeContent(block[[2L]], tag)
-    		    of1('</td></tr>')
-    		},
-    		"\\describe"= {
-    		    of1("<dt>")
-    		    writeContent(block[[1L]], tag)
-    		    of1("</dt><dd>")
-    		    writeContent(block[[2L]], tag)
-    		    of1("</dd>")
-    		},
-    		"\\enumerate" =,
-    		"\\itemize"= of1("<li>"))
-    	    },
-    	    { # default
-    	    	if (inlist && !(blocktag %in% c("\\arguments", "\\itemize", "\\enumerate"))
-    	    	           && !(tag == "TEXT" && isBlankRd(block))) {
-    	    	    switch(blocktag,
-     	    	    "\\value" = of1("</table>\n"),
-    	    	    "\\describe" = of1("</dl>\n"))
-    		    inlist <- FALSE
-    		}
-                if (itemskip) {
-                    ## The next item must be TEXT, and start with a space.
-                    itemskip <- FALSE
-                    if (tag == "TEXT") {
-                        txt <- gsub("^ ", "", as.character(block), perl = TRUE)
-                        of1(txt)
-                    } else writeBlock(block, tag, blocktag) # should not happen
-                } else writeBlock(block, tag, blocktag)
-    	    })
-	}
-	if (inlist)
-	    switch(blocktag,
-		"\\value"=,
-		"\\arguments"=of1("</table>\n"),
-		"\\itemize"=of1("</ul>\n"),
-		"\\enumerate"=of1("</ol>\n"),
-		# "\\value"=,
-		"\\describe"=of1("</dl>\n"))
-    }
-
-    writeSection <- function(section, tag) {
-        if (tag == "\\alias") return() ## only used on CHM header
-    	of1("\n\n<h3>")
-    	if (tag == "\\section") {
-    	    title <- section[[1L]]
-    	    section <- section[[2L]]
-            ## FIXME: this needs trimming of whitespace
-    	    writeContent(title, tag)
-    	} else
-    	    of1(sectionTitles[tag])
-    	if (tag %in% c("\\examples", "\\synopsis", "\\usage"))
-    	    para <- "pre" else para <- "p"
-        of1("</h3>\n")
-        ## \arguments is a single table, not a para
-        if (tag == "\\arguments") para <- ""
-    	if(nzchar(para)) of0("\n<", para, ">")
-        ## There may be an initial \n, so remove that
-        s1 <- section[[1L]][1L]
-        if (RdTags(s1) == "TEXT" && s1 == "\n") section <- section[-1]
-    	writeContent(section, tag)
-    	if(nzchar(para)) of0("</", para, ">\n")
-    }
-
-    Rdfile <- "not known"
-
-    if (is.character(Rd)) {
-        Rdfile <- Rd
-        ## do it this way to get info in internal warnings
-        Rd <- eval(substitute(parse_Rd(f, encoding = enc),
-                              list(f = Rd, enc = encoding)))
-    } else if(inherits(Rd, "connection")) {
-        Rdfile <- summary(Rd)
-        Rd <- parse_Rd(Rd, encoding = encoding)
-    }
-
-    if (is.character(out)) {
-        if(out == "") con <- stdout()
-        else {
-	    con <- file(out, "w")
-	    on.exit(close(con))
-	}
-    } else {
-    	con <- out
-    	out <- summary(con)$description
-    }
-
-    ## Process top level ifdef's.
-    Rd <- preprocessRd(Rd, defines)
-    sections <- attr(Rd, "RdTags")
-
-    ## Print initial comments
-    ## for (i in seq_along(sections)) {
-    ## 	if (sections[i] != "COMMENT") break
-    ##	writeComment(Rd[[i]])
-    ##}
-
-    version <- which(sections == "\\Rdversion")
-    if (length(version) == 1L && as.numeric(version[[1L]]) < 2)
-    	warning("Rd2HTML is designed for Rd version 2 or higher.")
-    else if (length(version) > 1L)
-    	stopRd(Rd[[version[2L]]], "Only one \\Rdversion declaration is allowed")
-
-    enc <- which(sections == "\\encoding")
-    if (length(enc)) {
-    	if (length(enc) > 1L)
-    	    stopRd(Rd[[enc[2L]]], "Only one \\encoding declaration is allowed")
-    	encoding <- Rd[[enc]]
-    	if (!identical(RdTags(encoding), "TEXT"))
-    	    stopRd(encoding, "Encoding must be plain text")
-    	encoding <- encoding[[1L]]
-    }
-
-    ## Give error for nonblank text outside a section
-    if (length(bad <- grep("[^[:blank:][:cntrl:]]", unlist(Rd[sections == "TEXT"]), perl = TRUE )))
-    	stopRd(Rd[sections == "TEXT"][[bad[1L]]], "All text must be in a section")
-
-    ## Drop all the parts that are not rendered
-    drop <- sections %in% c("COMMENT", "TEXT", "\\concept", "\\docType", "\\encoding",
-                            "\\keyword", "\\Rdversion")
-    Rd <- Rd[!drop]
-    sections <- sections[!drop]
-
-    sortorder <- sectionOrder[sections]
-    if (any(bad <- is.na(sortorder)))
-    	stopRd(Rd[[which(bad)[1L]]], "Section ", sections[which(bad)[1L]], " unrecognized.")
-    sortorder <- order(sortorder)
-    Rd <- Rd[sortorder]
-    sections <- sections[sortorder]
-    if (!identical(sections[1:2], c("\\title", "\\name")))
-    	stopRd(Rd, "Sections \\title, and \\name must exist and be unique in Rd files.")
-
-    title <- Rd[[1L]]
-    name <- Rd[[2L]]
-    tags <- RdTags(name)
-    if (length(tags) > 1L) stopRd(name, "\\name must only contain simple text.")
-
-    name <- htmlify(name[[1L]])
-
-    if(CHM)
-        of0('<html><head><title>')
-    else
-        of0('<!DOCTYPE html PUBLIC "-//W3C//DTD HTML 4.01 Transitional//EN">\n',
-            '<html><head><title>R: ')
-    ## special for now, as we need to remove leading and trailing spaces
-    title <- trim(as.character(title))
-    title <- htmlify(paste(sub("^\\s+", "", title[nzchar(title)], perl = TRUE),
-                           collapse=" "))
-    of1(title)
-    of0('</title>\n',
-        '<meta http-equiv="Content-Type" content="text/html; charset=',
-        mime_canonical_encoding(encoding),
-        '">\n')
-    if(CHM) {
-        of0('<link rel="stylesheet" type="text/css" href="Rchm.css">\n',
-            '</head><body>\n\n')
-        of0('<table width="100%"><tr><td>', name, '(', package, ')',
-            '</td><td align="right">R Documentation</td></tr></table>\n')
-        of1('<object type="application/x-oleobject" classid="clsid:1e2a7bd0-dab9-11d0-b93a-00c04fc99f9e">\n')
-        aliases <- sapply(Rd[RdTags(Rd) == "\\alias"], as.character)
-        ## FIXME: (un)escape as needed
-        of0('<param name="keyword" value="R:   ', aliases, '">\n')
-        ## space is deliberate, used in sorting indices
-        of0('<param name="keyword" value=" ', title, '">\n')
-        of1('</object>\n\n\n')
-    } else
-        of0('<link rel="stylesheet" type="text/css" href="../../R.css">\n',
-            '</head><body>\n\n',
-            '<table width="100%" summary="page for ', name, ' {', package,
-            '}"><tr><td>',name,' {', package,
-            '}</td><td align="right">R Documentation</td></tr></table>\n\n')
-
-    of0("<h2>", title,'</h2>\n')
-
-    for (i in seq_along(sections)[-(1:2)])
-    	writeSection(Rd[[i]], sections[i])
-
-    if (CHM) {
-        if (nlinks > 0)
-            writeLines(paste('',
-                             '<script Language="JScript">',
-                             'function findlink(pkg, fn) {',
-                             'var Y, link;',
-                             'Y = location.href.lastIndexOf("\\\\") + 1;',
-                             'link = location.href.substring(0, Y);',
-                             'link = link + "../../" + pkg + "/chtml/" + pkg + ".chm::/" + fn;',
-                             'location.href = link;', '}', '</script>',
-                             sep = '\n'), con)
-    }
-    version <- packageDescription(package, fields="Version")
-    of0('\n',
-        '<hr><div align="center">[Package <em>', package,
-        '</em> version ', version, ' <a href="00Index.html">Index</a>]</div>\n',
-        '</body></html>\n')
-    return(out)
-}
-
-checkRd <-
-    function(Rd, defines=.Platform$OS.type, encoding = "unknown",
-             unknownOK = FALSE, listOK = TRUE)
-{
-    Rdfile <- "not known"
-
-    checkWrapped <- function(tag, block) {
-    	checkContent(block, tag)
-    }
-
-    checkLink <- function(tag, block) { # FIXME This doesn't handle aliases, and
-                                        # doesn't cover all variations
-    	option <- attr(block, "Rd_option")
-    	if(!is.null(option)) checkContent(option, tag)
-    	checkContent(block, tag)
-    }
-
-    checkBlock <- function(block, tag, blocktag) {
-	switch(tag,
-	UNKNOWN = if (!unknownOK) stopRd(block, "Unrecognized macro ", block[[1L]]) else warnRd(block, Rdfile, "Unrecognized macro ", block[[1L]]),
-	VERB = ,
-	RCODE = ,
-	TEXT = ,
-	COMMENT = {},
-	LIST = if (length(block)) {
-		deparse <- sQuote(paste(as.character.Rd(block), collapse=""))
-		if(!listOK)
-               	    stopRd(block, "Unnecessary braces at ", deparse)
-               else warnRd(block, Rdfile, "Unnecessary braces at ", deparse)
-              },
-	"\\describe"=,
-	"\\enumerate"=,
-	"\\itemize"=,
-	"\\bold"=,
-	"\\cite"=,
-	"\\code"=,
-	"\\command"=,
-	"\\dfn"=,
-	"\\emph"=,
-	"\\kbd"=,
-	"\\preformatted"=,
-	"\\special"=,
-	"\\strong"=,
-	"\\var" =,
-	"\\verb"= checkContent(tag, block),
-	"\\linkS4class" =,
-	"\\link" = checkLink(tag, block),
-	"\\email" =,
-	"\\url" =,
-	"\\cr" =,
-	"\\dots" =,
-	"\\ldots" =,
-	"\\R" = {},
-	"\\acronym" =,
-	"\\dontrun" =,
-	"\\donttest" =,
-	"\\env" =,
-	"\\file" =,
-	"\\option" =,
-	"\\pkg" =,
-	"\\samp" =,
-	"\\sQuote" =,
-	"\\dQuote" = checkContent(block, tag),
-	"\\method" =,
-	"\\S3method" =,
-	"\\S4method" =,
-	"\\enc" = {
-	    checkContent(block[[1L]], tag)
-	    checkContent(block[[2L]], tag)
-	},
-	"\\eqn" =,
-	"\\deqn" = {
-	    checkContent(block[[1L]])
-	    if (length(block) > 1L) checkContent(block[[2L]])
-	},
-	"\\dontshow" =,
-	"\\testonly" = checkContent(block, tag),
-	"\\tabular" = checkTabular(block),
-        stopRd(block, "Tag ", tag, " not recognized."))
+                   ## parser already warned here
+                   UNKNOWN = if (!unknownOK)
+                   stopRd(block, Rdfile, "Unrecognized macro ", block[[1L]]),
+                   VERB = ,
+                   RCODE = ,
+                   TEXT = {
+                       if(!def_enc) {
+                           ## check for encoding; this is UTF-8 if known
+                           ## (but then def_enc = TRUE?)
+                           msg2 <- if(inEnc2) "in second part of \\enc" else "without declared encoding"
+                           if(Encoding(block) == "UTF-8")
+                               warnRd(block, Rdfile, level = -1,
+                                      "Non-ASCII contents ", msg2)
+                           if(grepl("<[0123456789abcdef][0123456789abcdef]>", block))
+                               warnRd(block, Rdfile, level = -3,
+                                      "Apparent non-ASCII contents ", msg2)
+                       }
+                       ## check if this renders as non-whitespace
+                       if(!grepl("^[[:space:]]*$", block)) has_text <<- TRUE
+                   },
+                   COMMENT = {},
+                   "\\var" = checkCodeBlock(block, blocktag), # not preformatted, but the parser checks that
+                   "\\special" = checkCodeBlock(block, blocktag),
+                   "\\dots" = has_text <<- TRUE,
+                   "\\ldots" = {
+                       ## but it is rendered as ... in all converters
+                       warnRd(block, Rdfile, level = -3,
+                              "Tag ", tag, " is invalid in a code block")
+                       has_text <<- TRUE
+                   },
+                   ## these are valid in \code, at least
+                   "\\linkS4class" =,
+                   "\\link" = checkLink(tag, block),
+                   "\\method" =,
+                   "\\S3method" =,
+                   "\\S4method" = if(blocktag == "\\usage") {
+                       checkContent(block[[1L]], tag) # generic
+                       checkContent(block[[2L]], tag) # class
+                   } else warnRd(block, Rdfile, level = 5,
+                                 "Tag ", tag, " is only valid in \\usage"),
+                   "\\dontrun" =,
+                   "\\donttest" =,
+                   "\\dontshow" =,
+                   "\\testonly" = if(blocktag == "\\examples")
+                   checkCodeBlock(block, blocktag)
+                   else warnRd(block, Rdfile, level = 5,
+                               "Tag ", tag, " is only valid in \\examples"),
+                   {
+                       warnRd(block, Rdfile, level = 5,
+                              "Tag ", tag, " is invalid in a ",
+                              blocktag, " block")
+                       has_text <<- TRUE  # likely, e.g. \url
+                   })
+        }
     }
 
     checkTabular <- function(table) {
+        has_text <<- TRUE
     	format <- table[[1L]]
     	content <- table[[2L]]
     	if (length(format) != 1 || RdTags(format) != "TEXT")
-    	    stopRd(table, "\\tabular format must be simple text")
-    	format <- strsplit(format[[1L]], "")[[1L]]
+    	    warnRd(table, Rdfile, level = 7,
+                   "\\tabular format must be simple text")
+    	format <- strsplit(format[[1L]], "", fixed=TRUE)[[1L]]
     	if (!all(format %in% c("l", "c", "r")))
-    	    stopRd(table, "Unrecognized \\tabular format: ", table[[1L]][[1L]])
-        content <- preprocessRd(content, defines)
-        tags <- attr(content, "RdTags")
+    	    warnRd(table, Rdfile, level = 7,
+                   "Unrecognized \\tabular format: ", table[[1L]][[1L]])
+        tags <- RdTags(content)
 
         newrow <- TRUE
         for (i in seq_along(tags)) {
@@ -783,7 +720,9 @@ checkRd <-
             if (newcol) {
                 col <- col + 1
                 if (col > length(format))
-                    stopRd(table, "Only ", length(format), " columns allowed in this table.")
+                    warnRd(table, Rdfile, level = 7,
+                           "Only ", length(format),
+                           " columns allowed in this table")
             	newcol <- FALSE
             }
             switch(tags[i],
@@ -800,8 +739,7 @@ checkRd <-
     checkContent <- function(blocks, blocktag) {
         inlist <- FALSE
 
-	blocks <- preprocessRd(blocks, defines)
-	tags <- attr(blocks, "RdTags")
+	tags <- RdTags(blocks)
 
 	for (i in seq_along(tags)) {
             tag <- tags[i]
@@ -810,7 +748,7 @@ checkRd <-
             "\\item" = {
     	    	if (!inlist) inlist <- TRUE
     		switch(blocktag,
-    		"\\arguments"={
+    		"\\arguments"= {
     		    checkContent(block[[1L]], tag)
     		    checkContent(block[[2L]], tag)
     		},
@@ -832,285 +770,105 @@ checkRd <-
 	}
     }
 
+    has_text <- FALSE
     checkSection <- function(section, tag) {
     	if (tag == "\\section") {
     	    title <- section[[1L]]
-    	    section <- section[[2L]]
+            ## should be simple text
+            if(length(title) < 1L || attr(title[[1L]], "Rd_tag") != "TEXT") {
+                warnRd(section, Rdfile, level = 5,
+                       "Title of \\section must be non-empty plain text")
+            }
     	    checkContent(title, tag)
-    	}
-    	checkContent(section, tag)
+    	    section <- section[[2L]]
+            ## replace 'tag' in message below
+            tagtitle <- sQuote(as.character(title))
+    	} else tagtitle <- tag
+        has_text <<- FALSE
+        if (tag %in% c("\\usage", "\\synopsis", "\\examples"))
+            checkCodeBlock(section, tag)
+    	else checkContent(section, tag)
+        if(!has_text) warnRd(section, Rdfile, level = 3,
+                             "Empty section ", tagtitle)
     }
 
     checkUnique <- function(tag) {
     	which <- which(sections == tag)
     	if (length(which) < 1L)
-    	    stopRd(Rd, "Must have a ", tag)
-    	else if (length(which) > 1L)
-    	    stopRd(Rd[[which[2L]]], "Only one ", tag, " is allowed")
+    	    warnRd(Rd, Rdfile, level = 7, "Must have a ", tag)
+    	else {
+            if (length(which) > 1L)
+    	    warnRd(Rd[[which[2L]]], Rdfile, level = 7,
+                   "Only one ", tag, " is allowed")
+            empty <- TRUE
+            for(block in Rd[[which]]) {
+                switch(attr(block, "Rd_tag"),
+                       TEXT = if(!grepl("^[[:space:]]*$", block))
+                       empty <- FALSE,
+                       empty <- FALSE)
+            }
+            if(empty)
+                warnRd(Rd[[which]], Rdfile, level = 5,
+                       "Tag ", tag, " must not be empty")
+        }
     }
 
-    if (is.character(Rd)) {
-        Rdfile <- Rd
-        ## do it this way to get info in internal warnings
-        Rd <- eval(substitute(parse_Rd(f, encoding = enc),
-                              list(f = Rd, enc = encoding)))
-    } else if(inherits(Rd, "connection")) {
-        Rdfile <- summary(Rd)
-        Rd <- parse_Rd(Rd, encoding = encoding)
-    }
-
-    # Process top level ifdef's.
-    Rd <- preprocessRd(Rd, defines)
-    sections <- attr(Rd, "RdTags")
-
-    version <- which(sections == "\\Rdversion")
-    if (length(version) == 1L && as.numeric(version[[1L]]) < 2)
-    	warning("Rd2HTML is designed for Rd version 2 or higher.")
-    else if (length(version) > 1L)
-    	stopRd(Rd[[version[2L]]], "Only one \\Rdversion declaration is allowed")
-
-    enc <- which(sections == "\\encoding")
-    if (length(enc)) {
-    	if (length(enc) > 1L)
-    	    stopRd(Rd[[enc[2L]]], "Only one \\encoding declaration is allowed")
-    	encoding <- Rd[[enc]]
-    	if (!identical(RdTags(encoding), "TEXT"))
-    	    stopRd(encoding, "Encoding must be plain text")
-    }
-
-    dt <- which(sections == "\\docType")
-    docTypes <- character(length(dt))   
+    dt <- which(RdTags(Rd) == "\\docType")
+    docTypes <- character(length(dt))
     if (length(dt)) {
         for (i in dt) {
             docType <- Rd[[i]]
             if(!identical(RdTags(docType), "TEXT"))
-        	stopRd(docType, "docType must be plain text")
+        	warnRd(docType, Rdfile, level = 7,
+                       "'docType' must be plain text")
             docTypes[i] <- docType[[1L]]
          }
     }
 
-    checkUnique("\\title")
-    checkUnique("\\name")
+    .messages <- character()
+    .whandler <-     function(e) {
+        .messages <<- c(.messages, paste("prepare_Rd:", conditionMessage(e)))
+        invokeRestart("muffleWarning")
+    }
+
+    Rd <- withCallingHandlers({
+        prepare_Rd(Rd, defines=defines, stages=stages,
+                   warningCalls = FALSE, ..., msglevel = 1)
+    }, warning = .whandler)
+    Rdfile <- attr(Rd, "Rdfile")
+    sections <- RdTags(Rd)
+
+    enc <- which(sections == "\\encoding")
+    ## sanity was checked in prepare2_Rd
+    if (length(enc)) def_enc <- TRUE
+
+    inEnc2 <- FALSE
     if(!identical("package", docTypes))
         checkUnique("\\description")
-
-    name <- Rd[[which(sections == "\\name")]]
-    tags <- RdTags(name)
-    if (length(tags) > 1L) stopRd(name, "\\name must only contain simple text.")
-
     for (i in seq_along(sections))
-    	checkSection(Rd[[i]], sections[i])
+        checkSection(Rd[[i]], sections[i])
 
-    TRUE
+    structure(.messages, class = "checkRd")
 }
 
-Rd2ex <-
-    function(Rd, out="", defines=.Platform$OS.type, encoding = "unknown")
+print.checkRd <- function(x, minlevel = -Inf, ...)
 {
-    of0 <- function(...) writeLines(paste(..., sep=""), con, sep ="")
-    of1 <- function(text) writeLines(text, con, sep = "")
-
-    wr <- function(x) {
-        x <- remap(x)
-        paste("###", strwrap(x, 73, indent=1, exdent=3), sep="", collapse="\n")
-    }
-    remap <- function(x) {
-        ## \link, \var are untouched in comments: e.g. is.R
-        x <- gsub("\\\\(link|var)\\{([^}]+)\\}", "\\2", x, perl = TRUE)
-        ## FIXME not valid in perl: use lookbehind instead.
-        x <- gsub("(^|[^\\])\\\\([%{])", "\\1\\2", x)
-        x <- gsub("\\\\(l|)dots", "...", x, perl = TRUE)
-        ## Want to leave file bytes unchanged
-        Encoding(x) <- "unknown"
-        x
-    }
-
-    render <- function(x, prefix = "")
-    {
-        tag <- attr(x, "Rd_tag")
-        x <- preprocessRd(x, defines)
-        if(tag %in% c("\\dontshow", "\\testonly")) {
-            ## There are fancy rules here if not followed by \n
-            of1("## Don't show: ")
-            if (!length(grep("^\n", x[[1L]], perl = TRUE)))
-                writeLines("", con)
-            for(i in seq_along(x)) render(x[[i]], prefix)
-            if (!length(grep("\n$", x[[length(x)]], perl = TRUE)))
-                writeLines("", con)
-            of1("## End Don't show")
-        } else if (tag  == "\\dontrun") {
-            ## Special case for one line.
-            if (length(x) == 1L) {
-                of1("## Not run: ")
-                render(x[[1L]], prefix)
-            } else {
-                of1("## Not run: ")
-                if (!length(grep("^\n", x[[1L]], perl = TRUE))) {
-                    writeLines("", con)
-                    render(x[[1L]], paste("##D", prefix))
-                } else render(x[[1L]], prefix)
-                for(i in 2:length(x)) render(x[[i]], paste("##D", prefix))
-                if (!length(grep("\n$", x[[length(x)]], perl = TRUE)))
-                    writeLines("", con)
-                of1("## End(Not run)")
-            }
-        } else if (tag  == "\\donttest") {
-            of1("## No test: ")
-            if (!length(grep("^\n", x[[1L]], perl = TRUE)))
-                writeLines("", con)
-            for(i in seq_along(x)) render(x[[i]], prefix)
-            if (!length(grep("\n$", x[[length(x)]], perl = TRUE)))
-                writeLines("", con)
-            of1("## End(No test)")
-        } else if (tag == "COMMENT") {
-            ## % can escape a whole line (e.g. beavers.Rd) or
-            ## be trailing when we want a NL
-            ## This is not right (leaading spaces?) but it may do
-            if(attr(x, "srcref")[2L] > 1) writeLines("", con)
-        } else if (tag %in% c("\\dots", "\\ldots")) {
-            of1("...")
-        } else {
-            txt <- unlist(x)
-            of0(prefix, remap(txt))
-        }
-    }
-
-    Rdfile <- "not known"
-
-    if (is.character(Rd)) {
-        Rdfile <- Rd
-        ## do it this way to get info in internal warnings
-        Rd <- eval(substitute(tools::parse_Rd(f, encoding = enc),
-                              list(f = Rd, enc = encoding)))
-    } else if(inherits(Rd, "connection")) {
-        Rdfile <- summary(Rd)
-        Rd <- tools::parse_Rd(Rd, encoding = encoding)
-    }
-
-
-    ## Process top level ifdef's.
-    Rd <- preprocessRd(Rd, defines)
-    sections <- attr(Rd, "RdTags")
-
-    where <- which(sections == "\\examples")
-    if(length(where)) {
-        if (is.character(out)) {
-            if(out == "") con <- stdout()
-            else {
-                con <- file(out, "w")
-                on.exit(close(con))
-            }
-        } else {
-            con <- out
-            out <- summary(con)$description
-        }
-
-        if(length(which) > 1L)
-            warning("more than one \\examples section, using the first")
-        if(any(f <- sections == "\\encoding")) {
-            encoding <- unlist(Rd[[which(f)]])[1L]
-            of0("### Encoding: ", encoding, "\n\n")
-        }
-        nameblk <- sections == "\\name"
-        if (any(nameblk)) {
-            ## perl wrapped here, but it seems unnecessary
-            name <- as.character(Rd[[ which(nameblk)[1L] ]])
-            of0("### Name: ", name, "\n")
-        }
-        titleblk <- sections == "\\title"
-        if (any(titleblk)) {
-            title <- as.character(Rd[[ which(titleblk)[1L] ]])
-            ## remove empty lines, leading whitespace
-            title <- paste(sub("^\\s+", "", title[nzchar(title)], perl = TRUE),
-                           collapse=" ")
-            ## FIXME: more?
-            title <- gsub("(---|--)", "-", title, perl =  TRUE)
-        } else title <- "No title found"
-        of0(wr(paste("Title: ", title, sep='')), "\n")
-        aliasblks <- sections == "\\alias"
-        if (any(aliasblks)) {
-            aliases <- unlist(Rd[aliasblks])
-            sp <- grep(" ", aliases, fixed = TRUE)
-            aliases[sp] <- paste("'", aliases[sp], "'", sep = "")
-            of0(wr(paste("Aliases: ", paste(aliases, collapse=" "), sep="")), "\n")
-        }
-        keyblks <- sections == "\\keyword"
-        if (any(keyblks)) {
-            keys <- unlist(Rd[keyblks])
-            keys <- gsub("^\\s+", "", keys, perl = TRUE)
-            of0(wr(paste("Keywords: ", paste(keys, collapse=" "), sep="")), "\n")
-        }
-        writeLines(c("", "### ** Examples"), con)
-        ex <- preprocessRd(Rd[[ where[1L] ]], defines)
-        for (i in seq_along(ex)) render(ex[[i]])
-        of1("\n\n\n")
-    }
-    out
+    fromParse <- grepl("^prepare_Rd", x)
+    x1 <- x[fromParse]
+    x2 <- x[!fromParse]
+    levs <- as.numeric(sub("^checkRd: \\(([-0123456789]+)(.*)", "\\1", x2))
+    xx <- if(minlevel > 0) x2[levs >= minlevel] else c(x1, x2[levs >= minlevel])
+    writeLines(unique(xx))
+    invisible(x)
 }
 
-findHTMLlinks <- function(pkgDir = "", lib.loc = NULL)
-{
-    ## The priority order is
-    ## This package
-    ## The standard packages
-    ## along lib.loc.
-
-    getTopics <- function(info)
-    {
-        topics <- info$Aliases
-        lens <- sapply(topics, length)
-        data.frame(Topic = unlist(topics),
-                   File = rep.int(info$File, lens),
-                   stringsAsFactors = FALSE)
-    }
-
-    if(is.null(lib.loc)) lib.loc <- .libPaths()
-    nlinks <- 10000L; used <- 0L
-    Links <- character(nlinks)
-    names(Links) <- rep("", nlinks)
-    addLink <- function(names, links, p)
-    {
-        m  <- length(names)
-        names <- names
-        if (m == 0L) return
-        if(used+m > nlinks) {
-            nnlink <- length(Links) + 1000L
-            new <- character(nnlink); names(new) <- rep("", nnlink)
-            new[1L:(length(Links) + m)] <- c(Links, links)
-            names(new)[1L:(length(Links)+m)] <- c(names(Links), names)
-            Links <<- new
-        } else {
-            Links[used + (1:m)] <<- links
-            names(Links)[used + (1:m)] <<- names
-        }
-        used <<- used + m
-    }
-    for (lib in rev(lib.loc))
-        for (p in rev(dir(lib))) {
-            f <- file.path(lib, p, "Meta", "Rd.rds")
-            if (file.exists(f)) {
-                info <- getTopics(.readRDS(f))
-
-                addLink(info$Topic, file.path("../..", p, "html", info$File))
-            }
-        }
-    for (p in c("base", "utils", "graphics", "grDevices", "stats",
-                "datasets", "methods")) {
-        f <- file.path(.Library, p, "Meta", "Rd.rds")
-        if (file.exists(f)) {
-            info <- getTopics(.readRDS(f))
-            addLink(info$Topic, file.path("../..", p, "html", info$File))
-        }
-    }
-    if(nzchar(pkgDir)) {
-        f <- file.path(pkgDir, "Meta", "Rd.rds")
-        if (file.exists(f)) {
-            info <- getTopics(.readRDS(f))
-            addLink(info$Topic, info$File)
-        }
-    }
-    ## now latest names are newest, so
-    Links <- rev(Links)
-    Links <- Links[!duplicated(names(Links))]
-    gsub("[Rr]d$", "html", Links)
+testRdConditional <- function(format, conditional, Rdfile) {
+    condition <- conditional[[1L]]
+    tags <- RdTags(condition)
+    if (!all(tags == "TEXT")) stopRd(conditional, Rdfile, "condition must be plain text")
+    
+    allow <- .strip_whitespace(strsplit(paste(condition, collapse=""), ",")[[1L]])
+    any(c("TRUE", format) %in% allow)
 }
+
+

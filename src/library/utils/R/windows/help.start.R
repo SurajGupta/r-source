@@ -14,30 +14,21 @@
 #  A copy of the GNU General Public License is available at
 #  http://www.r-project.org/Licenses/
 
-help.start <- function(update = TRUE, gui = "irrelevant",
-                       browser = getOption("browser"), searchEngine = FALSE)
+help.start <- function(update = FALSE, gui = "irrelevant",
+                       browser = getOption("browser"), remote = NULL)
 {
-    a <- if(!searchEngine) file.path(R.home("doc"), "html", "index.html")
-    else file.path(R.home("doc"), "html", "search", "SearchEngine.html")
-    if(!file.exists(a))
-        stop("unable to find the HTML help")
-    if(update) {
-        cat(gettext("updating HTML package listing\n"))
-        flush.console()
-        try(make.packages.html(.libPaths()))
-        cat("updating HTML search index\n")
-        flush.console()
-        try(make.search.html(.libPaths()))
-        if(any(.libPaths() != .Library)) {
-            cat(gettext("fixing URLs in non-standard libraries\n"))
-            flush.console()
-            try(fixup.libraries.URLs(.libPaths()))
-        }
-    }
-    a <- chartr("/", "\\", a)
-    cat(gettextf("If nothing happens, you should open '%s' yourself\n", a))
-    browseURL(a, browser = browser)
-    invisible("")
+    home <- if(is.null(remote)) {
+        if(tools:::httpdPort == 0L) tools::startDynamicHelp()
+        if (tools:::httpdPort > 0L) {
+            if(update) make.packages.html(temp = TRUE)
+            paste("http://127.0.0.1:", tools:::httpdPort, sep = "")
+        } else stop("help.start() requires the HTTP server to be running",
+                  call. = FALSE)
+    } else remote
+    url <- paste(home, "/doc/html/index.html", sep = "")
+    cat(gettextf("If nothing happens, you should open\n'%s' yourself\n", url))
+    browseURL(url, browser = browser)
+    invisible()
 }
 
 browseURL <- function(url, browser = getOption("browser"), encodeIfNeeded=FALSE)

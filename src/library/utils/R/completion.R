@@ -35,15 +35,47 @@
 
 ### Note: sprintf seems faster than paste based on naive benchmarking:
 
-## > system.time(for (i in 1L:100000) sprintf("foo%sbar%d", letters[1L:26], 1L:26) )
+## > system.time(for (i in 1L:100000L) sprintf("foo%sbar%d", letters, 1L:26L) )
 ##            user          system           total   user.children system.children
 ##           4.796           0.088           4.887           0.000           0.000
-## > system.time(for (i in 1L:100000) paste("foo", letters[1L:26], "bar", 1L:26) )
+## > system.time(for (i in 1L:100000L) paste("foo", letters, "bar", 1L:26L) )
 ##            user          system           total   user.children system.children
 ##           8.300           0.028           8.336           0.000           0.000
 
 ### so will change all pastes to sprintf.  However, we need to be
 ### careful because 0 length components in sprintf will cause errors.
+
+
+## generic and built-in methods to generate completion after $
+
+.DollarNames <- function(x, pattern)
+    UseMethod(".DollarNames")
+
+.DollarNames.default <- function(x, pattern = "") {
+    if (is.atomic(x) || is.symbol(x)) character(0)
+    else grep(pattern, names(x), value = TRUE)
+}
+
+.DollarNames.list <- function(x, pattern = "") {
+    grep(pattern, names(x), value = TRUE)
+}
+
+.DollarNames.environment <- function(x, pattern = "") {
+    ls(x, all.names = TRUE, pattern = pattern)
+}
+
+## if (is.environment(object))
+## {
+##     ls(object,
+##        all.names = TRUE,
+##        pattern = sprintf("^%s", makeRegexpSafe(suffix)))
+## }
+## else
+## {
+##     grep(sprintf("^%s", makeRegexpSafe(suffix)),
+##          names(object), value = TRUE)
+## }
+
 
 
 
@@ -322,18 +354,19 @@ specialCompletions <- function(text, spl)
                            suffix
                        else
                        {
-                           ## suffix must match names(object) (or ls(object) for environments)
-                           if (is.environment(object))
-                           {
-                               ls(object,
-                                  all.names = TRUE,
-                                  pattern = sprintf("^%s", makeRegexpSafe(suffix)))
-                           }
-                           else
-                           {
-                               grep(sprintf("^%s", makeRegexpSafe(suffix)),
-                                    names(object), value = TRUE)
-                           }
+                           ## ## suffix must match names(object) (or ls(object) for environments)
+                           .DollarNames(object, pattern = sprintf("^%s", makeRegexpSafe(suffix)))
+                           ## if (is.environment(object))
+                           ## {
+                           ##     ls(object,
+                           ##        all.names = TRUE,
+                           ##        pattern = sprintf("^%s", makeRegexpSafe(suffix)))
+                           ## }
+                           ## else
+                           ## {
+                           ##     grep(sprintf("^%s", makeRegexpSafe(suffix)),
+                           ##          names(object), value = TRUE)
+                           ## }
                        }
                    } else suffix
                },

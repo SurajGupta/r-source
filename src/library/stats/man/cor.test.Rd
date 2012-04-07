@@ -24,7 +24,7 @@ cor.test(x, \dots)
 \method{cor.test}{default}(x, y,
          alternative = c("two.sided", "less", "greater"),
          method = c("pearson", "kendall", "spearman"),
-         exact = NULL, conf.level = 0.95, \dots)
+         exact = NULL, conf.level = 0.95, continuity = FALSE, \dots)
 
 \method{cor.test}{formula}(formula, data, subset, na.action, \dots)
 }
@@ -46,6 +46,9 @@ cor.test(x, \dots)
     interval.  Currently only used for the Pearson product moment
     correlation coefficient if there are at least 4 complete pairs of
     observations.}
+  \item{continuity}{logical: if true, a continuity correction is used
+    for Kendall's \eqn{\tau}{tau} and Spearman's \eqn{\rho}{rho} when
+    not computed exactly.}
   \item{formula}{a formula of the form \code{~ u + v}, where each of
     \code{u} and \code{v} are numeric variables giving the data values
     for one sample.  The samples must be of the same length.}

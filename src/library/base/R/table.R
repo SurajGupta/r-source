@@ -48,7 +48,7 @@ table <- function (..., exclude = if (useNA=="no") c(NA, NaN),
 	    dnn <- if (!is.null(argn <- names(args)))
 		 argn
 	    else
-		 paste(dnn[1L], 1L:length(args), sep = ".")
+		 paste(dnn[1L], seq_along(args), sep = ".")
     }
     # 0L, 1L, etc: keep 'bin' and 'pd' integer - as long as tabulate() requires it
     bin <- 0L
@@ -190,10 +190,13 @@ function(x, digits = max(1, getOption("digits") - 3), ...)
 }
 
 as.data.frame.table <-
-    function(x, row.names = NULL, ..., responseName = "Freq")
+    function(x, row.names = NULL, ..., responseName = "Freq",
+             stringsAsFactors = TRUE)
 {
     x <- as.table(x)
-    ex <- quote(data.frame(do.call("expand.grid", dimnames(x)),
+    ex <- quote(data.frame(do.call("expand.grid",
+                                   c(dimnames(x),
+                                     stringsAsFactors = stringsAsFactors)),
                            Freq = c(x),
                            row.names = row.names))
     names(ex)[3L] <- responseName

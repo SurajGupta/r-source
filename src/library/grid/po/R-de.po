@@ -5,10 +5,10 @@
 # Detlef Steuer <steuer@hsu-hh.de>, 2007-2009.
 msgid ""
 msgstr ""
-"Project-Id-Version: R 2.9.1\n"
+"Project-Id-Version: R 2.10.0\n"
 "Report-Msgid-Bugs-To: bugs@r-project.org\n"
-"POT-Creation-Date: 2008-12-16 13:00\n"
-"PO-Revision-Date: 2009-06-16 10:54+0200\n"
+"POT-Creation-Date: 2009-08-06 09:09\n"
+"PO-Revision-Date: 2009-10-07 14:27+0200\n"
 "Last-Translator: Detlef Steuer <steuer@hsu-hh.de>\n"
 "Language-Team: R-Core <R-core@r-project.org>\n"
 "MIME-Version: 1.0\n"
@@ -216,6 +216,9 @@ msgstr "es ist nur zulässig einen 'grob' zu einem 'gTree' hinzuzufügen"
 msgid "It is only valid to add a child to a 'gTree'"
 msgstr "es ist nur zulässig ein Kind zu einem 'gTree' hinzuzufügen"
 
+msgid "'gPath' (%s) not found"
+msgstr "'gPath' (%s) nicht gefunden"
+
 msgid "It is only valid to remove a child from a 'gTree'"
 msgstr "es ist nur zulässig ein Kind aus einem 'gTree' zu entfernen"
 
@@ -235,9 +238,6 @@ msgstr "neuer 'grob' muss den selben Namen wie der alte 'grob' haben"
 
 msgid "Slot '%s' not found"
 msgstr "Slot '%s' nicht gefunden"
-
-msgid "'gPath' (%s) not found"
-msgstr "'gPath' (%s) nicht gefunden"
 
 msgid "gPath (%s) not found"
 msgstr "gPath (%s) nicht gefunden"
@@ -411,6 +411,9 @@ msgstr "'Summary'-Funktion '%s' hat für Einheiten keine Bedeutung"
 msgid "Zero arguments where at least one expected"
 msgstr "Kein Argument, wo zumindest eines erwartet"
 
+msgid "Cannot mix signs of indices"
+msgstr "Vorzeichen von Indices können nicht gemischt werden"
+
 msgid "Index out of bounds (unit subsetting)"
 msgstr "Index außerhalb des Bereichs (Einheitenauswahl)"
 
@@ -483,6 +486,12 @@ msgstr "Ein Viewport-Pfad muss zumindest einen Viewport-Namen enthalten"
 
 msgid "Invalid viewport name(s)"
 msgstr "Unzulässige(r) Viewport-Name(n)"
+
+msgid "How did we get here?"
+msgstr "Wie konnte es so weit kommen?"
+
+msgid "Must start new page if showing leaves separately"
+msgstr "Muss eine neue Seite anfangen, um die Blätter einzeln zu zeigen"
 
 msgid "Must specify at least one of 'x' or 'xscale'"
 msgstr "Mindestens 'x' oder 'xscale' muss angegeben werden"

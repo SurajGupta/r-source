@@ -24,17 +24,22 @@
     }
 })
 
+## FIXME: use UTF-8, either always or optionally
+## (Needs UTF-8-savvy & fast agrep, and PCRE regexps.)
 help.search <-
     function(pattern, fields = c("alias", "concept", "title"),
              apropos, keyword, whatis, ignore.case = TRUE,
              package = NULL, lib.loc = NULL,
              help.db = getOption("help.db"),
              verbose = getOption("verbose"),
-             rebuild = FALSE, agrep = NULL)
+             rebuild = FALSE, agrep = NULL, use_UTF8 = FALSE)
 {
+    WINDOWS <- .Platform$OS.type == "windows"
+
     ### Argument handling.
     TABLE <- c("alias", "concept", "keyword", "name", "title")
 
+    if (is.logical(verbose)) verbose <- 2*as.integer(verbose)
     .wrong_args <- function(args)
 	gettextf("argument '%s' must be a single character string", args)
 
@@ -108,7 +113,11 @@ help.search <-
             rebuild <- TRUE
     }
     if(rebuild) {
-	if(verbose) message("Rebuilding the data base ...")
+	if(verbose > 0L) {
+            message("Rebuilding the help.search() database", " ", "...",
+                    if(verbose > 1L) "...")
+            flush.console()
+        }
 	## Check whether we can save the hsearch db later on.
 	if(all(is.na(mem.limits()))) {
 	    save_db <- save_db_to_memory <- TRUE
@@ -116,9 +125,9 @@ help.search <-
 	    save_db <- save_db_to_memory <- FALSE
 	    dir <- file.path(tempdir(), ".R")
 	    db_file <- file.path(dir, "hsearch.rds")
-	    if((file_test("-d", dir)
-		|| ((unlink(dir) == 0L) && dir.create(dir)))
-	       && (unlink(db_file) == 0L))
+	    if( (file_test("-d", dir)
+                 || ((unlink(dir) == 0L) && dir.create(dir)) )
+	       && (unlink(db_file) == 0L) )
 		save_db <- TRUE
 	}
 
@@ -153,8 +162,16 @@ help.search <-
 
 	## Create the hsearch db.
 	np <- 0L
-	if(verbose)
+	if(verbose >= 2L) {
 	    message("Packages {.readRDS() sequentially}:")
+            flush.console()
+        }
+        tot <- length(paths)
+        incr <- 0L
+        if(verbose && WINDOWS) {
+            pb <- winProgressBar("R: creating the help.search() DB", max = tot)
+            on.exit(close(pb))
+        } else if(verbose == 1L) incr <- ifelse(tot > 500L, 100L, 10L)
 
 	## Starting with R 1.8.0, prebuilt hsearch indices are available
 	## in Meta/hsearch.rds, and the code to build this from the Rd
@@ -174,9 +191,16 @@ help.search <-
 	    tools:::.get_standard_package_names()$stubs
 
 	for(p in packages_in_hsearch_db) {
+            if(incr && np %% incr == 0L) {
+                message(".", appendLF = FALSE)
+                flush.console()
+            }
 	    np <- np + 1L
-	    if(verbose)
+            if(verbose && WINDOWS) setWinProgressBar(pb, np)
+	    if(verbose >= 2L) {
 		message(" ", p, appendLF = ((np %% 5L) == 0L), domain=NA)
+                flush.console()
+            }
             path <- if(!is.null(package_paths)) package_paths[p]
 	    else .find.package(p, lib.loc, quiet = TRUE)
 	    if(length(path) == 0L) {
@@ -196,17 +220,21 @@ help.search <-
 		    ## Put the hsearch index for the np-th package into the
 		    ## np-th row of the matrix used for aggregating.
 		    dbMat[np, seq_along(hDB)] <- hDB
-		} else if(verbose)
-		    message(gettextf("package '%s' has empty hsearch data - strangely", p), domain=NA)
+		} else if(verbose >= 2L) {
+		    message(gettextf("package '%s' has empty hsearch data - strangely", p),
+                            domain = NA)
+                    flush.console()
+                }
 	    }
 	    else if(!is.null(package))
                 warning("no hsearch.rds meta data for package ", p)
 	}
 
-	if(verbose)  {
+	if(verbose >= 2L)  {
 	    message(ifelse(np %% 5L == 0L, "\n", "\n\n"),
                     sprintf("Built dbMat[%d,%d]", nrow(dbMat), ncol(dbMat)),
                     domain = NA)
+            flush.console()
             ## DEBUG save(dbMat, file="~/R/hsearch_dbMat.rda", compress=TRUE)
         }
 
@@ -238,28 +266,34 @@ help.search <-
 		      sep = "/")
 	}
 	## And maybe re-encode ...
-	if(!identical(Sys.getlocale("LC_CTYPE"), "C")
-           && capabilities("iconv")) {
-	    if(verbose) message("reencoding ...", appendLF=FALSE)
+	if(!identical(Sys.getlocale("LC_CTYPE"), "C")) {
+	    if(verbose >= 2L) {
+                message("reencoding ...", appendLF=FALSE)
+                flush.console()
+            }
 	    encoding <- db$Base[, "Encoding"]
-	    IDs_to_iconv <- db$Base[encoding != "", "ID"]
-	    encoding <- encoding[encoding != ""]
+            target <- ifelse(use_UTF8 && !l10n_info()$`UTF-8`, "UTF-8", "")
 	    ## As iconv is not vectorized in the 'from' argument, loop
 	    ## over groups of identical encodings.
 	    for(enc in unique(encoding)) {
-		IDs <- IDs_to_iconv[encoding == enc]
+                if(enc != target) next
+		IDs <- db$Base[encoding == enc, "ID"]
 		for(i in seq_along(db)) {
 		    ind <- db[[i]][, "ID"] %in% IDs
 		    db[[i]][ind, ] <- iconv(db[[i]][ind, ], enc, "")
 		}
 	    }
-	    if(verbose) message(" done")
+	    if(verbose >= 2L) {
+                message(" ", "done")
+                flush.console()
+            }
 	}
 	bad_IDs <-
 	    unlist(sapply(db,
 			  function(u)
 			  u[rowSums(is.na(nchar(u, "c", TRUE))) > 0, "ID"]))
-	if(length(bad_IDs) && capabilities("iconv")) { ## try latin1
+        ## FIXME: drop this fallback
+	if(length(bad_IDs)) { ## try latin1
             for(i in seq_along(db)) {
                 ind <- db[[i]][, "ID"] %in% bad_IDs
                 db[[i]][ind, ] <- iconv(db[[i]][ind, ], "latin1", "")
@@ -281,7 +315,10 @@ help.search <-
 	}
 
 	if(save_db) {
-	    if(verbose) message("saving the database ...", appendLF=FALSE)
+	    if(verbose >= 2L) {
+                message("saving the database ...", appendLF=FALSE)
+                flush.console()
+            }
 	    attr(db, "LibPaths") <- lib.loc
 	    attr(db, "mtime") <- Sys.time()
 	    attr(db, "ctype") <- Sys.getlocale("LC_CTYPE")
@@ -294,18 +331,31 @@ help.search <-
 		.hsearch_db(substitute(.readRDS(con),
 				       list(con = db_file)))
 	    }
-	    if(verbose) message(" done")
+	    if(verbose >= 2L) {
+                message(" ", "done")
+                flush.console()
+            }
 	}
+        if(verbose > 0L) {
+            message("... database rebuilt")
+            if(WINDOWS) {
+                close(pb)
+                on.exit() # clear closing of progress bar
+            }
+            flush.console()
+        }
     }
 
     ### Matching.
-    if(verbose)
+    if(verbose >= 2L) {
 	message("Database of ",
                 NROW(db$Base), " Rd objects (",
                 NROW(db$Aliases), " aliases, ",
                 NROW(db$Concepts), " concepts, ",
                 NROW(db$Keywords), " keywords)",
                 domain = NA)
+        flush.console()
+    }
     if(!is.null(package)) {
 	## Argument 'package' was given.  Need to check that all given
 	## packages exist in the db, and only search the given ones.
@@ -313,7 +363,7 @@ help.search <-
 	    match(package, unique(db$Base[, "Package"]), nomatch = 0L)
         ## This should not happen for R >= 2.4.0
 	if(any(pos_in_hsearch_db) == 0L)
-	    stop(gettextf("no information in the data base for package '%s': need 'rebuild = TRUE'?",
+	    stop(gettextf("no information in the database for package '%s': need 'rebuild = TRUE'?",
 			  package[pos_in_hsearch_db == 0][1L]), domain = NA)
 	db <-
 	    lapply(db,
@@ -352,9 +402,9 @@ help.search <-
     searchFun <- function(x) {
 	if(agrep)
 	    agrep(pattern, x, ignore.case = ignore.case,
-		  max.distance = max.distance, useBytes = TRUE)
+		  max.distance = max.distance)
 	else
-	    grep(pattern, x, ignore.case = ignore.case)
+	    grep(pattern, x, ignore.case = ignore.case, perl = use_UTF8)
     }
     dbBase <- db$Base
     searchDbField <- function(field) {
@@ -386,7 +436,10 @@ help.search <-
     db <- dbBase[sort(unique(i)),
 		 c("topic", "title", "Package", "LibPath"),
 		 drop = FALSE]
-    if(verbose) message(gettextf("matched %d objects.", NROW(db)), domain=NA)
+    if(verbose>= 2L) {
+        message(gettextf("matched %d objects.", NROW(db)), domain=NA)
+        flush.console()
+    }
 
     ## Retval.
     y <- list(pattern = pattern, fields = fields,

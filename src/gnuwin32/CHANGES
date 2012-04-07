@@ -1,4 +1,4 @@
-			Dear Emacs, please make this -*-Text-*- mode!
+
 	**************************************************
 	*	 Windows-specific changes to R		 *
 	*	 See the file NEWS for changes that	 *
@@ -8,9 +8,103 @@
 
 	**************************************************
 	*						 *
+	*	       2.10 SERIES NEWS			 *
+	*						 *
+	**************************************************
+
+
+    		CHANGES IN R VERSION 2.10.0
+
+
+NEW FEATURES
+
+    o	windows() now has a parameter fillOddEven (default TRUE),
+	which controls the mode used for polygon fills of self-
+	intersecting shapes.
+	
+    o 	The functions arrangeWindows() and getWindowsHandles() have
+    	been added to give more programmatic control to the appearance
+    	of windows in an R session.
+    	
+    o	A Windows menu has been added to the SDI version of the R GUI,
+	and the corresponding menu in the MDI version has been
+	expanded slightly.
+
+    o	The libpng library has been updated to version 1.2.40.
+
+    o	The remaining Perl scripts build, check, Rprof, Sd2Rd in
+	R_HOME/bin now have extension .pl.
+
+    o	Rcmd (or R CMD) can now run .sh (shell) and .pl (Perl) scripts
+	anywhere on the path (as well as .bat and .exe files as before).
+
+
+PACKAGE INSTALLATION
+
+    o	Rcmd SHLIB (which is used by Rcmd INSTALL) now calls 'make'
+	without a target, rather than target 'all'.  This is now the
+	same as on Unix, and was announced in the NEWS for 2.9.0.
+
+    o	Help files are no longer zipped: rendering as text, HTML, latex
+	or examples is now done when needed.
+
+	Options --use-zip and --use-zip-help in R CMD INSTALL are no
+	longer available and --auto-zip only zips data (or not).
+
+	Help in packages installed under 2.9.x may not work correctly,
+	and a warning is given when such a package is attached by
+	library().  Re-installation of all packages is strongly
+	recommended (use update.packages(checkBuilt = TRUE)).
+
+	Binary packages are installed without CHM help if they contain
+	it (as those intended for 2.9.x may).
+
+    o	It is possible to install source packages without Rtools
+	provided they have no compiled code and no configure.win or
+	cleanup.win script.
+
+
+INSTALLATION
+
+    o	Support for memory profiling is enabled in a standard build
+	(this can be changed by editing config.h).
+
+    o	CHM help is no longer supported.
+
+    o	The help default for the standard installer is HTML help rather
+	than CHM help.
+
+    o	The categories in the installers have been simplified.  Now the
+	files to support installation of source packages are always
+	installed (they are now only 0.7Mb), and there are no longer
+	categories 'chtml', 'html/help', 'latex' and 'Rd'.
+
+
+BUG FIXES
+
+    o	'Rcmd open' now work as documented: previously
+	'Rcmd open.exe' was required.
+
+    o	cat(x, file=) in Rgui tried to interpre UTF-8-encoded strings
+	for the console rather than converting them to the native encoding.
+
+
+
+	**************************************************
+	*						 *
 	*	       2.9 SERIES NEWS			 *
 	*						 *
 	**************************************************
+
+
+		CHANGES IN R VERSION 2.9.2 patched
+
+
+BUG FIXES
+
+    o	If a nonstandard font were specified in Rconsole, the GUI
+    	preferences dialog would crash R.
+    	
 
 
 		CHANGES IN R VERSION 2.9.2
@@ -2082,3 +2176,7 @@ BUG FIXES
 	*	distribution.					*
 	*							*
 	*********************************************************
+
+%%% Local Variables:
+%%% mode: text
+%%% End:

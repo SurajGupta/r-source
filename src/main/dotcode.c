@@ -38,9 +38,7 @@
 #include <R_ext/GraphicsEngine.h> /* needed for GEDevDesc in do_Externalgr */
 
 #include <R_ext/RConverters.h>
-#ifdef HAVE_ICONV
 #include <R_ext/Riconv.h>
-#endif
 
 #ifndef max
 #define max(a, b) ((a > b)?(a):(b))
@@ -99,9 +97,9 @@ checkValidSymbolId(SEXP op, SEXP call, DL_FUNC *fun,
     *fun = NULL;
     if(TYPEOF(op) == EXTPTRSXP) {
 	char *p = NULL;
-	if(R_ExternalPtrTag(op) == Rf_install("native symbol"))
+	if(R_ExternalPtrTag(op) == install("native symbol"))
 	   *fun = R_ExternalPtrAddrFn(op);
-	else if(R_ExternalPtrTag(op) == Rf_install("registered native symbol")) {
+	else if(R_ExternalPtrTag(op) == install("registered native symbol")) {
 	   R_RegisteredNativeSymbol *tmp;
 	   tmp = (R_RegisteredNativeSymbol *) R_ExternalPtrAddr(op);
 	   if(tmp) {
@@ -391,7 +389,6 @@ static void *RObjToCPtr(SEXP s, int naok, int dup, int narg, int Fort,
 	} else {
 	    cptr = (char**)R_alloc(n, sizeof(char*));
 	    if(strlen(encname)) {
-#ifdef HAVE_ICONV
 		char *outbuf;
 		const char *inbuf;
 		size_t inb, outb, outb0, res;
@@ -417,12 +414,7 @@ static void *RObjToCPtr(SEXP s, int naok, int dup, int narg, int Fort,
 		    *outbuf = '\0';
 		}
 		Riconv_close(obj);
-	    } else
-#else
-		warning(_("re-encoding is not supported on this system"));
-	    }
-#endif
-	    {
+	    } else {
 		for (i = 0 ; i < n ; i++) {
 		    const char *ss = translateChar(STRING_ELT(s, i));
 		    l = strlen(ss);
@@ -520,7 +512,6 @@ static SEXP CPtrToRObj(void *p, SEXP arg, int Fort,
 	    PROTECT(s = allocVector(type, n));
 	    cptr = (char**)p;
 	    if(strlen(encname)) {
-#ifdef HAVE_ICONV
 		const char *inbuf;
 		char *outbuf, *p;
 		size_t inb, outb, outb0, res;
@@ -546,12 +537,7 @@ static SEXP CPtrToRObj(void *p, SEXP arg, int Fort,
 		    SET_STRING_ELT(s, i, mkChar(p));
 		}
 		Riconv_close(obj);
-	    } else
-#else
-		warning(_("re-encoding is not supported on this system"));
-	    }
-#endif
-	    {
+	    } else {
 		for(i = 0 ; i < n ; i++)
 		    SET_STRING_ELT(s, i, mkChar(cptr[i]));
 	    }
@@ -746,16 +732,16 @@ SEXP attribute_hidden do_isloaded(SEXP call, SEXP op, SEXP args, SEXP env)
     if (nargs > 3) error(_("too many arguments"));
 
     if(!isValidString(CAR(args)))
-	error(R_MSG_IA);
+	error(_("invalid '%s' argument"), "symbol");
     sym = translateChar(STRING_ELT(CAR(args), 0));
     if(nargs >= 2) {
 	if(!isValidString(CADR(args)))
-	    error(R_MSG_IA);
+	    error(_("invalid '%s' argument"), "PACKAGE");
 	pkg = translateChar(STRING_ELT(CADR(args), 0));
     }
     if(nargs >= 3) {
 	if(!isValidString(CADDR(args)))
-	    error(R_MSG_IA);
+	    error(_("invalid '%s' argument"), "type");
 	type = CHAR(STRING_ELT(CADDR(args), 0)); /* ASCII */
 	if(strcmp(type, "C") == 0) symbol.type = R_C_SYM;
 	else if(strcmp(type, "Fortran") == 0) symbol.type = R_FORTRAN_SYM;
@@ -1514,7 +1500,7 @@ SEXP attribute_hidden do_Externalgr(SEXP call, SEXP op, SEXP args, SEXP env)
      * If there is an error or user-interrupt in the above
      * evaluation, dd->recordGraphics is set to TRUE
      * on all graphics devices (see GEonExit(); called in errors.c)
-     * 
+     *
      * NOTE: if someone uses try() around this call and there
      * is an error, then dd->recordGraphics stays FALSE, so
      * subsequent pages of graphics output are NOT saved on
@@ -1544,7 +1530,7 @@ SEXP attribute_hidden do_dotcallgr(SEXP call, SEXP op, SEXP args, SEXP env)
      * If there is an error or user-interrupt in the above
      * evaluation, dd->recordGraphics is set to TRUE
      * on all graphics devices (see GEonExit(); called in errors.c)
-     * 
+     *
      * NOTE: if someone uses try() around this call and there
      * is an error, then dd->recordGraphics stays FALSE, so
      * subsequent pages of graphics output are NOT saved on
@@ -1595,7 +1581,7 @@ Rf_getCallingDLL(void)
     }
     if(!found) return R_NilValue;
 
-    PROTECT(e = lang2(Rf_install("getCallingDLLe"), rho));
+    PROTECT(e = lang2(install("getCallingDLLe"), rho));
     ans = eval(e,  R_GlobalEnv);
     UNPROTECT(1);
     return(ans);
@@ -1709,7 +1695,7 @@ SEXP attribute_hidden do_dotCode(SEXP call, SEXP op, SEXP args, SEXP env)
 				  checkTypes ? checkTypes[nargs] : 0,
 				  encname);
 #ifdef R_MEMORY_PROFILING
-	if (TRACE(CAR(pargs)) && dup)
+	if (RTRACE(CAR(pargs)) && dup)
 		memtrace_report(CAR(pargs), cargs[nargs]);
 #endif
 	nargs++;
@@ -2336,9 +2322,9 @@ SEXP attribute_hidden do_dotCode(SEXP call, SEXP op, SEXP args, SEXP env)
 				       checkTypes ? checkTypes[nargs] : TYPEOF(CAR(pargs)),
 				       encname));
 #if R_MEMORY_PROFILING
-		if (TRACE(CAR(pargs)) && dup){
+		if (RTRACE(CAR(pargs)) && dup){
 			memtrace_report(cargs[nargs], s);
-			SET_TRACE(s, 1);
+			SET_RTRACE(s, 1);
 		}
 #endif
 		DUPLICATE_ATTRIB(s, CAR(pargs));

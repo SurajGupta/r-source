@@ -42,9 +42,6 @@ The files are as follows.
   install-info.pl
 	create or update entry in Info directory.  Taken from the Debian
 	GNU/Linux stable distribution.
-
-  keywords2html.pl
-	convert 'KEYWORDS.db' to HTML.
 	
   ldAIX4
 	writes an export file, assembling the exported symbols by
@@ -59,9 +56,7 @@ The files are as follows.
 
   ltmain.sh
 	provide generalized library-building support services.  Taken
-	from Libtool 1.5; older versions taken from the Libtool CVS
-	(:pserver:anoncvs@subversions.gnu.org:/cvsroot/libtool, module
-	'libtool').
+	from Libtool 2.2.6a.
 
   move-if-change
 	move a file if changed; otherwise, remove.

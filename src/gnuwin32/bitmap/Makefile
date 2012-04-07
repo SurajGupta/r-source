@@ -1,6 +1,7 @@
 ## These can be overridden in MkRules
 
-JPEGDIR = jpeg-6b
+## must be jpeg-6b or jpeg-7
+JPEGDIR = jpeg-7
 PNGDIR = libpng
 TIFFDIR = libtiff
 
@@ -33,16 +34,16 @@ buildpng:
 # (I suspect) using the reduced set of tools we distribute.
 ## 2006-01-15 checked under current tools
 buildjpeg: $(JPEGDIR)/jconfig.h Makefile.jpeg
-	$(MAKE) CC='$(CC)' AR='$(AR) rc' RANLIB=$(RANLIB) -C $(JPEGDIR) \
+	$(MAKE) CC='$(CC)' AR='$(AR) rc' RANLIB=$(RANLIB) JPEGDIR=$(JPEGDIR) -C $(JPEGDIR) \
 	  -f ../Makefile.jpeg libjpeg.a
 
 $(JPEGDIR)/jconfig.h: jconfig.h 
 	$(CP) jconfig.h $(JPEGDIR)/jconfig.h
 
 buildtiff: $(JPEGDIR)/jconfig.h Makefile.tiff
-	$(MAKE) -C $(TIFFDIR) -f ../Makefile.tiff
+	$(MAKE) -C $(TIFFDIR) -f ../Makefile.tiff JPEGDIR=$(JPEGDIR)
 
-rbitmap-CPPFLAGS=-DHAVE_PNG -DHAVE_JPEG -DHAVE_TIFF -I../../extra/zlib -I./$(PNGDIR) -I$(JPEGDIR) -I./$(TIFFDIR) -I../../include
+rbitmap-CPPFLAGS=-DHAVE_PNG -DHAVE_JPEG -DHAVE_TIFF -I. -I../../extra/zlib -I./$(PNGDIR) -I$(JPEGDIR) -I./$(TIFFDIR) -I../../include
 CFLAGS=-O3 -Wall -pedantic 
 
 ../../../library/grDevices/libs/Rbitmap.dll: rbitmap.o $(TIFFDIR)/libtiff.a $(PNGDIR)/libpng.a $(JPEGDIR)/libjpeg.a

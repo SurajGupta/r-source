@@ -37,8 +37,9 @@ function(dataDir, contents)
     ## We could also have an interface like
     ##   .build_data_index(dir, contents = NULL)
     ## where @code{dir} is the path to a package's root source dir and
-    ## contents is Rdcontents(list_files_with_type(file.path(dir, "man"),
-    ## "docs")).
+    ## contents is
+    ##    Rd_contents(list_files_with_type(file.path(dir, "man"),
+    ##                                     "docs")).
     ## </NOTE>
 
     if(!file_test("-d", dataDir))
@@ -238,8 +239,21 @@ function(contents, packageName, defaultEncoding = NULL)
     list(dbBase, dbAliases, dbKeywords, dbConcepts)
 }
 
+### * .build_links_index
 
-### Local variables: ***
+.build_links_index <-
+function(contents, package)
+{
+    if(length(contents)) {
+        aliases <- contents$Aliases
+        lens <- sapply(aliases, length)
+        files <- sub("\\.[Rr]d$", "\\.html", contents$File)
+        structure(file.path("../..", package, "html", rep.int(files, lens)),
+                  names = unlist(aliases))
+    } else character()
+}
+
+
 ### mode: outline-minor ***
 ### outline-regexp: "### [*]+" ***
 ### End: ***

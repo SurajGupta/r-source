@@ -30,7 +30,6 @@ Encoding(x) <- value
   \code{"unknown"}.  ASCII strings will never be marked with a declared
   encoding, since their representation is the same in all encodings.
   
-
   There are other ways for character strings to acquire a declared
   encoding apart from explicitly setting it (and these have changed as
   \R has evolved).  Functions \code{\link{scan}},
@@ -46,13 +45,12 @@ Encoding(x) <- value
 
   Most character manipulation functions will set the encoding on output
   strings if it was declared on the corresponding input.  These include
-  \code{\link{chartr}}, \code{\link{strsplit}}, \code{\link{strtrim}},
-  \code{\link{tolower}} and \code{\link{toupper}}
-  as well as \code{\link{sub}(useBytes = FALSE)} and
-  \code{\link{gsub}(useBytes = FALSE)}.  Note that such functions
-  do not \emph{preserve} the encoding, but if they know the input
-  encoding and that the string has been successfully re-encoded to the
-  current encoding, they mark the output with the latter (if it is
+  \code{\link{chartr}}, \code{\link{strsplit}}, \code{\link{tolower}}
+  and \code{\link{toupper}} as well as \code{\link{sub}(useBytes =
+  FALSE)} and \code{\link{gsub}(useBytes = FALSE)}.  Note that such
+  functions do not \emph{preserve} the encoding, but if they know the
+  input encoding and that the string has been successfully re-encoded to
+  the current encoding, they mark the output with the latter (if it is
   \code{"latin1"} or \code{"UTF-8"}).
 
   \code{\link{substr}} does preserve the encoding, and
@@ -63,7 +61,11 @@ Encoding(x) <- value
   any of the inputs are UTF-8.
 
   \code{\link{paste}} and \code{\link{sprintf}} return a UTF-8 marked
-  element if any of the inputs to that element are UTF-8.
+  element if any of the inputs to that element is marked as UTF-8.
+
+  \code{\link{match}}, \code{\link{pmatch}}, \code{\link{charmatch}},
+  \code{\link{duplicated}} and \code{\link{unique}} all match in UTF-8
+  if any of the elements are marked as UTF-8.
 }
 \value{
   A character vector.

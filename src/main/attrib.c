@@ -1,7 +1,7 @@
 /*
  *  R : A Computer Language for Statistical Data Analysis
  *  Copyright (C) 1995, 1996  Robert Gentleman and Ross Ihaka
- *  Copyright (C) 1997--2008  Robert Gentleman, Ross Ihaka and the
+ *  Copyright (C) 1997--2009  Robert Gentleman, Ross Ihaka and the
  *                            R Development Core Team
  *
  *  This program is free software; you can redistribute it and/or modify
@@ -398,7 +398,7 @@ SEXP tspgets(SEXP vec, SEXP val)
 
     if(IS_S4_OBJECT(vec)) { /* leave validity checking to validObject */
         if (!isNumeric(val)) /* but should have been checked */
-	    error(_("'tsp' attribute must be numeric")); 
+	    error(_("'tsp' attribute must be numeric"));
 	installAttrib(vec, R_TspSymbol, val);
 	return vec;
     }
@@ -650,8 +650,8 @@ SEXP attribute_hidden R_data_class2 (SEXP obj)
 	    /* return an S3Class slot, if it exists,
 	       or else the S4 class inheritance */
 	    /* The S4 class is included for compatibility with
-	       the deprecated practice of defining S3 methods 
-	       for S4 classes.  Someday this should be disallowed. 
+	       the deprecated practice of defining S3 methods
+	       for S4 classes.  Someday this should be disallowed.
 	       JMC iii.9.09 */
   	    SEXP s3class = S3Class(obj);
 	    if(s3class != R_NilValue) {
@@ -754,6 +754,10 @@ SEXP attribute_hidden do_namesgets(SEXP call, SEXP op, SEXP args, SEXP env)
     checkArity(op, args);
     if (DispatchOrEval(call, op, "names<-", args, env, &ans, 0, 1))
 	return(ans);
+    /* Special case: removing non-existent names, to avoid a copy */
+    if (CADR(args) == R_NilValue && 
+	getAttrib(CAR(args), R_NamesSymbol) == R_NilValue)
+	return CAR(args);
     PROTECT(args = ans);
     if (NAMED(CAR(args)) == 2)
 	SETCAR(args, duplicate(CAR(args)));
@@ -1082,7 +1086,11 @@ SEXP attribute_hidden do_levelsgets(SEXP call, SEXP op, SEXP args, SEXP env)
     SEXP ans;
     checkArity(op, args);
     if (DispatchOrEval(call, op, "levels<-", args, env, &ans, 0, 1))
+	/* calls, e.g., levels<-.factor() */
 	return(ans);
+    if(!isNull(CADR(args)) && any_duplicated(CADR(args), FALSE))
+	warningcall(call, _("duplicated levels will not be allowed in factors anymore"));
+/* TODO errorcall(call, _("duplicated levels are not allowed in factors anymore")); */
     PROTECT(args = ans);
     if (NAMED(CAR(args)) > 1) SETCAR(args, duplicate(CAR(args)));
     setAttrib(CAR(args), R_LevelsSymbol, CADR(args));
@@ -1231,7 +1239,7 @@ SEXP attribute_hidden do_attr(SEXP call, SEXP op, SEXP args, SEXP env)
 		match = FULL;
 		break;
 	    }
-	    else if (match == PARTIAL || match == PARTIAL2) {
+    else if (match == PARTIAL || match == PARTIAL2) {
 		/* this match is partial and we already have a partial match,
 		   so the query is ambiguous and we will return R_NilValue
 		   unless a full match comes up.
@@ -1299,6 +1307,10 @@ SEXP attribute_hidden do_attrgets(SEXP call, SEXP op, SEXP args, SEXP env)
     name = CADR(args);
     if (!isValidString(name) || STRING_ELT(name, 0) == NA_STRING)
 	error(_("'name' must be non-null character string"));
+    /* TODO?  if (isFactor(obj) && !strcmp(asChar(name), "levels"))
+     * ---         if(any_duplicated(CADDR(args)))
+     *                  error(.....)
+     */
     setAttrib(obj, name, CADDR(args));
     UNPROTECT(1);
     return obj;
@@ -1567,7 +1579,7 @@ R_getS4DataSlot(SEXP obj, SEXPTYPE type)
     if(type == S4SXP)
       return obj;
     value = obj;
-  }  
+  }
   else
       value = getAttrib(obj, s_dotData);
   if(value == R_NilValue)

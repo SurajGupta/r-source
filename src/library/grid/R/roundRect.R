@@ -49,7 +49,7 @@ postDrawDetails.roundrect <- function(x) {
 # x, y, is the real corner
 roundCorner <- function(num, x, y, r) {
   n <- 10*4
-  t <- seq(0, 2*pi, length=n)
+  t <- seq(0, 2*pi, length.out=n)
   cost <- cos(t)
   sint <- sin(t)
   if (num == 1) {
@@ -99,7 +99,7 @@ rrpoints <- function(x) {
 drawDetails.roundrect <- function(x, recording) {
     boundary <- rrpoints(x)
     grid.Call.graphics("L_polygon", boundary$x, boundary$y,
-                       list(as.integer(1L:length(boundary$x))))
+                       list(as.integer(seq_along(boundary$x))))
 }
 
 xDetails.roundrect <- function(x, theta) {

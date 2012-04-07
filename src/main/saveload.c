@@ -1,8 +1,7 @@
 /*
  *  R : A Computer Language for Statistical Data Analysis
  *  Copyright (C) 1995, 1996  Robert Gentleman and Ross Ihaka
- *  Copyright (C) 1997--2007  Robert Gentleman, Ross Ihaka and the
- *			      R Development Core Team
+ *  Copyright (C) 1997--2009  The R Development Core Team
  *
  *  This program is free software; you can redistribute it and/or modify
  *  it under the terms of the GNU General Public License as published by
@@ -1910,6 +1909,7 @@ static void saveload_cleanup(void *data)
     fclose(fp);
 }
 
+/* Only used for version 1 saves */
 SEXP attribute_hidden do_save(SEXP call, SEXP op, SEXP args, SEXP env)
 {
     /* save(list, file, ascii, version, environment) */
@@ -2236,7 +2236,13 @@ SEXP attribute_hidden do_saveToConn(SEXP call, SEXP op, SEXP args, SEXP env)
 	error(_("invalid '%s' argument"), "eval.promises");
 
     wasopen = con->isopen;
-    if(!wasopen && !con->open(con)) error(_("cannot open the connection"));
+    if(!wasopen) {
+	char mode[5];	
+	strcpy(mode, con->mode);
+	strcpy(con->mode, "wb");
+	if(!con->open(con)) error(_("cannot open the connection"));
+	strcpy(con->mode, mode);
+    }
     if(!con->canwrite) {
 	if(!wasopen) con->close(con);
 	error(_("connection not open for writing"));
@@ -2288,13 +2294,12 @@ SEXP attribute_hidden do_saveToConn(SEXP call, SEXP op, SEXP args, SEXP env)
 }
 
 
-/* This version reads and checks the magic number,
-   opens the connection if needed */
+/* Read and checks the magic number, open the connection if needed */
 
-static void saveloadcon_cleanup(void *data)
+static void load_con_cleanup(void *data)
 {
-    FILE *fp = (FILE *) data;
-    fclose(fp);
+    Rconnection con = data;
+    con->close(con);
 }
 
 SEXP attribute_hidden do_loadFromConn2(SEXP call, SEXP op, SEXP args, SEXP env)
@@ -2315,8 +2320,13 @@ SEXP attribute_hidden do_loadFromConn2(SEXP call, SEXP op, SEXP args, SEXP env)
     if(!con->canread) error(_("cannot read from this connection"));
     if(con->text) error(_("can only read from a binary connection"));
     wasopen = con->isopen;
-    if(!wasopen)
+    if(!wasopen) {
+	char mode[5];	
+	strcpy(mode, con->mode);
+	strcpy(con->mode, "rb");
 	if(!con->open(con)) error(_("cannot open the connection"));
+	strcpy(con->mode, mode);
+    }
     if(!con->canread) {
 	if(!wasopen) con->close(con);
 	error(_("connection not open for reading"));
@@ -2336,11 +2346,14 @@ SEXP attribute_hidden do_loadFromConn2(SEXP call, SEXP op, SEXP args, SEXP env)
     if (strncmp((char*)buf, "RDA2\n", 5) == 0 ||
 	strncmp((char*)buf, "RDB2\n", 5) == 0 ||
 	strncmp((char*)buf, "RDX2\n", 5) == 0) {
-	/* set up a context which will clean up if there is an error */
+	/* FIXME: this is odd: we did not open that connection, so
+	   why should we be closing it? */
+	/* set up a context which will close the connection 
+	   if there is an error */
 	if (wasopen) {
 	    begincontext(&cntxt, CTXT_CCODE, R_NilValue, R_BaseEnv, R_BaseEnv,
 			 R_NilValue, R_NilValue);
-	    cntxt.cend = &saveloadcon_cleanup;
+	    cntxt.cend = &load_con_cleanup;
 	    cntxt.cenddata = con;
 	}
 	R_InitConnInPStream(&in, con, R_pstream_any_format, NULL, NULL);
@@ -2354,31 +2367,4 @@ SEXP attribute_hidden do_loadFromConn2(SEXP call, SEXP op, SEXP args, SEXP env)
     } else
 	error(_("the input does not start with a magic number compatible with loading from a connection"));
     return res;
-}
-
-/* This assumes the magic number has already been read, and its format
-   specification (A or X) is ignored.  For saved images with many
-   variables and the values saved in a pair list this internal version
-   will be faster than a version in R */
-
-SEXP attribute_hidden do_loadFromConn(SEXP call, SEXP op, SEXP args, SEXP env)
-{
-    /* loadFromConn(conn, environment) */
-
-    struct R_inpstream_st in;
-    Rconnection con;
-    SEXP aenv;
-
-    checkArity(op, args);
-
-    con = getConnection(asInteger(CAR(args)));
-    aenv = CADR(args);
-    if (TYPEOF(aenv) == NILSXP) {
-	error(_("use of NULL environment is defunct"));
-	aenv = R_BaseEnv;
-    } else if (TYPEOF(aenv) != ENVSXP)
-	error(_("invalid '%s' argument"), "envir");
-
-    R_InitConnInPStream(&in, con, R_pstream_any_format, NULL, NULL);
-    return RestoreToEnv(R_Unserialize(&in), aenv);
 }

@@ -12,14 +12,11 @@ include $(top_builddir)/Makeconf
 
 distdir = $(top_builddir)/$(PACKAGE)-$(VERSION)/$(subdir)
 INSTFILES = \
-	R.css \
-	left.jpg logo.jpg logosm.jpg right.jpg up.jpg \
-	about.html \
-	packages-head.html packages-head-utf8.html \
-	thanks.html
+	R.css Search.html SearchOn.html \
+	favicon.ico left.jpg logo.jpg logosm.jpg right.jpg up.jpg \
+	about.html packages-head-utf8.html
 NON_SVN_INSTFILES = resources.html
 DISTFILES = Makefile.in $(INSTFILES) index-default.html
-SUBDIRS = search
 OBJECTS = index.html
 ## <FIXME>
 ## We really should not create packages.html in *this* directory.
@@ -36,9 +33,6 @@ R: Makefile $(OBJECTS) svnonly
 	@if test "$(BUILDDIR_IS_SRCDIR)" = no ; then \
 	  $(MAKE) rdocdir=$(top_builddir)/doc install-sources; \
 	fi
-	@for d in $(SUBDIRS); do \
-	  (cd $${d} && $(MAKE) $@) || exit 1; \
-	done
 
 svnonly:
 	@if test -f "$(srcdir)/resources.html"; then \
@@ -49,18 +43,14 @@ svnonly:
 	  fi \
 	fi
 
+## NB, not used on Windows, replaced by src/gnuwin32/fixed/html/rwin.html
 index.html: FORCE
-	@$(PERL) $(top_srcdir)/tools/linkcheck.pl \
-	  $(srcdir)/index-default.html > $@ || \
-	  $(INSTALL_DATA) $(srcdir)/index-default.html $@
+	@$(INSTALL_DATA) $(srcdir)/index-default.html $@
 FORCE:
 
 install: svnonly install-message installdirs install-sources
 	@for f in $(OBJECTS); do \
 	  $(INSTALL_DATA) $${f} "$(DESTDIR)$(rdocdir)/html"; \
-	done
-	@for d in $(SUBDIRS); do \
-	  (cd $${d} && $(MAKE) $@) || exit 1; \
 	done
 	@for f in $(NON_SVN_INSTFILES); do \
 	  $(INSTALL_DATA) $${f} "$(DESTDIR)$(rdocdir)/html"; \
@@ -76,9 +66,6 @@ install-sources: installdirs
 install-strip: install
 uninstall:
 	@$(ECHO) "uninstalling $(subdir) ..."
-	@for d in $(SUBDIRS); do \
-	  (cd $${d} && $(MAKE) $@); \
-	done
 	@for f in $(CLEANFILES) $(INSTFILES) $(NON_SVN_INSTFILES) $(OBJECTS); do \
 	  rm -f "$(DESTDIR)$(rdocdir)/html/$${f}"; \
 	done
@@ -87,17 +74,11 @@ uninstall:
 
 mostlyclean:
 clean:
-	@for d in $(SUBDIRS); do \
-	  (cd $${d} && $(MAKE) $@); \
-	done
 	@if test "$(BUILDDIR_IS_SRCDIR)" = no ; then \
 	  rm -f $(INSTFILES); \
 	fi
 	-@test -z "$(CLEANFILES)" || rm -f $(CLEANFILES)
 distclean: clean
-	@for d in $(SUBDIRS); do \
-	  (cd $${d} && $(MAKE) $@); \
-	done
 	@if test "$(BUILDDIR_IS_SRCDIR)" = no ; then \
 	  rm -f $(NON_SVN_INSTFILES); \
 	fi
@@ -112,12 +93,4 @@ distdir: $(DISTFILES)
 	done
 	@for f in $(NON_SVN_INSTFILES); do \
 	  cp -p $${f} $(distdir)/$${f}; \
-	done
-	@for d in $(SUBDIRS); do \
-	  test -d $(distdir)/$${d} \
-	    || mkdir $(distdir)/$${d} \
-	    || exit 1; \
-	  chmod 755 $(distdir)/$${d}; \
-	  (cd $${d} && $(MAKE) distdir) \
-	    || exit 1; \
 	done

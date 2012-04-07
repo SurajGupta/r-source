@@ -28,8 +28,8 @@ runmed(x, k, endrule = c("median", "keep", "constant"),
     beginning and the end (of the data) should be treated.
     \describe{
       \item{\code{"keep"}}{keeps the first and last \eqn{k_2}{k2} values
-        at both ends, where \eqn{k_2}{k2} is the half-bandwidth \code{k2
-          = k \%/\% 2},
+        at both ends, where \eqn{k_2}{k2} is the half-bandwidth
+        \code{k2 = k \%/\% 2},
         i.e., \code{y[j] = x[j]} for \eqn{j \in \{1,\ldots,k_2;
           n-k_2+1,\ldots,n\}}{j = 1,..,k2 and (n-k2+1),..,n};}
       \item{\code{"constant"}}{copies \code{median(y[1:k2])} to the first
@@ -85,7 +85,7 @@ runmed(x, k, endrule = c("median", "keep", "constant"),
   working paper available from the author.
 }
 \author{Martin Maechler \email{maechler@stat.math.ethz.ch},
-  based on Fortran code from Werner Stuetzle and S-plus and C code from
+  based on Fortran code from Werner Stuetzle and S-PLUS and C code from
   Berwin Turlach.
 }
 \seealso{

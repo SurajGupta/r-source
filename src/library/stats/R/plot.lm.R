@@ -15,7 +15,7 @@
 #  http://www.r-project.org/Licenses/
 
 plot.lm <-
-function (x, which = c(1L:3,5), ## was which = 1L:4,
+function (x, which = c(1L:3L,5L), ## was which = 1L:4L,
 	  caption = list("Residuals vs Fitted", "Normal Q-Q",
 	  "Scale-Location", "Cook's distance",
 	  "Residuals vs Leverage",
@@ -41,7 +41,7 @@ function (x, which = c(1L:3,5), ## was which = 1L:4,
     if (!inherits(x, "lm"))
 	stop("use only with \"lm\" objects")
     if(!is.numeric(which) || any(which < 1) || any(which > 6))
-	stop("'which' must be in 1L:6")
+	stop("'which' must be in 1:6")
     isGlm <- inherits(x, "glm")
     show <- rep(FALSE, 6)
     show[which] <- TRUE
@@ -102,7 +102,7 @@ function (x, which = c(1L:3,5), ## was which = 1L:4,
 	}
     }
     getCaption <- function(k) # allow caption = "" , plotmath etc
-        as.graphicsAnnot(unlist(caption[k]))
+        if(length(caption) < k) NA_character_ else as.graphicsAnnot(caption[[k]])
 
     if(is.null(sub.caption)) { ## construct a default:
 	cal <- x$call
@@ -294,7 +294,7 @@ function (x, which = c(1L:3,5), ## was which = 1L:4,
 	usr <- par("usr")
 	xmax <- usr[2L]
 	ymax <- usr[4L]
-	for(i in 1L:length(bval)) {
+	for(i in seq_along(bval)) {
 	    bi2 <- bval[i]^2
 	    if(ymax > bi2*xmax) {
 		xi <- xmax + strwidth(" ")/3

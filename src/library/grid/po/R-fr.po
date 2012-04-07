@@ -7,8 +7,8 @@ msgid ""
 msgstr ""
 "Project-Id-Version: R 2.2.1\n"
 "Report-Msgid-Bugs-To: bugs@r-project.org\n"
-"POT-Creation-Date: 2008-12-16 13:00\n"
-"PO-Revision-Date: 2009-03-29 21:35+0100\n"
+"POT-Creation-Date: 2009-08-06 09:09\n"
+"PO-Revision-Date: 2009-10-10 13:39+0100\n"
 "Last-Translator: Philippe Grosjean <phgrosjean@sciviews.org>\n"
 "Language-Team: French <R-core@r-project.org>\n"
 "MIME-Version: 1.0\n"
@@ -205,6 +205,9 @@ msgstr "Seul un 'grob' peut être ajouté à un 'gTree'"
 msgid "It is only valid to add a child to a 'gTree'"
 msgstr "Seul l'ajout d'un noeud enfant est autorisé pour un objet 'gTree'"
 
+msgid "'gPath' (%s) not found"
+msgstr "'gPath' (%s) introuvable"
+
 msgid "It is only valid to remove a child from a 'gTree'"
 msgstr "Seul l'élimination d'un noeud enfant est autorisée dans un objet 'gTree'"
 
@@ -222,9 +225,6 @@ msgstr "Le nouveau 'grob' doit avoir le même nom que l'ancien 'grob'"
 
 msgid "Slot '%s' not found"
 msgstr "Slot '%s' introuvable"
-
-msgid "'gPath' (%s) not found"
-msgstr "'gPath' (%s) introuvable"
 
 msgid "gPath (%s) not found"
 msgstr "gPath (%s) introuvable"
@@ -391,6 +391,9 @@ msgstr "la function 'Summary' '%s' n'est pas applicable pour des unités"
 msgid "Zero arguments where at least one expected"
 msgstr "Aucun argument là où au moins un était attendu"
 
+msgid "Cannot mix signs of indices"
+msgstr "Impossible de mélanger les signes des indices"
+
 msgid "Index out of bounds (unit subsetting)"
 msgstr "Indice hors plage (indiçage d'unités)"
 
@@ -453,6 +456,12 @@ msgstr "Un chemin de vue doit contenir au moins un nom de vue"
 
 msgid "Invalid viewport name(s)"
 msgstr "Nom(s) de vue(s) incorrect(s)"
+
+msgid "How did we get here?"
+msgstr "Comment sommes-nous arrivés ici ?"
+
+msgid "Must start new page if showing leaves separately"
+msgstr "Il faut démarrer une nouvelle page pour afficher les feuilles séparément"
 
 msgid "Must specify at least one of 'x' or 'xscale'"
 msgstr "Il faut spécifier au moins 'x' ou 'xscale'"

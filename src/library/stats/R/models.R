@@ -127,7 +127,7 @@ delete.response <- function (termobj)
         if(length(a$offset))
             a$offset <- ifelse(a$offset > y, a$offset-1, a$offset)
         if(length(a$specials))
-            for(i in 1L:length(a$specials)) {
+            for(i in seq_along(a$specials)) {
                 b <- a$specials[[i]]
                 a$specials[[i]] <- ifelse(b > y, b-1, b)
             }
@@ -175,7 +175,6 @@ drop.terms <- function(termobj, dropx = NULL, keep.response = FALSE)
     newformula <- reformulate(newformula, resp)
     environment(newformula)<-environment(termobj)
     terms(newformula, specials = names(attr(termobj, "specials")))
-
 }
 
 
@@ -195,12 +194,13 @@ terms.formula <- function(x, specials = NULL, abb = NULL, data = NULL,
             tmp2 <- as.character(attr(Terms, "variables"))[-1L]
             tmp <- c(tmp, tmp2[ind])
         }
-	form <- formula(object)
-	lhs <- if(length(form) == 2L) NULL else
-          paste(deparse(form[[2L]]), collapse="")
 	rhs <- if(length(tmp)) paste(tmp, collapse = " + ") else "1"
 	if(!attr(terms(object), "intercept")) rhs <- paste(rhs, "- 1")
-	formula(paste(lhs, "~", rhs))
+        if(length(form <- formula(object)) > 2L) {
+            res <- formula(paste("lhs ~", rhs))
+            res[[2L]] <- form[[2L]]
+            res
+        } else formula(paste("~", rhs))
     }
 
     if (!is.null(data) && !is.environment(data) && !is.data.frame(data))
@@ -398,6 +398,11 @@ model.frame.default <-
 	for(nm in names(xlev))
 	    if(!is.null(xl <- xlev[[nm]])) {
 		xi <- data[[nm]]
+                if(is.character(xi)) {
+                    xi <- as.factor(xi)
+		    warning(gettextf("character variable '%s' changed to a factor", nm),
+                            domain = NA)
+                }
 		if(!is.factor(xi) || is.null(nxl <- levels(xi)))
 		    warning(gettextf("variable '%s' is not a factor", nm),
                             domain = NA)

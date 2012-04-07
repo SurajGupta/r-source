@@ -32,6 +32,9 @@
 #include "RBufferUtils.h"
 static R_StringBuffer cbuff = {NULL, 0, MAXELTSIZE};
 
+#define _S4_rep_keepClass
+/* ==>  rep(<S4>, .) keeps class e.g., for list-like */
+
 static SEXP cross_colon(SEXP call, SEXP s, SEXP t)
 {
     SEXP a, la, ls, lt, rs, rt;
@@ -90,14 +93,23 @@ static SEXP seq_colon(double n1, double n2, SEXP call)
     SEXP ans;
     Rboolean useInt;
 
-    in1 = (int)(n1);
-    useInt = (n1 == in1);
-    if (n1 <= INT_MIN || n2 <= INT_MIN || n1 > INT_MAX || n2 > INT_MAX)
-	useInt = FALSE;
     r = fabs(n2 - n1);
     if(r >= INT_MAX) errorcall(call,_("result would be too long a vector"));
 
     n = r + 1 + FLT_EPSILON;
+
+    in1 = (int)(n1);
+    useInt = (n1 == in1);
+    if(useInt) {
+	if(n1 <= INT_MIN || n1 > INT_MAX)
+	    useInt = FALSE;
+	else {
+	    /* r := " the effective 'to' "  of  from:to */
+	    r = n1 + ((n1 <= n2) ? n-1 : -(n-1));
+	    if(r <= INT_MIN || r > INT_MAX)
+		useInt = FALSE;
+	}
+    }
     if (useInt) {
 	ans = allocVector(INTSXP, n);
 	if (n1 <= n2)
@@ -126,10 +138,12 @@ SEXP attribute_hidden do_colon(SEXP call, SEXP op, SEXP args, SEXP rho)
     s1 = CAR(args);
     s2 = CADR(args);
     n1 = length(s1);
-    if( n1 > 1 )
-	warningcall(call, _("numerical expression has %d elements: only the first used"), (int) n1);
     n2 = length(s2);
-    if( n2 > 1 )
+    if (n1 > 1)
+	warningcall(call, _("numerical expression has %d elements: only the first used"), (int) n1);
+    else if (n1 == 0 || n2 == 0)
+	errorcall(call, _("argument of length 0"));
+    if (n2 > 1)
 	warningcall(call, _("numerical expression has %d elements: only the first used"), (int) n2);
     n1 = asReal(s1);
     n2 = asReal(s2);
@@ -207,10 +221,12 @@ static SEXP rep2(SEXP s, SEXP ncopy)
     default:
 	UNIMPLEMENTED_TYPE("rep2", s);
     }
+#ifdef _S4_rep_keepClass
     if(IS_S4_OBJECT(s)) { /* e.g. contains = "list" */
 	setAttrib(a, R_ClassSymbol, getAttrib(s, R_ClassSymbol));
 	SET_S4_OBJECT(a);
     }
+#endif
     if (inherits(s, "factor")) {
 	SEXP tmp;
 	if(inherits(s, "ordered")) {
@@ -258,10 +274,12 @@ static SEXP rep1(SEXP s, SEXP ncopy)
 	a = allocList(na);
     PROTECT(a);
 
+#ifdef _S4_rep_keepClass
     if(IS_S4_OBJECT(s)) { /* e.g. contains = "list" */
 	setAttrib(a, R_ClassSymbol, getAttrib(s, R_ClassSymbol));
 	SET_S4_OBJECT(a);
     }
+#endif
 
     switch (TYPEOF(s)) {
     case LGLSXP:
@@ -414,10 +432,12 @@ SEXP attribute_hidden do_rep(SEXP call, SEXP op, SEXP args, SEXP rho)
 
 done:
     ans = do_subset_dflt(R_NilValue, R_NilValue, list2(x, ind), rho);
+#ifdef _S4_rep_keepClass
     if(IS_S4_OBJECT(x)) { /* e.g. contains = "list" */
 	setAttrib(ans, R_ClassSymbol, getAttrib(x, R_ClassSymbol));
 	SET_S4_OBJECT(ans);
     }
+#endif
     /* 1D arrays get dimensions preserved */
     setAttrib(ans, R_DimSymbol, R_NilValue);
     UNPROTECT(nprotect);
@@ -606,8 +626,9 @@ SEXP attribute_hidden do_seq_along(SEXP call, SEXP op, SEXP args, SEXP rho)
 #ifdef R_291_and_less
     len = length(CAR(args));
 #else
-    if(isObject(CAR(args)) && DispatchOrEval(call, op, "length", args,
-					     rho, &ans, 0, 1)) {
+    if(isObject(CAR(args)) &&
+       DispatchOrEval(call, /* op = */ ScalarInteger(0),
+		      "length", args, rho, &ans, 0, 1)) {
 	len = asInteger(ans);
     }
     else

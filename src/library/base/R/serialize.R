@@ -21,7 +21,8 @@ function(object, file = "", ascii = FALSE, version = NULL,
     if(is.character(file)) {
         if(file == "") stop("'file' must be non-empty string")
         mode <- if(ascii) "w" else "wb"
-        con <- if(compress) gzfile(file, mode) else file(file, mode)
+        con <- if (identical(compress, "bzip2")) bzfile(file, mode)
+            else if(compress) gzfile(file, mode) else file(file, mode)
         on.exit(close(con))
     }
     else if(inherits(file, "connection")) {
@@ -40,8 +41,13 @@ function(file, refhook = NULL)
         con <- gzfile(file, "rb")
         on.exit(close(con))
     }
-    else if(inherits(file, "connection"))
+    else if(inherits(file, "connection")) {
         con <- gzcon(file)
+        if(!isOpen(con, "rb")) {
+            open(con, "rb")
+            on.exit(close(con))
+        }
+    }
     else
         stop("bad 'file' argument")
     .Internal(unserializeFromConn(con, refhook))

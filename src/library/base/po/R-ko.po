@@ -2,7 +2,7 @@ msgid ""
 msgstr ""
 "Project-Id-Version: R 2.3.0\n"
 "Report-Msgid-Bugs-To: bugs@r-project.org\n"
-"POT-Creation-Date: 2009-06-14 08:17\n"
+"POT-Creation-Date: 2009-10-09 08:02\n"
 "PO-Revision-Date: 2005-05-31 09:39+0900\n"
 "Last-Translator: Korean <uiami@hanmail.com>\n"
 "Language-Team: Korean <translation-team-ko@lists.sourceforge.net>\n"
@@ -172,10 +172,6 @@ msgstr "'x'는 적어도 2차원의 배열이 아니면 되지 않습니다"
 msgid "invalid 'dims'"
 msgstr "무효인 'dms' 입니다"
 
-#, fuzzy
-msgid "extra arguments ignored:"
-msgstr "drop인수는 무시됩니다"
-
 msgid "bad handler specification"
 msgstr "잘못한 handler의 지정입니다"
 
@@ -208,6 +204,10 @@ msgstr "문자 오브젝트만을 기입할수가 없습니다"
 msgid "supplied timeout must be NULL or a non-negative number"
 msgstr "timeout은 NUL이거나 non-negative number가 아니면 되지 않습니다"
 
+#, fuzzy
+msgid "'from' must be raw or character"
+msgstr "'normal.kind'는 길이1의 문자열이 아니면 안됩니다"
+
 msgid "'x' must be numeric"
 msgstr "'x'는 수치가 아니면 되지 않습니다"
 
@@ -233,7 +233,8 @@ msgstr "'row.names'가 빠져 있어 되지 않습니다"
 msgid "invalid 'dimnames' given for data frame"
 msgstr "데이터 프레임에 무효인 'dmnames'가 주어졌습니다"
 
-msgid "cannot coerce class \"%s\" into a data.frame"
+#, fuzzy
+msgid "cannot coerce class %s into a data.frame"
 msgstr "class \\\"%s\\\"는 데이터 프레임에 강제 변환할수가 없습니다"
 
 msgid "invalid 'row.names', length %d for a data frame with %d rows"
@@ -276,11 +277,23 @@ msgstr "주어진 열명은 잘못한 길이입니다"
 msgid "row names were found from a short variable and have been discarded"
 msgstr "열명은 짧은 변수로부터 검색할수 있어 버리고 갔습니다"
 
+#, fuzzy
+msgid "named arguments other than 'drop' are discouraged"
+msgstr "'row.names'가 빠져 있어 되지 않습니다"
+
 msgid "drop argument will be ignored"
 msgstr "drop인수는 무시됩니다"
 
 msgid "undefined columns selected"
 msgstr "정의하지 않는 열이 선택되었습니다"
+
+#, fuzzy
+msgid "named arguments other than 'exact' are discouraged"
+msgstr "'row.names'가 빠져 있어 되지 않습니다"
+
+#, fuzzy
+msgid "named arguments are discouraged"
+msgstr "중복한 'row.names'는 허용되지 않습니다"
 
 msgid "rhs is the wrong length for indexing by a logical matrix"
 msgstr "우변은 논리값 행렬에 의해 첨자 조작하기에는 잘못된 길이입니다"
@@ -593,9 +606,6 @@ msgstr "0 x 0 행렬입니다"
 msgid "non-square matrix in 'eigen'"
 msgstr "'eigen'에 non-sqare 행렬이 주어졌습니다"
 
-msgid "numeric or complex values required in 'eigen'"
-msgstr "'eigen'에 수치 또는 복소수값이 필요합니다"
-
 msgid "'ch' returned code %d in 'eigen'"
 msgstr "'eigen'로 'ch'가 부호 %d를 돌려주었습니다"
 
@@ -743,6 +753,9 @@ msgstr "알수 없는 일치거리요소는 무시되었습니다"
 msgid "'max.distance' components must be non-negative"
 msgstr "'max.distance'요소는 non-negative가 나오지 않으면 되지 않습니다"
 
+msgid "norm '%s' currently always uses exact = FALSE"
+msgstr ""
+
 #, fuzzy
 msgid "triangular matrix should be square"
 msgstr "정방 행렬이어야 합니다"
@@ -759,6 +772,23 @@ msgstr "패키지 '%s' R 2.0.0 이전 것입니다. 그것을 다시 인스톨�
 
 msgid "package '%s' was built under R version %s"
 msgstr "패키지 '%s'는 버전 %s의 R미만에서 작성되어졌습니다"
+
+#, fuzzy
+msgid ""
+"package '%s' was built under R version %s and help will not work correctly\n"
+"Please re-install it"
+msgstr "패키지 '%s' R 2.0.0 이전 것입니다. 그것을 다시 인스톨을 해주십시오"
+
+#, fuzzy
+msgid ""
+"package '%s' was built under R version %s and help may not work correctly"
+msgstr "패키지 '%s'는 버전 %s의 R미만에서 작성되어졌습니다"
+
+#, fuzzy
+msgid ""
+"package '%s' claims to be built under R version %s but is missing some help "
+"files and needs to be re-installed"
+msgstr "패키지 '%s' R 2.0.0 이전 것입니다. 그것을 다시 인스톨을 해주십시오"
 
 msgid "package '%s' was built for %s"
 msgstr "패키지 '%s'는 %s에 대해서 작성되었습니다"
@@ -1031,9 +1061,6 @@ msgstr ""
 
 msgid "invalid to change the storage mode of a factor"
 msgstr ""
-
-msgid "package '%s' has been merged into '%s'"
-msgstr "패케지'%s'는 '%s'에 병합되었습니다"
 
 msgid "'%s' is not an exported object from 'namespace:%s'"
 msgstr "'%s'는 'namespace:%s' 로부터  export된 오브젝트가 아닙니다"
@@ -1421,9 +1448,6 @@ msgstr "'x' 그리고 'y'는 동일 길이를 가지지 않으면 안됩니다"
 msgid "incorrect values of 'indent' and 'width'"
 msgstr "'indent'와 'width'에 대한 부정확한 값입니다"
 
-msgid "argument to 'svd' must be numeric"
-msgstr "'svd'에의 인수는 수치가 아니면 되지 않습니다"
-
 msgid "'nv' must be 0 or ncol(x)"
 msgstr "'nv'는 0 또는 ncol(x)가 나오지 않으면 되지 않습니다"
 
@@ -1625,6 +1649,19 @@ msgid_plural "Warning messages:\n"
 msgstr[0] ""
 "경고 메세지:\n"
 "경고 메세지(복수)\n"
+
+#, fuzzy
+#~ msgid "extra arguments ignored:"
+#~ msgstr "drop인수는 무시됩니다"
+
+#~ msgid "numeric or complex values required in 'eigen'"
+#~ msgstr "'eigen'에 수치 또는 복소수값이 필요합니다"
+
+#~ msgid "argument to 'svd' must be numeric"
+#~ msgstr "'svd'에의 인수는 수치가 아니면 되지 않습니다"
+
+#~ msgid "package '%s' has been merged into '%s'"
+#~ msgstr "패케지'%s'는 '%s'에 병합되었습니다"
 
 #~ msgid "package 'lqs' has been moved back to package 'MASS'"
 #~ msgstr "패키지 'lqs'는  패키지 'MASS'으로 재귀했습니다"

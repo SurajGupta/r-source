@@ -7,7 +7,7 @@ msgid ""
 msgstr ""
 "Project-Id-Version: R 2.3.0\n"
 "Report-Msgid-Bugs-To: bugs@r-project.org\n"
-"POT-Creation-Date: 2009-06-14 08:17\n"
+"POT-Creation-Date: 2009-10-09 08:02\n"
 "PO-Revision-Date: 2005-12-17 10:55-0200\n"
 "Last-Translator: Fernando Henrique Ferraz P. da Rosa <feferraz@ime.usp.br>\n"
 "Language-Team: Portuguese <ldp-br@bazar.conectiva.com.br>\n"
@@ -178,10 +178,6 @@ msgstr "'x' deve ser um array de pelo menos duas dimensões"
 msgid "invalid 'dims'"
 msgstr "'dims' inválido"
 
-#, fuzzy
-msgid "extra arguments ignored:"
-msgstr "argumento 'drop' será ignorado"
-
 msgid "bad handler specification"
 msgstr "especificação de handler inválido"
 
@@ -212,6 +208,10 @@ msgstr "só é possível escrever objetos do tipo caracter"
 msgid "supplied timeout must be NULL or a non-negative number"
 msgstr "tempo limite especificado deve ser NULL ou um número não negativo"
 
+#, fuzzy
+msgid "'from' must be raw or character"
+msgstr "'normal.kind' deve ser uma string de caractres de tamanho 1."
+
 msgid "'x' must be numeric"
 msgstr "'x' deve ser numérico"
 
@@ -237,7 +237,8 @@ msgstr "'row.names' faltantes não são permitidos"
 msgid "invalid 'dimnames' given for data frame"
 msgstr "'dimnames' inválidos para um data frame"
 
-msgid "cannot coerce class \"%s\" into a data.frame"
+#, fuzzy
+msgid "cannot coerce class %s into a data.frame"
 msgstr "não é possível fazer coerção de classe \"%s\" para data.frame"
 
 msgid "invalid 'row.names', length %d for a data frame with %d rows"
@@ -281,11 +282,23 @@ msgid "row names were found from a short variable and have been discarded"
 msgstr ""
 "nomes de linhas foram encontrados em uma variável curta e foram descartados"
 
+#, fuzzy
+msgid "named arguments other than 'drop' are discouraged"
+msgstr "'row.names' faltantes não são permitidos"
+
 msgid "drop argument will be ignored"
 msgstr "argumento 'drop' será ignorado"
 
 msgid "undefined columns selected"
 msgstr "colunas indefinidas selecionadas"
+
+#, fuzzy
+msgid "named arguments other than 'exact' are discouraged"
+msgstr "'row.names' faltantes não são permitidos"
+
+#, fuzzy
+msgid "named arguments are discouraged"
+msgstr "'row.names' duplicados não são permitidos"
 
 msgid "rhs is the wrong length for indexing by a logical matrix"
 msgstr ""
@@ -606,9 +619,6 @@ msgstr "matriz 0 x 0"
 msgid "non-square matrix in 'eigen'"
 msgstr "matriz não quadrada em 'eigen'"
 
-msgid "numeric or complex values required in 'eigen'"
-msgstr "valores numéricos ou complexos exigidos em 'eigen'"
-
 msgid "'ch' returned code %d in 'eigen'"
 msgstr "'ch' retornou código %d em 'eigen'"
 
@@ -751,6 +761,9 @@ msgstr "componentes de pareamento de distância desconhecidos ignorados"
 msgid "'max.distance' components must be non-negative"
 msgstr "componentes de 'max.distance' devem ser não negativos"
 
+msgid "norm '%s' currently always uses exact = FALSE"
+msgstr ""
+
 #, fuzzy
 msgid "triangular matrix should be square"
 msgstr "matriz deve ser quadrada"
@@ -768,6 +781,25 @@ msgstr ""
 
 msgid "package '%s' was built under R version %s"
 msgstr "pacote '%s' foi compilado na versão do R %s"
+
+#, fuzzy
+msgid ""
+"package '%s' was built under R version %s and help will not work correctly\n"
+"Please re-install it"
+msgstr ""
+"pacote '%s' foi compilado antes do R 2.0.0: por favor instale-o novamente"
+
+#, fuzzy
+msgid ""
+"package '%s' was built under R version %s and help may not work correctly"
+msgstr "pacote '%s' foi compilado na versão do R %s"
+
+#, fuzzy
+msgid ""
+"package '%s' claims to be built under R version %s but is missing some help "
+"files and needs to be re-installed"
+msgstr ""
+"pacote '%s' foi compilado antes do R 2.0.0: por favor instale-o novamente"
 
 msgid "package '%s' was built for %s"
 msgstr "pacote '%s' foi compilado para %s"
@@ -1040,9 +1072,6 @@ msgstr ""
 
 msgid "invalid to change the storage mode of a factor"
 msgstr ""
-
-msgid "package '%s' has been merged into '%s'"
-msgstr "pacote '%s' foi incluído em '%s'"
 
 msgid "'%s' is not an exported object from 'namespace:%s'"
 msgstr "'%s' não é um objeto exportado de 'namespace:%s'"
@@ -1425,9 +1454,6 @@ msgstr "'x' e 'y' devem ter o mesmo comprimento"
 msgid "incorrect values of 'indent' and 'width'"
 msgstr "valores incorretos de 'indent' e 'width'"
 
-msgid "argument to 'svd' must be numeric"
-msgstr "argumento para 'svd' deve ser numérico"
-
 msgid "'nv' must be 0 or ncol(x)"
 msgstr "'nv' deve ser 0 ou ncol(x)"
 
@@ -1622,6 +1648,19 @@ msgid "Warning message:\n"
 msgid_plural "Warning messages:\n"
 msgstr[0] "Mensagem de aviso:\n"
 msgstr[1] "Mensagens de aviso:\n"
+
+#, fuzzy
+#~ msgid "extra arguments ignored:"
+#~ msgstr "argumento 'drop' será ignorado"
+
+#~ msgid "numeric or complex values required in 'eigen'"
+#~ msgstr "valores numéricos ou complexos exigidos em 'eigen'"
+
+#~ msgid "argument to 'svd' must be numeric"
+#~ msgstr "argumento para 'svd' deve ser numérico"
+
+#~ msgid "package '%s' has been merged into '%s'"
+#~ msgstr "pacote '%s' foi incluído em '%s'"
 
 #~ msgid "package 'lqs' has been moved back to package 'MASS'"
 #~ msgstr "pacote 'lqs' foi movido de volta para o pacote 'MASS'"

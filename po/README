@@ -18,15 +18,14 @@ compiled (.mo) files.
 
 To do this for an individual standard package use
 
-	make pkgname.pkg-update
-
-e.g. make grid.pkg-update.
+	make pkg-update PKG=<pkgname>
 
 
 To add a new translation, add the lang.po file to this directory and
-add the language to LINGUAS.  Hopefully 'make all R' (in the builddir,
-if separate) will do the rest (create ll.gmo and install it as
-required).  For fuller manual control, use
+add the language to LINGUAS.  If there are no problems with the
+translations 'make all R' (in the builddir, if separate) will do the
+rest (create ll.gmo and install it as required).  For fuller manual
+control, use
 
 	msgfmt -c --statistics -o ll.gmo ll.po
 
@@ -69,3 +68,35 @@ right places when 'make -f Makefile.win' is run in this directory,
 which is part of the main 'make' process.)
 
 To re-make RGui.pot and all the translations use 'make update-RGui'.
+
+
+Adding translations to other packages
+=====================================
+
+To create the .pot files for a package PKG with absolute path PKGDIR, use
+
+   mkdir ${PKGDIR}/po
+
+and (only) if there are marked translations in the C source code
+
+    touch ${PKGDIR}/po/${PKG}.pot
+
+Then run from this directory
+
+     make pkg-update PKG=${PKG} PKGDIR=${PKGDIR}
+
+This will create ${PKGDIR}/po/R-${PKG}.pot, and update
+${PKGDIR}/po/${PKG}.pot if it already exists.  It will then create
+en@quot translations and install them.
+
+Running the same make command at a later stage will update the
+template files, and update and install any new translations that have
+been added in ${PKGDIR}/po.
+
+
+Note to Mac OS X users
+======================
+
+NB: these commands did not run correctly on at least one Mac OS X
+installation.  There were problems with the sed scripts used for the
+en@quot translations (in how \n was handled).

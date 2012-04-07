@@ -36,7 +36,10 @@ file.show <-
     nfiles <- length(files)
     if(nfiles == 0)
         return(invisible(NULL))
-    if(!is.na(encoding) && encoding != "" && capabilities("iconv")) {
+    ## avoid re-encoding files to the current encoding.
+    if(l10n_info()[["UTF-8"]] && encoding == "UTF-8") encoding <- ""
+    if(l10n_info()[["Latin-1"]] && encoding == "latin1") encoding <- ""
+    if(!is.na(encoding) && encoding != "") {
         for(i in seq_along(files)) {
             f <- files[i]
             tf <- tempfile()
@@ -287,3 +290,6 @@ Sys.chmod <- function(paths, mode = "0777")
 
 Sys.umask <- function(mode = "0000")
     .Internal(Sys.umask(as.octmode(mode)))
+
+Sys.readlink <- function(paths)
+    .Internal(Sys.readlink(paths))

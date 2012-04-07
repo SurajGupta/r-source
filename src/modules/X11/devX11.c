@@ -1,7 +1,7 @@
 /*
  *  R : A Computer Language for Statistical Data Analysis
  *  Copyright (C) 1995, 1996  Robert Gentleman and Ross Ihaka
- *  Copyright (C) 1997--2008  Robert Gentleman, Ross Ihaka and the
+ *  Copyright (C) 1997--2009  Robert Gentleman, Ross Ihaka and the
  *			      R Development Core Team
  *
  *  This program is free software; you can redistribute it and/or modify
@@ -60,15 +60,11 @@
 #include <R_ext/eventloop.h>
 #include <R_ext/Memory.h>	/* vmaxget */
 
-#ifdef SUPPORT_MBCS
-/* This uses fontsets only in mbcslocales */
-# define USE_FONTSET 1
 /* In theory we should do this, but it works less well
 # ifdef X_HAVE_UTF8_STRING
 #  define HAVE_XUTF8TEXTESCAPEMENT 1
 #  define HAVE_XUTF8TEXTEXTENTS 1
 # endif */
-#endif
 
 typedef int (*X11IOhandler)(Display *);
 
@@ -721,7 +717,6 @@ static void R_XFreeFont(Display *display, R_XFont *font)
 /*
  * Can't load Symbolfont to XFontSet!!
  */
-#ifdef USE_FONTSET
 static R_XFont *R_XLoadQueryFontSet(Display *display,
 				    const char *fontset_name)
 {
@@ -751,7 +746,7 @@ static R_XFont *R_XLoadQueryFontSet(Display *display,
     tmp->fontset = fontset;
     return tmp;
 }
-#endif
+
 
 static void *RLoadFont(pX11Desc xd, char* family, int face, int size)
 {
@@ -759,9 +754,7 @@ static void *RLoadFont(pX11Desc xd, char* family, int face, int size)
     int pixelsize, i, dpi;
     cacheentry *f;
     char buf[BUFSIZ];
-#ifdef USE_FONTSET
     char buf1[BUFSIZ];
-#endif
     R_XFont *tmp = NULL;
 
 #ifdef DEBUG_X11
@@ -809,7 +802,6 @@ static void *RLoadFont(pX11Desc xd, char* family, int face, int size)
     if (face == SYMBOL_FONTFACE - 1) /* NB: face-- above */
 	sprintf(buf, xd->symbolfamily,  pixelsize);
     else
-#ifdef USE_FONTSET
       if (mbcslocale && *slant[(face & 2) >> 1] == 'o') {
 	sprintf(buf, family, weight[face & 1], slant[(face & 2) >> 1],
 		pixelsize);
@@ -817,18 +809,15 @@ static void *RLoadFont(pX11Desc xd, char* family, int face, int size)
 	strcat(buf,",");
 	strcat(buf,buf1);
       } else
-#endif
-	sprintf(buf, family, weight[face & 1], slant[(face & 2) >> 1],
-		pixelsize);
+	  sprintf(buf, family, weight[face & 1], slant[(face & 2) >> 1],
+		  pixelsize);
 #ifdef DEBUG_X11
     Rprintf("loading:\n%s\n",buf);
 #endif
     if (!mbcslocale || face == SYMBOL_FONTFACE - 1)
       tmp = R_XLoadQueryFont(display, buf);
-#ifdef USE_FONTSET
     else
       tmp = R_XLoadQueryFontSet(display, buf);
-#endif
 
 #ifdef DEBUG_X11
     if (tmp) Rprintf("success\n"); else Rprintf("failure\n");
@@ -848,12 +837,10 @@ static void *RLoadFont(pX11Desc xd, char* family, int face, int size)
 	   If we can't find a "fixed" font then something is seriously
 	   wrong */
 	if ( ADOBE_SIZE(pixelsize) ) {
-#ifdef USE_FONTSET
 	    if(mbcslocale)
 		tmp = (void*) R_XLoadQueryFontSet(display,
 		   "-*-fixed-medium-r-*--13-*-*-*-*-*-*-*");
 	    else
-#endif
 		tmp = (void*) R_XLoadQueryFont(display, "fixed");
 
 	    if (tmp)
@@ -883,10 +870,8 @@ static void *RLoadFont(pX11Desc xd, char* family, int face, int size)
 #endif
 	if (!mbcslocale || face == SYMBOL_FONTFACE - 1)
 	    tmp = R_XLoadQueryFont(display, buf);
-#ifdef USE_FONTSET
 	else
 	    tmp = R_XLoadQueryFontSet(display, buf);
-#endif
 #ifdef DEBUG_X11
 	if (tmp) Rprintf("success\n"); else Rprintf("failure\n");
 #endif
@@ -906,10 +891,8 @@ static void *RLoadFont(pX11Desc xd, char* family, int face, int size)
 
 	if (!mbcslocale || face == SYMBOL_FONTFACE - 1)
 	    tmp = R_XLoadQueryFont(display, buf);
-#ifdef USE_FONTSET
 	else
 	    tmp = R_XLoadQueryFontSet(display, buf);
-#endif
 
 #ifdef DEBUG_X11
 	if (tmp) Rprintf("success\n"); else Rprintf("failure\n");
@@ -1589,7 +1572,6 @@ static double X11_StrWidth(const char *str, const pGEcontext gc, pDevDesc dd)
 
     SetFont(gc, xd);
 
-#ifdef USE_FONTSET
     if (xd->font->type == One_Font)
 	return (double) XTextWidth(xd->font->font, str, strlen(str));
     else  {
@@ -1602,9 +1584,6 @@ static double X11_StrWidth(const char *str, const pGEcontext gc, pDevDesc dd)
 	    return (double) XmbTextEscapement(xd->font->fontset,
 					      str, strlen(str));
     }
-#else
-    return (double) XTextWidth(xd->font->font, str, strlen(str));
-#endif
 }
 
 
@@ -1624,7 +1603,6 @@ static void X11_MetricInfo(int c, const pGEcontext gc,
 
     SetFont(gc, xd);
 
-#ifdef USE_FONTSET
     *ascent = 0; *descent = 0; *width = 0; /* fallback position */
     if (xd->font) {
 	if (xd->font->type != One_Font) {
@@ -1687,33 +1665,6 @@ static void X11_MetricInfo(int c, const pGEcontext gc,
 	  }
 	}
     }
-#else
-    f = xd->font->font;
-    first = f->min_char_or_byte2;
-    last = f->max_char_or_byte2;
-    if (c == 0) {
-	*ascent = f->ascent;
-	*descent = f->descent;
-	*width = f->max_bounds.width;
-    } else if (first <= c && c <= last) {
-    /* It seems that per_char could be NULL
-       http://www.ac3.edu.au/SGI_Developer/books/XLib_PG/sgi_html/ch06.html
-    */
-	if(f->per_char) {
-	    *ascent = f->per_char[c-first].ascent;
-	    *descent = f->per_char[c-first].descent;
-	    *width = f->per_char[c-first].width;
-	} else {
-	    *ascent = f->max_bounds.ascent;
-	    *descent = f->max_bounds.descent;
-	    *width = f->max_bounds.width;
-	}
-    } else {
-	*ascent = 0;
-	*descent = 0;
-	*width = 0;
-    }
-#endif
 }
 
 static void X11_Clip(double x0, double x1, double y0, double y1,
@@ -2700,7 +2651,6 @@ static SEXP in_do_saveplot(SEXP call, SEXP op, SEXP args, SEXP env)
 	if (res != CAIRO_STATUS_SUCCESS)
 	    error("cairo error '%s'", cairo_status_to_string(res));
     }
-#if CAIRO_VERSION >= 10200
     /* cairo_image_surface_get_data is from 1.2 */
     else if (streql(type, "jpeg")) {
 	void *xi = cairo_image_surface_get_data(xd->cs);
@@ -2715,14 +2665,7 @@ static SEXP in_do_saveplot(SEXP call, SEXP op, SEXP args, SEXP env)
 	stride = xd->windowWidth;
 	R_SaveAsTIFF(xi, xd->windowWidth, xd->windowHeight,
 		     Sbitgp, 0, fn, 0, 1L);
-    }
-#else
-    else if (streql(type, "jpeg"))
-	error(_("type = \"%s\" requires cairo >= 1.2: try \"png\""), "jpeg");
-    else if (streql(type, "tiff"))
-	error(_("type = \"%s\" requires cairo >= 1.2: try \"png\""), "tiff");
-#endif
-    else
+    } else
 	error(_("invalid '%s' argument"), "type");
     return R_NilValue;
 }
@@ -2758,7 +2701,7 @@ BM_Open(pDevDesc dd, pX11Desc xd, int width, int height)
 {
     cairo_status_t res;
     if (xd->type == PNG || xd->type == JPEG ||
-	xd->type == PNGdirect || xd->type == TIFF || xd->type == BMP)
+	xd->type == TIFF || xd->type == BMP)
 	xd->cs = cairo_image_surface_create(CAIRO_FORMAT_ARGB32,
 					    (double)xd->windowWidth,
 					    (double)xd->windowHeight);
@@ -2792,7 +2735,6 @@ static unsigned int Cbitgp(void *xi, int x, int y)
     return data[x*stride+y];
 }
 
-#if CAIRO_VERSION >= 10200
 static void BM_Close_bitmap(pX11Desc xd)
 {
     void *xi = cairo_image_surface_get_data(xd->cs);
@@ -2819,7 +2761,6 @@ static void BM_Close_bitmap(pX11Desc xd)
 		     xd->quality);
     }
 }
-#endif
 
 static void BM_NewPage(const pGEcontext gc, pDevDesc dd)
 {
@@ -2828,7 +2769,6 @@ static void BM_NewPage(const pGEcontext gc, pDevDesc dd)
     cairo_status_t res;
 
     xd->npages++;
-#if CAIRO_VERSION >= 10200
     if (xd->type == PNG || xd->type == JPEG || xd->type == BMP) {
 	if (xd->npages > 1) {
 	    /* try to preserve the page we do have */
@@ -2839,14 +2779,6 @@ static void BM_NewPage(const pGEcontext gc, pDevDesc dd)
 	xd->fp = R_fopen(R_ExpandFileName(buf), "w");
 	if (!xd->fp)
 	    error(_("could not open file '%s'"), buf);
-    } else if(xd->type == PNGdirect) {
-	if (xd->npages > 1) {
-	    cairo_status_t res;
-	    snprintf(buf, PATH_MAX, xd->filename, xd->npages - 1);
-	    res = cairo_surface_write_to_png(xd->cs, R_ExpandFileName(buf));
-	    if (res != CAIRO_STATUS_SUCCESS)
-		warning("cairo error '%s'", cairo_status_to_string(res));
-	}
     }
 #ifdef HAVE_TIFF
     else if(xd->type == TIFF) {
@@ -2940,18 +2872,6 @@ static void BM_NewPage(const pGEcontext gc, pDevDesc dd)
 #endif
     else
 	error(_("unimplemented cairo-based device"));
-#else /* cairo 1.0 */
-    if(xd->type == PNGdirect) {
-	if (xd->npages > 1) {
-	    cairo_status_t res;
-	    snprintf(buf, PATH_MAX, xd->filename, xd->npages - 1);
-	    res = cairo_surface_write_to_png(xd->cs, R_ExpandFileName(buf));
-	    if (res != CAIRO_STATUS_SUCCESS)
-		warning("cairo error '%s'", cairo_status_to_string(res));
-	}
-    } else
-	error(_("unimplemented cairo-based device"));
-#endif
 
     cairo_reset_clip(xd->cc);
     if (xd->type == PNG  || xd->type == TIFF) {
@@ -2972,21 +2892,10 @@ static void BM_Close(pDevDesc dd)
 {
     pX11Desc xd = (pX11Desc) dd->deviceSpecific;
 
-    if (xd->npages) {
-#if CAIRO_VERSION >= 10200
+    if (xd->npages)
 	if (xd->type == PNG || xd->type == JPEG ||
 	    xd->type == TIFF || xd->type == BMP)
 	    BM_Close_bitmap(xd);
-#endif
-	if (xd->type == PNGdirect) {
-	    cairo_status_t res;
-	    char buf[PATH_MAX];
-	    snprintf(buf, PATH_MAX, xd->filename, xd->npages);
-	    res = cairo_surface_write_to_png(xd->cs, R_ExpandFileName(buf));
-	    if (res != CAIRO_STATUS_SUCCESS)
-		warning("cairo error '%s'", cairo_status_to_string(res));
-	}
-    }
     if (xd->fp) fclose(xd->fp);
     if (xd->cc) cairo_show_page(xd->cc);
     if (xd->cs) cairo_surface_destroy(xd->cs);
@@ -3107,7 +3016,7 @@ const static struct {
     { "png", PNG },
     { "jpeg", JPEG },
     { "svg", SVG },
-    { "png", PNGdirect },
+    { "png", PNGdirect }, /* defunct in 2.10.0 */
     { "cairo_pdf", PDF },
     { "cairo_ps", PS },
     { "tiff", TIFF },
@@ -3160,12 +3069,6 @@ static SEXP in_do_cairo(SEXP call, SEXP op, SEXP args, SEXP env)
     if(quality == NA_INTEGER || quality < 0 || quality > 100)
 	error(_("invalid '%s' argument"), "quality");
 
-#if CAIRO_VERSION < 10200
-    if (type == 2)
-	error(_("'type = \"cairo\"' requires cairo >= 1.2 : try 'type = \"cairo1\"'"));
-    else if (type != 5)
-	error(_("device '%s' requires cairo >= 1.2"), devtable[type]);
-#endif
     R_GE_checkVersionOrDie(R_GE_version);
     R_CheckDeviceAvailable();
     BEGIN_SUSPEND_INTERRUPTS {
@@ -3260,28 +3163,40 @@ static Rboolean in_R_X11readclp(Rclpconn this, char *type)
     }
 
     /* find the size and format of the data in the selection */
-    XGetWindowProperty(display, clpwin, pty, 0, 0, False, AnyPropertyType,
-		       &pty_type, &pty_format, &pty_items, &pty_size, &buffer);
-    XFree(buffer);
-    if (pty_format != 8) { /* bytes */
+    ret = XGetWindowProperty(display, clpwin, pty, 0, 0, False, AnyPropertyType,
+			     &pty_type, &pty_format, &pty_items, &pty_size,
+			     &buffer);
+    if (ret) {
 	warning(_("clipboard cannot be opened or contains no text"));
 	res = FALSE;
-    } else { /* read the property */
-	XGetWindowProperty(display, clpwin, pty, 0, (long)pty_size, False,
-			   AnyPropertyType, &pty_type, &pty_format,
-			   &pty_items, &pty_size, &buffer);
-	this->buff = (char *)malloc(pty_items + 1);
-	this->last = this->len = pty_items;
-	if(this->buff) {
-	    /* property always ends in 'extra' zero byte */
-	    memcpy(this->buff, buffer, pty_items + 1);
-	} else {
-	    warning(_("memory allocation to copy clipboard failed"));
+    } else {
+	XFree(buffer);
+	if (pty_format != 8) { /* bytes */
+	    warning(_("clipboard cannot be opened or contains no text"));
 	    res = FALSE;
+	} else { /* read the property */
+	    ret = XGetWindowProperty(display, clpwin, pty, 0, (long)pty_size, False,
+				     AnyPropertyType, &pty_type, &pty_format,
+				     &pty_items, &pty_size, &buffer);
+	    if (ret) {
+		warning(_("clipboard cannot be read (error code %d)"), ret);
+		res = FALSE;
+	    } else {
+		this->buff = (char *)malloc(pty_items + 1);
+		this->last = this->len = pty_items;
+		if(this->buff) {
+		    /* property always ends in 'extra' zero byte */
+		    memcpy(this->buff, buffer, pty_items + 1);
+		} else {
+		    warning(_("memory allocation to copy clipboard failed"));
+		    res = FALSE;
+		}
+		XFree(buffer);
+	    }
 	}
     }
+    
     XDeleteProperty(display, clpwin, pty);
-    XFree(buffer);
     if (!displayOpen) {
 	XCloseDisplay(display);
 	strcpy(dspname, "");

@@ -35,7 +35,7 @@ use Text::Wrap;
 ## Don't buffer output.
 $| = 1;
 
-my $revision = ' $Rev: 49271 $ ';
+my $revision = ' $Rev: 49718 $ ';
 my $version;
 my $name;
 $revision =~ / ([\d\.]*) /;
@@ -59,6 +59,8 @@ $opt_rcfile = &file_path($ENV{"HOME"}, ".R", "check.conf")
 my $opt_subdirs;
 my $HAVE_LATEX = 0;
 my $HAVE_PDFLATEX = 0;
+
+my $INSTALL_OPTS ="";
 
 my $WINDOWS = ($R::Vars::OSTYPE eq "windows");
 
@@ -139,8 +141,8 @@ my $R_check_executables =
     &R_getenv("_R_CHECK_EXECUTABLES_", "TRUE");
 my $R_check_executables_exclusions =
     &R_getenv("_R_CHECK_EXECUTABLES_EXCLUSIONS_", "TRUE");
-my $R_check_Rd_parse =
-    &R_getenv("_R_CHECK_RD_PARSE_", "TRUE");
+# my $R_check_Rd_parse =
+#     &R_getenv("_R_CHECK_RD_PARSE_", "TRUE");
 ## This check needs codetools
 my $R_check_dot_internal =
     &R_getenv("_R_CHECK_DOT_INTERNAL_", "FALSE");
@@ -193,8 +195,8 @@ $R_check_executables =
     &config_val_to_logical($R_check_executables);
 $R_check_executables_exclusions =
     &config_val_to_logical($R_check_executables_exclusions);
-$R_check_Rd_parse =
-    &config_val_to_logical($R_check_Rd_parse);
+# $R_check_Rd_parse =
+#     &config_val_to_logical($R_check_Rd_parse);
 $R_check_dot_internal =
     &config_val_to_logical($R_check_dot_internal);
 ## <NOTE>
@@ -235,7 +237,6 @@ if($opt_library) {
 }
 
 my $tar = R_getenv("TAR", "tar");
-my $gzip = R_getenv("R_GZIPCMD", "gzip");
 
 my $R_opts = "--vanilla";
 
@@ -295,19 +296,19 @@ foreach my $pkg (@ARGV) {
     chdir($startdir);
     $pkg =~ s+/$++;  # strip any trailing '/'
     my $pkgname = basename($pkg);
+    my $opkgname = $pkgname;
     $is_ascii = 0;
 
     my $thispkg_subdirs = $opt_subdirs;
     ## is this a tar archive?
     my $istar = 0;
-    if($pkgname =~ /\.tar\.gz$/ || $pkgname =~ /\.tgz$/) {
-	$pkgname =~ s/\.tar\.gz$//;
-	$pkgname =~ s/\.tgz$//;
-	$pkgname =~ s/_[0-9\.-]*$//;
+    if(-d $pkg) {
+	$thispkg_subdirs = "no" if $thispkg_subdirs eq "default";
+    } else {
 	$istar = 1;
 	$thispkg_subdirs = "yes-maybe" if $thispkg_subdirs eq "default";
-    } else {
-	$thispkg_subdirs = "no" if $thispkg_subdirs eq "default";
+	$pkgname =~ s/\.(tar\.gz|tgz|tar\.bz2)$//;
+	$pkgname =~ s/_[0-9\.-]*$//;
     }
 
     my $pkgoutdir = &file_path($outdir, "$pkgname.Rcheck");
@@ -325,12 +326,26 @@ foreach my $pkg (@ARGV) {
 	    ## workaround for paths in Cygwin tar
 	    $pkg =~ s+^([A-Za-z]):+/cygdrive/\1+;
 	}
-	## this requires GNU tar: ATT 'tar x' does not support -C.
+	## ATT 'tar x' did not support -C.
 	## Note that $pkg, $dir might contain spaces
 	my $pkgq = &shell_quote_file_path($pkg);
 	my $dirq = &shell_quote_file_path($dir);
-	if(R_system("$gzip -dc $pkgq | $tar -xf - -C $dirq")) {
-	    die "Error: cannot untar '$pkg'\n";}
+	if($opkgname =~ /\.bz2$/) {
+	    my $bzip = R_getenv("R_BZIPCMD", "bzip2");
+	    if(R_system("$bzip -dc $pkgq | $tar -xf - -C $dirq")) {
+		die "Error: cannot untar '$pkg'\n";
+	    }
+	} elsif ($opkgname =~ /\.(tar\.gz|tgz)$/) {
+	    my $gzip = R_getenv("R_GZIPCMD", "gzip");
+	    if(R_system("$gzip -dc $pkgq | $tar -xf - -C $dirq")) {
+		die "Error: cannot untar '$pkg'\n";
+	    }
+	} else {
+	    ## let tar automagically fathom out compression (if any)
+	    if(R_system("$tar -xf $pkgq -C $dirq")) {
+		die "Error: cannot untar '$pkg'\n";
+	    }
+	}
 	$pkg = &file_path($dir, $pkgname);
     }
 
@@ -392,10 +407,14 @@ foreach my $pkg (@ARGV) {
     ## Package sources from the R distribution are special.  They have a
     ## 'DESCRIPTION.in' file (instead of 'DESCRIPTION'), with Version
     ## field containing '@VERSION@' for substitution by configure.  We
-    ## test for such packages by looking for 'DESCRIPTION.in' with
+    ## test for such packages by looking for 'DESCRIPTION.in' (and 'Makefile.in') with
     ## Priority 'base', and skip the installation test for such
-    ## packages.
-    if(-r &file_path($pkgdir, "DESCRIPTION.in")) {
+    ## packages.  We have to check for Makefile.in in addition to DESCRIPTION.in
+    ## so that we can allow packages to have a DESCRIPTION.in.  Such DESCRIPTION.in files will
+    ## have their content completed via the package's configuration which we have not yet run.
+    ## The DESCRIPTION.in file may be malformed (according to R::Dcf()), e.g if it has a line
+    ## @SYSTEM@ which is either empty or "System: ...." depending on the configuration script.
+    if(-r &file_path($pkgdir, "DESCRIPTION.in") && -r &file_path($pkgdir, "Makefile.in")) {
 	$description =
 	  new R::Dcf(&file_path($pkgdir, "DESCRIPTION.in"));
 	if($description->{"Priority"} eq "base") {
@@ -457,6 +476,30 @@ foreach my $pkg (@ARGV) {
 		$opt_install = 0;
 	    }
 	}
+
+	## Check CRAN incoming feasibility.
+	if(&config_val_to_logical(&R_getenv("_R_CHECK_CRAN_INCOMING_",
+					    "FALSE"))) {
+	    $log->checking("CRAN incoming feasibility");
+	    my $Rcmd = "tools:::.check_package_CRAN_incoming(\"${pkgdir}\")\n";
+	    my @out = R_runR($Rcmd, "${R_opts} --quiet",
+			     "R_DEFAULT_PACKAGES=NULL");
+	    @out = grep(!/^\>/, @out);
+	    if(scalar(@out) > 0) {
+		my $err = scalar(grep(/^Conflicting/, @out) > 0);
+		if($err) {
+		    $log->error();
+		} elsif(scalar(grep(/^Insufficient/, @out) > 0)) {
+		    $log->warning();
+		} else {
+		    $log->note();
+		}
+		$log->print(join("\n", @out) . "\n");
+		exit(1) if($err);
+	    } else {
+		$log->result("OK");
+	    }
+	}	    
 
 	## Check package dependencies.
 
@@ -615,16 +658,14 @@ foreach my $pkg (@ARGV) {
 	    ## see http://www.darwinsys.com/file/
 	    my $have_free_file = 0;
 	    my $tmpfile = R_tempfile("file");
-	    if (!$WINDOWS) {
-		## version 4.21 writes to stdout, 4.23 to stderr
-		## and set an error status code
-		R_system("file --version > $tmpfile 2>&1");
-		open FILE, "< $tmpfile";
-		my @lines = <FILE>;
-		close(FILE);
-		## a reasonable check -- it does not identify itself well
-		$have_free_file = 1 if grep(/^file-[45]/, @lines);
-	    }
+	    ## version 4.21 writes to stdout, 4.23 to stderr
+	    ## and set an error status code
+	    R_system("file --version > $tmpfile 2>&1");
+	    open FILE, "< $tmpfile";
+	    my @lines = <FILE>;
+	    close(FILE);
+	    ## a reasonable check -- it does not identify itself well
+	    $have_free_file = 1 if grep(/^(file-[45]|magic file from)/, @lines);
 	    if ($have_free_file) {
 		$log->checking("for executable files");
 		my @exec_files = ();
@@ -667,6 +708,17 @@ foreach my $pkg (@ARGV) {
 		    @exec_files = ();
 		    foreach my $file (@exec_files0) {
 			push @exec_files, $file unless $bin{$file};
+		    }
+		}
+		if(($opt_install =~ /^check/) &&
+		   (-f &file_path($pkgdir, ".install_timestamp"))) {
+		    my $its = (-M &file_path($pkgdir,
+					     ".install_timestamp"));
+		    my @exec_files_in = @exec_files;
+		    @exec_files = ();
+		    foreach my $path (@exec_files_in) {
+			push @exec_files, $path unless
+			    ((-M &file_path($pkgdir, $path)) < $its);
 		    }
 		}
 		if(scalar(@exec_files) > 0) {
@@ -747,8 +799,11 @@ foreach my $pkg (@ARGV) {
 		    (($opt_install =~ /^check/) ||
 		     $R_check_use_install_log ||
 		     !(-t STDIN && -t STDOUT));
-		my $INSTALL_opts = $opt_install_args;
-		$INSTALL_opts = "--fake" if($opt_install eq "fake");
+		$INSTALL_opts = $opt_install_args;
+		## don't use HTML, checkRd goes over the same ground.
+		$INSTALL_opts = $INSTALL_opts .  " --no-html";
+		#$INSTALL_opts = $INSTALL_opts .  " --no-chm" if $WINDOWS;
+		$INSTALL_opts = $INSTALL_opts . " --fake" if($opt_install eq "fake");
 		my $cmd;
 		if($WINDOWS) {
 		    ## avoid some quoting hell
@@ -801,7 +856,11 @@ foreach my $pkg (@ARGV) {
 			## </NOTE>
 		    }
 		    else {
-			$cmd .= " >" .
+			## record in the log what options were used
+			open(LOG, "> $out");
+			print LOG "* install options are '$INSTALL_opts'\n\n";
+			close(LOG);
+			$cmd .= " >>" .
 			    &shell_quote_file_path($out) .
 			    " 2>&1";
 			$install_error = &R_system($cmd);
@@ -841,6 +900,11 @@ foreach my $pkg (@ARGV) {
 		    my $warn_re =
 			"(" . join("|", ("^WARNING:",
 					 "^Warning:",
+					 ## <FIXME>
+					 ## New style Rd conversion
+					 ## which may even show errors:
+					 "^Rd (warning|error): ",
+					 ## </FIXME>
 					 ": warning: .*ISO C",
 					 ": warning: implicit declaration of function",
 					 ": warning: .* discards qualifiers from pointer target type",
@@ -982,7 +1046,7 @@ foreach my $pkg (@ARGV) {
 		  $is_bundle, $description, $log, $is_base_pkg,
 		  $thispkg_subdirs);
 	my $instdir = &file_path($library, $pkgname);
-	if (-d &file_path($instdir, "latex")) {
+	if (-d &file_path($instdir, "help")) {
 	    check_pkg_manual($instdir, $description->{"Package"}, $log);
 	} else {
 	    check_pkg_manual($pkgdir, $description->{"Package"}, $log);
@@ -1095,6 +1159,7 @@ sub check_pkg {
 		return 0 if($file_path =~ /$p/i);
 	    }
 	    else {
+		## Hmm, but Unix-alikes such as Mac OS X have such file systems
 		return 0 if($file_path =~ /$p/);
 	    }
 	}
@@ -1902,47 +1967,42 @@ sub check_pkg {
 
     if(-d "man") {
 	$log->checking("Rd files");
-	my $def_enc = 0;
-	$def_enc = 1 if defined($description->{"Encoding"});
-
-	my $Rcmd = "options(warn=1)\ntools:::check_Rd_files_in_man_dir(\"man\",$def_enc)\n";
+	my $minlevel = &R_getenv("_R_CHECK_RD_CHECKRD_MINLEVEL_", "-1");
+	my $Rcmd = "options(warn=1)\ntools:::.check_package_parseRd('.', minlevel=$minlevel)\n";
 	my @out = R_runR($Rcmd, "${R_opts} --quiet",
 			 "R_DEFAULT_PACKAGES=NULL");
 	@out = grep(!/^\>/, @out);
 	if(scalar(@out) > 0) {
-	    ## Output may indicate warnings or errors ...
-	    if(grep(/^Rd files with (syntax errors|missing or empty)/,
-		    @out)) {
-		$log->error();
-		$log->print(join("\n", @out) . "\n");
-		$log->print(wrap("", "", @msg_writing_Rd));
-		exit(1);
-	    }
-	    else {
+	    if(scalar(grep(!/^prepare.*Dropping empty section/, @out)) > 0) {
 		$log->warning();
-		$log->print(join("\n", @out) . "\n");
-		$log->print(wrap("", "", @msg_writing_Rd));
+	    } else {
+		$log->note();
 	    }
+	    $log->print(join("\n", @out) . "\n");
+	} else {
+	    $log->result("OK");
+	}
+
+	$log->checking("Rd metadata");
+	my $Rcmd = "options(warn=1)\n";
+	if($opt_install) {
+	    $Rcmd .= "tools:::.check_Rd_metadata(package = \"${pkgname}\")\n";
+	}
+	else {
+	    $Rcmd .= "tools:::.check_Rd_metadata(dir = \"${pkgdir}\")\n";
+	}
+	my @out = R_runR($Rcmd, "${R_opts} --quiet",
+			 "R_DEFAULT_PACKAGES=NULL");
+	@out = grep(!/^\>/, @out);
+	if(scalar(@out) > 0) {
+	    $log->warning();
+	    $log->print(join("\n", @out) . "\n");
 	}
 	else {
 	    $log->result("OK");
 	}
-	if($R_check_Rd_parse) {
-	    $log->checking("Rd files against version 2 parser");
-	    my $Rcmd = "options(warn=1)\ntools:::.check_package_parseRd('.')\n";
-	    my @out = R_runR($Rcmd, "${R_opts} --quiet",
-			     "R_DEFAULT_PACKAGES=NULL");
-	    @out = grep(!/^\>/, @out);
-	    if(scalar(@out) > 0) {
-		$log->warning();
-		$log->print(join("\n", @out) . "\n");
-	    }
-	    else {
-		$log->result("OK");
-	    }
-	}
     }
-
+	    
     ## Check cross-references in R documentation files.
 
     ## <NOTE>
@@ -1973,7 +2033,11 @@ sub check_pkg {
 			 "R_DEFAULT_PACKAGES=NULL");
 	@out = grep(!/^\>/, @out);
 	if(scalar(@out) > 0) {
-	    $log->warning();
+	    if(scalar(grep(!/^Package\(s\) unavailable/, @out)) > 0) {
+		$log->warning();
+	    } else {
+		$log->note();
+	    }
 	    $log->print(join("\n", @out) . "\n");
 	}
 	else {
@@ -2308,16 +2372,14 @@ sub check_pkg {
     ${R_opts} = ${R_opts}." -d valgrind" if $opt_use_valgrind;
 
     ## this will be skipped if installation was
-    if((-d &file_path($library, $pkgname, "R-ex"))) {
-
+    if( -d &file_path($library, $pkgname, "help") ) {
 	$log->checking("examples");
 	if(!$opt_examples) {
 	    $log->result("SKIPPED");
 	} else {
-	    my $Rexdir = &file_path($library, $pkgname, "R-ex");
-	    ## $Rexdir might contain spaces (not on Windows, though)
+	    my $pkgtopdir = &file_path($library, $pkgname);
 	    $cmd = join(" ",
-			("(echo 'tools:::.createExdotR(\"${pkgname}\", \"${Rexdir}\")'",
+			("(echo 'tools:::.createExdotR(\"${pkgname}\", \"${pkgtopdir}\", silent = TRUE)'",
 			 "| LC_ALL=C",
 			 &shell_quote_file_path(${R::Vars::R_EXE}),
 			 "--vanilla --slave)"
@@ -2329,112 +2391,96 @@ sub check_pkg {
 		exit(1);
 	    }
 
-	    if($is_zipped) {
-		unlink(&list_files_with_exts($Rexdir, "R"));
-	    }
-
-	    my $enc = "";
-	    if(defined($description->{"Encoding"})) {
-		$enc = "--encoding " . $description->{"Encoding"};
-		if ($is_ascii) {
-		    print "\n* WARNING: ",
-		    "checking a package with encoding '",
-		    $description->{"Encoding"},
-		    "' in an ASCII locale.\n";
+	    ## It ran, but did it create any examples?
+	    if(-f "${pkgname}-Ex.R") {
+		my $enc = "";
+		if(defined($description->{"Encoding"})) {
+		    $enc = "--encoding " . $description->{"Encoding"};
+		    if ($is_ascii) {
+			print "\n* WARNING: ",
+			"checking a package with encoding '",
+			$description->{"Encoding"},
+			"' in an ASCII locale.\n";
+		    }
 		}
-	    }
-	    if($opt_use_gct) {
-		$cmd = join(" ",
-			    ("(echo 'gctorture(TRUE)';",
-			     "cat ${pkgname}-Ex.R) |",
-			     &shell_quote_file_path(${R::Vars::R_EXE}),
-			     "${R_opts}", $enc,
-			     "> ${pkgname}-Ex.Rout 2>&1"));
-	    } else {
-		$cmd = join(" ",
-			    (&shell_quote_file_path(${R::Vars::R_EXE}),
-			     "${R_opts}", $enc,
-			     "< ${pkgname}-Ex.R",
-			     "> ${pkgname}-Ex.Rout 2>&1"));
-	    }
-	    if(R_system($cmd)) {
-		$log->error();
-		$log->print("Running examples in '${pkgname}-Ex.R' failed.\n");
-		## Try to spot the offending example right away.
-		my $txt = join("\n", &read_lines("${pkgname}-Ex.Rout"));
-		## Look for the header section anchored by a subsequent call
-		## to flush(): needs to be kept in sync with the code in
-		## massageExamples (in testing.R).  Should perhaps also be more
-		## defensive about the prompt ...
-		my @chunks = split(/(> \#\#\# \* [^\n]+\n> \n> flush)/, $txt);
-		if(scalar(@chunks) > 2) {
-		    $log->print("The error most likely occurred in:\n\n");
-		    $log->print($chunks[$#chunks - 1]);
-		    $log->print($chunks[$#chunks] . "\n");
+		## might be diff-ing results against tests/Examples later
+		if($opt_use_gct) {
+		    $cmd = join(" ",
+				("(echo 'gctorture(TRUE)';",
+				 "cat ${pkgname}-Ex.R) |",
+				 "LANGUAGE=en",
+				 &shell_quote_file_path(${R::Vars::R_EXE}),
+				 "${R_opts}", $enc,
+				 "> ${pkgname}-Ex.Rout 2>&1"));
+		} else {
+		    $cmd = join(" ",
+				("LANGUAGE=en",
+				 &shell_quote_file_path(${R::Vars::R_EXE}),
+				 "${R_opts}", $enc,
+				 "< ${pkgname}-Ex.R",
+				 "> ${pkgname}-Ex.Rout 2>&1"));
 		}
-		exit(1);
-	    }
-	    ## Look at the output from running the examples.  For the time
-	    ## being, report warnings about use of deprecated functions, as
-	    ## the next release will make them defunct and hence using them
-	    ## an error.  Also warn about loading defunct base package stubs,
-	    ## as load special-casing for these will be removed eventually.
-	    my @lines = &read_lines("${pkgname}-Ex.Rout");
-	    my $any;
-	    my @bad_lines;
-	    @bad_lines = grep(/^Warning: .*is deprecated.$/, @lines);
-	    if(scalar(@bad_lines) > 0) {
-		$log->warning();
-		$any++;
-		$log->print("Found the following significant warnings:\n");
-		$log->print("  " . join("\n  ", @bad_lines) . "\n");
-		$log->print(wrap("", "",
-				 ("Deprecated functions may be defunct as",
-				  "soon as of the next release of R.\n",
-				  "See ?Deprecated.\n")));
-	    }
-	    @bad_lines = grep(/^Warning: package '.*' has been merged into/,
-			      @lines);
-	    ## Could make this more precise by looking for an exact match
-	    ## for one of the defunct stubs, but we currently do not get
-	    ## R_PKGS_STUBS from 'share/make/vars.mk'.
-	    if(scalar(@bad_lines) > 0) {
-		if($any) {
-		    $log->print("\nAdditional significant warnings:\n");
-		}
-		else {
-		    $log->warning();
-		    $any++;
-		    $log->print("Found the following significant " .
-				"warnings:\n");
-		}
-		$log->print("  " . join("\n  ", @bad_lines) . "\n");
-		$log->print(wrap("", "",
-				 ("Support for loading defunct former base",
-				  "packages may be removed as soon as of",
-				  "the next release of R.\n")));
-	    }
-	    $log->result("OK") unless($any);
-
-	    ## Try to compare results from running the examples to a saved
-	    ## previous version.
-	    my $Rex_out_save =
-		&file_path($pkgdir, "tests", "Examples",
-			   "${pkgname}-Ex.Rout.save");
-	    if(-f $Rex_out_save) {
-		$log->checking("differences from '${pkgname}-Ex.Rout' to '${pkgname}-Ex.Rout.save'");
-		$cmd = join(" ",
-			    (${R::Vars::R_CMD},
-			     "Rdiff",
-			     &shell_quote_file_path("${pkgname}-Ex.Rout"),
-			     &shell_quote_file_path("${Rex_out_save}"),
-			     "0"));
 		if(R_system($cmd)) {
 		    $log->error();
-		    $log->print("Comparison failed.\n");
+		    $log->print("Running examples in '${pkgname}-Ex.R' failed.\n");
+		    ## Try to spot the offending example right away.
+		    my $txt = join("\n", &read_lines("${pkgname}-Ex.Rout"));
+		    ## Look for the header section anchored by a subsequent call
+		    ## to flush(): needs to be kept in sync with the code in
+		    ## massageExamples (in testing.R).  Should perhaps also be more
+		    ## defensive about the prompt ...
+		    my @chunks = split(/(> \#\#\# \* [^\n]+\n> \n> flush)/, $txt);
+		    if(scalar(@chunks) > 2) {
+			$log->print("The error most likely occurred in:\n\n");
+			$log->print($chunks[$#chunks - 1]);
+			$log->print($chunks[$#chunks] . "\n");
+		    }
 		    exit(1);
 		}
-		$log->result("OK");
+		## Look at the output from running the examples.  For the time
+		## being, report warnings about use of deprecated functions, as
+		## the next release will make them defunct and hence using them
+		## an error.  Also warn about loading defunct base package stubs,
+		## as load special-casing for these will be removed eventually.
+		my @lines = &read_lines("${pkgname}-Ex.Rout");
+		my $any;
+		my @bad_lines;
+		@bad_lines = grep(/^Warning: .*is deprecated.$/, @lines);
+		if(scalar(@bad_lines) > 0) {
+		    $log->warning();
+		    $any++;
+		    $log->print("Found the following significant warnings:\n");
+		    $log->print("  " . join("\n  ", @bad_lines) . "\n");
+		    $log->print(wrap("", "",
+				     ("Deprecated functions may be defunct as",
+				      "soon as of the next release of R.\n",
+				      "See ?Deprecated.\n")));
+		}
+		$log->result("OK") unless($any);
+
+		## Try to compare results from running the examples to a saved
+		## previous version.
+		my $Rex_out_save =
+		    &file_path($pkgdir, "tests", "Examples",
+			       "${pkgname}-Ex.Rout.save");
+		if(-f $Rex_out_save) {
+		    $log->checking("differences from '${pkgname}-Ex.Rout' to '${pkgname}-Ex.Rout.save'");
+		    $cmd = join(" ",
+				(${R::Vars::R_CMD},
+				 "Rdiff",
+				 &shell_quote_file_path("${pkgname}-Ex.Rout"),
+				 &shell_quote_file_path("${Rex_out_save}"),
+				 "0"));
+		    if(R_system($cmd)) {
+			$log->error();
+			$log->print("Comparison failed.\n");
+			exit(1);
+		    }
+		    $log->result("OK");
+		}
+	    } else {
+		## no examples found
+		$log->result("NONE");
 	    }
 	}
     } elsif(-d &file_path($pkgdir, "man")) {
@@ -2588,8 +2634,10 @@ sub check_pkg {
 sub check_pkg_manual {
     my ($pkgdir, $pkgname, $log) = @_;
     ## Run LaTeX on the manual, if there are man pages
-    if ((-d &file_path($pkgdir, "latex)")) ||
-	(-d &file_path($pkgdir, "man")) ) {
+    ## If it is installed with docs there is a 'help' dir
+    ## and for a source package, there is a 'man' dir
+    if ( (-d &file_path($pkgdir, "help")) ||
+	 (-d &file_path($pkgdir, "man")) ) {
 	if($opt_latex && $HAVE_LATEX) {
 	    $topdir = $pkgdir;
 	    my $Rd2dvi_opts = "--batch --no-preview";
@@ -2612,12 +2660,21 @@ sub check_pkg_manual {
 	    $cmd = join(" ",
 			($cmd0, "Rd2dvi $Rd2dvi_opts",
 			 "--build-dir=${build_dir} --no-clean",
-			 "-o ${pkgname}-manual.${fmt} >/dev/null 2>&1",
+			 "-o ${pkgname}-manual.${fmt} > Rdlatex.log 2>&1",
 			 "$topdir"));
 	    my $res = R_system($cmd);
 	    my $latex_log = &file_path($build_dir, "Rd2.log");
 	    if(-f $latex_log) {copy($latex_log, "${pkgname}-manual.log");}
-	    if($res) {
+	    if($res == 2816) { ## 11*256
+		$log->error();
+		$log->print("Rd conversion errors:\n");
+		@lines = &read_lines("Rdlatex.log");
+		foreach my $line (@lines) {
+		    $log->print($line . "\n") unless $line =~ /^(Hmm|Execution)/;
+		}
+		rmtree($build_dir);
+		exit(1);
+	    } elsif($res) {
 		my $latex_file = &file_path($build_dir, "Rd2.tex");
 		if(-f $latex_file) {copy($latex_file, "${pkgname}-manual.tex");}
 		$log->warning();
@@ -2645,13 +2702,32 @@ sub check_pkg_manual {
 			     "$topdir"));
 		if(R_system($cmd)) {
 		    $log->error();
-		    if(-f $latex_log) {copy($latex_log, "${pkgname}-manual.log");}
+		    if(-f $latex_log) {
+			copy($latex_log, "${pkgname}-manual.log");
+		    } else {
+			## No log file and thus no chance to find out
+			## what went wrong.  Hence, re-run without
+			## redirecting stdout/stderr and hope that this
+			## gives the same problem ...
+			## Ideally, we would have a version of
+			## R_system() similar to R_run_R() which returns 
+			## both the exit status and stdout/stderr.
+			$log->print("LaTeX error when running command:\n");
+			$log->print(wrap("  ", "    ", ($cmd)) . "\n");
+			$log->print("Re-running with no redirection of stdout/stderr.\n");
+			$cmd = join(" ",
+				    ($cmd0, "Rd2dvi $Rd2dvi_opts",
+				     "--build-dir=${build_dir} --no-clean --no-index",
+				     "-o ${pkgname}-manual.${fmt} $topdir"));
+			R_system($cmd);
+		    }
 		    rmtree($build_dir);
 		    exit(1);
 		}
+	    } else {
+		rmtree($build_dir);
+		$log->result("OK");
 	    }
-	    rmtree($build_dir);
-	    $log->result("OK");
 	}
     }
 }
@@ -2663,7 +2739,7 @@ sub usage {
 Usage: R CMD $name [options] pkgs
 
 Check R packages from package sources, which can be directories or
-gzipped package 'tar' archives with extension '.tar.gz' or '.tgz'.
+package 'tar' archives with extension '.tar.gz', '.tar.bz2' or '.tgz'.
 
 A variety of diagnostic checks on directory structure, index and
 control files are performed.  The package is installed into the log

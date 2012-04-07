@@ -34,7 +34,7 @@ monthplot.ts <-
     if (is.null(labels)) {
         if (missing(phase)) {
             f <- frequency(x)
-            if (f == 4) labels <- paste("Q", 1L:4, sep = "")
+            if (f == 4) labels <- paste("Q", 1L:4L, sep = "")
             else if (f == 12)
                 labels <- c("J", "F", "M", "A", "M", "J", "J",
                   "A", "S", "O", "N", "D")
@@ -46,10 +46,10 @@ monthplot.ts <-
 }
 
 monthplot.default <-
-    function (x, labels = 1L:12,
+    function (x, labels = 1L:12L,
               ylab = deparse(substitute(x)),
-              times = 1L:length(x),
-              phase = (times - 1)%%length(labels) + 1, base = mean,
+              times = seq_along(x),
+              phase = (times - 1L)%%length(labels) + 1L, base = mean,
               axes = TRUE, type = c("l", "h"), box = TRUE, add = FALSE, ...)
 {
     dots <- list(...); nmdots <- names(dots)
@@ -91,4 +91,5 @@ monthplot.default <-
         else segments((y[sub] - min(y)) * scale - 0.45 + i, means[i],
                       (y[sub] - min(y)) * scale - 0.45 + i, x[sub], ...)
     }
+    invisible()
 }

@@ -17,6 +17,7 @@
 
 ### * .install_package_description
 
+## called from basepkg.mk and .install_packages
 .install_package_description <-
 function(dir, outDir)
 {
@@ -106,6 +107,7 @@ function(dir, outDir)
 
 ### * .split_description
 
+## also used in .getRequiredPackages
 .split_description <-
 function(db, verbose = FALSE)
 {
@@ -125,10 +127,13 @@ function(db, verbose = FALSE)
     } else Built <- NULL
     ## might perhaps have multiple entries
     Depends <- .split_dependencies(db[names(db) %in% "Depends"])
+    ## We only need Rdepends for R < 2.7.0, but we still need to be
+    ## able to check that someone is not trying to load this into a
+    ## very old version of R.
     if("R" %in% names(Depends)) {
         Rdeps2 <- Depends["R" == names(Depends)]
         names(Rdeps2) <- NULL
-        if(verbose && !all(sapply(Rdeps2[-1], function(x)
+        if(verbose && !all(sapply(Rdeps2[-1L], function(x)
             		   x$op %in% c("<", "<=")
             		&& x$version >= package_version("2.7.0")))) {
             entries <- lapply(Rdeps2, function(x)
@@ -156,6 +161,7 @@ function(db, verbose = FALSE)
 
 ### * .vinstall_package_descriptions_as_RDS
 
+## called from src/library/Makefile
 .vinstall_package_descriptions_as_RDS <-
 function(dir, packages)
 {
@@ -182,6 +188,7 @@ function(dir, packages)
 
 ### * .update_package_rds
 
+## not used
 .update_package_rds <-
 function(lib.loc = NULL)
 {
@@ -296,16 +303,7 @@ function(dir, outDir)
     enc <- as.vector(db["Encoding"])
     need_enc <- !is.na(enc) # Encoding was specified
     ## assume that if locale is 'C' we can used 8-bit encodings unchanged.
-    if(need_enc && capabilities("iconv") &&
-       !(Sys.getlocale("LC_CTYPE") %in% c("C", "POSIX"))
-       ) {
-        ## syntax check: see below
-        op <- options(encoding = enc, showErrorCalls=FALSE)
-        on.exit(options(op))
-        for(f in codeFiles)
-            eval(substitute(parse(f), list(f=f)))
-        options(op); on.exit()
-
+    if(need_enc && !(Sys.getlocale("LC_CTYPE") %in% c("C", "POSIX"))) {
         con <- file(outFile, "a")
         on.exit(close(con))  # Windows does not like files left open
         for(f in codeFiles) {
@@ -313,15 +311,11 @@ function(dir, outDir)
             if(any(is.na(tmp)))
                stop(gettextf("unable to re-encode '%s'", basename(f)),
                     domain = NA, call. = FALSE)
+            writeLines(paste("#line 1 \"", f, "\"", sep=""), con)
             writeLines(tmp, con)
         }
+	close(con); on.exit()
     } else {
-        ## A syntax check here, both so that we do not install a
-        ## broken package and that we get better diagnostics.
-        op <- options(showErrorCalls=FALSE)
-        on.exit(options(op))
-        for(f in codeFiles)
-            eval(substitute(parse(f), list(f=f)))
         ## <NOTE>
         ## It may be safer to do
         ##   writeLines(sapply(codeFiles, readLines), outFile)
@@ -331,7 +325,12 @@ function(dir, outDir)
             stop("unable to write code files")
         ## </NOTE>
     }
-
+    ## A syntax check here, so that we do not install a broken package.
+    ## FIXME:  this is only needed if we don't lazy load, as the lazy loader
+    ## would detect the error.
+    op <- options(showErrorCalls=FALSE)
+    on.exit(options(op))
+    parse(outFile)
     invisible()
 }
 
@@ -379,14 +378,6 @@ function(dir, outDir)
     dataDir <- file.path(outDir, "data")
     outDir <- file_path_as_absolute(outDir)
 
-    ## allow for a data dir but no man pages
-    if(!file_test("-d", docsDir)) {
-        if(file_test("-d", dataDir))
-            .saveRDS(.build_data_index(dataDir, NULL),
-                     file.path(outDir, "Meta", "data.rds"))
-        return(invisible())
-    }
-
     ## <FIXME>
     ## Not clear whether we should use the basename of the directory we
     ## install to, or the package name as obtained from the DESCRIPTION
@@ -396,7 +387,8 @@ function(dir, outDir)
     packageName <- basename(outDir)
     ## </FIXME>
 
-    allRd <- list_files_with_type(docsDir, "docs")
+    allRd <- if(file_test("-d", docsDir))
+        list_files_with_type(docsDir, "docs") else character()
     ## some people have man dirs without any valid .Rd files
     if(length(allRd)) {
         ## we want the date of the newest .Rd file we will install
@@ -404,7 +396,8 @@ function(dir, outDir)
         ## these files need not exist, which gives NA.
         indices <- c(file.path("Meta", "Rd.rds"),
                      file.path("Meta", "hsearch.rds"),
-                     "CONTENTS", "INDEX")
+                     file.path("Meta", "links.rds"),
+                     "INDEX")
         upToDate <- file.info(file.path(outDir, indices))$mtime >= newestRd
         if(file_test("-d", dataDir)
            && length(dataFiles <- list.files(dataDir))) {
@@ -415,21 +408,34 @@ function(dir, outDir)
                           file.info(file.path(outDir, "Meta", "data.rds"))$mtime >=
                           max(newestRd, newestData))
         }
+        ## Note that this is not quite good enough: an Rd file or data file
+        ## might have been removed since the indices were made.
+        RdsFile <- file.path("Meta", "Rd.rds")
+        if(file.exists(RdsFile)) { ## for Rd files
+            ## this has file names without path
+            files <- .readRDS(RdsFile)$File
+            if(!identical(basename(allRd), files)) upToDate <- FALSE
+        }
         ## we want to proceed if any is NA.
         if(all(upToDate %in% TRUE)) return(invisible())
 
-        contents <- Rdcontents(allRd)
+        ## Rd objects should already have been installed.
+        db <- tryCatch(Rd_db(basename(outDir), lib.loc = dirname(outDir)),
+                       error = function(e) NULL)
+        ## If not, we build the Rd db from the sources:
+        if(is.null(db)) db <- .build_Rd_db(dir, allRd)
+        contents <- Rd_contents(db)
 
-        .write_contents_as_RDS(contents,
-                               file.path(outDir, "Meta", "Rd.rds"))
+        .write_Rd_contents_as_RDS(contents,
+                                  file.path(outDir, "Meta", "Rd.rds"))
 
         defaultEncoding <- as.vector(.readRDS(file.path(outDir, "Meta", "package.rds"))$DESCRIPTION["Encoding"])
         if(is.na(defaultEncoding)) defaultEncoding <- NULL
         .saveRDS(.build_hsearch_index(contents, packageName, defaultEncoding),
                  file.path(outDir, "Meta", "hsearch.rds"))
 
-        .write_contents_as_DCF(contents, packageName,
-                               file.path(outDir, "CONTENTS"))
+        .saveRDS(.build_links_index(contents, packageName),
+                 file.path(outDir, "Meta", "links.rds"))
 
         ## If there is no @file{INDEX} file in the package sources, we
         ## build one.
@@ -441,7 +447,15 @@ function(dir, outDir)
             writeLines(formatDL(.build_Rd_index(contents)),
                        file.path(outDir, "INDEX"))
         ## </NOTE>
-    } else contents <- NULL
+    } else {
+        contents <- NULL
+        .saveRDS(.build_hsearch_index(contents, packageName, defaultEncoding),
+                 file.path(outDir, "Meta", "hsearch.rds"))
+
+        .saveRDS(.build_links_index(contents, packageName),
+                 file.path(outDir, "Meta", "links.rds"))
+
+    }
     if(file_test("-d", dataDir))
         .saveRDS(.build_data_index(dataDir, contents),
                  file.path(outDir, "Meta", "data.rds"))
@@ -537,6 +551,7 @@ function(dir, outDir)
 
 ### * .vinstall_package_indices
 
+## called from src/library/Makefile
 .vinstall_package_indices <-
 function(src_dir, out_dir, packages)
 {
@@ -555,6 +570,8 @@ function(src_dir, out_dir, packages)
 }
 
 ### * .install_package_vignettes
+
+## called from src/library/Makefile
 ## this is only used when building R, to build the 'grid' vignettes.
 .install_package_vignettes <-
 function(dir, outDir, keep.source = FALSE)
@@ -653,6 +670,7 @@ function(dir, outDir)
 
 ### * .vinstall_package_namespaces_as_RDS
 
+## called from src/library/Makefile
 .vinstall_package_namespaces_as_RDS <-
 function(dir, packages)
 {
@@ -667,47 +685,40 @@ function(dir, packages)
     invisible()
 }
 
-### * .convert_examples
+### * .install_package_Rd_objects
 
-.convert_examples <- function(infile, outfile, encoding)
-{
-    ## convert infile from encoding to current, if possible
-    if(capabilities("iconv") && l10n_info()[["MBCS"]]) {
-        text <- iconv(readLines(infile), encoding, "")
-        if(any(is.na(text)))
-            stop("invalid input", domain = NA)
-        writeLines(text, outfile)
-    } else file.copy(infile, outfile, TRUE)
-}
-
-
-### * .install_package_man_sources
-
-.install_package_man_sources <- function(dir, outDir)
+## called from src/library/Makefile
+.install_package_Rd_objects <-
+function(dir, outDir, encoding = "unknown")
 {
     mandir <- file.path(dir, "man")
-    if(!file_test("-d", mandir)) return()
-    manfiles <- list_files_with_type(mandir, "docs")
-    if(!length(manfiles)) return()
-    manOutDir <- file.path(outDir, "man")
-    if(!file_test("-d", manOutDir)) dir.create(manOutDir)
-    pkgname <- sub("_.*$", "", basename(outDir)) # allow for versioned installs
-    filepath <- file.path(manOutDir, paste(pkgname, ".Rd.gz", sep = ""))
-    con <- gzfile(filepath, "wb")
-    for(file in manfiles) {
-        fn <- sub(".*/man/", "", file)
-        cat(file=con, "% --- Source file: ", fn, " ---\n", sep="")
-        writeLines(readLines(file, warn = FALSE), con) # will ensure final \n
-        ## previous format had (sometimes) blank line before \eof, but
-        ## this is not needed.
-        cat(file=con, "\\eof\n")
+    manfiles <- if(!file_test("-d", mandir)) character()
+    else list_files_with_type(mandir, "docs")
+    manOutDir <- file.path(outDir, "help")
+    dir.create(manOutDir, FALSE)
+    db_file <- file.path(manOutDir,
+                         paste(basename(outDir), ".rdx", sep = ""))
+    ## Avoid (costly) rebuilding if not needed.
+    ## Actually, it seems no more costly than these tests, which it also does
+    pathsFile <- file.path(manOutDir, "paths.rds")
+    if(!file_test("-f", db_file) || !file.exists(pathsFile) ||
+       !identical(sort(manfiles), sort(.readRDS(pathsFile))) ||
+       !all(file_test("-nt", db_file, manfiles))) {
+        db <- .build_Rd_db(dir, manfiles, db_file = db_file,
+                           encoding = encoding)
+        nm <- names(db)
+        .saveRDS(nm, pathsFile)
+        names(db) <- sub("\\.[Rr]d$", "", basename(nm))
+        makeLazyLoadDB(db, file.path(manOutDir, basename(outDir)))
     }
-    close(con)
+    invisible()
 }
 
 ### * .install_package_demos
 
-.install_package_demos <- function(dir, outDir)
+## called from basepkg.mk and .install_packages
+.install_package_demos <-
+function(dir, outDir)
 {
     ## NB: we no longer install 00Index
     demodir <- file.path(dir, "demo")
@@ -716,13 +727,15 @@ function(dir, packages)
     if(!length(demofiles)) return()
     demoOutDir <- file.path(outDir, "demo")
     if(!file_test("-d", demoOutDir)) dir.create(demoOutDir)
-    file.copy(file.path(demodir, demofiles), demoOutDir)
+    file.copy(file.path(demodir, demofiles), demoOutDir,
+              overwrite = TRUE)
 }
 
 
 ### * .find_cinclude_paths
 
-.find_cinclude_paths <- function(pkgs, lib.loc = NULL, file = NULL)
+.find_cinclude_paths <-
+function(pkgs, lib.loc = NULL, file = NULL)
 {
     ## given a character string of comma-separated package names,
     ## find where the packages are installed and generate
@@ -742,6 +755,7 @@ function(dir, packages)
 
 ### * .vcreate_bundle_package_descriptions
 
+## called from .install_packages
 .vcreate_bundle_package_descriptions <-
 function(dir, packages)
 {
@@ -766,7 +780,7 @@ function(dir, packages)
             pmeta <- .canonicalize_metadata(pmeta)
             ## Need to merge dependency fields in *both* metadata.
             fields_to_merge <-
-                c("Depends", "Imports", "Suggests", "Enhances")
+                c("Depends", "Imports", "LinkingTo", "Suggests", "Enhances")
             fields <- intersect(intersect(names(bmeta), fields_to_merge),
                                 intersect(names(pmeta), fields_to_merge))
             if(length(fields)) {
@@ -831,10 +845,83 @@ function(dir)
     status
 }
 
+## no longer used
 .test_package_depends_R_version <-
 function(dir)
     q(status = .Rtest_package_depends_R_version(dir))
 
+
+### * checkRdaFiles
+
+checkRdaFiles <- function(paths)
+{
+    if(length(paths) == 1L && isTRUE(file.info(paths)$isdir))
+        paths <- Sys.glob(c(file.path(paths, "*.rda"),
+                            file.path(paths, "*.RData")))
+    res <- data.frame(size = NA_real_, ASCII = NA,
+                      compress = NA_character_, version = NA_integer_,
+                      stringsAsFactors = FALSE)
+    res <- res[rep(1L, length(paths)), ]
+    row.names(res) <- paths
+    keep <- file.exists(paths)
+    res$size[keep] <- file.info(paths)$size[keep]
+    for(p in paths[keep]) {
+        magic <- readBin(p, "raw", n = 5)
+        res[p, "compress"] <- if(all(magic[1:2] == c(0x1f, 0x8b))) "gzip"
+        else if(rawToChar(magic[1:3]) == "BZh") "bzip2"
+        else if(magic[1] == 0xFD && rawToChar(magic[2:5]) == "7zXZ") "xz"
+        else if(grepl("RD[ABX][12]", rawToChar(magic), useBytes = TRUE)) "none"
+        else "unknown"
+        con <- gzfile(p)
+        magic <- readChar(con, 5L, useBytes = TRUE)
+        close(con)
+        res[p, "ASCII"]  <- if (grepl("RD[ABX][12]", magic, useBytes = TRUE))
+            substr(magic, 3, 3) == "A" else NA
+        ver <- sub("(RD[ABX])([12]*)", "\\2", magic, useBytes = TRUE)
+        res$version <- as.integer(ver)
+    }
+    res
+}
+
+### * resaveRdaFiles
+
+resaveRdaFiles <- function(paths,
+                           compress = c("auto", "gzip", "bzip2", "xz"),
+                           compression_level)
+{
+    if(length(paths) == 1L && isTRUE(file.info(paths)$isdir))
+        paths <- Sys.glob(c(file.path(paths, "*.rda"),
+                            file.path(paths, "*.RData")))
+    compress <- match.arg(compress)
+    if (missing(compression_level))
+        compression_level <- switch(compress, "gzip" = 6, 9)
+    for(p in paths) {
+        env <- new.env()
+        load(p, envir = env)
+        if(compress == "auto") {
+            f1 <- tempfile()
+            save(file = f1, list = ls(env, all=TRUE), envir = env)
+            f2 <- tempfile()
+            save(file = f2, list = ls(env, all=TRUE), envir = env,
+                 compress = "bzip2")
+            ss <- file.info(c(f1, f2))$size * c(0.9, 1.0)
+            names(ss) <- c(f1, f2)
+            if(ss[1L] > 10240) {
+                f3 <- tempfile()
+                save(file = f3, list = ls(env, all=TRUE), envir = env,
+                     compress = "xz")
+                ss <- c(ss, file.info(f3)$size)
+		names(ss) <- c(f1, f2, f3)
+            }
+            nm <- names(ss)
+            ind <- which.min(ss)
+            file.copy(nm[ind], p, overwrite = TRUE)
+            unlink(nm)
+        } else
+            save(file = p, list = ls(env, all=TRUE), envir = env,
+                 compress = compress, compression_level = compression_level)
+    }
+}
 
 ### Local variables: ***
 ### mode: outline-minor ***

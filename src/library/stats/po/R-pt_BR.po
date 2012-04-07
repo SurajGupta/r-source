@@ -7,7 +7,7 @@ msgid ""
 msgstr ""
 "Project-Id-Version: R 2.3.0\n"
 "Report-Msgid-Bugs-To: bugs@r-project.org\n"
-"POT-Creation-Date: 2009-05-08 17:39\n"
+"POT-Creation-Date: 2009-10-08 08:29\n"
 "PO-Revision-Date: 2006-04-16 19:17-0300\n"
 "Last-Translator: Fernando Henrique Ferraz P. da Rosa <feferraz@.ime.usp.br>\n"
 "Language-Team: Portuguese <ldp-br@bazar.conectiva.com.br>\n"
@@ -528,6 +528,9 @@ msgstr "matriz de contrastes singular"
 msgid "numeric contrasts or contrast name expected"
 msgstr "contrastes numéricos ou nome de contraste esperado"
 
+msgid "contr*(.., sparse=TRUE) needs package \"Matrix\" correctly installed"
+msgstr ""
+
 msgid "not enough degrees of freedom to define contrasts"
 msgstr "não há graus de liberdade suficientes para definir contrastes"
 
@@ -863,7 +866,7 @@ msgstr ""
 msgid "non-positive values not allowed for the gamma family"
 msgstr "valores não positivos não são permitidos na família gama"
 
-msgid "using weights as shape paraneters"
+msgid "using weights as shape parameters"
 msgstr ""
 
 #, fuzzy
@@ -1003,7 +1006,12 @@ msgstr "'col.vars' ausente ou incorreto"
 msgid "'family' not recognized"
 msgstr "'family' não reconhecido"
 
-msgid "invalid 'method':"
+#, fuzzy
+msgid "invalid 'method': %s"
+msgstr "'method' inválido:"
+
+#, fuzzy
+msgid "invalid 'method'"
 msgstr "'method' inválido:"
 
 #, fuzzy
@@ -1552,6 +1560,10 @@ msgstr "'data' deve ser um data.frame, não uma matriz ou array"
 msgid "'newdata' had %d rows but variable(s) found have %d rows"
 msgstr "'newdata' tem  %d linhas mas variável(eis) encontradas tem %d linhass"
 
+#, fuzzy
+msgid "character variable '%s' changed to a factor"
+msgstr "variável '%s' não é um fator"
+
 msgid "variable '%s' is not a factor"
 msgstr "variável '%s' não é um fator"
 
@@ -1631,7 +1643,7 @@ msgid "'params' has wrong length"
 msgstr "'params' tem comprimento errado"
 
 #, fuzzy
-msgid "'varying' must be in 1L:length(pars)"
+msgid "'varying' must be in seq_along(pars)"
 msgstr "'varying' deve estar em 1:length(pars)"
 
 msgid "'varying' has wrong length"
@@ -1766,7 +1778,7 @@ msgid "use only with \"lm\" objects"
 msgstr "uso somente para objetos \"lm\""
 
 #, fuzzy
-msgid "'which' must be in 1L:6"
+msgid "'which' must be in 1:6"
 msgstr "'which' deve estar em 1:6"
 
 msgid "'id.n' must be in {1,..,%d}"
@@ -2329,6 +2341,12 @@ msgstr "não é possível calcular intervalo de confiança exato com zeros"
 
 msgid "must supply either 'formula' or 'data'"
 msgstr "ou 'formula' ou 'data' deve ser especificado"
+
+msgid "xtabs(*, sparse=TRUE) applies only to two-way tables"
+msgstr ""
+
+msgid "xtabs(*, sparse=TRUE) needs package \"Matrix\" correctly installed"
+msgstr ""
 
 msgid "too few distinct input values to fit an asymptotic regression model"
 msgstr ""

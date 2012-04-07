@@ -14,23 +14,32 @@
 #  A copy of the GNU General Public License is available at
 #  http://www.r-project.org/Licenses/
 
-factor <- function (x = character(), levels = sort(unique.default(x),
-                    na.last = TRUE), labels=levels, exclude = NA,
-                    ordered = is.ordered(x))
+factor <- function(x = character(), levels, labels=levels,
+                   exclude = NA, ordered = is.ordered(x))
 {
-    exclude <- as.vector(exclude, typeof(x))
+    if(is.null(x)) x <- character()
+    nx <- names(x)
+    if (missing(levels)) {
+	y <- unique(x)
+	ind <- sort.list(y) # or possibly order(x) which is more (too ?) tolerant
+	y <- as.character(y)
+	levels <- unique(y[ind])
+    }
+    force(ordered)
+    exclude <- as.vector(exclude, typeof(x))# may result in NA
+    x <- as.character(x)
     levels <- levels[is.na(match(levels, exclude))]
     f <- match(x, levels)
-    names(f) <- names(x)
+    if(!is.null(nx))
+	names(f) <- nx
     nl <- length(labels)
-    attr(f, "levels") <-
-	if (nl == length(levels))
-	    as.character(labels)
-	else if(nl == 1L)
-	    paste(labels, seq_along(levels), sep = "")
-	else
-	    stop(gettextf("invalid labels; length %d should be 1 or %d",
-                          nl, length(levels)), domain = NA)
+    nL <- length(levels)
+    if(!any(nl == c(1L, nL)))
+	stop(gettextf("invalid labels; length %d should be 1 or %d", nl, nL),
+	     domain = NA)
+    levels(f) <- ## nl == nL or 1
+	if (nl == nL) as.character(labels)
+	else paste(labels, seq_along(levels), sep="")
     class(f) <- c(if(ordered)"ordered", "factor")
     f
 }

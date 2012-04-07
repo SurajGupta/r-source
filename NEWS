@@ -1,9 +1,702 @@
+﻿
+	**************************************************
+	*						 *
+	*	       2.10 SERIES NEWS			 *
+	*						 *
+	**************************************************
+
+
+		CHANGES IN R VERSION 2.10.0
+
+
+SIGNIFICANT USER-VISIBLE CHANGES
+
+    o	Package help is now converted from Rd by the R-based converters
+	that were first introduced in 2.9.0.  This means
+
+	- Packages that were installed by R-devel after 2009-08-09
+	  should not be used with earlier versions of R, and most
+	  aspects of package help (including the runnable examples)
+	  will be missing if they are so used.
+
+	- Text, HTML and latex help and examples for packages
+	  installed under the new system are converted on-demand from
+	  stored parsed Rd files.  (Conversions stored in packages
+	  installed under R < 2.10.0 are used if no parsed Rd files
+	  are found.  It is recommended that such packages be
+	  re-installed.)
+
+
+    o	HTML help is now generated dynamically using an HTTP server
+	running in the R process and listening on the loopback
+	interface.
+
+	- Those worried about security implications of such a server
+	  can disable it by setting the environment variable
+	  R_DISABLE_HTTPD to a non-empty value.  This disables
+	  help.start() and HTML help (so text help is shown instead).
+
+	- The Java/Javascript search engine has been replaced by an
+	  HTML interface to help.search().  help.start() no longer has
+	  an argument 'searchEngine' as it is no longer needed.
+
+	- The HTML help can now locate cross-references of the form
+          \link[pkg]{foo} and \link[pkg:foo]{bar} where 'foo' is an
+          alias in the package, rather than the documented (basename
+          of a) filename (since the documentation has been much
+          ignored).
+
+
+NEW FEATURES
+
+    o	polygon(), pdf() and postscript() now have a parameter
+	'fillOddEven' (default FALSE), which controls the mode used for
+	polygon fills of self-intersecting shapes.
+
+    o	New debugonce() function; further,
+	getOption("deparse.max.lines") is now observed when debugging,
+	from a code suggestion by John Brzustowski.  (PR#13647/8)
+
+    o	plot() methods for "stepfun" and hence "ecdf" no longer plot
+	points by default for n >= 1000.
+
+    o	[g]sub(*, perl=TRUE) now also supports '\E' in order to *end*
+	\U and \L case changes, thanks to a patch from Bill Dunlap.
+
+    o	factor(), `levels<-`(), etc, now ensure that the resulting factor
+	levels are unique (as was always the implied intention).  Factors
+	with duplicated levels are still constructible by low-level means,
+	but are now declared illegal.
+
+    o	New print() (S3) method for class "function", also used for
+	auto-printing.	Further, .Primitive functions now print and
+	auto-print identically.	 The new method is based on code
+	suggestions by Romain François.
+
+    o	The print() and toLatex() methods for class "sessionInfo" now
+	show the locale in a nicer format and have arguments to
+	suppress locale information.
+
+    o	In addition to previously only round(), there are other 'Math'
+	group (S3) methods for 'difftime', such as floor(), signif(),
+	abs(), etc.
+
+    o	For completeness, old.packages() and available.packages() allow
+	'type' to be specified (you could always specify 'available'
+	or 'contriburl').
+
+    o	available.packages() by default only returns information on
+	the latest versions of packages whose version requirements are
+	satisified by the currently running R.
+
+    o	tools::write_PACKAGES() has a new argument 'latestOnly', which
+	defaults to TRUE when only the latest versions in the
+	repository will be listed in the index.
+
+    o	getOption() has a new argument 'default' that is returned if
+	the specified option is not set. This simplifies querying a
+	value and checking whether it is NULL or not.
+
+    o	parse() now warns if the requested encoding is not supported.
+
+    o	The "table" method of as.data.frame() gains a 'stringsAsFactors'
+	argument to allow the classifying factors to be returned as
+	character vectors rather than the default factor type.
+
+    o	If model.frame.default() encounters a character variable where
+	'xlev' indicates a factor, it now converts the variable to a
+	factor (with a warning).
+
+    o	curve() now returns a list containing the points that were drawn.
+
+    o	spineplot() now accepts axes = FALSE, for consistency with
+	other functions called by plot.factor().
+
+    o	The Kendall and Spearman methods of cor.test() can optionally
+	use continuity correction when not computing exact p-values.
+	(The Kendall case is the wish of PR#13691.)
+
+    o	R now keeps track of line numbers during execution for
+	code sourced with options(keep.source = TRUE).	The source
+	reference is displayed by debugging functions such as traceback(),
+	browser(), recover(), and dump.frames(), and is stored as an
+	attribute on each element returned by sys.calls(). [Experimental]
+
+    o	More functions now have an implicit (S4) generic definition.
+
+    o	quantile.default() now disallows factors (wish of PR#13631)
+	and its help documents what numeric-like properties its input
+	need to have to work correctly.
+
+    o	weighted.mean() is now generic and has "Date", "POSIXct" and
+	"POSIXlt" methods.
+
+    o	Naming subscripts (e.g. x[i=1, j=2]) in data.frame methods for
+	[ and [[ now gives a warning.  (Names are ignored in the
+	default method, but could have odd semantics for other
+	methods, and do for the data.frame ones.)
+
+    o	as.data.frame() has an "aovproj" method.  (Wish of PR#13505)
+
+    o	as.character(x) for numeric x no longer produces strings such as
+	"0.30", i.e., with trailing zeros.  This change also renders
+	levels construction in factor() more consistent.
+
+    o	codocClasses(), which checks consistency of the documentation of
+	S4 class slots, now does so in considerably more cases.  The
+	documentation of inherited slots (from superclasses) is now
+	optional.  This affects 'R CMD check <pkg>' when the package
+	defines S4 classes.
+
+    o	codoc() now also checks S4 methods for code/documentation
+	mismatches.
+
+    o	for(), while(), and repeat() loops  now always return NULL as
+	their (invisible) value.  This change was needed to address a
+	reference counting bug without creating performance penalties
+	for some common use cases.
+
+    o	The print() method for ls.str() results now obeys an optional
+	'digits' argument.
+
+    o	The 'method' argument of glm() now allows user-contributed methods.
+
+    o	More general reorder.default() replaces functionality of
+	reorder.factor() and reorder.character().
+
+    o	The function aspell() has been added to provide an interface to
+	the Aspell spell-checker.
+
+    o	Filters RdTextFilter() and SweaveTeXFilter() have been added
+	to the tools package to provide support for aspell() or other
+	spell checkers.
+
+    o	xtabs() with the new option 'sparse = TRUE' now returns a sparse
+	Matrix, using package 'Matrix'.
+
+    o	contr.sum() etc gain an argument 'sparse' which allows sparse
+	matrices to be returned.
+
+	contrasts() also gains a 'sparse' argument which it passes to the
+	actual contrast function if that has a formal argument 'sparse'.
+
+	'contrasts(f, .) <- val' now also works when 'val' is a sparse
+	Matrix.	 It is planned that model.matrix() will work with such
+	factors 'f' in the future.
+
+    o	readNEWS() will recognize a UTF-8 byte-order mark (BOM) in the
+	NEWS file. However, it is safer to use only ASCII code there
+	because not all editors recognize BOMs.
+
+    o	New utility function inheritedSlotNames() for S4 class programming.
+
+    o	tabulate() now allows NAs to pass through (and be ignored).
+
+    o	If debug() is called on an S3 generic function then all methods
+	are debugged as well.
+
+    o	Outlier symbols drawn by boxplot() now obey the 'outlwd'
+	argument.  Reported by Jurgen Kluge.
+
+    o	svd(x) and eigen(x) now behave analogously to qr(x) in
+	accepting logical matrices x.
+
+    o	File NEWS is now in UTF-8, and has a BOM (often invisible) on
+	the first line, and Emacs local variables set for UTF-8 at the
+	end.  RShowDoc("NEWS") should display this correctly, given
+	suitable fonts.
+
+    o	terms.formula(simplify = TRUE) now does not deparse the LHS and
+	so preserves non-standard responses such as `a: b` (requested
+	by Sundar Dorai-Raj).
+
+    o	New function news() for building and querying R or package news
+	information.
+
+    o	z^n for integer n and complex z is more accurate now if
+	|n| <= 65536.
+
+    o	factor(NULL) now returns the same as factor(character(0))
+	instead of an error, and table(NULL) consequently does
+	analogously.
+
+    o	as.data.frame.vector() (and its copies) is slightly faster
+	by avoiding a copy if there are no names (following a
+	suggestion of Tim Hesterberg).
+
+    o	writeLines(), writeBin() and writeChar() have a new argument
+	'useBytes'.  If false, character strings with marked encodings
+	are translated to the current locale (as before) but if true
+	they are written byte-by-byte.
+
+    o	iconv() has a new argument 'mark' which can be used (by
+	experts) to suppress the declaration of encodings.
+
+    o	DESCRIPTION 'LinkingTo' specs are now recognized as installation
+	dependencies, and included in package management computations.
+
+    o	Standardized DESCRIPTION 'License' specs are now available for
+	package management computations.
+
+    o	"\uxxxx" and "\Uxxxxxxxx" escapes can now be parsed to a UTF-8
+	encoded string even in non-UTF-8 locales (this has been
+	implemented on Windows since R 2.7.0).	The semantics have
+	been changed slightly: a string containing such escapes is
+	always stored in UTF-8 (and hence is suitable for portably
+	including Unicode text in packages).
+
+    o	New as.raw() method for "tclObj" objects (wish of PR#13578).
+
+    o	Rd.sty now makes a better job of setting email addresses,
+	including using a monospaced font.
+
+    o	textConnection() gains an 'encoding' argument to determine how
+	input strings with marked encodings will be handled.
+
+    o	R CMD Rd2pdf is available as a shortcut for R CMD Rd2dvi --pdf.
+
+    o	R CMD check now checks links where a package is specified
+	(\link[pkg]{file} or \link[pkg:file]{topic}), if the package
+	is available.  It notes if the package is not available, as in
+	many cases this is an error in the link.
+
+    o	identical() gains three logical arguments, which allow for even
+	more differentiation, notably '-0' and '0'.
+
+    o	legend() now can specify the 'border' color of filled boxes,
+	thanks to a patch from Frederic Schutz.
+
+    o	Indexing with a vector index to [[]] has now been extended to
+    	all recursive types.
+
+    o	Pairlists may now be assigned as elements of lists.  (Lists
+    	could always be created with pairlist elements, but [[<-
+    	didn't support assigning them.)
+
+    o	The parser now supports C-preprocessor-like #line directives,
+    	so error messages and source references may refer to the original
+    	file rather than an intermediate one.
+
+    o	New functions findLineNum() and setBreakpoint() work with the
+	source references to find the location of source lines and set
+	breakpoints (using trace()) at those lines.
+
+    o	Namespace importing is more careful about warning on masked
+	generics, thanks to a patch by Yohan Chalabi.
+
+    o	detach() now has an argument 'character.only' with the same
+	meaning as for library() or require().
+
+    o	available.packages() gains a 'filters' argument for specifying
+    	the filtering operations performed on the packages found in the
+	repositories.  A new built-in 'license/FOSS' filter only
+    	retains packages for which installation can proceed solely based
+    	on packages which can be verified as Free or Open Source
+    	Software (FOSS) employing the available license specifications.
+
+    o	In registering an S3 class by a call to setOldClass(), the data
+	part (e.g., the object type) required for the class can be
+	included as one of the superclasses in the Classes argument.
+
+    o	The argument 'f' to showMethods() can be an expression evaluating
+	to a generic function, allowing methods to be shown for
+	non-exported generics and other nonstandard cases.
+
+    o	sprintf() now supports '%o' for octal conversions.
+
+    o	New function Sys.readlink() for information about symbolic
+	links, including if a file is a symbolic link.
+
+    o	Package 'tools' has new functions checkRdaFiles() and
+	resaveRdaFiles() to report on the format of .rda/.RData data
+	files, and to re-save them in a different compressed format,
+	including choosing the most compact format available.
+
+	A new INSTALL option, --resave-data, makes use of this.
+
+    o	File ~/.R/config is used in preference to ~/.Rconfig, and
+	these are now documented in 'R Installation and Administration'.
+
+    o	Logic operations with complex numbers now work, as they were always
+	documented to, and as in S.
+
+    o	arrows() and segments() allow one of x1 or y1 to be omitted to
+	simplify the specification of vertical or horizontal lines
+	(suggestion of Tim Hesterberg).
+
+    o	approxfun() is faster by avoiding repeated NA checks (diagnosis
+	and patch by Karline Soetaert & Thomas Petzoldt).
+
+    o	There are the beginnings of a Nynorsk translation by Karl Ove
+	Hufthammer.
+
+    o	stripchart() allows par 'bg' to be passed in for the
+	background colour for pch = 21 (wish of PR#13984).
+
+    o   New generic function .DollarNames() to enable class authors
+        to customize completion after the $ extractor.
+
+    o	load(), save(), dput() and dump() now open a not-yet-open
+	connection in the appropriate mode (as other functions using
+	connections directly already did).
+
+
+REGULAR EXPRESSIONS
+
+    o	A different regular expression engine is used for basic and
+	extended regexps and is also for approximate matching.  This is
+	based on the TRE library of Ville Laurikari, a modifed copy of
+	which is included in the R sources.
+
+	This is often faster, especially in a MBCS locale.
+
+	Some known differences are that it is less tolerant of invalid
+	inputs in MBCS locales, and in its interpretation of undefined
+	(extended) regexps such as "^*".  Also, the interpretation of
+	ranges such as [W-z] in caseless matching is no longer to map
+	the range to lower case.
+
+	This engine may in future be used in 'literal' mode for fixed
+	= TRUE, and there is a compile-time option in src/main/grep.c
+	to do so.
+
+    o	The use of repeated boundary regexps in gsub() and gregexpr() as
+	warned about in the help page does not work in this engine (it
+	did in the previous one since 2005).
+
+    o	Extended (and basic) regexps now support same set of options as
+	for fixed = TRUE and perl = TRUE, including 'useBytes' and
+	support for UTF-8-encoded strings in non-UTF-8 locales.
+
+    o	agrep() now has full support for MBCS locales with a modest
+	speed penalty.  This enables help.search() to use approximate
+	matching character-wise rather than byte-wise.
+
+    o	[g]sub use a single-pass algorithm instead of matching twice
+	and so is usually faster.
+
+    o	The perl = TRUE versions now work correctly in a non-UTF-8 MBCS
+	locale, by translating the inputs to UTF-8.
+
+    o	useBytes = TRUE now inhibits the translation of inputs with
+	marked encodings.
+
+    o	strsplit() gains a 'useBytes' argument.
+
+    o	The algorithm used by strsplit() has been reordered to batch by
+    	elements of 'split': this can be much faster for fixed = FALSE
+    	(as multiple compilation of regexps is avoided).
+
+    o	The help pages, including ?regexp, have been updated and
+	should be consulted for details of the new implementations.
+
+
+HELP & Rd FILE CHANGES
+
+    o	A new dynamic HTML help system is used by default, and may be
+	controlled using tools::startDynamicHelp().  With this enabled,
+	HTML help pages will be generated on request, resolving links
+	by searching through the current .libPaths().  The user
+	may set option("help.ports") to control which IP port is used
+	by the server.
+
+    o	help.start() no longer sets options(htmlhelp = TRUE) (it used
+	to on Unix but not on Windows).  Nor does it on Unix reset the
+	"browser" option if given an argument of that name.
+
+	Arguments 'update' and 'remote' are now available on all
+	platforms: the default is update = FALSE since the http server
+	will update the package index at first use.
+
+    o	help() has a new argument 'help_type' (with default set by the
+	option of that name) to supersede 'offline', 'htmlhelp' and
+	'chmhelp' (although for now they still work if 'help_type' is
+	unset).  There is a new type, "PDF" to allow offline PDF
+	(rather than PostScript).
+
+	A function offline_help_helper() will be used if this exists
+	in the workspace or further down the search path, otherwise
+	the function of that name in the 'utils' name space is used.
+
+    o	Plain text help is now used as the fallback for HTML help (as
+	it always was for Compiled HTML help on Windows).
+
+    o	It is possible to ask for static HTML pages to be prebuilt via
+	the configure option --enable-prebuilt-html.  This may be
+	useful for those who wish to make HTML help available outside
+	R, e.g. on a local web site.
+
+    o	An experimental tag \Sexpr has been added to Rd files, to
+	evaluate expressions at build, install, or render time.
+	Currently install time and render time evaluation are
+	supported.
+
+    o	Tags \if, \ifelse and \out have been added to allow
+        format-specific (or more general, using \Sexpr) conditional
+	text in man pages.
+
+    o	The parse_Rd() parser has been made more tolerant of coding
+	errors in Rd files:  now all syntax errors are reported as
+	warnings, and an attempt is made to continue parsing.
+
+    o	parse_Rd() now has an argument 'fragment' (default FALSE) to
+	accept small fragments of Rd files (so that \Sexpr can output
+	Rd code which is then parsed).
+
+    o	parse_Rd() now always converts its input to UTF-8.  The Rd2*
+	rendering functions have a new parameter, 'outputEncoding',
+	which controls how their output is encoded.
+
+    o	parse_Rd() no longer includes the newline as part of a
+	"%"-style comment.
+
+    o	There have been various bug fixes and code reorganization in
+	the Rd renderers Rd2HTML, Rd2latex, Rd2txt, and Rd2ex.
+
+	All example files are now created with either ASCII or UTF-8
+	encoding, and the encoding is only marked in the file if there
+	is any non-UTF-8 code (previously it was marked if the help
+	file had non-ASCII contents, possibly in other sections).
+
+    o	print.Rd() now adds necessary escape characters so that
+	printing and re-parsing an Rd object should produce an
+	equivalent object.
+
+    o	parse_Rd() was incorrectly handling multiple backslashes in
+	R code strings, converting 4n+3 backslashes to 2n+1 instead
+	of 2n+2.
+
+    o   parse_Rd() now recognizes the \var tag within a quoted string
+    	in R-like text.
+
+    o	parse_Rd() now treats the argument of \command as LaTeX-like,
+	rather than verbatim.
+
+
+COMPRESSION
+
+    o	New function untar() to list or unpack tar archives, possibly
+	compressed.  This uses either an external 'tar' command or an
+	internal implementation.
+
+    o	New function tar() to create (possibly compressed) tar archives.
+
+    o	New functions memCompress() and memDecompress() for in-memory
+	compression and decompression.
+
+    o	bzfile() has a 'compress' argument to select the amount of
+	effort put into compression when writing.
+
+    o	New function xzfile() for use with xz-compressed files.  (This
+	can also read files compressed by some versions of 'lzma'.)
+
+    o	gzfile() looks at the file header and so can now also read
+	bzip2-ed files and xz-compressed files.
+
+    o	There are the new options of save(compress = "bzip2") and "xz"
+	to use bzip2 or xz compression (which will be slower, but can
+	give substantially smaller files).  Argument compression_level
+	gives finer control over the space/time tradeoffs.
+
+	load() can read such saves (but only as from this version of R).
+
+    o	R CMD INSTALL/check and tools::writePACKAGES accept a wider
+	range of compressed tar archives.  Precisely how wide depends
+	on the capabilities of the host system's 'tar' command: they
+	almost always include .tar.bz2 archives, and with modern
+	versions of 'tar' other forms of compression such as lzma and
+	xz, and arbitrary extensions.
+
+    o	R CMD INSTALL has a new option --data-compress to control the
+	compression used when lazy-loading data.  New possibilities are
+	--data-compress=bzip2 which will give ca 15% better
+	compression at the expense of slower installation times, and
+	--data-compress=xz, often giving even better compression on
+	large datasets at the expense of much longer installation
+	times.  (The latter is used for the recommended packages: it is
+	particularly effective for 'survival'.)
+
+    o	file() for open = "", "r" or "rt" will automagically detect
+	compressed files (from gzip, bzip2 or xz).  This means that
+	compressed files can be specified by file name (rather than
+	via a gzfile() connection) to read.table(), readlines(),
+	scan() and so on.
+
+    o	data() can handle compressed text files with extensions
+	.{txt,tab,csv}.{gz,bz2,xz} .
+
+
+DEPRECATED & DEFUNCT
+
+    o	png(type="cairo1") is defunct: the value is no longer recognized.
+
+    o	tools::Rd_parse() is defunct (as this version of R uses only
+	Rd version 2).
+
+    o	Use of ~/.Rconf (which was deprecated in favour of ~/.Rconfig
+	in 2004) has finally been removed.
+
+    o	Bundles of packages are deprecated.  See 'Writing R
+	Extensions' for the steps needed to unbundle a bundle.
+
+    o 	help() arguments 'offline', 'htmlhelp' and 'chmhelp' are
+	deprecated in favour of 'help_type'.
+
+    o	clearNames() ('stats') is deprecated for unname().
+
+    o	Basic regular expressions (extended = FALSE) are deprecated in
+	strsplit, grep and friends.  There is a precise POSIX standard
+	for them, but it is not what recent RE engines implement, and
+	it seems that in almost all cases package authors intended
+	fixed = TRUE when using extended = FALSE.
+
+    o	methods::trySilent() is deprecated for  try(*, silent=TRUE) or
+    	- more efficiently and flexibly - something like
+	tryCatch(*, error = function(e) e).
+
+    o	index.search() is deprecated: there are no longer directories of
+	types other than 'help'.
+
+
+INSTALLATION
+
+    o	cairo >= 1.2 is now required (1.2.0 was released in July 2006)
+	for cairo-based graphics devices (which remain optional).
+
+    o	A suitable iconv() is now required: support for configure option
+	--without-iconv has been withdrawn (it was deprecated in R 2.5.0).
+
+    o	Perl is no longer 'essential'.	R can be built without it, but
+	scripts R CMD build, check, Rprof and Sd2d require it.
+
+    o	A system 'glob' function is now essential (a working
+	Sys.glob() has been assumed since R 2.9.0 at least).
+
+    o	C99 support for MBCS is now required, and configure option
+	--disable-mbcs has been withdrawn.
+
+    o	Having a version of 'tar' capable of automagically detecting
+	compressed archives is useful for utils::untar(), and so 'gtar'
+	(a common name for GNU tar) is preferred to 'tar': set
+	environment variable TAR to specify a particular 'tar' command.
+
+
+INTERNATIONALIZATION
+
+    o	There is some makefile support for adding/updating translations
+	in packages: see po/README and 'Writing R Extensions'.
+
+	There is support for the use of 'dngettext' for C-level
+	translations in packages: see 'Writing R Extensions'.
+
+
+BUG FIXES
+
+    o	Assigning an extra 0-length column to a data frame by
+	DF[, "foo"] <- value now works in most cases (by filling with
+	NAs) or fails.	(It used to give a corrupt data frame.)
+
+    o	validObject() avoids an error during evaluation in the case
+	of various incorrect slot definitions.
+
+    o	n:m now returns a result of type "integer" in a few more
+	boundary cases.
+
+    o	The 'zap.ind' argument to printCoefmat() did not usually work as
+	other code attempted to ensure that non-zero values had a
+	non-zero representation.
+
+    o	printCoefmat() formatted groups of columns together, not just
+	the cs.ind group but also the zap.ind group and a residual
+	group.	It now formats all columns except the cs.ind group
+	separately (and zaps the zap.ind group column-by-column).  The
+	main effect will be see in the output from print.anova, as
+	this grouped SS-like columns in the zap.ind group.
+
+    o	R_ReplDLLinit() initializes the top-level jump so that some
+	embedded applications on Windows no longer crash on error.
+
+    o	identical() failed to take the encoding of character strings
+	into account, so identical byte patterns are not necessarily
+	identical strings, and similarly Latin-1 and UTF-8 versions of
+	the same string differ in byte pattern.
+
+    o	methods(f) used to warn unnecessarily for an S4 generic 'f' which
+	had been created based on an existing S3 generic.
+
+    o	The check for consistent ordering of superclasses was not
+        ignoring all conditional relations (the symptom was usually
+        spurious warnings for classes extending "array").
+
+    o	Trying to assign into a raw vector with an index vector
+        containing NAs could cause a segfault.  Reported by Hervé Pagès.
+
+    o	Rscript could segfault if (by user error) its filename argument
+        was missing.  Reported by Martin Morgan.
+
+    o	getAnywhere() (and functions that use it, including argument
+	completion in the console) did not handle special built-in
+	functions.  Reported by Romain Francois.
+
+    o	order() was missing a PROTECT() call and so could segfault when
+	called on character data under certain (rare) circumstances
+	involving marked non-native encodings.
+
+    o	prettyNum(z, drop0trailing=TRUE) did not work correctly when z
+	was a complex vector.  Consequently, str(z, ...)  also did
+	not.  (PR#13985)
+
+    o	'make distclean' removed too many files in etc/ if
+	builddir = srcdir.
+
+    o	R CMD replaced TEXINPUTS rather than appending to it (as
+	documented and intended).
+
+    o	help.start() no longer fails on unix when "browser" is a
+	function.
+
+    o	pbeta(x, *, log.p = TRUE) is sometimes more accurate, e.g., for
+	very small x.
+
+    o	Unserializing a pre-2.8 workspace containing pure ASCII character
+	objects with a LATIN1 or UTF-8 encoding would corrupt the CHARSXP
+	cache.
+
+
 
 	**************************************************
 	*						 *
 	*	       2.9 SERIES NEWS			 *
 	*						 *
 	**************************************************
+
+
+		CHANGES IN R VERSION 2.9.2 patched
+
+
+NEW FEATURES
+
+    o	On systems using ICU for collation (including Mac OS X), using
+ 	Sys.setlocale() to change the LC_COLLATE setting is more
+ 	likely to change the collation provided by ICU.
+
+
+BUG FIXES
+
+    o	On systems using zipped data and help (Windows) the names of
+	datasets could clash with temporary filenames used when
+	running examples, causing errors.
+
+    o	as.complex() sometimes warned about NAs on coercions and
+	sometimes not (when the C function asComplex was used, e.g. on
+	list elements).  (PR#13942)
+
+    o	cat() on an unopened connection could close it twice, and
+	with file() connections segfaulted on some systems.
+
+    o	Printing a list could segfault if the elements are nested too
+	deeply.
+
 
 
 		CHANGES IN R VERSION 2.9.2
@@ -35,8 +728,8 @@ NEW FEATURES
 
 DEPRECATED & DEFUNCT
 
-    o	R CMD Rd2txt is deprecated, and will be removed in 2.10.0.
-	(It is just a wrapper for R CMD Rdconv -t txt.)
+    o	R CMD Rd2txt is deprecated.  (It is just a wrapper for
+	R CMD Rdconv -t txt.)
 
     o	tools::Rd_parse() is deprecated and will be removed in 2.10.0
 	(which will use only Rd version 2).
@@ -3174,7 +3867,7 @@ BUG FIXES
     o	strptime() crashed under certain locales on Mac OS X.
 
     o	gregexpr() no longer segfaults when "" is given as the search
-	pattern.  Thanks to Herve Pages for the bug report.
+	pattern.  Thanks to Hervé Pagès for the bug report.
 
     o	matplot(x, *) with default 'pch' did not plot columns from column
 	number 37 on (because the default pch was NA for those). (PR#10676)
@@ -3815,8 +4508,8 @@ C-LEVEL FACILITIES
 
     o 	CHAR() now returns (const char *) since CHARSXPs should no
 	longer be modified in place.  This change allows compilers to
-	warn or error about improper modification.  Thanks to Herve
-	Pages for the suggestion.
+	warn or error about improper modification.  Thanks to Hervé
+	Pagès for the suggestion.
 
     o	acopy_string is a (provisional) new helper function that
 	copies character data and returns a pointer to memory

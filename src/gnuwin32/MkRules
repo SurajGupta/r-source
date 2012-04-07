@@ -13,9 +13,6 @@ G_FLAG=-gdwarf-2
 
 ## ============== configuration macros for building R ===================
 
-# Should CHM help be built?  Any value other than TRUE disables this
-USE_CHM = TRUE
-
 # Comment out if the msvcrt.dll malloc/free is required (not tested recently)
 LEA_MALLOC=YES
 
@@ -24,14 +21,6 @@ USE_ATLAS=NO
 ATLAS_PATH=/R/ATLAS/lib/WinNT_P4SSE2
 
 # Support for the ACML and Goto BLASes has been withdrawn: see R-admin.html
-
-# Where does 'HTML Help Workshop' live? (unused if compiled HTML help is
-# not selectred by USE_CHM = TRUE). Spaces allowed.
-# Used to build Rchtml.dll: hhc.exe must also be in the path.
-HHWDIR=C:/Program Files/HTML Help Workshop
-
-# Define this to enable memory profiling.
-# R_MEMORY_PROFILING=YES
 
 # Where does Tcl/Tk live? Spaces allowed.
 TCL_HOME = $(RHOME)/Tcl
@@ -48,29 +37,28 @@ TCL_VERSION = 85
 # Some of the Mingw64 compilers are in fact cross-compilers and have prefixes
 BINPREF=
 
-# 32- or 64-bit Windows?  For experminets with Mingw64.
+# 32- or 64-bit Windows?  For experiments with Mingw64.
 WIN=32
 ifeq ($(strip $(WIN)),64)
 USE_IMPLIBS = YES
 DEFINES=-DW64
 BINPREF=x86_64-pc-mingw32-
-USE_CHM = FALSE
 endif
 
-# use ICU
-USE_ICU=NO
+# set to use ICU (experimental)
+# USE_ICU=YES
 # path to parent of ICU headers
 ICU_PATH=/sources/icu
 
 # optional overrides for making bitmapdll: names of source directories
-# JPEGDIR = jpeg-6b
+# JPEGDIR = jpeg-7
 # PNGDIR = libpng-1.2.35
 # TIFFDIR = libtiff
 
 
 ## ====== configuration macros for building installer ===========
 
-# location where Inno Setup 5.[12].x was installed. Spaces allowed.
+# location where Inno Setup 5.[123].x was installed. Spaces allowed.
 ISDIR=C:/packages/Inno
 
 ## ====== configuration macros for building MSI installer ===========
@@ -80,6 +68,7 @@ WIXDIR=C:/packages/WiX
 
 ## =============== end of user-customizable parts  ===================
 
+## c99 would force __STRICT_ANSI__ disabling strdup etc, and also alloca
 C99FLAG=-std=gnu99
 
 ifeq ($(strip $(BUILD)),GCC4)
@@ -97,7 +86,7 @@ F77=sh $(RHOME)/src/scripts/f77_f2c
 FLIBS=-lf2c
 endif
 
-ifeq ($(strip $(USE_IMPLIBS)),YES)
+ifdef USE_IMPLIBS
 IMPDIR=lib
 else
 IMPDIR=bin
@@ -125,6 +114,7 @@ DLLTOOL=$(BINPREF)dlltool
 ## even for native builds
 DLLTOOLFLAGS=--as $(AS) -k
 ECHO=echo
+## FIND is only used in installer/Makefile
 FIND=find
 LINKER=$(MAIN_LD)
 MAIN_LD=$(CC)

@@ -8,7 +8,8 @@ See the file COPYING for the exact conditions under which you may
 redistribute it.  R as a whole is distributed under GPL version 2:
 most source files contain a copyright statement allow use of that file
 under GPL version 2 or later: the main exceptions are packages 'rpart'
-and 'survival' (GPL-2 only) and bundle 'VR' (GPL-2 or GPL-3).
+and 'survival' (GPL-2 only) and packages 'MASS', 'class', 'nnet' and
+'spatial' (GPL-2 or GPL-3).
 
 The status of files used only in the Windows port is in file
 src/gnuwin32/COPYRIGHTS.win, which is appended to this file in binary
@@ -90,11 +91,6 @@ src/library/grDevices/inst/afm/cm*.afm
 	Mathematical Society, but `the AMS does require that the
 	AMS copyright notice be removed from any derivative versions
 	of the fonts which have been altered in any way'.
-
-doc/html/search/*.java
-
-	Copyright (C), 1998 Thomas Baier
-or	Copyright (C), 1998-2000, Thomas Baier, R Core Development Team
 
 doc/manual/R-intro.texi
 
@@ -252,13 +248,6 @@ src/main/vsnprintf.c
    */
 
 
-src/main/regex.c
-   Copyright (C) 2002, 2003, 2004, 2005 Free Software Foundation, Inc.
-src/main/Rregex.h
-   Copyright (C) 1985,1989-93,1995-98,2000,2001,2002,2003
-   Free Software Foundation, Inc.
-
-
 src/extra/xdr/*
 
 	Copyright (undated) Sun Microsystems, Inc.
@@ -289,22 +278,6 @@ According to http://www.netlib.org/cephes/readme
 
   What you see here may be used freely but it comes with no support or
   guarantee.
-
-
-src/main/apse.c
-src/main/apse.h
-
-  Copyright (C) Jarkko Hietaniemi, 1998,1999,2000,2001.
-
-  This program is free software; you can redistribute it and/or modify
-  it under the terms of either:
-
-  a) the GNU Library General Public License as published by the Free
-     Software Foundation; either version 2, or (at your option) any
-     later version, or
-
-  b) the "Artistic License" which comes with Perl source code.
-
 
 
 src/extra/pcre/LICENCE
@@ -358,6 +331,40 @@ src/extra/bzip2/randtable.c
    copyright (C) 1996-2008 Julian R Seward.
 
 
+src/extra/tre/LICENSE
+src/extra/tre/*.[ch]
+
+Copyright (c) 2001-2009 Ville Laurikari <vl@iki.fi>
+All rights reserved.
+
+From tre-0.7.6 (http://laurikari.net/tre/).  See file
+src/extra/tre/LICENSE.  For binary builds of R that requires us to
+include
+
+Redistribution and use in source and binary forms, with or without
+modification, are permitted provided that the following conditions
+are met:
+
+  1. Redistributions of source code must retain the above copyright
+     notice, this list of conditions and the following disclaimer.
+
+  2. Redistributions in binary form must reproduce the above copyright
+     notice, this list of conditions and the following disclaimer in the
+     documentation and/or other materials provided with the distribution.
+
+THIS SOFTWARE IS PROVIDED BY THE COPYRIGHT HOLDER AND CONTRIBUTORS
+``AS IS'' AND ANY EXPRESS OR IMPLIED WARRANTIES, INCLUDING, BUT NOT
+LIMITED TO, THE IMPLIED WARRANTIES OF MERCHANTABILITY AND FITNESS FOR
+A PARTICULAR PURPOSE ARE DISCLAIMED.  IN NO EVENT SHALL THE COPYRIGHT
+HOLDER OR CONTRIBUTORS BE LIABLE FOR ANY DIRECT, INDIRECT, INCIDENTAL,
+SPECIAL, EXEMPLARY, OR CONSEQUENTIAL DAMAGES (INCLUDING, BUT NOT
+LIMITED TO, PROCUREMENT OF SUBSTITUTE GOODS OR SERVICES; LOSS OF USE,
+DATA, OR PROFITS; OR BUSINESS INTERRUPTION) HOWEVER CAUSED AND ON ANY
+THEORY OF LIABILITY, WHETHER IN CONTRACT, STRICT LIABILITY, OR TORT
+(INCLUDING NEGLIGENCE OR OTHERWISE) ARISING IN ANY WAY OUT OF THE USE
+OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
+
+
 src/library/tools/src/md5.[ch]
 
     Copyright (C) 1995, 1996, 2001 Free Software Foundation, Inc.
@@ -399,13 +406,6 @@ share/perl/File/Copy/Recursive.pm
 
    This library is free software; you can redistribute it and/or modify
    it under the same terms as Perl itself.
-
-
-share/perl/Text/Delimiter.pm
-
-   Copyright (C) Small Planet Software and Norman Walsh.
-   All rights reserved.  This program is free software; you can
-   redistribute it and/or modify it under the same terms as Perl itself.
 
 po/*.po
 src/library/*/po/*.po

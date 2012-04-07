@@ -112,73 +112,66 @@ SweaveReadFile <- function(file, syntax)
 
     bf <- basename(f)
     df <- dirname(f)
-    if(!file.exists(f)){
+    if(!file.exists(f)) {
         f <- list.files(df, full.names=TRUE,
                         pattern=paste(bf, syntax$extension, sep=""))
 
-        if(length(f) == 0L){
+        if(length(f) == 0L)
             stop(gettextf("no Sweave file with name '%s' found", file[1L]),
                  domain = NA)
-        }
-        else if(length(f) > 1L){
+        else if(length(f) > 1L)
             stop(paste(gettextf("%d Sweave files for basename '%s' found:",
                                 length(f), file),
                        paste("\n         ", f, collapse="")),
                  domain = NA)
-        }
     }
 
-    text <- readLines(f[1L])
+    ## An incomplete last line is not a real problem.
+    text <- readLines(f[1L], warn = FALSE)
+
     ## <FIXME>
     ## This needs to be more refined eventually ...
     if(any(is.na(nchar(text, "c", TRUE)))) {
         ## Ouch, invalid in the current locale.
         ## (Can only happen in a MBCS locale.)
         ## Try re-encoding from Latin1.
-        if(capabilities("iconv"))
-            text <- iconv(text, "latin1", "")
-        else
-            stop("Found invalid multi-byte character data.", "\n",
-                 "Cannot re-encode because 'iconv' is not available.", "\n",
-                 "Try running R in a single-byte locale.")
+        text <- iconv(text, "latin1", "")
     }
     ## </FIXME>
 
     pos <- grep(syntax$syntaxname, text)
 
-    if(length(pos) > 1L){
+    if(length(pos) > 1L)
         warning(gettextf("more than one syntax specification found, using the first one"), domain = NA)
-    }
-    if(length(pos) > 0L){
+
+    if(length(pos) > 0L) {
         sname <- sub(syntax$syntaxname, "\\1", text[pos[1L]])
         syntax <- get(sname, mode = "list")
         if(class(syntax) != "SweaveSyntax")
             stop(gettextf("object '%s' does not have class \"SweaveSyntax\"",
                           sname), domain = NA)
-
         text <- text[-pos]
     }
 
-    if(!is.null(syntax$input)){
-        while(length(pos <- grep(syntax$input, text))){
-
+    if(!is.null(syntax$input)) {
+        while(length(pos <- grep(syntax$input, text))) {
             pos <- pos[1L]
             ifile <- file.path(df, sub(syntax$input, "\\1", text[pos]))
-            if(any(ifile==file)){
+            if(any(ifile == file)){
                 stop(paste(gettextf("recursive Sweave input '%s' in stack",
                                     ifile),
-                           paste("\n         ", 1L:length(file), ": ",
+                           paste("\n         ", seq_len(file), ": ",
                                  rev(file), collapse="")),
                  domain = NA)
             }
             itext <- SweaveReadFile(c(ifile, file), syntax)
 
-            if(pos==1)
+            if(pos == 1L)
                 text <- c(itext, text[-pos])
-            else if(pos==length(text))
+            else if(pos == length(text))
                 text <- c(text[-pos], itext)
             else
-                text <- c(text[1L:(pos-1L)], itext, text[(pos+1L):length(text)])
+                text <- c(text[seq_len(pos-1L)], itext, text[(pos+1L):length(text)])
         }
     }
 
@@ -250,15 +243,15 @@ SweaveSyntConv <- function(file, syntax, output=NULL)
         stop("target syntax contains no translation table")
 
     insynt <- SweaveGetSyntax(file)
-    text = readLines(file)
+    text <- readLines(file)
     if(is.null(output))
-        output = sub(insynt$extension, syntax$trans$extension, basename(file))
+        output <- sub(insynt$extension, syntax$trans$extension, basename(file))
 
-    TN = names(syntax$trans)
+    TN <- names(syntax$trans)
 
     for(n in TN){
-        if(n!="extension")
-            text = gsub(insynt[[n]], syntax$trans[[n]], text)
+        if(n != "extension")
+            text <- gsub(insynt[[n]], syntax$trans[[n]], text)
     }
 
     cat(text, file=output, sep="\n")
@@ -291,7 +284,7 @@ SweaveParseOptions <- function(text, defaults=list(), check=NULL)
 
     options <- defaults
 
-    for(k in 1L:length(x))
+    for(k in seq_along(x))
         options[[ x[[k]][1L] ]] <- x[[k]][2L]
 
     if(!is.null(options[["label"]]) && !is.null(options[["engine"]]))
@@ -453,7 +446,7 @@ makeRweaveLatexCodeRunner <- function(evalFunc=RweaveEvalWithOpt)
 	  else
 	    lastshown <- srcline - 1L
 	  thisline <- 0
-          for(nce in 1L:length(chunkexps))
+          for(nce in seq_along(chunkexps))
             {
                 ce <- chunkexps[[nce]]
                 if (nce <= length(srcrefs) && !is.null(srcref <- srcrefs[[nce]])) {
@@ -498,7 +491,7 @@ makeRweaveLatexCodeRunner <- function(evalFunc=RweaveEvalWithOpt)
                     if (length(dce) > leading)
                     	cat("\n", paste(getOption("continue"), dce[-(1L:leading)], sep="", collapse="\n"),
                     	    file=chunkout, append=TRUE, sep="")
-		    linesout[thisline + 1L:length(dce)] <- srcline
+		    linesout[thisline + seq_along(dce)] <- srcline
 		    thisline <- thisline + length(dce)
                 }
 
@@ -560,7 +553,7 @@ makeRweaveLatexCodeRunner <- function(evalFunc=RweaveEvalWithOpt)
 
                     if(options$results=="verbatim"){
                         cat("\n\\end{Soutput}\n", file=chunkout, append=TRUE)
-                        linesout[thisline + 1L:2] <- srcline
+                        linesout[thisline + 1L:2L] <- srcline
                         thisline <- thisline + 2L
                     }
                 }

@@ -1,3 +1,4 @@
+
 /*
  *  R : A Computer Language for Statistical Data Analysis
  *  Copyright (C) 1995, 1996  Robert Gentleman and Ross Ihaka
@@ -299,7 +300,11 @@ SEXP attribute_hidden do_dput(SEXP call, SEXP op, SEXP args, SEXP rho)
 	con = getConnection(ifile);
 	wasopen = con->isopen;
 	if(!wasopen) {
+	    char mode[5];	
+	    strcpy(mode, con->mode);
+	    strcpy(con->mode, "w");
 	    if(!con->open(con)) error(_("cannot open the connection"));
+	    strcpy(con->mode, mode);
 	    if(!con->canwrite) {
 		con->close(con);
 		error(_("cannot write to this connection"));
@@ -379,7 +384,11 @@ SEXP attribute_hidden do_dump(SEXP call, SEXP op, SEXP args, SEXP rho)
 	    con = getConnection(INTEGER(file)[0]);
 	    wasopen = con->isopen;
 	    if(!wasopen) {
+		char mode[5];	
+		strcpy(mode, con->mode);
+		strcpy(con->mode, "w");
 		if(!con->open(con)) error(_("cannot open the connection"));
+		strcpy(con->mode, mode);
 		if(!con->canwrite) {
 		    con->close(con);
 		    error(_("cannot write to this connection"));
@@ -446,7 +455,7 @@ static Rboolean
 curlyahead(SEXP s)
 {
     if (isList(s) || isLanguage(s))
-	if (TYPEOF(CAR(s)) == SYMSXP && CAR(s) == install("{"))
+	if (TYPEOF(CAR(s)) == SYMSXP && CAR(s) == R_BraceSymbol)
 	    return TRUE;
     return FALSE;
 }
@@ -620,7 +629,6 @@ static const char * backquotify(const char *s)
 	error("symbol '%s' is too long to be a valid symbol", s);
 
     *t++ = '`';
-#ifdef SUPPORT_MBCS
     if(mbcslocale && !utf8locale) {
 	mbstate_t mb_st; int j, used;
 	mbs_init(&mb_st);
@@ -629,7 +637,6 @@ static const char * backquotify(const char *s)
 	    for(j = 0; j < used; j++) *t++ = *s++;
 	}
     } else
-#endif
 	while ( *s ) {
 	    if ( *s  == '`' || *s == '\\' ) *t++ = '\\';
 	    *t++ = *s++;

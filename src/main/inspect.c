@@ -84,8 +84,9 @@ static void inspect(int pre, SEXP v, int deep) {
     if (OBJECT(v)) { a = 1; Rprintf("OBJ"); }
     if (MARK(v)) { if (a) Rprintf(","); Rprintf("MARK"); a = 1; }
     if (NAMED(v)) { if (a) Rprintf(","); Rprintf("NAM(%d)",NAMED(v)); a = 1; }
-    if (DEBUG(v)) { if (a) Rprintf(","); Rprintf("DBG"); a = 1; }
-    if (TRACE(v)) { if (a) Rprintf(","); Rprintf("TR"); a = 1; }
+    if (RDEBUG(v)) { if (a) Rprintf(","); Rprintf("DBG"); a = 1; }
+    if (RTRACE(v)) { if (a) Rprintf(","); Rprintf("TR"); a = 1; }
+    if (RSTEP(v)) { if (a) Rprintf(","); Rprintf("STP"); a = 1; }
     if (LEVELS(v)) { if (a) Rprintf(","); Rprintf("gp=0x%x", LEVELS(v)); a = 1; }
     if (ATTRIB(v) && ATTRIB(v) != R_NilValue) { if (a) Rprintf(","); Rprintf("ATT"); a = 1; }
     Rprintf("] ");
@@ -193,7 +194,7 @@ static void inspect(int pre, SEXP v, int deep) {
 /* internal API - takes one mandatory argument (object to inspect) and
    one optional argument (deep - see above), positional argument
    matching only */
-SEXP do_inspect(SEXP call, SEXP op, SEXP args, SEXP env) {
+SEXP attribute_hidden do_inspect(SEXP call, SEXP op, SEXP args, SEXP env) {
     SEXP obj = CAR(args);
     int deep = -1;
     if (CDR(args) != R_NilValue)
