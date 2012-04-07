@@ -306,6 +306,8 @@ functionality,@footnote{for example, if you configured @R{} with
 should look carefully at any reported discrepancies.  (Some non-fatal
 errors are expected in locales that do not support Latin-1, in
 particular in true @code{C} locales and non-UTF-8 non-European locales.)
+A falure in @file{tests/ok-errors.R} may indicate inadequate resource
+limits (@pxref{Running R}).
 
 To re-run the tests including those successfully run you would need
 
@@ -1172,6 +1174,10 @@ MinGW-specific patches are not yet stable (and not needed to build @R{}).
 You will need suitable cross-compilers installed and in your path.  We
 do not at present distribute suitable cross-compilers.
 
+For Fedora 8 and 9 users, RPMs are available at
+@uref{http://sourceforge.net/projects/mingw-cross/}, currently of
+@command{gcc} 4.3.0 for both @cputype{ix86} and @cputype{x86_64}.
+
 @c There is currently a complete set of tools based on @command{gcc} 3.4.5
 @c at @uref{http://www.stats.ox.ac.uk/pub/Rtools/i586-cross-tools.tar.bz2,
 @c @code{www.stats.ox.ac.uk/pub/Rtools/mingw-cross5.tar.bz2}} (Just unpack
@@ -1313,6 +1319,11 @@ see the FAQ for details.
 
 How to start @R{} and what command-line options are available is discussed
 in @ref{Invoking R, , Invoking R, R-intro, An Introduction to R}.
+
+You should ensure that the shell has set adequate resource limits: @R{}
+expects a stack size of at least 8MB and to be able to open at least 256
+file descriptors.  (Any modern OS will have default limits at least as
+large as these, but apparently NetBSD does not.)
 
 @R{} makes use of a number of environment variables, the default values
 of many of which are set in file @file{@var{R_HOME}/etc/Renviron} (there
@@ -2058,8 +2069,9 @@ is larger (normally twice the size).  This means that @R{} objects take
 more space and (usually) more time to manipulate.  So 64-bit versions of
 @R{} will typically run slower than 32-bit versions.  (On Sparc Solaris
 the difference was 15-20%, on Linux on Opteron around 10%.  The pattern
-is not universal on Intel Core 2 Duo the 64-bit version is around 10%
-faster on both Linux and Mac OS X.)
+is not universal, as on Intel Core 2 Duo the vanilla 64-bit version is
+around 10% faster on both Linux and Mac OS X -- this can be reduced by
+tuning the compiler to that chip.)
 @end itemize
 
 So, for speed you may want to use a 32-bit build, but to handle large
@@ -2230,7 +2242,8 @@ library.
 @node Windows standalone,  , Unix standalone, The standalone Rmath library
 @section Windows
 
-You need to set up almost all the tools to make @R{} and then run
+You need to set up almost all the tools to make @R{} and then run (in a
+Unix-like shell)
 
 @example
 (cd ../../include; make -f Makefile.win config.h Rconfig.h Rmath.h)
@@ -2238,6 +2251,16 @@ make -f Makefile.win
 @end example
 
 @noindent
+For @file{cmd.exe} use
+
+@example
+cd ../../include
+make -f Makefile.win config.h Rconfig.h Rmath.h
+cd ../nmath/standalone
+make -f Makefile.win
+@end example
+
+
 This creates a static library @file{libRmath.a} and a DLL
 @file{Rmath.dll}.  If you want an import library @file{libRmath.dll.a}
 (you don't need one), use
@@ -2246,7 +2269,7 @@ This creates a static library @file{libRmath.a} and a DLL
 make -f Makefile.win shared implib
 @end example
 
-To use the routines in your own C or C++ programs, include
+To use the routines in your own C or C++ programs using MinGW, include
 
 @example
 #define MATHLIB_STANDALONE
@@ -2264,9 +2287,15 @@ able to force static or dynamic linking  @emph{via}
 @end example
 
 or by linking to explicit files (as in the @samp{test} target in
-@file{Makefile.win}: this makes two executable @file{test.exe} which is
-dynamically linked, and @code{test-static}, which is statically
+@file{Makefile.win}: this makes two executables, @file{test.exe} which
+is dynamically linked, and @code{test-static}, which is statically
 linked).
+
+It is possible to link to @file{Rmath.dll} using other compilers, either
+directly or via an import library: if you make a MinGW import library as
+above, you will create a file @file{Rmath.def} which can be used
+(possibly after editing) to creat an import library for other systems
+such as Visual C++.
 
 If you make use of dynamic linking you should use
 
@@ -2277,8 +2306,10 @@ If you make use of dynamic linking you should use
 @end example
 
 @noindent
-to ensure that the constant like @code{NA_REAL} are linked correctly.
-(Auto-import will probably work, but it is better to be sure.)
+to ensure that the constants like @code{NA_REAL} are linked correctly.
+(Auto-import will probably work with MinGW, but it is better to be
+sure. This is likely to also work with VC++, Borland and similar
+compilers.)
 
 
 @node Essential and useful other programs under Unix, Configuration on Unix, The standalone Rmath library, Top
@@ -3062,7 +3093,10 @@ On systems using the GNU linker (especially those using @R{} as a shared
 library), it is likely that including @samp{-Wl,-O1} in @code{LDFLAGS}
 is worthwhile, and on recent systems@footnote{e.g.@: Fedora Core 6}
 @samp{'-Bdirect,--hash-style=both,-Wl,-O1'} is recommended at
-@uref{http://lwn.net/Articles/192624/}
+@uref{http://lwn.net/Articles/192624/}.  Tuning compilation to a
+specific CPU family (e.g.@: @samp{-mtune=core2} for @command{gcc}) can
+give worthwhile performance gains, especially on older architectures
+such as @cputype{ix86}.
 
 @node Making manuals,  , Compilation flags, Configuration variables
 @subsection Making manuals
@@ -3406,7 +3440,7 @@ what is needed.
 
 It seems that @cputype{ix86} Linux accepts non-PIC code in shared
 libraries, but this is not necessarily so on other platforms, in
-particular for 64-bit CPUs such as that for AMD Opteron.  So care can be
+particular for 64-bit CPUs such as @cputype{x86_64}.  So care can be
 needed with BLAS libraries and when building @R{} as a shared library to
 ensure that position-independent code is used in any static libraries
 (such as the Tcl/Tk libraries, @code{libpng}, @code{libjpeg} and
@@ -3455,20 +3489,23 @@ required @option{-D__NO_MATH_INLINES} to achieve
 @acronym{IEC}@tie{}60059-compliance for @code{exp}, and this is included
 in @code{R_XTRA_CFLAGS} if required.
 
-Several Linux distributions have shipped unreleased versions of
-@command{gcc}@tie{}4.0.0 and its FORTRAN compiler @command{gfortran}
-(see the separate comments).  Some versions of @command{gcc}@tie{}4
-(such as that in Fedora Core 3) produce incorrect code.  In our
-experiments @command{gcc}@tie{}3.4.x always produced faster and more
-reliable code.  It seems that @command{gcc}@tie{}4.0.x cannot compile
-@file{src/main/plot.c} when building R as a shared library on
-@cputype{ix86} unless the optimization level is changed from the default
-@option{-O2} (@option{-O3} works, as does @command{gcc}@tie{}4.1.0 with
-the default settings).
+There are known problems with several early versions of
+@command{gcc}@tie{}4, but @command{gcc}@tie{}4.1.0 and later seems to
+cause no special difficulties.
+@c Several Linux distributions have shipped unreleased versions of
+@c @command{gcc}@tie{}4.0.0 and its FORTRAN compiler @command{gfortran}
+@c (see the separate comments).  Some versions of @command{gcc}@tie{}4
+@c (such as that in Fedora Core 3) produce incorrect code.  In our
+@c experiments @command{gcc}@tie{}3.4.x always produced faster and more
+@c reliable code.  It seems that @command{gcc}@tie{}4.0.x cannot compile
+@c @file{src/main/plot.c} when building R as a shared library on
+@c @cputype{ix86} unless the optimization level is changed from the default
+@c @option{-O2} (@option{-O3} works, as does @command{gcc}@tie{}4.1.0 with
+@c the default settings).
 
-It has been reported that using @command{gcc}@tie{}4.0.3 on
-@cputype{ppc64} needed the compiler flag @option{-mminimal-toc} to avoid
-errors when linking @R{} as a shared library.
+@c It has been reported that using @command{gcc}@tie{}4.0.3 on
+@c @cputype{ppc64} needed the compiler flag @option{-mminimal-toc} to avoid
+@c errors when linking @R{} as a shared library.
 
 To build a 64-bit version of @R{} on @cputype{ppc64} (also known as
 @cputype{powerpc64}) with @command{gcc}@tie{}4.1.1, Ei-Ji Nakama used
@@ -3488,8 +3525,8 @@ the additional flags being needed to problems linking against
 
 On some@footnote{e.g.@: Fedora Core 5} @code{glibc} systems,
 @samp{-fgnu89-inline} needs to be added to @option{CFLAGS} when using
-the (currently unreleased) @command{gcc}@tie{}4.3.0, since
-@file{wchar.h} is not set up properly for C99-style inlines.
+@command{gcc}@tie{}4.3.x, since @file{wchar.h} is not set up properly
+for C99-style inlines.
 
 @menu
 * Intel compilers::             
@@ -3762,7 +3799,7 @@ CXXFLAGS=-O
 FC=f95
 FCFLAGS=$FFLAGS
 LDFLAGS=-L/opt/csw/lib
-SHLIB_CXXLDFLAGS=-G -lCstd
+SHLIB_CXXLDFLAGS="-G -lCstd"
 @end example
 
 @noindent
@@ -4162,8 +4199,8 @@ port would be greatly appreciated.
 
 We no longer support AIX prior to 4.2, and @command{configure} will
 throw an error on such systems.  The recent testing has been under AIX
-5.2 on @cputype{powerpc}, where Ei-ji Nakama was able to build pre-2.5.0
-with @command{gcc 4.0.3} in several configurations.
+5.2 on @cputype{powerpc}, where Ei-ji Nakama was able to build with
+@command{gcc 4.0.3} in several configurations.
 
 Mr Nakama found 32-bit versions of @R{} could be built with
 @command{configure --without-iconv} as well as
@@ -4190,6 +4227,11 @@ FC="f90 -cpu=pwr4 -hf77 -parallel=0 -i,L -O3 -64"
 FLIBS="-L/opt/ofort90/lib -lhf90vecmath -lhf90math -lf90"
 @end example
 
+Some systems have @command{f95} as an IBM compiler that does not by
+default accept FORTRAN 77.  It needs the flag @code{-qfixed=72}, or to
+be invoked as @command{xlf_r}.
+%http://publib.boulder.ibm.com/infocenter/comphelp/v7v91/index.jsp?topic=/com.ibm.xlf91a.doc/xlfug/hu00465.htm
+
 The AIX native @code{iconv} does not support encodings @samp{latin1} nor
 @samp{""} and so cannot be used.  (As far as we know GNU @code{libiconv}
 could be installed.)
@@ -4201,8 +4243,8 @@ The Cygwin emulation layer on Windows can be treated as a Unix-alike OS.
 This is unsupported, but experiments have been conducted and a few
 workarounds added for @R{} 2.6.0.
 
-Only building as a shared library works,@footnote{DLLs need to have all
-links resolved at build time and so cannot resolve against
+Only building as a shared library works,@footnote{Windows DLLs need to
+have all links resolved at build time and so cannot resolve against
 @file{R.bin}.} so use
 
 @example
@@ -4216,8 +4258,8 @@ use in a CJK locale.  NLS does work, although
 @option{--with-included-gettext} is preferable.  You will see many
 warnings about the use of auto-import.
 
-It almost passes @command{make check}: FIFOs are supposedly supported
-but hung in @samp{example(fifo)}.
+%It almost passes @command{make check}: FIFOs are supposedly supported
+%but hung in @samp{example(fifo)}.
 
 Note that this gives you a command-line application using @code{readline}
 for command editing.  The @samp{X11} graphics device will work if a

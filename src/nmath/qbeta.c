@@ -66,9 +66,11 @@ double qbeta(double alpha, double p, double q, int lower_tail, int log_p)
 
     p_ = R_DT_qIv(alpha);/* lower_tail prob (in any case) */
 
-    /* initialize */
+    if(log_p && (p_ == 0. || p_ == 1.))
+	return p_; /* better than NaN or infinite loop;
+		      FIXME: suboptimal, since -Inf < alpha ! */
 
-    xinbta = alpha;
+    /* initialize */
     logbeta = lbeta(p, q);
 
     /* change tail if necessary;  afterwards   0 < a <= 1/2	 */
@@ -81,6 +83,7 @@ double qbeta(double alpha, double p, double q, int lower_tail, int log_p)
 
     /* calculate the initial approximation */
 
+    /* y := {fast approximation of} qnorm(1 - a) :*/
     r = sqrt(-2 * log(a));
     y = r - (const1 + const2 * r) / (1. + (const3 + const4 * r) * r);
     if (pp > 1 && qq > 1) {
@@ -133,7 +136,6 @@ double qbeta(double alpha, double p, double q, int lower_tail, int log_p)
 
     for (i_pb=0; i_pb < 1000; i_pb++) {
 	y = pbeta_raw(xinbta, pp, qq, /*lower_tail = */ TRUE, FALSE);
-	/* y = pbeta_raw2(xinbta, pp, qq, logbeta) -- to SAVE CPU; */
 #ifdef IEEE_754
 	if(!R_FINITE(y))
 #else

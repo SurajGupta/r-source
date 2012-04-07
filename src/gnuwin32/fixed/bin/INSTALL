@@ -23,7 +23,7 @@ use Getopt::Long;
 use R::Dcf;
 use R::Utils;
 
-my $revision = ' $Rev: 43332 $ ';
+my $revision = ' $Rev: 45602 $ ';
 my $version;
 my $name;
 $revision =~ / ([\d\.]*) /;
@@ -249,8 +249,13 @@ foreach $pkg (@ARGV){
 	if (defined($tardir)) { chdir($startdir); rmtree($tardir); }
 	die "cannot install package '${pkgname}' of type '$Type'\n"
     }
- 
+
     die "no valid package name found\n" unless length($pkgname) > 0;
+
+    my $OS_type = $description->{"OS_type"};
+    die "cannot install package '${pkgname}' for '$OS_type'\n" if
+	$OS_type && $OS_type ne "windows";
+
     my $pkgoutdir = "$library/$pkgname";
     die "  *** can't install into source directory ***\n"
 	if $canonpkg eq $pkgoutdir;

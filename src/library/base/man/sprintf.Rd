@@ -110,11 +110,15 @@ gettextf(fmt, \dots, domain = NULL)
   There is a limit of 8192 bytes on elements of \code{fmt} and also on
   strings included by a \code{\%s} conversion specification.
 
+  Field widths and precisions of \code{\%s} conversions are interpreted
+  as bytes, not characters, as described in the C standard.
+
   Character inputs with embedded nul bytes will be truncated at the first nul.
 }
 
 \value{
-  A character vector of length that of the longest input.
+  A character vector of length that of the longest input, in the current
+  locale's encoding.
 }
 
 \references{

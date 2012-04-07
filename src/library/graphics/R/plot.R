@@ -67,8 +67,8 @@ plot.default <-
     plot.xy(xy, type, ...)
     panel.last
     if (axes) {
-	localAxis(xy$x, side = 1, ...)
-	localAxis(xy$y, side = 2, ...)
+	localAxis(if(is.null(y)) xy$x else x, side = 1, ...)
+	localAxis(if(is.null(y))  x   else y, side = 2, ...)
     }
     if (frame.plot) localBox(...)
     if (ann) localTitle(main = main, sub = sub, xlab = xlab, ylab = ylab, ...)
@@ -129,8 +129,12 @@ plot.table <-
 		if(!is.null(as$axes) && !as$axes) "n" else as$xaxt
 	    }## else NULL
 	axis(1, at = x0, labels = nx, xaxt = xaxt)
-    } else
-	mosaicplot(x, xlab = xlab, ylab = ylab, ...)
+    } else {
+	if(length(as <- list(...)) && !is.null(as$main)) # use 'main'
+	    mosaicplot(x, xlab = xlab, ylab = ylab, ...)
+	else # default main
+	    mosaicplot(x, xlab = xlab, ylab = ylab, main = xnam, ...)
+    }
 }
 
 plot.formula <-

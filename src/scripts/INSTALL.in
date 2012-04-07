@@ -7,7 +7,7 @@
 ## Trap interrupts, most importantly 2 (^C from keyboard)
 trap do_exit_on_error 1 2 15
 
-revision='$Rev: 44958 $'
+revision='$Rev: 45602 $'
 version=`set - ${revision}; echo ${2}`
 version="R add-on package installer ${version}
 
@@ -514,6 +514,12 @@ do_install_source () {
       cp -r ./library ${R_HOME}
     fi
     return
+  fi
+
+  OS_type=`get_dcf_field OS_type DESCRIPTION`
+  if test "$OS_type" = "windows" ; then
+    error "windows-only package"
+    do_exit_on_error
   fi
 
   if test "${pkg_name}" = "${R_PACKAGE_NAME}"; then

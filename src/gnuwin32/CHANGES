@@ -13,6 +13,50 @@
 	**************************************************
 
 
+		CHANGES IN R VERSION 2.7.1
+
+
+NEW FEATURES
+
+    o	Rgui now accepts Unicode characters invalid in the locale when
+	pasted in and converts them to \uxxxx sequences before passing
+	to R.
+
+    o	The Save as | Postscript ... file selection box now offers
+	*.eps (default) and *.ps file selections.
+
+    o	nchar() now gives the number of characters and their width as
+	would be printed in Rgui for non-representable UTF-8 strings,
+	not as they would be printed in Rterm (via <U+xxxx> escapes).
+
+    o	savePlot() now adds the file type as an extension to the
+	filename if no dot ('.') is present in the filename.  This
+	provides the same default as in versions prior to 2.7.0, but
+	allows the extension to be specified explicitly. (Contributed
+	by Steve Ellison.)
+
+
+BUG FIXES
+
+    o	Sys.getenv() could read incorrectly non-ASCII values.
+
+    o	The vertical scrollbar on the data editor/viewer now works
+	when scrolling beyond 65535 rows.  (PR#11291)
+
+    o	getWinProgressBar() returned an integer result -- it now
+    	returns a double value.
+
+    o	basename() and dirname() could truncate their results when
+   	Unicode chars were used (usually in a CJK locale).
+
+    o	memory.size() no longer wraps around allocations greater than
+	2Gb.  (PR#11596)
+	
+    o	file.choose() in SDI mode now restores the window focus
+    	properly.
+
+
+
 		CHANGES IN R VERSION 2.7.0
 
 

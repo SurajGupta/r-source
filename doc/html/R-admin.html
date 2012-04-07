@@ -57,7 +57,7 @@ ul.menu{list-style-type: decimal}
 
 <p>This is a guide to installation and administration for R.
 
-   <p>The current version of this document is 2.7.0 (2008-04-22).
+   <p>The current version of this document is 2.7.1 (2008-06-23).
 
    <p>ISBN 3-900051-09-7
 
@@ -240,7 +240,9 @@ the following commands:
 functionality,<a rel="footnote" href="#fn-1" name="fnd-1"><sup>1</sup></a> but you
 should look carefully at any reported discrepancies.  (Some non-fatal
 errors are expected in locales that do not support Latin-1, in
-particular in true <code>C</code> locales and non-UTF-8 non-European locales.)
+particular in true <code>C</code> locales and non-UTF-8 non-European locales.) 
+A falure in <samp><span class="file">tests/ok-errors.R</span></samp> may indicate inadequate resource
+limits (see <a href="#Running-R">Running R</a>).
 
    <p>To re-run the tests including those successfully run you would need
 
@@ -458,7 +460,7 @@ specified on the <samp><span class="command">make install</span></samp> command 
 <code>libdir</code>.  The C header files can be installed to the value of
 <code>rincludedir</code>: note that as the headers are not installed into a
 subdirectory you probably want something like
-<code>rincludedir=/usr/local/include/R-2.7.0</code>.
+<code>rincludedir=/usr/local/include/R-2.7.1</code>.
 
    <p>If you want the R home to be something other than
 <samp><var>libdir</var><span class="file">/R</span></samp>, use <samp><span class="option">rhome</span></samp>: for example
@@ -608,7 +610,7 @@ from <acronym>CRAN</acronym> to run on Windows 2000 or later on ix86 CPUs
    <p>Your file system must allow long file names (as is likely except
 perhaps for some network-mounted systems).
 
-   <p>Installation is <em>via</em> the installer <samp><span class="file">R-2.7.0-win32.exe</span></samp>. 
+   <p>Installation is <em>via</em> the installer <samp><span class="file">R-2.7.1-win32.exe</span></samp>. 
 Just double-click on the icon and follow the instructions.  You can
 uninstall R from the Control Panel.  (Note that you will probably
 (depending on the Windows language settings) be asked to choose a
@@ -645,11 +647,11 @@ will call this directory <var>R_HOME</var> below.
 
 <p>You need to collect the following sets of files:
      <ul>
-<li>Get the R source code <samp><span class="file">R-2.7.0.tar.gz</span></samp> from
+<li>Get the R source code <samp><span class="file">R-2.7.1.tar.gz</span></samp> from
 <acronym>CRAN</acronym>.  Open a command window (or another shell) at
 directory <var>R_HOME</var>, and run
 
-     <pre class="example">          tar zxvf R-2.7.0.tar.gz
+     <pre class="example">          tar zxvf R-2.7.1.tar.gz
      </pre>
      <p class="noindent">to create the source tree in <var>R_HOME</var>.  <strong>Beware</strong>: do use
 <samp><span class="command">tar</span></samp> to extract the sources rather than tools such as WinZip
@@ -896,7 +898,7 @@ customizations to that installation.  Then in
 </pre>
    <p class="noindent">where <samp><span class="file">rootdir</span></samp> is the path to the root of the customized
 installation (forward slashes and no spaces, please).  This creates an
-executable with the standard name, <samp><span class="file">R-2.7.0-win32.exe</span></samp>, so
+executable with the standard name, <samp><span class="file">R-2.7.1-win32.exe</span></samp>, so
 please rename it to indicate that it is customized.
 
    <p>The defaults for the startup parameters may also be customized.  For example
@@ -953,6 +955,10 @@ MinGW-specific patches are not yet stable (and not needed to build R).
    <p>You will need suitable cross-compilers installed and in your path.  We
 do not at present distribute suitable cross-compilers.
 
+   <p>For Fedora 8 and 9 users, RPMs are available at
+<a href="http://sourceforge.net/projects/mingw-cross/">http://sourceforge.net/projects/mingw-cross/</a>, currently of
+<samp><span class="command">gcc</span></samp> 4.3.0 for both `<samp><span class="samp">ix86</span></samp>' and `<samp><span class="samp">x86_64</span></samp>'.
+
 <!-- There is currently a complete set of tools based on @command{gcc} 3.4.5 -->
 <!-- at @uref{http://www.stats.ox.ac.uk/pub/Rtools/i586-cross-tools.tar.bz2, -->
 <!-- @code{www.stats.ox.ac.uk/pub/Rtools/mingw-cross5.tar.bz2}} (Just unpack -->
@@ -964,14 +970,14 @@ do not at present distribute suitable cross-compilers.
 make the manuals) <samp><span class="command">makeinfo</span></samp> version 4.7 or later (part of GNU
 <code>texinfo</code>) as well as <samp><span class="file">texinfo.tex</span></samp>.
 
-   <p>You also need the R source (<samp><span class="file">R-2.7.0.tar.gz</span></samp>),
+   <p>You also need the R source (<samp><span class="file">R-2.7.1.tar.gz</span></samp>),
 the Tcl/Tk support files and <samp><span class="file">iconv.dll</span></samp> (see above).
 
-   <p>Then: untar <samp><span class="file">R-2.7.0.tar.gz</span></samp> somewhere, unpack
+   <p>Then: untar <samp><span class="file">R-2.7.1.tar.gz</span></samp> somewhere, unpack
 <samp><span class="file">R_Tcl.zip</span></samp> at the top level and put <samp><span class="file">iconv.dll</span></samp> in
 <samp><span class="file">src/gnuwin32/unicode</span></samp>, then
 
-<pre class="example">     cd /somewhere/R-2.7.0/src/gnuwin32
+<pre class="example">     cd /somewhere/R-2.7.1/src/gnuwin32
 </pre>
    <p>Edit <samp><span class="file">MkRules</span></samp> to set <code>BUILD=CROSS</code> and the appropriate paths
 (including <code>HEADER</code> if needed).
@@ -1007,7 +1013,7 @@ for testing) use
 <pre class="example">     make all recommended manuals
      cd installer
      make imagedir
-     zip -r9X R-2.7.0.zip R-2.7.0  # or something similar
+     zip -r9X R-2.7.1.zip R-2.7.1  # or something similar
 </pre>
    <p>Note that <samp><span class="file">.chm</span></samp> help files (the default for a vanilla binary
 installation) will not be made when cross-building.
@@ -1027,7 +1033,7 @@ binaries for Mac OS X for a base distribution and a large number of
 add-on packages from <acronym>CRAN</acronym> to run on Mac OS X version 10.4.4 or
 higher.
 
-   <p>The simplest way is to use <samp><span class="file">R-2.7.0.dmg</span></samp>.  Just
+   <p>The simplest way is to use <samp><span class="file">R-2.7.1.dmg</span></samp>.  Just
 double-click on the icon and the disk image file will be mounted. Read
 the <samp><span class="file">ReadMe.txt</span></samp> inside the disk image and follow the instructions.
 
@@ -1042,8 +1048,8 @@ mentioned <a href="http://CRAN.R-project.org/bin/macosx/RMacOSX-FAQ.html">R for 
 and install some tools as explained in the document.  Then you have to
 expand the R sources and configure R appropriately, for example
 
-<pre class="example">     tar zxvf R-2.7.0.tar.gz
-     cd R-2.7.0
+<pre class="example">     tar zxvf R-2.7.1.tar.gz
+     cd R-2.7.1
      ./configure --with-blas='-framework vecLib' --with-lapack \
        --with-aqua --enable-R-framework
      make
@@ -1073,6 +1079,11 @@ see the FAQ for details.
 
 <p>How to start R and what command-line options are available is discussed
 in <a href="R-intro.html#Invoking-R">Invoking R</a>.
+
+   <p>You should ensure that the shell has set adequate resource limits: R
+expects a stack size of at least 8MB and to be able to open at least 256
+file descriptors.  (Any modern OS will have default limits at least as
+large as these, but apparently NetBSD does not.)
 
    <p>R makes use of a number of environment variables, the default values
 of many of which are set in file <samp><var>R_HOME</var><span class="file">/etc/Renviron</span></samp> (there
@@ -1702,8 +1713,9 @@ is larger (normally twice the size).  This means that R objects take
 more space and (usually) more time to manipulate.  So 64-bit versions of
 R will typically run slower than 32-bit versions.  (On Sparc Solaris
 the difference was 15-20%, on Linux on Opteron around 10%.  The pattern
-is not universal on Intel Core 2 Duo the 64-bit version is around 10%
-faster on both Linux and Mac OS X.) 
+is not universal, as on Intel Core 2 Duo the vanilla 64-bit version is
+around 10% faster on both Linux and Mac OS X &ndash; this can be reduced by
+tuning the compiler to that chip.) 
 </ul>
 
    <p>So, for speed you may want to use a 32-bit build, but to handle large
@@ -1841,18 +1853,26 @@ library.
 
 <h3 class="section">9.2 Windows</h3>
 
-<p>You need to set up almost all the tools to make R and then run
+<p>You need to set up almost all the tools to make R and then run (in a
+Unix-like shell)
 
 <pre class="example">     (cd ../../include; make -f Makefile.win config.h Rconfig.h Rmath.h)
      make -f Makefile.win
 </pre>
-   <p class="noindent">This creates a static library <samp><span class="file">libRmath.a</span></samp> and a DLL
+   <p class="noindent">For <samp><span class="file">cmd.exe</span></samp> use
+
+<pre class="example">     cd ../../include
+     make -f Makefile.win config.h Rconfig.h Rmath.h
+     cd ../nmath/standalone
+     make -f Makefile.win
+</pre>
+   <p>This creates a static library <samp><span class="file">libRmath.a</span></samp> and a DLL
 <samp><span class="file">Rmath.dll</span></samp>.  If you want an import library <samp><span class="file">libRmath.dll.a</span></samp>
 (you don't need one), use
 
 <pre class="example">     make -f Makefile.win shared implib
 </pre>
-   <p>To use the routines in your own C or C++ programs, include
+   <p>To use the routines in your own C or C++ programs using MinGW, include
 
 <pre class="example">     #define MATHLIB_STANDALONE
      #include &lt;Rmath.h&gt;
@@ -1866,9 +1886,15 @@ able to force static or dynamic linking  <em>via</em>
      -Wl,-Bdynamic -lRmath
 </pre>
    <p>or by linking to explicit files (as in the `<samp><span class="samp">test</span></samp>' target in
-<samp><span class="file">Makefile.win</span></samp>: this makes two executable <samp><span class="file">test.exe</span></samp> which is
-dynamically linked, and <code>test-static</code>, which is statically
+<samp><span class="file">Makefile.win</span></samp>: this makes two executables, <samp><span class="file">test.exe</span></samp> which
+is dynamically linked, and <code>test-static</code>, which is statically
 linked).
+
+   <p>It is possible to link to <samp><span class="file">Rmath.dll</span></samp> using other compilers, either
+directly or via an import library: if you make a MinGW import library as
+above, you will create a file <samp><span class="file">Rmath.def</span></samp> which can be used
+(possibly after editing) to creat an import library for other systems
+such as Visual C++.
 
    <p>If you make use of dynamic linking you should use
 
@@ -1876,8 +1902,10 @@ linked).
      #define RMATH_DLL
      #include &lt;Rmath.h&gt;
 </pre>
-   <p class="noindent">to ensure that the constant like <code>NA_REAL</code> are linked correctly. 
-(Auto-import will probably work, but it is better to be sure.)
+   <p class="noindent">to ensure that the constants like <code>NA_REAL</code> are linked correctly. 
+(Auto-import will probably work with MinGW, but it is better to be
+sure. This is likely to also work with VC++, Borland and similar
+compilers.)
 
 <p><a name="Essential-and-useful-other-programs-under-Unix"></a>
 
@@ -2539,7 +2567,10 @@ On systems using the GNU linker (especially those using R as a shared
 library), it is likely that including `<samp><span class="samp">-Wl,-O1</span></samp>' in <code>LDFLAGS</code>
 is worthwhile, and on recent systems<a rel="footnote" href="#fn-20" name="fnd-20"><sup>20</sup></a>
 `<samp><span class="samp">'-Bdirect,--hash-style=both,-Wl,-O1'</span></samp>' is recommended at
-<a href="http://lwn.net/Articles/192624/">http://lwn.net/Articles/192624/</a>
+<a href="http://lwn.net/Articles/192624/">http://lwn.net/Articles/192624/</a>.  Tuning compilation to a
+specific CPU family (e.g. `<samp><span class="samp">-mtune=core2</span></samp>' for <samp><span class="command">gcc</span></samp>) can
+give worthwhile performance gains, especially on older architectures
+such as `<samp><span class="samp">ix86</span></samp>'.
 
 <p><a name="Making-manuals"></a>
 
@@ -2828,7 +2859,7 @@ what is needed.
 
    <p>It seems that `<samp><span class="samp">ix86</span></samp>' Linux accepts non-PIC code in shared
 libraries, but this is not necessarily so on other platforms, in
-particular for 64-bit CPUs such as that for AMD Opteron.  So care can be
+particular for 64-bit CPUs such as `<samp><span class="samp">x86_64</span></samp>'.  So care can be
 needed with BLAS libraries and when building R as a shared library to
 ensure that position-independent code is used in any static libraries
 (such as the Tcl/Tk libraries, <code>libpng</code>, <code>libjpeg</code> and
@@ -2868,22 +2899,24 @@ required <samp><span class="option">-D__NO_MATH_INLINES</span></samp> to achieve
 <acronym>IEC</acronym>&nbsp;<!-- /@w -->60059-compliance for <code>exp</code>, and this is included
 in <code>R_XTRA_CFLAGS</code> if required.
 
-   <p>Several Linux distributions have shipped unreleased versions of
-<samp><span class="command">gcc</span></samp>&nbsp;<!-- /@w -->4.0.0 and its FORTRAN compiler <samp><span class="command">gfortran</span></samp>
-(see the separate comments).  Some versions of <samp><span class="command">gcc</span></samp>&nbsp;<!-- /@w -->4
-(such as that in Fedora Core 3) produce incorrect code.  In our
-experiments <samp><span class="command">gcc</span></samp>&nbsp;<!-- /@w -->3.4.x always produced faster and more
-reliable code.  It seems that <samp><span class="command">gcc</span></samp>&nbsp;<!-- /@w -->4.0.x cannot compile
-<samp><span class="file">src/main/plot.c</span></samp> when building R as a shared library on
-`<samp><span class="samp">ix86</span></samp>' unless the optimization level is changed from the default
-<samp><span class="option">-O2</span></samp> (<samp><span class="option">-O3</span></samp> works, as does <samp><span class="command">gcc</span></samp>&nbsp;<!-- /@w -->4.1.0 with
-the default settings).
+   <p>There are known problems with several early versions of
+<samp><span class="command">gcc</span></samp>&nbsp;<!-- /@w -->4, but <samp><span class="command">gcc</span></samp>&nbsp;<!-- /@w -->4.1.0 and later seems to
+cause no special difficulties. 
+<!-- Several Linux distributions have shipped unreleased versions of -->
+<!-- @command{gcc}@tie{}4.0.0 and its FORTRAN compiler @command{gfortran} -->
+<!-- (see the separate comments).  Some versions of @command{gcc}@tie{}4 -->
+<!-- (such as that in Fedora Core 3) produce incorrect code.  In our -->
+<!-- experiments @command{gcc}@tie{}3.4.x always produced faster and more -->
+<!-- reliable code.  It seems that @command{gcc}@tie{}4.0.x cannot compile -->
+<!-- @file{src/main/plot.c} when building R as a shared library on -->
+<!-- @cputype{ix86} unless the optimization level is changed from the default -->
+<!-- @option{-O2} (@option{-O3} works, as does @command{gcc}@tie{}4.1.0 with -->
+<!-- the default settings). -->
 
-   <p>It has been reported that using <samp><span class="command">gcc</span></samp>&nbsp;<!-- /@w -->4.0.3 on
-`<samp><span class="samp">ppc64</span></samp>' needed the compiler flag <samp><span class="option">-mminimal-toc</span></samp> to avoid
-errors when linking R as a shared library.
-
-   <p>To build a 64-bit version of R on `<samp><span class="samp">ppc64</span></samp>' (also known as
+<!-- It has been reported that using @command{gcc}@tie{}4.0.3 on -->
+<!-- @cputype{ppc64} needed the compiler flag @option{-mminimal-toc} to avoid -->
+<!-- errors when linking @R{} as a shared library. -->
+<p>To build a 64-bit version of R on `<samp><span class="samp">ppc64</span></samp>' (also known as
 `<samp><span class="samp">powerpc64</span></samp>') with <samp><span class="command">gcc</span></samp>&nbsp;<!-- /@w -->4.1.1, Ei-Ji Nakama used
 
 <pre class="example">     CC="gcc -m64"
@@ -2898,8 +2931,8 @@ errors when linking R as a shared library.
 
    <p>On some<a rel="footnote" href="#fn-26" name="fnd-26"><sup>26</sup></a> <code>glibc</code> systems,
 `<samp><span class="samp">-fgnu89-inline</span></samp>' needs to be added to <samp><span class="option">CFLAGS</span></samp> when using
-the (currently unreleased) <samp><span class="command">gcc</span></samp>&nbsp;<!-- /@w -->4.3.0, since
-<samp><span class="file">wchar.h</span></samp> is not set up properly for C99-style inlines.
+<samp><span class="command">gcc</span></samp>&nbsp;<!-- /@w -->4.3.x, since <samp><span class="file">wchar.h</span></samp> is not set up properly
+for C99-style inlines.
 
 <p><a name="Intel-compilers"></a>
 
@@ -3129,7 +3162,7 @@ we used
      FC=f95
      FCFLAGS=$FFLAGS
      LDFLAGS=-L/opt/csw/lib
-     SHLIB_CXXLDFLAGS=-G -lCstd
+     SHLIB_CXXLDFLAGS="-G -lCstd"
 </pre>
    <p class="noindent">to ensure that the <code>libiconv</code> version of <samp><span class="file">iconv.h</span></samp> was found. 
 For a 64-bit target add <code>-xarch=v9</code> (or <code>v9b</code>, or
@@ -3473,8 +3506,8 @@ port would be greatly appreciated.
 <p><a name="index-AIX-99"></a>
 We no longer support AIX prior to 4.2, and <samp><span class="command">configure</span></samp> will
 throw an error on such systems.  The recent testing has been under AIX
-5.2 on `<samp><span class="samp">powerpc</span></samp>', where Ei-ji Nakama was able to build pre-2.5.0
-with <samp><span class="command">gcc 4.0.3</span></samp> in several configurations.
+5.2 on `<samp><span class="samp">powerpc</span></samp>', where Ei-ji Nakama was able to build with
+<samp><span class="command">gcc 4.0.3</span></samp> in several configurations.
 
    <p>Mr Nakama found 32-bit versions of R could be built with
 <samp><span class="command">configure --without-iconv</span></samp> as well as
@@ -3496,6 +3529,11 @@ with <samp><span class="command">gcc 4.0.3</span></samp> in several configuratio
      FC="f90 -cpu=pwr4 -hf77 -parallel=0 -i,L -O3 -64"
      FLIBS="-L/opt/ofort90/lib -lhf90vecmath -lhf90math -lf90"
 </pre>
+   <p>Some systems have <samp><span class="command">f95</span></samp> as an IBM compiler that does not by
+default accept FORTRAN 77.  It needs the flag <code>-qfixed=72</code>, or to
+be invoked as <samp><span class="command">xlf_r</span></samp>. 
+%http://publib.boulder.ibm.com/infocenter/comphelp/v7v91/index.jsp?topic=/com.ibm.xlf91a.doc/xlfug/hu00465.htm
+
    <p>The AIX native <code>iconv</code> does not support encodings `<samp><span class="samp">latin1</span></samp>' nor
 `<samp><span class="samp">""</span></samp>' and so cannot be used.  (As far as we know GNU <code>libiconv</code>
 could be installed.)
@@ -3518,8 +3556,8 @@ use in a CJK locale.  NLS does work, although
 <samp><span class="option">--with-included-gettext</span></samp> is preferable.  You will see many
 warnings about the use of auto-import.
 
-   <p>It almost passes <samp><span class="command">make check</span></samp>: FIFOs are supposedly supported
-but hung in `<samp><span class="samp">example(fifo)</span></samp>'.
+   <p>%It almost passes <samp><span class="command">make check</span></samp>: FIFOs are supposedly supported
+%but hung in `<samp><span class="samp">example(fifo)</span></samp>'.
 
    <p>Note that this gives you a command-line application using <code>readline</code>
 for command editing.  The `<samp><span class="samp">X11</span></samp>' graphics device will work if a
@@ -3732,7 +3770,7 @@ but no compiled code, only the first two of these are needed.
 
    <p>A complete build of R including compiled <acronym>HTML</acronym> help files and
 PDF manuals, and producing the standalone installer
-<samp><span class="file">R-2.7.0-win32.exe</span></samp> will also need the following:
+<samp><span class="file">R-2.7.1-win32.exe</span></samp> will also need the following:
      <ul>
 <li>The Microsoft <acronym>HTML</acronym> Help Workshop
 <li>LaTeX
@@ -3827,7 +3865,7 @@ suitably; ensure you have the required fonts installed.
 
 <h3 class="section">E.4 The Inno Setup installer</h3>
 
-<p>To make the installer package (<samp><span class="file">R-2.7.0-win32.exe</span></samp>) we require
+<p>To make the installer package (<samp><span class="file">R-2.7.1-win32.exe</span></samp>) we require
 Inno Setup 5.1.7 or later (including 5.2.x) from <a href="http://jrsoftware.org"><code>jrsoftware.org</code></a>.  This is <em>not</em> included in <samp><span class="file">Rtools.exe</span></samp>.
 
    <p>Edit file <samp><span class="file">src/gnuwin32/MkRules</span></samp> and change <code>ISDIR</code> to the
@@ -4120,8 +4158,8 @@ from Sun.</p>
 versions have <samp><span class="command">f77</span></samp> as a wrapper for <samp><span class="command">f95</span></samp>, and these do
 work.</p>
 
-   <p class="footnote"><small>[<a name="fn-30" href="#fnd-30">30</a>]</small> DLLs need to have all
-links resolved at build time and so cannot resolve against
+   <p class="footnote"><small>[<a name="fn-30" href="#fnd-30">30</a>]</small> Windows DLLs need to
+have all links resolved at build time and so cannot resolve against
 <samp><span class="file">R.bin</span></samp>.</p>
 
    <p class="footnote"><small>[<a name="fn-31" href="#fnd-31">31</a>]</small> For

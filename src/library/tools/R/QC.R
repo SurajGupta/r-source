@@ -1369,6 +1369,8 @@ function(package, dir, lib.loc = NULL)
         ## If we were really picky, we would worry about possible
         ## namespace renaming.
         functions <- .transform_S3_method_markup(functions)
+        ## Also transform the markup for S4 replacement methods.
+        functions <- .transform_S4_method_markup(functions)
         ## </NOTE>
 
         ## Now analyze what we found.
@@ -2432,8 +2434,7 @@ function(x, ...)
 
 ## changed in 2.3.0 to refer to a source dir.
 
-.check_package_depends <-
-function(dir)
+.check_package_depends <- function(dir)
 {
     if(length(dir) != 1L)
         stop("argument 'package' must be of length 1")
@@ -2441,9 +2442,15 @@ function(dir)
     ## We definitely need a valid DESCRIPTION file.
     db <- .read_description(file.path(dir, "DESCRIPTION"))
 
-    package_name <- basename(dir)
-    ## (Should really use db["Package"], but then we need to check
-    ## whether this is really there ...)
+    dir_name <- basename(dir)
+    package_name <- db["Package"]
+    if(!identical(package_name, dir_name) &&
+       (!is.character(package_name) || !nzchar(package_name))) {
+	message(sprintf(
+	"package name '%s' seems invalid; using directory name '%s' instead",
+			package_name, dir_name))
+	package_name <- dir_name
+    }
     depends <- .get_requires_from_package_db(db, "Depends")
     imports <- .get_requires_from_package_db(db, "Imports")
     suggests <- .get_requires_from_package_db(db, "Suggests")
@@ -3382,6 +3389,12 @@ function(package, lib.loc = NULL)
             assign("nsl", function(hostname) {}, envir = compat)
             assign("X11Font", function(font) {}, envir = compat)
             assign("X11Fonts", function(...) {}, envir = compat)
+            assign("cairo_pdf",
+                   function(filename =
+                            if (onefile) "Rplots.pdf" else "Rplot%03d.pdf",
+                            width = 7, height = 7, pointsize = 12,
+                            onefile = FALSE, bg = "white", antialias) {},
+                   envir = compat)
             assign("quartz",
                    function(display = "", width = 5, height = 5,
                             pointsize = 12, family = "Helvetica",
@@ -3655,7 +3668,7 @@ function(dir, doDelete = FALSE)
                                                 all.files = TRUE,
                                                 full.names = FALSE)))
             }
-        d[sapply(file.path(dir, d), function(x) file_test("-f", x))]
+        d[file_test("-f", file.path(dir, d))]
     }
 
     if(!file_test("-d", dir))
@@ -4423,13 +4436,11 @@ function()
 
 ### ** .get_S4_generics_really_in_env
 
-.get_S4_generics_really_in_env <-
-function(env)
+.get_S4_generics_really_in_env <- function(env)
 {
     env <- as.environment(env)
-    Filter(function(g) exists(g, envir = env, inherits=FALSE) &&
-	   methods::is(get(g, envir = env), "genericFunction"),
-           methods::getGenerics(env))
+    Filter(function(g) methods::isGeneric(g, where = env),
+	   methods::getGenerics(env))
 }
 
 ### ** .get_S4_methods_list
@@ -4613,6 +4624,16 @@ function(x)
         x)
 }
 
+### ** .transform_S4_method_markup
+
+.transform_S4_method_markup <-
+function(x)
+{
+    sub(sprintf("%s(<-)?", .S4_method_markup_regexp),
+        "\\\\S4method{\\2\\4}{\\3}",
+        x)
+}
+
 ### ** .S3_method_markup_regexp
 
 ## For matching \(S3)?method{GENERIC}{CLASS}.
@@ -4642,7 +4663,10 @@ function(x)
 
 .S4_method_markup_regexp <-
     sprintf("(\\\\S4method\\{(%s)\\}\\{(%s)\\})",
-            "[._[:alnum:]]*",
+            paste(c("[._[:alnum:]]*",
+                    ## Subscripting
+                    "\\$", "\\[\\[?"),
+                  collapse = "|"),
             "[._[:alnum:],]*")
 
 ### ** .valid_maintainer_field_regexp

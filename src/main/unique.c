@@ -192,8 +192,6 @@ static int sequal(SEXP x, int i, SEXP y, int j)
     /* Then if either is NA the other cannot be */
     if (STRING_ELT(x, i) == NA_STRING || STRING_ELT(y, j) == NA_STRING)
 	return 0;
-    /* Look at the lengths, as that is some check for embedded nuls. */
-    if (LENGTH(STRING_ELT(x, i)) != LENGTH(STRING_ELT(y, j))) return 0;
     /* Finally look at the contents if necessary */
     return !strcmp(translateChar(STRING_ELT(x, i)),
 		   translateChar(STRING_ELT(y, j)));
@@ -461,7 +459,7 @@ SEXP attribute_hidden do_duplicated(SEXP call, SEXP op, SEXP args, SEXP env)
     if(length(incomp) && /* S has FALSE to mean empty */
        !(isLogical(incomp) && length(incomp) == 1 && LOGICAL(incomp)[0] == 0))
 	dup = duplicated3(x, incomp, asLogical(CADDR(args)));
-    else 
+    else
 	dup = duplicated(x, asLogical(CADDR(args)));
 
     if (PRIMVAL(op) == 0) /* "duplicated()" : */

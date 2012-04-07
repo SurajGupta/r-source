@@ -279,8 +279,8 @@ getMethodsForDispatch <- function(fdef)
     .getMethodsTable(fdef, environment(fdef))
 }
 
-## some functions used in MethodsListSelect, that must be safe against recursive
-## method selection.  TODO:  wouldn't need this if methods package had a name space
+## Some functions used in MethodsListSelect, that must be safe against recursive
+## method selection.
 
 .existsBasic <- get("exists", "package:base")
 .getBasic <- get("get", "package:base")
@@ -691,19 +691,11 @@ dumpMethods <- function(f, file = "", signature = character(), methods,
 
 
 selectMethod <-
-  ## Returns the method (a function) that R would use to evaluate a call to this generic,
-  ## with arguments corresponding to the specified signature.
-  ##
-  ## f = the name of the generic function
-  ## env = an environment, in which the class corresponding to each argument
-  ##       is assigned with the argument's name.
-  ## optional = If TRUE, and no explicit selection results, return result anyway. else error
-  ## mlist = Optional MethodsList object to use in the search.
-    function(f, signature, optional = FALSE,
-             useInherited = TRUE,
+    ## Returns the method (a function) that R would use to evaluate a call to
+    ## generic 'f' with arguments corresponding to the specified signature.
+    function(f, signature, optional = FALSE, useInherited = TRUE,
 	     mlist = if(!is.null(fdef)) getMethodsForDispatch(fdef),
-             fdef = getGeneric(f, !optional),
-             verbose = FALSE)
+	     fdef = getGeneric(f, !optional), verbose = FALSE)
 {
     if(is.environment(mlist))  {# using methods tables
         fenv <- environment(fdef)
@@ -712,10 +704,12 @@ selectMethod <-
             cat("* mlist environment with", length(mlist),"potential methods\n")
         if(length(signature) < nsig)
             signature[(length(signature)+1):nsig] <- "ANY"
-        if(missing(useInherited))
-	    useInherited <- is.na(match(signature, "ANY"))# -> vector
         method <- .findMethodInTable(signature, mlist, fdef)
 	if(is.null(method)) {
+	    if(missing(useInherited))
+		useInherited <- (is.na(match(signature, "ANY")) & # -> vector
+				 if(identical(fdef, coerce))# careful !
+				 c(TRUE,FALSE) else TRUE)
 	    methods <-
 		if(any(useInherited)) {
 		    allmethods <- .getMethodsTable(fdef, fenv, check=FALSE, inherited=TRUE)
@@ -772,12 +766,14 @@ selectMethod <-
       ##
       ## assign the updated information to the method environment
       fEnv <- environment(fdef)
-      if(exists(".SelectMethodOn", fEnv, inherits = FALSE))
+      if(exists(".SelectMethodOn", fEnv, inherits = FALSE)) {
           ##<FIXME> This should have been eliminated now
           ## we shouldn't be doing method selection on a function used in method selection!
           ## Having name spaces for methods will prevent this happening -- until then
           ## force a return of the original default method
+          message("selectMethod(): .SelectMethodOn - old stuff - please report")
           return(finalDefaultMethod(mlist, f))
+      }
       assign(".SelectMethodOn", TRUE, fEnv)
       on.exit(rm(.SelectMethodOn, envir = fEnv))
       ##</FIXME>
@@ -788,20 +784,11 @@ selectMethod <-
           selection <- .Call("R_selectMethod", f, env, mlist, evalArgs, PACKAGE = "methods")
       ## else: selection remains NULL
     }
-    if(is(selection, "function"))
+    if(is(selection, "function") || optional)
         selection
-    else if(is(selection, "MethodsList")) {
-      if(optional)
-        selection
-      else
+    else if(is(selection, "MethodsList"))
         stop("no unique method corresponding to this signature")
-    }
-    else {
-        if(optional)
-            selection
-        else
-            stop("unable to match signature to methods")
-    }
+    else stop("unable to match signature to methods")
 }
 
 hasMethod <-
@@ -1388,7 +1375,7 @@ findMethods <- function(f, where, classes = character(), inherited = FALSE) {
       table <- get(if(inherited) ".AllMTable" else ".MTable", envir = environment(fdef))
     else {
         if(!identical(inherited, FALSE))
-          stop("Only FALSE meaningful for inherited, when where is supplied (got ", inherited, "\"")
+          stop("Only FALSE is meaningful for 'inherited', when 'where' is supplied (got ", inherited, "\"")
         where <- as.environment(where)
         what <- .TableMetaName(f, fdef@package)
         if(exists(what, envir = where, inherits = FALSE))
@@ -1411,37 +1398,41 @@ findMethods <- function(f, where, classes = character(), inherited = FALSE) {
       list()
 }
 
-findMethodSignatures <- function(..., target = TRUE, methods = findMethods(...)) {
+findMethodSignatures <- function(..., target = TRUE, methods = findMethods(...))
+{
     ## unless target is FALSE, the signatures are just the names from the table
     ## unscrambled.
     if(length(methods) < 1)
-      return(methods)
+        return(methods)
     ## find the argument names
     prims <- sapply(methods, is.primitive)
     if(!all(prims)) {
         what <- lapply(methods[!prims], function(x)  names(x@target))
         lens <- sapply(what, length)
         if(length(unique(lens)) == 1) # asserted to be true for legit. method tables
-          what <- what[[1]]
+            what <- what[[1]]
         else
-          what <- what[lens == max(lens)][[1]]
+            what <- what[lens == max(lens)][[1]]
     }
     else
-      what <- names(formals(args(methods[[1]]))) # uses the hack that args() returns a function if its argument is a primitve!
+        ## uses the hack that args() returns a function if its argument is a primitve!
+        what <- names(formals(args(methods[[1]])))
     if(target)
-      sigs <- strsplit(names(methods), "#", fixed = TRUE)
+        sigs <- strsplit(names(methods), "#", fixed = TRUE)
     else {
         anySig <- rep("ANY", length(what))
-        sigs <- lapply(methods, function(x) if(is.primitive(x)) anySig else as.character(x@defined))
+        sigs <- lapply(methods, function(x)
+                       if(is.primitive(x)) anySig else as.character(x@defined))
     }
     lens <- unique(sapply(sigs, length))
     if(length(lens) > 1)
-      sigs
+        sigs
     else
-      t(matrix(unlist(sigs), nrow = lens, dimnames = list(what, NULL)))
+        t(matrix(unlist(sigs), nrow = lens, dimnames = list(what, NULL)))
 }
 
-hasMethods <- function(f, where,package) {
+hasMethods <- function(f, where, package)
+{
     fdef <- NULL
     nowhere <- missing(where) # because R resets this if where is assigned
     if(is(f, "genericFunction")) {
@@ -1452,19 +1443,20 @@ hasMethods <- function(f, where,package) {
         stop(gettextf("argument \"f\" must be a generic function or a single character string; got an object of class \"%s\"", class(f)), domain = NA)
     if(missing(package)) {
         package <- packageSlot(f)
-        if(is.null(package)) {
-            if(missing(where))
-              where <- .GlobalEnv
-            fdef <- getFunction(f, where = where)
-            if(is(fdef, "genericFunction"))
-              package <- fdef@package
-            else if(is.primitive(fdef))
-              package <- "base"
-            else if( length(ff <- findFunction(f, where = where)) == 1)
-                package <- getPackageName(ff[[1]])
-            else
-              stop(gettextf("f does not correspond to a generic function and package not specified"), domain = NA)
-        }
+	if(is.null(package)) {
+	    if(missing(where))
+		where <- .GlobalEnv
+	    fdef <- getFunction(f, where = where, mustFind = FALSE)
+	    if(is(fdef, "genericFunction"))
+		package <- fdef@package
+	    else if(is.primitive(fdef))
+		package <- "base"
+	    else if( length(ff <- findFunction(f, where = where)) == 1)
+		package <- getPackageName(ff[[1]])
+	    else
+		stop(gettextf("f does not correspond to a generic function and package not specified"),
+		     domain = NA)
+	}
     }
     what <- .TableMetaName(f, package)
     testEv <- function(ev)

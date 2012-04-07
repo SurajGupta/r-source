@@ -36,14 +36,20 @@ double qf(double p, double df1, double df2, int lower_tail, int log_p)
 
     R_Q_P01_boundaries(p, 0, ML_POSINF);
 
-    /* fudge the extreme DF cases -- qbeta doesn't do this well */
+    /* fudge the extreme DF cases -- qbeta doesn't do this well.
+       But we still need to fudge the infinite ones.
+     */
 
-    if (df2 > 4e5)
+    if (df1 <= df2 && df2 > 4e5) {
+	if(!R_FINITE(df1)) /* df1 == df2 == Inf : */
+	    return 1.;
+ 	/* else */
 	return qchisq(p, df1, lower_tail, log_p) / df1;
+    }
+    if (df1 > 4e5) { /* and so  df2 < df1 */
+	return df2 / qchisq(p, df2, !lower_tail, log_p);
+    }
 
-    if (df1 > 4e5)
-	return 1/qchisq(p, df2, !lower_tail, log_p) * df2;
-
-    p = (1. / qbeta(R_DT_CIv(p), df2/2, df1/2, TRUE, FALSE) - 1.) * (df2 / df1);
+    p = (1. / qbeta(p, df2/2, df1/2, !lower_tail, log_p) - 1.) * (df2 / df1);
     return ML_VALID(p) ? p : ML_NAN;
 }

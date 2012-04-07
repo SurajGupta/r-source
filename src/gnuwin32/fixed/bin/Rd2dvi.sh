@@ -9,7 +9,7 @@
 ## This is set by R CMD on Unix but not on Windows
 R_PAPERSIZE=${R_PAPERSIZE-a4}
 
-revision='$Rev: 45282 $'
+revision='$Rev: 45594 $'
 version=`set - ${revision}; echo ${2}`
 version="Rd2dvi.sh ${version}
 
@@ -183,7 +183,8 @@ Rd_DESCRIPTION_to_LaTeX () {
                   s/\\\\\\\\/\\\\\\\\textbackslash /g
                   s/{/\\\\\\\\{/g
 		  s/}/\\\\\\\\}/g"`
-    ${echo} "\\item[${f}] \\AsIs{${text}}"
+    ff=`echo ${f} | ${SED} s/_/\\\\\\\\_/g`
+    ${echo} "\\item[${ff}] \\AsIs{${text}}"
   done
   ${echo} "\\end{description}"
 }

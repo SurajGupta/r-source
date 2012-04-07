@@ -262,6 +262,9 @@ getOption(x)
       printed as they occur.  If \code{warn} is two or larger all
       warnings are turned into errors.}
 
+    \item{\code{warnEscapes}:}{logical.  If true (the default) the parser
+      warns on unrecognized (backslash) escape sequences.}
+
     \item{\code{warnPartialMatchArgs}:}{logical.  If true, warns if
       partial matching is used in argument matching.}
 
@@ -499,8 +502,7 @@ getOption(x)
   Wadsworth \& Brooks/Cole.
 }
 \examples{
-options() # printing all current options
-op <- options(); utils::str(op) # nicer printing
+op <- options(); utils::str(op) # the values might be e.g. functions
 
 getOption("width") == options()$width # the latter needs more memory
 options(digits = 15)

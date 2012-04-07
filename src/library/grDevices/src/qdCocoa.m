@@ -39,6 +39,7 @@
 struct sQuartzCocoaDevice {
     QuartzDesc_t    qd;
     QuartzCocoaView *view;
+    NSWindow        *window;
     CGLayerRef      layer;   /* layer */
     CGContextRef    layerContext; /* layer context */
     CGContextRef    context; /* window drawing context */
@@ -75,6 +76,7 @@ static QuartzFunctions_t *qf;
 
 + (QuartzCocoaView*) quartzWindowWithRect: (NSRect) rect andInfo: (void*) info
 {
+    QuartzCocoaDevice *ci = (QuartzCocoaDevice*) info;
     QuartzCocoaView* view = [[QuartzCocoaView alloc] initWithFrame: rect andInfo: info];
     NSWindow* window = [[NSWindow alloc] initWithContentRect: rect
                                                    styleMask: NSTitledWindowMask|NSClosableWindowMask|
@@ -83,8 +85,8 @@ static QuartzFunctions_t *qf;
     NSColor *canvasColor = [view canvasColor];
     [window setBackgroundColor:canvasColor ? canvasColor : [NSColor colorWithCalibratedRed:1.0 green:1.0 blue:1.0 alpha:0.5]];
     [window setOpaque:NO];
-
-    [window autorelease];
+    ci->window = window;
+	
     [window setDelegate: view];
     [window setContentView: view];
     [window setInitialFirstResponder: view];
@@ -227,6 +229,7 @@ static QuartzFunctions_t *qf;
     qpar.flags = 0;
     qpar.width = qf->GetWidth(ci->qd);
     qpar.height = qf->GetHeight(ci->qd);
+    qpar.canvas = 0; /* disable canvas */
     QuartzDesc_t qd = Quartz_C(&qpar, QuartzPDF_DeviceCreate, NULL);
     if (qd == NULL) return NO;
     void *ss = qf->GetSnapshot(ci->qd, 0);
@@ -264,6 +267,7 @@ static QuartzFunctions_t *qf;
     qpar.flags = 0;
     qpar.width = qf->GetWidth(ci->qd);
     qpar.height = qf->GetHeight(ci->qd);
+    qpar.canvas = 0; /* have to disable canvas */
     /* replay our snapshot and close the PDF device */
     QuartzDesc_t qd = Quartz_C(&qpar, QuartzPDF_DeviceCreate, NULL);
     if (qd == NULL) {
@@ -365,10 +369,33 @@ static QuartzFunctions_t *qf;
         unsigned int mf = [theEvent modifierFlags];
         ci->locator[0] = pt.x;
         ci->locator[1] = pt.y;
-        if (mf&NSControlKeyMask)
+        /* Note: we still use menuForEvent:  because no other events than left click get here ..*/
+        if (mf&(NSControlKeyMask|NSRightMouseDownMask|NSOtherMouseDownMask))
             ci->locator[0] = -1.0;
         ci->inLocator = NO;
     }
+}
+
+/* right-click does NOT generate mouseDown: events, sadly, so we have to (ab)use menuForEvent: */
+- (NSMenu *)menuForEvent:(NSEvent *)theEvent
+{
+    if (ci->inLocator) {
+        ci->locator[0] = -1.0;
+        ci->inLocator = NO;
+        return nil;
+    }
+    return [super menuForEvent:theEvent];
+}
+
+/* <Esc> is caught before so keyDown: won't work */
+- (BOOL)performKeyEquivalent:(NSEvent *)theEvent
+{
+    if (ci->inLocator && [theEvent keyCode] == 53 /* ESC - can't find the proper constant for this */) {
+        ci->locator[0] = -1.0;
+        ci->inLocator = NO;
+        return TRUE;
+    }
+    return FALSE;
 }
 
 static void QuartzCocoa_SaveHistory(QuartzCocoaDevice *ci, int last) {
@@ -442,13 +469,6 @@ static void QuartzCocoa_SaveHistory(QuartzCocoaDevice *ci, int last) {
         i++;
     }
 }
-
-#if 0
-- (void)keyDown:(NSEvent *)theEvent
-{
-    Rprintf("keyCode=%d\n", [theEvent keyCode]);
-}
-#endif
 
 - (void)viewDidEndLiveResize
 {
@@ -651,6 +671,11 @@ static void QuartzCocoa_Close(QuartzDesc_t dev,void *userInfo) {
     /* close the window (if it's not already closing) */
     if (ci && ci->view && !ci->closing)
         [[ci->view window] close];
+	
+    if (ci->view) [ci->view release]; /* this is our own release, the window should still have a copy */
+    if (ci->window) [ci->window release]; /* that should close it all */
+    ci->view = nil;
+    ci->window = nil;
 }
 
 static int QuartzCocoa_Locator(QuartzDesc_t dev, void* userInfo, double *x, double*y) {
@@ -742,13 +767,19 @@ QuartzDesc_t QuartzCocoa_DeviceCreate(void *dd, QuartzFunctions_t *fn, QuartzPar
             CGSize ds = CGDisplayScreenSize(md);
             double width  = (double)CGDisplayPixelsWide(md);
             double height = (double)CGDisplayPixelsHigh(md);
-            mydpi[0] = width / ds.width*25.4;
-            mydpi[1] = height / ds.height*25.4;
+	    /* landscape screen, portrait resolution -> rotated screen */
+	    if (ds.width > ds.height && width < height) {
+		mydpi[0] = width / ds.height * 25.4;
+		mydpi[1] = height / ds.width * 25.4;
+	    } else {
+		mydpi[0] = width / ds.width * 25.4;
+		mydpi[1] = height / ds.height * 25.4;
+	    }
             /* Rprintf("screen resolution %f x %f\n", mydpi[0], mydpi[1]); */
         }
         dpi = mydpi;
     }
-    
+
     scalex = dpi[0] / 72.0;
     scaley = dpi[1] / 72.0;
 
@@ -757,7 +788,7 @@ QuartzDesc_t QuartzCocoa_DeviceCreate(void *dd, QuartzFunctions_t *fn, QuartzPar
 
     QuartzBackend_t qdef = {
 	sizeof(qdef), width, height, scalex, scaley, par->pointsize,
-	par->bg, par->canvas, par->flags | QDFLAG_INTERACTIVE | QDFLAG_DISPLAY_LIST,
+	par->bg, par->canvas, par->flags | QDFLAG_INTERACTIVE | QDFLAG_DISPLAY_LIST | QDFLAG_RASTERIZED,
 	dev,
 	QuartzCocoa_GetCGContext,
 	QuartzCocoa_Locator,
@@ -788,6 +819,7 @@ QuartzDesc_t QuartzCocoa_DeviceCreate(void *dd, QuartzFunctions_t *fn, QuartzPar
         /* Rprintf("scale=%f/%f; size=%f x %f\n", scalex, scaley, rect.size.width, rect.size.height); */
         [QuartzCocoaView quartzWindowWithRect: rect andInfo: dev];
     }
-    [[dev->view window] makeKeyAndOrderFront: dev->view];
+    if (dev->view)
+        [[dev->view window] makeKeyAndOrderFront: dev->view];
     return qd;
 }

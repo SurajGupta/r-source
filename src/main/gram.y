@@ -66,6 +66,7 @@ typedef struct yyltype
 static void	CheckFormalArgs(SEXP, SEXP, YYLTYPE *);
 static SEXP	FirstArg(SEXP, SEXP);
 static SEXP	GrowList(SEXP, SEXP);
+static SEXP	Insert(SEXP, SEXP);
 static void	IfPush(void);
 static int	KeywordLookup(const char *);
 static SEXP	NewList(void);
@@ -122,7 +123,7 @@ static int mbcs_get_next(int c, wchar_t *wc)
 	    if(s[i] == R_EOF) error(_("EOF whilst reading MBCS char at line %d"), xxlineno);
 	}
 	res = mbrtowc(wc, s, clen, NULL);
-	if(res == -1) error(_("invalid multibyte character in mbcs_get_next at line %d"), xxlineno);
+	if(res == -1) error(_("invalid multibyte character in parser at line %d"), xxlineno);
     } else {
 	/* This is not necessarily correct for stateful MBCS */
 	while(clen <= MB_CUR_MAX) {
@@ -130,10 +131,10 @@ static int mbcs_get_next(int c, wchar_t *wc)
 	    res = mbrtowc(wc, s, clen, &mb_st);
 	    if(res >= 0) break;
 	    if(res == -1) 
-		error(_("invalid multibyte character in mbcs_get_next at line %d"), xxlineno);
+		error(_("invalid multibyte character in parser at line %d"), xxlineno);
 	    /* so res == -2 */
 	    c = xxgetc();
-	    if(c == R_EOF) error(_("EOF whilst reading MBCS char"));
+	    if(c == R_EOF) error(_("EOF whilst reading MBCS char at line %d"), xxlineno);
 	    s[clen++] = c;
 	} /* we've tried enough, so must be complete or invalid by now */
     }
@@ -197,7 +198,7 @@ static SEXP	xxunary(SEXP, SEXP);
 static SEXP	xxbinary(SEXP, SEXP, SEXP);
 static SEXP	xxparen(SEXP, SEXP);
 static SEXP	xxsubscript(SEXP, SEXP, SEXP);
-static SEXP	xxexprlist(SEXP, SEXP);
+static SEXP	xxexprlist(SEXP, YYLTYPE *, SEXP);
 static int	xxvalue(SEXP, int, YYLTYPE *);
 
 #define YYSTYPE		SEXP
@@ -255,7 +256,7 @@ expr	: 	NUM_CONST			{ $$ = $1; }
 	|	NULL_CONST			{ $$ = $1; }
 	|	SYMBOL				{ $$ = $1; }
 
-	|	'{' exprlist '}'		{ $$ = xxexprlist($1,$2); }
+	|	'{' exprlist '}'		{ $$ = xxexprlist($1,&@1,$2); }
 	|	'(' expr_or_assign ')'			{ $$ = xxparen($1,$2); }
 
 	|	'-' expr %prec UMINUS		{ $$ = xxunary($1,$2); }
@@ -836,13 +837,13 @@ static SEXP xxdefun(SEXP fname, SEXP formals, SEXP body)
 		    nc = p - p0;
 		    if (*p != '\n')
 			nc++;
-		    if (nc <= MAXLINESIZE) {
+		    if (nc < MAXLINESIZE) {
 			strncpy((char *)SourceLine, (char *)p0, nc);
 			SourceLine[nc] = '\0';
 			SET_STRING_ELT(source, lines++,
 				       mkChar2((char *)SourceLine));
 		    } else { /* over-long line */
-			char *LongLine = (char *) malloc(nc);
+			char *LongLine = (char *) malloc(nc+1);
 			if(!LongLine) 
 			    error(_("unable to allocate space for source line %d"), xxlineno);
 			strncpy(LongLine, (char *)p0, nc);
@@ -917,7 +918,7 @@ static SEXP xxsubscript(SEXP a1, SEXP a2, SEXP a3)
     return ans;
 }
 
-static SEXP xxexprlist(SEXP a1, SEXP a2)
+static SEXP xxexprlist(SEXP a1, YYLTYPE *lloc, SEXP a2)
 {
     SEXP ans;
     SEXP prevSrcrefs;
@@ -928,6 +929,7 @@ static SEXP xxexprlist(SEXP a1, SEXP a2)
 	SETCAR(a2, a1);
 	if (SrcFile) {
 	    PROTECT(prevSrcrefs = getAttrib(a2, R_SrcrefSymbol));
+	    REPROTECT(SrcRefs = Insert(SrcRefs, makeSrcref(lloc, SrcFile)), srindex);
 	    PROTECT(ans = attachSrcrefs(a2, SrcFile));
 	    REPROTECT(SrcRefs = prevSrcrefs, srindex);
 	    /* SrcRefs got NAMED by being an attribute... */
@@ -985,6 +987,18 @@ static SEXP GrowList(SEXP l, SEXP s)
     UNPROTECT(1);
     SETCDR(CAR(l), tmp);
     SETCAR(l, tmp);
+    return l;
+}
+
+/* Insert a new element at the head of a stretchy list */
+
+static SEXP Insert(SEXP l, SEXP s)
+{
+    SEXP tmp;
+    PROTECT(s);
+    tmp = CONS(s, CDR(l));
+    UNPROTECT(1);
+    SETCDR(l, tmp);
     return l;
 }
 
@@ -1404,8 +1418,6 @@ SEXP R_ParseBuffer(IoBuffer *buffer, int n, ParseStatus *status, SEXP prompt, SE
 	    if (c == ';' || c == '\n') break;
 	}
 
-	rval = R_Parse1Buffer(buffer, 1, status);
-	
 	/* Was a call to R_Parse1Buffer, but we don't want to reset xxlineno and xxcolno */
 	ParseInit();
 	ParseContextInit();
@@ -1959,18 +1971,18 @@ static SEXP mkStringUTF8(const wchar_t *wcs, int cnt)
 {
     SEXP t;
     char *s;
-
+    int nb;
+    
 /* NB: cnt includes the terminator */
 #ifdef Win32
-    s = alloca(cnt*4); /* UCS-2/UTF-16 so max 4 bytes per wchar_t */
-    R_CheckStack();
-    memset(s, 0, cnt*4);
+    nb = cnt*4; /* UCS-2/UTF-16 so max 4 bytes per wchar_t */
 #else
-    s = alloca(cnt*6); /* max 6 bytes per wchar_t */
-    R_CheckStack();
-    memset(s, 0, cnt*6);
+    nb = cnt*6;
 #endif
-    wcstoutf8(s, wcs, cnt);
+    s = alloca(nb);
+    R_CheckStack();
+    memset(s, 0, nb); /* safety */
+    wcstoutf8(s, wcs, nb);
     PROTECT(t = allocVector(STRSXP, 1));
     SET_STRING_ELT(t, 0, mkCharCE(s, CE_UTF8));
     UNPROTECT(1);
@@ -2039,7 +2051,18 @@ static int StringValue(int c, Rboolean forSymbol)
 		    if(c >= '0' && c <= '9') ext = c - '0';
 		    else if (c >= 'A' && c <= 'F') ext = c - 'A' + 10;
 		    else if (c >= 'a' && c <= 'f') ext = c - 'a' + 10;
-		    else {xxungetc(c); CTEXT_POP(); break;}
+		    else {
+			xxungetc(c); 
+			CTEXT_POP();
+			if (i == 0) { /* was just \x */
+			    if(GenerateCode && R_WarnEscapes) {
+				have_warned++;
+				warningcall(R_NilValue, _("'\\x used without hex digits"));
+			    }
+			    val = 'x';
+			}
+			break;
+		    }
 		    val = 16*val + ext;
 		}
 		c = val;
@@ -2060,7 +2083,18 @@ static int StringValue(int c, Rboolean forSymbol)
 		    if(c >= '0' && c <= '9') ext = c - '0';
 		    else if (c >= 'A' && c <= 'F') ext = c - 'A' + 10;
 		    else if (c >= 'a' && c <= 'f') ext = c - 'a' + 10;
-		    else {xxungetc(c); CTEXT_POP(); break;}
+		    else {
+			xxungetc(c); 
+			CTEXT_POP();
+			if (i == 0) { /* was just \x */
+			    if(GenerateCode && R_WarnEscapes) {
+				have_warned++;
+				warningcall(R_NilValue, _("\\u used without hex digits"));
+			    }
+			    val = 'u';
+			}
+			break;
+		    }
 		    val = 16*val + ext;
 		}
 		if(delim) {
@@ -2104,7 +2138,18 @@ static int StringValue(int c, Rboolean forSymbol)
 			if(c >= '0' && c <= '9') ext = c - '0';
 			else if (c >= 'A' && c <= 'F') ext = c - 'A' + 10;
 			else if (c >= 'a' && c <= 'f') ext = c - 'a' + 10;
-			else {xxungetc(c); CTEXT_POP(); break;}
+			else {
+			    xxungetc(c); 
+			    CTEXT_POP();
+			    if (i == 0) { /* was just \x */
+				if(GenerateCode && R_WarnEscapes) {
+				    have_warned++;
+				    warningcall(R_NilValue, _("\\U used without hex digits"));
+				}
+				val = 'U';
+			    }
+			    break;
+			}
 			val = 16*val + ext;
 		    }
 		    if(delim) {
@@ -2169,7 +2214,8 @@ static int StringValue(int c, Rboolean forSymbol)
        else if(mbcslocale) {
            int i, clen;
            wchar_t wc = L'\0';
-           clen = utf8locale ? utf8clen(c): mbcs_get_next(c, &wc);
+	   /* We can't assume this is valid UTF-8 */
+           clen = /* utf8locale ? utf8clen(c):*/ mbcs_get_next(c, &wc);
 	   WTEXT_PUSH(wc);
            for(i = 0; i < clen - 1; i++){
                STEXT_PUSH(c);
@@ -2301,7 +2347,8 @@ static int SymbolValue(int c)
 #if defined(SUPPORT_MBCS)
     if(mbcslocale) {
 	wchar_t wc; int i, clen;
-	clen = utf8locale ? utf8clen(c) : mbcs_get_next(c, &wc);
+	   /* We can't assume this is valid UTF-8 */
+	clen = /* utf8locale ? utf8clen(c) :*/ mbcs_get_next(c, &wc);
 	while(1) {
 	    /* at this point we have seen one char, so push its bytes 
 	       and get one more */
@@ -2521,6 +2568,11 @@ static int token(void)
 	yylval = install(yytext);
 	return c;
     case '*':
+	/* Replace ** by ^.  This has been here since 1998, but is
+	   undocumented (at least in the obvious places).  It is in
+	   the index of the Blue Book with a reference to p. 431, the
+	   help for 'Deprecated'.  S-PLUS 6.2 still allowed this, so
+	   presumably it was for compatibility with S. */
 	if (nextchar('*'))
 	    c='^';
 	yytext[0] = c;

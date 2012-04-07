@@ -52,13 +52,21 @@
   a device to be opened.  Which device is given by
   \code{\link{options}("device")} which is initially set as the most
   appropriate for each platform: a screen device for most interactive use and
-  \code{\link{pdf}} otherwise.  The exception is interactive
-  use under Unix if no screen device is known to be available, when
-  \code{pdf()} is used for most systems.
+  \code{\link{pdf}} (or the setting of \env{R\_DEFAULT\_DEVICE})
+  otherwise.  The exception is interactive use under Unix if no screen
+  device is known to be available, when \code{pdf()}is used.
 }
 \seealso{
   The individual help files for further information on any of the
   devices listed here;
+#ifdef windows
+  \code{\link{windows.options}},
+#endif
+#ifdef unix
+  \code{\link{X11}.options}, \code{\link{quartz.options}},
+#endif
+  \code{\link{ps.options}} and \code{\link{pdf.options}} for how to
+  customize devices.
 
   \code{\link{dev.interactive}},
   \code{\link{dev.cur}}, \code{\link{dev.print}},
@@ -73,6 +81,6 @@
 \examples{\dontrun{
 ## open the default screen device on this platform if no device is
 ## open
-if(dev.cur() == 1) get(getOption("device"))()
+if(dev.cur() == 1) dev.new()
 }}
 \keyword{device}

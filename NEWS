@@ -6,6 +6,230 @@
 	**************************************************
 
 
+		CHANGES IN R VERSION 2.7.1
+
+
+NEW FEATURES
+
+    o	tools::texi2dvi() has a new argument 'texinputs' to allow the
+	TeX and bibtex input paths to be specified (even on MiKTeX).
+
+    o	dev.copy2pdf() gains an 'out.type' argument to allow it to be
+	used with cairo_pdf() or quartz(type = "pdf").
+
+    o	poly() has additional checks against user error (as in PR#11243).
+
+    o	The Mac OS quartz() device draws contiguous lines much faster.
+
+    o	A field containing just a sign is no longer regarded as numeric
+	(it was on all platforms in 2.7.0, but not on most in earlier
+	versions of R).  Similarly, '.' is now always non-numeric.
+
+    o	CITATION files are now read in Latin-1: quite a few were
+	failing if used in a multibyte locale such as UTF-8.
+
+    o	The DESCRIPTION file of a package can specify an 'OS_type' field
+	as either 'unix' or 'windows' to confine installation to that
+	OS type.
+
+    o	HoltWinters() now uses optimize() rather than optim for
+	one-parameter problems which should be more reliable (PR#11469).
+
+    o	axis() now respects the setting of par("xpd") when clipping.
+
+    o	The 'factor' method of format() now preserves names, dims and
+	dimnames in the same way as for character and numeric inputs.
+	(PR#11512)
+
+    o	read.DIF(*, transpose=TRUE) now allows to correctly read DIF files
+	produced by some versions of Excel.
+
+
+DEPRECATED & DEFUNCT
+
+    o	The use of unserialize() on character strings is deprecated:
+	that was a format used in R < 2.4.0.
+
+    o	The use of embedded nuls in character strings is deprecated:
+	They will no longer be allowed in R 2.8.0.
+
+
+UTILITIES
+
+    o	R CMD check checks for possible check directories in the
+	sources -- in mid-2008 there were about 20 examples on CRAN.
+
+    o	R CMD build tries harder to clean up the inst/doc directory
+	from the remnants of earlier builds.
+
+	It also removes any directories with extension .Rcheck, and
+	files .DS_Store and ._* (created by tar on Mac OS X under some
+	circumstances: it now sets environment variables to ask for
+	such files not to be created by that tar.)
+
+
+BUG FIXES
+
+    o	Encoding<- on NA_character_ converted it to "NA".
+
+    o	Adobe Symbol was missing from the encodings in
+	tools::charset_to_Unicode.
+
+    o	diag(matrix(x, 0, 0)) now returns a 0-length vector of the
+	correct mode, instead of always numeric.
+
+    o	The parser sometimes accepted invalid quoted strings in a UTF-8
+	locale.
+
+    o	plot.default(x, y) now dispatches to Axis() methods whether
+	y is NULL or not.
+
+    o	On Mac OS X, the Cocoa Quartz window could close without warning
+	under certain circumstances (specific autorelease pool flush).
+
+    o	Plotting symbols with separate border and fill colours (e.g.,
+	plot(pch = 21)) now works with transparent 'col', but opaque
+	or semi-transparent 'bg'.  Previously, if 'col' was
+	transparent then 'bg' was ignored and nothing was drawn.
+
+    o	file.path() did not work correctly in 2.7.0 if the components
+	had different encodings.
+
+    o	merge() failed if there were no common columns and one of the
+	inputs had zero rows.
+
+    o	expand.grid() failed if an input had length 0.
+
+    o	match() does again truncate strings at embedded nuls (as newly
+	documented in 2.7.0).
+
+    o	Because of a typo, 'pointsize' in png(type="cairo") (and jpeg,
+	bmp, tiff) devices was being interpreted in pixels not bigpoints.
+
+    o	is() was wrong for some S3 class objects with class of length
+	greater than one.
+
+    o	undoc() / codoc() were not checking all S4 methods in some cases.
+
+    o	Use of textConnection(NULL, mode="w") could segfault.
+
+    o	Use of strwidth/height(units="user") (the default) is again an
+	error before a user coordinate system has been set on the
+	device, rather than giving nonsensical values (the effect of
+	r31367).
+
+    o	Rare string width calculations in package grid were not
+	interpreting the string encoding correctly.
+
+    o	hasMethods(f, env) {without specified 'package'} now works better.
+
+    o	A missing PROTECT could cause segfaults on string
+	comparisons.  (PR#11421)
+
+    o	str(structure(1, classID = "Pooh")) now works fine.
+
+    o	A missing PROTECT could cause segfaults in if() if coercion of
+	the condition was required or a warning was to be given.
+
+    o	plot(<table>) now uses a sensible default main title.
+
+    o	validObject() called with complete=TRUE did not use inherited
+	validity methods for slot classes.
+
+    o	Several bugs fixed in as(): the initial method lookup was not
+	using the table with inherited methods (so inheritance had to
+	be recomputed each time); coerce() should not be called
+	directly--it can insert invalid inherited methods; the
+	constructed as() methods were not retaining the function's
+	environment.
+
+    o	influence.measures(<glm-object>) now computes the same
+	Cook's distance approximations as cooks.distance().
+
+    o	plot(<glm>, which=5) uses more correct Cook's distance contours;
+	(fix to fix to PR#9316).
+
+    o	pdf() and postscript() were not working correctly in 2.7.0 with
+	UTF-8 encoded data in a non-UTF-8 MBCS (e.g. EUC-JP on Unix,
+	CJK locales on Windows).
+
+    o	conformMethod(), called by setMethod(), now checks better about
+	argument names in wrong order.  Whereas it only warns currently,
+	it is planned to become an error in the future.
+
+    o	The predict() method for prcomp() had an incorrect check for
+	the number of columns of 'newdata' if the columns were not named.
+
+    o	The axis() function now distinguishes between setting "at" to
+	NULL or a zero-length vector, treating the latter as a request
+	for no ticks.  This corrects the handling of the "x" parameter
+	to rug().
+
+    o	glob2rx("*[*") now produces a correct regular expression.
+
+    o	The canvas is no longer painted on copy or save in Cocoa Quartz.
+
+    o	identify() in Quartz can now be terminated by either using popup
+	menu equivalent (Ctrl-click or second mouse button) or by pressing
+	the <Esc> key. The latter was documented but did not work.
+
+    o	tools:::.check_package_depends() {called from 'R CMD check'} now
+	also works correctly when directory-name != package-name.
+
+    o	Source references were sometimes off by a line.
+
+    o	The quartz() parameter 'antialias' is no longer ignored.
+
+    o	The Quartz device is now trying hard to remove anti-aliasing
+	effects for rasterized backends in plots that use adjacent,
+	borderless rectangles such as image().
+
+    o	The srcfilecopy() function now adds a timestamp to the object it
+	creates.
+
+    o	parse() would lose a token when run on stdin().
+
+    o	socketConnection() was using internally the class "socket"
+	and not "sockconn", which caused a conflict with make.socket().
+	(PR#11515)
+
+    o	Quartz is now trying harder to find the proper font for a given
+	family which resolves font issues on Mac OS X 10.4. Full font
+	names and PostScript names can be used interchangeably. (Note,
+	however that italic/oblique font faces of Helvetica are not
+	included in the Mac OS X 10.4 system).
+
+    o	qf() no longer gives NaN when one of df1 and df2 is large and
+	the other is infinite (including if both are infinite); it is more
+	accurate e.g. for qf(1e-18, 2,4).
+
+    o	qbeta(-1e10, 50, 40, log.p=TRUE) no longer hangs.
+
+    o	Cocoa Quartz backend autodetection of display DPI was not
+	correct for screens rotated by 90 or 270 degrees.
+
+    o	selectMethod("coerce", .) now uses a correct default for
+	'useInherited', and hence no longer may mess up the method cache.
+
+    o	show() now also works on "unregistered" S3 class objects.
+
+    o	formatC(*, format="fg", flag="#") is no longer dropping trailing
+	zeros.
+
+    o	read.table(file = stdin()) with invalid input could leave the
+	connection in an invalid state and hence cause a later
+	segfault.  (PR#11627)
+
+    o	read.DIF() did not obey the default 'stringsAsFactors = TRUE'.
+
+    o	The 'noquote' method for c() now works correctly with three or
+	more arguments.
+
+    o	symbol() in plotmath expressions works again with non-ASCII
+    	input on devices that use UTF-8 for the symbol font.
+
+
+
 		CHANGES IN R VERSION 2.7.0
 
 
@@ -136,7 +360,7 @@ NEW FEATURES
     o	Extensions to condition number computation for matrices, notably
 	complex ones are provided, both in kappa() and the new rcond().
 
-    o	list.file() gains a 'ignore.case' argument, to allow
+    o	list.files() gains a 'ignore.case' argument, to allow
 	case-insensitive matching on some Windows/MacOS file systems.
 
     o	ls.str() and lsf.str() have slightly changed arguments and
@@ -440,7 +664,7 @@ GRAPHICS CHANGES
 	devices (it used to prompt for all devices).
 
     o	When plot.default() is called with y=NULL it now calls Axis()
-    	with the 'y' it constructs rather than use the default axis.
+	with the 'y' it constructs rather than use the default axis.
 
 
 DEPRECATED & DEFUNCT
@@ -525,7 +749,7 @@ INSTALLATION
     o	libtool has been updated to version 2.2.
 
     o	Use of --with-system-zlib, --with-system-bzlib or
-    	--with-system-pcre now requires version >= 1.2.3, 1.0.5, 7.6
+	--with-system-pcre now requires version >= 1.2.3, 1.0.5, 7.6
 	respectively, for security.
 
 
@@ -747,7 +971,7 @@ BUG FIXES
 	conflicting local names in the method definition.
 
     o	qgamma() and qchisq() could be inaccurate for small p,
-    	e.g. qgamma(1.2e-10, shape = 19) was 2.52 rather than 2.73.
+	e.g. qgamma(1.2e-10, shape = 19) was 2.52 rather than 2.73.
 
     o	dbeta(.., ncp) is now more accurate for large ncp, and typically no
 	longer underflows for give.log = TRUE.
@@ -755,10 +979,10 @@ BUG FIXES
     o	coerce() is now a proper S4 object and so prints correctly.
 
     o	@ now checks it is being applied to an S4 object, and if not
-    	gives a warning (which will become an error in 2.8.0).
+	gives a warning (which will become an error in 2.8.0).
 
     o	dump() and friends now warn that all S4 objects (even those
-    	based on vectors) are not source()able, with a stronger wording.
+	based on vectors) are not source()able, with a stronger wording.
 
     o	read.dcf(all = TRUE) was leaking connections.
 
@@ -773,7 +997,7 @@ BUG FIXES
 	name space was unloaded.
 
     o	getNativeSymbolInfo() was unaware of non-registered Fortran
-    	names, because one of the C support routines ignored them.
+	names, because one of the C support routines ignored them.
 
     o	load() again reads correctly character strings with embedded nuls.
 	(This was broken in 2.6.x, but worked in earlier versions.)
