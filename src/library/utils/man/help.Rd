@@ -28,13 +28,14 @@ help(topic, package = NULL, lib.loc = NULL,
    See \sQuote{Details} for what happens if this is omitted.
  }
  \item{package}{a name or character vector giving the packages to look
-   into for documentation, or \code{NULL}. By default, all packages in
-   the search path are used. To avoid a name being deparsed use e.g.
-   \code{(pkg_ref)}.}
+   into for documentation, or \code{NULL}.  By default, all packages in
+   the search path are used.  To avoid a name being deparsed use e.g.
+   \code{(pkg_ref)} (see the examples).}
  \item{lib.loc}{a character vector of directory names of \R libraries,
    or \code{NULL}.  The default value of \code{NULL} corresponds to all
    libraries currently known.  If the default is used, the loaded
-   packages are searched before the libraries.}
+   packages are searched before the libraries.  This is not used for
+   HTML help (see \sQuote{Details}.}
  \item{verbose}{logical; if \code{TRUE}, the file name is reported.}
  \item{try.all.packages}{logical; see \code{Note}.}
  \item{help_type}{character string: the type of help required.
@@ -80,11 +81,11 @@ help(topic, package = NULL, lib.loc = NULL,
   none of the first three arguments is specified.
 
   Some topics need to be quoted (by \link{backtick}s) or given as a
-  character string.  There include those which cannot syntactically
+  character string.  These include those which cannot syntactically
   appear on their own such as unary and binary operators,
   \code{function} and control-flow \link{reserved} words (including
   \code{if}, \code{else} \code{for}, \code{in}, \code{repeat},
-  \code{while}, \code{break} and \code{next}.  The other \code{reserved}
+  \code{while}, \code{break} and \code{next}).  The other \code{reserved}
   words can be used as if they were names, for example \code{TRUE},
   \code{NA} and \code{Inf}.
 
@@ -93,6 +94,10 @@ help(topic, package = NULL, lib.loc = NULL,
   first on the search path is used.  (For HTML help the menu will be an
   HTML page, otherwise a graphical menu if possible if
   \code{\link{getOption}("menu.graphics")} is true, the default.)
+  
+  Note that HTML help does not make use of \code{lib.loc}: it will
+  always look first in the attached packages and then along
+  \code{.libPaths()}.
 }
 
 \section{Offline help}{
@@ -172,5 +177,9 @@ help(topi)
 try(help("bs", try.all.packages=FALSE)) # reports not found (an error)
 help("bs", try.all.packages=TRUE)       # reports can be found
                                         # in package 'splines'
-}
+
+\donttest{## For programmatic use:
+topic <- "family"; pkg_ref <- "stats"
+help((topic), (pkg_ref))
+}}
 \keyword{documentation}

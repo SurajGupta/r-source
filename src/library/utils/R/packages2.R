@@ -279,7 +279,7 @@ install.packages <-
     } else {
         if(substr(type, 1L, 10L) == "mac.binary") {
             if(!length(grep("darwin", R.version$platform)))
-                stop("cannot install MacOS X binary packages on this plaform")
+                stop("cannot install MacOS X binary packages on this platform")
             .install.macbinary(pkgs = pkgs, lib = lib, contriburl = contriburl,
                                method = method, available = available,
                                destdir = destdir,
@@ -288,7 +288,7 @@ install.packages <-
         }
 
         if(type %in% "win.binary")
-            stop("cannot install Windows binary packages on this plaform")
+            stop("cannot install Windows binary packages on this platform")
 
         if(!file.exists(file.path(R.home("bin"), "INSTALL")))
             stop("This version of R is not set up to install source packages\nIf it was installed from an RPM, you may need the R-devel RPM")
@@ -337,8 +337,8 @@ install.packages <-
     }
 
     tmpd <- destdir
-    nonlocalcran <- length(grep("^file:", contriburl)) < length(contriburl)
-    if(is.null(destdir) && nonlocalcran) {
+    nonlocalrepos <- length(grep("^file:", contriburl)) < length(contriburl)
+    if(is.null(destdir) && nonlocalrepos) {
         tmpd <- file.path(tempdir(), "downloaded_packages")
         if (!file.exists(tmpd) && !dir.create(tmpd))
             stop(gettextf("unable to create temporary directory '%s'", tmpd),
@@ -380,9 +380,14 @@ install.packages <-
                      domain = NA)
             mfile <- file.path(tmpd, "Makefile")
             conn <- file(mfile, "wt")
-            cat("all: ", paste(paste(update[, 1L], ".ts", sep=""),
-                               collapse=" "),
-                "\n", sep = "", file = conn)
+            deps <- paste(paste(update[, 1L], ".ts", sep=""), collapse=" ")
+            deps <- strwrap(deps, width = 75, exdent = 2)
+            deps <- paste(deps, collapse=" \\\n")
+            cat("all: ", deps, "\n", sep = "", file = conn)
+            nms <- rownames(available)
+            aDL <- vector("list", length(nms))
+            names(aDL) <- nms
+            for (i in seq_along(nms)) aDL[[i]] <- .clean_up_dependencies(available[i, c("Depends", "Imports", "LinkingTo"), drop = FALSE])
             for(i in seq_len(nrow(update))) {
                 pkg <- update[i, 1L]
                 cmd <- paste(cmd0, "-l", shQuote(update[i, 2L]),
@@ -390,12 +395,21 @@ install.packages <-
                              getConfigureVars(update[i, 3L]),
                              update[i, 3L],
                              ">", paste(pkg, ".out", sep=""), "2>&1")
-                deps <- DL[[pkg]]
+                ## We need recursive dependencies, not just direct ones
+                p <- DL[[pkg]]
+                repeat {
+                    extra <- unlist(aDL[p[p %in% nms]])
+                    extra <- extra[extra != pkg]
+                    deps <- unique(c(p, extra))
+                    if (length(deps) <= length(p)) break
+                    p <- deps
+                }
                 deps <- deps[deps %in% pkgs]
+                ## very unikely to be too long
                 deps <- if(length(deps))
                     paste(paste(deps, ".ts", sep=""), collapse=" ") else ""
                 cat(paste(pkg, ".ts: ", deps, sep=""),
-                    paste("\t@echo installing package", pkg),
+                    paste("\t@echo begin installing package", sQuote(pkg)),
                     paste("\t@", cmd, " && touch ", pkg, ".ts", sep=""),
                     paste("\t@cat ", pkg, ".out", sep=""),
                     "", sep="\n", file = conn)
@@ -430,7 +444,7 @@ install.packages <-
                                      update[i, 1L]), domain = NA)
             }
         }
-        if(!is.null(tmpd) && is.null(destdir))
+        if(nonlocalrepos && !is.null(tmpd) && is.null(destdir))
             cat("\n", gettextf("The downloaded packages are in\n\t%s",
                                sQuote(normalizePath(tmpd, mustWork = FALSE))),
                 "\n", sep = "")

@@ -1071,7 +1071,7 @@ and a 64-bit version.
 You need @code{libpng}, @code{jpeg} and @code{libtiff} sources
 (available, e.g., from @uref{http://www.libpng.org/},
 @uref{http://www.ijg.org} and
-@uref{ftp://ftp.remotesensing.org/@/pub/@/libtiff/}).  The earliest
+@uref{http://download.osgeo.org/@/libtiff/}.  The earliest
 versions that have been tested are @file{libpng-1.4.5.tar.gz},
 @file{jpegsrc.v8b.tar.gz}, @file{tiff-3.9.4.tar.gz} (including betas of
 @file{tiff-4.0.0}).  It is also possible to use @samp{libjpeg-turbo}
@@ -2013,7 +2013,9 @@ simplest way to set up such a file is to use function
 which fields are needed.  Optionally there can also be a
 @file{PACKAGES.gz} file, a @command{gzip}-compressed version of
 @file{PACKAGES}---as this will be downloaded in preference to
-@file{PACKAGES} it should be included for large repositories.
+@file{PACKAGES} it should be included for large repositories.  (If you
+have a mis-configured server that does not report correctly non-existent
+files you will need @file{PACKAGES.gz}.)
 
 To add your repository to the list offered by @code{setRepositories()},
 see the help file for that function.
@@ -2156,7 +2158,7 @@ Optionally, a modifier, for example to indicate that Austria is to be
 considered pre- or post-Euro.  The modifier is also used to indicate the
 script (@code{@@latin}, @code{@@cyrillic}, @code{@@iqtelif}) or language
 dialect (e.g.@: @code{saaho}, a dialect of Afar, and @code{bokmal} and
-@code{nynorsk}, dialects of Norwegian regarded by some OSes are separate
+@code{nynorsk}, dialects of Norwegian regarded by some OSes as separate
 languages, @code{no} and @code{nn}).
 @end itemize
 
@@ -2659,6 +2661,19 @@ for @code{glibc} but not of most commercial Unixes.  However, you can
 make use of @acronym{GNU} @code{libiconv} (possibly as a plug-in
 replacement: see @uref{http://www.gnu.org/@/software/@/libiconv/}).
 
+An implementation of @acronym{XDR} is required.  This is part of
+@acronym{RPC} and historically has been part of @file{libc} on a
+Unix-alike: however some builds@footnote{when built by default, but not
+for example as built for Fedora 15.} @code{glibc 2.14} hide it.  The
+intention seems to be that the @acronym{TI-RPC} library be used instead,
+in which case @code{libtirpc} (and its development version) needs to be
+installed, and its headers need to be on the C include path (and
+@command{configure} tries @file{/usr/include/tirpc} if the headers are
+not found on the standard include path).  The @R{} sources contain a
+simple implementation of @acronym{XDR} which in recent versions can be
+used on platforms with 32-bit or 64-bit @code{long} (and earlier ones
+will fail to compile unless @code{long} is 32-bit).
+
 The OS needs to have enough support@footnote{specifically, the C99
 functionality of headers @file{wchar.h} and @file{wctype.h}, types
 @code{wctans_t} and @code{mbstate_t} and functions @code{mbrtowc},
@@ -2766,17 +2781,19 @@ The bitmapped graphics devices @code{jpeg()}, @code{png()} and
 @code{tiff()} need the appropriate headers and libraries installed:
 @code{jpeg} (version 6b or later, or @code{libjpeg-turbo}) or
 @code{libpng} (version 1.2.7 or later, including 1.4.x and 1.5.x) and
-@code{zlib} or @code{libtiff} (any recent version of 3.x.y -- 3.8.2 and
-3.9.[124] have been tested) respectively.
+@code{zlib} or @code{libtiff} (any recent version of 3.x.y -- 3.9.[45]
+have been tested) respectively.
 
 If you have them installed (including the appropriate headers and of
 suitable versions), @code{zlib}, @code{libbz2} and PCRE will be used if
 specified by @option{--with-system-zlib} (version 1.2.3 or later, but
 beware that bugs have been found with 1.2.4 and 1.2.5, and these should
 not be used on 32-bit Linux systems with LFS),
-@option{--with-system-bzlib} or @option{--with-system-pcre}: otherwise
-versions in the @R{} sources will be compiled in.  As the latter suffice
-and are tested with @R{} you should not need to change this.
+@option{--with-system-bzlib} or @option{--with-system-pcre} (version
+8.10 or later, preferably 8.13 which is what is supplied with @R{}):
+otherwise versions in the @R{} sources will be compiled in.  As the
+latter suffice and are tested with @R{} you should not need to change
+this.
 
 @code{liblzma} from @code{xz-utils} version 4.999 or later (preferably
 5.0.0 or later) will be used if installed: the version in the @R{}

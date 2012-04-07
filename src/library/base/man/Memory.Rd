@@ -1,6 +1,6 @@
 % File src/library/base/man/Memory.Rd
 % Part of the R package, http://www.R-project.org
-% Copyright 1995-2010 R Core Development Team
+% Copyright 1995-2011 R Core Development Team
 % Distributed under GPL 2 or later
 
 \name{Memory}
@@ -27,26 +27,24 @@ mem.limits(nsize = NA, vsize = NA)
 \arguments{
   \item{vl, vu, vsize}{Heap memory in bytes.}
   \item{nl, nu, nsize}{Number of cons cells.}
-  \item{N}{Number of nested \code{PROTECT} calls.}.
+  \item{N}{Number of nested \code{PROTECT} calls.}
 }
 \details{
-  \R has a variable-sized workspace.  There is
-  much less need to set memory options than prior to \R 1.2.0, and most
-  users will never need to set these.  They are provided both as a way
-  to control the overall memory usage (which can also be done
-  by operating-system facilities such as \code{limit} on Unix and by
-  using the command-line option \option{--max-mem-size} on Windows),
-  and since setting larger values of the minima will make \R slightly
-  more efficient on large tasks.
+  \R has a variable-sized workspace.  These limits are mainly
+  historical, and now used only exceptionally.  They were provided both
+  as a way to control the overall memory usage (which can be done better
+  by operating-system facilities such as \code{ulimit} or \code{limit}
+  in a Unix-alike shell or by using the command-line option
+  \option{--max-mem-size} on Windows), and since setting larger values
+  of the minimum sizes will make \R slightly more efficient on large
+  tasks.
 
 #ifdef windows
   (On Windows the \option{--max-mem-size} option sets the maximum memory
   allocation: it has a minimum allowed value of 32M.  This is intended
   to catch attempts to allocate excessive amounts of memory which may
-  cause other processes to run out of resources.  The default is the
-  smaller of the amount of physical RAM in the machine and 1.5Gb (or
-  2.5Gb if the version of Windows in use allows 3Gb per user process).
-  See also \code{\link{memory.limit}}.)
+  cause other processes to run out of resources.  See also
+  \code{\link{memory.limit}}.)
 #endif
 
   To understand the options, one needs to know that \R maintains
@@ -69,18 +67,20 @@ mem.limits(nsize = NA, vsize = NA)
     1048576}), (computer) \emph{Kilo} (\eqn{2^{10} = 1024}), or regular
   \emph{kilo} (1000).
 
-  The \option{--min-*} options set the minimal sizes for the number of
-  cons cells and for the vector heap.  These values are also the initial
-  values, but thereafter \R will grow or shrink the areas depending on
-  usage, but never exceeding the limits set by the \option{--max-*}
-  options nor decreasing below the initial values.
+  The \option{--min-*} options set the \sQuote{minimal} sizes for the
+  number of cons cells and for the vector heap.  These values are also
+  the initial values, but thereafter \R will grow or shrink the areas
+  depending on usage, but never exceeding the limits set by the
+  \option{--max-*} options nor decreasing below the initial values.
+  Note that the areas are not actually allocated initially: rather these
+  values are the sizes for triggering garbage collection.
 
   The default values are currently minima of 350k cons cells, 6Mb of
   vector heap and no maxima (other than machine resources).  The maxima
-  can be changed during an \R session by calling
+  can be increased during an \R session by calling
   \code{\link{mem.limits}}. (If this is called with the default values,
-  it reports the current settings.)
-
+  it reports the current settings.)  Setting values larger than the
+  maximum allowed value (e.g. \code{Inf}) removes the corresponding limit.
 
   You can find out the current memory consumption (the heap and cons
   cells used as numbers and megabytes) by typing \code{\link{gc}()} at the
@@ -88,7 +88,7 @@ mem.limits(nsize = NA, vsize = NA)
   garbage collection always prints memory use statistics.  Maxima will
   never be reduced below the current values for triggering garbage
   collection, and attempts to do so will be silently ignored.
-
+  
   The command-line option \option{--max-ppsize} controls the maximum
   size of the pointer protection stack.  This defaults to 50000, but can
   be increased to allow deep recursion or large and complicated
@@ -99,12 +99,12 @@ mem.limits(nsize = NA, vsize = NA)
 }
 
 \value{
-  \code{mem.limits()} returns an integer vector giving the current
-  settings of the maxima, possibly \code{NA}.
+  \code{mem.limits()} returns a numeric vector giving the current
+  settings of the maxima, possibly \code{NA} (for unlimited).
 }
 
 \seealso{
-  \emph{An Introduction to R} for more command-line options
+  \emph{An Introduction to R} for more command-line options.
 
   \code{\link{Memory-limits}} for the design limitations.
 
@@ -119,12 +119,4 @@ mem.limits(nsize = NA, vsize = NA)
 #endif
 }
 
-\examples{
-# Start R with 10MB of heap memory and 500k cons cells, limit to
-# 100Mb and 1M cells
-\dontrun{
-## Unix
-R --min-vsize=10M --max-vsize=100M --min-nsize=500k --max-nsize=1M
-}
-}
 \keyword{environment}

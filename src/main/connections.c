@@ -366,6 +366,7 @@ int dummy_vfprintf(Rconnection con, const char *format, va_list ap)
 		strcpy(ob, con->init_out);
 		ob += ninit; onb -= ninit; ninit = 0;
 	    }
+	    errno = 0;
 	    ires = Riconv(con->outconv, &ib, &inb, &ob, &onb);
 	    if(ires == (size_t)(-1) && errno == E2BIG) again = TRUE;
 	    if(ires == (size_t)(-1) && errno != E2BIG)
@@ -416,6 +417,7 @@ int dummy_fgetc(Rconnection con)
 	    }
 	    ib = con->iconvbuff; inb = con->inavail;
 	    ob = con->oconvbuff; onb = 50;
+	    errno = 0;
 	    res = Riconv(con->inconv, &ib, &inb, &ob, &onb);
 	    con->inavail = inb;
 	    if(res == (size_t)-1) { /* an error condition */
@@ -876,6 +878,7 @@ static Rboolean fifo_open(Rconnection con)
     else flags = O_WRONLY;
     if(!con->blocking) flags |= O_NONBLOCK;
     if(con->mode[0] == 'a') flags |= O_APPEND;
+    errno = 0; /* precaution */
     fd = open(name, flags);
     if(fd < 0) {
 	if(errno == ENXIO) warning(_("fifo '%s' is not ready"), name);
@@ -1009,6 +1012,7 @@ SEXP attribute_hidden do_fifo(SEXP call, SEXP op, SEXP args, SEXP env)
     con = Connections[ncon] = newfifo(file, strlen(open) ? open : "r");
     con->blocking = block;
     strncpy(con->encname, CHAR(STRING_ELT(enc, 0)), 100); /* ASCII */
+    con->ex_ptr = R_MakeExternalPtr(con->id, install("connection"), R_NilValue);
 
     /* open it if desired */
     if(strlen(open)) {
@@ -1024,8 +1028,6 @@ SEXP attribute_hidden do_fifo(SEXP call, SEXP op, SEXP args, SEXP env)
     SET_STRING_ELT(class, 0, mkChar("fifo"));
     SET_STRING_ELT(class, 1, mkChar("connection"));
     classgets(ans, class);
-    con->ex_ptr = R_MakeExternalPtr(con->id, install("connection"),
-				    R_NilValue);
     setAttrib(ans, R_ConnIdSymbol, con->ex_ptr);
     R_RegisterCFinalizerEx(con->ex_ptr, conFinalizer, FALSE);
     UNPROTECT(2);
@@ -1065,7 +1067,7 @@ static Rboolean pipe_open(Rconnection con)
 	fp = R_popen(con->description, mode);
     if(!fp) {
 	warning(_("cannot open pipe() cmd '%s': %s"), con->description,
-			strerror(errno));
+		strerror(errno));
 	return FALSE;
     }
     ((Rfileconn)(con->private))->fp = fp;
@@ -1167,6 +1169,7 @@ SEXP attribute_hidden do_pipe(SEXP call, SEXP op, SEXP args, SEXP env)
 	con = newpipe(file, ienc, strlen(open) ? open : "r");
     Connections[ncon] = con;
     strncpy(con->encname, CHAR(STRING_ELT(enc, 0)), 100); /* ASCII */
+    con->ex_ptr = R_MakeExternalPtr(con->id, install("connection"), R_NilValue);
 
     /* open it if desired */
     if(strlen(open)) {
@@ -1186,8 +1189,6 @@ SEXP attribute_hidden do_pipe(SEXP call, SEXP op, SEXP args, SEXP env)
 #endif
     SET_STRING_ELT(class, 1, mkChar("connection"));
     classgets(ans, class);
-    con->ex_ptr = R_MakeExternalPtr(con->id, install("connection"),
-				    R_NilValue);
     setAttrib(ans, R_ConnIdSymbol, con->ex_ptr);
     R_RegisterCFinalizerEx(con->ex_ptr, conFinalizer, FALSE);
     UNPROTECT(2);
@@ -1213,6 +1214,7 @@ static Rboolean gzfile_open(Rconnection con)
     if(strchr(con->mode, 'w')) sprintf(mode, "wb%1d", gzcon->compress);
     else if (con->mode[0] == 'a') sprintf(mode, "ab%1d", gzcon->compress);
     else strcpy(mode, "rb");
+    errno = 0; /* precaution */
     fp = gzopen(R_ExpandFileName(con->description), mode);
     if(!fp) {
 	warning(_("cannot open compressed file '%s', probable reason '%s'"),
@@ -1360,6 +1362,7 @@ static Rboolean bzfile_open(Rconnection con)
     /* regardless of the R view of the file, the file must be opened in
        binary mode where it matters */
     mode[0] = con->mode[0];
+    errno = 0; /* precaution */
     fp = R_fopen(R_ExpandFileName(con->description), mode);
     if(!fp) {
 	warning(_("cannot open bzip2-ed file '%s', probable reason '%s'"),
@@ -1545,6 +1548,7 @@ static Rboolean xzfile_open(Rconnection con)
     /* regardless of the R view of the file, the file must be opened in
        binary mode where it matters */
     mode[0] = con->mode[0];
+    errno = 0; /* precaution */
     xz->fp = R_fopen(R_ExpandFileName(con->description), mode);
     if(!xz->fp) {
 	warning(_("cannot open compressed file '%s', probable reason '%s'"),
@@ -1813,6 +1817,7 @@ SEXP attribute_hidden do_gzfile(SEXP call, SEXP op, SEXP args, SEXP env)
     /* see the comment in do_url */
     if (con->encname[0] && !streql(con->encname, "native.enc"))
 	con->canseek = 0;
+    con->ex_ptr = R_MakeExternalPtr(con->id, install("connection"), R_NilValue);
 
     /* open it if desired */
     if(strlen(open)) {
@@ -1838,7 +1843,6 @@ SEXP attribute_hidden do_gzfile(SEXP call, SEXP op, SEXP args, SEXP env)
     }
     SET_STRING_ELT(class, 1, mkChar("connection"));
     classgets(ans, class);
-    con->ex_ptr = R_MakeExternalPtr(con->id, install("connection"), R_NilValue);
     setAttrib(ans, R_ConnIdSymbol, con->ex_ptr);
     R_RegisterCFinalizerEx(con->ex_ptr, conFinalizer, FALSE);
     UNPROTECT(2);
@@ -2442,8 +2446,7 @@ SEXP attribute_hidden do_rawconnection(SEXP call, SEXP op, SEXP args, SEXP env)
     SET_STRING_ELT(class, 0, mkChar("rawConnection"));
     SET_STRING_ELT(class, 1, mkChar("connection"));
     classgets(ans, class);
-    con->ex_ptr = R_MakeExternalPtr(con->id, install("connection"),
-				    R_NilValue);
+    con->ex_ptr = R_MakeExternalPtr(con->id, install("connection"), R_NilValue);
     setAttrib(ans, R_ConnIdSymbol, con->ex_ptr);
     R_RegisterCFinalizerEx(con->ex_ptr, conFinalizer, FALSE);
     UNPROTECT(2);
@@ -2694,8 +2697,15 @@ static int text_vfprintf(Rconnection con, const char *format, va_list ap)
 	    /* retain the last line */
 	    if(strlen(p) >= this->lastlinelength) {
 		int newlen = strlen(p) + 1;
-		this->lastline = realloc(this->lastline, newlen);
-		this->lastlinelength = newlen;
+		void * tmp = realloc(this->lastline, newlen);
+		if (tmp) {
+		    this->lastline = tmp;
+		    this->lastlinelength = newlen;
+		} else {
+		    warning("allocation problem for last line");
+		    this->lastline = NULL;
+		    this->lastlinelength = 0;
+		}
 	    }
 	    strcpy(this->lastline, p);
 	    con->incomplete = strlen(this->lastline) > 0;
@@ -2842,8 +2852,7 @@ SEXP attribute_hidden do_textconnection(SEXP call, SEXP op, SEXP args, SEXP env)
     SET_STRING_ELT(class, 0, mkChar("textConnection"));
     SET_STRING_ELT(class, 1, mkChar("connection"));
     classgets(ans, class);
-    con->ex_ptr = R_MakeExternalPtr(con->id, install("connection"),
-				    R_NilValue);
+    con->ex_ptr = R_MakeExternalPtr(con->id, install("connection"), R_NilValue);
     setAttrib(ans, R_ConnIdSymbol, con->ex_ptr);
     R_RegisterCFinalizerEx(con->ex_ptr, conFinalizer, FALSE);
     UNPROTECT(2);
@@ -2912,6 +2921,7 @@ SEXP attribute_hidden do_sockconn(SEXP call, SEXP op, SEXP args, SEXP env)
     Connections[ncon] = con;
     con->blocking = blocking;
     strncpy(con->encname, CHAR(STRING_ELT(enc, 0)), 100); /* ASCII */
+    con->ex_ptr = R_MakeExternalPtr(con->id, install("connection"), R_NilValue);
 
     /* open it if desired */
     if(strlen(open)) {
@@ -2927,8 +2937,6 @@ SEXP attribute_hidden do_sockconn(SEXP call, SEXP op, SEXP args, SEXP env)
     SET_STRING_ELT(class, 0, mkChar("sockconn"));
     SET_STRING_ELT(class, 1, mkChar("connection"));
     classgets(ans, class);
-    con->ex_ptr = R_MakeExternalPtr(con->id, install("connection"),
-				    R_NilValue);
     setAttrib(ans, R_ConnIdSymbol, con->ex_ptr);
     R_RegisterCFinalizerEx(con->ex_ptr, conFinalizer, FALSE);
     UNPROTECT(2);
@@ -2966,6 +2974,7 @@ SEXP attribute_hidden do_unz(SEXP call, SEXP op, SEXP args, SEXP env)
     ncon = NextConnection();
     con = Connections[ncon] = R_newunz(file, strlen(open) ? open : "r");
     strncpy(con->encname, CHAR(STRING_ELT(enc, 0)), 100); /* ASCII */
+    con->ex_ptr = R_MakeExternalPtr(con->id, install("connection"), R_NilValue);
 
     /* open it if desired */
     if(strlen(open)) {
@@ -2981,8 +2990,6 @@ SEXP attribute_hidden do_unz(SEXP call, SEXP op, SEXP args, SEXP env)
     SET_STRING_ELT(class, 0, mkChar("unz"));
     SET_STRING_ELT(class, 1, mkChar("connection"));
     classgets(ans, class);
-    con->ex_ptr = R_MakeExternalPtr(con->id, install("connection"),
-				    R_NilValue);
     setAttrib(ans, R_ConnIdSymbol, con->ex_ptr);
     R_RegisterCFinalizerEx(con->ex_ptr, conFinalizer, FALSE);
     UNPROTECT(2);
@@ -3335,9 +3342,11 @@ SEXP attribute_hidden do_readLines(SEXP call, SEXP op, SEXP args, SEXP env)
 	while((c = Rconn_fgetc(con)) != R_EOF) {
 	    if(nbuf == buf_size) {
 		buf_size *= 2;
-		buf = (char *) realloc(buf, buf_size);
-		if(!buf)
+		char *tmp = (char *) realloc(buf, buf_size);
+		if(!buf) {
+		    free(buf);
 		    error(_("cannot allocate buffer in readLines"));
+		} else buf = tmp;
 	    }
 	    if(c != '\n') buf[nbuf++] = c; else break;
 	}
@@ -3590,6 +3599,12 @@ SEXP attribute_hidden do_readbin(SEXP call, SEXP op, SEXP args, SEXP env)
 	    error(_("size changing is not supported for complex vectors"));
 	PROTECT(ans = allocVector(CPLXSXP, n));
 	p = (void *) COMPLEX(ans);
+	if((double) n * size > INT_MAX) {
+	    if(isRaw)
+		error(_("only 2^31-1 bytes can be read from a raw vector"));
+	    else
+		error(_("only 2^31-1 bytes can be read in a single readBin() call"));
+	}
 	m = isRaw ? rawRead(p, size, n, bytes, nbytes, &np)
 	    : con->read(p, size, n, con);
 	if(swap)
@@ -3663,7 +3678,15 @@ SEXP attribute_hidden do_readbin(SEXP call, SEXP op, SEXP args, SEXP env)
 	} else
 	    error(_("invalid '%s' argument"), "what");
 
+	if(!signd && (mode != 1 || size > 2))
+	    warning(_("'signed = FALSE' is only valid for integers of sizes 1 and 2"));
 	if(size == sizedef) {
+	    if((double) n * size > INT_MAX) {
+		if(isRaw)
+		    error(_("only 2^31-1 bytes can be read from a raw vector"));
+		else
+		    error(_("only 2^31-1 bytes can be read in a single readBin() call"));
+	    }
 	    m = isRaw ? rawRead(p, size, n, bytes, nbytes, &np)
 		: con->read(p, size, n, con);
 	    if(swap && size > 1)
@@ -3671,7 +3694,7 @@ SEXP attribute_hidden do_readbin(SEXP call, SEXP op, SEXP args, SEXP env)
 	} else {
 	    char buf[size];
 	    int s;
-	    if(mode == 1) {
+	    if(mode == 1) { /* integer result */
 		for(i = 0, m = 0; i < n; i++) {
 		    s = isRaw ? rawRead(buf, size, 1, bytes, nbytes, &np)
 			: con->read(buf, size, 1, con);
@@ -3703,7 +3726,7 @@ SEXP attribute_hidden do_readbin(SEXP call, SEXP op, SEXP args, SEXP env)
 			error(_("size %d is unknown on this machine"), size);
 		    }
 		}
-	    } else if (mode == 2) {
+	    } else if (mode == 2) { /* double result */
 		for(i = 0, m = 0; i < n; i++) {
 		    s = isRaw ? rawRead(buf, size, 1, bytes, nbytes, &np)
 			: con->read(buf, size, 1, con);
@@ -3777,7 +3800,7 @@ SEXP attribute_hidden do_writebin(SEXP call, SEXP op, SEXP args, SEXP env)
 	if(isRaw)
 	    error(_("only 2^31-1 bytes can be written to a raw vector"));
 	else
-	    error(_("only 2^31-1 bytes can be written in a single readBin() call"));
+	    error(_("only 2^31-1 bytes can be written in a single writeBin() call"));
     }
 
     if(!wasopen) {
@@ -4321,12 +4344,12 @@ void con_pushback(Rconnection con, Rboolean newLine, char *line)
     char **q;
 
     if(nexists > 0) {
-	q = con->PushBack =
-	    (char **) realloc(con->PushBack, (nexists+1)*sizeof(char *));
+	q = (char **) realloc(con->PushBack, (nexists+1)*sizeof(char *));
     } else {
-	q = con->PushBack = (char **) malloc(sizeof(char *));
+	q = (char **) malloc(sizeof(char *));
     }
     if(!q) error(_("could not allocate space for pushBack"));
+    else con->PushBack = q;
     q += nexists;
     *q = (char *) malloc(strlen(line) + 1 + newLine);
     if(!(*q)) error(_("could not allocate space for pushBack"));
@@ -4361,13 +4384,12 @@ SEXP attribute_hidden do_pushback(SEXP call, SEXP op, SEXP args, SEXP env)
 	error(_("can only push back on text-mode connections"));
     nexists = con->nPushBack;
     if((n = length(stext)) > 0) {
-	if(nexists > 0) {
-	    q = con->PushBack =
-		(char **) realloc(con->PushBack, (n+nexists)*sizeof(char *));
-	} else {
-	    q = con->PushBack = (char **) malloc(n*sizeof(char *));
-	}
+	if(nexists > 0)
+	    q = (char **) realloc(con->PushBack, (n+nexists)*sizeof(char *));
+	else
+	    q = (char **) malloc(n*sizeof(char *));
 	if(!q) error(_("could not allocate space for pushBack"));
+	con->PushBack = q;
 	q += nexists;
 	for(i = 0; i < n; i++) {
 	    p = translateChar(STRING_ELT(stext, n - i - 1));
@@ -4773,6 +4795,10 @@ SEXP attribute_hidden do_url(SEXP call, SEXP op, SEXP args, SEXP env)
        connection intended to be used in binary mode? */
     if (con->encname[0] && !streql(con->encname, "native.enc"))
 	con->canseek = 0;
+    /* This is referenced in do_getconnection, so set up before
+       any warning */
+    con->ex_ptr = R_MakeExternalPtr(con->id, install("connection"), R_NilValue);
+
     /* open it if desired */
     if(strlen(open)) {
 	Rboolean success = con->open(con);
@@ -4787,8 +4813,6 @@ SEXP attribute_hidden do_url(SEXP call, SEXP op, SEXP args, SEXP env)
     SET_STRING_ELT(class, 0, mkChar(class2));
     SET_STRING_ELT(class, 1, mkChar("connection"));
     classgets(ans, class);
-    con->ex_ptr = R_MakeExternalPtr(con->id, install("connection"),
-				    R_NilValue);
     setAttrib(ans, R_ConnIdSymbol, con->ex_ptr);
     R_RegisterCFinalizerEx(con->ex_ptr, conFinalizer, FALSE);
     UNPROTECT(2);
@@ -5083,12 +5107,12 @@ static int gzcon_fgetc(Rconnection con)
 }
 
 
-/* gzcon(con, level) */
+/* gzcon(con, level, allowNonCompressed) */
 SEXP attribute_hidden do_gzcon(SEXP call, SEXP op, SEXP args, SEXP rho)
 {
     SEXP ans, class;
     int icon, level, allow;
-    Rconnection incon=NULL, new=NULL;
+    Rconnection incon = NULL, new = NULL;
     char *m, *mode = NULL /* -Wall */,  description[1000];
 
     checkArity(op, args);
@@ -5150,22 +5174,20 @@ SEXP attribute_hidden do_gzcon(SEXP call, SEXP op, SEXP args, SEXP rho)
     ((Rgzconn)(new->private))->nsaved = -1;
     ((Rgzconn)(new->private))->allow = allow;
 
-    /* as there might not be an R-level reference to the wrapped
-       connection */
+    /* as there might not be an R-level reference to the wrapped connection */
     R_PreserveObject(incon->ex_ptr);
 
     Connections[icon] = new;
     strncpy(new->encname, incon->encname, 100);
+    new->ex_ptr = R_MakeExternalPtr((void *)new->id, install("connection"),
+				    R_NilValue);
     if(incon->isopen) new->open(new);
-    /* show we do encoding here */
 
     PROTECT(ans = ScalarInteger(icon));
     PROTECT(class = allocVector(STRSXP, 2));
     SET_STRING_ELT(class, 0, mkChar("gzcon"));
     SET_STRING_ELT(class, 1, mkChar("connection"));
     classgets(ans, class);
-    new->ex_ptr = R_MakeExternalPtr((void *)new->id, install("connection"),
-				    R_NilValue);
     setAttrib(ans, R_ConnIdSymbol, new->ex_ptr);
     R_RegisterCFinalizerEx(new->ex_ptr, conFinalizer, FALSE);
     UNPROTECT(2);

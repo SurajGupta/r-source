@@ -81,7 +81,7 @@ pdf(file = ifelse(onefile, "Rplots.pdf", "Rplot\%03d.pdf"),
   \item{fillOddEven}{logical controlling the polygon fill mode:  see
     \code{\link{polygon}} for details.  Defaults to \code{FALSE}.}
   \item{maxRasters}{integer.  The maximum number of raster images that
-    can be stored in this PDF document. }
+    can be stored in this PDF document.  Defaults to \code{1000}.}
 }
 \details{
   All arguments except \code{file} default to values given by
@@ -177,7 +177,7 @@ pdf(file = ifelse(onefile, "Rplots.pdf", "Rplot\%03d.pdf"),
 
   If you are planning to use a large number of raster images in your
   output, you may need to specify a larger value for argument
-  \code{maxRasters}.
+  \code{maxRasters} (this had default \code{64} prior to \R 2.13.2).
 }
 
 \section{Color models}{
@@ -186,6 +186,9 @@ pdf(file = ifelse(onefile, "Rplots.pdf", "Rplot\%03d.pdf"),
   \code{"cmyk"} outputs in CMYK colorspace.  The simplest
   possible conversion from sRGB to CMYK is used
   (\url{http://en.wikipedia.org/wiki/CMYK_color_model#Mapping_RGB_to_CMYK}).
+
+  Raster images are output in RGB under the \code{"gray"} and
+  \code{"cmyk"} models.
 }
 
 \section{Conventions}{
@@ -199,11 +202,11 @@ pdf(file = ifelse(onefile, "Rplots.pdf", "Rplot\%03d.pdf"),
     \item Line widths are as a multiple of 1/96 inch, with a minimum
     of 0.01 enforced.   
     \item Circles of any radius are allowed.  Unless \code{useDingbats =
-    FALSE}, opaque circles of less than 10 big
-    points radius are rendered using char 108 in the Dingbats font:
-    all semi-transparent and larger circles using a \enc{Bézier}{Bezier}
-    curve for each quadrant.
-    \item Colours are specified as sRGB.
+      FALSE}, opaque circles of less than 10 big points radius are
+    rendered using char 108 in the Dingbats font: all semi-transparent
+    and larger circles using a \enc{Bézier}{Bezier} curve for each
+    quadrant.
+    \item Colours are by default specified as sRGB.
   }
 
   At very small line widths, the line type may be forced to solid.

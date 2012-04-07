@@ -643,11 +643,12 @@
                         if(!pkg_name %in% c("AnalyzeFMRI", "CORElearn",
                                             "PearsonDS", "RBGL", "RGtk2",
                                             "RNetCDF", "RODBC", "Rcpp",
-                                            "Runuran", "cairoDevice",
-                                            "foreign", "fastICA", "glmnet",
-                                            "gstat", "igraph", "png", "proj4",
+                                            "Runuran", "XML", "cairoDevice",
+                                            "diversitree", "foreign",
+                                            "fastICA", "glmnet", "gstat",
+                                            "igraph", "jpeg", "png", "proj4",
                                             "randtoolbox", "rgdal", "rngWELL",
-                                            "rphast", "tcltk2"))
+                                            "rphast", "rtfbs", "tcltk2"))
                             one_only <- sum(nchar(readLines("../configure.win"), "bytes")) > 0
                         if(one_only && !force_biarch)
                             warning("this package has a non-empty 'configure.win' file,\nso building only the main architecture\n", call. = FALSE, domain=NA)
@@ -955,8 +956,10 @@
 	    ## Something above, e.g. lazydata,  might have loaded the namespace
 	    if (pkg_name %in% loadedNamespaces())
 		unloadNamespace(pkg_name)
-	    res <- try({.getRequiredPackages(quietly = TRUE)
-			makeLazyLoading(pkg_name, lib)})
+	    res <- try({
+                suppressPackageStartupMessages(.getRequiredPackages(quietly = TRUE))
+                makeLazyLoading(pkg_name, lib)
+            })
 	    if (inherits(res, "try-error"))
 		pkgerrmsg("lazy loading failed", pkg_name)
 	}
@@ -1493,7 +1496,7 @@
                 R.version[["major"]], ".",  R.version[["minor"]],
                 " (r", R.version[["svn rev"]], ")\n", sep = "")
             cat("",
-                "Copyright (C) 2000-2009 The R Core Development Team.",
+                "Copyright (C) 2000-2011 The R Core Development Team.",
                 "This is free software; see the GNU General Public License version 2",
                 "or later for copying conditions.  There is NO warranty.",
                 sep="\n")

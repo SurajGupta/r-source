@@ -1,6 +1,6 @@
 % File src/library/stats/man/fisher.test.Rd
 % Part of the R package, http://www.R-project.org
-% Copyright 1995-2009 R Core Development Team
+% Copyright 1995-2011 R Core Development Team
 % Distributed under GPL 2 or later
 
 \name{fisher.test}
@@ -24,7 +24,7 @@ fisher.test(x, y = NULL, workspace = 200000, hybrid = FALSE,
     used in the network algorithm.  In units of 4 bytes.  Only used for
     non-simulated p-values larger than \eqn{2 \times 2}{2 by 2} tables.}
   \item{hybrid}{a logical. Only used for larger than \eqn{2 \times 2}{2 by 2}
-    tables, in which cases it indicated whether the exact probabilities
+    tables, in which cases it indicates whether the exact probabilities
     (default) or a hybrid approximation thereof should be computed.
     See \sQuote{Details}.}
   \item{control}{a list with named components for low level algorithm
@@ -39,10 +39,11 @@ fisher.test(x, y = NULL, workspace = 200000, hybrid = FALSE,
     one of \code{"two.sided"}, \code{"greater"} or \code{"less"}.
     You can specify just the initial letter.  Only used in the
     \eqn{2 \times 2}{2 by 2} case.}
-  \item{conf.int}{logical indicating if a confidence interval should be
+  \item{conf.int}{logical indicating if a confidence interval for the
+    odds ratio in a \eqn{2 \times 2}{2 by 2} table should be
     computed (and returned).}
   \item{conf.level}{confidence level for the returned confidence
-    interval.  Only used in the \eqn{2 \times 2}{2 by 2} case if
+    interval.  Only used in the \eqn{2 \times 2}{2 by 2} case and if
     \code{conf.int = TRUE}.}
   \item{simulate.p.value}{a logical indicating whether to compute
     p-values by Monte Carlo simulation, in larger than \eqn{2 \times
@@ -54,7 +55,7 @@ fisher.test(x, y = NULL, workspace = 200000, hybrid = FALSE,
   A list with class \code{"htest"} containing the following components:
   \item{p.value}{the p-value of the test.}
   \item{conf.int}{a confidence interval for the odds ratio.
-    Only present in the \eqn{2 \times 2}{2 by 2} case if argument
+    Only present in the \eqn{2 \times 2}{2 by 2} case and if argument
     \code{conf.int = TRUE}.}
   \item{estimate}{an estimate of the odds ratio.  Note that the
     \emph{conditional} Maximum Likelihood Estimate (MLE) rather than the
@@ -105,7 +106,8 @@ fisher.test(x, y = NULL, workspace = 200000, hybrid = FALSE,
   For larger than  \eqn{2 \times 2}{2 by 2} tables and \code{hybrid =
     TRUE}, asymptotic chi-squared probabilities are only used if the
   \sQuote{Cochran conditions} are satisfied, that is if no cell has
-  count zero, and more than 80\% of the cells have counts at least 5.
+  count zero, and more than 80\% of the cells have counts at least 5:
+  otherwise the exact calculation is used.
 
   Simulation is done conditional on the row and column marginals, and
   works only if the marginals are strictly positive.  (A C translation
@@ -153,6 +155,10 @@ fisher.test(x, y = NULL, workspace = 200000, hybrid = FALSE,
 }
 \seealso{
   \code{\link{chisq.test}}
+
+  \code{fisher.exact} in package \pkg{exact2x2} for alternative
+  interpretations of two-sided tests and confidence intervals for
+  \eqn{2 \times 2}{2 by 2} tables.
 }
 \examples{
 ## Agresti (1990, p. 61f; 2002, p. 91) Fisher's Tea Drinker

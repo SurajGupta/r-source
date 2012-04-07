@@ -211,13 +211,23 @@ format.POSIXct <- function(x, format = "", tz = "", usetz = FALSE, ...)
 
 print.POSIXct <- function(x, ...)
 {
-    print(format(x, usetz=TRUE, ...), ...)
+    max.print <- getOption("max.print", 9999L)
+    if(max.print < length(x)) {
+        print(format(x[seq_len(max.print)], usetz=TRUE), ...)
+        cat(' [ reached getOption("max.print") -- omitted',
+            length(x) - max.print, 'entries ]\n')
+    } else print(format(x, usetz=TRUE), ...)
     invisible(x)
 }
 
 print.POSIXlt <- function(x, ...)
 {
-    print(format(x, usetz=TRUE), ...)
+    max.print <- getOption("max.print", 9999L)
+    if(max.print < length(x)) {
+        print(format(x[seq_len(max.print)], usetz=TRUE), ...)
+        cat(' [ reached getOption("max.print") -- omitted',
+            length(x) - max.print, 'entries ]\n')
+   } else print(format(x, usetz=TRUE), ...)
     invisible(x)
 }
 
@@ -858,10 +868,10 @@ trunc.POSIXt <- function(x, units=c("secs", "mins", "hours", "days"), ...)
     if(length(x$sec))
 	switch(units,
 	       "secs" = {x$sec <- trunc(x$sec)},
-	       "mins" = {x$sec <- 0},
-	       "hours"= {x$sec <- 0; x$min <- 0L},
+	       "mins" = {x$sec[] <- 0},
+	       "hours"= {x$sec[] <- 0; x$min[] <- 0L},
                ## start of day need not be on the same DST.
-	       "days" = {x$sec <- 0; x$min <- 0L; x$hour <- 0L; x$isdst <- -1L}
+	       "days" = {x$sec[] <- 0; x$min[] <- 0L; x$hour[] <- 0L; x$isdst[] <- -1L}
 	       )
     x
 }
