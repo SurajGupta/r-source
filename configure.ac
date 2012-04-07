@@ -535,7 +535,8 @@ R_PROG_INSTALL
 
 ## we would like a POSIX sed, and need one on Solaris
 AC_PATH_PROGS(SED, sed, /bin/sed, [/usr/xpg4/bin:$PATH])
-AC_PATH_PROGS(TR, tr, /bin/tr, [/usr/xpg4/tr:$PATH])
+## we need an tr that interprets \r for Rdiff
+AC_PATH_PROGS(TR, tr, /bin/tr, [/usr/xpg4/bin:$PATH])
 ## Make
 : ${MAKE=make}
 AC_SUBST(MAKE)
@@ -544,7 +545,7 @@ R_PROG_PAGER
 ## Perl
 R_PROG_PERL
 ## Tar -- we prefer a GNU version
-AC_PATH_PROGS(TAR, [${TAR} gtar tar], "")
+AC_PATH_PROGS(TAR, [${TAR} gtar gnutar tar], "")
 ## TeXMF stuff
 R_PROG_TEXMF
 ## Unzip && zip && gzip && bip2

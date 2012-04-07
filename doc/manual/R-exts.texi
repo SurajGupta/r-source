@@ -541,8 +541,7 @@ interesting object in the package, giving its name and a description
 be included).  Normally this file is missing, and the corresponding
 information is automatically generated from the documentation sources
 (using @code{Rdindex()} from package @pkg{tools}) when installing from
-source and when using the package builder (@pxref{Checking and building
-packages}).
+source.
 
 Rather than editing this file, it is preferable to put customized
 information about the package into an overview man page
@@ -652,11 +651,12 @@ want to ship Ratfor source files, please do so in a subdirectory of
 @file{src} and not in the main subdirectory.}, Objective C and Objective
 C++@footnote{either or both of which may not be supported on particular
 platforms} with associated extensions @file{.c}, @file{.cc} or
-@file{.cpp} or @file{.C}, @file{.f}, @file{.f90} or @file{.f95},
-@file{.m}, and @file{.mm} or @file{.M}, respectively.  We recommend
-using @file{.h} for headers, also for C++@footnote{Using @file{.hpp},
-although somewhat popular, is not guaranteed to be portable.} or Fortran
-9x include files.
+@file{.cpp}, @file{.f}, @file{.f90} or @file{.f95}, @file{.m}, and
+@file{.mm} or @file{.M}, respectively.  We recommend using @file{.h} for
+headers, also for C++@footnote{Using @file{.hpp}, although somewhat
+popular, is not guaranteed to be portable.} or Fortran 9x include files.
+(Use of @file{.C} for C++ is now deprecated and will be removed in @R{}
+2.12.0.)
 
 It is not portable (and may not be possible at all) to mix all these
 languages in a single package, and we do not support using both C++ and
@@ -944,7 +944,7 @@ which is a minimal version of Bourne-style @command{sh}.)  When
 @env{R_HOME}@footnote{and also @env{RHOME} for backwards compatiblity,
 but this will be removed in future.} and @env{R_ARCH} will be set.
 Use @env{R_ARCH} to decide if this is a 64-bit build (its value there is
-@samp{/x64} and to install DLLs to the correct place
+@samp{/x64}) and to install DLLs to the correct place
 (@code{$@{R_HOME@}/libs$@{R_ARCH@}}).
 
 In some rare circumstances, the configuration and cleanup scripts need
@@ -1007,7 +1007,7 @@ GCC.
 There are some macros which are built whilst configuring the building of
 @R{} itself and are stored in
 @file{@var{R_HOME}/etc@var{R_ARCH}/Makeconf}.  That makefile is included
-as a @file{Makefile} @emph{before} @file{Makevars[.win]}, and so the
+as a @file{Makefile} @emph{after} @file{Makevars[.win]}, and the
 macros it defines can be used in the latter.  These include
 
 @table @code
@@ -1127,6 +1127,46 @@ directory for some purpose other than building a DLL, use a
 
 It is sometimes useful to have a target @samp{clean} in @file{Makevars}
 or @file{Makevars.win}: this will be used by @command{R CMD build}.
+
+If you want to run @R{} code in @file{Makevars}, e.g.@: to find
+configuration information, please do ensure that you use the correct
+copy of @code{R} or @code{Rscript}: there might not be one in the path
+at all, or it might be the wrong version or architecture.  The correct
+way to do this is @emph{via}
+
+@example
+$(R_HOME)/bin$(R_ARCH_BIN)/Rscript @var{filename}
+$(R_HOME)/bin$(R_ARCH_BIN)/Rscript -e '@var{R expression}'
+@end example
+
+@noindent
+where @code{$(R_ARCH_BIN)} is only needed currently on Windows.
+
+Since @file{Makeconf} is included after @file{Makevars[.win]}, the values
+of the macros it defines cannot be used in GNU-style conditionals.  However,
+environment variables can be and so for example a way on Windows to
+select different macros for 32- and 64-bit code is
+
+@example
+ifeq "$@{R_ARCH@}" "/x64"
+PKG_LIBS = @var{value for 64-bit Windows}
+else
+PKG_LIBS = @var{value for 32-bit Windows}
+endif
+@end example
+
+@noindent
+To make this simpler, as from @R{} 2.11.1 (but not in @R{} 2.11.0) you
+can use
+
+@example
+ifeq "$(WIN)" "64"
+PKG_LIBS = @var{value for 64-bit Windows}
+else
+PKG_LIBS = @var{value for 32-bit Windows}
+endif
+@end example
+
 
 @menu
 * Back-compatibility for Makevars::  
@@ -2449,6 +2489,9 @@ file by
 SystemRequirements: GNU make
 @end example
 
+Since the only viable make for Windows is GNU make, it is permissible to
+use GNU extensions in files @file{Makevars.win} or @file{Makefile.win}.
+
 @item
 Make use of the abilities of your compilers to check the
 standards-conformance of your code.  For example, @command{gcc} can be used
@@ -2472,10 +2515,16 @@ on most @R{} platforms (including those mostly used by the
 platforms.  It is rather unlikely that the use of @code{long} in C code
 has been thought through: if you need a longer type than @code{int} you
 should use a configure test for a C99 type such as @code{int_fast64_t}
-(and failing that, @code{long long}, but not that @code{long long} is
-not a standard C++ type, and C++ compilers set up for strict checking
-will reject it) and typedef your own type to be @code{long} or
+(and failing that, @code{long long} @footnote{but note that @code{long
+long} is not a standard C++ type, and C++ compilers set up for strict
+checking will reject it}) and typedef your own type to be @code{long} or
 @code{long long}, or use another suitable type (such as @code{size_t}).
+
+It is not safe to assume that @code{long} and pointer types are the same
+size, and they are not on 64-bit Windows.  If you need to convert
+pointers to and from integers use the C99 integer types @code{intptr_t}
+and @code{uintptr_t}.
+
 Note that @code{integer} in @acronym{FORTRAN} corresponds to @code{int}
 in C on all @R{} platforms.
 
@@ -9025,6 +9074,7 @@ The most useful function for printing from a C routine compiled into
 @code{printf}, but is guaranteed to write to @R{}'s output (which might
 be a @acronym{GUI} console rather than a file).  It is wise to write
 complete lines (including the @code{"\n"}) before returning to @R{}.
+It is defined in @file{R_ext/Print.h}.
 
 The function @code{REprintf} is similar but writes on the error stream
 (@code{stderr}) which may or may not be different from the standard
@@ -9878,11 +9928,13 @@ static R_INLINE int ind_2(int l, int j)
 @end example
 
 Be aware that using inlining with functions in more than one compilation
-unit is almost impossible to do portably: see
-@uref{http://www.greenend.org.uk/rjk/2003/03/inline.html}.  All the @R{}
+unit is almost impossible to do portably, see
+@uref{http://www.greenend.org.uk/rjk/2003/03/inline.html}, so this usage
+is for @code{static} functions as in the example.  All the @R{}
 configure code has checked is that @code{R_INLINE} can be used in a
 single C file with the compiler used to build @R{}.  We recommend that
-packages making extensive use of inlining include their own configure code.
+packages making extensive use of inlining include their own configure
+code.
 
 @node Controlling visibility, Standalone Mathlib, Inlining C functions, The R API
 @section Controlling visibility
@@ -11014,15 +11066,15 @@ Both applications which embed @R{} and those which use a @code{system}
 call to invoke @R{} (as @command{Rscript.exe}, @command{Rterm.exe} or
 @command{R.exe}) need to be able to find the @R{} @file{bin} directory.
 The simplest way to do so is the ask the user to set an environment
-variable @env{R_HOME} and use that, but naive users may be fluxommed as
+variable @env{R_HOME} and use that, but naive users may be flummoxed as
 to how to do so or what value to use.
 
 The @R{} for Windows installers have for a long time allowed the value
 of @code{R_HOME} to be recorded in the Windows Registry: this is
-optional but the default. Where is it is recorded has changed over the
-years to allow for multiple versions of @R{} to be installed at once,
-and as from @R{} 2.11.0, to allow 32- and 64-bit versions of @R{} to be
-installed on the same machine.
+optional but selected by default.  @emph{Where} is it is recorded has
+changed over the years to allow for multiple versions of @R{} to be
+installed at once, and as from @R{} 2.11.0, to allow 32- and 64-bit
+versions of @R{} to be installed on the same machine.
 
 The basic Registry location is @code{Software\R-core\R}.  For an
 administrative install this is under @code{HKEY_LOCAL_MACHINE} and on a

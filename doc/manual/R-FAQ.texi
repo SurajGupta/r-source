@@ -4,11 +4,11 @@
 @settitle R FAQ
 @setchapternewpage on
 @set FAQ_YEAR 2010
-@set FAQ_DATE @value{FAQ_YEAR}-04-18
+@set FAQ_DATE @value{FAQ_YEAR}-05-30
 @set REL_YEAR 2010
 @set REL_MAJOR 2
 @set REL_MINOR 11
-@set REL_PATCHLEVEL 0
+@set REL_PATCHLEVEL 1
 @set REL_VERSION @value{REL_MAJOR}.@value{REL_MINOR}.@value{REL_PATCHLEVEL}
 @set FAQ_VERSION @value{REL_MAJOR}.@value{REL_MINOR}.@value{FAQ_DATE}
 
@@ -52,6 +52,14 @@ FORTRAN
 
 @macro XSL{}
 @acronym{XSL}
+@end macro
+
+@macro pkg {p}
+@strong{\p\}
+@end macro
+
+@macro cpkg {p}
+@url{http://CRAN.R-project.org/package=\p\, @strong{\p\}}
 @end macro
 
 @titlepage
@@ -225,7 +233,7 @@ know.
 * What is the current version of R?::  
 * How can R be obtained?::      
 * How can R be installed?::     
-* Are there Unix binaries for R?::  
+* Are there Unix-like binaries for R?::  
 * What documentation exists for R?::  
 * Citing R::                    
 * What mailing lists exist for R?::  
@@ -287,14 +295,16 @@ official part of the @url{http://www.gnu.org/, @acronym{GNU}} project
 @node What machines does R run on?, What is the current version of R?, What is R?, R Basics
 @section What machines does R run on?
 
-R is being developed for the Unix, Windows and Mac families of operating
-systems.  Support for Mac OS Classic ended with R 1.7.1.
+R is being developed for the Unix-like, Windows and Mac families of
+operating systems.  Support for Mac OS Classic ended with R 1.7.1.
 
 The current version of R will configure and build under a number of
-common Unix platforms including @var{cpu}-linux-gnu for the i386, alpha,
-arm, hppa, ia64, m68k, mips/mipsel, powerpc, s390, sparc (e.g.,
-@url{http://buildd.debian.org/build.php?&pkg=r-base}), and x86_64
-@acronym{CPU}s, powerpc-apple-darwin, mips-sgi-irix,
+common Unix-like (e.g., @uref{http://en.wikipedia.org/wiki/Unix-like})
+platforms including @var{cpu}-linux-gnu for the i386, amd64, alpha,
+arm/armel, hppa, ia64, m68k, mips/mipsel, powerpc, s390 and sparc 
+@acronym{CPU}s (e.g., @url{http://buildd.debian.org/build.php?&pkg=r-base}),
+i386-hurd-gnu, @var{cpu}-kfreebsd-gnu for i386 and amd64, 
+powerpc-apple-darwin, mips-sgi-irix,
 @c <FIXME>
 @c Not sure anymore ...
 @c alpha-dec-osf4,
@@ -367,27 +377,27 @@ versions of R can be found at
 @c The sources of the development version are also available via anonymous
 @c CVS.  See @url{http://anoncvs.R-project.org} for more information.
 
-@node How can R be installed?, Are there Unix binaries for R?, How can R be obtained?, R Basics
+@node How can R be installed?, Are there Unix-like binaries for R?, How can R be obtained?, R Basics
 @section How can R be installed?
 
 @menu
-* How can R be installed (Unix)::  
+* How can R be installed (Unix-like)::  
 * How can R be installed (Windows)::  
 * How can R be installed (Macintosh)::  
 @end menu
 
-@node How can R be installed (Unix), How can R be installed (Windows), How can R be installed?, How can R be installed?
-@subsection How can R be installed (Unix)
+@node How can R be installed (Unix-like), How can R be installed (Windows), How can R be installed?, How can R be installed?
+@subsection How can R be installed (Unix-like)
 
 If R is already installed, it can be started by typing @kbd{R} at the
 shell prompt (of course, provided that the executable is in your path).
 
-If binaries are available for your platform (see @ref{Are there Unix
-binaries for R?}), you can use these, following the instructions that
-come with them.
+If binaries are available for your platform (see @ref{Are there
+Unix-like binaries for R?}), you can use these, following the
+instructions that come with them.
 
 Otherwise, you can compile and install R yourself, which can be done
-very easily under a number of common Unix platforms (see @ref{What
+very easily under a number of common Unix-like platforms (see @ref{What
 machines does R run on?}).  The file @file{INSTALL} that comes with the
 R distribution contains a brief introduction, and the ``R Installation
 and Administration'' guide (@pxref{What documentation exists for R?})
@@ -459,7 +469,7 @@ To install DVI, info and PDF versions of the manuals, use @kbd{make
 install-dvi}, @kbd{make install-info} and @kbd{make install-pdf},
 respectively.
 
-@node How can R be installed (Windows), How can R be installed (Macintosh), How can R be installed (Unix), How can R be installed?
+@node How can R be installed (Windows), How can R be installed (Macintosh), How can R be installed (Unix-like), How can R be installed?
 @subsection How can R be installed (Windows)
 
 The @file{bin/windows} directory of a @CRAN{} site contains binaries for
@@ -503,8 +513,8 @@ The @file{bin/macos} directory of a @CRAN{} site contains bin-hexed
 and a large number of add-on packages of R 1.7.1 to run under Mac OS 8.6
 to Mac OS 9.2.2.  This port of R for Macintosh is no longer supported.
 
-@node Are there Unix binaries for R?, What documentation exists for R?, How can R be installed?, R Basics
-@section Are there Unix binaries for R?
+@node Are there Unix-like binaries for R?, What documentation exists for R?, How can R be installed?, R Basics
+@section Are there Unix-like binaries for R?
 
 @c Linux binaries as of 2009-04-15:
 @c
@@ -617,7 +627,7 @@ No other binary distributions are currently publically available via
 @c @url{http://dirk.eddelbuettel.com/quantian/} contains more details as
 @c well download information.
 
-@node What documentation exists for R?, Citing R, Are there Unix binaries for R?, R Basics
+@node What documentation exists for R?, Citing R, Are there Unix-like binaries for R?, R Basics
 @section What documentation exists for R?
 
 Online documentation for most of the functions and variables in R
@@ -1393,13 +1403,13 @@ was given on the command line, R searches for site and user files to
 process for setting environment variables.  Then, R searches for a
 site-wide startup profile unless the command line option
 @option{--no-site-file} was given.  This code is loaded in package
-@strong{base}.  Then, unless @option{--no-init-file} was given, R
+@pkg{base}.  Then, unless @option{--no-init-file} was given, R
 searches for a user profile file, and sources it into the user
 workspace.  It then loads a saved image of the user workspace from
 @file{.RData} in case there is one (unless @option{--no-restore-data} or
 @option{--no-restore} were specified).  Next, a function @code{.First()}
 is run if found on the search path.  Finally, function @code{.First.sys}
-in the @strong{base} package is run.  When terminating an R session, by
+in the @pkg{base} package is run.  When terminating an R session, by
 default a function @code{.Last} is run if found on the search path,
 followed by @code{.Last.sys}.  If needed, the functions @code{.First()}
 and @code{.Last()} should be defined in the appropriate startup
@@ -1660,7 +1670,7 @@ to a remote server, see for example the collection of links available from
 @url{http://biostat.mc.vanderbilt.edu/twiki/bin/view/Main/StatCompCourse}.
 
 @url{http://www.warwick.ac.uk/go/dfirth, David Firth} has written
-@strong{CGIwithR}, an R add-on package available from @CRAN{}.  It
+@cpkg{CGIwithR}, an R add-on package available from @CRAN{}.  It
 provides some simple extensions to R to facilitate running R scripts
 through the CGI interface to a web server, and allows submission of data
 using both GET and POST methods.  It is easily installed using Apache
@@ -1708,10 +1718,12 @@ interface for doing microarray analysis using several of the
 Bioconductor packages'' and is designed to be installed at local sites
 as a shared computing resource.
 
-Finally, @url{http://rwui.cryst.bbk.ac.uk, Rwui} is a web application to
-to create user-friendly web interfaces for R scripts.  All code for the
-web interface is created automatically.  There is no need for the user
-to do any extra scripting or learn any new scripting techniques.
+Finally, @url{http://sysbio.mrc-bsu.cam.ac.uk/Rwui, Rwui} is a web
+application to create user-friendly web interfaces for R scripts.  All
+code for the web interface is created automatically.  There is no need
+for the user to do any extra scripting or learn any new scripting
+techniques.  Rwui can also be found at
+@uref{http://rwui.cryst.bbk.ac.uk}.
 
 @node R Add-On Packages, R and Emacs, R Web Interfaces, Top
 @chapter R Add-On Packages
@@ -1773,12 +1785,12 @@ Tools for package development and administration.
 R utility functions.
 @end table
 These ``base packages'' were substantially reorganized in R 1.9.0.  The
-former @strong{base} was split into the four packages @strong{base},
-@strong{graphics}, @strong{stats}, and @strong{utils}.  Packages
-@strong{ctest}, @strong{eda}, @strong{modreg}, @strong{mva},
-@strong{nls}, @strong{stepfun} and @strong{ts} were merged into
-@strong{stats}, package @strong{lqs} returned to the recommended package
-@strong{MASS}, and package @strong{mle} moved to @strong{stats4}.
+former @pkg{base} was split into the four packages @pkg{base},
+@pkg{graphics}, @pkg{stats}, and @pkg{utils}.  Packages @pkg{ctest},
+@pkg{eda}, @pkg{modreg}, @pkg{mva}, @pkg{nls}, @pkg{stepfun} and
+@pkg{ts} were merged into @pkg{stats}, package @pkg{lqs} returned to the
+recommended package @pkg{MASS}, and package @pkg{mle} moved to
+@pkg{stats4}.
 
 @node Add-on packages from CRAN, Add-on packages from Omegahat, Add-on packages in R, Which add-on packages exist for R?
 @subsection Add-on packages from @acronym{CRAN}
@@ -1894,8 +1906,8 @@ obtained from the mailing list archive.
 @node How can add-on packages be installed?, How can add-on packages be used?, Which add-on packages exist for R?, R Add-On Packages
 @section How can add-on packages be installed?
 
-(Unix only.)  The add-on packages on @CRAN{} come as gzipped tar files
-named @code{@var{pkg}_@var{version}.tar.gz}, which may in fact be
+(Unix-like only.)  The add-on packages on @CRAN{} come as gzipped tar
+files named @code{@var{pkg}_@var{version}.tar.gz}, which may in fact be
 ``bundles'' containing more than one package.  Let @var{path} be the
 path to such a package file.  Provided that @command{tar} and
 @command{gzip} are available on your system, type
@@ -2022,8 +2034,12 @@ help(package = @var{pkg})
 You can unload the loaded package @var{pkg} by
 
 @example
-detach("package:@var{pkg}")
+detach("package:@var{pkg}", unload = TRUE)
 @end example
+
+@noindent
+(where @code{unload = TRUE} is needed only for packages with a
+namespace, see @code{?unload}).
 
 @node How can add-on packages be removed?, How can I create an R package?, How can add-on packages be used?, R Add-On Packages
 @section How can add-on packages be removed?
@@ -2253,6 +2269,8 @@ dir /opt/R/src/unix
 * Why are p-values not displayed when using lmer()?::  
 * Why are there unwanted borders::  
 * Why does backslash behave strangely inside strings?::  
+* How can I put error bars or confidence bands on my plot?::  
+* How do I create a plot with two y-axes?::  
 @end menu
 
 @c @node Why does R run out of memory?, Why does sourcing a correct file fail?, R Miscellanea, R Miscellanea
@@ -2521,8 +2539,8 @@ internal codes).
 @node Are Trellis displays implemented in R?, What are the enclosing and parent environments?, How do I convert factors to numeric?, R Miscellanea
 @section Are Trellis displays implemented in R?
 
-The recommended package @strong{lattice} (which is based on another
-recommended package, @strong{grid}) provides graphical functionality
+The recommended package @pkg{lattice} (which is based on another
+recommended package, @pkg{grid}) provides graphical functionality
 that is compatible with most Trellis commands.
 
 You could also look at @code{coplot()} and @code{dotchart()} which might
@@ -2666,15 +2684,15 @@ strings file ``names''.
 @node Are GAMs implemented in R?, Why is the output not printed when I source() a file?, What are valid names?, R Miscellanea
 @section Are GAMs implemented in R?
 
-Package @strong{gam} from @CRAN{} implements all the Generalized
-Additive Models (GAM) functionality as described in the GAM chapter of
-the White Book.  In particular, it implements backfitting with both
-local regression and smoothing splines, and is extendable.  There is a
-@code{gam()} function for GAMs in package @strong{mgcv}, but it is not
-an exact clone of what is described in the White Book (no @code{lo()}
-for example).  Package @strong{gss} can fit spline-based GAMs too.  And
-if you can accept regression splines you can use @code{glm()}.  For
-Gaussian GAMs you can use @code{bruto()} from package @strong{mda}.
+Package @cpkg{gam} from @CRAN{} implements all the Generalized Additive
+Models (GAM) functionality as described in the GAM chapter of the White
+Book.  In particular, it implements backfitting with both local
+regression and smoothing splines, and is extendable.  There is a
+@code{gam()} function for GAMs in package @pkg{mgcv}, but it is not an
+exact clone of what is described in the White Book (no @code{lo()} for
+example).  Package @cpkg{gss} can fit spline-based GAMs too.  And if you
+can accept regression splines you can use @code{glm()}.  For Gaussian
+GAMs you can use @code{bruto()} from package @cpkg{mda}.
 
 @node Why is the output not printed when I source() a file?, Why does outer() behave strangely with my function?, Are GAMs implemented in R?, R Miscellanea
 @section Why is the output not printed when I source() a file?
@@ -2747,7 +2765,7 @@ If you define the general function
 
 @example
 wrapper <- function(x, y, my.fun, ...) @{
-  sapply(seq(along = x), FUN = function(i) my.fun(x[i], y[i], ...))
+  sapply(seq_along(x), FUN = function(i) my.fun(x[i], y[i], ...))
 @}
 @end example
 
@@ -2787,7 +2805,7 @@ squares resulting from dropping single terms.
 @node How do I produce PNG graphics in batch mode?, How can I get command line editing to work?, Why does the output from anova() depend on the order of factors in the model?, R Miscellanea
 @section How do I produce PNG graphics in batch mode?
 
-Under a Unix-alike, if your installation supports the
+Under a Unix-like, if your installation supports the
 @code{type="cairo"} option to the @code{png()} device there should be no
 problems, and the default settings should just work.  This option is not
 available for versions of R prior to 2.7.0, or without support for
@@ -2802,13 +2820,13 @@ installations this produces ugly output, on others it is perfectly
 satisfactory.  Many systems now come with Xvfb from 
 @url{http://www.x.org/Downloads.html, X.Org} (possibly as an optional 
 install), which is an X11 server that does not require a screen; and there 
-is the @strong{GDD} package from @CRAN{}, which produces PNG, JPEG and GIF 
+is the @cpkg{GDD} package from @CRAN{}, which produces PNG, JPEG and GIF 
 bitmaps without X11.
 
 @node How can I get command line editing to work?, How can I turn a string into a variable?, How do I produce PNG graphics in batch mode?, R Miscellanea
 @section How can I get command line editing to work?
 
-The Unix command-line interface to R can only provide the inbuilt
+The Unix-like command-line interface to R can only provide the inbuilt
 command line editor which allows recall, editing and re-submission of
 prior commands provided that the @acronym{GNU} readline library is
 available at the time R is configured for compilation.  Note that the
@@ -2885,7 +2903,7 @@ without any of this messing about.
 
 The most likely reason is that you forgot to tell R to display the
 graph.  Lattice functions such as @code{xyplot()} create a graph object,
-but do not display it (the same is true of @strong{ggplot2} graphics,
+but do not display it (the same is true of @cpkg{ggplot2} graphics,
 and Trellis graphics in @SPLUS{}).  The @code{print()} method for the
 graph object produces the actual display.  When you use these functions
 interactively at the command line, the result is automatically printed,
@@ -2926,7 +2944,7 @@ R-admin, R Installation and Administration}, for further details.
 @section Why did my .Rprofile stop working when I updated R?
 
 Did you read the @file{NEWS} file?  For functions that are not in the
-@strong{base} package you need to specify the correct package namespace,
+@pkg{base} package you need to specify the correct package namespace,
 since the code will be run @emph{before} the packages are loaded.  E.g.,
 
 @example
@@ -3174,7 +3192,7 @@ Disable this option.
 There are settings for Text Alpha and Graphics Alpha.
 Change Graphics Alpha from 4 bits to 1 bit to disable graphic
 anti-aliasing.
-@item gv (Linux/Unix X)
+@item gv (Unix-like X)
 There is an option to enable/disable anti-aliasing.
 Disable this option.
 @item Evince (Linux/GNOME)
@@ -3190,7 +3208,7 @@ Then restart Okular.  Change the final word to @samp{Enabled} to restore
 the original setting.
 @end ftable
 
-@node Why does backslash behave strangely inside strings?,  , Why are there unwanted borders, R Miscellanea
+@node Why does backslash behave strangely inside strings?, How can I put error bars or confidence bands on my plot?, Why are there unwanted borders, R Miscellanea
 @section Why does backslash behave strangely inside strings?
 
 This question most often comes up in relation to file names (see
@@ -3246,6 +3264,48 @@ backslash to represent a single literal one.
 In versions of R up to 2.4.1 an unknown escape sequence like @samp{\p}
 was quietly interpreted as just @samp{p}.  Current versions of R emit a
 warning.
+
+@node How can I put error bars or confidence bands on my plot?, How do I create a plot with two y-axes?, Why does backslash behave strangely inside strings?, R Miscellanea
+@section How can I put error bars or confidence bands on my plot?
+
+Some functions will display a particular kind of plot with error bars,
+such as the @code{bar.err()} function in the @cpkg{agricolae} package,
+the @code{plotCI()} function in the @cpkg{gplots} package, the
+@code{plotCI()} and @code{brkdn.plot()} functions in the @cpkg{plotrix}
+package and the @code{error.bars()}, @code{error.crosses()} and
+@code{error.bars.by()} functions in the @cpkg{psych} package.  Within
+these types of functions, some will accept the measures of dispersion
+(e.g., @code{plotCI}), some will calculate the dispersion measures from
+the raw values (@code{bar.err}, @code{brkdn.plot}), and some will do
+both (@code{error.bars}).  Still other functions will just display error
+bars, like the dispersion function in the @cpkg{plotrix} package.  Most
+of the above functions use the @code{arrows()} function in the base
+@pkg{graphics} package to draw the error bars.
+
+The above functions all use the base graphics system.  The grid and
+lattice graphics systems also have specific functions for displaying
+error bars, e.g., the @code{grid.arrow()} function in the @pkg{grid}
+package, and the @code{geom_errorbar()}, @code{geom_errorbarh()},
+@code{geom_pointrange()}, @code{geom_linerange()},
+@code{geom_crossbar()} and @code{geom_ribbon()} functions in the
+@cpkg{ggplot2} package.  In the lattice system, error bars can be
+displayed with @code{Dotplot()} or @code{xYplot()} in the @cpkg{Hmisc}
+package and @code{segplot()} in the @cpkg{latticeExtra} package.
+
+@node How do I create a plot with two y-axes?,  , How can I put error bars or confidence bands on my plot?, R Miscellanea
+@section How do I create a plot with two y-axes?
+
+Creating a graph with two y-axes, i.e., with two sorts of data that are
+scaled to the same vertical size and showing separate vertical axes on
+the left and right sides of the plot that reflect the original scales of
+the data, is possible in R but is not recommended.  The basic approach
+for constructing such graphs is to use @code{par(new=TRUE)} (see
+@code{?par}); functions @code{twoord.plot()} (in the @cpkg{plotrix}
+package) and @code{doubleYScale()} (in the @cpkg{latticeExtra} package)
+automate the process somewhat.  See
+@url{http://rwiki.sciviews.org/@/doku.php?id=tips:graphics-base:2yaxes}
+for more information, including strong arguments against this sort of
+graph.
 
 @node R Programming, R Bugs, R Miscellanea, Top
 @chapter R Programming
@@ -3466,7 +3526,7 @@ should be sent first to the package maintainer, and only submitted to
 the R-bugs repository by package maintainers, mentioning the package in
 the subject line.
 
-On Unix systems a bug report can be generated using the function
+On Unix-like systems a bug report can be generated using the function
 @code{bug.report()}.  This automatically includes the version
 information and sends the bug to the correct address.  Alternatively the
 bug report can be emailed to @email{R-bugs@@R-project.org} or submitted

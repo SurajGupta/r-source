@@ -132,8 +132,8 @@
     {
         do_cleanup_tmpdir()
         if (!is_first_package) {
-            ## Only need to do this in case we successfully installed at least
-            ## *one* package
+            ## Only need to do this in case we successfully installed
+            ## at least one package
             file.copy(file.path(R.home("doc"), "html", "R.css"), lib)
             if (lib == .Library) {
                 if (build_help)
@@ -215,6 +215,14 @@
     ## 'pkg' is the absolute path to package sources.
     do_install <- function(pkg)
     {
+        if (WINDOWS && grepl("\\.zip$", pkg)) {
+            pkg_name <- basename(pkg)
+            pkg_name <- sub("\\.zip$", "", pkg_name)
+            pkg_name <- sub("_[0-9.-]+$", "", pkg_name)
+            utils:::unpackPkgZip(pkg, pkg_name, lib, libs_only)
+            return()
+        }
+
         setwd(pkg)
         desc <- read.dcf(file.path(pkg, "DESCRIPTION"))[1, ]
         ## Let's see if we have a bundle
@@ -263,16 +271,30 @@
                                Sys.getenv("R_PLATFORM"), ".tar")
             filepath <- shQuote(file.path(startdir, filename))
             owd <- setwd(lib)
-            system(paste(TAR, "-chf", filepath,
+            TAR2 <- shQuote(Sys.getenv("TAR"))
+            system(paste(TAR2, "-chf", filepath,
                          paste(curPkg, collapse = " ")))
             system(paste(GZIP, "-9f", filepath))
-            message("packaged installation of ",
-                    sQuote(pkg_name), " as ", filename, ".gz",
-                    domain = NA)
+            if (grepl("darwin", R.version$os)) {
+                filename <- paste0(filename, ".gz")
+                nfilename <- paste0(pkg_name, "_", version,".tgz")
+                file.rename(file.path(startdir, filename),
+                            file.path(startdir, nfilename))
+                message("packaged installation of ",
+                        sQuote(pkg_name), " as ", sQuote(nfilename),
+                        domain = NA)
+            } else {
+                message("packaged installation of ",
+                        sQuote(pkg_name), " as ",
+                        sQuote(paste0(filename, ".gz")),
+                        domain = NA)
+            }
             setwd(owd)
         }
 
         if (zip_up) {
+            starsmsg(stars, "MD5 sums")
+            .installMD5sums(instdir)
             ZIP <- "zip"                # Windows only
             version <- desc["Version"]
             filename <- paste0(pkg_name, "_", version, ".zip")
@@ -450,7 +472,27 @@
                 errmsg(" Windows-only package")
         }
 
-        starsmsg(stars, "installing *source* package ", sQuote(pkg_name), " ...")
+
+        ## At this point we check that we have the dependencies we need.
+        ## We cannot use installed.packages() as other installs might be
+        ## going on in parallel
+
+        pkgInfo <- .split_description(.read_description("DESCRIPTION"))
+         pkgs <- unique(c(names(pkgInfo$Depends), names(pkgInfo$Imports)))
+        if (length(pkgs)) {
+            miss <- character()
+            for (pkg in pkgs) {
+                if(!length(.find.package(pkg, quiet = TRUE)))
+                    miss <- c(miss, pkg)
+            }
+            if (length(miss))
+                 pkgerrmsg(sprintf("dependencies %s are not available",
+                                   paste(sQuote(miss), collapse = ", ")),
+                           pkg_name)
+        }
+
+        starsmsg(stars, "installing *source* package ",
+                 sQuote(pkg_name), " ...")
 
         stars <- "**"
 
@@ -591,17 +633,17 @@
                     srcs <- dir(pattern = "\\.([cfmCM]|cc|cpp|f90|f95|mm)$")
                     ## This allows Makevars to set OBJECTS or its own targets.
                     allfiles <- if (file.exists("Makevars")) c("Makevars", srcs) else srcs
-                    ## FIXME better R.home("bin") ?  Same for now.
-                    wd2 <- setwd(file.path(R.home(), "bin", "exec"))
+                    wd2 <- setwd(file.path(R.home("bin"), "exec"))
                     archs <- Sys.glob("*")
                     setwd(wd2)
                     if (length(allfiles)) {
                         ## if there is a configure script we install only the main
                         ## sub-architecture
-                        if (!multiarch ||
+                        if (!multiarch || length(archs) <= 1 ||
                             .file_test("-x", "../configure")) {
                             if (nzchar(rarch))
-                                starsmsg(stars, "arch - ", substr(rarch, 2, 1000))
+                                starsmsg("***", "arch - ",
+                                         substr(rarch, 2, 1000))
                             has_error <- run_shlib(pkg_name, srcs, instdir, rarch)
                         } else {
                             for(arch in archs) {
@@ -609,10 +651,8 @@
                                 if (arch == "R") {
                                     ## top-level, so one arch without subdirs
                                     has_error <- run_shlib(pkg_name, srcs, instdir, "")
-                                } else if (arch == "Rgnome") {
-                                    ## ignore
                                 } else {
-                                    starsmsg(stars, "arch - ", arch)
+                                    starsmsg("***", "arch - ", arch)
                                     ra <- paste0("/", arch)
                                     ## FIXME: do this lower down
                                     Sys.setenv(R_ARCH = ra)
@@ -845,11 +885,6 @@
 
         if (clean) run_clean()
 
-        if (WINDOWS) { ## Add MD5 sums: only for --build?
-            starsmsg(stars, "MD5 sums")
-            .installMD5sums(instdir)
-        }
-
         if (test_load) {
 	    starsmsg(stars, "testing if installed package can be loaded")
             res <- try(suppressPackageStartupMessages(library(pkg_name, lib.loc = lib, character.only = TRUE, logical.return = TRUE)))
@@ -1015,6 +1050,14 @@
     for(pkg in pkgs) {
         if (debug) message("processing ", sQuote(pkg), domain = NA)
         if (.file_test("-f", pkg)) {
+            if (WINDOWS && grepl("\\.zip$", pkg)) {
+                if (debug) message("a zip file", domain = NA)
+                pkgname <- basename(pkg)
+                pkgname <- sub("\\.zip$", "", pkgname)
+                pkgname <- sub("_[0-9.-]+$", "", pkgname)
+                allpkgs <- c(allpkgs, pkg)
+                next
+            }
             if (debug) message("a file", domain = NA)
             of <- dir(tmpdir, full.names = TRUE)
             ## force the use of internal untar unless over-ridden
@@ -1310,7 +1353,10 @@
     if (length(objs)) objs <- p0(objs, OBJ_EXT, collapse=" ")
 
     if (WINDOWS) {
-        if (file.exists(f <- path.expand("~/.R/Makevars.win")))
+        if (rarch == "x64" &&
+            file.exists(f <- path.expand("~/.R/Makevars.win64")))
+            makefiles <- c(makefiles, f)
+        else if (file.exists(f <- path.expand("~/.R/Makevars.win")))
             makefiles <- c(makefiles, f)
         else if (file.exists(f <- path.expand("~/.R/Makevars")))
             makefiles <- c(makefiles, f)
@@ -1356,6 +1402,7 @@
     ## removed in 2.10.0
     ## if (WINDOWS) makeargs <- c(makeargs, "all")
     if (WINDOWS && debug) makeargs <- c(makeargs, "DEBUG=T")
+    if (WINDOWS && rarch == "x64") makeargs <- c(makeargs, "WIN=64")
 
     cmd <- paste(MAKE, p1(paste("-f", makefiles)), p1(makeargs), p1(makeobjs))
     if (dry_run) {

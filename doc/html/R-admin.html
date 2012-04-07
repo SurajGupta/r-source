@@ -182,7 +182,7 @@ span.env{font-family: monospace}
 <li><a href="#FreeBSD">C.3 FreeBSD</a>
 <li><a href="#Mac-OS-X">C.4 Mac OS X</a>
 <ul>
-<li><a href="#64_002dbit-builds">C.4.1 64-bit builds</a>
+<li><a href="#64_002dbit-Leopard-builds">C.4.1 64-bit Leopard builds</a>
 <li><a href="#Snow-Leopard">C.4.2 Snow Leopard</a>
 </li></ul>
 <li><a href="#Solaris">C.5 Solaris</a>
@@ -217,7 +217,7 @@ span.env{font-family: monospace}
 
 <p>This is a guide to installation and administration for R.
 
-   <p>The current version of this document is 2.11.0 (2010-04-22).
+   <p>The current version of this document is 2.11.1 (2010-05-31).
 
    <p>ISBN 3-900051-09-7
 
@@ -629,7 +629,7 @@ specified on the <samp><span class="command">make install</span></samp> command 
 <code>libdir</code>.  The C header files can be installed to the value of
 <code>rincludedir</code>: note that as the headers are not installed into a
 subdirectory you probably want something like
-<code>rincludedir=/usr/local/include/R-2.11.0</code>.
+<code>rincludedir=/usr/local/include/R-2.11.1</code>.
 
    <p>If you want the R home to be something other than
 <samp><var>libdir</var><span class="file">/R</span></samp>, use <samp><span class="option">rhome</span></samp>: for example
@@ -835,14 +835,20 @@ has been changed, for example by OS updates or by substituting the BLAS
 
 <pre class="example">     library("tools")
      testInstalledBasic("both")
-     testInstalledPackages("base")
-     testInstalledPackages("recommended")
+     testInstalledPackages(scope = "base")
+     testInstalledPackages(scope = "recommended")
 </pre>
    <p class="noindent">runs the basic tests and then all the tests on the standard and
-recommended packages.  These tests can be run from anywhere: they write
-their results in the <samp><span class="file">tests</span></samp> folder of the R home directory. 
-They run slightly fewer tests than the first approach: in particular
-they do not test Internet access.
+recommended packages.  These tests can be run from anywhere: the basic
+tests write their results in the <samp><span class="file">tests</span></samp> folder of the R home
+directory and run slightly fewer tests than the first approach: in
+particular they do not test Internet access.
+
+   <p>These tests work best if <samp><span class="command">diff</span></samp> (in <samp><span class="file">Rtools.exe</span></samp> for
+Windows users) is in the path, and on some systems need the collation
+locale set manually (the R code tries to do so but it may not be
+possible to reset it): so if needed try setting the environment variable
+<samp><span class="env">LC_COLLATE</span></samp> to &lsquo;<samp><span class="samp">C</span></samp>&rsquo; before starting R.
 
    <p>It is possible to test the installed packages (but not the
 package-specific tests) by <code>testInstalledPackages</code> even if
@@ -868,8 +874,8 @@ install the standard version even on a 64-bit Windows OS.
 perhaps for some network-mounted systems).
 
    <p>Installation is <em>via</em> the installer
-<samp><span class="file">R-2.11.0-win32.exe</span></samp> (or
-<samp><span class="file">R-2.11.0-win64.exe</span></samp>).  Just double-click on the icon and
+<samp><span class="file">R-2.11.1-win32.exe</span></samp> (or
+<samp><span class="file">R-2.11.1-win64.exe</span></samp>).  Just double-click on the icon and
 follow the instructions.  You can uninstall R from the Control Panel
 or from the (optional) R program group on the Start Menu.
 
@@ -906,11 +912,11 @@ will call this directory <var>R_HOME</var> below.
 
 <p>You need to collect the following sets of files:
      <ul>
-<li>Get the R source code <samp><span class="file">R-2.11.0.tar.gz</span></samp> from
+<li>Get the R source code <samp><span class="file">R-2.11.1.tar.gz</span></samp> from
 <acronym>CRAN</acronym>.  Open a command window (or another shell) at
 directory <var>R_HOME</var>, and run
 
-     <pre class="example">          tar xf R-2.11.0.tar.gz
+     <pre class="example">          tar xf R-2.11.1.tar.gz
 </pre>
      <p class="noindent">to create the source tree in <var>R_HOME</var>.  <strong>Beware</strong>: do use
 <samp><span class="command">tar</span></samp> to extract the sources rather than tools such as WinZip
@@ -1036,9 +1042,10 @@ ample memory, and is not 100% reliable.
 The file <samp><var>R_HOME</var><span class="file">/library/grDevices/libs/Rbitmap.dll</span></samp> is not built
 automatically.
 
-   <p>Running <code>make</code> in <samp><var>R_HOME</var><span class="file">/src/gnuwin32/bitmap</span></samp>
-or <code>make bitmapdll</code> in <samp><var>R_HOME</var><span class="file">/src/gnuwin32</span></samp>
-should build <samp><span class="file">Rbitmap.dll</span></samp> and install it in <samp><var>R_HOME</var><span class="file">/bin</span></samp>.
+   <p>Running <code>make</code> in <samp><var>R_HOME</var><span class="file">/src/gnuwin32/bitmap</span></samp> or
+<code>make bitmapdll</code> in <samp><var>R_HOME</var><span class="file">/src/gnuwin32</span></samp> should build
+<samp><span class="file">Rbitmap.dll</span></samp> and install it under
+<samp><var>R_HOME</var><span class="file">/library/grDevices/libs</span></samp>.
 
 <p><a name="Checking-the-build"></a>
 
@@ -1140,7 +1147,7 @@ customizations to that installation.  Then in
 installation (forward slashes and no spaces, please).
 
    <p>Both methods create an executable with the standard name,
-<samp><span class="file">R-2.11.0-win32.exe</span></samp>, so please rename it to indicate that
+<samp><span class="file">R-2.11.1-win32.exe</span></samp>, so please rename it to indicate that
 it is customized.  If you intend to <em>distribute</em> a customized
 installer please do check that license requirements are met &ndash; note that
 the installer will state that the contents are distributed under GPL-2
@@ -1183,7 +1190,7 @@ required.  Then
      make msi
 </pre>
    <p class="noindent">which will results in a file of about 45Mb with a name like
-<samp><span class="file">R-2.11.0-win32.msi</span></samp>.  This can be double-clicked to be
+<samp><span class="file">R-2.11.1-win32.msi</span></samp>.  This can be double-clicked to be
 installed, but those who need it will know what to do with it.
 
    <p>Thanks to David del Campo (Dept of Statistics, University of Oxford)
@@ -1278,14 +1285,14 @@ imposes on re-distribution).
 <!-- compilers from @url{ftp://ftp.equation.com/gcc/} and from -->
 <!-- @url{http://www.cadforte.com/downloads.html}.  Use at your own risk! -->
    <p>To build package <strong>tcltk</strong> you need to unpack
-<a href="http://www.stats.ox.ac.uk/pub/Rtools/R64_Tcl_8-5-8.zip">http://www.stats.ox.ac.uk/pub/Rtools/R64_Tcl_8-5-8.zip</a> at the top
-of the source tree: otherwise edit <samp><span class="file">src/library/tcltk/Makefile.win</span></samp>
-to make a stub package.
+<a href="http://www.stats.ox.ac.uk/pub/Rtools/R64_Tcl_8-5-8.zip">http://www.stats.ox.ac.uk/pub/Rtools/R64_Tcl_8-5-8.zip</a>
+(<strong>NB</strong> this is not the same file as for R 2.12.0) at the top of
+the source tree: otherwise edit <samp><span class="file">src/library/tcltk/Makefile.win</span></samp> to
+make a stub package.
 
-   <p>The default is <code>options(pkgType="win64.binary")</code>, supported for
-R 2.11.x on both <acronym>CRAN</acronym> and <acronym>CRANextras</acronym>.  Packages
-using Gtk+ (<strong>Cairo</strong>, <strong>RGtk2</strong>, <strong>cairoDevice</strong> and those that
-depend on them) need the <samp><span class="file">bin</span></samp> directory of the distribution at
+   <p>The default is <code>options(pkgType="win64.binary")</code>.  Packages using
+Gtk+ (<strong>Cairo</strong>, <strong>RGtk2</strong>, <strong>cairoDevice</strong> and those that depend
+on them) need the <samp><span class="file">bin</span></samp> directory of the distribution at
 <a href="http://www.gtk.org/download-windows-64bit.html">http://www.gtk.org/download-windows-64bit.html</a> in the path: note
 that this conflicts with the directory of DLLs needed for 32-bit Gtk+ so
 you need the correct one first in your path if using both.
@@ -1313,10 +1320,9 @@ developer of the MinGW-w64 project.
 <p><a name="index-Mac-OS-X-26"></a>
 The <samp><span class="file">bin/macosx</span></samp> directory of a <acronym>CRAN</acronym> site contains
 binaries for Mac OS X for a base distribution and a large number of
-add-on packages from <acronym>CRAN</acronym> to run on Mac OS X 10.5/6 (with a
-different build for version 10.4.4 or higher).
+add-on packages from <acronym>CRAN</acronym> to run on Mac OS X 10.5/6.
 
-   <p>The simplest way is to use <samp><span class="file">R-2.11.0.pkg</span></samp>: just
+   <p>The simplest way is to use <samp><span class="file">R-2.11.1.pkg</span></samp>: just
 double-click on the icon.  Note that Tcl/Tk and the Fortran compiler
 need to be installed separately if needed (unlike for R 2.9.x and
 earlier).
@@ -1332,8 +1338,8 @@ for full details.  You will need to collect and install some tools as
 explained in the document.  Then you have to expand the R sources and
 configure R appropriately, for example
 
-<pre class="example">     tar zxvf R-2.11.0.tar.gz
-     cd R-2.11.0
+<pre class="example">     tar zxvf R-2.11.1.tar.gz
+     cd R-2.11.1
      ./configure --with-blas='-framework vecLib' --with-lapack \
        --with-aqua --enable-R-framework
      make
@@ -1479,12 +1485,12 @@ library paths, separated by colons (semicolons on Windows).
 <p><a name="index-Packages_002c-installing-45"></a>
 
    <p>Packages may be distributed in source form or compiled binary form. 
-Installing source packages requires that compilers and tools be
-installed.  Binary packages are platform-specific and generally need no
-special tools to install, but see the documentation for your platform
-for details.
+Installing source packages which contain C/C++/Fortran code requires
+that compilers and related tools be installed.  Binary packages are
+platform-specific and generally need no special tools to install, but
+see the documentation for your platform for details.
 
-   <p>Note that you need to specify implicitly or explicitly the library to
+   <p>Note that you may need to specify implicitly or explicitly the library to
 which the package is to be installed.  This is only an issue if you have
 more than one library, of course.
 
@@ -1538,9 +1544,9 @@ this will be selected automatically if the name given is a single
 
    <p><code>install.packages</code> can look in several repositories, specified as a
 character vector by the argument <code>repos</code>: these can include a
-<acronym>CRAN</acronym> mirror, Bioconductor, Omegahat, local archives, local
-files, <small class="dots">...</small>).  Function <code>setRepositories()</code> can select amongst
-those repositories that the R installation is aware of.
+<acronym>CRAN</acronym> mirror, Bioconductor, Omegahat, R-forge, local archives,
+local files, <small class="dots">...</small>).  Function <code>setRepositories()</code> can select
+amongst those repositories that the R installation is aware of.
 
    <p>Naive users sometimes forget that as well as installing a package, they
 have to use <code>library</code> to make its functionality available.
@@ -1568,29 +1574,37 @@ interface to <code>install.packages</code>, <code>update.packages</code> and
    <p><samp><span class="command">R CMD INSTALL</span></samp> works in Windows to install source packages if
 you have set up the tools needed (see <a href="#The-Windows-toolset">The Windows toolset</a>). 
 <samp><span class="command">R CMD INSTALL --help</span></samp> will tell you the current options under
-Windows (which differ from those on a Unix-alike). 
-Installation of binary packages must be done by <code>install.packages</code>.
+Windows (which differ from those on a Unix-alike).
 
    <p>We have seen permission problems after unpacking source packages on some
 Vista/Windows 7/Server 2008 systems: these have been circumvented by
 setting the environment variable <samp><span class="env">R_INSTALL_TAR</span></samp> to &lsquo;<samp><span class="samp">tar.exe</span></samp>&rsquo;.
 
    <p>If you have only a source package that is known to work with current
-R and just want a binary Windows build of it, you could make use of
-the building service offered at <a href="http://win-builder.r-project.org/">http://win-builder.r-project.org/</a>.
+R and just want a binary (32- or 64-bit) Windows build of it, you
+could make use of the building service offered at
+<a href="http://win-builder.r-project.org/">http://win-builder.r-project.org/</a>.
 
 <p><a name="Mac-OS-X-packages"></a>
 
 <h4 class="subsection">6.3.2 Mac OS X</h4>
 
 <p>On Mac OS X <code>install.packages</code> works as it does on other Unix-like
-systems, but there is an additional type <code>mac.binary</code> (the default
+systems, but there are additional types <code>mac.binary*</code> (the default
 in the <acronym>CRAN</acronym> distribution) that can be passed to
 <code>install.packages</code> in order to download and install binary packages
 from a suitable repository, and is the default for <acronym>CRAN</acronym> builds
 of R.  These Macintosh binary package files have the extension
 &lsquo;<samp><span class="samp">tgz</span></samp>&rsquo;.  The R GUI provides for installation of either binary or
 source packages, from <acronym>CRAN</acronym> or local files.
+
+   <p>Originally there was just package type <code>mac.binary</code>, and this was
+used for `universal' binaries, that is those designed to run on multiple
+CPU types (PowerPC and i386 at the time).  Later it became necessary to
+use different binary distributions for different versions of Mac OS X,
+and we now have <code>mac.binary.universal</code> (for Mac OS 10.4 aka
+`Tiger', last built for R 2.10.1) and <code>mac.binary.leopard</code> (for
+Mac OS 10.5 and 10.6).
 
 <p><a name="Customizing-package-compilation"></a>
 
@@ -1677,7 +1691,10 @@ for one or more of the following types of package distributions:
 can be used, e.g. <samp><span class="file">.tar.bz2</span></samp> or <samp><span class="file">.tar.xz</span></samp> files.
 
      <li><code>"win.binary"</code>: located at <samp><span class="file">bin/windows/contrib/</span><var>x.y</var></samp> for
-R versions <var>x.y.z</var> and containing <samp><span class="file">.zip</span></samp> files.
+R versions <var>x.y.z</var> and containing <samp><span class="file">.zip</span></samp> files for 32-bit Windows
+
+     <li><code>"win64.binary"</code>: located at <samp><span class="file">bin/windows64/contrib/</span><var>x.y</var></samp> for
+R versions <var>x.y.z</var> and containing <samp><span class="file">.zip</span></samp> files for 64-bit Windows.
 
      <li><code>"mac.binary"</code>: located at
 <samp><span class="file">bin/macosx/universal/contrib/</span><var>x.y</var></samp> for R versions <var>x.y.z</var>
@@ -1685,8 +1702,7 @@ and containing <samp><span class="file">.tgz</span></samp> files.  If the reposi
 packages for a specific architecture, the package distribution type
 can be set to <code>"mac.binary.xxx"</code> where <var>xxx</var> specifies the
 architecture, replacing <code>universal</code> by <var>xxx</var> in the path
-above.  For packages built for the off-CRAN `leopard' binary, replace
-<code>universal</code> by <code>leopard</code>. 
+above. 
 </ul>
 
    <p>Each terminal directory must also contain a <samp><span class="file">PACKAGES</span></samp> file.  This
@@ -2195,7 +2211,8 @@ types: this is checked at configuration.
    <p>A <samp><span class="command">tar</span></samp> program is needed to unpack the sources and packages
 (including the recommended packages).  A version<a rel="footnote" href="#fn-19" name="fnd-19"><sup>19</sup></a> that can
 automagically detect compressed archives is preferred for use with
-<code>untar()</code>: the configure script looks for <samp><span class="command">gtar</span></samp> before
+<code>untar()</code>: the configure script looks for <samp><span class="command">gtar</span></samp> and
+<samp><span class="command">gnutar</span></samp> before
 <a name="index-TAR-65"></a><samp><span class="command">tar</span></samp>: use environment variable <samp><span class="env">TAR</span></samp> to override this.
 
    <p>There need to be suitable versions of the tools <samp><span class="command">grep</span></samp>,
@@ -2278,8 +2295,7 @@ or <samp><span class="option">--with-system-pcre</span></samp>: otherwise versio
 will be compiled in.  As the latter suffice and are tested with R you
 should not need to change this.  In particular, the version of
 <code>zlib</code> 1.2.3 in the R sources has enhancements to work with
-large file systems on 32-bit platforms, and <code>zlib</code> 1.2.4 is not
-currently compatible with R.
+large file systems on 32-bit platforms.
 
    <p><code>liblzma</code> from <code>xz-utils</code> version 4.999 or later will be used
 if installed: the version in the R sources can be selected instead by
@@ -3302,8 +3318,7 @@ suggests that <samp><span class="option">-pc64</span></samp> may be desirable.
 
 <h4 class="subsection">C.2.3 Sun Studio compilers</h4>
 
-<p>Brian Ripley tested the Sun Studio 12 (aka Sun Ceres, formerly Sun
-Forte) compilers
+<p>Brian Ripley tested the Sun Studio 12 compilers
 (<a href="http://developers.sun.com/sunstudio/index.jsp">http://developers.sun.com/sunstudio/index.jsp</a>) on
 &lsquo;<samp><span class="samp">x86_64</span></samp>&rsquo; Linux with
 
@@ -3360,7 +3375,8 @@ Developer Tools (`Xcode') and <samp><span class="command">gfortran</span></samp>
 install an X sub-system or configure with <samp><span class="option">--without-x</span></samp>.  The X
 window manager is part of the standard Mac OS X distribution since Mac
 OS X version 10.3 (Panther), but it is typically not pre-installed prior
-to 10.5 (Leopard).
+to 10.5 (Leopard).  You will also need <samp><span class="command">gfortran</span></samp> and
+<code>libreadline</code> (or configure with <samp><span class="option">--without-readline</span></samp>).
 
    <p>For more information on how to find these tools please read the
 <a href="http://CRAN.R-project.org/bin/macosx/RMacOSX-FAQ.html">R for Mac OS X <acronym>FAQ</acronym></a>.
@@ -3385,10 +3401,10 @@ routines.  Building R without these options <em>via</em>
    <p class="noindent">can be done (and is provided as an alternative in the binary
 distribution).
 
-<p><a name="64-bit-builds"></a>
-<a name="g_t64_002dbit-builds"></a>
+<p><a name="64-bit-Leopard-builds"></a>
+<a name="g_t64_002dbit-Leopard-builds"></a>
 
-<h4 class="subsection">C.4.1 64-bit builds</h4>
+<h4 class="subsection">C.4.1 64-bit Leopard builds</h4>
 
 <p>64-bit builds are supported on 10.5.x (Leopard) and later.  All that is
 needed is to select suitable compiler options, e.g. for recent Intel
@@ -3411,25 +3427,45 @@ on Snow Leopard.)
 <p>On Snow Leopard you will most likely to need to specify <samp><span class="option">-arch
 i386</span></samp> for a 32-bit build and <samp><span class="option">-arch x86_64</span></samp> for a 64-bit build:
 the Apple compilers default to 64-bit but the <samp><span class="command">gfortran</span></samp>
-supplied on <acronym>CRAN</acronym> defaults to 32-bit.
+supplied on <a href="http://r.research.att.com">http://r.research.att.com</a> defaults to 32-bit.
 
-   <p>Another quirk is that people have found that the X11 libraries are not
-in the default linking path, so something like
-&lsquo;<samp><span class="samp">LIBS=-L/usr/X11/lib</span></samp>&rsquo; may be required.
+   <p>Another quirk is that the X11 libraries are not in the default linking
+path, so something like &lsquo;<samp><span class="samp">LIBS=-L/usr/X11/lib</span></samp>&rsquo; may be required (or
+you can use the <samp><span class="command">configure</span></samp> options
+<samp><span class="option">--x-includes=/usr/X11/include --x-libraries=/usr/X11/lib.</span></samp>).
 
-<p><a name="Solaris"></a>
+   <p>So for a 64-bit build of R you need a file <samp><span class="file">config.site</span></samp> in the
+top-level build directory containing
+
+<pre class="example">     CC='gcc -arch x86_64'
+     CXX='g++ -arch x86_64'
+     F77='gfortran -arch x86_64'
+     FC='gfortran -arch x86_64'
+     OBJC='gcc -arch x86_64'
+     LIBS=-L/usr/X11/lib
+</pre>
+   <p class="noindent">whereas for a 32-bit build it should have
+
+<pre class="example">     CC='gcc -arch i386'
+     CXX='g++ -arch i386'
+     F77='gfortran -arch i386'
+     FC='gfortran -arch i386'
+     OBJC='gcc -arch i386'
+     LIBS=-L/usr/X11/lib
+</pre>
+   <p><a name="Solaris"></a>
 
 <h3 class="section">C.5 Solaris</h3>
 
 <p><a name="index-Solaris-102"></a>
 R has been built successfully on Solaris 10 (both Sparc and
-&lsquo;<samp><span class="samp">x86</span></samp>&rsquo;) using the (zero cost) Sun Studio (aka Ceres) 12
-compilers: there has been some success with
-<samp><span class="command">gcc</span></samp>&nbsp;4/<samp><span class="command">gfortran</span></samp>, mainly on Sparc.  Sun packages
-for R used to be available from <a href="http://www.sunfreeware.com/">http://www.sunfreeware.com/</a>
-for both architectures, but have not been updated recently.  (Recent Sun
-machines are Opterons (&lsquo;<samp><span class="samp">amd64</span></samp>&rsquo;) rather than &lsquo;<samp><span class="samp">x86</span></samp>&rsquo;, but
-32-bit &lsquo;<samp><span class="samp">x86</span></samp>&rsquo; executables are the default.)
+&lsquo;<samp><span class="samp">x86</span></samp>&rsquo;) using the (zero cost) Sun Studio 12 compilers: there has
+been some success with <samp><span class="command">gcc</span></samp>&nbsp;4/<samp><span class="command">gfortran</span></samp>, mainly
+on Sparc.  Sun packages for R used to be available from
+<a href="http://www.sunfreeware.com/">http://www.sunfreeware.com/</a> for both architectures, but have not
+been updated recently.  (Recent Sun machines are Opterons
+(&lsquo;<samp><span class="samp">amd64</span></samp>&rsquo;) rather than &lsquo;<samp><span class="samp">x86</span></samp>&rsquo;, but 32-bit &lsquo;<samp><span class="samp">x86</span></samp>&rsquo;
+executables are the default.)
 
    <p>There are also reports of success on OpenSolaris (also known as Solaris
 Express Community Edition, and sometimes as Solaris 11) on
@@ -3506,7 +3542,7 @@ performance: Sun recommend
      CXXFLAGS="-O5 -xlibmil -nofstore -xtarget=native"
      SAFE_FFLAGS="-libmil -fstore -xtarget=native"
 </pre>
-   <p>The SunStudio compilers provide several implementations of the C++
+   <p>The Sun Studio compilers provide several implementations of the C++
 standard which select both the set of headers and a C++ runtime library. 
 These are selected by the <samp><span class="option">-library</span></samp> flag, which as it is needed
 for both compiling and linking is best specified as part of the
@@ -3648,7 +3684,7 @@ libraries downloaded from these repositories (e.g., GCC, Make,
 <code>libreadline</code>, etc.) are typically installed to
 <samp><span class="file">/opt/freeware</span></samp>, hence corresponding executables are found in
 <a name="index-PATH-108"></a><samp><span class="file">/opt/freeware/bin</span></samp> which thus needs to be in <samp><span class="env">PATH</span></samp> for using
-these tools.  Like on other Unix systems one needs <acronym>GNU</acronym>
+these tools.  As on other Unix systems one needs <acronym>GNU</acronym>
 <code>libiconv</code> as the AIX version of iconv is not sufficiently
 powerful.  Additionally, for proper Unicode compatibility one should
 install the corresponding package from the ICU project
@@ -3712,7 +3748,9 @@ environment can be found in the &ldquo;R on AIX&rdquo; project on R-Forge
 
 <p>The Cygwin emulation layer on Windows can be treated as a Unix-alike OS. 
 This is unsupported, but experiments have been conducted and a few
-workarounds added for R 2.6.0.
+workarounds added for R 2.6.0.  Currently (mid 2010) the build
+produced with Cygwin's <samp><span class="command">gcc 4.3.4</span></samp> fails to handles regular
+expressions correctly.
 
    <p>Only building as a shared library works,<a rel="footnote" href="#fn-36" name="fnd-36"><sup>36</sup></a> so use e.g
 
@@ -3805,15 +3843,14 @@ locations and other updates to these instructions.  (Most Windows users
 will not need to build add-on packages from source; see <a href="#Add_002don-packages">Add-on packages</a> for details.)
 
    <p>Only building with MinGW <samp><span class="command">gcc 4.2.1</span></samp> is supported.  It is
-possible to build with the recently released MinGW <samp><span class="command">gcc 4.5.0</span></samp>,
-but this came too late to be supported for this release of R&mdash;beware
-that this by default uses DLLs for runtimes which need to be distributed
-with R or packages built with that compiler.  There are also
-differences in the behaviour of <code>formatC</code> with later MinGW runtimes.
+possible to build with the recently released MinGW <samp><span class="command">gcc
+4.5.0</span></samp>&mdash;beware that this by default uses DLLs for Fortran and C++
+runtimes which need to be distributed with R or packages built with
+that compiler.<a rel="footnote" href="#fn-37" name="fnd-37"><sup>37</sup></a>
 
    <p>We have found that the build process for R is quite sensitive to
 the choice of tools: please follow our instructions <strong>exactly</strong>,
-even to the choice of particular versions of the tools.<a rel="footnote" href="#fn-37" name="fnd-37"><sup>37</sup></a>  The build process for add-on packages is somewhat more
+even to the choice of particular versions of the tools.<a rel="footnote" href="#fn-38" name="fnd-38"><sup>38</sup></a>  The build process for add-on packages is somewhat more
 forgiving, but we recommend using the exact toolset at first, and only
 substituting other tools once you are familiar with the process.
 
@@ -3838,14 +3875,14 @@ See the subsections below for detailed descriptions.
 <!-- src/gnuwin32/fixed/rwver.pl, used to make version.texi -->
 <!-- src/gnuwin32/installer: JRins.pl WIXins.pl -->
 <li>The command line tools (in <samp><span class="file">Rtools.exe</span></samp>)
-<li>The MinGW compilers (in <samp><span class="file">Rtools.exe</span></samp>)
+<li>The MinGW compilers (for 32-bit, in <samp><span class="file">Rtools.exe</span></samp>)
 </ul>
    For installing simple packages containing data or R source
 but no compiled code, none of these are needed. 
 Perl is essential to build R, and needed to develop packages.
 
    <p>A complete build of R including PDF manuals, and producing the
-standalone installer <samp><span class="file">R-2.11.0-win32.exe</span></samp> will also need
+standalone installer <samp><span class="file">R-2.11.1-win32.exe</span></samp> will also need
 the following:
      <ul>
 <li>LaTeX
@@ -3915,7 +3952,7 @@ suitably; ensure you have the required fonts installed.
 
 <h3 class="section">D.3 The Inno Setup installer</h3>
 
-<p>To make the installer package (<samp><span class="file">R-2.11.0-win32.exe</span></samp>) we
+<p>To make the installer package (<samp><span class="file">R-2.11.1-win32.exe</span></samp>) we
 currently require Inno Setup 5.3.7 or later from
 <a href="http://jrsoftware.org/">http://jrsoftware.org/</a>.  We use the Unicode version and recommend
 that version be used.  This is <em>not</em> included in <samp><span class="file">Rtools.exe</span></samp>. 
@@ -3931,7 +3968,7 @@ location where Inno Setup was installed.
 
 <h3 class="section">D.4 The command line tools</h3>
 
-<p>This item and the next are installed by the <samp><span class="file">Rtools.exe</span></samp> installer.
+<p>This item is installed by the <samp><span class="file">Rtools.exe</span></samp> installer.
 
 <!-- date is used when building base and tools -->
 <!-- find is used in building the installers -->
@@ -3966,10 +4003,14 @@ at the prompt to find out.
 
 <h3 class="section">D.5 The MinGW compilers</h3>
 
-<p>This version of R is set up to use <samp><span class="command">gcc</span></samp> <code>4.2.1</code> for
-which MinGW compilers were released in August 2007.  The
-<samp><span class="file">Rtools.exe</span></samp> installer currently includes the <code>-sjlj</code> version
-of <code>4.2.1</code> of the MinGW port of <samp><span class="command">gcc</span></samp> from
+<p>This is the only step which differs between 32- and 64-bit builds. 
+Technically you need more than just a compiler so the set of tools is
+referred to as a `toolchain'.
+
+   <p>The 32-bit build for this version of R is set up to use <samp><span class="command">gcc</span></samp>
+<code>4.2.1</code> for which MinGW compilers were released in August 2007. 
+The <samp><span class="file">Rtools.exe</span></samp> installer currently includes the <code>-sjlj</code>
+version of <code>4.2.1</code> of the MinGW port of <samp><span class="command">gcc</span></samp> from
 <a href="http://sourceforge.net/project/showfiles.php?group_id=2435">http://sourceforge.net/project/showfiles.php?group_id=2435</a>.
 
    <p>If you would like to install your own copy, we recommend downloading
@@ -3977,30 +4018,9 @@ from the URL above, as the download links from
 <a href="http://www.mingw.org/">http://www.mingw.org/</a> have led to obsolete versions. See the
 notes on <a href="http://www.murdoch-sutherland.com/Rtools/">http://www.murdoch-sutherland.com/Rtools/</a> for updates.
 
-<!-- There may be an installer in the `Current' section, which can be used -->
-<!-- if it gives the @samp{Candidate} compilers (@code{gcc-3.4.5}).  (If -->
-<!-- using this, select the @samp{Candidate} package and add the @code{g++} -->
-<!-- and @code{g77} compilers to the @samp{MinGW base tools}: components will -->
-<!-- be downloaded from Sourceforge and unpacked.) -->
-   <p>To download the components individually, currently you need
+   <p>See above for comments about the MinGW build of <code>gcc 4.5.0</code>.
 
-<pre class="example">     mingw-runtime-3.13.tar.gz
-     w32api-3.10.tar.gz
-     binutils-2.17.50-20060824-1.tar.gz
-     gcc-core-4.2.1-sjlj-2.tar.gz
-     gcc-g++-4.2.1-sjlj-2.tar.gz
-     gcc-gfortran-4.2.1-sjlj-2.tar.gz
-</pre>
-   <p class="noindent">(and <code>gcc-objc-4.2.1-sjlj-2.tar.gz</code> if you want Objective C
-support).  Unpack these into the same directory (using <samp><span class="command">tar zxf
-tarball_name</span></samp>).  (You may need to copy <samp><span class="file">bin/gcc-sjlj.exe</span></samp> to
-<samp><span class="file">bin/gcc.exe</span></samp> and a few badly-written packages need
-<samp><span class="file">bin/g++-sjlj.exe</span></samp> copied to <samp><span class="file">bin/g++.exe</span></samp>.)  This compiler
-should work on Windows Vista without any workarounds.
-
-   <p>Note that <code>mingw-runtime-3.13.tar.gz</code> or later (but not as late as
-<code>3.18</code>) and <code>gcc-4.2.1</code> or later are needed to get a correct
-build of R itself.
+   <p>For the 64-bit toolchain, see <a href="#Building-R-for-64_002dbit-Windows">Building R for 64-bit Windows</a>.
 
 <p><a name="Useful-additional-programs"></a>
 
@@ -4159,7 +4179,7 @@ difficulty.</p>
 
    <p class="footnote"><small>[<a name="fn-5" href="#fnd-5">5</a>]</small> but the current versions are at
 <a href="ftp://ftp.remotesensing.org/pub/libtiff/">ftp://ftp.remotesensing.org/pub/libtiff/</a>: we used
-<samp><span class="file">tiff-3.9.1.tar.gz</span></samp>.</p>
+<samp><span class="file">tiff-3.9.2.tar.gz</span></samp>.</p>
 
    <p class="footnote"><small>[<a name="fn-6" href="#fnd-6">6</a>]</small> As the R build process itself runs R, it has to
 be done under 64-bit Windows.  So does installation of source packages.</p>
@@ -4263,7 +4283,10 @@ resolved by turning off optimization</p>
 have all links resolved at build time and so cannot resolve against
 <samp><span class="file">R.bin</span></samp>.</p>
 
-   <p class="footnote"><small>[<a name="fn-37" href="#fnd-37">37</a>]</small> For
+   <p class="footnote"><small>[<a name="fn-37" href="#fnd-37">37</a>]</small> In our experiments, packages using C++ crash
+frequently unless linked statically <em>via</em> <code>-static-libstdc++</code>.</p>
+
+   <p class="footnote"><small>[<a name="fn-38" href="#fnd-38">38</a>]</small> For
 example, the Cygwin version of <code>make 3.81</code> fails to work
 correctly.</p>
 

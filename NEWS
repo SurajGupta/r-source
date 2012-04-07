@@ -6,6 +6,120 @@
 	**************************************************
 
 
+		CHANGES IN R VERSION 2.11.1
+
+
+NEW FEATURES
+
+    o	R CMD INSTALL checks if dependent packages are available early on
+	in the installation of source packages, thereby giving clearer
+	error messages.
+
+    o	R CMD INSTALL --build now names the file in the format used
+	for Mac OS X binary files on that platform.
+
+    o	BIC() in package stats4 now also works with multiple fitted models,
+	analogously to AIC().
+
+
+DEPRECATED & DEFUNCT
+
+    o	Use of file extension .C for C++ code in packages is now
+	deprecated: it has caused problems for some 'make's on
+	case-insensitive file systems (although it currently works
+	with the recommended toolkits).
+
+
+INSTALLATION
+
+    o	Command 'gnutar' is preferred to 'tar' when configure sets
+	TAR.  This is needed on Mac OS 10.6, where the default tar,
+	bsdtar 2.6.2, has been reported to produce archives with
+	illegal extensions to tar (according to the POSIX standard).
+
+
+BUG FIXES
+
+    o	The C function mkCharLenCE now no longer reads past 'len' bytes
+	(unlikely to be a problem except in user code). (PR#14246)
+
+    o	On systems without any default LD_LIBRARY_PATH (not even
+	/usr/local/lib), [DY]LIB_LIBRARY_PATH is now set without a
+	trailing colon.	 (PR#13637)
+
+    o	More efficient utf8ToInt() on long multi-byte strings with
+	many multi-byte characters.  (PR#14262)
+
+    o	aggregate.ts() gave platform-depedent results due to rounding
+	error for ndeltat != 1.
+
+    o 	package.skeleton() sometimes failed to fix filenames for .R or
+    	.Rd files to start with an alphanumeric.  (PR#14253)
+	It also failed when only an S4 class without any methods was
+	defined.  (PR#14280)
+
+    o	splinefun(*, method = "monoH.FC")  was not quite monotone in rare
+	cases.	(PR#14215)
+
+    o	Rhttpd no longer crashes due to SIGPIPE when the client closes
+	the connection prematurely.  (PR#14266)
+
+    o	format.POSIXlt() could cause a stack overflow and crash when used on
+    	very long vectors.  (PR#14267)
+
+    o	Rd2latex() incorrectly escaped special characters in \usage sections.
+
+    o	mcnemar.test() could alter the levels (dropping unused levels)
+	if passed 'x' and 'y' as factors (reported by Greg Snow).
+
+    o	Rd2pdf sometimes needed a further pdflatex pass to get
+	hyperlinked pages correct.
+
+    o	interaction() produced malformed results when levels were
+    	duplicated, causing segfaults in split().
+
+    o	cut(d, breaks = <n>)  now also works for "Date" or "POSIXt"
+        argument d.  (PR#14288)
+
+    o	memDecompress() could decompress incompletely rare xz-compressed
+	input due to incorrect documentation of xz utils.  (Report
+	and patch from Olaf Mersmann.)
+
+    o	The S4 initialize() methods for "matrix", "array", and "ts" have
+ 	been fixed to call validObject(). (PR#14284)
+
+    o	R CMD INSTALL now behaves the same way with or without
+	--no-multiarch on platforms with only one installed
+	architecture.  (It used to clean the src directory without
+	--no-multiarch.)
+
+    o	[<-.data.frame was not quite careful enough in assigning (and
+        potentially deleting) columns right-to-left. (PR#14263)
+
+    o	rbeta(n, a,b) no longer occasionally returns NaN for a >> 1 > b.
+	(PR#14291)
+
+    o	pnorm(x, log.p = TRUE) could return NaN not -Inf for x near
+	(minus for lower.tail=TRUE) the largest representable number.
+
+    o	Compressed data files *.(txt|tab|csv).(gz|bz2|xz) were not
+	recognized for the list of data topics and hence for packages
+	using LazyData.  (PR#14273)
+
+    o	textConnection() did an unnecessary translation on strings in
+	a foreign encoding (e.g. UTF-8 strings on Windows) and so was
+	slower than it could have been on very long input strings.
+	(PR#14286)
+	
+    o	tools::Rd2txt() did not render poorly written Rd files
+	consistently with other renderers.
+
+    o	na.action() did not extract the 'na.action' component as
+	documented.
+
+
+
+
 		CHANGES IN R VERSION 2.11.0
 
 
@@ -41,7 +155,7 @@ NEW FEATURES
 
     o	R CMD INSTALL now uses the internal untar() in package utils:
 	this ensures that all platforms can install bzip2- and
-	xz-compressed tarballs.  In case this causes problems (as it
+	xz-compressed tarballs.	 In case this causes problems (as it
 	has on some Windows file systems when run from Cygwin tools)
 	it can be overridden by the environment variable
 	R_INSTALL_TAR: setting this to a modern external tar program
@@ -266,12 +380,12 @@ NEW FEATURES
 	versions on systems with sub-architectures.
 
     o	R CMD check now (by default) also checks Rd files for
-    	auto-generated content in need of editing, and missing argument
-    	descriptions.
+	auto-generated content in need of editing, and missing argument
+	descriptions.
 
     o	aggregate() gains a formula method thanks to a contribution by
-    	Arni Magnusson.  The data frame method now allows summary
-    	functions to return arbitrarily many values.
+	Arni Magnusson.	 The data frame method now allows summary
+	functions to return arbitrarily many values.
 
     o	path.expand() now propagates NA values rather than converting them
 	to "NA".
@@ -281,7 +395,7 @@ NEW FEATURES
 
     o	The 'fuzz' used by seq() and seq.int() has been reduced from
 	1e-7 to 1e-10, which should be ample for the double-precision
-	calculations used in R.  It ensures that the fuzz never comes
+	calculations used in R.	 It ensures that the fuzz never comes
 	into play with sequences of integers (wish of PR#14169).
 
     o	The default value of RSiteSearch(restrict=) has been changed
@@ -290,7 +404,7 @@ NEW FEATURES
 	"Rhelp10" for those from 2010.
 
     o	New function rasterImage() in the 'graphics' package for drawing
-        raster images.
+	raster images.
 
     o	stats:::extractAIC.coxph() now omits aliased terms when computing
 	the degrees of freedom (suggestion of Terry Therneau).
@@ -300,7 +414,7 @@ NEW FEATURES
 
     o	pchisq(ncp =, log.p = TRUE) is more accurate for probabilities
 	near one.  E.g. pchisq(80, 4, ncp=1, log.p=TRUE).  (Maybe what
-	was meant in PR#14126.)
+	was meant in PR#14216.)
 
     o	maintainer() has been added, to give convenient access to the
 	name of the maintainer of a package (contributed by David
@@ -340,8 +454,8 @@ NEW FEATURES
 	outputEncoding = "ASCII" uses the second part.
 
     o	A new class "listOfMethods" has been introduced to represent
-        the methods in a methods table, to replace the deprecated
-        class "MethodsList".
+	the methods in a methods table, to replace the deprecated
+	class "MethodsList".
 
     o	any() and all() return early if possible.  This may speed up
 	operations on long vectors.
@@ -394,10 +508,10 @@ DEPRECATED & DEFUNCT
 	longer assigned or used as metadata by the package.
 
 	getMethods() is now deprecated, with its internal use replaced
-        by findMethods() and other changes.  Creating objects from the
-        MethodsList class is also deprecated.
+	by findMethods() and other changes.  Creating objects from the
+	MethodsList class is also deprecated.
 
-    o 	Parsing strings containing both octal/hex and Unicode escapes
+    o	Parsing strings containing both octal/hex and Unicode escapes
 	now gives a warning and will become an error in R 2.12.0.
 
 
@@ -416,8 +530,8 @@ INSTALLATION
 PACKAGE INSTALLATION
 
     o	Characters in R source which are not translatable to the
-	current locale are now handled more tolerantly:  these will be
-	converted to hex codes with a warning.  Such characters are
+	current locale are now handled more tolerantly:	 these will be
+	converted to hex codes with a warning.	Such characters are
 	only really portable if they appear in comments.
 
     o	R CMD INSTALL now tests that the installed package can be loaded
@@ -487,10 +601,10 @@ BUG FIXES
 	on a DST-change day could give the wrong time for 'breaks' in units
 	of days or longer.  (PR#14208)
 
-    o   do_par() UNPROTECTed too early (PR#14214)
+    o	do_par() UNPROTECTed too early (PR#14214)
 
-    o   subassignment x[[....]] <- y didn't check for a zero-length
-        right hand side, and inserted rubbish value. (PR#14217)
+    o	subassignment x[[....]] <- y didn't check for a zero-length
+	right hand side, and inserted rubbish value. (PR#14217)
 
     o	fisher.test() no longer gives a P-value *very* slightly > 1,
 	in some borderline cases.
@@ -503,7 +617,7 @@ BUG FIXES
 
     o	gsub() in 2.10.x could fail from stack overflow for extremely
 	long strings due to temporary data being allocated on the
-	stack.  Also, gsub() with fixed=TRUE is in some circumstances
+	stack.	Also, gsub() with fixed=TRUE is in some circumstances
 	considerably faster.
 
     o	Several primitives, including attributes(), attr<-()
@@ -543,9 +657,9 @@ BUG FIXES
     o	The X11() device with cairo but not Pango (notably Mac OS X)
 	now checks validity of text strings in UTF-8 locales (since
 	Pango does but cairo it seems does not).
-	
+
     o	read.fwf() misread multi-line records when n was specified.
-        (PR#14241)
+	(PR#14241)
 
     o	all.equal(*, tolerance = e) passes the numeric tolerance also to
 	the comparison of the attributes.
@@ -606,9 +720,9 @@ NEW FEATURES
 
     o	The PCRE library has been updated to version 8.01, a bug-fix
 	release.
-	
+
     o	tools::readNEWS() now accepts a digit as the first character
-    	of a news section.
+	of a news section.
 
 
 BUG FIXES
@@ -650,7 +764,7 @@ BUG FIXES
 	if an as.character() method called it.
 
     o	The quartz() device did not restore the clipping region when
-	filling the background for a new page.  This could be observed
+	filling the background for a new page.	This could be observed
 	in multi-page bitmap output as stale outer regions of the
 	plot.
 
@@ -659,8 +773,8 @@ BUG FIXES
 	"none", thanks to a patch from Gordon Smyth.
 
     o	tools::showNonASCII() failed to detect non-ASCII characters
-    	if iconv() (incorrectly) converted them to different ASCII
-    	characters.  (Seen on Windows only.)
+	if iconv() (incorrectly) converted them to different ASCII
+	characters.  (Seen on Windows only.)
 
     o	tcrossprod() wrongly failed in some cases when one of the
 	arguments was a vector and the other a matrix.
@@ -670,10 +784,10 @@ BUG FIXES
 	PR#14189.)
 
     o	match(incomparables=<non-NULL>) could in rare cases infinite-
-    	loop.
+	loop.
 
-    o   poisson.test() needed to pass 'conf.level' to binom.test()
-        (PR#14195)
+    o	poisson.test() needed to pass 'conf.level' to binom.test()
+	(PR#14195)
 
     o	The "nls" method for df.residual() gave incorrect results for
 	models fitted with na.action = na.exclude.  (PR#14194)
@@ -686,8 +800,8 @@ BUG FIXES
 	parts of complex numbers correctly (and this was used by str():
 	PR#14201).
 
-    o   system.time() had sys.child component wrong (copied user.child
-        instead) on systems with HAVE_GETRUSAGE (PR#14210)
+    o	system.time() had sys.child component wrong (copied user.child
+	instead) on systems with HAVE_GETRUSAGE (PR#14210)
 
     o	Changing both line texture and line cap (end) resulted in the
 	latter to be ommitted form the PDF code.  In addition, line cap

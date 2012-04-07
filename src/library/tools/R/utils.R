@@ -57,10 +57,12 @@ function(x)
 ### ** file_path_sans_ext
 
 file_path_sans_ext <-
-function(x)
+function(x, compression = FALSE)
 {
     ## Return the file paths without extensions.
     ## (Only purely alphanumeric extensions are recognized.)
+    if(compression)
+        x <- sub("[.](gz|bz2|xz)$", "", x)
     sub("([^.]+)\\.[[:alnum:]]+$", "\\1", x)
 }
 
@@ -1039,6 +1041,7 @@ function(package)
              "rep.int", "round.POSIXt",
              "seq.int", "sort.int", "sort.list"),
              BSDA = "sign.test",
+             GLDEX = "pretty.su",
              Hmisc = c("abs.error.pred", "t.test.cluster"),
              HyperbolicDist = "log.hist",
              MASS = c("frequency.polygon",
@@ -1057,6 +1060,7 @@ function(package)
              ctv = "update.views",
              equivalence = "sign.boot",
              fields = c("qr.q2ty", "qr.yq2"),
+             gbm = c("pretty.gbm.tree", "quantile.rug"),
              grDevices = "boxplot.stats",
              graphics = c("close.screen",
              "plot.design", "plot.new", "plot.window", "plot.xy",
