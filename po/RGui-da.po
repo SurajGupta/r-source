@@ -1,41 +1,43 @@
-# Danish translation rgui.
-# Copyright (C) 2011 The R Foundation & nedenstående oversættere.
-# This file is distributed under the same license as the rgui package.
-# Joe Hansen <joedalton2@yahoo.dk>, 2011.
+# SOME DESCRIPTIVE TITLE.
+# Copyright (C) YEAR The R Foundation
+# This file is distributed under the same license as the PACKAGE package.
+# FIRST AUTHOR <EMAIL@ADDRESS>, YEAR.
 #
 msgid ""
 msgstr ""
-"Project-Id-Version: rgui\n"
+"Project-Id-Version: PACKAGE VERSION\n"
 "Report-Msgid-Bugs-To: bugs@R-project.org\n"
-"POT-Creation-Date: 2011-10-17 10:13+0100\n"
-"PO-Revision-Date: 2011-10-08 22:24+0100\n"
-"Last-Translator: Joe Hansen <joedalton2@yahoo.dk>\n"
-"Language-Team: Danish <debian-l10n-danish@lists.debian.org>\n"
+"POT-Creation-Date: 2012-03-16 06:19+0000\n"
+"PO-Revision-Date: 2011-11-28 23:36+0200\n"
+"Last-Translator: Joe <joedalton2@yahoo.dk>\n"
+"Language-Team: LANGUAGE <LL@li.org>\n"
 "Language: da\n"
 "MIME-Version: 1.0\n"
-"Content-Type: text/plain; charset=ISO-8859-1\n"
+"Content-Type: text/plain; charset=UTF-8\n"
 "Content-Transfer-Encoding: 8bit\n"
+"Plural-Forms: nplurals=2; plural=(n != 1);\n"
+"X-Generator: Pootle 2.1.6\n"
 
-#: console.c:1159 console.c:1201
+#: console.c:1167 console.c:1209
 msgid "Not enough memory"
 msgstr "Ikke nok hukommelse"
 
-#: console.c:1248 console.c:1252
+#: console.c:1256 console.c:1260
 msgid "Insufficient memory: text not copied to the clipboard"
 msgstr ""
-"Utilstrækkelig hukommelse: Tekst blev ikke kopieret til udklipsholderen"
+"UtilstrÃ¦kkelig hukommelse: Tekst blev ikke kopieret til udklipsholderen"
 
-#: console.c:1288 ../extra/graphapp/clipboard.c:53
+#: console.c:1296 ../extra/graphapp/clipboard.c:53
 #: ../extra/graphapp/clipboard.c:79
 msgid "Unable to open the clipboard"
-msgstr "Kan ikke åbne udklipsholderen"
+msgstr "Kan ikke Ã¥bne udklipsholderen"
 
-#: console.c:1906
+#: console.c:1914
 msgid "Insufficient memory. Please close the console"
-msgstr "Utilstrækkelig hukommelse. Luk venligst konsollen"
+msgstr "UtilstrÃ¦kkelig hukommelse. Luk venligst konsollen"
 
 # engelsk fejl, ekstra mellemrum.
-#: console.c:1961 console.c:2014 preferences.c:333
+#: console.c:1969 console.c:2022 preferences.c:333
 #, c-format
 msgid ""
 "Font %s-%d-%d  not found.\n"
@@ -44,144 +46,144 @@ msgstr ""
 "Skrifttype %s-%d-%d blev ikke fundet.\n"
 "Bruger systemskrifttype"
 
-#: console.c:2119
+#: console.c:2127
 msgid "Save selection to"
 msgstr "Gem markering til"
 
-#: console.c:2121
+#: console.c:2129
 msgid "Save console contents to"
 msgstr "Gem konsolindhold til"
 
-#: console.c:2220
+#: console.c:2228
 msgid "Scrolling.\n"
 msgstr "Rulle.\n"
 
-#: console.c:2221
+#: console.c:2229
 msgid "  Keyboard: PgUp, PgDown, Ctrl+Arrows, Ctrl+Home, Ctrl+End,\n"
 msgstr "  Tastatur: PgUp, PgDown, Ctrl+pile, Ctrl+Home, Ctrl+End,\n"
 
-#: console.c:2222
+#: console.c:2230
 msgid ""
 "  Mouse: use the scrollbar(s).\n"
 "\n"
 msgstr ""
-"  Mus: Brug rullebjælkerne.\n"
+"  Mus: Brug rullebjÃ¦lkerne.\n"
 "\n"
 
-#: console.c:2223
+#: console.c:2231
 msgid "Editing.\n"
 msgstr "Redigere.\n"
 
-#: console.c:2224
+#: console.c:2232
 msgid "  Moving the cursor: \n"
-msgstr "  Flytning af markøren: \n"
+msgstr "  Flytning af markÃ¸ren: \n"
 
-#: console.c:2225
+#: console.c:2233
 msgid "     Left arrow or Ctrl+B: move backward one character;\n"
 msgstr "     Venstre pil eller Ctrl+B: Flyt et tegn tilbage;\n"
 
-#: console.c:2226
+#: console.c:2234
 msgid "     Right arrow or Ctrl+F: move forward one character;\n"
-msgstr "     Højre pil eller Ctrl+F: Flyt et tegn fremad;\n"
+msgstr "     HÃ¸jre pil eller Ctrl+F: Flyt et tegn fremad;\n"
 
-#: console.c:2227
+#: console.c:2235
 msgid "     Home or Ctrl+A: go to beginning of line;\n"
-msgstr "     Home eller Ctrl+A: Gå til begyndelsen af linjen;\n"
+msgstr "     Home eller Ctrl+A: GÃ¥ til begyndelsen af linjen;\n"
 
-#: console.c:2228
+#: console.c:2236
 msgid "     End or Ctrl+E: go to end of line;\n"
-msgstr "     End eller Ctrl+E: Gå til slutningen af linjen;\n"
+msgstr "     End eller Ctrl+E: GÃ¥ til slutningen af linjen;\n"
 
-#: console.c:2229
+#: console.c:2237
 msgid "  History: Up and Down Arrows, Ctrl+P, Ctrl+N\n"
 msgstr "  Historik: Pilene op og ned, Ctrl+P, Ctrl+N\n"
 
-#: console.c:2230
+#: console.c:2238
 msgid "  Deleting:\n"
 msgstr "  Slette:\n"
 
-#: console.c:2231
+#: console.c:2239
 msgid "     Del or Ctrl+D: delete current character or selection;\n"
 msgstr "     Del eller Ctrl+D: Slet aktuelt tegn eller markering;\n"
 
-#: console.c:2232
+#: console.c:2240
 msgid "     Backspace: delete preceding character;\n"
-msgstr "     Slet tilbage: Slet foregående tegn;\n"
+msgstr "     Slet tilbage: Slet foregÃ¥ende tegn;\n"
 
-#: console.c:2233
+#: console.c:2241
 msgid ""
 "     Ctrl+Del or Ctrl+K: delete text from current character to end of line.\n"
 msgstr ""
 "     Ctrl+Del eller Ctrl+K: Slet tekst fra aktuel tegn til slutningen af "
 "linjen.\n"
 
-#: console.c:2234
+#: console.c:2242
 msgid "     Ctrl+U: delete all text from current line.\n"
 msgstr "     Ctrl+U: Slet al tekst fra aktuel linje.\n"
 
-#: console.c:2235
+#: console.c:2243
 msgid "  Copy and paste.\n"
-msgstr "  Kopier og indsæt.\n"
+msgstr "  Kopier og indsÃ¦t.\n"
 
-#: console.c:2236
+#: console.c:2244
 msgid ""
 "     Use the mouse (with the left button held down) to mark (select) text.\n"
 msgstr ""
-"     Brug musen (med den venstre tast nede) til at markere (vælge) tekst.\n"
+"     Brug musen (med den venstre tast nede) til at markere (vÃ¦lge) tekst.\n"
 
-#: console.c:2237
+#: console.c:2245
 msgid ""
 "     Use Shift+Del (or Ctrl+C) to copy the marked text to the clipboard and\n"
 msgstr ""
 "     Brug Skift+Del (eller Ctrl+C) til at kopiere den markerede tekst til "
 "udklipsholderen og\n"
 
-#: console.c:2238
+#: console.c:2246
 msgid ""
 "     Shift+Ins (or Ctrl+V or Ctrl+Y) to paste the content of the clipboard "
 "(if any)  \n"
 msgstr ""
-"     Skift+Ins (eller Ctrl+V eller Ctrl+Y) til at indsætte indholdet af "
+"     Skift+Ins (eller Ctrl+V eller Ctrl+Y) til at indsÃ¦tte indholdet af "
 "udklipsholderen (hvis der er noget)  \n"
 
-#: console.c:2239
+#: console.c:2247
 msgid "     to the console, Ctrl+X first copy then paste\n"
-msgstr "     til konsollen, Ctrl+X først kopier så indsæt\n"
+msgstr "     til konsollen, Ctrl+X fÃ¸rst kopier sÃ¥ indsÃ¦t\n"
 
-#: console.c:2240
+#: console.c:2248
 msgid "  Misc:\n"
 msgstr "  Div.:\n"
 
-#: console.c:2241
+#: console.c:2249
 msgid "     Ctrl+L: Clear the console.\n"
 msgstr "     Ctrl+L: Ryd konsollen.\n"
 
-#: console.c:2242
+#: console.c:2250
 msgid "     Ctrl+O or INS: Toggle overwrite mode: initially off.\n"
 msgstr ""
 "     Ctrl+O eller INS: Skift tilstand for overskrivning: Som start slukket.\n"
 
-#: console.c:2243
+#: console.c:2251
 msgid "     Ctrl+T: Interchange current char with one to the left.\n"
 msgstr "     Ctrl+T: Udveksl aktuelt tegn med tegnet til venstre.\n"
 
-#: console.c:2244
+#: console.c:2252
 msgid ""
 "\n"
 "Note: Console is updated only when some input is required.\n"
 msgstr ""
 "\n"
-"Bemærk: Konsol opdateres kun når inddata er krævet..\n"
+"BemÃ¦rk: Konsol opdateres kun nÃ¥r inddata er krÃ¦vet..\n"
 
-#: console.c:2245
+#: console.c:2253
 msgid ""
 "  Use Ctrl+W to toggle this feature off/on.\n"
 "\n"
 msgstr ""
-"  Brug Ctrl+W til at tænde og slukke denne funktion..\n"
+"  Brug Ctrl+W til at tÃ¦nde og slukke denne funktion..\n"
 "\n"
 
-#: console.c:2246
+#: console.c:2254
 msgid ""
 "Use ESC to stop the interpreter.\n"
 "\n"
@@ -189,88 +191,88 @@ msgstr ""
 "Brug ESC til at stoppe fortolkeren.\n"
 "\n"
 
-#: console.c:2247
+#: console.c:2255
 msgid ""
 "TAB starts completion of the current word.\n"
 "\n"
 msgstr ""
-"TAB påbegynder færdiggørelse af det aktuelle ord.\n"
+"TAB pÃ¥begynder fÃ¦rdiggÃ¸relse af det aktuelle ord.\n"
 "\n"
 
-#: console.c:2248
+#: console.c:2256
 msgid "Standard Windows hotkeys can be used to switch to the\n"
 msgstr "Standardgenvejstaster for Windows kan bruges til at skifte til\n"
 
-#: console.c:2249
+#: console.c:2257
 msgid "graphics device (Ctrl+Tab or Ctrl+F6 in MDI, Alt+Tab in SDI)"
 msgstr "den grafiske enhed (Ctrl+Tab eller Ctrl+F6 i MDI, Alt+Tab i SDI)"
 
-#: dataentry.c:222 dataentry.c:1850 dataentry.c:1853 dataentry.c:1884
+#: dataentry.c:223 dataentry.c:1851 dataentry.c:1854 dataentry.c:1885
 msgid "invalid argument"
 msgstr "ugyldig argument"
 
-#: dataentry.c:269
+#: dataentry.c:270
 msgid "invalid type for value"
-msgstr "ugyldig type for værdi"
+msgstr "ugyldig type for vÃ¦rdi"
 
-#: dataentry.c:280
+#: dataentry.c:281
 msgid "Data Editor"
 msgstr "Dataredigeringsprogram"
 
-#: dataentry.c:281 dataentry.c:1891
+#: dataentry.c:282 dataentry.c:1892
 msgid "invalid device"
 msgstr "ugyldig enhed"
 
-#: dataentry.c:330
+#: dataentry.c:331
 msgid "dataentry: internal memory problem"
 msgstr "datapost: Internt hukommelsesproblem"
 
-#: dataentry.c:633 dataentry.c:1220
+#: dataentry.c:634 dataentry.c:1221
 msgid "dataentry: internal memory error"
 msgstr "datapost: Intern hukommelsesfejl"
 
-#: dataentry.c:756 dataentry.c:769
+#: dataentry.c:757 dataentry.c:770
 msgid "internal type error in dataentry"
 msgstr "intern typefejl i datapost"
 
-#: dataentry.c:851
+#: dataentry.c:852
 msgid "dataentry: parse error on string"
-msgstr "datapost: Fortolk fejl på streng"
+msgstr "datapost: Fortolk fejl pÃ¥ streng"
 
-#: dataentry.c:994
+#: dataentry.c:995
 msgid "dataentry: expression too long"
 msgstr "datapost: Udtryk er for langt"
 
-#: dataentry.c:1471
+#: dataentry.c:1472
 msgid "column names cannot be blank"
-msgstr "kolonnenavne kan ikke være tomme"
+msgstr "kolonnenavne kan ikke vÃ¦re tomme"
 
-#: dataentry.c:1517
+#: dataentry.c:1518
 msgid "Variable editor"
 msgstr "Redigeringsprogram for variabler"
 
-#: dataentry.c:1522
+#: dataentry.c:1523
 msgid "variable name"
 msgstr "variabelnavn"
 
-#: dataentry.c:1524
+#: dataentry.c:1525
 msgid "type"
 msgstr "type"
 
-#: dataentry.c:1638
+#: dataentry.c:1639
 msgid "Cell width(s)"
 msgstr "Cellebredder"
 
-#: dataentry.c:1644
+#: dataentry.c:1645
 msgid "Cell width"
 msgstr "Cellebredde"
 
-#: dataentry.c:1647
+#: dataentry.c:1648
 msgid "variable"
 msgstr "variabel"
 
-# engelsk fejl, spørg om maks 80 tegn.
-#: dataentry.c:1690
+# engelsk fejl, spÃ¸rg om maks 80 tegn.
+#: dataentry.c:1691
 msgid ""
 "Navigation.\n"
 "  Keyboard: cursor keys move selection\n"
@@ -293,77 +295,77 @@ msgid ""
 "\n"
 msgstr ""
 "Navigering.\n"
-"  Tastatur: markørtaster flytter markering\n"
-"\tTab flytter mod højre, Skift+Tab flytter mod venstre\n"
-"\tPgDn eller Ctrl+F: Flyt en skærm ned\n"
-"\tPgUp eller Ctrl+B: Flyt en skærm op\n"
+"  Tastatur: markÃ¸rtaster flytter markering\n"
+"\tTab flytter mod hÃ¸jre, Skift+Tab flytter mod venstre\n"
+"\tPgDn eller Ctrl+F: Flyt en skÃ¦rm ned\n"
+"\tPgUp eller Ctrl+B: Flyt en skÃ¦rm op\n"
 "\tHome: Flyt til cellen (1,1)\n"
-"\tEnd: Vis sidste rækker på sidste kolonne.\n"
-"   Mus: Venstreklik i en celle, brug rullebjælkerne.\n"
+"\tEnd: Vis sidste rÃ¦kker pÃ¥ sidste kolonne.\n"
+"   Mus: Venstreklik i en celle, brug rullebjÃ¦lkerne.\n"
 "\n"
 "Redigering.\n"
-"  Indtast i den aktuelt fremhævet celle\n"
+"  Indtast i den aktuelt fremhÃ¦vet celle\n"
 "  Dobbelklik i en celle for et redigerbart felt\n"
 "\n"
 "Diverse.\n"
-"  Ctrl-L gentegner skærmen, med automatisk ændring af kolonnestørrelser\n"
+"  Ctrl-L gentegner skÃ¦rmen, med automatisk Ã¦ndring af kolonnestÃ¸rrelser\n"
 "  Ctrl-C kopier valgt celle\n"
-"  Ctrl-V indsætter i valgt celle\n"
-"  Højrekliksmenu for kopier, indsæt, automatisk størrelse på aktuelt valgt "
+"  Ctrl-V indsÃ¦tter i valgt celle\n"
+"  HÃ¸jrekliksmenu for kopier, indsÃ¦t, automatisk stÃ¸rrelse pÃ¥ aktuelt valgt "
 "kolonne\n"
 "\n"
 
-#: dataentry.c:1696 dataentry.c:1806 editor.c:778 rui.c:1184
+#: dataentry.c:1697 dataentry.c:1807 editor.c:781 rui.c:1184
 msgid "Help"
-msgstr "Hjælp"
+msgstr "HjÃ¦lp"
 
-#: dataentry.c:1698
+#: dataentry.c:1699
 msgid "Copy selected cell"
 msgstr "Kopier valgt celle"
 
-#: dataentry.c:1699
-msgid "Paste to selected cell"
-msgstr "Indsæt til valgt celle"
-
 #: dataentry.c:1700
+msgid "Paste to selected cell"
+msgstr "IndsÃ¦t til valgt celle"
+
+#: dataentry.c:1701
 msgid "Autosize column"
-msgstr "Automatisk størrelse på kolonne"
+msgstr "Automatisk stÃ¸rrelse pÃ¥ kolonne"
 
-#: dataentry.c:1702 pager.c:310 rui.c:867
-#: ../library/grDevices/src/devWindows.c:1676
+#: dataentry.c:1703 pager.c:310 rui.c:867
+#: ../library/grDevices/src/devWindows.c:1684
 msgid "Stay on top"
-msgstr "Forbliv øverst"
+msgstr "Forbliv Ã¸verst"
 
-#: dataentry.c:1704 dataentry.c:1791 pager.c:312 pager.c:475
+#: dataentry.c:1705 dataentry.c:1792 pager.c:312 pager.c:475
 msgid "Close"
 msgstr "Luk"
 
-#: dataentry.c:1789 editor.c:724 pager.c:467 rui.c:1120
-#: ../library/grDevices/src/devWindows.c:1616
+#: dataentry.c:1790 editor.c:727 pager.c:467 rui.c:1120
+#: ../library/grDevices/src/devWindows.c:1624
 msgid "File"
 msgstr "Fil"
 
-#: dataentry.c:1795 editor.c:742 pager.c:477 rui.c:1141
+#: dataentry.c:1796 editor.c:745 pager.c:477 rui.c:1141
 msgid "Edit"
 msgstr "Rediger"
 
-#: dataentry.c:1796
+#: dataentry.c:1797
 msgid "Copy  \tCTRL+C"
 msgstr "Kopier  \tCTRL+C"
 
-#: dataentry.c:1798
+#: dataentry.c:1799
 msgid "Paste \tCTRL+V"
-msgstr "Indsæt \tCTRL+V"
+msgstr "IndsÃ¦t \tCTRL+V"
 
-#: dataentry.c:1800
+#: dataentry.c:1801
 msgid "Delete\tDEL"
 msgstr "Slet\tDEL"
 
-#: dataentry.c:1803
+#: dataentry.c:1804
 msgid "Cell widths ..."
 msgstr "Cellebredder..."
 
-#: dataentry.c:1807
+#: dataentry.c:1808
 msgid "Data editor"
 msgstr "Redigeringsprogram for data"
 
@@ -374,204 +376,204 @@ msgstr "Redigeringsprogrammet R"
 #: editor.c:119
 #, c-format
 msgid "unable to open file %s for reading"
-msgstr "kan ikke åbne fil %s for læsning"
+msgstr "kan ikke Ã¥bne fil %s for lÃ¦sning"
 
 #: editor.c:135
 #, c-format
 msgid "Could not read from file '%s'"
-msgstr "Kunne ikke læse fra fil »%s«"
+msgstr "Kunne ikke lÃ¦se fra fil Â»%sÂ«"
 
 #: editor.c:166
 #, c-format
 msgid "Could not save file '%s'"
-msgstr "Kunne ikke gemme fil »%s«"
+msgstr "Kunne ikke gemme fil Â»%sÂ«"
 
 #: editor.c:182
 msgid "Save script as"
 msgstr "Gem skript som"
 
-#: editor.c:372 editor.c:689 pager.c:431 rui.c:1074
+#: editor.c:375 editor.c:692 pager.c:431 rui.c:1074
 msgid "Open script"
-msgstr "Åbn skript"
+msgstr "Ã…bn skript"
 
-#: editor.c:495 pager.c:185 pager.c:205
+#: editor.c:498 pager.c:185 pager.c:205
 msgid "No RGui console to paste to"
-msgstr "Ingen RGui-konsol at indsætte til"
+msgstr "Ingen RGui-konsol at indsÃ¦tte til"
 
-#: editor.c:597
+#: editor.c:600
 msgid "R EDITOR\n"
 msgstr "REDIGERINGSPROGRAM FOR R\n"
 
-#: editor.c:599
+#: editor.c:602
 msgid "A standard text editor for editing and running R code.\n"
 msgstr ""
-"Et standard tekstredigeringsprogram for redigering og kørsel af R-kode.\n"
+"Et standard tekstredigeringsprogram for redigering og kÃ¸rsel af R-kode.\n"
 
-#: editor.c:601
+#: editor.c:604
 msgid "RUNNING COMMANDS\n"
-msgstr "KØRE KOMMANDOER\n"
+msgstr "KÃ˜RE KOMMANDOER\n"
 
-#: editor.c:602
+#: editor.c:605
 msgid "To run a line or section of R code, select the code and either\n"
-msgstr "For at køre en linje eller afsnit af R-kode, så vælg koden og enten\n"
+msgstr "For at kÃ¸re en linje eller afsnit af R-kode, sÃ¥ vÃ¦lg koden og enten\n"
 
-#: editor.c:603
+#: editor.c:606
 msgid "     Press Ctrl-R\n"
 msgstr "     Tryk Ctrl-R\n"
 
-#: editor.c:604
+#: editor.c:607
 msgid "     Select \"Run line or selection\" from the \"Edit\" menu\n"
-msgstr "     Vælg »Kør linje eller markering« fra menuen »Rediger«\n"
+msgstr "     VÃ¦lg Â»KÃ¸r linje eller markeringÂ« fra menuen Â»RedigerÂ«\n"
 
-#: editor.c:605
+#: editor.c:608
 msgid "     Press the \"Run line or selection\" icon on the toolbar\n"
-msgstr "     Tryk på ikonet »Kør linje eller markering« på værktøjsbjælken\n"
+msgstr "     Tryk pÃ¥ ikonet Â»KÃ¸r linje eller markeringÂ« pÃ¥ vÃ¦rktÃ¸jsbjÃ¦lken\n"
 
-#: editor.c:606
+#: editor.c:609
 msgid ""
 "This will copy the selected commands to the console and evaluate them.\n"
 msgstr ""
 "Dette vil kopiere de valgte kommandoer til konsollen og evaluere dem.\n"
 
-#: editor.c:607
+#: editor.c:610
 msgid ""
 "If there is no selection, this will just run the current line and advance\n"
 msgstr ""
-"Hvis der ikke er en markering, vil dette bare køre den aktuelle linje og "
-"fortsætte\n"
+"Hvis der ikke er en markering, vil dette bare kÃ¸re den aktuelle linje og "
+"fortsÃ¦tte\n"
 
-#: editor.c:608
+#: editor.c:611
 msgid "the cursor by one line.\n"
-msgstr "markøren med en linje.\n"
+msgstr "markÃ¸ren med en linje.\n"
 
-#: editor.c:620 editor.c:697 editor.c:758
+#: editor.c:623 editor.c:700 editor.c:761
 msgid "Run line or selection"
-msgstr "Kør linje eller markering"
+msgstr "KÃ¸r linje eller markering"
 
-#: editor.c:622 editor.c:743
+#: editor.c:625 editor.c:746
 msgid "Undo"
 msgstr "Fortryd"
 
-#: editor.c:624 editor.c:746
+#: editor.c:627 editor.c:749
 msgid "Cut"
 msgstr "Klip"
 
-#: editor.c:625 editor.c:748 pager.c:305 pager.c:478 rui.c:857 rui.c:1086
+#: editor.c:628 editor.c:751 pager.c:305 pager.c:478 rui.c:857 rui.c:1086
 #: rui.c:1142
 msgid "Copy"
 msgstr "Kopier"
 
-#: editor.c:626 editor.c:750 rui.c:858 rui.c:1090 rui.c:1143
+#: editor.c:629 editor.c:753 rui.c:858 rui.c:1090 rui.c:1143
 msgid "Paste"
-msgstr "Indsæt"
+msgstr "IndsÃ¦t"
 
-#: editor.c:627 editor.c:752
+#: editor.c:630 editor.c:755
 msgid "Delete"
 msgstr "Slet"
 
-#: editor.c:629 editor.c:754 pager.c:308 pager.c:484 rui.c:864 rui.c:1147
+#: editor.c:632 editor.c:757 pager.c:308 pager.c:484 rui.c:864 rui.c:1147
 msgid "Select all"
-msgstr "Vælg alle"
+msgstr "VÃ¦lg alle"
 
-#: editor.c:693
+#: editor.c:696
 msgid "Save script"
 msgstr "Gem skript"
 
-#: editor.c:701 pager.c:451 ../library/grDevices/src/devWindows.c:1584
+#: editor.c:704 pager.c:451 ../library/grDevices/src/devWindows.c:1592
 msgid "Return focus to Console"
 msgstr "Returner fokus til konsollen"
 
-#: editor.c:704
+#: editor.c:707
 msgid "Print script"
 msgstr "Udskriv skript"
 
-#: editor.c:706 pager.c:446 rui.c:1102
-#: ../library/grDevices/src/devWindows.c:1578
+#: editor.c:709 pager.c:446 rui.c:1102
+#: ../library/grDevices/src/devWindows.c:1586
 msgid "Print"
 msgstr "Udskriv"
 
-#: editor.c:725 pager.c:468 rui.c:1122
+#: editor.c:728 pager.c:468 rui.c:1122
 msgid "New script"
 msgstr "Nyt skript"
 
-#: editor.c:727 pager.c:469 rui.c:1123
+#: editor.c:730 pager.c:469 rui.c:1123
 msgid "Open script..."
-msgstr "Åbn skript..."
+msgstr "Ã…bn skript..."
 
-#: editor.c:729
+#: editor.c:732
 msgid "Save"
 msgstr "Gem"
 
-#: editor.c:731
+#: editor.c:734
 msgid "Save as..."
 msgstr "Gem som..."
 
-#: editor.c:734 pager.c:470 rui.c:1136
-#: ../library/grDevices/src/devWindows.c:1679
+#: editor.c:737 pager.c:470 rui.c:1136
+#: ../library/grDevices/src/devWindows.c:1687
 msgid "Print..."
 msgstr "Udskriv..."
 
-#: editor.c:737
+#: editor.c:740
 msgid "Close script"
 msgstr "Luk skript"
 
-#: editor.c:756 rui.c:1148
+#: editor.c:759 rui.c:1148
 msgid "Clear console"
 msgstr "Ryd konsol"
 
-#: editor.c:760
-msgid "Run all"
-msgstr "Kør alle"
-
 #: editor.c:763
-msgid "Find..."
-msgstr "Søg..."
+msgid "Run all"
+msgstr "KÃ¸r alle"
 
-#: editor.c:765
+#: editor.c:766
+msgid "Find..."
+msgstr "SÃ¸g..."
+
+#: editor.c:768
 msgid "Replace..."
 msgstr "Erstat..."
 
-#: editor.c:768 rui.c:1152
+#: editor.c:771 rui.c:1152
 msgid "GUI preferences..."
 msgstr "Indstillinger for grafisk brugerflade..."
 
-#: editor.c:779
+#: editor.c:782
 msgid "Editor"
 msgstr "Redigering"
 
-#: editor.c:838
+#: editor.c:841
 msgid "Maximum number of editors reached"
-msgstr "Det maksimale antal redigeringer er nået"
+msgstr "Det maksimale antal redigeringer er nÃ¥et"
 
-#: editor.c:843
+#: editor.c:846
 msgid "Unable to create editor window"
 msgstr "Kunne ikke oprette redigeringsvindue"
 
-#: editor.c:851
+#: editor.c:854
 msgid "Untitled"
 msgstr "Uden titel"
 
-#: extra.c:902 ../extra/graphapp/dialogs.c:618 ../extra/graphapp/dialogs.c:737
+#: extra.c:903 ../extra/graphapp/dialogs.c:622 ../extra/graphapp/dialogs.c:741
 msgid "OK"
 msgstr "O.k."
 
-#: extra.c:903 ../extra/graphapp/dialogs.c:598 ../extra/graphapp/dialogs.c:616
-#: ../extra/graphapp/dialogs.c:622 ../extra/graphapp/dialogs.c:721
-#: ../extra/graphapp/dialogs.c:735 ../extra/graphapp/dialogs.c:741
+#: extra.c:904 ../extra/graphapp/dialogs.c:602 ../extra/graphapp/dialogs.c:620
+#: ../extra/graphapp/dialogs.c:626 ../extra/graphapp/dialogs.c:725
+#: ../extra/graphapp/dialogs.c:739 ../extra/graphapp/dialogs.c:745
 msgid "Cancel"
 msgstr "Afbryd"
 
-#: extra.c:2163 rui.c:1222
+#: extra.c:2161 rui.c:1222
 msgid "Select file"
-msgstr "Vælg fil"
+msgstr "VÃ¦lg fil"
 
 #: pager.c:89
 msgid "Error opening file"
-msgstr "Fejl ved åbning af fil"
+msgstr "Fejl ved Ã¥bning af fil"
 
 #: pager.c:96
 msgid "Insufficient memory to display file in internal pager"
-msgstr "Utilstrækkelig hukommelse til at vise fil i intern tekstfremviser"
+msgstr "UtilstrÃ¦kkelig hukommelse til at vise fil i intern tekstfremviser"
 
 #: pager.c:177 pager.c:189 pager.c:209 rui.c:236 rui.c:263
 msgid "No selection"
@@ -579,11 +581,11 @@ msgstr "Ingen markering"
 
 #: pager.c:306 pager.c:436 pager.c:480
 msgid "Paste to console"
-msgstr "Indsæt i konsol"
+msgstr "IndsÃ¦t i konsol"
 
 #: pager.c:307 pager.c:441 pager.c:482
 msgid "Paste commands to console"
-msgstr "Indsæt kommandoer i konsol"
+msgstr "IndsÃ¦t kommandoer i konsol"
 
 #: pager.c:472 rui.c:1137
 msgid "Save to File..."
@@ -604,8 +606,8 @@ msgid ""
 "\n"
 "Save the preferences and restart Rgui to apply them.\n"
 msgstr ""
-"De overordnede konsolegenskaber kan ikke blive ændret\n"
-"på en kørende konsol.\n"
+"De overordnede konsolegenskaber kan ikke blive Ã¦ndret\n"
+"pÃ¥ en kÃ¸rende konsol.\n"
 "\n"
 "Gem indstillingerne og genstart Rgui for at bruge dem.\n"
 
@@ -616,35 +618,36 @@ msgid ""
 "\n"
 "Save the preferences and restart Rgui to apply to menus.\n"
 msgstr ""
-"Sproget for menuer kan ikke ændres på en\n"
-" kørende konsol.\n"
-"Gem indstillingerne og genstart Rgui for at de træder i kraft.\n"
+"Sproget for menuer kan ikke Ã¦ndres pÃ¥ en\n"
+" kÃ¸rende konsol.\n"
+"\n"
+"Gem indstillingerne og genstart Rgui for at de trÃ¦der i kraft.\n"
 
 #: preferences.c:371
 msgid "Changes in pager size will not apply to any open pagers"
 msgstr ""
-"Ændringer i fremviserstørrelse vil ikke træde i kraft for åbne fremvisere"
+"Ã†ndringer i fremviserstÃ¸rrelse vil ikke trÃ¦de i kraft for Ã¥bne fremvisere"
 
 #: preferences.c:377
 msgid ""
 "Do not change pager type if any pager is open\n"
 "Proceed?"
 msgstr ""
-"Ændr ikke fremvisertype hvis en fremviser er åben\n"
-"Fortsæt?"
+"Ã†ndr ikke fremvisertype hvis en fremviser er Ã¥ben\n"
+"FortsÃ¦t?"
 
 #: preferences.c:410
 msgid "Select directory for file 'Rconsole'"
-msgstr "Vælg mappe for filen »Rconsole«"
+msgstr "VÃ¦lg mappe for filen Â»RconsoleÂ«"
 
 #: preferences.c:503
 msgid "Select 'Rconsole' file"
-msgstr "Vælg »Rconsole-fil«"
+msgstr "VÃ¦lg Â»Rconsole-filÂ«"
 
 #: preferences.c:688
 #, c-format
 msgid "Ignored '%s' at line %d of file %s"
-msgstr "Ignorerede »%s« på linje %d i filen %s"
+msgstr "Ignorerede Â»%sÂ« pÃ¥ linje %d i filen %s"
 
 #: preferences.c:789
 msgid "Rgui Configuration Editor"
@@ -652,11 +655,11 @@ msgstr "Konfigurationsredigering for Rgui"
 
 #: rui.c:139
 msgid "Select file to source"
-msgstr "Vælg fil til kilde"
+msgstr "VÃ¦lg fil til kilde"
 
 #: rui.c:160
 msgid "Select image to load"
-msgstr "Vælg billede at indlæse"
+msgstr "VÃ¦lg billede at indlÃ¦se"
 
 #: rui.c:175
 msgid "Save image in"
@@ -664,7 +667,7 @@ msgstr "Gem billede i"
 
 #: rui.c:189
 msgid "Load history from"
-msgstr "Indlæs historik fra"
+msgstr "IndlÃ¦s historik fra"
 
 #: rui.c:198
 msgid "Save history in"
@@ -672,16 +675,16 @@ msgstr "Gem historik i"
 
 #: rui.c:245 rui.c:254
 msgid "No text available"
-msgstr "Ingen tekst tilgængelig"
+msgstr "Ingen tekst tilgÃ¦ngelig"
 
 #: rui.c:303
 msgid "Name of data frame or matrix"
-msgstr "Navn på dataramme eller matrix"
+msgstr "Navn pÃ¥ dataramme eller matrix"
 
 #: rui.c:310
 #, c-format
 msgid "'%s' cannot be found"
-msgstr "»%s« kan ikke findes"
+msgstr "Â»%sÂ« kan ikke findes"
 
 #: rui.c:449
 msgid "Are you sure?"
@@ -689,15 +692,15 @@ msgstr "Er du sikker?"
 
 #: rui.c:544
 msgid "Help on"
-msgstr "Hjælp til"
+msgstr "HjÃ¦lp til"
 
 #: rui.c:600
 msgid "Search help"
-msgstr "Søgehjælp"
+msgstr "SÃ¸gehjÃ¦lp"
 
 #: rui.c:615
 msgid "Search for words in help list archives and documentation"
-msgstr "Søg efter ord i arkiver og dokumentation for hjælpelister"
+msgstr "SÃ¸g efter ord i arkiver og dokumentation for hjÃ¦lpelister"
 
 #: rui.c:630
 msgid "Apropos"
@@ -705,15 +708,15 @@ msgstr "Apropos"
 
 #: rui.c:853
 msgid "Can only drag-and-drop .R, .RData and .rda files"
-msgstr "Kan kun trække og slippe .R-, .RData- og .rda-filer"
+msgstr "Kan kun trÃ¦kke og slippe .R-, .RData- og .rda-filer"
 
 #: rui.c:859 rui.c:1144
 msgid "Paste commands only"
-msgstr "Indsæt kun kommandoer"
+msgstr "IndsÃ¦t kun kommandoer"
 
 #: rui.c:860 rui.c:1094
 msgid "Copy and paste"
-msgstr "Kopier og indsæt"
+msgstr "Kopier og indsÃ¦t"
 
 #: rui.c:862
 msgid "Clear window"
@@ -729,7 +732,7 @@ msgstr "Pakker"
 
 #: rui.c:907
 msgid "Load package..."
-msgstr "Indlæs pakke..."
+msgstr "IndlÃ¦s pakke..."
 
 #: rui.c:909
 msgid "Set CRAN mirror..."
@@ -737,7 +740,7 @@ msgstr "Angiv CRAN-spejl..."
 
 #: rui.c:911
 msgid "Select repositories..."
-msgstr "Vælg arkiver..."
+msgstr "VÃ¦lg arkiver..."
 
 #: rui.c:913
 msgid "Install package(s)..."
@@ -753,11 +756,11 @@ msgstr "Installer pakker fra lokale zip-filer..."
 
 #: rui.c:942
 msgid "FAQ on R"
-msgstr "OSS på R"
+msgstr "OSS pÃ¥ R"
 
 #: rui.c:944
 msgid "FAQ on R for &Windows"
-msgstr "OSS på R for &Vinduer"
+msgstr "OSS pÃ¥ R for &Vinduer"
 
 #: rui.c:950 rui.c:953
 msgid "Manuals (in PDF)"
@@ -769,11 +772,11 @@ msgstr "R-funktioner (tekst)..."
 
 #: rui.c:985
 msgid "Html help"
-msgstr "Html-hjælp"
+msgstr "Html-hjÃ¦lp"
 
 #: rui.c:987
 msgid "Search help..."
-msgstr "Søg i hjælp..."
+msgstr "SÃ¸g i hjÃ¦lp..."
 
 #: rui.c:992
 msgid "Apropos..."
@@ -818,7 +821,7 @@ msgstr "Gendan gruppe"
 
 #: rui.c:1078
 msgid "Load workspace"
-msgstr "Indlæs arbejdsrum"
+msgstr "IndlÃ¦s arbejdsrum"
 
 #: rui.c:1082
 msgid "Save workspace"
@@ -838,7 +841,7 @@ msgstr "Vis filer..."
 
 #: rui.c:1126
 msgid "Load Workspace..."
-msgstr "Indlæs arbejdsrum..."
+msgstr "IndlÃ¦s arbejdsrum..."
 
 #: rui.c:1127
 msgid "Save Workspace..."
@@ -846,7 +849,7 @@ msgstr "Gem arbejdsrum..."
 
 #: rui.c:1129
 msgid "Load History..."
-msgstr "Indlæs historik..."
+msgstr "IndlÃ¦s historik..."
 
 #: rui.c:1131
 msgid "Save History..."
@@ -854,7 +857,7 @@ msgstr "Gem historik..."
 
 #: rui.c:1134
 msgid "Change dir..."
-msgstr "Ændr mappe..."
+msgstr "Ã†ndr mappe..."
 
 #: rui.c:1139
 msgid "Exit"
@@ -862,7 +865,7 @@ msgstr "Afslut"
 
 #: rui.c:1146
 msgid "Copy and Paste"
-msgstr "Kopier og indsæt"
+msgstr "Kopier og indsÃ¦t"
 
 #: rui.c:1150
 msgid "Data editor..."
@@ -870,11 +873,11 @@ msgstr "Redigeringsprogram for data..."
 
 #: rui.c:1155
 msgid "Toolbar"
-msgstr "Værktøjsbjælke"
+msgstr "VÃ¦rktÃ¸jsbjÃ¦lke"
 
 #: rui.c:1156
 msgid "Statusbar"
-msgstr "Statusbjælke"
+msgstr "StatusbjÃ¦lke"
 
 #: rui.c:1160
 msgid "Misc"
@@ -890,15 +893,15 @@ msgstr "Stop alle beregninger"
 
 #: rui.c:1165
 msgid "Break to debugger"
-msgstr "Afbryd til fejlsøgning"
+msgstr "Afbryd til fejlsÃ¸gning"
 
 #: rui.c:1168
 msgid "Word completion"
-msgstr "Ordfuldførelse"
+msgstr "OrdfuldfÃ¸relse"
 
 #: rui.c:1170
 msgid "Filename completion"
-msgstr "Filnavnsfuldførelse"
+msgstr "FilnavnsfuldfÃ¸relse"
 
 #: rui.c:1177
 msgid "List objects"
@@ -910,7 +913,7 @@ msgstr "Fjern alle objekter"
 
 #: rui.c:1179
 msgid "List search &path"
-msgstr "Vis søge&sti"
+msgstr "Vis sÃ¸ge&sti"
 
 #: rui.c:1185
 msgid "Console"
@@ -918,7 +921,7 @@ msgstr "Konsol"
 
 #: rui.c:1266
 msgid "'mname' is limited to 1000 bytes"
-msgstr "»mname« er begrænset til 1.000 byte"
+msgstr "Â»mnameÂ« er begrÃ¦nset til 1.000 byte"
 
 #: rui.c:1308
 #, c-format
@@ -927,7 +930,7 @@ msgstr "menu %s findes ikke"
 
 #: rui.c:1361
 msgid "'menu' is limited to 500 bytes"
-msgstr "»menu« er begrænset til 500 byte"
+msgstr "Â»menuÂ« er begrÃ¦nset til 500 byte"
 
 #: rui.c:1371
 msgid "base menu does not exist"
@@ -939,7 +942,7 @@ msgstr "kunne ikke allokere menu"
 
 #: rui.c:1403 rui.c:1527
 msgid "menu + item is limited to 1000 bytes"
-msgstr "menu + punkt er begrænset til 1.000 byte"
+msgstr "menu + punkt er begrÃ¦nset til 1.000 byte"
 
 #: rui.c:1411 rui.c:1494
 msgid "menu does not exist"
@@ -962,227 +965,227 @@ msgstr "menu ikke fundet"
 msgid "menu or item does not exist"
 msgstr "menu eller punkt findes ikke"
 
-#: system.c:440
+#: system.c:442
 msgid "Save workspace image?"
 msgstr "Gem arbejdsrumsbillede?"
 
 #: ../extra/graphapp/clipboard.c:69 ../extra/graphapp/clipboard.c:73
 msgid "Insufficient memory: cell not copied to the clipboard"
-msgstr "Utilstrækkelig hukommelse: Celle ikke kopieret til udklipsholderen"
+msgstr "UtilstrÃ¦kkelig hukommelse: Celle ikke kopieret til udklipsholderen"
 
-#: ../extra/graphapp/dialogs.c:143 ../extra/graphapp/dialogs.c:160
-#: ../extra/graphapp/dialogs.c:177
+#: ../extra/graphapp/dialogs.c:147 ../extra/graphapp/dialogs.c:164
+#: ../extra/graphapp/dialogs.c:181
 msgid "Question"
-msgstr "Spørgsmål"
+msgstr "SpÃ¸rgsmÃ¥l"
 
-#: ../extra/graphapp/dialogs.c:198
+#: ../extra/graphapp/dialogs.c:202
 msgid " Change working directory to:"
-msgstr " Ændr arbejdsmappe til:"
+msgstr " Ã†ndr arbejdsmappe til:"
 
-#: ../extra/graphapp/dialogs.c:201
+#: ../extra/graphapp/dialogs.c:205
 #, c-format
 msgid "Unable to set '%s' as working directory"
-msgstr "Kan ikke angive »%s« som arbejdsmappe"
+msgstr "Kan ikke angive Â»%sÂ« som arbejdsmappe"
 
-#: ../extra/graphapp/dialogs.c:729
+#: ../extra/graphapp/dialogs.c:733
 msgid "User"
 msgstr "Bruger"
 
-#: ../extra/graphapp/dialogs.c:730
+#: ../extra/graphapp/dialogs.c:734
 msgid "Password"
 msgstr "Adgangskode"
 
-#: ../extra/graphapp/dialogs.c:896 ../extra/graphapp/dialogs.c:902
+#: ../extra/graphapp/dialogs.c:900 ../extra/graphapp/dialogs.c:906
 #, c-format
 msgid "\"%s\" not found"
-msgstr "»%s« ikke fundet"
+msgstr "Â»%sÂ« ikke fundet"
 
 #: ../extra/graphapp/gmenus.c:56
 msgid "Arrange Icons"
 msgstr "Arrangere ikoner"
 
-#: ../library/grDevices/src/devWindows.c:923
+#: ../library/grDevices/src/devWindows.c:931
 msgid "Portable network graphics file"
 msgstr "Portable network graphics-fil"
 
-#: ../library/grDevices/src/devWindows.c:926
+#: ../library/grDevices/src/devWindows.c:934
 msgid "Windows bitmap file"
 msgstr "Windows bitmap-fil"
 
-#: ../library/grDevices/src/devWindows.c:929
+#: ../library/grDevices/src/devWindows.c:937
 msgid "TIFF file"
 msgstr "TIFF-fil"
 
-#: ../library/grDevices/src/devWindows.c:932
+#: ../library/grDevices/src/devWindows.c:940
 msgid "Jpeg file"
 msgstr "Jpeg-fil"
 
-#: ../library/grDevices/src/devWindows.c:954
+#: ../library/grDevices/src/devWindows.c:962
 msgid "Postscript file"
 msgstr "Postscript-fil"
 
-#: ../library/grDevices/src/devWindows.c:966
+#: ../library/grDevices/src/devWindows.c:974
 msgid "PDF file"
 msgstr "PDF-fil"
 
-#: ../library/grDevices/src/devWindows.c:978
+#: ../library/grDevices/src/devWindows.c:986
 msgid "Enhanced metafiles"
 msgstr "Forbedrede metafiler"
 
-#: ../library/grDevices/src/devWindows.c:981
-#: ../library/grDevices/src/devWindows.c:3369
+#: ../library/grDevices/src/devWindows.c:989
+#: ../library/grDevices/src/devWindows.c:3433
 msgid "file path selected is too long: only 512 bytes are allowed"
 msgstr "den valgte filsti er for langt: Kun 512 byte er tilladt"
 
-#: ../library/grDevices/src/devWindows.c:1192
+#: ../library/grDevices/src/devWindows.c:1200
 msgid "No plot to replace!"
 msgstr "Intet plot at erstatte!"
 
-#: ../library/grDevices/src/devWindows.c:1240
+#: ../library/grDevices/src/devWindows.c:1248
 msgid "Variable name"
 msgstr "Variabelnavn"
 
-#: ../library/grDevices/src/devWindows.c:1247
+#: ../library/grDevices/src/devWindows.c:1255
 msgid "Variable doesn't exist or doesn't contain any plots!"
 msgstr "Variabel findes ikke eller indeholder ingen plot!"
 
-#: ../library/grDevices/src/devWindows.c:1263
+#: ../library/grDevices/src/devWindows.c:1271
 msgid "Name of variable to save to"
-msgstr "Navn på variabel at gemme til"
+msgstr "Navn pÃ¥ variabel at gemme til"
 
-#: ../library/grDevices/src/devWindows.c:1572
+#: ../library/grDevices/src/devWindows.c:1580
 msgid "Copy to the clipboard as a metafile"
 msgstr "Kopier til udklipsholderen som en metafil"
 
-#: ../library/grDevices/src/devWindows.c:1590
-#: ../library/grDevices/src/devWindows.c:1601
+#: ../library/grDevices/src/devWindows.c:1598
+#: ../library/grDevices/src/devWindows.c:1609
 msgid "Stop locator"
 msgstr "Stop lokalisering"
 
-#: ../library/grDevices/src/devWindows.c:1600
-#: ../library/grDevices/src/devWindows.c:1604
+#: ../library/grDevices/src/devWindows.c:1608
+#: ../library/grDevices/src/devWindows.c:1612
 msgid "Stop"
 msgstr "Stop"
 
-#: ../library/grDevices/src/devWindows.c:1606
+#: ../library/grDevices/src/devWindows.c:1614
 msgid "Continue"
-msgstr "Fortsæt"
+msgstr "FortsÃ¦t"
 
-#: ../library/grDevices/src/devWindows.c:1610
+#: ../library/grDevices/src/devWindows.c:1618
 msgid "Next"
-msgstr "Næste"
+msgstr "NÃ¦ste"
 
-#: ../library/grDevices/src/devWindows.c:1611
+#: ../library/grDevices/src/devWindows.c:1619
 msgid "Next plot"
-msgstr "Næste plot"
+msgstr "NÃ¦ste plot"
 
-#: ../library/grDevices/src/devWindows.c:1617
+#: ../library/grDevices/src/devWindows.c:1625
 msgid "Save as"
 msgstr "Gem som"
 
-#: ../library/grDevices/src/devWindows.c:1626
-#: ../library/grDevices/src/devWindows.c:1628
-#: ../library/grDevices/src/devWindows.c:1630
+#: ../library/grDevices/src/devWindows.c:1634
+#: ../library/grDevices/src/devWindows.c:1636
+#: ../library/grDevices/src/devWindows.c:1638
 #, c-format
 msgid "%s quality..."
 msgstr "%s kvalitet..."
 
-#: ../library/grDevices/src/devWindows.c:1632
+#: ../library/grDevices/src/devWindows.c:1640
 msgid "Copy to the clipboard"
 msgstr "Kopier til udklipsholderen"
 
-#: ../library/grDevices/src/devWindows.c:1633
+#: ../library/grDevices/src/devWindows.c:1641
 msgid "as a Bitmap\tCTRL+C"
 msgstr "som en bitmap\tCTRL+C"
 
-#: ../library/grDevices/src/devWindows.c:1634
+#: ../library/grDevices/src/devWindows.c:1642
 msgid "as a Metafile\tCTRL+W"
 msgstr "som en metafil\tCTRL+W"
 
-#: ../library/grDevices/src/devWindows.c:1637
+#: ../library/grDevices/src/devWindows.c:1645
 msgid "Print...\tCTRL+P"
 msgstr "Udskriv...\tCTRL+P"
 
-#: ../library/grDevices/src/devWindows.c:1639
+#: ../library/grDevices/src/devWindows.c:1647
 msgid "close Device"
 msgstr "luk enhed"
 
-#: ../library/grDevices/src/devWindows.c:1640
+#: ../library/grDevices/src/devWindows.c:1648
 msgid "History"
 msgstr "Historik"
 
-#: ../library/grDevices/src/devWindows.c:1641
+#: ../library/grDevices/src/devWindows.c:1649
 msgid "Recording"
 msgstr "Optager"
 
-#: ../library/grDevices/src/devWindows.c:1644
+#: ../library/grDevices/src/devWindows.c:1652
 msgid "Add\tINS"
-msgstr "Tilføj\tINS"
+msgstr "TilfÃ¸j\tINS"
 
-#: ../library/grDevices/src/devWindows.c:1645
+#: ../library/grDevices/src/devWindows.c:1653
 msgid "Replace"
 msgstr "Erstat"
 
-#: ../library/grDevices/src/devWindows.c:1647
+#: ../library/grDevices/src/devWindows.c:1655
 msgid "Previous\tPgUp"
 msgstr "Forrige\tPgUp"
 
-#: ../library/grDevices/src/devWindows.c:1648
+#: ../library/grDevices/src/devWindows.c:1656
 msgid "Next\tPgDown"
-msgstr "Næste\tPgDown"
+msgstr "NÃ¦ste\tPgDown"
 
-#: ../library/grDevices/src/devWindows.c:1650
+#: ../library/grDevices/src/devWindows.c:1658
 msgid "Save to variable..."
 msgstr "Gem til variabel..."
 
-#: ../library/grDevices/src/devWindows.c:1651
+#: ../library/grDevices/src/devWindows.c:1659
 msgid "Get from variable..."
 msgstr "Hent fra variabel..."
 
-#: ../library/grDevices/src/devWindows.c:1653
+#: ../library/grDevices/src/devWindows.c:1661
 msgid "Clear history"
 msgstr "Ryd historik"
 
-#: ../library/grDevices/src/devWindows.c:1654
+#: ../library/grDevices/src/devWindows.c:1662
 msgid "Resize"
-msgstr "Ændr størrelse"
+msgstr "Ã†ndr stÃ¸rrelse"
 
-#: ../library/grDevices/src/devWindows.c:1655
+#: ../library/grDevices/src/devWindows.c:1663
 msgid "R mode"
 msgstr "R-tilstand"
 
-#: ../library/grDevices/src/devWindows.c:1657
+#: ../library/grDevices/src/devWindows.c:1665
 msgid "Fit to window"
 msgstr "Tilpas til vindue"
 
-#: ../library/grDevices/src/devWindows.c:1659
+#: ../library/grDevices/src/devWindows.c:1667
 msgid "Fixed size"
-msgstr "Fast størrelse"
+msgstr "Fast stÃ¸rrelse"
 
-#: ../library/grDevices/src/devWindows.c:1666
+#: ../library/grDevices/src/devWindows.c:1674
 msgid "Copy as metafile"
 msgstr "Kopier som metafil"
 
-#: ../library/grDevices/src/devWindows.c:1668
+#: ../library/grDevices/src/devWindows.c:1676
 msgid "Copy as bitmap"
 msgstr "Kopier som bitmap"
 
-#: ../library/grDevices/src/devWindows.c:1671
+#: ../library/grDevices/src/devWindows.c:1679
 msgid "Save as metafile..."
 msgstr "Gem som metafil..."
 
-#: ../library/grDevices/src/devWindows.c:1673
+#: ../library/grDevices/src/devWindows.c:1681
 msgid "Save as postscript..."
 msgstr "Gem som postscript..."
 
-#: ../library/grDevices/src/devWindows.c:3069
+#: ../library/grDevices/src/devWindows.c:3133
 msgid "Locator is active"
 msgstr "Lokalisering er aktiv"
 
-#: ../library/grDevices/src/devWindows.c:3692
+#: ../library/grDevices/src/devWindows.c:3756
 msgid "Waiting to confirm page change..."
-msgstr "Venter på at bekræfte sideændring..."
+msgstr "Venter pÃ¥ at bekrÃ¦fte sideÃ¦ndring..."
 
-#: ../library/grDevices/src/devWindows.c:3704
+#: ../library/grDevices/src/devWindows.c:3768
 msgid "Click or hit ENTER for next page"
-msgstr "Klik eller tryk på RETUR for næste side"
+msgstr "Klik eller tryk pÃ¥ RETUR for nÃ¦ste side"

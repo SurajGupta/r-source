@@ -3531,11 +3531,6 @@ static void SetFont(int font, int size, pDevDesc dd)
     }
 }
 
-#ifdef Win32
-/* exists, but does not work on GUI processes */
-# undef HAVE_POPEN
-#endif
-
 static void PS_cleanup(int stage, pDevDesc dd, PostScriptDesc *pd)
 {
     switch (stage) {
@@ -3556,11 +3551,6 @@ static Rboolean PS_Open(pDevDesc dd, PostScriptDesc *pd)
     char buf[512];
 
     if (strlen(pd->filename) == 0) {
-#ifdef Win32
-	PS_cleanup(4, dd, pd);
-	error(_("printing via file = \"\" is not implemented in this version"));
-	return FALSE;
-#else
 	if(strlen(pd->command) == 0) return FALSE;
 	errno = 0;
 	pd->psfp = R_popen(pd->command, "w");
@@ -3570,13 +3560,7 @@ static Rboolean PS_Open(pDevDesc dd, PostScriptDesc *pd)
 	    error(_("cannot open 'postscript' pipe to '%s'"), pd->command);
 	    return FALSE;
 	}
-#endif
     } else if (pd->filename[0] == '|') {
-#ifdef Win32
-	PS_cleanup(4, dd, pd);
-	error(_("file = \"|cmd\" is not implemented in this version"));
-	return FALSE;
-#else
 	errno = 0;
 	pd->psfp = R_popen(pd->filename + 1, "w");
 	pd->open_type = 1;
@@ -3586,7 +3570,6 @@ static Rboolean PS_Open(pDevDesc dd, PostScriptDesc *pd)
 		    pd->filename + 1);
 	    return FALSE;
 	}
-#endif
     } else {
 	snprintf(buf, 512, pd->filename, pd->fileno + 1); /* file 1 to start */
 	pd->psfp = R_fopen(R_ExpandFileName(buf), "w");
@@ -5371,6 +5354,8 @@ typedef struct {
 
 typedef struct {
     char filename[PATH_MAX];
+    int open_type;
+    char cmd[PATH_MAX];
 
     char papername[64];	/* paper name */
     int paperwidth;	/* paper width in big points (1/72 in) */
@@ -5389,6 +5374,7 @@ typedef struct {
 
     FILE *pdffp;        /* output file */
     FILE *mainfp;
+    FILE *pipefp;
 
     /* This group of variables track the current device status.
      * They should only be set by routines that emit PDF. */
@@ -5483,10 +5469,10 @@ static void PDF_Close(pDevDesc dd);
 static void PDF_Line(double x1, double y1, double x2, double y2,
 		     const pGEcontext gc,
 		     pDevDesc dd);
-static void PDF_MetricInfo(int c,
-			   const pGEcontext gc,
-			   double* ascent, double* descent,
-			   double* width, pDevDesc dd);
+void PDF_MetricInfo(int c,
+                    const pGEcontext gc,
+                    double* ascent, double* descent,
+                    double* width, pDevDesc dd);
 static void PDF_NewPage(const pGEcontext gc, pDevDesc dd);
 static void PDF_Polygon(int n, double *x, double *y,
 			const pGEcontext gc,
@@ -5509,9 +5495,9 @@ static void PDF_Raster(unsigned int *raster, int w, int h,
 static void PDF_Size(double *left, double *right,
 		     double *bottom, double *top,
 		     pDevDesc dd);
-static double PDF_StrWidth(const char *str,
-			   const pGEcontext gc,
-			   pDevDesc dd);
+double PDF_StrWidth(const char *str,
+                    const pGEcontext gc,
+                    pDevDesc dd);
 static void PDF_Text(double x, double y, const char *str,
 		     double rot, double hadj,
 		     const pGEcontext gc,
@@ -6664,6 +6650,16 @@ static int isSans(const char *name)
 }
 
 #define boldslant(x) ((x==3)?",BoldItalic":((x==2)?",Italic":((x==1)?",Bold":"")))
+
+#if defined(BUFSIZ) && (BUFSIZ > 512)
+/* OS's buffer size in stdio.h, probably.
+   Windows has 512, Solaris 1024, glibc 8192
+ */
+# define APPENDBUFSIZE BUFSIZ
+#else
+# define APPENDBUFSIZE 512
+#endif
+
 static void PDF_endfile(PDFDesc *pd)
 {
     int i, startxref, tempnobj, nenc, nfonts, cidnfonts, firstencobj;
@@ -7011,6 +7007,18 @@ static void PDF_endfile(PDFDesc *pd)
     rewind(pd->pdffp);
     fprintf(pd->pdffp, "%%PDF-%i.%i\n", pd->versionMajor, pd->versionMinor);
     fclose(pd->pdffp);
+    if (pd->open_type == 1) {
+	char buf[APPENDBUFSIZE];
+	int nc;
+	pd->pdffp = R_fopen(pd->filename, "rb"); 
+	while((nc = fread(buf, 1, APPENDBUFSIZE, pd->pdffp))) {
+	    fwrite(buf, 1, nc, pd->pipefp);
+	    if (nc < APPENDBUFSIZE) break;
+	}
+	fclose(pd->pdffp);
+	pclose(pd->pipefp);
+	unlink(pd->filename);
+    }
 }
 
 
@@ -7018,12 +7026,27 @@ static Rboolean PDF_Open(pDevDesc dd, PDFDesc *pd)
 {
     char buf[512];
 
-    /* NB: this must be binary to get tell positions and line endings right,
-       as well as allowing binary streams */
-
     if (pd->offline)
         return TRUE;
-
+    
+    if (pd->filename[0] == '|') {
+	strncpy(pd->cmd, pd->filename + 1, PATH_MAX);
+	char *tmp = R_tmpnam("Rpdf", R_TempDir);
+	strncpy(pd->filename, tmp, PATH_MAX);
+	free(tmp);
+	errno = 0;
+	pd->pipefp = R_popen(pd->cmd, "w");
+	if (!pd->pipefp || errno != 0) {
+	    PDFcleanup(6, pd);
+	    error(_("cannot open 'pdf' pipe to '%s'"), pd->cmd);
+	    return FALSE;
+	}
+	pd->open_type = 1;
+	if (!pd->onefile) {
+	    pd->onefile = TRUE;
+	    warning(_("file = \"|cmd\" implies 'onefile = TRUE'"));
+	}
+    } else pd->open_type = 0;
     snprintf(buf, 512, pd->filename, pd->fileno + 1); /* file 1 to start */
     /* NB: this must be binary to get tell positions and line endings right,
        as well as allowing binary streams */
@@ -7364,7 +7387,8 @@ static void PDF_Circle(double x, double y, double r,
 
     PDF_checkOffline();
 
-    if (r <= 0.0) return;  /* since PR#14797 use 0-sized pch=1 */
+    if (r <= 0.0) return;  /* since PR#14797 use 0-sized pch=1, but now
+			      GECircle omits such circles */
 
     code = 2 * (R_VIS(gc->fill)) + (R_VIS(gc->col));
     if (code) {
@@ -8039,9 +8063,9 @@ static char
     return result;
 }
 
-static double PDF_StrWidth(const char *str,
-			   const pGEcontext gc,
-			   pDevDesc dd)
+double PDF_StrWidth(const char *str,
+                    const pGEcontext gc,
+                    pDevDesc dd)
 {
     PDFDesc *pd = (PDFDesc *) dd->deviceSpecific;
 
@@ -8098,10 +8122,10 @@ static double PDF_StrWidthUTF8(const char *str,
     }
 }
 
-static void PDF_MetricInfo(int c,
-			   const pGEcontext gc,
-			   double* ascent, double* descent,
-			   double* width, pDevDesc dd)
+void PDF_MetricInfo(int c,
+                    const pGEcontext gc,
+                    double* ascent, double* descent,
+                    double* width, pDevDesc dd)
 {
     PDFDesc *pd = (PDFDesc *) dd->deviceSpecific;
     int face = gc->fontface;

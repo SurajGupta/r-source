@@ -28,6 +28,7 @@
 #include <config.h>
 #endif
 
+#define R_USE_SIGNALS 1
 #include <Defn.h>
 #define R_USE_PROTOTYPES 1
 #include <R_ext/GraphicsEngine.h>
@@ -40,6 +41,7 @@
 #include "console.h"
 #include "rui.h"
 #define WIN32_LEAN_AND_MEAN 1
+/* Mingw-w64 defines this to be 0x0502 */
 #ifndef _WIN32_WINNT
 # define _WIN32_WINNT 0x0500
 #endif
@@ -120,7 +122,7 @@ static drawing _d;
 
 #define DRAW(a) {if(xd->kind != SCREEN) {_d=xd->gawin; CLIP; a;} else {_d=xd->bm; CLIP; a; if(!xd->buffered) {_d=xd->gawin; CLIP; a;} }}
 
-#define SHOW  if(xd->kind==SCREEN) {gbitblt(xd->gawin, xd->bm, pt(0,0), getrect(xd->bm)); GALastUpdate = GetTickCount();}
+#define SHOW  if(xd->kind==SCREEN) {drawbits(xd); GALastUpdate = GetTickCount();}
 #define SH if(xd->kind==SCREEN && xd->buffered && GA_xd) GA_Timer(xd)
 
 
@@ -153,7 +155,7 @@ static rect getregion(gadesc *xd)
    last update (by default).
 
    This runs on (asynchronous) timers for each device.
-   Macro SHOW does an immediate update, and records the update 
+   Macro SHOW does an immediate update, and records the update
    in GALastUpdate.
    SHOW is called for expose and mouse events, and newpage.
 
@@ -173,11 +175,17 @@ static UINT_PTR TimerNo = 0;
 static gadesc *GA_xd;
 static DWORD GALastUpdate = 0;
 
+static void drawbits(gadesc *xd)
+{
+    if (xd)
+	gbitblt(xd->gawin, xd->bm, pt(0,0), getrect(xd->bm));
+}
+
 static VOID CALLBACK
 GA_timer_proc(HWND hwnd, UINT message, UINT_PTR tid, DWORD time)
 {
     if ((message != WM_TIMER) || tid != TimerNo || !GA_xd) return;
-    gbitblt(GA_xd->gawin, GA_xd->bm, pt(0,0), getrect(GA_xd->bm));
+    drawbits(GA_xd);
     GALastUpdate = time;
 }
 
@@ -186,7 +194,7 @@ static void GA_Timer(gadesc *xd)
     DWORD now = GetTickCount();
     if(TimerNo != 0) KillTimer(0, TimerNo);
     if(now > GALastUpdate + xd->timesince) {
-	gbitblt(xd->gawin, xd->bm, pt(0,0), getrect(xd->bm));
+	drawbits(xd);
 	GALastUpdate = now;
     } else {
 	GA_xd = xd;
@@ -203,14 +211,14 @@ static int GA_holdflush(pDevDesc dd, int level)
     xd->holdlevel += level;
     if(xd->holdlevel <= 0) xd->holdlevel = 0;
     if(xd->holdlevel == 0) {
-	GA_xd = xd; 
+	GA_xd = xd;
 	gsetcursor(xd->gawin, ArrowCursor);
-	gbitblt(GA_xd->gawin, GA_xd->bm, pt(0,0), getrect(GA_xd->bm));
+	drawbits(GA_xd);
 	GALastUpdate = GetTickCount();
     }
     if (old == 0 && xd->holdlevel > 0) {
 	if(TimerNo != 0) KillTimer(0, TimerNo);
-	gbitblt(xd->gawin, xd->bm, pt(0,0), getrect(xd->bm));
+	drawbits(xd);
 	GA_xd = NULL;
 	gsetcursor(xd->gawin, WatchCursor);
     }
@@ -853,7 +861,7 @@ static void HelpMouseClick(window w, int button, point pt)
 	if (!xd->locator && !xd->confirmation && !dd->gettingEvent)
 	    return;
 	if (button & LeftButton) {
-	    int useBeep = xd->locator && 
+	    int useBeep = xd->locator &&
 		asLogical(GetOption1(install("locatorBell")));
 	    if(useBeep) gabeep();
 	    xd->clicked = 1;
@@ -2204,7 +2212,7 @@ static void GA_NewPage(const pGEcontext gc,
 	} else if(xd->kind == PNG) {
 	    DRAW(gfillrect(_d, PNG_TRANS, xd->clip));
 	}
-	if(xd->kind == PNG) 
+	if(xd->kind == PNG)
 	    xd->pngtrans = ggetpixel(xd->gawin, pt(0,0)) | 0xff000000;
     } else {
 	xd->clip = getregion(xd);
@@ -2294,6 +2302,9 @@ static void GA_Activate(pDevDesc dd)
     }
     strcat(t, " (ACTIVE)");
     settext(xd->gawin, t);
+    if (xd != GA_xd)
+    	drawbits(GA_xd);
+    GA_xd = xd;
 }
 
 	/********************************************************/
@@ -2326,7 +2337,7 @@ static void GA_Deactivate(pDevDesc dd)
 	    xd->warn_trans = TRUE; \
 	}
 
-#define DRAW2(col) {if(xd->kind != SCREEN) gcopyalpha(xd->gawin,xd->bm2,r,R_ALPHA(col)); else {gcopyalpha(xd->bm,xd->bm2,r,R_ALPHA(col)); if(!xd->buffered) gbitblt(xd->gawin,xd->bm,pt(0,0),getrect(xd->bm));}}
+#define DRAW2(col) {if(xd->kind != SCREEN) gcopyalpha(xd->gawin,xd->bm2,r,R_ALPHA(col)); else {gcopyalpha(xd->bm,xd->bm2,r,R_ALPHA(col)); if(!xd->buffered) drawbits(xd);}}
 
 
 
@@ -2790,15 +2801,47 @@ static void doRaster(unsigned int *raster, int x, int y, int w, int h,
 	gcopyalpha2(xd->gawin, img, dr);
     } else {
         gsetcliprect(xd->bm, xd->clip);
-	gcopyalpha2(xd->bm, img, dr); 
-        if(!xd->buffered) 
-	    gbitblt(xd->gawin, xd->bm, pt(0,0), getrect(xd->bm));
+	gcopyalpha2(xd->bm, img, dr);
+        if(!xd->buffered)
+	    drawbits(xd);
     }
 
     /* Tidy up */
     delimage(img);
     SH;
     vmaxset(vmax);
+}
+
+static void flipRaster(unsigned int *rasterImage,
+                       int imageWidth, int imageHeight,
+                       int invertX, int invertY,
+                       unsigned int *flippedRaster) {
+    int i, j;
+    int rowInc, rowOff, colInc, colOff;
+
+    if (invertX) {
+        colInc = -1;
+        colOff = imageWidth - 1;
+    } else {
+        colInc = 1;
+        colOff = 0;
+    }
+    if (invertY) {
+        rowInc = -1;
+        rowOff = imageHeight - 1;
+    } else {
+        rowInc = 1;
+        rowOff = 0;
+    }
+
+    for (i = 0; i < imageHeight ;i++) {
+        for (j = 0; j < imageWidth; j++) {
+            int row = (rowInc*i + rowOff);
+            int col = (colInc*j + colOff);
+            flippedRaster[i*imageWidth + j] =
+                rasterImage[row*imageWidth + col];
+        }
+    }
 }
 
 static void GA_Raster(unsigned int *raster, int w, int h,
@@ -2812,12 +2855,17 @@ static void GA_Raster(unsigned int *raster, int w, int h,
     double angle = rot*M_PI/180;
     unsigned int *image = raster;
     int imageWidth = w, imageHeight = h;
-    Rboolean adjustXY = FALSE;
- 
+    Rboolean invertX = FALSE;
+    Rboolean invertY = TRUE;
+
     /* The alphablend code cannot handle negative width or height */
     if (height < 0) {
         height = -height;
-        adjustXY = TRUE;
+        invertY = FALSE;
+    }
+    if (width < 0) {
+        width = -width;
+        invertX = TRUE;
     }
 
     if (interpolate) {
@@ -2848,8 +2896,13 @@ static void GA_Raster(unsigned int *raster, int w, int h,
         imageHeight = newH;
     }
 
-    if (adjustXY) {
-        /* convert (x, y) from bottom-left to top-right */
+    if (invertX) {
+        /* convert (x, y) from bottom-left to top-left */
+        x -= imageWidth*cos(angle);
+        if (angle != 0) y -= imageWidth*sin(angle);
+    }
+    if (!invertY) {
+        /* convert (x, y) from bottom-left to top-left */
         y -= imageHeight*cos(angle);
         if (angle != 0) x -= imageHeight*sin(angle);
     }
@@ -2885,6 +2938,16 @@ static void GA_Raster(unsigned int *raster, int w, int h,
         image = rotatedRaster;
         imageWidth = newW;
         imageHeight = newH;
+    }
+
+    if (invertX || invertY) {
+        unsigned int *flippedRaster;
+
+        flippedRaster = (unsigned int *) R_alloc(imageWidth * imageHeight,
+                                                 sizeof(unsigned int));
+        flipRaster(image, imageWidth, imageHeight,
+                   invertX, invertY, flippedRaster);
+        image = flippedRaster;
     }
 
     doRaster(image, (int) (x + .5), (int) (y + .5),
@@ -2936,7 +2999,7 @@ static SEXP GA_Cap(pDevDesc dd)
 	/* Tidy up */
 	delimage(img);
     }
-    
+
 
     return raster;
 }
@@ -3074,7 +3137,7 @@ static Rboolean GA_Locator(double *x, double *y, pDevDesc dd)
 		 R_NilValue, R_NilValue);
     cntxt.cend = &donelocator;
     cntxt.cenddata = xd;
-    xd->cntxt = &cntxt;
+    xd->cntxt = (void *) &cntxt;
 
     /* and an exit handler in case the window gets closed */
     dd->onExit = GA_onExit;
@@ -3646,7 +3709,7 @@ SEXP devga(SEXP args)
 	if (!GADeviceDriver(dev, display, width, height, ps,
 			    (Rboolean)recording, resize, bg, canvas, gamma,
 			    xpos, ypos, (Rboolean)buffered, psenv,
-			    restoreConsole, title, clickToConfirm, 
+			    restoreConsole, title, clickToConfirm,
 			    fillOddEven, family, quality)) {
 	    char type[100], *p;
 	    free(dev);
@@ -3672,7 +3735,7 @@ static void GA_onExit(pDevDesc dd)
     xd->confirmation = FALSE;
     dd->gettingEvent = FALSE;
 
-    if (xd->cntxt) endcontext(xd->cntxt);
+    if (xd->cntxt) endcontext((RCNTXT *)xd->cntxt);
     if (xd->locator) donelocator((void *)xd);
 
     addto(xd->gawin);
@@ -3752,7 +3815,7 @@ static int Load_Rcairo_Dll()
 	strcat(szFullPath, R_ARCH);
 	strcat(szFullPath, "/winCairo.dll");
 	if (((hRcairoDll = LoadLibrary(szFullPath)) != NULL) &&
-	    ((R_devCairo = 
+	    ((R_devCairo =
 	      (R_SaveAsBitmap)GetProcAddress(hRcairoDll, "in_Cairo"))
 	     != NULL)) {
 	    RcairoAlreadyLoaded = 1;
@@ -3772,7 +3835,7 @@ static int Load_Rcairo_Dll()
 */
 SEXP devCairo(SEXP args)
 {
-    if (!Load_Rcairo_Dll()) 
+    if (!Load_Rcairo_Dll())
 	error(_("Unable to load winCairo.dll: was it built?"));
     else (R_devCairo)(args);
     return R_NilValue;

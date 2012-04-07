@@ -1,27 +1,31 @@
 ## Namespace for package 'parallel'
 useDynLib("parallel", .registration = TRUE, .fixes = "C_")
 
-export(nextRNGStream, nextRNGSubStream, clusterSetRNGStream, detectCores)
+export(nextRNGStream, nextRNGSubStream, clusterSetRNGStream)
 
 if(tools:::.OStype() == "unix") {
     export(mccollect, mcparallel, mc.reset.stream)
 }
 
 export(clusterApply, clusterApplyLB, clusterCall, clusterEvalQ,
-       clusterExport, clusterMap, clusterSplit, makeCluster,
-       makeForkCluster, makePSOCKcluster, mclapply, parApply,
-       parCapply, parLapply, parRapply, parSapply, pvec,
-       splitIndices, # used by e.g. spdep
-       stopCluster)
+       clusterExport, clusterMap, clusterSplit, detectCores,
+       makeCluster, makeForkCluster, makePSOCKcluster, mclapply,
+       mcmapply, parApply, parCapply, parLapply, parLapplyLB,
+       parRapply, parSapply, parSapplyLB, pvec, setDefaultCluster,
+       splitIndices, stopCluster)
 
 S3method(print, SOCKcluster)
 S3method(print, SOCKnode)
+S3method(print, SOCK0node)
 S3method("[", cluster)
 S3method(closeNode, SOCKnode)
+S3method(closeNode, SOCK0node)
 S3method(closeNode, default)
 S3method(recvData, SOCKnode)
+S3method(recvData, SOCK0node)
 S3method(recvOneData, SOCKcluster)
 S3method(sendData, SOCKnode)
+S3method(sendData, SOCK0node)
 S3method(stopCluster, default)
 
 ## To support snow clusters

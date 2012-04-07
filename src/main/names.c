@@ -1,7 +1,7 @@
 /*
  *  R : A Computer Language for Statistical Data Analysis
  *  Copyright (C) 1995, 1996  Robert Gentleman and Ross Ihaka
- *  Copyright (C) 1997--2011  The R Development Core Team
+ *  Copyright (C) 1997--2012  The R Development Core Team
  *  Copyright (C) 2003, 2004  The R Foundation
  *
  *  This program is free software; you can redistribute it and/or modify
@@ -24,6 +24,7 @@
 #endif
 
 #define __R_Names__ /* used in Defn.h for extern on R_FunTab */
+#define R_USE_SIGNALS 1
 #include <Defn.h>
 #include <Print.h>
 #include "arithmetic.h" /* for do_math[1234], do_cmathfuns */
@@ -492,6 +493,7 @@ attribute_hidden FUNTAB R_FunTab[] =
 
 {"as.vector",	do_asvector,	0,	11,	2,	{PP_FUNCALL, PREC_FN,	0}},
 {"paste",	do_paste,	0,	11,	3,	{PP_FUNCALL, PREC_FN,	0}},
+{"paste0",	do_paste,	1,	11,	2,	{PP_FUNCALL, PREC_FN,	0}},
 {"file.path",	do_filepath,	0,	11,	2,	{PP_FUNCALL, PREC_FN,	0}},
 {"format",	do_format,	0,	11,	8,	{PP_FUNCALL, PREC_FN,	0}},
 {"format.info",	do_formatinfo,	0,	11,	3,	{PP_FUNCALL, PREC_FN,	0}},
@@ -660,6 +662,7 @@ attribute_hidden FUNTAB R_FunTab[] =
 {"closeWinProgressBar",do_closewinprogressbar,0,111,1,	{PP_FUNCALL, PREC_FN,	0}},
 {"setWinProgressBar",do_setwinprogressbar,0,11,	4,	{PP_FUNCALL, PREC_FN,	0}},
 {"useInternet2",do_setInternet2,0,	211,	1,	{PP_FUNCALL, PREC_FN,	0}},
+{"mkjunction", do_mkjunction,	0,	11,	2,	{PP_FUNCALL, PREC_FN,	0}},
 #endif
 #if defined(__APPLE_CC__) && defined(HAVE_AQUA)
 {"wsbrowser",	do_wsbrowser,	0,	11,	8,	{PP_FUNCALL, PREC_FN,	0}},
@@ -713,6 +716,7 @@ attribute_hidden FUNTAB R_FunTab[] =
 {"sys.on.exit",	do_sys,		7,	11,	-1,	{PP_FUNCALL, PREC_FN,	0}},
 {"sys.parents",	do_sys,		8,	11,	-1,	{PP_FUNCALL, PREC_FN,	0}},
 {"sys.function",do_sys,		9,	11,	-1,	{PP_FUNCALL, PREC_FN,	0}},
+{"traceback",	do_traceback,  	0,      11,     1,      {PP_FUNCALL, PREC_FN,   0}},
 {"browserText", do_sysbrowser,	1,	11,	1,	{PP_FUNCALL, PREC_FN,	0}},
 {"browserCondition", do_sysbrowser,	2,	11,	1,	{PP_FUNCALL, PREC_FN,	0}},
 {"browserSetDebug", do_sysbrowser,	3,	111,	1,	{PP_FUNCALL, PREC_FN,	0}},
@@ -927,7 +931,6 @@ attribute_hidden FUNTAB R_FunTab[] =
 {"Date2POSIXlt",do_D2POSIXlt,	0,	11,	1,	{PP_FUNCALL, PREC_FN,	0}},
 {"POSIXlt2Date",do_POSIXlt2D,	0,	11,	1,	{PP_FUNCALL, PREC_FN,	0}},
 
-#ifdef BYTECODE
 {"mkCode",     do_mkcode,       0,      11,     2,      {PP_FUNCALL, PREC_FN, 0}},
 {"bcClose",    do_bcclose,      0,      11,     3,      {PP_FUNCALL, PREC_FN, 0}},
 {"is.builtin.internal",    do_is_builtin_internal,      0,      11,     1,      {PP_FUNCALL, PREC_FN, 0}},
@@ -940,7 +943,6 @@ attribute_hidden FUNTAB R_FunTab[] =
 {"getconst", do_getconst,       0,      11,     2,      {PP_FUNCALL, PREC_FN, 0}},
 {"enableJIT",    do_enablejit,  0,      11,     1,      {PP_FUNCALL, PREC_FN, 0}},
 {"compilePKGS", do_compilepkgs, 0,      11,     1,      {PP_FUNCALL, PREC_FN, 0}},
-#endif
 
 {"setNumMathThreads", do_setnumthreads,      0,      11,     1,      {PP_FUNCALL, PREC_FN, 0}},
 {"setMaxNumMathThreads", do_setmaxnumthreads,      0,      11,     1,      {PP_FUNCALL, PREC_FN, 0}},
@@ -1027,30 +1029,31 @@ attribute_hidden FUNTAB R_FunTab[] =
 {NULL,		NULL,		0,	0,	0,	{PP_INVALID, PREC_FN,	0}},
 };
 
-/* also used in eval.c .  Also finds .Internal()s */
+/* also used in eval.c */
 SEXP attribute_hidden R_Primitive(const char *primname)
 {
     for (int i = 0; R_FunTab[i].name; i++) 
-	if (strcmp(primname, R_FunTab[i].name) == 0)  /* all names are ASCII */
-	    return mkPRIMSXP(i, R_FunTab[i].eval % 10);
-    return(R_NilValue);		/* -Wall */
+	if (strcmp(primname, R_FunTab[i].name) == 0) { /* all names are ASCII */
+	    if ((R_FunTab[i].eval % 100 )/10)
+		return R_NilValue; /* it is a .Internal */
+	    else
+		return mkPRIMSXP(i, R_FunTab[i].eval % 10);
+	}
+    return R_NilValue;
 }
 
 SEXP attribute_hidden do_primitive(SEXP call, SEXP op, SEXP args, SEXP env)
 {
+    SEXP name, prim;
     checkArity(op, args);
-    SEXP name = CAR(args);
+    name = CAR(args);
     if (!isString(name) || length(name) != 1 ||
 	STRING_ELT(name, 0) == R_NilValue)
 	errorcall(call, _("string argument required"));
-    const char *primname = CHAR(STRING_ELT(name, 0));
-    for (int i = 0; R_FunTab[i].name; i++) 
-	if (strcmp(primname, R_FunTab[i].name) == 0) {
-	    if ((R_FunTab[i].eval % 100 )/10) break;
-	    return mkPRIMSXP(i, R_FunTab[i].eval % 10);
-	}
-    errorcall(call, _("no such primitive function"));
-    return R_NilValue; /* -Wall */
+    prim = R_Primitive(CHAR(STRING_ELT(name, 0)));
+    if (prim == R_NilValue)
+	errorcall(call, _("no such primitive function"));
+    return prim;
 }
 
 int StrToInternal(const char *s)
@@ -1128,8 +1131,6 @@ extern SEXP framenames; /* from model.c */
 /* initialize the symbol table */
 void InitNames()
 {
-    int i;
-
     /* allocate the symbol table */
     if (!(R_SymbolTable = (SEXP *) calloc(HSIZE, sizeof(SEXP))))
 	R_Suicide("couldn't allocate memory for symbol table");
@@ -1160,18 +1161,15 @@ void InitNames()
     /* R_BlankString */
     R_BlankString = mkChar("");
     /* Initialize the symbol Table */
-    for (i = 0; i < HSIZE; i++)
-	R_SymbolTable[i] = R_NilValue;
+    for (int i = 0; i < HSIZE; i++) R_SymbolTable[i] = R_NilValue;
     /* Set up a set of globals so that a symbol table search can be
        avoided when matching something like dim or dimnames. */
     SymbolShortcuts();
     /*  Builtin Functions */
-    for (i = 0; R_FunTab[i].name; i++)
-	installFunTab(i);
+    for (int i = 0; R_FunTab[i].name; i++) installFunTab(i);
     framenames = R_NilValue;
-#ifdef BYTECODE
+
     R_initialize_bcode();
-#endif
 }
 
 
@@ -1228,7 +1226,7 @@ SEXP attribute_hidden do_internal(SEXP call, SEXP op, SEXP args, SEXP env)
     flag = PRIMPRINT(INTERNAL(fun));
     R_Visible = flag != 1;
     ans = PRIMFUN(INTERNAL(fun)) (s, INTERNAL(fun), args, env);
-    /* This resetting of R_Visible=FALSE  was to fix PR#7397,
+    /* This resetting of R_Visible = FALSE was to fix PR#7397,
        now fixed in GEText */
     if (flag < 2) R_Visible = flag != 1;
 #ifdef CHECK_VISIBILITY

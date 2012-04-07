@@ -9,8 +9,8 @@ msgid ""
 msgstr ""
 "Project-Id-Version: R 2.11.0\n"
 "Report-Msgid-Bugs-To: bugs@r-project.org\n"
-"POT-Creation-Date: 2011-07-16 22:46\n"
-"PO-Revision-Date: 2011-10-18 19:35-0600\n"
+"POT-Creation-Date: 2011-11-23 13:45\n"
+"PO-Revision-Date: 2012-03-15 11:27-0500\n"
 "Last-Translator: Alexey Shipunov <dactylorhiza@gmail.com>\n"
 "Language-Team: Russian\n"
 "Language: \n"
@@ -148,6 +148,9 @@ msgstr "Неправильное значение 'ask'"
 
 msgid "Invalid object inserted on the display list"
 msgstr "Неправильный объект вставлен в список изображений"
+
+msgid "Invalid modification of the display list"
+msgstr "Неправильное изменение в списке изображений"
 
 msgid "Invalid 'grob' argument"
 msgstr "неправильный аргумент 'grob'"
@@ -337,6 +340,12 @@ msgstr "x и y должны быть единицами"
 
 msgid "shape must be between -1 and 1"
 msgstr "форма должна быть между -1 и 1"
+
+msgid "Must have exactly 4 control points"
+msgstr "Должно быть ровно четыре контрольные точки"
+
+msgid "Must have exactly 4 control points per Bezier curve"
+msgstr "Для кривой Безье должно быть в точности четыре контрольные точки"
 
 msgid "'x', 'y', and 'r' must be units"
 msgstr "'x', 'y', и 'r' должны быть единицами"

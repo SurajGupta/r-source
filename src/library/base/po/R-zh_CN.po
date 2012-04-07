@@ -7,7 +7,7 @@ msgid ""
 msgstr ""
 "Project-Id-Version: R 2.3.0\n"
 "Report-Msgid-Bugs-To: bugs@r-project.org\n"
-"POT-Creation-Date: 2012-01-23 08:18\n"
+"POT-Creation-Date: 2012-03-12 09:01\n"
 "PO-Revision-Date: 2005-02-04 08:37+0000\n"
 "Last-Translator: 陈斐 <FeiChen@FairIsaac.com>\n"
 "Language-Team: Chinese\n"
@@ -28,12 +28,6 @@ msgstr "见help(\"Defunct\"))和help(\"%s-defunct\")。"
 
 msgid "See help(\"Defunct\")"
 msgstr "见help(\"Defunct\"))"
-
-msgid "'symbol.C' is not needed: please remove it"
-msgstr "不需要'symbol.C'：请删除"
-
-msgid "'symbol.For' is not needed: please remove it"
-msgstr "不需要'symbol.For'：请删除"
 
 msgid "'%s' is deprecated."
 msgstr "%s不再有用。"
@@ -846,9 +840,8 @@ msgstr "程辑包%s没有名字空间，应该重新安装"
 msgid "package %s already present in search()"
 msgstr "search()里已经存在程辑包%s"
 
-#, fuzzy
 msgid "'DESCRIPTION' has an 'Encoding' field and re-encoding is not possible"
-msgstr "'DESCRIPTION'有'Encoding'一域，但重新編碼是不可能的"
+msgstr "'DESCRIPTION'内有'Encoding'这个域，但重新編碼是不可能的"
 
 msgid "%sPackages in library %s:"
 msgstr "图书馆%2$s里有%1$s个程辑包："
@@ -960,6 +953,9 @@ msgstr "必需设定'file'的值"
 
 msgid "Use of save versions prior to 2 is deprecated"
 msgstr "在R版本2号之前的保存功能不再有用"
+
+msgid "nothing specified to be save()d"
+msgstr "没有指定要save()的东西"
 
 msgid "'file' must be non-empty string"
 msgstr "'file'的值必需是长度大于零的字符串"
@@ -1113,6 +1109,7 @@ msgstr "程辑包%s没有名字空间"
 msgid "unable to load R code in package %s"
 msgstr "程辑包%s里的R写碼载入失败"
 
+#, fuzzy
 msgid ""
 "exportClassPattern specified in NAMESPACE but no matching classes in package "
 "%s"
@@ -1120,6 +1117,9 @@ msgstr "虽然exportClassPattern在NAMESPACE有设定但它在%s程辑包中没�
 
 msgid "in package %s classes %s were specified for export but not defined"
 msgstr "在%s程辑包中%s类别指定被用于出口，但它的定义并不存在"
+
+msgid "No function found corresponding to methods exports from %s for: %s"
+msgstr "从%s导出功能里找不到适用于%s的相应方法"
 
 msgid "in %s methods for export not found: %s"
 msgstr "用于出口的%s方法不存在：%s "
@@ -1169,8 +1169,18 @@ msgstr "进口目标有错"
 msgid "found methods to import for function %s but not the generic itself"
 msgstr "%s函数有可进口的方法，但找不到它的同属方法"
 
+msgid "No methods found in \"%s\" for requests: %s"
+msgstr "在\"%s\"找不到%s需要的索取"
+
 msgid "requested methods not found in environment/package %s: %s"
 msgstr "环境/程辑包%s里找不到所要求的方法：%s"
+
+msgid ""
+"No generic function found corresponding to requested imported methods for "
+"\"%s\" from package \"%s\" (malformed exports?)"
+msgstr ""
+"程序包\"%2$s\"里没有相应于为\"%1$s\"所要求的进口方法的泛型函数（是不是出口的"
+"格式不对？）"
 
 msgid "cannot add to exports of a sealed namespace"
 msgstr "不能在封闭名字空间里进行出口加入"
@@ -1300,6 +1310,9 @@ msgstr "'length.out'参数的长度必需为一"
 
 msgid "first element used of 'length.out' argument"
 msgstr "用了'length.out'参数里的第一个元素"
+
+msgid "extra argument(s) %s will be disregarded"
+msgstr "额外参数%s忽略不用"
 
 msgid "invalid (to - from)/by in seq(.)"
 msgstr "seq(.)里的(to - from)/by 有错"
@@ -1574,6 +1587,15 @@ msgstr "'stderr'的长度必需为一"
 msgid "'which' was not found on this platform"
 msgstr "这个平台上找不到'which'"
 
+msgid "fewer 'from' files than 'to' files"
+msgstr "'from'的文件比'to'的文件要少"
+
+msgid "link '%s' already exists"
+msgstr "已经存在'%s'这个链结"
+
+msgid "failed to create directory for link '%s"
+msgstr "无法为'%s'这个链结创建目录"
+
 msgid "'show.output.on.console' must be TRUE or FALSE"
 msgstr "'show.output.on.console'的值必需是'TRUE'或'FALSE'值"
 
@@ -1616,7 +1638,6 @@ msgstr "项目"
 msgid "have been removed from the search path"
 msgstr "在搜索路径上被删除"
 
-#, fuzzy
 msgid "cannot find namespace environment"
 msgstr "找不到名字空间环境"
 
@@ -1640,6 +1661,14 @@ msgid "object %s not found"
 msgid_plural "objects %s not found"
 msgstr[0] "目标对象%s不存在"
 
+msgid ""
+"Function found when exporting methods from the namespace %s which is not S4 "
+"generic: %s"
+msgid_plural ""
+"Functions found when exporting methods from the namespace %s which are not "
+"S4 generic: %s"
+msgstr[0] ""
+
 msgid "class %s is not exported by 'namespace:%s'"
 msgid_plural "classes %s are not exported by 'namespace:%s'"
 msgstr[0] "'namespace:%2$s'没有出口%1$s这个类别"
@@ -1659,6 +1688,19 @@ msgstr[0] "S3方法%s在NAMESPACE里有声明但不存在"
 msgid "Warning message:\n"
 msgid_plural "Warning messages:\n"
 msgstr[0] "警告信息：\n"
+
+#~ msgid ""
+#~ "Functions for exporting methods must have been made generic, explicitly "
+#~ "or implicitly; not true when loading %s for %s"
+#~ msgstr ""
+#~ "出口方法的函数肯定已经被明确地或隐式地被泛型了; 但在为%2$s加载%1$s时却不是"
+#~ "这样的"
+
+#~ msgid "'symbol.C' is not needed: please remove it"
+#~ msgstr "不需要'symbol.C'：请删除"
+
+#~ msgid "'symbol.For' is not needed: please remove it"
+#~ msgstr "不需要'symbol.For'：请删除"
 
 #~ msgid "'pattern' must be a non-empty character string"
 #~ msgstr "'pattern'必需为非空字符串"

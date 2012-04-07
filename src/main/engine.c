@@ -1191,6 +1191,9 @@ void GECircle(double x, double y, double radius, const pGEcontext gc, pGEDevDesc
     double *xc, *yc;
     int result;
 
+    /* There is no point in trying to plot a circle of zero radius */
+    if (radius <= 0.0) return;
+
     if (gc->lty == LTY_BLANK)
 	/* "transparent" border */
 	gc->col = R_TRANWHITE;
@@ -2045,7 +2048,7 @@ void GESymbol(double x, double y, int pch, double size,
 	    break;
 
 	case 1: /* S octahedron ( circle) */
-	    xc = RADIUS * size;
+	    xc = RADIUS * size; /* NB: could be zero */
 	    gc->fill = R_TRANWHITE;
 	    GECircle(x, y, xc, gc, dd);
 	    break;
@@ -2530,6 +2533,73 @@ double GEStrHeight(const char *str, cetype_t enc, const pGEcontext gc, pGEDevDes
 		gc->ps/dd->dev->startps;
 	h += asc;
 	return h;
+    }
+}
+
+/****************************************************************
+ * GEStrMetric
+ ****************************************************************
+
+ * This does not (currently) depend on the encoding.  It depends on
+ * the string only through the number of lines of text (via embedded
+ * \n) and we assume they are never part of an mbc.
+ */
+void GEStrMetric(const char *str, cetype_t enc, const pGEcontext gc, 
+                 double *ascent, double *descent, double *width,
+                 pGEDevDesc dd)
+{
+    /*
+     * If the fontfamily is a Hershey font family, call R_GE_VStrHeight
+     */
+    int vfontcode = VFontFamilyCode(gc->fontfamily);
+    *ascent = 0.0;
+    *descent = 0.0;
+    *width = 0.0;
+    if (vfontcode >= 0) {
+	/*
+	 * It should be straightforward to figure this out, but
+	 * just haven't got around to it yet
+	 */
+    } else {
+	double h;
+	const char *s;
+	double asc, dsc, wid;
+	/* cra is based on the font pointsize at the
+	 * time the device was created.
+	 * Adjust for potentially different current pointsize
+	 * This is a crude calculation that might be better
+	 * performed using a device call that responds with
+	 * the current font pointsize in device coordinates.
+	 */
+        double lineheight = gc->lineheight * gc->cex * dd->dev->cra[1] *
+                            gc->ps/dd->dev->startps;
+	int n;
+	/* Count the lines of text minus one */
+	n = 0;
+	for(s = str; *s ; s++)
+	    if (*s == '\n')
+		n++;
+        /* Where is the start of the last line? */
+        if (n > 0) {
+            while (*s != '\n') 
+                s--;
+            s++;
+        } else {
+            s = str;
+        }
+	h = n * lineheight;
+        /* Find the largest ascent and descent for the last line of text
+         */
+        while (*s) {
+            GEMetricInfo(*s, gc, &asc, &dsc, &wid, dd);
+            if (asc > *ascent)
+                *ascent = asc;
+            if (dsc > *descent)
+                *descent = dsc;
+            s++;
+        }
+        *ascent = *ascent + h;
+        *width = GEStrWidth(str, enc, gc ,dd);
     }
 }
 
@@ -3254,6 +3324,11 @@ void R_GE_rasterRotatedSize(int w, int h, double angle,
     double try2 = diag*sin(angle - theta);
     *wnew = (int) (fmax2(fabs(trx1), fabs(trx2)) + 0.5);
     *hnew = (int) (fmax2(fabs(try1), fabs(try2)) + 0.5);
+    /* 
+     * Rotated image may be shorter or thinner than original
+     */
+    *wnew = imax2(w, *wnew);
+    *hnew = imax2(h, *hnew);
 }
 
 /*

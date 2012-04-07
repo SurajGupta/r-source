@@ -1,6 +1,6 @@
 /*
  *  R : A Computer Language for Statistical Data Analysis
- *  Copyright (C) 2000-11   The R Development Core Team.
+ *  Copyright (C) 2000-12   The R Development Core Team.
  *
  *  This program is free software; you can redistribute it and/or modify
  *  it under the terms of the GNU General Public License as published by
@@ -73,6 +73,7 @@
 # include <config.h>
 #endif
 
+#define R_USE_SIGNALS 1
 #include <Defn.h>
 #include <Fileio.h>
 #include <Rconnections.h>
@@ -81,6 +82,12 @@
 #include <R_ext/RS.h>		/* R_chk_calloc and Free */
 #include <R_ext/Riconv.h>
 #undef ERROR			/* for compilation on Windows */
+
+#ifdef Win32
+int trio_vsnprintf(char *buffer, size_t bufferSize, const char *format,
+		   va_list args);
+# define vsnprintf trio_vsnprintf
+#endif
 
 int attribute_hidden R_OutputCon; /* used in printutils.c */
 
@@ -1113,7 +1120,7 @@ SEXP attribute_hidden do_pipe(SEXP call, SEXP op, SEXP args, SEXP env)
     if(length(scmd) > 1)
 	warning(_("only first element of 'description' argument used"));
 #ifdef Win32
-    if( !strIsASCII(CHAR(STRING_ELT(scmd, 0))) ) {
+    if( !IS_ASCII(STRING_ELT(scmd, 0)) ) {
 	ienc = CE_UTF8;
 	file = translateCharUTF8(STRING_ELT(scmd, 0));
     } else {
@@ -4661,7 +4668,7 @@ SEXP attribute_hidden do_url(SEXP call, SEXP op, SEXP args, SEXP env)
 	warning(_("only first element of 'description' argument used"));
     url = CHAR(STRING_ELT(scmd, 0)); /* ASCII */
 #ifdef Win32
-    if(PRIMVAL(op) && !strIsASCII(CHAR(STRING_ELT(scmd, 0))) ) {
+    if(PRIMVAL(op) && !IS_ASCII(STRING_ELT(scmd, 0)) ) {
 	ienc = CE_UTF8;
 	url = translateCharUTF8(STRING_ELT(scmd, 0));
     } else {

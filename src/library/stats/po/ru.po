@@ -10,8 +10,8 @@ msgid ""
 msgstr ""
 "Project-Id-Version: R 2.9.0\n"
 "Report-Msgid-Bugs-To: bugs@R-project.org\n"
-"POT-Creation-Date: 2011-02-18 12:36+0000\n"
-"PO-Revision-Date: 2011-10-18 22:22-0600\n"
+"POT-Creation-Date: 2012-03-01 06:57+0000\n"
+"PO-Revision-Date: 2012-03-15 12:00-0500\n"
 "Last-Translator: Alexey Shipunov <dactylorhiza@gmail.com>\n"
 "Language-Team: Russian\n"
 "Language: \n"
@@ -289,6 +289,18 @@ msgstr "m должен быть списком"
 #: port.c:544
 msgid "'lowerb' and 'upperb' must be numeric vectors"
 msgstr "'lowerb' и 'upperb' должны быть числовыми векторами"
+
+#: rWishart.c:51
+msgid "inconsistent degrees of freedom and dimension"
+msgstr "несвязанные степени свободы и размерность"
+
+#: rWishart.c:84
+msgid "'scal' must be a square, real matrix"
+msgstr "'scal' должен быть настоящей квадратной матрицей"
+
+#: rWishart.c:96
+msgid "'scal' matrix is not positive-definite"
+msgstr "матрица 'scal' не положительно-определенная"
 
 #: smooth.c:79
 #, c-format

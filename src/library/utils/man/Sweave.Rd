@@ -66,7 +66,7 @@ Stangle(file, driver = Rtangle(),
   of \code{key=value} items, as would be used in a \samp{\\SweaveOpts}
   statement in a document.
   
-  Non-ASCII source files should contain a line of the form
+  Non-ASCII source files must contain a line of the form
 \preformatted{\usepackage[foo]{inputenc}}
   (where \samp{foo} is typically \samp{latin1}, \samp{latin2}, \samp{utf8} or
   \samp{cp1252} or \samp{cp1250}) or they will give an error.

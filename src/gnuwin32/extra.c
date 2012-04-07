@@ -31,11 +31,12 @@
 
 
 #include <stdio.h>
+#include <time.h>
 #include "Defn.h"
 #include "Fileio.h"
 #include <direct.h>
-#include <time.h>
 #include "graphapp/ga.h"
+/* Mingw-w64 defines this to be 0x0502 */
 #ifndef _WIN32_WINNT
 # define _WIN32_WINNT 0x0502 /* for GetLongPathName, KEY_WOW64_64KEY */
 #endif
@@ -1480,9 +1481,6 @@ SEXP do_setStatusBar(SEXP call, SEXP op, SEXP args, SEXP rho)
     setstatus(translateChar(STRING_ELT(text, 0)));
     return R_NilValue;
 }
-
-/* Note that a HANDLE is a pointer and hence will not necesarily fit into
-   an int, so this is fundamentally broken */
 
 static void * getConsoleHandle(const char *which)
 {

@@ -1,6 +1,6 @@
 
-R version 2.14.0 alpha (2011-10-03 r57134)
-Copyright (C) 2011 The R Foundation for Statistical Computing
+R version 2.15.0 alpha (2012-03-02 r58556)
+Copyright (C) 2012 The R Foundation for Statistical Computing
 ISBN 3-900051-07-0
 Platform: x86_64-unknown-linux-gnu (64-bit)
 
@@ -1568,9 +1568,42 @@ List of 150
 [13] "azure"         "azure1"        "azure2"        "azure3"       
 [17] "azure4"        "beige"         "bisque"        "bisque1"      
 > 
+> ### ----------- Show (almost) all named colors ---------------------
+> 
+> ## 1) with traditional 'graphics' package:
+> showCols1 <- function(bg = "gray", cex = 0.75, srt = 30) {
++     m <- ceiling(sqrt(n <- length(cl <- colors())))
++     length(cl) <- m*m; cm <- matrix(cl, m)
++     ##
++     require("graphics")
++     op <- par(mar=rep(0,4), ann=FALSE, bg = bg); on.exit(par(op))
++     plot(1:m,1:m, type="n", axes=FALSE)
++     text(col(cm), rev(row(cm)), cm,  col = cl, cex=cex, srt=srt)
++ }
+> showCols1()
+> 
+> ## 2) with 'grid' package:
+> showCols2 <- function(bg = "grey", cex = 0.75, rot = 30) {
++     m <- ceiling(sqrt(n <- length(cl <- colors())))
++     length(cl) <- m*m; cm <- matrix(cl, m)
++     ##
++     require("grid")
++     grid.newpage(); vp <- viewport(w = .92, h = .92)
++     grid.rect(gp=gpar(fill=bg))
++     grid.text(cm, x = col(cm)/m, y = rev(row(cm))/m, rot = rot,
++               vp=vp, gp=gpar(cex = cex, col = cm))
++ }
+> showCols2()
+Loading required package: grid
+> showCols2(bg = "gray33")
 > 
 > 
+> 
+> graphics::par(get("par.postscript", pos = 'CheckExEnv'))
 > cleanEx()
+
+detaching ‘package:grid’
+
 > nameEx("contourLines")
 > ### * contourLines
 > 
@@ -1814,7 +1847,7 @@ character(0)
 > ### ** Examples
 > 
 > ## Not run: 
-> ##D x11()
+> ##D x11() # on a Unix-alike
 > ##D plot(rnorm(10), main="Plot 1")
 > ##D dev.copy(device=x11)
 > ##D mtext("Copy 1", 3)
@@ -3471,7 +3504,7 @@ $zlab
 > ### * <FOOTER>
 > ###
 > cat("Time elapsed: ", proc.time() - get("ptime", pos = 'CheckExEnv'),"\n")
-Time elapsed:  1.915 0.066 2.059 0 0 
+Time elapsed:  2.147 0.05 2.209 0 0 
 > grDevices::dev.off()
 null device 
           1 

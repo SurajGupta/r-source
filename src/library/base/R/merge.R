@@ -56,9 +56,9 @@ merge.data.frame <-
         nm.y <- names(y)
         has.common.nms <- any(cnm <- nm.x %in% nm.y)
         if(has.common.nms) {
-            names(x)[cnm] <- paste(nm.x[cnm], suffixes[1L], sep="")
+            names(x)[cnm] <- paste0(nm.x[cnm], suffixes[1L])
             cnm <- nm.y %in% nm
-            names(y)[cnm] <- paste(nm.y[cnm], suffixes[2L], sep="")
+            names(y)[cnm] <- paste0(nm.y[cnm], suffixes[2L])
         }
         if (nx == 0L || ny == 0L) {
             res <- cbind(x[FALSE, ], y[FALSE, ])
@@ -86,7 +86,7 @@ merge.data.frame <-
             ## Do these together for consistency in as.character.
             ## Use same set of names.
             bx <- x[, by.x, drop=FALSE]; by <- y[, by.y, drop=FALSE]
-            names(bx) <- names(by) <- paste("V", seq_len(ncol(bx)), sep="")
+            names(bx) <- names(by) <- paste0("V", seq_len(ncol(bx)))
             bz <- do.call("paste", c(rbind(bx, by), sep = "\r"))
             bx <- bz[seq_len(nx)]
             by <- bz[nx + seq_len(ny)]
@@ -109,14 +109,24 @@ merge.data.frame <-
         lxy <- length(m$xi)             # == length(m$yi)
         ## x = [ by | x ] :
         has.common.nms <- any(cnm <- nm.x %in% nm.y)
-        if(has.common.nms)
-            nm.x[cnm] <- paste(nm.x[cnm], suffixes[1L], sep="")
+        if(has.common.nms && nzchar(suffixes[1L])) {
+            new <- paste0(nm.x[cnm], suffixes[1L])
+            prob <- new %in% nm.x
+            if(sum(prob) > 1L)
+                stop("there are already columns named ",
+                     paste(sQuote(new[new %in% nm.x]), collapse = ", "),
+                     domain = NA)
+            else if(sum(prob) == 1L)
+                stop("there is already a column named ",
+                     sQuote(new[new %in% nm.x]), domain = NA)
+            nm.x[cnm] <- new
+        }
         x <- x[c(m$xi, if(all.x) m$x.alone),
                c(by.x, seq_len(ncx)[-by.x]), drop=FALSE]
         names(x) <- c(nm.by, nm.x)
         if(all.y) { ## add the 'y.alone' rows to x[]
             ## need to have factor levels extended as well -> using [cr]bind
-            ya <- y[m$y.alone, by.y, drop=FALSE]
+            ya <- y[m$y.alone, by.y, drop = FALSE]
             names(ya) <- nm.by
             ## this used to use a logical matrix, but that is not good
             ## enough as x could be zero-row.
@@ -126,9 +136,18 @@ merge.data.frame <-
             #                               dimnames=list(NULL,nm.x))))
         }
         ## y (w/o 'by'):
-        if(has.common.nms) {
+        if(has.common.nms && nzchar(suffixes[2L])) {
             cnm <- nm.y %in% nm
-            nm.y[cnm] <- paste(nm.y[cnm], suffixes[2L], sep="")
+            new <- paste0(nm.y[cnm], suffixes[2L])
+            prob <- new %in% nm.y
+            if(sum(prob) > 1L)
+                stop("there are already columns named ",
+                     paste(sQuote(new[new %in% nm.y]), collapse = ", "),
+                     domain = NA)
+            else if(sum(prob) == 1L)
+                stop("there is already a column named ",
+                     sQuote(new[new %in% nm.y]), domain = NA)
+            nm.y[cnm] <- new
         }
         y <- y[c(m$yi, if(all.x) rep.int(1L, nxx), if(all.y) m$y.alone),
                -by.y, drop = FALSE]

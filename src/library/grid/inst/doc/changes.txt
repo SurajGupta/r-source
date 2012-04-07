@@ -1,3 +1,34 @@
+Changes from grid_2.14.0 to grid_2.15.0:
+--------------------------------------
+
+1.  Added calcStringMetric() function.
+
+2.  Added "strascent" and "strdescent" units, plus 
+    stringAscent() and stringDescent() convenience functions.
+
+3.  Added "grobascent" and "grobdescent" units, plus 
+    grobAscent() and grobDescent() convenience functions.
+
+    The "ascent" of a grob is equivalent to its height by default,
+    but ascentDetails() methods can be written 
+    (e.g., text grobs are different).
+
+    The "descent" of a grob is zero by default,
+    but descentDetails() methods can be written 
+    (e.g., text grobs are different).
+
+4.  Fix for xsplinePoints() so that it copes with xspline grob
+    with non-NULL 'id' AND so that it takes the 'vp' and 'gp'
+    settings into account.
+
+5.  Added grid.bezier() function to draw Bezier curve
+    (using an X-spline approximation).
+
+    Also added bezierPoints() function.
+
+6.  Added grid.DLapply() function.
+
+
 Changes from grid_2.12.0 to grid_2.13.0:
 --------------------------------------
 

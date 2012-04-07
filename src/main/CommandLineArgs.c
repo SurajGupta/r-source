@@ -1,6 +1,6 @@
 /*
  *  R : A Computer Language for Statistical Data Analysis
- *  Copyright (C) 1997-2008   The R Development Core Team
+ *  Copyright (C) 1997-2012   The R Development Core Team
  *
  *  This program is free software; you can redistribute it and/or modify
  *  it under the terms of the GNU General Public License as published by
@@ -89,9 +89,7 @@ void
 R_common_command_line(int *pac, char **argv, Rstart Rp)
 {
     int ac = *pac, newac = 1;	/* argv[0] is process name */
-    int ierr;
     long lval; /* this is only used for ppval, so 32-bit long is fine */
-    R_size_t value;
     char *p, **av = argv, msg[1024];
     Rboolean processing = TRUE;
 
@@ -188,6 +186,8 @@ R_common_command_line(int *pac, char **argv, Rstart Rp)
 		     !strcmp(*av, "-quiet") ||
 		     !strcmp(*av, "-nsize") ||
 		     !strcmp(*av, "-vsize") ||
+		     !strncmp(*av, "--max-nsize", 11) ||
+		     !strncmp(*av, "--max-vsize", 11) ||
 		     !strcmp(*av, "-V") ||
 		     !strcmp(*av, "-n") ||
 		     !strcmp(*av, "-v")) {
@@ -195,13 +195,9 @@ R_common_command_line(int *pac, char **argv, Rstart Rp)
 			 _("WARNING: option '%s' no longer supported"), *av);
 		R_ShowMessage(msg);
 	    }
-	    /* mop up --max/min/-n/vsize */
+	    /* mop up --min-[nv]size */
 	    else if( !strncmp(*av, "--min-nsize", 11) ||
-		     !strncmp(*av, "--max-nsize", 11) ||
-		     !strncmp(*av, "--min-vsize", 11) ||
-		     !strncmp(*av, "--max-vsize", 11) ) {
-		snprintf(msg, 1024,
-			 "WARNING: option '%s' is deprecated", *av);
+		     !strncmp(*av, "--min-vsize", 11) ) {
 		R_ShowMessage(msg);
 		if(strlen(*av) < 13) {
 		    if(ac > 1) {ac--; av++; p = *av;} else p = NULL;
@@ -213,6 +209,8 @@ R_common_command_line(int *pac, char **argv, Rstart Rp)
 		    R_ShowMessage(msg);
 		    break;
 		}
+		int ierr;
+		R_size_t value;
 		value = R_Decode2Long(p, &ierr);
 		if(ierr) {
 		    if(ierr < 0)
@@ -227,9 +225,7 @@ R_common_command_line(int *pac, char **argv, Rstart Rp)
 
 		} else {
 		    if(!strncmp(*av, "--min-nsize", 11)) Rp->nsize = value;
-		    if(!strncmp(*av, "--max-nsize", 11)) Rp->max_nsize = value;
 		    if(!strncmp(*av, "--min-vsize", 11)) Rp->vsize = value;
-		    if(!strncmp(*av, "--max-vsize", 11)) Rp->max_vsize = value;
 		}
 	    }
 	    else if(strncmp(*av, "--max-ppsize", 12) == 0) {

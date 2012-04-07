@@ -43,7 +43,7 @@
 #include <Fileio.h>
 #include <R_ext/Applic.h>		/* machar */
 #include <ctype.h>			/* toupper */
-#include <time.h>
+#include <time.h>			/* for ctime */
 
 # include <errno.h>
 
@@ -566,6 +566,40 @@ SEXP attribute_hidden do_fileremove(SEXP call, SEXP op, SEXP args, SEXP rho)
 #include <unistd.h> /* for symlink, getpid */
 #endif
 
+#ifdef HAVE_SYS_TYPES_H
+# include <sys/types.h>
+#endif
+#ifdef HAVE_SYS_STAT_H
+# include <sys/stat.h>
+#endif
+
+#ifdef Win32
+/* Mingw-w64 defines this to be 0x0502 */
+#ifndef _WIN32_WINNT
+# define _WIN32_WINNT 0x0500 /* for CreateHardLink */
+#endif
+#include <windows.h>
+typedef BOOLEAN (WINAPI *PCSL)(LPWSTR, LPWSTR, DWORD);
+static PCSL pCSL = NULL;
+const char *formatError(DWORD res);  /* extra.c */
+/* Windows does not have link(), but it does have CreateHardLink() on NTFS */
+#undef HAVE_LINK
+#define HAVE_LINK 1
+/* Windows does not have symlink(), but >= Vista does have 
+   CreateSymbolicLink() on NTFS */
+#undef HAVE_SYMLINK
+#define HAVE_SYMLINK 1
+#endif
+
+/* the Win32 stuff here is not ready for release:
+
+   (i) It needs Windows >= Vista
+   (ii) It matters whether 'from' is a file or a dir, and we could only 
+   know if it exists already.
+   (iii) This needs specific privileges which in general only Adminstrators 
+   have, and which many people report granting in the Policy Editor 
+   fails to work.
+*/
 SEXP attribute_hidden do_filesymlink(SEXP call, SEXP op, SEXP args, SEXP rho)
 {
     SEXP f1, f2;
@@ -573,8 +607,6 @@ SEXP attribute_hidden do_filesymlink(SEXP call, SEXP op, SEXP args, SEXP rho)
 #ifdef HAVE_SYMLINK
     SEXP ans;
     int i;
-    char from[PATH_MAX], to[PATH_MAX];
-    const char *p;
 #endif
     checkArity(op, args);
     f1 = CAR(args); n1 = length(f1);
@@ -588,13 +620,35 @@ SEXP attribute_hidden do_filesymlink(SEXP call, SEXP op, SEXP args, SEXP rho)
     if (n2 < 1)
 	return allocVector(LGLSXP, 0);
     n = (n1 > n2) ? n1 : n2;
-#ifdef HAVE_SYMLINK  /* Not (yet) Windows */
+
+#ifdef Win32
+    pCSL = (PCSL) GetProcAddress(GetModuleHandle(TEXT("kernel32.dll")),
+				 "CreateSymbolicLinkW");
+    if(!pCSL) 
+	error(_("symbolic links are not supported on this version of Windows"));
+#endif
+
+#ifdef HAVE_SYMLINK
     PROTECT(ans = allocVector(LGLSXP, n));
     for (i = 0; i < n; i++) {
 	if (STRING_ELT(f1, i%n1) == NA_STRING ||
 	    STRING_ELT(f2, i%n2) == NA_STRING)
 	    LOGICAL(ans)[i] = 0;
 	else {
+#ifdef Win32
+	    wchar_t *from, *to;
+	    struct _stati64 sb;
+	    from = filenameToWchar(STRING_ELT(f1, i%n1), TRUE);
+	    to = filenameToWchar(STRING_ELT(f2, i%n2), TRUE);
+	    _wstati64(from, &sb);
+	    int isDir = (sb.st_mode & S_IFDIR) > 0;
+	    LOGICAL(ans)[i] = pCSL(to, from, isDir) != 0;
+	    if(!LOGICAL(ans)[i])
+		warning(_("cannot symlink '%ls' to '%ls', reason '%s'"),
+			from, to, formatError(GetLastError()));
+#else
+	    char from[PATH_MAX], to[PATH_MAX];
+	    const char *p;
 	    p = R_ExpandFileName(translateChar(STRING_ELT(f1, i%n1)));
 	    if (strlen(p) >= PATH_MAX - 1) {
 		LOGICAL(ans)[i] = 0;
@@ -609,10 +663,10 @@ SEXP attribute_hidden do_filesymlink(SEXP call, SEXP op, SEXP args, SEXP rho)
 	    strcpy(to, p);
 	    /* Rprintf("linking %s to %s\n", from, to); */
 	    LOGICAL(ans)[i] = symlink(from, to) == 0;
-	    if(!LOGICAL(ans)[i]) {
+	    if(!LOGICAL(ans)[i])
 		warning(_("cannot symlink '%s' to '%s', reason '%s'"),
 			from, to, strerror(errno));
-	    }
+#endif
 	}
     }
     UNPROTECT(1);
@@ -623,16 +677,6 @@ SEXP attribute_hidden do_filesymlink(SEXP call, SEXP op, SEXP args, SEXP rho)
 #endif
 }
 
-#ifdef Win32
-# ifndef _WIN32_WINNT
-# define _WIN32_WINNT 0x500 /* for CreateHardLink */
-# endif
-#include <windows.h>
-const char *formatError(DWORD res);  /* extra.c */
-/* Windows does not have link(), but it does have CreateHardLink() on NTFS */
-#undef HAVE_LINK
-#define HAVE_LINK 1
-#endif
 
 SEXP attribute_hidden do_filelink(SEXP call, SEXP op, SEXP args, SEXP rho)
 {
@@ -767,13 +811,6 @@ SEXP attribute_hidden do_filerename(SEXP call, SEXP op, SEXP args, SEXP rho)
     return ans;
 }
 
-#ifdef HAVE_SYS_TYPES_H
-# include <sys/types.h>
-#endif
-#ifdef HAVE_SYS_STAT_H
-# include <sys/stat.h>
-#endif
-
 # if defined(Unix) && defined(HAVE_PWD_H) && defined(HAVE_GRP_H) \
   && defined(HAVE_GETPWUID) && defined(HAVE_GETGRGID)
 #  include <pwd.h>
@@ -782,8 +819,6 @@ SEXP attribute_hidden do_filerename(SEXP call, SEXP op, SEXP args, SEXP rho)
 # endif
 
 #ifdef Win32
-# define WIN32_LEAN_AND_MEAN 1
-# include <windows.h>
 # ifndef SCS_64BIT_BINARY
 #  define SCS_64BIT_BINARY 6
 # endif
@@ -875,6 +910,7 @@ SEXP attribute_hidden do_fileinfo(SEXP call, SEXP op, SEXP args, SEXP rho)
 #ifdef Win32
 	    _wstati64(wfn, &sb)
 #else
+	    /* Target not link */
 	    stat(efn, &sb)
 #endif
 	    == 0) {
@@ -1336,7 +1372,6 @@ SEXP attribute_hidden do_fileaccess(SEXP call, SEXP op, SEXP args, SEXP rho)
 }
 
 #ifdef Win32
-#include <windows.h>
 
 static int R_rmdir(const wchar_t *dir)
 {
@@ -1344,6 +1379,46 @@ static int R_rmdir(const wchar_t *dir)
     GetShortPathNameW(dir, tmp, MAX_PATH);
     //printf("removing directory %ls\n", tmp);
     return _wrmdir(tmp);
+}
+
+/* Junctions and symbolic links are fundamentally reparse points, so
+   apparently this is the way to detect them. */
+static int isReparsePoint(const wchar_t *name)
+{
+    DWORD res = GetFileAttributesW(name);
+    if(res == INVALID_FILE_ATTRIBUTES) {
+	warning("cannot get info on '%ls', reason '%s'",
+		name, formatError(GetLastError()));
+	return 0;
+    }
+    // printf("%ls: %x\n", name, res);
+    return res & FILE_ATTRIBUTE_REPARSE_POINT;
+}
+
+static int delReparsePoint(const wchar_t *name)
+{
+    HANDLE hd = 
+	CreateFileW(name, GENERIC_READ | GENERIC_WRITE, 0, 0, OPEN_EXISTING,
+		    FILE_FLAG_BACKUP_SEMANTICS | FILE_FLAG_OPEN_REPARSE_POINT,
+		    0);
+    if(hd == INVALID_HANDLE_VALUE) {
+	warning("cannot open reparse point '%ls', reason '%s'",
+		name, formatError(GetLastError()));
+	return 1;
+    }    
+    REPARSE_GUID_DATA_BUFFER rgdb = {0};
+    rgdb.ReparseTag = IO_REPARSE_TAG_MOUNT_POINT;
+    DWORD dwBytes;
+    BOOL res = DeviceIoControl(hd, FSCTL_DELETE_REPARSE_POINT, &rgdb,
+			       REPARSE_GUID_DATA_BUFFER_HEADER_SIZE,
+			       NULL, 0, &dwBytes, 0);
+    CloseHandle(hd);
+    if(res == 0)
+	warning("cannot delete reparse point '%ls', reason '%s'",
+		name, formatError(GetLastError()));
+    else /* This may leave an empty dir behind */
+	R_rmdir(name);
+    return res == 0;
 }
 
 static int R_unlink(wchar_t *name, int recursive, int force)
@@ -1361,7 +1436,10 @@ static int R_unlink(wchar_t *name, int recursive, int force)
 	int n, ans = 0;
 
 	_wstati64(name, &sb);
-	if ((sb.st_mode & S_IFDIR) > 0) { /* a directory */
+	/* We need to test for a junction first, as junctions
+	   are detected as directories. */
+	if (isReparsePoint(name)) ans += delReparsePoint(name);
+	else if ((sb.st_mode & S_IFDIR) > 0) { /* a directory */
 	    if ((dir = _wopendir(name)) != NULL) {
 		while ((de = _wreaddir(dir))) {
 		    if (!wcscmp(de->d_name, L".") || !wcscmp(de->d_name, L".."))
@@ -1375,7 +1453,8 @@ static int R_unlink(wchar_t *name, int recursive, int force)
 		    }
 		    /* printf("stat-ing %ls\n", p); */
 		    _wstati64(p, &sb);
-		    if ((sb.st_mode & S_IFDIR) > 0) { /* a directory */
+		    if (isReparsePoint(name)) ans += delReparsePoint(name);
+		    else if ((sb.st_mode & S_IFDIR) > 0) { /* a directory */
 			/* printf("is a directory\n"); */
 			if (force) _wchmod(p, _S_IWRITE);
 			ans += R_unlink(p, recursive, force);
@@ -1392,7 +1471,8 @@ static int R_unlink(wchar_t *name, int recursive, int force)
 	    return ans;
 	}
 	/* drop through */
-    }
+    } else if (isReparsePoint(name)) return delReparsePoint(name);
+    
     return _wunlink(name) == 0 ? 0 : 1;
 }
 
@@ -1417,7 +1497,7 @@ static int R_unlink(const char *name, int recursive, int force)
     /* We cannot use R_FileExists here since it is false for broken
        symbolic links 
        if (!R_FileExists(name)) return 0; */
-    res  = stat(name, &sb);
+    res  = lstat(name, &sb);  /* better to be lstat */
     if (!res && force) chmod(name, sb.st_mode | S_IWUSR);
 
     if (!res && recursive) {
@@ -1437,7 +1517,7 @@ static int R_unlink(const char *name, int recursive, int force)
 		    else
 			snprintf(p, PATH_MAX, "%s%s%s", name, R_FileSep,
 				 de->d_name);
-		    stat(p, &sb);
+		    lstat(p, &sb);
 		    if ((sb.st_mode & S_IFDIR) > 0) { /* a directory */
 			if (force) chmod(p, sb.st_mode | S_IWUSR | S_IXUSR);
 			ans += R_unlink(p, recursive, force);
@@ -2327,6 +2407,7 @@ static int do_copy(const char* from, const char* name, const char* to,
 #endif
     /* REprintf("from: %s, name: %s, to: %s\n", from, name, to); */
     snprintf(this, PATH_MAX, "%s%s", from, name);
+    /* Here we want the target not the link */
     stat(this, &sb);
     if ((sb.st_mode & S_IFDIR) > 0) { /* a directory */
 	DIR *dir;
@@ -2679,3 +2760,62 @@ SEXP attribute_hidden R_setFileTime(SEXP name, SEXP time)
 #endif
     return ScalarLogical(res);
 }
+
+#ifdef Win32
+/* based on ideas in
+   http://www.codeproject.com/KB/winsdk/junctionpoints.aspx
+*/
+typedef struct TMN_REPARSE_DATA_BUFFER
+{
+    DWORD  ReparseTag;
+    WORD   ReparseDataLength;
+    WORD   Reserved;
+    WORD   SubstituteNameOffset;
+    WORD   SubstituteNameLength;
+    WORD   PrintNameOffset;
+    WORD   PrintNameLength;
+    WCHAR  PathBuffer[1024];
+} TMN_REPARSE_DATA_BUFFER;
+
+SEXP attribute_hidden do_mkjunction(SEXP call, SEXP op, SEXP args, SEXP rho)
+{
+    wchar_t from[10000];
+    const wchar_t *to;
+
+    checkArity(op, args);
+    /* from and to are both directories: and to exists */
+    wcscpy(from, filenameToWchar(STRING_ELT(CAR(args), 0), FALSE));
+    to = filenameToWchar(STRING_ELT(CADR(args), 0), TRUE);
+    // printf("ln %ls %ls\n", from, to);
+    
+    HANDLE hd = 
+	CreateFileW(to, GENERIC_READ | GENERIC_WRITE, 0, 0, OPEN_EXISTING,
+		    FILE_FLAG_BACKUP_SEMANTICS | FILE_FLAG_OPEN_REPARSE_POINT,
+		    0);
+    if(hd == INVALID_HANDLE_VALUE) {
+	warning("cannot open reparse point '%ls', reason '%s'",
+		to, formatError(GetLastError()));
+	return ScalarLogical(1);
+    }
+    TMN_REPARSE_DATA_BUFFER rdb;
+    const size_t nbytes = wcslen(from) * 2;
+    rdb.ReparseTag = IO_REPARSE_TAG_MOUNT_POINT;
+    rdb.ReparseDataLength = nbytes + 12;
+    wcscpy(rdb.PathBuffer, from);
+    rdb.Reserved = 0;
+    rdb.SubstituteNameOffset = 0;
+    rdb.SubstituteNameLength = nbytes;
+    rdb.PrintNameOffset = nbytes + 2;
+    rdb.PrintNameLength = 0;
+    DWORD dwBytes;
+    const BOOL bOK =
+	DeviceIoControl(hd, FSCTL_SET_REPARSE_POINT, &rdb, 
+			8 /* header */ + rdb.ReparseDataLength,
+			NULL, 0, &dwBytes, 0);
+    CloseHandle(hd);
+    if(!bOK)
+	warning("cannot set reparse point '%ls', reason '%s'",
+		to, formatError(GetLastError()));
+    return ScalarLogical(bOK != 0);
+}
+#endif

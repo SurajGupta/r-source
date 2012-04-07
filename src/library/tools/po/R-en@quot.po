@@ -22,10 +22,10 @@
 #
 msgid ""
 msgstr ""
-"Project-Id-Version: R 2.14.1\n"
+"Project-Id-Version: R 2.15.0\n"
 "Report-Msgid-Bugs-To: bugs@r-project.org\n"
-"POT-Creation-Date: 2012-01-23 08:19\n"
-"PO-Revision-Date: 2012-01-23 08:19\n"
+"POT-Creation-Date: 2012-03-16 06:26\n"
+"PO-Revision-Date: 2012-03-16 06:26\n"
 "Last-Translator: Automatically generated\n"
 "Language-Team: none\n"
 "MIME-Version: 1.0\n"
@@ -190,51 +190,12 @@ msgstr "found T/F in %s"
 msgid "package name '%s' seems invalid; using directory name '%s' instead"
 msgstr "package name ‘%s’ seems invalid; using directory name ‘%s’ instead"
 
-msgid "Packages required but not available:"
-msgstr "Packages required but not available:"
-
-msgid "Package required but not available: %s"
-msgstr "Package required but not available: %s"
-
-msgid "Packages required and available but unsuitable versions:"
-msgstr "Packages required and available but unsuitable versions:"
-
-msgid "Package required and available but unsuitable version: %s"
-msgstr "Package required and available but unsuitable version: %s"
-
-msgid "Former standard packages required but now defunct:"
-msgstr "Former standard packages required but now defunct:"
-
-msgid "Packages suggested but not available for checking:"
-msgstr "Packages suggested but not available for checking:"
-
-msgid "Package suggested but not available for checking: %s"
-msgstr "Package suggested but not available for checking: %s"
-
-msgid "Packages which this enhances but not available for checking:"
-msgstr "Packages which this enhances but not available for checking:"
-
-msgid "Package which this enhances but not available for checking: %s"
-msgstr "Package which this enhances but not available for checking: %s"
-
-msgid "Vignette dependencies not required:"
-msgstr "Vignette dependencies not required:"
-
-msgid "Vignette dependencies not required: %s"
-msgstr "Vignette dependencies not required: %s"
-
 msgid ""
 "Vignette dependencies (\\VignetteDepends{} entries) must be contained in the "
 "DESCRIPTION Depends/Suggests/Imports entries."
 msgstr ""
 "Vignette dependencies (\\VignetteDepends{} entries) must be contained in the "
 "DESCRIPTION Depends/Suggests/Imports entries."
-
-msgid "Namespace dependencies not required:"
-msgstr "Namespace dependencies not required:"
-
-msgid "Namespace dependency not required: %s"
-msgstr "Namespace dependency not required: %s"
 
 msgid "Malformed package name"
 msgstr "Malformed package name"
@@ -421,6 +382,12 @@ msgstr "Package startup functions should use %s to generate messages."
 msgid "packageStartupMessage"
 msgstr "packageStartupMessage"
 
+msgid "Package startup functions should not call %s."
+msgstr "Package startup functions should not call %s."
+
+msgid "installed.packages"
+msgstr "installed.packages"
+
 msgid "See section %s in ?.onAttach."
 msgstr "See section %s in ?.onAttach."
 
@@ -447,6 +414,9 @@ msgstr "‘data(package=)’ calls not declared from:"
 
 msgid "'data(package=)' call not declared from: %s"
 msgstr "‘data(package=)’ call not declared from: %s"
+
+msgid "NB: need Internet access to use CRAN incoming checks"
+msgstr "NB: need Internet access to use CRAN incoming checks"
 
 msgid "Rd files with duplicated name '%s':"
 msgstr "Rd files with duplicated name '%s':"
@@ -518,6 +488,9 @@ msgstr "missing/empty \\name field in Rd file(s)"
 msgid "No help on %s found in RdDB %s"
 msgstr "No help on %s found in RdDB %s"
 
+msgid "more than one \\examples section, using the first"
+msgstr "more than one \\examples section, using the first"
+
 msgid "Converting Rd files to LaTeX ..."
 msgstr "Converting Rd files to LaTeX ..."
 
@@ -545,14 +518,8 @@ msgstr "current working directory cannot be ascertained"
 msgid "no inputs"
 msgstr "no inputs"
 
-msgid "DVI output from Rd2dvi is deprecated"
-msgstr "DVI output from Rd2dvi is deprecated"
-
-msgid "Error in running tools::texi2dvi"
-msgstr "Error in running tools::texi2dvi"
-
-msgid "more than one \\examples section, using the first"
-msgstr "more than one \\examples section, using the first"
+msgid "Error in running tools::texi2pdf"
+msgstr "Error in running tools::texi2pdf"
 
 msgid "invalid value for '%s' : %s"
 msgstr "invalid value for ‘%s’ : %s"
@@ -617,13 +584,6 @@ msgstr "unable to re-encode ‘%s’ line(s) %s"
 msgid "unable to copy INDEX to '%s'"
 msgstr "unable to copy INDEX to ‘%s’"
 
-msgid ""
-"running Stangle on vignette '%s' failed with message:\n"
-"%s"
-msgstr ""
-"running Stangle on vignette ‘%s’ failed with message:\n"
-"%s"
-
 msgid "cannot create directory '%s'"
 msgstr "cannot create directory ‘%s’"
 
@@ -661,6 +621,9 @@ msgstr "Changes require specified ‘style’"
 msgid "The default JSS style may not be modified."
 msgstr "The default JSS style may not be modified."
 
+msgid "invalid value for --compact-vignettes, assuming \"qpdf\""
+msgstr "invalid value for --compact-vignettes, assuming “qpdf”"
+
 msgid "Error: cannot rename directory to"
 msgstr "Error: cannot rename directory to"
 
@@ -672,6 +635,9 @@ msgstr "configuration files are not supported as from R 2.12.0"
 
 msgid "'--multiarch' specified with only one usable sub-architecture"
 msgstr "‘--multiarch’ specified with only one usable sub-architecture"
+
+msgid "--as-cran turns off --extra-arch"
+msgstr "--as-cran turns off --extra-arch"
 
 msgid "Error: no packages were specified"
 msgstr "Error: no packages were specified"
@@ -824,17 +790,14 @@ msgstr "no source files found"
 msgid "empty 'data' directory"
 msgstr "empty ‘data’ directory"
 
-msgid "--merge-multiarch is Windows-only"
-msgstr "--merge-multiarch is Windows-only"
-
 msgid "cannot create temporary directory"
 msgstr "cannot create temporary directory"
 
 msgid "ERROR: --merge-multiarch applies only to a single tarball"
 msgstr "ERROR: --merge-multiarch applies only to a single tarball"
 
-msgid "ERROR: --merge-multiarch can only be used on i386/x64 installations"
-msgstr "ERROR: --merge-multiarch can only be used on i386/x64 installations"
+msgid "only one architecture so ignoring '--merge-multiarch'"
+msgstr "only one architecture so ignoring ‘--merge-multiarch’"
 
 msgid "invalid package"
 msgstr "invalid package"

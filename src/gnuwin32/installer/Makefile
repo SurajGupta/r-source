@@ -146,10 +146,18 @@ else
 endif
 endif
 
+extras:
+	for f in $(DLLs32); do \
+	  cp "$$f" $(RPREFIX)/bin/i386; \
+	done
+	for f in $(DLLs64); do \
+	  cp "$$f" $(RPREFIX)/bin/x64; \
+	done
+
 ## for Inno Setup installer
 
 R.iss: JRins.R header1.iss types3264.iss types32.iss code.iss \
-   CustomMsg.txt imagedir fixups 32bit md5sums \
+   CustomMsg.iss imagedir fixups 32bit extras md5sums \
   ../../../VERSION ../../../SVN-REVISION
 	../../../bin$(R_ARCH)/Rscript JRins.R \
 	  $(RPREFIX) $(RPREFIX) $(MDISDI) $(HelpStyle) $(Internet) $(Producer)
@@ -167,7 +175,7 @@ uuidgen.exe: uuidgen.o
 uuids: uuidgen.exe
 	./uuidgen 4000 > $@
 
-files.wxs: imagedir fixups 32bit md5sums
+files.wxs: imagedir fixups 32bit extras md5sums
 	"$(WIX3DIR)/heat" dir $(RPREFIX) -sw5150 -nologo -o $@
 
 R.wxs: WIXins.R uuids files.wxs
@@ -179,9 +187,10 @@ $(RPREFIX)-$(SUFF).msi: R.wxs License.rtf
 	 -ext WixUIExtension -sw1076 -sval -spdb >> $(RPREFIX).log 2>&1
 
 
+## occasionally this fails to empty directories.
 clean:
-	rm -rf R.iss *.log $(RPREFIX) R.wxs files.wxs R.wixobj \
-	  uuidgen.o uuidgen.exe uuids
+	rm -rf R.iss *.log R.wxs files.wxs R.wixobj uuidgen.o uuidgen.exe uuids
+	-rm -rf $(RPREFIX)
 
 distclean: clean
 	rm -f R*-win*.exe R*-win*.msi

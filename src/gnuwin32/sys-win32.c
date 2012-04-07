@@ -149,6 +149,7 @@ void R_getProcTime(double *data)
     data[4] = R_NaReal;
 }
 
+/* use in memory.c: increments for CPU times */
 double R_getClockIncrement(void)
 {
     return 1.0 / 100.0;
@@ -259,6 +260,7 @@ SEXP do_system(SEXP call, SEXP op, SEXP args, SEXP rho)
 	    SET_STRING_ELT(rval, j, CAR(tlist));
 	    tlist = CDR(tlist);
 	}
+	if(ll) setAttrib(rval, install("status"), ScalarInteger(ll));
 	UNPROTECT(2);
 	return rval;
     } else {

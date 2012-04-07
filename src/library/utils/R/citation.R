@@ -364,11 +364,10 @@ function(x,
 
     ## format 1 person
     format_person1 <- function(p) {
-        rval <- lapply(seq_along(p), function(i)
-            if(is.null(p[[i]])) NULL else paste(braces[[i]][1L],
-	        paste(p[[i]], collapse = collapse[[i]]), braces[[i]][2L], sep = ""))
-        rval <- paste(do.call("c", rval), collapse = " ")
-	rval
+	rval <- lapply(seq_along(p), function(i) if(is.null(p[[i]])) NULL else
+		       paste0(braces[[i]][1L], paste(p[[i]], collapse = collapse[[i]]),
+			      braces[[i]][2L]))
+	paste(do.call("c", rval), collapse = " ")
     }
 
     sapply(x, format_person1)
@@ -519,7 +518,8 @@ function(x, style = "text", .bibstyle = "JSS", ...)
 
     .format_bibentry_via_Rd <- function(f) {
         out <- file()
-        on.exit(close(out))
+        saveopt <- tools::Rd2txt_options(width = getOption("width"))
+        on.exit({tools::Rd2txt_options(saveopt); close(out)})
         sapply(x,
                function(y) {
                    rd <- tools::toRd(y, style = .bibstyle)
@@ -544,8 +544,7 @@ function(x, style = "text", .bibstyle = "JSS", ...)
                       },
                       if(bibtex) {
                           c("\nA BibTeX entry for LaTeX users is\n",
-                            paste("  ", unclass(toBibtex(y)),
-                                  sep = ""))
+			    paste0("  ", unclass(toBibtex(y))))
                       },
                       if(!is.null(y$footer))
                       c("", strwrap(y$footer))),
@@ -599,7 +598,7 @@ function(x, style = "text", .bibstyle = "JSS", ...)
             writeLines(paste(y, collapse = "\n\n"))
         }
     }
-    
+
     invisible(x)
 }
 
@@ -633,7 +632,7 @@ function(x, collapse = FALSE)
     ## * There could be field names which clash with the names of the
     ##   bibentry() formals: these would need to be put as a list into
     ##   the 'other' formal.
-    
+
     ## The following make it into the attributes of an entry.
     anames <- bibentry_attribute_names
     ## The following make it into the attributes of the object.
@@ -654,7 +653,7 @@ function(x, collapse = FALSE)
             prefix <- c(prefix,
                         rep.int(.blanks(nchar(prefix)), n - 1L))
         sprintf("%s%s", prefix, v)
-    }        
+    }
 
     s <- lapply(unclass(x),
                 function(e) {
@@ -678,7 +677,7 @@ function(x, collapse = FALSE)
                     c(Map(g, names(a), sapply(a, deparse)),
                       Map(g, names(e), sapply(e, f)),
                       if(length(other)) list(g("other", other)))
-                      
+
                 })
 
     if(!is.null(mheader <- attr(x, "mheader")))
@@ -816,13 +815,13 @@ function(object, ...)
 
     format_bibentry1 <- function(object) {
 	object <- unclass(object)[[1L]]
-        rval <- paste("@", attr(object, "bibtype"), "{", attr(object, "key"), ",", sep = "")
+        rval <- paste0("@", attr(object, "bibtype"), "{", attr(object, "key"), ",")
         if("author" %in% names(object)) object$author <- format_author(object$author)
         if("editor" %in% names(object)) object$editor <- format_author(object$editor)
 
         rval <- c(rval,
             sapply(names(object), function (n)
-                   paste("  ", n, " = {", object[[n]], "},", sep = "")),
+                   paste0("  ", n, " = {", object[[n]], "},")),
     	"}", "")
         return(rval)
     }
@@ -902,14 +901,14 @@ function(package = "base", lib.loc = NULL, auto = NULL)
         meta <- auto
         package <- meta$Package
     } else {
-        auto_was_meta <- FALSE        
+        auto_was_meta <- FALSE
         dir <- system.file(package = package, lib.loc = lib.loc)
         if(dir == "")
             stop(gettextf("package %s not found", sQuote(package)),
                  domain = NA)
         meta <- packageDescription(pkg = package,
                                    lib.loc = dirname(dir))
-        ## if(is.null(auto)): Use default auto-citation if no CITATION 
+        ## if(is.null(auto)): Use default auto-citation if no CITATION
         ## available.
         citfile <- file.path(dir, "CITATION")
         if(is.null(auto)) auto <- !file_test("-f", citfile)
@@ -928,8 +927,8 @@ function(package = "base", lib.loc = NULL, auto = NULL)
     if((!is.null(meta$Priority)) && (meta$Priority == "base")) {
     	cit <- citation("base", auto = FALSE)
     	attr(cit, "mheader")[1L] <-
-            paste("The ", sQuote(package), " package is part of R.  ",
-                  attr(cit, "mheader")[1L], sep = "")
+	    paste0("The ", sQuote(package), " package is part of R.  ",
+		   attr(cit, "mheader")[1L])
         return(.citation(cit))
     }
 
@@ -972,7 +971,7 @@ function(package = "base", lib.loc = NULL, auto = NULL)
     }
     ## </FIXME>
 
-    z <- list(title = paste(package, ": ", meta$Title, sep=""),
+    z <- list(title = paste0(package, ": ", meta$Title),
               author = author,
               year = year,
               note = paste("R package version", meta$Version)
@@ -997,7 +996,7 @@ function(package = "base", lib.loc = NULL, auto = NULL)
               sQuote(package),
               "in publications use:")
     } else NULL
-    
+
 
     ## No auto-generation message for auto was meta so that maintainers
     ## can safely use citation(auto = meta) in their CITATION without
@@ -1012,11 +1011,10 @@ function(package = "base", lib.loc = NULL, auto = NULL)
     if(length(author) > 1L)
         author <- paste(paste(head(author, -1L), collapse = ", "),
                         tail(author, 1L), sep = " and ")
-    
+
     rval <- bibentry(
         bibtype = "Manual",
-	textVersion = paste(author, " (", z$year, "). ", z$title, ". ",
-	    z$note, ". ", z$url, sep = ""),
+	textVersion = paste0(author, " (",z$year,"). ", z$title,". ", z$note,". ", z$url),
         header = header,
 	footer = footer,
 	other = z
@@ -1030,7 +1028,7 @@ function(package = "base", lib.loc = NULL, auto = NULL)
     x
 }
 
-.read_authors_at_R_field <-  
+.read_authors_at_R_field <-
 function(x)
 {
     out <- eval(parse(text = x))
@@ -1089,7 +1087,7 @@ function(x) {
     if(!length(role)) return("")
     out <- sprintf("%s [%s]", out, paste(role, collapse = ", "))
     if(!is.null(comment <- x$comment))
-        out <- sprintf("%s (%s)", out, 
+        out <- sprintf("%s (%s)", out,
                        paste(comment, collapse = "\n"))
     out
 }
@@ -1099,12 +1097,32 @@ function(x)
 {
     if(is.character(x))
         x <- .read_authors_at_R_field(x)
+    header <- attr(x, "header")
+    footer <- attr(x, "footer")
     x <- sapply(x, .format_person_for_plain_author_spec)
     ## Drop persons with irrelevant roles.
     x <- x[x != ""]
     ## And format.
     if(!length(x)) return("")
-    paste(strwrap(x, indent = 0L, exdent = 4L), collapse = ",\n  ")
+    ## We need to ensure that the first line has no indentation, whereas
+    ## all subsequent lines are indented (as .write_description avoids
+    ## folding for Author fields).  We use a common indentation of 2,
+    ## with an extra indentation of 2 within single author descriptions.
+    out <- paste(lapply(strwrap(x, indent = 0L, exdent = 4L,
+                                simplify = FALSE),
+                        paste, collapse = "\n"),
+                 collapse = ",\n  ")
+    if(!is.null(header)) {
+        header <- paste(strwrap(header, indent = 0L, exdent = 2L),
+                        collapse = "\n")
+        out <- paste(header, out, sep = "\n  ")
+    }
+    if(!is.null(footer)) {
+        footer <- paste(strwrap(footer, indent = 2L, exdent = 2L),
+                        collapse = "\n")
+        out <- paste(out, footer, sep = ".\n")
+    }
+    out
 }
 
 .format_authors_at_R_field_for_maintainer <-

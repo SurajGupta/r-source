@@ -16,6 +16,21 @@
 
 ## Derived from snow 0.3-6 by Luke Tierney
 
+.reg <-  new.env()
+assign("default", NULL, envir = .reg)
+
+defaultCluster <- function(cl = NULL)
+{
+    if(is.null(cl)) cl <- get("default", envir = .reg)
+    if(is.null(cl)) stop("no cluster supplied and none is registered")
+    cl
+}
+
+setDefaultCluster <- function(cl = NULL)
+{
+    if(!is.null(cl)) checkCluster(cl)
+    assign("default", cl, envir = .reg)
+}
 
 #
 # Checking and subsetting
@@ -84,7 +99,7 @@ initDefaultClusterOptions <- function(libname)
                     scriptdir = file.path(libname, "parallel"),
                     rprog = file.path(R.home("bin"), "R"),
                     snowlib = .libPaths()[1],
-                    useRscript = TRUE)
+                    useRscript = TRUE, useXDR = TRUE)
     defaultClusterOptions <<- addClusterOptions(emptyenv(), options)
 }
 
@@ -123,9 +138,11 @@ makeCluster <-
 }
 
 
-stopCluster <- function(cl)
+stopCluster <- function(cl = NULL)
 {
-    checkCluster(cl)
+    cl <- defaultCluster(cl)
+    if(identical(cl, get("default", envir = .reg)))
+        assign("default", NULL, envir = .reg)
     UseMethod("stopCluster")
 }
 

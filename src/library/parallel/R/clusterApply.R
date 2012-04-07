@@ -16,8 +16,8 @@
 
 ## Derived from snow 0.3-6 by Luke Tierney
 
-staticClusterApply <- function(cl, fun, n, argfun) {
-    checkCluster(cl)
+staticClusterApply <- function(cl = NULL, fun, n, argfun) {
+    cl <- defaultCluster(cl)
     p <- length(cl)
     if (n > 0L && p) {
         val <- vector("list", n)
@@ -34,8 +34,8 @@ staticClusterApply <- function(cl, fun, n, argfun) {
     }
 }
 
-dynamicClusterApply <- function(cl, fun, n, argfun) {
-    checkCluster(cl)
+dynamicClusterApply <- function(cl = NULL, fun, n, argfun) {
+    cl <- defaultCluster(cl)
     p <- length(cl)
     if (n > 0L && p) {
         submit <- function(node, job)
@@ -54,20 +54,20 @@ dynamicClusterApply <- function(cl, fun, n, argfun) {
 
 ## exported and documented from here down unless otherwise stated.
 
-clusterCall  <- function(cl, fun, ...)
+clusterCall  <- function(cl = NULL, fun, ...)
 {
-    checkCluster(cl)
+    cl <- defaultCluster(cl)
     for (i in seq_along(cl)) sendCall(cl[[i]], fun, list(...))
     checkForRemoteErrors(lapply(cl, recvResult))
 }
 
 
-clusterEvalQ <- function(cl, expr)
+clusterEvalQ <- function(cl = NULL, expr)
     clusterCall(cl, eval, substitute(expr), env=.GlobalEnv)
 
 clusterExport <- local({
     gets <- function(n, v) { assign(n, v, envir = .GlobalEnv); NULL }
-    function(cl, varlist, envir = .GlobalEnv) {
+    function(cl = NULL, varlist, envir = .GlobalEnv) {
         ## do this with only one clusterCall--loop on workers?
         for (name in varlist) {
             clusterCall(cl, gets, name, get(name, envir = envir))
@@ -75,39 +75,43 @@ clusterExport <- local({
     }
 })
 
-clusterApply <- function(cl, x, fun, ...)
+clusterApply <- function(cl = NULL, x, fun, ...)
 {
+    ## **** this closure is sending all of x to all nodes
     argfun <- function(i) c(list(x[[i]]), list(...))
     staticClusterApply(cl, fun, length(x), argfun)
 }
 
-clusterApplyLB <- function(cl, x, fun, ...)
+clusterApplyLB <- function(cl = NULL, x, fun, ...)
 {
     ## **** this closure is sending all of x to all nodes
     argfun <- function(i) c(list(x[[i]]), list(...))
     dynamicClusterApply(cl, fun, length(x), argfun)
 }
 
-## **** should this allow load balancing?
 clusterMap <- function (cl = NULL, fun, ..., MoreArgs = NULL, RECYCLE = TRUE,
-                        SIMPLIFY = FALSE, USE.NAMES = TRUE)
+                        SIMPLIFY = FALSE, USE.NAMES = TRUE,
+                        .scheduling = c("static", "dynamic"))
 {
-    checkCluster(cl)
+    cl <- defaultCluster(cl)
     args <- list(...)
     if (length(args) == 0) stop("need at least one argument")
+    .scheduling <- match.arg(.scheduling)
     n <- sapply(args, length)
     if (RECYCLE) {
         vlen <- max(n)
         if(vlen && min(n) == 0L)
             stop("Zero-length inputs cannot be mixed with those of non-zero length")
         if (!all(n == vlen))
-            for (i in seq_along(args))
+            for (i in seq_along(args)) # why not lapply?
                 args[[i]] <- rep(args[[i]], length.out = vlen)
     }
     else vlen <- min(n)
     ## **** this closure is sending all of ... to all nodes
     argfun <- function(i) c(lapply(args, function(x) x[[i]]), MoreArgs)
-    answer <- staticClusterApply(cl, fun, vlen, argfun)
+    answer <-
+        if(.scheduling == "dynamic") dynamicClusterApply(cl, fun, vlen, argfun)
+    else staticClusterApply(cl, fun, vlen, argfun)
     ## rest matches mapply(): with a different default for SIMPLIFY
     if (USE.NAMES && length(args)) {
         if (is.null(names1 <- names(args[[1L]])) && is.character(args[[1L]]))
@@ -120,7 +124,6 @@ clusterMap <- function (cl = NULL, fun, ..., MoreArgs = NULL, RECYCLE = TRUE,
     else answer
 }
 
-## internal
 splitIndices <- function(nx, ncl)
 {
     i <- seq_len(nx)
@@ -142,38 +145,50 @@ splitIndices <- function(nx, ncl) {
     }
 }
 
-clusterSplit <- function(cl, seq)
+clusterSplit <- function(cl = NULL, seq) {
+    cl <- defaultCluster(cl)
     lapply(splitIndices(length(seq), length(cl)), function(i) seq[i])
+}
 
+#internal
 splitList <- function(x, ncl)
     lapply(splitIndices(length(x), ncl), function(i) x[i])
 
+#internal
 splitRows <- function(x, ncl)
     lapply(splitIndices(nrow(x), ncl), function(i) x[i, , drop=FALSE])
 
+#internal
 splitCols <- function(x, ncl)
     lapply(splitIndices(ncol(x), ncl), function(i) x[, i, drop=FALSE])
 
-parLapply <- function(cl, X, fun, ...)
+parLapply <- function(cl = NULL, X, fun, ...)
     do.call(c,
             clusterApply(cl, x = splitList(X, length(cl)),
                          fun = lapply, fun, ...),
             quote = TRUE)
 
-parRapply <- function(cl, x, FUN, ...)
+parLapplyLB <- function(cl = NULL, X, fun, ...)
+    do.call(c,
+            clusterApplyLB(cl, x = splitList(X, length(cl)),
+                           fun = lapply, fun, ...),
+            quote = TRUE)
+
+parRapply <- function(cl = NULL, x, FUN, ...)
     do.call(c,
             clusterApply(cl = cl, x = splitRows(x, length(cl)),
                          fun = apply, MARGIN = 1L, FUN = FUN, ...),
             quote = TRUE)
 
-parCapply <- function(cl, x, FUN, ...)
+parCapply <- function(cl = NULL, x, FUN, ...)
     do.call(c,
-            clusterApply(cl = cl, x = splitCols(x,length(cl)),
+            clusterApply(cl = cl, x = splitCols(x, length(cl)),
                          fun = apply, MARGIN = 2L, FUN = FUN, ...),
             quote = TRUE)
 
 
-parSapply <- function (cl, X, FUN, ..., simplify = TRUE, USE.NAMES = TRUE)
+parSapply <-
+    function (cl = NULL, X, FUN, ..., simplify = TRUE, USE.NAMES = TRUE)
 {
     FUN <- match.fun(FUN) # should this be done on worker?
     answer <- parLapply(cl, X = as.list(X), fun = FUN, ...)
@@ -184,8 +199,22 @@ parSapply <- function (cl, X, FUN, ..., simplify = TRUE, USE.NAMES = TRUE)
     else answer
 }
 
-parApply <- function(cl, X, MARGIN, FUN, ...)
+parSapplyLB <-
+    function (cl = NULL, X, FUN, ..., simplify = TRUE, USE.NAMES = TRUE)
 {
+    FUN <- match.fun(FUN) # should this be done on worker?
+    answer <- parLapplyLB(cl, X = as.list(X), fun = FUN, ...)
+    if(USE.NAMES && is.character(X) && is.null(names(answer)))
+	names(answer) <- X
+    if(!identical(simplify, FALSE) && length(answer))
+	simplify2array(answer, higher = (simplify == "array"))
+    else answer
+}
+
+
+parApply <- function(cl = NULL, X, MARGIN, FUN, ...)
+{
+    cl <- defaultCluster(cl) # initial sanity check
     FUN <- match.fun(FUN) # should this be done on worker?
 
     ## Ensure that X is an array object

@@ -35,7 +35,7 @@ newForkNode <- function(..., options = defaultClusterOptions, rank)
     f <- mcfork()
     if (inherits(f, "masterProcess")) { # the slave
         on.exit(mcexit(1L, structure("fatal error in wrapper code",
-                                  class = "try-error")))
+                                     class = "try-error")))
         # closeStdout()
         master <- "localhost"
         makeSOCKmaster <- function(master, port, timeout)

@@ -7,7 +7,7 @@ msgid ""
 msgstr ""
 "Project-Id-Version: R 2.3.0\n"
 "Report-Msgid-Bugs-To: bugs@r-project.org\n"
-"POT-Creation-Date: 2012-01-23 08:19\n"
+"POT-Creation-Date: 2012-02-12 08:59\n"
 "PO-Revision-Date: 2011-01-18 13:56+0000\n"
 "Last-Translator: 陈斐 <FeiChen@FairIsaac.com>\n"
 "Language-Team: Chinese\n"
@@ -76,6 +76,9 @@ msgstr "指向%s的路径里不能有空格,"
 
 msgid "this may cause problems when running LaTeX"
 msgstr "这可能会对运行LaTeX里产生问题"
+
+msgid "the output file '%s' has disappeared"
+msgstr "输出文件'%s'不见了"
 
 msgid "invalid value for %s : %s"
 msgstr "%s的值不对: %s"
@@ -331,19 +334,17 @@ msgstr "串列项太多(最多只能有26项)"
 msgid "too many list items (at most up to number 3899)"
 msgstr "串列项太多(最多只能有3899项("
 
-#, fuzzy
 msgid "no vector columns were selected"
-msgstr "没有记录下任何事件"
+msgstr "没有选择向量列"
 
 msgid "non-vector columns will be ignored"
-msgstr ""
+msgstr "非向量列将被忽略不用"
 
-#, fuzzy
 msgid "at least one vector element is required"
-msgstr "你至少需要填一项"
+msgstr "至少需要一个向量元素"
 
 msgid "non-vector elements will be ignored"
-msgstr ""
+msgstr "非向量元素将被忽略不用"
 
 msgid "'form' must be a two-sided formula"
 msgstr "'form'必需是双边公式"
@@ -353,9 +354,6 @@ msgstr "'form'必需是双边公式，每一边至少带一项"
 
 msgid "'topic' should be a name, length-one character vector or reserved word"
 msgstr "'topic'的值必需是名字，长度为一的字符串或保留文字"
-
-msgid "Postscript offline help is deprecated"
-msgstr "Postscript offline 脱机帮助已经不再用了"
 
 msgid "No documentation for %s in specified packages and libraries:"
 msgstr "在指定的程序包和图书馆里没有与%s有关的说明书:"
@@ -399,12 +397,6 @@ msgid ""
 "package %s exists but was not installed under R >= 2.10.0 so help cannot be "
 "accessed"
 msgstr "有%s这样一个程序包但没有在R >= 2.10.0下安装，因此不能用它的帮助文件"
-
-msgid "running %s failed"
-msgstr "执行%s失败"
-
-msgid "%s produced no output file: sent to printer?"
-msgstr "%s没有产生文件：是不是还要送到打印机？"
 
 msgid "creation of %s failed"
 msgstr "制造%s时出了问题"
@@ -508,7 +500,7 @@ msgstr "程序包'%s'里元数据出了错"
 msgid "DESCRIPTION file of package '%s' is corrupt"
 msgstr "程序包'%s'里DESCRIPTION这个文件出了错"
 
-#, fuzzy
+
 msgid ""
 "'DESCRIPTION' file has an 'Encoding' field and re-encoding is not possible"
 msgstr "'DESCRIPTION'文件有'Encoding'这个域但重新編碼是不可能的"
@@ -747,6 +739,17 @@ msgstr "无法安装程序包"
 msgid "unable to create"
 msgstr "无法建立"
 
+msgid ""
+"type == \"both\" can only be used on Windows or a CRAN build for Mac OS X"
+msgstr "type == \"both\"只适用在Windows上或在为Mac OS X的CRAN构建上"
+
+msgid ""
+"type == \"both\" cannot be used if 'available' or 'contriburl' is specified"
+msgstr "如果已经设定了'available'或'contriburl'的话，不能再设定type == \"both\""
+
+msgid "type == \"both\" cannot be used with 'repos = NULL'"
+msgstr "设定了'repos = NULL'后就不能再设定type == \"both\""
+
 msgid "inferring 'repos = NULL' from the file name"
 msgstr "从文件名字推断'repos = NULL'"
 
@@ -780,7 +783,7 @@ msgstr ""
 "  可能原因%s"
 
 msgid ""
-"The downloaded packages are in\n"
+"The downloaded source packages are in\n"
 "\t%s"
 msgstr ""
 "下载的程序包在\n"
@@ -811,9 +814,9 @@ msgid "no documentation of type %s and topic %s (or error in processing help)"
 msgstr "没有种类为%s和題目为%s的文件(或是在处理帮助文件时发生了错误)"
 
 msgid ""
-"the object of class \"%s\" in the function call %s could not be used as a "
+"the object of class %s in the function call %s could not be used as a "
 "documentation topic"
-msgstr "函数調用%2$s里类别为\"%1$s\"的对象不能用作帮助文件題目"
+msgstr "函数調用%2$s里类别为%1$s的对象不能用作帮助文件題目"
 
 msgid "no methods for %s and no documentation for it as a function"
 msgstr "%s没有方法，也没有将之用作函数的帮助文件"
@@ -983,6 +986,9 @@ msgstr "程序资料不包含内存信息"
 msgid "no events were recorded"
 msgstr "没有记录下任何事件"
 
+msgid "invalid 'tarfile' argument"
+msgstr "'tarfile'参数不对"
+
 msgid "'compressed' must be logical or character"
 msgstr "'compressed'必需是字符向量"
 
@@ -1119,6 +1125,13 @@ msgstr "无法将临时安装%s搬到%s"
 msgid "cannot remove prior installation of package"
 msgstr "无法拆除原来安装的程序包"
 
+msgid ""
+"The downloaded binary packages are in\n"
+"\t%s"
+msgstr ""
+"下载的二进制程序包在\n"
+"\t%s里"
+
 msgid "'memory.size()' is Windows-specific"
 msgstr "'memory.size()'只在Windows上有用"
 
@@ -1178,9 +1191,22 @@ msgid "'lib' element %s is not a writable directory"
 msgid_plural "'lib' elements %s are not writable directories"
 msgstr[0] "'lib'元素%s不是可写目录"
 
+msgid "installing the source package %s"
+msgid_plural "installing the source packages %s"
+msgstr[0] "安装源码包%s"
+
 msgid "package %s is in use and will not be installed"
 msgid_plural "packages %s are in use and will not be installed"
 msgstr[0] "正在使用%s这个程序包，因此不会被安装"
+
+#~ msgid "Postscript offline help is deprecated"
+#~ msgstr "Postscript offline 脱机帮助已经不再用了"
+
+#~ msgid "running %s failed"
+#~ msgstr "执行%s失败"
+
+#~ msgid "%s produced no output file: sent to printer?"
+#~ msgstr "%s没有产生文件：是不是还要送到打印机？"
 
 #~ msgid "Use either 'given' or 'first'/'middle' but not both."
 #~ msgstr "要么用'given'，要么用'first'/'middle'，但不能两者都用"
@@ -1404,3 +1430,4 @@ msgstr[0] "正在使用%s这个程序包，因此不会被安装"
 
 #~ msgid "Optionally other keywords from doc/KEYWORDS, one per line"
 #~ msgstr "可以从其他文件/KEYWORDS中任选其他关键字，每行一个"
+

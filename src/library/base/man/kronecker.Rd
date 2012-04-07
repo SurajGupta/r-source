@@ -5,38 +5,45 @@
 
 \name{kronecker}
 
+\alias{kronecker}
+\alias{.kronecker} % an internal version.
+\alias{\%x\%}
+
 \title{Kronecker Products on Arrays}
+
+\description{
+  Computes the generalised kronecker product of two arrays,
+  \code{X} and \code{Y}.
+}
+
 
 \usage{
 kronecker(X, Y, FUN = "*", make.dimnames = FALSE, \dots)
 X \%x\% Y
 }
 
-\alias{kronecker}
-\alias{\%x\%}
-
 \arguments{
  \item{X}{A vector or array.}
  \item{Y}{A vector or array.}
  \item{FUN}{a function; it may be a quoted string.}
  \item{make.dimnames}{Provide dimnames that are the product of the
-dimnames of \code{X} and \code{Y}.}
+   dimnames of \code{X} and \code{Y}.}
  \item{\dots}{optional arguments to be passed to \code{FUN}.}
 }
 
-\description{
-Computes the generalised kronecker product of two arrays,
-\code{X} and \code{Y}.  \code{kronecker(X, Y)} returns an array
-\code{A} with dimensions \code{dim(X) * dim(Y)}.}
+\details{
+  If \code{X} and \code{Y} do not have the same number of
+  dimensions, the smaller array is padded with dimensions of size
+  one.  The returned array comprises submatrices constructed by
+  taking \code{X} one term at a time and expanding that term as
+  \code{FUN(x, Y, ...)}.
+  
+  \code{\%x\%} is an alias for \code{kronecker} (where
+  \code{FUN} is hardwired to \code{"*"}).
+}
 
-\details{If \code{X} and \code{Y} do not have the same number of
-dimensions, the smaller array is padded with dimensions of size
-one.  The returned array comprises submatrices constructed by
-taking \code{X} one term at a time and expanding that term as
-\code{FUN(x, Y, ...)}.
-
-\code{\%x\%} is an alias for \code{kronecker} (where
-\code{FUN} is hardwired to \code{"*"}).
+\value{
+  An array \code{A} with dimensions \code{dim(X) * dim(Y)}.
 }
 
 \references{

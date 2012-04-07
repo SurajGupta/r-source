@@ -478,15 +478,11 @@ void (SET_HASHVALUE)(SEXP x, int v);
 #define EXTPTR_PROT(x)	CDR(x)
 #define EXTPTR_TAG(x)	TAG(x)
 
-#ifdef BYTECODE
 /* Bytecode access macros */
 #define BCODE_CODE(x)	CAR(x)
 #define BCODE_CONSTS(x) CDR(x)
 #define BCODE_EXPR(x)	TAG(x)
 #define isByteCode(x)	(TYPEOF(x)==BCODESXP)
-#else
-#define isByteCode(x)	FALSE
-#endif
 
 /* Pointer Protection and Unprotection */
 #define PROTECT(s)	Rf_protect(s)
@@ -708,7 +704,6 @@ SEXP R_WeakRefKey(SEXP w);
 SEXP R_WeakRefValue(SEXP w);
 void R_RunWeakRefFinalizer(SEXP w);
 
-#ifdef BYTECODE
 SEXP R_PromiseExpr(SEXP);
 SEXP R_ClosureExpr(SEXP);
 void R_initialize_bcode(void);
@@ -716,10 +711,6 @@ SEXP R_bcEncode(SEXP);
 SEXP R_bcDecode(SEXP);
 #define PREXPR(e) R_PromiseExpr(e)
 #define BODY_EXPR(e) R_ClosureExpr(e)
-#else
-#define PREXPR(e) PRCODE(e)
-#define BODY_EXPR(e) BODY(e)
-#endif
 
 /* Protected evaluation */
 Rboolean R_ToplevelExec(void (*fun)(void *), void *data);
@@ -833,7 +824,9 @@ int R_has_slot(SEXP obj, SEXP name);
 SEXP R_do_MAKE_CLASS(const char *what);
 SEXP R_getClassDef  (const char *what);
 SEXP R_do_new_object(SEXP class_def);
+/* supporting  a C-level version of  is(., .) : */
 int R_check_class_and_super(SEXP x, const char **valid, SEXP rho);
+int R_check_class_etc      (SEXP x, const char **valid);
 
 /* preserve objects across GCs */
 void R_PreserveObject(SEXP);
@@ -850,7 +843,7 @@ FILE *R_popen(const char *, const char *);
 int R_system(const char *);
 
 /* R_compute_identical:  C version of identical() function
-   The third arg to R_compute_identical() consists of bitmapped flags for non-default options:  
+   The third arg to R_compute_identical() consists of bitmapped flags for non-default options:
    currently all default to TRUE, so the flag is set for FALSE values:
    1 = !NUM_EQ
    2 = !SINGLE_NA

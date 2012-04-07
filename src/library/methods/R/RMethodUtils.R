@@ -301,8 +301,8 @@ doPrimitiveMethod <-
 .renderSignature <- function(f, signature)
 {
     nm <- names(signature)
-    nm[nzchar(nm)] <- paste(nm[nzchar(nm)], "=", sep = "")
-    msig <- paste(nm, '"', as.vector(signature), '"', sep = "")
+    nm[nzchar(nm)] <- paste0(nm[nzchar(nm)], "=")
+    msig <- paste0(nm, '"', as.vector(signature), '"')
     msig <- paste(msig, collapse = ",")
     gettextf("in method for %s with signature %s: ", sQuote(f), sQuote(msig))
 }
@@ -336,7 +336,7 @@ conformMethod <- function(signature, mnames, fnames,
       return(signature)
     if(any(is.na(match(signature[omittedSig], c("ANY", "missing"))))) {
         bad <- omittedSig & is.na(match(signature[omittedSig], c("ANY", "missing")))
-        bad2 <- paste(fnames[bad], " = \"", signature[bad], "\"", sep = "", collapse = ", ")
+        bad2 <- paste0(fnames[bad], " = \"", signature[bad], "\"", collapse = ", ")
         stop(.renderSignature(f, sig0),
              gettextf("formal arguments (%s) omitted in the method definition cannot be in the signature", bad2),
              call. = TRUE, domain = NA)
@@ -637,7 +637,7 @@ getGeneric <-
     if(is.null(fdef)) {
 	penv <- tryCatch(getNamespace(pkg), error = function(e)e)
 	if(!isNamespace(penv))	{      # no namespace--should be rare!
-	    pname <- paste("package:", pkg, sep="")
+	    pname <- paste0("package:", pkg)
 	    penv <- if(pname %in% search()) as.environment(pname) else env
 	}
         fdef <- getFunction(name, TRUE, FALSE, penv)
@@ -891,6 +891,7 @@ cacheMetaData <-
         methods <- .updateMethodsInTable(fdef, where, attach)
         cacheGenericsMetaData(f, fdef, attach, where, fdef@package, methods)
     }
+    .doLoadActions(where, attach)
     invisible(NULL) ## as some people call this at the end of functions
 }
 
@@ -1116,7 +1117,7 @@ methodSignatureMatrix <- function(object, sigSlots = c("target", "defined"))
         def <- getFunction(def)
     }
     if(is(def, "function"))
-        paste(name, "(", paste(args, collapse=", "), ")", sep="")
+        paste0(name, "(", paste(args, collapse=", "), ")")
     else
         ""
 }
@@ -1157,7 +1158,7 @@ metaNameUndo <- function(strings, prefix, searchForm = FALSE)
     if(searchForm) {
         global <- grep(".GlobalEnv", value)
         if(length(global)) {
-            pkg[-global] <- paste("package", pkg[-global], sep="")
+            pkg[-global] <- paste0("package", pkg[-global])
             pkg[global] <- substring(pkg[global], 2L)
         }
     }
@@ -1201,13 +1202,10 @@ metaNameUndo <- function(strings, prefix, searchForm = FALSE)
 {
     if(identical(body, stdBody))
         FALSE
-    else {
-        if(!.recursiveCallTest(body, fname))
-            warning("the supplied generic function definition for ",
-                    sQuote(fname),
-                    " does not seem to call 'standardGeneric'; no methods will be dispatched!")
+    else if(.recursiveCallTest(body, fname))
         TRUE
-    }
+    else
+        NA
 }
 
 .GenericInPrimitiveMethods <- function(mlist, f)
@@ -1247,7 +1245,7 @@ metaNameUndo <- function(strings, prefix, searchForm = FALSE)
     }
     else
         signature <- as.character(signature)
-    paste(paste(snames, "=\"", signature, "\"", sep=""), collapse = ", ")
+    paste(paste0(snames, "=\"", signature, "\""), collapse = ", ")
 }
 
 .ChangeFormals <- function(def, defForArgs, msg = "<unidentified context>")
@@ -1264,13 +1262,13 @@ metaNameUndo <- function(strings, prefix, searchForm = FALSE)
     new <- formalArgs(defForArgs)
     if(length(old) < length(new))
         stop(gettextf("trying to change the formal arguments in %s, but the number of existing arguments is less than the number of new arguments: (%s) vs (%s)",
-                      msg, paste("\"", old, "\"", sep ="", collapse=", "),
-                      paste("\"", new, "\"", sep ="", collapse=", ")),
+                      msg, paste0("\"", old, "\"", collapse=", "),
+                      paste0("\"", new, "\"", collapse=", ")),
              domain = NA)
     if(length(old) > length(new))
         warning(gettextf("trying to change the formal arguments in %s, but the number of existing arguments is greater than the number of new arguments (the extra arguments won't be used): (%s) vs (%s)",
-                         msg, paste("\"", old, "\"", sep ="", collapse=", "),
-                         paste("\"", new, "\"", sep ="", collapse=", ")),
+                         msg, paste0("\"", old, "\"", collapse=", "),
+                         paste0("\"", new, "\"", collapse=", ")),
                 domain = NA)
     if(identical(old, new))           # including the case of 0 length
         return(def)
@@ -1283,7 +1281,9 @@ metaNameUndo <- function(strings, prefix, searchForm = FALSE)
     dnames <- names(dlist)
     whereNames <- match(old, dnames)
     if(any(is.na(whereNames)))
-        stop(gettextf("in changing formal arguments in %s, some of the old names are not in fact arguments: %s", msg, paste("\"", old[is.na(match(old, names(dlist)))], "\"", sep ="", collapse=", ")), domain = NA)
+	stop(gettextf("in changing formal arguments in %s, some of the old names are not in fact arguments: %s",
+		      msg, paste0("\"", old[is.na(match(old, names(dlist)))], "\"", collapse=", ")),
+	     domain = NA)
     dnames[whereNames] <- new
     names(vlist) <- dnames
     as.function(vlist, envir = environment(def))
@@ -1540,7 +1540,7 @@ getGroupMembers <- function(group, recursive = FALSE, character = TRUE)
         else if(where %in% search())
             value <- as.environment(where)
         else {
-            where <- paste("package:", where, sep="")
+            where <- paste0("package:", where)
             if(where %in% search())
                 value <- as.environment(where)
         }
@@ -1553,7 +1553,7 @@ getGroupMembers <- function(group, recursive = FALSE, character = TRUE)
 
 .hasS4MetaData <- function(env)
   (length(objects(env, all.names = TRUE,
-                          pattern = "^[.]__[CT]_")))
+                          pattern = "^[.]__[CTA]_")))
 
 ## turn ordinary generic into one that dispatches on "..."
 ## currently only called in one place from setGeneric()
@@ -1604,7 +1604,7 @@ getGroupMembers <- function(group, recursive = FALSE, character = TRUE)
 
 .selectDotsMethod <- function(classes, mtable, allmtable)
 {
-    .pasteC <- function(names) paste('"', names, '"', sep="", collapse = ", ")
+    .pasteC <- function(names) paste0('"', names, '"', collapse = ", ")
     found <- character()
     distances <- numeric()
     methods <- objects(mtable, all.names = TRUE)
@@ -1786,3 +1786,121 @@ getGroupMembers <- function(group, recursive = FALSE, character = TRUE)
     }
     list(signature = signature, message = msgs, level = level)
 }
+
+.ActionMetaPattern <- function()
+    paste0("^[.]",substring(methodsPackageMetaName("A",""),2))
+
+.actionMetaName <- function(name)
+    methodsPackageMetaName("A", name)
+
+.doLoadActions <- function(where, attach) {
+    ## at the moment, no unload actions
+    if(!attach)return()
+    actionListName <- .actionMetaName("")
+    if(!exists(actionListName, envir = where, inherits = FALSE))
+        return(list())
+    actions <- get(actionListName, envir = where)
+    for(what in actions) {
+        aname <- .actionMetaName(what)
+        if(!exists(aname, envir = where, inherits = FALSE)) {
+            warning(gettextf("Missing  function for load action: %s", what))
+            next
+        }
+        f <- get(aname, envir = where)
+        value <- eval(substitute(tryCatch(FUN(WHERE), error = function(e)e),
+                            list(FUN = f, WHERE = where)), where)
+        if(is(value, "error"))
+            stop(gettextf("Error in load action %s for package %s: %s: %s",
+                          aname, getPackageName(where), value$call, value$message))
+    }
+}
+
+setLoadAction <- function(action,
+              aname = "",
+              where = topenv(parent.frame())) {
+    currentAnames <- .assignActionListNames(where)
+    if(!nzchar(aname))
+        aname <- paste0(".", length(currentAnames)+1)
+    .assignActions(list(action), aname, where)
+    if(is.na(match(aname, currentAnames))) {
+        actionListName <- .actionMetaName("")
+        assign(actionListName, c(currentAnames, aname), envir = where)
+    }
+}
+
+.assignActions <- function(actions, anames, where) {
+    ## check all the actions before assigning any
+    for(i in seq_along(actions)) {
+        f <- actions[[i]]
+        fname <- anames[[i]]
+        if(!is(f, "function"))
+            stop( gettextf("non-function action: \"%s", fname))
+        if(length(formals(f)) == 0)
+                stop(gettextf("action function \"%s\" has no arguments, should have at least 1",fname ))
+    }
+    for(i in seq_along(actions))
+        assign(.actionMetaName(anames[[i]]), actions[[i]], envir = where)
+}
+
+.assignActionListNames <- function(where) {
+    actionListName <- .actionMetaName("")
+    if(exists(actionListName, envir = where, inherits = FALSE))
+        get(actionListName, envir = where)
+    else
+        character()
+}
+
+setLoadActions <- function(..., .where = topenv(parent.frame())) {
+    actionListName <- .actionMetaName("")
+    currentAnames <- .assignActionListNames(.where)
+    actions <- list(...)
+    anames <- allNames(actions)
+    ## first, replacements
+    previous <- anames %in% currentAnames
+    if(any(previous)) {
+        .assignActions(actions[previous], anames[previous], .where)
+        if(all(previous))
+            return(list())
+        anames <- anames[!previous]
+        actions <- actions[!previous]
+    }
+    anon <- !nzchar(anames)
+    if(any(anon)) {
+        n <- length(currentAnames)
+        deflts <- paste0(".",seq(from = n+1, length.out = length(actions)))
+        anames[anon] <- deflts[anon]
+    }
+    .assignActions(actions, anames, .where)
+    assign(actionListName, c(currentAnames, anames), envir = .where)
+}
+
+hasLoadAction <- function(aname, where = topenv(parent.frame()))
+    exists(.actionMetaName(aname), envir = where, inherits = FALSE)
+
+getLoadActions <- function(where = topenv(parent.frame())) {
+    actionListName <- .actionMetaName("")
+    if(!exists(actionListName, envir = where, inherits = FALSE))
+        return(list())
+    actions <- get(actionListName, envir = where)
+    if(length(actions)) {
+        allExists <- sapply(actions, function(what) exists(.actionMetaName(what), envir = where, inherits = FALSE))
+        if(!all(allExists)) {
+            warning(gettextf("Some actions missing: %s", paste(actions[!allExists], collapse =", ")))
+            actions <- actions[allExists]
+        }
+        allFuns <- lapply(actions, function(what) get(.actionMetaName(what), envir = where))
+        names(allFuns) <- actions
+        allFuns
+    }
+    else
+        list()
+}
+
+evalOnLoad <- function(expr, where = topenv(parent.frame()), aname = "") {
+    f <- function(env)NULL
+    body(f, where) <- substitute(eval(EXPR,ENV), list(EXPR = expr, ENV = where))
+    setLoadAction(f, aname, where)
+}
+
+evalqOnLoad <- function(expr, where = topenv(parent.frame()), aname = "")
+    evalOnLoad(substitute(expr), where, aname)

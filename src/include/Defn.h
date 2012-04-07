@@ -110,7 +110,9 @@ extern0 SEXP	R_StringHash;       /* Global hash of CHARSXPs */
 #define BYTES_MASK (1<<1)
 #define LATIN1_MASK (1<<2)
 #define UTF8_MASK (1<<3)
+/* (1<<4) is taken by S4_OBJECT_MASK */
 #define CACHED_MASK (1<<5)
+#define ASCII_MASK (1<<6)
 #define HASHASH_MASK 1
 /**** HASHASH uses the first bit -- see HASHASH_MASK defined below */
 
@@ -119,6 +121,8 @@ extern0 SEXP	R_StringHash;       /* Global hash of CHARSXPs */
 # define SET_BYTES(x) (((x)->sxpinfo.gp) |= BYTES_MASK)
 # define IS_LATIN1(x) ((x)->sxpinfo.gp & LATIN1_MASK)
 # define SET_LATIN1(x) (((x)->sxpinfo.gp) |= LATIN1_MASK)
+# define IS_ASCII(x) ((x)->sxpinfo.gp & ASCII_MASK)
+# define SET_ASCII(x) (((x)->sxpinfo.gp) |= ASCII_MASK)
 # define IS_UTF8(x) ((x)->sxpinfo.gp & UTF8_MASK)
 # define SET_UTF8(x) (((x)->sxpinfo.gp) |= UTF8_MASK)
 # define ENC_KNOWN(x) ((x)->sxpinfo.gp & (LATIN1_MASK | UTF8_MASK))
@@ -130,6 +134,8 @@ int IS_BYTES(SEXP x);
 void SET_BYTES(SEXP x);
 int IS_LATIN1(SEXP x);
 void SET_LATIN1(SEXP x);
+int IS_ASCII(SEXP x);
+void SET_ASCII(SEXP x);
 int IS_UTF8(SEXP x);
 void SET_UTF8(SEXP x);
 int ENC_KNOWN(SEXP x);
@@ -154,11 +160,13 @@ SEXP (SET_CXTAIL)(SEXP x, SEXP y);
 
 extern void R_ProcessEvents(void);
 
+#ifdef R_USE_SIGNALS
 #ifdef Win32
 # include <psignal.h>
 #else
 # include <signal.h>
 # include <setjmp.h>
+#endif
 #endif
 
 #ifdef Unix
@@ -209,7 +217,7 @@ extern void R_ProcessEvents(void);
 /*	R_NSIZE	   The number of cons cells	 */
 /*	R_VSIZE	   The vector heap size in bytes */
 /*  These values are defaults and can be overridden in config.h
-    The maxima and minima are in ../unix/sys-common.c */
+    The maxima and minima are in startup.c */
 
 #ifndef R_PPSSIZE
 #define	R_PPSSIZE	50000L
@@ -267,6 +275,7 @@ extern int putenv(char *string);
 # endif
 #endif
 
+#ifdef R_USE_SIGNALS
 #ifdef HAVE_POSIX_SETJMP
 # define SIGJMP_BUF sigjmp_buf
 # define SIGSETJMP(x,s) sigsetjmp(x,s)
@@ -281,6 +290,7 @@ extern int putenv(char *string);
 # define JMP_BUF jmp_buf
 # define SETJMP(x) setjmp(x)
 # define LONGJMP(x,i) longjmp(x,i)
+#endif
 #endif
 
 #define HSIZE	   4119	/* The size of the hash table for symbols */
@@ -436,13 +446,12 @@ void (UNLOCK_BINDING)(SEXP b);
 
 #endif /* USE_RINTERNALS */
 
-#ifdef BYTECODE
 typedef SEXP R_bcstack_t;
-# ifdef BC_INT_STACK
+#ifdef BC_INT_STACK
 typedef union { void *p; int i; } IStackval;
-# endif
 #endif
 
+#ifdef R_USE_SIGNALS
 /* Stack entry for pending promises */
 typedef struct RPRSTACK {
     SEXP promise;
@@ -469,11 +478,9 @@ typedef struct RCNTXT {
     SEXP handlerstack;          /* condition handler stack */
     SEXP restartstack;          /* stack of available restarts */
     struct RPRSTACK *prstack;   /* stack of pending promises */
-#ifdef BYTECODE
     SEXP *nodestack;
-# ifdef BC_INT_STACK
+#ifdef BC_INT_STACK
     IStackval *intstack;
-# endif
 #endif
     SEXP srcref;	        /* The source line in effect */
 } RCNTXT, *context;
@@ -519,6 +526,7 @@ BUI   0 0 0 0 0 0 0 1 = 64
 #define IS_RESTART_BIT_SET(flags) ((flags) & CTXT_RESTART)
 #define SET_RESTART_BIT_ON(flags) (flags |= CTXT_RESTART)
 #define SET_RESTART_BIT_OFF(flags) (flags &= ~CTXT_RESTART)
+#endif
 
 /* Miscellaneous Definitions */
 #define streql(s, t)	(!strcmp((s), (t)))
@@ -592,9 +600,11 @@ extern0 SEXP*	R_PPStack;	    /* The pointer protection stack */
 LibExtern SEXP	R_CurrentExpr;	    /* Currently evaluating expression */
 extern0 SEXP	R_ReturnedValue;    /* Slot for return-ing values */
 extern0 SEXP*	R_SymbolTable;	    /* The symbol table */
+#ifdef R_USE_SIGNALS
 LibExtern RCNTXT R_Toplevel;	    /* Storage for the toplevel environment */
 LibExtern RCNTXT* R_ToplevelContext;  /* The toplevel environment */
 LibExtern RCNTXT* R_GlobalContext;    /* The global environment */
+#endif
 extern0 Rboolean R_Visible;	    /* Value visibility flag */
 LibExtern int	R_EvalDepth	INI_as(0);	/* Evaluation recursion depth */
 extern0 int	R_BrowseLines	INI_as(0);	/* lines/per call in browser */
@@ -603,11 +613,14 @@ extern0 int	R_Expressions	INI_as(5000);	/* options(expressions) */
 extern0 int	R_Expressions_keep INI_as(5000);	/* options(expressions) */
 extern0 Rboolean R_KeepSource	INI_as(FALSE);	/* options(keep.source) */
 extern0 int	R_WarnLength	INI_as(1000);	/* Error/warning max length */
+extern0 int	R_nwarnings	INI_as(50);
 extern uintptr_t R_CStackLimit	INI_as((uintptr_t)-1);	/* C stack limit */
 extern uintptr_t R_CStackStart	INI_as((uintptr_t)-1);	/* Initial stack address */
 extern0 int	R_CStackDir	INI_as(1);	/* C stack direction */
 
+#ifdef R_USE_SIGNALS
 extern0 struct RPRSTACK *R_PendingPromises INI_as(NULL); /* Pending promise stack */
+#endif
 
 /* File Input/Output */
 LibExtern Rboolean R_Interactive INI_as(TRUE);	/* TRUE during interactive use*/
@@ -687,18 +700,16 @@ extern double elapsedLimitValue		INI_as(-1.0);
 
 void resetTimeLimits(void);
 
-#ifdef BYTECODE
 #define R_BCNODESTACKSIZE 100000
 extern0 SEXP *R_BCNodeStackBase, *R_BCNodeStackTop, *R_BCNodeStackEnd;
-# ifdef BC_INT_STACK
-#define R_BCINTSTACKSIZE 10000
+#ifdef BC_INT_STACK
+# define R_BCINTSTACKSIZE 10000
 extern0 IStackval *R_BCIntStackBase, *R_BCIntStackTop, *R_BCIntStackEnd;
-# endif
+#endif
 extern0 int R_jit_enabled INI_as(0);
 extern0 int R_compile_pkgs INI_as(0);
 extern SEXP R_cmpfun(SEXP);
 extern void R_init_jit_enabled(void);
-#endif
 
 LibExtern int R_num_math_threads INI_as(1);
 LibExtern int R_max_num_math_threads INI_as(1);
@@ -943,7 +954,6 @@ SEXP Rf_EnsureString(SEXP);
 
 SEXP Rf_allocCharsxp(R_len_t);
 SEXP Rf_append(SEXP, SEXP); /* apparently unused now */
-void begincontext(RCNTXT*, int, SEXP, SEXP, SEXP, SEXP, SEXP);
 void check1arg(SEXP, SEXP, const char *);
 void Rf_checkArityCall(SEXP, SEXP, SEXP);
 void CheckFormals(SEXP);
@@ -965,8 +975,6 @@ SEXP duplicated(SEXP, Rboolean);
 SEXP duplicated3(SEXP, SEXP, Rboolean);
 int any_duplicated(SEXP, Rboolean);
 int any_duplicated3(SEXP, SEXP, Rboolean);
-SEXP dynamicfindVar(SEXP, RCNTXT*);
-void endcontext(RCNTXT*);
 int envlength(SEXP);
 SEXP evalList(SEXP, SEXP, SEXP, int);
 SEXP evalListKeepMissing(SEXP, SEXP);
@@ -974,7 +982,6 @@ int factorsConform(SEXP, SEXP);
 void findcontext(int, SEXP, SEXP);
 SEXP findVar1(SEXP, SEXP, SEXPTYPE, int);
 void FrameClassFix(SEXP);
-int framedepth(RCNTXT*);
 SEXP frameSubscript(int, SEXP, SEXP);
 int get1index(SEXP, SEXP, int, int, int, SEXP);
 SEXP getVar(SEXP, SEXP);
@@ -998,11 +1005,9 @@ void InitStringHash(void);
 void Init_R_Variables(SEXP);
 void InitTempDir(void);
 void initStack(void);
-void R_InsertRestartHandlers(RCNTXT *, Rboolean);
 void internalTypeCheck(SEXP, SEXP, SEXPTYPE);
 Rboolean isMethodsDispatchOn(void);
 int isValidName(const char *);
-void R_JumpToContext(RCNTXT *, int, SEXP);
 void jump_to_toplevel(void);
 void KillAllDevices(void);
 SEXP levelsgets(SEXP, SEXP);
@@ -1067,10 +1072,6 @@ void ssort(SEXP*,int);
 int StrToInternal(const char *);
 SEXP strmat2intmat(SEXP, SEXP, SEXP);
 SEXP substituteList(SEXP, SEXP);
-SEXP R_syscall(int,RCNTXT*);
-int R_sysparent(int,RCNTXT*);
-SEXP R_sysframe(int,RCNTXT*);
-SEXP R_sysfunction(int,RCNTXT*);
 Rboolean tsConform(SEXP,SEXP);
 SEXP tspgets(SEXP, SEXP);
 SEXP type2symbol(SEXPTYPE);
@@ -1083,6 +1084,22 @@ int usemethod(const char *, SEXP, SEXP, SEXP, SEXP, SEXP, SEXP, SEXP*);
 SEXP vectorIndex(SEXP, SEXP, int, int, int, SEXP);
 SEXP Rf_vectorSubscript(int, SEXP, int*, SEXP (*)(SEXP,SEXP),
                         SEXP (*)(SEXP, int), SEXP, SEXP);
+
+#ifdef R_USE_SIGNALS
+void begincontext(RCNTXT*, int, SEXP, SEXP, SEXP, SEXP, SEXP);
+SEXP dynamicfindVar(SEXP, RCNTXT*);
+void endcontext(RCNTXT*);
+int framedepth(RCNTXT*);
+void R_InsertRestartHandlers(RCNTXT *, Rboolean);
+void R_JumpToContext(RCNTXT *, int, SEXP);
+SEXP R_syscall(int,RCNTXT*);
+int R_sysparent(int,RCNTXT*);
+SEXP R_sysframe(int,RCNTXT*);
+SEXP R_sysfunction(int,RCNTXT*);
+
+void R_run_onexits(RCNTXT *);
+void R_restore_globals(RCNTXT *);
+#endif
 
 /* ../main/bind.c */
 SEXP ItemName(SEXP, int);
@@ -1098,9 +1115,6 @@ R_size_t R_GetMaxNSize(void);
 void R_SetMaxNSize(R_size_t);
 R_size_t R_Decode2Long(char *p, int *ierr);
 void R_SetPPSize(R_size_t);
-
-void R_run_onexits(RCNTXT *);
-void R_restore_globals(RCNTXT *);
 
 /* ../main/devices.c, used in memory.c, gnuwin32/extra.c */
 #define R_MaxDevices 64

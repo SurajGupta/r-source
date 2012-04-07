@@ -1,6 +1,12 @@
 # Refer to all C/Fortran routines by their name prefixed by C_
 useDynLib(stats, .registration = TRUE, .fixes = "C_")
 
+import(graphics)
+importFrom(grDevices, dev.interactive, palette, extendrange, xy.coords)
+
+importFrom(utils, str)
+
+
 # exportPattern("^[^\\.]")
 export(.checkMFClasses, .getXlevels, .MFclass)
 
@@ -34,7 +40,7 @@ export(add.scope, add1, addmargins, aggregate, aggregate.data.frame,
        model.matrix.default, model.matrix.lm, model.offset,
        model.response, model.tables, model.weights, mvfft, na.action,
        na.exclude, na.fail, na.omit, na.pass, napredict, naprint,
-       naresid, nextn, nlm, nlminb, nobs, offset, optim, optimise,
+       naresid, nextn, nlm, nlminb, nobs, offset, optim, optimHess, optimise,
        optimize, p.adjust, p.adjust.methods, pbeta, pbinom, pcauchy,
        pchisq, pexp, pf, pgamma, pgeom, phyper, plnorm, plogis,
        plot.density, plot.lm, plot.mlm, plot.ts, plot.TukeyHSD,
@@ -54,7 +60,7 @@ export(add.scope, add1, addmargins, aggregate, aggregate.data.frame,
        residuals.glm, residuals.lm, rexp, rf, rgamma, rgeom, rhyper,
        rlnorm, rlogis, rmultinom, rnbinom, rnorm, rpois, rsignrank,
        rstandard, rstandard.glm, rstandard.lm, rstudent, rstudent.glm,
-       rstudent.lm, rt, runif, rweibull, rwilcox, sd, se.contrast,
+       rstudent.lm, rt, runif, rweibull, rwilcox, rWishart, sd, se.contrast,
        simulate, spline, splinefun, splinefunH, SSD, start,
        stat.anova, step, summary.aov, summary.aovlist, summary.glm,
        summary.infl, summary.lm, summary.manova, summary.mlm, symnum,
@@ -74,12 +80,6 @@ export(mauchley.test)
 # defunct
 export(reshapeWide, reshapeLong, print.coefmat, anovalist.lm, lm.fit.null,
        lm.wfit.null, glm.fit.null)
-
-import(graphics)
-## 'graphics' imports 'grDevices' completely; hence this is currently a noop:
-importFrom(grDevices, dev.interactive, palette, extendrange, xy.coords)
-
-importFrom(utils, str)
 
 ## register all the methods for generics elsewhere in case namespace is
 ## loaded but not currently attached.
@@ -146,6 +146,7 @@ S3method(extractAIC, survreg)
 S3method(family, glm)
 S3method(family, lm)
 S3method(fitted, default)
+S3method(fitted, kmeans)
 S3method(format, ftable)
 S3method(formula, character)
 S3method(formula, data.frame)

@@ -47,7 +47,7 @@ x \%/\% y
   \code{\%\%} indicates \code{x mod y} and \code{\%/\%} indicates
   integer division.  It is guaranteed that \code{x == (x \%\% y) + y * (
   x \%/\% y )} (up to rounding error) unless \code{y == 0} where the
-  result for \code{\%\%} is \code{\link{NA_integer_}} or
+  result of \code{\%\%} is \code{\link{NA_integer_}} or
   \code{\link{NaN}} (depending on the \code{\link{typeof}} of the
   arguments).
 

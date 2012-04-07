@@ -1,7 +1,6 @@
 /*
  *  R : A Computer Language for Statistical Data Analysis
- *  Copyright (C) 1995, 1996  Robert Gentleman and Ross Ihaka
- *  Copyright (C) 1997--2010  The R Development Core Team.
+ *  Copyright (C) 1995--2012  The R Development Core Team.
  *
  *  This program is free software; you can redistribute it and/or modify
  *  it under the terms of the GNU General Public License as published by
@@ -22,6 +21,7 @@
 #include <config.h>
 #endif
 
+#define R_USE_SIGNALS 1
 #include <Defn.h>
 /* -> Errormsg.h */
 #include <Startup.h> /* rather cleanup ..*/
@@ -200,11 +200,23 @@ RETSIGTYPE attribute_hidden onsigusr2(int dummy)
 
 static void setupwarnings(void)
 {
-    R_Warnings = allocVector(VECSXP, 50);
-    setAttrib(R_Warnings, R_NamesSymbol, allocVector(STRSXP, 50));
+    R_Warnings = allocVector(VECSXP, R_nwarnings);
+    setAttrib(R_Warnings, R_NamesSymbol, allocVector(STRSXP, R_nwarnings));
 }
 
 /* Rvsnprintf: like vsnprintf, but guaranteed to null-terminate. */
+#ifdef Win32
+int trio_vsnprintf(char *buffer, size_t bufferSize, const char *format,
+		   va_list args);
+
+static int Rvsnprintf(char *buf, size_t size, const char  *format, va_list ap)
+{
+    int val;
+    val = trio_vsnprintf(buf, size, format, ap);
+    buf[size-1] = '\0';
+    return val;
+}
+#else
 static int Rvsnprintf(char *buf, size_t size, const char  *format, va_list ap)
 {
     int val;
@@ -212,6 +224,7 @@ static int Rvsnprintf(char *buf, size_t size, const char  *format, va_list ap)
     buf[size-1] = '\0';
     return val;
 }
+#endif
 
 #define BUFSIZE 8192
 void warning(const char *format, ...)
@@ -331,7 +344,7 @@ static void vwarningcall_dflt(SEXP call, const char *format, va_list ap)
     else if(w == 0) {	/* collect them */
 	char *tr; int nc;
 	if(!R_CollectWarnings) setupwarnings();
-	if(R_CollectWarnings < 50) {
+	if(R_CollectWarnings < R_nwarnings) {
 	    SET_VECTOR_ELT(R_Warnings, R_CollectWarnings, call);
 	    Rvsnprintf(buf, min(BUFSIZE, R_WarnLength+1), format, ap);
 	    if(R_WarnLength < BUFSIZE - 20 && strlen(buf) == R_WarnLength)
@@ -469,11 +482,11 @@ void PrintWarnings(void)
 	    }
 	}
     } else {
-	if (R_CollectWarnings < 50)
+	if (R_CollectWarnings < R_nwarnings)
 	    REprintf(_("There were %d warnings (use warnings() to see them)\n"),
 		     R_CollectWarnings);
 	else
-	    REprintf(_("There were 50 or more warnings (use warnings() to see the first 50)\n"));
+	    REprintf(_("There were %d or more warnings (use warnings() to see the first %d)\n"), R_nwarnings, R_nwarnings);
     }
     /* now truncate and install last.warning */
     PROTECT(s = allocVector(VECSXP, R_CollectWarnings));
@@ -1258,6 +1271,19 @@ SEXP R_GetTraceback(int skip)
 	}
     UNPROTECT(1);
     return s;
+}
+
+SEXP attribute_hidden do_traceback(SEXP call, SEXP op, SEXP args, SEXP rho)
+{
+    int skip;
+    
+    checkArity(op, args);
+    skip = asInteger(CAR(args));
+    
+    if (skip == NA_INTEGER || skip < 0 )
+    	error(_("invalid '%s' value"), "skip");
+    	
+    return R_GetTraceback(skip);
 }
 
 static char * R_ConciseTraceback(SEXP call, int skip)

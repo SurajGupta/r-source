@@ -20,14 +20,15 @@
 nextRNGStream(seed)
 nextRNGSubStream(seed)
 
-clusterSetRNGStream(cl, iseed)
+clusterSetRNGStream(cl = NULL, iseed)
 mc.reset.stream()
 }
 \arguments{
   \item{seed}{An integer vector of length 7 as given by
     \code{.Random.seed} when the \samp{"L'Ecuyer-CMRG"} RNG is in use.
     See \code{\link{RNG}} for the valid values.}
-  \item{cl}{A cluster from this package or package \CRANpkg{snow}.}
+  \item{cl}{A cluster from this package or package \CRANpkg{snow}, or (if
+    \code{NULL}) the registered cluster.}
   \item{iseed}{An integer to be supplied to \code{\link{set.seed}}, or
     \code{NULL} not to set reproducible seeds.}
 }

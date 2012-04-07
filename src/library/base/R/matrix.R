@@ -27,8 +27,8 @@ matrix <- function(data=NA, nrow=1, ncol=1, byrow=FALSE, dimnames=NULL)
 nrow <- function(x) dim(x)[1L]
 ncol <- function(x) dim(x)[2L]
 
-NROW <- function(x) if(is.array(x)||is.data.frame(x)) nrow(x) else length(x)
-NCOL <- function(x) if(is.array(x) && length(dim(x)) > 1L || is.data.frame(x)) ncol(x) else 1L
+NROW <- function(x) if(length(d <- dim(x)))      d[1L] else length(x)
+NCOL <- function(x) if(length(d <- dim(x)) > 1L) d[2L] else 1L
 
 rownames <- function(x, do.NULL = TRUE, prefix = "row")
 {
@@ -38,7 +38,7 @@ rownames <- function(x, do.NULL = TRUE, prefix = "row")
     else {
         nr <- NROW(x)
 	if(do.NULL) NULL
-        else if(nr > 0L) paste(prefix, seq_len(nr), sep="")
+        else if(nr > 0L) paste0(prefix, seq_len(nr))
         else character()
     }
 }
@@ -73,7 +73,7 @@ colnames <- function(x, do.NULL = TRUE, prefix = "col")
     else {
         nc <- NCOL(x)
 	if(do.NULL) NULL
-        else if(nc > 0L) paste(prefix, seq_len(nc), sep="")
+        else if(nc > 0L) paste0(prefix, seq_len(nc))
         else character()
     }
 }

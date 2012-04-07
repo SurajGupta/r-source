@@ -23,6 +23,9 @@
    - set errno on error
    - XP-compatibility for WC_NO_BEST_FIT_CHARS -- use only for ASCII
 
+A reasonably complete list is at
+http://msdn.microsoft.com/en-us/library/windows/desktop/dd317756%28v=vs.85%29.aspx
+
  */
 
 /* for WC_NO_BEST_FIT_CHARS */
@@ -916,17 +919,19 @@ make_csconv(const char *_name, csconv_t *cv)
     cv->codepage = name_to_codepage(name);
     if (cv->codepage == 1200 || cv->codepage == 1201)
     {
-	cv->mbtowc = utf16_mbtowc;
-	cv->wctomb = utf16_wctomb;
-	if (_stricmp(name, "UTF-16") == 0 || _stricmp(name, "UTF16") == 0)
-	    cv->flags |= FLAG_USE_BOM;
+        cv->mbtowc = utf16_mbtowc;
+        cv->wctomb = utf16_wctomb;
+        if (_stricmp(name, "UTF-16") == 0 || _stricmp(name, "UTF16") == 0 ||
+          _stricmp(name, "UCS-2") == 0 || _stricmp(name, "UCS2") == 0)
+            cv->flags |= FLAG_USE_BOM;
     }
     else if (cv->codepage == 12000 || cv->codepage == 12001)
     {
-	cv->mbtowc = utf32_mbtowc;
-	cv->wctomb = utf32_wctomb;
-	if (_stricmp(name, "UTF-32") == 0 || _stricmp(name, "UTF32") == 0)
-	    cv->flags |= FLAG_USE_BOM;
+        cv->mbtowc = utf32_mbtowc;
+        cv->wctomb = utf32_wctomb;
+        if (_stricmp(name, "UTF-32") == 0 || _stricmp(name, "UTF32") == 0 ||
+          _stricmp(name, "UCS-4") == 0 || _stricmp(name, "UCS4") == 0)
+            cv->flags |= FLAG_USE_BOM;
     }
     else if (cv->codepage == 65001)
     {
@@ -1231,8 +1236,8 @@ kernel_wctomb(csconv_t *cv, ushort *wbuf, int wbufsize, uchar *buf, int bufsize)
 	    return seterror(E2BIG);
 	return seterror(EILSEQ);
     }
-    else if (usedDefaultChar)
-	return seterror(EILSEQ);
+    else if (usedDefaultChar && !(cv->flags & FLAG_TRANSLIT))
+        return seterror(EILSEQ);
     else if (cv->mblen(cv, buf, len) != len) /* validate result */
 	return seterror(EILSEQ);
     return len;

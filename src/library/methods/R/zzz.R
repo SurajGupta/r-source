@@ -21,7 +21,7 @@
   function(libname, pkgname, where)
 {
     if(missing(where)) {
-        where <- match(paste("package:", pkgname, sep=""), search())
+        where <- match(paste0("package:", pkgname), search())
         if(is.na(where)) {
             warning(gettextf("not a package name: %s", sQuote(pkgname)),
                     domain = NA)
@@ -43,7 +43,7 @@
         .noMlistsFlag <<- (is.character(mopt) && all(mopt != "YES"))
         if(!.noMlistsFlag)
             cat("Initializing with support for old-style methods list objects\n")
-        cat("initializing class and method definitions ...")
+        cat("initializing class and method definitions ...\n")
         on.exit(assign(".saveImage", NA, envir = where))
         ## set up default prototype (uses .Call so has be at load time)
         assign(".defaultPrototype",
@@ -60,12 +60,13 @@
         assign(".classEnv", ..classEnv, envir = where)
         assign("makeGeneric", .makeGeneric, envir = where)
         assign("newClassRepresentation", .newClassRepresentation, envir = where)
+        assign("classGeneratorFunction", .classGeneratorFunction, envir = where)
         assign(".mergeClassDefSlots", ..mergeClassDefSlots, envir = where)
         assign(".addToMetaTable", ..addToMetaTable, envir = where)
         assign(".extendsForS3", ..extendsForS3, envir = where)
         .makeBasicFuns(where)
         rm(.makeGeneric, .newClassRepresentation, .possibleExtends,
-           ..mergeClassDefSlots, envir = where)
+           ..mergeClassDefSlots, .classGeneratorFunction, envir = where)
         .InitMethodDefinitions(where)
         .InitShowMethods(where)
         assign(".isPrototype", ..isPrototype, envir = where)
@@ -154,4 +155,4 @@
 ## cat("Saving namespace image ...\n")
 
 ## want ASCII quotes, not fancy nor translated ones
-.dQ <- function (x) paste('"', x, '"', sep = '')
+.dQ <- function (x) paste0('"', x, '"')

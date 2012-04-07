@@ -5,7 +5,6 @@
 
 \name{RdUtils}
 \alias{Rdconv}
-\alias{Rd2dvi}
 \alias{Rd2pdf}
 \title{Utilities for Processing Rd Files}
 \description{
@@ -15,7 +14,6 @@
 }
 \usage{
 \special{R CMD Rdconv [options] file}
-\special{R CMD Rd2dvi [options] files}
 \special{R CMD Rd2pdf [options] files}
 }
 \arguments{
@@ -29,7 +27,7 @@
 \details{
   \command{R CMD Rdconv} converts Rd format to plain text, HTML or LaTeX
   formats: it can also extract the examples.
-  
+
   \command{R CMD Rd2pdf} is the user-level program for producing PDF output
   from Rd sources.  It will make use of the environment variables
 #ifdef unix
@@ -42,20 +40,9 @@
   \code{executive})
 #endif
   and \env{R_PDFVIEWER} (the PDF previewer).  Also,
-  \env{RD2DVI_INPUTENC} can be set to \code{inputenx} to make use of the
+  \env{RD2PDF_INPUTENC} can be set to \code{inputenx} to make use of the
   LaTeX package of that name rather than \code{inputenc}: this might be
   needed for better support of the UTF-8 encoding.
-
-  \command{R CMD Rd2dvi} is a deprecated alternative to \command{R CMD
-    Rd2pdf}, which is equivalent to \command{Rd2dvi --pdf}; it will be
-  removed in \R 2.15.0.  When used for DVI output (without the
-  \option{--pdf} flag) it will also make use of the environment variable
-#ifdef unix
-  \env{xdvi} (the DVI previewer, default \command{xdvi})
-#endif
-#ifdef windows
-  \env{xdvi} (the DVI previewer, default \command{open} (use file associations))
-#endif
 
   Use \command{R CMD \var{foo} --help} to obtain usage information on utility
   \code{\var{foo}}.

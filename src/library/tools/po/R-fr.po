@@ -7,8 +7,8 @@ msgid ""
 msgstr ""
 "Project-Id-Version: R 2.12.0\n"
 "Report-Msgid-Bugs-To: bugs@r-project.org\n"
-"POT-Creation-Date: 2012-01-23 08:19\n"
-"PO-Revision-Date: 2011-10-15 17:54+0100\n"
+"POT-Creation-Date: 2012-03-16 06:26\n"
+"PO-Revision-Date: 2012-03-06 21:55+0100\n"
 "Last-Translator: Philippe Grosjean <phgrosjean@sciviews.org>\n"
 "Language-Team: French <R-core@r-project.org>\n"
 "Language: fr\n"
@@ -187,55 +187,12 @@ msgstr ""
 "le nom du package '%s' semble incorrect ; utilisation du nom de répertoire "
 "'%s' à la place"
 
-msgid "Packages required but not available:"
-msgstr "Packages requis mais non disponibles :"
-
-msgid "Package required but not available: %s"
-msgstr "Package requis mais non disponible : %s"
-
-msgid "Packages required and available but unsuitable versions:"
-msgstr "Packages requis et disponibles mais de versions incompatibles :"
-
-msgid "Package required and available but unsuitable version: %s"
-msgstr "Package requis et disponible mais de version incompatible :"
-
-msgid "Former standard packages required but now defunct:"
-msgstr "Packages standard requis, mais maintenant obsolètes :"
-
-msgid "Packages suggested but not available for checking:"
-msgstr "Packages suggérés mais non disponibles pour la vérification :"
-
-msgid "Package suggested but not available for checking: %s"
-msgstr "Package suggéré mais non disponible pour la vérification :"
-
-msgid "Packages which this enhances but not available for checking:"
-msgstr ""
-"Packages qui seraient améliorés mais qui ne sont pas disponibles pour la "
-"vérification :"
-
-msgid "Package which this enhances but not available for checking: %s"
-msgstr ""
-"Package qui serait amélioré mais qui n'est pas disponible pour la "
-"vérification :"
-
-msgid "Vignette dependencies not required:"
-msgstr "Dependences de vignette non requises :"
-
-msgid "Vignette dependencies not required: %s"
-msgstr "Dépendences de vignette non requises :"
-
 msgid ""
 "Vignette dependencies (\\VignetteDepends{} entries) must be contained in the "
 "DESCRIPTION Depends/Suggests/Imports entries."
 msgstr ""
 "Les dépendances de vignette (entrée \\VignetteDepends{}) doivent être "
 "contenues dans les entrées Depends/Suggests/Imports de DESCRIPTION."
-
-msgid "Namespace dependencies not required:"
-msgstr "Dépendances d'espaces de noms non requises :"
-
-msgid "Namespace dependency not required: %s"
-msgstr "Dépendances d'espaces de noms non requises :"
 
 msgid "Malformed package name"
 msgstr "Nom de package mal orthographié"
@@ -429,6 +386,12 @@ msgstr ""
 msgid "packageStartupMessage"
 msgstr "packageStartupMessage"
 
+msgid "Package startup functions should not call %s."
+msgstr "Les fonctionne de démarrage de package ne devraient pas appeler %s."
+
+msgid "installed.packages"
+msgstr "installed.packages"
+
 msgid "See section %s in ?.onAttach."
 msgstr "Voir section %s dans ?.onAttach."
 
@@ -450,13 +413,16 @@ msgstr "appels 'library' ou 'require' non déclarés depuis :"
 msgid "'library' or 'require' call not declared from: %s"
 msgstr "appels 'library' ou 'require' non déclarés depuis : %s"
 
-#, fuzzy
 msgid "'data(package=)' calls not declared from:"
-msgstr "appels 'library' ou 'require' non déclarés depuis :"
+msgstr "appel 'data(package=)' non déclaré depuis :"
 
-#, fuzzy
 msgid "'data(package=)' call not declared from: %s"
-msgstr "appels 'library' ou 'require' non déclarés depuis : %s"
+msgstr "appel 'data(package=)' non déclaré depuis : %s"
+
+msgid "NB: need Internet access to use CRAN incoming checks"
+msgstr ""
+"NB : un accès Internet est nécessaire pour utiliser les vérifications CRAN "
+"en entrée"
 
 msgid "Rd files with duplicated name '%s':"
 msgstr "Fichiers Rd avec nom dupliqué '%s' :"
@@ -532,6 +498,9 @@ msgstr "champ \\name manquant ou vide dans le(s) fichier(s) Rd"
 msgid "No help on %s found in RdDB %s"
 msgstr "Pas d'aide pour %s trouvée dans RdDB %s"
 
+msgid "more than one \\examples section, using the first"
+msgstr "plus d'une section \\example, utilisation de la première"
+
 msgid "Converting Rd files to LaTeX ..."
 msgstr "Conversion des fichiers Rd en LaTeX ..."
 
@@ -559,14 +528,8 @@ msgstr "le répertoire de travail actuel ne peut être déterminé"
 msgid "no inputs"
 msgstr "pas d'entrées"
 
-msgid "DVI output from Rd2dvi is deprecated"
-msgstr "La sortie DVI de Rd2dvi est obsolète"
-
-msgid "Error in running tools::texi2dvi"
-msgstr "Erreur lors de l'exécution de tools:texi2dvi"
-
-msgid "more than one \\examples section, using the first"
-msgstr "plus d'une section \\example, utilisation de la première"
+msgid "Error in running tools::texi2pdf"
+msgstr "Erreur lors de l'exécution de tools:texi2pdf"
 
 msgid "invalid value for '%s' : %s"
 msgstr "valeur inexacte pour '%s' : %s"
@@ -632,14 +595,6 @@ msgstr "impossible de réencoder la (les) ligne(s) %2$s de '%1$s'"
 msgid "unable to copy INDEX to '%s'"
 msgstr "impossible de copier INDEX vers '%s'"
 
-msgid ""
-"running Stangle on vignette '%s' failed with message:\n"
-"%s"
-msgstr ""
-"le traitement de la vignette '%s' à l'aide de 'Stangle' a échoué avec le "
-"diagnostic :\n"
-"%s"
-
 msgid "cannot create directory '%s'"
 msgstr "impossible de créer le répertoire '%s'"
 
@@ -678,6 +633,9 @@ msgstr "Les modifications nécessite le 'style' spécifié"
 msgid "The default JSS style may not be modified."
 msgstr "Le style par défaut JSS ne peut être modifié."
 
+msgid "invalid value for --compact-vignettes, assuming \"qpdf\""
+msgstr "valeur incorrecte pour --compact-vignettes, \"qpdf\" sera utilisée"
+
 msgid "Error: cannot rename directory to"
 msgstr "Erreur: impossible de renommer le répertoire"
 
@@ -691,6 +649,10 @@ msgstr ""
 msgid "'--multiarch' specified with only one usable sub-architecture"
 msgstr ""
 "--multiarch spécifié alors qu'une seule sous-architecture est utilisable"
+
+#, fuzzy
+msgid "--as-cran turns off --extra-arch"
+msgstr "--cran inactive --extra-arch"
 
 msgid "Error: no packages were specified"
 msgstr "Erreur : aucun package spécifié"
@@ -844,17 +806,14 @@ msgstr "aucun fichier source n'est trouvé"
 msgid "empty 'data' directory"
 msgstr "répertoire 'data' vide"
 
-msgid "--merge-multiarch is Windows-only"
-msgstr "'--merge-multiarch est pour Windows seulement"
-
 msgid "cannot create temporary directory"
 msgstr "impossible de créer un répertoire temporaire"
 
 msgid "ERROR: --merge-multiarch applies only to a single tarball"
 msgstr "ERREUR : --merge-multiarch est valide pour un seul package"
 
-msgid "ERROR: --merge-multiarch can only be used on i386/x64 installations"
-msgstr "ERREUR : --merge-multiarch valide seulement sur les systèmes i386/x64"
+msgid "only one architecture so ignoring '--merge-multiarch'"
+msgstr "seulement une architecture et donc '--merge-multiarch' est ignoré"
 
 msgid "invalid package"
 msgstr "package incorrect"
@@ -1331,8 +1290,69 @@ msgid_plural "objects %s are created by more than one data call"
 msgstr[0] "l'objet %s est créé par plus d'un appel aux données"
 msgstr[1] "les objets %s sont créés par plus d'un appel aux données"
 
+#~ msgid "ERROR: --merge-multiarch can only be used on i386/x64 installations"
+#~ msgstr ""
+#~ "ERREUR : --merge-multiarch valide seulement sur les systèmes i386/x64"
+
+#~ msgid "--merge-multiarch is Windows-only"
+#~ msgstr "'--merge-multiarch est pour Windows seulement"
+
+#~ msgid ""
+#~ "running Stangle on vignette '%s' failed with message:\n"
+#~ "%s"
+#~ msgstr ""
+#~ "le traitement de la vignette '%s' à l'aide de 'Stangle' a échoué avec le "
+#~ "diagnostic :\n"
+#~ "%s"
+
+#~ msgid "Packages required but not available:"
+#~ msgstr "Packages requis mais non disponibles :"
+
+#~ msgid "Package required but not available: %s"
+#~ msgstr "Package requis mais non disponible : %s"
+
+#~ msgid "Packages required and available but unsuitable versions:"
+#~ msgstr "Packages requis et disponibles mais de versions incompatibles :"
+
+#~ msgid "Package required and available but unsuitable version: %s"
+#~ msgstr "Package requis et disponible mais de version incompatible :"
+
+#~ msgid "Former standard packages required but now defunct:"
+#~ msgstr "Packages standard requis, mais maintenant obsolètes :"
+
+#~ msgid "Packages suggested but not available for checking:"
+#~ msgstr "Packages suggérés mais non disponibles pour la vérification :"
+
+#~ msgid "Package suggested but not available for checking: %s"
+#~ msgstr "Package suggéré mais non disponible pour la vérification :"
+
+#~ msgid "Packages which this enhances but not available for checking:"
+#~ msgstr ""
+#~ "Packages qui seraient améliorés mais qui ne sont pas disponibles pour la "
+#~ "vérification :"
+
+#~ msgid "Package which this enhances but not available for checking: %s"
+#~ msgstr ""
+#~ "Package qui serait amélioré mais qui n'est pas disponible pour la "
+#~ "vérification :"
+
+#~ msgid "Vignette dependencies not required:"
+#~ msgstr "Dependences de vignette non requises :"
+
+#~ msgid "Vignette dependencies not required: %s"
+#~ msgstr "Dépendences de vignette non requises :"
+
+#~ msgid "Namespace dependencies not required:"
+#~ msgstr "Dépendances d'espaces de noms non requises :"
+
+#~ msgid "Namespace dependency not required: %s"
+#~ msgstr "Dépendances d'espaces de noms non requises :"
+
 #~ msgid "Package name and namespace differ."
 #~ msgstr "Le nom et l'espace de noms du package diffèrent."
+
+#~ msgid "DVI output from Rd2dvi is deprecated"
+#~ msgstr "La sortie DVI de Rd2dvi est obsolète"
 
 #, fuzzy
 #~ msgid ""

@@ -347,7 +347,8 @@ already been seen during the evaluation of the promise (and so to avoid
 recursive loops).
 
 Bit 0 is used for @code{HASHASH}, on the @code{PRINTNAME} of the
-@code{TAG} of the frame of an environment.
+@code{TAG} of the frame of an environment. (This bit is not serialized
+for @code{CHARSXP} objects.)
 
 Bits 0 and 1 are used for weak references (to indicate `ready to
 finalize', `finalize on exit').
@@ -357,14 +358,14 @@ indicate a calling handler.
 
 Bit 4 is turned on to mark S4 objects.
 
-Bits 1, 2, 3 and 5 are used for a @code{CHARSXP} to denote its encoding.
-Bit 1 indicates the @code{CHARSXP} should be treated as a set of bytes,
-not necessarily representing a character in any known encoding.  Bits 2
-and 3 are used to indicate that it is known to be in Latin-1 and UTF-8
-respectively.
+Bits 1, 2, 3, 5 and 6 are used for a @code{CHARSXP} to denote its
+encoding.  Bit 1 indicates that the @code{CHARSXP} should be treated as
+a set of bytes, not necessarily representing a character in any known
+encoding.  Bits 2, 3 and 6 are used to indicate that it is known to be
+in Latin-1, UTF-8 or ASCII respectively.
 
 Bit 5 for a @code{CHARSXP} indicates that it is hashed by its address,
-that is @code{NA_STRING} or in the @code{CHARSXP} cache (this is not
+that is @code{NA_STRING} or is in the @code{CHARSXP} cache (this is not
 serialized).  Only exceptionally is a @code{CHARSXP} not hashed, and
 this should never happen in end-user code.
 
@@ -3531,7 +3532,7 @@ If true, check the cross-references in @file{.Rd} files.
 Default: true.
 @item _R_CHECK_SUBDIRS_NOCASE_
 If true, check the case of directories such as @file{R} and @file{man}.
-Default: false (but true for CRAN submission checks).
+Default: true
 @item _R_CHECK_SUBDIRS_STRICT_
 Initial setting for @option{--check-subdirs}.
 Default: @samp{default} (which checks only tarballs, and checks in the
@@ -3556,7 +3557,7 @@ Default: true.
 @item _R_CHECK_DOT_INTERNAL_
 Control whether the package code is scanned for @code{.Internal} calls,
 which should only be used by base (and occasionally by recommended) packages.
-Default: false.
+Default: true.
 @item _R_CHECK_EXECUTABLES_
 Control checking for executable (binary) files.
 Default: true.
@@ -3610,12 +3611,9 @@ Default: true.
 If true, check data for non-ascii characters.
 Default: true.
 @item _R_CHECK_COMPACT_DATA_
-If true, check data for ascii and uncompressed saves.
-Default: true.
-@item _R_CHECK_COMPACT_DATA2_
 If true, check data for ascii and uncompressed saves, and also check if
 using @command{bzip2} or @code{xz} compression would be significantly
-better.  Implies @env{_R_CHECK_COMPACT_DATA_} is true.
+better.
 Default: true.
 @item _R_CHECK_SKIP_ARCH_
 Comma-separated list of architectures that will be omitted from
@@ -3644,6 +3642,14 @@ Default: true if @command{du} is found.
 @item _R_CHECK_DOC_SIZES_
 Should @command{qpdf} be used to check the installed sizes of PDFs?
 Default: true if @command{qpdf} is found.
+@item _R_CHECK_DOC_SIZES2_
+Should @command{gs} be used to check the installed sizes of PDFs?  This
+is slower than (and in addition to) the previous check, but does detect
+figures with excessive detail (often hidden by over-plotting) or bitmap
+figures with too high a resolution.  Requires that @env{R_GSCMD} is set
+to a valid program, or @command{gs} (or on Windows,
+@command{gswin32.exe} or @command{gswin64c.exe}) is on the path.
+Default: false (but true for CRAN submission checks).
 @item _R_CHECK_ALWAYS_LOG_VIGNETTE_OUTPUT_
 By default the output from running the @R{} code in the vignettes is
 kept only if there is an error.
@@ -3654,38 +3660,108 @@ Default: true.
 @item _R_CHECK_REPLACING_IMPORTS_
 Should warnings about replacing imports be reported?  These mainly come
 from auto-generated @file{NAMESPACE} files in other packages.
-Default: false
+Default: false.
+@item _R_CHECK_UNSAFE_CALLS_
+Check for calls that appear to tamper with (or allow tampering with)
+already loaded code not from the current package: such calls may well
+contravene CRAN policies.
+Default: true.
+@item _R_CHECK_TIMINGS_
+Optionally report timings for installation, examples, tests and
+running/re-building vignettes as part of the check log.  The format is
+@samp{[as/bs]} for the total CPU time (including child processes)
+@samp{a} and elapsed time @samp{b}, except on Windows, when it is
+@samp{[bs]}.  In most cases timings are only given for @samp{OK} checks.
+Times with an elapsed component over 10 mins are reported in minutes
+(with abbreviation @samp{m}).  The value is the smallest numerical value
+in elapsed seconds that should be reported: non-numerical values
+indicate that no report is required, a value of @samp{0} that a report
+is always required.
+Default: @code{""}. (@code{10} for CRAN checks.)
+
+@item _R_CHECK_INSTALL_DEPENDS_
+If set to a true value and a test installation is to
+be done, this is done with @code{.libPaths()} containing just a
+temporary library directory and @code{.Library}.  The temporary library
+is populated by symbolic links@footnote{under Windows, junction points.}
+to the installed copies of all the Depends/Imports/LinkingTo packages
+which are not in @code{.Library}.  
+Default: false (but true for CRAN submission checks).
+
+Note that this is actually implemented in @command{R CMD INSTALL}, so it
+is available to those who first install recording to a log, then call
+@command{R CMD check}. 
+
+@item _R_CHECK_DEPENDS_ONLY_
+@itemx _R_CHECK_SUGGESTS_ONLY_
+If set to a true value, running examples, tests and vignettes is done
+with @code{.libPaths()} containing just a temporary library directory
+and @code{.Library}.  The temporary library is populated by symbolic
+links@footnote{under Windows, junction points.} to the installed copies
+of all the Depends/Imports/LinkingTo and (for the second only) Suggests
+packages which are not in @code{.Library}.
+Default: false (but true for CRAN checks).
+
+@item _R_CHECK_NO_RECOMMENDED_
+If set to a true value, augment the previous checks to make recommended
+packages unavailable unless declared.
+Default: false (but true for CRAN submission checks).
+
+This may give false positives on code which uses
+@code{grDevices::densCols} and @code{stats:::asSparse} as these invoke
+@CRANpkg{KernSmooth} and @CRANpkg{Matrix} respectively.
+
 @item _R_CHECK_CODETOOLS_PROFILE_
 A string with comma-separated @code{@var{name}=@var{value}} pairs (with
 @var{value} a logical constant) giving additional arguments for the
 @CRANpkg{codetools} functions used for analyzing package code.  E.g.,
 use @code{_R_CHECK_CODETOOLS_PROFILE_="suppressLocalUnused=FALSE"} to
-turn off suppressing warnings about unused local variables. 
-Default: no additional arguments, corresponding to using @code{skipWith =
-TRUE} and @code{suppressLocalUnused = TRUE}.
-
-CRAN's submission checks use @code{suppressPartialMatchArgs=FALSE}.
+turn off suppressing warnings about unused local variables.  Default: no
+additional arguments, corresponding to using @code{skipWith = TRUE},
+@code{suppressPartialMatchArgs = FALSE} and @code{suppressLocalUnused =
+TRUE}.
 
 @item _R_CHECK_CRAN_INCOMING_
 Check whether package is suitable for publication on CRAN.
 Default: false, except for CRAN submission checks.
 
+@item _R_CHECK_XREFS_USE_ALIASES_FROM_CRAN_
+When checking anchored Rd xrefs, use Rd aliases from the CRAN package
+web areas in addition to those in the packages installed locally.
+Default: false.
+
+@item _R_SHLIB_BUILD_OBJECTS_SYMBOL_TABLES_
+Make the checks of compiled code more accurate by recording the symbol
+tables for objects (@file{.o} files) at installation in a file
+@file{symbols.rds}.  (Only currently supported on Linux, Solaris, OS X,
+Windows and FreeBSD.)
+Default: true.
 @end vtable
 
 CRAN's submission checks use something like
 
 @example
 _R_CHECK_CRAN_INCOMING_=TRUE
-_R_CHECK_FORCE_SUGGESTS_=FALSE
 _R_CHECK_VC_DIRS_=TRUE
-_R_CHECK_SUBDIRS_NOCASE_=TRUE
+_R_CHECK_TIMINGS_=10
+_R_CHECK_INSTALL_DEPENDS_=TRUE
+_R_CHECK_SUGGESTS_ONLY_=TRUE
+_R_CHECK_NO_RECOMMENDED_=TRUE
 _R_CHECK_EXECUTABLES_EXCLUSIONS_=FALSE
-_R_CHECK_CODETOOLS_PROFILE_="suppressPartialMatchArgs=FALSE"
-_R_CHECK_DOT_INTERNAL_=TRUE
+_R_CHECK_DOC_SIZES2_=TRUE
 @end example
 
 @noindent
-plus other options only available in the latest versions of @R{}.
+These are turned on by @command{R CMD check --as-cran}: the incoming
+checks also use
+@example
+_R_CHECK_FORCE_SUGGESTS_=FALSE
+@end example
+
+@noindent
+since some packages do suggest other packages not available on CRAN or
+other commonly-used repositories.
+
 
 @node R coding standards, Testing R code, Tools, Top
 @chapter R coding standards

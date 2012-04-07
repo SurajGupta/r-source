@@ -1,15 +1,17 @@
 % File src/library/base/man/attach.Rd
 % Part of the R package, http://www.R-project.org
-% Copyright 1995-2011 R Core Development Team
+% Copyright 1995-2012 R Core Development Team
 % Distributed under GPL 2 or later
 
 \name{attach}
+\alias{attach}
+\alias{.conflicts.OK}
+
 \title{Attach Set of R Objects to Search Path}
 \usage{
 attach(what, pos = 2, name = deparse(substitute(what)),
        warn.conflicts = TRUE)
 }
-\alias{attach}
 \arguments{
   \item{what}{\sQuote{database}.  This can be a
     \code{data.frame} or a \code{list} or a \R data file created with
@@ -62,11 +64,10 @@ attach(what, pos = 2, name = deparse(substitute(what)),
   \code{\link{load}} or \code{\link{sys.source}}.
 
   Names starting \code{"package:"} are reserved for
-  \code{\link{library}} and should not be used by end users.  The name
-  for an attached file is always of the form \code{file:\var{what}},
-  even if \code{name} is supplied.  Otherwise the \code{name} argument
-  given for the attached environment will be used by
-  \code{\link{search}} and can be used as the argument to
+  \code{\link{library}} and should not be used by end users. Attached
+  files are by default given the name \code{file:\var{what}}.  The
+  \code{name} argument given for the attached environment will be used
+  by \code{\link{search}} and can be used as the argument to
   \code{\link{as.environment}}.
 
   There are hooks to attach user-defined table objects of class

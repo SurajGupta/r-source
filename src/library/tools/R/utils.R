@@ -97,7 +97,7 @@ function(dir, exts, all.files = FALSE, full.names = TRUE)
     }
     ## does not cope with exts with '.' in.
     ## files <- files[sub(".*\\.", "", files) %in% exts]
-    patt <- paste("\\.(", paste(exts, collapse="|"), ")$", sep = "")
+    patt <- paste0("\\.(", paste(exts, collapse="|"), ")$")
     files <- grep(patt, files, value = TRUE)
     if(full.names)
         files <- if(length(files))
@@ -399,7 +399,7 @@ function(file, pdf = FALSE, clean = FALSE, quiet = TRUE,
         texfile <- shQuote(file)
         ## 'file' could be a file path
         base <- basename(file_path_sans_ext(file))
-        idxfile <- paste(base, ".idx", sep="")
+        idxfile <- paste0(base, ".idx")
         latex <- if(pdf) Sys.getenv("PDFLATEX", "pdflatex")
         else  Sys.getenv("LATEX", "latex")
         if(!nzchar(Sys.which(latex)))
@@ -411,7 +411,7 @@ function(file, pdf = FALSE, clean = FALSE, quiet = TRUE,
             stop(gettextf("unable to run '%s' on '%s'", latex, file),
                  domain = NA)
         nmiss <- length(grep("^LaTeX Warning:.*Citation.*undefined",
-                             readLines(paste(base, ".log", sep = ""))))
+                             readLines(paste0(base, ".log"))))
         for(iter in 1L:10L) { ## safety check
             ## This might fail as the citations have been included in the Rnw
             if(nmiss) system(paste(shQuote(bibtex), shQuote(base)))
@@ -424,7 +424,7 @@ function(file, pdf = FALSE, clean = FALSE, quiet = TRUE,
             }
             if(system(paste(shQuote(latex), "-interaction=nonstopmode", texfile)))
                 stop(gettextf("unable to run %s on '%s'", latex, file), domain = NA)
-            Log <- readLines(paste(base, ".log", sep = ""))
+            Log <- readLines(paste0(base, ".log"))
             nmiss <- length(grep("^LaTeX Warning:.*Citation.*undefined", Log))
             if(nmiss == nmiss_prev &&
                !length(grep("Rerun to get", Log)) ) break
@@ -439,7 +439,7 @@ function(file, pdf = FALSE, clean = FALSE, quiet = TRUE,
 ### ** .BioC_version_associated_with_R_version
 
 .BioC_version_associated_with_R_version <-
-    numeric_version("2.9")
+    numeric_version("2.10")
 ## (Could also use something programmatically mapping (R) 2.10.x to
 ## (BioC) 2.5, 2.9.x to 2.4, ..., 2.1.x to 1.6, but what if R 3.0.0
 ## comes out? Also, pre-2.12.0 is out weeks before all of BioC 2.7)
@@ -569,7 +569,7 @@ function(file1, file2)
 function(x, f = NULL, recursive = FALSE)
 {
     x <- as.list(x)
-    
+
     predicate <- if(is.null(f))
         function(e) is.call(e)
     else
@@ -880,7 +880,7 @@ function()
         } else {
             a <- .read_repositories(file.path(R.home("etc"),
                                               "repositories"))
-            c("http://cran.r-project.org", a[nms[-1L], "URL"])
+            c("http://CRAN.R-project.org", a[nms[-1L], "URL"])
         }
         names(repos) <- nms
     }
@@ -1032,7 +1032,7 @@ function(type = c("code", "data", "demo", "docs", "vignette"))
                     "tab.bz2", "txt.bz2",
                     "tab.xz", "txt.xz",
                     "csv", "CSV",
-                    "csv.gz", "csv,bz2", "csv.xz"),
+                    "csv.gz", "csv.bz2", "csv.xz"),
            demo = c("R", "r"),
            docs = c("Rd", "rd", "Rd.gz", "rd.gz"),
            vignette = c(outer(c("R", "r", "S", "s"), c("nw", "tex"),
@@ -1116,6 +1116,7 @@ function(package)
              "seq.int", "sort.int", "sort.list"),
              AMORE = "sim.MLPnet",
              BSDA = "sign.test",
+             ChemometricsWithR = "lda.loofun",
              ElectoGraph = "plot.wedding.cake",
              FrF2 = "all.2fis.clear.catlg",
              GLDEX = c("hist.su", "pretty.su"),
@@ -1155,6 +1156,7 @@ function(package)
              ic.infer = "all.R2",
              hier.part = "all.regs",
              lasso2 = "qr.rtr.inv",
+             locfit = c("density.lf", "plot.eval"),
              moments = c("all.cumulants", "all.moments"),
              mratios = c("t.test.ration", "t.test.ratio.default",
                          "t.test.ratio.formula"),

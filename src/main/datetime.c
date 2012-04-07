@@ -1,6 +1,6 @@
 /*
  *  R : A Computer Language for Statistical Data Analysis
- *  Copyright (C) 2000-2010  The R Development Core Team.
+ *  Copyright (C) 2000-2012  The R Development Core Team.
  *
  *  This program is free software; you can redistribute it and/or modify
  *  it under the terms of the GNU General Public License as published by
@@ -25,18 +25,19 @@
     and where they are they may be partially or incorrectly
     implemented.  A number of lightweight alternatives are supplied,
     but generally timezone support is only available if the OS
-    supplies it.  However, as these are now also mandated by C99, they
-    are almost universally available, albeit with more room for
-    implementation variations.
+    supplies it (or as on Windows, we replace it).  However, as these
+    are now also mandated by C99, they are almost universally
+    available, albeit with more room for implementation variations.
 
     A particular problem is the setting of the timezone TZ on
     Unix/Linux.  POSIX appears to require it, yet older Linux systems
     do not set it and do not give the correct results/crash strftime
     if it is not set (or even if it is: see the workaround below).  We
-    use unsetenv() to work around this: that is a BSD construct but
-    seems to be available on the affected platforms.
+    use unsetenv() to work around this: that is a BSD (and POSIX 2001)
+    construct but seems to be available on the affected platforms.
 
     Notes on various time functions:
+    ===============================
 
     The current (2008) POSIX recommendation to find the calendar time
     is to call clock_gettime(), defined in <time.h>.  This may also be
@@ -44,6 +45,9 @@
     (e.g. machine reboot), but is not currently so used in R.  It
     returns in second and nanoseconds, although not necessarily to
     more than clock-tick accuracy.
+
+    C11 adds 'struct timespec' to <time.h>.  And timespec_get() can get
+    the current time or interval after a base time.
 
     The previous POSIX recommendation was gettimeofday(), defined in
     <sys/time.h>.  This returns in seconds and microseconds (with
@@ -69,6 +73,20 @@
     POSIX function getrusage() defined in <sys/resource.h>.  This
     returns the same time structure as gettimeofday() and on some
     systems offers millisecond resolution.
+    It is available on Cygwin, FreeBSD, Mac OS X, Linux and Solaris.
+
+    currentTime() (in this file) uses
+    clock_gettime(): AIX, FreeBSD, Linux, Solaris
+    gettimeofday():  Mac OS X, Windows, Cygwin
+    time() (as ultimate fallback, AFAIK unused).
+
+    proc.time() uses currentTime() for elapsed time,
+    and getrusage, then times for CPU times on a Unix-alike,
+    GetProcessTimes on Windows.
+
+    devPS.c uses time() and localtime() for timestamps.
+
+    do_date (platform.c) uses ctime.
  */
 
 #ifdef HAVE_CONFIG_H
@@ -468,7 +486,7 @@ static struct tm * localtime0(const double *tp, const int local, struct tm *ltm)
 }
 
 
-/* clock_gettime, time are in <time.h>, already included */
+/* clock_gettime, timespec_get time are in <time.h>, already included */
 #ifdef HAVE_SYS_TIME_H
 /* gettimeoday, including on Windows */
 # include <sys/time.h>
@@ -478,13 +496,19 @@ double currentTime(void)
 {
     double ans = NA_REAL;
 
-#if defined(HAVE_CLOCK_GETTIME) && defined(CLOCK_REALTIME)
+#ifdef HAVE_TIMESPEC_GET
+    struct timespec tp;
+    int res = timespec_get(&tp, TIME_UTC);
+    if(res != 0)
+	ans = (double) tp.tv_sec + 1e-9 * (double) tp.tv_nsec;
+#elif defined(HAVE_CLOCK_GETTIME) && defined(CLOCK_REALTIME)
     struct timespec tp;
     int res = clock_gettime(CLOCK_REALTIME, &tp);
     if(res == 0)
 	ans = (double) tp.tv_sec + 1e-9 * (double) tp.tv_nsec;
 
 #elif defined(HAVE_GETTIMEOFDAY)
+    /* Mac OS X, mingw.org */
     struct timeval tv;
     int res = gettimeofday(&tv, NULL);
     if(res == 0)
@@ -529,13 +553,13 @@ unsigned int TimeToSeed(void)
     {
 	struct timespec tp;
 	clock_gettime(CLOCK_REALTIME, &tp);
-	seed = ((uint64_t) tp.tv_nsec << 16) ^ tp.tv_sec;
+	seed = ((uint_least64_t) tp.tv_nsec << 16) ^ tp.tv_sec;
     }
 #elif defined(HAVE_GETTIMEOFDAY)
     {
 	struct timeval tv;
 	gettimeofday (&tv, NULL);
-	seed = ((uint64_t) tv.tv_usec << 16) ^ tv.tv_sec;
+	seed = ((uint_least64_t) tv.tv_usec << 16) ^ tv.tv_sec;
     }
 #else
     /* C89, so must work */

@@ -37,11 +37,11 @@
 
 re_anchor <-
 function(s)
-    if(length(s)) paste("^", s, "$", sep = "") else character()
+    if(length(s)) paste0("^", s, "$") else character()
 
 re_group <-
 function(s)
-    if(length(s)) paste("(", s, ")", sep = "") else character()
+    if(length(s)) paste0("(", s, ")") else character()
 
 re_or <-
 function(s, group = TRUE) {
@@ -76,13 +76,13 @@ function()
                            list(sep = "-")))))
     license_names_or_abbrevs_without_version <-
         Filter(nzchar,
-               unlist(subset(license_db, Version == "",
-                             c("Name", "Abbrev")),
+               unlist(license_db[license_db$Version == "",
+                                 c("Name", "Abbrev")],
                       use.names = FALSE))
     license_names_or_abbrevs_with_version <-
         unique(Filter(nzchar,
-                      unlist(subset(license_db, Version != "",
-                                    c("Name", "Abbrev")),
+                      unlist(license_db[license_db$Version != "",
+                                    c("Name", "Abbrev")],
                              use.names = FALSE)))
 
     operators <- c("<", "<=", ">", ">=", "==", "!=")
@@ -96,7 +96,7 @@ function()
               sep = "")
     re_for_version_spec <-
         paste("\\(",
-              paste("(", re_for_single_version_spec, ",)*", sep = ""),
+              paste0("(", re_for_single_version_spec, ",)*"),
               re_for_single_version_spec,
               "\\)",
               sep = "")
@@ -110,7 +110,7 @@ function()
                 ## means "any version" (which is correct for GPL).
                 paste(re_or(license_names_or_abbrevs_with_version),
                       "[[:space:]]*",
-                      paste("(", re_for_version_spec, ")*", sep = ""),
+                      paste0("(", re_for_version_spec, ")*"),
                       sep = ""),
                 ## Also allow for things like
                 ##   GNU General Public License version 2
@@ -424,7 +424,9 @@ function(x)
         ## rather generous about using whitespace).
         ind <- ok & grepl("\\(", components)
         if(any(ind)) {
-            s <- sub("[[:space:]]*\\(", " \\(", components[ind])
+            s <- sub("[[:space:]]*\\([[:space:]]*", " \\(",
+                     components[ind])
+            s <- sub("[[:space:]]*\\)", "\\)", s)            
             s <- gsub("[[:space:]]*,[[:space:]]*", ", ", s)
             ## Really re_or(operators) ...
             s <- gsub("[[:space:]]+(<=?|>=?|==|!=)", " \\1", s)

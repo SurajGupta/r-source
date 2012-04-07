@@ -6,7 +6,7 @@ options(stringsAsFactors = TRUE)
 (Meps <- .Machine$double.eps)# and use it in this file
 
 assertError <- function(expr)
-    stopifnot(inherits(try(expr, silent = TRUE), "try-error"))
+    stopifnot(inherits(tryCatch(expr, error=function(e)e), "error"))
 
 
 ## str() for list-alikes :
@@ -1141,7 +1141,7 @@ lapply("forward", switch, forward = "posS", reverse = "negS")
 
 
 ## evaluation of arguments of log2
-assertError(try(log2(quote(1:10))))
+assertError(tryCatch(log2(quote(1:10))))
 ## 'worked' in 2.10.x by evaluting the arg twice.
 
 
@@ -1434,7 +1434,7 @@ stopifnot(identical(tt[1:2], tt))
 
 ## Test new defn of cmdscale()
 mds <- cmdscale(eurodist, eig = TRUE, k = 14)
-stopifnot(ncol(mds$points) == 11L)
+stopifnot(ncol(mds$points) < 14L) # usually 11.
 ## Used negative eigenvalues in 2.12.0
 
 
@@ -1692,6 +1692,83 @@ stopifnot(!is.nan(pbinom(10, 1e6, 0.01, log.p=TRUE)))
 stopifnot(identical(duplicated(data.frame(c(1, 1)), fromLast = TRUE),
                     duplicated(c(1, 1), fromLast = TRUE)))
 ## first ignored fromLast in 2.14.0.
+
+## str(*, list.len, strict.width=.):
+dm <- as.data.frame(matrix( rnorm(10000), nrow=50, ncol=200))
+calls <- list(quote( str(dm, list.len= 7)),
+	      quote( str(dm, list.len= 7, digits=10, width=88, strict.width='no')),
+	      quote( str(dm, list.len= 7, digits=10, width=88, strict.width='cut')))
+ee <- lapply(calls, function(cl) capture.output(eval(cl)))
+stopifnot(sapply(ee, length) == 1 + 7 + 1)
+## with 'list.len' was not used with 'strict.width="cut"' in  R <= 2.14.1
+
+## Tests of serialization (new internal code in 2.15.0)
+input <- pi^(1:10)
+stopifnot(identical(input, unserialize(serialize(input, NULL))))
+stopifnot(identical(input, unserialize(serialize(input, NULL, xdr = FALSE))))
+z <- pi+ 3*1i
+input <- z^(1:10)
+stopifnot(identical(input, unserialize(serialize(input, NULL))))
+stopifnot(identical(input, unserialize(serialize(input, NULL, xdr = FALSE))))
+input <- matrix(1:1000000, 1000, 1000)
+stopifnot(identical(input, unserialize(serialize(input, NULL))))
+stopifnot(identical(input, unserialize(serialize(input, NULL, xdr = FALSE))))
+z <- paste(readLines(file.path(R.home("doc"), "COPYING")), collapse="\n")
+input <- charToRaw(z)
+stopifnot(identical(input, unserialize(serialize(input, NULL))))
+serialize(input, con <- file("serial", "wb")); close(con)
+res <- unserialize(con <- file("serial", "rb")); close(con)
+stopifnot(identical(input, res))
+unlink("serial")
+## Just a test for possible regressions.
+
+
+## mis-PROTECT()ion in printarray C code:
+df <- data.frame(a=1:2080, b=1001:2040, c=letters, d=LETTERS, e=1:1040)
+stopifnot(length(df.ch <- capture.output(df)) == 1+nrow(df))
+## "cannot allocate memory block of size 17179869183.6 Gb" in R <= 2.14.1
+
+
+## logic in one of the many combinations of predict.lm() computations
+fit <- lm(mpg ~ disp+hp, data=mtcars)
+r <- predict(fit, type="terms", terms = 2, se.fit=TRUE)
+stopifnot(dim(r$se.fit) == c(nrow(mtcars), 1))
+## failed in  R <= 2.14.1
+
+
+## format.POSIXlt(x) for wrong x
+d0 <- strptime(as.Date(logical(0)), format="%Y-%m-%d", tz = "GMT")
+d0$mday <- 1
+try(format(d0))
+## crashed (Arithmetic exception) for  R <= 2.14.1
+
+
+## options("max.print") :
+suppressWarnings({
+    assertError(options(max.print = Inf))
+    assertError(options(max.print = -2))
+    assertError(options(max.print = 1e100))
+})
+## gave only warnings (every print() time, ...)  in R <= 2.14.2
+
+
+## attributes with units<-  (PR#14839)
+tt <- structure(500, units = "secs", class = "difftime", names = "a")
+tt
+units(tt) <- "mins"
+tt
+stopifnot(identical(names(tt), "a"))
+## R < 2.15.0 changed the name, but then it was not documented to be kept.
+
+
+## predict( VAR(p >= 2) )
+set.seed(42)
+u <- matrix(rnorm(200),100,2)
+y <- filter(u,filter=0.8,"recursive")
+est <- ar(y, aic=FALSE, order.max=2) ## Estimate VAR(2)
+xpred <- predict(object=est, n.ahead=100, se.fit=FALSE)
+stopifnot(dim(xpred) == c(100,2), abs(range(xpred)) < 1)
+## values went to +- 1e23 in R <= 2.14.2
 
 
 proc.time()

@@ -61,6 +61,7 @@ SEXP do_getWindowHandles(SEXP, SEXP, SEXP, SEXP);
 SEXP do_getWindowTitle(SEXP, SEXP, SEXP, SEXP);
 SEXP do_loadRconsole(SEXP, SEXP, SEXP, SEXP);
 SEXP do_memsize(SEXP, SEXP, SEXP, SEXP);
+SEXP do_mkjunction(SEXP, SEXP, SEXP, SEXP);
 SEXP do_msgwindow(SEXP, SEXP, SEXP, SEXP);
 SEXP do_readClipboard(SEXP, SEXP, SEXP, SEXP);
 SEXP do_readRegistry(SEXP, SEXP, SEXP, SEXP);
@@ -507,6 +508,7 @@ SEXP do_tilde(SEXP, SEXP, SEXP, SEXP);
 SEXP do_title(SEXP, SEXP, SEXP, SEXP);
 SEXP do_tolower(SEXP, SEXP, SEXP, SEXP);
 SEXP do_trace(SEXP, SEXP, SEXP, SEXP);
+SEXP do_traceback(SEXP, SEXP, SEXP, SEXP);
 SEXP do_transpose(SEXP, SEXP, SEXP, SEXP);
 SEXP do_trunc(SEXP, SEXP, SEXP, SEXP);
 SEXP do_typecvt(SEXP, SEXP, SEXP, SEXP);
@@ -539,7 +541,7 @@ SEXP R_do_data_class(SEXP call, SEXP op, SEXP args, SEXP env);
 SEXP R_do_set_class(SEXP call, SEXP op, SEXP args, SEXP env);
 SEXP R_getS4DataSlot(SEXP obj, SEXPTYPE type);
 
-#ifdef BYTECODE
+/* bytecode */
 SEXP do_mkcode(SEXP, SEXP, SEXP, SEXP);
 SEXP do_bcclose(SEXP, SEXP, SEXP, SEXP);
 SEXP do_is_builtin_internal(SEXP, SEXP, SEXP, SEXP);
@@ -552,7 +554,6 @@ SEXP do_putconst(SEXP, SEXP, SEXP, SEXP);
 SEXP do_getconst(SEXP, SEXP, SEXP, SEXP);
 SEXP do_enablejit(SEXP, SEXP, SEXP, SEXP);
 SEXP do_compilepkgs(SEXP, SEXP, SEXP, SEXP);
-#endif
 
 /* Connections */
 SEXP do_stdin(SEXP, SEXP, SEXP, SEXP);

@@ -1,8 +1,8 @@
 msgid ""
 msgstr ""
-"Project-Id-Version: R 2.14.1\n"
+"Project-Id-Version: R 2.15.0\n"
 "Report-Msgid-Bugs-To: bugs@r-project.org\n"
-"POT-Creation-Date: 2012-01-23 08:19\n"
+"POT-Creation-Date: 2012-02-12 08:59\n"
 "PO-Revision-Date: YEAR-MO-DA HO:MI+ZONE\n"
 "Last-Translator: FULL NAME <EMAIL@ADDRESS>\n"
 "Language-Team: LANGUAGE <LL@li.org>\n"
@@ -63,6 +63,9 @@ msgid "path to %s contains spaces,"
 msgstr ""
 
 msgid "this may cause problems when running LaTeX"
+msgstr ""
+
+msgid "the output file '%s' has disappeared"
 msgstr ""
 
 msgid "invalid value for %s : %s"
@@ -326,9 +329,6 @@ msgstr ""
 msgid "'topic' should be a name, length-one character vector or reserved word"
 msgstr ""
 
-msgid "Postscript offline help is deprecated"
-msgstr ""
-
 msgid "No documentation for %s in specified packages and libraries:"
 msgstr ""
 
@@ -366,12 +366,6 @@ msgid "invalid %s argument"
 msgstr ""
 
 msgid "package %s exists but was not installed under R >= 2.10.0 so help cannot be accessed"
-msgstr ""
-
-msgid "running %s failed"
-msgstr ""
-
-msgid "%s produced no output file: sent to printer?"
 msgstr ""
 
 msgid "creation of %s failed"
@@ -686,6 +680,15 @@ msgstr ""
 msgid "unable to create"
 msgstr ""
 
+msgid "type == \"both\" can only be used on Windows or a CRAN build for Mac OS X"
+msgstr ""
+
+msgid "type == \"both\" cannot be used if 'available' or 'contriburl' is specified"
+msgstr ""
+
+msgid "type == \"both\" cannot be used with 'repos = NULL'"
+msgstr ""
+
 msgid "inferring 'repos = NULL' from the file name"
 msgstr ""
 
@@ -710,7 +713,7 @@ msgstr ""
 msgid "installation of one of more packages failed,\n  probably %s"
 msgstr ""
 
-msgid "The downloaded packages are in\n\t%s"
+msgid "The downloaded source packages are in\n\t%s"
 msgstr ""
 
 msgid "no object named '%s' to show"
@@ -737,7 +740,7 @@ msgstr ""
 msgid "no documentation of type %s and topic %s (or error in processing help)"
 msgstr ""
 
-msgid "the object of class \"%s\" in the function call %s could not be used as a documentation topic"
+msgid "the object of class %s in the function call %s could not be used as a documentation topic"
 msgstr ""
 
 msgid "no methods for %s and no documentation for it as a function"
@@ -905,6 +908,9 @@ msgstr ""
 msgid "no events were recorded"
 msgstr ""
 
+msgid "invalid 'tarfile' argument"
+msgstr ""
+
 msgid "'compressed' must be logical or character"
 msgstr ""
 
@@ -1031,6 +1037,9 @@ msgstr ""
 msgid "cannot remove prior installation of package"
 msgstr ""
 
+msgid "The downloaded binary packages are in\n\t%s"
+msgstr ""
+
 msgid "'memory.size()' is Windows-specific"
 msgstr ""
 
@@ -1091,6 +1100,11 @@ msgstr[1]    ""
 
 msgid        "'lib' element %s is not a writable directory"
 msgid_plural "'lib' elements %s are not writable directories"
+msgstr[0]    ""
+msgstr[1]    ""
+
+msgid        "installing the source package %s"
+msgid_plural "installing the source packages %s"
 msgstr[0]    ""
 msgstr[1]    ""
 

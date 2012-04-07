@@ -104,21 +104,26 @@ format.Date <- function(x, ...)
 }
 
 ## could handle arrays for max.print
-print.Date <- function(x, ...)
+print.Date <- function(x, max = NULL, ...)
 {
-    max.print <- getOption("max.print", 9999L)
-    if(max.print < length(x)) {
-        print(format(x[seq_len(max.print)]), ...)
-        cat(' [ reached getOption("max.print") -- omitted',
-            length(x) - max.print, 'entries ]\n')
-    } else print(format(x), ...)
+    if(is.null(max)) max <- getOption("max.print", 9999L)
+    if(max < length(x)) {
+	print(format(x[seq_len(max)]), max=max, ...)
+	cat(' [ reached getOption("max.print") -- omitted',
+	    length(x) - max, 'entries ]\n')
+    } else print(format(x), max=max, ...)
     invisible(x)
 }
 
 summary.Date <- function(object, digits = 12, ...)
 {
-    x <- summary.default(unclass(object), digits = digits, ...)[1L:6L]# not NA's
-    class(x) <- oldClass(object)
+    x <- summary.default(unclass(object), digits = digits, ...)
+    if(m <- match("NA's", names(x), 0)) {
+        NAs <- as.integer(x[m])
+        x <- x[-m]
+        attr(x, "NAs") <- NAs
+    }
+    class(x) <- c("summaryDefault", "table", oldClass(object))
     x
 }
 
@@ -406,7 +411,7 @@ months.Date <- function(x, abbreviate = FALSE)
 quarters.Date <- function(x, ...)
 {
     x <- (as.POSIXlt(x)$mon) %/% 3L
-    paste("Q", x+1L, sep = "")
+    paste0("Q", x+1L)
 }
 
 ## These only make sense for negative digits, but still ...

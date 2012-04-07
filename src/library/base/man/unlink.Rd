@@ -19,16 +19,17 @@
   \code{unlink} deletes the file(s) or directories specified by \code{x}.
 }
 \details{
-  Tilde-expansion (see \code{\link{path.expand}}) is done on \code{x} as
-  from \R 2.13.0.
+  Tilde-expansion (see \code{\link{path.expand}}) is done on \code{x}.
   
   If \code{recursive = FALSE} directories are not deleted,
   not even empty ones.
 
 #ifdef unix
-  On most platforms \sQuote{file} includes symbolic links, fifos and sockets.
-  Beware that \code{unlink(x, recursive = TRUE)} will on most platforms
-  delete the contents of a directory target of a symbolic link.
+  On most platforms \sQuote{file} includes symbolic links, fifos and
+  sockets.  Prior to \R 2.15.0 \code{unlink(x, recursive = TRUE)} would
+  delete the contents of a directory target of a symbolic link: it now
+  only deletes the symbolic link (as \code{unlink(x, recursive = FALSE)}
+  always has).
   
 #endif  
   Wildcard expansion is done by the internal code of

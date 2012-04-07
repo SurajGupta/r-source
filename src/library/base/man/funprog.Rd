@@ -97,8 +97,8 @@ Position(f, x, right = FALSE, nomatch = NA_integer_)
 }
 
 \seealso{
-  \code{\link{clusterMap}} in package \pkg{parallel} provides a parallel
-  version of \code{Map}.
+  Function \code{\link{clusterMap}} and \code{\link{mcmapply}} (not
+  Windows) in package \pkg{parallel} provide parallel versions of \code{Map}.
 }
 
 \examples{

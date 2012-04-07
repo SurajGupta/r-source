@@ -86,7 +86,8 @@ function(file, local = FALSE, echo = verbose, print.eval = echo,
 	    	lines <- readLines(file, warn = FALSE)
 	    	on.exit()
 	    	close(file)
-            	srcfile <- srcfilecopy(filename, lines, file.info(filename)[1,"mtime"])
+            	srcfile <- srcfilecopy(filename, lines, file.info(filename)[1,"mtime"], 
+            			       isFile = TRUE)
 	    } else
             	from_file <- TRUE
 
@@ -202,11 +203,10 @@ function(file, local = FALSE, echo = verbose, print.eval = echo,
 	    	if (!tail) {
 		    # Deparse.  Must drop "expression(...)"
 		    dep <- substr(paste(deparse(ei, control = "showAttributes"),
-			      collapse = "\n"), 12L, 1e+06L)
+					collapse = "\n"), 12L, 1e+06L)
 		    ## We really do want chars here as \n\t may be embedded.
-		    dep <- paste(prompt.echo,
-				 gsub("\n", paste("\n", continue.echo, sep=""), dep),
-				 sep="")
+		    dep <- paste0(prompt.echo,
+				  gsub("\n", paste0("\n", continue.echo), dep))
 		    nd <- nchar(dep, "c") - 1L
 		}
 	    }
@@ -215,8 +215,8 @@ function(file, local = FALSE, echo = verbose, print.eval = echo,
 		dep <- substr(dep, 1L, if (do.trunc) max.deparse.length else nd)
 		cat("\n", dep, if (do.trunc)
 		    paste(if (length(grep(sd, dep)) && length(grep(oddsd, dep)))
-		      " ...\" ..."
-		      else " ....", "[TRUNCATED] "), "\n", sep = "")
+			  " ...\" ..." else " ....", "[TRUNCATED] "),
+		    "\n", sep = "")
 	    }
 	}
 	if (!tail) {
@@ -262,7 +262,7 @@ function(file, envir = baseenv(), chdir = FALSE,
     on.exit(options(oop))
     if (keep.source) {
     	lines <- readLines(file, warn = FALSE)
-    	srcfile <- srcfilecopy(file, lines, file.info(file)[1,"mtime"])
+    	srcfile <- srcfilecopy(file, lines, file.info(file)[1,"mtime"], isFile = TRUE)
     	exprs <- parse(text = lines, srcfile = srcfile)
     } else
     	exprs <- parse(n = -1, file = file)

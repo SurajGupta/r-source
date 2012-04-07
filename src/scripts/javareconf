@@ -5,7 +5,7 @@ fi
 
 tools_classpath=${R_SHARE_DIR}/java
 
-revision='$Rev: 57431 $'
+revision='$Rev: 58677 $'
 version=`set - ${revision}; echo ${2}`
 version="R Java configurator: ${R_VERSION} (r${version})
 
@@ -48,7 +48,7 @@ javareconf cannot detect automatically:
   JAVA_LIBS      libraries (as linker flags) necessary to compile
                  JNI programs
 
-Report bugs to <r-bugs@r-project.org>."
+Report bugs at bugs.r-project.org ."
 
 
 dry_run=no

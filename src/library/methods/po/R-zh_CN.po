@@ -7,7 +7,7 @@ msgid ""
 msgstr ""
 "Project-Id-Version: R 2.3.0\n"
 "Report-Msgid-Bugs-To: bugs@r-project.org\n"
-"POT-Creation-Date: 2012-01-23 08:18\n"
+"POT-Creation-Date: 2012-03-09 06:26\n"
 "PO-Revision-Date: 2005-03-15 08:37+0000\n"
 "Last-Translator: 陈斐 <FeiChen@FairIsaac.com>\n"
 "Language-Team: Chinese\n"
@@ -132,10 +132,10 @@ msgstr ""
 
 msgid ""
 "if the 'def' argument is supplied, it must be a function that calls "
-"standardGeneric(\"%s\") to dispatch methods"
+"standardGeneric(\"%s\") or is the default"
 msgstr ""
-"如果设定了`def'参数的话，这个参数只能是来調用standardGeneric(\"%s\")分配方法"
-"的函数"
+"如果设定了`def'参数的话，它要么是調用standardGeneric(\"%s\")的函数，要么是默"
+"认值"
 
 msgid ""
 "must supply a function skeleton for %s, explicitly or via an existing "
@@ -505,6 +505,9 @@ msgstr "%d: 目标\"%s\": 选择\"%s\" (其它：%s)"
 msgid "Notes: %s."
 msgstr "记录：%s。"
 
+msgid "Class generator function for class \"%s\" from package \"%s\""
+msgstr "程辑包\"%2$s\"里用于\"%1$s\"这一类的类生成函数"
+
 msgid "the names in signature for method (%s) do not match %s's arguments (%s)"
 msgstr "方法(%s)标记里的名字同函数%s参数(%s)不相对应"
 
@@ -834,12 +837,6 @@ msgid ""
 msgstr ""
 "'%s'泛型函数的程序部分調用'standardGeneric'来分配给一个不同的名字('%s')!"
 
-msgid "the supplied generic function definition for"
-msgstr "所提供的泛型函数定义是为"
-
-msgid "does not seem to call 'standardGeneric'; no methods will be dispatched!"
-msgstr "好象没有調用'standardGeneric'；因此无法分配任何方法!"
-
 msgid ""
 "internal error: Bad methods list object in fixing methods for primitive "
 "function %s"
@@ -918,6 +915,24 @@ msgstr "%s类别存在多个定义；应该用className()指定其中的一个"
 
 msgid "No definition found for class %s"
 msgstr "类别%s的定义不存在"
+
+#, fuzzy
+msgid "Missing  function for load action: %s"
+msgstr "函数%s没有定义"
+
+#, fuzzy
+msgid "Error in load action %s for package %s: %s: %s"
+msgstr "从%3$s里的程辑包%2$s为%1$s建立新的泛型函数"
+
+#, fuzzy
+msgid "non-function action: \"%s"
+msgstr "没有'%s'这样一个函数定义"
+
+msgid "action function \"%s\" has no arguments, should have at least 1"
+msgstr ""
+
+msgid "Some actions missing: %s"
+msgstr ""
 
 msgid "\"%s\" has a sealed class definition and cannot be redefined"
 msgstr "\"%s\"的类别定义被封闭了，因此无法重新被定义"
@@ -1036,6 +1051,9 @@ msgstr "程序包%2$s里有多个类别%1$s的定义；现在用第一个"
 
 msgid "No package name supplied and no class definition found for %s"
 msgstr "%s没有程辑包出没有类别定义"
+
+msgid "argument classDef must be a class definition or the name of a class"
+msgstr "参数classDef必需是类别定义或是类别的名字"
 
 msgid ""
 "'traceOn' is deprecated: use the function 'trace' in the 'methods' package "
@@ -1449,19 +1467,10 @@ msgstr ""
 "\"%s\"主题在%s类别里不是方法名字\n"
 "类别定义在下面"
 
-msgid "Arguments must all be character string names of fields"
-msgstr "参数必需是场名字的字符串"
-
 msgid ""
 "The definition of class %s in package %s is locked, fields may not be "
 "modified"
 msgstr "程辑包%2$s中%1$s类别的定义封闭了，因此无法个性场的定义"
-
-msgid "Field \"%s\" is already locked"
-msgstr ""
-
-msgid "Field \"%s\" of class %s has a non-default binding and cannot be locked"
-msgstr "%1$s类别的\"%2$s\"场有非默认的约束力，因此不能被锁定"
 
 msgid ""
 "The overriding class(\"%s\") of field \"%s\" is not a subclass of the "
@@ -1556,6 +1565,15 @@ msgstr ""
 "不行允许非本地分配方法名字\n"
 "    %1$s\n"
 "( 在类别%3$s的%2$s方法里)"
+
+msgid "Arguments must all be character string names of fields"
+msgstr "参数必需是场名字的字符串"
+
+msgid "Field \"%s\" is already locked"
+msgstr "场\"%s\"已经被锁住了"
+
+msgid "Field \"%s\" of class %s has a non-default binding and cannot be locked"
+msgstr "%1$s类别的\"%2$s\"场有非默认的约束力，因此不能被锁定"
 
 msgid ""
 "invalid ignore= argument; should be a class definition or a character "
@@ -1717,6 +1735,13 @@ msgstr "移动文件或删除类别/方法"
 msgid "no definition for class %s"
 msgid_plural "no definition for classes %s"
 msgstr[0] "类别%s的定义不存在"
+
+#~ msgid "the supplied generic function definition for"
+#~ msgstr "所提供的泛型函数定义是为"
+
+#~ msgid ""
+#~ "does not seem to call 'standardGeneric'; no methods will be dispatched!"
+#~ msgstr "好象没有調用'standardGeneric'；因此无法分配任何方法!"
 
 #~ msgid "no generic function \"'%s\" found"
 #~ msgstr "不存在'%s'这一泛型函数"

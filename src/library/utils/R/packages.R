@@ -241,7 +241,7 @@ function(db)
     ## Now find the recursive reverse dependencies of these and the
     ## packages missing from the db.
     depends <-
-        tools:::.package_dependencies(db1$Package[ind], db = db1,
+        tools:::package_dependencies(db1$Package[ind], db = db1,
                                       reverse = TRUE, recursive = TRUE)
     depends <- unique(unlist(depends))
     ind[match(depends, db1$Package, nomatch = 0L)] <- TRUE
@@ -249,6 +249,22 @@ function(db)
     ## And drop these from the db.
     db[!ind, , drop = FALSE]
 }
+
+available_packages_filters_db$CRAN <-
+function(db)
+{
+    packages <- db[, "Package"]
+    dups <- packages[duplicated(packages)]
+    drop <- integer()
+    CRAN <- getOption("repos")["CRAN"]
+    for(d in dups) {
+        pos <- which(packages == d)
+        drop <- c(drop, pos[substring(db[pos, "Repository"], 1,
+                                      nchar(CRAN)) != CRAN])
+    }
+    if(length(drop)) db[-drop, , drop = FALSE] else db
+}
+
 
 ## unexported helper function
 simplifyRepos <- function(repos, type)
@@ -520,7 +536,7 @@ installed.packages <-
                            ## it is actually 32-bit on some systems)
                            .Call("crc64ToString", base, PACKAGE = "base"))
             dest <- file.path(tempdir(),
-                              paste("libloc_", enc, ".rds", sep = ""))
+                              paste0("libloc_", enc, ".rds"))
             if(file.exists(dest) &&
                file.info(dest)$mtime > file.info(lib)$mtime &&
                (val <- readRDS(dest))$base == base)
@@ -674,6 +690,8 @@ download.packages <- function(pkgs, destdir, available = NULL,
 
 contrib.url <- function(repos, type = getOption("pkgType"))
 {
+    ## Not entirely clear this is optimal
+    if(type == "both") type <- "source"
     if(is.null(repos)) return(NULL)
     if("@CRAN@" %in% repos && interactive()) {
         cat(gettext("--- Please select a CRAN mirror for use in this session ---"),
@@ -739,11 +757,13 @@ chooseCRANmirror <- function(graphics = getOption("menu.graphics"))
 chooseBioCmirror <- function(graphics = getOption("menu.graphics"))
 {
     if(!interactive()) stop("cannot choose a BioC mirror non-interactively")
-    m <- c("Seattle (USA)"="http://www.bioconductor.org",
-           "Bethesda (USA)"="http://watson.nci.nih.gov/bioc_mirror",
-           "Dortmund (Germany)"="http://bioconductor.statistik.tu-dortmund.de",
-           "Bergen (Norway)"="http://bioconductor.uib.no/",
-           "Cambridge (UK)"="http://mirrors.ebi.ac.uk/bioconductor/")
+    m <- c("Seattle (USA)"="http://www.bioconductor.org"
+	   , "Bethesda (USA)"="http://watson.nci.nih.gov/bioc_mirror"
+	   , "Dortmund (Germany)"="http://bioconductor.statistik.tu-dortmund.de"
+	   , "Bergen (Norway)"="http://bioconductor.uib.no/"
+	   , "Cambridge (UK)"="http://mirrors.ebi.ac.uk/bioconductor/"
+	   , "Riken, Kobe (Japan)" = "http://bioconductor.jp/"
+	   )
     res <- menu(names(m), graphics, "BioC mirror")
     if(res > 0L) options("BioC_mirror" = m[res])
     invisible()
@@ -883,7 +903,7 @@ compareVersion <- function(a, b)
             target <- as.package_version(x[[3L]])
             res <- eval(parse(text = paste("any(current", x$op, "target)")))
             if(res) canget <- c(canget, x[[1L]])
-            else  miss <- c(miss, paste(x[[1L]], " (>= ", x[[3L]], ")", sep=""))
+            else  miss <- c(miss, paste0(x[[1L]], " (>= ", x[[3L]], ")"))
         } else if(x[[1L]] %in% pkgs) canget <- c(canget, x[[1L]])
         else miss <- c(miss, x[[1L]])
     }

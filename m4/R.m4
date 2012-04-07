@@ -129,8 +129,10 @@ fi
 ## ------------
 AC_DEFUN([R_PROG_TEXMF],
 [
-## TEX PDFTEX LATEX PDFLATEX MAKEINDEX TEXI2DVI are used to make manuals
+## PDFTEX PDFLATEX MAKEINDEX TEXI2DVI are used to make manuals
+## PDFLATEX and MAKEINDEX in the emulation mode of tools::texi2dvi
 ## TEXI2DVICMD sets default for R_TEXI2DVICMD, used for options('texi2dvi')
+## TEX AND LATEX are no longer used
 AC_PATH_PROGS(TEX, [${TEX} tex], )
 AC_PATH_PROGS(PDFTEX, [${PDFTEX} pdftex], )
 if test -z "${ac_cv_path_PDFTEX}" ; then
@@ -150,8 +152,6 @@ if test -z "${TEXI2DVICMD}"; then
   TEXI2DVICMD=texi2dvi
 fi
 AC_SUBST(TEXI2DVICMD)
-: ${R_RD4DVI="ae"}
-AC_SUBST(R_RD4DVI)
 AC_PATH_PROGS(KPSEWHICH, [${KPSEWHICH} kpsewhich], "")
 r_rd4pdf="times,inconsolata,hyper"
 if test -n "${KPSEWHICH}"; then
@@ -173,7 +173,9 @@ AC_DEFUN([R_PROG_MAKEINFO],
 [AC_PATH_PROGS(MAKEINFO, [${MAKEINFO} makeinfo])
 if test -n "${MAKEINFO}"; then
   _R_PROG_MAKEINFO_VERSION
-  AC_PATH_PROGS(INSTALL_INFO, [${INSTALL_INFO} install-info], false)
+  AC_PATH_PROGS(INSTALL_INFO,
+                [${INSTALL_INFO} ginstall-info install-info],
+                false)
   if test "ac_cv_path_INSTALL_INFO" = "false"; then
     if test "${r_cv_prog_perl_v5}" = yes; then
       INSTALL_INFO="perl \$(top_srcdir)/tools/install-info.pl"
@@ -3815,6 +3817,9 @@ case "${host_os}" in
     ;;
   darwin*)
     R_SYSTEM_ABI="osx"
+    ;;
+  freebsd*)
+    R_SYSTEM_ABI="freebsd"
     ;;
   *)
     R_SYSTEM_ABI="?"

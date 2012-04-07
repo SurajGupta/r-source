@@ -229,7 +229,6 @@ cl <- makeCluster(<size of pool>)
 stopCluster(cl)
 \end{verbatim}
 % we could arrange to stop a cluster when cl is gc-ed
-% we could arrange to create a default cluster if cl = NULL
 
 For matrices there are the rarely used \code{parApply} and
 \code{parCapply} functions, and the more commonly used
@@ -258,6 +257,13 @@ the \code{outfile} option.  Note that the previous sentence refers to
 the \emph{connections} of those names, not the C-level file handles.
 Thus properly written \R{} packages using \code{Rprintf} will have
 their output redirected, but not direct C-level output.
+
+A default cluster can be registered by a call to
+\code{setDefaultCluster()}: this is then used whenever one of the
+higher-level functions such as \code{parApply} is called without an
+explicit cluster.  A little care is needed when repeatedly re-using a
+pool of workers, as their workspaces will accumulate objects from past
+usage, and packages may get added to the search path.
 
 If clusters are to be created on a host other than the current machine
 (\samp{localhost}), \code{makeCluster} may need to be be given more
@@ -302,6 +308,9 @@ its default from environment variable \code{MC\_CORES} when the
 package is loaded.  (Setting this to \code{1} inhibits parallel
 operation: there are stub versions of these functions on Windows which
 force \code{mc.cores = 1}.)
+
+As from \R{} 2.15.0, \code{mcmapply} and \code{mcMap} provide
+analogues of \code{mapply} and \code{Map}.
 
 Note the earlier comments about using forking in a GUI environment.
 
@@ -410,7 +419,8 @@ using S4 classes in package \CRANpkg{rstream} \citep{rstream}.
 The introduction mentioned a different strategy which dynamically
 allocates tasks to workers: this is sometimes known as `load
 balancing' and is implemented in \code{mclapply(mc.preschedule =
-  FALSE)} and \code{clusterApplyLB}.
+  FALSE)}, \code{clusterApplyLB} and wrappers such as
+\code{parLapplyLB} and \code{clusterMap(.scheduling = "dynamic")}.
 
 Load balancing is potentially advantageous when the tasks take quite
 dissimilar amounts of computation time, or where the nodes are of
@@ -641,9 +651,9 @@ res <- c(0, unlist(mclapply(c[-1], run4, mc.cores = 10)))
 If you do not have as many as 10 cores, you might want to consider
 load-balancing in a task like this as the time taken per simulation
 does vary with \code{c}.  This can be done using
-\code{mclapply(mc.preschedule = FALSE)} or the lower-level function
-\code{clusterApplyLB}.  The disadvantage is that the results would not
-be reproducible (which does not matter here).
+\code{mclapply(mc.preschedule = FALSE)} or \code{parSapplyLB}.  The
+disadvantage is that the results would not be reproducible (which does
+not matter here).
 
 \subsection{Package installation}
 
@@ -704,7 +714,7 @@ while(length(done) < length(pkgs)) {
 }
 @
 
-\subsection{Passing \ldots}
+\subsection{Passing \code{...}}
 
 The semantics of \code{...} do not fit well with parallel operation,
 since lazy evaluation may be delayed until the tasks have been sent to

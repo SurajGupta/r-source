@@ -214,7 +214,7 @@ print.dendrogram <- function(x, digits = getOption("digits"), ...)
 str.dendrogram <-
 function (object, max.level = NA, digits.d = 3, give.attr = FALSE,
           wid = getOption("width"), nest.lev = 0, indent.str = "",
-          last.str = "`", stem = "--", ...)
+          last.str = getOption("str.dendrogram.last"), stem = "--", ...)
 {
 ## TO DO: when object is part of a larger structure which is str()ed
 ##    with default max.level= NA, it should not be str()ed to all levels,
@@ -792,7 +792,7 @@ function (x, Rowv=NULL, Colv=if(symm)"Rowv" else NULL,
     ## draw the side bars
     if(!missing(RowSideColors)) {
 	par(mar = c(margins[1L],0, 0,0.5))
-	image(rbind(1L:nr), col = RowSideColors[rowInd], axes = FALSE)
+	image(rbind(if(revC) nr:1L else 1L:nr), col = RowSideColors[rowInd], axes = FALSE)
     }
     if(!missing(ColSideColors)) {
 	par(mar = c(0.5,0, 0,margins[2L]))

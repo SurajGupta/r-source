@@ -60,19 +60,16 @@ function(dir, outDir)
         nzchar(Sys.getenv("R_ARCH")))
         OStype <- sub(".*-apple-darwin", "universal-apple-darwin", OStype)
     Built <-
-        paste("R ",
-              paste(R.version[c("major", "minor")],
-                    collapse = "."),
-              "; ",
-              if(file_test("-d", file.path(dir, "src"))) OStype
-              else "",
-              "; ",
-              ## Prefer date in ISO 8601 format, UTC.
-              format(Sys.time(), tz = "UTC", usetz = TRUE),
-              ## Sys.time(),
-              "; ",
-              .OStype(),
-              sep = "")
+	paste0("R ",
+	       paste(R.version[c("major", "minor")], collapse = "."),
+	       "; ",
+	       if(file_test("-d", file.path(dir, "src"))) OStype else "",
+	       "; ",
+	       ## Prefer date in ISO 8601 format, UTC.
+	       format(Sys.time(), tz = "UTC", usetz = TRUE),
+	       ## Sys.time(),
+	       "; ",
+	       .OStype())
 
     ## At some point of time, we had:
     ##   We must not split the Built: field across lines.
@@ -287,7 +284,7 @@ function(dir, outDir)
     outFile <- file.path(outCodeDir, db["Package"])
     if(!file.create(outFile))
         stop(gettextf("unable to create '%s'", outFile), domain = NA)
-    writeLines(paste(".packageName <- \"", db["Package"], "\"", sep=""),
+    writeLines(paste0(".packageName <- \"", db["Package"], "\""),
                outFile)
     enc <- as.vector(db["Encoding"])
     need_enc <- !is.na(enc) # Encoding was specified
@@ -304,7 +301,7 @@ function(dir, outDir)
                tmp <- iconv(readLines(f, warn = FALSE), from = enc, to = "",
                             sub = "byte")
             }
-            writeLines(paste("#line 1 \"", f, "\"", sep=""), con)
+            writeLines(paste0("#line 1 \"", f, "\""), con)
             writeLines(tmp, con)
         }
 	close(con); on.exit()
@@ -332,7 +329,7 @@ function(dir, outDir)
 ## called from R CMD INSTALL
 
 .install_package_indices <-
-function(dir, outDir, encoding = "")
+function(dir, outDir)
 {
     options(warn = 1)                   # to ensure warnings get seen
     if(!file_test("-d", dir))
@@ -357,7 +354,6 @@ function(dir, outDir, encoding = "")
          stop(gettextf("cannot open directory '%s'", outMetaDir),
               domain = NA)
     .install_package_Rd_indices(dir, outDir)
-    .install_package_vignette_index(dir, outDir, encoding)
     .install_package_demo_index(dir, outDir)
     invisible()
 }
@@ -456,10 +452,10 @@ function(dir, outDir)
     invisible()
 }
 
-### * .install_package_vignette_index
-## only called from .install_package_indices
+### * .install_package_vignettes2
+## called from R CMD INSTALL
 
-.install_package_vignette_index <-
+.install_package_vignettes2 <-
 function(dir, outDir, encoding = "")
 {
     dir <- file_path_as_absolute(dir)
@@ -509,18 +505,13 @@ function(dir, outDir, encoding = "")
         vignetteIndex$PDF[ind] <- vignettePDFs[ind]
 
         ## install tangled versions of all vignettes
-        cat("*** tangling vignette sources ...\n")
         for(srcfile in vignetteIndex$File) {
             enc <- getVignetteEncoding(srcfile, TRUE)
             if(enc %in% c("non-ASCII", "unknown")) enc <- encoding
             cat("  ", sQuote(basename(srcfile)),
                 if(nzchar(enc)) paste("using", sQuote(enc)), "\n")
-           tryCatch(utils::Stangle(srcfile, quiet = TRUE, encoding = enc),
-                     error = function(e)
-                     stop(gettextf("running Stangle on vignette '%s' failed with message:\n%s",
-                                   srcfile, conditionMessage(e)),
-                          domain = NA, call. = FALSE))
-        }
+            utils::Stangle(srcfile, quiet = TRUE, encoding = enc)
+       }
         Rfiles <- sub("\\.[RrSs](nw|tex)$", ".R", basename(vignetteIndex$File))
         ## remove any files with no R code (they will have header comments).
         ## if not correctly declared they might not be in the current encoding
@@ -613,7 +604,7 @@ function(dir, outDir, keep.source = TRUE)
     for(srcfile in vigns$docs[!upToDate]) {
         base <- basename(file_path_sans_ext(srcfile))
         message("processing ", sQuote(basename(srcfile)))
-        texfile <- paste(base, ".tex", sep = "")
+        texfile <- paste0(base, ".tex")
         tryCatch(utils::Sweave(srcfile, pdf = TRUE, eps = FALSE,
                                quiet = TRUE, keep.source = keep.source,
                                stylepath = FALSE),
@@ -629,7 +620,7 @@ function(dir, outDir, keep.source = TRUE)
         texi2pdf(texfile, quiet = TRUE, texinputs = vigns$dir)
         ## </FIXME>
         pdffile <-
-            paste(basename(file_path_sans_ext(srcfile)), ".pdf", sep = "")
+	    paste0(basename(file_path_sans_ext(srcfile)), ".pdf")
         if(!file.exists(pdffile))
             stop(gettextf("file '%s' was not created", pdffile),
                  domain = NA)
@@ -645,7 +636,7 @@ function(dir, outDir, keep.source = TRUE)
     unlink(buildDir, recursive = TRUE)
     ## Now you need to update the HTML index!
     ## This also creates the .R files
-    .install_package_vignette_index(dir, outDir)
+    .install_package_vignettes2(dir, outDir)
     invisible()
 }
 
@@ -698,7 +689,7 @@ function(dir, outDir, encoding = "unknown")
     manOutDir <- file.path(outDir, "help")
     dir.create(manOutDir, FALSE)
     db_file <- file.path(manOutDir,
-                         paste(basename(outDir), ".rdx", sep = ""))
+                         paste0(basename(outDir), ".rdx"))
     built_file <- file.path(dir, "build", "partial.rdb")
     ## Avoid (costly) rebuilding if not needed.
     ## Actually, it seems no more costly than these tests, which it also does
@@ -751,7 +742,7 @@ function(pkgs, lib.loc = NULL, file = NULL)
     pkgs <- strsplit(pkgs[1L], ",[[:blank:]]*")[[1L]]
     paths <- find.package(pkgs, lib.loc, quiet=TRUE)
     if(length(paths))
-        cat(paste(paste('-I"', paths, '/include"', sep=""), collapse=" "))
+	cat(paste(paste0('-I"', paths, '/include"'), collapse=" "))
     return(invisible())
 }
 
@@ -812,6 +803,7 @@ function(dir)
 
 .test_load_package <- function(pkg_name, lib)
 {
+    options(warn = 1)
     res <- try(suppressPackageStartupMessages(library(pkg_name, lib.loc = lib, character.only = TRUE, logical.return = TRUE)))
     if (inherits(res, "try-error") || !res)
         stop("loading failed", call. = FALSE)
@@ -895,33 +887,43 @@ resaveRdaFiles <- function(paths,
 ### * compactPDF
 
 compactPDF <-
-    function(paths, qpdf = Sys.getenv("R_QPDF", "qpdf"),
+    function(paths, qpdf = Sys.which(Sys.getenv("R_QPDF", "qpdf")),
              gs_cmd = Sys.getenv("R_GSCMD", ""),
              gs_quality = Sys.getenv("GS_QUALITY", "none"),
              gs_extras = character())
 {
-    if(!nzchar(Sys.which(qpdf)) && !nzchar(Sys.which(gs_cmd)))
-    	return()
+    use_qpdf <- nzchar(qpdf)
+    gs_quality <- match.arg(gs_quality, c("none", "printer", "ebook", "screen"))
+    use_gs <- if(gs_quality != "none") nzchar(gs_cmd <- find_gs_cmd(gs_cmd)) else FALSE
+    if (!use_gs && !use_qpdf) return()
     if(length(paths) == 1L && isTRUE(file.info(paths)$isdir))
         paths <- Sys.glob(file.path(paths, "*.pdf"))
-    gs_quality <- match.arg(gs_quality, c("none", "printer", "ebook", "screen"))
-    tf <- tempfile("pdf")
     dummy <- rep.int(NA_real_, length(paths))
     ans <- data.frame(old = dummy, new = dummy, row.names = paths)
-    if(gs_quality != "none") gs_cmd <- find_gs_cmd(gs_cmd)
+    tf <- tempfile("pdf"); tf2 <- tempfile("pdf")
     for (p in paths) {
-        res <- if (nzchar(gs_cmd) && gs_quality != "none")
-            system2(gs_cmd,
-                    c("-q -dNOPAUSE -dBATCH -sDEVICE=pdfwrite",
-                      sprintf("-dPDFSETTINGS=/%s", gs_quality),
-                      "-dCompatibilityLevel=1.5",
-                      "-dAutoRotatePages=/None",
-                      sprintf("-sOutputFile=%s", tf),
-                      gs_extras,
-                      p), FALSE, FALSE)
-        else
-            system2(qpdf, c("--stream-data=compress",
-			    "--object-streams=generate", p, tf), FALSE, FALSE)
+        res <- 0
+        if (use_gs) {
+            res <- system2(gs_cmd,
+                           c("-q -dNOPAUSE -dBATCH -sDEVICE=pdfwrite",
+                             sprintf("-dPDFSETTINGS=/%s", gs_quality),
+                             "-dCompatibilityLevel=1.5",
+                             "-dAutoRotatePages=/None",
+                             sprintf("-sOutputFile=%s", tf),
+                             gs_extras, p), FALSE, FALSE)
+            if(!res && use_qpdf) {
+                unlink(tf2) # precaution
+                file.rename(tf, tf2)
+                res <- system2(qpdf, c("--stream-data=compress",
+                                       "--object-streams=generate",
+                                       tf2, tf), FALSE, FALSE)
+                unlink(tf2)
+            }
+        } else if(use_qpdf) {
+            res <- system2(qpdf, c("--stream-data=compress",
+                                   "--object-streams=generate",
+                                   p, tf), FALSE, FALSE)
+        }
         if(!res && file.exists(tf)) {
             old <- file.info(p)$size; new <-  file.info(tf)$size
             if(new/old < 0.9 && new < old - 1e4) {

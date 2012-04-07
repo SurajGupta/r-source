@@ -17,13 +17,17 @@
 getDependencies <-
     function(pkgs, dependencies = NA, available = NULL, lib = .libPaths()[1L])
 {
+    if (is.null(dependencies)) return(unique(pkgs))
     oneLib <- length(lib) == 1L
+    dep2 <- NULL
     if(is.logical(dependencies) && is.na(dependencies))
         dependencies <- c("Depends", "Imports", "LinkingTo")
     depends <-
         is.character(dependencies) || (is.logical(dependencies) && dependencies)
-    if(depends && is.logical(dependencies))
+    if(depends && is.logical(dependencies)) {
         dependencies <-  c("Depends", "Imports", "LinkingTo", "Suggests")
+        dep2 <- c("Depends", "Imports", "LinkingTo")
+    }
     if(depends && !oneLib) {
         warning("Do not know which element of 'lib' to install dependencies into\nskipping dependencies")
         depends <- FALSE
@@ -36,7 +40,7 @@ getDependencies <-
 				 "packages %s are not available (for %s)"),
 			paste(sQuote(p0[miss]), collapse=", "),
 			sub(" *\\(.*","", R.version.string)),
-                domain = NA)
+                domain = NA, call. = FALSE)
         if (sum(miss) == 1L &&
             !is.na(w <- match(tolower(p0[miss]),
                               tolower(row.names(available))))) {
@@ -68,6 +72,7 @@ getDependencies <-
 	    if(!length(deps)) break
 	    pkgs <- c(deps, pkgs)
 	    p1 <- deps
+            if(!is.null(dep2)) { dependencies <- dep2; dep2 <- NULL }
 	}
         if(length(not_avail)) {
             not_avail <- unique(not_avail)
@@ -169,14 +174,16 @@ install.packages <-
     }
 
     if(missing(pkgs) || !length(pkgs)) {
+        if(!interactive()) stop("no packages were specified")
         ## if no packages were specified, use a menu
 	if(.Platform$OS.type == "windows" || .Platform$GUI == "AQUA"
            || (capabilities("tcltk")
-               && capabilities("X11")&& suppressWarnings(tcltk:::.TkUp)) ) {
+               && capabilities("X11") && suppressWarnings(tcltk:::.TkUp)) ) {
             ## this is the condition for a graphical select.list()
 	} else
 	    stop("no packages were specified")
 
+        ## This will only offer the specified type.
 	if(is.null(available))
 	    available <- available.packages(contriburl = contriburl,
 					    method = method)
@@ -239,6 +246,58 @@ install.packages <-
         } else stop("unable to install packages")
     }
 
+    ## Look at type == "both"
+    if (type == "both") {
+        ## NB it is only safe to use binary packages with a Mac OS X
+        ## build that uses the same R foundation layout as CRAN since
+        ## paths in DSOs are hard-coded.
+        type2 <- .Platform$pkgType
+        if (type2 == "source")
+            stop("type == \"both\" can only be used on Windows or a CRAN build for Mac OS X")
+        if(!missing(contriburl) || !is.null(available))
+            stop("type == \"both\" cannot be used if 'available' or 'contriburl' is specified")
+        if(is.null(repos))
+            stop("type == \"both\" cannot be used with 'repos = NULL'")
+        type <- "source"
+        contriburl <- contrib.url(repos, "source")
+        available <-
+            available.packages(contriburl = contriburl, method = method)
+        pkgs <- getDependencies(pkgs, dependencies, available, lib)
+        ## Now see what we can get as binary packages.
+        av2 <- available.packages(contriburl = contrib.url(repos, type2),
+                                  method = method)
+        bins <- row.names(av2)
+        bins <- pkgs[pkgs %in% bins]
+        ## It seems safest to use binaries only if they are as recent as sources.
+        binvers <- av2[bins, "Version"]
+        srcvers <- available[bins, "Version"]
+        bins <- bins[binvers >= srcvers] # allow for CRAN extras updates
+        if(length(bins)) {
+            if(type2 == "win.binary")
+                .install.winbinary(pkgs = bins, lib = lib,
+                                   contriburl = contrib.url(repos, type2),
+                                   method = method, available = av2,
+                                   destdir = destdir,
+                                   dependencies = NULL,
+                                   libs_only = libs_only, ...)
+            else
+                .install.macbinary(pkgs = bins, lib = lib,
+                                   contriburl = contrib.url(repos, type2),
+                                   method = method, available = av2,
+                                   destdir = destdir,
+                                   dependencies = NULL, ...)
+        }
+        pkgs <- setdiff(pkgs, bins)
+        if(!length(pkgs)) return(invisible())
+        message(sprintf(ngettext(length(pkgs),
+                                     "installing the source package %s",
+                                     "installing the source packages %s"),
+                        paste(sQuote(pkgs), collapse=", ")),
+                "\n", domain = NA)
+            flush.console()
+
+    }
+
     ## check if we should infer repos=NULL
     if(length(pkgs) == 1L && missing(repos) && missing(contriburl)) {
         if((type == "source" && length(grep("\\.tar.gz$", pkgs))) ||
@@ -247,12 +306,11 @@ install.packages <-
             && length(grep("\\.tgz$", pkgs)))) {
             repos <- NULL
             message("inferring 'repos = NULL' from the file name")
-
         }
     }
 
     if(.Platform$OS.type == "windows") {
-        if(type == "mac.binary")
+        if(substr(type, 1L, 10L) == "mac.binary")
             stop("cannot install MacOS X binary packages on Windows")
 
         if(type %in% "win.binary") {
@@ -383,38 +441,27 @@ install.packages <-
                      domain = NA)
             mfile <- file.path(tmpd, "Makefile")
             conn <- file(mfile, "wt")
-            deps <- paste(paste(update[, 1L], ".ts", sep=""), collapse=" ")
+            deps <- paste(paste0(update[, 1L], ".ts"), collapse=" ")
             deps <- strwrap(deps, width = 75, exdent = 2)
             deps <- paste(deps, collapse=" \\\n")
             cat("all: ", deps, "\n", sep = "", file = conn)
-            nms <- rownames(available)
-            aDL <- vector("list", length(nms))
-            names(aDL) <- nms
-            for (i in seq_along(nms)) aDL[[i]] <- .clean_up_dependencies(available[i, c("Depends", "Imports", "LinkingTo"), drop = FALSE])
+            aDL <- .make_dependency_list(upkgs, available, recursive = TRUE)
             for(i in seq_len(nrow(update))) {
                 pkg <- update[i, 1L]
                 cmd <- paste(cmd0, "-l", shQuote(update[i, 2L]),
                              getConfigureArgs(update[i, 3L]),
                              getConfigureVars(update[i, 3L]),
                              shQuote(update[i, 3L]),
-                             ">", paste(pkg, ".out", sep=""), "2>&1")
-                ## We need recursive dependencies, not just direct ones
-                p <- DL[[pkg]]
-                repeat {
-                    extra <- unlist(aDL[p[p %in% nms]])
-                    extra <- extra[extra != pkg]
-                    deps <- unique(c(p, extra))
-                    if (length(deps) <= length(p)) break
-                    p <- deps
-                }
-                deps <- deps[deps %in% pkgs]
+                             ">", paste0(pkg, ".out"), "2>&1")
+                deps <- aDL[[pkg]]
+                deps <- deps[deps %in% upkgs]
                 ## very unlikely to be too long
                 deps <- if(length(deps))
-                    paste(paste(deps, ".ts", sep=""), collapse=" ") else ""
-                cat(paste(pkg, ".ts: ", deps, sep=""),
+                    paste(paste0(deps, ".ts"), collapse=" ") else ""
+                cat(paste0(pkg, ".ts: ", deps),
                     paste("\t@echo begin installing package", sQuote(pkg)),
-                    paste("\t@", cmd, " && touch ", pkg, ".ts", sep=""),
-                    paste("\t@cat ", pkg, ".out", sep=""),
+                    paste0("\t@", cmd, " && touch ", pkg, ".ts"),
+                    paste0("\t@cat ", pkg, ".out"),
                     "", sep="\n", file = conn)
             }
             close(conn)
@@ -428,7 +475,7 @@ install.packages <-
                 pkgs <- update[, 1L]
                 tss <- sub("\\.ts$", "", dir(".", pattern = "\\.ts$"))
                 failed <- pkgs[!pkgs %in% tss]
-		for (pkg in failed) system(paste("cat ", pkg, ".out", sep=""))
+		for (pkg in failed) system(paste0("cat ", pkg, ".out"))
                 warning(gettextf("installation of one of more packages failed,\n  probably %s",
                                  paste(sQuote(failed), collapse = ", ")),
                         domain = NA)
@@ -448,7 +495,7 @@ install.packages <-
             }
         }
         if(nonlocalrepos && !is.null(tmpd) && is.null(destdir))
-            cat("\n", gettextf("The downloaded packages are in\n\t%s",
+            cat("\n", gettextf("The downloaded source packages are in\n\t%s",
                                sQuote(normalizePath(tmpd, mustWork = FALSE))),
                 "\n", sep = "")
         ## update packages.html on Unix only if .Library was installed into

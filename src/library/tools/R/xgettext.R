@@ -142,7 +142,7 @@ function(dir, potFile)
 {
     dir <- file_path_as_absolute(dir)
     if(missing(potFile))
-        potFile <- paste("R-", basename(dir), ".pot", sep="")
+        potFile <- paste0("R-", basename(dir), ".pot")
     tmp <- unique(unlist(xgettext(dir, asCall = FALSE)))
     tmp <- tmp[nzchar(tmp)]
     tmp <- shQuote(encodeString(tmp), type="cmd")  # need to quote \n, \t etc
@@ -154,9 +154,9 @@ function(dir, potFile)
                  sprintf('"Project-Id-Version: R %s.%s\\n"',
                          R.version$major, R.version$minor),
                  '"Report-Msgid-Bugs-To: bugs@r-project.org\\n"',
-                 paste('"POT-Creation-Date: ',
-                       format(Sys.time(), "%Y-%m-%d %H:%M"), # %z is not portable
-                       '\\n"', sep=''),
+                 paste0('"POT-Creation-Date: ',
+                        format(Sys.time(), "%Y-%m-%d %H:%M"), # %z is not portable
+                        '\\n"'),
                  '"PO-Revision-Date: YEAR-MO-DA HO:MI+ZONE\\n"',
                  '"Last-Translator: FULL NAME <EMAIL@ADDRESS>\\n"',
                  '"Language-Team: LANGUAGE <LL@li.org>\\n"',

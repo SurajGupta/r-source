@@ -204,11 +204,9 @@ You cannot use mathematical expressions (\code{\link{plotmath}}) with
 }
 
 \references{
-  \url{http://www.gnu.org/software/plotutils/plotutils.html}
+  \url{http://www.gnu.org/software/plotutils/plotutils.html}.
 }
-
-\seealso{
-  \code{\link{demo}(Hershey)}, \code{\link{par}},
+\seealso{ \code{\link{demo}(Hershey)}, \code{\link{par}},
   \code{\link{text}}, \code{\link{contour}}.
 
   \code{\link{Japanese}} for the Japanese characters in the Hershey fonts.

@@ -2,16 +2,16 @@ msgid ""
 msgstr ""
 "Project-Id-Version: R 2.1.0 \n"
 "Report-Msgid-Bugs-To: bugs@r-project.org\n"
-"POT-Creation-Date: 2012-01-23 08:19\n"
-"PO-Revision-Date: 2011-10-23 00:23+0900 \n"
-"Last-Translator: Masafumi OKADA <mokada@mail.ne.jp> \n"
+"POT-Creation-Date: 2012-03-16 06:26\n"
+"PO-Revision-Date: 2012-02-26 14:22+0200 \n"
+"Last-Translator: Shigeru Mase <maseshigeru@gmail.com> \n"
 "Language-Team: RjpWiki Message Translation Team <mokada@md.tsukuba.ac.jp> \n"
-"Language: \n"
+"Language: ja \n"
 "MIME-Version: 1.0 \n"
 "Content-Type: text/plain; charset=utf-8 \n"
 "Content-Transfer-Encoding: 8bit \n"
 "Plural-Forms: nplurals=1; plural=0; \n"
-"X-Generator: Pootle 1.1.0 \n"
+"X-Generator: Pootle 2.0.5 \n"
 
 msgid "argument 'package' must be of length 1"
 msgstr " 引数 'package' は 長さ 1 でなければならない "
@@ -181,52 +181,12 @@ msgid "package name '%s' seems invalid; using directory name '%s' instead"
 msgstr ""
 " パッケージ名 '%s' は無効のようです。代わりにディレクトリ名 '%s' を使います "
 
-msgid "Packages required but not available:"
-msgstr " パッケージが必要ですが，利用可能ではありません "
-
-msgid "Package required but not available: %s"
-msgstr " パッケージが必要ですが，利用可能ではありません：%s "
-
-msgid "Packages required and available but unsuitable versions:"
-msgstr " パッケージが必要で利用可能ですが，適切なバージョンではありません "
-
-msgid "Package required and available but unsuitable version: %s"
-msgstr ""
-" パッケージが必要で，利用可能ですが，適切なバージョンではありません:%s "
-
-msgid "Former standard packages required but now defunct:"
-msgstr " 以前の標準パッケージが必要ですが，このパッケージは現存しません： "
-
-msgid "Packages suggested but not available for checking:"
-msgstr " パッケージが示唆されていますが，チェック可能ではありません "
-
-msgid "Package suggested but not available for checking: %s"
-msgstr " パッケージが示唆されていますが，チェック可能ではありません：%s "
-
-msgid "Packages which this enhances but not available for checking:"
-msgstr " これが拡張するパッケージがチェック可能ではありません： "
-
-msgid "Package which this enhances but not available for checking: %s"
-msgstr " これが拡張するパッケージがチェック可能ではありません：%s "
-
-msgid "Vignette dependencies not required:"
-msgstr " ビニエットの依存性は不要です: "
-
-msgid "Vignette dependencies not required: %s"
-msgstr " ビニエットの依存性は不要です: %s "
-
 msgid ""
 "Vignette dependencies (\\VignetteDepends{} entries) must be contained in the "
 "DESCRIPTION Depends/Suggests/Imports entries."
 msgstr ""
 " ビニエット依存性(\\VignetteDepends{} 項目)は　DESCRIPTION の Depends/"
 "Suggests/Imports 項目に含まれなければなりません "
-
-msgid "Namespace dependencies not required:"
-msgstr " Namespaceの依存性は必要ありません： "
-
-msgid "Namespace dependency not required: %s"
-msgstr " Namespaceの依存性は必要ありません： %s "
 
 msgid "Malformed package name"
 msgstr " 奇矯なパッケージ名です "
@@ -416,6 +376,14 @@ msgstr ""
 msgid "packageStartupMessage"
 msgstr " packageStartupMessage "
 
+#, fuzzy
+msgid "Package startup functions should not call %s."
+msgstr " パッケージのスターツアップ関数はサーチパスを変更できません。 "
+
+#, fuzzy
+msgid "installed.packages"
+msgstr " 不正なパッケージです "
+
 msgid "See section %s in ?.onAttach."
 msgstr " ?.onAttachのセクション%sを見てください。 "
 
@@ -440,15 +408,14 @@ msgid "'library' or 'require' call not declared from: %s"
 msgstr ""
 " 'library' もしくは 'requires' 呼出しが以下から宣言されていません： ％ｓ "
 
-#, fuzzy
 msgid "'data(package=)' calls not declared from:"
-msgstr ""
-" 'library' もしくは 'requires'　による呼出しが以下から宣言されていません: "
+msgstr " 'data(package=)' コールは以下から宣言されていません: "
 
-#, fuzzy
 msgid "'data(package=)' call not declared from: %s"
+msgstr " 'data(package=)' コールは以下から宣言されていません: %s "
+
+msgid "NB: need Internet access to use CRAN incoming checks"
 msgstr ""
-" 'library' もしくは 'requires' 呼出しが以下から宣言されていません： ％ｓ "
 
 msgid "Rd files with duplicated name '%s':"
 msgstr " 名前 '%s' が重複する Rd ファイル: "
@@ -527,6 +494,9 @@ msgstr ""
 msgid "No help on %s found in RdDB %s"
 msgstr " %s に関するいかなるヘルプも RdDB %s 中にはありません "
 
+msgid "more than one \\examples section, using the first"
+msgstr " 2つ以上の\\examples節があります、1番目を用います "
+
 msgid "Converting Rd files to LaTeX ..."
 msgstr "RdファイルをLaTeXに変換しています "
 
@@ -555,14 +525,8 @@ msgstr " 現在の作業ディレクトリを確認することができませ�
 msgid "no inputs"
 msgstr " 入力がありません "
 
-msgid "DVI output from Rd2dvi is deprecated"
-msgstr "Rd2dviからのDVI出力は廃止予定です。 "
-
-msgid "Error in running tools::texi2dvi"
-msgstr " tools::texi2dvi を実行中にエラーがありました "
-
-msgid "more than one \\examples section, using the first"
-msgstr " 2つ以上の\\examples節があります、1番目を用います "
+msgid "Error in running tools::texi2pdf"
+msgstr " tools::texi2pdf の実行時にエラーがありました "
 
 msgid "invalid value for '%s' : %s"
 msgstr " '%s' に対する不正な値 : %s "
@@ -627,13 +591,6 @@ msgstr " '%s' ('%s'行')を再エンコード出来ません "
 msgid "unable to copy INDEX to '%s'"
 msgstr " INDEX を '%s' にコピーすることが出来ません "
 
-msgid ""
-"running Stangle on vignette '%s' failed with message:\n"
-"%s"
-msgstr ""
-" ビニエット '%s' の処理に失敗しました。診断は以下の通りです: \n"
-" %s "
-
 msgid "cannot create directory '%s'"
 msgstr " ディレクトリ '%s' を生成することが出来ません "
 
@@ -673,6 +630,9 @@ msgstr " 指定された 'style' の変更が必要です "
 msgid "The default JSS style may not be modified."
 msgstr " 既定の JSS スタイルは変更できないかもしれません "
 
+msgid "invalid value for --compact-vignettes, assuming \"qpdf\""
+msgstr " --compact-vignettes に対する不正な値です、 \"qpdf\" であるとします "
+
 msgid "Error: cannot rename directory to"
 msgstr " エラー：ディレクトリの名前を以下に変更できません "
 
@@ -685,6 +645,9 @@ msgstr " コンフィギュレーションファイルは R 2.12.0 からはサ�
 msgid "'--multiarch' specified with only one usable sub-architecture"
 msgstr ""
 " ただ一つの使用可能なサブアーキテクチャで '--multiarch' が指定されました "
+
+msgid "--as-cran turns off --extra-arch"
+msgstr ""
 
 msgid "Error: no packages were specified"
 msgstr " エラー：パッケージが指定されていません "
@@ -838,18 +801,14 @@ msgstr " ソースファイルが見つかりません "
 msgid "empty 'data' directory"
 msgstr " 'data' ディレクトリが空です "
 
-msgid "--merge-multiarch is Windows-only"
-msgstr " --merge-multiarch は Windows 専用です "
-
 msgid "cannot create temporary directory"
 msgstr " 一時ディレクトリを生成することが出来ません "
 
 msgid "ERROR: --merge-multiarch applies only to a single tarball"
 msgstr " エラー: --merge-multiarch は単一の tarball だけに適用可能です "
 
-msgid "ERROR: --merge-multiarch can only be used on i386/x64 installations"
+msgid "only one architecture so ignoring '--merge-multiarch'"
 msgstr ""
-" エラー: --merge-multiarch は i386/x64 へのインストールだけで利用可能です "
 
 msgid "invalid package"
 msgstr " 不正なパッケージです "
@@ -1311,8 +1270,65 @@ msgid "object %s is created by more than one data call"
 msgid_plural "objects %s are created by more than one data call"
 msgstr[0] " オブジェクト %s は1つ以上のデータ呼び出しにより生成されました "
 
+#~ msgid "--merge-multiarch is Windows-only"
+#~ msgstr " --merge-multiarch は Windows 専用です "
+
+#~ msgid "ERROR: --merge-multiarch can only be used on i386/x64 installations"
+#~ msgstr ""
+#~ " エラー: --merge-multiarch は i386/x64 へのインストールだけで利用可能です "
+
+#~ msgid ""
+#~ "running Stangle on vignette '%s' failed with message:\n"
+#~ "%s"
+#~ msgstr ""
+#~ " ビニエット '%s' の処理に失敗しました。診断は以下の通りです: \n"
+#~ " %s "
+
+#~ msgid "Packages required but not available:"
+#~ msgstr " パッケージが必要ですが，利用可能ではありません "
+
+#~ msgid "Package required but not available: %s"
+#~ msgstr " パッケージが必要ですが，利用可能ではありません：%s "
+
+#~ msgid "Packages required and available but unsuitable versions:"
+#~ msgstr " パッケージが必要で利用可能ですが，適切なバージョンではありません "
+
+#~ msgid "Package required and available but unsuitable version: %s"
+#~ msgstr ""
+#~ " パッケージが必要で，利用可能ですが，適切なバージョンではありません:%s "
+
+#~ msgid "Former standard packages required but now defunct:"
+#~ msgstr " 以前の標準パッケージが必要ですが，このパッケージは現存しません： "
+
+#~ msgid "Packages suggested but not available for checking:"
+#~ msgstr " パッケージが示唆されていますが，チェック可能ではありません "
+
+#~ msgid "Package suggested but not available for checking: %s"
+#~ msgstr " パッケージが示唆されていますが，チェック可能ではありません：%s "
+
+#~ msgid "Packages which this enhances but not available for checking:"
+#~ msgstr " これが拡張するパッケージがチェック可能ではありません： "
+
+#~ msgid "Package which this enhances but not available for checking: %s"
+#~ msgstr " これが拡張するパッケージがチェック可能ではありません：%s "
+
+#~ msgid "Vignette dependencies not required:"
+#~ msgstr " ビニエットの依存性は不要です: "
+
+#~ msgid "Vignette dependencies not required: %s"
+#~ msgstr " ビニエットの依存性は不要です: %s "
+
+#~ msgid "Namespace dependencies not required:"
+#~ msgstr " Namespaceの依存性は必要ありません： "
+
+#~ msgid "Namespace dependency not required: %s"
+#~ msgstr " Namespaceの依存性は必要ありません： %s "
+
 #~ msgid "Package name and namespace differ."
 #~ msgstr " パッケージ名と namespace とが異なっています． "
+
+#~ msgid "DVI output from Rd2dvi is deprecated"
+#~ msgstr "Rd2dviからのDVI出力は廃止予定です。 "
 
 #, fuzzy
 #~ msgid ""

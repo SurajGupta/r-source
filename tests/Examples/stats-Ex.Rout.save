@@ -1,8 +1,8 @@
 
-R version 2.14.0 Patched (2011-12-05 r57815)
-Copyright (C) 2011 The R Foundation for Statistical Computing
+R version 2.15.0 alpha (2012-03-02 r58556)
+Copyright (C) 2012 The R Foundation for Statistical Computing
 ISBN 3-900051-07-0
-Platform: x86_64-apple-darwin9.8.0/x86_64 (64-bit)
+Platform: x86_64-unknown-linux-gnu (64-bit)
 
 R is free software and comes with ABSOLUTELY NO WARRANTY.
 You are welcome to redistribute it under certain conditions.
@@ -3701,7 +3701,7 @@ detaching ‘package:cluster’
 > 
 > asOneSidedFormula("age")
 ~age
-<environment: 0x45f6b68>
+<environment: 0x32c9090>
 > asOneSidedFormula(~ age)
 ~age
 > 
@@ -4762,7 +4762,7 @@ function (V)
     r[cbind(1L:p, 1L:p)] <- 1
     r
 }
-<bytecode: 0x3a40d90>
+<bytecode: 0x50747c8>
 <environment: namespace:stats>
 > stopifnot(all.equal(Cl, cov2cor(cov(longley))),
 +           all.equal(cor(longley, method="kendall"),
@@ -5657,6 +5657,16 @@ NULL
   '--[dendrogram w/ 2 branches and 34 members at h = 89.2]
      |--[dendrogram w/ 2 branches and 14 members at h = 44.8] ..
      '--[dendrogram w/ 2 branches and 20 members at h = 54.7] ..
+> oo <- options(str.dendrogram.last = "\\") # yet another possibility
+> str(dend1, max = 2) # only the first two sub-levels
+--[dendrogram w/ 2 branches and 50 members at h = 152]
+  |--[dendrogram w/ 2 branches and 16 members at h = 77.6]
+  |  |--[dendrogram w/ 2 branches and 2 members at h = 38.5] ..
+  |  --[dendrogram w/ 2 branches and 14 members at h = 44.3] ..
+  --[dendrogram w/ 2 branches and 34 members at h = 89.2]
+     |--[dendrogram w/ 2 branches and 14 members at h = 44.8] ..
+     --[dendrogram w/ 2 branches and 20 members at h = 54.7] ..
+> options(oo)# .. resetting them
 > 
 > op <- par(mfrow= c(2,2), mar = c(5,2,1,4))
 > plot(dend1)
@@ -6723,7 +6733,7 @@ List of 11
  $ dev.resids:function (y, mu, wt)  
  $ aic       :function (y, n, mu, wt, dev)  
  $ mu.eta    :function (eta)  
- $ initialize:  expression({     n <- rep.int(1, nobs)     if (is.null(etastart) && is.null(start) && is.null(mustart) &&          ((family$link == "inverse" && any(y == 0)) || (family$link ==              "log" && any(y <= 0))))          stop("cannot find valid starting values: please specify some")     mustart <- y })
+ $ initialize:  expression({     n <- rep.int(1, nobs)     if (is.null(etastart) && is.null(start) && is.null(mustart) && ((family$link ==          "inverse" && any(y == 0)) || (family$link == "log" && any(y <=          0))))          stop("cannot find valid starting values: please specify some")     mustart <- y })
  $ validmu   :function (mu)  
  $ valideta  :function (eta)  
  - attr(*, "class")= chr "family"
@@ -6752,8 +6762,8 @@ List of 12
 > gf$linkinv
 function (eta) 
 1/eta
-<bytecode: 0x2af7688>
-<environment: 0x8151c30>
+<bytecode: 0x20a4858>
+<environment: 0x6ea3df8>
 > gf$variance(-3:4) #- == (.)^2
 [1]  9  4  1  0  1  4  9 16
 > 
@@ -7155,7 +7165,7 @@ attr(,".Environment")
 > environment(as.formula("y ~ x"))
 <environment: R_GlobalEnv>
 > environment(as.formula("y ~ x", env=new.env()))
-<environment: 0x9cf60e0>
+<environment: 0x8a127f8>
 > 
 > 
 > ## Create a formula for a model with a large number of variables:
@@ -7729,6 +7739,12 @@ attr(,"legend")
 [1] 0 ‘ ’ 0.3 ‘.’ 0.6 ‘,’ 0.8 ‘+’ 0.9 ‘*’ 0.95 ‘B’ 1
 > heatmap(Ca,             symm = TRUE, margins=c(6,6))# with reorder()
 > heatmap(Ca, Rowv=FALSE, symm = TRUE, margins=c(6,6))# _NO_ reorder()
+> ## slightly artificial with color bar, without and with ordering:
+> cc <- rainbow(nrow(Ca))
+> heatmap(Ca, Rowv=FALSE, symm = TRUE, RowSideColors=cc, ColSideColors=cc,
++ 	margins=c(6,6))
+> heatmap(Ca,		symm = TRUE, RowSideColors=cc, ColSideColors=cc,
++ 	margins=c(6,6))
 > 
 > ## For variable clustering, rather use distance based on cor():
 > symnum( cU <- cor(USJudgeRatings) )
@@ -8131,7 +8147,7 @@ coef[ 6] = 0.02041
 > 
 > ### Name: kmeans
 > ### Title: K-Means Clustering
-> ### Aliases: kmeans print.kmeans
+> ### Aliases: kmeans print.kmeans fitted.kmeans
 > ### Keywords: multivariate cluster
 > 
 > ### ** Examples
@@ -8166,10 +8182,41 @@ Available components:
 > plot(x, col = cl$cluster)
 > points(cl$centers, col = 1:2, pch = 8, cex=2)
 > 
-> kmeans(x,1)$withinss # if you are interested in that
+> # sum of squares
+> ss <- function(x) sum(scale(x, scale = FALSE)^2)
+> 
+> ## cluster centers "fitted" to each obs.:
+> fitted.x <- fitted(cl);  head(fitted.x)
+           x          y
+2 0.02149367 0.02121248
+2 0.02149367 0.02121248
+2 0.02149367 0.02121248
+2 0.02149367 0.02121248
+2 0.02149367 0.02121248
+2 0.02149367 0.02121248
+> resid.x <- x - fitted(cl)
+> 
+> ## Equalities : ----------------------------------
+> cbind(cl[c("betweenss", "tot.withinss", "totss")], # the same two columns
++          c(ss(fitted.x), ss(resid.x),    ss(x)))
+             [,1]     [,2]    
+betweenss    46.07333 46.07333
+tot.withinss 14.9179  14.9179 
+totss        60.99123 60.99123
+> stopifnot(all.equal(cl$ totss,        ss(x)),
++ 	  all.equal(cl$ tot.withinss, ss(resid.x)),
++ 	  ## these three are the same:
++ 	  all.equal(cl$ betweenss,    ss(fitted.x)),
++ 	  all.equal(cl$ betweenss, cl$totss - cl$tot.withinss),
++ 	  ## and hence also
++ 	  all.equal(ss(x), ss(fitted.x) + ss(resid.x))
++ 	  )
+> 
+> kmeans(x,1)$withinss # trivial one-cluster, (its W.SS == ss(x))
 [1] 60.99123
 > 
 > ## random starts do help here with too many clusters
+> ## (and are often recommended anyway!):
 > (cl <- kmeans(x, 5, nstart = 25))
 K-means clustering with 5 clusters of sizes 24, 15, 24, 25, 12
 
@@ -10515,7 +10562,7 @@ Signif. codes:  0 ‘***’ 0.001 ‘**’ 0.01 ‘*’ 0.05 ‘.’ 0.1 ‘ ’
 > 
 > ### Name: optim
 > ### Title: General-purpose Optimization
-> ### Aliases: optim
+> ### Aliases: optim optimHess
 > ### Keywords: nonlinear optimize
 > 
 > ### ** Examples
@@ -11532,26 +11579,26 @@ attr(,"degree")
 $linkfun
 function (mu) 
 mu
-<bytecode: 0x2b4bc78>
-<environment: 0x7e36170>
+<bytecode: 0x20a6fc0>
+<environment: 0x6b2ba28>
 
 $linkinv
 function (eta) 
 eta
-<bytecode: 0x2b4bce8>
-<environment: 0x7e36170>
+<bytecode: 0x20a70d8>
+<environment: 0x6b2ba28>
 
 $mu.eta
 function (eta) 
 rep.int(1, length(eta))
-<bytecode: 0x2b4bd58>
-<environment: 0x7e36170>
+<bytecode: 0x20a7148>
+<environment: 0x6b2ba28>
 
 $valideta
 function (eta) 
 TRUE
-<bytecode: 0x2b4bf18>
-<environment: 0x7e36170>
+<bytecode: 0x20a73e8>
+<environment: 0x6b2ba28>
 
 $name
 [1] "identity"
@@ -11562,14 +11609,14 @@ attr(,"class")
 $linkfun
 function (mu) 
 mu^lambda
-<bytecode: 0x7e37128>
-<environment: 0x7e2ddb0>
+<bytecode: 0x6b2c9e0>
+<environment: 0x6af1b28>
 
 $linkinv
 function (eta) 
 pmax(eta^(1/lambda), .Machine$double.eps)
-<bytecode: 0x7e37240>
-<environment: 0x7e2ddb0>
+<bytecode: 0x6b2caf8>
+<environment: 0x6af1b28>
 
 > 
 > 
@@ -13478,6 +13525,35 @@ Quade F = 3.8293, num df = 4, denom df = 24, p-value = 0.01519
 > 
 > 
 > cleanEx()
+> nameEx("rWishart")
+> ### * rWishart
+> 
+> flush(stderr()); flush(stdout())
+> 
+> ### Name: rWishart
+> ### Title: Random Wishart Distributed Matrices
+> ### Aliases: rWishart
+> ### Keywords: multivariate
+> 
+> ### ** Examples
+> 
+> ## Artificial
+> S <- toeplitz((10:1)/10)
+> set.seed(11)
+> R <- rWishart(1000, 20, S)
+> dim(R)# 10 10  1000
+[1]   10   10 1000
+> mR <- apply(R, 1:2, mean)# ~= E[ Wish(S, 20) ] = 20 * S
+> stopifnot(all.equal(mR, 20*S, tol = .009))
+> 
+> ## See Details, the variance is
+> Va <- 20*(S^2 + tcrossprod(diag(S)))
+> vR <- apply(R, 1:2, var)
+> stopifnot(all.equal(vR, Va, tol = 1/16))
+> 
+> 
+> 
+> cleanEx()
 > nameEx("read.ftable")
 > ### * read.ftable
 > 
@@ -15226,8 +15302,8 @@ function (v)
     xout = as.double(v), as.integer(length(v)), as.integer(method), 
     as.double(yleft), as.double(yright), as.double(f), NAOK = TRUE, 
     PACKAGE = "stats")$xout
-<bytecode: 0x3fd01c8>
-<environment: 0x8d5f7a8>
+<bytecode: 0x2617f18>
+<environment: 0x7987648>
 attr(,"call")
 stepfun(1:3, y0, f = 0)
 > ls(envir = environment(sfun0))
@@ -15272,13 +15348,13 @@ f.f1c  1.0 1.00    1 2.00  2.0 2.00    2 4.00  4.0  4.00     4  3.00   3.0
  stl(x = log(co2), s.window = 21)
 
  Time.series components:
-    seasonal                 trend            remainder            
- Min.   :-9.939103e-03   Min.   :5.753541   Min.   :-2.255405e-03  
- 1st Qu.:-4.536535e-03   1st Qu.:5.778556   1st Qu.:-4.586796e-04  
- Median : 8.777611e-04   Median :5.815125   Median :-8.867395e-06  
- Mean   :-1.304469e-06   Mean   :5.819267   Mean   :-1.965549e-06  
- 3rd Qu.: 4.997747e-03   3rd Qu.:5.859806   3rd Qu.: 4.023465e-04  
- Max.   : 9.114691e-03   Max.   :5.898750   Max.   : 1.939626e-03  
+    seasonal                trend            remainder            
+ Min.   :-0.009939103   Min.   :5.753541   Min.   :-0.0022554051  
+ 1st Qu.:-0.004536535   1st Qu.:5.778556   1st Qu.:-0.0004586796  
+ Median : 0.000877761   Median :5.815125   Median :-0.0000088674  
+ Mean   :-0.000001304   Mean   :5.819267   Mean   :-0.0000019655  
+ 3rd Qu.: 0.004997747   3rd Qu.:5.859806   3rd Qu.: 0.0004023465  
+ Max.   : 0.009114691   Max.   :5.898750   Max.   : 0.0019396260  
  IQR:
      STL.seasonal STL.trend STL.remainder data    
      0.009534     0.081250  0.000861      0.079370
@@ -15302,13 +15378,13 @@ f.f1c  1.0 1.00    1 2.00  2.0 2.00    2 4.00  4.0  4.00     4  3.00   3.0
  stl(x = mdeaths, s.window = "per", robust = TRUE)
 
  Time.series components:
-    seasonal                 trend            remainder          
- Min.   :-4.468302e+02   Min.   :1318.650   Min.   :-314.583544  
- 1st Qu.:-3.015726e+02   1st Qu.:1432.208   1st Qu.: -32.539250  
- Median :-7.905613e+01   Median :1448.891   Median :   5.794267  
- Mean   :-2.497770e-06   Mean   :1472.880   Mean   :  23.064626  
- 3rd Qu.: 3.045673e+02   3rd Qu.:1548.974   3rd Qu.:  47.513361  
- Max.   : 5.447904e+02   Max.   :1615.535   Max.   : 872.199161  
+    seasonal             trend            remainder        
+ Min.   :-446.8302   Min.   :1318.650   Min.   :-314.5835  
+ 1st Qu.:-301.5726   1st Qu.:1432.208   1st Qu.: -32.5392  
+ Median : -79.0561   Median :1448.891   Median :   5.7943  
+ Mean   :   0.0000   Mean   :1472.880   Mean   :  23.0646  
+ 3rd Qu.: 304.5673   3rd Qu.:1548.974   3rd Qu.:  47.5134  
+ Max.   : 544.7904   Max.   :1615.535   Max.   : 872.1992  
  IQR:
      STL.seasonal STL.trend STL.remainder data  
      606.14       116.77     80.05        707.75
@@ -17302,13 +17378,6 @@ B    L                 27 14 29 19 29 31 41 20 44
 + }
 Loading required package: Matrix
 Loading required package: lattice
-
-Attaching package: ‘Matrix’
-
-The following object(s) are masked from ‘package:base’:
-
-    det
-
     Subj
 Type 1 2 3 4 5 6 7 8 9
   T1 4 4 4 4 4 4 4 4 4
@@ -17450,7 +17519,7 @@ Number of Fisher Scoring iterations: 6
 > ### * <FOOTER>
 > ###
 > cat("Time elapsed: ", proc.time() - get("ptime", pos = 'CheckExEnv'),"\n")
-Time elapsed:  12.179 0.339 12.589 0 0 
+Time elapsed:  12.13 0.325 12.522 0 0 
 > grDevices::dev.off()
 null device 
           1 

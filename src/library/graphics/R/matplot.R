@@ -31,7 +31,7 @@ matplot <- function(x, y, type = "p",
 		    xlab=NULL, ylab=NULL, xlim=NULL, ylim=NULL,
 		    ..., add= FALSE, verbose = getOption("verbose"))
 {
-    paste.ch <- function(chv) paste('"',chv,'"', sep="", collapse=" ")
+    paste.ch <- function(chv) paste0('"',chv,'"', collapse=" ")
     str2vec <- function(string) {
 	if(nchar(string, type="c")[1L] > 1)
 	    strsplit(string[1L], NULL)[[1L]]
@@ -69,9 +69,9 @@ matplot <- function(x, y, type = "p",
     ## else pch is numeric supposedly
     if(verbose)
 	message("matplot: doing ", k, " plots with ",
-	    paste(" col= (", paste.ch(col), ")", sep=''),
-	    paste(" pch= (", paste.ch(pch), ")", sep=''),
-	    " ...\n", domain=NA)
+		paste0(" col= (", paste.ch(col), ")"),
+		paste0(" pch= (", paste.ch(pch), ")"),
+		" ...\n", domain=NA)
     ii <- match("log", names(xargs <- list(...)), nomatch = 0L)
     log <- if (ii != 0) xargs[[ii]]
     xy <- xy.coords(x, y, xlabel, ylabel, log=log)

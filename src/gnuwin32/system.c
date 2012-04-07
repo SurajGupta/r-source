@@ -24,6 +24,7 @@
 # include <config.h>
 #endif
 
+#define R_USE_SIGNALS 1
 #include "Defn.h"
 #include <R_ext/Riconv.h>
 #include "Fileio.h"
@@ -34,7 +35,8 @@
 #include "getline/getline.h"
 #include "getline/wc_history.h"
 #define WIN32_LEAN_AND_MEAN 1
-#ifndef _WIN32_WINNT /* currently MinGW does not define, MinGW-w64 does */
+/* Mingw-w64 defines this to be 0x0502 */
+#ifndef _WIN32_WINNT
 #define _WIN32_WINNT 0x0500     /* for MEMORYSTATUSEX */
 #endif
 #include <windows.h>		/* for CreateEvent,.. */
@@ -783,7 +785,7 @@ char *PrintUsage(void)
 	msg1[] =
 	"  --no-environ          Don't read the site and user environment files\n  --no-site-file        Don't read the site-wide Rprofile\n  --no-init-file        Don't read the .Rprofile or ~/.Rprofile files\n  --restore             Do restore previously saved objects at startup\n  --no-restore-data     Don't restore previously saved objects\n  --no-restore-history  Don't restore the R history file\n  --no-restore          Don't restore anything\n",
 	msg2[] =
-	"  --vanilla             Combine --no-save, --no-restore, --no-site-file,\n                          --no-init-file and --no-environ\n  --min-vsize=N         Set vector heap min to N bytes; '4M' = 4 MegaB\n  --max-vsize=N         Set vector heap max to N bytes;\n  --min-nsize=N         Set min number of cons cells to N\n  --max-nsize=N         Set max number of cons cells to N\n",
+	"  --vanilla             Combine --no-save, --no-restore, --no-site-file,\n                          --no-init-file and --no-environ\n",
 	msg2b[] =
 	"  --max-mem-size=N      Set limit for memory to be used by R\n  --max-ppsize=N        Set max size of protect stack to N\n",
 	msg3[] =

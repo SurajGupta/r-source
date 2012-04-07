@@ -4,6 +4,70 @@
 \title{Windows-specific changes to R}
 \encoding{UTF-8}
 
+\section{CHANGES IN R VERSION 2.15.0}{
+  \subsection{NEW FEATURES}{
+    \itemize{
+      \item The 32-bit and 64-bit builds are now treated equally, as it
+      is anticipated that 64-bit R will soon be (if not already) the
+      more commonly used.  This entails:
+      
+      The \command{Rterm} or \command{Rgui} title mentions 32-bit as
+      well as 64-bit.
+      
+      The desktop icons are labelled \code{R i386} and \code{R x64}.
+
+      \command{R CMD INSTALL} for a package with compiled code will fail
+      if compilation fails for any of the installed sub-architectures:
+      use \option{--no-multiarch} to override this.
+
+      \item \code{postscript(file = "|cmd")} now works on Windows.
+      
+      \item \code{file.symlink()} is now implemented on NTFS file
+      systems on Vista or later, for accounts which have suitable
+      permissions (and most will not).  It can link existing
+      directories, and existing-or-not files.
+
+      \item There is a new function \code{Sys.junction()} to create
+      junction points on NTFS file systems.
+
+      \item C-level error formats now use the trio library, and so for
+      example output \samp{1.53e-11} (as required by C99) rather than
+      \samp{1.53e-011}.
+    }
+  }
+  
+  \subsection{INSTALLER}{
+    \itemize{
+      \item The installer has many fewer options with more files always
+      being installed, as a few Mb of file space is nowadays no longer
+      an issue.
+
+      \item It is now possible to select \sQuote{64-bit Files}
+      from the standard installer even on a 32-bit version of Windows.
+    }
+  }
+  
+  \subsection{PACKAGE INSTALLATION}{
+    \itemize{
+      \item As the current toolchain uses only 32-bit executables, it is
+      possible to compile a package for both architectures on 32-bit
+      Windows provided both architectures of \R have been installed: use
+      \command{Rcmd INSTALL --compile-both}.
+
+      \item \code{Rcmd INSTALL --merge-multiarch} will work (but do a
+      normal install) if only one architecture is installed.
+    }
+  }
+
+  \subsection{BUG FIXES}{
+    \itemize{
+      \item Due to a race condition, some graphics changes were not
+      flushed to the display if another graphics window was closed at
+      nearly the same time.  (Reported by Michael Sumner.)      
+    }
+  }
+}
+
 \section{CHANGES IN R VERSION 2.14.2}{
   \subsection{NEW FEATURES}{
     \itemize{

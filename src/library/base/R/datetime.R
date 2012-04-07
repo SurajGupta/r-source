@@ -175,7 +175,7 @@ format.POSIXlt <- function(x, format = "", usetz = FALSE, ...)
                 }
         format <- if(all(times[!is.na(times)] == 0)) "%Y-%m-%d"
         else if(np == 0L) "%Y-%m-%d %H:%M:%S"
-        else paste("%Y-%m-%d %H:%M:%OS", np, sep="")
+        else paste0("%Y-%m-%d %H:%M:%OS", np)
     }
     ## <FIXME>
     ## Move names handling to C code eventually ...
@@ -234,8 +234,13 @@ print.POSIXlt <- function(x, ...)
 
 summary.POSIXct <- function(object, digits = 15, ...)
 {
-    x <- summary.default(unclass(object), digits=digits, ...)[1L:6L]# no NA's
-    class(x) <- oldClass(object)
+    x <- summary.default(unclass(object), digits = digits, ...)
+    if(m <- match("NA's", names(x), 0)) {
+        NAs <- as.integer(x[m])
+        x <- x[-m]
+        attr(x, "NAs") <- NAs
+    }
+    class(x) <- c("summaryDefault", "table", oldClass(object))
     attr(x, "tzone") <- attr(object, "tzone")
     x
 }
@@ -500,7 +505,7 @@ units.difftime <- function(x) attr(x, "units")
     if (!(value %in% c("secs", "mins", "hours", "days", "weeks")))
         stop("invalid units specified")
     sc <- cumprod(c(secs=1, mins=60, hours=60, days=24, weeks=7))
-    newx <- as.vector(x)*sc[from]/sc[value]
+    newx <- unclass(x) * as.vector(sc[from]/sc[value])
     .difftime(newx, value)
 }
 
@@ -863,7 +868,7 @@ quarters <- function(x, abbreviate) UseMethod("quarters")
 quarters.POSIXt <- function(x, ...)
 {
     x <- (as.POSIXlt(x)$mon)%/%3
-    paste("Q", x+1, sep = "")
+    paste0("Q", x+1)
 }
 
 trunc.POSIXt <- function(x, units=c("secs", "mins", "hours", "days"), ...)

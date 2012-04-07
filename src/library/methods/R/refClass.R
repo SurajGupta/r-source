@@ -461,7 +461,7 @@ getRefSuperClasses <- function(classes, classDefs) {
     methodsEnv <- def@refMethods
     if(nargs() == 0)
         return(objects(methodsEnv, all.names = TRUE))
-    if(.classDefIsLocked(def))
+    if(methods:::.classDefIsLocked(def))
         stop(gettextf("The definition of class %s in package %s is locked, methods may not be redefined",
                       dQuote(def@className),
                       sQuote(def@package)),
@@ -533,60 +533,17 @@ c('Usage:  $help(topic) where topic is the name of a method (quoted or not)',
         }
     }
 },
-lock =  function(...) {
-    lockedFields <- .getLockedFieldNames(def)
-    if(nargs()<1)
-        return(lockedFields)
-    fields <- c(...)
-    if(is.character(fields) && all(nzchar(fields))) {}
-    else
-        stop("Arguments must all be character string names of fields")
-    if(.classDefIsLocked(def))
-        stop(gettextf("The definition of class %s in package %s is locked, fields may not be modified",
-                      dQuote(def@className),
-                      sQuote(def@package)),
-             domain = NA)
-    env <- def@fieldPrototypes
-    className <- def@className
-    for(what in fields) {
-        if(what %in% lockedFields) {
-            warning(gettextf("Field \"%s\" is already locked", what),
-                    domain = NA)
-            next
-        }
-        current <- env[[what]]
-        if(is.null(current))
-            stop(gettextf("\"%s\" is not a field in class %s",
-                          what,
-                          dQuote(className)),
-                 domain = NA)
-        if(is(current, "activeBindingFunction")) {
-            if(is(current, "defaultBindingFunction"))
-                env[[what]] <- .makeDefaultBinding(current@field,
-                    current@className, TRUE, environment(current))[[what]]
-            else
-                stop(gettextf("Field \"%s\" of class %s has a non-default binding and cannot be locked",
-                              what,
-                              dQuote(className)),
-                     domain = NA)
-        }
-        else {
-            ## capture the current prototype value with a read-only binding function
-            binding <- .makeDefaultBinding(current@field,
-               current@className, TRUE, environment(current))
-            env[[what]] <- binding[[what]]
-            metaName <- .bindingMetaName(what)
-            env[[metaName]] <- current
-        }
-        lockedFields <- c(lockedFields, what)
-    }
-    .setLockedFieldNames(def, lockedFields)
-    invisible(env)
-},
+lock =  function(...) methods:::.lockRefFields(def, ...),
 ## define accessor functions, store them in the refMethods environment
 ## of the class definition.
 accessors = function(...) {
-    if(.classDefIsLocked(def))
+    firstCap <- function(names) {
+        firstChars <- substr(names, 1,1)
+        modChars <- toupper(firstChars)
+        substr(names, 1, 1) <- modChars
+        list(get = paste0("get", names), set = paste0("set", names))
+    }
+    if(methods:::.classDefIsLocked(def))
         stop(gettextf("The definition of class %s in package %s is locked, fields may not be modified",
                       dQuote(def@className),
                       sQuote(def@package)),
@@ -630,7 +587,6 @@ accessors = function(...) {
 )
 
 .makeCall <- function(name, x) {
-    paste0 <- function(...)paste(..., sep = "")
     n <- length(argls <- formals(x))
     noDeflt <- if(n > 0) sapply(argls,function(x)  !is.name(x) || nzchar(as.character(x)))
     if (n) {
@@ -665,7 +621,7 @@ accessors = function(...) {
 }
 
 .bindingMetaName <- function(fieldName)
-    paste(".->", fieldName, sep="")
+    paste0(".->", fieldName)
 
 .makeActiveBinding <- function(thisField) {
     if(is(thisField, "activeBindingFunction"))
@@ -738,7 +694,7 @@ refClassInformation <- function(Class, contains, fields, refMethods, where) {
         missingDefs <- sapply(superClassDefs, is.null)
         if(any(missingDefs))
             stop(gettextf("No definition found for inherited class: %s",
-                          paste('"',contains[missingDefs], '"', sep = "", collapse = ", ")),
+                          paste0('"',contains[missingDefs], '"', collapse = ", ")),
                  domain = NA)
         superClasses <- unlist(lapply(superClassDefs,
                           function(def) def@className), FALSE)
@@ -990,7 +946,7 @@ showClassMethod <- function(object) {
         cat("\n",header,"\n    ")
     else
         cat(header,": ",sep="")
-    cat(paste('"', names, '"', sep = ""), sep = ", ", fill = TRUE)
+    cat(paste0('"', names, '"'), sep = ", ", fill = TRUE)
     cat("\n")
     }
 
@@ -1013,14 +969,6 @@ showRefClassDef <- function(object, title = "Reference Class") {
     supers <- object@refSuperClasses
     if(length(supers))
         .printNames("Reference Superclasses: ", supers)
-}
-
-
-firstCap <- function(names) {
-    firstChars <- substr(names, 1,1)
-    modChars <- toupper(firstChars)
-    substr(names, 1, 1) <- modChars
-    list(get = paste("get", names, sep = ""), set = paste("set", names, sep = ""))
 }
 
 
@@ -1090,10 +1038,10 @@ all.equal.environment <- function(target, current, ...) {
 .checkFieldsInMethod <- function(methodDef, fieldNames, methodNames) {
     if(!.hasCodeTools())
         return(NA)
-    paste0 <- function(x) paste('"', x, '"', sep = "", collapse = "; ")
+    p0q <- function(x) paste0('"', x, '"', collapse = "; ")
     if(is(methodDef, "refMethodDef")) {
-        methodName <- paste0(methodDef@name)
-        className <- paste0(methodDef@refClassName)
+        methodName <- p0q(methodDef@name)
+        className <- p0q(methodDef@refClassName)
     }
     else {
         methodName <- className <- ""
@@ -1146,4 +1094,55 @@ all.equal.environment <- function(target, current, ...) {
     env <- def@fieldPrototypes
     env[[.lockedFieldsMetaName]] <- value
     value
+}
+
+.lockRefFields <- function(def, ...) {
+    lockedFields <- .getLockedFieldNames(def)
+    if(nargs()<2)
+        return(lockedFields)
+    fields <- c(...)
+    if(is.character(fields) && all(nzchar(fields))) {}
+    else
+        stop("Arguments must all be character string names of fields")
+    if(.classDefIsLocked(def))
+        stop(gettextf("The definition of class %s in package %s is locked, fields may not be modified",
+                      dQuote(def@className),
+                      sQuote(def@package)),
+             domain = NA)
+    env <- def@fieldPrototypes
+    className <- def@className
+    for(what in fields) {
+        if(what %in% lockedFields) {
+            warning(gettextf("Field \"%s\" is already locked", what),
+                    domain = NA)
+            next
+        }
+        current <- env[[what]]
+        if(is.null(current))
+            stop(gettextf("\"%s\" is not a field in class %s",
+                          what,
+                          dQuote(className)),
+                 domain = NA)
+        if(is(current, "activeBindingFunction")) {
+            if(is(current, "defaultBindingFunction"))
+                env[[what]] <- .makeDefaultBinding(current@field,
+                    current@className, TRUE, environment(current))[[what]]
+            else
+                stop(gettextf("Field \"%s\" of class %s has a non-default binding and cannot be locked",
+                              what,
+                              dQuote(className)),
+                     domain = NA)
+        }
+        else {
+            ## capture the current prototype value with a read-only binding function
+            binding <- .makeDefaultBinding(current@field,
+               current@className, TRUE, environment(current))
+            env[[what]] <- binding[[what]]
+            metaName <- .bindingMetaName(what)
+            env[[metaName]] <- current
+        }
+        lockedFields <- c(lockedFields, what)
+    }
+    .setLockedFieldNames(def, lockedFields)
+    invisible(env)
 }

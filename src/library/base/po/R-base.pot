@@ -1,8 +1,8 @@
 msgid ""
 msgstr ""
-"Project-Id-Version: R 2.14.1\n"
+"Project-Id-Version: R 2.15.0\n"
 "Report-Msgid-Bugs-To: bugs@r-project.org\n"
-"POT-Creation-Date: 2012-01-23 08:18\n"
+"POT-Creation-Date: 2012-03-12 09:01\n"
 "PO-Revision-Date: YEAR-MO-DA HO:MI+ZONE\n"
 "Last-Translator: FULL NAME <EMAIL@ADDRESS>\n"
 "Language-Team: LANGUAGE <LL@li.org>\n"
@@ -21,12 +21,6 @@ msgid "See help(\"Defunct\") and help(\"%s-defunct\")."
 msgstr ""
 
 msgid "See help(\"Defunct\")"
-msgstr ""
-
-msgid "'symbol.C' is not needed: please remove it"
-msgstr ""
-
-msgid "'symbol.For' is not needed: please remove it"
 msgstr ""
 
 msgid "'%s' is deprecated."
@@ -911,6 +905,9 @@ msgstr ""
 msgid "Use of save versions prior to 2 is deprecated"
 msgstr ""
 
+msgid "nothing specified to be save()d"
+msgstr ""
+
 msgid "'file' must be non-empty string"
 msgstr ""
 
@@ -1067,6 +1064,9 @@ msgstr ""
 msgid "in package %s classes %s were specified for export but not defined"
 msgstr ""
 
+msgid "No function found corresponding to methods exports from %s for: %s"
+msgstr ""
+
 msgid "in %s methods for export not found: %s"
 msgstr ""
 
@@ -1115,7 +1115,13 @@ msgstr ""
 msgid "found methods to import for function %s but not the generic itself"
 msgstr ""
 
+msgid "No methods found in \"%s\" for requests: %s"
+msgstr ""
+
 msgid "requested methods not found in environment/package %s: %s"
+msgstr ""
+
+msgid "No generic function found corresponding to requested imported methods for \"%s\" from package \"%s\" (malformed exports?)"
 msgstr ""
 
 msgid "cannot add to exports of a sealed namespace"
@@ -1245,6 +1251,9 @@ msgid "argument 'length.out' must be of length 1"
 msgstr ""
 
 msgid "first element used of 'length.out' argument"
+msgstr ""
+
+msgid "extra argument(s) %s will be disregarded"
 msgstr ""
 
 msgid "invalid (to - from)/by in seq(.)"
@@ -1511,6 +1520,15 @@ msgstr ""
 msgid "'which' was not found on this platform"
 msgstr ""
 
+msgid "fewer 'from' files than 'to' files"
+msgstr ""
+
+msgid "link '%s' already exists"
+msgstr ""
+
+msgid "failed to create directory for link '%s"
+msgstr ""
+
 msgid "'show.output.on.console' must be TRUE or FALSE"
 msgstr ""
 
@@ -1578,6 +1596,11 @@ msgstr[1]    ""
 
 msgid        "object %s not found"
 msgid_plural "objects %s not found"
+msgstr[0]    ""
+msgstr[1]    ""
+
+msgid        "Function found when exporting methods from the namespace %s which is not S4 generic: %s"
+msgid_plural "Functions found when exporting methods from the namespace %s which are not S4 generic: %s"
 msgstr[0]    ""
 msgstr[1]    ""
 

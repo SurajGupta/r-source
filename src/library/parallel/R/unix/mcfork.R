@@ -82,7 +82,7 @@ mckill <- function(process, signal = 2L)
 ## used by mcparallel, mclapply
 sendMaster <- function(what)
 {
-    if (!is.raw(what)) what <- serialize(what, NULL, FALSE)
+    if (!is.raw(what)) what <- serialize(what, NULL)
     .Call(C_mc_send_master, what, PACKAGE = "parallel")
 }
 

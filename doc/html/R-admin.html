@@ -94,6 +94,9 @@ p {
 <li><a href="#Multilib">2.6.1 Multilib</a>
 </li></ul>
 <li><a href="#Other-Options">2.7 Other Options</a>
+<ul>
+<li><a href="#Inter_002dProcedure-Optimization">2.7.1 Inter-Procedure Optimization</a>
+</li></ul>
 <li><a href="#Testing-a-Unix_002dalike-Installation">2.8 Testing an Installation</a>
 </li></ul>
 <li><a name="toc_Installing-R-under-Windows" href="#Installing-R-under-Windows">3 Installing R under Windows</a>
@@ -240,7 +243,7 @@ p {
 
 <p>This is a guide to installation and administration for R.
 
-   <p>The current version of this document is 2.14.2 (2012-02-29).
+   <p>The current version of this document is 2.15.0 (2012-03-30).
 
    <p>ISBN 3-900051-09-7
 
@@ -678,12 +681,12 @@ specified on the <samp><span class="command">make install</span></samp> command 
 <code>libdir</code>.  The C header files can be installed to the value of
 <code>rincludedir</code>: note that as the headers are not installed into a
 subdirectory you probably want something like
-<code>rincludedir=/usr/local/include/R-2.14.2</code>.
+<code>rincludedir=/usr/local/include/R-2.15.0</code>.
 
    <p>If you want the R home to be something other than
 <samp><var>libdir</var><span class="file">/R</span></samp>, use <samp><span class="option">rhome</span></samp>: for example
 
-<pre class="example">     make install rhome=/usr/local/lib64/R-2.14.0
+<pre class="example">     make install rhome=/usr/local/lib64/R-2.15.0
 </pre>
    <p class="noindent">will use a version-specific R home on a Linux 64-bit system.
 
@@ -882,6 +885,38 @@ recommended packages are lazyloaded but not byte-compiled.
 <samp><span class="env">R_NO_BASE_COMPILE</span></samp> can be set to a non-empty value for the duration
 of the build.)
 
+<p><a name="Inter-Procedure-Optimization"></a>
+<a name="Inter_002dProcedure-Optimization"></a>
+
+<h4 class="subsection">2.7.1 Inter-Procedure Optimization</h4>
+
+<p>In a conventional build system each C/Fortran source file is compiled
+and optimized separately.  A trend in modern compilers is to carry
+optimization across source files: this has been done in commercial
+compilers for some time.
+
+   <p>GCC introduced a version of inter-procedure optimization in version
+4.5.0, which it calls <em>link-time optimization</em>.  This writes an
+intermediate representation in the <samp><span class="file">.o</span></samp> file, and then the linker
+combines those intermediate representations and re-compiles with
+optimization the combined representation.  Support for LTO is still
+evolving: it is available for ELF-based systems and more recently for
+PE_COFF (Windows): only on some platforms<a rel="footnote" href="#fn-8" name="fnd-8"><sup>8</sup></a> can objects in static libraries be
+included in the link-time optimization.
+
+   <p>Link-time optimization roughly doubles the compilation time and
+increases the size of the <samp><span class="file">.o</span></samp> files (but not the installed
+<samp><span class="file">.so</span></samp> and executable files).
+
+   <p>Link-time optimization can be enabled by the <samp><span class="command">configure</span></samp> option
+<samp><span class="option">--enable-lto</span></samp>: no check is made that the compiler/linker support
+it.  In experiments with <samp><span class="command">gcc</span></samp> 4.5.x on Linux the performance
+gain was very small (mainly seen with <samp><span class="option">--enable-R-shlib</span></samp>), but
+this may not be so with later compilers or other platforms.
+
+   <p>Setting <samp><span class="option">--enable-lto=R</span></samp> enables LTO for building R itself but
+not for extension packages (including the recommended packages).
+
 <p><a name="Testing-a-Unix-alike-Installation"></a>
 <a name="Testing-a-Unix_002dalike-Installation"></a>
 
@@ -952,13 +987,13 @@ try setting
 The <samp><span class="file">bin/windows</span></samp> directory of a <acronym>CRAN</acronym> site contains
 binaries for a base distribution and a large number of add-on packages
 from <acronym>CRAN</acronym> to run on Windows XP or later on ix86
-<acronym>CPU</acronym>s (including AMD64/Intel64<a rel="footnote" href="#fn-8" name="fnd-8"><sup>8</sup></a> chips and Windows x64).
+<acronym>CPU</acronym>s (including AMD64/Intel64<a rel="footnote" href="#fn-9" name="fnd-9"><sup>9</sup></a> chips and Windows x64).
 
    <p>Your file system must allow long file names (as is likely except
 perhaps for some network-mounted systems).
 
    <p>Installation is <em>via</em> the installer
-<samp><span class="file">R-2.14.2-win.exe</span></samp>.  Just double-click on the icon and
+<samp><span class="file">R-2.15.0-win.exe</span></samp>.  Just double-click on the icon and
 follow the instructions.  When installing on a 64-bit version of Windows
 the options will include 32- or 64-bit versions of R (and the default is
 to install both).  You can uninstall R from the Control Panel.
@@ -997,10 +1032,8 @@ install the extra files into your intended R source directory, e.g.
 <samp><span class="file">C:/R</span></samp>. The directory name <em>should not contain spaces</em>. We
 will call this directory <samp><var>R_HOME</var></samp> below.
 
-   <p>The preferred set of tools for R 2.14.2 is contained in
-<samp><span class="file">Rtools215.exe</span></samp> which uses a single 32/64-bit toolchain: the
-separate 32- and 64-bit toolchains contained in <samp><span class="file">Rtools214.exe</span></samp> can
-still be used.
+   <p>The toolchain used as from R 2.14.2 differs from from that used for
+R 2.12.0 to R 2.14.1.
 
 <p><a name="Getting-the-source-files"></a>
 
@@ -1008,11 +1041,11 @@ still be used.
 
 <p>You need to collect the following sets of files:
      <ul>
-<li>Get the R source code tarball <samp><span class="file">R-2.14.2.tar.gz</span></samp> from
+<li>Get the R source code tarball <samp><span class="file">R-2.15.0.tar.gz</span></samp> from
 <acronym>CRAN</acronym>.  Open a command window (or another shell) at directory
 <var>R_HOME</var>, and run
 
-     <pre class="example">          tar -xf R-2.14.2.tar.gz
+     <pre class="example">          tar -xf R-2.15.0.tar.gz
 </pre>
      <p class="noindent">to create the source tree in <var>R_HOME</var>.  <strong>Beware</strong>: do use
 <samp><span class="command">tar</span></samp> to extract the sources rather than tools such as WinZip
@@ -1020,7 +1053,7 @@ that do not understand symbolic links.  If you are using an account with
 administrative privileges you may get a lot of messages which can be
 suppressed by
 
-     <pre class="example">          tar --no-same-owner -xf R-2.14.2.tar.gz
+     <pre class="example">          tar --no-same-owner -xf R-2.15.0.tar.gz
 </pre>
      <p class="noindent"><a name="index-TAR_005fOPTIONS-25"></a>or perhaps better, set the environment variable <samp><span class="env">TAR_OPTIONS</span></samp> to the
 value &lsquo;<samp><span class="samp">--no-same-owner --no-same-permissions</span></samp>&rsquo;.
@@ -1260,7 +1293,7 @@ made R in the source tree) in <samp><span class="file">src/gnuwin32/installer</s
 installation (in double quotes if it contains spaces or backslashes).
 
    <p>Both methods create an executable with a standard name such as
-<samp><span class="file">R-2.14.2-win.exe</span></samp>, so please rename it to indicate that
+<samp><span class="file">R-2.15.0-win.exe</span></samp>, so please rename it to indicate that
 it is customized.  If you intend to <em>distribute</em> a customized
 installer please do check that license requirements are met &ndash; note that
 the installer will state that the contents are distributed under GPL-2
@@ -1311,21 +1344,21 @@ required.  Then
      make msi
 </pre>
    <p class="noindent">which will result in a file with a name like
-<samp><span class="file">R-2.14.2-win32.msi</span></samp>.  This can be double-clicked to be
+<samp><span class="file">R-2.15.0-win32.msi</span></samp>.  This can be double-clicked to be
 installed, but those who need it will know what to do with it (usually
 by running <samp><span class="command">msiexec /i</span></samp> with additional options).  Properties
 that users might want to set from the <samp><span class="command">msiexec</span></samp> command line
 include &lsquo;<samp><span class="samp">ALLUSERS</span></samp>&rsquo;, &lsquo;<samp><span class="samp">INSTALLDIR</span></samp>&rsquo; (something like
-<samp><span class="file">c:\Program Files\R\R-2.14.2</span></samp>) and &lsquo;<samp><span class="samp">RMENU</span></samp>&rsquo; (the path
+<samp><span class="file">c:\Program Files\R\R-2.15.0</span></samp>) and &lsquo;<samp><span class="samp">RMENU</span></samp>&rsquo; (the path
 to the &lsquo;<samp><span class="samp">R</span></samp>&rsquo; folder on the start menu) and &lsquo;<samp><span class="samp">STARTDIR</span></samp>&rsquo; (the
 starting directory for R shortcuts, defaulting to something like
 <samp><span class="file">c:\Users\name\Documents\R</span></samp>).
 
    <p>The MSI installer can be built both from a 32-bit build of R
-(<samp><span class="file">R-2.14.2-win32.msi</span></samp>) and from a 64-bit build of R
-(<samp><span class="file">R-2.14.2-win64.msi</span></samp>, optionally including 32-bit files
+(<samp><span class="file">R-2.15.0-win32.msi</span></samp>) and from a 64-bit build of R
+(<samp><span class="file">R-2.15.0-win64.msi</span></samp>, optionally including 32-bit files
 by setting the macro <code>HOME32</code>, when the name is
-<samp><span class="file">R-2.14.2-win.msi</span></samp>).  Unlike the main installer, a 64-bit
+<samp><span class="file">R-2.15.0-win.msi</span></samp>).  Unlike the main installer, a 64-bit
 MSI installer can only be run on 64-bit Windows.
 
    <p>Thanks to David del Campo (Dept of Statistics, University of Oxford)
@@ -1395,7 +1428,7 @@ The <samp><span class="file">bin/macosx</span></samp> directory of a <acronym>CR
 binaries for OS X for a base distribution and a large number of
 add-on packages from <acronym>CRAN</acronym> to run on OS X 10.[567].
 
-   <p>The simplest way is to use <samp><span class="file">R-2.14.2.pkg</span></samp>: just
+   <p>The simplest way is to use <samp><span class="file">R-2.15.0.pkg</span></samp>: just
 double-click on the icon.  Note that Tcl/Tk and the Fortran compiler
 need to be installed separately if needed.
 
@@ -1411,8 +1444,8 @@ Mac OS X FAQ for full details.  You will need to collect and install
 some tools as explained in that document.  Then you have to unpack the
 R sources and configure R appropriately, for example
 
-<pre class="example">     tar -zxvf R-2.14.2.tar.gz
-     cd R-2.14.2
+<pre class="example">     tar -zxvf R-2.15.0.tar.gz
+     cd R-2.15.0
      ./configure --with-blas='-framework vecLib' --with-lapack \
        --with-aqua --enable-R-framework
      make
@@ -1532,7 +1565,7 @@ package installed there.
 
    <p>R comes with a single library, <samp><var>R_HOME</var><span class="file">/library</span></samp> which is
 the value of the R object &lsquo;<samp><span class="samp">.Library</span></samp>&rsquo; containing the standard and
-recommended<a rel="footnote" href="#fn-9" name="fnd-9"><sup>9</sup></a>  packages. 
+recommended<a rel="footnote" href="#fn-10" name="fnd-10"><sup>10</sup></a>  packages. 
 Both sites and users can create others and make use of them (or not) in
 an R session.  At the lowest level &lsquo;<samp><span class="samp">.libPaths()</span></samp>&rsquo; can be used to
 add paths to the collection of libraries or to report the current
@@ -1541,7 +1574,7 @@ collection.
    <p><a name="index-Libraries_002c-site-42"></a><a name="index-Site-libraries-43"></a>R will automatically make use of a site-specific library
 <samp><var>R_HOME</var><span class="file">/site-library</span></samp> if this exists (it does not in a
 vanilla R installation).  This location can be overridden by
-setting<a rel="footnote" href="#fn-10" name="fnd-10"><sup>10</sup></a> &lsquo;<samp><span class="samp">.Library.site</span></samp>&rsquo; in
+setting<a rel="footnote" href="#fn-11" name="fnd-11"><sup>11</sup></a> &lsquo;<samp><span class="samp">.Library.site</span></samp>&rsquo; in
 <samp><var>R_HOME</var><span class="file">/etc/Rprofile.site</span></samp>, or (not recommended) by setting
 the
 <a name="index-R_005fLIBS_005fSITE-44"></a>environment variable <samp><span class="env">R_LIBS_SITE</span></samp>.  Like &lsquo;<samp><span class="samp">.Library</span></samp>&rsquo;, the
@@ -1580,7 +1613,7 @@ in recent versions of R, which install packages as if <code>umask = 022</code>.)
    <p>For most users it suffices to call
 &lsquo;<samp><span class="samp">install.packages(</span><var>pkgname</var><span class="samp">)</span></samp>&rsquo; or its GUI equivalent if the
 intention is to install a <acronym>CRAN</acronym> package and internet access is
-available.<a rel="footnote" href="#fn-11" name="fnd-11"><sup>11</sup></a>  On most systems &lsquo;<samp><span class="samp">install.packages()</span></samp>&rsquo;
+available.<a rel="footnote" href="#fn-12" name="fnd-12"><sup>12</sup></a>  On most systems &lsquo;<samp><span class="samp">install.packages()</span></samp>&rsquo;
 will allow packages to be selected from a list box.
 
    <p>To install packages from source in a Unix-alike use
@@ -1687,7 +1720,7 @@ whether or not the other architecture was successfully installed.
 
    <p>The exceptions are packages with a non-empty <samp><span class="file">configure.win</span></samp> script
 or which make use of <samp><span class="file">src/Makefile.win</span></samp>.  If <samp><span class="file">configure.win</span></samp>
-does something appropriate to both architectures use<a rel="footnote" href="#fn-12" name="fnd-12"><sup>12</sup></a> option
+does something appropriate to both architectures use<a rel="footnote" href="#fn-13" name="fnd-13"><sup>13</sup></a> option
 <samp><span class="option">--force-biarch</span></samp>: otherwise <samp><span class="command">R CMD INSTALL
 --merge-multiarch</span></samp> can be applied to a source tarball to merge separate
 32- and 64-bit installs.  (This can only be applied to a tarball, and
@@ -1788,7 +1821,7 @@ starting with a source tarball.
 
 <h4 class="subsection">6.3.5 Byte-compilation</h4>
 
-<p>In R 2.14.x only the base and recommended packages are byte-compiled
+<p>As from R 2.14.0 the base and recommended packages are byte-compiled
 by default.  Other packages can be byte-compiled on installation by
 using the option <samp><span class="option">--byte-compile</span></samp> with <samp><span class="command">R CMD INSTALL</span></samp> or
 with <code>install.packages(type = "source")</code>.
@@ -2025,7 +2058,7 @@ Chinese.
 
 <h4 class="subsection">7.1.1 Locales under Linux</h4>
 
-<p>Modern Linux uses the XPG<a rel="footnote" href="#fn-13" name="fnd-13"><sup>13</sup></a> locale specifications which have the form
+<p>Modern Linux uses the XPG<a rel="footnote" href="#fn-14" name="fnd-14"><sup>14</sup></a> locale specifications which have the form
 &lsquo;<samp><span class="samp">en_GB</span></samp>&rsquo;, &lsquo;<samp><span class="samp">en_GB.UTF-8</span></samp>&rsquo;, &lsquo;<samp><span class="samp">aa_ER.UTF-8@saaho</span></samp>&rsquo;,
 &lsquo;<samp><span class="samp">de_AT.iso885915@euro</span></samp>&rsquo;, the components being in the order listed
 above.  (See <samp><span class="command">man locale</span></samp> and <samp><span class="command">locale -a</span></samp> for more
@@ -2074,7 +2107,7 @@ specified it is assumed to be <code>UTF-8</code>.
 
 <p>The preferred language for messages is by default taken from the locale. 
 This can be overridden first by the setting of the environment variable
-<a name="index-LANGUAGE-61"></a><a name="index-LC_005fALL-62"></a><a name="index-LC_005fMESSAGES-63"></a><a name="index-LANG-64"></a><samp><span class="env">LANGUAGE</span></samp> and then<a rel="footnote" href="#fn-14" name="fnd-14"><sup>14</sup></a>
+<a name="index-LANGUAGE-61"></a><a name="index-LC_005fALL-62"></a><a name="index-LC_005fMESSAGES-63"></a><a name="index-LANG-64"></a><samp><span class="env">LANGUAGE</span></samp> and then<a rel="footnote" href="#fn-15" name="fnd-15"><sup>15</sup></a>
 by the environment variables <samp><span class="env">LC_ALL</span></samp>, <samp><span class="env">LC_MESSAGES</span></samp> and
 <samp><span class="env">LANG</span></samp>. (The last three are normally used to set the locale and so
 should not be needed, but the first is only used to select the language
@@ -2088,7 +2121,7 @@ language to Spanish.)
    <p>It is usually possible to change the language once R is running
 <em>via</em> (not Windows) <code>Sys.setlocale("LC_MESSAGES",
 "new_locale")</code>, or by setting an environment variable such as
-<samp><span class="env">LANGUAGE</span></samp>, <em>provided</em><a rel="footnote" href="#fn-15" name="fnd-15"><sup>15</sup></a> the language you are changing to can be output in
+<samp><span class="env">LANGUAGE</span></samp>, <em>provided</em><a rel="footnote" href="#fn-16" name="fnd-16"><sup>16</sup></a> the language you are changing to can be output in
 the current character set.  But this is OS-specific, and has been known
 to stop working on an OS upgrade.
 
@@ -2120,7 +2153,7 @@ to a generic German one (&lsquo;<samp><span class="samp">de</span></samp>&rsquo;
 specific translation catalogue exists but does not contain a
 translation, the less specific catalogues are consulted.  For example,
 R has catalogues for &lsquo;<samp><span class="samp">en_GB</span></samp>&rsquo; that translate the Americanisms
-(e.g., &lsquo;<samp><span class="samp">gray</span></samp>&rsquo;) in the standard messages into English.<a rel="footnote" href="#fn-16" name="fnd-16"><sup>16</sup></a>  Two other examples: there are catalogues
+(e.g., &lsquo;<samp><span class="samp">gray</span></samp>&rsquo;) in the standard messages into English.<a rel="footnote" href="#fn-17" name="fnd-17"><sup>17</sup></a>  Two other examples: there are catalogues
 for &lsquo;<samp><span class="samp">es</span></samp>&rsquo;, which is Spanish as written in Spain and these will by
 default also be used in Spanish-speaking Latin American countries, and
 also for &lsquo;<samp><span class="samp">pt_BR</span></samp>&rsquo;, which are used for Brazilian locales but not for
@@ -2135,7 +2168,7 @@ error messages with pairs of quotes translated to Unicode directional
 quotes.
 
    <p>If no suitable translation catalogue is found or a particular message is
-not translated in any suitable catalogue, `English'<a rel="footnote" href="#fn-17" name="fnd-17"><sup>17</sup></a> is used.
+not translated in any suitable catalogue, `English'<a rel="footnote" href="#fn-18" name="fnd-18"><sup>18</sup></a> is used.
 
    <p>See <a href="http://developer.r-project.org/Translations.html">http://developer.r-project.org/Translations.html</a> for how to
 prepare and install translation catalogues.
@@ -2156,8 +2189,8 @@ specific OSes).  For most a 32-bit version is the default, but for some
 (e.g., &lsquo;<samp><span class="samp">x86_64</span></samp>&rsquo; Linux and (Mac) OS X &gt;= 10.6) 64-bit is.
 
    <p>All current versions of R use 32-bit integers and
-<acronym>IEC</acronym>&nbsp;60559<a rel="footnote" href="#fn-18" name="fnd-18"><sup>18</sup></a> double-precision reals, and so compute to
-the same precision<a rel="footnote" href="#fn-19" name="fnd-19"><sup>19</sup></a> and with the same limits on the sizes of
+<acronym>IEC</acronym>&nbsp;60559<a rel="footnote" href="#fn-19" name="fnd-19"><sup>19</sup></a> double-precision reals, and so compute to
+the same precision<a rel="footnote" href="#fn-20" name="fnd-20"><sup>20</sup></a> and with the same limits on the sizes of
 numerical quantities.  The principal difference is in the size of the
 pointers.
 
@@ -2210,7 +2243,7 @@ use of 32-bit integers (especially in FORTRAN code).  On all builds of
 R, the maximum length (number of elements) of a vector is
 2^31-1, about 2 billion, and on 64-bit builds the size of a
 block of memory allocated is limited to 2^34-1 bytes (8GB).  It
-is anticipated these will be raised eventually<a rel="footnote" href="#fn-20" name="fnd-20"><sup>20</sup></a> but the need for 8GB objects is (when
+is anticipated these will be raised eventually<a rel="footnote" href="#fn-21" name="fnd-21"><sup>21</sup></a> but the need for 8GB objects is (when
 this was written in 2011) exceptional.
 
 <p><a name="The-standalone-Rmath-library"></a>
@@ -2218,7 +2251,7 @@ this was written in 2011) exceptional.
 <h2 class="chapter">9 The standalone Rmath library</h2>
 
 <p>The routines supporting the distribution and
-special<a rel="footnote" href="#fn-21" name="fnd-21"><sup>21</sup></a> functions in R
+special<a rel="footnote" href="#fn-22" name="fnd-22"><sup>22</sup></a> functions in R
 and a few others are declared in C header file <samp><span class="file">Rmath.h</span></samp>.  These
 can be compiled into a standalone library for linking to other
 applications.  (Note that they are not a separate library when R is
@@ -2230,7 +2263,7 @@ is the current working directory (in the build directory tree on a
 Unix-alike if that is separate from the sources).
 
    <p><samp><span class="file">Rmath.h</span></samp> contains &lsquo;<samp><span class="samp">R_VERSION_STRING</span></samp>&rsquo;, which is a character
-string containing the current R version, for example <code>"2.14.0"</code>.
+string containing the current R version, for example <code>"2.15.0"</code>.
 
    <p>There is full access to R's handling of <code>NaN</code>, <code>Inf</code> and
 <code>-Inf</code> via special versions of the macros and functions
@@ -2327,7 +2360,7 @@ library.
 
 <h3 class="section">9.2 Windows</h3>
 
-<p>You need to set up<a rel="footnote" href="#fn-22" name="fnd-22"><sup>22</sup></a> almost all the
+<p>You need to set up<a rel="footnote" href="#fn-23" name="fnd-23"><sup>23</sup></a> almost all the
 tools to make R and then run (in a Unix-like shell)
 
 <pre class="example">     (cd ../../gnuwin32; make MkRules)
@@ -2402,11 +2435,11 @@ installed.
 <h3 class="section">A.1 Essential programs and libraries</h3>
 
 <p>You need a means of compiling C and FORTRAN 77 (see <a href="#Using-FORTRAN">Using FORTRAN</a>).  Some add-on packages also need a C++ compiler.  Your C
-compiler should be <acronym>IEC</acronym>&nbsp;60059<a rel="footnote" href="#fn-23" name="fnd-23"><sup>23</sup></a>, POSIX 1003.1 and C99-compliant.<a rel="footnote" href="#fn-24" name="fnd-24"><sup>24</sup></a>  R tries to choose suitable flags for the C
+compiler should be <acronym>IEC</acronym>&nbsp;60059<a rel="footnote" href="#fn-24" name="fnd-24"><sup>24</sup></a>, POSIX 1003.1 and C99-compliant.<a rel="footnote" href="#fn-25" name="fnd-25"><sup>25</sup></a>  R tries to choose suitable flags for the C
 compilers it knows about, but you may have to set <code>CC</code> or
 <code>CFLAGS</code> suitably.  For recent versions of <samp><span class="command">gcc</span></samp> with
 <code>glibc</code> this means including
-<samp><span class="option">-std=gnu99</span></samp><a rel="footnote" href="#fn-25" name="fnd-25"><sup>25</sup></a>.  If the compiler is
+<samp><span class="option">-std=gnu99</span></samp><a rel="footnote" href="#fn-26" name="fnd-26"><sup>26</sup></a>.  If the compiler is
 detected as <samp><span class="command">gcc</span></samp>, <samp><span class="option">-std=gnu99</span></samp> will be appended to
 <code>CC</code> unless it conflicts with a setting of <code>CFLAGS</code>.  (Note
 that options essential to run the compiler even for linking, such as
@@ -2437,7 +2470,7 @@ replacement: see <a href="http://www.gnu.org/software/libiconv/">http://www.gnu.
 
    <p>An implementation of <acronym>XDR</acronym> is required.  This is part of
 <acronym>RPC</acronym> and historically has been part of <samp><span class="file">libc</span></samp> on a
-Unix-alike: however some builds<a rel="footnote" href="#fn-26" name="fnd-26"><sup>26</sup></a> of <code>glibc
+Unix-alike: however some builds<a rel="footnote" href="#fn-27" name="fnd-27"><sup>27</sup></a> of <code>glibc
 2.14</code> hide it.  The intention seems to be that the <acronym>TI-RPC</acronym>
 library be used instead, in which case <code>libtirpc</code> (and its
 development version) needs to be installed, and its headers need to be
@@ -2448,11 +2481,11 @@ include path).  The R sources contain a simple implementation of
 32-bit or 64-bit <code>long</code> (and earlier ones will fail to compile
 unless <code>long</code> is 32-bit).
 
-   <p>The OS needs to have enough support<a rel="footnote" href="#fn-27" name="fnd-27"><sup>27</sup></a> for wide-character
+   <p>The OS needs to have enough support<a rel="footnote" href="#fn-28" name="fnd-28"><sup>28</sup></a> for wide-character
 types: this is checked at configuration.
 
    <p>A <samp><span class="command">tar</span></samp> program is needed to unpack the sources and packages
-(including the recommended packages).  A version<a rel="footnote" href="#fn-28" name="fnd-28"><sup>28</sup></a> that can
+(including the recommended packages).  A version<a rel="footnote" href="#fn-29" name="fnd-29"><sup>29</sup></a> that can
 automagically detect compressed archives is preferred for use with
 <code>untar()</code>: the configure script looks for <samp><span class="command">gtar</span></samp> and
 <samp><span class="command">gnutar</span></samp> before
@@ -2470,7 +2503,7 @@ the <acronym>HTML</acronym> manuals will be linked to <acronym>CRAN</acronym>. T
 versions of the manuals you will also need file <samp><span class="file">texinfo.tex</span></samp>
 installed (which is part of the <acronym>GNU</acronym> <strong>texinfo</strong> distribution
 but is often made part of the TeX package in re-distributions) as
-well as <samp><span class="command">texi2dvi</span></samp>.<a rel="footnote" href="#fn-29" name="fnd-29"><sup>29</sup></a>  Further, the versions of <samp><span class="command">texi2dvi</span></samp> and
+well as <samp><span class="command">texi2dvi</span></samp>.<a rel="footnote" href="#fn-30" name="fnd-30"><sup>30</sup></a>  Further, the versions of <samp><span class="command">texi2dvi</span></samp> and
 <samp><span class="file">texinfo.tex</span></samp> need to be compatible: we have seen problems with
 older TeX distributions (TeXLive 2007 and MiKTeX 2.8) used with
 <strong>texinfo</strong> 4.13.
@@ -2522,11 +2555,11 @@ comes with none of these libraries, but <code>cairo</code> support (without
    <p>For the best font experience with these devices you need suitable fonts
 installed: Linux users will want the <code>urw-fonts</code> package.  On
 platforms which have it available, the <code>msttcorefonts</code>
-package<a rel="footnote" href="#fn-30" name="fnd-30"><sup>30</sup></a>  provides
+package<a rel="footnote" href="#fn-31" name="fnd-31"><sup>31</sup></a>  provides
 TrueType versions of Monotype fonts such as Arial and Times New Roman. 
 Another useful set of fonts is the `liberation' TrueType fonts available
 at
-<a href="https://www.redhat.com/promo/fonts/">https://www.redhat.com/promo/fonts/</a>,<a rel="footnote" href="#fn-31" name="fnd-31"><sup>31</sup></a> which cover the Latin, Greek and Cyrillic alphabets
+<a href="https://www.redhat.com/promo/fonts/">https://www.redhat.com/promo/fonts/</a>,<a rel="footnote" href="#fn-32" name="fnd-32"><sup>32</sup></a> which cover the Latin, Greek and Cyrillic alphabets
 plus a fair range of signs.  These share metrics with Arial, Times New
 Roman and Courier New, and contain fonts rather similar to the first two
 (<a href="http://en.wikipedia.org/wiki/Liberation_fonts">http://en.wikipedia.org/wiki/Liberation_fonts</a>).  Then there
@@ -2689,7 +2722,7 @@ well as <code>LSAME</code>), and appears to be usable.  However, an external
 position-independent code), and that is not checked.
 
    <p>Some enhanced <acronym>BLAS</acronym>es are compiler-system-specific
-(<code>sunperf</code> on Solaris<a rel="footnote" href="#fn-32" name="fnd-32"><sup>32</sup></a>, <code>libessl</code> on IBM,
+(<code>sunperf</code> on Solaris<a rel="footnote" href="#fn-33" name="fnd-33"><sup>33</sup></a>, <code>libessl</code> on IBM,
 <code>vecLib</code> on OS X).  The correct incantation for these is usually
 found <em>via</em> <samp><span class="option">--with-blas</span></samp> with no value on the appropriate
 platforms.
@@ -2723,7 +2756,8 @@ checked in the test suite.
 Unfortunately it is usually built as a static library that on some
 platforms cannot be used with shared objects such as are used in R
 packages.  Be careful when using pre-built versions of ATLAS (they seem
-to work on &lsquo;<samp><span class="samp">ix86</span></samp>&rsquo; platforms, but not on &lsquo;<samp><span class="samp">x86_64</span></samp>&rsquo; ones).
+to work on &lsquo;<samp><span class="samp">ix86</span></samp>&rsquo; platforms, but not always on &lsquo;<samp><span class="samp">x86_64</span></samp>&rsquo;
+ones).
 
    <p>The usual way to specify ATLAS will be via
 
@@ -2733,7 +2767,10 @@ to work on &lsquo;<samp><span class="samp">ix86</span></samp>&rsquo; platforms, 
 
 <pre class="example">     --with-blas="-L/path/to/ATLAS/libs -lf77blas -latlas"
 </pre>
-   <p class="noindent">For systems with multiple CPU cores it is possible to use a
+   <p class="noindent">For example, &lsquo;<samp><span class="samp">x86_64</span></samp>&rsquo; Fedora needs
+<pre class="example">     --with-blas="-L/usr/lib64/atlas -lf77blas -latlas"
+</pre>
+   <p>For systems with multiple CPU cores it is possible to use a
 multi-threaded version of ATLAS, by specifying
 
 <pre class="example">     --with-blas="-lptf77blas -lpthread -latlas"
@@ -2758,13 +2795,16 @@ the <samp><span class="command">gcc</span></samp> version we could use
 <pre class="example">     --with-blas="-lacml"
 </pre>
    <p class="noindent">if the appropriate library directory (such as
-<a name="index-LD_005fLIBRARY_005fPATH-78"></a><samp><span class="file">/opt/acml4.4.0/gfortran64/lib</span></samp>) is in the <samp><span class="env">LD_LIBRARY_PATH</span></samp>. 
+<a name="index-LD_005fLIBRARY_005fPATH-78"></a><samp><span class="file">/opt/acml5.1.0/gfortran64/lib</span></samp>) is in the <samp><span class="env">LD_LIBRARY_PATH</span></samp>. 
 For other compilers, see the ACML documentation.  There is a
 multithreaded Linux version of ACML available for recent versions of
 <samp><span class="command">gfortran</span></samp>.  To make use of this you will need something like
 
-<pre class="example">     --with-blas="-L/opt/acml4.4.0/gfortran64_mp/lib -lacml_mp"
+<pre class="example">     --with-blas="-L/opt/acml5.1.0/gfortran64_mp/lib -lacml_mp"
 </pre>
+   <p class="noindent">(and you may need to arrange for the directory to be in <samp><span class="command">ld.so</span></samp>
+cache).
+
    <p>See see <a href="#Shared-BLAS">Shared BLAS</a> for an alternative (and in many ways preferable)
 way to use ACML.
 
@@ -2839,7 +2879,7 @@ with
 but can be controlled by setting <code>OMP_NUM_THREADS</code> or
 <code>MKL_NUM_THREADS</code>.
 
-   <p>Static sequential MKL may be used with
+   <p>Static threaded MKL may be used with
 
 <pre class="example">     MKL="   -L${MKL_LIB_PATH}                               \
              -Wl,--start-group                               \
@@ -2884,7 +2924,7 @@ disabled via <samp><span class="option">--disable-BLAS-shlib</span></samp>.
      <ul>
 <li>It saves space by having only a single copy of the <acronym>BLAS</acronym>
 routines, which is helpful if there is an external static <acronym>BLAS</acronym>
-such as is standard for ATLAS.
+such as used to be standard for ATLAS.
 
      <li>There may be performance disadvantages in using a shared <acronym>BLAS</acronym>. 
 Probably the most likely is when R's internal <acronym>BLAS</acronym> is used
@@ -2892,7 +2932,7 @@ and R is <em>not</em> built as a shared library, when it is possible to
 build the <acronym>BLAS</acronym> into <samp><span class="file">R.bin</span></samp> (and <samp><span class="file">libR.a</span></samp>) without
 using position-independent code.  However, experiments showed that in
 many cases using a shared <acronym>BLAS</acronym> was as fast, provided high
-levels (e.g., <samp><span class="option">-O3</span></samp>) of compiler optimization are used.
+levels of compiler optimization are used.
 
      <li>It is easy to change the <acronym>BLAS</acronym> without needing to re-install
 R and all the add-on packages, since all references to the
@@ -2907,7 +2947,7 @@ dynamic <acronym>BLAS</acronym> library (such as ACML or Goto's) to
 <samp><var>R_HOME</var><span class="file">/lib/libRblas.so</span></samp>.  For example, just
 
 <pre class="example">     mv <var>R_HOME</var>/lib/libRblas.so <var>R_HOME</var>/lib/libRblas.so.keep
-     ln -s /opt/acml4.4.0/gfortran64_mp/lib/libacml_mp.so <var>R_HOME</var>/lib/libRblas.so
+     ln -s /opt/acml5.1.0/gfortran64_mp/lib/libacml_mp.so <var>R_HOME</var>/lib/libRblas.so
 </pre>
    <p>will change the <acronym>BLAS</acronym> in use to multithreaded ACML.  A similar
 link works for recent versions of the Goto <acronym>BLAS</acronym> and perhaps
@@ -2932,7 +2972,7 @@ check the <acronym>BLAS</acronym> library and then look for an external library
 algebra may want to build a LAPACK library using the ATLAS-optimized
 subset of LAPACK.  To do so specify something like
 
-<pre class="example">     --with-lapack="-L/path/to/libs -llapack -lcblas"
+<pre class="example">     --with-lapack="-L/path/to/ATLAS/libs -llapack -lcblas"
 </pre>
    <p class="noindent">since the ATLAS subset of LAPACK depends on <code>libcblas</code>.  A value
 for <samp><span class="option">--with-lapack</span></samp> can be set <em>via</em> the environment
@@ -3011,7 +3051,7 @@ a dynamic (shared) library, typically called <samp><span class="file">libR.so</s
 the main R executable <samp><span class="file">R.bin</span></samp> against that library.  This can
 only be done if all the code (including system libraries) can be
 compiled into a dynamic library, and there may be a
-performance<a rel="footnote" href="#fn-33" name="fnd-33"><sup>33</sup></a> penalty.  So you probably
+performance<a rel="footnote" href="#fn-34" name="fnd-34"><sup>34</sup></a> penalty.  So you probably
 only want this if you will be using an application which embeds R. 
 Note that C code in packages installed on an R system linked with
 <samp><span class="option">--enable-R-shlib</span></samp> is linked against the dynamic library and so
@@ -3197,7 +3237,7 @@ is to search for
 <!-- F77 compilers in m4/R.m4: -->
 <samp><span class="command">g77</span></samp>, <samp><span class="command">f77</span></samp>, <samp><span class="command">xlf</span></samp>, <samp><span class="command">frt</span></samp>,
 <samp><span class="command">pgf77</span></samp>, <samp><span class="command">cf77</span></samp>, <samp><span class="command">fort77</span></samp>, <samp><span class="command">fl32</span></samp>,
-<samp><span class="command">af77</span></samp> (in that order)<a rel="footnote" href="#fn-34" name="fnd-34"><sup>34</sup></a>, and use whichever is found first; if none is found,
+<samp><span class="command">af77</span></samp> (in that order)<a rel="footnote" href="#fn-35" name="fnd-35"><sup>35</sup></a>, and use whichever is found first; if none is found,
 R cannot be compiled. 
 <!-- GCC_Fortran_compiler in m4/R.m4: -->
 However, if <samp><span class="command">CC</span></samp> is <samp><span class="command">gcc</span></samp>, the matching FORTRAN compiler
@@ -3225,11 +3265,11 @@ pointer.  This is checked during the configuration process.
 
    <p>Some of the FORTRAN code makes use of <code>COMPLEX*16</code> variables, which
 is a Fortran 90 extension.  This is checked for at configure
-time<a rel="footnote" href="#fn-35" name="fnd-35"><sup>35</sup></a>, but you may need to avoid
-compiler flags<a rel="footnote" href="#fn-36" name="fnd-36"><sup>36</sup></a> asserting
+time<a rel="footnote" href="#fn-36" name="fnd-36"><sup>36</sup></a>, but you may need to avoid
+compiler flags<a rel="footnote" href="#fn-37" name="fnd-37"><sup>37</sup></a> asserting
 FORTRAN 77 compliance.
 
-   <p><a name="index-BLAS-library-94"></a>For performance reasons<a rel="footnote" href="#fn-37" name="fnd-37"><sup>37</sup></a> you may want to choose a FORTRAN 90/95 compiler.
+   <p><a name="index-BLAS-library-94"></a>For performance reasons<a rel="footnote" href="#fn-38" name="fnd-38"><sup>38</sup></a> you may want to choose a FORTRAN 90/95 compiler.
 
    <p>It may be possible to use <samp><span class="command">f2c</span></samp>, the FORTRAN-to-C converter
 (<a href="http://www.netlib.org/f2c">http://www.netlib.org/f2c</a>), via a script.  (An example script
@@ -3359,7 +3399,7 @@ selection issues, they are more amenable than the issues with
 
    <p>When X11 was designed, most displays were around 75dpi, whereas today
 they are of the order of 100dpi or more.  If you find that X11()
-is reporting<a rel="footnote" href="#fn-38" name="fnd-38"><sup>38</sup></a> missing font sizes, especially larger ones, it is likely
+is reporting<a rel="footnote" href="#fn-39" name="fnd-39"><sup>39</sup></a> missing font sizes, especially larger ones, it is likely
 that you are not using scalable fonts and have not installed the 100dpi
 versions of the X11 fonts.  The names and details differ by system, but
 will likely have something like Fedora's
@@ -3462,7 +3502,7 @@ significant performance improvements on recent CPUs (especially for
 the best possible performance on the machine on which R is being
 installed: if the compilation is for a site-wide installation, it may
 still be desirable to use something like
-<samp><span class="option">-mtume=core2</span></samp>.<a rel="footnote" href="#fn-39" name="fnd-39"><sup>39</sup></a> It is also possible to increase the
+<samp><span class="option">-mtume=core2</span></samp>.<a rel="footnote" href="#fn-40" name="fnd-40"><sup>40</sup></a> It is also possible to increase the
 optimization levels to <samp><span class="option">-O3</span></samp>: however for many versions of the
 compilers this has caused problems in at least one <acronym>CRAN</acronym>
 package.
@@ -3621,7 +3661,7 @@ to install a pre-compiled version first, e.g. by
 and <code>gcc-4.6.2</code> which includes <samp><span class="command">gfortran46</span></samp>).  A listing of
 dependencies (not necessarily for current R) can be found at
 <a href="http://www.freebsd.org/ports/lang.html">http://www.freebsd.org/ports/lang.html</a>: you will however also
-need a TeX system<a rel="footnote" href="#fn-40" name="fnd-40"><sup>40</sup></a> to build the
+need a TeX system<a rel="footnote" href="#fn-41" name="fnd-41"><sup>41</sup></a> to build the
 manuals.
 
    <p>Then R itself can be built by something like
@@ -3785,7 +3825,7 @@ and without declaring it as &lsquo;<samp><span class="samp">SystemRequirements</
 avoided, for example by using <samp><span class="option">--disable-nls</span></samp> or
 <samp><span class="option">--with-included-gettext</span></samp> or using <code>libintl</code> from OpenCSW.
 
-   <p>When using the Oracle compilers<a rel="footnote" href="#fn-41" name="fnd-41"><sup>41</sup></a> do <em>not</em> specify <samp><span class="option">-fast</span></samp>, as this
+   <p>When using the Oracle compilers<a rel="footnote" href="#fn-42" name="fnd-42"><sup>42</sup></a> do <em>not</em> specify <samp><span class="option">-fast</span></samp>, as this
 disables <acronym>IEEE</acronym> arithmetic and <samp><span class="command">make check</span></samp> will fail.
 
    <p>For the Solaris Studio compilers a little juggling of paths was needed
@@ -3864,7 +3904,7 @@ compilation to the current machine.
      SAFE_FFLAGS="-libmil -fstore -xtarget=native"
 </pre>
    <p class="noindent">but the use of <code>-nofstore</code> can be less numerically stable, and some
-packages (notably <strong>mgcv</strong> on &lsquo;<samp><span class="samp">x86</span></samp>&rsquo;) failed to compile at
+packages (notably <a href="http://CRAN.R-project.org/package=mgcv"><strong>mgcv</strong></a> on &lsquo;<samp><span class="samp">x86</span></samp>&rsquo;) failed to compile at
 higher optimization levels with version 12.3.
 
    <p>The Solaris Studio compilers provide several implementations of the C++
@@ -4091,7 +4131,7 @@ implementation of <code>cacos</code> gives incorrect results, so we undefine
    <p>Many versions of Cygwin during 2011 were unable to build R: 1.7.9-1
 with <acronym>GCC</acronym> 4.5.3-3 in November 2011 was able to do so.
 
-   <p>Only building as a shared library can possibly work,<a rel="footnote" href="#fn-42" name="fnd-42"><sup>42</sup></a> so use e.g
+   <p>Only building as a shared library can possibly work,<a rel="footnote" href="#fn-43" name="fnd-43"><sup>43</sup></a> so use e.g
 
 <pre class="example">     ./configure --disable-nls --enable-R-shlib FLIBS=-lgfortran
      make
@@ -4194,7 +4234,7 @@ will not need to build add-on packages from source; see <a href="#Add_002don-pac
 
    <p>We have found that the build process for R is quite sensitive to
 the choice of tools: please follow our instructions <strong>exactly</strong>,
-even to the choice of particular versions of the tools.<a rel="footnote" href="#fn-43" name="fnd-43"><sup>43</sup></a>  The build process for add-on packages is somewhat more
+even to the choice of particular versions of the tools.<a rel="footnote" href="#fn-44" name="fnd-44"><sup>44</sup></a>  The build process for add-on packages is somewhat more
 forgiving, but we recommend using the exact toolset at first, and only
 substituting other tools once you are familiar with the process.
 
@@ -4204,7 +4244,7 @@ the R mailing lists unless you have followed all the prescriptions.</em>
 
    <p>We have collected most of the necessary tools (unfortunately not all,
 due to license or size limitations) into an executable installer
-named<a rel="footnote" href="#fn-44" name="fnd-44"><sup>44</sup></a>  <samp><span class="file">Rtools215.exe</span></samp>,
+named<a rel="footnote" href="#fn-45" name="fnd-45"><sup>45</sup></a>  <samp><span class="file">Rtools215.exe</span></samp>,
 available from <a href="http://cran.r-project.org/bin/windows/Rtools/">http://cran.r-project.org/bin/windows/Rtools/</a>. You
 should download and run it, choosing the default &ldquo;Package authoring
 installation&rdquo; to build add-on packages, or the &ldquo;full installation&rdquo; if
@@ -4241,11 +4281,11 @@ use filepaths containing spaces: you can always use the short forms
    <p>For example for a 32-bit build, all on one line,
 
 <pre class="smallexample">     PATH=c:\Rtools\bin;c:\Rtools\gcc-4.6.3\bin;c:\MiKTeX\miktex\bin;
-          c:\R\R-2.14.2\bin\i386;c:\windows;c:\windows\system32
+          c:\R\R-2.15\bin\i386;c:\windows;c:\windows\system32
 </pre>
    <p>It is essential that the directory containing the command line tools
 comes first or second in the path: there are typically like-named
-tools<a rel="footnote" href="#fn-45" name="fnd-45"><sup>45</sup></a> in other directories, and they will <strong>not</strong>
+tools<a rel="footnote" href="#fn-46" name="fnd-46"><sup>46</sup></a> in other directories, and they will <strong>not</strong>
 work. The ordering of the other directories is less important, but if in
 doubt, use the order above.
 
@@ -4279,7 +4319,7 @@ install LaTeX on first use.
 
 <h3 class="section">D.2 The Inno Setup installer</h3>
 
-<p>To make the installer package (<samp><span class="file">R-2.14.2-win.exe</span></samp>) we
+<p>To make the installer package (<samp><span class="file">R-2.15.0-win.exe</span></samp>) we
 currently require Inno Setup 5.3.7 or later (including 5.4.x) from
 <a href="http://jrsoftware.org/">http://jrsoftware.org/</a>.  We use the Unicode version and recommend
 that version be used.  This is <em>not</em> included in
@@ -4298,7 +4338,6 @@ location where Inno Setup was installed.
 <!-- INSTALL may use sh make zip (and tar if R_INSTALL_TAR is used) -->
 <!-- build may use make and sh. -->
 <!-- Rdiff.sh USED to use diff echo grep sed tr: grep and tr are no longer used. -->
-<!-- Rd2dvi USED to use basename echo mkdir rm sed -->
 <!-- basename is used in src/library/Recommended/Makefile.win -->
 <!-- comm, sort, uniq are used in producing .def files -->
 <!-- cmp is used in src/include/Makefile.win, tools/{copy,move}-if-change -->
@@ -4353,31 +4392,29 @@ Windows-style paths.
 <p>Technically you need more than just a compiler so the set of tools is
 referred to as a `toolchain'.
 
-   <p>The released version of R 2.14.2 will be built with a different
-toolchain from R 2.14.1.  The preferred toolchain is part of
-<code>Rtools215.exe</code>: this uses a beta version of <samp><span class="command">gcc 4.6.3</span></samp>
+   <p>The released version of R 2.15.0 will be built with a different
+toolchain from R 2.12.0 to 2.14.1.  The preferred toolchain is part
+of <code>Rtools215.exe</code>: this uses a beta version of <samp><span class="command">gcc 4.6.3</span></samp>
 and version 2.0.1 of the MinGW-w64 project's runtime.
 
    <p>This toolchain uses <em>multilib</em>: that is there is a single front-end
 such as <samp><span class="command">gcc.exe</span></samp> for each of the compilers and 32-bit (the
-default) and 64-bit compilation are selected by the flags<a rel="footnote" href="#fn-46" name="fnd-46"><sup>46</sup></a>  <samp><span class="option">-m32</span></samp> and <samp><span class="option">-m64</span></samp>
+default) and 64-bit compilation are selected by the flags<a rel="footnote" href="#fn-47" name="fnd-47"><sup>47</sup></a>  <samp><span class="option">-m32</span></samp> and <samp><span class="option">-m64</span></samp>
 respectively.  The tools are all 32-bit Windows executables and should
 be able to run on any current version of Windows&mdash;however you do need a
 64-bit version of Windows to build 64-bit R as the build process runs
 R.
 
    <p>To select a 32-bit or 64-bit build of R, set the options in
-<samp><span class="file">MkRules.local</span></samp> appropriately (following the comments in the file). 
-Older toolchains such as those used for R 2.14.1 can still be used by
-following the comments in that file.
+<samp><span class="file">MkRules.local</span></samp> appropriately (following the comments in the file).
 
    <p>Some external software libraries will need to be re-compiled under the
 new toolchain: especially those providing a C++ interface.  Many of
 those used by <acronym>CRAN</acronym> packages are available from
 <a href="http://www.stats.ox.ac.uk/pub/Rtools/multilib/">http://www.stats.ox.ac.uk/pub/Rtools/multilib/</a>.  Users
-developing packages with <strong>Rcpp</strong> need to ensure that they use a
+developing packages with <a href="http://CRAN.R-project.org/package=Rcpp"><strong>Rcpp</strong></a> need to ensure that they use a
 version built with exactly the same toolchain as their package: the
-recommendation is to build <strong>Rcpp</strong> from its sources yourself.
+recommendation is to build <a href="http://CRAN.R-project.org/package=Rcpp"><strong>Rcpp</strong></a> from its sources yourself.
 
    <p>There is support for OpenMP and pthreads in this toolchain.  As the
 performance of OpenMP on Windows is poor for small tasks, it is not used
@@ -4559,136 +4596,141 @@ and so need Debian package &lsquo;<samp><span class="samp">texlive-fonts-extra</
    <p class="footnote"><small>[<a name="fn-7" href="#fnd-7">7</a>]</small> mainly on RedHat and Fedora, whose layout is described
 here.</p>
 
-   <p class="footnote"><small>[<a name="fn-8" href="#fnd-8">8</a>]</small> formerly known as
+   <p class="footnote"><small>[<a name="fn-8" href="#fnd-8">8</a>]</small> For those using GNU
+<code>binutils</code>, where <samp><span class="command">gold</span></samp> is used as the linker: this might
+be enabled when <samp><span class="command">gcc</span></samp> was built or selected <em>via</em> the
+<samp><span class="command">alternatives</span></samp> mechanism.</p>
+
+   <p class="footnote"><small>[<a name="fn-9" href="#fnd-9">9</a>]</small> formerly known as
 EM64T.</p>
 
-   <p class="footnote"><small>[<a name="fn-9" href="#fnd-9">9</a>]</small> unless they were excluded in the build.</p>
+   <p class="footnote"><small>[<a name="fn-10" href="#fnd-10">10</a>]</small> unless they were excluded in the build.</p>
 
-   <p class="footnote"><small>[<a name="fn-10" href="#fnd-10">10</a>]</small> its binding is locked once that files has been read, so
+   <p class="footnote"><small>[<a name="fn-11" href="#fnd-11">11</a>]</small> its binding is locked once that files has been read, so
 users cannot easily change it.</p>
 
-   <p class="footnote"><small>[<a name="fn-11" href="#fnd-11">11</a>]</small> If a proxy needs to be set, see
+   <p class="footnote"><small>[<a name="fn-12" href="#fnd-12">12</a>]</small> If a proxy needs to be set, see
 <samp><span class="command">?download.file</span></samp>.</p>
 
-   <p class="footnote"><small>[<a name="fn-12" href="#fnd-12">12</a>]</small> for a
+   <p class="footnote"><small>[<a name="fn-13" href="#fnd-13">13</a>]</small> for a
 small number of <acronym>CRAN</acronym> packages where this is known to be safe
 and is needed by the autobuilder this is the default.  Look at the
 source of <samp><span class="file">tools:::.install_packages</span></samp> for the list.</p>
 
-   <p class="footnote"><small>[<a name="fn-13" href="#fnd-13">13</a>]</small> `X/Open Portability Guide', which has
+   <p class="footnote"><small>[<a name="fn-14" href="#fnd-14">14</a>]</small> `X/Open Portability Guide', which has
 had several versions.</p>
 
-   <p class="footnote"><small>[<a name="fn-14" href="#fnd-14">14</a>]</small> On some systems setting
+   <p class="footnote"><small>[<a name="fn-15" href="#fnd-15">15</a>]</small> On some systems setting
 <samp><span class="env">LC_ALL</span></samp> or <samp><span class="env">LC_MESSAGES</span></samp> to &lsquo;<samp><span class="samp">C</span></samp>&rsquo; disables <samp><span class="env">LANGUAGE</span></samp>.</p>
 
-   <p class="footnote"><small>[<a name="fn-15" href="#fnd-15">15</a>]</small> If you try changing from French
+   <p class="footnote"><small>[<a name="fn-16" href="#fnd-16">16</a>]</small> If you try changing from French
 to Russian except in a UTF-8 locale, you will most likely find messages
 change to English.</p>
 
-   <p class="footnote"><small>[<a name="fn-16" href="#fnd-16">16</a>]</small> the
+   <p class="footnote"><small>[<a name="fn-17" href="#fnd-17">17</a>]</small> the
 language written in England: some people living in the USA appropriate
 this name for their language.</p>
 
-   <p class="footnote"><small>[<a name="fn-17" href="#fnd-17">17</a>]</small> with
+   <p class="footnote"><small>[<a name="fn-18" href="#fnd-18">18</a>]</small> with
 Americanisms.</p>
 
-   <p class="footnote"><small>[<a name="fn-18" href="#fnd-18">18</a>]</small> also known as
+   <p class="footnote"><small>[<a name="fn-19" href="#fnd-19">19</a>]</small> also known as
 <acronym>IEEE</acronym>&nbsp;754</p>
 
-   <p class="footnote"><small>[<a name="fn-19" href="#fnd-19">19</a>]</small> at least when storing quantities: the on-FPU
+   <p class="footnote"><small>[<a name="fn-20" href="#fnd-20">20</a>]</small> at least when storing quantities: the on-FPU
 precision is allowed to vary</p>
 
-   <p class="footnote"><small>[<a name="fn-20" href="#fnd-20">20</a>]</small> this comment has
+   <p class="footnote"><small>[<a name="fn-21" href="#fnd-21">21</a>]</small> this comment has
 been in the manual since 2005.</p>
 
-   <p class="footnote"><small>[<a name="fn-21" href="#fnd-21">21</a>]</small> e.g. Bessel, beta and gamma functions</p>
+   <p class="footnote"><small>[<a name="fn-22" href="#fnd-22">22</a>]</small> e.g. Bessel, beta and gamma functions</p>
 
-   <p class="footnote"><small>[<a name="fn-22" href="#fnd-22">22</a>]</small> including copying <samp><span class="file">MkRules.dist</span></samp> to
+   <p class="footnote"><small>[<a name="fn-23" href="#fnd-23">23</a>]</small> including copying <samp><span class="file">MkRules.dist</span></samp> to
 <samp><span class="file">MkRule.local</span></samp> and selecting the architecture.</p>
 
-   <p class="footnote"><small>[<a name="fn-23" href="#fnd-23">23</a>]</small> also known as
+   <p class="footnote"><small>[<a name="fn-24" href="#fnd-24">24</a>]</small> also known as
 <acronym>IEEE</acronym>&nbsp;754</p>
 
-   <p class="footnote"><small>[<a name="fn-24" href="#fnd-24">24</a>]</small> Note
+   <p class="footnote"><small>[<a name="fn-25" href="#fnd-25">25</a>]</small> Note
 that C11 compilers (when they appear) need not be C99-compliant: R
 requires support for <code>double complex</code> which is optional in C11 but
 is mandatory in C99.</p>
 
-   <p class="footnote"><small>[<a name="fn-25" href="#fnd-25">25</a>]</small> <samp><span class="option">-std=c99</span></samp> excludes POSIX
+   <p class="footnote"><small>[<a name="fn-26" href="#fnd-26">26</a>]</small> <samp><span class="option">-std=c99</span></samp> excludes POSIX
 functionality, but <samp><span class="file">config.h</span></samp> will turn on all <acronym>GNU</acronym>
 extensions to include the POSIX functionality.</p>
 
-   <p class="footnote"><small>[<a name="fn-26" href="#fnd-26">26</a>]</small> apparently when built by
+   <p class="footnote"><small>[<a name="fn-27" href="#fnd-27">27</a>]</small> apparently when built by
 default, but not for example as built for Fedora 15.</p>
 
-   <p class="footnote"><small>[<a name="fn-27" href="#fnd-27">27</a>]</small> specifically, the C99
+   <p class="footnote"><small>[<a name="fn-28" href="#fnd-28">28</a>]</small> specifically, the C99
 functionality of headers <samp><span class="file">wchar.h</span></samp> and <samp><span class="file">wctype.h</span></samp>, types
 <code>wctans_t</code> and <code>mbstate_t</code> and functions <code>mbrtowc</code>,
 <code>mbstowcs</code>, <code>wcrtomb</code>, <code>wcscoll</code>, <code>wcstombs</code>,
 <code>wctrans</code>, <code>wctype</code>, and <code>iswctype</code>.</p>
 
-   <p class="footnote"><small>[<a name="fn-28" href="#fnd-28">28</a>]</small> Such as
+   <p class="footnote"><small>[<a name="fn-29" href="#fnd-29">29</a>]</small> Such as
 <acronym>GNU</acronym> <samp><span class="command">tar</span></samp> 1.15 or later, <samp><span class="command">bsdtar</span></samp> (from
 <a href="http://code.google.com/p/libarchive/">http://code.google.com/p/libarchive/</a>, as used by FreeBSD and OS
 10.[67]) or <samp><span class="command">tar</span></samp> from the Heirloom Toolchest
 (<a href="http://heirloom.sourceforge.net/tools.html">http://heirloom.sourceforge.net/tools.html</a>).</p>
 
-   <p class="footnote"><small>[<a name="fn-29" href="#fnd-29">29</a>]</small> <samp><span class="command">texi2dvi</span></samp> is normally a
+   <p class="footnote"><small>[<a name="fn-30" href="#fnd-30">30</a>]</small> <samp><span class="command">texi2dvi</span></samp> is normally a
 shell script.  Some versions, e.g. that from <strong>texinfo</strong> 4.13a, need
 to be run under <samp><span class="command">bash</span></samp> rather than a Bourne shell as on, say,
 Solaris.</p>
 
-   <p class="footnote"><small>[<a name="fn-30" href="#fnd-30">30</a>]</small> also known as <code>ttf-mscorefonts-installer</code> in the
+   <p class="footnote"><small>[<a name="fn-31" href="#fnd-31">31</a>]</small> also known as <code>ttf-mscorefonts-installer</code> in the
 Debian/Ubuntu world: see also
 <a href="http://en.wikipedia.org/wiki/Core_fonts_for_the_Web">http://en.wikipedia.org/wiki/Core_fonts_for_the_Web</a>.</p>
 
-   <p class="footnote"><small>[<a name="fn-31" href="#fnd-31">31</a>]</small> <code>ttf-liberation</code>
+   <p class="footnote"><small>[<a name="fn-32" href="#fnd-32">32</a>]</small> <code>ttf-liberation</code>
 in Debian/Ubuntu.</p>
 
-   <p class="footnote"><small>[<a name="fn-32" href="#fnd-32">32</a>]</small> Using the Oracle Solaris Studio
+   <p class="footnote"><small>[<a name="fn-33" href="#fnd-33">33</a>]</small> Using the Oracle Solaris Studio
 <samp><span class="command">cc</span></samp> and <samp><span class="command">f95</span></samp> compilers</p>
 
-   <p class="footnote"><small>[<a name="fn-33" href="#fnd-33">33</a>]</small> We have measured 15&ndash;20% on &lsquo;<samp><span class="samp">i686</span></samp>&rsquo; Linux
+   <p class="footnote"><small>[<a name="fn-34" href="#fnd-34">34</a>]</small> We have measured 15&ndash;20% on &lsquo;<samp><span class="samp">i686</span></samp>&rsquo; Linux
 and around 10% on &lsquo;<samp><span class="samp">x86_64</span></samp>&rsquo; Linux.</p>
 
-   <p class="footnote"><small>[<a name="fn-34" href="#fnd-34">34</a>]</small> On HP-UX <samp><span class="command">fort77</span></samp> is the
+   <p class="footnote"><small>[<a name="fn-35" href="#fnd-35">35</a>]</small> On HP-UX <samp><span class="command">fort77</span></samp> is the
 <acronym>POSIX</acronym> compliant FORTRAN compiler, and comes after
 <samp><span class="command">g77</span></samp>.</p>
 
-   <p class="footnote"><small>[<a name="fn-35" href="#fnd-35">35</a>]</small> as well as its equivalence to the <code>Rcomplex</code>
+   <p class="footnote"><small>[<a name="fn-36" href="#fnd-36">36</a>]</small> as well as its equivalence to the <code>Rcomplex</code>
 structure defined in <samp><span class="file">R_ext/Complex.h</span></samp>.</p>
 
-   <p class="footnote"><small>[<a name="fn-36" href="#fnd-36">36</a>]</small> In particular, avoid <samp><span class="command">g77</span></samp>'s
+   <p class="footnote"><small>[<a name="fn-37" href="#fnd-37">37</a>]</small> In particular, avoid <samp><span class="command">g77</span></samp>'s
 <samp><span class="option">-pedantic</span></samp>, which gives confusing error messages.</p>
 
-   <p class="footnote"><small>[<a name="fn-37" href="#fnd-37">37</a>]</small> e.g., to use an optimized <acronym>BLAS</acronym> on
+   <p class="footnote"><small>[<a name="fn-38" href="#fnd-38">38</a>]</small> e.g., to use an optimized <acronym>BLAS</acronym> on
 Sun/Sparc</p>
 
-   <p class="footnote"><small>[<a name="fn-38" href="#fnd-38">38</a>]</small> for example, <code>X11 font at size 14 could not
+   <p class="footnote"><small>[<a name="fn-39" href="#fnd-39">39</a>]</small> for example, <code>X11 font at size 14 could not
 be loaded</code>.</p>
 
-   <p class="footnote"><small>[<a name="fn-39" href="#fnd-39">39</a>]</small> or <code>-mtune=corei7</code> for Intel Core
+   <p class="footnote"><small>[<a name="fn-40" href="#fnd-40">40</a>]</small> or <code>-mtune=corei7</code> for Intel Core
 i3/15/17 with <samp><span class="command">gcc &gt;= 4.6.0</span></samp>.</p>
 
-   <p class="footnote"><small>[<a name="fn-40" href="#fnd-40">40</a>]</small> TeXLive is recommended.</p>
+   <p class="footnote"><small>[<a name="fn-41" href="#fnd-41">41</a>]</small> TeXLive is recommended.</p>
 
-   <p class="footnote"><small>[<a name="fn-41" href="#fnd-41">41</a>]</small> including <samp><span class="command">gcc</span></samp> for
+   <p class="footnote"><small>[<a name="fn-42" href="#fnd-42">42</a>]</small> including <samp><span class="command">gcc</span></samp> for
 Sparc from Oracle.</p>
 
-   <p class="footnote"><small>[<a name="fn-42" href="#fnd-42">42</a>]</small> Windows
+   <p class="footnote"><small>[<a name="fn-43" href="#fnd-43">43</a>]</small> Windows
 DLLs need to have all links resolved at build time and so cannot resolve
 against <samp><span class="file">R.bin</span></samp>.</p>
 
-   <p class="footnote"><small>[<a name="fn-43" href="#fnd-43">43</a>]</small> For
+   <p class="footnote"><small>[<a name="fn-44" href="#fnd-44">44</a>]</small> For
 example, the Cygwin version of <code>make 3.81</code> fails to work
 correctly.</p>
 
-   <p class="footnote"><small>[<a name="fn-44" href="#fnd-44">44</a>]</small> for R 2.14.2 and later.</p>
+   <p class="footnote"><small>[<a name="fn-45" href="#fnd-45">45</a>]</small> for R 2.14.2 and later.</p>
 
-   <p class="footnote"><small>[<a name="fn-45" href="#fnd-45">45</a>]</small> such as <samp><span class="command">sort</span></samp>, <samp><span class="command">find</span></samp> and perhaps
+   <p class="footnote"><small>[<a name="fn-46" href="#fnd-46">46</a>]</small> such as <samp><span class="command">sort</span></samp>, <samp><span class="command">find</span></samp> and perhaps
 <samp><span class="command">make</span></samp>.</p>
 
-   <p class="footnote"><small>[<a name="fn-46" href="#fnd-46">46</a>]</small> these
+   <p class="footnote"><small>[<a name="fn-47" href="#fnd-47">47</a>]</small> these
 flags apply to the compilers: some of the tools use different flags. 
 32-bit builds are the default.</p>
 

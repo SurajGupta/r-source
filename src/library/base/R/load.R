@@ -59,8 +59,10 @@ save <- function(..., list = character(),
     if (!is.null(version) && version < 2)
         warning("Use of save versions prior to 2 is deprecated")
 
-    names <- as.character( substitute( list(...)))[-1L]
-    list<- c(list, names)
+    if(missing(list) && !length(list(...)))
+	warning("nothing specified to be save()d")
+    names <- as.character( substitute(list(...)))[-1L]
+    list <- c(list, names)
     if (!is.null(version) && version == 1)
         invisible(.Internal(save(list, file, ascii, version, envir,
                                  eval.promises)))
@@ -136,11 +138,11 @@ save.image <- function (file = ".RData", version = NULL, ascii = FALSE,
     if (safe) {
         ## find a temporary file name in the same directory so we can
         ## rename it to the final output file on success
-        outfile <- paste(file, "Tmp", sep = "")
+        outfile <- paste0(file, "Tmp")
         i <- 0
         while (file.exists(outfile)) {
             i <- i + 1
-            outfile <- paste(file, "Tmp", i, sep = "")
+            outfile <- paste0(file, "Tmp", i)
         }
     }
     else outfile <- file

@@ -192,13 +192,12 @@ static void PrintLanguageEtc(SEXP s, Rboolean useSource, Rboolean isClosure)
         t = eval(t, R_BaseEnv);
         UNPROTECT(1);
     }
+    PROTECT(t);
     for (i = 0; i < LENGTH(t); i++)
 	Rprintf("%s\n", CHAR(STRING_ELT(t, i))); /* translated */
+    UNPROTECT(1);
     if (isClosure) {
-#ifdef BYTECODE
-	if (isByteCode(BODY(s)))
-	    Rprintf("<bytecode: %p>\n", BODY(s));
-#endif
+	if (isByteCode(BODY(s))) Rprintf("<bytecode: %p>\n", BODY(s));
 	t = CLOENV(s);
 	if (t != R_GlobalEnv)
 	    Rprintf("%s\n", EncodeEnvironment(t));
@@ -472,7 +471,7 @@ static void PrintGenericVector(SEXP s, SEXP env)
 	    }
 	    Rprintf("\n");
 	    if(n_pr < ns)
-		Rprintf(" [ reached getOption(\"max.print\") -- omitted %d entries ]]\n",
+		Rprintf(" [ reached getOption(\"max.print\") -- omitted %d entries ]\n",
 			ns - n_pr);
 	}
 	else { /* ns = length(s) == 0 */
@@ -791,11 +790,9 @@ void attribute_hidden PrintValueRec(SEXP s, SEXP env)
     case EXTPTRSXP:
 	Rprintf("<pointer: %p>\n", R_ExternalPtrAddr(s));
 	break;
-#ifdef BYTECODE
     case BCODESXP:
 	Rprintf("<bytecode: %p>\n", s);
 	break;
-#endif
     case WEAKREFSXP:
 	Rprintf("<weak reference>\n");
 	break;

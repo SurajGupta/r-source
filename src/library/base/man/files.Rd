@@ -13,6 +13,10 @@
 \alias{file.rename}
 \alias{file.symlink}
 \alias{file.link}
+#ifdef windows
+\alias{Sys.junction}
+#endif
+
 \title{File Manipulation}
 \usage{
 file.create(\dots, showWarnings = TRUE)
@@ -24,12 +28,18 @@ file.copy(from, to, overwrite = recursive, recursive = FALSE,
           copy.mode = TRUE)
 file.symlink(from, to)
 file.link(from, to)
+#ifdef windows
+Sys.junction(from, to)
+#endif
 }
 \arguments{
   \item{\dots, file1, file2}{character vectors, containing file names or paths.}
   \item{from, to}{character vectors, containing file names or paths.
-    For \code{file.copy} and \code{file.symlink} \code{to} can
-    alternatively be the path to a single existing directory.}
+    For \code{file.copy} and \code{file.symlink}
+#ifdef windows
+    and \code{Sys.junction}
+#endif
+    \code{to} can alternatively be the path to a single existing directory.}
   \item{overwrite}{logical; should existing destination files be overwritten?}
   \item{showWarnings}{logical; should the warnings on failure be shown?}
   \item{recursive}{logical.  If \code{to} is a directory, should
@@ -78,7 +88,7 @@ file.link(from, to)
   something like \command{man 2 rename} on a Unix-alike): in particular
   in the interpretation of \sQuote{file}: most platforms will not rename
   files across file systems.  (On Windows, \code{file.rename} nowadays
-  works for files (but not directories) across volumes.)
+  works across volumes for files but not directories.)
 
   \code{file.append} attempts to append the files named by its
   second argument to those named by its first.  The \R subscript
@@ -92,14 +102,16 @@ file.link(from, to)
   \code{copy.mode = TRUE} (added in \R 2.13.0) file read/write/execute
   permissions are copied where possible, restricted by
   \sQuote{\link{umask}}.  Other security attributes such as ACLs are not
-  copied.
+  copied.  On a POSIX filesystem the targets of symbolic links will be
+  copied rather than the links themselves.
   
   \code{file.symlink} and \code{file.link} make symbolic and hard links
   on those file systems which support them.  For \code{file.symlink} the
   \code{to} argument can specify a single existing directory.  (Unix and
-  Mac OS X native filesystems support both.  Windows has hard links on
-  NTFS file systems.  What happens on a FAT or SMB-mounted file system is
-  OS-specific.)
+  Mac OS X native filesystems support both.  Windows has hard links to
+  files on NTFS file systems and concepts related to symbolic links on
+  recent versions: see the section below on the Windows version of this
+  help page.  What happens on a FAT or SMB-mounted file system is OS-specific.)
 }
 
 \value{
@@ -110,6 +122,7 @@ file.link(from, to)
   If \code{showWarnings = TRUE}, \code{file.create} will give a warning
   for an unexpected failure.
 }
+
 \section{Case-insensitive file systems}{
   Case-insensitive file systems are the norm on Windows and Mac OS X,
   but can be found on all OSes (for example a FAT-formatted USB drive is
@@ -127,24 +140,47 @@ file.link(from, to)
   instead.  In particular, \file{d:} is not recognized as a directory.
   Nor are \samp{\\\\?\\} prefixes (and similar) supported.
   
-  Recent versions of Windows have a limited version of symbolic links on
-  NTFS filesystems, but this has not been implemented in
-  \code{file.symlink}, not least because \R is still widely used on
-  Windows XP.  However, linking to \emph{directories} has been
-  implemented since Windows 2000 using \sQuote{junctions}, unfortunately
-  without a public API.  The examples show one way to use this
-  \emph{via} \file{junction.exe} from
-  \url{http://download.sysinternals.com/Files/Junction.zip} (see
-  \url{http://technet.microsoft.com/en-us/sysinternals/bb896768}).
-  Care is needed with removing junctions: many tools will remove their
-  target and its contents (including Windows Explorer in XP):
-  \command{junction -d \var{path}} can be used.
-
   Most of these functions accept UTF-8 filepaths not valid in the
   current locale.
 
   User error in supplying invalid file names (and note that \file{foo/}
-  \emph{is} invalid on Windows) has undefined consequences.
+  and \file{foo\\} \emph{are} invalid on Windows) has undefined consequences.
+}
+
+\section{Symbolic links on Windows}{
+  Symbolic links in the sense of POSIX file systems do not exist on
+  Windows: however, NTFS file systems support two similar concepts.
+
+  Windows 2000 and later have \sQuote{junctions} (or
+  \sQuote{junction points}), unfortunately without a public API.  They
+  are a Windows version of the Unix concept of mounting one directory on
+  another.  One way to create, list and delete junctions is \emph{via}
+  \file{junction.exe} from
+  \url{http://download.sysinternals.com/Files/Junction.zip} (see
+  \url{http://technet.microsoft.com/en-us/sysinternals/bb896768}).  On
+  recent enough versions of Windows \command{mklink /J} can also be
+  used.  Function \code{Sys.junction} (added in \R 2.15.0) creates one
+  or more junctions: \code{to} should either specify a single existing
+  directory or a set of non-existent file paths of the same length as
+  \code{from}.
+  
+  A version of symbolic linking to files/directories was implemented
+  starting with Vista, and \code{file.symlink} makes use of that interface since
+  \R 2.15.0.  However, it has restrictions (apart from the OS
+  restriction) that are crippling.  First, the user needs permission to
+  make symbolic links, and that permission is not normally granted
+  except to Administrator accounts (note: not users with Administrator
+  rights): further many users report that whereas the Policy Editor
+  appears to be able to grant such rights, the API still reports
+  insufficient permissions.  Second, the interface needs to know if
+  \code{from} is a file or a directory (and it need not yet exist): we
+  have implemented this to allow linking from a directory only if it
+  currently exists.
+
+  Care is needed with removing a junction (and most likely also a
+  symbolic link): many tools will remove the target and its contents
+  (including Windows Explorer in XP, and \code{unlink} in \R prior to
+  2.15.0).
 }
 #endif
 
@@ -187,14 +223,5 @@ setwd("..")
 #endif
 unlink("tmp", recursive=TRUE)
 file.remove("A", "B", "C")
-#ifdef windows
-## Windows can link to directories via junctions.
-## See the text for the system requirements here.
-\dontrun{
-dir.symlink <- function(from, to) {
-    to2 <- file.path(to, basename(from))
-    system2("junction.exe", c(to2, normalizePath(from)), NULL)
-}}
-#endif
 }
 \keyword{file}

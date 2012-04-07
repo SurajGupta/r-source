@@ -1,27 +1,18 @@
 % File src/library/base/man/Memory.Rd
 % Part of the R package, http://www.R-project.org
-% Copyright 1995-2012 R Core Development Team
+% Copyright 1995-2011 R Core Development Team
 % Distributed under GPL 2 or later
 
 \name{Memory}
 \alias{Memory}
-\alias{mem.limits}
 \title{Memory Available for Data Storage}
 \description{
   How \R manages its workspace.
-  
-  \code{mem.limits} is deprecated as of \R 2.14.0
-}
-\usage{
-mem.limits(nsize = NA, vsize = NA)
-}
-\arguments{
-  \item{vsize}{Heap memory in bytes.}
-  \item{nsize}{Number of cons cells.}
 }
 \details{
-  \R has a variable-sized workspace which is sized automatically.  These
-  limits are mainly historical, and now used only exceptionally.
+  \R has a variable-sized workspace.  Prior to \R 2.15.0 there were
+  (rarely-used) command-line options to control its size, but it is now
+  sized automatically.
 #ifdef windows
   
   On Windows the \option{--max-mem-size} option sets the maximum memory
@@ -50,10 +41,6 @@ mem.limits(nsize = NA, vsize = NA)
   \R prompt.  Note that following \code{\link{gcinfo}(TRUE)}, automatic
   garbage collection always prints memory use statistics.
   
-  The function \code{mem.limits} is deprecated: use \code{\link{gc}}
-  instead, which reports the limits in the exceptional case that they are
-  set.
-  
   The command-line option \option{--max-ppsize} controls the maximum
   size of the pointer protection stack.  This defaults to 50000, but can
   be increased to allow deep recursion or large and complicated
@@ -61,11 +48,6 @@ mem.limits(nsize = NA, vsize = NA)
   collection process goes through the full reserved pointer protection
   stack and hence becomes slower when the size is increased.  Currently
   the maximum value accepted is 500000.
-}
-
-\value{
-  \code{mem.limits()} returns a numeric vector giving the current
-  settings of the maxima, possibly \code{NA} (for unlimited).
 }
 
 \seealso{

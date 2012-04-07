@@ -1,6 +1,6 @@
 
-R version 2.14.0 beta (2011-10-21 r57363)
-Copyright (C) 2011 The R Foundation for Statistical Computing
+R version 2.15.0 alpha (2012-03-02 r58556)
+Copyright (C) 2012 The R Foundation for Statistical Computing
 ISBN 3-900051-07-0
 Platform: x86_64-unknown-linux-gnu (64-bit)
 
@@ -101,7 +101,7 @@ $itemBullet
 $enumFormat
 function (n) 
 sprintf("%d. ", n)
-<environment: 0x3121fc0>
+<environment: 0x1476b88>
 
 $showURLs
 [1] FALSE
@@ -135,7 +135,7 @@ $itemBullet
 $enumFormat
 function (n) 
 sprintf("%d. ", n)
-<environment: 0x3121fc0>
+<environment: 0x1476b88>
 
 $showURLs
 [1] FALSE
@@ -169,7 +169,7 @@ $itemBullet
 $enumFormat
 function (n) 
 sprintf("%d. ", n)
-<environment: 0x3121fc0>
+<environment: 0x1476b88>
 
 $showURLs
 [1] FALSE
@@ -232,7 +232,7 @@ $underline_titles
 +     pages = "211-252"))
 > bibstyle("unsorted", sortKeys = function(refs) seq_along(refs),
 +        .init = TRUE)
-<environment: 0x27e7fb0>
+<environment: 0x1e9d8a8>
 > print(refs, .bibstyle = "unsorted")    
 R Development Core Team (2010). _R: A Language and Environment for
 Statistical Computing_. R Foundation for Statistical Computing, Vienna,
@@ -624,6 +624,29 @@ NULL
 > 
 > 
 > cleanEx()
+> nameEx("package_dependencies")
+> ### * package_dependencies
+> 
+> flush(stderr()); flush(stdout())
+> 
+> ### Name: package_dependencies
+> ### Title: Computations on the Dependency Hierarchy of Packages
+> ### Aliases: package_dependencies
+> ### Keywords: utilities
+> 
+> ### ** Examples
+> 
+> ## Not run: 
+> ##D pdb <- available.packages()
+> ##D deps <- package_dependencies(packages = "MASS", pdb,
+> ##D                     which = c("Depends", "Imports", "LinkingTo", "Suggests"),
+> ##D                     recursive = TRUE, reverse = TRUE)
+> ##D length(deps$MASS)
+> ## End(Not run)
+> 
+> 
+> 
+> cleanEx()
 > nameEx("parseLatex")
 > ### * parseLatex
 > 
@@ -869,7 +892,7 @@ attr(,"class")
 > ### * <FOOTER>
 > ###
 > cat("Time elapsed: ", proc.time() - get("ptime", pos = 'CheckExEnv'),"\n")
-Time elapsed:  0.379 0.016 0.397 0 0 
+Time elapsed:  0.362 0.012 0.376 0 0 
 > grDevices::dev.off()
 null device 
           1 

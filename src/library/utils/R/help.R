@@ -20,7 +20,7 @@ function(topic, package = NULL, lib.loc = NULL,
          try.all.packages = getOption("help.try.all.packages"),
          help_type = getOption("help_type"))
 {
-    types <- c("text", "html", "postscript", "ps", "pdf")
+    types <- c("text", "html", "pdf")
     if(!missing(package))
         if(is.name(y <- substitute(package)))
             package <- as.character(y)
@@ -72,9 +72,6 @@ function(topic, package = NULL, lib.loc = NULL,
 
     help_type <- if(!length(help_type)) "text"
     else match.arg(tolower(help_type), types)
-    if (help_type %in% c("postscript", "ps"))
-        warning("Postscript offline help is deprecated",
-                call. = FALSE, immediate. = TRUE)
 
     paths <- index.search(topic,
                           find.package(package, lib.loc, verbose = verbose))
@@ -100,8 +97,7 @@ function(topic, package = NULL, lib.loc = NULL,
     paths
 }
 
-print.help_files_with_topic <-
-function(x, ...)
+print.help_files_with_topic <- function(x, ...)
 {
     browser <- getOption("browser")
     topic <- attr(x, "topic")
@@ -117,7 +113,7 @@ function(x, ...)
         writeLines(c(gettextf("No documentation for %s in specified packages and libraries:",
                               sQuote(topic)),
                      gettextf("you could try %s",
-                              sQuote(paste("??", topic, sep = "")))))
+                              sQuote(paste0("??", topic)))))
         return(invisible(x))
     }
 
@@ -187,7 +183,7 @@ function(x, ...)
                         "unknown title" else
                     tmp[tools::file_path_sans_ext(tmp$File) == tp[i], "Title"]
                 }
-                txt <- paste(titles, " {", basename(paths), "}", sep="")
+                txt <- paste0(titles, " {", basename(paths), "}")
                 ## the default on menu() is currtently graphics = FALSE
                 res <- menu(txt, title = gettext("Choose one"),
                             graphics = getOption("menu.graphics"))
@@ -222,12 +218,12 @@ function(x, ...)
             file.show(temp, title = gettextf("R Help on %s", sQuote(topic)),
                       delete.file = TRUE)
         }
-        else if(type %in% c("ps", "postscript", "pdf")) {
+        else if(type %in% "pdf") {
             path <- dirname(file)
             dirpath <- dirname(path)
             texinputs <- file.path(dirpath, "help", "figures")
             tf2 <- tempfile("Rlatex")
-            tools::Rd2latex(.getHelpFile(file), tf2)
+            tools::Rd2latex(.getHelpFile(file), out = tf2)
             .show_help_on_topic_offline(tf2, topic, type, texinputs)
             unlink(tf2)
         }
@@ -245,13 +241,9 @@ function(x, ...)
     if(length(res <- grep(encpatt, lines, perl = TRUE, useBytes = TRUE)))
         encoding <- sub(encpatt, "\\1", lines[res],
                         perl = TRUE, useBytes = TRUE)
-    texfile <- paste(topic, ".tex", sep = "")
+    texfile <- paste0(topic, ".tex")
     on.exit(unlink(texfile)) ## ? leave to helper
-    opt <- if(tolower(type) == "pdf") {
-        if(nzchar(opt <- Sys.getenv("R_RD4PDF"))) opt else "times,inconsolata"
-    } else {
-        if(nzchar(opt <- Sys.getenv("R_RD4DVI"))) opt else "ae"
-    }
+    if(nzchar(opt <- Sys.getenv("R_RD4PDF"))) opt else "times,inconsolata"
     has_figure <- any(grepl("\\Figure", lines))
     cat("\\documentclass[", getOption("papersize"), "paper]{article}\n",
         "\\usepackage[", opt, "]{Rd}\n",
@@ -285,29 +277,16 @@ function(x, ...)
 }
 
 
-offline_help_helper <- function(texfile, type = "postscript", texinputs = NULL)
+offline_help_helper <- function(texfile, type, texinputs = NULL)
 {
-    PDF <- type == "pdf"
     ## Some systems have problems with texfile names like ".C.tex"
     tf <- tempfile("tex", tmpdir = ".", fileext = ".tex"); on.exit(unlink(tf))
     file.copy(texfile, tf)
-    tools::texi2dvi(tf, pdf = PDF, clean = TRUE, texinputs = texinputs)
-    ofile <- sub("tex$", if(PDF) "pdf" else "ps", tf)
-    if(!PDF) {
-        dfile <- sub("tex$", "dvi", tf)
-        on.exit(unlink(dfile))
-        dvips <- getOption("dvipscmd", default = "dvips")
-        res <- system2(dvips, dfile, stdout = FALSE, stderr = FALSE)
-        if(res)
-            stop(gettextf("running %s failed", sQuote(dvips)), domain = NA)
-        if(!file.exists(ofile)) {
-            message(gettextf("%s produced no output file: sent to printer?",
-                             sQuote(dvips)), domain = NA)
-            return(invisible())
-        }
-    } else if(!file.exists(ofile))
-        stop(gettextf("creation of %s failed", sQuote(ofile)), domain = NA)
-    ofile2 <- sub("tex$", if(PDF) "pdf" else "ps", texfile)
+    tools::texi2pdf(tf, clean = TRUE, texinputs = texinputs)
+    ofile <- sub("tex$", "pdf", tf)
+    ofile2 <- sub("tex$", "pdf", texfile)
+    if(!file.exists(ofile))
+        stop(gettextf("creation of %s failed", sQuote(ofile2)), domain = NA)
     if(file.copy(ofile, ofile2, overwrite = TRUE)) {
         unlink(ofile)
         message("Saving help page to ", sQuote(basename(ofile2)))
@@ -316,3 +295,4 @@ offline_help_helper <- function(texfile, type = "postscript", texinputs = NULL)
     }
     invisible()
 }
+

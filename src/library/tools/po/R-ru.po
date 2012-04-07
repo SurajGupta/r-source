@@ -9,8 +9,8 @@ msgid ""
 msgstr ""
 "Project-Id-Version: R 2.11.0\n"
 "Report-Msgid-Bugs-To: bugs@r-project.org\n"
-"POT-Creation-Date: 2012-01-23 08:19\n"
-"PO-Revision-Date: 2011-10-18 22:43-0600\n"
+"POT-Creation-Date: 2012-03-16 06:26\n"
+"PO-Revision-Date: 2012-03-15 12:03-0500\n"
 "Last-Translator: Alexey Shipunov <dactylorhiza@gmail.com>\n"
 "Language-Team: Russian\n"
 "Language: \n"
@@ -179,52 +179,12 @@ msgstr ""
 "похоже, что имя пакета '%s' неправильное; вместо него использую имя папки "
 "'%s'"
 
-msgid "Packages required but not available:"
-msgstr "Пакет требуется, но недоступен:"
-
-msgid "Package required but not available: %s"
-msgstr "Пакет требуется, но недоступен: %s"
-
-msgid "Packages required and available but unsuitable versions:"
-msgstr "Пакет требуется и доступен, но неподходящих версий:"
-
-msgid "Package required and available but unsuitable version: %s"
-msgstr "Пакет требуется и доступен, но неподходящей версии:"
-
-msgid "Former standard packages required but now defunct:"
-msgstr ""
-"Бывший стандартный пакет требуется, который сейчас вышел из употребления:"
-
-msgid "Packages suggested but not available for checking:"
-msgstr "Пакет требуется, но недоступен для выдачи:"
-
-msgid "Package suggested but not available for checking: %s"
-msgstr "Пакет требуется, но недоступен  для выдачи:"
-
-msgid "Packages which this enhances but not available for checking:"
-msgstr "Пакет, который это усиливает, недоступен для выдачи:"
-
-msgid "Package which this enhances but not available for checking: %s"
-msgstr "Пакет, который это усиливает, недоступен для выдачи: %s"
-
-msgid "Vignette dependencies not required:"
-msgstr "Зависимости очерка не требуются:"
-
-msgid "Vignette dependencies not required: %s"
-msgstr "Зависимости очерка не требуются: %s"
-
 msgid ""
 "Vignette dependencies (\\VignetteDepends{} entries) must be contained in the "
 "DESCRIPTION Depends/Suggests/Imports entries."
 msgstr ""
 "Зависимости очерка (элементы \\VignetteDepends{}) должны содержаться в "
 "пунктах 'Depends/Suggests/Imports' файла DESCRIPTION."
-
-msgid "Namespace dependencies not required:"
-msgstr "Определения пространства имен не требуются:"
-
-msgid "Namespace dependency not required: %s"
-msgstr "Определения зависимости имен не требуется: %s"
 
 msgid "Malformed package name"
 msgstr "Плохое имя пакета"
@@ -414,6 +374,12 @@ msgstr ""
 msgid "packageStartupMessage"
 msgstr "packageStartupMessage"
 
+msgid "Package startup functions should not call %s."
+msgstr "Стартовые функции пакета не должны вызывать %s."
+
+msgid "installed.packages"
+msgstr "installed.packages"
+
 msgid "See section %s in ?.onAttach."
 msgstr "См. раздел %s в ?.onAttach."
 
@@ -435,13 +401,14 @@ msgstr "не объявлены вызовы 'library' или 'require' из:"
 msgid "'library' or 'require' call not declared from: %s"
 msgstr "не объявлен вызов 'library' или 'require' из: %ы"
 
-#, fuzzy
 msgid "'data(package=)' calls not declared from:"
-msgstr "не объявлены вызовы 'library' или 'require' из:"
+msgstr "'data(package=)' не объявлены в:"
 
-#, fuzzy
 msgid "'data(package=)' call not declared from: %s"
-msgstr "не объявлен вызов 'library' или 'require' из: %ы"
+msgstr "вызов 'data(package=)' не объявлен: %s"
+
+msgid "NB: need Internet access to use CRAN incoming checks"
+msgstr "NB: для проверок приходящего в CRAN нужен доступ в Интернет"
 
 msgid "Rd files with duplicated name '%s':"
 msgstr "Rd-файлы с повторяющимся именем '%s':"
@@ -515,6 +482,9 @@ msgstr "пропущенное/пустое поле \\имя Rd-файлы"
 msgid "No help on %s found in RdDB %s"
 msgstr "Не найдено помощи %s в RdDB %s"
 
+msgid "more than one \\examples section, using the first"
+msgstr "более чем одна \\секция примеров, использую первую"
+
 msgid "Converting Rd files to LaTeX ..."
 msgstr "Конвертирую  Rd файлы в LaTeX ..."
 
@@ -542,14 +512,8 @@ msgstr "невозможно перейти в текущий рабочий каталог"
 msgid "no inputs"
 msgstr "нет вводов"
 
-msgid "DVI output from Rd2dvi is deprecated"
-msgstr "Вывод DVI из Rd2dvi не рекомендуется"
-
-msgid "Error in running tools::texi2dvi"
-msgstr "Ошибка запуска tools::texi2dvi"
-
-msgid "more than one \\examples section, using the first"
-msgstr "более чем одна \\секция примеров, использую первую"
+msgid "Error in running tools::texi2pdf"
+msgstr "Ошибка запуска tools::texi2pdf"
 
 msgid "invalid value for '%s' : %s"
 msgstr "неправильное значение '%s' : %s"
@@ -615,13 +579,6 @@ msgstr "не могу перекодировать '%s' строк(и) %s"
 msgid "unable to copy INDEX to '%s'"
 msgstr "не могу скопировать 'INDEX' в '%s'"
 
-msgid ""
-"running Stangle on vignette '%s' failed with message:\n"
-"%s"
-msgstr ""
-"выполнение Stangle в очерке '%s' не удалось с диагностикой:\n"
-"%s"
-
 msgid "cannot create directory '%s'"
 msgstr "Не могу создать папку '%s'"
 
@@ -659,6 +616,9 @@ msgstr "Изменения требуют определенного 'style'"
 msgid "The default JSS style may not be modified."
 msgstr "Исходную библиотеку стиля JSS нельзя изменять. "
 
+msgid "invalid value for --compact-vignettes, assuming \"qpdf\""
+msgstr "неправильное значение --compact-vignettes, предполагаю \"qpdf\""
+
 msgid "Error: cannot rename directory to"
 msgstr "Ошибка: не могу переименовать папку в"
 
@@ -670,6 +630,10 @@ msgstr "начиная с R 2.12.0, конфигурационные файлы не поддерживаются"
 
 msgid "'--multiarch' specified with only one usable sub-architecture"
 msgstr "'--multiarch' определен только для одной используемой субархитектуры"
+
+#, fuzzy
+msgid "--as-cran turns off --extra-arch"
+msgstr "--cran выключает --extra-arch"
 
 msgid "Error: no packages were specified"
 msgstr "Ошибка: пакеты не определены"
@@ -821,18 +785,14 @@ msgstr "не найдено файлов исходников"
 msgid "empty 'data' directory"
 msgstr "пустая папка 'data'"
 
-msgid "--merge-multiarch is Windows-only"
-msgstr "--merge-multiarch -- это только для Windows"
-
 msgid "cannot create temporary directory"
 msgstr "Не могу создать врЕменную"
 
 msgid "ERROR: --merge-multiarch applies only to a single tarball"
 msgstr "ОШИБКА: --merge-multiarch применим только к одному tar-архиву"
 
-msgid "ERROR: --merge-multiarch can only be used on i386/x64 installations"
-msgstr ""
-"ERROR: --merge-multiarch можно использовать только на i386/x64-инсталляциях"
+msgid "only one architecture so ignoring '--merge-multiarch'"
+msgstr "только одна архитектура, так что пропускаю '--merge-multiarch'"
 
 msgid "invalid package"
 msgstr "неправильный пакет"
@@ -1304,8 +1264,66 @@ msgstr[0] "объект %s создан больше чем за один вызов данных"
 msgstr[1] "объекты %s созданы больше чем за один вызов данных"
 msgstr[2] "объекты %s созданы больше чем за один вызов данных"
 
+#~ msgid "ERROR: --merge-multiarch can only be used on i386/x64 installations"
+#~ msgstr ""
+#~ "ERROR: --merge-multiarch можно использовать только на i386/x64-"
+#~ "инсталляциях"
+
+#~ msgid "--merge-multiarch is Windows-only"
+#~ msgstr "--merge-multiarch -- это только для Windows"
+
+#~ msgid ""
+#~ "running Stangle on vignette '%s' failed with message:\n"
+#~ "%s"
+#~ msgstr ""
+#~ "выполнение Stangle в очерке '%s' не удалось с диагностикой:\n"
+#~ "%s"
+
+#~ msgid "Packages required but not available:"
+#~ msgstr "Пакет требуется, но недоступен:"
+
+#~ msgid "Package required but not available: %s"
+#~ msgstr "Пакет требуется, но недоступен: %s"
+
+#~ msgid "Packages required and available but unsuitable versions:"
+#~ msgstr "Пакет требуется и доступен, но неподходящих версий:"
+
+#~ msgid "Package required and available but unsuitable version: %s"
+#~ msgstr "Пакет требуется и доступен, но неподходящей версии:"
+
+#~ msgid "Former standard packages required but now defunct:"
+#~ msgstr ""
+#~ "Бывший стандартный пакет требуется, который сейчас вышел из употребления:"
+
+#~ msgid "Packages suggested but not available for checking:"
+#~ msgstr "Пакет требуется, но недоступен для выдачи:"
+
+#~ msgid "Package suggested but not available for checking: %s"
+#~ msgstr "Пакет требуется, но недоступен  для выдачи:"
+
+#~ msgid "Packages which this enhances but not available for checking:"
+#~ msgstr "Пакет, который это усиливает, недоступен для выдачи:"
+
+#~ msgid "Package which this enhances but not available for checking: %s"
+#~ msgstr "Пакет, который это усиливает, недоступен для выдачи: %s"
+
+#~ msgid "Vignette dependencies not required:"
+#~ msgstr "Зависимости очерка не требуются:"
+
+#~ msgid "Vignette dependencies not required: %s"
+#~ msgstr "Зависимости очерка не требуются: %s"
+
+#~ msgid "Namespace dependencies not required:"
+#~ msgstr "Определения пространства имен не требуются:"
+
+#~ msgid "Namespace dependency not required: %s"
+#~ msgstr "Определения зависимости имен не требуется: %s"
+
 #~ msgid "Package name and namespace differ."
 #~ msgstr "Имена пакета и пространства имен различаются."
+
+#~ msgid "DVI output from Rd2dvi is deprecated"
+#~ msgstr "Вывод DVI из Rd2dvi не рекомендуется"
 
 #, fuzzy
 #~ msgid ""

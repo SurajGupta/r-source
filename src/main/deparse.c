@@ -89,6 +89,7 @@
 #include <config.h>
 #endif
 
+#define R_USE_SIGNALS 1
 #include <Defn.h>
 #include <float.h> /* for DBL_DIG */
 #include <Print.h>
@@ -244,18 +245,43 @@ static SEXP deparse1WithCutoff(SEXP call, Rboolean abbrev, int cutoff,
     return svec;
 }
 
-/* deparse1line uses the maximum cutoff rather than the default */
+/* deparse1line concatenates all lines into one long one */
 /* This is needed in terms.formula, where we must be able */
 /* to deparse a term label into a single line of text so */
 /* that it can be reparsed correctly */
 SEXP deparse1line(SEXP call, Rboolean abbrev)
 {
-   SEXP temp;
-   Rboolean backtick=TRUE;
+    SEXP temp;
+    Rboolean backtick=TRUE;
+    int lines;
 
-   temp = deparse1WithCutoff(call, abbrev, MAX_Cutoff, backtick,
-			     SIMPLEDEPARSE, 1);
-   return(temp);
+    PROTECT(temp = deparse1WithCutoff(call, abbrev, MAX_Cutoff, backtick,
+			     SIMPLEDEPARSE, -1));
+    if ((lines = length(temp)) > 1) {
+	char *buf;
+	int i, len;
+	const void *vmax;
+	cetype_t enc = CE_NATIVE;
+	for (len=0, i = 0; i < length(temp); i++) {
+	    SEXP s = STRING_ELT(temp, i);
+	    cetype_t thisenc = getCharCE(s);
+	    len += strlen(CHAR(s));
+	    if (thisenc != CE_NATIVE) 
+	    	enc = thisenc; /* assume only one non-native encoding */ 
+	}    
+	vmax = vmaxget();
+	buf = R_alloc((size_t) len+lines, sizeof(char));
+	*buf = '\0';
+	for (i = 0; i < length(temp); i++) {
+	    strcat(buf, CHAR(STRING_ELT(temp, i)));
+	    if (i < lines - 1)
+	    	strcat(buf, "\n");
+	}
+	temp = ScalarString(mkCharCE(buf, enc));
+	vmaxset(vmax);
+    }		
+    UNPROTECT(1);	
+    return(temp);
 }
 
 SEXP attribute_hidden deparse1s(SEXP call)
@@ -1152,12 +1178,10 @@ static void deparse2buff(SEXP s, LocalParseData *d)
 	print2buff(tpb, d);
     }
 	break;
-#ifdef BYTECODE
     case BCODESXP:
 	d->sourceable = FALSE;
 	print2buff("<bytecode>", d);
 	break;
-#endif
     case WEAKREFSXP:
 	d->sourceable = FALSE;
 	print2buff("<weak reference>", d);

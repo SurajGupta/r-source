@@ -1,6 +1,6 @@
 R FAQ
 Frequently Asked Questions on R
-Version 2.14.2012-02-23
+Version 2.15.2012-03-29
 ISBN 3-900051-08-9
 Kurt Hornik
 
@@ -165,7 +165,7 @@ and give the above, _official_ URL and the ISBN 3-900051-08-9:
      @Misc{,
        author        = {Kurt Hornik},
        title         = {The {R} {FAQ}},
-       year          = {2011},
+       year          = {2012},
        note          = {{ISBN} 3-900051-08-9},
        url           = {http://CRAN.R-project.org/doc/FAQ/R-FAQ.html}
      }
@@ -185,7 +185,7 @@ Feedback via email to <Kurt.Hornik@R-project.org> is of course most welcome.
 systems.  Features specific to the Windows and Mac OS X ports of R are
 described in the "R for Windows FAQ"
 (http://CRAN.R-project.org/bin/windows/base/rw-FAQ.html) and the "R for Mac
-OS X FAQ (http://CRAN.R-project.org/bin/macosx/RMacOSX-FAQ.html).  If you
+OS X FAQ" (http://CRAN.R-project.org/bin/macosx/RMacOSX-FAQ.html).  If you
 have information on Macintosh or Windows systems that you think should be
 added to this document, please let me know.
 
@@ -258,7 +258,7 @@ i386-freebsd, rs6000-ibm-aix, and sparc-sun-solaris.
 2.3 What is the current version of R?
 =====================================
 
-The current released version is 2.14.2.  Based on this
+The current released version is 2.15.0.  Based on this
 `major.minor.patchlevel' numbering scheme, there are two development
 versions of R, a patched version of the current release (`r-patched') and
 one working towards the next minor or eventually major (`r-devel') releases
@@ -392,11 +392,11 @@ port of R for Macintosh is no longer supported.
 
 The `bin/linux' directory of a CRAN site contains the following packages.
 
-               CPU           Versions                      Provider
-     ----------------------------------------------------------------------- 
-     Debian    i386/amd64    etch/lenny/squeeze            Johannes Ranke
-     Red Hat   i386/x86_64   fedora10/fedora11             Martyn Plummer
-     Ubuntu    i386/amd64    hardy/lucid/maverick/natty    Michael Rutter
+               CPU           Versions                             Provider
+     ------------------------------------------------------------------------------ 
+     Debian    i386/amd64    etch/lenny/squeeze                   Johannes Ranke
+     Red Hat   i386/x86_64   fedora10/fedora11                    Martyn Plummer
+     Ubuntu    i386/amd64    hardy/lucid/maverick/natty/oneiric   Michael Rutter
 
    Debian packages, maintained by Dirk Eddelbuettel, have long been part of
 the Debian distribution, and can be accessed through APT, the Debian
@@ -530,7 +530,7 @@ To cite R in publications, use
        author       = {{R Development Core Team}},
        organization = {R Foundation for Statistical Computing},
        address      = {Vienna, Austria},
-       year         = 2011,
+       year         = 2012,
        note         = {{ISBN} 3-900051-07-0},
        url          = {http://www.R-project.org}
      }
@@ -1326,6 +1326,9 @@ reliability, security, and performance, Concerto relies on the popular and
 reliable open-source elements such as MySQL server (exchange and storage of
 the data), Rstudio (http://rstudio.org/) (R code designing and testing,
 file management), CKEditor (HTML Layer design), and PHP.
+
+   See `http://rwiki.sciviews.org/doku.php?id=faq-r#web_interfaces' for
+additional information.
 
 5 R Add-On Packages
 *******************

@@ -112,7 +112,7 @@ methods <- function (generic.function, class)
                 generic.function <- truegf
             }
         }
-	name <- paste("^", generic.function, ".", sep = "")
+	name <- paste0("^", generic.function, ".")
         name <- gsub("([.[$+*])", "\\\\\\1",name)
         info <- info[grep(name, row.names(info)), ]
         info <- info[! row.names(info) %in% S3MethodsStopList, ]
@@ -149,7 +149,7 @@ methods <- function (generic.function, class)
     else if (!missing(class)) {
 	if (!is.character(class))
 	    class <- paste(deparse(substitute(class)))
-	name <- paste(".", class, "$", sep = "")
+	name <- paste0(".", class, "$")
         name <- gsub("([.[])", "\\\\\\1", name)
         info <- info[grep(name, row.names(info)), ]
         info <- info[! row.names(info) %in% S3MethodsStopList, ]
@@ -193,7 +193,7 @@ print.MethodsFunction <- function(x, ...)
 {
     visible <- attr(x, "info")[["visible"]]
     if(length(x)) {
-        print(paste(x, ifelse(visible, "", "*"), sep=""), quote=FALSE, ...)
+	print(paste0(x, ifelse(visible, "", "*")), quote=FALSE, ...)
         if(any(!visible))
             cat("\n", "   ",
                 "Non-visible functions are asterisked", "\n", sep="")
@@ -244,29 +244,64 @@ getFromNamespace <- function(x, ns, pos = -1, envir = as.environment(pos))
     get(x, envir = ns, inherits = FALSE)
 }
 
+assignInMyNamespace <- function(x, value)
+{
+    ns <- environment(sys.function(-1))
+    if(bindingIsLocked(x, ns)) {
+        unlockBinding(x, ns)
+        assign(x, value, envir = ns, inherits = FALSE)
+        w <- options("warn")
+        on.exit(options(w))
+        options(warn = -1)
+        lockBinding(x, ns)
+    } else assign(x, value, envir = ns, inherits = FALSE)
+    if(!isBaseNamespace(ns)) {
+        ## now look for possible copy as a registered S3 method
+        S3 <- getNamespaceInfo(ns, "S3methods")
+        if(!length(S3)) return(invisible(NULL))
+        S3names <- S3[, 3L]
+        if(x %in% S3names) {
+            i <- match(x, S3names)
+            genfun <- get(S3[i, 1L], mode = "function", envir = parent.frame())
+            if(.isMethodsDispatchOn() && methods::is(genfun, "genericFunction"))
+                genfun <- methods::slot(genfun, "default")@methods$ANY
+            defenv <- if (typeof(genfun) == "closure") environment(genfun)
+            else .BaseNamespaceEnv
+            S3Table <- get(".__S3MethodsTable__.", envir = defenv)
+            remappedName <- paste(S3[i, 1L], S3[i, 2L], sep = ".")
+            if(exists(remappedName, envir = S3Table, inherits = FALSE))
+                assign(remappedName, value, S3Table)
+        }
+    }
+    invisible(NULL)
+}
+
 assignInNamespace <-
     function(x, value, ns, pos = -1, envir = as.environment(pos))
 {
+    nf <- sys.nframe()
     if(missing(ns)) {
         nm <- attr(envir, "name", exact = TRUE)
         if(is.null(nm) || substring(nm, 1L, 8L) != "package:")
             stop("environment specified is not a package")
         ns <- asNamespace(substring(nm, 9L))
     } else ns <- asNamespace(ns)
-    protected <- c("as.Date.numeric", "sample")
-    if (x %in% protected && getNamespaceName(ns) == "base") {
-        warning("locked binding of ", sQuote(x), " will not be changed",
-                call. = FALSE, domain = NA, immediate. = TRUE)
-        return(invisible(NULL))
+    if (nf > 1L) {
+        if(getNamespaceName(ns) %in% tools:::.get_standard_package_names()$base)
+            stop("locked binding of ", sQuote(x), " cannot be changed",
+                 domain = NA)
     }
     if(bindingIsLocked(x, ns)) {
         in_load <- Sys.getenv("_R_NS_LOAD_")
         if (nzchar(in_load)) {
             ns_name <- getNamespaceName(ns)
-            if(!in_load %in% c("Matrix", "SparseM") && in_load != ns_name)
-                warning(gettextf("changing locked binding for %s in %s whilst loading %s",
-                                 sQuote(x), sQuote(ns_name), sQuote(in_load)),
-                        call. = FALSE, domain = NA, immediate. = TRUE)
+            if(in_load != ns_name) {
+                msg <-
+                    gettextf("changing locked binding for %s in %s whilst loading %s",
+                             sQuote(x), sQuote(ns_name), sQuote(in_load))
+                if (! in_load %in% c("Matrix", "SparseM"))
+                    warning(msg, call. = FALSE, domain = NA, immediate. = TRUE)
+            }
         } else if (nzchar(Sys.getenv("_R_WARN_ON_LOCKED_BINDINGS_"))) {
             ns_name <- getNamespaceName(ns)
             warning(gettextf("changing locked binding for %s in %s",
@@ -330,16 +365,20 @@ getAnywhere <- function(x)
         where <- names(pos)
         visible <- rep.int(TRUE, length(pos))
     }
-    ## next look for methods
+    ## next look for methods: a.b.c.d could be a method for a or a.b or a.b.c
     if(length(grep(".", x, fixed=TRUE))) {
         np <- length(parts <- strsplit(x, ".", fixed=TRUE)[[1L]])
         for(i in 2:np) {
             gen <- paste(parts[1L:(i-1)], collapse=".")
             cl <- paste(parts[i:np], collapse=".")
             if (gen == "" || cl == "") next
-            # f might be a special, not a closure, and not have an environment, so
-            # be careful below
-            if(!is.null(f <- getS3method(gen, cl, TRUE)) && !is.null(environment(f))) {
+            ## want to evaluate this in the parent, or the utils namespace
+            ## gets priority.
+            Call <- substitute(getS3method(gen, cl, TRUE), list(gen = gen, cl = cl))
+            f <- eval.parent(Call)
+            ## Now try to fathom out where it is from.
+            ## f might be a special, not a closure, and not have an environment,
+            if(!is.null(f) && !is.null(environment(f))) {
                 ev <- topenv(environment(f), baseenv())
                 nmev <- if(isNamespace(ev)) getNamespaceName(ev) else NULL
                 objs <- c(objs, f)
@@ -351,7 +390,7 @@ getAnywhere <- function(x)
             }
         }
     }
-    ## now look in namespaces, visible or not
+    ## now look in loaded namespaces
     for(i in loadedNamespaces()) {
         ns <- asNamespace(i)
         if(exists(x, envir = ns, inherits = FALSE)) {
@@ -388,14 +427,14 @@ print.getAnywhere <- function(x, ...)
     } else if (n == 1L) {
         cat("A single object matching", sQuote(x$name), "was found\n")
         cat("It was found in the following places\n")
-        cat(paste("  ", x$where, sep=""), sep="\n")
+	cat(paste0("  ", x$where), sep="\n")
         cat("with value\n\n")
         print(x$objs[[1L]])
     } else {
         cat(n, "differing objects matching", sQuote(x$name),
             "were found\n")
         cat("in the following places\n")
-        cat(paste("  ", x$where, sep=""), sep="\n")
+        cat(paste0("  ", x$where), sep="\n")
         cat("Use [] to view one of them\n")
     }
     invisible(x)

@@ -26,20 +26,30 @@
 
 newLog <- function(filename = "")
 {
-    con <- if (nzchar(filename)) file(filename, "wt") else 0L
-    list(filename = filename, con = con, stars = "*", warnings = 0L)
+    con <- if(nzchar(filename)) file(filename, "wt") else 0L
+
+    Log <- new.env(parent = emptyenv())
+    Log$con <- con
+    Log$filename <- filename
+    Log$stars <- "*"
+    Log$warnings <- 0L
+    Log$notes <- 0L
+
+    Log
 }
 
-closeLog <- function(Log) if (Log$con > 2) close(Log$con)
+closeLog <- function(Log) if (Log$con > 2L) close(Log$con)
 
-printLog <- function(Log, ...) {
+printLog <- function(Log, ...)
+{
     quotes <- function(x) gsub("'([^']*)'", sQuote("\\1"), x)
     args <- lapply(list(...), quotes)
     do.call(cat, c(args, sep = ""))
     if (Log$con > 0L) do.call(cat, c(args, sep = "", file=Log$con))
 }
 
-printLog0 <- function(Log, ...) {
+printLog0 <- function(Log, ...)
+{
     cat(..., sep = "")
     if (Log$con > 0L) cat(..., file = Log$con, sep = "")
 }
@@ -51,44 +61,60 @@ checkingLog <- function(Log, ...)
     printLog(Log, Log$stars, " checking ", ..., " ...")
 
 creatingLog <- function(Log, text)
-    printLog(Log, Log$stars," creating ", text, " ...")
+    printLog(Log, Log$stars, " creating ", text, " ...")
 
 messageLog <- function(Log, ...)
     printLog(Log, Log$stars, " ", ..., "\n")
 
-resultLog <- function(Log, text) printLog(Log, " ", text, "\n")
+resultLog <- function(Log, text)
+    printLog(Log, " ", text, "\n")
 
 errorLog <- function(Log, ...)
 {
     resultLog(Log, "ERROR")
-    text <- paste(..., sep="")
+    text <- paste0(...)
     if (length(text) && nzchar(text)) printLog(Log, ..., "\n")
 }
 
-warningLog <- function(Log, text="")
+## <NOTE>
+## Perhaps the arguments to errorLog(), warningLog() and noteLog()
+## should be synchronized?
+## </NOTE>
+
+warningLog <- function(Log, text = "")
 {
     resultLog(Log, "WARNING")
-    if (nzchar(text)) messageLog(Log, text)
-    Log$warnings <- Log$warnings+1L
-    invisible(Log)
+    if(nzchar(text)) printLog(Log, text, "\n")
+    Log$warnings <- Log$warnings + 1L
 }
 
-noteLog <- function(Log, text="")
+noteLog <- function(Log, text = "")
 {
     resultLog(Log, "NOTE")
-    if (nzchar(text)) messageLog(Log, text)
+    if(nzchar(text)) printLog(Log, text, "\n")
+    Log$notes <- Log$notes + 1L
 }
 
 summaryLog <- function(Log)
 {
-    if (Log$warnings > 1)
+    if((Log$warnings > 0L) || (Log$notes > 0L)) {
+        if(Log$warnings > 1L)
+            printLog(Log,
+                     sprintf("WARNING: There were %d warnings.\n",
+                             Log$warnings))
+        else if(Log$warnings == 1L)
+            printLog(Log,
+                     sprintf("WARNING: There was 1 warning.\n"))
+        if(Log$notes > 1L)
+            printLog(Log,
+                     sprintf("NOTE: There were %d notes.\n",
+                             Log$notes))
+        else if(Log$notes == 1L)
+            printLog(Log,
+                     sprintf("NOTE: There was 1 note.\n"))
         printLog(Log,
-                 sprintf("WARNING: There were %d warnings, see\n  %s\nfor details\n",
-                         Log$warnings, sQuote(Log$filename)))
-    else if (Log$warnings == 1)
-        printLog(Log,
-                 sprintf("WARNING: There was 1 warning, see\n  %s\nfor details\n",
-                         sQuote(Log$filename)))
+                 sprintf("See\n  %s\nfor details.\n", sQuote(Log$filename)))
+    }
 }
 
 writeDefaultNamespace <-
@@ -209,9 +235,12 @@ get_exclude_patterns <- function()
             '                        "no", "best", "gzip" (default)',
             "  --resave-data         same as --resave-data=best",
             "  --no-resave-data      same as --resave-data=no",
-            "  --compact-vignettes   try to compact PDF files under inst/doc (using qpdf)",
-            "",
-            "Report bugs to <r-bugs@r-project.org>.", sep="\n")
+            "  --compact-vignettes=  try to compact PDF files under inst/doc:",
+            '                        "no" (default), "qpdf", "gs", "gs+pdf", "both"',
+            "  --compact-vignettes   same as --compact-vignettes=qpdf",
+            "  --md5                 add MD5 sums",
+           "",
+            "Report bugs at bugs.r-project.org .", sep="\n")
     }
 
     add_build_stamp_to_description_file <- function(ldpath) {
@@ -370,12 +399,25 @@ get_exclude_patterns <- function()
                 }
             }
         }
-        if (compact_vignettes &&
+        if (compact_vignettes != "no" &&
             length(pdfs <- dir(doc_dir, pattern = "\\.pdf", recursive = TRUE,
-                               full.names = TRUE))
-            && nzchar(Sys.which(qpdf <-Sys.getenv("R_QPDF", "qpdf")))) {
+                               full.names = TRUE))) {
             messageLog(Log, "compacting vignettes and other PDF files")
-            compactPDF(pdfs, qpdf, gs_quality = "none") # so this always uses qpdf
+            if(compact_vignettes %in% c("gs", "gs+pdf", "both")) {
+                gs_cmd <- find_gs_cmd(Sys.getenv("R_GSCMD", ""))
+                gs_quality <- "ebook"
+            } else {
+                gs_cmd <- ""
+                gs_quality <- "none"
+            }
+            qpdf <-
+                ifelse(compact_vignettes %in% c("qpdf", "gs+pdf", "both"),
+                       Sys.which(Sys.getenv("R_QPDF", "qpdf")), "")
+            res <- compactPDF(pdfs, qpdf = qpdf,
+                              gs_cmd = gs_cmd, gs_quality = gs_quality)
+            res <- format(res, diff = 1e5)
+            if(length(res))
+                printLog(Log, paste(" ", format(res), collapse = "\n"), "\n")
         }
         if (pkgInstalled) {
             unlink(libdir, recursive = TRUE)
@@ -406,7 +448,8 @@ get_exclude_patterns <- function()
                     }
                     ## Also cleanup possible Unix leftovers ...
                     unlink(c(Sys.glob(c("*.o", "*.sl", "*.so", "*.dylib")),
-                             paste(pkgname, c(".a", ".dll", ".def"), sep="")))
+                             paste0(pkgname, c(".a", ".dll", ".def")),
+                             "symbols.rds"))
                     if (dir.exists(".libs")) unlink(".libs", recursive = TRUE)
                     if (dir.exists("_libs")) unlink("_libs", recursive = TRUE)
                 }
@@ -429,7 +472,8 @@ get_exclude_patterns <- function()
                     }
                     ## Also cleanup possible Windows leftovers ...
                     unlink(c(Sys.glob(c("*.o", "*.sl", "*.so", "*.dylib")),
-                             paste(pkgname, c(".a", ".dll", ".def"), sep="")))
+                             paste0(pkgname, c(".a", ".dll", ".def")),
+                             "symbols.rds"))
                     if (dir.exists(".libs")) unlink(".libs", recursive = TRUE)
                     if (dir.exists("_libs")) unlink("_libs", recursive = TRUE)
                 }
@@ -530,37 +574,37 @@ get_exclude_patterns <- function()
 	    messageLog(Log, "building the PDF package manual")
 	    dir.create("build", showWarnings = FALSE)
 	    refman <- file.path(pkgdir, "build",
-                                paste(basename(pkgdir), ".pdf", sep = ""))
-	    ..Rd2dvi(c("--pdf", "--force", "--no-preview",
-	               paste("--output=", refman, sep=""),
+                                paste0(basename(pkgdir), ".pdf"))
+	    ..Rd2pdf(c("--force", "--no-preview",
+	               paste0("--output=", refman),
 	               pkgdir), quit = FALSE)
         }
 	return(TRUE)
     }
 
-    ## These also fix up missing final NL
-    fix_nonLF_in_source_files <- function(pkgname, Log)
+    ## also fixes up missing final NL
+    fix_nonLF_in_files <- function(pkgname, dirPattern, Log)
     {
-        if (!dir.exists(file.path(pkgname, "src"))) return()
-        src_files <- dir(file.path(pkgname, "src"),
-                         pattern = "\\.([cfh]|cc|cpp)$",
-                         full.names=TRUE, recursive = TRUE)
-        for (ff in src_files) {
-            lines <- readLines(ff, warn = FALSE)
-            writeLinesNL(lines, ff)
+	if(dir.exists(sDir <- file.path(pkgname, "src"))) {
+            files <- dir(sDir, pattern = dirPattern,
+                         full.names = TRUE, recursive = TRUE)
+            ## FIXME: This "destroys" all timestamps
+            for (ff in files) {
+                lines <- readLines(ff, warn = FALSE)
+                writeLinesNL(lines, ff)
+            }
         }
     }
 
-    fix_nonLF_in_make_files <- function(pkgname, Log)
-    {
-        if (!dir.exists(file.path(pkgname, "src"))) return()
-         for (f in c("Makefile", "Makefile.in", "Makefile.win",
-                     "Makevars", "Makevars.in", "Makevars.win")) {
-             if (!file.exists(ff <- file.path(pkgname, "src", f))) next
-             lines <- readLines(ff, warn = FALSE)
-             writeLinesNL(lines, ff)
-         }
-     }
+    fix_nonLF_in_source_files <- function(pkgname, Log) {
+        fix_nonLF_in_files(pkgname, dirPattern = "\\.([cfh]|cc|cpp)$", Log)
+    }
+    fix_nonLF_in_make_files <- function(pkgname, Log) {
+        fix_nonLF_in_files(pkgname,
+                           paste("^",c("Makefile", "Makefile.in", "Makefile.win",
+                                       "Makevars", "Makevars.in", "Makevars.win"),
+                                 "$", sep=""), Log)
+    }
 
     find_empty_dirs <- function(d)
     {
@@ -601,7 +645,7 @@ get_exclude_patterns <- function()
 
         flatten <- function(x) {
             if(length(x) == 3L)
-                paste(x$name, " (", x$op, " ", x$version, ")", sep = "")
+                paste0(x$name, " (", x$op, " ", x$version, ")")
             else x[[1L]]
         }
         deps <- desc["Depends"]
@@ -710,6 +754,7 @@ get_exclude_patterns <- function()
     force <- FALSE
     vignettes <- TRUE
     manual <- TRUE  # Install the manual if Rds contain \Sexprs
+    with_md5 <- FALSE
     INSTALL_opts <- character()
     pkgs <- character()
     options(showErrorCalls = FALSE, warn = 1)
@@ -722,11 +767,8 @@ get_exclude_patterns <- function()
     else if (file.exists(Renv <- "~/.R/build.Renviron")) readRenviron(Renv)
 
     ## Configurable variables.
-    compact_vignettes <-
-        config_val_to_logical(Sys.getenv("_R_BUILD_COMPACT_VIGNETTES_",
-                                         "FALSE"))
-    resave_data <-
-        Sys.getenv("_R_BUILD_RESAVE_DATA_", "gzip")
+    compact_vignettes <- Sys.getenv("_R_BUILD_COMPACT_VIGNETTES_", "no")
+    resave_data <- Sys.getenv("_R_BUILD_RESAVE_DATA_", "gzip")
 
     keep_empty <-
         config_val_to_logical(Sys.getenv("_R_BUILD_KEEP_EMPTY_DIRS_", "FALSE"))
@@ -768,12 +810,21 @@ get_exclude_patterns <- function()
             resave_data <- substr(a, 15, 1000)
         } else if (a == "--no-manual") {
             manual <- FALSE
+        } else if (substr(a, 1, 20) == "--compact-vignettes=") {
+            compact_vignettes <- substr(a, 21, 1000)
         } else if (a == "--compact-vignettes") {
-            compact_vignettes <- TRUE
+            compact_vignettes <- "qpdf"
+        } else if (a == "--md5") {
+            with_md5 <- TRUE
         } else if (substr(a, 1, 1) == "-") {
             message("Warning: unknown option ", sQuote(a))
         } else pkgs <- c(pkgs, a)
         args <- args[-1L]
+    }
+
+    if(!compact_vignettes %in% c("no", "qpdf", "gs", "gs+pdf", "both")) {
+        warning('invalid value for --compact-vignettes, assuming "qpdf"')
+        compact_vignettes <-"qpdf"
     }
 
     Sys.unsetenv("R_DEFAULT_PACKAGES")
@@ -823,7 +874,7 @@ get_exclude_patterns <- function()
         intname <- desc["Package"]
         ## make a copy, cd to parent of copy
         setwd(dirname(pkgdir))
-        filename <- paste(intname, "_", desc["Version"], ".tar", sep="")
+        filename <- paste0(intname, "_", desc["Version"], ".tar")
         filepath <- file.path(startdir, filename)
         Tdir <- tempfile("Rbuild")
         dir.create(Tdir, mode = "0755")
@@ -888,7 +939,7 @@ get_exclude_patterns <- function()
         ## Mac resource forks
         exclude <- exclude | grepl("^\\._", bases)
 	## Windows DLL resource file
-        exclude <- exclude | (bases == paste("src/", pkgname, "_res.rc", sep=""))
+        exclude <- exclude | (bases == paste0("src/", pkgname, "_res.rc"))
         unlink(allfiles[exclude], recursive = TRUE, force = TRUE)
         setwd(owd)
 
@@ -932,7 +983,8 @@ get_exclude_patterns <- function()
                recursive = TRUE)
 
         ## work on 'data' directory if present
-        if(file_test("-d", file.path(pkgname, "data"))) {
+        if(file_test("-d", file.path(pkgname, "data")) ||
+           file_test("-f", file.path(pkgname, "R", "sysdata.rda"))) {
             messageLog(Log, "looking to see if a 'data/datalist' file should be added")
             ## in some cases data() needs the package installed as
             ## there are links to the package's namespace
@@ -952,8 +1004,16 @@ get_exclude_patterns <- function()
 	    writeDefaultNamespace(namespace)
 	}
 
+        if(with_md5) {
+	    messageLog(Log, "adding MD5 file")
+            .installMD5sums(pkgname)
+        } else {
+            ## remove any stale file
+            unlink(file.path(pkgname, "MD5"))
+        }
+
         ## Finalize
-        filename <- paste(pkgname, "_", desc["Version"], ".tar.gz", sep="")
+        filename <- paste0(pkgname, "_", desc["Version"], ".tar.gz")
         filepath <- file.path(startdir, filename)
         ## NB: naughty reg-packages.R relies on this exact format!
         messageLog(Log, "building ", sQuote(filename))

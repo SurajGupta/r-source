@@ -22,10 +22,10 @@
 #
 msgid ""
 msgstr ""
-"Project-Id-Version: R 2.14.1\n"
+"Project-Id-Version: R 2.15.0\n"
 "Report-Msgid-Bugs-To: bugs@r-project.org\n"
-"POT-Creation-Date: 2012-01-23 08:18\n"
-"PO-Revision-Date: 2012-01-23 08:18\n"
+"POT-Creation-Date: 2012-03-09 06:26\n"
+"PO-Revision-Date: 2012-03-09 06:26\n"
 "Last-Translator: Automatically generated\n"
 "Language-Team: none\n"
 "MIME-Version: 1.0\n"
@@ -162,10 +162,10 @@ msgstr ""
 
 msgid ""
 "if the 'def' argument is supplied, it must be a function that calls "
-"standardGeneric(\"%s\") to dispatch methods"
+"standardGeneric(\"%s\") or is the default"
 msgstr ""
 "if the ‘def’ argument is supplied, it must be a function that calls "
-"standardGeneric(“%s”) to dispatch methods"
+"standardGeneric(“%s”) or is the default"
 
 msgid ""
 "must supply a function skeleton for %s, explicitly or via an existing "
@@ -591,6 +591,9 @@ msgstr "%d: target “%s”: chose “%s” (others: %s)"
 msgid "Notes: %s."
 msgstr "Notes: %s."
 
+msgid "Class generator function for class \"%s\" from package \"%s\""
+msgstr "Class generator function for class “%s” from package “%s”"
+
 msgid "the names in signature for method (%s) do not match %s's arguments (%s)"
 msgstr ""
 "the names in signature for method (%s) do not match %s's arguments (%s)"
@@ -966,13 +969,6 @@ msgstr ""
 "the body of the generic function for “%s” calls ‘standardGeneric’ to "
 "dispatch on a different name (“%s”)!"
 
-msgid "the supplied generic function definition for"
-msgstr "the supplied generic function definition for"
-
-msgid "does not seem to call 'standardGeneric'; no methods will be dispatched!"
-msgstr ""
-"does not seem to call 'standardGeneric'; no methods will be dispatched!"
-
 msgid ""
 "internal error: Bad methods list object in fixing methods for primitive "
 "function %s"
@@ -1063,6 +1059,21 @@ msgstr ""
 
 msgid "No definition found for class %s"
 msgstr "No definition found for class %s"
+
+msgid "Missing  function for load action: %s"
+msgstr "Missing  function for load action: %s"
+
+msgid "Error in load action %s for package %s: %s: %s"
+msgstr "Error in load action %s for package %s: %s: %s"
+
+msgid "non-function action: \"%s"
+msgstr "non-function action: \"%s"
+
+msgid "action function \"%s\" has no arguments, should have at least 1"
+msgstr "action function “%s” has no arguments, should have at least 1"
+
+msgid "Some actions missing: %s"
+msgstr "Some actions missing: %s"
 
 msgid "\"%s\" has a sealed class definition and cannot be redefined"
 msgstr "“%s” has a sealed class definition and cannot be redefined"
@@ -1195,6 +1206,9 @@ msgstr "Multiple class definitions for %s from packages: %s; picking the first"
 
 msgid "No package name supplied and no class definition found for %s"
 msgstr "No package name supplied and no class definition found for %s"
+
+msgid "argument classDef must be a class definition or the name of a class"
+msgstr "argument classDef must be a class definition or the name of a class"
 
 msgid ""
 "'traceOn' is deprecated: use the function 'trace' in the 'methods' package "
@@ -1659,21 +1673,12 @@ msgstr ""
 "Topic “%s” is not a method name in class %s\n"
 "The class definition follows"
 
-msgid "Arguments must all be character string names of fields"
-msgstr "Arguments must all be character string names of fields"
-
 msgid ""
 "The definition of class %s in package %s is locked, fields may not be "
 "modified"
 msgstr ""
 "The definition of class %s in package %s is locked, fields may not be "
 "modified"
-
-msgid "Field \"%s\" is already locked"
-msgstr "Field “%s” is already locked"
-
-msgid "Field \"%s\" of class %s has a non-default binding and cannot be locked"
-msgstr "Field “%s” of class %s has a non-default binding and cannot be locked"
 
 msgid ""
 "The overriding class(\"%s\") of field \"%s\" is not a subclass of the "
@@ -1783,6 +1788,15 @@ msgstr ""
 "Non-local assignment to method names is not allowed\n"
 "    %s\n"
 "( in method %s for class %s)"
+
+msgid "Arguments must all be character string names of fields"
+msgstr "Arguments must all be character string names of fields"
+
+msgid "Field \"%s\" is already locked"
+msgstr "Field “%s” is already locked"
+
+msgid "Field \"%s\" of class %s has a non-default binding and cannot be locked"
+msgstr "Field “%s” of class %s has a non-default binding and cannot be locked"
 
 msgid ""
 "invalid ignore= argument; should be a class definition or a character "

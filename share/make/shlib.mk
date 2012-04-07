@@ -12,4 +12,10 @@ $(SHLIB): $(OBJECTS)
 
 shlib-clean:
 	@rm -rf .libs _libs
-	@rm -f $(OBJECTS)
+	@rm -f $(OBJECTS) symbols.rds
+
+
+## FIXME: why not Rscript?
+symbols.rds: $(OBJECTS)
+	@$(ECHO) "tools:::.shlib_objects_symbol_tables()" | \
+	  $(R_HOME)/bin/R --vanilla --slave --args $(OBJECTS)

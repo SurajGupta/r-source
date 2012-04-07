@@ -57,6 +57,10 @@
 \alias{.Export}
 \alias{.S3method}
 \alias{.First.lib}
+\alias{mem.limits}
+\alias{.readRDS}
+\alias{.saveRDS}
+\alias{Sys.putenv}
 %
 \description{
   The functions or variables listed here are no longer part of \R as
@@ -149,6 +153,12 @@ manglePackageName(pkgName, pkgVersion)
 % Removed in 2.14.0
 .First.lib(lib, pkg)
 % </Removed 2.14.0>
+% Removed in 2.15.0
+mem.limits(nsize = NA, vsize = NA)
+.saveRDS(\dots)
+.readRDS(\dots)
+Sys.putenv(\dots)
+% </Removed 2.15.0>
 }
 \details{
   \code{category} has been an old-S function before there were factors;
@@ -248,6 +258,17 @@ manglePackageName(pkgName, pkgVersion)
 
   \code{.First.lib} was the load/attach hook for packages without
   namespaces: use \code{\link{.onLoad}} or \code{\link{.onAttach}} instead.
+  
+  \code{mem.limits} reported on the old-style limits on the number of
+  cons cells and size of the vector heap.  These are no longer limited
+  except by overall memory limits.
+  
+  \code{.readRDS} and \code{.saveRDS}, were internal-only versions (and
+  the only versions available prior to \R 2.13.0) of
+  \code{\link{.readRDS}} and \code{\link{.saveRDS}}.
+
+  \code{Sys.putenv} was a synonym for \code{\link{Sys.setenv}},
+  deprecated since \R 2.5.0.
 }
 \seealso{
   \code{\link{Defunct}}, \code{\link{base-deprecated}}

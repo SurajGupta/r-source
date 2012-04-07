@@ -1,6 +1,6 @@
 
-R version 2.14.0 beta (2011-10-21 r57363)
-Copyright (C) 2011 The R Foundation for Statistical Computing
+R version 2.15.0 alpha (2012-03-02 r58556)
+Copyright (C) 2012 The R Foundation for Statistical Computing
 ISBN 3-900051-07-0
 Platform: x86_64-unknown-linux-gnu (64-bit)
 
@@ -810,7 +810,7 @@ temperature no yes
 > 
 > ### Name: filled.contour
 > ### Title: Level (Contour) Plots
-> ### Aliases: filled.contour
+> ### Aliases: filled.contour .filled.contour
 > ### Keywords: hplot aplot
 > 
 > ### ** Examples
@@ -1303,6 +1303,16 @@ List of 2
 +        inset = .02)
 > legend("right", "(x,y)", pch=1, title="right")
 > legend("center", "(x,y)", pch=1, title="center")
+> 
+> # using text.font (and text.col):
+> op <- par(mfrow = c(2, 2), mar=rep(2.1,4))
+> c6 <- terrain.colors(10)[1:6]
+> for(i in 1:4) {
++    plot(1, type = "n", axes=FALSE, ann=FALSE); title(paste("text.font =",i))
++    legend("top", legend = LETTERS[1:6], col = c6,
++           ncol =2, cex = 2, lwd = 3, text.font = i, text.col = c6)
++ }
+> par(op)
 > 
 > 
 > 
@@ -1998,7 +2008,7 @@ N
 > points.default # to see how it calls "plot.xy(xy.coords(x, y), ...)"
 function (x, y = NULL, type = "p", ...) 
 plot.xy(xy.coords(x, y), type = type, ...)
-<bytecode: 0x26c6cf0>
+<bytecode: 0x31a2270>
 <environment: namespace:graphics>
 > 
 > 
@@ -2905,7 +2915,7 @@ function (xy = 1, warn.log = TRUE)
     u <- par("usr")
     xy * c(u[2L] - u[1L], u[4L] - u[3L])/par("pin")
 }
-<bytecode: 0x2b26778>
+<bytecode: 0x2e9a1a0>
 <environment: namespace:graphics>
 > 
 > ## plot labels offset 0.12 inches to the right
@@ -2985,7 +2995,7 @@ function (xy = 1, warn.log = TRUE)
 > ### * <FOOTER>
 > ###
 > cat("Time elapsed: ", proc.time() - get("ptime", pos = 'CheckExEnv'),"\n")
-Time elapsed:  5.277 0.141 5.447 0 0 
+Time elapsed:  5.342 0.122 5.5 0 0 
 > grDevices::dev.off()
 null device 
           1 

@@ -11,30 +11,29 @@ function(title="R", logo=TRUE,
          outputEncoding = "UTF-8")
 {
     result <- c('<!DOCTYPE html PUBLIC "-//W3C//DTD HTML 4.01 Transitional//EN">',
-        paste('<html><head><title>', headerTitle, '</title>', sep=''),
-        paste('<meta http-equiv="Content-Type" content="text/html; charset=',
-              mime_canonical_encoding(outputEncoding), '">', sep=''),
-        paste('<link rel="stylesheet" type="text/css" href="', css, '">', sep=''),
-        '</head><body>',
+	paste0('<html><head><title>', headerTitle, '</title>'),
+	paste0('<meta http-equiv="Content-Type" content="text/html; charset=',
+	       mime_canonical_encoding(outputEncoding), '">'),
+	paste0('<link rel="stylesheet" type="text/css" href="', css, '">'),
+	'</head><body>',
 	paste('<h1>', title))
     if (logo)
-    	result <- c(result, paste('<img class="toplogo" src="',
-	      file.path(Rhome, 'doc/html/logo.jpg'), '" alt="[R logo]">', sep=''))
+    	result <- c(result,
+                    paste0('<img class="toplogo" src="',
+                           file.path(Rhome, 'doc/html/logo.jpg'), '" alt="[R logo]">'))
     result <- c(result, '</h1>', '<hr>')
     if (!is.null(up) || !is.null(top)) {
     	result <- c(result, '<div align="center">')
     	if (!is.null(up))
     	    result <- c(result,
-    	        paste('<a href="', up, '"><img src="',
-    	              file.path(Rhome, 'doc/html/left.jpg'),
-    	              '" alt="[Up]" width="30" height="30" border="0"></a>',
-    	              sep=''))
+    	        paste0('<a href="', up, '"><img src="',
+                       file.path(Rhome, 'doc/html/left.jpg'),
+                       '" alt="[Up]" width="30" height="30" border="0"></a>'))
     	if (!is.null(top))
     	    result <- c(result,
-    	    	paste('<a href="', top, '"><img src="',
+    	    	paste0('<a href="', top, '"><img src="',
     	    	      file.path(Rhome, 'doc/html/up.jpg'),
-    	    	      '" alt="[Top]" width="30" height="30" border="0"></a>',
-    	    	      sep=''))
+    	    	      '" alt="[Top]" width="30" height="30" border="0"></a>'))
     	result <- c(result, '</div>')
     }
     result
@@ -54,24 +53,23 @@ function(x, ...)
     out <- if(nrow(db) == 0L)
          NULL
     else
-        lapply(split(1 : nrow(db), db[, "Package"]),
-               function(ind) db[ind, c("Item", "Title"),
-                                drop = FALSE])
+        lapply(split(1:nrow(db), db[, "Package"]),
+               function(ind) db[ind, c("Item", "Title"), drop = FALSE])
 
     result <- HTMLheader(...)
 
     for(pkg in names(out)) {
         result <- c(result,
-                    paste('<h2>', htmlify(x$title), ' in package &lsquo;',
-                                  htmlify(pkg), '&rsquo;</h2>', sep = ''),
-                    '<table cols="2" width="100%">',
-                    paste('<tr>\n',
-                          ' <td align="left" valign="top" width="10%">\n',
-                          htmlify(out[[pkg]][, "Item"]),
-                          '\n </td>\n <td align="left" valign="top" width="90%">\n',
-                          htmlify(out[[pkg]][, "Title"]),
-                          '\n </td>\n</tr>\n', sep = ''),
-                    '</table>')
+		    paste0('<h2>', htmlify(x$title), ' in package &lsquo;',
+			   htmlify(pkg), '&rsquo;</h2>'),
+		    '<table cols="2" width="100%">',
+		    paste0('<tr>\n',
+			   ' <td align="left" valign="top" width="10%">\n',
+			   htmlify(out[[pkg]][, "Item"]),
+			   '\n </td>\n <td align="left" valign="top" width="90%">\n',
+			   htmlify(out[[pkg]][, "Title"]),
+			   '\n </td>\n</tr>\n'),
+		    '</table>')
     }
     if(!is.null(x$footer))
     	result <- c(result, '<p>',
@@ -165,12 +163,12 @@ makeVignetteTable <- function(vignettes, depth=2) {
 	R     <- vignettes[i, "R"]
 	pkg   <- vignettes[i, "Package"]
         root <- c(rep("../", depth), "library/", pkg, "/doc/")
-	link  <- c('<a href="', root, 
-		  if (nchar(PDF)) PDF else File, '">', 
+	link  <- c('<a href="', root,
+		  if (nchar(PDF)) PDF else File, '">',
 		  pkg, "::", topic, '</a>')
-	line <- c('<tr><td align="right" valign="top">', link, 
-		    '</td>\n<td></td><td valign="top">', Title, 
-		    '</td>\n<td valign="top">', 
+	line <- c('<tr><td align="right" valign="top">', link,
+		    '</td>\n<td></td><td valign="top">', Title,
+		    '</td>\n<td valign="top">',
 		    if (nchar(PDF))
 			c('<a href="', root, PDF,'">PDF</a>'),
 		    '</td>\n<td valign="top">',
@@ -178,7 +176,7 @@ makeVignetteTable <- function(vignettes, depth=2) {
 		    '</td>\n<td valign="top" nowrap>',
 		    if (nchar(R))
 		    	c('<a href="', root, R,'">R code</a>'),
-		    '</td></tr>')      
+		    '</td></tr>')
 	out <- c(out, paste(line, collapse=''))
      }
      c(out, '</table>')
@@ -193,24 +191,24 @@ makeDemoTable <- function(demos, depth=2) {
     for (i in seq_len(nrow(demos))) {
 	topic <- demos[i, "topic"]
 	pkg <- demos[i, "Package"]
-        root <- c(rep("../", depth), "library/", pkg, "/")	      
+        root <- c(rep("../", depth), "library/", pkg, "/")
 	Title <- demos[i, "title"]
 	path <- file.path(demos[i, "LibPath"], "demo")
 	files <- basename(list_files_with_type(path, "demo", full.names=FALSE))
 	file <- files[topic == file_path_sans_ext(files)]
-	if (length(file) == 1) { 
-	    link <- c('<a href="', root, 'demo/', file, '">', 
+	if (length(file) == 1) {
+	    link <- c('<a href="', root, 'demo/', file, '">',
 			  pkg, "::", topic, '</a>')
-	    runlink <- c(' <a href="', root, 'Demo/', topic, 
-	                 '">(Run demo in console)</a>')					  	
+	    runlink <- c(' <a href="', root, 'Demo/', topic,
+	                 '">(Run demo in console)</a>')
 	} else {
 	    link <- c(pkg, "::", topic)
 	    runlink <- ""
 	}
-	line <- c('<tr><td align="right" valign="top">', link, 
-		    '</td>\n<td></td><td valign="top">', Title, 
-		    '</td>\n<td valign="top" nowrap>', runlink, 
-		    '</td></tr>')      
+	line <- c('<tr><td align="right" valign="top">', link,
+		    '</td>\n<td></td><td valign="top">', Title,
+		    '</td>\n<td valign="top" nowrap>', runlink,
+		    '</td></tr>')
 	out <- c(out, paste(line, collapse=''))
      }
      c(out, '</table>')
@@ -222,16 +220,16 @@ makeHelpTable <- function(help, depth=2) {
 	      '<col width="2%">',
 	      '<col width="74%">')
     pkg <- help[,"Package"]
-    root <- paste(paste(rep("../", depth), collapse=""),
-                  "library/", pkg, "/html/", sep="")	      
+    root <- paste0(paste(rep.int("../", depth), collapse=""),
+                   "library/", pkg, "/html/")
     topic <- help[, "topic"]
     Title <- help[, "title"]
     name <- help[, "name"]
-    links <- paste('<a href="', root, name, '.html">',
-		   ifelse(nchar(pkg), paste(pkg, "::", sep=""), ""),
-		   topic, '</a>', sep = "")
-    lines <- paste('<tr><td align="right" valign="top">', links, 
-		   '</td>\n<td></td><td valign="top">', Title, 
-		   '</td></tr>', sep="")  
+    links <- paste0('<a href="', root, name, '.html">',
+		    ifelse(nchar(pkg), paste0(pkg, "::"), ""),
+		    topic, '</a>')
+    lines <- paste0('<tr><td align="right" valign="top">', links,
+		    '</td>\n<td></td><td valign="top">', Title,
+		    '</td></tr>')
     c(out, lines, '</table>')
 }

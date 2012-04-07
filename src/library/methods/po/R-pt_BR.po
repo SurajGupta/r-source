@@ -6,7 +6,7 @@ msgid ""
 msgstr ""
 "Project-Id-Version: R 2.2.0\n"
 "Report-Msgid-Bugs-To: bugs@r-project.org\n"
-"POT-Creation-Date: 2012-01-23 08:18\n"
+"POT-Creation-Date: 2012-03-09 06:26\n"
 "PO-Revision-Date: 2011-03-26 08:56-0300\n"
 "Last-Translator: Fernando Henrique <pessoal@fernandohrosa.com.br>\n"
 "Language-Team: http://www.feferraz.net/br/P/Projeto_Traducao_R_Portugues\n"
@@ -166,9 +166,10 @@ msgstr ""
 "'%s' é uma função primitiva; métodos podem ser definidos, mas a função "
 "genérica está implícita e não pode ser modificada"
 
+#, fuzzy
 msgid ""
 "if the 'def' argument is supplied, it must be a function that calls "
-"standardGeneric(\"%s\") to dispatch methods"
+"standardGeneric(\"%s\") or is the default"
 msgstr ""
 "se o argumento `def' for fornecido, ele deve ser uma função que chama "
 "standardGeneric(\"%s\") para executar os métodos"
@@ -650,6 +651,10 @@ msgstr ""
 msgid "Notes: %s."
 msgstr ""
 
+#, fuzzy
+msgid "Class generator function for class \"%s\" from package \"%s\""
+msgstr "Criando uma nova função genérica para \"%s\" em \"%s\""
+
 msgid "the names in signature for method (%s) do not match %s's arguments (%s)"
 msgstr ""
 "os nomes na assinatura do método (%s) não correspondem aos argumentos da "
@@ -1023,12 +1028,6 @@ msgid ""
 "dispatch on a different name (\"%s\")!"
 msgstr ""
 
-msgid "the supplied generic function definition for"
-msgstr "a definição genérica de função fornecida para"
-
-msgid "does not seem to call 'standardGeneric'; no methods will be dispatched!"
-msgstr ""
-
 #, fuzzy
 msgid ""
 "internal error: Bad methods list object in fixing methods for primitive "
@@ -1112,6 +1111,24 @@ msgstr ""
 #, fuzzy
 msgid "No definition found for class %s"
 msgstr "nenhuma definição existente para função '%s'"
+
+#, fuzzy
+msgid "Missing  function for load action: %s"
+msgstr "nenhuma definição existente para função \"%s\""
+
+#, fuzzy
+msgid "Error in load action %s for package %s: %s: %s"
+msgstr "Criando uma nova função genérica para \"%s\" em \"%s\""
+
+#, fuzzy
+msgid "non-function action: \"%s"
+msgstr "nenhuma função genérica '%s' encontrada"
+
+msgid "action function \"%s\" has no arguments, should have at least 1"
+msgstr ""
+
+msgid "Some actions missing: %s"
+msgstr ""
 
 msgid "\"%s\" has a sealed class definition and cannot be redefined"
 msgstr ""
@@ -1232,6 +1249,12 @@ msgstr "Criando uma nova função genérica para \"%s\" em \"%s\""
 #, fuzzy
 msgid "No package name supplied and no class definition found for %s"
 msgstr "nenhuma função genérica '%s' encontrada"
+
+#, fuzzy
+msgid "argument classDef must be a class definition or the name of a class"
+msgstr ""
+"argumento 'f' inválido, esperada uma função ou seu nome, mas foi obtido um "
+"objeto de classe  \"%s\""
 
 msgid ""
 "'traceOn' is deprecated: use the function 'trace' in the 'methods' package "
@@ -1662,22 +1685,12 @@ msgid ""
 msgstr ""
 
 #, fuzzy
-msgid "Arguments must all be character string names of fields"
-msgstr "'file' deve ser uma cadeia de caracteres ou uma conexão"
-
-#, fuzzy
 msgid ""
 "The definition of class %s in package %s is locked, fields may not be "
 "modified"
 msgstr ""
 "o método para a função \"%s\" e assinatura %s está selado e não pode ser "
 "redefinido"
-
-msgid "Field \"%s\" is already locked"
-msgstr ""
-
-msgid "Field \"%s\" of class %s has a non-default binding and cannot be locked"
-msgstr ""
 
 msgid ""
 "The overriding class(\"%s\") of field \"%s\" is not a subclass of the "
@@ -1777,6 +1790,16 @@ msgid ""
 "Non-local assignment to method names is not allowed\n"
 "    %s\n"
 "( in method %s for class %s)"
+msgstr ""
+
+#, fuzzy
+msgid "Arguments must all be character string names of fields"
+msgstr "'file' deve ser uma cadeia de caracteres ou uma conexão"
+
+msgid "Field \"%s\" is already locked"
+msgstr ""
+
+msgid "Field \"%s\" of class %s has a non-default binding and cannot be locked"
 msgstr ""
 
 #, fuzzy
@@ -1969,6 +1992,9 @@ msgid "no definition for class %s"
 msgid_plural "no definition for classes %s"
 msgstr[0] "nenhuma definição existente para função '%s'"
 msgstr[1] "nenhuma definição existente para função '%s'"
+
+#~ msgid "the supplied generic function definition for"
+#~ msgstr "a definição genérica de função fornecida para"
 
 #~ msgid "no generic function \"'%s\" found"
 #~ msgstr "nenhuma função genérica \"%s\" encontrada"

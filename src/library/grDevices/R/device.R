@@ -234,6 +234,7 @@ dev.copy2pdf <- function(..., out.type = "pdf")
         oc$onefile <- FALSE
         if(is.null(oc$paper)) oc$paper <- "special"
     }
+    oc$out.type <- NULL
     din <- dev.size("in"); w <- din[1L]; h <- din[2L]
     if(is.null(oc$width))
         oc$width <- if(!is.null(oc$height)) w/h * eval.parent(oc$height) else w
@@ -295,7 +296,7 @@ dev.new <- function(...)
     if(identical(dev, pdf)) {
         ## Take care not to open device on top of another.
         if(is.null(a[["file"]]) && file.exists("Rplots.pdf")) {
-            fe <- file.exists(tmp <- paste("Rplots", 1L:999, ".pdf", sep=""))
+            fe <- file.exists(tmp <- paste0("Rplots", 1L:999, ".pdf"))
             if(all(fe)) stop("no suitable unused file name for pdf()")
             message(gettextf("dev.new(): using pdf(file=\"%s\")", tmp[!fe][1L]),
                     domain=NA)
@@ -304,7 +305,7 @@ dev.new <- function(...)
     } else if(identical(dev, postscript)) {
         ## Take care not to open device on top of another.
         if(is.null(a[["file"]]) && file.exists("Rplots.ps")) {
-            fe <- file.exists(tmp <- paste("Rplots", 1L:999, ".ps", sep=""))
+            fe <- file.exists(tmp <- paste0("Rplots", 1L:999, ".ps"))
             if(all(fe)) stop("no suitable unused file name for postscript()")
             message(gettextf("dev.new(): using postscript(file=\"%s\")",
                              tmp[!fe][1L]), domain=NA)

@@ -42,9 +42,3 @@ precise description) available on the net at
 
      `http://bugs.R-project.org/'
 
-and via e-mail to <r-bugs@R-project.org>.  The R function `bug.report()'
-can be used to invoke an editor from a within an R session and send the
-report to the right address.  It also fills in some basic information, such
-as your R version and operating system, which has proved helpful in the
-debugging process.
-

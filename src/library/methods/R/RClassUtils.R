@@ -176,12 +176,10 @@ makePrototypeFromClassDef <-
         pwhat <- slot(prototype, what)
         slotClass <- getClassDef(slotDefs[[what]], where)
         if(is.null(slotClass) || !extends(class(pwhat), slotClass)) {
-            if(is.null(pwhat)) {
-#                 warning("In class \"", className,
-#                         "\", the prototype for slot \"", what, "\" (slot class \"",
-#                         slotDefs[[what]],
-#                         "\") is NULL; new() will fail for this class unless this slot is supplied in the call")
+            if(is.null(pwhat)) { # does this still apply??
             }
+            else if(is(slotClass, "classRepresentation") &&
+                    slotClass@virtual) {} # no nonvirtual prototype;e.g. S3 class
             else
                 check[match(what, pnames)] <- TRUE
         }
@@ -293,7 +291,7 @@ completeClassDefinition <-
 #                     }
 #                     stop(paste("Duplicate slot names: slots ",
 #                                paste(dupNames, collapse =", "), "; see classes ",
-#                                paste(c(Class, ext)[dupClasses], collapse = ", "), sep=""))
+#                                paste0(c(Class, ext)[dupClasses], collapse = ", ")))
 #                }
             }
         }
@@ -576,8 +574,9 @@ assignClassDef <-
     setClass("MethodSelectionReport",
          representation(generic = "character", allSelections = "character", target = "character", selected = "character", candidates = "list", note = "character"),
              sealed = TRUE, where = where)
-
-
+    setClass("classGeneratorFunction",
+             representation(className = "character", package = "character"),
+             contains = "function")
 }
 
 
@@ -825,21 +824,27 @@ reconcilePropertiesAndPrototype <-
   }
 
 tryNew <-
-  ## Tries to generate a new element from this class, but if the attempt fails
-  ## (as, e.g., when the class is undefined or virtual) just returns NULL.
-  ##
-  ## This is inefficient and also not a good idea when actually generating objects,
-  ## but is useful in the initial definition of classes.
+    ## Tries to generate a new element from this class, but if
+    ## the class is undefined just returns NULL.
+    ##
+    ## For virtual classes, returns the class prototype
+    ## so that the object is valid member of class.
+    ## Otherwise tries to generate a new() object, but in rare
+    ## cases, this might fail if the install() method required
+    ## an argument, so this case is trapped as well.
   function(Class, where)
 {
     ClassDef <- getClassDef(Class, where)
-    if(is.null(ClassDef) || isVirtualClass(ClassDef))
+    if(is.null(ClassDef))
         return(NULL)
-    value <- tryCatch(new(ClassDef), error = function(e)e)
-    if(is(value, "error"))
-	NULL
-    else
-        value
+    else if(identical(ClassDef@virtual, TRUE))
+        ClassDef@prototype
+    else tryCatch(new(ClassDef),
+                  error = function(e) {
+                      value <- ClassDef@prototype
+                      class(value) <- ClassDef@className
+                      value
+                  })
 }
 
 empty.dump <- function() list()
@@ -907,8 +912,8 @@ showExtends <-
         if(is(eli, "SClassExtension")) {
             how[i] <-
                 if(length(eli@by))
-                    paste("by class", paste("\"", eli@by,
-                      "\", distance ",  eli@distance, sep="", collapse = ", "))
+		    paste("by class", paste0("\"", eli@by, "\", distance ",
+					     eli@distance, collapse = ", "))
                 else if(identical(eli@dataPart, TRUE))
                     "from data part"
                 else "directly"
@@ -920,19 +925,20 @@ showExtends <-
                               ", with explicit test", sep="")
                 }
                 else if(is.function(eli@coerce))
-                    how[i] <- paste(how[i], ", with explicit coerce", sep="")
+                    how[i] <- paste0(how[i], ", with explicit coerce")
             }
         }
     }
     if(identical(printTo, FALSE))
         list(what = what, how = how)
     else if(all(!nzchar(how)) ||  all(how == "directly")) {
-        what <- paste('"', what, '"', sep="")
+        what <- paste0('"', what, '"')
         if(length(what) > 1L)
-            what <- c(paste(what[-length(what)], ",", sep=""), what[[length(what)]])
+            what <- c(paste0(what[-length(what)], ","), what[[length(what)]])
         cat(file = printTo, what, fill=TRUE)
     }
-    else cat(file = printTo, "\n", paste("Class \"", what, "\", ", how, "\n", sep=""), sep="")
+    else cat(file = printTo, "\n",
+	     paste0("Class \"", what, "\", ", how, "\n"), sep = "")
 }
 
 
@@ -1240,7 +1246,7 @@ classMetaName <-
 # regexp for matching class metanames; semi-general but assumes the
 # meta pattern starts with "." and has no other special characters
 .ClassMetaPattern <- function()
-    paste("^[.]",substring(methodsPackageMetaName("C",""),2), sep = "")
+    paste0("^[.]",substring(methodsPackageMetaName("C",""),2))
 
 ##FIXME:  C code should take multiple strings in name so paste() calls could  be avoided.
 methodsPackageMetaName <-
@@ -1283,7 +1289,7 @@ requireMethods <-
 ## Construct an error message for an unsatisfied required method.
 .missingMethod <- function(f, message = "", method) {
     if(nzchar(message))
-        message <- paste("(", message, ")", sep="")
+        message <- paste0("(", message, ")")
     message <- paste("for function", f, message)
     if(is(method, "MethodDefinition")) {
         target <-  paste(.dQ(method@target), collapse=", ")
@@ -2357,7 +2363,7 @@ S3forS4Methods <- function(where, checkClasses = character()) {
     allClasses <- allClasses[match(allClasses, checkClasses, 0) > 0]
   if(length(allClasses) == 0)
     return(allClasses)
-  pattern <- paste("([.]",allClasses, "$)", sep = "", collapse="|")
+  pattern <- paste0("([.]",allClasses, "$)", collapse="|")
   allObjects <- objects(where, all.names = TRUE)
   allObjects <- allObjects[-grep("^[.][_][_]", allObjects)] # remove meta data
   allObjects <- grep(pattern, allObjects, value = TRUE)
@@ -2402,7 +2408,7 @@ S3forS4Methods <- function(where, checkClasses = character()) {
 ## .checkS3forClass <- function(className, where, what = className) {
 ##   badMethods <- S3forS4Methods(where, what)
 ##   if(length(badMethods) > 0) {
-##     msg <- paste("The apparent methods are ", paste('"',badMethods, '"', sep = "", collapse = ", "))
+##     msg <- paste0("The apparent methods are ", paste('"',badMethods, '"', collapse = ", "))
 ##     warning("Some of the superclasses in the definition of class \"",
 ##             className, "\" have apparent S3 methods.\n\nThese will be hidden by the S3 class that this class contains. (See ?Methods)\n\n", msg)
 ##   }

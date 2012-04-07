@@ -617,7 +617,7 @@ If you want the @R{} home to be something other than
 @file{@var{libdir}/R}, use @option{rhome}: for example
 
 @example
-make install rhome=/usr/local/lib64/R-2.14.0
+make install rhome=/usr/local/lib64/R-2.15.0
 @end example
 
 @noindent
@@ -854,6 +854,43 @@ recommended packages are lazyloaded but not byte-compiled.
 @env{R_NO_BASE_COMPILE} can be set to a non-empty value for the duration
 of the build.)
 
+@menu
+* Inter-Procedure Optimization::  
+@end menu
+
+@node Inter-Procedure Optimization,  , Other Options, Other Options
+@subsection Inter-Procedure Optimization
+
+In a conventional build system each C/Fortran source file is compiled
+and optimized separately.  A trend in modern compilers is to carry
+optimization across source files: this has been done in commercial
+compilers for some time.
+
+GCC introduced a version of inter-procedure optimization in version
+4.5.0, which it calls @emph{link-time optimization}.  This writes an
+intermediate representation in the @file{.o} file, and then the linker
+combines those intermediate representations and re-compiles with
+optimization the combined representation.  Support for LTO is still
+evolving: it is available for ELF-based systems and more recently for
+PE_COFF (Windows): only on some platforms@footnote{For those using GNU
+@code{binutils}, where @command{gold} is used as the linker: this might
+be enabled when @command{gcc} was built or selected @emph{via} the
+@command{alternatives} mechanism.} can objects in static libraries be
+included in the link-time optimization.
+
+Link-time optimization roughly doubles the compilation time and
+increases the size of the @file{.o} files (but not the installed
+@file{.so} and executable files).
+
+Link-time optimization can be enabled by the @command{configure} option
+@option{--enable-lto}: no check is made that the compiler/linker support
+it.  In experiments with @command{gcc} 4.5.x on Linux the performance
+gain was very small (mainly seen with @option{--enable-R-shlib}), but
+this may not be so with later compilers or other platforms.
+
+Setting @option{--enable-lto=R} enables LTO for building @R{} itself but
+not for extension packages (including the recommended packages).
+
 @node Testing a Unix-alike Installation,  , Other Options, Installing R under Unix-alikes
 @section Testing an Installation
 
@@ -1000,10 +1037,8 @@ install the extra files into your intended @R{} source directory, e.g.@:
 @file{C:/R}. The directory name @emph{should not contain spaces}. We
 will call this directory @file{@var{R_HOME}} below.
 
-The preferred set of tools for @R{} 2.14.2 is contained in
-@file{Rtools215.exe} which uses a single 32/64-bit toolchain: the
-separate 32- and 64-bit toolchains contained in @file{Rtools214.exe} can
-still be used.
+The toolchain used as from @R{} 2.14.2 differs from from that used for
+@R{} 2.12.0 to @R{} 2.14.1.
 
 @node Getting the source files, Building the core files, Getting the tools, Building from source
 @subsection Getting the source files
@@ -1912,7 +1947,7 @@ starting with a source tarball.
 @node Byte-compilation,  , Multiple sub-architectures, Installing packages
 @subsection Byte-compilation
 
-In @R{} 2.14.x only the base and recommended packages are byte-compiled
+As from @R{} 2.14.0 the base and recommended packages are byte-compiled
 by default.  Other packages can be byte-compiled on installation by
 using the option @option{--byte-compile} with @command{R CMD INSTALL} or
 with @code{install.packages(type = "source")}.
@@ -2410,7 +2445,7 @@ is the current working directory (in the build directory tree on a
 Unix-alike if that is separate from the sources).
 
 @file{Rmath.h} contains @samp{R_VERSION_STRING}, which is a character
-string containing the current @R{} version, for example @code{"2.14.0"}.
+string containing the current @R{} version, for example @code{"2.15.0"}.
 
 There is full access to @R{}'s handling of @code{NaN}, @code{Inf} and
 @code{-Inf} via special versions of the macros and functions
@@ -3014,7 +3049,8 @@ ATLAS (@uref{http://math-atlas.sourceforge.net/}) is a ``tuned''
 Unfortunately it is usually built as a static library that on some
 platforms cannot be used with shared objects such as are used in @R{}
 packages.  Be careful when using pre-built versions of ATLAS (they seem
-to work on @cputype{ix86} platforms, but not on @cputype{x86_64} ones).
+to work on @cputype{ix86} platforms, but not always on @cputype{x86_64}
+ones).
 
 The usual way to specify ATLAS will be via
 
@@ -3030,6 +3066,11 @@ if the libraries are in the library path, otherwise by
 @end example
 
 @noindent
+For example, @cputype{x86_64} Fedora needs
+@example
+--with-blas="-L/usr/lib64/atlas -lf77blas -latlas"
+@end example
+
 For systems with multiple CPU cores it is possible to use a
 multi-threaded version of ATLAS, by specifying
 
@@ -3061,14 +3102,18 @@ the @command{gcc} version we could use
 @noindent
 if the appropriate library directory (such as
 @enindex LD_LIBRARY_PATH
-@file{/opt/acml4.4.0/gfortran64/lib}) is in the @env{LD_LIBRARY_PATH}.
+@file{/opt/acml5.1.0/gfortran64/lib}) is in the @env{LD_LIBRARY_PATH}.
 For other compilers, see the ACML documentation.  There is a
 multithreaded Linux version of ACML available for recent versions of
 @command{gfortran}.  To make use of this you will need something like
 
 @example
---with-blas="-L/opt/acml4.4.0/gfortran64_mp/lib -lacml_mp"
+--with-blas="-L/opt/acml5.1.0/gfortran64_mp/lib -lacml_mp"
 @end example
+
+@noindent
+(and you may need to arrange for the directory to be in @command{ld.so}
+cache).
 
 See @pxref{Shared BLAS} for an alternative (and in many ways preferable)
 way to use ACML.
@@ -3149,7 +3194,7 @@ The default number of threads will be chosen by the OpenMP software,
 but can be controlled by setting @code{OMP_NUM_THREADS} or
 @code{MKL_NUM_THREADS}.
 
-Static sequential MKL may be used with
+Static threaded MKL may be used with
 
 @example
 MKL="   -L$@{MKL_LIB_PATH@}                               \
@@ -3200,7 +3245,7 @@ This has both advantages and disadvantages.
 @item
 It saves space by having only a single copy of the @acronym{BLAS}
 routines, which is helpful if there is an external static @acronym{BLAS}
-such as is standard for ATLAS.
+such as used to be standard for ATLAS.
 
 @item
 There may be performance disadvantages in using a shared @acronym{BLAS}.
@@ -3209,7 +3254,7 @@ and @R{} is @emph{not} built as a shared library, when it is possible to
 build the @acronym{BLAS} into @file{R.bin} (and @file{libR.a}) without
 using position-independent code.  However, experiments showed that in
 many cases using a shared @acronym{BLAS} was as fast, provided high
-levels (e.g., @option{-O3}) of compiler optimization are used.
+levels of compiler optimization are used.
 
 @item
 It is easy to change the @acronym{BLAS} without needing to re-install
@@ -3226,7 +3271,7 @@ dynamic @acronym{BLAS} library (such as ACML or Goto's) to
 
 @example
 mv @var{R_HOME}/lib/libRblas.so @var{R_HOME}/lib/libRblas.so.keep
-ln -s /opt/acml4.4.0/gfortran64_mp/lib/libacml_mp.so @var{R_HOME}/lib/libRblas.so
+ln -s /opt/acml5.1.0/gfortran64_mp/lib/libacml_mp.so @var{R_HOME}/lib/libRblas.so
 @end example
 will change the @acronym{BLAS} in use to multithreaded ACML.  A similar
 link works for recent versions of the Goto @acronym{BLAS} and perhaps
@@ -3253,7 +3298,7 @@ algebra may want to build a LAPACK library using the ATLAS-optimized
 subset of LAPACK.  To do so specify something like
 
 @example
---with-lapack="-L/path/to/libs -llapack -lcblas"
+--with-lapack="-L/path/to/ATLAS/libs -llapack -lcblas"
 @end example
 
 @noindent
@@ -4347,7 +4392,7 @@ SAFE_FFLAGS="-libmil -fstore -xtarget=native"
 
 @noindent
 but the use of @code{-nofstore} can be less numerically stable, and some
-packages (notably @pkg{mgcv} on @cputype{x86}) failed to compile at
+packages (notably @CRANpkg{mgcv} on @cputype{x86}) failed to compile at
 higher optimization levels with version 12.3.
 
 The Solaris Studio compilers provide several implementations of the C++
@@ -4777,7 +4822,7 @@ For example for a 32-bit build, all on one line,
 
 @smallexample
 PATH=c:\Rtools\bin;c:\Rtools\gcc-4.6.3\bin;c:\MiKTeX\miktex\bin;
-     c:\R\R-2.14.2\bin\i386;c:\windows;c:\windows\system32
+     c:\R\R-2.15\bin\i386;c:\windows;c:\windows\system32
 @end smallexample
 
 It is essential that the directory containing the command line tools
@@ -4842,7 +4887,6 @@ This item is installed by the @file{Rtools*.exe} installer.
 @c INSTALL may use sh make zip (and tar if R_INSTALL_TAR is used)
 @c build may use make and sh.
 @c Rdiff.sh USED to use diff echo grep sed tr: grep and tr are no longer used.
-@c Rd2dvi USED to use basename echo mkdir rm sed
 
 @c basename is used in src/library/Recommended/Makefile.win
 @c comm, sort, uniq are used in producing .def files
@@ -4898,9 +4942,9 @@ Windows-style paths.
 Technically you need more than just a compiler so the set of tools is
 referred to as a `toolchain'.
 
-The released version of @R{} 2.14.2 will be built with a different
-toolchain from @R{} 2.14.1.  The preferred toolchain is part of
-@code{Rtools215.exe}: this uses a beta version of @command{gcc 4.6.3}
+The released version of @R{} 2.15.0 will be built with a different
+toolchain from @R{} 2.12.0 to 2.14.1.  The preferred toolchain is part
+of @code{Rtools215.exe}: this uses a beta version of @command{gcc 4.6.3}
 and version 2.0.1 of the MinGW-w64 project's runtime.
 
 This toolchain uses @emph{multilib}: that is there is a single front-end
@@ -4915,16 +4959,14 @@ be able to run on any current version of Windows---however you do need a
 
 To select a 32-bit or 64-bit build of @R{}, set the options in
 @file{MkRules.local} appropriately (following the comments in the file).
-Older toolchains such as those used for @R{} 2.14.1 can still be used by
-following the comments in that file.
 
 Some external software libraries will need to be re-compiled under the
 new toolchain: especially those providing a C++ interface.  Many of
 those used by @acronym{CRAN} packages are available from
 @uref{http://www.stats.ox.ac.uk/@/pub/@/Rtools/@/multilib/}.  Users
-developing packages with @pkg{Rcpp} need to ensure that they use a
+developing packages with @CRANpkg{Rcpp} need to ensure that they use a
 version built with exactly the same toolchain as their package: the
-recommendation is to build @pkg{Rcpp} from its sources yourself.
+recommendation is to build @CRANpkg{Rcpp} from its sources yourself.
 
 There is support for OpenMP and pthreads in this toolchain.  As the
 performance of OpenMP on Windows is poor for small tasks, it is not used

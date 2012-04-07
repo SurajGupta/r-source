@@ -30,7 +30,7 @@ m4_define([R_VERSION],
           m4_bpatsubst(m4_esyscmd([cat VERSION]),
                        [\([0-9.]*\)\(\w\|\W\)*],
                        [\1]))
-AC_INIT([R],[R_VERSION],[r-bugs@R-project.org],[R])
+AC_INIT([R],[R_VERSION],[http://bugs.r-project.org],[R],[http://www.r-project.org])
 AC_CONFIG_SRCDIR([src/include/Defn.h])
 AC_CONFIG_AUX_DIR([tools])
 
@@ -322,6 +322,21 @@ AC_ARG_ENABLE([prebuilt-html],
 [want_prebuilt_html="${enableval}"],
 [want_prebuilt_html=no])
 AM_CONDITIONAL(BUILD_HTML, [test "x${want_prebuilt_html}" = xyes])
+
+
+AC_ARG_ENABLE([lto],
+[AS_HELP_STRING([--enable-lto],[enable link-time optimization @<:@no@:>@])],
+[want_lto="${enableval}"], [want_lto=no])
+## FIXME: add a test for gcc >= 4.5.0
+if test "x${want_lto}" != xno; then
+  LTO=-flto
+fi
+if test "x${want_lto}" == xyes; then
+  LTOALL=-flto
+fi
+AC_SUBST(LTO)
+AC_SUBST(LTOALL)
+AM_CONDITIONAL(BUILD_LTO, [test "x${want_lto}" != xno])
 
 
 ### ** Optional packages.
@@ -1783,7 +1798,8 @@ R_CHECK_FUNCS([utime], [#include <utime.h>])
 ## clock_gettime is POSIX 1993, but not on MacOS X
 ## Some OSes need -lrt: Linux, Solaris, not FreeBSD.
 ## Unsurprising, as POSIX 2008 moved it from its timers section to base.
-R_CHECK_FUNCS([clock_gettime], [#include <time.h>])
+## timespec_get is C11.
+R_CHECK_FUNCS([clock_gettime timespec_get], [#include <time.h>])
 if test "${ac_cv_have_decl_clock_gettime}" = "yes"; then
 AC_CHECK_LIB(rt, clock_gettime)
 fi
@@ -2748,12 +2764,6 @@ if test -n "${warn_fcpicflags}"; then
 fi
 if test -n "${warn_tcltk_version}"; then
   AC_MSG_WARN([${warn_tcltk_version}])
-fi
-if test -n "${warn_dvi1}"; then
-  AC_MSG_WARN([${warn_dvi1}])
-fi
-if test -n "${warn_dvi2}"; then
-  AC_MSG_WARN([${warn_dvi2}])
 fi
 if test -n "${warn_info}"; then
   AC_MSG_WARN([${warn_info}])

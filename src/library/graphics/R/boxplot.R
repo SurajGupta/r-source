@@ -175,7 +175,7 @@ bxp <- function(z, notch=FALSE, width=NULL, varwidth=FALSE, outline = TRUE,
 		warning(sprintf(ngettext(length(unique(out[inf])),
 				 "Outlier (%s) in boxplot %d is not drawn",
 				 "Outliers (%s) in boxplot %d are not drawn"),
-				paste(unique(out[inf]), collapse=", "), x),
+				paste(unique(out[inf]), collapse=", "), i),
 			domain = NA)
 	    }
 	}
@@ -202,17 +202,16 @@ bxp <- function(z, notch=FALSE, width=NULL, varwidth=FALSE, outline = TRUE,
 	pars$ylim <- NULL
     }
 
-    if(is.null(pars$xlim))
-        xlim <- c(0.5, n + 0.5)
-    else {
-	xlim <- pars$xlim
-	pars$xlim <- NULL
-    }
-
     if(length(border) == 0L) border <- par("fg")
 
     dev.hold(); on.exit(dev.flush())
     if (!add) {
+	if(is.null(pars$xlim))
+	    xlim <- range(at, finite=TRUE) + c(-0.5, 0.5)
+	else {
+	    xlim <- pars$xlim
+	    pars$xlim <- NULL
+	}
 	plot.new()
 	## shall we switch log for horizontal with
 	## switch(log, x="y", y="x", log) ??

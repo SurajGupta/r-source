@@ -1,8 +1,8 @@
 msgid ""
 msgstr ""
-"Project-Id-Version: R 2.14.1\n"
+"Project-Id-Version: R 2.15.0\n"
 "Report-Msgid-Bugs-To: bugs@r-project.org\n"
-"POT-Creation-Date: 2012-01-23 08:19\n"
+"POT-Creation-Date: 2012-03-16 06:26\n"
 "PO-Revision-Date: YEAR-MO-DA HO:MI+ZONE\n"
 "Last-Translator: FULL NAME <EMAIL@ADDRESS>\n"
 "Language-Team: LANGUAGE <LL@li.org>\n"
@@ -161,46 +161,7 @@ msgstr ""
 msgid "package name '%s' seems invalid; using directory name '%s' instead"
 msgstr ""
 
-msgid "Packages required but not available:"
-msgstr ""
-
-msgid "Package required but not available: %s"
-msgstr ""
-
-msgid "Packages required and available but unsuitable versions:"
-msgstr ""
-
-msgid "Package required and available but unsuitable version: %s"
-msgstr ""
-
-msgid "Former standard packages required but now defunct:"
-msgstr ""
-
-msgid "Packages suggested but not available for checking:"
-msgstr ""
-
-msgid "Package suggested but not available for checking: %s"
-msgstr ""
-
-msgid "Packages which this enhances but not available for checking:"
-msgstr ""
-
-msgid "Package which this enhances but not available for checking: %s"
-msgstr ""
-
-msgid "Vignette dependencies not required:"
-msgstr ""
-
-msgid "Vignette dependencies not required: %s"
-msgstr ""
-
 msgid "Vignette dependencies (\\VignetteDepends{} entries) must be contained in the DESCRIPTION Depends/Suggests/Imports entries."
-msgstr ""
-
-msgid "Namespace dependencies not required:"
-msgstr ""
-
-msgid "Namespace dependency not required: %s"
 msgstr ""
 
 msgid "Malformed package name"
@@ -359,6 +320,12 @@ msgstr ""
 msgid "packageStartupMessage"
 msgstr ""
 
+msgid "Package startup functions should not call %s."
+msgstr ""
+
+msgid "installed.packages"
+msgstr ""
+
 msgid "See section %s in ?.onAttach."
 msgstr ""
 
@@ -384,6 +351,9 @@ msgid "'data(package=)' calls not declared from:"
 msgstr ""
 
 msgid "'data(package=)' call not declared from: %s"
+msgstr ""
+
+msgid "NB: need Internet access to use CRAN incoming checks"
 msgstr ""
 
 msgid "Rd files with duplicated name '%s':"
@@ -455,6 +425,9 @@ msgstr ""
 msgid "No help on %s found in RdDB %s"
 msgstr ""
 
+msgid "more than one \\examples section, using the first"
+msgstr ""
+
 msgid "Converting Rd files to LaTeX ..."
 msgstr ""
 
@@ -482,13 +455,7 @@ msgstr ""
 msgid "no inputs"
 msgstr ""
 
-msgid "DVI output from Rd2dvi is deprecated"
-msgstr ""
-
-msgid "Error in running tools::texi2dvi"
-msgstr ""
-
-msgid "more than one \\examples section, using the first"
+msgid "Error in running tools::texi2pdf"
 msgstr ""
 
 msgid "invalid value for '%s' : %s"
@@ -548,9 +515,6 @@ msgstr ""
 msgid "unable to copy INDEX to '%s'"
 msgstr ""
 
-msgid "running Stangle on vignette '%s' failed with message:\n%s"
-msgstr ""
-
 msgid "cannot create directory '%s'"
 msgstr ""
 
@@ -584,6 +548,9 @@ msgstr ""
 msgid "The default JSS style may not be modified."
 msgstr ""
 
+msgid "invalid value for --compact-vignettes, assuming \"qpdf\""
+msgstr ""
+
 msgid "Error: cannot rename directory to"
 msgstr ""
 
@@ -594,6 +561,9 @@ msgid "configuration files are not supported as from R 2.12.0"
 msgstr ""
 
 msgid "'--multiarch' specified with only one usable sub-architecture"
+msgstr ""
+
+msgid "--as-cran turns off --extra-arch"
 msgstr ""
 
 msgid "Error: no packages were specified"
@@ -737,16 +707,13 @@ msgstr ""
 msgid "empty 'data' directory"
 msgstr ""
 
-msgid "--merge-multiarch is Windows-only"
-msgstr ""
-
 msgid "cannot create temporary directory"
 msgstr ""
 
 msgid "ERROR: --merge-multiarch applies only to a single tarball"
 msgstr ""
 
-msgid "ERROR: --merge-multiarch can only be used on i386/x64 installations"
+msgid "only one architecture so ignoring '--merge-multiarch'"
 msgstr ""
 
 msgid "invalid package"

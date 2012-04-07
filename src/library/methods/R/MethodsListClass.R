@@ -227,7 +227,8 @@
     setMethod("show", "MethodSelectionReport", where = envir,
               function(object) {
                   nreport <- length(object@target)
-                  cat(gettextf("Reported %d ambiguous selections out of %d for function %s\n",nreport, length(object@allSelections), object@generic))
+                  cat(gettextf("Reported %d ambiguous selections out of %d for function %s\n",nreport,
+			       length(object@allSelections), object@generic))
                   target <- object@target; selected = object@selected
                   candidates <- object@candidates; note <- object@note
                   for(i in seq_len(nreport)) {
@@ -235,7 +236,7 @@
                       these <- these[is.na(match(these, selected[[i]]))]
                       cat(gettextf(
                                    '%d: target "%s": chose "%s" (others: %s)',
-                                   i,target[[i]], selected[[i]], paste('"', these, '"', sep="", collapse =", ")))
+                                   i,target[[i]], selected[[i]], paste0('"', these, '"', collapse =", ")))
                       if(nzchar(notei))
                           cat(gettextf("\n    Notes: %s.\n", notei))
                       else
@@ -243,8 +244,14 @@
                   }
                   NULL
               })
+    setMethod("show", "classGeneratorFunction", where = envir,
+              function(object) {
+                  cat(gettextf("Class generator function for class \"%s\" from package \"%s\"\n",
+                         object@className, object@package))
+                  show(as(object, "function"))
+              })
 
-    setGeneric("cbind2", function(x, y) standardGeneric("cbind2"),
+    setGeneric("cbind2", function(x, y, ...) standardGeneric("cbind2"),
 	       where = envir)
     ## and its default methods:
     setMethod("cbind2", signature(x = "ANY", y = "ANY"),
@@ -252,13 +259,20 @@
     setMethod("cbind2", signature(x = "ANY", y = "missing"),
 	      function(x,y) .Internal(cbind(deparse.level = 0, x)))
 
-    setGeneric("rbind2", function(x, y) standardGeneric("rbind2"),
+    setGeneric("rbind2", function(x, y, ...) standardGeneric("rbind2"),
 	       where = envir)
     ## and its default methods:
     setMethod("rbind2", signature(x = "ANY", y = "ANY"),
 	      function(x,y) .Internal(rbind(deparse.level = 0, x, y)))
     setMethod("rbind2", signature(x = "ANY", y = "missing"),
 	      function(x,y) .Internal(rbind(deparse.level = 0, x)))
+
+    setGeneric("kronecker", where = envir)
+
+    setMethod("kronecker", signature(X = "ANY", Y = "ANY"),
+	      function(X, Y, FUN = "*", make.dimnames = FALSE, ...)
+              .kronecker(X, Y, FUN = FUN, make.dimnames = make.dimnames, ...))
+
     .InitStructureMethods(envir)
 ### Uncomment next line if we want special initialize methods for basic classes
     .InitBasicClassMethods(envir)

@@ -569,7 +569,7 @@ SEXP attribute_hidden do_plot_window(SEXP call, SEXP op, SEXP args, SEXP env)
     return R_NilValue;
 }
 
-static void GetAxisLimits(double left, double right, double *low, double *high)
+static void GetAxisLimits(double left, double right, Rboolean logflag, double *low, double *high)
 {
 /*	Called from do_axis()	such as
  *	GetAxisLimits(gpptr(dd)->usr[0], gpptr(dd)->usr[1], &low, &high)
@@ -577,6 +577,10 @@ static void GetAxisLimits(double left, double right, double *low, double *high)
  *	Computes  *low < left, right < *high  (even if left=right)
  */
     double eps;
+    if (logflag) {
+	left = log(left);
+	right = log(right);
+    }
     if (left > right) {/* swap */
 	eps = left; left = right; right = eps;
     }
@@ -587,6 +591,11 @@ static void GetAxisLimits(double left, double right, double *low, double *high)
 	eps *= FLT_EPSILON;
     *low = left - eps;
     *high = right + eps;
+    
+    if (logflag) {
+	*low = exp(*low);
+	*high = exp(*high);
+    }
 }
 
 
@@ -1144,7 +1153,7 @@ SEXP attribute_hidden do_axis(SEXP call, SEXP op, SEXP args, SEXP env)
         getxlimits(limits, dd);
         /* Now override par("xpd") and force clipping to device region. */
         gpptr(dd)->xpd = 2;
-	GetAxisLimits(limits[0], limits[1], &low, &high);
+	GetAxisLimits(limits[0], limits[1], logflag, &low, &high);
 	axis_low  = GConvertX(fmin2(high, fmax2(low, REAL(at)[0])), USER, NFC, dd);
 	axis_high = GConvertX(fmin2(high, fmax2(low, REAL(at)[n-1])), USER, NFC, dd);
 	if (side == 1) {
@@ -1285,7 +1294,7 @@ SEXP attribute_hidden do_axis(SEXP call, SEXP op, SEXP args, SEXP env)
         getylimits(limits, dd);
         /* Now override par("xpd") and force clipping to device region. */
         gpptr(dd)->xpd = 2;
-	GetAxisLimits(limits[0], limits[1], &low, &high);
+	GetAxisLimits(limits[0], limits[1], logflag, &low, &high);
 	axis_low = GConvertY(fmin2(high, fmax2(low, REAL(at)[0])), USER, NFC, dd);
 	axis_high = GConvertY(fmin2(high, fmax2(low, REAL(at)[n-1])), USER, NFC, dd);
 	if (side == 2) {
@@ -1695,6 +1704,7 @@ SEXP attribute_hidden do_plot_xy(SEXP call, SEXP op, SEXP args, SEXP env)
 	    if (R_FINITE(xx) && R_FINITE(yy)) {
 		if (R_FINITE( (thiscex = REAL(cex)[i % ncex]) ) &&
 		    (thispch = INTEGER(pch)[i % npch]) != NA_INTEGER) {
+		    /* FIXME: should this skip 0-sized symbols? */
 		    thiscol = INTEGER(col)[i % ncol];
 		    thisbg = INTEGER(bg)[i % nbg];
 		    if (!(R_TRANSPARENT(thiscol) &&
@@ -3881,6 +3891,8 @@ SEXP attribute_hidden do_symbols(SEXP call, SEXP op, SEXP args, SEXP env)
 		    rx *= inches / pmax;
 		else
 		    rx = GConvertXUnits(rx, USER, INCHES, dd);
+		/* GCircle sets radius zero to one pixel, but does
+		   not change very small non-zero radii */
 		GCircle(REAL(x)[i], REAL(y)[i],	USER, rx,
 			INTEGER(bg)[i%nbg], INTEGER(fg)[i%nfg],	dd);
 	    }
@@ -3905,6 +3917,7 @@ SEXP attribute_hidden do_symbols(SEXP call, SEXP op, SEXP args, SEXP env)
 		else {
 		    rx = GConvertXUnits(0.5 * p0, USER, DEVICE, dd);
 		}
+		/* FIXME: should this skip 0-sized symbols? */
 		GRect(xx - rx, yy - rx, xx + rx, yy + rx, DEVICE,
 		      INTEGER(bg)[i%nbg], INTEGER(fg)[i%nfg], dd);
 	    }
@@ -3933,6 +3946,7 @@ SEXP attribute_hidden do_symbols(SEXP call, SEXP op, SEXP args, SEXP env)
 		    rx = GConvertXUnits(0.5 * p0, USER, DEVICE, dd);
 		    ry = GConvertYUnits(0.5 * p1, USER, DEVICE, dd);
 		}
+		/* FIXME: should this skip 0-sized symbols? */
 		GRect(xx - rx, yy - ry, xx + rx, yy + ry, DEVICE,
 		      INTEGER(bg)[i%nbg], INTEGER(fg)[i%nfg], dd);
 
@@ -3968,6 +3982,7 @@ SEXP attribute_hidden do_symbols(SEXP call, SEXP op, SEXP args, SEXP env)
 			pp[j] =	 GConvertXUnits(p0, USER, INCHES, dd);
 		    }
 		}
+		/* FIXME: should this skip 0-sized symbols? */
 		for(j = 0; j < nc; j++) {
 		    xp[j] = GConvertXUnits(pp[j] * cos(j * p1),
 					   INCHES, NDC, dd) + xx;

@@ -75,6 +75,7 @@
 #define VALGRIND_LEVEL 0
 #endif
 
+#define R_USE_SIGNALS 1
 #include <Defn.h>
 #include <R_ext/GraphicsEngine.h> /* GEDevDesc, GEgetDevice */
 #include <R_ext/Rdynload.h>
@@ -1502,13 +1503,8 @@ static void RunGenCollect(R_size_t size_needed)
 
     FORWARD_NODE(R_VStack);		   /* R_alloc stack */
 
-#ifdef BYTECODE
-    {
-	SEXP *sp;
-	for (sp = R_BCNodeStackBase; sp < R_BCNodeStackTop; sp++)
-	    FORWARD_NODE(*sp);
-    }
-#endif
+    for (SEXP *sp = R_BCNodeStackBase; sp < R_BCNodeStackTop; sp++)
+	FORWARD_NODE(*sp);
 
     /* main processing loop */
     PROCESS_NODES();
@@ -1921,23 +1917,22 @@ void attribute_hidden InitMemory()
     TAG(R_NilValue) = R_NilValue;
     ATTRIB(R_NilValue) = R_NilValue;
 
-#ifdef BYTECODE
     R_BCNodeStackBase = (SEXP *) malloc(R_BCNODESTACKSIZE * sizeof(SEXP));
     if (R_BCNodeStackBase == NULL)
 	R_Suicide("couldn't allocate node stack");
-# ifdef BC_INT_STACK
+#ifdef BC_INT_STACK
     R_BCIntStackBase =
       (IStackval *) malloc(R_BCINTSTACKSIZE * sizeof(IStackval));
     if (R_BCIntStackBase == NULL)
 	R_Suicide("couldn't allocate integer stack");
-# endif
+#endif
     R_BCNodeStackTop = R_BCNodeStackBase;
     R_BCNodeStackEnd = R_BCNodeStackBase + R_BCNODESTACKSIZE;
-# ifdef BC_INT_STACK
+#ifdef BC_INT_STACK
     R_BCIntStackTop = R_BCIntStackBase;
     R_BCIntStackEnd = R_BCIntStackBase + R_BCINTSTACKSIZE;
-# endif
 #endif
+
     R_weak_refs = R_NilValue;
 
     R_HandlerStack = R_RestartStack = R_NilValue;
@@ -2458,17 +2453,18 @@ SEXP allocVector(SEXPTYPE type, R_len_t length)
 #endif
 	CHAR_RW(s)[length] = 0;
     }
-    else if (type == REALSXP) {
 #if VALGRIND_LEVEL > 0
+    else if (type == REALSXP)
 	VALGRIND_MAKE_WRITABLE(REAL(s), actual_size);
-#endif
-    }
-    else if (type == INTSXP) {
-#if VALGRIND_LEVEL > 0
+    else if (type == INTSXP)
 	VALGRIND_MAKE_WRITABLE(INTEGER(s), actual_size);
+    else if (type == LGLSXP)
+	VALGRIND_MAKE_WRITABLE(LOGICAL(s), actual_size);
+    else if (type == CPLXSXP)
+	VALGRIND_MAKE_WRITABLE(COMPLEX(s), actual_size);
+    else if (type == RAWSXP)
+	VALGRIND_MAKE_WRITABLE(RAW(s), actual_size);
 #endif
-    }
-    /* <FIXME> why not valgrindify LGLSXP, CPLXSXP and RAWSXP? */
     return s;
 }
 
@@ -2550,7 +2546,10 @@ static void gc_end_timing(void)
 	R_getProcTime(times);
 	delta = R_getClockIncrement();
 
-	/* add delta to compensate for timer resolution */
+	/* add delta to compensate for timer resolution:
+	   NB: as all current Unix-alike systems use getrusage, 
+	   this may over-compensate.
+	 */
 	gctimes[0] += times[0] - gcstarttimes[0] + delta;
 	gctimes[1] += times[1] - gcstarttimes[1] + delta;
 	gctimes[2] += times[2] - gcstarttimes[2];
@@ -3277,10 +3276,12 @@ void (SET_PRIMFUN)(SEXP x, CCODE f) { PRIMFUN(x) = f; }
 /* for use when testing the write barrier */
 int  attribute_hidden (IS_BYTES)(SEXP x) { return IS_BYTES(x); }
 int  attribute_hidden (IS_LATIN1)(SEXP x) { return IS_LATIN1(x); }
+int  attribute_hidden (IS_ASCII)(SEXP x) { return IS_ASCII(x); }
 int  attribute_hidden (IS_UTF8)(SEXP x) { return IS_UTF8(x); }
 void attribute_hidden (SET_BYTES)(SEXP x) { SET_BYTES(x); }
 void attribute_hidden (SET_LATIN1)(SEXP x) { SET_LATIN1(x); }
 void attribute_hidden (SET_UTF8)(SEXP x) { SET_UTF8(x); }
+void attribute_hidden (SET_ASCII)(SEXP x) { SET_ASCII(x); }
 int  attribute_hidden (ENC_KNOWN)(SEXP x) { return ENC_KNOWN(x); }
 void attribute_hidden (SET_CACHED)(SEXP x) { SET_CACHED(x); }
 int  attribute_hidden (IS_CACHED)(SEXP x) { return IS_CACHED(x); }
