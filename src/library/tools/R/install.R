@@ -96,7 +96,7 @@
             "      --no-html		do not build HTML help",
             "      --latex      	install LaTeX help",
             "      --example		install R code for help examples",
-            "      --use-zip-data	collect data files in zip archive",
+            "      --use-zip-data	collect data files in zip archive (deprecated)",
             "      --fake		do minimal install for testing purposes",
             "      --no-lock, --unsafe",
             "			install on top of any existing installation",
@@ -120,7 +120,7 @@
             "      --configure-vars=VARS",
             "			set variables for the configure scripts (if any)",
             "\nand on Windows only",
-            "      --auto-zip	select whether to zip data automatically",
+            "      --auto-zip	select whether to zip data automatically (deprecated)",
             "      --force-biarch	attempt to build both architectures",
             "			even if there is a non-empty configure.win",
             "      --merge-multiarch	bi-arch by merging",
@@ -531,6 +531,7 @@
         if (auto_zip || zip_up) { ## --build implies --auto-zip
             thislazy <- parse_description_field(desc, "LazyData",
                                                 default = lazy_data)
+            ## This allows ZipData: no to override --auto-zip
             thiszip <- parse_description_field(desc, "ZipData",
                                                default = TRUE)
             if (!thislazy && thiszip && dir.exists("data")) {
@@ -763,9 +764,11 @@
 	    if (inherits(res, "try-error"))
 		pkgerrmsg("unable to collate files", pkg_name)
 
-	    if (file.exists(file.path("R", "sysdata.rda"))) {
-		res <- try(sysdata2LazyLoadDB("R/sysdata.rda",
-						      file.path(instdir, "R")))
+	    if (file.exists(f <- file.path("R", "sysdata.rda"))) {
+                comp <- TRUE
+                if (file.info(f)$size > 1e6) comp <- 3 # "xz"
+		res <- try(sysdata2LazyLoadDB(f, file.path(instdir, "R"),
+                                              compress = comp))
 		if (inherits(res, "try-error"))
 		    pkgerrmsg("unable to build sysdata DB", pkg_name)
 	    }
@@ -817,6 +820,12 @@
 		file.copy(files, is, TRUE)
 		thislazy <- parse_description_field(desc, "LazyData",
 						    default = lazy_data)
+                if(!thislazy && !use_zip_data) {
+                    use_zip_data <- parse_description_field(desc, "ZipData",
+                                                            default = FALSE)
+                    if(use_zip_data)
+                        warning("use of a true value for 'ZipData' is deprecated", call. = FALSE, domain=NA)
+                }
 		if (!thislazy && resave_data) {
 		    paths <- Sys.glob(c(file.path(is, "*.rda"),
 					file.path(is, "*.RData")))
@@ -837,6 +846,14 @@
 		    ## the package we have just installed is on the
 		    ## library path.'
 		    ## (We set .libPaths)
+                    lazycompress <- desc["LazyDataCompression"]
+                    if(!is.na(lazycompress))
+                        data_compress <- switch(lazycompress,
+                                                "none" = FALSE,
+                                                "gzip" = TRUE,
+                                                "bzip2" = 2,
+                                                "xz" = 3,
+                                                TRUE)  # default to gzip
 		    res <- try(data2LazyLoadDB(pkg_name, lib,
 					       compress = data_compress))
 		    if (inherits(res, "try-error"))
@@ -851,7 +868,7 @@
 		    setwd(owd)
 		}
 	    } else warning("empty 'data' directory", call. = FALSE)
-	}
+        }
 
 	if (install_demo && dir.exists("demo")) {
 	    starsmsg(stars, "demo")
@@ -872,15 +889,17 @@
 	    files <- Sys.glob(file.path("exec", "*"))
 	    if (length(files)) {
 		file.copy(files, file.path(instdir, "exec"), TRUE)
-		Sys.chmod(Sys.glob(file.path(instdir, "exec", "*")), "755")
+                if (!WINDOWS)
+                    Sys.chmod(Sys.glob(file.path(instdir, "exec", "*")), "755")
 	    }
 	}
 
-	if (install_inst && dir.exists("inst") && length(dir("inst"))) {
+	if (install_inst && dir.exists("inst") &&
+            length(dir("inst", all.files = TRUE))) {
 	    starsmsg(stars, "inst")
-	    ## FIXME avoid installing .svn etc?
 	    cp_r("inst", instdir)
-	    ## file.copy("inst", "instdir", recursive = TRUE)
+            ## remove some Sweave detritus
+            unlink(Sys.glob(file.path(instdir, "doc/Rplots.*")))
 	}
 
 	if (install_tests && dir.exists("tests")) {
@@ -888,14 +907,6 @@
 	    file.copy("tests", instdir, recursive = TRUE)
 	}
 
-	## Defunct:
-	## FIXME: remove these at some point
-	if (file.exists("install.R"))
-	    warning("use of file 'install.R' is no longer supported",
-		    call. = FALSE, domain = NA)
-	if (file.exists("R_PROFILE.R"))
-	    warning("use of file 'R_PROFILE.R' is no longer supported",
-		    call. = FALSE, domain = NA)
 	value <- parse_description_field(desc, "SaveImage", default = NA)
 	if (!is.na(value))
 	    warning("field 'SaveImage' is defunct: please remove it",
@@ -960,10 +971,10 @@
         ## control, we should really exclude the subdirs CVS, .svn
         ## (Subversion), .arch-ids (arch), .git and .hg (mercurial).
         for(d in c("CVS", ".svn", ".arch-ids", ".git", ".hg")) {
-            ## FIXME
+            ## FIXME This could be run on Windows, if we check find.exe exists.
             if (!WINDOWS)
                 system(paste("find",  shQuote(instdir), "-name", d,
-                             "-type d -prune -exe rm \\{\\} \\;"),
+                             "-type d -prune -exec rm -r \\{\\} \\;"),
                        ignore.stderr = TRUE)
         }
 
@@ -1067,11 +1078,17 @@
             build_latex <- TRUE
         } else if (a == "--example") {
             build_example <- TRUE
-        } else if (a == "--use-zipdata") {
+        } else if (a == "--use-zip-data") {
             use_zip_data <- TRUE
+            warning("use of '--use-zip-data' is deprecated",
+                    call. = FALSE, domain = NA)
         } else if (a == "--auto-zip") {
-            if (WINDOWS) auto_zip <- TRUE
-            else warning("'--auto-zip' is for Windows only", call. = FALSE)
+            if (WINDOWS) {
+                auto_zip <- TRUE
+                warning("use of '--auto-zip' is deprecated",
+                        call. = FALSE, domain = NA)
+            } else warning("'--auto-zip' is for Windows only",
+                           call. = FALSE, domain = NA)
         } else if (a == "-l") {
             if (length(args) >= 2L) {lib <- args[2L]; args <- args[-1L]}
             else stop("-l option without value", call. = FALSE)
@@ -1578,7 +1595,10 @@
 
     html_header <- function(pkg, title, version, conn)
     {
-        cat(paste(HTMLheader(title, Rhome="../../..", up="../../../doc/html/packages.html"), collapse="\n"),
+        cat(paste(HTMLheader(title, Rhome="../../..",
+                             up="../../../doc/html/packages.html",
+                             css = "../../R.css"),
+                  collapse="\n"),
            '<h2>Documentation for package &lsquo;', pkg, '&rsquo; version ',
             version, '</h2>\n\n', sep ='', file = conn)
 
@@ -1602,7 +1622,7 @@
         x[grep("-package$", x)] <- " "
         x <- toupper(substr(x, 1, 1))
         x[x > "Z"] <- "misc"
-        x[x < "A" & x != " "] <- ""
+        x[x < "A" & x != " "] <- "misc"
         x
     }
 
@@ -1712,8 +1732,10 @@
     if (use_alpha) {
         first <- firstLetterCategory(M$Topic)
         nm <- sort(names(table(first)))
-        m <- match(" ", nm, 0L)
+        m <- match(" ", nm, 0L) # -package
         if (m) nm <- c(" ", nm[-m])
+        m <- match("misc", nm, 0L) # force last in all locales.
+        if (m) nm <- c(nm[-m], "misc")
         writeLines("<p align=\"center\">", outcon)
         writeLines(paste("<a href=\"#", nm, "\">", nm, "</a>", sep = ""),
                    outcon)
@@ -1721,8 +1743,9 @@
 
         for (f in nm) {
             MM <- M[first == f, ]
-            cat("\n<h2><a name=\"", f, "\">-- ", f, " --</a></h2>\n\n",
-                sep = "", file = outcon)
+            if (f != " ")
+                cat("\n<h2><a name=\"", f, "\">-- ", f, " --</a></h2>\n\n",
+                    sep = "", file = outcon)
             writeLines('<table width="100%">', outcon)
             writeLines(paste('<tr><td width="25%"><a href="', MM[, 2L], '.html">',
                              MM$HTopic, '</a></td>\n<td>', MM[, 3L],'</td></tr>',

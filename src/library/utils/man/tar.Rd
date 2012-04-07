@@ -1,6 +1,6 @@
 % File src/library/utils/man/tar.Rd
 % Part of the R package, http://www.R-project.org
-% Copyright 2009-10 R Core Development Team
+% Copyright 2009-11 R Core Development Team
 % Distributed under GPL 2 or later
 
 \name{tar}
@@ -20,7 +20,7 @@ tar(tarfile, files = NULL,
 \arguments{
   \item{tarfile}{The pathname of the tar file: tilde expansion (see
     \code{\link{path.expand}}) will be performed.  Alternatively, a
-    connection that can be used for binary writes.}
+    \link{connection} that can be used for binary writes.}
 
   \item{files}{A character vector of filepaths to be archived:
     the default is to archive all files under the current directory.}
@@ -40,13 +40,22 @@ tar(tarfile, files = NULL,
   This is either a wrapper for a \command{tar} command or uses an
   internal implementation in \R.  The latter is used if \code{tarfile}
   is a connection or if the argument \code{tar} is \code{"internal"} or
-  \code{""}.
+  \code{""}.  Note that whereas Unix-alike versions of \R set the
+  environment variable \env{TAR}, its value is not the default for this
+  function.
+}
 
-  Beware of portability considerations: the \sQuote{tar} format no
-  longer has an agreed standard (\sQuote{Unix Standard Tar} was part of
-  POSIX 1003.1:1998 but has been removed in favour of \command{pax}),
-  and in any case many common implementations diverged from the former
-  standard.  Known problems arise from
+\section{Portability}{
+  The \sQuote{tar} format no longer has an agreed standard!
+  \sQuote{Unix Standard Tar} was part of POSIX 1003.1:1998 but has been
+  removed in favour of \command{pax}, and in any case many common
+  implementations diverged from the former standard.  Most \R platforms
+  use a version of GNU \command{tar} (including \command{Rtools} on
+  Windows, but the behaviour seems to be changed with each version), Mac
+  OS 10.6 and FreeBSD use \command{bsdttar} from the \samp{libarchive
+  project}, and commercial Unixes will have their own versions.
+
+  Known problems arise from
   \itemize{
     \item The handling of file names of more than 100 bytes.  These were
     unsupported in early versions of \command{tar}, and supported in one
@@ -82,7 +91,8 @@ tar(tarfile, files = NULL,
 }
 
 \value{
-  The return code from \code{\link{system}}, invisibly.
+  The return code from \code{\link{system}} or \code{0} for the internal
+  version, invisibly.
 }
 
 \seealso{

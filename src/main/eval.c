@@ -1,7 +1,7 @@
  /*
  *  R : A Computer Language for Statistical Data Analysis
  *  Copyright (C) 1995, 1996	Robert Gentleman and Ross Ihaka
- *  Copyright (C) 1998--2009	The R Development Core Team.
+ *  Copyright (C) 1998--2011	The R Development Core Team.
  *
  *  This program is free software; you can redistribute it and/or modify
  *  it under the terms of the GNU General Public License as published by
@@ -403,7 +403,7 @@ SEXP eval(SEXP e, SEXP rho)
 	tmp = e;
 	/* Make sure constants in expressions are NAMED before being
 	   used as values.  Setting NAMED to 2 makes sure weird calls
-	   to assignment functions won't modify constants in
+	   to replacement functions won't modify constants in
 	   expressions.  */
 	if (NAMED(tmp) != 2) SET_NAMED(tmp, 2);
 	break;
@@ -2108,12 +2108,15 @@ int DispatchOrEval(SEXP call, SEXP op, const char *generic, SEXP args,
 		   multiple evaluation after the call to possible_dispatch.
 		*/
 		if (dots)
-		    argValue = evalArgs(argValue, rho, dropmissing, call, 0);
+		    PROTECT(argValue = evalArgs(argValue, rho, dropmissing,
+						call, 0));
 		else {
-		    argValue = CONS(x, evalArgs(CDR(argValue), rho, dropmissing, call, 1));
+		    PROTECT(argValue = CONS(x, evalArgs(CDR(argValue), rho,
+							dropmissing, call, 1)));
 		    SET_TAG(argValue, CreateTag(TAG(args)));
 		}
-		PROTECT(args = argValue); nprotect++;
+		nprotect++;
+		args = argValue; 
 		argsevald = 1;
 	    }
 	}

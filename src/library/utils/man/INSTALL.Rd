@@ -1,6 +1,6 @@
 % File src/library/utils/man/INSTALL.Rd
 % Part of the R package, http://www.R-project.org
-% Copyright 1995-2009 R Core Development Team
+% Copyright 1995-2011 R Core Development Team
 % Distributed under GPL 2 or later
 
 \name{INSTALL}
@@ -59,11 +59,15 @@
   \command{R CMD INSTALL --binary}) can be supplied.
 #endif
 
-  Tarballs are by default unpackaged by the internal \code{\link{tar}}
+  Tarballs are by default unpackaged by the internal \code{\link{untar}}
   function: if needed an external \command{tar} command can be specified
   by the environment variable \env{R_INSTALL_TAR}: please ensure that it
-  can handle the type of compression used on the tarball.
-
+  can handle the type of compression used on the tarball.  (This is
+  sometimes needed for tarballs containing illegal or unsupported
+  sections, and can be faster on very large tarballs.   Setting
+  \env{R_INSTALL_TAR} to \samp{tar.exe} has been needed to overcome
+  permissions issues on some Windows systems.)
+  
   The package sources can be cleaned up prior to installation by
   \option{--preclean} or after by \option{--clean}: cleaning is
   essential if the sources are to be used with more than one
@@ -119,9 +123,12 @@
   the compiled code for another sub-architecture, use
   \option{--libs-only}.
 #endif
+
+  By default a package is installed with static HTML help pages if and
+  only if \R was: use option \option{--html} to override this.
   
   Use \command{R CMD INSTALL --help} for concise usage information,
-  including all the available options
+  including all the available options.
 }
 
 #ifdef unix

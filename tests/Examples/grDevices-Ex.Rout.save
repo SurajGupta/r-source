@@ -1,6 +1,6 @@
 
-R version 2.12.0 Under development (unstable) (2010-09-02 r52865)
-Copyright (C) 2010 The R Foundation for Statistical Computing
+R version 2.12.1 Patched (2011-02-12 r54356)
+Copyright (C) 2011 The R Foundation for Statistical Computing
 ISBN 3-900051-07-0
 Platform: x86_64-unknown-linux-gnu (64-bit)
 
@@ -353,6 +353,12 @@ Warning in text.default(1:8, labels = paste(x, "++", sep = ""), col = x.,  :
  [9,] FALSE FALSE FALSE FALSE FALSE FALSE FALSE FALSE FALSE FALSE
 [10,] FALSE FALSE FALSE FALSE FALSE FALSE FALSE FALSE FALSE FALSE
 > 
+> ## Don't show: 
+> stopifnot(r[] == r,
++           identical(r[3:5], colors()[3:5]))
+> r[2:4] <- "black"
+> stopifnot(identical(r[1:4, 1], as.raster(c("white", rep("black",3)))))
+> ## End Don't show
 > 
 > 
 > 
@@ -1549,7 +1555,7 @@ List of 150
 > flush(stderr()); flush(stdout())
 > 
 > ### Name: convertColor
-> ### Title: Convert between colour spaces
+> ### Title: Convert between Colour Spaces
 > ### Aliases: convertColor colorspaces
 > ### Keywords: color
 > 
@@ -2953,15 +2959,15 @@ List of 18
 > 
 > ### ---- error checking of arguments: ----
 > ps.options(width=0:12, onefile=0, bg=pi)
-Warning: 'mode(onefile)' and 'mode(bg)' differ between new and previous
-	 ==> NOT changing 'onefile' & 'bg'
-Warning: 'length(width)' differs between new and previous
-	 ==> NOT changing 'width'
+Warning: ‘mode(onefile)’ and ‘mode(bg)’ differ between new and previous
+	 ==> NOT changing ‘onefile’ & ‘bg’
+Warning: ‘length(width)’ differs between new and previous
+	 ==> NOT changing ‘width’
 > # override the check for 'width', but not 'bg':
 > ps.options(width=0:12, bg=pi, override.check = c(TRUE,FALSE))
-Warning: 'mode(bg)' differs between new and previous
-	 ==> NOT changing 'bg'
-Warning: 'length(width)' differs between new and previous
+Warning: ‘mode(bg)’ differs between new and previous
+	 ==> NOT changing ‘bg’
+Warning: ‘length(width)’ differs between new and previous
 > utils::str(ps.options())
 List of 18
  $ onefile    : logi TRUE
@@ -3392,7 +3398,7 @@ $zlab
 > ### * <FOOTER>
 > ###
 > cat("Time elapsed: ", proc.time() - get("ptime", pos = 'CheckExEnv'),"\n")
-Time elapsed:  1.87 0.025 2.134 0 0 
+Time elapsed:  1.835 0.07 1.905 0 0 
 > grDevices::dev.off()
 null device 
           1 

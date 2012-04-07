@@ -47,7 +47,7 @@ read.delim2(file, header = TRUE, sep = "\t", quote="\"", dec=",",
     As from \R 2.10.0 this can be a compressed file (see \code{\link{file}}).
     
     Alternatively, \code{file} can be a readable text-mode
-    \code{\link{connection}} (which will be opened for reading if
+    \link{connection} (which will be opened for reading if
     necessary, and if so \code{\link{close}}d (and hence destroyed) at
     the end of the function call).  (If \code{\link{stdin}()} is used,
     the prompts for lines may be somewhat confusing.  Terminate input
@@ -55,7 +55,9 @@ read.delim2(file, header = TRUE, sep = "\t", quote="\"", dec=",",
     \code{Ctrl-Z} on Windows.  Any pushback on \code{stdin()} will be
     cleared before return.)
 
-    \code{file} can also be a complete URL.
+    \code{file} can also be a complete URL.  (For the supported URL
+    schemes, see the \sQuote{URLs} section of the help for
+    \code{\link{url}}.)
   }
 
   \item{header}{a logical value indicating whether the file contains the
@@ -150,7 +152,8 @@ read.delim2(file, header = TRUE, sep = "\t", quote="\"", dec=",",
   \item{strip.white}{logical. Used only when \code{sep} has
     been specified, and allows the stripping of leading and trailing
     white space from \code{character} fields (\code{numeric} fields
-    are always stripped).  See \code{\link{scan}} for further details,
+    are always stripped).  See \code{\link{scan}} for further details
+    (including the exact meaning of \sQuote{white space}),
     remembering that the columns may include the row names.}
 
   \item{blank.lines.skip}{logical: if \code{TRUE} blank lines in the
@@ -175,7 +178,9 @@ read.delim2(file, header = TRUE, sep = "\t", quote="\"", dec=",",
   
   \item{fileEncoding}{character string: if non-empty declares the
     encoding used on a file (not a connection) so the character data can
-    be re-encoded.  See \code{\link{file}} and \sQuote{Note}.
+    be re-encoded.  See the \sQuote{Encoding} section of the help for
+    \code{\link{file}}, the \sQuote{R Data Import/Export Manual} and
+    \sQuote{Note}.
   }
   
   \item{encoding}{encoding to be assumed for input strings.  It is

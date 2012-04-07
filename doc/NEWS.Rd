@@ -4,6 +4,224 @@
 \title{R News}
 \encoding{UTF-8}
 
+\section{CHANGES IN R VERSION 2.12.2}{
+  \subsection{SIGNIFICANT USER-VISIBLE CHANGES}{
+    \itemize{
+      \item Complex arithmetic (notably \code{z^n} for complex \code{z}
+      and integer \code{n}) gave incorrect results since \R 2.10.0 on
+      platforms without C99 complex support.  This and some
+      lesser issues in trignometric functions have been corrected.
+
+      Such platforms were rare (we know of Cygwin and FreeBSD).
+      However, because of new compiler optimizations in the way complex
+      arguments are handled, the same code was selected on x86_64 Linux
+      with \command{gcc 4.5.x} at the default \code{-O2} optimization
+      (but not at \code{-O}).
+
+      \item There is a workaround for crashes seen with several packages
+      on systems using \samp{zlib 1.2.5}: see the INSTALLATION section.
+    }
+  }
+
+  \subsection{NEW FEATURES}{
+    \itemize{
+      \item PCRE has been updated to 8.12 (two bug-fix releases since 8.10).
+
+      \item \code{rep()}, \code{seq()}, \code{seq.int()} and
+      \code{seq_len()} report more often when the first element is taken
+      of an argument of incorrect length.
+
+      \item The Cocoa back-end for the \code{quartz()} graphics device
+      on Mac OS X provides a way to disable event loop processing
+      temporarily (useful, e.g., for forked instances of \R).
+
+      \item \code{kernel()}'s default for \code{m} was not appropriate
+      if \code{coef} was a set of coefficients.  (Reported by Pierre
+      Chausse.)
+
+      \item \code{bug.report()} has been updated for the current \R bug
+      tracker, which does not accept emailed submissions.
+
+      \item \command{R CMD check} now checks for the correct use of
+      \samp{$(LAPACK_LIBS)} (as well as \samp{$(BLAS_LIBS)}), since
+      several CRAN recent submissions have ignored \sQuote{Writing R
+	Extensions}.
+    }
+  }
+
+  \subsection{INSTALLATION}{
+    \itemize{
+      \item The \samp{zlib} sources in the distribution are now built
+      with all symbols remapped: this is intended to avoid problems seen
+      with packages such as \pkg{XML} and \pkg{rggobi} which link to
+      \file{zlib.so.1} on systems using \samp{zlib 1.2.5}.
+
+      \item The default for \env{FFLAGS} and \env{FCFLAGS} with
+      \command{gfortran} on x86_64 Linux has been changed back to \samp{-g
+	-O2}:  however, setting \samp{-g -O} may still be needed for
+      \command{gfortran 4.3.x}.
+    }
+  }
+
+  \subsection{PACKAGE INSTALLATION}{
+    \itemize{
+      \item A \samp{LazyDataCompression} field in the \file{DESCRIPTION}
+      file will be used to set the value for the
+      \option{--data-compress} option of \command{R CMD INSTALL}.
+
+      \item Files \file{R/sysdata.rda} of more than 1Mb are now stored
+      in the lazyload daabase using \command{xz} compression: this for
+      example halves the installed size of package \pkg{Imap}.
+
+      \item \command{R CMD INSTALL} now ensures that directories
+      installed from \file{inst} have search permission for everyone.
+
+      It no longer installs files \file{inst/doc/Rplots.ps} and
+      \file{inst/doc/Rplots.pdf}.  These are almost certainly left-overs
+      from \code{Sweave} runs, and are often large.
+    }
+  }
+
+  \subsection{DEPRECATED & DEFUNCT}{
+    \itemize{
+      \item The \sQuote{experimental} alternative specification of a
+      name space via \code{.Export()} etc is now deprecated.
+
+      \item \code{zip.file.extract()} is now deprecated.
+
+      \item Zip-ing data sets in packages (and hence \command{R CMD
+	INSTALL --use-zip-data} and the \samp{ZipData: yes} field in a
+	\code{DESCRIPTION} file) is deprecated: using efficiently
+	compressed \file{.rda} images and lazy-loading of data has
+	superseded it.
+    }
+  }
+
+  \subsection{BUG FIXES}{
+    \itemize{
+      \item \code{identical()} could in rare cases generate a warning
+      about non-pairlist attributes on CHARSXPs.  As these are used for
+      internal purposes, the attribute check should be skipped.
+      (Reported by Niels Richard Hansen).
+
+      \item If the filename extension (usually \file{.Rnw}) was not
+      included in a call to \code{Sweave()}, source references would not
+      work properly and the \code{keep.source} option failed.  (\PR{14459})
+
+      \item \code{format.data.frame()} now keeps zero character column names.
+
+      \item \code{pretty(x)} no longer raises an error when \code{x}
+      contains solely non-finite values. (\PR{14468})
+
+      \item The \code{plot.TukeyHSD()} function now uses a line width of
+      0.5 for its reference lines rather than \samp{lwd = 0} (which
+      caused problems for some PDF and PostScript viewers).
+
+      \item The \code{big.mark} argument to \code{prettyNum()},
+      \code{format()}, etc. was inserted reversed if it was more than
+      one character long.
+
+      \item \command{R CMD check} failed to check the filenames under
+      \file{man} for Windows' reserved names.
+
+      \item The \code{"Date"} and \code{"POSIXt"} methods for
+      \code{seq()} could overshoot when \code{to} was supplied and
+      \code{by} was specified in months or years.
+
+      \item The internal method of \code{untar()} now restores hard
+      links as file copies rather than symbolic links (which did not
+      work for cross-directory links).
+
+      \item \code{unzip()} did not handle zip files which contained
+      filepaths with two or more leading directories which were not in
+      the zipfile and did not already exist.  (It is unclear if such
+      zipfiles are valid and the third-party C code used did not support
+      them, but \PR{14462} created one.)
+
+      \item \code{combn(n, m)} now behaves more regularly for the border
+      case \eqn{m = 0}. (\PR{14473})
+
+      \item The rendering of numbers in plotmath expressions (e.g.
+      \code{expression(10^2)}) used the current settings for conversion
+      to strings rather than setting the defaults, and so could be
+      affected by what has been done before.  (\PR{14477})
+
+      \item The methods of \code{napredict()} and \code{naresid()} for
+      \code{na.action = na.exclude} fits did not work correctly in the
+      very rare event that every case had been omitted in the fit.
+      (Reported by Simon Wood.)
+
+      \item \code{weighted.residuals(drop0=TRUE)} returned a vector when
+      the residuals were a matrix (e.g. those of class \code{"mlm"}).
+      (Reported by Bill Dunlap.)
+
+      \item Package HTML index files \file{<pkg>/html/00Index.html} were
+      generated with a stylesheet reference that was not correct for
+      static browsing in libraries.
+
+      \item \code{ccf(na.action = na.pass)} was not implemented.
+
+      \item The parser accepted some incorrect numeric constants,
+      e.g. \code{20x2}.  (Reported by Olaf Mersmann.)
+
+      \item \code{format(*, zero.print)} did not always replace the full
+      zero parts.
+
+      \item Fixes for subsetting or subassignment of \code{"raster"}
+      objects when not both \code{i} and \code{j} are specified.
+
+      \item \command{R CMD INSTALL} was not always respecting the
+      \samp{ZipData: yes} field of a \file{DESCRIPTION} file (although
+      this is frequently incorrectly specified for packages with no data
+      or which specify lazy-loading of data).
+
+      \command{R CMD INSTALL --use-zip-data} was incorrectly implemented
+      as \option{--use-zipdata} since \R 2.9.0.
+
+      \item \command{source(file, echo=TRUE)} could fail if the file
+      contained \samp{#line} directives.  It now recovers more gracefully, but
+      may still display the wrong line if the directive gives incorrect
+      information.
+
+      \item \code{atan(1i)} returned \code{NaN+Infi} (rather than
+      \code{0+Infi}) on platforms without C99 complex support.
+
+      \item \code{library()} failed to cache S4 metadata (unlike
+      \code{loadNamespace()}) causing failures in S4-using packages
+      without a namespace (e.g. those using reference classes).
+
+      \item The function \code{qlogis(lp, log.p=TRUE)} no longer
+      prematurely overflows to \code{Inf} when exp(lp) is close to 1.
+
+      \item Updating S4 methods for a group generic function requires
+      resetting the methods tables for the members of the group (patch
+      contributed by Martin Morgan).
+
+      \item In some circumstances (including for package \pkg{XML}),
+      \command{R CMD INSTALL} installed version-control directories from
+      source packages.
+
+      \item Added \code{PROTECT} calls to some constructed expressions
+      used in C level \code{eval} calls.
+
+      \item \code{utils:::create.post()} (used by \code{bug.report()}
+      and \code{help.request()}) failed to quote arguments to the
+      mailer, and so often failed.
+
+      \item \code{bug.report()} was naive about how to extract
+      maintainer email addresses from package descriptions, so would
+      often try mailing to incorrect addresses.
+
+      \item \code{debugger()} could fail to read the environment of a
+      call to a function with a \code{\dots} argument.  (Reported by
+      Charlie Roosen.)
+
+      \item \code{prettyNum(c(1i, NA), drop0=TRUE)} or
+      \code{str(NA_complex_)} now work correctly.
+    }
+  }
+}
+
 \section{CHANGES IN R VERSION 2.12.1}{
   \subsection{NEW FEATURES}{
     \itemize{
@@ -22,13 +240,14 @@
       \item \code{legend()} allows the length of lines to be set by the
       end user \emph{via} the new argument \code{seg.len}.
 
-      \item New reference class utility methods \code{copy()}, \code{field()},
-      \code{getRefClass()} and \code{getClass()} have been added.
-     
+      \item New S4 reference class utility methods \code{copy()},
+      \code{field()}, \code{getRefClass()} and \code{getClass()} have
+      been added to package \pkg{methods}.
+
       \item When a character value is used for the \code{EXPR}
       argument in \code{switch()}, a warning is given if more than
       one unnamed alternative value is given.  This will become an
-      error in R 2.13.0.
+      error in \R 2.13.0.
 
       \item \code{StructTS(type = "BSM")} now allows series with just
       two seasons.  (Reported by Birgit Erni.)
@@ -154,10 +373,10 @@
       \item \code{unit.pmax()} and \code{unit.pmin()} in package
       \pkg{grid} gave incorrect results when all inputs were of length 1.
       (\PR{14443})
-      
+
       \item The parser for \file{NAMESPACE} files ignored misspelled
       directives, rather than signalling an error.  For 2.12.x a warning
-      will be issued, but this will be correctly reported as an error 
+      will be issued, but this will be correctly reported as an error
       in later releases. (Reported by Charles Berry.)
 
       \item Fix for subsetting of \code{"raster"} objects when only one
@@ -175,11 +394,11 @@
 
       With Cairo < 1.6, will be better than before, though still a
       little clunky.  With Cairo >= 1.6, should be sweet as.
-            
+
       \item Several bugs fixed in \code{read.DIF()}:  single column
       inputs caused errors, cells marked as \code{"character"} could
       be converted to other types, and (in Windows) copying from the
-      clipboard failed.      
+      clipboard failed.
     }
   }
 }

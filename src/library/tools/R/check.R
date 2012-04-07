@@ -224,9 +224,9 @@ R_runR <- function(cmd = NULL, Ropts = "", env = "",
                       function(x) any(grepl("[^ -~]|%", x)))
         if (length(bad))
             bad_files <- c(bad_files, (allfiles[is_man])[bad])
-        bad <- tolower(basename(allfiles[!is_man]))
-        bad <- grepl("^(con|prn|aux|clock$|nul|lpt[1-9]|com[1-9])$", bad)
-        bad_files <- c(bad_files, (allfiles[!is_man])[bad])
+        bad <- tolower(basename(allfiles))
+        bad <- grepl("^(con|prn|aux|clock[$]|nul|lpt[1-9]|com[1-9])$", bad)
+        bad_files <- c(bad_files, allfiles[bad])
         if (length(bad_files)) {
             errorLog(Log)
             wrapLog("Found the following file(s) with non-portable file names:\n")
@@ -1019,7 +1019,8 @@ R_runR <- function(cmd = NULL, Ropts = "", env = "",
             } else resultLog(Log, "OK")
         }
 
-        if (do_install && !extra_arch && !is_base_pkg) {
+        ## Check undeclared dependencies in examples (if any)
+        if (dir.exists("man") && do_install && !extra_arch && !is_base_pkg) {
             checkingLog(Log, "for unstated dependencies in examples")
             Rcmd <- paste("options(warn=1)\n",
                           sprintf("tools:::.check_packages_used_in_examples(package = \"%s\")\n", pkgname))
@@ -1106,20 +1107,28 @@ R_runR <- function(cmd = NULL, Ropts = "", env = "",
         ## check src/Makevar*, src/Makefile* for correct use of BLAS_LIBS
         ## FLIBS is not needed on Windows, at least currently (as it is
         ## statically linked).
-        checkingLog(Log, "for portable use of $BLAS_LIBS")
+        checkingLog(Log, "for portable use of $(BLAS_LIBS) and $(LAPACK_LIBS)")
         makefiles <- Sys.glob(file.path("src",
                                         c("Makevars", "Makevars.in",
                                           "Makefile", "Makefile.win")))
         any <- FALSE
         for (f in makefiles) {
             lines <- readLines(f, warn = FALSE)
-            c1 <- grepl("PKG_LIBS", lines, useBytes = TRUE)
-            c2 <- grepl("$[{(]{0,1}BLAS_LIBS", lines, useBytes = TRUE)
-            c3 <- grepl("FLIBS", lines, useBytes = TRUE)
-            if (any(c1 && c2 && !c3)) {
+            c1 <- grepl("^[[:space:]]*PKG_LIBS", lines, useBytes = TRUE)
+            c2l <- grepl("\\$[{(]{0,1}LAPACK_LIBS", lines, useBytes = TRUE)
+            c2b <- grepl("\\$[{(]{0,1}BLAS_LIBS", lines, useBytes = TRUE)
+            c3 <- grepl("\\$[{(]{0,1}FLIBS", lines, useBytes = TRUE)
+            if (any(c1 & c2l & !c2b)) {
                 if (!any) warnLog()
                 any <- TRUE
-                printLog(Log, "apparently missing $(FLIBS) in ",
+                printLog(Log,
+                         "  apparently using $(LAPACK_LIBS) without $(BLAS_LIBS) in ",
+                         sQuote(f), "\n")
+            }
+            if (any(c1 & (c2b | c2l) & !c3)) {
+                if (!any) warnLog()
+                any <- TRUE
+                printLog(Log, "  apparently PKG_LIBS is missing $(FLIBS) in ",
                          sQuote(f), "\n")
             }
         }
@@ -1498,16 +1507,17 @@ R_runR <- function(cmd = NULL, Ropts = "", env = "",
             Rd2pdf_opts <- "--batch --no-preview"
             checkingLog(Log, "PDF version of manual")
             build_dir <- gsub("\\", "/", tempfile("Rd2pdf"), fixed = TRUE)
+            man_file <- paste(pkgname, "-manual.pdf ", sep = "")
+            ## precautionary remove in case some other attempt left it behind
+            if(file.exists(man_file)) unlink(man_file)
             args <- c( "Rd2pdf ", Rd2pdf_opts,
                       paste("--build-dir=", shQuote(build_dir), sep = ""),
-                      "--no-clean",
-                      "-o ", paste(pkgname, "-manual.pdf ", sep = ""),
-                      topdir)
+                      "--no-clean", "-o ", man_file , topdir)
             res <- run_Rcmd(args,  "Rdlatex.log")
             latex_log <- file.path(build_dir, "Rd2.log")
             if (file.exists(latex_log))
                 file.copy(latex_log, paste(pkgname, "-manual.log", sep=""))
-            if (res == 2816) { ## 11*256
+            if (res == 11) { ## return code from Rd2dvi
                 errorLog(Log, "Rd conversion errors:")
                 lines <- readLines("Rdlatex.log", warn = FALSE)
                 lines <- grep("^(Hmm|Execution)", lines,
@@ -1539,8 +1549,7 @@ R_runR <- function(cmd = NULL, Ropts = "", env = "",
                 args <- c( "Rd2pdf ", Rd2pdf_opts,
                           paste("--build-dir=", shQuote(build_dir), sep = ""),
                           "--no-clean", "--no-index",
-                          "-o ", paste(pkgname, "-manual.pdf ", sep = ""),
-                          topdir)
+                          "-o ", man_file, topdir)
                 if (run_Rcmd(args, "Rdlatex.log")) {
                     ## FIXME: the info is almost certainly in Rdlatex.log
                     errorLog(Log)

@@ -4,6 +4,39 @@
 \title{Windows-specific changes to R}
 \encoding{UTF-8}
 
+\section{CHANGES IN R VERSION 2.12.2}{
+  \subsection{NEW FEATURES}{
+    \itemize{
+      \item Building badly-written vignettes which used the default
+      device (\code{pdf(file = "Rplots.pdf")} could leave the device
+      open and hence the file \file{Rplots.pdf} could not be removed on
+      Windows: all devices are now closed.
+    }
+  }
+
+  \subsection{BUG FIXES}{
+    \itemize{
+      \item In some circumstances the caret (cursor) could be positioned 
+      incorrectly. (\PR{14460})
+      
+      \item When loading \file{Rconsole} from disk, a spurious warning
+      message was sometimes shown.
+      
+      \item In \R 2.12.1, \code{system()} sometimes passed an empty
+      input stream to the new process rather than allowing user input.
+
+      \item The internal method for \code{untar()} does a better job of
+      unravelling symbolic links in the tarball (but still with many
+      limitations).
+      
+      \item Bug fixes for drawing raster objects on \code{windows()}.  The
+      symptom was the occasional raster image not being drawn, especially
+      when drawing multiple raster images in a single expression.
+      Thanks to Michael Sumner for report and testing.
+    }
+  }
+}
+
 \section{CHANGES IN R VERSION 2.12.1}{
   \subsection{NEW FEATURES}{
     \itemize{

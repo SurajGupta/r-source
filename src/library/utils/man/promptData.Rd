@@ -1,11 +1,11 @@
 % File src/library/utils/man/promptData.Rd
 % Part of the R package, http://www.R-project.org
-% Copyright 1995-2007 R Core Development Team
+% Copyright 1995-2011 R Core Development Team
 % Distributed under GPL 2 or later
 
 \name{promptData}
 \alias{promptData}
-\title{Generate a Shell for Documentation of Data Sets}
+\title{Generate Outiine Documentation for a Data Set}
 \description{
   Generates a shell of documentation for a data set.
 }
@@ -14,7 +14,7 @@ promptData(object, filename = NULL, name = NULL)
 }
 \arguments{
   \item{object}{an \R object to be documented as a data set.}
-  \item{filename}{usually, a connection or a character string giving the
+  \item{filename}{usually, a \link{connection} or a character string giving the
     name of the file to which the documentation shell should be written.
     The default corresponds to a file whose name is \code{name} followed
     by \code{".Rd"}.  Can also be \code{NA} (see below).}
@@ -36,16 +36,6 @@ promptData(object, filename = NULL, name = NULL)
   where \code{x} is the list-style representation.
   
   Currently, only data frames are handled explicitly by the code.
-}
-\section{Warning}{
-  This function is still experimental.  Both interface and value might
-  change in future versions.  In particular, it may be preferable to use
-  a character string naming the data set and optionally a specification
-  of where to look for it instead of using \code{object}/\code{name} as
-  we currently do.  This would be different from \code{\link{prompt}},
-  but consistent with other prompt-style functions in package
-  \pkg{methods}, and also allow prompting for data set documentation
-  without explicitly having to load the data set.
 }
 \seealso{\code{\link{prompt}}}
 \examples{

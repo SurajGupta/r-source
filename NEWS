@@ -1,5 +1,198 @@
 R News
 
+CHANGES IN R VERSION 2.12.2:
+
+  SIGNIFICANT USER-VISIBLE CHANGES:
+
+    • Complex arithmetic (notably z^n for complex z and integer n) gave
+      incorrect results since R 2.10.0 on platforms without C99 complex
+      support.  This and some lesser issues in trignometric functions
+      have been corrected.
+
+      Such platforms were rare (we know of Cygwin and FreeBSD).
+      However, because of new compiler optimizations in the way complex
+      arguments are handled, the same code was selected on x86_64 Linux
+      with gcc 4.5.x at the default -O2 optimization (but not at -O).
+
+    • There is a workaround for crashes seen with several packages on
+      systems using zlib 1.2.5: see the INSTALLATION section.
+
+  NEW FEATURES:
+
+    • PCRE has been updated to 8.12 (two bug-fix releases since 8.10).
+
+    • rep(), seq(), seq.int() and seq_len() report more often when the
+      first element is taken of an argument of incorrect length.
+
+    • The Cocoa back-end for the quartz() graphics device on Mac OS X
+      provides a way to disable event loop processing temporarily
+      (useful, e.g., for forked instances of R).
+
+    • kernel()'s default for m was not appropriate if coef was a set of
+      coefficients.  (Reported by Pierre Chausse.)
+
+    • bug.report() has been updated for the current R bug tracker,
+      which does not accept emailed submissions.
+
+    • R CMD check now checks for the correct use of $(LAPACK_LIBS) (as
+      well as $(BLAS_LIBS)), since several CRAN recent submissions have
+      ignored ‘Writing R Extensions’.
+
+  INSTALLATION:
+
+    • The zlib sources in the distribution are now built with all
+      symbols remapped: this is intended to avoid problems seen with
+      packages such as XML and rggobi which link to zlib.so.1 on
+      systems using zlib 1.2.5.
+
+    • The default for FFLAGS and FCFLAGS with gfortran on x86_64 Linux
+      has been changed back to -g -O2: however, setting -g -O may still
+      be needed for gfortran 4.3.x.
+
+  PACKAGE INSTALLATION:
+
+    • A LazyDataCompression field in the DESCRIPTION file will be used
+      to set the value for the --data-compress option of R CMD INSTALL.
+
+    • Files R/sysdata.rda of more than 1Mb are now stored in the
+      lazyload daabase using xz compression: this for example halves
+      the installed size of package Imap.
+
+    • R CMD INSTALL now ensures that directories installed from inst
+      have search permission for everyone.
+
+      It no longer installs files inst/doc/Rplots.ps and
+      inst/doc/Rplots.pdf.  These are almost certainly left-overs from
+      Sweave runs, and are often large.
+
+  DEPRECATED & DEFUNCT:
+
+    • The ‘experimental’ alternative specification of a name space via
+      .Export() etc is now deprecated.
+
+    • zip.file.extract() is now deprecated.
+
+    • Zip-ing data sets in packages (and hence R CMD INSTALL
+      --use-zip-data and the ZipData: yes field in a DESCRIPTION file)
+      is deprecated: using efficiently compressed .rda images and
+      lazy-loading of data has superseded it.
+
+  BUG FIXES:
+
+    • identical() could in rare cases generate a warning about
+      non-pairlist attributes on CHARSXPs.  As these are used for
+      internal purposes, the attribute check should be skipped.
+      (Reported by Niels Richard Hansen).
+
+    • If the filename extension (usually .Rnw) was not included in a
+      call to Sweave(), source references would not work properly and
+      the keep.source option failed.  (PR#14459)
+
+    • format.data.frame() now keeps zero character column names.
+
+    • pretty(x) no longer raises an error when x contains solely
+      non-finite values. (PR#14468)
+
+    • The plot.TukeyHSD() function now uses a line width of 0.5 for its
+      reference lines rather than lwd = 0 (which caused problems for
+      some PDF and PostScript viewers).
+
+    • The big.mark argument to prettyNum(), format(), etc. was inserted
+      reversed if it was more than one character long.
+
+    • R CMD check failed to check the filenames under man for Windows'
+      reserved names.
+
+    • The "Date" and "POSIXt" methods for seq() could overshoot when to
+      was supplied and by was specified in months or years.
+
+    • The internal method of untar() now restores hard links as file
+      copies rather than symbolic links (which did not work for
+      cross-directory links).
+
+    • unzip() did not handle zip files which contained filepaths with
+      two or more leading directories which were not in the zipfile and
+      did not already exist.  (It is unclear if such zipfiles are valid
+      and the third-party C code used did not support them, but
+      PR#14462 created one.)
+
+    • combn(n, m) now behaves more regularly for the border case m = 0.
+      (PR#14473)
+
+    • The rendering of numbers in plotmath expressions (e.g.
+      expression(10^2)) used the current settings for conversion to
+      strings rather than setting the defaults, and so could be
+      affected by what has been done before.  (PR#14477)
+
+    • The methods of napredict() and naresid() for na.action =
+      na.exclude fits did not work correctly in the very rare event
+      that every case had been omitted in the fit.  (Reported by Simon
+      Wood.)
+
+    • weighted.residuals(drop0=TRUE) returned a vector when the
+      residuals were a matrix (e.g. those of class "mlm").  (Reported
+      by Bill Dunlap.)
+
+    • Package HTML index files <pkg>/html/00Index.html were generated
+      with a stylesheet reference that was not correct for static
+      browsing in libraries.
+
+    • ccf(na.action = na.pass) was not implemented.
+
+    • The parser accepted some incorrect numeric constants, e.g. 20x2.
+      (Reported by Olaf Mersmann.)
+
+    • format(*, zero.print) did not always replace the full zero parts.
+
+    • Fixes for subsetting or subassignment of "raster" objects when
+      not both i and j are specified.
+
+    • R CMD INSTALL was not always respecting the ZipData: yes field of
+      a DESCRIPTION file (although this is frequently incorrectly
+      specified for packages with no data or which specify lazy-loading
+      of data).
+
+      R CMD INSTALL --use-zip-data was incorrectly implemented as
+      --use-zipdata since R 2.9.0.
+
+    • source(file, echo=TRUE) could fail if the file contained #line
+      directives.  It now recovers more gracefully, but may still
+      display the wrong line if the directive gives incorrect
+      information.
+
+    • atan(1i) returned NaN+Infi (rather than 0+Infi) on platforms
+      without C99 complex support.
+
+    • library() failed to cache S4 metadata (unlike loadNamespace())
+      causing failures in S4-using packages without a namespace (e.g.
+      those using reference classes).
+
+    • The function qlogis(lp, log.p=TRUE) no longer prematurely
+      overflows to Inf when exp(lp) is close to 1.
+
+    • Updating S4 methods for a group generic function requires
+      resetting the methods tables for the members of the group (patch
+      contributed by Martin Morgan).
+
+    • In some circumstances (including for package XML), R CMD INSTALL
+      installed version-control directories from source packages.
+
+    • Added PROTECT calls to some constructed expressions used in C
+      level eval calls.
+
+    • utils:::create.post() (used by bug.report() and help.request())
+      failed to quote arguments to the mailer, and so often failed.
+
+    • bug.report() was naive about how to extract maintainer email
+      addresses from package descriptions, so would often try mailing
+      to incorrect addresses.
+
+    • debugger() could fail to read the environment of a call to a
+      function with a ... argument.  (Reported by Charlie Roosen.)
+
+    • prettyNum(c(1i, NA), drop0=TRUE) or str(NA_complex_) now work
+      correctly.
+
 CHANGES IN R VERSION 2.12.1:
 
   NEW FEATURES:
@@ -19,8 +212,8 @@ CHANGES IN R VERSION 2.12.1:
     • legend() allows the length of lines to be set by the end user
       _via_ the new argument seg.len.
 
-    • New reference class utility methods copy(), field(),
-      getRefClass() and getClass() have been added.
+    • New S4 reference class utility methods copy(), field(),
+      getRefClass() and getClass() have been added to package methods.
 
     • When a character value is used for the EXPR argument in switch(),
       a warning is given if more than one unnamed alternative value is

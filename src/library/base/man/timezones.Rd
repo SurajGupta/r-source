@@ -1,6 +1,6 @@
 % File src/library/base/man/timezones.Rd
 % Part of the R package, http://www.R-project.org
-% Copyright 1995-2008 R Core Development Team
+% Copyright 1995-2011 R Core Development Team
 % Distributed under GPL 2 or later
 
 \name{timezones}
@@ -23,10 +23,10 @@ Sys.timezone()
 }
 
 \details{
-  Time zones are a system-specific topic, but in recent versions
-  of \R almost all \R platforms use the same underlying code, used by
-  Linux, Mac OS X, Solaris, AIX, FreeBSD, Sun Java >= 1.4 and Tcl >=
-  8.5, and supplied with \R on Windows.
+  Time zones are a system-specific topic, but these days almost all \R
+  platforms use the same underlying code, used by Linux, Mac OS X,
+  Solaris, AIX, FreeBSD, Sun Java >= 1.4 and Tcl >= 8.5, and installed
+  with \R on Windows.
 
   It is not in general possible to retrieve the system's own name(s) for
   the current timezone, but \code{Sys.timezone} will retrieve the name
@@ -48,7 +48,7 @@ Sys.timezone()
   nineteenth century, and DST was first introduced in the early
   twentieth century, most widely during the First World War (in 1916).
 #ifdef unix
-  The most common implementation of \code{POSIXct} is a signed 32-bit
+  The most common implementation of \code{POSIXct} is as signed 32-bit
   integers and so only goes back to the end of 1901: on such systems \R
   assumes that dates prior to that are in the same time zone as they
   were in 1902.
@@ -56,9 +56,9 @@ Sys.timezone()
 }
 
 \note{
-  There is currently (2007/8) considerable disruption over changes to
-  the timings of the DST transitions, aimed at energy conservation.
-  These often have short notice and time zone databases may not be up to
+  There is currently (since 2007) considerable disruption over changes
+  to the timings of the DST transitions, aimed at energy conservation.
+  These often have short notice and timezone databases may not be up to
   date (even if the OS has been updated recently).
 
   Note that except on Windows, the operation of time zones is an OS
@@ -98,20 +98,23 @@ Sys.timezone()
   details and references.
 #ifdef unix
   
-  For most Unix-alikes use the Olson databases.  The 
-  system-specific default location in the file system varies, e.g. 
-  \file{/usr/share/zoneinfo}, \file{/usr/etc/zoneinfo},
-  \file{/usr/lib/zoneinfo} or \file{/usr/share/lib/zoneinfo}.
+  For most Unix-alikes use the Olson database.  The system-specific
+  default location in the file system varies, e.g.
+  \file{/usr/share/zoneinfo} (Linux, Mac OS X, FreeBSD),
+  \file{/usr/share/lib/zoneinfo} (Solaris, AIX), \file{/usr/etc/zoneinfo},
+  \ldots.  It is likely that there is a file \file{zone.tab} in that
+  directory listing the locations known as time-zone names (but not for
+  example \code{EST5EDT}).  See also
+  \url{http://en.wikipedia.org/wiki/Zone.tab}.
 #endif
 #ifdef windows
 
   \R under Windows uses the Olson database.  The current version of the
   database will be given in file
-  \file{\var{\link{R_HOME}}/share/zoneinfo/VERSION}.
+  \file{\var{\link{R_HOME}}\\share\\zoneinfo\\VERSION}.
   Environment variable \env{TZDIR} can be used to point to a later
-  \file{zoneinfo} directory. A file listing most known time zones can be
-  found at
-  \file{\var{\link{R_HOME}}/share/zoneinfo/zone.tab} (see
+  \file{zoneinfo} directory.  A file listing most known time zones can be
+  found at \file{\var{\link{R_HOME}}\\share\\zoneinfo\\zone.tab} (see
   \sQuote{Examples}).
 
   An attempt is made (once only per session) to map Windows' idea of
@@ -137,6 +140,24 @@ Sys.timezone()
 
 \examples{
 Sys.timezone()
+
+#ifdef windows
+tzfile <- file.path(R.home("share"), "zoneinfo", "zone.tab")
+tzones <- read.delim(tzfile, row.names = NULL, header = FALSE,
+    col.names = c("country", "coords", "name", "comments"),
+    as.is = TRUE, fill = TRUE, comment.char = "#")
+str(tzones$name)
+#endif
+#ifdef unix
+\dontrun{
+## need to supply a suitable file path (if any) for your system
+tzfile <- "/usr/share/zoneinfo/zone.tab"
+tzones <- read.delim(tzfile, row.names = NULL, header = FALSE,
+    col.names = c("country", "coords", "name", "comments"),
+    as.is = TRUE, fill = TRUE, comment.char = "#")
+str(tzones$name)
+}
+#endif
 }
 \keyword{utilities}
 \keyword{chron}

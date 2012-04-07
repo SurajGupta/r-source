@@ -1,6 +1,6 @@
 % File src/library/base/man/Arithmetic.Rd
 % Part of the R package, http://www.R-project.org
-% Copyright 1995-2010 R Core Development Team
+% Copyright 1995-2011 R Core Development Team
 % Distributed under GPL 2 or later
 
 \name{Arithmetic}
@@ -52,11 +52,13 @@ x \%/\% y
   \url{http://en.wikipedia.org/wiki/Modulo_operation} for the
   rationale.
 
-  If either argument is complex the result will be complex, and if one
-  or both arguments are numeric, the result will be numeric.  If both
-  arguments are integer, the result of \code{/} and \code{^} is numeric
-  and of the other operators integer (with overflow returned as
-  \code{NA} with a warning).
+  If either argument is complex the result will be complex, otherwise if
+  one or both arguments are numeric, the result will be numeric.  If
+  both arguments are of type \link{integer}, the type of the result of
+  \code{/} and \code{^} is \link{numeric} and for the other operators it
+  is integer (with overflow, which occurs at
+  \eqn{\pm(2^{31} - 1)}{+/- (2^31 - 1)},
+  returned as \code{NA_integer_} with a warning).
 
   The rules for determining the attributes of the result are rather
   complicated.  Most attributes are taken from the longer argument, the
@@ -92,20 +94,24 @@ x \%/\% y
   given if this is detected.
 
   \code{\%\%} and \code{x \%/\% y} can be used for non-integer \code{y},
-  e.g. \code{1 \%/\% 0.2}, but the results are subject to rounding error
-  and so may be platform-dependent.  Because the IEC 60059
+  e.g. \code{1 \%/\% 0.2}, but the results are subject to representation
+  error and so may be platform-dependent.  Because the IEC 60059
   representation of \code{0.2} is a binary fraction slightly larger than
   \code{0.2}, the answer to \code{1 \%/\% 0.2} should be \code{4} but
   most platforms give \code{5}.
   
   Users are sometimes surprised by the value returned, for example why
-  \code{(-8)^(1/3) = NaN}.  \R makes use of IEC 60559 arithmetic on all
-  platforms, together with the C system function \samp{pow} for the
-  \code{^} operator.  The relevant standards define the result in many
-  corner cases.  In particular, the result in the example above is
-  mandated by the C99 standard.  On many Unix-alike systems the command
-  \command{man pow} gives details of the values in a large number of
-  corner cases.
+  \code{(-8)^(1/3)} is \code{NaN}.  For \link{double} inputs, \R makes
+  use of IEC 60559 arithmetic on all platforms, together with the C
+  system function \samp{pow} for the \code{^} operator.  The relevant
+  standards define the result in many corner cases.  In particular, the
+  result in the example above is mandated by the C99 standard.  On many
+  Unix-alike systems the command \command{man pow} gives details of the
+  values in a large number of corner cases.
+
+  Arithmetic on type \link{double} in \R is supposed to be done in
+  \sQuote{round to nearest, ties to even} mode, but this does depend on
+  the compiler and FPU being set up correctly. 
 }
 \section{S4 methods}{
   These operators are members of the S4 \code{\link{Arith}} group generic,
@@ -117,13 +123,20 @@ x \%/\% y
   \code{**} is translated in the parser to \code{^}, but this was
   undocumented for many years.  It appears as an index entry in Becker
   \emph{et al} (1988), pointing to the help for \code{Deprecated} but
-  is not actually mentioned on that page.  Even though it has been
-  deprecated in S for 20 years, it was still accepted in 2008.
+  is not actually mentioned on that page.  Even though it had been
+  deprecated in S for 20 years, it was still accepted in \R in 2008.
 }
 \references{
   Becker, R. A., Chambers, J. M. and Wilks, A. R. (1988)
   \emph{The New S Language}.
   Wadsworth & Brooks/Cole.
+
+  D. Goldberg (1991) \emph{What Every Computer Scientist Should Know
+    about Floating-Point Arithmetic}  ACM Computing Surveys, \bold{23(1)}.\cr
+  Postscript version available at
+  \url{http://www.validlab.com/goldberg/paper.ps}
+  Extended PDF version at \url{http://www.validlab.com/goldberg/paper.pdf}
+
 }
 \seealso{
   \code{\link{sqrt}} for miscellaneous and \code{\link{Special}} for special

@@ -8,6 +8,359 @@
 
 <h2>R News</h2>
 
+<h3>CHANGES IN R VERSION 2.12.2</h3>
+
+<p>
+
+
+<h4>SIGNIFICANT USER-VISIBLE CHANGES</h4>
+
+<p>
+
+<ul>
+<li> Complex arithmetic (notably <code>z^n</code> for complex <code>z</code>
+and integer <code>n</code>) gave incorrect results since <font face="Courier New,Courier" color="#666666"><b>R</b></font> 2.10.0 on
+platforms without C99 complex support.  This and some
+lesser issues in trignometric functions have been corrected.
+</p>
+<p>
+Such platforms were rare (we know of Cygwin and FreeBSD).
+However, because of new compiler optimizations in the way complex
+arguments are handled, the same code was selected on x86_64 Linux
+with <CODE>gcc 4.5.x</CODE> at the default <code>-O2</code> optimization
+(but not at <code>-O</code>).
+</p>
+<p>
+</li>
+<li>There is a workaround for crashes seen with several packages
+on systems using <span class="samp">zlib 1.2.5</span>: see the INSTALLATION section.
+</ul>
+
+</p>
+
+</p>
+<p>
+
+
+<h4>NEW FEATURES</h4>
+
+<p>
+
+<ul>
+<li> PCRE has been updated to 8.12 (two bug-fix releases since 8.10).
+</p>
+<p>
+</li>
+<li><code>rep()</code>, <code>seq()</code>, <code>seq.int()</code> and
+<code>seq_len()</code> report more often when the first element is taken
+of an argument of incorrect length.
+</p>
+<p>
+</li>
+<li>The Cocoa back-end for the <code>quartz()</code> graphics device
+on Mac OS X provides a way to disable event loop processing
+temporarily (useful, e.g., for forked instances of <font face="Courier New,Courier" color="#666666"><b>R</b></font>).
+</p>
+<p>
+</li>
+<li><code>kernel()</code>'s default for <code>m</code> was not appropriate
+if <code>coef</code> was a set of coefficients.  (Reported by Pierre
+Chausse.)
+</p>
+<p>
+</li>
+<li><code>bug.report()</code> has been updated for the current <font face="Courier New,Courier" color="#666666"><b>R</b></font> bug
+tracker, which does not accept emailed submissions.
+</p>
+<p>
+</li>
+<li><CODE>R CMD check</CODE> now checks for the correct use of
+<span class="samp">$(LAPACK_LIBS)</span> (as well as <span class="samp">$(BLAS_LIBS)</span>), since
+several CRAN recent submissions have ignored &lsquo;Writing R
+Extensions&rsquo;.
+</ul>
+
+</p>
+
+</p>
+<p>
+
+
+<h4>INSTALLATION</h4>
+
+<p>
+
+<ul>
+<li> The <span class="samp">zlib</span> sources in the distribution are now built
+with all symbols remapped: this is intended to avoid problems seen
+with packages such as <span class="pkg">XML</span> and <span class="pkg">rggobi</span> which link to
+&lsquo;<span class="file">zlib.so.1</span>&rsquo; on systems using <span class="samp">zlib 1.2.5</span>.
+</p>
+<p>
+</li>
+<li>The default for <span class="env">FFLAGS</span> and <span class="env">FCFLAGS</span> with
+<CODE>gfortran</CODE> on x86_64 Linux has been changed back to <span class="samp">-g
+	-O2</span>:  however, setting <span class="samp">-g -O</span> may still be needed for
+<CODE>gfortran 4.3.x</CODE>.
+</ul>
+
+</p>
+
+</p>
+<p>
+
+
+<h4>PACKAGE INSTALLATION</h4>
+
+<p>
+
+<ul>
+<li> A <span class="samp">LazyDataCompression</span> field in the &lsquo;<span class="file">DESCRIPTION</span>&rsquo;
+file will be used to set the value for the
+<span class="option">--data-compress</span> option of <CODE>R CMD INSTALL</CODE>.
+</p>
+<p>
+</li>
+<li>Files &lsquo;<span class="file">R/sysdata.rda</span>&rsquo; of more than 1Mb are now stored
+in the lazyload daabase using <CODE>xz</CODE> compression: this for
+example halves the installed size of package <span class="pkg">Imap</span>.
+</p>
+<p>
+</li>
+<li><CODE>R CMD INSTALL</CODE> now ensures that directories
+installed from &lsquo;<span class="file">inst</span>&rsquo; have search permission for everyone.
+</p>
+<p>
+It no longer installs files &lsquo;<span class="file">inst/doc/Rplots.ps</span>&rsquo; and
+&lsquo;<span class="file">inst/doc/Rplots.pdf</span>&rsquo;.  These are almost certainly left-overs
+from <code>Sweave</code> runs, and are often large.
+</ul>
+
+</p>
+
+</p>
+<p>
+
+
+<h4>DEPRECATED &amp; DEFUNCT</h4>
+
+<p>
+
+<ul>
+<li> The &lsquo;experimental&rsquo; alternative specification of a
+name space via <code>.Export()</code> etc is now deprecated.
+</p>
+<p>
+</li>
+<li><code>zip.file.extract()</code> is now deprecated.
+</p>
+<p>
+</li>
+<li>Zip-ing data sets in packages (and hence <CODE>R CMD
+	INSTALL --use-zip-data</CODE> and the <span class="samp">ZipData: yes</span> field in a
+<code>DESCRIPTION</code> file) is deprecated: using efficiently
+compressed &lsquo;<span class="file">.rda</span>&rsquo; images and lazy-loading of data has
+superseded it.
+</ul>
+
+</p>
+
+</p>
+<p>
+
+
+<h4>BUG FIXES</h4>
+
+<p>
+
+<ul>
+<li> <code>identical()</code> could in rare cases generate a warning
+about non-pairlist attributes on CHARSXPs.  As these are used for
+internal purposes, the attribute check should be skipped.
+(Reported by Niels Richard Hansen).
+</p>
+<p>
+</li>
+<li>If the filename extension (usually &lsquo;<span class="file">.Rnw</span>&rsquo;) was not
+included in a call to <code>Sweave()</code>, source references would not
+work properly and the <code>keep.source</code> option failed.  (<a href="https://bugs.R-project.org/bugzilla3/show_bug.cgi?id=14459">PR#14459</a>)
+</p>
+<p>
+</li>
+<li><code>format.data.frame()</code> now keeps zero character column names.
+</p>
+<p>
+</li>
+<li><code>pretty(x)</code> no longer raises an error when <code>x</code>
+contains solely non-finite values. (<a href="https://bugs.R-project.org/bugzilla3/show_bug.cgi?id=14468">PR#14468</a>)
+</p>
+<p>
+</li>
+<li>The <code>plot.TukeyHSD()</code> function now uses a line width of
+0.5 for its reference lines rather than <span class="samp">lwd = 0</span> (which
+caused problems for some PDF and PostScript viewers).
+</p>
+<p>
+</li>
+<li>The <code>big.mark</code> argument to <code>prettyNum()</code>,
+<code>format()</code>, etc. was inserted reversed if it was more than
+one character long.
+</p>
+<p>
+</li>
+<li><CODE>R CMD check</CODE> failed to check the filenames under
+&lsquo;<span class="file">man</span>&rsquo; for Windows' reserved names.
+</p>
+<p>
+</li>
+<li>The <code>"Date"</code> and <code>"POSIXt"</code> methods for
+<code>seq()</code> could overshoot when <code>to</code> was supplied and
+<code>by</code> was specified in months or years.
+</p>
+<p>
+</li>
+<li>The internal method of <code>untar()</code> now restores hard
+links as file copies rather than symbolic links (which did not
+work for cross-directory links).
+</p>
+<p>
+</li>
+<li><code>unzip()</code> did not handle zip files which contained
+filepaths with two or more leading directories which were not in
+the zipfile and did not already exist.  (It is unclear if such
+zipfiles are valid and the third-party C code used did not support
+them, but <a href="https://bugs.R-project.org/bugzilla3/show_bug.cgi?id=14462">PR#14462</a> created one.)
+</p>
+<p>
+</li>
+<li><code>combn(n, m)</code> now behaves more regularly for the border
+case <i>m = 0</i>. (<a href="https://bugs.R-project.org/bugzilla3/show_bug.cgi?id=14473">PR#14473</a>)
+</p>
+<p>
+</li>
+<li>The rendering of numbers in plotmath expressions (e.g.
+<code>expression(10^2)</code>) used the current settings for conversion
+to strings rather than setting the defaults, and so could be
+affected by what has been done before.  (<a href="https://bugs.R-project.org/bugzilla3/show_bug.cgi?id=14477">PR#14477</a>)
+</p>
+<p>
+</li>
+<li>The methods of <code>napredict()</code> and <code>naresid()</code> for
+<code>na.action = na.exclude</code> fits did not work correctly in the
+very rare event that every case had been omitted in the fit.
+(Reported by Simon Wood.)
+</p>
+<p>
+</li>
+<li><code>weighted.residuals(drop0=TRUE)</code> returned a vector when
+the residuals were a matrix (e.g. those of class <code>"mlm"</code>).
+(Reported by Bill Dunlap.)
+</p>
+<p>
+</li>
+<li>Package HTML index files &lsquo;<span class="file">&lt;pkg&gt;/html/00Index.html</span>&rsquo; were
+generated with a stylesheet reference that was not correct for
+static browsing in libraries.
+</p>
+<p>
+</li>
+<li><code>ccf(na.action = na.pass)</code> was not implemented.
+</p>
+<p>
+</li>
+<li>The parser accepted some incorrect numeric constants,
+e.g. <code>20x2</code>.  (Reported by Olaf Mersmann.)
+</p>
+<p>
+</li>
+<li><code>format(*, zero.print)</code> did not always replace the full
+zero parts.
+</p>
+<p>
+</li>
+<li>Fixes for subsetting or subassignment of <code>"raster"</code>
+objects when not both <code>i</code> and <code>j</code> are specified.
+</p>
+<p>
+</li>
+<li><CODE>R CMD INSTALL</CODE> was not always respecting the
+<span class="samp">ZipData: yes</span> field of a &lsquo;<span class="file">DESCRIPTION</span>&rsquo; file (although
+this is frequently incorrectly specified for packages with no data
+or which specify lazy-loading of data).
+</p>
+<p>
+<CODE>R CMD INSTALL --use-zip-data</CODE> was incorrectly implemented
+as <span class="option">--use-zipdata</span> since <font face="Courier New,Courier" color="#666666"><b>R</b></font> 2.9.0.
+</p>
+<p>
+</li>
+<li><CODE>source(file, echo=TRUE)</CODE> could fail if the file
+contained <span class="samp">#line</span> directives.  It now recovers more gracefully, but
+may still display the wrong line if the directive gives incorrect
+information.
+</p>
+<p>
+</li>
+<li><code>atan(1i)</code> returned <code>NaN+Infi</code> (rather than
+<code>0+Infi</code>) on platforms without C99 complex support.
+</p>
+<p>
+</li>
+<li><code>library()</code> failed to cache S4 metadata (unlike
+<code>loadNamespace()</code>) causing failures in S4-using packages
+without a namespace (e.g. those using reference classes).
+</p>
+<p>
+</li>
+<li>The function <code>qlogis(lp, log.p=TRUE)</code> no longer
+prematurely overflows to <code>Inf</code> when exp(lp) is close to 1.
+</p>
+<p>
+</li>
+<li>Updating S4 methods for a group generic function requires
+resetting the methods tables for the members of the group (patch
+contributed by Martin Morgan).
+</p>
+<p>
+</li>
+<li>In some circumstances (including for package <span class="pkg">XML</span>),
+<CODE>R CMD INSTALL</CODE> installed version-control directories from
+source packages.
+</p>
+<p>
+</li>
+<li>Added <code>PROTECT</code> calls to some constructed expressions
+used in C level <code>eval</code> calls.
+</p>
+<p>
+</li>
+<li><code>utils:::create.post()</code> (used by <code>bug.report()</code>
+and <code>help.request()</code>) failed to quote arguments to the
+mailer, and so often failed.
+</p>
+<p>
+</li>
+<li><code>bug.report()</code> was naive about how to extract
+maintainer email addresses from package descriptions, so would
+often try mailing to incorrect addresses.
+</p>
+<p>
+</li>
+<li><code>debugger()</code> could fail to read the environment of a
+call to a function with a <code>...</code> argument.  (Reported by
+Charlie Roosen.)
+</p>
+<p>
+</li>
+<li><code>prettyNum(c(1i, NA), drop0=TRUE)</code> or
+<code>str(NA_complex_)</code> now work correctly.
+</ul>
+
+</p>
+
+</p>
+
+
 <h3>CHANGES IN R VERSION 2.12.1</h3>
 
 <p>
@@ -43,15 +396,16 @@ end user <EM>via</EM> the new argument <code>seg.len</code>.
 </p>
 <p>
 </li>
-<li>New reference class utility methods <code>copy()</code>, <code>field()</code>,
-<code>getRefClass()</code> and <code>getClass()</code> have been added.
+<li>New S4 reference class utility methods <code>copy()</code>,
+<code>field()</code>, <code>getRefClass()</code> and <code>getClass()</code> have
+been added to package <span class="pkg">methods</span>.
 </p>
 <p>
 </li>
 <li>When a character value is used for the <code>EXPR</code>
 argument in <code>switch()</code>, a warning is given if more than
 one unnamed alternative value is given.  This will become an
-error in R 2.13.0.
+error in <font face="Courier New,Courier" color="#666666"><b>R</b></font> 2.13.0.
 </p>
 <p>
 </li>
@@ -255,7 +609,7 @@ the column names.  (<a href="https://bugs.R-project.org/bugzilla3/show_bug.cgi?i
 </li>
 <li>The parser for &lsquo;<span class="file">NAMESPACE</span>&rsquo; files ignored misspelled
 directives, rather than signalling an error.  For 2.12.x a warning
-will be issued, but this will be correctly reported as an error 
+will be issued, but this will be correctly reported as an error
 in later releases. (Reported by Charles Berry.)
 </p>
 <p>
@@ -288,7 +642,7 @@ little clunky.  With Cairo &gt;= 1.6, should be sweet as.
 <li>Several bugs fixed in <code>read.DIF()</code>:  single column
 inputs caused errors, cells marked as <code>"character"</code> could
 be converted to other types, and (in Windows) copying from the
-clipboard failed.      
+clipboard failed.
 </ul>
 
 </p>

@@ -1,7 +1,7 @@
 /*
  *  R : A Computer Language for Statistical Data Analysis
  *  Copyright (C) 1995, 1996  Robert Gentleman and Ross Ihaka
- *  Copyright (C) 1998, 2001-10 The R Development Core Team
+ *  Copyright (C) 1998--2011 The R Development Core Team
  *
  *  This program is free software; you can redistribute it and/or modify
  *  it under the terms of the GNU General Public License as published by
@@ -952,9 +952,15 @@ SEXP attribute_hidden do_listfiles(SEXP call, SEXP op, SEXP args, SEXP rho)
     else if (!isNull(p) && !(isString(p) && length(p) < 1))
 	error(_("invalid '%s' argument"), "pattern");
     allfiles = asLogical(CAR(args)); args = CDR(args);
+    if (allfiles == NA_LOGICAL) 
+	error(_("invalid '%s' argument"), "all.files");
     fullnames = asLogical(CAR(args)); args = CDR(args);
+    if (fullnames == NA_LOGICAL)
+	error(_("invalid '%s' argument"), "full.names");
     recursive = asLogical(CAR(args)); args = CDR(args);
     igcase = asLogical(CAR(args));
+    if (igcase == NA_LOGICAL)
+	error(_("invalid '%s' argument"), "ignore.case");
     ndir = length(d);
     flags = REG_EXTENDED;
     if (igcase) flags |= REG_ICASE;
@@ -970,8 +976,7 @@ SEXP attribute_hidden do_listfiles(SEXP call, SEXP op, SEXP args, SEXP rho)
 		   recursive, pattern ? &reg : NULL, &countmax, idx);
     }
     REPROTECT(ans = lengthgets(ans, count), idx);
-    if (pattern)
-	tre_regfree(&reg);
+    if (pattern) tre_regfree(&reg);
     ssort(STRING_PTR(ans), count);
     UNPROTECT(1);
     return ans;
@@ -1291,7 +1296,8 @@ static void chmod_one(const char *name)
     struct stat sb;
     int n;
 #ifndef Win32
-    mode_t mask = S_IRUSR | S_IRGRP | S_IROTH | S_IWUSR;
+    mode_t mask = S_IRUSR | S_IRGRP | S_IROTH | S_IWUSR,
+	dirmask = S_IXUSR | S_IXGRP | S_IXOTH;
 #endif
 
     if (streql(name, ".") || streql(name, "..")) return;
@@ -1303,6 +1309,9 @@ static void chmod_one(const char *name)
     chmod(name, sb.st_mode | mask);
 #endif
     if ((sb.st_mode & S_IFDIR) > 0) { /* a directory */
+#ifndef Win32
+	chmod(name, sb.st_mode | mask | dirmask);
+#endif
 	if ((dir = opendir(name)) != NULL) {
 	    while ((de = readdir(dir))) {
 		if (streql(de->d_name, ".") || streql(de->d_name, ".."))
@@ -1322,6 +1331,7 @@ static void chmod_one(const char *name)
 }
 
 
+/* recursively fix up permissions: used for R CMD INSTALL */
 SEXP attribute_hidden do_dirchmod(SEXP call, SEXP op, SEXP args, SEXP env)
 {
     SEXP dr;

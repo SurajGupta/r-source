@@ -1,6 +1,6 @@
 % File src/library/base/man/scan.Rd
 % Part of the R package, http://www.R-project.org
-% Copyright 1995-2010 R Core Development Team
+% Copyright 1995-2011 R Core Development Team
 % Distributed under GPL 2 or later
 
 \name{scan}
@@ -41,11 +41,14 @@ scan(file = "", what = double(0), nmax = -1, n = -1, sep = "",
     any of LF, CRLF or CR will be accepted as the EOL marker for a line
     and so will match \code{sep = "\n"}.
 
-    \code{file} can also be a complete URL.
+    \code{file} can also be a complete URL.  (For the supported URL
+    schemes, see the \sQuote{URLs} section of the help for
+    \code{\link{url}}.)
 
     To read a data file not in the current encoding (for example a
     Latin-1 file in a UTF-8 locale or conversely) use a
-    \code{\link{file}} connection setting the \code{encoding} argument.
+    \code{\link{file}} connection setting its \code{encoding} argument
+    (or \code{scan}'s \code{fileEncoding} argument).
   }
 
   \item{what}{the type of \code{what} gives the type of data to be read.
@@ -66,10 +69,10 @@ scan(file = "", what = double(0), nmax = -1, n = -1, sep = "",
   \item{n}{integer: the maximum number of data values to be read, defaulting to
     no limit.  Invalid values will be ignored.}
 
-  \item{sep}{by default, scan expects to read white-space delimited
-    input fields.  Alternatively, \code{sep} can be used to specify a
-    character which delimits fields.  A field is always delimited by an
-    end-of-line marker unless it is quoted.
+  \item{sep}{by default, scan expects to read \sQuote{white-space}
+    delimited input fields.  Alternatively, \code{sep} can be used to
+    specify a character which delimits fields.  A field is always
+    delimited by an end-of-line marker unless it is quoted.
 
     If specified this should be the empty character string (the default)
     or \code{NULL} or a character string containing just one single-byte
@@ -105,16 +108,17 @@ scan(file = "", what = double(0), nmax = -1, n = -1, sep = "",
     \code{what}.}
 
   \item{strip.white}{vector of logical value(s) corresponding to items
-    in the \code{what} argument. It is used only when \code{sep} has
+    in the \code{what} argument.  It is used only when \code{sep} has
     been specified, and allows the stripping of leading and trailing
-    white space from \code{character} fields (\code{numeric} fields
+    \sQuote{white space} from \code{character} fields (\code{numeric} fields
     are always stripped).
 
     If \code{strip.white} is of length 1, it applies to all fields;
     otherwise, if \code{strip.white[i]} is \code{TRUE} \emph{and} the
     \code{i}-th field is of mode character (because \code{what[i]} is)
     then the leading and trailing white space from field \code{i} is
-    stripped.}
+    stripped.
+  }
 
   \item{quiet}{logical: if \code{FALSE} (default), scan() will print a
     line, saying how many items have been read.}
@@ -141,11 +145,15 @@ scan(file = "", what = double(0), nmax = -1, n = -1, sep = "",
     \samp{\\a, \\b, \\f, \\n, \\r, \\t, \\v} and octal and
     hexadecimal representations like \samp{\\040} and \samp{\\0x2A}.  Any
     other escaped character is treated as itself, including backslash.
+    Note that Unicode escapes (starting \samp{\\u} or \samp{\\U}: see
+    \link{Quotes}) are never processed.
   }
   
   \item{fileEncoding}{character string: if non-empty declares the
     encoding used on a file (not a connection nor the keyboard) so the
-    character data can be re-encoded.  See \code{\link{file}}.
+    character data can be re-encoded.  See the \sQuote{Encoding} section
+    of the help for \code{\link{file}}, and the \sQuote{R Data
+      Import/Export Manual}.
   }
   
   \item{encoding}{encoding to be assumed for input strings.  If the
