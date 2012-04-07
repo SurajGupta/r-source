@@ -4,7 +4,57 @@
 \title{Windows-specific changes to R}
 \encoding{UTF-8}
 
-\section{CHANGES IN R VERSION 2.14.0 patched}{
+\section{CHANGES IN R VERSION 2.14.2}{
+  \subsection{NEW FEATURES}{
+    \itemize{
+      \item \code{bitmap()} and \code{dev2bitmap()} look for
+      \command{gswin64c.exe} (as used by 64-bit GhostScript), in
+      preference to \command{gswin32c.exe}.
+    }
+  }
+  
+  \subsection{INSTALLATION}{
+    \itemize{
+      \item The sources (and packages) can now be compiled using the
+      multilib toolchain developed for \R 2.15.x: see the
+      \samp{MULTI} macro in \file{MkRules.dist}.  This toolchain is used
+      for the CRAN binary distribution.
+    }
+  }
+      
+  \subsection{PACKAGE INSTALLATION}{
+    \itemize{
+      \item The preferred toolchain has changed since the one used for
+      \R 2.12.0 to 2.14.1: see the\sQuote{R Installation and
+      Administration manual}.  Compiled code (except DLLs) may be
+      incompatible with previous toolchains (and compiled C++ code
+      almost certainly will be: users of \pkg{Rcpp} take care).
+
+      Ensure that the settings in \file{MkRules.local} are appropriate
+      to the toolchain you use.
+
+      \item There is a new macro (aka make variable)
+      \samp{SHLIB_PTHREAD_FLAGS}.  This is set to \option{-pthread} on
+      builds using toolchains which support it, and should be included
+      in both \samp{PKG_CPPFLAGS} (or the Fortran or F9x equivalents)
+      and \samp{PKG_LIBS}.
+    }
+  }
+
+  \subsection{BUG FIXES}{
+    \itemize{
+      \item Using a prompt of more than 80 characters in
+      \code{readline()} could cause a buffer overflow in Rterm.
+      (Reported by Henrik Bengtsson.)
+
+      \item Some of the custom messages in the installer were corrupted:
+      add a BOM mark to the file as now required by Unicode Inno Setup.
+      (\PR{14816})
+    }
+  }
+}
+
+\section{CHANGES IN R VERSION 2.14.1}{
   \subsection{NEW FEATURES}{
     \itemize{
       \item The \code{Save as} menu item on the script
@@ -26,7 +76,7 @@
   
   \subsection{BUG FIXES}{
     \itemize{
-      \item The fix for \PR{14543} caused stack problems with outputing
+      \item The fix for \PR{14543} caused stack problems with outputting
       large \R objects (e.g. data frames of 25,000 items).  (\PR{14698})
 
       \item In a double-byte locale (Chinese, Japanese, Korean),

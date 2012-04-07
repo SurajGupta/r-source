@@ -5,7 +5,7 @@
 
 ## =========== configuration macros for building packages ================
 # Absolute path to '/usr/local' software collection.  The versions used
-# on CRAN can be found under http://www.stats.ox.ac.uk/pub/Rtools/goodies
+# on CRAN can be found under http://www.stats.ox.ac.uk/pub/Rtools/multilib
 LOCAL_SOFT =
 
 ## ============== configuration macros for building R ===================
@@ -26,17 +26,19 @@ ATLAS_PATH=/R/ATLAS/lib/WinNT_P4SSE2
 # checkout with no modifications).
 # USE_SVNVERSION = YES
 
-# We normally link directly against DLLs, 
-# but this macro forces the use of import libs
-# Needed if using other compilers, including some versions of MinGW-w64
-# USE_IMPLIBS = YES
+# If using the preferred multilib toolchain, set MULTI to 32 or 64,
+# and if the toolchain's bin directory is not in your path, 
+# set TOOL_PATH to the path (including the trailing /, and use / not \).
+MULTI =
+TOOL_PATH =
 
+## SETTINGS FOR OLDER TOOLCHAINS
 # Some of the toolchains have prefixes for e.g. ar, gcc.
-# This will also be used to give the full path to the compiler, 
-# including a trailing /,
-# prefix for 32-bit: path or i686-w64-mingw32-
+# This can also be used to give the full path to the compiler, 
+# including a trailing / (and use / not \).
+# prefix for 32-bit: path or i686-w64-mingw32- or none.
 BINPREF =
-# prefix for 64-bit: path or x86_64-w64-mingw32-
+# prefix for 64-bit: path or x86_64-w64-mingw32- or none.
 BINPREF64 = x86_64-w64-mingw32-
 
 # Others use a -m64 or -m32 option to select architectures
@@ -50,6 +52,13 @@ DT_ARCH =
 
 # 32- or 64-bit Windows?
 WIN = 32
+
+# We normally link directly against DLLs, 
+# but this macro forces the use of import libs
+# Has been needed for some versions of MinGW-w64
+# USE_IMPLIBS = YES
+## END OF SETTINGS FOR OLDER TOOLCHAINS
+
 
 # set to use ICU (experimental)
 # USE_ICU=YES
@@ -77,6 +86,12 @@ MIKTEX = TRUE
 
 # additional optimization flags
 EOPTS=-mtune=core2
+
+# define to -fopenmp if the toolchain has OpenMP support
+OPENMP =
+
+# define to -pthreads if the toolchain has pthreads support
+PTHREAD =
 
 ## ====== configuration macros for building installer ===========
 

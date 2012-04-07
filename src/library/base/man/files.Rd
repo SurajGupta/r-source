@@ -1,6 +1,6 @@
 % File src/library/base/man/files.Rd
 % Part of the R package, http://www.R-project.org
-% Copyright 1995-2011 R Core Development Team
+% Copyright 1995-2012 R Core Development Team
 % Distributed under GPL 2 or later
 
 \name{files}
@@ -110,6 +110,16 @@ file.link(from, to)
   If \code{showWarnings = TRUE}, \code{file.create} will give a warning
   for an unexpected failure.
 }
+\section{Case-insensitive file systems}{
+  Case-insensitive file systems are the norm on Windows and Mac OS X,
+  but can be found on all OSes (for example a FAT-formatted USB drive is
+  probably case-insensitive).
+
+  These functions will most likely match existing files regardless of case
+  on such file systems: however this is an OS function and it is
+  possible that file names might be mapped to upper or lower case.
+}
+
 #ifdef windows
 \note{
   There is no guarantee that these functions will handle Windows
@@ -118,9 +128,17 @@ file.link(from, to)
   Nor are \samp{\\\\?\\} prefixes (and similar) supported.
   
   Recent versions of Windows have a limited version of symbolic links on
-  NTFS filesystems, but this has not be implemented in
+  NTFS filesystems, but this has not been implemented in
   \code{file.symlink}, not least because \R is still widely used on
-  Windows XP.
+  Windows XP.  However, linking to \emph{directories} has been
+  implemented since Windows 2000 using \sQuote{junctions}, unfortunately
+  without a public API.  The examples show one way to use this
+  \emph{via} \file{junction.exe} from
+  \url{http://download.sysinternals.com/Files/Junction.zip} (see
+  \url{http://technet.microsoft.com/en-us/sysinternals/bb896768}).
+  Care is needed with removing junctions: many tools will remove their
+  target and its contents (including Windows Explorer in XP):
+  \command{junction -d \var{path}} can be used.
 
   Most of these functions accept UTF-8 filepaths not valid in the
   current locale.
@@ -169,5 +187,14 @@ setwd("..")
 #endif
 unlink("tmp", recursive=TRUE)
 file.remove("A", "B", "C")
+#ifdef windows
+## Windows can link to directories via junctions.
+## See the text for the system requirements here.
+\dontrun{
+dir.symlink <- function(from, to) {
+    to2 <- file.path(to, basename(from))
+    system2("junction.exe", c(to2, normalizePath(from)), NULL)
+}}
+#endif
 }
 \keyword{file}

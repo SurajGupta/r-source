@@ -74,7 +74,7 @@ R_runR <- function(cmd = NULL, Ropts = "", env = "",
     R_runR2 <-
         if(WINDOWS) {
             function(cmd,
-                     env = "R_DEFAULT_PACKAGES=utils,grDevices,graphics,stats")
+                     env = "R_DEFAULT_PACKAGES=utils,grDevices,graphics,stats,methods")
                 {
                     out <- R_runR(cmd, R_opts2, env)
                     ## pesky gdata ....
@@ -83,7 +83,7 @@ R_runR <- function(cmd = NULL, Ropts = "", env = "",
                 }
         } else
             function(cmd,
-                     env = "R_DEFAULT_PACKAGES='utils,grDevices,graphics,stats'")
+                     env = "R_DEFAULT_PACKAGES='utils,grDevices,graphics,stats,methods'")
             {
                 out <- R_runR(cmd, R_opts2, env)
                 if (R_check_suppress_RandR_message)
@@ -397,9 +397,9 @@ R_runR <- function(cmd = NULL, Ropts = "", env = "",
         ## entries because these really are a part of R: hence, skip the
         ## check.
         if (!is_base_pkg) {
-            check_license <- Sys.getenv("_R_CHECK_LICENSE_", "maybe")
-            if (check_license == "maybe")
-                Sys.setenv('_R_CHECK_LICENSE_' = "maybe")
+            check_license <- Sys.getenv("_R_CHECK_LICENSE_", "TRUE")
+            if (check_license == "TRUE")
+                Sys.setenv('_R_CHECK_LICENSE_' = "TRUE")
             else check_license <- config_val_to_logical(check_license)
         } else check_license <- FALSE
         ## The check code conditionalizes *output* on _R_CHECK_LICENSE_.
@@ -518,19 +518,20 @@ R_runR <- function(cmd = NULL, Ropts = "", env = "",
             ## name of a standard directory, while differing in name.
             ## </FIXME>
 
-            if (dir.exists("r")) {
+            ## Watch out for case-insensitive file systems
+            if ("./r" %in% list.dirs(recursive = FALSE)) {
                 if (!any) warnLog()
                 any <- TRUE
                 printLog(Log, "Found subdirectory 'r'.\n",
                          "Most likely, this should be 'R'.\n")
             }
-            if (dir.exists("MAN")) {
+            if ("./MAN" %in% list.dirs(recursive = FALSE)) {
                 if (!any) warnLog()
                 any <- TRUE
                 printLog(Log, "Found subdirectory 'MAN'.\n",
                          "Most likely, this should be 'man'.\n")
             }
-            if (dir.exists("DATA")) {
+            if ("./DATA" %in% list.dirs(recursive = FALSE)) {
                 if (!any) warnLog()
                 any <- TRUE
                 printLog(Log, "Found subdirectory 'DATA'.\n",
@@ -598,7 +599,7 @@ R_runR <- function(cmd = NULL, Ropts = "", env = "",
         }
 
         if (subdirs != "no") {
-            Rcmd = "tools:::.check_package_subdirs(\".\")\n";
+            Rcmd <- "tools:::.check_package_subdirs(\".\")\n"
             ## We don't run this in the C locale, as we only require
             ## certain filenames to start with ASCII letters/digits, and not
             ## to be entirely ASCII.
@@ -699,7 +700,7 @@ R_runR <- function(cmd = NULL, Ropts = "", env = "",
             ## QC check function eventually ...
             .warnings <- NULL
             .error <- NULL
-            withCallingHandlers(tryCatch(tools:::.build_news_db_from_package_NEWS_Rd(nfile),
+            withCallingHandlers(tryCatch(.build_news_db_from_package_NEWS_Rd(nfile),
                                          error = function(e)
                                          .error <<- conditionMessage(e)),
                                 warning = function(e) {
@@ -913,7 +914,7 @@ R_runR <- function(cmd = NULL, Ropts = "", env = "",
             }
         }
 
-        ## This check is no use now all packages have a namespace.
+        ## This check is not used now all packages have a namespace.
         if (FALSE && R_check_use_codetools) {
             Rcmd <- paste("options(warn=1)\n",
                           if (do_install)
@@ -935,10 +936,16 @@ R_runR <- function(cmd = NULL, Ropts = "", env = "",
                           else
                           sprintf("tools:::.check_dotInternal(dir = \"%s\")\n", pkgdir))
             out <- R_runR2(Rcmd, "R_DEFAULT_PACKAGES=")
-            if (length(out)) {
+            ## Hmisc, gooJSON, quantmod give spurious output
+            if (length(out) && any(grepl("^Found .Internal call", out))) {
+                first <- grep("^Found .Internal call", out)[1L]
+                if(first > 1L) out <- out[-seq_len(first-1)]
                 if (!any) noteLog(Log)
                 any <- TRUE
-                printLog0(Log, paste(c(out, ""), collapse = "\n"))
+                printLog0(Log, paste(c(out, "", ""), collapse = "\n"))
+                wrapLog(c("Packages should not call .Internal():",
+                          "it is not part of the API, for use only by R itself",
+                          "and subject to change without notice."))
             }
         }
 
@@ -1018,6 +1025,10 @@ R_runR <- function(cmd = NULL, Ropts = "", env = "",
                           else
                           sprintf("tools::undoc(dir = \"%s\")\n", pkgdir))
             out <- R_runR2(Rcmd)
+            ## Grr, get() in undoc can change the search path
+            ## Current example is TeachingDemos
+            out <- grep("^Loading required package:", out,
+                        invert = TRUE, value = TRUE)
             err <- grep("^Error", out)
             if (length(err)) {
                 errorLog(Log)
@@ -1243,7 +1254,7 @@ R_runR <- function(cmd = NULL, Ropts = "", env = "",
             td <- tempfile('pdf')
             dir.create(td)
             file.copy(pdfs, td)
-            res <- compactPDF(td, gs_cmd = "") # we say we use qpdf
+            res <- compactPDF(td, gs_quality = "none") # we say we use qpdf
             res <- format(res, diff = 1e5)
             if(length(res)) {
                 resultLog(Log, "NOTE")
@@ -2097,14 +2108,15 @@ R_runR <- function(cmd = NULL, Ropts = "", env = "",
     {
         ## Option '--no-install' turns off installation and the tests
         ## which require the package to be installed.  When testing
-        ## recommended packages bundled with R we can skip installation,
-        ## and do so if '--install=skip' was given.  If command line
-        ## option '--install' is of the form 'check:FILE', it is assumed
-        ## that installation was already performed with stdout/stderr to
-        ## FILE, the contents of which need to be checked (without
-        ## repeating the installation).
-        ## In this case, one also needs to specify *where* the package
-        ## was installed to using command line option '--library'.
+        ## recommended packages bundled with R we can skip
+        ## installation, and do so if '--install=skip' was given.  If
+        ## command line option '--install' is of the form
+        ## 'check:FILE', it is assumed that installation was already
+        ## performed with stdout/stderr redirected to FILE, the
+        ## contents of which need to be checked (without repeating the
+        ## installation).  In this case, one also needs to specify
+        ## *where* the package was installed to using command line
+        ## option '--library'.
 
         if (install == "skip")
             messageLog(Log, "skipping installation test")
@@ -2340,12 +2352,13 @@ R_runR <- function(cmd = NULL, Ropts = "", env = "",
             rest <- rest[!grepl("/", rest[, 2L]), ]
             rest <- rest[rest[, 1L] > 1024, ] # > 1Mb
             if(nrow(rest)) {
+                o <- sort.list(rest[, 2L])
                 printLog(Log, "  sub-directories of 1Mb or more:\n")
                 size <- sprintf('%4.1fMb', rest[, 1L]/1024)
                 printLog(Log, paste("    ",
-                                    format(rest[, 2L], justify = "left"),
+                                    format(rest[o, 2L], justify = "left"),
                                     "  ",
-                                    format(size, justify = "right"),
+                                    format(size[o], justify = "right"),
                                     "\n", sep=""))
             }
         } else resultLog(Log, "OK")
@@ -2476,6 +2489,13 @@ R_runR <- function(cmd = NULL, Ropts = "", env = "",
                                       "enhances_but_not_installed"))) {
                 errorLog(Log)
                 printLog(Log, paste(out, collapse = "\n"), "\n")
+                if(length(res$suggested_but_not_installed))
+                   wrapLog("The suggested packages are required for",
+                           "a complete check.\n",
+                           "Checking can be attempted without them",
+                           "by setting the environment variable",
+                           "_R_CHECK_FORCE_SUGGESTS_",
+                           "to a false value.\n\n")
                 wrapLog(msg_DESCRIPTION)
                 do_exit(1L)
             } else {
@@ -2499,7 +2519,7 @@ R_runR <- function(cmd = NULL, Ropts = "", env = "",
         } else if (!grepl("^check", install)) {
             ## Check for package 'src' subdirectories with object
             ## files (but not if installation was already performed).
-            pat <- "(a|o|[ls][ao]|sl|obj)"; # Object file extensions.
+            pat <- "(a|o|[ls][ao]|sl|obj)" # Object file extensions.
             any <- FALSE
             srcd <- file.path(pkgdir, "src")
             if (dir.exists(srcd) &&
@@ -2584,6 +2604,8 @@ R_runR <- function(cmd = NULL, Ropts = "", env = "",
             "      --check-subdirs=default|yes|no",
             "			run checks on the package subdirectories",
             "			(default is yes for a tarball, no otherwise)",
+            "      --as-cran         select customizations similar to those used",
+            "                        for CRAN incoming checking",
             "",
             "The following options apply where sub-architectures are in use:",
             "      --extra-arch      do only runtime tests needed for an additional",
@@ -2641,6 +2663,7 @@ R_runR <- function(cmd = NULL, Ropts = "", env = "",
     spec_install <- FALSE
     multiarch <- NA
     force_multiarch <- FALSE
+    as_cran <- FALSE
 
     libdir <- ""
     outdir <- ""
@@ -2710,6 +2733,8 @@ R_runR <- function(cmd = NULL, Ropts = "", env = "",
             multiarch  <- FALSE
         } else if (a == "--force-multiarch") {
             force_multiarch  <- TRUE
+        } else if (a == "--as-cran") {
+            as_cran  <- TRUE
         } else if (substr(a, 1, 9) == "--rcfile=") {
             warning("configuration files are not supported as from R 2.12.0")
         } else if (substr(a, 1, 1) == "-") {
@@ -2824,6 +2849,19 @@ R_runR <- function(cmd = NULL, Ropts = "", env = "",
         unlist(strsplit(Sys.getenv("_R_CHECK_SKIP_ARCH_"), ",")[[1]])
 
     if (!nzchar(check_subdirs)) check_subdirs <- R_check_subdirs_strict
+
+    if (as_cran) {
+        if (extra_arch) {
+            message("--cran turns off --extra-arch")
+            extra_arch <- FALSE
+        }
+        R_check_vc_dirs <- TRUE
+        R_check_executables_exclusions <- FALSE
+        R_check_subdirs_nocase <-TRUE
+        R_check_dot_internal <- TRUE
+        Sys.setenv("_R_CHECK_CODETOOLS_PROFILE_" =
+                   "suppressPartialMatchArgs=FALSE")
+    }
 
     if (extra_arch)
         R_check_Rd_contents <- R_check_all_non_ISO_C <-

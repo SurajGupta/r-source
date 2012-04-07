@@ -782,6 +782,8 @@ R_HEADER_GLIBC2
 ### * Checks for types.
 
 AC_TYPE_SIGNAL
+## xz needs uint64_t
+AC_TYPE_UINT64_T
 AC_TYPE_PID_T
 AC_TYPE_SIZE_T
 R_SIZE_MAX
@@ -833,6 +835,10 @@ AC_OPENMP
 ### *** Fortran 77 compiler.
 
 R_PROG_F77_FLIBS
+if test -z "$FLIBS_IN_SO"; then
+  FLIBS_IN_SO=${FLIBS}
+fi
+AC_SUBST(FLIBS_IN_SO)
 R_PROG_F77_APPEND_UNDERSCORE
 R_PROG_F77_CAN_RUN
 R_PROG_F77_CC_COMPAT
@@ -1668,7 +1674,8 @@ AC_SUBST(FW_VERSION)
 
 if test "x${main_ld_was_given}" = xno -a "${MAIN_LD}" = "${CC}" -a \
         "x${dylib_ld_was_given}" = xno -a "${DYLIB_LD}" = "${CC}" -a \
-        "x${ac_cv_prog_c_openmp}" != "xunsupported"; then
+        "x${ac_cv_prog_c_openmp}" != "xunsupported" -a \
+        "x${ac_cv_prog_c_openmp}" != "x"; then
   R_OPENMP_CFLAGS="${OPENMP_CFLAGS}"
   R_OPENMP_FFLAGS="${OPENMP_FFLAGS}"
   R_SH_VAR_ADD(MAIN_LDFLAGS, [${OPENMP_CFLAGS}])
@@ -1771,7 +1778,7 @@ R_CHECK_FUNCS([access chdir execv ftruncate getcwd geteuid getuid link readlink 
 [#ifdef HAVE_UNISTD_H
 # include <unistd.h>
 #endif])
-## This was declared obsolescent in POSIX 2008 (use utimes instead)
+## utime was declared obsolescent in POSIX 2008 (use utimes instead)
 R_CHECK_FUNCS([utime], [#include <utime.h>])
 ## clock_gettime is POSIX 1993, but not on MacOS X
 ## Some OSes need -lrt: Linux, Solaris, not FreeBSD.
@@ -2235,6 +2242,7 @@ AC_SUBST(FCLIBS)
 if test "x${shlib_ld_was_given}" = xno -a \
         "${SHLIB_LD}" = "${CC}" -a \
         "x${ac_cv_prog_c_openmp}" != "xunsupported" -a \
+        "x${ac_cv_prog_c_openmp}" != "x" -a \
         "x${shlib_cxxld_was_given}" = xno -a \
         "${SHLIB_CXXLD}" = "${CXX}" -a \
         "x${ac_cv_prog_cxx_openmp}" != "xunsupported" -a \

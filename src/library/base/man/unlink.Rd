@@ -27,6 +27,8 @@
 
 #ifdef unix
   On most platforms \sQuote{file} includes symbolic links, fifos and sockets.
+  Beware that \code{unlink(x, recursive = TRUE)} will on most platforms
+  delete the contents of a directory target of a symbolic link.
   
 #endif  
   Wildcard expansion is done by the internal code of
@@ -44,8 +46,9 @@
   a metacharacter matches nothing it is considered as a literal
   character.
 
-  \code{recursive = TRUE} may not be supported on a platforms, when it
-  will be ignored, with a warning.
+  \code{recursive = TRUE} might not be supported on all platforms, when it
+  will be ignored, with a warning: however there are no known current
+  examples.
 #endif
 #ifdef Windows
   Character classes such as \file{[a-z]} are supported.  The

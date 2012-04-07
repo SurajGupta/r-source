@@ -3,6 +3,8 @@
 % Copyright 1995-2011 R Core Development Team
 % Distributed under GPL 2 or later
 
+\newcommand{\CRANpkg}{\href{http://CRAN.R-project.org/package=#1}{\pkg{#1}}}
+
 \name{image}
 \alias{image}
 \alias{image.default}
@@ -99,14 +101,13 @@ image(x, \dots)
   Images for large \code{z} on a regular grid are rendered more
   efficiently with \code{useRaster = TRUE} and can prevent rare
   anti-aliasing artifacts, but may not be supported by all graphics
-  devices.  Some devices (such as \code{postscript} and
-  \code{X11(type = "Xlib")}) which do not support semi-transparent
-  colours may emit missing values as white rather than transparent, and
-  there may be limitations on the size of a raster image.
-#ifdef windows
-  Problems with the rendering of raster images have been reported using
-  \code{windows()} devices under Remote Desktop.
-#endif
+  devices.  Some devices (such as \code{postscript} and \code{X11(type =
+  "Xlib")}) which do not support semi-transparent colours may emit
+  missing values as white rather than transparent, and there may be
+  limitations on the size of a raster image.  (Problems with the
+  rendering of raster images have been reported by users of
+  \code{windows()} devices under Remote Desktop, at least under its
+  default settings.)
   
   The graphics files in PDF and PostScript can be much smaller under
   this option.
@@ -123,7 +124,7 @@ image(x, \dots)
   \code{\link{filled.contour}} or \code{\link{heatmap}} which can
   look nicer (but are less modular),
   \code{\link{contour}};
-  The \pkg{lattice} equivalent of \code{image} is
+  The \CRANpkg{lattice} equivalent of \code{image} is
   \code{\link[lattice]{levelplot}}.
 
   \code{\link{heat.colors}}, \code{\link{topo.colors}},

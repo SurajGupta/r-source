@@ -2522,6 +2522,7 @@ function(dir, force_suggests = TRUE)
     }
     ldepends <-  .get_requires_with_version_from_package_db(db, "Depends")
     limports <-  .get_requires_with_version_from_package_db(db, "Imports")
+    llinks <-  .get_requires_with_version_from_package_db(db, "LinkingTo")
     lsuggests <- .get_requires_with_version_from_package_db(db, "Suggests")
     ## NB: no one checks version for 'Enhances'.
     lenhances <- .get_requires_with_version_from_package_db(db, "Enhances")
@@ -2534,9 +2535,8 @@ function(dir, force_suggests = TRUE)
 
     bad_depends <- list()
 
-    ## Are all packages listed in Depends/Suggests/Imports installed?
-    lreqs <- c(ldepends,
-               limports,
+    ## Are all packages listed in Depends/Suggests/Imports/LinkingTo installed?
+    lreqs <- c(ldepends, limports, llinks,
                if(force_suggests) lsuggests)
     lreqs2 <- c(if(!force_suggests) lsuggests, lenhances)
     if(length(c(lreqs, lreqs2))) {
@@ -3251,19 +3251,17 @@ function(package, lib.loc = NULL)
             assign("nsl", function(hostname) {}, envir = compat)
             assign("X11Font", function(font) {}, envir = compat)
             assign("X11Fonts", function(...) {}, envir = compat)
-            assign("cairo_pdf",
-                   function(filename =
-                            if (onefile) "Rplots.pdf" else "Rplot%03d.pdf",
-                            width = 7, height = 7, pointsize = 12,
-                            onefile = FALSE, bg = "white", antialias) {},
+            assign("X11.options", function(..., reset = TRUE) {},
                    envir = compat)
             assign("quartz",
-                   function(display = "", width = 5, height = 5,
-                            pointsize = 12, family = "Helvetica",
-                            antialias = TRUE, autorefresh = TRUE) {},
+                   function(title, width, height, pointsize, family,
+                            fontsmooth, antialias, type, file = NULL,
+                            bg, canvas, dpi) {},
                    envir = compat)
-            assign("quartzFont", function(font) {}, envir = compat)
+            assign("quartzFont", function(family) {}, envir = compat)
             assign("quartzFonts", function(...) {}, envir = compat)
+            assign("quartz.options", function(..., reset = TRUE) {},
+                   envir = compat)
         }
         if(.Platform$OS.type != "windows") {
             assign("bringToTop", function (which = dev.cur(), stay = FALSE) {},
@@ -3296,12 +3294,6 @@ function(package, lib.loc = NULL)
             assign("shortPathName", function(path) {}, envir = compat)
             assign("win.version", function() {}, envir = compat)
             assign("zip.unpack", function(zipname, dest) {}, envir = compat)
-
-            assign("bmp",
-                   function (filename = "Rplot%03d.bmp", width = 480,
-                             height = 480, units = "px", pointsize = 12,
-                             bg = "white", res = NA, restoreConsole = TRUE) {},
-                   envir = compat)
             assign("savePlot",
                    function (filename = "Rplot",
                              type = c("wmf", "emf", "png", "jpeg", "jpg",
@@ -3330,6 +3322,8 @@ function(package, lib.loc = NULL)
                             restoreConsole = FALSE) {}, envir = compat)
             assign("windowsFont", function(font) {}, envir = compat)
             assign("windowsFonts", function(...) {}, envir = compat)
+            assign("windows.options", function(..., reset = TRUE) {},
+                   envir = compat)
 
             assign("winDialog", function(type = "ok", message) {},
                    envir = compat)
@@ -3539,7 +3533,7 @@ function(package, dir, lib.loc = NULL)
             try(suppressWarnings(utils::available.packages(utils::contrib.url(repos, "source"),
                filters = c("R_version", "duplicates"))[, "Package"]))
         miss <- if(inherits(known, "try-error")) TRUE
-        else unknown %in% c(known, c("BRugs", "GLMMGibbs", "survnnet", "yags"))
+        else unknown %in% c(known, c("GLMMGibbs", "survnnet", "yags"))
         ## from CRANextras
         if(any(miss))
             message(gettextf("Package(s) unavailable to check Rd xrefs: %s",
@@ -4512,9 +4506,18 @@ function(x, ...)
       if(length(xx <- x$others)) {
           if(length(xx) > 1L) {
               c(gettext("'library' or 'require' calls not declared from:"),
-                .pretty_format(sort(x$others)))
+                .pretty_format(sort(xx)))
           } else {
               gettextf("'library' or 'require' call not declared from: %s",
+                       sQuote(xx))
+          }
+      },
+      if(length(xx <- x$data)) {
+          if(length(xx) > 1L) {
+              c(gettext("'data(package=)' calls not declared from:"),
+                .pretty_format(sort(xx)))
+          } else {
+              gettextf("'data(package=)' call not declared from: %s",
                        sQuote(xx))
           }
       },
@@ -4551,6 +4554,7 @@ function(db, files)
 
     bad_exprs <- character()
     bad_imports <- character()
+    bad_data <- character()
     find_bad_exprs <- function(e) {
         if(is.call(e) || is.expression(e)) {
             Call <- deparse(e[[1L]])[1L]
@@ -4585,10 +4589,18 @@ function(db, files)
                 if(! pkg %in% depends_suggests)
                     bad_imports <<- c(bad_imports, pkg)
             } else if(Call %in%  ":::") {
-                ## <FIXME> fathom out if this package has a namespace
                 if(! pkg %in% depends_suggests)
                     bad_imports <<- c(bad_imports, pkg)
+            } else if(Call %in%  "data" && length(e) >= 3L) {
+                mc <- match.call(utils::data, e)
+                if(!is.null(pkg <- mc$package) && !pkg %in% depends_suggests)
+                    bad_data <<- c(bad_data, pkg)
+            } else if(deparse(e[[1L]])[1L] %in% c("utils::data", "utils:::data")) {
+                mc <- match.call(utils::data, e)
+                if(!is.null(pkg <- mc$package) && !pkg %in% depends_suggests)
+                    bad_data <<- c(bad_data, pkg)
             }
+
             for(i in seq_along(e)) Recall(e[[i]])
         }
     }
@@ -4619,6 +4631,7 @@ function(db, files)
 
     res <- list(others = unique(bad_exprs),
                 imports = unique(bad_imports),
+                data = unique(bad_data),
                 methods_message = "")
     class(res) <- "check_packages_used"
     res
@@ -4701,6 +4714,7 @@ function(package, dir, lib.loc = NULL)
     }
     else if(!missing(dir)) {
         ## Using sources from directory @code{dir} ...
+        ## not currently used
         if(!file_test("-d", dir))
             stop(gettextf("directory '%s' does not exist", dir), domain = NA)
         else
@@ -4708,12 +4722,20 @@ function(package, dir, lib.loc = NULL)
         dfile <- file.path(dir, "DESCRIPTION")
         db <- .read_description(dfile)
         testsrcdir <- file.path(dir, "inst", "doc")
+        ## FIXME: this isn't right, as we've not tangled in this dir
     }
-    if (file_test("-d", testsrcdir)) {
+    Rfiles <- if (file_test("-d", testsrcdir)) {
         od <- setwd(testsrcdir)
         on.exit(setwd(od))
-        Rfiles <- dir(".", pattern="\\.R$")
-    } else Rfiles <- character()
+        vign_exts <- .make_file_exts( "vignette")
+        Rfiles <- dir(".", pattern="[.]R$")
+        if (length(Rfiles))
+        ## check they have a matching vignette
+        Rfiles[sapply(Rfiles,
+                      function(x) any(file.exists(paste(sub("[.]R$", "", x),
+                                                        vign_exts, sep="."))))]
+        else Rfiles
+    } else character()
     .check_packages_used_helper(db, Rfiles)
 }
 

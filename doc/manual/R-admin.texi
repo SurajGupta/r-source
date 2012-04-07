@@ -107,11 +107,11 @@ tar -xf R-@var{x}.@var{y}.@var{z}.tar.gz
 @end example
 
 @noindent
-on systems that have a suitable@footnote{e.g.@: @acronym{GNU} @command{tar}
-version 1.15 or later, or that from the @samp{libarchive} (as used on
-OS 10.6) or `Heirloom Toolchest' distributions.} @command{tar}
-installed.  On other systems you need to have the @command{gzip} program
-installed, when you can use
+on systems that have a suitable@footnote{e.g.@: @acronym{GNU}
+@command{tar} version 1.15 or later, or that from the @samp{libarchive}
+(as used on OS 10.[67]) or `Heirloom Toolchest' distributions.}
+@command{tar} installed.  On other systems you need to have the
+@command{gzip} program installed, when you can use
 
 @example
 gzip -dc R-@var{x}.@var{y}.@var{z}.tar.gz | tar -xf -
@@ -796,8 +796,9 @@ installation).
 @node Multilib,  , Sub-architectures, Sub-architectures
 @subsection Multilib
 
-On Linux, there is an alternative mechanism for mixing 32-bit and
-64-bit libraries known as @emph{multilib}. If a Linux distribution supports
+On Linux@footnote{mainly on RedHat and Fedora, whose layout is described
+here.}, there is an alternative mechanism for mixing 32-bit and 64-bit
+libraries known as @emph{multilib}. If a Linux distribution supports
 multilib, then parallel builds of @R{} may be installed in the
 sub-directories @file{lib} (32-bit) and @file{lib64} (64-bit).  The
 build to be run may then be chosen using the @command{setarch}
@@ -989,19 +990,20 @@ configuration files in the @file{etc} directory.
 If you want to build @R{} from the sources, you will first need to
 collect, install and test an extensive set of tools.  See @ref{The
 Windows toolset} (and perhaps updates in
-@uref{http://www.murdoch-sutherland.com/@/Rtools/}) for details.
+@uref{http://cran.r-project.org/bin/@/windows/@/Rtools/}) for details.
 
-The @file{Rtools*.exe} executable installer described in @ref{The Windows
-toolset} also includes some source files in addition to the @R{} source
-as noted below. You should run it first, to obtain a working @code{tar}
-and other necessities.  Choose a ``Full installation'', and install the
-extra files into your intended @R{} source directory, e.g.@:
+The @file{Rtools*.exe} executable installer described in @ref{The
+Windows toolset} also includes some source files in addition to the @R{}
+source as noted below.  You should run it first, to obtain a working
+@code{tar} and other necessities.  Choose a ``Full installation'', and
+install the extra files into your intended @R{} source directory, e.g.@:
 @file{C:/R}. The directory name @emph{should not contain spaces}. We
 will call this directory @file{@var{R_HOME}} below.
 
-For a 64-bit build you will need a 64-bit toolchain and the appropriate
-64-bit version of Tcl/Tk: both of these are contained in
-@file{Rtools214.exe}.
+The preferred set of tools for @R{} 2.14.2 is contained in
+@file{Rtools215.exe} which uses a single 32/64-bit toolchain: the
+separate 32- and 64-bit toolchains contained in @file{Rtools214.exe} can
+still be used.
 
 @node Getting the source files, Building the core files, Getting the tools, Building from source
 @subsection Getting the source files
@@ -1052,16 +1054,17 @@ make rsync-recommended
 @end itemize
 
 The following additional items are normally installed by
-@file{Rtools*.exe}.  If instead you choose to do a completely manual
+@file{Rtools215.exe}.  If instead you choose to do a completely manual
 build you will also need
 
 @itemize
 
 @item
-The Tcl/Tk support files are contained in @file{Rtools*.exe} and
-available from @uref{http://www.stats.ox.ac.uk/pub/Rtools}.  Please make
-sure you install the right version: there is a 32-bit version and a
-64-bit version.
+The Tcl/Tk support files are contained in @file{Rtools215.exe} and
+available as @file{.zip}s from
+@uref{http://www.stats.ox.ac.uk/pub/Rtools}.  Please make sure you
+install the right version: there is a 32-bit version and a 64-bit
+version.
 
 @item
 You need @code{libpng}, @code{jpeg} and @code{libtiff} sources
@@ -1404,8 +1407,7 @@ Support for cross-building was withdrawn at @R{} 2.9.0.
 @subsection 64-bit Windows builds
 
 To build a 64-bit version of R you need a 64-bit toolchain: the only one
-discussed here (@pxref{64-bit toolchain}) is based on the work of
-the MinGW-w64 project
+discussed here is based on the work of the MinGW-w64 project
 (@uref{http://sourceforge.net/@/projects/@/mingw-w64/}, but commercial
 compilers such as those from Intel and PGI could be used (and have been
 by @R{} redistributors).
@@ -1416,6 +1418,8 @@ of Yu Gong at a crucial step in porting R to MinGW-w64 is gratefully
 acknowledged, as well as help from Kai Tietz, the lead developer of the
 MinGW-w64 project.
 
+Windows 64-bit is now completely integrated into the @R{} and package
+build systems.
 
 @node Testing a Windows Installation,  , Building from source, Installing R under Windows
 @section Testing an Installation
@@ -1453,7 +1457,7 @@ given by @code{R.home()}).
 
 The @file{bin/macosx} directory of a @acronym{CRAN} site contains
 binaries for OS X for a base distribution and a large number of
-add-on packages from @acronym{CRAN} to run on OS X 10.5/6/7.
+add-on packages from @acronym{CRAN} to run on OS X 10.[567].
 
 The simplest way is to use @file{R-@value{VERSIONno}.pkg}: just
 double-click on the icon.  Note that Tcl/Tk and the Fortran compiler
@@ -1770,8 +1774,8 @@ binary containing either or both architectures.
 A few of the binary packages need other software to be installed on your
 system: see for example
 @uref{http://cran.r-project.org/@/bin/@/windows/@/contrib/@/2.14/@/@@ReadMe}.
-For 64-bit builds, packages using Gtk+ (@pkg{Cairo}, @pkg{RGtk2},
-@pkg{cairoDevice} and those that depend on them) need the @file{bin}
+For 64-bit builds, packages using Gtk+ (@CRANpkg{Cairo}, @CRANpkg{RGtk2},
+@CRANpkg{cairoDevice} and those that depend on them) need the @file{bin}
 directory of a bundled distribution from
 @uref{http://www.gtk.org/@/download-windows-64bit.html} in the path: it
 should work to have both Gtk+ @file{bin} directories in the path on a
@@ -2479,8 +2483,9 @@ make
 @end example
 
 @noindent
-will make standalone libraries @file{libRmath.a} and @file{libRmath.so}:
-@samp{make static} and @samp{make shared} will create just one of them.
+will make standalone libraries @file{libRmath.a} and @file{libRmath.so}
+(@file{libRmath.dylib} on Mac OS X): @samp{make static} and @samp{make
+shared} will create just one of them.
 
 @strong{NB:} certain compilers are unable to do compile-time IEC 60559
 arithmetic and so cannot compile @file{mlutils.c} and several other
@@ -2533,10 +2538,12 @@ library.
 @node Windows standalone,  , Unix-alike standalone, The standalone Rmath library
 @section Windows
 
-You need to set up almost all the tools to make @R{} and then run (in a
-Unix-like shell)
+You need to set up@footnote{including copying @file{MkRules.dist} to
+@file{MkRule.local} and selecting the architecture.} almost all the
+tools to make @R{} and then run (in a Unix-like shell)
 
 @example
+(cd ../../gnuwin32; make MkRules)
 (cd ../../include; make -f Makefile.win config.h Rconfig.h Rmath.h)
 make -f Makefile.win
 @end example
@@ -2630,10 +2637,13 @@ installed.
 You need a means of compiling C and FORTRAN 77 (see @ref{Using
 FORTRAN}).  Some add-on packages also need a C++ compiler.  Your C
 compiler should be @acronym{IEC}@tie{}60059@footnote{also known as
-@acronym{IEEE}@tie{}754}, POSIX 1003.1 and C99-compliant.  @R{} tries to
-choose suitable flags for the C compilers it knows about, but you may
-have to set @code{CC} or @code{CFLAGS} suitably.  For recent versions of
-@command{gcc} with @code{glibc} this means including
+@acronym{IEEE}@tie{}754}, POSIX 1003.1 and C99-compliant.@footnote{Note
+that C11 compilers (when they appear) need not be C99-compliant: @R{}
+requires support for @code{double complex} which is optional in C11 but
+is mandatory in C99.}  @R{} tries to choose suitable flags for the C
+compilers it knows about, but you may have to set @code{CC} or
+@code{CFLAGS} suitably.  For recent versions of @command{gcc} with
+@code{glibc} this means including
 @option{-std=gnu99}@footnote{@option{-std=c99} excludes POSIX
 functionality, but @file{config.h} will turn on all @acronym{GNU}
 extensions to include the POSIX functionality.}.  If the compiler is
@@ -2641,11 +2651,11 @@ detected as @command{gcc}, @option{-std=gnu99} will be appended to
 @code{CC} unless it conflicts with a setting of @code{CFLAGS}.  (Note
 that options essential to run the compiler even for linking, such as
 those to set the architecture, should be specified as part of @code{CC}
-rather than of @code{CFLAGS}.)
+rather than in @code{CFLAGS}.)
 
-Unless you do not want to view graphs on-screen you need @samp{X11}
-installed, including its headers and client libraries. For recent Fedora
-distributions it means (at least) RPMs @samp{libX11},
+Unless you do not want to view graphs on-screen (or use a Mac) you need
+@samp{X11} installed, including its headers and client libraries. For
+recent Fedora distributions it means (at least) RPMs @samp{libX11},
 @samp{libX11-devel}, @samp{libXt} and @samp{libXt-devel}.  On Debian we
 recommend the meta-package @samp{xorg-dev}.  If you really do not want
 these you will need to explicitly configure @R{} without X11, using
@@ -2690,7 +2700,7 @@ A @command{tar} program is needed to unpack the sources and packages
 (including the recommended packages).  A version@footnote{Such as
 @acronym{GNU} @command{tar} 1.15 or later, @command{bsdtar} (from
 @uref{http://code.google.com/@/p/libarchive/}, as used by FreeBSD and OS
-10.6) or @command{tar} from the Heirloom Toolchest
+10.[67]) or @command{tar} from the Heirloom Toolchest
 (@uref{http://heirloom.sourceforge.net/@/tools.html}).} that can
 automagically detect compressed archives is preferred for use with
 @code{untar()}: the configure script looks for @command{gtar} and
@@ -2796,7 +2806,7 @@ If you have them installed (including the appropriate headers and of
 suitable versions), system versions of @code{zlib}, @code{libbz2} and
 PCRE will be used if specified by @option{--with-system-zlib} (version
 1.2.3 or later), @option{--with-system-bzlib} or
-@option{--with-system-pcre} (version 8.10 or later, preferably 8.13
+@option{--with-system-pcre} (version 8.10 or later, preferably 8.21
 which is what is supplied with @R{}): otherwise versions in the @R{}
 sources will be compiled in.  As the latter suffice and are tested with
 @R{} you should not need to change this.
@@ -2979,7 +2989,7 @@ Note that under Unix (but not under Windows) if @R{} is compiled against
 a non-default @acronym{BLAS} and @option{--enable-BLAS-shlib} is
 @strong{not} used, then all @acronym{BLAS}-using packages must also be.
 So if @R{} is re-built to use an enhanced @acronym{BLAS} then packages
-such as @pkg{quantreg} will need to be re-installed.
+such as @CRANpkg{quantreg} will need to be re-installed.
 
 @R{} relies on @acronym{IEC}@tie{}60559 compliance of an external
 @acronym{BLAS}.  This can be broken if for example the code assumes that
@@ -3063,10 +3073,13 @@ multithreaded Linux version of ACML available for recent versions of
 See @pxref{Shared BLAS} for an alternative (and in many ways preferable)
 way to use ACML.
 
+The version last tested (5.1.0) failed the @file{reg-BLAS.R} test in its
+handling of @code{NA}s.
+
 @node Goto BLAS, MKL, ACML, BLAS
 @subsubsection Goto BLAS
 
-Dr Kazushige Goto has written another tuned @acronym{BLAS} which is
+Dr Kazushige Goto wrote another tuned @acronym{BLAS} which is
 available for several processors and OSes.  The current version is known
 as GotoBLAS2, and has (in November 2010) been re-released under a much
 less restrictive licence.  Source code can be obtained from
@@ -3082,14 +3095,20 @@ See @pxref{Shared BLAS} for an alternative (and in many ways preferable)
 way to use it.
 
 Our understanding is that this project is now frozen and so will not be
-updated for CPUs released since mid-2010.
+updated for CPUs released since mid-2010.  However, OpenBLAS
+(@uref{http://xianyi.github.com/OpenBLAS/}) is a descendant project.
 
 @node MKL, Shared BLAS, Goto BLAS, BLAS
 @subsubsection Intel MKL
 For Intel processors under Linux, there is Intel's Math Kernel Library
 (@uref{http://www.intel.com/@/software/@/products/@/mkl/}).  You are
 strongly encouraged to read the MKL User's Guide, which is installed
-with the library, before attempting to link to MKL.
+with the library, before attempting to link to MKL.  There are also
+versions of MKL for Mac OS X and Windows, but they do not work with the
+standard compilers used for @R{} on those platforms.
+
+The MKL interface has changed several times, and may change again: the
+following notes apply to version 10.0, and prior to that 9.
 
 Version 10 of MKL supports two linking models: the default model, which
 is backward compatible with version 9 (see below), and the pure layered
@@ -3876,7 +3895,7 @@ LDFLAGS="-L/usr/local/lib64 -L/usr/local/lib"
 @noindent
 is appropriate since most (but not all) software installs its 64-bit
 libraries in @file{/usr/local/lib64}.  To build a 32-bit version of @R{}
-on @cputype{x86_64} with Fedora 14 we used
+on @cputype{x86_64} with Fedora 16 we used
 
 @example
 CC="gcc -m32"
@@ -3892,7 +3911,12 @@ LIBnn=lib
 Note the use of @samp{LIBnn}: @cputype{x86_64} Fedora installs its
 64-bit software in @file{/usr/lib64} and 32-bit software in
 @file{/usr/lib}.  Linking will skip over inappropriate binaries, but for
-example the 32-bit Tcl/Tk configure scripts are in @file{/usr/lib}.
+example the 32-bit Tcl/Tk configure scripts are in @file{/usr/lib}.  It
+may also be necessary to set the @command{pkg-config} path, e.g.@: by
+
+@example
+export PKG_CONFIG_PATH=/usr/local/lib/pkgconfig:/usr/lib/pkgconfig
+@end example
 
 64-bit versions of Linux are built with support for files > 2Gb, and
 32-bit versions will be if possible unless @option{--disable-largefile}
@@ -3915,11 +3939,21 @@ the additional flags being needed to resolve problems linking against
 @file{libnmath.a} and when linking @R{} as a shared library.
 
 @menu
+* Clang::                       
 * Intel compilers::             
 * Oracle Solaris Studio compilers::  
 @end menu
 
-@node Intel compilers, Oracle Solaris Studio compilers, Linux, Linux
+@node Clang, Intel compilers, Linux, Linux
+@subsection Clang
+
+@R{} has been built with Linux @cputype{ix86} and @cputype{x86_64} C and
+C++ compilers (@uref{http://clang.llvm.org}, versions 2.9 and 3.0) based
+on the Clang front-ends, invoked by @code{CC=clang CXX=clang++},
+together with @command{gfortran}.  These take very similar options to
+the corresponding GCC compilers.
+
+@node Intel compilers, Oracle Solaris Studio compilers, Clang, Linux
 @subsection Intel compilers
 
 Intel compilers have been used under @cputype{ix86} and @cputype{x86_64}
@@ -4176,16 +4210,13 @@ for C++).
 @cindex Solaris
 
 @R{} has been built successfully on Solaris 10 (both Sparc and
-@cputype{x86}) using the (zero cost) Oracle Solaris Studio
-12@footnote{versions 12u1 and 12.2; a beta of 12.3 in Oct 2011 gave a
-segfault on powers of complex numbers and required @code{HAVE_CPOW}
-undefined.} compilers: there has been some success with
-@command{gcc}@tie{}4/@command{gfortran}.  Sun packages for @R{} are
-available from @uref{http://www.sunfreeware.com/} for both 32-bit
-architectures, but recently have often been several versions
-old.@footnote{For example, 2.11.1 at the time of release of 2.13.2.}
-(Recent Sun machines are AMD Opterons or Intel Xeons (@cputype{amd64})
-rather than @cputype{x86}, but 32-bit @cputype{x86} executables are the
+@cputype{x86}) using the (zero cost) Oracle Solaris Studio compilers:
+there has been some success with
+@command{gcc}@tie{}4/@command{gfortran}.  Sun packages for @R{} used to
+be available from @uref{http://www.sunfreeware.com/} for both 32-bit
+architectures, but recently have often been many versions old.  (Recent
+Sun machines are AMD Opterons or Intel Xeons (@cputype{amd64}) rather
+than @cputype{x86}, but 32-bit @cputype{x86} executables are the
 default.)
 
 There have been no reports on Solaris 11.  Solaris 9 and earlier are now
@@ -4209,7 +4240,7 @@ You will need @acronym{GNU} @code{libiconv} and @code{readline}: the
 Solaris version of @code{iconv} is not sufficiently powerful.
 
 The native @command{make} suffices to build @R{} but a small number of
-packages require @acronym{GNU} @command{make} (most without good reason
+packages require @acronym{GNU} @command{make} (some without good reason
 and without declaring it as @samp{SystemRequirements} in the
 @file{DESCRIPTION} file).
 
@@ -4229,7 +4260,7 @@ rather than the Solaris @code{iconv}:
 CC="cc -xc99"
 CFLAGS="-O -xlibmieee"
 F77=f95
-FFLAGS=-O4
+FFLAGS=-O
 CXX="CC -library=stlport4"
 CXXFLAGS=-O
 FC=f95
@@ -4259,7 +4290,7 @@ JAVA_LIBS = -L$(JAVA_HOME)/lib/amd64/server \
   -R$(JAVA_HOME)/lib/amd64/server -ljvm
 @end example
 
-With Solaris Studio 12.2 on Sparc, @code{FCLIBS} needs to be
+With Solaris Studio 12.[23] on Sparc, @code{FCLIBS} needs to be
 
 @example
 FCLIBS="-lfai -lfai2 -lfsu"
@@ -4274,59 +4305,50 @@ out-of-the-box with Sun Studio 12u1 but not Solaris Studio 12.2 and
 later: @file{libRblas.so} and @file{lapack.so} are generated with code
 that causes relocation errors (which is being linked in from the Fortran
 libraries).  This means that building @R{} as a shared library may be
-impossible with Solaris Studio 12.2.  For a standard build the trick
+impossible with Solaris Studio >= 12.2.  For a standard build the trick
 seems to be to manually set @code{FLIBS} to avoid the troublesome
-libraries.  For example, on @cputype{amd64}, set in @file{Makeconf}
+libraries.  For example, on @cputype{amd64} set in @file{config.site}
+something like
 
 @example
-FLIBS_IN_SO = -R/opt/solstudio12.2/lib/amd64 \
-  /opt/solstudio12.2/lib/amd64/libfui.so \
-  /opt/solstudio12.2/lib/amd64/libfsu.so
+FLIBS_IN_SO="-R/opt/solarisstudio12.3/lib/amd64
+  /opt/solarisstudio12.3/lib/amd64/libfui.so
+  /opt/solarisstudio12.3/lib/amd64/libfsu.so"
 @end example
 
-@noindent
-and set @code{FLIBS} in @file{etc/Makeconf} to the same value.
-
-For 64-bit Sparc, use something like
+For 64-bit Sparc, set in @file{config.site} something like
 @example
-FLIBS = -R/opt/solstudio12.2/prod/lib/sparc/64 -lifai -lsunimath -lfai -lfai2 \
- -lfsumai -lfprodai -lfminlai -lfmaxlai -lfminvai -lfmaxvai -lfui \
- -lsunmath -lmtsk /opt/solstudio12.2/prod/lib/sparc/64/libfsu.so.1
+FLIBS="-R/opt/solarisstudio12.3/prod/lib/sparc/64
+ -lifai -lsunimath -lfai -lfai2 -lfsumai -lfprodai -lfminlai -lfmaxlai
+ -lfminvai -lfmaxvai -lfui -lsunmath -lmtsk
+ /opt/solarisstudio12.3/prod/lib/sparc/64/libfsu.so.1"
 @end example
-
-@noindent
-in @file{config.site}, or manually in both in @file{Makeconf} and
-@file{etc/Makeconf}.
-
 
 By default the Solaris Studio compilers do not by default conform to the C99
 standard (appendix F 8.9) on the return values of functions such as
 @code{log}: use @option{-xlibmieee} to ensure this.
 
 You can target specific Sparc architectures for (slightly) higher
-performance: Oracle recommend
+performance: @option{-xtarget=native} (in @code{CFLAGS} etc) tunes the
+compilation to the current machine.
 
-@example
-@r{32-bit:} -xtarget=ultra3 -xarch=v8plusa
-@r{64-bit:} -xtarget=ultra3 -xarch=sparcvis2
-@end example
+Using @code{-xlibmil} in @code{CFLAGS} and @code{-xlibmil} in
+@code{FFLAGS} allows more system mathematical functions to be inlined.
 
-@noindent
-(in @code{CFLAGS} etc) as a good compromise for recent Sparc chipsets.
-Using @code{-libmil} in @code{CFLAGS} allows more system mathematical
-functions to be inlined.
 
 On @cputype{x86} you will get marginally higher performance @emph{via}
 
 @example
-CFLAGS="-O5 -xc99 -xlibmieee -xlibmil -nofstore -xtarget=native"
+CFLAGS="-xO5 -xc99 -xlibmieee -xlibmil -nofstore -xtarget=native"
 FFLAGS="-O5 -libmil -nofstore -xtarget=native"
-CXXFLAGS="-O5 -xlibmil -nofstore -xtarget=native"
+CXXFLAGS="-xO5 -xlibmil -nofstore -xtarget=native"
 SAFE_FFLAGS="-libmil -fstore -xtarget=native"
 @end example
 
 @noindent
-but the use of @code{-nofstore} can be less numerically stable.
+but the use of @code{-nofstore} can be less numerically stable, and some
+packages (notably @pkg{mgcv} on @cputype{x86}) failed to compile at
+higher optimization levels with version 12.3.
 
 The Solaris Studio compilers provide several implementations of the C++
 standard which select both the set of headers and a C++ runtime library.
@@ -4338,8 +4360,8 @@ it is needed for linking) is @samp{Cstd}: see
 @uref{http://developers.sun.com/@/solaris/@/articles/@/cmp_stlport_libCstd.html}.
 Note though that most external Solaris C++ libraries will have been
 built with @samp{Cstd} and so an @R{} package using such libraries also
-needs to be.  Occasionally the flag @option{-library=stlport4,Crun} is
-needed.
+needs to be.  Occasionally the flag @option{-library=stlport4,Crun} has
+been needed.
 
 Several CRAN packages using C++ need the more liberal interpretation
 given by adding
@@ -4405,6 +4427,8 @@ be in the
 @enindex LD_LIBRARY_PATH
 @env{LD_LIBRARY_PATH} during configuration.
 
+The compilation can be tuned to a particular cpu: the CRAN check system
+uses @code{-mtune=niagara2}.
 
 Compilation for an @cputype{x86} target with @command{gcc}@tie{}4.6.2
 needed
@@ -4690,7 +4714,7 @@ have had a fair amount of practice at porting @R{} to new platforms
 
 If you want to build @R{} or add-on packages from source in Windows, you
 will need to collect, install and test an extensive set of tools.  See
-@uref{http://www.murdoch-sutherland.com/@/Rtools/} for the current
+@uref{http://cran.r-project.org/@/bin/@/windows/@/Rtools/} for the current
 locations and other updates to these instructions.  (Most Windows users
 will not need to build add-on packages from source; see @ref{Add-on
 packages} for details.)
@@ -4709,8 +4733,8 @@ the @R{} mailing lists unless you have followed all the prescriptions.}
 
 We have collected most of the necessary tools (unfortunately not all,
 due to license or size limitations) into an executable installer
-named@footnote{for @R{} 2.13.x and later.}  @file{Rtools214.exe},
-available from @uref{http://www.murdoch-sutherland.com/@/Rtools/}. You
+named@footnote{for @R{} 2.14.2 and later.}  @file{Rtools215.exe},
+available from @uref{http://cran.r-project.org/@/bin/@/windows/@/Rtools/}. You
 should download and run it, choosing the default ``Package authoring
 installation'' to build add-on packages, or the ``full installation'' if
 you intend to build @R{}.
@@ -4721,8 +4745,7 @@ See the subsections below for detailed descriptions.
 @item
 The command line tools (in @file{Rtools*.exe})
 @item
-The (32-bit) MinGW or (64-bit) MinGW-w64 toolchain to compile C, Fortran
-and C++.
+The MinGW-w64 32/64-bit toolchain to compile C, Fortran and C++.
 @end itemize
 For installing simple source packages containing data or @R{} source but
 no compiled code, none of these are needed.  Perl is no longer needed to
@@ -4753,21 +4776,16 @@ use filepaths containing spaces: you can always use the short forms
 For example for a 32-bit build, all on one line,
 
 @smallexample
-PATH=c:\Rtools\bin;c:\Rtools\MinGW\bin;c:\MiKTeX\miktex\bin;
-     c:\R\bin\i386;c:\windows;c:\windows\system32
+PATH=c:\Rtools\bin;c:\Rtools\gcc-4.6.3\bin;c:\MiKTeX\miktex\bin;
+     c:\R\R-2.14.2\bin\i386;c:\windows;c:\windows\system32
 @end smallexample
 
 It is essential that the directory containing the command line tools
 comes first or second in the path: there are typically like-named
-tools@footnote{such as @command{sort}, @command{find} and
+tools@footnote{such as @command{sort}, @command{find} and perhaps
 @command{make}.} in other directories, and they will @strong{not}
-work. The ordering of the other directories is less important, but if
-in doubt, use the order above.  If you install both the 32 bit and 64
-bit toolchains from @file{Rtools*.exe}, it should work to list both in
-the path (as the automatic installer does), and this is needed if you
-want to install or build binary packages containing both architectures
-using the @command{--merge-multiarch} option as described in
-@ref{Windows packages}.  Other toolchains are more likely to conflict.
+work. The ordering of the other directories is less important, but if in
+doubt, use the order above.
 
 Our toolset contains copies of Cygwin DLLs that may conflict with other
 ones on your system if both are in the path at once.  The normal
@@ -4780,7 +4798,7 @@ path.
 * LaTeX::                       
 * The Inno Setup installer::    
 * The command line tools::      
-* The MinGW toolchain::         
+* The MinGW-w64 toolchain::     
 * Useful additional programs::  
 @end menu
 
@@ -4816,7 +4834,7 @@ Copy file @file{src/gnuwin32/MkRules.dist} to
 @file{src/gnuwin32/MkRules.local} and edit it to set @code{ISDIR} to the
 location where Inno Setup was installed.
 
-@node The command line tools, The MinGW toolchain, The Inno Setup installer, The Windows toolset
+@node The command line tools, The MinGW-w64 toolchain, The Inno Setup installer, The Windows toolset
 @section The command line tools
 
 This item is installed by the @file{Rtools*.exe} installer.
@@ -4874,88 +4892,45 @@ You may need to set the environment variable @env{CYGWIN} to a value
 including @samp{nodosfilewarning} to suppress messages about
 Windows-style paths.
 
-@node The MinGW toolchain, Useful additional programs, The command line tools, The Windows toolset
-@section The MinGW toolchain
+@node The MinGW-w64 toolchain, Useful additional programs, The command line tools, The Windows toolset
+@section The MinGW-w64 toolchain
 
-This is the only step which differs between 32- and 64-bit builds.
 Technically you need more than just a compiler so the set of tools is
 referred to as a `toolchain'.
 
-In each case you need to put the @file{bin} directory of the toolchain
-early in your @env{PATH}: if you use the recommended toolchains you can
-have both in the path (in either order), and need to if you want to
-install 32/64-bit packages.
+The released version of @R{} 2.14.2 will be built with a different
+toolchain from @R{} 2.14.1.  The preferred toolchain is part of
+@code{Rtools215.exe}: this uses a beta version of @command{gcc 4.6.3}
+and version 2.0.1 of the MinGW-w64 project's runtime.
 
-@menu
-* 32-bit toolchain::            
-* 64-bit toolchain::            
-@end menu
+This toolchain uses @emph{multilib}: that is there is a single front-end
+such as @command{gcc.exe} for each of the compilers and 32-bit (the
+default) and 64-bit compilation are selected by the flags@footnote{these
+flags apply to the compilers: some of the tools use different flags.
+32-bit builds are the default.}  @option{-m32} and @option{-m64}
+respectively.  The tools are all 32-bit Windows executables and should
+be able to run on any current version of Windows---however you do need a
+64-bit version of Windows to build 64-bit @R{} as the build process runs
+@R{}.
 
-@node 32-bit toolchain, 64-bit toolchain, The MinGW toolchain, The MinGW toolchain
-@subsection 32-bit toolchain
+To select a 32-bit or 64-bit build of @R{}, set the options in
+@file{MkRules.local} appropriately (following the comments in the file).
+Older toolchains such as those used for @R{} 2.14.1 can still be used by
+following the comments in that file.
 
-The 32-bit build for this version of @R{} is set up to use @command{gcc}
-@code{4.5.0}.  The toolchain included in @file{Rtools214.exe}, and was
-collected from the files at
-@uref{http://sourceforge.net/@/projects/@/mingw/@/files/}, specifically
+Some external software libraries will need to be re-compiled under the
+new toolchain: especially those providing a C++ interface.  Many of
+those used by @acronym{CRAN} packages are available from
+@uref{http://www.stats.ox.ac.uk/@/pub/@/Rtools/@/multilib/}.  Users
+developing packages with @pkg{Rcpp} need to ensure that they use a
+version built with exactly the same toolchain as their package: the
+recommendation is to build @pkg{Rcpp} from its sources yourself.
 
-@example
-binutils-2.20.51-1-mingw32-bin.tar.lzma
-gcc-c++-4.5.0-1-mingw32-bin.tar.lzma
-gcc-core-4.5.0-1-mingw32-bin.tar.lzma
-gcc-fortran-4.5.0-1-mingw32-bin.tar.lzma
-libgcc-4.5.0-1-mingw32-dll-1.tar.lzma
-libgmp-5.0.1-1-mingw32-dll-10.tar.lzma
-libgomp-4.5.0-1-mingw32-dll-1.tar.lzma
-libmpc-0.8.1-1-mingw32-dll-2.tar.lzma
-libmpfr-2.4.1-1-mingw32-dll-1.tar.lzma
-libssp-4.5.0-1-mingw32-dll-0.tar.lzma
-mingwrt-3.18-mingw32-dev.tar.gz
-mingwrt-3.18-mingw32-dll.tar.gz
-w32api-3.15-1-mingw32-dev.tar.lzma
-@end example
+There is support for OpenMP and pthreads in this toolchain.  As the
+performance of OpenMP on Windows is poor for small tasks, it is not used
+for @R{} itself.
 
-with the import libraries in @file{lib/gcc/mingw32/4.5.0} moved to a
-subdirectory @file{dlls} so that @file{libgfortran} and @file{libstdc++}
-are linked statically.
-
-It is also possible to use the 32-bit toolchain from the
-@code{mingw-w64} project and options to use that are documented in file
-@file{MkRules.dist}.
-
-@node 64-bit toolchain,  , 32-bit toolchain, The MinGW toolchain
-@subsection 64-bit toolchain
-
-Several versions of the MinGW-w64 toolchain are available: use one of
-them to replace (or supplement) the 32-bit toolchain's @file{bin}
-directory in your path.  Then copy file @file{src/gnuwin32/MkRules.dist}
-to @file{src/gnuwin32/MkRules.local} and edit it to set @code{WIN=64}
-and @code{BINPREF64}, @code{M_ARCH}, @code{DT_ARCH}, @code{RC_ARCH} and
-@code{SYMPAT64} appropriate to your toolchain, then make @R{} in the
-usual way.
-
-The toolchain we use is technically a cross-compiler: the tools run
-under 32-bit Windows but produce code to run under 64-bit
-Windows.@footnote{As the @R{} build process itself runs @R{}, it has to
-be done under 64-bit Windows.  So does installation of source packages
-unless @option{--no-test-load} is used.}  This is based on files from
-@uref{http://sourceforge.net/@/projects/@/mingw-w64/@/files/@/Toolchains%20targetting%20Win64/@/Automated%20Builds/}
-and has a name like @file{mingw-w64-1.0-bin_i686-mingw_20100917.zip},
-including a pre-release of @command{gcc 4.5.2}.  However, this has been
-patched to use static Fortran and C++ runtime libraries: a suitable
-toolchain is included in @file{Rtools214.exe}.
-
-@strong{NB:} 64-bit toolchains after late April 2010 at that site
-generate objects with symbols without a leading underscore. Only such
-toolchains are supported.
-
-Other toolchains are available: for example under
-@uref{http://sourceforge.net/@/projects/@/mingw-w64/@/files/@/Toolchains%20targetting%20Win64/@/Personal%20Builds/}
-contains a native x64 Windows toolchain by `sezero' that may be useful
-when building external software.
-
-
-@node Useful additional programs,  , The MinGW toolchain, The Windows toolset
+@node Useful additional programs,  , The MinGW-w64 toolchain, The Windows toolset
 @section Useful additional programs
 
 The process of making the installer will make use of @code{qpdf} to
@@ -4969,7 +4944,7 @@ Developers of packages will find some of the `goodies' at
 
 There is a version of the @command{file} command that identifies the
 type of files, and is used by @command{Rcmd check} if available.  The
-binary distribution is included in @file{Rtools214.exe}.
+binary distribution is included in @file{Rtools215.exe}.
 
 The file @file{xzutils.zip} contains the program @command{xz} which can
 be used to (de)compress files with that form of compression.
