@@ -1,6 +1,6 @@
 % File src/library/utils/man/Sweave.Rd
 % Part of the R package, http://www.R-project.org
-% Copyright 1995-2009 R Core Development Team
+% Copyright 1995-2010 R Core Development Team
 % Distributed under GPL 2 or later
 
 \name{Sweave}
@@ -85,7 +85,9 @@ Stangle(file, driver = Rtangle(),
   Friedrich Leisch: Sweave User Manual, 2008\cr
   \url{http://www.stat.uni-muenchen.de/~leisch/Sweave}
 }
-\seealso{\code{\link{RweaveLatex}}, \code{\link{Rtangle}}}
+\seealso{
+  \code{\link{RweaveLatex}}, \code{\link{Rtangle}}
+}
 \examples{
 testfile <- system.file("Sweave", "Sweave-test-1.Rnw", package = "utils")
 
@@ -96,11 +98,15 @@ options(device.ask.default=FALSE)
 Sweave(testfile)
 
 ## This can be compiled to PDF by
-\dontrun{tools::texi2dvi("Sweave-test-1.tex", pdf=TRUE)}
-#ifdef unix
+## tools::texi2dvi("Sweave-test-1.tex", pdf=TRUE)
 ## or outside R by
-## R CMD texi2dvi Sweave-test-1.tex
+#ifdef unix
+## R CMD texi2dvi --pdf Sweave-test-1.tex
 ## which sets the appropriate TEXINPUTS path.
+#endif
+#ifdef windows
+## Rcmd texify --pdf Sweave-test-1.tex
+## if MiKTeX is available.
 #endif
 
 ## create an S source file from the code chunks

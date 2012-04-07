@@ -1,6 +1,6 @@
 % File src/library/base/man/readBin.Rd
 % Part of the R package, http://www.R-project.org
-% Copyright 1995-2009 R Core Development Team
+% Copyright 1995-2010 R Core Development Team
 % Distributed under GPL 2 or later
 
 \name{readBin}
@@ -41,9 +41,10 @@ writeBin(object, con, size = NA_integer_,
   \item{useBytes}{See \code{\link{writeLines}}.} 
 }
 \details{
+  These functions are intended to be used with binary-mode connections.
   If \code{con} is a character string, the functions call
-  \code{\link{file}} to obtain an file connection which is opened for
-  the duration of the function call.
+  \code{\link{file}} to obtain a binary-mode file connection which is
+  opened for the duration of the function call.
 
   If the connection is open it is read/written from its current
   position.  If it is not open, it is opened for the duration of the
@@ -72,6 +73,9 @@ writeBin(object, con, size = NA_integer_,
   
   Handling \R's missing and special (\code{Inf}, \code{-Inf} and
   \code{NaN}) values is discussed in the \emph{R Data Import/Export} manual.
+  
+  Only \eqn{2^{31}-1}{2^31 - 1} bytes can be read in a single
+  \code{readBin} call (and this is the maximum capacity of a raw vector).
 }
 
 \note{
@@ -87,6 +91,10 @@ writeBin(object, con, size = NA_integer_,
   which does not contain C-style character strings, warnings (usually
   many) are given.  From a file or connection, the input will be broken
   into pieces of length 10000 with any final part being discarded.
+  
+  Using these functions on a text-mode connection may work but should
+  not be mixed with text-mode access to the connection, especially if
+  the connection was opened with an \code{encoding} argument. 
 }
 
 \value{

@@ -244,16 +244,16 @@ int isBasicClass(const char *ss) {
       return FALSE; /* too screwed up to do conversions */
     return findVarInFrame3(s_S3table, install(ss), FALSE) != R_UnboundValue;
 }
-    
-    
+
+
 
 int usemethod(const char *generic, SEXP obj, SEXP call, SEXP args,
 	      SEXP rho, SEXP callrho, SEXP defrho, SEXP *ans)
 {
-    SEXP klass, method, sxp, t, s, matchedarg;
+    SEXP klass, method, sxp, t, s, matchedarg, sort_list;
     SEXP op, formals, newrho, newcall, match_obj = 0;
     char buf[512];
-    int i, j, nclass, matched, S4toS3, nprotect;
+    int i, j, nclass, matched, /* S4toS3, */ nprotect;
     RCNTXT *cptr;
 
     /* Get the context which UseMethod was called from. */
@@ -302,7 +302,7 @@ int usemethod(const char *generic, SEXP obj, SEXP call, SEXP args,
     PROTECT(newcall = duplicate(cptr->call));
 
     PROTECT(klass = R_data_class2(obj));
-    S4toS3 = IS_S4_OBJECT(obj);
+    sort_list = install("sort.list");
 
     nclass = length(klass);
     for (i = 0; i < nclass; i++) {
@@ -313,6 +313,8 @@ int usemethod(const char *generic, SEXP obj, SEXP call, SEXP args,
 	method = install(buf);
 	sxp = R_LookupMethod(method, rho, callrho, defrho);
 	if (isFunction(sxp)) {
+	    if(method == sort_list && CLOENV(sxp) == R_BaseNamespace)
+		continue; /* kludge because sort.list is not a method */
             if( RDEBUG(op) || RSTEP(op) )
                 SET_RSTEP(sxp, 1);
 	    defineVar(install(".Generic"), mkString(generic), newrho);
@@ -331,25 +333,6 @@ int usemethod(const char *generic, SEXP obj, SEXP call, SEXP args,
 	    UNPROTECT(1);
 	    defineVar(install(".GenericCallEnv"), callrho, newrho);
 	    defineVar(install(".GenericDefEnv"), defrho, newrho);
-	    if(S4toS3 && i > 0 && isBasicClass(ss)) {
-	      SEXP S3Part; 
-	      S3Part = R_getS4DataSlot(obj, S4SXP);
-	      if(S3Part == R_NilValue && TYPEOF(obj) == S4SXP) /* could be type, e.g. "environment" */
-		S3Part = R_getS4DataSlot(obj, ANYSXP);
-	      PROTECT(S3Part); nprotect++;
-	      /* At this point S3Part is the S3 class object or
-	       an object of an abnormal type, or NULL */
-	      if(S3Part != R_NilValue) {  /* use S3Part as inherited object */
-		  obj = S3Part;
-		  if(!match_obj) /* use the first arg, for "[",e.g. */
-		    match_obj = CAR(matchedarg);
-		  if(NAMED(obj)) SET_NAMED(obj, 2);
-		  if(TYPEOF(match_obj) == PROMSXP)
-		    SET_PRVALUE(match_obj, obj); /* must have been eval'd */
-		  else /* not possible ?*/
-		    defineVar(TAG(FORMALS(sxp)), obj, newrho);
-	      } /* else, use the S4 object */
-	    }
 	    t = newcall;
 	    SETCAR(t, method);
 	    R_GlobalContext->callflag = CTXT_GENERIC;
@@ -389,7 +372,7 @@ int usemethod(const char *generic, SEXP obj, SEXP call, SEXP args,
 
 /* Note: "do_usemethod" is not the only entry point to
    "usemethod". Things like [ and [[ call usemethod directly,
-   hence do_usemethod should just be an interface to usemethod. 
+   hence do_usemethod should just be an interface to usemethod.
 */
 
 /* This is a primitive SPECIALSXP */
@@ -405,8 +388,8 @@ SEXP attribute_hidden do_usemethod(SEXP call, SEXP op, SEXP args, SEXP env)
     SET_TAG(CDR(ap), install("object"));
     PROTECT(argList =  matchArgs(ap, args, call));
     if (CAR(argList) == R_MissingArg)
-	errorcall(call, _("there must be a 'generic' argument"));	
-    else 
+	errorcall(call, _("there must be a 'generic' argument"));
+    else
 	PROTECT(generic = eval(CAR(argList), env));
     if(!isString(generic) || length(generic) != 1)
 	errorcall(call, _("'generic' argument must be a character string"));
@@ -467,7 +450,7 @@ SEXP attribute_hidden do_usemethod(SEXP call, SEXP op, SEXP args, SEXP env)
 	char cl[1000];
 	PROTECT(klass = R_data_class2(obj));
 	nclass = length(klass);
-	if (nclass == 1) 
+	if (nclass == 1)
 	    strcpy(cl, translateChar(STRING_ELT(klass, 0)));
 	else {
 	    int i;
@@ -564,7 +547,11 @@ SEXP attribute_hidden do_nextmethod(SEXP call, SEXP op, SEXP args, SEXP env)
     else if (defenv == R_UnboundValue) defenv = R_GlobalEnv;
 
     /* set up the arglist */
-    s = R_LookupMethod(CAR(cptr->call), env, callenv, defenv);
+    if (TYPEOF(CAR(cptr->call)) == CLOSXP)
+	// e.g., in do.call(function(x) NextMethod('foo'),list())
+	s = CAR(cptr->call);
+    else
+	s = R_LookupMethod(CAR(cptr->call), env, callenv, defenv);
     if (TYPEOF(s) == SYMSXP && s == R_UnboundValue)
 	error(_("no calling generic was found: was a method called directly?"));
     if (TYPEOF(s) != CLOSXP){ /* R_LookupMethod looked for a function */
@@ -844,48 +831,35 @@ SEXP attribute_hidden do_unclass(SEXP call, SEXP op, SEXP args, SEXP env)
     return CAR(args);
 }
 
-static SEXP s_S4inherits;
-static SEXP do_S4inherits(SEXP obj, SEXP what, SEXP which) {
-    SEXP e, val;
-    if(!s_S4inherits)
-      s_S4inherits = install(".S4inherits");
-    PROTECT(e = allocVector(LANGSXP, 4));
-    SETCAR(e, s_S4inherits);
-    val = CDR(e);
-    SETCAR(val, obj);
-    val = CDR(val);
-    SETCAR(val, what);
-    val = CDR(val);
-    SETCAR(val, which);
-    val = eval(e, R_MethodsNamespace);
-    UNPROTECT(1);
-    return val;
-}
 
 
-SEXP attribute_hidden do_inherits(SEXP call, SEXP op, SEXP args, SEXP env)
+/* NOTE: Fast  inherits(x, what)    in ../include/Rinlinedfuns.h
+ * ----        ----------------- */
+/** C API for  R  inherits(x, what, which)
+ *
+ * @param x any R object
+ * @param what character vector
+ * @param which logical: "want vector result" ?
+ *
+ * @return if which is false, logical TRUE or FALSE
+ *	   if which is true, integer vector of length(what) ..
+ */
+SEXP inherits3(SEXP x, SEXP what, SEXP which)
 {
-    SEXP x, klass, what, which, rval = R_NilValue /* -Wall */;
-    int i, j, nwhat, isvec, nclass;
-
-    checkArity(op, args);
-
-    x = CAR(args);
+    SEXP klass, rval = R_NilValue /* -Wall */;
     if(IS_S4_OBJECT(x))
-      return do_S4inherits(x, CADR(args), CADDR(args));
+	PROTECT(klass = R_data_class2(x));
     else
-      PROTECT(klass = R_data_class(x, FALSE));
-    nclass = length(klass);
+	PROTECT(klass = R_data_class(x, FALSE));
+    int nclass = length(klass);
 
-    what = CADR(args);
     if(!isString(what))
 	error(_("'what' must be a character vector"));
-    nwhat = length(what);
+    int j, nwhat = length(what);
 
-    which = CADDR(args);
     if( !isLogical(which) || (length(which) != 1) )
 	error(_("'which' must be a length 1 logical vector"));
-    isvec = asLogical(which);
+    int isvec = asLogical(which);
 
 #ifdef _be_too_picky_
     if(IS_S4_OBJECT(x) && nwhat == 1 && !isvec &&
@@ -897,13 +871,13 @@ SEXP attribute_hidden do_inherits(SEXP call, SEXP op, SEXP args, SEXP env)
 	PROTECT(rval = allocVector(INTSXP, nwhat));
 
     for(j = 0; j < nwhat; j++) {
-	const char *ss = translateChar(STRING_ELT(what, j));
+	const char *ss = translateChar(STRING_ELT(what, j)); int i;
+	if(isvec)
+	    INTEGER(rval)[j] = 0;
 	for(i = 0; i < nclass; i++) {
-	    if(isvec)
-		INTEGER(rval)[j] = 0;
 	    if(!strcmp(translateChar(STRING_ELT(klass, i)), ss)) {
 		if(isvec)
-		   INTEGER(rval)[j] = i+1;
+		    INTEGER(rval)[j] = i+1;
 		else {
 		    UNPROTECT(1);
 		    return mkTrue();
@@ -918,6 +892,15 @@ SEXP attribute_hidden do_inherits(SEXP call, SEXP op, SEXP args, SEXP env)
     }
     UNPROTECT(2);
     return rval;
+}
+
+SEXP attribute_hidden do_inherits(SEXP call, SEXP op, SEXP args, SEXP env)
+{
+    checkArity(op, args);
+
+    return inherits3(/* x = */ CAR(args),
+		     /* what = */ CADR(args),
+		     /* which = */ CADDR(args));
 }
 
 

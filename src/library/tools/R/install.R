@@ -14,7 +14,7 @@
 #  A copy of the GNU General Public License is available at
 #  http://www.r-project.org/Licenses/
 
-#### R based engine for  R CMD INSTALL SHLIB Rdconv Rd2dvi
+#### R based engine for  R CMD INSTALL SHLIB Rprof
 ####
 
 ##' @param args
@@ -45,8 +45,8 @@
     paste0 <- function(...) paste(..., sep="")
 
     MAKE <- Sys.getenv("MAKE")
-    TAR <- shQuote(Sys.getenv("TAR"))
-    GZIP <- Sys.getenv("R_GZIPCMD")
+    TAR <- Sys.getenv("TAR", 'tar') # used on Unix only
+    GZIP <- Sys.getenv("R_GZIPCMD") # ditto
     if (!nzchar(GZIP)) GZIP <- "gzip"
     if (WINDOWS) zip <- "zip"
     rarch <- Sys.getenv("R_ARCH") # unix only
@@ -67,9 +67,10 @@
         ## These might be needed for configure.win and Make{file,vars}.win
         ## Some people have *assumed* that R_HOME uses /
         Sys.setenv(R_HOME = rhome)
-        ## and others have assumed that RHOME is set:
-        Sys.setenv(RHOME = rhome)
-        if (nzchar(rarch)) Sys.setenv(R_ARCH = rarch)
+        if (nzchar(rarch)) {
+            Sys.setenv(R_ARCH = rarch)
+            Sys.setenv(R_ARCH_BIN = rarch)
+        }
     }
 
     Usage <- function() {
@@ -107,6 +108,8 @@
             "      --no-inst",
             "			suppress installation of the specified part of the",
             "			package for testing or other special purposes",
+            "      --no-multiarch	build only the main architecture",
+            "      --libs-only	only install the libs directory",
             "      --data-compress=	none, gzip (default), bzip2 or xz compression",
             "			to be used for lazy-loading of data",
             "      --resave-data	re-save data files as compactly as possible",
@@ -116,10 +119,11 @@
             "			set arguments for the configure scripts (if any)",
             "      --configure-vars=VARS",
             "			set variables for the configure scripts (if any)",
-            "      --libs-only	only install the libs directory",
-            "      --no-multiarch	build only the main architecture",
             "\nand on Windows only",
             "      --auto-zip	select whether to zip data automatically",
+            "      --force-biarch	attempt to build both architectures",
+            "			even if there is a non-empty configure.win",
+            "      --merge-multiarch	bi-arch by merging",
             "",
             "Which of --html or --no-html is the default depends on the build of R:",
             paste("for this one it is ",
@@ -265,14 +269,13 @@
         .Internal(dirchmod(instdir))
         is_first_package <<- FALSE
 
-        if (tar_up) {
+        if (tar_up) { # Unix only
             version <- desc["Version"]
             filename <- paste0(pkg_name, "_", version, "_R_",
                                Sys.getenv("R_PLATFORM"), ".tar")
             filepath <- shQuote(file.path(startdir, filename))
             owd <- setwd(lib)
-            TAR2 <- shQuote(Sys.getenv("TAR"))
-            system(paste(TAR2, "-chf", filepath,
+            system(paste(TAR, "-chf", filepath,
                          paste(curPkg, collapse = " ")))
             system(paste(GZIP, "-9f", filepath))
             if (grepl("darwin", R.version$os)) {
@@ -292,7 +295,7 @@
             setwd(owd)
         }
 
-        if (zip_up) {
+        if (zip_up) { # Windows only
             starsmsg(stars, "MD5 sums")
             .installMD5sums(instdir)
             ZIP <- "zip"                # Windows only
@@ -308,9 +311,10 @@
             message("packaged installation of ",
                     sQuote(pkg_name), " as ", filename)
         }
-
-        message("")  # ensure next starts on a new line
-        starsmsg(stars, "DONE (", pkg_name, ")")
+        if (Sys.getenv("_R_INSTALL_NO_DONE_") != "yes") {
+            message("")  # ensure next starts on a new line, for R CMD check
+            starsmsg(stars, "DONE (", pkg_name, ")")
+        }
 
         curPkg <<- character()
     }
@@ -393,6 +397,14 @@
                 file.copy(files, dest, overwrite = TRUE)
                 ## not clear if this is still necessary, but sh version did so
                 if (!WINDOWS) Sys.chmod(file.path(dest, files), "755")
+		## OS X does not keep debugging symbols in binaries anymore so
+		## optionally we can create dSYMs. This is important since we
+		## will blow away .o files so there is no way to create it later.
+		if (nzchar(Sys.getenv("PKG_MAKE_DSYM")) && length(grep("^darwin", R.version$os))) {
+		    message('generating debug symbols (dSYM)')
+		    dylib <- Sys.glob(paste0(dest, "/*", SHLIB_EXT))
+		    if (length(dylib)) for (file in dylib) system(paste0("dsymutil ", file))
+		}
             }
         }
 
@@ -485,11 +497,14 @@
                 if(!length(.find.package(pkg, quiet = TRUE)))
                     miss <- c(miss, pkg)
             }
-            if (length(miss))
+            if (length(miss) > 1)
                  pkgerrmsg(sprintf("dependencies %s are not available",
                                    paste(sQuote(miss), collapse = ", ")),
                            pkg_name)
-        }
+            else if (length(miss))
+                pkgerrmsg(sprintf("dependency %s is not available",
+                                  sQuote(miss)), pkg_name)
+         }
 
         starsmsg(stars, "installing *source* package ",
                  sQuote(pkg_name), " ...")
@@ -502,9 +517,11 @@
                 if (debug) starsmsg(stars, "backing up earlier installation")
                 if(WINDOWS) {
                     file.copy(instdir, lockdir, recursive = TRUE)
-                    unlink(instdir, recursive = TRUE)
-                } else
+                    if (more_than_libs) unlink(instdir, recursive = TRUE)
+                } else if (more_than_libs)
                     system(paste("mv", instdir, file.path(lockdir, pkg_name)))
+                else
+                    file.copy(instdir, lockdir, recursive = TRUE)
             } else if (more_than_libs) unlink(instdir, recursive = TRUE)
             dir.create(instdir, recursive = TRUE, showWarnings = FALSE)
         }
@@ -603,11 +620,53 @@
                                         paste("-f", shQuote(makefiles), collapse = " ")))
                     if (res == 0) shlib_install(instdir, rarch)
                     else has_error <- TRUE
-                } else {
-                    message("  making DLL ...")
-                    srcs <- dir(pattern = "\\.([cfmCM]|cc|cpp|f90|f95|mm)$")
-                    has_error <- run_shlib(pkg_name, srcs, instdir, rarch)
-                    message("  ... done")
+                } else { ## no src/Makefile.win
+                    srcs <- dir(pattern = "\\.([cfmM]|cc|cpp|f90|f95|mm)$")
+                    ## NB, not R.home("bin")
+                    f  <- dir(file.path(R.home(), "bin"))
+                    archs <- f[f %in% c("i386", "x64")]
+                    one_only <- !multiarch
+                    if(!one_only && file.exists("../configure.win")) {
+                        ## for now, hardcode some exceptions
+                        ## These are packages which have arch-independent
+                        ## code in configure.win
+                        if(!pkg_name %in% c("AnalyzeFMRI", "CORElearn",
+                                            "PearsonDS", "RBGL",
+                                            "RNetCDF","RODBC",
+                                            "RSiena", "Rcpp", "Runuran",
+                                            "cairoDevice", "foreign",
+                                            "fastICA", "glmnet", "gstat",
+                                            "mvabund", "png", "proj4",
+                                            "randtoolbox", "rngWELL",
+                                            "tcltk2"))
+                            one_only <- sum(nchar(readLines("../configure.win"), "bytes")) > 0
+                        if(one_only && !force_biarch)
+                            warning("this package has a non-empty 'configure.win' file,\nso building only the main architecture\n", call. = FALSE, domain=NA)
+                    }
+                    if(force_biarch) one_only <- FALSE
+                    if(one_only || length(archs) < 2L)
+                        has_error <- run_shlib(pkg_name, srcs, instdir, rarch)
+                    else {
+                        setwd(owd)
+                        for(arch in archs) {
+                            message("", domain = NA) # a blank line
+                            starsmsg("***", "arch - ", arch)
+                            ss <- paste("src", arch, sep = "-")
+                            dir.create(ss, showWarnings = FALSE)
+                            file.copy(Sys.glob("src/*"), ss, recursive = TRUE)
+                            setwd(ss)
+                            ra <- paste0("/", arch)
+                            Sys.setenv(R_ARCH = ra)
+                            Sys.setenv(R_ARCH_BIN = ra)
+                            has_error0 <- run_shlib(pkg_name, srcs, instdir, ra)
+                            setwd(owd)
+                            ## allow archs other than the current one to fail.
+                            if (has_error0 && ra == rarch) {
+                                has_error <- TRUE
+                                break
+                            }
+                        }
+                    }
                 }
                 setwd(owd)
             } else { # not WINDOWS
@@ -617,7 +676,11 @@
                     owd <- setwd("src")
                     system_makefile <- file.path(R.home(), paste0("etc", rarch),
                                                  "Makeconf")
-                    makefiles <- c(system_makefile, "Makefile")
+                    site <- file.path(paste(R.home("etc"), rarch, sep=""),
+                                      "Makevars.site")
+                    makefiles <- c(system_makefile,
+                                   if(file.exists(site)) site,
+                                   "Makefile")
                     if (file.exists(f <- path.expand(paste("~/.R/Makevars",
                                                            Sys.getenv("R_PLATFORM"), sep="-"))))
                         makefiles <- c(makefiles, f)
@@ -630,7 +693,7 @@
                     setwd(owd)
                 } else { ## no src/Makefile
                     owd <- setwd("src")
-                    srcs <- dir(pattern = "\\.([cfmCM]|cc|cpp|f90|f95|mm)$")
+                    srcs <- dir(pattern = "\\.([cfmM]|cc|cpp|f90|f95|mm)$")
                     ## This allows Makevars to set OBJECTS or its own targets.
                     allfiles <- if (file.exists("Makevars")) c("Makevars", srcs) else srcs
                     wd2 <- setwd(file.path(R.home("bin"), "exec"))
@@ -646,19 +709,24 @@
                                          substr(rarch, 2, 1000))
                             has_error <- run_shlib(pkg_name, srcs, instdir, rarch)
                         } else {
+                            setwd(owd)
                             for(arch in archs) {
-                                system("rm -f *.o *.so *.sl *.dylib")
                                 if (arch == "R") {
                                     ## top-level, so one arch without subdirs
                                     has_error <- run_shlib(pkg_name, srcs, instdir, "")
                                 } else {
                                     starsmsg("***", "arch - ", arch)
+                                    ss <- paste("src", arch, sep = "-")
+                                    dir.create(ss, showWarnings = FALSE)
+                                    file.copy(Sys.glob("src/*"), ss, recursive = TRUE)
+                                    setwd(ss)
                                     ra <- paste0("/", arch)
                                     ## FIXME: do this lower down
                                     Sys.setenv(R_ARCH = ra)
                                     has_error <- run_shlib(pkg_name, srcs, instdir, ra)
-                                    if (has_error) break
                                     Sys.setenv(R_ARCH = rarch)
+                                    setwd(owd)
+                                    if (has_error) break
                                 }
                             }
                         }
@@ -668,6 +736,22 @@
             }
             if (has_error)
                 pkgerrmsg("compilation failed", pkg_name)
+
+            ## if we have subarchs, update DESCRIPTION
+            fi <- file.info(Sys.glob(file.path(instdir, "libs", "*")))
+            dirs <- basename(row.names(fi[fi$isdir %in% TRUE]))
+            ## avoid DLLs installed by rogue packages
+            if(WINDOWS) dirs <- dirs[dirs %in% c("i386", "x64")]
+            if (length(dirs)) {
+                descfile <- file.path(instdir, "DESCRIPTION")
+                olddesc <- readLines(descfile)
+                olddesc <- grep("^Archs:", olddesc,
+                                invert = TRUE, value = TRUE, useBytes = TRUE)
+                newdesc <- c(olddesc,
+                             paste("Archs:", paste(dirs, collapse=", "))
+                             )
+                writeLines(newdesc, descfile, useBytes = TRUE)
+            }
         }                               # end of src dir
 
 	if (install_R && dir.exists("R")) {
@@ -792,7 +876,7 @@
 	    }
 	}
 
-	if (install_inst && dir.exists("inst")) {
+	if (install_inst && dir.exists("inst") && length(dir("inst"))) {
 	    starsmsg(stars, "inst")
 	    ## FIXME avoid installing .svn etc?
 	    cp_r("inst", instdir)
@@ -902,9 +986,11 @@
         args <- paste(args, collapse=" ")
         args <- strsplit(args,'nextArg', fixed = TRUE)[[1L]][-1L]
     }
+    args0 <- args
 
     startdir <- getwd()
-
+    if (is.null(startdir))
+        stop("current working directory cannot be ascertained")
     lib <- lib0 <- ""
     clean <- FALSE
     preclean <- FALSE
@@ -928,7 +1014,9 @@
     tar_up <- zip_up <- FALSE
     shargs <- character(0)
     multiarch <- TRUE
+    force_biarch <- FALSE
     test_load <- TRUE
+    merge <- FALSE
 
     get_user_libPaths <- FALSE
     data_compress <- TRUE # FALSE (none), TRUE (gzip), 2 (bzip2), 3 (xz)
@@ -954,7 +1042,7 @@
                 R.version[["major"]], ".",  R.version[["minor"]],
                 " (r", R.version[["svn rev"]], ")\n", sep = "")
             cat("",
-                "Copyright (C) 2000-2009 The R Core Development Team.",
+                "Copyright (C) 2000-2010 The R Core Development Team.",
                 "This is free software; see the GNU General Public License version 2",
                 "or later for copying conditions.  There is NO warranty.",
                 sep="\n")
@@ -1003,6 +1091,8 @@
             libs_only <- TRUE
         } else if (a == "--no-multiarch") {
             multiarch <- FALSE
+        } else if (a == "--force-biarch") {
+            force_biarch <- TRUE
         } else if (a == "--maybe-get-user-libPaths") {
             get_user_libPaths <- TRUE
         } else if (a == "--build") {
@@ -1035,6 +1125,9 @@
             install_help <- FALSE
         } else if (a == "--no-test-load") {
             test_load <- FALSE
+        } else if (a == "--merge-multiarch") {
+            if (WINDOWS) merge <- TRUE
+            else warning("--merge-multiarch is Windows-only", call.=FALSE)
         } else if (substr(a, 1, 1) == "-") {
             message("Warning: unknown option ", sQuote(a))
         } else pkgs <- c(pkgs, a)
@@ -1044,6 +1137,46 @@
     tmpdir <- tempfile("R.INSTALL")
     if (!dir.create(tmpdir))
         stop("cannot create temporary directory")
+
+    if (merge && length(pkgs) != 1)
+        stop("ERROR: --merge-multiarch applies only to a single tarball",
+             call.=FALSE)
+
+    if (merge) {
+        if (length(pkgs) != 1 || !.file_test("-f", pkgs))
+            stop("ERROR: --merge-multiarch applies only to a single tarball",
+                 call.=FALSE)
+        f  <- dir(file.path(R.home(), "bin"))
+        archs <- f[f %in% c("i386", "x64")]
+        if (length(archs) < 2)
+            stop("ERROR: --merge-multiarch can only be used on i386/x64 installations",
+                 call.=FALSE)
+        args <- args0[! args0 %in% c("--merge-multiarch", "--build")]
+        cmd <- paste(file.path(R.home(), "bin", "i386", "Rcmd.exe"),
+                     "INSTALL", "--no-multiarch")
+        allargs <-  paste(args, collapse=" ")
+        cmd1 <- paste(cmd, allargs)
+        if (debug) message("about to run ", cmd1, domain = NA)
+        message("\n", "install for i386", "\n", domain=NA)
+        ## this will report '* DONE (foo)' if it works, which
+        ## R CMD check treats as an indication of success.
+        ## so use a backdoor to suppress it.
+        Sys.setenv("_R_INSTALL_NO_DONE_"="yes")
+        res <- system(cmd1)
+        if(res == 0) {
+            cmd <- paste(file.path(R.home(), "bin", "x64", "Rcmd.exe"),
+                         "INSTALL", "--no-multiarch")
+            cmd1 <- paste(cmd, "--libs-only", if (zip_up) "--build", allargs)
+            if (debug) message("about to run ", cmd1, domain = NA)
+            message("\n", "add DLL for x64", "\n", domain=NA)
+            Sys.unsetenv("_R_INSTALL_NO_DONE_")
+            res <- system(cmd1)
+        }
+        if (res) do_exit_on_error()
+        do_cleanup()
+        on.exit()
+        return(invisible())
+    }
 
     ## now unpack tarballs and do some basic checks
     allpkgs <- character()
@@ -1062,8 +1195,8 @@
             of <- dir(tmpdir, full.names = TRUE)
             ## force the use of internal untar unless over-ridden
             ## so e.g. .tar.xz works everywhere
-            TAR <- Sys.getenv("R_INSTALL_TAR", "internal")
-            if (untar(pkg, exdir = tmpdir, tar = TAR))
+            if (untar(pkg, exdir = tmpdir,
+                      tar =  Sys.getenv("R_INSTALL_TAR", "internal")))
                 errmsg("error unpacking tarball")
             ## Now see what we got
             nf <- dir(tmpdir, full.names = TRUE)
@@ -1108,13 +1241,14 @@
     if (!length(allpkgs))
         stop("ERROR: no packages specified", call.=FALSE)
 
+
     if (!nzchar(lib)) {
         lib <- if (get_user_libPaths) { ## need .libPaths()[1L] *after* the site- and user-initialization
 	    system(paste(file.path(R.home("bin"), "Rscript"),
                          "-e 'cat(.libPaths()[1L])'"),
                    intern = TRUE)
         }
-        else .libPaths()[1]
+        else .libPaths()[1L]
         starsmsg(stars, "installing to library ", sQuote(lib))
     } else {
         lib0 <- lib <- path.expand(lib)
@@ -1142,7 +1276,6 @@
              sQuote(lib), call. = FALSE)
 
     if (libs_only) {
-        lock <- FALSE
         tar_up <- FALSE
 	install_R <- FALSE
 	install_data <- FALSE
@@ -1152,7 +1285,8 @@
 	install_help <- FALSE
     }
     more_than_libs <- !libs_only
-    if(!more_than_libs) test_load <- FALSE
+    ## probably desirable everywhere, but we know it works on Windows
+    if(!WINDOWS && !more_than_libs) test_load <- FALSE
 
 
     if (lock) {
@@ -1224,10 +1358,10 @@
     Usage <- function()
         cat("Usage: R CMD SHLIB [options] files | linker options",
             "",
-            "Build a shared library for dynamic loading from the specified source or",
+            "Build a shared object for dynamic loading from the specified source or",
             "object files (which are automagically made from their sources) or",
             "linker options.  If not given via '--output', the name for the shared",
-            "library is determined from the first source or object file.",
+            "object is determined from the first source or object file.",
             "",
             "Options:",
             "  -h, --help		print short help message and exit",
@@ -1255,24 +1389,33 @@
         SHLIB_EXT <- sub(".*= ", "", grep("^SHLIB_EXT", mconf, value = TRUE))
         SHLIB_LIBADD <- sub(".*= ", "", grep("^SHLIB_LIBADD", mconf, value = TRUE))
         MAKE <- Sys.getenv("MAKE")
+        rarch <- Sys.getenv("R_ARCH")
     } else {
         rhome <- chartr("\\", "/", R.home())
         Sys.setenv(R_HOME = rhome)
         SHLIB_EXT <- ".dll"
         SHLIB_LIBADD <- ""
         MAKE <- "make"
-        ## For winshlib.mk to pick up Makeconf
-        rarch <- .Platform$r_arch
-        if (nzchar(rarch)) Sys.setenv(R_ARCH = p0("/", rarch))
+        ## Formerly for winshlib.mk to pick up Makeconf
+        rarch <- Sys.getenv("R_ARCH", NA)
+        if(is.na(rarch)) {
+            if (nzchar(.Platform$r_arch)) {
+                rarch <- p0("/", .Platform$r_arch)
+                Sys.setenv(R_ARCH = rarch)
+            } else rarch <- ""
+        }
     }
 
     OBJ_EXT <- ".o" # all currrent compilers, but not some on Windows
 
     objs <- character()
     shlib <- ""
+    site <- file.path(p0(R.home("etc"), rarch), "Makevars.site")
     makefiles <-
-        file.path(R.home("share"), "make",
-                  if (WINDOWS) "winshlib.mk" else "shlib.mk")
+        c(file.path(p0(R.home("etc"), rarch), "Makeconf"),
+          if(file.exists(site)) site,
+          file.path(R.home("share"), "make",
+                    if (WINDOWS) "winshlib.mk" else "shlib.mk"))
     shlib_libadd <- if (nzchar(SHLIB_LIBADD)) SHLIB_LIBADD else character()
     with_cxx <- FALSE
     with_f77 <- FALSE
@@ -1291,7 +1434,7 @@
             return(0L)
         }
         else if (a %in% c("-v", "--version")) {
-            cat("R shared library builder: ",
+            cat("R shared object builder: ",
                 R.version[["major"]], ".",  R.version[["minor"]],
                 " (r", R.version[["svn rev"]], ")\n", sep = "")
             cat("",
@@ -1319,7 +1462,7 @@
             ext <- sub(p0(base, "."),  "", a, fixed = TRUE)
             nobj <- ""
             if (nzchar(ext)) {
-                if (ext %in% c("cc", "cpp", "C")) {
+                if (ext %in% c("cc", "cpp")) {
                     with_cxx <- TRUE
                     nobj <- base
                 } else if (ext == "m") {
@@ -1353,7 +1496,7 @@
     if (length(objs)) objs <- p0(objs, OBJ_EXT, collapse=" ")
 
     if (WINDOWS) {
-        if (rarch == "x64" &&
+        if (rarch == "/x64" &&
             file.exists(f <- path.expand("~/.R/Makevars.win64")))
             makefiles <- c(makefiles, f)
         else if (file.exists(f <- path.expand("~/.R/Makevars.win")))
@@ -1362,7 +1505,8 @@
             makefiles <- c(makefiles, f)
     } else {
         if (file.exists(f <- path.expand(paste("~/.R/Makevars",
-                                               Sys.getenv("R_PLATFORM"), sep="-"))))
+                                               Sys.getenv("R_PLATFORM"),
+                                               sep="-"))))
             makefiles <- c(makefiles, f)
         else if (file.exists(f <- path.expand("~/.R/Makevars")))
             makefiles <- c(makefiles, f)
@@ -1399,10 +1543,9 @@
         makeargs <- c(makeargs,
                       p0("SHLIB_LIBADD='", p1(shlib_libadd), "'"))
 
-    ## removed in 2.10.0
-    ## if (WINDOWS) makeargs <- c(makeargs, "all")
     if (WINDOWS && debug) makeargs <- c(makeargs, "DEBUG=T")
-    if (WINDOWS && rarch == "x64") makeargs <- c(makeargs, "WIN=64")
+    ## TCLBIN is needed for tkrplot and tcltk2
+    if (WINDOWS && rarch == "/x64") makeargs <- c(makeargs, "WIN=64 TCLBIN=64")
 
     cmd <- paste(MAKE, p1(paste("-f", makefiles)), p1(makeargs), p1(makeobjs))
     if (dry_run) {
@@ -1417,269 +1560,6 @@
     res # probably a multiple of 256
 }
 
-## base packages do not have versions and this is called on
-## DESCRIPTION.in
-## encodings are tricky: this may be done in a foreign encoding
-## (e.g., Latin-1 in UTF-8)
-.DESCRIPTION_to_latex <- function(descfile, outfile, version = "Unknown")
-{
-    desc <- read.dcf(descfile)[1, ]
-    if (is.character(outfile)) {
-        out <- file(outfile, "a")
-        on.exit(close(out))
-    } else out <- outfile
-    cat("\\begin{description}", "\\raggedright{}", sep="\n", file=out)
-    fields <- names(desc)
-    fields <- fields[! fields %in% c("Package", "Packaged", "Built")]
-    if ("Encoding" %in% fields)
-        cat("\\inputencoding{", latex_canonical_encoding(desc["Encoding"]),
-            "}\n", sep = "", file = out)
-    for (f in fields) {
-        text <- desc[f]
-        ## munge 'text' appropriately (\\, {, }, "...")
-        ## not sure why just these: copied from Rd2dvi, then added to.
-        ## KH: the LaTeX special characters are
-        ##   # $ % & _ ^ ~ { } \
-        ## \Rd@AsIs@dospecials in Rd.sty handles the first seven, so
-        ## braces and backslashes need explicit handling.
-        text <- gsub('"([^"]*)"', "\\`\\`\\1''", text, useBytes = TRUE)
-        text <- gsub("\\", "\\textbackslash{}", text,
-                     fixed = TRUE, useBytes = TRUE)
-        text <- gsub("([{}$#_])", "\\\\\\1", text, useBytes = TRUE)
-        text <- gsub("@VERSION@", version, text, fixed = TRUE, useBytes = TRUE)
-        ## text can have paras, and digest/DESCRIPTION does.
-        ## \AsIs is per-para.
-        text <- strsplit(text, "\n\n", fixed = TRUE, useBytes = TRUE)[[1L]]
-        Encoding(text) <- "unknown"
-        wrap <- paste("\\AsIs{", text, "}", sep = "")
-        if(f %in% c("Author", "Maintainer"))
-            wrap <- gsub("<([^@]+)@([^>]+)>", "\\\\email{\\1@\\2}",
-                         wrap, useBytes = TRUE)
-        if(f == "URL")
-            wrap <- gsub("(http://|ftp://)([^[:space:]]+)",
-                         "\\\\url{\\1\\2}", wrap, useBytes = TRUE)
-        ## Not entirely safe: in theory, tags could contain \ ~ ^.
-        cat("\\item[", gsub("([#$%&_{}])", "\\\\\\1", f),
-            "]", paste(wrap, collapse = "\n\n"),  "\n", sep = "", file=out)
-    }
-    cat("\\end{description}\n", file = out)
-}
-
-## workhorse of .Rd2dvi
-.Rdfiles2tex <-
-    function(files, outfile, encoding = "unknown", outputEncoding = "UTF-8",
-             append = FALSE, extraDirs = NULL, internals = FALSE,
-             silent = FALSE)
-{
-    if (file_test("-d", files))
-        .pkg2tex(files, outfile, encoding = encoding, append = append,
-                 asChapter = FALSE, extraDirs = extraDirs,
-                 internals = internals, silent = silent)
-    else {
-        files <- strsplit(files, "[[:space:]]+")[[1L]]
-        latexdir <- tempfile("ltx")
-        dir.create(latexdir)
-        if (!silent) message("Converting Rd files to LaTeX ...")
-        if (is.character(outfile)) {
-            outfile <- file(outfile, if (append) "at" else "wt")
-            on.exit(close(outfile))
-        }
-        latexEncodings <- character()
-        for(f in files) {
-            cat("  ", basename(f), "\n", sep="")
-            if (!internals) {
-                lines <- readLines(f)
-                if (any(grepl("\\\\keyword\\{\\s*internal\\s*\\}",
-                         lines, perl = TRUE))) next
-            }
-            out <-  file.path(latexdir, sub("\\.[Rr]d$", ".tex", basename(f)))
-            ## people have file names with quotes in them.
-            latexEncodings <- c(latexEncodings,
-                                attr(Rd2latex(f, out, encoding=encoding,
-                                              outputEncoding=outputEncoding),
-                                     "latexEncoding"))
-            writeLines(readLines(out), outfile)
-        }
-        unique(latexEncodings[!is.na(latexEncodings)])
-    }
-}
-
-## used for the refman (from doc/manual/Makefile*)
-## and for directories from .Rdfiles2tex  (with asChapter = FALSE)
-.pkg2tex <-
-    function(pkgdir, outfile, internals = FALSE, asChapter = TRUE,
-             encoding = "unknown", outputEncoding = "UTF-8",
-             extraDirs = NULL, append = FALSE, silent = FALSE)
-{
-    ## sort order for topics, a little tricky
-    re <- function(x) x[order(toupper(x), x)]
-
-    ## given an installed package with a latex dir or a source package
-    ## with a man dir, make a single file for use in the refman.
-
-    options(warn = 1)
-    if (missing(outfile))
-        outfile <- paste(basename(pkgdir), "-pkg.tex", sep="")
-
-    latexEncodings <- character() # Record any encodings used in the output
-
-    ## First check for a latex dir.
-    ## Second guess is this is a >= 2.10.0 package with stored .rds files.
-    ## If it does not exist, guess this is a source package.
-    latexdir <- file.path(pkgdir, "latex")
-    if (!file_test("-d", latexdir)) {
-        if (file_test("-d", file.path(pkgdir, "help"))) {
-            ## So convert it
-            latexdir <- tempfile("ltx")
-            dir.create(latexdir)
-            if (!silent) message("Converting parsed Rd's to LaTeX ",
-                                 appendLF = FALSE, domain = NA)
-            Rd <- Rd_db(basename(pkgdir), lib.loc = dirname(pkgdir))
-            if (!length(Rd)) {
-                if (is.character(outfile))
-                    close(file(outfile, if (append) "at" else "wt"))
-                return(invisible(character()))
-            }
-            cnt <- 0L
-            for(f in names(Rd)) {
-                bf <- basename(f)
-                cnt <- cnt + 1L
-                if (!silent && cnt %% 10L == 0L)
-                    message(".", appendLF=FALSE, domain=NA)
-                out <-  sub("[Rr]d$", "tex", basename(f))
-                latexEncodings <- c(latexEncodings,
-                                    attr(Rd2latex(Rd[[f]],
-                                                  file.path(latexdir, out),
-                                                  encoding = encoding,
-                                                  outputEncoding = outputEncoding,
-                                                  defines = NULL,
-                                                  writeEncoding = !asChapter),
-                                         "latexEncoding"))
-            }
-            if (!silent) message(domain = NA)
-        } else {
-            files <- c(Sys.glob(file.path(pkgdir, "*.Rd")),
-                       Sys.glob(file.path(pkgdir, "*.rd")))
-            if (!length(files)) {
-                ## is this a source package?  That has man/*.Rd files.
-                files <- c(Sys.glob(file.path(pkgdir, "man", "*.Rd")),
-                           Sys.glob(file.path(pkgdir, "man", "*.rd")))
-                if (!length(files))
-                    stop("this package does not have either a ", sQuote("latex"),
-                         " or a (source) ", sQuote("man"), " directory",
-                         domain = NA)
-                if (is.null(extraDirs)) extraDirs <- .Platform$OS.type
-                for(e in extraDirs)
-                    files <- c(files,
-                               Sys.glob(file.path(pkgdir, "man", e, "*.Rd")),
-                               Sys.glob(file.path(pkgdir, "man", e, "*.rd")))
-            }
-            latexdir <- tempfile("ltx")
-            dir.create(latexdir)
-            message("Converting Rd files to LaTeX ...")
-            for(f in files) {
-                cat("  ", basename(f), "\n", sep="")
-                out <-  sub("\\.[Rr]d$", ".tex", basename(f))
-                latexEncodings <-
-                    c(latexEncodings,
-                      attr(Rd2latex(f, file.path(latexdir, out),
-                                    encoding = encoding,
-                                    outputEncoding = outputEncoding),
-                           "latexEncoding"))
-            }
-        }
-    }
-    ## they might be zipped up
-    if (file.exists(f <- file.path(latexdir, "Rhelp.zip"))) {
-        dir.create(newdir <- tempfile("latex"))
-        unzip(f, exdir = newdir)
-        ## res <- system(paste("unzip -q", f, "-d", newdir))
-        ## if (res) stop("unzipping latex files failed")
-        latexdir <- newdir
-    }
-    ## There are some restrictions, but the former "[[:alnum:]]+\\.tex$" was
-    ## too strict.
-    files <- dir(latexdir, pattern = "\\.tex$", full.names = TRUE)
-    if (!length(files))
-        stop("no validly-named files in the ", sQuote("latex"), " directory",
-             domain = NA)
-
-    if (is.character(outfile)) {
-        outcon <- file(outfile, if (append) "at" else "wt")
-        on.exit(close(outcon))
-    } else outcon <- outfile
-
-    if (asChapter)
-        cat("\n\\chapter{The \\texttt{", basename(pkgdir), "} package}\n",
-            sep = "", file = outcon)
-    topics <- rep.int("", length(files)); names(topics) <- files
-    scanForEncoding <- !length(latexEncodings)
-    for (f in files) {
-        lines <- readLines(f)  # This reads as "unknown", no re-encoding done
-        hd <- grep("^\\\\HeaderA", lines, value = TRUE,
-                   perl = TRUE, useBytes = TRUE)
-        if (!length(hd)) {
-            warning("file ", sQuote(f), " lacks a header: skipping",
-                    domain = NA)
-            next
-        }
-        this <- sub("\\\\HeaderA\\{\\s*([^}]*)\\}.*", "\\1", hd[1L], perl = TRUE)
-        if (!internals &&
-           any(grepl("\\\\keyword\\{\\s*internal\\s*\\}", lines, perl = TRUE)))
-            next
-        if (scanForEncoding) {
-	    enc <- lines[grepl('^\\\\inputencoding', lines, perl = TRUE)]
-	    latexEncodings <- c(latexEncodings,
-	                        sub("^\\\\inputencoding\\{(.*)\\}", "\\1", enc))
-	}
-        topics[f] <- this
-    }
-
-    topics <- topics[nzchar(topics)]
-    summ <- grep("-package$", topics, perl = TRUE)
-    topics <- if (length(summ)) c(topics[summ], re(topics[-summ])) else re(topics)
-    for (f in names(topics)) writeLines(readLines(f), outcon)
-
-    if (asChapter)
-        cat("\\clearpage\n", file = outcon)
-
-    invisible(latexEncodings)
-}
-
-## replacement for tools/Rdnewer.pl
-.Rdnewer <- function(dir, file)
-    q("no", status = ..Rdnewer(dir, file), runLast = FALSE)
-
-..Rdnewer <- function(dir, file, OS = .Platform$OS.type)
-{
-    ## Test whether any Rd file in the 'man' and 'man/$OS'
-    ## subdirectories of directory DIR is newer than a given FILE.
-    ## Return 0 if such a file is found (i.e., in the case of
-    ## 'success'), and 1 otherwise, so that the return value can be used
-    ## for shell 'if' tests.
-
-    ## <NOTE>
-    ## For now only used for the R sources (/doc/manual/Makefile.in)
-    ## hence no need to also look for Rd files with '.rd' extension.
-    ## </NOTE>
-
-    if (!file.exists(file)) return(0L)
-    age <- file.info(file)$mtime
-
-    if (any(file.info(c(Sys.glob(file.path(dir, "man", "*.Rd")),
-                        Sys.glob(file.path(dir, "man", "*.rd")))
-                      )$mtime > age))
-        return(0L)
-
-    if (isTRUE(file.info(file.path(dir, OS))$isdir)) {
-        if (any(file.info(c(Sys.glob(file.path(dir, "man", OS, "*.Rd")),
-                            Sys.glob(file.path(dir, "man", OS, "*.rd")))
-                          )$mtime > age))
-            return(0L)
-    }
-
-    1L
-}
 
 ## called for base packages from src/Makefile[.win] and from
 ## .install.packages in this file.
@@ -2042,252 +1922,6 @@ function(name="", version = "0.0")
                  '        VALUE "Translation", 0x409, 1252',
                  '    END',
                  'END'))
-}
-
-### * .Rdconv
-
-## replacement R code for Perl-based R CMD Rdconv
-
-.Rdconv <- function(args = NULL)
-{
-    Usage <- function() {
-        cat("Usage: R CMD Rdconv [options] FILE",
-            "",
-            "Convert R documentation in FILE to other formats such as plain text,",
-            "HTML or LaTeX.",
-            "",
-            "Options:",
-            "  -h, --help		print short help message and exit",
-            "  -v, --version		print version info and exit",
-            "  -t, --type=TYPE	convert to format TYPE",
-            "  --encoding=enc        use 'enc' as the output encoding",
-            "  --package=pkg         use 'pkg' as the package name",
-            "  -o, --output=OUT	use 'OUT' as the output file",
-            "      --os=NAME		assume OS 'NAME' (unix or windows)",
-            "      --OS=NAME		the same as '--os'",
-            "",
-            "Possible format specifications are 'txt' (plain text), 'html', 'latex',",
-            "and 'example' (extract R code in the examples).",
-            "",
-            "The default is to send output to stdout, which is also given by '-o -'.",
-            "Using '-o \"\"' will choose an output filename by removing a '.Rd'",
-            "extension from FILE and adding a suitable extension.",
-            "",
-            "Report bugs to <r-bugs@r-project.org>.", sep = "\n")
-    }
-
-    options(showErrorCalls = FALSE, warn = 1)
-    files <- character(0L)
-    type <- "unknown"
-    enc <- ""
-    pkg <- ""
-    out <- NULL
-    os <- ""
-
-    if (is.null(args)) {
-        args <- commandArgs(TRUE)
-        ## it seems that splits on spaces, so try harder.
-        args <- paste(args, collapse=" ")
-        args <- strsplit(args,'nextArg', fixed = TRUE)[[1L]][-1L]
-    }
-
-    while(length(args)) {
-        a <- args[1L]
-        if (a %in% c("-h", "--help")) {
-            Usage()
-            q("no", runLast = FALSE)
-        }
-        else if (a %in% c("-v", "--version")) {
-            cat("Rdconv: ",
-                R.version[["major"]], ".",  R.version[["minor"]],
-                " (r", R.version[["svn rev"]], ")\n", sep = "")
-            cat("",
-                "Copyright (C) 1997-2009 The R Core Development Team.",
-                "This is free software; see the GNU General Public License version 2",
-                "or later for copying conditions.  There is NO warranty.",
-                sep="\n")
-            q("no", runLast = FALSE)
-        } else if (a == "-t") {
-            if (length(args) >= 2L) {type <- args[2L]; args <- args[-1L]}
-            else stop("-t option without value", call. = FALSE)
-        } else if (substr(a, 1, 7) == "--type=") {
-            type <- substr(a, 8, 1000)
-        } else if (substr(a, 1, 10) == "--encoding=") {
-            enc <- substr(a, 11, 1000)
-        } else if (substr(a, 1, 10) == "--package=") {
-            pkg <- substr(a, 11, 1000)
-        } else if (a == "-o") {
-            if (length(args) >= 2L) {out <- args[2L]; args <- args[-1L]}
-            else stop("-o option without value", call. = FALSE)
-        } else if (substr(a, 1, 9) == "--output=") {
-            out <- substr(a, 10, 1000)
-        } else if (substr(a, 1, 5) %in% c("--os=", "--OS=")) {
-            os <- substr(a, 6, 1000)
-        } else if (substr(a, 1, 1) == "-") {
-            message("Warning: unknown option ", sQuote(a))
-        } else files <- c(files, a)
-        args <- args[-1L]
-    }
-    if (length(files) != 1L)
-        stop("exactly one Rd file must be specified", call. = FALSE)
-    if (is.character(out) && !nzchar(out)) {
-        ## choose 'out' from filename
-        bf <- sub("\\.[Rr]d$", "", file)
-        exts <- c(txt=".txt", html=".html", latex=".tex", exmaple=".R")
-        out <- paste(bf,  exts[type], sep = "")
-    } else if (is.null(out)) out <- ""
-    if (!nzchar(os)) os <- .Platform$OS.type
-    switch(type,
-           "txt" = {
-               Rd2txt(files, out, package=pkg, defines=os,
-                      outputEncoding = enc)
-           },
-           "html" = {
-               if (!nzchar(enc)) enc <- "UTF-8"
-               Rd2HTML(files, out, package = pkg, defines = os,
-                       outputEncoding = enc, no_links = TRUE)
-           },
-           "latex" = {
-               if (!nzchar(enc)) enc <- "UTF-8"
-               Rd2latex(files, out, defines = os,
-                        outputEncoding = enc)
-           },
-           "example" = {
-               if (!nzchar(enc)) enc <- "UTF-8"
-               Rd2ex(files, out, defines = os, outputEncoding = enc)
-           },
-           "unknown" = stop("no 'type' specified", call. = FALSE),
-           stop("'type' must be one of 'txt', 'html', 'latex' or 'example'",
-                call. = FALSE)
-           )
-    invisible()
-}
-
-### * .Rd2dvi
-
-.Rd2dvi <-
-function(pkgdir, outfile, title, batch = FALSE,
-         description = TRUE, only_meta = FALSE,
-         enc = "unknown", outputEncoding = "UTF-8", files_or_dir, OSdir,
-         internals = "no", index = "true")
-{
-
-    ## %in% and others cause problems for some page layouts.
-    if (basename(pkgdir) == "base") index <- "false"
-    ## Write directly to the final location.  Encodings may mean we need
-    ## to make edits, but for most files one pass should be enough.
-    out <- file(outfile, "wt")
-    if (!nzchar(enc)) enc <- "unknown"
-    description <- description == "true"
-    only_meta <- only_meta == "true"
-    internals <- internals != "no"
-    index <- index != "false"
-
-    desc <- NULL
-    if (file.exists(f <- file.path(pkgdir, "DESCRIPTION"))) {
-        desc <- read.dcf(f)[1,]
-        if (enc == "unknown") {
-            pkg_enc <- desc["Encoding"]
-            if (!is.na(pkg_enc)) {
-            	enc <- pkg_enc
-            	outputEncoding <- pkg_enc
-            }
-        }
-    }
-
-    ## Rd2.tex part 1: header
-    if (batch == "true") writeLines("\\nonstopmode{}", out)
-    cat("\\documentclass[", Sys.getenv("R_PAPERSIZE"), "paper]{book}\n",
-        "\\usepackage[", Sys.getenv("R_RD4DVI", "ae"), "]{Rd}\n",
-        sep = "", file = out)
-    if (index) writeLines("\\usepackage{makeidx}", out)
-    ## this needs to be canonical, e.g. 'utf8'
-    setEncoding <- paste("\\usepackage[", latex_canonical_encoding(outputEncoding), "]{inputenc} % @SET ENCODING@", sep="")
-    writeLines(c(setEncoding,
-                 "\\makeindex{}",
-                 "\\begin{document}"), out)
-    if (!nzchar(title)) {
-        if (is.character(desc))
-            title <- paste("Package `", desc["Package"], "'", sep = "")
-        else if (file.exists(f <- file.path(pkgdir, "DESCRIPTION.in"))) {
-            desc <- read.dcf(f)[1,]
-            title <- paste("Package `", desc["Package"], "'", sep = "")
-        } else {
-            if (file_test("-d", pkgdir)) {
-                subj <- paste("all in \\file{", pkgdir, "}", sep ="")
-            } else {
-                files <- strsplit(files_or_dir, "[[:space:]]+")[[1L]]
-                subj1 <- if (length(files) > 1L) " etc." else ""
-                subj <- paste("\\file{", pkgdir, "}", subj1, sep = "")
-            }
-            subj <- gsub("[_$]", "\\\\1", subj)
-            title <- paste("\\R{} documentation}} \\par\\bigskip{{\\Large of", subj)
-        }
-    }
-    cat("\\chapter*{}\n",
-        "\\begin{center}\n",
-        "{\\textbf{\\huge ", title, "}}\n",
-        "\\par\\bigskip{\\large \\today}\n",
-        "\\end{center}\n", sep = "", file = out)
-    if (description && file.exists(f <- file.path(pkgdir, "DESCRIPTION")))
-        .DESCRIPTION_to_latex(f, out)
-    ## running on the sources of a base package will have DESCRIPTION.in,
-    ## only.
-    if (description &&
-        file.exists(f <- file.path(pkgdir, "DESCRIPTION.in"))) {
-        version <- readLines(file.path(pkgdir, "../../../VERSION"))
-        .DESCRIPTION_to_latex(file.path(pkgdir, "DESCRIPTION.in"),
-                              out, version)
-    }
-
-    ## Rd2.tex part 2: body
-    toc <- if (file_test("-d", files_or_dir)) {
-        "\\Rdcontents{\\R{} topics documented:}"
-    } else ""
-
-    latexEncodings <- character(0)
-    ## if this looks like a package with no man pages, skip body
-    if (file.exists(file.path(pkgdir, "DESCRIPTION")) &&
-        !(file_test("-d", file.path(pkgdir, "man")) ||
-          file_test("-d", file.path(pkgdir, "help")) ||
-          file_test("-d", file.path(pkgdir, "latex")))) only_meta <- TRUE
-    if (!only_meta) {
-        if (nzchar(toc)) writeLines(toc, out)
-        latexEncodings <-
-            .Rdfiles2tex(files_or_dir, out, encoding = enc, append = TRUE,
-                         extraDirs = OSdir, internals = internals,
-                         silent = (batch == "true"))
-    }
-
-    ## Rd2.tex part 3: footer
-    if (index) writeLines("\\printindex{}", out)
-    writeLines("\\end{document}", out)
-    close(out)
-
-    ## Fix up encodings
-    ## FIXME cyrillic probably only works with times, not ae.
-    latexEncodings <- unique(latexEncodings)
-    latexEncodings <- latexEncodings[!is.na(latexEncodings)]
-    cyrillic <- if (nzchar(Sys.getenv("_R_CYRILLIC_TEX_"))) "utf8" %in% latexEncodings else FALSE
-    latex_outputEncoding <- latex_canonical_encoding(outputEncoding)
-    encs <- latexEncodings[latexEncodings != latex_outputEncoding]
-    if (length(encs) || cyrillic) {
-        lines <- readLines(outfile)
-	encs <- paste(encs, latex_outputEncoding, collapse=",", sep=",")
-
-	if (!cyrillic) {
-	    lines[lines == setEncoding] <-
-		paste("\\usepackage[", encs, "]{inputenc}", sep = "")
-	} else {
-	    lines[lines == setEncoding] <-
-		paste(
-"\\usepackage[", encs, "]{inputenc}
-\\IfFileExists{t2aenc.def}{\\usepackage[T2A]{fontenc}}{}", sep = "")
-	}
-	writeLines(lines, outfile)
-    }
-
-    invisible(NULL)
 }
 
 

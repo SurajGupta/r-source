@@ -1,6 +1,6 @@
 % File src/library/utils/man/unix/COMPILE.Rd
 % Part of the R package, http://www.R-project.org
-% Copyright 1995-2007 R Core Development Team
+% Copyright 1995-2010 R Core Development Team
 % Distributed under GPL 2 or later
 
 \name{COMPILE}
@@ -8,7 +8,7 @@
 \title{Compile Files for Use with R}
 \description{
   Compile given source files so that they can subsequently be collected
-  into a shared library using \command{R CMD SHLIB} and be loaded into R
+  into a shared object using \command{R CMD SHLIB} and be loaded into R
   using \code{dyn.load()}.
 }
 \usage{
@@ -18,8 +18,9 @@
   \item{srcfiles}{A list of the names of source files to be compiled.
     Currently, C, C++, Objective C, Objective C++ and FORTRAN are
     supported; the corresponding files should have the extensions
-    \file{.c}, \file{.cc} (or \file{.cpp} or \file{.C}), \file{.m},
-    \file{.mm} (or \file{.M}) and \file{.f}, respectively.}
+    \file{.c}, \file{.cc} (or \file{.cpp}), \file{.m},
+    \file{.mm} (or \file{.M}), \file{.f} and \file{.f90} or \file{.f95},
+    respectively.}
   \item{options}{A list of compile-relevant settings, such as special
     values for \code{CFLAGS} or \code{FFLAGS}, or for obtaining
     information about usage and version of the utility.}

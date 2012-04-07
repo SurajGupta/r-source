@@ -1,6 +1,6 @@
 % File src/library/tools/man/testInstalledPackage.Rd
 % Part of the R package, http://www.R-project.org
-% Copyright 2009 R Core Development Team
+% Copyright 2009-10 R Core Development Team
 % Distributed under GPL 2 or later
 
 \name{testInstalledPackage}
@@ -14,11 +14,13 @@
 }
 \usage{
 testInstalledPackage(pkg, lib.loc = NULL, outDir = ".",
-                     types = c("examples", "tests", "vignettes"))
+                     types = c("examples", "tests", "vignettes"),
+                     srcdir = NULL)
 
 testInstalledPackages(outDir = ".", errorsAreFatal = TRUE,
                       scope = c("both", "base", "recommended"),
-                      types = c("examples", "tests", "vignettes"))
+                      types = c("examples", "tests", "vignettes"),
+                      srcdir = NULL)
 
 testInstalledBasic(scope = c("basic", "devel", "both"))
 }
@@ -31,6 +33,7 @@ testInstalledBasic(scope = c("basic", "devel", "both"))
   \item{types}{type(s) of tests to be done.}
   \item{errorsAreFatal}{logical: should testing terminate at the first
     error?}
+  \item{srcdir}{Optional directory to look for \code{.save} files.}
   \item{scope}{Which set(s) should be tested?}
 }
 \details{
@@ -46,7 +49,10 @@ testInstalledBasic(scope = c("basic", "devel", "both"))
 
   \code{testInstalledBasic} runs the basic tests, if installed.  This
   should be run with \code{LC_COLLATE=C} set: the function tries to set
-  this by it may not work on all OSes.
+  this by it may not work on all OSes.  For non-English locales it may
+  be desirable to set environment variables \env{LANGUAGE} to \samp{en}
+  and \env{LC_TIME} to \samp{C} to reduce the number of differences from
+  reference results.
   
 #ifdef unix
   The package-specific tests for the base and recommended packages are
@@ -55,8 +61,7 @@ testInstalledBasic(scope = c("basic", "devel", "both"))
 #endif
 #ifdef windows
   The package-specific tests for the base and recommended packages are
-  an optional part of the install: for testing package \pkg{tools} you
-  will also need the help page sources installed (also optional).
+  an optional part of the install.
   Currently testing requires a Unix-like \code{diff} for a full report
   if more than simple differences are found.
 #endif

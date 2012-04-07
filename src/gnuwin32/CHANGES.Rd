@@ -1,0 +1,361 @@
+\newcommand{\PR}{\Sexpr[results=rd]{tools:::Rd_expr_PR(#1)}}
+
+\name{CHANGES}
+\title{Windows-specific changes to R}
+\encoding{UTF-8}
+\section{CHANGES IN R VERSION 2.12.0}{
+  \subsection{NEW FEATURES}{
+    \itemize{
+      \item A sub-architecture is used for 32-bit (i386) as well as
+       64-bit (x64) builds.  32-bit packages containing compiled code
+       need to re-installed for this release (64-bit packages built
+       for 2.11.x will most likely still work).
+      
+       Architecture-specific files (such as \file{Rgui.exe} and
+       \file{Rscript.exe}) are now in \file{R_HOME/bin/i386} or
+       \file{R_HOME/bin/x64}.
+      
+       Because many people expect it, there is an executable
+       \file{R_HOME/bin/R.exe}, which accepts \option{--arch} and
+       launches either \file{R_HOME/bin/i386/R.exe} or
+       \file{R_HOME/bin/x64/R.exe}, and analogously for
+       \file{Rscript.exe}.  If not specified by their argument
+       \option{--arch}, these check the environment variable
+       \env{R_ARCH} for the architecture to use.
+        
+      \item The \command{Rgui} console now has an optional blinking
+        caret (cursor) to assist screen readers for the visually
+        impaired.
+        
+      \item \code{normalizePath()} now signals a warning instead of an
+        error when the input path does not exist.  It attempts partial
+        normalization, or if that fails, returns the original input.
+      
+      \item All the \command{Rcmd} sub-commands except \code{config} and
+       \code{Sd2d} are now handled internally rather by shell scripts.
+      
+      \item \command{Rcmd} has a new sub-command \command{texify} to run
+       MiKTeX's \file{texify.exe} with arguments to find files such as
+       \file{Sweave.sty}.  See the examples in \code{?Sweave}.
+
+       \item \code{system(intern = FALSE)} now returns \code{127} (the
+       same as Unix-alikes) rather than \code{-1} if the command cannot
+       be run, and (like Unix-alikes) no longer gives a warning.
+
+       \item \command{Rscript -e} and similar use a temporary file, and
+       now work harder to ensure that filename is not the same as some
+       other simultaneous \R process.
+    }
+  }
+  \subsection{INSTALLATION}{
+    \itemize{
+      \item The preferred toolchain for 32-bit builds (including
+       packages) is now based on \command{gcc 4.5.0}: see the \sQuote{R
+       Installation and Administration Manual}.
+      
+      \item It is now possible to build \R and the standard installer
+        without Perl: only maintainer-mode tasks now need Perl.
+    }
+  }
+  \subsection{64-bit NEWS}{
+    \itemize{
+      \item The 32- and 64-bit distributions have been merged:
+      
+        There is a combined installer (called
+        \file{R-<version>-win.exe}).  When used under 32-bit Windows
+        this works as before and installs 32-bit \R.  When used under
+        64-bit Windows there are options to install either or both of
+        32- and 64-bit \R: the default is to install both.
+      
+        The default package type is \code{"win.binary"} on both 32- and
+        64-bit builds: a single repository contains binary packages for
+        both architectures.  This is in place for CRAN, CRANextras and
+        BioC: \code{type = "win64.binary"} can still be used for any
+        repositories which follow the \R 2.11.x convention.  With the
+        default filters (see \code{?available.packages}) packages will
+        only be offered if they are available for the current
+        architecture.
+
+	The default personal library, e.g. \file{~/R/win-library/2.12}
+	is now the same for both 32- and 64-bit \R.
+	
+      \item The recommended 64-bit toolchain has been changed to one
+      that does not add leading underscores. See
+      \url{http://www.murdoch-sutherland.com/Rtools/} or
+      \url{http://www.stats.ox.ac.uk/pub/Rtools/}.  Any static or import
+      libraries for external software used in installing packages will
+      need to be re-compiled for this toolchain, but the use of DLLs is
+      unaffected.
+
+      \item For those building \R from the sources, the 64-bit
+       \code{Tcl} binary distribution for 2.12.x is in file
+       \file{R64a_Tcl_8-5-8.zip} and contains e.g. directory
+       \file{Tcl/bin64} and not \file{Tcl/bin}.
+    }
+  }
+  \subsection{PACKAGE INSTALLATION}{
+    \itemize{
+      \item The deprecated environment variable \env{RHOME} is no longer
+      set when a package is installed: use \env{R_HOME} instead (and
+      depend on \code{R (>= 2.9)} ).
+      
+      \item Package installation, including \file{configure.win}
+       scripts, can use \code{$\{R_HOME\}/bin$\{R_ARCH_BIN\}} as a
+       portable way to find the binaries such as \file{Rscript.exe}.
+    }
+  }
+  \subsection{BUG FIXES}{
+    \itemize{
+      \item \command{R.exe} when used in place of \command{Rterm.exe}
+      set the environment variables set by \command{R CMD}.  Conversely,
+      \command{R CMD BATCH} did not.
+    }
+  }
+}
+
+\section{CHANGES IN R VERSION 2.11.1 patched}{
+  \subsection{BUG FIXES}{
+    \itemize{
+      \item \code{file.rename()} now waits for the rename to complete
+      before returning, so that operations on the new filename will
+      not fail.
+      
+      \item \code{Sys.info()} and \code{win.version()} now report
+      Windows 7 as such (and not as Vista), and \code{Sys.info()} now
+      reports the machine type as \code{"x86-64"} on 64-bit platforms.
+
+      \item \code{serialize()} to a raw vector works around the dismal
+      performance of Windows' memory manager by allocating much larger
+      chunks of memory less frequently.
+      
+      \item \code{readClipboard()} could cause a segfault with certain
+      clipboard data.
+
+      \item A fix intended for Mac OS X was incorrectly applied to
+      Windows, so \code{iconv(x, from, "")} in a C locale was
+      interpreted as requesting translation to UTF-8.
+
+      \item \code{system(intern=TRUE)} often returned \code{0}
+      rather than an error status if the command could not be found, if
+      run from \code{Rterm} or from \code{Rgui} with
+      \code{show.output.on.console = FALSE}.
+      
+      \item \code{memory.limit()} did not allow sizes greater than
+      4095 on 64 bit builds. (\PR{14372})
+    }
+  }
+}
+
+\section{CHANGES IN R VERSION 2.11.1}{
+  \subsection{NEW FEATURES}{
+    \itemize{
+      \item The \command{Rgui} console, pagers and editor on the 64-bit
+       build now have a title bar icon.
+      
+      \item The outer frame/console for \command{Rgui/Rterm} mentions
+       '(64-bit)' to make it easier to distinguish running copies of \R.
+      
+      \item The package entries in listbox shown by the \code{Install
+       package(s) ...} menu are now explicitly sorted in the current
+       locale (as they were in most previous releases, but not in
+       2.11.0).
+      
+      \item \command{R CMD INSTALL} can install zipfiles as binary
+      packages.
+        
+      \item Errors in the \file{Rconsole} file are ignored: silently on
+        startup, with a warning when \file{Rconsole} is loaded
+        interactively.
+    }
+  }
+}
+
+\section{CHANGES IN R VERSION 2.11.0}{
+  \subsection{NEW FEATURES}{
+    \itemize{
+      \item There is now a native x64 Windows port, with a binary installer
+       and binaries of packages available on CRAN.  See the 'R
+       Administration and Installation Manual' and the 'R for Windows FAQ'.
+      
+      \item \command{Rcmd cmd} (or \command{R CMD cmd}) now runs an
+       arbitrary '\option{cmd}' if '\option{cmd}' is not one of the
+       builtin commands, and does not have extension '\file{.sh}' or
+       '\file{.pl}' (when it is run as a shell or Perl script
+       respectively).  This is done by passing '\option{cmd}' to the
+       command interpreter determined by the \env{COMSPEC} environment
+       variable (which in a vanilla Windows system points to
+       \file{cmd.exe}).
+      
+      \item \code{X11()} and \code{x11()} gain additional arguments to
+       be more similar to the Unix \code{X11()} device.
+      
+      \item \code{file.rename()} can work across volumes (by copy-and-delete).
+        
+      \item The main HTML help page now links to this \file{CHANGES} file.
+       (Suggested by Henrik Bengtsson.) 
+      
+      \item \code{strftime(format = "\%z")} now gives the timezone names
+       used by the Olson database and not those used by Windows.
+      
+      \item \code{iconv(to = "ASCII")} no longer transliterates, but
+       \code{iconv(to = "ASCII//TRANSLIT")} will.  This makes
+       \code{tools::showNonASCII()} work the same way as on other platforms.
+      
+      \item \code{readRegistry()} can look at either the 32- or 64-bit view
+       of the Registry on 64-bit Windows.
+    }
+  }
+  \subsection{INSTALLATION}{
+    \itemize{
+      \item The \code{Tcl} timezone files (3Mb on disc) are now an
+       optional part of the installation: they would be very rarely used
+       with \R.
+      
+      \item \file{RSetReg.exe} has been updated to (un)set the
+       version-specific keys in the same way as the main installer, and
+       to have the optional argument \option{/Personal} to (un)set the
+       per-user rather than the per-machine keys (which need
+       administrative access).
+      
+      \item When building \R, the recommended way is now to supply a file
+       \file{R_HOME/src/gnuwin32/MkRules.local} instead of editing
+       \file{MkRules}: there is now no \file{MkRules} file in the
+       distribution, but one is generated during the build process.
+       
+       \file{MkRules.local} can be generated by copying and editing
+       \file{MkRules.dist}.
+      
+      \item The MSI installer defaults to an all-user (per machine)
+       install (by setting the \code{ALLUSERS} property to \code{1}).
+       This can be changed at installation, and it can be built for a
+       user-mode install (see \file{MkRules.dist}).
+    }
+  }
+  \subsection{BUG FIXES}{
+    \itemize{
+      \item Using \code{ESC} to interrupt a \code{system()} call could
+       cause \R to become unstable.
+      
+      \item \code{0^1i} (which should be complex \code{NAN}) was
+      incorrect.
+    }
+  }
+}
+
+\section{CHANGES IN R VERSION 2.10.1 patched}{
+  \subsection{BUG FIXES}{
+    \itemize{
+      \item Some of the MDI toolbar buttons (e.g. \code{"Open Script"})
+       did not return the focus to the console if the user cancelled the
+       action.
+       
+      \item \code{system()} (and hence \code{shell()}) did not set the
+        standard file handles properly, so some programs would not run.
+      
+      \item \code{setWinProgressBar()} did not check the type of its
+       \code{'title'} and \code{'label'} arguments and might have
+       crashed if they were mis-specified.  It now does, thanks to a
+       report by Greg Snow.
+    }
+  }
+}
+\section{CHANGES IN R VERSION 2.10.1}{
+  \subsection{BUG FIXES}{
+    \itemize{
+      \item The installer did not properly record help type choices in
+       \file{R_HOME/etc/Rprofile.site}.
+      
+      \item \command{Rcmd INSTALL} once again uses
+       \option{--no-restore}, for consistency with the Unix version and
+       \R 2.9.2.
+       
+      \item The HTML package index was not constructed properly when the
+       library path was specified with backslashes.  (Patch submitted
+       by Gabor Grothendieck.)
+    }
+  }
+}
+
+\section{CHANGES IN R VERSION 2.10.0}{
+  \subsection{NEW FEATURES}{
+    \itemize{
+      \item \code{windows()} now has a parameter \code{fillOddEven}
+       (default \code{TRUE}), which controls the mode used for polygon
+       fills of self-intersecting shapes.
+       
+      \item The functions \code{arrangeWindows()} and
+        \code{getWindowsHandles()} have been added to give more
+        programmatic control to the appearance of windows in an R
+        session.
+        
+      \item A \sQuote{Windows} menu has been added to the SDI version of
+       the \R GUI, and the corresponding menu in the MDI version has
+       been expanded slightly.
+      
+      \item The \code{libpng} library has been updated to version 1.2.40.
+      
+      \item The remaining Perl scripts \code{build}, \code{check},
+      \code{Rprof}, \code{Sd2Rd} in \file{R_HOME/bin} now have extension
+      \file{.pl}.
+      
+      \item \code{Rcmd} (or \code{R CMD}) can now run \file{.sh} (shell)
+       and \file{.pl} (Perl) scripts anywhere on the path (as well as
+       \file{.bat} and \file{.exe} files as before).
+    }
+  }
+  \subsection{PACKAGE INSTALLATION}{
+    \itemize{
+      \item \command{Rcmd SHLIB} (which is used by \command{Rcmd
+       INSTALL}) now calls \code{make} without a target, rather than
+       target \code{'all'}.  This is now the same as on Unix, and was
+       announced in the \file{NEWS} file for 2.9.0.
+      
+      \item Help files are no longer zipped: rendering as text, HTML,
+       latex or examples is now done when needed.
+      
+       Options \option{--use-zip} and \option{--use-zip-help} in
+       \command{R CMD INSTALL} are no longer available and
+       \option{--auto-zip} only zips data (or not).
+      
+       Help in packages installed under 2.9.x may not work correctly,
+       and a warning is given when such a package is attached by
+       \code{library()}.  Re-installation of all packages is strongly
+       recommended (use \code{update.packages(checkBuilt = TRUE)}).
+      
+       Binary packages are installed without CHM help if they contain
+       it (as those intended for 2.9.x may).
+      
+      \item It is possible to install source packages without Rtools
+       provided they have no compiled code and no \file{configure.win} or
+       \file{cleanup.win} script.
+    }
+  }
+  \subsection{INSTALLATION}{
+    \itemize{
+      \item Support for memory profiling is enabled in a standard build
+       (this can be changed by editing \file{config.h}).
+      
+      \item CHM help is no longer supported.
+      
+      \item The help default for the standard installer is HTML help rather
+       than CHM help.
+      
+      \item The categories in the installers have been simplified.  Now the
+       files to support installation of source packages are always
+       installed (they are now only 0.7Mb), and there are no longer
+       categories 'chtml', 'html/help', 'latex' and 'Rd'.
+      
+      
+    }
+  }
+  \subsection{BUG FIXES}{
+    \itemize{
+      \item \command{Rcmd open} now works as documented: previously
+       \command{Rcmd open.exe} was required.
+      
+      \item \code{cat(x, file=)} in \command{Rgui} tried to interpret
+       UTF-8-encoded strings for the console rather than converting them
+       to the native encoding.
+    }
+  }
+}

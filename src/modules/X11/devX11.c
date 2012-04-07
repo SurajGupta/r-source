@@ -40,6 +40,8 @@
 #define R_rint(x) ((int) x + 0.5)
 #endif
 
+/* needed on Solaris */
+#define XK_MISCELLANY
 #include <stdio.h>
 #include <X11/X.h>
 #include <X11/Xlib.h>
@@ -50,6 +52,7 @@
 #ifdef HAVE_X11_Xmu
 # include <X11/Xmu/Atoms.h>
 #endif
+#include <X11/keysymdef.h>
 
 
 #define R_USE_PROTOTYPES 1
@@ -171,6 +174,7 @@ static double X11_StrWidth(const char *str, const pGEcontext gc, pDevDesc dd);
 static void X11_Text(double x, double y, const char *str,
 		     double rot, double hadj,
 		     const pGEcontext gc, pDevDesc dd);
+static void X11_eventHelper(pDevDesc dd, int code);
 
 	/*************************************************/
 	/* End of list of required device driver actions */
@@ -1299,9 +1303,14 @@ X11_Open(pDevDesc dd, pX11Desc xd, const char *dsp,
     attributes.background_pixel = whitepixel;
     attributes.border_pixel = blackpixel;
     attributes.backing_store = Always;
-    attributes.event_mask = ButtonPressMask
+    attributes.event_mask = ButtonPressMask 
+      | ButtonMotionMask 
+      | PointerMotionHintMask
+      | ButtonReleaseMask
       | ExposureMask
-      | StructureNotifyMask;
+      | StructureNotifyMask
+      | KeyPressMask;
+
 
     if (type == WINDOW) {
 	int alreadyCreated = (xd->window != (Window)NULL);
@@ -1469,7 +1478,9 @@ X11_Open(pDevDesc dd, pX11Desc xd, const char *dsp,
 	/* Map the window */
 	if(alreadyCreated == 0) {
 	    XSelectInput(display, xd->window,
-			 ExposureMask | ButtonPressMask | StructureNotifyMask);
+			 ExposureMask | ButtonPressMask | StructureNotifyMask 
+			 | ButtonReleaseMask | ButtonMotionMask  
+                         | PointerMotionHintMask | KeyPressMask);
 	    XMapWindow(display, xd->window);
 	    XSync(display, 0);
 
@@ -1959,6 +1970,14 @@ static void X11_Rect(double x0, double y0, double x1, double y1,
     }
 }
 
+static void X11_Path(double *x, double *y,
+                     int npoly, int *nper,
+                     Rboolean winding,
+                     const pGEcontext gc, pDevDesc dd)
+{
+    warning(_("%s not available for this device"), "Path drawing");
+}
+
 static void X11_Raster(unsigned int *raster, int w, int h,
                       double x, double y, 
                       double width, double height,
@@ -2034,10 +2053,10 @@ static void X11_Raster(unsigned int *raster, int w, int h,
                           */
                          (char *) rasterImage,
                          imageWidth, imageHeight,
-                         depth, /* bitmap_pad */
+                         depth >= 24 ? 32 : 16, /* bitmap_pad */
                          0); /* bytes_per_line: 0 means auto-calculate*/
 
-    if (XInitImage(image) == 0)
+    if (image == NULL || XInitImage(image) == 0)
         error(_("Unable to create XImage"));
 
     for (i=0; i < imageHeight ;i++) {
@@ -2272,6 +2291,105 @@ static Rboolean X11_Locator(double *x, double *y, pDevDesc dd)
     return (done == 1);
 }
 
+static int translate_key(KeySym keysym)
+{
+    if ((keysym >= XK_F1) && (keysym <= XK_F12))
+    	return knF1 + keysym - XK_F1;
+    else {
+    	switch(keysym) {
+	case XK_Left: return knLEFT;
+	case XK_Up:   return knUP;
+	case XK_Right:return knRIGHT;
+	case XK_Down: return knDOWN;
+	case XK_Page_Up: 	return knPGUP;
+	case XK_Page_Down: 	return knPGDN;
+	case XK_End:  return knEND;
+	case XK_Begin:return knHOME;
+	case XK_Insert:  	return knINS;
+	}
+    }
+    return knUNKNOWN;
+}
+
+static void X11_eventHelper(pDevDesc dd, int code)
+{
+    XEvent event;
+    pDevDesc ddEvent;
+    pX11Desc xd = (pX11Desc) dd->deviceSpecific;
+    caddr_t temp;
+    int done = 0;
+
+    if (xd->type > WINDOW) return;
+    if (code == 1) {
+    	R_ProcessX11Events((void*)NULL);	/* discard pending events */
+    	if (isEnvironment(dd->eventEnv)) {
+    	    SEXP prompt = findVar(install("prompt"), dd->eventEnv);
+    	    if (length(prompt) == 1) {
+    		 XStoreName(display, xd->window, CHAR(asChar(prompt)));
+    	    }
+    	}
+    	XSync(display, 1);
+    } else if (code == 2) {
+	XNextEvent(display, &event);
+	if (event.type == ButtonRelease || event.type == ButtonPress || event.type == MotionNotify) {
+	    XFindContext(display, event.xbutton.window,
+			 devPtrContext, &temp);
+	    ddEvent = (pDevDesc) temp;
+	    if (ddEvent == dd && dd->gettingEvent) {
+		if (event.type == MotionNotify) { /* Because of PointerMotionHintMask, need to update */
+		    Window root, child;
+		    int rootX, rootY, winX, winY;
+		    unsigned int mask;
+		    if (!XQueryPointer(display, event.xbutton.window,
+                                      &root, &child, &rootX, &rootY,
+				      &winX, &winY, &mask)) {
+			done = 1;
+		    } else {
+			event.xbutton.x = winX;
+			event.xbutton.y = winY;
+		    }
+		}
+		if (!done) {
+        	    doMouseEvent(dd, event.type == ButtonRelease ? meMouseUp :
+        	                 event.type == ButtonPress ? meMouseDown : meMouseMove, 
+        	                 event.xbutton.button, event.xbutton.x, event.xbutton.y);
+                    XSync(display, 0);
+                    done = 1;
+		}
+    	    }
+	} else if (event.type == KeyPress) {
+	    char keybuffer[13] = "";
+	    char *keystart=keybuffer;
+	    XComposeStatus compose;
+  	    KeySym keysym;
+	    int count, keycode;
+	    if (event.xkey.state & ControlMask) {
+	    	keystart += 5; 
+	    	sprintf(keybuffer, "ctrl-"); /* report control keys using labels like "ctrl-A" */
+	    	event.xkey.state &= !ControlMask;
+	    	event.xkey.state |= ShiftMask;
+	    }
+      	    count = XLookupString(&event.xkey, keystart, sizeof(keybuffer)-(keystart-keybuffer), &keysym, &compose);
+      	    /* Rprintf("keysym=%x\n", keysym); */
+      	    if ((keycode = translate_key(keysym)) > knUNKNOWN)
+      	    	doKeybd(dd, keycode, NULL);
+      	    else if (*keystart)
+	    	doKeybd(dd, knUNKNOWN, keybuffer);
+	    done = 1;
+	}
+	if (!done) 
+	    handleEvent(event);
+    } else if (code == 0) {
+	/* Restore the default title */
+	if (ndevNumber(dd) == curDevice())
+	    X11_Activate(dd);
+	else
+	    X11_Deactivate(dd);  
+    }
+
+    return;
+}
+
 	/********************************************************/
 	/* device_Mode is called whenever the graphics engine	*/
 	/* starts drawing (mode=1) or stops drawing (mode=0)	*/
@@ -2399,6 +2517,7 @@ Rf_setX11DeviceData(pDevDesc dd, double gamma_fac, pX11Desc xd)
 	dd->line = Cairo_Line;
 	dd->polyline = Cairo_Polyline;
 	dd->polygon = Cairo_Polygon;
+        dd->path = Cairo_Path;
         dd->raster = Cairo_Raster;
         dd->cap = Cairo_Cap;
 	dd->hasTextUTF8 = TRUE;
@@ -2420,6 +2539,7 @@ Rf_setX11DeviceData(pDevDesc dd, double gamma_fac, pX11Desc xd)
 	dd->strWidth = X11_StrWidth;
 	dd->text = X11_Text;
 	dd->rect = X11_Rect;
+        dd->path = X11_Path;
         dd->raster     = X11_Raster;
         dd->cap        = X11_Cap;
 	dd->circle = X11_Circle;
@@ -2428,6 +2548,11 @@ Rf_setX11DeviceData(pDevDesc dd, double gamma_fac, pX11Desc xd)
 	dd->polygon = X11_Polygon;
 	dd->metricInfo = X11_MetricInfo;
 	dd->hasTextUTF8 = FALSE;
+    	dd->eventHelper = X11_eventHelper;
+    	dd->canGenMouseDown = TRUE;
+	dd->canGenMouseUp = TRUE;
+	dd->canGenMouseMove = TRUE;
+	dd->canGenKeybd = TRUE;
     }
 
     dd->activate = X11_Activate;
@@ -3116,6 +3241,7 @@ BMDeviceDriver(pDevDesc dd, int kind, const char * filename,
     dd->line = Cairo_Line;
     dd->polyline = Cairo_Polyline;
     dd->polygon = Cairo_Polygon;
+    dd->path = Cairo_Path;
     dd->raster = Cairo_Raster;
     dd->locator = null_Locator;
     dd->mode = null_Mode;

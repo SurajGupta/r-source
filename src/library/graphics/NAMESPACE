@@ -8,7 +8,8 @@ export(abline, arrows, assocplot, axTicks, Axis, axis, axis.Date,
        image, layout, layout.show, lcm, legend, lines, lines.default,
        locator, matlines, matplot, matpoints, mosaicplot, mtext,
        pairs, panel.smooth, par, persp, pie, plot, plot.design,
-       plot.new, plot.window, plot.xy, points, polygon, rasterImage, rect, rug,
+       plot.new, plot.window, plot.xy, points, polygon, polypath,
+       rasterImage, rect, rug,
        screen, segments, smoothScatter, spineplot, split.screen, stars, stem,
        strheight, stripchart, strwidth, sunflowerplot, symbols, text,
        title, xinch, xspline, xyinch, yinch)
@@ -23,8 +24,8 @@ export(piechart)
 
 S3method(Axis, default)
 S3method(Axis, Date)
-S3method(Axis, POSIXct)
-S3method(Axis, POSIXlt)
+S3method(Axis, POSIXt)
+S3method(Axis, table)
 S3method(barplot, default)
 S3method(boxplot, default)
 S3method(boxplot, formula)
@@ -39,22 +40,21 @@ S3method(image, default)
 S3method(lines, default)
 S3method(lines, formula)
 S3method(lines, histogram)
+S3method(lines, table)
 S3method(mosaicplot, default)
 S3method(mosaicplot, formula)
 S3method(pairs, default)
 S3method(pairs, formula)
 S3method(persp, default)
 S3method(plot, data.frame)
-S3method(plot, Date)
 S3method(plot, default)
 S3method(plot, factor)
 S3method(plot, formula)
 S3method(plot, histogram)
-S3method(plot, POSIXct)
-S3method(plot, POSIXlt)
 S3method(plot, table)
 S3method(points, default)
 S3method(points, formula)
+S3method(points, table)
 S3method(spineplot, default)
 S3method(spineplot, formula)
 S3method(stripchart, default)

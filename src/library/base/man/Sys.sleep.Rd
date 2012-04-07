@@ -34,9 +34,12 @@ Sys.sleep(time)
 \value{
   Invisible \code{NULL}.
 }
-\note{This function may not be implemented on all systems.}
+\note{
+  This function may not be implemented on all systems.  Where it is not
+  implemented calling it given an error.
+}
 
-\examples{
+\examples{\donttest{
 testit <- function(x)
 {
     p1 <- proc.time()
@@ -44,5 +47,5 @@ testit <- function(x)
     proc.time() - p1 # The cpu usage should be negligible
 }
 testit(3.7)
-}
+}}
 \keyword{utilities}

@@ -2,7 +2,7 @@ msgid ""
 msgstr ""
 "Project-Id-Version: R 2.3.0\n"
 "Report-Msgid-Bugs-To: bugs@r-project.org\n"
-"POT-Creation-Date: 2010-03-16 09:20\n"
+"POT-Creation-Date: 2010-10-04 10:51\n"
 "PO-Revision-Date: 2005-04-17 16:57+0200\n"
 "Last-Translator: stefano iacus <>\n"
 "Language-Team: Italian <it@li.org>\n"
@@ -178,13 +178,34 @@ msgstr ""
 msgid "Packages required but not available:"
 msgstr ""
 
-msgid "Packages required and available but unsuitable version:"
+msgid "Package required but not available: %s"
+msgstr ""
+
+msgid "Packages required and available but unsuitable versions:"
+msgstr ""
+
+msgid "Package required and available but unsuitable version: %s"
 msgstr ""
 
 msgid "Former standard packages required but now defunct:"
 msgstr ""
 
+msgid "Packages suggested but not available for checking:"
+msgstr ""
+
+msgid "Package suggested but not available for checking: %s"
+msgstr ""
+
+msgid "Packages which this enhances but not available for checking:"
+msgstr ""
+
+msgid "Package which this enhances but not available for checking: %s"
+msgstr ""
+
 msgid "Vignette dependencies not required:"
+msgstr ""
+
+msgid "Vignette dependencies not required: %s"
 msgstr ""
 
 msgid ""
@@ -193,6 +214,9 @@ msgid ""
 msgstr ""
 
 msgid "Namespace dependencies not required:"
+msgstr ""
+
+msgid "Namespace dependency not required: %s"
 msgstr ""
 
 msgid "Malformed package name"
@@ -330,7 +354,13 @@ msgstr ""
 msgid "'::' or ':::' imports not declared from:"
 msgstr ""
 
+msgid "'::' or ':::' import not declared from: %s"
+msgstr ""
+
 msgid "'library' or 'require' calls not declared from:"
+msgstr ""
+
+msgid "'library' or 'require' call not declared from: %s"
 msgstr ""
 
 #, fuzzy
@@ -412,6 +442,36 @@ msgstr "campo \\name mancante/vuoto nei file Rd"
 #, fuzzy
 msgid "No help on %s found in RdDB %s"
 msgstr "non può essere usato per il pacchetto 'base'"
+
+msgid "Converting Rd files to LaTeX ..."
+msgstr ""
+
+msgid "-t option without value"
+msgstr ""
+
+msgid "-o option without value"
+msgstr ""
+
+msgid "Warning: unknown option"
+msgstr ""
+
+msgid "exactly one Rd file must be specified"
+msgstr ""
+
+msgid "no 'type' specified"
+msgstr ""
+
+msgid "'type' must be one of 'txt', 'html', 'latex' or 'example'"
+msgstr ""
+
+msgid "current working directory cannot be ascertained"
+msgstr ""
+
+msgid "no inputs"
+msgstr ""
+
+msgid "Error in running tools::texi2dvi"
+msgstr ""
 
 msgid "more than one \\examples section, using the first"
 msgstr ""
@@ -514,6 +574,47 @@ msgstr ""
 msgid "ERROR: this R is version %s, required is R %s %s"
 msgstr ""
 
+msgid "Changes require specified 'style'"
+msgstr ""
+
+msgid "The default JSS style may not be modified."
+msgstr ""
+
+msgid "** Options"
+msgstr ""
+
+msgid "are only for '--binary'  and will be ignored"
+msgstr ""
+
+#, fuzzy
+msgid "Error: cannot rename directory to"
+msgstr "impossibile creare directory '%s'"
+
+msgid "cannot coerce"
+msgstr ""
+
+msgid "to logical"
+msgstr ""
+
+msgid "-l option without value"
+msgstr ""
+
+msgid "configuration files are not supported as from R 2.12.0"
+msgstr ""
+
+msgid "'--multiarch' specified with only one usable sub-architecture"
+msgstr ""
+
+msgid "Error: no packages were specified"
+msgstr ""
+
+msgid "package dir"
+msgstr ""
+
+#, fuzzy
+msgid "does not exist"
+msgstr "il file '%s' non esiste"
+
 msgid "No files in this directory"
 msgstr ""
 
@@ -611,6 +712,9 @@ msgstr ""
 msgid "installing to"
 msgstr ""
 
+msgid "generating debug symbols (dSYM)"
+msgstr ""
+
 msgid ""
 "R include directory is empty -- perhaps need to install R-devel.rpm or "
 "similar"
@@ -619,13 +723,6 @@ msgstr ""
 #, fuzzy
 msgid "running src/Makefile.win ..."
 msgstr "esecuzione di make fallita"
-
-msgid "making DLL ..."
-msgstr ""
-
-#, fuzzy
-msgid "... done"
-msgstr "fatto"
 
 msgid "no source files found"
 msgstr ""
@@ -636,15 +733,18 @@ msgstr ""
 msgid "'--auto-zip' is for Windows only"
 msgstr ""
 
-msgid "-l option without value"
-msgstr ""
-
-msgid "Warning: unknown option"
+msgid "--merge-multiarch is Windows-only"
 msgstr ""
 
 #, fuzzy
 msgid "cannot create temporary directory"
 msgstr "impossibile creare directory '%s'"
+
+msgid "ERROR: --merge-multiarch applies only to a single tarball"
+msgstr ""
+
+msgid "ERROR: --merge-multiarch can only be used on i386/x64 installations"
+msgstr ""
 
 msgid "invalid package"
 msgstr ""
@@ -683,28 +783,10 @@ msgstr ""
 msgid "--"
 msgstr ""
 
-msgid "-o option without value"
-msgstr ""
-
-msgid "Converting Rd files to LaTeX ..."
-msgstr ""
-
 msgid "finding HTML links ..."
 msgstr ""
 
 msgid "finding level-2 HTML links ..."
-msgstr ""
-
-msgid "-t option without value"
-msgstr ""
-
-msgid "exactly one Rd file must be specified"
-msgstr ""
-
-msgid "no 'type' specified"
-msgstr ""
-
-msgid "'type' must be one of 'txt', 'html', 'latex' or 'example'"
 msgstr ""
 
 msgid "there is no package called '%s'"
@@ -736,6 +818,29 @@ msgid ""
 "%s"
 msgstr ""
 
+msgid "No news found in given file using old-style R-like format."
+msgstr ""
+
+msgid "No news found in given file using package default format."
+msgstr ""
+
+msgid "Could not extract news from the following text chunks:"
+msgstr ""
+
+msgid ""
+"Chunk %s:\n"
+"%s"
+msgstr ""
+
+msgid "Cannot extract version info from the following section titles:"
+msgstr ""
+
+msgid "%s"
+msgstr ""
+
+msgid "Malformed NEWS.Rd file."
+msgstr ""
+
 msgid "Processing packages:"
 msgstr "Elaboro i pacchetti:"
 
@@ -749,6 +854,34 @@ msgstr ""
 #, fuzzy
 msgid "cannot create HTML package index"
 msgstr "impossibile leggere codice sorgente del pacchetto"
+
+msgid "Internal error, no tag"
+msgstr ""
+
+msgid "Argument for"
+msgstr ""
+
+#, fuzzy
+msgid "not found."
+msgstr "file '%s' non trovato"
+
+msgid "Internal error:  NULL tag"
+msgstr ""
+
+msgid "internal error"
+msgstr ""
+
+msgid "Inconsistent arg count for"
+msgstr ""
+
+msgid "Entry for"
+msgstr ""
+
+msgid "="
+msgstr ""
+
+msgid "already defined to be"
+msgstr ""
 
 msgid "found encoding"
 msgstr ""
@@ -875,6 +1008,10 @@ msgstr ""
 msgid "running tests to possibly trigger segfaults"
 msgstr ""
 
+#, fuzzy
+msgid "'x' must be a single character string"
+msgstr "l'argomento 'txt' deve essere una stringa carattere"
+
 msgid "test '%s' is not available"
 msgstr "il test '%s' non è disponibile"
 
@@ -894,6 +1031,10 @@ msgstr "esecuzione texi2dvi su '%s' fallita"
 #, fuzzy
 msgid "running 'texi2dvi' on '%s' failed"
 msgstr "esecuzione texi2dvi su '%s' fallita"
+
+#, fuzzy
+msgid "unable to run '%s' on '%s'"
+msgstr "impossibile eseguire bibtext su '%s'"
 
 #, fuzzy
 msgid "unable to run %s on '%s'"
@@ -947,6 +1088,10 @@ msgid "object %s is created by more than one data call"
 msgid_plural "objects %s are created by more than one data call"
 msgstr[0] "creati da più di una chiamata data"
 msgstr[1] "creati da più di una chiamata data"
+
+#, fuzzy
+#~ msgid "... done"
+#~ msgstr "fatto"
 
 #, fuzzy
 #~ msgid "Suspect link(s) in documentation object '%s':"
@@ -1017,9 +1162,6 @@ msgstr[1] "creati da più di una chiamata data"
 
 #~ msgid "unterminated section 'section{%s}'"
 #~ msgstr "sezione 'section{%s}' non conclusa"
-
-#~ msgid "argument 'txt' must be a character string"
-#~ msgstr "l'argomento 'txt' deve essere una stringa carattere"
 
 #~ msgid "unmatched \\item name in '\\item{%s'"
 #~ msgstr "nome \\item non coincidente in ''\\item{%s'"

@@ -206,13 +206,9 @@ getClassDef <-
   function(Class, where = topenv(parent.frame()), package = packageSlot(Class),
            inherits = TRUE)
 {
-    ## FIXME:  really wants to be is(Class, "classRepresentation") but
-    ## generates inf. loop in booting methods package (also for new())
-    if(.identC(class(Class), "classRepresentation"))
-        return(Class)
-    if(inherits)
+    if(inherits) #includes both the lookup and Class being alread a definition
       value <- .getClassFromCache(Class, where)
-    else
+    else # want to force a search for the metadata in this case (Why?)
       value <- NULL
     if(is.null(value)) {
 	cname <-
@@ -239,13 +235,16 @@ getClass <-
   function(Class, .Force = FALSE,
 	   where = .classEnv(Class, topenv(parent.frame()), FALSE))
 {
-    value <- getClassDef(Class, where)
+    value <- .getClassFromCache(Class, where) # the quick way
     if(is.null(value)) {
-	if(!.Force)
-	    stop(gettextf("\"%s\" is not a defined class", Class), domain = NA)
-	else
-	    value <- makeClassRepresentation(Class, package = "base",
-					     virtual = TRUE, where = where)
+        value <- getClassDef(Class, where) # searches
+        if(is.null(value)) {
+            if(!.Force)
+                stop(gettextf("\"%s\" is not a defined class", Class), domain = NA)
+            else
+                value <- makeClassRepresentation(Class, package = "base",
+                                                 virtual = TRUE, where = where)
+        }
     }
     value
 }
@@ -265,7 +264,12 @@ slot <-
       if(check)
           value <- checkSlotAssignment(object, name, value)
       .Call("R_set_slot", object, name, value, PACKAGE="methods")
+      ## currently --> R_do_slot_assign() in ../../../main/attrib.c
   }
+
+## ". - hidden" since one should typically rather use is(), extends() etc:
+.hasSlot <- function(object, name)
+    .Call("R_hasSlot", object, name, PACKAGE = "methods")
 
 checkSlotAssignment <- function(obj, name, value)
 {
@@ -273,7 +277,7 @@ checkSlotAssignment <- function(obj, name, value)
     ClassDef <- getClass(cl) # fails if cl not a defined class (!)
     slotClass <- elNamed(ClassDef@slots, name)
     if(is.null(slotClass))
-        stop(gettextf("\"%s\" is not a slot in class \"%s\"", name, class(obj)),
+        stop(gettextf("\"%s\" is not a slot in class \"%s\"", name, cl),
              domain = NA)
     valueClass <- class(value)
     if(.identC(slotClass, valueClass))
@@ -284,7 +288,7 @@ checkSlotAssignment <- function(obj, name, value)
                           ClassDef2 = getClassDef(slotClass, where = .classEnv(ClassDef)))
     if(identical(ok, FALSE))
        stop(gettextf("assignment of an object of class \"%s\" is not valid for slot \"%s\" in an object of class \"%s\"; is(value, \"%s\") is not TRUE",
-                     class(value),  name, class(obj), slotClass),
+		     valueClass, name, cl, slotClass),
             domain = NA)
     else if(identical(ok, TRUE))
         value
@@ -367,26 +371,16 @@ isClass <-
         !is.null(getClassDef(Class, where))
 }
 
+### TODO   s/Class/._class/  -- in order to allow 'Class' as regular slot name
 new <-
   ## Generate an object from the specified class.
   ##
-  ## If other arguments are included, these are the values for named slots
-  ## in the object, or an object that can be coerced into this class.
   ## Note that the basic vector classes, `"numeric"', etc. are implicitly defined,
   ## so one can use `new' for these classes.
-  ###
-  ### Unnamed arguments are objects from this class or a superclass.
   ##
   function(Class, ...)
 {
-    ## get the class definition, completing it if this is the first reference
-    ## to this class in this session.
-    ## FIXME:  really wants to be is(Class, "classRepresentation") but
-    ## generates inf. loop in booting methods package (also for getClassDef)
-    if(.identC(class(Class), "classRepresentation"))
-        ClassDef <- Class
-    else
-        ClassDef <- getClass(Class, where = topenv(parent.frame()))
+    ClassDef <- getClass(Class, where = topenv(parent.frame()))
     value <- .Call("R_do_new_object", ClassDef, PACKAGE = "base")
     initialize(value, ...)
 }
@@ -763,13 +757,13 @@ sealClass <- function(Class, where = topenv(parent.frame())) {
     stop(gettextf("Class definition cannot extend more than one of these data types: %s", paste('"',type, '"', sep="", collapse = ", ")),
          domain = NA)
   class <- .indirectAbnormalClasses[type]
-  if(is.na(class) || is.null(getClassDef(class, .methodsNamespace)))
+  if(is.na(class))
     stop(gettextf("Sorry, abnormal type \"%s\" is not supported as a superclass of a class definition", type),
          domain = NA)
-  ## this message is not strictly needed, but reminds programmers that
+  ## this message USED TO BE PRINTED: reminds programmers that
   ## they will see an unexpected superclass
-  message(gettextf('Defining type "%s" as a superclass via class "%s"',
-                  type, class), domain = NA)
+  ## message(gettextf('Defining type "%s" as a superclass via class "%s"',
+  ##                 type, class), domain = NA)
   c(class, classes[!types])
 }
 

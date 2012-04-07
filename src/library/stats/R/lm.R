@@ -51,9 +51,10 @@ lm <- function (formula, data, subset, weights, na.action,
     if (is.empty.model(mt)) {
 	x <- NULL
 	z <- list(coefficients = if (is.matrix(y))
-                    matrix(,0,3) else numeric(0L), residuals = y,
+                  matrix(,0,3) else numeric(0L), residuals = y,
 		  fitted.values = 0 * y, weights = w, rank = 0L,
-		  df.residual = if (is.matrix(y)) nrow(y) else length(y))
+		  df.residual = if(!is.null(w)) sum(w != 0) else
+                  if (is.matrix(y)) nrow(y) else length(y))
         if(!is.null(offset)) {
             z$fitted.values <- offset
             z$residuals <- y - offset
@@ -256,7 +257,8 @@ lm.wfit <- function (x, y, w, offset = NULL, method = "qr", tol = 1e-7,
 
 print.lm <- function(x, digits = max(3, getOption("digits") - 3), ...)
 {
-    cat("\nCall:\n",deparse(x$call),"\n\n",sep="")
+    cat("\nCall:\n",
+	paste(deparse(x$call), sep="\n", collapse = "\n"), "\n\n", sep="")
     if(length(coef(x))) {
         cat("Coefficients:\n")
         print.default(format(coef(x), digits=digits),
@@ -270,6 +272,7 @@ summary.lm <- function (object, correlation = FALSE, symbolic.cor = FALSE, ...)
 {
     z <- object
     p <- z$rank
+    rdf <- z$df.residual
     if (p == 0) {
         r <- z$residuals
         n <- length(r)
@@ -280,7 +283,7 @@ summary.lm <- function (object, correlation = FALSE, symbolic.cor = FALSE, ...)
             rss <- sum(w * r^2)
             r <- sqrt(w) * r
         }
-        resvar <- rss/(n - p)
+        resvar <- rss/rdf
         ans <- z[c("call", "terms")]
         class(ans) <- "summary.lm"
         ans$aliased <- is.na(coef(object))  # used in print method
@@ -293,12 +296,13 @@ summary.lm <- function (object, correlation = FALSE, symbolic.cor = FALSE, ...)
         ans$r.squared <- ans$adj.r.squared <- 0
         return(ans)
     }
-    Qr <- object$qr
-    if (is.null(z$terms) || is.null(Qr))
-	stop("invalid \'lm\' object:  no 'terms' nor 'qr' component")
+    if (is.null(z$terms))
+	stop("invalid 'lm' object:  no 'terms' component")
+    if(!inherits(object, "lm"))
+	warning("calling summary.lm(<fake-lm-object>) ...")
+    Qr <- qr.lm(object)
     n <- NROW(Qr$qr)
-    rdf <- n - p
-    if(is.na(z$df.residual) || rdf != z$df.residual)
+    if(is.na(z$df.residual) || n - p != z$df.residual)
         warning("residual degrees of freedom in object suggest this is not an \"lm\" fit")
     p1 <- 1L:p
     ## do not want missing values substituted here
@@ -356,8 +360,8 @@ print.summary.lm <-
               symbolic.cor = x$symbolic.cor,
 	      signif.stars= getOption("show.signif.stars"),	...)
 {
-    cat("\nCall:\n")#S: ' ' instead of '\n'
-    cat(paste(deparse(x$call), sep="\n", collapse = "\n"), "\n\n", sep="")
+    cat("\nCall:\n", # S has ' ' instead of '\n'
+	paste(deparse(x$call), sep="\n", collapse = "\n"), "\n\n", sep="")
     resid <- x$residuals
     df <- x$df
     rdf <- df[2L]
@@ -368,7 +372,10 @@ print.summary.lm <-
 	rq <- if (length(dim(resid)) == 2L)
 	    structure(apply(t(resid), 1L, quantile),
 		      dimnames = list(nam, dimnames(resid)[[2L]]))
-	else  structure(quantile(resid), names = nam)
+	else  {
+            zz <- zapsmall(quantile(resid), digits + 1)
+            structure(zz, names = nam)
+        }
 	print(rq, digits = digits, ...)
     }
     else if (rdf > 0L) {
@@ -441,6 +448,14 @@ residuals.lm <-
     if (type=="partial") ## predict already does naresid
       res <- res + predict(object,type="terms")
     res
+}
+
+## using qr(<lm>)  as interface to  <lm>$qr :
+qr.lm <- function(x, ...) {
+      if(is.null(r <- x$qr))
+        stop("lm object does not have a proper 'qr' component.
+ Rank zero or should not have used lm(.., qr=FALSE).")
+      r
 }
 
 ## The lm method includes objects of class "glm"
@@ -526,8 +541,8 @@ model.frame.lm <- function(formula, ...)
 
 variable.names.lm <- function(object, full = FALSE, ...)
 {
-    if(full)	dimnames(object$qr$qr)[[2L]]
-    else if(object$rank) dimnames(object$qr$qr)[[2L]][seq_len(object$rank)]
+    if(full) dimnames(qr.lm(object)$qr)[[2L]]
+    else if(object$rank) dimnames(qr.lm(object)$qr)[[2L]][seq_len(object$rank)]
     else character(0L)
 }
 
@@ -542,6 +557,8 @@ anova.lm <- function(object, ...)
 {
     if(length(list(object, ...)) > 1L)
 	return(anova.lmlist(object, ...))
+    if(!inherits(object, "lm"))
+	warning("calling anova.lm(<fake-lm-object>) ...")
     w <- object$weights
     ssr <- sum(if(is.null(w)) object$residuals^2 else w*object$residuals^2)
     mss <- sum(if(is.null(w)) object$fitted.values^2 else w*object$fitted.values^2)
@@ -552,7 +569,7 @@ anova.lm <- function(object, ...)
     if(p > 0L) {
         p1 <- 1L:p
         comp <- object$effects[p1]
-        asgn <- object$assign[object$qr$pivot][p1]
+        asgn <- object$assign[qr.lm(object)$pivot][p1]
         nmeffects <- c("(Intercept)", attr(object$terms, "term.labels"))
         tlabels <- nmeffects[1 + unique(asgn)]
         ss <- c(unlist(lapply(split(comp^2,asgn), sum)), ssr)
@@ -638,6 +655,8 @@ predict.lm <-
              weights = 1, ...)
 {
     tt <- terms(object)
+    if(!inherits(object, "lm"))
+	warning("calling predict.lm(<fake-lm-object>) ...")
     if(missing(newdata) || is.null(newdata)) {
 	mm <- X <- model.matrix(object)
 	mmDone <- TRUE
@@ -657,10 +676,10 @@ predict.lm <-
 	    offset <- offset + eval(object$call$offset, newdata)
 	mmDone <- FALSE
     }
-    n <- length(object$residuals) # NROW(object$qr$qr)
+    n <- length(object$residuals) # NROW(qr(object)$qr)
     p <- object$rank
     p1 <- seq_len(p)
-    piv <- object$qr$pivot[p1]
+    piv <- if(p) qr.lm(object)$pivot[p1]
     if(p < ncol(X) && !(missing(newdata) || is.null(newdata)))
 	warning("prediction from a rank-deficient fit may be misleading")
 ### NB: Q[p1,] %*% X[,piv] = R[p1,p1]
@@ -701,18 +720,18 @@ predict.lm <-
 		r <- object$residuals
 		w <- object$weights
 		rss <- sum(if(is.null(w)) r^2 else r^2 * w)
-		df <- n - p
+		df <- object$df.residual
 		rss/df
 	    } else scale^2
 	if(type != "terms") {
             if(p > 0) {
                 XRinv <-
                     if(missing(newdata) && is.null(w))
-                        qr.Q(object$qr)[, p1, drop = FALSE]
+                        qr.Q(qr.lm(object))[, p1, drop = FALSE]
                     else
-                        X[, piv] %*% qr.solve(qr.R(object$qr)[p1, p1])
+                        X[, piv] %*% qr.solve(qr.R(qr.lm(object))[p1, p1])
 #	NB:
-#	 qr.Q(object$qr)[, p1, drop = FALSE] / sqrt(w)
+#	 qr.Q(qr.lm(object))[, p1, drop = FALSE] / sqrt(w)
 #	looks faster than the above, but it's slower, and doesn't handle zero
 #	weights properly
 #
@@ -746,7 +765,7 @@ predict.lm <-
             if (se.fit || interval != "none") {
                 ip <- matrix(ncol = nterms, nrow = NROW(X))
                 dimnames(ip) <- list(rownames(X), names(asgn))
-                Rinv <- qr.solve(qr.R(object$qr)[p1, p1])
+                Rinv <- qr.solve(qr.R(qr.lm(object))[p1, p1])
             }
             if(hasintercept)
                 X <- sweep(X, 2L, avx, check.margin=FALSE)
@@ -867,7 +886,7 @@ predict.mlm <-
 	else if (!is.null(object$offset))
 	    eval(object$call$offset, newdata)
     }
-    piv <- object$qr$pivot[seq(object$rank)]
+    piv <- qr.lm(object)$pivot[seq(object$rank)]
     pred <- X[, piv, drop = FALSE] %*% object$coefficients[piv,]
     if ( !is.null(offset) ) pred <- pred + offset
     if(inherits(object, "mlm")) pred else pred[, 1L]
@@ -877,6 +896,6 @@ predict.mlm <-
 labels.lm <- function(object, ...)
 {
     tl <- attr(object$terms, "term.labels")
-    asgn <- object$assign[object$qr$pivot[1L:object$rank]]
+    asgn <- object$assign[qr.lm(object)$pivot[1L:object$rank]]
     tl[unique(asgn)]
 }

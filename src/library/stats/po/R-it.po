@@ -2,7 +2,7 @@ msgid ""
 msgstr ""
 "Project-Id-Version: R 2.3.0\n"
 "Report-Msgid-Bugs-To: bugs@r-project.org\n"
-"POT-Creation-Date: 2010-03-19 11:18\n"
+"POT-Creation-Date: 2010-09-17 09:19\n"
 "PO-Revision-Date: 2005-04-14 18:07+0200\n"
 "Last-Translator: stefano iacus <>\n"
 "Language-Team: Italian <it@li.org>\n"
@@ -257,11 +257,11 @@ msgid "columns of 'contrast.obj' must define a contrast(sum to zero)"
 msgstr ""
 "le colonne di 'contrast.obj' devono definire un contrasto (sommare a zero)"
 
-msgid "invalid interpolation method"
-msgstr "metodo di interpolazione non valido"
-
 msgid "collapsing to unique 'x' values"
 msgstr "si riduce a valori unici di 'x'"
+
+msgid "invalid interpolation method"
+msgstr "metodo di interpolazione non valido"
 
 msgid "need at least two non-NA values to interpolate"
 msgstr "ci vogliono almeno due valori non-NA per interpolare"
@@ -478,8 +478,19 @@ msgstr "'k' deve essere in {1, 2, ..  n - 1}"
 msgid "some of the first %d eigenvalues are < 0"
 msgstr "alcuni dei primi %d autovalori sono < 0"
 
-msgid "initial value not feasible"
+#, fuzzy
+msgid "initial value is not in the interior of the feasible region"
 msgstr "valore iniziale non ammissimibile"
+
+#, fuzzy
+msgid "Barrier algorithm ran out of iterations and did not converge"
+msgstr "l'algoritmo non converge"
+
+msgid "Objective function increased at outer iteration %d"
+msgstr ""
+
+msgid "Objective function decreased at outer iteration %d"
+msgstr ""
 
 msgid "contrasts not defined for %d degrees of freedom"
 msgstr "contrasti non definiti per %d gradi di libertà"
@@ -1274,8 +1285,9 @@ msgstr "impossibile calcolae p-value corretti in presenza di ties"
 msgid "'y' must be numeric or a string naming a valid function"
 msgstr "'y' deve essere numerico o una stringa contente un nome di funzione"
 
+#, fuzzy
 msgid ""
-"y must be supplied.\n"
+"numeric y must be supplied.\n"
 "For density estimation use density()"
 msgstr ""
 "si deve specificare y.\n"
@@ -1312,13 +1324,22 @@ msgstr "stima singolare"
 msgid "missing or negative weights not allowed"
 msgstr "non sono ammessi pesi negativi o mancanti"
 
-msgid "invalid 'lm' object:  no 'terms' nor 'qr' component"
+#, fuzzy
+msgid "invalid 'lm' object:  no 'terms' component"
 msgstr "oggetto 'lm' non valido: mancano le componenti 'terms' e 'qr'"
+
+msgid "calling summary.lm(<fake-lm-object>) ..."
+msgstr ""
 
 msgid "residual degrees of freedom in object suggest this is not an \"lm\" fit"
 msgstr ""
 "numero di gradi di libertà dei residui dell'oggetto suggeriscono che questo "
 "non una stima \"lm\""
+
+msgid ""
+"lm object does not have a proper 'qr' component.\n"
+" Rank zero or should not have used lm(.., qr=FALSE)."
+msgstr ""
 
 msgid "family '"
 msgstr ""
@@ -1326,6 +1347,9 @@ msgstr ""
 #, fuzzy
 msgid "' not implemented"
 msgstr "tipo '%s' non ancora implementato"
+
+msgid "calling anova.lm(<fake-lm-object>) ..."
+msgstr ""
 
 msgid "ANOVA F-tests on an essentially perfect fit are unreliable"
 msgstr ""
@@ -1335,6 +1359,9 @@ msgstr "eliminate perché la risposta differisce da"
 
 msgid "model 1"
 msgstr "modello 1"
+
+msgid "calling predict.lm(<fake-lm-object>) ..."
+msgstr ""
 
 msgid "prediction from a rank-deficient fit may be misleading"
 msgstr "previsione da una stima non a rango pieno può essere non corretta"
@@ -1976,6 +2003,10 @@ msgstr "gli argomenti devono avere la stessa lunghezza"
 msgid "'relevel' only for factors"
 msgstr "'relevel' solo per variabili factor"
 
+#, fuzzy
+msgid "'ref' must be of length one"
+msgstr "'acf' deve avere lunghezza due o più"
+
 msgid "'ref' must be an existing level"
 msgstr "'ref' deve essere un livello esistente"
 
@@ -2352,6 +2383,11 @@ msgstr "osservazioni 'x' (finite) insufficienti"
 
 msgid "Requested conf.level not achievable"
 msgstr ""
+
+#, fuzzy
+msgid "cannot compute confidence interval when all observations are tied"
+msgstr ""
+"impossibile calcolar eintervalli di confidenza esatti in presenza di zeri"
 
 msgid "cannot compute exact confidence interval with ties"
 msgstr ""

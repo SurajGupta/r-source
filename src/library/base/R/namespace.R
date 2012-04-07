@@ -195,7 +195,9 @@ loadNamespace <- function (package, lib.loc = NULL,
             assign("spec", c(name = name,version = version), envir = info)
             setNamespaceInfo(env, "exports", new.env(hash = TRUE, parent = baseenv()))
             setNamespaceInfo(env, "imports", list("base" = TRUE))
-            setNamespaceInfo(env, "path", file.path(lib, name))
+            ## this should be an absolute path
+            abs_path <- function(x) {cwd <- setwd(x);on.exit(setwd(cwd));getwd()}
+            setNamespaceInfo(env, "path", abs_path(file.path(lib, name)))
             setNamespaceInfo(env, "dynlibs", NULL)
             setNamespaceInfo(env, "S3methods", matrix(NA_character_, 0L, 3L))
             assign(".__S3MethodsTable__.",
@@ -321,6 +323,7 @@ loadNamespace <- function (package, lib.loc = NULL,
         pkgInfoFP <- file.path(pkgpath, "Meta", "package.rds")
         if(file.exists(pkgInfoFP)) {
             pkgInfo <- .readRDS(pkgInfoFP)
+            version <- pkgInfo$DESCRIPTION["Version"]
             if(is.null(built <- pkgInfo$Built))
                 stop(gettextf("package '%s' has not been installed properly\n",
                               basename(pkgpath)),
@@ -1220,8 +1223,8 @@ registerS3method <- function(genname, class, method, envir = parent.frame()) {
     defenv <- if(genname %in% groupGenerics) .BaseNamespaceEnv
     else {
         genfun <- get(genname, envir = envir)
-        if(.isMethodsDispatchOn() && methods::is(genfun, "genericFunction"))
-	    genfun <- methods::slot(genfun, "default")
+        if(.isMethodsDispatchOn() && methods:::is(genfun, "genericFunction"))
+            genfun <- methods:::finalDefaultMethod(genfun@default)
         if (typeof(genfun) == "closure") environment(genfun)
 	else .BaseNamespaceEnv
     }
@@ -1278,7 +1281,7 @@ registerS3methods <- function(info, package, env)
                               genname, package), call. = FALSE, domain = NA)
             genfun <- get(genname, envir = parent.env(envir))
             if(.isMethodsDispatchOn() && methods:::is(genfun, "genericFunction")) {
-                genfun <- genfun@default
+		genfun <- methods:::finalDefaultMethod(genfun@default)
                 warning(gettextf("found an S4 version of %s so it has not been imported correctly",
                                  sQuote(genname)), call. = FALSE, domain = NA)
             }

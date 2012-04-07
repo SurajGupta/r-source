@@ -60,6 +60,14 @@ $nc = 1;
 ## for x64 add InstallerVersion="200" Platforms="x64"
 ## see http://blogs.msdn.com/astebner/archive/2007/08/09/4317654.aspx
 ## and change the product ....
+## Or something like
+
+##<Condition Message='This application is for x64 Windows.'>
+##  VersionNT64
+##</Condition>
+
+## In Wix 3.0 the Version has to be something like 2.11.0.51588
+## and the xmlns is 2006/wi
 
 ## ALLUSERS = 1 for per-machine, blank for default.
 ## http://wix.mindcapers.com/wiki/Allusers_Install_vs._Per_User_Install
@@ -97,6 +105,9 @@ print insfile <<END;
         <Directory Id='R' Name='R'>
           <Directory Id='INSTALLDIR' Name = '$sRW' LongName='$RW'>
 END
+## The standard folder names are listed at
+## http://msdn.microsoft.com/en-us/library/aa372057.aspx
+## They include ProgramFiles64Folder: this one is 32-bit
 
 my $rgui, $rhelp;
 my %comp;
@@ -106,14 +117,14 @@ while(<tfile>) {
     if(/<Component Id=\"([^\"]*)\"/) {
 	$id = $1;
     }
-    ## WiX 2.0.4221 uses 'src', 2.0.5805 uses 'Source'
+    ## tallow in WiX 2.0.4221 uses 'src', in 2.0.5805 uses 'Source'
     if(/<File Id=\"([^\"]*).* (src|Source)=\"([^\"]*)\"/) {
 	$fn = $1;
 	$src = $3;
 	$src =~ s+.*\\$SRCDIR\\++;
 	$src =~ s+\\+/+g;
 	$comp{$src} = $id;
-	$rgui = "$fn" if $src eq "bin/Rgui.exe";
+	$rgui = "$fn" if $src eq "bin/i386/Rgui.exe";
 	$rhelp = "$fn" if $src eq "doc/html/index.html";
     }
     if(/PUT-GUID-HERE/) {
@@ -402,7 +413,6 @@ print insfile <<END;
     </Feature>
     <Feature Id="registryversion" Title="Save Version in Registry"
      Description="Save the R version and install path in the Registry" Level="1" InstallDefault="local" AllowAdvertise="no">
-      <ComponentRef Id='registry0' />
       <ComponentRef Id='registry1' />
       <ComponentRef Id='registry7' />
       <ComponentRef Id='registry2' />
@@ -427,6 +437,7 @@ print insfile <<END;
   </Product>
 </Wix>
 END
+## maybe better to use "WixUI_FeatureTree": always custom
 
 close insfile;
 

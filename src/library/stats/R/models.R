@@ -67,10 +67,13 @@ formula.character <- function(x, env = parent.frame(), ...)
     ff
 }
 
-print.formula <- function(x, ...) {
+print.formula <- function(x, showEnv = !identical(e, .GlobalEnv), ...)
+{
+    e <- environment(.x <- x) ## return(.) original x
     attr(x, ".Environment") <- NULL
     print.default(unclass(x), ...)
-    invisible(x)
+    if (showEnv) print(e)
+    invisible(.x)
 }
 
 "[.formula" <- function(x,i) {
@@ -367,7 +370,10 @@ model.frame.default <-
     vars <- attr(formula, "variables")
     predvars <- attr(formula, "predvars")
     if(is.null(predvars)) predvars <- vars
-    varnames <- sapply(vars, deparse, width.cutoff=500)[-1L]
+    ## Some people have generated longer variable names
+    ## https://stat.ethz.ch/pipermail/r-devel/2010-October/058756.html
+    varnames <- sapply(vars, function(x) paste(deparse(x,width.cutoff=500),
+                                               collapse=' '))[-1L]
     variables <- eval(predvars, data, env)
     resp <- attr(formula, "response")
     if(is.null(rownames) && resp > 0L) {
@@ -421,7 +427,7 @@ model.frame.default <-
 	for(nm in names(data)) {
 	    x <- data[[nm]]
 	    if(is.factor(x) &&
-	       length(unique(x)) < length(levels(x)))
+	       length(unique(x[!is.na(x)])) < length(levels(x)))
 		data[[nm]] <- data[[nm]][, drop = TRUE]
 	}
     }

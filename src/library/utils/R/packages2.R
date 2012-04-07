@@ -101,7 +101,8 @@ install.packages <-
              type = getOption("pkgType"),
              configure.args = getOption("configure.args"),
              configure.vars = getOption("configure.vars"),
-             clean = FALSE, Ncpus = getOption("Ncpus"), ...)
+             clean = FALSE, Ncpus = getOption("Ncpus"),
+             libs_only = FALSE, INSTALL_opts, ...)
 {
     if (is.logical(clean) && clean)
         clean <- "--clean"
@@ -191,22 +192,22 @@ install.packages <-
 
     if(missing(lib) || is.null(lib)) {
         lib <- .libPaths()[1L]
-        if(length(.libPaths()) > 1L)
-            warning(gettextf("argument 'lib' is missing: using '%s'", lib),
-                    immediate. = TRUE, domain = NA)
+	if(length(.libPaths()) > 1L)
+	    message(gettextf("Installing package(s) into %s\n(as %s is unspecified)",
+			     sQuote(lib), sQuote("lib")), domain = NA)
     }
 
     ## check for writability by user
     ok <- file.info(lib)$isdir & (file.access(lib, 2) == 0)
     if(length(lib) > 1 && any(!ok))
         stop(sprintf(ngettext(sum(!ok),
-                              "'lib' element '%s'  is not a writable directory",
+                              "'lib' element '%s' is not a writable directory",
                               "'lib' elements '%s' are not writable directories"),
                      paste(lib[!ok], collapse=", ")), domain = NA)
-    if(length(lib) == 1 && .Platform$OS.type == "windows") {
-        ## file.access is unreliable on Windows, especially Vista.
+    if(length(lib) == 1L && .Platform$OS.type == "windows") {
+        ## file.access is unreliable on Windows, especially >= Vista.
         ## the only known reliable way is to try it
-        ok <- file.info(lib)$isdir
+        ok <- file.info(lib)$isdir %in% TRUE # dir might not exist, PR#14311
         if(ok) {
             fn <- file.path(lib, paste("_test_dir", Sys.getpid(), sep="_"))
             unlink(fn, recursive = TRUE) # precaution
@@ -259,7 +260,8 @@ install.packages <-
             .install.winbinary(pkgs = pkgs, lib = lib, contriburl = contriburl,
                                method = method, available = available,
                                destdir = destdir,
-                               dependencies = dependencies, ...)
+                               dependencies = dependencies,
+                               libs_only = libs_only, ...)
             return(invisible())
         }
         ## Avoid problems with spaces in pathnames.
@@ -310,11 +312,16 @@ install.packages <-
         } else
             cmd0 <- paste(paste("R_LIBS", shQuote(libpath), sep="="), cmd0)
 
+    if (is.character(clean))
+        cmd0 <- paste(cmd0, clean)
+    if (libs_only)
+        cmd0 <- paste(cmd0, "--libs-only")
+    if (!missing(INSTALL_opts))
+        cmd0 <- paste(cmd0, paste(INSTALL_opts, collapse = " "))
+
     if(is.null(repos) & missing(contriburl)) {
-        ## install from local source tarballs
+        ## install from local source tarball(s)
         update <- cbind(path.expand(pkgs), lib) # for side-effect of recycling to same length
-        if (is.character(clean))
-            cmd0 <- paste(cmd0, clean)
 
         for(i in seq_len(nrow(update))) {
             cmd <- paste(cmd0, "-l", shQuote(update[i, 2L]),
@@ -362,11 +369,11 @@ install.packages <-
             ## can't use update[p0, ] due to possible multiple matches
             update <- update[sort.list(match(pkgs, p0)), ]
         }
-        if (is.character(clean))
-            cmd0 <- paste(cmd0, clean)
 
         if (is.null(Ncpus)) Ncpus <- 1L
         if (Ncpus > 1L && nrow(update) > 1L) {
+            ## if --no-lock/--unsafe was specified in INSTALL_opts
+            ## that will override this.
             cmd0 <- paste(cmd0, "--pkglock")
             tmpd <- file.path(tempdir(), "make_packages")
             if (!file.exists(tmpd) && !dir.create(tmpd))

@@ -22,10 +22,10 @@
 #
 msgid ""
 msgstr ""
-"Project-Id-Version: R 2.11.0\n"
+"Project-Id-Version: R 2.12.0\n"
 "Report-Msgid-Bugs-To: bugs@r-project.org\n"
-"POT-Creation-Date: 2010-03-22 15:15\n"
-"PO-Revision-Date: 2010-03-22 15:15\n"
+"POT-Creation-Date: 2010-10-04 10:49\n"
+"PO-Revision-Date: 2010-10-04 10:49\n"
 "Last-Translator: Automatically generated\n"
 "Language-Team: none\n"
 "MIME-Version: 1.0\n"
@@ -105,6 +105,12 @@ msgstr "malformed version string"
 msgid "dim(X) must have a positive length"
 msgstr "dim(X) must have a positive length"
 
+msgid "'X' must have named dimnames"
+msgstr "‘X’ must have named dimnames"
+
+msgid "not all elements of 'MARGIN' are names of dimensions"
+msgstr "not all elements of ‘MARGIN’ are names of dimensions"
+
 msgid "'dim' specifies too large an array"
 msgstr "‘dim’ specifies too large an array"
 
@@ -143,6 +149,9 @@ msgstr ""
 
 msgid "name space cannot be unloaded:"
 msgstr "name space cannot be unloaded:"
+
+msgid "converted to character string"
+msgstr "converted to character string"
 
 msgid "replaced regular expression pattern '[' by  '\\\\['"
 msgstr "replaced regular expression pattern ‘[’ by  ‘\\\\[’"
@@ -643,6 +652,9 @@ msgstr "level sets of factors are different"
 msgid "invalid factor level, NAs generated"
 msgstr "invalid factor level, NAs generated"
 
+msgid "invalid factor level, NA generated"
+msgstr "invalid factor level, NA generated"
+
 msgid "'%s' is not meaningful for ordered factors"
 msgstr "‘%s’ is not meaningful for ordered factors"
 
@@ -748,13 +760,6 @@ msgstr "package ‘%s’ has not been installed properly"
 msgid "package '%s' was built before R 2.10.0: please re-install it"
 msgstr "package ‘%s’ was built before R 2.10.0: please re-install it"
 
-msgid ""
-"package '%s' claims to be built under R version %s but is missing some help "
-"files and needs to be re-installed"
-msgstr ""
-"package ‘%s’ claims to be built under R version %s but is missing some help "
-"files and needs to be re-installed"
-
 msgid "This is R %s, package '%s' needs %s %s"
 msgstr "This is R %s, package ‘%s’ needs %s %s"
 
@@ -790,6 +795,9 @@ msgstr "License for package ‘%s’ not accepted"
 
 msgid "Attaching package: '%s'"
 msgstr "Attaching package: ‘%s’"
+
+msgid "'verbose' and 'quietly' are both true; being verbose then .."
+msgstr "‘verbose’ and ‘quietly’ are both true; being verbose then .."
 
 msgid "invalid package name"
 msgstr "invalid package name"
@@ -833,26 +841,44 @@ msgstr "no packages found"
 msgid "R packages available"
 msgstr "R packages available"
 
-msgid "shared library '%s' not found"
-msgstr "shared library ‘%s’ not found"
+msgid "DLL '%s' not found: maybe not installed for this architecture?"
+msgstr "DLL ‘%s’ not found: maybe not installed for this architecture?"
 
-msgid "shared library '%s' already loaded"
-msgstr "shared library ‘%s’ already loaded"
+msgid "shared object '%s' not found"
+msgstr "shared object ‘%s’ not found"
+
+msgid "DLL '%s' already loaded"
+msgstr "DLL ‘%s’ already loaded"
+
+msgid "shared object '%s' already loaded"
+msgstr "shared object ‘%s’ already loaded"
 
 msgid "now dyn.load(\"%s\") ..."
 msgstr "now dyn.load(“%s”) ..."
 
-msgid "no shared library was specified"
-msgstr "no shared library was specified"
+msgid "no DLL was specified"
+msgstr "no DLL was specified"
 
-msgid "shared library '%s' was not loaded"
-msgstr "shared library ‘%s’ was not loaded"
+msgid "no shared object was specified"
+msgstr "no shared object was specified"
+
+msgid "DLL '%s' was not loaded"
+msgstr "DLL ‘%s’ was not loaded"
+
+msgid "shared object '%s' was not loaded"
+msgstr "shared object ‘%s’ was not loaded"
+
+msgid "DLL '%s' not found"
+msgstr "DLL ‘%s’ not found"
 
 msgid "now dyn.unload(\"%s\") ..."
 msgstr "now dyn.unload(“%s”) ..."
 
 msgid "Loading required package: %s"
 msgstr "Loading required package: %s"
+
+msgid "use of 'save' is deprecated"
+msgstr "use of ‘save’ is deprecated"
 
 msgid "none of the packages are loaded"
 msgstr "none of the packages are loaded"
@@ -1019,6 +1045,9 @@ msgstr ""
 
 msgid "Expected a single logical value for the S4 state flag"
 msgstr "Expected a single logical value for the S4 state flag"
+
+msgid "Expected a single logical value for the S3 state flag"
+msgstr "Expected a single logical value for the S3 state flag"
 
 msgid "invalid to change the storage mode of a factor"
 msgstr "invalid to change the storage mode of a factor"
@@ -1350,9 +1379,6 @@ msgstr "encoding = “%s” chosen"
 msgid "'chdir = TRUE' makes no sense for a URL"
 msgstr "‘chdir = TRUE’ makes no sense for a URL"
 
-msgid "cannot 'chdir' as current directory is unknown"
-msgstr "cannot ‘chdir’ as current directory is unknown"
-
 msgid "'chdir = TRUE' makes no sense for a connection"
 msgstr "‘chdir = TRUE’ makes no sense for a connection"
 
@@ -1388,6 +1414,9 @@ msgstr "‘x’ and ‘y’ must have the same length"
 
 msgid "incorrect values of 'indent' and 'width'"
 msgstr "incorrect values of ‘indent’ and ‘width’"
+
+msgid "probably wrong encoding in names(.) of column"
+msgstr "probably wrong encoding in names(.) of column"
 
 msgid "'nv' must be 0 or ncol(x)"
 msgstr "‘nv’ must be 0 or ncol(x)"
@@ -1489,6 +1518,9 @@ msgstr ""
 msgid "'intern' must be TRUE or FALSE"
 msgstr "‘intern’ must be TRUE or FALSE"
 
+msgid "'ignore.stdout' must be TRUE or FALSE"
+msgstr "‘ignore.stdout’ must be TRUE or FALSE"
+
 msgid "'ignore.stderr' must be TRUE or FALSE"
 msgstr "‘ignore.stderr’ must be TRUE or FALSE"
 
@@ -1497,6 +1529,18 @@ msgstr "‘wait’ must be TRUE or FALSE"
 
 msgid "'input' must be a character vector or 'NULL'"
 msgstr "‘input’ must be a character vector or ‘NULL’"
+
+msgid "arguments 'minimized' and 'invisible' are for Windows only"
+msgstr "arguments ‘minimized’ and ‘invisible’ are for Windows only"
+
+msgid "setting stdout = TRUE"
+msgstr "setting stdout = TRUE"
+
+msgid "'stdout' must be of length 1"
+msgstr "‘stdout’ must be of length 1"
+
+msgid "'stderr' must be of length 1"
+msgstr "‘stderr’ must be of length 1"
 
 msgid "'show.output.on.console' must be TRUE or FALSE"
 msgstr "‘show.output.on.console’ must be TRUE or FALSE"

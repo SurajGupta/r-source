@@ -87,6 +87,16 @@ nlevels <- function(x) length(levels(x))
     y
 }
 
+droplevels <- function(x, ...) UseMethod("droplevels")
+droplevels.factor <- function(x, ...) factor(x)
+droplevels.data.frame <- function(x, except = NULL, ...)
+  {		      
+    ix <- sapply(x, is.factor)
+    if (!is.null(except)) ix[except] <- FALSE
+    x[ix] <- lapply(x[ix], factor)
+    x
+  }
+
 as.vector.factor <- function(x, mode="any")
 {
     if(mode=="list") as.list(x)
@@ -97,6 +107,8 @@ as.vector.factor <- function(x, mode="any")
 }
 
 as.character.factor <- function(x,...) levels(x)[x]
+
+as.logical.factor <- function(x,...) as.logical(levels(x))[x]
 
 as.list.factor <- function(x,...)
 {
@@ -183,24 +195,24 @@ Ops.factor <- function(e1, e2)
     value
 }
 
+## NB for next four:
+## a factor has levels before class in attribute list (PR#6799)
 "[.factor" <- function(x, ..., drop = FALSE)
 {
     y <- NextMethod("[")
     attr(y,"contrasts")<-attr(x,"contrasts")
-    ## NB factor has levels before class in attribute list (PR#6799)
     attr(y,"levels") <- attr(x,"levels")
     class(y) <- oldClass(x)
     lev <- levels(x)
-    if (drop) factor(y, exclude = if(any(is.na(levels(x)))) NULL else NA ) else y
+    if (drop)
+        factor(y, exclude = if(any(is.na(levels(x)))) NULL else NA ) else y
 }
 
 "[<-.factor" <- function(x, ..., value)
 {
     lx <- levels(x)
     cx <- oldClass(x)
-#    nas <- is.na(x) # unused
-    if (is.factor(value))
-	value <- levels(value)[value]
+    if (is.factor(value)) value <- levels(value)[value]
     m <- match(value, lx)
     if (any(is.na(m) & !is.na(value)))
 	warning("invalid factor level, NAs generated")
@@ -215,11 +227,27 @@ Ops.factor <- function(e1, e2)
 {
     y <- NextMethod("[[")
     attr(y,"contrasts") <- attr(x,"contrasts")
-    ## NB factor has levels before class in attribute list (PR#6799)
     attr(y,"levels") <- attr(x,"levels")
     class(y) <- oldClass(x)
     y
 }
+
+## added for 2.12.0
+`[[<-.factor` <- function(x, ..., value)
+{
+    lx <- levels(x)
+    cx <- oldClass(x)
+    if (is.factor(value)) value <- levels(value)[value]
+    m <- match(value, lx)
+    if (any(is.na(m) & !is.na(value)))
+	warning("invalid factor level, NA generated")
+    class(x) <- NULL
+    x[[...]] <- m
+    attr(x,"levels") <- lx
+    class(x) <- cx
+    x
+}
+
 
 ## ordered factors ...
 

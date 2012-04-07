@@ -196,7 +196,10 @@ R_common_command_line(int *pac, char **argv, Rstart Rp)
 		R_ShowMessage(msg);
 	    }
 	    /* mop up --max/min/-n/vsize */
-	    else if(strncmp(*av+7, "size", 4) == 0) {
+	    else if( !strncmp(*av, "--min-nsize", 11) ||
+		     !strncmp(*av, "--max-nsize", 11) ||
+		     !strncmp(*av, "--min-vsize", 11) ||
+		     !strncmp(*av, "--max-vsize", 11) ) {
 		if(strlen(*av) < 13) {
 		    ac--; av++; p = *av;
 		}
@@ -236,12 +239,12 @@ R_common_command_line(int *pac, char **argv, Rstart Rp)
 		}
 		lval = strtol(p, &p, 10);
 		if (lval < 0)
-		    R_ShowMessage(_("WARNING: '-max-ppsize' value is negative: ignored\n"));
+		    R_ShowMessage(_("WARNING: '--max-ppsize' value is negative: ignored\n"));
 		else if (lval < 10000)
-		    R_ShowMessage(_("WARNING: '-max-ppsize' value is too small: ignored\n"));
+		    R_ShowMessage(_("WARNING: '--max-ppsize' value is too small: ignored\n"));
 
 		else if (lval > 500000)
-		    R_ShowMessage(_("WARNING: '-max-ppsize' value is too large: ignored\n"));
+		    R_ShowMessage(_("WARNING: '--max-ppsize' value is too large: ignored\n"));
 		else Rp->ppsize = lval;
 	    }
 	    else { /* unknown -option */

@@ -27,8 +27,9 @@ rcmdfn-CFLAGS=-DBINDIR='"$(BINDIR)"'
 all: makeMakedeps \
      $(R_HOME)/$(BINDIR)/Rgui.exe $(R_HOME)/$(BINDIR)/Rterm.exe \
      $(R_HOME)/$(BINDIR)/Rcmd.exe  $(R_HOME)/$(BINDIR)/RSetReg.exe  \
-     $(R_HOME)/$(BINDIR)/R.exe \
-     $(R_HOME)/$(BINDIR)/Rscript.exe $(R_HOME)/$(BINDIR)/open.exe 
+     $(R_HOME)/$(BINDIR)/R.exe\
+     $(R_HOME)/$(BINDIR)/Rscript.exe $(R_HOME)/$(BINDIR)/open.exe \
+     $(R_HOME)/bin/R.exe $(R_HOME)/bin/Rscript.exe 
 
 $(R_HOME)/$(BINDIR)/Rgui.exe: Rgui.exe
 	$(MKDIR) -p $(R_HOME)/$(BINDIR)
@@ -50,6 +51,14 @@ $(R_HOME)/$(BINDIR)/R.exe: R.exe
 	$(MKDIR) -p $(R_HOME)/$(BINDIR)
 	$(CP) $^ $@	
 
+$(R_HOME)/bin/R.exe: Rfe.exe
+	$(MKDIR) -p $(R_HOME)/bin
+	$(CP) $^ $@	
+
+$(R_HOME)/bin/Rscript.exe: Rfe.exe
+	$(MKDIR) -p $(R_HOME)/bin
+	$(CP) $^ $@	
+
 $(R_HOME)/$(BINDIR)/Rscript.exe: Rscript.exe
 	$(MKDIR) -p $(R_HOME)/$(BINDIR)
 	$(CP) $^ $@	
@@ -60,6 +69,7 @@ $(R_HOME)/$(BINDIR)/open.exe: open.exe
 
 rgui-CPPFLAGS=-DWin32
 rterm-CPPFLAGS=-DWin32
+graphappmain-CPPFLAGS=$(DEFS_W64)
 
 ## -luser32 -lkernel32 -ladvapi32 -lshell32 are now standard
 Rgui-LIBS=-L../../../$(IMPDIR) -lR $(GRAPHAPP_LIB)
@@ -70,22 +80,23 @@ Rgui-LINKFLAGS=-mwindows $(LARGE_ADDR) $(LARGE_STACK)
 Rterm-LINKFLAGS=$(LARGE_ADDR) $(LARGE_STACK)
 Rscript-LINKFLAGS=$(LARGE_ADDR) $(LARGE_STACK)
 
-ifneq ($(strip $(WIN)),64)
-Rgui.exe: graphappmain.o  rgui.o rgico.o
+Rgui.exe: graphappmain.o rgui.o rgico.o
 Rterm.exe: graphappmain.o rterm.o rtico.o
+
+ifneq ($(strip $(WIN)),64)
 rcico.o: Rcmd.exe.manifest
 rgico.o: Rgui.exe.manifest
 rtico.o: Rterm.exe.manifest
 else
-Rgui.exe: graphappmain.o  rgui.o rgico64.o
-Rterm.exe: graphappmain.o rterm.o rtico.o
 rtico.o: Rterm64.manifest
-rgico64.o: Rgui64.manifest
+rgico.o: Rgui64.manifest
 endif
 
 Rcmd.exe: rcmd.o ../rhome.o ../shext.o rcico.o rcmdfn.o Renviron.o
 
 R.exe: R.o ../rhome.o ../shext.o rcico.o rcmdfn.o Renviron.o
+
+Rfe.exe: Rfe.o ../rhome.o rcico.o
 
 RSetReg.exe: RSetReg.o ../rhome.o rcico.o
 

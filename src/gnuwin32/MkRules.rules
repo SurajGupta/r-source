@@ -2,30 +2,30 @@
 
 ifeq ($(strip $(WIN)),64)
 BINPREF = $(BINPREF64)
-# for sub-architecture
+SYMPAT = $(SYMPAT64)
 R_ARCH = /x64
-DEFINES = -DR_ARCH='"x64"'
+DEFINES = -DR_ARCH='"x64"' -DW64
+else
+R_ARCH = /i386
+DEFINES = -DR_ARCH='"i386"' $(DEFS_W64)
+SYMPAT = 's/^.* [BCDRT] _/ /p'
 endif
 
-## c99 would force __STRICT_ANSI__ disabling strdup etc, and also alloca
+## -std=c99 would force __STRICT_ANSI__ disabling strdup etc, and also alloca
 C99FLAG=-std=gnu99
-## for mingw-runtime <= 3.11
-# C99FLAG=-std=gnu99 -fgnu89-inline
+
+# No other alternative is currently supported, but this could be used for ICC
+BUILD=GCC4
+
 
 ifeq ($(strip $(BUILD)),GCC4)
 F77=$(BINPREF)gfortran$(GCC4_SUFF)
 FLIBS=-lgfortran
-## earlier Rtools needs -sjlj; the alternative is -dw2, which fails building R.
+## earlier Rtools needed -sjlj; the alternative is -dw2, which failed building R.
 GCC4_SUFF=
 endif
 
-ifeq ($(strip $(BUILD)),F2C)
-F77=sh $(RHOME)/src/scripts/f77_f2c
-FLIBS=-lf2c
-endif
-
-## usually bin: other values are not yet completely accepted
-BINDIR=bin
+BINDIR=bin$(R_ARCH)
 
 ifdef USE_IMPLIBS
 IMPDIR=lib
@@ -66,11 +66,6 @@ RM=rm -f
 SED=sed
 SORT=sort
 
-## from etc/Renviron.site on Unix
-# EGREP=grep -e
-# LN_S=cp -p
-# TAR=tar
-
 .SUFFIXES:
 .SUFFIXES: .c .cc .cpp .C .f .o .a .def .exp .dll .exe .d .f90 .f95 .m .S
 
@@ -89,7 +84,7 @@ SORT=sort
 
 %.dll:
 	@$(ECHO) EXPORTS > $*.def
-	@$(NM) $^ | $(SED) -n 's/^.* [BCDRT] _/ /p' >> $*.def
+	@$(NM) $^ | $(SED) -n $(SYMPAT) >> $*.def
 	$(DLL) -shared $(DLLFLAGS) $($*-DLLFLAGS) -o $@ $*.def $^ $($*-DLLLIBS) $(DLLLIBS)
 	@$(RM) $*.def
 

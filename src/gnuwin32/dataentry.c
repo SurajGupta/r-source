@@ -773,14 +773,6 @@ static Rboolean getccol(DEstruct DE)
     return newcol;
 }
 
-static SEXP lang5(SEXP s, SEXP t, SEXP u, SEXP v, SEXP w)
-{
-    PROTECT(s);
-    s = LCONS(s, list4(t, u, v, w));
-    UNPROTECT(1);
-    return s;
-}
-
 static SEXP processEscapes(SEXP x)
 {
     SEXP newval, pattern, replacement, expr;
@@ -1748,7 +1740,7 @@ static dataeditor newdataeditor(DEstruct DE, const char *title)
     DE->p = newconsoledata((consolefn) ? consolefn : FixedFont,
 			   pagerrow, pagercol, 0, 0,
 			   guiColors,
-			   DATAEDITOR, 0);
+			   DATAEDITOR, 0, 0);
     if (!DE->p) return NULL;
 
     w = DE->p->w ;

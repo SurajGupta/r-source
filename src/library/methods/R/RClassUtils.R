@@ -5,7 +5,7 @@
 #  it under the terms of the GNU General Public License as published by
 #  the Free Software Foundation; either version 2 of the License, or
 #  (at your option) any later version.
-#int
+#
 #  This program is distributed in the hope that it will be useful,
 #  but WITHOUT ANY WARRANTY; without even the implied warranty of
 #  MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
@@ -167,7 +167,7 @@ makePrototypeFromClassDef <-
     slotDefs <- getSlots(ClassDef); slotNames <- names(slotDefs)
     pnames <- names(attributes(prototype))
     pnames <- pnames[!is.na(match(pnames, slotNames))]
-    check <- rep(FALSE, length(pnames))
+    check <- rep.int(FALSE, length(pnames))
     for(what in pnames) {
         pwhat <- slot(prototype, what)
         slotClass <- getClassDef(slotDefs[[what]], where)
@@ -289,7 +289,7 @@ completeClassDefinition <-
             }
         }
         ## ensure that each element of the slots is a valid class reference
-        undefClasses <- rep(FALSE, length(properties))
+        undefClasses <- rep.int(FALSE, length(properties))
         for(i in seq_along(properties)) {
             cli <- properties[[i]]
             if(is.null(packageSlot(cli))) {
@@ -505,7 +505,8 @@ assignClassDef <-
       }
       else
           assign(mname, def, where)
-      .cacheClass(clName, def, is(def, "ClassUnionRepresentation"), where)
+      if(cacheOnAssign(where)) # will be FALSE for sourceEnvironment's
+          .cacheClass(clName, def, is(def, "ClassUnionRepresentation"), where)
   }
 
 
@@ -838,12 +839,7 @@ showClass <-
 	"\n", sep="")
     x <- ClassDef@slots
     if(length(x)) {
-        n <- length(x)
-        cat("\n",propertiesAreCalled, ":\n", sep="")
-        text <- format(c(names(x), as.character(x)), justify="right")
-        text <- matrix(text, nrow = 2L, ncol = n, byrow = TRUE)
-        dimnames(text) <- list(c("Name:", "Class:"), rep("", n))
-        print(text, quote = FALSE)
+        printPropertiesList(x, propertiesAreCalled)
     }
     else
         cat("\nNo ", propertiesAreCalled, ", prototype of class \"",
@@ -857,6 +853,17 @@ showClass <-
     if(length(ext)) {
         cat("\nKnown Subclasses: ")
         showExtends(ext)
+    }
+}
+
+printPropertiesList <- function(x, propertiesAreCalled) {
+    if(length(x)) {
+        n <- length(x)
+        cat("\n",propertiesAreCalled, ":\n", sep="")
+        text <- format(c(names(x), as.character(x)), justify="right")
+        text <- matrix(text, nrow = 2L, ncol = n, byrow = TRUE)
+        dimnames(text) <- list(c("Name:", "Class:"), rep.int("", n))
+        print(text, quote = FALSE)
     }
 }
 
@@ -932,13 +939,18 @@ possibleExtends <- function(class1, class2, ClassDef1, ClassDef2)
         ## look for class1 in the known subclasses of class2
         if(!is.null(ClassDef2)) {
             ext <- ClassDef2@subclasses
+            ## check for a classUnion definition, not a plain "classRepresentation"
             if(!.identC(class(ClassDef2), "classRepresentation") &&
                isClassUnion(ClassDef2))
                 ## a simple TRUE iff class1 or one of its superclasses belongs to the union
 		i <- as.logical(anyDuplicated(c(class1, unique(nm1),
 						names(ext))))
             else {
+                ## class1 could be multiple classes here.
+                ## I think we want to know if any extend
                 i <- match(class1, names(ext))
+                ii <- i[!is.na(i)]
+                i <- if(length(ii))  ii[1L] else i[1L]
             }
         }
     }
@@ -1194,6 +1206,11 @@ classMetaName <-
   function(name)
   methodsPackageMetaName("C", name)
 
+# regexp for matching class metanames; semi-general but assumes the
+# meta pattern starts with "." and has no other special characters
+.ClassMetaPattern <- function()
+    paste("^[.]",substring(methodsPackageMetaName("C",""),2), sep = "")
+
 ##FIXME:  C code should take multiple strings in name so paste() calls could  be avoided.
 methodsPackageMetaName <-
   ## a name mangling device to simulate the meta-data in S4
@@ -1260,8 +1277,7 @@ getSlots <- function(x) {
 
 ## check for reserved slot names.  Currently only "class" is reserved
 validSlotNames <- function(names) {
-    i <- match("class", names)
-    if(is.na(i))
+    if(is.na(match("class", names)))
         names
     else
         stop("\"class\" is a reserved slot name and cannot be redefined")
@@ -1847,8 +1863,12 @@ substituteFunctionArgs <-
             if(identical(prev, def))
                return()
             pkg <- prev@package # start a per-package list
-            if(identical(pkg, newpkg)) # redefinition
-              return(assign(name, def, envir = .classTable))
+            if(identical(pkg, newpkg)) { # redefinition
+                ## cache for S3, to override possible previous cache
+                base:::.cache_class(name, .extendsForS3(def))
+##                base:::.cache_class(name, extends(def))
+                return(assign(name, def, envir = .classTable))
+            }
             prev <- list(prev)
             names(prev) <- pkg
         }
@@ -1883,9 +1903,13 @@ substituteFunctionArgs <-
     }
 }
 
+## the workhorse of class access
+## The underlying C code will return name if it is not a character vector
+## in the assumption this is a classRepresentation or subclass of that.
+## In principle, this could replace the checks on class(name) in getClassDef
+## and new(), which don't work for subclasses of classRepresentation anyway.
 .getClassFromCache <- function(name, where) {
-    if(exists(name, envir = .classTable, inherits = FALSE)) {
-	value <- get(name, envir = .classTable)
+	value <- .Call("R_getClassFromCache", name, .classTable, PACKAGE = "methods")
 	if(is.list(value)) { ## multiple classes with this name
 	    pkg <- packageSlot(name)
 	    if(is.null(pkg))
@@ -1894,11 +1918,11 @@ substituteFunctionArgs <-
 	    i <- match(pkg, pkgs, 0L)
 	    if(i == 0L) ## try 'methods':
 		i <- match("methods", pkgs, 0L)
-	    if(i > 0L) value[[i]]	# else NULL
+	    if(i > 0L) value[[i]]
+            else NULL
 	}
-	else
+	else #either a class definition or NULL
 	    value
-    } ## else NULL
 }
 
 ### insert superclass information into all the subclasses of this
@@ -2086,7 +2110,7 @@ classesToAM <- function(classes, includeSubclasses = FALSE,
     value
   }
   if(length(includeSubclasses) == 1)
-    includeSubclasses <- rep(includeSubclasses, length(classes))
+    includeSubclasses <- rep.int(includeSubclasses, length(classes))
   if(!is(includeSubclasses, "logical") || length(includeSubclasses) != length(classes))
     stop("argument includeSubclasses must be a logical, either one value or a vector of the same length as argument classes")
   value <- matrix(0,0,0)
@@ -2269,3 +2293,17 @@ S3forS4Methods <- function(where, checkClasses = character()) {
 ##             className, "\" have apparent S3 methods.\n\nThese will be hidden by the S3 class that this class contains. (See ?Methods)\n\n", msg)
 ##   }
 ## }
+
+## a utility to detect mixin classes:  meant to be fast for use in
+## initialize methods (cf the "matrix" method in BasicClasses.R)
+isMixin <- function(classDef) {
+    val <- 0
+    cc <- classDef@contains
+    ## relies on the superclasses in contains slot being ordered by distance
+    for(cl in cc) {
+        if(cl@distance > 1 || val > 1)
+          break
+        val <- val + 1
+    }
+    val > 1
+}

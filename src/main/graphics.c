@@ -29,6 +29,7 @@
 #endif
 
 #include <Defn.h>
+#include <float.h> /* for DBL_EPSILON etc */
 #include <Graphics.h>
 #include <GraphicsBase.h>       /* setBaseDevice */
 #include <Rmath.h>		/* eg. fmax2() */
@@ -1691,6 +1692,7 @@ void GReset(pGEDevDesc dd)
 
 /*  Is the figure region too big ? */
 
+/* Why is this FLT_EPSILON? */
 static Rboolean validFigureRegion(pGEDevDesc dd)
 {
     return ((gpptr(dd)->fig[0] > 0-FLT_EPSILON) &&
@@ -2903,6 +2905,25 @@ void GRect(double x0, double y0, double x1, double y1, int coords,
     gc.col = fg;
     gc.fill = bg;
     GERect(x0, y0, x1, y1, &gc, dd);
+}
+
+void GPath(double *x, double *y, 
+           int npoly, int *nper,
+           Rboolean winding,
+           int bg, int fg, pGEDevDesc dd)
+{
+    R_GE_gcontext gc; gcontextFromGP(&gc, dd);
+
+    if (gpptr(dd)->lty == LTY_BLANK)
+	fg = R_TRANWHITE; /* transparent for the border */
+
+    /*
+     * Ensure that the base clipping region is set on the device
+     */
+    GClip(dd);
+    gc.col = fg;
+    gc.fill = bg;
+    GEPath(x, y, npoly, nper, winding, &gc, dd);
 }
 
 void GRaster(unsigned int* image, int w, int h, 

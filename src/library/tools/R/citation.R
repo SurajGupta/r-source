@@ -1,5 +1,26 @@
 ## Tools for computing on CITATION info.
-## Currently only for validation, and hence not in utils.
+
+.parse_CITATION_file <-
+function(cfile, encoding = NULL)
+{
+    if(is.null(encoding))
+        encoding <- "ASCII"
+    
+    ## The parser can only read valid strings, but single-byte locales
+    ## can mark their encoding.  The following allows latin1 and UTF-8
+    ## citation files to be read in UTF-8 and any single-byte locale
+    ## (including C).
+    ##
+    ## FIXME: if parse() could be told to read strings bytewise,
+    ## we could simply convert to UTF-8.
+    if(encoding %in% c("latin1", "UTF-8") && !l10n_info()$MBCS) {
+        parse(file = cfile, encoding = encoding)
+    } else {
+        con <- file(cfile, encoding = encoding)
+        on.exit(close(con))
+        parse(con)
+    }
+}
 
 BibTeX_entry_field_db <-
     list(Article = c("author", "title", "journal", "year"),
@@ -20,43 +41,46 @@ BibTeX_entry_field_db <-
          )
 ## See e.g. lisp/textmodes/bibtex.el in the GNU Emacs sources.
 
-## Keep in step with utils::readCitationFile
 get_CITATION_entry_fields <-
-function(file, encoding = "unknown")
+function(file, encoding = "ASCII")
 {
-    ## Assume that citEntry() only occurs at top level.
+    exprs <- .parse_CITATION_file(file, encoding)
 
-    ## To parallel readCitationFile, default to latin1.
-    if(encoding == "unknown") encoding <- "latin1"
+    ## Assume that bibentry() or citEntry() only occur at top level.
 
-    if(encoding %in% c("latin1", "UTF-8") && !l10n_info()$MBCS) {
-        exprs <- tryCatch(parse(file = file, encoding = encoding),
-                          error = identity)
-    } else {
-        con <- file(file, encoding = encoding)
-        on.exit(close(con))
-        exprs <- tryCatch(parse(con), error = identity)
+    ## Try to detect entry type and field names from the calls.
+    FOO1 <- FOO2 <- function() match.call(expand.dots = FALSE)
+    formals(FOO1) <- formals(utils::citEntry)
+    formals(FOO2) <- formals(utils::bibentry)
+    ## Could also hard-wire this, of course.
+    get_names_of_nonempty_fields <- function(x) {
+        names(x)[sapply(x,
+                        function(e) {
+                            length(e) &&
+                            !(is.character(e) &&
+                              all(grepl("^[[:space:]]*$", e)))
+                        })]
     }
-    if(inherits(exprs, "error")) return()
-
-    ## Argh.  citEntry() has formals
-    ##   (entry, textVersion, header = NULL, footer = NULL, ...)
-    ## so we cannot simply compute of the names of the citEntry() calls.
-    FOO <- function(entry, textVersion, header = NULL, footer = NULL, ...)
-        match.call()
-
+    
     out <- lapply(exprs,
            function(e) {
-               if(as.character(e[[1L]]) != "citEntry") return()
-               e[[1L]] <- as.name("FOO")
-               e <- as.list(eval(e))
-               entry <- e$entry
+               nm <- as.character(e[[1L]])
+               if(nm == "citEntry") {
+                   e[[1L]] <- as.name("FOO1")
+                   e <- as.list(eval(e))
+                   entry <- e$entry
+                   fields <- get_names_of_nonempty_fields(e$...)
+               }
+               else if(nm == "bibentry") {
+                   e[[1L]] <- as.name("FOO2")
+                   e <- as.list(eval(e))
+                   entry <- e$bibtype
+                   fields <- get_names_of_nonempty_fields(c(e$...,
+                                                            as.list(e$other)[-1L]))
+               }
+               else return()
                entry <- if(!is.character(entry)) NA_character_ else entry[1L]
-               fields <- names(e)
-               ## Retain fields textVersion/header/footer, so these must
-               ## be removed in subsequent BibTeX validation computations.
-               fields <- fields[is.na(match(fields, c("", "entry")))]
-               list(entry = entry, fields = fields)
+               list(entry = entry, fields = as.character(fields))
            })
 
     out <- Filter(Negate(is.null), out)
@@ -73,7 +97,6 @@ function(file, encoding = "unknown")
 find_missing_required_BibTeX_fields <-
 function(entry, fields)
 {
-    if(!length(fields)) return(character())
     pos <- match(tolower(entry),
                  tolower(names(BibTeX_entry_field_db)))
     if(is.na(pos)) {
@@ -82,10 +105,8 @@ function(entry, fields)
     }
     rfields <- BibTeX_entry_field_db[[pos]]
     if(!length(rfields)) return(character())
-    ## Drop non-BibTeX citEntry() fields.
-    fields <- tolower(fields[!fields %in%
-                             c("textVersion", "header", "footer")])
     ## Go for legibility/generality rather than efficiency.
+    fields <- tolower(fields)
     ok <- sapply(strsplit(rfields, "|", fixed = TRUE),
                  function(f) any(f %in% fields))
     rfields[!ok]

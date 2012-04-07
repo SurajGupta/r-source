@@ -14,13 +14,16 @@
 #  A copy of the GNU General Public License is available at
 #  http://www.r-project.org/Licenses/
 
-system <- function(command, intern = FALSE, ignore.stderr = FALSE,
+system <- function(command, intern = FALSE,
+                   ignore.stdout = FALSE, ignore.stderr = FALSE,
                    wait = TRUE, input = NULL,
                    show.output.on.console = TRUE, minimized = FALSE,
                    invisible = TRUE)
 {
     if(!is.logical(intern) || is.na(intern))
         stop("'intern' must be TRUE or FALSE")
+    if(!is.logical(ignore.stdout) || is.na(ignore.stdout))
+        stop("'ignore.stdout' must be TRUE or FALSE")
     if(!is.logical(ignore.stderr) || is.na(ignore.stderr))
         stop("'ignore.stderr' must be TRUE or FALSE")
     if(!is.logical(wait) || is.na(wait))
@@ -36,7 +39,8 @@ system <- function(command, intern = FALSE, ignore.stderr = FALSE,
     if (!is.null(input)) {
         f <- tempfile()
         on.exit(unlink(f))
-        cat(input, file = f, sep="\n")
+        # cat(input, file = f, sep="\n")
+        writeLines(input, f)
     }
     if (intern)
         flag <- 3L
@@ -48,8 +52,38 @@ system <- function(command, intern = FALSE, ignore.stderr = FALSE,
     }
     if (invisible) flag <- 20L + flag
     else if (minimized) flag <- 10L + flag
-    if(ignore.stderr) flag <- flag + 100L
-    .Internal(system(command, as.integer(flag), f))
+    .Internal(system(command, as.integer(flag), f,
+                     !ignore.stdout, !ignore.stderr))
+}
+
+system2 <- function(command, args = character(),
+                    stdout = "", stderr = "", stdin = "", input = NULL,
+                    env = character(),
+                    wait = TRUE, minimized = FALSE, invisible = TRUE)
+{
+    if(!is.logical(wait) || is.na(wait))
+        stop("'wait' must be TRUE or FALSE")
+    if(!is.logical(minimized) || is.na(minimized))
+        stop("'minimized' must be TRUE or FALSE")
+    if(!is.logical(invisible) || is.na(invisible))
+        stop("'invisible' must be TRUE or FALSE")
+    command <- paste(c(shQuote(command), env, args), collapse = " ")
+
+    if(is.null(stdout)) stdout <- FALSE
+    if(is.null(stderr)) stderr <- FALSE
+
+    if (!is.null(input)) {
+        f <- tempfile()
+        on.exit(unlink(f))
+        # cat(input, file = f, sep="\n")
+        writeLines(input, f)
+    } else f <- stdin
+    flag <- if (isTRUE(stdout) || isTRUE(stderr)) 3L
+    else if (wait) ifelse(identical(stdout, ""), 2L, 1L)
+    else 0L
+    if (invisible) flag <- 20L + flag
+    else if (minimized) flag <- 10L + flag
+    .Internal(system(command, flag, f, stdout, stderr))
 }
 
 shell <- function(cmd, shell, flag = "/c", intern = FALSE,

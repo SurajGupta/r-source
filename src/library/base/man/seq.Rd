@@ -1,6 +1,6 @@
 % File src/library/base/man/seq.Rd
 % Part of the R package, http://www.R-project.org
-% Copyright 1995-2009 R Core Development Team
+% Copyright 1995-2010 R Core Development Team
 % Distributed under GPL 2 or later
 
 \name{seq}
@@ -12,7 +12,7 @@
 \alias{seq_len}
 \description{
   Generate regular sequences.  \code{seq} is a standard generic with a
-  default method.  \code{seq.int} is an internal generic which can be
+  default method.  \code{seq.int} is a primitive which can be
   much faster but has a few restrictions.  \code{seq_along} and
   \code{seq_len} are very fast primitives for two common cases.
 }
@@ -41,8 +41,18 @@ seq_len(length.out)
   \code{seq.int} is \emph{not} standard, and it is recommended always to
   name the arguments when programming.
 
-  Both \code{seq} are \code{seq.int} are generic, and only the default
-  method is described here.  Typical usages are
+  \code{seq} is  generic, and only the default method is described here.
+  Note that it dispatches on the class of the \strong{first} argument
+  irrespective of argument names.  This can have unintended consequences
+  if it is called with just one argument intending this to be taken as
+  \code{along.with}: it is much better to use \code{seg_along} in that
+  case.
+
+  \code{seq.int} is an \link{internal generic} which dispatches on
+  methods for \code{"seq"} based on the class of the first supplied
+  argument (before argument matching).
+  
+  Typical usages are
 \preformatted{
 seq(from, to)
 seq(from, to, by= )
@@ -76,6 +86,8 @@ seq(length.out= )
   (as if argument \code{along.with} had been specified), \emph{unless}
   the argument is numeric of length 1 when it is interpreted as
   \code{1:from} (even for \code{seq(0)} for compatibility with S).
+  Using either \code{seq_along} or \code{seq_len} is much preferred
+  (unless strict S compatibility is essential).
 
   The final form generates the integer sequence \code{1, 2, \dots,
   length.out} unless \code{length.out = 0}, when it generates
@@ -86,7 +98,9 @@ seq(length.out= )
 
   For \code{seq} (only), up to two of \code{from}, \code{to} and
   \code{by} can be supplied as complex values provided \code{length.out}
-  or \code{along.with} is specified.
+  or \code{along.with} is specified.  More generally, the default method
+  of \code{seq} will handle classed objects with methods for
+  the \code{Math}, \code{Ops} and \code{Summary} group generics.
 
   \code{seq.int}, \code{seq_along} and \code{seq_len} are
   \link{primitive}.
@@ -94,11 +108,16 @@ seq(length.out= )
 % We used to explain some of the circumstances when integer was
 % returned, but people read that carelessly, so no longer.
 \value{
-  \code{seq.int} and the default method of \code{seq} return a vector of
-  type \code{"integer"} or \code{"double"}: programmers should not rely
-  on which.
-  
-  \code{seq_along} and \code{seq_length} always return an integer vector.
+  \code{seq.int} and the default method of \code{seq} for numeric
+  arguments return a vector of type \code{"integer"} or \code{"double"}:
+  programmers should not rely on which.
+
+  \code{seq_along} and \code{seq_len} always return an integer vector.
+}
+% PR#14388
+\note{
+  In its current implementation \code{seq.int} may evaluate its
+  arguments twice.
 }
 
 \references{
@@ -117,11 +136,11 @@ seq(length.out= )
 }
 \examples{
 seq(0, 1, length.out=11)
-seq(stats::rnorm(20))
-seq(1, 9, by = 2) # match
-seq(1, 9, by = pi)# stay below
+seq(stats::rnorm(20)) # effectively 'along'
+seq(1, 9, by = 2)     # matches 'end'
+seq(1, 9, by = pi)    # stays below 'end'
 seq(1, 6, by = 3)
 seq(1.575, 5.125, by=0.05)
-seq(17) # same as 1:17
+seq(17) # same as 1:17, or even better seq_len(17)
 }
 \keyword{manip}

@@ -2,13 +2,23 @@ RdTextFilter <-
 function(ifile, encoding = "unknown", keepSpacing = TRUE,
          drop = character(), keep = character())
 {
-    if (inherits(ifile, "Rd")) p <- ifile
-    else p <- parse_Rd(ifile, encoding = encoding)
+    if(inherits(ifile, "srcfile"))
+        ifile <- ifile$filename
+    if (inherits(ifile, "Rd")) {
+	# Undo sorting done in prepare2_Rd
+	srcrefs <- sapply(ifile, function(s) attr(s, "srcref"))
+	p <- ifile[ order(srcrefs[1,], srcrefs[2,]) ]
+	class(p) <- class(ifile)
+    } else 
+    	p <- parse_Rd(ifile, encoding = encoding)
+    
     tags <- RdTags(p)
+    
     if ("\\encoding" %in% tags) {
-	encoding <- p[[which(tags=="\\encoding")]][[1L]]
-	if(encoding %in% c("UTF-8", "utf-8", "utf8")) encoding <- "UTF-8"
-	p <- parse_Rd(ifile, encoding=encoding)
+	encoding <- p[[which(tags == "\\encoding")[1L]]][[1L]]
+	if (encoding %in% c("UTF-8", "utf-8", "utf8")) encoding <- "UTF-8"
+	if (!inherits(ifile, "Rd"))
+	    p <- parse_Rd(ifile, encoding=encoding)
     } else
 	encoding <- ""
 
@@ -82,18 +92,19 @@ function(ifile, encoding = "unknown", keepSpacing = TRUE,
 	    prevcol <<- lastcol
 	    prevline <<- lastline
 	},
-	"\\docType"=,
-	"\\encoding"=,
-	"\\keyword"=,
-	"\\email"=,
-	"\\file"=,
-	"\\linkS4class"=,
-	"\\pkg"=,
-	"\\var"=,
-	"\\method"=,
 	"\\S3method"=,
 	"\\S4method"=,
+        "\\command"=,
+	"\\docType"=,
+	"\\email"=,
+	"\\encoding"=,
+	"\\file"=,
+	"\\keyword"=,
 	"\\link"=,
+        "\\linkS4class"=,
+	"\\method"=,
+	"\\pkg"=,
+	"\\var"=,
 	DROP = {},  # do nothing
 
 	"\\tabular"=,

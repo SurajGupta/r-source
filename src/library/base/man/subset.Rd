@@ -1,6 +1,6 @@
 % File src/library/base/man/subset.Rd
 % Part of the R package, http://www.R-project.org
-% Copyright 1995-2007 R Core Development Team
+% Copyright 1995-2010 R Core Development Team
 % Distributed under GPL 2 or later
 
 \name{subset}
@@ -53,15 +53,27 @@ subset(x, \dots)
   The \code{drop} argument is passed on to the indexing method for
   matrices and data frames: note that the default for matrices is
   different from that for indexing.
+
+  Factors may have empty levels after subsetting; unused levels are
+  not automatically removed. See \code{\link{droplevels}} for a way to
+  drop all unused levels from a data frame.
+
 }
 \value{
   An object similar to \code{x} contain just the selected elements (for
   a vector), rows and columns (for a matrix or data frame), and so on.
 }
+\section{Warning}{
+  This is a convenience function intended for use interactively.  For
+  programming it is better to use the standard subsetting functions like
+  \code{\link{[}}, and in particular the non-standard evaluation of
+  argument \code{subset} can have unanticipated consequences.
+}
 \author{Peter Dalgaard and Brian Ripley}
 \seealso{
   \code{\link{[}}, % = ./Extract.Rd
   \code{\link{transform}}
+  \code{\link{droplevels}}
 }
 \examples{
 subset(airquality, Temp > 80, select = c(Ozone, Temp))
@@ -74,5 +86,7 @@ with(airquality, subset(Ozone, Temp > 80))
 nm <- rownames(state.x77)
 start_with_M <- nm \%in\% grep("^M", nm, value=TRUE)
 subset(state.x77, start_with_M, Illiteracy:Murder)
+# but in recent versions of R this can simply be
+subset(state.x77, grepl("^M", nm), Illiteracy:Murder)
 }
 \keyword{manip}

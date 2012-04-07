@@ -5,10 +5,10 @@
 #
 msgid ""
 msgstr ""
-"Project-Id-Version: R 2.11.0\n"
+"Project-Id-Version: R 2.12.0\n"
 "Report-Msgid-Bugs-To: bugs@r-project.org\n"
-"POT-Creation-Date: 2010-03-19 11:18\n"
-"PO-Revision-Date: 2010-03-23 13:36+0100\n"
+"POT-Creation-Date: 2010-09-17 09:19\n"
+"PO-Revision-Date: 2010-09-22 13:37+0200\n"
 "Last-Translator: Detlef Steuer <steuer@hsu-hh.de>\n"
 "Language-Team: R Core <r-core@r-project.org>\n"
 "MIME-Version: 1.0\n"
@@ -249,11 +249,11 @@ msgid "columns of 'contrast.obj' must define a contrast(sum to zero)"
 msgstr ""
 "Spalten von 'contrast.obj' müssen einen Kontrast definieren (Summe = 0)"
 
-msgid "invalid interpolation method"
-msgstr "unzulässige Interpolationsmehtode"
-
 msgid "collapsing to unique 'x' values"
 msgstr "Reduktion auf einmalige 'x' Werte"
+
+msgid "invalid interpolation method"
+msgstr "unzulässige Interpolationsmehtode"
 
 msgid "need at least two non-NA values to interpolate"
 msgstr "benötige mindestens zwei nicht-NA Werte zur Interpolation"
@@ -467,8 +467,17 @@ msgstr "'k' muss in {1, 2, .. n-1} liegen"
 msgid "some of the first %d eigenvalues are < 0"
 msgstr "einige der ersten %d Eigenwerte sind < 0"
 
-msgid "initial value not feasible"
-msgstr "Startwert nicht nutzbar"
+msgid "initial value is not in the interior of the feasible region"
+msgstr "Startwert nicht im Inneren der zulässigen Region"
+
+msgid "Barrier algorithm ran out of iterations and did not converge"
+msgstr "Barrier-Algorithmus konvergierte nicht in maximaler Iterationszahl"
+
+msgid "Objective function increased at outer iteration %d"
+msgstr "Zielfunktion angestiegen bei der äußeren Iteration %d"
+
+msgid "Objective function decreased at outer iteration %d"
+msgstr "Zilfunktion gefallen bei der äußeren Iteration %d"
 
 msgid "contrasts not defined for %d degrees of freedom"
 msgstr "Kontraste für %d Freiheitsgrade nicht definiert"
@@ -1060,7 +1069,9 @@ msgid "glm.fit: algorithm stopped at boundary value"
 msgstr "glm.fit: Algortihmus stoppte am Rand"
 
 msgid "glm.fit: fitted probabilities numerically 0 or 1 occurred"
-msgstr "glm.fit: Angepasste Wahrscheinlichkeiten mit numerischem Wert 0 oder 1 aufgetreten"
+msgstr ""
+"glm.fit: Angepasste Wahrscheinlichkeiten mit numerischem Wert 0 oder 1 "
+"aufgetreten"
 
 msgid "glm.fit: fitted rates numerically 0 occurred"
 msgstr "glm.fit: angepasste Raten, die numerisch 0 sind, aufgetreten"
@@ -1233,10 +1244,10 @@ msgstr ""
 "'y' muss entweder numerisch oder der Name einer zulässigen Funktion sein"
 
 msgid ""
-"y must be supplied.\n"
+"numeric y must be supplied.\n"
 "For density estimation use density()"
 msgstr ""
-"y muss angegeben werden.\n"
+"numerisches y muss angegeben werden.\n"
 "Zur Dichteschätzung bitte density() nutzen"
 
 msgid "'k' is not an integer"
@@ -1269,19 +1280,32 @@ msgstr "singlärer Fit aufgetreten"
 msgid "missing or negative weights not allowed"
 msgstr "fehlende oder negative Gewichte nicht erlaubt"
 
-msgid "invalid 'lm' object:  no 'terms' nor 'qr' component"
-msgstr "unzulässiges 'lm' Objekt: keine 'terms' und keine 'qr' Komponente"
+msgid "invalid 'lm' object:  no 'terms' component"
+msgstr "unzulässiges 'lm' Objekt: keine 'terms' Komponente"
+
+msgid "calling summary.lm(<fake-lm-object>) ..."
+msgstr "aufruf von summary.lm(<fake-lm-obejct>)"
 
 msgid "residual degrees of freedom in object suggest this is not an \"lm\" fit"
 msgstr ""
 "Freiheitsgrade der Residuen legt nahe, dass es sich nicht um einen \"lm\" "
 "Fit handelt"
 
+msgid ""
+"lm object does not have a proper 'qr' component.\n"
+" Rank zero or should not have used lm(.., qr=FALSE)."
+msgstr ""
+"lm Objekt hat keine gültige 'qr' Komponente.\n"
+"Rang Null oder nicht lm(.., qr=FALSE) nutzen "
+
 msgid "family '"
 msgstr "Familie '"
 
 msgid "' not implemented"
 msgstr "' nicht implementiert"
+
+msgid "calling anova.lm(<fake-lm-object>) ..."
+msgstr "Aufruf von anova.lm(<fake-lm-object>) ..."
 
 msgid "ANOVA F-tests on an essentially perfect fit are unreliable"
 msgstr ""
@@ -1291,7 +1315,10 @@ msgid "removed because response differs from"
 msgstr "enfernt, da die Response sich von"
 
 msgid "model 1"
-msgstr "Modell 1 unterscheidet"
+msgstr "Modell 1"
+
+msgid "calling predict.lm(<fake-lm-object>) ..."
+msgstr "Aufruf von predict.lm(<fake-lm-object>)..."
 
 msgid "prediction from a rank-deficient fit may be misleading"
 msgstr "Vorhersage durch Fit ohne vollen Rang mag täuschen"
@@ -1908,6 +1935,9 @@ msgstr "Argumente 'r' und 'c' müssen die selben Summen besitzen"
 msgid "'relevel' only for factors"
 msgstr "'relevel' nur für Faktoren"
 
+msgid "'ref' must be of length one"
+msgstr "'ref' muss Länge eins haben"
+
 msgid "'ref' must be an existing level"
 msgstr "'ref' muss eine exisiterende Faktorstufe sein"
 
@@ -2273,6 +2303,9 @@ msgstr "nicht genug (endliche) 'x' Beobachtungen"
 
 msgid "Requested conf.level not achievable"
 msgstr "gefordertes conf.level nicht erreichbar"
+
+msgid "cannot compute confidence interval when all observations are tied"
+msgstr "kann kein Konfidenzinterval berechnen, wenn alle Beobachtungen gebunden sind"
 
 msgid "cannot compute exact confidence interval with ties"
 msgstr "kann bei Bindungen das exakte Konfidenzinterval nicht berechnen"

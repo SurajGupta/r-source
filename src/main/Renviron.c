@@ -31,6 +31,7 @@
 #include <Defn.h> /* for PATH_MAX */
 #include <Rinterface.h>
 #include <Fileio.h>
+#include <ctype.h>		/* for isspace */
 
 /* remove leading and trailing space */
 static char *rmspace(char *s)
@@ -89,7 +90,7 @@ static char *findRbrace(char *s)
 #define BUF_SIZE 10000
 static char *findterm(char *s)
 {
-    char *p, *q, *r, *r2, *ss=s;
+    char *p, *q, *r2, *ss=s;
     static char ans[BUF_SIZE];
     int nans;
 
@@ -104,7 +105,7 @@ static char *findterm(char *s)
 	/* copy over leading part */
 	nans = strlen(ans);
 	strncat(ans, s, p-s); ans[nans + p - s] = '\0';
-	r = (char *) alloca(q - p + 2);
+	char r[q - p + 2];
 	strncpy(r, p, q - p + 1);
 	r[q - p + 1] = '\0';
 	r2 = subterm(r);
@@ -275,6 +276,11 @@ void process_user_Renviron()
 	return;
     }
 
+#ifdef R_ARCH
+    char buff[100];
+    snprintf(buff, 100, ".Renviron.%s", R_ARCH);
+    if( process_Renviron(buff)) return;
+#endif
     if(process_Renviron(".Renviron")) return;
 #ifdef Unix
     s = R_ExpandFileName("~/.Renviron");
@@ -290,5 +296,23 @@ void process_user_Renviron()
 	s = buf;
     }
 #endif
+#ifdef R_ARCH
+    snprintf(buff, 100, "%s.%s", s, R_ARCH);
+    if( process_Renviron(buff)) return;
+#endif
     process_Renviron(s);
+}
+
+SEXP do_readEnviron(SEXP call, SEXP op, SEXP args, SEXP env)
+{
+
+    checkArity(op, args);
+    SEXP x = CAR(args);
+    if (length(x) != 1 || !isString(x))
+	errorcall(call, _("argument 'x' must be a character string"));
+    const char *fn = R_ExpandFileName(translateChar(STRING_ELT(x, 0)));
+    int res = process_Renviron(fn);
+    if (!res)
+	warningcall(call, _("file '%s' cannot be opened for reading"), fn);
+    return ScalarLogical(res != 0);
 }

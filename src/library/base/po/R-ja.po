@@ -2,9 +2,9 @@ msgid ""
 msgstr ""
 "Project-Id-Version: R 2.4.0 \n"
 "Report-Msgid-Bugs-To: bugs@r-project.org\n"
-"POT-Creation-Date: 2010-03-22 15:15\n"
-"PO-Revision-Date: 2010-04-03 18:36+0900 \n"
-"Last-Translator: takahashi <takahashi.kohske@gmail.com> \n"
+"POT-Creation-Date: 2010-10-04 10:49\n"
+"PO-Revision-Date: 2010-09-29 07:56+0900 \n"
+"Last-Translator: Shigeru Mase <maseshigeru@gmail.com> \n"
 "Language-Team: RjpWiki Message Translation Team <mokada@md.tsukuba.ac.jp> \n"
 "MIME-Version: 1.0 \n"
 "Content-Type: text/plain; charset=UTF-8 \n"
@@ -84,6 +84,12 @@ msgstr " 正しい書式のバージョン文字列ではありません "
 msgid "dim(X) must have a positive length"
 msgstr " dim(X) は正の長さを持たねばなりません "
 
+msgid "'X' must have named dimnames"
+msgstr " 'x' は名前付きの次元名でなければなりません "
+
+msgid "not all elements of 'MARGIN' are names of dimensions"
+msgstr " `MARGIN` に次元名でない要素があります "
+
 msgid "'dim' specifies too large an array"
 msgstr " 'dim' は余りに大きな配列を指定しています "
 
@@ -124,6 +130,9 @@ msgstr ""
 
 msgid "name space cannot be unloaded:"
 msgstr " 名前空間をアンロード出来ません "
+
+msgid "converted to character string"
+msgstr "文字列に変換されました "
 
 msgid "replaced regular expression pattern '[' by  '\\\\['"
 msgstr " 正規表現パターン '[' を '\\\\[' で置き換えました "
@@ -636,6 +645,9 @@ msgstr " 因子の水準セットが異なっています "
 msgid "invalid factor level, NAs generated"
 msgstr " 不正な因子水準です。NA が発生しました "
 
+msgid "invalid factor level, NA generated"
+msgstr " 不正な因子水準です。NA が発生しました "
+
 msgid "'%s' is not meaningful for ordered factors"
 msgstr " '%s' は順序因子に対しては無意味です "
 
@@ -747,13 +759,6 @@ msgid "package '%s' was built before R 2.10.0: please re-install it"
 msgstr ""
 "パッケージ '%s' は R 2.10.0 以前に造らました。新しくインストールして下さい "
 
-msgid ""
-"package '%s' claims to be built under R version %s but is missing some help "
-"files and needs to be re-installed"
-msgstr ""
-"パッケージ '%s' はバージョン %s の R の下で造らている必要があります。欠けてい"
-"るヘルプファイルがあります。新しくインストールしてください "
-
 msgid "This is R %s, package '%s' needs %s %s"
 msgstr " これは R %s です。パッケージ '%s' は %s %s を必要とします "
 
@@ -789,6 +794,9 @@ msgstr "パッケージ '%s' のライセンスは受け入れられていませ
 
 msgid "Attaching package: '%s'"
 msgstr " 次のパッケージを付け加えます: '%s' "
+
+msgid "'verbose' and 'quietly' are both true; being verbose then .."
+msgstr " 'verbose' と 'quietly' が両方真です； verbose とします .. "
 
 msgid "invalid package name"
 msgstr " 不当なパッケージ名です "
@@ -832,26 +840,44 @@ msgstr " いかなるパッケージも見付かりませんでした "
 msgid "R packages available"
 msgstr " 利用可能な R パッケージ "
 
-msgid "shared library '%s' not found"
-msgstr " 共用ライブラリ '%s' が見付かりません "
+msgid "DLL '%s' not found: maybe not installed for this architecture?"
+msgstr "DLL '%s' が見つかりません；　おそらくインストールされていないのでは？ "
 
-msgid "shared library '%s' already loaded"
+msgid "shared object '%s' not found"
+msgstr " 共有オブジェクト `%s` を見付けることができません "
+
+msgid "DLL '%s' already loaded"
+msgstr "DLL '%s' は既にロードされています "
+
+msgid "shared object '%s' already loaded"
 msgstr " 共用ライブラリ '%s' は既にロードされています "
 
 msgid "now dyn.load(\"%s\") ..."
 msgstr " 今 dyn.load(\"%s\") 中です ... "
 
-msgid "no shared library was specified"
+msgid "no DLL was specified"
+msgstr "DLLが何も指定されませんでした "
+
+msgid "no shared object was specified"
 msgstr " 共用ライブラリが何も指定されませんでした "
 
-msgid "shared library '%s' was not loaded"
+msgid "DLL '%s' was not loaded"
+msgstr "DLL '%s' はロードされませんでした "
+
+msgid "shared object '%s' was not loaded"
 msgstr " 共用ライブラリ '%s' はロードされませんでした "
+
+msgid "DLL '%s' not found"
+msgstr "DLL '%s' が見付かりません "
 
 msgid "now dyn.unload(\"%s\") ..."
 msgstr " 今 dyn.unload(\"%s\") 中です ... "
 
 msgid "Loading required package: %s"
 msgstr " 要求されたパッケージ %s をロード中です "
+
+msgid "use of 'save' is deprecated"
+msgstr " '%s' の使用は廃止予定です "
 
 msgid "none of the packages are loaded"
 msgstr " どのパッケージもロードされません "
@@ -1021,6 +1047,9 @@ msgstr ""
 
 msgid "Expected a single logical value for the S4 state flag"
 msgstr " S4 状態フラグに対しては単一の論理値が期待されています "
+
+msgid "Expected a single logical value for the S3 state flag"
+msgstr " S3 状態フラグに対しては単一の論理値が期待されています "
 
 msgid "invalid to change the storage mode of a factor"
 msgstr " factor　の格納モードを変えるのは不正です "
@@ -1370,9 +1399,6 @@ msgstr "エンコーディング %s が選択されました "
 msgid "'chdir = TRUE' makes no sense for a URL"
 msgstr " 'chdir = TRUE' は URL に対しては意味がありません "
 
-msgid "cannot 'chdir' as current directory is unknown"
-msgstr " 現在のディレクトリが未知なので 'chdir'  できません "
-
 msgid "'chdir = TRUE' makes no sense for a connection"
 msgstr " 'chdir = TRUE' はコネクションに対しては意味がありません "
 
@@ -1408,6 +1434,9 @@ msgstr " 'x' と 'y' は同じ長さを持たなければなりません "
 
 msgid "incorrect values of 'indent' and 'width'"
 msgstr " 'indent' と 'width' に対する値が不正です "
+
+msgid "probably wrong encoding in names(.) of column"
+msgstr " おそらく列の names(.) 中に間違ったエンコーディングがあります "
 
 msgid "'nv' must be 0 or ncol(x)"
 msgstr " 'nv' は 0 か ncol(x) でなければなりません "
@@ -1509,6 +1538,9 @@ msgstr ""
 msgid "'intern' must be TRUE or FALSE"
 msgstr " 'intern' は 'TRUE' か 'FALSE' でなければなりません "
 
+msgid "'ignore.stdout' must be TRUE or FALSE"
+msgstr " 'ignore.stderr' は 'TRUE' か 'FALSE' でなければなりません "
+
 msgid "'ignore.stderr' must be TRUE or FALSE"
 msgstr " 'ignore.stderr' は 'TRUE' か 'FALSE' でなければなりません "
 
@@ -1517,6 +1549,18 @@ msgstr " 'wait' は 'TRUE' か 'FALSE' でなければなりません "
 
 msgid "'input' must be a character vector or 'NULL'"
 msgstr " 'input' は文字ベクトルまたは NULL でなければなりません "
+
+msgid "arguments 'minimized' and 'invisible' are for Windows only"
+msgstr " 引数 'minimized' そして 'invisible' は Windows 専用です "
+
+msgid "setting stdout = TRUE"
+msgstr " stdout = TRUE と設定しました "
+
+msgid "'stdout' must be of length 1"
+msgstr " 'stdout' は長さ 1 でなければなりません "
+
+msgid "'stderr' must be of length 1"
+msgstr " 'stderr' は長さ 1 でなければなりません "
 
 msgid "'show.output.on.console' must be TRUE or FALSE"
 msgstr " 'show.output.on.console' は 'TRUE' か 'FALSE' でなければなりません "
@@ -1608,8 +1652,18 @@ msgid "Warning message:\n"
 msgid_plural "Warning messages:\n"
 msgstr[0] " 警告メッセージ： \n"
 
-#~ msgid "'x' must have length 1"
-#~ msgstr " 'x' は長さ 1 でなければなりません "
+#~ msgid "cannot 'chdir' as current directory is unknown"
+#~ msgstr " 現在のディレクトリが未知なので 'chdir'  できません "
+
+#~ msgid "shared library '%s' not found"
+#~ msgstr " 共用ライブラリ '%s' が見付かりません "
+
+#~ msgid ""
+#~ "package '%s' claims to be built under R version %s but is missing some "
+#~ "help files and needs to be re-installed"
+#~ msgstr ""
+#~ "パッケージ '%s' はバージョン %s の R の下で造らている必要があります。欠け"
+#~ "ているヘルプファイルがあります。新しくインストールしてください "
 
 #~ msgid "invalid digits"
 #~ msgstr " 無効な桁数です "

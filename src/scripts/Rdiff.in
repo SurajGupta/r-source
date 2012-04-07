@@ -2,7 +2,7 @@
 ##
 ## Rdiff -- diff 'without R version'
 
-revision='$Rev: 51514 $'
+revision='$Rev: 51510 $'
 version=`set - ${revision}; echo ${2}`
 version="R output diff: ${R_VERSION} (r${version})
 
@@ -67,6 +67,7 @@ tmpfile=${TMPDIR-/tmp}/${bfile}-d.${$}
 
 ${SED} -e "${scriptold}" -e "${scriptnew}" -e "${s1}" -e "${s2}" ${ffile} | ${EGREP} -v "${pattern}" > ${tmpfile}
 ## some packages ship .Rout.save with CRLF endings
+## OTOH, Solaris's /usr/ucb/tr strips 'r' here
 (${TR} -d '\r' <  ${tfile} | ${SED} -e "${scriptold}" -e "${scriptnew}" -e "${s1}" -e "${s2}" | \
   ${EGREP} -v "${pattern}" | \
   diff -bw ${tmpfile} - ) && exitstatus=0

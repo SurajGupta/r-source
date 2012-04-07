@@ -30,7 +30,7 @@ testPlatformEquivalence <- function(built, run)
 library <-
 function(package, help, pos = 2, lib.loc = NULL, character.only = FALSE,
          logical.return = FALSE, warn.conflicts = TRUE,
-         keep.source = getOption("keep.source.pkgs"),
+	 quietly = FALSE, keep.source = getOption("keep.source.pkgs"),
          verbose = getOption("verbose"))
 {
     paste0 <- function(...) paste(..., sep="")
@@ -41,21 +41,11 @@ function(package, help, pos = 2, lib.loc = NULL, character.only = FALSE,
                  call. = FALSE, domain = NA)
 
         ## which version was this package built under?
-        ## must be >= 2.10.0 (new help system), but R-devel
-        ## reported 2.10.0 for a long time before the help system
-        ## was finished.
+        ## must be >= 2.10.0 (new help system)
         R_version_built_under <- as.numeric_version(built$R)
         if(R_version_built_under < "2.10.0")
             stop(gettextf("package '%s' was built before R 2.10.0: please re-install it",
                           pkgname), call. = FALSE, domain = NA)
-        ## check that this was not under pre-release 2.10.0,
-        ## but beware of bootstrapping base packages
-        if(R_version_built_under == "2.10.0" &&
-           file.exists(file.path(pkgpath, "help")) &&
-           !file.exists(file.path(pkgpath, "help", "paths.rds")))
-            warning(gettextf("package '%s' claims to be built under R version %s but is missing some help files and needs to be re-installed",
-                             pkgname, as.character(built$R)),
-                    call. = FALSE, domain = NA)
 
         current <- getRversion()
         ## depends on R version?
@@ -98,6 +88,8 @@ function(package, help, pos = 2, lib.loc = NULL, character.only = FALSE,
         }
         ## if using r_arch subdirs, check for presence
         if(nzchar(r_arch)
+           ## back-compatibility fix: remove before 2.12.0
+           ## && (.Platform$OS.type != "windows" || r_arch != "i386")
            && file.exists(file.path(pkgpath, "libs"))
            && !file.exists(file.path(pkgpath, "libs", r_arch)))
             stop(gettextf("package '%s' is not installed for 'arch=%s'",
@@ -232,6 +224,8 @@ function(package, help, pos = 2, lib.loc = NULL, character.only = FALSE,
         bindtextdomain(paste("R", pkgname, sep="-"), popath)
     }
 
+    if(verbose && quietly)
+	message("'verbose' and 'quietly' are both true; being verbose then ..")
     if(!missing(package)) {
         if (is.null(lib.loc)) lib.loc <- .libPaths()
         ## remove any non-existent directories
@@ -265,7 +259,8 @@ function(package, help, pos = 2, lib.loc = NULL, character.only = FALSE,
 		    return(FALSE)
 		} else stop(txt, domain = NA)
             }
-            which.lib.loc <- dirname(pkgpath)
+            abs_path <- function(x) {cwd <- setwd(x);on.exit(setwd(cwd));getwd()}
+            which.lib.loc <- abs_path(dirname(pkgpath))
             pfile <- system.file("Meta", "package.rds", package = package,
                                  lib.loc = which.lib.loc)
             if(!nzchar(pfile))
@@ -289,7 +284,7 @@ function(package, help, pos = 2, lib.loc = NULL, character.only = FALSE,
                     pos <- 2
                 } else pos <- npos
             }
-            .getRequiredPackages2(pkgInfo)
+            .getRequiredPackages2(pkgInfo, quietly = quietly)
             deps <- unique(names(pkgInfo$Depends))
             ## If the name space mechanism is available and the package
             ## has a name space, then the name space loading mechanism
@@ -552,13 +547,14 @@ function(chname, package = NULL, lib.loc = NULL,
          verbose = getOption("verbose"),
          file.ext = .Platform$dynlib.ext, ...)
 {
+    abs_path <- function(x) {cwd <- setwd(x);on.exit(setwd(cwd));getwd()}
     dll_list <- .dynLibs()
 
     if(missing(chname) || (nc_chname <- nchar(chname, "c")) == 0)
         return(dll_list)
 
     ## Be defensive about possible system-specific extension for shared
-    ## libraries, although the docs clearly say they should not be
+    ## objects, although the docs clearly say they should not be
     ## added.
     nc_file_ext <- nchar(file.ext, "c")
     if(substr(chname, nc_chname - nc_file_ext + 1L, nc_chname) == file.ext)
@@ -572,12 +568,21 @@ function(chname, package = NULL, lib.loc = NULL,
         if(file.exists(file)) break else file <- ""
     }
     if(file == "")
-        stop(gettextf("shared library '%s' not found", chname), domain = NA)
+        if(.Platform$OS.type == "windows")
+            stop(gettextf("DLL '%s' not found: maybe not installed for this architecture?", chname), domain = NA)
+        else
+            stop(gettextf("shared object '%s' not found", chname), domain = NA)
+    ## for consistency with library.dyn.unload:
+    file <- file.path(abs_path(DLLpath), paste(chname, file.ext, sep = ""))
     ind <- sapply(dll_list, function(x) x[["path"]] == file)
     if(length(ind) && any(ind)) {
         if(verbose)
-            message(gettextf("shared library '%s' already loaded", chname),
-                    domain = NA)
+            if(.Platform$OS.type == "windows")
+                message(gettextf("DLL '%s' already loaded", chname),
+                        domain = NA)
+            else
+                message(gettextf("shared object '%s' already loaded", chname),
+                        domain = NA)
         return(invisible(dll_list[[ seq_along(dll_list)[ind] ]]))
     }
     if(.Platform$OS.type == "windows") {
@@ -606,20 +611,26 @@ library.dynam.unload <-
 function(chname, libpath, verbose = getOption("verbose"),
          file.ext = .Platform$dynlib.ext)
 {
+    abs_path <- function(x) {cwd <- setwd(x);on.exit(setwd(cwd));getwd()}
     dll_list <- .dynLibs()
 
     if(missing(chname) || (nc_chname <- nchar(chname, "c")) == 0)
-        stop("no shared library was specified")
+        if(.Platform$OS.type == "windows")
+            stop("no DLL was specified")
+        else
+            stop("no shared object was specified")
 
     ## Be defensive about possible system-specific extension for shared
-    ## libraries, although the docs clearly say they should not be
+    ## objects, although the docs clearly say they should not be
     ## added.
     nc_file_ext <- nchar(file.ext, "c")
     if(substr(chname, nc_chname - nc_file_ext + 1L, nc_chname)
        == file.ext)
         chname <- substr(chname, 1L, nc_chname - nc_file_ext)
 
-     file <- if(nzchar(.Platform$r_arch))
+    ## We need an absolute path here.
+    libpath <- abs_path(libpath)
+    file <- if(nzchar(.Platform$r_arch))
              file.path(libpath, "libs", .Platform$r_arch,
                        paste(chname, file.ext, sep = ""))
      else    file.path(libpath, "libs",
@@ -627,11 +638,17 @@ function(chname, libpath, verbose = getOption("verbose"),
 
     pos <- which(sapply(dll_list, function(x) x[["path"]] == file))
     if(!length(pos))
-        stop(gettextf("shared library '%s' was not loaded", chname),
-             domain = NA)
+        if(.Platform$OS.type == "windows")
+            stop(gettextf("DLL '%s' was not loaded", chname), domain = NA)
+        else
+            stop(gettextf("shared object '%s' was not loaded", chname),
+                 domain = NA)
 
     if(!file.exists(file))
-        stop(gettextf("shared library '%s' not found", chname), domain = NA)
+        if(.Platform$OS.type == "windows")
+            stop(gettextf("DLL '%s' not found", chname), domain = NA)
+        else
+            stop(gettextf("shared object '%s' not found", chname), domain = NA)
     if(verbose)
         message(gettextf("now dyn.unload(\"%s\") ...", file), domain = NA)
     dyn.unload(file)
@@ -642,7 +659,7 @@ function(chname, libpath, verbose = getOption("verbose"),
 require <-
 function(package, lib.loc = NULL, quietly = FALSE, warn.conflicts = TRUE,
          keep.source = getOption("keep.source.pkgs"),
-         character.only = FALSE, save = TRUE)
+         character.only = FALSE, save = FALSE)
 {
     if( !character.only )
         package <- as.character(substitute(package)) # allowing "require(eda)"
@@ -652,14 +669,28 @@ function(package, lib.loc = NULL, quietly = FALSE, warn.conflicts = TRUE,
 	if (!quietly)
             packageStartupMessage(gettextf("Loading required package: %s",
                                            package), domain = NA)
-	value <- library(package, lib.loc = lib.loc, character.only = TRUE,
-                         logical.return = TRUE,
-                         warn.conflicts = warn.conflicts,
-                         keep.source = keep.source)
+	value <- tryCatch(library(package, lib.loc = lib.loc,
+                                  character.only = TRUE,
+                                  logical.return = TRUE,
+                                  warn.conflicts = warn.conflicts,
+				  quietly = quietly,
+                                  keep.source = keep.source),
+                          error = function(e) e)
+        if (inherits(value, "error")) {
+            if (!quietly) {
+                msg <- conditionMessage(value)
+                cat("Failed with error:  ",
+                    sQuote(msg), "\n", file = stderr(), sep = "")
+                .Internal(printDeferredWarnings())
+            }
+            return(invisible(FALSE))
+        }
+        if (!value) return(invisible(FALSE))
     } else value <- TRUE
 
     if(identical(save, FALSE)) {}
     else {
+        warning("use of 'save' is deprecated")
         ## update the ".Depends" variable
         ## We no longer use '.required' since some packages set that.
         if(identical(save, TRUE)) {

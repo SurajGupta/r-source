@@ -1,7 +1,7 @@
 #-*- Makefile -*-
 
 ## This is only used when building R itself but it does customize
-## etc/Makeconf using LOCAL_SOFT, BINPREF[64], IMPLIB and R_ARCH
+## etc/*/Makeconf using LOCAL_SOFT, BINPREF[64], SYMPAT64, IMPLIB and R_ARCH
 
 ## =========== configuration macros for building packages ================
 # Absolute path to '/usr/local' software collection.  The versions used
@@ -11,10 +11,6 @@
 LOCAL_SOFT =
 
 ## ============== configuration macros for building R ===================
-
-# Alternatives GCC4 or F2C (use suitable f2c rather than a Fortran compiler).
-
-BUILD=GCC4
 
 # an alternative is to use -gstabs here, if the debugger supports only stabs.
 G_FLAG=-gdwarf-2
@@ -28,9 +24,7 @@ ATLAS_PATH=/R/ATLAS/lib/WinNT_P4SSE2
 
 # Support for the ACML and Goto BLASes has been withdrawn: see R-admin.html
 
-# Where does Tcl/Tk live? Spaces allowed.
-# If you alter this you cannot build the installer and will need to set
-# MY_TCLTK to use the package.
+# Where does Tcl/Tk live?  Spaces allowed.
 TCL_HOME = $(RHOME)/Tcl
 TCL_VERSION = 85
 
@@ -43,14 +37,23 @@ TCL_VERSION = 85
 # Needed if using other compilers, including some versions of MinGW-w64
 # USE_IMPLIBS = YES
 
-# Some of the compilers are in fact cross-compilers and have prefixes
-# prefix for 32-bit compiler
+# Some of the toolchains are in fact cross-compilers and have prefixes
+# prefix for 32-bit, i686-w64-mingw32- for MinGW-w64's
 BINPREF =
-# prefix for 64-bit compiler
+# prefix for 64-bit: usually this, but not for native x64 builds.
 BINPREF64 = x86_64-w64-mingw32-
 
-# 32- or 64-bit Windows?  For MinGW-w64.
+# 32- or 64-bit Windows?
 WIN = 32
+
+# define to -DW64 if using 32-bit MinGW-w64
+DEFS_W64 =
+
+# pattern for symbols on 64-bit builds only
+# for older toolchains which use a leading underscore
+# SYMPAT64 = 's/^.* [BCDRT] _/ /p'
+# for versions of MinGW-w64 from about 2010-05
+SYMPAT64 = 's/^.* [BCDRT] / /p'
 
 # set to use ICU (experimental)
 # USE_ICU=YES
@@ -69,6 +72,9 @@ BUILD_HTML = NO
 
 # location where Inno Setup 5.3.x was installed. Spaces allowed.
 ISDIR=C:/packages/Inno
+
+# home of 32-bit files for combined installer on 64-bit build
+HOME32=
 
 ## ====== configuration macros for building MSI installer ===========
 

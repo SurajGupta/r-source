@@ -2,9 +2,9 @@ msgid ""
 msgstr ""
 "Project-Id-Version: R 2.1.0 \n"
 "Report-Msgid-Bugs-To: bugs@r-project.org\n"
-"POT-Creation-Date: 2010-03-16 09:20\n"
-"PO-Revision-Date: 2010-04-03 10:33+0900 \n"
-"Last-Translator: takahashi <takahashi.kohske@gmail.com> \n"
+"POT-Creation-Date: 2010-10-04 10:51\n"
+"PO-Revision-Date: 2010-09-29 21:37+0900 \n"
+"Last-Translator: Shigeru Mase <maseshigeru@gmail.com> \n"
 "Language-Team: RjpWiki Message Translation Team <mokada@md.tsukuba.ac.jp> \n"
 "MIME-Version: 1.0 \n"
 "Content-Type: text/plain; charset=utf-8 \n"
@@ -180,14 +180,36 @@ msgstr ""
 msgid "Packages required but not available:"
 msgstr " パッケージが必要ですが，利用可能ではありません "
 
-msgid "Packages required and available but unsuitable version:"
-msgstr " パッケージが必要で，利用可能ですが，適切なバージョンではありません "
+msgid "Package required but not available: %s"
+msgstr " パッケージが必要ですが，利用可能ではありません：%s "
+
+msgid "Packages required and available but unsuitable versions:"
+msgstr " パッケージが必要で利用可能ですが，適切なバージョンではありません "
+
+msgid "Package required and available but unsuitable version: %s"
+msgstr ""
+" パッケージが必要で，利用可能ですが，適切なバージョンではありません:%s "
 
 msgid "Former standard packages required but now defunct:"
 msgstr " 以前の標準パッケージが必要ですが，このパッケージは現存しません： "
 
+msgid "Packages suggested but not available for checking:"
+msgstr " パッケージが示唆されていますが，チェック可能ではありません "
+
+msgid "Package suggested but not available for checking: %s"
+msgstr " パッケージが示唆されていますが，チェック可能ではありません：%s "
+
+msgid "Packages which this enhances but not available for checking:"
+msgstr " これが拡張するパッケージがチェック可能ではありません： "
+
+msgid "Package which this enhances but not available for checking: %s"
+msgstr " これが拡張するパッケージがチェック可能ではありません：%s "
+
 msgid "Vignette dependencies not required:"
 msgstr " ビニエットの依存性は不要です: "
+
+msgid "Vignette dependencies not required: %s"
+msgstr " ビニエットの依存性は不要です: %s "
 
 msgid ""
 "Vignette dependencies (\\VignetteDepends{} entries) must be contained in the "
@@ -198,6 +220,9 @@ msgstr ""
 
 msgid "Namespace dependencies not required:"
 msgstr " Namespaceの依存性は必要ありません： "
+
+msgid "Namespace dependency not required: %s"
+msgstr " Namespaceの依存性は必要ありません： %s "
 
 msgid "Malformed package name"
 msgstr " 奇矯なパッケージ名です "
@@ -345,9 +370,17 @@ msgstr " パッケージ \"methods\" が使われていますが、宣言され�
 msgid "'::' or ':::' imports not declared from:"
 msgstr " '::' もしくは ':::'　によるインポートが以下から宣言されていません: "
 
+msgid "'::' or ':::' import not declared from: %s"
+msgstr ""
+" '::' もしくは ':::'　によるインポートが以下から宣言されていません: %s "
+
 msgid "'library' or 'require' calls not declared from:"
 msgstr ""
 " 'library' もしくは 'requires'　による呼出しが以下から宣言されていません: "
+
+msgid "'library' or 'require' call not declared from: %s"
+msgstr ""
+" 'library' もしくは 'requires' 呼出しが以下から宣言されていません： ％ｓ "
 
 msgid "Rd files with duplicated name '%s':"
 msgstr " 名前 '%s' が重複する Rd ファイル: "
@@ -428,6 +461,37 @@ msgstr ""
 
 msgid "No help on %s found in RdDB %s"
 msgstr " %s に関するいかなるヘルプも RdDB %s 中にはありません "
+
+msgid "Converting Rd files to LaTeX ..."
+msgstr "RdファイルをLaTeXに変換しています "
+
+msgid "-t option without value"
+msgstr " 値のない -t オプション"
+
+msgid "-o option without value"
+msgstr " 値のない -o オプションです "
+
+msgid "Warning: unknown option"
+msgstr " 警告: 未知のオプションです "
+
+msgid "exactly one Rd file must be specified"
+msgstr " 正確に1つのRdファイルは指定されなければなりません "
+
+msgid "no 'type' specified"
+msgstr "指定された 'type' ではありません "
+
+msgid "'type' must be one of 'txt', 'html', 'latex' or 'example'"
+msgstr ""
+" 'type'は'txt', 'html', 'latex', 'example'のいずれかである必要があります "
+
+msgid "current working directory cannot be ascertained"
+msgstr ""
+
+msgid "no inputs"
+msgstr " 入力がありません "
+
+msgid "Error in running tools::texi2dvi"
+msgstr " tools::texi2dvi を実行中にエラーがありました "
 
 msgid "more than one \\examples section, using the first"
 msgstr " 2つ以上の\\examples節があります、1番目を用います "
@@ -534,6 +598,46 @@ msgstr ""
 msgid "ERROR: this R is version %s, required is R %s %s"
 msgstr "エラー：この R はバージョン %s です。 R %s %s を必要とします "
 
+msgid "Changes require specified 'style'"
+msgstr " 指定された 'style' の変更が必要です "
+
+msgid "The default JSS style may not be modified."
+msgstr " 既定の JSS スタイルは変更できないかもしれません "
+
+msgid "** Options"
+msgstr " ** オプション"
+
+msgid "are only for '--binary'  and will be ignored"
+msgstr " 　は '--binary' 専用ですから無視されます "
+
+msgid "Error: cannot rename directory to"
+msgstr " エラー：ディレクトリの名前を以下に変更できません "
+
+msgid "cannot coerce"
+msgstr " 強制変換できません "
+
+msgid "to logical"
+msgstr " 論理値へ"
+
+msgid "-l option without value"
+msgstr " 値のない -l オプション"
+
+msgid "configuration files are not supported as from R 2.12.0"
+msgstr " コンフィギュレーションファイルは R 2.12.0 からはサポートされません "
+
+msgid "'--multiarch' specified with only one usable sub-architecture"
+msgstr ""
+" ただ一つの使用可能なサブアーキテクチャで '--multiarch' が指定されました "
+
+msgid "Error: no packages were specified"
+msgstr "エラー：パッケージが指定されていません "
+
+msgid "package dir"
+msgstr " パッケージ dir "
+
+msgid "does not exist"
+msgstr " は存在しません "
+
 msgid "No files in this directory"
 msgstr " このディレクトリにはファイルが存在しません "
 
@@ -625,6 +729,9 @@ msgstr ""
 msgid "installing to"
 msgstr "にインストールしています "
 
+msgid "generating debug symbols (dSYM)"
+msgstr " デバッグシンボル (dSYM) を生成中"
+
 msgid ""
 "R include directory is empty -- perhaps need to install R-devel.rpm or "
 "similar"
@@ -635,12 +742,6 @@ msgstr ""
 msgid "running src/Makefile.win ..."
 msgstr " src/Makefile.win を実行中"
 
-msgid "making DLL ..."
-msgstr "DLLの作成中... "
-
-msgid "... done"
-msgstr " ... 完了 "
-
 msgid "no source files found"
 msgstr "ソースファイルが見つかりません "
 
@@ -650,14 +751,18 @@ msgstr " 'data' ディレクトリが空です "
 msgid "'--auto-zip' is for Windows only"
 msgstr " --auto-zip'  は Windows 専用です "
 
-msgid "-l option without value"
-msgstr " 値のない -l オプション"
-
-msgid "Warning: unknown option"
-msgstr " 警告: 未知のオプションです "
+msgid "--merge-multiarch is Windows-only"
+msgstr " --merge-multiarch は Windows 専用です "
 
 msgid "cannot create temporary directory"
 msgstr " 一時ディレクトリを生成することが出来ません "
+
+msgid "ERROR: --merge-multiarch applies only to a single tarball"
+msgstr " エラー: --merge-multiarch は単一の tarball だけに適用可能です "
+
+msgid "ERROR: --merge-multiarch can only be used on i386/x64 installations"
+msgstr ""
+" エラー: --merge-multiarch は i386/x64 へのインストールだけで利用可能です "
 
 msgid "invalid package"
 msgstr " 不正なパッケージです "
@@ -696,30 +801,11 @@ msgstr " --no-help が優先されます "
 msgid "--"
 msgstr " -- "
 
-msgid "-o option without value"
-msgstr " 値のない -o オプションです "
-
-msgid "Converting Rd files to LaTeX ..."
-msgstr "RdファイルをLaTeXに変換しています "
-
 msgid "finding HTML links ..."
 msgstr "HTML リンクを検索... "
 
 msgid "finding level-2 HTML links ..."
 msgstr " level-2 HTML リンクを検索... "
-
-msgid "-t option without value"
-msgstr " 値のない -t オプション"
-
-msgid "exactly one Rd file must be specified"
-msgstr " 正確に1つのRdファイルは指定されなければなりません "
-
-msgid "no 'type' specified"
-msgstr "指定された 'type' ではありません "
-
-msgid "'type' must be one of 'txt', 'html', 'latex' or 'example'"
-msgstr ""
-" 'type'は'txt', 'html', 'latex', 'example'のいずれかである必要があります "
 
 msgid "there is no package called '%s'"
 msgstr " '%s' という名前のパッケージが見当たりません "
@@ -753,6 +839,33 @@ msgstr ""
 "チャンク/行を処理できません: \n"
 " %s "
 
+msgid "No news found in given file using old-style R-like format."
+msgstr " 旧来のR風の書式を使ったニュースは与えられたファイル中にはありません．"
+
+msgid "No news found in given file using package default format."
+msgstr ""
+"  ペッケージの既定の書式を使ったニュースは与えられたファイル中にはありませ"
+"ん．"
+
+msgid "Could not extract news from the following text chunks:"
+msgstr " 以下のテキストの集まりからニュースを取り出せませんでした： "
+
+msgid ""
+"Chunk %s:\n"
+"%s"
+msgstr ""
+"集まり %s: \n"
+" %s "
+
+msgid "Cannot extract version info from the following section titles:"
+msgstr " 以下のセクションタイトルからバージョン情報を取り出せません "
+
+msgid "%s"
+msgstr " %s "
+
+msgid "Malformed NEWS.Rd file."
+msgstr " 不正な NEWS.Rd ファイルです． "
+
 msgid "Processing packages:"
 msgstr " パッケージを処理中： "
 
@@ -764,6 +877,33 @@ msgstr " 'DESCRIPTION' は 'Encoding' 欄を持ち、再エンコーディング
 
 msgid "cannot create HTML package index"
 msgstr " HTMLパッケージのインデックスを生成することが出来ません "
+
+msgid "Internal error, no tag"
+msgstr " 内部エラー、タグがありません "
+
+msgid "Argument for"
+msgstr " 以下に対する引数 "
+
+msgid "not found."
+msgstr " が見つかりません "
+
+msgid "Internal error:  NULL tag"
+msgstr " 内部エラー： NULL タグ"
+
+msgid "internal error"
+msgstr " 内部エラー"
+
+msgid "Inconsistent arg count for"
+msgstr " 以下に対する不整合な引数の数"
+
+msgid "Entry for"
+msgstr " 以下に対する項目　 "
+
+msgid "="
+msgstr " = "
+
+msgid "already defined to be"
+msgstr " は既に以下のように定義されています "
 
 msgid "found encoding"
 msgstr " 見つけられたエンコーディング"
@@ -887,6 +1027,10 @@ msgstr " regexp 回帰テストの実行中"
 msgid "running tests to possibly trigger segfaults"
 msgstr " 可能性のある trigger segfaults のテストを実行中"
 
+#, fuzzy
+msgid "'x' must be a single character string"
+msgstr " 引数 'txt' は文字列でなければなりません "
+
 msgid "test '%s' is not available"
 msgstr " テスト '%s' は利用出来ません "
 
@@ -904,6 +1048,9 @@ msgstr " 'texi2dvi' を '%s' に対して実行できませんでした "
 
 msgid "running 'texi2dvi' on '%s' failed"
 msgstr " 'texi2dvi' を '%s' に対して実行できませんでした "
+
+msgid "unable to run '%s' on '%s'"
+msgstr " '%s' を '%s' に対して実行出来ません "
 
 msgid "unable to run %s on '%s'"
 msgstr " %s を '%s' に対して実行出来ません "
@@ -950,6 +1097,12 @@ msgstr[0] " 以下の関数中に .internal 呼び出しが見つかりました
 msgid "object %s is created by more than one data call"
 msgid_plural "objects %s are created by more than one data call"
 msgstr[0] " オブジェクト %s は1つ以上のデータ呼び出しにより生成されました "
+
+#~ msgid "making DLL ..."
+#~ msgstr "DLLの作成中... "
+
+#~ msgid "... done"
+#~ msgstr " ... 完了 "
 
 #~ msgid "Unable to locate help document %s in package %s"
 #~ msgstr ""
@@ -1087,9 +1240,6 @@ msgstr[0] " オブジェクト %s は1つ以上のデータ呼び出しにより
 
 #~ msgid "unterminated section 'section{%s}'"
 #~ msgstr " 終了しないセクション 'section{%s}' "
-
-#~ msgid "argument 'txt' must be a character string"
-#~ msgstr " 引数 'txt' は文字列でなければなりません "
 
 #~ msgid "unmatched \\item name in '\\item{%s'"
 #~ msgstr " マッチしない \\item 名が以下にあります '\\item{%s' "

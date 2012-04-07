@@ -322,8 +322,8 @@ FileReadConsole(const char *prompt, char *buf, int len, int addhistory)
     /* translate if necessary */
     if(strlen(R_StdinEnc) && strcmp(R_StdinEnc, "native.enc")) {
 	size_t res, inb = strlen(buf), onb = len;
-	const char *ib = buf; char *ob, *obuf;
-	ob = obuf = alloca(len+1);
+	const char *ib = buf; 
+	char obuf[len+1], *ob = obuf;
 	if(!cd) {
 	    cd = Riconv_open("", R_StdinEnc);
 	    if(!cd) error(_("encoding '%s' is not recognised"), R_StdinEnc);
@@ -536,6 +536,8 @@ int R_ShowFiles(int nfile, const char **file, const char **headers,
 			}
 			fclose(f);
 			if (del) DeleteFile(file[i]);
+			/* add a blank line */
+			R_WriteConsole("", 0);
 		    }
 		    else {
 			snprintf(buf, 1024,
@@ -549,7 +551,7 @@ int R_ShowFiles(int nfile, const char **file, const char **headers,
 			snprintf(buf, 1024, "\"%s\" \"%s\"", pager, file[i]);
 		    else
 			snprintf(buf, 1024, "%s \"%s\"", pager, file[i]);
-		    runcmd(buf, CE_NATIVE, 0, 1, "");
+		    runcmd(buf, CE_NATIVE, 0, 1, NULL, NULL, NULL);
 		}
 	    } else {
 		snprintf(buf, 1024,
@@ -595,7 +597,7 @@ int R_EditFiles(int nfile, const char **file, const char **title,
 		    snprintf(buf, 1024, "\"%s\" \"%s\"", editor, file[i]);
 		else
 		    snprintf(buf, 1024, "%s \"%s\"", editor, file[i]);
-		runcmd(buf, CE_UTF8, 0, 1, "");
+		runcmd(buf, CE_UTF8, 0, 1, NULL, NULL, NULL);
 	    }
 
 	}
@@ -661,7 +663,7 @@ static int char_YesNoCancel(const char *s)
 
 static char RHome[MAX_PATH + 7];
 static char UserRHome[MAX_PATH + 7];
-extern char *getRHOME(void), *getRUser(void); /* in rhome.c */
+extern char *getRHOME(int), *getRUser(void); /* in rhome.c */
 void R_setStartTime(void);
 
 
@@ -774,7 +776,7 @@ char *PrintUsage(void)
 {
     static char msg[5000];
     char msg0[] =
-	"Start R, a system for statistical computation and graphics, with the\nspecified options\n\nEnvVars: Environmental variables can be set by NAME=value strings\n\nOptions:\n  -h, --help            Print usage message and exit\n  --version             Print version info and exit\n  --encoding=enc        Specify encoding to be used for stdin\n  --save                Do save workspace at the end of the session\n  --no-save             Don't save it\n",
+	"Start R, a system for statistical computation and graphics, with the\nspecified options\n\nEnvVars: Environmental variables can be set by NAME=value strings\n\nOptions:\n  -h, --help            Print usage message and exit\n  --version             Print version info and exit\n  --encoding=enc        Specify encoding to be used for stdin\n  --encoding enc        ditto\n  --save                Do save workspace at the end of the session\n  --no-save             Don't save it\n",
 	msg1[] =
 	"  --no-environ          Don't read the site and user environment files\n  --no-site-file        Don't read the site-wide Rprofile\n  --no-init-file        Don't read the .Rprofile or ~/.Rprofile files\n  --restore             Do restore previously saved objects at startup\n  --no-restore-data     Don't restore previously saved objects\n  --no-restore-history  Don't restore the R history file\n  --no-restore          Don't restore anything\n",
 	msg2[] =
@@ -818,7 +820,6 @@ void R_setupHistory(void)
 }
 
 #include <sys/stat.h>
-#include <time.h>
 static int isDir(char *path)
 {
     struct stat sb;
@@ -848,7 +849,7 @@ int cmdlineoptions(int ac, char **av)
     Rboolean usedRdata = FALSE, processing = TRUE;
 
     /* ensure R_Home gets set early: we are in rgui or rterm here */
-    R_Home = getRHOME();
+    R_Home = getRHOME(3);
     /* need this for moduleCdynload for iconv.dll */
     InitFunctionHashing();
     sprintf(RHome, "R_HOME=%s", R_Home);
@@ -1090,8 +1091,8 @@ int cmdlineoptions(int ac, char **av)
 			tm = getenv("R_USER"); /* this one will succeed */
 		}
 	    }
-	    srand( (unsigned) time(NULL) );
-	    sprintf(ifile, "%s/Rscript%x%x", tm, rand(), rand());
+	    /* in case getpid() is not unique -- has been seen under Windows */
+	    sprintf(ifile, "%s/Rscript%x%x", tm, getpid(), (unsigned int) GetTickCount());
 	    ifp = fopen(ifile, "w+b");
 	    if(!ifp) R_Suicide(_("creation of tmpfile failed -- set TMPDIR suitably?"));
 	}

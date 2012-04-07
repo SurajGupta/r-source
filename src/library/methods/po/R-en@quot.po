@@ -22,10 +22,10 @@
 #
 msgid ""
 msgstr ""
-"Project-Id-Version: R 2.11.0\n"
+"Project-Id-Version: R 2.12.0\n"
 "Report-Msgid-Bugs-To: bugs@r-project.org\n"
-"POT-Creation-Date: 2010-04-06 07:17\n"
-"PO-Revision-Date: 2010-04-06 07:17\n"
+"POT-Creation-Date: 2010-09-27 09:37\n"
+"PO-Revision-Date: 2010-09-27 09:37\n"
 "Last-Translator: Automatically generated\n"
 "Language-Team: none\n"
 "MIME-Version: 1.0\n"
@@ -161,7 +161,7 @@ msgstr ""
 "function is implicit, and cannot be changed."
 
 msgid ""
-"if the `def' argument is supplied, it must be a function that calls "
+"if the 'def' argument is supplied, it must be a function that calls "
 "standardGeneric(\"%s\") to dispatch methods"
 msgstr ""
 "if the ‘def’ argument is supplied, it must be a function that calls "
@@ -416,6 +416,9 @@ msgstr "not both functions!"
 
 msgid "Classes: %s, %s"
 msgstr "Classes: %s, %s"
+
+msgid "argument %s is not S4"
+msgstr "argument %s is not S4"
 
 msgid "Formal arguments differ (in default values?)"
 msgstr "Formal arguments differ (in default values?)"
@@ -1170,9 +1173,6 @@ msgstr ""
 "Sorry, abnormal type “%s” is not supported as a superclass of a class "
 "definition"
 
-msgid "Defining type \"%s\" as a superclass via class \"%s\""
-msgstr "Defining type “%s” as a superclass via class “%s”"
-
 msgid ""
 "'traceOn' is deprecated: use the function 'trace' in the 'methods' package "
 "instead"
@@ -1565,6 +1565,146 @@ msgstr ""
 "on : %s"
 
 msgid ""
+"Field \"%s\" is not a valid field or method name for reference class \"%s\""
+msgstr ""
+"Field “%s” is not a valid field or method name for reference class “%s”"
+
+msgid ""
+"The class of field \"%s\" in the object is not compatible with the desired "
+"class \"%s\" in the target"
+msgstr ""
+"The class of field “%s” in the object is not compatible with the desired "
+"class “%s” in the target"
+
+msgid "\"%s\" is not a defined class in this environment"
+msgstr "“%s” is not a defined class in this environment"
+
+msgid "Invalid Class argument:  should be a single string"
+msgstr "Invalid Class argument:  should be a single string"
+
+msgid "\"%s\" is not one of the reference super classes for this object"
+msgstr "“%s” is not one of the reference super classes for this object"
+
+msgid ""
+"Method %s from class %s was not processed into a class method until being "
+"installed.  Possible corruption of the methods in the class."
+msgstr ""
+"Method %s from class %s was not processed into a class method until being "
+"installed.  Possible corruption of the methods in the class."
+
+msgid ""
+"a call to superClass() is in the method \"%s\" but there is no superclass "
+"definition of this method for class \"%s\""
+msgstr ""
+"a call to superClass() is in the method “%s” but there is no superclass "
+"definition of this method for class “%s”"
+
+msgid "\"%s\" is not a reference class"
+msgstr "“%s” is not a reference class"
+
+msgid "\"%s\" is not a field in class \"%s\""
+msgstr "“%s” is not a field in class “%s”"
+
+msgid ""
+"direct calls to callSuper() are invalid:  should only be called from another "
+"method"
+msgstr ""
+"direct calls to callSuper() are invalid:  should only be called from another "
+"method"
+
+msgid "Arguments to methods() must be named, or one named list"
+msgstr "Arguments to methods() must be named, or one named list"
+
+msgid "must give named list of refdefined fields"
+msgstr "must give named list of refdefined fields"
+
+msgid "Only accessor fields can be replaced:  field \"%s\" has class \"%s\""
+msgstr "Only accessor fields can be replaced:  field “%s” has class “%s”"
+
+msgid ""
+"replacement for field \"%s\" must be an accessor function: got an object of "
+"class \"%s\""
+msgstr ""
+"replacement for field “%s” must be an accessor function: got an object of "
+"class “%s”"
+
+msgid ""
+"Topic \"%s\" is not a method name in class \"%s\"\n"
+"The class definition follows"
+msgstr ""
+"Topic “%s” is not a method name in class “%s”\n"
+"The class definition follows"
+
+msgid ""
+"The overriding class(\"%s\") of field \"%s\" is not a subclass of the "
+"existing field definition (\"%s\")"
+msgstr ""
+"The overriding class(“%s”) of field “%s” is not a subclass of the existing "
+"field definition (“%s”)"
+
+msgid "Field \""
+msgstr "Field \""
+
+msgid "\" is read-only"
+msgstr "\" is read-only"
+
+msgid "Arguments must all be character string names of fieds"
+msgstr "Arguments must all be character string names of fieds"
+
+msgid ""
+"Field \"%s\"  of class \"%s\" has a non-default binding and cannot be locked"
+msgstr ""
+"Field “%s”  of class “%s” has a non-default binding and cannot be locked"
+
+msgid ""
+"The contains= argument should be the names of superclasses:  got an element "
+"of class \"%s\""
+msgstr ""
+"The contains= argument should be the names of superclasses:  got an element "
+"of class “%s”"
+
+msgid "No definition found for inherited class: %s"
+msgstr "No definition found for inherited class: %s"
+
+msgid ""
+"Single class name needed for field \"%s\", got a character vector of length %"
+"d"
+msgstr ""
+"Single class name needed for field “%s”, got a character vector of length %d"
+
+msgid "Class \"%s\" for field \"%s\" is not defined"
+msgstr "Class “%s” for field “%s” is not defined"
+
+msgid ""
+"Field \"%s\" was supplied as an object of class \"%s\"; must be a class name "
+"or a binding function"
+msgstr ""
+"Field “%s” was supplied as an object of class “%s”; must be a class name or "
+"a binding function"
+
+msgid "A list argument for fields must have nonempty names for all the fields"
+msgstr "A list argument for fields must have nonempty names for all the fields"
+
+msgid ""
+"Argument fields must be a list of the field classes or definitions, or else "
+"just the names of the fields; got an object of class \"%s\""
+msgstr ""
+"Argument fields must be a list of the field classes or definitions, or else "
+"just the names of the fields; got an object of class “%s”"
+
+msgid "Class \"%s\" is defined but is not a reference class"
+msgstr "Class “%s” is defined but is not a reference class"
+
+msgid "Not a reference class:"
+msgstr "Not a reference class:"
+
+msgid "(class \"%s\")"
+msgstr "(class “%s”)"
+
+msgid "for method %s()"
+msgstr "for method %s()"
+
+msgid ""
 "invalid ignore= argument; should be a class definition or a character "
 "vector, got an object of class %s"
 msgstr ""
@@ -1652,6 +1792,80 @@ msgstr "Environment of class \""
 
 msgid "\" is locked; using global environment for new class"
 msgstr "\" is locked; using global environment for new class"
+
+msgid ""
+"None of the objects in the source code could be found:  need to attach or "
+"specify the package"
+msgstr ""
+"None of the objects in the source code could be found:  need to attach or "
+"specify the package"
+
+msgid "Objects found in multiple packages: using \"%s\" and ignoring %s"
+msgstr "Objects found in multiple packages: using “%s” and ignoring %s"
+
+msgid "Package \"%s\" is not attached and no namespace found for it"
+msgstr "Package “%s” is not attached and no namespace found for it"
+
+msgid ""
+"Invalid source argument: expected file names(s) or connection, got an object "
+"of class \"%s\""
+msgstr ""
+"Invalid source argument: expected file names(s) or connection, got an object "
+"of class “%s”"
+
+msgid "Can't find an environment corresponding to package name '%s\""
+msgstr "Can't find an environment corresponding to package name '%s\""
+
+msgid ""
+"Supplied package, \"%s\", differs from package inferred from source, \"%s\""
+msgstr ""
+"Supplied package, “%s”, differs from package inferred from source, “%s”"
+
+msgid "Can't insert these (not found in source): %s"
+msgstr "Can't insert these (not found in source): %s"
+
+msgid ""
+"Can't insert methods for these functions (methods table not found in "
+"source): %s"
+msgstr ""
+"Can't insert methods for these functions (methods table not found in "
+"source): %s"
+
+msgid "Non-function objects aren't currently inserted (not traceable): %s"
+msgstr "Non-function objects aren't currently inserted (not traceable): %s"
+
+msgid "New functions aren't currently inserted (not untraceable): %s"
+msgstr "New functions aren't currently inserted (not untraceable): %s"
+
+msgid "Modified functions inserted through trace(): %s"
+msgstr "Modified functions inserted through trace(): %s"
+
+msgid ""
+"%s() is not a generic function in the target environment--methods will not "
+"be inserted"
+msgstr ""
+"%s() is not a generic function in the target environment--methods will not "
+"be inserted"
+
+msgid "Methods inserted for function %s(): %s"
+msgstr "Methods inserted for function %s(): %s"
+
+msgid "Pretend we inserted class"
+msgstr "Pretend we inserted class"
+
+msgid "No definition for object \"%s\" found in tracing environment"
+msgstr "No definition for object “%s” found in tracing environment"
+
+msgid "multiple generics match pattern, using table %s"
+msgstr "multiple generics match pattern, using table %s"
+
+msgid ""
+"Does not seem to be a method table for generic  \"%s\" in tracing environment"
+msgstr ""
+"Does not seem to be a method table for generic  “%s” in tracing environment"
+
+msgid "No method in methods table for \"%s\" for signature \"%s\""
+msgstr "No method in methods table for “%s” for signature “%s”"
 
 msgid "not a package name: \"%s\""
 msgstr "not a package name: “%s”"

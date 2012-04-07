@@ -10,14 +10,11 @@ R_PAPERSIZE_USER=${R_PAPERSIZE}
 R_PAPERSIZE=${R_PAPERSIZE-'@R_PAPERSIZE@'}
 ## Default print command
 R_PRINTCMD=${R_PRINTCMD-'@R_PRINTCMD@'}
-## Default TeXMF stuff
-R_LATEXCMD=${R_LATEXCMD-${LATEX-'@LATEXCMD@'}}
-R_PDFLATEXCMD=${R_PDFLATEXCMD-${PDFLATEX-'@PDFLATEXCMD@'}}
-R_DVIPSCMD=${R_DVIPSCMD-${DVIPS-'@DVIPSCMD@'}}
-R_MAKEINDEXCMD=${R_MAKEINDEXCMD-${MAKEINDEX-'@MAKEINDEXCMD@'}}
-R_TEXI2DVICMD=${R_TEXI2DVICMD-${TEXI2DVI-'@TEXI2DVICMD@'}}
+# for Rd2dvi, reference manual
 R_RD4DVI=${R_RD4DVI-'@R_RD4DVI@'}
 R_RD4PDF=${R_RD4PDF-'@R_RD4PDF@'}
+## used for options("texi2dvi")
+R_TEXI2DVICMD=${R_TEXI2DVICMD-${TEXI2DVI-'@TEXI2DVICMD@'}}
 ## used by INSTALL, check, build
 R_GZIPCMD=${R_GZIPCMD-'@R_GZIPCMD@'}
 ## Default zip/unzip commands
@@ -42,6 +39,7 @@ PERL=${PERL-'@PERL@'}
 ## Prefer a POSIX-compliant sed on e.g. Solaris
 SED=${SED-'@SED@'}
 TR=${TR-'@TR@'}
+WHICH=${WHICH-'@WHICH@'}
 ## Prefer a tar that can automagically read compressed archives
 TAR=${TAR-'@TAR@'}
 

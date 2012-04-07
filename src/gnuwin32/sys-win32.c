@@ -1,8 +1,7 @@
 /*
  *  R : A Computer Language for Statistical Data Analysis
  *  Copyright (C) 1995, 1996  Robert Gentleman and Ross Ihaka
- *  Copyright (C) 1997--2007  Robert Gentleman, Ross Ihaka
- *                            and the R Development Core Team
+ *  Copyright (C) 1997--2010  The R Development Core Team
  *
  *  This program is free software; you can redistribute it and/or modify
  *  it under the terms of the GNU General Public License as published by
@@ -27,9 +26,11 @@
 #include <config.h>
 #endif
 
-#include "Defn.h"
-#include "Fileio.h"
-#include "Startup.h"
+#include <Defn.h>
+#include <Fileio.h>
+#include <Startup.h>
+
+#include <ctype.h> /* for isalpha */
 
 extern Rboolean LoadInitFile;
 extern UImode  CharacterMode;
@@ -158,7 +159,7 @@ double R_getClockIncrement(void)
  * flag =0 don't wait/ignore stdout
  * flag =1 wait/ignore stdout
  * flag =2 wait/copy stdout to the console
- * flag =3 wait/return stdout
+ * flag =3 wait/return stdout (intern=TRUE)
  * Add 10 to minimize application
  * Add 20 to make application "invisible"
 */
@@ -170,69 +171,79 @@ SEXP do_system(SEXP call, SEXP op, SEXP args, SEXP rho)
 {
     rpipe *fp;
     char  buf[INTERN_BUFSIZE];
-    int   vis = 0, flag = 2, i = 0, j, ll, ignore_stderr = 0;
-    SEXP  tlist = R_NilValue, tchar, rval;
-    HANDLE hERR = NULL /* -Wall */;
+    const char *fout = "", *ferr = "";
+    int   vis = 0, flag = 2, i = 0, j, ll;
+    SEXP  cmd, fin, Stdout, Stderr, tlist = R_NilValue, tchar, rval;
+    HANDLE hOUT = NULL, hERR = NULL /* -Wall */;
 
     checkArity(op, args);
-    if (!isString(CAR(args)))
+    cmd = CAR(args);
+    if (!isString(cmd) || LENGTH(cmd) != 1)
 	errorcall(call, _("character string expected as first argument"));
-    if (isInteger(CADR(args)))
-	flag = INTEGER(CADR(args))[0];
-    if (flag >= 100) {
-	ignore_stderr = 1;
-	flag -= 100;
-    }
-    if (flag >= 20) {
-	vis = -1;
-	flag -= 20;
-    } else if (flag >= 10) {
-	vis = 0;
-	flag -= 10;
-    } else
-	vis = 1;
-    if (!isString(CADDR(args)))
+    args = CDR(args);
+    flag = asInteger(CAR(args)); args = CDR(args);
+    if (flag >= 20) {vis = -1; flag -= 20;}
+    else if (flag >= 10) {vis = 0; flag -= 10;}
+    else vis = 1;
+
+    fin = CAR(args);
+    if (!isString(fin))
 	errorcall(call, _("character string expected as third argument"));
-    if ((CharacterMode != RGui) && (flag == 2)) flag = 1;
+    args = CDR(args);
+    Stdout = CAR(args);
+    args = CDR(args);
+    Stderr = CAR(args);
+
     if (CharacterMode == RGui) {
 	SetStdHandle(STD_INPUT_HANDLE, INVALID_HANDLE_VALUE);
 	SetStdHandle(STD_OUTPUT_HANDLE, INVALID_HANDLE_VALUE);
 	SetStdHandle(STD_ERROR_HANDLE, INVALID_HANDLE_VALUE);
-    }
-    if ((CharacterMode != RGui) && ignore_stderr) {
-	hERR = GetStdHandle(STD_ERROR_HANDLE) ;
-	SetStdHandle(STD_ERROR_HANDLE, INVALID_HANDLE_VALUE);
-    }
-    if (flag < 2) {
-	ll = runcmd(CHAR(STRING_ELT(CAR(args), 0)),
-		    getCharCE(STRING_ELT(CAR(args), 0)),
-		    flag, vis,
-		    CHAR(STRING_ELT(CADDR(args), 0)));
-	if (ll == NOLAUNCH)
-	    warning(runerror());
     } else {
+	if (flag == 2) flag = 1; /* ignore std.output.on.console */
+	if (TYPEOF(Stdout) == STRSXP) {
+	    fout = CHAR(STRING_ELT(Stdout, 0));
+	} else if (asLogical(Stdout) == 0) {
+	    hOUT = GetStdHandle(STD_OUTPUT_HANDLE);
+	    SetStdHandle(STD_OUTPUT_HANDLE, INVALID_HANDLE_VALUE);
+	}
+	if (TYPEOF(Stderr) == STRSXP) {
+	    ferr = CHAR(STRING_ELT(Stderr, 0));
+	} else if (asLogical(Stderr) == 0) {
+	    hERR = GetStdHandle(STD_ERROR_HANDLE);
+	    SetStdHandle(STD_ERROR_HANDLE, INVALID_HANDLE_VALUE);
+	}
+    }
+
+    if (flag < 2) { /* Neither intern = TRUE nor
+		       show.output.on.console for Rgui */
+	ll = runcmd(CHAR(STRING_ELT(cmd, 0)),
+		    getCharCE(STRING_ELT(cmd, 0)),
+		    flag, vis, CHAR(STRING_ELT(fin, 0)), fout, ferr);
+	// if (ll == NOLAUNCH) warning(runerror());
+    } else {
+	/* read stdout +/- stderr from pipe */
 	int m = 0;
-	if(flag == 2 /* show on console */ || CharacterMode == RGui) m = 2;
-	if(ignore_stderr) m = 0;
-	fp = rpipeOpen(CHAR(STRING_ELT(CAR(args), 0)),
-		       getCharCE(STRING_ELT(CAR(args), 0)),
-		       vis, CHAR(STRING_ELT(CADDR(args), 0)), m);
+	if(flag == 2 /* show on console */ || CharacterMode == RGui) m = 3;
+	if(TYPEOF(Stderr) == LGLSXP)
+	    m = asLogical(Stderr) ? 2 : 0;
+	if(m  && TYPEOF(Stdout) == LGLSXP && asLogical(Stdout)) m = 3;
+	fp = rpipeOpen(CHAR(STRING_ELT(cmd, 0)),
+		       getCharCE(STRING_ELT(cmd, 0)),
+		       vis, CHAR(STRING_ELT(cmd, 0)), m);
 	if (!fp) {
-	    /* If we are capturing standard output generate an error */
-	    if (flag == 3)
-		error(runerror());
-	    warning(runerror());
+	    /* If intern = TRUE generate an error */
+	    if (flag == 3) error(runerror());
+	    // warning(runerror());
 	    ll = NOLAUNCH;
 	} else {
-	    if (flag == 3)
-		PROTECT(tlist);
+	    /* FIXME: use REPROTECT */
+	    if (flag == 3) PROTECT(tlist);
 	    for (i = 0; rpipeGets(fp, buf, INTERN_BUFSIZE); i++) {
-		if (flag == 3) {
+		if (flag == 3) { /* intern = TRUE */
 		    ll = strlen(buf) - 1;
-		    if ((ll >= 0) && (buf[ll] == '\n'))
-			buf[ll] = '\0';
+		    if ((ll >= 0) && (buf[ll] == '\n')) buf[ll] = '\0';
 		    tchar = mkChar(buf);
-		    UNPROTECT(1);
+		    UNPROTECT(1); /* tlist */
 		    PROTECT(tlist = CONS(tchar, tlist));
 		} else
 		    R_WriteConsole(buf, strlen(buf));
@@ -240,19 +251,20 @@ SEXP do_system(SEXP call, SEXP op, SEXP args, SEXP rho)
 	    ll = rpipeClose(fp);
 	}
     }
-    if ((CharacterMode != RGui) && ignore_stderr)
-	SetStdHandle(STD_ERROR_HANDLE, hERR);
-    if (flag == 3) {
-	rval = allocVector(STRSXP, i);;
+    /* restore stdout/stderr if we changed it */
+    if (hOUT) SetStdHandle(STD_OUTPUT_HANDLE, hOUT);
+    if (hERR) SetStdHandle(STD_ERROR_HANDLE, hERR);
+    if (flag == 3) { /* intern = TRUE: convert pairlist to list */
+	PROTECT(rval = allocVector(STRSXP, i));
 	for (j = (i - 1); j >= 0; j--) {
 	    SET_STRING_ELT(rval, j, CAR(tlist));
 	    tlist = CDR(tlist);
 	}
-	UNPROTECT(1);
-	return (rval);
+	UNPROTECT(2);
+	return rval;
     } else {
-	tlist = ScalarInteger(ll);
+	rval = ScalarInteger(ll);
 	R_Visible = 0;
-	return tlist;
+	return rval;
     }
 }

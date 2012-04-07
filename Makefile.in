@@ -10,7 +10,8 @@ top_builddir = .
 include $(top_builddir)/Makeconf
 
 distdir = $(PACKAGE)-$(VERSION)
-INSTFILES = COPYING NEWS
+INSTFILES = COPYING
+## plus NEWS and NEWS.pdf, but need to wait until they are generated
 NON_SVN_INSTFILES = SVN-REVISION
 DISTFILES = $(INSTFILES) \
 	ChangeLog INSTALL ONEWS OONEWS README VERSION \
@@ -66,9 +67,6 @@ R: Makefile svnonly
 docs: R FORCE
 	-@(cd doc && $(MAKE) $@)
 	-@(cd src/library && $(MAKE) $@)
-## no longer relevant
-#help html latex examples: FORCE
-#	-@(cd src/library && $(MAKE) $@)
 FORCE:
 
 stamp-recommended: R docs
@@ -84,7 +82,7 @@ install install-strip: installdirs svnonly
 	@for f in $(INSTFILES); do \
 	  $(INSTALL_DATA) $(srcdir)/$${f} "$(DESTDIR)$(rhome)"; \
 	done
-	@for f in $(NON_SVN_INSTFILES); do \
+	@for f in NEWS NEWS.pdf $(NON_SVN_INSTFILES); do \
 	  $(INSTALL_DATA) $${f} "$(DESTDIR)$(rhome)"; \
 	done
 @WANT_R_FRAMEWORK_TRUE@		$(MAKE) -f $(srcdir)/Makefile.fw top_srcdir=$(top_srcdir) $@
@@ -118,7 +116,7 @@ installdirs:
 uninstall:
 	@(for d in $(SUBDIRS); do rsd="$${d} $${rsd}"; done; \
 	  for d in $${rsd}; do (cd $${d} && $(MAKE) $@); done)
-	@for f in $(INSTFILES) $(NON_SVN_INSTFILES); do \
+	@for f in NEWS NEWS.pdf $(INSTFILES) $(NON_SVN_INSTFILES); do \
 	  rm -f "$(DESTDIR)$(rhome)/$${f}"; \
 	done
 	@rm -rf "$(DESTDIR)$(Rexecbindir)" "$(DESTDIR)$(rhome)/lib"
@@ -138,7 +136,7 @@ distclean: clean
 	  for d in $${rsd}; do (cd $${d} && $(MAKE) $@); done)
 	-@rm -rf bin include lib library modules gnome
 	@if test -f non-tarball ; then \
-	  rm -f $(NON_SVN_INSTFILES) non-tarball doc/FAQ doc/RESOURCES doc/html/resources.html ; \
+	  rm -f $(NON_SVN_INSTFILES) NEWS NEWS.pdf non-tarball doc/FAQ doc/RESOURCES doc/html/resources.html doc/html/NEWS.html; \
 	fi
 	@if test "$(BUILDDIR_IS_SRCDIR)" = no ; then \
 	  rm -f $(NON_SVN_INSTFILES); \
@@ -175,7 +173,7 @@ distdir: $(DISTFILES) vignettes
 	    || ln $(srcdir)/$${f} $(distdir)/$${f} 2>/dev/null \
 	    || cp -p $(srcdir)/$${f} $(distdir)/$${f}; \
 	done
-	@for f in $(NON_SVN_INSTFILES) ; do \
+	@for f in NEWS NEWS.pdf $(NON_SVN_INSTFILES) ; do \
 	  cp -p $${f} $(distdir)/$${f}; \
 	done
 	@for d in $(SUBDIRS); do \

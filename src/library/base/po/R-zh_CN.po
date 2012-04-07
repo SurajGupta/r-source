@@ -7,7 +7,7 @@ msgid ""
 msgstr ""
 "Project-Id-Version: R 2.3.0\n"
 "Report-Msgid-Bugs-To: bugs@r-project.org\n"
-"POT-Creation-Date: 2010-03-22 15:15\n"
+"POT-Creation-Date: 2010-10-04 10:49\n"
 "PO-Revision-Date: 2005-02-04 08:37+0000\n"
 "Last-Translator: 陈斐 <FeiChen@FairIsaac.com>\n"
 "Language-Team: Chinese\n"
@@ -88,6 +88,12 @@ msgstr "版本字串格式有错"
 msgid "dim(X) must have a positive length"
 msgstr "dim(X)的值必需是正数"
 
+msgid "'X' must have named dimnames"
+msgstr "'X'必需有带名字的维名"
+
+msgid "not all elements of 'MARGIN' are names of dimensions"
+msgstr "所有'MARGIN'的元素都必需是维的名字不是'缘'的所有元素都是尺寸名称"
+
 msgid "'dim' specifies too large an array"
 msgstr "'dim'的值太大"
 
@@ -126,6 +132,9 @@ msgstr ""
 
 msgid "name space cannot be unloaded:"
 msgstr "无法载入名字空间："
+
+msgid "converted to character string"
+msgstr "转换成字符串"
 
 msgid "replaced regular expression pattern '[' by  '\\\\['"
 msgstr "正规表现'['被换成'\\\\['"
@@ -623,6 +632,9 @@ msgstr "因子的层次集不同"
 msgid "invalid factor level, NAs generated"
 msgstr "因子层次有错，产生NA"
 
+msgid "invalid factor level, NA generated"
+msgstr "因子层次有错，产生了NA"
+
 msgid "'%s' is not meaningful for ordered factors"
 msgstr "'%s'对順序化的因子没有意义"
 
@@ -730,11 +742,6 @@ msgstr "程辑包'%s'没有正确安装"
 msgid "package '%s' was built before R 2.10.0: please re-install it"
 msgstr "程辑包'%s'是在R版本2.10.0之前建的：你得重新组装"
 
-msgid ""
-"package '%s' claims to be built under R version %s but is missing some help "
-"files and needs to be re-installed"
-msgstr "程辑包'%s'是用R版本%s建的，但它缺少一些帮助文件，请重新组装"
-
 msgid "This is R %s, package '%s' needs %s %s"
 msgstr "这是R%s，程辑包'%s'需要%s %s "
 
@@ -769,6 +776,9 @@ msgstr "程辑包'％s'的许可证没有被接受"
 
 msgid "Attaching package: '%s'"
 msgstr "载入程辑包：'%s'"
+
+msgid "'verbose' and 'quietly' are both true; being verbose then .."
+msgstr "'verbose'和'quietly'两个值都是TRUE；因此先详细再…"
 
 msgid "invalid package name"
 msgstr "程辑包名字不对"
@@ -812,26 +822,44 @@ msgstr "找不到程辑包"
 msgid "R packages available"
 msgstr "有R程辑包"
 
-msgid "shared library '%s' not found"
-msgstr "找不到共享图书馆'%s'"
+msgid "DLL '%s' not found: maybe not installed for this architecture?"
+msgstr "没有这个DLL'%s'：是不是没有安装？"
 
-msgid "shared library '%s' already loaded"
-msgstr "共享图书馆'%s'已经载入了"
+msgid "shared object '%s' not found"
+msgstr "共享目标对象'%s'不存在"
+
+msgid "DLL '%s' already loaded"
+msgstr "DLL'%s'已经载入了"
+
+msgid "shared object '%s' already loaded"
+msgstr "共享对象'%s'已经载入了"
 
 msgid "now dyn.load(\"%s\") ..."
 msgstr "现在dyn.load(\"%s\") ..."
 
-msgid "no shared library was specified"
-msgstr "没有指定共享图书馆"
+msgid "no DLL was specified"
+msgstr "没有指定DLL"
 
-msgid "shared library '%s' was not loaded"
-msgstr "共享图书馆'%s'没有载入"
+msgid "no shared object was specified"
+msgstr "没有指定共享对象"
+
+msgid "DLL '%s' was not loaded"
+msgstr "DLL'%s'没有载入"
+
+msgid "shared object '%s' was not loaded"
+msgstr "共享对象'%s'没有载入"
+
+msgid "DLL '%s' not found"
+msgstr "没有'%s'这个DLL"
 
 msgid "now dyn.unload(\"%s\") ..."
 msgstr "现在dyn.unload(\"%s\") ..."
 
 msgid "Loading required package: %s"
 msgstr "载入需要的程辑包：%s"
+
+msgid "use of 'save' is deprecated"
+msgstr "'save'不再有用。"
 
 msgid "none of the packages are loaded"
 msgstr "没有载入任何程辑包"
@@ -994,6 +1022,9 @@ msgstr "追蹤函数需要方法程辑包，但在载入方法名字空间的时
 
 msgid "Expected a single logical value for the S4 state flag"
 msgstr "S4状况标记应该是一个单独逻辑值"
+
+msgid "Expected a single logical value for the S3 state flag"
+msgstr "S3状况标记应该是一个单独逻辑值"
 
 msgid "invalid to change the storage mode of a factor"
 msgstr "不能改变因子的存储状态"
@@ -1321,9 +1352,6 @@ msgstr "已经选择了encoding = \"%s\""
 msgid "'chdir = TRUE' makes no sense for a URL"
 msgstr "'chdir = TRUE'对URL来说没有意义"
 
-msgid "cannot 'chdir' as current directory is unknown"
-msgstr "'chdir'没有作用，因为不知道目前的工作目录在哪里"
-
 msgid "'chdir = TRUE' makes no sense for a connection"
 msgstr "'chdir = TRUE'对联结来说没有任何意义"
 
@@ -1359,6 +1387,9 @@ msgstr "'x'和'y'的长度必需一致"
 
 msgid "incorrect values of 'indent' and 'width'"
 msgstr "'indent'和'width'的值有错"
+
+msgid "probably wrong encoding in names(.) of column"
+msgstr "列名称的编码可能不对"
 
 msgid "'nv' must be 0 or ncol(x)"
 msgstr "'nv'的值必需为零或为ncol(x)"
@@ -1459,6 +1490,9 @@ msgstr ""
 msgid "'intern' must be TRUE or FALSE"
 msgstr "'intern'的值必需是'TRUE'或'FALSE'值"
 
+msgid "'ignore.stdout' must be TRUE or FALSE"
+msgstr "'ignore.stdout'的值必需是'TRUE'或'FALSE'值"
+
 msgid "'ignore.stderr' must be TRUE or FALSE"
 msgstr "'ignore.stderr'的值必需是'TRUE'或'FALSE'值"
 
@@ -1467,6 +1501,18 @@ msgstr "'wait'的值必需是'TRUE'或'FALSE'值"
 
 msgid "'input' must be a character vector or 'NULL'"
 msgstr "'input'只能为字符矢量或NULL值"
+
+msgid "arguments 'minimized' and 'invisible' are for Windows only"
+msgstr "参数'minimized' 和'invisible'只适用在Windows上"
+
+msgid "setting stdout = TRUE"
+msgstr "把stdout设为TRUE"
+
+msgid "'stdout' must be of length 1"
+msgstr "'stdout'的长度必需为一"
+
+msgid "'stderr' must be of length 1"
+msgstr "'stderr'的长度必需为一"
 
 msgid "'show.output.on.console' must be TRUE or FALSE"
 msgstr "'show.output.on.console'的值必需是'TRUE'或'FALSE'值"
@@ -1556,8 +1602,16 @@ msgid "Warning message:\n"
 msgid_plural "Warning messages:\n"
 msgstr[0] "警告信息：\n"
 
-#~ msgid "'x' must have length 1"
-#~ msgstr "'x'的长度一定得为一"
+#~ msgid "cannot 'chdir' as current directory is unknown"
+#~ msgstr "'chdir'没有作用，因为不知道目前的工作目录在哪里"
+
+#~ msgid "shared library '%s' not found"
+#~ msgstr "找不到共享图书馆'%s'"
+
+#~ msgid ""
+#~ "package '%s' claims to be built under R version %s but is missing some "
+#~ "help files and needs to be re-installed"
+#~ msgstr "程辑包'%s'是用R版本%s建的，但它缺少一些帮助文件，请重新组装"
 
 #~ msgid "invalid digits"
 #~ msgstr "数字无效"
@@ -1771,4 +1825,3 @@ msgstr[0] "警告信息：\n"
 
 #~ msgid "arguments 'r' and 'c' must have the same sums"
 #~ msgstr "参数'r'和'c'各自的和必需相等"
-

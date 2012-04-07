@@ -90,6 +90,7 @@ rnbinom(n, size, prob, mu)
   Springer-Verlag, New York. Page 480.
 }
 \seealso{
+  \link{Distributions} for standard distributions, including
   \code{\link{dbinom}} for the binomial, \code{\link{dpois}} for the
   Poisson and \code{\link{dgeom}} for the geometric distribution, which
   is a special case of the negative binomial.
@@ -100,9 +101,9 @@ x <- 0:11
 dnbinom(x, size = 1, prob = 1/2) * 2^(1 + x) # == 1
 126 /  dnbinom(0:8, size  = 2, prob  = 1/2) #- theoretically integer
 
-## Cumulative ('p') = Sum of discrete prob.s ('d');  Relative error :
+\donttest{## Cumulative ('p') = Sum of discrete prob.s ('d');  Relative error :
 summary(1 - cumsum(dnbinom(x, size = 2, prob = 1/2)) /
-                  pnbinom(x, size  = 2, prob = 1/2))
+                  pnbinom(x, size  = 2, prob = 1/2))}
 
 x <- 0:15
 size <- (1:20)/4

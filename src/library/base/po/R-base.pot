@@ -1,8 +1,8 @@
 msgid ""
 msgstr ""
-"Project-Id-Version: R 2.11.0\n"
+"Project-Id-Version: R 2.12.0\n"
 "Report-Msgid-Bugs-To: bugs@r-project.org\n"
-"POT-Creation-Date: 2010-03-22 15:15\n"
+"POT-Creation-Date: 2010-10-04 10:49\n"
 "PO-Revision-Date: YEAR-MO-DA HO:MI+ZONE\n"
 "Last-Translator: FULL NAME <EMAIL@ADDRESS>\n"
 "Language-Team: LANGUAGE <LL@li.org>\n"
@@ -83,6 +83,12 @@ msgstr ""
 msgid "dim(X) must have a positive length"
 msgstr ""
 
+msgid "'X' must have named dimnames"
+msgstr ""
+
+msgid "not all elements of 'MARGIN' are names of dimensions"
+msgstr ""
+
 msgid "'dim' specifies too large an array"
 msgstr ""
 
@@ -114,6 +120,9 @@ msgid "%s failed in %s() for '%s', details:\n  call: %s\n  error: %s"
 msgstr ""
 
 msgid "name space cannot be unloaded:"
+msgstr ""
+
+msgid "converted to character string"
 msgstr ""
 
 msgid "replaced regular expression pattern '[' by  '\\\\['"
@@ -593,6 +602,9 @@ msgstr ""
 msgid "invalid factor level, NAs generated"
 msgstr ""
 
+msgid "invalid factor level, NA generated"
+msgstr ""
+
 msgid "'%s' is not meaningful for ordered factors"
 msgstr ""
 
@@ -698,9 +710,6 @@ msgstr ""
 msgid "package '%s' was built before R 2.10.0: please re-install it"
 msgstr ""
 
-msgid "package '%s' claims to be built under R version %s but is missing some help files and needs to be re-installed"
-msgstr ""
-
 msgid "This is R %s, package '%s' needs %s %s"
 msgstr ""
 
@@ -729,6 +738,9 @@ msgid "License for package '%s' not accepted"
 msgstr ""
 
 msgid "Attaching package: '%s'"
+msgstr ""
+
+msgid "'verbose' and 'quietly' are both true; being verbose then .."
 msgstr ""
 
 msgid "invalid package name"
@@ -773,25 +785,43 @@ msgstr ""
 msgid "R packages available"
 msgstr ""
 
-msgid "shared library '%s' not found"
+msgid "DLL '%s' not found: maybe not installed for this architecture?"
 msgstr ""
 
-msgid "shared library '%s' already loaded"
+msgid "shared object '%s' not found"
+msgstr ""
+
+msgid "DLL '%s' already loaded"
+msgstr ""
+
+msgid "shared object '%s' already loaded"
 msgstr ""
 
 msgid "now dyn.load(\"%s\") ..."
 msgstr ""
 
-msgid "no shared library was specified"
+msgid "no DLL was specified"
 msgstr ""
 
-msgid "shared library '%s' was not loaded"
+msgid "no shared object was specified"
+msgstr ""
+
+msgid "DLL '%s' was not loaded"
+msgstr ""
+
+msgid "shared object '%s' was not loaded"
+msgstr ""
+
+msgid "DLL '%s' not found"
 msgstr ""
 
 msgid "now dyn.unload(\"%s\") ..."
 msgstr ""
 
 msgid "Loading required package: %s"
+msgstr ""
+
+msgid "use of 'save' is deprecated"
 msgstr ""
 
 msgid "none of the packages are loaded"
@@ -942,6 +972,9 @@ msgid "Tracing functions requires the methods package, but unable to load method
 msgstr ""
 
 msgid "Expected a single logical value for the S4 state flag"
+msgstr ""
+
+msgid "Expected a single logical value for the S3 state flag"
 msgstr ""
 
 msgid "invalid to change the storage mode of a factor"
@@ -1262,9 +1295,6 @@ msgstr ""
 msgid "'chdir = TRUE' makes no sense for a URL"
 msgstr ""
 
-msgid "cannot 'chdir' as current directory is unknown"
-msgstr ""
-
 msgid "'chdir = TRUE' makes no sense for a connection"
 msgstr ""
 
@@ -1299,6 +1329,9 @@ msgid "'x' and 'y' must have the same length"
 msgstr ""
 
 msgid "incorrect values of 'indent' and 'width'"
+msgstr ""
+
+msgid "probably wrong encoding in names(.) of column"
 msgstr ""
 
 msgid "'nv' must be 0 or ncol(x)"
@@ -1397,6 +1430,9 @@ msgstr ""
 msgid "'intern' must be TRUE or FALSE"
 msgstr ""
 
+msgid "'ignore.stdout' must be TRUE or FALSE"
+msgstr ""
+
 msgid "'ignore.stderr' must be TRUE or FALSE"
 msgstr ""
 
@@ -1404,6 +1440,18 @@ msgid "'wait' must be TRUE or FALSE"
 msgstr ""
 
 msgid "'input' must be a character vector or 'NULL'"
+msgstr ""
+
+msgid "arguments 'minimized' and 'invisible' are for Windows only"
+msgstr ""
+
+msgid "setting stdout = TRUE"
+msgstr ""
+
+msgid "'stdout' must be of length 1"
+msgstr ""
+
+msgid "'stderr' must be of length 1"
 msgstr ""
 
 msgid "'show.output.on.console' must be TRUE or FALSE"

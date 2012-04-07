@@ -7,7 +7,7 @@ msgid ""
 msgstr ""
 "Project-Id-Version: R 2.3.0\n"
 "Report-Msgid-Bugs-To: bugs@r-project.org\n"
-"POT-Creation-Date: 2010-03-19 11:18\n"
+"POT-Creation-Date: 2010-09-17 09:19\n"
 "PO-Revision-Date: 2006-04-16 19:17-0300\n"
 "Last-Translator: Fernando Henrique Ferraz P. da Rosa <feferraz@.ime.usp.br>\n"
 "Language-Team: Portuguese <ldp-br@bazar.conectiva.com.br>\n"
@@ -258,11 +258,11 @@ msgstr ""
 msgid "columns of 'contrast.obj' must define a contrast(sum to zero)"
 msgstr "colunas de 'contrast.obj' devem definir um contraste (somar zero)"
 
-msgid "invalid interpolation method"
-msgstr "método de interpolação inválido"
-
 msgid "collapsing to unique 'x' values"
 msgstr "considerando apenas os valores distintos de 'x'"
+
+msgid "invalid interpolation method"
+msgstr "método de interpolação inválido"
 
 msgid "need at least two non-NA values to interpolate"
 msgstr "pelo menos dois valores não-NA são necessários para interpolar"
@@ -477,8 +477,19 @@ msgstr "'k' deve estar em {1, 2, ... n - 1}"
 msgid "some of the first %d eigenvalues are < 0"
 msgstr "alguns dos primeiros %d autovalores são < 0"
 
-msgid "initial value not feasible"
+#, fuzzy
+msgid "initial value is not in the interior of the feasible region"
 msgstr "valor inicial não plausível"
+
+#, fuzzy
+msgid "Barrier algorithm ran out of iterations and did not converge"
+msgstr "algoritmo não convergiu"
+
+msgid "Objective function increased at outer iteration %d"
+msgstr ""
+
+msgid "Objective function decreased at outer iteration %d"
+msgstr ""
 
 msgid "contrasts not defined for %d degrees of freedom"
 msgstr "contrastes não definidos para %d graus de liberdade"
@@ -1268,8 +1279,9 @@ msgstr "não é possível calcular os níveis descritivos corretos com empates"
 msgid "'y' must be numeric or a string naming a valid function"
 msgstr "'y' deve ser numérico ou uma string com o nome de uma função válida"
 
+#, fuzzy
 msgid ""
-"y must be supplied.\n"
+"numeric y must be supplied.\n"
 "For density estimation use density()"
 msgstr ""
 "y deve ser especificado.\n"
@@ -1306,13 +1318,22 @@ msgstr "ajuste singular encontrado"
 msgid "missing or negative weights not allowed"
 msgstr "pesos faltantes ou negativos não são permitidos"
 
-msgid "invalid 'lm' object:  no 'terms' nor 'qr' component"
+#, fuzzy
+msgid "invalid 'lm' object:  no 'terms' component"
 msgstr "objeto 'lm' inválido: nenhum componente 'terms' ou 'qr'"
+
+msgid "calling summary.lm(<fake-lm-object>) ..."
+msgstr ""
 
 msgid "residual degrees of freedom in object suggest this is not an \"lm\" fit"
 msgstr ""
 "graus de liberdade do resíduo no objeto sugerem que esse não é um ajuste \"lm"
 "\""
+
+msgid ""
+"lm object does not have a proper 'qr' component.\n"
+" Rank zero or should not have used lm(.., qr=FALSE)."
+msgstr ""
 
 msgid "family '"
 msgstr ""
@@ -1320,6 +1341,9 @@ msgstr ""
 #, fuzzy
 msgid "' not implemented"
 msgstr "tipo '%s' ainda não implementado"
+
+msgid "calling anova.lm(<fake-lm-object>) ..."
+msgstr ""
 
 msgid "ANOVA F-tests on an essentially perfect fit are unreliable"
 msgstr ""
@@ -1329,6 +1353,9 @@ msgstr "removido porque a resposta difere de"
 
 msgid "model 1"
 msgstr "modelo 1"
+
+msgid "calling predict.lm(<fake-lm-object>) ..."
+msgstr ""
 
 msgid "prediction from a rank-deficient fit may be misleading"
 msgstr ""
@@ -1971,6 +1998,10 @@ msgstr "argumentos devem ter o mesmo comprimento"
 msgid "'relevel' only for factors"
 msgstr "'relevel' somente possível para fatores"
 
+#, fuzzy
+msgid "'ref' must be of length one"
+msgstr "'acf' deve ter comprimento dois ou mais"
+
 msgid "'ref' must be an existing level"
 msgstr "'ref' deve ser um nível existente"
 
@@ -2344,6 +2375,10 @@ msgstr "não há observações o suficiente de 'x' (finitas)"
 
 msgid "Requested conf.level not achievable"
 msgstr "Nível de confiança pedido não é possível de se obter"
+
+#, fuzzy
+msgid "cannot compute confidence interval when all observations are tied"
+msgstr "não é possível calcular intervalo de confiança exato com zeros"
 
 msgid "cannot compute exact confidence interval with ties"
 msgstr "não é possível calcular intervalo de confiança exato com empates"

@@ -40,7 +40,7 @@
         ## optionally turn off old-style mlists
         mopt <- Sys.getenv("R_MLIST")
         .noMlistsFlag <<- (is.character(mopt) && all(mopt != "YES"))
-        if(!.noMlistsFlag) 
+        if(!.noMlistsFlag)
             cat("Initializing with support for old-style methods list objects\n")
         cat("initializing class and method definitions ...")
         on.exit(assign(".saveImage", NA, envir = where))
@@ -61,6 +61,7 @@
         assign("newClassRepresentation", .newClassRepresentation, envir = where)
         assign(".mergeClassDefSlots", ..mergeClassDefSlots, envir = where)
         assign(".addToMetaTable", ..addToMetaTable, envir = where)
+        assign(".extendsForS3", ..extendsForS3, envir = where)
         .makeBasicFuns(where)
         rm(.makeGeneric, .newClassRepresentation, .possibleExtends,
            ..mergeClassDefSlots, envir = where)
@@ -70,6 +71,8 @@
         .InitClassUnion(where)
         .InitS3Classes(where)
         .InitSpecialTypesAndClasses(where)
+        .InitTraceFunctions(where)
+        .InitRefClasses(where)
         ## now seal the classes defined in the package
         for(cl in get(".SealedClasses", where))
             sealClass(cl, where)
@@ -97,8 +100,10 @@
         ## package-- the namespace of the methods package, if it has
         ## one, or the global environment
 
-        assign(".methodsNamespace",
-               environment(get("setGeneric", where)), where)
+        mns <- environment(get("setGeneric", where))
+        assign(".methodsNamespace", mns, where)
+        ## assign to baseenv also, signalling methods loaded
+        assign(".methodsNamespace", mns, baseenv())
     }
 }
 
@@ -148,5 +153,3 @@
 
 ## want ASCII quotes, not fancy nor translated ones
 .dQ <- function (x) paste('"', x, '"', sep = '')
-
-

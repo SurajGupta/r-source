@@ -249,35 +249,37 @@ double R_getClockIncrement(void)
 void R_setStartTime(void) {}
 #endif /* not _R_HAVE_TIMING_ */
 
+#ifdef HAVE_SYS_WAIT_H
+# include <sys/wait.h>
+#endif
 
 #define INTERN_BUFSIZE 8096
 SEXP attribute_hidden do_system(SEXP call, SEXP op, SEXP args, SEXP rho)
 {
     SEXP tlist = R_NilValue;
-    int read=0;
+    int intern = 0;
 
     checkArity(op, args);
     if (!isValidStringF(CAR(args)))
-	errorcall(call, _("non-empty character argument expected"));
-    if (isLogical(CADR(args)) && (read = LOGICAL(CADR(args))[0]) != NA_INTEGER)
-	;
-    else
-	errorcall(call, _("'intern' must be logical and not NA"));
-    if (read) {
-#ifdef HAVE_POPEN
+	error(_("non-empty character argument expected"));
+    intern = asLogical(CADR(args));
+    if (intern == NA_INTEGER)
+	error(_("'intern' must be logical and not NA"));
+    if (intern) { /* intern = TRUE */
 	FILE *fp;
 	char *x = "r", buf[INTERN_BUFSIZE];
 	const char *cmd;
-	int i, j;
+	int i, j, res;
 	SEXP tchar, rval;
 
 	PROTECT(tlist);
 	cmd = translateChar(STRING_ELT(CAR(args), 0));
+	errno = 0; /* precaution */
 	if(!(fp = R_popen(cmd, x)))
 	    error(_("cannot popen '%s', probable reason '%s'"),
 		  cmd, strerror(errno));
 	for (i = 0; fgets(buf, INTERN_BUFSIZE, fp); i++) {
-	    read = strlen(buf);
+	    int read = strlen(buf);
 	    if(read >= INTERN_BUFSIZE - 1)
 		warning(_("line %d may be truncated in call to system(, intern = TRUE)"), i + 1);
 	    if (read > 0 && buf[read-1] == '\n')
@@ -286,20 +288,40 @@ SEXP attribute_hidden do_system(SEXP call, SEXP op, SEXP args, SEXP rho)
 	    UNPROTECT(1);
 	    PROTECT(tlist = CONS(tchar, tlist));
 	}
-	pclose(fp);
-	rval = allocVector(STRSXP, i);;
+	res = pclose(fp);
+#ifdef HAVE_SYS_WAIT_H
+	if (WIFEXITED(res)) res = WEXITSTATUS(res);
+	else res = 0;
+#else
+	/* assume that this is shifted if a multiple of 256 */
+	if ((res % 256) == 0) res = res/256;
+#endif
+	if ((res & 0xff)  == 127) {/* 127, aka -1 */
+	    if (errno)
+		error(_("error in running command: '%s'"), strerror(errno));
+	    else
+		error(_("error in running command"));
+	} else if (res) {
+	    if (errno)
+		warningcall(R_NilValue, 
+			    _("running command '%s' had status %d and error message '%s'"), 
+			    cmd, res, 
+			    strerror(errno));
+	    else 
+		warningcall(R_NilValue, 
+			    _("running command '%s' had status %d"), 
+			    cmd, res);
+	}
+	
+	rval = allocVector(STRSXP, i);
 	for (j = (i - 1); j >= 0; j--) {
 	    SET_STRING_ELT(rval, j, CAR(tlist));
 	    tlist = CDR(tlist);
 	}
 	UNPROTECT(1);
-	return (rval);
-#else /* not HAVE_POPEN */
-	errorcall(call, _("'intern=TRUE' is not implemented on this platform"));
-	return R_NilValue;
-#endif /* not HAVE_POPEN */
+	return rval;
     }
-    else {
+    else { /* intern =  FALSE */
 #ifdef HAVE_AQUA
 	R_Busy(1);
 #endif
@@ -372,6 +394,38 @@ SEXP do_sysinfo(SEXP call, SEXP op, SEXP args, SEXP rho)
     return R_NilValue;		/* -Wall */
 }
 #endif /* not HAVE_SYS_UTSNAME_H */
+
+/* The pointer here is used in the Mac GUI */
+#include <R_ext/eventloop.h> /* for R_PolledEvents */
+#include <R_ext/Rdynload.h>
+DL_FUNC ptr_R_ProcessEvents;
+void R_ProcessEvents(void)
+{
+    if (ptr_R_ProcessEvents) ptr_R_ProcessEvents();
+    R_PolledEvents();
+    if (cpuLimit > 0.0 || elapsedLimit > 0.0) {
+	double cpu, data[5];
+	R_getProcTime(data);
+	cpu = data[0] + data[1] + data[3] + data[4];
+	if (elapsedLimit > 0.0 && data[2] > elapsedLimit) {
+	    cpuLimit = elapsedLimit = -1;
+	    if (elapsedLimit2 > 0.0 && data[2] > elapsedLimit2) {
+		elapsedLimit2 = -1.0;
+		error(_("reached session elapsed time limit"));
+	    } else
+		error(_("reached elapsed time limit"));
+	}
+	if (cpuLimit > 0.0 && cpu > cpuLimit) {
+	    cpuLimit = elapsedLimit = -1;
+	    if (cpuLimit2 > 0.0 && cpu > cpuLimit2) {
+		cpuLimit2 = -1.0;
+		error(_("reached session CPU time limit"));
+	    } else
+		error(_("reached CPU time limit"));
+	}
+    }
+}
+
 
 /*
  *  helpers for start-up code

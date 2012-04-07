@@ -1,4 +1,4 @@
-/*
+ /*
  *  R : A Computer Language for Statistical Data Analysis
  *  Copyright (C) 1995, 1996	Robert Gentleman and Ross Ihaka
  *  Copyright (C) 1998--2009	The R Development Core Team.
@@ -429,10 +429,15 @@ SEXP eval(SEXP e, SEXP rho)
 	    else error(_("argument is missing, with no default"));
 	}
 	else if (TYPEOF(tmp) == PROMSXP) {
-	    PROTECT(tmp);
-	    tmp = eval(tmp, rho);
+	    if (PRVALUE(tmp) == R_UnboundValue) {
+		/* not sure the PROTECT is needed here but keep it to
+		   be on the safe side. */
+		PROTECT(tmp);
+		tmp = forcePromise(tmp);
+		UNPROTECT(1);
+	    }
+	    else tmp = PRVALUE(tmp);
 	    SET_NAMED(tmp, 2);
-	    UNPROTECT(1);
 	}
 	else if (!isNull(tmp) && NAMED(tmp) < 1)
 	    SET_NAMED(tmp, 1);
@@ -531,7 +536,7 @@ void SrcrefPrompt(const char * prefix, SEXP srcref)
 	SEXP srcfile = getAttrib(srcref, R_SrcfileSymbol);
 	if (TYPEOF(srcfile) == ENVSXP) {
 	    SEXP filename = findVar(install("filename"), srcfile);
-	    if (TYPEOF(filename) == STRSXP && length(filename) == 1) {
+	    if (isString(filename) && length(filename)) {
 	    	Rprintf(_("%s at %s#%d: "), prefix, CHAR(STRING_ELT(filename, 0)), 
 	                                    asInteger(srcref));
 	        return;
@@ -900,6 +905,7 @@ static SEXP EnsureLocal(SEXP symbol, SEXP rho)
 	    PROTECT(vl = duplicate(vl));
 	    defineVar(symbol, vl, rho);
 	    UNPROTECT(1);
+	    SET_NAMED(vl, 1);
 	}
 	return vl;
     }
@@ -1025,15 +1031,30 @@ SEXP attribute_hidden do_if(SEXP call, SEXP op, SEXP args, SEXP rho)
 	do_browser(call, op, R_NilValue, rho); \
     } } while (0)
 
+/* Allocate space for the loop variable value the first time through
+   (when v == R_NilValue) and when the value has been assigned to
+   another variable (NAMED(v) == 2). This should be safe and avoid
+   allocation in many cases. */
+#define ALLOC_LOOP_VAR(v, val_type, vpi) do { \
+        if (v == R_NilValue || NAMED(v) == 2) { \
+	    REPROTECT(v = allocVector(val_type, 1), vpi); \
+	    SET_NAMED(v, 1); \
+	} \
+    } while(0)
 
 SEXP attribute_hidden do_for(SEXP call, SEXP op, SEXP args, SEXP rho)
 {
-    int dbg, nm;
+    /* Need to declare volatile variables whose values are relied on
+       after for_next or for_break longjmps and might change between
+       the setjmp and longjmp calls. Theoretically this does not
+       include n and bgn, but gcc -O2 -Wclobbered warns about these so
+       to be safe we declare them volatile as well. */
     volatile int i, n, bgn;
+    volatile SEXP v, val;
+    int dbg, val_type;
     SEXP sym, body;
-    volatile SEXP ans, v, val;
     RCNTXT cntxt;
-    PROTECT_INDEX vpi, api;
+    PROTECT_INDEX vpi;
 
     sym = CAR(args);
     val = CADR(args);
@@ -1049,22 +1070,18 @@ SEXP attribute_hidden do_for(SEXP call, SEXP op, SEXP args, SEXP rho)
     /* deal with the case where we are iterating over a factor
        we need to coerce to character - then iterate */
 
-    if( inherits(val, "factor") ) {
-        PROTECT(ans = asCharacterFactor(val));
-	val = ans;
-	UNPROTECT(2);  /* ans and val from above */
-        PROTECT(val);
+    if ( inherits(val, "factor") ) {
+        SEXP tmp = asCharacterFactor(val);
+	UNPROTECT(1); /* val from above */
+        PROTECT(val = tmp);
     }
 
-    if (isList(val) || isNull(val)) {
+    if (isList(val) || isNull(val))
 	n = length(val);
-	PROTECT_WITH_INDEX(v = R_NilValue, &vpi);
-    }
-    else {
+    else
 	n = LENGTH(val);
-	PROTECT_WITH_INDEX(v = allocVector(TYPEOF(val), 1), &vpi);
-    }
-    ans = R_NilValue;
+
+    val_type = TYPEOF(val);
 
     dbg = RDEBUG(rho);
     bgn = BodyHasBraces(body);
@@ -1072,11 +1089,8 @@ SEXP attribute_hidden do_for(SEXP call, SEXP op, SEXP args, SEXP rho)
     /* bump up NAMED count of sequence to avoid modification by loop code */
     if (NAMED(val) < 2) SET_NAMED(val, NAMED(val) + 1);
 
-    /***** nm may not be needed anymore now that NAMED(val) is at
-	   least 1.  LT */
-    nm = NAMED(val);
+    PROTECT_WITH_INDEX(v = R_NilValue, &vpi);
 
-    PROTECT_WITH_INDEX(ans, &api);  /**** ans should no longer be needed. LT */
     begincontext(&cntxt, CTXT_LOOP, R_NilValue, rho, R_BaseEnv, R_NilValue,
 		 R_NilValue);
     switch (SETJMP(cntxt.cjmpbuf)) {
@@ -1085,59 +1099,66 @@ SEXP attribute_hidden do_for(SEXP call, SEXP op, SEXP args, SEXP rho)
     }
     for (i = 0; i < n; i++) {
 	DO_LOOP_RDEBUG(call, op, args, rho, bgn);
-	switch (TYPEOF(val)) {
-	case LGLSXP:
-	    REPROTECT(v = allocVector(TYPEOF(val), 1), vpi);
-	    LOGICAL(v)[0] = LOGICAL(val)[i];
-	    setVar(sym, v, rho);
-	    break;
-	case INTSXP:
-	    REPROTECT(v = allocVector(TYPEOF(val), 1), vpi);
-	    INTEGER(v)[0] = INTEGER(val)[i];
-	    setVar(sym, v, rho);
-	    break;
-	case REALSXP:
-	    REPROTECT(v = allocVector(TYPEOF(val), 1), vpi);
-	    REAL(v)[0] = REAL(val)[i];
-	    setVar(sym, v, rho);
-	    break;
-	case CPLXSXP:
-	    REPROTECT(v = allocVector(TYPEOF(val), 1), vpi);
-	    COMPLEX(v)[0] = COMPLEX(val)[i];
-	    setVar(sym, v, rho);
-	    break;
-	case STRSXP:
-	    REPROTECT(v = allocVector(TYPEOF(val), 1), vpi);
-	    SET_STRING_ELT(v, 0, STRING_ELT(val, i));
-	    setVar(sym, v, rho);
-	    break;
-	case RAWSXP:
-	    REPROTECT(v = allocVector(TYPEOF(val), 1), vpi);
-	    RAW(v)[0] = RAW(val)[i];
-	    setVar(sym, v, rho);
-	    break;
+
+	switch (val_type) {
+
 	case EXPRSXP:
 	case VECSXP:
-	    /* make sure loop variable is a copy if needed */
-	    if(nm > 0) SET_NAMED(VECTOR_ELT(val, i), 2);
-	    setVar(sym, VECTOR_ELT(val, i), rho);
+	    /* make sure loop variable is not modified via other vars */
+	    SET_NAMED(VECTOR_ELT(val, i), 2);
+	    /* defineVar is used here and below rather than setVar in
+	       case the loop code removes the variable. */
+	    defineVar(sym, VECTOR_ELT(val, i), rho);
 	    break;
+
 	case LISTSXP:
-	    /* make sure loop variable is a copy if needed */
-	    if(nm > 0) SET_NAMED(CAR(val), 2);
-	    setVar(sym, CAR(val), rho);
+	    /* make sure loop variable is not modified via other vars */
+	    SET_NAMED(CAR(val), 2);
+	    defineVar(sym, CAR(val), rho);
 	    val = CDR(val);
 	    break;
+
 	default:
-	    errorcall(call, _("invalid for() loop sequence"));
+
+            switch (val_type) {
+            case LGLSXP:
+                ALLOC_LOOP_VAR(v, val_type, vpi);
+                LOGICAL(v)[0] = LOGICAL(val)[i];
+                break;
+            case INTSXP:
+                ALLOC_LOOP_VAR(v, val_type, vpi);
+                INTEGER(v)[0] = INTEGER(val)[i];
+                break;
+            case REALSXP:
+                ALLOC_LOOP_VAR(v, val_type, vpi);
+                REAL(v)[0] = REAL(val)[i];
+                break;
+            case CPLXSXP:
+                ALLOC_LOOP_VAR(v, val_type, vpi);
+                COMPLEX(v)[0] = COMPLEX(val)[i];
+                break;
+            case STRSXP:
+                ALLOC_LOOP_VAR(v, val_type, vpi);
+                SET_STRING_ELT(v, 0, STRING_ELT(val, i));
+                break;
+            case RAWSXP:
+                ALLOC_LOOP_VAR(v, val_type, vpi);
+                RAW(v)[0] = RAW(val)[i];
+                break;
+            default:
+                errorcall(call, _("invalid for() loop sequence"));
+            }
+            defineVar(sym, v, rho);
 	}
-	REPROTECT(ans = eval(body, rho), api);
+
+	eval(body, rho);
+
     for_next:
 	; /* needed for strict ISO C compliance, according to gcc 2.95.2 */
     }
  for_break:
     endcontext(&cntxt);
-    UNPROTECT(5);
+    UNPROTECT(4);
     SET_RDEBUG(rho, dbg);
     return R_NilValue;
 }
@@ -1213,7 +1234,7 @@ SEXP attribute_hidden do_paren(SEXP call, SEXP op, SEXP args, SEXP rho)
 /* this function gets the srcref attribute from a statement block, 
    and confirms it's in the expected format */
    
-static SEXP getSrcrefs(SEXP call, SEXP args)
+static R_INLINE SEXP getSrcrefs(SEXP call, SEXP args)
 {
     SEXP srcrefs = getAttrib(call, R_SrcrefSymbol);
     if (   TYPEOF(srcrefs) == VECSXP
@@ -1346,6 +1367,22 @@ static void tmp_cleanup(void *data)
     unbindVar(R_TmpvalSymbol, (SEXP) data);
 }
 
+/* This macro stores the current assignment target in the saved
+   binding location. It duplicates if necessary to make sure
+   assignment functions are always called with a target with NAMED ==
+   1. The SET_CAR is intended to protect against possible GC in
+   R_SetVarLocValue; this might occur it the binding is an active
+   binding. */
+#define SET_TEMPVARLOC_FROM_CAR(loc, lhs) do { \
+	SEXP __lhs__ = (lhs); \
+	SEXP __v__ = CAR(__lhs__); \
+	if (NAMED(__v__) == 2) { \
+	    __v__ = duplicate(__v__); \
+	    SET_NAMED(__v__, 1); \
+	    SETCAR(__lhs__, __v__); \
+	} \
+	R_SetVarLocValue(loc, __v__); \
+    } while(0)
 
 static SEXP applydefine(SEXP call, SEXP op, SEXP args, SEXP rho)
 {
@@ -1404,14 +1441,14 @@ static SEXP applydefine(SEXP call, SEXP op, SEXP args, SEXP rho)
 	    error(_("overlong name in '%s'"), CHAR(PRINTNAME(CAR(expr))));
 	sprintf(buf, "%s<-", CHAR(PRINTNAME(CAR(expr))));
 	tmp = install(buf);
-	UNPROTECT(1);
-	R_SetVarLocValue(tmploc, CAR(lhs));
+	SET_TEMPVARLOC_FROM_CAR(tmploc, lhs);
 	PROTECT(tmp2 = mkPROMISE(rhs, rho));
 	SET_PRVALUE(tmp2, rhs);
 	PROTECT(rhs = replaceCall(tmp, R_GetVarLocSymbol(tmploc), CDDR(expr),
 				  tmp2));
 	rhs = eval(rhs, rho);
-	UNPROTECT(2);
+	UNPROTECT(3); /* the two PROTECTs from this iteration and the
+			 old rhs from the previous one */
 	PROTECT(rhs);
 	lhs = CDR(lhs);
 	expr = CADR(expr);
@@ -1421,7 +1458,7 @@ static SEXP applydefine(SEXP call, SEXP op, SEXP args, SEXP rho)
     if(strlen(CHAR(PRINTNAME(CAR(expr)))) + 3 > 32)
 	error(_("overlong name in '%s'"), CHAR(PRINTNAME(CAR(expr))));
     sprintf(buf, "%s<-", CHAR(PRINTNAME(CAR(expr))));
-    R_SetVarLocValue(tmploc, CAR(lhs));
+    SET_TEMPVARLOC_FROM_CAR(tmploc, lhs);
     PROTECT(tmp = mkPROMISE(CADR(args), rho));
     SET_PRVALUE(tmp, rhs);
     PROTECT(expr = assignCall(install(asym[PRIMVAL(op)]), CDR(lhs),
@@ -1545,9 +1582,10 @@ SEXP attribute_hidden do_set(SEXP call, SEXP op, SEXP args, SEXP rho)
  */
 SEXP attribute_hidden evalList(SEXP el, SEXP rho, SEXP call, int n)
 {
-    SEXP ans, h, tail;
+    SEXP head, tail, ev, h;
 
-    PROTECT(ans = tail = CONS(R_NilValue, R_NilValue));
+    head = R_NilValue;
+    tail = R_NilValue; /* to prevent uninitialized variable warnings */
 
     while (el != R_NilValue) {
 	n++;
@@ -1564,9 +1602,13 @@ SEXP attribute_hidden evalList(SEXP el, SEXP rho, SEXP call, int n)
 	    h = findVar(CAR(el), rho);
 	    if (TYPEOF(h) == DOTSXP || h == R_NilValue) {
 		while (h != R_NilValue) {
-		    SETCDR(tail, CONS(eval(CAR(h), rho), R_NilValue));
-		    tail = CDR(tail);
-		    COPY_TAG(tail, h);
+                    ev = CONS(eval(CAR(h), rho), R_NilValue);
+                    if (head==R_NilValue)
+                        PROTECT(head = ev);
+                    else
+                        SETCDR(tail, ev);
+                    COPY_TAG(ev, h);
+                    tail = ev;
 		    h = CDR(h);
 		}
 	    }
@@ -1580,14 +1622,22 @@ SEXP attribute_hidden evalList(SEXP el, SEXP rho, SEXP call, int n)
 	    /* It was missing */
 	    errorcall(call, _("'%s' is missing"), CHAR(PRINTNAME(CAR(el)))); 
 	} else {
-	    SETCDR(tail, CONS(eval(CAR(el), rho), R_NilValue));
-	    tail = CDR(tail);
-	    COPY_TAG(tail, el);
+            ev = CONS(eval(CAR(el), rho), R_NilValue);
+            if (head==R_NilValue)
+                PROTECT(head = ev);
+            else
+                SETCDR(tail, ev);
+            COPY_TAG(ev, el);
+            tail = ev;
 	}
 	el = CDR(el);
     }
-    UNPROTECT(1);
-    return CDR(ans);
+
+    if (head!=R_NilValue) 
+        UNPROTECT(1);
+
+    return head;
+
 } /* evalList() */
 
 
@@ -1596,9 +1646,10 @@ SEXP attribute_hidden evalList(SEXP el, SEXP rho, SEXP call, int n)
 /* used in evalArgs, arithmetic.c, seq.c */
 SEXP attribute_hidden evalListKeepMissing(SEXP el, SEXP rho)
 {
-    SEXP ans, h, tail;
+    SEXP head, tail, ev, h;
 
-    PROTECT(ans = tail = CONS(R_NilValue, R_NilValue));
+    head = R_NilValue;
+    tail = R_NilValue; /* to prevent uninitialized variable warnings */
 
     while (el != R_NilValue) {
 
@@ -1614,33 +1665,42 @@ SEXP attribute_hidden evalListKeepMissing(SEXP el, SEXP rho)
 	    h = findVar(CAR(el), rho);
 	    if (TYPEOF(h) == DOTSXP || h == R_NilValue) {
 		while (h != R_NilValue) {
-		    if (CAR(h) == R_MissingArg)
-			SETCDR(tail, CONS(R_MissingArg, R_NilValue));
-		    else
-			SETCDR(tail, CONS(eval(CAR(h), rho), R_NilValue));
-		    tail = CDR(tail);
-		    COPY_TAG(tail, h);
+                    if (CAR(h) == R_MissingArg) 
+                        ev = CONS(R_MissingArg, R_NilValue);
+                    else
+                        ev = CONS(eval(CAR(h), rho), R_NilValue);
+                    if (head==R_NilValue)
+                        PROTECT(head = ev);
+                    else
+                        SETCDR(tail, ev);
+                    COPY_TAG(ev, h);
+                    tail = ev;
 		    h = CDR(h);
 		}
 	    }
 	    else if(h != R_MissingArg)
 		error(_("'...' used in an incorrect context"));
 	}
-	else if (CAR(el) == R_MissingArg ||
-                 (isSymbol(CAR(el)) && R_isMissing(CAR(el), rho))) {
-	    SETCDR(tail, CONS(R_MissingArg, R_NilValue));
-	    tail = CDR(tail);
-	    COPY_TAG(tail, el);
-	}
 	else {
-	    SETCDR(tail, CONS(eval(CAR(el), rho), R_NilValue));
-	    tail = CDR(tail);
-	    COPY_TAG(tail, el);
+            if (CAR(el) == R_MissingArg ||
+                 (isSymbol(CAR(el)) && R_isMissing(CAR(el), rho)))
+                ev = CONS(R_MissingArg, R_NilValue);
+            else
+                ev = CONS(eval(CAR(el), rho), R_NilValue);
+            if (head==R_NilValue)
+                PROTECT(head = ev);
+            else
+                SETCDR(tail, ev);
+            COPY_TAG(ev, el);
+            tail = ev;
 	}
 	el = CDR(el);
     }
-    UNPROTECT(1);
-    return CDR(ans);
+
+    if (head!=R_NilValue) 
+        UNPROTECT(1);
+
+    return head;
 }
 
 
@@ -1742,7 +1802,7 @@ static SEXP VectorToPairListNamed(SEXP x)
     return xnew;
 }
 
-
+#define simple_as_environment(arg) (IS_S4_OBJECT(arg) && (TYPEOF(arg) == S4SXP) ? R_getS4DataSlot(arg, ENVSXP) : R_NilValue)
 
 /* "eval" and "eval.with.vis" : Evaluate the first argument */
 /* in the environment specified by the second argument. */
@@ -1763,8 +1823,11 @@ SEXP attribute_hidden do_eval(SEXP call, SEXP op, SEXP args, SEXP rho)
 	/* This is supposed to be defunct, but has been kept here
 	   (and documented as such) */
 	encl = R_BaseEnv;
-    } else if ( !isEnvironment(encl) )
+    } else if ( !isEnvironment(encl) &&
+		!isEnvironment((encl = simple_as_environment(encl))) )
 	error(_("invalid '%s' argument"), "enclos");
+    if(IS_S4_OBJECT(env) && (TYPEOF(env) == S4SXP))
+	env = R_getS4DataSlot(env, ANYSXP); /* usually an ENVSXP */
     switch(TYPEOF(env)) {
     case NILSXP:
 	env = encl;     /* so eval(expr, NULL, encl) works */
@@ -1887,7 +1950,9 @@ SEXP attribute_hidden do_recall(SEXP call, SEXP op, SEXP args, SEXP rho)
 	    break;
 	cptr = cptr->nextcontext;
     }
-    args = cptr->promargs;
+    if (cptr != NULL) {
+	args = cptr->promargs;
+    }
     /* get the env recall was called from */
     s = R_GlobalContext->sysparent;
     while (cptr != NULL) {
@@ -1908,6 +1973,8 @@ SEXP attribute_hidden do_recall(SEXP call, SEXP op, SEXP args, SEXP rho)
 	PROTECT(s = findFun(CAR(cptr->call), cptr->sysparent));
     else
 	PROTECT(s = eval(CAR(cptr->call), cptr->sysparent));
+    if (TYPEOF(s) != CLOSXP) 
+    	error(_("'Recall' called from outside a closure"));
     ans = applyClosure(cptr->call, s, args, cptr->sysparent, R_BaseEnv);
     UNPROTECT(1);
     return ans;
@@ -2343,7 +2410,7 @@ int DispatchGroup(const char* group, SEXP call, SEXP op, SEXP args, SEXP rho,
 }
 
 #ifdef BYTECODE
-static int R_bcVersion = 4;
+static int R_bcVersion = 5;
 static int R_bcMinVersion = 4;
 
 static SEXP R_AddSym = NULL;
@@ -2506,6 +2573,12 @@ enum {
   NMATELT_OP,
   SETNVECELT_OP,
   SETNMATELT_OP,
+  AND1ST_OP,
+  AND2ND_OP,
+  OR1ST_OP,
+  OR2ND_OP,
+  GETVAR_MISSOK_OP,
+  DDVAL_MISSOK_OP,
   OPCOUNT
 };
 
@@ -2613,10 +2686,10 @@ static SEXP cmp_arith2(SEXP call, int opval, SEXP opsym, SEXP x, SEXP y)
     return R_binary(R_NilValue, op, x, y);
 }
 
-#define Builtin1(do_fun,which) do { \
+#define Builtin1(do_fun,which,rho) do {				 \
   R_BCNodeStackTop[-1] = CONS(R_BCNodeStackTop[-1], R_NilValue); \
   R_BCNodeStackTop[-1] = do_fun(FakeCall1, SYMVALUE(which), \
-				R_BCNodeStackTop[-1], R_NilValue); \
+				R_BCNodeStackTop[-1], rho); \
   NEXT(); \
 } while(0)
 
@@ -2626,12 +2699,12 @@ static SEXP cmp_arith2(SEXP call, int opval, SEXP opsym, SEXP x, SEXP y)
   NEXT(); \
 } while(0)
 
-#define Builtin2(do_fun,which) do { \
+#define Builtin2(do_fun,which,rho) do {		     \
   SEXP tmp = CONS(R_BCNodeStackTop[-1], R_NilValue); \
   R_BCNodeStackTop[-2] = CONS(R_BCNodeStackTop[-2], tmp); \
   R_BCNodeStackTop--; \
   R_BCNodeStackTop[-1] = do_fun(FakeCall2, SYMVALUE(which), \
-				R_BCNodeStackTop[-1], R_NilValue); \
+				R_BCNodeStackTop[-1], rho); \
   NEXT(); \
 } while(0)
 
@@ -2645,7 +2718,7 @@ static SEXP cmp_arith2(SEXP call, int opval, SEXP opsym, SEXP x, SEXP y)
 
 #define Arith1(which) NewBuiltin1(cmp_arith1,which)
 #define Arith2(opval,opsym) NewBuiltin2(cmp_arith2,opval,opsym)
-#define Math1(which) Builtin1(do_math1,which)
+#define Math1(which) Builtin1(do_math1,which,rho)
 #define Relop2(opval,opsym) NewBuiltin2(cmp_relop,opval,opsym)
 
 # define DO_FAST_BINOP(op,a,b) do { \
@@ -2780,16 +2853,18 @@ typedef int BCODE;
 #define BCCODE(e) INTEGER(BCODE_CODE(e))
 #endif
 
-#define DO_GETVAR(dd) do { \
+#define DO_GETVAR(dd,keepmiss) do {			\
   SEXP symbol = VECTOR_ELT(constants, GETOP()); \
   value = (dd) ? ddfindVar(symbol, rho) : findVar(symbol, rho); \
   R_Visible = TRUE; \
   if (value == R_UnboundValue) \
     error(_("object '%s' not found"), CHAR(PRINTNAME(symbol))); \
   else if (value == R_MissingArg) { \
-    const char *n = CHAR(PRINTNAME(symbol)); \
-    if(*n) error(_("argument \"%s\" is missing, with no default"), n); \
-    else error(_("argument is missing, with no default")); \
+    if (! keepmiss) { \
+      const char *n = CHAR(PRINTNAME(symbol)); \
+      if(*n) error(_("argument \"%s\" is missing, with no default"), n); \
+      else error(_("argument is missing, with no default")); \
+    } \
   } \
   else if (TYPEOF(value) == PROMSXP) { \
     value = forcePromise(value); \
@@ -2815,6 +2890,7 @@ typedef int BCODE;
    and once load is set to make the constants NAMED--basically once
    there is a proper code data type with appropriate support. */
 #define DO_LDCONST(v) do { \
+  R_Visible = TRUE; \
   v = VECTOR_ELT(constants, GETOP()); \
   if (! NAMED(v)) SET_NAMED(v, 1); \
 } while (0)
@@ -2824,12 +2900,27 @@ static int tryDispatch(char *generic, SEXP call, SEXP x, SEXP rho, SEXP *pv)
   RCNTXT cntxt;
   SEXP pargs, rho1;
   int dispatched = FALSE;
+  SEXP op = SYMVALUE(install(generic)); /**** avoid this */
 
   PROTECT(pargs = promiseArgs(CDR(call), rho));
+  SET_PRVALUE(CAR(pargs), x);
+
+  /**** Minimal hack to try to handle the S4 case.  If we do the check
+	and do not dispatch then some arguments beyond the first might
+	have been evaluated; these will then be evaluated again by the
+	compiled argument code. */
+  if (IS_S4_OBJECT(x) && R_has_methods(op)) {
+    SEXP val = R_possible_dispatch(call, op, pargs, rho, TRUE);
+    if (val) {
+      *pv = val;
+      UNPROTECT(1);
+      return TRUE;
+    }
+  }
+
   /* See comment at first usemethod() call in this file. LT */
   PROTECT(rho1 = NewEnvironment(R_NilValue, R_NilValue, rho));
-  SET_PRVALUE(CAR(pargs), x);
-  begincontext(&cntxt, CTXT_RETURN, call, rho1, rho, pargs, R_NilValue);/**** FIXME: put in op */
+  begincontext(&cntxt, CTXT_RETURN, call, rho1, rho, pargs, op);
   if (usemethod(generic, x, call, pargs, rho1, rho, R_BaseEnv, pv))
     dispatched = TRUE;
   endcontext(&cntxt);
@@ -3022,6 +3113,15 @@ static SEXP setNumMatElt(SEXP mat, SEXP idx, SEXP jdx, SEXP value)
     return mat;
 }
 
+#define FIXUP_SCALAR_LOGICAL(arg, op) do { \
+	SEXP val = R_BCNodeStackTop[-1]; \
+	if (TYPEOF(val) != LGLSXP || LENGTH(val) != 1) { \
+	    if (!isNumber(val))	\
+		error(_("invalid %s type in 'x %s y'"), arg, op); \
+	    R_BCNodeStackTop[-1] = ScalarLogical(asLogical(val)); \
+	} \
+    } while(0)
+
 static SEXP bcEval(SEXP body, SEXP rho)
 {
   SEXP value, constants;
@@ -3153,6 +3253,10 @@ static SEXP bcEval(SEXP body, SEXP rho)
 	    value = allocVector(TYPEOF(seq), 1);
 	    SET_STRING_ELT(value, 0, STRING_ELT(seq, i));
 	    break;
+	  case RAWSXP:
+	    value = allocVector(TYPEOF(seq), 1);
+	    RAW(value)[0] = RAW(seq)[i];
+	    break;
 	  case EXPRSXP:
 	  case VECSXP:
 	    value = VECTOR_ELT(seq, i);
@@ -3161,6 +3265,8 @@ static SEXP bcEval(SEXP body, SEXP rho)
 	    value = CAR(seq);
 	    R_BCNodeStackTop[-4] = CDR(seq);
 	    break;
+	  default:
+	    error(_("invalid sequence argument in for loop"));
 	  }
 	  R_SetVarLocValue((R_varloc_t) cell, value);
 	  BC_CHECK_SIGINT();
@@ -3175,14 +3281,15 @@ static SEXP bcEval(SEXP body, SEXP rho)
 	R_BCNodeStackTop[-1] = value;
 	NEXT();
       }
-    OP(SETLOOPVAL, 0): BCNPOP(); R_BCNodeStackTop[-1] = R_NilValue; NEXT();
+    OP(SETLOOPVAL, 0):
+      BCNPOP_IGNORE_VALUE(); R_BCNodeStackTop[-1] = R_NilValue; NEXT();
     OP(INVISIBLE,0): R_Visible = FALSE; NEXT();
     OP(LDCONST, 1): DO_LDCONST(value); BCNPUSH(value); NEXT();
-    OP(LDNULL, 0):  BCNPUSH(R_NilValue); NEXT();
-    OP(LDTRUE, 0):  BCNPUSH(R_TrueValue); NEXT();
-    OP(LDFALSE, 0):  BCNPUSH(R_FalseValue); NEXT();
-    OP(GETVAR, 1): DO_GETVAR(FALSE);
-    OP(DDVAL, 1): DO_GETVAR(TRUE);
+    OP(LDNULL, 0): R_Visible = TRUE; BCNPUSH(R_NilValue); NEXT();
+    OP(LDTRUE, 0): R_Visible = TRUE; BCNPUSH(R_TrueValue); NEXT();
+    OP(LDFALSE, 0): R_Visible = TRUE; BCNPUSH(R_FalseValue); NEXT();
+    OP(GETVAR, 1): DO_GETVAR(FALSE, FALSE);
+    OP(DDVAL, 1): DO_GETVAR(TRUE, FALSE);
     OP(SETVAR, 1):
       {
 	SEXP symbol = VECTOR_ELT(constants, GETOP());
@@ -3393,6 +3500,7 @@ static SEXP bcEval(SEXP body, SEXP rho)
 	}
 	R_BCNodeStackTop -= 2;
 	R_BCNodeStackTop[-1] = value;
+	ftype = 0;
 	NEXT();
       }
     OP(CALLBUILTIN, 1):
@@ -3462,9 +3570,9 @@ static SEXP bcEval(SEXP body, SEXP rho)
     OP(LE, 0): FastRelop2(<=, LEOP, R_LeSym);
     OP(GE, 0): FastRelop2(>=, GEOP, R_GeSym);
     OP(GT, 0): FastRelop2(>, GTOP, R_GtSym);
-    OP(AND, 0): Builtin2(do_logic, R_AndSym);
-    OP(OR, 0): Builtin2(do_logic, R_OrSym);
-    OP(NOT, 0): Builtin1(do_logic, R_NotSym);
+    OP(AND, 0): Builtin2(do_logic, R_AndSym, rho);
+    OP(OR, 0): Builtin2(do_logic, R_OrSym, rho);
+    OP(NOT, 0): Builtin1(do_logic, R_NotSym, rho);
     OP(DOTSERR, 0): error(_("'...' used in an incorrect context"));
     OP(STARTASSIGN, 2):
       {
@@ -3560,11 +3668,16 @@ static SEXP bcEval(SEXP body, SEXP rho)
       }
     OP(ISNULL, 0): DO_ISTEST(isNull);
     OP(ISLOGICAL, 0): DO_ISTYPE(LGLSXP);
-    OP(ISINTEGER, 0): DO_ISTYPE(INTSXP);
+    OP(ISINTEGER, 0): {
+	SEXP arg = R_BCNodeStackTop[-1];
+	Rboolean test = (TYPEOF(arg) == INTSXP) && ! inherits(arg, "factor");
+	R_BCNodeStackTop[-1] = test ? mkTrue() : mkFalse();
+	NEXT();
+      }
     OP(ISDOUBLE, 0): DO_ISTYPE(REALSXP);
     OP(ISCOMPLEX, 0): DO_ISTYPE(CPLXSXP);
     OP(ISCHARACTER, 0): DO_ISTYPE(STRSXP);
-    OP(ISSYMBOL, 0): DO_ISTYPE(SYMSXP);
+    OP(ISSYMBOL, 0): DO_ISTYPE(SYMSXP); /**** S4 thingy allowed now???*/
     OP(ISOBJECT, 0): DO_ISTEST(OBJECT);
     OP(ISNUMERIC, 0): DO_ISTEST(isNumericOnly);
     OP(NVECELT, 2): {
@@ -3603,6 +3716,48 @@ static SEXP bcEval(SEXP body, SEXP rho)
 	R_BCNodeStackTop[-1] = value;
 	NEXT();
     }
+    OP(AND1ST, 1): {
+	int label = GETOP();
+        FIXUP_SCALAR_LOGICAL("'x'", "&&");
+        value = R_BCNodeStackTop[-1];
+	if (LOGICAL(value)[0] == FALSE)
+	    pc = codebase + label;
+	NEXT();
+    }
+    OP(AND2ND, 0): {
+        FIXUP_SCALAR_LOGICAL("'y'", "&&");
+        value = R_BCNodeStackTop[-1];
+	/* The first argument is TRUE or NA. If the second argument is
+	   not TRUE then its value is the result. If the second
+	   argument is TRUE, then the first argument's value is the
+	   result. */
+	if (LOGICAL(value)[0] != TRUE)
+	    R_BCNodeStackTop[-2] = value;
+	R_BCNodeStackTop -= 1;
+	NEXT();
+    }
+    OP(OR1ST, 1):  {
+	int label = GETOP();
+        FIXUP_SCALAR_LOGICAL("'x'", "||");
+        value = R_BCNodeStackTop[-1];
+	if (LOGICAL(value)[0] == TRUE)
+	    pc = codebase + label;
+	NEXT();
+    }
+    OP(OR2ND, 0):  {
+        FIXUP_SCALAR_LOGICAL("'y'", "||");
+        value = R_BCNodeStackTop[-1];
+	/* The first argument is FALSE or NA. If the second argument is
+	   not FALSE then its value is the result. If the second
+	   argument is FALSE, then the first argument's value is the
+	   result. */
+	if (LOGICAL(value)[0] != FALSE)
+	    R_BCNodeStackTop[-2] = value;
+	R_BCNodeStackTop -= 1;
+	NEXT();
+    }
+    OP(GETVAR_MISSOK, 1): DO_GETVAR(FALSE, TRUE);
+    OP(DDVAL_MISSOK, 1): DO_GETVAR(TRUE, TRUE);
     LASTOP;
   }
 

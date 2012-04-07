@@ -32,8 +32,10 @@ ECHO_T =
 MK = $(MAKE) -f Makefile.win
 TAR = tar
 
-test-src-reg-1 = reg-tests-1.R reg-tests-2.R reg-IO.R reg-IO2.R \
-  reg-plot.R reg-S4.R reg-win.R
+## Note: not reg-packages.R
+test-src-reg-1 = reg-tests-1.R  reg-tests-1b.R reg-tests-2.R \
+  reg-examples.R reg-packages.R \
+  reg-IO.R reg-IO2.R reg-plot.R reg-S4.R reg-win.R
 
 all-basic-tests = Examples Specific Reg Internet
 all-devel-tests = Docs IsAs Random Demo Primitive Regexp Segfault \
@@ -63,14 +65,15 @@ test-Standalone:
 
 clean:
 	@rm -f *.Rout *.Rout.fail internet.Rout2 Rplots.ps reg-plot.ps \
-	  reg-plot-latin1.ps reg-tests-?.ps \
+	  reg-plot-latin1.ps reg-tests-*.ps \
 	  $(test-src-auto) R-exts.* R-exts_res.rc R-intro.R Makedeps
 	@rm -rf *.Rcheck myTst* myLib Rprofmem.out
-	@rm -f FALSE* PACKAGES* .R .tex mirrors.html Rplots*.pdf
+	@rm -f FALSE* PACKAGES* .R .tex mirrors.html Rplots*.pdf ./-package.Rd ex.gz
 	@rm -f testit.txt testit.html testit.tex testit-Ex.R
 	@rm -f ver10.txt ver10.html ver10.tex ver10-Ex.R
 	@rm -f ver11.txt ver11.html ver11.tex ver11-Ex.R
 	@rm -rf Packages
+	-@rm -f *.tar.gz
 	@$(MK) -C Embedding clean
 
 distclean: clean
@@ -81,3 +84,4 @@ install-tests:
 	@for f in $(INSTFILES); do \
 	  cp $(srcdir)/$${f} "$(INST_TO)"; \
 	done
+	@$(MAKE) -C Examples -f Makefile.win install-tests INST_TO="$(INST_TO)"

@@ -1,6 +1,6 @@
 % File src/library/utils/man/Rprof.Rd
 % Part of the R package, http://www.R-project.org
-% Copyright 1995-2009 R Core Development Team
+% Copyright 1995-2010 R Core Development Team
 % Distributed under GPL 2 or later
 
 \name{Rprof}
@@ -32,9 +32,9 @@ Rprof(filename = "Rprof.out", append = FALSE, interval = 0.02,
   
   Profiling works by writing out the call stack every \code{interval}
   seconds, to the file specified.  Either the \code{\link{summaryRprof}}
-  function or the Perl script \command{R CMD Rprof} can be used to process
-  the output file to produce a summary of the
-  usage; use \command{R CMD Rprof --help} for usage information.
+  function or the wrappper script \command{R CMD Rprof} can be used to
+  process the output file to produce a summary of the usage; use
+  \command{R CMD Rprof --help} for usage information.
 
 #ifdef windows
   Exactly what the time interval measures is subtle: it is time that the
@@ -44,7 +44,7 @@ Rprof(filename = "Rprof.out", append = FALSE, interval = 0.02,
 
   Note that the timing interval cannot be too small, for the time spent
   in each profiling step is added to the interval.  What is feasible is
-  machine-dependent, but 10ms seems as small as advisable on a 1GHz machine.
+  machine-dependent, but 10ms seemed as small as advisable on a 1GHz machine.
 #endif
 #ifdef unix
   How time is measured varies by platform: on a Unix-alike it is the CPU
@@ -63,19 +63,14 @@ Rprof(filename = "Rprof.out", append = FALSE, interval = 0.02,
   for more details).
 }
 \note{
-#ifdef windows
-  Using \command{R CMD Rprof} needs Windows Perl to be installed: this can
-  be installed from \code{Rtools.exe}.  \code{\link{summaryRprof}} is an
-  alternative that does not use Perl.
-#endif
 #ifdef unix
-  Profiling is not available on all platforms.  By default, it is
-  attempted to compile support for profiling.  Configure \R with
+  Profiling is not available on all platforms.  By default,
+  support for profiling is compiled in if possible -- configure \R with
   \option{--disable-R-profiling} to change this.
 
   As \R profiling uses the same mechanisms as C profiling, the two
   cannot be used together, so do not use \code{Rprof} in an executable
-  built for profiling.
+  built for C-level profiling.
 #endif
 }
 \seealso{

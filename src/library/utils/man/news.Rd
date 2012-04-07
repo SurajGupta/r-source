@@ -23,21 +23,33 @@ news(query, package = "R", lib.loc = NULL, format = NULL,
   An data frame inheriting from class \code{"news_db"}.
 }
 \details{
-  If \code{package} is \code{"R"} (default), \code{\link{readNEWS}} in
-  package \pkg{tools} is used to build a news db from the R \file{NEWS}
-  file.  Otherwise, if the given add-on package can be found in the
-  given libraries and has a \file{NEWS} file, it is attempted to read
-  the package news in structured form.  The \file{NEWS} files in add-on
-  packages use a variety of different formats; the default news reader
-  should be capable to extract individual news entries from a majority
-  of packages from the standard repositories, which use (slight
-  variations of) the following format:
+  If \code{package} is \code{"R"} (default), a news db is built with the
+  news since the 2.10.0 release of R (corresponding to R's top-level
+  \file{NEWS} file).  Otherwise, if the given add-on package can be
+  found in the given libraries, it is attempted to read its news in
+  structured form from files \file{inst/NEWS.Rd}, \file{NEWS} or
+  \file{inst/NEWS} (in that order).
+
+  File \file{inst/NEWS.Rd} should be an Rd file given the entries as Rd
+  \verb{\itemize} lists, grouped according to version using
+  \verb{section} elements with names starting with a suitable prefix
+  (e.g, \dQuote{Changes in version} followed by a space and the version
+  number, and optionally followed by a space and a parenthesized ISO
+  8601 (\%Y-\%m-\%d, see \code{\link{strptime}}) format date, and
+  possibly further grouped according to categories using
+  \verb{\subsection} elements named as the categories.
+
+  The plain text \file{NEWS} files in add-on packages use a variety of
+  different formats; the default news reader should be capable to
+  extract individual news entries from a majority of packages from the
+  standard repositories, which use (slight variations of) the following
+  format:
 
   \itemize{
     \item Entries are grouped according to version, with version header
-    \samp{Changes in version} at the beginning of a line, followed by a
-    version number, optionally followed by an ISO 8601 (\%Y-\%m-\%d, see
-    \code{\link{strptime}}) format date, possibly parenthesized.
+    \dQuote{Changes in version} at the beginning of a line, followed by
+    a version number, optionally followed by an ISO 8601 format date,
+    possibly parenthesized.
     \item Entries may be grouped according to category, with a category
     header (different from a version header) starting at the beginning
     of a line.
@@ -48,6 +60,16 @@ news(query, package = "R", lib.loc = NULL, format = NULL,
   }
 
   Additional formats and readers may be supported in the future.
+
+  Package \pkg{tools} provides an (internal) utility function
+  \code{news2Rd} to convert plain text \file{NEWS} files to Rd.  For
+  \file{NEWS} files in a format which can successfully be handled by the
+  default reader, package maintainers can use \code{tools:::news2Rd(dir,
+    "NEWS.Rd")}, possibly with additional argument \code{codify = TRUE},
+  with \code{dir} a character string specifying the path to a package's
+  root directory.  Upon success, the \file{NEWS.Rd} file can further be
+  improved and then be moved to the \file{inst} subdirectory of the
+  package source directory.
 
   The news db built is a character data frame inheriting from
   \code{"news_db"} with variables \code{Version}, \code{Category},
@@ -70,9 +92,9 @@ news(query, package = "R", lib.loc = NULL, format = NULL,
 \examples{
 ## Build a db of all R news entries.
 db <- news()
-## Bug fixes with PR number in 2.9.0.
-news(Version == "2.9.0" & grepl("^BUG", Category) & grepl("PR#", Text),
+## Bug fixes with PR number in 2.11.0.
+news(Version == "2.11.0" & grepl("^BUG", Category) & grepl("PR#", Text),
      db = db)
-## Entries with version >= 2.8.1 (including "2.8.1 patched"):
-table(news(Version >= "2.8.1", db = db)$Version)
+## Entries with version >= 2.10.1 (including "2.10.1 patched"):
+table(news(Version >= "2.10.1", db = db)$Version)
 }

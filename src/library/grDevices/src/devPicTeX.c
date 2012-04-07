@@ -2,7 +2,7 @@
  *  A PicTeX device, (C) 1996 Valerio Aimale, for
  *  R : A Computer Language for Statistical Data Analysis
  *  Copyright (C) 1995, 1996  Robert Gentleman and Ross Ihaka
- *  Copyright (C) 2001-8  The R Development Core Team
+ *  Copyright (C) 2001-10  The R Development Core Team
  *
  *  This program is free software; you can redistribute it and/or modify
  *  it under the terms of the GNU General Public License as published by
@@ -177,6 +177,11 @@ static void PicTeX_MetricInfo(int c,
 			      double* width, pDevDesc dd);
 static void PicTeX_Mode(int mode, pDevDesc dd);
 static void PicTeX_NewPage(const pGEcontext gc, pDevDesc dd);
+static void PicTeX_Path(double *x, double *y, 
+                        int npoly, int *nper,
+                        Rboolean winding,
+                        const pGEcontext gc,
+                        pDevDesc dd);
 static void PicTeX_Polygon(int n, double *x, double *y, 
 			   const pGEcontext gc,
 			   pDevDesc dd);
@@ -493,8 +498,7 @@ static double PicTeX_StrWidth(const char *str,
 	/* This version at least uses the state of the MBCS */
 	int i, status, ucslen = mbcsToUcs2(str, NULL, 0, CE_NATIVE);
 	if (ucslen != (size_t)-1) {
-	    ucs2_t *ucs;
-	    ucs = (ucs2_t *) alloca(ucslen*sizeof(ucs2_t));
+	    ucs2_t ucs[ucslen];
 	    status = (int) mbcsToUcs2(str, ucs, ucslen, CE_NATIVE);
 	    if (status >= 0) 
 		for (i = 0; i < ucslen; i++)
@@ -524,6 +528,14 @@ static void PicTeX_Rect(double x0, double y0, double x1, double y1,
     x[2] = x1; y[2] = y1;
     x[3] = x1; y[3] = y0;
     PicTeX_Polygon(4, x, y, gc, dd);
+}
+
+static void PicTeX_Path(double *x, double *y, 
+                        int npoly, int *nper,
+                        Rboolean winding,
+                        const pGEcontext gc, pDevDesc dd)
+{
+    warning(_("%s not available for this device"), "Path rendering");
 }
 
 static void PicTeX_Raster(unsigned int *raster, int w, int h,
@@ -697,6 +709,7 @@ Rboolean PicTeXDeviceDriver(pDevDesc dd, const char *filename,
     dd->raster     = PicTeX_Raster;
     dd->cap        = PicTeX_Cap;
     dd->circle = PicTeX_Circle;
+    dd->path = PicTeX_Path;
     dd->polygon = PicTeX_Polygon;
     dd->polyline = PicTeX_Polyline;
     dd->locator = PicTeX_Locator;
@@ -784,7 +797,7 @@ SEXP PicTeX(SEXP args)
 	    return 0;
 	if(!PicTeXDeviceDriver(dev, file, bg, fg, width, height, debug)) {
 	    free(dev);
-	    error(_("unable to start device PicTeX"));
+	    error(_("unable to start %s() device"), "pictex");
 	}
 	dd = GEcreateDevDesc(dev);
 	GEaddDevice2(dd, "pictex");

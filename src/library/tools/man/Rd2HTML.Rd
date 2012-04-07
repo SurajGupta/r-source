@@ -18,14 +18,14 @@
 Rd2HTML(Rd, out = "", package = "", defines = .Platform$OS.type,
         Links = NULL, Links2 = NULL,
         stages = "render", outputEncoding = "UTF-8", 
-        dynamic = FALSE, no_links = FALSE, ...)
+        dynamic = FALSE, no_links = FALSE, fragment = FALSE, ...)
 
 Rd2txt(Rd, out = "", package = "", defines = .Platform$OS.type,
        stages = "render", outputEncoding = "",
-       width = getOption("help_text_width", 80L), ...)
+       fragment = FALSE, options, ...)
 
 Rd2latex(Rd, out = "", defines = .Platform$OS.type,
-         stages = "render", outputEncoding = "ASCII", ...,
+         stages = "render", outputEncoding = "ASCII", fragment = FALSE, ...,
          writeEncoding = TRUE)
 
 Rd2ex(Rd, out = "", defines = .Platform$OS.type,
@@ -44,10 +44,12 @@ Rd2ex(Rd, out = "", defines = .Platform$OS.type,
       dynamic help system.}
   \item{no_links}{logical: suppress hyperlinks to other help topics.
       Used by \command{R CMD \link{Rdconv}}.}
+  \item{fragment}{logical:  should fragments of Rd files be accepted?  See the
+      notes below.}
   \item{Links, Links2}{\code{NULL} or a named (by topics) character vector of
     links, as returned by \code{\link{findHTMLlinks}}.}
-  \item{width}{The intended page width (in characters) for which the
-      text rendering should be designed.}
+  \item{options}{An optional named list of options to pass to
+    \code{\link{Rd2txt_options}}.}
   \item{...}{ additional parameters to pass to \code{\link{parse_Rd}} when
     \code{Rd} is a filename. }
   \item{writeEncoding}{should \verb{\inputencoding} lines be written in
@@ -88,6 +90,18 @@ Rd2ex(Rd, out = "", defines = .Platform$OS.type,
   (Directional quotes are not attempted in CJK locales as they are
   usually double-width, which looks wrong with English text.)
 #endif
+
+  Various aspects of formatting by \code{Rd2txt} are controlled by the
+  \code{options} argument, documented with the \code{\link{Rd2txt_options}}
+  function. Changes made using \code{options} are temporary, those
+  made with \code{\link{Rd2txt_options}} are persistent.
+  
+  When \code{fragment = TRUE}, the \code{Rd} file will be rendered
+  with no processing of \verb{\Sexpr} elements or conditional defines
+  using \verb{#ifdef} or \verb{#ifndef}.  Normally a fragment represents
+  text within a section, but if the first element of the fragment
+  is a section macro, the whole fragment will be rendered as 
+  a series of sections, without the usual sorting.
 }
 \section{Encodings}{
   Rd files are normally intended to be rendered on a wide variety of
@@ -108,13 +122,10 @@ Rd2ex(Rd, out = "", defines = .Platform$OS.type,
 \note{
   The \verb{\Sexpr} macro is a new addition to Rd files.  It includes
   \R code that will be executed at one of three times: \emph{build} time
-  (when a package's source code is built into a tarball, not yet
-  implemented), \emph{install} time (when the package is installed or
+  (when a package's source code is built into a tarball), 
+  \emph{install} time (when the package is installed or
   built into a binary package), and \emph{render} time (when the man
   page is converted to a readable format).
-
-  Currently only text format man pages render when displayed; all other
-  formats render when installed.
 
   For example, this man page was:
   \enumerate{
@@ -125,11 +136,6 @@ Rd2ex(Rd, out = "", defines = .Platform$OS.type,
     \item rendered on
     \Sexpr[stage=render]{format(Sys.time(), "\%Y-\%m-\%d at \%H:\%M:\%S")}.
   }
-  Because build-time execution is not yet supported, the first of these
-  will display as a macro; the other two may or may not, depending on the
-  build of \R.  (Note that escapes, e.g. for \samp{\%}, may not be
-  identical in this display, but the displayed Rd code should parse to the
-  same object.)
 }
 
 \value{
@@ -145,7 +151,7 @@ Rd2ex(Rd, out = "", defines = .Platform$OS.type,
 \references{ \url{http://developer.r-project.org/parseRd.pdf} }
 \seealso{
   \code{\link{parse_Rd}}, \code{\link{checkRd}},
-  \code{\link{findHTMLlinks}}.
+  \code{\link{findHTMLlinks}}, \code{\link{Rd2txt_options}}.
 }
 \examples{\donttest{
 

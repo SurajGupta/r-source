@@ -101,7 +101,15 @@ in part
 	Copyright (C) 1997 R. Gentleman & R. Ihaka
 	Copyright (C) 1997, 1998 M. Maechler
 
-share/texmf/upquote.sty
+share/bibtex/bst/jss.bst
+
+	Copyright 1994-2005 Patrick W Daly
+
+share/texmf/tex/latex/jss.cls
+
+	Copyright: (C) Achim Zeileis
+
+share/texmf/tex/latex/upquote.sty
 
 	Copyright 2000 Michael A. Covington.
 	Copyright 2003 Michael A. Covington, Frank Mittelbach.
@@ -259,7 +267,7 @@ src/extra/xdr/*
 
 src/extra/zlib/README, *.c, *.h
 
-  Taken from zlib-1.2.3 (C) 1995-2005 Jean-loup Gailly and Mark Adler
+  Taken from zlib-1.2.3 (C) 1995-2010 Jean-loup Gailly and Mark Adler
   See src/extra/zlib/README for the licence.
 
 
@@ -330,7 +338,7 @@ src/extra/bzip2/decompress.c
 src/extra/bzip2/huffman.c
 src/extra/bzip2/randtable.c
 
-   copyright (C) 1996-2008 Julian R Seward.
+   copyright (C) 1996-2010 Julian R Seward.
 
 
 src/extra/tre/LICENSE
@@ -401,13 +409,6 @@ src/main/Rstrptime.h
    Copyright (C) 1996, 1997, 1998, 1999, 2000 Free Software Foundation, Inc.
    Distributed under the GNU Library General Public License
    version 2 or later.
-
-share/perl/File/Copy/Recursive.pm
-
-   Copyright 2004 by Daniel Muey
-
-   This library is free software; you can redistribute it and/or modify
-   it under the same terms as Perl itself.
 
 po/*.po
 src/library/*/po/*.po

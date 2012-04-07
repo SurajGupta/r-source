@@ -5,10 +5,10 @@
 #
 msgid ""
 msgstr ""
-"Project-Id-Version: R 2.11.0\n"
+"Project-Id-Version: R 2.12.0\n"
 "Report-Msgid-Bugs-To: bugs@r-project.org\n"
-"POT-Creation-Date: 2010-03-16 09:20\n"
-"PO-Revision-Date: 2010-03-24 12:26+0100\n"
+"POT-Creation-Date: 2010-08-17 16:04\n"
+"PO-Revision-Date: 2010-09-22 15:29+0200\n"
 "Last-Translator: Detlef Steuer <steuer@hsu-hh.de>\n"
 "Language-Team: R Core <r-core@r-project.org>\n"
 "MIME-Version: 1.0\n"
@@ -84,11 +84,17 @@ msgstr "Elemente von 'what' nach dem ersten werden ignoriert"
 msgid "%d occurrences in %s"
 msgstr "%d Vorkommen in %s"
 
+msgid "No suitable spell check program found."
+msgstr "Keine passende Rechtschreibprüfung gefunden."
+
+msgid "Filter '%s' is not available."
+msgstr "Filter '%s' ist nicht verfügbar"
+
 msgid "Invalid 'filter' argument."
 msgstr "unzulässiges 'filter' Argument"
 
-msgid "Could not find aspell or ispell executable."
-msgstr "Konnte weder aspell noch ispell finden"
+msgid "Processing file %s"
+msgstr "Verarbeite Datei %s"
 
 msgid ""
 "Running aspell failed with diagnostics:\n"
@@ -122,8 +128,63 @@ msgstr "'file' muss NULL, eine Zeichenkette oder eine Verbindung sein"
 msgid "bad argument"
 msgstr "unbrauchbares Argument"
 
+msgid ""
+"Not all arguments are of the same length, the following need to be recycled: "
+"%s"
+msgstr ""
+"Nicht alle Argumente haben dieselbe Länge. Die folgenden werden recycled:\n"
+"%s"
+
+msgid ","
+msgstr ","
+
+msgid "Use either 'given' or 'first'/'middle' but not both."
+msgstr "Benutze entweder 'given' oder 'first'/'middle' aber nicht beide."
+
+msgid "It is recommended to use 'given' instead of 'first'."
+msgstr "Es ist empfohlen 'given' anstelle von 'first' zu nutzen."
+
+msgid "It is recommended to use 'given' instead of 'middle'."
+msgstr "Es ist empfohlen 'given' anstelle von 'middle' zu nutzen."
+
+msgid "Use either 'family' or 'last' but not both."
+msgstr "Nutze entweder 'family' oder 'last' aber nicht beide."
+
+msgid "It is recommended to use 'family' instead of 'last'."
+msgstr "Es ist empfohlen 'family' statt 'last' zu nutzen."
+
+msgid "Invalid role specification(s): %s."
+msgstr "unzulässige Spezifikation(en) für role: %s."
+
+msgid "It is recommended to use given/family instead of first/middle/last."
+msgstr "Es ist empfohlen given/family statt first/middle/last zu nutzen."
+
+msgid "method is just applicable to 'person' objects"
+msgstr "Methode kann nur auf Objekte vom Typ 'person' angewendet werden"
+
 msgid "all arguments must be of class \"person\""
 msgstr "Alle Argumente müssen zur Klasse \"person\" gehören"
+
+msgid "at least one field has to be specified"
+msgstr "mindestens ein feld muss angegeben werden"
+
+msgid "all fields have to be named"
+msgstr "alle Felder müssen Namen haben"
+
+msgid "'bibtype' has to be one of"
+msgstr "'bibtype' muss aus Folgenden sein"
+
+msgid "A bibentry of bibtype '"
+msgstr "Ein bibentry mit bibtype '"
+
+msgid "' has to correctly specify the field(s):"
+msgstr "' muss die Felder korrekt spezifizieren:"
+
+msgid "' has to specify the field(s):"
+msgstr "' muss folgende Felder spezifizieren:"
+
+msgid "method is just applicable to 'bibentry' objects"
+msgstr "Methode nur anwendbar auf 'bibentry' Objekte"
 
 msgid "package '%s' not found"
 msgstr "Paket '%s' nicht gefunden"
@@ -137,6 +198,9 @@ msgstr "kein Feld date in der Datei DESCRIPTION des Paketes '%s'"
 msgid "could not determine year for '%s' from package DESCRIPTION file"
 msgstr ""
 "konnte das Jahr für '%s' aus der DESCRIPTION des Paketes nicht bestimmen"
+
+msgid "Enhanced author specification provides no authors."
+msgstr "Verbesserte Autorenspezifikation liefert keiner Autoren"
 
 msgid "m < 0"
 msgstr "m < 0"
@@ -261,6 +325,9 @@ msgstr "kann NULL Zeilennamen nicht editieren"
 msgid "no help found for '%s'"
 msgstr "kein Hilfe für '%s' gefunden"
 
+msgid "'%s' has a help file but no examples"
+msgstr "'%s' hat eine Hilfe, aber keine Beispiele"
+
 msgid "test '%s' is not available"
 msgstr "test '%s' ist nicht verfügbar"
 
@@ -328,7 +395,9 @@ msgstr "unzulässiges '%s' Argument"
 msgid ""
 "package %s exists but was not installed under R >= 2.10.0 so help cannot be "
 "accessed"
-msgstr "Paket %s exisitiert, wurde aber nicht unter R >= 2.10.0 installiert, weshalb die Hilfe nicht genutzt werden kann"
+msgstr ""
+"Paket %s exisitiert, wurde aber nicht unter R >= 2.10.0 installiert, weshalb "
+"die Hilfe nicht genutzt werden kann"
 
 msgid "argument '%s' must be a single character string"
 msgstr "Argument '%s' muss einzelne Zeichkette sein"
@@ -402,6 +471,12 @@ msgstr "'DESCRIPTION' hat Feld 'Encoding' und rekodieren ist nicht möglich"
 
 msgid "DESCRIPTION file of package '%s' is missing or broken"
 msgstr "DESCRIPTIN von Paket '%s' fehlt oder zerstört"
+
+msgid "package"
+msgstr "Paket"
+
+msgid "not found"
+msgstr " nicht gefunden"
 
 msgid "menu() cannot be used non-interactively"
 msgstr "menu() kann nicht nicht-interaktiv genutzt werden"
@@ -491,9 +566,6 @@ msgstr "Ungültige Dateiname(n) für R Kode in"
 msgid ":"
 msgstr ":"
 
-msgid ","
-msgstr ","
-
 msgid "are now renamed to 'z<name>.R'"
 msgstr "sind nun unbenannt nach 'z<name>.R'"
 
@@ -527,8 +599,12 @@ msgstr "Fehler in read.dcf() bei Datei '%s'"
 msgid "'priority' must be character or NULL"
 msgstr "'priority' muss ein Zeichen oder NULL sein"
 
-msgid "argument 'lib' is missing: using %s"
-msgstr "Argument 'lib' fehlt: nutze %s"
+msgid ""
+"Removing package(s) from %s\n"
+"(as %s is unspecified)"
+msgstr ""
+"Entferne Paket(e) von %s\n"
+"(da %s nicht spezifiziert)"
 
 msgid "'destdir' is not a directory"
 msgstr "'destdir' ist kein Verzeichnis"
@@ -579,8 +655,12 @@ msgstr ""
 msgid "no packages were specified"
 msgstr "keine Pakete angegeben"
 
-msgid "argument 'lib' is missing: using '%s'"
-msgstr "Argument 'lib' fehlt: nutze '%s'"
+msgid ""
+"Installing package(s) into %s\n"
+"(as %s is unspecified)"
+msgstr ""
+"Installiere Paket(e) nach %s\n"
+"(da %s nicht spezifiziert)"
 
 msgid "'lib = \"%s\"' is not writable"
 msgstr "'lib = \"%s\" ist nicht schreibbar"
@@ -914,7 +994,7 @@ msgid "appending column names to file"
 msgstr "hänge Spaltennamen an Datei an"
 
 msgid "attempt to set '%s' ignored"
-msgstr "Versuch '%s' auf ignoriert zu setzen"
+msgstr "Versuch ignoriert '%s' zu setzen"
 
 msgid "'unzip' must be a single character string"
 msgstr "'unzip' muss ein einzelne Zeichenkette sein"
@@ -949,7 +1029,9 @@ msgstr "help.start() benötigt den laufenden HTTP Server"
 msgid ""
 "If the browser launched by '%s' is already running, it is *not* restarted, "
 "and you must switch to its window."
-msgstr "Wenn der Browser '%s' bereits ausgeführt wird, wird er nicht neu gestartet, sondern Sie müssen in sein Fenster wechseln"
+msgstr ""
+"Wenn der Browser '%s' bereits ausgeführt wird, wird er nicht neu gestartet, "
+"sondern Sie müssen in sein Fenster wechseln"
 
 msgid "Otherwise, be patient ..."
 msgstr "Ansonsten: Geduld ..."
@@ -991,6 +1073,9 @@ msgstr "Wenn nichts passiert, sollten Sie '%s' selbst öffnen"
 
 msgid "failed to create '%s'"
 msgstr "Erzeugen von '%s' fehlgeschlagen"
+
+msgid "there is no 'libs' directory in package '%s'"
+msgstr "kein 'libs' Verzeichnis in paket '%s'"
 
 msgid "cannot remove prior installation of package '%s'"
 msgstr "kann alte Installation von Paket '%s' nicht entfernen"
@@ -1038,7 +1123,7 @@ msgid_plural "also installing the dependencies %s"
 msgstr[0] "installiere auch Abhängigkeit %s"
 msgstr[1] "installiere auch Abhängigkeiten %s"
 
-msgid "'lib' element '%s'  is not a writable directory"
+msgid "'lib' element '%s' is not a writable directory"
 msgid_plural "'lib' elements '%s' are not writable directories"
 msgstr[0] "'lib' Element '%s' ist keine schreibbares Verzeichnis"
 msgstr[1] "'lib' Elemente '%s' sind keine schreibbaren Verzeichnisse"
@@ -1047,6 +1132,15 @@ msgid "package '%s' is in use and will not be installed"
 msgid_plural "packages '%s' are in use and will not be installed"
 msgstr[0] "Paket '%s' wird gerade benutzt und deshab nicht installiert"
 msgstr[1] "Pakete '%s' werden gerade bennutzt und deshalb nicht installiert"
+
+#~ msgid "Could not find aspell or ispell executable."
+#~ msgstr "Konnte weder aspell noch ispell finden"
+
+#~ msgid "argument 'lib' is missing: using %s"
+#~ msgstr "Argument 'lib' fehlt: nutze %s"
+
+#~ msgid "argument 'lib' is missing: using '%s'"
+#~ msgstr "Argument 'lib' fehlt: nutze '%s'"
 
 #~ msgid "untar: using cmd ="
 #~ msgstr "untar: benutze cmd ="
@@ -1072,9 +1166,6 @@ msgstr[1] "Pakete '%s' werden gerade bennutzt und deshalb nicht installiert"
 
 #~ msgid "options(\"browser\") not set"
 #~ msgstr "options(\"browser\") nicht gesetzt"
-
-#~ msgid "'%s' has a help file but no examples"
-#~ msgstr "'%s' hat eine Hilfe, aber keine Beispiele"
 
 #~ msgid ""
 #~ "No text help for '%s' is available:\n"

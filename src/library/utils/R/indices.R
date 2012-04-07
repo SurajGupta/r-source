@@ -122,11 +122,19 @@ print.packageDescription <- function(x, ...)
     invisible(x)
 }
 
-# Simple convenience function 
+# Simple convenience functions
 
 maintainer <- function(pkg){
   pkg # force evaluation
   return(packageDescription(pkg)$Maintainer)
+}
+
+packageVersion <- function(pkg, lib.loc=NULL)
+{
+    res <- suppressWarnings(packageDescription(pkg, lib.loc=lib.loc,
+                                               fields = "Version"))
+    if (!is.na(res)) package_version(res) else
+    stop("package ", sQuote(pkg), " not found")
 }
 
 ## used with firstOnly = TRUE for example()

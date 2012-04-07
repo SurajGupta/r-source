@@ -5,10 +5,10 @@
 # Detlef Steuer <steuer@hsu-hh.de>, 2007-2010.
 msgid ""
 msgstr ""
-"Project-Id-Version: R 2.11.0\n"
+"Project-Id-Version: R 2.12.0\n"
 "Report-Msgid-Bugs-To: bugs@r-project.org\n"
-"POT-Creation-Date: 2009-10-05 14:08\n"
-"PO-Revision-Date: 2010-03-24 10:52+0100\n"
+"POT-Creation-Date: 2010-10-01 21:26\n"
+"PO-Revision-Date: 2010-09-21 14:29+0200\n"
 "Last-Translator: Detlef Steuer <steuer@hsu-hh.de>\n"
 "Language-Team: R-Core <R-core@r-project.org>\n"
 "MIME-Version: 1.0\n"
@@ -19,11 +19,8 @@ msgstr ""
 msgid "'a' is overridden by 'reg'"
 msgstr "'a' wird überschrieben durch 'reg'"
 
-msgid "only using the first two of"
-msgstr "nutze nur die ersten beiden aus"
-
-msgid "regression coefficients"
-msgstr "Regressionskoeffizienten"
+msgid "only using the first two of %d regression coefficients"
+msgstr "nutze nur die ersten beiden von %d Regressionskoeffizienten"
 
 msgid "'a' and 'b' are overridden by 'coef'"
 msgstr "'a' und 'b' werden überschrieben durch 'coef'"
@@ -42,6 +39,9 @@ msgstr "midestens ein Eintrag in 'x' muss positiv sein"
 
 msgid "incorrect 'col': must be length 2"
 msgstr "ungültiger Wert für 'col': muss Länge 2 haben"
+
+msgid "only for 1-D table"
+msgstr "nur für 1-D Tabelle"
 
 msgid "'side' must be in {1:4}"
 msgstr "'side' muss in {1:4} liegen"
@@ -99,9 +99,6 @@ msgstr "'formula' sollte genau zwei Variablen spezifizieren"
 msgid "dependent variable should be a factor"
 msgstr "abhängige Variable sollte ein Faktor sein"
 
-msgid "explanatory variable should be numeric"
-msgstr "erklärende Variable sollte nummerisch sein"
-
 msgid "y axis is on a cumulative probability scale, 'ylim' must be in [0,1]"
 msgstr ""
 "Y-Achse ist eine kumulative Wahscheinlichkeitsskala, 'ylim' muss in [0,1] "
@@ -137,8 +134,9 @@ msgstr " Zeilen * Spalten zu klein"
 msgid "Missing rows"
 msgstr "fehlende Zeilen"
 
-msgid "'expr' must be a function or an expression containing 'x'"
-msgstr "'expr' muss eine Funktion sein oder ein Ausdruck, der 'x' enthält"
+msgid "'expr' must be a function, call or an expression containing 'x'"
+msgstr ""
+"'expr' muss eine Funktion, ein Call oder ein Ausdruck sein, der 'x' enthält"
 
 msgid "'from' and 'to' must be > 0 with log=\"x\""
 msgstr "'from' und 'to' müssen > 0 sein mit log=\"x\""
@@ -338,6 +336,9 @@ msgstr "es muss zumindest eine nummerische Varable vorhanden sein!"
 msgid "cannot hatch with logarithmic scale active"
 msgstr "bei logarithmischer Skala hatch nicht möglich"
 
+msgid "Invalid fill rule for graphics path"
+msgstr "unzulässige Füllregel für den Grafikpfad"
+
 msgid "invalid rectangle specification"
 msgstr "unzulässige Spezifikation des Rechecks"
 
@@ -424,3 +425,9 @@ msgid "argument %s is not made use of"
 msgid_plural "arguments %s are not made use of"
 msgstr[0] "Argument (%s) wird nicht benutzt"
 msgstr[1] "Argumente (%s) werden nicht benutzt"
+
+#~ msgid "explanatory variable should be numeric"
+#~ msgstr "erklärende Variable sollte nummerisch sein"
+
+#~ msgid "regression coefficients"
+#~ msgstr "Regressionskoeffizienten"

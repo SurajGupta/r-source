@@ -42,6 +42,7 @@
     .setBaseClass("expression", prototype = expression(), where = envir)
     clList <- c(clList, vClasses)
     nullF <- function()NULL; environment(nullF) <- .GlobalEnv
+    attr(nullF, "source") <- NULL
     .setBaseClass("function", prototype = nullF, where = envir); clList <- c(clList, "function")
 
     setClass("language", where = envir); clList <- c(clList, "language")
@@ -165,12 +166,10 @@
             nzchar(argnames) & is.na(match(argnames, .tsArgNames)) }
 	if(any(slotnames)) {
 	    value <- do.call(stats::ts, args[!slotnames])
-	    .Object <- .mergeAttrs(value, .Object, args[slotnames])
+	    .mergeAttrs(value, .Object, args[slotnames])
 	}
 	else
-	    .Object <- .mergeAttrs(stats::ts(...), .Object)
-        validObject(.Object)
-        .Object
+	    .mergeAttrs(stats::ts(...), .Object)
     }
     setMethod("initialize", "ts", .init_ts, where = envir)
     setMethod("initialize", "mts", .init_ts, where = envir) #else, it's ambiguous
@@ -200,6 +199,8 @@
 	     },
 	     where = envir)
     setOldClass("factor", S4Class = "factor", where = envir)
+    if(!isGeneric("show", envir))
+        setGeneric("show", where = envir, simpleInheritanceOnly = TRUE)
     setMethod("show", "oldClass", function(object) {
         if(!isS4(object))  {
             print(object)
@@ -276,10 +277,8 @@
     ## Next, miscellaneous S3 classes.
     for(cl in .OldClassesList)
         setOldClass(cl, where = envir)
-    ## some S3 classes have inheritance on an instance basis, that breaks the S4 contains
-    ## model.  To emulate their (unfortunate) behavior requires a setIs with a test.
-    for(cl in .OldIsList)
-        .setOldIs(cl, envir)
+    ## special mess for "maov"; see comment in .OldClassesList
+    setIs("maov", "aov")
     setClassUnion("data.frameRowLabels", c("character", "integer"), where = envir)
     setClass("data.frame",
              representation(names = "character", row.names = "data.frameRowLabels"),
@@ -372,65 +371,86 @@
     ## functions of the same name.
 
     ## These methods are designed to be inherited or extended
+    initMatrix <- function(.Object, data = NA, nrow = 1, ncol = 1,
+                           byrow = FALSE, dimnames = NULL, ...) {
+        na <- nargs()
+        if(length(dots <- list(...)) && ".Data" %in% names(dots)) {
+            if(na == 2)
+              .Object <- .mergeAttrs(dots$.Data, .Object)
+            else {
+                dat <- dots$.Data
+                dots <- dots[names(dots) != ".Data"]
+                if(na == 2 + length(dots)) {
+                    .Object <- .mergeAttrs(as.matrix(dat), .Object, dots)
+                }
+                else
+                  stop("Cannot specify matrix() arguments when specifying .Data")
+            }
+        }
+        else if(is.matrix(data) && na == 2 + length(dots))
+          .Object <- .mergeAttrs(data, .Object, dots)
+        else {
+            if (missing(nrow))
+              nrow <- ceiling(length(data)/ncol)
+            else if (missing(ncol))
+              ncol <- ceiling(length(data)/nrow)
+            value <- matrix(data, nrow, ncol, byrow, dimnames)
+            .Object <- .mergeAttrs(value, .Object, dots)
+        }
+        validObject(.Object)
+        .Object
+    }
+    .matrixExtends <- unique(c("matrix", names(getClass("matrix")@contains)))
     setMethod("initialize", "matrix", where = where,
-	      function(.Object, data = NA, nrow = 1, ncol = 1,
-		       byrow = FALSE, dimnames = NULL, ...) {
-		  if((na <- nargs()) < 2) # guaranteed to be called with .Object from new
-		      return(.Object)
-		  if(length(dots <- list(...)) && ".Data" %in% names(dots)) {
-		      if(na == 2)
-			  .Object <-  .mergeAttrs(dots$.Data, .Object)
-		      else {
-			  dat <- dots$.Data
-			  dots <- dots[names(dots) != ".Data"]
-			  if(na == 2 + length(dots)) {
-			      .Object <-  .mergeAttrs(as.matrix(dat), .Object, dots)
-			  }
-			  else
-			      stop("Cannot specify matrix() arguments when specifying .Data")
-		      }
-		  }
-		  else if(is.matrix(data) && na == 2 + length(dots))
-		      .Object <-  .mergeAttrs(data, .Object, dots)
+              function(.Object, ...) {
+		  if(nargs() < 2) # guaranteed to be called with .Object from new
+                    return(.Object)
 		  else {
-		      if (missing(nrow))
-			  nrow <- ceiling(length(data)/ncol)
-		      else if (missing(ncol))
-			  ncol <- ceiling(length(data)/nrow)
-		      value <- matrix(data, nrow, ncol, byrow, dimnames)
-		      .Object <-  .mergeAttrs(value, .Object, dots)
-		  }
-                  validObject(.Object)
-                  .Object
-	      })
-
+                      if(isMixin(getClass(class(.Object)))) # other superclasses
+                          callNextMethod()
+                      else
+                          initMatrix(.Object, ...)
+                  }
+              }
+	      )
+    initArray <- function(.Object, data = NA, dim = length(data),
+                          dimnames = NULL, ...) {
+        na <- nargs()
+        if(length(dots <- list(...)) && ".Data" %in% names(dots)) {
+            if(na == 2)
+              .Object <- .mergeAttrs(dots$.Data, .Object)
+            else {
+                dat <- dots$.Data
+                dots <- dots[names(dots) != ".Data"]
+                if(na == 2 + length(dots)) {
+                    .Object <- .mergeAttrs(as.array(dat), .Object, dots)
+                }
+                else
+                  stop("Cannot specify array() arguments when specifying .Data")
+            }
+        }
+        else if(is.array(data) && na == 2 + length(dots))
+          .Object <- .mergeAttrs(data, .Object, dots)
+        else {
+            value <- array(data, dim, dimnames)
+            .Object <- .mergeAttrs(value, .Object, dots)
+        }
+        validObject(.Object)
+        .Object
+    }
+    .arrayExtends <- unique(c("array", names(getClass("array")@contains)))
     setMethod("initialize", "array", where = where,
-	      function(.Object, data = NA, dim = length(data),
-		       dimnames = NULL, ...) {
-		  if((na <- nargs()) < 2) # guaranteed to be called with .Object from new
-		      return(.Object)
-		  if(length(dots <- list(...)) && ".Data" %in% names(dots)) {
-		      if(na == 2)
-			  .Object <- .mergeAttrs(dots$.Data, .Object)
-		      else {
-			  dat <- dots$.Data
-			  dots <- dots[names(dots) != ".Data"]
-			  if(na == 2 + length(dots)) {
-			      .Object <- .mergeAttrs(as.array(dat), .Object, dots)
-			  }
-			  else
-			      stop("Cannot specify array() arguments when specifying .Data")
-		      }
-		  }
-		  else if(is.array(data) && na == 2 + length(dots))
-		      .Object <- .mergeAttrs(data, .Object, dots)
+              function(.Object, ...) {
+		  if(nargs() < 2) # guaranteed to be called with .Object from new
+                    .Object
 		  else {
-		      value <- array(data, dim, dimnames)
-		      .Object <- .mergeAttrs(value, .Object, dots)
-		  }
-                  validObject(.Object)
-                  .Object
-	      })
+                      if(isMixin(getClass(class(.Object)))) # other superclasses
+                          callNextMethod()
+                      else
+                          initArray(.Object, ...)
+                  }
+              }
+	      )
     ## following should not be needed if data_class2 returns "array",...
 ##     setMethod("[", # a method to avoid invalid objects from an S4 class
 ##               signature(x = "array"), where = where,
@@ -469,9 +489,13 @@
     list(
          c("anova", "data.frame"),
          c("mlm", "lm"),
-         c("aov", "lm"), # see also .OldIsList
+         c("aov", "lm"),
+         ## note:  definition of "maov" below differs from the
+         ## current S3 attribute, which has an inconsistent combination
+         ## of "aov" and "mlm" (version 2.12 devel, rev. 51984)
          c("maov", "mlm", "lm"),
-         "POSIXt", "POSIXct", "POSIXlt", # see .OldIsList
+         c("POSIXct", "POSIXt"),
+         c("POSIXlt", "POSIXt"),
          "Date",
          "dump.frames",
          c("ordered", "factor"),
@@ -484,6 +508,7 @@
          "packageIQR",
          "mtable",
          "table",
+         c("summaryDefault","table"),
          "summary.table",
          "recordedplot",
          "socket",
@@ -493,14 +518,6 @@
          "logLik",
          "rle"
 )
-
-# These relations sometimes hold, sometimes not:  have to look in the S3
-# class attribute to test.
-.OldIsList <- list(
-                   c("POSIXt", "POSIXct"),
-                   c("POSIXt", "POSIXlt"),
-                   c("aov","mlm")
-                   )
 
 .InitSpecialTypesAndClasses <- function(where) {
     if(!exists(".S3MethodsClasses", envir = where, inherits = FALSE)) {
@@ -535,6 +552,8 @@
     ## a few other special classes
     setClass("namedList", representation(names = "character"),
              contains = "list", where = where)
+    if(!isGeneric("show", where))
+        setGeneric("show", where = where, simpleInheritanceOnly = TRUE)
     setMethod("show", "namedList", function(object) {
         cat("An object of class ", dQuote(class(object)), "\n")
         print(structure(object@.Data, names=object@names))

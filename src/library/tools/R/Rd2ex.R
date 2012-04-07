@@ -38,7 +38,7 @@ Rd2ex <-
         of1(paste(..., sep=""))
     of1 <- function(text) {
         if (dropNewline && length(text)) {
-            text[1] <- psub("^\n", "", text[1L])
+            text[1L] <- psub("^\n", "", text[1L])
             dropNewline <<- FALSE
         }
         WriteLines(text, con, outputEncoding, sep = "")
@@ -112,6 +112,8 @@ Rd2ex <-
         } else if (tag == "\\out") {
             for (i in seq_along(x))
             	of1(x[[i]])
+        } else if (tag %in% c("USERMACRO", "\\newcommand", "\\renewcommand")) {
+            # do nothing
         } else {
             txt <- unlist(x)
             of0(prefix, remap(txt))
@@ -159,15 +161,9 @@ Rd2ex <-
             name <- as.character(Rd[[ which(nameblk)[1L] ]])
             of0("### Name: ", name, "\n")
         }
-        titleblk <- sections == "\\title"
-        if (any(titleblk)) {
-            title <- as.character(Rd[[ which(titleblk)[1L] ]])
-            ## remove empty lines, leading whitespace
-            title <- paste(psub1("^\\s+", "", title[nzchar(title)]),
-                           collapse=" ")
-            ## FIXME: more?
-            title <- psub("(---|--)", "-", title)
-        } else title <- "No title found"
+        title <- .Rd_format_title(.Rd_get_title(Rd))
+        if (!length(title))
+            title <- "No title found"
         of0(wr(paste("Title: ", title, sep='')), "\n")
         aliasblks <- sections == "\\alias"
         if (any(aliasblks)) {

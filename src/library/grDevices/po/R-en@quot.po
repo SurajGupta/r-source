@@ -22,10 +22,10 @@
 #
 msgid ""
 msgstr ""
-"Project-Id-Version: R 2.11.0\n"
+"Project-Id-Version: R 2.12.0\n"
 "Report-Msgid-Bugs-To: bugs@r-project.org\n"
-"POT-Creation-Date: 2009-12-17 11:57\n"
-"PO-Revision-Date: 2009-12-17 11:57\n"
+"POT-Creation-Date: 2010-08-11 09:24\n"
+"PO-Revision-Date: 2010-08-11 09:24\n"
 "Last-Translator: Automatically generated\n"
 "Language-Team: none\n"
 "MIME-Version: 1.0\n"
@@ -228,6 +228,9 @@ msgstr "Invalid output format"
 msgid "status %d in running command '%s'"
 msgstr "status %d in running command ‘%s’"
 
+msgid "range too small for min.n"
+msgstr "range too small for min.n"
+
 msgid "A raster matrix must be character, or numeric, or logical"
 msgstr "A raster matrix must be character, or numeric, or logical"
 
@@ -239,6 +242,9 @@ msgstr "A raster array must have exactly 3 dimensions"
 
 msgid "A raster array must have exactly 3 or 4 planes"
 msgstr "A raster array must have exactly 3 or 4 planes"
+
+msgid "Operator not meaningful for raster objects"
+msgstr "Operator not meaningful for raster objects"
 
 msgid "no current device to record from"
 msgstr "no current device to record from"
@@ -267,6 +273,9 @@ msgstr "‘r’ must be a “range”, hence of length 2"
 msgid "invalid first argument"
 msgstr "invalid first argument"
 
+msgid "'x' is a list, but does not have components 'x' and 'y'"
+msgstr "‘x’ is a list, but does not have components ‘x’ and ‘y’"
+
 msgid "'x' and 'y' lengths differ"
 msgstr "‘x’ and ‘y’ lengths differ"
 
@@ -276,6 +285,9 @@ msgstr "invalid first argument [bad language object]"
 msgid "at least 2 columns needed"
 msgstr "at least 2 columns needed"
 
+msgid "'x' is a list, but does not have components 'x', 'y'  and 'z'"
+msgstr "‘x’ is a list, but does not have components 'x', ‘y’  and ‘z’"
+
 msgid "'x', 'y' and 'z' lengths differ"
 msgstr "'x', ‘y’ and ‘z’ lengths differ"
 
@@ -284,6 +296,9 @@ msgstr "‘file’ is missing with no default"
 
 msgid "sorry, 'gs' cannot be found"
 msgstr "sorry, ‘gs’ cannot be found"
+
+msgid "unrecognized format of gs -help"
+msgstr "unrecognized format of gs -help"
 
 msgid "device '%s' is not available"
 msgstr "device ‘%s’ is not available"

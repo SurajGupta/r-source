@@ -22,10 +22,10 @@
 #
 msgid ""
 msgstr ""
-"Project-Id-Version: R 2.11.0\n"
+"Project-Id-Version: R 2.12.0\n"
 "Report-Msgid-Bugs-To: bugs@r-project.org\n"
-"POT-Creation-Date: 2010-03-19 11:18\n"
-"PO-Revision-Date: 2010-03-19 11:18\n"
+"POT-Creation-Date: 2010-09-17 09:19\n"
+"PO-Revision-Date: 2010-09-17 09:19\n"
 "Last-Translator: Automatically generated\n"
 "Language-Team: none\n"
 "MIME-Version: 1.0\n"
@@ -260,11 +260,11 @@ msgstr "Refitting model to allow projection"
 msgid "columns of 'contrast.obj' must define a contrast(sum to zero)"
 msgstr "columns of ‘contrast.obj’ must define a contrast(sum to zero)"
 
-msgid "invalid interpolation method"
-msgstr "invalid interpolation method"
-
 msgid "collapsing to unique 'x' values"
 msgstr "collapsing to unique ‘x’ values"
+
+msgid "invalid interpolation method"
+msgstr "invalid interpolation method"
 
 msgid "need at least two non-NA values to interpolate"
 msgstr "need at least two non-NA values to interpolate"
@@ -476,8 +476,17 @@ msgstr "‘k’ must be in {1, 2, ..  n - 1}"
 msgid "some of the first %d eigenvalues are < 0"
 msgstr "some of the first %d eigenvalues are < 0"
 
-msgid "initial value not feasible"
-msgstr "initial value not feasible"
+msgid "initial value is not in the interior of the feasible region"
+msgstr "initial value is not in the interior of the feasible region"
+
+msgid "Barrier algorithm ran out of iterations and did not converge"
+msgstr "Barrier algorithm ran out of iterations and did not converge"
+
+msgid "Objective function increased at outer iteration %d"
+msgstr "Objective function increased at outer iteration %d"
+
+msgid "Objective function decreased at outer iteration %d"
+msgstr "Objective function decreased at outer iteration %d"
 
 msgid "contrasts not defined for %d degrees of freedom"
 msgstr "contrasts not defined for %d degrees of freedom"
@@ -1224,10 +1233,10 @@ msgid "'y' must be numeric or a string naming a valid function"
 msgstr "‘y’ must be numeric or a string naming a valid function"
 
 msgid ""
-"y must be supplied.\n"
+"numeric y must be supplied.\n"
 "For density estimation use density()"
 msgstr ""
-"y must be supplied.\n"
+"numeric y must be supplied.\n"
 "For density estimation use density()"
 
 msgid "'k' is not an integer"
@@ -1260,17 +1269,30 @@ msgstr "singular fit encountered"
 msgid "missing or negative weights not allowed"
 msgstr "missing or negative weights not allowed"
 
-msgid "invalid 'lm' object:  no 'terms' nor 'qr' component"
-msgstr "invalid ‘lm’ object:  no ‘terms’ nor ‘qr’ component"
+msgid "invalid 'lm' object:  no 'terms' component"
+msgstr "invalid ‘lm’ object:  no ‘terms’ component"
+
+msgid "calling summary.lm(<fake-lm-object>) ..."
+msgstr "calling summary.lm(<fake-lm-object>) ..."
 
 msgid "residual degrees of freedom in object suggest this is not an \"lm\" fit"
 msgstr "residual degrees of freedom in object suggest this is not an “lm” fit"
+
+msgid ""
+"lm object does not have a proper 'qr' component.\n"
+" Rank zero or should not have used lm(.., qr=FALSE)."
+msgstr ""
+"lm object does not have a proper ‘qr’ component.\n"
+" Rank zero or should not have used lm(.., qr=FALSE)."
 
 msgid "family '"
 msgstr "family '"
 
 msgid "' not implemented"
 msgstr "' not implemented"
+
+msgid "calling anova.lm(<fake-lm-object>) ..."
+msgstr "calling anova.lm(<fake-lm-object>) ..."
 
 msgid "ANOVA F-tests on an essentially perfect fit are unreliable"
 msgstr "ANOVA F-tests on an essentially perfect fit are unreliable"
@@ -1280,6 +1302,9 @@ msgstr "removed because response differs from"
 
 msgid "model 1"
 msgstr "model 1"
+
+msgid "calling predict.lm(<fake-lm-object>) ..."
+msgstr "calling predict.lm(<fake-lm-object>) ..."
 
 msgid "prediction from a rank-deficient fit may be misleading"
 msgstr "prediction from a rank-deficient fit may be misleading"
@@ -1884,6 +1909,9 @@ msgstr "arguments ‘r’ and ‘c’ must have the same sums"
 msgid "'relevel' only for factors"
 msgstr "‘relevel’ only for factors"
 
+msgid "'ref' must be of length one"
+msgstr "‘ref’ must be of length one"
+
 msgid "'ref' must be an existing level"
 msgstr "‘ref’ must be an existing level"
 
@@ -2245,6 +2273,9 @@ msgstr "not enough (finite) ‘x’ observations"
 
 msgid "Requested conf.level not achievable"
 msgstr "Requested conf.level not achievable"
+
+msgid "cannot compute confidence interval when all observations are tied"
+msgstr "cannot compute confidence interval when all observations are tied"
 
 msgid "cannot compute exact confidence interval with ties"
 msgstr "cannot compute exact confidence interval with ties"

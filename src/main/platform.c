@@ -26,12 +26,10 @@
 #include <Rinterface.h>
 #include <Fileio.h>
 #include <R_ext/Applic.h>		/* machar */
-
+#include <ctype.h>			/* toupper */
 #include <time.h>
 
-#ifdef HAVE_ERRNO_H
 # include <errno.h>
-#endif
 
 /* Machine Constants */
 
@@ -147,11 +145,6 @@ static void Init_R_Platform(SEXP rho)
 #else
     SET_VECTOR_ELT(value, 4, mkString("little"));
 #endif
-#if defined(WIN64)
-    SET_VECTOR_ELT(value, 5, mkString("win64.binary"));
-#elif defined(Win32)
-    SET_VECTOR_ELT(value, 5, mkString("win.binary"));
-#else /* not Windows */
 /* pkgType should be "mac.binary" for CRAN build *only*, not for all
    AQUA builds. Also we want to be able to use "mac.binary.leopard"
    and similar for special builds. */
@@ -159,7 +152,6 @@ static void Init_R_Platform(SEXP rho)
     SET_VECTOR_ELT(value, 5, mkString(PLATFORM_PKGTYPE));
 #else /* unix default */
     SET_VECTOR_ELT(value, 5, mkString("source"));
-#endif
 #endif
 #ifdef Win32
     SET_VECTOR_ELT(value, 6, mkString(";"));
@@ -1056,7 +1048,7 @@ SEXP attribute_hidden do_filechoose(SEXP call, SEXP op, SEXP args, SEXP rho)
 extern int winAccessW(const wchar_t *path, int mode);
 #endif
 
-#ifdef HAVE_ACCESS
+/* require 'access' as from 2.12.0 */
 SEXP attribute_hidden do_fileaccess(SEXP call, SEXP op, SEXP args, SEXP rho)
 {
     SEXP fn, ans;
@@ -1087,13 +1079,6 @@ SEXP attribute_hidden do_fileaccess(SEXP call, SEXP op, SEXP args, SEXP rho)
     UNPROTECT(1);
     return ans;
 }
-#else
-SEXP attribute_hidden do_fileaccess(SEXP call, SEXP op, SEXP args, SEXP rho)
-{
-    error(_("file.access() is not implemented on this system"));
-    return R_NilValue;		/* -Wall */
-}
-#endif
 
 #ifdef Win32
 #include <windows.h>
@@ -1154,11 +1139,10 @@ static int R_unlink(wchar_t *name, int recursive)
 void R_CleanTempDir(void)
 {
     if (Sys_TempDir) {
-	wchar_t *w;
 	int n = strlen(Sys_TempDir);
 	/* Windows cannot delete the current working directory */
 	SetCurrentDirectory(R_HomeDir());
-	w = (wchar_t *) alloca(2*(n+1));
+	wchar_t w[2*(n+1)];
 	mbstowcs(w, Sys_TempDir, n+1);
 	R_unlink(w, 1);
     }
@@ -1833,8 +1817,10 @@ SEXP attribute_hidden do_dircreate(SEXP call, SEXP op, SEXP args, SEXP env)
 	while ((p = Rf_strchr(p+1, '/'))) {
 	    *p = '\0';
 	    res = mkdir(dir, mode);
-	    /* Solaris 10 returns ENOSYS on automount, PR#13834 */
-	    if (res && errno != EEXIST && errno != ENOSYS) goto end;
+	    /* Solaris 10 returns ENOSYS on automount, PR#13834
+	       EROFS is allowed by POSIX, so we skip that too */
+	    if (res && errno != EEXIST && errno != ENOSYS && errno != EROFS) 
+		goto end;
 	    *p = '/';
 	}
     }
@@ -2098,33 +2084,39 @@ SEXP attribute_hidden do_normalizepath(SEXP call, SEXP op, SEXP args, SEXP rho)
 SEXP attribute_hidden do_syschmod(SEXP call, SEXP op, SEXP args, SEXP env)
 {
 #ifdef HAVE_CHMOD
-    SEXP paths, ans;
-    int i, n, mode, res;
+    SEXP paths, smode, ans;
+    int i, m, n, *modes, mode, res;
 
     checkArity(op, args);
     paths = CAR(args);
     if (!isString(paths))
 	error(_("invalid '%s' argument"), "paths");
     n = LENGTH(paths);
-    mode = asInteger(CADR(args));
-    if (mode == NA_LOGICAL) mode = 0777;
-#ifdef Win32
-    /* Windows' _chmod seems only to support read access or read-write access
-     */
-    mode = (mode & 0200) ? (_S_IWRITE | _S_IREAD): _S_IREAD;
-#endif
+    PROTECT(smode = coerceVector(CADR(args), INTSXP));
+    modes = INTEGER(smode);
+    m = LENGTH(smode);
+    if(!m) error(_("'mode' must be of length at least one"));
     PROTECT(ans = allocVector(LGLSXP, n));
     for (i = 0; i < n; i++) {
+	mode = modes[i % m];
+	if (mode == NA_INTEGER) mode = 0777;
+#ifdef Win32
+	/* Windows' _chmod seems only to support read access
+	   or read-write access */
+	mode = (mode & 0200) ? (_S_IWRITE | _S_IREAD): _S_IREAD;
+#endif
 	if (STRING_ELT(paths, i) != NA_STRING) {
 #ifdef Win32
-	res = _wchmod(filenameToWchar(STRING_ELT(paths, i), TRUE), mode);
+	    res = _wchmod(filenameToWchar(STRING_ELT(paths, i), TRUE), mode);
 #else
-	res = chmod(R_ExpandFileName(translateChar(STRING_ELT(paths, i))),
-		    mode);
+	    res = chmod(R_ExpandFileName(translateChar(STRING_ELT(paths, i))),
+			mode);
 #endif
 	} else res = 1;
-	LOGICAL(ans)[i] = res == 0;
-   }
+	LOGICAL(ans)[i] = (res == 0);
+    }
+    UNPROTECT(2);
+    return ans;
 #else
     SEXP paths, ans;
     int i, n;
@@ -2137,9 +2129,9 @@ SEXP attribute_hidden do_syschmod(SEXP call, SEXP op, SEXP args, SEXP env)
     warning("insufficient OS support on this platform");
     PROTECT(ans = allocVector(LGLSXP, n));
     for (i = 0; i < n; i++) LOGICAL(ans)[i] = 0;
-#endif
     UNPROTECT(1);
     return ans;
+#endif
 }
 
 SEXP attribute_hidden do_sysumask(SEXP call, SEXP op, SEXP args, SEXP env)

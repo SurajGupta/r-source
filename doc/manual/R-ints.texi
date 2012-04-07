@@ -74,6 +74,8 @@ The current version of this document is @value{VERSION}.
 * Tools::                       
 * R coding standards::          
 * Testing R code::              
+* Use of TeX dialects::         
+* Future directions::           
 * Function and variable index::  
 * Concept index::               
 @end menu
@@ -2704,6 +2706,7 @@ of a would-be writer of a graphics device.
 * Handling text::               
 * Conventions::                 
 * 'Mode'::                      
+* Graphics events::             
 * Specific devices::            
 @end menu
 
@@ -2827,8 +2830,9 @@ function to change gamma.  So @samp{FALSE} is the only useful value.
 adjustment, 1 = @{0, 0.5, 1@} (left, centre, right justification) or 2 =
 continuously variable (in [0,1]) between left and right justification.
 @item canGenMouseDown -- 
-@code{Rboolean}: should mouse down events be sent to the @code{getEvent}
-callback?
+@code{Rboolean}: can the device handle mouse down events?  This
+flag and the next three are not currently used by R, but are maintained
+for back compatibility.
 @item canGenMouseMove -- 
 @code{Rboolean}: ditto for mouse move events.
 @item canGenMouseUp -- 
@@ -3063,7 +3067,7 @@ in the header @file{GraphicsEngine.h} and in the help for @code{par}: note that 
 least for widths above the default).
 
 
-@node 'Mode', Specific devices, Conventions, Graphics devices
+@node 'Mode', Graphics events, Conventions, Graphics devices
 @subsection `Mode'
 
 One of the device callbacks is a function @code{mode}, documented in
@@ -3092,7 +3096,32 @@ ensure that drawing is flushed to the screen when called with @code{mode
 that `drawing' is interpreted at quite a low level and a typical single
 figure will stop and start drawing many times.
 
-@node Specific devices,  , 'Mode', Graphics devices
+@node Graphics events, Specific devices, 'Mode', Graphics devices
+@subsection Graphics events
+
+Graphics devices may be designed to handle user interaction.  
+The current model is similar to the one introduced in R 2.1.0 for
+the Windows screen device, but the design was changed in R 2.12.0 to 
+be more open ended.
+
+Users may use @code{grDevices::setGraphicsEventEnv} to set the
+@code{eventEnv} environment in the device driver to hold event
+handlers. When the user calls @code{grDevices::getGraphicsEvent}, R
+will take three steps.  First, it sets the device driver member
+@code{gettingEvent} to @code{true} for each device with a
+non-@code{NULL} @code{eventEnv} entry, and calls @code{initEvent(dd,
+true)} if the callback is defined. It then enters an event loop.  Each
+time through the loop R will process events once, then check whether
+any device has set the @code{result} member of @code{eventEnv} to a
+non-@code{NULL} value, and will save the first such value found to be
+returned.  C functions @code{doMouseEvent} and @code{doKeybd} are
+provided to call the R event handlers @code{onMouseDown},
+@code{onMouseMove}, @code{onMouseUp}, and @code{onKeybd} and set
+@code{eventEnv$result} during this step.  Finally, @code{initEvent} is
+called again with @code{init=false} to inform the the devices that the
+loop is done, and the result is returned to the user.
+
+@node Specific devices,  , Graphics events, Graphics devices
 @subsection Specific devices
 
 Specific devices are mostly documented by comments in their sources,
@@ -3343,8 +3372,7 @@ package @pkg{grDevices}.
 @chapter Tools
 
 The behavior of @command{R CMD check} can be controlled through a
-variety of command line arguments, Perl configuration variables, and
-internal environment variables.
+variety of command line arguments and environment variables.
 
 There is an internal @option{--install=@var{value}} command line
 argument not shown by @command{R CMD check --help}, with possible values
@@ -3364,58 +3392,59 @@ Fake installation, and turn off the run-time tests.
 Skip installation, e.g., when testing recommended packages bundled with
 R.
 @item no
-The same as @option{--no-install}: turns off installation and the tests
+The same as @option{--no-install} : turns off installation and the tests
 which require the package to be installed.
 @end table
 
-The following internal environment variables are used for initializing
-the corresponding public Perl configuration variables
-(@pxref{Customizing checking and building, , Customizing checking and
-building, R-exts, Writing R Extensions}):
+The following environment variables can be used to customize the
+operation of @command{check}: a convenient place to set these is the
+file @file{~/.R/check.Renviron}.
 
-@quotation
-@multitable {@code{_R_CHECK_LATEX_VIGNETTES_}} {@code{$R_check_latex_vignettes}}
-@item Environment variable
-@tab Configuration variable
-@item @code{_R_CHECK_ALL_NON_ISO_C_}
-@vindex _R_CHECK_ALL_NON_ISO_C_
-@tab @code{$R_check_all_non_ISO_C} 
-@item @code{_R_CHECK_FORCE_SUGGESTS_}
-@vindex_R_CHECK_FORCE_SUGGESTS_
-@tab @code{$R_check_force_suggests}
-@item @code{_R_CHECK_LATEX_VIGNETTES_}
-@vindex_R_CHECK_LATEX_VIGNETTES_
-@tab @code{$R_check_latex_vignettes}
-@item @code{_R_CHECK_RD_STYLE_}
-@vindex_R_CHECK_RD_CONTENTS_
-@tab @code{$R_check_Rd_contents}
-@item @code{_R_CHECK_RD_CONTENTS_}
-@vindex_R_CHECK_RD_STYLE_
-@tab @code{$R_check_Rd_style}
-@item @code{_R_CHECK_RD_XREFS_}
-@vindex_R_CHECK_RD_XREFS_
-@tab @code{$R_check_Rd_xrefs}
-@item @code{_R_CHECK_SUBDIRS_NOCASE_}
-@vindex_R_CHECK_SUBDIRS_NOCASE_
-@tab @code{$R_check_subdirs_nocase}
-@item @code{_R_CHECK_SUBDIRS_STRICT_}
-@vindex_R_CHECK_SUBDIRS_STRICT_
-@tab @code{$R_check_subdirs_strict}
-@item @code{_R_CHECK_USE_INSTALL_LOG_}
-@vindex_R_CHECK_USE_INSTALL_LOG_
-@tab @code{$R_check_use_install_log}
-@item @code{_R_CHECK_WEAVE_VIGNETTES_}
-@vindex_R_CHECK_WEAVE_VIGNETTES_
-@tab @code{$R_check_weave_vignettes}
-@item @code{_R_CHECK_USE_CODETOOLS_}
-@vindex_R_CHECK_USE_CODETOOLS_
-@tab @code{$R_check_use_codetools}
-@end multitable
-@end quotation
-
-The following internal environment variables have no corresponding
-configuration variable.
 @vtable @code
+@item _R_CHECK_ALL_NON_ISO_C_
+If true, do not ignore compiler (typically GCC) warnings about non ISO C
+code in @emph{system} headers.  Note that this may also show additional
+ISO C++ warnings.
+Default: false.
+@item _R_CHECK_FORCE_SUGGESTS_
+If true, give an error if suggested packages are not available.
+Default: true.
+@item _R_CHECK_LATEX_VIGNETTES_
+If true (and @code{R_check_weave_vignettes} is also true),
+@command{latex} package vignettes in the process of checking them: this
+will show up @code{Sweave} source errors, including missing source
+files.  Default: true.
+@item _R_CHECK_RD_CONTENTS_
+If true, check @file{Rd} files for auto-generated content which needs editing,
+and missing argument documentation.
+Default: true.
+@item _R_CHECK_RD_STYLE_
+If true, check whether @file{Rd} usage entries for S3 methods use the full
+function name rather than the appropriate @code{\method} markup.
+Default: true.
+@item _R_CHECK_RD_XREFS_
+If true, check the cross-references in @file{.Rd} files.
+Default: true.
+@item _R_CHECK_SUBDIRS_NOCASE_
+If true, check the case of directories such as @file{R} and @file{man}.
+Default: false.
+@item _R_CHECK_SUBDIRS_STRICT_
+Initial setting for @option{--check-subdirs}.
+Default: @samp{default} (which checks only tarballs, and checks in the
+@file{src} only if there is no @file{configure} file).
+@item _R_CHECK_USE_INSTALL_LOG_
+If true, record the output from installing a package as part of its
+check to a log file (@file{00install.out} by default), even when running
+interactively.
+Default: true.
+@item _R_CHECK_WEAVE_VIGNETTES_
+If true, weave package vignettes in the process of checking them.
+Default: true.
+@item _R_CHECK_USE_CODETOOLS_
+If true, make use of the @pkg{codetools} package, which provides a
+detailed analysis of visibility of objects (but may give false
+positives).
+Default: true.
 @item _R_CHECK_CODOC_S4_METHODS_
 Control whether @code{codoc()} testing is also performed on S4 methods.
 This was off by default in R versions prior to 2.10.0 as it gave false
@@ -3433,6 +3462,9 @@ listed in the package's @file{BinaryFiles} file.
 Default: true.
 However, most likely this package-level override mechanism will be
 removed eventually.
+@item _R_CHECK_PERMISSIONS_
+Control whether permissions of files should be checked.
+Default: true iff @code{.Platform$OS.type == "unix"}.
 @item _R_CHECK_FF_CALLS_
 Allows turning off @code{checkFF()} testing.  Legacy mostly.
 Default: true.
@@ -3448,43 +3480,44 @@ Off by default because this can result in false positives.
 New in @R{} 2.10.0.  Controls the minimum level for reporting warnings
 from @code{checkRd}.
 Default: -1.
-@item _R_CHECK_RD_USAGE_METHOD_BINOPS_
-Control whether binops generics are considered as allowing useful S3
-method markup. 
-Default: true (as this Rd feature was added some time ago).
-OBSOLETE.
-@item _R_CHECK_RD_USAGE_METHOD_SUBSET_
-Control whether subset generics are considered as allowing useful S3
-method markup.
-Default: true (as this Rd feature was added some time ago).
-OBSOLETE.
 @item _R_CHECK_XREFS_REPOSITORIES_
 New in @R{} 2.10.0.  If set to a non-empty value, a space-separated list
 of repositories to use to determine known packages.
-Default: empty, when the CRAN, Omegahat and
-Bioconductor repositories known to @R{} is used.
+Default: empty, when the CRAN, Omegahat and Bioconductor repositories
+known to @R{} is used.
 @item _R_CHECK_SRC_MINUS_W_IMPLICIT_
 Control whether installation output is checked for compilation warnings
 about implicit function declarations (as spotted by GCC with command
 line option @option{-Wimplicit-function-declaration}, which is implied
 by @option{-Wall}).
 Default: false.
-This should really be a configuration variable, but we need a better
-name.
 @item _R_CHECK_SRC_MINUS_W_UNUSED_
 Control whether installation output is checked for compilation warnings
 about unused code constituents (as spotted by GCC with command line
 option @option{-Wunused}, which is implied by @option{-Wall}).
+Default: true.
 @item _R_CHECK_WALL_FORTRAN_
-Control whether gfortran 4.0 or better @option{-Wall} warnings are used in
+Control whether gfortran 4.0 or later @option{-Wall} warnings are used in
 the analysis of installation output.
 Default: false, even though the warnings are justifiable.
-This should really be a configuration variable, but we need a better name.
-@item _R_CHECK_WARN_BAD_USAGE_LINES_
-Control whether @code{checkDocFiles()} warns about bad Rd @code{\usage}
-lines.
-Default: true (as @code{\special} was rolled out a long time ago).
-OBSOLETE.
+@item _R_CHECK_ASCII_CODE_
+If true, check @R{} code for non-ascii characters.
+Default: true.
+@item _R_CHECK_ASCII_DATA_
+If true, check data for non-ascii characters.
+Default: true.
+@item _R_CHECK_SKIP_ARCH_
+Comma-separated list of architectutes that will be omitted from
+checking in a multi-arch setup.
+Default: none.
+@item _R_CHECK_SKIP_TESTS_ARCH_
+Comma-separated list of architectutes that will be omitted from
+running tests in a multi-arch setup.
+Default:none.
+@item _R_CHECK_SKIP_EXAMPLES_ARCH_
+Comma-separated list of architectutes that will be omitted from
+running examples in a multi-arch setup.
+Default:none.
 @end vtable
 
 @node R coding standards, Testing R code, Tools, Top
@@ -3510,9 +3543,9 @@ The following tools can ``safely be assumed'' for @R{} extensions.
 An ISO C99 C compiler.  Note that extensions such as @acronym{POSIX}
 1003.1 must be tested for, typically using Autoconf unless you are sure
 they are supported on all mainstream @R{} platforms (including Windows
-and Mac OS X).  Packages will be more portable if written assuming only
-C89, but this should not be done where using C99 features will make for
-cleaner or more robust code.
+and Mac OS X).  Packages will be more portable to @R{} < 2.12.0 if
+written assuming only C89, but this should not be done where using C99
+features will make for cleaner or more robust code.
 
 @item
 A FORTRAN 77 compiler (but not Fortran 9x).
@@ -3563,15 +3596,15 @@ In addition, the following tools are needed for certain tasks.
 
 @itemize @bullet
 @item
-Perl version 5 is needed for several tools, in particular
-@command{check} and @command{build}.
+Perl version 5 is needed for a few uncommon tools.
 @findex Perl
 
-The @R{} Core Team has decided that Perl (version 5) can safely be
-assumed for building @R{} from source, building and checking add-on
-packages, and for installing add-on packages from source.  On the other
-hand, Perl cannot be assumed at all for installing @emph{binary}
-(pre-built) versions of add-on packages, or at run time.
+The @R{} Core Team decided that Perl (version 5) can safely be assumed
+for building @R{} from source, building and checking add-on packages,
+and for installing add-on packages from source.  On the other hand, Perl
+cannot be assumed at all for installing @emph{binary} (pre-built)
+versions of add-on packages, or at run time.  (As from @R{} 2.12.0 Perl
+is not normally needed for any of these purposes.)
 
 @item
 Makeinfo version 4.7 or later is needed to build the Info files for the
@@ -3626,7 +3659,7 @@ their startup files, and using customization to set the
 which has been determined not to display the structure clearly enough
 when using narrow fonts.)
 
-@node Testing R code, Function and variable index, R coding standards, Top
+@node Testing R code, Use of TeX dialects, R coding standards, Top
 @chapter Testing R code
 
 When you (as @R{} developer) add new functions to the R base (all the
@@ -3640,7 +3673,184 @@ list'' in @file{tests/no-segfault.Rin}.
 [To be revised: use @command{make check-devel}, check the write barrier
 if you change internal structures.]
 
-@node Function and variable index, Concept index, Testing R code, Top
+@node Use of TeX dialects, Future directions, Testing R code, Top
+@chapter Use of TeX dialects
+
+Various dialects of TeX and used for different purposes in @R{}.  The
+policy is that manuals be written in @samp{texinfo}, and for convenience
+the main and Windows FAQs are also.  This has the advantage that is is
+easy to produce HTML and plain text versions as well as typeset manuals.
+
+LaTeX is not used directly, but rather as an intermediate format for
+typeset help documents and for vignettes.
+
+Care needs to be taken about the assumptions made about the @R{} user's
+system: it may not have either @samp{texinfo} or a TeX system
+installed.  We have attempted to abstract out the cross-platform
+differences, and almost all the setting of typeset documents is done by
+@code{tools::texi2dvi}.  This is used for offline printing of help
+documents, preparing vignettes and for package manuals via @command{R
+CMD Rd2dvi}.  It is not currently used for the @R{} manuals created in
+directory @file{doc/manual}.
+
+@code{tools::texi2dvi} makes use of a system command @command{texi2dvi}
+where available.  On a Unix-alike this is usually part of
+@samp{texinfo}, whereas on Windows if it exists at all it would be an
+executable, part of MiKTeX.  If none is available, the @R{} code runs
+a sequence of @command{(pdf)latex}, @command{bibtex} and
+@command{makeindex} commands.
+
+This process has been rather vulnerable to the versions of the external
+software used: particular issues have been @command{texi2dvi} and
+@file{texinfo.tex} updates, mismatches between the two@footnote{Linux
+distributions tend to unbundle @file{texinfo.tex} from @samp{texinfo}.},
+versions of the LaTeX package @samp{hyperref} and quirks in index
+production.  The licenses used for LaTeX and latterly @samp{texinfo}
+prohibit us from including `known good' versions in the @R{} distribution.
+
+On a Unix-alike @command{configure} looks for the executables for TeX and
+friends and if found records the absolute paths in the system
+@file{Renviron} file.  This used to record @samp{false} if no command
+was found, but it nowadays records the name for looking up on the path
+at run time.  The latter can be important for binary distributions: one
+does not want to be tied to, for example, TeXLive 2007.
+
+
+@node Future directions, Function and variable index, Use of TeX dialects, Top
+@chapter Future directions
+
+This chapter is for notes about possible future changes to @R{}: there
+is no commitment to make such changes, let alone to a timescale.
+
+@menu
+* 64-bit types::                
+@end menu
+
+@node 64-bit types,  , Future directions, Future directions
+@section 64-bit types
+
+Vectors in @R{} are limited to a length of 2^31 - 1 elements (about 2
+billion), as the length is stored in the @code{SEXPREC} as a C
+@code{int}, and that type is used extensively to record lengths and
+element numbers, including in packages.  (It is the latter that
+precludes a simple change to @code{unsigned int}).
+
+There is also some desire to be able to store larger integers in @R{},
+although the possibility of storing these as @code{double} is often
+overlooked (and e.g.@: file pointers as returned by @code{seek} are
+already stored as @code{double}).
+
+A single object with 2^31 or more elements will take up at least 8GB of
+memory if integer or logical and 16GB if numeric or character, so
+routine use of such objects is in 2010 still some way off, but it is
+time to start to note some of the considerations in allowing longer
+vectors.  Note that longer vectors are impossible under 32-bit
+platforms, so one possibility is to make changes only on 64-bit platforms.
+
+@itemize
+
+@item
+The most obvious next step is 64-bit lengths, but note that current
+64-bit OSes do not even theoretically offer 64-bit address spaces and it
+is likely that a 48-bit length would suffice for another 25 years or
+more.  Thus an alternative is to use C @code{double} to store lengths
+and element numbers, since this can hold integers up to 2^53 exactly.
+
+@item
+Simply changing the internal format of a @code{VECTOR_SEXPREC} has a
+number of consequences.  Most immediately, the serialization format
+would have to be changed to accommodate longer lengths -- and it might
+well be prudent to store lengths up to 2^31-1 in the same way as before
+to avoid unnecessary padding and for backwards compatibility.  (Note that
+the XDR format has a type @samp{hyper} for 64-bit integers, but it is
+not currently implemented in the code in @file{src/extra/xdr}.)
+
+@item
+Another immediate consequence is that there would need to be a C type to
+hold vector lengths and element numbers, say @code{Rlongint}.  It would
+be cleanest if this were a type defined by @R{}, and it may need to be.
+C99 guarantees @emph{via} @file{stdint.h} a number of types which are
+64-bit or at least 64-bit and which would be suitable, but regrettably
+people try to use @R{} internals in C++, whereas C99 is not a subset
+of C++ and C++ compilers are not required to support these types.  It
+would need to be tested if @file{stdint.h} was widely enough usable.
+
+@item
+There would need to be a way to refer to the length of longer vectors
+and to create indices to subset them: @R{}'s @code{integer} type is no
+longer necessarily suitable.  Much code has been written assuming that
+it is!  Different routes have been proposed:
+
+@itemize
+
+@item
+Add a new type to @R{} and use that for lengths and indices---most likely
+this would be a 64-bit signed type, say @code{longint}.  @R{}'s usual
+implicit coercion rules would ensure that supplying an @code{integer}
+vector for indexing or @code{length<-} would work.
+
+@item
+A more radical alternative is to change the existing @code{integer} type
+to be 64-bit on 64-bit platforms (which was the approach taken by S-PLUS
+for DEC/Compaq Alpha systems).  Or even on all platforms.
+
+@item
+Allow either @code{integer} or @code{double} values for lengths and
+indices, and return @code{double} only when necessary.
+
+@end itemize
+
+@noindent
+The third has the advantages of minimal disruption to existing code and
+not increasing memory requirements, but the disadvantage that the code
+branches for long vectors would be tested rarely.  In the first and
+third scenarios both @R{}'s own code and user code would have to be
+adapted for lengths that were not of type @code{integer}.
+
+@item
+Matrices are stored as vectors and so also limited to 2^31-1 elements.
+If longer vectors are allowed, this raises the question if larger
+matrices should be either allowed or supported.  The main problem is
+matrix algebra which is almost entirely done by FORTRAN code, not
+uncommonly calling external BLAS or LAPACK routines.  For FORTRAN code
+compiled as part of @R{} it may be possible simply to set the default
+integer size to be 64-bit (it is not clear if this can be done
+portably), and some external software (e.g.@: AMD's ACML) is available
+in versions compiled with 64-bit integers.
+
+Some FORTRAN compilers (e.g.@: @command{gfortran}) have flags to compile
+code with @code{INTEGER} as 64-bit (but not all), and even amongst those
+which do care is needed that any external functions which are called
+have versions for 64-bit integers and the correct versions are called.
+
+However, it does seem that for the foreseeable future anything but the
+most trivial matrix algebra on gigabyte matrices will be too slow to be
+contemplated, not least under the single-thread implementation supplied by
+@R{}.
+
+@item
+The @code{.C}, @code{.Fortran}, @code{.Call} and @code{.External}
+interfaces need consideration (as well as the @code{.Internal} and
+@code{.Primitive} interfaces used by @R{} itself).
+
+Most users of the @code{.C} and @code{.Fortran} interfaces use
+@code{as.integer} for lengths and element numbers, but a few omit these
+in the knowledge that these were of type @code{integer}.  It might be
+reasonable to suppose that these interfaces were not intended to be used
+with long vectors and make passing a long vector to them an error.
+
+The remaining interfaces will need to cope with the changed
+@code{VECTOR_SEXPREC} types.  It seems likely that in most cases lengths
+are accessed by the @code{length} and @code{LENGTH}
+functions@footnote{but @code{LENGTH} is a macro under some internal
+uses.}  So one approach is to keep these returning 32-bit lengths and
+introduce `long' versions.
+
+@end itemize
+
+See also @uref{http://www.cs.uiowa.edu/~luke/talks/useR10.pdf}.
+
+@node Function and variable index, Concept index, Future directions, Top
 @unnumbered Function and variable index
 
 @printindex vr

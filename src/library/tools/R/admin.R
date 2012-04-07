@@ -305,10 +305,10 @@ function(dir, outDir)
         for(f in codeFiles) {
             tmp <- iconv(readLines(f, warn = FALSE), from = enc, to = "")
             if(length(bad <- which(is.na(tmp)))) {
-               warning(gettextf("unable to re-encode '%s' line(s) %s", 
+               warning(gettextf("unable to re-encode '%s' line(s) %s",
                                 basename(f), paste(bad, collapse=",")),
                     domain = NA, call. = FALSE)
-               tmp <- iconv(readLines(f, warn = FALSE), from = enc, to = "", 
+               tmp <- iconv(readLines(f, warn = FALSE), from = enc, to = "",
                             sub = "byte")
             }
             writeLines(paste("#line 1 \"", f, "\"", sep=""), con)
@@ -515,6 +515,8 @@ function(dir, outDir)
 
         ## install tangled versions of all vignettes
         cwd <- getwd()
+        if (is.null(cwd))
+            stop("current working directory cannot be ascertained")
         setwd(outVignetteDir)
         for(srcfile in vignetteIndex$File)
             tryCatch(utils::Stangle(srcfile, quiet = TRUE),
@@ -605,6 +607,8 @@ function(dir, outDir, keep.source = FALSE)
     ## a temp dir:
     ## this allows inspection of problems and automatic cleanup via Make.
     cwd <- getwd()
+    if (is.null(cwd))
+        stop("current working directory cannot be ascertained")
     buildDir <- file.path(cwd, ".vignettes")
     if(!file_test("-d", buildDir) && !dir.create(buildDir))
         stop(gettextf("cannot create directory '%s'", buildDir), domain = NA)
@@ -691,6 +695,7 @@ function(dir, packages)
 .install_package_Rd_objects <-
 function(dir, outDir, encoding = "unknown")
 {
+    dir <- file_path_as_absolute(dir)
     mandir <- file.path(dir, "man")
     manfiles <- if(!file_test("-d", mandir)) character()
     else list_files_with_type(mandir, "docs")
@@ -698,6 +703,7 @@ function(dir, outDir, encoding = "unknown")
     dir.create(manOutDir, FALSE)
     db_file <- file.path(manOutDir,
                          paste(basename(outDir), ".rdx", sep = ""))
+    built_file <- file.path(dir, "build", "partial.rdb")
     ## Avoid (costly) rebuilding if not needed.
     ## Actually, it seems no more costly than these tests, which it also does
     pathsFile <- file.path(manOutDir, "paths.rds")
@@ -705,8 +711,8 @@ function(dir, outDir, encoding = "unknown")
        !identical(sort(manfiles), sort(.readRDS(pathsFile))) ||
        !all(file_test("-nt", db_file, manfiles))) {
         db <- .build_Rd_db(dir, manfiles, db_file = db_file,
-                           encoding = encoding)
-        nm <- names(db)
+                           encoding = encoding, built_file = built_file)
+        nm <- as.character(names(db)) # Might be NULL
         .saveRDS(nm, pathsFile)
         names(db) <- sub("\\.[Rr]d$", "", basename(nm))
         makeLazyLoadDB(db, file.path(manOutDir, basename(outDir)))
@@ -847,15 +853,15 @@ resaveRdaFiles <- function(paths,
         load(p, envir = env)
         if(compress == "auto") {
             f1 <- tempfile()
-            save(file = f1, list = ls(env, all=TRUE), envir = env)
+            save(file = f1, list = ls(env, all.names = TRUE), envir = env)
             f2 <- tempfile()
-            save(file = f2, list = ls(env, all=TRUE), envir = env,
+            save(file = f2, list = ls(env, all.names = TRUE), envir = env,
                  compress = "bzip2")
             ss <- file.info(c(f1, f2))$size * c(0.9, 1.0)
             names(ss) <- c(f1, f2)
             if(ss[1L] > 10240) {
                 f3 <- tempfile()
-                save(file = f3, list = ls(env, all=TRUE), envir = env,
+                save(file = f3, list = ls(env, all.names = TRUE), envir = env,
                      compress = "xz")
                 ss <- c(ss, file.info(f3)$size)
 		names(ss) <- c(f1, f2, f3)
@@ -865,7 +871,7 @@ resaveRdaFiles <- function(paths,
             file.copy(nm[ind], p, overwrite = TRUE)
             unlink(nm)
         } else
-            save(file = p, list = ls(env, all=TRUE), envir = env,
+            save(file = p, list = ls(env, all.names = TRUE), envir = env,
                  compress = compress, compression_level = compression_level)
     }
 }

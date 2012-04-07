@@ -183,6 +183,14 @@ INLINE_FUN SEXP list4(SEXP s, SEXP t, SEXP u, SEXP v)
     return s;
 }
 
+INLINE_FUN SEXP list5(SEXP s, SEXP t, SEXP u, SEXP v, SEXP w)
+{
+    PROTECT(s);
+    s = CONS(s, list4(t, u, v, w));
+    UNPROTECT(1);
+    return s;
+}
+
 
 /* Destructive list append : See also ``append'' */
 
@@ -240,6 +248,22 @@ INLINE_FUN SEXP lang4(SEXP s, SEXP t, SEXP u, SEXP v)
     return s;
 }
 
+INLINE_FUN SEXP lang5(SEXP s, SEXP t, SEXP u, SEXP v, SEXP w)
+{
+    PROTECT(s);
+    s = LCONS(s, list4(t, u, v, w));
+    UNPROTECT(1);
+    return s;
+}
+
+INLINE_FUN SEXP lang6(SEXP s, SEXP t, SEXP u, SEXP v, SEXP w, SEXP x)
+{
+    PROTECT(s);
+    s = LCONS(s, list5(t, u, v, w, x));
+    UNPROTECT(1);
+    return s;
+}
+
 /* from util.c */
 
 /* Check to see if the arrays "x" and "y" have the identical extents */
@@ -258,6 +282,9 @@ INLINE_FUN Rboolean conformable(SEXP x, SEXP y)
     return TRUE;
 }
 
+/* NOTE: R's inherits() is based on inherits3() in ../main/objects.c
+ * Here, use char / CHAR() instead of the slower more general translateChar()
+ */
 INLINE_FUN Rboolean inherits(SEXP s, const char *name)
 {
     SEXP klass;
@@ -556,7 +583,7 @@ INLINE_FUN Rboolean isVectorizable(SEXP s)
  *
  * @return (pointer to a) named vector of type TYP
  */
-INLINE_FUN SEXP mkNamed(int TYP, const char **names)
+INLINE_FUN SEXP mkNamed(SEXPTYPE TYP, const char **names)
 {
     SEXP ans, nms;
     int i, n;

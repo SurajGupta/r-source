@@ -1,6 +1,6 @@
 R FAQ
 Frequently Asked Questions on R
-Version 2.11.2010-05-30
+Version 2.12.2010-10-11
 ISBN 3-900051-08-9
 Kurt Hornik
 
@@ -135,12 +135,9 @@ WITHOUT ANY WARRANTY; without even the implied warranty of MERCHANTABILITY
 or FITNESS FOR A PARTICULAR PURPOSE.  See the GNU General Public License
 for more details.
 
-   A copy of the GNU General Public License is available via WWW at
+   Copies of the GNU General Public License versions are available at
 
-     `http://www.gnu.org/copyleft/gpl.html'.
-
-You can also obtain it by writing to the Free Software Foundation, Inc., 51
-Franklin Street, Fifth Floor, Boston, MA 02110-1301, U.S.A.
+     `http://www.R-project.org/Licenses/'
 
 1.2 Obtaining this document
 ===========================
@@ -258,7 +255,7 @@ i386-freebsd, rs6000-ibm-aix, and sparc-sun-solaris.
 2.3 What is the current version of R?
 =====================================
 
-The current released version is 2.11.1.  Based on this
+The current released version is 2.12.0.  Based on this
 `major.minor.patchlevel' numbering scheme, there are two development
 versions of R, a patched version of the current release (`r-patched') and
 one working towards the next minor or eventually major (`r-devel') releases
@@ -298,9 +295,7 @@ Administration" guide (*note What documentation exists for R?::) has full
 details.
 
    Note that you need a FORTRAN compiler or perhaps `f2c' in addition to a
-C compiler to build R.  Also, you need Perl version 5 to build the R object
-documentations.  (If this is not available on your system, you can obtain a
-PDF version of the object reference manual via CRAN.)
+C compiler to build R.
 
    In the simplest case, untar the R source code, change to the directory
 thus created, and issue the following commands (at the shell prompt):
@@ -404,18 +399,18 @@ The `bin/linux' directory of a CRAN site contains the following packages.
      Ubuntu    i386          hardy/intrepid/jaunty/karmic  Vincent Goulet
                amd64         hardy/intrepid/jaunty/karmic  Michael Rutter
 
-   Debian packages, maintained by Dirk Eddelbuettel Bates, have long been
-part of the Debian distribution, and can be accessed through APT, the
-Debian package maintenance tool.  Use e.g. `apt-get install r-base
-r-recommended' to install the R environment and recommended packages.  If
-you also want to build R packages from source, also run `apt-get install
-r-base-dev' to obtain the additional tools required for this.  So-called
-"backports" of the current R packages for at least the "stable"
-distribution of Debian are provided by Johannes Ranke, and available from
-CRAN.  See `http://CRAN.R-project.org/bin/linux/debian/README' for details
-on R Debian packages and installing the backports, which should also be
-suitable for other Debian derivatives.  Native backports for Ubuntu are
-provided by Vincent Goulet and Michael Rutter.
+   Debian packages, maintained by Dirk Eddelbuettel, have long been part of
+the Debian distribution, and can be accessed through APT, the Debian
+package maintenance tool.  Use e.g. `apt-get install r-base r-recommended'
+to install the R environment and recommended packages.  If you also want to
+build R packages from source, also run `apt-get install r-base-dev' to
+obtain the additional tools required for this.  So-called "backports" of
+the current R packages for at least the "stable" distribution of Debian are
+provided by Johannes Ranke, and available from CRAN.  See
+`http://CRAN.R-project.org/bin/linux/debian/README' for details on R Debian
+packages and installing the backports, which should also be suitable for
+other Debian derivatives.  Native backports for Ubuntu are provided by
+Vincent Goulet and Michael Rutter.
 
    On SUSE, you can set up an installation source for R within Yast by
 setting (e.g.)
@@ -1296,11 +1291,21 @@ for doing microarray analysis using several of the Bioconductor packages"
 and is designed to be installed at local sites as a shared computing
 resource.
 
-   Finally, Rwui (http://sysbio.mrc-bsu.cam.ac.uk/Rwui) is a web
-application to create user-friendly web interfaces for R scripts.  All code
-for the web interface is created automatically.  There is no need for the
-user to do any extra scripting or learn any new scripting techniques.  Rwui
-can also be found at `http://rwui.cryst.bbk.ac.uk'.
+   Rwui (http://sysbio.mrc-bsu.cam.ac.uk/Rwui) is a web application to
+create user-friendly web interfaces for R scripts.  All code for the web
+interface is created automatically.  There is no need for the user to do
+any extra scripting or learn any new scripting techniques.  Rwui can also
+be found at `http://rwui.cryst.bbk.ac.uk'.
+
+   Finally, the *R.rsp* (http://CRAN.R-project.org/package=R.rsp) package
+by Henrik Bengtsson introduces "R Server Pages".  Analogous to Java Server
+Pages, an R server page is typically HTML with embedded R code that gets
+evaluated when the page is requested.  The package includes an internal
+cross-platform HTTP server implemented in Tcl, so provides a good framework
+for including web-based user interfaces in packages.  The approach is
+similar to the use of the *brew* (http://CRAN.R-project.org/package=brew)
+package with Rapache (http://rapache.net/) with the advantage of
+cross-platform support and easy installation.
 
 5 R Add-On Packages
 *******************

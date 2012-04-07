@@ -1,5 +1,3 @@
-
-
 # Translation of R-tools.pot to French
 # Copyright (C) 2005 The R Foundation
 # This file is distributed under the same license as the tools R package.
@@ -7,16 +5,17 @@
 #
 msgid ""
 msgstr ""
-"Project-Id-Version: R 2.11.0\n"
+"Project-Id-Version: R 2.12.0\n"
 "Report-Msgid-Bugs-To: bugs@r-project.org\n"
-"POT-Creation-Date: 2010-03-16 09:20\n"
-"PO-Revision-Date: 2010-03-26 13:32-0400\n"
+"POT-Creation-Date: 2010-10-04 10:51\n"
+"PO-Revision-Date: 2010-10-03 18:49-0400\n"
 "Last-Translator: Vincent Goulet <vincent.goulet@act.ulaval.ca>\n"
 "Language-Team: French <R-core@r-project.org>\n"
 "MIME-Version: 1.0\n"
 "Content-Type: text/plain; charset=ISO-8859-1\n"
 "Content-Transfer-Encoding: 8bit\n"
 "Plural-Forms: nplurals=2; plural=(n > 1);\n"
+"X-Poedit-Language: French\n"
 
 msgid "argument 'package' must be of length 1"
 msgstr "l'argument 'package' doit être de longueur 1"
@@ -187,14 +186,39 @@ msgstr ""
 msgid "Packages required but not available:"
 msgstr "Packages requis mais non disponibles :"
 
-msgid "Packages required and available but unsuitable version:"
-msgstr "Packages requis et disponibles mais de version incompatible :"
+msgid "Package required but not available: %s"
+msgstr "Package requis mais non disponible : %s"
+
+msgid "Packages required and available but unsuitable versions:"
+msgstr "Packages requis et disponibles mais de versions incompatibles :"
+
+msgid "Package required and available but unsuitable version: %s"
+msgstr "Package requis et disponible mais de version incompatible :"
 
 msgid "Former standard packages required but now defunct:"
 msgstr "Packages standard requis, mais maintenant obsolètes :"
 
+msgid "Packages suggested but not available for checking:"
+msgstr "Packages suggérés mais non disponibles pour la vérification :"
+
+msgid "Package suggested but not available for checking: %s"
+msgstr "Package suggéré mais non disponible pour la vérification :"
+
+msgid "Packages which this enhances but not available for checking:"
+msgstr ""
+"Packages qui seraient améliorés mais qui ne sont pas disponibles pour la "
+"vérification :"
+
+msgid "Package which this enhances but not available for checking: %s"
+msgstr ""
+"Package qui serait amélioré mais qui n'est pas disponible pour la "
+"vérification :"
+
 msgid "Vignette dependencies not required:"
 msgstr "Dependences de vignette non requises :"
+
+msgid "Vignette dependencies not required: %s"
+msgstr "Dépendences de vignette non requises :"
 
 msgid ""
 "Vignette dependencies (\\VignetteDepends{} entries) must be contained in the "
@@ -204,6 +228,9 @@ msgstr ""
 "contenues dans les entrées Depends/Suggests/Imports de DESCRIPTION."
 
 msgid "Namespace dependencies not required:"
+msgstr "Dépendances d'espaces de noms non requises :"
+
+msgid "Namespace dependency not required: %s"
 msgstr "Dépendances d'espaces de noms non requises :"
 
 msgid "Malformed package name"
@@ -320,7 +347,9 @@ msgstr "le package doit être chargé"
 msgid ""
 "package %s exists but was not installed under R >= 2.10.0 so xrefs cannot be "
 "checked"
-msgstr "le package %s existe, mais il n'a pas été installé sous R >= 2.10.0 et donc vérification de xrefs impossible"
+msgstr ""
+"le package %s existe, mais il n'a pas été installé sous R >= 2.10.0 et donc "
+"vérification de xrefs impossible"
 
 msgid "Obsolete package(s) %s in Rd xrefs"
 msgstr "Package(s) obsolètes %s dans les xrefs Rd"
@@ -350,8 +379,14 @@ msgstr "le package 'methods' est utilisé mais pas déclaré"
 msgid "'::' or ':::' imports not declared from:"
 msgstr "importations '::' ou ':::' non déclarées depuis :"
 
+msgid "'::' or ':::' import not declared from: %s"
+msgstr "importations '::' ou ':::' non déclarées depuis : %s"
+
 msgid "'library' or 'require' calls not declared from:"
 msgstr "appels 'library' ou 'require' non déclarés depuis :"
+
+msgid "'library' or 'require' call not declared from: %s"
+msgstr "appels 'library' ou 'require' non déclarés depuis : %s"
 
 msgid "Rd files with duplicated name '%s':"
 msgstr "Fichiers Rd avec nom dupliqué '%s' :"
@@ -429,6 +464,36 @@ msgstr "champ \\name manquant ou vide dans le(s) fichier(s) Rd"
 
 msgid "No help on %s found in RdDB %s"
 msgstr "Pas d'aide pour %s trouvée dans RdDB %s"
+
+msgid "Converting Rd files to LaTeX ..."
+msgstr "Conversion des fichiers Rd en LaTeX ..."
+
+msgid "-t option without value"
+msgstr "option -t sans valeur"
+
+msgid "-o option without value"
+msgstr "option -o sans valeur"
+
+msgid "Warning: unknown option"
+msgstr "Avis : option inconnue"
+
+msgid "exactly one Rd file must be specified"
+msgstr "un seul fichier Rd doit être spécifié"
+
+msgid "no 'type' specified"
+msgstr "aucun 'type' spécifié"
+
+msgid "'type' must be one of 'txt', 'html', 'latex' or 'example'"
+msgstr "'type' doit être 'txt', 'html', 'latex' ou 'example'"
+
+msgid "current working directory cannot be ascertained"
+msgstr ""
+
+msgid "no inputs"
+msgstr "pas d'entrées"
+
+msgid "Error in running tools::texi2dvi"
+msgstr "Erreur lors de l'exécution de tools:texi2dvi"
 
 msgid "more than one \\examples section, using the first"
 msgstr "plus d'une section \\example, utilisation de la première"
@@ -537,6 +602,47 @@ msgstr "ERREUR : cette version de R est %s, le package '%s' nécessite R %s %s "
 msgid "ERROR: this R is version %s, required is R %s %s"
 msgstr "ERREUR : cette version de R est %s, requis R %s %s "
 
+msgid "Changes require specified 'style'"
+msgstr "Les modifications nécessite le 'style' spécifié"
+
+msgid "The default JSS style may not be modified."
+msgstr "Le style par défaut JSS ne peut être modifié."
+
+msgid "** Options"
+msgstr "** Les options"
+
+msgid "are only for '--binary'  and will be ignored"
+msgstr "sont valides avec --binary seulement et seront ignorées"
+
+msgid "Error: cannot rename directory to"
+msgstr "Erreur: impossible de renommer le répertoire"
+
+msgid "cannot coerce"
+msgstr "impossible de transformer"
+
+msgid "to logical"
+msgstr "en valeur logique"
+
+msgid "-l option without value"
+msgstr "option -l sans valeur"
+
+msgid "configuration files are not supported as from R 2.12.0"
+msgstr ""
+"les fichiers de configuration se sont pas plus supportés depuis R 2.12.0"
+
+msgid "'--multiarch' specified with only one usable sub-architecture"
+msgstr ""
+"--multiarch spécifié alors qu'une seule sous-architecture est utilisable"
+
+msgid "Error: no packages were specified"
+msgstr "Erreur : aucun package spécifié"
+
+msgid "package dir"
+msgstr "le répertoire"
+
+msgid "does not exist"
+msgstr "n'existe pas"
+
 msgid "No files in this directory"
 msgstr "Pas de fichiers dans ce répertoire"
 
@@ -565,7 +671,9 @@ msgid "No docs found for package %s"
 msgstr "Pas de docs trouvés pour le package %s"
 
 msgid "Only help files, %s, %s and files under %s in a package can be viewed"
-msgstr "Visualisation possible seulement pour les fichiers d'aide, %s, %s et les fichiers dans %s"
+msgstr ""
+"Visualisation possible seulement pour les fichiers d'aide, %s, %s et les "
+"fichiers dans %s"
 
 msgid "NEWS"
 msgstr "NEWS"
@@ -628,6 +736,9 @@ msgstr ""
 msgid "installing to"
 msgstr "installation dans"
 
+msgid "generating debug symbols (dSYM)"
+msgstr "génération des symboles de débogage (dSYM)"
+
 msgid ""
 "R include directory is empty -- perhaps need to install R-devel.rpm or "
 "similar"
@@ -638,12 +749,6 @@ msgstr ""
 msgid "running src/Makefile.win ..."
 msgstr "exécution de src/Makefile.win ..."
 
-msgid "making DLL ..."
-msgstr "création de la DLL ..."
-
-msgid "... done"
-msgstr "... fini"
-
 msgid "no source files found"
 msgstr "aucun fichier source n'est trouvé"
 
@@ -653,14 +758,17 @@ msgstr "répertoire 'data' vide"
 msgid "'--auto-zip' is for Windows only"
 msgstr "'--auto-zip'  est pour Windows seulement"
 
-msgid "-l option without value"
-msgstr "option -l sans valeur"
-
-msgid "Warning: unknown option"
-msgstr "Avis : option inconnue"
+msgid "--merge-multiarch is Windows-only"
+msgstr "'--merge-multiarch est pour Windows seulement"
 
 msgid "cannot create temporary directory"
 msgstr "impossible de créer un répertoire temporaire"
+
+msgid "ERROR: --merge-multiarch applies only to a single tarball"
+msgstr "ERREUR : --merge-multiarch est valide pour un seul package"
+
+msgid "ERROR: --merge-multiarch can only be used on i386/x64 installations"
+msgstr "ERREUR : --merge-multiarch valide seulement sur les systèmes i386/x64"
 
 msgid "invalid package"
 msgstr "package incorrect"
@@ -699,29 +807,11 @@ msgstr "--no-help a priorité sur"
 msgid "--"
 msgstr "--"
 
-msgid "-o option without value"
-msgstr "option -o sans valeur"
-
-msgid "Converting Rd files to LaTeX ..."
-msgstr "Conversion des fichiers Rd en LaTeX ..."
-
 msgid "finding HTML links ..."
 msgstr "recherche des liens HTML ..."
 
 msgid "finding level-2 HTML links ..."
 msgstr "recherche des liens HTML de niveau 2 ..."
-
-msgid "-t option without value"
-msgstr "option -t sans valeur"
-
-msgid "exactly one Rd file must be specified"
-msgstr "un seul fichier Rd doit être spécifié"
-
-msgid "no 'type' specified"
-msgstr "aucun 'type' spécifié"
-
-msgid "'type' must be one of 'txt', 'html', 'latex' or 'example'"
-msgstr "'type' doit être 'txt', 'html', 'latex' ou 'example'"
 
 msgid "there is no package called '%s'"
 msgstr "aucun package nommé '%s' n'existe"
@@ -754,6 +844,36 @@ msgstr ""
 "Impossible de traiter la section ou les lignes : \n"
 "%s"
 
+msgid "No news found in given file using old-style R-like format."
+msgstr ""
+"Pas de nouvelles trouvées dans le fichier en usant de l'ancien format de "
+"type R"
+
+msgid "No news found in given file using package default format."
+msgstr ""
+"Pas de nouvelles trouvées dans le fichier en usant du format par défaut du "
+"package"
+
+msgid "Could not extract news from the following text chunks:"
+msgstr ""
+"Impossible de trouver des nouvelles dans les extraits de texte suivants :"
+
+msgid ""
+"Chunk %s:\n"
+"%s"
+msgstr ""
+"Extrait %s :\n"
+"%s"
+
+msgid "Cannot extract version info from the following section titles:"
+msgstr "Impossible d'extraire la version des titres de sections suivants :"
+
+msgid "%s"
+msgstr "%s"
+
+msgid "Malformed NEWS.Rd file."
+msgstr "Fichier NEWS.Rd malformé."
+
 msgid "Processing packages:"
 msgstr "Traitement des packages :"
 
@@ -766,6 +886,33 @@ msgstr ""
 
 msgid "cannot create HTML package index"
 msgstr "impossible de créer l'index HTML du package"
+
+msgid "Internal error, no tag"
+msgstr "Erreur interne, pas d'étiquette"
+
+msgid "Argument for"
+msgstr "Argument pour"
+
+msgid "not found."
+msgstr "introuvable"
+
+msgid "Internal error:  NULL tag"
+msgstr "Erreur interne : étiquette NULL"
+
+msgid "internal error"
+msgstr "erreur interne"
+
+msgid "Inconsistent arg count for"
+msgstr "Nombre d'arguments incohérent pour"
+
+msgid "Entry for"
+msgstr "Entrée pour"
+
+msgid "="
+msgstr "="
+
+msgid "already defined to be"
+msgstr "déjà définie pour être"
 
 msgid "found encoding"
 msgstr "encodage trouvé"
@@ -891,6 +1038,10 @@ msgstr "exécution des tests de régression regexp"
 msgid "running tests to possibly trigger segfaults"
 msgstr "exécution de tests pour générer éventuellement des 'segfaults'"
 
+#, fuzzy
+msgid "'x' must be a single character string"
+msgstr "'file' doit être une chaîne de caractères ou une connexion"
+
 msgid "test '%s' is not available"
 msgstr "le test '%s' n'est pas disponible"
 
@@ -908,6 +1059,9 @@ msgstr "l'exécution de 'texi2dvi' sur '%s' a échoué."
 
 msgid "running 'texi2dvi' on '%s' failed"
 msgstr "l'exécution de 'texi2dvi' sur '%s' a échoué"
+
+msgid "unable to run '%s' on '%s'"
+msgstr "impossible d'exécuter '%s' sur '%s'"
 
 msgid "unable to run %s on '%s'"
 msgstr "impossible d'exécuter %s sur '%s'"
@@ -966,3 +1120,9 @@ msgid "object %s is created by more than one data call"
 msgid_plural "objects %s are created by more than one data call"
 msgstr[0] "l'objet %s est créé par plus d'un appel aux données"
 msgstr[1] "les objets %s sont créés par plus d'un appel aux données"
+
+#~ msgid "making DLL ..."
+#~ msgstr "création de la DLL ..."
+
+#~ msgid "... done"
+#~ msgstr "... fini"

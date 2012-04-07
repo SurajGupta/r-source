@@ -308,10 +308,9 @@ postscript(file = ifelse(onefile, "Rplots.ps", "Rplot\%03d.ps"),
     unless \code{command} arranges to delete it.
 
     \item \code{file=""} or \code{file="|cmd"} can be used to print
-    using a pipe on systems that support \file{popen}.  Failure to open the
-    command will probably be reported to the terminal but not to
-    \file{popen}, in which case close the device by \code{dev.off}
-    immediately.
+    using a pipe.  Failure to open the command will probably be reported
+    to the terminal but not to \R, in which case close the
+    device by \code{dev.off} immediately.
   }
 #ifdef windows
   Only the first of these will work on Windows, and the default
@@ -320,7 +319,7 @@ postscript(file = ifelse(onefile, "Rplots.ps", "Rplot\%03d.ps"),
   file to a printer can be found in \file{RedMon} suite available from
   \url{http://www.cs.wisc.edu/~ghost/index.html}.  The command will be
   run in a minimized window.   GSView 4.x provides \file{gsprint.exe}
-  which may be more convenient (it requires GhostScript version 6.0
+  which may be more convenient (it requires Ghostscript version 6.0
   or later).
 #endif
 }

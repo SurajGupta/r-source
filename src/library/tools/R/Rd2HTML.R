@@ -140,7 +140,7 @@ Rd2HTML <-
     function(Rd, out = "", package = "", defines = .Platform$OS.type,
              Links = NULL, Links2 = NULL,
              stages = "render", outputEncoding = "UTF-8",
-             dynamic = FALSE, no_links = FALSE, ...)
+             dynamic = FALSE, no_links = FALSE, fragment=FALSE, ...)
 {
     if (missing(no_links) && is.null(Links) && !dynamic) no_links <- TRUE
     version <- ""
@@ -370,6 +370,9 @@ Rd2HTML <-
                VERB = of1(vhtmlify(block, inEqn)),
                RCODE = of1(vhtmlify(block)),
                TEXT = of1(if(blocktag == "\\command") vhtmlify(block) else addParaBreaks(htmlify(block), blocktag)),
+               USERMACRO =,
+               "\\newcommand" =,
+               "\\renewcommand" =,               
                COMMENT = {},
                LIST =,
                "\\describe"=,
@@ -400,6 +403,16 @@ Rd2HTML <-
                    url <- paste(as.character(block), collapse="")
                    url <- gsub("\n", "", url)
                    of0('<a href="', url, '">', url, '</a>')
+               },
+               "\\href" = {
+               	   if(length(block[[1L]])) {
+               	   	url <- paste(as.character(block[[1L]]), collapse="")
+               	   	url <- gsub("\n", "", url)
+               	   	of0('<a href="', url, '">')
+               	   	closing <- "</a>"
+               	   } else closing <- ""
+               	   writeContent(block[[2L]], tag)
+               	   of0(closing)
                },
                "\\Sexpr"= of0(as.character.Rd(block, deparse=TRUE)),
                "\\cr" =,
@@ -437,24 +450,9 @@ Rd2HTML <-
                "\\dontshow" =,
                "\\testonly" = {}, # do nothing
                "\\method" =,
-               "\\S3method" = {
-                   class <- as.character(block[[2L]])
-                   if (class == "default")
-                       of1('## Default S3 method:\n')
-                   else {
-                       of1("## S3 method for class '")
-                       writeContent(block[[2L]], tag)
-                       of1("':\n")
-                   }
-                   if (!checkInfixMethod(block[[1L]]))
-                       writeContent(block[[1L]], tag)
-               },
+               "\\S3method",
                "\\S4method" = {
-                   of1("## S4 method for signature '")
-                   writeContent(block[[2L]], tag)
-                   of1("':\n")
-                   if (!checkInfixMethod(block[[1L]]))
-                       writeContent(block[[1L]], tag)
+                   # Should not get here
                },
                "\\tabular" = writeTabular(block),
                "\\subsection" = writeSection(block, tag),
@@ -524,8 +522,10 @@ Rd2HTML <-
         itemskip <- FALSE
 
 	tags <- RdTags(blocks)
-
-	for (i in seq_along(tags)) {
+	
+	i <- 0
+	while (i < length(tags)) {
+	    i <- i + 1
             tag <- tags[i]
             block <- blocks[[i]]
             if (length(pendingOpen)) { # Handle $, [ or [[ methods
@@ -549,6 +549,13 @@ Rd2HTML <-
             	pendingClose <<- character()
             }
             switch(tag,
+            "\\method" =,
+            "\\S3method" =,
+            "\\S4method" = {
+               	blocks <- transformMethod(i, blocks, Rdfile)
+               	tags <- RdTags(blocks)
+               	i <- i - 1
+            },
             "\\item" = {
     	    	if (!inlist) {
     	    	    switch(blocktag,
@@ -654,51 +661,58 @@ Rd2HTML <-
     	out <- summary(con)$description
     }
 
-    Rd <- prepare_Rd(Rd, defines = defines, stages = stages, ...)
+    Rd <- prepare_Rd(Rd, defines = defines, stages = stages, 
+                     fragment = fragment, ...)
     Rdfile <- attr(Rd, "Rdfile")
     sections <- RdTags(Rd)
+    if (fragment) {
+    	if (sections[1L] %in% names(sectionOrder))
+    	    for (i in seq_along(sections))
+    	    	writeSection(Rd[[i]], sections[i])
+    	else
+    	    for (i in seq_along(sections))
+    	    	writeBlock(Rd[[i]], sections[i], "")
+    } else {
+	title <- Rd[[1L]]
+	name <- htmlify(Rd[[2L]][[1L]])
 
-    title <- Rd[[1L]]
-    name <- htmlify(Rd[[2L]][[1L]])
+	of0('<!DOCTYPE html PUBLIC "-//W3C//DTD HTML 4.01 Transitional//EN">\n',
+	    '<html><head><title>R: ')
+	of1(htmlify(.Rd_format_title(.Rd_get_title(Rd, encoding="UTF-8"))))
+	of0('</title>\n',
+	    '<meta http-equiv="Content-Type" content="text/html; charset=',
+	    mime_canonical_encoding(outputEncoding),
+	    '">\n')
 
-    of0('<!DOCTYPE html PUBLIC "-//W3C//DTD HTML 4.01 Transitional//EN">\n',
-        '<html><head><title>R: ')
-    ## special for now, as we need to remove leading and trailing spaces
-    title <- trim(as.character(title))
-    title <- htmlify(paste(psub1("^\\s+", "", title[nzchar(title)]),
-                           collapse = " "))
-    of1(title)
-    of0('</title>\n',
-        '<meta http-equiv="Content-Type" content="text/html; charset=',
-        mime_canonical_encoding(outputEncoding),
-        '">\n')
+	of0('<link rel="stylesheet" type="text/css" ',
+	    if (no_links) 'href="R.css">' else 'href="../../R.css">',
+	    '\n</head><body>\n\n',
+	    '<table width="100%" summary="page for ', name)
+	if (nchar(package))
+	    of0(' {', package, '}"><tr><td>',name,' {', package,'}')
+	else
+	    of0('"><tr><td>',name)
+	of0('</td><td align="right">R Documentation</td></tr></table>\n\n')
 
-    of0('<link rel="stylesheet" type="text/css" ',
-        if (no_links) 'href="R.css">' else 'href="../../R.css">',
-        '\n</head><body>\n\n',
-        '<table width="100%" summary="page for ', name)
-    if (nchar(package))
-    	of0(' {', package, '}"><tr><td>',name,' {', package,'}')
-    else
-        of0('"><tr><td>',name)
-    of0('</td><td align="right">R Documentation</td></tr></table>\n\n')
+	of1("<h2>")
+	writeContent(title,sections[1])
+	of1("</h2>")
 
-    of0("<h2>", title,'</h2>\n')
+	for (i in seq_along(sections)[-(1:2)])
+	    writeSection(Rd[[i]], sections[i])
 
-    for (i in seq_along(sections)[-(1:2)])
-    	writeSection(Rd[[i]], sections[i])
-
-    if(version != "")
-        version <- paste('Package <em>', package,
-                         '</em> version ', version,
-                         ' ', sep='')
-    of0('\n')
-    if (version != "")
-    	of0('<hr><div align="center">[', version,
-            if (!no_links) '<a href="00Index.html">Index</a>',
-            ']</div>')
-    of0('\n', 
-        '</body></html>\n')
+	if(version != "")
+	    version <- paste('Package <em>', package,
+			     '</em> version ', version,
+			     ' ', sep='')
+	of0('\n')
+	if (version != "")
+	    of0('<hr><div align="center">[', version,
+		if (!no_links) '<a href="00Index.html">Index</a>',
+		']</div>')
+	of0('\n', 
+	    '</body></html>\n')
+    }
     invisible(out)
 }
 

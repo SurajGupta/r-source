@@ -1,8 +1,7 @@
 /*
  *  R : A Computer Language for Statistical Data Analysis
  *  Copyright (C) 1995, 1996  Robert Gentleman and Ross Ihaka
- *  Copyright (C) 1997--2007  Robert Gentleman, Ross Ihaka
- *                            and the R Development Core Team
+ *  Copyright (C) 1997--2010  The R Development Core Team
  *
  *  This program is free software; you can redistribute it and/or modify
  *  it under the terms of the GNU General Public License as published by
@@ -428,10 +427,6 @@ extern void rl_callback_read_char(void);
 extern char *tilde_expand (const char *);
 # endif
 
-#ifdef HAVE_RL_COMPLETION_MATCHES
-static void initialize_rlcompletion(void); /* forward declaration */
-#endif
-
 attribute_hidden
 char *R_ExpandFileName_readline(const char *s, char *buff)
 {
@@ -636,7 +631,7 @@ static void initialize_rlcompletion(void)
 {
     if(rcompgen_active >= 0) return;
 
-    /* Find if package rcompgen is around */
+    /* Find if package utils is around */
     if(rcompgen_active < 0) {
 	char *p = getenv("R_COMPLETION");
 	if(p && streql(p, "FALSE")) {
@@ -677,9 +672,6 @@ static void initialize_rlcompletion(void)
     RComp_completeTokenSym = install(".completeToken");
     RComp_getFileCompSym   = install(".getFileComp");
     RComp_retrieveCompsSym = install(".retrieveCompletions");
-
-    /* Allow conditional parsing of the ~/.inputrc file. */
-    rl_readline_name = "RCustomCompletion";
 
     /* Tell the completer that we want a crack first. */
     rl_attempted_completion_function = R_custom_completion;
@@ -889,6 +881,8 @@ Rstd_ReadConsole(const char *prompt, unsigned char *buf, int len,
 	    rl_data.readline_eof = 0;
 	    rl_data.prev = rl_top;
 	    rl_top = &rl_data;
+	    /* Allow conditional parsing of the ~/.inputrc file. */
+	    rl_readline_name = "R";
 	    pushReadline(prompt, readline_handler);
 #ifdef HAVE_RL_COMPLETION_MATCHES
 	    initialize_rlcompletion();
@@ -1035,24 +1029,26 @@ void attribute_hidden Rstd_CleanUp(SA_TYPE saveact, int status, int runLast)
 
 	    R_ClearerrConsole();
 	    R_FlushConsole();
-	    R_ReadConsole("Save workspace image? [y/n/c]: ",
-			  buf, 128, 0);
-	    switch (buf[0]) {
-	    case 'y':
-	    case 'Y':
-		saveact = SA_SAVE;
-		break;
-	    case 'n':
-	    case 'N':
-		saveact = SA_NOSAVE;
-		break;
-	    case 'c':
-	    case 'C':
-		jump_to_toplevel();
-		break;
-	    default:
-		goto qask;
-	    }
+	    int res = R_ReadConsole("Save workspace image? [y/n/c]: ",
+				    buf, 128, 0);
+	    if(res) {
+		switch (buf[0]) {
+		case 'y':
+		case 'Y':
+		    saveact = SA_SAVE;
+		    break;
+		case 'n':
+		case 'N':
+		    saveact = SA_NOSAVE;
+		    break;
+		case 'c':
+		case 'C':
+		    jump_to_toplevel();
+		    break;
+		default:
+		    goto qask;
+		}
+	    } else saveact = SA_NOSAVE; /* probably EOF */
 	} else
 	    saveact = SaveAction;
     }
@@ -1096,9 +1092,8 @@ void attribute_hidden Rstd_CleanUp(SA_TYPE saveact, int status, int runLast)
  *  7) PLATFORM DEPENDENT FUNCTIONS
  */
 
-#ifdef HAVE_ERRNO_H
 # include <errno.h>
-#endif
+
 int attribute_hidden
 Rstd_ShowFiles(int nfile,		/* number of files */
 	       const char **file,		/* array of filenames */

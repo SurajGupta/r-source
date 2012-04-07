@@ -17,7 +17,8 @@ install.packages(pkgs, lib, repos = getOption("repos"),
                  dependencies = NA, type = getOption("pkgType"),
                  configure.args = getOption("configure.args"),
                  configure.vars = getOption("configure.vars"),
-                 clean = FALSE, Ncpus = getOption("Ncpus"), \dots)
+                 clean = FALSE, Ncpus = getOption("Ncpus"),
+                 libs_only = FALSE, INSTALL_opts, \dots)
 }
 \arguments{
   \item{pkgs}{character vector of the short names of packages whose
@@ -35,8 +36,8 @@ install.packages(pkgs, lib, repos = getOption("repos"),
     Tilde-expansion will be done on the file paths.
 #endif
     
-    If this is a zero-length character vector, a listbox of available
-    packages is presented where possible.
+    If this is missing or a zero-length character vector, a listbox of
+    available packages is presented where possible.
   }
   \item{lib}{
     character vector giving the library directories where to
@@ -132,6 +133,18 @@ install.packages(pkgs, lib, repos = getOption("repos"),
     \command{make -j \var{Ncpus}} works).  Defaults to \code{1} if the
     option is unset.
   }
+  \item{libs_only}{
+    a logical value: should the \option{--libs-only} option be used to
+    install only additional sub-architectures?  (See also
+    \code{INSTALL_opts}.)  This can also be used on Windows to install
+    just the DLL(s) from a binary package, e.g. to add 64-bit DLLs to a
+    32-bit install. 
+  }
+  \item{INSTALL_opts}{
+    an optional character vector of additional option(s) to be passed to
+    \command{R CMD INSTALL} for a source package install.  E.g.
+    \code{c("--html", "--no-multiarch")}.
+  }
   \item{\dots}{
     Arguments to be passed to \code{\link{download.file}}.
   }
@@ -175,6 +188,9 @@ install.packages(pkgs, lib, repos = getOption("repos"),
   You are advised to run \code{update.packages} before
   \code{install.packages} to ensure that any already installed
   dependencies have their latest versions.
+  
+  \code{libs_only = TRUE} is supported for source installs and for
+  Windows binary installs.
 }
 \value{
   Invisible \code{NULL}.

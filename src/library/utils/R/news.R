@@ -4,7 +4,7 @@ function(query, package = "R", lib.loc = NULL,
 {
     if(is.null(db)) {
         db <- if(package == "R")
-            tools:::.build_news_db_from_R_NEWS()
+            tools:::.build_news_db_from_R_NEWS_Rd()
         else
             tools:::.build_news_db(package, lib.loc, format, reader)
     }
@@ -59,9 +59,10 @@ function(query, package = "R", lib.loc = NULL,
 print.news_db <-
 function(x, ...)
 {
-    if(!(is.null(bad <- attr(x, "bad")))
-       && (length(bad) == NROW(x))
-       && all(!bad)) {
+    if(inherits(x, "news_db_from_Rd") ||
+       (!(is.null(bad <- attr(x, "bad")))
+        && (length(bad) == NROW(x))
+        && all(!bad))) {
         ## Output news in the preferred input format:
         ##   Changes in $VERSION [($DATE)]:
         ##   [$CATEGORY$]
@@ -80,10 +81,15 @@ function(x, ...)
             vchunks[order(as.numeric_version(sub(" *patched", ".1",
                                                  names(vchunks))),
                                  decreasing = TRUE)]
-        vheaders <-
-            sprintf("%sChanges in version %s:\n\n",
-                    c("", rep.int("\n", length(vchunks) - 1L)),
-                    names(vchunks))
+	if(length(vchunks)) {
+            dates <- sapply(vchunks, function(v) v$Date[1L])
+            vheaders <-
+                sprintf("%sChanges in version %s%s:\n\n",
+                        c("", rep.int("\n", length(vchunks) - 1L)),
+                        names(vchunks),
+                        ifelse(is.na(dates), "",
+                               sprintf(" (%s)", dates)))
+        }
         for(i in seq_along(vchunks)) {
             cat(vheaders[i])
             vchunk <- vchunks[[i]]

@@ -12,9 +12,13 @@ else
 endif
 
 DLLFLAGS+= -static-libgcc
+LINKFLAGS+= -static-libgcc
 
 WIN = 32
 BINPREF =
+## SYMPAT = 's/^.* [BCDRT] _/ /p' or 32-bit and older 64-bit toolchains
+## SYMPAT = 's/^.* [BCDRT] / /p' for 64-bit >= May 2010
+SYMPAT = @SYMPAT@
 
 IMPDIR = bin
 
@@ -116,9 +120,11 @@ SED = sed
 SHLIB_CFLAGS = 
 SHLIB_CXXFLAGS = 
 SHLIB_CXXLD = $(CXX)
+## ideally -shared -static-libstdc++, but not for gcc 4.2.1
 SHLIB_CXXLDFLAGS = -shared
 SHLIB_EXT = .dll
 SHLIB_FCLD = $(FC)
+## ideally -shared -static-libgfortran, but not for gcc 4.2.1
 SHLIB_FCLDFLAGS = -shared
 SHLIB_FFLAGS = 
 SHLIB_LD = $(CC)
@@ -146,7 +152,7 @@ ALL_FFLAGS = $(R_XTRA_FFLAGS) $(PKG_FFLAGS) $(FPICFLAGS) $(SHLIB_FFLAGS) $(FFLAG
 ALL_LIBS = $(LOCAL_LIBS) $(PKG_LIBS) $(SHLIB_LIBADD) $(LIBR) $(LIBINTL)
 
 .SUFFIXES:
-.SUFFIXES: .c .cc .cpp .C .f .f90 .f95 .m .mm .M .o .a .def .dll .exe .rc
+.SUFFIXES: .c .cc .cpp .f .f90 .f95 .m .mm .M .o .a .def .dll .exe .rc
 
 .c.o:
 	$(CC) $(ALL_CPPFLAGS) $(ALL_CFLAGS) -c $< -o $@
@@ -157,15 +163,10 @@ ALL_LIBS = $(LOCAL_LIBS) $(PKG_LIBS) $(SHLIB_LIBADD) $(LIBR) $(LIBINTL)
 	$(CXX) $(ALL_CPPFLAGS) $(ALL_CXXFLAGS) -c $< -o $@
 .cpp.o:
 	$(CXX) $(ALL_CPPFLAGS) $(ALL_CXXFLAGS) -c $< -o $@
-.C.o:
-	$(CXX) $(ALL_CPPFLAGS) $(ALL_CXXFLAGS) -c $< -o $@
 .cc.d:
 	@echo "making $@ from $<"
 	@$(CXX) -M $(ALL_CPPFLAGS) $< > $@
 .cpp.d:
-	@echo "making $@ from $<"
-	@$(CXX) -M $(ALL_CPPFLAGS) $< > $@
-.C.d:
 	@echo "making $@ from $<"
 	@$(CXX) -M $(ALL_CPPFLAGS) $< > $@
 .m.o:
@@ -189,7 +190,7 @@ ALL_LIBS = $(LOCAL_LIBS) $(PKG_LIBS) $(SHLIB_LIBADD) $(LIBR) $(LIBINTL)
 
 %.dll:
 	@echo EXPORTS > $*.def
-	@$(NM) $^ | $(SED) -n 's/^.* [BCDRT] _/ /p' >> $*.def
+	@$(NM) $^ | $(SED) -n $(SYMPAT) >> $*.def
 	$(SHLIB_LD) -shared $(DLLFLAGS) -o $@ $*.def $^ $(ALL_LIBS)
 	@$(RM) $*.def
 

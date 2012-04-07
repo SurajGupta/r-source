@@ -41,11 +41,11 @@ file.access(names, mode = 0)
   (\code{\link{system}} and \code{\link{Sys.which}} make the same assumption.)
 #endif
 
-  Please note that it is not good to use this function to test before
-  trying to open a file.  On a multi-tasking system, it is possible that
-  the accessibility of a file will change between the time you call
-  \code{file.access()} and the time you try to open the file.  It is
-  better to wrap file open attempts in \code{\link{try}}.
+  Please note that it is not a good idea to use this function to test
+  before trying to open a file.  On a multi-tasking system, it is
+  possible that the accessibility of a file will change between the time
+  you call \code{file.access()} and the time you try to open the file.
+  It is better to wrap file open attempts in \code{\link{try}}.
 }
 \value{
   An integer vector with values \code{0} for success and \code{-1} for failure.

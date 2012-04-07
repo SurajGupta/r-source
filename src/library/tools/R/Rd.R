@@ -249,7 +249,7 @@ function(RdFiles, outFile = "", type = NULL,
     if(!inherits(outFile, "connection"))
         stop("argument 'outFile' must be a character string or connection")
 
-    db <- .build_Rd_db(files = RdFiles)
+    db <- .build_Rd_db(files = RdFiles, stages="build")
     index <- .build_Rd_index(Rd_contents(db), type = type)
     writeLines(formatDL(index, width = width, indent = indent), outFile)
 }
@@ -347,51 +347,80 @@ function(x, ...)
 }
 
 .build_Rd_db <-
-function(dir = NULL, files = NULL, encoding = "unknown", db_file = NULL)
+function(dir = NULL, files = NULL, encoding = "unknown", db_file = NULL, 
+         stages = c("build", "install"), os = .OStype(), step = 3L, built_file = NULL)
 {
     if(!is.null(dir)) {
+        dir <- file_path_as_absolute(dir)
         man_dir <- file.path(dir, "man")
         if(!file_test("-d", man_dir))
             return(structure(list(), names = character()))
         if(is.null(files))
-            files <- list_files_with_type(man_dir, "docs")
+            files <- list_files_with_type(man_dir, "docs", OS_subdirs=os)
         encoding <- .get_package_metadata(dir, FALSE)["Encoding"]
         if(is.na(encoding)) encoding <- "unknown"
     } else if(is.null(files))
         stop("you must specify 'dir' or 'files'")
 
     .fetch_Rd_object <- function(f) {
-        ## This calls parse_Rd
+        ## This calls parse_Rd if f is a filename
         Rd <- prepare_Rd(f, encoding = encoding,
-                         defines = .Platform$OS.type,
-                         stages = "install", warningCalls = FALSE)
-        structure(Rd, prepared = 3L)
+                         defines = os,
+                         stages = stages, warningCalls = FALSE,
+                         stage2 = step > 1L, stage3 = step > 2L)
+        structure(Rd, prepared = step)
     }
 
-    if(!is.null(db_file) && file_test("-f", db_file)) {
+    if(!is.null(db_file) && file_test("-f", db_file)) { 
         ## message("updating database of parsed Rd files")
         db <- fetchRdDB(sub("\\.rdx$", "", db_file))
         db_names <- names(db) <-
             .readRDS(file.path(dirname(db_file), "paths.rds"))
         ## Files in the db in need of updating:
-        ind <- (files %in% db_names) & file_test("-nt", files, db_file)
-        if(any(ind))
-            db[files[ind]] <- lapply(files[ind], .fetch_Rd_object)
-        ## Files not in the db:
-        ind <- !(files %in% db_names)
-        if(any(ind)) {
-            db1 <- lapply(files[ind], .fetch_Rd_object)
-            names(db1) <- files[ind]
-            db <- c(db, db1)
-        }
+        indf <- (files %in% db_names) & file_test("-nt", files, db_file)
+        ## Also files not in the db:
+        indf <- indf | !(files %in% db_names)
+
         ## Db elements missing from files:
-        ind <- !(db_names %in% files)
-        if(any(ind))
+        ind <- !(db_names %in% files) | (db_names %in% files[indf])
+	if(any(ind))
             db <- db[!ind]
-    } else {
+	files <- files[indf]    
+    } else 
+    	db <- list()
+    	
+    # The built_file is a file of partially processed Rd objects, where build time
+    # \Sexprs have been evaluated.  We'll put the object in place of its
+    # filename to continue processing.
+
+    names(files) <- files    
+    if(!is.null(built_file) && file_test("-f", built_file)) {	
+        basenames <- basename(files)
+ 	built <- .readRDS(built_file)
+ 	names_built <- names(built)
+ 	if ("install" %in% stages) {
+ 	    this_os <- grepl(paste("^", os, "/", sep=""), names_built)
+ 	    name_only <- basename(names_built[this_os])
+ 	    built[name_only] <- built[this_os]
+ 	    some_os <- grepl("/", names(built))
+ 	    built <- built[!some_os]
+ 	    names_built <- names(built)
+ 	}
+ 	built[!(names_built %in% basenames)] <- NULL
+ 	if (length(built)) {
+ 	    which <- match(names(built), basenames)
+ 	    if (all(file_test("-nt", built_file, files[which]))) {
+ 	    	files <- as.list(files) 	
+	    	files[which] <- built
+	    }
+	}
+    }
+    	
+    if(length(files)) {
         ## message("building database of parsed Rd files")
-        db <- lapply(files, .fetch_Rd_object)
-        names(db) <- files
+        db1 <- lapply(files, .fetch_Rd_object)
+        names(db1) <- names(files)
+        db <- c(db, db1)
     }
 
     db
@@ -478,13 +507,9 @@ function(x, which, predefined = TRUE)
     else {
         ## User-defined sections are parsed into lists of length 2, with
         ## the elements the title and the body, respectively.
-        ## <FIXME>
-        ## Section titles should really contain no Rd markup, but might
-        ## they contain Rd comments?
-        ## </FIXME>
         x <- x[RdTags(x) == "\\section"]
         if(length(x)) {
-            ind <- sapply(x, function(e) .Rd_deparse(e[[1L]])) == which
+            ind <- sapply(x, function(e) .Rd_get_text(e[[1L]])) == which
             x <- lapply(x[ind], `[[`, 2L)
         }
     }
@@ -641,21 +666,38 @@ function(x)
 ### * .Rd_get_title
 
 .Rd_get_title <-
-function(x)
+function(x, encoding="")
 {
-    x <- .Rd_get_section(x, "title")
+    title <- .Rd_get_section(x, "title")
 
-    if(length(x)) {
-        ## <FIXME>
-        ## Remove eventually.
-        x <- .Rd_drop_comments(x)
-        ## </FIXME>
-        .strip_whitespace(.Rd_deparse(x, tag = FALSE))
+    result <- character()
+    if(length(title)) {
+        result <- .Rd_get_text(title, encoding=encoding)
+        result <- result[result != ""]
     }
-    else
-        character()
+    if (length(result)) 
+    	result <- result[1]
+    result
 }
 
+### * .Rd_get_text
+
+.Rd_get_text <-
+function(x, encoding="") {
+    # We'd like to use capture.output here, but don't want to depend
+    # on utils, so we duplicate some of it
+    rval <- NULL
+    file <- textConnection("rval", "w", local = TRUE)
+    
+    save <- options(useFancyQuotes = FALSE)
+    sink(file)
+    tryCatch(Rd2txt(x, fragment=TRUE, encoding=encoding),
+             finally = {sink(); options(save); close(file)})    
+    
+    if (is.null(rval)) character()
+    else rval
+}
+     
 ### * .Rd_get_xrefs
 
 .Rd_get_xrefs <-
@@ -663,12 +705,17 @@ function(x)
 {
     out <- matrix(character(), nrow = 0L, ncol = 2L)
     recurse <- function(e) {
-        if(identical(attr(e, "Rd_tag"), "\\link")) {
+        tag <- attr(e, "Rd_tag")
+        if(identical(tag, "\\link")) {
             val <- if(length(e)) { # mvbutils has empty links
                 arg <- as.character(e[[1L]])
                 opt <- attr(e, "Rd_option")
                 c(arg, if(is.null(opt)) "" else as.character(opt))
             } else c("", "")
+            out <<- rbind(out, val)
+        } else if(identical(tag, "\\linkS4class")) {
+            arg <- as.character(e[[1L]])
+            val <- c(arg, sprintf("=%s-class", arg))
             out <<- rbind(out, val)
         }
         if(is.list(e)) lapply(e, recurse)

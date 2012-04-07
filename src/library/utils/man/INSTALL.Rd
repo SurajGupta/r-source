@@ -54,6 +54,10 @@
   Finally, binary package archive files (as created by
   \command{R CMD INSTALL --binary}) can be supplied.
 #endif
+#ifdef windows
+  Finally, zipped binary packages (as created by
+  \command{R CMD INSTALL --binary}) can be supplied.
+#endif
 
   Tarballs are by default unpackaged by the internal \code{\link{tar}}
   function: if needed an external \command{tar} command can be specified

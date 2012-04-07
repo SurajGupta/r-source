@@ -202,7 +202,7 @@ int
 Rf_ReplIteration(SEXP rho, int savestack, int browselevel, R_ReplState *state)
 {
     int c, browsevalue;
-    SEXP value;
+    SEXP value, thisExpr;
     Rboolean wasDisplayed = FALSE;
 
     if(!*state->bufp) {
@@ -257,16 +257,16 @@ Rf_ReplIteration(SEXP rho, int savestack, int browselevel, R_ReplState *state)
 	R_Visible = FALSE;
 	R_EvalDepth = 0;
 	resetTimeLimits();
-	PROTECT(R_CurrentExpr);
+	PROTECT(thisExpr = R_CurrentExpr);
 	R_Busy(1);
-	value = eval(R_CurrentExpr, rho);
+	value = eval(thisExpr, rho);
 	SET_SYMVALUE(R_LastvalueSymbol, value);
 	wasDisplayed = R_Visible;
 	if (R_Visible)
 	    PrintValueEnv(value, rho);
 	if (R_CollectWarnings)
 	    PrintWarnings();
-	Rf_callToplevelHandlers(R_CurrentExpr, value, TRUE, wasDisplayed);
+	Rf_callToplevelHandlers(thisExpr, value, TRUE, wasDisplayed);
 	R_CurrentExpr = value; /* Necessary? Doubt it. */
 	UNPROTECT(1);
 	R_IoBufferWriteReset(&R_ConsoleIob);
@@ -672,6 +672,11 @@ int R_SignalHandlers = 1;  /* Exposed in R_interface.h */
    Don't use R-specific type, e.g. Rboolean */
 /* int R_Is_Running = 0; now in Defn.h */
 
+#include <time.h>
+#ifdef HAVE_SYS_TIME_H
+# include <sys/time.h>
+#endif
+
 void setup_Rmainloop(void)
 {
     volatile int doneit;
@@ -682,7 +687,7 @@ void setup_Rmainloop(void)
     char localedir[PATH_MAX+20];
 #endif
     char deferred_warnings[6][250];
-    int ndeferred_warnings = 0;
+    volatile int ndeferred_warnings = 0;
 
     InitConnections(); /* needed to get any output at all */
 
@@ -762,6 +767,24 @@ void setup_Rmainloop(void)
     bindtextdomain("R-base", localedir);
 #endif
 #endif
+
+    /* make sure srand is called before R_tmpnam, PR#14381
+       Copied from RNG.c: Randomize */
+    {
+	int seed;
+#if HAVE_GETTIMEOFDAY
+	{
+	    struct timeval tv;
+	    gettimeofday (&tv, NULL);
+	    seed = ((uint64_t) tv.tv_usec << 16) ^ tv.tv_sec;
+	}
+#elif HAVE_TIME
+	seed = time(NULL);
+#else
+	/* unlikely, but use random contents */
+#endif
+	srand(seed);    
+    }
 
     InitTempDir(); /* must be before InitEd */
     InitMemory();

@@ -1,9 +1,10 @@
 % File src/library/base/man/Random.Rd
 % Part of the R package, http://www.R-project.org
-% Copyright 1995-2009 R Core Development Team
+% Copyright 1995-2010 R Core Development Team
 % Distributed under GPL 2 or later
 
 \name{Random}
+\alias{Random}
 \alias{RNG}
 \alias{RNGkind}
 \alias{RNGversion}
@@ -247,9 +248,13 @@ set.seed(seed, kind = NULL, normal.kind = NULL)
 }
 \author{of RNGkind: Martin Maechler. Current implementation, B. D. Ripley}
 
-\seealso{\code{\link{runif}}, \code{\link{rnorm}}, \ldots.}
-%       this is ./Uniform.Rd
-\examples{
+\seealso{
+  \code{\link{sample}} for random sampling with and without replacement.
+  
+  \link{Distributions} for functions for random-variate generation from
+  standard distributions.
+}
+\examples{\donttest{
 require(stats)
 
 ## the default random seed is 626 integers, so only print a few
@@ -290,6 +295,6 @@ RNGkind(ok[1])
 sum(duplicated(runif(1e6))) # around 110 for default generator
 ## and we would expect about almost sure duplicates beyond about
 qbirthday(1-1e-6, classes=2e9) # 235,000
-}
+}}
 \keyword{distribution}
 \keyword{sysdata}

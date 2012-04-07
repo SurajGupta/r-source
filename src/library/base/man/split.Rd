@@ -86,17 +86,17 @@ sapply(xg, length)
 sapply(xg, mean)
 
 ### Calculate 'z-scores' by group (standardize to mean zero, variance one)
-
 z <- unsplit(lapply(split(x, g), scale), g)
-# check group means are zero
-tapply(z, g, mean)
 
 # or
 
-z <- x
-split(z, g) <- lapply(split(x, g), scale)
-# check group sds are one
+zz <- x
+split(zz, g) <- lapply(split(x, g), scale)
+
+# and check that the within-group std dev is indeed one
 tapply(z, g, sd)
+tapply(zz, g, sd)
+
 
 ### data frame variation
 

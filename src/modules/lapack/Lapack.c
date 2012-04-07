@@ -25,7 +25,9 @@
 #ifdef HAVE_CONFIG_H
 # include <config.h>
 #endif
+
 #include <Defn.h>
+#include <ctype.h> /* for toupper */
 
 #include "Lapack.h"
 
@@ -303,7 +305,7 @@ static SEXP modLa_rg(SEXP x, SEXP only_values)
 static SEXP modLa_dlange(SEXP A, SEXP type)
 {
     SEXP x, val;
-    int *xdims, m, n, nprot = 1;
+    int *xdims, m, n, nprot = 0;
     double *work = NULL;
     char typNorm[] = {'\0', '\0'};
 
@@ -314,7 +316,7 @@ static SEXP modLa_dlange(SEXP A, SEXP type)
     } else
 	x = A;
     if (!(isMatrix(x) && isReal(x))) {
-	UNPROTECT(1);
+	UNPROTECT(nprot);
 	error(_("'A' must be a numeric matrix"));
     }
 
@@ -324,7 +326,7 @@ static SEXP modLa_dlange(SEXP A, SEXP type)
 
     typNorm[0] = La_norm_type(CHAR(asChar(type)));
 
-    val = PROTECT(allocVector(REALSXP, 1));
+    val = PROTECT(allocVector(REALSXP, 1)); nprot++;
     if(*typNorm == 'I') work = (double *) R_alloc(m, sizeof(double));
     REAL(val)[0] = F77_CALL(dlange)(typNorm, &m, &n, REAL(x), &m, work);
 
@@ -1100,6 +1102,7 @@ static SEXP modqr_qy_real(SEXP Q, SEXP Bin, SEXP trans)
     return B;
 }
 
+/* TODO : add  a *complex* version, using  LAPACK ZGETRF() */
 static SEXP moddet_ge_real(SEXP Ain, SEXP logarithm)
 {
     int i, n, *Adims, info, *jpvt, sign, useLog;

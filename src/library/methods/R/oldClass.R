@@ -199,6 +199,11 @@ slotsFromS3 <- function(object) {
 .oldReplaceFun <- function(from, to, value)
     stop(gettextf("explicit replacement not defined for as(x, \"%s\") <- value for old-style class \"%s\"", to, class(from)[1L]), domain = NA)
 
+## the inheritance of these S3 classes must be decided on a per-instance
+## basis.  At one time, there were classes in base/stats that had this
+## property, (e.g., POSIXt, POSIX{cl}t) but apparently no longer.
+## The possibility is still allowed
+## for user-defined S3 classes.
 .setOldIs <- function(Classes, where) {
     if(length(Classes) != 2)
         stop(gettextf("argument 'Classes' must be a vector of two classes; got an argument of length %d", length(Classes)), domain = NA)
@@ -287,3 +292,10 @@ S3Class <- function(object) {
     def
 }
 
+## extends() w/o conditional inheritance:  used for S3 inheritance, method
+## selection on S4 objects
+..extendsForS3 <- function(Class)
+    extends(Class, maybe = FALSE)
+## dummy version while generating methods package
+.extendsForS3 <- function(Class)
+    extends(Class)

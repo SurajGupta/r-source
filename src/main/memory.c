@@ -1301,6 +1301,8 @@ static void RunGenCollect(R_size_t size_needed)
 	if (gdd) {
 	    FORWARD_NODE(gdd->displayList);
 	    FORWARD_NODE(gdd->savedSnapshot);
+	    if (gdd->dev)
+	    	FORWARD_NODE(gdd->dev->eventEnv);
 	}
     }
 
@@ -2888,6 +2890,7 @@ void attribute_hidden (SET_LATIN1)(SEXP x) { SET_LATIN1(x); }
 void attribute_hidden (SET_UTF8)(SEXP x) { SET_UTF8(x); }
 int  attribute_hidden (ENC_KNOWN)(SEXP x) { return ENC_KNOWN(x); }
 void attribute_hidden (SET_CACHED)(SEXP x) { SET_CACHED(x); }
+int  attribute_hidden (IS_CACHED)(SEXP x) { return IS_CACHED(x); }
 
 /*******************************************/
 /* Non-sampling memory use profiler
@@ -3068,4 +3071,5 @@ int Seql(SEXP a, SEXP b)
     	return result;
     }
 }
+
 

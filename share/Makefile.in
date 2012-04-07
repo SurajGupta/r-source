@@ -14,9 +14,7 @@ distdir = $(top_builddir)/$(PACKAGE)-$(VERSION)/$(subdir)
 DISTFILES = Makefile.in
 
 ## subdirectories of R_HOME/share
-SUBDIRS_WITH_NO_BUILD = R encodings licenses make perl sh texmf java
-## subdirectories of R_HOME/share/perl
-SUBDIRS_SHARE_PERL = R File/Copy
+SUBDIRS_WITH_NO_BUILD = R encodings licenses make sh texmf java
 
 all: Makefile R
 
@@ -39,12 +37,11 @@ installdirs:
 	@$(MKINSTALLDIRS) "$(DESTDIR)$(rsharedir)/java"
 	@$(MKINSTALLDIRS) "$(DESTDIR)$(rsharedir)/licenses"
 	@$(MKINSTALLDIRS) "$(DESTDIR)$(rsharedir)/make"
-	@$(MKINSTALLDIRS) "$(DESTDIR)$(rsharedir)/perl"
-	@for d in $(SUBDIRS_SHARE_PERL); do \
-	  $(MKINSTALLDIRS) "$(DESTDIR)$(rsharedir)/perl/$${d}"; \
-	done
 	@$(MKINSTALLDIRS) "$(DESTDIR)$(rsharedir)/sh"
 	@$(MKINSTALLDIRS) "$(DESTDIR)$(rsharedir)/texmf"
+	@$(MKINSTALLDIRS) "$(DESTDIR)$(rsharedir)/texmf/bibtex/bib"
+	@$(MKINSTALLDIRS) "$(DESTDIR)$(rsharedir)/texmf/bibtex/bst"
+	@$(MKINSTALLDIRS) "$(DESTDIR)$(rsharedir)/texmf/tex/latex"
 install-message:
 	@$(ECHO) "installing share ..."
 install-sources: installdirs
@@ -63,17 +60,17 @@ install-sources: installdirs
 	@for f in $(srcdir)/make/*.mk; do \
 	  $(INSTALL_DATA) $${f} "$(DESTDIR)$(rsharedir)/make"; \
 	done
-	@for d in $(SUBDIRS_SHARE_PERL); do \
-	  for f in $(srcdir)/perl/$${d}/*.pm; do \
-	    $(INSTALL_DATA) $${f} "$(DESTDIR)$(rsharedir)/perl/$${d}"; \
-	  done; \
-	done
 	@for f in $(srcdir)/sh/*.sh; do \
 	  $(INSTALL_DATA) $${f} "$(DESTDIR)$(rsharedir)/sh"; \
 	done
-	@for f in $(srcdir)/texmf/*.sty \
-		  $(srcdir)/texmf/*.fd; do \
-	  $(INSTALL_DATA) $${f} "$(DESTDIR)$(rsharedir)/texmf"; \
+	@for f in $(srcdir)/texmf/bibtex/bib/*; do \
+	  $(INSTALL_DATA) $${f} "$(DESTDIR)$(rsharedir)/texmf/bibtex/bib"; \
+	done
+	@for f in $(srcdir)/texmf/bibtex/bst/*; do \
+	  $(INSTALL_DATA) $${f} "$(DESTDIR)$(rsharedir)/texmf/bibtex/bst"; \
+	done
+	@for f in $(srcdir)/texmf/tex/latex/*; do \
+	  $(INSTALL_DATA) $${f} "$(DESTDIR)$(rsharedir)/texmf/tex/latex"; \
 	done
 install-strip: install
 

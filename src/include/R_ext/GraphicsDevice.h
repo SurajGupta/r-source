@@ -141,7 +141,7 @@ struct _DevDesc {
      * Event handling entries
      ********************************************************/
 
-    /* These determine whether getGraphicsEvent will try to set an event handler */
+    /* The next 4 are not currently used, but are kept for back compatibility */
 
     Rboolean canGenMouseDown; /* can the device generate mousedown events */
     Rboolean canGenMouseMove; /* can the device generate mousemove events */
@@ -150,7 +150,7 @@ struct _DevDesc {
 
     Rboolean gettingEvent;    /* This is set while getGraphicsEvent
 				 is actively looking for events */
-
+    
     /********************************************************
      * Device procedures.
      ********************************************************/
@@ -425,6 +425,29 @@ struct _DevDesc {
     void (*rect)();
 #endif
     /* 
+     * device_Path should draw one or more sets of points 
+     * as a single path
+     * 
+     * 'x' and 'y' give the points
+     *
+     * 'npoly' gives the number of polygons in the path
+     * MUST be at least 1
+     *
+     * 'nper' gives the number of points in each polygon
+     * each value MUST be at least 2
+     *
+     * 'winding' says whether to fill using the nonzero 
+     * winding rule or the even-odd rule
+     */
+#if R_USE_PROTOTYPES
+    void (*path)(double *x, double *y, 
+                 int npoly, int *nper,
+                 Rboolean winding,
+                 const pGEcontext gc, pDevDesc dd);
+#else
+    void (*path)();
+#endif
+    /* 
      * device_Raster should draw a raster image justified 
      * at the given location,
      * size, and rotation (not all devices may be able to rotate?)
@@ -537,13 +560,8 @@ struct _DevDesc {
     void (*onExit)();
 #endif
     /*
-     * device_getEvent is called by do_getGraphicsEvent to get a modal
-     * graphics event.  It should call R_ProcessEvents() until one
-     * of the event handlers sets eventResult to a non-null value,
-     * and then return it
-     * An example is ...
-     *
-     * static SEXP GA_getEvent(SEXP eventRho, const char *prompt);
+     * device_getEvent is no longer used, but the slot is kept for back
+     * compatibility of the structure.
      */
     SEXP (*getEvent)(SEXP, const char *);
 
@@ -590,6 +608,25 @@ struct _DevDesc {
     Rboolean useRotatedTextInContour;
 
     /* --------- Post-2.7.0 features --------- */
+
+    /* Added in 2.12.0:  Changed graphics event handling. */
+    
+    SEXP eventEnv;		/* This is an environment holding  event handlers. */
+    /*
+     * eventHelper(dd, 1) is called by do_getGraphicsEvent before looking for a 
+     * graphics event.  It will then call R_ProcessEvents() and eventHelper(dd, 2)
+     * until this or another device returns sets a non-null result value in eventEnv,
+     * at which time eventHelper(dd, 0) will be called.
+     * 
+     * An example is ...
+     *
+     * static SEXP GA_eventHelper(pDevDesc dd, int code);
+     */
+#if R_USE_PROTOTYPES
+    void (*eventHelper)(pDevDesc dd, int code);
+#else
+    void (*eventHelper)();
+#endif
 
     /* Area for future expansion.
        By zeroing this, devices are more likely to work if loaded
@@ -743,9 +780,9 @@ typedef enum {meMouseDown = 0,
 #define doKeybd			Rf_doKeybd
 #define doMouseEvent		Rf_doMouseEvent
 
-SEXP doMouseEvent(SEXP eventRho, pDevDesc dd, R_MouseEvent event,
+void doMouseEvent(pDevDesc dd, R_MouseEvent event,
                   int buttons, double x, double y);
-SEXP doKeybd(SEXP eventRho, pDevDesc dd, R_KeyName rkey,
+void doKeybd(pDevDesc dd, R_KeyName rkey,
 	     const char *keyname);
 
 

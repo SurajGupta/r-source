@@ -14,22 +14,25 @@ export R_VERSION
 R_OSTYPE="unix"
 export R_OSTYPE
 
-## Add 'share/perl' to the perl library path.
-if test -n "${PERL5LIB}"; then
-  PERL5LIB="${R_SHARE_DIR}/perl:${PERL5LIB}"
-  export PERL5LIB
+## Append 'share/texmf/...' to TeX's input search path.
+if test -z "${TEXINPUTS}"; then
+  TEXINPUTS=".:${R_SHARE_DIR}/texmf/tex/latex:"
 else
-  PERLLIB="${R_SHARE_DIR}/perl:${PERLLIB}"
-  export PERLLIB
-fi
-
-## Append 'share/texmf' to TeX's input search path.
-if test -z "$TEXINPUTS}"; then
-  TEXINPUTS=".:${R_SHARE_DIR}/texmf:"
-else
-  TEXINPUTS=".:${TEXINPUTS}:${R_SHARE_DIR}/texmf:"
+  TEXINPUTS=".:${TEXINPUTS}:${R_SHARE_DIR}/texmf/tex/latex:"
 fi
 export TEXINPUTS
+if test -z "${BIBINPUTS}"; then
+  BIBINPUTS=".:${R_SHARE_DIR}/texmf/bibtex/bib:"
+else
+  BIBINPUTS=".:${BIBINPUTS}:${R_SHARE_DIR}/texmf/bibtex/bib:"
+fi
+export BIBINPUTS
+if test -z "${BSTINPUTS}"; then
+  BSTINPUTS=".:${R_SHARE_DIR}/texmf/bibtex/bst:"
+else
+  BSTINPUTS=".:${BSTINPUTS}:${R_SHARE_DIR}/texmf/bibtex/bst:"
+fi
+export BSTINPUTS
 
 . "${R_HOME}/etc${R_ARCH}/Renviron"
 export `sed 's/^ *#.*//; s/^\(.*\)=.*/\1/' "${R_HOME}/etc${R_ARCH}/Renviron"`
@@ -59,7 +62,7 @@ case "${1}" in
 esac
 shift
 
-exec "${cmd}" ${extra} "${@}"
+exec "${cmd}" ${extra} @OSF_SH_BUG@
 
 ### Local Variables: ***
 ### mode: sh ***

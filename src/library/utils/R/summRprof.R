@@ -94,31 +94,40 @@ summaryRprof <-
     if (sum(fcounts) == 0)
         stop("no events were recorded")
 
-    digits <- ifelse(sample.interval < 0.01,  3L, 2L)
-    firstnum <- round(fcounts*sample.interval, digits)
-    uniquenum <- round(ucounts*sample.interval, digits)
 
-    firstpct <- round(100*firstnum/sum(firstnum), 1)
-    uniquepct <- round(100*uniquenum/sum(firstnum), 1)
+    firstnum <- fcounts*sample.interval
+    uniquenum <- ucounts*sample.interval
 
-    if (memory == "both") memtotal <-  round(umem/1048576, 1)     ## 0.1MB
-
+    ## sort and form % on unrounded numbers
     index1 <- order(-firstnum, -uniquenum)
     index2 <- order(-uniquenum, -firstnum)
+
+    firstpct <- round(100*firstnum/sum(firstnum), 2)
+    uniquepct <- round(100*uniquenum/sum(firstnum), 2)
+
+    digits <- ifelse(sample.interval < 0.01,  3L, 2L)
+    firstnum <- round(firstnum, digits)
+    uniquenum <- round(uniquenum, digits)
+
+    if (memory == "both") memtotal <-  round(umem/1048576, 1)     ## 0.1MB
 
     rval <- data.frame(firstnum, firstpct, uniquenum, uniquepct)
     names(rval) <- c("self.time", "self.pct", "total.time", "total.pct")
     rownames(rval) <- fnames
     if (memory == "both") rval$mem.total <- memtotal
 
-    list(by.self = rval[index1, ],
-         by.total = rval[index2, c(3L, 4L,  if(memory == "both") 5L, 1L, 2L)],
+    by.self <- rval[index1, ]
+    by.self <- by.self[by.self[,1L] > 0, ]
+    by.total <- rval[index2, c(3L, 4L,  if(memory == "both") 5L, 1L, 2L)]
+    list(by.self = by.self, by.total = by.total,
+         sample.interval = sample.interval,
          sampling.time = sum(fcounts)*sample.interval)
 }
 
 Rprof_memory_summary <- function(filename, chunksize = 5000,
                                  label = c(1, -1), aggregate = 0, diff = FALSE,
-                                 exclude = NULL, sample.interval){
+                                 exclude = NULL, sample.interval)
+{
 
     fnames <- NULL
     memcounts <- NULL

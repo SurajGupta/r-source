@@ -2447,3 +2447,19 @@ switch("a", a=, b=, c=, )
 switch("a", a=, b=, c=, invisible(4))
 .Last.value
 ## visiblilty changed in 2.11.0
+
+
+## rounding error in aggregate.ts
+## https://stat.ethz.ch/pipermail/r-devel/2010-April/057225.html
+x <- rep(6:10, 1:5)
+aggregate(as.ts(x), FUN = mean, ndeltat = 5)
+x <- rep(6:10, 1:5)
+aggregate(as.ts(x), FUN = mean, nfrequency = 0.2)
+## platform-dependent in 2.10.1
+
+
+## wish of PR#9574
+a <- c(0.1, 0.3, 0.4, 0.5, 0.3, 0.0001)
+format.pval(a, eps=0.01)
+format.pval(a, eps=0.01, nsmall =2)
+## granted in 2.12.0

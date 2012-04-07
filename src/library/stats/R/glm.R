@@ -381,7 +381,8 @@ glm.fit <-
 
 print.glm <- function(x, digits= max(3, getOption("digits") - 3), ...)
 {
-    cat("\nCall: ", deparse(x$call), "\n\n")
+    cat("\nCall:  ",
+	paste(deparse(x$call), sep="\n", collapse = "\n"), "\n\n", sep="")
     if(length(coef(x))) {
         cat("Coefficients")
         if(is.character(co <- x$contrasts))
@@ -590,7 +591,7 @@ summary.glm <- function(object, dispersion = NULL,
     p <- object$rank
     if (p > 0) {
         p1 <- 1L:p
-        Qr <- object$qr
+	Qr <- qr.lm(object)
         ## WATCHIT! doesn't this rely on pivoting not permuting 1L:p? -- that's quaranteed
         coef.p <- object$coefficients[Qr$pivot[p1]]
         covmat.unscaled <- chol2inv(Qr$qr[p1,p1,drop=FALSE])
@@ -657,15 +658,15 @@ print.summary.glm <-
 	      symbolic.cor = x$symbolic.cor,
 	      signif.stars = getOption("show.signif.stars"), ...)
 {
-    cat("\nCall:\n")
-    cat(paste(deparse(x$call), sep="\n", collapse="\n"), "\n\n", sep="")
+    cat("\nCall:\n",
+	paste(deparse(x$call), sep="\n", collapse = "\n"), "\n\n", sep="")
     cat("Deviance Residuals: \n")
     if(x$df.residual > 5) {
 	x$deviance.resid <- quantile(x$deviance.resid,na.rm=TRUE)
 	names(x$deviance.resid) <- c("Min", "1Q", "Median", "3Q", "Max")
     }
-    print.default(x$deviance.resid, digits=digits, na.print = "",
-                  print.gap = 2)
+    xx <- zapsmall(x$deviance.resid, digits + 1)
+    print.default(xx, digits=digits, na.print = "", print.gap = 2)
 
     if(length(x$aliased) == 0L) {
         cat("\nNo Coefficients\n")

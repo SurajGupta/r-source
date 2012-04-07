@@ -26,9 +26,9 @@ strptime(x, format, tz = "")
 }
 \arguments{
   \item{x}{An object to be converted.}
-  \item{tz}{A timezone specification to be used for the conversion.
-    System-specific (see \code{\link{as.POSIXlt}}), but \code{""} is the
-    current time zone, and \code{"GMT"} is UTC.}
+  \item{tz}{A character string specifying the timezone to be used for
+    the conversion.  System-specific (see \code{\link{as.POSIXlt}}), but
+    \code{""} is the current time zone, and \code{"GMT"} is UTC.}
   \item{format}{A character string.  The default for the \code{format}
     methods is
     \code{"\%Y-\%m-\%d \%H:\%M:\%S"} if any component has a time
@@ -45,13 +45,13 @@ strptime(x, format, tz = "")
   convert objects from the classes \code{"POSIXlt"} and \code{"POSIXct"}
   (not \code{strftime}) to character vectors.
   
-  \code{strptime} converts character strings to class \code{"POSIXlt"}:
-  its input \code{x} is first coerced to character if necessary.  Each
-  string is processed as far as necessary for the format specified: any
-  trailing characters are ignored.
+  \code{strptime} converts character vectors to class \code{"POSIXlt"}:
+  its input \code{x} is first converted by \code{\link{as.character}}.
+  Each input string is processed as far as necessary for the format
+  specified: any trailing characters are ignored.
 
   \code{strftime} is a wrapper for \code{format.POSIXlt}, and it and
-  \code{format.POSIXct} first converts to class \code{"POSIXlt"} by
+  \code{format.POSIXct} first convert to class \code{"POSIXlt"} by
   calling \code{\link{as.POSIXlt}}.  Note that only that conversion
   depends on the time zone.
 
@@ -111,9 +111,8 @@ strptime(x, format, tz = "")
     \item{\code{\%y}}{Year without century (00--99). Values 00 to 68 are
       prefixed by 20 and 69 to 99 by 19 -- that is the behaviour specified
       by the 2004 POSIX standard, but it does also say \sQuote{it is
-	expected that in a future version of IEEE Std 1003.1-2001 the default
-	century inferred from a 2-digit year will change}.
-    }
+  expected that in a future version the default century inferred from a
+  2-digit year will change}.}
     \item{\code{\%Y}}{Year with century.}
     \item{\code{\%z}}{Signed offset in hours and minutes from UTC, so
       \code{-0800} is 8 hours behind UTC.}
@@ -122,7 +121,11 @@ strptime(x, format, tz = "")
   }
   Where leading zeros are shown they will be used on output but are
   optional on input.
-
+  
+  Note that when \code{\%z} or \code{\%Z} is used for output with an
+  object with an assigned timezone an attempt is made to use the values
+  for that timezone --- but it is not guaranteed to succeed.
+  
   Also defined in the current standards but less widely implemented
   (e.g. not for output on Windows) are
   \describe{
@@ -222,7 +225,7 @@ strptime(x, format, tz = "")
 }
 \seealso{
   \link{DateTimeClasses} for details of the date-time classes;
-  \code{\link{locales}} to query or set a locale.
+  \link{locales} to query or set a locale.
 
   Your system's help pages on \code{strftime} and \code{strptime} to
   see how to specify their formats.
@@ -239,7 +242,7 @@ strptime(x, format, tz = "")
   number representation nor era available in any locale.
 #endif
 }
-\examples{
+\examples{\donttest{
 ## locale-specific version of date()
 format(Sys.time(), "\%a \%b \%d \%X \%Y \%Z")
 
@@ -275,6 +278,6 @@ attr(x, "tzone")
 
 ## An RFC 822 header (Eastern Canada, during DST)
 strptime("Tue, 23 Mar 2010 14:36:38 -0400",  "\%a, \%d \%b \%Y \%H:\%M:\%S \%z")
-}
+}}
 \keyword{utilities}
 \keyword{chron}

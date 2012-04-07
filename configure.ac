@@ -1,8 +1,8 @@
-	### configure.ac					-*- Autoconf -*-
+### configure.ac					-*- Autoconf -*-
 ###
 ### Process this file with autoconf to produce a configure script.
 ###
-### Copyright (C) 1998-2009 R Core Team
+### Copyright (C) 1998-2010 R Core Team
 ###
 ### This file is part of R.
 ###
@@ -430,27 +430,27 @@ AC_ARG_VAR([R_BATCHSAVE],
 AC_ARG_VAR([MAIN_CFLAGS],
            [additional CFLAGS used when compiling the main binary])
 AC_ARG_VAR([SHLIB_CFLAGS],
-           [additional CFLAGS used when building shared libraries])
+           [additional CFLAGS used when building shared objects])
 AC_ARG_VAR([MAIN_FFLAGS],
            [additional FFLAGS used when compiling the main binary])
 AC_ARG_VAR([SHLIB_FFLAGS],
-           [additional FFLAGS used when building shared libraries])
+           [additional FFLAGS used when building shared objects])
 AC_ARG_VAR([MAIN_LD],
            [command used to link the main binary])
 AC_ARG_VAR([MAIN_LDFLAGS],
            [flags which are necessary for loading a main program which
-            will load shared library modules (DLLs) at runtime])
+            will load shared objects (DLLs) at runtime])
 AC_ARG_VAR([CPICFLAGS],
            [special flags for compiling C code to be turned into a
-            shared library.])
+            shared object.])
 AC_ARG_VAR([FPICFLAGS],
            [special flags for compiling Fortran code to be turned into a
-            shared library.])
+            shared object.])
 AC_ARG_VAR([FCPICFLAGS],
            [special flags for compiling Fortran 95 code to be turned into a
-            shared library.])
+            shared object.])
 AC_ARG_VAR([SHLIB_LD],
-           [command for linking shared libraries which contain object
+           [command for linking shared objects which contain object
             files from a C or Fortran compiler only])
 AC_ARG_VAR([SHLIB_LDFLAGS],
            [special flags used by SHLIB_LD])
@@ -461,14 +461,14 @@ AC_ARG_VAR([DYLIB_LDFLAGS],
            [special flags used for make a dynamic library])
 AC_ARG_VAR([CXXPICFLAGS],
            [special flags for compiling C++ code to be turned into a
-            shared library])
+            shared object])
 AC_ARG_VAR([SHLIB_CXXLD],
-           [command for linking shared libraries which contain object
-            files from a C++ compiler])
+           [command for linking shared objects which contain object
+            files from the C++ compiler])
 AC_ARG_VAR([SHLIB_CXXLDFLAGS],
            [special flags used by SHLIB_CXXLD])
 AC_ARG_VAR([SHLIB_FCD],
-           [command for linking shared libraries which contain object
+           [command for linking shared objects which contain object
             files from the Fortran 95 compiler])
 AC_ARG_VAR([SHLIB_FCLDFLAGS],
            [special flags used by SHLIB_FCLD])
@@ -537,6 +537,9 @@ R_PROG_INSTALL
 AC_PATH_PROGS(SED, sed, /bin/sed, [/usr/xpg4/bin:$PATH])
 ## we need an tr that interprets \r for Rdiff
 AC_PATH_PROGS(TR, tr, /bin/tr, [/usr/xpg4/bin:$PATH])
+## 'which' is not POSIX, and might be a shell builtin or alias
+##  (but should not be in 'sh')
+AC_PATH_PROGS(WHICH, which, which)
 ## Make
 : ${MAKE=make}
 AC_SUBST(MAKE)
@@ -721,20 +724,16 @@ AC_HEADER_SYS_WAIT
 ## Some of these are also checked for when Autoconf computes the default
 ## includes.
 AC_CHECK_HEADERS(arpa/inet.h dl.h dlfcn.h elf.h fcntl.h floatingpoint.h \
-  fpu_control.h glob.h grp.h limits.h locale.h \
-  netdb.h netinet/in.h pwd.h stdbool.h strings.h \
+  fpu_control.h glob.h grp.h locale.h \
+  netdb.h netinet/in.h pwd.h strings.h \
   sys/param.h sys/select.h sys/socket.h sys/stat.h sys/resource.h \
   sys/time.h sys/times.h sys/utsname.h time.h unistd.h)
 ## </NOTE>
 ## <NOTE>
 ## These are C99 headers but some C code (written to work also
 ## without assuming C99) may need the corresponding conditionals.
-AC_CHECK_HEADERS(errno.h inttypes.h stdarg.h stdint.h string.h)
-## </NOTE>
-## <NOTE>
-## src/main/regex.c uses HAVE_LIBINTL_H.
-## But then we want full gettext support and AM_GNU_GETTEXT.
-## AC_CHECK_HEADERS(libintl.h)
+AC_CHECK_HEADERS(errno.h inttypes.h limits.h stdarg.h stdbool.h \
+                 stdint.h string.h)
 ## </NOTE>
 
 R_HEADER_SETJMP
@@ -955,9 +954,7 @@ case "${host_os}" in
 	    esac
           fi
         fi
-	## -mp is the preferred form of -mieee-fp
-        R_PROG_CC_FLAG([-mp],
-                       R_SH_VAR_ADD(R_XTRA_CFLAGS, [-mp]))
+	## used to set IEEE flag, but this is version-dependent.
         ;;
     esac
     case  "${F77}" in
@@ -1007,8 +1004,6 @@ case "${host_os}" in
 	    esac
           fi
         fi
-        R_PROG_CC_FLAG([-mp],
-                       R_SH_VAR_ADD(R_XTRA_FFLAGS, [-mp]))
         ;;
     esac
     case  "${CXX}" in
@@ -1035,8 +1030,6 @@ case "${host_os}" in
 	    esac
           fi
         fi
-        R_PROG_CC_FLAG([-mp],
-                       R_SH_VAR_ADD(R_XTRA_CXXFLAGS, [-mp]))
         ;;
     esac
     ;;
@@ -1083,7 +1076,7 @@ AC_SUBST(OBJCXXFLAGS)
 ##
 ## MAIN_LD, MAINLD_FLAGS
 ##   command and flags for loading the main binary so that it will load
-##   shared libraries (DLLs) at runtime, also for profiling.
+##   shared objects (DLLs) at runtime, also for profiling.
 ## CPICFLAGS, CXXPICFLAGS, FPICFLAGS, FCPICFLAGS
 ##   flags for compiling C, C++, and Fortran library code.
 ## SHLIB_LD, SHLIB_LDFLAGS
@@ -1645,8 +1638,7 @@ AC_SUBST(SHLIB_LDFLAGS)
 AC_SUBST(SHLIB_LIBADD)
 AC_SUBST(SHLIB_EXT)
 AC_DEFINE_UNQUOTED(SHLIB_EXT, "${SHLIB_EXT}",
-[Define this to be the extension used for shared libraries on your
-system.])
+[Define this to be the extension used for shared objects on your system.])
 AM_CONDITIONAL(USE_EXPORTFILES, [test "x${use_exportfiles}" = xyes])
 AC_SUBST(DYLIB_EXT)
 AC_SUBST(LIBR_LDFLAGS)
@@ -1688,7 +1680,7 @@ AC_CHECK_DECLS([alloca], , ,
 R_CHECK_FUNCS([expm1 hypot log1p log2 log10 rint], [#include <math.h>])
 
 ## fseeko/ftello may be macros, matherr is redefined
-## is.blank should be a macro according to C99
+## isblank should be a macro according to C99
 AC_CHECK_FUNCS(fseeko ftello isblank matherr)
 
 R_CHECK_FUNCS([fcntl], [#include <fcntl.h>])
@@ -1698,6 +1690,9 @@ R_CHECK_FUNCS([sigaction sigaltstack sigemptyset], [#include <signal.h>])
 ## va_copy is C99
 R_CHECK_FUNCS([va_copy __va_copy], [#include <stdarg.h>])
 R_CHECK_FUNCS([fdopen popen], [#include <stdio.h>])
+if test "${ac_cv_have_decl_popen}" = "no"; then
+   AC_MSG_ERROR([Building R requires the 'stat' system call])
+fi
 ## system is C89: [un]setenv are POSIX and BSD
 R_CHECK_FUNCS([setenv system unsetenv], [#include <stdlib.h>])
 ## strcoll is C89
@@ -1742,13 +1737,22 @@ fi
 if test "${ac_cv_search_opendir}" = "no"; then
    AC_MSG_ERROR([Building R requires the 'opendir' system call])
 fi
-## Lots of uses of Sys.glob, e.g. install.packages
+## Lots of uses of getwd(), file.access(), Sys.glob()
 case "${host_os}" in
   mingw*)
   ;;
   *)
     if test "${ac_cv_search_glob}" = "no"; then
        AC_MSG_ERROR([Building R requires the 'glob' system call])
+    fi
+    if test "${ac_cv_search_access}" = "no"; then
+       AC_MSG_ERROR([Building R requires the 'access' system call])
+    fi
+    if test "${ac_cv_search_getcwd}" = "no"; then
+       AC_MSG_ERROR([Building R requires the 'getcwd' system call])
+    fi
+    if test "${ac_cv_search_chdir}" = "no"; then
+       AC_MSG_ERROR([Building R requires the 'chdir' system call])
     fi
   ;;
 esac
@@ -2458,10 +2462,7 @@ AC_CONFIG_FILES(
   src/scripts/R.sh
   src/scripts/Rcmd
   src/scripts/Rdiff
-  src/scripts/Rprof
   src/scripts/Sd2Rd
-  src/scripts/build
-  src/scripts/check
   src/scripts/f77_f2c
   src/scripts/mkinstalldirs
   src/scripts/pager

@@ -1,7 +1,8 @@
 
-R version 2.11.0 Under development (unstable) (2010-03-07 r51216)
+R version 2.12.0 Under development (unstable) (2010-08-22 r52792)
 Copyright (C) 2010 The R Foundation for Statistical Computing
 ISBN 3-900051-07-0
+Platform: x86_64-apple-darwin10.4.0 (64-bit)
 
 R is free software and comes with ABSOLUTELY NO WARRANTY.
 You are welcome to redistribute it under certain conditions.
@@ -336,12 +337,12 @@ c  203  215  227  239
 > for(nu in nus){xx <- x[x > .6*nu]; lines(xx,besselY(xx,nu=nu), col = nu+2)}
 > summary(bY <- besselY(2,nu = nu <- seq(0,100,len=501)))
        Min.     1st Qu.      Median        Mean     3rd Qu.        Max. 
--3.001e+155 -1.067e+107  -1.976e+62 -9.961e+152  -2.059e+23   5.104e-01 
+-3.001e+155 -1.067e+107  -1.976e+62 -9.961e+152  -2.059e+23   1.000e+00 
 > which(bY >= 0)
 [1] 1 2 3 4 5
 > summary(bY <- besselY(2,nu = nu <- seq(3,300,len=51)))
        Min.     1st Qu.      Median        Mean     3rd Qu.        Max. 
-       -Inf        -Inf -2.248e+263        -Inf -3.777e+116  -1.128e+00 
+       -Inf        -Inf -2.248e+263        -Inf -3.777e+116  -1.000e+00 
 There were 22 warnings (use warnings() to see them)
 > summary(bI <- besselI(x = x <- 10:700, 1))
       Min.    1st Qu.     Median       Mean    3rd Qu.       Max. 
@@ -985,7 +986,7 @@ $B$subset
 > detg1.m0 <- glm(cbind(X,M)~1,binomial,detg1)
 > detg1.m0
 
-Call:  glm(formula = cbind(X, M) ~ 1, family = binomial, data = detg1) 
+Call:  glm(formula = cbind(X, M) ~ 1, family = binomial, data = detg1)
 
 Coefficients:
 (Intercept)  
@@ -1031,7 +1032,8 @@ cbind(X, M) ~ M.user + Temp + M.user:Temp
 - M.user:Temp  1   8.4440 72.142
 + Soft         2   5.4952 75.193
 
-Call:  glm(formula = cbind(X, M) ~ M.user + Temp + M.user:Temp, family = binomial,      data = detg1) 
+Call:  glm(formula = cbind(X, M) ~ M.user + Temp + M.user:Temp, family = binomial, 
+    data = detg1)
 
 Coefficients:
     (Intercept)          M.userY          TempLow  M.userY:TempLow  
@@ -1739,7 +1741,8 @@ In log(ifelse(y == 0, 1, y/mu)) : NaNs produced
 > ## now gives useful error message
 > glm(y ~ x, family = poisson(identity), start = c(1,0))
 
-Call:  glm(formula = y ~ x, family = poisson(identity), start = c(1,      0)) 
+Call:  glm(formula = y ~ x, family = poisson(identity), start = c(1, 
+    0))
 
 Coefficients:
 (Intercept)            x  
@@ -1756,7 +1759,8 @@ Warning messages:
 > y <- rpois(100, pmax(3*x, 0))
 > glm(y ~ x, family = poisson(identity), start = c(1,0))
 
-Call:  glm(formula = y ~ x, family = poisson(identity), start = c(1,      0)) 
+Call:  glm(formula = y ~ x, family = poisson(identity), start = c(1, 
+    0))
 
 Coefficients:
 (Intercept)            x  
@@ -2365,7 +2369,7 @@ x3  0.81       -0.97
 
 > (fit <- glm(y ~ x1 + x2 + x3))
 
-Call:  glm(formula = y ~ x1 + x2 + x3) 
+Call:  glm(formula = y ~ x1 + x2 + x3)
 
 Coefficients:
 (Intercept)           x1           x2           x3  
@@ -2558,8 +2562,8 @@ Call:
 lm(formula = y ~ 0)
 
 Residuals:
-      Min        1Q    Median        3Q       Max 
--1.369192 -0.210726  0.008405  0.084366  0.552922 
+     Min       1Q   Median       3Q      Max 
+-1.36919 -0.21073  0.00840  0.08437  0.55292 
 
 No Coefficients
 
@@ -2654,8 +2658,8 @@ Call:
 lm(formula = y ~ x + 0)
 
 Residuals:
-      Min        1Q    Median        3Q       Max 
--1.369192 -0.210726  0.008405  0.084366  0.552922 
+     Min       1Q   Median       3Q      Max 
+-1.36919 -0.21073  0.00840  0.08437  0.55292 
 
 Coefficients: (1 not defined because of singularities)
   Estimate Std. Error t value Pr(>|t|)
@@ -2743,7 +2747,7 @@ attr(,"assign")
 > 
 > (fit <- glm(y ~ 0))
 
-Call:  glm(formula = y ~ 0) 
+Call:  glm(formula = y ~ 0)
 
 No coefficients
 
@@ -2757,8 +2761,8 @@ Call:
 glm(formula = y ~ 0)
 
 Deviance Residuals: 
-      Min         1Q     Median         3Q        Max  
--1.369192  -0.210726   0.008405   0.084366   0.552922  
+     Min        1Q    Median        3Q       Max  
+-1.36919  -0.21073   0.00840   0.08437   0.55292  
 
 No Coefficients
 
@@ -2830,7 +2834,7 @@ $residual.scale
 > 
 > (fit <- glm(y ~ x + 0))
 
-Call:  glm(formula = y ~ x + 0) 
+Call:  glm(formula = y ~ x + 0)
 
 Coefficients:
  x  
@@ -2845,8 +2849,8 @@ Call:
 glm(formula = y ~ x + 0)
 
 Deviance Residuals: 
-      Min         1Q     Median         3Q        Max  
--1.369192  -0.210726   0.008405   0.084366   0.552922  
+     Min        1Q    Median        3Q       Max  
+-1.36919  -0.21073   0.00840   0.08437   0.55292  
 
 Coefficients: (1 not defined because of singularities)
   Estimate Std. Error t value Pr(>|t|)
@@ -3001,7 +3005,7 @@ j
 
 $sigma
         b         d         e         f         g         h         i         j 
-0.8830622 0.8830622 0.8830622 0.8830622 0.8830622 0.8830622 0.8830622 0.8830622 
+0.9366289 0.9366289 0.9366289 0.9366289 0.9366289 0.9366289 0.9366289 0.9366289 
 
 $wt.res
          b          d          e          f          g          h          i 
@@ -3028,9 +3032,9 @@ j
 
 $sigma
         b         d         c         e         f         g         h         i 
-0.8830622 0.8830622 0.8830622 0.8830622 0.8830622 0.8830622 0.8830622 0.8830622 
+0.9366289 0.9366289 0.9366289 0.9366289 0.9366289 0.9366289 0.9366289 0.9366289 
         j 
-0.8830622 
+0.9366289 
 
 $wt.res
          b          d          c          e          f          g          h 
@@ -3171,13 +3175,13 @@ Error in `[.data.frame`(x, 1, c("a", "c")) : undefined columns selected
  [1] $<-           Math          Ops           Summary       [            
  [6] [<-           [[            [[<-          aggregate     anyDuplicated
 [11] as.data.frame as.list       as.matrix     by            cbind        
-[16] dim           dimnames      dimnames<-    duplicated    edit         
-[21] format        formula       head          is.na         mean         
-[26] merge         na.exclude    na.omit       plot          print        
-[31] prompt        rbind         row.names     row.names<-   rowsum       
-[36] split         split<-       stack         str           subset       
-[41] summary       t             tail          transform     unique       
-[46] unstack       within       
+[16] dim           dimnames      dimnames<-    droplevels    duplicated   
+[21] edit          format        formula       head          is.na        
+[26] mean          merge         na.exclude    na.omit       plot         
+[31] print         prompt        rbind         row.names     row.names<-  
+[36] rowsum        split         split<-       stack         str          
+[41] subset        summary       t             tail          transform    
+[46] unique        unstack       within       
 > meth2gen("dendrogram")
 [1] [[         cophenetic cut        labels     plot       print      reorder   
 [8] rev        str       
@@ -4119,7 +4123,7 @@ Warning message:
 3  3  c  C 2004-03-01 2004-03-01 12:00:00
 > unlist(sapply(.Last.value, class))
          V1          V2          V4          V5         V61         V62 
-  "integer"    "factor" "character"      "Date"    "POSIXt"   "POSIXct" 
+  "integer"    "factor" "character"      "Date"   "POSIXct"    "POSIXt" 
 > read.table(foo, colClasses = c("factor",NA,"NULL","factor","Date","POSIXct"))
   V1 V2 V4         V5                  V6
 1  1  a  A 2004-01-01 2004-01-01 12:00:00
@@ -4127,7 +4131,7 @@ Warning message:
 3  3  c  C 2004-03-01 2004-03-01 12:00:00
 > unlist(sapply(.Last.value, class))
        V1        V2        V4        V5       V61       V62 
- "factor"  "factor"  "factor"    "Date"  "POSIXt" "POSIXct" 
+ "factor"  "factor"  "factor"    "Date" "POSIXct"  "POSIXt" 
 > read.table(foo, colClasses = c(V4="character"))
   V1 V2 V3 V4         V5               V6
 1  1  a  1  A 2004-01-01 2004-01-01 12:00
@@ -5511,8 +5515,8 @@ Call:
 lm(formula = y1 ~ 1, na.action = "na.exclude")
 
 Residuals:
-     Min       1Q   Median       3Q      Max 
--3.28057 -0.90572  0.04996  0.80200  2.54584 
+    Min      1Q  Median      3Q     Max 
+-3.2806 -0.9057  0.0500  0.8020  2.5458 
 
 Coefficients:
             Estimate Std. Error t value Pr(>|t|)    
@@ -5906,7 +5910,7 @@ Error in pmin(NULL, 1:3) : cannot mix 0-length vectors with others
 [16] "1979-01-01" "1978-01-01" "1977-01-01" "1976-01-01" "1975-01-01"
 [21] "1974-01-01" "1973-01-01" "1972-07-01"
 > class(pmin(x, y))
-[1] "POSIXt"  "POSIXct"
+[1] "POSIXct" "POSIXt" 
 > stopifnot(identical(pmin(x, y), pmin(y, x)))
 > format(pmin(x, y, na.rm=TRUE), tz="GMT")
  [1] "1972-07-01" NA           "1997-07-01" "1975-01-01" "1976-01-01"
@@ -5938,7 +5942,7 @@ Error in pmin(NULL, 1:3) : cannot mix 0-length vectors with others
 [16] "1979-01-01" "1978-01-01" "1977-01-01" "1976-01-01" "1975-01-01"
 [21] "1974-01-01" "1973-01-01" "1972-07-01"
 > class(pmin(x, y))
-[1] "POSIXt"  "POSIXlt"
+[1] "POSIXlt" "POSIXt" 
 > stopifnot(identical(pmin(x, y), pmin(y, x)))
 > format(pmin(x, y, na.rm=TRUE), tz="GMT")
  [1] "1972-07-01" NA           "1997-07-01" "1975-01-01" "1976-01-01"
@@ -6519,4 +6523,32 @@ NULL
 > .Last.value
 [1] 4
 > ## visiblilty changed in 2.11.0
+> 
+> 
+> ## rounding error in aggregate.ts
+> ## https://stat.ethz.ch/pipermail/r-devel/2010-April/057225.html
+> x <- rep(6:10, 1:5)
+> aggregate(as.ts(x), FUN = mean, ndeltat = 5)
+Time Series:
+Start = 1 
+End = 11 
+Frequency = 0.2 
+[1]  7.2  8.8 10.0
+> x <- rep(6:10, 1:5)
+> aggregate(as.ts(x), FUN = mean, nfrequency = 0.2)
+Time Series:
+Start = 1 
+End = 11 
+Frequency = 0.2 
+[1]  7.2  8.8 10.0
+> ## platform-dependent in 2.10.1
+> 
+> 
+> ## wish of PR#9574
+> a <- c(0.1, 0.3, 0.4, 0.5, 0.3, 0.0001)
+> format.pval(a, eps=0.01)
+[1] "0.1"   "0.3"   "0.4"   "0.5"   "0.3"   "<0.01"
+> format.pval(a, eps=0.01, nsmall =2)
+[1] "0.10"  "0.30"  "0.40"  "0.50"  "0.30"  "<0.01"
+> ## granted in 2.12.0
 > 

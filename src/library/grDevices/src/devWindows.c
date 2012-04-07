@@ -3,7 +3,7 @@
  *  Copyright (C) 1995, 1996  Robert Gentleman and Ross Ihaka
  *  Copyright (C) 1998--2003  Guido Masarotto and Brian Ripley
  *  Copyright (C) 2004        The R Foundation
- *  Copyright (C) 2004-8      The R Development Core Team
+ *  Copyright (C) 2004-10     The R Development Core Team
  *
  *  This program is free software; you can redistribute it and/or modify
  *  it under the terms of the GNU General Public License as published by
@@ -196,7 +196,7 @@ static void GA_Clip(double x0, double x1, double y0, double y1,
 		     pDevDesc dd);
 static void GA_Close(pDevDesc dd);
 static void GA_Deactivate(pDevDesc dd);
-static SEXP GA_getEvent(SEXP eventRho, const char* prompt);
+static void GA_eventHelper(pDevDesc dd, int code);
 static Rboolean GA_Locator(double *x, double *y, pDevDesc dd);
 static void GA_Line(double x1, double y1, double x2, double y2,
 		    const pGEcontext gc,
@@ -208,6 +208,11 @@ static void GA_MetricInfo(int c,
 static void GA_Mode(int mode, pDevDesc dd);
 static void GA_NewPage(const pGEcontext gc,
 		       pDevDesc dd);
+static void GA_Path(double *x, double *y,
+                    int npoly, int *nper,
+                    Rboolean winding,
+                    const pGEcontext gc,
+                    pDevDesc dd);
 static void GA_Polygon(int n, double *x, double *y,
 		       const pGEcontext gc,
 		       pDevDesc dd);
@@ -222,9 +227,9 @@ static void GA_Size(double *left, double *right,
 		    pDevDesc dd);
 static void GA_Resize(pDevDesc dd);
 static void GA_Raster(unsigned int *raster, int w, int h,
-                      double x, double y, 
+                      double x, double y,
                       double width, double height,
-                      double rot, 
+                      double rot,
                       Rboolean interpolate,
                       const pGEcontext gc, pDevDesc dd);
 static SEXP GA_Cap(pDevDesc dd);
@@ -813,8 +818,7 @@ static void HelpMouseClick(window w, int button, point pt)
 	} else
 	    xd->clicked = 2;
 	if (dd->gettingEvent) {
-	    xd->eventResult = doMouseEvent(xd->eventRho, dd, meMouseDown,
-				button, pt.x, pt.y);
+	    doMouseEvent(dd, meMouseDown, button, pt.x, pt.y);
 	    if (xd->buffered) SHOW;
 	}
     }
@@ -828,8 +832,7 @@ static void HelpMouseMove(window w, int button, point pt)
 	gadesc *xd = (gadesc *) dd->deviceSpecific;
 
 	if (dd->gettingEvent) {
-	    xd->eventResult = doMouseEvent(xd->eventRho, dd, meMouseMove,
-				button, pt.x, pt.y);
+	    doMouseEvent(dd, meMouseMove, button, pt.x, pt.y);
 	    if (xd->buffered) SHOW;
 	}
     }
@@ -843,8 +846,7 @@ static void HelpMouseUp(window w, int button, point pt)
 	gadesc *xd = (gadesc *) dd->deviceSpecific;
 
 	if (dd->gettingEvent) {
-	    xd->eventResult = doMouseEvent(xd->eventRho, dd, meMouseUp,
-				button, pt.x, pt.y);
+	    doMouseEvent(dd, meMouseUp,button, pt.x, pt.y);
 	    if (xd->buffered) SHOW;
 	}
     }
@@ -1292,7 +1294,7 @@ static void CHelpKeyIn(control w, int key)
     if (dd->gettingEvent) {
 	keyname = getKeyName(key);
 	if (keyname > knUNKNOWN) {
-	    xd->eventResult = doKeybd(xd->eventRho, dd, keyname, NULL);
+	    doKeybd(dd, keyname, NULL);
 	    if (xd->buffered) SHOW;
 	}
     } else {
@@ -1331,7 +1333,7 @@ static void NHelpKeyIn(control w, int key)
 	    keyname[0] = (char) key;
 	    keyname[1] = '\0';
 	}
-	xd->eventResult = doKeybd(xd->eventRho, dd, knUNKNOWN, keyname);
+	doKeybd(dd, knUNKNOWN, keyname);
 	if (xd->buffered) SHOW;
     } else {
 	if (xd->replaying) return;
@@ -1682,16 +1684,13 @@ setupScreenDevice(pDevDesc dd, gadesc *xd, double w, double h,
     xd->replaying = FALSE;
     xd->resizing = resize;
 
-    dd->getEvent = GA_getEvent;
+    dd->eventHelper = GA_eventHelper;
 
     dd->canGenMouseDown = TRUE;
     dd->canGenMouseMove = TRUE;
     dd->canGenMouseUp = TRUE;
     dd->canGenKeybd = TRUE;
     dd->gettingEvent = FALSE;
-
-    xd->eventRho = NULL;
-    xd->eventResult = NULL;
 
     return TRUE;
 }
@@ -2616,8 +2615,91 @@ static void GA_Polygon(int n, double *x, double *y,
     SH;
 }
 
+static void GA_Path(double *x, double *y,
+                    int npoly, int *nper,
+                    Rboolean winding,
+                    const pGEcontext gc,
+                    pDevDesc dd)
+{
+    const void *vmax = vmaxget();
+    point *points;
+    point *pointIndex;
+    rect r;
+    double devx, devy;
+    int   i, mx0 = 0, mx1 = 0, my0 = 0, my1 = 0;
+    gadesc *xd = (gadesc *) dd->deviceSpecific;
+
+    int ntot = 0;
+    for (i=0; i < npoly; i++) {
+        ntot = ntot + nper[i];
+    }
+
+    TRACEDEVGA("path");
+    points = (point *) R_alloc(ntot, sizeof(point));
+    if (!points)
+	return;
+    for (i = 0; i < ntot; i++) {
+	devx = x[i];
+	devy = y[i];
+	points[i].x = (int) (devx);
+	points[i].y = (int) (devy);
+	mx0 = imin2(mx0, points[i].x);
+	mx1 = imax2(mx1, points[i].x);
+	my0 = imin2(my0, points[i].y);
+	my1 = imax2(my1, points[i].y);
+    }
+    r.x = mx0; r.width = mx1 - mx0;
+    r.y = my0; r.height = my1 - my0;
+
+    if (winding) {
+        DRAW(gsetpolyfillmode(_d, 0));
+    } else {
+        DRAW(gsetpolyfillmode(_d, 1));
+    }
+
+    SetColor(gc->fill, gc->gamma, xd);
+    if (R_OPAQUE(gc->fill)) {
+	DRAW(gfillpolypolygon(_d, xd->fgcolor, points, npoly, nper));
+    } else if(R_ALPHA(gc->fill) > 0) {
+	if(xd->have_alpha) {
+	    gsetcliprect(xd->bm, xd->clip);
+	    gcopy(xd->bm2, xd->bm, r);
+	    gfillpolypolygon(xd->bm2, xd->fgcolor, points, npoly, nper);
+	    DRAW2(gc->fill);
+	} else WARN_SEMI_TRANS;
+    }
+
+    SetColor(gc->col, gc->gamma, xd);
+    SetLineStyle(gc, dd);
+    if (R_OPAQUE(gc->col)) {
+        pointIndex = points;
+        for (i=0; i < npoly; i++) {
+            DRAW(gdrawpolygon(_d, xd->lwd, xd->lty, xd->fgcolor,
+                              pointIndex, nper[i], 0,
+                              xd->lend, xd->ljoin, xd->lmitre));
+            pointIndex = pointIndex + nper[i];
+        }
+    } else if(R_ALPHA(gc->col) > 0) {
+	if(xd->have_alpha) {
+	    r = xd->clip;
+	    gsetcliprect(xd->bm, xd->clip);
+	    gcopy(xd->bm2, xd->bm, r);
+            pointIndex = points;
+            for (i=0; i < npoly; i++) {
+                gdrawpolygon(xd->bm2, xd->lwd, xd->lty, xd->fgcolor,
+                             pointIndex, nper[i], 0,
+                             xd->lend, xd->ljoin, xd->lmitre);
+                pointIndex = pointIndex + nper[i];
+            }
+	    DRAW2(gc->col);
+	} else WARN_SEMI_TRANS;
+    }
+    vmaxset(vmax);
+    SH;
+}
+
 static void doRaster(unsigned int *raster, int x, int y, int w, int h,
-                     double rot, 
+                     double rot,
                      pDevDesc dd)
 {
     const void *vmax = vmaxget();
@@ -2629,7 +2711,7 @@ static void doRaster(unsigned int *raster, int x, int y, int w, int h,
     /* If there are any fully transparent pixels in the image
      * then we will need to create a mask.
      */
-    Rboolean fullTrans = FALSE; 
+    Rboolean fullTrans = FALSE;
     /* If there are any semitransparent pixels in the image
      * then we will need to do alpha blending.
      * NOTE though that we can only handle 1 level of semitransparency
@@ -2641,9 +2723,9 @@ static void doRaster(unsigned int *raster, int x, int y, int w, int h,
     int fixedAlpha = -1;
 
     TRACEDEVGA("raster");
-    
+
     dr = rect(x, y, w, h);
-    
+
     /* Create image object */
     img = newimage(w, h, 32);
 
@@ -2663,7 +2745,7 @@ static void doRaster(unsigned int *raster, int x, int y, int w, int h,
                 imageData[i*4 + 0] = 255;
                 fullTrans = TRUE;
             } else {
-                /* We will draw semitransparent pixels opaque 
+                /* We will draw semitransparent pixels opaque
                  * then alpha blend using fixedAlpha
                  */
                 imageData[i*4 + 3] = 0;
@@ -2677,8 +2759,8 @@ static void doRaster(unsigned int *raster, int x, int y, int w, int h,
              */
             if (alpha > 0 && fixedAlpha < 0) {
                 fixedAlpha = i;
-            } 
-            if (alpha > 0 && fixedAlpha >= 0 && 
+            }
+            if (alpha > 0 && fixedAlpha >= 0 &&
                 alpha != R_ALPHA(raster[fixedAlpha])) {
                 warning("Per-pixel alpha not supported on this device");
             }
@@ -2716,7 +2798,7 @@ static void doRaster(unsigned int *raster, int x, int y, int w, int h,
             }
         }
         setpixels(mask, maskData);
-        
+
         if (semiTrans) {
             if (xd->have_alpha) {
                 rect r = dr;
@@ -2728,7 +2810,7 @@ static void doRaster(unsigned int *raster, int x, int y, int w, int h,
                 WARN_SEMI_TRANS;
             }
         } else {
-            DRAW(gmaskimage(_d, img, dr, sr, mask));            
+            DRAW(gmaskimage(_d, img, dr, sr, mask));
         }
         delimage(mask);
     } else {
@@ -2748,7 +2830,7 @@ static void doRaster(unsigned int *raster, int x, int y, int w, int h,
             DRAW(gdrawimage(_d, img, dr, sr));
         }
     }
-    
+
     /* Tidy up */
     delimage(img);
     SH;
@@ -2756,9 +2838,9 @@ static void doRaster(unsigned int *raster, int x, int y, int w, int h,
 }
 
 static void GA_Raster(unsigned int *raster, int w, int h,
-                      double x, double y, 
+                      double x, double y,
                       double width, double height,
-                      double rot, 
+                      double rot,
                       Rboolean interpolate,
                       const pGEcontext gc, pDevDesc dd)
 {
@@ -2779,12 +2861,12 @@ static void GA_Raster(unsigned int *raster, int w, int h,
         int newW = (int) width;
         int newH = (int) height;
         unsigned int *newRaster;
-        
-        newRaster = (unsigned int *) R_alloc(newW * newH, 
+
+        newRaster = (unsigned int *) R_alloc(newW * newH,
                                              sizeof(unsigned int));
         R_GE_rasterInterpolate(image, w, h,
                                newRaster, newW, newH);
-        
+
         image = newRaster;
         imageWidth = newW;
         imageHeight = newH;
@@ -2792,18 +2874,18 @@ static void GA_Raster(unsigned int *raster, int w, int h,
     } else {
         /* Even if not interpolating, have to explicitly scale here
          * before doing rotation, so that image to rotate
-         * is the right size AND so that can adjust (x, y) 
+         * is the right size AND so that can adjust (x, y)
          * correctly
          */
         int newW = (int) width;
         int newH = (int) height;
         unsigned int *newRaster;
-        
-        newRaster = (unsigned int *) R_alloc(newW * newH, 
+
+        newRaster = (unsigned int *) R_alloc(newW * newH,
                                              sizeof(unsigned int));
         R_GE_rasterScale(image, w, h,
                          newRaster, newW, newH);
-        
+
         image = newRaster;
         imageWidth = newW;
         imageHeight = newH;
@@ -2814,7 +2896,7 @@ static void GA_Raster(unsigned int *raster, int w, int h,
         y = y - imageHeight*cos(angle);
         if (angle != 0) {
             x = x - imageHeight*sin(angle);
-        }        
+        }
     }
 
     if (angle != 0) {
@@ -2826,24 +2908,24 @@ static void GA_Raster(unsigned int *raster, int w, int h,
         R_GE_rasterRotatedOffset(imageWidth, imageHeight, angle, 0,
                                  &xoff, &yoff);
 
-        resizedRaster = (unsigned int *) R_alloc(newW * newH, 
+        resizedRaster = (unsigned int *) R_alloc(newW * newH,
                                              sizeof(unsigned int));
-        R_GE_rasterResizeForRotation(image, imageWidth, imageHeight, 
+        R_GE_rasterResizeForRotation(image, imageWidth, imageHeight,
                                      resizedRaster, newW, newH, gc);
 
-        rotatedRaster = (unsigned int *) R_alloc(newW * newH, 
+        rotatedRaster = (unsigned int *) R_alloc(newW * newH,
                                                  sizeof(unsigned int));
         R_GE_rasterRotate(resizedRaster, newW, newH, angle, rotatedRaster, gc,
-                          /* Threshold alpha to 
+                          /* Threshold alpha to
                            * transparent/opaque only
                            */
                           FALSE);
 
-        /* 
+        /*
          * Adjust (x, y) for resized and rotated image
          */
         x = x - (newW - imageWidth)/2 - xoff;
-        y = y - (newH - imageHeight)/2 + yoff;        
+        y = y - (newH - imageHeight)/2 + yoff;
 
         image = rotatedRaster;
         imageWidth = newW;
@@ -2884,13 +2966,13 @@ static SEXP GA_Cap(pDevDesc dd)
 
         PROTECT(raster = allocVector(INTSXP, size));
 
-        /* Copy each byte of screen to an R matrix. 
+        /* Copy each byte of screen to an R matrix.
          * The ARGB32 needs to be converted to an R ABGR32 */
         rint = (unsigned int *) INTEGER(raster);
         for (i=0; i<size; i++) {
-            rint[i] = R_RGBA(screenData[i*4 + 2], 
+            rint[i] = R_RGBA(screenData[i*4 + 2],
                              screenData[i*4 + 1],
-                             screenData[i*4 + 0], 
+                             screenData[i*4 + 0],
                              255);
         }
         PROTECT(dim = allocVector(INTSXP, 2));
@@ -2936,10 +3018,8 @@ static void GA_Text0(double x, double y, const char *str, int enc,
     if (R_OPAQUE(gc->col)) {
 	if(gc->fontface != 5) {
 	    /* As from 2.7.0 can use Unicode always */
-	    wchar_t *wc;
 	    int n = strlen(str), cnt;
-	    wc = alloca((n+1) * sizeof(wchar_t)); /* only need terminator to
-						     debug */
+	    wchar_t wc[n+1];/* only need terminator to debug */
 	    R_CheckStack();
 	    cnt = (enc == CE_UTF8) ?
 		Rf_utf8towcs(wc, str, n+1): mbstowcs(wc, str, n);
@@ -2957,9 +3037,8 @@ static void GA_Text0(double x, double y, const char *str, int enc,
 	    gsetcliprect(xd->bm, xd->clip);
 	    gcopy(xd->bm2, xd->bm, r);
 	    if(gc->fontface != 5) {
-		wchar_t *wc;
 		int n = strlen(str), cnt;
-		wc = alloca((n+1) * sizeof(wchar_t));
+		wchar_t wc[n+1];
 		R_CheckStack();
 		cnt = (enc == CE_UTF8) ?
 		    Rf_utf8towcs(wc, str, n+1): mbstowcs(wc, str, n);
@@ -3180,6 +3259,7 @@ Rboolean GADeviceDriver(pDevDesc dd, const char *display, double width,
     dd->line = GA_Line;
     dd->polyline = GA_Polyline;
     dd->polygon = GA_Polygon;
+    dd->path = GA_Path;
     dd->raster = GA_Raster;
     dd->cap = GA_Cap;
     dd->locator = GA_Locator;
@@ -3328,7 +3408,6 @@ SEXP savePlot(SEXP args)
 
 
 /* Rbitmap  */
-#define BITMAP_DLL_NAME "\\library\\grDevices\\libs\\Rbitmap.dll"
 typedef int (*R_SaveAsBitmap)(/* variable set of args */);
 static R_SaveAsBitmap R_SaveAsPng, R_SaveAsJpeg, R_SaveAsBmp, R_SaveAsTIFF;
 
@@ -3340,7 +3419,9 @@ static int Load_Rbitmap_Dll()
     if (!RbitmapAlreadyLoaded) {
 	char szFullPath[PATH_MAX];
 	strcpy(szFullPath, R_HomeDir());
-	strcat(szFullPath, BITMAP_DLL_NAME);
+	strcat(szFullPath, "\\library\\grDevices\\libs\\");
+	strcat(szFullPath, R_ARCH);
+	strcat(szFullPath, "\\Rbitmap.dll");
 	if (((hRbitmapDll = LoadLibrary(szFullPath)) != NULL) &&
 	    ((R_SaveAsPng=
 	      (R_SaveAsBitmap)GetProcAddress(hRbitmapDll, "R_SaveAsPng"))
@@ -3618,8 +3699,14 @@ SEXP devga(SEXP args)
 			    (Rboolean)recording, resize, bg, canvas, gamma,
 			    xpos, ypos, (Rboolean)buffered, psenv,
 			    restoreConsole, title, clickToConfirm, fillOddEven)) {
+	    char type[100], *p;
 	    free(dev);
-	    error(_("unable to start device"));
+	    if (display[0]) {
+		strncpy(type, display, 100);
+		p = strchr(type, ':');
+		if(p) *p = '\0';
+	    } else strcpy(type, "windows");
+	    error(_("unable to start %s() device"), type);
 	}
 	gdd = GEcreateDevDesc(dev);
 	GEaddDevice2(gdd, display[0] ? display : "windows");
@@ -3635,7 +3722,6 @@ static void GA_onExit(pDevDesc dd)
     dd->onExit = NULL;
     xd->confirmation = FALSE;
     dd->gettingEvent = FALSE;
-    xd->eventRho = NULL;
 
     if (xd->cntxt) endcontext(xd->cntxt);
     if (xd->locator) donelocator((void *)xd);
@@ -3681,35 +3767,25 @@ static Rboolean GA_NewFrameConfirm(pDevDesc dev)
     return TRUE;
 }
 
-static SEXP GA_getEvent(SEXP eventRho, const char* prompt)
+static void GA_eventHelper(pDevDesc dd, int code)
 {
-    gadesc *xd;
-    pGEDevDesc dd = GEcurrentDevice();
+    gadesc *xd = dd->deviceSpecific;
 
-    xd = dd->dev->deviceSpecific;
+    if (code == 1) {
+    	show(xd->gawin);
+    	addto(xd->gawin);
+    	gchangemenubar(xd->mbar);
+    	gchangepopup(xd->gawin, NULL);
+    	if (isEnvironment(dd->eventEnv)) {
+    	    SEXP prompt = findVar(install("prompt"), dd->eventEnv);
+    	    if (length(prompt) == 1) {
+    		setstatus(CHAR(asChar(prompt)));
+    		settext(xd->gawin, CHAR(asChar(prompt)));
+    	    }
+    	}
+    	dd->onExit = GA_onExit;  /* install callback for cleanup */
+    } else if (code == 0)
+    	dd->onExit(dd);
 
-    if (xd->eventRho)
-	error(_("recursive use of getGraphicsEvent not supported"));
-    xd->eventRho = eventRho;
-
-    dd->dev->gettingEvent = TRUE;
-    show(xd->gawin);
-    addto(xd->gawin);
-    gchangemenubar(xd->mbar);
-    gchangepopup(xd->gawin, NULL);
-    setstatus(prompt);
-    Rprintf("%s", prompt);
-    Rprintf("\n", 1);
-    R_FlushConsole();
-    settext(xd->gawin, prompt);
-    xd->eventResult = NULL;
-    dd->dev->onExit = GA_onExit;  /* install callback for cleanup */
-    while (!xd->eventResult || xd->eventResult == R_NilValue) {
-	SH;
-	if (!peekevent()) WaitMessage();
-	R_ProcessEvents(); /* May not return if user interrupts */
-    }
-    dd->dev->onExit(dd->dev);
-
-    return xd->eventResult;
+    return;
 }

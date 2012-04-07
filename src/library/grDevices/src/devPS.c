@@ -739,18 +739,16 @@ static double
     const unsigned char *p = NULL, *str1 = str;
     unsigned char p1, p2;
 
-    char *buff;
     int status;
     if(!metrics && (face % 5) != 0) {
 	/* This is the CID font case, and should only happen for
 	   non-symbol fonts.  So we assume monospaced with multipliers.
 	   We need to remap even if we are in a SBCS, should we get to here */
-	ucs2_t *ucs2s;
 	size_t ucslen;
 	ucslen = mbcsToUcs2((char *)str, NULL, 0, enc);
 	if (ucslen != (size_t)-1) {
 	    /* We convert the characters but not the terminator here */
-	    ucs2s = (ucs2_t *) alloca(sizeof(ucs2_t) * ucslen);
+	    ucs2_t ucs2s[ucslen];
 	    R_CheckStack();
 	    status = (int) mbcsToUcs2((char *)str, ucs2s, ucslen, enc);
 	    if (status >= 0)
@@ -773,7 +771,7 @@ static double
 	    * see postscriptFonts()
 	    */
 	   (face % 5) != 0) {
-	    buff = alloca(strlen((char *)str)+1);
+	    char buff[strlen((char *)str)+1];
 	    /* Output string cannot be longer */
 	    R_CheckStack();
 	    mbcsToSbcs((char *)str, buff, encoding, enc);
@@ -2684,7 +2682,7 @@ PostScriptSetLineTexture(FILE *fp, const char *dashlist, int nlty,
     int i;							\
     fprintf(fp,"[");						\
     for (i = 0; i < nlty; i++) {				\
-	dash = (lwd >= 1 ? lwd: 1) *				\
+	dash = lwd *				\
 	    ((i % 2) ? (dashlist[i] + a)			\
 	     : ((nlty == 1 && dashlist[i] == 1.) ? 1. : dashlist[i] - a) ); \
 	if (dash < 0) dash = 0;					\
@@ -2960,6 +2958,11 @@ static void PS_Polyline(int n, double *x, double *y,
 static void PS_Rect(double x0, double y0, double x1, double y1,
 		    const pGEcontext gc,
 		    pDevDesc dd);
+static void PS_Path(double *x, double *y,
+                    int npoly, int *nper,
+                    Rboolean winding,
+                    const pGEcontext gc,
+                    pDevDesc dd);
 static void PS_Raster(unsigned int *raster, int w, int h,
 		       double x, double y, double width, double height,
 		       double rot, Rboolean interpolate,
@@ -3049,6 +3052,8 @@ static void SetFont(int, int, pDevDesc);
 static void SetLineStyle(const pGEcontext, pDevDesc dd);
 static void Invalidate(pDevDesc);
 
+static void PS_cleanup(int stage, pDevDesc dd, PostScriptDesc *pd);
+
 
 Rboolean
 PSDeviceDriver(pDevDesc dd, const char *file, const char *paper,
@@ -3076,12 +3081,14 @@ PSDeviceDriver(pDevDesc dd, const char *file, const char *paper,
 
     if(strlen(file) > PATH_MAX - 1) {
 	free(dd);
-	error(_("filename too long in postscript"));
+	error(_("filename too long in %s()"), "postscript");
     }
 
     /* allocate new postscript device description */
-    if (!(pd = (PostScriptDesc *) malloc(sizeof(PostScriptDesc))))
-	return FALSE;
+    if (!(pd = (PostScriptDesc *) malloc(sizeof(PostScriptDesc)))) {
+	free(dd);
+	error(_("memory allocation problem in %s()"), "postscript");
+    }
 
     /* from here on, if need to bail out with "error", must also */
     /* free(pd) */
@@ -3095,9 +3102,8 @@ PSDeviceDriver(pDevDesc dd, const char *file, const char *paper,
     pd->fillOddEven = fillOddEven;
 
     if(strlen(encoding) > PATH_MAX - 1) {
-	free(dd);
-	free(pd);
-	error(_("encoding path is too long"));
+	PS_cleanup(1, dd, pd);
+	error(_("encoding path is too long in %s()"), "postscript");
     }
     /*
      * Load the default encoding AS THE FIRST ENCODING FOR THIS DEVICE.
@@ -3110,9 +3116,8 @@ PSDeviceDriver(pDevDesc dd, const char *file, const char *paper,
     if (enc && (enclist = addDeviceEncoding(enc, pd->encodings))) {
 	pd->encodings = enclist;
     } else {
-	free(dd);
-	free(pd);
-	error(_("failed to load encoding"));
+	PS_cleanup(1, dd, pd);
+	error(_("failed to load encoding file in %s()"), "postscript");
     }
 
     /*****************************
@@ -3154,7 +3159,9 @@ PSDeviceDriver(pDevDesc dd, const char *file, const char *paper,
 	    } else {
 		/*
 		 * Should NOT get here.
+		 * AND if we do, we should free
 		 */
+		PS_cleanup(3, dd, pd);
 		error(_("Invalid font type"));
 	    }
 	}
@@ -3178,8 +3185,7 @@ PSDeviceDriver(pDevDesc dd, const char *file, const char *paper,
 	}
     }
     if (!gotFont) {
-	free(dd);
-	free(pd);
+	PS_cleanup(3, dd, pd);
 	error(_("Failed to initialise default PostScript font"));
     }
 
@@ -3192,7 +3198,7 @@ PSDeviceDriver(pDevDesc dd, const char *file, const char *paper,
 	int i, dontcare, gotFonts = 0, nfonts = LENGTH(fonts);
 	type1fontlist fontlist;
 	cidfontlist cidfontlist;
-	for (i=0; i<nfonts; i++) {
+	for (i = 0; i < nfonts; i++) {
 	    int index, cidindex;
 	    const char *name = CHAR(STRING_ELT(fonts, i));
 	    /*
@@ -3218,6 +3224,7 @@ PSDeviceDriver(pDevDesc dd, const char *file, const char *paper,
 			/*
 			 * Should NOT get here.
 			 */
+			PS_cleanup(4, dd, pd);
 			error(_("Invalid font type"));
 		    }
 		}
@@ -3244,12 +3251,7 @@ PSDeviceDriver(pDevDesc dd, const char *file, const char *paper,
 	    }
 	}
 	if (gotFonts < nfonts) {
-	    freeDeviceFontList(pd->fonts);
-	    freeDeviceEncList(pd->encodings);
-	    pd->fonts = NULL;
-	    pd->encodings = NULL;
-	    free(dd);
-	    free(pd);
+	    PS_cleanup(4, dd, pd);
 	    error(_("Failed to initialise additional PostScript fonts"));
 	}
     }
@@ -3265,27 +3267,19 @@ PSDeviceDriver(pDevDesc dd, const char *file, const char *paper,
     pd->landscape = horizontal;
     pointsize = floor(ps);
     if(R_TRANSPARENT(setbg) && R_TRANSPARENT(setfg)) {
-	freeDeviceFontList(pd->fonts);
-	freeDeviceCIDFontList(pd->cidfonts);
-	pd->fonts = NULL;
-	pd->cidfonts = NULL;
-	free(dd);
-	free(pd);
+	PS_cleanup(4, dd, pd);
 	error(_("invalid foreground/background color (postscript)"));
     }
     pd->printit = printit;
     if(strlen(cmd) > 2*PATH_MAX - 1) {
-	freeDeviceFontList(pd->fonts);
-	freeDeviceCIDFontList(pd->cidfonts);
-	pd->fonts = NULL;
-	pd->cidfonts = NULL;
-	free(dd);
-	free(pd);
+	PS_cleanup(4, dd, pd);
 	error(_("'command' is too long"));
     }
     strcpy(pd->command, cmd);
-    if (printit && strlen(cmd) == 0)
+    if (printit && strlen(cmd) == 0) {
+	PS_cleanup(4, dd, pd);
 	error(_("postscript(print.it=TRUE) used with an empty print command"));
+    }
     strcpy(pd->command, cmd);
 
 
@@ -3332,12 +3326,7 @@ PSDeviceDriver(pDevDesc dd, const char *file, const char *paper,
 	pd->paperspecial = TRUE;
     }
     else {
-	freeDeviceFontList(pd->fonts);
-	freeDeviceCIDFontList(pd->cidfonts);
-	pd->fonts = NULL;
-	pd->cidfonts = NULL;
-	free(dd);
-	free(pd);
+	PS_cleanup(4, dd, pd);
 	error(_("invalid page type '%s' (postscript)"), pd->papername);
     }
     pd->pagecentre = pagecentre;
@@ -3415,18 +3404,7 @@ PSDeviceDriver(pDevDesc dd, const char *file, const char *paper,
     dd->canChangeGamma = FALSE;
 
     /*	Start the driver */
-
-    if(!PS_Open(dd, pd)) {
-	freeDeviceFontList(pd->fonts);
-	freeDeviceCIDFontList(pd->cidfonts);
-	freeDeviceEncList(pd->encodings);
-	pd->fonts = NULL;
-	pd->encodings = NULL;
-	pd->cidfonts = NULL;
-	free(dd);
-	free(pd);
-	return FALSE;
-    }
+    PS_Open(dd, pd);
 
     dd->close      = PS_Close;
     dd->activate   = PS_Activate;
@@ -3438,6 +3416,7 @@ PSDeviceDriver(pDevDesc dd, const char *file, const char *paper,
     dd->strWidth   = PS_StrWidth;
     dd->metricInfo = PS_MetricInfo;
     dd->rect	      = PS_Rect;
+    dd->path     = PS_Path;
     dd->raster     = PS_Raster;
     dd->cap        = PS_Cap;
     dd->circle     = PS_Circle;
@@ -3545,13 +3524,29 @@ static void SetFont(int font, int size, pDevDesc dd)
 # undef HAVE_POPEN
 #endif
 
+static void PS_cleanup(int stage, pDevDesc dd, PostScriptDesc *pd)
+{
+    switch (stage) {
+    case 4: /* Allocated fonts */
+    freeDeviceFontList(pd->fonts);
+    freeDeviceCIDFontList(pd->cidfonts);
+    case 3: /* Allocated encodings */
+    freeDeviceEncList(pd->encodings);
+    case 1: /* Allocated PDFDesc */
+    free(pd);
+    free(dd);
+    }
+}
+
+
 static Rboolean PS_Open(pDevDesc dd, PostScriptDesc *pd)
 {
     char buf[512];
 
     if (strlen(pd->filename) == 0) {
-#ifndef HAVE_POPEN
-	warning(_("printing via file = \"\" is not implemented in this version"));
+#ifdef Win32
+	PS_cleanup(4, dd, pd);
+	error(_("printing via file = \"\" is not implemented in this version"));
 	return FALSE;
 #else
 	if(strlen(pd->command) == 0) return FALSE;
@@ -3559,20 +3554,23 @@ static Rboolean PS_Open(pDevDesc dd, PostScriptDesc *pd)
 	pd->psfp = R_popen(pd->command, "w");
 	pd->open_type = 1;
 	if (!pd->psfp || errno != 0) {
-	    warning(_("cannot open 'postscript' pipe to '%s'"), pd->command);
+	    PS_cleanup(4, dd, pd);
+	    error(_("cannot open 'postscript' pipe to '%s'"), pd->command);
 	    return FALSE;
 	}
 #endif
     } else if (pd->filename[0] == '|') {
-#ifndef HAVE_POPEN
-	warning(_("file = \"|cmd\" is not implemented in this version"));
+#ifdef Win32
+	PS_cleanup(4, dd, pd);
+	error(_("file = \"|cmd\" is not implemented in this version"));
 	return FALSE;
 #else
 	errno = 0;
 	pd->psfp = R_popen(pd->filename + 1, "w");
 	pd->open_type = 1;
 	if (!pd->psfp || errno != 0) {
-	    warning(_("cannot open 'postscript' pipe to '%s'"),
+	    PS_cleanup(4, dd, pd);
+	    error(_("cannot open 'postscript' pipe to '%s'"),
 		    pd->filename + 1);
 	    return FALSE;
 	}
@@ -3583,7 +3581,8 @@ static Rboolean PS_Open(pDevDesc dd, PostScriptDesc *pd)
 	pd->open_type = 0;
     }
     if (!pd->psfp) {
-	warning(_("cannot open 'postscript' file argument '%s'"), buf);
+	PS_cleanup(4, dd, pd);
+	error(_("cannot open file '%s'"), buf);
 	return FALSE;
     }
 
@@ -3719,7 +3718,7 @@ static void PostScriptClose(pDevDesc dd)
 	    err = R_system(buff);
 #endif
 #ifdef Win32
-	    err = Rf_runcmd(buff, CE_NATIVE, 0, 0, NULL);
+	    err = Rf_runcmd(buff, CE_NATIVE, 0, 0, NULL, NULL, NULL);
 #endif
 	    if (err)
 		warning(_("error from postscript() in running:\n    %s"),
@@ -4094,6 +4093,57 @@ static void PS_Polygon(int n, double *x, double *y,
     }
 }
 
+static void PS_Path(double *x, double *y,
+                    int npoly, int *nper,
+                    Rboolean winding,
+                    const pGEcontext gc,
+                    pDevDesc dd)
+{
+    PostScriptDesc *pd;
+    int i, j, index, code;
+
+    pd = (PostScriptDesc *) dd->deviceSpecific;
+
+    /* code is set as follows */
+    /* code == 0, nothing to draw */
+    /* code == 1, outline only */
+    /* code == 2, fill only */
+    /* code == 3, outline and fill */
+
+    CheckAlpha(gc->fill, pd);
+    CheckAlpha(gc->col, pd);
+    code = 2 * (R_OPAQUE(gc->fill)) + (R_OPAQUE(gc->col));
+
+    if (code) {
+	if(code & 2) {
+	    SetFill(gc->fill, dd);
+	    if (!winding)
+		code |= 4;
+	}
+	if(code & 1) {
+	    SetColor(gc->col, dd);
+	    SetLineStyle(gc, dd);
+	}
+	fprintf(pd->psfp, "np\n");
+        index = 0;
+        for (i=0; i < npoly; i++) {
+            fprintf(pd->psfp, " %.2f %.2f m\n", x[index], y[index]);
+            index++;
+            for(j=1; j < nper[i]; j++) {
+                if (j % 100 == 0)
+                    fprintf(pd->psfp, "%.2f %.2f lineto\n", 
+                            x[index], y[index]);
+                else
+                    PostScriptRLineTo(pd->psfp, x[index-1], y[index-1], 
+                                      x[index], y[index]);
+                index++;
+            }
+            fprintf(pd->psfp, "cp\n");        
+        }
+	fprintf(pd->psfp, "p%d\n", code);
+    }
+}
+
 static void PS_Polyline(int n, double *x, double *y,
 			const pGEcontext gc,
 			pDevDesc dd)
@@ -4290,7 +4340,6 @@ static void PS_Text0(double x, double y, const char *str, int enc,
 	ucslen = (dd->hasTextUTF8) ? Rf_utf8towcs(NULL, str, 0) : mbstowcs(NULL, str, 0);
 	if (ucslen != (size_t)-1) {
 	    void *cd;
-	    unsigned char *buf;
 	    const char  *i_buf; char *o_buf;
 	    size_t nb, i_len,  o_len, buflen = ucslen * sizeof(ucs2_t);
 	    size_t status;
@@ -4303,7 +4352,7 @@ static void PS_Text0(double x, double y, const char *str, int enc,
 		return;
 	    }
 
-	    buf = (unsigned char *) alloca(buflen);
+	    unsigned char buf[buflen];
 	    R_CheckStack();
 
 	    i_buf = (char *)str;
@@ -4568,6 +4617,11 @@ static void XFig_Polyline(int n, double *x, double *y,
 static void XFig_Rect(double x0, double y0, double x1, double y1,
 		      const pGEcontext gc,
 		      pDevDesc dd);
+static void XFig_Path(double *x, double *y,
+                      int npoly, int *nper,
+                      Rboolean winding,
+                      const pGEcontext gc,
+                      pDevDesc dd);
 static void XFig_Raster(unsigned int *raster, int w, int h,
 		       double x, double y, double width, double height,
 		       double rot, Rboolean interpolate,
@@ -4649,12 +4703,15 @@ XFigDeviceDriver(pDevDesc dd, const char *file, const char *paper,
 
     if(strlen(file) > PATH_MAX - 1) {
 	free(dd);
-	error(_("filename too long in xfig"));
+	error(_("filename too long in %s()"), "xfig");
     }
 
     /* allocate new xfig device description */
-    if (!(pd = (XFigDesc *) malloc(sizeof(XFigDesc))))
-	return 0;
+    if (!(pd = (XFigDesc *) malloc(sizeof(XFigDesc)))) {
+	free(dd);
+	error(_("memory allocation problem in %s()"), "xfig");
+	return FALSE;	
+    }
 
     /* from here on, if need to bail out with "error", must also */
     /* free(pd) */
@@ -4692,7 +4749,7 @@ XFigDeviceDriver(pDevDesc dd, const char *file, const char *paper,
     } else {
 	free(dd);
 	free(pd);
-	error(_("failed to load encoding"));
+	error(_("failed to load encoding file in %s()"), "xfig");
     }
 
     /* Load default font */
@@ -4842,15 +4899,7 @@ XFigDeviceDriver(pDevDesc dd, const char *file, const char *paper,
 
     /*	Start the driver */
 
-    if(!XFig_Open(dd, pd)) {
-	freeDeviceFontList(pd->fonts);
-	freeDeviceEncList(pd->encodings);
-	pd->fonts = NULL;
-	pd->encodings = NULL;
-	free(dd);
-	free(pd);
-	return 0;
-    }
+    XFig_Open(dd, pd);
 
     dd->close      = XFig_Close;
     dd->activate   = XFig_Activate;
@@ -4862,6 +4911,7 @@ XFigDeviceDriver(pDevDesc dd, const char *file, const char *paper,
     dd->strWidth   = XFig_StrWidth;
     dd->metricInfo = XFig_MetricInfo;
     dd->rect	   = XFig_Rect;
+    dd->path       = XFig_Path;
     dd->raster     = XFig_Raster;
     dd->cap        = XFig_Cap;
     dd->circle     = XFig_Circle;
@@ -4878,18 +4928,34 @@ XFigDeviceDriver(pDevDesc dd, const char *file, const char *paper,
     return 1;
 }
 
+static void XFig_cleanup(pDevDesc dd, XFigDesc *pd)
+{
+    freeDeviceFontList(pd->fonts);
+    freeDeviceEncList(pd->encodings);
+    pd->fonts = NULL;
+    pd->encodings = NULL;
+    free(dd);
+    free(pd);   
+}
+
+
 static Rboolean XFig_Open(pDevDesc dd, XFigDesc *pd)
 {
     char buf[512], *tmp;
 
     if (strlen(pd->filename) == 0) {
+	XFig_cleanup(dd, pd);
 	error(_("empty file name"));
 	return FALSE;
     } else {
 	snprintf(buf, 512, pd->filename, pd->pageno + 1); /* page 1 to start */
 	pd->psfp = R_fopen(R_ExpandFileName(buf), "w");
     }
-    if (!pd->psfp) return FALSE;
+    if (!pd->psfp) {
+	XFig_cleanup(dd, pd);
+	error(_("cannot open file '%s'"), buf);
+	return FALSE;
+    }
     /* assume tmpname is less than PATH_MAX */
     tmp = R_tmpnam("Rxfig", R_TempDir);
     strcpy(pd->tmpname, tmp);
@@ -4897,6 +4963,8 @@ static Rboolean XFig_Open(pDevDesc dd, XFigDesc *pd)
     pd->tmpfp = R_fopen(pd->tmpname, "w");
     if (!pd->tmpfp) {
 	fclose(pd->psfp);
+	XFig_cleanup(dd, pd);
+	error(_("cannot open file '%s'"), pd->tmpname);
 	return FALSE;
     }
     XF_FileHeader(pd->psfp, pd->papername, pd->landscape, pd->onefile);
@@ -5038,6 +5106,14 @@ static void XFig_Rect(double x0, double y0, double x1, double y1,
     fprintf(fp, "  %d %d ", ix1, iy1);
     fprintf(fp, "  %d %d ", ix1, iy0);
     fprintf(fp, "  %d %d\n", ix0, iy0);
+}
+
+static void XFig_Path(double *x, double *y,
+                      int npoly, int *nper,
+                      Rboolean winding,
+		      const pGEcontext gc, pDevDesc dd)
+{
+    warning(_("%s not yet implemented for this device"), "Path rendering");
 }
 
 static void XFig_Raster(unsigned int *raster, int w, int h,
@@ -5420,6 +5496,11 @@ static void PDF_Polyline(int n, double *x, double *y,
 static void PDF_Rect(double x0, double y0, double x1, double y1,
 		     const pGEcontext gc,
 		     pDevDesc dd);
+static void PDF_Path(double *x, double *y,
+                     int npoly, int *nper,
+                     Rboolean winding,
+                     const pGEcontext gc,
+                     pDevDesc dd);
 static void PDF_Raster(unsigned int *raster, int w, int h,
 		       double x, double y, double width, double height,
 		       double rot, Rboolean interpolate,
@@ -5718,19 +5799,24 @@ PDFDeviceDriver(pDevDesc dd, const char *file, const char *paper,
     if(strlen(file) > PATH_MAX - 1) {
 	/* not yet created PDFcleanup(0, pd); */
 	free(dd);
-	error(_("filename too long in pdf"));
+	error(_("filename too long in %s()"), "pdf");
     }
 
     /* allocate new PDF device description */
-    if (!(pd = (PDFDesc *) malloc(sizeof(PDFDesc))))
-	return 0;
-    /* from here on, if need to bail out with "error", must also */
-    /* free(pd) */
+    if (!(pd = (PDFDesc *) malloc(sizeof(PDFDesc)))) {
+	free(dd);
+	error(_("memory allocation problem in %s()"), "pdf");
+    }
+    /* from here on, if need to bail out with "error", must also
+       free(pd) */
 
     pd->versionMajor = versionMajor;
     pd->versionMinor = versionMinor;
 
-    pd->pos = (int *) calloc(1150, sizeof(int));
+    /* FIXME: pos is allocated of a static size that is never checked
+       as objects are added. This can lead to buffer overflows (and
+       has in the past when it was independent of maxRasters). */
+    pd->pos = (int *) calloc(1150 + maxRasters * 2, sizeof(int));
     if(!pd->pos) {
 	PDFcleanup(1, pd);
 	free(dd);
@@ -5761,7 +5847,7 @@ PDFDeviceDriver(pDevDesc dd, const char *file, const char *paper,
     if(strlen(encoding) > PATH_MAX - 1) {
 	PDFcleanup(3, pd);
 	free(dd);
-	error(_("encoding path is too long"));
+	error(_("encoding path is too long in %s()"), "pdf");
     }
     /*
      * Load the default encoding AS THE FIRST ENCODING FOR THIS DEVICE.
@@ -5843,7 +5929,7 @@ PDFDeviceDriver(pDevDesc dd, const char *file, const char *paper,
     if (!gotFont) {
 	PDFcleanup(3, pd);
 	free(dd);
-	error(_("Failed to initialise default PostScript font"));
+	error(_("Failed to initialise default PDF font"));
     }
 
     /*
@@ -5898,7 +5984,7 @@ PDFDeviceDriver(pDevDesc dd, const char *file, const char *paper,
 	if (gotFonts < nfonts) {
 	    PDFcleanup(4, pd);
 	    free(dd);
-	    error(_("Failed to initialise additional PostScript fonts"));
+	    error(_("Failed to initialise additional PDF fonts"));
 	}
     }
     /*****************************
@@ -5913,6 +5999,7 @@ PDFDeviceDriver(pDevDesc dd, const char *file, const char *paper,
 	free(dd);
 	error(_("failed to allocate rasters"));
     }
+    pd->numMasks = 0;
     pd->masks = initMaskArray(pd->maxRasters);
     if (!pd->masks) {
 	PDFcleanup(5, pd);
@@ -6055,12 +6142,7 @@ PDFDeviceDriver(pDevDesc dd, const char *file, const char *paper,
     dd->canChangeGamma = FALSE;
 
     /*	Start the driver */
-
-    if(!PDF_Open(dd, pd)) {
-	PDFcleanup(6, pd);
-	free(dd);
-	return 0;
-    }
+    PDF_Open(dd, pd); /* errors on failure */
 
     dd->close      = PDF_Close;
     dd->activate   = PDF_Activate;
@@ -6072,6 +6154,7 @@ PDFDeviceDriver(pDevDesc dd, const char *file, const char *paper,
     dd->strWidth   = PDF_StrWidth;
     dd->metricInfo = PDF_MetricInfo;
     dd->rect	      = PDF_Rect;
+    dd->path	      = PDF_Path;
     dd->raster	      = PDF_Raster;
     dd->cap	      = PDF_Cap;
     dd->circle     = PDF_Circle;
@@ -6087,7 +6170,7 @@ PDFDeviceDriver(pDevDesc dd, const char *file, const char *paper,
 
     dd->deviceSpecific = (void *) pd;
     dd->displayListOn = FALSE;
-    return 1;
+    return TRUE;
 }
 
 static void PDF_Invalidate(pDevDesc dd)
@@ -6843,8 +6926,9 @@ static Rboolean PDF_Open(pDevDesc dd, PDFDesc *pd)
     snprintf(buf, 512, pd->filename, pd->fileno + 1); /* file 1 to start */
     pd->pdffp = R_fopen(R_ExpandFileName(buf), "wb");
     if (!pd->pdffp) {
-	warning(_("cannot open 'pdf' file argument '%s'"), buf);
-	return FALSE;
+	PDFcleanup(6, pd);
+	free(dd);	
+	error(_("cannot open file '%s'"), buf);
     }
 
     PDF_startfile(pd);
@@ -7222,6 +7306,56 @@ static void PDF_Polygon(int n, double *x, double *y,
     }
 }
 
+static void PDF_Path(double *x, double *y,
+                     int npoly, int *nper,
+                     Rboolean winding,
+                     const pGEcontext gc,
+                     pDevDesc dd)
+{
+    PDFDesc *pd = (PDFDesc *) dd->deviceSpecific;
+    double xx, yy;
+    int i, j, index, code;
+
+    code = 2 * (R_VIS(gc->fill)) + (R_VIS(gc->col));
+    if (code) {
+	if(pd->inText) textoff(pd);
+	if(code & 2)
+	    PDF_SetFill(gc->fill, dd);
+	if(code & 1) {
+	    PDF_SetLineColor(gc->col, dd);
+	    PDF_SetLineStyle(gc, dd);
+	}
+        index = 0;
+        for (i=0; i < npoly; i++) {
+            xx = x[index];
+            yy = y[index];
+            index++;
+            fprintf(pd->pdffp, "  %.2f %.2f m\n", xx, yy);
+            for(j=1; j < nper[i]; j++) {
+                xx = x[index];
+                yy = y[index];
+                index++;
+                fprintf(pd->pdffp, "  %.2f %.2f l\n", xx, yy);
+            }
+            if (i < npoly - 1)
+                fprintf(pd->pdffp, "h\n");
+	}
+	if (winding) {
+	    switch(code) {
+	    case 1: fprintf(pd->pdffp, "s\n"); break;
+	    case 2: fprintf(pd->pdffp, "h f\n"); break;
+	    case 3: fprintf(pd->pdffp, "b\n"); break;
+	    }
+	} else {
+	    switch(code) {
+	    case 1: fprintf(pd->pdffp, "s\n"); break;
+	    case 2: fprintf(pd->pdffp, "h f*\n"); break;
+	    case 3: fprintf(pd->pdffp, "b*\n"); break;
+	    }
+	}
+    }
+}
+
 static void PDF_Polyline(int n, double *x, double *y,
 			 const pGEcontext gc,
 			 pDevDesc dd)
@@ -7267,7 +7401,7 @@ static int PDFfontNumber(const char *family, int face, PDFDesc *pd)
 	     * Use very high font number for CID fonts to avoid
 	     * Type 1 fonts
 	     */
-	    num = 1000 + (cidfontIndex - 1)*5 + 1 + face;
+	    num = 1000 + (cidfontIndex - 1)*5 + face;
 	else {
 	    /*
 	     * Check whether the font is loaded and, if not,
@@ -7303,7 +7437,7 @@ static int PDFfontNumber(const char *family, int face, PDFDesc *pd)
 		} else /* (isCIDFont(family, PDFFonts)) */ {
 		    if (addPDFDeviceCIDfont(cidfontfamily, pd,
 					    &cidfontIndex)) {
-			num = 1000 + (cidfontIndex - 1)*5 + 1 + face;
+			num = 1000 + (cidfontIndex - 1)*5 + face;
 		    } else {
 			cidfontfamily = NULL;
 		    }
@@ -7467,7 +7601,6 @@ static void PDF_Text0(double x, double y, const char *str, int enc,
 
     if(isCIDFont(gc->fontfamily, PDFFonts, pd->defaultCIDFont) && face != 5) {
 	/* NB we could be in a SBCS here */
-	unsigned char *buf = NULL /* -Wall */;
 	size_t ucslen;
 	unsigned char *p;
 	int fontIndex;
@@ -7518,13 +7651,12 @@ static void PDF_Text0(double x, double y, const char *str, int enc,
 	    const char *i_buf; char *o_buf;
 	    size_t i, nb, i_len,  o_len, buflen = ucslen*sizeof(ucs2_t);
 	    size_t status;
-	    unsigned char *p;
 
 	    cd = (void*)Riconv_open(cidfont->encoding,
 				    (enc == CE_UTF8) ? "UTF-8": "");
 	    if(cd  == (void*)-1) return;
 
-	    buf = (unsigned char *) alloca(buflen);
+	    unsigned char buf[buflen];
 	    R_CheckStack();
 
 	    i_buf = (char *)str;
@@ -7541,6 +7673,7 @@ static void PDF_Text0(double x, double y, const char *str, int enc,
 		warning(_("failed in text conversion to encoding '%s'"),
 			cidfont->encoding);
 	    else {
+		unsigned char *p;
 		PDF_SetFill(gc->col, dd);
 		fprintf(pd->pdffp,
 			"/F%d 1 Tf %.2f %.2f %.2f %.2f %.2f %.2f Tm <",
@@ -7905,8 +8038,8 @@ SEXP PostScript(SEXP args)
 			   width, height, (double)horizontal, ps, onefile,
 			   pagecentre, printit, cmd, title, fonts,
 			   colormodel, useKern, fillOddEven)) {
-	    /* free(dev); No, dev freed inside PSDeviceDrive */
-	    error(_("unable to start device PostScript"));
+	    /* we no longer get here: error is thrown in PSDeviceDriver */
+	    error(_("unable to start %s() device"), "postscript");
 	}
 	gdd = GEcreateDevDesc(dev);
 	GEaddDevice2(gdd, "postscript");
@@ -7972,8 +8105,8 @@ SEXP XFig(SEXP args)
 	if(!XFigDeviceDriver(dev, file, paper, family, bg, fg, width, height,
 			     (double) horizontal, ps, onefile, pagecentre, defaultfont, textspecial,
 			     encoding)) {
-	    /* free(dev); No, freed inside XFigDeviceDriver */
-	    error(_("unable to start device xfig"));
+	    /* we no longer get here: error is thrown in XFigDeviceDriver */
+	    error(_("unable to start %s() device"), "xfig");
 	}
 	gdd = GEcreateDevDesc(dev);
 	GEaddDevice2(gdd, "xfig");
@@ -8067,8 +8200,8 @@ SEXP PDF(SEXP args)
 			    width, height, ps, onefile, pagecentre,
 			    title, fonts, major, minor, colormodel,
 			    dingbats, useKern, fillOddEven, maxRasters)) {
-	    /* free(dev); PDFDeviceDriver now frees */
-	    error(_("unable to start device pdf"));
+	    /* we no longer get here: error is thrown in PDFDeviceDriver */
+	    error(_("unable to start %s() device"), "pdf");
 	}
 	gdd = GEcreateDevDesc(dev);
 	GEaddDevice2(gdd, "pdf");

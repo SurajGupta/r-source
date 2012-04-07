@@ -47,7 +47,7 @@ unix.time(expr, gcFirst = TRUE)
 }
 \examples{
 require(stats)
-system.time(for(i in 1:100) mad(runif(1000)))
+\donttest{system.time(for(i in 1:100) mad(runif(1000)))}
 \dontrun{
 exT <- function(n = 10000) {
   # Purpose: Test if system.time works ok;   n: loop size

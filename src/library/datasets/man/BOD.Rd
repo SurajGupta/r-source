@@ -1,6 +1,6 @@
 % File src/library/datasets/man/BOD.Rd
 % Part of the R package, http://www.R-project.org
-% Copyright 1995-2007 R Core Development Team
+% Copyright 1995-2010 R Core Development Team
 % Distributed under GPL 2 or later
 
 \name{BOD}
@@ -34,17 +34,20 @@
   M.Sc. Thesis, University of Wisconsin -- Madison.
 }
 \examples{
+\testonly{options(show.nls.convergence=FALSE)
+old <- options(digits = 5)}
 require(stats)
 # simplest form of fitting a first-order model to these data
 fm1 <- nls(demand ~ A*(1-exp(-exp(lrc)*Time)), data = BOD,
    start = c(A = 20, lrc = log(.35)))
 coef(fm1)
-print(fm1)
+fm1
 # using the plinear algorithm
 fm2 <- nls(demand ~ (1-exp(-exp(lrc)*Time)), data = BOD,
    start = c(lrc = log(.35)), algorithm = "plinear", trace = TRUE)
 # using a self-starting model
 fm3 <- nls(demand ~ SSasympOrig(Time, A, lrc), data = BOD)
-summary( fm3 )
+summary(fm3)
+\testonly{options(old)}
 }
 \keyword{datasets}

@@ -45,6 +45,8 @@ rbinom(n, size, prob)
   \deqn{p(x) = {n \choose x} {p}^{x} {(1-p)}^{n-x}}{
     p(x) = choose(n,x) p^x (1-p)^(n-x)}
   for \eqn{x = 0, \ldots, n}.
+  Note that binomial \emph{coefficients} can be computed by
+  \code{\link{choose}} in \R.
 
   If an element of \code{x} is not integer, the result of \code{dbinom}
   is zero, with a warning.
@@ -54,6 +56,7 @@ rbinom(n, size, prob)
   \eqn{F(x) \ge p}, where \eqn{F} is the distribution function.
 }
 \seealso{
+  \link{Distributions} for other standard distributions, including
   \code{\link{dnbinom}} for the negative binomial, and
   \code{\link{dpois}} for the Poisson distribution.
 }

@@ -7,7 +7,7 @@ msgid ""
 msgstr ""
 "Project-Id-Version: R 2.3.0\n"
 "Report-Msgid-Bugs-To: bugs@r-project.org\n"
-"POT-Creation-Date: 2010-03-22 15:15\n"
+"POT-Creation-Date: 2010-10-04 10:49\n"
 "PO-Revision-Date: 2005-02-16 08:34\n"
 "Last-Translator: Stefano M. Iacus <Stefano.Iacus@R-project.org>\n"
 "Language-Team: Italian\n"
@@ -95,6 +95,13 @@ msgstr "versione stringa mal composta"
 msgid "dim(X) must have a positive length"
 msgstr "dim(X) deve avere lunghezza positiva"
 
+#, fuzzy
+msgid "'X' must have named dimnames"
+msgstr "'input' deve avere lunghezza 1"
+
+msgid "not all elements of 'MARGIN' are names of dimensions"
+msgstr ""
+
 msgid "'dim' specifies too large an array"
 msgstr "'dim' specifica un array troppo esteso"
 
@@ -134,6 +141,10 @@ msgstr ""
 #, fuzzy
 msgid "name space cannot be unloaded:"
 msgstr "namespace '%s' caricato"
+
+#, fuzzy
+msgid "converted to character string"
+msgstr "'file' deve essere NULL, una connessione o una stringa di caratteri"
 
 #, fuzzy
 msgid "replaced regular expression pattern '[' by  '\\\\['"
@@ -663,6 +674,10 @@ msgstr ""
 msgid "invalid factor level, NAs generated"
 msgstr "livello non valido in factor, sono stati generati degli NA"
 
+#, fuzzy
+msgid "invalid factor level, NA generated"
+msgstr "livello non valido in factor, sono stati generati degli NA"
+
 msgid "'%s' is not meaningful for ordered factors"
 msgstr "'%s' è senza senso per le variabili qualitative ordinali"
 
@@ -776,13 +791,6 @@ msgid "package '%s' was built before R 2.10.0: please re-install it"
 msgstr ""
 "il pacchetto '%s' è stato creato prima di R 2.0.0: si prega di re-installarlo"
 
-#, fuzzy
-msgid ""
-"package '%s' claims to be built under R version %s but is missing some help "
-"files and needs to be re-installed"
-msgstr ""
-"il pacchetto '%s' è stato creato prima di R 2.0.0: si prega di re-installarlo"
-
 msgid "This is R %s, package '%s' needs %s %s"
 msgstr "Questo è R %s, il pacchetto '%s' necessita di %s %s"
 
@@ -816,6 +824,9 @@ msgstr ""
 
 msgid "Attaching package: '%s'"
 msgstr "Carico il pacchetto richiesto: '%s'"
+
+msgid "'verbose' and 'quietly' are both true; being verbose then .."
+msgstr ""
 
 #, fuzzy
 msgid "invalid package name"
@@ -861,26 +872,53 @@ msgstr "nessun pacchetto trovato"
 msgid "R packages available"
 msgstr "Pacchetti di R disponibili"
 
-msgid "shared library '%s' not found"
-msgstr "libraria condivisa '%s' non trovata"
+msgid "DLL '%s' not found: maybe not installed for this architecture?"
+msgstr ""
 
-msgid "shared library '%s' already loaded"
+#, fuzzy
+msgid "shared object '%s' not found"
+msgstr "%s non trovato"
+
+#, fuzzy
+msgid "DLL '%s' already loaded"
+msgstr "libreria condivisa '%s' già caricata"
+
+#, fuzzy
+msgid "shared object '%s' already loaded"
 msgstr "libreria condivisa '%s' già caricata"
 
 msgid "now dyn.load(\"%s\") ..."
 msgstr "eseguo dyn.load(\"%s\") ..."
 
-msgid "no shared library was specified"
+#, fuzzy
+msgid "no DLL was specified"
 msgstr "non è stata specificata alcuna libreria condivisa"
 
-msgid "shared library '%s' was not loaded"
+#, fuzzy
+msgid "no shared object was specified"
+msgstr "non è stata specificata alcuna libreria condivisa"
+
+#, fuzzy
+msgid "DLL '%s' was not loaded"
 msgstr "libreria condivisa '%s' non caricata"
+
+#, fuzzy
+msgid "shared object '%s' was not loaded"
+msgstr "libreria condivisa '%s' non caricata"
+
+#, fuzzy
+msgid "DLL '%s' not found"
+msgstr "file '%s' non trovato"
 
 msgid "now dyn.unload(\"%s\") ..."
 msgstr "eseguo dyn.unload(\"%s\") ..."
 
 msgid "Loading required package: %s"
 msgstr "Carico il pacchetto richiesto: %s"
+
+#, fuzzy
+msgid "use of 'save' is deprecated"
+msgstr "'%s' è deprecata"
 
 msgid "none of the packages are loaded"
 msgstr "nessuno dei pacchetti è stato caricato"
@@ -1051,6 +1089,9 @@ msgstr ""
 "caricare il namespace methods"
 
 msgid "Expected a single logical value for the S4 state flag"
+msgstr ""
+
+msgid "Expected a single logical value for the S3 state flag"
 msgstr ""
 
 msgid "invalid to change the storage mode of a factor"
@@ -1399,9 +1440,6 @@ msgstr ""
 msgid "'chdir = TRUE' makes no sense for a URL"
 msgstr ""
 
-msgid "cannot 'chdir' as current directory is unknown"
-msgstr ""
-
 msgid "'chdir = TRUE' makes no sense for a connection"
 msgstr ""
 
@@ -1438,6 +1476,9 @@ msgstr "'x' e 'y' devono avere la stessa lunghezza"
 
 msgid "incorrect values of 'indent' and 'width'"
 msgstr "valori non corretti per 'indent' e 'width'"
+
+msgid "probably wrong encoding in names(.) of column"
+msgstr ""
 
 msgid "'nv' must be 0 or ncol(x)"
 msgstr "'nv' deve essere 0 o ncol(x)"
@@ -1541,6 +1582,9 @@ msgstr ""
 msgid "'intern' must be TRUE or FALSE"
 msgstr ""
 
+msgid "'ignore.stdout' must be TRUE or FALSE"
+msgstr ""
+
 msgid "'ignore.stderr' must be TRUE or FALSE"
 msgstr ""
 
@@ -1550,6 +1594,20 @@ msgstr ""
 #, fuzzy
 msgid "'input' must be a character vector or 'NULL'"
 msgstr "'input' e 'target' devono essere vettori di caratteri"
+
+msgid "arguments 'minimized' and 'invisible' are for Windows only"
+msgstr ""
+
+msgid "setting stdout = TRUE"
+msgstr ""
+
+#, fuzzy
+msgid "'stdout' must be of length 1"
+msgstr "'to' deve avere  lunghezza 1"
+
+#, fuzzy
+msgid "'stderr' must be of length 1"
+msgstr "'to' deve avere  lunghezza 1"
 
 msgid "'show.output.on.console' must be TRUE or FALSE"
 msgstr ""
@@ -1658,9 +1716,16 @@ msgid_plural "Warning messages:\n"
 msgstr[0] "Messaggio di avvertimento:\n"
 msgstr[1] "Messaggi di avvertimento:\n"
 
+#~ msgid "shared library '%s' not found"
+#~ msgstr "libraria condivisa '%s' non trovata"
+
 #, fuzzy
-#~ msgid "'x' must have length 1"
-#~ msgstr "'input' deve avere lunghezza 1"
+#~ msgid ""
+#~ "package '%s' claims to be built under R version %s but is missing some "
+#~ "help files and needs to be re-installed"
+#~ msgstr ""
+#~ "il pacchetto '%s' è stato creato prima di R 2.0.0: si prega di re-"
+#~ "installarlo"
 
 #, fuzzy
 #~ msgid "invalid digits"

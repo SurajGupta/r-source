@@ -1,8 +1,8 @@
 msgid ""
 msgstr ""
-"Project-Id-Version: R 2.11.0\n"
+"Project-Id-Version: R 2.12.0\n"
 "Report-Msgid-Bugs-To: bugs@r-project.org\n"
-"POT-Creation-Date: 2009-10-05 14:08\n"
+"POT-Creation-Date: 2010-10-01 21:26\n"
 "PO-Revision-Date: YEAR-MO-DA HO:MI+ZONE\n"
 "Last-Translator: FULL NAME <EMAIL@ADDRESS>\n"
 "Language-Team: LANGUAGE <LL@li.org>\n"
@@ -14,10 +14,7 @@ msgstr ""
 msgid "'a' is overridden by 'reg'"
 msgstr ""
 
-msgid "only using the first two of"
-msgstr ""
-
-msgid "regression coefficients"
+msgid "only using the first two of %d regression coefficients"
 msgstr ""
 
 msgid "'a' and 'b' are overridden by 'coef'"
@@ -36,6 +33,9 @@ msgid "at least one entry of 'x' must be positive"
 msgstr ""
 
 msgid "incorrect 'col': must be length 2"
+msgstr ""
+
+msgid "only for 1-D table"
 msgstr ""
 
 msgid "'side' must be in {1:4}"
@@ -92,9 +92,6 @@ msgstr ""
 msgid "dependent variable should be a factor"
 msgstr ""
 
-msgid "explanatory variable should be numeric"
-msgstr ""
-
 msgid "y axis is on a cumulative probability scale, 'ylim' must be in [0,1]"
 msgstr ""
 
@@ -128,7 +125,7 @@ msgstr ""
 msgid "Missing rows"
 msgstr ""
 
-msgid "'expr' must be a function or an expression containing 'x'"
+msgid "'expr' must be a function, call or an expression containing 'x'"
 msgstr ""
 
 msgid "'from' and 'to' must be > 0 with log=\"x\""
@@ -318,6 +315,9 @@ msgid "there must be at least one numeric variable!"
 msgstr ""
 
 msgid "cannot hatch with logarithmic scale active"
+msgstr ""
+
+msgid "Invalid fill rule for graphics path"
 msgstr ""
 
 msgid "invalid rectangle specification"

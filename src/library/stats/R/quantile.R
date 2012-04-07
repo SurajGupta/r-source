@@ -17,9 +17,7 @@
 quantile <- function(x, ...) UseMethod("quantile")
 
 quantile.POSIXt <- function(x, ...)
-    structure(quantile(unclass(as.POSIXct(x)), ...),
-              class = c("POSIXt", "POSIXct"),
-              tzone = attr(x, "tzone"))
+    .POSIXct(quantile(unclass(as.POSIXct(x)), ...), attr(x, "tzone"))
 
 quantile.default <-
     function(x, probs = seq(0, 1, 0.25), na.rm = FALSE, names = TRUE,
@@ -73,7 +71,7 @@ quantile.default <-
                    {a <- 0; b <- 1},    # type 4
                        a <- b <- 0.5,   # type 5
                        a <- b <- 0,     # type 6
-                       a <- b <- 1,     # type 7
+                       a <- b <- 1,     # type 7 (unused here)
                        a <- b <- 1 / 3, # type 8
                        a <- b <- 3 / 8) # type 9
                 ## need to watch for rounding errors here
@@ -92,7 +90,7 @@ quantile.default <-
             ## also h*x might be invalid ... e.g. Dates and ordered factors
             qs <- x[j+2L]
             qs[h == 1] <- x[j+3L][h == 1]
-            other <- (h > 0) && (h < 1)
+            other <- (h > 0) & (h < 1)
             if(any(other)) qs[other] <- ((1-h)*x[j+2L] + h*x[j+3L])[other]
         }
     } else {

@@ -14,7 +14,8 @@
 #  A copy of the GNU General Public License is available at
 #  http://www.r-project.org/Licenses/
 
-system <- function(command, intern = FALSE, ignore.stderr = FALSE,
+system <- function(command, intern = FALSE,
+                   ignore.stdout = FALSE, ignore.stderr = FALSE,
                    wait = TRUE, input = NULL,
                    show.output.on.console = TRUE, minimized = FALSE,
                    invisible = TRUE)
@@ -25,20 +26,77 @@ system <- function(command, intern = FALSE, ignore.stderr = FALSE,
 
     if(!is.logical(intern) || is.na(intern))
         stop("'intern' must be TRUE or FALSE")
+    if(!is.logical(ignore.stdout) || is.na(ignore.stdout))
+        stop("'ignore.stdout' must be TRUE or FALSE")
     if(!is.logical(ignore.stderr) || is.na(ignore.stderr))
         stop("'ignore.stderr' must be TRUE or FALSE")
     if(!is.logical(wait) || is.na(wait))
         stop("'wait' must be TRUE or FALSE")
 
+    if(ignore.stdout) command <- paste(command, ">/dev/null")
     if(ignore.stderr) command <- paste(command, "2>/dev/null")
     if(!is.null(input)) {
         if(!is.character(input))
             stop("'input' must be a character vector or 'NULL'")
         f <- tempfile()
         on.exit(unlink(f))
-        cat(input, file=f, sep="\n")
+        writeLines(input, f)
+        # cat(input, file=f, sep="\n")
         command <- paste(command, "<", f)
     }
+    if(!wait && !intern) command <- paste(command, "&")
+    .Internal(system(command, intern))
+}
+
+system2 <- function(command, args = character(),
+                    stdout = "", stderr = "", stdin = "", input = NULL,
+                    env = character(),
+                    wait = TRUE, minimized = FALSE, invisible = TRUE)
+{
+    if(!missing(minimized) || !missing(invisible))
+        warning("arguments 'minimized' and 'invisible' are for Windows only")
+    if(!is.logical(wait) || is.na(wait))
+        stop("'wait' must be TRUE or FALSE")
+
+    intern <- FALSE
+    command <- paste(c(env, shQuote(command), args), collapse = " ")
+
+    if(is.null(stdout)) stdout <- FALSE
+    if(is.null(stderr)) stderr <- FALSE
+
+    if (isTRUE(stderr)) {
+        if (!isTRUE(stdout)) warning("setting stdout = TRUE")
+        stdout <- TRUE
+    }
+    if (identical(stdout, FALSE))
+        command <- paste(command, ">/dev/null")
+    else if(isTRUE(stdout))
+        intern <- TRUE
+    else if(is.character(stdout)) {
+        if(length(stdout) != 1L) stop("'stdout' must be of length 1")
+        if(nzchar(stdout)) {
+            command <- if (identical(stdout, stderr))
+                paste(command, ">", shQuote(stdout), "2>&1")
+            else command <- paste(command, ">", shQuote(stdout))
+        }
+    }
+    if (identical(stderr, FALSE))
+        command <- paste(command, "2>/dev/null")
+    else if(isTRUE(stderr)) { # stdout == TRUE
+        command <- paste(command, "2>&1")
+    } else if(is.character(stderr)) {
+        if(length(stderr) != 1L) stop("'stderr' must be of length 1")
+        paste(command, "2>", shQuote(stderr))
+    }
+    if(!is.null(input)) {
+        if(!is.character(input))
+            stop("'input' must be a character vector or 'NULL'")
+        f <- tempfile()
+        on.exit(unlink(f))
+        writeLines(input, f)
+        # cat(input, file=f, sep="\n")
+        command <- paste(command, "<", f)
+    } else if (nzchar(stdin)) command <- paste(command, "<", stdin)
     if(!wait && !intern) command <- paste(command, "&")
     .Internal(system(command, intern))
 }
@@ -46,9 +104,20 @@ system <- function(command, intern = FALSE, ignore.stderr = FALSE,
 Sys.which <- function(names)
 {
     res <- character(length(names)); names(res) <- names
+    ## hopefully configure found /usr/bin/which
+    which <- Sys.getenv("WHICH", "which")
     for(i in names) {
-        ans <- system(paste("which", i), intern=TRUE, ignore.stderr=TRUE)
+        ans <- suppressWarnings(system(paste(which, i), intern=TRUE,
+                                       ignore.stderr=TRUE))
+        ## Solaris' which gives 'no foo in ...' message on stdout,
+        ## GNU which does it on stderr
+        if(grepl("solaris", R.version$os)) {
+            tmp <- strsplit(ans[1], " ", fixed = TRUE)[[1]]
+            if(identical(tmp[1:3], c("no", i, "in"))) ans <- ""
+        }
         res[i] <- if(length(ans)) ans[1] else ""
+        ## final check that this is a real path and not an error message
+        if(!file.exists(res[i])) res[i] <- ""
     }
     res
 }

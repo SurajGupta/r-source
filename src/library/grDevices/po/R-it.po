@@ -7,7 +7,7 @@ msgid ""
 msgstr ""
 "Project-Id-Version: R 2.3.0\n"
 "Report-Msgid-Bugs-To: bugs@r-project.org\n"
-"POT-Creation-Date: 2009-12-17 11:57\n"
+"POT-Creation-Date: 2010-08-11 09:24\n"
 "PO-Revision-Date: 2005-02-27 13:33+0100\n"
 "Last-Translator: Stefano M. Iacus <Stefano.Iacus@R-project.org>\n"
 "Language-Team: Italian\n"
@@ -224,6 +224,9 @@ msgstr ""
 msgid "status %d in running command '%s'"
 msgstr ""
 
+msgid "range too small for min.n"
+msgstr ""
+
 msgid "A raster matrix must be character, or numeric, or logical"
 msgstr ""
 
@@ -235,6 +238,9 @@ msgid "A raster array must have exactly 3 dimensions"
 msgstr ""
 
 msgid "A raster array must have exactly 3 or 4 planes"
+msgstr ""
+
+msgid "Operator not meaningful for raster objects"
 msgstr ""
 
 msgid "no current device to record from"
@@ -266,6 +272,9 @@ msgstr ""
 msgid "invalid first argument"
 msgstr ""
 
+msgid "'x' is a list, but does not have components 'x' and 'y'"
+msgstr ""
+
 msgid "'x' and 'y' lengths differ"
 msgstr "le lunghezze di 'x' e 'y' differiscono"
 
@@ -275,6 +284,9 @@ msgstr "primo argomento non valido [oggetto sbagliato]"
 msgid "at least 2 columns needed"
 msgstr "necessarie almeno 2 colonne"
 
+msgid "'x' is a list, but does not have components 'x', 'y'  and 'z'"
+msgstr ""
+
 msgid "'x', 'y' and 'z' lengths differ"
 msgstr "le lunghezze di 'x', 'y' e 'z' differiscono"
 
@@ -283,6 +295,9 @@ msgstr "'file' manca senza valore di default"
 
 msgid "sorry, 'gs' cannot be found"
 msgstr "spiacente, ma non trovo 'gs'"
+
+msgid "unrecognized format of gs -help"
+msgstr ""
 
 msgid "device '%s' is not available"
 msgstr "device '%s' non disponibile"

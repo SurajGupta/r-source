@@ -114,7 +114,8 @@
   Logical values are sent as \code{0} (\code{FALSE}), \code{1}
   (\code{TRUE}) or \code{INT_MIN = -2147483648} (\code{NA}, but only if
   \code{NAOK = TRUE}), and the compiled code should return one of these
-  three values.
+  three values: however non-zero value other than \code{INT_MIN} are
+  mapped to \code{TRUE} as from \R 2.12.0.
 
   \emph{Note:} The C types corresponding to \code{integer} and
   \code{logical} are \code{int}, not \code{long} as in S.  This

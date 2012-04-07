@@ -1,7 +1,5 @@
 ## ${R_HOME}/share/make/winshlib.mk
 
-include $(R_HOME)/etc${R_ARCH}/Makeconf
-
 all: $(SHLIB)
 
 BASE = $(shell basename $(SHLIB) .dll)
@@ -16,7 +14,7 @@ $(SHLIB): $(OBJECTS)
 	    $(SHLIB_LD) -shared $(DLLFLAGS) -o $@ $(BASE)-win.def $(OBJECTS) $(ALL_LIBS); \
 	  else \
 	    echo EXPORTS > tmp.def; \
-	    $(NM) $^ | $(SED) -n 's/^.* [BCDRT] _/ /p' >> tmp.def; \
+	    $(NM) $^ | $(SED) -n $(SYMPAT) >> tmp.def; \
 	    echo $(SHLIB_LD) -shared $(DLLFLAGS) -o $@ tmp.def $(OBJECTS) $(ALL_LIBS); \
 	    $(SHLIB_LD) -shared $(DLLFLAGS) -o $@ tmp.def $(OBJECTS) $(ALL_LIBS); \
 	    $(RM) tmp.def; \

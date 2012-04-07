@@ -19,11 +19,16 @@ R.home <- function(component="home")
     rh <- .Internal(R.home())
     switch(component,
            "home" = rh,
+           "bin" = if(.Platform$OS.type == "windows" &&
+                      nzchar(p <- .Platform$r_arch)) file.path(rh, component, p)
+           else file.path(rh, component),
            "share" = if(nzchar(p <- as.vector(Sys.getenv("R_SHARE_DIR")))) p
            else file.path(rh, component),
 	   "doc" = if(nzchar(p <- as.vector(Sys.getenv("R_DOC_DIR")))) p
            else file.path(rh, component),
            "include" = if(nzchar(p <- as.vector(Sys.getenv("R_INCLUDE_DIR")))) p
+           else file.path(rh, component),
+           "modules" = if(nzchar(p <- .Platform$r_arch)) file.path(rh, component, p)
            else file.path(rh, component),
            file.path(rh, component))
 }
@@ -125,8 +130,9 @@ file.symlink <- function(from, to) {
 file.info <- function(...)
 {
     res <- .Internal(file.info(fn <- c(...)))
-    class(res$mtime) <- class(res$ctime) <- class(res$atime) <-
-        c("POSIXt", "POSIXct")
+    res$mtime <- .POSIXct(res$mtime)
+    res$ctime <- .POSIXct(res$ctime)
+    res$atime <- .POSIXct(res$atime)
     class(res) <- "data.frame"
     attr(res, "row.names") <- fn # not row.names<- as that does a length check
     res
@@ -192,3 +198,6 @@ Sys.umask <- function(mode = "0000")
 
 Sys.readlink <- function(paths)
     .Internal(Sys.readlink(paths))
+
+readRenviron <- function(path)
+    .Internal(readRenviron(path))

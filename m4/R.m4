@@ -1,6 +1,6 @@
 ### R.m4 -- extra macros for configuring R		-*- Autoconf -*-
 ###
-### Copyright (C) 1998-2009 R Core Team
+### Copyright (C) 1998-2010 R Core Team
 ###
 ### This file is part of R.
 ###
@@ -132,7 +132,6 @@ if test -n "${PERL}"; then
   _R_PROG_PERL_VERSION
 fi
 if test "${r_cv_prog_perl_v5}" != yes; then
-  AC_MSG_WARN([Using 'R CMD build|check|Rprof' requires Perl >= 5.8.0])
   ## in case available at runtime: 'false' is an alternative
   PERL="/usr/bin/env perl"
 fi
@@ -160,49 +159,29 @@ fi])
 ## ------------
 AC_DEFUN([R_PROG_TEXMF],
 [AC_REQUIRE([R_PROG_PERL])
-## dvips is not used to make manuals, only in Rd2dvi and help-print.sh
-## the latter via options("dvipscmd"). Also sets R_DVIPSCMD.
-AC_PATH_PROGS(DVIPS, [${DVIPS} dvips], dvips)
-DVIPSCMD=${ac_cv_path_DVIPS}
-if test -z "${DVIPSCMD}"; then
-  DVIPSCMD=dvips
-fi
-AC_SUBST(DVIPSCMD)
 ## TEX PDFTEX LATEX PDFLATEX MAKEINDEX TEXI2DVI are used to make manuals
-## LATEXCMD is used for options("latexcmd") (used in help-print.sh).
-## LATEXCMD PDFLATEXCMD MAKEINDEXCMD TEXI2DVICMD set default for R_<foo> in etc/Renviron
+## TEXI2DVICMD sets default for R_TEXI2DVICMD, used for options('texi2dvi')
 AC_PATH_PROGS(TEX, [${TEX} tex], )
 if test -z "${ac_cv_path_TEX}" ; then
   warn_dvi1="you cannot build DVI versions of the R manuals"
   AC_MSG_WARN([${warn_dvi1}])
 fi
 AC_PATH_PROGS(LATEX, [${LATEX} latex], )
-LATEXCMD=${ac_cv_path_LATEX}
 if test -z "${ac_cv_path_LATEX}"; then
   warn_dvi2="you cannot build DVI versions of all the help pages"
   AC_MSG_WARN([${warn_dvi2}])
-  LATEXCMD=latex
 fi
-AC_SUBST(LATEXCMD)
-AC_PATH_PROGS(MAKEINDEX, [${MAKEINDEX} makeindex], )
-MAKEINDEXCMD=${ac_cv_path_MAKEINDEX}
-if test -z "${MAKEINDEXCMD}"; then
-  MAKEINDEXCMD=makeindex
-fi
-AC_SUBST(MAKEINDEXCMD)
 AC_PATH_PROGS(PDFTEX, [${PDFTEX} pdftex], )
 if test -z "${ac_cv_path_PDFTEX}" ; then
   warn_pdf1="you cannot build PDF versions of the R manuals"
   AC_MSG_WARN([${warn_pdf1}])
 fi
 AC_PATH_PROGS(PDFLATEX, [${PDFLATEX} pdflatex], )
-PDFLATEXCMD=${ac_cv_path_PDFLATEX}
 if test -z "${ac_cv_path_PDFLATEX}" ; then
   warn_pdf2="you cannot build PDF versions of all the help pages"
   AC_MSG_WARN([${warn_pdf2}])
-  PDFLATEXCMD=pdflatex
 fi
-AC_SUBST(PDFLATEXCMD)
+AC_PATH_PROGS(MAKEINDEX, [${MAKEINDEX} makeindex], )
 R_PROG_MAKEINFO
 AC_PATH_PROGS(TEXI2DVI, [${TEXI2DVI} texi2dvi], )
 TEXI2DVICMD=${ac_cv_path_TEXI2DVI}
@@ -222,13 +201,13 @@ AC_DEFUN([R_PROG_MAKEINFO],
 [AC_PATH_PROGS(MAKEINFO, [${MAKEINFO} makeinfo])
 if test -n "${MAKEINFO}"; then
   _R_PROG_MAKEINFO_VERSION
-  ## This test admittedly looks a bit strange ... see R_PROG_PERL.
-  if test "${PERL}" = "${FALSE}"; then
-    AC_PATH_PROGS(INSTALL_INFO, [${INSTALL_INFO} install-info], false)
-  else
-    INSTALL_INFO="\$(PERL) \$(top_srcdir)/tools/install-info.pl"
-    AC_SUBST(INSTALL_INFO)
+  AC_PATH_PROGS(INSTALL_INFO, [${INSTALL_INFO} install-info], false)
+  if test "ac_cv_path_INSTALL_INFO" = "false"; then
+    if test "${r_cv_prog_perl_v5}" = yes; then
+      INSTALL_INFO="\$(PERL) \$(top_srcdir)/tools/install-info.pl"
+    fi
   fi
+  AC_SUBST(INSTALL_INFO)
 fi
 if test "${r_cv_prog_makeinfo_v4}" != yes; then
   warn_info="you cannot build info or HTML versions of the R manuals"
@@ -598,8 +577,6 @@ cat << \EOF > ${r_cxx_rules_frag}
 	$(CXX) $(ALL_CPPFLAGS) $(ALL_CXXFLAGS) -c $< -o $[@]
 .cpp.o:
 	$(CXX) $(ALL_CPPFLAGS) $(ALL_CXXFLAGS) -c $< -o $[@]
-.C.o:
-	$(CXX) $(ALL_CPPFLAGS) $(ALL_CXXFLAGS) -c $< -o $[@]
 EOF
 if test "${r_cv_prog_cxx_m}" = yes; then
   cat << \EOF >> ${r_cxx_rules_frag}
@@ -609,17 +586,12 @@ if test "${r_cv_prog_cxx_m}" = yes; then
 .cpp.d:
 	@echo "making $[@] from $<"
 	@$(CXX) -M $(ALL_CPPFLAGS) $< > $[@]
-.C.d:
-	@echo "making $[@] from $<"
-	@$(CXX) -M $(ALL_CPPFLAGS) $< > $[@]
 EOF
 else
   cat << \EOF >> ${r_cxx_rules_frag}
 .cc.d:
 	@echo > $[@]
 .cpp.d:
-	@echo > $[@]
-.C.d:
 	@echo > $[@]
 EOF
 fi
@@ -2202,7 +2174,7 @@ AC_DEFUN([_R_HEADER_TCL],
 [#include <tcl.h>
 /* Revise if 9.x ever appears (and 8.x seems to increment only
    every few years). */
-#if (TCL_MAJOR_VERSION >= 8) && (TCL_MINOR_VERSION >= 3)
+#if (TCL_MAJOR_VERSION >= 8) && (TCL_MINOR_VERSION >= 4)
   yes
 #endif
 ],
@@ -2220,7 +2192,7 @@ AC_DEFUN([_R_HEADER_TK],
 [#include <tk.h>
 /* Revise if 9.x ever appears (and 8.x seems to increment only
    every few years). */
-#if (TK_MAJOR_VERSION >= 8) && (TK_MINOR_VERSION >= 3)
+#if (TK_MAJOR_VERSION >= 8) && (TK_MINOR_VERSION >= 4)
   yes
 #endif
 ],
@@ -2954,7 +2926,7 @@ AM_CONDITIONAL(BUILD_XDR, [test "x${r_cv_xdr}" = xno])
 ## R_ZLIB
 ## ------
 ## Try finding zlib library and headers.
-## We check that both are installed, and that the header >= 1.2.3
+## We check that both are installed, and that the header == 1.2.3
 ## and that gzeof is in the library (which suggests the library
 ## is also recent enough).
 AC_DEFUN([R_ZLIB],
@@ -2988,7 +2960,7 @@ AM_CONDITIONAL(USE_MMAP_ZLIB,
 ## Set shell variable r_cv_header_zlib_h to 'yes' if a recent enough
 ## zlib.h is found, and to 'no' otherwise.
 AC_DEFUN([_R_HEADER_ZLIB],
-[AC_CACHE_CHECK([if zlib version >= 1.2.3],
+[AC_CACHE_CHECK([if zlib version == 1.2.3],
                 [r_cv_header_zlib_h],
 [AC_RUN_IFELSE([AC_LANG_SOURCE([[
 #include <stdlib.h>
@@ -2996,7 +2968,9 @@ AC_DEFUN([_R_HEADER_ZLIB],
 #include <zlib.h>
 int main() {
 #ifdef ZLIB_VERSION
-  exit(strcmp(ZLIB_VERSION, "1.2.3") < 0);
+/* Workaround Debian bug: it uses 1.2.3.4 even though there is no such
+   version on the master site zlib.net */
+  exit(strncmp(ZLIB_VERSION, "1.2.3", 5) != 0);
 #else
   exit(1);
 #endif
@@ -3095,7 +3069,7 @@ else
   have_bzlib=no
 fi
 if test "x${have_bzlib}" = xyes; then
-AC_CACHE_CHECK([if bzip2 version >= 1.0.5], [r_cv_have_bzlib],
+AC_CACHE_CHECK([if bzip2 version >= 1.0.6], [r_cv_have_bzlib],
 [AC_LANG_PUSH(C)
 r_save_LIBS="${LIBS}"
 LIBS="-lbz2 ${LIBS}"
@@ -3105,7 +3079,7 @@ AC_RUN_IFELSE([AC_LANG_SOURCE([[
 #endif
 int main() {
     char *ver = BZ2_bzlibVersion();
-    exit(strcmp(ver, "1.0.5") < 0);
+    exit(strcmp(ver, "1.0.6") < 0);
 }
 ]])], [r_cv_have_bzlib=yes], [r_cv_have_bzlib=no], [r_cv_have_bzlib=no])
 LIBS="${r_save_LIBS}"
@@ -3227,8 +3201,8 @@ fi
 ## R_SIZE_MAX
 ## ----------
 ## Look for a definition of SIZE_MAX (the maximum of size_t).
-## C99 has it declared in <inttypes.h>, glibc in <stdint.h>
-## and Solaris 8 in <limits.h>!
+## C99 has it declared in <stdint.h>, pre-C99 POSIX in <inttypes.h>, 
+## glibc in <stdint.h> and Solaris 8 in <limits.h>!
 ## autoconf tests for inttypes.h and stdint.h by default
 AC_DEFUN([R_SIZE_MAX],
 [AC_CACHE_CHECK([whether SIZE_MAX is declared],

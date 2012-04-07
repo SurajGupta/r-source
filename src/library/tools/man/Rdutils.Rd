@@ -26,14 +26,10 @@ Rd_db(package, dir, lib.loc = NULL)
   as a list of the results of running \code{\link{parse_Rd}} on the Rd
   source files in the package and processing platform conditionals.
 }
-\section{Warning}{
-  \code{Rd_db} is still experimental.  Names, interface and value might
-  change in future versions.
-}
 \seealso{
   \code{\link{parse_Rd}}
 }
-\examples{
+\examples{\donttest{
 ## Build the Rd db for the (installed) base package.
 db <- Rd_db("base")
 
@@ -52,6 +48,6 @@ concepts <- lapply(db, tools:::.Rd_get_metadata, "concept")
 sum(sapply(concepts, length) > 0)
 ## How many concept entries altogether?
 length(unlist(concepts))
-}
+}}
 \keyword{utilities}
 \keyword{documentation}

@@ -8,25 +8,27 @@
 \title{Linearly Constrained Optimization}
 \description{
 Minimise a function subject to linear inequality constraints using an
-adaptive barrier algorithm.  
+adaptive barrier algorithm.
 }
 \usage{
 constrOptim(theta, f, grad, ui, ci, mu = 1e-04, control = list(),
             method = if(is.null(grad)) "Nelder-Mead" else "BFGS",
-            outer.iterations = 100, outer.eps = 1e-05, \dots)
+            outer.iterations = 100, outer.eps = 1e-05, \dots,
+            hessian = FALSE)
 }
 \arguments{
-  \item{theta}{Starting value: must be in the feasible region.}
-  \item{f}{Function to minimise (see below).}
-  \item{grad}{Gradient of \code{f}, or \code{NULL} (see below).}
-  \item{ui}{Constraints (see below).}
-  \item{ci}{Constraints (see below).}
+  \item{theta}{numeric (vector) starting value (of length \eqn{p}): must
+    be in the feasible region.}
+  \item{f}{function to minimise (see below).}
+  \item{grad}{gradient of \code{f} (a \code{\link{function}} as well),
+    or \code{NULL} (see below).}
+  \item{ui}{constraint matrix (\eqn{k \times p}{k x p}), see below.}
+  \item{ci}{constraint vector of length \eqn{k} (see below).}
   \item{mu}{(Small) tuning parameter.}
-  \item{control}{Passed to \code{\link{optim}}.}
-  \item{method}{Passed to \code{\link{optim}}.}
-  \item{outer.iterations}{Iterations of the barrier algorithm.}
-  \item{outer.eps}{Criterion for relative convergence of the barrier
-    algorithm.}
+  \item{control, method, hessian}{passed to \code{\link{optim}}.}
+  \item{outer.iterations}{iterations of the barrier algorithm.}
+  \item{outer.eps}{non-negative number; the relative convergence
+    tolerance of the barrier algorithm.}
   \item{\dots}{Other named arguments to be passed to \code{f} and \code{grad}:
     needs to be passed through \code{\link{optim}} so should not match its
     argument names.}
@@ -34,8 +36,8 @@ constrOptim(theta, f, grad, ui, ci, mu = 1e-04, control = list(),
 \details{
   The feasible region is defined by \code{ui \%*\% theta - ci >= 0}. The
   starting value must be in the interior of the feasible region, but the
-  minimum may be on the boundary. 
-  
+  minimum may be on the boundary.
+
   A logarithmic barrier is added to enforce the constraints and then
   \code{\link{optim}} is called. The barrier function is chosen so that
   the objective function should decrease at each outer iteration. Minima
@@ -43,15 +45,15 @@ constrOptim(theta, f, grad, ui, ci, mu = 1e-04, control = list(),
   quickly, but a substantial number of outer iterations may be needed
   for a minimum on the boundary.
 
- The tuning parameter \code{mu} multiplies the barrier term. Its precise
+  The tuning parameter \code{mu} multiplies the barrier term. Its precise
   value is often relatively unimportant. As \code{mu} increases the
   augmented objective function becomes closer to the original objective
   function but also less smooth near the boundary of the feasible
   region.
 
   Any \code{optim} method that permits infinite values for the
-  objective function may be used (currently all but "L-BFGS-B").  
-  
+  objective function may be used (currently all but "L-BFGS-B").
+
   The objective function \code{f} takes as first argument the vector
   of parameters over which minimisation is to take place.  It should
   return a scalar result. Optional arguments \code{\dots} will be
@@ -59,17 +61,19 @@ constrOptim(theta, f, grad, ui, ci, mu = 1e-04, control = list(),
   \code{f}. As with \code{optim}, the default is to minimise, but
   maximisation can be performed by setting \code{control$fnscale} to a
   negative value.
-  
+
   The gradient function \code{grad} must be supplied except with
   \code{method="Nelder-Mead"}.  It should take arguments matching
   those of \code{f} and return a vector containing the gradient.
-  
+
 }
 \value{
   As for \code{\link{optim}}, but with two extra components:
   \code{barrier.value} giving the value of the barrier function at the
   optimum and \code{outer.iterations} gives the
-  number of outer iterations (calls to \code{optim})
+  number of outer iterations (calls to \code{optim}).
+  The \code{counts} component contains the \emph{sum} of all
+  \code{\link{optim}()$counts}.
 }
 
 \references{
@@ -83,6 +87,7 @@ constrOptim(theta, f, grad, ui, ci, mu = 1e-04, control = list(),
 }
 
 \examples{
+\testonly{od <- options(digits=5)}
 ## from optim
 fr <- function(x) {   ## Rosenbrock Banana function
     x1 <- x[1]
@@ -120,6 +125,7 @@ constrOptim(c(2,-1,-1), fQP, gQP, ui=t(Amat), ci=bvec)
 hQP <- function(b) {sum(c(0,5,0)*b)-0.5*sum(b*b)}
 constrOptim(c(2,-1,-1), hQP, NULL, ui=t(Amat), ci=bvec,
             control=list(fnscale=-1))
+\testonly{options(od)}
 }
 \keyword{optimize}
 

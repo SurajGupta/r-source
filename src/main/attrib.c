@@ -615,14 +615,29 @@ SEXP R_data_class(SEXP obj, Rboolean singleString)
 
 static SEXP s_dot_S3Class = 0;
 
-#ifdef UNUSED
 static SEXP R_S4_extends_table = 0;
 
+ 
+static SEXP cache_class(const char *class, SEXP klass) {
+    if(!R_S4_extends_table) {
+	R_S4_extends_table = R_NewHashedEnv(R_NilValue, ScalarInteger(0));
+	R_PreserveObject(R_S4_extends_table);
+    }
+    if(isNull(klass)) { /* retrieve cached value */
+	SEXP val;
+	val = findVarInFrame(R_S4_extends_table, install(class));
+	return (val == R_UnboundValue) ? klass : val;
+    }
+    defineVar(install(class), klass, R_S4_extends_table);
+    return klass;
+}
+
 static SEXP S4_extends(SEXP klass) {
-    static SEXP s_extends = 0;
-    SEXP e, val; const char *class; 
+  static SEXP s_extends = 0, s_extendsForS3;
+    SEXP e, val; const char *class;
     if(!s_extends) {
 	s_extends = install("extends");
+	s_extendsForS3 = install(".extendsForS3");
 	R_S4_extends_table = R_NewHashedEnv(R_NilValue, ScalarInteger(0));
 	R_PreserveObject(R_S4_extends_table);
     }
@@ -634,61 +649,25 @@ static SEXP S4_extends(SEXP klass) {
     if(val != R_UnboundValue)
        return val;
     PROTECT(e = allocVector(LANGSXP, 2));
-    SETCAR(e, s_extends);
+    SETCAR(e, s_extendsForS3);
     val = CDR(e);
     SETCAR(val, klass);
-    val = eval(e, R_GlobalEnv);
-    defineVar(install(class), val, R_S4_extends_table);
+    val = eval(e, R_MethodsNamespace);
+    cache_class(class, val);
     UNPROTECT(1);
     return(val);
 }
-#endif
 
 /* Version for S3-dispatch */
 SEXP attribute_hidden R_data_class2 (SEXP obj)
 {
     SEXP klass = getAttrib(obj, R_ClassSymbol);
       if(length(klass) > 0) {
-	if(IS_S4_OBJECT(obj)) { 
-	    /* return an S3Class slot, if it exists,
-	       or else the S4 class inheritance */
-	    /* The S4 class is included for compatibility with
-	       the deprecated practice of defining S3 methods
-	       for S4 classes.  Someday this should be disallowed.
-	       JMC iii.9.09 */
-  	    SEXP s3class = S3Class(obj);
-	    if(s3class != R_NilValue) {
-	      SEXP value; int i, j = 0, n = length(s3class);
-		PROTECT(value =  allocVector(STRSXP, n+1));
-		if(STRING_ELT(value, 0) != STRING_ELT(klass, 0)) {
-		  /* always include the S4 class itself.  It would be
-		     cleaner NOT to do this & require the class to
-		     specify that it wants S3 methods for its own
-		     class. (see S3method= argument to setClass())
-		  */
-		  SET_STRING_ELT(value, 0, STRING_ELT(klass, 0));
-		  j++;
-		}
-		for(i=0; i<n; i++, j++)
-		  SET_STRING_ELT(value, j, STRING_ELT(s3class, i));
-		UNPROTECT(1);
-		return value;
-	    }
-	    else if(TYPEOF(obj) == S4SXP &&
-		    (s3class = R_getS4DataSlot(obj, ANYSXP)) != R_NilValue) {
-	        SEXP value; /* an object extending an abnormal type*/
-	        PROTECT(value = allocVector(STRSXP, 2));
-		SET_STRING_ELT(value, 0, STRING_ELT(klass, 0));
-		SET_STRING_ELT(value, 1, type2str(TYPEOF(s3class)));
-		UNPROTECT(1);
-		return value; /* return c(class(obj), typeof(obj)) */
-	    }
-	    else
-	        return klass;
-	    }
+	if(IS_S4_OBJECT(obj))
+	    return S4_extends(klass);
 	else
 	    return klass;
-    }
+      }
       else { /* length(klass) == 0 */
 	SEXPTYPE t;
 	SEXP value, class0 = R_NilValue, dim = getAttrib(obj, R_DimSymbol);
@@ -747,6 +726,15 @@ SEXP attribute_hidden R_data_class2 (SEXP obj)
 SEXP attribute_hidden R_do_data_class(SEXP call, SEXP op, SEXP args, SEXP env)
 {
   checkArity(op, args);
+  if(PRIMVAL(op) == 1) {
+      const char *class; SEXP klass;
+      check1arg(args, call, "class");
+      klass = CAR(args);
+      if(TYPEOF(klass) != STRSXP || LENGTH(klass) < 1)
+	  error("invalid class argument to internal .class_cache");
+      class = translateChar(STRING_ELT(klass, 0));
+      return cache_class(class, CADR(args));
+  }
   check1arg(args, call, "x");
   return R_data_class(CAR(args), FALSE);
 }
@@ -761,7 +749,7 @@ SEXP attribute_hidden do_namesgets(SEXP call, SEXP op, SEXP args, SEXP env)
     if (DispatchOrEval(call, op, "names<-", args, env, &ans, 0, 1))
 	return(ans);
     /* Special case: removing non-existent names, to avoid a copy */
-    if (CADR(args) == R_NilValue && 
+    if (CADR(args) == R_NilValue &&
 	getAttrib(CAR(args), R_NamesSymbol) == R_NilValue)
 	return CAR(args);
     PROTECT(args = ans);
@@ -1054,7 +1042,7 @@ SEXP attribute_hidden do_attributes(SEXP call, SEXP op, SEXP args, SEXP env)
     int nvalues;
 
     checkArity(op, args);
-    check1arg(args, call, "x"); 
+    check1arg(args, call, "x");
     namesattr = R_NilValue;
     attrs = ATTRIB(CAR(args));
     nvalues = length(attrs);
@@ -1494,6 +1482,10 @@ int R_has_slot(SEXP obj, SEXP name) {
     return(getAttrib(obj, name) != R_NilValue);
 }
 
+/* the @ operator, and its assignment form.  Processed much like $
+   (see do_subset3) but without S3-style methods.
+*/
+/* currently, R_get_slot() ["methods"] is a trivial wrapper for this: */
 SEXP R_do_slot(SEXP obj, SEXP name) {
     R_SLOT_INIT;
     if(name == s_dot_Data)
@@ -1504,7 +1496,7 @@ SEXP R_do_slot(SEXP obj, SEXP name) {
 	    SEXP input = name, classString;
 	    if(name == s_dot_S3Class) /* defaults to class(obj) */
 	        return R_data_class(obj, FALSE);
-	    else if(name == R_NamesSymbol && 
+	    else if(name == R_NamesSymbol &&
 		    TYPEOF(obj) == VECSXP) /* needed for namedList class */
 	        return value;
 	    if(isSymbol(name) ) {
@@ -1534,12 +1526,14 @@ SEXP R_do_slot(SEXP obj, SEXP name) {
 }
 #undef R_SLOT_INIT
 
-
-/* the @ operator, and its assignment form.  Processed much like $
-   (see do_subset3) but without S3-style methods.
-*/
-
+/* currently, R_set_slot() ["methods"] is a trivial wrapper for this: */
 SEXP R_do_slot_assign(SEXP obj, SEXP name, SEXP value) {
+#ifndef _R_ver_le_2_11_x_
+    if (isNull(obj))/* cannot use !IS_S4_OBJECT(obj), because
+		     *  slot(obj, name, check=FALSE) <- value  must work on
+		     * "pre-objects", currently only in makePrototypeFromClassDef() */
+	error(_("attempt to set slot on NULL object"));
+#endif
     PROTECT(obj); PROTECT(value);
 				/* Ensure that name is a symbol */
     if(isString(name) && LENGTH(name) == 1)
@@ -1554,13 +1548,22 @@ SEXP R_do_slot_assign(SEXP obj, SEXP name, SEXP value) {
 
     if(name == s_dot_Data) {	/* special handling */
 	obj = set_data_part(obj, value);
-	UNPROTECT(2);
-	return obj;
-    }
-    if(isNull(value))		/* Slots, but not attributes, can be NULL.*/
-	value = pseudo_NULL;	/* Store a special symbol instead. */
+    } else {
+	if(isNull(value))		/* Slots, but not attributes, can be NULL.*/
+	    value = pseudo_NULL;	/* Store a special symbol instead. */
 
-    setAttrib(obj, name, value);
+#ifdef _R_ver_le_2_11_x_
+	setAttrib(obj, name, value);
+#else
+	/* simplified version of setAttrib(obj, name, value);
+	   here we do *not* treat "names", "dimnames", "dim", .. specially : */
+	PROTECT(name);
+	if (NAMED(value)) value = duplicate(value);
+	SET_NAMED(value, NAMED(value) | NAMED(obj));
+	UNPROTECT(1);
+	installAttrib(obj, name, value);
+#endif
+    }
     UNPROTECT(2);
     return obj;
 }
@@ -1597,17 +1600,17 @@ SEXP attribute_hidden do_AT(SEXP call, SEXP op, SEXP args, SEXP env)
 }
 
 /* Return a suitable S3 object (OK, the name of the routine comes from
-   an earlier version and isn't quite accurate.) If there is a .S3Class 
+   an earlier version and isn't quite accurate.) If there is a .S3Class
    slot convert to that S3 class.
    Otherwise, unless type == S4SXP, look for a .Data or .xData slot.  The
-   value of type controls what's wanted.  If it is S4SXP, then ONLY 
-   .S3class is used.  If it is ANYSXP, don't check except that automatic 
-   conversion from the current type only applies for classes that extend 
-   one of the basic types (i.e., not S4SXP).  For all other types, the 
-   recovered data must match the type. 
+   value of type controls what's wanted.  If it is S4SXP, then ONLY
+   .S3class is used.  If it is ANYSXP, don't check except that automatic
+   conversion from the current type only applies for classes that extend
+   one of the basic types (i.e., not S4SXP).  For all other types, the
+   recovered data must match the type.
    Because S3 objects can't have type S4SXP, .S3Class slot is not searched
    for in that type object, unless ONLY that class is wanted.
-   (Obviously, this is another routine that has accumulated barnacles and 
+   (Obviously, this is another routine that has accumulated barnacles and
    should at some time be broken into separate parts.)
 */
 SEXP attribute_hidden

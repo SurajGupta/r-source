@@ -21,14 +21,14 @@
 \usage{
 library(package, help, pos = 2, lib.loc = NULL,
         character.only = FALSE, logical.return = FALSE,
-        warn.conflicts = TRUE,
+        warn.conflicts = TRUE, quietly = FALSE,
         keep.source = getOption("keep.source.pkgs"),
         verbose = getOption("verbose"))
 
 require(package, lib.loc = NULL, quietly = FALSE,
         warn.conflicts = TRUE,
         keep.source = getOption("keep.source.pkgs"),
-        character.only = FALSE, save = TRUE)
+        character.only = FALSE, save = FALSE)
 
 .First.lib(libname, pkgname)
 .Last.lib(libpath)
@@ -70,12 +70,11 @@ require(package, lib.loc = NULL, quietly = FALSE,
   \item{verbose}{a logical.  If \code{TRUE}, additional diagnostics are
     printed.}
   \item{quietly}{a logical.  If \code{TRUE}, no message confirming
-    package loading is printed.}
-  \item{save}{logical or environment.  If \code{TRUE}, a call to
-    \code{require} from the source for a package will save the name of
-    the required package in the variable \code{".required"}, allowing
-    function \code{\link{detach}} to warn if a required package is
-    detached. See section \sQuote{Packages that require other packages} below.}
+    package loading is printed, and most often, no errors/warnings are
+    printed if package loading fails.}
+  \item{save}{logical or environment: see section \sQuote{Packages that
+    require other packages}.  Use of any value other than the default is
+    deprecated.}
   \item{libname}{a character string giving the library directory where
     the package was found.}
   \item{pkgname}{a character string giving the name of the package.}
@@ -92,7 +91,7 @@ require(package, lib.loc = NULL, quietly = FALSE,
   loaded.  (Furthermore, if the package has a name space and a name
   space of that name is already loaded, they work from the existing
   name space rather than reloading from the file system.  If you want to
-  reload a package, call \code{\link{detach}} or
+  reload such a package, call \code{\link{detach}(unload = TRUE)} or
   \code{\link{unloadNamespace}} first.)
 
   To suppress messages during the loading of packages use
@@ -149,7 +148,8 @@ require(package, lib.loc = NULL, quietly = FALSE,
   class \code{"packageInfo"}.
 
   \code{require} returns (invisibly) a logical indicating whether the required
-  package is available.
+  package is available.  (Before \R 2.12.0 it could also fail with an
+  error.)
 }
 \section{Licenses}{
   Some packages have restrictive licenses, and as from \R 2.11.0 there
@@ -177,7 +177,8 @@ require(package, lib.loc = NULL, quietly = FALSE,
   An alternative way to record that a package is required is to use a
   call to \code{require(save = TRUE)} in the \code{.First.lib} function
   of the package (but only for a package without a namespace): this
-  mechanism was used more widely in earlier versions of \R.
+  mechanism was used more widely in earlier versions of \R and is now
+  deprecated.
 }
 \section{Formal methods}{
   \code{library} takes some further actions when package \pkg{methods}
@@ -234,7 +235,7 @@ require(package, lib.loc = NULL, quietly = FALSE,
 \examples{
 library()                   # list all available packages
 library(lib.loc = .Library) # list all packages in the default library
-library(help = splines)     # documentation on package 'splines'
+\donttest{library(help = splines)     # documentation on package 'splines'}
 library(splines)            # load package 'splines'
 require(splines)            # the same
 search()                    # "splines", too

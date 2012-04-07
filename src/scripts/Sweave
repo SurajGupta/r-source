@@ -1,31 +1,7 @@
-#
-# ${R_HOME}/bin/Sweave
-
-revision='$Rev: 47522 $'
-version=`set - ${revision}; echo ${2}`
-version="Sweave front-end: ${R_VERSION} (r${version})
-
-Copyright (C) 2006-7 The R Core Development Team.
-This is free software; see the GNU General Public License version 2
-or later for copying conditions.  There is NO warranty."
-
-usage="Usage: R CMD Sweave file
-
-A simple front-end for Sweave()
-
-Options:
-  -h, --help		print short help message and exit
-  -v, --version		print version info and exit
-
-Report bugs to <r-bugs@r-project.org>."
-
-case ${1} in
-  -h|--help)
-     echo "${usage}"; exit 0 ;;
-  -v|--version)
-     echo "${version}"; exit 0 ;;
-esac
+# ${R_HOME}/bin/Sweave -*- sh -*-
 
 R_EXE="${R_HOME}/bin/R"
-echo "library(\"utils\"); Sweave(\"$1\")" | \
-  "${R_EXE}" --no-restore --slave
+
+R_SWEAVE_OPTIONS=${R_SWEAVE_OPTIONS:='--no-save --no-restore --slave'}
+
+echo "utils:::.Sweave(\"$1\")" | "${R_EXE}" $R_SWEAVE_OPTIONS

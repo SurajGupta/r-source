@@ -8,9 +8,11 @@
 \usage{
 substitute(expr, env)
 quote(expr)
+enquote(cl)
 }
 \alias{substitute}
 \alias{quote}
+\alias{enquote}
 \description{
   \code{substitute} returns the parse tree for the (unevaluated)
   expression \code{expr}, substituting any variables bound in
@@ -18,10 +20,17 @@ quote(expr)
 
   \code{quote} simply returns its argument. The argument is not evaluated
   and can be any R expression.
+
+  \code{enquote} is a simple one-line utility which transforms a call of
+  the form \code{Foo(....)} into the call \code{quote(Foo(....))}.  This
+  is typically only used to protect a \code{\link{call}} from early
+  evaluation.
 }
 \arguments{
-  \item{expr}{Any syntactically valid \R expression}
-  \item{env}{An environment or a list object.  Defaults to the
+  \item{expr}{any syntactically valid \R expression}
+  \item{cl}{a \code{\link{call}}, i.e., an \R object of
+    \code{\link{class}} (and \code{\link{mode}}) \code{"call"}.}
+  \item{env}{an environment or a list object.  Defaults to the
     current evaluation environment.}
 }
 \details{

@@ -36,16 +36,20 @@ function(x)
     ## expansion if necessary.
     ## Seems the only way we can do this is 'temporarily' change the
     ## working dir and see where this takes us.
+    if(length(x) != 1L)
+        stop("'x' must be a single character string")
     if(!file.exists(epath <- path.expand(x)))
         stop(gettextf("file '%s' does not exist", x),
              domain = NA)
     cwd <- getwd()
+    if (is.null(cwd))
+        stop("current working directory cannot be ascertained")
     on.exit(setwd(cwd))
     if(file_test("-d", epath)) {
         ## Combining dirname and basename does not work for e.g. '.' or
         ## '..' on Unix ...
         setwd(epath)
-        getwd()
+        getwd() # might be NULL, but very unlikely if setwd succeeded
     }
     else {
         setwd(dirname(epath))
@@ -203,20 +207,41 @@ function(x, delim = c("{", "}"), syntax = "Rd")
 
 texi2dvi <-
 function(file, pdf = FALSE, clean = FALSE, quiet = TRUE,
-         texi2dvi = getOption("texi2dvi"), texinputs = NULL)
+         texi2dvi = getOption("texi2dvi"),
+         texinputs = NULL, index = TRUE)
 {
+    do_cleanup <- function(clean)
+        if(clean) {
+            ## output file will be created in the current directory
+            out_file <- paste(basename(file_path_sans_ext(file)),
+                              if(pdf) "pdf" else "dvi",
+                              sep = ".")
+            files <- list.files(all.files = TRUE) %w/o% c(".", "..", out_file)
+            file.remove(files[file_test("-nt", files, ".timestamp")])
+        }
+
+
     ## Run texi2dvi on a latex file, or emulate it.
 
     if(is.null(texi2dvi) || !nzchar(texi2dvi))
         texi2dvi <- Sys.which("texi2dvi")
 
     envSep <- .Platform$path.sep
+    texinputs0 <- texinputs
     Rtexmf <- file.path(R.home("share"), "texmf")
+    Rtexinputs <- file.path(Rtexmf, "tex", "latex")
     ## "" forces use of default paths.
-    texinputs <- paste(c(texinputs, Rtexmf, ""), collapse = envSep)
+    texinputs <- paste(c(texinputs0, Rtexinputs, ""),
+                       collapse = envSep)
     ## not clear if this is needed, but works
     if(.Platform$OS.type == "windows")
-        texinputs <- gsub("\\\\", "/", texinputs)
+        texinputs <- gsub("\\", "/", texinputs, fixed = TRUE)
+    Rbibinputs <- file.path(Rtexmf, "bibtex", "bib")
+    bibinputs <- paste(c(texinputs0, Rbibinputs, ""),
+                       collapse = envSep)
+    Rbstinputs <- file.path(Rtexmf, "bibtex", "bst")
+    bstinputs <- paste(c(texinputs0, Rbstinputs, ""),
+                       collapse = envSep)
 
     otexinputs <- Sys.getenv("TEXINPUTS", unset = NA)
     if(is.na(otexinputs)) {
@@ -224,20 +249,28 @@ function(file, pdf = FALSE, clean = FALSE, quiet = TRUE,
         otexinputs <- "."
     } else on.exit(Sys.setenv(TEXINPUTS = otexinputs))
     Sys.setenv(TEXINPUTS = paste(otexinputs, texinputs, sep = envSep))
-    bibinputs <- Sys.getenv("BIBINPUTS", unset = NA)
-    if(is.na(bibinputs)) {
+    obibinputs <- Sys.getenv("BIBINPUTS", unset = NA)
+    if(is.na(obibinputs)) {
         on.exit(Sys.unsetenv("BIBINPUTS"), add = TRUE)
-        bibinputs <- "."
-    } else on.exit(Sys.setenv(BIBINPUTS = bibinputs, add = TRUE))
-    Sys.setenv(BIBINPUTS = paste(bibinputs, texinputs, sep = envSep))
-    bstinputs <- Sys.getenv("BSTINPUTS", unset = NA)
-    if(is.na(bstinputs)) {
+        obibinputs <- "."
+    } else on.exit(Sys.setenv(BIBINPUTS = obibinputs, add = TRUE))
+    Sys.setenv(BIBINPUTS = paste(obibinputs, bibinputs, sep = envSep))
+    obstinputs <- Sys.getenv("BSTINPUTS", unset = NA)
+    if(is.na(obstinputs)) {
         on.exit(Sys.unsetenv("BSTINPUTS"), add = TRUE)
-        bstinputs <- "."
-    } else on.exit(Sys.setenv(BSTINPUTS = bstinputs), add = TRUE)
-    Sys.setenv(BSTINPUTS = paste(bstinputs, texinputs, sep = envSep))
+        obstinputs <- "."
+    } else on.exit(Sys.setenv(BSTINPUTS = obstinputs), add = TRUE)
+    Sys.setenv(BSTINPUTS = paste(obstinputs, bstinputs, sep = envSep))
 
-    if(nzchar(texi2dvi) && .Platform$OS.type != "windows") {
+    if (clean) {
+        file.create(".timestamp")
+        on.exit(file.remove(".timestamp"))
+        Sys.sleep(0.1) # wait long enough for files to be after the timestamp
+    }
+    if(index && nzchar(texi2dvi) && .Platform$OS.type != "windows") {
+        ## switch off the use of texindy in texi2dvi >= 1.157
+        Sys.setenv(TEXINDY = "false")
+        on.exit(Sys.unsetenv("TEXINDY"), add = TRUE)
         opt_pdf <- if(pdf) "--pdf" else ""
         opt_quiet <- if(quiet) "--quiet" else ""
         opt_extra <- ""
@@ -248,7 +281,6 @@ function(file, pdf = FALSE, clean = FALSE, quiet = TRUE,
         ## error messages in log files should work for both regular and
         ## file line error indicators.)
 
-        file.create(".timestamp")
         out <- .shell_with_capture(paste(shQuote(texi2dvi), opt_pdf,
                                          opt_quiet, opt_extra,
                                          shQuote(file)))
@@ -298,16 +330,7 @@ function(file, pdf = FALSE, clean = FALSE, quiet = TRUE,
                              sep = "\n")
         }
 
-        ## Clean up as needed.
-        if(clean) {
-            out_file <- paste(file_path_sans_ext(file),
-                              if(pdf) "pdf" else "dvi",
-                              sep = ".")
-            files <- list.files(all.files = TRUE) %w/o% c(".", "..",
-                                                          out_file)
-            file.remove(files[file_test("-nt", files, ".timestamp")])
-        }
-        file.remove(".timestamp")
+        do_cleanup(clean)
 
         if(nzchar(msg))
             stop(msg, domain = NA)
@@ -315,88 +338,84 @@ function(file, pdf = FALSE, clean = FALSE, quiet = TRUE,
             message(paste(paste(out$stderr, collapse = "\n"),
                           paste(out$stdout, collapse = "\n"),
                           sep = "\n"))
-    } else if(nzchar(texi2dvi)) {       # Windows
+    } else if(index && nzchar(texi2dvi)) { # MiKTeX on Windows
         extra <- ""
-        ext <- if(pdf) "pdf" else "dvi"
-        pdf <- if(pdf) "--pdf" else ""
-        file.create(".timestamp")
-        quiet <- if(quiet) "--quiet" else ""
 
         ## look for MiKTeX (which this almost certainly is)
         ## and set the path to R's style files.
         ## -I works in MiKTeX >= 2.4, at least
+        ## http://docs.miktex.org/manual/texify.html
         ver <- system(paste(shQuote(texi2dvi), "--version"), intern = TRUE)
         if(length(grep("MiKTeX", ver[1L]))) {
-            paths <- paste ("-I", shQuote(texinputs))
+            ## AFAICS need separate -I for each element of texinputs.
+            texinputs <- c(texinputs0, Rtexinputs, Rbstinputs)
+	    texinputs <- gsub("\\", "/", texinputs, fixed = TRUE)
+	    paths <- paste ("-I", shQuote(texinputs))
             extra <- paste(extra, paste(paths, collapse = " "))
         }
+        ## 'file' could be a file path
+        base <- basename(file_path_sans_ext(file))
         ## this only gives a failure in some cases, e.g. not for bibtex errors.
-        system(paste(shQuote(texi2dvi), quiet, pdf,
+        system(paste(shQuote(texi2dvi),
+                     if(quiet) "--quiet" else "",
+                     if(pdf) "--pdf" else "",
                      shQuote(file), extra),
                intern=TRUE, ignore.stderr=TRUE)
         msg <- ""
         ## (La)TeX errors.
-        log <- paste(file_path_sans_ext(file), "log", sep = ".")
-        if(file_test("-f", log)) {
-            lines <- .get_LaTeX_errors_from_log_file(log)
+        logfile <- paste(base, "log", sep = ".")
+        if(file_test("-f", logfile)) {
+            lines <- .get_LaTeX_errors_from_log_file(logfile)
             if(length(lines))
                 msg <- paste(msg, "LaTeX errors:",
                              paste(lines, collapse = "\n"),
                              sep = "\n")
         }
         ## BibTeX errors.
-        log <- paste(file_path_sans_ext(file), "blg", sep = ".")
-        if(file_test("-f", log)) {
-            lines <- .get_BibTeX_errors_from_blg_file(log)
+        logfile <- paste(base, "blg", sep = ".")
+        if(file_test("-f", logfile)) {
+            lines <- .get_BibTeX_errors_from_blg_file(logfile)
             if(length(lines))
                 msg <- paste(msg, "BibTeX errors:",
                              paste(lines, collapse = "\n"),
                              sep = "\n")
         }
 
-        if(nzchar(msg))
+        do_cleanup(clean)
+        if(nzchar(msg)) {
             msg <- paste(gettextf("running 'texi2dvi' on '%s' failed", file),
                          msg, "", sep = "\n")
-        if(clean) {
-            out_file <- paste(file_path_sans_ext(file), ext, sep = ".")
-            files <- list.files(all.files = TRUE) %w/o% c(".", "..",
-                                                          out_file)
-            file.remove(files[file_test("-nt", files, ".timestamp")])
+            stop(msg, call. = FALSE, domain = NA)
         }
-        file.remove(".timestamp")
-
-        if(nzchar(msg)) stop(msg, domain = NA)
     } else {
-        ## Do not have texi2dvi
-        ## Needed at least on Windows except for MiKTeX
+        ## Do not have texi2dvi or don't want to index
+        ## Needed on Windows except for MiKTeX
         ## Note that this does not do anything about running quietly,
         ## nor cleaning, but is probably not used much anymore.
 
+        ## If it is called with MiKTeX then TEXINPUTS etc will be ignored.
+
         texfile <- shQuote(file)
-        base <- file_path_sans_ext(file)
+        ## 'file' could be a file path
+        base <- basename(file_path_sans_ext(file))
         idxfile <- paste(base, ".idx", sep="")
-        if(pdf) {
-            latex <- Sys.getenv("PDFLATEX")
-            if(!nzchar(latex)) latex <- "pdflatex"
-        } else {
-            latex <- Sys.getenv("LATEX")
-            if(!nzchar(latex)) latex <- "latex"
-        }
-        bibtex <- Sys.getenv("BIBTEX")
-        if(!nzchar(bibtex)) bibtex <- "bibtex"
-        makeindex <- Sys.getenv("MAKEINDEX")
-        if(!nzchar(makeindex)) makeindex <- "makeindex"
+        latex <- if(pdf) Sys.getenv("PDFLATEX", "pdflatex")
+        else  Sys.getenv("LATEX", "latex")
+        bibtex <- Sys.getenv("BIBTEX", "bibtex")
+        makeindex <- Sys.getenv("MAKEINDEX", "makeindex")
         if(system(paste(shQuote(latex), "-interaction=nonstopmode", texfile)))
-            stop(gettextf("unable to run %s on '%s'", latex, file), domain = NA)
+            stop(gettextf("unable to run '%s' on '%s'", latex, file),
+                 domain = NA)
         nmiss <- length(grep("^LaTeX Warning:.*Citation.*undefined",
                              readLines(paste(base, ".log", sep = ""))))
         for(iter in 1L:10L) { ## safety check
             ## This might fail as the citations have been included in the Rnw
             if(nmiss) system(paste(shQuote(bibtex), shQuote(base)))
             nmiss_prev <- nmiss
-            if(file.exists(idxfile)) {
+            if(index && file.exists(idxfile)) {
                 if(system(paste(shQuote(makeindex), shQuote(idxfile))))
-                    stop(gettextf("unable to run %s on '%s'", makeindex, idxfile),
+                    stop(gettextf("unable to run '%s' on '%s'",
+                                  makeindex, idxfile),
                          domain = NA)
             }
             if(system(paste(shQuote(latex), "-interaction=nonstopmode", texfile)))
@@ -406,7 +425,9 @@ function(file, pdf = FALSE, clean = FALSE, quiet = TRUE,
             if(nmiss == nmiss_prev &&
                !length(grep("Rerun to get", Log)) ) break
         }
+        do_cleanup(clean)
     }
+    invisible(NULL)
 }
 
 ### * Internal utility variables.
@@ -414,10 +435,10 @@ function(file, pdf = FALSE, clean = FALSE, quiet = TRUE,
 ### ** .BioC_version_associated_with_R_version
 
 .BioC_version_associated_with_R_version <-
-    numeric_version("2.6")
+    numeric_version("2.7")
 ## (Could also use something programmatically mapping (R) 2.10.x to
 ## (BioC) 2.5, 2.9.x to 2.4, ..., 2.1.x to 1.6, but what if R 3.0.0
-## comes out?)
+## comes out? Also, pre-2.12.0 is out weeks before all of BioC 2.7)
 
 ### * Internal utility functions.
 
@@ -560,7 +581,14 @@ function(con, n = 4L)
 
     ## Try matching both the regular error indicator ('!') as well as
     ## the file line error indicator ('file:line:').
-    pos <- grep("^(!|.*:[0123456789]+:)", lines)
+    pos <- grep("(^! |^!pdfTeX error:|:[0123456789]+:.*[Ee]rror)", lines)
+    ## unforunately that was too general and caught false positives
+    ## Errors are typically of the form
+    ## ! LaTeX Error:
+    ## !pdfTeX error:
+    ## ! Emergency stop
+    ## !  ==> Fatal error occurred, no output PDF file produced!
+    ## .../pegas.Rcheck/inst/doc/ReadingFiles.tex:395: Package inputenc Error:
     if(!length(pos)) return(character())
     ## Error chunk extends to at most the next error line.
     mapply(function(from, to) paste(lines[from : to], collapse = "\n"),
@@ -817,7 +845,7 @@ function() {
 function()
     c("Package", "Version", "Priority",
       "Depends", "Imports", "LinkingTo", "Suggests", "Enhances",
-      "OS_type", "License")
+      "OS_type", "License", "Archs")
 
 ### ** .is_ASCII
 
@@ -1068,6 +1096,9 @@ function(package)
              hier.part = "all.regs",
              lasso2 = "qr.rtr.inv",
              mratios = c("t.test.ratio.default", "t.test.ratio.formula"),
+             ncdf = c("open.ncdf", "close.ncdf",
+                      "dim.create.ncdf", "dim.def.ncdf",
+                      "dim.inq.ncdf", "dim.same.ncdf"),
              quadprog = c("solve.QP", "solve.QP.compact"),
              reposTools = "update.packages2",
              sac = "cumsum.test",

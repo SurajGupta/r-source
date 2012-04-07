@@ -1,6 +1,6 @@
 /*
  *  R : A Computer Language for Statistical Data Analysis
- *  Copyright (C) 2009    The R Development Core Team.
+ *  Copyright (C) 2009,2010 The R Development Core Team.
  *
  *  This program is free software; you can redistribute it and/or modify
  *  it under the terms of the GNU General Public License as published by
@@ -63,6 +63,7 @@ static const char *typename(SEXP v) {
     case EXTPTRSXP:	return "EXTPTRSXP";
     case WEAKREFSXP:	return "WEAKREFSXP";
     case S4SXP:		return "S4SXP";
+    case RAWSXP:	return "RAWSXP";
     default:
 	return "<unknown>";
     }
@@ -77,7 +78,7 @@ static void inspect(int pre, SEXP v, int deep, int pvec) {
     pp(pre);
     /* the use of %lx is deliberate because I hate the output of %p,
        but if this causes portability issues, it could be changed. */
-#ifdef WIN64
+#ifdef W64
     Rprintf("@%p %02d %s g%dc%d [", v, TYPEOF(v), typename(v), v->sxpinfo.gcgen, v->sxpinfo.gccls);
 #else
     Rprintf("@%lx %02d %s g%dc%d [", (long) v, TYPEOF(v), typename(v), v->sxpinfo.gcgen, v->sxpinfo.gccls);
@@ -92,7 +93,7 @@ static void inspect(int pre, SEXP v, int deep, int pvec) {
     if (ATTRIB(v) && ATTRIB(v) != R_NilValue) { if (a) Rprintf(","); Rprintf("ATT"); a = 1; }
     Rprintf("] ");
     switch (TYPEOF(v)) {
-    case VECSXP: case STRSXP: case LGLSXP: case INTSXP:
+    case VECSXP: case STRSXP: case LGLSXP: case INTSXP: case RAWSXP:
     case REALSXP: case CPLXSXP: case EXPRSXP:
 	Rprintf("(len=%d, tl=%d)", LENGTH(v), TRUELENGTH(v));
     }
@@ -116,6 +117,16 @@ static void inspect(int pre, SEXP v, int deep, int pvec) {
 	    unsigned int i = 0;
 	    while (i < LENGTH(v) && i < pvec) {
 		Rprintf("%s%d", (i > 0) ? "," : " ", INTEGER(v)[i]);
+		i++;
+	    }
+	    if (i < LENGTH(v)) Rprintf(",...");
+	}
+	break;
+    case RAWSXP:
+	if (LENGTH(v) > 0) {
+	    unsigned int i = 0;
+	    while (i < LENGTH(v) && i < pvec) {
+		Rprintf("%s%02x", (i > 0) ? "," : " ", (int) ((unsigned char) RAW(v)[i]));
 		i++;
 	    }
 	    if (i < LENGTH(v)) Rprintf(",...");

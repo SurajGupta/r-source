@@ -24,10 +24,14 @@ Sys.Date <- function() as.Date(as.POSIXlt(Sys.time()))
 
 as.Date <- function(x, ...) UseMethod("as.Date")
 
-as.Date.POSIXct <- function(x, ...) {
-    z <- floor(unclass(x)/86400)
-    attr(z, "tzone") <- NULL
-    structure(z, class="Date")
+as.Date.POSIXct <- function(x, tz = "UTC", ...)
+{
+    if(tz == "UTC") {
+        z <- floor(unclass(x)/86400)
+        attr(z, "tzone") <- NULL
+        structure(z, class = "Date")
+    } else
+        as.Date(as.POSIXlt(x, tz = tz))
 }
 
 as.Date.POSIXlt <- function(x, ...) .Internal(POSIXlt2Date(x))
@@ -354,7 +358,7 @@ cut.Date <-
 	    start <- as.Date(start)
 	    if (length(by2) == 2L) incr <- incr * as.integer(by2[1L])
 	    maxx <- max(x, na.rm = TRUE)
-	    breaks <- seq.int(start, maxx + incr, breaks)
+	    breaks <- seq(start, maxx + incr, breaks)
 	    breaks <- breaks[seq_len(1L+max(which(breaks <= maxx)))]
 	}
     } else stop("invalid specification of 'breaks'")

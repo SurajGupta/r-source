@@ -51,13 +51,13 @@
   Pinheiro, J. C. and Bates, D. M. (2000) \emph{Mixed-effects Models in
     S and S-PLUS}, Springer.
 }
-\examples{
-require(stats); require(graphics)
-coplot(weight ~ Time | Chick, data = ChickWeight,
-    type = "b", show.given = FALSE)
-## fit a representative chick
-fm1 <- nls(weight ~ SSlogis( Time, Asym, xmid, scal ),
-    data = ChickWeight, subset = Chick == 1)
-summary( fm1 )
+\seealso{
+  \code{\link{SSlogis}} for models fitted to this dataset.
 }
+
+\examples{\donttest{
+require(graphics)
+coplot(weight ~ Time | Chick, data = ChickWeight,
+       type = "b", show.given = FALSE)
+}}
 \keyword{datasets}

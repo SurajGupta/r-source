@@ -10,8 +10,8 @@ msgid ""
 msgstr ""
 "Project-Id-Version: R 2.11.0\n"
 "Report-Msgid-Bugs-To: bugs@r-project.org\n"
-"POT-Creation-Date: 2010-03-19 11:18\n"
-"PO-Revision-Date: 2010-04-09 19:52-0500\n"
+"POT-Creation-Date: 2010-09-17 09:19\n"
+"PO-Revision-Date: 2010-09-30 01:58-0600\n"
 "Last-Translator: Alexey Shipunov <dactylorhiza@gmail.com>\n"
 "Language-Team: Russian\n"
 "MIME-Version: 1.0\n"
@@ -246,11 +246,11 @@ msgstr "Подгонка модели для того чтобы сделать возможной проекцию"
 msgid "columns of 'contrast.obj' must define a contrast(sum to zero)"
 msgstr "колонки 'контраст.obj' должны определять контраст (с нулевой суммой)"
 
-msgid "invalid interpolation method"
-msgstr "неправильный метод интерполяции"
-
 msgid "collapsing to unique 'x' values"
 msgstr "свертывается в уникальные значения 'x'"
+
+msgid "invalid interpolation method"
+msgstr "неправильный метод интерполяции"
 
 msgid "need at least two non-NA values to interpolate"
 msgstr "для интерполяции нужны по крайней мере два не-NA значения"
@@ -462,8 +462,17 @@ msgstr "'k' должен быть из {1, 2, ..  n - 1}"
 msgid "some of the first %d eigenvalues are < 0"
 msgstr "некоторые из первых %d собственных значений < 0"
 
-msgid "initial value not feasible"
-msgstr "начальное значение недопустимо"
+msgid "initial value is not in the interior of the feasible region"
+msgstr "начальное значение не является внутренним в допустимом регионе"
+
+msgid "Barrier algorithm ran out of iterations and did not converge"
+msgstr "Barrier алгоритм вышел за пределы итераций и не сходится"
+
+msgid "Objective function increased at outer iteration %d"
+msgstr "Объектная функция увеличилась после внешней итерации  %d"
+
+msgid "Objective function decreased at outer iteration %d"
+msgstr "Объектная функция уменьшилась после внешней итерации %d"
 
 msgid "contrasts not defined for %d degrees of freedom"
 msgstr "для %d степеней свободы контрасты не определены"
@@ -1190,11 +1199,11 @@ msgid "'y' must be numeric or a string naming a valid function"
 msgstr "'y' должен быть числовым или строкой с названием правильной функции"
 
 msgid ""
-"y must be supplied.\n"
+"numeric y must be supplied.\n"
 "For density estimation use density()"
 msgstr ""
-"укажите y.\n"
-"Для оценки плотности используйте density()"
+"надо указать числовой y.\n"
+"Для определения плотности пользуйтесь density()"
 
 msgid "'k' is not an integer"
 msgstr "'k' не является целым числом"
@@ -1226,17 +1235,30 @@ msgstr "обнаружено сингулярное сглаживание"
 msgid "missing or negative weights not allowed"
 msgstr "пропущенные или отрицательные веса не разрешены"
 
-msgid "invalid 'lm' object:  no 'terms' nor 'qr' component"
-msgstr "неправильный 'lm'-объект:  нет ни 'terms', ни компонента 'qr'"
+msgid "invalid 'lm' object:  no 'terms' component"
+msgstr "неправильный 'lm' объект:  нет компонента 'terms'"
+
+msgid "calling summary.lm(<fake-lm-object>) ..."
+msgstr "вызываю summary.lm(<fake-lm-object>) ..."
 
 msgid "residual degrees of freedom in object suggest this is not an \"lm\" fit"
 msgstr "остаточные степени свободы в объекте указывают, что это не подгонка \"lm\""
+
+msgid ""
+"lm object does not have a proper 'qr' component.\n"
+" Rank zero or should not have used lm(.., qr=FALSE)."
+msgstr ""
+"у объекта lm object нет правильного 'qr' компонента.\n"
+" Потому что нулевой ранг или не надо было использовать lm(.., qr=FALSE)."
 
 msgid "family '"
 msgstr "семейство '"
 
 msgid "' not implemented"
 msgstr "' не реализовано"
+
+msgid "calling anova.lm(<fake-lm-object>) ..."
+msgstr "вызываю anova.lm(<fake-lm-object>) ..."
 
 msgid "ANOVA F-tests on an essentially perfect fit are unreliable"
 msgstr "применение F-критерия для в целом хорошей подгонки бессмысленно"
@@ -1246,6 +1268,9 @@ msgstr "удалено, потому что зависимость отличалась от"
 
 msgid "model 1"
 msgstr "модель 1"
+
+msgid "calling predict.lm(<fake-lm-object>) ..."
+msgstr "вызываю predict.lm(<fake-lm-object>) ..."
 
 msgid "prediction from a rank-deficient fit may be misleading"
 msgstr "предсказание от вырожденной подгонки может быть неправильным"
@@ -1827,6 +1852,9 @@ msgstr "аргументы 'r' и 'c' должны иметь одинаковые суммы"
 msgid "'relevel' only for factors"
 msgstr "'relevel' -- только для факторов"
 
+msgid "'ref' must be of length one"
+msgstr "'ref' должен быть длиной один"
+
 msgid "'ref' must be an existing level"
 msgstr "'ref' должен быть существующим уровнем"
 
@@ -2180,6 +2208,9 @@ msgstr "недостаточно (конечных) данных 'x'"
 
 msgid "Requested conf.level not achievable"
 msgstr "Заданный доверительный интервал не достигнут"
+
+msgid "cannot compute confidence interval when all observations are tied"
+msgstr "не могу высчитать доверительный интервал, когда все наблюдения связаны"
 
 msgid "cannot compute exact confidence interval with ties"
 msgstr "совпадающие значения: не могу высчитать точный доверительный интервал"

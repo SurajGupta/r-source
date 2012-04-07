@@ -1,10 +1,12 @@
 % File src/library/utils/man/packageDescription.Rd
 % Part of the R package, http://www.R-project.org
 % Copyright 1995-2007 R Core Development Team
+% Copyright 2005-2010 The R Foundation
 % Distributed under GPL 2 or later
 
 \name{packageDescription}
 \alias{packageDescription}
+\alias{packageVersion}
 \alias{print.packageDescription}
 \title{Package Description}
 \description{
@@ -13,6 +15,7 @@
 \usage{
 packageDescription(pkg, lib.loc = NULL, fields = NULL,
                    drop = TRUE, encoding = "")
+packageVersion(pkg, lib.loc = NULL)
 }
 \arguments{
   \item{pkg}{a character string with the package name.}
@@ -38,6 +41,9 @@ packageDescription(pkg, lib.loc = NULL, fields = NULL,
 
   An \link{attach}ed environment named to look like a package
   (e.g. \code{package:utils2}) will be ignored.
+
+  \code{packageVersion()} is a convenience shortcut, allowing things
+  like \code{if (packageVersion("MASS") < "7.3") { do.things } }.
 }
 \value{
   If a \file{DESCRIPTION} file for the given package is found and can
@@ -49,15 +55,21 @@ packageDescription(pkg, lib.loc = NULL, fields = NULL,
   If parsing the \file{DESCRIPTION} file was not successful, it returns
   a named list of \code{NA}s with the field tags as names if \code{fields}
   is not null, and \code{NA} otherwise.
+
+  \code{packageVersion()} returns a (length-one) object of class
+  \code{"\link{package_version}"}.
 }
 \seealso{
   \code{\link{read.dcf}}
 }
-\examples{
+\examples{\donttest{
 packageDescription("stats")
 packageDescription("stats", fields = c("Package", "Version"))
 
 packageDescription("stats", fields = "Version")
 packageDescription("stats", fields = "Version", drop = FALSE)
-}
+
+if(packageVersion("MASS") < "7.3")
+  message("you need to update 'MASS'")
+}}
 \keyword{utilities}

@@ -74,6 +74,8 @@ withCallingHandlers <- function(expr, ...) {
 }
 
 suppressWarnings <- function(expr) {
+    ops <- options(warn = -1) ## FIXME: temporary hack until R_tryEval
+    on.exit(options(ops))     ## calls are removed from methods code
     withCallingHandlers(expr,
                         warning=function(w)
                             invokeRestart("muffleWarning"))
@@ -228,7 +230,6 @@ invokeRestartInteractively <- function(r) {
 
 withRestarts <- function(expr, ...) {
     docall <- function(fun, args) {
-	enquote <- function(x) as.call(list(as.name("quote"), x))
 	if ((is.character(fun) && length(fun) == 1L) || is.name(fun))
 	    fun <- get(as.character(fun), envir = parent.frame(),
                        mode = "function")

@@ -24,8 +24,7 @@ weighted.mean.default <- function(x, w, ..., na.rm = FALSE)
         stop("'x' and 'w' must have the same length")
     w <- as.double(w) # avoid overflow in sum for integer weights.
     if (na.rm) { i <- !is.na(x); w <- w[i]; x <- x[i] }
-    w <- w/sum(w)
-    sum((x*w)[w != 0])
+    sum((x*w)[w != 0])/sum(w) # --> NaN in empty case
 }
 
 ## see note for ?mean.Date
@@ -33,9 +32,7 @@ weighted.mean.Date <- function (x, w, ...)
     structure(weighted.mean(unclass(x), w, ...), class = "Date")
 
 weighted.mean.POSIXct <- function (x, w, ...)
-    structure(weighted.mean(unclass(x), w, ...),
-              class = c("POSIXt", "POSIXct"),
-              tzone = attr(x, "tzone"))
+    .POSIXct(weighted.mean(unclass(x), w, ...), attr(x, "tzone"))
 
 weighted.mean.POSIXlt <- function (x, w, ...)
     as.POSIXlt(weighted.mean(as.POSIXct(x), w, ...))

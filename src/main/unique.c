@@ -40,6 +40,7 @@ struct _HashData {
 
     int nomatch;
     Rboolean useUTF8;
+    Rboolean useCache;
 };
 
 
@@ -128,15 +129,25 @@ static int chash(SEXP x, int indx, HashData *d)
 #endif
 }
 
+/* Hash CHARSXP by address.  Hash values are int, For 64bit pointers,
+ * we do (upper ^ lower) */
+static int cshash(SEXP x, int indx, HashData *d)
+{
+    intptr_t z = (intptr_t) STRING_ELT(x, indx);
+    unsigned int z1 = z & 0xffffffff, z2 = 0;
+#if SIZEOF_LONG == 8
+    z2 = z/0x100000000L;
+#endif
+    return scatter(z1 ^ z2, d);
+}
+
 static int shash(SEXP x, int indx, HashData *d)
 {
     unsigned int k;
     const char *p;
     const void *vmax = vmaxget();
-    if(d->useUTF8)
-	p = translateCharUTF8(STRING_ELT(x, indx));
-    else
-	p = translateChar(STRING_ELT(x, indx));
+    if(!d->useUTF8 && d->useCache) return cshash(x, indx, d);
+    p = translateCharUTF8(STRING_ELT(x, indx));
     k = 0;
     while (*p++)
 	    k = 11 * k + *p; /* was 8 but 11 isn't a power of 2 */
@@ -300,6 +311,7 @@ static void MKsetup(int n, HashData *d)
 static void HashTableSetup(SEXP x, HashData *d)
 {
     d->useUTF8 = FALSE;
+    d->useCache = TRUE;
     switch (TYPEOF(x)) {
     case LGLSXP:
 	d->hash = lhash;
@@ -392,8 +404,11 @@ SEXP duplicated(SEXP x, Rboolean from_last)
     HashTableSetup(x, &data);					\
     h = INTEGER(data.HashTable);				\
     if(TYPEOF(x) == STRSXP) {					\
-	for(i = 0; i < length(x); i++) 				\
+	data.useUTF8 = FALSE; data.useCache = TRUE;		\
+	for(i = 0; i < length(x); i++) {			\
 	    if(ENC_KNOWN(STRING_ELT(x, i))) {data.useUTF8 = TRUE; break;} \
+	    if(!IS_CACHED(STRING_ELT(x, i))) {data.useCache = FALSE; break;} \
+	}							\
     }
 
     DUPLICATED_INIT;
@@ -656,12 +671,31 @@ static SEXP HashLookup(SEXP table, SEXP x, HashData *d)
     return ans;
 }
 
-SEXP match(SEXP itable, SEXP ix, int nmatch)
+static SEXP match_transform(SEXP s, SEXP env)
+{
+    if(OBJECT(s)) {
+	if(inherits(s, "factor"))
+	    return asCharacterFactor(s);
+	else if(inherits(s, "POSIXlt")) { /* and maybe more classes in the future:
+					   * Call R's (generic)  as.character(s) : */
+	    SEXP call, r;
+	    PROTECT(call = lang2(install("as.character"), s));
+	    PROTECT(r = eval(call, env));
+	    UNPROTECT(2);
+	    return r;
+	}
+    }
+    /* else */
+    return duplicate(s);
+}
+
+SEXP match5(SEXP itable, SEXP ix, int nmatch, SEXP incomp, SEXP env)
 {
     SEXP ans, x, table;
     SEXPTYPE type;
     HashData data;
-    int i, n = length(ix);
+
+    int i, n = length(ix), nprot = 0;
 
     /* handle zero length arguments */
     if (n == 0) return allocVector(INTSXP, 0);
@@ -671,77 +705,57 @@ SEXP match(SEXP itable, SEXP ix, int nmatch)
 	return ans;
     }
 
+    PROTECT(x     = match_transform(ix,     env)); nprot++;
+    PROTECT(table = match_transform(itable, env)); nprot++;
+    /* or should we use PROTECT_WITH_INDEX  and  REPROTECT below ? */
+
     /* Coerce to a common type; type == NILSXP is ok here.
-     * Note that R's match() does only coerce factors (to character).
+     * Note that above we coerce factors and "POSIXlt", only to character.
      * Hence, coerce to character or to `higher' type
      * (given that we have "Vector" or NULL) */
-    if(TYPEOF(ix)  >= STRSXP || TYPEOF(itable) >= STRSXP) type = STRSXP;
-    else type = TYPEOF(ix) < TYPEOF(itable) ? TYPEOF(itable) : TYPEOF(ix);
-    PROTECT(x = coerceVector(ix, type));
-    PROTECT(table = coerceVector(itable, type));
-
-    data.nomatch = nmatch;
-    HashTableSetup(table, &data);
+    if(TYPEOF(x) >= STRSXP || TYPEOF(table) >= STRSXP)
+	type = STRSXP;
+    else type = TYPEOF(x) < TYPEOF(table) ? TYPEOF(table) : TYPEOF(x);
+    PROTECT(x     = coerceVector(x,     type)); nprot++;
+    PROTECT(table = coerceVector(table, type)); nprot++;
+    if (incomp) { PROTECT(incomp = coerceVector(incomp, type)); nprot++; }
     data.nomatch = nmatch;
     HashTableSetup(table, &data);
     if(type == STRSXP) {
 	Rboolean useUTF8 = FALSE;
-	for(i = 0; i < length(x); i++)
-	    if(ENC_KNOWN(STRING_ELT(x, i))) {useUTF8 = TRUE; break;}
-	if (!useUTF8)
-	    for(i = 0; i < length(table); i++)
-		if(ENC_KNOWN(STRING_ELT(table, i))) {useUTF8 = TRUE; break;}
+        Rboolean useCache = TRUE;
+	for(i = 0; i < length(x); i++) {
+            SEXP s = STRING_ELT(x, i);
+	    if(ENC_KNOWN(s)) {useUTF8 = TRUE; break;}
+            if(!IS_CACHED(s)) {useCache = FALSE; break;}
+        }
+	if (!useUTF8 || useCache) {
+	    for(i = 0; i < length(table); i++) {
+                SEXP s = STRING_ELT(table, i);
+		if(ENC_KNOWN(s)) {useUTF8 = TRUE; break;}
+		if(!IS_CACHED(s)) {useCache = FALSE; break;}
+            }
+        }
 	data.useUTF8 = useUTF8;
+        data.useCache = useCache;
     }
-    PROTECT(data.HashTable);
+    PROTECT(data.HashTable); nprot++;
     DoHashing(table, &data);
+    if (incomp) UndoHashing(incomp, table, &data);
     ans = HashLookup(table, x, &data);
-    UNPROTECT(3);
+    UNPROTECT(nprot);
     return ans;
 }
 
-SEXP match4(SEXP itable, SEXP ix, int nmatch, SEXP incomp)
+SEXP matchE(SEXP itable, SEXP ix, int nmatch, SEXP env)
 {
-    SEXP ans, x, table;
-    SEXPTYPE type;
-    HashData data;
-    int i, n = length(ix);
+    return match5(itable, ix, nmatch, NULL, env);
+}
 
-    /* handle zero length arguments */
-    if (n == 0) return allocVector(INTSXP, 0);
-    if (length(itable) == 0) {
-	ans = allocVector(INTSXP, n);
-	for (i = 0; i < n; i++) INTEGER(ans)[i] = nmatch;
-	return ans;
-    }
-
-    /* Coerce to a common type; type == NILSXP is ok here.
-     * Note that R's match() does only coerce factors (to character).
-     * Hence, coerce to character or to `higher' type
-     * (given that we have "Vector" or NULL) */
-    if(TYPEOF(ix)  >= STRSXP || TYPEOF(itable) >= STRSXP) type = STRSXP;
-    else type = TYPEOF(ix) < TYPEOF(itable) ? TYPEOF(itable) : TYPEOF(ix);
-    PROTECT(x = coerceVector(ix, type));
-    PROTECT(table = coerceVector(itable, type));
-    PROTECT(incomp = coerceVector(incomp, type));
-
-    data.nomatch = nmatch;
-    HashTableSetup(table, &data);
-    if(type == STRSXP) {
-	Rboolean useUTF8 = FALSE;
-	for(i = 0; i < length(x); i++)
-	    if(ENC_KNOWN(STRING_ELT(x, i))) {useUTF8 = TRUE; break;}
-	if (!useUTF8)
-	    for(i = 0; i < length(table); i++)
-		if(ENC_KNOWN(STRING_ELT(table, i))) {useUTF8 = TRUE; break;}
-	data.useUTF8 = useUTF8;
-    }
-    PROTECT(data.HashTable);
-    DoHashing(table, &data);
-    UndoHashing(incomp, table, &data);
-    ans = HashLookup(table, x, &data);
-    UNPROTECT(4);
-    return ans;
+/* used from other code, not here: */
+SEXP match(SEXP itable, SEXP ix, int nmatch)
+{
+    return match5(itable, ix, nmatch, NULL, R_BaseEnv);
 }
 
 
@@ -763,15 +777,15 @@ SEXP attribute_hidden do_match(SEXP call, SEXP op, SEXP args, SEXP env)
 	error(_("'match' requires vector arguments"));
 
     nomatch = asInteger(CADDR(args));
-    if (nargs < 4) return match(CADR(args), CAR(args), nomatch);
+    if (nargs < 4) return matchE(CADR(args), CAR(args), nomatch, env);
 
     incomp = CADDDR(args);
 
     if(length(incomp) && /* S has FALSE to mean empty */
        !(isLogical(incomp) && length(incomp) == 1 && LOGICAL(incomp)[0] == 0))
-	return match4(CADR(args), CAR(args), nomatch, incomp);
+	return match5(CADR(args), CAR(args), nomatch, incomp, env);
     else
-	return match(CADR(args), CAR(args), nomatch);
+	return matchE(CADR(args), CAR(args), nomatch, env);
 }
 
 /* Partial Matching of Strings */
@@ -1226,18 +1240,13 @@ SEXP attribute_hidden do_matchcall(SEXP call, SEXP op, SEXP args, SEXP env)
 }
 
 
-#if defined(HAVE_STRING_H)
-#  include <string.h>
-#  ifdef _AIX  /*some people just have to be different */
+#include <string.h>
+#ifdef _AIX  /*some people just have to be different */
 #    include <memory.h>
-#  endif
-/* int and double zeros are all bits off */
-#  define ZEROINT(X,N,I) do{memset(INTEGER(X),0,N*sizeof(int));}while(0)
-#  define ZERODBL(X,N,I) do{memset(REAL(X),0,N*sizeof(double));}while(0)
-#else
-#  define ZEROINT(X,N,I) for(I=0;I<N;I++) INTEGER(X)[I]=0
-#  define ZERODBL(X,N,I) for(I=0;I<N;I++) REAL(X)[I]=0
 #endif
+/* int and double zeros are all bits off */
+#define ZEROINT(X,N,I) do{memset(INTEGER(X),0,N*sizeof(int));}while(0)
+#define ZERODBL(X,N,I) do{memset(REAL(X),0,N*sizeof(double));}while(0)
 
 SEXP attribute_hidden
 Rrowsum_matrix(SEXP x, SEXP ncol, SEXP g, SEXP uniqueg, SEXP snarm)
@@ -1393,7 +1402,7 @@ static SEXP duplicated2(SEXP x, HashData *d)
     v = INTEGER(ans);
     for (i = 0; i < d->M; i++) h[i] = NIL;
     for (i = 0; i < n; i++) v[i] = isDuplicated2(x, i, d);
-    UNPROTECT(2);    
+    UNPROTECT(2);
     return ans;
 }
 
@@ -1402,7 +1411,7 @@ SEXP attribute_hidden do_makeunique(SEXP call, SEXP op, SEXP args, SEXP env)
     SEXP names, sep, ans, dup, newx;
     int i, n, cnt, len, maxlen = 0, *cnts, dp;
     HashData data;
-    const char *csep, *ss; char *buf;
+    const char *csep, *ss;
     void *vmax;
 
     checkArity(op, args);
@@ -1424,7 +1433,7 @@ SEXP attribute_hidden do_makeunique(SEXP call, SEXP op, SEXP args, SEXP env)
     }
     if(n > 1) {
 	/* +2 for terminator and rounding error */
-	buf = (char *) alloca(maxlen + strlen(csep) + (int) (log((double)n)/log(10.0)) + 2);
+	char buf[maxlen + strlen(csep) + (int) (log((double)n)/log(10.0)) + 2];
 	if(n < 10000) {
 	    cnts = (int *) alloca(n * sizeof(int));
 	} else {
@@ -1461,18 +1470,7 @@ SEXP attribute_hidden do_makeunique(SEXP call, SEXP op, SEXP args, SEXP env)
 }
 
 /* Use hashing to improve object.size. Here we want equal CHARSXPs,
-   not equal contents.  This only uses the bottom 32 bits of the pointer,
-   but for now that's almost certainly OK */
-
-static int cshash(SEXP x, int indx, HashData *d)
-{
-    intptr_t z = (intptr_t) STRING_ELT(x, indx);
-    unsigned int z1 = z & 0xffffffff, z2 = 0;
-#if SIZEOF_LONG == 8
-    z2 = z/0x100000000L;
-#endif
-    return scatter(z1 ^ z2, d);
-}
+   not equal contents. */
 
 static int csequal(SEXP x, int i, SEXP y, int j)
 {

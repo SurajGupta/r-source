@@ -1,6 +1,6 @@
 % File src/library/base/man/files.Rd
 % Part of the R package, http://www.R-project.org
-% Copyright 1995-2009 R Core Development Team
+% Copyright 1995-2010 R Core Development Team
 % Distributed under GPL 2 or later
 
 \name{files}
@@ -44,33 +44,32 @@ file.symlink(from, to)
   already exist and truncates them if they do.  They are created with the
   maximal permissions allowed by the \code{umask} setting.
 
-  \code{file.exists} returns a logical vector indicating whether
-  the files named by its argument exist.  (Here \sQuote{exists} is in the
+  \code{file.exists} returns a logical vector indicating whether the
+  files named by its argument exist.  (Here \sQuote{exists} is in the
   sense of the system's \code{stat} call: a file will be reported as
   existing only if you have the permissions needed by \code{stat}.
   Existence can also be checked by \code{\link{file.access}}, which
   might use different permissions and so obtain a different result.
   Note that the existence of a file does not imply that it is readable:
-  for that use \code{\link{file.access}}.)
-#ifdef unix
-  Note that if the file is a symbolic link, the result indicates if the
-  link points to an actual file, not just if the link exists.
-#endif
+  for that use \code{\link{file.access}}.)  What constitutes a
+  \sQuote{file} is system-dependent, but should include directories.
+  (However, directory names must not include a trailing backslash or
+  slash on Windows.)  Note that if the file is a symbolic link on a
+  Unix-alike, the result indicates if the link points to an actual file,
+  not just if the link exists.
 
   \code{file.remove} attempts to remove the files named in its argument.
   On most Unix platforms \sQuote{file} includes \emph{empty}
   directories, symbolic links, fifos and sockets.  On Windows,
   \sQuote{file} means a regular file and not, say, an empty directory.
-
   
   \code{file.rename} attempts to rename a single file.  Where file
   permissions allow this will first remove an existing file \code{to}.
   This is subject to the limitations of the OS's corresponding system
   call: in particular in the interpretation of \sQuote{file}: also most
-  platforms will not rename files across file systems.
-#ifdef Windows
-  (As from \R 2.11.0, \code{file.rename} works across Windows' volumes.)
-#endif
+  platforms will not rename files across file systems.  (On Windows,
+  \code{file.rename} works for files (but not directories) across
+  volumes as from \R 2.11.0.)
 
   \code{file.append} attempts to append the files named by its
   second argument to those named by its first.  The \R subscript
@@ -82,11 +81,11 @@ file.symlink(from, to)
   destination files is skipped unless \code{overwrite = TRUE}.
   The \code{to} argument can specify a single existing directory.
 
-  \code{file.symlink} makes symbolic links on those Unix-like platforms
+  \code{file.symlink} makes symbolic links on those Unix-alike platforms
   which support them.  The \code{to} argument can specify a single
   existing directory.
 #ifdef windows
-  (Windows Vista/Server 2008/7 have a version of symbolic links on NTFS
+  (Windows Vista/7/Server 2008 have a version of symbolic links on NTFS
   filesystems, but this seems too limited to be worth implementing.)
 #endif
 }

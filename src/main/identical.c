@@ -1,6 +1,6 @@
 /*
  *  R : A Computer Language for Statistical Data Analysis
- *  Copyright (C) 2001-9  The R Development Core Team
+ *  Copyright (C) 2001-2010  The R Development Core Team
  *
  *  This program is free software; you can redistribute it and/or modify
  *  it under the terms of the GNU General Public License as published by
@@ -22,6 +22,7 @@
 #include <config.h>
 #endif
 #include <Defn.h>
+/* -> Rinternals.h which exports R_compute_identical() */
 
 /* Implementation of identical(x, y) */
 
@@ -70,7 +71,7 @@ SEXP attribute_hidden do_identical(SEXP call, SEXP op, SEXP args, SEXP env)
 
 /* do the two objects compute as identical?
    used in unique.c */
-Rboolean attribute_hidden
+Rboolean
 R_compute_identical(SEXP x, SEXP y, Rboolean num_eq,
 		    Rboolean single_NA, Rboolean attr_as_set)
 {
@@ -226,12 +227,13 @@ R_compute_identical(SEXP x, SEXP y, Rboolean num_eq,
 	return(PRIMOFFSET(x) == PRIMOFFSET(y) ? TRUE : FALSE);
     case ENVSXP:
     case SYMSXP:
-    case EXTPTRSXP:
     case WEAKREFSXP:
 #ifdef BYTECODE
     case BCODESXP: /**** is this the best approach? */
 #endif
 	return(x == y ? TRUE : FALSE);
+    case EXTPTRSXP:
+	return (EXTPTR_PTR(x) == EXTPTR_PTR(y) ? TRUE : FALSE);
     case RAWSXP:
 	if (length(x) != length(y)) return FALSE;
 	/* Use memcmp (which is ISO C) to speed up the comparison */

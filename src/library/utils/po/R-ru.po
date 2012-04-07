@@ -10,8 +10,8 @@ msgid ""
 msgstr ""
 "Project-Id-Version: R 2.11.0\n"
 "Report-Msgid-Bugs-To: bugs@r-project.org\n"
-"POT-Creation-Date: 2010-03-16 09:20\n"
-"PO-Revision-Date: 2010-04-09 20:01-0500\n"
+"POT-Creation-Date: 2010-08-17 16:04\n"
+"PO-Revision-Date: 2010-09-30 02:59-0600\n"
 "Last-Translator: Alexey Shipunov <dactylorhiza@gmail.com>\n"
 "Language-Team: Russian\n"
 "MIME-Version: 1.0\n"
@@ -88,11 +88,17 @@ msgstr "элементы 'what' после первого будут пропущены"
 msgid "%d occurrences in %s"
 msgstr "%d вхождений в %s"
 
+msgid "No suitable spell check program found."
+msgstr "Не найдено подходящей программы проверки грамматики."
+
+msgid "Filter '%s' is not available."
+msgstr "Фильтр '%s' недоступен."
+
 msgid "Invalid 'filter' argument."
 msgstr "Неправильный аргумент 'filter'"
 
-msgid "Could not find aspell or ispell executable."
-msgstr "Не могу найти исполняемого файла aspell или ispell."
+msgid "Processing file %s"
+msgstr "Обрабатываю файл %s"
 
 msgid ""
 "Running aspell failed with diagnostics:\n"
@@ -126,8 +132,59 @@ msgstr "'file' должен быть NULL, текстовой строкой или соединением"
 msgid "bad argument"
 msgstr "неправильный аргумент"
 
+msgid "Not all arguments are of the same length, the following need to be recycled: %s"
+msgstr "Не все аргументы имеют одну длину, следующие надо зациклить: %s"
+
+msgid ","
+msgstr ","
+
+msgid "Use either 'given' or 'first'/'middle' but not both."
+msgstr "Используйте либо 'given' или 'first'/'middle', но не оба сразу."
+
+msgid "It is recommended to use 'given' instead of 'first'."
+msgstr "Рекомендуется использовать 'given' вместо 'first'."
+
+msgid "It is recommended to use 'given' instead of 'middle'."
+msgstr "рекомендуется использовать 'given' вместо 'middle'."
+
+msgid "Use either 'family' or 'last' but not both."
+msgstr "Используйте либо 'family', либо 'last', но не оба сразу."
+
+msgid "It is recommended to use 'family' instead of 'last'."
+msgstr "Рекомендуется использовать 'family' вместо 'last'."
+
+msgid "Invalid role specification(s): %s."
+msgstr "Неправильное указание роли: %s"
+
+msgid "It is recommended to use given/family instead of first/middle/last."
+msgstr "Рекомендуется использовать given/family вместо first/middle/last."
+
+msgid "method is just applicable to 'person' objects"
+msgstr "метод не подходит для объектов 'person'"
+
 msgid "all arguments must be of class \"person\""
 msgstr "все аргументы должны быть класса \"person\""
+
+msgid "at least one field has to be specified"
+msgstr "по крайней мере одно поле надо определить"
+
+msgid "all fields have to be named"
+msgstr "все поля надо поименовать"
+
+msgid "'bibtype' has to be one of"
+msgstr "'bibtype' не имеет ни одного из"
+
+msgid "A bibentry of bibtype '"
+msgstr "Библиографическая запись типа bibtype '"
+
+msgid "' has to correctly specify the field(s):"
+msgstr "' должна корректно определять пол(я):"
+
+msgid "' has to specify the field(s):"
+msgstr "' должна определять пол(я):"
+
+msgid "method is just applicable to 'bibentry' objects"
+msgstr "метод подходит только для объектов 'bibentry'"
 
 msgid "package '%s' not found"
 msgstr "пакет '%s' не найден"
@@ -140,6 +197,9 @@ msgstr "в файле DESCRIPTION пакета '%s' нет поля date"
 
 msgid "could not determine year for '%s' from package DESCRIPTION file"
 msgstr "не могу определить год для '%s' из файла DESCRIPTION пакета"
+
+msgid "Enhanced author specification provides no authors."
+msgstr "Улучшенный перечень авторов не содержит ни одного автора."
 
 msgid "m < 0"
 msgstr "m < 0"
@@ -261,6 +321,9 @@ msgstr "не могу редактировать NULL-имена строк"
 
 msgid "no help found for '%s'"
 msgstr "в '%s' не найдено помощи"
+
+msgid "'%s' has a help file but no examples"
+msgstr "у '%s' есть файл помощи, но нет примеров"
 
 msgid "test '%s' is not available"
 msgstr "тест '%s' недоступен"
@@ -394,6 +457,12 @@ msgstr "у файла 'DESCRIPTION' есть поле 'Encoding', а перекодировка невозможна"
 msgid "DESCRIPTION file of package '%s' is missing or broken"
 msgstr "файл DESCRIPTION пакета '%s' пропущен или поврежден"
 
+msgid "package"
+msgstr "пакет"
+
+msgid "not found"
+msgstr "не найден"
+
 msgid "menu() cannot be used non-interactively"
 msgstr "menu() нельзя использовать неинтерактивно"
 
@@ -478,9 +547,6 @@ msgstr "Неправильное имя файла(ов) для кода R в"
 msgid ":"
 msgstr ":"
 
-msgid ","
-msgstr ","
-
 msgid "are now renamed to 'z<name>.R'"
 msgstr "теперь переименован в 'z<name>.R'"
 
@@ -514,8 +580,12 @@ msgstr "Ошибка read.dcf() на файле '%s'"
 msgid "'priority' must be character or NULL"
 msgstr "'priority' должен быть текстом или NULL"
 
-msgid "argument 'lib' is missing: using %s"
-msgstr "аргумент 'lib' пропущен: использую %s"
+msgid ""
+"Removing package(s) from %s\n"
+"(as %s is unspecified)"
+msgstr ""
+"Удаляю пакет(ы) из %s\n"
+"(потому что %s не определено)"
 
 msgid "'destdir' is not a directory"
 msgstr "'destdir' не является папкой"
@@ -566,8 +636,12 @@ msgstr ""
 msgid "no packages were specified"
 msgstr "не указаны пакеты"
 
-msgid "argument 'lib' is missing: using '%s'"
-msgstr "аргумент 'lib' пропущен: использую %s"
+msgid ""
+"Installing package(s) into %s\n"
+"(as %s is unspecified)"
+msgstr ""
+"Устанавливаю пакеты в %s\n"
+"(потому что %s не определено)"
 
 msgid "'lib = \"%s\"' is not writable"
 msgstr "'lib = \"%s\"' не для записи"
@@ -964,6 +1038,9 @@ msgstr ""
 msgid "failed to create '%s'"
 msgstr "не удалось создать '%s'"
 
+msgid "there is no 'libs' directory in package '%s'"
+msgstr "нет папки 'libs' в пакете '%s'"
+
 msgid "cannot remove prior installation of package '%s'"
 msgstr "не могу удалить прежнюю установку пакета '%s'"
 
@@ -1015,11 +1092,11 @@ msgstr[0] "устанавливаю также зависимость"
 msgstr[1] "устанавливаю также зависимости"
 msgstr[2] "устанавливаю также зависимости"
 
-msgid "'lib' element '%s'  is not a writable directory"
+msgid "'lib' element '%s' is not a writable directory"
 msgid_plural "'lib' elements '%s' are not writable directories"
-msgstr[0] "элемент '%s' из 'lib' -- папка не для записи"
-msgstr[1] "элемент '%s' из 'lib' -- папки не для записи"
-msgstr[2] "элемент '%s' из 'lib' -- папки не для записи"
+msgstr[0] "'lib' элемент '%s' -- папка не для записи"
+msgstr[1] "'lib' элементы '%s' -- папки не для записи"
+msgstr[2] "'lib' элементы '%s' -- папки не для записи"
 
 msgid "package '%s' is in use and will not be installed"
 msgid_plural "packages '%s' are in use and will not be installed"
@@ -1027,14 +1104,18 @@ msgstr[0] "пакет '%s' сейчас используется и не будет установлен"
 msgstr[1] "пакеты '%s' сейчас используются и не будут установлены"
 msgstr[2] "пакеты '%s' сейчас используются и не будут установлены"
 
+#~ msgid "Could not find aspell or ispell executable."
+#~ msgstr "Не могу найти исполняемого файла aspell или ispell."
+#~ msgid "argument 'lib' is missing: using %s"
+#~ msgstr "аргумент 'lib' пропущен: использую %s"
+#~ msgid "argument 'lib' is missing: using '%s'"
+#~ msgstr "аргумент 'lib' пропущен: использую %s"
 #~ msgid "untar: using cmd ="
 #~ msgstr "untar: использую cmd ="
 #~ msgid "Enter zero or more numbers separated by space"
 #~ msgstr "Введите ни одного или больше чисел, разделенных пробелом"
 #~ msgid "more than one help file found: using package '%s'"
 #~ msgstr "найдено более одного файла помощи: использую пакет '%s'"
-#~ msgid "'%s' has a help file but no examples"
-#~ msgstr "у '%s' есть файл помощи, но нет примеров"
 #~ msgid "offline = TRUE is deprecated: use help_type =\"postscript\""
 #~ msgstr ""
 #~ "offline = TRUE не приветствуется: используйте help_type =\"postscript\""

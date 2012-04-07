@@ -113,16 +113,21 @@ function(f, ...)
 
 Negate <-
 function(f)
-    function(...) ! match.fun(f)(...)
+{  
+    f <- match.fun(f) # effectively force f, avoid lazy eval. 
+    function(...) ! f(...)
+}
 
 Position <-
 function(f, x, right = FALSE, nomatch = NA_integer_)
 {
-    ind <- which(as.logical(sapply(x, f)))
-    if(len <- length(ind))
-        ind[if(right) len else 1L]
-    else
-        nomatch
+    ind <- if(right) rev(seq_along(x)) else seq_along(x)
+    
+    for(i in ind)
+        if(f(x[[i]]))
+            return(i)
+    
+    nomatch
 }
 
 Find <-

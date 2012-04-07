@@ -1,18 +1,15 @@
 msgid ""
 msgstr ""
-"Project-Id-Version: R 2.11.0\n"
+"Project-Id-Version: R 2.3.0\n"
 "Report-Msgid-Bugs-To: bugs@r-project.org\n"
-"POT-Creation-Date: 2010-03-19 11:18\n"
-"PO-Revision-Date: 2010-03-25 14:29-0600\n"
-"Last-Translator: Chel Hee Lee <chl948@mail.usask.ca>\n"
-"Language-Team: Open Statistics Group Korea <gnustats@gmail.com>\n"
+"POT-Creation-Date: 2010-09-17 09:19\n"
+"PO-Revision-Date: 2005-05-26 15:05+0900\n"
+"Last-Translator: Korean <uiami@hanmail.com>\n"
+"Language-Team: Korean <translation-team-ko@lists.sourceforge.net>\n"
 "MIME-Version: 1.0\n"
 "Content-Type: text/plain; charset=UTF-8\n"
 "Content-Transfer-Encoding: 8bit\n"
 "Plural-Forms: nplurals=1; plural=0;\n"
-"X-Poedit-Language: Korean\n"
-"X-Poedit-Country: Korea, Republic Of\n"
-"X-Poedit-SourceCharset: utf-8\n"
 
 msgid "empty model supplied"
 msgstr "비어있는 모델이 제공되어졌습니다"
@@ -255,11 +252,11 @@ msgstr ""
 msgid "columns of 'contrast.obj' must define a contrast(sum to zero)"
 msgstr "'contrast.obj'의 열은 대비(총계가 0)를 정의하지 않으면 되지 않습니다"
 
-msgid "invalid interpolation method"
-msgstr "무효인 보간법입니다"
-
 msgid "collapsing to unique 'x' values"
 msgstr "유일한 'x'값을 얻기 위해서 축소했습니다"
+
+msgid "invalid interpolation method"
+msgstr "무효인 보간법입니다"
 
 msgid "need at least two non-NA values to interpolate"
 msgstr "보간을 위해서 적어도 2개의 non-NA값이 필요합니다"
@@ -476,8 +473,19 @@ msgstr "'k'는 {1,2,...n - 1}내에 있을 필요가 있습니다"
 msgid "some of the first %d eigenvalues are < 0"
 msgstr "최초의 %d개의 고유치 중 몇개인가는 negative입니다"
 
-msgid "initial value not feasible"
+#, fuzzy
+msgid "initial value is not in the interior of the feasible region"
 msgstr "실행 가능한 초기값이 아닙니다"
+
+#, fuzzy
+msgid "Barrier algorithm ran out of iterations and did not converge"
+msgstr "알고리즘은 수렴하지 않았습니다"
+
+msgid "Objective function increased at outer iteration %d"
+msgstr ""
+
+msgid "Objective function decreased at outer iteration %d"
+msgstr ""
 
 msgid "contrasts not defined for %d degrees of freedom"
 msgstr "대비는 자유도 %d에서는 정의 되지 않습니다"
@@ -554,8 +562,6 @@ msgstr "'V'는 수치 정방 행렬이 아닙니다"
 
 msgid "diag(.) had 0 or NA entries; non-finite result is doubtful"
 msgstr ""
-"대각행렬의 값이 0 또는 NA 가 있기 때문에 유한값을 가지지 않을 것으로 추측됩니"
-"다"
 
 #, fuzzy
 msgid "'x' must be a numeric vector"
@@ -687,7 +693,7 @@ msgid "'weights' must not be negative"
 msgstr "'x'는 non-negative가 나오지 않으면 되지 않습니다"
 
 msgid "sum(weights) != 1  -- will not get true density"
-msgstr "가중치의 합이 1이 아니므로 정확한 확률분포를 찾을 수 없습니다"
+msgstr ""
 
 msgid "need at least 2 points to select a bandwidth automatically"
 msgstr ""
@@ -810,7 +816,7 @@ msgid "negative values not allowed for the Poisson family"
 msgstr "포아송 패밀리에서 negative 값은 허용되지 않습니다"
 
 msgid "ignoring prior weights"
-msgstr "기존에 부여한 가중치를 무시합니다"
+msgstr ""
 
 #, fuzzy
 msgid ""
@@ -880,7 +886,7 @@ msgid "non-positive values not allowed for the gamma family"
 msgstr "정확하지 않는 값은 gamma family에서 허용되지 않습니다"
 
 msgid "using weights as shape parameters"
-msgstr "모양인수로서 가중치를 사용합니다"
+msgstr ""
 
 #, fuzzy
 msgid ""
@@ -894,7 +900,7 @@ msgid "positive values only allowed for the inverse.gaussian family"
 msgstr "역정규 패밀리에서 정의값만 허용되지 않습니다"
 
 msgid "Need CRAN package 'SuppDists' for 'inverse.gaussian' family"
-msgstr "'inverse.gaussian'를 사용하려면 CRAN package 'SuppDists'가 필요합니다"
+msgstr ""
 
 msgid "using weights as inverse variances"
 msgstr ""
@@ -949,10 +955,10 @@ msgid "'or' must be a single number between 0 and Inf"
 msgstr "'or'는 단일의 수치 또는 0 과 inf 간의 단일의 수가 아니면 되지 않습니다"
 
 msgid "need 2 or more non-zero row marginals"
-msgstr "음수가 아닌 2개이상의 마지널이 필요로 합니다"
+msgstr ""
 
 msgid "need 2 or more non-zero column marginals"
-msgstr "음수가 아닌 2개 이상의 열 마지널이 필요합니다"
+msgstr ""
 
 msgid "'hybrid' is ignored for a 2 x 2 table"
 msgstr ""
@@ -1115,7 +1121,7 @@ msgid ","
 msgstr ","
 
 msgid "using F test with a %s family is inappropriate"
-msgstr "F 테스트가 부적절합니다"
+msgstr ""
 
 msgid "using F test with a fixed dispersion is inappropriate"
 msgstr ""
@@ -1274,8 +1280,9 @@ msgstr "ties가 있기 때문에, 올바른 p값을 계산할 수가 없습니�
 msgid "'y' must be numeric or a string naming a valid function"
 msgstr "'y'는 수치 또는 유효한 함수의 이름인 문자열이 아니면 안됩니다"
 
+#, fuzzy
 msgid ""
-"y must be supplied.\n"
+"numeric y must be supplied.\n"
 "For density estimation use density()"
 msgstr ""
 "y를 제공하지 않으면 되지 않습니다. \n"
@@ -1314,11 +1321,20 @@ msgstr "특이한 적용시켜 조우했습니다"
 msgid "missing or negative weights not allowed"
 msgstr "결손 또는 negative의 중량감은 허용되지 않습니다"
 
-msgid "invalid 'lm' object:  no 'terms' nor 'qr' component"
+#, fuzzy
+msgid "invalid 'lm' object:  no 'terms' component"
 msgstr "무효인 'lm'오브젝트: 항('terms') 혹은 'qr'성분이 없습니다"
+
+msgid "calling summary.lm(<fake-lm-object>) ..."
+msgstr ""
 
 msgid "residual degrees of freedom in object suggest this is not an \"lm\" fit"
 msgstr "오브젝트중의 나머지 자유도는 이 'lm'가 아니라고 시사합니다"
+
+msgid ""
+"lm object does not have a proper 'qr' component.\n"
+" Rank zero or should not have used lm(.., qr=FALSE)."
+msgstr ""
 
 msgid "family '"
 msgstr ""
@@ -1326,6 +1342,9 @@ msgstr ""
 #, fuzzy
 msgid "' not implemented"
 msgstr "유형 '%s'는 실제 적용되지 않습니다"
+
+msgid "calling anova.lm(<fake-lm-object>) ..."
+msgstr ""
 
 msgid "ANOVA F-tests on an essentially perfect fit are unreliable"
 msgstr ""
@@ -1335,6 +1354,9 @@ msgstr "(을)를 가지는 모델을 제거 했습니다. 응답이하와 다르
 
 msgid "model 1"
 msgstr "모델 1"
+
+msgid "calling predict.lm(<fake-lm-object>) ..."
+msgstr ""
 
 msgid "prediction from a rank-deficient fit may be misleading"
 msgstr ""
@@ -1351,7 +1373,7 @@ msgid ""
 msgstr ""
 
 msgid "Assuming constant prediction variance even though model fit is weighted"
-msgstr "모델이 적합하게 가중치가 부여되었음에도 일정한 분산치를 가집니다"
+msgstr ""
 
 #, fuzzy
 msgid "'weights' as formula should be one-sided"
@@ -1657,7 +1679,7 @@ msgid "unrecognized control element(s) named `"
 msgstr ""
 
 msgid "' ignored"
-msgstr "무시"
+msgstr ""
 
 msgid "Logical `hessian' argument not allowed.  See documentation."
 msgstr ""
@@ -1705,7 +1727,7 @@ msgid "No starting values specified for some parameters."
 msgstr "초기값이 주어지고 있지 않습니다"
 
 msgid "Intializing"
-msgstr "초기화중"
+msgstr ""
 
 msgid "to '1.'."
 msgstr ""
@@ -1721,7 +1743,7 @@ msgid "fitting parameters"
 msgstr "모든 파라미터가 고정되어 있었습니다"
 
 msgid "without any variables"
-msgstr "변수사용없이"
+msgstr ""
 
 #, fuzzy
 msgid "no parameters to fit"
@@ -1735,7 +1757,7 @@ msgid "argument 'na.action' will be ignored"
 msgstr ""
 
 msgid "Upper or lower bounds ignored unless algorithm = \"port\""
-msgstr "algorithm \"port\" 이 아니면, 상단과 하단값이 무시됩니다"
+msgstr ""
 
 msgid "cannot calculate REML log-likelihood for \"nls\" objects"
 msgstr "\"nls\" 오브젝트를 위한 REML 대수우도를 계산할 수 없습니다"
@@ -1753,7 +1775,7 @@ msgid "'%s' cannot be of mode '%s'"
 msgstr "'%s'는 모드 '%s'로는 될 수 없습니다"
 
 msgid "a two-sided formula is required"
-msgstr "two-sided 공식이 필요합니다"
+msgstr ""
 
 msgid "not enough groups"
 msgstr "충분하지 않는 group입니다"
@@ -1808,7 +1830,7 @@ msgid "'id.n' must be in {1,..,%d}"
 msgstr "'id.n' {1,..,%d}에서 없으면 되지 않습니다"
 
 msgid "hat values (leverages) are all ="
-msgstr "leverages 의 값은 "
+msgstr ""
 
 msgid "and there are no factor predictors; no plot no. 5"
 msgstr ""
@@ -1911,7 +1933,7 @@ msgid "'princomp' can only be used with more units than variables"
 msgstr "'princomp'에서 cases는 변수로부터 많지 않으면 되지 않습니다"
 
 msgid "cannot use cor=TRUE with a constant variable"
-msgstr "고정값으로서의 cor 를 사용할수 없습니다"
+msgstr ""
 
 msgid "covariance matrix is not non-negative definite"
 msgstr "공분산 행렬이 비부치정부호가 아닙니다"
@@ -1986,6 +2008,10 @@ msgstr "인수는 동일 길이가 나오지 않으면 되지 않습니다"
 
 msgid "'relevel' only for factors"
 msgstr "'relevel'는 인자 전용입니다"
+
+#, fuzzy
+msgid "'ref' must be of length one"
+msgstr "'acf'는 2 이상의 길이가 나오지 않으면 되지 않습니다"
 
 msgid "'ref' must be an existing level"
 msgstr "'ref'는 기존의 수준이 아니면 되지 않습니다"
@@ -2362,6 +2388,10 @@ msgstr "(유한한）'x'의 관측값이 충분하지는 않습니다"
 
 msgid "Requested conf.level not achievable"
 msgstr ""
+
+#, fuzzy
+msgid "cannot compute confidence interval when all observations are tied"
+msgstr "zeroes 값 때문에, 정확한 신뢰 구간을 계산할 수 없습니다"
 
 msgid "cannot compute exact confidence interval with ties"
 msgstr "time가 있으므로, 정확한 신뢰 구간을 계산할수가 없습니다 "

@@ -510,7 +510,8 @@ data.frame <-
     mdrop <- missing(drop)
     Narg <- nargs() - !mdrop  # number of arg from x,i,j that were specified
     has.j <- !missing(j)
-    if(!all(names(sys.call()) %in% c("", "drop")))
+    if(!all(names(sys.call()) %in% c("", "drop"))
+       && !isS4(x)) # at least don't warn for callNextMethod!
         warning("named arguments other than 'drop' are discouraged")
 
     if(Narg < 3L) {  # list-like indexing or matrix indexing
@@ -543,17 +544,17 @@ data.frame <-
 
     if(missing(i)) { # df[, j] or df[ , ]
         ## not quite the same as the 1/2-arg case, as 'drop' is used.
-        if(missing(j) && drop && length(x) == 1L) return(.subset2(x, 1L))
+        if(drop && !has.j && length(x) == 1L) return(.subset2(x, 1L))
         nm <- names(x); if(is.null(nm)) nm <- character(0L)
-        if(!missing(j) && !is.character(j) && any(is.na(nm))) {
+        if(has.j && !is.character(j) && any(is.na(nm))) {
             ## less efficient version
             names(nm) <- names(x) <- seq_along(x)
-            y <- if(missing(j)) x else .subset(x, j)
+            y <- .subset(x, j)
             cols <- names(y)
             if(any(is.na(cols))) stop("undefined columns selected")
             cols <- names(y) <- nm[cols]
         } else {
-            y <- if(missing(j)) x else .subset(x, j)
+            y <- if(has.j) .subset(x, j) else x
             cols <- names(y)
             if(any(is.na(cols))) stop("undefined columns selected")
         }
@@ -577,7 +578,7 @@ data.frame <-
     x <- .Call("R_copyDFattr", xx, x, PACKAGE="base")
     oldClass(x) <- attr(x, "row.names") <- NULL
 
-    if(!missing(j)) { # df[i, j]
+    if(has.j) { # df[i, j]
         nm <- names(x); if(is.null(nm)) nm <- character(0L)
         if(!is.character(j) && any(is.na(nm)))
             names(nm) <- names(x) <- seq_along(x)
@@ -1133,7 +1134,7 @@ rbind.data.frame <- function(..., deparse.level = 1)
 			 row.names = integer()))
     nms <- names(allargs)
     if(is.null(nms))
-	nms <- character(length(allargs))
+	nms <- character(n)
     cl <- NULL
     perm <- rows <- rlabs <- vector("list", n)
     nrow <- 0L

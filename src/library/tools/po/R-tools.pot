@@ -1,8 +1,8 @@
 msgid ""
 msgstr ""
-"Project-Id-Version: R 2.11.0\n"
+"Project-Id-Version: R 2.12.0\n"
 "Report-Msgid-Bugs-To: bugs@r-project.org\n"
-"POT-Creation-Date: 2010-03-16 09:20\n"
+"POT-Creation-Date: 2010-10-04 10:51\n"
 "PO-Revision-Date: YEAR-MO-DA HO:MI+ZONE\n"
 "Last-Translator: FULL NAME <EMAIL@ADDRESS>\n"
 "Language-Team: LANGUAGE <LL@li.org>\n"
@@ -161,19 +161,43 @@ msgstr ""
 msgid "Packages required but not available:"
 msgstr ""
 
-msgid "Packages required and available but unsuitable version:"
+msgid "Package required but not available: %s"
+msgstr ""
+
+msgid "Packages required and available but unsuitable versions:"
+msgstr ""
+
+msgid "Package required and available but unsuitable version: %s"
 msgstr ""
 
 msgid "Former standard packages required but now defunct:"
 msgstr ""
 
+msgid "Packages suggested but not available for checking:"
+msgstr ""
+
+msgid "Package suggested but not available for checking: %s"
+msgstr ""
+
+msgid "Packages which this enhances but not available for checking:"
+msgstr ""
+
+msgid "Package which this enhances but not available for checking: %s"
+msgstr ""
+
 msgid "Vignette dependencies not required:"
+msgstr ""
+
+msgid "Vignette dependencies not required: %s"
 msgstr ""
 
 msgid "Vignette dependencies (\\VignetteDepends{} entries) must be contained in the DESCRIPTION Depends/Suggests/Imports entries."
 msgstr ""
 
 msgid "Namespace dependencies not required:"
+msgstr ""
+
+msgid "Namespace dependency not required: %s"
 msgstr ""
 
 msgid "Malformed package name"
@@ -296,7 +320,13 @@ msgstr ""
 msgid "'::' or ':::' imports not declared from:"
 msgstr ""
 
+msgid "'::' or ':::' import not declared from: %s"
+msgstr ""
+
 msgid "'library' or 'require' calls not declared from:"
+msgstr ""
+
+msgid "'library' or 'require' call not declared from: %s"
 msgstr ""
 
 msgid "Rd files with duplicated name '%s':"
@@ -369,6 +399,36 @@ msgid "missing/empty \\name field in Rd file(s)"
 msgstr ""
 
 msgid "No help on %s found in RdDB %s"
+msgstr ""
+
+msgid "Converting Rd files to LaTeX ..."
+msgstr ""
+
+msgid "-t option without value"
+msgstr ""
+
+msgid "-o option without value"
+msgstr ""
+
+msgid "Warning: unknown option"
+msgstr ""
+
+msgid "exactly one Rd file must be specified"
+msgstr ""
+
+msgid "no 'type' specified"
+msgstr ""
+
+msgid "'type' must be one of 'txt', 'html', 'latex' or 'example'"
+msgstr ""
+
+msgid "current working directory cannot be ascertained"
+msgstr ""
+
+msgid "no inputs"
+msgstr ""
+
+msgid "Error in running tools::texi2dvi"
 msgstr ""
 
 msgid "more than one \\examples section, using the first"
@@ -461,6 +521,45 @@ msgstr ""
 msgid "ERROR: this R is version %s, required is R %s %s"
 msgstr ""
 
+msgid "Changes require specified 'style'"
+msgstr ""
+
+msgid "The default JSS style may not be modified."
+msgstr ""
+
+msgid "** Options"
+msgstr ""
+
+msgid "are only for '--binary'  and will be ignored"
+msgstr ""
+
+msgid "Error: cannot rename directory to"
+msgstr ""
+
+msgid "cannot coerce"
+msgstr ""
+
+msgid "to logical"
+msgstr ""
+
+msgid "-l option without value"
+msgstr ""
+
+msgid "configuration files are not supported as from R 2.12.0"
+msgstr ""
+
+msgid "'--multiarch' specified with only one usable sub-architecture"
+msgstr ""
+
+msgid "Error: no packages were specified"
+msgstr ""
+
+msgid "package dir"
+msgstr ""
+
+msgid "does not exist"
+msgstr ""
+
 msgid "No files in this directory"
 msgstr ""
 
@@ -548,16 +647,13 @@ msgstr ""
 msgid "installing to"
 msgstr ""
 
+msgid "generating debug symbols (dSYM)"
+msgstr ""
+
 msgid "R include directory is empty -- perhaps need to install R-devel.rpm or similar"
 msgstr ""
 
 msgid "running src/Makefile.win ..."
-msgstr ""
-
-msgid "making DLL ..."
-msgstr ""
-
-msgid "... done"
 msgstr ""
 
 msgid "no source files found"
@@ -569,13 +665,16 @@ msgstr ""
 msgid "'--auto-zip' is for Windows only"
 msgstr ""
 
-msgid "-l option without value"
-msgstr ""
-
-msgid "Warning: unknown option"
+msgid "--merge-multiarch is Windows-only"
 msgstr ""
 
 msgid "cannot create temporary directory"
+msgstr ""
+
+msgid "ERROR: --merge-multiarch applies only to a single tarball"
+msgstr ""
+
+msgid "ERROR: --merge-multiarch can only be used on i386/x64 installations"
 msgstr ""
 
 msgid "invalid package"
@@ -611,28 +710,10 @@ msgstr ""
 msgid "--"
 msgstr ""
 
-msgid "-o option without value"
-msgstr ""
-
-msgid "Converting Rd files to LaTeX ..."
-msgstr ""
-
 msgid "finding HTML links ..."
 msgstr ""
 
 msgid "finding level-2 HTML links ..."
-msgstr ""
-
-msgid "-t option without value"
-msgstr ""
-
-msgid "exactly one Rd file must be specified"
-msgstr ""
-
-msgid "no 'type' specified"
-msgstr ""
-
-msgid "'type' must be one of 'txt', 'html', 'latex' or 'example'"
 msgstr ""
 
 msgid "there is no package called '%s'"
@@ -662,6 +743,27 @@ msgstr ""
 msgid "Cannot process chunk/lines:\n%s"
 msgstr ""
 
+msgid "No news found in given file using old-style R-like format."
+msgstr ""
+
+msgid "No news found in given file using package default format."
+msgstr ""
+
+msgid "Could not extract news from the following text chunks:"
+msgstr ""
+
+msgid "Chunk %s:\n%s"
+msgstr ""
+
+msgid "Cannot extract version info from the following section titles:"
+msgstr ""
+
+msgid "%s"
+msgstr ""
+
+msgid "Malformed NEWS.Rd file."
+msgstr ""
+
 msgid "Processing packages:"
 msgstr ""
 
@@ -672,6 +774,33 @@ msgid "'DESCRIPTION' has 'Encoding' field and re-encoding is not possible"
 msgstr ""
 
 msgid "cannot create HTML package index"
+msgstr ""
+
+msgid "Internal error, no tag"
+msgstr ""
+
+msgid "Argument for"
+msgstr ""
+
+msgid "not found."
+msgstr ""
+
+msgid "Internal error:  NULL tag"
+msgstr ""
+
+msgid "internal error"
+msgstr ""
+
+msgid "Inconsistent arg count for"
+msgstr ""
+
+msgid "Entry for"
+msgstr ""
+
+msgid "="
+msgstr ""
+
+msgid "already defined to be"
 msgstr ""
 
 msgid "found encoding"
@@ -794,6 +923,9 @@ msgstr ""
 msgid "running tests to possibly trigger segfaults"
 msgstr ""
 
+msgid "'x' must be a single character string"
+msgstr ""
+
 msgid "test '%s' is not available"
 msgstr ""
 
@@ -810,6 +942,9 @@ msgid "Running 'texi2dvi' on '%s' failed."
 msgstr ""
 
 msgid "running 'texi2dvi' on '%s' failed"
+msgstr ""
+
+msgid "unable to run '%s' on '%s'"
 msgstr ""
 
 msgid "unable to run %s on '%s'"
