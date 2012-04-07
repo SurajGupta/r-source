@@ -790,7 +790,7 @@ cd tests
 @noindent
 and other useful targets are @code{test-BasePackages} and
 @code{test-Recommended} to the run tests of the standard and
-recommmended packages (if installed) respectively.
+recommended packages (if installed) respectively.
 
 This re-runs all the tests relevant to the installed @R{} (including for
 example code in the package vignettes), but not for example the ones
@@ -1206,7 +1206,7 @@ It is also possible to build an installer for use with Microsoft
 Installer.  This is intended for use by sysadmins doing automated
 installs, and is not recommended for casual use.
 
-It makes use of the Windows Installer XML (WiX) toolkit (wersion 2.0)
+It makes use of the Windows Installer XML (WiX) toolkit (version 2.0)
 available from @uref{http://wix.sourceforge.net/}.  (This needs the .NET
 1.1 framework installed: it ran on a vanilla Windows XP SP2
 machine. Unfortunately the file format has been changed within the same
@@ -1225,8 +1225,8 @@ make msi
 @end example
 
 @noindent
-which will results in a file of about 40Mb with a name like
-@file{R-2.6.0-win32.msi}.  This can be double-clicked to be installed,
+which will results in a file of about 50Mb with a name like
+@file{R-2.9.2-win32.msi}.  This can be double-clicked to be installed,
 but those who need it will know what to do with it.
 
 Thanks to David del Campo (Dept of Statistics, University of Oxford)
@@ -1298,7 +1298,7 @@ expand the @R{} sources and configure @R{} appropriately, for example
 @example
 tar zxvf R-@value{VERSIONno}.tar.gz
 cd R-@value{VERSIONno}
-./configure --with-blas='-framework vecLib' --with-lapack --with-ICU \
+./configure --with-blas='-framework vecLib' --with-lapack \
   --with-aqua --enable-R-framework
 make
 @end example
@@ -1306,10 +1306,6 @@ make
 @noindent
 and then sit back and wait.  The first two options are the default (and
 strongly recommended), and with some toolsets have been essential.
-Selecting @option{--with-ICU} replaces Apple's @code{wcscoll} with
-one@footnote{It makes use of an Apple-supplied modified ICU library, and
-is known to work with Mac OS >= 10.4.} that works correctly in UTF-8
-locales, and is the default as from @R{} 2.9.0.  
 
 The second line of options is also default on Mac OS X, but needed only
 if you want to build @R{} for use with @code{R.app} Console, and imply
@@ -1327,8 +1323,8 @@ make prefix=/where/you/want/R.framework/to/go install
 @noindent
 (the @file{R.framework} directory should not be included in the path).
 
-For compatibility with the CRAN distribution you may need to specify
-@option{--with-included-gettext} to avoid linking against a
+For compatibility with the @acronym{CRAN} distribution you may need to
+specify @option{--with-included-gettext} to avoid linking against a
 @samp{libintl} dynamic library you may have available, for example in
 @file{/usr/local/lib}.
 
@@ -1552,7 +1548,7 @@ this will be selected automatically if the name given is a single
 character vector by the argument @code{repos}: these can include a
 @acronym{CRAN} mirror, Bioconductor, Omegahat, local archives, local
 files, @dots{}).  Function @code{setRepositories()} can select amongst
-those the @R{} installation is aware of.
+those repositories that the @R{} installation is aware of.
 
 @node Windows packages, Mac OS X packages, Installing packages, Installing packages
 @subsection Windows
@@ -1591,12 +1587,12 @@ the building service offered at @uref{http://win-builder.r-project.org/}.
 
 On Mac OS X @code{install.packages} works as it does on other Unix-like
 systems, but there is an additional type @code{mac.binary} (the default
-in the CRAN distribution) that can be passed to @code{install.packages}
-in order to download and install binary packages from a suitable
-repository, and is the default for CRAN builds of R.  These Macintosh
-binary package files have the extension @samp{tgz}.  The @R{} GUI
-provides for installation of either binary or source packages, from
-@acronym{CRAN} or local files.
+in the @acronym{CRAN} distribution) that can be passed to
+@code{install.packages} in order to download and install binary packages
+from a suitable repository, and is the default for @acronym{CRAN} builds
+of R.  These Macintosh binary package files have the extension
+@samp{tgz}.  The @R{} GUI provides for installation of either binary or
+source packages, from @acronym{CRAN} or local files.
 
 @node Customizing package compilation,  , Mac OS X packages, Installing packages
 @subsection Customizing package compilation
@@ -1677,8 +1673,8 @@ whole bundle).
 @cindex Repositories
 
 Utilities such as @code{install.packages} can be pointed at any
-CRAN-style repository, and @R{} users may want to set up their own.  The
-`base' of a repository is a URL such as
+@acronym{CRAN}-style repository, and @R{} users may want to set up their
+own.  The `base' of a repository is a URL such as
 @uref{http://www.omegahat.org/R/}: this must be an URL scheme that
 @code{download.packages} supports (which also includes @samp{ftp://} and
 @samp{file://}).  Under that base URL there should be directory trees
@@ -2070,7 +2066,7 @@ an entry point
 @noindent
 to set its seeds).
 
-The facilties to change the normal random number generator are
+The facilities to change the normal random number generator are
 available through the constant N01_kind. This takes values
 from the enumeration type
 
@@ -2098,7 +2094,7 @@ typedef enum @{
 @section Unix
 
 If @R{} has not already be made in the directory tree,
-@command{configure} must tbe run as described in the main build
+@command{configure} must be run as described in the main build
 instructions.
 
 Then
@@ -2307,7 +2303,6 @@ of the manuals you will also need @file{texinfo.tex} installed (which is
 part of the GNU @samp{texinfo} distribution but is often made part of
 the @TeX{} package in re-distributions) as well as @command{texi2dvi}
 (part of the GNU @pkg{texinfo} distribution).
-
 
 @cindex Vignettes
 The DVI and PDF documentation and building vignettes needs @command{tex}
@@ -2586,9 +2581,10 @@ when building from source, and
 @node ACML, Goto BLAS, ATLAS, BLAS
 @subsubsection ACML
 
-For @cputype{x86_64} processors under Linux and Solaris 10 there is the
-AMD Core Math Library (ACML) @uref{http://www.amd.com/@/acml}.  For the
-@command{gcc} version we could use
+For @cputype{x86_64} and @cputype{i686} processors under Linux and
+Solaris 10 there is the AMD Core Math Library (ACML)
+@uref{http://www.amd.com/@/acml}.  For the @command{gcc} version we
+could use
 
 @example
 --with-blas="-lacml"
@@ -2596,15 +2592,15 @@ AMD Core Math Library (ACML) @uref{http://www.amd.com/@/acml}.  For the
 
 @noindent
 if the appropriate library directory (such as
-@enindex LD_LIBRRARY_PATH
-@file{/opt/acml4.2.0/gfortran64/lib}) is in the @env{LD_LIBRRARY_PATH}.
+@enindex LD_LIBRARY_PATH
+@file{/opt/acml4.3.0/gfortran64/lib}) is in the @env{LD_LIBRRARY_PATH}.
 For other compilers, see the ACML documentation.  There is a
 multithreaded Linux version of ACML available for @command{gfortran}
 which needs @command{gcc} >= 4.2.0 (or some RedHat versions of 4.1.x).
 To make use of this you will need something like
 
 @example
---with-blas="-L/opt/acml4.2.0/gfortran64_mp/lib -lacml_mp"
+--with-blas="-L/opt/acml4.3.0/gfortran64_mp/lib -lacml_mp"
 @end example
 
 See @pxref{Shared BLAS} for an alternative (and in many ways preferable)
@@ -2656,7 +2652,7 @@ and run-time library support. Some examples of linking to MKL using this
 layered model are given below. These examples are for GCC compilers on
 @cputype{x86_64}.  The choice of interface layer is important on
 @cputype{x86_64} since the Intel Fortran compiler returns complex
-values differently from the GNU fortran compiler. You must therefore
+values differently from the GNU Fortran compiler. You must therefore
 use the interface layer that matches your compiler (@code{mkl_intel*}
 or @code{mkl_gf*}).
 
@@ -2700,7 +2696,7 @@ MKL="   -L$@{MKL_LIB_PATH@}                               \
 @end example
 
 @noindent
-(Thanks to Ei-Ji Nakama).
+(Thanks to Ei-ji Nakama).
 
 The default linking model, which is also used by version 9 of MKL, can
 be used by
@@ -2753,7 +2749,8 @@ It is easy to change the BLAS without making to re-install @R{} and all
 the add-on packages, since all references to the BLAS go through
 @code{libRblas}, and that can be replaced.  Note though that any dynamic
 libraries the replacement links to will need to be found by the linker:
-this may need the library path to be changed in @file{etc/ldpaths}.
+this may need the library path to be changed in
+@file{@var{R_HOME}/etc/ldpaths}.
 @end itemize
 
 Another option to change the BLAS in use is to symlink a dynamic BLAS
@@ -2762,11 +2759,11 @@ For example, just
 
 @example
 mv @var{R_HOME}/lib/libRblas.so @var{R_HOME}/lib/libRblas.so.keep
-ln -s /opt/acml4.0.1/gfortran64_mp/lib/libacml_mp.so @var{R_HOME}/lib/libRblas.so
+ln -s /opt/acml4.3.0/gfortran64_mp/lib/libacml_mp.so @var{R_HOME}/lib/libRblas.so
 @end example
 
-will change the BLAS in use to multithreaded ACML.  A similar link
-works for recent versions of the Goto BLAS and for MKL (provided the
+will change the BLAS in use to multithreaded ACML.  A similar link works
+for recent versions of the Goto BLAS and perhaps for MKL (provided the
 appropriate @file{lib} directory is in the run-time library path or
 @command{ld.so} cache).
 
@@ -3074,10 +3071,9 @@ path to a shell, e.g. @file{/usr/local/bin/bash}).
 @findex make
 
 To compile @R{}, you will most likely find it easiest to use GNU
-@command{make}.  On Solaris 2.6/7/8 in particular, you need a version of
-@acronym{GNU} @command{make} different from 3.77; 3.79.1 and later work
-fine, as does the Sun @command{make}.  The native @command{make} is
-reported to fail on SGI Irix 6.5 and Alpha/OSF1 (aka Tru64).
+@command{make}, although the Sun @command{make} works on Solaris.  The
+native @command{make} has been reported to fail on SGI Irix 6.5 and
+Alpha/OSF1 (aka Tru64).
 
 To build in a separate directory you need a @command{make} that uses the
 @code{VPATH} variable, for example @acronym{GNU} @command{make}, or Sun
@@ -3287,6 +3283,7 @@ of compilers and support libraries.
 @menu
 * X11 issues::                  
 * Linux::                       
+* FreeBSD::                     
 * Mac OS X::                    
 * Solaris::                     
 * HP-UX::                       
@@ -3388,7 +3385,7 @@ directory or elsewhere, for example,
 @end example
 
 
-@node Linux, Mac OS X, X11 issues, Platform notes
+@node Linux, FreeBSD, X11 issues, Platform notes
 @section Linux
 @cindex Linux
 
@@ -3445,24 +3442,12 @@ LIBnn=lib
 32-bit versions will be if possible unless @option{--disable-largefile}
 is specified.
 
-@R{} used to include the compiler flag @option{-mieee-fp}, but it seems
-this was really an alias for the linker flag @option{-lieee}.  Neither
-are needed for a modern Linux (e.g.@: using @code{glibc} 2.2/3/4) but
-could conceivably be needed on an older version.  @code{glibc} 2.1
-required @option{-D__NO_MATH_INLINES} to achieve
-@acronym{IEC}@tie{}60059-compliance for @code{exp}, and this is included
-in @code{R_XTRA_CFLAGS} if required.
-
 There are known problems with several early versions of
-@command{gcc}@tie{}4, but @command{gcc}@tie{}4.1.0 and later seem to
-cause no special difficulties.
-
-@c It has been reported that using @command{gcc}@tie{}4.0.3 on
-@c @cputype{ppc64} needed the compiler flag @option{-mminimal-toc} to avoid
-@c errors when linking @R{} as a shared library.
+@command{gcc}@tie{}4, but @command{gcc}@tie{}4.1.0 and later have been
+tested extensively.
 
 To build a 64-bit version of @R{} on @cputype{ppc64} (also known as
-@cputype{powerpc64}) with @command{gcc}@tie{}4.1.1, Ei-Ji Nakama used
+@cputype{powerpc64}) with @command{gcc}@tie{}4.1.1, Ei-ji Nakama used
 
 @example
 CC="gcc -m64"
@@ -3474,18 +3459,13 @@ FFLAGS="-mminimal-toc -fno-optimize-sibling-calls -g -O2"
 @end example
 
 @noindent
-the additional flags being needed to problems linking against
+the additional flags being needed to resolve problems linking against
 @file{libnmath.a} and when linking @R{} as a shared library.
-
-On some earlier@footnote{e.g.@: Fedora Core 5} @code{glibc} systems,
-@samp{-fgnu89-inline} needs to be added to @option{CFLAGS} when using
-@command{gcc}@tie{}4.3.x, since @file{wchar.h} is not set up properly
-for C99-style inlines.
 
 @menu
 * Intel compilers::             
 * PGI compilers::               
-* SunStudio compilers::         
+* Sun Studio compilers::        
 @end menu
 
 @node Intel compilers, PGI compilers, Linux, Linux
@@ -3541,8 +3521,10 @@ For some comments on building on an Itanium (@cputype{ia64}) Linux
 system with @command{gcc} or the Intel compilers see
 @uref{http://www.nakama.ne.jp/@/memo/@/ia64_linux/}.
 
+Others have reported success with version 10.0.
 
-@node PGI compilers, SunStudio compilers, Intel compilers, Linux
+
+@node PGI compilers, Sun Studio compilers, Intel compilers, Linux
 @subsection PGI compilers
 
 Jennifer Lai used the Portland Group compilers on @cputype{x86_64} to
@@ -3571,10 +3553,10 @@ compliance to IEC60659.  Also,
 @uref{http://@/www.amd.com/@/us-en/@/assets/@/content_type/@/DownloadableAssets/@/dwamd_PGI_nov603.pdf}
 suggests that @option{-pc64} may be desirable.
 
-@node SunStudio compilers,  , PGI compilers, Linux
-@subsection SunStudio compilers
+@node Sun Studio compilers,  , PGI compilers, Linux
+@subsection Sun Studio compilers
 
-Brian Ripley tested the SunStudio 12 (aka Sun Ceres) compilers
+Brian Ripley tested the Sun Studio 12 (aka Sun Ceres) compilers
 (@uref{http://developers.sun.com/@/sunstudio/@/index.jsp}) on
 @cputype{x86_64} Linux with
 
@@ -3606,28 +3588,41 @@ The resulting build of @R{} was not quite as fast as that built with
 @command{gcc}@tie{}4.3.2 at @samp{-O3}.
 
 
-@node Mac OS X, Solaris, Linux, Platform notes
+@node FreeBSD, Mac OS X, Linux, Platform notes
+@section FreeBSD
+@cindex FreeBSD
+
+Rainer Hurling has reported success on @cputype{x86_64} FreeBSD 7.2 (and
+on 6.x in the past).  Since Darwin (the base OS of Mac OS X) is based on
+FreeBSD we find testing on Darwin tends to pick up any potential
+problems on FreeBSD problems quite early.
+
+The native BSD @command{make} suffices to build @R{} but a number of
+packages require GNU @command{make}.  (The BSD version is
+@command{bsdmake} on Darwin.)
+
+@node Mac OS X, Solaris, FreeBSD, Platform notes
 @section Mac OS X
 @cindex Mac OS X
 
 You can build @R{} as a Unix application on Mac OS X using the Apple
-Developer Tools (`Xcode') and @command{g77} or @command{gfortran}.  You
-will also need to install an X sub-system or configure with
-@option{--without-x}.  The X window manager is part of the standard Mac
-OS X distribution since Mac OS X version 10.3 (Panther), but it is
-typically not pre-installed prior to 10.5 (Leopard).
+Developer Tools (`Xcode') and @command{gfortran}.  You will also need to
+install an X sub-system or configure with @option{--without-x}.  The X
+window manager is part of the standard Mac OS X distribution since Mac
+OS X version 10.3 (Panther), but it is typically not pre-installed prior
+to 10.5 (Leopard).
 
 For more information on how to find these tools please read the
 @uref{http://CRAN.R-project.org/bin/macosx/RMacOSX-FAQ.html, R for Mac
 OS X @acronym{FAQ}}.
 
-If you use the X window manager and prefer @code{Terminal.app} to
-@code{xterm}, you should be aware that @R{}, like many Unix tools, uses
-@enindex DISPLAY
-the existence of a @env{DISPLAY} environment variable to determine
-whether an X system is running.  This affects the default graphics
-device for the command-line version of R and the behaviour of the
-@code{png} and @code{jpeg} devices.
+@c If you use the X window manager and prefer @code{Terminal.app} to
+@c @code{xterm}, you should be aware that @R{}, like many Unix tools, uses
+@c @enindex DISPLAY
+@c the existence of a @env{DISPLAY} environment variable to determine
+@c whether an X system is running.  This affects the default graphics
+@c device for the command-line version of R and the behaviour of the
+@c @code{png} and @code{jpeg} devices.
 
 
 @cindex BLAS library
@@ -3688,12 +3683,13 @@ in @file{config.site} or on the @command{configure} command line.
 @subsection Solaris 10 and Open Solaris
 
 @R{} has been built successfully on Solaris 10 (both Sparc and
-@cputype{x86}) using @command{gcc}@tie{}3/@command{g77},
-@command{gcc}@tie{}4/@command{gfortran} and the (zero cost) Sun Studio
-(aka Ceres) 11/12 compilers.  Sun packages for @R{} are available from
-@uref{http://www.sunfreeware.com/} for both architectures.  (Recent Sun
-machines are Opterons (@cputype{x86-64}) rather than @cputype{x86}, but
-32-bit @cputype{x86} executables are the default.)
+@cputype{x86}) using the (zero cost) Sun Studio (aka Ceres) 12
+compilers: there has been some success with
+@command{gcc}@tie{}4/@command{gfortran}, mainly on Sparc.  Sun packages
+for @R{} are available from @uref{http://www.sunfreeware.com/} for both
+architectures, but have not been updated recently.  (Recent Sun machines
+are Opterons (@cputype{amd64}) rather than @cputype{x86}, but 32-bit
+@cputype{x86} executables are the default.)
 
 There are also reports of success on OpenSolaris (aka Solaris Express
 Community Edition, and sometimes as Solaris 11) on @cputype{x86}.
@@ -3705,11 +3701,14 @@ path.
 
 Modern Solaris systems allow a large selection of Open Source software
 to be installed from @url{http://www.opencsw.org} (formerly
-@url{http://www.blastwave.org}) via @command{pkg-get}: a Sparc Solaris 10
-system came with @code{libreadline} and @code{libiconv} and a choice of
-@code{gcc3} and @code{gcc4} compilers, installed under @file{/opt/csw}.
-(You will need GNU @code{libiconv}: the Solaris version of @code{iconv}
-is not sufficiently powerful.)
+@url{http://www.blastwave.org}) via @command{pkg-get}, by default
+installed under @file{/opt/csw}.  You will need GNU @code{libiconv} and
+@code{readline}: the Solaris version of @code{iconv} is not sufficiently
+powerful.
+
+Some people have reported that the Solaris @code{libintl} needs to be
+avoided, for example by using @option{--disable-nls} or
+@option{--with-included-gettext} or using @code{libintl} from OpenCSW.
 
 If using @command{gcc}, do ensure that the compiler was compiled for the
 version of Solaris in use.  (This can be ascertained from @command{gcc
@@ -3723,34 +3722,9 @@ When using the Sun compilers@footnote{including @command{gcc} for Sparc
 from Sun.} do @emph{not} specify @option{-fast}, as this disables
 @acronym{IEEE} arithmetic and @command{make check} will fail.
 
-@c https://stat.ethz.ch/pipermail/r-devel/2009-March/052454.html
-@c and followups
-Jeff Long reported problems if @R{} is built as a shared library and
-@samp{libintl} was installed via @command{pkg-get}: in particular
-segfaults using @code{read.spss} from package @pkg{foreign}: this can be
-avoided by not building @R{} as a shared library or configuring with
-@option{--with-included-gettext}.
-
-To compile for a 64-bit Sparc target with @command{gcc}@tie{}4 we used
-
-@example
-CC="gcc -m64"
-F77="gfortran -m64"
-CXX="g++ -m64"
-FC="gfortran -m64"
-LDFLAGS="-L/opt/csw/gcc4/lib/sparcv9 -L/opt/csw/lib/sparcv9"
-@end example
-
-@noindent
-replacing @samp{gfortran} with @samp{g77} for @command{gcc} 3.x.y.
-Note that paths such as @file{/opt/csw/gcc4/lib/sparcv9} may need to
-be in the
-@enindex LD_LIBRARY_PATH
-@env{LD_LIBRARY_PATH} during configuration.
-
 For the Sun Studio compilers a little juggling of paths was needed to
 ensure GNU @code{libiconv} is used rather than the Solaris @code{iconv}:
-we used
+at one time we used
 
 @example
 CC="cc -xc99"
@@ -3767,11 +3741,20 @@ SHLIB_CXXLDFLAGS="-G -lCstd"
 @end example
 
 @noindent
-to ensure that the @code{libiconv} version of @file{iconv.h} was found.
-For a 64-bit target add @option{-xarch=v9} (or @code{v9b}, or
-@code{amd64}) to each of the compiler commands, or for Sun Studio 12 add
-@option{-m64}.  You can target specific Sparc architectures for (slightly)
-higher performance: Sun recommend
+to ensure that the @code{libiconv} version of @file{iconv.h} was found,
+and later used self-compiled versions of @code{libiconv} and
+@code{readline} from @file{/usr/local} (replacing @file{/opt/csw} in the
+flags).  For a 64-bit target add @option{-m64} and use something like
+@code{LDFLAGS=-L/opt/csw/lib/sparcv9} or
+@code{LDFLAGS=-L/usr/local/lib/amd64} as appropriate.  
+
+By default the Sun Studio compilers do not conform to the C99 standard
+(appendix F 8.9) on the return values of functions such as @code{log}:
+use @option{-xlibmieee} to ensure this.  Also, errors have been reported
+on @cputype{amd64} if @option{-xc99} is omitted.
+
+You can target specific Sparc architectures for (slightly) higher
+performance: Sun recommend
 
 @example
 @r{32-bit:} -xtarget=ultra3 -xarch=v8plusa
@@ -3780,11 +3763,6 @@ higher performance: Sun recommend
 
 @noindent
 (in @code{CFLAGS} etc.) as a good compromise for recent Sparc chipsets.
-
-By default the Sun Studio compilers do not conform to the C99 standard
-(appendix F 8.9) on the return values of functions such as @code{log}:
-use @option{-xlibmieee} to ensure this.  Also, errors have been reported
-on @cputype{x86_64} if @option{-xc99} is omitted.
 
 On @cputype{x86} you will get marginally higher performance @emph{via}
 
@@ -3795,32 +3773,57 @@ CXXFLAGS="-xO5 -xlibmil -nofstore"
 SAFE_FFLAGS="-O5 -libmil -fstore"
 @end example
 
+Compilation for a 32-bit Sparc target with @command{gcc}@tie{}4 
+(@command{gcc}@tie{}4.3.3 but @command{gfortran}@tie{}4.0.2) needed
 
-Building on @cputype{x86} with @command{gcc}@tie{}4 failed @command{make
-check} in the complex LAPACK tests: using Sun Studio 11 worked
-correctly.
+@example
+CPPFLAGS=-I/opt/csw/include
+FPICFLAGS=-fPIC
+FCPICFLAGS=-fPIC
+LDFLAGS="-L/opt/csw/gcc4/lib -L/opt/csw/lib"
+@end example
 
-There is limited support for @cputype{x86_64} builds in the pre-built
-GNU software repositories, with 64-bit libraries (which are installed in
-@file{/opt/csw/lib/amd64} and so on) being scarce (and not including the
-@command{gcc} support libraries).  The Sun Studio compilers do support
-64-bit builds via @option{-xarch=amd64} (or, for version 12,
-@option{-m64}).
+@noindent
+and for a 64-bit Sparc target
+@example
+CC="gcc -m64"
+CPPFLAGS=-I/opt/csw/include
+F77="gfortran -m64"
+FPICFLAGS=-fPIC
+CXX="g++ -m64"
+FC="gfortran -m64"
+FCPICFLAGS=-fPIC
+LDFLAGS="-L/opt/csw/gcc4/lib/sparcv9 -L/opt/csw/lib/sparcv9"
+@end example
+
+@noindent
+Note that paths such as @file{/opt/csw/gcc4/lib/sparcv9} may need to
+be in the
+@enindex LD_LIBRARY_PATH
+@env{LD_LIBRARY_PATH} during configuration.
+
+Tests with @command{gcc} on @cputype{x86} and @cputype{amd64} have been
+less successful: @cputype{x86} builds have failed on tests using complex
+arithmetic@footnote{these can often be resolved by turning off
+optimization}, whereas on @cputype{amd64} the builds have failed to
+complete in several different ways.
 
 @cindex BLAS library
 @cindex LAPACK library
 
-The Sun performance library @code{libsunperf} is available with the Sun
-Studio compilers.  If selected as a BLAS, it must also be selected as
-LAPACK via
+The Sun performance library @code{libsunperf} is available for use with
+the Sun Studio compilers.  If selected as a BLAS, it must also be
+selected as LAPACK via
 
 @example
 ./configure --with-blas=sunperf --with-lapack
 @end example
 
 @noindent
-However, our tests were none too successful: Sparc 64-bit builds
-crashed.
+However, our tests were none too successful.  Sparc 32-bit builds
+worked, but 64-bit Sparc builds failed in @code{example(eigen)},
+and @cputype{x86} builds failed in @code{example(bw.SJ)}.
+
 
 
 @node Sparc Solaris 9 and earlier,  , Solaris 10 and Open Solaris, Solaris
@@ -3954,8 +3957,8 @@ alignment of doubles (which @command{gcc} generated by default, but
 @cindex HP-UX
 
 @c R-help 2007 Nov 1/2, and follow up to BDR Nov 6.
-Fan Long built @R{} 2.6.0 on HP-UX 11.23 on @cputype{ia64} using the
-native compilers via
+In late 2007 Fan Long built @R{} 2.6.0 on HP-UX 11.23 on @cputype{ia64}
+using the native compilers via
 
 @example
 CC=cc
@@ -4220,12 +4223,12 @@ default shell to be Bash rather than Zsh.
 Kurt Hornik and Stefan Theussl at WU (Wirtschaftsuniversit@"at Wien)
 successfully built R on a @cputype{powerpc} (8-@acronym{CPU} Power6
 system) on AIX 6.1, configuring with or without
-@option{--enable-R-shlib} (Ei-Ji Nakama's support is gratefully
+@option{--enable-R-shlib} (Ei-ji Nakama's support is gratefully
 acknowledged).
 
 It helps to describe the WU build environment first.  A small part of
 the software needed to build R and/or install packages is available
-directly from the AIX Installation DVDs, e.g., Java 6, X11, or Perl.
+directly from the AIX Installation DVDs, e.g., Java 6, X11, and Perl.
 Additional open source software (OSS) is packaged for AIX in @file{.rpm}
 files and available from both IBM's ``AIX Toolbox for Linux
 Applications''
@@ -4321,9 +4324,6 @@ MBCS does not work---@code{wcstod} is missing---but would only be of any
 use in a CJK locale.  NLS does work, although
 @option{--with-included-gettext} is preferable.  You will see many
 warnings about the use of auto-import.
-
-@c It almost passes @command{make check}: FIFOs are supposedly supported
-@c but hung in @samp{example(fifo)}.
 
 Note that this gives you a command-line application using @code{readline}
 for command editing.  The @samp{X11} graphics device will work if a
@@ -4457,13 +4457,14 @@ browsers on @cputype{x86_64} Linux: but 32-bit browsers are often used
 on that platform.
 
 Marc Schwartz reports that the `OpenJDK' (formerly called `IcedTea') JVM
-that ships with Fedora 8, 9 and 10 does not work with the search applet.
-(The bug report is part of
+that ships with Fedora >= 8 does not work with the search applet.  (The
+bug report is part of
 @uref{https://bugzilla.redhat.com/@/show_bug.cgi?id=304021}.)  The Sun
 JRE and plugin can be installed: see
 @uref{http://www.fedorafaq.org/#java}.  (See also
 @uref{http://www.mjmwired.net/@/resources/@/mjm-fedora-f8.@/html#java},
-@uref{http://www.mjmwired.net/@/resources/@/mjm-fedora-f9.@/html#java} and
+@uref{http://www.mjmwired.net/@/resources/@/mjm-fedora-f9.@/html#java}
+and
 @uref{http://www.mjmwired.net/@/resources/@/mjm-fedora-f10.@/html#java}.)
 
 Older but still useful links are for Firefox/Mozilla,
@@ -4487,9 +4488,9 @@ Solaris 8, whereas @code{jre}@tie{}1.5.0 and @code{j2re}@tie{}1.4.2_01
 
 We have not seen any problems on Windows provided a Java Virtual Machine
 has been installed and is operational: Sun's current
-@code{j2re}@tie{}1.6.0 works in Internet Explorer, Mozilla@tie{}1.7 and
-Mozilla Firefox on Windows XP/Vista.  Note that a recent Windows system
-may not have a JVM installed at all.  Visit
+@code{j2re}@tie{}1.6.0 works in Internet Explorer and Mozilla Firefox on
+Windows XP/Vista.  Note that a recent Windows system may not have a JVM
+installed at all.  Visit
 @uref{http://java.sun.com/@/getjava/@/manual.html} to install a Sun JVM.
 Which (if any) JVM is enabled can be set in `Set Program Access and
 Defaults' in Windows XP (SP1 or later), and which JVM is used by browser
@@ -4501,13 +4502,13 @@ and need the block removed @emph{via} the @emph{information bar}.  Also,
 we have seen cases in which the search results come up as a blank page:
 go back one page in the browser history to find the real results page.
 
-Apple's Safari 3.0.4 also works.
+Apple's Safari and Google's Chrome also work.
 
 @node Java Virtual Machines on Mac OS X,  , Java Virtual Machines on Windows, Enabling search in HTML help
 @section Java Virtual Machines on Mac OS X
 
 Java 1.5.0 ships with recent versions of Mac OS X, and the @HTML{}
-search engine works with Safari under Mac OS 10.5.
+search engine works with both Safari and Safari under Mac OS 10.5.
 
 @node The Windows toolset, Function and variable index, Enabling search in HTML help, Top
 @appendix The Windows toolset
@@ -4617,11 +4618,10 @@ path.
 
 You will need a Windows port of @code{perl5} (but only the basic
 functionality, not any of the third-party Win32 extensions).  The
-Vanilla Perl package is included in @file{Rtools.exe}. A more full-
-featured distribution is available from
-@uref{http://www.activestate.com/@/Products/@/ActivePerl/}, and this was
-used in releases of @R{} up to @R{} 2.5.1.  Alternatives are listed at
-@uref{http://win32.perl.org/}.
+Vanilla Perl (version 5.8.x) package is included in @file{Rtools.exe}. A
+more full- featured distribution is available from
+@uref{http://www.activestate.com/@/Products/@/ActivePerl/}: other
+alternatives are listed at @uref{http://win32.perl.org/}.
 
 @strong{Beware}: you do need a @emph{Windows} port and not the Cygwin
 one.  Users of 64-bit Windows can use a Win64 Perl (such as that from
@@ -4701,10 +4701,10 @@ which MinGW compilers were released in August 2007.  The
 of @code{4.2.1} of the MinGW port of @command{gcc} from
 @uref{http://sourceforge.net/@/project/@/showfiles.php?@/group_id=2435}.
 
-If you would like to install your own copy, we recommed downloading from
-the URL above, as the download links from @uref{http://www.mingw.org/}
-have led to obsolete versions. See the notes on
-@uref{http://www.murdoch-sutherland.com/@/Rtools/} for updates.
+If you would like to install your own copy, we recommend downloading
+from the URL above, as the download links from
+@uref{http://www.mingw.org/} have led to obsolete versions. See the
+notes on @uref{http://www.murdoch-sutherland.com/@/Rtools/} for updates.
 
 @c There may be an installer in the `Current' section, which can be used
 @c if it gives the @samp{Candidate} compilers (@code{gcc-3.4.5}).  (If
@@ -4732,10 +4732,8 @@ tarball_name}).  (You may need to copy @file{bin/gcc-sjlj.exe} to
 should work on Windows Vista without any workarounds.
 
 Note that @code{mingw-runtime-3.13.tar.gz} or later and @code{gcc-4.2.1}
-or later are needed to get a correct build of @R{} itself.  (The
-`Snapshot' @code{binutils-2.17.50-20070129-1.tar.gz} has also be
-tested.)  There are known problems with using other compiler sets on
-Windows Vista
+or later are needed to get a correct build of @R{} itself.  There are
+known problems with using other compiler sets on Windows Vista
 (@uref{http://www.nabble.com/@/environment-@/hosed-@/during-@/upgrade-@/tf3305745@/.html#a9195667})
 and that a suitable @code{PATH} needs to be set to include the path to
 @file{cc1}.

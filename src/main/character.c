@@ -1165,7 +1165,7 @@ SEXP attribute_hidden do_grep(SEXP call, SEXP op, SEXP args, SEXP env)
 
     if (value_opt) {
 	SEXP nmold = getAttrib(vec, R_NamesSymbol), nm;
-	ans = allocVector(STRSXP, nmatches);
+	PROTECT(ans = allocVector(STRSXP, nmatches));
 	for (i = 0, j = 0; i < n ; i++)
 	    if (invert ^ LOGICAL(ind)[i])
 		SET_STRING_ELT(ans, j++, STRING_ELT(vec, i));
@@ -1177,6 +1177,7 @@ SEXP attribute_hidden do_grep(SEXP call, SEXP op, SEXP args, SEXP env)
 		    SET_STRING_ELT(nm, j++, STRING_ELT(nmold, i));
 	    setAttrib(ans, R_NamesSymbol, nm);
 	}
+	UNPROTECT(1);
     } else {
 	ans = allocVector(INTSXP, nmatches);
 	j = 0;
@@ -1411,14 +1412,13 @@ SEXP attribute_hidden do_gsub(SEXP call, SEXP op, SEXP args, SEXP env)
 		SET_STRING_ELT(ans, i, NA_STRING);
 	    else {
 		if (global) { /* need to find number of matches */
+		    const char *ss= s;
+		    int sst = st;
 		    nr = 0;
 		    do {
 			nr++;
-			s += st+patlen;
-		    } while((st = fgrep_one_bytes(spat, s, useBytes)) >= 0);
-		    /* and reset */
-		    s = translateChar(STRING_ELT(vec, i));
-		    st = fgrep_one_bytes(spat, s, useBytes);
+			ss += sst+patlen;
+		    } while((sst = fgrep_one_bytes(spat, ss, useBytes)) >= 0);
 		} else nr = 1;
 		cbuf = u = CallocCharBuf(ns + nr*(replen - patlen));
 		*u = '\0';
@@ -1463,7 +1463,10 @@ SEXP attribute_hidden do_gsub(SEXP call, SEXP op, SEXP args, SEXP env)
 	    else {
 		offset = 0;
 		nmatch = 0;
-		s = translateChar(STRING_ELT(vec, i));
+		if(use_UTF8)
+		    s = translateCharUTF8(STRING_ELT(vec, i));
+		else
+		    s = translateChar(STRING_ELT(vec, i));
 		t = srep;
 		cbuf = u = CallocCharBuf(ns);
 		ns = strlen(s);

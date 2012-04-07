@@ -104,7 +104,7 @@
             "      --no-multiarch	build only the main architecture",
             "\nand on Windows only",
             "      --auto-zip	select whether to zip automatically",
-            "      --no-chm		do not build CHM help [disabled pro lem]",
+            "      --no-chm		do not build CHM help",
             "",
             "Report bugs to <r-bugs@r-project.org>.", sep="\n")
     }
@@ -1109,7 +1109,19 @@
         lib <- getwd()
         setwd(cwd)
     }
-    if (!.file_test("-d", lib) || file.access(lib, 2L))
+    ok <- .file_test("-d", lib)
+    if (ok) {
+        if(WINDOWS) {
+            ## file.access is unreliable on Windows
+            ## the only known reliable way is to try it
+            fn <- file.path(lib, "_test_dir_")
+            unlink(fn, recursive = TRUE) # precaution
+            res <- try(dir.create(fn, showWarnings = FALSE))
+            if(inherits(res, "try-error") || !res) ok <- FALSE
+            else unlink(fn, recursive = TRUE)
+        } else ok <- file.access(lib, 2L) == 0
+    }
+    if(!ok)
         stop("ERROR: no permission to install to directory ",
              sQuote(lib), call. = FALSE)
 
@@ -1785,6 +1797,9 @@
     }
     desc <- read.dcf(file.path(outDir, "DESCRIPTION"))[1,]
     ## drop internal entries
+    if (CHM) {
+    	CHMinternals <- M[M[, 4], ]
+    }
     M <- M[!M[, 4], ]
     if(desc["Package"] %in% c("base", "graphics", "stats", "utils")) {
         for(pass in 1:2) {
@@ -1893,12 +1908,12 @@
     if(CHM) writeLines('</body></html>', chmcon)
     if(CHM) {
         chm_toc(dir, desc["Package"], M)
-        .write_CHM_hhp(dir, desc["Package"])
+        .write_CHM_hhp(dir, desc["Package"], CHMinternals)
     }
 }
 
 ## dir is the package top-level directory
-.write_CHM_hhp <- function(dir, pkg)
+.write_CHM_hhp <- function(dir, pkg, internals)
 {
     if(missing(pkg)) pkg <- basename(dir)
     d <- file.path(dir, "chm")
@@ -1914,8 +1929,11 @@
                      "Full-text search=Yes\n",
                      "Full text search stop list file=..\\..\\..\\gnuwin32\\help\\R.stp\n",
                      "Title=R Help for package ", pkg, "\n",
-                     "\n\n[FILES]", sep = ""), con)
-    writeLines(dir(d, pattern = "\\.html$"), con)
+                     "\n\n[FILES]\n",
+                     "00Index.html\n", sep = ""), con)
+    # Most files are linked from the index; internals are not, so need to be listed.
+    if (nrow(internals))
+    	writeLines(paste(unique(internals$File), ".html", sep=""), con)
 }
 
 .convertRdfiles <-

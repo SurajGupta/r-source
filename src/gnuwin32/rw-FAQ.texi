@@ -124,7 +124,7 @@ The information here applies only to recent versions of R for Windows,
 Go to any CRAN site (see @uref{http://cran.r-project.org/mirrors.html}
 for a list), navigate to the @file{bin/windows/base} directory and
 collect the file(s) you need.  The current release is distributed as an
-installer @samp{@RWVER@-win32.exe} of about 34Mb.  This contains all the
+installer @samp{@RWVER@-win32.exe} of about 36Mb.  This contains all the
 components and allows as complete as installation as you choose.
 
 There are also links on that page to the @samp{r-patched} and
@@ -147,7 +147,7 @@ test on versions of Windows currently supported by Microsoft, mainly on
 
 Your file system must allow case-honouring long file names (as is likely
 except perhaps for some network-mounted systems).  A full installation
-takes up about 75Mb of disk space and a minimal one about 25Mb.
+takes up about 80Mb of disk space and a minimal one about 30Mb.
 
 If you want to be able to build packages from sources, we recommend that
 you choose an installation path not containing spaces.  (Using a path
@@ -220,7 +220,7 @@ set the initial list of components: Components are named @samp{main},
 @samp{chtml}, @samp{html}, @samp{html/help}, @samp{latex},
 @samp{manuals}, @samp{manuals/basic}, @samp{manuals/technical},
 @samp{manuals/refman}, @samp{libdocs}, @samp{devel}, @samp{tcl},
-@samp{tcl/chm}, @samp{Rd}, @samp{latex}, @samp{trans} and @code{tests}.
+@samp{tcl/chm}, @samp{Rd}, @samp{trans} and @code{tests}.
 @end table
 
 @noindent
@@ -552,10 +552,11 @@ for example @code{update.packages()} and the menu items on the Packages menu.
 We have had several reports of this, although they do work for us on
 @emph{all} of our machines.  There are two known possible fixes.
 
-(a) Use the alternative @file{internet2.dll} by starting R with the flag
-@option{--internet2} (@pxref{How do I install R for Windows?}) which uses
-the Internet Explorer internals (and so needs Internet Explorer 4 or
-later installed).  Note that this does not work with proxies that need
+(a) Use the alternative @file{internet2.dll} by starting R with the
+flag @option{--internet2} (@pxref{How do I install R for Windows?}) or
+calling @code{setInternet2(TRUE)}.  These cause R to use the Internet
+Explorer internals (and so need Internet Explorer 4 or later
+installed).  Note that this does not work with proxies that need
 authentication.
 
 (b) A proxy needs to be set up: see @code{?download.file}.  Here are two

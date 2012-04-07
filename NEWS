@@ -1,9 +1,115 @@
-			Dear Emacs, please make this -*-Text-*- mode!
+
 	**************************************************
 	*						 *
 	*	       2.9 SERIES NEWS			 *
 	*						 *
 	**************************************************
+
+
+		CHANGES IN R VERSION 2.9.2
+
+
+NEW FEATURES
+
+    o	install.packages(NULL) now lists packages only once even if they
+	occur in more than one repository (as the latest compatible
+	version of those available will always be downloaded).
+
+    o	approxfun() and approx() now accept a 'rule' of length two, for
+	easy specification of different interpolation rules on left and
+	right.
+
+	They no longer segfault for invalid zero-length specification
+	of 'yleft, 'yright', or 'f'.
+
+    o	seq_along(x) is now equivalent to seq_len(length(x)) even where
+	length() has an S3/S4 method; previously it (intentionally)
+	always used the default method for length().
+
+    o	PCRE has been updated to version 7.9 (for bug fixes).
+
+    o	agrep() uses 64-bit ints where available on 32-bit platforms
+    	and so may do a better job with complex matches.
+	(E.g. PR#13789, which failed only on 32-bit systems.)
+
+
+DEPRECATED & DEFUNCT
+
+    o	R CMD Rd2txt is deprecated, and will be removed in 2.10.0.
+	(It is just a wrapper for R CMD Rdconv -t txt.)
+
+    o	tools::Rd_parse() is deprecated and will be removed in 2.10.0
+	(which will use only Rd version 2).
+
+
+BUG FIXES
+
+    o	parse_Rd() still did not handle source reference encodings
+	properly.
+
+    o	The C utility function PrintValue no longer attempts to print
+	attributes for CHARSXPs as those attributes are used
+	internally for the CHARSXP cache.  This fixes a segfault when
+	calling it on a CHARSXP from C code.
+
+    o	PDF graphics output was producing two instances of anything
+	drawn with the symbol font face. (Report from Baptiste Auguie.)
+
+    o	length(x) <- newval and grep() could cause memory corruption.
+	(PR#13837)
+
+    o	If model.matrix() was given too large a model, it could crash
+	R. (PR#13838, fix found by Olaf Mersmann.)
+
+    o	gzcon() (used by load()) would re-open an open connection,
+    	leaking a file descriptor each time. (PR#13841)
+
+    o	The checks for inconsistent inheritance reported by setClass()
+	now detect inconsistent superclasses and give better warning
+	messages.
+
+    o	print.anova() failed to recognize the column labelled
+    	P(>|Chi|) from a Poisson/binomial GLM anova as a p-value
+    	column in order to format it appropriately (and as a
+    	consequence it gave no significance stars).
+
+    o	A missing PROTECT caused rare segfaults during calls to
+    	load().  (PR#13880, fix found by Bill Dunlap.)
+
+    o	gsub() in a non-UTF-8 locale with a marked UTF-8 input
+	could in rare circumstances overrun a buffer and so segfault.
+
+    o	R CMD Rdconv --version was not working correctly.
+
+    o   Missing PROTECTs in nlm() caused "random" errors. (PR#13381 by
+        Adam D.I. Kramer, analysis and suggested fix by Bill Dunlap.)
+
+    o	Some extreme cases of pbeta(log.p = TRUE) are more accurate
+	(finite values < -700 rather than -Inf).  (PR#13786)
+
+	pbeta() now reports on more cases where the asymptotic
+	expansions lose accuracy (the underlying TOMS708 C code was
+	ignoring some of these, including the PR#13786 example).
+
+    o	new.env(hash = TRUE, size = NA)	now works the way it has been
+	documented to for a long time.
+
+    o	tcltk::tk_choose.files(multi = TRUE) produces better-formatted
+	output with filenames containing spaces.  (PR#13875)
+
+    o	R CMD check --use-valgrind did not run valgrind on the package tests.
+
+    o	The tclvalue() and the print() and as.xxx methods for class
+	"tclObj" crashed R with an invalid object -- seen with an
+	object saved from an earlier session.
+
+    o	R CMD BATCH garbled options -d <debugger> (useful for
+	valgrind, although --debugger=valgrind always worked)
+
+    o	INSTALL with LazyData and Encoding declared in DESCRIPTION
+ 	might have left options("encoding") set for the rest of the
+ 	package installation.
+
 
 
 		CHANGES IN R VERSION 2.9.1
@@ -45,7 +151,7 @@ NEW FEATURES
 
     o	R CMD check now reports where options are used that cause some
 	of the checks to be skipped.
-	
+
     o	RSiteSearch has been updated to be consistent with the new
 	layout of the search site itself, which now includes separate
 	options for vignettes, views, and r-sig-mixed-models, as well
@@ -1393,7 +1499,7 @@ NEW FEATURES
 	Unicode) for collation, enabled by configure option --with-ICU
 	on a Unix-alike and by a setting in MkRules on Windows.
 	Function icuSetCollate() allows the collation rules (including
-	the locale) to be tuned.  [Experimental]
+	the locale) to be tuned.
 
     o	If S4 method dispatch is on and S4 objects are found as
 	attributes, show() rather than print() is used to print the
@@ -3189,7 +3295,7 @@ BUG FIXES
 	Antonio, Fabio di Narzo.
 
     o	reshape() got column names out of sync with contents in some
-	cases; found by Antonio, Fabio Di Narzo.
+	cases; found by Antonio Fabio Di Narzo.
 
     o	ar(x) for short 'x' (i.e. length <= 10) could fail because the
 	default 'order.max' was >= length(x) which is non-sensical.
@@ -3707,7 +3813,7 @@ C-LEVEL FACILITIES
     o	The instructions for making and using standalone libRmath have
 	been moved to the R Installation and Administration manual.
 
-    o	CHAR() now returns (const char *) since CHARSXPs should no
+    o 	CHAR() now returns (const char *) since CHARSXPs should no
 	longer be modified in place.  This change allows compilers to
 	warn or error about improper modification.  Thanks to Herve
 	Pages for the suggestion.
@@ -6873,10 +6979,10 @@ NEW FEATURES
     o	On suitably equipped Unix-alike systems, segfaults, illegal
 	operations and bus errors are caught and there is a simple
 	error-handler which gives the user some choice as to what to
-	do in interactive use. [Experimental.]
+	do in interactive use.
 
 	On Windows access violations and illegal instructions are
-	caught with a simple error handler.  [Experimental.]
+	caught with a simple error handler.
 
     o	Tracebacks now include calls such as .C/.Fortran/.Call, which
 	will help if errors occur in R code evaluated by compiled code
@@ -10129,3 +10235,8 @@ BUG FIXES
 	*	News of 1.0.0 and earlier is in file `OONEWS'	*
 	*							*
 	*********************************************************
+
+%%% Local Variables:
+%%% mode: text
+%%% coding: utf-8
+%%% End:
