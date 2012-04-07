@@ -7,7 +7,7 @@ msgid ""
 msgstr ""
 "Project-Id-Version: R 2.3.0\n"
 "Report-Msgid-Bugs-To: bugs@r-project.org\n"
-"POT-Creation-Date: 2007-05-25 12:17\n"
+"POT-Creation-Date: 2008-04-05 10:49\n"
 "PO-Revision-Date: 2005-02-27 13:33+0100\n"
 "Last-Translator: Stefano M. Iacus <Stefano.Iacus@R-project.org>\n"
 "Language-Team: Italian\n"
@@ -105,6 +105,10 @@ msgstr "posso stampare solo da dispositivi schermo"
 msgid "need to specify one of 'width' and 'height'"
 msgstr ""
 
+#, fuzzy
+msgid "can only print from a screen device"
+msgstr "posso stampare solo da dispositivi schermo"
+
 msgid "dev.control() called without an open graphics device"
 msgstr "dev.control() usato senza che ci sia un dispositivo grafico aperto"
 
@@ -114,6 +118,25 @@ msgstr "argomento mancante senza valore di default"
 #, fuzzy
 msgid "dev.displaylist() called without an open graphics device"
 msgstr "dev.control() usato senza che ci sia un dispositivo grafico aperto"
+
+msgid "invalid setting for 'getOption(\"device\")'"
+msgstr ""
+
+msgid "no suitable unused file name for pdf()"
+msgstr ""
+
+msgid "dev.new(): using pdf(file=\"%s\")"
+msgstr ""
+
+msgid "no suitable unused file name for postscript()"
+msgstr ""
+
+msgid "dev.new(): using postscript(file=\"%s\")"
+msgstr ""
+
+#, fuzzy
+msgid "device '%s' not found"
+msgstr "device '%s' non disponibile"
 
 msgid "invalid arguments in '%s' (need named args)"
 msgstr "argomenti non validi in '%s' (devono essere argomenti con nome)"
@@ -130,10 +153,17 @@ msgstr "opzioni non valide in '%s'"
 msgid "NOT changing"
 msgstr "NON cambio"
 
+msgid "argment 'append' is for back-compatibility and will be ignored"
+msgstr ""
+
 msgid "unknown family '%s'"
 msgstr ""
 
 msgid "invalid 'family' argument"
+msgstr "argomento 'family' non valido"
+
+#, fuzzy
+msgid "invalid 'file'"
 msgstr "argomento 'family' non valido"
 
 msgid "invalid PDF version"
@@ -236,8 +266,9 @@ msgstr "device '%s' non disponibile"
 msgid "Available devices are %s"
 msgstr "I dispositivi disponibili sono %s"
 
-msgid "quartz() device interactivity reduced without an event loop manager"
-msgstr "interattività del device quartz() ridotta senza un manager eventi"
+#, fuzzy
+msgid "invalid 'title'"
+msgstr "argomento 'family' non valido"
 
 msgid "invalid Quartz font:  must be 4 strings"
 msgstr "font Quartz non valido: deve essere una stringa di 4"
@@ -248,17 +279,31 @@ msgstr "argomenti non validi in quartzFonts (deve essere 'font names')"
 msgid "invalid arguments in quartzFonts (need named args)"
 msgstr "argomenti non validi in quartzFonts (necessita argomenti con nome)"
 
+msgid "invalid value for 'antialias'"
+msgstr ""
+
+#, fuzzy
+msgid "invalid 'filename'"
+msgstr "argomento 'family' non valido"
+
 msgid "'res' must be specified unless 'units = \"px\"'"
 msgstr ""
 
 msgid "invalid X11 font specification:"
 msgstr "specificazione font X11 non valida"
 
-msgid "can only bring windows devices to the front"
-msgstr "posso portare in primo piano dispositivi 'windows'"
-
 msgid "no such device"
 msgstr "dispositivo non trovato"
+
+#, fuzzy
+msgid "can only copy from 'X11(type=\"cairo\")' devices"
+msgstr "posso copiare solo da dispositivi 'windows'"
+
+msgid "invalid value for 'rescale'"
+msgstr ""
+
+msgid "can only bring windows devices to the front"
+msgstr "posso portare in primo piano dispositivi 'windows'"
 
 msgid "can only copy from 'windows' devices"
 msgstr "posso copiare solo da dispositivi 'windows'"
@@ -300,3 +345,6 @@ msgid "%d z value <= 0 omitted from logarithmic plot"
 msgid_plural "%d z values <= 0 omitted from logarithmic plot"
 msgstr[0] "omesso %d valore di x <= 0 dal grafico su scala logaritmica"
 msgstr[1] "omessi %d valori di x <= 0 dal grafico su scala logaritmica"
+
+#~ msgid "quartz() device interactivity reduced without an event loop manager"
+#~ msgstr "interattività del device quartz() ridotta senza un manager eventi"

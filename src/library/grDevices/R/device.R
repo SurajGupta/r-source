@@ -16,26 +16,27 @@
 
 
 .known_interactive.devices <-
-    c("X11", "GTK", "quartz", "windows", "JavaGD", "CairoWin", "CairoX11")
-dev.interactive <- function(orNone = FALSE) {
+    c("X11", "X11cairo", "quartz", "windows", "JavaGD", "CairoWin", "CairoX11")
+
+dev.interactive <- function(orNone = FALSE)
+{
     iDevs <- .known_interactive.devices
     interactive() &&
     (.Device %in% iDevs ||
-     (dev.cur() > 1 && dev.displaylist()) ||
      (orNone && .Device == "null device" &&
       is.character(newdev <- getOption("device")) &&
       newdev %in% iDevs))
 }
 
-deviceIsInteractive <- function(name)
+deviceIsInteractive <- function(name = NULL)
 {
     if(length(name)) {
         if(!is.character(name)) stop("'name' must be a character vector")
         unlockBinding(".known_interactive.devices", asNamespace("grDevices"))
         .known_interactive.devices <<- c(.known_interactive.devices, name)
         lockBinding(".known_interactive.devices", asNamespace("grDevices"))
-    }
-    invisible(.known_interactive.devices)
+        invisible(.known_interactive.devices)
+    } else .known_interactive.devices
 }
 
 
@@ -182,8 +183,8 @@ dev.copy2eps <- function(...)
     current.device <- dev.cur()
     nm <- names(current.device)[1]
     if(nm == "null device") stop("no device to print from")
-    if(!(nm %in% c("X11", "GTK", "gnome", "windows","quartz")))
-        stop("can only print from screen device")
+    if(!dev.displaylist())
+        stop("can only print from a screen device")
     oc <- match.call()
     oc[[1]] <- as.name("dev.copy")
     oc$device <- postscript
@@ -191,12 +192,36 @@ dev.copy2eps <- function(...)
     oc$horizontal <- FALSE
     if(is.null(oc$paper))
         oc$paper <- "special"
-    din <- graphics::par("din"); w <- din[1]; h <- din[2]
+    din <- dev.size("in"); w <- din[1]; h <- din[2]
     if(is.null(oc$width))
         oc$width <- if(!is.null(oc$height)) w/h * eval.parent(oc$height) else w
     if(is.null(oc$height))
         oc$height <- if(!is.null(oc$width)) h/w * eval.parent(oc$width) else h
     if(is.null(oc$file)) oc$file <- "Rplot.eps"
+    dev.off(eval.parent(oc))
+    dev.set(current.device)
+}
+
+dev.copy2pdf <- function(...)
+{
+    current.device <- dev.cur()
+    nm <- names(current.device)[1]
+    if(nm == "null device") stop("no device to print from")
+    if(!dev.displaylist())
+        stop("can only print from a screen device")
+    oc <- match.call()
+    oc[[1]] <- as.name("dev.copy")
+    oc$device <- pdf
+    ## the defaults in pdf are all customizable, so we override
+    ## even those which are the ultimate defaults.
+    oc$onefile <- FALSE
+    if(is.null(oc$paper)) oc$paper <- "special"
+    din <- dev.size("in"); w <- din[1]; h <- din[2]
+    if(is.null(oc$width))
+        oc$width <- if(!is.null(oc$height)) w/h * eval.parent(oc$height) else w
+    if(is.null(oc$height))
+        oc$height <- if(!is.null(oc$width)) h/w * eval.parent(oc$width) else h
+    if(is.null(oc$file)) oc$file <- "Rplot.pdf"
     dev.off(eval.parent(oc))
     dev.set(current.device)
 }
@@ -227,4 +252,61 @@ graphics.off <- function ()
 {
     while ((which <- dev.cur()) != 1)
 	dev.off(which)
+}
+
+dev.new <- function()
+{
+    dev <- getOption("device")
+    if(is.function(dev)) dev()
+    else if(!is.character(dev))
+        stop("invalid setting for 'getOption(\"device\")'")
+    else if(identical(dev, "pdf")) {
+        ## Take care not to open device on top of another.
+        if(!file.exists("Rplots.pdf")) pdf()
+        else {
+            fe <- file.exists(tmp <- paste("Rplots", 1:999, ".pdf", sep=""))
+            if(all(fe)) stop("no suitable unused file name for pdf()")
+            message(gettextf("dev.new(): using pdf(file=\"%s\")", tmp[!fe][1]),
+                    domain=NA)
+            pdf(tmp[!fe][1])
+        }
+    } else if(identical(dev, "postscript")) {
+        ## Take care not to open device on top of another.
+        if(!file.exists("Rplots.ps")) postscript()
+        else {
+            fe <- file.exists(tmp <- paste("Rplots", 1:999, ".ps", sep=""))
+            if(all(fe)) stop("no suitable unused file name for postscript()")
+            message(gettextf("dev.new(): using postscript(file=\"%s\")",
+                             tmp[!fe][1]), domain=NA)
+            postscript(tmp[!fe][1])
+        }
+    } else {
+        ## this is documented to be searched for from base,
+        ## then in graphics namespace.
+        if(exists(dev, .GlobalEnv)) get(dev, .GlobalEnv)()
+        else if(exists(dev, asNamespace("grDevices")))
+            get(dev, asNamespace("grDevices"))()
+        else stop(gettextf("device '%s' not found", dev), domain=NA)
+    }
+}
+
+### Check for a single valid integer format
+checkIntFormat <- function(s)
+{
+    ## OK if no unescaped %, so first remove those
+    s <- gsub("%%", "", s)
+    if(length(grep("%", s)) == 0) return(TRUE)
+    ## now remove at most one valid(ish) integer format
+    s <- sub("%[#0 ,+-]*[0-9.]*[diouxX]", "", s)
+    length(grep("%", s)) == 0
+}
+
+devAskNewPage <- function(ask=NULL) .Internal(devAskNewPage(ask))
+
+dev.size <- function(units = c("in", "cm", "px"))
+{
+    units <- match.arg(units)
+    size <- .Internal(dev.size())
+    if(units == "px") size else size * graphics::par("cin")/graphics::par("cra") *
+        if(units == "cm") 2.54 else 1
 }

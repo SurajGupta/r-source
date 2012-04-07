@@ -40,7 +40,8 @@ example(topic, package = NULL, lib.loc = NULL,
     running a package's examples.  This is currently equivalent to
     \code{setRNG = \{RNGkind("default", "default"); set.seed(1)\}}.}
   \item{ask}{logical (or \code{"default"}) indicating if
-    \code{\link{par}(ask=TRUE)} should be called before graphical output
+    \code{\link{par}(ask=TRUE)} and \code{\link{grid.prompt}(ask=TRUE)}
+    should be called before graphical output
     happens from the example code.  The value \code{"default"} (the
     factory-fresh default) means to ask if \code{echo == TRUE} and the
     graphics device appears to be interactive.  This parameter applies
@@ -80,7 +81,7 @@ example(topic, package = NULL, lib.loc = NULL,
   If the examples file contains non-ASCII characters the encoding used
   will matter.  If in a UTF-8 locale \code{example} first tries UTF-8
   and then Latin-1.  (This can be overridden by setting the encoding in
-  the \code{.Rd} file.)
+  the \file{.Rd} file.)
 }
 \note{
   The examples can be many small files.  On some file systems it is

@@ -553,7 +553,8 @@ static void ExtractDropArg(SEXP el, int *drop)
 static int ExtractExactArg(SEXP args)
 {
     SEXP argval = ExtractArg(args, R_ExactSymbol);
-    int exact = -1;
+    int exact;
+    if(isNull(argval)) return 1; /* Default is true as from R 2.7.0 */
     exact = asLogical(argval);
     if (exact == NA_LOGICAL) exact = -1;
     return exact;
@@ -805,7 +806,7 @@ SEXP attribute_hidden do_subset2_dflt(SEXP call, SEXP op, SEXP args, SEXP rho)
       
       UNPROTECT(1);
       if(ans == R_UnboundValue )
-        return(R_NilValue);
+	  return(R_NilValue);
       return(ans);
     }
     
@@ -815,7 +816,7 @@ SEXP attribute_hidden do_subset2_dflt(SEXP call, SEXP op, SEXP args, SEXP rho)
 
     if(nsubs == 1) { /* vector indexing */
 	SEXP thesub = CAR(subs);
-	int i =-1, len = length(thesub);
+	int i = -1, len = length(thesub);
 
 	/* new case in 1.7.0, one vector index for a list */
 	if(isVectorList(x) && length(CAR(subs)) > 1) {
@@ -913,7 +914,9 @@ enum pmatch {
     PARTIAL_MATCH
 };
 
-/* A helper to partially match tags against a candidate. */
+/* A helper to partially match tags against a candidate.
+   Tags are always in the native charset.
+ */
 /* Returns: */
 static
 enum pmatch
@@ -1105,10 +1108,10 @@ SEXP attribute_hidden R_subset3_dflt(SEXP x, SEXP input, SEXP call)
       return R_NilValue;
     }
     else if( isVectorAtomic(x) ){
-        warningcall(call, "$ operator is invalid for atomic vectors, returning NULL");
+        errorcall(call, "$ operator is invalid for atomic vectors");
     }
     else if( IS_S4_OBJECT(x) ){
-        warningcall(call, "$ operator not defined for this S4 class, returning NULL");
+        errorcall(call, "$ operator not defined for this S4 class");
     }
     UNPROTECT(2);
     return R_NilValue;

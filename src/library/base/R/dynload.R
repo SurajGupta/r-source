@@ -14,8 +14,16 @@
 #  A copy of the GNU General Public License is available at
 #  http://www.r-project.org/Licenses/
 
-dyn.load <- function(x, local=TRUE, now=TRUE)
-    .Internal(dyn.load(x, as.logical(local), as.logical(now)))
+if(.Platform$OS.type == "windows") {
+    dyn.load <- function(x, local = TRUE, now = TRUE, ...) {
+        inDL <- function(x, local, now, ..., DLLpath = "")
+            .Internal(dyn.load(x, local, now, DLLpath))
+        inDL(x, as.logical(local), as.logical(now), ...)
+    }
+} else {
+    dyn.load <- function(x, local = TRUE, now = TRUE, ...)
+        .Internal(dyn.load(x, as.logical(local), as.logical(now), ""))
+}
 
 dyn.unload <- function(x)
     .Internal(dyn.unload(x))
@@ -38,24 +46,23 @@ getNativeSymbolInfo <- function(name, PACKAGE, unlist = TRUE,
     } else
         stop("must pass a package name, DLLInfo or DllInfoReference object")
 
+    syms <- lapply(name, function(id) {
+	v <- .Call("R_getSymbolInfo", as.character(id), PACKAGE,
+		   as.logical(withRegistrationInfo), PACKAGE = "base")
+	if(is.null(v)) {
+	    msg <- paste("no such symbol", id)
+	    if(length(pkgName) && nzchar(pkgName))
+		msg <- paste(msg, "in package", pkgName)
+	    stop(msg)
+	}
+	names(v) <- c("name", "address", "package", "numParameters")[seq_along(v)]
+	v
+    })
 
-    syms = lapply(name, function(id) {
-       v <- .Call("R_getSymbolInfo", as.character(id), PACKAGE, as.logical(withRegistrationInfo), PACKAGE = "base")
-       if(is.null(v)) {
-           msg <- paste("no such symbol", id)
-           if(length(pkgName) && nzchar(pkgName))
-               msg <- paste(msg, "in package", pkgName)
-           stop(msg)
-       }
-       names(v) <- c("name", "address", "package", "numParameters")[1:length(v)]
-       v
-      })
-
-
-   if(length(name) == 1 && unlist == TRUE)
-     syms = syms[[1]]
+   if(length(name) == 1 && unlist)
+     syms <- syms[[1]]
    else
-     names(syms) = name
+     names(syms) <- name
 
    syms
 }
@@ -204,9 +211,8 @@ print.DLLInfoList <- function(x, ...)
 
 
 `$.DLLInfo` <- function(x, name)
-{
-  getNativeSymbolInfo(as.character(name), PACKAGE = x)
-}
+    getNativeSymbolInfo(as.character(name), PACKAGE = x)
+
 
 
 

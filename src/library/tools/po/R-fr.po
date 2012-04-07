@@ -7,8 +7,8 @@ msgid ""
 msgstr ""
 "Project-Id-Version: R 2.2.1\n"
 "Report-Msgid-Bugs-To: bugs@r-project.org\n"
-"POT-Creation-Date: 2007-08-22 12:25\n"
-"PO-Revision-Date: 2007-04-13 12:40+0100\n"
+"POT-Creation-Date: 2008-04-07 08:26\n"
+"PO-Revision-Date: 2008-03-26 10:35+0100\n"
 "Last-Translator: Philippe Grosjean <phgrosjean@sciviews.org>\n"
 "Language-Team: French <R-core@r-project.org>\n"
 "MIME-Version: 1.0\n"
@@ -252,6 +252,9 @@ msgstr ""
 msgid "Rd files with duplicated alias '%s':"
 msgstr "Fichiers Rd avec alias '%s' dupliqué :"
 
+msgid "Rd files with empty sections:"
+msgstr "Fichiers Rd avec des sections vides :"
+
 msgid "Found invalid multi-byte character data."
 msgstr "Des chaînes de caractères multi-octets incorrectes sont détectées"
 
@@ -349,13 +352,20 @@ msgstr ""
 "Voyez l'information à propos des fichiers DESCRIPTION dans la section "
 "'Creating R packages' du manuel 'Writing R Extensions'."
 
-#, fuzzy
 msgid "Encoding '%s' is not portable"
-msgstr "le test '%s' n'est pas disponible"
+msgstr "l'encodage '%s' n'est pas portable"
 
-#, fuzzy
 msgid "Unknown encoding with non-ASCII data"
-msgstr "Champs avec des tags non ASCII :"
+msgstr "Encodage inconnu avec des données non-ASCII"
+
+msgid "Non-standard license specification:"
+msgstr "Spécification de licence non standard :"
+
+msgid "Invalid license file pointers: %s"
+msgstr "Pointeur de fichier licence incorrect : %s"
+
+msgid "Verifiable as open source: %s"
+msgstr "Vérifiable comme Open Source : %s"
 
 msgid "Non-portable flags in variable '%s':"
 msgstr "Indicateur non portable dans la variable '%s' :"
@@ -450,9 +460,8 @@ msgstr "champ \\name manquant ou vide dans le(s) fichier(s) Rd"
 msgid "unable to create temp directory"
 msgstr "impossible de créer le répertoire temporaire"
 
-#, fuzzy
 msgid "--- running texi2dvi on vignettes"
-msgstr "l'exécution de texi2dvi sur '%s' a échoué"
+msgstr "--- exécution de texi2dvi sur les vignettes"
 
 msgid ""
 "processing vignette '%s' failed with diagnostics:\n"
@@ -461,9 +470,8 @@ msgstr ""
 "le traitement de la vignette '%s' a échoué avec le diagnostic :\n"
 "%s"
 
-#, fuzzy
 msgid "running 'make' failed"
-msgstr "l'exécution de make a échoué"
+msgstr "l'exécution de 'make' a échoué"
 
 msgid "cannot read index information in file '%s'"
 msgstr "impossible de lire l'indice de l'information dans le fichier '%s'"
@@ -483,18 +491,20 @@ msgstr "*** quelqu'un a corrompu le champ 'Built' dans le package '%s' ***"
 msgid "cannot open directory '%s'"
 msgstr "impossible d'ouvrir le répertoire '%s'"
 
-msgid "WARNING: 'Depends' entry has multiple dependencies:"
-msgstr ""
+#, fuzzy
+msgid "WARNING: 'Depends' entry has multiple dependencies on R:"
+msgstr "AVIS : l'entrée 'Depends' a des dépendances multiples :"
 
 msgid ","
-msgstr ""
+msgstr ","
 
-msgid "only the first will be used"
-msgstr ""
+#, fuzzy
+msgid "only the first will be used in R < 2.7.0"
+msgstr "seule la première sera utilisée"
 
 msgid ""
 "WARNING: omitting pointless dependence on 'R' without a version requirement"
-msgstr ""
+msgstr "AVIS : la dépendance inutile à R sans numéro de version est omise"
 
 msgid "cannot turn off locale-specific sorting via LC_COLLATE"
 msgstr ""
@@ -522,12 +532,11 @@ msgstr "impossible de copier INDEX vers '%s'"
 msgid "cannot create directory '%s'"
 msgstr "impossible de créer le répertoire '%s'"
 
-#, fuzzy
 msgid "processing '"
-msgstr "analyse de '%s'"
+msgstr "analyse de '"
 
 msgid "'"
-msgstr ""
+msgstr "'"
 
 msgid "file '%s' was not created"
 msgstr "le fichier '%s' n'a pas été créé"
@@ -536,19 +545,19 @@ msgid "cannot copy '%s' to '%s'"
 msgstr "impossible de copier '%s' dans '%s'"
 
 msgid "missing 'DESCRIPTION.in' for package '%s'"
-msgstr ""
+msgstr "'DESCRIPTION.in' manquant pour le package '%s'"
 
 msgid "WARNING: malformed 'Depends' field in 'DESCRIPTION'"
-msgstr ""
+msgstr "AVIS : champ 'Depends' erroné dans 'DESCRIPTION'"
 
 msgid "ERROR: this R is version %s, package '%s' requires R %s %s"
-msgstr ""
+msgstr "ERREUR : cette version de R est %s, le package '%s' nécessite R %s %s "
 
 msgid "ERROR: this R is version %s, bundle '%s' requires R %s %s"
-msgstr ""
+msgstr "ERREUR : cette version de R est %s, le bundle '%s' nécessite R %s %s "
 
 msgid "ERROR: this R is version %s, required is R %s %s"
-msgstr ""
+msgstr "ERREUR : cette version de R est %s, requis R %s %s "
 
 msgid "there is no package called '%s'"
 msgstr "aucun package nommé '%s' n'existe"
@@ -605,6 +614,9 @@ msgstr "Le package '%s' a ses dépendances réduites à un ensemble minimal."
 msgid "argument '%s' must be a character string or connection"
 msgstr "l'argument '%s' doit être une chaîne de caractères ou une connexion"
 
+msgid "'file' must be a character string or connection"
+msgstr "'file' doit être une chaîne de caractères ou une connexion"
+
 msgid "unimplemented encoding"
 msgstr "encodage non implémenté"
 
@@ -613,6 +625,9 @@ msgstr "le test '%s' n'est pas disponible"
 
 msgid "no or more than one match"
 msgstr "soit aucune, soit plus d'une correspondance"
+
+msgid "'iconv' is required"
+msgstr "'iconv' est requis"
 
 msgid "argument 'x' must be a character vector"
 msgstr "l'argument 'x' doit être un vecteur de chaînes de caractères"
@@ -623,13 +638,11 @@ msgstr "l'argument 'delim' doit spécifier deux caractères"
 msgid "only Rd syntax is currently supported"
 msgstr "seule la syntaxe Rd est actuellement supportée"
 
-#, fuzzy
 msgid "running 'texi2dvi' on '%s' failed"
-msgstr "l'exécution de texi2dvi sur '%s' a échoué"
+msgstr "l'exécution de 'texi2dvi' sur '%s' a échoué"
 
-#, fuzzy
 msgid "unable to run %s on '%s'"
-msgstr "impossible d'exécuter bibtex sur '%s'"
+msgstr "impossible d'exécuter %s sur '%s'"
 
 msgid "file '%s' is not in valid DCF format"
 msgstr "le fichier '%s' n'est pas d'un format DCF valide"
@@ -672,6 +685,3 @@ msgstr[0] ""
 msgstr[1] ""
 "Des utilisations globales possibles de 'T' ou 'F' sont trouvées dans les "
 "exemples des fichiers Rd suivants :"
-
-#~ msgid "unable to run pdflatex on '%s'"
-#~ msgstr "impossible d'exécuter pdflatex sur '%s'"

@@ -232,6 +232,7 @@ tclvalue.tclObj <- function(x) .External("RTcl_StringFromObj", x,
 print.tclObj <- function(x,...) {
     z <- tclvalue(x)
     if (length(z) > 0) cat("<Tcl>", z, "\n")
+    invisible(x)
 }
 
 "tclvalue<-.tclVar" <- function(x, value) {
@@ -317,6 +318,25 @@ tkradiobutton <- function(parent, ...) tkwidget(parent, "radiobutton", ...)
 tkscale       <- function(parent, ...) tkwidget(parent, "scale", ...)
 tkscrollbar   <- function(parent, ...) tkwidget(parent, "scrollbar", ...)
 tktext        <- function(parent, ...) tkwidget(parent, "text", ...)
+
+ttkbutton      <- function(parent, ...) tkwidget(parent, "ttk::button", ...)
+ttkcheckbutton <- function(parent, ...) tkwidget(parent, "ttk::checkbutton", ...)
+ttkcombobox    <- function(parent, ...) tkwidget(parent, "ttk::combobox", ...)
+ttkentry       <- function(parent, ...) tkwidget(parent, "ttk::entry", ...)
+ttkframe       <- function(parent, ...) tkwidget(parent, "ttk::frame", ...)
+ttkimage       <- function(parent, ...) tkwidget(parent, "ttk::image", ...)
+ttklabel       <- function(parent, ...) tkwidget(parent, "ttk::label", ...)
+ttklabelframe  <- function(parent, ...) tkwidget(parent, "ttk::labelframe", ...)
+ttkmenubutton  <- function(parent, ...) tkwidget(parent, "ttk::menubutton", ...)
+ttknotebook    <- function(parent, ...) tkwidget(parent, "ttk::notebook", ...)
+ttkpanedwindow <- function(parent, ...) tkwidget(parent, "ttk::panedwindow", ...)
+ttkprogressbar <- function(parent, ...) tkwidget(parent, "ttk::progressbar", ...)
+ttkradiobutton <- function(parent, ...) tkwidget(parent, "ttk::radiobutton", ...)
+ttkscrollbar   <- function(parent, ...) tkwidget(parent, "ttk::scrollbar", ...)
+ttkseparator   <- function(parent, ...) tkwidget(parent, "ttk::separator", ...)
+ttksizegrip    <- function(parent, ...) tkwidget(parent, "ttk::sizegrip", ...)
+ttktreeview    <- function(parent, ...) tkwidget(parent, "ttk::treeview", ...)
+
 
 tktoplevel    <- function(parent=.TkRoot,...) {
     w <- tkwidget(parent,"toplevel",...)

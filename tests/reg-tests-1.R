@@ -2279,7 +2279,8 @@ as.character(list())
 ## help on reserved words
 ## if else repeat while function for in next break  will fail
 if(.Platform$OS.type == "windows") options(pager="console")
-for(topic in c("TRUE", "FALSE",  "NULL", "NA", "Inf", "NaN")) {
+for(topic in c("TRUE", "FALSE",  "NULL", "NA", "Inf", "NaN",
+               "NA_integer_", "NA_real_", "NA_complex_", "NA_character_")) {
     eval(parse(text=paste("?", topic, sep="")))
     eval(parse(text=paste("help(", topic, ")", sep="")))
 }
@@ -3435,12 +3436,23 @@ options(contrasts = c("contr.treatment", "contr.poly"))
 stopifnot(all.equal(res, res2))
 
 ## related checks on eff.aovlist
-example(eff.aovlist) # helmert contrasts
+# from example(eff.aovlist) # helmert contrasts
+Block <- gl(8, 4)
+A<-factor(c(0,1,0,1,0,1,0,1,0,1,0,1,0,1,0,1,0,1,0,1,0,1,0,1,0,1,0,1,0,1,0,1))
+B<-factor(c(0,0,1,1,0,0,1,1,0,1,0,1,1,0,1,0,0,0,1,1,0,0,1,1,0,0,1,1,0,0,1,1))
+C<-factor(c(0,1,1,0,1,0,0,1,0,0,1,1,0,0,1,1,0,1,0,1,1,0,1,0,0,0,1,1,1,1,0,0))
+Yield <- c(101, 373, 398, 291, 312, 106, 265, 450, 106, 306, 324, 449,
+           272, 89, 407, 338, 87, 324, 279, 471, 323, 128, 423, 334,
+           131, 103, 445, 437, 324, 361, 302, 272)
+aovdat <- data.frame(Block, A, B, C, Yield)
+old <- getOption("contrasts")
+options(contrasts=c("contr.helmert", "contr.poly"))
+fit <- aov(Yield ~ A * B * C + Error(Block), data = aovdat)
 eff1 <- eff.aovlist(fit)
+options(contrasts = old)
 fit <- aov(Yield ~ A * B * C + Error(Block), data = aovdat)
 eff2 <- eff.aovlist(fit)
 stopifnot(all.equal(eff1, eff2)) # will have rounding-error differences
-options(contrasts = old)
 ## Were different in earlier versions
 
 
@@ -4118,10 +4130,10 @@ options(op)
 ## were +/-Inf with warning in 2.2.1.
 
 
-## PR#8718
-a <- matrix(2,2,2)
-apply(a,1,"$","a")
-apply(a,1,sum)
+## PR#8718: invalid usage in R >= 2.7.0
+#a <- matrix(2,2,2)
+#apply(a,1,"$","a")
+#apply(a,1,sum)
 ## first apply was corrupting apply() code in 2.2.1
 
 
@@ -4893,3 +4905,249 @@ str(x)
 curve(sin, -2*pi, 3*pi); pu1 <- par("usr")[1:2]
 curve(cos); stopifnot(all.equal(par("usr")[1:2], pu1))
 ## failed in R <= 2.6.0
+
+## tests of side-effects with CHARSXP caching
+x <- y <- "abc"
+Encoding(x) <- "UTF-8"
+stopifnot(Encoding(y) == "unknown") # was UTF-8 in 2.6.0
+x <- unserialize(serialize(x, NULL))
+stopifnot(Encoding(y) == "unknown") # was UTF-8 in 2.6.0
+##  problems in earlier versions of cache
+
+
+## regression test for adding functions to deriv()
+deriv3(~  gamma(y), namevec="y")
+deriv3(~  lgamma(y), namevec="y")
+# failed in R < 2.7.0
+D(quote(digamma(sin(x))),"x")
+D(quote(trigamma(sin(x))),"x")
+D(quote(psigamma(sin(x))),"x")
+D(quote(psigamma(sin(x), 3)),"x")
+n <- 2L; D(quote(psigamma(sin(x), n)),"x")
+## rest are new
+
+
+## .subset2 quirk
+iris[1, c(TRUE, FALSE, FALSE, FALSE, FALSE)]
+iris[1, c(FALSE, FALSE, FALSE, FALSE, TRUE)]
+## failed in 2.6.0
+
+
+## indexing by "": documented as 'no name' and no match
+x <- structure(1:4, names=c(letters[1:3], ""))
+stopifnot(is.na(x[""])) # always so
+stopifnot(is.na(x[NA_character_]))
+z <- tryCatch(x[[NA_character_]], error=function(...) {})
+stopifnot(is.null(z))
+z <- tryCatch(x[[""]], error=function(...) {})
+stopifnot(is.null(z)) # x[[""]] == 4 < 2.7.0
+x[[""]] <- 5  # no match, so should add an element, but replaced.
+stopifnot(length(x) == 5)
+x[""] <- 6    # also add
+stopifnot(length(x) == 6)
+xx <- list(a=1, 2)
+stopifnot(is.null(xx[[""]])) # 2 < 2.7.0
+##
+
+
+## negative n gave choose(n, k) == 0
+stopifnot(isTRUE(all.equal(choose(-1,3),-1)))
+##
+
+
+## by() on 1-column data frame (PR#10506)
+X <- data.frame(a=1:10)
+g <- gl(2,5)
+by(X, g, colMeans)
+## failed in 2.6.1
+
+
+## range.default omitted na.rm on non-numeric objects
+(z <- range(as.Date(c("2007-11-06", NA)), na.rm = TRUE))
+stopifnot(!is.na(z))
+## NAs in 2.6.1
+
+
+## cut() on constant values used the min, not abs(min)
+z <- cut(rep(-1,5), 2)
+stopifnot(!is.na(z))
+##
+
+
+## extreme example of two-sample wilcox.test
+## reported by Wolfgang Huber to R-devel, 2008-01-01
+## normal approximation is way off here.
+wilcox.test(1, 2:60, conf.int=TRUE, exact=FALSE)
+## failed in R < 2.7.0
+
+
+## more corner cases for cor()
+z <- cor(c(1,2,3),c(3,4,6),use="pairwise.complete.obs",method="kendall")
+stopifnot(!is.matrix(x)) # was 1x1 in R < 2.7.0
+Z <- cbind(c(1,2,3),c(3,4,6))
+# next gave 0x0 matrix < 2.7.0
+z <- try(cor(Z[, FALSE], use="pairwise.complete.obs",method="kendall"))
+stopifnot(inherits(z, "try-error"))
+# next gave NA < 2.7.0
+z <- try(cor(numeric(0), numeric(0), use="pairwise.complete.obs",
+             method="kendall"))
+stopifnot(inherits(z, "try-error"))
+##
+
+
+## infinite loop in format.AsIs reported on R-help by Bert Gunter
+## https://stat.ethz.ch/pipermail/r-help/2008-January/149504.html
+z <- rep(Sys.time(),5)
+data.frame(I(z))
+##
+
+
+## drop with length-one result
+x <- matrix(1:4, 4,1, dimnames=list(letters[1:4], NULL))
+stopifnot(identical(names(drop(x)), letters[1:4])) # was OK
+stopifnot(identical(names(drop(x[1,,drop=FALSE])), "a")) # was no names
+stopifnot(identical(names(x[1,]), "a")) # ditto
+# now consistency tests.
+x <- matrix(1, 1, 1, dimnames=list("a", NULL))
+stopifnot(identical(names(x[,]), "a"))
+x <- matrix(1, 1, 1, dimnames=list(NULL, "a"))
+stopifnot(identical(names(x[,]), "a"))
+x <- matrix(1, 1, 1, dimnames=list("a", "b"))
+stopifnot(is.null(names(x[,])))
+## names were dropped in R < 2.7.0 in all cases except the first.
+
+
+## fisher.test with extreme degeneracy PR#10558
+a <- diag(1:3)
+p <- fisher.test(a, simulate.p.value=TRUE)$p.value
+# true value is 1/60, but should not be small
+stopifnot(p > 0.001)
+## was about 0.0005 in 2.6.1 patched
+
+
+## tests of problems fixed by Marc Schwartz's patch for
+## cut/hist for Dates and POSIXt
+Dates <- seq(as.Date("2005/01/01"), as.Date("2009/01/01"), "day")
+months <- format(Dates, format = "%m")
+years <- format(Dates, format = "%Y")
+mn <- as.vector(unlist(sapply(split(months, years), table)))
+ty <- as.vector(table(years))
+# Test hist.Date() for months
+stopifnot(identical(hist(Dates, "month", plot = FALSE)$counts, mn))
+# Test cut.Date() for months
+stopifnot(identical(as.vector(table(cut(Dates, "month"))), mn))
+# Test cut.Date() for 3 months
+stopifnot(identical(as.vector(table(cut(Dates, "3 months"))),
+                    as.integer(colSums(matrix(c(mn, 0, 0), nrow = 3)))))
+# Test hist.Date() for years
+stopifnot(identical(hist(Dates, "year", plot = FALSE)$counts, ty))
+# Test cut.Date() for years
+stopifnot(identical(as.vector(table(cut(Dates, "years"))),ty))
+# Test cut.Date() for 3 years
+stopifnot(identical(as.vector(table(cut(Dates, "3 years"))),
+                    as.integer(colSums(matrix(c(ty, 0), nrow = 3)))))
+
+Dtimes <- as.POSIXlt(Dates)
+# Test hist.POSIXt() for months
+stopifnot(identical(hist(Dtimes, "month", plot = FALSE)$counts, mn))
+# Test cut.POSIXt() for months
+stopifnot(identical(as.vector(table(cut(Dtimes, "month"))), mn))
+# Test cut.POSIXt() for 3 months
+stopifnot(identical(as.vector(table(cut(Dtimes, "3 months"))),
+                    as.integer(colSums(matrix(c(mn, 0, 0), nrow = 3)))))
+# Test hist.POSIXt() for years
+stopifnot(identical(hist(Dtimes, "year", plot = FALSE)$counts, ty))
+# Test cut.POSIXt() for years
+stopifnot(identical(as.vector(table(cut(Dtimes, "years"))), ty))
+# Test cut.POSIXt() for 3 years
+stopifnot(identical(as.vector(table(cut(Dtimes, "3 years"))),
+                    as.integer(colSums(matrix(c(ty, 0), nrow = 3)))))
+## changed in 2.6.2
+
+
+## zero-length args in tapply (PR#10644)
+tapply(character(0), factor(letters)[FALSE], length)
+## failed < 2.6.2
+
+
+## zero-length patterns in gregexpr
+expect <- structure(1:3, match.length=rep(0L, 3))
+stopifnot(identical(expect, gregexpr("", "abc")[[1]]))
+stopifnot(identical(expect, gregexpr("", "abc", fixed=TRUE)[[1]]))
+stopifnot(identical(expect, gregexpr("", "abc", perl=TRUE)[[1]]))
+## segfaulted < 2.6.2
+
+
+## test of internal argument matching
+stopifnot(all.equal(round(d=2, x=pi), 3.14))
+## used positional matching in 2.6.x
+
+## kappa.tri(x, exact=TRUE) wrongly ended using exact=FALSE:
+data(longley)
+fm1 <- lm(Employed ~ ., data = longley)
+stopifnot(all.equal(23845862, kappa(fm1, exact=TRUE)))
+
+
+## names from pairlists (PR#10807, esoteric)
+m <- c("a", "b", "c")
+mp <- pairlist("a", "b", "c")
+x <- 1:3
+names(x) <- mp
+stopifnot(identical(names(x), m)) # OK before
+x <- 1:3
+attr(x, "names") <- mp
+stopifnot(identical(names(x), m)) # rep("a", 3) in 2.6.x
+##
+
+
+## preserving attributes in [<-.data.frame (PR#10873)
+df <- data.frame(a=1:3, b=letters[1:3])
+attr(df,"foo") <- 10
+df[, "b"] <- 10:12
+stopifnot(identical(attr(df, "foo"), 10))
+## dropped attributes < 2.7.0
+
+## r<foo> NA warnings, and rnorm(*, mu = +- Inf) consistency
+op <- options(warn=2)
+m <- c(-Inf,Inf)
+stopifnot(rnorm(2, mean = m) == m,
+          rexp (2, Inf) == 0)
+rt(1, Inf)
+R <- list(try(rnorm(2, numeric())),
+          try(rexp (2, numeric())),
+          try(rnorm(2, c(1,NA))),
+          try(rnorm(1, sd = Inf)) )
+options(op)
+stopifnot(sapply(R, function(ch) sub(".* : ", '', ch) ==
+                 "(converted from warning) NAs produced\n"))
+## was inconsistent in R < 2.7.0
+
+## package.skeleton() with metadata-only code
+(cwd <- getwd())
+tDir <- tempdir()
+tmp <- tempfile(tmpdir = tDir)
+writeLines(c('setClass("foo", contains="numeric")',
+             'setMethod("show", "foo",',
+             '          function(object) cat("I am a \\"foo\\"\\n"))'),
+           tmp)
+setwd(tDir)
+if(file.exists("myTst")) unlink("myTst", recursive=TRUE)
+package.skeleton("myTst", code_files = tmp, namespace=TRUE)# with a file name warning
+stopifnot(1 == grep("setClass",
+	  readLines(list.files("myTst/R", full.names=TRUE))),
+	  c("foo-class.Rd","show-methods.Rd") %in% list.files("myTst/man"))
+setwd(cwd)
+## failed for several reasons in R < 2.7.0
+
+
+## predict.loess with transformed variables
+y <- 1:100 + rnorm(100)
+od <- data.frame(x=1:100, z=1:100 + rnorm(100, 10))
+nd <- data.frame(x=1:100, z=11:110)
+fit <- loess(y ~ log(x) + log(z), od)
+p1 <- predict(fit, nd) # failed in 2.6.x
+fit.log <- loess(y ~ x + z, log(od))
+p2 <- predict(fit.log, log(nd))
+stopifnot(identical(p1,p2))
+
+

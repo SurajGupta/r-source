@@ -19,7 +19,7 @@
 .Deprecated <- function(new, package = NULL, msg) {
     if( missing(msg) ) {
        msg <- gettextf("'%s' is deprecated.\n",
-		    as.character(sys.call(sys.parent())[[1]]))
+                       as.character(sys.call(sys.parent()))[1] )
       if(!missing(new))
 	msg <- c(msg, gettextf("Use '%s' instead.\n", new))
       msg <- c(msg,
@@ -39,5 +39,14 @@
 Sys.putenv <- function(...) {
     .Deprecated("Sys.setenv")
     Sys.setenv(...)
+}
+## </entry>
+
+## <entry>
+## Deprecated in 2.7.0
+gammaCody <- function(x)
+{
+    .Deprecated("gamma")
+    .Internal(gammaCody(x))
 }
 ## </entry>

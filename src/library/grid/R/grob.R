@@ -131,6 +131,7 @@ as.character.grob <- function(x, ...) {
 
 print.grob <- function(x, ...) {
   cat(as.character(x), "\n")
+  invisible(x)
 }
 
 ################
@@ -238,6 +239,7 @@ as.character.gList <- function(x, ...) {
 
 print.gList <- function(x, ...) {
   cat(as.character(x), "\n")
+  invisible(x)
 }
 
 "[.gList" <- function(x, index, ...) {
@@ -314,6 +316,15 @@ gTree <- function(..., name=NULL, gp=NULL, vp=NULL,
   gt <- validGrob(gt, childrenvp)
   gt <- setChildren(gt, children)
   return(gt)
+}
+
+# A basic gTree that is JUST a collection of grobs
+# (simply interface to gTree)
+grobTree <- function(..., name=NULL, gp=NULL, vp=NULL,
+                     childrenvp=NULL, cl=NULL) {
+    gTree(children=gList(...),
+          name=name, gp=gp, vp=vp,
+          childrenvp=childrenvp, cl=cl)
 }
 
 ################
@@ -602,7 +613,7 @@ editDetails.default <- function(x, specs) {
 
 editDetails.gTree <- function(x, specs) {
   # Disallow editing children or childrenOrder slots directly
-  if (any(match(specs, c("children", "childrenOrder"), nomatch=FALSE)))
+  if (any(specs %in% c("children", "childrenOrder")))
     stop("It is invalid to directly edit the 'children' or 'childrenOrder' slot")
   x
 }

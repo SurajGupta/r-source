@@ -69,6 +69,7 @@ The current version of this document is @value{VERSION}.
 * R Internal Structures::       
 * .Internal vs .Primitive::     
 * Internationalization in the R sources::  
+* Graphics Devices::            
 * R coding standards::          
 * Testing R code::              
 * Function and variable index::  
@@ -94,6 +95,7 @@ checked against the current version of the source code.
 * The write barrier::           
 * Serialization Formats::       
 * Encodings for CHARSXPs::      
+* The CHARSXP cache::           
 * Warnings and errors::         
 * S4 objects::                  
 * Memory allocators::           
@@ -1174,7 +1176,7 @@ doubles formatted with @code{%.16g} (plus @code{NA}, @code{Inf} and
 standard escapes (e.g.@: @code{\t} and @code{\013} for non-printing and
 non-ASCII bytes.
 
-@node Encodings for CHARSXPs, Warnings and errors, Serialization Formats, R Internal Structures
+@node Encodings for CHARSXPs, The CHARSXP cache, Serialization Formats, R Internal Structures
 @section Encodings for CHARSXPs
 
 Character data in @R{} are stored in the sexptype @code{CHARSXP}.  Until
@@ -1204,16 +1206,14 @@ preserve the declaration or re-encode the character string.
 
 Eventually strings that refer to the OS such as file names will need to
 be passed through a wide-character interface on some OSes
-(e.g. Windows), but currently they are just recoded to the current locale.
+(e.g. Windows), which is to a large extent done as from @R{} 2.7.0.
 
 When are character strings declared to be of known encoding?  One way is
 to do so directly via @code{Encoding}.  The parser declares the encoding
 if this is known, either via the @code{encoding} argument to
 @code{parse} or from the locale within which parsing is being done at
-the @R{} command line.  Functions @code{scan}, @code{read.table},
-@code{readLines} and @code{source} have an @code{encoding} argument, but
-do not assume anything about files from the current locale.  Also,
-@code{iconv} marks character strings it converts to Latin-1 or UTF-8.
+the @R{} command line.  (Other ways are recorded on the help page for
+@code{Encoding}.)
 
 It is not necessary to declare the encoding of ASCII strings as they
 will work in any locale, but the overhead in doing so is small since
@@ -1225,7 +1225,64 @@ we have to a universal format.  For those that do not (for example those
 lacking a powerful enough @code{iconv}), it is likely that they work in
 Latin-1, the old @R{} assumption.
 
-@node Warnings and errors, S4 objects, Encodings for CHARSXPs, R Internal Structures
+This was taken further in @R{} 2.7.0.  There the parser can return a
+UTF-8-encoded string if it encounters a @samp{\uxxx} escape for a
+Unicode point that cannot be represented in the current charset.  (This
+needs MBCS support, and is currently only enabled@footnote{See define
+@code{USE_UTF8_IF_POSSIBLE} in @file{gram.c}.} on Windows.)
+Many of the character manipulation functions now preserve UTF-8 encodings.
+
+Graphics devices are offered the possibility of handing UTF-8-encoded
+strings without re-encoding to the native character set, by setting
+@code{hasTextUTF8} to be @samp{TRUE}@footnote{To maximize
+back-compatibility with devices installed prior to @R{} 2.7.0 it has to
+be exactly that value: all others are equivalent to @samp{FALSE}.} and
+supplying functions @code{textUTF8} and @code{strWidthUTF8} that expect
+UTF-8-encoded inputs.  Normally the symbol font is encoded in Adobe
+Symbol encoding, but that can be re-encoded to UTF-8 by setting
+@code{wantSymbolUTF8} to @samp{TRUE}.
+
+Windows has no UTF-8 locales, but rather expects to work with
+UCS-2@footnote{or UTF-16 if support for surrogates is enabled in the OS,
+which it is not normally at least for Western versions of Windows,
+despite some claims to the contrary on the Microsoft site.} strings.
+@R{} (being written in standard C) will not work internally with UCS-2
+without extensive changes.  As from @R{} 2.7.0 the @file{Rgui}
+console@footnote{but not the GraphApp toolkit.} uses UCS-2 internally,
+but communicates with the @R{} engine in the native encoding.  To allow
+UTF-8 strings to be printed in UTF-8, there is an escape convention is
+used (see header @file{rgui_UTF8.h}) used by @code{cat}, @code{print}
+and autoprinting.
+
+`Unicode' (UCS-2LE) files are common in the Windows world, and
+@code{readLines} and @code{scan} will read them into UTF-8 strings on
+Windows if the encoding is declared explicitly on an unopened
+connection passed to those functions.
+
+@node The CHARSXP cache, Warnings and errors, Encodings for CHARSXPs, R Internal Structures
+@section The CHARSXP cache
+
+@findex mkChar
+A global cache for @code{CHARSXP}s created by @code{mkChar} was
+introduced in @R{} 2.6.0 -- the cache ensures that most @code{CHARSXP}s
+with the same contents share storage (`contents' including any declared
+encoding).  Not all @code{CHARSXP}s are part of the cache -- notably
+@samp{NA_STRING} is not.
+
+In @R{} 2.6.x and 2.7.x character strings created by @code{mkCharLen}
+are not part of the cache: these were intended to be those containing
+embedded nuls.  As from @R{} 2.8.0 the cache will handle any content,
+including strings with embedded nuls.
+
+There are a few other ways in which @code{CHARSXP}s could or can escape
+the cache.  @code{CHARSXP}s reloaded from the @code{save} formats of
+@R{} prior to 0.99.0 are not cached (since the code used is frozen and
+few examples still exist).  Currently @code{CHARSXP}s are used to hold
+the finalizer function of a C finalizer (uncached).  Finally, user code
+can create @code{CHARSXP}s via @code{allocString} (removed in @R 2.8.0)
+and @code{allocVector(CHARSXP ...)} (deprecated in @R 2.8.0).
+
+@node Warnings and errors, S4 objects, The CHARSXP cache, R Internal Structures
 @section Warnings and errors
 
 @findex warning
@@ -1838,9 +1895,12 @@ inside other functions), such as
 @group
 nargs        missing
 interactive  is.@emph{xxx}
+as.call      as.character as.complex  as.double
+as.environment
+as.integer   as.logical   as.raw
 .Primitive   .Internal
-globalenv    baseenv     emptyenv     pos.to.env
-unclass
+globalenv    baseenv      emptyenv     pos.to.env
+unclass      invisible
 seq_along    seq_len
 @end group
 @end example
@@ -1896,21 +1956,19 @@ efficiency reasons:
 @example
 @group
 :          ~          c           list
-call       as.call    as.character as.complex  as.double
-as.integer as.logical as.raw
-expression substitute as.environment
-UseMethod  invisible  standardGeneric
+call       expression substitute
+UseMethod  standardGeneric
 .C         .Fortran   .Call       .External
 .Call.graphics        .External.graphics
 .subset    .subset2   .primTrace  .primUntrace
-rep        seq.int
+round      signif      rep        seq.int
 lazyLoadDBfetch
 @end group
 @end example
 
 @noindent
-@code{rep} and @code{seq.int} manage their own argument matching and so
-do work in the standard way.
+@code{round}, @code{signif}, @code{rep} and @code{seq.int} manage their
+own argument matching and so do work in the standard way.
 
 @end enumerate
 
@@ -2011,7 +2069,7 @@ know that if other @code{.Internal} or primitive functions are not
 internally generic except by reading the source code.
 
 
-@node Internationalization in the R sources, R coding standards, .Internal vs .Primitive, Top
+@node Internationalization in the R sources, Graphics Devices, .Internal vs .Primitive, Top
 @chapter Internationalization in the R sources
 
 The process of marking messages (errors, warnings etc) for translation
@@ -2023,8 +2081,8 @@ in an @R{} package is described in
 `Writing R Extensions',
 @end ifclear
 and the standard packages included with @R{} have (with an exception in
-@pkg{grDevices}) been internationalized in the same way as other
-packages.
+@pkg{grDevices} for the menus of the @code{windows()} device) been
+internationalized in the same way as other packages.
 
 @menu
 * R code::                      
@@ -2138,7 +2196,772 @@ This is handled separately: see
 
 See @file{po/README} for how to update the message templates and catalogs.
 
-@node R coding standards, Testing R code, Internationalization in the R sources, Top
+@node Graphics Devices, R coding standards, Internationalization in the R sources, Top
+@chapter Graphics
+
+@R{}'s graphics internals were revised for version 1.4.0 (and tidied up
+for 2.7.0).  This was to enable multiple graphics systems to be
+installed on top on the graphics `engine' -- currently there are two
+such systems, one supporting `base' graphics (based on that in S and
+whose @R{} code@footnote{The C code is in files @file{base.c},
+@code{graphics.c}, @code{par.c}, @code{plot.c} and @code{plot3d.c} in
+directory @file{src/main}.} is in package @pkg{graphics}) and one
+implemented in package @pkg{grid}.
+
+Some notes on the changes for 1.4.0 can be found at
+@uref{http://www.stat.auckland.ac.nz/~paul/R/basegraph.html} and
+@uref{http://www.stat.auckland.ac.nz/~paul/R/graphicsChanges.html}.
+
+At the lowest level is a graphics device, which manages a plotting
+surface (a screen window or a representation to be written to a file).
+This implements a set of graphics primitives, to `draw'
+
+@itemize
+@item a circle, optionally filled
+@item a rectangle, optionally filled
+@item a line
+@item a set of connected lines
+@item a polygon, optionally filled
+@item text
+@item and to set a clipping rectangle
+@end itemize
+
+@noindent
+as well as requests for information such as
+
+@itemize
+@item the width of a string if plotted
+@item the metrics (width, ascent, descent) of a single character
+@item the current size of the plotting surface
+@end itemize
+
+@noindent
+and requests/opportunities to take action such as
+
+@itemize
+@item start a new `page', possibly after responding to a request to ask
+the user for confirmation.
+@item return the position of the device pointer (if any).
+@item when a device become the current device or stops being the current
+device (this is usually used to change the window title on a screen
+device).
+@item when drawing starts or finishes (e.g. used to flush graphics to
+the screen when drawing stops).
+@item wait for an event, for example a mouse click or keypress.
+@item an `onexit' action, to clean up if plotting is interrupted (by an
+error or by the user).
+@item close the device.
+@end itemize
+
+The device also sets a number of variables, mainly Boolean flags
+indicating its capabilities.  Devices work entirely in `device units'
+which are up to its developer: they can be in pixels, big points (1/72
+inch), twips, @dots{}, and can differ@footnote{although that needs to be
+handled carefully, as for example the @code{xspline} functions used
+prior to @R{} 2.7.0 to depend on the aspect ratio of the pixels, and the
+@code{circle} callback is given a radius (and that should be interpreted
+as in the x units).}  in the @samp{x} and @samp{y} directions.
+
+@c think of the engine as colors.c, devices.c, engine.c, plotmath.c, vfonts.c
+The next layer up is the graphics `engine' that is the main interface to
+the device (although the graphics subsystems do talk directly to
+devices).  This is responsible for clipping, converting the @code{pch}
+values @code{0...26} to sets of lines/circles, centring (and otherwise
+adjusting) text, rendering mathematical expressions (`plotmath') and
+mapping colour descriptions such as names to the internal
+representation.
+
+@c graphics.c looks at device dimensions, locator, metricinfo
+@c par.c looks at various device pars
+@c plot3d.c looks at useRotatedTextInContour
+@c grid looks at size, clipping, locator, ipr
+
+Another function of the engine is to manage display lists and snapshots.
+Some but not all instances of graphics devices maintain display lists, a
+`list' of operations that have been performed on the device to produce
+the current plot (since the device was opened or the plot was last
+cleared, e.g.@: by @code{plot.new}).  Screen devices generally maintain
+a display list to handle repaint and resize events where as file-based
+formats do not---display lists are also used to implement
+@code{dev.copy()} and friends.  The display list is a pairlist of
+@code{.Internal} (base graphics) or @code{.Call.graphics} (grid
+graphics) calls, which means that the C code implementing a graphics
+operation will be re-called when the display list is replayed: apart
+from the part which records the operation if successful.
+
+Snapshots of the current graphics state are taken by
+@code{GEcreateSnapshot} and replayed later in the session by
+@code{GEplaySnapshot}.  These are used by @code{recordPlot()},
+@code{replayPlot()} and the GUI menus of the @code{windows()} device.
+The `state' includes the display list.
+
+
+The top layer comprises the graphics subsystems. Although there is
+provision for 24 subsystems, after 6 years only two exist, `base' and
+`grid'.  The base subsystem is registered with the engine when @R{} is
+initialized, and unregistered (via @code{KillAllDevices}) when an @R{}
+session is shut down.  The grid subsystem is registered in its
+@code{.onLoad} function and unregistered in the @code{.onUnload}
+function.  The graphics subsystem may also have `state' information
+saved in a snapshot (currently base does and grid does not).
+
+Package @pkg{grDevices} was originally created to contain the basic
+graphics devices (although @code{X11} is in a separate load-on-demand
+module because of the volume of external libraries it brings in).  Since
+then it has been used for other functionality that was thought desirable
+for use with @pkg{grid}, and hence has been transferred from package
+@pkg{graphics} to @pkg{grDevices}.  This is principally concerned with
+the handling of colours and recording and replaying plots.
+
+@menu
+* Graphics devices::            
+* Colours::                     
+* Base graphics::               
+* Grid graphics::               
+@end menu
+
+@node Graphics devices, Colours, Graphics Devices, Graphics Devices
+@section Graphics Devices
+
+@R{} ships with several graphics devices, and there is support for
+third-party packages to provide additional devices---several packages
+now do.  This section describes the device internals from the viewpoint
+of a would-be writer of a graphics device.
+
+@menu
+* Device structures::           
+* Device capabilities::         
+* Handling text::               
+* Conventions::                 
+* 'Mode'::                      
+* Specific devices::            
+@end menu
+
+@node Device structures, Device capabilities, Graphics devices, Graphics devices
+@subsection Device structures
+
+There are currently three types used internally which are pointers to
+structures related to graphics devices.
+
+The @code{NewDevDesc} type@footnote{`new' in @R 1.4.0 and scheduled to
+be renamed in @R 2.8.0.} is a structure defined in the header file
+@file{R_ext/GraphicsDevice.h} (which is included by
+@file{R_ext/GraphicsEngine.h}).  This describes the physical
+characteristics of a device, the capabilities of the device driver and
+contains a set of callback functions that will be used by the graphics
+engine to obtain information about the device and initiate actions
+(e.g.@: a new page, plotting a line or some text).  Type @code{pDevDesc}
+is a pointer to this type.
+
+The relationship of device units to physical dimensions is set by the
+element @code{ipr} of the @code{NewDevDesc} structure: a @samp{double}
+array of length 2.
+
+
+The @code{GEDevDesc} type is a structure defined in
+@file{R_ext/GraphicsEngine.h} (with comments in the file) as
+
+@example
+typedef struct _GEDevDesc GEDevDesc;
+struct _GEDevDesc @{
+    DevDesc dev;
+    Rboolean displayListOn;
+    SEXP displayList;
+    SEXP DLlastElt;
+    SEXP savedSnapshot;
+    Rboolean dirty;
+    Rboolean recordGraphics;
+    GESystemDesc *gesd[MAX_GRAPHICS_SYSTEMS];
+    Rboolean ask;
+@}
+@end example
+
+@noindent
+So this is essentially a device structure plus information about the
+device maintained by the graphics engine and normally@footnote{It is
+possible for the device to find the @code{GEDevDesc} which points to its
+@code{NewDevSec}, and this is done often enough that there is a
+convenience function @code{desc2GEDesc} to do so.} visible to the engine
+and not to the device.  Type @code{pGEDevDesc} is a pointer to this
+type.
+
+The third type is @code{pGEDev} which is an opaque pointer to a
+@code{GEDevDesc} structure.  (In earlier code you will also find
+@code{DevDesc *}, which in post-1.4.0 versions of @R{} was,
+confusinngly, also an opaque pointer to a @code{GEDevDesc} structure.)
+This will no longer exist in @R{} 2.8.0.
+
+The graphics engine maintains an array of devices, as pointers to
+@code{GEDevDesc} structures.  The array is of size 64 but the first
+element is always occupied by the @code{"null device"} and the final
+element is kept as NULL as a sentinel.@footnote{Calling
+@code{R_CheckDeviceAvailable()} ensures there is a free slot or throws
+an error.}  This array is reflected in the @R{} variable
+@samp{.Devices}.  Once a device is killed its element becomes available
+for reallocation (and its name will appear as @code{""} in
+@samp{.Devices}).  Exactly one of the devices is `active': this is the
+the null device if no other device has been opened and not killed.
+
+Each instance of a graphics device needs to set up a @code{GEDevDesc}
+structure by code very similar to
+
+@example
+    pGEDevDesc gdd;
+
+    R_GE_checkVersionOrDie(R_GE_version);
+    R_CheckDeviceAvailable();
+    BEGIN_SUSPEND_INTERRUPTS @{
+        pDevDesc dev;
+        /* Allocate and initialize the device driver data */
+        if (!(dev = (pDevDesc) calloc(1, sizeof(NewDevDesc))))
+            return 0; /* or error() */
+        /* set up device driver or free 'dev' and error() */
+        gdd = GEcreateDevDesc(dev);
+        GEaddDevice2(gdd, "dev_name");
+    @} END_SUSPEND_INTERRUPTS;
+@end example
+
+The @code{NewDevDesc} structure contains a @code{void *} pointer
+@samp{deviceSpecific} which is used to store data specific to the
+device.  Setting up the device driver includes initializing all the
+non-zero elements of the @code{NewDevDesc} structure.
+
+Note that the device structure is zeroed when allocated: this provides
+some protection against future expansion of the structure since the
+graphics engine can add elements that need to be non-NULL/non-zero to be
+`on' (and the structure ends with 64 reserved bytes which will be zeroed
+and allow for future expansion).
+
+Rather more protection is provided by the version number of the
+engine/device API, @code{R_GE_version} defined in
+@file{R_ext/GraphicsEngine.h} together with access functions
+
+@example
+int R_GE_getVersion(void);
+void R_GE_checkVersionOrDie(int version);
+@end example
+
+@noindent
+If a graphics device calls @code{R_GE_checkVersionOrDie(R_GE_version)}
+it can ensure it will only be used in versions of @R{} which provide the
+API it was designed for and compiled against.
+
+@node Device capabilities, Handling text, Device structures, Graphics devices
+@subsection Device capabilities
+
+The following `capabilities' can be defined for the device's
+@code{NewDevDesc} structure.
+
+@itemize
+@item canChangeGamma --
+@code{Rboolean}: can the display gamma be adjusted?  This is not true
+for any current device, and as from @R{} 2.8.0 there is no user-level
+function to change gamma.  So @samp{FALSE} is the only useful value.
+@item canHadj --
+@code{integer}: can the device do horizontal adjustment of text
+@emph{via} the @code{text} callback, and if so, how precisely? 0 = no
+adjustment, 1 = @{0, 0.5, 1@} (left, centre, right justification) or 2 =
+continuously variable (in [0,1]) between left and right justification.
+@item canGenMouseDown -- 
+@code{Rboolean}: should mouse down events be sent to the @code{getEvent}
+callback?
+@item canGenMouseMove -- 
+@code{Rboolean}: ditto for mouse move events.
+@item canGenMouseUp -- 
+@code{Rboolean}: ditto for mouse up events.
+@item canGenKeybd -- 
+@code{Rboolean}: ditto for keyboard events.
+@item hasTextUTF8 --
+@code{Rboolean}: should non-symbol text be sent (in UTF-8) to the
+@code{textUTF8} and @code{strWidthUTF8} callbacks, and sent as Unicode
+points (negative values) to the @code{metricInfo} callback?
+@item wantSymbolUTF8 --
+@code{Rboolean}: should symbol text be handled in UTF-8 in the same way
+as other text?  Requires @code{textUTF8 = TRUE}.
+@end itemize
+
+@node Handling text, Conventions, Device capabilities, Graphics devices
+@subsection Handling text
+
+Handling text is probably the hardest task for a graphics device, and
+the design allows for the device to optionally indicate that it has
+additional capabilities.  (If the device does not, these will if
+possible be handled in the graphics engine.)
+
+The three callbacks for handling text that must be in all graphics
+devices are @code{text}, @code{strWidth} and @code{metricInfo} with
+declarations
+
+@example
+void text(double x, double y, const char *str, double rot, double hadj,
+          pGgcontext gc, pDevDesc dd);
+
+double strWidth(const char *str, pGEcontext gc, pDevDesc dd);
+
+void metricInfo(int c, pGEcontext gc,
+               double* ascent, double* descent, double* width,
+               pDevDesc dd);
+@end example
+
+@noindent
+The @samp{gc} parameter provides the graphics context, most importantly
+the current font and fontsize, and @samp{dd} is a pointer to the active
+device's structure.
+
+The @code{text} callback should plot @samp{str} at @samp{(x,
+y)}@footnote{in device coordinates} with an anti-clockwise rotation of
+@samp{rot} degrees.  (For @samp{hadj} see below.)  The interpretation
+for horizontal text is that the baseline is at @code{y} and the start is
+a @code{x}, so any left bearing for the first character will start at
+@code{x}.
+
+The @code{strWidth} callback computes the width of the string which it
+would occupy if plotted horizontally in the current font.  (Width here
+is expected to include both (preferably) or neither of left and right
+bearings.)
+
+The @code{metricInfo} callback computes the size of a single
+character: @code{ascent} is the distance it extends above the baseline
+and @code{descent} how far it extends below the baseline.
+@code{width} is the amount by which the cursor should be advanced when
+the character is placed.  For @code{ascent} and @code{descent} this is
+intended to be the bounding box of the `ink' put down by the glyph and
+not the box which might be used when assembling a line of conventional
+text (it needs to be for e.g. @code{hat(beta)} to work correctly).
+However, the @code{width} is used in plotmath to advance to the next
+character, and so needs to include left and right bearings.
+ 
+The @emph{interpretation} of @samp{c} depends on the locale.  Using
+@code{c = 0} used to give an indication of the size of the font: it
+often returned the measurements for character @code{"M"}---however it is
+not longer used as from @R{} 2.7.0.  In a single-byte locale values
+@code{32...255} indicate the corresponding character in the locale (if
+present).  For the symbol font (as used by @samp{graphics::par(font=5)},
+@samp{grid::gpar(fontface=5}) and by `plotmath'), values @code{32...126,
+161...239, 241...254} indicate glyphs in the Adobe Symbol encoding.  In
+a multibyte locale, @code{c} represents a Unicode point (except in the
+symbol font).  So the function needs to include code like
+
+@example
+    Rboolean Unicode = mbcslocale && (gc->fontface != 5);
+    if (c < 0) @{ Unicode = TRUE; c = -c; @} 
+    if(Unicode) UniCharMetric(c, ...); else CharMetric(c, ...);
+@end example
+
+@noindent
+In addition, if device capability @code{hasTextUTF8} (see below) is
+true, Unicode points will be passed as negative values: the code snippet
+above shows how to handle this.  (This applies to the symbol font only
+if device capability @code{wantSymbolUTF8} is true.)
+
+If possible, the graphics device should handle clipping of text.  It
+indicates this by the structure element @code{canClip} which if true
+will result in calls to the callback @code{clip} to set the clipping
+region. If this is not done, the engine will clip very crudely (by
+omitting any text that does not appear to be wholly inside the clipping
+region).
+
+The device structure has an integer element @code{canHadj}, which
+indicates if the device can do horizontal alignment of text.  If this is
+one, argument @samp{hadj} to @code{text} will be called as @code{0 ,0.5,
+1} to indicate left-, centre- and right-alignment at the indicated
+position.  If it is two, continuous values in the range @code{[0, 1]}
+are assumed to be supported.
+
+A new capability in @R{} 2.7.0 (graphics API version 4) is
+@code{hasTextUTF8}.  If this is true, it has two consequences.  First,
+there are callbacks @code{textUTF8} and @code{strWidthUTF8} that should
+behave identically to @code{text} and @code{strWidth} except that
+@samp{str} is assumed to be in UTF-8 rather than the current locale's
+encoding.  The graphics engine will call these for all text except in
+the symbol font.  Second, Unicode points will be passed to the
+@code{metricInfo} callback as negative integers.  If your device would
+prefer to have UTF-8-encoded symbols, define @code{wantSymbolUTF8} as
+well as @code{hasTextUTF8}.  In that case text in the symbol font is
+sent to @code{textUTF8} and @code{strWidthUTF8}.
+
+Some devices can produce high-quality rotated text, but those based on
+bitmaps often cannot.  Those which can should set
+@code{useRotatedTextInContour} to be true from graphics API version 4.
+
+Several other elements relate to the precise placement of text by the
+graphics engine:
+
+@example
+double xCharOffset;
+double yCharOffset;
+double yLineBias;
+double cra[2];
+@end example
+
+@noindent
+These are more than a little mysterious.  Element @code{cra} provides an
+indication of the character size, @code{par("cra")} in base graphics, in
+device units.  The mystery is what is meant by `character size': which
+character, which font at which size?  Some help can be obtained by
+looking at what this is used for.  The first element, `width', is not
+used by @R{} except to set the graphical parameters.  The second,
+`height', is use to set the line spacing, that is the relationship
+between @code{par("mai")} and @code{par("mai")} and so on.  It is
+suggested that a good choice is
+
+@example
+dd->cra[0] = 0.9 * fnsize;
+dd->cra[1] = 1.2 * fnsize;
+@end example
+
+@noindent
+where @samp{fnsize} is the `size' of the standard font (@code{cex=1})
+on the device, in device units.  So for a 12-point font (the usual
+default for graphics devices), @samp{fnsize} should be 12 points in
+device units.
+
+The remaining elements are yet more mysterious.  The @code{postscript()}
+device says
+
+@example
+    /* Character Addressing Offsets */
+    /* These offsets should center a single */
+    /* plotting character over the plotting point. */
+    /* Pure guesswork and eyeballing ... */
+
+    dd->xCharOffset =  0.4900;
+    dd->yCharOffset =  0.3333;
+    dd->yLineBias = 0.2;
+@end example
+
+@noindent
+It seems that @code{xCharOffset} is not currently used, and
+@code{yCharOffset} is used by the base graphics system to set vertical
+alignment in @code{text()} when @code{pos} is specified, and in
+@code{identify()}.  It is occasionally used by the graphic engine when
+attempting exact centring of text, such as character string values of
+@code{pch} in @code{points()} or @code{grid.points()}---however, it is
+only used when precise character metric information is not available or
+for multi-line strings.
+
+@code{yLineBias} is used in the base graphics system in @code{axis()} and
+@code{mtext()} to provide a default for their @samp{padj} argument.
+
+@node Conventions, 'Mode', Handling text, Graphics devices
+@subsection Conventions
+
+The aim is to make the (default) output from graphics devices as similar
+as possible, and further steps were taken in that direction in @R{}
+2.7.0.  Generally people follow the model of the @code{postscript} and
+@code{pdf} devices (which share most of their internal code).
+
+The following conventions have become established:
+
+@itemize
+
+@item
+The default size of a device should be 7 inches square.
+
+@item
+There should be a @samp{pointsize} argument which defaults to 12, and it
+should give the pointsize in big points (1/72 inch).  How exactly this
+is interpreted is font-specific, but it should use a font which works
+with lines packed 1/6 inch apart, and looks good with lines 1/5 inch
+apart (that is with 2pt leading).
+
+@item
+The default font family should be a sans serif font, e.g Helvetica or
+similar (e.g.@: Arial on Windows).
+
+@item
+@code{lwd = 1} should correspond to a line width of 1/96 inch.  This
+will be a problem with pixel-based devices, and generally there is a
+minimum line width of 1 pixel (although this may not be appropriate
+where anti-aliasing of lines is used, and @code{cairo} prefers a minimum
+of 2 pixels).
+
+@item
+Even very small circles should be visible, e.g.@: by using a minimum
+radius of 1 pixel or replacing very small circles by a single filled
+pixel.
+
+@item
+How RGB colour values will be interpreted should be documented, and
+preferably be sRGB.
+
+@item
+The help page should describe its policy on these conventions.
+
+@end itemize
+
+These conventions are less clear-cut for bitmap devices, especially
+where the bitmap format does not have a design resolution.
+
+The interpretation of the line texture (@code{par("lty"}) is described
+in the header @file{GraphicsEngine.h} and in the help for @code{par}: note that the
+`scale' of the pattern should be proportional to the line width (at
+least for widths above the default).
+
+
+@node 'Mode', Specific devices, Conventions, Graphics devices
+@subsection `Mode'
+
+One of the device callbacks is a function @code{mode}, documented in
+the header as
+
+@example
+     * device_Mode is called whenever the graphics engine
+     * starts drawing (mode=1) or stops drawing (mode=0)
+     * GMode (in graphics.c) also ways that 
+     * mode = 2 (graphical input on) exists.
+     * The device is not required to do anything
+@end example
+
+@noindent
+Since @code{mode = 2} has only recently been documented at device level,
+it is not surprising that was it not used by any device: prior to @R{}
+2.7.0 it was not set by @code{grid::grid.locator}.  It could be used to
+change the graphics cursor, but devices currently do that in the
+@code{locator} callback.  (In base graphics the mode is set for the
+duration of a @code{locator} call, but if @code{type != "n"} is switched
+back for each point whilst annotation is being done.)
+
+Many devices do indeed do nothing on this call, but some screen devices
+ensure that drawing is flushed to the screen when called with @code{mode
+= 0}.  It is tempting to use it for some sort of buffering, but note
+that `drawing' is interpreted at quite a low level and a typical single
+figure will stop and start drawing many times.
+
+@node Specific devices,  , 'Mode', Graphics devices
+@subsection Specific devices
+
+Specific devices are mostly documented by comments in their sources,
+although for devices of many years' standing those comments can be in
+need of updating.  This subsection is a repository of notes on design
+decisions.
+
+@menu
+* X11()::                       
+* windows()::                   
+@end menu
+
+@node X11(), windows(), Specific devices, Specific devices
+@subsubsection X11()
+
+The @code{X11()} device dates back to the mid 1990's and was written
+then in @code{Xlib}, the most basic X11 toolkit.  It has since
+optionally made use of a few features from other toolkits: @code{libXt} is
+used to read X11 resources, and @code{libXmu} is used in the handling of
+clipboard selections.
+
+Using basic @code{Xlib} code makes drawing fast, but is limiting.  There
+is no support of translucent colours (that came in the @code{Xrender}
+toolkit of 2000) nor for rotated text (which @R{} implements by
+rendering text to a bitmap and rotating the latter).
+
+The hinting for the X11 window asks for backing store to be used, and
+some windows managers may use it to handle repaints, but it seems that
+most repainting is done by replaying the display list (and here the fast
+drawing is very helpful).
+
+There are perennial problems with finding fonts.  Many users fail to
+realize that fonts are a function of the X server and not of the machine
+that @R{} is running on.  After many difficulties, @R{} tries first to
+find the nearest size match in the sizes provided for Adobe fonts in the
+standard 75dpi and 100dpi X11 font packages---even that will fail to
+work when users of near-100dpi screens have only the 75dpi set
+installed.  The 75dpi set allows sizes down to 6 points on a 100dpi
+screen, but some users do try to use smaller sizes and even 6 and 8
+point bitmapped fonts do not look good.
+
+Introduction of UTF-8 locales has caused another wave of difficulties.
+X11 has very few genuine UTF-8 fonts, and produces composite fontsets
+for the @code{iso10646-1} encoding.  Unfortunately these seem to have
+low coverage apart from a few monospaced fonts in a few sizes (which are
+not suitable for graph annotation), and where glyphs are missing what is
+plotted is often quite unsatisfactory.
+
+The approach being taken for @R 2.7.0 is to make use of more modern
+toolkits, namely @code{cairo} for rendering and @code{Pango} for font
+management---because these are associated with @code{Gtk+2} they are
+widely available.  Cairo supports translucent colours and alpha-blending
+(@emph{via} @code{Xrender}), and anti-aliasing for the display of lines
+and text.  Pango's font management is based on @code{fontconfig} and
+somewhat mysterious, but it seems mainly to use Type 1 and TrueType
+fonts on the machine running @R{} and send grayscale bitmaps to cairo.
+
+
+@node windows(),  , X11(), Specific devices
+@subsubsection windows()
+
+The @code{windows()} device is a family of devices: it supports plotting
+to Windows (enhanced) metafiles, @code{BMP}, @code{JPEG} and @code{PNG}
+files as well as to Windows printers.
+
+In most of these cases the primary plotting is to a bitmap: this is used
+for the (default) buffering of the screen device, which also enables the
+current plot to be saved to BMP, JPEG or PNG (it is the internal bitmap
+which is copied to the file in the appropriate format).
+
+The device units are pixels (logical ones on a metafile device).
+
+The code was originally written by Guido Masarotto with extensive use of
+macros, which can make it hard to disentangle.
+
+For a screen device, @code{xd->gawin} is the canvas of the screen, and
+@code{xd->bm} is the off-screen bitmap.  So macro @code{DRAW} arranges
+to plot to @code{xd->bm}, and if buffering is off, also to
+@code{xd->gawin}.  For all other device, @code{xd->gawin} is the canvas,
+a bitmap for the @code{jpeg()} and @code{png()} device, and an internal
+representation of a Windows metafile for the @code{win.metafile()} and
+@code{win.print} device.  Since `plotting' is done by Windows GDI calls
+to the appropriate canvas, its precise nature is hidden by the GDI
+system.
+
+Buffering on the screen device is achieved by running a timer, which
+when it fires copies the internal bitmap to the screen.  This is set to
+fire every 500ms (by default) and is reset to 100ms after plotting
+activity.
+
+Repaint events are handled by copying the internal bitmap to the screen
+canvas (and then reinitializing the timer), unless there has been a resize.
+Resizes are handled by replaying the display list: this might not be
+necessary if a fixed canvas with scrollbars is being used, but that is
+the least popular of the three forms of resizing.
+
+Text on the device has moved to `Unicode' (UCS-2) in recent years.  As
+from  @R{} 2.7.0, UTF-8 is requested (@code{hasTextUTF8 = TRUE}) for
+standard text, and converted to UCS-2 in the plotting functions in file
+@file{src/extra/graphapp/gdraw.c}.  However, GDI has no support for
+Unicode symbol fonts, and symbols are handled in Adobe Symbol encoding.
+
+Support for translucent colours (with alpha channel between 0 and 255)
+was introduced in @R{} 2.6.0 for the screen device only.  This is done
+by drawing on a further internal bitmap, @code{xd->bm2}, in the opaque
+version of the colour then alpha-blending that bitmap to @code{xd->bm}.
+The alpha-blending routine is in a separate DLL, @file{msimg32.dll} that
+is available on Windows 2000 or later and is loaded on first use.  As
+small a rectangular region as reasonably possible is alpha-blended (this
+is rectangle @code{r} in the code), but things like mitre joins make
+estimation of a tight bounding box too much work for lines and polygonal
+boundaries.  Translucent-coloured lines are not common, and the
+performance seems acceptable.
+
+The support for a transparent background in @code{png()} predates full
+alpha-channel support in @code{libpng} (let alone in PNG viewers), so
+makes use of the limited transparency support in earlier versions of
+PNG.  Where 24-bit colour is used, this is done by marking a single
+colour to be rendered as transparent.  @R{} chose @samp{#fdfefd}, and
+uses this as the background colour (in @code{GA_NewPage} if the
+specified background colour is transparent (and all non-opaque
+background colours are treated as transparent).  So this works by
+marking that colour in the PNG file, and viewers without transparency
+support see a slightly-off-white background, as if there were a near-white
+canvas.  Where a palette is used in the PNG file (if less than 256
+colours were used) then this colour is recorded with full transparency
+and the remaining colours as opaque.  If 32-bit colour was available
+then we could add a full alpha channel, but this is dependent on the
+graphics hardware and undocumented properties of GDI.
+
+
+@node Colours, Base graphics, Graphics devices, Graphics Devices
+@section Colours
+
+Devices receive colours as an @code{unsigned int} (in the @code{GPar}
+structure and some of the devices as the @code{typedef} @code{rcolor}):
+the comments in file @file{R_ext/GraphicsDevice.h} are the primary
+documentation.  The 4 bytes in the @code{unsigned int} are
+@emph{R},@emph{G},@emph{B} and @emph{alpha} from least to most
+significant. So each of RGB has 256 levels of luminosity from 0 to 255.
+The alpha byte represents (from @R{} 2.0.0) opacity, so value 255 is
+fully opaque and 0 fully transparent: many but not all devices handle
+semi-transparent colours.
+
+Colors can be created in C via the macro @code{R_RGBA}, and a set of
+macros are defined in @file{R_ext/GraphicsDevice.h} to extract the
+various components.
+
+Colours in the base graphics system were originally borrowed from S (and
+before that the GRZ library from Bell Labs), with the concept of a
+(variable-sized) palette of colours referenced by numbers
+@samp{1...@var{N}} plus @samp{0} (the background colour).  @R{}
+introduced the idea of referring to colours by character strings, either
+in the forms @samp{#RRGGBB} or @samp{#RRGGBBAA} (representing the bytes
+in hex) as given by function @code{rgb()} or via names: the 657 known
+names are given in the character vector @code{colors} and in a table in
+file @file{colors.c}.  Note that semi-transparent colours are not
+`premultiplied', so 50% transparent white is @samp{#ffffff80}.
+
+What is not clear is how the RGB values are to be mapped to display
+colours in the graphics device.  There is a proposal
+(@uref{http://developer.r-project.org/sRGB-RFC.html}) to regard the
+mapping as the colorspace `sRGB', but this is not currently done.
+The sRGB colorspace is an industry standard: it is used by Web browsers
+and JPEGs from all but high-end digital cameras.  The interpretation is
+a matter for graphics devices and for code that manipulates colours, but
+not for the graphics engine or subsystems.
+
+
+@node Base graphics, Grid graphics, Colours, Graphics Devices
+@section Base graphics
+
+The base graphics system is likely to move to package @pkg{graphics} at
+some stage, but it currently implemented in files in @file{src/main}.
+
+For historical reasons it is largely implemented in two layers.
+Files @file{plot.c}, @code{plot3d.c} and @code{par.c} contain the code
+for the around 30 @code{.Internal} calls that implement the basic
+graphics operations.  This code then calls functions with names starting
+with @code{G} and declared in header @file{Rgraphics.h} in file
+@file{graphics.c}, which in turn call the graphics engine (whose
+functions almost all have names starting with @code{GE}).
+
+Again for historical reasons, @file{Rgraphics.h} was a public header
+which will be taken private in @R{} 2.8.0.
+
+A large part of the infrastructure of the base graphics subsystem are
+the graphics parameters (as set/read by @code{par()}).  These are stored
+in a @code{GPar} structure declared in the private header
+@file{Graphics.h}.  This structure has two variables (@code{state} and
+@code{valid}) tracking the state of the base subsystem on the device,
+and many variables recording the graphics parameters and functions of
+them.
+
+The base system state is contained in @code{baseSystemState} structure
+defined in @file{R_ext/GraphicsBase.h}.  This contains three @code{GPar}
+structures and a Boolean variable used to record if @code{plot.new()}
+(or @code{persp}) has been used successfully on the device.
+
+The three copies of the @code{GPar} structure are used to store the
+current parameters (accessed via @code{gpptr}), the `device copy'
+(accessed via @code{dpptr}) and space for a saved copy of the `device
+copy' parameters.  The current parameters are, clearly, those currently
+in use and are copied from the `device copy' whenever @code{plot.new()}
+is called (whether or not that advances to the next `page'). The saved
+copy keeps the state when the device was last completely cleared (e.g.@:
+when @code{plot.new()} was called with @code{par(new=TRUE)}), and is
+used to replay the display list.
+
+The separation is not completely clean: the `device copy' is altered if
+a plot with log scale(s) is set up via @code{plot.window()}.
+
+There is yet another copy of most of the graphics parameters in
+@code{static} variables in @file{graphics.c} which are used to preserve
+the current parameters across the processing of inline parameters in
+high-level graphics calls (handled by @code{ProcessInlinePars}).
+
+Snapshots of the base subsystem record the `saved device copy' of the
+@code{GPar} structure.
+
+There remain quite a number of anomalies.  For example, function
+@code{GEcontourLines} is (despite its name) coded in file
+@file{plot3d.c} and used to support function @code{contourLines} in
+package @pkg{grDevices}.
+
+
+@node Grid graphics,  , Base graphics, Graphics Devices
+@section Grid graphics
+
+[At least pointers to documentation.]
+
+
+@node R coding standards, Testing R code, Graphics Devices, Top
 @chapter R coding standards
 
 @cindex coding standards
@@ -2182,7 +3005,7 @@ more information).  On the other hand, building @R{} in a separate
 directory (not containing the sources) should work provided that
 @command{make} supports the @code{VPATH} mechanism.
 
-Windows-specific makefiles can assume @acronym{GNU} @command{make} 3.75
+Windows-specific makefiles can assume @acronym{GNU} @command{make} 3.79
 or later, as no other @command{make} is viable on that platform.
 
 @item
@@ -2240,7 +3063,8 @@ also formatting it properly.  The @R{} Core Team recommends to use a
 basic indentation of 4 for @R{} and C (and most likely also Perl) code,
 and 2 for documentation in Rd format.  Emacs users can implement this
 indentation style by putting the following in one of their startup
-files.  (For @acronym{GNU} Emacs 20: for @acronym{GNU} Emacs 21 or later
+files.
+Alternatively, (for @acronym{GNU} Emacs 21 or later),
 use customization to set the @code{c-default-style} to @code{"bsd"} and
 @code{c-basic-offset} to @code{4}.)
 @findex emacs
@@ -2255,7 +3079,7 @@ use customization to set the @code{c-default-style} to @code{"bsd"} and
 ;;; ESS
 (add-hook 'ess-mode-hook
           (lambda ()
-            (ess-set-style 'C++)
+            (ess-set-style 'C++ 'quiet)
             ;; Because
             ;;                                 DEF GNU BSD K&R C++
             ;; ess-indent-level                  2   2   8   5   4

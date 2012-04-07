@@ -40,9 +40,14 @@ function(topic, offline = FALSE, package = NULL, lib.loc = NULL,
     if(inherits(ischar, "try-error")) ischar <- FALSE
     ## if this was not a length-one character vector, try for the name.
     if(!ischar) {
-        ## we only want names here, but some reserved words parse
-        ## to other types, e.g. NA, Inf
-        topic <- deparse(substitute(topic))
+        ## the reserved words that could be parsed as a help arg:
+        reserved <-
+            c("TRUE", "FALSE", "NULL", "Inf", "NaN", "NA", "NA_integer_",
+              "NA_real_", "NA_complex_", "NA_character_")
+        stopic <- deparse(substitute(topic))
+        if(!is.name(substitute(topic)) && ! stopic %in% reserved)
+            stop("'topic' should be a name, length-one character vector or reserved word")
+        topic <- stopic
     }
 
     type <- if(offline)
@@ -135,7 +140,8 @@ function(x, ...)
                 fp <- file.path(paths, "Meta", "Rd.rds")
                 tp <- basename(p)
                 titles <- tp
-                if(type == "html") tp <- tools::file_path_sans_ext(tp)
+                if(type == "html" || type == "latex")
+                    tp <- tools::file_path_sans_ext(tp)
                 for (i in seq_along(fp)) {
                     tmp <- try(.readRDS(fp[i]))
                     titles[i] <- if(inherits(tmp, "try-error"))

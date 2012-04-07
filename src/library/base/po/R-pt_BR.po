@@ -7,7 +7,7 @@ msgid ""
 msgstr ""
 "Project-Id-Version: R 2.3.0\n"
 "Report-Msgid-Bugs-To: bugs@r-project.org\n"
-"POT-Creation-Date: 2008-02-06 06:53\n"
+"POT-Creation-Date: 2008-04-08 11:23\n"
 "PO-Revision-Date: 2005-12-17 10:55-0200\n"
 "Last-Translator: Fernando Henrique Ferraz P. da Rosa <feferraz@ime.usp.br>\n"
 "Language-Team: Portuguese <ldp-br@bazar.conectiva.com.br>\n"
@@ -74,11 +74,11 @@ msgstr "'%s' não é uma abreviação válida de RNG"
 msgid "'normal.kind' must be a character string of length 1."
 msgstr "'normal.kind' deve ser uma string de caractres de tamanho 1."
 
-msgid "Buggy version of Kinderman-Ramage generator used."
-msgstr "Usando versão com erros do gerador Kinderman-Ramage."
-
 msgid "'%s' is not a valid choice"
 msgstr "'%s' não é uma escolha válida"
+
+msgid "Buggy version of Kinderman-Ramage generator used."
+msgstr "Usando versão com erros do gerador Kinderman-Ramage."
 
 msgid "malformed version string"
 msgstr "string de versão mal formada"
@@ -377,6 +377,10 @@ msgstr ""
 msgid "character string is not in a standard unambiguous format"
 msgstr "string de caracteres não é um formato padrão não ambíguo"
 
+#, fuzzy
+msgid "'origin' must be supplied"
+msgstr "'from' deve ser especificado"
+
 msgid "do not know how to convert '%s' to class \"Date\""
 msgstr "não sei como converter '%s' para classe \"Date\""
 
@@ -461,32 +465,30 @@ msgstr "não sei como converter '%s' para classe \"POSIXlt\""
 msgid "wrong class"
 msgstr "classe errada"
 
-msgid "binary + is not defined for \"POSIXt\" objects"
+#, fuzzy
+msgid "binary '+' is not defined for \"POSIXt\" objects"
 msgstr "+ binário não definido para objetos \"POSIXt\""
 
 msgid "Can only subtract from POSIXt objects"
 msgstr "Só é possível subtrair de objetos POSIXt"
 
-msgid "unary - is not defined for \"POSIXt\" objects"
+#, fuzzy
+msgid "unary '-' is not defined for \"POSIXt\" objects"
 msgstr "- unário não definido para objetos \"POSIXt\""
 
 msgid "can only subtract numbers from POSIXt objects"
 msgstr "só é possível subtrair números de objetos POSIXt"
 
-msgid "not defined for \"POSIXt\" objects"
-msgstr "não definido para objetos \"POSIXt\""
+#, fuzzy
+msgid "unary '%s' not defined for \"POSIXt\" objects"
+msgstr "- unário não definido para objetos \"POSIXt\""
 
-msgid "not defined for POSIXt objects"
-msgstr "não definido para objetos POSIXt"
+#, fuzzy
+msgid "'%s' not defined for \"POSIXt\" objects"
+msgstr "não definido para objetos \"POSIXt\""
 
 msgid "'tzone' attributes are inconsistent"
 msgstr "atributos 'tzone' inconsistentes"
-
-msgid "not defined for \"POSIXct\" objects"
-msgstr "não definido para objetos \"POSIXct\""
-
-msgid "not defined for \"POSIXlt\" objects"
-msgstr "não definido para objetos \"POSIXlt\""
 
 #, fuzzy
 msgid "'tim' is not character or numeric"
@@ -499,7 +501,12 @@ msgstr ""
 msgid "invalid units specified"
 msgstr "especificação de 'quote' inválida"
 
-msgid "not defined for \"difftime\" objects"
+#, fuzzy
+msgid "unary '%s' not defined for \"difftime\" objects"
+msgstr "não definidos para objetos \"difftime\""
+
+#, fuzzy
+msgid "'%s' not defined for \"difftime\" objects"
 msgstr "não definidos para objetos \"difftime\""
 
 msgid "both arguments of * cannot be \"difftime\" objects"
@@ -625,6 +632,18 @@ msgstr "nenhum arquivo para onde fazer a vinculação"
 msgid "no files/directory to link to"
 msgstr "nenhum arquivo/diretório para onde fazer a vinculação"
 
+#, fuzzy
+msgid "'x' must be have length 1"
+msgstr "'input' deve ter comprimento 1"
+
+#, fuzzy
+msgid "invalid digits"
+msgstr "'digits' inválido"
+
+#, fuzzy
+msgid "'x' cannot be coerced to 'octmode'"
+msgstr "não é possível fazer coerção para tabela"
+
 msgid "'package' must be of length 1"
 msgstr "'package' deve ter comprimento 1"
 
@@ -692,7 +711,8 @@ msgstr "componentes de pareamento de distância desconhecidos ignorados"
 msgid "'max.distance' components must be non-negative"
 msgstr "componentes de 'max.distance' devem ser não negativos"
 
-msgid "matrix should be square"
+#, fuzzy
+msgid "triangular matrix should be square"
 msgstr "matriz deve ser quadrada"
 
 #, fuzzy
@@ -1048,16 +1068,10 @@ msgstr "em '%s' classes para expor~tação não definidas: %s"
 msgid "in '%s' methods for export not found: %s"
 msgstr "em '%s' métodos para exportação não encontrados: %s"
 
-msgid "Multiple methods lists found for '"
+msgid "Multiple methods tables found for '"
 msgstr ""
 
 msgid "'"
-msgstr ""
-
-msgid "No methods table for \""
-msgstr ""
-
-msgid "\""
 msgstr ""
 
 msgid "Failed to find metadata object for \"%s\""
@@ -1106,6 +1120,9 @@ msgstr "não é possível importar em um espaço de nomes selado"
 msgid "invalid import target"
 msgstr "alvo de importação inválido"
 
+msgid "got invalid index for importing"
+msgstr ""
+
 msgid "Found methods to import for function \"%s\" but not the generic itself"
 msgstr ""
 
@@ -1116,7 +1133,8 @@ msgstr ""
 msgid "cannot add to exports of a sealed name space"
 msgstr "não é possível adicionar à exportação de um espaço de nomes selado"
 
-msgid "undefined exports :"
+#, fuzzy
+msgid "undefined exports:"
 msgstr "exportações não definidas:"
 
 msgid "package '%s' has no NAMESPACE file"
@@ -1469,17 +1487,19 @@ msgstr ""
 msgid "'input' must be a character vector or 'NULL'"
 msgstr "'input' e 'target' devem ser vetores de caracteres"
 
-msgid "'cmd' could not be run"
+#, fuzzy
+msgid "'%s' could not be run"
 msgstr "'cmd' não pôde ser executado"
 
-msgid "'cmd' execution failed with error code %d"
+#, fuzzy
+msgid "'%s' execution failed with error code %d"
 msgstr "execução de 'cmd' falhou com erro código %d"
-
-msgid "package '%s' has a non-function '.First.lib'"
-msgstr "pacote '%s' tem uma não funão '.FIrst.lib'"
 
 msgid "cannot find name space environment"
 msgstr "não foi possível encontrar o ambiente de espaço de nomes"
+
+msgid "package '%s' has a non-function '.First.lib'"
+msgstr "pacote '%s' tem uma não funão '.FIrst.lib'"
 
 msgid "deparse option %s is not recognized"
 msgid_plural "deparse options %s are not recognized"
@@ -1523,6 +1543,15 @@ msgid "Warning message:\n"
 msgid_plural "Warning messages:\n"
 msgstr[0] "Mensagem de aviso:\n"
 msgstr[1] "Mensagens de aviso:\n"
+
+#~ msgid "not defined for POSIXt objects"
+#~ msgstr "não definido para objetos POSIXt"
+
+#~ msgid "not defined for \"POSIXct\" objects"
+#~ msgstr "não definido para objetos \"POSIXct\""
+
+#~ msgid "not defined for \"POSIXlt\" objects"
+#~ msgstr "não definido para objetos \"POSIXlt\""
 
 #, fuzzy
 #~ msgid "'data' must exist"

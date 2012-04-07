@@ -2,7 +2,7 @@
  *  R : A Computer Language for Statistical Data Analysis
  *  file console.h
  *  Copyright (C) 1998--2003  Guido Masarotto and Brian Ripley
- *  Copyright (C) 2004-7      The R Foundation
+ *  Copyright (C) 2004-8      The R Foundation
  *
  *  This program is free software; you can redistribute it and/or modify
  *  it under the terms of the GNU General Public License as published by
@@ -27,14 +27,15 @@ typedef window editor;
 
 
 void
-setconsoleoptions(char *fnname,int fnsty, int fnpoints,
+setconsoleoptions(const char *fnname,int fnsty, int fnpoints,
 		  int rows, int cols, int consx, int consy,
 		  rgb nfg, rgb nufg, rgb nbg, rgb high,
 		  int pgr, int pgc, int multiplewindows, int widthonresize,
 		  int bufbytes, int buflines, int buffered);
-pager newpager(char *title, char *filename, char *header, int unlinkonexit);
+pager newpager(const char *title, const char *filename, int enc,
+	       const char *header, int unlinkonexit);
 console newconsole(char *name, int flags);
-int  consolereads(console c, char *prompt, char *buf, int len,
+int  consolereads(console c, const char *prompt, char *buf, int len,
 		  int addtohistory);
 int  consolewrites(console c, const char *s);
 int  consolecancopy(console c);
@@ -43,9 +44,9 @@ void consolecopy(console c);
 void consolepaste(console c);
 void consolepastecmds(console c);
 void consoleselectall(console c);
-void consolecmd(console c, char *cmd);
+void consolecmd(console c, const char *cmd);
 void consolenewline(console c);
-void consolehelp();
+void consolehelp(void);
 void consolesetbrk(console c, actionfn, char ch, char mod);
 void consoletogglelazy(console c);
 int  consolegetlazy(console c);

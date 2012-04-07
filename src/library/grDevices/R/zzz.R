@@ -20,30 +20,33 @@
 {
     op <- options()
     extras <- if(.Platform$OS.type == "windows")
-        list(graphics.record = FALSE,
-             windowsBuffered = TRUE,
-             windowsTimeouts = as.integer(c(100,500)))
-    else
-        ## these must be set for x11 to be used, even non-interactively
-        list(X11colortype = "true",
-             X11fonts = c("-adobe-helvetica-%s-%s-*-*-%d-*-*-*-*-*-*-*",
-             "-adobe-symbol-medium-r-*-*-%d-*-*-*-*-*-*-*"))
+        list(windowsTimeouts = c(100L,500L)) else
+    list(bitmapType = if(capabilities("aqua")) "quartz" else if(capabilities("cairo")) "cairo" else "Xlib")
+    defdev <- Sys.getenv("R_DEFAULT_DEVICE")
+    if(!nzchar(defdev)) defdev <- "pdf"
     device <- if(interactive()) {
-        if(.Platform$OS.type == "windows") "windows"
-        else if (.Platform$GUI == "AQUA") "quartz"
-        else if (!is.null(Sys.info) && (Sys.info()["sysname"] == "Darwin")
-                 && (Sys.getenv("DISPLAY") != "")) "X11"
-        else if (Sys.getenv("DISPLAY") != "")
-            switch(.Platform$GUI, "Tk" = "X11",
-                    "X11" = "X11", "GNOME" = "X11", "postscript")
-	else "postscript"
-    } else "postscript"
+        intdev <- Sys.getenv("R_INTERACTIVE_DEVICE")
+        if(nzchar(intdev)) intdev
+        else {
+            if(.Platform$OS.type == "windows") "windows"
+            else if (.Platform$GUI == "AQUA") "quartz"
+            else if (Sys.getenv("DISPLAY") != "")
+                switch(.Platform$GUI, "Tk" = "X11", "X11" = "X11",
+                       "GNOME" = "X11", defdev)
+            else if (.Call("makeQuartzDefault")) "quartz"
+	    else defdev
+        }
+    } else defdev
 
-    op.utils <- c(list(locatorBell = TRUE, par.ask.default = FALSE),
-                  extras, device=device)
-    toset <- !(names(op.utils) %in% names(op))
-    if(any(toset)) options(op.utils[toset])
+    op.grDevices <- c(list(locatorBell = TRUE, device.ask.default = FALSE),
+                  extras, device = device)
+    toset <- !(names(op.grDevices) %in% names(op))
+    if(any(toset)) options(op.grDevices[toset])
 }
+
+.onUnload <- function(libpath)
+    library.dynam.unload("grDevices", libpath)
+
 
 ### Used by text, mtext, strwidth, strheight, title, axis,
 ### L_text and L_textBounds, all of which

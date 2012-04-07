@@ -52,6 +52,10 @@ sink.number(type = c("output", "message"))
 
   If \code{file} is a connection it will be opened if necessary.
 
+  If \code{split = TRUE} only splits \R output (via \code{Rvprintf}) and
+  the default output from \code{\link{writeLines}}: it does not split
+  all output that might be sent to \code{\link{stdout}()}.
+
   Sink-ing the messages stream should be done only with great care.
   For that stream \code{file} must be an already open connection, and
   there is no stack of connections.
@@ -69,12 +73,9 @@ sink.number(type = c("output", "message"))
   \code{sink(split = TRUE)} is only available on systems which support
   the C99 function \code{va_copy} (or under the name \code{__va_copy}),
   but we know of no current systems which do not.
-
-  It only splits internal \R output, not that from \R-level use of
-  \code{\link{stdout}}.
 }
 \section{Warning}{
-  Don't use a connection that is open for \code{sink} for any other
+  Do not use a connection that is open for \code{sink} for any other
   purpose.  The software will stop you closing one such inadvertently.
 
   Do not sink the messages stream unless you understand the source code

@@ -5,11 +5,13 @@ export("Rdindex",
        "checkReplaceFuns", "checkS3methods", "checkTnF", "checkVignettes",
        "codoc", "codocClasses", "codocData", "md5sum", "undoc",
        "file_path_as_absolute", "file_path_sans_ext",
-       "list_files_with_exts", "list_files_with_type", "delimMatch",
+       "list_files_with_exts", "list_files_with_type", "showNonASCII",
+       "delimMatch",
        "texi2dvi", "buildVignettes", "pkgVignettes", "pkgDepends",
        "getDepList", "installFoundDepends", "vignetteDepends",
        "write_PACKAGES", "xgettext", "xgettext2pot", "xngettext",
-       "encoded_text_to_latex", "charset_to_Unicode", "Adobe_glyphs")
+       "encoded_text_to_latex", "charset_to_Unicode", "Adobe_glyphs",
+       "checkNEWS", "readNEWS")
 
 export("Rd_db", "Rd_parse", "package.dependencies", "read.00Index")
 
@@ -38,6 +40,7 @@ S3method("print", "check_package_code_syntax")
 S3method("print", "check_package_depends")
 S3method("print", "check_package_description")
 S3method("print", "check_package_description_encoding")
+S3method("print", "check_package_license")
 S3method("print", "check_package_datasets")
 S3method("print", "check_packages_used")
 S3method("print", "check_vignette_index")

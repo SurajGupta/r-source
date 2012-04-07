@@ -1,54 +1,127 @@
 % File src/library/grDevices/man/unix/quartz.Rd
 % Part of the R package, http://www.R-project.org
-% Copyright 1995-2007 R Core Development Team
+% Copyright 1995-2008 R Core Development Team
 % Distributed under GPL 2 or later
 
 \name{quartz}
 \alias{quartz}
-\title{MacOS X Quartz device}
+\alias{quartz.options}
+
+\title{MacOS X Quartz Device}
 \description{
-  \code{quartz} starts a graphics device driver for the MacOS X System.
-  This can only be done on machines that run MacOS X.
+  \code{quartz} starts a graphics device driver for the Mac OS X System.
+  It supports plotting both to the screen (the default) and to various
+  graphics file formats.
 }
 \usage{
-quartz(display = "", width = 5, height = 5, pointsize = 12,
-       family = "Helvetica", antialias = TRUE, autorefresh = TRUE)
+quartz(title, width, height, pointsize, family, fontsmooth, antialias,
+       type, file = NULL, bg, canvas, dpi)
+
+quartz.options(\dots, reset = FALSE)
 }
 \arguments{
-  \item{display}{the display on which the graphics window will appear.
-    The default is to use the value in the user's environment variable
-    \env{DISPLAY}.}
-  \item{width}{the width of the plotting window in inches.}
-  \item{height}{the height of the plotting window in inches.}
-  \item{pointsize}{the default pointsize to be used.}
-  \item{family}{this is the family name of the Postscript font
-    that will be used by the device.}
-  \item{antialias}{whether to use antialiasing. It is never the case to set
-     it \code{FALSE}}
-  \item{autorefresh}{logical specifying if realtime refreshing should be
-    done.  If \code{FALSE}, the system is charged to refresh the context
-      of the device window.}
- }
+  \item{title}{title for the Quartz window (applies to on-screen output
+    only). Default \code{"Quartz \%d"}.  A C-style format for an integer
+    will be substituted by the device number (see the \code{file}
+    argument to \code{\link{postscript}} for further details).}
+  \item{width}{the width of the plotting area in inches.  Default \code{7}.}
+  \item{height}{the height of the plotting area in inches.  Default \code{7}.}
+  \item{pointsize}{the default pointsize to be used.  Default \code{12}.}
+  \item{family}{this is the family name of the font
+    that will be used by the device.  Default \code{"Helvetica"}.}
+  \item{fontsmooth}{logical specifying if fonts should be
+    smoothed. Default \code{TRUE}.  Currently unused.}
+  \item{antialias}{whether to use antialiasing.  Default \code{TRUE}.
+    Currently unused.}
+  \item{type}{the type of output to use.  See \sQuote{Details} for
+    more information.  Default \code{"native"}.}
+  \item{file}{an optional target for the graphics device. The default,
+    \code{NULL}, selects a default name where one is needed.  See
+    \sQuote{Details} for more information.}
+  \item{bg}{the initial background colour to use for the device.  Default
+    \code{"transparent"}.  An opaque colour such as \code{"white"} will
+    normally be required on off-screen types that support transparency
+    such as \code{"png}" and \code{"tiff"}.}
+  \item{canvas}{canvas colour to use for an on-screen device.  Default
+    \code{"white"}, and will be forced to be an opaque colour.}
+  \item{dpi}{resolution of the output.  The default (\code{NA_real_})
+    for an on-screen display defaults to the resolution of
+    the main screen, and to 72 dpi otherwise.  See \sQuote{Details}.}
+  \item{\dots}{Any of the arguments to \code{quartz} except \code{file}.}
+  \item{reset}{logical: should the defaults be reset to their defaults?}
+}
 \details{
-  Quartz is the graphic engine based on the PDF format.  It is used
-  by the graphic interface of MacOS X to render high quality graphics.
-  As PDF it is device independent and can be rescaled without loss of
-  definition.
+  The defaults for all but one of the arguments of \code{quartz} are set
+  by \code{quartz.options}: the \sQuote{Arguments} section gives the
+  \sQuote{factory-fresh} defaults.
 
-  If a device-independent R graphics font family is specified
+  The Quartz graphics device supports a variety of output types.
+  On-screen output types are \code{""} or \code{"native"} (picks the best
+  possible on-screen output), \code{"Cocoa"} (Mac OS X 10.4 and later)
+  and \code{"Carbon"} (not currently implemented -- potentially
+  Mac OS X 10.3 and earlier).   Off-screen output
+  types produce output files and utilize the \code{file} argument.
+  \code{type = "pdf"} gives PDF output. The following bitmap formats may
+  be supported (on OS X 10.4 and later): \code{"png"}, \code{"jpeg"},
+  \code{"jpg"}, \code{"jpeg2000"}, \code{"tif"}, \code{"tiff"},
+  \code{"gif"}, \code{"psd"} (Adobe Photoshop), \code{"bmp"} (Windows
+  bitmap), \code{"sgi"} and \code{"pict"}.  (The availability of some
+  formats is OS-version-dependent.)
+
+  To reproduce the default of older Quartz devices on-screen, set
+  \code{dpi = 72} (for a permanent solution set
+  \code{quartz.options(dpi = 72)}).
+
+  The \code{file} argument is used for off-screen drawing.  The actual
+  file is only created when the device is closed (e.g. using
+  \code{dev.off()}).  For the bitmap devices, the page number is
+  substituted if a C integer format is included in the character string,
+  e.g. \code{Rplot\%03d.png}.  (The result must be less than
+  \code{PATH_MAX} characters long, and may be truncated if not. See
+  \code{\link{postscript}} for further details.)  If a \code{file}
+  argument is not supplied, the default is \code{Rplots.pdf} or
+  \code{Rplot\%03d.\var{type}}.
+
+  If a device-independent \R graphics font family is specified
   (e.g., via \code{par(family=)} in the graphics package),
   the Quartz device makes use of the Quartz font database
-  (see \code{quartzFonts}) to
-  convert the R graphics font family
-  to a Quartz-specific font family description.  
-  
-  Calling \code{quartz()} sets \code{\link{.Device}} to \code{"quartz"}.
+  (see \code{quartzFonts}) to convert the R graphics font family
+  to a Quartz-specific font family description.
 
-  Line widths as controlled by \code{par(lwd=)} are in multiples of the
-  1/72 inch, and multiples < 1 are silently converted to 1.
+  On-screen devices are launched with a semi-transparent canvas.  Once a
+  new plot is created, the canvas is first painted with the
+  \code{canvas} colour and then the current background colour (which can
+  be transparent or semi-transparent).  Off-screen devices have no
+  canvas colour, and so start with a transparent background where
+  possible (e.g. \code{type="png"} and \code{type="tiff"}) -- otherwise
+  it appears that a solid white canvas is assumed in the Quartz code.
+
+  \code{title} can be used for on-screen output.  It must be a single
+  character string with an optional integer printf-style format that
+  will be substituted by the device number.  It is also optionally used
+  (without a format) to give a title to a PDF file.
+
+  Calling \code{quartz()} sets \code{\link{.Device}} to \code{"quartz"}
+  for on-scren devices and to \code{"quartz_off_screen"} otherwise.
+}
+\section{Conventions}{
+  This section describes the implementation of the conventions for
+  graphics devices set out in the \dQuote{R Internals Manual}.
+
+  \itemize{
+    \item The default device size is 7 inches square.
+    \item Font sizes are in big points.
+    \item The default font family is Arial.
+    \item Line widths are a multiple of 1/96 inch with no minimum set by \R.
+    \item Circle radii are real-valued with no minimum set by \R.
+    \item Colour interpretation is by the viewer, including the screen
+    display.
+  }
 }
 \seealso{
-  \code{\link{quartzFonts}},
-  \code{\link{Devices}}.
+  \code{\link{quartzFonts}}, \code{\link{Devices}}.
+
+  \code{\link{png}} for way to access the bitmap types of this device
+  via \R's standard bitmap devices.
 }
 \keyword{device}

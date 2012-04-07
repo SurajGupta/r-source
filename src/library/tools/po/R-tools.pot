@@ -2,7 +2,7 @@ msgid ""
 msgstr ""
 "Project-Id-Version: R 2.3.0\n"
 "Report-Msgid-Bugs-To: bugs@r-project.org\n"
-"POT-Creation-Date: 2007-08-22 12:25\n"
+"POT-Creation-Date: 2008-04-07 08:26\n"
 "PO-Revision-Date: YEAR-MO-DA HO:MI+ZONE\n"
 "Last-Translator: FULL NAME <EMAIL@ADDRESS>\n"
 "Language-Team: LANGUAGE <LL@li.org>\n"
@@ -224,6 +224,9 @@ msgstr ""
 msgid "Rd files with duplicated alias '%s':"
 msgstr ""
 
+msgid "Rd files with empty sections:"
+msgstr ""
+
 msgid "Found invalid multi-byte character data."
 msgstr ""
 
@@ -306,6 +309,15 @@ msgid "Encoding '%s' is not portable"
 msgstr ""
 
 msgid "Unknown encoding with non-ASCII data"
+msgstr ""
+
+msgid "Non-standard license specification:"
+msgstr ""
+
+msgid "Invalid license file pointers: %s"
+msgstr ""
+
+msgid "Verifiable as open source: %s"
 msgstr ""
 
 msgid "Non-portable flags in variable '%s':"
@@ -422,13 +434,13 @@ msgstr ""
 msgid "cannot open directory '%s'"
 msgstr ""
 
-msgid "WARNING: 'Depends' entry has multiple dependencies:"
+msgid "WARNING: 'Depends' entry has multiple dependencies on R:"
 msgstr ""
 
 msgid ","
 msgstr ""
 
-msgid "only the first will be used"
+msgid "only the first will be used in R < 2.7.0"
 msgstr ""
 
 msgid "WARNING: omitting pointless dependence on 'R' without a version requirement"
@@ -539,6 +551,9 @@ msgstr ""
 msgid "argument '%s' must be a character string or connection"
 msgstr ""
 
+msgid "'file' must be a character string or connection"
+msgstr ""
+
 msgid "unimplemented encoding"
 msgstr ""
 
@@ -546,6 +561,9 @@ msgid "test '%s' is not available"
 msgstr ""
 
 msgid "no or more than one match"
+msgstr ""
+
+msgid "'iconv' is required"
 msgstr ""
 
 msgid "argument 'x' must be a character vector"

@@ -1,59 +1,64 @@
 # Russian translations for R
 # Русский перевод для R
 #
-# Copyright (C) 2007 The R Foundation
+# Copyright (C) 2008 The R Foundation
 # This file is distributed under the same license as the R package.
-# Alexey Shipunov <dactylorhiza@gmail.com> 2007
+# Alexey Shipunov <dactylorhiza at gmail> 2008
 #
 msgid ""
 msgstr ""
-"Project-Id-Version: R 2.6.0\n"
+"Project-Id-Version: R 2.7.0\n"
 "Report-Msgid-Bugs-To: bugs@R-project.org\n"
-"POT-Creation-Date: 2007-08-22 12:25+0100\n"
-"PO-Revision-Date: 2006-04-16 21:42-0800\n"
-"Last-Translator: Alexey Shipunov <dactylorhiza@gmail.com>\n"
+"POT-Creation-Date: 2008-03-03 19:13+0000\n"
+"PO-Revision-Date: 2008-04-07 00:04-0500\n"
+"Last-Translator: Alexey Shipunov <dactylorhiza at gmail>\n"
 "Language-Team: Russian\n"
 "MIME-Version: 1.0\n"
 "Content-Type: text/plain; charset=KOI8-R\n"
 "Content-Transfer-Encoding: 8bit\n"
 "X-Poedit-Language: Russian\n"
-"Plural-Forms: nplurals=3; plural=(n%10==1 && n%100!=11 ? 0 : n%10>=2 && n%"
-"10<=4 && (n%100<10 || n%100>=20) ? 1 : 2);\n"
+"Plural-Forms: nplurals=3; plural=(n%10==1 && n%100!=11 ? 0 : n%10>=2 && n%10<=4 && (n%100<10 || n%100>=20) ? 1 : 2);\n"
 
-#: grid.c:210
+#: grid.c:214
 msgid "Cannot clip to rotated viewport"
 msgstr "Не могу обрезать для повернутой оконницы"
 
-#: grid.c:649 grid.c:654 grid.c:743 grid.c:748
+#: grid.c:653
+#: grid.c:658
+#: grid.c:747
+#: grid.c:752
 msgid "Cannot pop the top-level viewport (grid and graphics output mixed?)"
-msgstr ""
-"Не могу извлечь оконницу верхнего уровня (выводы grid и graphics смешались?)"
+msgstr "Не могу извлечь оконницу верхнего уровня (выводы grid и graphics смешались?)"
 
-#: grid.c:939
+#: grid.c:930
 msgid "attempt to plot on null device"
 msgstr "попытка чертить на нулевом устройстве"
 
-#: grid.c:1219
+#: grid.c:1210
 msgid "There is no layout defined"
 msgstr "Нет заданного эскиза"
 
-#: grid.c:1439
+#: grid.c:1430
 msgid "Polygon edge not found (zero-width or zero-height?)"
 msgstr "Край многоугольника не найден (нулевая ширина или высота?)"
 
-#: grid.c:1448
+#: grid.c:1439
 msgid "Polygon edge not found"
 msgstr "Край многоугольника не найден"
 
-#: grid.c:1588
+#: grid.c:1579
 msgid "Require at least two points to draw arrow"
 msgstr "Надо как минимум две точки, чтобы нарисовать стрелку"
 
-#: grid.c:1902
+#: grid.c:1893
 msgid "Non-finite control point in Xspline"
 msgstr "Не-конечная контрольная точка в Xspline"
 
-#: grid.c:3073
+#: grid.c:2988
+msgid "invalid plotting symbol"
+msgstr "неправильный символ графика"
+
+#: grid.c:3068
 msgid "Unable to clip to rotated rectangle"
 msgstr "Не могу обрезать повернутый четырехугольник"
 
@@ -69,27 +74,33 @@ msgstr "неправильный layout.pos.col"
 msgid "singular transformation matrix"
 msgstr "сингулярная трансформационная матрица"
 
-#: state.c:177
+#: state.c:169
 msgid "Unable to store grid state.  Too many devices open?"
 msgstr "Не могу сохранить состояние grid. Открыто слишком много устройств?"
 
-#: unit.c:260 unit.c:410 unit.c:1139 unit.c:1219 unit.c:1299 unit.c:1379
+#: unit.c:260
+#: unit.c:410
+#: unit.c:1142
+#: unit.c:1222
+#: unit.c:1302
+#: unit.c:1382
 msgid "Unimplemented unit function"
 msgstr "Не разработанная единичная функция"
 
-#: unit.c:828 unit.c:1574
+#: unit.c:831
+#: unit.c:1577
 msgid "Illegal unit or unit not yet implemented"
 msgstr "Неправильная или не разработанная единица"
 
-#: unit.c:1707
+#: unit.c:1710
 msgid "Invalid unit"
 msgstr "Неправильная единица"
 
-#: unit.c:1723
+#: unit.c:1726
 msgid "Units must be character"
 msgstr "Единицы должен быть буквами"
 
-#: unit.c:1726
+#: unit.c:1729
 msgid "Units must be of length > 0"
 msgstr "Единицы должны быть длиной > 0"
 
@@ -99,3 +110,4 @@ msgstr "Не-конечное положение и/или размер оконницы"
 
 #~ msgid "Invalid circle radius (must be non-negative)"
 #~ msgstr "Неправильный радиус круга (должен быть неотрицательным)"
+

@@ -22,7 +22,7 @@
 ## A copy of the GNU General Public License is available at
 ## http://www.r-project.org/Licenses/
 
-revision='$Revision: 42688 $'
+revision='$Revision: 45268 $'
 version=`set - ${revision}; echo ${2}`
 version="R configuration information retrieval script ${version}
 
@@ -40,9 +40,9 @@ Options:
   -h, --help            print short help message and exit
   -v, --version         print 'config' version info and exit
       --cppflags        print pre-processor flags required to compile
-                        a program using R as a shared library
+                        a program using R as a library
       --ldflags         print linker flags needed for linking against
-                        the R shared library
+                        the R library
 
 Variables:
   BLAS_LIBS     flags needed for linking against external BLAS libraries 
@@ -66,6 +66,10 @@ Variables:
   FFLAGS        Fortran 77 compiler flags
   FLIBS         linker flags needed to link Fortran code
   FPICFLAGS     special flags for compiling Fortran code to be turned
+                into a shared library 
+  FC            Fortran 9x compiler command
+  FCFLAGS       Fortran 9x compiler flags
+  FCPICFLAGS    special flags for compiling Fortran 9x code to be turned
                 into a shared library 
   JAR           Java archive tool command
   JAVA          Java interpreter command
@@ -92,6 +96,8 @@ Variables:
                 object files from a C or Fortran compiler only 
   SHLIB_LDFLAGS
                 special flags used by SHLIB_LD
+  SHLIB_FCLD, SHLIB_FCLDFLAGS
+                ditto when using Fortran 9x
   TCLTK_CPPFLAGS
                 flags needed for finding the tcl.h and tk.h headers
   TCLTK_LIBS    flags needed for linking against the Tcl and Tk libraries
@@ -124,6 +130,7 @@ makefiles="-f ${R_HOME}/etc${R_ARCH}/Makeconf -f ${R_SHARE_DIR}/make/config.mk"
 query="${MAKE} -s ${makefiles} print R_HOME=${R_HOME}"
 
 LIBR=`eval $query VAR=LIBR`
+STATIC_LIBR=`eval $query VAR=STATIC_LIBR`
 
 var=
 while test -n "${1}"; do
@@ -134,7 +141,11 @@ while test -n "${1}"; do
       echo "${version}"; exit 0 ;;
     --cppflags)
       if test -z "${LIBR}"; then
-        echo "R was not built as a shared library" >&2
+        if test -z "${STATIC_LIBR}"; then
+          echo "R was not built as a library" >&2
+	else
+          echo "-I${R_INCLUDE_DIR} -I${R_INCLUDE_DIR}${R_ARCH}"
+        fi
       else
         echo "-I${R_INCLUDE_DIR} -I${R_INCLUDE_DIR}${R_ARCH}"
       fi
@@ -142,7 +153,11 @@ while test -n "${1}"; do
       ;;
     --ldflags)
       if test -z "${LIBR}"; then
-        echo "R was not built as a shared library" >&2
+        if test -z "${STATIC_LIBR}"; then
+          echo "R was not built as a library" >&2
+	else
+          echo "${STATIC_LIBR}"
+        fi
       else
         echo "${LIBR}"
       fi
@@ -165,9 +180,9 @@ ok_cxx_vars="CXX CXXCPP CXXFLAGS CXXPICFLAGS"
 ok_dylib_vars="DYLIB_LD DYLIB_LDFLAGS"
 ok_objc_vars="OBJC OBJCFLAGS"
 ok_java_vars="JAVA JAVAC JAVAH JAR JAVA_HOME JAVA_LIBS JAVA_CPPFLAGS"
-ok_f77_vars="F77 FFLAGS FPICFLAGS FLIBS SAFE_FFLAGS GC FCFLAGS"
+ok_f77_vars="F77 FFLAGS FPICFLAGS FLIBS SAFE_FFLAGS FC FCFLAGS FCPICFLAGS"
 ok_ld_vars="LDFLAGS"
-ok_shlib_vars="SHLIB_CFLAGS SHLIB_CXXLD SHLIB_CXXLDFLAGS SHLIB_FFLAGS SHLIB_LD SHLIB_LDFLAGS"
+ok_shlib_vars="SHLIB_CFLAGS SHLIB_CXXLD SHLIB_CXXLDFLAGS SHLIB_FFLAGS SHLIB_LD SHLIB_LDFLAGS SHLIB_FCLD SHLIB_FCLDFLAGS"
 ok_tcltk_vars="TCLTK_CPPFLAGS TCLTK_LIBS"
 ok_other_vars="BLAS_LIBS LAPACK_LIBS MAKE LIBnn"
 

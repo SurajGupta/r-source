@@ -97,7 +97,7 @@ function(dir, exts, all.files = FALSE, full.names = TRUE)
     patt <- paste("\\.(", paste(exts, collapse="|"), ")$", sep = "")
     files <- grep(patt, files, value = TRUE)
     if(full.names)
-        files <- if(length(files) > 0)
+        files <- if(length(files) > 0L)
             file.path(dir, files)
         else
             character(0)
@@ -158,11 +158,24 @@ function(file, topic)
     valid_lines <- lines <- readLines(file, warn = FALSE)
     valid_lines[is.na(nchar(lines, "c", TRUE))] <- ""
     patt <- paste("^% --- Source file:.*/", topic, ".Rd ---$", sep="")
-    if(length(top <- grep(patt, valid_lines)) != 1)
+    if(length(top <- grep(patt, valid_lines)) != 1L)
         stop("no or more than one match")
     eofs <- grep("^\\\\eof$", valid_lines)
     end <- min(eofs[eofs > top]) - 1
     lines[top:end]
+}
+
+### ** showNonASCII
+
+showNonASCII <-
+function(x)
+{
+    if(!capabilities("iconv")) stop("'iconv' is required")
+    ind <- is.na(iconv(x, "latin1", "ASCII"))
+    if(any(ind))
+        cat(paste(which(ind), ": ",
+                  iconv(x[ind], "latin1", "ASCII", sub="byte"), sep=""),
+            sep="\n")
 }
 
 ### * Text utilities.
@@ -175,7 +188,7 @@ function(x, delim = c("{", "}"), syntax = "Rd")
     if(!is.character(x))
         stop("argument 'x' must be a character vector")
     ## FIXME: bytes or chars?
-    if((length(delim) != 2) || any(nchar(delim) != 1))
+    if((length(delim) != 2L) || any(nchar(delim) != 1L))
         stop("argument 'delim' must specify two characters")
     if(syntax != "Rd")
         stop("only Rd syntax is currently supported")
@@ -204,6 +217,18 @@ function(file, pdf = FALSE, clean = FALSE,
             extra <- if(.Platform$OS.type == "windows") "" else " > /dev/null"
         } else {
             extra <- quiet <- ""
+        }
+        if(.Platform$OS.type == "windows") {
+            ## look for MiKTeX (which this almost certainly is)
+            ## and set the path to R's style files.
+            ## -I works in MiKTeX >= 2.4, at least
+            ver <- system(paste(shQuote(texi2dvi), "--version"), intern = TRUE)
+            if(length(grep("MiKTeX", ver[1]))) {
+                ## could use shortPathName here
+                stypath <-  shQuote(gsub("\\\\", "/",
+                                         file.path(R.home("share"), "texmf")))
+                clean <- paste(clean, "-I", stypath)
+            }
         }
         if(system( paste(shQuote(texi2dvi), quiet, pdf, clean,
                          shQuote(file), extra) ))
@@ -344,10 +369,10 @@ function(primitive = TRUE) # primitive means 'include primitives'
 .get_namespace_package_depends <-
 function(dir)
 {
-    nsInfo <- parseNamespaceFile(basename(dir), dirname(dir))
-    depends <- c(sapply(nsInfo$imports, "[[", 1),
-                 sapply(nsInfo$importClasses, "[[", 1),
-                 sapply(nsInfo$importMethods, "[[", 1))
+    nsInfo <- .check_namespace(dir)
+    depends <- c(sapply(nsInfo$imports, "[[", 1L),
+                 sapply(nsInfo$importClasses, "[[", 1L),
+                 sapply(nsInfo$importMethods, "[[", 1L))
     unique(sort(as.character(depends)))
 }
 
@@ -361,10 +386,10 @@ function(nsInfo)
     ## names of the generic, class and method (as a function).
     S3_methods_list <- nsInfo$S3methods
     if(!length(S3_methods_list)) return(matrix(character(), ncol = 3))
-    idx <- is.na(S3_methods_list[, 3])
-    S3_methods_list[idx, 3] <-
-        paste(S3_methods_list[idx, 1],
-              S3_methods_list[idx, 2],
+    idx <- is.na(S3_methods_list[, 3L])
+    S3_methods_list[idx, 3L] <-
+        paste(S3_methods_list[idx, 1L],
+              S3_methods_list[idx, 2L],
               sep = ".")
     S3_methods_list
 }
@@ -422,6 +447,7 @@ function(dir, installed = TRUE, primitive = FALSE)
             reqs <- intersect(c(depends, imports), loadedNamespaces())
             if(length(reqs))
                 env_list <- c(env_list, lapply(reqs, getNamespace))
+            ## note .packages give versioned names.
             reqs <- intersect(depends %w/o% loadedNamespaces(),
                               .packages())
             if(length(reqs))
@@ -456,11 +482,11 @@ function(include_group_generics = TRUE)
     if(include_group_generics)
         c(base::.S3PrimitiveGenerics,
           "abs", "sign", "sqrt", "floor", "ceiling", "trunc", "round",
-          "signif", "exp", "log", "expm1", "log1p", "cos", "sin", "tan", "acos", "asin",
-          "atan", "cosh", "sinh", "tanh", "acosh", "asinh", "atanh",
-          "lgamma", "gamma", "gammaCody", "digamma", "trigamma",
-          "tetragamma", "pentagamma", "cumsum", "cumprod", "cummax",
-          "cummin",
+          "signif", "exp", "log", "expm1", "log1p",
+          "cos", "sin", "tan", "acos", "asin", "atan",
+          "cosh", "sinh", "tanh", "acosh", "asinh", "atanh",
+          "lgamma", "gamma", "digamma", "trigamma",
+          "cumsum", "cumprod", "cummax", "cummin",
           "+", "-", "*", "/", "^", "%%", "%/%", "&", "|", "!", "==",
           "!=", "<", "<=", ">=", ">",
           "all", "any", "sum", "prod", "max", "min", "range",
@@ -577,22 +603,22 @@ function(fname, envir, mustMatch = TRUE)
     f <- get(fname, envir = envir, inherits = FALSE)
     if(!is.function(f)) return(FALSE)
     isUMEbrace <- function(e) {
-        for (ee in as.list(e[-1])) if (nzchar(res <- isUME(ee))) return(res)
+        for (ee in as.list(e[-1L])) if (nzchar(res <- isUME(ee))) return(res)
         ""
     }
     isUMEif <- function(e) {
-        if (length(e) == 3) isUME(e[[3]])
+        if (length(e) == 3L) isUME(e[[3L]])
         else {
-            if (nzchar(res <- isUME(e[[3]]))) res
-            else if (nzchar(res <- isUME(e[[4]]))) res
+            if (nzchar(res <- isUME(e[[3L]]))) res
+            else if (nzchar(res <- isUME(e[[4L]]))) res
             else ""
         }
 
     }
     isUME <- function(e) {
-        if (is.call(e) && (is.name(e[[1]]) || is.character(e[[1]]))) {
-            switch(as.character(e[[1]]),
-                   UseMethod = as.character(e[[2]]),
+        if (is.call(e) && (is.name(e[[1L]]) || is.character(e[[1L]]))) {
+            switch(as.character(e[[1L]]),
+                   UseMethod = as.character(e[[2L]]),
                    "{" = isUMEbrace(e),
                    "if" = isUMEif(e),
                    "")
@@ -736,6 +762,7 @@ function(package)
              boot = "exp.tilt",
              car = "scatterplot.matrix",
 	     calibrator = "t.fun",
+             ctv = "update.views",
              equivalence = "sign.boot",
              fields = c("qr.q2ty", "qr.yq2"),
              grDevices = "boxplot.stats",
@@ -770,7 +797,7 @@ function(packages = NULL, FUN, ...)
     ## priority.
     if(is.null(packages))
         packages <-
-            unique(utils::installed.packages(priority = "high")[ , 1])
+            unique(utils::installed.packages(priority = "high")[ , 1L])
     out <- lapply(packages, function(p)
                   tryCatch(FUN(p, ...),
                            error = function(e)
@@ -793,6 +820,21 @@ function(con)
         on.exit(close(con))
     }
     .try_quietly(readLines(con, warn=FALSE))
+}
+
+### ** .read_collate_field
+
+.read_collate_field <-
+function(txt)
+{
+    ## Read Collate specifications in DESCRIPTION files.
+    ## These consist of file paths relative to the R code directory,
+    ## separated by white space, possibly quoted.  Note that we could
+    ## have newlines in DCF entries but do not allow them in file names,
+    ## hence we gsub() them out.
+    con <- textConnection(gsub("\n", " ", txt))
+    on.exit(close(con))
+    scan(con, what = character(), strip.white = TRUE, quiet = TRUE)
 }
 
 ### ** .read_description
@@ -836,10 +878,10 @@ function(file, envir, enc = NA)
         on.exit(close(con))
     } else con <- file
     exprs <- parse(n = -1, file = con)
-    if(length(exprs) == 0)
+    if(length(exprs) == 0L)
         return(invisible())
     for(e in exprs) {
-        if(e[[1]] == assignmentSymbolLM || e[[1]] == assignmentSymbolEq)
+        if(e[[1L]] == assignmentSymbolLM || e[[1L]] == assignmentSymbolEq)
             eval(e, envir)
     }
     invisible()
@@ -848,20 +890,26 @@ function(file, envir, enc = NA)
 ### .source_assignments_in_code_dir
 
 .source_assignments_in_code_dir <-
-function(dir, env, enc = NA)
+function(dir, env, meta = character())
 {
     ## Combine all code files in @code{dir}, read and parse expressions,
-    ## and successively evaluated the top-level assignments in
-    ## @code{env}.
+    ## and successively evaluate the top-level assignments in @code{env}.
     con <- tempfile("Rcode")
     on.exit(unlink(con))
     if(!file.create(con))
         stop("unable to create ", con)
-    if(!all(.file_append_ensuring_LFs(con,
-                                      list_files_with_type(dir,
-                                                           "code"))))
+    ## If the (DESCRIPTION) metadata contain a Collate specification,
+    ## use this for determining the code files and their order.
+    txt <- meta[c(paste("Collate", .OStype(), sep = "."), "Collate")]
+    ind <- which(!is.na(txt))
+    files <- if(any(ind))
+        Filter(function(x) file_test("-f", x),
+               file.path(dir, .read_collate_field(txt[ind[1L]])))
+    else
+        list_files_with_type(dir, "code")
+    if(!all(.file_append_ensuring_LFs(con, files)))
         stop("unable to write code files")
-    tryCatch(.source_assignments(con, env, enc = enc),
+    tryCatch(.source_assignments(con, env, enc = meta["Encoding"]),
              error =
              function(e)
              stop("cannot source package code\n",
@@ -954,15 +1002,15 @@ function(expr)
 function(args, msg)
 {
     len <- length(args)
-    if(len == 0)
+    if(len == 0L)
         character()
-    else if(len == 1)
+    else if(len == 1L)
         paste("argument", sQuote(args), msg)
     else
         paste("arguments",
-              paste(c(rep.int("", len - 1), "and "),
+              paste(c(rep.int("", len - 1L), "and "),
                     sQuote(args),
-                    c(rep.int(", ", len - 1), ""),
+                    c(rep.int(", ", len - 1L), ""),
                     sep = "", collapse = ""),
               msg)
 }

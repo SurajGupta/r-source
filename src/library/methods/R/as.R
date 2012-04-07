@@ -24,20 +24,22 @@ as <-
   ## no valid way to coerce the two objects).  Otherwise, `NULL' is returned.
   function(object, Class, strict = TRUE, ext = possibleExtends(thisClass, Class))
 {
+    ## prior to 2.7.0 there was a pseudo-class "double"
+    if(.identC(Class, "double")) Class <- "numeric"
     thisClass <- .class1(object) ## always one string
     if(.identC(thisClass, Class) || .identC(Class, "ANY"))
         return(object)
     where <- .classEnv(thisClass)
     coerceFun <- getGeneric("coerce", where = where)
-    coerceMethods <- getMethodsForDispatch("coerce", coerceFun)
+    coerceMethods <- getMethodsForDispatch(coerceFun)
     asMethod <- .quickCoerceSelect(thisClass, Class, coerceFun, coerceMethods)
     if(is.null(asMethod)) {
         sig <-  c(from=thisClass, to = Class)
         packageSlot(sig) <- where
         ## try first for an explicit (not inherited) method
         ## ?? Can this ever succeed if .quickCoerceSelect failed?
-        asMethod <- selectMethod("coerce", sig, TRUE,
-                                 FALSE, #optional, no inheritance
+        asMethod <- selectMethod("coerce", sig, optional = TRUE,
+                                 useInherited = FALSE, #optional, no inheritance
                                  fdef = coerceFun, mlist = coerceMethods)
         canCache <- TRUE
         if(is.null(asMethod)) {
@@ -62,10 +64,9 @@ as <-
             ## if none of these applies, look for an inherited method
             ## but only on the from argument
             if(is.null(asMethod)) {
-                asMethod <- selectMethod("coerce", sig, TRUE,
+                asMethod <- selectMethod("coerce", sig, optional = TRUE,
                                          c(from = TRUE, to = FALSE),
-                                         fdef = coerceFun, mlist =
-                                         coerceMethods)
+                                         fdef = coerceFun, mlist = coerceMethods)
                 inherited <- TRUE
             }
             else if(canCache)  # make into method definition
@@ -146,7 +147,7 @@ as <-
       value <- as(value, Class)
     where <- .classEnv(class(object))
     coerceFun <- getGeneric("coerce<-", where = where)
-    coerceMethods <- getMethodsForDispatch("coerce<-", coerceFun)
+    coerceMethods <- getMethodsForDispatch(coerceFun)
     asMethod <- .quickCoerceSelect(thisClass, Class, coerceFun, coerceMethods)
     if(is.null(asMethod)) {
         sig <-  c(from=thisClass, to = Class)
@@ -218,9 +219,8 @@ setAs <-
         if(!is.na(match("strict", args))) args <- args[-match("strict", args)]
         if(length(args) == 1)
             def <- substituteFunctionArgs(def, "from", functionName = "coerce")
-        else if(length(args) == 2)
-            def <- substituteFunctionArgs(def, c("from", "to"), functionName = "coerce")
-        else stop(gettextf("'as' method must have one or two arguments, plus optional 'strict'; got (%s)",
+        else  if(length(args) != 2 || !identical(args, c("from", "to")))
+               stop(gettextf("'as' method should have one argument, or match the arguments of coerce(): got  (%s)",
                            paste(formalArgs(def), collapse = ", ")),
                   domain = NA)
         method <- as.list(coerce@.Data) # the function def'n, just to get arguments correct

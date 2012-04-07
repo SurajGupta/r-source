@@ -2,7 +2,7 @@ msgid ""
 msgstr ""
 "Project-Id-Version: R 2.3.0\n"
 "Report-Msgid-Bugs-To: bugs@r-project.org\n"
-"POT-Creation-Date: 2007-08-22 12:25\n"
+"POT-Creation-Date: 2008-04-07 08:26\n"
 "PO-Revision-Date: 2005-04-17 16:57+0200\n"
 "Last-Translator: stefano iacus <>\n"
 "Language-Team: Italian <it@li.org>\n"
@@ -249,6 +249,10 @@ msgstr ""
 msgid "Rd files with duplicated alias '%s':"
 msgstr ""
 
+#, fuzzy
+msgid "Rd files with empty sections:"
+msgstr "I file Rd devono avere \\title non vuoto."
+
 msgid "Found invalid multi-byte character data."
 msgstr "Trovato dati multi-byte carattere non validi."
 
@@ -340,6 +344,15 @@ msgid "Encoding '%s' is not portable"
 msgstr "il test '%s' non è disponibile"
 
 msgid "Unknown encoding with non-ASCII data"
+msgstr ""
+
+msgid "Non-standard license specification:"
+msgstr ""
+
+msgid "Invalid license file pointers: %s"
+msgstr ""
+
+msgid "Verifiable as open source: %s"
 msgstr ""
 
 msgid "Non-portable flags in variable '%s':"
@@ -467,13 +480,13 @@ msgstr "*** qualcuno ha danneggiato il campo Builr nel pacchetto '%s' ***"
 msgid "cannot open directory '%s'"
 msgstr "impossibile leggere directory '%s'"
 
-msgid "WARNING: 'Depends' entry has multiple dependencies:"
+msgid "WARNING: 'Depends' entry has multiple dependencies on R:"
 msgstr ""
 
 msgid ","
 msgstr ""
 
-msgid "only the first will be used"
+msgid "only the first will be used in R < 2.7.0"
 msgstr ""
 
 msgid ""
@@ -592,6 +605,11 @@ msgstr "le sue dipendenze sono state ridotte ad un insieme minimale."
 msgid "argument '%s' must be a character string or connection"
 msgstr "l'argomento '%s' deve essere una stringa carattere o una connessione"
 
+#, fuzzy
+msgid "'file' must be a character string or connection"
+msgstr ""
+"argomento 'file' deve essere una stringa di caratteri o una connessione"
+
 msgid "unimplemented encoding"
 msgstr ""
 
@@ -600,6 +618,9 @@ msgstr "il test '%s' non è disponibile"
 
 msgid "no or more than one match"
 msgstr "non più di una corrispondenza"
+
+msgid "'iconv' is required"
+msgstr ""
 
 msgid "argument 'x' must be a character vector"
 msgstr "l'argomento 'x' deve essere un vettore carattere"

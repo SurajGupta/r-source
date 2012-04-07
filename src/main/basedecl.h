@@ -1,6 +1,6 @@
 /*
  *  R : A Computer Language for Statistical Data Analysis
- *  Copyright (C) 2002-2006	The R Development Core Team.
+ *  Copyright (C) 2002-2008	The R Development Core Team.
  *
  *  This program is free software; you can redistribute it and/or modify
  *  it under the terms of the GNU General Public License as published by
@@ -32,6 +32,10 @@ SEXP call_dqags(SEXP);
 SEXP La_svd(SEXP, SEXP, SEXP, SEXP, SEXP, SEXP, SEXP);
 SEXP La_rs(SEXP, SEXP);
 SEXP La_rg(SEXP, SEXP);
+SEXP La_dgecon(SEXP, SEXP);
+SEXP La_dtrcon(SEXP, SEXP);
+SEXP La_zgecon(SEXP, SEXP);
+SEXP La_ztrcon(SEXP, SEXP);
 SEXP La_zgesv(SEXP, SEXP);
 SEXP La_zgeqp3(SEXP);
 SEXP qr_coef_cmplx(SEXP, SEXP);
@@ -47,16 +51,16 @@ SEXP qr_coef_real(SEXP, SEXP);
 SEXP qr_qy_real(SEXP, SEXP, SEXP);
 SEXP det_ge_real(SEXP, SEXP);
 
-void signrank_free();
-void wilcox_free();
+void signrank_free(void);
+void wilcox_free(void);
 
-SEXP R_getTaskCallbackNames();
+SEXP R_getTaskCallbackNames(void);
 SEXP R_removeTaskCallback(SEXP);
 SEXP R_addTaskCallback(SEXP, SEXP, SEXP, SEXP);
 
 
 SEXP R_getSymbolInfo(SEXP, SEXP, SEXP);
-SEXP R_getDllTable();
+SEXP R_getDllTable(void);
 SEXP R_getRegisteredRoutines(SEXP);
 
 SEXP R_isMethodsDispatchOn(SEXP);
@@ -77,8 +81,10 @@ void F77_SYMBOL(dchdc)(double *, int *, int *, double *, int *, int *, int *);
 void F77_SYMBOL(dpbfa)(double *, int *, int *, int *, int *);
 void F77_SYMBOL(dpbsl)(double *, int *, int *, int *, double *);
 
+#if 0
 void Rf_InitGraphics(void);
 void Rf_InitColors(void);
+#endif
 
 SEXP R_compress1(SEXP);
 SEXP R_decompress1(SEXP);
@@ -94,7 +100,12 @@ SEXP R_lazyLoadDBflush(SEXP);
 SEXP R_get_primname(SEXP op) ;
 
 #ifdef BYTECODE
-SEXP R_getbcprofcounts();
-SEXP R_startbcprof();
-SEXP R_stopbcprof();
+SEXP R_getbcprofcounts(void);
+SEXP R_startbcprof(void);
+SEXP R_stopbcprof(void);
 #endif
+
+SEXP Rg_contourDef(void);
+SEXP Rg_readonlypars(void);
+
+

@@ -470,7 +470,7 @@ int SYSCALL R_set_graphics_device (struct _SC_Proxy_Object* object,
 				   struct _SC_GraphicsDevice* device)
 {
   unsigned long lCurrentVersion = 0;
-  static GEDevDesc* lDD = NULL;
+  static pGEDevDesc lDD = NULL;
 
   if (object == NULL)
     {
@@ -504,27 +504,17 @@ int SYSCALL R_set_graphics_device (struct _SC_Proxy_Object* object,
 
   /* add the graphics device to the set of drivers */
   if(!lDD) {
-    R_Proxy_Graphics_CB* lDev =
-      (R_Proxy_Graphics_CB*) calloc (1,sizeof (R_Proxy_Graphics_CB));
+      R_GE_checkVersionOrDie(R_GE_version);
+      R_CheckDeviceAvailable();
+      BEGIN_SUSPEND_INTERRUPTS {
+	  R_Proxy_Graphics_CB* lDev =
+	      (R_Proxy_Graphics_CB*) calloc (1, sizeof(R_Proxy_Graphics_CB));
 
-    /* Do this for early redraw attempts */
-    DEVDESC(lDev)->displayList = R_NilValue;
-    /* Make sure that this is initialised before a GC can occur.
-     * This (and displayList) get protected during GC
-     */
-    DEVDESC(lDev)->savedSnapshot = R_NilValue;
-    R_Proxy_Graphics_Driver_CB (lDev,
-				"ActiveXDevice 1",
-				100.0,
-				100.0,
-				10.0,
-				0,
-				0);
-    gsetVar(install(".Device"),
-	    mkString("ActiveXDevice 1"), R_BaseEnv);
-    lDD = GEcreateDevDesc(DEVDESC(lDev));
-    addDevice((DevDesc*) lDD);
-    GEinitDisplayList(lDD);
+	  R_Proxy_Graphics_Driver_CB (lDev, "ActiveXDevice 1",
+				      100.0, 100.0, 10.0, 0, 0);
+	  lDD = GEcreateDevDesc(DEVDESC(lDev));
+	  GEaddDevice2(lDD, "ActiveXDevice 1" );
+      } END_SUSPEND_INTERRUPTS;
   }
   return SC_PROXY_OK;
 }

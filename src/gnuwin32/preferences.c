@@ -53,7 +53,7 @@ static void showDialog(Gui gui);
 
 extern __declspec(dllimport) const char *ColorName[]; /* from graphapp/rgb.c */
 
-static int cmatch(char *col, const char **list)
+static int cmatch(const char *col, const char **list)
 {
     int i=0;
     const char **pos = list;
@@ -67,7 +67,7 @@ static int cmatch(char *col, const char **list)
 
 static const char *StyleList[] = {"normal", "bold", "italic", NULL};
 static const char *PointsList[] = {"6", "7", "8", "9", "10", "11", "12", "14", "16", "18", "20", "22", "24", "26", "28", "32", "36", NULL};
-static const char *FontsList[] = {"Courier", "Courier New", "FixedSys", "FixedFont", "Lucida Console", "Terminal", "BatangChe", "DotumChe", "GulimChe", "MingLiU", "MS Gothic", "MS Mincho", "NSimSun", NULL};
+static const char *FontsList[] = {"Courier", "Courier New", "FixedSys", "FixedFont", "Lucida Console", "Consolas", "Terminal", "BatangChe", "DotumChe", "GulimChe", "MingLiU", "MS Gothic", "MS Mincho", "NSimSun", NULL};
 
 
 static window wconfig;
@@ -113,72 +113,107 @@ static void getChoices(Gui p)
     /* MDIsize is not currently a choice in the dialog, only in the Rconsole file */
 }
 
-void getActive(Gui gui)
+void getDefaults(Gui gui)
 {
-    rect r;
-    ConsoleData p = (ConsoleData) getdata(RConsole);
+    gui->crows = 25;
+    gui->ccols = 80;
+    gui->cx = gui->cy = 0;
+    gui->grx = Rwin_graphicsx;
+    gui->gry = Rwin_graphicsy;
+    gui->bg = White;
+    gui->fg = DarkBlue;
+    gui->user = gaRed;
+    gui->hlt = DarkRed;
+    gui->prows = 25;
+    gui->pcols = 80;
+    gui->pagerMultiple = 0;
+    gui->cbb = 65000;
+    gui->cbl = 8000;
+    gui->setWidthOnResize = 1;
+    strcpy(gui->font, "Courier New");
+    strcpy(gui->style, "normal");
+    gui->tt_font = 1;
+    gui->pointsize = 10;
+    strcpy(gui->language, "");
+    gui->buffered = 1;
 
+#ifdef USE_MDI
     gui->toolbar = ((RguiMDI & RW_TOOLBAR) != 0);
     gui->statusbar = ((RguiMDI & RW_STATUSBAR) != 0);
     gui->MDI = ((RguiMDI & RW_MDI) != 0);
-    gui->pagerMultiple = pagerMultiple;
-    {
-	char *p = getenv("LANGUAGE");
-	strcpy(gui->language, p ? p : "");
-    }
 
-/* Font, pointsize, style */
+    gui->MDIsize = rect(0, 0, 0, 0);
+#endif
+}
 
-    gui->tt_font = FALSE;
-    {
-	char *pf;
-	if ((strlen(fontname) > 1) &&
-	    (fontname[0] == 'T') && (fontname[1] == 'T')) {
-	    gui->tt_font = TRUE;
-	    for (pf = fontname+2; isspace(*pf) ; pf++);
-	} else pf = fontname;
-	strcpy(gui->font, pf);
-    }
+void getActive(Gui gui)
+{
+    rect r;
+    ConsoleData p;
+    if (RConsole && (p = (ConsoleData) getdata(RConsole))) {
 
-    gui->pointsize = pointsize;
-    
-    if (fontsty & Italic) strcpy(gui->style, "italic");
-    else if (fontsty & Bold) strcpy(gui->style, "Bold");
-    else strcpy(gui->style, "normal");
+	gui->toolbar = ((RguiMDI & RW_TOOLBAR) != 0);
+	gui->statusbar = ((RguiMDI & RW_STATUSBAR) != 0);
+	gui->MDI = ((RguiMDI & RW_MDI) != 0);
+	gui->pagerMultiple = pagerMultiple;
+	{
+	    const char *p = getenv("LANGUAGE");
+	    strcpy(gui->language, p ? p : "");
+	}
 
-/* Console size, set widthonresize */
-    gui->crows = ROWS;
-    gui->ccols = COLS;
-    r = GetCurrentWinPos(RConsole);
-    gui->cx = r.x;
-    gui->cy = r.y;
-    gui->setWidthOnResize = setWidthOnResize;
-    gui->cbb = p->lbuf->dim;
-    gui->cbl = p->lbuf->ms;
-    gui->buffered = consolebuffered;
+	/* Font, pointsize, style */
 
-/* Pager size */
-    gui->prows = pagerrow;
-    gui->pcols = pagercol;
+	gui->tt_font = FALSE;
+	{
+	    const char *pf;
+	    if ((strlen(fontname) > 1) &&
+		(fontname[0] == 'T') && (fontname[1] == 'T')) {
+		gui->tt_font = TRUE;
+		for (pf = fontname+2; isspace(*pf) ; pf++);
+	    } else pf = fontname;
+	    strcpy(gui->font, pf);
+	}
 
-/* Graphics window */
-    gui->grx = Rwin_graphicsx;
-    gui->gry = Rwin_graphicsy;
+	gui->pointsize = pointsize;
 
-/* Font colours */
-    gui->bg = consolebg;
-    gui->fg = consolefg;
-    gui->user = consoleuser;
-    gui->hlt = pagerhighlight;
-    
-/* MDIsize is not currently a choice in the dialog, only in the Rconsole file, so is not set here */
-    
+	if (fontsty & Italic) strcpy(gui->style, "italic");
+	else if (fontsty & Bold) strcpy(gui->style, "Bold");
+	else strcpy(gui->style, "normal");
+
+	/* Console size, set widthonresize */
+	gui->crows = ROWS;
+	gui->ccols = COLS;
+	r = GetCurrentWinPos(RConsole);
+	gui->cx = r.x;
+	gui->cy = r.y;
+	gui->setWidthOnResize = setWidthOnResize;
+	gui->cbb = p->lbuf->dim;
+	gui->cbl = p->lbuf->ms;
+	gui->buffered = consolebuffered;
+
+	/* Pager size */
+	gui->prows = pagerrow;
+	gui->pcols = pagercol;
+
+	/* Graphics window */
+	gui->grx = Rwin_graphicsx;
+	gui->gry = Rwin_graphicsy;
+
+	/* Font colours */
+	gui->bg = consolebg;
+	gui->fg = consolefg;
+	gui->user = consoleuser;
+	gui->hlt = pagerhighlight;
+
+	/* MDIsize is not currently a choice in the dialog, only in the Rconsole file, so is not set here */
+    } else
+	getDefaults(gui);
 }
 
 static int has_changed(Gui a, Gui b)
 {
-    return !a || 
-        a->MDI != b->MDI ||
+    return !a ||
+	a->MDI != b->MDI ||
 	a->toolbar != b->toolbar ||
 	a->statusbar != b->statusbar ||
 	a->pagerMultiple != b->pagerMultiple ||
@@ -205,7 +240,7 @@ static int has_changed(Gui a, Gui b)
 }
 
 
-static void cleanup()
+static void cleanup(void)
 {
     hide(wconfig);
     delobj(l_mdi); delobj(rb_mdi); delobj(rb_sdi);
@@ -237,8 +272,8 @@ void applyGUI(Gui newGUI)
     int havenewfont = 0;
     struct structGUI curGUI;
 
-    getActive(&curGUI);    
-    
+    getActive(&curGUI);
+
     if(!has_changed(&curGUI, newGUI)) return;
 
     if(newGUI->MDI != curGUI.MDI || newGUI->toolbar != curGUI.toolbar ||
@@ -249,9 +284,9 @@ void applyGUI(Gui newGUI)
 	char *buf = malloc(50);
 	askok(G_("The language for menus cannot be changed on a\n running console.\n\nSave the preferences and restart Rgui to apply to menus.\n"));
 	sprintf(buf, "LANGUAGE=%s", newGUI->language);
-	putenv(buf);	
+	putenv(buf);
     }
-    
+
 
 /*  Set a new font? */
     if(strcmp(newGUI->font, curGUI.font) ||
@@ -270,7 +305,7 @@ void applyGUI(Gui newGUI)
 
 	/* Don't delete font: open pagers may be using it */
 	if (strcmp(fontname, "FixedFont"))
-	    consolefn = gnewfont(NULL, fontname, fontsty, pointsize, 0.0);
+	    consolefn = gnewfont(NULL, fontname, fontsty, pointsize, 0.0, 1);
 	else consolefn = FixedFont;
 	if (!consolefn) {
 	    sprintf(msg,
@@ -280,12 +315,12 @@ void applyGUI(Gui newGUI)
 	    consolefn = FixedFont;
 	}
 	/* if (!ghasfixedwidth(consolefn)) {
-	    sprintf(msg,
-		    G_("Font %s-%d-%d has variable width.\nUsing system fixed font"),
-		    fontname, fontsty, pointsize);
-	    R_ShowMessage(msg);
-	    consolefn = FixedFont;
-	    } */
+	   sprintf(msg,
+	   G_("Font %s-%d-%d has variable width.\nUsing system fixed font"),
+	   fontname, fontsty, pointsize);
+	   R_ShowMessage(msg);
+	   consolefn = FixedFont;
+	   } */
 	p->f = consolefn;
 	FH = fontheight(p->f);
 	FW = fontwidth(p->f);
@@ -314,7 +349,7 @@ void applyGUI(Gui newGUI)
     drawconsole(RConsole, r);
     pagerhighlight = newGUI->hlt;
 
-    if(haveusedapager && 
+    if(haveusedapager &&
        (newGUI->prows != curGUI.prows || newGUI->pcols != curGUI.pcols))
 	askok(G_("Changes in pager size will not apply to any open pagers"));
     pagerrow = newGUI->prows;
@@ -332,12 +367,12 @@ void applyGUI(Gui newGUI)
 
     setWidthOnResize = newGUI->setWidthOnResize;
     consolebuffered = newGUI->buffered;
-    
+
     Rwin_graphicsx = newGUI->grx;
     Rwin_graphicsy = newGUI->gry;
 }
 
-static void do_apply()
+static void do_apply(void)
 {
     struct structGUI newGUI;
 
@@ -399,7 +434,7 @@ static void save(button b)
     fprintf(fp, "# should options(width=) be set to the console width?\n");
     fprintf(fp, "setwidthonresize = %s\n\n",
 	    ischecked(c_resize) ? "yes" : "no");
-    fprintf(fp, "# memory limits for the console scrolling buffer, in bytes and lines\n");
+    fprintf(fp, "# memory limits for the console scrolling buffer, in chars and lines\n");
     fprintf(fp, "bufbytes = %s\nbuflines = %s\n\n",
 	    gettext(f_cbb), gettext(f_cbl));
     fprintf(fp, "# Initial position of the console (pixels, relative to the workspace for MDI)\n");
@@ -439,13 +474,13 @@ static void save(button b)
 static void load(button b) /* button callback */
 {
     char *optf, buf[256];
-    struct structGUI newGUI;    
+    struct structGUI newGUI;
 
     setuserfilter("All files (*.*)\0*.*\0\0");
-    strcpy(buf, getenv("R_USER"));    
+    strcpy(buf, getenv("R_USER"));
     optf = askfilenamewithdir(G_("Select 'Rconsole' file"), "Rconsole", buf);
     if(!optf) return;
-    
+
     getChoices(&newGUI);
     if (loadRconsole(&newGUI, optf)) {
 	cleanup();
@@ -456,10 +491,10 @@ static void load(button b) /* button callback */
 int loadRconsole(Gui gui, const char *optf)
 {
     int ok, done, cfgerr;
-    char *opt[2];    
-    
+    char *opt[2];
+
     if (!optopenfile(optf)) {
-	return 0; 	/* this should not happen unless there are permission problems, etc */
+	return 0; /* this should not happen unless there are permission problems, etc */
     }
     cfgerr = 0;
     while ((ok = optread(opt, '='))) {
@@ -469,7 +504,7 @@ int loadRconsole(Gui gui, const char *optf)
 		if(strlen(opt[1]) > 127) opt[1][127] = '\0';
 		gui->tt_font = FALSE;
 		{
-		    char *pf;
+		    const char *pf;
 		    if ((strlen(opt[1]) > 1) &&
 			(opt[1][0] == 'T') && (opt[1][1] == 'T')) {
 			gui->tt_font = TRUE;
@@ -484,8 +519,8 @@ int loadRconsole(Gui gui, const char *optf)
 		done = 1;
 	    }
 	    if (!strcmp(opt[0], "style")) {
-		strcpy(gui->style, opt[1]); 
- 		done = 1;
+		strcpy(gui->style, opt[1]);
+		done = 1;
 	    }
 	    if (!strcmp(opt[0], "rows")) {
 		gui->crows = atoi(opt[1]);
@@ -579,7 +614,7 @@ int loadRconsole(Gui gui, const char *optf)
 		y *= sign;
 
 		gui->MDIsize = rect(x, y, w, h);
-		
+
 		done = 1;
 	    }
 #endif
@@ -619,20 +654,20 @@ int loadRconsole(Gui gui, const char *optf)
 		done = 1;
 	    }
 	    if (!strcmp(opt[0], "language")) {
-		strcpy(gui->language, opt[1]); 
- 		done = 1;
+		strcpy(gui->language, opt[1]);
+		done = 1;
 	    }
 	    if (!strcmp(opt[0], "buffered")) {
 		if (!strcmp(opt[1], "yes"))
 		    gui->buffered = 1;
 		else if (!strcmp(opt[1], "no"))
-		    gui->buffered = 0;		
- 		done = 1;
+		    gui->buffered = 0;
+		done = 1;
 	    }
 	} else if (ok == 3) { /* opt[1] == "" */
 	    if (!strcmp(opt[0], "language")) {
-		strcpy(gui->language, opt[1]); 
- 		done = 1;
+		strcpy(gui->language, opt[1]);
+		done = 1;
 	    }
 	}
 	if (!done) {
@@ -660,7 +695,7 @@ static void cancel(button b)
 
 static void ok(button b)
 {
-    do_apply(); 
+    do_apply();
     cleanup();
     show(RConsole);
 }
@@ -680,12 +715,12 @@ static void cSDI(button b)
 static void showDialog(Gui gui)
 {
     char buf[100];
-        
+
     wconfig = newwindow(G_("Rgui Configuration Editor"), rect(0, 0, 550, 450),
 			Titlebar | Centered | Modal);
     setbackground(wconfig, dialog_bg());
     l_mdi = newlabel("Single or multiple windows",
-		      rect(10, 10, 140, 20), AlignLeft);
+		     rect(10, 10, 140, 20), AlignLeft);
     rb_mdi = newradiobutton("MDI", rect(150, 10 , 70, 20), cMDI);
     rb_sdi = newradiobutton("SDI", rect(220, 10 , 70, 20), cSDI);
 
@@ -706,7 +741,7 @@ static void showDialog(Gui gui)
     rb_swin = newradiobutton("single window", rect(150, 60 , 150, 20), NULL);
     if(gui->pagerMultiple) check(rb_mwin); else check(rb_swin);
 
-    l_lang = newlabel("Language for menus\nand messages", 
+    l_lang = newlabel("Language for menus\nand messages",
 		      rect(320, 40, 130, 40), AlignLeft);
     f_lang = newfield(gui->language, rect(450, 45, 60, 20));
 
@@ -745,7 +780,7 @@ static void showDialog(Gui gui)
 			   rect(20, 175, 200, 20), NULL);
     if(gui->setWidthOnResize) check(c_resize);
 
-    l_cbb = newlabel("buffer bytes", rect(270, 175, 70, 20), AlignLeft);
+    l_cbb = newlabel("buffer chars", rect(270, 175, 70, 20), AlignLeft);
     sprintf(buf, "%d", gui->cbb);
     f_cbb = newfield(buf, rect(350, 175, 60, 20));
     l_cbl = newlabel("lines", rect(430, 175, 50, 20), AlignLeft);
@@ -766,7 +801,7 @@ static void showDialog(Gui gui)
 
 /* Graphics window */
     l_grx = newlabel("Graphics windows: initial left",
-		    rect(10, 260, 190, 20), AlignLeft);
+		     rect(10, 260, 190, 20), AlignLeft);
     sprintf(buf, "%d", gui->grx);
     f_grx = newfield(buf, rect(200, 260, 40, 20));
     l_gry = newlabel("top", rect(270, 260, 30, 20), AlignLeft);
@@ -800,8 +835,8 @@ static void showDialog(Gui gui)
 
 void Rgui_configure()
 {
-    struct structGUI curGUI;  
-    
+    struct structGUI curGUI;
+
     getActive(&curGUI);
     showDialog(&curGUI);
 }

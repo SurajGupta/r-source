@@ -93,6 +93,8 @@ gregexpr(pattern, text, ignore.case = FALSE, extended = TRUE,
 
   PCRE only supports caseless matching for a non-ASCII pattern in a
   UTF-8 locale (and not for \code{useBytes = TRUE} in any locale).
+
+  Inputs with embedded nul bytes will be truncated at the first nul.
 }
 \value{
   For \code{grep} a vector giving either the indices of the elements of
@@ -102,6 +104,15 @@ gregexpr(pattern, text, ignore.case = FALSE, extended = TRUE,
 
   For \code{sub} and \code{gsub} a character vector of the same length
   and with the same attributes as \code{x} (after possible coercion).
+  Elements of character vectors \code{x} which are not subsituted will
+  be return unchanged (including any declared encoding).  If
+  \code{useBytes = FALSE}, either \code{perl = TRUE} or \code{fixed =
+    TRUE} and any element of \code{pattern}, \code{replacement} and
+  \code{x} is declared to be in UTF-8, the result will be in UTF-8.
+  Otherwise changed elements of the result will be have the encoding
+  declared as that of the current locale (see \code{\link{Encoding}} if
+  the corresponding input had a declared encoding and the current locale
+  is either Latin-1 or UTF-8.
 
   For \code{regexpr} an integer vector of the same length as \code{text}
   giving the starting position of the first match, or \eqn{-1} if there
@@ -158,7 +169,7 @@ gregexpr(pattern, text, ignore.case = FALSE, extended = TRUE,
 grep("[a-z]", letters)
 
 txt <- c("arm","foot","lefroo", "bafoobar")
-if(any(i <- grep("foo",txt)))
+if(length(i <- grep("foo",txt)))
    cat("'foo' appears at least once in\n\t",txt,"\n")
 i # 2 and 4
 txt[i]

@@ -3,7 +3,7 @@
 
 require(datasets)
 require(grDevices); require(graphics)
-opar <- par(ask = dev.interactive(orNone = TRUE))
+oask <- devAskNewPage(dev.interactive(orNone = TRUE))
 
 
 ## (1) The Obligatory Mathematical surface.
@@ -21,7 +21,7 @@ sinc.exp <- expression(z == Sinc(sqrt(x^2 + y^2)))
 z <- outer(x, y, rotsinc)
 
 
-par(bg = "white")
+oldpar <- par(bg = "white")
 persp(x, y, z, theta = 30, phi = 30, expand = 0.5, col = "lightblue")
 title(sub=".")## work around persp+plotmath bug
 title(main = sinc.exp)
@@ -84,4 +84,5 @@ persp(x, y, 2*z, theta = 110, phi = 40, col = fcol, scale = FALSE,
 
 
 ## reset par():
-par(opar)
+par(oldpar)
+devAskNewPage(oask)

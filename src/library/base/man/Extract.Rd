@@ -23,8 +23,8 @@
 \usage{
 x[i]
 x[i, j, \dots , drop = TRUE]
-x[[i, exact = NA]]
-x[[i, j, \dots, exact = NA]]
+x[[i, exact = TRUE]]
+x[[i, j, \dots, exact = TRUE]]
 x$name
 }
 \arguments{
@@ -61,14 +61,15 @@ x$name
   }
   \item{drop}{For matrices and arrays.  If \code{TRUE} the result is
     coerced to the lowest possible dimension (see the examples).  This
-    only works for extracting elements, not for the replacement.
+    only works for extracting elements, not for the replacement.  See
+    \code{\link{drop}} for further details.
   }
   \item{exact}{Controls possible partial matching of \code{[[} when
     extracting by a character vector (for most objects, but see under
-    \sQuote{Environments}). The default value, \code{NA}, allows partial
-    matching, but issues a warning when it occurs.  When \code{TRUE}, no
-    partial matching is performed.  When \code{FALSE}, partial matching
-    is allowed and no warning is issued when it occurs.}
+    \sQuote{Environments}).  The default is no partial matching.  Value
+    \code{NA} allows partial matching but issues a warning when it
+    occurs.  Value \code{FALSE} allows partial matching without any
+    warning.}
 }
 \details{
   These operators are generic.  You can write methods to handle indexing
@@ -85,10 +86,10 @@ x$name
 
   The default methods work somewhat differently for atomic vectors,
   matrices/arrays and for recursive (list-like, see
-  \code{\link{is.recursive}}) objects.  \code{$} returns \code{NULL}
-  (with a warning) except for recursive objects, and is only discussed
-  in the section below on recursive objects.  Its use on non-recursive
-  objects was deprecated in \R 2.5.0 and will be removed in \R 2.7.0.
+  \code{\link{is.recursive}}) objects.  \code{$} is only valid for
+  recursive objects, and is only discussed in the section below on
+  recursive objects.  Its use on non-recursive objects was deprecated in
+  \R 2.5.0 and removed in \R 2.7.0.
 
   Subsetting (except by an empty index) will drop all attributes except
   \code{names}, \code{dim} and \code{dimnames}.
@@ -161,6 +162,9 @@ x$name
   equivalent to \code{alist[[i1]]\dots[[ip]]} providing all but the
   final indexing results in a list.
 
+  When either \code{[[} or \code{$} is used for replacement, a value of
+  \code{NULL} deletes the corresponding item of the list.
+
   When \code{$<-} is applied to a \code{NULL} \code{x}, it first coerces
   \code{x} to \code{list()}.  This is what also happens with \code{[[<-}
   if the replacement value \code{value} is of length greater than one:
@@ -216,28 +220,24 @@ x$name
   \code{\link{pmatch}}) to the names or dimnames of the object being
   subsetted (but never for subassignment).  Unlike S (Becker \emph{et
     al} p. 358)), \R has never used partial matching when extracting by
-  \code{[}.  Partial matching is currently used by default for
-  extraction by \code{[[} (see argument \code{exact}).
+  \code{[}.  As from \R 2.7.0, partial matching is not by default used
+  by \code{[[} (see argument \code{exact}).
 
-  Partial matching is used when extracting (only) from recursive objects
-  (except environments) by \code{$}.  In that case, warnings can be
-  switched on by \code{\link{options}(warnPartialMatchAttr = TRUE)}.
+  Thus the default behaviour is to use partial matching only when
+  extracting from recursive objects (except environments) by \code{$}.
+  Even in that case, warnings can be switched on by
+  \code{\link{options}(warnPartialMatchAttr = TRUE)}.
 
-  The intention is that neither empty (\code{""}) nor \code{NA} indices
-  match any names, not even empty nor missing names.  If any object has
-  no names or appropriate dimnames, they are taken as all \code{""} and
-  so match nothing.  The implementation for \code{""} is currently
-  incomplete (they do match empty names in some circumstances), but such
-  names should be avoided as this will be altered in future versions of \R.
+  Neither empty (\code{""}) nor \code{NA} indices match any names, not
+  even empty nor missing names.  If any object has no names or
+  appropriate dimnames, they are taken as all \code{""} and so match
+  nothing.
 }
 \note{
   The documented behaviour of S is that an \code{NA} replacement index
   \sQuote{goes nowhere} but uses up an element of \code{value}
-  (Becker \emph{et al} p. 359).  However, that is not the current
-  behaviour of S-PLUS.
-
-  The default for \code{exact} will become \code{exact=TRUE} in \R
-  2.7.0: partial matching for \code{$} will remain the default.
+  (Becker \emph{et al} p. 359).  However, that has not been true of
+  other implementations.
 }
 \references{
   Becker, R. A., Chambers, J. M. and Wilks, A. R. (1988)
@@ -247,9 +247,6 @@ x$name
 \seealso{
   \code{\link{names}} for details of matching to names, and
   \code{\link{pmatch}} for partial matching.
-  
-  \code{\link{options}(warnPartialMatchAttr = TRUE)} causes partial
-  matches in \code{$name} to give warnings.
 
   \code{\link{list}}, \code{\link{array}}, \code{\link{matrix}}.
 

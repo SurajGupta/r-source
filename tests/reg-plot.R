@@ -27,7 +27,7 @@ known <- c(32:126, 160:255)
 for(i in known) {
     x <- i %% 16
     y <- i %/% 16
-    points(x, y, pch=i)
+    points(x, y, pch=-i)
 }
 
 par(pty="m")
@@ -122,5 +122,16 @@ plot(cos, -7,7, n=11, axes=FALSE)
 ## gave wrong ylab in R 2.6.0
 plot(cos, -7,7, ylab = "Cosine  cos(x)", n=11, axes=FALSE)
 ## partial matching of 'ylab'; mapping  [0,1] (not [-7.7]):
-plot(gamma, yla = 'Gamma(x)', n=11, yaxt="n")
+## margins chosen to avoid rouding error showing to 2dp.
+op <- par(mar=c(5,4.123,4,2)+0.1)
+plot(gamma, yla = expression(Gamma(x)), n=11, yaxt="n")
+par(op)
 
+## plot.ts(x, y) could get the labels wrong in R <= 2.6.0:
+x <- ts(1:5);x1 <- lag(x, 2); plot(x1, x, axes=FALSE)
+
+# adding a curve in log scale :
+curve(5*exp(-x), 0.1, 100, n = 3, log="x", ylab="", axes=FALSE)
+curve(5*exp(-x), add=TRUE, n = 3, col=2,lwd=3)
+## should fully overplot; wrong default xlim in 2.6.1
+## (and *slightly* wrong up to 2.6.0)

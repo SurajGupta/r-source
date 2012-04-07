@@ -14,7 +14,7 @@
 #  A copy of the GNU General Public License is available at
 #  http://www.r-project.org/Licenses/
 
-dev2bitmap <- function(file, type="png256", height=6, width=6, res=72,
+dev2bitmap <- function(file, type="png256", height = 7, width = 7, res = 72,
                        units = "in", pointsize, ...,
                        method = c("postscript", "pdf"))
 {
@@ -26,6 +26,7 @@ dev2bitmap <- function(file, type="png256", height=6, width=6, res=72,
     height <- switch(units, "in"=1, "cm"=1/2.54, "mm"=1/25.4, "px"=1/res) * height
     width <- switch(units, "in"=1, "cm"=1/2.54, "mm"=1/25.4, "px"=1/res) * width
     gsexe <- Sys.getenv("R_GSCMD")
+    if(!nzchar(gsexe)) gsexe <- Sys.getenv("GSC")
     if(is.null(gsexe) || !nzchar(gsexe)) {
         gsexe <- "gswin32c.exe"
     } else if(length(grep(" ", gsexe, fixed=TRUE))> 0)
@@ -67,7 +68,7 @@ dev2bitmap <- function(file, type="png256", height=6, width=6, res=72,
     invisible()
 }
 
-bitmap <- function(file, type="png256", height=6, width=6, res=72,
+bitmap <- function(file, type="png256", height = 7, width = 7, res = 72,
                    units = "in", pointsize, ...)
 {
     if(missing(file)) stop("'file' is missing with no default")
@@ -77,6 +78,7 @@ bitmap <- function(file, type="png256", height=6, width=6, res=72,
     height <- switch(units, "in"=1, "cm"=1/2.54, "mm"=1/25.4, "px"=1/res) * height
     width <- switch(units, "in"=1, "cm"=1/2.54, "mm"=1/25.4, "px"=1/res) * width
     gsexe <- Sys.getenv("R_GSCMD")
+    if(!nzchar(gsexe)) gsexe <- Sys.getenv("GSC")
     if(is.null(gsexe) || !nzchar(gsexe)) {
         gsexe <- "gswin32c.exe"
     } else if(length(grep(" ", gsexe, fixed=TRUE))> 0)

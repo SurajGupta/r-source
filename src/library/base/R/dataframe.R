@@ -595,7 +595,7 @@ data.frame <-
     x
 }
 
-"[[.data.frame" <- function(x, ..., exact=NA)
+"[[.data.frame" <- function(x, ..., exact=TRUE)
 {
     ## use in-line functions to refer to the 1st and 2nd ... arguments
     ## explicitly. Also will check for wrong number or empty args
@@ -810,14 +810,18 @@ data.frame <-
     ncolv <- dimv[2L]
     jvseq <- seq_len(p)
     if(ncolv < p) jvseq <- rep(seq_len(ncolv), length.out = p)
-    else if(ncolv > p)
+    else if(ncolv > p) {
 	warning(gettextf("provided %d variables to replace %d variables",
                          ncolv, p), domain = NA)
+        new.cols <- new.cols[seq_len(p)]
+    }
     if(length(new.cols)) {
         ## extend and name now, as assignment of NULL may delete cols later.
         nm <- names(x)
         rows <- .row_names_info(x, 0L)
+        a <- attributes(x); a["names"] <- NULL
         x <- c(x, vector("list", length(new.cols)))
+        attributes(x) <- a
         names(x) <- c(nm, new.cols)
         attr(x, "row.names") <- rows
     }
@@ -1211,17 +1215,22 @@ rbind.data.frame <- function(..., deparse.level = 1)
 ### coercion and print methods
 
 print.data.frame <-
-    function(x, ..., digits = NULL, quote = FALSE, right = TRUE)
+    function(x, ..., digits = NULL, quote = FALSE, right = TRUE,
+	     row.names = TRUE)
 {
+    n <- length(row.names(x))
     if(length(x) == 0L) {
-	cat("NULL data frame with", length(row.names(x)), "rows\n")
-    } else if(length(row.names(x)) == 0L) {
+	cat("NULL data frame with", n, "rows\n")
+    } else if(n == 0L) {
 	print.default(names(x), quote = FALSE)
 	cat("<0 rows> (or 0-length row.names)\n")
     } else {
-	## avoiding picking up e.g. format.AsIs
-	print(as.matrix(format.data.frame(x, digits=digits, na.encode=FALSE)),
-              ..., quote = quote, right = right)
+	## format.<*>() : avoiding picking up e.g. format.AsIs
+	m <- as.matrix(format.data.frame(x, digits=digits, na.encode=FALSE))
+	if(!isTRUE(row.names))
+	    dimnames(m)[[1]] <- if(identical(row.names,FALSE))
+		rep.int("", n) else row.names
+	print(m, ..., quote = quote, right = right)
     }
     invisible(x)
 }

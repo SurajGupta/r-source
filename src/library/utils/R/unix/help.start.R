@@ -19,26 +19,21 @@ help.start <- function (gui = "irrelevant", browser = getOption("browser"),
 {
     if(is.null(browser))
 	stop("invalid browser name, check options(\"browser\").")
-    if(browser != getOption("browser")) {
+    if (is.character(browser) && browser != getOption("browser")) {
         msg <- gettext("Changing the default browser (as specified by the 'browser' option) to the given browser so that it gets used for all future help requests.")
         writeLines(strwrap(msg, exdent = 4))
         options(browser = browser)
     }
-#     sessiondir <- file.path(tempdir(), ".R")
-#     dir.create(sessiondir)
-#     dir.create(file.path(sessiondir, "doc"))
-#     dir.create(file.path(sessiondir, "doc", "html"))
-    cat(gettext("Making links in per-session dir ...\n"))
-    .Script("sh", "help-links.sh",
-            paste(tempdir(), paste(.libPaths(), collapse = " ")))
     make.packages.html()
     tmpdir <- paste("file://", URLencode(tempdir()), "/.R", sep = "")
     url <- paste(if (is.null(remote)) tmpdir else remote,
 		 "/doc/html/index.html", sep = "")
-    writeLines(strwrap(gettextf("If '%s' is already running, it is *not* restarted, and you must switch to its window.",
-                                browser),
-                       exdent = 4))
-    writeLines(gettext("Otherwise, be patient ..."))
+    if (is.character(browser)) {
+        writeLines(strwrap(gettextf("If '%s' is already running, it is *not* restarted, and you must switch to its window.",
+                                    browser),
+                           exdent = 4))
+        writeLines(gettext("Otherwise, be patient ..."))
+    }
     browseURL(url)
     options(htmlhelp = TRUE)
 }
@@ -53,6 +48,8 @@ browseURL <- function(url, browser = getOption("browser"))
 
     if(!is.character(url) || !(length(url) == 1) || !nzchar(url))
         stop("'url' must be a non-empty character string")
+    if (is.function(browser))
+        return(invisible(browser(url)))
     if(!is.character(browser)
        || !(length(browser) == 1)
        || !nzchar(browser))
@@ -70,7 +67,7 @@ browseURL <- function(url, browser = getOption("browser"))
                "gnome-moz-remote" =, "open" = quotedUrl,
                "galeon" = paste("-x", quotedUrl),
                "kfmclient" = paste("openURL", quotedUrl),
-               "netscape" =, "mozilla" =, "opera" =, "firefox" = {
+               "mozilla" =, "opera" =, "firefox" = {
                    paste("-remote \"openURL(",
                          ## Quote ',' and ')' ...
                          gsub("([,)$])", "%\\1", url), ")\"",
@@ -81,32 +78,41 @@ browseURL <- function(url, browser = getOption("browser"))
                  browser, quotedUrl, "&"))
 }
 
-make.packages.html <- function(lib.loc=.libPaths())
+make.packages.html <- function(lib.loc=.libPaths(), packages = TRUE)
 {
-    f.tg <- file.path(tempdir(), ".R/doc/html/packages.html")
-    if(!file.create(f.tg)) {
-        warning("cannot create HTML package index")
-        return(FALSE)
+    message("Making links in per-session dir ...", " ", appendLF = FALSE)
+    .Script("sh", "help-links.sh",tempdir())
+    if(packages) {
+        f.tg <- file.path(tempdir(), ".R/doc/html/packages.html")
+        if(!file.create(f.tg)) {
+            warning("cannot create HTML package index")
+            return(FALSE)
+        }
+        searchindex <- file.path(tempdir(), ".R/doc/html/search/index.txt")
+        if(!file.create(searchindex)) {
+            warning("cannot create HTML search index")
+            return(FALSE)
+        }
+        ## First we need to fathom out what encoding to use.
+        ## For now we assume that if we have iconv then UTF-8 is OK.
+        useUTF8 <- capabilities("iconv")
+        file.append(f.tg, file.path(R.home("doc"), "html",
+                                    if(useUTF8) "packages-head-utf8.html"
+                                    else "packages-head.html"))
+        out <- file(f.tg, open="a")
+        search <- file(searchindex, open="w")
     }
-    searchindex <- file.path(tempdir(), ".R/doc/html/search/index.txt")
-    if(!file.create(searchindex)) {
-        warning("cannot create HTML search index")
-        return(FALSE)
-    }
-    ## First we need to fathom out what encoding to use.
-    ## For now we assume that if we have iconv then UTF-8 is OK.
-    useUTF8 <- capabilities("iconv")
-    file.append(f.tg, file.path(R.home("doc"), "html",
-				if(useUTF8) "packages-head-utf8.html"
-				else "packages-head.html"))
-    out <- file(f.tg, open="a")
-    search <- file(searchindex, open="w")
     known <- character(0)
     for (lib in lib.loc) {
-        cat("<p><h3>Packages in ", lib,
-            '</h3>\n<p><table width="100%" summary="R Package list">\n',
-            sep = "", file=out)
-        pg <- sort(.packages(all.available = TRUE, lib.loc = lib))
+        if(packages)
+            cat("<p><h3>Packages in ", lib,
+                '</h3>\n<p><table width="100%" summary="R Package list">\n',
+                sep = "", file=out)
+        ## too slow
+        ## pg <- sort(.packages(all.available = TRUE, lib.loc = lib))
+        pg <- Sys.glob(file.path(lib, "*", "DESCRIPTION"))
+        pg <- sort(sub(paste(lib, "([^/]*)", "DESCRIPTION$", sep="/"),
+                       "\\1", pg))
         for (i in pg) {
             ## links are set up to break ties of package names
             before <- sum(i %in% known)
@@ -114,7 +120,8 @@ make.packages.html <- function(lib.loc=.libPaths())
             from <- file.path(lib, i)
             to <- file.path(tempdir(), ".R", "library", link)
             file.symlink(from, to)
-            title <- packageDescription(i, lib.loc = lib, field = "Title",
+            if(!packages) next
+            title <- packageDescription(i, lib.loc = lib, fields = "Title",
                                         encoding = ifelse(useUTF8,"UTF-8",""))
             if (is.na(title)) title <- "-- Title is missing --"
             cat('<tr align="left" valign="top">\n',
@@ -132,11 +139,14 @@ make.packages.html <- function(lib.loc=.libPaths())
                          contents[isURL], fixed = TRUE, useBytes = TRUE)
             writeLines(c(contents, ""), search)  # space between packages
         }
-        cat("</table>\n\n", file=out)
+        if(packages)cat("</table>\n\n", file=out)
         known <- c(known, pg)
     }
-    cat("</body></html>\n", file=out)
-    close(out)
-    close(search)
+    if(packages) {
+        cat("</body></html>\n", file=out)
+        close(out)
+        close(search)
+    }
+    message("done")
     invisible(TRUE)
 }

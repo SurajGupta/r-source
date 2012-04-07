@@ -165,7 +165,7 @@ simpleLoess <-
 			       as.double(fitted.residuals),
 			       as.integer(N),
 			       robust = double(N),
-			       double(N))$robust
+			       integer(N))$robust
     }
     if(surface == "interpolate")
     {
@@ -182,7 +182,7 @@ simpleLoess <-
 				 as.double(z$fitted.values),
 				 as.double(weights),
 				 as.double(robust),
-				 double(N),
+				 integer(N),
 				 pseudovalues = double(N))$pseudovalues
 	zz <- .C(R_loess_raw,
 		as.double(pseudovalues),
@@ -236,16 +236,10 @@ predict.loess <- function(object, newdata = NULL, se = FALSE, ...)
     if(is.null(newdata) && !se)
 	return(fitted(object))
 
-    if(is.null(newdata)) newx <- object$x
-    else {
-	vars <- as.character(attr(delete.response(terms(object)),
-				  "variables"))[-1]
-	newx <- if(length(vars) > 1 || NCOL(newdata) > 1) {
-	    if(any(!match(vars, colnames(newdata), FALSE)))
-		stop("'newdata' does not contain the variables needed")
-	    as.matrix(newdata[, vars, drop=FALSE])
-	} else as.matrix(newdata)
-    }
+    newx <- if(is.null(newdata)) object$x
+    else if(is.data.frame(newdata))
+        as.matrix(model.frame(delete.response(terms(object)), newdata))
+    else as.matrix(newdata)
     res <- predLoess(object$y, object$x, newx, object$s, object$weights,
 		     object$pars$robust, object$pars$span, object$pars$degree,
 		     object$pars$normalize, object$pars$parametric,

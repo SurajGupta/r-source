@@ -164,9 +164,9 @@ getOption(x)
     \item{\code{pager}:}{the command used for displaying text files by
       \code{\link{file.show}}.
 #ifdef unix
-      Defaults to \file{\$R\_HOME/bin/pager}, which selects a pager via
-      the \env{PAGER} environment variable (and that usually defaults to
-      \code{less}).
+      Defaults to \file{\var{R\_HOME}/bin/pager}, which selects a pager
+      via the \env{PAGER} environment variable (and that usually
+      defaults to \code{less}).
 #endif
 #ifdef windows
       Defaults to \code{"internal"}, which uses a pager similar to the
@@ -328,53 +328,40 @@ getOption(x)
       the name of a function, or the function object itself,
       which when called creates a new graphics device of the default
       type for that session.  The value of this option defaults to the
-      normal screen device (e.g., \code{x11}, \code{windows} or
-      \code{quartz}) for an interactive session, and \code{postscript}
-      in batch use or if a screen is not available.  If named, it is
-      looked for first from the global environment and then in the
-      \pkg{grDevices} namespace.}
+      normal screen device (e.g., \code{X11}, \code{windows} or
+      \code{quartz}) for an interactive session, and \code{pdf}
+      in batch use or if a screen is not available.  If set to the name
+      of a device, the device is looked for first from the global
+      environment (that is down the usual search path) and then in the
+      \pkg{grDevices} namespace.
+
+      The default values in interactive and non-interactive sessions are
+      configurable via environment variables
+      \env{R\_INTERACTIVE\_DEVICE} and \env{R\_DEFAULT\_DEVICE}
+      respectively.
+    }
 
     \item{\code{locatorBell}:}{logical.  Should selection in \code{locator}
       and \code{identify} be confirmed by a bell?  Default \code{TRUE}.
       Honoured at least on \code{X11} and \code{windows} devices.}
 
-    \item{\code{par.ask.default}:}{logical.  The default for
-      \code{\link{par}("ask")} when a device is opened.}
+    \item{\code{device.ask.default}:}{logical.  The default for
+      \code{\link{devAskNewPage}("ask")} when a device is opened.}
 
 #ifdef unix
-    \item{\code{X11colortype}:}{The default colour type for
-      \code{\link{X11}} devices.  Default \code{"true"}.}
-
-    \item{\code{X11fonts}:}{character vector of length 2.
-      See \code{\link{X11}}.}
-
-    \item{\code{gamma}:}{double.  The default value of
-      \code{gamma} for \code{\link{X11}} devices, defaulting to 1
-      if unset (the default).}
+    \item{\code{bitmapType}:}{character.  The default type for the
+      bitmap devices such as \code{\link{png}}.  Defaults to
+      \code{"cairo"} on systems where that is available, or to
+      \code{"quartz"} on Mac OS X where that is available.}
 #endif
 #ifdef windows
-    \item{\code{gamma}:}{double. The default value of
-      \code{gamma} for \code{\link{windows}} devices, defaulting to 1
-      if unset (the default).}
-
-    \item{\code{graphics.record}:}{logical.  The default value of
-      \code{record} for \code{\link{windows}} devices.  Default
-      \code{FALSE}.}
-
-    \item{\code{windowsBuffered}:}{logical.  Should
-      \code{\link{windows}} devices be double-buffered?.  Default
-      \code{TRUE}.}
-
     \item{\code{windowsTimeout}:}{integer vector of length 2
       representing two times in milliseconds.  These control the
       double-buffering of \code{\link{windows}} devices when that is
       enabled: the first is the delay after plotting finishes
       (default 100) and the second is the update interval during
-      continuous plotting (default 500).}
-
-    \item{\code{xpinch, ypinch}:}{double.  Pixels per inch, horizontally and
-      vertically, for the \code{\link{windows}} device.  If unset
-      (the default), taken from Windows.}
+      continuous plotting (default 500).  The values at the time the
+      device is opened are used.}
 #endif
   }
 }
@@ -413,17 +400,19 @@ getOption(x)
   \describe{
     \item{\code{browser}:}{default HTML browser used by
       \code{\link{help.start}()} on UNIX, or a non-default browser on
-      Windows.}
+      Windows.  Alternatively, a function that is called with a URL as
+      its argument. }
 
     \item{\code{de.cellwidth}:}{integer: the cell widths (number of
       characters) to be used in the data editor \code{\link{dataentry}}.
       If this is unset (the default), 0, negative or \code{NA}, variable
       cell widths are used.}
 
-    \item{\code{editor}:}{a non-empty string.
+    \item{\code{editor}:}{a non-empty string, or a function that is
+      called with a file path as argument.
       Sets the default text editor, e.g., for
       \code{\link{edit}}.  Set from the environment variable
-      \code{VISUAL} on UNIX.}
+      \env{VISUAL} on UNIX.}
 
     \item{\code{example.ask}:}{default for the \code{ask} argument of
       \code{\link{example}}.}

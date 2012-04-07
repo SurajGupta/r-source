@@ -1,7 +1,7 @@
 /*
  *  R : A Computer Language for Statistical Data Analysis
  *  Copyright (C) 1995, 1996  Robert Gentleman and Ross Ihaka
- *  Copyright (C) 1998--2007  The R Development Core Team.
+ *  Copyright (C) 1998--2008  The R Development Core Team.
  *
  *  This program is free software; you can redistribute it and/or modify
  *  it under the terms of the GNU General Public License as published by
@@ -74,8 +74,8 @@
 #endif
 
 #include <Defn.h>
-#include <Graphics.h> /* display lists */
-#include <Rdevices.h> /* GetDevice */
+#include <R_ext/GraphicsEngine.h> /* GEDevDesc, GEgetDevice */
+#include <R_ext/Rdynload.h>
 
 #if defined(Win32) && defined(LEA_MALLOC)
 /*#include <stddef.h> */
@@ -1185,9 +1185,8 @@ SEXP attribute_hidden do_regFinaliz(SEXP call, SEXP op, SEXP args, SEXP rho)
 static void RunGenCollect(R_size_t size_needed)
 {
     int i, gen, gens_collected;
-    DevDesc *dd;
     RCNTXT *ctxt;
-    SEXP s, t;
+    SEXP s;
     SEXP forwarded_nodes;
 
     /* determine number of generations to collect */
@@ -1278,14 +1277,10 @@ static void RunGenCollect(R_size_t size_needed)
 	FORWARD_NODE(R_CurrentExpr);
 
     for (i = 0; i < R_MaxDevices; i++) {   /* Device display lists */
-	dd = GetDevice(i);
-	if (dd) {
-	    if (dd->newDevStruct) {
-		FORWARD_NODE(((GEDevDesc*) dd)->dev->displayList);
-		FORWARD_NODE(((GEDevDesc*) dd)->dev->savedSnapshot);
-	    }
-	    else
-		FORWARD_NODE(dd->displayList);
+	pGEDevDesc gdd = GEgetDevice(i);
+	if (gdd) {
+	    FORWARD_NODE(gdd->displayList);
+	    FORWARD_NODE(gdd->savedSnapshot);
 	}
     }
 
@@ -1356,8 +1351,10 @@ static void RunGenCollect(R_size_t size_needed)
 
     DEBUG_CHECK_NODE_COUNTS("after processing forwarded list");
 
+#ifdef USE_CHAR_HASHING
     /* process CHARSXP cache */
     { 
+	SEXP t;
 	int nc = 0;
 	for (i = 0; i < LENGTH(R_StringHash); i++) {
 	    s = VECTOR_ELT(R_StringHash, i);
@@ -1382,6 +1379,7 @@ static void RunGenCollect(R_size_t size_needed)
     }
     FORWARD_NODE(R_StringHash);
     PROCESS_NODES();
+#endif
 
     /* release large vector allocations */
     ReleaseLargeFreeVectors();
@@ -1536,7 +1534,7 @@ static void mem_err_heap(R_size_t size)
 }
 
 
-static void mem_err_cons()
+static void mem_err_cons(void)
 {
     errorcall(R_NilValue, _("cons memory exhausted (limit reached?)"));
 }
@@ -1559,7 +1557,7 @@ void attribute_hidden InitMemory()
 	R_Suicide("couldn't allocate memory for pointer stack");
     R_PPStackTop = 0;
 #if VALGRIND_LEVEL > 1
-    VALGRIND_MAKE_NOACCESS(R_PPStackTop+R_PPStackSize,PP_REDZONE_SIZE);
+    VALGRIND_MAKE_NOACCESS(R_PPStack+R_PPStackSize,PP_REDZONE_SIZE);
 #endif
     vsfac = sizeof(VECREC);
     R_VSize = (((R_VSize + 1)/ vsfac));
@@ -2088,7 +2086,7 @@ SEXP allocList(int n)
     return result;
 }
 
-SEXP allocS4Object()
+SEXP allocS4Object(void)
 {
    SEXP s;
    GC_PROT(s = allocSExpNonCons(S4SXP));
@@ -2235,9 +2233,9 @@ SEXP attribute_hidden do_memoryprofile(SEXP call, SEXP op, SEXP args, SEXP env)
     SEXP ans, nms;
     int i, tmp;
 
-    PROTECT(ans = allocVector(INTSXP, 23));
-    PROTECT(nms = allocVector(STRSXP, 23));
-    for (i = 0; i < 23; i++) {
+    PROTECT(ans = allocVector(INTSXP, 24));
+    PROTECT(nms = allocVector(STRSXP, 24));
+    for (i = 0; i < 24; i++) {
         INTEGER(ans)[i] = 0;
 	SET_STRING_ELT(nms, i, type2str(i > LGLSXP? i+2 : i));
     }
@@ -2331,11 +2329,9 @@ void unprotect_ptr(SEXP s)
     } while ( R_PPStack[--i] != s );
 
     /* OK, got it, and  i  is indexing its location */
-    /* Now drop stack above it */
+    /* Now drop stack above it, if any */
 
-    do {
-    	R_PPStack[i] = R_PPStack[i + 1];
-    } while ( i++ < R_PPStackTop );
+    while (++i < R_PPStackTop) R_PPStack[i - 1] = R_PPStack[i];
 
     R_PPStackTop--;
 }
@@ -2825,7 +2821,7 @@ SEXP (SET_CXTAIL)(SEXP x, SEXP v) {
 #ifdef USE_TYPE_CHECKING
     if(TYPEOF(v) != CHARSXP && TYPEOF(v) != NILSXP) 
 	error("value of 'SET_CXTAIL' must be a char or NULL, not a '%s'", 
-	      type2char(TYPEOF(x)));
+	      type2char(TYPEOF(v)));
 #endif
     /*CHECK_OLD_TO_NEW(x, v); *//* not needed since not properly traced */
     ATTRIB(x) = v;
@@ -2866,6 +2862,7 @@ void attribute_hidden (SET_LATIN1)(SEXP x) { SET_LATIN1(x); }
 void attribute_hidden (SET_UTF8)(SEXP x) { SET_UTF8(x); }
 void attribute_hidden (UNSET_LATIN1)(SEXP x) { UNSET_LATIN1(x); }
 void attribute_hidden (UNSET_UTF8)(SEXP x) { UNSET_UTF8(x); }
+int  attribute_hidden (ENC_KNOWN)(SEXP x) { return ENC_KNOWN(x); }
 
 /*******************************************/
 /* Non-sampling memory use profiler
@@ -2936,11 +2933,11 @@ static void R_EndMemReporting()
     return;
 }
 
-static void R_InitMemReporting(const char *filename, int append,
+static void R_InitMemReporting(SEXP filename, int append,
 			       R_size_t threshold)
 {
     if(R_MemReportingOutfile != NULL) R_EndMemReporting();
-    R_MemReportingOutfile = fopen(filename, append ? "a" : "w");
+    R_MemReportingOutfile = RC_fopen(filename, append ? "a" : "w", TRUE);
     if (R_MemReportingOutfile == NULL)
 	error(_("Rprofmem: cannot open output file '%s'"), filename);
     R_MemReportingThreshold = threshold;
@@ -2950,7 +2947,7 @@ static void R_InitMemReporting(const char *filename, int append,
 
 SEXP attribute_hidden do_Rprofmem(SEXP call, SEXP op, SEXP args, SEXP rho)
 {
-    const char *filename;
+    SEXP filename;
     R_size_t threshold;
     int append_mode;
 
@@ -2958,9 +2955,9 @@ SEXP attribute_hidden do_Rprofmem(SEXP call, SEXP op, SEXP args, SEXP rho)
     if (!isString(CAR(args)) || (LENGTH(CAR(args))) != 1)
 	error(_("invalid '%s' argument"), "filename");
     append_mode = asLogical(CADR(args));
-    filename = R_ExpandFileName(CHAR(STRING_ELT(CAR(args), 0)));
+    filename = STRING_ELT(CAR(args), 0);
     threshold = REAL(CADDR(args))[0];
-    if (strlen(filename))
+    if (strlen(CHAR(filename)))
 	R_InitMemReporting(filename, append_mode, threshold);
     else
 	R_EndMemReporting();

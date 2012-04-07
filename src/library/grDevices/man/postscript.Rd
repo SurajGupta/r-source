@@ -1,6 +1,6 @@
 % File src/library/grDevices/man/postscript.Rd
 % Part of the R package, http://www.R-project.org
-% Copyright 1995-2007 R Core Development Team
+% Copyright 1995-2008 R Core Development Team
 % Distributed under GPL 2 or later
 
 \name{postscript}
@@ -16,9 +16,7 @@
 %% 	../../../main/devices.c  &   ../../../unix/devPS.c
 \usage{
 postscript(file = ifelse(onefile, "Rplots.ps", "Rplot\%03d.ps"),
-           onefile = TRUE, family,
-           title = "R Graphics Output", fonts = NULL,
-           encoding, bg, fg,
+           onefile, family, title, fonts, encoding, bg, fg,
            width, height, horizontal, pointsize,
            paper, pagecentre, print.it, command, colormodel)
 }
@@ -32,24 +30,27 @@ postscript(file = ifelse(onefile, "Rplots.ps", "Rplot\%03d.ps"),
 #endif
 
     For use with \code{onefile = FALSE} give a \code{printf} format such
-    as \code{"Rplot\%03d.ps"} (the default in that case).
+    as \code{"Rplot\%03d.ps"} (the default in that case).  The string
+    should not otherwise contain a \code{\%}: if it is really necessary,
+    use \code{\%\%} in the string for \code{\%} in the file name.
+    A single integer format matching the \link{regular expression}
+    \code{"\%[#0 +=-]*[0-9.]*[diouxX]"} is allowed.
   }
   \item{onefile}{logical: if true (the default) allow multiple figures
     in one file.  If false, generate a file name containing the page
     number for each page and use an EPSF header and no
-    \code{DocumentMedia} comment.}
+    \code{DocumentMedia} comment.  Defaults to the \code{TRUE}.}
   \item{family}{the initial font family to be used, normally as a
-    character string.  See the section \sQuote{Families}.  This defaults
-    to the setting given by \code{\link{ps.options}()}, which defaults to
+    character string.  See the section \sQuote{Families}.  Defaults to
     \code{"Helvetica"}.}
-  \item{title}{title string to embed as the \code{Title} comment in the file.}
+  \item{title}{title string to embed as the \code{Title} comment in the
+    file.  Defaults to \code{"R Graphics Output"}.}
   \item{fonts}{a character vector specifying additional \R graphics font
     family names for font families whose declarations will be included
     in the PostScript file and are available for use with the device.
-    See \sQuote{Families} below.}
+    See \sQuote{Families} below.  Defaults to \code{NULL}.}
   \item{encoding}{the name of an encoding file.  Defaults to
-    to the setting given by \code{\link{ps.options}()}, which defaults
-    to \code{"default"}.  The latter is interpreted as
+    \code{"default"}.  The latter is interpreted as
 #ifdef unix
     \file{"ISOLatin1.enc"} unless the locale is recognized as
     corresponding to a language using ISO 8859-{5,7,13,15} or KOI8-{R,U}.
@@ -64,48 +65,40 @@ postscript(file = ifelse(onefile, "Rplots.ps", "Rplot\%03d.ps"),
     \pkg{grDevices} if the path does not contain a path separator.  An
     extension \code{".enc"} can be omitted.
   }
-  \item{bg}{the default background color to be used.  If
-    \code{"transparent"} (or an equivalent specification), no background
-    is painted.  Defaults to the setting given by
-    \code{\link{ps.options}()}, which defaults to \code{"transparent"}.}
-  \item{fg}{the default foreground color to be used.  Defaults to
-    to the setting given by \code{\link{ps.options}()}, which defaults
-    to \code{"black"}.}
+  \item{bg}{the initial background color to be used.  If
+    \code{"transparent"} (or any other non-opaque colour), no background
+    is painted.  Defaults to \code{"transparent"}.}
+  \item{fg}{the initial foreground color to be used.  Defaults to
+    \code{"black"}.}
   \item{width, height}{the width and height of the graphics region in
-    inches.  Default to the settings given by \code{\link{ps.options}()},
-    which default to \code{0}.
+    inches.  Default to t\code{0}.
 
     If \code{paper != "special"} and \code{width} or \code{height} is less
     than \code{0.1} or too large to give a total margin of 0.5 inch, it is
     reset to the corresponding paper dimension minus 0.5.
   }
   \item{horizontal}{the orientation of the printed image, a logical.
-    Defaults to the setting given by \code{\link{ps.options}()},
-    which defaults to true, that is landscape orientation on paper sizes
+    Defaults to true, that is landscape orientation on paper sizes
     with width less than height.}
   \item{pointsize}{the default point size to be used.  Strictly
     speaking, in bp, that is 1/72 of an inch, but approximately in
-    points.  Defaults to the setting given by
-    \code{\link{ps.options}()}, which defaults to \code{12}.}
+    points.  Defaults to \code{12}.}
   \item{paper}{the size of paper in the printer.  The choices are
     \code{"a4"}, \code{"letter"} (or \code{"us"}), \code{"legal"} and
     \code{"executive"} (and these can be capitalized).
     Also, \code{"special"} can be used, when arguments \code{width}
     and \code{height} specify the paper size.  A further choice is
-    \code{"default"}: If this is selected, the papersize is taken from
-    the option \code{"papersize"} if that is set and to \code{"a4"} if
-    it is unset or empty.  Defaults to the setting given by
-    \code{\link{ps.options}()}, which defaults to \code{"default"}.}
+    \code{"default"} (the default): If this is selected, the papersize
+    is taken from the option \code{"papersize"} if that is set and to
+    \code{"a4"} if it is unset or empty.}
   \item{pagecentre}{logical: should the device region be centred on the
-    page? -- defaults to the setting given by
-    \code{\link{ps.options}()}, which defaults to true.}
+    page?  Defaults to true.}
   \item{print.it}{logical: should the file be printed when the device is
     closed?  (This only applies if \code{file} is a real file name.)
-    Defaults to the setting given by \code{\link{ps.options}()}, which
-    defaults to false.}
-  \item{command}{the command to be used for \sQuote{printing}.  Defaults to
-    option \code{"printcmd"}; this can also be selected as
-    \code{"default"}.  The length limit is \code{2*PATH_MAX},
+    Defaults to false.}
+  \item{command}{the command to be used for \sQuote{printing}.  Defaults
+    to \code{"default"}, the value of option \code{"printcmd"}.  The
+    length limit is \code{2*PATH_MAX},
 #ifdef unix
     typically 8096 bytes.
 #endif
@@ -115,38 +108,17 @@ postscript(file = ifelse(onefile, "Rplots.ps", "Rplot\%03d.ps"),
   }
   \item{colormodel}{a character string describing the color model:
     currently allowed values as \code{"rgb"}, \code{"rgb-nogray"},
-    \code{"gray"} and \code{"cmyk"}. Defaults to the setting given by
-    \code{\link{ps.options}()}, which defaults to \code{"rgb"}.}
+    \code{"gray"} and \code{"cmyk"}. Defaults to \code{"rgb"}.}
 }
 \details{
+  All arguments except \code{file} default to values given by
+  \code{\link{ps.options}()}.  The ultimate defaults are quoted in the
+  arguments section.
+    
   \code{postscript} opens the file \code{file} and the PostScript
   commands needed to plot any graphics requested are written to that
   file.  This file can then be printed on a suitable device to obtain
   hard copy.
-
-  A postscript plot can be printed via \code{postscript} in two ways.
-  \enumerate{
-    \item Setting \code{print.it = TRUE} causes the command given in
-    argument \code{command} to be called with argument \code{"file"}
-    when the device is closed.  Note that the plot file is not deleted
-    unless \code{command} arranges to delete it.
-
-    \item \code{file=""} or \code{file="|cmd"} can be used to print
-    using a pipe on systems that support \file{popen}.  Failure to open the
-    command will probably be reported to the terminal but not to
-    \file{popen}, in which case close the device by \code{dev.off}
-    immediately.
-  }
-#ifdef windows
-  Only the first of these will work on Windows, and the default
-  \code{"printcmd"} is empty and will give an error if
-  \code{print.it=TRUE} is used.  Suitable commands to spool a PostScript
-  file to a printer can be found in \file{RedMon} suite available from
-  \url{http://www.cs.wisc.edu/~ghost/index.html}.  The command will be
-  run in a minimized window.   GSView 4.x provides \file{gsprint.exe}
-  which may be even more convenient (it requires GhostScript version 6.0
-  or later).
-#endif
 
   The \code{file} argument is interpreted as a C integer format as used
   by \code{\link{sprintf}}, with integer argument the page number.
@@ -156,11 +128,11 @@ postscript(file = ifelse(onefile, "Rplots.ps", "Rplot\%03d.ps"),
   The postscript produced for a single \R plot is EPS (\emph{Encapsulated
     PostScript}) compatible, and can be included into other documents,
   e.g., into LaTeX, using \code{\includegraphics{<filename>}}.  For use
-  in this way you will probably want to set \code{horizontal = FALSE,
-    onefile = FALSE, paper = "special"}.  Note that the bounding box is
-  for the device region: if you find the white space around the plot
-  region excessive, reduce the margins of the figure region via
-  \code{\link{par}(mar=)}.
+  in this way you will probably want to use \code{\link{setEPS}()} to
+  set the defaults as \code{horizontal = FALSE, onefile = FALSE, paper =
+    "special"}.  Note that the bounding box is for the \emph{device}
+  region: if you find the white space around the plot region excessive,
+  reduce the margins of the figure region via \code{\link{par}(mar=)}.
 
   Most of the PostScript prologue used is taken from the \R character
   vector \code{.ps.prolog}.  This is marked in the output, and can be
@@ -180,6 +152,12 @@ postscript(file = ifelse(onefile, "Rplots.ps", "Rplot\%03d.ps"),
   \code{cex = 1} corresponds to a square of side 1/72 inch, which is
   also the \sQuote{pixel} size assumed for graphics parameters such as
   \code{"cra"}.
+
+  When the background colour is fully transparent (as is the initial
+  default value), the PostScript produced does not paint the
+  background. Almost all PostScript viewers will use a white canvas so
+  the visual effect is if the background were white.  This will not be
+  the case when printing onto coloured paper, though.
 }
 
 \section{Families}{
@@ -302,13 +280,53 @@ postscript(file = ifelse(onefile, "Rplots.ps", "Rplot\%03d.ps"),
 }
 \section{Color models}{
   The default color model is RGB, with pure gray colors expressed as
-  greyscales.  Color model \code{"rgb-nogray"} uses only  RGB, model
+  greyscales.  Color model \code{"rgb-nogray"} uses only RGB, model
   \code{"cmyk"} only CMYK, and model \code{"gray"} only greyscales (and
   selecting any other colour is an error).  Nothing in \R specifies the
   interpretation of the RGB or CMYK color spaces, and the simplest
   possible conversion to CMYK is used
   (\url{http://en.wikipedia.org/wiki/CMYK_color_model#Mapping_RGB_to_CMYK}).
 }
+
+\section{Printing}{
+  A postscript plot can be printed via \code{postscript} in two ways.
+  \enumerate{
+    \item Setting \code{print.it = TRUE} causes the command given in
+    argument \code{command} to be called with argument \code{"file"}
+    when the device is closed.  Note that the plot file is not deleted
+    unless \code{command} arranges to delete it.
+
+    \item \code{file=""} or \code{file="|cmd"} can be used to print
+    using a pipe on systems that support \file{popen}.  Failure to open the
+    command will probably be reported to the terminal but not to
+    \file{popen}, in which case close the device by \code{dev.off}
+    immediately.
+  }
+#ifdef windows
+  Only the first of these will work on Windows, and the default
+  \code{"printcmd"} is empty and will give an error if
+  \code{print.it=TRUE} is used.  Suitable commands to spool a PostScript
+  file to a printer can be found in \file{RedMon} suite available from
+  \url{http://www.cs.wisc.edu/~ghost/index.html}.  The command will be
+  run in a minimized window.   GSView 4.x provides \file{gsprint.exe}
+  which may be more convenient (it requires GhostScript version 6.0
+  or later).
+#endif
+}
+\section{Conventions}{
+  This section describes the implementation of the conventions for
+  graphics devices set out in the \dQuote{R Internals Manual}.
+
+  \itemize{
+    \item The default device size is 7 inches square.
+    \item Font sizes are in big points.
+    \item The default font family is Helvetica.
+    \item Line widths are as a multiple of 1/96 inch, with no minimum. 
+    \item Circle of any radius are allowed.
+    \item Colours are interpreted by the viewing/printing application.
+  }
+}
+
 \references{
   Becker, R. A., Chambers, J. M. and Wilks, A. R. (1988)
   \emph{The New S Language}.
@@ -319,6 +337,9 @@ postscript(file = ifelse(onefile, "Rplots.ps", "Rplot\%03d.ps"),
   \code{\link{Devices}},
   {\code{\link{check.options}} which is called from both
     \code{\link{ps.options}} and \code{postscript}}.
+#ifdef unix
+  \code{\link{cairo_ps}} for another device that can produce PostScript.
+#endif
 
   More details of font families and encodings and especially handling
   text in a non-Latin-1 encoding and embedding fonts can be found in

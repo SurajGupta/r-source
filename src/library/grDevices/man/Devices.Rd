@@ -1,45 +1,16 @@
 % File src/library/grDevices/man/Devices.Rd
 % Part of the R package, http://www.R-project.org
-% Copyright 1995-2007 R Core Development Team
+% Copyright 1995-2008 R Core Development Team
 % Distributed under GPL 2 or later
 
 \name{Devices}
 \title{List of Graphical Devices}
 \alias{Devices}
 \alias{device}
-% \usage{
-% #ifdef unix
-% X11(\dots)
-% #endif
-% #ifdef windows
-% windows(\dots)
-% #endif
-% %% FIXME:
-% #ifdef aqua
-% quartz(\dots)
-% #endif
-% postscript(\dots)
-% pdf(\dots)
-% pictex(\dots)
-% #ifdef unix
-% png(\dots)
-% jpeg(\dots)
-% GNOME(\dots)
-% #endif
-% #ifdef windows
-% win.metafile(\dots)
-% win.print(\dots)
-% png(\dots)
-% jpeg(\dots)
-% bmp(\dots)
-% #endif
-% xfig(\dots)
-% bitmap(\dots)
-% }
 \description{The following graphics devices are currently available:
   \itemize{
 #ifdef windows
-    \item \code{\link{windows}} The graphics driver for Windows (on screen,
+    \item \code{\link{windows}} The graphics device for Windows (on screen,
     to printer and to Windows metafile).
 #endif
     \item \code{\link{postscript}} Writes PostScript graphics commands to
@@ -51,25 +22,28 @@
     \item \code{\link{png}} PNG bitmap device
     \item \code{\link{jpeg}} JPEG bitmap device
     \item \code{\link{bmp}} BMP bitmap device
+    \item \code{\link{tiff}} TIFF bitmap device
 #endif
     \item \code{\link{xfig}} Device for XFIG graphics file format
     \item \code{\link{bitmap}} bitmap pseudo-device via
     \code{GhostScript} (if available).
   }
 #ifdef unix
-  The following devices will be available if \R was compiled to use them:
+  The following devices will be functional if \R was compiled to use
+  them (they exist but will return with a warning on other systems):
   \itemize{
-    \item \code{\link{X11}} The graphics driver for the X11 Window
-    system
-    \item \code{\link{png}} PNG bitmap device
+    \item \code{\link{X11}} The graphics device for the X11 Window system
+    \item \code{\link{bmp}} Windows bitmap device
     \item \code{\link{jpeg}} JPEG bitmap device
-%% <FIXME>  quartz() also with corresponding --gui aqua ?
-#ifdef aqua
-%%     ^^^^ not yet available
-    \item \code{\link{quartz}} The graphics driver for the Mac OSX
-    native aqua system.
-#endif
-%% </FIXME>
+    \item \code{\link{png}} PNG bitmap device
+    \item \code{\link{tiff}} TIFF bitmap device
+    \item \code{\link{cairo_pdf}}, \code{cairo_ps} PDF and PostScript
+    devices based on cairo graphics.
+
+    \item \code{\link{quartz}} The graphics device for the Mac OS X
+    native Quartz 2d graphics system.  (This is only functional on Mac
+    OS X, but unlike \R < 2.7.0 can be used from the command line and
+    not just from the GUI console.)
   }
 #endif
 }
@@ -78,9 +52,9 @@
   a device to be opened.  Which device is given by
   \code{\link{options}("device")} which is initially set as the most
   appropriate for each platform: a screen device for most interactive use and
-  \code{\link{postscript}} otherwise.  The exception is interactive
+  \code{\link{pdf}} otherwise.  The exception is interactive
   use under Unix if no screen device is known to be available, when
-  \code{postscript()} is used for most systems; \code{pdf()} for Mac OS X.
+  \code{pdf()} is used for most systems.
 }
 \seealso{
   The individual help files for further information on any of the
@@ -93,8 +67,7 @@
 #ifdef unix
 
   \code{\link{capabilities}} to see if \code{\link{X11}}, \code{\link{jpeg}}
-  and \code{\link{png}} are available.
-%% FIXME: aqua / quartz ?
+  \code{\link{png}} and \code{\link{quartz}} are available.
 #endif
 }
 \examples{\dontrun{

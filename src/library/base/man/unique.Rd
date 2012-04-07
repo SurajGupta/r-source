@@ -1,6 +1,6 @@
 % File src/library/base/man/unique.Rd
 % Part of the R package, http://www.R-project.org
-% Copyright 1995-2007 R Core Development Team
+% Copyright 1995-2008 R Core Development Team
 % Distributed under GPL 2 or later
 
 \name{unique}
@@ -28,8 +28,10 @@ unique(x, incomparables = FALSE, \dots)
 \arguments{
   \item{x}{a vector or a data frame or an array or \code{NULL}.}
   \item{incomparables}{a vector of values that cannot be compared.
-    Currently, \code{FALSE} is the only possible value, meaning that all
-    values can be compared.}
+    \code{FALSE} is a special value, meaning that all values can be
+    compared, and nay be the only value accepted for methods other than
+    the default.  It will be coerced internally to the same type as
+       \code{x}.}
   \item{fromLast}{logical indicating if duplication should be considered
     from the last, i.e., the last (or rightmost) of identical elements will
     be kept.  This only matters for \code{\link{names}} or
@@ -51,6 +53,13 @@ unique(x, incomparables = FALSE, \dots)
   \emph{duplicated} and not just \emph{repeated} elements/rows.  That
   is, an element is omitted if it is identical to any previous element
   and not just if it is the same as the immediately previous one.
+  (For the latter, see \code{\link{rle}}).
+
+  Missing values are regarded as equal, but \code{NaN} is not equal to
+  \code{NA_real_}.
+
+  Strings with embedded nuls of the same length will be considered
+  equal if they agree when truncated at the first nul.
 }
 \value{
   For a vector, an object of the same type of \code{x}, but with only

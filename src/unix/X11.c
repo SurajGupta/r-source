@@ -1,6 +1,6 @@
 /*
  *  R : A Computer Language for Statistical Data Analysis
- *  Copyright (C) 1999-2004 The R Development Core Team
+ *  Copyright (C) 1999-2008 The R Development Core Team
  *
  *  This program is free software; you can redistribute it and/or modify
  *  it under the terms of the GNU General Public License as published by
@@ -23,6 +23,7 @@
 
 #include <Defn.h>
 #include <Rconnections.h>
+#include <R_ext/Rdynload.h>
 
 #ifdef HAVE_X11
 
@@ -70,6 +71,28 @@ SEXP attribute_hidden do_X11(SEXP call, SEXP op, SEXP args, SEXP rho)
     R_X11_Init();
     if(initialized > 0)
 	return (*ptr->X11)(call, op, args, rho);
+    else {
+	error(_("X11 module cannot be loaded"));
+	return R_NilValue;
+    }
+}
+
+SEXP attribute_hidden do_cairo(SEXP call, SEXP op, SEXP args, SEXP rho)
+{
+    R_X11_Init();
+    if(initialized > 0)
+	return (*ptr->cairo)(call, op, args, rho);
+    else {
+	error(_("X11 module cannot be loaded"));
+	return R_NilValue;
+    }
+}
+
+SEXP attribute_hidden do_saveplot(SEXP call, SEXP op, SEXP args, SEXP rho)
+{
+    R_X11_Init();
+    if(initialized > 0)
+	return (*ptr->saveplot)(call, op, args, rho);
     else {
 	error(_("X11 module cannot be loaded"));
 	return R_NilValue;
@@ -135,6 +158,18 @@ Rboolean attribute_hidden R_access_X11(void)
 }
 
 SEXP attribute_hidden do_X11(SEXP call, SEXP op, SEXP args, SEXP rho)
+{
+    error(_("X11 is not available"));
+    return R_NilValue;
+}
+
+SEXP attribute_hidden do_cairo(SEXP call, SEXP op, SEXP args, SEXP rho)
+{
+    error(_("X11 is not available"));
+    return R_NilValue;
+}
+
+SEXP attribute_hidden do_saveplot(SEXP call, SEXP op, SEXP args, SEXP rho)
 {
     error(_("X11 is not available"));
     return R_NilValue;

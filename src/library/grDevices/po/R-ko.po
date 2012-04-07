@@ -2,7 +2,7 @@ msgid ""
 msgstr ""
 "Project-Id-Version: R 2.3.0\n"
 "Report-Msgid-Bugs-To: bugs@r-project.org\n"
-"POT-Creation-Date: 2007-05-25 12:17\n"
+"POT-Creation-Date: 2008-04-05 10:49\n"
 "PO-Revision-Date: 2005-05-25 14:17+0900\n"
 "Last-Translator: Korean <uiami@hanmail.com>\n"
 "Language-Team: Korean <translation-team-ko@lists.sourceforge.net>\n"
@@ -103,6 +103,10 @@ msgstr "screen 디바이스로부터만 print가 할수 없습니다"
 msgid "need to specify one of 'width' and 'height'"
 msgstr ""
 
+#, fuzzy
+msgid "can only print from a screen device"
+msgstr "screen 디바이스로부터만 print가 할수 없습니다"
+
 msgid "dev.control() called without an open graphics device"
 msgstr ""
 "dev.control()는 graphics 디바이스가 아무것도 열려 있지 않은데 호출되었습니다"
@@ -114,6 +118,25 @@ msgstr "인수는 default 없음으로 결손이 되고 있습니다"
 msgid "dev.displaylist() called without an open graphics device"
 msgstr ""
 "dev.control()는 graphics 디바이스가 아무것도 열려 있지 않은데 호출되었습니다"
+
+msgid "invalid setting for 'getOption(\"device\")'"
+msgstr ""
+
+msgid "no suitable unused file name for pdf()"
+msgstr ""
+
+msgid "dev.new(): using pdf(file=\"%s\")"
+msgstr ""
+
+msgid "no suitable unused file name for postscript()"
+msgstr ""
+
+msgid "dev.new(): using postscript(file=\"%s\")"
+msgstr ""
+
+#, fuzzy
+msgid "device '%s' not found"
+msgstr "디바이스 '%s'는 유효하지는 않습니다"
 
 #, fuzzy
 msgid "invalid arguments in '%s' (need named args)"
@@ -132,10 +155,17 @@ msgstr "이하의 부적절한 옵션입니다"
 msgid "NOT changing"
 msgstr "변경하지 않습니다"
 
+msgid "argment 'append' is for back-compatibility and will be ignored"
+msgstr ""
+
 msgid "unknown family '%s'"
 msgstr ""
 
 msgid "invalid 'family' argument"
+msgstr "부적절한 'family' 인수입니다"
+
+#, fuzzy
+msgid "invalid 'file'"
 msgstr "부적절한 'family' 인수입니다"
 
 msgid "invalid PDF version"
@@ -238,9 +268,9 @@ msgstr "디바이스 '%s'는 유효하지는 않습니다"
 msgid "Available devices are %s"
 msgstr "이용 가능한 디바이스는 %s입니다"
 
-msgid "quartz() device interactivity reduced without an event loop manager"
-msgstr ""
-"quartz() 디바이스는 event loop manager가 없으므로 쌍방향으로 감소해졌습니다"
+#, fuzzy
+msgid "invalid 'title'"
+msgstr "부적절한 'family' 인수입니다"
 
 msgid "invalid Quartz font:  must be 4 strings"
 msgstr "부적절한 Quartz font입니다: 4개 문자열이 아니면 되지 않습니다"
@@ -251,17 +281,31 @@ msgstr "quartzFonts에서 부적절한 인수입니다(font명이 필요합니�
 msgid "invalid arguments in quartzFonts (need named args)"
 msgstr "quartFonts에서 부적절한 인수입니다(이름이 붙은 인수가 필요합니다)"
 
+msgid "invalid value for 'antialias'"
+msgstr ""
+
+#, fuzzy
+msgid "invalid 'filename'"
+msgstr "부적절한 'family' 인수입니다"
+
 msgid "'res' must be specified unless 'units = \"px\"'"
 msgstr ""
 
 msgid "invalid X11 font specification:"
 msgstr "부적절한 X11 폰트의 지정방법입니다"
 
-msgid "can only bring windows devices to the front"
-msgstr "windows 디바이스만을 그 전방으로 가져 올수가 없습니다"
-
 msgid "no such device"
 msgstr "그러한 디바이스는 없습니다"
+
+#, fuzzy
+msgid "can only copy from 'X11(type=\"cairo\")' devices"
+msgstr "'windows' 디바이스로부터만 복사할수 없습니다"
+
+msgid "invalid value for 'rescale'"
+msgstr ""
+
+msgid "can only bring windows devices to the front"
+msgstr "windows 디바이스만을 그 전방으로 가져 올수가 없습니다"
 
 msgid "can only copy from 'windows' devices"
 msgstr "'windows' 디바이스로부터만 복사할수 없습니다"
@@ -298,3 +342,8 @@ msgstr[0] "%d개의 올바르지 않는 y의 값이 대수 plot로부터 제외�
 msgid "%d z value <= 0 omitted from logarithmic plot"
 msgid_plural "%d z values <= 0 omitted from logarithmic plot"
 msgstr[0] "%d개의 올바르지 않는 x의 값이 대수 plot로부터 제외해졌습니다"
+
+#~ msgid "quartz() device interactivity reduced without an event loop manager"
+#~ msgstr ""
+#~ "quartz() 디바이스는 event loop manager가 없으므로 쌍방향으로 감소해졌습니"
+#~ "다"

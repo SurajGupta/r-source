@@ -31,6 +31,7 @@
 #include <Fileio.h>
 #include <Rversion.h>
 #include <R_ext/RS.h>           /* for CallocCharBuf, Free */
+#include <errno.h>
 
 /* From time to time changes in R, such as the addition of a new SXP,
  * may require changes in the save file format.  Here are some
@@ -957,7 +958,7 @@ static void WriteItem (SEXP s, SEXP ref_table, R_outpstream_t stream)
 }
 
 #ifdef BYTECODE
-static SEXP MakeCircleHashTable()
+static SEXP MakeCircleHashTable(void)
 {
     return CONS(R_NilValue, allocVector(VECSXP, HASHSIZE));
 }
@@ -1330,14 +1331,24 @@ static SEXP ReadItem (SEXP ref_table, R_inpstream_t stream)
 	    if (length == -1)
 		PROTECT(s = NA_STRING);
 	    else if (length < 1000) {
+		int enc = CE_NATIVE;
 		cbuf = alloca(length+1);
 		InString(stream, cbuf, length);
 		cbuf[length] = '\0';
-                PROTECT(s = mkCharEnc(cbuf, levs & (LATIN1_MASK | UTF8_MASK)));
+		if (levs & UTF8_MASK) enc = CE_UTF8;
+		else if (levs & LATIN1_MASK) enc = CE_LATIN1;
+		if (length > strlen(cbuf))
+		    PROTECT(s = mkCharLen(cbuf, length));
+                else PROTECT(s = mkCharCE(cbuf, enc));
 	    } else {
-                cbuf = CallocCharBuf(length);
+ 		int enc = CE_NATIVE;
+		cbuf = CallocCharBuf(length);
 		InString(stream, cbuf, length);
-                PROTECT(s = mkCharEnc(cbuf, levs & (LATIN1_MASK | UTF8_MASK)));
+ 		if (levs & UTF8_MASK) enc = CE_UTF8;
+		else if (levs & LATIN1_MASK) enc = CE_LATIN1;
+		if (length > strlen(cbuf))
+		    PROTECT(s = mkCharLen(cbuf, length));
+                else PROTECT(s = mkCharCE(cbuf, enc));
                 Free(cbuf);
 	    }
 	    break;
@@ -1403,7 +1414,7 @@ static SEXP ReadItem (SEXP ref_table, R_inpstream_t stream)
 	if (TYPEOF(s) == CHARSXP) {
 	    /* With the CHARSXP cache maintained through the ATTRIB
 	       field that field has already been filled in by the
-	       mkChar/mkCharEnc call above, so we need to leave it
+	       mkChar/mkCharCE call above, so we need to leave it
 	       alone.  If there is an attribute (as there might be if
 	       the serialized data was created by an older version) we
 	       read and ignore the value. */
@@ -2008,8 +2019,8 @@ static SEXP CloseMemOutPStream(R_outpstream_t stream)
     return val;
 }
 
-/* This is undocumented and in no header, but used by package taskPR. */
-SEXP R_serialize(SEXP object, SEXP icon, SEXP ascii, SEXP fun)
+SEXP attribute_hidden 
+R_serialize(SEXP object, SEXP icon, SEXP ascii, SEXP fun)
 {
     struct R_outpstream_st out;
     R_pstream_format_t type;
@@ -2050,8 +2061,8 @@ SEXP R_serialize(SEXP object, SEXP icon, SEXP ascii, SEXP fun)
     }
 }
 
-/* This is undocumented and in no header, but used by package taskPR */
-SEXP R_unserialize(SEXP icon, SEXP fun)
+
+SEXP attribute_hidden R_unserialize(SEXP icon, SEXP fun)
 {
     struct R_inpstream_st in;
     SEXP (*hook)(SEXP, SEXP);
@@ -2064,14 +2075,13 @@ SEXP R_unserialize(SEXP icon, SEXP fun)
 	int length = LENGTH(STRING_ELT(icon, 0));
 	InitMemInPStream(&in, &mbs, data,  length, hook, fun);
 	return R_Unserialize(&in);
-    } else if (TYPEOF(icon) == RAWSXP) { /* for future use */
+    } else if (TYPEOF(icon) == RAWSXP) {
         struct membuf_st mbs;
 	void *data = RAW(icon);
 	int length = LENGTH(icon);
 	InitMemInPStream(&in, &mbs, data,  length, hook, fun);
 	return R_Unserialize(&in);
-    }
-    else {
+    } else {
 	Rconnection con = getConnection(asInteger(icon));
 	R_InitConnInPStream(&in, con, R_pstream_any_format, hook, fun);
 	return R_Unserialize(&in);
@@ -2106,11 +2116,23 @@ static SEXP appendRawToFile(SEXP file, SEXP bytes)
 	error(_("not a proper raw vector"));
 #ifdef HAVE_WORKING_FTELL
     /* Windows' ftell returns position 0 with "ab" */
-    if ((fp = R_fopen(CHAR(STRING_ELT(file, 0)), "ab")) == NULL)
-	error(_("file open failed"));
+    if ((fp = R_fopen(CHAR(STRING_ELT(file, 0)), "ab")) == NULL) {
+#ifdef HAVE_STRERROR
+	error( _("cannot open file '%s': %s"), CHAR(STRING_ELT(file, 0)),
+	       strerror(errno));
 #else
-    if ((fp = R_fopen(CHAR(STRING_ELT(file, 0)), "r+b")) == NULL)
-	 error(_("file open failed"));
+	error( _("cannot open file '%s'"), CHAR(STRING_ELT(file, 0)));
+#endif
+    }
+#else
+    if ((fp = R_fopen(CHAR(STRING_ELT(file, 0)), "r+b")) == NULL) {
+#ifdef HAVE_STRERROR
+	error( _("cannot open file '%s': %s"), CHAR(STRING_ELT(file, 0)),
+	       strerror(errno));
+#else
+	error( _("cannot open file '%s'"), CHAR(STRING_ELT(file, 0)));
+#endif
+    }
     fseek(fp, 0, SEEK_END);
 #endif
 
@@ -2187,8 +2209,13 @@ static SEXP readRawFromFile(SEXP file, SEXP key)
 
     if(icache >= 0) {
 	strcpy(names[icache], cfile);
-	if ((fp = R_fopen(cfile, "rb")) == NULL)
-	    error(_("open failed on %s"), cfile);
+	if ((fp = R_fopen(cfile, "rb")) == NULL) {
+#ifdef HAVE_STRERROR
+	    error(_("cannot open file '%s': %s"), cfile, strerror(errno));
+#else
+	    error(_("cannot open file '%s'"), cfile);
+#endif
+	}
 	if (fseek(fp, 0, SEEK_END) != 0) {
 	    fclose(fp);
 	    error(_("seek failed on %s"), cfile);
@@ -2206,8 +2233,13 @@ static SEXP readRawFromFile(SEXP file, SEXP key)
 	if (filelen != in) error(_("read failed on %s"), cfile);
 	memcpy(RAW(val), ptr[icache]+offset, len);
     } else {
-	if ((fp = R_fopen(cfile, "rb")) == NULL)
-	    error(_("open failed on %s"), cfile);
+	if ((fp = R_fopen(cfile, "rb")) == NULL) {
+#ifdef HAVE_STRERROR
+	    error(_("cannot open file '%s': %s"), cfile, strerror(errno));
+#else
+	    error(_("cannot open file '%s'"), cfile);
+#endif
+	}
 	if (fseek(fp, offset, SEEK_SET) != 0) {
 	    fclose(fp);
 	    error(_("seek failed on %s"), cfile);

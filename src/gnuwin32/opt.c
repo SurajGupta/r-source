@@ -35,7 +35,7 @@ static FILE *ff = NULL;
 static char optfl[MAX_PATH];
 static int optln;
 
-void optclosefile()
+void optclosefile(void)
 {
     if (!ff) return;
     fclose(ff);
@@ -52,16 +52,14 @@ int optopenfile(const char *fname)
     return 1;
 }
 
-
-
 char *
-optfile()
+optfile(void)
 {
     return optfl;
 }
 
-int 
-optline()
+int
+optline(void)
 {
     return optln;
 }
@@ -78,7 +76,7 @@ static char *rmspace(char *s)
 }
 
 
-int optread(char *opt[], char sep)
+int optread(char *opt[], const char sep)
 {
     static char sm[120];
     char *p, *s;

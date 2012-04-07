@@ -1,7 +1,7 @@
 /*
  *  R : A Computer Language for Statistical Data Analysis
- *  Copyright (C) 2001--2006  The R Development Core Team.
- *  Copyright (C) 2003-5      The R Foundation
+ *  Copyright (C) 2001--2008  The R Development Core Team.
+ *  Copyright (C) 2003--2008  The R Foundation
  *
  *  This program is free software; you can redistribute it and/or modify
  *  it under the terms of the GNU General Public License as published by
@@ -28,6 +28,48 @@
 #include <Defn.h>
 
 #include "Lapack.h"
+
+/* FIXME: Would want to make these available to packages;
+ * BUT:  1) cannot be in libRlapack {since that may be external}
+ *       2) Pkgs cannot get it from the C-Lapack interface code {lapack.so}
+ *          since that is R-internal
+ */
+char La_norm_type(const char *typstr)
+{
+    char typup;
+
+    if (strlen(typstr) != 1)
+	error(
+	    _("argument type[1]='%s' must be a character string of string length 1"),
+	    typstr);
+    typup = toupper(*typstr);
+    if (typup == '1')
+	typup = 'O'; /* aliases */
+    else if (typup == 'E')
+	typup = 'F';
+    else if (typup != 'M' && typup != 'O' && typup != 'I' && typup != 'F')
+	error(_("argument type[1]='%s' must be one of 'M','1','O','I','F' or 'E'"),
+	      typstr);
+    return typup;
+}
+
+/* Lapack condition number approximation: currently only supports _1 or _Inf norm : */
+char La_rcond_type(const char *typstr)
+{
+    char typup;
+
+    if (strlen(typstr) != 1)
+	error(_("argument type[1]='%s' must be a character string of string length 1"),
+	      typstr);
+    typup = toupper(*typstr);
+    if (typup == '1')
+	typup = 'O'; /* alias */
+    else if (typup != 'O' && typup != 'I')
+	error(_("argument type[1]='%s' must be one of '1','O', or 'I'"),
+	      typstr);
+    return typup; /* 'O' or 'I' */
+}
+
 
 static SEXP modLa_svd(SEXP jobu, SEXP jobv, SEXP x, SEXP s, SEXP u, SEXP v,
 		      SEXP method)
@@ -106,7 +148,7 @@ static SEXP modLa_rs(SEXP xin, SEXP only_values)
     if (n != xdims[1])
 	error(_("'x' must be a square numeric matrix"));
     ov = asLogical(only_values);
-    if (ov == NA_LOGICAL) error(_("invalid 'only.values'"));
+    if (ov == NA_LOGICAL) error(_("invalid '%s' argument"), "only.values");
     if (ov) jobv[0] = 'N'; else jobv[0] = 'V';
 
     PROTECT(values = allocVector(REALSXP, n));
@@ -196,7 +238,7 @@ static SEXP modLa_rg(SEXP x, SEXP only_values)
     /* work on a copy of x */
     Memcpy(xvals, REAL(x), (size_t) (n * n));
     ov = asLogical(only_values);
-    if (ov == NA_LOGICAL) error(_("invalid 'only.values'"));
+    if (ov == NA_LOGICAL) error(_("invalid '%s' argument"), "only.values");
     vectors = !ov;
     jobVL[0] = jobVR[0] = 'N';
     left = right = (double *) 0;
@@ -259,6 +301,176 @@ static SEXP modLa_rg(SEXP x, SEXP only_values)
 }
 
 /* ------------------------------------------------------------ */
+static SEXP modLa_dgecon(SEXP A, SEXP norm)
+{
+    SEXP x, val;
+    int *xdims, m, n, info, *iwork;
+    double anorm, *work;
+    char typNorm[] = {'\0', '\0'};
+
+    if (!isString(norm))
+	error(_("'norm' must be a character string"));
+    if (!isReal(A) && isNumeric(A))
+	x = PROTECT(coerceVector(A, REALSXP));
+    else
+	x = PROTECT(duplicate(A)); /* will be overwritten by LU */
+    if (!(isMatrix(x) && isReal(x))) {
+	UNPROTECT(1);
+	error(_("'A' must be a numeric matrix"));
+    }
+
+    xdims = INTEGER(coerceVector(getAttrib(x, R_DimSymbol), INTSXP));
+    m = xdims[0];
+    n = xdims[1]; /* m x n  matrix {using Lapack naming convention} */
+
+    typNorm[0] = La_rcond_type(CHAR(asChar(norm)));
+
+    val = PROTECT(allocVector(REALSXP, 1));
+    work = (double *) R_alloc((*typNorm == 'I' && m > 4*n) ? m : 4*n,
+			      sizeof(double));
+    iwork = (int *) R_alloc(m, sizeof(int));
+
+    anorm = F77_CALL(dlange)(typNorm, &m, &n, REAL(x), &m, work);
+
+    /* Compute the LU-decomposition and overwrite 'x' with result :*/
+    F77_CALL(dgetrf)(&m, &n, REAL(x), &m, iwork, &info);
+    if (info) {
+	UNPROTECT(2);
+	error(_("error [%d] from Lapack 'dgetrf()'"), info);
+    }
+    F77_CALL(dgecon)(typNorm, &n, REAL(x), &n, &anorm,
+		     /* rcond = */ REAL(val),
+		     work, iwork, &info);
+    UNPROTECT(2);
+    if (info) error(_("error [%d] from Lapack 'dgecon()'"), info);
+    return val;
+}
+
+static SEXP modLa_dtrcon(SEXP A, SEXP norm)
+{
+    SEXP x, val;
+    int *xdims, n, nprot = 0, info;
+    char typNorm[] = {'\0', '\0'};
+
+    if (!isString(norm))
+	error(_("'norm' must be a character string"));
+    if (!isReal(A) && isNumeric(A)) {
+	nprot++;
+	x = PROTECT(coerceVector(A, REALSXP));
+    } else
+	x = A; /* no copy needed */
+    if (!(isMatrix(x) && isReal(x))) {
+	UNPROTECT(nprot);
+	error(_("'A' must be a numeric matrix"));
+    }
+    xdims = INTEGER(coerceVector(getAttrib(x, R_DimSymbol), INTSXP));
+    n = xdims[0];
+    if(n != xdims[1]) {
+	UNPROTECT(nprot);
+	error(_("'A' must be a *square* matrix"));
+    }
+
+    typNorm[0] = La_rcond_type(CHAR(asChar(norm)));
+
+    nprot++;
+    val = PROTECT(allocVector(REALSXP, 1));
+
+    F77_CALL(dtrcon)(typNorm, "U", "N", &n, REAL(x), &n,
+		     REAL(val),
+		     /* work : */ (double *) R_alloc(3*n, sizeof(double)),
+		     /* iwork: */ (int *)    R_alloc(n, sizeof(int)),
+		     &info);
+    UNPROTECT(nprot);
+    if (info) error(_("error [%d] from Lapack 'dtrcon()'"), info);
+    return val;
+}
+
+static SEXP modLa_zgecon(SEXP A, SEXP norm)
+{
+#ifdef HAVE_FORTRAN_DOUBLE_COMPLEX
+    SEXP val;
+    Rcomplex *avals; /* copy of A, to be modified */
+    int *dims, n, info;
+    double anorm, *rwork;
+    char typNorm[] = {'\0', '\0'};
+
+    if (!isString(norm))
+	error(_("'norm' must be a character string"));
+    if (!(isMatrix(A) && isComplex(A)))
+	error(_("'A' must be a complex matrix"));
+    dims = INTEGER(coerceVector(getAttrib(A, R_DimSymbol), INTSXP));
+    n = dims[0];
+    if(n != dims[1])
+	error(_("'A' must be a *square* matrix"));
+
+    typNorm[0] = La_rcond_type(CHAR(asChar(norm)));
+
+    val = PROTECT(allocVector(REALSXP, 1));
+
+    rwork = (double *) R_alloc(2*n, sizeof(Rcomplex));
+    anorm = F77_CALL(zlange)(typNorm, &n, &n, COMPLEX(A), &n, rwork);
+
+    /* Compute the LU-decomposition and overwrite 'x' with result;
+     * working on a copy of A : */
+    avals = (Rcomplex *) R_alloc(n * n, sizeof(Rcomplex));
+    Memcpy(avals, COMPLEX(A), (size_t) (n * n));
+    F77_CALL(zgetrf)(&n, &n, avals, &n,
+		     /* iwork: */(int *) R_alloc(n, sizeof(int)),
+		     &info);
+    if (info) {
+	UNPROTECT(1);
+	error(_("error [%d] from Lapack 'zgetrf()'"), info);
+    }
+
+    F77_CALL(zgecon)(typNorm, &n, avals, &n, &anorm,
+		     /* rcond = */ REAL(val),
+		     /* work : */ (Rcomplex *) R_alloc(4*n, sizeof(Rcomplex)),
+		     rwork, &info);
+    UNPROTECT(1);
+    if (info) error(_("error [%d] from Lapack 'zgecon()'"), info);
+    return val;
+
+#else
+    error(_("Fortran complex functions are not available on this platform"));
+    return R_NilValue; /* -Wall */
+#endif
+}
+
+static SEXP modLa_ztrcon(SEXP A, SEXP norm)
+{
+#ifdef HAVE_FORTRAN_DOUBLE_COMPLEX
+    SEXP val;
+    int *dims, n, info;
+    char typNorm[] = {'\0', '\0'};
+
+    if (!isString(norm))
+	error(_("'norm' must be a character string"));
+    if (!(isMatrix(A) && isComplex(A)))
+	error(_("'A' must be a complex matrix"));
+    dims = INTEGER(coerceVector(getAttrib(A, R_DimSymbol), INTSXP));
+    n = dims[0];
+    if(n != dims[1])
+	error(_("'A' must be a *square* matrix"));
+
+    typNorm[0] = La_rcond_type(CHAR(asChar(norm)));
+
+    val = PROTECT(allocVector(REALSXP, 1));
+
+    F77_CALL(ztrcon)(typNorm, "U", "N", &n, COMPLEX(A), &n,
+		     REAL(val),
+		     /* work : */ (Rcomplex *) R_alloc(2*n, sizeof(Rcomplex)),
+		     /* rwork: */ (double *)   R_alloc(n, sizeof(double)),
+		     &info);
+    UNPROTECT(1);
+    if (info) error(_("error [%d] from Lapack 'ztrcon()'"), info);
+    return val;
+#else
+    error(_("Fortran complex functions are not available on this platform"));
+    return R_NilValue; /* -Wall */
+#endif
+}
+
+
 
 static SEXP modLa_zgesv(SEXP A, SEXP Bin)
 {
@@ -406,7 +618,7 @@ static SEXP modqr_qy_cmplx(SEXP Q, SEXP Bin, SEXP trans)
     if (!(isMatrix(Bin) && isComplex(Bin)))
 	error(_("'b' must be a complex matrix"));
     tr = asLogical(trans);
-    if(tr == NA_LOGICAL) error(_("invalid 'trans' parameter"));
+    if(tr == NA_LOGICAL) error(_("invalid '%s' argument"), "trans");
 
     PROTECT(B = duplicate(Bin));
     Qdims = INTEGER(coerceVector(getAttrib(qr, R_DimSymbol), INTSXP));
@@ -502,7 +714,7 @@ static SEXP modLa_rs_cmplx(SEXP xin, SEXP only_values)
     if (n != xdims[1])
 	error(_("'x' must be a square numeric matrix"));
     ov = asLogical(only_values);
-    if (ov == NA_LOGICAL) error(_("invalid 'only.values'"));
+    if (ov == NA_LOGICAL) error(_("invalid '%s' argument"), "only.values");
     if (ov) jobv[0] = 'N'; else jobv[0] = 'V';
 
     PROTECT(values = allocVector(REALSXP, n));
@@ -559,7 +771,7 @@ static SEXP modLa_rg_cmplx(SEXP x, SEXP only_values)
     /* work on a copy of x */
     Memcpy(xvals, COMPLEX(x), (size_t) (n * n));
     ov = asLogical(only_values);
-    if (ov == NA_LOGICAL) error(_("invalid 'only.values'"));
+    if (ov == NA_LOGICAL) error(_("invalid '%s' argument"), "only.values");
     jobVL[0] = jobVR[0] = 'N';
     left = right = (Rcomplex *) 0;
     if (!ov) {
@@ -811,7 +1023,7 @@ static SEXP modqr_qy_real(SEXP Q, SEXP Bin, SEXP trans)
     if (!(isMatrix(Bin) && isReal(Bin)))
 	error(_("'b' must be a numeric matrix"));
     tr = asLogical(trans);
-    if(tr == NA_LOGICAL) error(_("invalid 'trans' parameter"));
+    if(tr == NA_LOGICAL) error(_("invalid '%s' argument"), "trans");
 
     PROTECT(B = duplicate(Bin));
     Qdims = INTEGER(coerceVector(getAttrib(qr, R_DimSymbol), INTSXP));
@@ -908,6 +1120,10 @@ R_init_lapack(DllInfo *info)
     tmp->svd = modLa_svd;
     tmp->rs = modLa_rs;
     tmp->rg = modLa_rg;
+    tmp->dgecon = modLa_dgecon;
+    tmp->dtrcon = modLa_dtrcon;
+    tmp->zgecon = modLa_zgecon;
+    tmp->ztrcon = modLa_ztrcon;
     tmp->zgesv = modLa_zgesv;
     tmp->zgeqp3 = modLa_zgeqp3;
     tmp->qr_coef_cmplx = modqr_coef_cmplx;

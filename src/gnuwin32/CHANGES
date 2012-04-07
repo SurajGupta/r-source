@@ -3,10 +3,306 @@
 	*	 Windows-specific changes to R		 *
 	*	 See the file NEWS for changes that	 *
 	*        affect all versions of R.		 *
+	**************************************************
+
+
+	**************************************************
+	*						 *
+	*	       2.7 SERIES NEWS			 *
+	*						 *
+	**************************************************
+
+
+		CHANGES IN R VERSION 2.7.0
+
+
+WINDOWS VERSIONS
+
+    o	Versions of Windows older than 2000 are no longer supported
+	(specifically, 95, 98, ME, NT4).  Windows 2000 is minimally
+	tested, but those tests were successful.
+
+
+GUI CHANGES
+
+    o	The folder selection dialog used by choose.dir() and
+ 	File | Change dir is now re-sizeable with a status line showing
+	the currently selected path, rather than having a separate
+ 	'Browse' button.
+
+    o	When Rgui is launched from a terminal, C output from ill-formed
+	packages that write to stdout or stderr rather than use
+	Rprintf will appear in the terminal rather than being lost.
+	(Only on XP or later.)  This can be very handy for debugging C
+	code in packages: just write debugging messages to stdout.
+
+
+INTERNATIONALIZATION
+
+    o	If a string presented to the parser contains a \uxxxx escape
+	invalid in the current locale, the string is recorded in UTF-8
+	with the encoding declared.  This is likely to throw an error
+	if it is used later in the session, but it can be printed, and
+	used for e.g. plotting on the windows() device.  So "\u03b2"
+	gives a Greek small beta and "\u2642" a 'male sign'.  Such
+	strings will be printed as e.g. <U+2642> except in the Rgui
+	console (see below).
+	
+    o	Rgui has been re-written to work internally in Unicode.  This
+	means that copy and paste will be done in Unicode, and should
+	now work correctly if R is being run in a different locale
+	from other applications.  There is more support for input
+	methods, thanks to Ei-ji Nakama.
+
+    o	The Rgui console can display UTF-8 encoded strings (provided
+	the font selected has the glyphs needed).
+
+    o	The windows() family of devices now always use Unicode fonts
+	(except for the Symbol font), not just in multibyte locales.
+	This means it should be possble to plot in an 8-bit locale
+	other than the system locale (e.g. for R running in Russian
+	with Windows set to French).
+
+	Further, they can handle UTF-8-encoded strings, so if a
+	character string in R is marked (see ?Encoding) as UTF-8, it
+	can be plotted (for a suitable font) even if it is not a valid
+	character in the current locale.  Thus one way to plot a Greek
+	beta (Unicode point U+03B2) is text(x, y, "\u03b2").
+
+	The postscript() and pdf() devices handle UTF-8-encoded
+	strings provided the characters used are in both the output
+	encoding and the PostScript font used.
+
+    o	Environment variables are read and set in Unicode by
+	Sys.getenv()/Sys.setenv().
+
+    o	Sys.info() uses UTF-8 machine, login and user names.
+
+    o	readClipboard() can read Unicode text (format = 13), and
+	writeClipboard() can write it.
+
+    o	file() and pipe() connections and the functions basename(),
+	dir(), dirname(), dir.create(), DLL.version(), file.access(),
+	file.copy(), file.create(), file.exists(), file.info(),
+	file.remove(), file.rename(), getwd(), load(),
+	normalizePath(), path.expand(), save(), setwd(), shell(),
+	shell.exec(), shortPathName(), Sys.chmod(), Sys.glob(),
+	system() and unlink() have been converted to use Unicode
+	filenames.
+
+	Pathnames you select (by choose.files(), choose.dir() and
+	file.choose()) are returned in UTF-8.
+
+	list.files() still works with the native charsets as we do not
+	have a Unicode regexp engine.  (The code for grep uses wide
+	chars internally but does not provide an interface.)
+
+    o	Collating (e.g. <) and sorting is done in UTF-8 where one of
+	the items is in UTF-8.
+
+    o	If readLines() or scan() is passed an unopened connection with
+	a non-default 'encoding' argument, it will re-encode to UTF-8
+	and declare the encoding on character columns.
+
+
+TIME ZONES
+
+    o	This version of R no longer makes use of Windows' flawed concept
+	of time zones but replaces it by Arthur Olson's public-domain
+	tz database (which is widely used, including on Linux, Mac OS
+	X, Solaris, AIX, FreeBSD and by Java and Tcl).  This means
+	that time zones should now be referred to by their 'standard'
+	names, and will be output correctly (e.g. not the incorrect
+	'GMT Daylight Time' for 'British Summer Time' used by
+	Windows).
+
+    o	An attempt is made (once per session) to identify the current
+	timezone from the Windows' Registry.  If this does not work or
+	is incorrect, set the 'TZ' environment variable appropriately:
+	a list of known timezones is given in
+	R_HOME/share/zoneinfo/zones.tab (some alternative names will
+	also be recognized).  (Thanks to Uwe Ligges for testing
+	various versions on German versions of Windows: time zone
+	names are stored in the language of the Windows install.)
+
+    o	Since the Windows C runtime does not think that times prior to
+	1970-01-01 00:01 *in Seattle* are valid, heuristics had to be
+	used for the time zones pre-1970.  Now the database is
+	available for 1902-1969 (and nowhere had DST prior to 1902 and
+	the time offset is assumed to be the same as in 1902) and so
+	the results are reliable from the onset of standard time
+	(second half of the nineteenth century) until the near future
+	(since legislators change time zones with little notice).
+
+
+GRAPHICS DEVICE CHANGES
+
+    o	Options "graphics.record", "windowsBuffered", "xpinch" and
+	"ypinch" have been replaced by a function windows.options() to
+	set the defaults for the arguments of the windows() device.
+
+    o	The windows() device has a new argument 'title' to set the
+	title of the window.
+
+    o	The windows() device no longer sizes the window to allow for
+	scrollbars that might be needed for rescale="fixed", which
+	means the default size really is 7 inches square and not 7.177
+	inches.
+
+    o	Saving a graphics window containing semi-transparent colours
+	to BMP, JPEG or PNG now works.
+
+    o	The bmp(), jpeg() and png() devices support semi-transparent
+	colours.  See ?png for use with transparent backgrounds.
+
+	Specifying 'res' to these devices now scales the text size and
+	line width.
+
+    o	Drawing circles is now done with an integer diameter rather
+	than radius and so can be more accurate for small circles.
+	You can see this in the pairs plot and coplot examples in
+	demo(graphics) which on a 96dpi system use diameter 5 rather
+	than radius 2.
+
+    o	There is a new tiff() graphics device, and an option to save to
+	TIFF from the graphics device menu and in savePlot().  (The
+	only advantage of (simple) TIFF over PNG is that some journals
+	are unable to cope with formats from as recently as 1996.)
+
+    o	savePlot() no longer automatically adds an extension to the filename.
+
+
+PACKAGE INSTALLATION
+
+    o	Using PKG_C[XX]FLAGS instead of PKG_CPPFLAGS for -I and -D
+	flags is now a fatal error.
+
+    o	INSTALL does selection of lazyloading or not via an initial
+	dummy installation, so large packages which cannot be
+	installed without lazyloading and do not specify it may
+	succeed when they did not earlier.
+
+    o	The new argument dyn.load(DLLpath=) was implemented to make
+	DLL conflicts easier to manage on Windows (see ?dyn.load), and
+	is used by package tcltk.  This changes the meaning of the
+	environment value MY_TCLTK: its value is now the path to the
+	directory containing tcl85.dll and tk85.dll.
+
+    o	The GraphApp DLL is now called Rgraphapp.dll to avoid any
+	conflicts.  Packages using it (Cairo, RWinEdt) will need to be
+	re-installed for R 2.7.0.
+
+    o	zlib is now packaged as Rzlib.dll and its headers are
+	installed.  Packages attempting to use the former private 
+	entry points in R.dll will need to be modified to include
+	$(ZLIB_LIBS) in PKG_LIBS.
+
+    o	install.packages() now handles type="source", repos=NULL
+        installs.
+
+
+OTHERS
+
+    o	bitmap(), dev2bitmap() and embedfonts() now look at environment
+	variable GSC if R_GSCMD is unset.  (This is the variable used
+	by ps2pdf and similar batch files.)
+
+    o	loadRconsole() may now be used in Rterm and embedded R
+	(where it affects graphics windows and pagers).  Embedded R
+	no longer reads the Rconsole file on startup.
+
+    o	getClipboardFormats() by default returns a human-readable
+	character vector, but will give numeric output with new
+	arguent 'numeric = TRUE'.
+
+    o	New function readRegistry() to read registry hives.
+
+    o	The progress bar in download.file() is now supressed by
+    	quiet=TRUE (as it has long been on Unix).
+    	
+    o	RSetReg now uses full pathnames, the same as the regular
+    	installer.
+
+    o	Font Consolas has been added to the console fonts listed in the
+	GUI preferences widget.
+
+    o	New widget winProgressBar() (based on the progress bar used by
+	download.file()).
+
+    o	The download progress bar now shows the percentage done in the
+    	title bar (and hence in the Windows task bar).
+
+    o	download.file() now selects mode="wb" if 'mode' is not
+    	supplied and the file extension on the url looks like a binary file.
+
+    o	tools::texi2dvi() detects the use of MikTeX's texi2dvi and
+    	uses its '-I path' argument to add the path to R's style files
+    	(such as Sweave.sty) to the input search path.
+
+    o	R CMD Rd2dvi defaults to 'yap' as the previewer (rather than
+	xdvi.bat) -- as before this is set by the environment variable
+	'xdvi'.
+
+    o	The size of the Rgui buffer is now set in characters not bytes
+	(the difference only matters in CJK locales), but for
+	backwards compatibility the entry in Rconsole is still called
+	'bufbytes'.  The default has been increased to 250,000 chars
+	(0.5Mb).
+
+
+BUILDING R
+
+    o	Support for the ACML BLAS has been withdrawn (there is no
+	version of ACML 4.0.0 for gcc under Windows, and none at all
+	for gfortran).
+
+    o	We assume version 2.7.0 of Rtools.exe, in which gcc is
+	version 4.2.1.
+
+    o	We assume Tcl/Tk version 8.5.x (included in version 2.7.0 of
+	Rtools.exe).  Earlier versions can be selected in MkRules.
+	The distribution in Rtools (and hence in the binary installer)
+	includes the BWidget and Tktable extensions.
+
+
+BUG FIXES
+
+    o	If a windows(rescale="fit") device was shrunk initially to fit
+	on screen, the font size was not rescaled to take account of
+	the initial shrink factor.
+
+    o	If windows(ypinch=) was specified, the 'width' argument's value
+	was used for the height.
+
+    o	The Graphapp computation for keyboard accelerators for menus was
+	not always working correctly, at least on Windows XP -- this
+	affected e.g. Alt-M plus 'i' for 'List search path', where the
+	second 's' was being underlined.  (PR#11036)
+	
+    o	The winDialogString() dialog now releases CPU cycles while
+    	waiting for input. (PR#11045)
+
+    o	R CMD now sets TEXINPUTS to .;%R_HOME%/share/texmf;%TEXINPUTS%;
+	by exact analogy with Unix-alikes (that is, including the
+	current directory before R's texmf directory).
+
+
+
+	**************************************************
 	*						 *
 	*	       2.6 SERIES NEWS			 *
 	*						 *
 	**************************************************
+
+
+		CHANGES IN R VERSION 2.6.2 patched
+
+INSTALLER
+
+    o	The installer now uses version-specific identifiers so that
+	multiple versions of R can be installed and uninstalled
+	separately. (PR#10746)
+
 
 
 		CHANGES IN R VERSION 2.6.2
@@ -14,9 +310,9 @@
 WORKAROUNDS
 
     o	We set some environment variables to work around hangs in Rgui
-	when packages (e.g. tseries) use Fortran WRITE calls.  The
-	Fortran output will be written to a file named 'fort.6' in the
-	working directory.
+	when packages (e.g. the then current version of tseries) use
+	Fortran WRITE calls.  The Fortran output will be written to a
+	file named 'fort.6' in the working directory.
 
     o	Browsing for a directory in choose.dir() and the Rgui
 	'Change Dir...' menu item now works around Vista's confusion
@@ -26,7 +322,7 @@ WORKAROUNDS
 	personal folder (typically 'My Documents' or 'Documents').
 
 
-NEW FEATURES
+NEW FEATUES
 
     o	win.version() and Sys.info() know about recent and upcoming
 	Windows versions, including if they are running on a 64-bit

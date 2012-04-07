@@ -86,12 +86,15 @@ function(topic, package = NULL, lib.loc = NULL, local = FALSE,
         ask <- echo && grDevices::dev.interactive(orNone = TRUE)
     if(ask) {
 	if(.Device != "null device") {
-            ## NB, this is somewhat dangerous as the device may have
-            ## changed during the example.
-	    opar <- graphics::par(ask = TRUE)
-            on.exit(graphics::par(opar), add = TRUE)
+	    oldask <- grDevices::devAskNewPage(ask = TRUE)
+            if(!oldask) on.exit(grDevices::devAskNewPage(oldask), add = TRUE)
         }
-        op <- options(par.ask.default = TRUE)
+        ## <FIXME>
+        ## This ensures that any device opened by the examples will
+        ## have ask = TRUE set, but it does not return the device to
+        ## the expected 'ask' state if it is left as the current device.
+        ## </FIXME>
+        op <- options(device.ask.default = TRUE)
         on.exit(options(op), add = TRUE)
     }
     source(zfile, local, echo = echo,

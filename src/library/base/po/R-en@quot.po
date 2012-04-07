@@ -22,10 +22,10 @@
 #
 msgid ""
 msgstr ""
-"Project-Id-Version: R 2.6.2\n"
+"Project-Id-Version: R 2.7.0\n"
 "Report-Msgid-Bugs-To: bugs@r-project.org\n"
-"POT-Creation-Date: 2008-02-06 06:53\n"
-"PO-Revision-Date: 2008-02-06 06:53\n"
+"POT-Creation-Date: 2008-04-08 11:23\n"
+"PO-Revision-Date: 2008-04-08 11:23\n"
 "Last-Translator: Automatically generated\n"
 "Language-Team: none\n"
 "MIME-Version: 1.0\n"
@@ -90,11 +90,11 @@ msgstr "‘%s’ is not a valid abbreviation of an RNG"
 msgid "'normal.kind' must be a character string of length 1."
 msgstr "‘normal.kind’ must be a character string of length 1."
 
-msgid "Buggy version of Kinderman-Ramage generator used."
-msgstr "Buggy version of Kinderman-Ramage generator used."
-
 msgid "'%s' is not a valid choice"
 msgstr "‘%s’ is not a valid choice"
+
+msgid "Buggy version of Kinderman-Ramage generator used."
+msgstr "Buggy version of Kinderman-Ramage generator used."
 
 msgid "malformed version string"
 msgstr "malformed version string"
@@ -377,6 +377,9 @@ msgstr "only defined on a data frame with all numeric variables"
 msgid "character string is not in a standard unambiguous format"
 msgstr "character string is not in a standard unambiguous format"
 
+msgid "'origin' must be supplied"
+msgstr "‘origin’ must be supplied"
+
 msgid "do not know how to convert '%s' to class \"Date\""
 msgstr "do not know how to convert ‘%s’ to class “Date”"
 
@@ -460,32 +463,26 @@ msgstr "do not know how to convert ‘%s’ to class “POSIXlt”"
 msgid "wrong class"
 msgstr "wrong class"
 
-msgid "binary + is not defined for \"POSIXt\" objects"
-msgstr "binary + is not defined for “POSIXt” objects"
+msgid "binary '+' is not defined for \"POSIXt\" objects"
+msgstr "binary ‘+’ is not defined for “POSIXt” objects"
 
 msgid "Can only subtract from POSIXt objects"
 msgstr "Can only subtract from POSIXt objects"
 
-msgid "unary - is not defined for \"POSIXt\" objects"
-msgstr "unary - is not defined for “POSIXt” objects"
+msgid "unary '-' is not defined for \"POSIXt\" objects"
+msgstr "unary ‘-’ is not defined for “POSIXt” objects"
 
 msgid "can only subtract numbers from POSIXt objects"
 msgstr "can only subtract numbers from POSIXt objects"
 
-msgid "not defined for \"POSIXt\" objects"
-msgstr "not defined for “POSIXt” objects"
+msgid "unary '%s' not defined for \"POSIXt\" objects"
+msgstr "unary ‘%s’ not defined for “POSIXt” objects"
 
-msgid "not defined for POSIXt objects"
-msgstr "not defined for POSIXt objects"
+msgid "'%s' not defined for \"POSIXt\" objects"
+msgstr "‘%s’ not defined for “POSIXt” objects"
 
 msgid "'tzone' attributes are inconsistent"
 msgstr "‘tzone’ attributes are inconsistent"
-
-msgid "not defined for \"POSIXct\" objects"
-msgstr "not defined for “POSIXct” objects"
-
-msgid "not defined for \"POSIXlt\" objects"
-msgstr "not defined for “POSIXlt” objects"
 
 msgid "'tim' is not character or numeric"
 msgstr "‘tim’ is not character or numeric"
@@ -496,8 +493,11 @@ msgstr "need explicit units for numeric conversion"
 msgid "invalid units specified"
 msgstr "invalid units specified"
 
-msgid "not defined for \"difftime\" objects"
-msgstr "not defined for “difftime” objects"
+msgid "unary '%s' not defined for \"difftime\" objects"
+msgstr "unary ‘%s’ not defined for “difftime” objects"
+
+msgid "'%s' not defined for \"difftime\" objects"
+msgstr "‘%s’ not defined for “difftime” objects"
 
 msgid "both arguments of * cannot be \"difftime\" objects"
 msgstr "both arguments of * cannot be “difftime” objects"
@@ -618,6 +618,15 @@ msgstr "no files to link from"
 msgid "no files/directory to link to"
 msgstr "no files/directory to link to"
 
+msgid "'x' must be have length 1"
+msgstr "‘x’ must be have length 1"
+
+msgid "invalid digits"
+msgstr "invalid digits"
+
+msgid "'x' cannot be coerced to 'octmode'"
+msgstr "‘x’ cannot be coerced to ‘octmode’"
+
 msgid "'package' must be of length 1"
 msgstr "‘package’ must be of length 1"
 
@@ -681,8 +690,8 @@ msgstr "unknown match distance components ignored"
 msgid "'max.distance' components must be non-negative"
 msgstr "‘max.distance’ components must be non-negative"
 
-msgid "matrix should be square"
-msgstr "matrix should be square"
+msgid "triangular matrix should be square"
+msgstr "triangular matrix should be square"
 
 msgid "'object' must be a list"
 msgstr "‘object’ must be a list"
@@ -1024,17 +1033,11 @@ msgstr "in ‘%s’ classes for export not defined: %s"
 msgid "in '%s' methods for export not found: %s"
 msgstr "in ‘%s’ methods for export not found: %s"
 
-msgid "Multiple methods lists found for '"
-msgstr "Multiple methods lists found for '"
+msgid "Multiple methods tables found for '"
+msgstr "Multiple methods tables found for '"
 
 msgid "'"
 msgstr "'"
-
-msgid "No methods table for \""
-msgstr "No methods table for \""
-
-msgid "\""
-msgstr "\""
 
 msgid "Failed to find metadata object for \"%s\""
 msgstr "Failed to find metadata object for “%s”"
@@ -1081,6 +1084,9 @@ msgstr "cannot import into a sealed name space"
 msgid "invalid import target"
 msgstr "invalid import target"
 
+msgid "got invalid index for importing"
+msgstr "got invalid index for importing"
+
 msgid "Found methods to import for function \"%s\" but not the generic itself"
 msgstr "Found methods to import for function “%s” but not the generic itself"
 
@@ -1090,8 +1096,8 @@ msgstr "requested ‘methods’ objects not found in environment/package '%s': %
 msgid "cannot add to exports of a sealed name space"
 msgstr "cannot add to exports of a sealed name space"
 
-msgid "undefined exports :"
-msgstr "undefined exports :"
+msgid "undefined exports:"
+msgstr "undefined exports:"
 
 msgid "package '%s' has no NAMESPACE file"
 msgstr "package ‘%s’ has no NAMESPACE file"
@@ -1438,17 +1444,17 @@ msgstr ""
 msgid "'input' must be a character vector or 'NULL'"
 msgstr "‘input’ must be a character vector or ‘NULL’"
 
-msgid "'cmd' could not be run"
-msgstr "‘cmd’ could not be run"
+msgid "'%s' could not be run"
+msgstr "‘%s’ could not be run"
 
-msgid "'cmd' execution failed with error code %d"
-msgstr "‘cmd’ execution failed with error code %d"
-
-msgid "package '%s' has a non-function '.First.lib'"
-msgstr "package ‘%s’ has a non-function ‘.First.lib’"
+msgid "'%s' execution failed with error code %d"
+msgstr "‘%s’ execution failed with error code %d"
 
 msgid "cannot find name space environment"
 msgstr "cannot find name space environment"
+
+msgid "package '%s' has a non-function '.First.lib'"
+msgstr "package ‘%s’ has a non-function ‘.First.lib’"
 
 msgid "deparse option %s is not recognized"
 msgid_plural "deparse options %s are not recognized"

@@ -255,33 +255,42 @@ const char
 
    On Windows with surrogate pairs it will not be canonical, but AFAIK
    they do not occur in any MBCS (so it would only matter if we implement
-   UTF-8).
+   UTF-8, and then only if Windows has surrogate pairs switched on, 
+   which Western versions at least do not.).
 */
 
 #ifdef SUPPORT_MBCS
-# include <R_ext/rlocale.h>
-#include <wchar.h>
-#include <wctype.h>
+# include <R_ext/rlocale.h> /* redefines isw* functions */
+# include <wchar.h>
+# include <wctype.h>
 #endif
+
+#ifdef Win32
+#include "rgui_UTF8.h"
+#endif
+
 /* strlen() using escaped rather than literal form,
    and allowing for embedded nuls.
    In MBCS locales it works in characters, and reports in display width.
+   Also used in printarray.c.
  */
-int Rstrwid(const char *str, int slen, int quote)
+attribute_hidden
+int Rstrwid(const char *str, int slen, cetype_t ienc, int quote)
 {
     const char *p = str;
     int len = 0, i;
 
 #ifdef SUPPORT_MBCS
-    if(mbcslocale) {
+    if(mbcslocale || ienc == CE_UTF8) {
 	int res;
 	mbstate_t mb_st;
 	wchar_t wc;
 	unsigned int k; /* not wint_t as it might be signed */
 
-	mbs_init(&mb_st);
+	if(ienc != CE_UTF8)  mbs_init(&mb_st);
 	for (i = 0; i < slen; i++) {
-	    res = (int) mbrtowc(&wc, p, MB_CUR_MAX, NULL);
+	    res = (ienc == CE_UTF8) ? utf8toucs(&wc, p):
+		mbrtowc(&wc, p, MB_CUR_MAX, NULL);
 	    if(res >= 0) {
 		k = wc;
 		if(0x20 <= k && k < 0x7f && iswprint(wc)) {
@@ -372,23 +381,34 @@ int Rstrwid(const char *str, int slen, int quote)
     return len;
 }
 
+attribute_hidden
 int Rstrlen(SEXP s, int quote)
 {
-    return Rstrwid(CHAR(s), LENGTH(s), quote);
+    return Rstrwid(CHAR(s), LENGTH(s), getCharCE(s), quote);
 }
 
 /* Here w is the minimum field width
    If 'quote' is non-zero the result should be quoted (and internal quotes
    escaped and NA strings handled differently).
+
+   EncodeString is called from EncodeElements, cat() (for labels when
+   filling), to (auto)print character vectors, arrays, names and
+   CHARSXPs.  It is also called by do_encodeString, but not from
+   format().
  */
+
 const char *EncodeString(SEXP s, int w, int quote, Rprt_adj justify)
 {
     int b, b0, i, j, cnt;
     const char *p; char *q, buf[11];
+#ifdef SUPPORT_MBCS /* always true on Win32 */
+    cetype_t ienc = CE_NATIVE;
+#endif
 
     /* We have to do something like this as the result is returned, and
-       passed on by EncodeElement -- so no way could be enduser be
+       passed on by EncodeElement -- so no way could be end user be
        responsible for freeing it.  However, this is not thread-safe. */
+
     static R_StringBuffer gBuffer = {NULL, 0, BUFSIZE};
     R_StringBuffer *buffer = &gBuffer;
 
@@ -398,26 +418,44 @@ const char *EncodeString(SEXP s, int w, int quote, Rprt_adj justify)
 	    strlen(CHAR(R_print.na_string_noquote));
 	quote = 0;
     } else {
-	p = translateChar(s);
-	if(p == CHAR(s)) {
-	    i = Rstrlen(s, quote);
-	    cnt = LENGTH(s);
-	} else { /* drop anything after embedded nul */
-	    cnt = strlen(p);
-	    i = Rstrwid(p, cnt, quote);
+#ifdef Win32
+	if(WinUTF8out) {
+	    ienc = getCharCE(s);
+	    if(ienc == CE_UTF8) {
+		p = CHAR(s);
+		i = Rstrlen(s, quote);
+		cnt = LENGTH(s);
+	    } else {
+		p = translateChar(s);
+		cnt = strlen(p);
+		i = Rstrwid(p, cnt, CE_NATIVE, quote);
+		ienc = CE_NATIVE;
+	    }
+	} else
+#endif
+        {
+	    p = translateChar(s);
+	    if(p == CHAR(s)) {
+		i = Rstrlen(s, quote);
+		cnt = LENGTH(s);
+	    } else { /* drop anything after embedded nul */
+		cnt = strlen(p);
+		i = Rstrwid(p, cnt, CE_NATIVE, quote);
+	    }
 	}
     }
 
     /* We need enough space for the encoded string, including escapes.
        Octal encoding turns one byte into four.
-       Unicode encoding can turn a multibyte into six or ten,
+       \u encoding can turn a multibyte into six or ten,
        but it turns 2/3 into 6, and 4 (and perhaps 5/6) into 10.
        Let's be wasteful here (the worst case appears to be an MBCS with
-       two bytes for an upper-plane Unicode point output as ten bytes).
+       one byte for an upper-plane Unicode point output as ten bytes,
+       but I doubt that such an MBCS exists: two bytes is plausible).
 
-       +2 allows for quotes,
+       +2 allows for quotes, +6 for UTF_8 escapes.
      */
-    q = R_AllocStringBuffer(imax2(5*cnt+2, w), buffer);
+    q = R_AllocStringBuffer(imax2(5*cnt+8, w), buffer);
     b = w - i - (quote ? 2 : 0); /* total amount of padding */
     if(justify == Rprt_adj_none) b = 0;
     if(b > 0 && justify != Rprt_adj_left) {
@@ -427,16 +465,20 @@ const char *EncodeString(SEXP s, int w, int quote, Rprt_adj justify)
     }
     if(quote) *q++ = quote;
 #ifdef SUPPORT_MBCS
-    if(mbcslocale) {
+    if(mbcslocale || ienc == CE_UTF8) {
 	int j, res;
 	mbstate_t mb_st;
 	wchar_t wc;
 	unsigned int k; /* not wint_t as it might be signed */
-        Rboolean Unicode_warning=FALSE;
+        Rboolean Unicode_warning = FALSE;
 
-	mbs_init(&mb_st);
+	if(ienc != CE_UTF8)  mbs_init(&mb_st);
+#ifdef Win32
+	else if(WinUTF8out) { memcpy(q, UTF8in, 3); q += 3; } 
+#endif
 	for (i = 0; i < cnt; i++) {
-	    res = (int) mbrtowc(&wc, p, MB_CUR_MAX, &mb_st);
+	    res = (ienc == CE_UTF8) ? utf8toucs(&wc, p):
+		mbrtowc(&wc, p, MB_CUR_MAX, NULL);
 	    if(res >= 0) { /* res = 0 is a terminator */
 		k = wc;
 		/* To be portable, treat \0 explicitly */
@@ -474,6 +516,10 @@ const char *EncodeString(SEXP s, int w, int quote, Rprt_adj justify)
 		    p++;
 		} else {
 		    if(iswprint(wc)) {
+			/* The problem here is that wc may be
+			   printable according to the Unicode tables,
+			   but it may not be printable on the ouput
+			   device concerned. */ 
 			for(j = 0; j < res; j++) *q++ = *p++;
 		    } else {
 #ifndef Win32
@@ -546,6 +592,9 @@ const char *EncodeString(SEXP s, int w, int quote, Rprt_adj justify)
 	    }
 	}
 
+#ifdef Win32
+    if(WinUTF8out && ienc == CE_UTF8)  { memcpy(q, UTF8out, 3); q += 3; } 
+#endif
     if(quote) *q++ = quote;
     if(b > 0 && justify != Rprt_adj_right) {
 	for(i = 0 ; i < b ; i++) *q++ = ' ';
@@ -554,6 +603,7 @@ const char *EncodeString(SEXP s, int w, int quote, Rprt_adj justify)
     return buffer->data;
 }
 
+/* EncodeElement is called by cat(), write.table() and deparsing. */
 const char *EncodeElement(SEXP x, int indx, int quote, char dec)
 {
     int w, d, e, wi, di, ei;
@@ -605,7 +655,7 @@ char *Rsprintf(char *format, ...)
 }
 #endif
 
-void Rprintf(char *format, ...)
+void Rprintf(const char *format, ...)
 {
     va_list(ap);
 
@@ -619,7 +669,7 @@ void Rprintf(char *format, ...)
   anything unless you're sure it won't
   cause problems
 */
-void REprintf(char *format, ...)
+void REprintf(const char *format, ...)
 {
     va_list(ap);
     va_start(ap, format);

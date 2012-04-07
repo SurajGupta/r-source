@@ -20,7 +20,7 @@ install.packages <-
              method, available = NULL, destdir = NULL,
              installWithVers = FALSE, dependencies = NA,
              type = getOption("pkgType"), configure.args = character(0),
-             clean = FALSE)
+             clean = FALSE, ...)
 {
     if (is.logical(clean) && clean)
         clean <- "--clean"
@@ -159,9 +159,21 @@ install.packages <-
                                method = method, available = available,
                                destdir = destdir,
                                installWithVers = installWithVers,
-                               dependencies = dependencies)
+                               dependencies = dependencies, ...)
             return(invisible())
         }
+        ## Avoid problems with spaces in pathnames.
+        have_spaces <- grep(" ", pkgs)
+        if(length(have_spaces)) {
+            ## we want the short name for the directory,
+            ## but not for a .tar.gz, and package names never contain spaces.
+            p <- pkgs[have_spaces]
+            dirs <- shortPathName(dirname(p))
+            pkgs[have_spaces] <- file.path(dirs, basename(p))
+        }
+        ## Avoid problems with backslashes
+        ## -- will mess up UNC names, but they don't work
+        pkgs <- gsub("\\\\", "/", pkgs)
     } else {
         if(type == "mac.binary") {
             if(!length(grep("darwin", R.version$platform)))
@@ -170,7 +182,7 @@ install.packages <-
                                method = method, available = available,
                                destdir = destdir,
                                installWithVers = installWithVers,
-                               dependencies = dependencies)
+                               dependencies = dependencies, ...)
             return(invisible())
         }
 
@@ -249,6 +261,13 @@ install.packages <-
                                  "packages %s are not available"),
                         paste(sQuote(p0[miss]), collapse=", ")),
                 domain = NA)
+        if (sum(miss) == 1 &&
+            !is.na(w <- match(tolower(p0[miss]),
+                              tolower(row.names(available))))) {
+            warning(sprintf("Perhaps you meant %s ?",
+                            sQuote( row.names(available)[w])),
+                    call. = FALSE, domain = NA)
+        }
         flush.console()
     }
     p0 <- p0[!miss]
@@ -297,7 +316,7 @@ install.packages <-
 
     foundpkgs <- download.packages(p0, destdir = tmpd, available = available,
                                    contriburl = contriburl, method = method,
-                                   type = "source")
+                                   type = "source", ...)
 
     ## at this point pkgs may contain duplicates,
     ## the same pkg in different libs

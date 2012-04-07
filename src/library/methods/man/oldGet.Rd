@@ -11,11 +11,10 @@
 \alias{getProperties}
 \alias{getPrototype}
 \alias{getSubclasses}
-\alias{getValidity}
 \alias{getVirtual}
 \title{Old functions to access slots in a class definition }
 \description{
-Expect these functions to become deprecated in the near future.
+ \bold{These functions are deprecated.}
 
  They do nothing but access a slot in a class definition, and don't
  even do this consistently  with the right name (they date back to the
@@ -25,26 +24,23 @@ Expect these functions to become deprecated in the near future.
 
 }
 \usage{
-getAccess(ClassDef) 
+getAccess(ClassDef)
 
-getClassName(ClassDef) 
+getClassName(ClassDef)
 
-getClassPackage(ClassDef) 
+getClassPackage(ClassDef)
 
-getExtends(ClassDef) 
+getExtends(ClassDef)
 
-getProperties(ClassDef) 
+getProperties(ClassDef)
 
-getPrototype(ClassDef) 
+getPrototype(ClassDef)
 
-getSubclasses(ClassDef) 
+getSubclasses(ClassDef)
 
-getValidity(ClassDef) 
-
-getVirtual(ClassDef) 
+getVirtual(ClassDef)
 
 }
-%- maybe also 'usage' for other objects documented here.
 \arguments{
   \item{ClassDef}{ the class definition object }
 }
@@ -52,7 +48,7 @@ getVirtual(ClassDef)
   The functions should be replaced by direct access to the slots, or
   by use of higher-level alternatives.
 
-The functions and corresponding slots are: 
+The functions and corresponding slots are:
 \tabular{ll}{
 \code{getAccess} \tab \code{"access"} \cr
 \code{getClassName} \tab \code{"className"} \cr
@@ -61,10 +57,9 @@ The functions and corresponding slots are:
 \code{getProperties} \tab \code{"slots"} \cr
 \code{getPrototype} \tab \code{"prototype"} \cr
 \code{getSubclasses} \tab \code{"subclasses"} \cr
-\code{getValidity} \tab \code{"validity"} \cr
 \code{getVirtual} \tab \code{"virtual"}
 }
 
 }
-\seealso{ \code{\link{classRepresentation-class}} }
+\seealso{Class \code{\linkS4class{classRepresentation}}.}
 \keyword{internal}

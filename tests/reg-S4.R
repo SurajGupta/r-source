@@ -41,8 +41,8 @@ trace("f", sig = c("character", "character"), quote(x <- c(x, "D")),
       exit = quote(xy <<- xyy <<- c(x, "W")), print = FALSE)
 
 stopifnot(identical(f("B", "C"), paste(c("A","B","D"), "C")))
-# These two got broken by Luke's lexical scoping fix
-#stopifnot(identical(xy, c("A", "B", "D", "W")))
+stopifnot(identical(xyy, c("A", "B", "D", "W")))
+# got broken by Luke's lexical scoping fix:
 #stopifnot(identical(xy, xyy))
 
 ## but the default method is unchanged
@@ -320,3 +320,25 @@ setMethod("as.vector", signature(x = "foo", mode = "missing"),
           function(x) unclass(x))
 ## whereas this fails in R versions earlier than 2.6.0:
 setMethod("as.vector", "foo", function(x) unclass(x))# gives message
+
+## stats4::AIC in R < 2.7.0 used to clobber stats::AIC
+pfit <- function(data) {
+    m <- mean(data)
+    loglik <- sum(dpois(data, m))
+    ans <- list(par = m, loglik = loglik)
+    class(ans) <- "pfit"
+    ans
+}
+AIC.pfit <- function(object, ..., k = 2) -2*object$loglik + k
+AIC(pfit(1:10))
+library(stats4)
+AIC(pfit(1:10)) # failed in R < 2.7.0
+
+## For a few days (~ 2008-01-30), this failed to work without any notice:
+setClass("Mat",  representation(Dim = "integer","VIRTUAL"))
+setClass("dMat", representation(x = "numeric",  "VIRTUAL"), contains = "Mat")
+setClass("CMat", representation(dnames = "list","VIRTUAL"), contains = "Mat")
+setClass("dCMat", contains = c("dMat", "CMat"))
+stopifnot(!isVirtualClass("dCMat"),
+	  length(slotNames(new("dCMat"))) == 3)
+

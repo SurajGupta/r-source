@@ -1,7 +1,7 @@
 export("?", CRAN.packages, Rprof,Rprofmem, RShowDoc, RSiteSearch,
        URLdecode, URLencode, View, alarm, apropos, argsAnywhere,
        assignInNamespace, as.roman, as.person, as.personList, as.relistable,
-       available.packages, browseEnv, browseURL, bug.report,
+       available.packages, browseEnv, browseURL, browseVignettes, bug.report,
        capture.output, checkCRAN, chooseCRANmirror, citation,
        citEntry, citHeader, citFooter, close.socket, combn,
        compareVersion, contrib.url, count.fields, data, data.entry,
@@ -18,7 +18,8 @@ export("?", CRAN.packages, Rprof,Rprofmem, RShowDoc, RSiteSearch,
        normalizePath, object.size, old.packages, package.contents,
        package.skeleton, packageDescription, packageStatus, page,
        person, personList, pico, prompt, promptData, promptPackage,
-       readCitationFile, readNEWS, read.DIF, read.csv, read.csv2,
+       rc.getOption, rc.options, rc.settings, rc.status,
+       readCitationFile, read.DIF, read.csv, read.csv2,
        read.delim, read.delim2, read.fwf, read.fortran, read.socket,
        read.table, recover, relist, remove.packages, savehistory, select.list,
        sessionInfo, setRepositories, stack, str, strOptions,
@@ -28,6 +29,7 @@ export("?", CRAN.packages, Rprof,Rprofmem, RShowDoc, RSiteSearch,
        write.csv2, write.socket, write.table, wsbrowser, xedit,
        xemacs, zip.file.extract)
 
+export(txtProgressBar, getTxtProgressBar, setTxtProgressBar)
 
 S3method("[", getAnywhere)
 S3method("[", roman)
@@ -37,6 +39,7 @@ S3method(as.character, roman)
 S3method(as.person, default)
 S3method(as.personList, default)
 S3method(as.personList, person)
+S3method(close, txtProgressBar)
 S3method(edit, data.frame)
 S3method(edit, default)
 S3method(edit, matrix)
@@ -64,6 +67,7 @@ S3method(print, roman)
 S3method(print, sessionInfo)
 S3method(print, socket)
 S3method(print, vignette)
+S3method(print, browseVignettes)
 S3method(prompt, data.frame)
 S3method(prompt, default)
 S3method(relist, default)
@@ -109,9 +113,11 @@ if(tools:::.OStype() == "windows") {
 export(DLL.version, Filters, choose.dir, choose.files,
        fixup.libraries.URLs, fixup.package.URLs, getClipboardFormats,
        getIdentification, getWindowsHandle, getWindowTitle,
-       link.html.help, loadRconsole, make.search.html,
-       readClipboard, setStatusBar, setWindowTitle, shortPathName,
-       win.version, winDialog, winDialogString, winMenuAdd, winMenuAddItem,
-       winMenuDel, winMenuDelItem, winMenuNames, winMenuItems, writeClipboard,
-       zip.unpack)
+       link.html.help, loadRconsole, make.search.html, readClipboard,
+       readRegistry, setStatusBar, setWindowTitle, shortPathName,
+       win.version, winDialog, winDialogString, winMenuAdd,
+       winMenuAddItem, winMenuDel, winMenuDelItem, winMenuNames,
+       winMenuItems, writeClipboard, zip.unpack,
+       winProgressBar, getWinProgressBar, setWinProgressBar)
+S3method(close, winProgressBar)
 }

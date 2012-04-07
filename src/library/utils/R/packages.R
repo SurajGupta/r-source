@@ -90,8 +90,12 @@ available.packages <-
                                 dimnames=list(NULL, missingFields))
                 res0 <- cbind(res0, toadd)
             }
-            res0 <- cbind(res0[, fields, drop = FALSE],
-                          Repository = repos)
+            if ("Path" %in% colnames(res0)) {
+                rp <- rep.int(repos, nrow(res0))
+                path <- res0[, "Path"]
+                rp[!is.na(path)] <- paste(repos, path[!is.na(path)], sep="/")
+            } else rp <- repos
+            res0 <- cbind(res0[, fields, drop = FALSE], Repository = rp)
             res <- rbind(res, res0)
         }
     }
@@ -101,9 +105,13 @@ available.packages <-
         .checkRversion <- function(x) {
             if(is.na(xx <- x["Depends"])) return(TRUE)
             xx <- tools:::.split_dependencies(xx)
-            if(length(z <- xx[["R", exact=TRUE]]) > 1)
-                eval(parse(text=paste("currentR", z$op, "z$version")))
-            else TRUE
+            ## R < 2.7.0 picked up only the first
+            zs <- xx[names(xx) == "R"]
+            r <- TRUE
+            for(z in zs)
+                if(length(z) > 1)
+                    r <- r & eval(parse(text=paste("currentR", z$op, "z$version")))
+            r
         }
         res <- res[apply(res, 1, .checkRversion), , drop=FALSE]
     }
@@ -451,7 +459,7 @@ remove.packages <- function(pkgs, lib, version) {
 download.packages <- function(pkgs, destdir, available = NULL,
                               repos = getOption("repos"),
                               contriburl = contrib.url(repos, type),
-                              method, type = getOption("pkgType"))
+                              method, type = getOption("pkgType"), ...)
 {
     dirTest <- function(x) !is.na(isdir <- file.info(x)$isdir) & isdir
 
@@ -508,7 +516,7 @@ download.packages <- function(pkgs, destdir, available = NULL,
                 url <- paste(repos, fn, sep="/")
                 destfile <- file.path(destdir, fn)
 
-                res <- try(download.file(url, destfile, method, mode="wb"))
+                res <- try(download.file(url, destfile, method, mode="wb", ...))
                 if(!inherits(res, "try-error") && res == 0)
                     retval <- rbind(retval, c(p, destfile))
                 else
@@ -587,7 +595,8 @@ chooseCRANmirror <- function(graphics = getOption("menu.graphics"))
 setRepositories <-
     function(graphics = getOption("menu.graphics"), ind = NULL)
 {
-    if(!interactive()) stop("cannot set repositories non-interactively")
+    if(is.null(ind) && !interactive())
+        stop("cannot set repositories non-interactively")
     p <- file.path(Sys.getenv("HOME"), ".R", "repositories")
     if(!file.exists(p))
         p <- file.path(R.home("etc"), "repositories")

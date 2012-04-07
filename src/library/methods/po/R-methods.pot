@@ -2,7 +2,7 @@ msgid ""
 msgstr ""
 "Project-Id-Version: R 2.3.0\n"
 "Report-Msgid-Bugs-To: bugs@r-project.org\n"
-"POT-Creation-Date: 2007-12-02 19:24\n"
+"POT-Creation-Date: 2008-04-05 10:49\n"
 "PO-Revision-Date: YEAR-MO-DA HO:MI+ZONE\n"
 "Last-Translator: FULL NAME <EMAIL@ADDRESS>\n"
 "Language-Team: LANGUAGE <LL@li.org>\n"
@@ -21,9 +21,6 @@ msgid "in .OldClassesPrototypes"
 msgstr ""
 
 msgid "methods may not be defined for primitive function \"%s\" in this version of R"
-msgstr ""
-
-msgid "\"%s\" is not one of the basic functions"
 msgstr ""
 
 msgid "no 'replace' method was defined for as(x, \"%s\") <- value for class \"%s\""
@@ -128,6 +125,9 @@ msgstr ""
 msgid "no method defined for function \"%s\" and signature %s"
 msgstr ""
 
+msgid "'file' must be a character string or a connection"
+msgstr ""
+
 msgid "No method found for signature %s"
 msgstr ""
 
@@ -158,13 +158,10 @@ msgstr ""
 msgid "\"%s\" is not a generic function in \"%s\"; methods not removed"
 msgstr ""
 
-msgid "cannot restore previous version of \"%s\" in locked environment/package \"%s\""
+msgid "cannot remove methods for  \"%s\" in locked environment/package \"%s\""
 msgstr ""
 
 msgid "restoring default function definition of \"%s\""
-msgstr ""
-
-msgid "cannot reset \"%s\", the definition is not a generic function object"
 msgstr ""
 
 msgid "error in updating generic function \"%s\"; the function definition is not a generic function (class \"%s\")"
@@ -182,10 +179,16 @@ msgstr ""
 msgid "'callGeneric' must be called from a generic function or method"
 msgstr ""
 
-msgid "\"%s\" is not currently a generic:  define it first to create a non-default implicit form"
+msgid "expected a non-empty character string for argument name"
 msgstr ""
 
-msgid "No nongeneric version of function \"%s\" exists to be restored"
+msgid "generic function supplied was not created for \"%s\""
+msgstr ""
+
+msgid "\"%s\" is a primitive function; its generic form cannot be redefined"
+msgstr ""
+
+msgid "\"%s\" is not currently a generic:  define it first to create a non-default implicit form"
 msgstr ""
 
 msgid "Must provide an environment table; got class \"%s\""
@@ -195,6 +198,21 @@ msgid "Function \"%s\" may not be used as a generic (implicitly prohibited)"
 msgstr ""
 
 msgid "Implicit generic exists for \"%s\", but will be overriden by explicit call to setGeneric()"
+msgstr ""
+
+msgid "argument \"f\" must be a generic function or a single character string; got an object of class \"%s\""
+msgstr ""
+
+msgid "non-generic function given to findMethods()"
+msgstr ""
+
+msgid "Only FALSE meaningful for inherited, when where is supplied (got"
+msgstr ""
+
+msgid "\""
+msgstr ""
+
+msgid "f does not correspond to a generic function and package not specified"
 msgstr ""
 
 msgid "invalid first argument: should be the name of the first argument in the dispatch"
@@ -242,7 +260,7 @@ msgstr ""
 msgid "in the method signature for function \"%s\" invalid argument names in the signature: %s"
 msgstr ""
 
-msgid "no methods found for generic \"%s\""
+msgid "No generic function found corresponding to \"%s\""
 msgstr ""
 
 msgid "skipping methods list element %s of unexpected class \"%s\""
@@ -356,18 +374,6 @@ msgstr ""
 msgid "class \"%s\" does not have a data part (a .Data slot) defined"
 msgstr ""
 
-msgid "trying to change the argument list of %s with %d arguments to have arguments (%s)"
-msgstr ""
-
-msgid "get rid of variables in definition %s (%s); they conflict with the needed change to argument names (%s)"
-msgstr ""
-
-msgid "arguments in definition %s changed from (%s) to (%s)"
-msgstr ""
-
-msgid ","
-msgstr ""
-
 msgid "a validity method must be a function of one argument, got an object of class \"%s\""
 msgstr ""
 
@@ -422,12 +428,6 @@ msgstr ""
 msgid "invalid call in method dispatch to \"%s\" (no default method)"
 msgstr ""
 
-msgid "\"%s\" from \"%s\" is a non-generic function; no methods available"
-msgstr ""
-
-msgid "invalid 'fdef' for \"%s\" in 'getAllMethods'; expected either a 'genericFunction object' or a primitive function, got an object of class \"%s\""
-msgstr ""
-
 msgid "formal arguments in method and function do not appear in the same order"
 msgstr ""
 
@@ -438,6 +438,9 @@ msgid "expanding the signature to include omitted arguments in definition: %s"
 msgstr ""
 
 msgid "= \"missing\""
+msgstr ""
+
+msgid ","
 msgstr ""
 
 msgid "methods can add arguments to the generic only if '...' is an argument to the generic"
@@ -453,6 +456,9 @@ msgid "methods cannot be defined for the primitive function \"%s\""
 msgstr ""
 
 msgid "no generic function found for \"%s\""
+msgstr ""
+
+msgid "Empty function name in .getGeneric"
 msgstr ""
 
 msgid "the methods object name for \"%s\" must include the name of the package that contains the generic function, but no generic function of this name was found"
@@ -510,6 +516,9 @@ msgid "\"%s\" is not a generic function (or not visible here)"
 msgstr ""
 
 msgid "invalid element in the groupMembers slot (class \"%s\")"
+msgstr ""
+
+msgid "\" is not a known action (warn, stop, once, ignore); no action recorded for function \""
 msgstr ""
 
 msgid "\"%s\" has a sealed class definition and cannot be redefined"
@@ -623,7 +632,7 @@ msgstr ""
 msgid "class \"%s\" is a class union: 'coerce' relations to a class union are not meaningful"
 msgstr ""
 
-msgid "'as' method must have one or two arguments, plus optional 'strict'; got (%s)"
+msgid "'as' method should have one argument, or match the arguments of coerce(): got  (%s)"
 msgstr ""
 
 msgid "a 'replace' method definition in 'setAs' must be a function of two arguments, got %d"
@@ -719,9 +728,6 @@ msgstr ""
 msgid "\"), expected a method, got an object of class \""
 msgstr ""
 
-msgid "\""
-msgstr ""
-
 msgid "Invalid or unset methods table in generic function \""
 msgstr ""
 
@@ -752,15 +758,6 @@ msgstr ""
 msgid "Couldn't find methods table for \"%s\", package \"%s\" may be out of date"
 msgstr ""
 
-msgid "Methods list for generic \""
-msgstr ""
-
-msgid "\" not found"
-msgstr ""
-
-msgid ".UsingMethodsTables: 'onOff' is not TRUE or FALSE"
-msgstr ""
-
 msgid "Failed to find expected group generic function:"
 msgstr ""
 
@@ -785,7 +782,13 @@ msgstr ""
 msgid "; gnames ="
 msgstr ""
 
-msgid "Could not find generic function \"%s\" to initialize cached methods"
+msgid "Something weird:  inconsistent number of args in methods table strings:"
+msgstr ""
+
+msgid "(using the largest value)"
+msgstr ""
+
+msgid "No methods table for generic \"%s\" from package \"%s\" in package \"%s\""
 msgstr ""
 
 msgid "inconsistent old-style class information for \"%s\" (maybe mixing old and new classes?)"
@@ -798,6 +801,9 @@ msgid "explicit replacement not defined for as(x, \"%s\") <- value for old-style
 msgstr ""
 
 msgid "argument 'Classes' must be a vector of two classes; got an argument of length %d"
+msgstr ""
+
+msgid "Created a package name, \"%s\", when none found"
 msgstr ""
 
 msgid "no definition of class \"%s\" found"
@@ -872,7 +878,10 @@ msgstr ""
 msgid "not a package name: \"%s\""
 msgstr ""
 
-msgid "apparently bad method or class metadata in saved environment; move the file or remove the class/method"
+msgid "apparently bad method or class metadata in saved environment;"
+msgstr ""
+
+msgid "move the file or remove the class/method"
 msgstr ""
 
 msgid        "in the method signature for function \"%s\" no definition for class: %s"

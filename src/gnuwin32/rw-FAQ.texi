@@ -136,12 +136,11 @@ release.
 @node How do I install R for Windows?, How do I check an installation?, Where can I find the latest version?, Installation and Usage
 @section How do I install R for Windows?
 
-You need Windows 95 or later.  There is no specific version for Windows
-64, but the standard 32-bit version has been proven to work.  Some
-features only work on an NT-based version of Windows (and some work
-better on such an OS).  We do minimally test most releases on Windows 98
-(2.5.0 was tested, for example), but only test thoroughly on XP and
-Vista 64.
+Versions of R as from 2.7.0 will only run on Windows 2000 or later.  (R
+2.6.2 was the last version for Windows 95. 98, ME and NT4.)  There is no
+specific version for x64 Windows, but the standard 32-bit version works
+well enough.  We only test on versions of Windows currently supported by
+Microsoft, mainly on XP, Vista x64 and Windows Server 2003.
 
 Your file system must allow case-honouring long file names (as is likely
 except perhaps for some network-mounted systems).  A full installation
@@ -170,12 +169,11 @@ you will only be able to install R in your own file area.  On Windows
 Vista you may need to confirm that you want to proceed with
 installing a program from an `unidentified publisher'.
 
-After installation you should choose a working directory for R (one
-where you have permission to create files).  You will have a shortcut to
-@file{@RWVER@\bin\Rgui.exe} on your desktop and/or somewhere on the
-Start menu file tree, and perhaps also in the Quick Launch part of the
-taskbar.  Right-click each shortcut, select Properties... and change the
-`Start in' field to your working directory.
+After installation you should choose a working directory for R.  You
+will have a shortcut to @file{@RWVER@\bin\Rgui.exe} on your desktop
+and/or somewhere on the Start menu file tree, and perhaps also in the
+Quick Launch part of the taskbar.  Right-click each shortcut, select
+Properties... and change the `Start in' field to your working directory.
 
 You may also want to add command-line arguments at the end of the
 Target field (@emph{after} any final double quote, and separated by a
@@ -196,7 +194,8 @@ Run the program @file{bin\md5check.exe}.
 This compares checksums on all the installed files with those put into
 the installer, and will report any changed or missing files.
 
-(It only works if R was installed from the Inno Setup installer.)
+(It only works if R was installed from the Inno Setup installer, and not
+the MSI installer.)
 
 @node Can I customize the installation?, How do I run it?, How do I check an installation?, Installation and Usage
 @section Can I customize the installation?
@@ -298,15 +297,17 @@ was installed.
 That's a matter of taste.  For most people the best thing to do is to
 uninstall R (see the previous Q), install the new version, copy any
 installed packages to the library folder in the new installation, run
-@code{update.packages()} in the new R (`Update packages...' from
-the Packages menu, if you prefer) and then delete anything left of the
-old installation.  Different versions of R are quite deliberately
-installed in parallel folders so you can keep old versions around if you
-wish.
+@code{update.packages(checkBuilt=TRUE, ask=FALSE)} in the new R and then
+delete anything left of the old installation.  Different versions of R
+are quite deliberately installed in parallel folders so you can keep old
+versions around if you wish.
 
-Upgrading from R 1.x.y to R 2.x.y is special as all the packages
-need to be reinstalled.  Rather than copy them across, make a note of
-their names and re-install them from CRAN.
+For those with a personal library (folder @file{R\win-library\@var{x.y}}
+of your home directory), you will need to update that too when the minor
+version of R changes (e.g.@: from 2.6.2 to 2.7.0).  A simple way
+to do so is to copy (say) @file{R\win-library\2.6} to
+@file{R\win-library\2.7} before running
+@code{update.packages(checkBuilt=TRUE, ask=FALSE)}.
 
 
 @node There seems to be a limit on the memory it uses!, How can I keep workspaces for different projects in different directories?, What's the best way to upgrade?, Installation and Usage
@@ -381,10 +382,7 @@ path_to_R\bin\Rterm.exe --no-restore --no-save < %1 > %1.out 2>&1
 
 @noindent
 The purpose of @code{2>&1} is to redirect warnings and errors to the
-same file as normal output, and users of Windows 95/98/ME's default
-@code{command.com} `shell' will need to omit it.  (That program has no
-means to redirect @file{stderr}, and @command{Rterm.exe} sends warnings and
-errors to the normal output file on such systems.)
+same file as normal output.
 
 
 @node Can I use @RWVER@ with ESS and (X)emacs?, What are HOME and working directories?, Can I use R CMD BATCH?, Installation and Usage
@@ -416,9 +414,9 @@ directories.  It first tries to use the Windows "personal" directory
 (typically @file{C:\Documents and Settings\username\My Documents} on
 Windows XP and @file{C:\Users\username\Documents} on Vista).  If that
 fails, if both environment variables @env{HOMEDRIVE} and @env{HOMEPATH}
-are set (and they normally are under Windows NT4, 2000 and later), the
-value is @file{$@{HOMEDRIVE@}$@{HOMEPATH@}}.  If all of these fail, the
-current working directory is used.
+are set (and they normally are), the value is
+@file{$@{HOMEDRIVE@}$@{HOMEPATH@}}.  If all of these fail, the current
+working directory is used.
 
 You can find this from R code by @code{Sys.getenv("R_USER")}.
 
@@ -487,8 +485,7 @@ tried to make R work on paths with spaces in, but many people writing
 packages for Unix do not bother.  So it is worth trying the alternative
 short name (something like @samp{PROGRA~1}; you can get it as the
 `MS-DOS name' from the Properties of the file on some versions of
-Windows, and from @command{dir /X} in a @samp{Command Prompt} window on
-2000 and later).
+Windows, and from @command{dir /X} in a @samp{Command Prompt} window).
 
 
 @node Does R use the Registry?, Does R support automation?, R can't find my file, Installation and Usage
@@ -510,8 +507,7 @@ Windows registry:
     home directory.
 @end itemize
 If you do not have administrative privileges on the machine while running
-the installer, then the entries are created under the @code{HKEY_CURRENT_USER}
-root.
+the installer, then the entries are created under @code{HKEY_CURRENT_USER}.
 
 If you tick the second option (`Associate R with .RData files') and have
 administrative privileges, then entries are created under
@@ -644,9 +640,7 @@ may want to experiment with disabling it.
 
 It does.  A few issues have been reported that related to the way
 accounts and file permissions work.  (These are not specifically R
-issues, but changes in user experiences.)  As there are many settings
-that system administrators can change, it is clear that only a tiny
-fraction of possibilities will have been explored.
+issues, but changes in user experiences.)
 
 Earlier versions of Windows had user and Administrator accounts, and
 user accounts could be give administrative privileges (by being added to
@@ -734,9 +728,9 @@ running under Administrator privileges when updating those.
 
 Another issue with Vista is that the standard POSIX ways that R uses
 (e.g.@: in @code{file.info} and @code{file.access}) to look at file
-permissions no longer work reliably.  @code{file.access} has been
-re-written for R 2.5.1 to work with Windows NT-based security and
-the new version seems much more reliable with Vista.
+permissions no longer work reliably.  @code{file.access} was re-written
+for R 2.5.1 to work with Windows NT-based security and the new version
+seems much more reliable with Vista.
 
 On suitably recent hardware Vista can prevent the execution of code
 from data areas via `Data Execution Prevention' (from a tab in
@@ -851,7 +845,7 @@ for example for Lucida Console.
 You do need to ensure that R is running in a suitable locale: use
 @code{Sys.getlocale()} to find out.  (CJK users may be used to their
 language characters always being available, which is the case for
-so-called `Unicode' Windows applications.  However, R has to run on
+so-called `Unicode' Windows applications.  However, R used to run on
 Windows 9x and is not therefore `Unicode'.)  You can find suitable
 locale names from
 @uref{http://msdn.microsoft.com/library/default.asp?url=/library/en-us/vccore98/html/_crt_language_and_country_strings.asp}:
@@ -887,18 +881,15 @@ the shortcut you use to start R, or setting it in the @file{Rconsole} file.
 for example, in the console and to annotate graphs.  Similar comments
 apply to any non-Western European language.
 
-This is possible by setting suitable fonts in the @file{Rconsole} and
-@file{Rdevga} configuration files (see Q3.2 and the next Q).  You can
-specify additional fonts in @file{Rdevga}, and use them by
-
-@example
-par(font=, font.lab=, font.main=, font.sub=)
-@end example
-
-Nineteen fonts are specified (as 1 to 19) by default: you can add to these
-(up to 13 more) or replace them.  Also, you can make use of font
-families in a way similar to other graphics devices: see the examples
-for @code{windowsFonts}.
+With suitable fonts, this should just work.  You will need to set MS
+Mincho or MS Gothic as the console font to ensure that single- and
+double-width characters are handled correctly.  The default graphics
+fonts for the @code{windows()} graphics device can handle most common
+Japanese characters, but more specialized fonts may need to be set.
+(See Q3.5 for how to set fonts: the console font can also be set from
+the `GUI preferences' meny item.)  The help for @code{windowsFonts} has
+examples of selecting Japanese fonts for the @code{windows()} family of
+devices.
 
 In addition, the Hershey vector fonts (see @code{?Hershey},
 @code{?Japanese} and @code{demo(Japanese)}) can be used on any graphics
@@ -911,20 +902,15 @@ see its help page (which also applies to @code{pdf}).
 @section I don't see characters with accents at the R console, for example in ?text.
 
 You need to specify a font in @file{Rconsole} (see Q3.5) that supports
-the encoding in use, in Western European languages Latin-1.  The default
-font, @code{Courier New}, does on our systems, as does @code{FixedSys}.
-This may be a problem in other locales, especially for non-Western
-European languages.
+the encoding in use, in Western European languages Latin-1.  This used
+to be a problem in earlier versions of Windows, but now it is hard to
+find a font which does not.
 
 Support for these characters within @command{Rterm} depends on the
-environment (the terminal window and shell, including locale settings)
-within which it is run as well as the font used by the terminal window.
-
-If you are using a non-Latin-1 language, you do need to ensure that the
-fonts you selected support the language.  For example, it was found by
-one Czech user (under Windows 98) that he had to select @code{Times New
-Roman CE} or @code{Courier} (not @code{Courier New}) to get certain
-Czech characters displayed correctly.
+environment (the terminal window and shell, including locale and
+codepage settings) within which it is run as well as the font used by
+the terminal window.  Those are usually on legacy DOS settings and need
+to altered.
 
 @node The dialog buttons are not translated,  , I don't see characters with accents at the R console, Languages and Internationalization
 @section The dialog buttons are not translated.
@@ -977,7 +963,7 @@ You can install pre-compiled packages either from CRAN or from a local
 There are menu items on the @code{Packages} menu to provide a
 point-and-click interface to package installation.  The packages for
 each minor (2.x) version will be stored in a separate area, so for R
-2.5.? the files are in @file{bin/windows/contrib/2.5}.  You can try
+2.7.? the files are in @file{bin/windows/contrib/2.7}.  You can try
 those compiled for earlier versions (but not before 2.0.0), at your own
 risk.
 
@@ -1055,11 +1041,12 @@ package, run at the R prompt.
 > link.html.help()
 @end example
 
-This is done automatically when installing from the Packages menu or
-by @code{install.packages()}, and when @code{help.start} is run,
-@emph{provided} you have write permission in @file{@RWVER@}.  If you do not
-have sufficient permission, you will get warnings and the packages you
-install will not appear in the list of packages or the search system.
+This is done automatically when installing from the Packages menu or by
+@code{install.packages()}, and when @code{help.start} is run,
+@emph{provided} you have write permission on @file{@RWVER@/library}.  If
+you do not have sufficient permission, you will get warnings and the
+packages you install will not appear in the list of packages or the
+search system.
 
 
 @node My functions are not found by the HTML help search system., Loading a package fails., The packages I installed do not appear in the HTML help system, Packages
@@ -1080,9 +1067,10 @@ update the indices (for which you need write permission in the
 the main library will be found.
 
 If the help search system does not work @emph{at all}, this probably
-indicates that Java support is either not installed or not enabled in
-your browser.  The search page contains a link to the appropriate
-section in the @emph{R Installation and Administration} manual.
+indicates that Java support is either not installed or Java or
+JavaScript is not enabled in your browser.  The search page contains a
+link to the appropriate section in the @emph{R Installation and
+Administration} manual.
 
 
 @node Loading a package fails., Package TclTk does not work., My functions are not found by the HTML help search system., Packages
@@ -1114,11 +1102,25 @@ installer and install them.
 
 Alternatively, if you have the environment variable @env{MY_TCLTK} set
 to a non-empty value, it is assumed that you want to use a different
-Tcl/Tk 8.4.x installation, and that this is set up correctly (with the
-DLLs in your path and @env{TCL_LIBRARY} set if needed).  In that case
-you do not need the Tcl/Tk support files installed (but they can be).
-Note that you do need 8.4.x and not 8.5.x.  (If you build R from the
-sources yourself you can configure it to use 8.5.x.)
+Tcl/Tk 8.5.x installation with the path to its @file{bin} directory
+given by value of @env{MY_TCLTK}, and that this is set up correctly
+(with @env{TCL_LIBRARY} set if needed).  In that case you do not need
+the Tcl/Tk support files installed (but they can be).  Note that you do
+need 8.5.x and not 8.4.x.  (If you build R from the sources yourself you
+can configure it to use 8.4.x.)
+
+Several package authors have suggested using ActiveTcl
+(@uref{http://www.activestate.com/Products/activetcl/}) as a way to get
+Tcl/Tk extensions.  This could be used by setting (for a default install)
+
+@example
+MT_TCLTK=c:/Tcl/bin
+@end example
+
+@noindent
+@strong{but} current versions (e.g.@: 8.5.1.0) do not contain any extra
+extensions.  Some extensions can be copied over from an ActiveTcl
+install of Tcl/Tk 8.4 or downloaded via the @code{Teacup} facility.
 
 
 @node  Hyperlinks in HTML do not work., update.packages() fails, Package TclTk does not work., Packages
@@ -1126,7 +1128,8 @@ sources yourself you can configure it to use 8.5.x.)
 
 They may well not work between packages installed in different
 libraries.  This is solved under Unix using symbolic links which Windows
-does not implement.
+does not implement (except on NTFS file systems under Vista/Server 2008
+-- where they may need Administrator privileges).
 
 With HTML, @code{help.start()} fixes up links to the most of the
 standard packages if it has write permission in the main library tree.
@@ -1168,7 +1171,7 @@ in your HOME directory (@pxref{What are HOME and working directories?}).
 @section Help is not shown for some of the packages
 
 Is this for Compiled HTML help (the default)?  If a help viewer appears
-but says the page cannot be displayed, this may be due to a 2006 Windows
+but says the page cannot be displayed, this may be due to a Windows
 security patch (@url{http://support.microsoft.com/kb/896358}).  Either
 apply the workarounds given at that URL or choose another form of help
 as the default (on installation or by editing
@@ -1265,7 +1268,7 @@ either in the call to @code{windows} or as options: see @code{?windows}.
 
 On one of our systems, the screen height was reported as 240mm, and the
 width as 300mm in 1280 x 1024 mode and 320mm in 1280 x 960 and 1600 x 1200
-modes.  In fact it is a 21" monitor and 400mm x 300mm!
+modes.  In fact it was a 21" monitor and 400mm x 300mm!
 
 @node How do I move focus to a graphics window or the console?, What does TAB completion do?, Circles appear as ovals on screen, Windows Features
 @section How do I move focus to a graphics window or the console?
@@ -1307,7 +1310,6 @@ so, and setting the environment variable @env{R_COMPLETION} to
 settings available use
 
 @example
-library(rcompgen)
 ?rc.settings
 @end example
 
@@ -1423,11 +1425,11 @@ To build R on 32-bit Windows you will need the tools from
 @uref{http://www.murdoch-sutherland.com/Rtools/} as well as some
 others.  See the `R Installation and Administration' manual.
 
-It is possible to cross-build R for Windows x64 using @code{binutils} and
-@code{gcc} with the @samp{x86_64-pc-mingw32} target, using suitable
-settings in @file{src/gnuwin32/MkRules} (see the comments there).
-However, at present that toolchain is experimental and the build does
-not run.
+It has been possible to cross-build R for Windows x64 using
+@code{binutils} and @code{gcc} with the @samp{x86_64-pc-mingw32} target,
+using suitable settings in @file{src/gnuwin32/MkRules} (see the comments
+there).  However, that toolchain is experimental and the support for
+Unicode file functions needed for R 2.7.x is at present incomplete.
  
 You are of course welcome to try a commercial compiler, but we will not
 be distributing a port to which users cannot easily add packages.
@@ -1668,7 +1670,7 @@ call @code{R_ProcessEvents()} periodically from your compiled code.
 If you want output to be updated on the console, call
 @code{R_FlushConsole()} and then @code{R_ProcessEvents()}.
 
-@set LASTEDIT 2007-04-13
+@set LASTEDIT 2008-03-19
 @ifhtml
 @html
 <hr WIDTH="100%">

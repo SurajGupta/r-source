@@ -130,22 +130,10 @@ AC_DEFUN([R_PROG_PERL],
 [AC_PATH_PROGS(PERL, [${PERL} perl])
 if test -n "${PERL}"; then
   _R_PROG_PERL_VERSION
-else
-  ## <NOTE>
-  ## Need a full path for '@PERL@' substitutions when starting Perl
-  ## scripts with a line of the form '#! FOO'.
-  AC_PATH_PROGS(FALSE, false)
-  PERL="${FALSE}"
-  ## </NOTE>
 fi
-if test "${r_cv_prog_perl_v5}" = yes; then
-  NO_PERL5=false
-else
-  warn_perl5="you cannot build the object documentation system"
-  AC_MSG_WARN([${warn_perl5}])
-  NO_PERL5=true
+if test "${r_cv_prog_perl_v5}" != yes; then
+  AC_MSG_ERROR([Building R requires Perl >= 5.8.0])
 fi
-AC_SUBST(NO_PERL5)
 ])# R_PROG_PERL
 
 ## _R_PROG_PERL_VERSION
@@ -249,9 +237,10 @@ fi])
 
 ## R_PROG_BROWSER
 ## --------------
+## xdg-open is the freedesktop.org interface to kfmclient/gnome-open
 AC_DEFUN([R_PROG_BROWSER],
 [if test -z "${R_BROWSER}"; then
-  AC_PATH_PROGS(R_BROWSER, [firefox mozilla netscape galeon kfmclient opera gnome-moz-remote open])
+  AC_PATH_PROGS(R_BROWSER, [firefox mozilla galeon opera xdg-open kfmclient gnome-moz-remote open])
 fi
 if test -z "${R_BROWSER}"; then
   warn_browser="I could not determine a browser"
@@ -1200,6 +1189,52 @@ else
 fi
 ])# R_PROG_F77_FLAG
 
+## R_PROG_OBJC_M
+## -------------
+## Check whether we can figure out ObjC Make dependencies.
+AC_DEFUN([R_PROG_OBJC_M],
+[AC_MSG_CHECKING([whether we can compute ObjC Make dependencies])
+AC_CACHE_VAL([r_cv_prog_objc_m],
+[echo "#include <math.h>" > conftest.m
+for prog in "${OBJC} -MM" "${OBJC} -M" "${CPP} -M" "cpp -M"; do
+  if ${prog} conftest.m 2>/dev/null | \
+      grep 'conftest.o: conftest.m' >/dev/null; then
+    r_cv_prog_objc_m="${prog}"
+    break
+  fi
+done])
+if test -z "${r_cv_prog_objc_m}"; then
+  AC_MSG_RESULT([no])
+else
+  AC_MSG_RESULT([yes, using ${r_cv_prog_objc_m}])
+fi
+])# R_PROG_OBJC_M
+
+## R_PROG_OBJC_MAKEFRAG
+## --------------------
+## Generate a Make fragment with suffix rules for the Obj-C compiler.
+AC_DEFUN([R_PROG_OBJC_MAKEFRAG],
+[r_objc_rules_frag=Makefrag.m
+AC_REQUIRE([R_PROG_OBJC_M])
+cat << \EOF > ${r_objc_rules_frag}
+.m.o:
+	$(OBJC) $(ALL_CPPFLAGS) $(ALL_OBJCFLAGS) -c $< -o $[@]
+EOF
+if test -n "${r_cv_prog_objc_m}"; then
+  cat << EOF >> ${r_objc_rules_frag}
+.m.d:
+	@echo "making \$[@] from \$<"
+	@${r_cv_prog_objc_m} \$(ALL_CPPFLAGS) $< > \$[@]
+EOF
+else
+  cat << \EOF >> ${r_cc_rules_frag}
+.m.d:
+	@echo > $[@]
+EOF
+fi
+AC_SUBST_FILE(r_objc_rules_frag)
+])# R_PROG_OBJC_MAKEFRAG
+
 ## R_PROG_OBJC_RUNTIME
 ## -------------------
 ## Check for ObjC runtime and style.
@@ -1323,7 +1358,7 @@ EOF
 echo "running: $1 -c conftest.mm ${CPPFLAGS} ${OBJCXXFLAGS}" >&AS_MESSAGE_LOG_FD
 if $1 -c conftest.mm ${CPPFLAGS} ${OBJCXXFLAGS} >&AS_MESSAGE_LOG_FD 2>&1; then
    AC_MSG_RESULT([yes])
-   rm -f conftest.mm conftest.o
+   rm -rf conftest conftest.* core
    m4_default([$2], OBJCXX=$1)
 else
    AC_MSG_RESULT([no])
@@ -1345,7 +1380,7 @@ AC_BEFORE([AC_PROG_OBJC], [$0])
 
 r_cached_objcxx=yes
 AC_MSG_CHECKING([for cached ObjC++ compiler])
-AC_CACHE_VAL([r_ac_OBJCXX],[
+AC_CACHE_VAL([r_cv_OBJCXX],[
  AC_MSG_RESULT([none])
  r_cached_objcxx=no
 if test -n "${OBJCXX}"; then
@@ -1366,12 +1401,12 @@ if test -z "${OBJCXX}"; then
 else
   AC_MSG_RESULT([${OBJCXX}])
 fi
-r_ac_OBJCXX="${OBJCXX}"
+r_cv_OBJCXX="${OBJCXX}"
 if test "${r_cached_objcxx}" = yes; then
-  AC_MSG_RESULT(["${r_ac_OBJCXX}"])
+  AC_MSG_RESULT(["${r_cv_OBJCXX}"])
 fi
 ])
-OBJCXX="${r_ac_OBJCXX}"
+OBJCXX="${r_cv_OBJCXX}"
 AC_SUBST(OBJCXX)
 ])# R_PROG_OBJCXX
 
@@ -1710,14 +1745,14 @@ fi])# R_X11_XMu
 # HAVE_..._FW if present
 
 AC_DEFUN([R_CHECK_FRAMEWORK],
-[ AC_CACHE_CHECK([for $1 in $2 framework], [r_check_fw_$2],
-  r_check_fw_save_LIBS=$LIBS
-  r_check_fw_$2=no
+[ AC_CACHE_CHECK([for $1 in $2 framework], [r_cv_check_fw_$2],
+  r_cv_check_fw_save_LIBS=$LIBS
+  r_cv_check_fw_$2=no
   LIBS="-framework $2 $5 $LIBS"
   AC_LINK_IFELSE([AC_LANG_CALL([],[$1])],
-                 [r_check_fw_$2="-framework $2"],[])
-  LIBS=$r_check_fw_save_LIBS
-  AS_IF([test "$r_check_fw_$2" != no],
+                 [r_cv_check_fw_$2="-framework $2"],[])
+  LIBS=$r_cv_check_fw_save_LIBS
+  AS_IF([test "$r_cv_check_fw_$2" != no],
         [m4_default([$3], [AC_DEFINE_UNQUOTED(AS_TR_CPP(HAVE_$2_FW), 1, [Defined if framework $2 is present])
 	AS_TR_SH(have_$2_fw)=yes])],
 	[m4_default([$4], AS_TR_SH(have_$2_fw)=no)])
@@ -2009,10 +2044,13 @@ AC_EGREP_CPP([yes],
 ## tcl$x.$y subdirectories.  Set shell variable r_cv_path_TCL_CONFIG
 ## to the entire path of the script if found, and leave it empty
 ## otherwise.
+## /opt/csw/lib and /usr/sfw/lib are for Solaris (blastwave and sunfreeware
+## respectively).
+## We want to look in LIBnn only here.
 AC_DEFUN([_R_PATH_TCL_CONFIG],
 [AC_MSG_CHECKING([for tclConfig.sh in library (sub)directories])
 AC_CACHE_VAL([r_cv_path_TCL_CONFIG],
-[for ldir in /opt/lib /sw/lib /usr/local/lib64 /usr/local/lib /usr/lib64 /usr/lib /lib64 /lib ; do
+[for ldir in /usr/local/${LIBnn} /usr/${LIBnn} /${LIBnn} /opt/lib /sw/lib /opt/csw/lib /usr/sfw/lib; do
   for dir in \
       ${ldir} \
       `ls -d ${ldir}/tcl[[8-9]].[[0-9]]* 2>/dev/null | sort -r`; do
@@ -2038,7 +2076,7 @@ fi
 AC_DEFUN([_R_PATH_TK_CONFIG],
 [AC_MSG_CHECKING([for tkConfig.sh in library (sub)directories])
 AC_CACHE_VAL([r_cv_path_TK_CONFIG],
-[for ldir in /opt/lib /sw/lib /usr/local/lib64 /usr/local/lib /usr/lib64 /usr/lib /lib64 /lib ; do
+[for ldir in /usr/local/${LIBnn} /usr/${LIBnn} /${LIBnn} /opt/lib /sw/lib /opt/csw/lib /usr/sfw/lib; do
   for dir in \
       ${ldir} \
       `ls -d ${ldir}/tk[[8-9]].[[0-9]]* 2>/dev/null | sort -r`; do
@@ -2084,6 +2122,8 @@ if test -z "${TCLTK_CPPFLAGS}" \
   ## Note that in theory a system could have outdated versions of the
   ## *Config.sh scripts and yet up-to-date installations of Tcl/Tk in
   ## standard places ...
+  ## This doesn't make a great deal of sense: on past form 
+  ## we don't even expect future versions of 8.x to work, let alone 9.0
   if test -n "${TCL_CONFIG}"; then
     . ${TCL_CONFIG}
     if test ${TCL_MAJOR_VERSION} -lt 8; then
@@ -2122,7 +2162,9 @@ AC_DEFUN([_R_HEADER_TCL],
 [AC_CACHE_CHECK([for tcl.h], [r_cv_header_tcl_h],
 [AC_EGREP_CPP([yes],
 [#include <tcl.h>
-#if (TCL_MAJOR_VERSION >= 8)
+/* Revise if 9.x ever appears (and 8.x seems to increment only
+   every few years). */
+#if (TCL_MAJOR_VERSION >= 8) && (TCL_MINOR_VERSION >= 3)
   yes
 #endif
 ],
@@ -2138,7 +2180,9 @@ AC_DEFUN([_R_HEADER_TK],
 [AC_CACHE_CHECK([for tk.h], [r_cv_header_tk_h],
 [AC_EGREP_CPP([yes],
 [#include <tk.h>
-#if (TK_MAJOR_VERSION >= 8)
+/* Revise if 9.x ever appears (and 8.x seems to increment only
+   every few years). */
+#if (TK_MAJOR_VERSION >= 8) && (TK_MINOR_VERSION >= 3)
   yes
 #endif
 ],
@@ -2165,24 +2209,36 @@ if test -z "${TCLTK_CPPFLAGS}"; then
     found_tcl_h=no
     if test -n "${TCL_CONFIG}"; then
       . ${TCL_CONFIG}
-      ## Look for tcl.h in
-      ##   ${TCL_PREFIX}/include/tcl${TCL_VERSION}
-      ##   ${TCL_PREFIX}/include
-      ## Also look in
-      ##   ${TCL_PREFIX}/include/tcl${TCL_VERSION}/generic
-      ## to deal with current FreeBSD layouts.  These also link the real
-      ## thing to the version subdir, but the link cannot be used as it
-      ## fails to include 'tclDecls.h' which is not linked.  Hence we
-      ## must look for the real thing first.  Argh ...
-      for dir in \
-          ${TCL_PREFIX}/include/tcl${TCL_VERSION}/generic \
-          ${TCL_PREFIX}/include/tcl${TCL_VERSION} \
-          ${TCL_PREFIX}/include; do 
-        AC_CHECK_HEADER([${dir}/tcl.h],
-                        [TCLTK_CPPFLAGS="-I${dir}"
-                         found_tcl_h=yes
-                         break])
-      done
+      ## TCL_INCLUDE_SPEC (if set) is what we want.
+      if test -n ${TCL_INCLUDE_SPEC} ; then
+        r_save_CPPFLAGS="${CPPFLAGS}"
+	CPPFLAGS="${CPPFLAGS} ${TCL_INCLUDE_SPEC}"
+	AC_CHECK_HEADER([tcl.h], 
+			[TCLTK_CPPFLAGS="${TCL_INCLUDE_SPEC}"
+			 found_tcl_h=yes
+			 break])
+	CPPFLAGS="${r_save_CPPFLAGS}"
+      fi
+      if test "${found_tcl_h}" = no; then
+	## Look for tcl.h in
+	##   ${TCL_PREFIX}/include/tcl${TCL_VERSION}
+	##   ${TCL_PREFIX}/include
+	## Also look in
+	##   ${TCL_PREFIX}/include/tcl${TCL_VERSION}/generic
+	## to deal with current FreeBSD layouts.  These also link the real
+	## thing to the version subdir, but the link cannot be used as it
+	## fails to include 'tclDecls.h' which is not linked.  Hence we
+	## must look for the real thing first.  Argh ...
+	for dir in \
+	    ${TCL_PREFIX}/include/tcl${TCL_VERSION}/generic \
+	    ${TCL_PREFIX}/include/tcl${TCL_VERSION} \
+	    ${TCL_PREFIX}/include; do 
+	  AC_CHECK_HEADER([${dir}/tcl.h],
+			  [TCLTK_CPPFLAGS="-I${dir}"
+			   found_tcl_h=yes
+			   break])
+	done
+      fi
     fi
     if test "${found_tcl_h}" = no; then
       _R_HEADER_TCL
@@ -2198,32 +2254,44 @@ if test -z "${TCLTK_CPPFLAGS}"; then
     found_tk_h=no
     if test -n "${TK_CONFIG}"; then
       . ${TK_CONFIG}
-      ## Look for tk.h in
-      ##   ${TK_PREFIX}/include/tk${TK_VERSION}
-      ##   ${TK_PREFIX}/include
-      ## Also look in
-      ##   ${TK_PREFIX}/include/tcl${TK_VERSION}
-      ## to compensate for Debian madness ...
-      ## Also look in
-      ##   ${TK_PREFIX}/include/tk${TK_VERSION}/generic
-      ## to deal with current FreeBSD layouts.  See above for details.
-      ##
-      ## As the AC_CHECK_HEADER test tries including the header file and
-      ## tk.h includes tcl.h and X11/Xlib.h, we need to change CPPFLAGS
-      ## for the check.
-      r_save_CPPFLAGS="${CPPFLAGS}"
-      CPPFLAGS="${CPPFLAGS} ${TK_XINCLUDES} ${TCLTK_CPPFLAGS}"
-      for dir in \
-          ${TK_PREFIX}/include/tk${TK_VERSION}/generic \
-          ${TK_PREFIX}/include/tk${TK_VERSION} \
-          ${TK_PREFIX}/include/tcl${TK_VERSION} \
-          ${TK_PREFIX}/include; do 
-        AC_CHECK_HEADER([${dir}/tk.h],
-                        [TCLTK_CPPFLAGS="${TCLTK_CPPFLAGS} -I${dir}"
-                         found_tk_h=yes
-                         break])
-      done
-      CPPFLAGS="${r_save_CPPFLAGS}"
+      ## TK_INCLUDE_SPEC (if set) is what we want.
+      if test -n ${TK_INCLUDE_SPEC} ; then
+        r_save_CPPFLAGS="${CPPFLAGS}"
+	CPPFLAGS="${CPPFLAGS} ${TCLTK_CPPFLAGS} ${TK_XINCLUDES} ${TK_INCLUDE_SPEC}"
+	AC_CHECK_HEADER([tk.h], 
+		        [TCLTK_CPPFLAGS="${TCLTK_CPPFLAGS} ${TK_INCLUDE_SPEC}"
+			 found_tk_h=yes
+			 break])
+	CPPFLAGS="${r_save_CPPFLAGS}"
+      fi
+      if test "${found_tk_h}" = no; then
+	## Look for tk.h in
+	##   ${TK_PREFIX}/include/tk${TK_VERSION}
+	##   ${TK_PREFIX}/include
+	## Also look in
+	##   ${TK_PREFIX}/include/tcl${TK_VERSION}
+	## to compensate for Debian madness ...
+	## Also look in
+	##   ${TK_PREFIX}/include/tk${TK_VERSION}/generic
+	## to deal with current FreeBSD layouts.  See above for details.
+	##
+	## As the AC_CHECK_HEADER test tries including the header file and
+	## tk.h includes tcl.h and X11/Xlib.h, we need to change CPPFLAGS
+	## for the check.
+	r_save_CPPFLAGS="${CPPFLAGS}"
+	CPPFLAGS="${CPPFLAGS} ${TK_XINCLUDES} ${TCLTK_CPPFLAGS}"
+	for dir in \
+	    ${TK_PREFIX}/include/tk${TK_VERSION}/generic \
+	    ${TK_PREFIX}/include/tk${TK_VERSION} \
+	    ${TK_PREFIX}/include/tcl${TK_VERSION} \
+	    ${TK_PREFIX}/include; do 
+	  AC_CHECK_HEADER([${dir}/tk.h],
+			  [TCLTK_CPPFLAGS="${TCLTK_CPPFLAGS} -I${dir}"
+			   found_tk_h=yes
+			   break])
+	done
+	CPPFLAGS="${r_save_CPPFLAGS}"
+      fi
     fi
     if test "${found_tk_h}" = no; then
       _R_HEADER_TK
@@ -2848,7 +2916,7 @@ AM_CONDITIONAL(BUILD_XDR, [test "x${r_cv_xdr}" = xno])
 ## R_ZLIB
 ## ------
 ## Try finding zlib library and headers.
-## We check that both are installed, and that the header >= 1.2.1
+## We check that both are installed, and that the header >= 1.2.3
 ## and that gzeof is in the library (which suggests the library
 ## is also recent enough).
 AC_DEFUN([R_ZLIB],
@@ -2882,7 +2950,7 @@ AM_CONDITIONAL(USE_MMAP_ZLIB,
 ## Set shell variable r_cv_header_zlib_h to 'yes' if a recent enough
 ## zlib.h is found, and to 'no' otherwise.
 AC_DEFUN([_R_HEADER_ZLIB],
-[AC_CACHE_CHECK([if zlib version >= 1.2.1],
+[AC_CACHE_CHECK([if zlib version >= 1.2.3],
                 [r_cv_header_zlib_h],
 [AC_RUN_IFELSE([AC_LANG_SOURCE([[
 #include <stdlib.h>
@@ -2890,7 +2958,7 @@ AC_DEFUN([_R_HEADER_ZLIB],
 #include <zlib.h>
 int main() {
 #ifdef ZLIB_VERSION
-  exit(strcmp(ZLIB_VERSION, "1.2.1") < 0);
+  exit(strcmp(ZLIB_VERSION, "1.2.3") < 0);
 #else
   exit(1);
 #endif
@@ -2938,7 +3006,7 @@ else
   have_pcre=no
 fi
 if test "x${have_pcre}" = xyes; then
-AC_CACHE_CHECK([if PCRE version >= 4.0], [r_have_pcre4],
+AC_CACHE_CHECK([if PCRE version >= 7.6], [r_cv_have_pcre76],
 [AC_RUN_IFELSE([AC_LANG_SOURCE([[
 #ifdef HAVE_PCRE_PCRE_H
 #include <pcre/pcre.h>
@@ -2949,23 +3017,29 @@ AC_CACHE_CHECK([if PCRE version >= 4.0], [r_have_pcre4],
 #endif
 int main() {
 #ifdef PCRE_MAJOR
-  exit(PCRE_MAJOR<4);
+#if PCRE_MAJOR > 7
+  exit(0);
+#elif PCRE_MAJOR > 6 && PCRE_MAJOR >= 6
+  exit(0);
+#else
+  exit(1);
+#endif
 #else
   exit(1);
 #endif
 }
-]])], [r_have_pcre4=yes], [r_have_pcre4=no], [r_have_pcre4=no])])
+]])], [r_cv_have_pcre76=yes], [r_cv_have_pcre76=no], [r_cv_have_pcre76=no])])
 fi
-if test "x${r_have_pcre4}" = xyes; then
+if test "x${r_cv_have_pcre76}" = xyes; then
   LIBS="-lpcre ${LIBS}"
 fi
 AC_MSG_CHECKING([whether PCRE support needs to be compiled])
-if test "x${r_have_pcre4}" = xyes; then
+if test "x${r_cv_have_pcre76}" = xyes; then
   AC_MSG_RESULT([no])
 else
   AC_MSG_RESULT([yes])
 fi
-AM_CONDITIONAL(BUILD_PCRE, [test "x${r_have_pcre4}" != xyes])
+AM_CONDITIONAL(BUILD_PCRE, [test "x${r_cv_have_pcre76}" != xyes])
 ])# R_PCRE
 
 ## R_BZLIB
@@ -2980,6 +3054,21 @@ AC_DEFUN([R_BZLIB],
     AC_CHECK_HEADER(bzlib.h, [have_bzlib=yes], [have_bzlib=no])
   fi
 else
+  have_bzlib=no
+fi
+if test "x${have_bzlib}" = xyes; then
+AC_CACHE_CHECK([if bzip2 version >= 1.0.5], [r_cv_have_bzlib],
+[AC_RUN_IFELSE([AC_LANG_SOURCE([[
+#ifdef HAVE_BZLIB_H
+#include <bzlib.h>
+#endif
+int main() {
+    char *ver = BZ2_bzlibVersion();
+    exit(strcmp(ver, "1.0.5") < 0);
+}
+]])], [r_cv_have_bzlib=yes], [r_cv_have_bzlib=no], [r_cv_have_bzlib=no])])
+fi
+if test "x${r_cv_have_bzlib}" = xno; then
   have_bzlib=no
 fi
 AC_MSG_CHECKING([whether bzip2 support needs to be compiled])
@@ -3261,6 +3350,7 @@ if test "$want_mbcs_support" = yes ; then
   fi
 fi
 if test "x${want_mbcs_support}" = xyes; then
+## SUPPORT_UTF8 is needed for PCRE, only
 AC_DEFINE(SUPPORT_UTF8, 1, [Define this to enable support for UTF-8 locales.])
 AC_SUBST(SUPPORT_UTF8)
 AC_DEFINE(SUPPORT_MBCS, 1, [Define this to enable support for MBCS locales.])
@@ -3581,6 +3671,7 @@ if test "${cross_compiling}" = yes; then
       fi
     done
   fi
+  rm -rf conftest conftest.* core
   if test "${build_cc_works}" = no; then
     AC_MSG_RESULT(none)
     AC_MSG_ERROR([Build C compiler doesn't work. Set BUILD_CC to a compiler capable of creating a binary native to the build machine.])
@@ -3596,6 +3687,38 @@ if test "${cross_compiling}" = yes; then
   fi
 fi
 ])
+
+## R_MKTIME_ERRNO
+## --------------
+## Check whether mktime sets errno
+AC_DEFUN([R_MKTIME_ERRNO],
+[AC_CACHE_CHECK([whether mktime sets errno], [r_cv_mktime_errno],
+[AC_RUN_IFELSE([AC_LANG_SOURCE([[
+#include <stdlib.h>
+#include <time.h>
+#include <errno.h>
+
+int main()
+{
+    struct tm tm;
+    /* It's hard to know what is an error, since mktime is allowed to
+       fix up times and there are 64-bit time_t about.
+       But this works for now (yes on Solaris, no on glibc). */
+    tm.tm_year = 3000; tm.tm_mon = 0; tm.tm_mday = 0; 
+    tm.tm_hour = 0; tm.tm_min = 0; tm.tm_sec = 0; tm.tm_isdst = -1;
+    errno = 0;
+    mktime(&tm);
+    exit(errno == 0);
+}
+]])],
+              [r_cv_mktime_errno=yes],
+              [r_cv_mktime_errno=no],
+              [r_cv_mktime_errno=no])])
+if test "${r_cv_mktime_errno}" = yes; then
+  AC_DEFINE(MKTIME_SETS_ERRNO,, [Define if mktime sets errno.])
+fi
+])# R_MKTIME_ERRNO
+
 
 ### Local variables: ***
 ### mode: outline-minor ***

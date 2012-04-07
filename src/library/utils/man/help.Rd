@@ -32,8 +32,8 @@ type?topic
 
    For \code{help}, if the value of \code{topic} is a length-one
    character vector the topic is taken to be the value of the only
-   element.  Any other argument \code{topic} is regarded as a name and
-   \link{deparse}d to give the desired topic.
+   element.  Otherwise \code{topic} must be a name or a \link{reserved}
+   word (if syntactically valid) or character string.
 
    For \code{?} the \code{topic} argument may also be a function call,
    to ask for documentation on a corresponding method: see the section
@@ -116,14 +116,12 @@ type?topic
   not found at compile time, you can either set the options
   \code{latexcmd} and \code{dvipscmd}, or the environment variables
   \env{R\_LATEXCMD} and \env{R\_DVIPSCMD} appropriately.
-  The appearance of the output can be customized through a file
-  \file{Rhelp.cfg} somewhere in your LaTeX search path.
 #endif
 #ifdef windows
   If \code{offline} is \code{TRUE}, hardcopy of the documentation is
   produced by running the LaTeX version of the help page through
   \code{latex}.  You need to customize the file
-  \file{R\_HOME/bin/helpPRINT.bat} which contains an example.
+  \file{\var{R\_HOME}/bin/helpPRINT.bat} which contains an example.
 #endif
   The appearance of the output can be customized through a file
   \file{Rhelp.cfg} somewhere in your LaTeX search path.

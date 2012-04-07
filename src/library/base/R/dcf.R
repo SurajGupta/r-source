@@ -37,9 +37,9 @@ function(file, fields = NULL, all = FALSE)
 
     .assemble_things_into_a_data_frame <- function(tags, vals, nums) {
         tf <- factor(tags, levels = unique(tags))
-            
+
         cnts <- table(nums, tf)
-        out <- array(as.character(NA), dim = dim(cnts),
+        out <- array(NA_character_, dim = dim(cnts),
                      dimnames = list(NULL, levels(tf)))
         if(all(cnts <= 1)) {
             ## No repeated tags ...
@@ -54,16 +54,16 @@ function(file, fields = NULL, all = FALSE)
             }
             out <- as.data.frame(out, stringsAsFactors = FALSE)
             for(l in levels(tf)[!levs]) {
-                out[[l]] <- rep.int(list(as.character(NA)), nrow(cnts))
+                out[[l]] <- rep.int(list(NA_character_), nrow(cnts))
                 i <- tf == l
                 out[[l]][unique(nums[i])] <- split(vals[i], nums[i])
             }
         }
-        
+
         out
-    }    
-    
-    on.exit(Sys.setlocale("LC_CTYPE", Sys.getlocale("LC_CTYPE")))
+    }
+
+    on.exit(Sys.setlocale("LC_CTYPE", Sys.getlocale("LC_CTYPE")), add = TRUE)
     Sys.setlocale("LC_CTYPE", "C")
 
     lines <- readLines(file)
@@ -71,11 +71,10 @@ function(file, fields = NULL, all = FALSE)
     ## Try to find out about invalid things: mostly, lines which do not
     ## start with blanks but have no ':' ...
     ind <- grep("^[^[:blank:]][^:]*$", lines)
-    if(any(ind))
-        stop("Invalid DCF format.")
+    if(length(ind)) stop("Invalid DCF format.")
 
-    line_is_not_empty <- regexpr("^[[:space:]]*$", lines) < 0
-    nums <- cumsum(diff(c(FALSE, line_is_not_empty) > 0) > 0)
+    line_is_not_empty <- regexpr("^[[:space:]]*$", lines) < 0L
+    nums <- cumsum(diff(c(FALSE, line_is_not_empty) > 0L) > 0L)
     ## Remove the empty ones so that nums knows which record each line
     ## belongs to.
     nums <- nums[line_is_not_empty]
@@ -84,16 +83,16 @@ function(file, fields = NULL, all = FALSE)
     ## Deal with escaped blank lines (used by Debian at least for the
     ## Description: values, see man 5 deb-control):
     line_is_escaped_blank <-
-        regexpr("^[[:space:]]+\\.[[:space:]]*$", lines) > -1
+        regexpr("^[[:space:]]+\\.[[:space:]]*$", lines) > -1L
     if(any(line_is_escaped_blank))
         lines[line_is_escaped_blank] <- ""
 
-    line_has_tag <- regexpr("^[^[:blank:]][^:]*:", lines) > -1
+    line_has_tag <- regexpr("^[^[:blank:]][^:]*:", lines) > -1L
 
     ## Check that records start with tag lines.
-    if(!all(line_has_tag[which(diff(nums) > 0) + 1]))
+    if(!all(line_has_tag[which(diff(nums) > 0L) + 1L]))
         stop("Invalid DCF format.")
-    
+
     ## End positions of field entries.
     pos <- cumsum(rle(cumsum(line_has_tag))$lengths)
 
@@ -105,7 +104,7 @@ function(file, fields = NULL, all = FALSE)
 
     vals <- mapply(function(from, to) paste(lines[from:to],
                                             collapse = "\n"),
-                   c(1, pos[-length(pos)] + 1), pos)
+                   c(1L, pos[-length(pos)] + 1L), pos)
 
     out <- .assemble_things_into_a_data_frame(tags, vals, nums[pos])
 
@@ -114,10 +113,10 @@ function(file, fields = NULL, all = FALSE)
 
     out
 }
-                     
+
 write.dcf <-
 function(x, file = "", append = FALSE,
-         indent = 0.1 * getOption("width"), 
+         indent = 0.1 * getOption("width"),
          width = 0.9 * getOption("width"))
 {
     if(file == "")
@@ -126,7 +125,7 @@ function(x, file = "", append = FALSE,
         file <- file(file, ifelse(append, "a", "w"))
         on.exit(close(file))
     }
-    if(!inherits(file, "connection")) 
+    if(!inherits(file, "connection"))
         stop("'file' must be a character string or connection")
 
     ## We need to take care of two things:
@@ -136,7 +135,7 @@ function(x, file = "", append = FALSE,
     escape_paragraphs <- function(s)
         gsub("\n[[:space:]]*\n", "\n .\n ", s)
 
-    if(!is.data.frame(x)) 
+    if(!is.data.frame(x))
         x <- as.data.frame(x, stringsAsFactors = FALSE)
     nmx <- names(x)
     out <- matrix("", nrow(x), ncol(x))
@@ -171,7 +170,7 @@ function(x, file = "", append = FALSE,
     if(length(eor)) {
         ## Newline for end of record.
         ## Note that we do not write a trailing blank line.
-        eor[ diff(c(col(out))[is_not_empty]) >= 1 ] <- "\n"
+        eor[ diff(c(col(out))[is_not_empty]) >= 1L ] <- "\n"
     }
     writeLines(paste(c(out[is_not_empty]), eor, sep = ""), file)
 }

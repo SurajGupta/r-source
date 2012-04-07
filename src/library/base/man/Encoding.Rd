@@ -1,6 +1,6 @@
 % File src/library/base/man/Encoding.Rd
 % Part of the R package, http://www.R-project.org
-% Copyright 1995-2007 R Core Development Team
+% Copyright 1995-2008 R Core Development Team
 % Distributed under GPL 2 or later
 
 \name{Encoding}
@@ -35,7 +35,26 @@ Encoding(x) <- value
   \code{\link{parse}} and  \code{\link{source}} have an \code{encoding}
   argument that is used to declare encodings, \code{\link{iconv}}
   declares encodings from its \code{from} argument, and console input in
-  suitable locales is also declared.
+  suitable locales is also declared.  \code{\link{intToUtf8}} declares
+  its output as \code{"UTF-8"}, and output text connections are marked
+  if running it a suitable locale.
+
+  Most character manipulation functions will set the encoding on output
+  strings if it was declared on the corresponding input.  These include
+  \code{\link{chartr}}, \code{\link{strsplit}}, \code{\link{strtrim}},
+  \code{\link{substr}}, \code{\link{tolower}} and \code{\link{toupper}}
+  as well as \code{\link{sub}(useBytes = FALSE)} and
+  \code{\link{gsub}(useBytes = FALSE)}.  (Also, under some circumstances
+  \code{\link{paste}} will set an encoding.)   Note that such functions
+  do not \emph{preserve} the encoding, but if they know the input
+  encoding and that the string has been successfully re-encoded to the
+  current encoding, they mark the output with the latter (if it is
+  \code{"latin1"} or \code{"UTF-8"}).  However, as from \R 2.7.0
+  \code{\link{substr}} does preserve the encoding, and
+  \code{\link{chartr}}, \code{\link{tolower}} and \code{\link{toupper}}
+  preserve UTF-8 encoding on systems with Unicode wide characters.
+  With their \code{fixed} and \code{perl} options, \code{\link{sub}} and
+  \code{gsub} will give a UTF-8 result if any of the inputs are UTF-8.
 }
 \value{
   A character vector.

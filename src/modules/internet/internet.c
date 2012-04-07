@@ -1,6 +1,6 @@
 /*
  *  R : A Computer Language for Statistical Data Analysis
- *  Copyright (C) 2000-6   The R Development Core Team.
+ *  Copyright (C) 2000-8   The R Development Core Team.
  *
  *  This program is free software; you can redistribute it and/or modify
  *  it under the terms of the GNU General Public License as published by
@@ -27,6 +27,7 @@
 #include <Fileio.h>
 #include <Rconnections.h>
 #include <R_ext/R-ftp-http.h>
+#include <errno.h>
 
 static void *in_R_HTTPOpen(const char *url, const char *headers, const int cacheOK);
 static int   in_R_HTTPRead(void *ctx, char *dest, int len);
@@ -194,7 +195,7 @@ static Rconnection in_R_newurl(const char *description, const char * const mode)
 	free(new->class); free(new);
 	error(_("allocation of url connection failed"));
     }
-    init_con(new, description, mode);
+    init_con(new, description, CE_NATIVE, mode);
     new->canwrite = FALSE;
     new->open = &url_open;
     new->close = &url_close;
@@ -250,6 +251,7 @@ typedef struct {
     progressbar pb;
     label l_url;
     RCNTXT cntxt;
+    int pc;
 } winprogressbar;
 
 static winprogressbar pbar = {NULL, NULL, NULL};
@@ -270,6 +272,10 @@ static SEXP in_do_download(SEXP call, SEXP op, SEXP args, SEXP env)
     SEXP scmd, sfile, smode, sheaders, agentFun;
     const char *url, *file, *mode, *headers;
     int quiet, status = 0, cacheOK;
+#ifdef Win32
+    char pbuf[30];
+    int pc;
+#endif
 
     checkArity(op, args);
     scmd = CAR(args); args = CDR(args);
@@ -306,12 +312,13 @@ static SEXP in_do_download(SEXP call, SEXP op, SEXP args, SEXP env)
     else
         headers = CHAR(STRING_ELT(sheaders, 0));
 #ifdef Win32
-    if (!pbar.wprog) {
+    if (!quiet && !pbar.wprog) {
 	pbar.wprog = newwindow(_("Download progress"), rect(0, 0, 540, 100),
-		      Titlebar | Centered);
+			       Titlebar | Centered);
 	setbackground(pbar.wprog, dialog_bg());
 	pbar.l_url = newlabel(" ", rect(10, 15, 520, 25), AlignCenter);
 	pbar.pb = newprogressbar(rect(20, 50, 500, 20), 0, 1024, 1024, 1);
+	pbar.pc = 0;
     }
 #endif
     if(strncmp(url, "file://", 7) == 0) {
@@ -327,9 +334,24 @@ static SEXP in_do_download(SEXP call, SEXP op, SEXP args, SEXP env)
 
 	/* Use binary transfers */
 	in = R_fopen(R_ExpandFileName(url+nh), (mode[2] == 'b') ? "rb" : "r");
-	if(!in) error(_("cannot open URL '%s'"), url);
+	if(!in) {
+#ifdef HAVE_STRERROR
+	    error(_("cannot open URL '%s', reason '%s'"), 
+		  url, strerror(errno));
+#else
+	    error(_("cannot open URL '%s'"), url);
+#endif
+	}
+
 	out = R_fopen(R_ExpandFileName(file), mode);
-	if(!out) error(_("cannot open destfile '%s'"), file);
+	if(!out) {
+#ifdef HAVE_STRERROR
+	    error(_("cannot open destfile '%s', reason '%s'"), 
+		  file, strerror(errno));
+#else
+	    error(_("cannot open destfile '%s'"), file);
+#endif
+	}
 	while((n = fread(buf, 1, CPBUFSIZE, in)) > 0) {
 	    size_t res = fwrite(buf, 1, n, out);
 	    if(res != n) error(_("write failed"));
@@ -352,7 +374,14 @@ static SEXP in_do_download(SEXP call, SEXP op, SEXP args, SEXP env)
 #endif
 
 	out = R_fopen(R_ExpandFileName(file), mode);
-	if(!out) error(_("cannot open destfile '%s'"), file);
+	if(!out) {
+#ifdef HAVE_STRERROR
+	    error(_("cannot open destfile '%s', reason '%s'"), 
+		  file, strerror(errno));
+#else
+	    error(_("cannot open destfile '%s'"), file);
+#endif
+	}
 
 	R_Busy(1);
 	if(!quiet) REprintf(_("trying URL '%s'\n"), url);
@@ -372,24 +401,39 @@ static SEXP in_do_download(SEXP call, SEXP op, SEXP args, SEXP env)
 		strcat(buf, "... ");
 		strcat(buf, url + (strlen(url) - 60));
 	    } else strcat(buf, url);
-	    settext(pbar.l_url, buf);
-	    setprogressbarrange(pbar.pb, 0, guess);
-	    show(pbar.wprog);
-	    begincontext(&(pbar.cntxt), CTXT_CCODE, R_NilValue, R_NilValue,
-			 R_NilValue, R_NilValue, R_NilValue);
-	    pbar.cntxt.cend = &doneprogressbar;
-	    pbar.cntxt.cenddata = &pbar;
+	    if(!quiet) {
+		settext(pbar.l_url, buf);
+		setprogressbarrange(pbar.pb, 0, guess);
+		setprogressbar(pbar.pb, 0);
+		settext(pbar.wprog, "Download progress");
+		show(pbar.wprog);
+		begincontext(&(pbar.cntxt), CTXT_CCODE, R_NilValue, R_NilValue,
+			     R_NilValue, R_NilValue, R_NilValue);
+		pbar.cntxt.cend = &doneprogressbar;
+		pbar.cntxt.cenddata = &pbar;
+		pbar.pc = 0;
+	    }
 #endif
 	    while ((len = in_R_HTTPRead(ctxt, buf, sizeof(buf))) > 0) {
 		size_t res = fwrite(buf, 1, len, out);
 		if(res != len) error(_("write failed"));
 		nbytes += len;
 #ifdef Win32
-		if(nbytes > guess) {
-		    guess *= 2;
-		    setprogressbarrange(pbar.pb, 0, guess);
+		if(!quiet) {
+		    if(nbytes > guess) {
+			guess *= 2;
+			setprogressbarrange(pbar.pb, 0, guess);
+		    }
+		    setprogressbar(pbar.pb, nbytes);
+		    if (total > 0) {
+			pc = 0.499 + 100.0*nbytes/total;
+			if (pc > pbar.pc) {
+			    snprintf(pbuf, 30, "%d%% downloaded", pc);
+			    settext(pbar.wprog, pbuf);
+			    pbar.pc = pc;
+			}
+		    }
 		}
-		setprogressbar(pbar.pb, nbytes);
 #else
 		if(!quiet) {
 		    if(guess <= 0) putdots(&ndots, nbytes/1024);
@@ -413,8 +457,10 @@ static SEXP in_do_download(SEXP call, SEXP op, SEXP args, SEXP env)
 	    }
 #ifdef Win32
 	    R_FlushConsole();
-	    endcontext(&(pbar.cntxt));
-	    doneprogressbar(&pbar);
+	    if(!quiet) {
+		endcontext(&(pbar.cntxt));
+		doneprogressbar(&pbar);
+	    }
 #endif
 	    if (total > 0 && total != nbytes)
 		warning(_("downloaded length %d != reported length %d"),
@@ -434,7 +480,14 @@ static SEXP in_do_download(SEXP call, SEXP op, SEXP args, SEXP env)
 #endif
 
 	out = R_fopen(R_ExpandFileName(file), mode);
-	if(!out) error(_("cannot open destfile '%s'"), file);
+	if(!out) {
+#ifdef HAVE_STRERROR
+	    error(_("cannot open destfile '%s', reason '%s'"), 
+		  file, strerror(errno));
+#else
+	    error(_("cannot open destfile '%s'"), file);
+#endif
+	}
 
 	R_Busy(1);
 	if(!quiet) REprintf(_("trying URL '%s'\n"), url);
@@ -454,27 +507,42 @@ static SEXP in_do_download(SEXP call, SEXP op, SEXP args, SEXP env)
 		strcat(buf, "... ");
 		strcat(buf, url + (strlen(url) - 60));
 	    } else strcat(buf, url);
-	    settext(pbar.l_url, buf);
-	    setprogressbarrange(pbar.pb, 0, guess);
-	    show(pbar.wprog);
+	    if(!quiet) {
+		settext(pbar.l_url, buf);
+		setprogressbarrange(pbar.pb, 0, guess);
+		setprogressbar(pbar.pb, 0);
+		settext(pbar.wprog, "Download progress");
+		show(pbar.wprog);
 
-	    /* set up a context which will close progressbar on error. */
-	    begincontext(&(pbar.cntxt), CTXT_CCODE, R_NilValue, R_NilValue,
-			 R_NilValue, R_NilValue, R_NilValue);
-	    pbar.cntxt.cend = &doneprogressbar;
-	    pbar.cntxt.cenddata = &pbar;
-
+		/* set up a context which will close progressbar on error. */
+		begincontext(&(pbar.cntxt), CTXT_CCODE, R_NilValue, R_NilValue,
+			     R_NilValue, R_NilValue, R_NilValue);
+		pbar.cntxt.cend = &doneprogressbar;
+		pbar.cntxt.cenddata = &pbar;
+		pbar.pc = 0;
+	    }
+	    
 #endif
 	    while ((len = in_R_FTPRead(ctxt, buf, sizeof(buf))) > 0) {
 		size_t res = fwrite(buf, 1, len, out);
 		if(res != len) error(_("write failed"));
 		nbytes += len;
 #ifdef Win32
-		if(nbytes > guess) {
-		    guess *= 2;
-		    setprogressbarrange(pbar.pb, 0, guess);
+		if(!quiet) {
+		    if(nbytes > guess) {
+			guess *= 2;
+			setprogressbarrange(pbar.pb, 0, guess);
+		    }
+		    setprogressbar(pbar.pb, nbytes);
+		    if (total > 0) {
+			pc = 0.499 + 100.0*nbytes/total;
+			if (pc > pbar.pc) {
+			    snprintf(pbuf, 30, "%d%% downloaded", pc);
+			    settext(pbar.wprog, pbuf);
+			    pbar.pc = pc;
+			}
+		    }
 		}
-		setprogressbar(pbar.pb, nbytes);
 #else
 		if(!quiet) {
 		    if(guess <= 0) putdots(&ndots, nbytes/1024);
@@ -498,8 +566,10 @@ static SEXP in_do_download(SEXP call, SEXP op, SEXP args, SEXP env)
 	    }
 #ifdef Win32
 	    R_FlushConsole();
-	    endcontext(&(pbar.cntxt));
-	    doneprogressbar(&pbar);
+	    if(!quiet) {
+		endcontext(&(pbar.cntxt));
+		doneprogressbar(&pbar);
+	    }
 #endif
 	    if (total > 0 && total != nbytes)
 		warning(_("downloaded length %d != reported length %d"),
@@ -983,6 +1053,7 @@ void RxmlMessage(int level, const char *format, ...)
 #include "sock.h"
 #define STRICT_R_HEADERS
 #include <R_ext/RS.h> /* for R_Calloc */
+#include <R_ext/Rdynload.h>
 
 void
 #ifdef HAVE_VISIBILITY_ATTRIBUTE

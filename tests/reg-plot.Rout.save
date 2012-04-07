@@ -1,6 +1,6 @@
 
-R version 2.6.0 Patched (2007-10-22 r43252)
-Copyright (C) 2007 The R Foundation for Statistical Computing
+R version 2.8.0 Under development (unstable) (2008-04-01 r45026)
+Copyright (C) 2008 The R Foundation for Statistical Computing
 ISBN 3-900051-07-0
 
 R is free software and comes with ABSOLUTELY NO WARRANTY.
@@ -30,7 +30,7 @@ Type 'q()' to quit R.
 > str(par(c("usr","xaxp","yaxp")))
 List of 3
  $ usr : num [1:4]  0.568  1.432 -1.080  1.080
- $ xaxp: num [1:3] 0.6 1.4 4.0
+ $ xaxp: num [1:3] 0.6 1.4 4
  $ yaxp: num [1:3] -1 1 4
 > 
 > 
@@ -48,7 +48,7 @@ List of 3
 > for(i in known) {
 +     x <- i %% 16
 +     y <- i %/% 16
-+     points(x, y, pch=i)
++     points(x, y, pch=-i)
 + }
 > 
 > par(pty="m")
@@ -149,7 +149,18 @@ Error in plot.xy(xy.coords(x, y), type = type, ...) :
 > ## gave wrong ylab in R 2.6.0
 > plot(cos, -7,7, ylab = "Cosine  cos(x)", n=11, axes=FALSE)
 > ## partial matching of 'ylab'; mapping  [0,1] (not [-7.7]):
-> plot(gamma, yla = 'Gamma(x)', n=11, yaxt="n")
+> ## margins chosen to avoid rouding error showing to 2dp.
+> op <- par(mar=c(5,4.123,4,2)+0.1)
+> plot(gamma, yla = expression(Gamma(x)), n=11, yaxt="n")
 Warning in x(x) : NaNs produced
+> par(op)
 > 
+> ## plot.ts(x, y) could get the labels wrong in R <= 2.6.0:
+> x <- ts(1:5);x1 <- lag(x, 2); plot(x1, x, axes=FALSE)
+> 
+> # adding a curve in log scale :
+> curve(5*exp(-x), 0.1, 100, n = 3, log="x", ylab="", axes=FALSE)
+> curve(5*exp(-x), add=TRUE, n = 3, col=2,lwd=3)
+> ## should fully overplot; wrong default xlim in 2.6.1
+> ## (and *slightly* wrong up to 2.6.0)
 > 

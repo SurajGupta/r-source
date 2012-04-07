@@ -25,10 +25,11 @@ edit.int <- c("fix", "edit", "edit.data.frame", "edit.matrix",
 ## warning: trace will load methods.
 ## warning: rm and remove zap c0, l0, m0, df0
 ## warning: parent.env(NULL) <- NULL creates a loop
-misc.int <- c("browser", "bug.report", "checkCRAN",
-              "menu", "repeat", "readLines",
-              "package.skeleton", "trace", "recover", "rm", "remove",
-              "parent.env<-")
+## warning: browseVignettes lanuches many browser processes.
+misc.int <- c("browser", "browseVignettes", "bug.report", "checkCRAN",
+              "getCRANmirrors", "menu", "repeat",
+              "readLines", "package.skeleton", "trace", "recover",
+              "rm", "remove", "parent.env<-")
 inet.list <- c(apropos("download\\."),
                apropos("^url\\."), apropos("\\.url"),
                apropos("packageStatus"),
@@ -37,7 +38,8 @@ inet.list <- c(apropos("download\\."),
 socket.fun <- apropos("socket")
 ## "Interactive" ones:
 dev.int <- c("X11", "x11", "pdf", "postscript",
-             "xfig", "jpeg", "png", "pictex", "quartz")
+             "xfig", "jpeg", "png", "pictex", "quartz",
+             "svg", "tiff", "cairo_pdf", "cairo_ps")
 misc.2 <- c("asS4", "help.start", "browseEnv",
             "gctorture", "q", "quit", "restart", "try",
             "read.fwf", "source",## << MM thinks "FIXME"
@@ -47,7 +49,7 @@ if(.Platform$OS.type == "windows") {
     dev.int <- c(dev.int, "bmp", "windows", "win.graph", "win.print",
                 "win.metafile")
     misc.2 <- c(misc.2, "file.choose", "choose.files", "choose.dir",
-    		"setWindowTitle", "loadRconsole")
+    		"setWindowTitle", "loadRconsole", "link.html.help")
 }
 
 stop.list[["base"]] <-

@@ -1,6 +1,6 @@
 % File src/library/base/man/capabilities.Rd
 % Part of the R package, http://www.R-project.org
-% Copyright 1995-2007 R Core Development Team
+% Copyright 1995-2008 R Core Development Team
 % Distributed under GPL 2 or later
 
 \name{capabilities}
@@ -27,6 +27,16 @@ capabilities(what = NULL)
       X11 module if not already loaded, and checks that the default
       display can be contacted unless a \code{X11} device has already
       been used.}
+#ifdef unix
+    \item{aqua}{Are the \code{R.app} GUI components and the
+      \code{\link{quartz}} function operational?  Only on some Mac OS X
+      builds.  Note that this is distinct from
+      \code{.Platform$GUI == "AQUA"}, which is true when using the Mac
+      \code{R.app} console.}
+#endif
+#ifdef windows
+    \item{aqua}{\code{FALSE} except on Mac OS X.}
+#endif
     \item{http/ftp}{Are \code{\link{url}} and the internal method for
       \code{\link{download.file}} available?}
     \item{sockets}{Are \code{\link{make.socket}} and related functions
@@ -46,6 +56,16 @@ capabilities(what = NULL)
       \code{\link{iconv}} supported?}
     \item{NLS}{is there Natural Language Support (for message translations)?}
     \item{profmem}{is there support for memory profiling?}
+#ifdef windows
+    \item{cairo}{applies to Unix-alikes -- always \code{FALSE}.}
+#endif
+#ifdef unix
+    \item{cairo}{is there support for \code{type="Cairo"} in
+      \code{\link{X11}}, \code{\link{png}},\code{\link{jpeg}},
+      \code{\link{tiff}} and \code{\link{bmp}}, and
+      for the \code{\link{svg}}, \code{\link{cairo_pdf}} and
+      \code{\link{cairo_ps}} devices?}
+#endif    
 }
 \seealso{\code{\link{.Platform}}}
 

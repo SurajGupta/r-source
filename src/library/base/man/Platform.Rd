@@ -1,6 +1,6 @@
 % File src/library/base/man/Platform.Rd
 % Part of the R package, http://www.R-project.org
-% Copyright 1995-2007 R Core Development Team
+% Copyright 1995-2008 R Core Development Team
 % Distributed under GPL 2 or later
 
 \name{.Platform}
@@ -30,16 +30,16 @@
     character string, giving the file name \bold{ext}ension of
     \bold{dyn}amically loadable \bold{lib}raries, e.g., \code{".dll"} on
     Windows and \code{".so"} or \code{".sl"} on Unix-alikes.  (Note for
-    MacOS X users: these are shared objects as loaded by
-    \code{\link{dyn.load}} and not dylibs.)
+    Mac OS X users: these are shared objects as loaded by
+    \code{\link{dyn.load}} and not dylibs: see \code{\link{dyn.load}}.)
   }
   \item{GUI}{
     character string, giving the type of GUI in use, or \code{"unknown"}
     if no GUI can be assumed.  Possible values are for Unix-alikes the
     values given via the \option{-g} command-line flag (\code{"X11"},
-    \code{"Tk"}, \code{"none"} and perhaps others under alternative
-    front-ends or embedded \R), \code{"AQUA"} (running under
-    \code{R.app} on MacOS X), \code{"Rgui"} and \code{"RTerm"} (Windows).
+    \code{"Tk"}, \code{"GNOME"}), \code{"AQUA"} (running under
+    \code{R.app} on MacOS X), \code{"Rgui"} and \code{"RTerm"}
+    (Windows) and perhaps others under alternative front-ends or embedded \R.
   }
   \item{endian}{
     character string, \code{"big"} or \code{"little"}, giving the
@@ -49,7 +49,7 @@
   }
   \item{pkgType}{
     character string, the preferred setting for
-    \code{\link{options}("pkgType")}. Values \code{"source"},
+    \code{\link{options}("pkgType")}.  Values \code{"source"},
     \code{"mac.binary"} and \code{"win.binary"} are currently in use.
   }
   \item{path.sep}{

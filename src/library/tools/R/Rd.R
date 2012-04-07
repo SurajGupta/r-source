@@ -31,7 +31,7 @@ function(lines)
     if(length(encoding)) {
         if((Sys.getlocale("LC_CTYPE") != "C")
            && capabilities("iconv")) {
-            encoding <- encoding[1]     # Just making sure ...
+            encoding <- encoding[1L]     # Just making sure ...
             if(.is_ASCII(encoding))
                 lines <- iconv(lines, encoding, "")
         }
@@ -56,61 +56,61 @@ function(lines)
     ## Strip Rd first.
     lines <- .strip_Rd_comments(lines)
 
-    ppLineIndices <- grep("^#(endif|ifn?def[[:space:]]+[[:alnum:]]+)",
-                          lines)
+    pp_line_indices <- grep("^#(endif|ifn?def[[:space:]]+[[:alnum:]]+)",
+                            lines)
     ## <NOTE>
     ## This is based on the Perl code in R::Rdtools::Rdpp().
     ## What should we do with #ifn?def lines not matching the above?
     ## </NOTE>
-    n_of_pp_lines <- length(ppLineIndices)
-    if(n_of_pp_lines == 0)
+    n_of_pp_lines <- length(pp_line_indices)
+    if(n_of_pp_lines == 0L)
         return(structure(lines, encoding = encoding))
 
     OS <- .Platform$OS.type
-    ppLines <- lines[ppLineIndices]
+    pp_lines <- lines[pp_line_indices]
 
     ## Record the preprocessor line type: starts of conditionals with
     ## TRUE/FALSE according to whether they increase the skip level or
     ## not, and NA for ends of conditionals.
-    ppTypes <- rep(NA, n_of_pp_lines)
-    if(any(i <- grep("^#ifdef", ppLines))) {
-        ppTypes[i] <- gsub("^#ifdef[[:space:]]+([[:alnum:]]+).*",
-                           "\\1", ppLines[i]) != OS
+    pp_types <- rep.int(NA, n_of_pp_lines)
+    if(length(i <- grep("^#ifdef", pp_lines))) {
+        pp_types[i] <- gsub("^#ifdef[[:space:]]+([[:alnum:]]+).*",
+                           "\\1", pp_lines[i]) != OS
     }
-    if(any(i <- grep("^#ifndef", ppLines))) {
-        ppTypes[i] <- gsub("^#ifndef[[:space:]]+([[:alnum:]]+).*",
-                           "\\1", ppLines[i]) == OS
+    if(length(i <- grep("^#ifndef", pp_lines))) {
+        pp_types[i] <- gsub("^#ifndef[[:space:]]+([[:alnum:]]+).*",
+                           "\\1", pp_lines[i]) == OS
     }
 
     ## Looks stupid, but ... we need a loop to determine the skip list
     ## to deal with nested conditionals.
-    skipList <- integer(0)
-    skipLevel <- 0
-    skipIndices <- ppLineIndices
-    for(i in seq_along(ppTypes)) {
-        if(!is.na(skip <- ppTypes[i])) {
-            if(skipLevel == 0 && skip > 0) {
-                skipStart <- ppLineIndices[i]
-                skipLevel <- 1
+    skip_list <- integer(0)
+    skip_level <- 0L
+    skip_indices <- pp_line_indices
+    for(i in seq_along(pp_types)) {
+        if(!is.na(skip <- pp_types[i])) {
+            if(skip_level == 0L && skip > 0L) {
+                skipStart <- pp_line_indices[i]
+                skip_level <- 1L
             }
             else
-                skipLevel <- skipLevel + skip
-            skipList <- c(skip, skipList) # push
+                skip_level <- skip_level + skip
+            skip_list <- c(skip, skip_list) # push
         }
         else {
-            if(skipLevel == 1 && skipList[1] > 0) {
-                skipIndices <- c(skipIndices,
-                                 seq.int(from = skipStart,
-                                         to = ppLineIndices[i]))
-                skipLevel <- 0
+            if(skip_level == 1L && skip_list[1L] > 0L) {
+                skip_indices <- c(skip_indices,
+                                  seq.int(from = skipStart,
+                                          to = pp_line_indices[i]))
+                skip_level <- 0L
             }
             else
-                skipLevel <- skipLevel - skipList[1]
-            skipList <- skipList[-1]    # pop
+                skip_level <- skip_level - skip_list[1L]
+            skip_list <- skip_list[-1L]    # pop
         }
     }
 
-    structure(lines[-skipIndices], encoding = encoding)
+    structure(lines[-skip_indices], encoding = encoding)
 }
 
 ### * .strip_Rd_comments
@@ -150,9 +150,9 @@ function(file)
 
     ## Could be none or more than one ... argh.
     Rd_type <-
-        c(.get_Rd_metadata_from_Rd_lines(lines, "docType"), "")[1]
+        c(.get_Rd_metadata_from_Rd_lines(lines, "docType"), "")[1L]
     encoding <-
-        c(.get_Rd_metadata_from_Rd_lines(lines, "encoding"), "")[1]
+        c(.get_Rd_metadata_from_Rd_lines(lines, "encoding"), "")[1L]
 
     txt <- paste(lines, collapse = "\n")
 
@@ -190,7 +190,7 @@ function(RdFiles)
 
     RdFiles <- path.expand(RdFiles[file_test("-f", RdFiles)])
 
-    if(length(RdFiles) == 0) {
+    if(length(RdFiles) == 0L) {
         out <- data.frame(File = character(0),
                           Name = character(0),
                           Type = character(0),
@@ -275,14 +275,14 @@ function(contents, packageName, outFile)
     ## e.g. URLs would not be right ...)
     if(!NROW(contents)) return()
 
-    ## <FIXME>
+    ## <NOTE>
     ## This has 'html' hard-wired.
     ## Note that slashes etc. should be fine for URLs.
     URLs <- paste("../../../library/", packageName, "/html/",
                   file_path_sans_ext(contents[ , "File"]),
                   ".html",
                   sep = "")
-    ## </FIXME>
+    ## </NOTE>
 
     if(is.data.frame(contents))
         contents <-
@@ -332,15 +332,15 @@ function(contents, type = NULL)
         ## If a \name is not a valid \alias, replace it by the first
         ## alias.
         aliases <- contents[idx, "Aliases"]
-        bad <- which(!mapply("%in%", index[, 1], aliases))
+        bad <- which(!mapply("%in%", index[, 1L], aliases))
         if(any(bad)) {
             ## was [[, but that applies to lists not char vectors
-            tmp <- sapply(aliases[bad], "[", 1)
+            tmp <- sapply(aliases[bad], "[", 1L)
             tmp[is.na(tmp)] <- ""
-            index[bad, 1] <- tmp
+            index[bad, 1L] <- tmp
         }
         ## and sort it by name
-        index <- index[sort.list(index[,1]), ]
+        index <- index[sort.list(index[, 1L]), ]
     }
     index
 }
@@ -356,7 +356,7 @@ function(RdFiles, outFile = "", type = NULL,
     ##
     ## R version of defunct @code{R CMD Rdindex} (now removed).
 
-    if((length(RdFiles) == 1) && file_test("-d", RdFiles)) {
+    if((length(RdFiles) == 1L) && file_test("-d", RdFiles)) {
         ## Compatibility code for the former @code{R CMD Rdindex}
         ## interface.
         docsDir <- RdFiles
@@ -391,33 +391,33 @@ function(package, dir, lib.loc = NULL)
 
     ## Argument handling.
     if(!missing(package)) {
-        if(length(package) != 1)
+        if(length(package) != 1L)
             stop("argument 'package' must be of length 1")
         dir <- .find.package(package, lib.loc)
         ## Using package installed in @code{dir} ...
-        docsDir <- file.path(dir, "man")
-        if(!file_test("-d", docsDir))
+        docs_dir <- file.path(dir, "man")
+        if(!file_test("-d", docs_dir))
             stop(gettextf("directory '%s' does not contain Rd objects", dir),
                  domain = NA)
-        docsFiles <- list_files_with_type(docsDir, "docs")
+        docs_files <- list_files_with_type(docs_dir, "docs")
         db <- list()
-        for(f in docsFiles) {
+        for(f in docs_files) {
             valid_lines <- lines <- .read_Rd_lines_quietly(f)
             valid_lines[is.na(nchar(lines, "c", TRUE))] <- ""
-            eofPos <- grep("^\\\\eof$", valid_lines)
-            db <- c(db, split(lines[-eofPos],
-                              rep(seq_along(eofPos),
-                                  times = diff(c(0, eofPos)))[-eofPos]))
+            eof_pos <- grep("^\\\\eof$", valid_lines)
+            db <- c(db, split(lines[-eof_pos],
+                              rep(seq_along(eof_pos),
+                                  times = diff(c(0, eof_pos)))[-eof_pos]))
         }
         ## If this was installed using a recent enough version of R CMD
         ## INSTALL, information on source file names is available, and
         ## we use it for the names of the Rd db.  Otherwise, remove the
         ## artificial names attribute.
-        paths <- as.character(sapply(db, "[", 1))
+        paths <- as.character(sapply(db, "[", 1L))
         names(db) <-
             if(length(paths)
                && all(regexpr("^% --- Source file: (.+) ---$", paths)
-                      > -1))
+                      > -1L))
                 sub("^% --- Source file: (.+) ---$", "\\1", paths)
             else
                 NULL
@@ -431,13 +431,13 @@ function(package, dir, lib.loc = NULL)
                  domain = NA)
         else
             dir <- file_path_as_absolute(dir)
-        docsDir <- file.path(dir, "man")
-        if(!file_test("-d", docsDir))
+        docs_dir <- file.path(dir, "man")
+        if(!file_test("-d", docs_dir))
             stop(gettextf("directory '%s' does not contain Rd sources", dir),
                  domain = NA)
-        docsFiles <- list_files_with_type(docsDir, "docs")
-        db <- lapply(docsFiles, .read_Rd_lines_quietly)
-        names(db) <- docsFiles
+        docs_files <- list_files_with_type(docs_dir, "docs")
+        db <- lapply(docs_files, .read_Rd_lines_quietly)
+        names(db) <- docs_files
     }
 
     db
@@ -490,7 +490,7 @@ function(file, text = NULL)
                     "\\{[[:space:]]*([^}]*[^}[:space:]])[[:space:]]*\\}.*",
                     sep = ""),
               lines)
-    if(any(i)) lines <- lines[-i]
+    if(length(i)) lines <- lines[-i]
     ## Collapse into one character string.
     txt <- paste(lines, collapse = "\n")
     ## Initialize for extraction loop.
@@ -507,46 +507,56 @@ function(file, text = NULL)
     ## deprecated.
     ## </NOTE>
     pattern <- "(^|\n)[[:space:]]*\\\\([[:alpha:]]|non_function)+\\{"
-    while((pos <- regexpr(pattern, txt)) != -1) {
+    while((pos <- regexpr(pattern, txt)) != -1L) {
         otag <- tag
-        start <- substring(txt, 1, pos + attr(pos, "match.length") - 2)
-        txt <- substring(txt, pos + attr(pos, "match.length") - 1)
+        start <- substring(txt, 1L, pos + attr(pos, "match.length") - 2L)
+        txt <- substring(txt, pos + attr(pos, "match.length") - 1L)
         pos <- regexpr("\\\\([[:alpha:]]|non_function)+$", start)
-        tag <- substring(start, pos + 1)
-        start <- substring(start, 1, pos - 1)
+        tag <- substring(start, pos + 1L)
+        start <- substring(start, 1L, pos - 1L)
         pos <- delimMatch(txt)
-        if(pos == -1)
+        if(pos == -1L)
             stop(gettextf("unterminated section '%s'", tag),
                  domain = NA)
         if(tag == "section") {
-            tmp <- substring(txt, 2, attr(pos, "match.length") - 1)
+            tmp <- substring(txt, 2L, attr(pos, "match.length") - 1L)
             txt <- substring(txt, pos + attr(pos, "match.length"))
             ## Should 'txt' now really start with an open brace?
-            if(substring(txt, 1, 1) != "{")
+            if(substring(txt, 1L, 1L) != "{")
                 stop(gettextf("incomplete section 'section{%s}'", tmp),
                      domain = NA)
             pos <- delimMatch(txt)
-            if(pos == -1)
+            if(pos == -1L)
                 stop(gettextf("unterminated section 'section{%s}'", tmp),
                      domain = NA)
             tag <- c(tag, tmp)
         }
-        if(regexpr("^[[:space:]]*(^|\n)[[:space:]]*$", start) == -1) {
+        if(regexpr("^[[:space:]]*(^|\n)[[:space:]]*$", start) == -1L) {
             names(start) <- paste(otag, collapse = " ")
             rest <- c(rest, start)
         }
         tags <- c(tags, list(tag))
         vals <- c(vals, substring(txt,
-                                  pos + 1,
-                                  pos + attr(pos, "match.length") - 2))
+                                  pos + 1L,
+                                  pos + attr(pos, "match.length") - 2L))
         txt <- substring(txt, pos + attr(pos, "match.length"))
     }
-    if(regexpr("^[[:space:]]*(^|\n)[[:space:]]*$", txt) == -1) {
+    if(regexpr("^[[:space:]]*(^|\n)[[:space:]]*$", txt) == -1L) {
         names(txt) <- paste(tag, collapse = " ")
         rest <- c(rest, txt)
     }
+    ## Remove empty sections unless needed for checking ...
+    if(!identical(as.logical(Sys.getenv("_R_CHECK_RD_EMPTY_SECTIONS_")),
+                  TRUE)) {
+        ind <- regexpr("^[[:space:]]*$", vals) > -1L
+        if(any(ind)) {
+            vals <- vals[!ind]
+            tags <- tags[!ind]
+        }
+    }
     data <- data.frame(vals = vals, stringsAsFactors = FALSE)
     data$tags <- tags
+
     list(meta = meta, data = data, rest = rest)
 }
 
@@ -577,7 +587,7 @@ function(package, dir, lib.loc = NULL)
         ##   else
         ##       sort(scan(file = helpIndex, what = list("", ""),
         ##                 sep = "\t", quote = "", quiet = TRUE,
-        ##                 na.strings = character())[[1]])
+        ##                 na.strings = character())[[1L]])
         ## </CODE>
         ## This gets all topics the same way as index.search() would
         ## find individual ones.
@@ -626,10 +636,10 @@ function(txt, type, predefined = TRUE)
     ## Hence, a vectorized version would return its results similar to
     ## e.g. strsplit(), i.e., a list of character vectors.  Worth the
     ## effort?
-    ## </FIXME>
+    ## </NOTE>
 
     out <- character()
-    if(length(txt) != 1)
+    if(length(txt) != 1L)
         stop("argument 'txt' must be a character string")
     pattern <- paste("(^|\n)[[:space:]]*\\\\",
                      ifelse(predefined, type,
@@ -637,17 +647,17 @@ function(txt, type, predefined = TRUE)
                                   sep = "")),
                      "\\{",
                      sep = "")
-    while((pos <- regexpr(pattern, txt)) != -1) {
-        txt <- substring(txt, pos + attr(pos, "match.length") - 1)
+    while((pos <- regexpr(pattern, txt)) != -1L) {
+        txt <- substring(txt, pos + attr(pos, "match.length") - 1L)
         pos <- delimMatch(txt)
-        if(pos == -1) {
+        if(pos == -1L) {
             if((type == "alias") && predefined) {
                 ## \alias entries seem to be special (Paren.Rd).
                 ## The regexp below feels wrong, but is based on what is
                 ## used in Perl's R::Rdlists::build_index(), sort of.
                 pos <- regexpr("\\{([^\n]*)\\}(\n|$)", txt)
             }
-            if(pos == -1)
+            if(pos == -1L)
                 stop(gettextf("unterminated section '%s'", type),
                      domain = NA)
             else {
@@ -659,8 +669,8 @@ function(txt, type, predefined = TRUE)
         }
         out <- c(out,
                  substring(txt,
-                           pos + 1,
-                           pos + attr(pos, "match.length") - 2))
+                           pos + 1L,
+                           pos + attr(pos, "match.length") - 2L))
         txt <- substring(txt, pos + attr(pos, "match.length"))
     }
     out
@@ -674,30 +684,30 @@ function(txt)
     ## Extract names of Rd \item{}{} markup in the character string
     ## 'txt'.
     out <- character()
-    if(length(txt) != 1)
+    if(length(txt) != 1L)
         stop("argument 'txt' must be a character string")
     pattern <- "(^|\n)[[:space:]]*\\\\item\\{"
-    while((pos <- regexpr(pattern, txt)) != -1) {
-        txt <- substring(txt, pos + attr(pos, "match.length") - 1)
-        if((pos <- delimMatch(txt)) == -1)
+    while((pos <- regexpr(pattern, txt)) != -1L) {
+        txt <- substring(txt, pos + attr(pos, "match.length") - 1L)
+        if((pos <- delimMatch(txt)) == -1L)
             stop(gettextf("unmatched \\item name in '\\item{%s'",
                           sub("\n.*$", "", txt)),
                  domain = NA,
                  call. = FALSE)
         out <- c(out,
                  substring(txt,
-                           pos + 1,
-                           pos + attr(pos, "match.length") - 2))
+                           pos + 1L,
+                           pos + attr(pos, "match.length") - 2L))
         txt <- substring(txt, pos + attr(pos, "match.length"))
         ## The next character should really be a '{'.  Let's be nice
         ## and tolerate whitespace in between ...
-        if((pos <- regexpr("^[[:space:]]*\\{", txt)) == -1)
+        if((pos <- regexpr("^[[:space:]]*\\{", txt)) == -1L)
             stop(gettextf("no \\item description for item '%s'",
                           out[length(out)]),
                  domain = NA,
                  call. = FALSE)
-        txt <- substring(txt, pos + attr(pos, "match.length") - 1)
-        if((pos <- delimMatch(txt)) == -1)
+        txt <- substring(txt, pos + attr(pos, "match.length") - 1L)
+        if((pos <- delimMatch(txt)) == -1L)
             stop(gettextf("unmatched \\item description for item '%s'",
                           out[length(out)]),
                  domain = NA,
@@ -742,11 +752,11 @@ function(txt)
 function(txt)
 {
     start <- regexpr("\\\\name\\{[[:space:]]*([^}]+)[[:space:]]*\\}", txt)
-    if(start == -1) return(character())
+    if(start == -1L) return(character())
     Rd_name <- gsub("[[:space:]]+", " ",
                     substr(txt,
-                           start + 6,
-                           start + attr(start, "match.length") - 2))
+                           start + 6L,
+                           start + attr(start, "match.length") - 2L))
     Rd_name
 }
 
@@ -756,11 +766,11 @@ function(txt)
 function(txt)
 {
     start <- regexpr("\\\\title\\{[[:space:]]*([^}]+)[[:space:]]*\\}", txt)
-    if(start == -1) return(character())
+    if(start == -1L) return(character())
     Rd_title <- gsub("[[:space:]]+", " ",
                      substr(txt,
-                            start + 7,
-                            start + attr(start, "match.length") - 2))
+                            start + 7L,
+                            start + attr(start, "match.length") - 2L))
     Rd_title
 }
 
@@ -770,7 +780,7 @@ function(txt)
 function(txt)
 {
     txt <- get_Rd_section(txt, "examples")
-    if(length(txt) != 1) return(character())
+    if(length(txt) != 1L) return(character())
 
     txt <- gsub("\\\\l?dots", "...", txt)
     txt <- gsub("\\\\%", "%", txt)
@@ -789,22 +799,22 @@ function(txt)
 .get_Rd_xrefs <-
 function(txt)
 {
-    out <- matrix(character(), nrow = 0, ncol = 2)
-    if(length(txt) != 1) return(out)
+    out <- matrix(character(), nrow = 0L, ncol = 2L)
+    if(length(txt) != 1L) return(out)
     while((pos <-
-           regexpr("\\\\link(\\[[^[]+\\])?\\{", txt)) != -1) {
+           regexpr("\\\\link(\\[[^[]+\\])?\\{", txt)) != -1L) {
         len <- attr(pos, "match.length")
-        opt <- substring(txt, pos + 6, pos + len - 3)
-        txt <- substring(txt, pos + len - 1)
-        if((pos <- delimMatch(txt)) == -1)
+        opt <- substring(txt, pos + 6L, pos + len - 3L)
+        txt <- substring(txt, pos + len - 1L)
+        if((pos <- delimMatch(txt)) == -1L)
             stop("unclosed \\link")
         len <- attr(pos, "match.length")
-        arg <- substring(txt, 2, pos + len - 2)
+        arg <- substring(txt, 2L, pos + len - 2L)
         txt <- substring(txt, pos + len)
         out <- rbind(out, c(arg, opt))
     }
     colnames(out) <- c("Target", "Anchor")
-    out[, 1] <-  gsub("\\\\%", "%", out[, 1])
+    out[, 1L] <-  gsub("\\\\%", "%", out[, 1L])
     out
 }
 
@@ -821,21 +831,21 @@ function(txt, cmd, FUN)
     ##   replace_command        FUN = function(u) sprintf("Bef%sAft", u)
     ## Currently, optional arguments to \cmd are not supported.
 
-    if(length(txt) != 1) return(character())
+    if(length(txt) != 1L) return(character())
 
     ## Vectorized in 'cmd':
     pattern <- sprintf("\\\\(%s)\\{", paste(cmd, collapse = "|"))
 
     out <- character()
-    while((pos <- regexpr(pattern, txt)) != -1) {
-        out <- c(out, substring(txt, 1, pos - 1))
-        cmd <- substring(txt, pos, pos + attr(pos, "match.length") - 2)
-        txt <- substring(txt, pos + attr(pos, "match.length") - 1)
-        if((pos <- delimMatch(txt)) == -1)
+    while((pos <- regexpr(pattern, txt)) != -1L) {
+        out <- c(out, substring(txt, 1L, pos - 1L))
+        cmd <- substring(txt, pos, pos + attr(pos, "match.length") - 2L)
+        txt <- substring(txt, pos + attr(pos, "match.length") - 1L)
+        if((pos <- delimMatch(txt)) == -1L)
             stop(sprintf("unclosed \\%s", cmd))
         out <- c(out,
-                 FUN(substring(txt, 2,
-                               pos + attr(pos, "match.length") - 2)))
+                 FUN(substring(txt, 2L,
+                               pos + attr(pos, "match.length") - 2L)))
         txt <- substring(txt, pos + attr(pos, "match.length"))
     }
 
@@ -874,7 +884,7 @@ function(db)
     ## For Rd dbs created from a package source directory, we now add
     ## the Rd file paths as the names attribute, so that we can point to
     ## the files with missing \name entries.
-    idx <- as.numeric(sapply(Rd_names, length)) == 0
+    idx <- as.integer(sapply(Rd_names, length)) == 0L
     if(any(idx)) {
         Rd_paths <- names(db)
         if(is.null(Rd_paths)) {

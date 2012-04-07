@@ -1,6 +1,6 @@
 % File src/library/graphics/man/par.Rd
 % Part of the R package, http://www.R-project.org
-% Copyright 1995-2007 R Core Development Team
+% Copyright 1995-2008 R Core Development Team
 % Distributed under GPL 2 or later
 
 \name{par}
@@ -108,6 +108,11 @@ par(\dots, no.readonly = FALSE)
 }
 
 \details{
+  Each device has its own set of graphical parameters.  If the current
+  device is the null device, \code{par} will open a new device before
+  querying/setting parameters.  (What device is controlled by
+  \code{\link{options}("device")}.)
+  
   Parameters are queried by giving one or more character vectors to
   \code{par}.
 
@@ -118,7 +123,7 @@ par(\dots, no.readonly = FALSE)
   \emph{\bold{R.O.}} indicates \emph{\bold{read-only arguments}}: These
   may only be used in queries and cannot be set.  (\code{"cin"},
   \code{"cra"}, \code{"csi"}, \code{"cxy"} and \code{"din"} are always
-  read-only, and \code{"gamma"} is on most devices.)
+  read-only, and \code{"gamma"} is on all current devices.)
 
   There are several parameters can only be set by a call to \code{par()}:
   \itemize{
@@ -180,7 +185,7 @@ par(\dots, no.readonly = FALSE)
   \describe{
     \item{\code{adj}}{The value of \code{adj} determines the way in
       which text strings are justified.  A value of \code{0} produces
-      left-justified text, \code{0.5} centered text and \code{1}
+      left-justified text, \code{0.5} (the default) centered text and \code{1}
       right-justified text.  (Any value in \eqn{[0, 1]} is allowed, and
       on most devices values outside that interval will also work.)
       Note that the \code{adj} argument of \code{\link{text}} also
@@ -194,18 +199,27 @@ par(\dots, no.readonly = FALSE)
       interactive) the user is asked for input, before a new figure is
       drawn.  As this applies to the device, it also affects output by
       packages \pkg{grid} and \pkg{lattice}.  It can be set even on
-      non-screen devices.}
+      non-screen devices but may have no effect there.
+
+      This not really a graphics parameter, and its use is deprecated in
+      favour of \code{\link{devAskNewPage}}.
+    }
     \item{\code{bg}}{The color to be used for the background of the
       device region.  When called from \code{par()} it also sets
       \code{new=FALSE}. See section \sQuote{Color Specification} for
-      suitable values. Note that some graphics functions such as
+      suitable values.  For many devices the initial value is set from
+      the \code{bg} argument of the device, and for the rest it is
+      normally \code{"white"}.
+
+      Note that some graphics functions such as
       \code{\link{plot.default}} and \code{\link{points}} have an
       \emph{argument} of this name with a different meaning.}
     \item{\code{bty}}{A character string which determined the type of
-      \code{\link{box}} which is drawn about plots.  If \code{bty} is one of
-      \code{"o"}, \code{"l"}, \code{"7"}, \code{"c"}, \code{"u"}, or
-      \code{"]"} the resulting box resembles the corresponding upper
-      case letter.  A value of \code{"n"} suppresses the box.}
+      \code{\link{box}} which is drawn about plots.  If \code{bty} is
+      one of \code{"o"} (the default), \code{"l"}, \code{"7"},
+      \code{"c"}, \code{"u"}, or \code{"]"} the resulting box resembles
+      the corresponding upper case letter.  A value of \code{"n"}
+      suppresses the box.}
     \item{\code{cex}}{A numerical value giving the amount by which
       plotting text and symbols should be magnified relative to the
       default.  Note that some graphics functions such as
@@ -231,10 +245,14 @@ par(\dots, no.readonly = FALSE)
       which are recycled.  Other uses will take just the first value if
       a vector of length greater than one is supplied.)
     }
-    \item{\code{col.axis}}{The color to be used for axis annotation.}
-    \item{\code{col.lab}}{The color to be used for x and y labels.}
-    \item{\code{col.main}}{The color to be used for plot main titles.}
-    \item{\code{col.sub}}{The color to be used for plot sub-titles.}
+    \item{\code{col.axis}}{The color to be used for axis
+      annotation.  Defaults to \code{"black"}.}
+    \item{\code{col.lab}}{The color to be used for x and y labels.
+      Defaults to \code{"black"}.} 
+    \item{\code{col.main}}{The color to be used for plot main titles.
+      Defaults to \code{"black"}.} 
+    \item{\code{col.sub}}{The color to be used for plot sub-titles.
+      Defaults to \code{"black"}.} 
     \item{\code{cra}}{\emph{\bold{R.O.}}; size of default character
       \code{(width, height)} in \sQuote{rasters} (pixels).  Some devices
       have no concept of pixels and so assume an arbitrary pixel size,
@@ -260,20 +278,20 @@ par(\dots, no.readonly = FALSE)
     \item{\code{family}}{The name of a font family for drawing text.
       The maximum allowed length is 200 bytes.
       This name gets mapped by each graphics device to a device-specific
-      font description.
-      The default value is \code{""} which means that the
-      default device fonts will be used.
-      Standard values are \code{"serif"}, \code{"sans"},
-      \code{"mono"}, and \code{"symbol"} and the \link{Hershey}
-      font families are also available.  (Different devices
-      may define others, and some devices will ignore this setting
-      completely.)  This can be specified inline for
+      font description.  The default value is \code{""} which means that
+      the default device fonts will be used (and what those are should
+      be listed on the help page for the device).  Standard values are
+      \code{"serif"}, \code{"sans"} and \code{"mono"}, and the
+      \link{Hershey} font families are also available.  (Different
+      devices may define others, and some devices will ignore this
+      setting completely.)  This can be specified inline for
       \code{\link{text}}.}
     \item{\code{fg}}{The color to be used for the foreground of plots.
       This is the default color used for things like axes and boxes
       around plots.  When called from \code{par()} this also sets
       parameter \code{col} to the same value.  See section \sQuote{Color
-	Specification}.}
+	Specification}.  A few devices have an argument to set the
+      initial value, which is otherwise \code{"black"}.}
     \item{\code{fig}}{A numerical vector of the form \code{c(x1, x2, y1,
 	y2)} which gives the (NDC) coordinates of the figure region in
       the display region of the device. If you set this, unlike S, you
@@ -284,19 +302,20 @@ par(\dots, no.readonly = FALSE)
       start a new plot.}
     \item{\code{font}}{An integer which specifies which font to use for
       text.  If possible, device drivers arrange so that 1 corresponds
-      to plain text, 2 to bold face, 3 to italic and 4 to bold
-      italic.  Also, font 5 is expected to be the symbol font, in Adobe
-      symbol encoding.  On some devices font families can be selected by
-      \code{family} to choose different sets of 5 fonts.}
+      to plain text (the default), 2 to bold face, 3 to italic and 4 to
+      bold italic.  Also, font 5 is expected to be the symbol font, in
+      Adobe symbol encoding.  On some devices font families can be
+      selected by \code{family} to choose different sets of 5 fonts.}
     \item{\code{font.axis}}{The font to be used for axis annotation.}
     \item{\code{font.lab}}{The font to be used for x and y labels.}
     \item{\code{font.main}}{The font to be used for plot main titles.}
     \item{\code{font.sub}}{The font to be used for plot sub-titles.}
     \item{\code{gamma}}{the gamma correction, see argument \code{gamma}
-      to \code{\link{hsv}}.  This is only accepted if the current device
-      has support for changing the gamma correction: currently only
-      \code{windows} and \code{quartz} do.  (\code{X11} has support for
-      setting the gamma correction when opening the device, but not for
+      to \code{\link{hsv}}.  This was deprecated in \R 2.7.0.
+      This is only accepted as a setting if the current device
+      has support for changing the gamma correction: no current device
+      does. (\code{X11} and \code{windows} have support for setting the
+      gamma correction when opening the first device, but not for
       changing it.)}
     \item{\code{lab}}{A numerical vector of the form \code{c(x, y, len)}
       which modifies the default way that axes are annotated.  The values of
@@ -348,9 +367,9 @@ par(\dots, no.readonly = FALSE)
       devices will honour this setting.
     }
     \item{\code{lty}}{The line type.
-      Line types can either be specified as an integer (0=blank,
-      1=solid, 2=dashed, 3=dotted, 4=dotdash, 5=longdash, 6=twodash) or
-      as one of the character strings \code{"blank"}, \code{"solid"},
+      Line types can either be specified as an integer (0=blank, 1=solid
+      (default), 2=dashed, 3=dotted, 4=dotdash, 5=longdash, 6=twodash)
+      or as one of the character strings \code{"blank"}, \code{"solid"},
       \code{"dashed"}, \code{"dotted"}, \code{"dotdash"},
       \code{"longdash"}, or \code{"twodash"}, where \code{"blank"} uses
       \sQuote{invisible lines} (i.e., does not draw them).
@@ -430,16 +449,16 @@ par(\dots, no.readonly = FALSE)
     \item{\code{oma}}{A vector of the form \code{c(bottom, left, top,
 	right)} giving the size of the outer margins in lines of text.}
     \item{\code{omd}}{A vector of the form \code{c(x1, x2, y1, y2)}
-      giving the outer margin region in NDC (= normalized device
-      coordinates), i.e., as fraction (in \eqn{[0,1]}) of the device
-      region.}
+      giving the region \emph{inside} outer margins in NDC (=
+      normalized device coordinates), i.e., as fraction (in \eqn{[0,1]})
+      of the device region.}
     \item{\code{omi}}{A vector of the form \code{c(bottom, left, top,
 	right)} giving the size of the outer margins in inches.}
     \item{\code{pch}}{Either an integer specifying a symbol or a single
       character to be used as the default in plotting points.  See
       \code{\link{points}} for possible values and their interpretation.
-      Note that only non-negative integers and single-byte strings can
-      be set as a graphics parameter.
+      Note that only integers and single-character strings can
+      be set as a graphics parameter (and not \code{NA} nor \code{NULL}).
     }
     \item{\code{pin}}{The current plot dimensions, \code{(width,height)},
       in inches.}
@@ -509,8 +528,8 @@ par(\dots, no.readonly = FALSE)
       \code{"e"}, \code{"s"}, \code{"d"}.  The styles are generally
       controlled by the range of data or \code{xlim}, if given.
       Style \code{"r"} (regular) first extends the data range by 4
-      percent and then finds an axis with pretty labels that fits within
-      the range.
+      percent at each end and then finds an axis with pretty labels
+      that fits within the extended range.
       Style \code{"i"} (internal) just finds an axis with pretty labels
       that fits within the original data range.
       Style \code{"s"} (standard) finds an axis with pretty labels
@@ -534,7 +553,8 @@ par(\dots, no.readonly = FALSE)
     \item{\code{xpd}}{A logical value or \code{NA}.
       If \code{FALSE}, all plotting is clipped to the plot region, if
       \code{TRUE}, all plotting is clipped to the figure region, and if
-      \code{NA}, all plotting is clipped to the device region.}
+      \code{NA}, all plotting is clipped to the device region. See also
+      \code{\link{clip}}.}
     \item{\code{yaxp}}{A vector of the form \code{c(y1, y2, n)} giving
       the coordinates of the extreme tick marks and the number of
       intervals between tick-marks unless for log coordinates, see
@@ -557,7 +577,9 @@ par(\dots, no.readonly = FALSE)
   hexadecimal digits giving a value in the range \code{00} to \code{FF}.
   Colors can also be specified by giving an index into a small table of
   colors, the \code{\link{palette}}.  This provides compatibility with
-  S.  Index \code{0} corresponds to the background color.
+  S.  Index \code{0} corresponds to the background color.  (Because
+  apparently some people have been assuming it, it is also possible to
+  specify integers as character strings, e.g. \code{"3"}.)
 
   Additionally, \code{"transparent"} or (integer) \code{NA} is
   \emph{transparent}, useful for filled areas (such as the background!),
@@ -608,7 +630,7 @@ par(\dots, no.readonly = FALSE)
 }
 \seealso{
   \code{\link{plot.default}} for some high-level plotting parameters;
-  \code{\link{colors}};
+  \code{\link{colors}}; \code{\link{clip}};
   \code{\link{options}} for other setup parameters;
   graphic devices \code{\link{x11}}, \code{\link{postscript}} and
   setting up device regions by \code{\link{layout}} and

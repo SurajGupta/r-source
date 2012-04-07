@@ -49,18 +49,24 @@ axis.POSIXct <- function(side, x, at, format, labels = TRUE, ...)
     } else if(d < 1.1*60*60*24*365) { # months
         class(z) <- c("POSIXt", "POSIXct")
         zz <- as.POSIXlt(z)
-        zz$mday <- 1; zz$isdst <- zz$hour <- zz$min <- zz$sec <- 0
+        zz$mday <- zz$wday <- zz$yday <- 1
+        zz$isdst <- -1; zz$hour <- zz$min <- zz$sec <- 0
         zz$mon <- pretty(zz$mon)
-        m <- length(zz$mon)
+        m <- length(zz$mon); M <- 2*m
         m <- rep.int(zz$year[1], m)
         zz$year <- c(m, m+1)
+        zz <- lapply(zz, function(x) rep(x, length = M))
+        class(zz) <- c("POSIXt", "POSIXlt")
         z <- as.POSIXct(zz)
         if(missing(format)) format <- "%b"
     } else { # years
         class(z) <- c("POSIXt", "POSIXct")
         zz <- as.POSIXlt(z)
-        zz$mday <- 1; zz$isdst <- zz$mon <- zz$hour <- zz$min <- zz$sec <- 0
-        zz$year <- pretty(zz$year)
+        zz$mday <- zz$wday <- zz$yday <- 1
+        zz$isdst <- -1; zz$mon <- zz$hour <- zz$min <- zz$sec <- 0
+        zz$year <- pretty(zz$year); M <- length(zz$year)
+        zz <- lapply(zz, function(x) rep(x, length = M))
+        class(zz) <- c("POSIXt", "POSIXlt")
         z <- as.POSIXct(zz)
         if(missing(format)) format <- "%Y"
     }
@@ -136,7 +142,7 @@ hist.POSIXt <- function(x, breaks, ..., xlab = deparse(substitute(x)),
             valid <-
                 pmatch(breaks,
                        c("secs", "mins", "hours", "days", "weeks",
-                         "months", "years"))
+                         "months", "years", "quarters"))
             if(is.na(valid)) stop("invalid specification of 'breaks'")
             start <- as.POSIXlt(min(x, na.rm = TRUE))
             incr <- 1
@@ -164,6 +170,15 @@ hist.POSIXt <- function(x, breaks, ..., xlab = deparse(substitute(x)),
                 end$mon <- 0
                 end$mday <- 1
                 breaks <- seq(start, end, "years") - 86400
+            } else if(valid == 8) {
+                qtr <- rep(c(0, 3, 6, 9), each = 3)
+                start$mon <- qtr[start$mon + 1]
+                start$mday <- 1
+                end <- as.POSIXlt(max(x, na.rm = TRUE))
+                end <- as.POSIXlt(end + (93 * 86400))
+                end$mon <- qtr[end$mon + 1]
+                end$mday <- 1
+                breaks <- seq(start, end, "3 months") - 86400
             } else {
                 maxx <- max(x, na.rm = TRUE)
                 breaks <- seq.int(start, maxx + incr, breaks)
@@ -283,7 +298,8 @@ hist.Date <- function(x, breaks, ..., xlab = deparse(substitute(x)),
         if(num.br) {
         ## specified number of breaks
         } else if(is.character(breaks) && length(breaks) == 1) {
-            valid <- pmatch(breaks, c("days", "weeks", "months", "years"))
+            valid <- pmatch(breaks, c("days", "weeks", "months", "years",
+                                      "quarters"))
             if(is.na(valid)) stop("invalid specification of 'breaks'")
             start <- as.POSIXlt(min(x, na.rm = TRUE))
             incr <- 1
@@ -308,6 +324,15 @@ hist.Date <- function(x, breaks, ..., xlab = deparse(substitute(x)),
                 end$mon <- 0
                 end$mday <- 1
                 breaks <- as.Date(seq(start, end, "years")) - 1
+            } else if(valid == 5) {
+                qtr <- rep(c(0, 3, 6, 9), each = 3)
+                start$mon <- qtr[start$mon + 1]
+                start$mday <- 1
+                end <- as.POSIXlt(max(x, na.rm = TRUE))
+                end <- as.POSIXlt(end + (93 * 86400))
+                end$mon <- qtr[end$mon + 1]
+                end$mday <- 1
+                breaks <- as.Date(seq(start, end, "3 months")) - 1
             } else {
                 start <- .Internal(POSIXlt2Date(start))
                 maxx <- max(x, na.rm = TRUE)

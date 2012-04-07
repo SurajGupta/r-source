@@ -2,12 +2,12 @@
 # Copyright (C) 2006 The R Foundation
 # This file is distributed under the same license as the PACKAGE package.
 # 陈斐 <feic@avaya.com>, 2006.
-#
+# 
 msgid ""
 msgstr ""
 "Project-Id-Version: R 2.4.0\n"
 "Report-Msgid-Bugs-To: bugs@r-project.org\n"
-"POT-Creation-Date: 2007-08-22 12:25\n"
+"POT-Creation-Date: 2008-04-07 08:26\n"
 "PO-Revision-Date: 2005-02-04 08:37+0000\n"
 "Last-Translator: 陈斐 <feic@avaya.com>\n"
 "Language-Team: Chinese\n"
@@ -238,6 +238,9 @@ msgstr ""
 msgid "Rd files with duplicated alias '%s':"
 msgstr "Rd文件不能有重复的别名'%s':"
 
+msgid "Rd files with empty sections:"
+msgstr "Rd文件内有空的段:"
+
 msgid "Found invalid multi-byte character data."
 msgstr "遇到了错误多字节字符数据."
 
@@ -332,6 +335,15 @@ msgstr "编码'%s'不可便携"
 
 msgid "Unknown encoding with non-ASCII data"
 msgstr "没有这样的编码，带非ASCII数据:"
+
+msgid "Non-standard license specification:"
+msgstr "非标准执照规格"
+
+msgid "Invalid license file pointers: %s"
+msgstr "执照文件指示器无效：%s"
+
+msgid "Verifiable as open source: %s"
+msgstr "可验证开放源码：%s"
 
 msgid "Non-portable flags in variable '%s':"
 msgstr "变量'%s'里有不可便携的标志:"
@@ -451,19 +463,20 @@ msgstr "***程辑包'%s'里的Built域坏了***"
 msgid "cannot open directory '%s'"
 msgstr "无法打开目录'%s'"
 
-msgid "WARNING: 'Depends' entry has multiple dependencies:"
+#, fuzzy
+msgid "WARNING: 'Depends' entry has multiple dependencies on R:"
 msgstr "警告：'Depends'项有多个從屬项"
 
 msgid ","
 msgstr ","
 
-msgid "only the first will be used"
+#, fuzzy
+msgid "only the first will be used in R < 2.7.0"
 msgstr "只能用第一个"
 
 msgid ""
 "WARNING: omitting pointless dependence on 'R' without a version requirement"
-msgstr ""
-"警告：略过不带版本需求的无意义'R'从属"
+msgstr "警告：略过不带版本需求的无意义'R'从属"
 
 msgid "cannot turn off locale-specific sorting via LC_COLLATE"
 msgstr "无法通过LC_COLLATE来关掉地方化分类整理"
@@ -570,6 +583,9 @@ msgstr "程辑包'%s'的从属被减低成最小集."
 msgid "argument '%s' must be a character string or connection"
 msgstr "变元'%s'必需是字符串或联结"
 
+msgid "'file' must be a character string or connection"
+msgstr "变元'file'必需是字符串或联结"
+
 msgid "unimplemented encoding"
 msgstr "还没有实现的编码"
 
@@ -578,6 +594,9 @@ msgstr "不存在'%s'这个测试"
 
 msgid "no or more than one match"
 msgstr "没有成对的，或多于一双"
+
+msgid "'iconv' is required"
+msgstr "需要'iconv'"
 
 msgid "argument 'x' must be a character vector"
 msgstr "变元'x'必需是字符矢量"
@@ -627,4 +646,3 @@ msgstr[0] "在下面的Rd例子文件中遇到了有可能是全局的T或F值:"
 
 #~ msgid "unable to run pdflatex on '%s'"
 #~ msgstr "无法在'%s'上调用pdflatex"
-

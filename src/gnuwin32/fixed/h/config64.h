@@ -78,6 +78,15 @@
 /* Define this if you have support for C99 complex types. */
 #define HAVE_C99_COMPLEX 1
 
+/* Define to 1 if you have cairo-ps. */
+/* #undef HAVE_CAIRO_PDF */
+
+/* Define to 1 if you have cairo-pdf. */
+/* #undef HAVE_CAIRO_PS */
+
+/* Define to 1 if you have cairo-svg. */
+/* #undef HAVE_CAIRO_SVG */
+
 /* Define to 1 if you have the MacOS X function CFLocaleCopyCurrent in the
    CoreFoundation framework. */
 /* #undef HAVE_CFLOCALECOPYCURRENT */
@@ -88,6 +97,9 @@
 
 /* Define to 1 if you have the `chdir' function. */
 #define HAVE_CHDIR 1
+
+/* Define to 1 if you have the `chmod' function. */
+#define HAVE_CHMOD 1
 
 /* Defined if framework CoreFoundation is present */
 /* #undef HAVE_COREFOUNDATION_FW */
@@ -326,7 +338,7 @@
 #define HAVE_INTTYPES_H_WITH_UINTMAX 1
 
 /* Define to 1 if you have the `isblank' function. */
-#define HAVE_ISBLANK
+#define HAVE_ISBLANK 1
 
 /* Define to 1 if you have the `isnan' function. */
 #define HAVE_ISNAN 1
@@ -449,6 +461,9 @@
 
 /* Define if you have off_t, fseeko and ftello. */
 #define HAVE_OFF_T 1
+
+/* Define to 1 if you have pangocairo. */
+/* #undef HAVE_PANGOCAIRO */
 
 /* Define to 1 if you have the <pcre.h> header file. */
 /* #undef HAVE_PCRE_H */
@@ -632,6 +647,12 @@
    to be built. */
 #define HAVE_TCLTK 1
 
+/* Define this if libtiff is available. */
+/* #undef HAVE_TIFF */
+
+/* Define to 1 if you have the <tiffio.h> header file. */
+/* #undef HAVE_TIFFIO_H */
+
 /* Define to 1 if you have the `time' function. */
 #define HAVE_TIME 1
 
@@ -649,6 +670,9 @@
 
 /* Define to 1 if the system has the type `uintptr_t'. */
 #define HAVE_UINTPTR_T 1
+
+/* Define to 1 if you have the `umask' function. */
+#define HAVE_UMASK 1
 
 /* Define to 1 if you have the <unistd.h> header file. */
 #define HAVE_UNISTD_H 1
@@ -720,6 +744,9 @@
 /* Define if you have the 'wint_t' type. */
 #define HAVE_WINT_T 1
 
+/* Define to 1 if you have cairo. */
+/* #undef HAVE_WORKING_CAIRO */
+
 /* Define if calloc(0) returns a null pointer. */
 #define HAVE_WORKING_CALLOC 1
 
@@ -763,6 +790,13 @@
 /* Define if you have 32 bit ints. */
 #define INT_32_BITS 1
 
+/* Define to the sub-directory in which libtool stores uninstalled libraries.
+   */
+#define LT_OBJDIR ".libs/"
+
+/* Define if mktime sets errno. */
+#define MKTIME_SETS_ERRNO 1
+
 /* Define if your system needs __setfpucw() to control FPU rounding. This was
    used to control floating point precision, rounding and floating point
    exceptions on older Linux systems. As of GLIBC 2.1 this function is not
@@ -773,7 +807,7 @@
 #define NVALGRIND 1
 
 /* Define if using GNU-style Objective C runtime. */
-/* #undef OBJC_GNU_RUNTIME */
+#define OBJC_GNU_RUNTIME 1
 
 /* Define if using NeXT/Apple-style Objective C runtime. */
 /* #undef OBJC_NEXT_RUNTIME */
@@ -880,7 +914,7 @@
 #define SUPPORT_MBCS 1
 
 /* Define this to enable support for UTF-8 locales. */
-/* #undef SUPPORT_UTF8 */
+#define SUPPORT_UTF8 1
 
 /* Define to enable provoking compile errors on write barrier violation. */
 /* #undef TESTING_WRITE_BARRIER */
@@ -893,11 +927,11 @@
 /* #undef USE_BUILTIN_RINT */
 
 /* Define if the POSIX multithreading library can be used. */
-/* #define USE_POSIX_THREADS 1 */
+/* #undef USE_POSIX_THREADS */
 
 /* Define if references to the POSIX multithreading library should be made
    weak. */
-/* #define USE_POSIX_THREADS_WEAK 1 */
+/* #undef USE_POSIX_THREADS_WEAK */
 
 /* Define if the GNU Pth multithreading library can be used. */
 /* #undef USE_PTH_THREADS */

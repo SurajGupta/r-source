@@ -199,6 +199,27 @@ sub Rdconv { # Rdconv(foobar.Rd, type, debug, filename, pkgname, version, def_en
 	    warn "\n** Rdconv --type '..' : no valid type specified\n";
 	}
 
+	## Remove empty sections.
+	foreach my $key (keys %blocks) {
+	    if($blocks{$key} =~ /^[[:space:]]*$/) {
+		warn "Note: removing empty section \\${key}\n";
+		delete $blocks{$key};
+	    }
+	}
+	my ($section, $title, @nonempty);
+	for($section = 0; $section < $max_section; $section++) {
+	    if($section_body[$section] =~ /^[[:space:]]*$/) {
+		$title = $section_title[$section];
+		warn "Note: removing empty section \\section\{$title\}\n";
+	    }
+	    else {
+		push(@nonempty, $section);
+	    }
+	}
+	@section_title = @section_title[@nonempty];
+	@section_body  = @section_body [@nonempty];
+	$max_section = scalar(@section_title);
+	
 	rdoc2html($htmlfile, $def_encoding)	if $type =~ /html/i;
 	rdoc2txt($txtfile, $def_encoding)	if $type =~ /txt/i;
 	rdoc2Sd($Sdfile)	if $type =~ /Sd/;
@@ -388,6 +409,7 @@ sub get_multi {
     my @res, $k=0;
     print STDERR "--- Multi: $name\n" if $debug;
     my $loopcount = 0;
+    my $any = 0;
     while(checkloop($loopcount++, $text, "\\name")
 	  && $text =~ /\\$name($ID)/) {
 	my $id = $1;
@@ -398,10 +420,16 @@ sub get_multi {
 	$arg =~ s/^\s*(\S)/$1/;
 	$arg =~ s/\n[ \t]*(\S)/\n$1/g;
 	$arg =~ s/\s*$//;
-	$res[$k++] = $arg;
+	if($arg) {
+	    $res[$k++] = $arg;
+	}
+	else {
+	    $any++;
+	}
 	$text =~ s/\\$name//s;
     }
     print STDERR "\n---\n" if $debug;
+    warn "Note: ignoring empty \\${name} entries\n" if($any);
     @res;
 }
 
@@ -1131,6 +1159,7 @@ sub code2html {
 				  "## Not run: ", "## End(Not run)");
     $text = drop_full_command($text, "testonly");
     $text = drop_full_command($text, "dontshow");
+    $text = undefine_command($text, "donttest");
     $text =~ s/\\\\/\\/go;
 
     $text = unmark_brackets($text);
@@ -1621,21 +1650,21 @@ sub text2txt {
 
     $text = replace_command($text,
 			    "itemize",
-			    "\n.in +$INDENT\n",
-			    "\n.in -$INDENT\n");
+			    "\n\n.in +$INDENT\n",
+			    "\n\n.in -$INDENT\n");
 
     $text = replace_command($text,
 			    "enumerate",
-			    "\n.inen +$INDENT\n",
-			    "\n.inen -$INDENT\n");
+			    "\n\n.inen +$INDENT\n",
+			    "\n\n.inen -$INDENT\n");
 
     $text =~ s/\\item\s+/\n.ti * \n/go;
 
     ## Handle '\describe':
     $text = replace_command($text,
 			    "describe",
-			    "\n.in +$INDENTDD\n",
-			    "\n.in -$INDENTDD\n");
+			    "\n\n.in +$INDENTDD\n",
+			    "\n\n.in -$INDENTDD\n");
     while(checkloop($loopcount++, $text, "\\item")
 	  && $text =~ /\\itemnormal/s) {
 	my ($id, $arg, $desc)  = get_arguments("item", $text, 2);
@@ -1674,6 +1703,7 @@ sub code2txt {
 				  "## Not run: ", "## End(Not run)");
     $text = drop_full_command($text, "testonly");
     $text = drop_full_command($text, "dontshow");
+    $text = undefine_command($text, "donttest");
 
     $text = unmark_brackets($text);
 
@@ -2389,6 +2419,7 @@ sub code2nroff {
 				  "## Not run: ", "## End(Not run)");
     $text = drop_full_command($text, "testonly");
     $text = drop_full_command($text, "dontshow");
+    $text = undefine_command($text, "donttest");
 
     $text = unmark_brackets($text);
 
@@ -2487,11 +2518,16 @@ sub rdoc2ex { # (filename)
 	    $Exout->print("### Encoding: $encoding\n\n");
 	}
 
+	my $qaliases = "";
+	foreach my $a (@aliases) {
+	    $a = "'" . $a . "'" if $a =~ / / ;
+	    $qaliases = $qaliases . " " . $a;
+	}
 	$Exout->print(wrap("### Name: ", "###   ", $blocks{"name"}),
 		      "\n",
 		      wrap("### Title: ", "###   ", $tit),
 		      "\n",
-		      wrap("### Aliases: ", "###   ", @aliases),
+		      wrap("### Aliases:", "###   ", $qaliases),
 		      "\n",
 		      wrap("### Keywords: ", "###   ", @keywords),
 		      "\n\n");
@@ -2533,6 +2569,8 @@ sub code2examp {
     $text = replace_prepend_command($text, "dontrun",
 				    "## Not run: ", "## End(Not run)",
 				    "##D ");
+    $text = replace_addnl_command($text, "donttest",
+				  "## No test: ", "## End(No test)");
     $text =~ s/\\\\/\\/g;
 
     $text = unmark_brackets($text);
@@ -2732,6 +2770,7 @@ sub code2latex {
 				  "## Not run: ", "## End(Not run)");
     $text = drop_full_command($text, "testonly");
     $text = drop_full_command($text, "dontshow");
+    $text = undefine_command($text, "donttest");
 
     $text = unmark_brackets($text);
 
@@ -3283,6 +3322,7 @@ sub code2Ssgm {
 				  "## Not run: ", "## End(Not run)");
     $text = drop_full_command($text, "testonly");
     $text = drop_full_command($text, "dontshow");
+    $text = undefine_command($text, "donttest");
     $text =~ s/\\\\/\\/go;
 
     $text = unmark_brackets($text);

@@ -1288,7 +1288,7 @@ TRIO_ARGS5((type, format, parameters, arglist, argarray),
   int currentParam;
   int maxParam = -1;
   /* Utility variables */
-  trio_flags_t flags;
+  trio_flags_t flags = FLAGS_NEW;
   int width;
   int precision;
   int varsize;
@@ -5420,6 +5420,7 @@ TRIO_ARGS3((ref, format, argarray),
 /*************************************************************************
  * trio_print_pointer [public]
  */
+static
 void
 trio_print_pointer
 TRIO_ARGS2((ref, pointer),
@@ -7448,12 +7449,12 @@ TRIO_ARGS3((buffer, format, args),
 /*************************************************************************
  * trio_strerror
  */
+#if TRIO_FEATURE_STRERR
 TRIO_PUBLIC TRIO_CONST char *
 trio_strerror
 TRIO_ARGS1((errorcode),
 	   int errorcode)
 {
-#if TRIO_FEATURE_STRERR
   /* Textual versions of the error codes */
   switch (TRIO_ERROR_CODE(errorcode))
     {
@@ -7476,7 +7477,5 @@ TRIO_ARGS1((errorcode),
     default:
       return "Unknown";
     }
-#else
-  return "Unknown";
-#endif
 }
+#endif

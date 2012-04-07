@@ -36,6 +36,12 @@
 # define SWAP(n) (n)
 #endif
 
+/* moved from md5.h */
+static void md5_process_block __P ((const void *buffer, size_t len,
+				    struct md5_ctx *ctx));
+static void md5_process_bytes __P ((const void *buffer, size_t len,
+				    struct md5_ctx *ctx));
+
 
 /* This array contains the bytes used to pad the buffer to the next
    64-byte boundary.  (RFC 1321, 3.1: Step 1)  */
@@ -44,9 +50,8 @@ static const unsigned char fillbuf[64] = { 0x80, 0 /* , 0, 0, ...  */ };
 
 /* Initialize structure containing state of computation.
    (RFC 1321, 3.3: Step 3)  */
-void
-md5_init_ctx (ctx)
-     struct md5_ctx *ctx;
+static void
+md5_init_ctx (struct md5_ctx *ctx)
 {
   ctx->A = 0x67452301;
   ctx->B = 0xefcdab89;
@@ -62,10 +67,8 @@ md5_init_ctx (ctx)
 
    IMPORTANT: On some systems it is required that RESBUF is correctly
    aligned for a 32 bits value.  */
-void *
-md5_read_ctx (ctx, resbuf)
-     const struct md5_ctx *ctx;
-     void *resbuf;
+static void *
+md5_read_ctx (const struct md5_ctx *ctx, void *resbuf)
 {
   ((md5_uint32 *) resbuf)[0] = SWAP (ctx->A);
   ((md5_uint32 *) resbuf)[1] = SWAP (ctx->B);
@@ -80,10 +83,8 @@ md5_read_ctx (ctx, resbuf)
 
    IMPORTANT: On some systems it is required that RESBUF is correctly
    aligned for a 32 bits value.  */
-void *
-md5_finish_ctx (ctx, resbuf)
-     struct md5_ctx *ctx;
-     void *resbuf;
+static void *
+md5_finish_ctx (struct md5_ctx *ctx, void *resbuf)
 {
   /* Take yet unprocessed bytes into account.  */
   md5_uint32 bytes = ctx->buflen;
@@ -112,9 +113,7 @@ md5_finish_ctx (ctx, resbuf)
    resulting message digest number will be written into the 16 bytes
    beginning at RESBLOCK.  */
 int
-md5_stream (stream, resblock)
-     FILE *stream;
-     void *resblock;
+md5_stream (FILE *stream, void *resblock)
 {
   /* Important: BLOCKSIZE must be a multiple of 64.  */
 #define BLOCKSIZE 4096
@@ -164,15 +163,13 @@ md5_stream (stream, resblock)
   return 0;
 }
 
+#ifdef UNUSED
 /* Compute MD5 message digest for LEN bytes beginning at BUFFER.  The
    result is always in little endian byte order, so that a byte-wise
    output yields to the wanted ASCII representation of the message
    digest.  */
-void *
-md5_buffer (buffer, len, resblock)
-     const char *buffer;
-     size_t len;
-     void *resblock;
+static void *
+md5_buffer (const char *buffer, size_t len, void *resblock)
 {
   struct md5_ctx ctx;
 
@@ -185,13 +182,10 @@ md5_buffer (buffer, len, resblock)
   /* Put result in desired memory area.  */
   return md5_finish_ctx (&ctx, resblock);
 }
+#endif
 
-
-void
-md5_process_bytes (buffer, len, ctx)
-     const void *buffer;
-     size_t len;
-     struct md5_ctx *ctx;
+static void
+ md5_process_bytes (const void *buffer, size_t len, struct md5_ctx *ctx)
 {
   /* When we already have some bits in our internal buffer concatenate
      both inputs first.  */
@@ -245,11 +239,8 @@ md5_process_bytes (buffer, len, ctx)
 /* Process LEN bytes of BUFFER, accumulating context into CTX.
    It is assumed that LEN % 64 == 0.  */
 
-void
-md5_process_block (buffer, len, ctx)
-     const void *buffer;
-     size_t len;
-     struct md5_ctx *ctx;
+static void
+md5_process_block (const void *buffer, size_t len, struct md5_ctx *ctx)
 {
   md5_uint32 correct_words[16];
   const md5_uint32 *words = buffer;

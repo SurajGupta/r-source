@@ -69,13 +69,13 @@ static char rhome[] = R_HOME;
 # include "rterm.c"
 #endif
 
-#define RSVERSION "$Rev: 42724 $"
+#define RSVERSION "$Rev: 44199 $"
 
 #ifdef HAVE_EXECV
 static int verbose = 0;
 #endif
 
-void usage()
+void usage(void)
 {
     fprintf(stderr, "Usage: /path/to/Rscript [--options] [-e expr] file [args]\n\n");
     fprintf(stderr, "--options accepted are\n");

@@ -1,7 +1,7 @@
 /*
  *  R : A Computer Language for Statistical Data Analysis
  *  Copyright (C) 1995, 1996  Robert Gentleman and Ross Ihaka
- *  Copyright (C) 1997--2004  Robert Gentleman, Ross Ihaka and the
+ *  Copyright (C) 1997--2008  Robert Gentleman, Ross Ihaka and the
  *			      R Development Core Team
  *
  *  This program is free software; you can redistribute it and/or modify
@@ -19,8 +19,8 @@
  *  http://www.r-project.org/Licenses/
  */
 
-#ifndef _DEV_X11_H
-#define _DEV_X11_H
+#ifndef R_DEV_X11_H
+#define R_DEV_X11_H
 
 #define SYMBOL_FONTFACE 5
 
@@ -35,18 +35,17 @@ typedef enum {
 
 typedef enum {
     WINDOW, /* NB: have "type > WINDOW" below ... */
+    XIMAGE,
     PNG,
     JPEG,
-    XIMAGE
+    TIFF,
+    PNGdirect,
+    SVG,
+    PDF,
+    PS,
+    BMP
 } X_GTYPE;
 
-
-/*
-  For the moment, we just conditionally activate the remainder of this
-  section iff we are in devX11.c which defines R_X11_DEVICE.
-  This is purely historical: it was once included by devUI.h
- */
-#if R_X11_DEVICE
 
 #include <stdio.h>
 #include <X11/X.h>
@@ -56,11 +55,29 @@ typedef enum {
 #include <X11/cursorfont.h>
 #include <X11/Intrinsic.h>  /*->	Xlib.h	Xutil.h Xresource.h .. */
 
+#ifdef HAVE_WORKING_CAIRO
+# ifdef HAVE_PANGOCAIRO
+#  include <pango/pango.h>
+#  include <pango/pangocairo.h>
+# else
+#  include <cairo.h>
+# endif
+#  include <cairo-xlib.h>
+# ifdef HAVE_CAIRO_SVG
+#  include <cairo-svg.h>
+# endif
+# ifdef HAVE_CAIRO_PDF
+#  include <cairo-pdf.h>
+# endif
+# ifdef HAVE_CAIRO_PS
+#  include <cairo-ps.h>
+# endif
+#endif
 
 
-Rboolean newX11DeviceDriver(DevDesc*, const char*, double, double, double,
-			    double, 
-			    X_COLORTYPE, int, int, int, SEXP, int, int, int);
+Rboolean X11DeviceDriver(pDevDesc, const char*, double, double, double,
+			 double, X_COLORTYPE, int, int, int, SEXP, 
+			 int, int, int, const char *, int, int);
 
 
 	/********************************************************/
@@ -81,26 +98,22 @@ typedef struct {
     /* Local device copy so that we can detect */
     /* when parameter changes. */
 
-    /* cex retained -- its a GRZ way of specifying text size, but
-     * its too much work to change at this time (?)
-     */
-    double cex;				/* Character expansion */
-    /* srt removed -- its a GRZ parameter and is not used in devX11.c
-     */
+    /* Used to detect changes */ 
     int lty;				/* Line type */
     double lwd;
     R_GE_lineend lend;
     R_GE_linejoin ljoin;
-    double lmitre;
+
+    double lwdscale;                    /* scaling to get a multiple
+					   of 1/96" */
+
     int col;				/* Color */
-    /* fg and bg removed -- only use col and new param fill
-     */
     int fill;
-    int canvas;				/* Canvas */
-    int fontface;			/* Typeface */
+    int bg;				/* bg */
+    int canvas;				/* Canvas colour */
+    int fontface;			/* Typeface 1:5 */
     int fontsize;			/* Size in points */
-    int basefontface;			/* Typeface */
-    int basefontsize;			/* Size in points */
+    double pointsize;			/* Size in points */
     char basefontfamily[500];           /* Initial font family */
 
     /* X11 Driver Specific */
@@ -113,14 +126,8 @@ typedef struct {
     GC wgc;				/* GC for window */
     Cursor gcursor;			/* Graphics Cursor */
     XSetWindowAttributes attributes;	/* Window attributes */
-#if 0
-    XColor fgcolor;			/* Foreground color */
-    XColor bgcolor;			/* Background color */
-#endif
     XRectangle clip;			/* The clipping rectangle */
 
-    int usefixed;
-    R_XFont *fixedfont;
     R_XFont *font;
     char fontfamily[500];               /* CURRENT fontfamily */
     char symbolfamily[500];
@@ -128,26 +135,36 @@ typedef struct {
     int npages;				/* counter for a pixmap */
     FILE *fp;				/* file for a bitmap device */
     char filename[PATH_MAX];		/* filename for a bitmap device */
-    int quality;			/* JPEG quality */
+    int quality;			/* JPEG quality/TIFF compression */
 
-    Rboolean handleOwnEvents;           /* Flag indicating whether events will be handled externally from R (TRUE),
-                                           or whether R is to handle the events (FALSE) */
+    Rboolean handleOwnEvents;           /* Flag indicating whether events will
+					   be handled externally from R (TRUE),
+                                           or whether R is to handle the events
+					   (FALSE) */
     int res_dpi;			/* used for png/jpeg */
     Rboolean warn_trans;		/* have we warned about translucent cols? */
-} newX11Desc;
+    char title[101];
+    Rboolean onefile;
+
+#ifdef HAVE_WORKING_CAIRO
+    Rboolean useCairo, buffered;
+    cairo_t *cc, *xcc;
+    cairo_surface_t *cs, *xcs;
+    cairo_antialias_t antialias;
+#endif
+} X11Desc;
+
+typedef X11Desc* pX11Desc;
 
 
+/* This is a private header, so why are these here? */
 
-newX11Desc *Rf_allocNewX11DeviceDesc(double ps);
-int      Rf_setX11Display(Display *dpy, double gamma_fac, X_COLORTYPE colormodel, int maxcube, Rboolean setHandlers);
-int      Rf_setNewX11DeviceData(NewDevDesc *dd, double gamma_fac, newX11Desc *xd);
-Rboolean newX11_Open(NewDevDesc *dd, newX11Desc *xd, 
-		     const char *dsp, double w, double h, 
-		     double gamma_fac, X_COLORTYPE colormodel, 
-		     int maxcube, int bgcolor, int canvascolor, 
-		     int res, int xpos, int ypos);
+X11Desc *Rf_allocX11DeviceDesc(double ps);
 
-#endif /* R_X11_DEVICE */
+int Rf_setX11Display(Display *dpy, double gamma_fac, X_COLORTYPE colormodel,
+		     int maxcube, Rboolean setHandlers);
+
+int Rf_setX11DeviceData(pDevDesc dd, double gamma_fac, X11Desc *xd);
 
 #endif
 

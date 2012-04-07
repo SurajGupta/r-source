@@ -603,7 +603,7 @@ SEXP R_lsInternal(SEXP, Rboolean);
 SEXP Rf_match(SEXP, SEXP, int);
 SEXP Rf_namesgets(SEXP, SEXP);
 SEXP Rf_mkChar(const char *);
-SEXP Rf_mkCharEnc(const char *, int);
+SEXP Rf_mkCharLen(const char *, int);
 Rboolean Rf_NonNullStringMatch(SEXP, SEXP);
 int Rf_ncols(SEXP);
 int Rf_nrows(SEXP);
@@ -619,6 +619,7 @@ SEXPTYPE Rf_str2type(const char *);
 Rboolean Rf_StringBlank(SEXP);
 SEXP Rf_substitute(SEXP,SEXP);
 const char * Rf_translateChar(SEXP);
+const char * Rf_translateCharUTF8(SEXP);
 const char * Rf_type2char(SEXPTYPE);
 SEXP Rf_type2str(SEXPTYPE);
 void Rf_unprotect(int);
@@ -630,6 +631,18 @@ SEXP R_tryEval(SEXP, SEXP, int *);
 
 Rboolean Rf_isS4(SEXP);
 SEXP Rf_asS4(SEXP, Rboolean);
+
+typedef enum {
+    CE_NATIVE = 0,
+    CE_UTF8   = 1,
+    CE_LATIN1 = 2,
+    CE_SYMBOL = 5,
+    CE_ANY    =99
+} cetype_t;
+
+cetype_t Rf_getCharCE(SEXP);
+SEXP Rf_mkCharCE(const char *, cetype_t);
+const char *Rf_reEnc(const char *x, cetype_t ce_in, cetype_t ce_out, int subst);
 
 				/* return(.) NOT reached : for -Wall */
 #define error_return(msg)	{ Rf_error(msg);	   return R_NilValue; }
@@ -783,6 +796,7 @@ SEXP R_Unserialize(R_inpstream_t ips);
 /* slot management (in attrib.c) */
 SEXP R_do_slot(SEXP obj, SEXP name);
 SEXP R_do_slot_assign(SEXP obj, SEXP name, SEXP value);
+int R_has_slot(SEXP obj, SEXP name);
 
 /* class definition, new objects */
 SEXP R_do_MAKE_CLASS(const char *what);
@@ -847,6 +861,7 @@ int R_system(const char *);
 #define findVarInFrame3		Rf_findVarInFrame3
 #define GetArrayDimnames	Rf_GetArrayDimnames
 #define getAttrib		Rf_getAttrib
+#define getCharCE		Rf_getCharCE
 #define GetColNames		Rf_GetColNames
 #define GetMatrixDimnames	Rf_GetMatrixDimnames
 #define GetOption		Rf_GetOption
@@ -905,7 +920,8 @@ int R_system(const char *);
 #define listAppend		Rf_listAppend
 #define match			Rf_match
 #define mkChar			Rf_mkChar
-#define mkCharEnc		Rf_mkCharEnc
+#define mkCharCE		Rf_mkCharCE
+#define mkCharLen		Rf_mkCharLen
 #define mkString		Rf_mkString
 #define namesgets		Rf_namesgets
 #define ncols			Rf_ncols
@@ -918,6 +934,7 @@ int R_system(const char *);
 #define psmatch			Rf_psmatch
 #define PrintValue		Rf_PrintValue
 #define protect			Rf_protect
+#define reEnc			Rf_reEnc
 #define rownamesgets		Rf_rownamesgets
 #define ScalarComplex		Rf_ScalarComplex
 #define ScalarInteger		Rf_ScalarInteger
@@ -932,6 +949,7 @@ int R_system(const char *);
 #define StringBlank		Rf_StringBlank
 #define substitute		Rf_substitute
 #define translateChar		Rf_translateChar
+#define translateCharUTF8      	Rf_translateCharUTF8
 #define type2char		Rf_type2char
 #define type2str		Rf_type2str
 #define unprotect		Rf_unprotect

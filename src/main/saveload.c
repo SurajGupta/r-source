@@ -31,6 +31,7 @@
 #include <Rmath.h>
 #include <Fileio.h>
 #include <R_ext/RS.h>
+#include <errno.h>
 
 /* From time to time changes in R, such as the addition of a new SXP,
  * may require changes in the save file format.  Here are some
@@ -1968,17 +1969,23 @@ SEXP attribute_hidden do_save(SEXP call, SEXP op, SEXP args, SEXP env)
     else
 	version = asInteger(CADDDR(args));
     if (version == NA_INTEGER || version <= 0)
-	error(_("invalid value for '%s'"), "version");
+	error(_("invalid '%s' argument"), "version");
     source = CAR(nthcdr(args,4));
     if (source != R_NilValue && TYPEOF(source) != ENVSXP)
-	error(_("invalid value for '%s'"), "environment");
+	error(_("invalid '%s' argument"), "environment");
     ep = asLogical(CAR(nthcdr(args,5)));
     if (ep == NA_LOGICAL)
-	error(_("invalid value for '%s'"), "eval.promises");
+	error(_("invalid '%s' argument"), "eval.promises");
 
     fp = RC_fopen(STRING_ELT(CADR(args), 0), "wb", TRUE);
-    if (!fp)
-	error(_("unable to open file"));
+    if (!fp) {
+	const char *cfile = CHAR(STRING_ELT(CADR(args), 0));
+#ifdef HAVE_STERROR
+	error(_("cannot open file '%s': %s"), cfile, strerror(error));
+#else
+	error(_("cannot open file '%s'"), cfile);
+#endif
+    }
 
     /* set up a context which will close the file if there is an error */
     begincontext(&cntxt, CTXT_CCODE, R_NilValue, R_BaseEnv, R_BaseEnv,
@@ -2174,8 +2181,14 @@ void R_SaveGlobalEnvToFile(const char *name)
     SEXP sym = install("sys.save.image");
     if (findVar(sym, R_GlobalEnv) == R_UnboundValue) { /* not a perfect test */
 	FILE *fp = R_fopen(name, "wb"); /* binary file */
-	if (!fp)
-	    error(_("cannot save data -- unable to open %s"), name);
+	if (!fp) {
+#ifdef HAVE_STRERROR
+	    error(_("cannot save data -- unable to open '%s': %s"),
+		  name, strerror(errno));
+#else
+	    error(_("cannot save data -- unable to open '%s'"), name);
+#endif
+	}
 	R_SaveToFile(FRAME(R_GlobalEnv), fp, 0);
 	fclose(fp);
     }
@@ -2255,15 +2268,15 @@ SEXP attribute_hidden do_saveToConn(SEXP call, SEXP op, SEXP args, SEXP env)
     else
 	version = asInteger(CADDDR(args));
     if (version == NA_INTEGER || version <= 0)
-	error(_("invalid value for '%s'"), "version");
+	error(_("invalid '%s' argument"), "version");
     if (version < 2)
 	error(_("cannot save to connections in version %d format"), version);
     source = CAR(nthcdr(args,4));
     if (source != R_NilValue && TYPEOF(source) != ENVSXP)
-	error(_("invalid value for '%s'"), "environment");
+	error(_("invalid '%s' argument"), "environment");
     ep = asLogical(CAR(nthcdr(args,5)));
     if (ep == NA_LOGICAL)
-	error(_("invalid value for '%s'"), "eval.promises");
+	error(_("invalid '%s' argument"), "eval.promises");
 
     source = CAR(nthcdr(args,4));
     if (source != R_NilValue && TYPEOF(source) != ENVSXP)

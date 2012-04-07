@@ -2,7 +2,7 @@
 /*
  *  R : A Computer Langage for Statistical Data Analysis
  *  Copyright (C) 1995, 1996, 1997  Robert Gentleman and Ross Ihaka
- *  Copyright (C) 1997--2007  Robert Gentleman, Ross Ihaka and the
+ *  Copyright (C) 1997--2008  Robert Gentleman, Ross Ihaka and the
  *                            R Development Core Team
  *
  *  This program is free software; you can redistribute it and/or modify
@@ -63,14 +63,14 @@ typedef struct yyltype
 
 /* Functions used in the parsing process */
 
-static void	CheckFormalArgs(SEXP, SEXP);
+static void	CheckFormalArgs(SEXP, SEXP, YYLTYPE *);
 static SEXP	FirstArg(SEXP, SEXP);
 static SEXP	GrowList(SEXP, SEXP);
 static void	IfPush(void);
 static int	KeywordLookup(const char *);
 static SEXP	NewList(void);
 static SEXP	NextArg(SEXP, SEXP, SEXP);
-static SEXP	TagArg(SEXP, SEXP);
+static SEXP	TagArg(SEXP, SEXP, YYLTYPE *);
 
 /* These routines allocate constants */
 
@@ -96,80 +96,12 @@ static SEXP	SrcRefs = NULL;
 static PROTECT_INDEX srindex;
 
 #if defined(SUPPORT_MBCS)
-# include <R_ext/Riconv.h>
 # include <R_ext/rlocale.h>
-# include <wchar.h>
-# include <wctype.h>
-# include <sys/param.h>
+/* # include <sys/param.h> what was this for? */
 #ifdef HAVE_LANGINFO_CODESET
 # include <langinfo.h>
 #endif
 
-/* Previous versions (< 2.3.0) assumed wchar_t was in Unicode (and it
-   commonly is).  This version does not. */
-# ifdef Win32
-static const char UNICODE[] = "UCS-2LE";
-# else
-#  ifdef WORDS_BIGENDIAN
-static const char UNICODE[] = "UCS-4BE";
-#  else
-static const char UNICODE[] = "UCS-4LE";
-# endif
-#endif
-#include <errno.h>
-
-static size_t ucstomb(char *s, const wchar_t wc, mbstate_t *ps)
-{
-    char     tocode[128];
-    char     buf[16];
-    void    *cd = NULL ;
-    wchar_t  wcs[2];
-    const char *inbuf = (const char *) wcs;
-    size_t   inbytesleft = sizeof(wchar_t);
-    char    *outbuf = buf;
-    size_t   outbytesleft = sizeof(buf);
-    size_t   status;
-    
-    if(wc == L'\0') {
-	*s = '\0';
-        return 1;
-    }
-    
-    strcpy(tocode, "");
-    memset(buf, 0, sizeof(buf));
-    memset(wcs, 0, sizeof(wcs));
-    wcs[0] = wc;
-
-    if((void *)(-1) == (cd = Riconv_open("", UNICODE))) {
-#ifndef  Win32
-        /* locale set fuzzy case */
-    	strncpy(tocode, locale2charset(NULL), sizeof(tocode));
-	if((void *)(-1) == (cd = Riconv_open(tocode, UNICODE)))
-            return (size_t)(-1); 
-#else
-        return (size_t)(-1);
-#endif
-    }
-    
-    status = Riconv(cd, &inbuf, &inbytesleft, &outbuf, &outbytesleft);
-    Riconv_close(cd);
-
-    if (status == (size_t) -1) {
-        switch(errno){
-        case EINVAL:
-            return (size_t) -2;
-        case EILSEQ:
-            return (size_t) -1;
-        case E2BIG:
-            break;
-        default:
-            errno = EILSEQ;
-            return (size_t) -1;
-        }
-    }
-    strncpy(s, buf, sizeof(buf) - 1); /* ensure 0-terminated */
-    return strlen(buf);
-}
 
 static int mbcs_get_next(int c, wchar_t *wc)
 {
@@ -177,7 +109,9 @@ static int mbcs_get_next(int c, wchar_t *wc)
     mbstate_t mb_st;
 
     s[0] = c;
-    if((unsigned int)c < 0x80) {
+    /* This assumes (probably OK) that all MBCS embed ASCII as single-byte
+       lead bytes, including control chars */
+    if((unsigned int) c < 0x80) {
 	*wc = (wchar_t) c;
 	return 1;
     }
@@ -185,17 +119,18 @@ static int mbcs_get_next(int c, wchar_t *wc)
 	clen = utf8clen(c);
 	for(i = 1; i < clen; i++) {
 	    s[i] = xxgetc();
-	    if(s[i] == R_EOF) error(_("EOF whilst reading MBCS char"));
+	    if(s[i] == R_EOF) error(_("EOF whilst reading MBCS char at line %d"), xxlineno);
 	}
 	res = mbrtowc(wc, s, clen, NULL);
-	if(res == -1) error(_("invalid multibyte character in mbcs_get_next"));
+	if(res == -1) error(_("invalid multibyte character in mbcs_get_next at line %d"), xxlineno);
     } else {
+	/* This is not necessarily correct for stateful MBCS */
 	while(clen <= MB_CUR_MAX) {
 	    mbs_init(&mb_st);
 	    res = mbrtowc(wc, s, clen, &mb_st);
 	    if(res >= 0) break;
 	    if(res == -1) 
-		error(_("invalid multibyte character in mbcs_get_next"));
+		error(_("invalid multibyte character in mbcs_get_next at line %d"), xxlineno);
 	    /* so res == -2 */
 	    c = xxgetc();
 	    if(c == R_EOF) error(_("EOF whilst reading MBCS char"));
@@ -234,17 +169,17 @@ int		R_fgetc(FILE*);
 static SEXP	xxnullformal(void);
 static SEXP	xxfirstformal0(SEXP);
 static SEXP	xxfirstformal1(SEXP, SEXP);
-static SEXP	xxaddformal0(SEXP, SEXP);
-static SEXP	xxaddformal1(SEXP, SEXP, SEXP);
+static SEXP	xxaddformal0(SEXP, SEXP, YYLTYPE *);
+static SEXP	xxaddformal1(SEXP, SEXP, SEXP, YYLTYPE *);
 static SEXP	xxexprlist0();
 static SEXP	xxexprlist1(SEXP, YYLTYPE *);
 static SEXP	xxexprlist2(SEXP, SEXP, YYLTYPE *);
 static SEXP	xxsub0(void);
-static SEXP	xxsub1(SEXP);
-static SEXP	xxsymsub0(SEXP);
-static SEXP	xxsymsub1(SEXP, SEXP);
-static SEXP	xxnullsub0();
-static SEXP	xxnullsub1(SEXP);
+static SEXP	xxsub1(SEXP, YYLTYPE *);
+static SEXP	xxsymsub0(SEXP, YYLTYPE *);
+static SEXP	xxsymsub1(SEXP, SEXP, YYLTYPE *);
+static SEXP	xxnullsub0(YYLTYPE *);
+static SEXP	xxnullsub1(SEXP, YYLTYPE *);
 static SEXP	xxsublist1(SEXP);
 static SEXP	xxsublist2(SEXP, SEXP);
 static SEXP	xxcond(SEXP);
@@ -273,9 +208,10 @@ static int	xxvalue(SEXP, int, YYLTYPE *);
 %token		STR_CONST NUM_CONST NULL_CONST SYMBOL FUNCTION 
 %token		LEFT_ASSIGN EQ_ASSIGN RIGHT_ASSIGN LBB
 %token		FOR IN IF ELSE WHILE NEXT BREAK REPEAT
-%token		GT GE LT LE EQ NE AND OR
+%token		GT GE LT LE EQ NE AND OR AND2 OR2
 %token		NS_GET NS_GET_INT
 
+/* This is the precedence table, low to high */
 %left		'?'
 %left		LOW WHILE FOR REPEAT
 %right		IF
@@ -284,8 +220,8 @@ static int	xxvalue(SEXP, int, YYLTYPE *);
 %right		EQ_ASSIGN
 %left		RIGHT_ASSIGN
 %left		'~' TILDE
-%left		OR
-%left		AND
+%left		OR OR2
+%left		AND AND2
 %left		UNOT NOT
 %nonassoc   	GT GE LT LE EQ NE
 %left		'+' '-'
@@ -346,6 +282,8 @@ expr	: 	NUM_CONST			{ $$ = $1; }
 	|	expr GT expr			{ $$ = xxbinary($2,$1,$3); }
 	|	expr AND expr			{ $$ = xxbinary($2,$1,$3); }
 	|	expr OR expr			{ $$ = xxbinary($2,$1,$3); }
+	|	expr AND2 expr			{ $$ = xxbinary($2,$1,$3); }
+	|	expr OR2 expr			{ $$ = xxbinary($2,$1,$3); }
 
 	|	expr LEFT_ASSIGN expr 		{ $$ = xxbinary($2,$1,$3); }
 	|	expr RIGHT_ASSIGN expr 		{ $$ = xxbinary($2,$3,$1); }
@@ -399,20 +337,20 @@ sublist	:	sub				{ $$ = xxsublist1($1); }
 	;
 
 sub	:					{ $$ = xxsub0(); }
-	|	expr				{ $$ = xxsub1($1); }
-	|	SYMBOL EQ_ASSIGN 			{ $$ = xxsymsub0($1); }
-	|	SYMBOL EQ_ASSIGN expr			{ $$ = xxsymsub1($1,$3); }
-	|	STR_CONST EQ_ASSIGN 			{ $$ = xxsymsub0($1); }
-	|	STR_CONST EQ_ASSIGN expr		{ $$ = xxsymsub1($1,$3); }
-	|	NULL_CONST EQ_ASSIGN 			{ $$ = xxnullsub0(); }
-	|	NULL_CONST EQ_ASSIGN expr		{ $$ = xxnullsub1($3); }
+	|	expr				{ $$ = xxsub1($1, &@1); }
+	|	SYMBOL EQ_ASSIGN 			{ $$ = xxsymsub0($1, &@1); }
+	|	SYMBOL EQ_ASSIGN expr			{ $$ = xxsymsub1($1,$3, &@1); }
+	|	STR_CONST EQ_ASSIGN 			{ $$ = xxsymsub0($1, &@1); }
+	|	STR_CONST EQ_ASSIGN expr		{ $$ = xxsymsub1($1,$3, &@1); }
+	|	NULL_CONST EQ_ASSIGN 			{ $$ = xxnullsub0(&@1); }
+	|	NULL_CONST EQ_ASSIGN expr		{ $$ = xxnullsub1($3, &@1); }
 	;
 
 formlist:					{ $$ = xxnullformal(); }
 	|	SYMBOL				{ $$ = xxfirstformal0($1); }
 	|	SYMBOL EQ_ASSIGN expr			{ $$ = xxfirstformal1($1,$3); }
-	|	formlist ',' SYMBOL		{ $$ = xxaddformal0($1,$3); }
-	|	formlist ',' SYMBOL EQ_ASSIGN expr	{ $$ = xxaddformal1($1,$3,$5); }
+	|	formlist ',' SYMBOL		{ $$ = xxaddformal0($1,$3, &@3); }
+	|	formlist ',' SYMBOL EQ_ASSIGN expr	{ $$ = xxaddformal1($1,$3,$5,&@3); }
 	;
 
 cr	:					{ EatLines = 1; }
@@ -451,7 +389,7 @@ static int xxgetc(void)
     if ( KeepSource && GenerateCode && FunctionLevel > 0 ) {
 	if(SourcePtr <  FunctionSource + MAXFUNSIZE)
 	    *SourcePtr++ = c;
-	else  error(_("function is too long to keep source"));
+	else  error(_("function is too long to keep source (at line %d)"), xxlineno);
     }
     xxcharcount++;
     return c;
@@ -548,11 +486,11 @@ static SEXP xxfirstformal1(SEXP sym, SEXP expr)
     return ans;
 }
 
-static SEXP xxaddformal0(SEXP formlist, SEXP sym)
+static SEXP xxaddformal0(SEXP formlist, SEXP sym, YYLTYPE *lloc)
 {
     SEXP ans;
     if (GenerateCode) {
-	CheckFormalArgs(formlist ,sym);
+	CheckFormalArgs(formlist, sym, lloc);
 	PROTECT(ans = NextArg(formlist, R_MissingArg, sym));
     }
     else
@@ -562,11 +500,11 @@ static SEXP xxaddformal0(SEXP formlist, SEXP sym)
     return ans;
 }
 
-static SEXP xxaddformal1(SEXP formlist, SEXP sym, SEXP expr)
+static SEXP xxaddformal1(SEXP formlist, SEXP sym, SEXP expr, YYLTYPE *lloc)
 {
     SEXP ans;
     if (GenerateCode) {
-	CheckFormalArgs(formlist, sym);
+	CheckFormalArgs(formlist, sym, lloc);
 	PROTECT(ans = NextArg(formlist, expr, sym));
     }
     else
@@ -577,7 +515,7 @@ static SEXP xxaddformal1(SEXP formlist, SEXP sym, SEXP expr)
     return ans;
 }
 
-static SEXP xxexprlist0()
+static SEXP xxexprlist0(void)
 {
     SEXP ans;
     if (GenerateCode) {
@@ -636,33 +574,33 @@ static SEXP xxsub0(void)
     return ans;
 }
 
-static SEXP xxsub1(SEXP expr)
+static SEXP xxsub1(SEXP expr, YYLTYPE *lloc)
 {
     SEXP ans;
     if (GenerateCode)
-	PROTECT(ans = TagArg(expr, R_NilValue));
+	PROTECT(ans = TagArg(expr, R_NilValue, lloc));
     else
 	PROTECT(ans = R_NilValue);
     UNPROTECT_PTR(expr);
     return ans;
 }
 
-static SEXP xxsymsub0(SEXP sym)
+static SEXP xxsymsub0(SEXP sym, YYLTYPE *lloc)
 {
     SEXP ans;
     if (GenerateCode)
-	PROTECT(ans = TagArg(R_MissingArg, sym));
+	PROTECT(ans = TagArg(R_MissingArg, sym, lloc));
     else
 	PROTECT(ans = R_NilValue);
     UNPROTECT_PTR(sym);
     return ans;
 }
 
-static SEXP xxsymsub1(SEXP sym, SEXP expr)
+static SEXP xxsymsub1(SEXP sym, SEXP expr, YYLTYPE *lloc)
 {
     SEXP ans;
     if (GenerateCode)
-	PROTECT(ans = TagArg(expr, sym));
+	PROTECT(ans = TagArg(expr, sym, lloc));
     else
 	PROTECT(ans = R_NilValue);
     UNPROTECT_PTR(expr);
@@ -670,23 +608,23 @@ static SEXP xxsymsub1(SEXP sym, SEXP expr)
     return ans;
 }
 
-static SEXP xxnullsub0()
+static SEXP xxnullsub0(YYLTYPE *lloc)
 {
     SEXP ans;
     UNPROTECT_PTR(R_NilValue);
     if (GenerateCode)
-	PROTECT(ans = TagArg(R_MissingArg, install("NULL")));
+	PROTECT(ans = TagArg(R_MissingArg, install("NULL"), lloc));
     else
 	PROTECT(ans = R_NilValue);
     return ans;
 }
 
-static SEXP xxnullsub1(SEXP expr)
+static SEXP xxnullsub1(SEXP expr, YYLTYPE *lloc)
 {
     SEXP ans = install("NULL");
     UNPROTECT_PTR(R_NilValue);
     if (GenerateCode)
-	PROTECT(ans = TagArg(expr, ans));
+	PROTECT(ans = TagArg(expr, ans, lloc));
     else
 	PROTECT(ans = R_NilValue);
     UNPROTECT_PTR(expr);
@@ -836,9 +774,9 @@ static SEXP xxfuncall(SEXP expr, SEXP args)
 
 static SEXP mkChar2(const char *name)
 {
-    if(!utf8strIsASCII(name)) {
-	if(known_to_be_latin1) return mkCharEnc(name, LATIN1_MASK);
-	else if(known_to_be_utf8) return mkCharEnc(name, UTF8_MASK);
+    if(!strIsASCII(name)) {
+	if(known_to_be_latin1) return mkCharCE(name, CE_LATIN1);
+	else if(known_to_be_utf8) return mkCharCE(name, CE_UTF8);
     }
     return mkChar(name);
 }
@@ -878,6 +816,7 @@ static SEXP xxdefun(SEXP fname, SEXP formals, SEXP body)
 
 	    */
 	    end = SourcePtr - (xxcharcount - xxcharsave);
+	    /* FIXME: this should be whitespace */
 	    for (p = end ; p < SourcePtr && (*p == ' ' || *p == '\t') ; p++)
 		;
 	    if (*p == '#') {
@@ -905,7 +844,7 @@ static SEXP xxdefun(SEXP fname, SEXP formals, SEXP body)
 		    } else { /* over-long line */
 			char *LongLine = (char *) malloc(nc);
 			if(!LongLine) 
-			    error(("unable to allocate space for source line"));
+			    error(_("unable to allocate space for source line %d"), xxlineno);
 			strncpy(LongLine, (char *)p0, nc);
 			LongLine[nc] = '\0';
 			SET_STRING_ELT(source, lines++,
@@ -1006,7 +945,7 @@ static SEXP xxexprlist(SEXP a1, SEXP a2)
 
 /*--------------------------------------------------------------------------*/
 
-static SEXP TagArg(SEXP arg, SEXP tag)
+static SEXP TagArg(SEXP arg, SEXP tag, YYLTYPE *lloc)
 {
     switch (TYPEOF(tag)) {
     case STRSXP:
@@ -1015,7 +954,7 @@ static SEXP TagArg(SEXP arg, SEXP tag)
     case SYMSXP:
 	return lang2(arg, tag);
     default:
-	error(_("incorrect tag type")); return R_NilValue/* -Wall */;
+	error(_("incorrect tag type at line %d"), lloc->first_line); return R_NilValue/* -Wall */;
     }
 }
 
@@ -1172,7 +1111,7 @@ static int	SavedToken;
 static SEXP	SavedLval;
 static char	contextstack[CONTEXTSTACK_SIZE], *contextp;
 
-static void ParseInit()
+static void ParseInit(void)
 {
     contextp = contextstack;
     *contextp = ' ';
@@ -1187,7 +1126,7 @@ static void ParseInit()
     npush = 0;
 }
 
-static void ParseContextInit()
+static void ParseContextInit(void)
 {
     R_ParseContextLast = 0;
     R_ParseContext[0] = '\0';
@@ -1237,15 +1176,17 @@ SEXP R_Parse1File(FILE *fp, int gencode, ParseStatus *status)
 
 static IoBuffer *iob;
 
-static int buffer_getc()
+static int buffer_getc(void)
 {
     return R_IoBufferGetc(iob);
 }
 
-/* Used only in main.c, rproxy_impl.c  and this file */
+/* Used only in main.c, rproxy_impl.c */
 attribute_hidden
 SEXP R_Parse1Buffer(IoBuffer *buffer, int gencode, ParseStatus *status)
 {
+    xxlineno = 1;
+    xxcolno = 0;
     ParseInit();
     ParseContextInit();
     GenerateCode = gencode;
@@ -1257,7 +1198,7 @@ SEXP R_Parse1Buffer(IoBuffer *buffer, int gencode, ParseStatus *status)
 
 static TextBuffer *txtb;
 
-static int text_getc()
+static int text_getc(void)
 {
     return R_TextBufferGetc(txtb);
 }
@@ -1440,6 +1381,10 @@ SEXP R_ParseBuffer(IoBuffer *buffer, int n, ParseStatus *status, SEXP prompt, SE
     
     xxlineno = 1;
     xxcolno = 0;      
+    GenerateCode = 1;
+    iob = buffer;
+    ptr_getc = buffer_getc;    
+
     if (!isNull(srcfile)) {
 	SrcFile = srcfile;
 	PROTECT_WITH_INDEX(SrcRefs = NewList(), &srindex);
@@ -1461,6 +1406,12 @@ SEXP R_ParseBuffer(IoBuffer *buffer, int n, ParseStatus *status, SEXP prompt, SE
 
 	rval = R_Parse1Buffer(buffer, 1, status);
 	
+	/* Was a call to R_Parse1Buffer, but we don't want to reset xxlineno and xxcolno */
+	ParseInit();
+	ParseContextInit();
+	R_Parse1(status);
+        rval = R_CurrentExpr;
+    
 	switch(*status) {
 	case PARSE_NULL:
 	    break;
@@ -1525,7 +1476,7 @@ static void IfPush(void)
 	*contextp=='('    ||
 	*contextp == 'i') {
 	if(contextp - contextstack >= CONTEXTSTACK_SIZE) 
-	    error("contextstack overflow");
+	    error(_("contextstack overflow"));
 	*++contextp = 'i';
     }
     
@@ -1663,36 +1614,14 @@ static int KeywordLookup(const char *s)
     return 0;
 }
 
-
 static SEXP mkFloat(const char *s)
 {
-    double f;
-    if(strlen(s) > 2 && (s[1] == 'x' || s[1] == 'X')) {
-	double ret = 0; const char *p = s + 2;
-	for(; p; p++) {
-	    if('0' <= *p && *p <= '9') ret = 16*ret + (*p -'0');
-	    else if('a' <= *p && *p <= 'f') ret = 16*ret + (*p -'a' + 10);
-	    else if('A' <= *p && *p <= 'F') ret = 16*ret + (*p -'A' + 10);
-	    else break;
-	}	
-	f = ret;
-    } else f = atof(s);
-    return ScalarReal(f);
+    return ScalarReal(R_atof(s));
 }
 
 static SEXP mkInt(const char *s)
 {
-    double f;
-    if(strlen(s) > 2 && (s[1] == 'x' || s[1] == 'X')) {
-	double ret = 0; const char *p = s + 2;
-	for(; p; p++) {
-	    if('0' <= *p && *p <= '9') ret = 16*ret + (*p -'0');
-	    else if('a' <= *p && *p <= 'f') ret = 16*ret + (*p -'a' + 10);
-	    else if('A' <= *p && *p <= 'F') ret = 16*ret + (*p -'A' + 10);
-	    else break;
-	}	
-	f = ret;
-    } else f = atof(s);
+    double f = R_atof(s);  /* or R_strtol? */
     return ScalarInteger((int) f);
 }
 
@@ -1700,7 +1629,7 @@ static SEXP mkComplex(const char *s)
 {
     SEXP t = R_NilValue;
     double f;
-    f = atof(s); /* make certain the value is legitimate. */
+    f = R_atof(s); /* FIXME: make certain the value is legitimate. */
 
     if(GenerateCode) {
        t = allocVector(CPLXSXP, 1);
@@ -1770,8 +1699,10 @@ static void yyerror(char *s)
 	"LE",		"'<='",
 	"EQ",		"'=='",
 	"NE",		"'!='",
-	"AND",		"'&&'",
-	"OR",		"'||'",
+	"AND",		"'&'",
+	"OR",		"'|'",
+	"AND2",		"'&&'",
+	"OR2",		"'||'",
 	"NS_GET",	"'::'",
 	"NS_GET_INT",	"':::'",
 	0
@@ -1798,7 +1729,7 @@ static void yyerror(char *s)
     	/* Edit the error message */    
     	expecting = strstr(s + sizeof yyunexpected -1, yyexpecting);
     	if (expecting) *expecting = '\0';
-    	for (i=0; yytname_translations[i]; i += 2) {
+    	for (i = 0; yytname_translations[i]; i += 2) {
     	    if (!strcmp(s + sizeof yyunexpected - 1, yytname_translations[i])) {
     	    	sprintf(R_ParseErrorMsg, _("unexpected %s"), 
     	    	    i/2 < YYENGLISH ? _(yytname_translations[i+1])
@@ -1812,11 +1743,12 @@ static void yyerror(char *s)
     }	
 }
 
-static void CheckFormalArgs(SEXP formlist, SEXP _new)
+static void CheckFormalArgs(SEXP formlist, SEXP _new, YYLTYPE *lloc)
 {
     while (formlist != R_NilValue) {
 	if (TAG(formlist) == _new) {
-	    error(_("Repeated formal argument"));
+	    error(_("Repeated formal argument '%s' on line %d"), CHAR(PRINTNAME(_new)), 
+	                                                         lloc->first_line);
 	}
 	formlist = CDR(formlist);
     }
@@ -1827,15 +1759,50 @@ static char yytext[MAXELTSIZE];
 #define DECLARE_YYTEXT_BUFP(bp) char *bp = yytext
 #define YYTEXT_PUSH(c, bp) do { \
     if ((bp) - yytext >= sizeof(yytext) - 1) \
-        error(_("input buffer overflow")); \
+        error(_("input buffer overflow at line %d"), xxlineno); \
 	*(bp)++ = (c); \
 } while(0)
 
 static int SkipSpace(void)
 {
     int c;
-    while ((c = xxgetc()) == ' ' || c == '\t' || c == '\f')
-	/* nothing */;
+
+#ifdef Win32
+    if(!mbcslocale) { /* 0xa0 is NBSP in all 8-bit Windows locales */
+	while ((c = xxgetc()) == ' ' || c == '\t' || c == '\f' || 
+	       (unsigned int) c == 0xa0) ;
+	return c;
+    } else {
+	int i, clen;
+	wchar_t wc;
+	while (1) {
+	    c = xxgetc();
+	    if (c == ' ' || c == '\t' || c == '\f') continue;
+	    if (c == '\n' || c == R_EOF) break;
+	    if ((unsigned int) c < 0x80) break;
+	    clen = mbcs_get_next(c, &wc);  /* always 2 */
+	    if(! Ri18n_iswctype(wc, Ri18n_wctype("blank")) ) break;
+	    for(i = 1; i < clen; i++) c = xxgetc();
+	}
+	return c;
+    }
+#endif
+#if defined(SUPPORT_MBCS) && defined(__STDC_ISO_10646__)
+    if(mbcslocale) { /* wctype functions need Unicode wchar_t */
+	int i, clen;
+	wchar_t wc;
+	while (1) {
+	    c = xxgetc();
+	    if (c == ' ' || c == '\t' || c == '\f') continue;
+	    if (c == '\n' || c == R_EOF) break;
+	    if ((unsigned int) c < 0x80) break;
+	    clen = mbcs_get_next(c, &wc);
+	    if(! Ri18n_iswctype(wc, Ri18n_wctype("blank")) ) break;
+	    for(i = 1; i < clen; i++) c = xxgetc();
+	}
+    } else
+#endif
+	while ((c = xxgetc()) == ' ' || c == '\t' || c == '\f') ;
     return c;
 }
 
@@ -1882,7 +1849,19 @@ static int NumericValue(int c)
 		YYTEXT_PUSH(c, yyp);
 		nd++;
 	    }
-	    if(nd == 0) return ERROR;
+	    if (nd == 0) return ERROR;
+	    if (c == 'p' || c == 'P') {
+		YYTEXT_PUSH(c, yyp);
+		c = xxgetc();
+		if (!isdigit(c) && c != '+' && c != '-') return ERROR;
+		if (c == '+' || c == '-') {
+		    YYTEXT_PUSH(c, yyp);
+		    c = xxgetc();
+		}
+		for(nd = 0; isdigit(c); c = xxgetc(), nd++) 
+		    YYTEXT_PUSH(c, yyp);
+		if (nd == 0) return ERROR;
+	    }
 	    break;
 	}
 	if (c == 'E' || c == 'e') {
@@ -1910,8 +1889,8 @@ static int NumericValue(int c)
     YYTEXT_PUSH('\0', yyp);
     /* Make certain that things are okay. */
     if(c == 'L') {
-	double a = atof(yytext);
-	int b = (int) atof(yytext); 
+	double a = R_atof(yytext);
+	int b = (int) a; 
 	/* We are asked to create an integer via the L, so we check that the 
 	   double and int values are the same. If not, this is a problem and we
 	   will not lose information and so use the numeric value.
@@ -1934,8 +1913,7 @@ static int NumericValue(int c)
 	if(GenerateCode && seendot == 1 && seenexp == 0) 
 	    warning(_("integer literal %sL contains unnecessary decimal point"), yytext);
 	yylval = GenerateCode ? mkInt(yytext) : R_NilValue;
-    }
-    else {
+    } else {
 	if(c != 'L')
 	    xxungetc(c);
 	yylval = GenerateCode ? mkFloat(yytext) : R_NilValue;
@@ -1949,15 +1927,83 @@ static int NumericValue(int c)
 /* specifications of the form \o, \oo or \ooo, where 'o' */
 /* is an octal digit. */
 
-static int StringValue(int c)
+
+#define STEXT_PUSH(c) do {                  \
+	unsigned int nc = bp - stext;       \
+	if (nc >= nstext - 1) {             \
+	    char *old = stext;              \
+            nstext *= 2;                    \
+	    stext = malloc(nstext);         \
+	    if(!stext) error(_("unable to allocate buffer for long string at line %d"), xxlineno);\
+	    memmove(stext, old, nc);        \
+	    if(old != st0) free(old);	    \
+	    bp = stext+nc; }		    \
+	*bp++ = (c);                        \
+} while(0)
+
+
+/* The idea here is that if a string contains \u escapes that are not
+   valid in the current locale, we should switch to UTF-8 for that
+   string.  Needs wide-char support.
+*/
+#ifdef SUPPORT_MBCS
+# ifdef Win32
+#  define USE_UTF8_IF_POSSIBLE
+# endif
+#endif
+
+#ifdef USE_UTF8_IF_POSSIBLE
+#define WTEXT_PUSH(c) do { if(wcnt < 1000) wcs[wcnt++] = c; } while(0)
+
+static SEXP mkStringUTF8(const wchar_t *wcs, int cnt)
+{
+    SEXP t;
+    char *s;
+
+/* NB: cnt includes the terminator */
+#ifdef Win32
+    s = alloca(cnt*4); /* UCS-2/UTF-16 so max 4 bytes per wchar_t */
+    R_CheckStack();
+    memset(s, 0, cnt*4);
+#else
+    s = alloca(cnt*6); /* max 6 bytes per wchar_t */
+    R_CheckStack();
+    memset(s, 0, cnt*6);
+#endif
+    wcstoutf8(s, wcs, cnt);
+    PROTECT(t = allocVector(STRSXP, 1));
+    SET_STRING_ELT(t, 0, mkCharCE(s, CE_UTF8));
+    UNPROTECT(1);
+    return t;
+}
+#else
+#define WTEXT_PUSH(c)
+#endif
+
+#define CTEXT_PUSH(c) do { \
+	if (ct - currtext >= 1000) {memmove(currtext, currtext+100, 901); memmove(currtext, "... ", 4); ct -= 100;} \
+	*ct++ = (c); \
+} while(0)
+#define CTEXT_POP() ct--
+
+
+static int StringValue(int c, Rboolean forSymbol)
 {
     int quote = c;
     int have_warned = 0;
-    char currtext[MAXELTSIZE], *ct = currtext;
-    DECLARE_YYTEXT_BUFP(yyp);
+    char currtext[1010], *ct = currtext;
+    char st0[MAXELTSIZE];
+    unsigned int nstext = MAXELTSIZE;
+    char *stext = st0, *bp = st0;
+
+#ifdef USE_UTF8_IF_POSSIBLE
+    int wcnt = 0;
+    wchar_t wcs[1001];
+    Rboolean use_wcs = FALSE;
+#endif
 
     while ((c = xxgetc()) != R_EOF && c != quote) {
-	*ct++ = c;
+	CTEXT_PUSH(c);
 	if (c == '\n') {
 	    xxungetc(c);
 	    /* Fix by Mark Bravington to allow multiline strings
@@ -1967,110 +2013,117 @@ static int StringValue(int c)
 	    c = '\\';
 	}
 	if (c == '\\') {
-	    c = xxgetc(); *ct++ = c;
+	    c = xxgetc(); CTEXT_PUSH(c);
 	    if ('0' <= c && c <= '8') {
 		int octal = c - '0';
 		if ('0' <= (c = xxgetc()) && c <= '8') {
-		    *ct++ = c;
+		    CTEXT_PUSH(c);
 		    octal = 8 * octal + c - '0';
 		    if ('0' <= (c = xxgetc()) && c <= '8') {
-			*ct++ =c;
+			CTEXT_PUSH(c);
 			octal = 8 * octal + c - '0';
 		    } else {
 			xxungetc(c);
-			ct--;
+			CTEXT_POP();
 		    }
 		} else {
 		    xxungetc(c);
-		    ct--;
+		    CTEXT_POP();
 		}
 		c = octal;
 	    }
 	    else if(c == 'x') {
 		int val = 0; int i, ext;
 		for(i = 0; i < 2; i++) {
-		    c = xxgetc(); *ct++ = c;
+		    c = xxgetc(); CTEXT_PUSH(c);
 		    if(c >= '0' && c <= '9') ext = c - '0';
 		    else if (c >= 'A' && c <= 'F') ext = c - 'A' + 10;
 		    else if (c >= 'a' && c <= 'f') ext = c - 'a' + 10;
-		    else {xxungetc(c); ct--; break;}
+		    else {xxungetc(c); CTEXT_POP(); break;}
 		    val = 16*val + ext;
 		}
 		c = val;
 	    }
 	    else if(c == 'u') {
 #ifndef SUPPORT_MBCS
-		error(_("\\uxxxx sequences not supported"));
+		error(_("\\uxxxx sequences not supported (line %d)"), xxlineno);
 #else
-		wint_t val = 0; int i, ext; size_t res;
-		char buff[16]; Rboolean delim = FALSE;
+		unsigned int val = 0; int i, ext; size_t res;
+		char buff[MB_CUR_MAX+1]; /* could be variable, and hence not legal C90 */ 
+		Rboolean delim = FALSE;
 		if((c = xxgetc()) == '{') {
 		    delim = TRUE; 
-		    *ct++ = c;
+		    CTEXT_PUSH(c);
 		} else xxungetc(c);
 		for(i = 0; i < 4; i++) {
-		    c = xxgetc(); *ct++ = c;
+		    c = xxgetc(); CTEXT_PUSH(c);
 		    if(c >= '0' && c <= '9') ext = c - '0';
 		    else if (c >= 'A' && c <= 'F') ext = c - 'A' + 10;
 		    else if (c >= 'a' && c <= 'f') ext = c - 'a' + 10;
-		    else {xxungetc(c); ct--; break;}
+		    else {xxungetc(c); CTEXT_POP(); break;}
 		    val = 16*val + ext;
 		}
 		if(delim) {
 		    if((c = xxgetc()) != '}')
-			error(_("invalid \\u{xxxx} sequence"));
-		    else *ct++ = c;
+			error(_("invalid \\u{xxxx} sequence (line %d)"), xxlineno);
+		    else CTEXT_PUSH(c);
 		}
-		res = ucstomb(buff, val, NULL);
-		if((int)res <= 0) {
-		    if(delim)
-			error(_("invalid \\u{xxxx} sequence"));
-		    else
-			error(_("invalid \\uxxxx sequence"));
-		}
-		for(i = 0; i <  res - 1; i++) YYTEXT_PUSH(buff[i], yyp);
-		c = buff[res - 1]; /* pushed below */
+		WTEXT_PUSH(val);
+		res = ucstomb(buff, val);
+		if((int) res <= 0) {
+#ifdef USE_UTF8_IF_POSSIBLE
+		    if(!forSymbol) {
+			use_wcs = TRUE;
+		    } else
+#endif
+		    {
+			if(delim)
+			    error(_("invalid \\u{xxxx} sequence (line %d)"), xxlineno);
+			else
+			    error(_("invalid \\uxxxx sequence (line %d)"), xxlineno);
+		    }
+		} else
+		    for(i = 0; i <  res; i++) STEXT_PUSH(buff[i]);
+		continue;
 #endif
 	    }
 	    else if(c == 'U') {
-#ifdef Win32
-		error(_("\\Uxxxxxxxx sequences are not supported on Windows"));
+#ifndef SUPPORT_MBCS
+		error(_("\\Uxxxxxxxx sequences not supported (line %d)"), xxlineno);
 #else
-		if(!mbcslocale) 
-		     error(_("\\Uxxxxxxxx sequences are only valid in multibyte locales"));
-#ifdef SUPPORT_MBCS
-		else {
-		    wint_t val = 0; int i, ext; size_t res;
-		    char buff[16]; Rboolean delim = FALSE;
+		{
+		    unsigned int val = 0; int i, ext; size_t res;
+		    char buff[MB_CUR_MAX+1]; /* could be variable, and hence not legal C90 */ 
+		    Rboolean delim = FALSE;
 		    if((c = xxgetc()) == '{') {
 			delim = TRUE;
-			*ct++ = c;
+			CTEXT_PUSH(c);
 		    } else xxungetc(c);
 		    for(i = 0; i < 8; i++) {
-			c = xxgetc(); *ct++ = c;
+			c = xxgetc(); CTEXT_PUSH(c);
 			if(c >= '0' && c <= '9') ext = c - '0';
 			else if (c >= 'A' && c <= 'F') ext = c - 'A' + 10;
 			else if (c >= 'a' && c <= 'f') ext = c - 'a' + 10;
-			else {xxungetc(c); ct--; break;}
+			else {xxungetc(c); CTEXT_POP(); break;}
 			val = 16*val + ext;
 		    }
 		    if(delim) {
 			if((c = xxgetc()) != '}')
-			    error(_("invalid \\U{xxxxxxxx} sequence"));
-			else *ct++ = c;
+			    error(_("invalid \\U{xxxxxxxx} sequence (line %d)"), xxlineno);
+			else CTEXT_PUSH(c);
 		    }
-		    res = ucstomb(buff, val, NULL);
+		    res = ucstomb(buff, val);
 		    if((int)res <= 0) {
 			if(delim)
-			    error(_("invalid \\U{xxxxxxxx} sequence"));
+			    error(_("invalid \\U{xxxxxxxx} sequence (line %d)"), xxlineno);
 			else
-			    error(("invalid \\Uxxxxxxxx sequence"));
+			    error(_("invalid \\Uxxxxxxxx sequence (line %d)"), xxlineno);
 		    }
-		    for(i = 0; i <  res - 1; i++) YYTEXT_PUSH(buff[i], yyp);
-		    c = buff[res - 1]; /* pushed below */
+		    for(i = 0; i <  res; i++) STEXT_PUSH(buff[i]);
+		    WTEXT_PUSH(val);
+		    continue;
 		}
 #endif
-#endif /* Win32 */
 	    }
 	    else {
 		switch (c) {
@@ -2117,45 +2170,66 @@ static int StringValue(int c)
            int i, clen;
            wchar_t wc = L'\0';
            clen = utf8locale ? utf8clen(c): mbcs_get_next(c, &wc);
+	   WTEXT_PUSH(wc);
            for(i = 0; i < clen - 1; i++){
-               YYTEXT_PUSH(c, yyp);
+               STEXT_PUSH(c);
                c = xxgetc();
                if (c == R_EOF) break;
-	       *ct++ = c;
+	       CTEXT_PUSH(c);
                if (c == '\n') {
-                   xxungetc(c); ct--;
+                   xxungetc(c); CTEXT_POP();
                    c = '\\';
                }
            }
            if (c == R_EOF) break;
+	   STEXT_PUSH(c);
+	   continue;
        }
 #endif /* SUPPORT_MBCS */
-	YYTEXT_PUSH(c, yyp);
-    }
-    YYTEXT_PUSH('\0', yyp);
-    PROTECT(yylval = mkString2(yytext));
-    if(have_warned) {
-	*ct = '\0';
-#ifdef ENABLE_NLS
-	warningcall(R_NilValue,
-		    ngettext("unrecognized escape removed from \"%s\"",
-			     "unrecognized escapes removed from \"%s\"",
-			     have_warned),
-		    currtext);
-#else
-	warningcall(R_NilValue,
-		    "unrecognized escape(s) removed from \"%s\"", currtext);
+	STEXT_PUSH(c);
+#ifdef USE_UTF8_IF_POSSIBLE
+	if ((unsigned int) c < 0x80) WTEXT_PUSH(c);
+	else { /* have an 8-bit char in the current encoding */
+	    wchar_t wc;
+	    char s[2] = " ";
+	    s[0] = c;
+	    mbrtowc(&wc, s, 1, NULL);
+	    WTEXT_PUSH(wc);
+	}
 #endif
     }
-    return STR_CONST;
-}
-
-static int QuotedSymbolValue(int c)
-{
-    (void) StringValue(c); /* always returns STR_CONST */
-    UNPROTECT(1);
-    PROTECT(yylval = install(yytext));
-    return SYMBOL;
+    STEXT_PUSH('\0');
+    WTEXT_PUSH(0);
+    if(forSymbol) {
+	PROTECT(yylval = install(stext));
+	if(stext != st0) free(stext);
+	return SYMBOL;
+    } else {
+#ifdef USE_UTF8_IF_POSSIBLE
+	if(use_wcs) {
+	    if(wcnt < 1000)
+		PROTECT(yylval = mkStringUTF8(wcs, wcnt)); /* include terminator */
+	    else
+		error(_("string at line %d containing Unicode escapes not in this locale\nis too long (max 1000 chars)"), xxlineno);
+	} else
+#endif
+	    PROTECT(yylval = mkString2(stext));
+	if(stext != st0) free(stext);
+	if(have_warned) {
+	    *ct = '\0';
+#ifdef ENABLE_NLS
+	    warningcall(R_NilValue,
+			ngettext("unrecognized escape removed from \"%s\"",
+				 "unrecognized escapes removed from \"%s\"",
+				 have_warned),
+			currtext);
+#else
+	    warningcall(R_NilValue,
+			"unrecognized escape(s) removed from \"%s\"", currtext);
+#endif
+	}
+	return STR_CONST;
+    }
 }
 
 static int SpecialValue(int c)
@@ -2254,7 +2328,7 @@ static int SymbolValue(int c)
     if ((kw = KeywordLookup(yytext))) {
 	if ( kw == FUNCTION ) {
 	    if (FunctionLevel >= MAXNEST)
-		error(_("functions nested too deeply in source code"));
+		error(_("functions nested too deeply in source code at line %d"), xxlineno);
 	    if ( FunctionLevel++ == 0 && GenerateCode) {
 		strcpy((char *)FunctionSource, "function");
 		SourcePtr = FunctionSource + 8;
@@ -2273,7 +2347,7 @@ static int SymbolValue(int c)
 /* Split the input stream into tokens. */
 /* This is the lowest of the parsing levels. */
 
-static int token()
+static int token(void)
 {
     int c;
 #if defined(SUPPORT_MBCS)
@@ -2314,7 +2388,7 @@ static int token()
     /* literal strings */
 
     if (c == '\"' || c == '\'')
-	return StringValue(c);
+	return StringValue(c, FALSE);
 
     /* special functions */
 
@@ -2324,7 +2398,7 @@ static int token()
     /* functions, constants and variables */
 
     if (c == '`')
-	return QuotedSymbolValue(c);
+	return StringValue(c, TRUE);
  symbol:
 
     if (c == '.') return SymbolValue(c);
@@ -2412,14 +2486,14 @@ static int token()
     case '&':
 	if (nextchar('&')) {
 	    yylval = install("&&");
-	    return AND;
+	    return AND2;
 	}
 	yylval = install("&");
 	return AND;
     case '|':
 	if (nextchar('|')) {
 	    yylval = install("||");
-	    return OR;
+	    return OR2;
 	}
 	yylval = install("|");
 	return OR;
@@ -2468,7 +2542,7 @@ static int token()
     }
 }
 
-static void setlastloc()
+static void setlastloc(void)
 {
     yylloc.last_line = xxlineno;
     yylloc.last_column = xxcolno;
@@ -2581,6 +2655,8 @@ static int yylex(void)
     case NE:
     case OR:
     case AND:
+    case OR2:
+    case AND2:
     case SPECIAL:
     case FUNCTION:
     case WHILE:
@@ -2641,27 +2717,27 @@ static int yylex(void)
 
     case LBB:
 	if(contextp - contextstack >= CONTEXTSTACK_SIZE - 1)
-	    error("contextstack overflow");
+	    error(_("contextstack overflow at line %d"), xxlineno);
 	*++contextp = '[';
 	*++contextp = '[';
 	break;
 
     case '[':
 	if(contextp - contextstack >= CONTEXTSTACK_SIZE)
-	    error("contextstack overflow");
+	    error(_("contextstack overflow at line %d"), xxlineno);
 	*++contextp = tok;
 	break;
 
     case LBRACE:
 	if(contextp - contextstack >= CONTEXTSTACK_SIZE)
-	    error("contextstack overflow");
+	    error(_("contextstack overflow at line %d"), xxlineno);
 	*++contextp = tok;
 	EatLines = 1;
 	break;
 
     case '(':
 	if(contextp - contextstack >= CONTEXTSTACK_SIZE) 
-	    error("contextstack overflow");
+	    error(_("contextstack overflow at line %d"), xxlineno);
 	*++contextp = tok;
 	break;
 

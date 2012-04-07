@@ -75,7 +75,7 @@ typedef enum { UP, DOWN, LEFT, RIGHT } DE_DIRECTION;
 typedef enum {UNKNOWNN, NUMERIC, CHARACTER} CellType;
 
 /* EXPORTS : */
-SEXP RX11_dataentry(SEXP call, SEXP op, SEXP args, SEXP rho);
+SEXP in_RX11_dataentry(SEXP call, SEXP op, SEXP args, SEXP rho);
 
 /* Global variables needed for the graphics */
 static Display *iodisplay = NULL;
@@ -304,7 +304,7 @@ static void closewin_cend(void *data)
     closewin(DE);
 }
 
-SEXP RX11_dataentry(SEXP call, SEXP op, SEXP args, SEXP rho)
+SEXP in_RX11_dataentry(SEXP call, SEXP op, SEXP args, SEXP rho)
 {
     SEXP colmodes, tnames, tvec, tvec2, work2;
     SEXPTYPE type;
@@ -1232,7 +1232,7 @@ static void clearrect(DEstruct DE)
    do as we get a char at a time */
 static void handlechar(DEstruct DE, char *text)
 {
-    int i, c = text[0], j;
+    int c = text[0], j;
 #ifdef USE_FONTSET
     wchar_t wcs[BOOSTED_BUF_SIZE];
 
@@ -1280,7 +1280,7 @@ static void handlechar(DEstruct DE, char *text)
 
 #ifdef USE_FONTSET
       char *mbs = text;
-      int cnt = mbsrtowcs(wcs, (const char **)&mbs, strlen(text)+1, NULL);
+      int i, cnt = mbsrtowcs(wcs, (const char **)&mbs, strlen(text)+1, NULL);
 
       for(i = 0; i < cnt; i++) {
 	  switch (wcs[i]) {
@@ -1336,7 +1336,7 @@ static void handlechar(DEstruct DE, char *text)
     if (currentexp == 3) {
 #ifdef USE_FONTSET
 	char *mbs = text;
-	int cnt = mbsrtowcs(wcs, (const char **)&mbs, strlen(text)+1, NULL);
+	int i, cnt = mbsrtowcs(wcs, (const char **)&mbs, strlen(text)+1, NULL);
 	for(i = 0; i < cnt; i++) {
 	    if (iswspace(wcs[i])) goto donehc;
 	    if (clength == 0 && wcs[i] != L'.' && !iswalpha(wcs[i]))
@@ -1698,7 +1698,7 @@ static void doSpreadKey(DEstruct DE, int key, DEEvent * event)
 	    w += BOXW(j);
 	    if(w > DE->fullwindowWidth) break;
 	}
-	jumpwin(DE, min(j+1, DE->xmaxused), max(i, 1));
+	jumpwin(DE, min(1 + max(j, 0), DE->xmaxused), max(i, 1));
 	downlightrect(DE);
 	DE->crow = DE->ymaxused - DE->rowmin + 1;
 	DE->ccol = DE->xmaxused - DE->colmin + 1;

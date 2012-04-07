@@ -11,10 +11,11 @@
   Read binary data from a connection, or write binary data to a connection.
 }
 \usage{
-readBin(con, what, n = 1, size = NA, signed = TRUE,
+readBin(con, what, n = 1, size = NA_integer_, signed = TRUE,
         endian = .Platform$endian)
 
-writeBin(object, con, size = NA, endian = .Platform$endian)
+writeBin(object, con, size = NA_integer_,
+         endian = .Platform$endian)
 }
 \arguments{
   \item{con}{A connection object or a character string naming a file or
@@ -27,8 +28,8 @@ writeBin(object, con, size = NA, endian = .Platform$endian)
     read.  You can use an over-estimate here, but not too large as
     storage is reserved for \code{n} items.}
   \item{size}{integer.  The number of bytes per element in the byte
-    stream.  The default, \code{NA}, uses the natural size.  Size changing
-    is not supported for raw and complex vectors.}
+    stream.  The default, \code{NA_integer_}, uses the natural size.
+    Size changing is not supported for raw and complex vectors.}
   \item{signed}{logical. Only used for integers of sizes 1 and 2,
     when it determines if the quantity on file
     should be regarded as a signed or unsigned integer.}
@@ -64,7 +65,8 @@ writeBin(object, con, size = NA, endian = .Platform$endian)
   \code{readBin} and \code{writeBin} read and write C-style
   zero-terminated character strings.  Input strings are limited to 10000
   characters.  \code{\link{readChar}} and \code{\link{writeChar}} can
-  be used to read and write fixed-length strings.
+  be used to read and write fixed-length strings.  No check is made that
+  the string is valid in the current locale.
   
   Handling \R's missing and special (\code{Inf}, \code{-Inf} and
   \code{NaN}) values is discussed in the \emph{R Data Import/Export} manual.

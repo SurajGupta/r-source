@@ -39,9 +39,21 @@ function(package, help, pos = 2, lib.loc = NULL, character.only = FALSE,
     {
         current <- getRversion()
         ## depends on R version?
-        ## That this is NULL or of length 1 (installed < 2.6.0 only) or
+        ## If installed >= 2.7.0 it will have Rdepends2
+        ## Otherwise Rdepends, which this NULL or of length 1
+        ## (installed < 2.6.0 only) or
         ## length 3 with valid components was checked at INSTALL time.
-        if(length(Rdeps <- pkgInfo$Rdepends) > 1) {
+       if(length(Rdeps <- pkgInfo$Rdepends2)) {
+            for(dep in Rdeps)
+                if(length(dep) > 1) {
+                    target <- as.numeric_version(dep$version)
+                    res <- eval(parse(text=paste("current", dep$op, "target")))
+                    if(!res)
+                        stop(gettextf("This is R %s, package '%s' needs %s %s",
+                                      current, pkgname, dep$op, target),
+                             call. = FALSE, domain = NA)
+                }
+        } else if(length(Rdeps <- pkgInfo$Rdepends) > 1) {
             target <- as.numeric_version(Rdeps$version)
             res <- eval(parse(text=paste("current", Rdeps$op, "target")))
             if(!res)
@@ -589,17 +601,16 @@ function(chname, package = NULL, lib.loc = NULL,
         chname <- substr(chname, 1, nc_chname - nc_file_ext)
 
     for(pkg in .find.package(package, lib.loc, verbose = verbose)) {
-        file <- if(nzchar(.Platform$r_arch))
-                file.path(pkg, "libs", .Platform$r_arch,
-                          paste(chname, file.ext, sep = ""))
-	else    file.path(pkg, "libs",
-                          paste(chname, file.ext, sep = ""))
+        DLLpath <- if(nzchar(.Platform$r_arch))
+                file.path(pkg, "libs", .Platform$r_arch)
+	else    file.path(pkg, "libs")
+        file <- file.path(DLLpath, paste(chname, file.ext, sep = ""))
         if(file.exists(file)) break else file <- ""
     }
     if(file == "")
         stop(gettextf("shared library '%s' not found", chname), domain = NA)
     ind <- sapply(dll_list, function(x) x[["path"]] == file)
-    if(any(ind)) {
+    if(length(ind) && any(ind)) {
         if(verbose)
             message(gettextf("shared library '%s' already loaded", chname),
                     domain = NA)
@@ -612,14 +623,17 @@ function(chname, package = NULL, lib.loc = NULL,
         ## (without having to bypass the default package dynload
         ## mechanism).  Note that this only works under Windows, and a
         ## more general solution will have to be found eventually.
+        ##
+        ## 2.7.0: there's a more general mechanism in DLLpath=,
+        ## so not clear if this is still needed.
         PATH <- Sys.getenv("PATH")
-        Sys.setenv(PATH =
-                   paste(gsub("/", "\\\\", dirname(file)), PATH, sep=";"))
+        Sys.setenv(PATH = paste(gsub("/", "\\\\", DLLpath), PATH, sep=";"))
         on.exit(Sys.setenv(PATH = PATH))
     }
     if(verbose)
         message(gettextf("now dyn.load(\"%s\") ...", file), domain = NA)
-    dll <- dyn.load(file, ...)
+    dll <- if("DLLpath" %in% names(list(...))) dyn.load(file, ...)
+    else dyn.load(file, DLLpath = DLLpath, ...)
     .dynLibs(c(dll_list, list(dll)))
     invisible(dll)
 }
@@ -1027,13 +1041,15 @@ manglePackageName <- function(pkgName, pkgVersion)
 .getRequiredPackages2 <-
 function(pkgInfo, quietly = FALSE, lib.loc = NULL, useImports = FALSE)
 {
-    pkgs <- names(pkgInfo$Depends)
+    pkgs <- unique(names(pkgInfo$Depends))
     if (length(pkgs)) {
         pkgname <- pkgInfo$DESCRIPTION["Package"]
         for(pkg in pkgs) {
-            z <- pkgInfo$Depends[[pkg]]
+            ## allow for multiple occurrences
+            zs <- pkgInfo$Depends[names(pkgInfo$Depends) == pkg]
+            have_vers <- any(sapply(zs, length) > 1L)
             if ( !paste("package", pkg, sep = ":") %in% search() ) {
-                if (length(z) > 1) {
+                if (have_vers) {
                     pfile <- system.file("Meta", "package.rds",
                                          package = pkg, lib.loc = lib.loc)
                     if(nzchar(pfile) == 0)
@@ -1041,11 +1057,14 @@ function(pkgInfo, quietly = FALSE, lib.loc = NULL, useImports = FALSE)
                                       pkg, pkgname),
                              call. = FALSE, domain = NA)
                     current <- .readRDS(pfile)$DESCRIPTION["Version"]
-                    target <- as.numeric_version(z$version)
-                    if (!eval(parse(text=paste("current", z$op, "target"))))
-                        stop(gettextf("package '%s' %s was found, but %s %s is required by '%s'",
-                             pkg, current, z$op, target, pkgname),
-                             call. = FALSE, domain = NA)
+                    for(z in zs)
+                        if(length(z) > 1) {
+                            target <- as.numeric_version(z$version)
+                            if (!eval(parse(text=paste("current", z$op, "target"))))
+                                stop(gettextf("package '%s' %s was found, but %s %s is required by '%s'",
+                                              pkg, current, z$op, target, pkgname),
+                                     call. = FALSE, domain = NA)
+                        }
                 }
 
                 if (!quietly)
@@ -1057,15 +1076,18 @@ function(pkgInfo, quietly = FALSE, lib.loc = NULL, useImports = FALSE)
                      call. = FALSE, domain = NA)
             } else {
                 ## check the required version number, if any
-                if (length(z) > 1) {
+                if (have_vers) {
                     pfile <- system.file("Meta", "package.rds",
                                          package = pkg, lib.loc = lib.loc)
                     current <- .readRDS(pfile)$DESCRIPTION["Version"]
-                    target <- as.numeric_version(z$version)
-                    if (!eval(parse(text=paste("current", z$op, "target"))))
-                        stop(gettextf("package '%s' %s is loaded, but %s %s is required by '%s'",
-                             pkg, current, z$op, target, pkgname),
-                             call. = FALSE, domain = NA)
+                    for(z in zs)
+                        if (length(z) > 1) {
+                            target <- as.numeric_version(z$version)
+                            if (!eval(parse(text=paste("current", z$op, "target"))))
+                                stop(gettextf("package '%s' %s is loaded, but %s %s is required by '%s'",
+                                              pkg, current, z$op, target, pkgname),
+                                     call. = FALSE, domain = NA)
+                        }
                 }
             }
         }

@@ -1,7 +1,7 @@
 /*
  *  R : A Computer Language for Statistical Data Analysis
  *  Copyright (C) 1995, 1996  Robert Gentleman and Ross Ihaka
- *  Copyright (C) 1998--2000  R Development Core Team
+ *  Copyright (C) 1998--2008  R Development Core Team
  *
  *  This program is free software; you can redistribute it and/or modify
  *  it under the terms of the GNU General Public License as published by
@@ -21,25 +21,23 @@
 #ifndef GRAPHICS_H_
 #define GRAPHICS_H_
 
-#define R_GRAPHICS_INTERNAL 1
+/* This is a private header */
 
 #include <R_ext/Boolean.h>
 
-#include <R_ext/GraphicsDevice.h>
 #include <R_ext/GraphicsEngine.h>
+/* needed for R_GE_lineend/join, R_GE_gcontext */
 
-#define R_MaxDevices 64
+#define R_GRAPHICS 1
+#include <Rgraphics.h> /* RUnit */
 
-#define	DEG2RAD 0.01745329251994329576
+typedef unsigned int rcolor;
 
-#define COLOR_TABLE_SIZE 1024
-
+/* base.c, graphics.c, par.c */
 #define MAX_LAYOUT_ROWS 50
 #define MAX_LAYOUT_COLS 50
 #define MAX_LAYOUT_CELLS 500 /* must be less than 65535, 
 				3 copies, 3bytes each */
-
-typedef unsigned int rcolor;
 
 typedef struct {
 	double ax;
@@ -48,74 +46,20 @@ typedef struct {
 	double by;
 } GTrans;
 
-	/* possible coordinate systems (for specifying locations) */
-typedef enum {
- DEVICE	= 0,	/* native device coordinates (rasters) */
- NDC	= 1,	/* normalised device coordinates x=(0,1), y=(0,1) */
- INCHES = 13,	/* inches x=(0,width), y=(0,height) */
- NIC	= 6,	/* normalised inner region coordinates (0,1) */
- OMA1	= 2,	/* outer margin 1 (bottom) x=NIC, y=LINES */
- OMA2	= 3,	/* outer margin 2 (left) */
- OMA3	= 4,	/* outer margin 3 (top) */
- OMA4	= 5,	/* outer margin 4 (right) */
- NFC	= 7,	/* normalised figure region coordinates (0,1) */
- NPC	= 16,	/* normalised plot region coordinates (0,1) */
- USER	= 12,	/* user/data/world coordinates;
-		 * x,=(xmin,xmax), y=(ymin,ymax) */
- MAR1	= 8,	/* figure margin 1 (bottom) x=USER(x), y=LINES */
- MAR2	= 9,	/* figure margin 2 (left)   x=USER(y), y=LINES */
- MAR3	= 10,	/* figure margin 3 (top)    x=USER(x), y=LINES */
- MAR4	= 11,	/* figure margin 4 (right)  x=USER(y), y=LINES */
-
-	/* possible, units (for specifying dimensions) */
-	/* all of the above, plus ... */
-
- LINES = 14,	/* multiples of a line in the margin (mex) */
- CHARS = 15	/* multiples of text height (cex) */
-} GUnit;
-
-
 typedef struct {
-    /* Basic Device Driver Properties */
-    /* These MUST be set by device drivers on open */
-
-    /* These parameters cannot be set by the user */
-    /* although left, right, bottom, and top can be */
-    /* interrogated indirectly (i.e., par("din")) */
-    /* and cra can be interrogated directly (i.e., par("cra")) */
-
-    double left;	/* left raster coordinate */
-    double right;	/* right raster coordinate */
-    double bottom;	/* bottom raster coordinate */
-    double top;		/* top raster coordinate */
-    double xCharOffset;	/* x character addressing offset */
-    double yCharOffset;	/* y character addressing offset */
-    double yLineBias;	/* 1/2 interline space as fraction of line height */
-    Rboolean canResizePlot;	/* can the graphics surface be resized */
-    Rboolean canChangeFont;	/* device has multiple fonts */
-    Rboolean canRotateText;	/* text can be rotated */
-    Rboolean canResizeText;	/* text can be resized */
-    Rboolean canClip;		/* Hardware clipping */
-    int canHAdj;	/* Can do at least some horizontal adjustment of text
-			   0 = none, 1 = {0,0.5, 1}, 2 = [0,1] */
-
-    /* a couple of the GRZ-like parameters that have to be */
-    /* set by the device */
-
-    double ipr[2];	/* Inches per raster; [0]=x, [1]=y */
-    double asp;		/* Pixel aspect ratio = ipr[1]/ipr[0] */
-    double cra[2];	/* Character size in rasters; [0]=x, [1]=y */
-
     /* Plot State */
-    /* When the device driver is started this is 0 */
-    /* After the first call to plot.new it is 1 */
-    /* Every graphics operation except plot.new */
-    /* should fail if state = 0 */
-    /* This is checked at the highest internal function */
-    /* level (e.g., do_lines, do_axis, do_plot_xy, ...) */
+    /* 
+       When the device driver is started this is 0
+       After the first call to plot.new/perps it is 1
+       Every graphics operation except plot.new/persp
+       should fail if state = 0 
+       This is checked at the highest internal function
+       level (e.g., do_lines, do_axis, do_plot_xy, ...) 
+    */
 
-    int	state;		/* Plot State */
-    Rboolean valid;	/* valid layout ? */
+    int	state;		/* plot state: 1 if GNewPlot has been called 
+			   (by plot.new or persp) */
+    Rboolean valid;	/* valid layout ?  Used in GCheckState & do_playDL */
 
     /* GRZ-like Graphics Parameters */
     /* ``The horror, the horror ... '' */
@@ -125,7 +69,6 @@ typedef struct {
 
     double adj;		/* String adjustment */
     Rboolean ann;	/* Should annotation take place */
-    Rboolean ask;	/* User confirmation of ``page eject'' */
     rcolor bg;		/* **R ONLY** Background color */
     int	bty;		/* Box type */
     double cex;		/* Character expansion */
@@ -161,14 +104,13 @@ typedef struct {
 			/* [2] = location of axis line */
     double mkh;		/* Mark size in inches */
     int	pch;		/* Plotting character */
-    int ps;		/* Text & symbol pointsize */
+    /* Note that ps is never changed, so always the same as dev->startps.
+       However, the ps in the graphics context is changed */
+    double ps;		/* Text & symbol pointsize */
     int	smo;		/* Curve smoothness */
     double srt;		/* String Rotation */
     double tck;		/* Tick size as in S */
     double tcl;		/* Tick size in "lines" */
-    /* kept to avoid changing the structure */
-    double tmag;	/* **DEFUNCT** Title Magnification */
-    /* int	type;	    type of plot desired -- removed in 2.3.0 */
     double xaxp[3];	/* X Axis annotation */
 			/* [0] = coordinate of lower tick */
 			/* [1] = coordinate of upper tick */
@@ -176,12 +118,12 @@ typedef struct {
 			/* almost always used internally */
     int	xaxs;		/* X Axis style */
     int	xaxt;		/* X Axis type */
+    Rboolean xlog;	/* Log Axis for X */
     int	xpd;		/* Clip to plot region indicator */
     int	oldxpd;
     double yaxp[3];	/* Y Axis annotation */
     int	yaxs;		/* Y Axis style */
     int	yaxt;		/* Y Axis type */
-    Rboolean xlog;	/* Log Axis for X */
     Rboolean ylog;	/* Log Axis for Y */
 
     /* Annotation Parameters */
@@ -197,10 +139,10 @@ typedef struct {
     int	fontsub;	/* Subtitle font */
     int	fontaxis;	/* Axis label fonts */
 
-    int	colmain;	/* Main title color */
-    int	collab;		/* Xlab and ylab color */
-    int	colsub;		/* Subtitle color */
-    int	colaxis;	/* Axis label color */
+    rcolor colmain;	/* Main title color */
+    rcolor collab;	/* Xlab and ylab color */
+    rcolor colsub;	/* Subtitle color */
+    rcolor colaxis;	/* Axis label color */
 
     /* Layout Parameters */
 
@@ -280,7 +222,7 @@ typedef struct {
     /* The reliability of these parameters relies on */
     /* the fact that plot.new is the */
     /* first graphics operation called in the creation */
-    /* of a graph */
+    /* of a graph  (unless it is a call to persp) */
 
     /* udpated per plot.new */
 
@@ -312,87 +254,22 @@ typedef struct {
 
     double scale;       /* An internal "zoom" factor to apply to ps and lwd */
                         /* (for fit-to-window resizing in Windows) */
-
-    /* device operations */
-    Rboolean (*open)();
-    void (*close)();
-    void (*activate)();
-    void (*deactivate)();
-    void (*resize)();
-    void (*newPage)();
-    void (*clip)();
-    double (*strWidth)();
-    void (*line)();
-    void (*polyline)();
-    void (*text)();
-    void (*dot)();
-    void (*rect)();
-    void (*circle)();
-    void (*polygon)();
-    Rboolean (*locator)();
-    void (*mode)();
-    void (*hold)();
-    void (*metricInfo)();
 } GPar;
 
-typedef struct {
-    /* New flag to indicate that this is an "old" device
-     * structure.
-     */
-    int newDevStruct;
-    GPar dp;		/* current device default parameters */
-    GPar gp;		/* current device current parameters */
-    GPar dpSaved;		/* saved device default parameters */
-    void *deviceSpecific;	/* pointer to device specific parameters */
-    Rboolean displayListOn;	/* toggle for display list status */
-    SEXP displayList;	/* display list */
-} DevDesc;
-
-/* For easy reference: Here are the source files of
- * currently existing device drivers:
- * FILE				driver name prefix
- * ----------------------	------------------
- * ../main/devPS.c		PS , PDF _and_  XFig
- * ../main/devPicTeX.c		PicTeX
- * ../modules/X11/devX11.c	X11
- * ../gnuwin32/devga.c		GA
- * ../modules/gnome/devGTK.c	GTK
- * ../modules/gnome/devGNOME.c	Gnome
- */
-
 /* always remap private functions */
-#include <Rgraphics.h>
-#define char2col		Rf_char2col
-#define CheckColor		Rf_CheckColor
-#define col2name		Rf_col2name
 #define copyGPar		Rf_copyGPar
-#define curDevice               Rf_curDevice
-#define FixupCex		Rf_FixupCex
 #define FixupCol		Rf_FixupCol
-#define FixupFont		Rf_FixupFont
 #define FixupLty		Rf_FixupLty
 #define FixupLwd		Rf_FixupLwd
-#define FixupPch		Rf_FixupPch
 #define FixupVFont		Rf_FixupVFont
-#define GetDevice               Rf_GetDevice
 #define GInit			Rf_GInit
-#define name2col		Rf_name2col
-#define nextDevice              Rf_nextDevice
-#define number2col		Rf_number2col
-#define NumDevices              Rf_NumDevices
+#define labelformat		Rf_labelformat
 #define ProcessInlinePars	Rf_ProcessInlinePars
-#define rgb2col			Rf_rgb2col
-#define RGB2rgb			Rf_RGB2rgb
-#define RGBA2rgb		Rf_RGBA2rgb
-#define ScaleColor		Rf_ScaleColor
-#define Specify2		Rf_Specify2
-#define str2col			Rf_str2col
-#define StrMatch		Rf_StrMatch
-#define isNAcol                 Rf_isNAcol
+#define recordGraphicOperation	Rf_recordGraphicOperation
 
 /* NOTE: during replays, call == R_NilValue;
    ----  the following adds readability: */
-Rboolean GRecording(SEXP, DevDesc*);
+Rboolean GRecording(SEXP, pGEDevDesc);
 
 /* Default the settings for general graphical parameters
  * (i.e., defaults that do not depend on the device type: */
@@ -400,66 +277,33 @@ void GInit(GPar*);
 
 void copyGPar(GPar *, GPar *);
 
-int curDevice(void);
-
-DevDesc* GetDevice(int i);
-
-int nextDevice(int from);
-
-int NumDevices(void);
-
-int deviceNumber(DevDesc *dd);
-
-int devNumber(DevDesc *dd);
-
-		/* Miscellaneous (from graphics.c & colors.c) */
-
-unsigned int rgb2col(const char *);
-unsigned int name2col(const char *);
-unsigned int number2col(const char *);
-unsigned int char2col(const char *);/* rgb2col() or name2col() */
-unsigned int str2col(const char *);
-
-const char *col2name(unsigned int);
-
-unsigned int ScaleColor(double x);
-unsigned int CheckColor(int x);
-Rboolean isNAcol(SEXP col, int index, int ncol);
-
-char *RGB2rgb(unsigned int, unsigned int, unsigned int);
-char *RGBA2rgb(unsigned int, unsigned int, unsigned int, unsigned int);
-
-int StrMatch(const char *s, const char *t);
-
+ /* from graphics.c, used in par.c */
 double R_Log10(double);
 
-void ProcessInlinePars(SEXP, DevDesc*, SEXP call);
-void Specify2(const char*, SEXP, DevDesc*, SEXP call);
-#ifdef UNUSED
-void RecordGraphicsCall(SEXP);
-#endif
+/* from par.c, called in plot.c, plot3d.c */
+void ProcessInlinePars(SEXP, pGEDevDesc, SEXP call);
 
-SEXP FixupPch(SEXP, int);
-SEXP FixupLty(SEXP, int);
-SEXP FixupFont(SEXP, int);
+/* from device.c */
+void recordGraphicOperation(SEXP, SEXP, pGEDevDesc);
+
+/* some functions that plot.c needs to share with plot3d.c */
 SEXP FixupCol(SEXP, unsigned int);
-SEXP FixupCex(SEXP, double);
+SEXP FixupLty(SEXP, int);
 SEXP FixupLwd(SEXP, double);
 SEXP FixupVFont(SEXP);
-
-#include <R_ext/GraphicsBase.h>
+SEXP labelformat(SEXP);
 
 /* 
  * Function to generate an R_GE_gcontext from Rf_gpptr info
+ *
+ * from graphics.c, used in plot.c, plotmath.c
  */
-void gcontextFromGP(R_GE_gcontext *gc, DevDesc *dd);
+void gcontextFromGP(pGEcontext gc, pGEDevDesc dd);
 
-/* FIXME: Make this a macro to avoid function call overhead?
- */
-GPar* Rf_gpptr(DevDesc *dd);
-GPar* Rf_dpptr(DevDesc *dd);
-GPar* Rf_dpSavedptr(DevDesc *dd);
-SEXP Rf_displayList(DevDesc *dd);
-
+/* From base.c */
+#define gpptr Rf_gpptr
+#define dpptr Rf_dpptr
+GPar* Rf_gpptr(pGEDevDesc dd);
+GPar* Rf_dpptr(pGEDevDesc dd);
 
 #endif /* GRAPHICS_H_ */

@@ -18,18 +18,22 @@ logLik <- function(object, ...) UseMethod("logLik")
 
 print.logLik <- function(x, digits = getOption("digits"), ...)
 {
-    cat("'log Lik.' ",format(c(x), digits=digits),
+    cat("'log Lik.' ", paste(format(c(x), digits=digits), collapse=", "),
         " (df=",format(attr(x,"df")),")\n",sep="")
     invisible(x)
 }
 
-str.logLik <- function(object, digits = max(2, getOption("digits") - 3), ...)
+str.logLik <- function(object, digits = max(2, getOption("digits") - 3),
+                       vec.len = getOption("str")$vec.len, ...)
 {
     cl <- oldClass(object)
+    len <- length(co <- c(object))
+    cutl <- len > vec.len
     cat("Class", if (length(cl) > 1) "es",
-        " '", paste(cl, collapse = "', '"), "' : ",
-        format(c(object), digits=digits),
-        " (df=",format(attr(object,"df")),")\n",sep="")
+	" '", paste(cl, collapse = "', '"), "' : ",
+	paste(format(co[seq_len(min(len,vec.len))], digits=digits),
+	      collapse = ", "), if(cutl)", ...",
+	" (df=",format(attr(object,"df")),")\n",sep="")
 }
 
 ## rather silly (but potentially used in pkg nlme):

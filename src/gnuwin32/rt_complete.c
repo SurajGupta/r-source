@@ -36,7 +36,7 @@ extern char *alloca(size_t);
 #include <Rinternals.h>
 #include <R_ext/Parse.h>
 
-static int rcompgen_available = -1;
+static int completion_available = -1;
 
 static int gl_tab(char *buf, int offset, int *loc)
 /* default tab handler, acts like tabstops every 8 cols */
@@ -46,9 +46,9 @@ static int gl_tab(char *buf, int offset, int *loc)
     len = strlen(buf);
     count = 8 - (offset + *loc) % 8;
     for (i=len; i >= *loc; i--)
-        buf[i+count] = buf[i];
+	buf[i+count] = buf[i];
     for (i=0; i < count; i++)
-        buf[*loc+i] = ' ';
+	buf[*loc+i] = ' ';
     i = *loc;
     *loc = i + count;
     return i;
@@ -63,19 +63,19 @@ static int rt_completion(char *buf, int offset, int *loc)
     SEXP cmdSexp, cmdexpr, ans = R_NilValue;
     ParseStatus status;
 
-    if(!rcompgen_available) return gl_tab(buf, offset, loc);
-    
-    if(rcompgen_available < 0) {
+    if(!completion_available) return gl_tab(buf, offset, loc);
+
+    if(completion_available < 0) {
 	char *p = getenv("R_COMPLETION");
 	if(p && strcmp(p, "FALSE") == 0) {
-	    rcompgen_available = 0;
-	    return gl_tab(buf, offset, loc);   
+	    completion_available = 0;
+	    return gl_tab(buf, offset, loc);
 	}
 	/* First check if namespace is loaded */
-	if(findVarInFrame(R_NamespaceRegistry, install("rcompgen"))
-	   != R_UnboundValue) rcompgen_available = 1;
+	if(findVarInFrame(R_NamespaceRegistry, install("utils"))
+	   != R_UnboundValue) completion_available = 1;
 	else { /* Then try to load it */
-	    char *p = "try(loadNamespace('rcompgen'), silent=TRUE)";
+	    char *p = "try(loadNamespace('utils'), silent=TRUE)";
 	    PROTECT(cmdSexp = mkString(p));
 	    cmdexpr = PROTECT(R_ParseVector(cmdSexp, -1, &status, R_NilValue));
 	    if(status == PARSE_OK) {
@@ -83,10 +83,10 @@ static int rt_completion(char *buf, int offset, int *loc)
 		    eval(VECTOR_ELT(cmdexpr, i), R_GlobalEnv);
 	    }
 	    UNPROTECT(2);
-	    if(findVarInFrame(R_NamespaceRegistry, install("rcompgen"))
-	       != R_UnboundValue) rcompgen_available = 1;
+	    if(findVarInFrame(R_NamespaceRegistry, install("utils"))
+	       != R_UnboundValue) completion_available = 1;
 	    else {
-		rcompgen_available = 0;
+		completion_available = 0;
 		return -1; /* no change */
 	    }
 	}
@@ -100,7 +100,7 @@ static int rt_completion(char *buf, int offset, int *loc)
     for (i = 0; i < alen; i++) if (pline[i] == '"') pline[i] = '\'';
 
     cmd = alloca(strlen(pline) + 100);
-    sprintf(cmd, "rcompgen:::.win32consoleCompletion(\"%s\", %d)",
+    sprintf(cmd, "utils:::.win32consoleCompletion(\"%s\", %d)",
 	    pline, cursor_position);
     PROTECT(cmdSexp = mkString(cmd));
     cmdexpr = PROTECT(R_ParseVector(cmdSexp, -1, &status, R_NilValue));
@@ -115,7 +115,7 @@ static int rt_completion(char *buf, int offset, int *loc)
     for(i = 0; i < length(cmdexpr); i++)
 	ans = eval(VECTOR_ELT(cmdexpr, i), R_GlobalEnv);
     UNPROTECT(2);
-    
+
     /* ans has the form list(addition, possible), where 'addition' is
        unique additional text if any, and 'possible' is a character
        vector holding possible completions if any (already formatted

@@ -1,6 +1,6 @@
 /*
  *  R : A Computer Language for Statistical Data Analysis
- *  Copyright (C) 2001  The R Development Core Team.
+ *  Copyright (C) 2001-8  The R Development Core Team.
  *
  *  This program is free software; you can redistribute it and/or modify
  *  it under the terms of the GNU Lesser General Public License as published by
@@ -22,6 +22,7 @@
 
 #include <R_ext/Boolean.h>
 
+/* called with a variable argument set */
 typedef void * (*DL_FUNC)();
 
 typedef unsigned int R_NativePrimitiveArgType;
@@ -97,7 +98,7 @@ DllInfo *R_getDllInfo(const char *name);
 
 /* to be used by applications embedding R to register their symbols
    that are not related to any dynamic module */
-DllInfo *R_getEmbeddingDllInfo();
+DllInfo *R_getEmbeddingDllInfo(void);
 
 typedef struct Rf_RegisteredNativeSymbol R_RegisteredNativeSymbol;
 typedef enum {R_ANY_SYM=0, R_C_SYM, R_CALL_SYM, R_FORTRAN_SYM, R_EXTERNAL_SYM} NativeSymbolType;

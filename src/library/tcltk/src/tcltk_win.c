@@ -17,22 +17,35 @@
  *  http://www.r-project.org/Licenses/
  */
 
-#include <tcl.h>
+#include "tcltk.h"
+
+#include <R_ext/Boolean.h>
 #define WIN32_LEAN_AND_MEAN 1
 #include <windows.h>
 
+Rboolean R_ToplevelExec(void (*fun)(void *), void *data);
+
 void tcltk_init();
 
-extern __declspec(dllimport) void (* R_tcldo)();
-
-static void _R_tcldo()
+/* We don't need a re-entrancy guard on Windows as Tcl_ServiceAll
+   has one -- it uses serviceMode, setting it to TCL_SERVICE_NONE
+   whilst it is running.  Unlike TclDoOneEvent, it checks on entry.
+ */
+static void TclSpinLoop(void *data)
 {
     Tcl_ServiceAll();
 }
 
+static void _R_tcldo(void)
+{
+    (void) R_ToplevelExec(TclSpinLoop, NULL);
+}
+
+/* import from src/gnuwin32/system.c */
+extern __declspec(dllimport) void (* R_tcldo)();
 static void (* old_R_tcldo)();
 
-void tcltk_start()
+void tcltk_start(void)
 {
     HWND active = GetForegroundWindow(); /* ActiveTCL steals the focus */
     tcltk_init(); /* won't return on error */
@@ -42,7 +55,9 @@ void tcltk_start()
     SetForegroundWindow(active); /* and fix it */
 }
 
-void tcltk_end()
+void tcltk_end(void)
 {
+    Tcl_DeleteInterp(RTcl_interp);
+    Tcl_Finalize();
     R_tcldo = old_R_tcldo;
 }

@@ -1,15 +1,15 @@
-# Translation of src//src/library/methods/po/R-methods.pot
-# to german
-# Copyright (C) 2005-2007 The R Foundation
+# Translation of src/library/methods/po/R-methods.pot
+# to German
+# Copyright (C) 2005-2008 The R Foundation
 # This file is distributed under the same license as the R package.
-# Detlef Steuer <steuer@hsu-hh.de>, 2007.
+# Detlef Steuer <steuer@hsu-hh.de>, 2007-2008.
 msgid ""
 msgstr ""
-"Project-Id-Version: R 2.6.1\n"
+"Project-Id-Version: R 2.7.0\n"
 "Report-Msgid-Bugs-To: bugs@r-project.org\n"
-"POT-Creation-Date: 2007-12-02 19:24\n"
-"PO-Revision-Date: 2007-11-29 12:14\n"
-"Last-Translator: Dr. Detlef Steuer <detlef.steuer@hsu-hh.de>\n"
+"POT-Creation-Date: 2008-04-05 10:49\n"
+"PO-Revision-Date: 2008-04-06 19:08+0200\n"
+"Last-Translator: Detlef Steuer <detlef.steuer@hsu-hh.de>\n"
 "Language-Team: R-core <R-core@r-project.org>\n"
 "MIME-Version: 1.0\n"
 "Content-Type: text/plain; charset=UTF-8\n"
@@ -30,9 +30,6 @@ msgid ""
 msgstr ""
 "in dieser Version von R dürfen keine Methoden für die primitive Funktion \"%s"
 "\" definiert werden"
-
-msgid "\"%s\" is not one of the basic functions"
-msgstr "\"%s\" ist keine der Grundfunktionen"
 
 msgid ""
 "no 'replace' method was defined for as(x, \"%s\") <- value for class \"%s\""
@@ -220,6 +217,9 @@ msgstr ""
 msgid "no method defined for function \"%s\" and signature %s"
 msgstr "keine Methode für Funktion \"%s\" und Signatur %s definiert"
 
+msgid "'file' must be a character string or a connection"
+msgstr "'file' muss eine Zeichenkette oder eine Verbindung sein"
+
 msgid "No method found for signature %s"
 msgstr "Keine Methode für Signatur %s gefunden"
 
@@ -264,20 +264,11 @@ msgid "\"%s\" is not a generic function in \"%s\"; methods not removed"
 msgstr ""
 "\"%s\" ist keine generische Funktion in \"%s\"; Methoden nicht entfernt"
 
-msgid ""
-"cannot restore previous version of \"%s\" in locked environment/package \"%s"
-"\""
-msgstr ""
-"kann vorhergehende Version von \"%s\" in gesicherter/m Umgebung/Paket \"%s\" "
-"nicht wiederherstellen"
+msgid "cannot remove methods for  \"%s\" in locked environment/package \"%s\""
+msgstr "kann methoden von \"%s\" aus gesicherter/m Umgebung/Paket \"%s\" nicht entfernen"
 
 msgid "restoring default function definition of \"%s\""
 msgstr "stelle Standardfunktionsdefinitionen für \"%s\" wieder her"
-
-msgid "cannot reset \"%s\", the definition is not a generic function object"
-msgstr ""
-"kann \"%s\" nicht zurücksetzen, Definition ist keine generisches "
-"Funktionsobjekt"
 
 msgid ""
 "error in updating generic function \"%s\"; the function definition is not a "
@@ -304,17 +295,21 @@ msgstr ""
 "'callGeneric' muss von einer generischen Funktion oder Methode aufgerufen "
 "werden"
 
+msgid "expected a non-empty character string for argument name"
+msgstr "erwarte nicht-leere Zeichenkette als Argumentnamen"
+
+msgid "generic function supplied was not created for \"%s\""
+msgstr "angegebene generische Funktion für \"%s\" nicht gefunden"
+
+msgid "\"%s\" is a primitive function; its generic form cannot be redefined"
+msgstr "\"%s\" ist eine primitive, generische Funktion und kann nicht umdefiniert werden"
+
 msgid ""
 "\"%s\" is not currently a generic:  define it first to create a non-default "
 "implicit form"
 msgstr ""
 "\"%s\" ist momentan nicht generisch; definiere sie erst, um eine nicht-"
 "standard implizite Form zu erzeugen"
-
-msgid "No nongeneric version of function \"%s\" exists to be restored"
-msgstr ""
-"Es existiert keine nichtgenerische Version der Funktion \"%s\" zur "
-"Wiederherstellung"
 
 msgid "Must provide an environment table; got class \"%s\""
 msgstr "Umgebungstabelle musss angegeben werden; bekam Klasse \"%s\""
@@ -329,6 +324,25 @@ msgid ""
 msgstr ""
 "Es existiert eine implizite Generische für \"%s\", wird aber durch "
 "expliziten Aufruf von setGeneric() überschrieben"
+
+msgid ""
+"argument \"f\" must be a generic function or a single character string; got "
+"an object of class \"%s\""
+msgstr ""
+"Argument \"f\" muss eine generische Funktion oder eine Zeichenkette sein;\n"
+" bekam ein Objekt aus Klasse \"%s\""
+
+msgid "non-generic function given to findMethods()"
+msgstr "nicht-generische Funktion an findMethods() übergeben"
+
+msgid "Only FALSE meaningful for inherited, when where is supplied (got"
+msgstr "Nur FALSE sinnvoll für Vererbung, wenn Ort angegeben (bekam"
+
+msgid "\""
+msgstr "\""
+
+msgid "f does not correspond to a generic function and package not specified"
+msgstr "f Korrespondiert nicht mit einer generischen Funktion und Paket nicht angegeben"
 
 msgid ""
 "invalid first argument: should be the name of the first argument in the "
@@ -419,8 +433,8 @@ msgstr ""
 "in der Methodensignatur für Funktion \"%s\" unzulässige Argumentnamen in der "
 "Signatur %s"
 
-msgid "no methods found for generic \"%s\""
-msgstr "keine Methoden für Generische \"%s\" gefunden"
+msgid "No generic function found corresponding to \"%s\""
+msgstr "keine generische Funktion für \"%s\" gefunden"
 
 msgid "skipping methods list element %s of unexpected class \"%s\""
 msgstr "überspringe Methodenlistenelement %s der unerwarteten Klasse \"%s\""
@@ -620,26 +634,6 @@ msgid "class \"%s\" does not have a data part (a .Data slot) defined"
 msgstr "Klasse \"%s\" hat keinen Datenteil (einen .Data Slot) definiert"
 
 msgid ""
-"trying to change the argument list of %s with %d arguments to have arguments "
-"(%s)"
-msgstr ""
-"versuche die Argumentliste von %s mit %d Argumenten auf Argumente (%s) zu "
-"ändern"
-
-msgid ""
-"get rid of variables in definition %s (%s); they conflict with the needed "
-"change to argument names (%s)"
-msgstr ""
-"verwerfe Variablen aus der Definition %s (%s): Konflikt mit der notwendigen "
-"Änderung der Argumentnamen (%s)"
-
-msgid "arguments in definition %s changed from (%s) to (%s)"
-msgstr "Argumente in Definition %s geändert von (%s) nach (%s)"
-
-msgid ","
-msgstr ","
-
-msgid ""
 "a validity method must be a function of one argument, got an object of class "
 "\"%s\""
 msgstr ""
@@ -733,20 +727,6 @@ msgid "invalid call in method dispatch to \"%s\" (no default method)"
 msgstr ""
 "unzulässiger Aufruf im Methodendispatch zu \"%s\" (keine Standardmethode)"
 
-msgid "\"%s\" from \"%s\" is a non-generic function; no methods available"
-msgstr ""
-"\"%s\" aus \"%s\" ist eine nicht-generische Funktion; keine Methoden "
-"vorhanden"
-
-msgid ""
-"invalid 'fdef' for \"%s\" in 'getAllMethods'; expected either a "
-"'genericFunction object' or a primitive function, got an object of class \"%s"
-"\""
-msgstr ""
-"ungültige 'fdef' für \"%s\" in 'getAllMethods'; erwarte entweder ein "
-"'genericFunctionobject' oder eine primitive Funktion, bekam ein Objekt der "
-"Klasse \"%s\""
-
 msgid "formal arguments in method and function do not appear in the same order"
 msgstr ""
 "formale Argumente in Methode und Funktion erscheinen nicht in der gleichen "
@@ -764,6 +744,9 @@ msgstr "erweitere Signatur um ausgelassene Argumente in Definition: %s"
 
 msgid "= \"missing\""
 msgstr "= \"missing\""
+
+msgid ","
+msgstr ","
 
 msgid ""
 "methods can add arguments to the generic only if '...' is an argument to the "
@@ -792,6 +775,9 @@ msgstr ""
 
 msgid "no generic function found for \"%s\""
 msgstr "keine generische Funktion für \"%s\" gefunden"
+
+msgid "Empty function name in .getGeneric"
+msgstr "Leerer Funktionsname in .getGeneric"
 
 msgid ""
 "the methods object name for \"%s\" must include the name of the package that "
@@ -896,6 +882,13 @@ msgstr "\"%s\" ist keine generische Funktion (oder hier nicht sichtbar)"
 
 msgid "invalid element in the groupMembers slot (class \"%s\")"
 msgstr "unzulässiges Element im groupMembers Slot (Klasse \"%s\")"
+
+msgid ""
+"\" is not a known action (warn, stop, once, ignore); no action recorded for "
+"function \""
+msgstr ""
+"\" ist keine bekannte Aktion (warn, stop, once, ignore); keine Aktion aufgenommen für\n"
+"function \""
 
 msgid "\"%s\" has a sealed class definition and cannot be redefined"
 msgstr ""
@@ -1063,10 +1056,11 @@ msgstr ""
 "Klassenvereinigung ergeben keinen Sinn"
 
 msgid ""
-"'as' method must have one or two arguments, plus optional 'strict'; got (%s)"
+"'as' method should have one argument, or match the arguments of coerce(): "
+"got  (%s)"
 msgstr ""
-"'as' Methode muss ein oder zwei Argumente haben, zusätzlich optional "
-"'strict'; bekam (%s)"
+"'as' Methode sollte ein Argument haben oder mit coerce() übereinstimmen:\n"
+" bekam (%s)"
 
 msgid ""
 "a 'replace' method definition in 'setAs' must be a function of two "
@@ -1208,9 +1202,6 @@ msgstr "Unzulässiges Ohjekt in Methodentabelle (\""
 msgid "\"), expected a method, got an object of class \""
 msgstr "\") erwartete Methode, bekam Objekt der Klasse \""
 
-msgid "\""
-msgstr "\""
-
 msgid "Invalid or unset methods table in generic function \""
 msgstr ""
 "Ungültige oder zurückgesetzte Methodentabelle in generischer Funktion \""
@@ -1252,15 +1243,6 @@ msgid ""
 msgstr ""
 "Konnte keine Methodentabelle für \"%s\" finden, Paket \"%s\" evtl. veraltet"
 
-msgid "Methods list for generic \""
-msgstr "Methodenliste für die Generische \""
-
-msgid "\" not found"
-msgstr "\" nicht gefunden"
-
-msgid ".UsingMethodsTables: 'onOff' is not TRUE or FALSE"
-msgstr ".UsingMethodsTables: 'onOff' ist weder TRUE noch FALSE"
-
 msgid "Failed to find expected group generic function:"
 msgstr "Konnte die erwartete gruppengenerische Funktion nicht finden"
 
@@ -1287,10 +1269,15 @@ msgstr ", funs ="
 msgid "; gnames ="
 msgstr ": gnames ="
 
-msgid "Could not find generic function \"%s\" to initialize cached methods"
-msgstr ""
-"Konnte keine generische Funktion \"%s\" finden, um die gepufferten Methoden "
-"zu initialisieren"
+msgid "Something weird:  inconsistent number of args in methods table strings:"
+msgstr "Seltsam: inkonsistente Anzahl Methoden in den Methodentabellenzeichenketten:"
+
+msgid "(using the largest value)"
+msgstr "(nutze größten Wert)"
+
+msgid ""
+"No methods table for generic \"%s\" from package \"%s\" in package \"%s\""
+msgstr "keine Methodentabelle für generische \"%s\" aus  Paket \"%s\" in paket \"%s\""
 
 msgid ""
 "inconsistent old-style class information for \"%s\" (maybe mixing old and "
@@ -1315,6 +1302,9 @@ msgid ""
 msgstr ""
 "Argument 'Classes' muss ein Vektor aus zwei Klassen sein: bekam Argument der "
 "Länge %d"
+
+msgid "Created a package name, \"%s\", when none found"
+msgstr "Erzeuge Paketnamen, \"%s\", da keinen gefunden"
 
 msgid "no definition of class \"%s\" found"
 msgstr "keine Definition der Klasse \"%s\" gefunden"
@@ -1420,12 +1410,11 @@ msgstr "\" ist gesichert; nutze die Basisumgebung für die neue Klasse"
 msgid "not a package name: \"%s\""
 msgstr "kein Paketname: \"%s\""
 
-msgid ""
-"apparently bad method or class metadata in saved environment; move the file "
-"or remove the class/method"
-msgstr ""
-"anscheinend unbrauchbare Methoden- oder Klassenmetadaten in gespeicherter "
-"Umgebung; bitte Datei verschieben oder Klasse bzw. Methode entfernen"
+msgid "apparently bad method or class metadata in saved environment;"
+msgstr "anscheinend unbrauchbare Methode oder Klassenmetadaten in gespeicherter Umgebung"
+
+msgid "move the file or remove the class/method"
+msgstr "verschiebe die Datei oder entferne die Klasse/Methode"
 
 msgid "in the method signature for function \"%s\" no definition for class: %s"
 msgid_plural ""
@@ -1434,6 +1423,67 @@ msgstr[0] ""
 "in der Methodensignatur für Funktion \"%s\" keine Definition für Klasse: %s"
 msgstr[1] ""
 "in der Methodensignatur für Funktion \"%s\" keine Definition für Klassen: %s"
+
+#~ msgid "Could not find generic function \"%s\" to initialize cached methods"
+#~ msgstr ""
+#~ "Konnte keine generische Funktion \"%s\" finden, um die gepufferten "
+#~ "Methoden zu initialisieren"
+
+#~ msgid ""
+#~ "trying to change the argument list of %s with %d arguments to have "
+#~ "arguments (%s)"
+#~ msgstr ""
+#~ "versuche die Argumentliste von %s mit %d Argumenten auf Argumente (%s) zu "
+#~ "ändern"
+
+#~ msgid ""
+#~ "get rid of variables in definition %s (%s); they conflict with the needed "
+#~ "change to argument names (%s)"
+#~ msgstr ""
+#~ "verwerfe Variablen aus der Definition %s (%s): Konflikt mit der "
+#~ "notwendigen Änderung der Argumentnamen (%s)"
+
+#~ msgid "arguments in definition %s changed from (%s) to (%s)"
+#~ msgstr "Argumente in Definition %s geändert von (%s) nach (%s)"
+
+#~ msgid "no methods found for generic \"%s\""
+#~ msgstr "keine Methoden für Generische \"%s\" gefunden"
+
+#~ msgid "\"%s\" is not one of the basic functions"
+#~ msgstr "\"%s\" ist keine der Grundfunktionen"
+
+#~ msgid "cannot reset \"%s\", the definition is not a generic function object"
+#~ msgstr ""
+#~ "kann \"%s\" nicht zurücksetzen, Definition ist keine generisches "
+#~ "Funktionsobjekt"
+
+#~ msgid "No nongeneric version of function \"%s\" exists to be restored"
+#~ msgstr ""
+#~ "Es existiert keine nichtgenerische Version der Funktion \"%s\" zur "
+#~ "Wiederherstellung"
+
+#~ msgid "\"%s\" from \"%s\" is a non-generic function; no methods available"
+#~ msgstr ""
+#~ "\"%s\" aus \"%s\" ist eine nicht-generische Funktion; keine Methoden "
+#~ "vorhanden"
+
+#~ msgid ""
+#~ "invalid 'fdef' for \"%s\" in 'getAllMethods'; expected either a "
+#~ "'genericFunction object' or a primitive function, got an object of class "
+#~ "\"%s\""
+#~ msgstr ""
+#~ "ungültige 'fdef' für \"%s\" in 'getAllMethods'; erwarte entweder ein "
+#~ "'genericFunctionobject' oder eine primitive Funktion, bekam ein Objekt "
+#~ "der Klasse \"%s\""
+
+#~ msgid "Methods list for generic \""
+#~ msgstr "Methodenliste für die Generische \""
+
+#~ msgid "\" not found"
+#~ msgstr "\" nicht gefunden"
+
+#~ msgid ".UsingMethodsTables: 'onOff' is not TRUE or FALSE"
+#~ msgstr ".UsingMethodsTables: 'onOff' ist weder TRUE noch FALSE"
 
 #~ msgid "Package \"%s\" is not loaded"
 #~ msgstr "Paket \"%s\" nicht geladen"

@@ -30,7 +30,7 @@ View <- function (x, title)
     as.num.or.char <- function(x)
     {
         if (is.character(x)) x
-        else if(is.numeric(x)) {storage.mode(x) <- "double"; x}
+        else if (is.numeric(x)) {storage.mode(x) <- "double"; x}
         else as.character(x)
     }
     x0 <- as.data.frame(x)
@@ -46,14 +46,17 @@ View <- function (x, title)
 edit <- function(name,...)UseMethod("edit")
 
 edit.default <-
-    function (name = NULL, file = "", title = NULL, editor = getOption("editor"), ...)
+    function (name = NULL, file = "", title = NULL,
+              editor = getOption("editor"), ...)
 {
     if(is.matrix(name) &&
        (mode(name) == "numeric" || mode(name) == "character"))
         edit.matrix(name=name, ...)
     else {
 	if (is.null(title)) title <- deparse(substitute(name))
-	.Internal(edit(name, file, title, editor))
+        if (is.function(editor))
+            invisible(editor(name, file, title))
+	else .Internal(edit(name, file, title, editor))
     }
 }
 
@@ -62,7 +65,7 @@ edit.data.frame <-
              edit.row.names =  any(row.names(name) != 1:nrow(name)), ...)
 {
     if (.Platform$OS.type == "unix"  && .Platform$GUI != "AQUA")
-        if(.Platform$GUI == "unknown" || Sys.getenv("DISPLAY")=="" )
+        if(.Platform$GUI == "unknown" || Sys.getenv("DISPLAY") == "" )
             return (edit.default(name, ...))
 
     is.vector.unclass <- function(x) is.vector(unclass(x))
@@ -74,10 +77,9 @@ edit.data.frame <-
 
     as.num.or.char <- function(x)
     {
-        ## Would as.character be a better default?  BDR 2000/5/3
-        if (is.character(x)) x
-        else if (is.logical(x) || (is.factor(x) && factor.mode == "character")) as.character(x)
-        else as.numeric(x)
+        if (is.numeric(x)) x
+        else if (is.factor(x) && factor.mode == "numeric") as.numeric(x)
+        else as.character(x)
     }
 
     attrlist <- lapply(name, attributes)
@@ -92,13 +94,27 @@ edit.data.frame <-
     else
     	numeric(0)
 
+    if(length(name) > 0) {
+        has_class <-
+            sapply(name, function(x) (is.object(x) || isS4(x)) && !is.factor(x))
+        if(any(has_class))
+            warning(sprintf(ngettext(sum(has_class),
+                                    "class discarded from column %s",
+                                    "classes discarded from columns %s"),
+                            paste(sQuote(names(name)[has_class]),
+                                  collapse=", ")),
+                    domain = NA, call. = FALSE, immediate. = TRUE)
+    }
+
     modes <- lapply(datalist, mode)
     if (edit.row.names) {
-        datalist <- c(list(row.names=row.names(name)), datalist)
-        modes <- c(list(row.names="character"), modes)
+        datalist <- c(list(row.names = row.names(name)), datalist)
+        modes <- c(list(row.names = "character"), modes)
     }
     rn <- attr(name, "row.names")
+
     out <- .Internal(dataentry(datalist, modes))
+
     lengths <- sapply(out, length)
     maxlength <- max(lengths)
     if (edit.row.names) rn <- out[[1]]
@@ -127,7 +143,8 @@ edit.data.frame <-
                 new <- unique(o[new])
                 warning(gettextf("added factor levels in '%s'", names(out)[i]),
                         domain = NA)
-                o <- factor(o, levels=c(a$levels, new), ordered=is.ordered(o))
+                o <- factor(o, levels=c(a$levels, new),
+                            ordered = is.ordered(o))
             } else {
                 o <- match(o, a$levels)
                 attributes(o) <- a
@@ -155,21 +172,31 @@ edit.matrix <-
         if(.Platform$GUI == "unknown" || Sys.getenv("DISPLAY")=="" )
             return (edit.default(name, ...))
     if(!is.matrix(name) ||
-       !(mode(name) == "numeric" || mode(name) == "character" || mode(name) == "logical")
-       || any(dim(name) < 1))
+       ! mode(name) %in% c("numeric", "character", "logical") ||
+       any(dim(name) < 1))
         stop("invalid input matrix")
+    ## logical matrices will be edited as character
     logicals <- is.logical(name)
     if (logicals) mode(name) <- "character"
+    if(is.object(name) || isS4(name))
+        warning("class(es) of 'name' will be discarded",
+                call. = FALSE, immediate. = TRUE)
+
     dn <- dimnames(name)
     datalist <- split(name, col(name))
     if(!is.null(dn[[2]])) names(datalist) <- dn[[2]]
     else names(datalist) <- paste("col", 1:ncol(name), sep = "")
     modes <- as.list(rep.int(mode(name), ncol(name)))
+    ## guard aginst user error (PR#10500)
+    if(edit.row.names && is.null(dn[[1]]))
+        stop("cannot edit NULL row names")
     if (edit.row.names) {
         datalist <- c(list(row.names = dn[[1]]), datalist)
         modes <- c(list(row.names = "character"), modes)
     }
+
     out <- .Internal(dataentry(datalist, modes))
+
     lengths <- sapply(out, length)
     maxlength <- max(lengths)
     if (edit.row.names) rn <- out[[1]]
@@ -192,8 +219,10 @@ edit.matrix <-
 file.edit <-
   function (..., title = file, editor=getOption("editor"))
 {
-    file <- c(...)
-    .Internal(file.edit(file, rep(as.character(title), len=length(file)), editor))
+    file <- path.expand(c(...))
+    title <- rep(as.character(title), len=length(file))
+    if (is.function(editor)) invisible(editor(file = file, title = title))
+    else .Internal(file.edit(file, title, editor))
 }
 
 vi <- function(name=NULL, file="")

@@ -16,17 +16,58 @@
 
 .Quartzenv <- new.env()
 
-quartz <- function (display = "", width = 5, height = 5, pointsize = 12,
-                    family = "Helvetica", antialias = TRUE, autorefresh = TRUE)
-{
-    if (.Platform$GUI != "AQUA")
-        warning("quartz() device interactivity reduced without an event loop manager")
+assign(".quartz.Options",
+       list(title = "Quartz %d",
+            width = 7, height = 7, pointsize=12,
+            family = "Helvetica",
+            fontsmooth = TRUE, antialias = TRUE,
+            type = "native",
+            bg = "transparent", canvas = "white",
+            dpi = NA_real_),
+       envir = .Quartzenv)
 
-    .External("Quartz", display, width, height, pointsize,family, antialias,
-              autorefresh, PACKAGE = "grDevices")
-    invisible()
+assign(".quartz.Options.default",
+       get(".quartz.Options", envir = .Quartzenv),
+       envir = .Quartzenv)
+
+quartz.options <- function(..., reset = FALSE)
+{
+    old <- get(".quartz.Options", envir = .Quartzenv)
+    if(reset) {
+        assign(".quartz.Options",
+               get(".quartz.Options.default", envir = .Quartzenv),
+               envir = .Quartzenv)
+    }
+    l... <- length(new <- list(...))
+    check.options(new, name.opt = ".quartz.Options", envir = .Quartzenv,
+                  assign.opt = l... > 0)
+    if(reset || l... > 0) invisible(old) else old
 }
 
+quartz <- function(title, width, height, pointsize, family,
+                   fontsmooth, antialias,
+                   type, file = NULL, bg, canvas, dpi)
+{
+    new <- list()
+    if(!missing(title)) new$title <- title
+    if(!missing(width)) new$width <- width
+    if(!missing(height)) new$height <- height
+    if(!missing(pointsize)) new$pointsize <- pointsize
+    if(!missing(family)) new$family <- family
+    if(!missing(fontsmooth)) new$fontsmooth <- fontsmooth
+    if(!missing(antialias)) new$antialias <- antialias
+    if(!missing(bg)) new$bg <- bg
+    if(!missing(canvas)) new$canvas <- canvas
+    if(!missing(type)) new$type <- type
+    if(!missing(dpi)) new$dpi <- dpi
+    if(!checkIntFormat(new$title)) stop("invalid 'title'")
+    if(!is.null(file) && !checkIntFormat(file)) stop("invalid 'file'")
+    d <- check.options(new, name.opt = ".quartz.Options", envir = .Quartzenv)
+    .External(CQuartz, d$type, file, d$width, d$height, d$pointsize, d$family,
+              d$antialias, d$fontsmooth, d$title, d$bg, d$canvas,
+              if(is.na(d$dpi)) NULL else d$dpi)
+    invisible()
+}
 
 #########
 # QUARTZ font database
@@ -95,13 +136,14 @@ quartzFont <- function(family) {
 }
 
 quartzFonts(# Default Serif font is Times
-            serif=quartzFont(c("Times-Roman", "Times-Bold",
+            serif = quartzFont(c("Times-Roman", "Times-Bold",
             "Times-Italic", "Times-BoldItalic")),
                 # Default Sans Serif font is Helvetica
-            sans=quartzFont(c("Helvetica", "Helvetica-Bold",
+            sans = quartzFont(c("Helvetica", "Helvetica-Bold",
             "Helvetica-Italic", "Helvetica-BoldOblique")),
                 # Default Monospace font is Courier
-            mono=quartzFont(c("Courier", "Courier-Bold",
+            mono = quartzFont(c("Courier", "Courier-Bold",
             "Courier-Oblique", "Courier-BoldOblique")),
                 # Default Symbol font is Symbol
-            symbol=quartzFont(c("Symbol", "Symbol", "Symbol", "Symbol")))
+                # Deprecated: remove in R 2.8.0
+            symbol = quartzFont(c("Symbol", "Symbol", "Symbol", "Symbol")))

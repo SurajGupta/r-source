@@ -18,14 +18,9 @@
  */
 
 #define _GNU_SOURCE
+#include <tcl.h>
 #include <stdio.h>
 #include <string.h>
-#include <tcl.h>
-#include <tk.h>
-
-#if (TCL_MAJOR_VERSION==8 && TCL_MINOR_VERSION==0)
-#define TCL80
-#endif
 
 /* TclCmdProc was redefined to include const in Tcl 8.4 */
 #ifndef CONST84
@@ -36,8 +31,14 @@
 #include <R_ext/PrtUtil.h>
 #include <R_ext/Parse.h>
 
+#ifndef Win32
+/* From tcltk_unix.c */
+void Tcl_unix_setup(void);
+#endif
+
 /* Globals exported from  ./tcltk.c : */
 
+Tcl_Interp *RTcl_interp;      /* Interpreter for this application. */
 void tcltk_init(void);
 
 SEXP dotTcl(SEXP args);

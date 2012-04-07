@@ -1,7 +1,7 @@
 #-*- Makefile -*-
 include ../../gnuwin32/MkRules
 
-all: makeMakedeps libz.a
+all: makeMakedeps DLL implib headers
 
 SOURCES = adler32.c compress.c crc32.c deflate.c gzio.c infback.c \
   inffast.c inflate.c inftrees.c trees.c uncompr.c zutil.c
@@ -9,12 +9,34 @@ OBJECTS = $(SOURCES:.c=.o)
 
 CFLAGS=-I../../include -DHAVE_CONFIG_H $(OPTFLAGS)
 
-libz.a: $(OBJECTS)
+# libz.a: $(OBJECTS)
+
+DLL: Rzlib.dll
+	@cp Rzlib.dll ../../../bin
+
+Rzlib.dll: $(OBJECTS)
+
+ifeq ($(strip $(USE_IMPLIBS)),YES)
+implib: libRzlib.dll.a
+	@$(MKDIR) -p ../../../lib
+	@$(CP) libRzlib.dll.a ../../../lib
+else
+implib:
+endif
+
+libRzlib.dll.a: Rzlib.def
+
+Rzlib.def: $(OBJECTS)
+	@$(ECHO) EXPORTS > $@
+	@$(NM) $^ | $(SED) -n 's/^.* [BCDRT] _/ /p' | $(SORT) | uniq >> $@
+
+headers:
+	@$(CP) zlib.h zconf.h ../../../include
 
 clean:
-	@$(RM) *.o *~ *.d Makedeps
+	@$(RM) *.o *~ *.d Makedeps Rzlib.def
 distclean: clean
-	@$(RM) libz.a
+	@$(RM) libz.a Rzlib.dll libRzlib.dll.a
 
 # Dependencies
 DEPS=$(SOURCES:.c=.d)

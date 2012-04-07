@@ -20,9 +20,7 @@ if test "${R_HOME_DIR}" = "@prefix@/@LIBnn@/R"; then
         R_HOME_DIR="@prefix@/${libnn}/R"
      elif [ -x "@prefix@/${libnn_fallback}/R/bin/exec/R" ]; then
         R_HOME_DIR="@prefix@/${libnn_fallback}/R"
-     else 
-        echo "Error: R executable not found"
-        exit 1
+     ## else -- leave alone (might be a sub-arch)
      fi
      ;;
   esac
@@ -79,6 +77,7 @@ Options:
   -q, --quiet           Don't print startup message
   --silent              Same as --quiet
   --slave               Make R run as quietly as possible
+  --interactive         Force an interactive session
   --verbose             Print more information about progress
   -d, --debugger=NAME   Run R through debugger NAME
   --debugger-args=ARGS  Pass ARGS as arguments to the debugger
@@ -120,6 +119,12 @@ Report bugs to <r-bugs@r-project.org>."
 # General Public License.  For more information about these matters,
 # see http://www.gnu.org/copyleft/gpl.html."
 
+
+## some systems have a more portable sed, e.g. /usr/xpg4/bin/sed on Solaris,
+## so make sure that is used.
+SED=@SED@
+export SED
+
 error () {
   echo "ERROR: $*" >&2
   exit 1
@@ -140,7 +145,7 @@ while test -n "${1}"; do
       . ${R_HOME}/etc${R_ARCH}/ldpaths
       exec sh "${R_HOME}/bin/Rcmd" @OSF_SH_BUG@ ;;
     -g|--gui)
-      if test -n "`echo ${2} | sed 's/^-.*//'`"; then      
+      if test -n "`echo ${2} | ${SED} 's/^-.*//'`"; then      
 	gui="${2}"
         args="${args} ${1} ${2}"
 	shift
@@ -149,20 +154,20 @@ while test -n "${1}"; do
       fi
       ;;
     --gui=*)
-      gui=`echo "${1}" | sed -e 's/[^=]*=//'`
+      gui=`echo "${1}" | ${SED} -e 's/[^=]*=//'`
       args="${args} ${1}"
       ;;
     -d|--debugger)
-      if test -n "`echo ${2} | sed 's/^-.*//'`"; then      
+      if test -n "`echo ${2} | ${SED} 's/^-.*//'`"; then      
 	debugger="${2}"; shift
       else
 	error "option '${1}' requires an argument"
       fi
       ;;
     --debugger=*)
-      debugger=`echo "${1}" | sed -e 's/[^=]*=//'` ;;
+      debugger=`echo "${1}" | ${SED} -e 's/[^=]*=//'` ;;
     --debugger-args=*)
-      debugger_args=`echo "${1}" | sed -e 's/[^=]*=//'` ;;
+      debugger_args=`echo "${1}" | ${SED} -e 's/[^=]*=//'` ;;
     -h|--help)
       echo "${usage}"; exit 0 ;;
 ## use the version in compiled code to always be in sync      
@@ -171,7 +176,7 @@ while test -n "${1}"; do
     --args)
       break ;;
     --arch)
-      if test -n "`echo ${2} | sed 's/^-.*//'`"; then
+      if test -n "`echo ${2} | ${SED} 's/^-.*//'`"; then
 	R_ARCH="/${2}"
         shift
       else
@@ -179,12 +184,12 @@ while test -n "${1}"; do
       fi
       ;;
     --arch=*)
-      r_arch=`echo "${1}" | sed -e 's/[^=]*=//'`
+      r_arch=`echo "${1}" | ${SED} -e 's/[^=]*=//'`
       R_ARCH="/${r_arch}"
       ;;
     -e)
-      if test -n "`echo ${2} | sed 's/^-.*//'`"; then      
-	a=`echo "${2}" | sed -e 's/ /~+~/g'`; shift
+      if test -n "`echo ${2} | ${SED} 's/^-.*//'`"; then      
+	a=`echo "${2}" | ${SED} -e 's/ /~+~/g'`; shift
       else
 	error "option '${1}' requires an argument"
       fi

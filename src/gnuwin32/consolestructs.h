@@ -1,7 +1,7 @@
 /*
  *  R : A Computer Language for Statistical Data Analysis
  *  file consolestructs.h
- *  Copyright (C) 2004-7      The R Foundation
+ *  Copyright (C) 2004-8      The R Foundation
  *
  *  This program is free software; you can redistribute it and/or modify
  *  it under the terms of the GNU General Public License as published by
@@ -26,7 +26,7 @@ typedef unsigned long xlong;
 struct structXBUF {
     xint  ns, ms, shift;
     xlong dim, av;
-    char *b, **s, *free;
+    wchar_t *b, **s, *free;
     int  *user;
 };
 
@@ -49,17 +49,17 @@ struct structConsoleData {
     int   sel, mx0, my0, mx1, my1;	/* selection */
     xbuf  lbuf;			/* lines buffer */
     int   firstkey, numkeys;	/* keys buffer */
-    char *kbuf;
+    wchar_t *kbuf;
     int   already;              /* number of keys in buffer to be processed
 				   before clipb. */
-    char *clp;                  /* data from the clipboard */
+    wchar_t *clp;                 /* data from the clipboard */
     int  pclp;
 
     int   lazyupdate, needredraw, newfv, newfc;	/* updating and redrawing */
     int   wipe_completion;
     bitmap bm;
 
-    int   input, cur_pos, cur_byte, max_pos, max_byte, 
+    int   input, cur_pos, max_pos, 
 	prompt_len, prompt_wid; /* editing */
 
     char  chbrk, modbrk;	/* hook for user's break */
@@ -92,9 +92,8 @@ typedef struct structConsoleData *ConsoleData;
 #define VLINE(i) ((strlen(LINE(i))>FC) ? &LINE(i)[FC] : "")
 #define RLINE(i) (rect(0, BORDERY + (i)*FH, WIDTH, FH))
 #define RMLINES(i,j) (rect(0, BORDERY + (i)*FH, WIDTH, (j-i+1)*FH))
-#define cur_byte (p->cur_byte)
-#define max_byte (p->max_byte)
 #define cur_pos (p->cur_pos)
+#define max_pos (p->max_pos)
 #define prompt_len (p->prompt_len)
 #define prompt_wid (p->prompt_wid)
 #define CURROW  (p->r)  /* row of cursor */
@@ -121,6 +120,7 @@ void console_mousedown(control c, int button, point pt);
 void consoleresize(console c, rect r);
 void console_ctrlkeyin(control c, int key);
 void console_normalkeyin(control c, int k);
+void console_im(control c, font *f, point *pt);
 
 font consolefn;
 int fontsty, pointsize;
@@ -128,16 +128,16 @@ int consoler, consolec;
 int pagerrow, pagercol;
 rgb consolebg, consolefg, consoleuser, pagerhighlight;
 
-#define DIMLBUF 64*1024         /* console buffer size in chars */
-#define MLBUF   8*1024          /* console buffer size in lines */
+#define DIMLBUF 250000          /* console buffer size in chars */
+#define MLBUF   8000            /* console buffer size in lines */
 #define SLBUF   512             /* console buffer shift in lines */
-#define NKEYS   512		/* 8Kb paste buffer */
+#define NKEYS   512		/* key input buffer */
 #define TABSIZE 8
 
 xbuf newxbuf(xlong dim, xint ms, xint shift);
 void xbufgrow(xbuf p, xlong dim, xint ms);
 void xbufdel(xbuf p);
-void xbufaddc(xbuf p, char c);
-
-
+//void xbufaddc(xbuf p, char c);
+void xbufaddxc(xbuf p, wchar_t c);
+void xbufaddxs(xbuf p, const wchar_t *s, int user);
 

@@ -1,7 +1,7 @@
 /*
  *  R : A Computer Language for Statistical Data Analysis
  *  Copyright (C) 1995, 1996  Robert Gentleman and Ross Ihaka
- *  Copyright (C) 1998--2007  The R Development Core Team.
+ *  Copyright (C) 1998--2008  The R Development Core Team.
  *
  *  This program is free software; you can redistribute it and/or modify
  *  it under the terms of the GNU General Public License as published by
@@ -25,6 +25,8 @@
 #define COUNTING
 
 #define BYTECODE
+
+#define USE_CHAR_HASHING
 
 /* probably no longer needed */
 #define NEW_CONDITION_HANDLING
@@ -107,6 +109,7 @@ extern0 SEXP	R_StringHash;       /* Global hash of CHARSXPs */
 # define IS_UTF8(x) ((x)->sxpinfo.gp & UTF8_MASK)
 # define SET_UTF8(x) (((x)->sxpinfo.gp) |= UTF8_MASK)
 # define UNSET_UTF8(x) (((x)->sxpinfo.gp) &= ~UTF8_MASK)
+# define ENC_KNOWN(x) ((x)->sxpinfo.gp & (LATIN1_MASK | UTF8_MASK))
 #else
 /* Needed only for write-barrier testing */
 int IS_LATIN1(SEXP x);
@@ -115,17 +118,20 @@ void UNSET_LATIN1(SEXP x);
 int IS_UTF8(SEXP x);
 void SET_UTF8(SEXP x);
 void UNSET_UTF8(SEXP x);
+int ENC_KNOWN(SEXP x);
 #endif
 /* macros and declarations for managing CHARSXP cache */
-#define USE_ATTRIB_FIELD_FOR_CHARSXP_CACHE_CHAINS
-#ifdef USE_ATTRIB_FIELD_FOR_CHARSXP_CACHE_CHAINS
-# define CXHEAD(x) (x)
-# define CXTAIL(x) ATTRIB(x)
+#ifdef USE_CHAR_HASHING
+# define USE_ATTRIB_FIELD_FOR_CHARSXP_CACHE_CHAINS
+# ifdef USE_ATTRIB_FIELD_FOR_CHARSXP_CACHE_CHAINS
+#  define CXHEAD(x) (x)
+#  define CXTAIL(x) ATTRIB(x)
 SEXP (SET_CXTAIL)(SEXP x, SEXP y);
-#else
-# define CXHEAD(x) CAR(x)
-# define CXTAIL(x) CDR(x)
-#endif /* USE_ATTRIB_FIELD_FOR_CHARSXP_CACHE_CHAINS */
+# else
+#  define CXHEAD(x) CAR(x)
+#  define CXTAIL(x) CDR(x)
+# endif /* USE_ATTRIB_FIELD_FOR_CHARSXP_CACHE_CHAINS */
+#endif /* USE_CHAR_HASHING */
 
 
 #include "Internal.h"		/* do_FOO */
@@ -307,14 +313,12 @@ extern int putenv(char *string);
 # define _R_HAVE_TIMING_ 1
 #endif
 
-#include <R_ext/Rdynload.h>
-
 #define HSIZE	   4119	/* The size of the hash table for symbols */
 #define MAXIDSIZE   256	/* Largest symbol size possible */
 
 /* The type of the do_xxxx functions. */
 /* These are the built-in R functions. */
-typedef SEXP (*CCODE)();
+typedef SEXP (*CCODE)(SEXP, SEXP, SEXP, SEXP);
 
 /* Information for Deparsing Expressions */
 typedef enum {
@@ -666,7 +670,7 @@ extern int	R_DirtyImage	INI_as(0);	/* Current image dirty */
 LibExtern char *R_HistoryFile;	/* Name of the history file */
 LibExtern int	R_HistorySize;	/* Size of the history file */
 LibExtern int	R_RestoreHistory;	/* restore the history file? */
-extern void 	R_setupHistory();
+extern void 	R_setupHistory(void);
 
 /* Warnings/Errors */
 extern0 int	R_CollectWarnings INI_as(0);	/* the number of warnings */
@@ -686,6 +690,8 @@ LibExtern Rboolean mbcslocale  INI_as(FALSE);  /* is this a MBCS locale? */
 extern0   Rboolean latin1locale INI_as(FALSE); /* is this a Latin-1 locale? */
 #ifdef Win32
 LibExtern unsigned int localeCP  INI_as(1252); /* the locale's codepage */
+extern0   Rboolean WinUTF8out  INI_as(FALSE);  /* Use UTF-8 for output */
+extern0   void WinCheckUTF8(void);
 #endif
 
 extern0 char OutDec	INI_as('.');  /* decimal point used for output */
@@ -708,10 +714,10 @@ extern0 IStackval *R_BCIntStackBase, *R_BCIntStackTop, *R_BCIntStackEnd;
 
 /* Pointer  type and utilities for dispatch in the methods package */
 typedef SEXP (*R_stdGen_ptr_t)(SEXP, SEXP, SEXP); /* typedef */
-R_stdGen_ptr_t R_get_standardGeneric_ptr(); /* get method */
+R_stdGen_ptr_t R_get_standardGeneric_ptr(void); /* get method */
 R_stdGen_ptr_t R_set_standardGeneric_ptr(R_stdGen_ptr_t, SEXP); /* set method */
 LibExtern SEXP R_MethodsNamespace;
-SEXP R_deferred_default_method();
+SEXP R_deferred_default_method(void);
 SEXP R_set_prim_method(SEXP fname, SEXP op, SEXP code_vec, SEXP fundef,
 		       SEXP mlist);
 SEXP do_set_prim_method(SEXP op, const char *code_string, SEXP fundef,
@@ -764,6 +770,7 @@ extern0 Rboolean known_to_be_utf8 INI_as(FALSE);
 # define ddfindVar		Rf_ddfindVar
 # define deparse1		Rf_deparse1
 # define deparse1line		Rf_deparse1line
+# define deparse1s		Rf_deparse1s
 # define DispatchGroup		Rf_DispatchGroup
 # define DispatchOrEval		Rf_DispatchOrEval
 # define dynamicfindVar		Rf_dynamicfindVar
@@ -791,6 +798,7 @@ extern0 Rboolean known_to_be_utf8 INI_as(FALSE);
 # define InitFunctionHashing	Rf_InitFunctionHashing
 # define InitBaseEnv		Rf_InitBaseEnv
 # define InitGlobalEnv		Rf_InitGlobalEnv
+# define InitGraphics		Rf_InitGraphics
 # define InitMemory		Rf_InitMemory
 # define InitNames		Rf_InitNames
 # define InitOptions		Rf_InitOptions
@@ -805,6 +813,7 @@ extern0 Rboolean known_to_be_utf8 INI_as(FALSE);
 # define isValidName		Rf_isValidName
 # define ItemName		Rf_ItemName
 # define jump_to_toplevel	Rf_jump_to_toplevel
+# define KillAllDevices		Rf_KillAllDevices
 # define levelsgets		Rf_levelsgets
 # define LogicalFromComplex	Rf_LogicalFromComplex
 # define LogicalFromInteger	Rf_LogicalFromInteger
@@ -819,6 +828,7 @@ extern0 Rboolean known_to_be_utf8 INI_as(FALSE);
 # define matchArgs		Rf_matchArgs
 # define matchPar		Rf_matchPar
 # define Mbrtowc		Rf_mbrtowc
+# define mbtoucs		Rf_mbtoucs
 # define mkCLOSXP		Rf_mkCLOSXP
 # define mkFalse		Rf_mkFalse
 # define mkPROMISE		Rf_mkPROMISE
@@ -843,12 +853,15 @@ extern0 Rboolean known_to_be_utf8 INI_as(FALSE);
 # define RealFromInteger	Rf_RealFromInteger
 # define RealFromLogical	Rf_RealFromLogical
 # define RealFromString		Rf_RealFromString
+# define Seql			Rf_Seql
+# define Scollate		Rf_Scollate
 # define sortVector		Rf_sortVector
 # define ssort			Rf_ssort
 # define StringFromComplex	Rf_StringFromComplex
 # define StringFromInteger	Rf_StringFromInteger
 # define StringFromLogical	Rf_StringFromLogical
 # define StringFromReal		Rf_StringFromReal
+# define strIsASCII		Rf_strIsASCII
 # define StrToInternal		Rf_StrToInternal
 # define substituteList		Rf_substituteList
 # define tsConform		Rf_tsConform
@@ -856,9 +869,14 @@ extern0 Rboolean known_to_be_utf8 INI_as(FALSE);
 # define type2symbol		Rf_type2symbol
 # define unbindVar		Rf_unbindVar
 # define usemethod		Rf_usemethod
+# define ucstomb		Rf_ucstomb
+# define ucstoutf8		Rf_ucstoutf8
+# define utf8toucs		Rf_utf8toucs
+# define utf8towcs		Rf_utf8towcs
 # define vectorSubscript	Rf_vectorSubscript
 # define warningcall		Rf_warningcall
 # define WarningMessage		Rf_WarningMessage
+# define wcstoutf8		Rf_wcstoutf8
 # define yychar			Rf_yychar
 # define yylval			Rf_yylval
 # define yynerrs		Rf_yynerrs
@@ -872,15 +890,16 @@ extern0 Rboolean known_to_be_utf8 INI_as(FALSE);
 
 /* The maximum length of input line which will be asked for */
 #define CONSOLE_BUFFER_SIZE 1024
-int	R_ReadConsole(char *, unsigned char *, int, int);
-void	R_WriteConsole(char *, int); /* equivalent to R_WriteConsoleEx(a, b, 0) */
-void	R_WriteConsoleEx(char *, int, int);
+int	R_ReadConsole(const char *, unsigned char *, int, int);
+void	R_WriteConsole(const char *, int); /* equivalent to R_WriteConsoleEx(a, b, 0) */
+void	R_WriteConsoleEx(const char *, int, int);
 void	R_ResetConsole(void);
 void	R_FlushConsole(void);
 void	R_ClearerrConsole(void);
 void	R_Busy(int);
-int	R_ShowFiles(int, char **, char **, char *, Rboolean, char *);
-int     R_EditFiles(int, char **, char **, char *);
+int	R_ShowFiles(int, const char **, const char **, const char *,
+		    Rboolean, const char *);
+int     R_EditFiles(int, const char **, const char **, const char *);
 int	R_ChooseFile(int, char *, int);
 char	*R_HomeDir(void);
 Rboolean R_FileExists(const char *);
@@ -927,6 +946,7 @@ SEXP Rf_append(SEXP, SEXP); /* apparently unused now */
 void begincontext(RCNTXT*, int, SEXP, SEXP, SEXP, SEXP, SEXP);
 void Rf_checkArityCall(SEXP, SEXP, SEXP);
 void CheckFormals(SEXP);
+void R_check_locale(void);
 void check_stack_balance(SEXP op, int save);
 void CleanEd(void);
 void copyListMatrix(SEXP, SEXP, Rboolean);
@@ -936,6 +956,7 @@ void DataFrameClass(SEXP);
 SEXP ddfindVar(SEXP, SEXP);
 SEXP deparse1(SEXP,Rboolean,int);
 SEXP deparse1line(SEXP,Rboolean);
+SEXP deparse1s(SEXP call);
 int DispatchOrEval(SEXP, SEXP, const char *, SEXP, SEXP, SEXP*, int, int);
 int DispatchGroup(const char *, SEXP,SEXP,SEXP,SEXP,SEXP*);
 SEXP duplicated(SEXP, Rboolean);
@@ -960,10 +981,11 @@ void InitEd(void);
 void InitFunctionHashing(void);
 void InitBaseEnv(void);
 void InitGlobalEnv(void);
-Rboolean R_current_trace_state();
+Rboolean R_current_trace_state(void);
 Rboolean R_has_methods(SEXP);
 void R_InitialData(void);
 SEXP R_possible_dispatch(SEXP, SEXP, SEXP, SEXP, Rboolean);
+void InitGraphics(void);
 void InitMemory(void);
 void InitNames(void);
 void InitOptions(void);
@@ -977,6 +999,7 @@ Rboolean isMethodsDispatchOn(void);
 int isValidName(const char *);
 void R_JumpToContext(RCNTXT *, int, SEXP);
 void jump_to_toplevel(void);
+void KillAllDevices(void);
 SEXP levelsgets(SEXP, SEXP);
 void mainloop(void);
 SEXP makeSubscript(SEXP, SEXP, int *, SEXP);
@@ -995,7 +1018,7 @@ SEXP mkQUOTE(SEXP);
 SEXP mkSYMSXP(SEXP, SEXP);
 SEXP mkTrue(void);
 SEXP NewEnvironment(SEXP, SEXP, SEXP);
-void onintr();
+void onintr(void);
 RETSIGTYPE onsigusr1(int);
 RETSIGTYPE onsigusr2(int);
 int OneIndex(SEXP, SEXP, int, int, SEXP*, int, SEXP);
@@ -1007,9 +1030,9 @@ void PrintValueRec(SEXP, SEXP);
 void PrintVersion(char *);
 void PrintVersionString(char *);
 void PrintWarnings(void);
-void process_site_Renviron();
-void process_system_Renviron();
-void process_user_Renviron();
+void process_site_Renviron(void);
+void process_system_Renviron(void);
+void process_user_Renviron(void);
 SEXP promiseArgs(SEXP, SEXP);
 void Rcons_vprintf(const char *, va_list);
 SEXP R_data_class(SEXP , Rboolean);
@@ -1028,7 +1051,7 @@ void R_SaveToFileV(SEXP, FILE*, int, int);
 Rboolean R_seemsOldStyleS4Object(SEXP object);
 int R_SetOptionWarn(int);
 int R_SetOptionWidth(int);
-void R_Suicide(char *);
+void R_Suicide(const char *);
 void R_getProcTime(double *data);
 int R_isMissing(SEXP symbol, SEXP rho);
 void sortVector(SEXP, Rboolean);
@@ -1069,6 +1092,9 @@ void R_SetPPSize(R_size_t);
 void R_run_onexits(RCNTXT *);
 void R_restore_globals(RCNTXT *);
 
+/* ../main/devices.c, used in memory.c, gnuwin32/extra.c */
+#define R_MaxDevices 64
+
 /* ../main/identical.c : */
 Rboolean compute_identical(SEXP x, SEXP y);
 
@@ -1103,17 +1129,24 @@ SEXP R_subassign3_dflt(SEXP, SEXP, SEXP, SEXP);
 /* main/util.c */
 void UNIMPLEMENTED_TYPE(const char *s, SEXP x);
 void UNIMPLEMENTED_TYPEt(const char *s, SEXPTYPE t);
-Rboolean utf8strIsASCII(const char *str);
+Rboolean Rf_strIsASCII(const char *str);
+int utf8clen(char c);
 #ifdef SUPPORT_MBCS
 typedef unsigned short ucs2_t;
-size_t mbcsToUcs2(const char *in, ucs2_t *out, int nout);
+size_t mbcsToUcs2(const char *in, ucs2_t *out, int nout, int enc);
 /* size_t mbcsMblen(char *in);
 size_t ucs2ToMbcs(ucs2_t *in, char *out);
 size_t ucs2Mblen(ucs2_t *in); */
-int utf8clen(char c);
+size_t utf8toucs(wchar_t *wc, const char *s);
+size_t utf8towcs(wchar_t *wc, const char *s, size_t n);
+size_t ucstomb(char *s, const unsigned int wc);
+size_t ucstoutf8(char *s, const unsigned int wc);
+size_t mbtoucs(unsigned int *wc, const char *s, size_t n);
+size_t wcstoutf8(char *s, const wchar_t *wc, size_t n);
+
 #define mbs_init(x) memset(x, 0, sizeof(mbstate_t))
 size_t Mbrtowc(wchar_t *wc, const char *s, size_t n, mbstate_t *ps);
-void mbcsToLatin1(const char *in, char *out);
+/* void mbcsToLatin1(const char *in, char *out); */
 Rboolean mbcsValid(const char *str);
 char *Rf_strchr(const char *s, int c);
 char *Rf_strrchr(const char *s, int c);
@@ -1124,8 +1157,9 @@ char *Rf_strrchr(const char *s, int c);
 #ifdef Win32
 void R_fixslash(char *s);
 void R_fixbackslash(char *s);
+wchar_t *filenameToWchar(const SEXP fn, const Rboolean expand);
 #endif
-#if defined(Win32) && defined(SUPPORT_UTF8)
+#if defined(Win32) && defined(SUPPORT_UTF8_WIN32)
 #define mbrtowc(a,b,c,d) Rmbrtowc(a,b)
 #define wcrtomb(a,b,c) Rwcrtomb(a,b)
 #define mbstowcs(a,b,c) Rmbstowcs(a,b,c)
@@ -1137,25 +1171,18 @@ size_t Rwcstombs(char *s, const wchar_t *wc, size_t n);
 #endif
 
 FILE *RC_fopen(const SEXP fn, const char *mode, const Rboolean expand);
+int Seql(SEXP a, SEXP b);
+int Scollate(SEXP a, SEXP b);
+
+double R_strtod4(const char *str, char **endptr, char dec, Rboolean NA);
+double R_strtod(const char *str, char **endptr);
+double R_atof(const char *str);
 
 /* unix/sys-std.c, main/options.c */
 void set_rl_word_breaks(const char *str);
 
 /* From localecharset.c */
 extern char *locale2charset(const char *);
-
-/* used in relop.c and sort.c */
-#if defined(Win32) && defined(SUPPORT_UTF8)
-#define STRCOLL Rstrcoll
-#else
-
-#ifdef HAVE_STRCOLL
-#define STRCOLL strcoll
-#else
-#define STRCOLL strcmp
-#endif
-
-#endif
 
 /* Localization */
 
@@ -1177,7 +1204,7 @@ extern char *locale2charset(const char *);
 #endif
 
 
-/* Macros for suspending interrupts */
+/* Macros for suspending interrupts: also in GraphicsDevice.h */
 #define BEGIN_SUSPEND_INTERRUPTS do { \
     Rboolean __oldsusp__ = R_interrupts_suspended; \
     R_interrupts_suspended = TRUE;

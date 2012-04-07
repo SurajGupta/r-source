@@ -39,10 +39,9 @@ windowsFonts(...)
   mappings and to define new mappings.  The \code{windowsFont}
   function can be used to create a new mapping.
 
-  Default mappings are provided for four device-independent font family
+  Default mappings are provided for three device-independent font family
   names: \code{"sans"} for a sans-serif font, \code{"serif"} for a serif
-  font, \code{"mono"} for a monospaced font, and \code{"symbol"} for a
-  symbol font.
+  font and \code{"mono"} for a monospaced font.
 
   These mappings will only be used if the current font face is
   1 (plain), 2 (bold), 3 (italic), or 4 (bolditalic).
@@ -54,7 +53,7 @@ windowsFonts(...)
 windowsFonts()
 windowsFonts("mono")
 
-\dontrun{## set up for Japanese: needs an East Asian locale
+\dontrun{## set up for Japanese: needs the fonts installed
 windows()  # make sure we have the right device type
 Sys.setlocale("LC_ALL", "ja")
 windowsFonts(JP1 = windowsFont("MS Mincho"),

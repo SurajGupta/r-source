@@ -1,6 +1,6 @@
 % File src/library/stats/man/ks.test.Rd
 % Part of the R package, http://www.R-project.org
-% Copyright 1995-2007 R Core Development Team
+% Copyright 1995-2008 R Core Development Team
 % Distributed under GPL 2 or later
 
 \name{ks.test}
@@ -17,7 +17,8 @@ ks.test(x, y, \dots,
 \arguments{
   \item{x}{a numeric vector of data values.}
   \item{y}{either a numeric vector of data values, or a character string
-    naming a distribution function.}
+    naming a cumulative distribution function or an actual cumulative
+    distribtution function such as \code{pnorm}.}
   \item{\dots}{parameters of the distribution specified (as a character
     string) by \code{y}.}
   \item{alternative}{indicates the alternative hypothesis and must be
@@ -36,10 +37,10 @@ ks.test(x, y, \dots,
   distribution is performed.
 
   Alternatively, \code{y} can be a character string naming a continuous
-  distribution function.  In this case, a one-sample test is carried
-  out of the null that the distribution function which generated
-  \code{x} is distribution \code{y} with parameters specified by
-  \code{\dots}.
+  (cumulative) distribution function, or such a function.  In this case,
+  a one-sample test is carried out of the null that the distribution
+  function which generated \code{x} is distribution \code{y} with
+  parameters specified by \code{\dots}.
 
   The presence of ties generates a warning, since continuous
   distributions do not generate them.
@@ -52,7 +53,7 @@ ks.test(x, y, \dots,
   case), respectively.  This is a comparison of cumulative distribution
   functions, and the test statistic is the maximum difference in value,
   with the statistic in the \code{"greater"} alternative being
-  \eqn{D^+ = max_u [ F_x(u) - F_y(u) ]}.   Thus in the two-sample case
+  \eqn{D^+ = \max_u [ F_x(u) - F_y(u) ]}.   Thus in the two-sample case
   \code{alternative="greater"} includes distributions for which \code{x}
   is stochastically \emph{smaller} than \code{y} (the CDF of \code{x} lies
   above and hence to the left of that for \code{y}), in contrast to

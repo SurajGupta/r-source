@@ -1,6 +1,6 @@
 % File src/library/base/man/agrep.Rd
 % Part of the R package, http://www.R-project.org
-% Copyright 1995-2007 R Core Development Team
+% Copyright 1995-2008 R Core Development Team
 % Distributed under GPL 2 or later
 
 \name{agrep}
@@ -14,7 +14,7 @@
 }
 \usage{
 agrep(pattern, x, ignore.case = FALSE, value = FALSE,
-      max.distance = 0.1)
+      max.distance = 0.1, useBytes = FALSE)
 }
 \arguments{
   \item{pattern}{a non-empty character string to be matched (\emph{not}
@@ -28,9 +28,9 @@ agrep(pattern, x, ignore.case = FALSE, value = FALSE,
     indices of the matches determined is returned and if \code{TRUE}, a
     vector containing the matching elements themselves is returned.}
   \item{max.distance}{Maximum distance allowed for a match.  Expressed
-    either as integer, or as a fraction of the pattern length (will be
+    either as integer, or as a fraction of the \emph{pattern} length (will be
     replaced by the smallest integer not less than the corresponding
-    fraction), or a list with possible components
+    fraction of the pattern length), or a list with possible components
     \describe{
       \item{\code{all}:}{maximal (overall) distance}
       \item{\code{insertions}:}{maximum number/fraction of insertions}
@@ -41,17 +41,22 @@ agrep(pattern, x, ignore.case = FALSE, value = FALSE,
     If \code{all} is missing, it is set to 10\%, the other components
     default to \code{all}.  The component names can be abbreviated.
   }
+  \item{useBytes}{logical. in a multibyte locale, should the comparison
+    be character-by-chracter (the default) or byte-by-byte.}
 }
 \details{
   The Levenshtein edit distance is used as measure of approximateness:
   it is the total number of insertions, deletions and substitutions
-  required to transform one string into another.  Note that this is
-  currently done at byte-level, and so is not wholly appropriate for
-  multibyte encodings such as UTF-8.
+  required to transform one string into another.
 
   The function is a simple interface to the \code{apse} library
   developed by Jarkko Hietaniemi (also used in the Perl String::Approx
-  module).
+  module), modified to work with multibyte character sets.  To save
+  space it only supports the first 65536 characters of UTF-8 (where all
+  the characters for human languages lie).  Note that it can be quite
+  slow in UTF-8, and \code{useBytes = TRUE} will be much faster.
+
+  Inputs with embedded nul bytes will be truncated at the first nul.
 }
 \value{
   Either a vector giving the indices of the elements that yielded a
@@ -59,15 +64,14 @@ agrep(pattern, x, ignore.case = FALSE, value = FALSE,
   coercion, preserving names but no other attributes).
 }
 \author{
-  David Meyer, based on C code by Jarkko Hietaniemi;
-  modifications by Kurt Hornik.
+  Original version by David Meyer, based on C code by Jarkko Hietaniemi.
 }
 \seealso{
   \code{\link{grep}}
 }
 \examples{
 agrep("lasy", "1 lazy 2")
-agrep("lasy", "1 lazy 2", max = list(sub = 0))
+agrep("lasy", c(" 1 lazy 2", "1 lasy 2"), max = list(sub = 0))
 agrep("laysy", c("1 lazy", "1", "1 LAZY"), max = 2)
 agrep("laysy", c("1 lazy", "1", "1 LAZY"), max = 2, value = TRUE)
 agrep("laysy", c("1 lazy", "1", "1 LAZY"), max = 2, ignore.case = TRUE)

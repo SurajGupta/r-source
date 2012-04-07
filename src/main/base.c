@@ -8,53 +8,185 @@
 
 #include <Defn.h>
 #include <Graphics.h>
-#include <Rdevices.h>
+#include <Colors.h>
+#include <GraphicsBase.h>
 
 int attribute_hidden baseRegisterIndex = -1;
 
-void restoredpSaved(DevDesc *dd);
+static R_INLINE GPar* dpSavedptr(pGEDevDesc dd) {
+    baseSystemState *bss = dd->gesd[baseRegisterIndex]->systemSpecific;
+    return &(bss->dpSaved);
+}
 
-static SEXP baseCallback(GEevent task, GEDevDesc *dd, SEXP data) {
-    GEDevDesc *curdd;
+static void restoredpSaved(pGEDevDesc dd)
+{
+    /* NOTE that not all params should be restored before playing */
+    /* the display list (e.g., don't restore the device size) */
+
+    /* This could probably now just do a memcpy */
+    int i, j, nr, nc;
+
+    dpptr(dd)->state = dpSavedptr(dd)->state;
+    /* does not restore 'valid' */
+    dpptr(dd)->adj = dpSavedptr(dd)->adj;
+    dpptr(dd)->ann = dpSavedptr(dd)->ann;
+    dpptr(dd)->bg = dpSavedptr(dd)->bg;
+    dpptr(dd)->bty = dpSavedptr(dd)->bty;
+    dpptr(dd)->cex = dpSavedptr(dd)->cex;
+    gpptr(dd)->lheight = dpSavedptr(dd)->lheight;
+    dpptr(dd)->col = dpSavedptr(dd)->col;
+    dpptr(dd)->crt = dpSavedptr(dd)->crt;
+    dpptr(dd)->err = dpSavedptr(dd)->err;
+    dpptr(dd)->fg = dpSavedptr(dd)->fg;
+    strncpy(dpptr(dd)->family, dpSavedptr(dd)->family, 201);
+    dpptr(dd)->font = dpSavedptr(dd)->font;
+    dpptr(dd)->gamma = dpSavedptr(dd)->gamma;
+    dpptr(dd)->lab[0] = dpSavedptr(dd)->lab[0];
+    dpptr(dd)->lab[1] = dpSavedptr(dd)->lab[1];
+    dpptr(dd)->lab[2] = dpSavedptr(dd)->lab[2];
+    dpptr(dd)->las = dpSavedptr(dd)->las;
+    dpptr(dd)->lty = dpSavedptr(dd)->lty;
+    dpptr(dd)->lwd = dpSavedptr(dd)->lwd;
+    dpptr(dd)->lend = dpSavedptr(dd)->lend;
+    dpptr(dd)->ljoin = dpSavedptr(dd)->ljoin;
+    dpptr(dd)->lmitre = dpSavedptr(dd)->lmitre;
+    dpptr(dd)->mgp[0] = dpSavedptr(dd)->mgp[0];
+    dpptr(dd)->mgp[1] = dpSavedptr(dd)->mgp[1];
+    dpptr(dd)->mgp[2] = dpSavedptr(dd)->mgp[2];
+    dpptr(dd)->mkh = dpSavedptr(dd)->mkh;
+    dpptr(dd)->pch = dpSavedptr(dd)->pch;
+    dpptr(dd)->ps = dpSavedptr(dd)->ps; /*was commented out --why? Well, it never changes */
+    dpptr(dd)->smo = dpSavedptr(dd)->smo;
+    dpptr(dd)->srt = dpSavedptr(dd)->srt;
+    dpptr(dd)->tck = dpSavedptr(dd)->tck;
+    dpptr(dd)->tcl = dpSavedptr(dd)->tcl;
+    dpptr(dd)->xaxp[0] = dpSavedptr(dd)->xaxp[0];
+    dpptr(dd)->xaxp[1] = dpSavedptr(dd)->xaxp[1];
+    dpptr(dd)->xaxp[2] = dpSavedptr(dd)->xaxp[2];
+    dpptr(dd)->xaxs = dpSavedptr(dd)->xaxs;
+    dpptr(dd)->xaxt = dpSavedptr(dd)->xaxt;
+    dpptr(dd)->xpd = dpSavedptr(dd)->xpd;
+    /* not oldxpd, which is a gpptr concept */
+    dpptr(dd)->xlog = dpSavedptr(dd)->xlog;
+    dpptr(dd)->yaxp[0] = dpSavedptr(dd)->yaxp[0];
+    dpptr(dd)->yaxp[1] = dpSavedptr(dd)->yaxp[1];
+    dpptr(dd)->yaxp[2] = dpSavedptr(dd)->yaxp[2];
+    dpptr(dd)->yaxs = dpSavedptr(dd)->yaxs;
+    dpptr(dd)->yaxt = dpSavedptr(dd)->yaxt;
+    dpptr(dd)->ylog = dpSavedptr(dd)->ylog;
+    dpptr(dd)->cexbase = dpSavedptr(dd)->cexbase;
+    dpptr(dd)->cexmain = dpSavedptr(dd)->cexmain;
+    dpptr(dd)->cexlab = dpSavedptr(dd)->cexlab;
+    dpptr(dd)->cexsub = dpSavedptr(dd)->cexsub;
+    dpptr(dd)->cexaxis = dpSavedptr(dd)->cexaxis;
+    dpptr(dd)->fontmain = dpSavedptr(dd)->fontmain;
+    dpptr(dd)->fontlab = dpSavedptr(dd)->fontlab;
+    dpptr(dd)->fontsub = dpSavedptr(dd)->fontsub;
+    dpptr(dd)->fontaxis = dpSavedptr(dd)->fontaxis;
+    dpptr(dd)->colmain = dpSavedptr(dd)->colmain;
+    dpptr(dd)->collab = dpSavedptr(dd)->collab;
+    dpptr(dd)->colsub = dpSavedptr(dd)->colsub;
+    dpptr(dd)->colaxis = dpSavedptr(dd)->colaxis;
+
+    /* must restore layout parameters;	the different graphics */
+    /* regions and coordinate transformations will be recalculated */
+    /* but they need all of the layout information restored for this */
+    /* to happen correctly */
+
+    dpptr(dd)->devmode = dpSavedptr(dd)->devmode;
+    dpptr(dd)->fig[0] = dpSavedptr(dd)->fig[0];
+    dpptr(dd)->fig[1] = dpSavedptr(dd)->fig[1];
+    dpptr(dd)->fig[2] = dpSavedptr(dd)->fig[2];
+    dpptr(dd)->fig[3] = dpSavedptr(dd)->fig[3];
+    dpptr(dd)->fin[0] = dpSavedptr(dd)->fin[0];
+    dpptr(dd)->fin[1] = dpSavedptr(dd)->fin[1];
+    dpptr(dd)->fUnits = dpSavedptr(dd)->fUnits;
+    dpptr(dd)->defaultFigure = dpSavedptr(dd)->defaultFigure;
+    dpptr(dd)->mar[0] = dpSavedptr(dd)->mar[0];
+    dpptr(dd)->mar[1] = dpSavedptr(dd)->mar[1];
+    dpptr(dd)->mar[2] = dpSavedptr(dd)->mar[2];
+    dpptr(dd)->mar[3] = dpSavedptr(dd)->mar[3];
+    dpptr(dd)->mai[0] = dpSavedptr(dd)->mai[0];
+    dpptr(dd)->mai[1] = dpSavedptr(dd)->mai[1];
+    dpptr(dd)->mai[2] = dpSavedptr(dd)->mai[2];
+    dpptr(dd)->mai[3] = dpSavedptr(dd)->mai[3];
+    dpptr(dd)->mUnits = dpSavedptr(dd)->mUnits;
+    dpptr(dd)->mex = dpSavedptr(dd)->mex;
+    nr = dpptr(dd)->numrows = dpSavedptr(dd)->numrows;
+    nc = dpptr(dd)->numcols = dpSavedptr(dd)->numcols;
+    dpptr(dd)->currentFigure = dpSavedptr(dd)->currentFigure;
+    dpptr(dd)->lastFigure = dpSavedptr(dd)->lastFigure;
+    for (i = 0; i < nr && i < MAX_LAYOUT_ROWS; i++) {
+	dpptr(dd)->heights[i] = dpSavedptr(dd)->heights[i];
+	dpptr(dd)->cmHeights[i] = dpSavedptr(dd)->cmHeights[i];
+    }
+    for (j = 0; j < nc && j < MAX_LAYOUT_COLS; j++) {
+	dpptr(dd)->widths[j] = dpSavedptr(dd)->widths[j];
+	dpptr(dd)->cmWidths[j] = dpSavedptr(dd)->cmWidths[j];
+    }
+    for (i = 0; i < nr*nc && i < MAX_LAYOUT_CELLS; i++) {
+	dpptr(dd)->order[i] = dpSavedptr(dd)->order[i];
+	dpptr(dd)->respect[i] = dpSavedptr(dd)->respect[i];
+    }
+    dpptr(dd)->rspct = dpSavedptr(dd)->rspct;
+    dpptr(dd)->layout = dpSavedptr(dd)->layout;
+    dpptr(dd)->mfind = dpSavedptr(dd)->mfind;
+    dpptr(dd)->new = dpSavedptr(dd)->new;
+    dpptr(dd)->oma[0] = dpSavedptr(dd)->oma[0];
+    dpptr(dd)->oma[1] = dpSavedptr(dd)->oma[1];
+    dpptr(dd)->oma[2] = dpSavedptr(dd)->oma[2];
+    dpptr(dd)->oma[3] = dpSavedptr(dd)->oma[3];
+    dpptr(dd)->omi[0] = dpSavedptr(dd)->omi[0];
+    dpptr(dd)->omi[1] = dpSavedptr(dd)->omi[1];
+    dpptr(dd)->omi[2] = dpSavedptr(dd)->omi[2];
+    dpptr(dd)->omi[3] = dpSavedptr(dd)->omi[3];
+    dpptr(dd)->omd[0] = dpSavedptr(dd)->omd[0];
+    dpptr(dd)->omd[1] = dpSavedptr(dd)->omd[1];
+    dpptr(dd)->omd[2] = dpSavedptr(dd)->omd[2];
+    dpptr(dd)->omd[3] = dpSavedptr(dd)->omd[3];
+    dpptr(dd)->oUnits = dpSavedptr(dd)->oUnits;
+    dpptr(dd)->plt[0] = dpSavedptr(dd)->plt[0];
+    dpptr(dd)->plt[1] = dpSavedptr(dd)->plt[1];
+    dpptr(dd)->plt[2] = dpSavedptr(dd)->plt[2];
+    dpptr(dd)->plt[3] = dpSavedptr(dd)->plt[3];
+    dpptr(dd)->pin[0] = dpSavedptr(dd)->pin[0];
+    dpptr(dd)->pin[1] = dpSavedptr(dd)->pin[1];
+    dpptr(dd)->pUnits = dpSavedptr(dd)->pUnits;
+    dpptr(dd)->defaultPlot = dpSavedptr(dd)->defaultPlot;
+    dpptr(dd)->pty = dpSavedptr(dd)->pty;
+    dpptr(dd)->usr[0] = dpSavedptr(dd)->usr[0];
+    dpptr(dd)->usr[1] = dpSavedptr(dd)->usr[1];
+    dpptr(dd)->usr[2] = dpSavedptr(dd)->usr[2];
+    dpptr(dd)->usr[3] = dpSavedptr(dd)->usr[3];
+    dpptr(dd)->logusr[0] = dpSavedptr(dd)->logusr[0];
+    dpptr(dd)->logusr[1] = dpSavedptr(dd)->logusr[1];
+    dpptr(dd)->logusr[2] = dpSavedptr(dd)->logusr[2];
+    dpptr(dd)->logusr[3] = dpSavedptr(dd)->logusr[3];
+}
+
+static SEXP baseCallback(GEevent task, pGEDevDesc dd, SEXP data)
+{
     GESystemDesc *sd;
-    NewDevDesc *dev;
-    GPar *ddp;
-    GPar *ddpSaved;
-    SEXP state;
-    SEXP valid;
+    baseSystemState *bss, *bss2;
     SEXP result = R_NilValue;
+
     switch (task) {
     case GE_FinaliseState:
+	/* called from unregisterOne */
 	sd = dd->gesd[baseRegisterIndex];
-	free((baseSystemState*) sd->systemSpecific);
+	free(sd->systemSpecific);
 	sd->systemSpecific = NULL;
 	break;
     case GE_InitState:
+    {
+	/* called from registerOne */
+	pDevDesc dev;
+	GPar *ddp;
 	sd = dd->gesd[baseRegisterIndex];
 	dev = dd->dev;
-	sd->systemSpecific = malloc(sizeof(baseSystemState));
-	ddp = &(((baseSystemState*) sd->systemSpecific)->dp);
+	bss = sd->systemSpecific = malloc(sizeof(baseSystemState));
+	ddp = &(bss->dp);
 	GInit(ddp);
-	/* Some things are set by the device, so copy them across now.
-	 */
-	ddp->ipr[0] = dev->ipr[0];
-	ddp->ipr[1] = dev->ipr[1];
-	ddp->cra[0] = dev->cra[0];
-	ddp->cra[1] = dev->cra[1];
-	ddp->asp = dev->asp;
-	ddp->left = dev->left;
-	ddp->right = dev->right;
-	ddp->top = dev->top;
-	ddp->bottom = dev->bottom;
-	ddp->xCharOffset = dev->xCharOffset;
-	ddp->yCharOffset = dev->yCharOffset;
-	ddp->yLineBias = dev->yLineBias;
-	ddp->canResizePlot = dev->canResizePlot;
-	ddp->canChangeFont = dev->canChangeFont;
-	ddp->canRotateText = dev->canRotateText;
-	ddp->canResizeText = dev->canResizeText;
-	ddp->canClip = dev->canClip;
-	ddp->canHAdj = dev->canHAdj;
 	/* For some things, the device sets the starting value at least.
 	 */
 	ddp->ps = dev->startps;
@@ -63,139 +195,116 @@ static SEXP baseCallback(GEevent task, GEDevDesc *dd, SEXP data) {
 	ddp->font = dev->startfont; 
 	ddp->lty = dev->startlty; 
 	ddp->gamma = dev->startgamma;
-	/* Initialise the gp settings too.
-	 */
-	/* copyGPar(ddp, &(((baseSystemState*) sd->systemSpecific)->gp)); */
+	/* Initialise the gp settings too: formerly in addDevice. */
+	copyGPar(ddp, &(bss->gp));
+	GReset(dd);
 	/*
 	 * The device has not yet received any base output
 	 */
-	((baseSystemState*) sd->systemSpecific)->baseDevice = FALSE;
+	bss->baseDevice = FALSE;
 	break;
+    }
     case GE_CopyState:
-	sd = dd->gesd[baseRegisterIndex];
-	curdd = GEcurrentDevice();
-	copyGPar(&(((baseSystemState*) sd->systemSpecific)->dpSaved),
-		 &(((baseSystemState*) 
-		    curdd->gesd[baseRegisterIndex]->systemSpecific)->dpSaved));
-	restoredpSaved((DevDesc*) curdd);
-	copyGPar(&(((baseSystemState*) 
-		    curdd->gesd[baseRegisterIndex]->systemSpecific)->dp),
-		 &(((baseSystemState*) 
-		    curdd->gesd[baseRegisterIndex]->systemSpecific)->gp));
-	GReset((DevDesc*) curdd);
+    {
+	/* called from GEcopyDisplayList */
+	pGEDevDesc curdd = GEcurrentDevice();
+	bss = dd->gesd[baseRegisterIndex]->systemSpecific;
+	bss2 = curdd->gesd[baseRegisterIndex]->systemSpecific;
+	copyGPar(&(bss->dpSaved), &(bss2->dpSaved)); 
+	restoredpSaved(curdd);
+	copyGPar(&(bss2->dp), &(bss2->gp));
+	GReset(curdd);
 	break;
+    }
     case GE_SaveState:
-	sd = dd->gesd[baseRegisterIndex];
-	copyGPar(&(((baseSystemState*) sd->systemSpecific)->dp),
-		 &(((baseSystemState*) sd->systemSpecific)->dpSaved));
+	/* called from GEinitDisplayList */
+	bss = dd->gesd[baseRegisterIndex]->systemSpecific;
+	copyGPar(&(bss->dp), &(bss->dpSaved));
 	break;
     case GE_RestoreState:
-	sd = dd->gesd[baseRegisterIndex];
-	restoredpSaved((DevDesc*) dd);
-	copyGPar(&(((baseSystemState*) sd->systemSpecific)->dp),
-		 &(((baseSystemState*) sd->systemSpecific)->gp));
-	GReset((DevDesc*) dd);
+	/* called from GEplayDisplayList */
+	bss = dd->gesd[baseRegisterIndex]->systemSpecific;
+	restoredpSaved(dd);
+	copyGPar(&(bss->dp), &(bss->gp));
+	GReset(dd);
 	break;
     case GE_SaveSnapshotState:
-	sd = dd->gesd[baseRegisterIndex];
-	PROTECT(state = allocVector(INTSXP,
-				    /* Got this formula from devga.c
-				     * Not sure why the "+ 1"
-				     * Rounding up?
-				     */
-				    1 + sizeof(GPar) / sizeof(int)));
-	copyGPar(&(((baseSystemState*) sd->systemSpecific)->dpSaved),
-		 (GPar*) INTEGER(state));
-	result = state;
+	/* called from GEcreateSnapshot */
+	bss = dd->gesd[baseRegisterIndex]->systemSpecific;
+	/* Changed from INTSXP in 2.7.0: but saved graphics lists
+	   are protected by an R version number */
+	PROTECT(result = allocVector(RAWSXP, sizeof(GPar)));
+	copyGPar(&(bss->dpSaved), (GPar*) RAW(result));
 	UNPROTECT(1);
 	break;
     case GE_RestoreSnapshotState:
-	sd = dd->gesd[baseRegisterIndex];
-	copyGPar((GPar*) INTEGER(data),
-		 &(((baseSystemState*) sd->systemSpecific)->dpSaved));	
-	restoredpSaved((DevDesc*) dd);
-	copyGPar(&(((baseSystemState*) sd->systemSpecific)->dp),
-		 &(((baseSystemState*) sd->systemSpecific)->gp));
-	GReset((DevDesc*) dd);
+	/* called from GEplaySnapshot */
+	bss = dd->gesd[baseRegisterIndex]->systemSpecific;
+	copyGPar((GPar*) RAW(data), &(bss->dpSaved));	
+	restoredpSaved(dd);
+	copyGPar(&(bss->dp), &(bss->gp));
+	GReset(dd);
 	break;
     case GE_CheckPlot:
-	/* Check that the current plotting state is "valid"
+	/* called from GEcheckState:
+	   Check that the current plotting state is "valid"
 	 */
-	sd = dd->gesd[baseRegisterIndex];
-	PROTECT(valid = allocVector(LGLSXP, 1));
-	/*
-	 * If there has not been any base output on the device
-	 * then ignore "valid" setting
-	 */
-	if (((baseSystemState*) sd->systemSpecific)->baseDevice) {
-	    LOGICAL(valid)[0] = 
-		(((baseSystemState*) sd->systemSpecific)->gp.state == 1) &&
-		((baseSystemState*) sd->systemSpecific)->gp.valid;
-	} else {
-	    LOGICAL(valid)[0] = TRUE;
-	}
-	UNPROTECT(1);
-	result = valid;
+	bss = dd->gesd[baseRegisterIndex]->systemSpecific;
+	result = ScalarLogical(bss->baseDevice ?
+			       (bss->gp.state == 1) && bss->gp.valid :
+			       TRUE);
 	break;
     case GE_ScalePS:
-        sd = dd->gesd[baseRegisterIndex];
-        dev = dd->dev;
-	ddp = &(((baseSystemState*) sd->systemSpecific)->dp);
-	ddpSaved = &(((baseSystemState*) sd->systemSpecific)->dpSaved);
+    {
+	/* called from GEhandleEvent in devWindows.c */
+	GPar *ddp, *ddpSaved;
+	bss = dd->gesd[baseRegisterIndex]->systemSpecific;
+	ddp = &(bss->dp);
+	ddpSaved = &(bss->dpSaved);
 	if (isReal(data) && LENGTH(data) == 1) {
-	  double rf = REAL(data)[0];
-	  ddp->scale *= rf;
-	  ddp->cra[0] *= rf; 
-	  ddp->cra[1] *= rf;
-	  /* Modify the saved settings so effects dislpay list too
-	   */
-	  ddpSaved->scale *= rf;
-	  ddpSaved->cra[0] *= rf; 
-	  ddpSaved->cra[1] *= rf;
-	}
-	else 
-	  error(_("Event UpdatePS requires a single numeric value"));
+	    double rf = REAL(data)[0];
+	    ddp->scale *= rf;
+	    /* Modify the saved settings so this effects display list too */
+	    ddpSaved->scale *= rf;
+	} else 
+	  error(_("Event GE_ScalePS requires a single numeric value"));
 	break;
+    }
     }
     return result;
 }
 
-/* Register the base graphics system with the graphics engine
+/* (un)Register the base graphics system with the graphics engine
  */
-void registerBase() {
+void attribute_hidden
+registerBase(void) {
     GEregisterSystem(baseCallback, &baseRegisterIndex);
 }
 
+void attribute_hidden
+unregisterBase(void) {
+    GEunregisterSystem(baseRegisterIndex);
+}
+
+
 /* FIXME: Make this a macro to avoid function call overhead?
+   Inline it if you really think it matters.
  */
 attribute_hidden
-GPar* Rf_gpptr(DevDesc *dd) {
-    return &(((baseSystemState*) GEsystemState((GEDevDesc*) dd, 
-					       baseRegisterIndex))->gp);
+GPar* gpptr(pGEDevDesc dd) {
+    baseSystemState *bss = dd->gesd[baseRegisterIndex]->systemSpecific;
+    return &(bss->gp);
 }
 
 attribute_hidden
-GPar* Rf_dpptr(DevDesc *dd) {
-    return &(((baseSystemState*) GEsystemState((GEDevDesc*) dd, 
-					       baseRegisterIndex))->dp);
+GPar* dpptr(pGEDevDesc dd) {
+    baseSystemState *bss = dd->gesd[baseRegisterIndex]->systemSpecific;
+    return &(bss->dp);
 }
 
-attribute_hidden
-GPar* Rf_dpSavedptr(DevDesc *dd) {
-    return &(((baseSystemState*) GEsystemState((GEDevDesc*) dd, 
-					       baseRegisterIndex))->dpSaved);
+attribute_hidden /* used in GNewPlot */
+void Rf_setBaseDevice(Rboolean val, pGEDevDesc dd) {
+    baseSystemState *bss = dd->gesd[baseRegisterIndex]->systemSpecific;
+    bss->baseDevice = val;
 }
 
-Rboolean Rf_baseDevice(DevDesc *dd) {
-    return ((baseSystemState*) GEsystemState((GEDevDesc*) dd, 
-					     baseRegisterIndex))->baseDevice;
-}
-
-void Rf_setBaseDevice(Rboolean val, DevDesc *dd) {
-    ((baseSystemState*) GEsystemState((GEDevDesc*) dd, 
-				      baseRegisterIndex))->baseDevice = val;
-}
-
-SEXP Rf_displayList(DevDesc *dd) {
-    return ((GEDevDesc*) dd)->dev->displayList;
-}

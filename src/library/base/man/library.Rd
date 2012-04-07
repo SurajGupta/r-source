@@ -67,9 +67,9 @@ require(package, lib.loc = NULL, quietly = FALSE,
     the named package, and not to any packages or name spaces which might be
     loaded to satisfy dependencies or imports.
 
-    This argument does not apply to packages using lazy-loading or saved
-    images.  Whether they have kept source is determined when they are
-    installed (and is most likely false).
+    This argument does not apply to packages using lazy-loading.
+    Whether they have kept source is determined when they are installed
+    (and is most likely false).
   }
   \item{verbose}{a logical.  If \code{TRUE}, additional diagnostics are
     printed.}
@@ -178,11 +178,12 @@ require(package, lib.loc = NULL, quietly = FALSE,
   functions as well as re-defining functions in other packages (notably
   \pkg{base}) to be generic, and this information is cached whenever
   such a package is loaded after \pkg{methods} and re-defined functions
-  are excluded from the list of conflicts.  The check requires looking
-  for a pattern of objects; the pattern search may be avoided by
-  defining an object \code{.noGenerics}
-  (with any value) in the package.  Naturally, if the package
-  \emph{does} have any such methods, this will prevent them from being used.
+  (\link{implicit generic}s) are excluded from the list of conflicts.
+  The caching  and check for conflicts require looking for a pattern of
+  objects; the search may be avoided by defining an object
+  \code{.noGenerics} (with any value) in the package.  Naturally, if the
+  package \emph{does} have any such methods, this will prevent them from
+  being used.
 }
 \section{Versioned installs}{
   Packages can be installed with version information by \code{R CMD
@@ -262,11 +263,10 @@ detach(pos = match(paste("package", pkg, sep=":"), search()))
 
 require(nonexistent)        # FALSE
 \dontrun{
-## Suppose a package needs to call a shared library named 'fooEXT',
+## Suppose a package needs to call a DLL named 'fooEXT',
 ## where 'EXT' is the system-specific extension.  Then you should use
-.First.lib <- function(lib, pkg) {
+.First.lib <- function(lib, pkg)
   library.dynam("foo", pkg, lib)
-}
 
 ## if you want to mask as little as possible, use
 library(mypkg, pos = "package:base")

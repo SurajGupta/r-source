@@ -1,6 +1,6 @@
 % File src/library/base/man/Bessel.Rd
 % Part of the R package, http://www.R-project.org
-% Copyright 1995-2007 R Core Development Team
+% Copyright 1995-2008 R Core Development Team
 % Distributed under GPL 2 or later
 
 \name{Bessel}
@@ -11,22 +11,17 @@
 \alias{besselJ}
 \alias{besselK}
 \alias{besselY}
-\alias{gammaCody}
 \usage{
 besselI(x, nu, expon.scaled = FALSE)
 besselK(x, nu, expon.scaled = FALSE)
 besselJ(x, nu)
 besselY(x, nu)
-gammaCody(x)
 }
 \description{
   Bessel Functions of integer and fractional order, of first
   and second kind, \eqn{J_{\nu}}{J(nu)} and \eqn{Y_{\nu}}{Y(nu)}, and
   Modified Bessel functions (of first and third kind),
   \eqn{I_{\nu}}{I(nu)} and \eqn{K_{\nu}}{K(nu)}.
-
-  \code{gammaCody} is the \eqn{(\Gamma)} function from the Specfun
-  package and originally used in the Bessel code.
 }
 \arguments{
   \item{x}{numeric, \eqn{\ge 0}{>= 0}.}
@@ -44,19 +39,16 @@ gammaCody(x)
   \code{expon.scale=TRUE}) values of the corresponding Bessel function.
 }
 \details{
-  The underlying C code stems from \emph{Netlib}
-  (\url{http://www.netlib.org/specfun/r[ijky]besl}).
-
   If \code{expon.scaled = TRUE}, \eqn{e^{-x} I_{\nu}(x)}{exp(-x) I(x;nu)},
   or \eqn{e^{x} K_{\nu}(x)}{exp(x) K(x;nu)} are returned.
 
-  \code{gammaCody} may be somewhat faster but less precise and/or robust
-  than \R's standard \code{\link{gamma}}.  It is here for experimental
-  purpose mainly, and \emph{may be defunct very soon}.
-
-  For \eqn{\nu < 0}{nu < 0}, formulae 9.1.2 and 9.6.2 from the
-  reference below are applied (which is probably suboptimal), unless for
+  For \eqn{\nu < 0}{nu < 0}, formulae 9.1.2 and 9.6.2 from Abramowitz \&
+  Stegun  are applied (which is probably suboptimal), except for
   \code{besselK} which is symmetric in \code{nu}.
+}
+\source{
+  The C code is a translation of Fortran routines from
+  \url{http://www.netlib.org/specfun/r[ijky]besl}.
 }
 \references{
   Abramowitz, M. and Stegun, I. A. (1972)
@@ -79,13 +71,13 @@ require(graphics)
 
 nus <- c(0:5, 10, 20)
 
-x <- seq(0, 4, len = 501)
+x <- seq(0, 4, length.out = 501)
 plot(x, x, ylim = c(0, 6), ylab = "", type = "n",
      main = "Bessel Functions  I_nu(x)")
 for(nu in nus) lines(x, besselI(x, nu=nu), col = nu+2)
 legend(0, 6, legend = paste("nu=", nus), col = nus+2, lwd = 1)
 
-x <- seq(0, 40, len=801); yl <- c(-.8, .8)
+x <- seq(0, 40, length.out = 801); yl <- c(-.8, .8)
 plot(x, x, ylim = yl, ylab = "", type = "n",
      main = "Bessel Functions  J_nu(x)")
 for(nu in nus) lines(x, besselJ(x, nu=nu), col = nu+2)
@@ -93,7 +85,7 @@ legend(32,-.18, legend = paste("nu=", nus), col = nus+2, lwd = 1)
 
 ## Negative nu's :
 xx <- 2:7
-nu <- seq(-10, 9, len = 2001)
+nu <- seq(-10, 9, length.out = 2001)
 op <- par(lab = c(16, 5, 7))
 matplot(nu, t(outer(xx, nu, besselI)), type = "l", ylim = c(-50, 200),
         main = expression(paste("Bessel ", I[nu](x), " for fixed ", x,

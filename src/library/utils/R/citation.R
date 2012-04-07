@@ -89,6 +89,8 @@ print.citation <- function(x, bibtex=TRUE, ...){
         cat("\n")
         writeLines(strwrap(attr(x, "footer")))
     }
+
+    invisible(x)
 }
 
 print.citationList <- function(x, bibtex=length(x)==1, ...)
@@ -106,6 +108,7 @@ print.citationList <- function(x, bibtex=length(x)==1, ...)
         writeLines(strwrap(attr(x, "footer")))
     }
     cat("\n")
+    invisible(x)
 }
 
 ###**********************************************************
@@ -275,10 +278,11 @@ citation <- function(package="base", lib.loc = NULL)
     attr(z, "header") <-
         paste("To cite package", sQuote(package), "in publications use:")
 
-    attr(z, "footer") <-
-        paste("ATTENTION: This citation information has been auto-generated",
-              "from the package DESCRIPTION file and may need manual editing,",
-              "see ", sQuote("help(\"citation\")"), ".")
+    if(! "recommended" %in% desc$Priority) # we assume those are OK
+        attr(z, "footer") <-
+            paste("ATTENTION: This citation information has been auto-generated",
+                  "from the package DESCRIPTION file and may need manual editing,",
+                  "see ", sQuote("help(\"citation\")"), ".")
 
     author <- as.character(z$author)
     if(length(author)>1)

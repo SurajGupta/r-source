@@ -1,7 +1,7 @@
 /*
  *  R : A Computer Language for Statistical Data Analysis
  *  Copyright (C) 1995, 1996  Robert Gentleman and Ross Ihaka
- *  Copyright (C) 1997--2007  The R Development Core Team.
+ *  Copyright (C) 1997--2008  The R Development Core Team.
  *
  *  This program is free software; you can redistribute it and/or modify
  *  it under the terms of the GNU General Public License as published by
@@ -18,7 +18,10 @@
  *  http://www.r-project.org/Licenses/
  */
 
-/* <UTF8> char here is either ASCII or handled as a whole */
+/* <UTF8> char here is either ASCII or handled as a whole 
+   Domain names could be non-native, but the message translation
+   systen is native.
+*/
 
 #ifdef HAVE_CONFIG_H
 #include <config.h>
@@ -35,7 +38,6 @@ extern void R_ProcessEvents(void);
 #include <Startup.h> /* rather cleanup ..*/
 #include <Rconnections.h>
 #include <Rinterface.h>
-#include <R_ext/GraphicsDevice.h>
 #include <R_ext/GraphicsEngine.h> /* for GEonExit */
 #include <Rmath.h> /* for imax2 */
 #if  !( defined(HAVE_AQUA) || defined(Win32) )
@@ -120,9 +122,7 @@ void R_CheckUserInterrupt(void)
 #if  ( defined(HAVE_AQUA) || defined(Win32) )
     R_ProcessEvents();
 #else
-
     R_PolledEvents();
-
     if (R_interrupts_pending)
 	onintr();
 #endif /* Win32 */
@@ -322,7 +322,7 @@ static void vwarningcall_dflt(SEXP call, const char *format, va_list ap)
     else if(w == 1) {	/* print as they happen */
 	char *tr;
 	if( call != R_NilValue ) {
-	    dcall = CHAR(STRING_ELT(deparse1(call, 0, DEFAULTDEPARSE), 0));
+	    dcall = CHAR(STRING_ELT(deparse1s(call), 0));
 	} else dcall = "";
 	Rvsnprintf(buf, min(BUFSIZE, R_WarnLength+1), format, ap);
 	if(R_WarnLength < BUFSIZE - 20 && strlen(buf) == R_WarnLength)
@@ -439,8 +439,7 @@ void PrintWarnings(void)
 	   REprintf("%s \n", CHAR(STRING_ELT(names, 0)));
 	else {
 	    const char *dcall, *sep = " ", *msg = CHAR(STRING_ELT(names, 0));
-	    dcall = CHAR(STRING_ELT(deparse1(VECTOR_ELT(R_Warnings, 0),
-					     0, DEFAULTDEPARSE), 0));
+	    dcall = CHAR(STRING_ELT(deparse1s(VECTOR_ELT(R_Warnings, 0)), 0));
 #ifdef SUPPORT_MBCS
 	    if (mbcslocale) {
 		int msgline1;
@@ -469,8 +468,7 @@ void PrintWarnings(void)
 		REprintf("%d: %s \n", i+1, CHAR(STRING_ELT(names, i)));
 	    else {
 		const char *dcall, *sep = " ", *msg = CHAR(STRING_ELT(names, i));
-		dcall = CHAR(STRING_ELT(deparse1(VECTOR_ELT(R_Warnings, i),
-						 0, DEFAULTDEPARSE), 0));
+		dcall = CHAR(STRING_ELT(deparse1s(VECTOR_ELT(R_Warnings, i)), 0));
 #ifdef SUPPORT_MBCS
 		if (mbcslocale) {
 		    int msgline1;
@@ -571,7 +569,7 @@ static void verrorcall_dflt(SEXP call, const char *format, va_list ap)
 	int len = strlen(head) + strlen(mid) + strlen(tail);
 
 	Rvsnprintf(tmp, min(BUFSIZE, R_WarnLength) - strlen(head), format, ap);
-	dcall = CHAR(STRING_ELT(deparse1(call, 0, DEFAULTDEPARSE), 0));
+	dcall = CHAR(STRING_ELT(deparse1s(call), 0));
 	if (len + strlen(dcall) + strlen(tmp) < BUFSIZE) {
 	    sprintf(errbuf, "%s%s%s", head, dcall, mid);
 #ifdef SUPPORT_MBCS
@@ -866,7 +864,7 @@ SEXP attribute_hidden do_gettext(SEXP call, SEXP op, SEXP args, SEXP rho)
 	     cptr = cptr->nextcontext)
 	    if (cptr->callflag & CTXT_FUNCTION) {
 		/* stop() etc have internal call to .makeMessage */
-		cfn = CHAR(STRING_ELT(deparse1(CAR(cptr->call), FALSE, 0), 0));
+		cfn = CHAR(STRING_ELT(deparse1s(CAR(cptr->call)), 0));
 		if(streql(cfn, "stop") || streql(cfn, "warning")
 		   || streql(cfn, "message")) continue;
 		rho = cptr->cloenv;
@@ -955,7 +953,7 @@ SEXP attribute_hidden do_ngettext(SEXP call, SEXP op, SEXP args, SEXP rho)
     int n = asInteger(CAR(args));
     
     checkArity(op, args);
-    if(n == NA_INTEGER || n < 0) error(_("invalid 'n'"));
+    if(n == NA_INTEGER || n < 0) error(_("invalid '%s' arguemnt"), "n");
     if(!isString(msg1) || LENGTH(msg1) != 1)
 	error(_("'msg1' must be a character string"));
     if(!isString(msg2) || LENGTH(msg2) != 1)
@@ -1279,7 +1277,7 @@ SEXP R_GetTraceback(int skip)
     UNPROTECT(1);
     return s;
 }
-\
+
 static char * R_ConciseTraceback(SEXP call, int skip)
 {
     static char buf[560];
@@ -1413,7 +1411,7 @@ SEXP attribute_hidden do_resetCondHands(SEXP call, SEXP op, SEXP args, SEXP rho)
     return R_NilValue;
 }
 
-static SEXP findSimpleErrorHandler()
+static SEXP findSimpleErrorHandler(void)
 {
     SEXP list;
     for (list = R_HandlerStack; list != R_NilValue; list = CDR(list)) {
@@ -1552,7 +1550,7 @@ SEXP attribute_hidden do_signalCondition(SEXP call, SEXP op, SEXP args, SEXP rho
     return R_NilValue;
 }
 
-static SEXP findInterruptHandler()
+static SEXP findInterruptHandler(void)
 {
     SEXP list;
     for (list = R_HandlerStack; list != R_NilValue; list = CDR(list)) {
@@ -1564,7 +1562,7 @@ static SEXP findInterruptHandler()
     return R_NilValue;
 }
 
-static SEXP getInterruptCondition()
+static SEXP getInterruptCondition(void)
 {
     /**** FIXME: should probably pre-allocate this */
     SEXP cond, klass;

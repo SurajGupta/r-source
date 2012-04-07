@@ -1,7 +1,7 @@
 /*
  *  R : A Computer Language for Statistical Data Analysis
  *  file dounzip.c
- *  first part Copyright (C) 2002-5  the R Development Core Team
+ *  first part Copyright (C) 2002-8  the R Development Core Team
  *  second part Copyright (C) 1998 Gilles Vollant
  *
  *  This program is free software; you can redistribute it and/or modify
@@ -28,12 +28,13 @@
 #include <config.h>
 #endif
 
-#include "Defn.h"
-#include "Fileio.h" /* for R_fopen */
+#include <Defn.h>
+#include <Fileio.h> /* for R_fopen */
 #include "unzip.h"
 #ifdef HAVE_SYS_STAT_H
 # include <sys/stat.h>
 #endif
+#include <errno.h>
 
 #ifdef Win32
 #include <io.h> /* for mkdir */
@@ -100,7 +101,11 @@ extract_one(unzFile uf, const char *const dest, const char * const filename,
 	fout = R_fopen(outname, "wb");
 	if (!fout) {
 	    unzCloseCurrentFile(uf);
+#ifdef HAVE_STRERROR
+	    error(_("cannot open file '%s': %s"), outname, strerror(errno));
+#else
 	    error(_("cannot open file '%s'"), outname);
+#endif
 	    return 3;		/* not reached */
 	}
 	while (1) {
@@ -343,7 +348,7 @@ R_newunz(const char *description, const char *const mode)
 	free(new->class); free(new);
 	error(_("allocation of unz connection failed"));
     }
-    init_con(new, description, mode);
+    init_con(new, description, CE_NATIVE, mode);
 
     new->canseek = TRUE;
     new->open = &unz_open;

@@ -1,6 +1,6 @@
 % File src/library/base/man/files.Rd
 % Part of the R package, http://www.R-project.org
-% Copyright 1995-2007 R Core Development Team
+% Copyright 1995-2008 R Core Development Team
 % Distributed under GPL 2 or later
 
 \name{files}
@@ -8,14 +8,17 @@
 \concept{directory}
 \title{File and Directory Manipulation}
 \usage{
-file.create(\dots)
+file.create(\dots, showWarnings = TRUE)
 file.exists(\dots)
 file.remove(\dots)
 file.rename(from, to)
 file.append(file1, file2)
 file.copy(from, to, overwrite = FALSE)
 file.symlink(from, to)
-dir.create(path, showWarnings = TRUE, recursive = FALSE)
+dir.create(path, showWarnings = TRUE, recursive = FALSE,
+           mode = "0777")
+Sys.chmod(paths, mode = "0777")
+Sys.umask(mode = "0000")
 }
 \alias{file.append}
 \alias{file.copy}
@@ -25,14 +28,18 @@ dir.create(path, showWarnings = TRUE, recursive = FALSE)
 \alias{file.rename}
 \alias{file.symlink}
 \alias{dir.create}
+\alias{Sys.chmod}
+\alias{Sys.umask}
 \arguments{
-  \item{\dots, file1, file2, from, to}{character vectors,
+  \item{\dots, file1, file2, from, to, paths}{character vectors,
     containing file names or paths.}
   \item{path}{a character vector containing a single path name.}
   \item{overwrite}{logical; should the destination files be overwritten?}
   \item{showWarnings}{logical; should the warnings on failure be shown?}
   \item{recursive}{logical: should elements of the path other than the
     last be created?  If true, like Unix's \code{mkdir -p}.}
+  \item{mode}{the file mode to be used on Unix-alikes: it will be
+    coerced by \code{\link{as.octmode}}.}
 }
 \description{
   These functions provide a low-level interface to the computer's
@@ -43,8 +50,9 @@ dir.create(path, showWarnings = TRUE, recursive = FALSE)
   string: you can specify the files separately or as one vector.
   All of these functions expand path names: see \code{\link{path.expand}}.
 
-  \code{file.create} creates files with the given names if they
-  do not already exist and truncates them if they do.
+  \code{file.create} creates files with the given names if they do not
+  already exist and truncates them if they do.  They are created with the
+  maximal permissions allowed by the \code{umask} setting.
 
   \code{file.exists} returns a logical vector indicating whether
   the files named by its argument exist.  (Here \sQuote{exists} is in the
@@ -57,12 +65,16 @@ dir.create(path, showWarnings = TRUE, recursive = FALSE)
 
   \code{file.remove} attempts to remove the files named in its
   argument.
-
-  \code{file.rename} attempts to rename a single file.
-#ifdef windows
-  On Windows 9x/ME rename is not atomic, so it is possible that
-  \code{to} will be deleted but \code{from} will not be renamed.
+#ifdef unix
+  On most platforms \sQuote{file} includes \emph{empty} directories,
+  symbolic links, fifos and sockets.
 #endif
+#ifdef windows
+  Unlike on Unix-alikes, \sQuote{file} here means a regular file and
+  not, say, an empty directory.
+#endif
+  
+  \code{file.rename} attempts to rename a single file.
 
   \code{file.append} attempts to append the files named by its
   second argument to those named by its first.  The \R subscript
@@ -77,23 +89,77 @@ dir.create(path, showWarnings = TRUE, recursive = FALSE)
   \code{file.symlink} makes symbolic links on those Unix-like platforms
   which support them.  The \code{to} argument can specify a single
   existing directory.
+#ifdef windows
+  (Windows Vista/Server 2008 have a version of symbolic links on NTFS
+  filesystems, but this seems too limited to be worth implementing.)
+#endif
   
   \code{dir.create} creates the last element of the path, unless
   \code{recursive = TRUE}.  Trailing path separators are removed.
 #ifdef windows
   On Windows drives are allowed in the path specification and unless
   the path is rooted, it will be interpreted relative to the current
-  directory on that drive.
+  directory on that drive.  \code{mode} is ignored on Windows.
 #endif
+#ifdef unix
+  The mode will be modified by the \code{umask} setting in the same way
+  as for the system function \code{mkdir}.  What modes can be set is
+  OS-dependent, and it is unsafe to assume that more than three octal
+  digits will be used.  For more details see your OS's documentation on the
+  system call \code{mkdir} (and not that on the command-line utility of
+  that name). 
+#endif
+
+  \code{Sys.chmod} sets the file permissions of one or more files.
+#ifdef unix
+  It may not be supported (when a warning is issued).
+  See the comments for \code{dir.create} for how modes are interpreted.
+  Changing mode on a symbolic link is unlikely to work (nor be
+  necessary).  For more details see your OS's documentation on the
+  system call \code{chmod} (and not that on the command-line utility of
+  that name). 
+#endif
+#ifdef windows
+  The interpretation of \code{mode} in the Windows system function is
+  non-POSIX and only supports setting the read-only attribute of the
+  file.  So \R interprets \code{mode} to mean set read-only if and only
+  if \code{mode & 0200 == 0} (interpreted in octal).  Windows has a much
+  more extensive system of file permissions on some file systems
+  (e.g. versions of NTFS) which are unrelated to this system call.
+#endif
+
+  \code{Sys.umask} sets the \code{umask}.
+#ifdef unix
+  It may not be supported (when a warning is issued and \code{"0000"}
+  returned).  For more details see your OS's documentation on the
+  system call \code{umask}. 
+#endif
+#ifdef windows
+  All files on Windows are readable, and files being executable is not a
+  Windows concept.  So \code{umask} only controls whether a file is
+  writable: a setting of \code{"200"} makes files (but not directories)
+  created subsequently read-only.
+#endif  
 }
 \value{
   \code{dir.create} and \code{file.rename} return a logical,
   true for success.
 
+  \code{Sys.umask} returns the previous value of the \code{umask},
+  invisibly, as a length-one object of class \code{"octmode"}.
+
   The remaining functions return a logical vector indicating which
   operation succeeded for each of the files attempted.
 
-  \code{dir.create} will return failure if the directory already exists. 
+  \code{dir.create} will return failure if the directory already exists.
+
+  If \code{showWarnings = TRUE}, \code{file.create} and
+  \code{dir.create} will give a warning for an unexpected failure
+  (e.g. not for a missing value nor for an already existing component for
+  \code{dir.create(recursive = TRUE)}).
+
+  Using a missing value for a file or path name will always be regarded
+  as a failure.
 }
 \author{
   Ross Ihaka, Brian Ripley

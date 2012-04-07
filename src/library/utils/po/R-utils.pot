@@ -2,7 +2,7 @@ msgid ""
 msgstr ""
 "Project-Id-Version: R 2.3.0\n"
 "Report-Msgid-Bugs-To: bugs@r-project.org\n"
-"POT-Creation-Date: 2008-02-06 06:53\n"
+"POT-Creation-Date: 2008-04-05 10:50\n"
 "PO-Revision-Date: YEAR-MO-DA HO:MI+ZONE\n"
 "Last-Translator: FULL NAME <EMAIL@ADDRESS>\n"
 "Language-Team: LANGUAGE <LL@li.org>\n"
@@ -80,6 +80,15 @@ msgstr ""
 msgid "%d occurrences in %s"
 msgstr ""
 
+msgid "Use <code> %s </code> \n to list the vignettes in all <strong>available</strong> packages."
+msgstr ""
+
+msgid "No vignettes found by"
+msgstr ""
+
+msgid "call"
+msgstr ""
+
 msgid "'file' must be NULL, a character string or a connection"
 msgstr ""
 
@@ -108,6 +117,9 @@ msgid "n < m"
 msgstr ""
 
 msgid "'FUN' must be a function or NULL"
+msgstr ""
+
+msgid "Can't handle S4 methods yet"
 msgstr ""
 
 msgid "'package' must be a character string or NULL"
@@ -206,6 +218,12 @@ msgstr ""
 msgid "invalid input matrix"
 msgstr ""
 
+msgid "class(es) of 'name' will be discarded"
+msgstr ""
+
+msgid "cannot edit NULL row names"
+msgstr ""
+
 msgid "no help file found for '%s'"
 msgstr ""
 
@@ -231,6 +249,9 @@ msgid "'form' must be a two-sided formula"
 msgstr ""
 
 msgid "'form' must be a two-sided formula with one term on each side"
+msgstr ""
+
+msgid "'topic' should be a name, length-one character vector or reserved word"
 msgstr ""
 
 msgid "No documentation for '%s' in specified packages and libraries:"
@@ -332,6 +353,9 @@ msgstr ""
 msgid "no package '%s' was found"
 msgstr ""
 
+msgid "metadata of package '%s' is corrupt"
+msgstr ""
+
 msgid "DESCRIPTION file of package '%s' is corrupt"
 msgstr ""
 
@@ -380,13 +404,13 @@ msgstr ""
 msgid "cannot create directory '%s'"
 msgstr ""
 
-msgid "'code_files' should be a character vector"
+msgid "'namespace' must be a single logical"
 msgstr ""
 
-msgid "'list' should be a character vector naming R objects"
+msgid "'code_files' must be a character vector"
 msgstr ""
 
-msgid "'namespace' should be a single logical"
+msgid "'list' must be a character vector naming R objects"
 msgstr ""
 
 msgid "cannot turn off locale-specific chars via LC_CTYPE"
@@ -414,6 +438,18 @@ msgid "Saving functions and data ..."
 msgstr ""
 
 msgid "Copying code files ..."
+msgstr ""
+
+msgid "Invalid file name(s) for R code in"
+msgstr ""
+
+msgid ":"
+msgstr ""
+
+msgid ","
+msgstr ""
+
+msgid "are now renamed to 'z<name>.R'"
 msgstr ""
 
 msgid "Making help files ..."
@@ -525,6 +561,9 @@ msgid "The downloaded packages are in\n\t%s"
 msgstr ""
 
 msgid "no object named '%s' to show"
+msgstr ""
+
+msgid "'pb' is not from class \"txtProgressBar\""
 msgstr ""
 
 msgid "cannot determine a usable name"
@@ -647,9 +686,6 @@ msgstr ""
 msgid "last record incomplete, %d lines discarded"
 msgstr ""
 
-msgid "'file' must be a character string or connection"
-msgstr ""
-
 msgid "transfer failure"
 msgstr ""
 
@@ -657,6 +693,9 @@ msgid "HTTPUserAgent"
 msgstr ""
 
 msgid "option must be a length one character vector or NULL"
+msgstr ""
+
+msgid "'file' must be a character string or connection"
 msgstr ""
 
 msgid "empty beginning of file"
@@ -702,6 +741,9 @@ msgid "str.data.frame() called with non-data.frame -- coercing to one."
 msgstr ""
 
 msgid "invalid options('str') -- using defaults instead"
+msgstr ""
+
+msgid "invalid components in options('str'):"
 msgstr ""
 
 msgid "'object' does not have valid levels()"
@@ -752,7 +794,7 @@ msgstr ""
 msgid "appending column names to file"
 msgstr ""
 
-msgid "attempt to change '%s' ignored"
+msgid "attempt to set '%s' ignored"
 msgstr ""
 
 msgid "'unzip' must be a single character string"
@@ -767,6 +809,9 @@ msgstr ""
 msgid "download had nonzero exit status"
 msgstr ""
 
+msgid "Using non-linked HTML file: hyperlinks may be incorrect"
+msgstr ""
+
 msgid "options(\"browser\") not set"
 msgstr ""
 
@@ -774,9 +819,6 @@ msgid "invalid browser name, check options(\"browser\")."
 msgstr ""
 
 msgid "Changing the default browser (as specified by the 'browser' option) to the given browser so that it gets used for all future help requests."
-msgstr ""
-
-msgid "Making links in per-session dir ..."
 msgstr ""
 
 msgid "If '%s' is already running, it is *not* restarted, and you must switch to its window."
@@ -789,6 +831,9 @@ msgid "'url' must be a non-empty character string"
 msgstr ""
 
 msgid "'browser' must be a non-empty character string"
+msgstr ""
+
+msgid "Making links in per-session dir ..."
 msgstr ""
 
 msgid "cannot create HTML package index"
@@ -845,6 +890,9 @@ msgstr ""
 msgid "cannot update '%s'"
 msgstr ""
 
+msgid "'pb' is not from class \"winProgressBar\""
+msgstr ""
+
 msgid "this function is intended to work with the Aqua GUI"
 msgstr ""
 
@@ -853,6 +901,11 @@ msgstr ""
 
 msgid "cannot remove prior installation of package"
 msgstr ""
+
+msgid        "class discarded from column %s"
+msgid_plural "classes discarded from columns %s"
+msgstr[0]    ""
+msgstr[1]    ""
 
 msgid        "object '%s' not found"
 msgid_plural "objects '%s' not found"

@@ -10,7 +10,16 @@
 \alias{as.POSIXct.date}
 \alias{as.POSIXct.dates}
 \alias{as.POSIXct.Date}
+\alias{as.POSIXct.numeric}
 \alias{as.POSIXlt}
+\alias{as.POSIXlt.Date}
+\alias{as.POSIXlt.date}
+\alias{as.POSIXlt.dates}
+\alias{as.POSIXlt.POSIXct}
+\alias{as.POSIXlt.factor}
+\alias{as.POSIXlt.character}
+\alias{as.POSIXlt.default}
+\alias{as.POSIXlt.numeric}
 \alias{as.double.POSIXlt}
 
 \title{Date-time Conversion Functions}
@@ -19,18 +28,26 @@
   \code{"POSIXct"} representing calendar dates and times.
 }
 \usage{
-as.POSIXct(x, tz = "")
-as.POSIXlt(x, tz = "")
+as.POSIXct(x, tz = "", \dots)
+as.POSIXlt(x, tz = "", \dots)
+
+\method{as.POSIXlt}{character}(x, tz = "", format, \dots)
+
+\method{as.POSIXlt}{numeric}(x, tz = "", origin, \dots)
 
 \method{as.double}{POSIXlt}(x, \dots)
 }
 \arguments{
   \item{x}{An object to be converted.}
   \item{tz}{A timezone specification to be used for the conversion,
-    \emph{if one is required}.  System-specific, but \code{""}
-    is the current timezone, and \code{"GMT"} is UTC
-    (Coordinated Universal Time, in French).}
+    \emph{if one is required}.  System-specific (see \link{time zones}),
+    but \code{""} is the current timezone, and \code{"GMT"} is UTC
+    (Universal Time, Coordinated).}
   \item{\dots}{further arguments to be passed to or from other methods.}
+  \item{format}{character string giving a date-time format as used
+    by \code{\link{strptime}}.}
+  \item{origin}{a date-time object, or something which can be coerced by
+    \code{as.POSIXct(tz="GMT")} to such an object.}
 }
 \details{
   The \code{as.POSIX*} functions convert an object to one of the two
@@ -48,6 +65,8 @@ as.POSIXlt(x, tz = "")
   \code{"14:52:03"}.  (Formats such as \code{"01/02/03"} are ambiguous
   but can be converted via a format specification by
   \code{\link{strptime}}.)  Fractional seconds are allowed.
+  Alternatively, \code{format} can be specified for character vectors or
+  factors.
 
   Logical \code{NA}s can be converted to either of the classes, but no
   other logical vectors can be.
@@ -57,37 +76,8 @@ as.POSIXlt(x, tz = "")
 
   If you are given a numeric time as the number of seconds since an
   epoch, see the examples.
-
-  Where OSes describe their valid timezones can be obscure.  The help
-  for \code{tzset} (or \code{_tzset} on Windows) can be helpful, but it
-  can also be inaccurate.  There is a cumbersome POSIX specification
-  (listed under environment variable \code{TZ} at
-  \url{http://www.opengroup.org/onlinepubs/009695399/basedefs/xbd_chap08.html}),
-  which is often at least partially supported, but there may be other more
-  user-friendly ways to specify timezones.
-#ifdef unix
-  For most Unix-alikes (including MacOS X) this can be an optional colon
-  prepended to the path to a file (by default under
-  \file{/usr/share/zoneinfo} or \file{/usr/lib/zoneinfo}
-  (or even \file{/usr/share/lib/zoneinfo} on Solaris)),
-  for example \file{EST5EDT} or \file{GB} or \file{Europe/Paris}.  See
-  \url{http://www.twinsun.com/tz/tz-link.htm} for more details and
-  references.
-#endif
-#ifdef windows
-  Windows documents a specification of the form \code{GST-1GDT}, but
-  always applies the \sQuote{US rules} for changing to/from DST with
-  such a specification.  (Further, the \sQuote{US rules} changed in
-  2007, which has caused errors even in US/Canadian timezones.)  So valid
-  time zone values are of the forms \code{EST5EDT} for a timezone 5
-  hours west of GMT called \code{EST} when daylight saving is in force
-  and \code{EDT} when it is not, \code{HST10} for
-  \sQuote{Hawaii-Aleutian Standard Time} (which has no DST), and
-  \code{CST-9:30} for the Northern Territory of Australia. The
-  abbreviations have to be exactly 3 letters, and have no meaning other
-  than as labels on the output.
-#endif
 }
+
 \value{
   \code{as.POSIXct} and \code{as.POSIXlt} return an object of the
   appropriate class.  If \code{tz} was specified, \code{as.POSIXlt}
@@ -106,7 +96,8 @@ as.POSIXlt(x, tz = "")
 \seealso{
   \link{DateTimeClasses} for details of the classes;
   \code{\link{strptime}} for conversion to and from character
-  representations.
+  representations. \code{\link{Sys.timezone}} for details of the
+  (system-specific)naming of time zones.
 }
 \examples{
 (z <- Sys.time())             # the current datetime, as class "POSIXct"
@@ -117,23 +108,30 @@ unlist(unclass(z))            # a list shown as a named vector
 
 ## suppose we have a time in seconds since 1960-01-01 00:00:00 GMT
 z <- 1472562988
-# two ways to convert this
-ISOdatetime(1960,1,1,0,0,0) + z # late August 2006
-strptime("1960-01-01", "\%Y-\%m-\%d", tz="GMT") + z
+# ways to convert this
+as.POSIXct(z, origin="1960-01-01")                # local
+as.POSIXct(z, origin="1960-01-01", tz="GMT")      # in UTC
+as.POSIXct(z, origin=ISOdatetime(1960,1,1,0,0,0)) # local
+ISOdatetime(1960,1,1,0,0,0) + z                   # local
 
-as.POSIXlt(Sys.time(), "GMT") # the current time in GMT
-#ifdef windows
-as.POSIXlt(Sys.time(), "EST5EDT")  # the current time in New York
-as.POSIXlt(Sys.time(), "HST10")    # the current time in Hawaii
-as.POSIXlt(Sys.time(), "CST-9:30") # the current time in Darwin
-#endif
-#ifdef unix
+## SPSS dates (R-help 2006-02-17)
+z <- c(10485849600, 10477641600, 10561104000, 10562745600)
+as.Date(as.POSIXct(z, origin="1582-10-14", tz="GMT"))
+
+as.POSIXlt(Sys.time(), "GMT") # the current time in UTC
 \dontrun{## These may not be correct names on your system
-as.POSIXlt(Sys.time(), "EST5EDT")  # the current time in New York
-as.POSIXlt(Sys.time(), "EST" )     # ditto, ignoring DST
-as.POSIXlt(Sys.time(), "HST")      # the current time in Hawaii
+as.POSIXlt(Sys.time(), "America/New_York")  # in New York
+as.POSIXlt(Sys.time(), "EST5EDT")           # alternative.
+as.POSIXlt(Sys.time(), "EST" )   # somewhere in Eastern Canada
+as.POSIXlt(Sys.time(), "HST")    # in Hawaii
 as.POSIXlt(Sys.time(), "Australia/Darwin")
 }
+#ifdef windows
+
+cols <- c("code", "coordinates", "TZ", "comments")
+tmp <- read.delim(file.path(R.home(), "share", "zoneinfo", "zone.tab"),
+                  header = FALSE, comment.char="#", col.names = cols)
+if(interactive()) View(tmp)
 #endif
 }
 \keyword{utilities}

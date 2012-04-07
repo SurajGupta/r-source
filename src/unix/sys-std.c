@@ -41,7 +41,6 @@
 #endif
 
 #include "Fileio.h"
-#include <Rdevices.h>		/* for KillAllDevices */
 #include "Runix.h"
 #include "Startup.h"
 #include <R_ext/Riconv.h>
@@ -66,7 +65,7 @@ extern FILE* ifp;
  *  1) FATAL MESSAGES AT STARTUP
  */
 
-void attribute_hidden Rstd_Suicide(char *s)
+void attribute_hidden Rstd_Suicide(const char *s)
 {
     REprintf("Fatal error: %s\n", s); 
     /* Might be called before translation is running */
@@ -418,7 +417,11 @@ static void initialize_rlcompletion(void); /* forward declaration */
 attribute_hidden
 char *R_ExpandFileName_readline(const char *s, char *buff)
 {
+#if defined(__APPLE__)
+    char *s2 = tilde_expand((char *)s);
+#else
     char *s2 = tilde_expand(s);
+#endif
 
     strncpy(buff, s2, PATH_MAX);
     if(strlen(s2) >= PATH_MAX) buff[PATH_MAX-1] = '\0';
@@ -492,7 +495,7 @@ static struct {
   and keeps a record of it on the top of the R readline stack.
  */
 static void
-pushReadline(char *prompt, rl_vcpfunc_t f)
+pushReadline(const char *prompt, rl_vcpfunc_t f)
 {
    if(ReadlineStack.current >= ReadlineStack.max) {
      warning(_("An unusual circumstance has arisen in the nesting of readline input. Please report using bug.report()"));
@@ -509,7 +512,7 @@ pushReadline(char *prompt, rl_vcpfunc_t f)
   Unregister the current readline handler and pop it from R's readline
   stack, followed by re-registering the previous one.
 */
-static void popReadline()
+static void popReadline(void)
 {
   if(ReadlineStack.current > -1) {
      rl_callback_handler_remove();
@@ -622,7 +625,7 @@ static void initialize_rlcompletion(void)
 	    return;	    
 	}
 	/* First check if namespace is loaded */
-	if(findVarInFrame(R_NamespaceRegistry, install("rcompgen"))
+	if(findVarInFrame(R_NamespaceRegistry, install("utils"))
 	   != R_UnboundValue) rcompgen_active = 1;
 	else { /* Then try to load it */
 	    SEXP cmdSexp, cmdexpr;
@@ -637,7 +640,7 @@ static void initialize_rlcompletion(void)
 		    eval(VECTOR_ELT(cmdexpr, i), R_GlobalEnv);
 	    }
 	    UNPROTECT(2);
-	    if(findVarInFrame(R_NamespaceRegistry, install("rcompgen"))
+	    if(findVarInFrame(R_NamespaceRegistry, install("utils"))
 	       != R_UnboundValue) rcompgen_active = 1;
 	    else {
 		rcompgen_active = 0;
@@ -646,7 +649,7 @@ static void initialize_rlcompletion(void)
 	}
     }
 
-    rcompgen_rho = R_FindNamespace(mkString("rcompgen"));
+    rcompgen_rho = R_FindNamespace(mkString("utils"));
 
     RComp_assignBufferSym  = install(".assignLinebuffer");
     RComp_assignStartSym   = install(".assignStart");
@@ -798,7 +801,7 @@ handleInterrupt(void)
 static void *cd = NULL;
 
 int attribute_hidden
-Rstd_ReadConsole(char *prompt, unsigned char *buf, int len,
+Rstd_ReadConsole(const char *prompt, unsigned char *buf, int len,
 		 int addtohistory)
 {
     if(!R_Interactive) {
@@ -830,7 +833,8 @@ Rstd_ReadConsole(char *prompt, unsigned char *buf, int len,
 	    *ob = '\0';
 	    err = res == (size_t)(-1);
 	    /* errors lead to part of the input line being ignored */
-	    if(err) fputs(_("<ERROR: invalid input in encoding> "), stdout);
+	    if(err) printf(_("<ERROR: re-encoding failure from encoding '%s'>\n"),
+			   R_StdinEnc);
 	    strncpy((char *)buf, obuf, len);
 #else
 	    if(!cd) {
@@ -917,7 +921,7 @@ Rstd_ReadConsole(char *prompt, unsigned char *buf, int len,
 	/* Write a text buffer to the console. */
 	/* All system output is filtered through this routine (unless R_Consolefile is used). */
 
-void attribute_hidden Rstd_WriteConsole(char *buf, int len)
+void attribute_hidden Rstd_WriteConsole(const char *buf, int len)
 {
     printf("%s", buf);
     fflush(stdout);
@@ -925,7 +929,7 @@ void attribute_hidden Rstd_WriteConsole(char *buf, int len)
 
 /* The extended version allows the distinction of errors and warnings.
    It is not enabled by default unless pretty-printing is desired. */
-void attribute_hidden Rstd_WriteConsoleEx(char *buf, int len, int otype)
+void attribute_hidden Rstd_WriteConsoleEx(const char *buf, int len, int otype)
 {
     if (otype)
       printf("\033[1m%s\033[0m", buf);
@@ -1067,13 +1071,13 @@ void attribute_hidden Rstd_CleanUp(SA_TYPE saveact, int status, int runLast)
 #endif
 int attribute_hidden
 Rstd_ShowFiles(int nfile, 		/* number of files */
-		   char **file,		/* array of filenames */
-		   char **headers,	/* the `headers' args of file.show.
+	       const char **file,		/* array of filenames */
+	       const char **headers,	/* the `headers' args of file.show.
 					   Printed before each file. */
-		   char *wtitle,	/* title for window
+	       const char *wtitle,	/* title for window
 					   = `title' arg of file.show */
-		   Rboolean del,	/* should files be deleted after use? */
-		   char *pager)		/* pager to be used */
+	       Rboolean del,	/* should files be deleted after use? */
+	       const char *pager)		/* pager to be used */
 
 {
 /*
@@ -1109,7 +1113,7 @@ Rstd_ShowFiles(int nfile, 		/* number of files */
 		}
 		else
 #ifdef HAVE_STRERROR
-		    fprintf(tfp, _("Cannot open file '%s', reason '%s'\n\n"), 
+		    fprintf(tfp, _("Cannot open file '%s': %s\n\n"), 
 			    file[i], strerror(errno));
 #else
 		    fprintf(tfp, _("Cannot open file '%s'\n\n"), file[i]);
@@ -1148,13 +1152,13 @@ int attribute_hidden Rstd_ChooseFile(int _new, char *buf, int len)
 }
 
 
-void attribute_hidden Rstd_ShowMessage(char *s)
+void attribute_hidden Rstd_ShowMessage(const char *s)
 {
     REprintf("%s\n", s);
 }
 
 
-void attribute_hidden Rstd_read_history(char *s)
+void attribute_hidden Rstd_read_history(const char *s)
 {
 #ifdef HAVE_LIBREADLINE
 # ifdef HAVE_READLINE_HISTORY_H

@@ -29,8 +29,6 @@ that differs only in that
  - it does not find the declarations of siglongjmp/sigsetjmp (in
    psignal.[ch])
 
- - SUPPORT_UTF8 is defined, but that is not true on Windows.
-
  - MinGW gcc 4.2.1 supports pthreads, but I left that undefined.
 
 Also, watch out for versions of the header files.  For example,
@@ -159,16 +157,6 @@ setupui
 for rgui/rterm/Rscript
 
 
-crc32
-deflate
-deflateEnd
-deflateInit2_
-deflateReset
-inflateReset
-
-for Rbitmap.dll
-
-
 Rf_mbrtowc
 Rf_strchr
 localeCP
@@ -180,14 +168,6 @@ R_cumsum
 
 for package DCluster
 
-deflate
-deflateEnd
-deflateInit_
-inflate
-inflateEnd
-inflateInit_
-
-for package GRASS
 
 fft_factor
 fft_work
@@ -224,3 +204,87 @@ for package panel
 
 
 BDR 2007-08-20
+
+
+6) Conversion to Unicode/UTF-8.
+
+[Notes are a work in progress.  This has been discussed since 2003.]
+
+As from R 2.7.0, Rgui works internally in UCS-2.  Currently key strokes are
+recorded as bytes, but that could easily be changed if we had testers with CJK
+keyboards.  Input/output is converted to/from the current locale in
+R_ReadConsole/R_WriteConsole.
+
+The internal pager works in UCS-2.
+
+History files are currently written in the locale's charset, for
+compatibility with Rterm and past versions of R.  We could perhaps
+alleviate this by using a BOM when writing in UCS-2, and detecting
+that when loading history files.
+
+Chris Jackson's script editor is still MBCS.  Quite a bit of work will
+be needed to convert it, since e.g. GA_gettext() expects to work with
+char *.
+
+The only bar to converting Rterm to UCS-2 is the lack of CJK keyboards
+to test on, but there would be little advantage in doing so.
+
+6.1 Internal use of UTF-8
+
+- Internal mbcs<->wchar/UCS translations would need to be modified to
+  use UTF-8 and not the locale charset.  Several places
+  (e.g. Riconv_open) already have support for this.  The
+  gettext-runtime (src/extra/intl) does not.
+
+*All* I/O would need to be translated.  This includes
+
+- Rprintf and allies, error messaging.
+
+  [This one is really tricky: we don't want to be writing UTF-8 files
+   when sink() is in use, for example, and rterm/some embedded uses
+   run in environments that probably do not support UCS-2.
+
+   The current compromise is to encode UTF-8 character vector elements
+   in EncodeString, at least when called from printing and from cat(),
+   and if outputting to the Rgui console. This is done by surrounding
+   them by 3-byte escape sequences starting with STX/ETX.]
+
+- file names.  Since Windows NTFS can have file names not valid in the
+  current locale, this needs to use wfopen and similar interfaces, as
+  well as GetFullPathNameW ... also _w* versions of mkdir, rmdir,
+  unlink, open, popen, stat, system.  Use with care, as not all file
+  systems use UCS-2 file names.  [Done]
+
+  This needs to include bzlib and zlib, as well as file/folder
+  selection widgets. [Done]
+
+- environment variables.  Both values and names, since _wputenv is
+  needed to set name=value strings.  It would be better to use wmain
+  and only ever use _wgetenv and _wputenv to avoid maintaining
+  parallel environments.  [Done]
+
+- graphics devices.  Calls to text() and points() (with pch as a
+  string) need either to be translated or, preferably, the device
+  adjusted to accept UTF-8 (and we would need a flag to know if it
+  could).  Note that this impacts third-party devices.
+  [Done for windows() family, postscript, pdf.]
+
+- GetUserName, GetComputerName, [GS]etCurrentDirectory. [Done]
+
+Also:
+
+- There would be compatibility issues with saved workspaces, although
+  few for those working in CP1252 locales.
+
+- It is not clear what to do with strings passed to packages.  We
+  could force conversion in .C and .Fortran, but most
+  character-manipulation packages are likely to be using .Call.
+
+BDR 2008-01-06
+
+7) Changing the parser
+
+By default the parser in gram.y is only processed in maintainer mode, 
+which isn't supported in Windows builds.  Defining RUN_BISON will 
+cause src/main/Makefile.win to process it (and correct for the erroneous
+line number records caused by our renaming of the output).

@@ -1,30 +1,36 @@
-# Explicitly enumerate the symbols here that are in the registration information
-# rather than use .registration as there are symbols that conflict with functions
-# on Windows, i.e. savePlot.  devga and Quartz are also not listed
-# here since they are conditional as is savePlot.  Calls to those are currently
-# left in name, PACKAGE pairs.
-# We can add additional useDynLib() directives within the conditional constructs
-# below to add these and can use a different prefix.
+## Explicitly enumerate the symbols here that are in the registration
+## information rather than use .registration as there are symbols that
+## conflict with functions on Windows, i.e. savePlot.
 
-useDynLib(grDevices, R_chull,
-          PicTeX, PostScript, XFig, PDF,
-          Type1FontInUse, CIDFontInUse, R_GD_nullDevice)
+if(tools:::.OStype() == "windows") {
+    useDynLib(grDevices, R_chull,
+              PicTeX, PostScript, XFig, PDF,
+              Cdevga=devga, CsavePlot=savePlot,
+              Type1FontInUse, CIDFontInUse, R_GD_nullDevice)
+} else {
+    useDynLib(grDevices, R_chull,
+              PicTeX, PostScript, XFig, PDF, CQuartz = Quartz,
+              Type1FontInUse, CIDFontInUse, R_GD_nullDevice)
+}
 
 export(Hershey, as.graphicsAnnot, boxplot.stats, check.options, chull,
        CIDFont, col2rgb, colors, colours, cm, colorRamp,
        colorRampPalette, contourLines, convertColor, colorConverter,
-       colorspaces, cm.colors, dev.control, dev.copy, dev.copy2eps,
-       dev.cur, dev.interactive, dev.list, dev.next, dev.off,
-       dev.prev, dev.print, dev.set, deviceIsInteractive, embedFonts,
+       colorspaces, cm.colors, devAskNewPage, dev.control,
+       dev.copy, dev.copy2eps, dev.copy2pdf, dev.cur, dev.interactive,
+       dev.list, dev.new, dev.next, dev.off, dev.prev, dev.print,
+       dev.set, dev.size, dev2bitmap, deviceIsInteractive, embedFonts,
        extendrange, getGraphicsEvent, graphics.off, gray, grey,
        gray.colors, grey.colors, heat.colors, hsv, hcl, make.rgb,
        n2mfrow, nclass.Sturges, nclass.FD, nclass.scott, palette, pdf,
-       pdfFonts, pictex, postscript, postscriptFont, postscriptFonts,
-       ps.options, rainbow, recordGraphics, recordPlot, replayPlot,
-       rgb, rgb2hsv, terrain.colors, topo.colors,
-       trans3d, Type1Font, xfig, xyTable, xy.coords, xyz.coords)
+       pdf.options, pdfFonts, pictex, postscript, postscriptFont,
+       postscriptFonts, ps.options, rainbow, recordGraphics,
+       recordPlot, replayPlot, rgb, rgb2hsv, savePlot, setEPS, setPS,
+       terrain.colors, topo.colors, trans3d, Type1Font, xfig, xyTable,
+       xy.coords, xyz.coords)
 
-export(X11, x11, bitmap, dev2bitmap, jpeg, png)
+## devices common to all platforms
+export(X11, x11, bitmap, bmp, jpeg, png, tiff)
 
 S3method(print, recordedplot)
 S3method(print, colorConverter)
@@ -36,14 +42,13 @@ S3method("checkFont", "CIDFont")
 S3method("matchEncoding", "Type1Font")
 S3method("matchEncoding", "CIDFont")
 
-if(tools:::.OStype() == "unix") {
-export(X11Font, X11Fonts, quartz, quartzFont, quartzFonts)
-}
-
 if(tools:::.OStype() == "windows") {
-export(bmp, bringToTop, savePlot, win.graph, win.metafile, win.print, windows,
-       windowsFont, windowsFonts)
+    export(bringToTop, win.graph, win.metafile, win.print,
+           windows, windows.options, windowsFont, windowsFonts)
 
-S3method("[", SavedPlots)
-S3method(print, SavedPlots)
+    S3method("[", SavedPlots)
+    S3method(print, SavedPlots)
+} else {
+    export(cairo_pdf, cairo_ps, X11.options, X11Font, X11Fonts,
+           quartz, quartz.options, quartzFont, quartzFonts, svg)
 }

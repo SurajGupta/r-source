@@ -22,10 +22,10 @@
 #
 msgid ""
 msgstr ""
-"Project-Id-Version: R 2.6.2\n"
+"Project-Id-Version: R 2.7.0\n"
 "Report-Msgid-Bugs-To: bugs@r-project.org\n"
-"POT-Creation-Date: 2007-08-22 12:25\n"
-"PO-Revision-Date: 2007-08-22 12:25\n"
+"POT-Creation-Date: 2008-04-07 08:26\n"
+"PO-Revision-Date: 2008-04-07 08:26\n"
 "Last-Translator: Automatically generated\n"
 "Language-Team: none\n"
 "MIME-Version: 1.0\n"
@@ -256,6 +256,9 @@ msgstr ""
 msgid "Rd files with duplicated alias '%s':"
 msgstr "Rd files with duplicated alias '%s':"
 
+msgid "Rd files with empty sections:"
+msgstr "Rd files with empty sections:"
+
 msgid "Found invalid multi-byte character data."
 msgstr "Found invalid multi-byte character data."
 
@@ -355,6 +358,15 @@ msgstr "Encoding ‘%s’ is not portable"
 
 msgid "Unknown encoding with non-ASCII data"
 msgstr "Unknown encoding with non-ASCII data"
+
+msgid "Non-standard license specification:"
+msgstr "Non-standard license specification:"
+
+msgid "Invalid license file pointers: %s"
+msgstr "Invalid license file pointers: %s"
+
+msgid "Verifiable as open source: %s"
+msgstr "Verifiable as open source: %s"
 
 msgid "Non-portable flags in variable '%s':"
 msgstr "Non-portable flags in variable '%s':"
@@ -475,14 +487,14 @@ msgstr "*** someone has corrupted the Built field in package ‘%s’ ***"
 msgid "cannot open directory '%s'"
 msgstr "cannot open directory ‘%s’"
 
-msgid "WARNING: 'Depends' entry has multiple dependencies:"
-msgstr "WARNING: ‘Depends’ entry has multiple dependencies:"
+msgid "WARNING: 'Depends' entry has multiple dependencies on R:"
+msgstr "WARNING: ‘Depends’ entry has multiple dependencies on R:"
 
 msgid ","
 msgstr ","
 
-msgid "only the first will be used"
-msgstr "only the first will be used"
+msgid "only the first will be used in R < 2.7.0"
+msgstr "only the first will be used in R < 2.7.0"
 
 msgid ""
 "WARNING: omitting pointless dependence on 'R' without a version requirement"
@@ -594,6 +606,9 @@ msgstr "Package ‘%s’ had its dependencies reduced to a minimal set."
 msgid "argument '%s' must be a character string or connection"
 msgstr "argument ‘%s’ must be a character string or connection"
 
+msgid "'file' must be a character string or connection"
+msgstr "‘file’ must be a character string or connection"
+
 msgid "unimplemented encoding"
 msgstr "unimplemented encoding"
 
@@ -602,6 +617,9 @@ msgstr "test ‘%s’ is not available"
 
 msgid "no or more than one match"
 msgstr "no or more than one match"
+
+msgid "'iconv' is required"
+msgstr "‘iconv’ is required"
 
 msgid "argument 'x' must be a character vector"
 msgstr "argument ‘x’ must be a character vector"

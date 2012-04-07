@@ -165,6 +165,3 @@ image bitmaptoimage (drawing dw)
     gsetcliprect(dw, r);
     return new_img;
 }
-
-
-

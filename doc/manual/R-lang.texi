@@ -1656,8 +1656,8 @@ The form using @code{$} applies to recursive objects such as lists and
 pairlists.  It allows only a literal character string or a symbol as the
 index.  That is, the index is not computable: for cases where you need
 to evaluate an expression to find the index, use @code{x[[expr]]}.  When
-@code{$} is applied to a non-recursive object the result is always
-@code{NULL}: as from @R{} 2.5.0 this is deprecated and will give a warning.
+@code{$} is applied to a non-recursive object the result used to be
+always @code{NULL}: as from @R{} 2.6.0 this is an error.
 
 @menu
 * Indexing by vectors::         
@@ -4368,6 +4368,10 @@ eight hex digits.
 A single quote may also be embedded directly in a double-quote delimited
 string and vice versa.
 
+Currently the inclusion of @code{\0} in a string constant terminates the
+constant: further characters up to the closing quote are scanned but
+ignored.  (This will change in @R{} 2.8.0.)
+
 @node Identifiers, Reserved words, Literal constants, Tokens
 @subsection Identifiers
 
@@ -4441,9 +4445,11 @@ Note that the following operators are predefined
 @node Separators, Operator tokens, Special operators, Tokens
 @subsection Separators
 
-Although not strictly tokens, stretches of whitespace characters (spaces
-and tabs) serve to delimit tokens in case of ambiguity, (compare
-@code{x<-5} and @code{x < -5}).
+Although not strictly tokens, stretches of whitespace characters
+(spaces, tabs and formfeeds, on Windows and UTF-8 locales other Unicode
+whitespace characters@footnote{such as @code{U+A0}, non-breaking space,
+and @code{U+3000}, ideographic space.}) serve to delimit tokens in case of
+ambiguity, (compare @code{x<-5} and @code{x < -5}).
 
 
 Newlines have a function which is a combination of token separator and

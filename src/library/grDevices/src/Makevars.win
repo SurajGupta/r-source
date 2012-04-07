@@ -1,7 +1,14 @@
 #-*- Makefile -*-
-## need config.h and Rgui and GraphApp headers.
-PKG_CPPFLAGS=-I$(RHOME)/src/include -I$(RHOME)/src/extra/zlib -I$(RHOME)/src/gnuwin32 -I$(RHOME)/src/extra -DHAVE_CONFIG_H
-ifdef SUPPORT_UTF8
-PKG_CPPFLAGS+=-DSUPPORT_UTF8
-endif
-PKG_LIBS=$(RHOME)/src/extra/zlib/libz.a -lgraphapp
+## need config.h
+PKG_CPPFLAGS=-I$(RHOME)/src/include -DHAVE_CONFIG_H
+## need zlib.h and run.h
+devPS-CPPFLAGS=-I$(RHOME)/src/extra/zlib -I$(RHOME)/src/gnuwin32
+## need opt.h, console.h, rui.h and graphapp headers
+devWindows-CPPFLAGS=-I$(RHOME)/src/gnuwin32 -I$(RHOME)/src/extra 
+
+PKG_LIBS=-lRgraphapp -lRzlib
+
+## need to avoid quartz files added for 2.7.0
+OBJECTS=chull.o devNull.o devPicTeX.o devPS.o devWindows.o init.o
+DEPS=chull.d devNull.d devPicTeX.d devPS.d devWindows.d init.d
+EXTRA_LIBS=

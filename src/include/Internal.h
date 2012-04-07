@@ -1,7 +1,7 @@
 /*
  *  R : A Computer Language for Statistical Data Analysis
  *  Copyright (C) 1995, 1996  Robert Gentleman and Ross Ihaka
- *  Copyright (C) 1997--2007  Robert Gentleman, Ross Ihaka and the
+ *  Copyright (C) 1997--2008  Robert Gentleman, Ross Ihaka and the
  *                            R Development Core Team
  *
  *  This program is free software; you can redistribute it and/or modify
@@ -32,6 +32,8 @@
 /* Device drivers here (for ease of access) */
 
 SEXP do_X11(SEXP, SEXP, SEXP, SEXP);
+SEXP do_cairo(SEXP, SEXP, SEXP, SEXP);
+SEXP do_saveplot(SEXP, SEXP, SEXP, SEXP);
 
 #if defined(__APPLE_CC__) && defined(HAVE_AQUA)
 SEXP do_wsbrowser(SEXP, SEXP, SEXP, SEXP);
@@ -60,6 +62,7 @@ SEXP do_getWindowTitle(SEXP, SEXP, SEXP, SEXP);
 SEXP do_loadRconsole(SEXP, SEXP, SEXP, SEXP);
 SEXP do_memsize(SEXP, SEXP, SEXP, SEXP);
 SEXP do_readClipboard(SEXP, SEXP, SEXP, SEXP);
+SEXP do_readRegistry(SEXP, SEXP, SEXP, SEXP);
 SEXP do_selectlist(SEXP, SEXP, SEXP, SEXP);
 SEXP do_setTitle(SEXP, SEXP, SEXP, SEXP);
 SEXP do_setStatusBar(SEXP, SEXP, SEXP, SEXP);
@@ -74,6 +77,9 @@ SEXP do_winmenunames(SEXP, SEXP, SEXP, SEXP);
 SEXP do_wingetmenuitems(SEXP, SEXP, SEXP, SEXP);
 SEXP do_winver(SEXP, SEXP, SEXP, SEXP);
 SEXP do_writeClipboard(SEXP, SEXP, SEXP, SEXP);
+SEXP do_winprogressbar(SEXP, SEXP, SEXP, SEXP);
+SEXP do_closewinprogressbar(SEXP, SEXP, SEXP, SEXP);
+SEXP do_setwinprogressbar(SEXP, SEXP, SEXP, SEXP);
 #endif
 
 SEXP do_abbrev(SEXP, SEXP, SEXP, SEXP);
@@ -128,6 +134,7 @@ SEXP do_charToRaw(SEXP, SEXP, SEXP, SEXP);
 SEXP do_chartr(SEXP, SEXP, SEXP, SEXP);
 SEXP do_class(SEXP, SEXP, SEXP, SEXP);
 SEXP do_classgets(SEXP, SEXP, SEXP, SEXP);
+SEXP do_clip(SEXP, SEXP, SEXP, SEXP);
 SEXP do_colon(SEXP, SEXP, SEXP, SEXP);
 SEXP do_colors(SEXP, SEXP, SEXP, SEXP);
 SEXP do_colsum(SEXP, SEXP, SEXP, SEXP);
@@ -139,6 +146,7 @@ SEXP do_complex(SEXP, SEXP, SEXP, SEXP);
 SEXP do_contour(SEXP, SEXP, SEXP, SEXP);
 SEXP do_contourLines(SEXP, SEXP, SEXP, SEXP);
 SEXP do_countfields(SEXP, SEXP, SEXP, SEXP);
+SEXP do_convertXY(SEXP, SEXP, SEXP, SEXP);
 SEXP do_Cstack_info(SEXP, SEXP, SEXP, SEXP);
 SEXP do_cum(SEXP, SEXP, SEXP, SEXP);
 SEXP do_compcases(SEXP, SEXP, SEXP, SEXP);
@@ -150,6 +158,7 @@ SEXP do_dataframe(SEXP, SEXP, SEXP, SEXP);
 SEXP do_dataviewer(SEXP, SEXP, SEXP, SEXP);
 SEXP do_date(SEXP, SEXP, SEXP, SEXP);
 SEXP do_debug(SEXP, SEXP, SEXP, SEXP);
+SEXP do_devAskNewPage(SEXP, SEXP, SEXP, SEXP);
 SEXP do_delayed(SEXP, SEXP, SEXP, SEXP);
 SEXP do_dend(SEXP, SEXP, SEXP, SEXP);
 SEXP do_dendwindow(SEXP, SEXP, SEXP, SEXP);
@@ -163,6 +172,7 @@ SEXP do_devnext(SEXP, SEXP, SEXP, SEXP);
 SEXP do_devoff(SEXP, SEXP, SEXP, SEXP);
 SEXP do_devprev(SEXP, SEXP, SEXP, SEXP);
 SEXP do_devset(SEXP, SEXP, SEXP, SEXP);
+SEXP do_devsize(SEXP, SEXP, SEXP, SEXP);
 SEXP do_dfltStop(SEXP, SEXP, SEXP, SEXP);
 SEXP do_dfltWarn(SEXP, SEXP, SEXP, SEXP);
 SEXP do_dim(SEXP, SEXP, SEXP, SEXP);
@@ -201,6 +211,7 @@ SEXP do_filechoose(SEXP, SEXP, SEXP, SEXP);
 SEXP do_filecreate(SEXP, SEXP, SEXP, SEXP);
 SEXP do_fileexists(SEXP, SEXP, SEXP, SEXP);
 SEXP do_fileinfo(SEXP, SEXP, SEXP, SEXP);
+SEXP do_filepath(SEXP, SEXP, SEXP, SEXP);
 SEXP do_fileremove(SEXP, SEXP, SEXP, SEXP);
 SEXP do_filerename(SEXP, SEXP, SEXP, SEXP);
 SEXP do_fileshow(SEXP, SEXP, SEXP, SEXP);
@@ -371,7 +382,6 @@ SEXP do_rawToChar(SEXP, SEXP, SEXP, SEXP);
 SEXP do_readDCF(SEXP, SEXP, SEXP, SEXP);
 SEXP do_readLines(SEXP, SEXP, SEXP, SEXP);
 SEXP do_readln(SEXP, SEXP, SEXP, SEXP);
-SEXP do_readonlypars(SEXP, SEXP, SEXP, SEXP);
 SEXP do_readtablehead(SEXP, SEXP, SEXP, SEXP);
 SEXP do_recall(SEXP, SEXP, SEXP, SEXP);
 SEXP do_recordGraphics(SEXP, SEXP, SEXP, SEXP);
@@ -384,7 +394,6 @@ SEXP do_remove(SEXP, SEXP, SEXP, SEXP);
 SEXP do_rep(SEXP, SEXP, SEXP, SEXP);
 SEXP do_rep_int(SEXP, SEXP, SEXP, SEXP);
 SEXP do_repeat(SEXP, SEXP, SEXP, SEXP);
-SEXP do_replay(SEXP, SEXP, SEXP, SEXP);
 SEXP do_resetCondHands(SEXP, SEXP, SEXP, SEXP);
 SEXP do_restart(SEXP, SEXP, SEXP, SEXP);
 SEXP do_restoreb(SEXP, SEXP, SEXP, SEXP);
@@ -431,8 +440,10 @@ SEXP do_storage_mode(SEXP, SEXP, SEXP, SEXP);
 SEXP do_strsplit(SEXP,SEXP,SEXP,SEXP);
 SEXP do_strptime(SEXP,SEXP,SEXP,SEXP);
 SEXP do_strtrim(SEXP,SEXP,SEXP,SEXP);
+SEXP do_syschmod(SEXP,SEXP,SEXP,SEXP);
 SEXP do_sysinfo(SEXP,SEXP,SEXP,SEXP);
 SEXP do_syssleep(SEXP,SEXP,SEXP,SEXP);
+SEXP do_sysumask(SEXP,SEXP,SEXP,SEXP);
 SEXP do_subassign(SEXP, SEXP, SEXP, SEXP);
 SEXP do_subassign_dflt(SEXP, SEXP, SEXP, SEXP);
 SEXP do_subassign2(SEXP, SEXP, SEXP, SEXP);
@@ -488,8 +499,6 @@ SEXP do_xspline(SEXP, SEXP, SEXP, SEXP);
 SEXP do_zeroin(SEXP, SEXP, SEXP, SEXP);
 SEXP do_zeroin2(SEXP, SEXP, SEXP, SEXP);
 
-SEXP do_playDL(SEXP, SEXP, SEXP, SEXP);
-SEXP do_setGPar(SEXP, SEXP, SEXP, SEXP);
 SEXP do_getSnapshot(SEXP, SEXP, SEXP, SEXP);
 SEXP do_playSnapshot(SEXP, SEXP, SEXP, SEXP);
 

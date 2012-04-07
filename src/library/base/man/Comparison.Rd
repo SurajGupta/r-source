@@ -37,7 +37,17 @@ x != y
   strings using the collating sequence of the locale in use: see
   \code{\link{locales}}.  The collating sequence of locales such as
   \samp{en\_US} is normally different from \samp{C} (which should use
-  ASCII) and can be surprising.
+  ASCII) and can be surprising.  Beware of making \emph{any} assumptions
+  about the collation order: e.g. in Estonian \code{Z} comes between
+  \code{S} and \code{T}, and collation is not necessarily
+  character-by-character -- in Danish \code{aa} sorts as a single
+  letter, after \code{z}.  In Welsh \code{ng} may or may not be a single
+  sorting unit: if it is it follows \code{g}.  Some platforms may
+  not respect the locale and always sort in numerical order of the bytes
+  in an 8-bit locale, or in Unicode point order for a UTF-8 locale (and
+  may not sort in the same order for the same language in different
+  character sets).  Collation of non-letters (spaces, punctuation signs,
+  hyphens, fractions and so on) is even more problematic. 
 
   At least one of \code{x} and \code{y} must be an atomic vector, but if
   the other is a list \R attempts to coerce it to the type of the atomic
@@ -64,7 +74,7 @@ x != y
   character strings before comparison.
 }
 \value{
-  A vector of logicals indicating the result of the element by element
+  A logical vector indicating the result of the element by element
   comparison.  The elements of shorter vectors are recycled as
   necessary.
 
@@ -80,7 +90,7 @@ x != y
 
   For numerical and complex values, remember \code{==} and \code{!=} do
   not allow for the finite representation of fractions, nor for rounding
-  error. Using \code{\link{all.equal}} with \code{identical} is almost
+  error.  Using \code{\link{all.equal}} with \code{identical} is almost
   always preferable.  See the examples.
 }
 \section{S4 methods}{
@@ -93,6 +103,13 @@ x != y
   Becker, R. A., Chambers, J. M. and Wilks, A. R. (1988)
   \emph{The New S Language}.
   Wadsworth \& Brooks/Cole.
+
+  Collation of character strings is a complex topic.  For an
+  introduction see
+  \url{http://en.wikipedia.org/wiki/Collating_sequence}.  The
+  \emph{Unicode Collation Algorithm}
+  (\url{http://unicode.org/reports/tr10/}) is likely to be increasing
+  influential. 
 }
 \seealso{
   \code{\link{factor}} for the behaviour with factor arguments.

@@ -1,12 +1,13 @@
 /*
- *  Copyright (C) 2000-2007 The R Development Core Team
+ *  Copyright (C) 2000-2008 The R Development Core Team
  *
  *  Algorithm AS 226 Appl. Statist. (1987) Vol. 36, No. 2
  *  Incorporates modification AS R84 from AS Vol. 39, pp311-2, 1990
- *  original (C) Royal Statistical Society 1987, 1990
+ *                        and AS R95 from AS Vol. 44, pp551-2, 1995
+ *  original (C) Royal Statistical Society 1987, 1990, 1995
  *
  *  Returns the cumulative probability of x for the non-central
- *  beta distribution with parameters a, b and non-centrality lambda.
+ *  beta distribution with parameters a, b and non-centrality ncp.
  *
  *  Auxiliary routines required:
  *	lgamma - log-gamma function
@@ -16,12 +17,12 @@
 #include "nmath.h"
 #include "dpq.h"
 
-double pnbeta(double x, double a, double b, double lambda,
+double pnbeta(double x, double a, double b, double ncp,
 	      int lower_tail, int log_p)
 {
 
-    /* change errmax and itrmax if desired */
-
+    /* change errmax and itrmax if desired;
+     * original (AS 226, R84) had  (errmax; itrmax) = (1e-6; 100) */
     const static double errmax = 1.0e-9;
     const int    itrmax = 1000;  /* 100 is not enough for pf(ncp=200) */
 
@@ -31,15 +32,15 @@ double pnbeta(double x, double a, double b, double lambda,
 
 
 #ifdef IEEE_754
-    if (ISNAN(x) || ISNAN(a) || ISNAN(b) || ISNAN(lambda))
-	return x + a + b + lambda;
+    if (ISNAN(x) || ISNAN(a) || ISNAN(b) || ISNAN(ncp))
+	return x + a + b + ncp;
 #endif
 
-    if (lambda < 0. || a <= 0. || b <= 0.) ML_ERR_return_NAN;
+    if (ncp < 0. || a <= 0. || b <= 0.) ML_ERR_return_NAN;
 
     R_P_bounds_01(x, 0., 1.);
 
-    c = lambda / 2.;
+    c = ncp / 2.;
 
 	/* initialize the series */
 
@@ -74,8 +75,8 @@ double pnbeta(double x, double a, double b, double lambda,
 	ML_ERROR(ME_PRECISION, "pnbeta");
     if (j >= itrmax + x0)
 	ML_ERROR(ME_NOCONV, "pnbeta");
-    
-    /* return R_DT_val(ans); 
+
+    /* return R_DT_val(ans);
        We want to warn about cancellation here */
     if(lower_tail) return log_p	? log(ans) : ans;
     else {

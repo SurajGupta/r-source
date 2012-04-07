@@ -1,6 +1,6 @@
 /*
  *  R : A Computer Language for Statistical Data Analysis
- *  Copyright (C) 2000  R Development Core Team
+ *  Copyright (C) 2000-8  R Development Core Team
  *
  *  This program is free software; you can redistribute it and/or modify
  *  it under the terms of the GNU General Public License as published by
@@ -20,42 +20,27 @@
 #ifndef DEVICES_H_
 #define DEVICES_H_
 
+/* A public header.
+   This is almost entirely of historical interest: it was the 
+   interface for graphics device in R < 2.7.0
+ */
+
+#ifdef EVENTUALLY
+#error Rdevices.h is obsolete
+#endif
+
 #ifdef __cplusplus
 extern "C" {
 #endif
 
 #include <Rgraphics.h>
+#include <R_ext/GraphicsEngine.h> /* modern version */
 #include <R_ext/Boolean.h>
 
 #define addDevice		Rf_addDevice
-#define copyDisplayList		Rf_copyDisplayList
-#define deviceNumber		Rf_deviceNumber
 #define devNumber		Rf_devNumber
-#define DevNull			Rf_DevNull
-#define enableDisplayList	Rf_enableDisplayList
-#define inhibitDisplayList	Rf_inhibitDisplayList
-#define InitGraphics		Rf_InitGraphics
 #define GetDevice		Rf_GetDevice
-#define KillAllDevices		Rf_KillAllDevices
 #define KillDevice		Rf_KillDevice
-#define killDevice		Rf_killDevice
-#define nextDevice		Rf_nextDevice
-#define NumDevices		Rf_NumDevices
-#define StartDevice		Rf_StartDevice
-#define playDisplayList		Rf_playDisplayList
-#define prevDevice		Rf_prevDevice
-#define recordGraphicOperation	Rf_recordGraphicOperation
-
-/* Initialize internal device structures. */
-void InitGraphics(void);
-/* Kill all active devices (used at shutdown). */
-void KillAllDevices(void);
-/*
- * Free the font and encoding structures used by
- * PostScript, Xfig, and PDF devices
- */
-void freeType1Fonts(void);
-
 
 /*-------------------------------------------------------------------
  *
@@ -66,52 +51,24 @@ void freeType1Fonts(void);
 
 /* Return a pointer to a device which is identified by number */
 DevDesc* GetDevice(int);
-/* Kill device which is identified by number. */
+
+/* Kill device which is identified by number.
+ * Here DevDesc * is being used as an opaque pointer to GEDevDesc.
+ */
 void KillDevice(DevDesc*);
-/* How many devices exist ? (>= 1) */
-int NumDevices(void);
+
 /* Get the index of the specified device. 
- * This is used by the graphics engine to map from a *GEDevDesc to
- * a device number.
+ * This is used by a device to map from a *NewDevDesc to a device number.
+ * Here DevDesc * is being used as an opaque pointer to NewDevDesc.
  */
-int deviceNumber(DevDesc*);
-/* Get the index of the specified device. 
- * This is used by a device to map from a *NewDevDesc to
- * a device number.
- */
-int devNumber(DevDesc *dd);
-/* Create a new device. */
-int StartDevice(SEXP, SEXP, int, SEXP, int);
-/* Check for an available device slot */
-void R_CheckDeviceAvailable(void);
-Rboolean R_CheckDeviceAvailableBool(void);
+int devNumber(DevDesc *);
+/* New, properly declared version in GraphicsDevices.h */
 
-void DevNull(void);
-
-/* Miscellaneous */
-void recordGraphicOperation(SEXP, SEXP, DevDesc*);
-void copyDisplayList(int);
-void playDisplayList(DevDesc*);
-void enableDisplayList(DevDesc*);
-void inhibitDisplayList(DevDesc*);
-
-/*-------------------------------------------------------------------
- *
- *  DEVICE UTILITIES are concerned with providing information
- *  for R interpreted functions.
- *
- */
-
-/* Return the number of the next device. */
-int nextDevice(int);
-/* Return the number of the previous device. */
-int prevDevice(int);
-/* Make the specified device (specified by number) the current device */
-int selectDevice(int);
-/* Kill device which is identified by number. */
-void killDevice(int);
 /* ...NO DOC... */
+/* Here DevDesc * is being used as an opaque pointer to GEDevDesc. */
+/* Replaced by GEaddDevice */
 void addDevice(DevDesc *);
+
 
 #ifdef __cplusplus
 }

@@ -37,7 +37,7 @@ extern int UserBreak;
 /* calls into the R DLL */
 extern char *getDLLVersion(), *getRUser(), *get_R_HOME();
 extern void R_DefParams(Rstart), R_SetParams(Rstart), R_setStartTime();
-extern void setup_term_ui(void), ProcessEvents(void);
+extern void ProcessEvents(void);
 extern int R_ReplDLLdo1();
 
 
@@ -47,7 +47,8 @@ extern int R_ReplDLLdo1();
    frequently. See rterm.c and ../system.c for one approach using
    a separate thread for input.
 */
-static int myReadConsole(char *prompt, char *buf, int len, int addtohistory)
+static int myReadConsole(const char *prompt, char *buf, int len,
+			 int addtohistory)
 {
     fputs(prompt, stdout);
     fflush(stdout);
@@ -55,7 +56,7 @@ static int myReadConsole(char *prompt, char *buf, int len, int addtohistory)
     else return 0;
 }
 
-static void myWriteConsole(char *buf, int len)
+static void myWriteConsole(const char *buf, int len)
 {
     printf("%s", buf);
 }
@@ -74,15 +75,8 @@ static void my_onintr(int sig)
 {
     UserBreak = 1;
 }
-static void wrap_askok(char *info)
-{
-    askok(info);
-}
 
-static int wrap_askyesnocancel(char *question)
-{
-    return askyesnocancel(question);    
-}
+extern Rboolean R_LoadRconsole;
 
 int Rf_initialize_R(int argc, char **argv)
 {
@@ -92,14 +86,14 @@ int Rf_initialize_R(int argc, char **argv)
 
     snprintf(Rversion, 25, "%s.%s", R_MAJOR, R_MINOR);
     if(strncmp(getDLLVersion(), Rversion, 25) != 0) {
-        fprintf(stderr, "Error: R.DLL version does not match\n");
+	fprintf(stderr, "Error: R.DLL version does not match\n");
 	exit(1);
     }
 
     R_setStartTime();
     R_DefParams(Rp);
     if((RHome = get_R_HOME()) == NULL) {
-	fprintf(stderr, 
+	fprintf(stderr,
 		"R_HOME must be set in the environment or Registry\n");
 	exit(2);
     }
@@ -109,8 +103,8 @@ int Rf_initialize_R(int argc, char **argv)
     Rp->ReadConsole = myReadConsole;
     Rp->WriteConsole = myWriteConsole;
     Rp->CallBack = myCallBack;
-    Rp->ShowMessage = wrap_askok;
-    Rp->YesNoCancel = wrap_askyesnocancel;
+    Rp->ShowMessage = askok;
+    Rp->YesNoCancel = askyesnocancel;
     Rp->Busy = myBusy;
 
     Rp->R_Quiet = TRUE;
@@ -124,8 +118,9 @@ int Rf_initialize_R(int argc, char **argv)
 
     signal(SIGBREAK, my_onintr);
     GA_initapp(0, 0);
+    R_LoadRconsole = FALSE;
     readconsolecfg();
- 
+
     return 0;
 }
 

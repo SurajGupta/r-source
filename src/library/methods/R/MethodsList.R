@@ -41,8 +41,7 @@ MethodsList <-
     value
 }
 
-makeMethodsList <-
-  function(object, level=1)
+makeMethodsList <- function(object, level=1)
 {
     mnames <- allNames(object)
     value <- new("MethodsList")
@@ -54,7 +53,8 @@ makeMethodsList <-
     }
     if(any(duplicated(mnames)))
         stop(gettextf("duplicate element names in 'MethodsList' at level %d: %s",
-             level, paste("\"", unique(mnames[duplicated(mnames)]), "\"", collapse=", ")), domain = NA)
+             level, paste("\"", unique(mnames[duplicated(mnames)]), "\"",
+                          collapse=", ")), domain = NA)
     for(i in seq_along(object)) {
         eli <- el(object, i)
         if(is(eli, "function")
@@ -63,7 +63,8 @@ makeMethodsList <-
                 is(eli, "named"))
             el(object, i) <- Recall(eli, NULL, level+1)
         else
-            stop(gettextf("element %d at level %d (class \"%s\") cannot be interpreted as a function or named list", i, level, class(eli)), domain = NA)
+            stop(gettextf("element %d at level %d (class \"%s\") cannot be interpreted as a function or named list",
+                          i, level, class(eli)), domain = NA)
     }
     slot(value, "methods") <- object
     value
@@ -152,7 +153,8 @@ insertMethod <-
         if(is.null(current))
             current <- new("MethodsList", argument = as.name(args[2]))
         else if(is.function(current))
-            current <- new("MethodsList", argument = as.name(args[2]), methods = list(ANY = current))
+            current <- new("MethodsList", argument = as.name(args[2]),
+			   methods = list(ANY = current))
         elNamed(methods, Class) <-
             Recall(current, signature[-1], args[-1], def, cacheOnly)
     }
@@ -186,11 +188,11 @@ MethodsListSelect <-
  )
 {
     if(!resetAllowed) # ensure we restore the real methods for this function
-        resetMlist <- .getMethodsForDispatch(f, fdef)
+	resetMlist <- .getMethodsForDispatch(fdef)
     ## look for call from C dispatch code during another call to MethodsListSelect
     if(is.null(f)) {} # Recall, not from C
     else {
-        fMethods <- .getMethodsForDispatch(f, fdef)
+	fMethods <- .getMethodsForDispatch(fdef)
         if(is.null(mlist) || (evalArgs && is.function(fMethods)))
             mlist <- fMethods
     }
@@ -209,7 +211,7 @@ MethodsListSelect <-
     if(!is.logical(useInherited))
         stop(gettextf("'useInherited' must be TRUE, FALSE, or a named logical vector of those values; got an object of class \"%s\"",
                       class(useInherited)), domain = NA)
-    if(identical(mlist, .getMethodsForDispatch(f, fdef))) {
+    if(identical(mlist, .getMethodsForDispatch(fdef))) {
         resetNeeded <- TRUE
         ## On the initial call:
         ## turn off any further method dispatch on this function, to avoid recursive
@@ -290,7 +292,8 @@ MethodsListSelect <-
                 else if(is(selection, "MethodsList")) {
                     ## go on to try matching further arguments
                     method <- Recall(NULL, env, selection, finalDefault = finalDefault,
-                                     evalArgs = evalArgs, useInherited = nextUseInherited, fdef = fdef)
+                                     evalArgs = evalArgs,
+                                     useInherited = nextUseInherited, fdef = fdef)
                     if(is(method, "EmptyMethodsList"))
                         selection <- method   ## recursive selection failed
                 }
@@ -331,24 +334,22 @@ MethodsListSelect <-
     value
 }
 
-emptyMethodsList <-
-  function(mlist, thisClass = "ANY", sublist = list()) {
+emptyMethodsList <- function(mlist, thisClass = "ANY", sublist = list()) {
     sublist[thisClass] <- list(NULL)
     new("EmptyMethodsList", argument = mlist@argument, sublist = sublist)
-  }
+}
 
-insertMethodInEmptyList <-
-  function(mlist, def) {
+insertMethodInEmptyList <- function(mlist, def) {
     value <- new("MethodsList", argument = mlist@argument)
     sublist <- mlist@sublist
     submethods <- sublist[[1]]
     if(is.null(submethods))
-      sublist[[1]] <- def
+        sublist[[1]] <- def
     else
-      sublist[[1]] <- Recall(submethods, def)
+        sublist[[1]] <- Recall(submethods, def)
     value@allMethods <- sublist
     value
-  }
+}
 
 
 
@@ -582,34 +583,34 @@ promptMethods <- function(f, filename = NULL, methods)
     escape <- function(txt) gsub("%", "\\\\%", txt)
     packageString <- ""
 
+    fdef <- getGeneric(f)
+    if(!isGeneric(f, fdef=fdef))
+	stop(gettextf("No generic function found corresponding to \"%s\"", f),
+	     domain = NA)
     if(missing(methods)) {
-        where <- find(mlistMetaName(f))
-        if(length(where) == 0)
-            stop(gettextf("no methods found for generic \"%s\"", f), domain = NA)
-        where <- where[1]
-        methods <- getMethods(f, where)
-        if(where != 1)
-            packageString <-
-                paste0("in Package `", getPackageName(where), "'")
-        ## (We want the '`' for LaTeX, as we currently cannot have
-        ## \sQuote{} inside a \title.)
+	methods <- findMethods(fdef)
+	## try making  packageString
+	where <- .genEnv(fdef, topenv(parent.frame()))
+	if(!identical(where, .GlobalEnv))
+	    packageString <-
+		paste0("in Package `", getPackageName(where), "'")
+	## (We want the '`' for LaTeX, as we currently cannot have
+	## \sQuote{} inside a \title.)
     }
-
-    object <- linearizeMlist(methods, FALSE)
-    methods <- object@methods; n <- length(methods)
-    args <- object@arguments
-    signatures <- object@classes
+    fullName <- utils:::topicName("methods", f)
+    n <- length(methods)
     labels <- character(n)
     aliases <- character(n)
-    fullName <- utils:::topicName("methods", f)
+    signatures <- findMethodSignatures(methods = methods, target=TRUE)
+    args <- colnames(signatures) # the *same* for all
     for(i in seq_len(n)) {
-        sigi <- paste("\"", signatures[[i]], "\"", sep ="")
-        labels[[i]] <-
-            paste(args[[i]], sigi, collapse = ", ", sep = " = ")
-        aliases[[i]] <-
-            paste0("\\alias{",
-                   utils:::topicName("method", c(f, signatures[[i]])),
-                   "}")
+	sigi <- paste("\"", signatures[i,], "\"", sep ="")
+	labels[[i]] <-
+	    paste(args, sigi, collapse = ", ", sep = " = ")
+	aliases[[i]] <-
+	    paste0("\\alias{",
+		   utils:::topicName("method", c(f, signatures[i,])),
+		   "}")
     }
     text <- paste0("\n\\item{", labels, "}{ ~~describe this method here }")
     text <- c("\\section{Methods}{\n\\describe{", text, "}}")

@@ -7,8 +7,8 @@ msgid ""
 msgstr ""
 "Project-Id-Version: R 2.2.1\n"
 "Report-Msgid-Bugs-To: bugs@r-project.org\n"
-"POT-Creation-Date: 2008-02-06 06:53\n"
-"PO-Revision-Date: 2007-04-13 12:56+0100\n"
+"POT-Creation-Date: 2008-04-05 10:50\n"
+"PO-Revision-Date: 2008-03-26 16:55+0100\n"
 "Last-Translator: Philippe Grosjean <phgrosjean@sciviews.org>\n"
 "Language-Team: French <R-core@r-project.org>\n"
 "MIME-Version: 1.0\n"
@@ -95,9 +95,22 @@ msgstr "les éléments suivants de 'what' seront ignorés"
 msgid "%d occurrences in %s"
 msgstr "%d occurences dans %s"
 
-#, fuzzy
+msgid ""
+"Use <code> %s </code> \n"
+" to list the vignettes in all <strong>available</strong> packages."
+msgstr ""
+"Utilisez <code> %s </code> \n"
+"  pour lister les vignettes dans tous les packages <strong>disponibles</"
+"strong>."
+
+msgid "No vignettes found by"
+msgstr "Aucune vignette n'est trouvée par"
+
+msgid "call"
+msgstr "appel"
+
 msgid "'file' must be NULL, a character string or a connection"
-msgstr "'file' doit être une chaîne de caractères ou une connexion"
+msgstr "'file' doit être NULL, une chaîne de caractères ou une connexion"
 
 msgid "bad argument"
 msgstr "argument incorrect"
@@ -126,6 +139,9 @@ msgstr "n < m"
 
 msgid "'FUN' must be a function or NULL"
 msgstr "'FUN' doit être une fonction ou NULL"
+
+msgid "Can't handle S4 methods yet"
+msgstr "Incapable de traiter les méthodes S4 actuellement"
 
 msgid "'package' must be a character string or NULL"
 msgstr "'package' doit être une chaîne de caratcères ou NULL"
@@ -234,6 +250,12 @@ msgstr ""
 msgid "invalid input matrix"
 msgstr "matrice d'entrée incorrecte"
 
+msgid "class(es) of 'name' will be discarded"
+msgstr "la(les) classe(s) de 'name' sera écartées"
+
+msgid "cannot edit NULL row names"
+msgstr "impossible d'éditer des noms de lignes NULL"
+
 msgid "no help file found for '%s'"
 msgstr "fichier d'aide introuvable pour '%s'"
 
@@ -258,9 +280,14 @@ msgstr "trop d'entrées de liste (3899 maximum)"
 msgid "'form' must be a two-sided formula"
 msgstr "'form' doit être une formule à deux membres"
 
-#, fuzzy
 msgid "'form' must be a two-sided formula with one term on each side"
-msgstr "'form' doit être une formule à deux membres"
+msgstr ""
+"'form' doit être une formule à deux membres avec un terme de chaque côté"
+
+msgid "'topic' should be a name, length-one character vector or reserved word"
+msgstr ""
+"'topic' doit être un nom, une chaîne de caractères de longueur unitaire, ou "
+"un mot réservé"
 
 msgid "No documentation for '%s' in specified packages and libraries:"
 msgstr ""
@@ -388,6 +415,9 @@ msgstr "%d objets correspondent"
 msgid "no package '%s' was found"
 msgstr "le package '%s' est introuvable"
 
+msgid "metadata of package '%s' is corrupt"
+msgstr "les métadonnées du package '%s' sont incorrectes"
+
 msgid "DESCRIPTION file of package '%s' is corrupt"
 msgstr "le fichier DESCRIPTION du package '%s' est incorrect"
 
@@ -439,14 +469,14 @@ msgstr "seuls les indices numériques peuvent être utilisés"
 msgid "cannot create directory '%s'"
 msgstr "impossible de créer le répertoire '%s'"
 
-msgid "'code_files' should be a character vector"
+msgid "'namespace' must be a single logical"
+msgstr "'namespace' doit être une valeur logique unique"
+
+msgid "'code_files' must be a character vector"
 msgstr "'code_files' devrait être un vecteur de type caractère"
 
-msgid "'list' should be a character vector naming R objects"
+msgid "'list' must be a character vector naming R objects"
 msgstr "'list' devrait être un vecteur de type caractère nommant des objets R"
-
-msgid "'namespace' should be a single logical"
-msgstr "'namespace' doit être une valeur logique unique"
 
 msgid "cannot turn off locale-specific chars via LC_CTYPE"
 msgstr ""
@@ -476,6 +506,18 @@ msgstr "Sauvegarde des fonctions et des données..."
 
 msgid "Copying code files ..."
 msgstr "Recopiage des fichiers de code..."
+
+msgid "Invalid file name(s) for R code in"
+msgstr "Nom(s) de fichier(s) invalide(s) pour du code R"
+
+msgid ":"
+msgstr ":"
+
+msgid ","
+msgstr ","
+
+msgid "are now renamed to 'z<name>.R'"
+msgstr "sont maintenant renommés vers 'z<nom>.R'"
 
 msgid "Making help files ..."
 msgstr "Création des fichiers d'aide ..."
@@ -510,9 +552,8 @@ msgstr "'destdir' n'est pas un répertoire"
 msgid "no package '%s' at the repositories"
 msgstr "pas de package '%s' dans les entrepôts"
 
-#, fuzzy
 msgid "package '%s' does not exist on the local repository"
-msgstr "pas de package '%s' dans les entrepôts"
+msgstr "pas de package '%s' dans l'entrepôt local"
 
 msgid "download of package '%s' failed"
 msgstr "le téléchargement du package '%s' a échoué"
@@ -550,9 +591,8 @@ msgstr "aucun package spécifié"
 msgid "argument 'lib' is missing: using '%s'"
 msgstr "l'argument 'lib' manque : '%s' est utilisé"
 
-#, fuzzy
 msgid "'lib = \"%s\"' is not writable"
-msgstr "'lib' ne peut être ouvert en écriture"
+msgstr "'lib = \"%s\"' ne peut être ouvert en écriture"
 
 msgid ""
 "Would you like to create a personal library\n"
@@ -609,6 +649,9 @@ msgstr ""
 
 msgid "no object named '%s' to show"
 msgstr "aucun objet de nom '%s' à afficher"
+
+msgid "'pb' is not from class \"txtProgressBar\""
+msgstr ""
 
 msgid "cannot determine a usable name"
 msgstr "impossible de trouver un nom utilisable"
@@ -750,9 +793,6 @@ msgstr "format incorrect"
 msgid "last record incomplete, %d lines discarded"
 msgstr "dernier enregistrement incomplet, %d lignes ignorées"
 
-msgid "'file' must be a character string or connection"
-msgstr "'file' doit être une chaîne de caractères ou une connexion"
-
 msgid "transfer failure"
 msgstr "erreur de transfert"
 
@@ -762,6 +802,9 @@ msgstr "HTTPUserAgent"
 msgid "option must be a length one character vector or NULL"
 msgstr "'option' doit être une chaîne de caractères ou NULL"
 
+msgid "'file' must be a character string or connection"
+msgstr "'file' doit être une chaîne de caractères ou une connexion"
+
 msgid "empty beginning of file"
 msgstr "début de fichier vide"
 
@@ -769,15 +812,17 @@ msgid "first five rows are empty: giving up"
 msgstr "les premières cinq lignes sont vides : abandon"
 
 msgid "relist() requires recursively unlisted objects."
-msgstr ""
+msgstr "relist() demande des objets délistés de manière récursive."
 
 msgid "The flesh argument does not contain a skeleton attribute."
-msgstr ""
+msgstr "L'argument 'flesh' ne contient pas d'attribut 'skeleton'."
 
 msgid ""
 "Either ensure you unlist a relistable object, or specify the skeleton "
 "separately."
 msgstr ""
+"Faites en sorte de délister un objet relistable, ou spécifiez le squelette "
+"séparément."
 
 msgid "cannot coerce 'x' to roman"
 msgstr "impossible de convertir 'x' en roman"
@@ -785,9 +830,8 @@ msgstr "impossible de convertir 'x' en roman"
 msgid "Invalid roman numeral(s): %s"
 msgstr "Nombre(s) roman(s) incorrect(s) : %s"
 
-#, fuzzy
 msgid "no valid packages were specified"
-msgstr "aucun package spécifié"
+msgstr "aucun package valide n'a été spécifié"
 
 msgid "invalid 'socket' argument"
 msgstr "argument 'socket' incorrect"
@@ -809,6 +853,9 @@ msgstr "str.data.frame() appelé avec un non data.frame -- forçage du type"
 
 msgid "invalid options('str') -- using defaults instead"
 msgstr "options('str') incorrecte -- utilisation de la valeur par défaut"
+
+msgid "invalid components in options('str'):"
+msgstr "composants erronés dans options('str') :"
 
 msgid "'object' does not have valid levels()"
 msgstr "'object' n'a pas d'attribut levels() correct"
@@ -862,7 +909,7 @@ msgstr "spécification de 'col.names' incorrecte"
 msgid "appending column names to file"
 msgstr "ajout du nom des colonnes dans le fichier"
 
-msgid "attempt to change '%s' ignored"
+msgid "attempt to set '%s' ignored"
 msgstr "une tentative de modification de '%s' a échoué"
 
 msgid "'unzip' must be a single character string"
@@ -877,6 +924,11 @@ msgstr "impossible de trouver une méthode de téléchargement"
 msgid "download had nonzero exit status"
 msgstr "le téléchargement a a eu un statut de sortie non nul"
 
+msgid "Using non-linked HTML file: hyperlinks may be incorrect"
+msgstr ""
+"Utilisation de fichiers HTML non liés : les hyperliens sont peut-être "
+"incorrects"
+
 msgid "options(\"browser\") not set"
 msgstr "options(\"browser\") non fixée"
 
@@ -890,9 +942,6 @@ msgstr ""
 "Changement du navigateur par défaut (spécifié dans l'option 'brower') pour "
 "ce navigateur de façon qu'il soit utilisé dans toutes les requêtes d'aide "
 "futures"
-
-msgid "Making links in per-session dir ..."
-msgstr "Création des liens dans le répertoire de session..."
 
 msgid ""
 "If '%s' is already running, it is *not* restarted, and you must switch to "
@@ -910,15 +959,17 @@ msgstr "'url' doit être une chaîne de caractères non vide"
 msgid "'browser' must be a non-empty character string"
 msgstr "'browser' doit être une chaîne de caractères non vide"
 
+msgid "Making links in per-session dir ..."
+msgstr "Création des liens dans le répertoire de session..."
+
 msgid "cannot create HTML package index"
 msgstr "impossible de créer l'index HTML des packages"
 
 msgid "cannot create HTML search index"
 msgstr "impossible de créer l'index HTML de recherche"
 
-#, fuzzy
 msgid "Updating HTML index of packages in '.Library'"
-msgstr "mise à jour de la liste HTML des packages"
+msgstr "mise à jour de la liste HTML des packages dans '.Library'"
 
 msgid "'memory.size()' is Windows-specific"
 msgstr "'memory.size()' est spécifique à Windows"
@@ -969,6 +1020,9 @@ msgstr "mise à jour des descriptions HTML des packages"
 msgid "cannot update '%s'"
 msgstr "impossible de mettre à jour '%s'"
 
+msgid "'pb' is not from class \"winProgressBar\""
+msgstr ""
+
 msgid "this function is intended to work with the Aqua GUI"
 msgstr "cette fonction est conçue pour fontionner avec l'interface Aqua"
 
@@ -977,6 +1031,11 @@ msgstr "'tar' a renvoyé un code de sortie non nul %d"
 
 msgid "cannot remove prior installation of package"
 msgstr "impossible de supprimer l'installation précédente du package"
+
+msgid "class discarded from column %s"
+msgid_plural "classes discarded from columns %s"
+msgstr[0] "classe écartée dans la colonne %s"
+msgstr[1] "classes écartées dans les colonnes %s"
 
 msgid "object '%s' not found"
 msgid_plural "objects '%s' not found"
@@ -1010,33 +1069,3 @@ msgid_plural "packages '%s' are in use and will not be installed"
 msgstr[0] "le package '%s' est en cours d'utilisation et ne sera pas installé"
 msgstr[1] ""
 "les packages '%s' sont en cours d'utilisation et ne seront pas installés"
-
-#~ msgid "cannot update HTML package index"
-#~ msgstr "impossible de mettre à jour l'index HTML des packages"
-
-#~ msgid "cannot update HTML search index"
-#~ msgstr "impossible de mettre à jour l'index HTML de recherche"
-
-#~ msgid "'format' must be \"normal\" or \"short\". Using \"normal\""
-#~ msgstr "'format' doit être \"normal\" ou \"short\". \"normal\" est utilisé"
-
-#~ msgid "wrong 'sortby' specified. Using sortby=\"score\""
-#~ msgstr "valeur de 'sortby' incorrect. sortby=\"score\" est utilisé"
-
-#~ msgid ""
-#~ "wrong restriction specified.\n"
-#~ "Using '%s'"
-#~ msgstr ""
-#~ "restriction incorrecte.\n"
-#~ "'%s' est utilisé"
-
-#~ msgid "Unable to create temporary directory '%s'"
-#~ msgstr "impossible de créer le répertoire temporaire '%s'"
-
-#~ msgid "dependency '%s' is not available"
-#~ msgid_plural "dependencies '%s' are not available"
-#~ msgstr[0] "la dépendance '%s' n'est pas disponible"
-#~ msgstr[1] "les dépendances '%s' ne sont pas disponibles"
-
-#~ msgid "Optionally other keywords from doc/KEYWORDS, one per line"
-#~ msgstr "Eventuellement d'autres mots clefs de doc/KEYWORDS, un par line"

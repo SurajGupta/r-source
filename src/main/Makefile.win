@@ -8,18 +8,16 @@ all: makeMakedeps libmain.a
 ## there are headers and include files in this directory
 CPPFLAGS=-I. -I../include -DHAVE_CONFIG_H -DR_DLL_BUILD
 CFLAGS=$(OPTFLAGS)
-ifdef SUPPORT_UTF8
-CFLAGS += -DSUPPORT_UTF8
-endif
 FFLAGS=-O2
+
 CSOURCES=\
 	CConverters.c CommandLineArgs.c \
 	Rdynload.c Renviron.c RNG.c \
-	apply.c arithmetic.c apse.c array.c attrib.c \
+	apply.c apse.c arithmetic.c array.c attrib.c \
 	base.c bind.c builtin.c \
 	character.c coerce.c colors.c complex.c connections.c context.c \
 	cov.c cum.c \
-	dcf.c datetime.c debug.c deparse.c deriv.c \
+	dcf.c datetime.c debug.c deparse.c deriv.c devices.c \
 	dotcode.c dounzip.c dstruct.c duplicate.c \
 	engine.c envir.c errors.c eval.c \
 	format.c fourier.c \
@@ -41,12 +39,21 @@ CSOURCES=\
 FSOURCES=xxxpr.f
 OBJS=$(CSOURCES:.c=.o) $(FSOURCES:.f=.o) 
 
+ifdef RUN_BISON
+gram.c: gram.y
+	bison gram.y
+	$(SED) -e "s/gram.tab.c/gram.c/" gram.tab.c > gram.c
+	$(RM) gram.tab.c
+endif
+
 saveload-CPPFLAGS=-I../extra/xdr
 connections-CPPFLAGS=-I../extra/zlib -I../extra/bzip2
 dounzip-CPPFLAGS=-I../extra/zlib
 character-CPPFLAGS=-I../extra/pcre -I../gnuwin32 -DPCRE_STATIC
 pcre-CPPFLAGS=-I../extra/pcre -DPCRE_STATIC
 platform-CPPFLAGS=-I../gnuwin32
+builtin-CPPFLAGS=-I../gnuwin32
+printutils-CPPFLAGS=-I../gnuwin32
 
 libmain.a: $(OBJS)
 

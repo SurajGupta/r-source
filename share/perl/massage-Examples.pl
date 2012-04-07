@@ -63,18 +63,18 @@ assign("base_plot_hook",
                outer <- (oma4 <- pp\$oma[4]) > 0; mar4 <- pp\$mar[4]
                mtext(sprintf("help(\\"%s\\")", nameEx()), side = 4,
                      line = if(outer)max(1, oma4 - 1) else min(1, mar4 - 1),
-              outer = outer, adj = 1, cex = .8, col = "orchid", las=3)
+               outer = outer, adj = 1, cex = .8, col = "orchid", las=3)
            }
        },
        pos = "CheckExEnv")
 assign("grid_plot_hook",
        function() {
-           pushViewport(viewport(width=unit(1, "npc") - unit(1, "lines"),
-                                 x=0, just="left"))
-           grid.text(sprintf("help(\\"%s\\")", nameEx()),
-                     x=unit(1, "npc") + unit(0.5, "lines"),
-                     y=unit(0.8, "npc"), rot=90,
-                     gp=gpar(col="orchid"))
+           grid::pushViewport(grid::viewport(width=grid::unit(1, "npc") - 
+                              grid::unit(1, "lines"), x=0, just="left"))
+           grid::grid.text(sprintf("help(\\"%s\\")", nameEx()),
+                           x=grid::unit(1, "npc") + grid::unit(0.5, "lines"),
+                           y=grid::unit(0.8, "npc"), rot=90,
+                           gp=grid::gpar(col="orchid"))
        },
        pos = "CheckExEnv")
 setHook("plot.new",     get("base_plot_hook", pos = "CheckExEnv"))
@@ -102,15 +102,21 @@ assign("cleanEx",
        },
        pos = "CheckExEnv")
 assign("ptime", proc.time(), pos = "CheckExEnv")
+## at least one package changes these via ps.options(), so do this
+## before loading the package.
+## Use postscript as incomplete files may be viewable, unlike PDF.
+## Choose a size that is close to on-screen devices, fix paper
+ps.options(width = 7, height = 7, paper = "a4", reset = TRUE)
 grDevices::postscript("$PKG-Ex.ps")
+		      
 assign("par.postscript", graphics::par(no.readonly = TRUE), pos = "CheckExEnv")
 options(contrasts = c(unordered = "contr.treatment", ordered = "contr.poly"))
 options(warn = 1)    
 _EOF_
 
-if($PKG eq "tcltk") {
+if ($PKG eq "tcltk") {
     print "require('tcltk') || q()\n\n";
-} elsif($PKG ne "base") {
+} elsif ($PKG ne "base") {
     print "library('$PKG')\n\n";
 }
 print "assign(\".oldSearch\", search(), pos = 'CheckExEnv')\n";
@@ -126,6 +132,7 @@ foreach my $file (@Rfiles) {
     $nm = basename $file, (".R");
     $nm =~ s/[^- .a-zA-Z0-9]/./g;
 
+    if ($PKG eq "graphics" && $file =~ /[^m]text\.R$/) { next; }
     open(FILE, "< $file") or die "file $file cannot be opened";
     while (<FILE>) {
 	$have_examples = 1
@@ -142,7 +149,13 @@ foreach my $file (@Rfiles) {
     print "### * $nm\n\n";
     print "flush(stderr()); flush(stdout())\n\n";
     open(FILE, "< $file") or die "file $file cannot be opened";
-    while (<FILE>) { print $_; }
+    my $dont_test = 0;	
+    while (<FILE>) {
+	## process \donttest
+	$dont_test = 1 if /^## No test:/;
+	print $_ unless $dont_test;
+	$dont_test = 0 if /^## End\(No test\)/;
+    }
     close(FILE);
 
     if($have_par) {

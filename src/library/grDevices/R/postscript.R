@@ -58,6 +58,9 @@ check.options <-
 	    doubt <- rep.int(FALSE, length(prev))
 	    for(fn in check.attributes)
 		if(any(ii <- sapply(prev, fn) != sapply(new, fn))) {
+                    ## skip 'fonts';
+                    ii <- ii & (names(prev) != "fonts")
+                    if(!any(ii)) next
 		    doubt <- doubt | ii
 		    do.keep <- ii & !override.check
 		    warning(paste(sQuote(paste(fn,"(",names(prev[ii]),")",
@@ -71,7 +74,7 @@ check.options <-
                                       gettext("NOT changing "),
                                       paste(sQuote(names(prev[do.keep])),
                                             collapse=" & "),
-                                      sep = "")},
+                                      sep = "")} else "",
                             domain = NA, call. = FALSE)
 		}
 	    names(new) <- NULL
@@ -86,17 +89,49 @@ check.options <-
     old
 }
 
-ps.options <- function(..., reset=FALSE, override.check= FALSE)
+ps.options <- function(..., reset = FALSE, override.check = FALSE)
 {
     ## do initialization if needed
     initPSandPDFfonts()
+    old <- get(".PostScript.Options", envir = .PSenv)
+    if(reset) {
+        assign(".PostScript.Options",
+               get(".PostScript.Options.default", envir = .PSenv),
+               envir = .PSenv)
+    }
     l... <- length(new <- list(...))
-    old <- check.options(new = new, envir = .PSenv,
-                         name.opt = ".PostScript.Options",
-			 reset = as.logical(reset), assign.opt = l... > 0,
-			 override.check= override.check)
-    if(reset || l... > 0) invisible(old)
-    else old
+    if(m <- match("append", names(new), 0)) {
+        warning("argment 'append' is for back-compatibility and will be ignored",
+                immediate. = TRUE)
+        new <- new[-m]
+    }
+    check.options(new, name.opt = ".PostScript.Options", envir = .PSenv,
+                  assign.opt = l... > 0, override.check = override.check)
+    if(reset || l... > 0) invisible(old) else old
+}
+
+setEPS <- function()
+    ps.options(onefile = FALSE, horizontal = FALSE, paper = "special",
+               width = 7, height = 7)
+
+setPS <- function()
+    ps.options(onefile = TRUE, horizontal = TRUE, paper = "default",
+               width = 0, height = 0)
+
+pdf.options <- function(..., reset=FALSE)
+{
+    ## do initialization if needed
+    initPSandPDFfonts()
+    old <- get(".PDF.Options", envir = .PSenv)
+    if(reset) {
+        assign(".PDF.Options",
+               get(".PDF.Options.default", envir = .PSenv),
+               envir = .PSenv)
+    }
+    l... <- length(new <- list(...))
+    check.options(new, name.opt = ".PDF.Options", envir = .PSenv,
+                  assign.opt = l... > 0)
+    if(reset || l... > 0) invisible(old) else old
 }
 
 guessEncoding <- function(family)
@@ -145,17 +180,18 @@ guessEncoding <- function(family)
 ##--> source in devPS.c :
 
 postscript <- function(file = ifelse(onefile, "Rplots.ps", "Rplot%03d.ps"),
-                       onefile = TRUE, family,
-                       title = "R Graphics Output", fonts = NULL,
-                       encoding, bg, fg,
+                       onefile, family, title , fonts, encoding, bg, fg,
                        width, height, horizontal, pointsize,
                        paper, pagecentre, print.it, command, colormodel)
 {
     ## do initialization if needed
     initPSandPDFfonts()
 
-    new <- list(onefile = onefile)
-    if(!missing(paper)) new$paper <- paper
+    new <- list()
+    if(!missing(onefile)) new$onefile <- onefile
+    ## 'family' is handled separately
+    if(!missing(title)) new$title <- title
+    if(!missing(fonts)) new$fonts <- fonts
     if(!missing(encoding)) new$encoding <- encoding
     if(!missing(bg)) new$bg <- bg
     if(!missing(fg)) new$fg <- fg
@@ -163,14 +199,13 @@ postscript <- function(file = ifelse(onefile, "Rplots.ps", "Rplot%03d.ps"),
     if(!missing(height)) new$height <- height
     if(!missing(horizontal)) new$horizontal <- horizontal
     if(!missing(pointsize)) new$pointsize <- pointsize
+    if(!missing(paper)) new$paper <- paper
     if(!missing(pagecentre)) new$pagecentre <- pagecentre
     if(!missing(print.it)) new$print.it <- print.it
     if(!missing(command)) new$command <- command
     if(!missing(colormodel)) new$colormodel <- colormodel
 
-    old <- check.options(new = new, envir = .PSenv,
-                         name.opt = ".PostScript.Options",
-			 reset = FALSE, assign.opt = FALSE)
+    old <- check.options(new, name.opt = ".PostScript.Options", envir = .PSenv)
 
     if(is.null(old$command) || old$command == "default")
         old$command <- if(!is.null(cmd <- getOption("printcmd"))) cmd else ""
@@ -209,52 +244,59 @@ postscript <- function(file = ifelse(onefile, "Rplots.ps", "Rplot%03d.ps"),
         old$family <- family
     }
 
+    onefile <- old$onefile # for 'file'
+    if(!checkIntFormat(file)) stop("invalid 'file'")
     .External(PostScript,
               file, old$paper, old$family, old$encoding, old$bg, old$fg,
               old$width, old$height, old$horizontal, old$pointsize,
-              old$onefile, old$pagecentre, old$print.it, old$command,
-              title, fonts, old$colormodel)
+              onefile, old$pagecentre, old$print.it, old$command,
+              old$title, old$fonts, old$colormodel)
     # if .ps.prolog is searched for and fails, NULL got returned.
     invisible()
 }
 
 xfig <- function (file = ifelse(onefile,"Rplots.fig", "Rplot%03d.fig"),
-                  onefile = FALSE, encoding="none", ...)
+                  onefile = FALSE, encoding = "none",
+                  paper = "default", horizontal = TRUE,
+                  width = 0, height = 0, family = "Helvetica",
+                  pointsize = 12, bg = "transparent", fg = "black",
+                  pagecentre = TRUE)
 {
     ## do initialization if needed
     initPSandPDFfonts()
-    new <- list(onefile=onefile, ...)# eval
-    old <- check.options(new = new, envir = .PSenv,
-                         name.opt = ".PostScript.Options",
-			 reset = FALSE, assign.opt = FALSE)
 
-    .External(XFig,
-              file, old$paper, old$family, old$bg, old$fg,
-              old$width, old$height, old$horizontal, old$pointsize,
-              old$onefile, old$pagecentre, encoding)
+    if(!checkIntFormat(file)) stop("invalid 'file'")
+    .External(XFig, file, paper, family, bg, fg,
+              width, height, horizontal, pointsize,
+              onefile, pagecentre, encoding)
     invisible()
 }
 
 pdf <- function(file = ifelse(onefile, "Rplots.pdf", "Rplot%03d.pdf"),
-                width = 6, height = 6, onefile = TRUE, family = "Helvetica",
-                title = "R Graphics Output", fonts = NULL, version = "1.1",
-                paper = "special", encoding, bg, fg, pointsize, pagecentre)
+                width, height, onefile, family, title, fonts, version,
+                paper, encoding, bg, fg, pointsize, pagecentre)
 {
     ## do initialization if needed
     initPSandPDFfonts()
 
-    new <- list(onefile = onefile)
-    new$paper <- paper
+    new <- list()
+    if(!missing(width)) new$width <- width
+    if(!missing(height)) new$height <- height
+    if(!missing(onefile)) new$onefile <- onefile
+    ## 'family' is handled separately
+    if(!missing(title)) new$title <- title
+    if(!missing(fonts)) new$fonts <- fonts
+    if(!missing(version)) new$version <- version
+    if(!missing(paper)) new$paper <- paper
     if(!missing(encoding)) new$encoding <- encoding
     if(!missing(bg)) new$bg <- bg
     if(!missing(fg)) new$fg <- fg
     if(!missing(pointsize)) new$pointsize <- pointsize
     if(!missing(pagecentre)) new$pagecentre <- pagecentre
 
-    old <- check.options(new = new, envir = .PSenv,
-                         name.opt = ".PostScript.Options",
-			 reset = FALSE, assign.opt = FALSE)
-    # need to handle this before encoding
+    old <- check.options(new, name.opt = ".PDF.Options", envir = .PSenv)
+
+    ## need to handle this before encoding
     if(!missing(family) &&
        (inherits(family, "Type1Font") || inherits(family, "CIDFont"))) {
         enc <- family$encoding
@@ -287,15 +329,19 @@ pdf <- function(file = ifelse(onefile, "Rplots.pdf", "Rplot%03d.pdf"),
         old$family <- family
     }
     # Extract version
+    version <- old$version
     versions <- c("1.1", "1.2", "1.3", "1.4", "1.5", "1.6")
     if (version %in% versions)
         version <- as.integer(strsplit(version, "[.]")[[1]])
     else
         stop("invalid PDF version")
+
+    onefile <- old$onefile # needed to set 'file'
+    if(!checkIntFormat(file)) stop("invalid 'file'")
     .External(PDF,
               file, old$paper, old$family, old$encoding, old$bg, old$fg,
-              width, height, old$pointsize, old$onefile, old$pagecentre, title,
-              fonts, version[1], version[2])
+              old$width, old$height, old$pointsize, onefile, old$pagecentre,
+              old$title, old$fonts, version[1], version[2])
     invisible()
 }
 
@@ -323,12 +369,6 @@ pdf <- function(file = ifelse(onefile, "Rplots.pdf", "Rplot%03d.pdf"),
 "       closepath clip newpath } def",
 "/rgb { setrgbcolor } def",
 "/s   { scalefont setfont } def")
-# "/R   { /Font1 findfont } def",
-# "/B   { /Font2 findfont } def",
-# "/I   { /Font3 findfont } def",
-# "/BI  { /Font4 findfont } def",
-# "/S   { /Font5 findfont } def",
-# "1 setlinecap 1 setlinejoin")
 
 ####################
 # PostScript font database
@@ -554,21 +594,44 @@ initPSandPDFfonts <- function() {
     if(exists(".PostScript.Options", envir = .PSenv, inherits=FALSE)) return()
 
 assign(".PostScript.Options",
-    list(paper	= "default",
-	 horizontal = TRUE,
-	 width	= 0,
-	 height = 0,
-	 family = "Helvetica",
+    list(onefile = TRUE,
+         family = "Helvetica",
+         title = "R Graphics Output",
+         fonts = NULL,
 	 encoding = "default",
-	 pointsize  = 12,
 	 bg	= "transparent",
 	 fg	= "black",
-	 onefile    = TRUE,
+	 width	= 0,
+	 height = 0,
+         horizontal = TRUE,
+	 pointsize  = 12,
+         paper	= "default",
+         pagecentre = TRUE,
 	 print.it   = FALSE,
-	 append	    = FALSE,
-	 pagecentre = TRUE,
 	 command    = "default",
          colormodel = "rgb"), envir = .PSenv)
+assign(".PostScript.Options.default",
+       get(".PostScript.Options", envir = .PSenv),
+       envir = .PSenv)
+
+assign(".PDF.Options",
+    list(width	= 7,
+	 height = 7,
+         onefile = TRUE,
+         family = "Helvetica",
+         title = "R Graphics Output",
+         fonts = NULL,
+         version = "1.1",
+         paper = "special",
+         encoding = "default",
+	 bg	= "transparent",
+	 fg	= "black",
+	 pointsize  = 12,
+	 pagecentre = TRUE), envir = .PSenv)
+assign(".PDF.Options.default",
+       get(".PDF.Options", envir = .PSenv),
+       envir = .PSenv)
+
 
 postscriptFonts(# Default Serif font is Times
                 serif=Type1Font("Times",
@@ -586,6 +649,7 @@ postscriptFonts(# Default Serif font is Times
                     "Courier-Oblique.afm", "Courier-BoldOblique.afm",
                     "Symbol.afm")),
                 # Default Symbol font is Symbol
+                # Deprecated: remove in R 2.8.0
                 symbol=Type1Font("Symbol",
                   c("Symbol.afm", "Symbol.afm", "Symbol.afm", "Symbol.afm",
                     "Symbol.afm"), encoding="AdobeSym.enc"),

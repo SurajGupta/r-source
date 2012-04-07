@@ -30,13 +30,15 @@ typedef SEXP (*R_X11DataEntryRoutine)(SEXP call, SEXP op, SEXP args, SEXP rho);
 typedef SEXP (*R_X11DataViewer)(SEXP call, SEXP op, SEXP args, SEXP rho);
 typedef Rboolean (*R_GetX11ImageRoutine)(int d, void *pximage, 
 					 int *pwidth, int *pheight);
-typedef int (*R_X11_access)();
+typedef int (*R_X11_access)(void);
 
 typedef Rboolean (*R_X11clp)(Rclpconn, char*);
 
 
 typedef struct {
     R_do_X11 X11;
+    R_do_X11 cairo;
+    R_do_X11 saveplot;
     R_X11DataEntryRoutine de;
     R_GetX11ImageRoutine  image;
     R_X11_access access;

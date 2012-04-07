@@ -34,8 +34,6 @@
 #define __MAIN__
 #include "Defn.h"
 #include "Rinterface.h"
-#include "Graphics.h"
-#include <Rdevices.h>		/* for InitGraphics */
 #include "IOStuff.h"
 #include "Fileio.h"
 #include "Parse.h"
@@ -45,12 +43,8 @@
 # include <locale.h>
 #endif
 
-#ifdef HAVE_LANGINFO_CODESET
-# include <langinfo.h>
-#endif
-
 #ifdef ENABLE_NLS
-void attribute_hidden nl_Rdummy()
+void attribute_hidden nl_Rdummy(void)
 {
     /* force this in as packages use it */
     dgettext("R", "dummy - do not translate");
@@ -80,7 +74,7 @@ void Rf_callToplevelHandlers(SEXP expr, SEXP value, Rboolean succeeded,
 static int ParseBrowser(SEXP, SEXP);
 
  
-extern void InitDynload();
+extern void InitDynload(void);
 
 	/* Read-Eval-Print Loop [ =: REPL = repl ] with input from a file */
 
@@ -318,7 +312,7 @@ static void R_ReplConsole(SEXP rho, int savestack, int browselevel)
 
 static unsigned char DLLbuf[CONSOLE_BUFFER_SIZE+1], *DLLbufp;
 
-void R_ReplDLLinit()
+void R_ReplDLLinit(void)
 {
     R_IoBufferInit(&R_ConsoleIob);
     R_GlobalContext = R_ToplevelContext = &R_Toplevel;
@@ -329,7 +323,7 @@ void R_ReplDLLinit()
 }
 
 
-int R_ReplDLLdo1()
+int R_ReplDLLdo1(void)
 {
     int c;
     ParseStatus status;
@@ -448,7 +442,7 @@ static void win32_segv(int signum)
    2005-12-17 BDR */
 
 static unsigned char ConsoleBuf[CONSOLE_BUFFER_SIZE];
-extern void R_CleanTempDir();
+extern void R_CleanTempDir(void);
 
 static void sigactionSegv(int signum, siginfo_t *ip, void *context)
 {
@@ -600,7 +594,7 @@ static struct sigaltstack sigstk;
 static void *signal_stack;
 
 #define R_USAGE 100000 /* Just a guess */
-static void init_signal_handlers()
+static void init_signal_handlers(void)
 {
     /* <FIXME> may need to reinstall this if we do recover. */
     struct sigaction sa;
@@ -629,7 +623,7 @@ static void init_signal_handlers()
 }
 
 #else /* not sigaltstack and sigaction and sigemptyset*/
-static void init_signal_handlers()
+static void init_signal_handlers(void)
 {
     signal(SIGINT,  handleInterrupt);
     signal(SIGUSR1, onsigusr1);
@@ -672,10 +666,8 @@ void setup_Rmainloop(void)
 #ifdef ENABLE_NLS
     char localedir[PATH_MAX+20];
 #endif
-#ifdef Win32
-    char deferred_warnings[4][250];
+    char deferred_warnings[6][250];
     int ndeferred_warnings = 0;
-#endif
 
     InitConnections(); /* needed to get any output at all */
 
@@ -711,19 +703,30 @@ void setup_Rmainloop(void)
 	/* Windows does not have LC_MESSAGES */
     }
 #else /* not Win32 */
-    setlocale(LC_CTYPE, "");/*- make ISO-latin1 etc. work for LOCALE users */
-    setlocale(LC_COLLATE, "");/*- alphabetically sorting */
-    setlocale(LC_TIME, "");/*- names and defaults for date-time formats */
-    setlocale(LC_MONETARY, "");/*- currency units */
+    if(!setlocale(LC_CTYPE, ""))
+	snprintf(deferred_warnings[ndeferred_warnings++], 250,
+		 "Setting LC_CTYPE failed, using \"C\"\n");
+    if(!setlocale(LC_COLLATE, ""))
+	snprintf(deferred_warnings[ndeferred_warnings++], 250,
+		 "Setting LC_COLLATE failed, using \"C\"\n");
+    if(!setlocale(LC_TIME, ""))
+	snprintf(deferred_warnings[ndeferred_warnings++], 250,
+		 "Setting LC_TIME failed, using \"C\"\n");
 #ifdef ENABLE_NLS
-    setlocale(LC_MESSAGES,""); /* language for messages */
+    if(!setlocale(LC_MESSAGES, ""))
+	snprintf(deferred_warnings[ndeferred_warnings++], 250,
+		 "Setting LC_MESSAGES failed, using \"C\"\n");
 #endif
     /* NB: we do not set LC_NUMERIC */
 #ifdef LC_PAPER
-    setlocale(LC_PAPER,"");
+    if(!setlocale(LC_PAPER, ""))
+	snprintf(deferred_warnings[ndeferred_warnings++], 250,
+		 "Setting LC_PAPER failed, using \"C\"\n");
 #endif
 #ifdef LC_MEASUREMENT
-    setlocale(LC_MEASUREMENT,"");
+    if(!setlocale(LC_MEASUREMENT, ""))
+	snprintf(deferred_warnings[ndeferred_warnings++], 250,
+		 "Setting LC_MEASUREMENT failed, using \"C\"\n");
 #endif
 #endif /* not Win32 */
 #ifdef ENABLE_NLS
@@ -747,7 +750,9 @@ void setup_Rmainloop(void)
 
     InitTempDir(); /* must be before InitEd */
     InitMemory();
+#ifdef USE_CHAR_HASHING
     InitStringHash(); /* must be before InitNames */
+#endif
     InitNames();
     InitBaseEnv();
     InitGlobalEnv();
@@ -758,29 +763,7 @@ void setup_Rmainloop(void)
     InitColors();
     InitGraphics();
     R_Is_Running = 1;
-#ifdef HAVE_LANGINFO_CODESET
-    {
-	char  *p = nl_langinfo(CODESET);
-	if(streql(p, "UTF-8")) known_to_be_utf8 = utf8locale =TRUE;
-	if(streql(p, "ISO-8859-1")) known_to_be_latin1 = latin1locale =TRUE;
-	/* fprintf(stderr, "using %s\n", p); */
-    }
-#endif
-#ifdef SUPPORT_MBCS
-    mbcslocale = MB_CUR_MAX > 1;
-#endif
-#ifdef Win32
-    {
-	char *ctype = setlocale(LC_CTYPE, NULL), *p;
-	p = strrchr(ctype, '.');
-	if(p && isdigit(p[1])) localeCP = atoi(p+1); else localeCP = 0;
-	/* Not 100% correct, but CP1252 is a superset */
-	known_to_be_latin1 = latin1locale = (localeCP == 1252);
-    }
-#endif
-#if defined(Win32) && defined(SUPPORT_UTF8)
-    utf8locale = mbcslocale = TRUE;
-#endif
+    R_check_locale();
     /* gc_inhibit_torture = 0; */
 
     /* Initialize the global context for error handling. */
@@ -884,9 +867,12 @@ void setup_Rmainloop(void)
      */
     if(!R_Quiet) {
 	PrintGreeting();
-#ifndef SUPPORT_UTF8
+#ifndef SUPPORT_MBCS
 	if(utf8locale)
 	    R_ShowMessage(_("WARNING: UTF-8 locales are not supported in this build of R\n"));
+	else if(mbcslocale)
+	    R_ShowMessage(_("WARNING: multibyte locales are not supported in this build of R\n"));
+
 #endif
     }
 
@@ -948,13 +934,11 @@ void setup_Rmainloop(void)
 	UNPROTECT(1);
     }
     /* gc_inhibit_torture = 0; */
-#ifdef Win32
     {
 	int i;
 	for(i = 0 ; i < ndeferred_warnings; i++)
 	    warning(deferred_warnings[i]);
     }
-#endif
     if (R_CollectWarnings) {
 	REprintf(_("During startup - "));
 	PrintWarnings();
@@ -1350,7 +1334,7 @@ R_removeTaskCallback(SEXP which)
 }
 
 SEXP
-R_getTaskCallbackNames()
+R_getTaskCallbackNames(void)
 {
     SEXP ans;
     R_ToplevelCallbackEl *el;
@@ -1506,3 +1490,15 @@ R_addTaskCallback(SEXP f, SEXP data, SEXP useData, SEXP name)
 }
 
 #undef __MAIN__
+
+#ifndef Win32
+/* this is here solely to pull in xxxpr.o */
+#include <R_ext/RS.h>
+void F77_SYMBOL(intpr) (const char *, int *, int *, int *);
+void attribute_hidden dummy12345(void)
+{
+    int i = 0;
+    F77_CALL(intpr)("dummy", &i, &i, &i);
+}
+#endif
+

@@ -17,15 +17,19 @@
 tk_select.list <-
     function(list, preselect = NULL, multiple = FALSE, title = NULL)
 {
+    have_ttk <- as.character(tcl("info", "tclversion")) >= "8.5"
+    if(!have_ttk) ttkbutton <- tkbutton
     lvar <- tclVar()
     tclObj(lvar) <- list
+    oldmode <- tclServiceMode(FALSE)
     dlg <- tktoplevel()
     tkwm.title(dlg, title)
     tkwm.deiconify(dlg)
     tkgrab.set(dlg)
     tkfocus(dlg)
     if(!is.null(title) && nzchar(title)) {
-        lab <- tklabel(dlg, text = title, fg = "blue")
+        lab <- if(have_ttk) ttklabel(dlg, text = title, foreground = "blue")
+        else tklabel(dlg, text = title, fg = "blue")
         tkpack(lab, side="top")
     }
     onOK <- function() {
@@ -40,8 +44,8 @@ tk_select.list <-
     }
     buttons <- tkframe(dlg)
     tkpack(buttons, side="bottom")
-    OK <- tkbutton(buttons, text = gettext("OK"), width = 6, command = onOK)
-    Cancel <- tkbutton(buttons, text = gettext("Cancel"), command = onCancel)
+    OK <- ttkbutton(buttons, text = gettext("OK"), width = 6, command = onOK)
+    Cancel <- ttkbutton(buttons, text = gettext("Cancel"), command = onCancel)
     tkpack(OK, Cancel, side="left", fill="x", padx="2m")
 
     scht <- as.numeric(tclvalue(tkwinfo("screenheight", dlg))) - 200
@@ -56,8 +60,8 @@ tk_select.list <-
     ht <- min(length(list), scht %/% tmp)
     tkdestroy(box)
     if(ht < length(list)) {
-        scr <- tkscrollbar(dlg, repeatinterval = 5,
-                           command = function(...) tkyview(box, ...))
+        scr <- if(have_ttk) ttkscrollbar(dlg, command = function(...) tkyview(box, ...))
+        else tkscrollbar(dlg, repeatinterval=5, command = function(...) tkyview(box, ...))
         box <- tklistbox(dlg, height = ht, width = 0,
                          listvariable = lvar, bg = "white",
                          selectmode = ifelse(multiple, "multiple", "single"),
@@ -77,7 +81,88 @@ tk_select.list <-
 
     tkbind(dlg, "<Destroy>", onCancel)
     tkfocus(box)
+    tclServiceMode(oldmode)
     tkwait.window(dlg)
     if(!multiple && !length(ans.select_list)) ans.select_list <- ""
     ans.select_list
+}
+
+tkProgressBar <- function(title = "R progress bar", label = "",
+                          min = 0, max = 1, initial = 0, width = 300)
+{
+    useText <- FALSE
+    have_ttk <- as.character(tcl("info", "tclversion")) >= "8.5"
+    if(!have_ttk && as.character(tclRequire("PBar")) == "FALSE") useText <- TRUE
+
+
+    .win <- tktoplevel()
+    .val <- initial
+    .killed <- FALSE
+
+    tkwm.geometry(.win, sprintf("%dx80", width+40))
+    tkwm.title(.win, title)
+    fn <- tkfont.create(family="helvetica", size=12)
+
+    if(useText) {
+        ## currently unused
+        .lab <- tklabel(.win, text=label, font=fn, padx=20)
+        tkpack(.lab, side = "left")
+        fn2 <- tkfont.create(family="helvetica", size=16)
+       .vlab <- tklabel(.win, text="0%", font=fn2, padx=20)
+        tkpack(.vlab, side = "right")
+        up <- function(value) {
+            if(!is.finite(value) || value < min || value > max) return()
+            .val <<- value
+             tkconfigure(.vlab,
+                         text=sprintf("%d%%",
+                         round(100*(value - min)/(max - min))))
+        }
+    } else {
+        .lab <- tklabel(.win, text=label, font=fn, pady=10)
+       .tkval <- tclVar(0)
+        tkpack(.lab, side="top")
+        tkpack(tklabel(.win, text="", font = fn), side="bottom")
+
+        pBar <- if(have_ttk) ttkprogressbar(.win, length=width, variable=.tkval) else tkwidget(.win, "ProgressBar", width=width, variable=.tkval)
+        tkpack(pBar, side="bottom")
+        up <- function(value) {
+            if(!is.finite(value) || value < min || value > max) return()
+            .val <<- value
+            tclvalue(.tkval) <<- 100*(value - min)/(max - min)
+        }
+    }
+    getVal <- function() .val
+    kill <- function() if(!.killed) {tkdestroy(.win); .killed <<- TRUE}
+    title <- function(title) tkwm.title(.win, title)
+    lab <- function(label) tkconfigure(.lab, text=label)
+    tkbind(.win, "<Destroy>", kill)
+    up(initial)
+
+    structure(list(getVal=getVal, up=up, title=title, label=lab, kill=kill),
+              class = "tkProgressBar")
+}
+
+getTkProgressBar <- function(pb)
+{
+    if(!inherits(pb, "tkProgressBar"))
+       stop("'pb' is not from class \"tkProgressBar\"")
+    pb$getVal()
+}
+
+setTkProgressBar <- function(pb, value, title = NULL, label = NULL)
+{
+    if(!inherits(pb, "tkProgressBar"))
+       stop("'pb' is not from class \"tkProgressBar\"")
+    oldval <- pb$getVal()
+    pb$up(value)
+    if(!is.null(title)) pb$title(title)
+    if(!is.null(label)) pb$label(label)
+    tcl("update", "idletasks")
+    invisible(oldval)
+}
+
+close.tkProgressBar <- function(con, ...)
+{
+    con$kill()
+    invisible(NULL)
 }

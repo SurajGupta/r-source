@@ -1,7 +1,7 @@
 /*
  *  R : A Computer Language for Statistical Data Analysis
  *  Copyright (C) 1995, 1996  Robert Gentleman and Ross Ihaka
- *  Copyright (C) 1998--2007  R Development Core Team
+ *  Copyright (C) 1998--2008  R Development Core Team
  *
  *  This program is free software; you can redistribute it and/or modify
  *  it under the terms of the GNU Lesser General Public License as published by
@@ -21,95 +21,19 @@
 #ifndef RGRAPHICS_H_
 #define RGRAPHICS_H_
 
+/* This is a public header */
+
 #ifdef  __cplusplus
 extern "C" {
 #endif
 
-/*
- *	Some Notes on Color
- *
- *	R uses a 24-bit color model.  Colors are specified in 32-bit
- *	integers which are partitioned into 4 bytes as follows.
- *
- *		<-- most sig	    least sig -->
- *		+-------------------------------+
- *		|   0	| blue	| green |  red	|
- *		+-------------------------------+
- *
- *	The red, green and blue bytes can be extracted as follows.
- *
- *		red   = ((color	     ) & 255)
- *		green = ((color >>  8) & 255)
- *		blue  = ((color >> 16) & 255)
- */
-/*
- *	Changes as from 1.4.0: use top 8 bits as an alpha channel.
- * 	0 = opaque, 255 = transparent.
- *	At present only 0 and >0 are used, with no semi-transparent.
- */
-/*
- * Changes as from 2.0.0:  use top 8 bits as full alpha channel
- *      1 = opaque, 0 = transparent
- *      [to conform with SVG, PDF and others]
- *      and everything in between is used
- *      [which means that NA is not stored as an internal colour;
- *       it is converted to R_RGBA(255, 255, 255, 0)]
- */
-/* #define R_RGB(r,g,b)	((r)|((g)<<8)|((b)<<16)|(255<<24)) overflows */
-#define R_RGB(r,g,b)	((r)|((g)<<8)|((b)<<16)|0xFF000000)
-#define R_RGBA(r,g,b,a)	((r)|((g)<<8)|((b)<<16)|((a)<<24))
-#define R_RED(col)	(((col)	   )&255)
-#define R_GREEN(col)	(((col)>> 8)&255)
-#define R_BLUE(col)	(((col)>>16)&255)
-#define R_ALPHA(col)	(((col)>>24)&255)
-#define R_OPAQUE(col)	(R_ALPHA(col) == 255)
-#define R_TRANSPARENT(col) (R_ALPHA(col) == 0)
-    /* 
-     * A transparent white
-     */
-#define R_TRANWHITE     (R_RGBA(255, 255, 255, 0))
+/* Color handling is in colors.c: at least R_OPAQUE and R_ALPHA are
+   used by devices.
 
-/*
- *	Some Notes on Line Textures
- *
- *	Line textures are stored as an array of 4-bit integers within
- *	a single 32-bit word.  These integers contain the lengths of
- *	lines to be drawn with the pen alternately down and then up.
- *	The device should try to arrange that these values are measured
- *	in points if possible, although pixels is ok on most displays.
- *
- *	If newlty contains a line texture description it is decoded
- *	as follows:
- *
- *		ndash = 0;
- *		for(i=0 ; i<8 && newlty & 15 ; i++) {
- *			dashlist[ndash++] = newlty & 15;
- *			newlty = newlty>>4;
- *		}
- *		dashlist[0] = length of pen-down segment
- *		dashlist[1] = length of pen-up segment
- *		etc
- *
- *	An integer containing a zero terminates the pattern.  Hence
- *	ndash in this code fragment gives the length of the texture
- *	description.  If a description contains an odd number of
- *	elements it is replicated to create a pattern with an
- *	even number of elements.  (If this is a pain, do something
- *	different its not crucial).
- */
-
-/* The basic numbered & named line types; here device-independent:
- * e.g. "dashed" == "44",  "dotdash" == "1343"
+   Line textures are in engine.c, used in graphics.c, plot3d.c,
+   plotmath.c and in devices.
 */
-#define LTY_BLANK	-1
-#define LTY_SOLID	0
-#define LTY_DASHED	4 + (4<<4)
-#define LTY_DOTTED	1 + (3<<4)
-#define LTY_DOTDASH	1 + (3<<4) + (4<<8) + (3<<12)
-#define LTY_LONGDASH	7 + (3<<4)
-#define LTY_TWODASH	2 + (2<<4) + (6<<8) + (2<<12)
 
-#ifndef R_GRAPHICS_INTERNAL
 	/* possible coordinate systems (for specifying locations) */
 typedef enum {
  DEVICE	= 0,	/* native device coordinates (rasters) */
@@ -135,39 +59,22 @@ typedef enum {
  LINES = 14,	/* multiples of a line in the margin (mex) */
  CHARS = 15	/* multiples of text height (cex) */
 } GUnit;
-#endif
 
-struct colorDataBaseEntry {
-	char *name;	/* X11 Color Name */
-	char *rgb;	/* #RRGGBB String */
-	unsigned int code;  /* Internal R Color Code */
-};
 
-typedef struct colorDataBaseEntry ColorDataBaseEntry;
-
-extern int R_ColorTableSize;
-extern unsigned int R_ColorTable[];
-extern ColorDataBaseEntry ColorDataBase[];
-extern const char *DefaultPalette[];
-
-/* Graphics State:
- *
- * The following structure defines state for a graphics device driver.
- * Two copies are kept; the ``default'' set of values, and a set which
- * can be modified during calls to an application program.  When a
- * new graphics frame is started, the values revert to the defaults
- *
- */
-
-#ifndef R_GRAPHICS_INTERNAL
+#ifdef R_GRAPHICS
+/* Foe use inside R: point to the real structure */
+# define pGEDev pGEDevDesc
+# define DevDesc GEDevDesc
+#else
+/* Use opaque structure for back compatibility */
 typedef struct {
 /* opaque structure */
 int dummy;
 } DevDesc;
-#endif /* R_GRAPHICS_INTERNAL */
+typedef DevDesc * pGEDev;
+#endif
 
 #define CreateAtVector		Rf_CreateAtVector
-#define curDevice		Rf_curDevice
 #define CurrentDevice		Rf_CurrentDevice
 #define currentFigureLocation	Rf_currentFigureLocation
 #define GArrow			Rf_GArrow
@@ -181,8 +88,6 @@ int dummy;
 #define GConvertXUnits		Rf_GConvertXUnits
 #define GConvertY		Rf_GConvertY
 #define GConvertYUnits		Rf_GConvertYUnits
-#define GEndPath		Rf_GEndPath
-#define GetAxisLimits		Rf_GetAxisLimits
 #define GExpressionHeight	Rf_GExpressionHeight
 #define GExpressionWidth	Rf_GExpressionWidth
 #define GForceClip		Rf_GForceClip
@@ -208,7 +113,6 @@ int dummy;
 #define GScale			Rf_GScale
 #define GSetState		Rf_GSetState
 #define GSetupAxis		Rf_GSetupAxis
-#define GStartPath		Rf_GStartPath
 #define GStrHeight		Rf_GStrHeight
 #define GStrWidth		Rf_GStrWidth
 #define GSymbol			Rf_GSymbol
@@ -216,16 +120,7 @@ int dummy;
 #define GVStrHeight		Rf_GVStrHeight
 #define GVStrWidth		Rf_GVStrWidth
 #define GVText			Rf_GVText
-#define initDisplayList		Rf_initDisplayList
-#define labelformat		Rf_labelformat
-#define LTYget			Rf_LTYget
-#define LTYpar			Rf_LTYpar
-#define NewFrameConfirm		Rf_NewFrameConfirm
-#define NoDevices		Rf_NoDevices
-#define RGBpar			Rf_RGBpar
-#define col2name                Rf_col2name
-#define selectDevice		Rf_selectDevice
-/* which of these conversions should be public? maybe all?*/
+
 #define xDevtoNDC		Rf_xDevtoNDC
 #define xDevtoNFC		Rf_xDevtoNFC
 #define xDevtoNPC		Rf_xDevtoNPC
@@ -246,27 +141,31 @@ int dummy;
  *  GPAR FUNCTIONS are concerned with operations on the
  *  entire set of graphics parameters for a device
  *  (e.g., initialisation, saving, and restoring)
+ *
+ *  From graphics.c, used in plot.c.
  */
 
 /* Reset the current graphical parameters from the default ones: */
-void GRestore(DevDesc*);
+void GRestore(pGEDev);
 /* Make a temporary copy of the current parameters */
-void GSavePars(DevDesc*);
+void GSavePars(pGEDev);
 /* Restore the temporary copy saved by GSavePars */
-void GRestorePars(DevDesc*);
+void GRestorePars(pGEDev);
 
 
 /*-------------------------------------------------------------------
  *
  *  DEVICE STATE FUNCTIONS are concerned with getting and setting
  *  the current state of the device;  is it ready to be drawn into?
+ *
+ *  From graphics.c, used in plot.c.
  */
 
 /* has plot.new been called yet? */
-void GCheckState(DevDesc*);
+void GCheckState(pGEDev);
 /* Set to 1 when plot.new succeeds
  * Set to 0 when don't want drawing to go ahead */
-void GSetState(int, DevDesc*);
+void GSetState(int, pGEDev);
 
 
 
@@ -281,57 +180,54 @@ void GSetState(int, DevDesc*);
  *  version of the function is responsible for calling GConvert to get
  *  the location into device coordinates.
  *
+ *  From graphics.c, used in plot.c.
  */
 
 
 /* Draw a circle, centred on (x,y) with radius r (in inches). */
-void GCircle(double, double, int, double, int, int, DevDesc*);
+void GCircle(double, double, int, double, int, int, pGEDev);
 /* Set clipping region (based on current setting of dd->gp.xpd).
  * Only clip if new clipping region is different from the current one */
-void GClip(DevDesc*);
+void GClip(pGEDev);
 /* Polygon clipping: */
 int GClipPolygon(double *, double *, int, int, int,
-		 double *, double *, DevDesc *);
+		 double *, double *, pGEDev);
 /* Always clips */
-void GForceClip(DevDesc*);
+void GForceClip(pGEDev);
 /* Draw a line from (x1,y1) to (x2,y2): */
-void GLine(double, double, double, double, int, DevDesc*);
+void GLine(double, double, double, double, int, pGEDev);
 /* Return the location of the next mouse click: */
-Rboolean GLocator(double*, double*, int, DevDesc*);
+Rboolean GLocator(double*, double*, int, pGEDev);
 /* Return the height, depth, and width of the specified
  * character in the specified units: */
-void GMetricInfo(int, double*, double*, double*, GUnit, DevDesc*);
+void GMetricInfo(int, double*, double*, double*, GUnit, pGEDev);
 /* Set device "mode" (drawing or not drawing) here for windows and mac drivers.
  */
-void GMode(int, DevDesc*);
+void GMode(int, pGEDev);
 /* Draw a polygon using the specified lists of x and y values: */
-void GPolygon(int, double*, double*, int, int, int, DevDesc*);
+void GPolygon(int, double*, double*, int, int, int, pGEDev);
 /* Draw series of straight lines using the specified lists of x and y values: */
-void GPolyline(int, double*, double*, int, DevDesc*);
+void GPolyline(int, double*, double*, int, pGEDev);
 /* Draw a rectangle given two opposite corners: */
-void GRect(double, double, double, double, int, int, int, DevDesc*);
+void GRect(double, double, double, double, int, int, int, pGEDev);
 /* Return the height of the specified string in the specified units: */
-double GStrHeight(const char *, GUnit, DevDesc*);
+double GStrHeight(const char *, cetype_t, GUnit, pGEDev);
 /* Return the width of the specified string in the specified units */
-double GStrWidth(const char *, GUnit, DevDesc*);
+double GStrWidth(const char *, cetype_t, GUnit, pGEDev);
 /* Draw the specified text at location (x,y) with the specified
  * rotation and justification: */
-void GText(double, double, int, const char *, double, double, double, DevDesc*);
+void GText(double, double, int, const char *, cetype_t, double, double, double,
+	   pGEDev);
 
+/* No longer exist
+void GStartPath(pGEDev);
+void GEndPath(pGEDev);
+*/
 
-void GStartPath(DevDesc*);
-void GEndPath(DevDesc*);
+/* From plotmath.c, used in plot.c */
+void GMathText(double, double, int, SEXP, double, double, double, pGEDev);
+void GMMathText(SEXP, int, double, int, double, int, double, pGEDev);
 
-void GMathText(double, double, int, SEXP, double, double, double, DevDesc*);
-void GMMathText(SEXP, int, double, int, double, int, double, DevDesc*);
-
-
-/* Called from do_text and do_contour */
-void GVText(double, double, int, const char *, int, int, double, double,
-	    double, DevDesc *);
-/* Called only from do_contour */
-double GVStrWidth(const char *, int, int, int, DevDesc *);
-double GVStrHeight(const char *, int, int, int, DevDesc *);
 
 /*-------------------------------------------------------------------
  *
@@ -339,114 +235,87 @@ double GVStrHeight(const char *, int, int, int, DevDesc *);
  *  using the graphical primitives (i.e., they are generic - NOT
  *  device-specific).
  *
+ *  From graphics.c, used in plot.c.
  */
 
 /* Draw a line from (x1,y1) to (x2,y2) with an arrow head
  * at either or both ends. */
-void GArrow(double, double, double, double, int, double, double, int, DevDesc*);
+void GArrow(double, double, double, double, int, double, double, int, pGEDev);
 /* Draw a box around specified region:
  *  1=plot region, 2=figure region, 3=inner region, 4=device. */
-void GBox(int, DevDesc*);
+void GBox(int, pGEDev);
 /* Return a "nice" min, max and number of intervals for a given
  * range on a linear or _log_ scale, respectively: */
-void GPretty(double*, double*, int*);
+void GPretty(double*, double*, int*); /* used in plot3d.c */
 void GLPretty(double*, double*, int*);
 /* Draw text in margins. */
-void GMtext(const char *, int, double, int, double, int, double, DevDesc*);
+void GMtext(const char *, cetype_t, int, double, int, double, int, double, pGEDev);
 /* Draw one of the predefined symbols (circle, square, diamond, ...) */
-void GSymbol(double, double, int, int, DevDesc*);
+void GSymbol(double, double, int, int, pGEDev);
 
-double GExpressionHeight(SEXP, GUnit, DevDesc*);
-double GExpressionWidth(SEXP, GUnit, DevDesc*);
+/* From plotmath.c, used in plot.c */
+double GExpressionHeight(SEXP, GUnit, pGEDev);
+double GExpressionWidth(SEXP, GUnit, pGEDev);
 
-
-
-/*-------------------------------------------------------------------
- *
- *  COLOUR CODE is concerned with the internals of R colour representation
- *
- */
-
-/* Convert an R colour specification (which might be a number or */
-/* a string) into an internal colour specification. */
-unsigned int RGBpar(SEXP, int);
-    /* Convert an internal colour specification into a colour name */
-const char *col2name(unsigned int col); /* used in grid */
-
-
-/*-------------------------------------------------------------------
- *
- *  LINE TEXTURE CODE is concerned with the internals of R
- *  line texture representation.
- */
-unsigned int LTYpar(SEXP, int);
-SEXP LTYget(unsigned int);
 
 
 /*----------------------------------------------------------------------
  *
  *  TRANSFORMATIONS are concerned with converting locations between
  *  coordinate systems and dimensions between different units.
+ *
+ *  From graphics.c, used in par.c, plot.c, plot3d.c
  */
 
 /* Convert an R unit (e.g., "user") into an internal unit (e.g., USER)> */
 GUnit GMapUnits(int);
 /* Convert a LOCATION from one coordinate system to another: */
-void GConvert(double*, double*, GUnit, GUnit, DevDesc*);
-double GConvertX(double, GUnit, GUnit, DevDesc*);
-double GConvertY(double, GUnit, GUnit, DevDesc*);
+void GConvert(double*, double*, GUnit, GUnit, pGEDev);
+double GConvertX(double, GUnit, GUnit, pGEDev);
+double GConvertY(double, GUnit, GUnit, pGEDev);
 /* Convert an x/y-dimension from one set of units to another: */
-double GConvertXUnits(double, GUnit, GUnit, DevDesc*);
-double GConvertYUnits(double, GUnit, GUnit, DevDesc*);
+double GConvertXUnits(double, GUnit, GUnit, pGEDev);
+double GConvertYUnits(double, GUnit, GUnit, pGEDev);
 
 /* Set up the different regions on a device (i.e., inner region,
  * figure region, plot region) and transformations for associated
  * coordinate systems (called whenever anything that affects the
  * coordinate transformations changes):
  */
-void GReset(DevDesc*);
+void GReset(pGEDev);
 
 /* Set up the user coordinate transformations: */
-void GMapWin2Fig(DevDesc*);
+void GMapWin2Fig(pGEDev);
 /* Set up the device for a new plot by Resetting graphics parameters
  * and Resetting the regions and coordinate Systems */
-DevDesc *GNewPlot(Rboolean);
+pGEDev GNewPlot(Rboolean);
 /* Set up the user coordinates based on the axis limits */
-void GScale(double, double, int, DevDesc*);
+void GScale(double, double, int, pGEDev);
 /* Set up the axis limits based on the user coordinates */
-void GSetupAxis(int, DevDesc*);
+void GSetupAxis(int, pGEDev);
 /* Return row and column of current figure in the layout matrix */
-void currentFigureLocation(int*, int*, DevDesc*);
+void currentFigureLocation(int*, int*, pGEDev);
 
 /* which of these conversions should be public? maybe all? [NO_REMAP] */
-double xDevtoNDC(double, DevDesc*);
-double yDevtoNDC(double, DevDesc*);
-double xDevtoNFC(double, DevDesc*);
-double yDevtoNFC(double, DevDesc*);
-double xDevtoNPC(double, DevDesc*);
-double yDevtoNPC(double, DevDesc*);
-double xDevtoUsr(double, DevDesc*);
-double yDevtoUsr(double, DevDesc*);
-double xNPCtoUsr(double, DevDesc*);
-double yNPCtoUsr(double, DevDesc*);
+double xDevtoNDC(double, pGEDev);
+double yDevtoNDC(double, pGEDev);
+double xDevtoNFC(double, pGEDev);
+double yDevtoNFC(double, pGEDev);
+double xDevtoNPC(double, pGEDev);
+double yDevtoNPC(double, pGEDev);
+double xDevtoUsr(double, pGEDev);
+double yDevtoUsr(double, pGEDev);
+double xNPCtoUsr(double, pGEDev);
+double yNPCtoUsr(double, pGEDev);
 
-/* Devices */
 
-/* Return the number of the current device. */
-int curDevice(void);
+/* Devices: from devices.c */
+
 /* Return a pointer to the current device. */
-DevDesc* CurrentDevice(void);
-/* Is the null device the current device? */
-int NoDevices(void);
-void NewFrameConfirm(void);
+pGEDev CurrentDevice(void); /* used in colors, graphics, par, plot, plot3d */
 
-void initDisplayList(DevDesc *dd);
-
-/* some functions that plot.c needs to share with plot3d.c */
+/* From plot.c, used by grid/src/grid.c */
 SEXP CreateAtVector(double*, double*, int, Rboolean);
-void GetAxisLimits(double, double, double*, double*);
-SEXP labelformat(SEXP);
-
 
 #ifdef  __cplusplus
 }

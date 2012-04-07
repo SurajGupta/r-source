@@ -53,6 +53,11 @@ get.gpar(names = NULL)
     backward compatibility) \cr
   }
 
+  Colours can be specified in one of the forms returned by
+  \code{\link{rgb}}, as a name (see \code{\link{colors}}) or as a
+  positive integer index into the current \link{palette} (with zero or
+  negative values being taken as transparent).
+  
   The \code{alpha} setting is combined with the alpha channel for
   individual colours by multiplying (with both alpha settings
   normalised to the range 0 to 1).
@@ -93,7 +98,7 @@ get.gpar(names = NULL)
   not always make sense -- for example, viewports will only take
   notice of the first parameter value.)
 
-  The \code{gamma} parameter is deprecated.
+  The \code{gamma} parameter is defunct since \R 2.7.0.
 
   \code{get.gpar()} returns all current graphical parameter settings.
 }

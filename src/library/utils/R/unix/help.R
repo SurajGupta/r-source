@@ -30,20 +30,21 @@ function(file, topic)
         file <- lnkfile[ex][1]          # could be more than one
     }
     if(file == ofile) {
-        msg <- paste("Using non-linked HTML file:",
-                     "style sheet and hyperlinks may be incorrect")
+        msg <- gettext("Using non-linked HTML file: hyperlinks may be incorrect")
         warning(paste(strwrap(msg), collapse = "\n"))
     }
     file <- paste("file://", URLencode(file), sep = "")
     if(is.null(browser <- getOption("browser")))
         stop("options(\"browser\") not set")
     browseURL(file)
-    writeLines(c(paste("Help for", sQuote(topic),
-                       "is shown in browser", browser, "..."),
-                 "Use",
-                 paste("\thelp(\"", topic, "\", htmlhelp = FALSE)",
-                       sep = ""),
-                 "or\n\toptions(htmlhelp = FALSE)\nto revert."))
+    if (is.character(browser)) {
+        writeLines(c(paste("Help for", sQuote(topic),
+                           "is shown in browser", browser, "..."),
+                     "Use",
+                     paste("\thelp(\"", topic, "\", htmlhelp = FALSE)",
+                           sep = ""),
+                     "or\n\toptions(htmlhelp = FALSE)\nto revert."))
+    }
     return(invisible())
 }
 

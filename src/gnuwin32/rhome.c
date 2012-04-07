@@ -1,6 +1,6 @@
 /*
  *  R : A Computer Language for Statistical Data Analysis
- *  Copyright (C) 1999--2006  Guido Masarotto and Brian Ripley
+ *  Copyright (C) 1999--2007  Guido Masarotto and Brian Ripley
  *
  *  This program is free software; you can redistribute it and/or modify
  *  it under the terms of the GNU General Public License as published by
@@ -28,7 +28,6 @@
 #include <string.h>		/* for strrchr(...) */
 #include <stdio.h>
 #include <ctype.h>
-#include <Rversion.h>
 #include <stdlib.h>		/* for exit */
 
 static char rhomebuf[MAX_PATH];
@@ -36,24 +35,33 @@ static char rhomebuf[MAX_PATH];
 /* <MBCS-FIXME> We can't just use Rf_strchr as this is called
    from front-ends */
 #define GOBACKONESLASH \
-  p = strrchr(rhomebuf,'\\'); \
-  if (!p) { \
-    MessageBox(NULL, "Installation problem", "Terminating", \
-		MB_TASKMODAL | MB_ICONSTOP | MB_OK);\
-   exit(1); \
-  } \
-  *p = '\0'
+    p = strrchr(rhomebuf,'\\'); \
+    if (!p) { \
+	MessageBox(NULL, "Installation problem", "Terminating", \
+		   MB_TASKMODAL | MB_ICONSTOP | MB_OK);\
+	exit(1); \
+    } \
+    *p = '\0'
 
-/* get R_HOME from the module path: used in Rgui and Rterm */
-char *getRHOME()
+/* get R_HOME from the module path: used in RSetReg */
+char *getRHOMElong(void)
 {
     DWORD nc;
     char *p;
-    int hasspace = 0;
 
     nc = GetModuleFileName(NULL, rhomebuf, MAX_PATH);
     GOBACKONESLASH;
     GOBACKONESLASH;
+    return (rhomebuf);
+}
+
+/* get no-spaces version of R_HOME from the module path: used in Rgui and Rterm */
+char *getRHOME(void)
+{
+    char *p;
+    int hasspace = 0;
+
+    getRHOMElong();
     /* make sure no spaces in path */
     for (p = rhomebuf; *p; p++)
 	if (isspace(*p)) { hasspace = 1; break; }
@@ -62,16 +70,9 @@ char *getRHOME()
     return (rhomebuf);
 }
 
-static char DLLversion[25];
-
-char *getDLLVersion()
-{
-    sprintf(DLLversion, "%s.%s", R_MAJOR, R_MINOR);
-    return (DLLversion);
-}
 
 /* get R_HOME from environment or registry: used in embedded apps */
-char *get_R_HOME()
+char *get_R_HOME(void)
 {
     LONG rc;
     HKEY hkey;
@@ -79,7 +80,7 @@ char *get_R_HOME()
 
     /* First try the C environment space */
     if(getenv("R_HOME")) {
-        strncpy(rhomebuf, getenv("R_HOME"), MAX_PATH);
+	strncpy(rhomebuf, getenv("R_HOME"), MAX_PATH);
 	return (rhomebuf);
     }
 

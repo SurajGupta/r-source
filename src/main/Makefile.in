@@ -15,11 +15,11 @@ include $(top_builddir)/Makeconf
 SOURCES_C = \
 	CConverters.c CommandLineArgs.c \
 	Rdynload.c Renviron.c RNG.c \
-	apply.c arithmetic.c apse.c array.c attrib.c \
+	apply.c apse.c arithmetic.c array.c attrib.c \
 	base.c bind.c builtin.c \
 	character.c coerce.c colors.c complex.c connections.c context.c \
 	cov.c cum.c \
-	dcf.c datetime.c debug.c deparse.c deriv.c \
+	dcf.c datetime.c debug.c deparse.c deriv.c devices.c \
 	dotcode.c dounzip.c dstruct.c duplicate.c \
 	engine.c envir.c errors.c eval.c \
 	format.c fourier.c \
@@ -85,36 +85,25 @@ R_ZLIBS = @BUILD_ZLIB_TRUE@ ../extra/zlib/libz.a
 R_BZLIBS = @BUILD_BZLIB_TRUE@ ../extra/bzip2/libbz2.a
 R_PCRE = @BUILD_PCRE_TRUE@ ../extra/pcre/libpcre.a
 R_XDR = @BUILD_XDR_TRUE@ ../extra/xdr/libxdr.a
+R_LIBINTL = @BUILD_LIBINTL_TRUE@ ../extra/intl/libintl.a
 
-## <FIXME>
-## Names in here should use '$(top_builddir)' instead ...
-RLIBS = ../unix/libunix.a ../appl/libappl.a ../nmath/libnmath.a
-## </FIXME>
+MAIN_LIBS = ../unix/libunix.a ../appl/libappl.a ../nmath/libnmath.a
+EXTRA_STATIC_LIBS = $(R_ZLIBS) $(R_BZLIBS) $(R_PCRE) $(R_XDR)$(R_LIBINTL)
+STATIC_LIBS = $(MAIN_LIBS) $(EXTRA_STATIC_LIBS)
 
-EXTRA_LIBS = $(BLAS_LIBS) $(FLIBS) $(R_XTRA_LIBS) $(R_ZLIBS) \
-	$(R_BZLIBS) $(R_PCRE) $(R_XDR) @LIBINTL@\
-	$(READLINE_LIBS) $(LIBS)
-
-## find dependencies for both libR and standalone R.bin
-DEP_LIBINTL = @BUILD_LIBINTL_TRUE@ ../extra/intl/libintl.a
-COMMON_DEPENDENCIES = \
-	$(R_ZLIBS) $(R_BZLIBS) $(R_PCRE) $(R_XDR) $(DEP_LIBINTL)
+EXTRA_LIBS = $(BLAS_LIBS) $(FLIBS) $(R_XTRA_LIBS) @LIBINTL@ $(READLINE_LIBS) $(LIBS)
 
 R_binary = R.bin
-R_bin_OBJECTS = Rmain.o @WANT_R_SHLIB_FALSE@$(OBJECTS)
-@WANT_R_SHLIB_FALSE@R_bin_LDADD = $(RLIBS) $(EXTRA_LIBS)
+R_bin_OBJECTS = Rmain.o
+@WANT_R_SHLIB_FALSE@R_bin_LDADD = libR.a $(EXTRA_LIBS)
 @WANT_R_SHLIB_TRUE@R_bin_LDADD = -L../../lib@R_ARCH@ -lR @BLAS_SHLIB_TRUE@-lRblas
-R_bin_DEPENDENCIES =@WANT_R_SHLIB_FALSE@ $(RLIBS) $(COMMON_DEPENDENCIES)
+R_bin_DEPENDENCIES =@WANT_R_SHLIB_FALSE@ libR.a
 
 libR_la = libR$(DYLIB_EXT)
-libR_la_OBJECTS = $(OBJECTS)
-## <FIXME>
-## This should also have `ls ../appl/*.lo ../nmath/*.lo ../unix/*.lo`, but
-## of course this will not work when the files do not exist yet :-)
-libR_la_LIBADD = $(EXTRA_LIBS)
-libR_la_DEPENDENCIES = ../appl/stamp-lo ../nmath/stamp-lo ../unix/stamp-lo \
-	 $(COMMON_DEPENDENCIES)
-## </FIXME>
+## have to force in Rembedded.o
+libR_la_OBJECTS = $(OBJECTS) ../unix/Rembedded.o
+libR_la_LIBADD = $(STATIC_LIBS) $(EXTRA_LIBS)
+libR_la_DEPENDENCIES = $(STATIC_LIBS)
 
 ## The next is needed on darwin only at present
 LIBR_LDFLAGS = @LIBR_LDFLAGS@
@@ -141,6 +130,7 @@ Makedeps: Makefile $(DEPENDS)
 R: Makefile
 	@$(MAKE) Makedeps
 @WANT_R_SHLIB_TRUE@	@$(MAKE) install-lib-local
+@WANT_R_STATIC_TRUE@	@$(MAKE) install-static-local
 	@$(MAKE) install-bin-local
 
 
@@ -151,14 +141,25 @@ R: Makefile
 $(R_binary): $(R_bin_OBJECTS) $(R_bin_DEPENDENCIES) @USE_EXPORTFILES_TRUE@ $(top_builddir)/etc/R.exp
 	$(MAIN_LINK) -o $@ $(R_bin_OBJECTS) $(R_bin_LDADD)
 
+libR.a: $(OBJECTS) $(STATIC_LIBS)
+	-@mkdir libs
+	@(cd libs; for l in $(STATIC_LIBS); do $(AR) x ../$$l; done)
+	@rm -rf $@
+	$(AR) cr $@ $(OBJECTS) libs/*o
+	$(RANLIB) $@
+	@rm -rf libs
+
 install-bin-local: $(R_binary)
 	@$(MAKE) rhome="$(abs_top_builddir)" install-bin
 
-$(top_builddir)/etc/R.exp: $(OBJECTS) $(RLIBS)
-	@$(SHELL) $(top_srcdir)/tools/ldAIX4 -o $@ $(OBJECTS) $(RLIBS)
+install-static-local: libR.a
+	@$(MAKE) rhome="$(abs_top_builddir)" install-static
+
+$(top_builddir)/etc/R.exp: $(OBJECTS) $(MAIN_LIBS)
+	@$(SHELL) $(top_srcdir)/tools/ldAIX4 -o $@ $(OBJECTS) $(MAIN_LIBS)
 
 ## is this portable?  Documented as GNU extension.
-$(RLIBS):
+$(MAIN_LIBS):
 	(cd $(@D); $(MAKE) $(@F))
 
 ../extra/bzip2/libbz2.a ../extra/pcre/libpcre.a ../extra/xdr/libxdr.a ../extra/zlib/libz.a ../extra/intl/libintl.a:
@@ -168,22 +169,24 @@ $(RLIBS):
 libR: $(libR_la)
 
 $(libR_la): $(libR_la_OBJECTS) $(libR_la_DEPENDENCIES)
-	$(DYLIB_LINK) $(LIBR_LDFLAGS) -o $@ $(libR_la_OBJECTS) `ls ../appl/*.o ../nmath/*.o ../unix/*.o  2>/dev/null|grep -v /ext-` $(libR_la_LIBADD)
+	$(DYLIB_LINK) $(LIBR_LDFLAGS) -o $@ $(libR_la_OBJECTS) $(libR_la_LIBADD)
 
 install-lib-local: $(libR_la)
 	@$(MAKE) rhome="$(abs_top_builddir)" install-lib
 
-../appl/stamp-lo ../nmath/stamp-lo ../unix/stamp-lo:
-	(cd $(@D); $(MAKE) $(@F))
+
+# suppress #line directives
+YFLAGS=-l
 
 $(srcdir)/gram.c: @MAINTAINER_MODE_TRUE@ $(srcdir)/gram.y
-	@echo "re-making gram.c"
+	@$(ECHO) "re-making gram.c"
 	$(YACC) $(YFLAGS) $(srcdir)/gram.y
 	$(SHELL) $(top_srcdir)/tools/move-if-change y.tab.c $(srcdir)/gram.c
 
 install: installdirs
 	@$(MAKE) install-bin
 	@if test -f $(libR_la); then $(MAKE) install-lib; fi
+	@WANT_R_STATIC_TRUE@ @$(MAKE) install-static
 installdirs:
 	@$(MKINSTALLDIRS) "$(DESTDIR)$(Rexecbindir2)"
 	@$(MKINSTALLDIRS) "$(DESTDIR)$(Rexeclibdir)"
@@ -191,27 +194,34 @@ install-bin: installdirs
 	@$(SHELL) $(top_srcdir)/tools/copy-if-change $(R_binary) "$(DESTDIR)$(Rexecbindir2)/R"
 install-lib: installdirs
 	@$(SHELL) $(top_srcdir)/tools/copy-if-change $(libR_la) "$(DESTDIR)$(Rexeclibdir)/$(libR_la)"
+install-static: installdirs
+	@$(SHELL) $(top_srcdir)/tools/copy-if-change libR.a "$(DESTDIR)$(Rexeclibdir)/libR.a"
 install-strip: installdirs
 	@${INSTALL_PROGRAM} -s $(R_binary) "$(DESTDIR)$(Rexecbindir2)/R"
 	@if test -f $(libR_la); then $(MAKE) install-lib; fi
+	@WANT_R_STATIC_TRUE@ @$(MAKE) install-static
 	@if test -n "$(STRIP_LIBS)"; then \
 	  if test -f $(libR_la); then $(STRIP_LIBS) "$(DESTDIR)$(Rexeclibdir)/$(libR_la)"; fi; \
+	fi
+	@if test -n "$(STRIP_STATIC_LIBS)"; then \
+	  if test -f libR.a; then $(STRIP_STATIC_LIBS) "$(DESTDIR)$(Rexeclibdir)/libR.a"; fi; \
 	fi
 uninstall:
 	@rm -f "$(DESTDIR)$(Rexecbindir)/exec/$(R_ARCH)/R" "$(DESTDIR)$(Rexecbindir)/R.bin"
 	@rm -f "$(DESTDIR)$(Rexeclibdir)/libR$(DYLIB_EXT)"
+	@rm -f "$(DESTDIR)$(Rexeclibdir)/libR.a"
 
 mostlyclean: clean
 clean:
 	@-rm -f $(top_builddir)/etc/R.exp
 	@-rm -rf .libs _libs
 	@-rm -f *core Makedeps *.d *.o *.lo *.la *$(DYLIB_EXT) \
-	  $(R_binary)
+	  $(R_binary) libR.a
 distclean: clean
 	@-rm -f Makefile
 maintainer-clean: distclean
-	@echo "This command is intended for maintainers to use; it"
-	@echo "deletes files that may need special rules to rebuild"
+	@$(ECHO) "This command is intended for maintainers to use; it"
+	@$(ECHO) "deletes files that may need special rules to rebuild"
 	@-rm -f $(srcdir)/gram.c
 
 tags: TAGS

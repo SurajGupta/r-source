@@ -29,11 +29,13 @@ FULLVERSION=`cat ../../VERSION`
 
 DATE = $(shell date +%F)
 
+SVNREVISION=`sed -e 1s/Revision:.// -e q <$(RHOME)/SVN-REVISION`
+
 RLIB = $(RHOME)/library
 PKGDIR = $(RHOME)/src/library
 
 OPTFLAGS=-O3 -Wall -pedantic
-FOPTFLAGS=-O3 -Wall
+FOPTFLAGS=-O3
 ifdef DEBUG
  OPTFLAGS+=$(G_FLAG)
  FOPTFLAGS+=$(G_FLAG)
@@ -45,7 +47,7 @@ ifdef R_MEMORY_PROFILING
  OPTFLAGS+=-DR_MEMORY_PROFILING
 endif
 
-# used when compiling src/main: needed for memory.c
+# used when compiling src/main: needed for memory.c, regex.c
 OPTFLAGS_M=$(OPTFLAGS)
 
 ifneq ($(strip $(BUILD)),CROSS)
@@ -54,20 +56,20 @@ else
 R-DLLFLAGS = -mwindows
 endif
 
-R-DLLLIBS =-L. $(FLIBS) -lRblas -L../../$(IMPDIR) -lgraphapp -liconv -lcomctl32 -lversion $(LIBEXTRAS)
+R-DLLLIBS =-L. $(FLIBS) -lRblas -L../../$(IMPDIR) -lRzlib -lRgraphapp -liconv -lcomctl32 -lversion $(LIBEXTRAS)
 dllversion-RESFLAGS =-I../include
 SOURCES = \
   console.c dataentry.c dynload.c edit.c editor.c embeddedR.c extra.c \
   opt.c pager.c preferences.c psignal.c rhome.c rt_complete.c \
-  rui.c run.c shext.c sys-win32.c system.c dos_glob.c
+  rui.c run.c shext.c sys-win32.c system.c dos_wglob.c
 OBJS = $(SOURCES:.c=.o)
 ifeq ($(strip $(WIN)),32)
  OBJS += e_pow.o
 endif
 MAINLIBS = ../main/libmain.a ../appl/libappl.a ../nmath/libnmath.a
 EXTRALIBS = getline/gl.a ../extra/xdr/libxdr.a \
-   ../extra/zlib/libz.a ../extra/pcre/libpcre.a ../extra/bzip2/libbz2.a \
-   ../extra/intl/libintl.a ../extra/trio/libtrio.a
+   ../extra/pcre/libpcre.a ../extra/bzip2/libbz2.a \
+   ../extra/intl/libintl.a ../extra/trio/libtrio.a ../extra/tzone/libtz.a
 
 R_PKGS0 = $(filter-out base tools, $(R_PKGS_BASE))
 PKGCLEAN = $(foreach i,$(R_PKGS_BASE),pkgclean-$i)
@@ -85,6 +87,7 @@ endif
 CPPFLAGS = -I../include -I. -I../extra -DHAVE_CONFIG_H -DR_DLL_BUILD
 CFLAGS = $(OPTFLAGS)
 FFLAGS = $(FOPTFLAGS)
+extra-CPPFLAGS = -I../library/grDevices/src
 
 Rpwd.exe: front-ends/Rpwd.exe
 	$(CP) $< $@
@@ -183,7 +186,7 @@ rlibs:
 	$(MAKE) --no-print-directory -C ../nmath OPTFLAGS='$(OPTFLAGS)' -f Makefile.win
 	$(MAKE) --no-print-directory -C ../main RHOME=$(RHOME) OPTFLAGS='$(OPTFLAGS_M)' FFLAGS='$(FOPTFLAGS)' -f Makefile.win
 	$(MAKE) --no-print-directory -C ./getline OPTFLAGS='$(OPTFLAGS)'
-	@for ex in graphapp pcre bzip2 zlib xdr trio; do \
+	@for ex in graphapp pcre bzip2 zlib xdr trio tzone; do \
 	  $(MAKE) --no-print-directory -C ../extra/$${ex} OPTFLAGS='$(OPTFLAGS)' -f Makefile.win || exit 1; \
 	done
 
@@ -231,9 +234,6 @@ Rdll: makeMakedeps libRblas.dll.a ../../bin/R.dll
 	@$(MKDIR) -p ../../bin
 	$(CP) R.dll ../../bin/
 	@$(MKDIR) -p ./../modules/
-ifdef USE_UNICOWS
-	$(CP) unicode/opencow.dll ../../bin/
-endif
 
 FORCE:
 
@@ -416,7 +416,7 @@ data-%:
 
 #                          ===== cleaning ======
 
-EXTRA_DIRS = blas bzip2 intl pcre trio xdr zlib
+EXTRA_DIRS = blas bzip2 graphapp intl pcre trio tzone xdr zlib
 
 clean: cleanwin $(PKGCLEAN)
 	$(RM) -f ../*/*.o ../*/*.a *.a ../*/*.d ../*/Makedeps fixed/fixdesc
@@ -455,6 +455,7 @@ distclean: clean clean-recommended
 	../../etc/Rprofile.site ../../etc/rgb.txt \
 	../../share/make/wintests.mk \
 	../../tests/*.Rout ../../tests/*.Rout.fail
+	$(RM) -r ../../share/zoneinfo
 	$(MAKE) -C fixed distclean
 	$(MAKE) -C ../include -f Makefile.win distclean
 	-$(MAKE) -C installer distclean
@@ -520,6 +521,8 @@ vignettes:
 	    (echo "tools:::.install_package_vignettes(\"../library/$${pkg}\", \"../../library/$${pkg}\")") | R_DEFAULT_PACKAGES="utils,tools" $(REXE) > /dev/null; \
 	  fi; \
 	done
+	@rm -rf .vignettes
+
 
 ## ===================== Maintainer targets ========================
 
@@ -612,18 +615,22 @@ crandir:
 	$(SED) -e s/@RWVER@/$(RPREFIX)/g \
 	  -e s/@RVER@/$(RVER)/g \
 	  -e "s/@DATE@/$(DATE)/g" \
+	  -e "s/@SVNREVISION@/$(SVNREVISION)/g" \
 	  -e "s/@FULLVERSION@/$(FULLVERSION)/g" cran/index.in > cran/index.html
 	$(SED) -e s/@RWVER@/$(RPREFIX)/g \
 	  -e s/@RVER@/$(RVER)/g \
 	  -e "s/@DATE@/$(DATE)/g" \
+	  -e "s/@SVNREVISION@/$(SVNREVISION)/g" \
 	  -e "s/@FULLVERSION@/$(FULLVERSION)/g" cran/rdevel.in > cran/rdevel.html
 	$(SED) -e s/@RWVER@/$(RPREFIX)/g \
 	  -e s/@RVER@/$(RVER)/g \
 	  -e "s/@DATE@/$(DATE)/g" \
+	  -e "s/@SVNREVISION@/$(SVNREVISION)/g" \
 	  -e "s/@FULLVERSION@/$(FULLVERSION)/g" cran/rpatched.in > cran/rpatched.html	  
 	$(SED) -e s/@RWVER@/$(RPREFIX)/g \
 	  -e s/@RVER@/$(RVER)/g \
 	  -e "s/@DATE@/$(DATE)/g" \
+	  -e "s/@SVNREVISION@/$(SVNREVISION)/g" \
 	  -e "s/@FULLVERSION@/$(FULLVERSION)/g" cran/rtest.in > cran/rtest.html	  	  
 	$(SED) -e s/@RWVER@/$(RPREFIX)/g cran/release.in > cran/release.htm
 	(cd cran;\

@@ -148,8 +148,10 @@ downViewport.vpPath <- function(name, strict=FALSE, recording=TRUE) {
     # Do not call set.gpar because set.gpar accumulates cex
     grid.Call.graphics("L_setGPar", pvp$gpar)
     # Record the viewport operation
+    # ... including the depth navigated down
     if (recording) {
-      record(name)
+        attr(name, "depth") <- result
+        record(name)
     }
   } else {
     stop(gettextf("Viewport '%s' was not found", as.character(name)),
@@ -293,20 +295,12 @@ current.transform <- function() {
 
 # Control whether user is prompted before new page
 grid.prompt <- function(ask) {
-  # Do a .Call rather than a grid.Call because
-  # this does not actually produce output on the device
-  # In particular, do not want to start the first page
-  # on a device (else first grid.newpage() will start
-  # page 2)
-  # This is safe because all that is done is a query and/or
-  # set of grid state setting "ask"
-  old.prompt <- .Call(L_getAsk)
-  if (!missing(ask)) {
-    if (!is.logical(ask))
-      stop("Invalid 'ask' value")
-    .Call(L_setAsk, ask)
-  }
-  old.prompt
+    .Deprecated("devAskNewPage")
+    if(!missing(ask)) {
+        if (!is.logical(ask))
+            stop("Invalid 'ask' value")
+        grDevices::devAskNewPage(ask)
+    } else grDevices::devAskNewPage()
 }
 
 # Call this function if you want the graphics device erased or moved

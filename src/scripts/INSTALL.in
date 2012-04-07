@@ -7,7 +7,7 @@
 ## Trap interrupts, most importantly 2 (^C from keyboard)
 trap do_exit_on_error 1 2 15
 
-revision='$Rev: 43663 $'
+revision='$Rev: 44958 $'
 version=`set - ${revision}; echo ${2}`
 version="R add-on package installer ${version}
 
@@ -67,15 +67,6 @@ umask 022
 R_VERSION='@VERSION@'
 GETWD='@GETWD@'
 R_GZIPCMD='@R_GZIPCMD@'
-NO_PERL5=@NO_PERL5@
-NO_PERL5_MSG="\
-*** Formatting and installing R help pages needs Perl version 5, which
-*** does not seem to be installed on your system or is not in your path.
-*** Please install either Perl 5 on your system and re-configure R or
-*** (for a CRAN package) get the PDF reference manual from the nearest
-*** CRAN mirror.
-*** The CRAN master site can be found at
-***    http://cran.r-project.org/"
 
 : ${R_ARCH=@R_ARCH@}
 SED=@SED@
@@ -323,7 +314,7 @@ lib=`tilde_expand "${lib}"`
 if test -z "${lib}"; then
   lib=`echo "cat('\n~~~', .libPaths()[1], '\n', sep = '')" | \
     R_DEFAULT_PACKAGES=NULL "${R_EXE}" --no-restore --slave | \
-    grep '^~~~' | sed 's/.*~~~//'`
+    grep '^~~~' | ${SED} 's/.*~~~//'`
   message "Installing to library '$lib'"
   ## $lib gets checked later.
 else
@@ -512,6 +503,7 @@ do_install_source () {
       fi
       return
     fi
+    return
   fi
   if test "$Type" = "Translation" ; then
     message "Installing *Translation* package '${pkg_name}' ..."
@@ -589,7 +581,7 @@ do_install_source () {
 
 
   if ${more_than_libs}; then
-    for f in NAMESPACE LICENSE LICENCE COPYING; do
+    for f in NAMESPACE LICENSE LICENCE COPYING NEWS; do
       if test -f "${f}"; then
 	cp "${f}" "${R_PACKAGE_DIR}"
 	chmod 644 "${R_PACKAGE_DIR}/${f}"
@@ -806,54 +798,6 @@ do_install_source () {
   if test "$value" != "missing" ; then
     save=${value}
   fi
-  ## sanity check
-  if test ! -d R ; then
-    R_SAVE_IMAGE=false
-  else
-    R_SAVE_IMAGE=${save}
-  fi
-  export R_SAVE_IMAGE
-  if ${R_SAVE_IMAGE}; then
-    warning "true value of 'SaveImage' is deprecated in favour of 'LazyLoad: true'"
-  fi
-
-  if ${R_SAVE_IMAGE}; then
-    message "save image"
-    ## <NOTE>
-    ## We want R to run as quietly as possible when creating the save
-    ## image.  But this is tricky: sending options(echo=FALSE) to R via
-    ## stdin (as opposed to writing to a file and reading from it)
-    ## echoes what we sent before shutting up R, which is not what we
-    ## want.  Option '--slave' gets around this but also turns off
-    ## saving ... hence we call R with '--slave --save' (in case there
-    ## is no namespace).  Argh.
-    ## </NOTE>
-    save_image_defaults="list(compress=TRUE, safe=FALSE)"
-    code_file="${R_PACKAGE_DIR}/R/${pkg_name}"
-    rda_file="${R_PACKAGE_DIR}/R/all.rda"
-    if test -f NAMESPACE; then
-      code_cmd="echo invisible(.libPaths(c(\"${lib}\", .libPaths()))); .getRequiredPackages(); saveNamespaceImage(\"${R_PACKAGE_NAME}\", \"${rda_file}\", \"${lib}\")"
-      loader_file=nsrdaload.R
-      R_save_args="--vanilla --slave"
-    else
-      code_cmd="eval cat \"${code_file}\""
-      loader_file=firstlib.R
-      R_save_args="--vanilla --slave --save"
-    fi
-    (echo "options(save.image.defaults=${save_image_defaults})"; \
-      echo "invisible(.libPaths(c(\"${lib}\", .libPaths()))); .getRequiredPackages()"; \
-      ${code_cmd}) | \
-        R_DEFAULT_PACKAGES= LC_ALL=C "${R_EXE}" ${R_save_args}
-    if test ${?} -ne 0; then
-      error "execution of package source for '${pkg_name}' failed"
-      do_exit_on_error
-    fi
-    test -f NAMESPACE || mv .RData "${rda_file}"
-    ## we used to install the dumped code but this seems a waste of space
-    rm "${code_file}"
-    # mv "${code_file}" "${R_PACKAGE_DIR}/R/${pkg_name}.R"
-    cat "${R_SHARE_DIR}/R/${loader_file}" > "${code_file}"
-  fi
 
   parse_description_field LazyLoad
   if test "$value" = "missing" ; then
@@ -863,6 +807,10 @@ do_install_source () {
   fi
   if test ! -d R ; then
     thislazy=false
+  fi
+  if ${save}; then
+    warning "true value of 'SaveImage' is defunct: using 'LazyLoad: yes' instead"
+    thislazy=true
   fi
   ## This test is designed to fail if a loader is used.
   ## Beware: the wc format is not portable -- some systems give
@@ -898,19 +846,15 @@ do_install_source () {
     chmod 644 "${R_PACKAGE_DIR}/man/${pkg_name}.Rd.gz"
     ## Maybe build preformatted help pages ...
     if ${build_help}; then
-      if ${NO_PERL5}; then
-	echo "${NO_PERL5_MSG}"
-      else
-	if ${debug}; then
-	  echo "DEBUG: build-help ${build_help_opts} ${pkg_dir} ${lib} ${R_PACKAGE_DIR} ${pkg_name}"
-	fi
-	"${R_CMD}" perl "${R_SHARE_DIR}/perl/build-help.pl" \
-	  ${build_help_opts} \
-	  "${pkg_dir}" "${lib}" "${R_PACKAGE_DIR}" "${pkg_name}"
-	if test ${?} -ne 0; then
-	  error "building help failed for package '${pkg_name}'"
-	  do_exit_on_error
-        fi
+      if ${debug}; then
+	echo "DEBUG: build-help ${build_help_opts} ${pkg_dir} ${lib} ${R_PACKAGE_DIR} ${pkg_name}"
+      fi
+      "${R_CMD}" perl "${R_SHARE_DIR}/perl/build-help.pl" \
+	${build_help_opts} \
+	"${pkg_dir}" "${lib}" "${R_PACKAGE_DIR}" "${pkg_name}"
+      if test ${?} -ne 0; then
+	error "building help failed for package '${pkg_name}'"
+	do_exit_on_error
       fi
       if test -n "${use_zip_help}" \
 	  && test -n "${R_UNZIPCMD}" \

@@ -1,6 +1,6 @@
 /*
  *  R : A Computer Language for Statistical Data Analysis
- *  Copyright (C) 2002-7     the R Development Core Team
+ *  Copyright (C) 2002-8     the R Development Core Team
  *
  *  This program is free software; you can redistribute it and/or modify
  *  it under the terms of the GNU General Public License as published by
@@ -30,7 +30,7 @@
 
 SEXP attribute_hidden do_sprintf(SEXP call, SEXP op, SEXP args, SEXP env)
 {
-    int i, nargs, cnt, v, thislen, nfmt;
+    int i, nargs, cnt, v, thislen, nfmt, nprotect = 1;
     const char *formatString, *ss; char *starc;
     /* fmt2 is a copy of fmt with '*' expanded.
        bit will hold numeric formats and %<w>s, so be quite small. */
@@ -53,7 +53,7 @@ SEXP attribute_hidden do_sprintf(SEXP call, SEXP op, SEXP args, SEXP env)
     if(nargs >= 100)
 	error(_("only 100 arguments are allowed"));
 
-    /* record the args for later re-ordering */
+    /* record the args for possible coercion and later re-ordering */
     for(i = 0; i < nargs; i++, args = CDR(args)) a[i] = CAR(args);
 
     maxlen = nfmt = length(format);
@@ -69,20 +69,16 @@ SEXP attribute_hidden do_sprintf(SEXP call, SEXP op, SEXP args, SEXP env)
 	if(maxlen % lens[i])
 	    error(_("arguments cannot be recycled to the same length"));
 
-    /* FIXME?  pull format analysis and conversion outside the loop if
-       there is only one format */
-
+    /* We do the format analysis a row at a time */
     PROTECT(ans = allocVector(STRSXP, maxlen));
     for(ns = 0; ns < maxlen; ns++) {
-	cnt = 0;
 	outputString[0] = '\0';
 	formatString = translateChar(STRING_ELT(format, ns % nfmt));
 	n = strlen(formatString);
 	if (n > MAXLINE)
-	    error(_("'fmt' length exceeds maximal format length %d"),
-		  MAXLINE);
+	    error(_("'fmt' length exceeds maximal format length %d"), MAXLINE);
  	/* process the format string */
-	for (cur = 0; cur < n; cur += chunk) {
+	for (cur = 0, cnt = 0; cur < n; cur += chunk) {
 	    ss = NULL;
 	    if (formatString[cur] == '%') { /* handle special format command */
 
@@ -147,14 +143,17 @@ SEXP attribute_hidden do_sprintf(SEXP call, SEXP op, SEXP args, SEXP env)
 			}
 
 			if (Rf_strchr(starc+1, '*'))
-			    error(_("at most one asterisk `*' is supported in each conversion specification"));
+			    error(_("at most one asterisk '*' is supported in each conversion specification"));
 
 			_this = a[nstar];
-			if(TYPEOF(_this) == REALSXP)
+			if(ns == 0 && TYPEOF(_this) == REALSXP) {
 			    _this = coerceVector(_this, INTSXP);
+			    PROTECT(a[nstar] = _this);
+			    nprotect++;
+			}
 			if(TYPEOF(_this) != INTSXP || LENGTH(_this)<1 ||
 			   INTEGER(_this)[ns % LENGTH(_this)] == NA_INTEGER)
-			    error(_("argument for `*' conversion specification must be a number"));
+			    error(_("argument for '*' conversion specification must be a number"));
 			has_star = 1;
 			star_arg = INTEGER(_this)[ns % LENGTH(_this)];
 		    }
@@ -180,41 +179,49 @@ SEXP attribute_hidden do_sprintf(SEXP call, SEXP op, SEXP args, SEXP env)
 			    fmtp = fmt2;
 			} else fmtp = fmt;
 			
-			/* Now let us see if some minimal coercion would be sensible.
-			 */
-			switch(fmtp[strlen(fmtp) - 1]) {
-			case 'd':
-			case 'i':
-			case 'x':
-			case 'X':
-			    if(TYPEOF(_this) == REALSXP) {
-				double r = REAL(_this)[0];
-				if((double)((int) r) == r)
-				    _this = coerceVector(_this, INTSXP);
+			if(ns == 0) {
+			    /* Now let us see if some minimal coercion 
+			       would be sensible, but only do so once. */
+			    switch(fmtp[strlen(fmtp) - 1]) {
+			    case 'd':
+			    case 'i':
+			    case 'x':
+			    case 'X':
+				if(TYPEOF(_this) == REALSXP) {
+				    double r = REAL(_this)[0];
+				    if((double)((int) r) == r)
+					_this = coerceVector(_this, INTSXP);
+				    PROTECT(a[nthis] = _this);
+				    nprotect++;
+				}
+				break;
+			    case 'e':
+			    case 'f':
+			    case 'g':
+			    case 'E':
+			    case 'G':
+				if(TYPEOF(_this) != REALSXP) {
+				    PROTECT(tmp = lang2(install("as.double"), _this));
+				    _this = eval(tmp, env);
+				    UNPROTECT(1);
+				    PROTECT(a[nthis] = _this);
+				    nprotect++;
+				}
+				break;
+			    case 's':
+				if(TYPEOF(_this) != STRSXP) {
+				    PROTECT(tmp = lang2(install("as.character"), _this));
+				    _this = eval(tmp, env);
+				    UNPROTECT(1);
+				    PROTECT(a[nthis] = _this);
+				    nprotect++;
+				}
+				break;
+			    default:
+				break;
 			    }
-			    break;
-			case 'e':
-			case 'f':
-			case 'g':
-			case 'E':
-			case 'G':
-			    if(TYPEOF(_this) != REALSXP) {
-				PROTECT(tmp = lang2(install("as.double"), _this));
-				_this = eval(tmp, env);
-				UNPROTECT(1);
-			    }
-			    break;
-			case 's':
-			    if(TYPEOF(_this) != STRSXP) {
-				PROTECT(tmp = 
-					lang2(install("as.character"), _this));
-				_this = eval(tmp, env);
-				UNPROTECT(1);
-			    }
-			    break;
-			default:
-			    break;
 			}
+			
 			PROTECT(_this);
 			thislen = length(_this);
 			if(thislen == 0)
@@ -286,13 +293,14 @@ SEXP attribute_hidden do_sprintf(SEXP call, SEXP op, SEXP args, SEXP env)
 				break;
 			    }
 			case STRSXP:
-			    /* NA_STRING will be printed as `NA' */
+			    /* NA_STRING will be printed as 'NA' */
 			    if (strcspn(fmtp, "s") >= strlen(fmtp))
 				error("%s", _("use format %s for character objects"));
 			    ss = translateChar(STRING_ELT(_this, ns % thislen));
 			    if(fmtp[1] != 's') {
 				if(strlen(ss) > MAXLINE)
-				    warning(_("Likely truncation of character string"));
+				    warning(_("likely truncation of character string to %d characters"),
+					    MAXLINE-1);
 				snprintf(bit, MAXLINE, fmtp, ss);
 				bit[MAXLINE] = '\0';
 				ss = NULL;
@@ -324,13 +332,12 @@ SEXP attribute_hidden do_sprintf(SEXP call, SEXP op, SEXP args, SEXP env)
 		outputString = R_AllocStringBuffer(strlen(outputString) + 
 						   strlen(bit) + 1, &outbuff);
 		strcat(outputString, bit);
-		
 	    }
 	}
 	SET_STRING_ELT(ans, ns, mkChar(outputString));
     }
 
-    UNPROTECT(1);
+    UNPROTECT(nprotect);
     R_FreeStringBufferL(&outbuff);
     return ans;
 }

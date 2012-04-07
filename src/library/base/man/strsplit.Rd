@@ -44,6 +44,12 @@ strsplit(x, split, extended = TRUE, fixed = FALSE, perl = FALSE)
 \value{
   A list of length \code{length(x)} the \code{i}-th element of which
   contains the vector of splits of \code{x[i]}.
+
+  If any element of \code{x} or \code{split} is declared to be in UTF-8
+  (see \code{\link{Encoding}} , non-ASCII character strings in the
+  result will be have the encoding declared as UTF-8.  Otherwise they
+  will be declared to have the encoding of the current locale if either
+  Latin-1 or UTF-8 and  the corresponding input had a declared encoding.
 }
 \details{
   Argument \code{split} will be coerced to character, so
@@ -78,6 +84,8 @@ strsplit(x, split, extended = TRUE, fixed = FALSE, perl = FALSE)
   (non-empty) string, the first element of the output is \code{""}, but
   if there is a match at the end of the string, the output is the same
   as with the match removed. 
+
+  Inputs with embedded nul bytes will be truncated at the first nul.
 }
 \section{Warning}{
   The standard regular expression code has been reported to be very slow

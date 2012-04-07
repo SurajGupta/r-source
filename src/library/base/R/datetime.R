@@ -19,46 +19,70 @@ Sys.time <- function()
 
 Sys.timezone <- function() as.vector(Sys.getenv("TZ"))
 
-as.POSIXlt <- function(x, tz = "")
-{
-    fromchar <- function(x) {
-	xx <- x[1]
-        if(is.na(xx)) {
-            j <- 1
-            while(is.na(xx) && (j <- j+1) <= length(x))
-                xx <- x[j]
-            if(is.na(xx)) f <- "%Y-%m-%d" # all NAs
-        }
-	if(is.na(xx) ||
-           !is.na(strptime(xx, f <- "%Y-%m-%d %H:%M:%OS")) ||
-	   !is.na(strptime(xx, f <- "%Y/%m/%d %H:%M:%OS")) ||
-	   !is.na(strptime(xx, f <- "%Y-%m-%d %H:%M")) ||
-	   !is.na(strptime(xx, f <- "%Y/%m/%d %H:%M")) ||
-	   !is.na(strptime(xx, f <- "%Y-%m-%d")) ||
-	   !is.na(strptime(xx, f <- "%Y/%m/%d")))
-        {
-	    res <- strptime(x, f)
-            if(nzchar(tz)) attr(res, "tzone") <- tz
-            return(res)
-        }
-	stop("character string is not in a standard unambiguous format")
-    }
+as.POSIXlt <- function(x, tz = "", ...) UseMethod("as.POSIXlt")
 
-    if(inherits(x, "POSIXlt")) return(x)
-    if(inherits(x, "Date")) return(.Internal(Date2POSIXlt(x)))
+as.POSIXlt.Date <- function(x, ...)
+    return(.Internal(Date2POSIXlt(x)))
+
+as.POSIXlt.date <- as.POSIXlt.dates <- function(x, ...)
+    as.POSIXlt(as.POSIXct(x), ...)
+
+as.POSIXlt.POSIXct <- function(x, tz = "", ...)
+{
     tzone <- attr(x, "tzone")
-    if(inherits(x, "date") || inherits(x, "dates")) x <- as.POSIXct(x)
-    if(is.character(x)) return(fromchar(unclass(x))) # precaution PR7826
-    if(is.factor(x))	return(fromchar(as.character(x)))
-    if(is.logical(x) && all(is.na(x))) x <- as.POSIXct.default(x)
-    if(!inherits(x, "POSIXct"))
-        stop(gettextf("do not know how to convert '%s' to class \"POSIXlt\"",
-                      deparse(substitute(x))))
     if(missing(tz) && !is.null(tzone)) tz <- tzone[1]
     .Internal(as.POSIXlt(x, tz))
 }
 
-as.POSIXct <- function(x, tz = "") UseMethod("as.POSIXct")
+as.POSIXlt.factor <- function(x, ...) as.POSIXlt(as.character(x))
+
+as.POSIXlt.character <- function(x, tz = "", format, ...)
+{
+    x <- unclass(x) # precaution PR7826
+    if(!missing(format)) {
+        res <- strptime(x, format, tz=tz)
+        if(nzchar(tz)) attr(res, "tzone") <- tz
+        return(res)
+    }
+    xx <- x[1]
+    if(is.na(xx)) {
+        j <- 1
+        while(is.na(xx) && (j <- j+1) <= length(x))
+            xx <- x[j]
+        if(is.na(xx)) f <- "%Y-%m-%d" # all NAs
+    }
+    if(is.na(xx) ||
+       !is.na(strptime(xx, f <- "%Y-%m-%d %H:%M:%OS", tz=tz)) ||
+       !is.na(strptime(xx, f <- "%Y/%m/%d %H:%M:%OS", tz=tz)) ||
+       !is.na(strptime(xx, f <- "%Y-%m-%d %H:%M", tz=tz)) ||
+       !is.na(strptime(xx, f <- "%Y/%m/%d %H:%M", tz=tz)) ||
+       !is.na(strptime(xx, f <- "%Y-%m-%d", tz=tz)) ||
+       !is.na(strptime(xx, f <- "%Y/%m/%d", tz=tz)))
+    {
+        res <- strptime(x, f, tz=tz)
+        if(nzchar(tz)) attr(res, "tzone") <- tz
+        return(res)
+    }
+    stop("character string is not in a standard unambiguous format")
+}
+
+as.POSIXlt.numeric <- function(x, tz = "", origin, ...)
+{
+    if(missing(origin)) stop("'origin' must be supplied")
+    as.POSIXlt(as.POSIXct(origin, tz = "UTC", ...) + x, tz = tz)
+}
+
+as.POSIXlt.default <- function(x, tz = "", ...)
+{
+
+    if(inherits(x, "POSIXlt")) return(x)
+    if(is.logical(x) && all(is.na(x)))
+        return(as.POSIXlt(as.POSIXct.default(x), tz=tz))
+    stop(gettextf("do not know how to convert '%s' to class \"POSIXlt\"",
+                  deparse(substitute(x))))
+}
+
+as.POSIXct <- function(x, tz = "", ...) UseMethod("as.POSIXct")
 
 as.POSIXct.Date <- function(x, ...)
     structure(unclass(x)*86400, class=c("POSIXt", "POSIXct"))
@@ -87,7 +111,7 @@ as.POSIXct.dates <- function(x, ...)
                          deparse(substitute(x)) ))
 }
 
-as.POSIXct.POSIXlt <- function(x, tz = "")
+as.POSIXct.POSIXlt <- function(x, tz = "", ...)
 {
     tzone <- attr(x, "tzone")
     if(missing(tz) && !is.null(tzone)) tz <- tzone[1]
@@ -95,11 +119,17 @@ as.POSIXct.POSIXlt <- function(x, tz = "")
               tzone = tz)
 }
 
-as.POSIXct.default <- function(x, tz = "")
+as.POSIXct.numeric <- function(x, tz = "", origin, ...)
+{
+    if(missing(origin)) stop("'origin' must be supplied")
+    as.POSIXct(origin, tz=tz, ...) + x
+}
+
+as.POSIXct.default <- function(x, tz = "", ...)
 {
     if(inherits(x, "POSIXct")) return(x)
     if(is.character(x) || is.factor(x))
-	return(as.POSIXct(as.POSIXlt(x), tz))
+	return(as.POSIXct(as.POSIXlt(x, tz, ...), tz, ...))
     if(is.logical(x) && all(is.na(x)))
         return(structure(as.numeric(x), class = c("POSIXt", "POSIXct")))
     stop(gettextf("do not know how to convert '%s' to class \"POSIXlt\"",
@@ -180,7 +210,7 @@ summary.POSIXlt <- function(object, digits = 15, ...)
     if (nargs() == 1) return(e1)
     # only valid if one of e1 and e2 is a scalar.
     if(inherits(e1, "POSIXt") && inherits(e2, "POSIXt"))
-        stop("binary + is not defined for \"POSIXt\" objects")
+        stop("binary '+' is not defined for \"POSIXt\" objects")
     if(inherits(e1, "POSIXlt")) e1 <- as.POSIXct(e1)
     if(inherits(e2, "POSIXlt")) e2 <- as.POSIXct(e2)
     if (inherits(e1, "difftime")) e1 <- coerceTimeUnit(e1)
@@ -199,7 +229,7 @@ summary.POSIXlt <- function(object, digits = 15, ...)
     }
     if(!inherits(e1, "POSIXt"))
         stop("Can only subtract from POSIXt objects")
-    if (nargs() == 1) stop("unary - is not defined for \"POSIXt\" objects")
+    if (nargs() == 1) stop("unary '-' is not defined for \"POSIXt\" objects")
     if(inherits(e2, "POSIXt")) return(difftime(e1, e2))
     if (inherits(e2, "difftime")) e2 <- unclass(coerceTimeUnit(e2))
     if(!is.null(attr(e2, "class")))
@@ -210,10 +240,13 @@ summary.POSIXlt <- function(object, digits = 15, ...)
 Ops.POSIXt <- function(e1, e2)
 {
     if (nargs() == 1)
-        stop("unary ", .Generic, " not defined for \"POSIXt\" objects")
+        stop(gettextf("unary '%s' not defined for \"POSIXt\" objects",
+                      .Generic), domain = NA)
     boolean <- switch(.Generic, "<" = , ">" = , "==" = ,
                       "!=" = , "<=" = , ">=" = TRUE, FALSE)
-    if (!boolean) stop(.Generic, " not defined for \"POSIXt\" objects")
+    if (!boolean)
+        stop(gettextf("'%s' not defined for \"POSIXt\" objects", .Generic),
+             domain = NA)
     if(inherits(e1, "POSIXlt") || is.character(e1)) e1 <- as.POSIXct(e1)
     if(inherits(e2, "POSIXlt") || is.character(e1)) e2 <- as.POSIXct(e2)
     check_tzones(e1, e2)
@@ -222,7 +255,8 @@ Ops.POSIXt <- function(e1, e2)
 
 Math.POSIXt <- function (x, ...)
 {
-    stop(.Generic, " not defined for POSIXt objects")
+    stop(gettextf("'%s' not defined for \"POSIXt\" objects", .Generic),
+         domain = NA)
 }
 
 check_tzones <- function(...)
@@ -240,7 +274,9 @@ check_tzones <- function(...)
 Summary.POSIXct <- function (..., na.rm)
 {
     ok <- switch(.Generic, max = , min = , range = TRUE, FALSE)
-    if (!ok) stop(.Generic, " not defined for \"POSIXct\" objects")
+    if (!ok)
+        stop(gettextf("'%s' not defined for \"POSIXt\" objects", .Generic),
+             domain = NA)
     args <- list(...)
     tz <- do.call("check_tzones", args)
     val <- NextMethod(.Generic)
@@ -252,7 +288,9 @@ Summary.POSIXct <- function (..., na.rm)
 Summary.POSIXlt <- function (..., na.rm)
 {
     ok <- switch(.Generic, max = , min = , range = TRUE, FALSE)
-    if (!ok) stop(.Generic, " not defined for \"POSIXlt\" objects")
+    if (!ok)
+        stop(gettextf("'%s' not defined for \"POSIXt\" objects", .Generic),
+             domain = NA)
     args <- list(...)
     tz <- do.call("check_tzones", args)
     args <- lapply(args, as.POSIXct)
@@ -457,7 +495,8 @@ Ops.difftime <- function(e1, e2)
     }
     if (nargs() == 1) {
         switch(.Generic, "+"= {}, "-" = {e1[] <- -unclass(e1)},
-               stop("unary ", .Generic, " not defined for \"difftime\" objects")
+               stop(gettextf("unary '%s' not defined for \"difftime\" objects",
+                             .Generic), domain = NA, call. = FALSE)
                )
         return(e1)
     }
@@ -487,7 +526,8 @@ Ops.difftime <- function(e1, e2)
         }
     } else {
         ## '*' is covered by a specific method
-        stop(.Generic, " not defined for \"difftime\" objects")
+        stop(gettextf("'%s' not defined for \"difftime\" objects", .Generic),
+             domain = NA)
     }
 }
 
@@ -512,7 +552,8 @@ Ops.difftime <- function(e1, e2)
 
 Math.difftime <- function (x, ...)
 {
-    stop(.Generic, " not defined for \"difftime\" objects")
+    stop(gettextf("'%s' not defined for \"difftime\" objects", .Generic),
+         domain = NA)
 }
 
 mean.difftime <- function (x, ..., na.rm = FALSE)
@@ -541,7 +582,9 @@ Summary.difftime <- function (..., na.rm)
                          days = 60*60*24*x, weeks = 60*60*24*7*x))
     }
     ok <- switch(.Generic, max = , min = , range = TRUE, FALSE)
-    if (!ok) stop(.Generic, " not defined for \"difftime\" objects")
+    if (!ok)
+        stop(gettextf("'%s' not defined for \"difftime\" objects", .Generic),
+             domain = NA)
     args <- c(lapply(list(...), coerceTimeUnit), na.rm = na.rm)
     structure(do.call(.Generic, args), units="secs", class="difftime")
 }
@@ -667,7 +710,7 @@ cut.POSIXt <-
 	valid <-
 	    pmatch(by2[length(by2)],
 		   c("secs", "mins", "hours", "days", "weeks",
-		     "months", "years", "DSTdays"))
+		     "months", "years", "DSTdays", "quarters"))
 	if(is.na(valid)) stop("invalid specification of 'breaks'")
 	start <- as.POSIXlt(min(x, na.rm=TRUE))
 	incr <- 1
@@ -680,21 +723,33 @@ cut.POSIXt <-
 		start$mday <- start$mday + ifelse(start$wday > 0, 1, -6)
 	    incr <- 7*86400
 	}
-        if(valid == 8) incr <- 25*3600
-	if(valid == 6) {
+    if(valid == 8) incr <- 25*3600
+    if(valid == 6) {
         start$mday <- 1
         end <- as.POSIXlt(max(x, na.rm = TRUE))
-        end <- as.POSIXlt(end + (31 * 86400))
+        step <- ifelse(length(by2) == 2, as.integer(by2[1]), 1)
+        end <- as.POSIXlt(end + (31 * step * 86400))
         end$mday <- 1
-        breaks <- seq(start, end, "months")
+        breaks <- seq(start, end, breaks)
     } else if(valid == 7) {
         start$mon <- 0
         start$mday <- 1
         end <- as.POSIXlt(max(x, na.rm = TRUE))
-        end <- as.POSIXlt(end + (366 * 86400))
+        step <- ifelse(length(by2) == 2, as.integer(by2[1]), 1)
+        end <- as.POSIXlt(end + (366 * step* 86400))
         end$mon <- 0
         end$mday <- 1
-        breaks <- seq(start, end, "years")
+        breaks <- seq(start, end, breaks)
+    } else if(valid == 9) {
+        qtr <- rep(c(0, 3, 6, 9), each = 3)
+        start$mon <- qtr[start$mon + 1]
+        start$mday <- 1
+        end <- as.POSIXlt(max(x, na.rm = TRUE))
+        step <- ifelse(length(by2) == 2, as.integer(by2[1]), 1)
+        end <- as.POSIXlt(end + (93 * step * 86400))
+        end$mon <- qtr[end$mon + 1]
+        end$mday <- 1
+        breaks <- seq(start, end, paste(step * 3, "months"))
     } else {
         if (length(by2) == 2) incr <- incr * as.integer(by2[1])
 	    maxx <- max(x, na.rm = TRUE)

@@ -1,7 +1,7 @@
 /*
  *  R : A Computer Language for Statistical Data Analysis
  *  Copyright (C) 1995, 1996  Robert Gentleman and Ross Ihaka
- *  Copyright (C) 1998--2007  Robert Gentleman, Ross Ihaka and the
+ *  Copyright (C) 1998--2008  Robert Gentleman, Ross Ihaka and the
  *                            R Development Core Team
  *
  *  This program is free software; you can redistribute it and/or modify
@@ -30,11 +30,13 @@
 #include <ctype.h>
 #include <limits.h> /* required for MB_LEN_MAX */
 
+/* Formerly in headers, but only used in some devices */
+typedef unsigned int rcolor;
 
 #ifdef SUPPORT_MBCS
 #include <wchar.h>
 #include <wctype.h>
-static void mbcsToSbcs(const char *in, char *out, const char *encoding);
+static void mbcsToSbcs(const char *in, char *out, const char *encoding, int enc);
 #endif
 
 #if defined(HAVE_ICONV) && defined(ICONV_LATIN1)
@@ -42,10 +44,10 @@ static void mbcsToSbcs(const char *in, char *out, const char *encoding);
 #endif
 
 #include <Rmath.h>		/* for rround */
-#include "Graphics.h"
+#define R_USE_PROTOTYPES 1
+#include <R_ext/GraphicsEngine.h>
 #include <R_ext/Error.h>
 #include "Fileio.h"
-#include <Rdevices.h>
 #include "grDevices.h"
 
 #ifdef HAVE_ERRNO_H
@@ -734,9 +736,9 @@ extern int Ri18n_wcwidth(wchar_t c);
 
 
 static double
-PostScriptStringWidth(const unsigned char *str,
-		      FontMetricInfo *metrics,
-		      int face, const char *encoding)
+    PostScriptStringWidth(const unsigned char *str, int enc,
+			  FontMetricInfo *metrics,
+			  int face, const char *encoding)
 {
     int sum = 0, i;
     short wx;
@@ -752,12 +754,12 @@ PostScriptStringWidth(const unsigned char *str,
 	   We need to remap even if we are in a SBCS, should we get to here */
 	ucs2_t *ucs2s;
 	size_t ucslen;
-	ucslen = mbcsToUcs2((char *)str, NULL, 0);
+	ucslen = mbcsToUcs2((char *)str, NULL, 0, enc);
 	if (ucslen != (size_t)-1) {
 	    /* We convert the characters but not the terminator here */
 	    ucs2s = (ucs2_t *) alloca(sizeof(ucs2_t) * ucslen);
 	    R_CheckStack();
-	    status = (int) mbcsToUcs2((char *)str, ucs2s, ucslen);
+	    status = (int) mbcsToUcs2((char *)str, ucs2s, ucslen, enc);
 	    if (status >= 0)
 		for(i = 0 ; i < ucslen ; i++) {
 		    wx = 500 * Ri18n_wcwidth(ucs2s[i]);
@@ -772,7 +774,7 @@ PostScriptStringWidth(const unsigned char *str,
 	    return 0.0;
 	}
     } else
-	if(utf8locale && !utf8strIsASCII((char *) str) &&
+	if(!strIsASCII((char *) str) &&
 	   /*
 	    * Every fifth font is a symbol font:
 	    * see postscriptFonts()
@@ -781,7 +783,7 @@ PostScriptStringWidth(const unsigned char *str,
 	    buff = alloca(strlen((char *)str)+1);
 	    /* Output string cannot be longer */
 	    R_CheckStack();
-	    mbcsToSbcs((char *)str, buff, encoding);
+	    mbcsToSbcs((char *)str, buff, encoding, enc);
 	    str1 = (unsigned char *)buff;
 	}
 #endif
@@ -833,6 +835,10 @@ PostScriptMetricInfo(int c, double *ascent, double *descent, double *width,
 		     Rboolean isSymbol,
 		     const char *encoding)
 {
+#ifdef SUPPORT_MBCS
+    Rboolean Unicode = mbcslocale;
+#endif
+
     if (c == 0) {
 	*ascent = 0.001 * metrics->FontBBox[3];
 	*descent = -0.001 * metrics->FontBBox[1];
@@ -840,10 +846,11 @@ PostScriptMetricInfo(int c, double *ascent, double *descent, double *width,
 	return;
     }
 
-#ifdef SUPPORT_MBCS
+#ifdef SUPPORT_MBCS   
+    if (c < 0) { Unicode = TRUE; c = -c; } 
     /* We don't need the restriction to 65536 here any more as we could
-       convert from  UCS4ENC, but there are no language chars about 65536. */
-    if(mbcslocale && !isSymbol && c >= 128 && c < 65536) { /* Unicode */
+       convert from  UCS4ENC, but there are few language chars above 65536. */
+    if(Unicode && !isSymbol && c >= 128 && c < 65536) { /* Unicode */
 	void *cd = NULL;
 	const char *i_buf; char *o_buf, out[2];
 	size_t i_len, o_len, status;
@@ -907,7 +914,7 @@ PostScriptCIDMetricInfo(int c, double *ascent, double *descent, double *width)
 	    char str;
 	    ucs2_t out;
 	    str = c;
-	    if(mbcsToUcs2(&str, &out, 1) == (size_t)-1)
+	    if(mbcsToUcs2(&str, &out, 1, CE_NATIVE) == (size_t)-1)
 		error(_("invalid character sent to 'PostScriptCIDMetricInfo' in a single-byte locale"));
 	    c = out;
 	}
@@ -2828,46 +2835,54 @@ static void PostScriptHexText(FILE *fp, double x, double y,
 
 /* Device Driver Actions */
 
-static void PS_Activate(NewDevDesc *dd);
+static void PS_Activate(pDevDesc dd);
 static void PS_Circle(double x, double y, double r,
-		      R_GE_gcontext *gc,
-		      NewDevDesc *dd);
+		      const pGEcontext gc,
+		      pDevDesc dd);
 static void PS_Clip(double x0, double x1, double y0, double y1,
-		     NewDevDesc *dd);
-static void PS_Close(NewDevDesc *dd);
-static void PS_Deactivate(NewDevDesc *dd);
-static void PS_Hold(NewDevDesc *dd);
-static Rboolean PS_Locator(double *x, double *y, NewDevDesc *dd);
+		     pDevDesc dd);
+static void PS_Close(pDevDesc dd);
+static void PS_Deactivate(pDevDesc dd);
+static Rboolean PS_Locator(double *x, double *y, pDevDesc dd);
 static void PS_Line(double x1, double y1, double x2, double y2,
-		    R_GE_gcontext *gc,
-		    NewDevDesc *dd);
+		    const pGEcontext gc,
+		    pDevDesc dd);
 static void PS_MetricInfo(int c,
-			  R_GE_gcontext *gc,
+			  const pGEcontext gc,
 			  double* ascent, double* descent,
-			  double* width, NewDevDesc *dd);
-static void PS_Mode(int mode, NewDevDesc *dd);
-static void PS_NewPage(R_GE_gcontext *gc,
-		       NewDevDesc *dd);
-static Rboolean PS_Open(NewDevDesc*, PostScriptDesc*);
+			  double* width, pDevDesc dd);
+static void PS_Mode(int mode, pDevDesc dd);
+static void PS_NewPage(const pGEcontext gc,
+		       pDevDesc dd);
+static Rboolean PS_Open(pDevDesc, PostScriptDesc*);
 static void PS_Polygon(int n, double *x, double *y,
-		       R_GE_gcontext *gc,
-		       NewDevDesc *dd);
+		       const pGEcontext gc,
+		       pDevDesc dd);
 static void PS_Polyline(int n, double *x, double *y,
-			R_GE_gcontext *gc,
-			NewDevDesc *dd);
+			const pGEcontext gc,
+			pDevDesc dd);
 static void PS_Rect(double x0, double y0, double x1, double y1,
-		    R_GE_gcontext *gc,
-		    NewDevDesc *dd);
+		    const pGEcontext gc,
+		    pDevDesc dd);
 static void PS_Size(double *left, double *right,
 		     double *bottom, double *top,
-		     NewDevDesc *dd);
+		     pDevDesc dd);
 static double PS_StrWidth(const char *str,
-			  R_GE_gcontext *gc,
-			  NewDevDesc *dd);
+			  const pGEcontext gc,
+			  pDevDesc dd);
 static void PS_Text(double x, double y, const char *str,
 		    double rot, double hadj,
-		    R_GE_gcontext *gc,
-		    NewDevDesc *dd);
+		    const pGEcontext gc,
+		    pDevDesc dd);
+#ifdef SUPPORT_MBCS
+static double PS_StrWidthUTF8(const char *str,
+			      const pGEcontext gc,
+			      pDevDesc dd);
+static void PS_TextUTF8(double x, double y, const char *str,
+			double rot, double hadj,
+			const pGEcontext gc,
+			pDevDesc dd);
+#endif
 
 /* PostScript Support (formerly in PostScript.c) */
 
@@ -2928,15 +2943,15 @@ static void PostScriptSetFill(FILE *fp, double r, double g, double b,
 
 /* Driver Support Routines */
 
-static void SetColor(int, NewDevDesc*);
-static void SetFill(int, NewDevDesc*);
-static void SetFont(int, int, NewDevDesc*);
-static void SetLineStyle(R_GE_gcontext*, NewDevDesc *dd);
-static void Invalidate(NewDevDesc*);
+static void SetColor(int, pDevDesc);
+static void SetFill(int, pDevDesc);
+static void SetFont(int, int, pDevDesc);
+static void SetLineStyle(const pGEcontext, pDevDesc dd);
+static void Invalidate(pDevDesc);
 
 
 Rboolean
-PSDeviceDriver(NewDevDesc *dd, const char *file, const char *paper,
+PSDeviceDriver(pDevDesc dd, const char *file, const char *paper,
 	       const char *family, const char **afmpaths, const char *encoding,
 	       const char *bg, const char *fg, double width, double height,
 	       Rboolean horizontal, double ps,
@@ -3140,8 +3155,8 @@ PSDeviceDriver(NewDevDesc *dd, const char *file, const char *paper,
      * END Load fonts
      *****************************/
 
-    setbg = str2col(bg);
-    setfg = str2col(fg);
+    setbg = R_GE_str2col(bg);
+    setfg = R_GE_str2col(fg);
 
     pd->width = width;
     pd->height = height;
@@ -3293,11 +3308,7 @@ PSDeviceDriver(NewDevDesc *dd, const char *file, const char *paper,
     dd->ipr[1] = 1.0/72.0;
     /* GREset(.)  dd->gp.mkh = dd->gp.cra[0] * dd->gp.ipr[0]; */
 
-    dd->canResizePlot = 0;
-    dd->canChangeFont = 1;
-    dd->canRotateText = 1;
-    dd->canResizeText = 1;
-    dd->canClip = 1;
+    dd->canClip = TRUE;
     dd->canHAdj = 2;
     dd->canChangeGamma = FALSE;
 
@@ -3315,9 +3326,6 @@ PSDeviceDriver(NewDevDesc *dd, const char *file, const char *paper,
 	return FALSE;
     }
 
-    dd->newDevStruct = 1;
-
-    dd->open	      = PS_Open;
     dd->close      = PS_Close;
     dd->activate   = PS_Activate;
     dd->deactivate = PS_Deactivate;
@@ -3334,7 +3342,14 @@ PSDeviceDriver(NewDevDesc *dd, const char *file, const char *paper,
     dd->polyline   = PS_Polyline;
     dd->locator    = PS_Locator;
     dd->mode	      = PS_Mode;
-    dd->hold	      = PS_Hold;
+#ifdef SUPPORT_MBCS
+    dd->hasTextUTF8   = TRUE;
+    dd->textUTF8      = PS_TextUTF8;
+    dd->strWidthUTF8  = PS_StrWidthUTF8;
+#else
+    dd->hasTextUTF8   = FALSE;
+#endif
+    dd->useRotatedTextInContour = TRUE;
 
     dd->deviceSpecific = (void *) pd;
     dd->displayListOn = FALSE;
@@ -3350,7 +3365,7 @@ static void CheckAlpha(int color, PostScriptDesc *pd)
     }
 }
 
-static void SetColor(int color, NewDevDesc *dd)
+static void SetColor(int color, pDevDesc dd)
 {
     PostScriptDesc *pd = (PostScriptDesc *) dd->deviceSpecific;
     if(color != pd->current.col) {
@@ -3363,7 +3378,7 @@ static void SetColor(int color, NewDevDesc *dd)
     }
 }
 
-static void SetFill(int color, NewDevDesc *dd)
+static void SetFill(int color, pDevDesc dd)
 {
     PostScriptDesc *pd = (PostScriptDesc *) dd->deviceSpecific;
     if(color != pd->current.fill) {
@@ -3377,7 +3392,7 @@ static void SetFill(int color, NewDevDesc *dd)
 
 /* Note that the line texture is scaled by the line width. */
 
-static void SetLineStyle(R_GE_gcontext *gc, NewDevDesc *dd)
+static void SetLineStyle(const pGEcontext gc, pDevDesc dd)
 {
     PostScriptDesc *pd = (PostScriptDesc *) dd->deviceSpecific;
     char dashlist[8];
@@ -3413,7 +3428,7 @@ static void SetLineStyle(R_GE_gcontext *gc, NewDevDesc *dd)
     }
 }
 
-static void SetFont(int font, int size, NewDevDesc *dd)
+static void SetFont(int font, int size, pDevDesc dd)
 {
     PostScriptDesc *pd = (PostScriptDesc *) dd->deviceSpecific;
     if(size < 1 || size > pd->maxpointsize)
@@ -3430,7 +3445,7 @@ static void SetFont(int font, int size, NewDevDesc *dd)
 # undef HAVE_POPEN
 #endif
 
-static Rboolean PS_Open(NewDevDesc *dd, PostScriptDesc *pd)
+static Rboolean PS_Open(pDevDesc dd, PostScriptDesc *pd)
 {
     char buf[512];
 
@@ -3511,7 +3526,7 @@ static Rboolean PS_Open(NewDevDesc *dd, PostScriptDesc *pd)
    invalidate the saved values, which in turn causes the parameters to
    be set before usage. */
 
-static void Invalidate(NewDevDesc *dd)
+static void Invalidate(pDevDesc dd)
 {
     PostScriptDesc *pd = (PostScriptDesc *) dd->deviceSpecific;
 
@@ -3526,7 +3541,7 @@ static void Invalidate(NewDevDesc *dd)
     pd->current.fill = INVALID_COL;
 }
 
-static void PS_Clip(double x0, double x1, double y0, double y1, NewDevDesc *dd)
+static void PS_Clip(double x0, double x1, double y0, double y1, pDevDesc dd)
 {
     PostScriptDesc *pd = (PostScriptDesc *) dd->deviceSpecific;
 
@@ -3537,7 +3552,7 @@ static void PS_Clip(double x0, double x1, double y0, double y1, NewDevDesc *dd)
 
 static void PS_Size(double *left, double *right,
 		    double *bottom, double *top,
-		    NewDevDesc *dd)
+		    pDevDesc dd)
 {
     *left = dd->left;
     *right = dd->right;
@@ -3545,10 +3560,10 @@ static void PS_Size(double *left, double *right,
     *top = dd->top;
 }
 
-static void PostScriptClose(NewDevDesc *dd);
+static void PostScriptClose(pDevDesc dd);
 
-static void PS_NewPage(R_GE_gcontext *gc,
-		       NewDevDesc *dd)
+static void PS_NewPage(const pGEcontext gc,
+		       pDevDesc dd)
 {
     PostScriptDesc *pd = (PostScriptDesc *) dd->deviceSpecific;
 
@@ -3577,7 +3592,7 @@ static void PS_NewPage(R_GE_gcontext *gc,
 #ifdef Win32
 #include "run.h" /* for runcmd */
 #endif
-static void PostScriptClose(NewDevDesc *dd)
+static void PostScriptClose(pDevDesc dd)
 {
     PostScriptDesc *pd = (PostScriptDesc *) dd->deviceSpecific;
 
@@ -3604,7 +3619,7 @@ static void PostScriptClose(NewDevDesc *dd)
 	    err = R_system(buff);
 #endif
 #ifdef Win32
-	    err = Rf_runcmd(buff, 0, 0, NULL);
+	    err = Rf_runcmd(buff, CE_NATIVE, 0, 0, NULL);
 #endif
 	    if (err)
 		warning(_("error from postscript() in running:\n    %s"),
@@ -3613,7 +3628,7 @@ static void PostScriptClose(NewDevDesc *dd)
     }
 }
 
-static void PS_Close(NewDevDesc *dd)
+static void PS_Close(pDevDesc dd)
 {
     PostScriptDesc *pd = (PostScriptDesc *) dd->deviceSpecific;
 
@@ -3627,8 +3642,8 @@ static void PS_Close(NewDevDesc *dd)
     free(pd);
 }
 
-static void PS_Activate(NewDevDesc *dd) {}
-static void PS_Deactivate(NewDevDesc *dd) {}
+static void PS_Activate(pDevDesc dd) {}
+static void PS_Deactivate(pDevDesc dd) {}
 
 static FontMetricInfo
 *CIDsymbolmetricInfo(const char *family, PostScriptDesc *pd)
@@ -3671,8 +3686,8 @@ static char *convname(const char *family, PostScriptDesc *pd) {
 }
 
 static double PS_StrWidth(const char *str,
-			  R_GE_gcontext *gc,
-			  NewDevDesc *dd)
+			  const pGEcontext gc,
+			  pDevDesc dd)
 {
     PostScriptDesc *pd = (PostScriptDesc *) dd->deviceSpecific;
     int face = gc->fontface;
@@ -3680,30 +3695,62 @@ static double PS_StrWidth(const char *str,
     if(face < 1 || face > 5) face = 1;
     if (isType1Font(gc->fontfamily, PostScriptFonts, pd->defaultFont)) {
 	return floor(gc->cex * gc->ps + 0.5) *
-	    PostScriptStringWidth((const unsigned char *)str,
+	    PostScriptStringWidth((const unsigned char *)str, CE_NATIVE,
 				  metricInfo(gc->fontfamily, face, pd),
 				  face,
 				  convname(gc->fontfamily, pd));
     } else { /* cidfont(gc->fontfamily, PostScriptFonts) */
         if (face < 5) {
 	    return floor(gc->cex * gc->ps + 0.5) *
-	      PostScriptStringWidth((const unsigned char *)str,
-				    NULL,
-				    face, NULL);
+		PostScriptStringWidth((const unsigned char *)str, CE_NATIVE,
+				      NULL,
+				      face, NULL);
 	} else {
 	    return floor(gc->cex * gc->ps + 0.5) *
-	      PostScriptStringWidth((const unsigned char *)str,
-				    /* Send symbol face metric info */
-				    CIDsymbolmetricInfo(gc->fontfamily, pd),
-				    face, NULL);
+		PostScriptStringWidth((const unsigned char *)str, CE_NATIVE,
+				      /* Send symbol face metric info */
+				      CIDsymbolmetricInfo(gc->fontfamily, pd),
+				      face, NULL);
 	}
     }
 }
 
+#ifdef SUPPORT_MBCS
+static double PS_StrWidthUTF8(const char *str,
+			      const pGEcontext gc,
+			      pDevDesc dd)
+{
+    PostScriptDesc *pd = (PostScriptDesc *) dd->deviceSpecific;
+    int face = gc->fontface;
+
+    if(face < 1 || face > 5) face = 1;
+    if (isType1Font(gc->fontfamily, PostScriptFonts, pd->defaultFont)) {
+	return floor(gc->cex * gc->ps + 0.5) *
+	    PostScriptStringWidth((const unsigned char *)str, CE_UTF8,
+				  metricInfo(gc->fontfamily, face, pd),
+				  face,
+				  convname(gc->fontfamily, pd));
+    } else { /* cidfont(gc->fontfamily, PostScriptFonts) */
+        if (face < 5) {
+	    return floor(gc->cex * gc->ps + 0.5) *
+		PostScriptStringWidth((const unsigned char *)str, CE_UTF8,
+				      NULL,
+				      face, NULL);
+	} else {
+	    return floor(gc->cex * gc->ps + 0.5) *
+		PostScriptStringWidth((const unsigned char *)str, CE_UTF8,
+				      /* Send symbol face metric info */
+				      CIDsymbolmetricInfo(gc->fontfamily, pd),
+				      face, NULL);
+	}
+    }
+}
+#endif
+
 static void PS_MetricInfo(int c,
-			  R_GE_gcontext *gc,
+			  const pGEcontext gc,
 			  double* ascent, double* descent,
-			  double* width, NewDevDesc *dd)
+			  double* width, pDevDesc dd)
 {
     PostScriptDesc *pd = (PostScriptDesc *) dd->deviceSpecific;
     int face = gc->fontface;
@@ -3729,8 +3776,8 @@ static void PS_MetricInfo(int c,
 }
 
 static void PS_Rect(double x0, double y0, double x1, double y1,
-		    R_GE_gcontext *gc,
-		    NewDevDesc *dd)
+		    const pGEcontext gc,
+		    pDevDesc dd)
 {
     int code;
     PostScriptDesc *pd = (PostScriptDesc *) dd->deviceSpecific;
@@ -3758,8 +3805,8 @@ static void PS_Rect(double x0, double y0, double x1, double y1,
 }
 
 static void PS_Circle(double x, double y, double r,
-		      R_GE_gcontext *gc,
-		      NewDevDesc *dd)
+		      const pGEcontext gc,
+		      pDevDesc dd)
 {
     int code;
     PostScriptDesc *pd = (PostScriptDesc *) dd->deviceSpecific;
@@ -3787,8 +3834,8 @@ static void PS_Circle(double x, double y, double r,
 }
 
 static void PS_Line(double x1, double y1, double x2, double y2,
-		    R_GE_gcontext *gc,
-		    NewDevDesc *dd)
+		    const pGEcontext gc,
+		    pDevDesc dd)
 {
     PostScriptDesc *pd = (PostScriptDesc *) dd->deviceSpecific;
 
@@ -3806,8 +3853,8 @@ static void PS_Line(double x1, double y1, double x2, double y2,
 }
 
 static void PS_Polygon(int n, double *x, double *y,
-		       R_GE_gcontext *gc,
-		       NewDevDesc *dd)
+		       const pGEcontext gc,
+		       pDevDesc dd)
 {
     PostScriptDesc *pd;
     int i, code;
@@ -3843,8 +3890,8 @@ static void PS_Polygon(int n, double *x, double *y,
 }
 
 static void PS_Polyline(int n, double *x, double *y,
-			R_GE_gcontext *gc,
-			NewDevDesc *dd)
+			const pGEcontext gc,
+			pDevDesc dd)
 {
     PostScriptDesc *pd;
     int i;
@@ -3922,8 +3969,8 @@ static int translateCIDFont(char *family, int style, PostScriptDesc *pd)
 static void drawSimpleText(double x, double y, const char *str,
 			   double rot, double hadj,
 			   int font,
-			   R_GE_gcontext *gc,
-			   NewDevDesc *dd) {
+			   const pGEcontext gc,
+			   pDevDesc dd) {
     PostScriptDesc *pd = (PostScriptDesc *) dd->deviceSpecific;
 
     SetFont(font,
@@ -3938,8 +3985,8 @@ static void drawSimpleText(double x, double y, const char *str,
 #ifndef SUPPORT_MBCS
 static void PS_Text(double x, double y, const char *str,
 		    double rot, double hadj,
-		    R_GE_gcontext *gc,
-		    NewDevDesc *dd)
+		    const pGEcontext gc,
+		    pDevDesc dd)
 {
     PostScriptDesc *pd = (PostScriptDesc *) dd->deviceSpecific;
     drawSimpleText(x, y, str, rot, hadj,
@@ -3951,49 +3998,62 @@ static void PS_Text(double x, double y, const char *str,
    need to know if the current locale's charset changes.  However,
    currently this is only called in a UTF-8 locale.
  */
-static void mbcsToSbcs(const char *in, char *out, const char *encoding)
+static void mbcsToSbcs(const char *in, char *out, const char *encoding,
+		       int enc)
 {
     void *cd = NULL;
     const char *i_buf; char *o_buf;
     size_t i_len, o_len, status;
 
-    if(strcmp(encoding, "latin1") == 0 || strcmp(encoding, "ISOLatin1") == 0) {
-	mbcsToLatin1(in, out);
+#if 0
+    if(enc != CE_UTF8 &&
+       ( !strcmp(encoding, "latin1") || !strcmp(encoding, "ISOLatin1")) ) {
+	mbcsToLatin1(in, out); /* more tolerant */
 	return;
     }
+#endif
 
-    if ((void*)-1 == (cd = Riconv_open(encoding, "")))
+    if ((void*)-1 == 
+	(cd = Riconv_open(encoding, (enc == CE_UTF8) ? "UTF-8" : "")))
 	error(_("unknown encoding '%s' in 'mbcsToSbcs'"), encoding);
 
-    i_buf = (char *)in;
+    i_buf = (char *) in;
     i_len = strlen(in)+1; /* include terminator */
-    o_buf = (char *)out;
+    o_buf = (char *) out;
     o_len = i_len; /* must be the same or fewer chars */
-    status = Riconv(cd, &i_buf, (size_t *)&i_len,
-		    (char **)&o_buf, (size_t *)&o_len);
+next_char:
+    status = Riconv(cd, &i_buf, &i_len, &o_buf, &o_len);
+    if(status == (size_t) -1 && errno == EILSEQ) {
+	warning(_("conversion failure on '%s' in 'mbcsToSbcs': dot substituted for <%02x>"),
+		in, (unsigned char) *i_buf), 
+	*o_buf++ = '.'; i_buf++; o_len--; i_len--;
+	if(i_len > 0) goto next_char; 
+    }
 
     Riconv_close(cd);
-    if (status == (size_t)-1) error(_("conversion failure in 'mbcsToSbcs'"));
+    if (status == (size_t)-1)  /* internal error? */
+	error("conversion failure from %s to %s on '%s' in 'mbcsToSbcs'", 
+	      (enc == CE_UTF8) ? "UTF-8" : "native", encoding, in);
 }
 
-static void PS_Text(double x, double y, const char *str,
-		    double rot, double hadj,
-		    R_GE_gcontext *gc,
-		    NewDevDesc *dd)
+static void PS_Text0(double x, double y, const char *str, int enc,
+		     double rot, double hadj,
+		     const pGEcontext gc,
+		     pDevDesc dd)
 {
     const char *str1 = str;
     char *buff;
 
     PostScriptDesc *pd = (PostScriptDesc *) dd->deviceSpecific;
 
-    if (gc->fontface == 5 ) {
+    if (gc->fontface == 5) {
         if (isCIDFont(gc->fontfamily, PostScriptFonts, pd->defaultCIDFont)) {
-	    drawSimpleText(x, y, str1, rot, hadj,
+	    drawSimpleText(x, y, str, rot, hadj,
 			   translateCIDFont(gc->fontfamily, gc->fontface, pd),
 			   gc, dd);
 	    return;
 	} else {
-	    drawSimpleText(x, y, str1, rot, hadj,
+	    drawSimpleText(x, y, str, rot, hadj,
 			   translateFont(gc->fontfamily, gc->fontface, pd),
 			   gc, dd);
 	    return;
@@ -4037,8 +4097,13 @@ static void PS_Text(double x, double y, const char *str,
 	    size_t nb, i_len,  o_len, buflen = ucslen * sizeof(ucs2_t);
 	    size_t status;
 
-            cd = (void*)Riconv_open(cidfont->encoding, "");
-            if(cd == (void*)-1) return;
+            cd = (void*) Riconv_open(cidfont->encoding, 
+				     (enc == CE_UTF8) ? "UTF-8" : "");
+            if(cd == (void*)-1) {
+		warning(_("failed open converter to encoding '%s'"),
+			cidfont->encoding);		
+		return;
+	    }
 
             buf = (unsigned char *) alloca(buflen);
 	    R_CheckStack();
@@ -4072,34 +4137,48 @@ static void PS_Text(double x, double y, const char *str,
 	}
     }
 
-    /* Now using single-byte non-symbol font. It is not entirely
-       obvious that only UTF-8 locales need re-encoding, but we don't
-       have any other MBCSs that can sensibly be mapped to a SBCS.
+    /* Now using single-byte non-symbol font. 
+
+       Was utf8locale, but it is not entirely obvious that only UTF-8
+       needs re-encoding, although we don't have any other MBCSs that
+       can sensibly be mapped to a SBCS.
        It would be perverse (but possible) to write English in a
        CJK MBCS.
     */
-    if(utf8locale && !utf8strIsASCII(str)) {
+    if((enc == CE_UTF8 || mbcslocale) && !strIsASCII(str)) {
 	buff = alloca(strlen(str)+1); /* Output string cannot be longer */
 	R_CheckStack();
-	mbcsToSbcs(str, buff, convname(gc->fontfamily, pd));
+	mbcsToSbcs(str, buff, convname(gc->fontfamily, pd), enc);
 	str1 = buff;
     }
     drawSimpleText(x, y, str1, rot, hadj,
 		   translateFont(gc->fontfamily, gc->fontface, pd),
 		   gc, dd);
 }
+
+static void PS_Text(double x, double y, const char *str,
+		    double rot, double hadj,
+		    const pGEcontext gc,
+		    pDevDesc dd)
+{
+    PS_Text0(x, y, str, CE_NATIVE, rot, hadj, gc, dd);
+}
+
+static void PS_TextUTF8(double x, double y, const char *str,
+			double rot, double hadj,
+			const pGEcontext gc,
+			pDevDesc dd)
+{
+    PS_Text0(x, y, str, CE_UTF8, rot, hadj, gc, dd);
+}
 #endif
 
-static Rboolean PS_Locator(double *x, double *y, NewDevDesc *dd)
+static Rboolean PS_Locator(double *x, double *y, pDevDesc dd)
 {
     return FALSE;
 }
 
-static void PS_Mode(int mode, NewDevDesc* dd)
-{
-}
-
-static void PS_Hold(NewDevDesc *dd)
+static void PS_Mode(int mode, pDevDesc dd)
 {
 }
 
@@ -4261,45 +4340,44 @@ static int XF_SetLty(int lty)
 
 /* Device Driver Actions */
 
-static void XFig_Activate(NewDevDesc *dd);
+static void XFig_Activate(pDevDesc dd);
 static void XFig_Circle(double x, double y, double r,
-			R_GE_gcontext *gc,
-			NewDevDesc *dd);
+			const pGEcontext gc,
+			pDevDesc dd);
 static void XFig_Clip(double x0, double x1, double y0, double y1,
-		     NewDevDesc *dd);
-static void XFig_Close(NewDevDesc *dd);
-static void XFig_Deactivate(NewDevDesc *dd);
-static void XFig_Hold(NewDevDesc *dd);
-static Rboolean XFig_Locator(double *x, double *y, NewDevDesc *dd);
+		     pDevDesc dd);
+static void XFig_Close(pDevDesc dd);
+static void XFig_Deactivate(pDevDesc dd);
+static Rboolean XFig_Locator(double *x, double *y, pDevDesc dd);
 static void XFig_Line(double x1, double y1, double x2, double y2,
-		      R_GE_gcontext *gc,
-		      NewDevDesc *dd);
+		      const pGEcontext gc,
+		      pDevDesc dd);
 static void XFig_MetricInfo(int c,
-			    R_GE_gcontext *gc,
+			    const pGEcontext gc,
 			    double* ascent, double* descent,
-			    double* width, NewDevDesc *dd);
-static void XFig_Mode(int mode, NewDevDesc *dd);
-static void XFig_NewPage(R_GE_gcontext *gc, NewDevDesc *dd);
+			    double* width, pDevDesc dd);
+static void XFig_Mode(int mode, pDevDesc dd);
+static void XFig_NewPage(const pGEcontext gc, pDevDesc dd);
 static void XFig_Polygon(int n, double *x, double *y,
-			 R_GE_gcontext *gc,
-			 NewDevDesc *dd);
+			 const pGEcontext gc,
+			 pDevDesc dd);
 static void XFig_Polyline(int n, double *x, double *y,
-			  R_GE_gcontext *gc,
-			  NewDevDesc *dd);
+			  const pGEcontext gc,
+			  pDevDesc dd);
 static void XFig_Rect(double x0, double y0, double x1, double y1,
-		      R_GE_gcontext *gc,
-		      NewDevDesc *dd);
+		      const pGEcontext gc,
+		      pDevDesc dd);
 static void XFig_Size(double *left, double *right,
 		     double *bottom, double *top,
-		     NewDevDesc *dd);
+		     pDevDesc dd);
 static double XFig_StrWidth(const char *str,
-			    R_GE_gcontext *gc,
-			    NewDevDesc *dd);
+			    const pGEcontext gc,
+			    pDevDesc dd);
 static void XFig_Text(double x, double y, const char *str,
 		      double rot, double hadj,
-		      R_GE_gcontext *gc,
-		      NewDevDesc *dd);
-static Rboolean XFig_Open(NewDevDesc*, XFigDesc*);
+		      const pGEcontext gc,
+		      pDevDesc dd);
+static Rboolean XFig_Open(pDevDesc, XFigDesc*);
 
 /*
  * Values taken from FIG format definition
@@ -4342,7 +4420,7 @@ static void XF_resetColors(XFigDesc *pd)
 /* Driver Support Routines */
 
 static Rboolean
-XFigDeviceDriver(NewDevDesc *dd, const char *file, const char *paper,
+XFigDeviceDriver(pDevDesc dd, const char *file, const char *paper,
 		 const char *family,
 		 const char *bg, const char *fg,
 		 double width, double height,
@@ -4380,8 +4458,8 @@ XFigDeviceDriver(NewDevDesc *dd, const char *file, const char *paper,
     pd->fontnum = XFigBaseNum(family);
     /* this might have changed the family, so update */
     if(pd->fontnum == 16) family = "Helvetica";
-    pd->bg = str2col(bg);
-    pd->col = str2col(fg);
+    pd->bg = R_GE_str2col(bg);
+    pd->col = R_GE_str2col(fg);
     pd->fill = R_TRANWHITE;
     pd->width = width;
     pd->height = height;
@@ -4546,11 +4624,7 @@ XFigDeviceDriver(NewDevDesc *dd, const char *file, const char *paper,
     dd->ipr[0] = 1.0/72.0;
     dd->ipr[1] = 1.0/72.0;
 
-    dd->canResizePlot = 0;
-    dd->canChangeFont = 1;
-    dd->canRotateText = 1;
-    dd->canResizeText = 1;
-    dd->canClip = 0;
+    dd->canClip = FALSE;
     dd->canHAdj = 1; /* 0, 0.5, 1 */
     dd->canChangeGamma = FALSE;
     strncpy(pd->encoding, encoding, 50);
@@ -4569,9 +4643,6 @@ XFigDeviceDriver(NewDevDesc *dd, const char *file, const char *paper,
 	return 0;
     }
 
-    dd->newDevStruct = 1;
-
-    dd->open       = XFig_Open;
     dd->close      = XFig_Close;
     dd->activate   = XFig_Activate;
     dd->deactivate = XFig_Deactivate;
@@ -4588,14 +4659,15 @@ XFigDeviceDriver(NewDevDesc *dd, const char *file, const char *paper,
     dd->polyline   = XFig_Polyline;
     dd->locator    = XFig_Locator;
     dd->mode	   = XFig_Mode;
-    dd->hold	   = XFig_Hold;
+    dd->hasTextUTF8 = FALSE;
+    dd->useRotatedTextInContour = FALSE; /* maybe */
 
     dd->deviceSpecific = (void *) pd;
     dd->displayListOn = FALSE;
     return 1;
 }
 
-static Rboolean XFig_Open(NewDevDesc *dd, XFigDesc *pd)
+static Rboolean XFig_Open(pDevDesc dd, XFigDesc *pd)
 {
     char buf[512], *tmp;
 
@@ -4623,13 +4695,13 @@ static Rboolean XFig_Open(NewDevDesc *dd, XFigDesc *pd)
 
 
 static void XFig_Clip(double x0, double x1, double y0, double y1,
-		      NewDevDesc *dd)
+		      pDevDesc dd)
 {
 }
 
 static void XFig_Size(double *left, double *right,
 		      double *bottom, double *top,
-		      NewDevDesc *dd)
+		      pDevDesc dd)
 {
     *left = dd->left;
     *right = dd->right;
@@ -4638,8 +4710,8 @@ static void XFig_Size(double *left, double *right,
 }
 
 #define CHUNK 10000
-static void XFig_NewPage(R_GE_gcontext *gc,
-			 NewDevDesc *dd)
+static void XFig_NewPage(const pGEcontext gc,
+			 pDevDesc dd)
 {
     char buf[PATH_MAX];
     XFigDesc *pd = (XFigDesc *) dd->deviceSpecific;
@@ -4698,7 +4770,7 @@ static void XFig_NewPage(R_GE_gcontext *gc,
 #include <unistd.h>
 #endif
 
-static void XFig_Close(NewDevDesc *dd)
+static void XFig_Close(pDevDesc dd)
 {
     char buf[CHUNK];
     size_t nread, res;
@@ -4721,12 +4793,12 @@ static void XFig_Close(NewDevDesc *dd)
     free(pd);
 }
 
-static void XFig_Activate(NewDevDesc *dd) {}
-static void XFig_Deactivate(NewDevDesc *dd) {}
+static void XFig_Activate(pDevDesc dd) {}
+static void XFig_Deactivate(pDevDesc dd) {}
 
 static void XFig_Rect(double x0, double y0, double x1, double y1,
-		      R_GE_gcontext *gc,
-		      NewDevDesc *dd)
+		      const pGEcontext gc,
+		      pDevDesc dd)
 {
     XFigDesc *pd = (XFigDesc *) dd->deviceSpecific;
     FILE *fp = pd->tmpfp;
@@ -4758,8 +4830,8 @@ static void XFig_Rect(double x0, double y0, double x1, double y1,
 }
 
 static void XFig_Circle(double x, double y, double r,
-			R_GE_gcontext *gc,
-			NewDevDesc *dd)
+			const pGEcontext gc,
+			pDevDesc dd)
 {
     XFigDesc *pd = (XFigDesc *) dd->deviceSpecific;
     FILE *fp = pd->tmpfp;
@@ -4787,8 +4859,8 @@ static void XFig_Circle(double x, double y, double r,
 }
 
 static void XFig_Line(double x1, double y1, double x2, double y2,
-		      R_GE_gcontext *gc,
-		      NewDevDesc *dd)
+		      const pGEcontext gc,
+		      pDevDesc dd)
 {
     XFigDesc *pd = (XFigDesc *) dd->deviceSpecific;
     FILE *fp = pd->tmpfp;
@@ -4812,8 +4884,8 @@ static void XFig_Line(double x1, double y1, double x2, double y2,
 }
 
 static void XFig_Polygon(int n, double *x, double *y,
-			 R_GE_gcontext *gc,
-			 NewDevDesc *dd)
+			 const pGEcontext gc,
+			 pDevDesc dd)
 {
     XFigDesc *pd = (XFigDesc *) dd->deviceSpecific;
     FILE *fp = pd->tmpfp;
@@ -4845,8 +4917,8 @@ static void XFig_Polygon(int n, double *x, double *y,
 }
 
 static void XFig_Polyline(int n, double *x, double *y,
-			  R_GE_gcontext *gc,
-			  NewDevDesc *dd)
+			  const pGEcontext gc,
+			  pDevDesc dd)
 {
     XFigDesc *pd = (XFigDesc*) dd->deviceSpecific;
     FILE *fp = pd->tmpfp;
@@ -4874,8 +4946,8 @@ static const int styles[4] = {0,2,1,3};
 
 static void XFig_Text(double x, double y, const char *str,
 		      double rot, double hadj,
-		      R_GE_gcontext *gc,
-		      NewDevDesc *dd)
+		      const pGEcontext gc,
+		      pDevDesc dd)
 {
     XFigDesc *pd = (XFigDesc *) dd->deviceSpecific;
     FILE *fp = pd->tmpfp;
@@ -4911,16 +4983,8 @@ static void XFig_Text(double x, double y, const char *str,
 	/* color, depth, pen_style */
 	fprintf(fp, "%d %d %.4f 4 ", fontnum, (int)size, rot * DEG2RAD);
 	/* font pointsize angle flags (Postscript font) */
-	/* FIXME:  Why is this calling GStr[Height|Width] when it
-	 * presumably could be calling XFig_Str[Height|Width] ?
-	 */
-	fprintf(fp, "%d %d ",
-		(int)(16.667*GStrHeight(str, DEVICE,
-					GetDevice(devNumber((DevDesc*) dd)))
-		      +0.5),
-		(int)(16.667*GStrWidth(str, DEVICE,
-				       GetDevice(devNumber((DevDesc*) dd)))
-		      +0.5));
+	fprintf(fp, "%d %d ", (int)(size*12), 
+		(int)(16.667*XFig_StrWidth(str, gc, dd) +0.5));
 	fprintf(fp, "%d %d ", (int)x, (int)y);
 	if(strcmp(pd->encoding, "none") != 0) {
 #if defined(HAVE_ICONV) && defined(ICONV_LATIN1)
@@ -4956,22 +5020,18 @@ static void XFig_Text(double x, double y, const char *str,
     }
 }
 
-static Rboolean XFig_Locator(double *x, double *y, NewDevDesc *dd)
+static Rboolean XFig_Locator(double *x, double *y, pDevDesc dd)
 {
     return FALSE;
 }
 
-static void XFig_Mode(int mode, NewDevDesc* dd)
-{
-}
-
-static void XFig_Hold(NewDevDesc *dd)
+static void XFig_Mode(int mode, pDevDesc dd)
 {
 }
 
 static double XFig_StrWidth(const char *str,
-			    R_GE_gcontext *gc,
-			    NewDevDesc *dd)
+			    const pGEcontext gc,
+			    pDevDesc dd)
 {
     XFigDesc *pd = (XFigDesc *) dd->deviceSpecific;
     int face = gc->fontface;
@@ -4979,15 +5039,15 @@ static double XFig_StrWidth(const char *str,
     if(face < 1 || face > 5) face = 1;
 
     return floor(gc->cex * gc->ps + 0.5) *
-	PostScriptStringWidth((const unsigned char *)str,
+	PostScriptStringWidth((const unsigned char *)str, CE_NATIVE,
 			      &(pd->fonts->family->fonts[face-1]->metrics),
 			      face, "latin1");
 }
 
 static void XFig_MetricInfo(int c,
-			    R_GE_gcontext *gc,
+			    const pGEcontext gc,
 			    double* ascent, double* descent,
-			    double* width, NewDevDesc *dd)
+			    double* width, pDevDesc dd)
 {
     XFigDesc *pd = (XFigDesc *) dd->deviceSpecific;
     int face = gc->fontface;
@@ -5094,45 +5154,53 @@ PDFDesc;
 
 /* Device Driver Actions */
 
-static Rboolean PDF_Open(NewDevDesc*, PDFDesc*);
-static void PDF_Activate(NewDevDesc *dd);
+static Rboolean PDF_Open(pDevDesc, PDFDesc*);
+static void PDF_Activate(pDevDesc dd);
 static void PDF_Circle(double x, double y, double r,
-		       R_GE_gcontext *gc,
-		       NewDevDesc *dd);
+		       const pGEcontext gc,
+		       pDevDesc dd);
 static void PDF_Clip(double x0, double x1, double y0, double y1,
-		     NewDevDesc *dd);
-static void PDF_Close(NewDevDesc *dd);
-static void PDF_Deactivate(NewDevDesc *dd);
-static void PDF_Hold(NewDevDesc *dd);
-static Rboolean PDF_Locator(double *x, double *y, NewDevDesc *dd);
+		     pDevDesc dd);
+static void PDF_Close(pDevDesc dd);
+static void PDF_Deactivate(pDevDesc dd);
+static Rboolean PDF_Locator(double *x, double *y, pDevDesc dd);
 static void PDF_Line(double x1, double y1, double x2, double y2,
-		     R_GE_gcontext *gc,
-		     NewDevDesc *dd);
+		     const pGEcontext gc,
+		     pDevDesc dd);
 static void PDF_MetricInfo(int c,
-			   R_GE_gcontext *gc,
+			   const pGEcontext gc,
 			   double* ascent, double* descent,
-			   double* width, NewDevDesc *dd);
-static void PDF_Mode(int mode, NewDevDesc *dd);
-static void PDF_NewPage(R_GE_gcontext *gc, NewDevDesc *dd);
+			   double* width, pDevDesc dd);
+static void PDF_Mode(int mode, pDevDesc dd);
+static void PDF_NewPage(const pGEcontext gc, pDevDesc dd);
 static void PDF_Polygon(int n, double *x, double *y,
-			R_GE_gcontext *gc,
-			NewDevDesc *dd);
+			const pGEcontext gc,
+			pDevDesc dd);
 static void PDF_Polyline(int n, double *x, double *y,
-			 R_GE_gcontext *gc,
-			 NewDevDesc *dd);
+			 const pGEcontext gc,
+			 pDevDesc dd);
 static void PDF_Rect(double x0, double y0, double x1, double y1,
-		     R_GE_gcontext *gc,
-		     NewDevDesc *dd);
+		     const pGEcontext gc,
+		     pDevDesc dd);
 static void PDF_Size(double *left, double *right,
 		     double *bottom, double *top,
-		     NewDevDesc *dd);
+		     pDevDesc dd);
 static double PDF_StrWidth(const char *str,
-			   R_GE_gcontext *gc,
-			   NewDevDesc *dd);
+			   const pGEcontext gc,
+			   pDevDesc dd);
 static void PDF_Text(double x, double y, const char *str,
 		     double rot, double hadj,
-		     R_GE_gcontext *gc,
-		     NewDevDesc *dd);
+		     const pGEcontext gc,
+		     pDevDesc dd);
+#ifdef SUPPORT_MBCS
+static double PDF_StrWidthUTF8(const char *str,
+			       const pGEcontext gc,
+			       pDevDesc dd);
+static void PDF_TextUTF8(double x, double y, const char *str,
+			 double rot, double hadj,
+			 const pGEcontext gc,
+			 pDevDesc dd);
+#endif
 
 /*
  * Add a graphics engine font family to the list of fonts used on a
@@ -5198,7 +5266,7 @@ static Rboolean addPDFDevicefont(type1fontfamily family,
 }
 
 Rboolean
-PDFDeviceDriver(NewDevDesc* dd, const char *file, const char *paper,
+PDFDeviceDriver(pDevDesc dd, const char *file, const char *paper,
 		const char *family, const char **afmpaths, 
 		const char *encoding,
 		const char *bg, const char *fg, double width, double height,
@@ -5409,8 +5477,8 @@ PDFDeviceDriver(NewDevDesc* dd, const char *file, const char *paper,
      * END Load fonts
      *****************************/
 
-    setbg = str2col(bg);
-    setfg = str2col(fg);
+    setbg = R_GE_str2col(bg);
+    setfg = R_GE_str2col(fg);
 
     /*
      * Initialise all alphas to -1
@@ -5549,11 +5617,7 @@ PDFDeviceDriver(NewDevDesc* dd, const char *file, const char *paper,
     dd->ipr[0] = 1.0/72.0;
     dd->ipr[1] = 1.0/72.0;
 
-    dd->canResizePlot = 0;
-    dd->canChangeFont = 1;
-    dd->canRotateText = 1;
-    dd->canResizeText = 1;
-    dd->canClip = 1;
+    dd->canClip = TRUE;
     dd->canHAdj = 0;
     dd->canChangeGamma = FALSE;
 
@@ -5571,9 +5635,6 @@ PDFDeviceDriver(NewDevDesc* dd, const char *file, const char *paper,
 	return 0;
     }
 
-    dd->newDevStruct = 1;
-
-    dd->open	      = PDF_Open;
     dd->close      = PDF_Close;
     dd->activate   = PDF_Activate;
     dd->deactivate = PDF_Deactivate;
@@ -5590,14 +5651,21 @@ PDFDeviceDriver(NewDevDesc* dd, const char *file, const char *paper,
     dd->polyline   = PDF_Polyline;
     dd->locator    = PDF_Locator;
     dd->mode	      = PDF_Mode;
-    dd->hold	      = PDF_Hold;
+#ifdef SUPPORT_MBCS
+    dd->hasTextUTF8   = TRUE;
+    dd->textUTF8       = PDF_TextUTF8;
+    dd->strWidthUTF8   = PDF_StrWidthUTF8;
+#else
+    dd->hasTextUTF8   = FALSE;
+#endif
+    dd->useRotatedTextInContour = TRUE;
 
     dd->deviceSpecific = (void *) pd;
     dd->displayListOn = FALSE;
     return 1;
 }
 
-static void PDF_Invalidate(NewDevDesc *dd)
+static void PDF_Invalidate(pDevDesc dd)
 {
     PDFDesc *pd = (PDFDesc *) dd->deviceSpecific;
 
@@ -5677,7 +5745,7 @@ static int semiTransparent(int col)
     return !(R_OPAQUE(col) || R_TRANSPARENT(col));
 }
 
-static void PDF_SetLineColor(int color, NewDevDesc *dd)
+static void PDF_SetLineColor(int color, pDevDesc dd)
 {
     PDFDesc *pd = (PDFDesc *) dd->deviceSpecific;
 
@@ -5699,7 +5767,7 @@ static void PDF_SetLineColor(int color, NewDevDesc *dd)
     }
 }
 
-static void PDF_SetFill(int color, NewDevDesc *dd)
+static void PDF_SetFill(int color, pDevDesc dd)
 {
     PDFDesc *pd = (PDFDesc *) dd->deviceSpecific;
     if(color != pd->current.fill) {
@@ -5765,7 +5833,7 @@ static void PDFSetLineTexture(FILE *fp, const char *dashlist, int nlty,
     PP_SetLineTexture("d");
 }
 
-static void PDF_SetLineStyle(R_GE_gcontext *gc, NewDevDesc *dd)
+static void PDF_SetLineStyle(const pGEcontext gc, pDevDesc dd)
 {
     PDFDesc *pd = (PDFDesc *) dd->deviceSpecific;
     char dashlist[8];
@@ -6226,7 +6294,7 @@ static void PDF_endfile(PDFDesc *pd)
 }
 
 
-static Rboolean PDF_Open(NewDevDesc *dd, PDFDesc *pd)
+static Rboolean PDF_Open(pDevDesc dd, PDFDesc *pd)
 {
     char buf[512];
 
@@ -6243,7 +6311,7 @@ static Rboolean PDF_Open(NewDevDesc *dd, PDFDesc *pd)
     return TRUE;
 }
 
-static void PDF_Clip(double x0, double x1, double y0, double y1, NewDevDesc *dd)
+static void PDF_Clip(double x0, double x1, double y0, double y1, pDevDesc dd)
 {
     PDFDesc *pd = (PDFDesc *) dd->deviceSpecific;
 
@@ -6257,7 +6325,7 @@ static void PDF_Clip(double x0, double x1, double y0, double y1, NewDevDesc *dd)
 
 static void PDF_Size(double *left, double *right,
 		     double *bottom, double *top,
-		     NewDevDesc *dd)
+		     pDevDesc dd)
 {
     *left = dd->left;
     *right = dd->right;
@@ -6279,8 +6347,8 @@ static void PDF_endpage(PDFDesc *pd)
 
 #define R_VIS(col) (R_ALPHA(col) > 0)
 
-static void PDF_NewPage(R_GE_gcontext *gc,
-			NewDevDesc *dd)
+static void PDF_NewPage(const pGEcontext gc,
+			pDevDesc dd)
 {
     PDFDesc *pd = (PDFDesc *) dd->deviceSpecific;
     char buf[512];
@@ -6333,7 +6401,7 @@ static void PDF_NewPage(R_GE_gcontext *gc,
     pd->inText = FALSE;
 }
 
-static void PDF_Close(NewDevDesc *dd)
+static void PDF_Close(pDevDesc dd)
 {
     PDFDesc *pd = (PDFDesc *) dd->deviceSpecific;
 
@@ -6346,12 +6414,12 @@ static void PDF_Close(NewDevDesc *dd)
     free(pd->pos); free(pd->pageobj); free(pd);
 }
 
-static void PDF_Activate(NewDevDesc *dd) {}
-static void PDF_Deactivate(NewDevDesc *dd) {}
+static void PDF_Activate(pDevDesc dd) {}
+static void PDF_Deactivate(pDevDesc dd) {}
 
 static void PDF_Rect(double x0, double y0, double x1, double y1,
-		     R_GE_gcontext *gc,
-		     NewDevDesc *dd)
+		     const pGEcontext gc,
+		     pDevDesc dd)
 {
     PDFDesc *pd = (PDFDesc *) dd->deviceSpecific;
     int code;
@@ -6376,8 +6444,8 @@ static void PDF_Rect(double x0, double y0, double x1, double y1,
 
 /* r is in device coords */
 static void PDF_Circle(double x, double y, double r,
-		       R_GE_gcontext *gc,
-		       NewDevDesc *dd)
+		       const pGEcontext gc,
+		       pDevDesc dd)
 {
     PDFDesc *pd = (PDFDesc *) dd->deviceSpecific;
     int code, tr;
@@ -6439,8 +6507,8 @@ static void PDF_Circle(double x, double y, double r,
 }
 
 static void PDF_Line(double x1, double y1, double x2, double y2,
-		     R_GE_gcontext *gc,
-		     NewDevDesc *dd)
+		     const pGEcontext gc,
+		     pDevDesc dd)
 {
     PDFDesc *pd = (PDFDesc *) dd->deviceSpecific;
 
@@ -6453,8 +6521,8 @@ static void PDF_Line(double x1, double y1, double x2, double y2,
 }
 
 static void PDF_Polygon(int n, double *x, double *y,
-			R_GE_gcontext *gc,
-			NewDevDesc *dd)
+			const pGEcontext gc,
+			pDevDesc dd)
 {
     PDFDesc *pd = (PDFDesc *) dd->deviceSpecific;
     double xx, yy;
@@ -6486,8 +6554,8 @@ static void PDF_Polygon(int n, double *x, double *y,
 }
 
 static void PDF_Polyline(int n, double *x, double *y,
-			 R_GE_gcontext *gc,
-			 NewDevDesc *dd)
+			 const pGEcontext gc,
+			 pDevDesc dd)
 {
     PDFDesc *pd = (PDFDesc*) dd->deviceSpecific;
     double xx, yy;
@@ -6588,8 +6656,8 @@ static int PDFfontNumber(const char *family, int face, PDFDesc *pd)
 static void PDFSimpleText(double x, double y, const char *str,
 			  double rot, double hadj,
 			  int font,
-			  R_GE_gcontext *gc,
-			  NewDevDesc *dd) {
+			  const pGEcontext gc,
+			  pDevDesc dd) {
     PDFDesc *pd = (PDFDesc *) dd->deviceSpecific;
     int size = (int)floor(gc->cex * gc->ps + 0.5);
     int face = gc->fontface;
@@ -6620,8 +6688,8 @@ static void PDFSimpleText(double x, double y, const char *str,
 #ifndef SUPPORT_MBCS
 static void PDF_Text(double x, double y, const char *str,
 		     double rot, double hadj,
-		     R_GE_gcontext *gc,
-		     NewDevDesc *dd)
+		     const pGEcontext gc,
+		     pDevDesc dd)
 {
     PDFDesc *pd = (PDFDesc *) dd->deviceSpecific;
     PDFSimpleText(x, y, str, rot, hadj,
@@ -6632,10 +6700,10 @@ static void PDF_Text(double x, double y, const char *str,
 #else
 static char *PDFconvname(const char *family, PDFDesc *pd);
 
-static void PDF_Text(double x, double y, const char *str,
-		     double rot, double hadj,
-		     R_GE_gcontext *gc,
-		     NewDevDesc *dd)
+static void PDF_Text0(double x, double y, const char *str, int enc,
+		      double rot, double hadj,
+		      const pGEcontext gc,
+		      pDevDesc dd)
 {
     PDFDesc *pd = (PDFDesc *) dd->deviceSpecific;
     int size = (int) floor(gc->cex * gc->ps + 0.5);
@@ -6718,7 +6786,8 @@ static void PDF_Text(double x, double y, const char *str,
 	    size_t status;
 	    unsigned char *p;
 
-	    cd = (void*)Riconv_open(cidfont->encoding, "");
+	    cd = (void*)Riconv_open(cidfont->encoding,
+				    (enc == CE_UTF8) ? "UTF-8": "");
 	    if(cd  == (void*)-1) return;
 
 	    buf = (unsigned char *) alloca(buflen);
@@ -6758,27 +6827,41 @@ static void PDF_Text(double x, double y, const char *str,
     fprintf(pd->pdffp, "/F%d 1 Tf %.2f %.2f %.2f %.2f %.2f %.2f Tm ",
 	    PDFfontNumber(gc->fontfamily, face, pd),
 	    a, b, -b, a, x, y);
-    if(utf8locale && !utf8strIsASCII(str1) && face < 5) {
+    if((enc == CE_UTF8 || mbcslocale) && !strIsASCII(str1) && face < 5) {
+	/* face 5 handled above */
 	buff = alloca(strlen(str)+1); /* Output string cannot be longer */
 	R_CheckStack();
-	mbcsToSbcs(str, buff, PDFconvname(gc->fontfamily, pd));
+	mbcsToSbcs(str, buff, PDFconvname(gc->fontfamily, pd), enc);
 	str1 = buff;
     }
     PostScriptWriteString(pd->pdffp, str1);
     fprintf(pd->pdffp, " Tj\n");
 }
+
+static void PDF_Text(double x, double y, const char *str,
+		      double rot, double hadj,
+		      const pGEcontext gc,
+		      pDevDesc dd)
+{
+    PDF_Text0(x, y, str, CE_NATIVE, rot, hadj, gc, dd);
+}
+
+static void PDF_TextUTF8(double x, double y, const char *str,
+			 double rot, double hadj,
+			 const pGEcontext gc,
+			 pDevDesc dd)
+{
+    PDF_Text0(x, y, str, CE_UTF8, rot, hadj, gc, dd);
+}
+
 #endif
 
-static Rboolean PDF_Locator(double *x, double *y, NewDevDesc *dd)
+static Rboolean PDF_Locator(double *x, double *y, pDevDesc dd)
 {
     return FALSE;
 }
 
-static void PDF_Mode(int mode, NewDevDesc* dd)
-{
-}
-
-static void PDF_Hold(NewDevDesc *dd)
+static void PDF_Mode(int mode, pDevDesc dd)
 {
 }
 
@@ -6902,8 +6985,8 @@ static char
 }
 
 static double PDF_StrWidth(const char *str,
-			   R_GE_gcontext *gc,
-			   NewDevDesc *dd)
+			   const pGEcontext gc,
+			   pDevDesc dd)
 {
     PDFDesc *pd = (PDFDesc *) dd->deviceSpecific;
     int face = gc->fontface;
@@ -6911,7 +6994,7 @@ static double PDF_StrWidth(const char *str,
     if(gc->fontface < 1 || gc->fontface > 5) gc->fontface = 1;
     if (isType1Font(gc->fontfamily, PDFFonts, pd->defaultFont)) {
 	return floor(gc->cex * gc->ps + 0.5) *
-	    PostScriptStringWidth((const unsigned char *)str,
+	    PostScriptStringWidth((const unsigned char *)str, CE_NATIVE,
 				  PDFmetricInfo(gc->fontfamily,
 						gc->fontface, pd),
 				  gc->fontface,
@@ -6919,12 +7002,12 @@ static double PDF_StrWidth(const char *str,
     } else { /* cidfont(gc->fontfamily) */
         if (face < 5) {
 	    return floor(gc->cex * gc->ps + 0.5) *
-	        PostScriptStringWidth((const unsigned char *)str,
+	        PostScriptStringWidth((const unsigned char *)str, CE_NATIVE,
 				      NULL,
 				      gc->fontface, NULL);
 	} else {
 	    return floor(gc->cex * gc->ps + 0.5) *
-	        PostScriptStringWidth((const unsigned char *)str,
+	        PostScriptStringWidth((const unsigned char *)str, CE_NATIVE,
 				      PDFCIDsymbolmetricInfo(gc->fontfamily,
 							     pd),
 				      gc->fontface, NULL);
@@ -6932,10 +7015,43 @@ static double PDF_StrWidth(const char *str,
     }
 }
 
+#ifdef SUPPORT_MBCS
+static double PDF_StrWidthUTF8(const char *str,
+			       const pGEcontext gc,
+			       pDevDesc dd)
+{
+    PDFDesc *pd = (PDFDesc *) dd->deviceSpecific;
+    int face = gc->fontface;
+
+    if(gc->fontface < 1 || gc->fontface > 5) gc->fontface = 1;
+    if (isType1Font(gc->fontfamily, PDFFonts, pd->defaultFont)) {
+	return floor(gc->cex * gc->ps + 0.5) *
+	    PostScriptStringWidth((const unsigned char *)str, CE_UTF8,
+				  PDFmetricInfo(gc->fontfamily,
+						gc->fontface, pd),
+				  gc->fontface,
+				  PDFconvname(gc->fontfamily, pd));
+    } else { /* cidfont(gc->fontfamily) */
+        if (face < 5) {
+	    return floor(gc->cex * gc->ps + 0.5) *
+	        PostScriptStringWidth((const unsigned char *)str, CE_UTF8,
+				      NULL,
+				      gc->fontface, NULL);
+	} else {
+	    return floor(gc->cex * gc->ps + 0.5) *
+	        PostScriptStringWidth((const unsigned char *)str, CE_UTF8,
+				      PDFCIDsymbolmetricInfo(gc->fontfamily,
+							     pd),
+				      gc->fontface, NULL);
+	}
+    }
+}
+#endif
+
 static void PDF_MetricInfo(int c,
-			   R_GE_gcontext *gc,
+			   const pGEcontext gc,
 			   double* ascent, double* descent,
-			   double* width, NewDevDesc *dd)
+			   double* width, pDevDesc dd)
 {
     PDFDesc *pd = (PDFDesc *) dd->deviceSpecific;
     int face = gc->fontface;
@@ -6983,8 +7099,7 @@ static void PDF_MetricInfo(int c,
 
 SEXP PostScript(SEXP args)
 {
-    NewDevDesc *dev = NULL;
-    GEDevDesc *dd;
+    pGEDevDesc gdd;
     char *vmax;
     const char *file, *paper, *family=NULL, *bg, *fg, *cmd;
     const char *afms[5];
@@ -7028,16 +7143,12 @@ SEXP PostScript(SEXP args)
     if (!isNull(fonts) && !isString(fonts))
 	error(_("invalid 'fonts' parameter in %s"), call);
 
+    R_GE_checkVersionOrDie(R_GE_version);
     R_CheckDeviceAvailable();
     BEGIN_SUSPEND_INTERRUPTS {
-	if (!(dev = (NewDevDesc *) calloc(1, sizeof(NewDevDesc))))
+	pDevDesc dev;
+	if (!(dev = (pDevDesc) calloc(1, sizeof(NewDevDesc))))
 	    return 0;
-	/* Do this for early redraw attempts */
-	dev->displayList = R_NilValue;
-	/* Make sure that this is initialised before a GC can occur.
-	 * This (and displayList) get protected during GC
-	 */
-	dev->savedSnapshot = R_NilValue;
 	if(!PSDeviceDriver(dev, file, paper, family, afms, encoding, bg, fg,
 			   width, height, (double)horizontal, ps, onefile,
 			   pagecentre, printit, cmd, title, fonts,
@@ -7045,10 +7156,8 @@ SEXP PostScript(SEXP args)
 	    /* free(dev); No, dev freed inside PSDeviceDrive */
 	    error(_("unable to start device PostScript"));
 	}
-	gsetVar(install(".Device"), mkString("postscript"), R_BaseEnv);
-	dd = GEcreateDevDesc(dev);
-	addDevice((DevDesc*) dd);
-	GEinitDisplayList(dd);
+	gdd = GEcreateDevDesc(dev);
+	GEaddDevice2(gdd, "postscript");
     } END_SUSPEND_INTERRUPTS;
     vmaxset(vmax);
     return R_NilValue;
@@ -7074,8 +7183,7 @@ SEXP PostScript(SEXP args)
 
 SEXP XFig(SEXP args)
 {
-    NewDevDesc *dev = NULL;
-    GEDevDesc *dd;
+    pGEDevDesc gdd;
     char *vmax;
     const char *file, *paper, *family, *bg, *fg, *encoding;
     int horizontal, onefile, pagecentre;
@@ -7098,26 +7206,20 @@ SEXP XFig(SEXP args)
     pagecentre = asLogical(CAR(args));args = CDR(args);
     encoding = CHAR(asChar(CAR(args)));
 
+    R_GE_checkVersionOrDie(R_GE_version);
     R_CheckDeviceAvailable();
     BEGIN_SUSPEND_INTERRUPTS {
-	if (!(dev = (NewDevDesc *) calloc(1, sizeof(NewDevDesc))))
+	pDevDesc dev;
+	if (!(dev = (pDevDesc) calloc(1, sizeof(NewDevDesc))))
 	    return 0;
-	/* Do this for early redraw attempts */
-	dev->displayList = R_NilValue;
-	/* Make sure that this is initialised before a GC can occur.
-	 * This (and displayList) get protected during GC
-	 */
-	dev->savedSnapshot = R_NilValue;
 	if(!XFigDeviceDriver(dev, file, paper, family, bg, fg, width, height,
 			     (double) horizontal, ps, onefile, pagecentre,
 			     encoding)) {
 	    /* free(dev); No, freed inside XFigDeviceDriver */
 	    error(_("unable to start device xfig"));
 	}
-	gsetVar(install(".Device"), mkString("xfig"), R_BaseEnv);
-	dd = GEcreateDevDesc(dev);
-	addDevice((DevDesc*) dd);
-	GEinitDisplayList(dd);
+	gdd = GEcreateDevDesc(dev);
+	GEaddDevice2(gdd, "xfig");
     } END_SUSPEND_INTERRUPTS;
     vmaxset(vmax);
     return R_NilValue;
@@ -7145,8 +7247,7 @@ SEXP XFig(SEXP args)
 
 SEXP PDF(SEXP args)
 {
-    NewDevDesc *dev = NULL;
-    GEDevDesc *dd;
+    pGEDevDesc gdd;
     char *vmax;
     const char *file, *paper, *encoding, *family = NULL /* -Wall */,
 	*bg, *fg, *title, call[] = "PDF";
@@ -7183,26 +7284,20 @@ SEXP PDF(SEXP args)
     major = asInteger(CAR(args)); args = CDR(args);
     minor = asInteger(CAR(args));
 
+    R_GE_checkVersionOrDie(R_GE_version);
     R_CheckDeviceAvailable();
     BEGIN_SUSPEND_INTERRUPTS {
-	if (!(dev = (NewDevDesc *) calloc(1, sizeof(NewDevDesc))))
+	pDevDesc dev;
+	if (!(dev = (pDevDesc) calloc(1, sizeof(NewDevDesc))))
 	    return 0;
-	/* Do this for early redraw attempts */
-	dev->displayList = R_NilValue;
-	/* Make sure that this is initialised before a GC can occur.
-	 * This (and displayList) get protected during GC
-	 */
-	dev->savedSnapshot = R_NilValue;
 	if(!PDFDeviceDriver(dev, file, paper, family, afms, encoding, bg, fg,
 			    width, height, ps, onefile, pagecentre,
 			    title, fonts, major, minor)) {
 	    /* free(dev); PDFDeviceDriver now frees */
 	    error(_("unable to start device pdf"));
 	}
-	gsetVar(install(".Device"), mkString("pdf"), R_BaseEnv);
-	dd = GEcreateDevDesc(dev);
-	addDevice((DevDesc*) dd);
-	GEinitDisplayList(dd);
+	gdd = GEcreateDevDesc(dev);
+	GEaddDevice2(gdd, "pdf");
     } END_SUSPEND_INTERRUPTS;
     vmaxset(vmax);
     return R_NilValue;

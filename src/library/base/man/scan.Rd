@@ -1,6 +1,6 @@
 % File src/library/base/man/scan.Rd
 % Part of the R package, http://www.R-project.org
-% Copyright 1995-2007 R Core Development Team
+% Copyright 1995-2008 R Core Development Team
 % Distributed under GPL 2 or later
 
 \name{scan}
@@ -146,6 +146,9 @@ scan(file = "", what = double(0), nmax = -1, n = -1, sep = "",
     latter, specify the encoding as part of the connection \code{con} or
     via \code{\link{options}(encoding=)}: see the example under
     \code{\link{file}}.
+#ifdef windows
+    See also \sQuote{Details}.
+#endif
   }
 }
 \details{
@@ -160,13 +163,25 @@ scan(file = "", what = double(0), nmax = -1, n = -1, sep = "",
 
   \sQuote{White space} is defined for the purposes of this function as
   one or more contiguous characters from the set space, horizontal tab,
-  carriage return and line feed.  It does not include form feed,
-  vertical tab or other non-ASCII space characters.
+  carriage return and line feed.  It does not include form feed or
+  vertical tab, but in Latin-1 and Windows 8-bit locales 'space'
+  includes non-breaking space.
 
   Empty numeric fields are always regarded as missing values.
   Empty character fields are scanned as empty character vectors, unless
   \code{na.strings} contains \code{""} when they are regarded as missing
   values.
+
+  The allowed input for a numeric field is optional whitespace followed
+  either \code{NA} or an optional sign followed by a decimal or
+  hexadecimal constant (see \link{NumericConstants}), or \code{NaN},
+  \code{Inf} or \code{infinity} (ignoring case).  Out-of-range values
+  are recorded as \code{Inf}, \code{-Inf} or \code{0}.
+
+  For an integer field the allowed input is optional whitespace,
+  followed by either \code{NA} or an optional sign and one or more
+  digits (\code{0-9}): all out-of-range values are converted to
+  \code{NA_integer_}.
 
   If \code{sep} is the default (\code{""}), the character \code{\\}
   in a quoted string escapes the following character, so quotes may be
@@ -195,6 +210,13 @@ scan(file = "", what = double(0), nmax = -1, n = -1, sep = "",
 
   There is a check for a user interrupt every 1000 lines if \code{what}
   is a list, otherwise every 10000 items.
+#ifdef windows
+
+  If \code{con} is a non-already-open \link{connection} with a non-default
+  \code{encoding} argument, the text is converted to UTF-8 and declared
+  as such (and the encoding argument to \code{scan} is ignored).
+  See the examples of \code{\link{readLines}}.
+#endif
 }
 \value{
   if \code{what} is a list, a list of the same length and same names (as
@@ -219,6 +241,11 @@ scan(file = "", what = double(0), nmax = -1, n = -1, sep = "",
 
   Using \code{scan} on an open connection to read partial lines can lose
   chars: use an explicit separator to avoid this.
+
+  Having \code{nul} bytes in fields (including \code{\0} if
+  \code{allowEscapes = TRUE}) may lead to scanning the field being
+  terminated at the \code{nul}.  \R 2.8.0 will handle these better, but
+  they not normally present in text files -- see \code{\link{readBin}}.
 }
 \references{
   Becker, R. A., Chambers, J. M. and Wilks, A. R. (1988)

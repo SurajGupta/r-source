@@ -42,32 +42,31 @@
 /* 06-08-20 | baier | R_Proxy_Graphics_CB instead of NewDevDesc */
 static void R_Proxy_Graphics_Activate_CB(R_Proxy_Graphics_CB* dd);
 static void R_Proxy_Graphics_Circle_CB(double x, double y, double r,
-				    R_GE_gcontext *gc,
+				    const pGEcontext gc,
 				    R_Proxy_Graphics_CB* dd);
 static void R_Proxy_Graphics_Clip_CB(double x0, double x1, double y0, double y1,
 		     R_Proxy_Graphics_CB* dd);
 static void R_Proxy_Graphics_Close_CB(R_Proxy_Graphics_CB* dd);
 static void R_Proxy_Graphics_Deactivate_CB(R_Proxy_Graphics_CB* dd);
-static void R_Proxy_Graphics_Hold_CB(R_Proxy_Graphics_CB* dd);
 static Rboolean R_Proxy_Graphics_Locator_CB(double *x, double *y, R_Proxy_Graphics_CB* dd);
 static void R_Proxy_Graphics_Line_CB(double x1, double y1, double x2, double y2,
-				  R_GE_gcontext *gc,
+				  const pGEcontext gc,
 				  R_Proxy_Graphics_CB* dd);
 static void R_Proxy_Graphics_MetricInfo_CB(int c, 
-					R_GE_gcontext *gc,
+					const pGEcontext gc,
 					double* ascent, double* descent,
 					double* width, R_Proxy_Graphics_CB* dd);
 static void R_Proxy_Graphics_Mode_CB(int mode, R_Proxy_Graphics_CB* dd);
-static void R_Proxy_Graphics_NewPage_CB(R_GE_gcontext *gc,
+static void R_Proxy_Graphics_NewPage_CB(const pGEcontext gc,
 				     R_Proxy_Graphics_CB* dd);
 static void R_Proxy_Graphics_Polygon_CB(int n, double *x, double *y,
-				     R_GE_gcontext *gc,
+				     const pGEcontext gc,
 				     R_Proxy_Graphics_CB* dd);
 static void R_Proxy_Graphics_Polyline_CB(int n, double *x, double *y,
-				      R_GE_gcontext *gc,
+				      const pGEcontext gc,
 				      R_Proxy_Graphics_CB* dd);
 static void R_Proxy_Graphics_Rect_CB(double x0, double y0, double x1, double y1,
-				  R_GE_gcontext *gc,
+				  const pGEcontext gc,
 				  R_Proxy_Graphics_CB* dd);
 static void R_Proxy_Graphics_Size_CB(double *left, double *right,
 				  double *bottom, double *top,
@@ -76,11 +75,11 @@ static void R_Proxy_Graphics_Size_CB(double *left, double *right,
 static void R_Proxy_Graphics_Resize_CB(R_Proxy_Graphics_CB* dd);
 #endif
 static double R_Proxy_Graphics_StrWidth_CB(char *str, 
-					R_GE_gcontext *gc,
+					const pGEcontext gc,
 					R_Proxy_Graphics_CB* dd);
 static void R_Proxy_Graphics_Text_CB(double x, double y, char *str,
 				  double rot, double hadj,
-				  R_GE_gcontext *gc,
+				  const pGEcontext gc,
 				  R_Proxy_Graphics_CB* dd);
 static Rboolean R_Proxy_Graphics_Open_CB (R_Proxy_Graphics_CB* pDD,
 				       void* pAXD,
@@ -106,7 +105,7 @@ static void R_Proxy_Graphics_Activate_CB(R_Proxy_Graphics_CB* pDD)
 static void R_Proxy_Graphics_Circle_CB(double pX,
 				       double pY,
 				       double pRad,
-				       R_GE_gcontext *gc,
+				       const pGEcontext gc,
 				       R_Proxy_Graphics_CB* pDD)
 {
 /*  OutputDebugString("R_Proxy_Graphics_Circle()\n"); */
@@ -167,17 +166,6 @@ static void R_Proxy_Graphics_Deactivate_CB(R_Proxy_Graphics_CB* pDD)
   MessageBox (GetDesktopWindow (),"Deactivate()","R_Proxy_Graphics",MB_OK);
 }
 
-/* 06-05-17 | baier | use GFX access macros */
-/* 06-08-20 | baier | R_Proxy_Graphics instead of NewDevDesc, Recorder device */
-static void R_Proxy_Graphics_Hold_CB(R_Proxy_Graphics_CB* pDD)
-{
-  if(HASGFXDEV()) {
-    GFXDEV()->vtbl->hold (GFXDEV());
-    return;
-  }
-
-  MessageBox (GetDesktopWindow (),"Hold()","R_Proxy_Graphics",MB_OK);
-}
 
 /* 00-06-22 | baier | added color, line type and width */
 /* 06-05-17 | baier | use GFX access macros */
@@ -186,7 +174,7 @@ static void R_Proxy_Graphics_Line_CB(double pX0,
 				     double pY0,
 				     double pX1,
 				     double pY1,
-				     R_GE_gcontext *gc,
+				     const pGEcontext gc,
 				     R_Proxy_Graphics_CB* pDD)
 {
   if(HASGFXDEV()) { 
@@ -228,7 +216,7 @@ static void R_Proxy_Graphics_Mode_CB(int pMode, R_Proxy_Graphics_CB* dd)
 
 /* 06-05-17 | baier | use GFX access macros */
 /* 06-08-20 | baier | R_Proxy_Graphics instead of NewDevDesc, Recorder device */
-static void R_Proxy_Graphics_NewPage_CB(R_GE_gcontext *gc,
+static void R_Proxy_Graphics_NewPage_CB(const pGEcontext gc,
 					R_Proxy_Graphics_CB* pDD)
 {
   if(HASGFXDEV()) {
@@ -264,7 +252,7 @@ static Rboolean R_Proxy_Graphics_Open_CB(R_Proxy_Graphics_CB* pDD,
 static void R_Proxy_Graphics_Polygon_CB(int pCount,
 					double* pX,
 					double* pY,
-					R_GE_gcontext *gc,
+					const pGEcontext gc,
 					R_Proxy_Graphics_CB* pDD)
 {
   if(HASGFXDEV()) {
@@ -300,7 +288,7 @@ static void R_Proxy_Graphics_Polygon_CB(int pCount,
 static void R_Proxy_Graphics_Polyline_CB(int pCount,
 					 double* pX,
 					 double* pY,
-					 R_GE_gcontext *gc,
+					 const pGEcontext gc,
 					 R_Proxy_Graphics_CB* pDD)
 {
   if(HASGFXDEV()) {
@@ -340,7 +328,7 @@ static void R_Proxy_Graphics_Rect_CB(double pX0,
 				     double pY0,
 				     double pX1,
 				     double pY1,
-				     R_GE_gcontext *gc,
+				     const pGEcontext gc,
 				     R_Proxy_Graphics_CB* pDD)
 {
   if(HASGFXDEV()) {
@@ -381,7 +369,7 @@ static void R_Proxy_Graphics_Resize_CB(R_Proxy_Graphics_CB* pDD)
 /* 06-05-17 | baier | use GFX access macros */
 /* 06-08-20 | baier | R_Proxy_Graphics instead of NewDevDesc, Recorder device */
 static double R_Proxy_Graphics_StrWidth_CB(char* pString,
-					 R_GE_gcontext *gc,
+					 const pGEcontext gc,
 					 R_Proxy_Graphics_CB* pDD)
 {
   if(HASGFXDEV()) {
@@ -404,7 +392,7 @@ static void R_Proxy_Graphics_Text_CB(double pX,
 				     char* pString,
 				     double pRot,
 				     double pHadj,
-				     R_GE_gcontext *gc,
+				     const pGEcontext gc,
 				     R_Proxy_Graphics_CB* pDD)
 {
   if(HASGFXDEV()) {
@@ -422,14 +410,14 @@ static void R_Proxy_Graphics_Text_CB(double pX,
 /* 00-06-22 | baier | added font and size parameters */
 /* 06-08-20 | baier | R_Proxy_Graphics instead of NewDevDesc, Recorder device */
 static void R_Proxy_Graphics_MetricInfo_CB(int c, 
-					   R_GE_gcontext *gc,
+					   const pGEcontext gc,
 					   double* ascent, double* descent,
 					   double* width, R_Proxy_Graphics_CB* dd);
 
 /* 06-05-17 | baier | use GFX access macros */
 /* 06-08-20 | baier | R_Proxy_Graphics instead of NewDevDesc, Recorder device */
 static void R_Proxy_Graphics_MetricInfo_CB(int pC,
-					   R_GE_gcontext *gc,
+					   const pGEcontext gc,
 					   double* pAscent,
 					   double* pDescent,
 					   double* pWidth,
@@ -483,9 +471,6 @@ int R_Proxy_Graphics_Driver_CB(R_Proxy_Graphics_CB* pDD,
   }
   /* Set up Data Structures  */
 
-  DEVDESC(pDD)->newDevStruct = 1;
-
-  DEVDESC(pDD)->open = R_Proxy_Graphics_Open_CB;
   DEVDESC(pDD)->close = R_Proxy_Graphics_Close_CB;
   DEVDESC(pDD)->activate = R_Proxy_Graphics_Activate_CB;
   DEVDESC(pDD)->deactivate = R_Proxy_Graphics_Deactivate_CB;
@@ -501,7 +486,6 @@ int R_Proxy_Graphics_Driver_CB(R_Proxy_Graphics_CB* pDD,
   DEVDESC(pDD)->polygon = R_Proxy_Graphics_Polygon_CB;
   DEVDESC(pDD)->locator = R_Proxy_Graphics_Locator_CB;
   DEVDESC(pDD)->mode = R_Proxy_Graphics_Mode_CB;
-  DEVDESC(pDD)->hold = R_Proxy_Graphics_Hold_CB;
   DEVDESC(pDD)->metricInfo = R_Proxy_Graphics_MetricInfo_CB;
 
     /* set graphics parameters that must be set by device driver */
@@ -529,16 +513,10 @@ int R_Proxy_Graphics_Driver_CB(R_Proxy_Graphics_CB* pDD,
   DEVDESC(pDD)->ipr[1] = 1.0 / 72.0;
 
     /* Device capabilities */
-    /* Clipping is problematic for X11 */
-    /* Graphics is clipped, text is not */
 
-  DEVDESC(pDD)->canResizePlot = 1;
-  DEVDESC(pDD)->canChangeFont = 1;
-  DEVDESC(pDD)->canRotateText = 1;
-  DEVDESC(pDD)->canResizeText = 1;
-  DEVDESC(pDD)->canClip = 1;
-  DEVDESC(pDD)->displayListOn = 1;
-  DEVDESC(pDD)->canChangeGamma = 1;
+  DEVDESC(pDD)->canClip = TRUE;
+  DEVDESC(pDD)->displayListOn = TRUE;
+  DEVDESC(pDD)->canChangeGamma = TRUE;
 
   return 1;
 }
@@ -549,32 +527,31 @@ int R_Proxy_Graphics_Driver_CB(R_Proxy_Graphics_CB* pDD,
  ******************************************************************************/
 static void R_Proxy_Graphics_Activate_Recorder(R_Proxy_Graphics_Recorder* dd);
 static void R_Proxy_Graphics_Circle_Recorder(double x, double y, double r,
-				    R_GE_gcontext *gc,
+				    const pGEcontext gc,
 				    R_Proxy_Graphics_Recorder* dd);
 static void R_Proxy_Graphics_Clip_Recorder(double x0, double x1, double y0, double y1,
 		     R_Proxy_Graphics_Recorder* dd);
 static void R_Proxy_Graphics_Close_Recorder(R_Proxy_Graphics_Recorder* dd);
 static void R_Proxy_Graphics_Deactivate_Recorder(R_Proxy_Graphics_Recorder* dd);
-static void R_Proxy_Graphics_Hold_Recorder(R_Proxy_Graphics_Recorder* dd);
 static Rboolean R_Proxy_Graphics_Locator_Recorder(double *x, double *y, R_Proxy_Graphics_Recorder* dd);
 static void R_Proxy_Graphics_Line_Recorder(double x1, double y1, double x2, double y2,
-				  R_GE_gcontext *gc,
+				  const pGEcontext gc,
 				  R_Proxy_Graphics_Recorder* dd);
 static void R_Proxy_Graphics_MetricInfo_Recorder(int c, 
-					R_GE_gcontext *gc,
+					const pGEcontext gc,
 					double* ascent, double* descent,
 					double* width, R_Proxy_Graphics_Recorder* dd);
 static void R_Proxy_Graphics_Mode_Recorder(int mode, R_Proxy_Graphics_Recorder* dd);
-static void R_Proxy_Graphics_NewPage_Recorder(R_GE_gcontext *gc,
+static void R_Proxy_Graphics_NewPage_Recorder(const pGEcontext gc,
 				     R_Proxy_Graphics_Recorder* dd);
 static void R_Proxy_Graphics_Polygon_Recorder(int n, double *x, double *y,
-				     R_GE_gcontext *gc,
+				     const pGEcontext gc,
 				     R_Proxy_Graphics_Recorder* dd);
 static void R_Proxy_Graphics_Polyline_Recorder(int n, double *x, double *y,
-				      R_GE_gcontext *gc,
+				      const pGEcontext gc,
 				      R_Proxy_Graphics_Recorder* dd);
 static void R_Proxy_Graphics_Rect_Recorder(double x0, double y0, double x1, double y1,
-				  R_GE_gcontext *gc,
+				  const pGEcontext gc,
 				  R_Proxy_Graphics_Recorder* dd);
 static void R_Proxy_Graphics_Size_Recorder(double *left, double *right,
 				  double *bottom, double *top,
@@ -583,11 +560,11 @@ static void R_Proxy_Graphics_Size_Recorder(double *left, double *right,
 static void R_Proxy_Graphics_Resize_Recorder(R_Proxy_Graphics_Recorder* dd);
 #endif
 static double R_Proxy_Graphics_StrWidth_Recorder(char *str, 
-					R_GE_gcontext *gc,
+					const pGEcontext gc,
 					R_Proxy_Graphics_Recorder* dd);
 static void R_Proxy_Graphics_Text_Recorder(double x, double y, char *str,
 				  double rot, double hadj,
-				  R_GE_gcontext *gc,
+				  const pGEcontext gc,
 				  R_Proxy_Graphics_Recorder* dd);
 static Rboolean R_Proxy_Graphics_Open_Recorder (R_Proxy_Graphics_Recorder* pDD,
 				       void* pAXD,
@@ -605,7 +582,7 @@ static void R_Proxy_Graphics_Activate_Recorder(R_Proxy_Graphics_Recorder* pDD)
 static void R_Proxy_Graphics_Circle_Recorder(double pX,
 					     double pY,
 					     double pRad,
-					     R_GE_gcontext *gc,
+					     const pGEcontext gc,
 					     R_Proxy_Graphics_Recorder* pDD)
 {
 }
@@ -643,18 +620,6 @@ static void R_Proxy_Graphics_Deactivate_Recorder(R_Proxy_Graphics_Recorder* pDD)
   MessageBox (GetDesktopWindow (),"Deactivate()","R_Proxy_Graphics",MB_OK);
 }
 
-/* 06-05-17 | baier | use GFX access macros */
-/* 06-08-20 | baier | R_Proxy_Graphics instead of NewDevDesc, Recorder device */
-static void R_Proxy_Graphics_Hold_Recorder(R_Proxy_Graphics_Recorder* pDD)
-{
-  if(HASGFXDEV()) {
-    GFXDEV()->vtbl->hold (GFXDEV());
-    return;
-  }
-
-  MessageBox (GetDesktopWindow (),"Hold()","R_Proxy_Graphics",MB_OK);
-}
-
 /* 00-06-22 | baier | added color, line type and width */
 /* 06-05-17 | baier | use GFX access macros */
 /* 06-08-20 | baier | R_Proxy_Graphics instead of NewDevDesc, Recorder device */
@@ -662,7 +627,7 @@ static void R_Proxy_Graphics_Line_Recorder(double pX0,
 					   double pY0,
 					   double pX1,
 					   double pY1,
-					   R_GE_gcontext *gc,
+					   const pGEcontext gc,
 					   R_Proxy_Graphics_Recorder* pDD)
 {
   if(HASGFXDEV()) { 
@@ -704,7 +669,7 @@ static void R_Proxy_Graphics_Mode_Recorder(int pMode, R_Proxy_Graphics_Recorder*
 
 /* 06-05-17 | baier | use GFX access macros */
 /* 06-08-20 | baier | R_Proxy_Graphics instead of NewDevDesc, Recorder device */
-static void R_Proxy_Graphics_NewPage_Recorder(R_GE_gcontext *gc,
+static void R_Proxy_Graphics_NewPage_Recorder(const pGEcontext gc,
 					      R_Proxy_Graphics_Recorder* pDD)
 {
   if(HASGFXDEV()) {
@@ -740,7 +705,7 @@ static Rboolean R_Proxy_Graphics_Open_Recorder(R_Proxy_Graphics_Recorder* pDD,
 static void R_Proxy_Graphics_Polygon_Recorder(int pCount,
 					      double* pX,
 					      double* pY,
-					      R_GE_gcontext *gc,
+					      const pGEcontext gc,
 					      R_Proxy_Graphics_Recorder* pDD)
 {
   if(HASGFXDEV()) {
@@ -776,7 +741,7 @@ static void R_Proxy_Graphics_Polygon_Recorder(int pCount,
 static void R_Proxy_Graphics_Polyline_Recorder(int pCount,
 					       double* pX,
 					       double* pY,
-					       R_GE_gcontext *gc,
+					       const pGEcontext gc,
 					       R_Proxy_Graphics_Recorder* pDD)
 {
   if(HASGFXDEV()) {
@@ -816,7 +781,7 @@ static void R_Proxy_Graphics_Rect_Recorder(double pX0,
 					   double pY0,
 					   double pX1,
 					   double pY1,
-					   R_GE_gcontext *gc,
+					   const pGEcontext gc,
 					   R_Proxy_Graphics_Recorder* pDD)
 {
   if(HASGFXDEV()) {
@@ -857,7 +822,7 @@ static void R_Proxy_Graphics_Resize_Recorder(R_Proxy_Graphics_Recorder* pDD)
 /* 06-05-17 | baier | use GFX access macros */
 /* 06-08-20 | baier | R_Proxy_Graphics instead of NewDevDesc, Recorder device */
 static double R_Proxy_Graphics_StrWidth_Recorder(char* pString,
-						 R_GE_gcontext *gc,
+						 const pGEcontext gc,
 						 R_Proxy_Graphics_Recorder* pDD)
 {
 #if 0
@@ -882,7 +847,7 @@ static void R_Proxy_Graphics_Text_Recorder(double pX,
 					   char* pString,
 					   double pRot,
 					   double pHadj,
-					   R_GE_gcontext *gc,
+					   const pGEcontext gc,
 					   R_Proxy_Graphics_Recorder* pDD)
 {
   if(HASGFXDEV()) {
@@ -900,14 +865,14 @@ static void R_Proxy_Graphics_Text_Recorder(double pX,
 /* 00-06-22 | baier | added font and size parameters */
 /* 06-08-20 | baier | R_Proxy_Graphics instead of NewDevDesc, Recorder device */
 static void R_Proxy_Graphics_MetricInfo_Recorder(int c, 
-						 R_GE_gcontext *gc,
+						 const pGEcontext gc,
 						 double* ascent, double* descent,
 						 double* width, R_Proxy_Graphics_Recorder* dd);
 
 /* 06-05-17 | baier | use GFX access macros */
 /* 06-08-20 | baier | R_Proxy_Graphics instead of NewDevDesc, Recorder device */
 static void R_Proxy_Graphics_MetricInfo_Recorder(int pC,
-						 R_GE_gcontext *gc,
+						 const pGEcontext gc,
 						 double* pAscent,
 						 double* pDescent,
 						 double* pWidth,
@@ -965,9 +930,6 @@ int R_Proxy_Graphics_Driver_Recorder(R_Proxy_Graphics_Recorder* pDD,
   }
   /* Set up Data Structures  */
 
-  DEVDESC(pDD)->newDevStruct = 1;
-
-  DEVDESC(pDD)->open = R_Proxy_Graphics_Open_Recorder;
   DEVDESC(pDD)->close = R_Proxy_Graphics_Close_Recorder;
   DEVDESC(pDD)->activate = R_Proxy_Graphics_Activate_Recorder;
   DEVDESC(pDD)->deactivate = R_Proxy_Graphics_Deactivate_Recorder;
@@ -983,7 +945,6 @@ int R_Proxy_Graphics_Driver_Recorder(R_Proxy_Graphics_Recorder* pDD,
   DEVDESC(pDD)->polygon = R_Proxy_Graphics_Polygon_Recorder;
   DEVDESC(pDD)->locator = R_Proxy_Graphics_Locator_Recorder;
   DEVDESC(pDD)->mode = R_Proxy_Graphics_Mode_Recorder;
-  DEVDESC(pDD)->hold = R_Proxy_Graphics_Hold_Recorder;
   DEVDESC(pDD)->metricInfo = R_Proxy_Graphics_MetricInfo_Recorder;
 
     /* set graphics parameters that must be set by device driver */
@@ -1014,13 +975,9 @@ int R_Proxy_Graphics_Driver_Recorder(R_Proxy_Graphics_Recorder* pDD,
     /* Clipping is problematic for X11 */
     /* Graphics is clipped, text is not */
 
-  DEVDESC(pDD)->canResizePlot = 1;
-  DEVDESC(pDD)->canChangeFont = 1;
-  DEVDESC(pDD)->canRotateText = 1;
-  DEVDESC(pDD)->canResizeText = 1;
-  DEVDESC(pDD)->canClip = 1;
-  DEVDESC(pDD)->displayListOn = 1;
-  DEVDESC(pDD)->canChangeGamma = 1;
+  DEVDESC(pDD)->canClip = TRUE;
+  DEVDESC(pDD)->displayListOn = TRUE;
+  DEVDESC(pDD)->canChangeGamma = TRUE;
 
   return 1;
 }

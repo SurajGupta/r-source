@@ -7,8 +7,8 @@ msgid ""
 msgstr ""
 "Project-Id-Version: R 2.2.1\n"
 "Report-Msgid-Bugs-To: bugs@r-project.org\n"
-"POT-Creation-Date: 2007-05-25 12:17\n"
-"PO-Revision-Date: 2007-04-13 12:15+0100\n"
+"POT-Creation-Date: 2008-04-05 10:49\n"
+"PO-Revision-Date: 2008-03-26 17:38+0100\n"
 "Last-Translator: Philippe Grosjean <phgrosjean@sciviews.org>\n"
 "Language-Team: French <R-core@r-project.org>\n"
 "MIME-Version: 1.0\n"
@@ -73,9 +73,8 @@ msgstr "'to.ref.white' en désaccord avec la définition de"
 msgid "color spaces use different reference whites."
 msgstr "les espaces de couleurs utilisent différents blancs de référence."
 
-#, fuzzy
 msgid "'name' must be a character vector"
-msgstr "'file' doit être une chaîne de caractère non vide"
+msgstr "'name' doit être un vecteur de type chaîne de caractère"
 
 msgid "cannot shut down device 1 (the null device)"
 msgstr "impossible de fermer le périphérique 1 (périphérique null)"
@@ -104,6 +103,9 @@ msgstr "seul un périphérique écran peut être imprimé"
 msgid "need to specify one of 'width' and 'height'"
 msgstr "il faut spécifier 'width' ou 'height'"
 
+msgid "can only print from a screen device"
+msgstr "seul un périphérique écran peut être imprimé"
+
 msgid "dev.control() called without an open graphics device"
 msgstr "dev.control() appelé sans périphérique graphique ouvert"
 
@@ -112,6 +114,24 @@ msgstr "argument manquant sans valeur par défaut"
 
 msgid "dev.displaylist() called without an open graphics device"
 msgstr "dev.displaylist() appelé sans périphérique graphique ouvert"
+
+msgid "invalid setting for 'getOption(\"device\")'"
+msgstr "paramètres incorrects por 'getOption(\"device\")'"
+
+msgid "no suitable unused file name for pdf()"
+msgstr "pas de nom de fichier utilisable pour pdf()"
+
+msgid "dev.new(): using pdf(file=\"%s\")"
+msgstr "deV.new() : utilisation de pdf(file=\"%s\")"
+
+msgid "no suitable unused file name for postscript()"
+msgstr "pas de nom de fichier utilisable disponible pour postscript()"
+
+msgid "dev.new(): using postscript(file=\"%s\")"
+msgstr "dev.new() : utilisation de postscript(file=\"%s\")"
+
+msgid "device '%s' not found"
+msgstr "le périphérique '%s' est introuvable"
 
 msgid "invalid arguments in '%s' (need named args)"
 msgstr "arguments incorrects dans '%s' (les arguments doivent être nommés)"
@@ -129,11 +149,19 @@ msgstr "options incorrectes dans '%s'"
 msgid "NOT changing"
 msgstr "NE change(nt) PAS"
 
+msgid "argment 'append' is for back-compatibility and will be ignored"
+msgstr ""
+"l'argument 'append' est là pour raison de compatibilité descendante mais "
+"sera ignoré"
+
 msgid "unknown family '%s'"
 msgstr "famille inconnue '%s'"
 
 msgid "invalid 'family' argument"
 msgstr "argument 'family' incorrect"
+
+msgid "invalid 'file'"
+msgstr "argument 'file' incorrect"
 
 msgid "invalid PDF version"
 msgstr "version de PDF incorrecte"
@@ -230,10 +258,8 @@ msgstr "le périphérique '%s' n'est pas disponible"
 msgid "Available devices are %s"
 msgstr "Les périphériques disponibles sont %s"
 
-msgid "quartz() device interactivity reduced without an event loop manager"
-msgstr ""
-"interactivité réduite (sans gestion des événements) dans les périphériques "
-"quartz()"
+msgid "invalid 'title'"
+msgstr "'title' incorrect"
 
 msgid "invalid Quartz font:  must be 4 strings"
 msgstr "police Quartz incorrecte : doit être 4 chaînes de caractères"
@@ -245,19 +271,33 @@ msgid "invalid arguments in quartzFonts (need named args)"
 msgstr ""
 "arguments incorrects dans quartzFonts (les arguments doivent être nommés)"
 
+msgid "invalid value for 'antialias'"
+msgstr "valeur incorrecte pour 'antialias'"
+
+msgid "invalid 'filename'"
+msgstr "argument 'filename' incorrect"
+
 msgid "'res' must be specified unless 'units = \"px\"'"
-msgstr ""
+msgstr "'res' doit être spécifié à moins que 'units = \"px\""
 
 msgid "invalid X11 font specification:"
 msgstr "spécification de police X11 incorrecte :"
+
+msgid "no such device"
+msgstr "aucun périphérique ne correspond"
+
+msgid "can only copy from 'X11(type=\"cairo\")' devices"
+msgstr ""
+"il n'est possible de copier qu'à partir de périphériques 'X11(type=\"cairo"
+"\")'"
+
+msgid "invalid value for 'rescale'"
+msgstr "valeur incorrecte pour 'rescale'"
 
 msgid "can only bring windows devices to the front"
 msgstr ""
 "seules les fenêtres des périphériques graphiques peuvent être amenées au "
 "premier plan"
-
-msgid "no such device"
-msgstr "aucun périphérique ne correspond"
 
 msgid "can only copy from 'windows' devices"
 msgstr "il n'est possible de copier qu'à partir d'un périphérique 'windows'"

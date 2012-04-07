@@ -32,8 +32,9 @@
     setClass("ANY", where = envir); clList <- c(clList, "ANY")
     setClass("vector", where = envir); clList <- c(clList, "vector")
     setClass("missing", where = envir); clList <- c(clList, "missing")
+    ## "numeric" is the class returned by class() for double vectors
     vClasses <- c("logical", "numeric", "character",
-                  "complex", "integer", "single", "double", "raw",
+                  "complex", "integer", "raw",
                   "expression", "list")
     ## now some pseudo-classes in base, marked specially for new()
     for(.class in vClasses) {
@@ -49,10 +50,13 @@
 
     .setBaseClass("externalptr", prototype = .newExternalptr(), where = envir); clList <- c(clList, "externalptr")
 
+    ## S4 is a basic class, but virtual:  new("S4") is an error; must be an actual S4 class
+     tmp <- newClassRepresentation(className="S4", prototype = defaultPrototype(), virtual=TRUE, package = "methods")
+    assignClassDef("S4", tmp, where = envir); clList <- c(clList, "S4")
 
     ## NULL is weird in that it has NULL as a prototype, but is not virtual
-    nullClass <- newClassRepresentation(className="NULL", prototype = NULL, virtual=FALSE, package = "methods")
-    assignClassDef("NULL", nullClass, where = envir); clList <- c(clList, "NULL")
+    tmp <- newClassRepresentation(className="NULL", prototype = NULL, virtual=FALSE, package = "methods")
+    assignClassDef("NULL", tmp, where = envir); clList <- c(clList, "NULL")
 
 
     setClass("structure", where = envir); clList <- c(clList, "structure")
@@ -72,7 +76,6 @@
     for(.class in vClasses)
         setIs(.class, "vector", where = envir)
 
-    setIs("double", "numeric", where = envir)
     setIs("integer", "numeric", where = envir)
 
     setIs("structure", "vector", coerce = .gblEnv(function(object) as.vector(object)),

@@ -1,6 +1,6 @@
 % File src/library/base/man/list.files.Rd
 % Part of the R package, http://www.R-project.org
-% Copyright 1995-2007 R Core Development Team
+% Copyright 1995-2008 R Core Development Team
 % Distributed under GPL 2 or later
 
 \name{list.files}
@@ -9,13 +9,17 @@
 \title{List the Files in a Directory/Folder}
 \usage{
 list.files(path = ".", pattern = NULL, all.files = FALSE,
-           full.names = FALSE, recursive = FALSE)
+           full.names = FALSE, recursive = FALSE,
+           ignore.case = FALSE)
+
        dir(path = ".", pattern = NULL, all.files = FALSE,
-           full.names = FALSE, recursive = FALSE)
+           full.names = FALSE, recursive = FALSE,
+           ignore.case = FALSE)
 }
 \arguments{
   \item{path}{a character vector of full path names; the default
-    corresponds to the working directory \code{\link{getwd}()}.}
+    corresponds to the working directory \code{\link{getwd}()}.  Missing
+    values will be ignored.}
   \item{pattern}{an optional \link{regular expression}.  Only file names
     which match the regular expression will be returned.}
   \item{all.files}{a logical value. If \code{FALSE}, only the
@@ -25,6 +29,7 @@ list.files(path = ".", pattern = NULL, all.files = FALSE,
     path is prepended to the file names.  If \code{FALSE}, only
     the file names are returned.}
   \item{recursive}{logical. Should the listing recurse into directories?}
+  \item{ignore.case}{logical. Should pattern-matching be case-insensitive?}
 }
 \description{
   These functions produce a character vector of the names of files
@@ -62,6 +67,8 @@ for interactive selection.
 \examples{
 list.files(R.home())
 ## Only files starting with a-l or r
-dir("../..", pattern = "^[a-lr]",full.names=TRUE)
+## Note that a-l is locale-dependent, but using case-insensitive
+## matching makes it unambiguous in English locales
+dir("../..", pattern = "^[a-lr]",full.names=TRUE, ignore.case = TRUE)
 }
 \keyword{file}

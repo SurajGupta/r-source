@@ -1,6 +1,6 @@
 /*
  *  R : A Computer Language for Statistical Data Analysis
- *  Copyright (C) 2004  The R Development Core Team
+ *  Copyright (C) 2004-8  The R Development Core Team
  *
  *  This program is free software; you can redistribute it and/or modify
  *  it under the terms of the GNU General Public License as published by
@@ -22,115 +22,114 @@
 #endif
 
 #include <Rinternals.h>
-#include <Rgraphics.h>
-#include <Rdevices.h>
-#include <R_ext/GraphicsDevice.h>
+#define R_USE_PROTOTYPES 1
 #include <R_ext/GraphicsEngine.h>
 
 #include "grDevices.h"
 #include <stdlib.h>
 
-static Rboolean nullDeviceDriver(NewDevDesc *dev);
+static Rboolean nullDeviceDriver(pDevDesc dev);
 
 void GEnullDevice()
 {
-    NewDevDesc *dev = NULL;
-    GEDevDesc *dd;
+    pDevDesc dev = NULL;
+    pGEDevDesc dd;
 
+    R_GE_checkVersionOrDie(R_GE_version);
     R_CheckDeviceAvailable();
-    if (!(dev = (NewDevDesc *) calloc(1, sizeof(NewDevDesc))))
-       error(_("unable to start NULL device"));
-    dev->displayList = R_NilValue;
-    if (!nullDeviceDriver(dev)) {
-       free(dev);
-       error(_("unable to start NULL device"));
-    }
-    gsetVar(install(".Device"), mkString("NULL"), R_BaseEnv);
-    dd = GEcreateDevDesc(dev);
-    Rf_addDevice((DevDesc*) dd);
-    GEinitDisplayList(dd);
+    BEGIN_SUSPEND_INTERRUPTS {
+	if (!(dev = (pDevDesc ) calloc(1, sizeof(NewDevDesc))))
+	    error(_("unable to start NULL device"));
+	if (!nullDeviceDriver(dev)) {
+	    free(dev);
+	    error(_("unable to start NULL device"));
+	}
+	dd = GEcreateDevDesc(dev);
+	GEaddDevice2(dd, "NULL");
+    } END_SUSPEND_INTERRUPTS;
 }
 static void NULL_Circle(double x, double y, double r,
-                        R_GE_gcontext *gc,
-                        NewDevDesc *dev) {
+                        const pGEcontext gc,
+                        pDevDesc dev) {
 }
 static void NULL_Line(double x1, double y1, double x2, double y2,
-                      R_GE_gcontext *gc,
-                      NewDevDesc *dev) {
+                      const pGEcontext gc,
+                      pDevDesc dev) {
 }
 static void NULL_Polygon(int n, double *x, double *y,
-                         R_GE_gcontext *gc,
-                         NewDevDesc *dev) {
+                         const pGEcontext gc,
+                         pDevDesc dev) {
 }
 static void NULL_Polyline(int n, double *x, double *y,
-                          R_GE_gcontext *gc,
-                          NewDevDesc *dev) {
+                          const pGEcontext gc,
+                          pDevDesc dev) {
 }
 static void NULL_Rect(double x0, double y0, double x1, double y1,
-                      R_GE_gcontext *gc,
-                      NewDevDesc *dev) {
+                      const pGEcontext gc,
+                      pDevDesc dev) {
 }
-static void NULL_Text(double x, double y, char *str,
+static void NULL_Text(double x, double y, const char *str,
                       double rot, double hadj,
-                      R_GE_gcontext *gc,
-                      NewDevDesc *dev) {
+                      const pGEcontext gc,
+                      pDevDesc dev) {
 }
-static void NULL_NewPage(R_GE_gcontext *gc,
-                         NewDevDesc *dev) {
+static void NULL_NewPage(const pGEcontext gc,
+                         pDevDesc dev) {
 }
-static void NULL_Close(NewDevDesc *dev) {
+static void NULL_Close(pDevDesc dev) {
 }
-static Rboolean NULL_Open(NewDevDesc *dev) {
+static Rboolean NULL_Open(pDevDesc dev) {
     return TRUE;
 }
-static void NULL_Activate(NewDevDesc *dev) {
+static void NULL_Activate(pDevDesc dev) {
 }
 static void NULL_Clip(double x0, double x1, double y0, double y1,
-                      NewDevDesc *dev) {
+                      pDevDesc dev) {
 }
-static void NULL_Deactivate(NewDevDesc *dev) {
+static void NULL_Deactivate(pDevDesc dev) {
 }
-static void NULL_Mode(int mode, NewDevDesc *dev) {
+static void NULL_Mode(int mode, pDevDesc dev) {
 }
-static Rboolean NULL_Locator(double *x, double *y, NewDevDesc *dev) {
+static Rboolean NULL_Locator(double *x, double *y, pDevDesc dev) {
     return FALSE;
 }
-static void NULL_MetricInfo(int c,
-                            R_GE_gcontext *gc,
+static void NULL_MetricInfo(int c, const pGEcontext gc,
                             double* ascent, double* descent,
-                            double* width, NewDevDesc *dev) {
+                            double* width, pDevDesc dev) 
+{
+    Rboolean Unicode = mbcslocale;
+
     *ascent = 0.0;
     *descent = 0.0;
     *width = 0.0;
+
+    /* dummy, as a test of the headers */
+    if (c < 0) { Unicode = TRUE; c = -c; }
+    if(Unicode && gc->fontface != 5 && c >= 128) {
+	/* Unicode case */ ;
+    } else {
+	/* single-byte case */ ;
+    }
 }
 static void NULL_Size(double *left, double *right,
                       double *bottom, double *top,
-                      NewDevDesc *dev) {
+                      pDevDesc dev) {
     *left = dev->left;
     *right = dev->right;
     *bottom = dev->bottom;
     *top = dev->top;
 }
-static double NULL_StrWidth(char *str,
-                            R_GE_gcontext *gc,
-                            NewDevDesc *dev) {
+static double NULL_StrWidth(const char *str,
+                            const pGEcontext gc,
+                            pDevDesc dev) {
     return 0.0;
 }
 
-#if 0 /* unused */
-static void NULL_dot(NewDevDesc *dev) {
-}
-#endif
-
-static void NULL_Hold(NewDevDesc *dev) {
-}
-
-static Rboolean nullDeviceDriver(NewDevDesc *dev) {
+static Rboolean nullDeviceDriver(pDevDesc dev) {
     dev->deviceSpecific = NULL;
     /*
      * Device functions
      */
-    dev->open = NULL_Open;
     dev->close = NULL_Close;
     dev->activate = NULL_Activate;
     dev->deactivate = NULL_Deactivate;
@@ -146,8 +145,9 @@ static Rboolean nullDeviceDriver(NewDevDesc *dev) {
     dev->polygon = NULL_Polygon;
     dev->locator = NULL_Locator;
     dev->mode = NULL_Mode;
-    dev->hold = NULL_Hold;
     dev->metricInfo = NULL_MetricInfo;
+    dev->hasTextUTF8 = FALSE;
+    dev->useRotatedTextInContour = FALSE;
     /*
      * Initial graphical settings
      */
@@ -170,8 +170,8 @@ static Rboolean nullDeviceDriver(NewDevDesc *dev) {
     dev->right = 1000;
     dev->bottom = 0;
     dev->top = 1000;
-    dev->cra[0] = 10;
-    dev->cra[1] = 10;
+    dev->cra[0] = 9;
+    dev->cra[1] = 12;
     dev->xCharOffset = 0.4900;
     dev->yCharOffset = 0.3333;
     dev->yLineBias = 0.1;
@@ -180,16 +180,11 @@ static Rboolean nullDeviceDriver(NewDevDesc *dev) {
     /*
      * Device capabilities
      */
-    dev->canResizePlot= FALSE;
-    dev->canChangeFont= FALSE;
-    dev->canRotateText= TRUE;
-    dev->canResizeText= TRUE;
     dev->canClip = TRUE;
     dev->canHAdj = 2;
     dev->canChangeGamma = FALSE;
-    dev->displayListOn = TRUE;
+    dev->displayListOn = FALSE;
 
-    dev->newDevStruct = 1;
     return TRUE;
 }
 

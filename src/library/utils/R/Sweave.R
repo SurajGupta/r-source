@@ -41,7 +41,7 @@ Sweave <- function(file, driver=RweaveLatex(),
     namedchunks <- list()
     for(linenum in seq_along(text)) {
     	line <- text[linenum]
-        if(any(grep(syntax$doc, line))){
+        if(length(grep(syntax$doc, line))){
             if(mode=="doc"){
                 if(!is.null(chunk))
                     drobj <- driver$writedoc(drobj, chunk)
@@ -56,7 +56,7 @@ Sweave <- function(file, driver=RweaveLatex(),
             }
             chunk <- NULL
         }
-        else if(any(grep(syntax$code, line))){
+        else if(length(grep(syntax$code, line))){
             if(mode=="doc"){
                 if(!is.null(chunk))
                     drobj <- driver$writedoc(drobj, chunk)
@@ -78,7 +78,7 @@ Sweave <- function(file, driver=RweaveLatex(),
             chunkopts$chunknr <- chunknr
         }
         else{
-            if(mode=="code" && any(grep(syntax$coderef, line))){
+            if(mode=="code" && length(grep(syntax$coderef, line))){
                 chunkref <- sub(syntax$coderef, "\\1", line)
                 if(!(chunkref %in% names(namedchunks)))
                     warning(gettextf("reference to unknown chunk '%s'",
@@ -160,7 +160,7 @@ SweaveReadFile <- function(file, syntax)
     }
 
     if(!is.null(syntax$input)){
-        while(any(pos <- grep(syntax$input, text))){
+        while(length(pos <- grep(syntax$input, text))){
 
             pos <- pos[1]
             ifile <- file.path(df, sub(syntax$input, "\\1", text[pos]))
@@ -232,7 +232,7 @@ SweaveGetSyntax <- function(file){
     for(sname in synt){
         s <- get(sname, mode="list")
         if(class(s) != "SweaveSyntax") next
-        if(any(grep(s$extension, file))) return(s)
+        if(length(grep(s$extension, file))) return(s)
     }
     return(SweaveSyntaxNoweb)
 }
@@ -342,30 +342,31 @@ RweaveLatex <- function()
 RweaveLatexSetup <-
     function(file, syntax,
              output=NULL, quiet=FALSE, debug=FALSE, echo=TRUE,
-             eval=TRUE, keep.source=FALSE, split=FALSE, stylepath=TRUE, pdf=TRUE, eps=TRUE)
+             eval=TRUE, keep.source=FALSE, split=FALSE,
+             stylepath, pdf=TRUE, eps=TRUE)
 {
-    if(is.null(output)){
+    if(is.null(output)) {
         prefix.string <- basename(sub(syntax$extension, "", file))
         output <- paste(prefix.string, "tex", sep=".")
-    }
-    else{
-        prefix.string <- basename(sub("\\.tex$", "", output))
-    }
+    } else prefix.string <- basename(sub("\\.tex$", "", output))
+
     if(!quiet) cat("Writing to file ", output, "\n",
                    "Processing code chunks ...\n", sep="")
     output <- file(output, open="w+")
 
+    if(missing(stylepath)) {
+        p <- as.vector(Sys.getenv("SWEAVE_STYLEPATH_DEFAULT"))
+        stylepath <- if(length(p) >= 1 && nzchar(p[1])) identical(p, "TRUE") else TRUE
+    }
     if(stylepath){
         styfile <- file.path(R.home("share"), "texmf", "Sweave")
         if(.Platform$OS.type == "windows")
             styfile <- gsub("\\\\", "/", styfile)
-        if(any(grep(" ", styfile)))
+        if(length(grep(" ", styfile)))
             warning(gettextf("path to '%s' contains spaces,\n", styfile),
                     gettext("this may cause problems when running LaTeX"),
                     domain = NA)
-    }
-    else
-        styfile <- "Sweave"
+    } else styfile <- "Sweave"
 
     options <- list(prefix=TRUE, prefix.string=prefix.string,
                     engine="R", print=FALSE, eval=eval,
@@ -468,7 +469,7 @@ makeRweaveLatexCodeRunner <- function(evalFunc=RweaveEvalWithOpt)
 	    	    leading <- showfrom-lastshown
 	    	    lastshown <- showto
                     srcline <- srclines[srcref[3]]
-                    while (length(dce) && length(grep("^[ \\t]*$", dce[1]))) {
+                    while (length(dce) && length(grep("^[[:blank:]]*$", dce[1]))) {
 	    		dce <- dce[-1]
 	    		leading <- leading - 1
 	    	    }
@@ -627,7 +628,7 @@ RweaveLatexWritedoc <- function(object, chunk)
 {
     linesout <- attr(chunk, "srclines")
 
-    if(any(grep("\\usepackage[^\\}]*Sweave.*\\}", chunk)))
+    if(length(grep("\\usepackage[^\\}]*Sweave.*\\}", chunk)))
         object$havesty <- TRUE
 
     if(!object$havesty){
@@ -636,15 +637,15 @@ RweaveLatexWritedoc <- function(object, chunk)
  	if (length(which)) {
             chunk[which] <- sub(begindoc,
                                 paste("\\\\usepackage{",
-                                object$styfile,
-                                "}\n\\\\begin{document}", sep=""),
+                                      object$styfile,
+                                      "}\n\\\\begin{document}", sep=""),
                                 chunk[which])
-            linesout <- linesout[c(1:which, which, seq(from=which+1, len=length(linesout)-which))]
+            linesout <- linesout[c(1:which, which, seq(from=which+1, length.out=length(linesout)-which))]
             object$havesty <- TRUE
         }
     }
 
-    while(any(pos <- grep(object$syntax$docexpr, chunk)))
+    while(length(pos <- grep(object$syntax$docexpr, chunk)))
     {
         cmdloc <- regexpr(object$syntax$docexpr, chunk[pos[1]])
         cmd <- substr(chunk[pos[1]], cmdloc,
@@ -660,7 +661,7 @@ RweaveLatexWritedoc <- function(object, chunk)
 
         chunk[pos[1]] <- sub(object$syntax$docexpr, val, chunk[pos[1]])
     }
-    while(any(pos <- grep(object$syntax$docopt, chunk)))
+    while(length(pos <- grep(object$syntax$docopt, chunk)))
     {
         opts <- sub(paste(".*", object$syntax$docopt, ".*", sep=""),
                     "\\1", chunk[pos[1]])
@@ -909,7 +910,7 @@ RtangleRuncode <-  function(object, chunk, options)
 
 RtangleWritedoc <- function(object, chunk)
 {
-    while(any(pos <- grep(object$syntax$docopt, chunk)))
+    while(length(pos <- grep(object$syntax$docopt, chunk)))
     {
         opts <- sub(paste(".*", object$syntax$docopt, ".*", sep=""),
                     "\\1", chunk[pos[1]])

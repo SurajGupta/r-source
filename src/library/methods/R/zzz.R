@@ -37,7 +37,6 @@
     ## temporary empty reference to the package's own namespace
     assign(".methodsNamespace", new.env(), envir = where)
     useTables <-  !nzchar(Sys.getenv("R_NO_METHODS_TABLES"))
-    .UsingMethodsTables(useTables) ## turn it on (or off)
     .Call("R_set_method_dispatch", useTables, PACKAGE = "methods")
     saved <- (if(exists(".saveImage", envir = where, inherits = FALSE))
               get(".saveImage", envir = where)
@@ -62,6 +61,7 @@
         assign("makeGeneric", .makeGeneric, envir = where)
         assign("newClassRepresentation", .newClassRepresentation, envir = where)
         assign(".mergeClassDefSlots", ..mergeClassDefSlots, envir = where)
+        assign(".addToMetaTable", ..addToMetaTable, envir = where)
         .makeBasicFuns(where)
         rm(.makeGeneric, .newClassRepresentation, .possibleExtends,
            ..mergeClassDefSlots, envir = where)
@@ -74,13 +74,11 @@
         for(cl in get(".SealedClasses", where))
             sealClass(cl, where)
         assign(".requirePackage", ..requirePackage, envir = where)
-        assign(".addToMetaTable", ..addToMetaTable, envir = where)
         ## initialize implicit generics for base package
         ## Note that this is done before making a non-vacuous implicitGeneric()
         ## so that non-default signatures are allowed in setGeneric()
         .initImplicitGenerics(where)
         assign("implicitGeneric", .implicitGeneric, envir = where)
-        .makeGenericTables(where)
         assign(".saveImage", TRUE, envir = where)
         on.exit()
         cat("done\n")
@@ -145,13 +143,12 @@
     ## unlock some bindings that must be modifiable to set methods
     unlockBinding(".BasicFunsList", env)
     ## following  has to be on attach , not on load, but why???
-    if(.UsingMethodsTables()) {
-      cacheMetaData(env, TRUE, searchWhere = .GlobalEnv)
-      result <- try(cacheMetaData(.GlobalEnv, TRUE))
-      ## still attach  methods package if global env has bad objets
-      if(is(result, "try-error"))
-        warning("apparently bad method or class metadata in saved environment; move the file or remove the class/method")
-    }
+    cacheMetaData(env, TRUE, searchWhere = .GlobalEnv)
+    result <- try(cacheMetaData(.GlobalEnv, TRUE))
+    ## still attach  methods package if global env has bad objets
+    if(is(result, "try-error"))
+	warning("apparently bad method or class metadata in saved environment;\n",
+		"move the file or remove the class/method")
 }
 
 .Last.lib <- function(libpath) {

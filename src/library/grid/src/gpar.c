@@ -43,13 +43,14 @@ double gpLineHeight(SEXP gp, int i) {
     return REAL(lineheight)[i % LENGTH(lineheight)];
 }
 
+/* grid has no concept of 'colour 0' (bg in base) */
 int gpCol(SEXP gp, int i) {
     SEXP col = VECTOR_ELT(gp, GP_COL);
     int result;
     if (isNull(col))
 	result = R_TRANWHITE;
     else
-	result = RGBpar(col, i % LENGTH(col));
+	result = RGBpar3(col, i % LENGTH(col), R_TRANWHITE);
     return result;
 }
 
@@ -63,7 +64,7 @@ int gpFill(SEXP gp, int i) {
     if (isNull(fill))
 	result = R_TRANWHITE;
     else
-	result = RGBpar(fill, i % LENGTH(fill));
+	result = RGBpar3(fill, i % LENGTH(fill), R_TRANWHITE);
     return result;
 }
 
@@ -82,7 +83,7 @@ SEXP gpLineTypeSXP(SEXP gp) {
 
 int gpLineType(SEXP gp, int i) {
     SEXP linetype = gpLineTypeSXP(gp);
-    return LTYpar(linetype, i % LENGTH(linetype));
+    return GE_LTYpar(linetype, i % LENGTH(linetype));
 }
 
 SEXP gpLineWidthSXP(SEXP gp) {
@@ -136,7 +137,7 @@ SEXP gpLineEndSXP(SEXP gp) {
 
 R_GE_lineend gpLineEnd(SEXP gp, int i) {
     SEXP lineend = gpLineEndSXP(gp);
-    return LENDpar(lineend, i % LENGTH(lineend));
+    return GE_LENDpar(lineend, i % LENGTH(lineend));
 }
 
 SEXP gpLineJoinSXP(SEXP gp) {
@@ -145,7 +146,7 @@ SEXP gpLineJoinSXP(SEXP gp) {
 
 R_GE_linejoin gpLineJoin(SEXP gp, int i) {
     SEXP linejoin = gpLineJoinSXP(gp);
-    return LJOINpar(linejoin, i % LENGTH(linejoin));
+    return GE_LJOINpar(linejoin, i % LENGTH(linejoin));
 }
 
 SEXP gpLineMitreSXP(SEXP gp) {
@@ -196,7 +197,7 @@ static unsigned int combineAlpha(double alpha, int col)
 /* 
  * Generate an R_GE_gcontext from a gpar
  */
-void gcontextFromgpar(SEXP gp, int i, R_GE_gcontext *gc, GEDevDesc *dd) 
+void gcontextFromgpar(SEXP gp, int i, const pGEcontext gc, pGEDevDesc dd) 
 {
     /* 
      * Combine gpAlpha with col and fill
@@ -232,7 +233,7 @@ SEXP L_setGPar(SEXP gpars)
      */
     /* Get the current device 
      */
-    GEDevDesc *dd = getDevice();
+    pGEDevDesc dd = getDevice();
     setGridStateElement(dd, GSS_GPAR, gpars);
     return R_NilValue;
 }
@@ -245,7 +246,7 @@ SEXP L_getGPar(void)
      */
     /* Get the current device 
      */
-    GEDevDesc *dd = getDevice();
+    pGEDevDesc dd = getDevice();
     return gridStateElement(dd, GSS_GPAR);
 }
 
@@ -253,7 +254,7 @@ SEXP L_getGPsaved()
 {
     /* Get the current device 
      */
-    GEDevDesc *dd = getDevice();
+    pGEDevDesc dd = getDevice();
     return gridStateElement(dd, GSS_GPSAVED);
 }
 
@@ -261,14 +262,14 @@ SEXP L_setGPsaved(SEXP gpars)
 {
     /* Get the current device 
      */
-    GEDevDesc *dd = getDevice();
+    pGEDevDesc dd = getDevice();
     setGridStateElement(dd, GSS_GPSAVED, gpars);
     return R_NilValue;
 }
 
-void initGPar(GEDevDesc *dd)
+void initGPar(pGEDevDesc dd)
 {
-    NewDevDesc *dev = dd->dev;
+    pDevDesc dev = dd->dev;
     SEXP gpar, gparnames, class;
     SEXP gpfill, gpcol, gpgamma, gplty, gplwd, gpcex, gpfs, gplh, gpfont;
     SEXP gpfontfamily, gpalpha, gplineend, gplinejoin, gplinemitre, gplex;
@@ -300,7 +301,7 @@ void initGPar(GEDevDesc *dd)
     PROTECT(gpgamma = allocVector(REALSXP, 1));
     REAL(gpgamma)[0] = dev->startgamma;
     SET_VECTOR_ELT(gpar, GP_GAMMA, gpgamma);
-    PROTECT(gplty = LTYget(dev->startlty));
+    PROTECT(gplty = GE_LTYget(dev->startlty));
     SET_VECTOR_ELT(gpar, GP_LTY, gplty);
     PROTECT(gplwd = allocVector(REALSXP, 1));
     REAL(gplwd)[0] = 1;

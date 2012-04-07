@@ -17,6 +17,9 @@
  *  http://www.r-project.org/Licenses/
  */
 
+/* For AttachConsole: seems the MinGW headers are wrong and that
+   requires XP or later, not 2000 or later. */
+#define _WIN32_WINNT 0x0501
 #define WIN32_LEAN_AND_MEAN 1
 #include <windows.h>
 #include <stdio.h>
@@ -30,17 +33,21 @@ extern void Rf_mainloop(void);
 __declspec(dllimport) extern UImode CharacterMode;
 extern void GA_exitapp(void);
 
-extern char *getDLLVersion();
+extern char *getDLLVersion(void);
 
 static char Rversion[25];
-char *getRVersion()
+char *getRVersion(void)
 {
     snprintf(Rversion, 25, "%s.%s", R_MAJOR, R_MINOR);
     return(Rversion);
 }
 
+#include <wincon.h>
+typedef BOOL (*AC)(DWORD);
 int AppMain (int argc, char **argv)
 {
+    AC entry;
+
     CharacterMode = RGui;
     if(strcmp(getDLLVersion(), getRVersion()) != 0) {
 	MessageBox(0, "R.DLL version does not match", "Terminating",
@@ -53,6 +60,20 @@ int AppMain (int argc, char **argv)
                       "Terminating", MB_TASKMODAL | MB_ICONSTOP | MB_OK);
         GA_exitapp();
     }
+
+/* If we have this, C writes to stdout/stderr would get set to the 
+   launching terminal (if there was one).  Unfortunately needs XP, and
+   works for C but not Fortran. */
+
+    entry = (AC) GetProcAddress((HMODULE)GetModuleHandle("KERNEL32"),
+				"AttachConsole");
+    if (entry && entry(ATTACH_PARENT_PROCESS))
+    {
+	freopen("CONIN$", "r", stdin);
+	freopen("CONOUT$", "w", stdout);
+	freopen("CONOUT$", "w", stderr);
+    }
+
     Rf_mainloop();
     /* NOTREACHED */
     return 0;

@@ -26,10 +26,10 @@ GW_INFO_FILES = CHANGES COPYRIGHTS README.Rterm rw-FAQ
 
 ETC_FILES = Rprofile.site Rconsole Rdevga rgb.txt repositories Makeconf
 
-GW32_FILES = MkRules MakePkg MakeDll Rpwd.exe pwd.pl makeDllRes.pl install-save.sh
+GW32_FILES = MkRules MakePkg MakeDll Rpwd.exe pwd.pl makeDllRes.pl
 
 # we don't want share/{Makefile.in,sh} installed
-SHARE_DIRS = R licenses locale make perl texmf
+SHARE_DIRS = R licenses locale make perl texmf zoneinfo
 
 all: $(RPREFIX)-win32.exe
 msi: $(RPREFIX)-win32.msi
@@ -94,6 +94,7 @@ endif
 	$(CP) -pr ../windlgs $(RPREFIX)/src/library
 #
 	$(FIND) $(RPREFIX) -name .svn -prune -exec rm -rf \{\} \;
+	$(FIND) $(RPREFIX) -name \*~ -delete
 
 md5sums:
 	@echo "adding MD5 checksums"
@@ -106,7 +107,6 @@ fixups:
 	  $(RPREFIX)/doc/html/search/index.txt
 	echo "make.packages.html(.Library)" | $(RPREFIX)/bin/rterm --vanilla --slave LC_COLLATE=C
 	$(CP) -pr $(R_HOME)/Tcl $(RPREFIX)
-	$(RM) -f $(RPREFIX)/Tcl/doc/*.cnt $(RPREFIX)/Tcl/doc/*.HLP
 
 
 ## for Inno Setup installer
