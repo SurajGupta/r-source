@@ -1,6 +1,6 @@
 % File src/library/stats/man/wilcox.test.Rd
 % Part of the R package, http://www.R-project.org
-% Copyright 1995-2008 R Core Development Team
+% Copyright 1995-2009 R Core Development Team
 % Distributed under GPL 2 or later
 
 \name{wilcox.test}
@@ -88,8 +88,10 @@ wilcox.test(x, \dots)
   confidence interval is obtained by the algorithm described in Bauer
   (1972), and the Hodges-Lehmann estimator is employed.  Otherwise, the
   returned confidence interval and point estimate are based on normal
-  approximations.
-  
+  approximations.  These are continuity-corrected for the interval but
+  \emph{not} the estimate (as the correction depends on the
+  \code{alternative}).
+
   With small samples it may not be possible to achieve very high
   confidence interval coverages. If this happens a warning will be given
   and an interval with lower coverage will be substituted.
@@ -128,7 +130,7 @@ wilcox.test(x, \dots)
 \section{Warning}{
   This function can use large amounts of memory and stack (and even
   crash \R if the stack limit is exceeded) if \code{exact = TRUE} and
-  one sample is large (several thousands or more). 
+  one sample is large (several thousands or more).
 }
 \references{
   David F. Bauer (1972),
@@ -145,14 +147,10 @@ wilcox.test(x, \dots)
 \seealso{
   \code{\link{psignrank}}, \code{\link{pwilcox}}.
 
-  \code{\link[exactRankTests]{wilcox.exact}}
-  in \pkg{exactRankTests} covers much of the same ground, but also
-  produces exact p-values in the presence of ties.
-
   \code{\link[coin:LocationTests]{wilcox_test}} in package \pkg{coin}
-  for exact and approximate \emph{conditional} p-values for the Wilcoxon
-  tests.
-  
+  for exact, asymptotic and Monte Carlo \emph{conditional} p-values,
+  including in the presence of ties.
+
   \code{\link{kruskal.test}} for testing homogeneity in location
   parameters in the case of two or more samples;
   \code{\link{t.test}} for an alternative under normality

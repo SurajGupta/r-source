@@ -57,18 +57,17 @@ file.symlink(from, to)
   link points to an actual file, not just if the link exists.
 #endif
 
-  \code{file.remove} attempts to remove the files named in its
-  argument.
-#ifdef unix
-  On most platforms \sQuote{file} includes \emph{empty} directories,
-  symbolic links, fifos and sockets.
-#endif
-#ifdef windows
-  Unlike on Unix-alikes, \sQuote{file} here means a regular file and
-  not, say, an empty directory.
-#endif
+  \code{file.remove} attempts to remove the files named in its argument.
+  On most Unix platforms \sQuote{file} includes \emph{empty}
+  directories, symbolic links, fifos and sockets.  On Windows,
+  \sQuote{file} means a regular file and not, say, an empty directory.
+
   
-  \code{file.rename} attempts to rename a single file.
+  \code{file.rename} attempts to rename a single file.  Where file
+  permissions allow this will first remove an existing file \code{to}.
+  This is subject to the limitations of the OS's corresponding system
+  call: in particular in the interpretation of \sQuote{file}: also most
+  platforms will not rename files across file systems.
 
   \code{file.append} attempts to append the files named by its
   second argument to those named by its first.  The \R subscript

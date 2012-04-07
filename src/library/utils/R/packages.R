@@ -148,6 +148,9 @@ function(db)
                              "[[:space:]]*,[[:space:]]*"),
                 function(s) s[grepl("^R[[:space:]]*\\(", s)])
     lens <- sapply(x, length)
+    pos <- which(lens > 0L)
+    if(!length(pos)) return(db)
+    lens <- lens[pos]
     ## Unlist.
     x <- unlist(x)
     pat <- "^R[[:space:]]*\\(([[<>=!]+)[[:space:]]+(.*)\\)[[:space:]]*"
@@ -163,8 +166,6 @@ function(db)
         res[ops == op] <- do.call(op, list(v_c, v_t[[op]]))
     ## And assemble test results according to the rows of db.
     ind <- rep.int(TRUE, NROW(db))
-    pos <- which(lens > 0L)
-    lens <- lens[pos]
     ind[pos] <- sapply(split(res, rep.int(seq_along(lens), lens)), all)
     db[ind, , drop = FALSE]
 }
@@ -750,9 +751,9 @@ setRepositories <-
 
     if(length(ind)) res <- as.integer(ind)
     else {
-        res <- integer(0L)
+        res <- NULL
         if(graphics) {
-            ## return a list of row numbers.
+            ## return an integer vector of row numbers, never NULL
             if(.Platform$OS.type == "windows" || .Platform$GUI == "AQUA")
                 res <- match(select.list(a[, 1L], a[default, 1L], multiple = TRUE,
                                          "Repositories"), a[, 1L])
@@ -761,7 +762,8 @@ setRepositories <-
                 res <- match(tcltk::tk_select.list(a[, 1L], a[default, 1L],
                                                    multiple = TRUE, "Repositories"),
                              a[, 1L])
-        } else {
+        }
+        if(is.null(res)) { ## pick up case where graphics method is N/A.
             cat(gettext("--- Please select repositories for use in this session ---\n"))
             nc <- length(default)
             cat("", paste(seq_len(nc), ": ",

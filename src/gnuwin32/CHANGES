@@ -1,4 +1,4 @@
-
+﻿
 	**************************************************
 	*	 Windows-specific changes to R		 *
 	*	 See the file NEWS for changes that	 *
@@ -11,6 +11,23 @@
 	*	       2.10 SERIES NEWS			 *
 	*						 *
 	**************************************************
+
+
+		CHANGES IN R VERSION 2.10.0 patched
+
+
+BUG FIXES
+
+    o	The installer did not properly record help type choices in
+	R_HOME/etc/Rprofile.site.
+
+    o	Rcmd INSTALL once again uses --no-restore, for consistency with
+	the Unix version and R 2.9.2.
+	
+    o	The HTML package index was not constructed properly when the
+	library path was specified with backslashes.  (Patch submitted
+	by Gabor Grothendieck.)
+    	
 
 
     		CHANGES IN R VERSION 2.10.0
@@ -82,10 +99,10 @@ INSTALLATION
 
 BUG FIXES
 
-    o	'Rcmd open' now work as documented: previously
+    o	'Rcmd open' now works as documented: previously
 	'Rcmd open.exe' was required.
 
-    o	cat(x, file=) in Rgui tried to interpre UTF-8-encoded strings
+    o	cat(x, file=) in Rgui tried to interpret UTF-8-encoded strings
 	for the console rather than converting them to the native encoding.
 
 
@@ -1813,7 +1830,7 @@ UNCATEGORIZED
     o	Overwrite mode in the console now works for MBCS charsets.
 	(Patch contributed by Haruki Koyanagi.)
 
-    o	Input from the Rgui console was changing the letter 255 (� in Latin-2)
+    o	Input from the Rgui console was changing the letter 255 (ÿ in Latin-2)
 	in the character set to letter 1.
 
     o	R CMD REMOVE in 2.2.0 removed the package(s) but failed to remake the

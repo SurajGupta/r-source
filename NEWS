@@ -1,9 +1,194 @@
-﻿
+
 	**************************************************
 	*						 *
 	*	       2.10 SERIES NEWS			 *
 	*						 *
 	**************************************************
+
+
+		CHANGES IN R VERSION 2.10.1
+
+
+NEW FEATURES
+
+    o	The PCRE library has been updated to version 8.00.
+
+    o	R CMD INSTALL has new options --no-R, --no-libs, --no-data,
+	--no-help, --no-demo, --no-exec, and --no-inst to suppress
+	installation of the specified part of the package.  These are
+	intended for special purposes (e.g. building a database
+	of help pages without fully installing all packages).
+
+    o	The documented line-length limit of 4095 bytes when reading
+	from the console now also applies also to parse(file="")
+	(which previously had a limit of around 1024 bytes).
+
+    o	A Bioconductor mirror can be set for use by setRepositories()
+	via the option "BioC_mirror", e.g. the European mirror can be
+	selected by
+	options(BioC_mirror="http://bioconductor.statistik.tu-dortmund.de")
+
+    o	Double-clicking in a tk_select.list() list box now selects the
+	item and closes the list box (as happens on the Windows
+	select.list() widget).
+
+
+INSTALLATION
+
+    o	configure will be able to find a usable libtiff in some rare
+	circumstances where it did not previously (where libtiff
+	needed to be linked explicitly against -ljpeg).
+
+    o	Making refman.pdf works around a problem with the indexing
+	with hyperref 6.79d and later.
+
+
+DEPRECATED & DEFUNCT
+
+    o	The 'extended' argument is deprecated in strsplit(), grep(),
+	grepl(), sub(), gsub(), regexpr() and gregexpr() (not just the
+	value extended = FALSE) and will be removed in R 2.11.0.
+
+
+BUG FIXES
+
+    o	trigamma(x) and other psigamma(x, n) calls are now accurate for
+	very large abs(x). (PR#14020)
+
+    o	[g]sub(perl=FALSE, fixed=FALSE) could use excessive stack space
+	when used with a very long vector containing some non-ASCII
+	strings.
+
+    o	The default method of weighted.mean(na.rm = TRUE) did not omit
+	weights for NA observations in 2.10.0.	(PR#14032)
+
+    o	[g]regexpr(pattern, fixed = TRUE) returned match positions in
+	bytes (not characters) in an MBCS locale if 'pattern' was a
+	single byte.
+
+	[g]sub(fixed = TRUE) with a single-byte pattern could
+	conceivably have matched part of a multibyte character in a
+	non-UTF-8 MBCS.
+
+    o	findLineNum() and setBreakpoint() would sometimes fail if the
+	specified file was not in the current directory.
+
+    o	Package tcltk's demo(tkdensity) was broken in 2.9.0 when demo()
+	was changed to set par(ask = TRUE).
+
+    o	gsub() with backrefs could fail on extremely long strings
+	(hundreds of thousands of characters) due to integer overflow
+	in a length calculation.
+
+    o	abline(*, untf=TRUE) now uses a better x-grid in log-scale, e.g.,
+	for plot(c(1,300), c(1,300), log="xy") ; abline(4,1, untf=TRUE).
+
+    o	detach/unloadNamespace() arrange to flush the package's
+	lazyload cache of R objects once the package/namespace is no
+	longer needed.
+
+    o	There have been small fixes to the rendering of help,
+	e.g. \command is now rendered verbatim (so e.g. -- is not
+	interpreted, PR#14045).
+
+	Also, there are many small changes to help files where the new
+	converters were not rendering them in the same way as before.
+
+    o	available.packages() would fail when run on a repository
+	with no packages meeting the filtering conditions. (PR#14042)
+
+    o	rep(x, times, each = 2) gave invalid results when the 'times'
+	argument is a vector longer than 'x'.  Reported by Bill Dunlap.
+
+    o	An error when unloadNamespace() attempted to run the .onUnload()
+	function gave an error in the reporting function and so was
+	not reported properly.
+
+    o	Text help rendering did not handle very long input lines
+	properly.
+
+    o	promptMethods() generated signature documentation improperly.
+
+    o	pgamma(x, a, lower.tail=FALSE) and qgamma(..) are now
+	considerably more accurate in some regions for very small 'a'.
+	qgamma() now correctly returns 0 instead of NaN in similar
+	extreme cases, and qgamma() no longer warns in the case of
+	small 'a', see (PR#12324).
+
+    o	unname() now also removes names from a zero length vector.
+
+    o	Printing results from ls.str() no longer evaluates unevaluated
+	calls.
+
+    o	complete.cases() failed on a 0-column data frame argument.
+	(Underlies PR#14066.)
+
+	It could return nonsensical results if no input determined the
+	number of cases (seen in the no-segfault tests).
+
+    o	An error in nls() with a long formula could cause a segfault.
+	(PR#14059)
+
+    o	qchisq(p, df, ncp, lower.tail = FALSE) with ncp >= 80 was
+	inaccurate for small p (as the help page said): it is now
+	less inaccurate. (In part, PR#13999.)
+
+	For ncp less than but close to 80, pchisq() and qchisq() are
+	more accurate for probablilities very close to 1 (a series
+	expansion was truncated slightly too early).
+
+	pchisq(x, df, ncp) can no longer return values just larger
+	than one for large values of ncp.
+
+    o	intToUtf8() could fail when asked to produce 10Mb or more
+	strings, something it was never intended to do: unfortunately
+	Windows crashed R (other OSes reported a lack of resources).
+	(PR#14068)
+
+    o	chisq.test() could fail when given argument 'x' or 'y' which
+	deparsed to more than one line.  (Reported by Laurent Gauthier.)
+
+    o	S4 methods are uncached whenever the name space containing
+	them is unloaded (by unloadNamespace() as well as by
+	detach(unload = TRUE)).
+
+    o	The internal record-keeping by dyn.load/dyn.unload was
+	incomplete, which could crash R if a DLL that registered
+	.External routines had earlier been unloaded.
+
+    o	bessel[JY](x, nu) with nu a negative integer (a singular case)
+	is now correct, analogously to besselI(), see PR#13556, below.
+
+    o	tools::file_path_as_absolute() doubled the file separator when
+ 	applied to a file such as "/vmunix" or (on Windows) "d:/afile"
+	in a directory for which getwd() would return a path with a
+ 	trailing separator (largely cosmetic, as reasonable file
+ 	systems handle such a path correctly).  (Perhaps what was
+ 	meant by PR#14078.)
+
+    o	unsplit(drop = TRUE) applied to a data frame failed to pass
+	'drop' to the computation of row names. (PR#14084)
+
+    o	The "difftime" method of mean() ignored its 'na.rm' argument.
+
+    o	tcltk::tk_select.list() is now more likely to remove the
+	widget immediately after selection is complete.
+
+    o	Adding/subtracting a "difftime" object to/from a "POSIXt" or
+	"Date" object works again (it was broken by the addition of
+	Ops.difftime).
+
+    o	Conversion to latex of an Rd file with no aliases failed.
+
+    o	wilcox.test(*, conf.int=TRUE) has achieved.level corrected and, for
+	exact=FALSE, now gives an 'estimate' which does not depend on the
+	alternative used.
+
+    o	help.search() failed when the package argument was specified.
+    	(PR#14113)
+
+    o	switch(EXPR = "A")  now returns NULL, as switch(1) {which used to
+	signal an error}.
 
 
 		CHANGES IN R VERSION 2.10.0
@@ -245,7 +430,7 @@ NEW FEATURES
 	always stored in UTF-8 (and hence is suitable for portably
 	including Unicode text in packages).
 
-    o	New as.raw() method for "tclObj" objects (wish of PR#13578).
+    o	New as.raw() method for "tclObj" objects (wish of PR#13758).
 
     o	Rd.sty now makes a better job of setting email addresses,
 	including using a monospaced font.
@@ -397,7 +582,7 @@ HELP & Rd FILE CHANGES
 	controlled using tools::startDynamicHelp().  With this enabled,
 	HTML help pages will be generated on request, resolving links
 	by searching through the current .libPaths().  The user
-	may set option("help.ports") to control which IP port is used
+	may set options("help.ports") to control which IP port is used
 	by the server.
 
     o	help.start() no longer sets options(htmlhelp = TRUE) (it used

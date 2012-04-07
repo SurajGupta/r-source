@@ -1,6 +1,6 @@
 % File src/library/tcltk/man/tk_select.list.Rd
 % Part of the R package, http://www.R-project.org
-% Copyright 1995-2008 R Core Development Team
+% Copyright 1995-2009 R Core Development Team
 % Distributed under GPL 2 or later
 
 \name{tk_select.list}
@@ -13,12 +13,13 @@
 tk_select.list(list, preselect = NULL, multiple = FALSE, title = NULL)
 }
 \arguments{
-  \item{list}{character. A list of items.}
+  \item{list}{a character vector of items.}
   \item{preselect}{a character vector, or \code{NULL}.  If non-null and
     if the string(s) appear in the list, the item(s) are selected
     initially.}
   \item{multiple}{logical: can more than one item be selected?}
-  \item{title}{optional character string for window title.}
+  \item{title}{optional character string for window title, or
+    \code{NULL} for no title.}
 }
 \details{
   This is a version of \code{\link{select.list}} implemented as a Tk
@@ -26,7 +27,9 @@ tk_select.list(list, preselect = NULL, multiple = FALSE, title = NULL)
   scrollbar if the list is too long to fit comfortably on the screen.
 
   The dialog box is \emph{modal}, so a selection must be made or
-  cancelled before the \R session can proceed.
+  cancelled before the \R session can proceed.  As from \R 2.10.1
+  double-clicking on an item is equivalent to selecting it and then
+  clicking \code{OK}.
 
   If Tk is version 8.5 or later, themed widgets will be used.
 }
@@ -37,9 +40,10 @@ tk_select.list(list, preselect = NULL, multiple = FALSE, title = NULL)
   \code{Cancel} was used) then a character vector of length 0 is returned.
 }
 \seealso{
-  \code{\link{select.list}} (a text version except on Windows),
+  \code{\link{select.list}} (a text version except on Windows and the
+  Mac OS X GUI),
   \code{\link{menu}} (whose \code{graphics=TRUE} mode uses this
-  on most Unix-alikes.
+  on most Unix-alikes).
 }
 \keyword{utilities}
 

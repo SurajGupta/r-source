@@ -1,5 +1,5 @@
 
-R version 2.10.0 Under development (unstable) (2009-05-24 r48603)
+R version 2.10.0 Patched (2009-11-23 r50554)
 Copyright (C) 2009 The R Foundation for Statistical Computing
 ISBN 3-900051-07-0
 
@@ -1241,5 +1241,5 @@ Warning messages:
 > 
 > 
 > cat("Time elapsed: ", proc.time() - .ptime,"\n")
-Time elapsed:  2.122 0.015 2.137 0 0 
+Time elapsed:  1.881 0.008 1.895 0 0 
 > 

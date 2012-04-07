@@ -1,6 +1,6 @@
 % File src/library/base/man/regex.Rd
 % Part of the R package, http://www.R-project.org
-% Copyright 1995-2008 R Core Development Team
+% Copyright 1995-2009 R Core Development Team
 % Distributed under GPL 2 or later
 
 \name{regex}
@@ -69,15 +69,12 @@
   \samp{[^abc]} matches anything except the characters \samp{a},
   \samp{b} or \samp{c}.  A range of characters may be specified by
   giving the first and last characters, separated by a hyphen.  (Because
-  their interpretation is so locale-dependent, they are best avoided.)
-  For basic and extended regular expressions the collation order is
-  taken from the OS's implementation of the setting of the locale
-  category \code{LC_COLLATE}, so \samp{[W-Z]} may include \samp{x} and
-  if it does may or may not include \samp{w}.  (In most English locales
-  the collation order is \samp{wWxXyYzZ}.  In Estonian the last letter
-  is \code{y} and \code{Z} precedes \code{T}.)  The only portable way to
-  specify all ASCII letters is to list them all as the character class
-  \samp{[ABCDEFGHIJKLMNOPQRSTUVWXYZabcdefghijklmnopqrstuvwxyz]}.
+  their interpretation is locale- and implementation-dependent, they are
+  best avoided.)  The only portable way to specify all ASCII letters is
+  to list them all as the character class
+  \samp{[ABCDEFGHIJKLMNOPQRSTUVWXYZabcdefghijklmnopqrstuvwxyz]}.  (The
+  current implementation uses numerical order of the encoding: prior to
+  \R 2.10.0 locale-specific collation was used, and might be again.)
 
   Certain named classes of characters are predefined.  Their
   interpretation depends on the \emph{locale} (see \link{locales}); the
@@ -224,7 +221,7 @@
   For complete details please consult the man pages for PCRE, especially
   \command{man pcrepattern} and \command{man pcreapi}), on your system or from
   the sources at \url{http://www.pcre.org}. If PCRE support was compiled
-  from the sources within \R, the PCRE version is 7.9 as described here.
+  from the sources within \R, the PCRE version is 8.0 as described here.
 
   Perl regular expressions can be computed byte-by-byte or
   (UTF-8) character-by-character: the latter is used in all multibyte
@@ -335,7 +332,7 @@
 \author{
   This help page is based on the documentation of GNU grep 2.4.2, the
   TRE documentation and the POSIX standard,  and the \code{pcrepattern}
-  man page from PCRE 7.9.
+  man page from PCRE 8.0.
 }
 \seealso{
   \code{\link{grep}}, \code{\link{apropos}}, \code{\link{browseEnv}},

@@ -100,7 +100,6 @@ getOption(x, default = NULL)
       There is no default for this option, when \code{method = "auto"}
       is chosen: see \code{\link{download.file}}.}
 
-    % note use of \code as otherwise -- is an en-dash.
     \item{\code{echo}:}{logical.  Only used in non-interactive mode,
       when it controls whether input is echoed.  Command-line option
       \option{--slave} sets this to \code{FALSE}, but otherwise
@@ -170,7 +169,7 @@ getOption(x, default = NULL)
       \code{\link{file.show}}.
 #ifdef unix
       Defaults to \file{\var{\link{R_HOME}}/bin/pager},
-      which selects a pager via the \env{PAGER} environment variable
+      which selects a pager via the \env{\link{PAGER}} environment variable
       (and that usually defaults to \code{less}).
 #endif
 #ifdef windows
@@ -197,10 +196,12 @@ getOption(x, default = NULL)
 
     \item{\code{pdfviewer}:}{default PDF viewer.
 #ifdef unix
-      The default is set from the environment variable \env{R_PDFVIEWER}.
+      The default is set from the environment variable
+      \env{R_PDFVIEWER}, the default value of which is set when \R is
+      configured.
 #endif
 #ifdef windows
-      Defaults to the full path to \samp{open.exe}, a utility supplied with \R
+      Defaults to the full path to \samp{open.exe}, a utility supplied with \R.
 #endif
     }
 
@@ -208,21 +209,22 @@ getOption(x, default = NULL)
       for printing; set by environment variable \env{R_PRINTCMD} when
       \R is started.  This should be a command that expects either input
       to be piped to \file{stdin} or to be given a single filename
-      argument.}
+      argument.  Usually set to \code{"lpr"} on a Unix-alike.}
 
     \item{\code{prompt}:}{a non-empty string to be used for \R's prompt;
       should usually end in a blank (\code{" "}).}
 
+      % verbatim, for checking " \t\n\"\\'`><=%;,|&{()}"    
 #ifdef unix
     \item{\code{rl_word_breaks}:}{Used for the readline-based terminal
-      % verbatim, for checking " \t\n\"\\'`><=%;,|&{()}"
       interface.  Default value \code{" \\t\\n\\"\\\\'`><=\%;,|&\{()\}"}.%"
       This is the set of characters use to break the input line up into
       tokens for object- and file-name completion.  Those who do not use
-      spaces around operators may prefer
-      \code{" \\t\\n\\"\\\\'`><=+-*\%;,|&\{()\}"}.%"
+      spaces around operators may prefer\cr
+      \code{" \\t\\n\\"\\\\'`><=+-*\%;,|&\{()\}"}%"
       which was the default in \R 2.5.0.  (The default in pre-2.5.0
-      versions of \R was \code{" \\t\\n\\"\\\\'`@$><=;|&\{("}.)}%"
+      versions of \R was\cr
+      \code{" \\t\\n\\"\\\\'`@$><=;|&\{("}.)}%"
 #endif
 
     \item{\code{save.defaults}, \code{save.image.defaults}:}{
@@ -265,8 +267,8 @@ getOption(x, default = NULL)
       \code{\link{sys.source}}.}
 
     \item{\code{useFancyQuotes}:}{logical: controls the use of
-      directional quotes: see \code{\link{sQuote}} and
-      \code{\link{Rd2txt}}.}
+      directional quotes in \code{\link{sQuote}}, \code{dQuote} and in
+      rendering text help (see \code{\link{Rd2txt}}).}
 
     \item{\code{verbose}:}{logical.  Should \R report extra information
       on progress?  Set to \code{TRUE} by the command-line option
@@ -438,10 +440,10 @@ getOption(x, default = NULL)
       \code{\link{demo}}.}
 
     \item{\code{editor}:}{a non-empty string, or a function that is
-      called with a file path as argument.
-      Sets the default text editor, e.g., for
-      \code{\link{edit}}.  Set from the environment variable
-      \env{VISUAL} on UNIX.}
+      called with a file path as argument.  Sets the default text
+      editor, e.g., for \code{\link{edit}}.  Set from the environment
+      variable \env{EDITOR} on UNIX, or if unset \env{VISUAL} or
+      \command{vi}.}
 
     \item{\code{example.ask}:}{default for the \code{ask} argument of
       \code{\link{example}}.}

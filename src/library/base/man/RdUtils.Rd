@@ -29,11 +29,10 @@
     obtaining information about usage and version of the utility.}
 }
 \details{
-  \command{Rdconv} converts Rd format to other formats.  Currently,
-  plain text, HTML and LaTeX formats are supported.  It can also extract
-  the examples for run-time testing.
+  \command{R CMD Rdconv} converts Rd format to plain text, HTML or LaTeX
+  formats: it can also extract the examples.
 
-  \command{Rd2dvi} is the user-level program for producing DVI/PDF output
+  \command{R CMD Rd2dvi} is the user-level program for producing DVI/PDF output
   from Rd sources.  It will make use of the environment variables
 #ifdef unix
   \env{R_PAPERSIZE} (set by \command{R CMD}, with a default set when \R
@@ -41,7 +40,7 @@
   \command{xdvi}),
 #endif
 #ifdef windows
-  \env{R_PAPERSIZE} (default \code{a4}, \code{legal} and
+  \env{R_PAPERSIZE} (default \code{a4}, also \code{legal} and
   \code{executive}) and \env{xdvi} (the DVI previewer, default
   \command{open} (use file associations)),
 #endif
@@ -50,12 +49,12 @@
   \code{executive}.)  \command{Rd2pdf} is shorthand for \command{Rd2dvi
   --pdf}.
 
-  \command{Sd2Rd} converts S (version 3 or 4) documentation formats to Rd
+  \command{R CMD Sd2Rd} converts S (version 3 or 4) documentation formats to Rd
   format: it is no longer much used and the results may need
   hand-tuning.  (It requires Perl.)
 
-  Use \command{R CMD foo --help} to obtain usage information on utility
-  \code{foo}.
+  Use \command{R CMD \var{foo} --help} to obtain usage information on utility
+  \code{\var{foo}}.
 }
 \seealso{
   The chapter \dQuote{Processing Rd format} in the \dQuote{Writing \R

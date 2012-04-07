@@ -38,7 +38,8 @@ function(x)
     }
     else {
         setwd(dirname(epath))
-        file.path(getwd(), basename(epath))
+        ## getwd() can be "/" or "d:/"
+        file.path(sub("/$", "", getwd()), basename(epath))
     }
 }
 
@@ -49,7 +50,7 @@ function(x)
 {
     ## Return the file paths without extensions.
     ## (Only purely alphanumeric extensions are recognized.)
-    sub("([^.]+)\\.[[:alpha:]]+$", "\\1", x)
+    sub("([^.]+)\\.[[:alnum:]]+$", "\\1", x)
 }
 
 ### ** file_test
@@ -1175,10 +1176,15 @@ function(file)
 }
 
 .expand_BioC_repository_URLs <-
-function(x)
+function(x) {
+    x <- sub("%bm",
+             as.character(getOption("BioC_mirror",
+                                    "http://www.bioconductor.org")),
+             x, fixed = TRUE)
     sub("%v",
         as.character(.BioC_version_associated_with_R_version),
         x, fixed = TRUE)
+}
 
 ### ** .shell_with_capture
 

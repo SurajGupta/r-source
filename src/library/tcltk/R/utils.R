@@ -33,7 +33,7 @@ tk_select.list <-
         tkpack(lab, side="top")
     }
     onOK <- function() {
-        res <- 1+as.integer(tkcurselection(box))
+        res <- 1L + as.integer(tkcurselection(box))
         ans.select_list <<- list[res]
         tkgrab.release(dlg)
         tkdestroy(dlg)
@@ -48,11 +48,11 @@ tk_select.list <-
     Cancel <- ttkbutton(buttons, text = gettext("Cancel"), command = onCancel)
     tkpack(OK, Cancel, side="left", fill="x", padx="2m")
 
-    scht <- as.numeric(tclvalue(tkwinfo("screenheight", dlg))) - 200
+    scht <- as.numeric(tclvalue(tkwinfo("screenheight", dlg))) - 200L
     ## allow for win furniture and buttons, and for e.g. KDE panel
     ht <- min(length(list), scht %/% 20) # a guess of font height
     box <- tklistbox(dlg, height = ht,
-                     listvariable = lvar, bg = "white",
+                     listvariable = lvar, bg = "white", setgrid = 1,
                      selectmode = ifelse(multiple, "multiple", "single"))
     tmp <- tcl("font", "metrics", tkcget(box, font=NULL))
     ## fudge factor here seems to be 1 on Windows, 3 on X11.
@@ -63,7 +63,7 @@ tk_select.list <-
         scr <- if(have_ttk) ttkscrollbar(dlg, command = function(...) tkyview(box, ...))
         else tkscrollbar(dlg, repeatinterval=5, command = function(...) tkyview(box, ...))
         box <- tklistbox(dlg, height = ht, width = 0,
-                         listvariable = lvar, bg = "white",
+                         listvariable = lvar, bg = "white", setgrid = 1,
                          selectmode = ifelse(multiple, "multiple", "single"),
                          yscrollcommand = function(...)tkset(scr,...))
         tkpack(box, side="left", fill="both", expand=TRUE)
@@ -75,14 +75,16 @@ tk_select.list <-
         tkpack(box, side="left", fill="both")
     }
     preselect <- match(preselect, list)
-    ans.select_list <- character(0L) # avoid name conflicts
-    for(i in preselect[preselect > 0])
-        tkselection.set(box, i - 1) # 0-based
+    ans.select_list <- character() # avoid name conflicts
+    for(i in preselect[preselect > 0L])
+        tkselection.set(box, i - 1L) # 0-based
 
     tkbind(dlg, "<Destroy>", onCancel)
+    tkbind(dlg, "<Double-ButtonPress-1>", onOK)
     tkfocus(box)
     tclServiceMode(oldmode)
     tkwait.window(dlg)
+    Sys.sleep(0.1) # allow time for window to be removed.
     if(!multiple && !length(ans.select_list)) ans.select_list <- ""
     ans.select_list
 }

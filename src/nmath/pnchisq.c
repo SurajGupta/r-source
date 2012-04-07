@@ -11,8 +11,8 @@
  *    distribution function. Appl.Statist., 41, 478-482.
 
  *  Other parts
- *  Copyright (C) 2000-2008  The R Development Core Team
- *  Copyright (C) 2003-2006  The R Foundation
+ *  Copyright (C) 2000-2009  The R Development Core Team
+ *  Copyright (C) 2003-2009  The R Foundation
  */
 
 #include "nmath.h"
@@ -40,9 +40,16 @@ double pnchisq(double x, double df, double ncp, int lower_tail, int log_p)
     if (df < 0. || ncp < 0.) ML_ERR_return_NAN;
 
     ans = pnchisq_raw(x, df, ncp, 1e-12, 8*DBL_EPSILON, 1000000, lower_tail);
-    if(!lower_tail && ncp >= 80) {
-	if(ans < 1e-10) ML_ERROR(ME_PRECISION, "pnchisq");
-	ans = fmax2(ans, 0.0);  /* Precaution PR#7099 */
+    if(ncp >= 80) {
+	if(lower_tail) {
+	    /* if(ans >= 1-1e-10) have no idea how close to 1 the true value is,
+	     *   but ML_ERROR(ME_PRECISION, "pnchisq") seems too harsh */
+	    ans = fmin2(ans, 1.0);  /* e.g., pchisq(555, 1.01, ncp = 80) */
+	}
+	else { /* !lower_tail */
+	    if(ans < 1e-10) ML_ERROR(ME_PRECISION, "pnchisq");
+	    ans = fmax2(ans, 0.0);  /* Precaution PR#7099 */
+	}
     }
     return log_p ? log(ans) : ans;
 }
@@ -63,7 +70,7 @@ pnchisq_raw(double x, double f, double theta,
     if (x <= 0.) {
 	if(x == 0. && f == 0.)
 	    return lower_tail ? exp(-0.5*theta) : -expm1(-0.5*theta);
-	/* x < 0  or  x==0, f > 0 */
+	/* x < 0  or {x==0, f > 0} */
 	return lower_tail ? 0. : 1.;
     }
     if(!R_FINITE(x))	return lower_tail ? 1. : 0.;
@@ -73,12 +80,18 @@ pnchisq_raw(double x, double f, double theta,
     R_CheckUserInterrupt();
 #endif
 
-    if(theta < 80) {
-	LDOUBLE sum = 0, lambda = 0.5*theta, pr = exp(-lambda);
+    if(theta < 80) { /* use 110 for Inf, as ppois(110, 80/2, lower.tail=FALSE) is 2e-20 */
+	LDOUBLE sum = 0, sum2 = 0, lambda = 0.5*theta, pr = exp(-lambda);
+	double ans;
 	int i;
-	for(i = 0; i < 100;  pr *= lambda/++i)
+	/* we need to renormalize here: the result could be very close to 1 */
+	for(i = 0; i < 110;  pr *= lambda/++i) {
+	    sum2 += pr;
+	    /* could break once sum2 is essentially 1 */
 	    sum += pr * pchisq(x, f+2*i, lower_tail, FALSE);
-	return sum;
+	}
+	ans = sum/sum2;
+	return ans;
     }
 
 
@@ -109,7 +122,7 @@ pnchisq_raw(double x, double f, double theta,
 #endif
 
     if(f2 * DBL_EPSILON > 0.125 && /* very large f and x ~= f: probably needs */
-       fabs(t = x2 - f2) <         /* other algorithm anyway */
+       fabs(t = x2 - f2) <         /* another algorithm anyway */
        sqrt(DBL_EPSILON) * f2) {
 	/* evade cancellation error */
 	/* t = exp((1 - t)*(2 - t/(f2 + 1))) / sqrt(2*M_PI*(f2 + 1));*/

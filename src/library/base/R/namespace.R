@@ -281,8 +281,8 @@ loadNamespace <- function (package, lib.loc = NULL,
         package.lib <- dirname(pkgpath)
         package <- basename(pkgpath) # need the versioned name
         if (! packageHasNamespace(package, package.lib)) {
-            hasNoNamespaceError <- function (package, package.lib,
-                                             call = NULL) {
+            hasNoNamespaceError <-
+                function (package, package.lib, call = NULL) {
                 class <- c("hasNoNamespaceError", "error", "condition")
                 msg <- gettextf("package '%s' does not have a name space",
                                 package)
@@ -294,10 +294,11 @@ loadNamespace <- function (package, lib.loc = NULL,
         }
 
         ## create namespace; arrange to unregister on error
-        ## <FIXME>
         ## Can we rely on the existence of R-ng 'nsInfo.rds' and
         ## 'package.rds'?
-        ## No, not during Unix builds of standard packages
+        ## No, not during builds of standard packages
+        ## stats4 depends on methods, but exports do not matter
+        ## whilst it is being built on
         nsInfoFilePath <- file.path(pkgpath, "Meta", "nsInfo.rds")
         nsInfo <- if(file.exists(nsInfoFilePath)) .readRDS(nsInfoFilePath)
         else parseNamespaceFile(package, package.lib, mustExist = FALSE)
@@ -319,7 +320,6 @@ loadNamespace <- function (package, lib.loc = NULL,
             ## whilst it is being build on Unix
             dependsMethods <- FALSE
         }
-        ## </FIXME>
         ns <- makeNamespace(package, version = version, lib = package.lib)
         on.exit(.Internal(unregisterNamespace(package)))
 
@@ -539,18 +539,6 @@ loadingNamespaceInfo <- function() {
     dynGet("__LoadingNamespaceInfo__", stop("not loading a name space"))
 }
 
-saveNamespaceImage <- function (package, rdafile, lib.loc = NULL,
-                                keep.source = getOption("keep.source.pkgs"),
-                                compress = TRUE)
-{
-    if (! is.null(.Internal(getRegisteredNamespace(as.name(package)))))
-        stop(gettextf("name space '%s' is loaded", package), domain = NA)
-    ns <- loadNamespace(package, lib.loc, keep.source, TRUE, TRUE)
-    vars <- ls(ns, all.names = TRUE)
-    vars <- vars[vars != ".__NAMESPACE__."]
-    save(list = vars, file = rdafile, envir = ns, compress = compress)
-}
-
 topenv <- function(envir = parent.frame(),
                    matchThisEnv = getOption("topLevelEnvironment")) {
     while (! identical(envir, emptyenv())) {
@@ -569,13 +557,20 @@ topenv <- function(envir = parent.frame(),
     return(.GlobalEnv)
 }
 
-unloadNamespace <- function(ns) {
+unloadNamespace <- function(ns)
+{
+    ## only used to run .onUnload
     runHook <- function(hookname, env, ...) {
         if (exists(hookname, envir = env, inherits = FALSE)) {
             fun <- get(hookname, envir = env, inherits = FALSE)
-            if (! is.null(try( { fun(...); NULL })))
-                stop(gettextf("%s failed in unloadNamespace(%s)", hookname,
-                              ns), call. = FALSE, domain = NA)
+            res <- tryCatch(fun(...), error=identity)
+            if (inherits(res, "error")) {
+                stop(gettextf("%s failed in unloadNamespace(\"%s\"), details:\n  call: %s\n  message: %s",
+                              hookname, nsname,
+                              deparse(conditionCall(res))[1L],
+                              conditionMessage(res)),
+                     call. = FALSE, domain = NA)
+            }
         }
     }
     ns <- asNamespace(ns, base.OK = FALSE)
@@ -593,6 +588,11 @@ unloadNamespace <- function(ns) {
     for(fun in rev(hook)) try(fun(nsname, nspath))
     try(runHook(".onUnload", ns, nspath))
     .Internal(unregisterNamespace(nsname))
+    if(.isMethodsDispatchOn() && methods:::.hasS4MetaData(ns))
+        methods:::cacheMetaData(ns, FALSE, ns)
+    .Call("R_lazyLoadDBflush",
+          paste(nspath, "/R/", nsname, ".rdb", sep=""),
+          PACKAGE="base")
     invisible()
 }
 
@@ -704,12 +704,11 @@ asNamespace <- function(ns, base.OK = TRUE) {
     else ns
 }
 
-namespaceImport <- function(self, ...) {
-    for (ns in list(...))
-        namespaceImportFrom(self, asNamespace(ns))
-}
+namespaceImport <- function(self, ...)
+    for (ns in list(...)) namespaceImportFrom(self, asNamespace(ns))
 
-namespaceImportFrom <- function(self, ns, vars, generics, packages) {
+namespaceImportFrom <- function(self, ns, vars, generics, packages)
+{
     addImports <- function(ns, from, what) {
         imp <- structure(list(what), names = getNamespaceName(from))
         imports <- getNamespaceImports(ns)
@@ -734,8 +733,8 @@ namespaceImportFrom <- function(self, ns, vars, generics, packages) {
     if (is.character(self))
         self <- getNamespace(self)
     ns <- asNamespace(ns)
-    if (missing(vars)) impvars <- getNamespaceExports(ns)
-    else impvars <- vars
+    nsname <- getNamespaceName(ns)
+    impvars <- if (missing(vars)) getNamespaceExports(ns) else vars
     impvars <- makeImportExportNames(impvars)
     impnames <- names(impvars)
     if (anyDuplicated(impnames)) {
@@ -744,19 +743,19 @@ namespaceImportFrom <- function(self, ns, vars, generics, packages) {
     }
     if (isNamespace(self) && isBaseNamespace(self)) {
         impenv <- self
-        msg <- "replacing local value with import:"
+        msg <- "replacing local value with import"
         register <- FALSE
     }
     else if (isNamespace(self)) {
         if (namespaceIsSealed(self))
             stop("cannot import into a sealed name space")
         impenv <- parent.env(self)
-        msg <- "replacing previous import:"
+        msg <- "replacing previous import"
         register <- TRUE
     }
     else if (is.environment(self)) {
         impenv <- self
-        msg <- "replacing local value with import:"
+        msg <- "replacing local value with import"
         register <- FALSE
     }
     else stop("invalid import target")
@@ -805,15 +804,17 @@ namespaceImportFrom <- function(self, ns, vars, generics, packages) {
 		genImpenv <- environmentName(environment(get(n, envir = impenv)))
 		if (!identical(genNs, genImpenv) ||
 		    ## warning if generic overwrites another generic
-		    methods:::isGeneric(n, impenv))
-		    warning(msg, " ", n)
-	    } else warning(msg, " ", n)
+		    methods:::isGeneric(n, impenv)) {}
+                else next
+	    }
+            ## this is always called from another function, so reporting call
+            ## is unhelpful
+            warning(msg, " ", sQuote(n), " when loading ", sQuote(nsname),
+                    call. = FALSE, domain = NA)
 	}
     importIntoEnv(impenv, impnames, ns, impvars)
-    if (register) {
-        addImports(self, ns,
-                   if (missing(vars)) TRUE else impvars)
-    }
+    if (register)
+        addImports(self, ns, if (missing(vars)) TRUE else impvars)
 }
 
 namespaceImportClasses <- function(self, ns, vars) {

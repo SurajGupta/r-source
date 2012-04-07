@@ -168,14 +168,14 @@ Rd2latex <- function(Rd, out="", defines=.Platform$OS.type, stages="render",
 
     # The quotes were Rd.sty macros, but Latex limitations (e.g. nesting \preformatted within)
     # mean we get better results expanding them here.
-    
+
     wrappers <- list("\\dQuote" =c("``", "''"),
     		     "\\sQuote" =c("`", "'"),
     		     "\\cite"   =c("\\Cite{", "}"))
 
     writeWrapped <- function(block, tag) {
     	wrapper <- wrappers[[tag]]
-    	if (is.null(wrapper)) 
+    	if (is.null(wrapper))
     	    wrapper <- c(paste(tag, "{", sep=""), "}")
     	of1(wrapper[1])
     	writeContent(block, tag)
@@ -223,7 +223,7 @@ Rd2latex <- function(Rd, out="", defines=.Platform$OS.type, stages="render",
     {
         x <- psub("([$#~_&])", "\\\\\\1", x) #- escape them
         x <- fsub("{", "\\textbraceleft{}", x)
-        x <- fsub("|", "\\textbraceright{}", x)
+        x <- fsub("}", "\\textbraceright{}", x)
         x <- fsub("^", "\\textasciicircum{}", x)
         x <- fsub("~", "\\textasciitilde{}", x)
         x <- fsub("%", "\\Rpercent{}", x)
@@ -318,6 +318,9 @@ Rd2latex <- function(Rd, out="", defines=.Platform$OS.type, stages="render",
     writeAlias <- function(block, tag) {
         alias <- as.character(block)
         aa <- "\\aliasA{"
+        ## some versions of hyperref have trouble indexing these
+        ## |, || in base, |.bit, %||% in ggplot2 ...
+        if(grepl("|", alias, fixed = TRUE)) aa <- "\\aliasB{"
         if(is.na(currentAlias)) currentAlias <<- name
         if (pmatch(paste(currentAlias, ".", sep=""), alias, 0L)) {
             aa <- "\\methaliasA{"
@@ -367,7 +370,7 @@ Rd2latex <- function(Rd, out="", defines=.Platform$OS.type, stages="render",
                    writeWrapped(block, tag)
                    inCode <<- FALSE
                },
-               ## simple wrappers 
+               ## simple wrappers
                "\\acronym" =,
                "\\bold"=,
                "\\dfn"=,
@@ -435,13 +438,13 @@ Rd2latex <- function(Rd, out="", defines=.Platform$OS.type, stages="render",
                },
                "\\tabular" = writeTabular(block),
                "\\if" =,
-               "\\ifelse" = 
+               "\\ifelse" =
 		    if (testRdConditional("latex", block, Rdfile))
                		writeContent(block[[2L]], tag)
                	    else if (tag == "\\ifelse")
                	    	writeContent(block[[3L]], tag),
                "\\out" = for (i in seq_along(block))
-		   of1(block[[i]]),              
+		   of1(block[[i]]),
                stopRd(block, Rdfile, "Tag ", tag, " not recognized")
                )
     }
@@ -647,11 +650,13 @@ Rd2latex <- function(Rd, out="", defines=.Platform$OS.type, stages="render",
     } else latexEncoding <- NA
 
     ## we know this has been ordered by prepare2_Rd, but
-    ## need to sort the aliases.
+    ## need to sort the aliases (if any)
     nm <- character(length(Rd))
     isAlias <- sections == "\\alias"
-    nm[isAlias] <- sapply(Rd[isAlias], as.character)
-    sortorder <- order(sectionOrder[sections], toupper(nm), nm)
+    sortorder <- if (any(isAlias)) {
+        nm[isAlias] <- sapply(Rd[isAlias], as.character)
+        order(sectionOrder[sections], toupper(nm), nm)
+    } else  order(sectionOrder[sections])
     Rd <- Rd[sortorder]
     sections <- sections[sortorder]
 

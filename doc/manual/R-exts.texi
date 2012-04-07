@@ -1441,8 +1441,7 @@ intention were to always use a @code{PACKAGE} argument)
 The Rd files are checked for correct syntax and meta data, including the
 presence of the mandatory (@code{\name}, @code{\alias}, @code{\title}
 and @code{\description}) fields.  The Rd name and title are checked for
-being non-empty, and the keywords found are compared to the standard
-ones.  There is a check for missing cross-references (links).
+being non-empty, and there is a check for missing cross-references (links).
 
 @item
 A check is made for missing documentation entries, such as undocumented
@@ -2015,18 +2014,20 @@ but not exported.
 @findex .Last.lib
 @findex .onUnload
 However, packages with name spaces @emph{do} use the @code{.Last.lib}
-function.  There is also a hook @code{.onUnload} which is called when
-the name space is unloaded (@emph{via} a call to @code{unloadNamespace}) with
-argument the full path to the installed package's directory.
-@code{.onUnload} should be defined in the name space and not exported,
-but @code{.Last.lib} does need to be exported.
+function (provided it is exported from the name space) when
+@code{detach} is called on the package.  There is also a hook
+@code{.onUnload} which is called when the name space is unloaded
+(@emph{via} a call to @code{unloadNamespace}, perhaps called by
+@code{detach(unload=TRUE)}) with argument the full path to the installed
+package's directory.  @code{.onUnload} should be defined in the name
+space and not exported, but @code{.Last.lib} does need to be exported.
 
 Packages are not likely to need @code{.onAttach} (except perhaps for a
 start-up banner); code to set options and load shared objects should be
 placed in a @code{.onLoad} function, or use made of the @code{useDynLib}
 directive described next.
 
-There can be one or more @code{useDynLib} directives which allow shared
+There can be one or more @code{useDynLib} directives which allows shared
 objects that need to be loaded to be specified in the @file{NAMESPACE}
 file.  The directive
 
@@ -3109,8 +3110,8 @@ about the name of the file, the topics documented, a title, a short
 textual description and @R{} usage information for the objects
 documented.  The body gives further information (for example, on the
 function's arguments and return value, as in the above example).
-Finally, there is a footer with keyword information.  The header is
-mandatory.
+Finally, there is an optional footer with keyword information.  The
+header is mandatory.
 
 See @uref{http://developer.r-project.org/Rds.html, ``Guidelines
 for Rd files''} for guidelines for writing documentation in Rd format
@@ -3180,12 +3181,9 @@ on a case-insensitive file system.} is the basename of the Rd file
 containing the documentation.  It is the ``name'' of the Rd object
 represented by the file and has to be unique in a package.  To avoid
 problems with indexing the package manual, it may not contain @samp{!}
-@samp{|} nor @samp{@@}.
-@c and must not contain @LaTeX{}
-@c special characters (@samp{#}, @samp{$}, @samp{%}, @samp{&}, @samp{~},
-@c @samp{_}, @samp{^}, @samp{\}, @samp{@{}, @samp{@}}).
-There can only be one @code{\name} entry in a file, and it must not
-contain any markup.
+@samp{|} nor @samp{@@}.  (@LaTeX{} special characters are allowed, but
+may not be collated correctly in the index.)  There can only be one
+@code{\name} entry in a file, and it must not contain any markup.
 
 @item \alias@{@var{topic}@}
 @findex \alias
@@ -3471,19 +3469,23 @@ first will be used.
 
 @findex \keyword
 @item \keyword@{@var{key}@}
-Each @code{\keyword} entry should specify one of the standard keywords
-as listed in file @file{KEYWORDS} in the R documentation directory
-(default @file{@var{R_HOME}/doc}).  Use e.g.@:
-@code{file.show(file.path(R.home("doc"), "KEYWORDS"))} to inspect the
-standard keywords from within R.  There can be more than one @code{\keyword}
-entry if the @R{} object being documented falls into more than one
-category.
+Each @code{\keyword} entry should specify a single keyword, preferably
+one of the standard keywords as listed in file @file{KEYWORDS} in the R
+documentation directory (default @file{@var{R_HOME}/doc}).  Use e.g.@:
+@code{RShowDoc("KEYWORDS")} to inspect the standard keywords from within
+R.  There can be more than one @code{\keyword} entry if the @R{} object
+being documented falls into more than one category, or none.
 
 The special keyword @samp{internal} marks a page of internal objects
-that are not part of the packages' API. If the help page for object
+that are not part of the package's API.  If the help page for object
 @code{foo} has keyword @samp{internal}, then @code{help(foo)} gives this
-help page, but @code{foo} is excluded from several object indices, like
-the alphabetical list of objects in the @HTML{} help system.
+help page, but @code{foo} is excluded from several object indices,
+including the alphabetical list of objects in the @HTML{} help system.
+
+@code{help.search()} can search by keyword, including user-defined
+values: however the `Search Engine & Keywords' HTML page accessed
+@emph{via} @code{help.start()} provides single-click access only to a
+pre-defined list of keywords.
 @end table
 
 
@@ -3551,7 +3553,7 @@ The @code{\usage} entry is always @code{@var{bar}} or (for packages
 which do not use lazy-loading of data) @code{data(@var{bar})}.  (In
 particular, only document a @emph{single} data object per Rd file.)
 @item
-The @code{\keyword} entry is always @samp{datasets}.
+The @code{\keyword} entry should always be @samp{datasets}.
 @end itemize
 
 If @code{@var{bar}} is a data frame, documenting it as a data set can
@@ -3662,8 +3664,11 @@ For example
 @noindent
 For consistency with the pre-assigned sections, the section name (the
 first argument to @code{\section}) should be capitalized (but not all
-upper case).  Whitespace between the first and second braced
-expressions is not allowed as from @R{} 2.10.0.
+upper case).  Whitespace between the first and second braced expressions
+is not allowed as from @R{} 2.10.0.  Markup (e.g.@: @code{\code}) within
+the section title may cause problems with the latex conversion
+(depending on the version of macro packages such as @samp{hyperref}) and
+so should be avoided.
 
 Note that additional named sections are always inserted at a fixed
 position in the output (before @code{\note}, @code{\seealso} and the
@@ -3711,9 +3716,9 @@ will need to be escaped (@pxref{Insertions}).
 @findex \code
 Indicate text that is a literal example of a piece of an @R{} program,
 e.g., a fragment of @R{} code or the name of an @R{} object.  Text is 
-entered in @R{}-like syntax, and displayed using
-@code{typewriter} font if possible. Macros @code{\var} and @code{\link}
-are interpreted within @var{text}.
+entered in @R{}-like syntax, and displayed using @code{typewriter} font
+if possible.  Macros @code{\var} and @code{\link} are interpreted within
+@var{text}.
 
 @item \preformatted@{@var{text}@}
 @findex \preformatted
@@ -3734,13 +3739,16 @@ type from computer output.  Text is entered verbatim.
 @item \samp@{@var{text}@}
 @findex \samp
 Indicate text that is a literal example of a sequence of characters,
-entered verbatim.  No wrapping or reformatting will occur.
+entered verbatim.  No wrapping or reformatting will occur.  Displayed
+using @code{typewriter} font if possible.
+
 
 @item \verb@{@var{text}@}
 @findex \verb
 Indicate text that is a literal example of a sequence of characters,
-with no interpretation of e.g.@: @code{\var}, but which will be 
-included within word-wrapped text.
+with no interpretation of e.g.@: @code{\var}, but which will be included
+within word-wrapped text.  Displayed using @code{typewriter} font if
+possible.
 
 @item \pkg@{@var{package_name}@}
 @findex \pkg
@@ -3749,16 +3757,20 @@ Indicate the name of an @R{} package.  @LaTeX{}-like.
 @item \file@{@var{file_name}@}
 @findex \file
 Indicate the name of a file.  Text is @LaTeX{}-like, so backslash needs
-to be escaped.
+to be escaped.  Displayed using a distinct font if possible.
+
 @item \email@{@var{email_address}@}
 @findex \email
 Indicate an electronic mail address.  @LaTeX{}-like, will be rendered as
-a hyperlink in HTML and PDF conversion.
+a hyperlink in HTML and PDF conversion.  Displayed using
+@code{typewriter} font if possible.
+
 @item \url@{@var{uniform_resource_locator}@}
 @findex \url
 Indicate a uniform resource locator (@acronym{URL}) for the World Wide
 Web.  The argument is handled verbatim, and rendered as a hyperlink in
-HTML and PDF conversion.
+HTML and PDF conversion.  Displayed using @code{typewriter} font if
+possible.
 
 @item \var@{@var{metasyntactic_variable}@}
 @findex \var
@@ -3769,12 +3781,15 @@ outside @samp{\usage} and @samp{\examples} environments.}. @LaTeX{}-like.
 @item \env@{@var{environment_variable}@}
 @findex \env
 Indicate an environment variable. Verbatim.
+Displayed using @code{typewriter} font if possible
 @item \option@{@var{option}@}
 @findex \option
 Indicate a command-line option.  Verbatim.
+Displayed using @code{typewriter} font if possible.
 @item \command@{@var{command_name}@}
 @findex \command
-Indicate the name of a command. @LaTeX{}-like.
+Indicate the name of a command. @LaTeX{}-like, so @code{\var} is
+interpreted.  Displayed using @code{typewriter} font if possible.
 @item \dfn@{@var{term}@}
 @findex \dfn
 Indicate the introductory or defining use of a term. @LaTeX{}-like.
@@ -3963,7 +3978,7 @@ for the dots in function argument lists @samp{@dots{}}, and
 @code{\ldots}
 @findex \ldots
 for ellipsis dots in ordinary text.@footnote{There is only a fine
-distinction between @code{\dots} and @code{\dots}.  It is technically
+distinction between @code{\dots} and @code{\ldots}.  It is technically
 incorrect to use @code{\ldots} in code blocks and @code{tools::checkRd}
 will warn about this---on the other hand the current converters treat
 them the same way in code blocks, and elsewhere apart from the small
@@ -6008,7 +6023,7 @@ library.dynam("libname", package, lib.loc)
 where @code{libname} is the object/DLL name @emph{with the extension
 omitted}.  Note that the first argument, @code{chname}, should
 @strong{not} be @code{package} since this will not work if the package
-is installed under another name (as it will be with a versioned install).
+is installed under another name.
 
 Under some Unix-alike systems there is a choice of how the symbols are
 resolved when the object is loaded, governed by the arguments
@@ -7444,13 +7459,13 @@ a test of a length-2 @code{"dim"} attribute.
 
 There are a series of small macros/functions to help construct pairlists
 and language objects (whose internal structures just differ by
-@code{SEXPTYPE}.  Function @code{CONS(u, v)} is the basic building
+@code{SEXPTYPE}).  Function @code{CONS(u, v)} is the basic building
 block: is constructs a pairlist from @code{u} followed by @code{v}
 (which is a pairlist or @code{R_NilValue}).  @code{LCONS} is a variant
 that constructs a language object.  Functions @code{list1} to
 @code{list4} construct a pairlist from one to four items, and
 @code{lang1} to @code{lang4} do the same for a language object (a
-function to call plus zero to three arguments).  Function @code{elt} and
+function to call plus zero to three arguments).  Functions @code{elt} and
 @code{lastElt} find the @var{i}th element and the last element of a
 pairlist, and @code{nthcdr} returns a pointer to the @var{n}th position
 in the pairlist (whose @code{CAR} is the @var{n}th item).

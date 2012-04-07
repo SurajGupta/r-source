@@ -546,12 +546,13 @@ print.ls_str <- function(x, max.level = 1, give.attr = FALSE,
 
 	o <- tryCatch(get(nam, envir = E, mode = M), error = function(e)e)
 	if(inherits(o, "error")) {
-	    if(length(grep("missing|not found", o$message)))
-		cat("<missing>\n")
-	    else stop(o$message)
+	    cat(## FIXME: only works with "C" (or English) LC_MESSAGES locale!
+		if(length(grep("missing|not found", o$message)))
+		"<missing>" else o$message, "\n", sep='')
 	}
 	else
-	    do.call(str, c(list(o), strargs))
+	    do.call(str, c(list(o), strargs),
+		    quote = is.call(o)) # protect calls from evaluation
     }
     invisible(x)
 }
