@@ -1,6 +1,6 @@
 % File src/library/base/man/source.Rd
 % Part of the R package, http://www.R-project.org
-% Copyright 1995-2007 R Core Development Team
+% Copyright 1995-2008 R Core Development Team
 % Distributed under GPL 2 or later
 
 \name{source}
@@ -12,7 +12,7 @@ source(file, local = FALSE, echo = verbose, print.eval = echo,
        max.deparse.length = 150, chdir = FALSE,
        encoding = getOption("encoding"),
        continue.echo = getOption("continue"),
-       skip.echo = 0)
+       skip.echo = 0, keep.source = getOption("keep.source"))
 }
 \alias{source}
 \arguments{
@@ -25,7 +25,7 @@ source(file, local = FALSE, echo = verbose, print.eval = echo,
     after parsing, before evaluation.}
   \item{print.eval}{logical; if \code{TRUE}, the result of
     \code{eval(i)} is printed for each expression \code{i}; defaults
-    to \code{echo}.}
+    to the value of \code{echo}.}
   \item{verbose}{if \code{TRUE}, more diagnostics (than just
     \code{echo = TRUE}) are printed during parsing and evaluation of
     input, including extra info for \bold{each} expression.}
@@ -44,6 +44,8 @@ source(file, local = FALSE, echo = verbose, print.eval = echo,
     continuation lines if \code{echo = TRUE}.}
   \item{skip.echo}{integer; how many comment lines at the start of the
     file to skip if \code{echo = TRUE}.}
+  \item{keep.source}{logical: should the source formatting be retained
+    when echo expressions, if possible?}
 }
 \description{
   \code{source} causes \R to accept its input from the named file or URL
@@ -53,16 +55,30 @@ source(file, local = FALSE, echo = verbose, print.eval = echo,
   chosen environment.
 }
 \details{
+  Note that running code via \code{source} differs in a few respects
+  from entering it at the \R command line.  Since expressions are not
+  executed at the top level, auto-printing is not done.  So you will
+  need to include explicit \code{print} calls for things you want to be
+  printed (and remember that this includes plotting by \pkg{lattice},
+  FAQ Q7.22).  Since the complete file is parsed before any of it is
+  run, syntax errors result in none of the code being run. If an error
+  occurs in running a syntactically correct script, anything assigned
+  into the workspace by code that has been run will be kept (just as
+  from the command line), but diagnostic information such as
+  \code{\link{traceback}()} will contain additional calls to
+  \code{eval.with.vis}, an undocumented internal function.
+
   All versions of \R accept input from a connection with end of line
   marked by LF (as used on Unix), CRLF (as used on DOS/Windows)
   or CR (as used on classic MacOS).  The final line can be incomplete, that
   is missing the final end-of-line marker.
 
-  If \code{\link{options}}("keep.source") is true (the default), the
-  source of functions is kept so they can be listed exactly as input.
-  This imposes a limit of 128K bytes on the function size and a nesting
-  limit of 265.  Use \code{option(keep.source = FALSE)} when these
-  limits might take effect: if exceeded they generate an error.
+  If \code{\link{options}}("keep.source") is true (the default in
+  interactive use), the source of functions is kept so they can be
+  listed exactly as input. This imposes a limit of 128K bytes on the
+  function size and a nesting limit of 265.  Use \code{keep.source =
+  FALSE} when these limits might take effect: if exceeded they generate
+  an error.
 
   This paragraph applies if \code{file} is a filename (rather than a
   connection).  If \code{encoding = "unknown"}, an attempt is made to

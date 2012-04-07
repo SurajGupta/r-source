@@ -1,6 +1,6 @@
 % File src/library/utils/man/browseURL.Rd
 % Part of the R package, http://www.R-project.org
-% Copyright 1995-2007 R Core Development Team
+% Copyright 1995-2008 R Core Development Team
 % Distributed under GPL 2 or later
 
 \name{browseURL}
@@ -10,25 +10,32 @@
   Load a given URL into a WWW browser.
 }
 \usage{
-browseURL(url, browser = getOption("browser"))
+browseURL(url, browser = getOption("browser"), encodeIfNeeded = FALSE)
 }
 \arguments{
   \item{url}{a non-empty character string giving the URL to be loaded.}
   \item{browser}{a non-empty character string giving the name of the
     program to be used as hypertext browser.  It should be in the PATH,
-    or a full path specified.
+    or a full path specified.  Alternatively, an \R function to be
+    called to invoke the browser.
 #ifdef windows
     
     Under Windows \code{NULL} is also allowed (and is the default), and
     implies that the file association mechanism will be used.
 #endif
   }
+  \item{encodeIfNeeded}{Should the URL be encoded by
+    \code{\link{URLencode}} before passing to the browser?  This is not
+    needed (and might be harmful) if the \code{browser} program/function
+    itself does encoding, and can be harmful for \code{file://} URLs on some
+    systems and for \code{http://} URLs passed to some CGI applications.
+    Fortunately, most URLs do not need encoding.}
 }
 #ifdef unix
 \details{
   The default browser is set by option \code{"browser"}, in turn set by
   the environment variable \env{R\_BROWSER} which is by default set
-  in file \file{\var{R\_HOME}/etc/Renviron} to a choice made manually or
+  in file \file{\var{\link[base:Rhome]{R\_HOME}}/etc/Renviron} to a choice made manually or
   automatically when \R was configured.  (See \code{\link{Startup}} for
   where to override that default value.)
 

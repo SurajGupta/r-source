@@ -1,5 +1,5 @@
 
-R version 2.7.0 Under development (unstable) (2008-03-12 r44742)
+R version 2.8.0 Under development (unstable) (2008-09-01 r46476)
 Copyright (C) 2008 The R Foundation for Statistical Computing
 ISBN 3-900051-07-0
 
@@ -18,7 +18,7 @@ Type 'q()' to quit R.
 > #### Run all demos that do not depend on tcl and other specials.
 > .ptime <- proc.time()
 > set.seed(123)
-> options(useFancyQuotes=FALSE)
+> options(keep.source=TRUE, useFancyQuotes=FALSE)
 > 
 > ## Drop these for strict testing {and add them to demos2.R)
 > ## lm.glm is in ../src/library/utils/man/demo.Rd }:
@@ -61,8 +61,8 @@ Type 'q()' to quit R.
 +     "\n\t starting with 'is.' :\t  ",
 +     length(is.bi <- bi[substring(bi,1,3) == "is."]), "\n")
 
-Number of base objects:		 1164 
-Number of functions in base:	 1135 
+Number of base objects:		 1190 
+Number of functions in base:	 1161 
 	 starting with 'is.' :	   48 
 
 > ## 0.14  : 31
@@ -80,10 +80,10 @@ Number of functions in base:	 1135
 
 > is.ALL <- function(obj, func.names = ls(pos=length(search())),
 + 		   not.using = c("is.single", "is.loaded",
-+                      "is.empty.model", "is.R", "is.element"),
++                      "is.empty.model", "is.R", "is.element", "is.unsorted"),
 + 		   true.only = FALSE, debug = FALSE)
 + {
-+     ## Purpose: show many ' .... [TRUNCATED] 
++     ## Purpo .... [TRUNCATED] 
 
 > print.isList <- function(x, ..., verbose = getOption("verbose"))
 + {
@@ -128,7 +128,6 @@ is.real            : .
 is.recursive       : . 
 is.symbol          : . 
 is.table           : . 
-is.unsorted        : . 
 is.vector          : . 
 
 > ##fails: is.ALL(NULL, not.using = c("is.single", "is.loaded"))
@@ -188,7 +187,6 @@ is.real            : .
 is.recursive       : . 
 is.symbol          : . 
 is.table           : . 
-is.unsorted        : . 
 is.vector          : | 
 
 > is.ALL(array(1:24, 2:4))
@@ -227,7 +225,6 @@ is.real            : .
 is.recursive       : . 
 is.symbol          : . 
 is.table           : . 
-is.unsorted        : . 
 is.vector          : . 
 
 > is.ALL(1 + 3)
@@ -266,7 +263,6 @@ is.real            : |
 is.recursive       : . 
 is.symbol          : . 
 is.table           : . 
-is.unsorted        : . 
 is.vector          : | 
 
 > e13 <- expression(1 + 3)
@@ -307,7 +303,6 @@ is.real            : .
 is.recursive       : | 
 is.symbol          : . 
 is.table           : . 
-is.unsorted        : NA 
 is.vector          : | 
 
 > is.ALL(substitute(expression(a + 3), list(a=1)), true.only = TRUE)
@@ -349,7 +344,6 @@ is.real            : .
 is.recursive       : | 
 is.symbol          : . 
 is.table           : . 
-is.unsorted        : NA 
 is.vector          : . 
 
 > is0 <- is.ALL(numeric(0))
@@ -387,10 +381,8 @@ logical(0)
              FALSE              FALSE              FALSE              FALSE 
       is.primitive              is.qr             is.raw            is.real 
              FALSE              FALSE              FALSE               TRUE 
-      is.recursive          is.symbol           is.table        is.unsorted 
-             FALSE              FALSE              FALSE              FALSE 
-         is.vector 
-              TRUE 
+      is.recursive          is.symbol           is.table          is.vector 
+             FALSE              FALSE              FALSE               TRUE 
 
 > ispi <- unlist(is.ALL(pi))
 
@@ -442,7 +434,6 @@ is.real            : .
 is.recursive       : . 
 is.symbol          : . 
 is.table           : . 
-is.unsorted        : . 
 is.vector          : | 
 
 > is.ALL(structure(1:7, names = paste("a",1:7,sep="")), true.only = TRUE)
@@ -488,7 +479,6 @@ is.real            : .
 is.recursive       : | 
 is.symbol          : . 
 is.table           : . 
-is.unsorted        : NA 
 is.vector          : . 
 
 > is.ALL(structure(1:7, names = paste("a",1:7,sep="")))
@@ -527,7 +517,6 @@ is.real            : .
 is.recursive       : . 
 is.symbol          : . 
 is.table           : . 
-is.unsorted        : . 
 is.vector          : | 
 
 > is.ALL(structure(1:7, names = paste("a",1:7,sep="")), true.only = TRUE)

@@ -7,7 +7,7 @@ msgid ""
 msgstr ""
 "Project-Id-Version: R 2.4.0\n"
 "Report-Msgid-Bugs-To: bugs@r-project.org\n"
-"POT-Creation-Date: 2008-08-01 08:44\n"
+"POT-Creation-Date: 2008-09-08 14:13\n"
 "PO-Revision-Date: 2005-02-04 08:37+0000\n"
 "Last-Translator: 陈斐 <feic@avaya.com>\n"
 "Language-Team: Chinese\n"
@@ -137,8 +137,12 @@ msgstr "你必需设定'package', 'dir'或'file'三个中的一个"
 msgid "file '%s' does not exist"
 msgstr "不存在'%s'这一文件"
 
-msgid "parse error in file '%s'"
-msgstr "文件'%s'里句法分析有错"
+msgid ""
+"parse error in file '%s':\n"
+"%s"
+msgstr "" 
+"文件'%s'里句法分析有错：\n"
+"%s"
 
 msgid "Foreign function calls without 'PACKAGE' argument:"
 msgstr "外函数调用时没有设定'package'这一变元:"
@@ -149,8 +153,11 @@ msgstr "找不到公布了的S3方法'%s'"
 msgid "cannot check R code installed as image"
 msgstr "因为影像安装无法检查R编码"
 
-msgid "parse error in examples from file '%s'"
-msgstr "文件'%s'中的例子在进行句法分析时出了错"
+msgid "parse error in file '%s':"
+msgstr "文件'%s'里句法分析有错:"
+
+msgid "parse error in examples from file '%s':"
+msgstr "文件'%s'中的例子在进行句法分析时出了错:"
 
 msgid "File '%s':"
 msgstr "文件'%s':"
@@ -159,7 +166,7 @@ msgid "found T/F in %s"
 msgstr "%s里不能有T/F这样的值"
 
 msgid "package name '%s' seems invalid; using directory name '%s' instead"
-msgstr ""
+msgstr "程辑包的名字'%s'好象有问题；用文件目录名'%s'替代"
 
 msgid "Packages required but not available:"
 msgstr "需要有程辑包但它却不存在:"
@@ -351,6 +358,9 @@ msgstr "可验证开放源码：%s"
 msgid "Non-portable flags in variable '%s':"
 msgstr "变量'%s'里有不可便携的标志:"
 
+msgid "package must be loaded"
+msgstr "必需载入程序包。"
+
 msgid "Missing link(s) in documentation object '%s':"
 msgstr "使用手冊对象'%s'缺少联结:"
 
@@ -366,12 +376,38 @@ msgstr "'::'或':::'引进没有被声明:"
 msgid "'library' or 'require' calls not declared from:"
 msgstr "'library'或'require'调用没有被声明:"
 
+msgid "Generics g in env ="
+msgstr "同属函数g在env="
+
+msgid "where hasMethods(g, env) errors:"
+msgstr "hasMethods(g, env) 出了错："
+
+msgid ","
+msgstr ","
+
+msgid "May need something like"
+msgstr "可能应该是这样的"
+
+msgid "importFrom("
+msgstr " importFrom("
+
+msgid ")"
+msgstr ")"
+
+msgid "in NAMESPACE."
+msgstr "在NAMESPACE。"
+
+msgid "Generics without methods in"
+msgstr "没有方法的同属函数在"
+
+msgid ":"
+msgstr "："
+
 msgid "argument 'lines' must be a character vector"
 msgstr "变元'lines'必需是字符矢量"
 
-#, fuzzy
 msgid "encoding '%s' is not portable"
-msgstr "编码'%s'不可便携"
+msgstr "非便携编码'%s' "
 
 msgid "argument 'file' must be a character string or connection"
 msgstr "变元'document'必需是字符串或联结"
@@ -439,9 +475,6 @@ msgstr "Rd文件里缺少或有空白的\\name域"
 msgid "unable to create temp directory"
 msgstr "无法建立temp目录"
 
-msgid "--- running texi2dvi on vignettes"
-msgstr "---在标头上调用texi2dvi失败"
-
 msgid ""
 "processing vignette '%s' failed with diagnostics:\n"
 "%s"
@@ -451,9 +484,6 @@ msgstr ""
 
 msgid "running 'make' failed"
 msgstr "调用'make'失败"
-
-msgid "cannot read index information in file '%s'"
-msgstr "无法从文件'%s'中读取索引信息"
 
 msgid "argument 'vignette' must be of length 1"
 msgstr "变元'vignette'的长度必需为一"
@@ -470,16 +500,11 @@ msgstr "***程辑包'%s'里的Built域坏了***"
 msgid "cannot open directory '%s'"
 msgstr "无法打开目录'%s'"
 
-#, fuzzy
 msgid "WARNING: 'Depends' entry has multiple dependencies on R:"
-msgstr "警告：'Depends'项有多个從屬项"
+msgstr "警告：'Depends'有多个于R相关的项"
 
-msgid ","
-msgstr ","
-
-#, fuzzy
 msgid "only the first will be used in R < 2.7.0"
-msgstr "只能用第一个"
+msgstr "R < 2.7.0版本只能用第一个"
 
 msgid ""
 "WARNING: omitting pointless dependence on 'R' without a version requirement"
@@ -506,12 +531,11 @@ msgstr "无法重新编码'%s'"
 msgid "unable to copy INDEX to '%s'"
 msgstr "无法拷贝索引至'%s'"
 
-#, fuzzy
 msgid ""
 "running Stangle on vignette '%s' failed with message:\n"
 "%s"
 msgstr ""
-"处理标头'%s'失败，诊断信息为:\n"
+"用Stangle处理标头'%s'失败，诊断信息为:\n"
 "%s"
 
 msgid "cannot create directory '%s'"
@@ -523,12 +547,11 @@ msgstr "处理 '"
 msgid "'"
 msgstr "'"
 
-#, fuzzy
 msgid ""
 "running Sweave on vignette '%s' failed with message:\n"
 "%s"
 msgstr ""
-"处理标头'%s'失败，诊断信息为:\n"
+"用Sweave处理标头'%s'失败，诊断信息为:\n"
 "%s"
 
 msgid "file '%s' was not created"
@@ -551,6 +574,9 @@ msgstr "错误：R的版本是%s，捆程序捆包'%s'要求版本为%s %s的R"
 
 msgid "ERROR: this R is version %s, required is R %s %s"
 msgstr "错误：R的版本是%s，需要的是版本为%s %s的R"
+
+msgid "cannot read index information in file '%s'"
+msgstr "无法从文件'%s'中读取索引信息"
 
 msgid "there is no package called '%s'"
 msgstr "没有叫'%s'的程辑包"
@@ -630,11 +656,23 @@ msgstr "变元'delim'必需指定两个字符"
 msgid "only Rd syntax is currently supported"
 msgstr "目前只支持Rd语法"
 
+msgid "Running 'texi2dvi' on '%s' failed."
+msgstr "给'%s'调用'texi2dvi'失败了"
+
 msgid "running 'texi2dvi' on '%s' failed"
 msgstr "给'%s'调用'texi2dvi'失败了"
 
 msgid "unable to run %s on '%s'"
 msgstr "无法在'%2$s'上调用%1$s"
+
+msgid "File 'DESCRIPTION' is missing."
+msgstr "缺少'DESCRIPTION'这个文件"
+
+msgid "Files 'DESCRIPTION' and 'DESCRIPTION.in' are missing."
+msgstr "缺少'DESCRIPTION'和'DESCRIPTION.in'这两个文件"
+
+msgid "Bundle 'DESCRIPTION' is missing."
+msgstr "缺少'DESCRIPTION'一捆文件"
 
 msgid "file '%s' is not in valid DCF format"
 msgstr "文件'%s'不含正确的DCF格式"
@@ -667,5 +705,9 @@ msgid_plural ""
 "Found possibly global 'T' or 'F' in the following Rd example files:"
 msgstr[0] "在下面的Rd例子文件中遇到了有可能是全局的T或F值:"
 
+#~ msgid "--- running texi2dvi on vignettes"
+#~ msgstr "---在标头上调用texi2dvi失败"
+
 #~ msgid "unable to run pdflatex on '%s'"
 #~ msgstr "无法在'%s'上调用pdflatex"
+

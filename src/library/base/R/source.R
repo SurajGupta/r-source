@@ -21,7 +21,7 @@ function(file, local = FALSE, echo = verbose, print.eval = echo,
 	 max.deparse.length = 150, chdir = FALSE,
          encoding = getOption("encoding"),
          continue.echo = getOption("continue"),
-         skip.echo = 0)
+         skip.echo = 0, keep.source = getOption("keep.source"))
 {
     eval.with.vis <-
 	function (expr, envir = parent.frame(),
@@ -69,7 +69,8 @@ function(file, local = FALSE, echo = verbose, print.eval = echo,
         }
         if(file == "") file <- stdin()
         else {
-            srcfile <- srcfile(file, encoding = encoding)
+            if (isTRUE(keep.source))
+            	srcfile <- srcfile(file, encoding = encoding)
 	    file <- file(file, "r", encoding = encoding)
 	    on.exit(close(file))
             from_file <- TRUE
@@ -164,8 +165,12 @@ function(file, local = FALSE, echo = verbose, print.eval = echo,
 	    cat(".... mode(ei[[1]])=", mode(ei[[1]]), "; paste(curr.fun)=")
 	    utils::str(paste(curr.fun))
 	}
-	if (print.eval && yy$visible)
-	    print(yy$value)
+	if (print.eval && yy$visible) {
+            if(isS4(yy$value))
+                methods::show(yy$value)
+            else
+                print(yy$value)
+        }
 	if (verbose)
 	    cat(" .. after ", sQuote(deparse(ei,
 	    	control = c("showAttributes","useSource"))), "\n", sep = "")

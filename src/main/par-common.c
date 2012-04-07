@@ -17,8 +17,6 @@
  *  http://www.r-project.org/Licenses/
  */
 
-/* <UTF8> char here is either ASCII or handled as a whole */
-
 /* Graphical parameters which are treated identically by
  * par( <nam> = <value> )  and	highlevel  plotfun (..., <nam> = <value> ).
  *
@@ -131,15 +129,6 @@
 	lengthCheck(what, value, 1, call);	ix = asInteger(value);
 	posIntCheck(ix, what);
 	R_DEV__(fontaxis) = ix;
-    }
-    else if(streql(what, "gamma")) {
-	lengthCheck(what, value, 1, call);	x = asReal(value);
-	posRealCheck(x, what);
-	if (dd->dev->canChangeGamma) {
-	    R_DEV__(gamma) = x;
-	    warning("changing 'gamma' is deprecated");
-	} else
-	    warning(_("'gamma' cannot be modified on this device"));
     }
     else if (streql(what, "lab")) {
 	value = coerceVector(value, INTSXP);

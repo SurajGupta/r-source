@@ -1,5 +1,5 @@
 
-R version 2.7.0 alpha (2008-03-26 r44914)
+R version 2.8.0 Under development (unstable) (2008-09-03 r46487)
 Copyright (C) 2008 The R Foundation for Statistical Computing
 ISBN 3-900051-07-0
 
@@ -1100,6 +1100,13 @@ Warning messages:
 + 	  All.eq(exp(16 * log(2) + dbeta(0:16/16, 5,1, log=TRUE)), db.x)
 +           )
 > ## the first gave 0, the 2nd NaN in R <= 2.3.0; others use 'TRUE' values
+> stopifnot(all.equal(dbeta(0.8, 0.5, 5, ncp=1000),# was way too small in R <= 2.6.2
++ 		    3.001852308909e-35),
++ 	  all.equal(1, integrate(dbeta, 0,1, 0.8, 0.5, ncp=1000)$value,
++ 		    tol=1e-4),
++           all.equal(1, integrate(dbeta, 0,1, 0.5, 200, ncp=720)$value),
++           all.equal(1, integrate(dbeta, 0,1, 125, 200, ncp=2000)$value)
++           )
 > 
 > ## df(*, ncp):
 > x <- seq(0, 10, length=101)
@@ -1168,8 +1175,42 @@ Warning messages:
 > t2 <- table(rbinom(100, 10*M, pr = 1e-10))
 > stopifnot(names(tt) == 0:6, sum(tt) == 100, sum(t2) == 100) ## no NaN there
 > 
+> ## qf() with large df1, df2  and/or  small p:
+> x <- 0.01; f1 <- 1e60; f2 <- 1e90
+> stopifnot(qf(1/4, Inf, Inf) == 1,
++ 	  all.equal(1, 1e-18/ pf(qf(1e-18, 12,50), 12,50), tol=1e-10),
++ 	  abs(x - qf(pf(x, f1,f2, log.p=TRUE), f1,f2, log.p=TRUE)) < 1e-4)
+> 
+> ## qbeta(*, log.p) for "border" case:
+> stopifnot(is.finite(qbeta(-1e10, 50,40, log.p=TRUE)),
++           is.finite(qbeta(-1e10,  2, 3, lower=FALSE, log.p=TRUE)))
+> ## infinite loop or NaN in R <= 2.7.0
+> 
+> ## phyper(x, 0,0,0), notably for huge x
+> stopifnot(all(phyper(c(0:3, 1e67), 0,0,0) == 1))
+> ## practically infinite loop and NaN in R <= 2.7.1 (PR#11813)
+> 
+> ## plnorm(<= 0, . , log.p=TRUE)
+> stopifnot(plnorm(-1:0, lower.tail=FALSE, log.p=TRUE) == 0,
++ 	  plnorm(-1:0, lower.tail=TRUE,	 log.p=TRUE) == -Inf)
+> ## was wrongly == 'log.p=FALSE' up to R <= 2.7.1 (PR#11867)
+> 
+> 
+> ## pchisq(df=0) was wrong in 2.7.1
+> stopifnot(pchisq(c(-1,0,1), df=0) == c(0,1,1),
++           pchisq(c(-1,0,1), df=0, lower.tail=FALSE) == c(1,0,0))
+> 
+> ## dnbinom for extreme  size and/or mu :
+> mu <- 20
+> d <- dnbinom(17, mu=mu, size = 1e11*2^(1:10)) - dpois(17, lambda=mu)
+> stopifnot(d < 0, diff(d) > 0, d[1] < 1e-10)
+> ## was wrong up to 2.7.1
+> ## The fix to the above, for x = 0, had a new cancellation problem
+> mu <- 1e12 * 2^(0:20)
+> stopifnot(all.equal(1/(1+mu), dnbinom(0, size = 1, mu = mu), tol=1e-13))
+> ## was wrong in 2.7.2 (only)
 > 
 > 
 > cat("Time elapsed: ", proc.time() - .ptime,"\n")
-Time elapsed:  2.367 0.027 2.396 0 0 
+Time elapsed:  2.219 0.019 2.24 0 0 
 > 

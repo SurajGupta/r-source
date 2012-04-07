@@ -1,6 +1,6 @@
 % File src/library/base/man/polyroot.Rd
 % Part of the R package, http://www.R-project.org
-% Copyright 1995-2007 R Core Development Team
+% Copyright 1995-2008 R Core Development Team
 % Distributed under GPL 2 or later
 
 \name{polyroot}
@@ -26,6 +26,9 @@ polyroot(z)
 
   If the coefficient vector \code{z} has zeroes for the highest powers,
   these are discarded.
+
+  As from \R 2.8.0 there is no maximum degree, but numerical stability
+  may be an issue for all but low-degree polynomials.
 }
 \value{
   A complex vector of length \eqn{n - 1}, where \eqn{n} is the position

@@ -26,8 +26,6 @@
 
 #define BYTECODE
 
-#define USE_CHAR_HASHING
-
 /* probably no longer needed */
 #define NEW_CONDITION_HANDLING
 
@@ -102,34 +100,34 @@ extern0 SEXP	R_StringHash;       /* Global hash of CHARSXPs */
 /* CHARSXP charset bits */
 #define LATIN1_MASK (1<<2)
 #define UTF8_MASK (1<<3)
+#define CACHED_MASK (1<<5)
 #ifdef USE_RINTERNALS
 # define IS_LATIN1(x) ((x)->sxpinfo.gp & LATIN1_MASK)
 # define SET_LATIN1(x) (((x)->sxpinfo.gp) |= LATIN1_MASK)
 # define IS_UTF8(x) ((x)->sxpinfo.gp & UTF8_MASK)
 # define SET_UTF8(x) (((x)->sxpinfo.gp) |= UTF8_MASK)
 # define ENC_KNOWN(x) ((x)->sxpinfo.gp & (LATIN1_MASK | UTF8_MASK))
+# define SET_CACHED(x) (((x)->sxpinfo.gp) |= CACHED_MASK)
+# define IS_CACHED(x) (((x)->sxpinfo.gp) & CACHED_MASK)
 #else
 /* Needed only for write-barrier testing */
 int IS_LATIN1(SEXP x);
 void SET_LATIN1(SEXP x);
-void UNSET_LATIN1(SEXP x);
 int IS_UTF8(SEXP x);
 void SET_UTF8(SEXP x);
-void UNSET_UTF8(SEXP x);
 int ENC_KNOWN(SEXP x);
+int SET_CACHED(SEXP x);
 #endif
 /* macros and declarations for managing CHARSXP cache */
-#ifdef USE_CHAR_HASHING
-# define USE_ATTRIB_FIELD_FOR_CHARSXP_CACHE_CHAINS
-# ifdef USE_ATTRIB_FIELD_FOR_CHARSXP_CACHE_CHAINS
-#  define CXHEAD(x) (x)
-#  define CXTAIL(x) ATTRIB(x)
+#define USE_ATTRIB_FIELD_FOR_CHARSXP_CACHE_CHAINS
+#ifdef USE_ATTRIB_FIELD_FOR_CHARSXP_CACHE_CHAINS
+# define CXHEAD(x) (x)
+# define CXTAIL(x) ATTRIB(x)
 SEXP (SET_CXTAIL)(SEXP x, SEXP y);
-# else
-#  define CXHEAD(x) CAR(x)
-#  define CXTAIL(x) CDR(x)
-# endif /* USE_ATTRIB_FIELD_FOR_CHARSXP_CACHE_CHAINS */
-#endif /* USE_CHAR_HASHING */
+#else
+# define CXHEAD(x) CAR(x)
+# define CXTAIL(x) CDR(x)
+#endif /* USE_ATTRIB_FIELD_FOR_CHARSXP_CACHE_CHAINS */
 
 
 #include "Internal.h"		/* do_FOO */
@@ -312,7 +310,7 @@ extern int putenv(char *string);
 #endif
 
 #define HSIZE	   4119	/* The size of the hash table for symbols */
-#define MAXIDSIZE   256	/* Largest symbol size possible */
+#define MAXIDSIZE   256	/* Largest symbol size, in bytes excluding terminator */
 
 /* The type of the do_xxxx functions. */
 /* These are the built-in R functions. */
@@ -701,6 +699,15 @@ extern int Rf_initEmbeddedR(int argc, char **argv);
 
 extern char	*R_GUIType	INI_as("unknown");
 
+extern double cpuLimit			INI_as(-1.0);
+extern double cpuLimit2			INI_as(-1.0);
+extern double cpuLimitValue		INI_as(-1.0);
+extern double elapsedLimit		INI_as(-1.0);
+extern double elapsedLimit2		INI_as(-1.0);
+extern double elapsedLimitValue		INI_as(-1.0);
+
+void resetTimeLimits(void);
+
 #ifdef BYTECODE
 #define R_BCNODESTACKSIZE 10000
 extern0 SEXP *R_BCNodeStackBase, *R_BCNodeStackTop, *R_BCNodeStackEnd;
@@ -752,6 +759,7 @@ extern0 Rboolean known_to_be_utf8 INI_as(FALSE);
 
 /*--- FUNCTIONS ------------------------------------------------------ */
 
+# define allocCharsxp		Rf_allocCharsxp
 # define begincontext		Rf_begincontext
 # define check_stack_balance	Rf_check_stack_balance
 # define CheckFormals		Rf_CheckFormals
@@ -886,8 +894,9 @@ extern0 Rboolean known_to_be_utf8 INI_as(FALSE);
 #define	R_FILE		2
 #define R_TEXT		3
 
-/* The maximum length of input line which will be asked for */
-#define CONSOLE_BUFFER_SIZE 1024
+/* The maximum length of input line which will be asked for,
+   in bytes, including the terminator */
+#define CONSOLE_BUFFER_SIZE 4096
 int	R_ReadConsole(const char *, unsigned char *, int, int);
 void	R_WriteConsole(const char *, int); /* equivalent to R_WriteConsoleEx(a, b, 0) */
 void	R_WriteConsoleEx(const char *, int, int);
@@ -940,6 +949,7 @@ SEXP Rf_EnsureString(SEXP);
 
 /* Other Internally Used Functions */
 
+SEXP Rf_allocCharsxp(R_len_t);
 SEXP Rf_append(SEXP, SEXP); /* apparently unused now */
 void begincontext(RCNTXT*, int, SEXP, SEXP, SEXP, SEXP, SEXP);
 void Rf_checkArityCall(SEXP, SEXP, SEXP);
@@ -1112,7 +1122,7 @@ const char *EncodeReal2(double, int, int, int);
 
 /* main/sort.c */
 void orderVector1(int *indx, int n, SEXP key, Rboolean nalast,
-		  Rboolean decreasing);
+		  Rboolean decreasing, SEXP rho);
 
 /* main/subset.c */
 SEXP R_subset3_dflt(SEXP, SEXP, SEXP);

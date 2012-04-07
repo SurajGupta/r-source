@@ -7,7 +7,7 @@
 ##  R CMD Rd2dvi `grep -l "\\keyword{distr" \
 ##                  /path/to/Rsrc/src/library/stats/man/*.Rd | sort | uniq`
 
-revision='$Rev: 45594 $'
+revision='$Rev: 46686 $'
 version=`set - ${revision}; echo ${2}`
 version="Rd2dvi ${version}
 
@@ -35,7 +35,7 @@ Options:
       --batch		no interaction
       --debug		turn on shell debugging (set -x)
       --no-clean	do not remove created temporary files
-      --no-preview	do not preview generated output file
+      --no-preview	do not preview generated DVI file
       --encoding=enc    use 'enc' as the default encoding
       --os=NAME		use OS subdir 'NAME' (unix or windows)
       --OS=NAME		the same as '--os'
@@ -45,10 +45,13 @@ Options:
   -V, --verbose		report on what is done
 
 The output papersize is set by the environment variable R_PAPERSIZE.
+The DVI previewer is set by the environment variable xdvi.
+The PDF previewer is set by the environment variable R_PDFVIEWER.
 
 Report bugs to <r-bugs@r-project.org>."
 
 start_dir=`pwd`
+build_dir=".Rd2dvi${$}"
 
 batch=false
 clean=true
@@ -56,15 +59,21 @@ debug=false
 only_meta=false
 out_ext="dvi"
 output=""
-preview=xdvi
 verbose=false
 enc=unknown
-OSdir=${R_OSTYPE-"unix"}
 
-: ${R_SHARE_DIR}=${R_HOME}/share
-## Need a `safe' echo which does not interpret backslash-escaped
-## characters in SysV style.
-echo="sh ${R_SHARE_DIR}/sh/echo.sh"
+if test "${R_OSTYPE}" = "windows"; then
+  echo=echo
+  preview=${xdvi-open}
+  OSdir=windows
+else
+  ## Need a `safe' echo which does not interpret backslash-escaped
+  ## characters in SysV style.
+  ## FIXME: R_SHARE_DIR might contain a space.
+  echo="sh ${R_SHARE_DIR}/sh/echo.sh"
+  preview=${xdvi-xdvi}
+  OSdir=unix
+fi
 
 while test -n "${1}"; do
   case ${1} in
@@ -82,13 +91,23 @@ while test -n "${1}"; do
       preview=false ;;
     --pdf)
       out_ext="pdf";
-      preview=false;
-      R_RD4DVI=${R_RD4PDF-"times,hyper"};
-      R_LATEXCMD=${PDFLATEX-pdflatex} ;;
+      ## allow for --no-preview --pdf
+      if test "${preview}" != "false"; then
+	if test -n "${R_PDFVIEWER}"; then
+	    preview=${R_PDFVIEWER}
+	elif test "${R_OSTYPE}" = "windows"; then
+	    preview=open
+        else
+	    preview=false
+	fi
+      fi
+      R_RD4DVI=${R_RD4PDF-"times,hyper"}
+      R_LATEXCMD=${PDFLATEX-pdflatex}
+      ;;
     --title=*)
-      title=`echo "${1}" | ${SED-sed} -e 's/[^=]*=//'` ;;
+      title=`echo "${1}" | ${SED} -e 's/[^=]*=//'` ;;
     -o)
-      if test -n "`echo ${2} | ${SED-sed} 's/^-.*//'`"; then      
+      if test -n "`echo ${2} | ${SED} 's/^-.*//'`"; then      
 	output="${2}"; shift
       else
 	${echo} "ERROR: option '${1}' requires an argument"
@@ -98,11 +117,13 @@ while test -n "${1}"; do
     --only-meta)
       only_meta=true ;;
     --output=*)
-      output=`echo "${1}" | ${SED-sed} -e 's/[^=]*=//'` ;;
+      output=`echo "${1}" | ${SED} -e 's/[^=]*=//'` ;;
     --OS=*|--os=*)
-      OSdir=`echo "${1}" | ${SED-sed} -e 's/[^=]*=//'` ;;
+      OSdir=`echo "${1}" | ${SED} -e 's/[^=]*=//'` ;;
     --encoding=*)
-      enc=`echo "${1}" | ${SED-sed} -e 's/[^=]*=//'` ;;
+      enc=`echo "${1}" | ${SED} -e 's/[^=]*=//'` ;;
+    --build-dir=*)
+      build_dir=`echo "${1}" | ${SED} -e 's/[^=]*=//'` ;;
     -V|--verbose)
       verbose=${echo} ;;
     --|*)
@@ -156,17 +177,17 @@ Rd_DESCRIPTION_to_LaTeX () {
   ## Usage:
   ##   Rd_DESCRIPTION_to_LaTeX FILE
   
-  fields=`${SED-sed} '/^[ 	]/d; s/^\([^:]*\):.*$/\1/' $1`
+  fields=`${SED} '/^[ 	]/d; s/^\([^:]*\):.*$/\1/' $1`
   ${echo} "\\begin{description}"
   ${echo} "\\raggedright{}"
-  for f in `${echo} "${fields}" | ${SED-sed} '/Package/d; /Bundle/d;'`; do
+  for f in `${echo} "${fields}" | ${SED} '/Package/d; /Bundle/d;'`; do
     text=`get_dcf_field ${f} ${1} | \
       tr '\n' ' ' | \
-      ${SED-sed} "s/\"\([^\"]*\)\"/\\\`\\\`\\1''/g
+      ${SED} "s/\"\([^\"]*\)\"/\\\`\\\`\\1''/g
                   s/\\\\\\\\/\\\\\\\\textbackslash /g
                   s/{/\\\\\\\\{/g
 		  s/}/\\\\\\\\}/g"`
-    ff=`echo ${f} | ${SED-sed} s/_/\\\\\\\\_/g`
+    ff=`echo ${f} | ${SED} s/_/\\\\\\\\_/g`
     ${echo} "\\item[${ff}] \\AsIs{${text}}"
   done
   ${echo} "\\end{description}"
@@ -208,7 +229,7 @@ if test -d "${1}"; then
     else
       dir=${1}
     fi
-    subj0=`${echo} ${dir} | ${SED-sed} -e ${file_sed}`
+    subj0=`${echo} ${dir} | ${SED} -e ${file_sed}`
     subj="all in \\file{${subj0}}"
   fi
 else
@@ -219,13 +240,17 @@ else
     toc=
     if test -z "${output}"; then
       output=`basename "${1}"`
-      output="`echo ${output} | ${SED-sed} 's/[Rr]d$//'`${out_ext}"
+      output="`echo ${output} | ${SED} 's/[Rr]d$//'`${out_ext}"
     fi
   fi
-  subj0=`${echo} ${1} | ${SED-sed} -e ${file_sed}`
+  subj0=`${echo} ${1} | ${SED} -e ${file_sed}`
   subj="\\file{${subj0}}${subj}"
 fi
-title=${title-"\\R{} documentation}} \\par\\bigskip{{\\Large of ${subj}"}
+
+
+## substitution went wrong under ash
+title1="\\R{} documentation}} \\par\\bigskip{{\\Large of ${subj}"
+title=${title-$title1}
 
 if test "${enc}"="unknown"; then
   if test -n "$pkg_enc"; then
@@ -242,7 +267,6 @@ if test -f ${output}; then
   ${echo} "file '${output}' exists; please remove first"
   exit 1
 fi
-build_dir=.Rd2dvi${$}
 if test -d ${build_dir}; then
   rm -rf ${build_dir} || echo "cannot write to build dir" && exit 2
 fi
@@ -282,7 +306,7 @@ EOF
       R_version=`cat ${1}/../../../VERSION`
     fi
     Rd_DESCRIPTION_to_LaTeX ${1}/DESCRIPTION.in | \
-      ${SED-sed} "s/@VERSION@/${R_version}/" >> ${build_dir}/Rd2.tex
+      ${SED} "s/@VERSION@/${R_version}/" >> ${build_dir}/Rd2.tex
   fi
 else
   cat >> ${build_dir}/Rd2.tex <<EOF
@@ -335,19 +359,19 @@ EOF
 
 ## Look for encodings
 ENCS=`grep '^\\\\inputencoding' ${build_dir}/Rd2.tex | uniq |\
-  ${SED-sed} -e 's/^\\\\inputencoding{\(.*\)}/\1/'`
+  ${SED} -e 's/^\\\\inputencoding{\(.*\)}/\1/'`
 ENCS=`grep '^\\\\\inputencoding' ${build_dir}/Rd2.tex |  uniq | \
-  ${SED-sed} -e 's/^\\\\inputencoding{\(.*\)}/\1/' | \
-  tr '\na-z0-9' ',a-z0-9' | ${SED-sed} -e s/,$//`
+  ${SED} -e 's/^\\\\inputencoding{\(.*\)}/\1/' | \
+  tr '\na-z0-9' ',a-z0-9' | ${SED} -e s/,$//`
 #echo "ENCS is ${ENCS}"
 
 ## substitute for the encodings used
 mv ${build_dir}/Rd2.tex ${build_dir}/Rd2.tex.pre
 if test -z "${ENCS}"; then
-  ${SED-sed} -e '/^\\usepackage\[@ENC@\]{inputenc}$/d' \
+  ${SED} -e '/^\\usepackage\[@ENC@\]{inputenc}$/d' \
     ${build_dir}/Rd2.tex.pre > ${build_dir}/Rd2.tex
 else
-  ${SED-sed} -e s/^\\\\usepackage\\[@ENC@\\]/\\\\usepackage[${ENCS}]/ \
+  ${SED} -e s/^\\\\usepackage\\[@ENC@\\]/\\\\usepackage[${ENCS}]/ \
     ${build_dir}/Rd2.tex.pre > ${build_dir}/Rd2.tex
 fi
 
@@ -356,13 +380,23 @@ fi
 status=0
 ## <FIXME>
 
+
+R_TEXOPTS=
+if test "${R_OSTYPE}" = "windows"; then
+  miktex=`latex --version | grep ^MiKTeX | wc -l`
+  if test "${miktex}" = "1"; then
+    R_TEXOPTS=--include-directory=${R_HOME}/share/texmf
+  fi
+fi
+
 echo "Creating ${out_ext} output from LaTeX ..."
 cd ${build_dir}
-${R_LATEXCMD-latex} Rd2 || status=1
+## R_LATEXCMD is redefined above for --pdf
+${R_LATEXCMD} ${R_TEXOPTS} Rd2 || status=1
 ${R_MAKEINDEXCMD-makeindex} Rd2
-${R_LATEXCMD-latex} Rd2
+${R_LATEXCMD} ${R_TEXOPTS} Rd2
 if test "${out_ext}" = pdf; then
-  ${R_LATEXCMD-latex} Rd2
+  ${R_LATEXCMD} ${R_TEXOPTS} Rd2
 fi
 cd ${start_dir}
 ${echo} "Saving output to '${output}' ..."

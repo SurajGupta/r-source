@@ -19,8 +19,6 @@
  *  http://www.r-project.org/Licenses/
  */
 
-/* <UTF8> char here is either ASCII or handled as a whole */
-
 #ifdef HAVE_CONFIG_H
 #include <config.h>
 #endif
@@ -152,7 +150,8 @@ wchar_t *filenameToWchar(const SEXP fn, const Rboolean expand)
     if(IS_UTF8(fn)) from = "UTF-8";
     obj = Riconv_open("UCS-2LE", from);
     if(obj == (void *)(-1))
-	error(_("unsupported conversion in 'filenameToWchar'"));
+	error("unsupported conversion from '%s' in 'filenameToWchar' in codepage %d", 
+	      from, localeCP);
 
     if(expand) inbuf = R_ExpandFileName(CHAR(fn)); else inbuf = CHAR(fn);
 
@@ -581,7 +580,12 @@ SEXP attribute_hidden do_iconv(SEXP call, SEXP op, SEXP args, SEXP env)
 	if(streql(to, "") && known_to_be_utf8) isUTF8 = TRUE;
 	obj = Riconv_open(to, from);
 	if(obj == (iconv_t)(-1))
-	    error(_("unsupported conversion"));
+#ifdef Win32
+	    error("unsupported conversion from '%s' to '%s' in codepage %d", 
+		  from, to, localeCP);
+#else
+	    error(_("unsupported conversion from '%s' to '%s'"), from, to);
+#endif
 	PROTECT(ans = duplicate(x));
 	R_AllocStringBuffer(0, &cbuff);  /* 0 -> default */
 	for(i = 0; i < LENGTH(x); i++) {
@@ -623,21 +627,12 @@ SEXP attribute_hidden do_iconv(SEXP call, SEXP op, SEXP args, SEXP env)
 	    }
 
 	    if(res != -1 && inb == 0) {
-		/* we can currently only put the result in the CHARSXP
-		   cache if it does not contain nuls. */
-		Rboolean has_nul = FALSE;
-		char *p = cbuff.data;
+		cetype_t ienc = CE_NATIVE;
 
 		nout = cbuff.bufsize - 1 - outb;
-		for(j = 0; j < nout; j++) if(!*p++) {has_nul = TRUE; break;}
-		if(has_nul) {
-		    si = mkCharLen(cbuff.data, nout);
-		} else {
-		    if(isLatin1) si = mkCharCE(cbuff.data, CE_LATIN1);
-		    else if(isUTF8) si = mkCharCE(cbuff.data, CE_UTF8);
-		    else si = mkChar(cbuff.data);
-		}
-		SET_STRING_ELT(ans, i, si);
+		if(isLatin1) ienc = CE_LATIN1;
+		else if(isUTF8) ienc = CE_UTF8;
+		SET_STRING_ELT(ans, i, mkCharLenCE(cbuff.data, nout, ienc));
 	    }
 	    else SET_STRING_ELT(ans, i, NA_STRING);
 	}
@@ -668,16 +663,17 @@ void * Riconv_open (const char* tocode, const char* fromcode)
 #if defined Win32 || __APPLE__
     const char *cp = "UTF-8";
 # ifdef Win32
-#  ifndef SUPPORT_UTF8_WIN32
-    cp = locale2charset(NULL);
+#  ifndef SUPPORT_UTF8_WIN32 /* Always, at present */
+    char to[20] = "";
+    if (localeCP > 0) {snprintf(to, 20, "CP%d", localeCP); cp = to;}
 #  endif
 # else /* __APPLE__ */
     if (latin1locale) cp = "ISO-8859-1";
     else if (!utf8locale) cp = locale2charset(NULL);
 # endif
     if (!*tocode && !*fromcode) return iconv_open(cp, cp);
-    if(strcmp(tocode, "") == 0)  return iconv_open(cp, fromcode);
-    else if(strcmp(fromcode, "") == 0) return iconv_open(tocode, cp);
+    if(!*tocode)  return iconv_open(cp, fromcode);
+    else if(!*fromcode) return iconv_open(tocode, cp);
     else return iconv_open(tocode, fromcode);
 #else
     return iconv_open(tocode, fromcode);
@@ -702,7 +698,8 @@ int Riconv_close (void *cd)
     return iconv_close((iconv_t) cd);
 }
 
-static void *latin1_obj = NULL, *utf8_obj=NULL, *ucsmb_obj=NULL;
+static void *latin1_obj = NULL, *utf8_obj=NULL, *ucsmb_obj=NULL,
+    *ucsutf8_obj=NULL;
 
 const char *translateChar(SEXP x)
 {
@@ -726,7 +723,14 @@ const char *translateChar(SEXP x)
 	if(!latin1_obj) {
 	    obj = Riconv_open("", "latin1");
 	    /* should never happen */
-	    if(obj == (void *)(-1)) error(_("unsupported conversion"));
+	    if(obj == (void *)(-1))
+#ifdef Win32
+		error("unsupported conversion from %s in codepage %d",
+		      "latin1", localeCP);
+#else
+	        error(_("unsupported conversion from '%s' to '%s'"),
+		      "latin1", "");
+#endif
 	    latin1_obj = obj;
 	}
 	obj = latin1_obj;
@@ -734,7 +738,14 @@ const char *translateChar(SEXP x)
 	if(!utf8_obj) {
 	    obj = Riconv_open("", "UTF-8");
 	    /* should never happen */
-	    if(obj == (void *)(-1)) error(_("unsupported conversion"));
+	    if(obj == (void *)(-1)) 
+#ifdef Win32
+		error("unsupported conversion from %s in codepage %d",
+		      "latin1", localeCP);
+#else
+	        error(_("unsupported conversion from '%s' to '%s'"),
+		      "latin1", "");
+#endif
 	    utf8_obj = obj;
 	}
 	obj = utf8_obj;
@@ -814,7 +825,14 @@ const char *translateCharUTF8(SEXP x)
     if(strIsASCII(CHAR(x))) return ans;
 
     obj = Riconv_open("UTF-8", IS_LATIN1(x) ? "latin1" : "");
-    if(obj == (void *)(-1)) error(_("unsupported conversion"));
+    if(obj == (void *)(-1)) 
+#ifdef Win32
+		error("unsupported conversion from %s in codepage %d",
+		      "latin1", localeCP);
+#else
+	        error(_("unsupported conversion from '%s' to '%s'"),
+		      "latin1", "UTF-8");
+#endif
     R_AllocStringBuffer(0, &cbuff);
 top_of_loop:
     inbuf = ans; inb = strlen(inbuf);
@@ -868,7 +886,9 @@ const wchar_t *wtransChar(SEXP x)
     if(IS_LATIN1(x)) {
 	if(!latin1_wobj) {
 	    obj = Riconv_open("UCS-2LE", "latin1");
-	    if(obj == (void *)(-1)) error(_("unsupported conversion"));
+	    if(obj == (void *)(-1))
+		error(_("unsupported conversion from '%s' to '%s'"),
+		      "latin1", "UCS-2LE");
 	    latin1_wobj = obj;
 	} else
 	    obj = latin1_wobj;
@@ -876,14 +896,18 @@ const wchar_t *wtransChar(SEXP x)
     } else if(IS_UTF8(x)) {
 	if(!utf8_wobj) {
 	    obj = Riconv_open("UCS-2LE", "UTF-8");
-	    if(obj == (void *)(-1)) error(_("unsupported conversion"));
+	    if(obj == (void *)(-1)) 
+		error(_("unsupported conversion from '%s' to '%s'"),
+		      "latin1", "UCS-2LE");
 	    utf8_wobj = obj;
 	} else
 	    obj = utf8_wobj;
 	knownEnc = TRUE;
     } else {
 	obj = Riconv_open("UCS-2LE", "");
-	if(obj == (void *)(-1)) error(_("unsupported conversion"));
+	if(obj == (void *)(-1))
+	    error("unsupported conversion to '%s' from codepage %d",
+		  "UCS-2LE", localeCP);
     }
 
     R_AllocStringBuffer(0, &cbuff);
@@ -962,7 +986,17 @@ const char *reEnc(const char *x, cetype_t ce_in, cetype_t ce_out, int subst)
     }
 
     switch(ce_out) {
+ #ifdef Win32
+    case CE_NATIVE:
+	{
+	    /* avoid possible misidentification of CP1250 as LATIN-2 */
+	    sprintf(buf, "CP%d", localeCP);
+	    tocode = buf;
+	    break;
+	}
+#else
     case CE_NATIVE: tocode = ""; break;
+#endif
     case CE_LATIN1: tocode = "latin1"; break;
     case CE_UTF8:   tocode = "UTF-8"; break;
     default: return x;
@@ -1141,9 +1175,16 @@ size_t ucstoutf8(char *s, const unsigned int wc)
     memset(buf, 0, sizeof(buf));
     wcs[0] = wc; wcs[1] = 0;
 
-    if((void *)(-1) == (cd = Riconv_open("UTF-8", UNICODE)))
-	return (size_t)(-1);
-    status = Riconv(cd, &inbuf, &inbytesleft, &outbuf, &outbytesleft);
+    if(ucsutf8_obj == NULL) {
+	if((void *)(-1) == (cd = Riconv_open("UTF-8", UNICODE))) {
+	    error(_("unsupported conversion from '%s' to '%s'"),
+		  UNICODE, "UTF-8");
+	    return (size_t)(-1);
+	}
+	ucsutf8_obj = cd;
+    }
+    
+    status = Riconv(ucsutf8_obj, &inbuf, &inbytesleft, &outbuf, &outbytesleft);
 
     if (status == (size_t) -1) {
 	switch(errno){
@@ -1160,7 +1201,6 @@ size_t ucstoutf8(char *s, const unsigned int wc)
     }
     *outbuf = '\0';
     strcpy(s, buf);
-    Riconv_close(cd);
     return strlen(buf);
 }
 
@@ -1377,3 +1417,84 @@ SEXP attribute_hidden do_proctime(SEXP call, SEXP op, SEXP args, SEXP env)
     return R_NilValue;		/* -Wall */
 }
 #endif
+
+void attribute_hidden resetTimeLimits()
+{
+#ifdef _R_HAVE_TIMING_
+    double data[5];
+    R_getProcTime(data);
+
+    elapsedLimit = (elapsedLimitValue > 0) ? data[2] + elapsedLimitValue : -1.0;
+    if (elapsedLimit2 > 0.0 &&
+	(elapsedLimit <= 0.0 || elapsedLimit2 < elapsedLimit))
+	elapsedLimit = elapsedLimit2;
+
+#ifdef Win32
+    cpuLimit = (cpuLimitValue > 0) ? data[0] + data[1] + cpuLimitValue : -1.0;
+#else
+    cpuLimit = (cpuLimitValue > 0) ? data[0] + data[1] + data[3] + data[4] + cpuLimitValue : -1.0;
+#endif
+    if (cpuLimit2 > 0.0 && (cpuLimit <= 0.0 || cpuLimit2 < cpuLimit))
+	cpuLimit = cpuLimit2;
+
+#endif
+}
+
+SEXP attribute_hidden
+do_setTimeLimit(SEXP call, SEXP op, SEXP args, SEXP rho)
+{
+#ifdef _R_HAVE_TIMING_
+    double cpu, elapsed, old_cpu = cpuLimitValue,
+	old_elapsed = elapsedLimitValue;
+    int transient;
+
+    checkArity(op, args);
+    cpu = asReal(CAR(args));
+    elapsed = asReal(CADR(args));
+    transient = asLogical(CADDR(args));
+
+    if (R_FINITE(cpu) && cpu > 0) cpuLimitValue = cpu; else cpuLimitValue = -1;
+
+    if (R_FINITE(elapsed) && elapsed > 0) elapsedLimitValue = elapsed;
+    else elapsedLimitValue = -1;
+
+    resetTimeLimits();
+
+    if (transient == TRUE) {
+	cpuLimitValue = old_cpu;
+	elapsedLimitValue = old_elapsed;
+    }
+#else
+    error(_("setTimelimit() is not implemented on this system"));
+#endif
+
+    return R_NilValue;
+}
+
+SEXP attribute_hidden
+do_setSessionTimeLimit(SEXP call, SEXP op, SEXP args, SEXP rho)
+{
+#ifdef _R_HAVE_TIMING_
+    double cpu, elapsed, data[5];
+
+    checkArity(op, args);
+    cpu = asReal(CAR(args));
+    elapsed = asReal(CADR(args));
+    R_getProcTime(data);
+
+    if (R_FINITE(cpu) && cpu > 0)
+#ifdef Win32
+	cpuLimit2 = cpu + data[0] + data[1];
+#else
+	cpuLimit2 = cpu + data[0] + data[1] + data[3] + data[4];
+#endif
+    else cpuLimit2 = -1;
+
+    if (R_FINITE(elapsed) && elapsed > 0) elapsedLimit2 = elapsed + data[2];
+    else elapsedLimit2 = -1;
+#else
+    error(_("setSessionTimelimit() is not implemented on this system"));
+#endif
+
+    return R_NilValue;
+}

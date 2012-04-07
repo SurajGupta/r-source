@@ -11,16 +11,15 @@
 % standardGeneric() is a .Primitive in 'base', not 'methods'
 %\alias{standardGeneric}
 \alias{getGenerics}
-\alias{allGenerics}
+\alias{allGenerics}%% << deprecated in 2.8.0
 \alias{dumpMethod}
 \alias{findFunction}
 \alias{dumpMethods}
 \alias{removeMethods}
 \alias{signature}
 \alias{setReplaceMethod}
-\alias{callGeneric}
 %% FIXME:  These are basically not documented at all:
-%% -----  isGroup, setReplaceMethod, allGenerics
+%% -----  isGroup, setReplaceMethod
 \title{Tools for Managing Generic Functions}
 \description{
   The functions documented here manage collections of methods associated
@@ -42,8 +41,7 @@ removeMethods(f, where = topenv(parent.frame()), all = missing(where))
 setReplaceMethod(f, \dots, where = topenv(parent.frame()))
 
 getGenerics(where, searchForm = FALSE)
-allGenerics(where, searchForm = FALSE)
-callGeneric(\dots)
+%Deprecated: allGenerics(where, searchForm = FALSE)
 }
 \section{Summary of Functions}{
   \describe{
@@ -108,10 +106,11 @@ callGeneric(\dots)
       Returns a named list of classes to be matched to arguments of a
       generic function.
     }
-    \item{\code{getGenerics}:}{ Returns the names of the generic
+    \item{\code{getGenerics}:}{returns the names of the generic
       functions that have methods defined on \code{where}; this
       argument can be an environment or an index into the search
       list.  By default, the whole search list is used.
+      (\code{allGenerics()} is a \emph{deprecated} alias for \code{getGenerics}.)
 
       The methods definitions are stored with
       package qualifiers; for example, methods for function
@@ -122,14 +121,7 @@ callGeneric(\dots)
       the returned name can be plain (e.g., \code{"base"}), or in
       the form used in the search list (\code{"package:base"})
       according to the value of \code{searchForm}}
-    \item{\code{callGeneric}:}{
-      In the body of a method, this function will make a call to the
-      current generic function.  If no arguments are passed to
-      \code{callGeneric}, the arguments to the current call are passed
-      down; otherwise, the arguments are interpreted as in a call to the
-      generic function.  If the generic is a primitive then arguments
-      must be supplied.
-    }
+
   }
 }
 
@@ -248,19 +240,13 @@ callGeneric(\dots)
   }
 }
 \references{
-  The R package \pkg{methods} implements, with a few exceptions, the
-  programming interface for classes
-  and methods in the book \emph{Programming with Data} (John
-  M. Chambers, Springer, 1998), in particular sections 1.6, 2.7, 2.8,
-  and chapters 7 and 8.
+ Chambers, John M. (2008)
+ \emph{Software for Data Analysis: Programming with R}
+  Springer.  (For the R version.)
 
-  While the programming interface for the methods package follows the reference,
-  the R software is an original implementation, so details in
-  the reference that reflect the S4 implementation may appear
-  differently in R.  Also, there are extensions to the programming
-  interface developed more recently than the reference.  For a
-  discussion of details see \code{?\link{Methods}}
-  and the links from that documentation.
+ Chambers, John M. (1998)
+ \emph{Programming with Data}
+ Springer (For the original S4 version.)
 }
 \seealso{
   \code{\link{getMethod}} (also for \code{selectMethod}),

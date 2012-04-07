@@ -18,8 +18,6 @@
  *  http://www.r-project.org/Licenses/
  */
 
-/* <UTF8> char here is either ASCII or handled as a whole */
-
 #ifdef HAVE_CONFIG_H
 #include <config.h>
 #endif
@@ -2190,6 +2188,8 @@ SEXP substitute(SEXP lang, SEXP rho)
 		    do {
 			t = PREXPR(t);
 		    } while(TYPEOF(t) == PROMSXP);
+		    /* make sure code will not be modified: */
+		    if (NAMED(t) < 2) SET_NAMED(t, 2);
 		    return t;
 		}
 		else if (TYPEOF(t) == DOTSXP)

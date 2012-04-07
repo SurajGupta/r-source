@@ -58,9 +58,6 @@ x != y
   coerced to the type of the other, the (decreasing) order of precedence
   being character, complex, numeric, integer, logical and raw.
 
-  When comparisons are made between character strings, parts of the
-  strings after embedded \code{nul} characters are ignored.
-
   Missing values (\code{\link{NA}}) and \code{\link{NaN}} values are
   regarded as non-comparable even to themselves, so comparisons
   involving them will always result in \code{NA}.  Missing values can
@@ -122,5 +119,15 @@ x1 <- 0.5 - 0.3
 x2 <- 0.3 - 0.1
 x1 == x2                           # FALSE on most machines
 identical(all.equal(x1, x2), TRUE) # TRUE everywhere
-}
+
+\donttest{
+z <- c(32:126, 160:255) # range of most 8-bit charsets, Latin-1 in Unicode
+x <- if(l10n_info()$MBCS) {
+    intToUtf8(z, multiple = TRUE)
+} else rawToChar(as.raw(z), multiple= TRUE)
+## by number
+writeLines(strwrap(paste(x, collapse=" "), width = 60))
+## by locale collation
+writeLines(strwrap(paste(sort(x), collapse=" "), width = 60))
+}}
 \keyword{logic}

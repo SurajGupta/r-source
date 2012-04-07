@@ -16,16 +16,17 @@
 
 plot.lm <-
 function (x, which = c(1:3,5), ## was which = 1:4,
-	  caption = c("Residuals vs Fitted", "Normal Q-Q",
+	  caption = list("Residuals vs Fitted", "Normal Q-Q",
 	  "Scale-Location", "Cook's distance",
-	  "Residuals vs Leverage", "Cook's distance vs Leverage"),
+	  "Residuals vs Leverage",
+	  expression("Cook's dist vs Leverage  " * h[ii] / (1 - h[ii]))),
 	  panel = if(add.smooth) panel.smooth else points,
-          sub.caption = NULL, main = "",
+	  sub.caption = NULL, main = "",
 	  ask = prod(par("mfcol")) < length(which) && dev.interactive(), ...,
 	  id.n = 3, labels.id = names(residuals(x)), cex.id = 0.75,
-          qqline = TRUE, cook.levels = c(0.5, 1.0),
-          add.smooth = getOption("add.smooth"),
-          label.pos = c(4,2), cex.caption = 1)
+	  qqline = TRUE, cook.levels = c(0.5, 1.0),
+	  add.smooth = getOption("add.smooth"),
+	  label.pos = c(4,2), cex.caption = 1)
 {
     if (!inherits(x, "lm"))
 	stop("use only with \"lm\" objects")
@@ -47,7 +48,7 @@ function (x, which = c(1:3,5), ## was which = 1:4,
     n <- length(r)
     if (any(show[2:6])) {
 	s <- if (inherits(x, "rlm")) x$s
-        else if(inherits(x, "glm")) sqrt(summary(x)$dispersion)
+        else if(isGlm) sqrt(summary(x)$dispersion)
         else sqrt(deviance(x)/df.residual(x))
 	hii <- lm.influence(x, do.coef = FALSE)$hat
 	if (any(show[4:6])) {
@@ -64,10 +65,20 @@ function (x, which = c(1:3,5), ## was which = 1:4,
         r.w <- residuals(x, "pearson")
         if(!is.null(w)) r.w <- r.w[wind] # drop 0-weight cases
     }
-    if (any(show[c(2:3,5)])) {
-	rs <- r.w/(s * sqrt(1 - hii))
-        rs[is.infinite(rs)] <- NaN
+
+    dropInf <- function(x) {
+	if(any(isInf <- is.infinite(x))) {
+	    warning("Not plotting observations with leverage one:\n  ",
+		    paste(which(isInf), collapse=", "))
+	    x[isInf] <- NaN
+	}
+	x
     }
+    if (any(show[c(2:3,5)]))
+	rs <- dropInf( r.w/(s * sqrt(1 - hii)) )
+    if(show[6])
+	g <- dropInf( hii/(1-hii) )
+
     if (any(show[5:6])) { # using 'leverages'
         r.hat <- range(hii, na.rm = TRUE) # though should never have NA
         isConst.hat <- all(r.hat == 0) || diff(r.hat) < 1e-10 * mean(hii)
@@ -95,6 +106,8 @@ function (x, which = c(1:3,5), ## was which = 1:4,
 		 pos = labpos, offset = 0.25)
 	}
     }
+    getCaption <- function(k) # allow caption = "" , plotmath etc
+        as.graphicsAnnot(unlist(caption[k]))
 
     if(is.null(sub.caption)) { ## construct a default:
 	cal <- x$call
@@ -123,7 +136,7 @@ function (x, which = c(1:3,5), ## was which = 1:4,
 	panel(yh, r, ...)
 	if (one.fig)
 	    title(sub = sub.caption, ...)
-	mtext(caption[1], 3, 0.25, cex = cex.caption)
+	mtext(getCaption(1), 3, 0.25, cex = cex.caption)
 	if(id.n > 0) {
 	    y.id <- r[show.r]
 	    y.id[y.id < 0] <- y.id[y.id < 0] - strheight(" ")/3
@@ -138,7 +151,7 @@ function (x, which = c(1:3,5), ## was which = 1:4,
 	if (qqline) qqline(rs, lty = 3, col = "gray50")
 	if (one.fig)
 	    title(sub = sub.caption, ...)
-	mtext(caption[2], 3, 0.25, cex = cex.caption)
+	mtext(getCaption(2), 3, 0.25, cex = cex.caption)
 	if(id.n > 0)
 	    text.id(qq$x[show.rs], qq$y[show.rs], show.rs)
     }
@@ -152,7 +165,7 @@ function (x, which = c(1:3,5), ## was which = 1:4,
 	panel(yhn0, sqrtabsr, ...)
 	if (one.fig)
 	    title(sub = sub.caption, ...)
-	mtext(caption[3], 3, 0.25, cex = cex.caption)
+	mtext(getCaption(3), 3, 0.25, cex = cex.caption)
 	if(id.n > 0)
 	    text.id(yhn0[show.rs], sqrtabsr[show.rs], show.rs)
     }
@@ -165,7 +178,7 @@ function (x, which = c(1:3,5), ## was which = 1:4,
 	     xlab = "Obs. number", ylab = "Cook's distance", ...)
 	if (one.fig)
 	    title(sub = sub.caption, ...)
-	mtext(caption[4], 3, 0.25, cex = cex.caption)
+	mtext(getCaption(4), 3, 0.25, cex = cex.caption)
 	if(id.n > 0)
 	    text.id(show.r, cook[show.r], show.r, adj.x=FALSE)
     }
@@ -177,7 +190,8 @@ function (x, which = c(1:3,5), ## was which = 1:4,
 	}
         do.plot <- TRUE
         if(isConst.hat) { ## leverages are all the same
-            caption[5] <- "Constant Leverage:\n Residuals vs Factor Levels"
+	    if(missing(caption)) # set different default
+		caption[[5]] <- "Constant Leverage:\n Residuals vs Factor Levels"
             ## plot against factor-level combinations instead
             aterms <- attributes(terms(x))
             ## classes w/o response
@@ -254,7 +268,7 @@ function (x, which = c(1:3,5), ## was which = 1:4,
             }
         } # if(const h_ii) .. else ..
 	if (do.plot) {
-	    mtext(caption[5], 3, 0.25, cex = cex.caption)
+	    mtext(getCaption(5), 3, 0.25, cex = cex.caption)
 	    if (id.n > 0) {
 		y.id <- rs[show.r]
 		y.id[y.id < 0] <- y.id[y.id < 0] - strheight(" ")/3
@@ -264,14 +278,14 @@ function (x, which = c(1:3,5), ## was which = 1:4,
     }
     if (show[6]) {
 	ymx <- max(cook, na.rm = TRUE)*1.025
-	g <- hii/(1-hii)
-        g[is.infinite(g)] <- NaN
 	plot(g, cook, xlim = c(0, max(g, na.rm=TRUE)), ylim = c(0, ymx),
-	     main = main, xlab = "Leverage", ylab = "Cook's distance",
+	     main = main, ylab = "Cook's distance",
+             xlab = expression("Leverage  " * h[ii]),
 	     xaxt = "n", type = "n", ...)
+	panel(g, cook, ...)
+        ## Label axis with h_ii values
 	athat <- pretty(hii)
 	axis(1, at = athat/(1-athat), labels = paste(athat))
-	panel(g, cook, ...)
 	if (one.fig)
 	    title(sub = sub.caption, ...)
 	p <- length(coef(x))
@@ -298,7 +312,7 @@ function (x, which = c(1:3,5), ## was which = 1:4,
 
 	## axis(4, at=p*cook.levels, labels=paste(c(rev(cook.levels), cook.levels)),
 	##	mgp=c(.25,.25,0), las=2, tck=0, cex.axis=cex.id)
-	mtext(caption[6], 3, 0.25, cex = cex.caption)
+	mtext(getCaption(6), 3, 0.25, cex = cex.caption)
 	if (id.n > 0) {
 	    show.r <- order(-cook)[iid]
             text.id(g[show.r], cook[show.r], show.r)

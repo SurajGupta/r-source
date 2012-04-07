@@ -22,10 +22,10 @@
 #
 msgid ""
 msgstr ""
-"Project-Id-Version: R 2.7.1\n"
+"Project-Id-Version: R 2.8.0\n"
 "Report-Msgid-Bugs-To: bugs@r-project.org\n"
-"POT-Creation-Date: 2008-08-01 08:44\n"
-"PO-Revision-Date: 2008-08-01 08:44\n"
+"POT-Creation-Date: 2008-10-06 07:30\n"
+"PO-Revision-Date: 2008-10-06 07:30\n"
 "Last-Translator: Automatically generated\n"
 "Language-Team: none\n"
 "MIME-Version: 1.0\n"
@@ -132,11 +132,11 @@ msgstr "bad argument"
 msgid "all arguments must be of class \"person\""
 msgstr "all arguments must be of class “person”"
 
-msgid "broken installation, no CITATION file in the base package."
-msgstr "broken installation, no CITATION file in the base package."
-
 msgid "package '%s' not found"
 msgstr "package ‘%s’ not found"
+
+msgid "broken installation, no CITATION file in the base package."
+msgstr "broken installation, no CITATION file in the base package."
 
 msgid "no date field in DESCRIPTION file of package '%s'"
 msgstr "no date field in DESCRIPTION file of package ‘%s’"
@@ -296,8 +296,8 @@ msgstr "‘topic’ should be a name, length-one character vector or reserved wo
 msgid "No documentation for '%s' in specified packages and libraries:"
 msgstr "No documentation for ‘%s’ in specified packages and libraries:"
 
-msgid "you could try 'help.search(\"%s\")'"
-msgstr "you could try ‘help.search(“%s”)’"
+msgid "you could try '??%s'"
+msgstr "you could try ‘??%s’"
 
 msgid ""
 "Help for topic '%s' is not in any loaded package but can be found in the "
@@ -525,6 +525,12 @@ msgstr "Further steps are described in '%s'."
 
 msgid "unable to access index for repository %s"
 msgstr "unable to access index for repository %s"
+
+msgid "invalid 'oldPkgs'; must be as result from old.packages()"
+msgstr "invalid 'oldPkgs'; must be as result from old.packages()"
+
+msgid "illformed 'instPkgs' matrix"
+msgstr "illformed ‘instPkgs’ matrix"
 
 msgid "no installed packages for (invalid?) 'lib.loc=%s'"
 msgstr "no installed packages for (invalid?) ‘lib.loc=%s’"
@@ -967,6 +973,12 @@ msgstr "updating HTML package descriptions"
 
 msgid "cannot update '%s'"
 msgstr "cannot update ‘%s’"
+
+msgid "winDialog() cannot be used non-interactively"
+msgstr "winDialog() cannot be used non-interactively"
+
+msgid "winDialogString() cannot be used non-interactively"
+msgstr "winDialogString() cannot be used non-interactively"
 
 msgid "'pb' is not from class \"winProgressBar\""
 msgstr "‘pb’ is not from class “winProgressBar”"

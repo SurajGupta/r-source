@@ -2,7 +2,7 @@ msgid ""
 msgstr ""
 "Project-Id-Version: R 2.3.0\n"
 "Report-Msgid-Bugs-To: bugs@r-project.org\n"
-"POT-Creation-Date: 2008-08-01 08:44\n"
+"POT-Creation-Date: 2008-10-06 07:30\n"
 "PO-Revision-Date: 2005-05-31 09:50+0900\n"
 "Last-Translator: Korean <uiami@hanmail.com>\n"
 "Language-Team: Korean <translation-team-ko@lists.sourceforge.net>\n"
@@ -112,11 +112,11 @@ msgstr "불적절한 인수"
 msgid "all arguments must be of class \"person\""
 msgstr "모든 인수는 클래스 \"person\"이어야만 합니다"
 
-msgid "broken installation, no CITATION file in the base package."
-msgstr "파손 되어진 설치, 기초 패키지로서 CITATION 파일은 없습니다"
-
 msgid "package '%s' not found"
 msgstr "'%s' 패키지가 검색되지 않습니다"
+
+msgid "broken installation, no CITATION file in the base package."
+msgstr "파손 되어진 설치, 기초 패키지로서 CITATION 파일은 없습니다"
 
 msgid "no date field in DESCRIPTION file of package '%s'"
 msgstr "패키지 '%s'의  DESCRIPTION 파일에서 date 필드가 있습니다"
@@ -291,7 +291,8 @@ msgstr "'package'는 문자열이나 NULL이어야만 합니다"
 msgid "No documentation for '%s' in specified packages and libraries:"
 msgstr "지정된 패키지 및 라이브러리에서 '%s'때문에 documentation는 없습니다"
 
-msgid "you could try 'help.search(\"%s\")'"
+#, fuzzy
+msgid "you could try '??%s'"
 msgstr "help.search(\"%s\")를 시도할 수 있었습니다"
 
 msgid ""
@@ -532,6 +533,12 @@ msgstr ""
 
 msgid "unable to access index for repository %s"
 msgstr "reposityory %s를 위한 인덱스에 액세스 할수 없습니다"
+
+msgid "invalid 'oldPkgs'; must be as result from old.packages()"
+msgstr ""
+
+msgid "illformed 'instPkgs' matrix"
+msgstr ""
 
 msgid "no installed packages for (invalid?) 'lib.loc=%s'"
 msgstr "'lib.loc=%s'를 위한 (무효?) 인스톨 된 패키지가 없습니다"
@@ -1001,6 +1008,14 @@ msgstr "갱신하는 HTML 패키지 기술입니다"
 
 msgid "cannot update '%s'"
 msgstr "'%s'를 갱신할 수 없습니다"
+
+#, fuzzy
+msgid "winDialog() cannot be used non-interactively"
+msgstr "menu()는 non-intertactively에 사용할 수가 없습니다"
+
+#, fuzzy
+msgid "winDialogString() cannot be used non-interactively"
+msgstr "menu()는 non-intertactively에 사용할 수가 없습니다"
 
 msgid "'pb' is not from class \"winProgressBar\""
 msgstr ""

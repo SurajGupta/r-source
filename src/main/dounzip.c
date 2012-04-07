@@ -19,11 +19,6 @@
  *  http://www.r-project.org/Licenses/
  */
 
-/* <UTF8>
-   Looks OK as byte-level comparions are all with ASCII chars.
-   Has own case-insensitive comparisons which we never use (as from R 2.1.0).
- */
-
 #ifdef HAVE_CONFIG_H
 #include <config.h>
 #endif
@@ -101,11 +96,7 @@ extract_one(unzFile uf, const char *const dest, const char * const filename,
 	fout = R_fopen(outname, "wb");
 	if (!fout) {
 	    unzCloseCurrentFile(uf);
-#ifdef HAVE_STRERROR
 	    error(_("cannot open file '%s': %s"), outname, strerror(errno));
-#else
-	    error(_("cannot open file '%s'"), outname);
-#endif
 	    return 3;		/* not reached */
 	}
 	while (1) {

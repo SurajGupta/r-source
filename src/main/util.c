@@ -19,13 +19,6 @@
  *  http://www.r-project.org/Licenses/
  */
 
-/* <UTF8>
-   char here is mainly either ASCII or handled as a whole.
-   isBlankString has been improved.
-   do_basename and do_dirname now work in chars.
-*/
-
-
 
 #ifdef HAVE_CONFIG_H
 #include <config.h>
@@ -964,7 +957,7 @@ SEXP attribute_hidden do_setencoding(SEXP call, SEXP op, SEXP args, SEXP rho)
 	if (! ((ienc == CE_LATIN1 && IS_LATIN1(tmp)) ||
 	       (ienc == CE_UTF8 && IS_UTF8(tmp)) ||
 	       (ienc == CE_NATIVE && ! IS_LATIN1(tmp) && ! IS_UTF8(tmp))))
-	    SET_STRING_ELT(x, i, mkCharCE(CHAR(tmp), ienc));
+	    SET_STRING_ELT(x, i, mkCharLenCE(CHAR(tmp), LENGTH(tmp), ienc));
     }
     UNPROTECT(1);
     return x;
@@ -1139,6 +1132,7 @@ size_t wcstoutf8(char *s, const wchar_t *wc, size_t n)
     return res;
 }
 
+
 /* A version that reports failure as an error */
 size_t Mbrtowc(wchar_t *wc, const char *s, size_t n, mbstate_t *ps)
 {
@@ -1147,6 +1141,8 @@ size_t Mbrtowc(wchar_t *wc, const char *s, size_t n, mbstate_t *ps)
     if(n <= 0 || !*s) return (size_t)0;
     used = mbrtowc(wc, s, n, ps);
     if((int) used < 0) {
+	/* This gets called from the menu setup in RGui */
+	if (!R_Is_Running) return -1;
 	/* let's try to print out a readable version */
 	char *err = alloca(4*strlen(s) + 1), *q;
 	const char *p;
@@ -1373,52 +1369,6 @@ char *acopy_string(const char *in)
 }
 
 
-/* FIXME: consider inlining here */
-#ifdef Win32
-
-static int Rstrcoll(const char *s1, const char *s2)
-{
-    wchar_t *w1, *w2;
-    w1 = (wchar_t *) alloca((strlen(s1)+1)*sizeof(wchar_t));
-    w2 = (wchar_t *) alloca((strlen(s2)+1)*sizeof(wchar_t));
-    R_CheckStack();
-    utf8towcs(w1, s1, strlen(s1));
-    utf8towcs(w2, s2, strlen(s2));
-    return wcscoll(w1, w2);
-}
-
-int Scollate(SEXP a, SEXP b)
-{
-    if(getCharCE(a) == CE_UTF8 || getCharCE(b) == CE_UTF8)
-	return Rstrcoll(translateCharUTF8(a), translateCharUTF8(b));
-    else
-	return strcoll(translateChar(a), translateChar(b));
-}
-
-int Seql(SEXP a, SEXP b)
-{
-    return (a == b) || !strcmp(translateCharUTF8(a), translateCharUTF8(b));
-}
-
-#else
-
-# ifdef HAVE_STRCOLL
-#  define STRCOLL strcoll
-# else
-#  define STRCOLL strcmp
-# endif
-
-int Scollate(SEXP a, SEXP b)
-{
-    return STRCOLL(translateChar(a), translateChar(b));
-}
-
-int Seql(SEXP a, SEXP b)
-{
-    return (a == b) || !strcmp(translateChar(a), translateChar(b));
-}
-
-#endif
 
 
 /* Table from
@@ -1490,7 +1440,7 @@ int attribute_hidden Rf_AdobeSymbol2ucs2(int n)
 double R_strtod4(const char *str, char **endptr, char dec, Rboolean NA)
 {
     LDOUBLE ans = 0.0, p10 = 10.0, fac = 1.0;
-    int n, expn = 0, sign = 1, ndigits = 0;
+    int n, expn = 0, sign = 1, ndigits = 0, exph = -1;
     const char *p = str;
 
     /* optional whitespace */
@@ -1530,7 +1480,9 @@ double R_strtod4(const char *str, char **endptr, char dec, Rboolean NA)
 	    if('0' <= *p && *p <= '9') ans = 16*ans + (*p -'0');
 	    else if('a' <= *p && *p <= 'f') ans = 16*ans + (*p -'a' + 10);
 	    else if('A' <= *p && *p <= 'F') ans = 16*ans + (*p -'A' + 10);
+	    else if(*p == dec) {exph = 0; continue;}
 	    else break;
+	    if (exph >= 0) exph += 4;
 	}
 	if (*p == 'p' || *p == 'P') {
 	    int expsign = 1;
@@ -1542,6 +1494,7 @@ double R_strtod4(const char *str, char **endptr, char dec, Rboolean NA)
 	    }
 	    for (n = 0; *p >= '0' && *p <= '9'; p++) n = n * 10 + (*p - '0');
 	    expn += expsign * n;
+	    if(exph > 0) expn -= exph;
 	    if (expn < 0) {
 		for (n = -expn, fac = 1.0; n; n >>= 1, p2 *= p2)
 		    if (n & 1) fac *= p2;
@@ -1611,3 +1564,156 @@ double R_atof(const char *str)
 {
     return R_strtod4(str, NULL, '.', FALSE);
 }
+
+#ifdef USE_ICU
+#include <unicode/utypes.h>
+#include <unicode/ucol.h>
+#include <unicode/uloc.h>
+#include <unicode/uiter.h>
+
+static UCollator *collator = NULL;
+
+static const struct {
+    const char * const str;
+    int val;
+} ATtable[] = {
+    { "case_first", UCOL_CASE_FIRST },
+    { "upper", UCOL_UPPER_FIRST },
+    { "lower", UCOL_LOWER_FIRST },
+    { "default ", UCOL_DEFAULT },
+    { "strength", 999 },
+    { "primary ", UCOL_PRIMARY },
+    { "secondary ", UCOL_SECONDARY },
+    { "teritary ", UCOL_TERTIARY },
+    { "guaternary ", UCOL_QUATERNARY },
+    { "identical ", UCOL_IDENTICAL },
+    { "french_collation", UCOL_FRENCH_COLLATION },
+    { "on", UCOL_ON },
+    { "off", UCOL_OFF },
+    { "normalization", UCOL_NORMALIZATION_MODE },
+    { "alternate_handling", UCOL_ALTERNATE_HANDLING },
+    { "non_ignorable", UCOL_NON_IGNORABLE },
+    { "shifted", UCOL_SHIFTED },
+    { "case_level", UCOL_CASE_LEVEL },
+    { "hiragana_quaternary", UCOL_HIRAGANA_QUATERNARY_MODE },
+    { NULL,  0 }
+};
+    
+
+SEXP do_ICUset(SEXP call, SEXP op, SEXP args, SEXP rho)
+{
+    SEXP x;
+    UErrorCode  status = U_ZERO_ERROR;
+    
+    for (; args != R_NilValue; args = CDR(args)) {
+	const char *this = CHAR(PRINTNAME(TAG(args)));
+	const char *s;
+
+	x = CAR(args);
+	if (!isString(x) || LENGTH(x) != 1)
+	    error(_("invalid argument"));
+	s = CHAR(STRING_ELT(x, 0));
+	if (streql(this, "locale")) {
+	    if (collator) ucol_close(collator);
+	    uloc_setDefault(s, &status);
+	    if(U_FAILURE(status))
+		error("failed to set ICU locale");
+	    collator = ucol_open(NULL, &status);
+	    if (U_FAILURE(status)) error("failed to open ICU collator");
+	} else {
+	    int i, at = -1, val = -1;
+	    for (i = 0; ATtable[i].str; i++)
+		if (streql(this, ATtable[i].str)) {
+		    at = ATtable[i].val;
+		    break;
+		}
+	    for (i = 0; ATtable[i].str; i++)
+		if (streql(s, ATtable[i].str)) {
+		    val = ATtable[i].val;
+		    break;
+		}
+	    if (collator && at == 999 && val >= 0) {
+		ucol_setStrength(collator, val);
+	    } else if (collator && at >= 0 && val >= 0) {
+		ucol_setAttribute(collator, at, val, &status);
+		if (U_FAILURE(status)) 
+		    error("failed to set ICU collator attribute");
+	    }
+	}
+    }
+
+    return R_NilValue;
+}
+
+
+/* NB: strings can have equal collation weight without being identical */
+int Scollate(SEXP a, SEXP b)
+{
+    int result = 0;
+    UErrorCode  status = U_ZERO_ERROR;
+    UCharIterator aIter, bIter;
+    const char *as = translateCharUTF8(a), *bs = translateCharUTF8(b);
+    size_t len1 = strlen(as), len2 = strlen(bs);
+
+    if (collator == NULL && strcmp("C", setlocale(LC_COLLATE, NULL)) ) {
+	/* do better later */
+	uloc_setDefault(setlocale(LC_COLLATE, NULL), &status);
+	if(U_FAILURE(status))
+	    error("failed to set ICU locale");
+	collator = ucol_open(NULL, &status);
+	if (U_FAILURE(status)) error("failed to open ICU collator");
+    }
+    if (collator == NULL)
+	return strcoll(translateChar(a), translateChar(b));
+    
+    uiter_setUTF8(&aIter, as, len1);
+    uiter_setUTF8(&bIter, bs, len2);
+    result = ucol_strcollIter(collator, &aIter, &bIter, &status);   
+    if (U_FAILURE(status)) error("could not collate");
+    return result;
+}
+
+#else /* not USE_ICU */
+
+SEXP do_ICUset(SEXP call, SEXP op, SEXP args, SEXP rho)
+{
+    warning(_("ICU is not supported on this build"));
+    return R_NilValue;
+}
+
+# ifdef Win32
+
+static int Rstrcoll(const char *s1, const char *s2)
+{
+    wchar_t *w1, *w2;
+    w1 = (wchar_t *) alloca((strlen(s1)+1)*sizeof(wchar_t));
+    w2 = (wchar_t *) alloca((strlen(s2)+1)*sizeof(wchar_t));
+    R_CheckStack();
+    utf8towcs(w1, s1, strlen(s1));
+    utf8towcs(w2, s2, strlen(s2));
+    return wcscoll(w1, w2);
+}
+
+int Scollate(SEXP a, SEXP b)
+{
+    if(getCharCE(a) == CE_UTF8 || getCharCE(b) == CE_UTF8)
+	return Rstrcoll(translateCharUTF8(a), translateCharUTF8(b));
+    else
+	return strcoll(translateChar(a), translateChar(b));
+}
+
+# else
+
+#  ifdef HAVE_STRCOLL
+#   define STRCOLL strcoll
+#  else
+#   define STRCOLL strcmp
+#  endif
+
+int Scollate(SEXP a, SEXP b)
+{
+    return STRCOLL(translateChar(a), translateChar(b));
+}
+
+# endif
+#endif

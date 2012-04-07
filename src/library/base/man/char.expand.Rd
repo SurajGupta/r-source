@@ -23,8 +23,6 @@
   This function is particularly useful when abbreviations are allowed in
   function arguments, and need to be uniquely expanded with respect to a
   target table of possible values.
-
-  Inputs with embedded nul bytes will be truncated at the first nul.
 }
 \value{
   A length-one character vector, one of the elements of \code{target}

@@ -82,9 +82,9 @@ This is an introduction to R.
 @value{ISBN-intro}
 @end titlepage
 
-@ifnothtml
+@c @ifnothtml
 @contents
-@end ifnothtml
+@c @end ifnothtml
 
 @ifnottex
 @node Top, Preface, (dir), (dir)
@@ -414,8 +414,16 @@ functions.  It can be a great way to get your bearings quickly and to
 understand the breadth of what @R{} has to offer.
 
 @findex help.search
-The @code{help.search} command allows searching for help in various
-ways: try @code{?help.search} for details and examples.
+The @code{help.search} command (alternatively @code{??}) 
+allows searching for help in various
+ways. For example,
+
+@example
+> ??solve
+@end example
+@findex ??
+
+Try @code{?help.search} for details and more examples.
 
 The examples on a help topic can normally be run by
 
@@ -479,7 +487,7 @@ and indicate continuation by simple indenting.
 Command lines entered at the console are limited@footnote{some of the
 consoles will not allow you to enter more, and amongst those which do
 some will silently discard the excess and some will use it as the start
-of the next line.} to about 1024 bytes (not characters).
+of the next line.} to about 4095 bytes (not characters).
 
 @node Recall and correction of previous commands, Executing commands from or diverting output to a file, R commands; case sensitivity etc, Introduction and preliminaries
 @section Recall and correction of previous commands
@@ -4033,7 +4041,8 @@ users control over their workspace and allows for different startup
 procedures in different working directories.  If no @file{.Rprofile}
 file is found in the startup directory, then @R{} looks for a
 @file{.Rprofile} file in the user's home directory and uses that (if it
-exists).
+exists).  If the environment variable @env{R_PROFILE_USER} is set, the
+file it points to is used instead of the @file{.Rprofile} files.
 
 Any function named @code{.First()} in either of the two profile files or
 in the @file{.RData} image has a special status.  It is automatically
@@ -4043,7 +4052,7 @@ below alters the prompt to @code{$} and sets up various other useful
 things that can then be taken for granted in the rest of the session.
 
 Thus, the sequence in which files are executed is, @file{Rprofile.site},
-@file{.Rprofile}, @file{.RData} and then @code{.First()}.  A definition
+the user profile, @file{.RData} and then @code{.First()}.  A definition
 in later files will mask definitions in earlier files.
 
 @example
@@ -5514,7 +5523,7 @@ of classes is usually chosen, but a recommendation can be given with the
 @code{nclass=} argument.  Alternatively, the breakpoints can be
 specified exactly with the @code{breaks=} argument.  If the
 @code{probability=TRUE} argument is given, the bars represent relative
-frequencies instead of counts.
+frequencies divided by bin width instead of counts.
 
 @item dotchart(x, @dots{})
 @findex dotchart
@@ -6796,26 +6805,30 @@ for some Windows-specific details).
 Unless @option{--no-environ} was given, @R{} searches for user and site
 files to process for setting environment variables.  The name of the
 site file is the one pointed to by the environment variable
-@env{R_ENVIRON}; if this is unset, @file{$R_HOME/etc/Renviron.site} is
-used (if it exists).  The user file searched for is @file{.Renviron}
-in the current or in the user's home directory (in that order).  These
-files should contain lines of the form @samp{@var{name}=@var{value}}.
-(See @code{help(Startup)} for a precise description.)  Variables you
-might want to set include @env{R_PAPERSIZE} (the default paper size),
-@env{R_PRINTCMD} (the default print command) and @env{R_LIBS} (specifies
-the list of @R{} library trees searched for add-on packages).
+@env{R_ENVIRON}; if this is unset, @file{@var{R_HOME}/etc/Renviron.site}
+is used (if it exists).  The user file is the one pointed to by the
+environment variable @env{R_ENVIRON_USER} if this is set; otherwise,
+files @file{.Renviron} in the current or in the user's home directory
+(in that order) are searched for.  These files should contain lines of
+the form @samp{@var{name}=@var{value}}.  (See @code{help("Startup")} for
+a precise description.)  Variables you might want to set include
+@env{R_PAPERSIZE} (the default paper size), @env{R_PRINTCMD} (the
+default print command) and @env{R_LIBS} (specifies the list of @R{}
+library trees searched for add-on packages).
 
 @item
 Then @R{} searches for the site-wide startup profile unless the command
 line option @option{--no-site-file} was given.  The name of this file is
 taken from the value of the @env{R_PROFILE} environment variable.  If
-that variable is unset, the default @file{$R_HOME/etc/Rprofile.site} is
-used if this exists.
+that variable is unset, the default
+@file{@var{R_HOME}/etc/Rprofile.site} is used if this exists.
 
 @item
-Then, unless @option{--no-init-file} was given, @R{} searches for a file
-called @file{.Rprofile} in the current directory or in the user's home
-directory (in that order) and sources it.
+Then, unless @option{--no-init-file} was given, @R{} searches for a user
+profile and sources it.  The name of this file is taken from the
+environment variable @env{R_PROFILE_USER}; if unset, a file called
+@file{.Rprofile} in the current directory or in the user's home
+directory (in that order) is searched for.
 
 @item
 It also loads a saved image from @file{.RData} if there is one (unless
@@ -6990,7 +7003,7 @@ skipped: this can be useful to retrieve values from it with
 @end table
 
 Note that input and output can be redirected in the usual way (using
-@samp{<} and @samp{>}), but the line length limit of 1024 bytes still
+@samp{<} and @samp{>}), but the line length limit of 4095 bytes still
 applies.  Warning and error messages are sent to the error channel
 (@code{stderr}).
 
@@ -7107,7 +7120,7 @@ a break to the debugger during command line processing.
 
 In Windows with @code{R CMD} you may also specify your own @file{*.bat}
 or @file{*.exe} file instead of one of the built-in commands.  It will
-be run with the following environment variables set appropriately:
+be run with several environment variables set appropriately, including
 @env{R_HOME}, @env{R_VERSION}, @env{R_CMD}, @env{R_OSTYPE}, @env{PATH},
 @env{PERL5LIB}, and @env{TEXINPUTS}.  For example, if you already have
 @file{latex.exe} on your path, then
@@ -7117,7 +7130,7 @@ R CMD latex.exe mydoc
 @end example
 @noindent
 will run @LaTeX{} on @file{mydoc.tex}, with the path to @R{}'s
-@file{share/texmf} macros added to @env{TEXINPUTS}.
+@file{share/texmf} macros appended to @env{TEXINPUTS}.
 
 @node Invoking R under Mac OS X, Scripting with R, Invoking R under Windows, Invoking R
 @appendixsec Invoking R under Mac OS X

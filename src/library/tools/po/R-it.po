@@ -2,7 +2,7 @@ msgid ""
 msgstr ""
 "Project-Id-Version: R 2.3.0\n"
 "Report-Msgid-Bugs-To: bugs@r-project.org\n"
-"POT-Creation-Date: 2008-08-01 08:44\n"
+"POT-Creation-Date: 2008-09-08 14:13\n"
 "PO-Revision-Date: 2005-04-17 16:57+0200\n"
 "Last-Translator: stefano iacus <>\n"
 "Language-Team: Italian <it@li.org>\n"
@@ -143,7 +143,10 @@ msgstr "specificare 'package', 'dir' o 'file'"
 msgid "file '%s' does not exist"
 msgstr "il file '%s' non esiste"
 
-msgid "parse error in file '%s'"
+#, fuzzy
+msgid ""
+"parse error in file '%s':\n"
+"%s"
 msgstr "errore analisi file '%s'"
 
 msgid "Foreign function calls without 'PACKAGE' argument:"
@@ -155,7 +158,12 @@ msgstr "il metodo S3 '%s' è dichiarato ma non trovato"
 msgid "cannot check R code installed as image"
 msgstr "impossibile verificare codice R installato come immagine"
 
-msgid "parse error in examples from file '%s'"
+#, fuzzy
+msgid "parse error in file '%s':"
+msgstr "errore analisi file '%s'"
+
+#, fuzzy
+msgid "parse error in examples from file '%s':"
 msgstr "errore di analisi negli esempi del file '%s'"
 
 msgid "File '%s':"
@@ -362,6 +370,10 @@ msgid "Non-portable flags in variable '%s':"
 msgstr ""
 
 #, fuzzy
+msgid "package must be loaded"
+msgstr "il name space non deve essere caricato."
+
+#, fuzzy
 msgid "Missing link(s) in documentation object '%s':"
 msgstr "Errore di sintassi nella documentazione dell'oggetto '%s':"
 
@@ -375,6 +387,33 @@ msgid "'::' or ':::' imports not declared from:"
 msgstr ""
 
 msgid "'library' or 'require' calls not declared from:"
+msgstr ""
+
+msgid "Generics g in env ="
+msgstr ""
+
+msgid "where hasMethods(g, env) errors:"
+msgstr ""
+
+msgid ","
+msgstr ""
+
+msgid "May need something like"
+msgstr ""
+
+msgid "importFrom("
+msgstr ""
+
+msgid ")"
+msgstr ""
+
+msgid "in NAMESPACE."
+msgstr ""
+
+msgid "Generics without methods in"
+msgstr ""
+
+msgid ":"
 msgstr ""
 
 msgid "argument 'lines' must be a character vector"
@@ -456,10 +495,6 @@ msgstr "campo \\name mancante/vuoto nei file Rd"
 msgid "unable to create temp directory"
 msgstr "impossibile creare directory temporanea"
 
-#, fuzzy
-msgid "--- running texi2dvi on vignettes"
-msgstr "esecuzione texi2dvi su '%s' fallita"
-
 msgid ""
 "processing vignette '%s' failed with diagnostics:\n"
 "%s"
@@ -468,9 +503,6 @@ msgstr ""
 #, fuzzy
 msgid "running 'make' failed"
 msgstr "esecuzione di make fallita"
-
-msgid "cannot read index information in file '%s'"
-msgstr "non posso leggere le informazioni dell'indice nel file '%s'"
 
 msgid "argument 'vignette' must be of length 1"
 msgstr "l'argomento 'vignette' deve avere lunghezza 1"
@@ -488,9 +520,6 @@ msgid "cannot open directory '%s'"
 msgstr "impossibile leggere directory '%s'"
 
 msgid "WARNING: 'Depends' entry has multiple dependencies on R:"
-msgstr ""
-
-msgid ","
 msgstr ""
 
 msgid "only the first will be used in R < 2.7.0"
@@ -563,6 +592,9 @@ msgstr ""
 
 msgid "ERROR: this R is version %s, required is R %s %s"
 msgstr ""
+
+msgid "cannot read index information in file '%s'"
+msgstr "non posso leggere le informazioni dell'indice nel file '%s'"
 
 msgid "there is no package called '%s'"
 msgstr "non esiste un pacchetto chiamato '%s'"
@@ -649,12 +681,25 @@ msgid "only Rd syntax is currently supported"
 msgstr "solo la sintassi Rd è supportata al momento"
 
 #, fuzzy
+msgid "Running 'texi2dvi' on '%s' failed."
+msgstr "esecuzione texi2dvi su '%s' fallita"
+
+#, fuzzy
 msgid "running 'texi2dvi' on '%s' failed"
 msgstr "esecuzione texi2dvi su '%s' fallita"
 
 #, fuzzy
 msgid "unable to run %s on '%s'"
 msgstr "impossibile eseguire bibtext su '%s'"
+
+msgid "File 'DESCRIPTION' is missing."
+msgstr ""
+
+msgid "Files 'DESCRIPTION' and 'DESCRIPTION.in' are missing."
+msgstr ""
+
+msgid "Bundle 'DESCRIPTION' is missing."
+msgstr ""
 
 msgid "file '%s' is not in valid DCF format"
 msgstr "il fil e'%s' non è in formato DCF valido"
@@ -690,6 +735,10 @@ msgid_plural ""
 "Found possibly global 'T' or 'F' in the following Rd example files:"
 msgstr[0] ""
 msgstr[1] ""
+
+#, fuzzy
+#~ msgid "--- running texi2dvi on vignettes"
+#~ msgstr "esecuzione texi2dvi su '%s' fallita"
 
 #~ msgid "unable to run pdflatex on '%s'"
 #~ msgstr "impossibile eseguire pdflatex su '%s'"

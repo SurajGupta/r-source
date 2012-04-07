@@ -27,8 +27,6 @@
  *	and reset the stack pointer.
  */
 
-/* <UTF8> char here is handled as a whole */
-
 #define USE_RINTERNALS
 
 
@@ -1004,23 +1002,24 @@ static void CheckFinalizers(void)
    use EXTPTRSXP's but these only hold a void *, and function pointers
    are not guaranteed to be compatible with a void *.  There should be
    a cleaner way of doing this, but this will do for now. --LT */
+/* Changed to RAWSXP in 2.8.0 */
 static Rboolean isCFinalizer(SEXP fun)
 {
-    return TYPEOF(fun) == CHARSXP;
+    return TYPEOF(fun) == RAWSXP;
     /*return TYPEOF(fun) == EXTPTRSXP;*/
 }
 
 static SEXP MakeCFinalizer(R_CFinalizer_t cfun)
 {
-    SEXP s = allocString(sizeof(R_CFinalizer_t));
-    *((R_CFinalizer_t *) CHAR(s)) = cfun;
+    SEXP s = allocVector(RAWSXP, sizeof(R_CFinalizer_t));
+    *((R_CFinalizer_t *) RAW(s)) = cfun;
     return s;
     /*return R_MakeExternalPtr((void *) cfun, R_NilValue, R_NilValue);*/
 }
 
 static R_CFinalizer_t GetCFinalizer(SEXP fun)
 {
-    return *((R_CFinalizer_t *) CHAR(fun));
+    return *((R_CFinalizer_t *) RAW(fun));
     /*return (R_CFinalizer_t) R_ExternalPtrAddr(fun);*/
 }
 
@@ -1351,7 +1350,6 @@ static void RunGenCollect(R_size_t size_needed)
 
     DEBUG_CHECK_NODE_COUNTS("after processing forwarded list");
 
-#ifdef USE_CHAR_HASHING
     /* process CHARSXP cache */
     {
 	SEXP t;
@@ -1379,7 +1377,6 @@ static void RunGenCollect(R_size_t size_needed)
     }
     FORWARD_NODE(R_StringHash);
     PROCESS_NODES();
-#endif
 
     /* release large vector allocations */
     ReleaseLargeFreeVectors();
@@ -1842,6 +1839,10 @@ SEXP attribute_hidden mkPROMISE(SEXP expr, SEXP rho)
 #if VALGRIND_LEVEL > 2
     VALGRIND_MAKE_READABLE(s,sizeof(*s));
 #endif
+    /* precaution to ensure code does not get modified via
+       substitute() and the like */ 
+    if (NAMED(expr) < 2) SET_NAMED(expr, 2);
+
     s->sxpinfo = UnmarkedNodeTemplate.sxpinfo;
     TYPEOF(s) = PROMSXP;
     PRCODE(s) = expr;
@@ -1855,11 +1856,15 @@ SEXP attribute_hidden mkPROMISE(SEXP expr, SEXP rho)
 /* All vector objects  must be a multiple of sizeof(ALIGN) */
 /* bytes so that alignment is preserved for all objects */
 
-/* allocString is now a macro */
-
-/* Allocate a vector object.  This ensures only validity of list-like
+/* Allocate a vector object (and also list-like objects).
+   This ensures only validity of list-like
    SEXPTYPES (as the elements must be initialized).  Initializing of
-   other vector types is done in do_makevector */
+   other vector types is done in do_makevector
+   [That comment seems outdated -- STRSXP, VECSXP, EXPRSXP
+   are initialized and CHARSXP are nul-terminated.]
+*/
+
+#define intCHARSXP 73
 
 SEXP allocVector(SEXPTYPE type, R_len_t length)
 {
@@ -1882,6 +1887,8 @@ SEXP allocVector(SEXPTYPE type, R_len_t length)
 	actual_size=length;
 	break;
     case CHARSXP:
+	warning("use of allocVector(CHARSXP ...) is deprecated\n");
+    case intCHARSXP:
 	size = BYTE2VEC(length + 1);
 	actual_size=length+1;
 	break;
@@ -2052,22 +2059,21 @@ SEXP allocVector(SEXPTYPE type, R_len_t length)
 #if VALGRIND_LEVEL > 1
 	VALGRIND_MAKE_READABLE(STRING_PTR(s), actual_size);
 #endif
-	for (i = 0; i < length; i++){
+	for (i = 0; i < length; i++)
 	    data[i] = R_BlankString;
-	}
     }
-    else if (type == CHARSXP){
+    else if (type == CHARSXP || type == intCHARSXP) {
 #if VALGRIND_LEVEL > 0
 	VALGRIND_MAKE_WRITABLE(CHAR(s), actual_size);
 #endif
 	CHAR_RW(s)[length] = 0;
     }
-    else if (type == REALSXP){
+    else if (type == REALSXP) {
 #if VALGRIND_LEVEL > 0
 	VALGRIND_MAKE_WRITABLE(REAL(s), actual_size);
 #endif
     }
-    else if (type == INTSXP){
+    else if (type == INTSXP) {
 #if VALGRIND_LEVEL > 0
 	VALGRIND_MAKE_WRITABLE(INTEGER(s), actual_size);
 #endif
@@ -2075,6 +2081,13 @@ SEXP allocVector(SEXPTYPE type, R_len_t length)
     /* <FIXME> why not valgrindify LGLSXP, CPLXSXP and RAWSXP? */
     return s;
 }
+
+/* For future hiding of allocVector(CHARSXP) */
+SEXP attribute_hidden allocCharsxp(R_len_t len)
+{
+    return allocVector(intCHARSXP, len);
+}
+
 
 SEXP allocList(int n)
 {
@@ -2861,6 +2874,7 @@ int  attribute_hidden (IS_UTF8)(SEXP x) { return IS_UTF8(x); }
 void attribute_hidden (SET_LATIN1)(SEXP x) { SET_LATIN1(x); }
 void attribute_hidden (SET_UTF8)(SEXP x) { SET_UTF8(x); }
 int  attribute_hidden (ENC_KNOWN)(SEXP x) { return ENC_KNOWN(x); }
+void attribute_hidden (SET_CACHED)(SEXP x) { SET_CACHED(x); }
 
 /*******************************************/
 /* Non-sampling memory use profiler
@@ -3019,3 +3033,39 @@ R_FreeStringBufferL(R_StringBuffer *buf)
 	buf->data = NULL;
     }
 }
+
+/* ======== These need direct access to gp field for efficiency ======== */
+
+/* FIXME: consider inlining here */
+#ifdef Win32
+int Seql(SEXP a, SEXP b)
+{
+    if (a == b) return 1;
+    if (LENGTH(a) != LENGTH(b)) return 0;
+    if (IS_CACHED(a) && IS_CACHED(b) &&
+	(!ENC_KNOWN(a) || !ENC_KNOWN(b) || 
+	 ENC_KNOWN(a) == ENC_KNOWN(b)))
+	return 0;
+    return !strcmp(translateCharUTF8(a), translateCharUTF8(b));
+}
+
+#else
+
+/* this has NA_STRING = NA_STRING */
+int Seql(SEXP a, SEXP b)
+{
+    /* The only case where pointer comparisons do not suffice is where
+      we have two strings in different marked encodings, since in 
+      R > 2.8.0 ASCII strings in the cache are never marked.
+    */
+    if (a == b) return 1;
+    if (LENGTH(a) != LENGTH(b)) return 0;
+    /* Leave this to compiler to optimize */
+    if (IS_CACHED(a) && IS_CACHED(b) &&
+	(!ENC_KNOWN(a) || !ENC_KNOWN(b) || 
+	 ENC_KNOWN(a) == ENC_KNOWN(b)))
+	return 0;
+    return !strcmp(translateChar(a), translateChar(b));
+}
+
+#endif

@@ -43,9 +43,9 @@ writeChar(object, con,
   the duration of the function call.
 
   If the connection is open it is read/written from its current
-  position.  If it is not open, it is opened for the duration of the call
-  and then closed again.  Connections can be open in either text or
-  binary mode.
+  position.  If it is not open, it is opened for the duration of the
+  call in an appropriate mode (binary read or write) and then closed
+  again.  An open connection must be in binary mode.
   
   If \code{readChar} is called with \code{con} a raw vector, the data in
   the vector is used as input.  If \code{writeChar} is called with
@@ -53,10 +53,8 @@ writeChar(object, con,
   should be returned.  
 
   Character strings containing ASCII \code{nul}(s) will be read
-  correctly by \code{readChar} and appear with embedded nuls in the
-  character vector returned.  \code{writeChar} can write strings with
-  embedded \code{nul}s, and for such strings inteprets \code{nchar} as
-  the number of bytes to be written.
+  correctly by \code{readChar} but truncated at the first
+  \code{nul} with a warning.
   
   If the character length requested for \code{readChar} is longer than
   the data available on the connection, what is available is
@@ -75,6 +73,13 @@ writeChar(object, con,
 }
 
 \note{
+  Earlier versions of \R allowed embedded nul bytes within character
+  strings, but not \R >= 2.8.0.  \code{readChar} was commonly used to
+  read fixed-size zero-padded byte fields for which \code{readBin} was
+  unsuitable.  \code{readChar} can still be used for such fields if
+  there are no embedded nuls: otherwise \code{readBin(what="raw")}
+  provides an alternative.
+  
   \code{nchars} will be interpreted in bytes not characters in a
   non-UTF-8 multi-byte locale, with a warning.
 

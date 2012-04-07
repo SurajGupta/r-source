@@ -82,8 +82,6 @@
  *
  * LT */
 
-/* <UTF8> char here is either ASCII or handled as a whole */
-
 #ifdef HAVE_CONFIG_H
 # include <config.h>
 #endif
@@ -1653,6 +1651,9 @@ SEXP attribute_hidden do_get(SEXP call, SEXP op, SEXP args, SEXP rho)
     rval = findVar1mode(t1, genv, gmode, ginherits, PRIMVAL(op));
 
     if (PRIMVAL(op)) { /* have get(.) */
+	if (rval == R_MissingArg)
+	    error(_("argument \"%s\" is missing, with no default"),
+		  CHAR(PRINTNAME(t1)));
 	if (rval == R_UnboundValue) {
 	    if (gmode == ANYSXP)
 		error(_("variable \"%s\" was not found"),
@@ -2197,7 +2198,13 @@ static void FrameValues(SEXP frame, int all, SEXP values, int *indx)
     while (frame != R_NilValue) {
 	if ((all || CHAR(PRINTNAME(TAG(frame)))[0] != '.') &&
 				      CAR(frame) != R_UnboundValue) {
-	    SET_VECTOR_ELT(values, *indx, duplicate(CAR(frame)));
+	    SEXP value = CAR(frame);
+	    if (TYPEOF(value) == PROMSXP) {
+		PROTECT(value);
+		value = eval(value, R_GlobalEnv);
+		UNPROTECT(1);
+	    }
+	    SET_VECTOR_ELT(values, *indx, duplicate(value));
 	    (*indx)++;
 	}
 	frame = CDR(frame);
@@ -2928,7 +2935,7 @@ SEXP attribute_hidden do_bndIsActive(SEXP call, SEXP op, SEXP args, SEXP rho)
     return ScalarLogical(R_BindingIsActive(sym, env));
 }
 
-/* This is a .Internal with no wrapper */
+/* This is a .Internal with no wrapper, currently unused in base R */
 SEXP attribute_hidden do_mkUnbound(SEXP call, SEXP op, SEXP args, SEXP rho)
 {
     SEXP sym;
@@ -3215,46 +3222,22 @@ SEXP attribute_hidden do_envprofile(SEXP call, SEXP op, SEXP args, SEXP rho)
     return ans;
 }
 
-/*
-   Version for strings with embedded nuls:
-   these do not currently go in the cache,
-   and do not have an encoding.
-*/
-SEXP mkCharLen(const char *name, int len)
-{
-    SEXP c = allocString(len);
-    memcpy(CHAR_RW(c), name, len);
-    return c;
-}
-
-#ifndef USE_CHAR_HASHING
-SEXP mkChar(const char *name)
-{
-    SEXP c = allocString(strlen(name));
-    strcpy(CHAR_RW(c), name);
-    return c;
-}
-
 SEXP mkCharCE(const char *name, cetype_t enc)
 {
-    SEXP c = allocString(strlen(name));
-    strcpy(CHAR_RW(c), name);
-    if (enc && strIsASCII(name)) enc = 0;
-    switch(enc) {
-    case 0:
-	break;          /* don't set encoding */
-    case CE_UTF8:
-	SET_UTF8(c);
-	break;
-    case CE_LATIN1:
-	SET_LATIN1(c);
-	break;
-    default:
-	error("unknown encoding: %d", enc);
-    }
-    return c;
+    return mkCharLenCE(name, strlen(name), enc);
 }
-#else
+
+/* no longer used in R but docuented in 2.7.x */
+SEXP mkCharLen(const char *name, int len)
+{
+    return mkCharLenCE(name, len, CE_NATIVE);
+}
+
+SEXP mkChar(const char *name)
+{
+    return mkCharLenCE(name, strlen(name), CE_NATIVE);
+}
+
 /* Global CHARSXP cache and code for char-based hash tables */
 
 /* We can reuse the hash structure, but need separate code for get/set
@@ -3271,12 +3254,13 @@ SEXP mkCharCE(const char *name, cetype_t enc)
 static unsigned int char_hash_size = 65536;
 static unsigned int char_hash_mask = 65535;
 
-static unsigned int char_hash(const char *s)
+static unsigned int char_hash(const char *s, int len)
 {
     /* djb2 as from http://www.cse.yorku.ca/~oz/hash.html */
     char *p;
+    int i;
     unsigned int h = 5381;
-    for (p = (char *) s; *p; p++)
+    for (p = (char *) s, i = 0; i < len; p++, i++)
 	h = ((h << 5) + h) + (*p);
     return h;
 }
@@ -3324,8 +3308,7 @@ static void R_StringHash_resize(unsigned int newsize)
 	while (!ISNULL(chain)) {
 	    val = CXHEAD(chain);
 	    next = CXTAIL(chain);
-	    /* new_hashcode = char_hash(CHAR(val)) % newsize; */
-	    new_hashcode = char_hash(CHAR(val)) & newmask;
+	    new_hashcode = char_hash(CHAR(val), LENGTH(val)) & newmask;
 	    new_chain = VECTOR_ELT(new_table, new_hashcode);
 	    /* If using a primary slot then increase HASHPRI */
 	    if (ISNULL(new_chain))
@@ -3359,11 +3342,25 @@ static void R_StringHash_resize(unsigned int newsize)
    encoding bit.  If a CHARSXP with the same string already exists in
    the global CHARSXP cache, R_StringHash, it is returned.  Otherwise,
    a new CHARSXP is created, added to the cache and then returned. */
-SEXP mkCharCE(const char *name, cetype_t enc)
+
+
+static Rboolean IsASCII(const char *str, int len)
+{
+    const char *p = str;
+    int i;
+
+    for(i = 0; i < len; i++)
+	if((unsigned int)*p++ > 0x7F) return FALSE;
+    return TRUE;
+}
+
+/* Because allocCharsxp allocates len+1 bytes and zeros the last,
+   this will always zero-terminate */
+SEXP mkCharLenCE(const char *name, int len, cetype_t enc)
 {
     SEXP cval, chain;
     unsigned int hashcode;
-    int len = strlen(name);
+    int need_enc, slen = strlen(name);
 
     switch(enc){
     case CE_NATIVE:
@@ -3375,11 +3372,33 @@ SEXP mkCharCE(const char *name, cetype_t enc)
     default:
 	error("unknown encoding: %d", enc);
     }
+    if (slen < len) {
+	SEXP c;
+	if (R_WarnEscapes) {
+	    /* This is tricky: we want to make a reasonable job of
+	       representing this string, and EncodeString() is the most
+	       comprehensive */
+	    c = allocCharsxp(len);
+	    memcpy(CHAR_RW(c), name, len);
+	    switch(enc) {
+	    case CE_UTF8: SET_UTF8(c); break;
+	    case CE_LATIN1: SET_LATIN1(c); break;
+	    default: break;
+	    }
+	    warning(_("truncating string with embedded nul: '%s'"),
+		    EncodeString(c, 0, 0, Rprt_adj_none));
+	}
+	len = slen;
+    }
 
-    if (enc && strIsASCII(name)) enc = 0;
+    if (enc && IsASCII(name, len)) enc = CE_NATIVE;
+    switch(enc) {
+    case CE_UTF8: need_enc = UTF8_MASK; break;
+    case CE_LATIN1: need_enc = LATIN1_MASK; break;
+    default: need_enc = 0;
+    }
 
-    /* hashcode = char_hash(name) % char_hash_size; */
-    hashcode = char_hash(name) & char_hash_mask;
+    hashcode = char_hash(name, len) & char_hash_mask;
 
     /* Search for a cached value */
     cval = R_NilValue;
@@ -3389,19 +3408,17 @@ SEXP mkCharCE(const char *name, cetype_t enc)
 #ifdef USE_ATTRIB_FIELD_FOR_CHARSXP_CACHE_CHAINS
 	if (TYPEOF(val) != CHARSXP) break; /* sanity check */
 #endif
-	/* If we had USE_RINTERNALS we could do the two in one step */
-	if ((enc == CE_UTF8) == IS_UTF8(val) &&
-	    (enc == CE_LATIN1) == IS_LATIN1(val) &&
+	if (need_enc == ENC_KNOWN(val) &&
 	    LENGTH(val) == len &&  /* quick pretest */
-	    strcmp(CHAR(val), name) == 0) {
+	    memcmp(CHAR(val), name, len) == 0) {
 	    cval = val;
 	    break;
 	}
     }
     if (cval == R_NilValue) {
 	/* no cached value; need to allocate one and add to the cache */
-	PROTECT(cval = allocString(len));
-	strcpy(CHAR_RW(cval), name);
+	PROTECT(cval = allocCharsxp(len));
+	memcpy(CHAR_RW(cval), name, len);
 	switch(enc) {
 	case 0:
 	    break;          /* don't set encoding */
@@ -3414,6 +3431,7 @@ SEXP mkCharCE(const char *name, cetype_t enc)
 	default:
 	    error("unknown encoding mask: %d", enc);
 	}
+	SET_CACHED(cval);  /* Mark it */
 	/* add the new value to the cache */
 	chain = VECTOR_ELT(R_StringHash, hashcode);
 	if (ISNULL(chain))
@@ -3439,14 +3457,6 @@ SEXP mkCharCE(const char *name, cetype_t enc)
     return cval;
 }
 
-/* mkChar - make a character (CHARSXP) variable.  If a CHARSXP with
-   the same string already exists in the global CHARSXP cache,
-   R_StringHash, it is returned.  Otherwise, a new CHARSXP is created,
-   added to the cache and then returned. */
-SEXP mkChar(const char *name)
-{
-    return mkCharCE(name, CE_NATIVE);
-}
 
 #ifdef DEBUG_SHOW_CHARSXP_CACHE
 /* Call this from gdb with
@@ -3503,4 +3513,3 @@ void do_write_cache()
     }
 }
 #endif /* DEBUG_SHOW_CHARSXP_CACHE */
-#endif

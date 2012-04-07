@@ -50,9 +50,9 @@ notice identical to this one except for the removal of this paragraph
 @value{ISBN-lang}
 @end titlepage
 
-@ifnothtml
+@c @ifnothtml
 @contents
-@end ifnothtml
+@c @end ifnothtml
 
 @ifnottex
 @node Top, Introduction, (dir), (dir)
@@ -4368,9 +4368,10 @@ eight hex digits.
 A single quote may also be embedded directly in a double-quote delimited
 string and vice versa.
 
-Currently the inclusion of @code{\0} in a string constant terminates the
-constant: further characters up to the closing quote are scanned but
-ignored.  (This will give a warning in @R{} 2.8.0.)
+As from @R{} 2.8.0, a `nul' (@code{\0}) is not allowed in a character
+string, so using @code{\0} in a string constant terminates the constant
+(usually with a warning): further characters up to the closing quote are
+scanned but ignored.
 
 @node Identifiers, Reserved words, Literal constants, Tokens
 @subsection Identifiers

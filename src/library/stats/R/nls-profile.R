@@ -143,7 +143,8 @@ profile.nls <-
     upper <- rep(if(!is.null(upper)) as.double(upper) else Inf, length.out = npar)
     if(is.character(which)) which <- match(which, names(pars), 0)
     which <- which[which >= 1 & which <= npar]
-    cutoff <- sqrt(npar * qf(1 - alphamax, npar, nobs - npar))
+    ## was 'npar' - length(which) would have made more sense
+    cutoff <- sqrt(qf(1 - alphamax, 1L, nobs - npar))
     out <- vector("list", npar)
     on.exit(prof$setDefault())     # in case there is an abnormal exit
     for(par in which) {
@@ -220,8 +221,8 @@ profile.nls <-
     out
 }
 
-plot.profile.nls <- function(x, levels, conf = c(99, 95, 90, 80, 50)/100,
-                             nseg = 50, absVal = TRUE, ...)
+plot.profile.nls <-
+    function(x, levels, conf = c(99, 95, 90, 80, 50)/100, absVal = TRUE, ...)
 {
     obj <- x
     dfres <- attr(obj, "summary")$df[2]

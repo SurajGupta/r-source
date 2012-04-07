@@ -49,9 +49,9 @@ notice identical to this one except for the removal of this paragraph
 @value{ISBN-ints}
 @end titlepage
 
-@ifnothtml
+@c @ifnothtml
 @contents
-@end ifnothtml
+@c @end ifnothtml
 
 @ifnottex
 @node Top, R Internal Structures, (dir), (dir)
@@ -292,10 +292,10 @@ a <- `dim<-`(a, c(7, 2))
 but for no longer, and so some primitive functions can be optimized to
 avoid a copy in this case.
 
-The @code{gp} bits are by definition `general purpose'.  As of version
-2.4.0 of R, bit 4 (i.e., the fifth bit) is turned on to mark S4 objects.
-Bits 0-3 and bits 14-15 have been used previously as described below
-(from detective work on the sources).
+The @code{gp} bits are by definition `general purpose'.  We label these
+from 0 to 15.  As of version 2.4.0 of R, bit 4 is turned on to mark S4
+objects.  Bits 0-3 and bits 14-15 have been used previously as described
+below (from detective work on the sources).
 
 @findex gp bits
 @findex LEVELS
@@ -307,12 +307,11 @@ code.  The @code{gp} field is serialized/unserialized for the
 @code{SEXPTYPE}s other than @code{NILSXP}, @code{SYMSXP} and
 @code{ENVSXP}.
 
-If we label the bits from 0, bits 14 and 15 of @code{gp} are used for
-`fancy bindings'.  Bit 14 is used to lock a binding or an environment,
-and bit 15 is used to indicate an active binding.  (For the definition
-of an `active binding' see the header comments in file
-@file{src/main/envir.c}.)  Bit 15 is used for an environment to indicate
-if it participates in the global cache.
+Bits 14 and 15 of @code{gp} are used for `fancy bindings'.  Bit 14 is
+used to lock a binding or an environment, and bit 15 is used to indicate
+an active binding.  (For the definition of an `active binding' see the
+header comments in file @file{src/main/envir.c}.)  Bit 15 is used for an
+environment to indicate if it participates in the global cache.
 
 Almost all other uses seem to be only of bits 0 and 1, although one
 reserves the first four bits.
@@ -357,7 +356,11 @@ indicate a calling handler.
 As from @R{} 2.5.0, bits 2 and 3 for a @code{CHARSXP} are used to note
 that it is known to be in Latin-1 and UTF-8 respectively.  (These are not
 usually set if it is also known to be in ASCII, since code does not need
-to know the charset to handle ASCII strings.)
+to know the charset to handle ASCII strings.  From @R{} 2.8.0
+it is guaranteed that they will not be set for CHARSXPs created by @R{}
+itself.)  As from @R{} 2.8.0 bit 5 is used to indicate that a CHARSXP
+is hashed by its address, that is NA_STRING or in the CHARSXP cache.
+
 
 @c Finally, @code{SETLEVELS} and @code{LEVELS} are used by that name for
 @c the internal code for @code{terms.formula} to compute the @code{order}
@@ -1270,17 +1273,18 @@ encoding).  Not all @code{CHARSXP}s are part of the cache -- notably
 @samp{NA_STRING} is not.
 
 In @R{} 2.6.x and 2.7.x character strings created by @code{mkCharLen}
-are not part of the cache: these were intended to be those containing
-embedded nuls.  As from @R{} 2.8.0 strings with embedded nuls will be
-disallowed. 
+were not part of the cache: these were intended to be those containing
+embedded nuls.  As from @R{} 2.8.0 the cache can handle any content,
+although embedded nuls are now disallowed.
 
 There are a few other ways in which @code{CHARSXP}s could or can escape
 the cache.  @code{CHARSXP}s reloaded from the @code{save} formats of
 @R{} prior to 0.99.0 are not cached (since the code used is frozen and
-few examples still exist).  Currently @code{CHARSXP}s are used to hold
-the finalizer function of a C finalizer (uncached).  Finally, user code
-can create @code{CHARSXP}s via @code{allocString} (removed in @R 2.8.0)
-and @code{allocVector(CHARSXP ...)} (deprecated in @R 2.8.0).
+few examples still exist).  Prior to @R{} 2.8.0, @code{CHARSXP}s were
+used to hold the finalizer function of a C finalizer (uncached) -- now
+@code{RAWSXP}s are used.  Finally, user code could create
+@code{CHARSXP}s via @code{allocString} (removed in @R 2.8.0) and
+@code{allocVector(CHARSXP ...)} (deprecated in @R 2.8.0).
 
 @node Warnings and errors, S4 objects, The CHARSXP cache, R Internal Structures
 @section Warnings and errors
@@ -1446,7 +1450,7 @@ only the visible methods will be cached.
 @subsection Mechanics of S4 dispatch
 
 This subsection does not discuss how S4 methods are chosen: see
-@uref{http://developer.r-project.org/howMethodsWork.pdf}.
+@uref{http://@/developer.@/r-project.org/howMethodsWork.pdf}.
 
 For all but primitive functions, setting a method on an existing
 function that is not itself S4 generic creates a new object in the
@@ -1894,7 +1898,7 @@ inside other functions), such as
 @example
 @group
 nargs        missing
-interactive  is.@emph{xxx}
+interactive  is.@var{xxx}
 as.call      as.character as.complex  as.double
 as.environment
 as.integer   as.logical   as.raw
@@ -2209,8 +2213,8 @@ directory @file{src/main}.} is in package @pkg{graphics}) and one
 implemented in package @pkg{grid}.
 
 Some notes on the changes for 1.4.0 can be found at
-@uref{http://www.stat.auckland.ac.nz/~paul/R/basegraph.html} and
-@uref{http://www.stat.auckland.ac.nz/~paul/R/graphicsChanges.html}.
+@uref{http://www.stat.auckland.ac.nz/@/~paul/@/R/basegraph.html} and
+@uref{http://www.stat.auckland.ac.nz/@/~paul/R/@/graphicsChanges.html}.
 
 At the lowest level is a graphics device, which manages a plotting
 surface (a screen window or a representation to be written to a file).
@@ -2340,11 +2344,11 @@ of a would-be writer of a graphics device.
 @node Device structures, Device capabilities, Graphics devices, Graphics devices
 @subsection Device structures
 
-There are currently three types used internally which are pointers to
-structures related to graphics devices.
+There are two types used internally which are pointers to structures
+related to graphics devices.
 
-The @code{NewDevDesc} type@footnote{`new' in @R 1.4.0 and scheduled to
-be renamed in @R 2.8.0.} is a structure defined in the header file
+The @code{DevDesc} type@footnote{@code{NewDevDesc} from @R 1.4.0,
+renamed in @R 2.8.0.} is a structure defined in the header file
 @file{R_ext/GraphicsDevice.h} (which is included by
 @file{R_ext/GraphicsEngine.h}).  This describes the physical
 characteristics of a device, the capabilities of the device driver and
@@ -2354,7 +2358,7 @@ engine to obtain information about the device and initiate actions
 is a pointer to this type.
 
 The relationship of device units to physical dimensions is set by the
-element @code{ipr} of the @code{NewDevDesc} structure: a @samp{double}
+element @code{ipr} of the @code{DevDesc} structure: a @samp{double}
 array of length 2.
 
 
@@ -2380,16 +2384,10 @@ struct _GEDevDesc @{
 So this is essentially a device structure plus information about the
 device maintained by the graphics engine and normally@footnote{It is
 possible for the device to find the @code{GEDevDesc} which points to its
-@code{NewDevSec}, and this is done often enough that there is a
+@code{DevDesc}, and this is done often enough that there is a
 convenience function @code{desc2GEDesc} to do so.} visible to the engine
 and not to the device.  Type @code{pGEDevDesc} is a pointer to this
 type.
-
-The third type is @code{pGEDev} which is an opaque pointer to a
-@code{GEDevDesc} structure.  (In earlier code you will also find
-@code{DevDesc *}, which in post-1.4.0 versions of @R{} was,
-confusinngly, also an opaque pointer to a @code{GEDevDesc} structure.)
-This will no longer exist in @R{} 2.8.0.
 
 The graphics engine maintains an array of devices, as pointers to
 @code{GEDevDesc} structures.  The array is of size 64 but the first
@@ -2413,7 +2411,7 @@ structure by code very similar to
     BEGIN_SUSPEND_INTERRUPTS @{
         pDevDesc dev;
         /* Allocate and initialize the device driver data */
-        if (!(dev = (pDevDesc) calloc(1, sizeof(NewDevDesc))))
+        if (!(dev = (pDevDesc) calloc(1, sizeof(DevDesc))))
             return 0; /* or error() */
         /* set up device driver or free 'dev' and error() */
         gdd = GEcreateDevDesc(dev);
@@ -2421,10 +2419,10 @@ structure by code very similar to
     @} END_SUSPEND_INTERRUPTS;
 @end example
 
-The @code{NewDevDesc} structure contains a @code{void *} pointer
+The @code{DevDesc} structure contains a @code{void *} pointer
 @samp{deviceSpecific} which is used to store data specific to the
 device.  Setting up the device driver includes initializing all the
-non-zero elements of the @code{NewDevDesc} structure.
+non-zero elements of the @code{DevDesc} structure.
 
 Note that the device structure is zeroed when allocated: this provides
 some protection against future expansion of the structure since the
@@ -2450,7 +2448,7 @@ API it was designed for and compiled against.
 @subsection Device capabilities
 
 The following `capabilities' can be defined for the device's
-@code{NewDevDesc} structure.
+@code{DevDesc} structure.
 
 @itemize
 @item canChangeGamma --
@@ -2534,7 +2532,7 @@ character, and so needs to include left and right bearings.
 The @emph{interpretation} of @samp{c} depends on the locale.  Using
 @code{c = 0} used to give an indication of the size of the font: it
 often returned the measurements for character @code{"M"}---however it is
-not longer used as from @R{} 2.7.0.  In a single-byte locale values
+no longer used as from @R{} 2.7.0.  In a single-byte locale values
 @code{32...255} indicate the corresponding character in the locale (if
 present).  For the symbol font (as used by @samp{graphics::par(font=5)},
 @samp{grid::gpar(fontface=5}) and by `plotmath'), values @code{32...126,
@@ -2929,9 +2927,6 @@ graphics operations.  This code then calls functions with names starting
 with @code{G} and declared in header @file{Rgraphics.h} in file
 @file{graphics.c}, which in turn call the graphics engine (whose
 functions almost all have names starting with @code{GE}).
-
-Again for historical reasons, @file{Rgraphics.h} was a public header
-which will be taken private in @R{} 2.8.0.
 
 A large part of the infrastructure of the base graphics subsystem are
 the graphics parameters (as set/read by @code{par()}).  These are stored

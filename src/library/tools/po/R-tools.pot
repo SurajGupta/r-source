@@ -2,7 +2,7 @@ msgid ""
 msgstr ""
 "Project-Id-Version: R 2.3.0\n"
 "Report-Msgid-Bugs-To: bugs@r-project.org\n"
-"POT-Creation-Date: 2008-08-01 08:44\n"
+"POT-Creation-Date: 2008-09-08 14:13\n"
 "PO-Revision-Date: YEAR-MO-DA HO:MI+ZONE\n"
 "Last-Translator: FULL NAME <EMAIL@ADDRESS>\n"
 "Language-Team: LANGUAGE <LL@li.org>\n"
@@ -131,7 +131,7 @@ msgstr ""
 msgid "file '%s' does not exist"
 msgstr ""
 
-msgid "parse error in file '%s'"
+msgid "parse error in file '%s':\n%s"
 msgstr ""
 
 msgid "Foreign function calls without 'PACKAGE' argument:"
@@ -143,7 +143,10 @@ msgstr ""
 msgid "cannot check R code installed as image"
 msgstr ""
 
-msgid "parse error in examples from file '%s'"
+msgid "parse error in file '%s':"
+msgstr ""
+
+msgid "parse error in examples from file '%s':"
 msgstr ""
 
 msgid "File '%s':"
@@ -326,6 +329,9 @@ msgstr ""
 msgid "Non-portable flags in variable '%s':"
 msgstr ""
 
+msgid "package must be loaded"
+msgstr ""
+
 msgid "Missing link(s) in documentation object '%s':"
 msgstr ""
 
@@ -339,6 +345,33 @@ msgid "'::' or ':::' imports not declared from:"
 msgstr ""
 
 msgid "'library' or 'require' calls not declared from:"
+msgstr ""
+
+msgid "Generics g in env ="
+msgstr ""
+
+msgid "where hasMethods(g, env) errors:"
+msgstr ""
+
+msgid ","
+msgstr ""
+
+msgid "May need something like"
+msgstr ""
+
+msgid "importFrom("
+msgstr ""
+
+msgid ")"
+msgstr ""
+
+msgid "in NAMESPACE."
+msgstr ""
+
+msgid "Generics without methods in"
+msgstr ""
+
+msgid ":"
 msgstr ""
 
 msgid "argument 'lines' must be a character vector"
@@ -413,16 +446,10 @@ msgstr ""
 msgid "unable to create temp directory"
 msgstr ""
 
-msgid "--- running texi2dvi on vignettes"
-msgstr ""
-
 msgid "processing vignette '%s' failed with diagnostics:\n%s"
 msgstr ""
 
 msgid "running 'make' failed"
-msgstr ""
-
-msgid "cannot read index information in file '%s'"
 msgstr ""
 
 msgid "argument 'vignette' must be of length 1"
@@ -441,9 +468,6 @@ msgid "cannot open directory '%s'"
 msgstr ""
 
 msgid "WARNING: 'Depends' entry has multiple dependencies on R:"
-msgstr ""
-
-msgid ","
 msgstr ""
 
 msgid "only the first will be used in R < 2.7.0"
@@ -507,6 +531,9 @@ msgid "ERROR: this R is version %s, bundle '%s' requires R %s %s"
 msgstr ""
 
 msgid "ERROR: this R is version %s, required is R %s %s"
+msgstr ""
+
+msgid "cannot read index information in file '%s'"
 msgstr ""
 
 msgid "there is no package called '%s'"
@@ -587,10 +614,22 @@ msgstr ""
 msgid "only Rd syntax is currently supported"
 msgstr ""
 
+msgid "Running 'texi2dvi' on '%s' failed."
+msgstr ""
+
 msgid "running 'texi2dvi' on '%s' failed"
 msgstr ""
 
 msgid "unable to run %s on '%s'"
+msgstr ""
+
+msgid "File 'DESCRIPTION' is missing."
+msgstr ""
+
+msgid "Files 'DESCRIPTION' and 'DESCRIPTION.in' are missing."
+msgstr ""
+
+msgid "Bundle 'DESCRIPTION' is missing."
 msgstr ""
 
 msgid "file '%s' is not in valid DCF format"

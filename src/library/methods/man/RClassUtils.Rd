@@ -22,7 +22,6 @@
 \alias{makePrototypeFromClassDef}
 \alias{newEmptyObject}
 \alias{completeClassDefinition}
-\alias{getSlots}
 \alias{getAllSuperClasses}
 \alias{superClassDepth}
 \alias{isVirtualClass}
@@ -72,8 +71,6 @@ newEmptyObject()
 
 completeClassDefinition(Class, ClassDef, where, doExtends)
 
-getSlots(x)
-
 getAllSuperClasses(ClassDef, simpleOnly = TRUE)
 
 superClassDepth(ClassDef, soFar, simpleOnly = TRUE)
@@ -108,7 +105,7 @@ classMetaName(name)
 
 methodsPackageMetaName(prefix, name, package = "")
 
-metaNameUndo(strings, prefix = "M", searchForm = FALSE)
+metaNameUndo(strings, prefix, searchForm = FALSE)
 
 requireMethods(functions, signature, message, where)
 
@@ -121,7 +118,7 @@ isClassDef(object)
 validSlotNames(names)
 
 getDataPart(object)
-setDataPart(object, value)
+setDataPart(object, value, check = TRUE)
 
 }
 
@@ -367,8 +364,9 @@ setDataPart(object, value)
       only reserved slot name.)
     }
     \item{\code{getDataPart}, \code{setDataPart}:}{
-      Utilities called from the base C code to implement
-      \code{object@.Data}.
+      Utilities called to implement
+      \code{object@.Data}.  Calls to \code{setDataPart} are also used
+      to merge the data part of a superclass prototype.
     }
 
   }

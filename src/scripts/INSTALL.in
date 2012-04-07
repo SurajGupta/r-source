@@ -7,11 +7,11 @@
 ## Trap interrupts, most importantly 2 (^C from keyboard)
 trap do_exit_on_error 1 2 15
 
-revision='$Rev: 46353 $'
+revision='$Rev: 46354 $'
 version=`set - ${revision}; echo ${2}`
 version="R add-on package installer ${version}
 
-Copyright (C) 2000-2007 The R Core Development Team.
+Copyright (C) 2000-2008 The R Core Development Team.
 This is free software; see the GNU General Public License version 2
 or later for copying conditions.  There is NO warranty."
 
@@ -201,9 +201,8 @@ use_zip_help=
 configure_args=
 configure_vars=
 with_package_versions=false
-save=false
 fake=false
-lazy="auto"
+lazy=true
 lazy_data=false
 lock=true
 libs_only=false
@@ -485,11 +484,16 @@ do_install_source () {
     if ${preclean}; then
       ${MAKE} clean
     fi
-    if ${use_configure} && test -x ./configure ; then
-      eval ${configure_vars} ./configure ${configure_args}
-      if test ${?} -ne 0; then
-	error "configuration failed for package '${pkg_name}'"
-	do_exit_on_error
+    if ${use_configure}; then
+      if test -x ./configure ; then
+	eval ${configure_vars} ./configure ${configure_args}
+	if test ${?} -ne 0; then
+	  error "configuration failed for package '${pkg_name}'"
+	  do_exit_on_error
+	fi
+      elif test -f ./configure ; then
+	error "'configure' exists but is not executable -- see the 'R Installation and Adminstration Manual'"
+        do_exit_on_error
       fi
     fi
     if test -f ./Makefile ; then
@@ -517,7 +521,7 @@ do_install_source () {
   fi
 
   OS_type=`get_dcf_field OS_type DESCRIPTION`
-  if test "$OS_type" = "windows" ; then
+  if test "$OS_type" = "windows" && test "${fake}" != "true"; then
     error "windows-only package"
     do_exit_on_error
   fi
@@ -574,13 +578,20 @@ do_install_source () {
     fi
     if test -x ./cleanup ; then
       ./cleanup
+    elif test -f ./cleanup ; then
+	warning "'cleanup' exists but is not executable -- see the 'R Installation and Adminstration Manual'"
     fi
   fi
 
-  if ${use_configure} && test -x ./configure ; then
-    eval ${configure_vars} ./configure ${configure_args}
-    if test ${?} -ne 0; then
-      error "configuration failed for package '${pkg_name}'"
+  if ${use_configure}; then
+    if test -x ./configure ; then
+      eval ${configure_vars} ./configure ${configure_args}
+      if test ${?} -ne 0; then
+	error "configuration failed for package '${pkg_name}'"
+	do_exit_on_error
+      fi
+    elif test -f ./configure ; then
+      error "'configure' exists but is not executable -- see the 'R Installation and Adminstration Manual'"
       do_exit_on_error
     fi
   fi
@@ -603,11 +614,13 @@ do_install_source () {
     fi
   fi
 
-  ## changed in 2.6.0
-  # system_makefile = "${R_SHARE_DIR}/make/shlib.mk"
   system_makefile="${R_HOME}/etc${R_ARCH}/Makeconf"
   if test -d src && test "${fake}" != "true"; then
     message "libs"
+    if ! test -f "${R_INCLUDE_DIR}/R.h" ; then
+      ## maybe even an error?  But installing Fortran-based packages should work
+      warning "R include directory is empty -- perhaps need to install R-devel.rpm or similar"
+    fi
     has_error=false
     ## prepend ${lib} to library path.
     CLINK_CPPFLAGS=`echo "invisible(.libPaths(c(\"${lib}\", .libPaths())));tools:::.find_cinclude_paths(file='DESCRIPTION')" | \
@@ -625,10 +638,6 @@ do_install_source () {
       elif test -r "${HOME}/.R/Makevars"; then
 	  makefiles="${makefiles} -f \"${HOME}/.R/Makevars\""
       fi
-      ## removed in 2.6.0
-#      if test -r Makevars; then
-#	makefiles="-f Makevars ${makefiles}"
-#      fi
       eval ${MAKE} ${makefiles} \
 	&& cp *@SHLIB_EXT@ "${R_PACKAGE_DIR}/libs${R_ARCH}" \
         || has_error=true; \
@@ -803,7 +812,11 @@ do_install_source () {
   fi
   parse_description_field SaveImage
   if test "$value" != "missing" ; then
-    save=${value}
+    if ${value}; then
+      warning "'SaveImage' is defunct: ignored, and please remove it"
+    else
+      warning "'SaveImage' is defunct: please remove it"
+    fi
   fi
 
   parse_description_field LazyLoad
@@ -814,21 +827,6 @@ do_install_source () {
   fi
   if test ! -d R ; then
     thislazy=false
-  fi
-  if ${save}; then
-    warning "true value of 'SaveImage' is defunct: using 'LazyLoad: yes' instead"
-    thislazy=true
-  fi
-  ## This test is designed to fail if a loader is used.
-  ## Beware: the wc format is not portable -- some systems give
-  ## size in a left-space-padded first field, and some do not pad.
-  if test "x$thislazy" = "xauto" ; then
-    Rcodesize=`cat "${R_PACKAGE_DIR}/R/${pkg_name}" | wc -c`
-    if test ${Rcodesize} -gt 25000 ; then
-      thislazy=true
-    else
-      thislazy=false
-    fi
   fi
   if ${thislazy}; then
     message "preparing package for lazy loading"
@@ -926,6 +924,8 @@ do_install_source () {
     fi
     if test -x ./cleanup ; then
       ./cleanup
+    elif test -f ./cleanup ; then
+	warning "'cleanup' exists but is not executable -- see the 'R Installation and Adminstration Manual'"
     fi
   fi
 

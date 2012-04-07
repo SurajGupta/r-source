@@ -29,12 +29,13 @@ intToUtf8(x, multiple = FALSE)
 
   \code{intToUtf8} converts a vector of (numeric) UTF-8 code points
   either to a single character string or a character vector of single
-  characters.  (Note that a single character string could contain
-  embedded nuls.)  The \code{\link{Encoding}} is declared as
-  \code{"UTF-8"}.
+  characters.  (For a single character string \code{0} is silently
+  omitted: otherwise \code{0} is mapped to \code{""}.  Non-integral
+  numeric values are truncated to integers.)  The
+  \code{\link{Encoding}} is declared as \code{"UTF-8"}.
 }
 \examples{\dontrun{
-## will only display in some locales
+## will only display in some locales and fonts
 intToUtf8(0x03B2L) # Greek beta
 }}
 \keyword{character}

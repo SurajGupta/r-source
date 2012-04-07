@@ -20,13 +20,6 @@
  *  http://www.r-project.org/Licenses/
  */
 
-/* <UTF8>
-   This uses byte-level access, which is generally OK as comparisons
-   are with ASCII chars.
-
-   typeofnext SymbolValue isValidName have been changed to cope.
- */
-
 #ifdef HAVE_CONFIG_H
 #include <config.h>
 #endif
@@ -146,16 +139,10 @@ static int mbcs_get_next(int c, wchar_t *wc)
 
 /* Handle function source */
 
-/* FIXME: These arrays really ought to be dynamically extendable
-   As from 1.6.0, SourceLine[] is, and the other two are checked.
-*/
-
 #define MAXFUNSIZE 131072
-#define MAXLINESIZE  1024
 #define MAXNEST       265
 
 static unsigned char FunctionSource[MAXFUNSIZE];
-static unsigned char SourceLine[MAXLINESIZE];
 static unsigned char *FunctionStart[MAXNEST], *SourcePtr;
 static int FunctionLevel = 0;
 static int KeepSource;
@@ -772,22 +759,16 @@ static SEXP xxfuncall(SEXP expr, SEXP args)
     return ans;
 }
 
-
-static SEXP mkChar2(const char *name)
-{
-    if(!strIsASCII(name)) {
-	if(known_to_be_latin1) return mkCharCE(name, CE_LATIN1);
-	else if(known_to_be_utf8) return mkCharCE(name, CE_UTF8);
-    }
-    return mkChar(name);
-}
-
-static SEXP mkString2(const char *s)
+static SEXP mkString2(const char *s, int len)
 {
     SEXP t;
+    cetype_t enc = CE_NATIVE;
+
+    if(known_to_be_latin1) enc= CE_LATIN1;
+    else if(known_to_be_utf8) enc = CE_UTF8;
 
     PROTECT(t = allocVector(STRSXP, 1));
-    SET_STRING_ELT(t, 0, mkChar2(s));
+    SET_STRING_ELT(t, 0, mkCharLenCE(s, len, enc));
     UNPROTECT(1);
     return t;
 }
@@ -834,24 +815,13 @@ static SEXP xxdefun(SEXP fname, SEXP formals, SEXP body)
 	    lines = 0;
 	    for (p = FunctionStart[FunctionLevel]; p < end ; p++)
 		if (*p == '\n' || p == end - 1) {
+		    cetype_t enc = CE_NATIVE;
 		    nc = p - p0;
-		    if (*p != '\n')
-			nc++;
-		    if (nc < MAXLINESIZE) {
-			strncpy((char *)SourceLine, (char *)p0, nc);
-			SourceLine[nc] = '\0';
-			SET_STRING_ELT(source, lines++,
-				       mkChar2((char *)SourceLine));
-		    } else { /* over-long line */
-			char *LongLine = (char *) malloc(nc+1);
-			if(!LongLine) 
-			    error(_("unable to allocate space for source line %d"), xxlineno);
-			strncpy(LongLine, (char *)p0, nc);
-			LongLine[nc] = '\0';
-			SET_STRING_ELT(source, lines++,
-				       mkChar2((char *)LongLine));
-			free(LongLine);
-		    }
+		    if (*p != '\n') nc++;
+		    if(known_to_be_latin1) enc = CE_LATIN1;
+		    else if(known_to_be_utf8) enc = CE_UTF8;
+		    SET_STRING_ELT(source, lines++,
+				   mkCharLenCE((char *)p0, nc, enc));
 		    p0 = p + 1;
 		}
 	    /* PrintValue(source); */
@@ -930,7 +900,7 @@ static SEXP xxexprlist(SEXP a1, YYLTYPE *lloc, SEXP a2)
 	if (SrcFile) {
 	    PROTECT(prevSrcrefs = getAttrib(a2, R_SrcrefSymbol));
 	    REPROTECT(SrcRefs = Insert(SrcRefs, makeSrcref(lloc, SrcFile)), srindex);
-	    PROTECT(ans = attachSrcrefs(a2, SrcFile));
+	    PROTECT(ans = attachSrcrefs(a2, SrcFile));	    
 	    REPROTECT(SrcRefs = prevSrcrefs, srindex);
 	    /* SrcRefs got NAMED by being an attribute... */
 	    SET_NAMED(SrcRefs, 0);
@@ -1001,54 +971,6 @@ static SEXP Insert(SEXP l, SEXP s)
     SETCDR(l, tmp);
     return l;
 }
-
-#if 0
-/* Comment Handling :R_CommentSxp is of the same form as an expression */
-/* list, each time a new { is encountered a new element is placed in the */
-/* R_CommentSxp and when a } is encountered it is removed. */
-
-static void ResetComment(void)
-{
-    R_CommentSxp = CONS(R_NilValue, R_NilValue);
-}
-
-static void PushComment(void)
-{
-    if (GenerateCode)
-	R_CommentSxp = CONS(R_NilValue, R_CommentSxp);
-}
-
-static void PopComment(void)
-{
-    if (GenerateCode)
-	R_CommentSxp = CDR(R_CommentSxp);
-}
-
-static void AddComment(SEXP l)
-{
-    SEXP tcmt, cmt;
-    int i, ncmt;
-
-    if(GenerateCode) {
-	tcmt = CAR(R_CommentSxp);
-	/* Return if there are no comments */
-	if (tcmt == R_NilValue || l == R_NilValue)
-	    return;
-	/* Attach the comments as a comment attribute */
-	ncmt = length(tcmt);
-	cmt = allocVector(STRSXP, ncmt);
-	for(i=0 ; i<ncmt ; i++) {
-	    STRING(cmt)[i] = CAR(tcmt);
-	    tcmt = CDR(tcmt);
-	}
-	PROTECT(cmt);
-	setAttrib(l, R_CommentSymbol, cmt);
-	UNPROTECT(1);
-	/* Reset the comment accumulator */
-	CAR(R_CommentSxp) = R_NilValue;
-    }
-}
-#endif
 
 static SEXP FirstArg(SEXP s, SEXP tag)
 {
@@ -1217,37 +1139,6 @@ static int text_getc(void)
     return R_TextBufferGetc(txtb);
 }
 
-
-/* unused */
-#ifdef PARSE_UNUSED
-SEXP R_Parse1Vector(TextBuffer *textb, int gencode, ParseStatus *status)
-{
-    ParseInit();
-    ParseContextInit();
-    GenerateCode = gencode;
-    txtb = textb;
-    ptr_getc = text_getc;
-    R_Parse1(status);
-    return R_CurrentExpr;
-}
-#endif
-
-
-#ifdef PARSE_UNUSED
-/* Not used, and note ungetc is no longer needed */
-attribute_hidden
-SEXP R_Parse1General(int (*g_getc)(), int (*g_ungetc)(),
-		     int gencode, ParseStatus *status)
-{
-    ParseInit();
-    ParseContextInit();
-    GenerateCode = gencode;
-    ptr_getc = g_getc;
-    R_Parse1(status);
-    return R_CurrentExpr;
-}
-#endif
-
 static SEXP R_Parse(int n, ParseStatus *status, SEXP srcfile)
 {
     volatile int savestack;
@@ -1350,17 +1241,6 @@ SEXP R_ParseVector(SEXP text, int n, ParseStatus *status, SEXP srcfile)
     R_TextBufferFree(&textb);
     return rval;
 }
-
-#ifdef PARSE_UNUSED
-/* Not used, and note ungetc is no longer needed */
-SEXP R_ParseGeneral(int (*ggetc)(), int (*gungetc)(), int n,
-		    ParseStatus *status, SEXP srcfile)
-{
-    GenerateCode = 1;
-    ptr_getc = ggetc;
-    return R_Parse(n, status, srcfile);
-}
-#endif
 
 static const char *Prompt(SEXP prompt, int type)
 {
@@ -1830,20 +1710,6 @@ static int SkipSpace(void)
 /* special assignment EndOfFile=2 to indicate that this is */
 /* going on.  This is detected and dealt with in Parse1Buffer. */
 
-#ifdef OLD
-/* This collected the comment in yytext but did not use it */
-static int SkipComment(void)
-{
-    DECLARE_YYTEXT_BUFP(yyp);
-    int c;
-    YYTEXT_PUSH('#', yyp);
-    while ((c = xxgetc()) != '\n' && c != R_EOF)
-	YYTEXT_PUSH(c, yyp);
-    YYTEXT_PUSH('\0', yyp);
-    if (c == R_EOF) EndOfFile = 2;
-    return c;
-}
-#else
 static int SkipComment(void)
 {
     int c;
@@ -1851,7 +1717,6 @@ static int SkipComment(void)
     if (c == R_EOF) EndOfFile = 2;
     return c;
 }
-#endif
 
 static int NumericValue(int c)
 {
@@ -1874,7 +1739,7 @@ static int NumericValue(int c)
 	    if (last != '0') break;
 	    YYTEXT_PUSH(c, yyp);
 	    while(isdigit(c = xxgetc()) || ('a' <= c && c <= 'f') ||
-		  ('A' <= c && c <= 'F')) {
+		  ('A' <= c && c <= 'F') || c == '.') {
 		YYTEXT_PUSH(c, yyp);
 		nd++;
 	    }
@@ -2074,7 +1939,7 @@ static int StringValue(int c, Rboolean forSymbol)
 			if (i == 0) { /* was just \x */
 			    if(GenerateCode && R_WarnEscapes) {
 				have_warned++;
-				warningcall(R_NilValue, _("'\\x used without hex digits"));
+				warningcall(R_NilValue, _("'\\x' used without hex digits"));
 			    }
 			    val = 'x';
 			}
@@ -2276,7 +2141,7 @@ static int StringValue(int c, Rboolean forSymbol)
 		error(_("string at line %d containing Unicode escapes not in this locale\nis too long (max 1000 chars)"), xxlineno);
 	} else
 #endif
-	    PROTECT(yylval = mkString2(stext));
+	    PROTECT(yylval = mkString2(stext,  bp - stext - 1));
 	if(stext != st0) free(stext);
 	if(have_warned) {
 	    *ct = '\0';

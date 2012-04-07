@@ -51,12 +51,11 @@ RweaveLatexSetup(file, syntax, output = NULL, quiet = FALSE,
   process the hard-coded path if it contains spaces (as it often will
   under Windows) or TeX special characters.
 
-  The default in \R prior to 2.7.0 was \code{stylepath = TRUE}.  In
-  2.7.x it is taken from the environment variable
-  \env{SWEAVE\_STYLEPATH\_DEFAULT}, or \code{TRUE} it that is unset or
+  The default in \R prior to 2.7.0 was \code{stylepath = TRUE}.  It is
+  now taken from the environment variable
+  \env{SWEAVE\_STYLEPATH\_DEFAULT}, or is \code{FALSE} it that is unset or
   empty.  If set, it should be exactly \code{TRUE} or \code{FALSE}: any
-  other values are taken as \code{FALSE}.  The default is likely to
-  change in later versions of \R.
+  other values are taken as \code{FALSE}.
 }
 \section{Supported Options}{
   \code{RweaveLatex} supports the following options for code chunks (the values
@@ -121,8 +120,8 @@ RweaveLatexSetup(file, syntax, output = NULL, quiet = FALSE,
 }
 \author{Friedrich Leisch}
 \references{
-  Friedrich Leisch: Sweave User Manual, 2002\cr
-  \url{http://www.ci.tuwien.ac.at/~leisch/Sweave}
+  Friedrich Leisch: Sweave User Manual, 2008\cr
+  \url{http://www.stat.uni-muenchen.de/~leisch/Sweave}
 }
 \seealso{\code{\link{Sweave}}, \code{\link{Rtangle}}}
 \keyword{utilities}

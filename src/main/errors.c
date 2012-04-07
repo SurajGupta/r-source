@@ -18,11 +18,6 @@
  *  http://www.r-project.org/Licenses/
  */
 
-/* <UTF8> char here is either ASCII or handled as a whole
-   Domain names could be non-native, but the message translation
-   systen is native.
-*/
-
 #ifdef HAVE_CONFIG_H
 #include <config.h>
 #endif
@@ -112,6 +107,12 @@ void R_CheckStack(void)
 void R_CheckUserInterrupt(void)
 {
     R_CheckStack();
+
+    /* Don't do any processing of interrupts, timing limits, or other
+       asynchronous events if interrupts are suspended. */
+    if (R_interrupts_suspended)
+	return;
+
     /* This is the point where GUI systems need to do enough event
        processing to determine whether there is a user interrupt event
        pending.  Need to be careful not to do too much event
@@ -123,9 +124,31 @@ void R_CheckUserInterrupt(void)
     R_ProcessEvents();
 #else
     R_PolledEvents();
+    /* the same code is in R_ProcessEvents on Windows and AQUA */
+    if (cpuLimit > 0.0 || elapsedLimit > 0.0) {
+	double cpu, data[5];
+	R_getProcTime(data);
+	cpu = data[0] + data[1] + data[3] + data[4];
+	if (elapsedLimit > 0.0 && data[2] > elapsedLimit) {
+	    cpuLimit = elapsedLimit = -1;
+	    if (elapsedLimit2 > 0.0 && data[2] > elapsedLimit2) {
+		elapsedLimit2 = -1.0;
+		error(_("reached session elapsed time limit"));
+	    } else
+		error(_("reached elapsed time limit"));
+	}
+	if (cpuLimit > 0.0 && cpu > cpuLimit) {
+	    cpuLimit = elapsedLimit = -1;
+	    if (cpuLimit2 > 0.0 && cpu > cpuLimit2) {
+		cpuLimit2 = -1.0;
+		error(_("reached session CPU time limit"));
+	    } else
+		error(_("reached CPU time limit"));
+	}
+    }
     if (R_interrupts_pending)
 	onintr();
-#endif /* Win32 */
+#endif /* Aqua or Win32 */
 }
 
 void onintr()
@@ -1766,3 +1789,14 @@ do_printDeferredWarnings(SEXP call, SEXP op, SEXP args, SEXP env)
     R_PrintDeferredWarnings();
     return R_NilValue;
 }
+
+SEXP attribute_hidden
+do_interruptsSuspended(SEXP call, SEXP op, SEXP args, SEXP env)
+{
+    int orig_value = R_interrupts_suspended;
+    if (args != R_NilValue) 
+	R_interrupts_suspended = asLogical(CAR(args));
+    return ScalarLogical(orig_value);
+}
+	
+	

@@ -55,7 +55,7 @@ export(add.scope, add1, addmargins, aggregate, aggregate.data.frame,
        rmultinom, rnbinom, rnorm, rpois, rsignrank, rstandard,
        rstandard.glm, rstandard.lm, rstudent, rstudent.glm,
        rstudent.lm, rt, runif, rweibull, rwilcox, sd, se.contrast,
-       simulate, spline, splinefun, SSD, start, stat.anova, step,
+       simulate, spline, splinefun, splinefunH, SSD, start, stat.anova, step,
        summary.aov, summary.aovlist, summary.glm, summary.infl,
        summary.lm, summary.manova, summary.mlm, symnum, termplot,
        terms, terms.aovlist, terms.default, terms.formula,
@@ -231,6 +231,7 @@ S3method(relevel, default)
 S3method(relevel, factor)
 S3method(relevel, ordered)
 S3method(reorder, factor)
+S3method(reorder, character)
 S3method(se.contrast, aov)
 S3method(se.contrast, aovlist)
 S3method(simulate, lm)
@@ -516,6 +517,7 @@ S3method(lines, stepfun)
 S3method(plot, ecdf)
 S3method(plot, stepfun)
 S3method(print, ecdf)
+S3method(print, summary.ecdf)
 S3method(print, stepfun)
 S3method(summary, ecdf)
 S3method(summary, stepfun)

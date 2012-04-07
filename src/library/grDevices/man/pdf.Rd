@@ -17,7 +17,8 @@
 \usage{
 pdf(file = ifelse(onefile, "Rplots.pdf", "Rplot\%03d.pdf"),
     width, height, onefile, family, title, fonts, version,
-    paper, encoding, bg, fg, pointsize, pagecentre)
+    paper, encoding, bg, fg, pointsize, pagecentre, colormodel,
+    useDingbats)
 }
 \arguments{
   \item{file}{a character string giving the name of the file.
@@ -39,7 +40,8 @@ pdf(file = ifelse(onefile, "Rplots.pdf", "Rplot\%03d.pdf"),
     \code{NULL}.}
   \item{version}{a string describing the PDF version that will be
     required to view the output.  This is a minimum, and will be
-    increased (with a warning) if necessary.  Defaults to \code{"1.1"}. }
+    increased (with a warning) if necessary.  Defaults to \code{"1.4"},
+    but see \sQuote{Details}.}
   \item{paper}{the target paper size.  The choices are
     \code{"a4"}, \code{"letter"}, \code{"legal"} (or \code{"us"}) and
     \code{"executive"} (and these can be capitalized), or \code{"a4r"}
@@ -63,6 +65,13 @@ pdf(file = ifelse(onefile, "Rplots.pdf", "Rplot\%03d.pdf"),
   \item{pagecentre}{logical: should the device region be centred on the
     page? -- is only relevant for \code{paper != "special"}.  Defaults
     to true.}
+  \item{colormodel}{a character string describing the color model:
+    currently allowed values are \code{"rgb"}, \code{"gray"} and
+    \code{"cmyk"}.  Defaults to \code{"rgb"}.}
+  \item{useDingbats}{logical.  Should small circles be rendered
+    \emph{via} the Dingbats font?  Defaults to true, which produces
+    smaller and better output -- this is provided for those who insist
+    on using broken PDF viewers.}
 }
 \details{
   All arguments except \code{file} default to values given by
@@ -124,9 +133,9 @@ pdf(file = ifelse(onefile, "Rplots.pdf", "Rplot\%03d.pdf"),
   produced.  The version must be at least 1.4 for semi-transparent
   output to be understood, and at least 1.3 if CID fonts are to be used:
   if these features are used the version number will be increased (with
-  a warning).  Specifying a low version number (as the default) is
-  useful if you want to produce PDF output that can be viewed on older
-  or non-Adobe PDF viewers.  (PDF 1.4 requires Acrobat 5 or later.)
+  a warning).  Specifying a low version number is useful if you want to
+  produce PDF output that can be viewed on older or non-Adobe PDF
+  viewers.  (PDF 1.4 requires Acrobat 5 or later.)
 
   Line widths as controlled by \code{par(lwd=)} are in multiples of
   1/96 inch.  Multiples less than 1 are allowed.  \code{pch="."} with
@@ -151,6 +160,14 @@ pdf(file = ifelse(onefile, "Rplots.pdf", "Rplot\%03d.pdf"),
   if the background were white.  This will not be the case when printing
   onto coloured paper, though.
 }
+\section{Color models}{
+  The default color model is RGB, and model \code{"gray"} maps RGB
+  colors to greyscale using perceived luminosity (biased towards green).
+  \code{"cmyk"} outputs in CMYK colorspace.  Nothing in \R specifies the
+  interpretation of the RGB or CMYK color spaces, and the simplest
+  possible conversion to CMYK is used
+  (\url{http://en.wikipedia.org/wiki/CMYK_color_model#Mapping_RGB_to_CMYK}).
+}
 \section{Conventions}{
   This section describes the implementation of the conventions for
   graphics devices set out in the \dQuote{R Internals Manual}.
@@ -160,7 +177,8 @@ pdf(file = ifelse(onefile, "Rplots.pdf", "Rplot\%03d.pdf"),
     \item Font sizes are in big points.
     \item The default font family is Helvetica.
     \item Line widths are as a multiple of 1/96 inch, with no minimum. 
-    \item Circles of any radius are allowed.  Opaque circles of less than 10
+    \item Circles of any radius are allowed.  Unless \code{useDingbats =
+    FALSE}, opaque circles of less than 10 big
     points radius are rendered using char 108 in the Dingbats font:
     all semi-transparent and larger circles using a \enc{Bézier}{Bezier}
     curve for each quadrant.

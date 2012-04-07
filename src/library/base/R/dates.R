@@ -348,9 +348,9 @@ cut.Date <-
     } else {
         start <- .Internal(POSIXlt2Date(start))
         if (length(by2) == 2) incr <- incr * as.integer(by2[1])
-	    maxx <- max(x, na.rm = TRUE)
+        maxx <- max(x, na.rm = TRUE)
         breaks <- seq.int(start, maxx + incr, breaks)
-        breaks <- breaks[1:(1+max(which(breaks < maxx)))]
+        breaks <- breaks[1:(1+max(which(breaks <= maxx)))]
       }
     } else stop("invalid specification of 'breaks'")
     res <- cut(unclass(x), unclass(breaks), labels = labels,
@@ -413,6 +413,18 @@ diff.Date <- function (x, lag = 1, differences = 1, ...)
     r
 }
 
-# ---- additions in 2.6.0 -----
+## ---- additions in 2.6.0 -----
 
 is.numeric.Date <- function(x) FALSE
+
+## ---- additions in 2.8.0 -----
+
+split.Date <-
+function(x, f, drop = FALSE, ...)
+{
+    y <- split.default(as.integer(x), f, drop = drop)
+    for(i in seq_along(y)) class(y[[i]]) <- "Date"
+    y
+}
+
+xtfrm.Date <- function(x) as.numeric(x)

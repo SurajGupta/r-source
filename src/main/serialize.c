@@ -655,13 +655,20 @@ static int HashGet(SEXP item, SEXP ht)
 #define IS_OBJECT_BIT_MASK (1 << 8)
 #define HAS_ATTR_BIT_MASK (1 << 9)
 #define HAS_TAG_BIT_MASK (1 << 10)
-#define ENCODE_LEVELS(v) (v << 12)
-#define DECODE_LEVELS(v) (v >> 12)
-#define DECODE_TYPE(v) (v & 255)
+#define ENCODE_LEVELS(v) ((v) << 12)
+#define DECODE_LEVELS(v) ((v) >> 12)
+#define DECODE_TYPE(v) ((v) & 255)
 
 static int PackFlags(int type, int levs, int isobj, int hasattr, int hastag)
 {
-    int val = type | ENCODE_LEVELS(levs);
+    /* We don't write out bit 5 as from R 2.8.0.
+       It is used to indicate if an object is in CHARSXP cache 
+       - not that it matters to this version of R, but it saves
+       checking all previous versions.
+    */
+    int val;
+    if (type == CHARSXP) levs &= (~CACHED_MASK);
+    val = type | ENCODE_LEVELS(levs);
     if (isobj) val |= IS_OBJECT_BIT_MASK;
     if (hasattr) val |= HAS_ATTR_BIT_MASK;
     if (hastag) val |= HAS_TAG_BIT_MASK;
@@ -1337,18 +1344,14 @@ static SEXP ReadItem (SEXP ref_table, R_inpstream_t stream)
 		cbuf[length] = '\0';
 		if (levs & UTF8_MASK) enc = CE_UTF8;
 		else if (levs & LATIN1_MASK) enc = CE_LATIN1;
-		if (length > strlen(cbuf))
-		    PROTECT(s = mkCharLen(cbuf, length));
-		else PROTECT(s = mkCharCE(cbuf, enc));
+		PROTECT(s = mkCharLenCE(cbuf, length, enc));
 	    } else {
 		int enc = CE_NATIVE;
 		cbuf = CallocCharBuf(length);
 		InString(stream, cbuf, length);
 		if (levs & UTF8_MASK) enc = CE_UTF8;
 		else if (levs & LATIN1_MASK) enc = CE_LATIN1;
-		if (length > strlen(cbuf))
-		    PROTECT(s = mkCharLen(cbuf, length));
-		else PROTECT(s = mkCharCE(cbuf, enc));
+		PROTECT(s = mkCharLenCE(cbuf, length, enc));
 		Free(cbuf);
 	    }
 	    break;
@@ -2070,12 +2073,9 @@ SEXP attribute_hidden R_unserialize(SEXP icon, SEXP fun)
     hook = fun != R_NilValue ? CallHook : NULL;
 
     if (TYPEOF(icon) == STRSXP && LENGTH(icon) > 0) {
-	struct membuf_st mbs;
-	void *data = (void *)CHAR(STRING_ELT(icon, 0)); /* FIXME, is this right? */
-	int length = LENGTH(STRING_ELT(icon, 0));
-	warning("unserialize() from a character string is deprecated and will be withdrawn in R 2.8.0");
-	InitMemInPStream(&in, &mbs, data,  length, hook, fun);
-	return R_Unserialize(&in);
+	/* was the format in R < 2.4.0, removed in R 2.8.0 */
+	error("character vectors are no longer accepted by unserialize()");
+	return R_NilValue; /* -Wall */
     } else if (TYPEOF(icon) == RAWSXP) {
 	struct membuf_st mbs;
 	void *data = RAW(icon);
@@ -2118,21 +2118,13 @@ static SEXP appendRawToFile(SEXP file, SEXP bytes)
 #ifdef HAVE_WORKING_FTELL
     /* Windows' ftell returns position 0 with "ab" */
     if ((fp = R_fopen(CHAR(STRING_ELT(file, 0)), "ab")) == NULL) {
-#ifdef HAVE_STRERROR
 	error( _("cannot open file '%s': %s"), CHAR(STRING_ELT(file, 0)),
 	       strerror(errno));
-#else
-	error( _("cannot open file '%s'"), CHAR(STRING_ELT(file, 0)));
-#endif
     }
 #else
     if ((fp = R_fopen(CHAR(STRING_ELT(file, 0)), "r+b")) == NULL) {
-#ifdef HAVE_STRERROR
 	error( _("cannot open file '%s': %s"), CHAR(STRING_ELT(file, 0)),
 	       strerror(errno));
-#else
-	error( _("cannot open file '%s'"), CHAR(STRING_ELT(file, 0)));
-#endif
     }
     fseek(fp, 0, SEEK_END);
 #endif
@@ -2210,13 +2202,8 @@ static SEXP readRawFromFile(SEXP file, SEXP key)
 
     if(icache >= 0) {
 	strcpy(names[icache], cfile);
-	if ((fp = R_fopen(cfile, "rb")) == NULL) {
-#ifdef HAVE_STRERROR
+	if ((fp = R_fopen(cfile, "rb")) == NULL)
 	    error(_("cannot open file '%s': %s"), cfile, strerror(errno));
-#else
-	    error(_("cannot open file '%s'"), cfile);
-#endif
-	}
 	if (fseek(fp, 0, SEEK_END) != 0) {
 	    fclose(fp);
 	    error(_("seek failed on %s"), cfile);
@@ -2234,13 +2221,8 @@ static SEXP readRawFromFile(SEXP file, SEXP key)
 	if (filelen != in) error(_("read failed on %s"), cfile);
 	memcpy(RAW(val), ptr[icache]+offset, len);
     } else {
-	if ((fp = R_fopen(cfile, "rb")) == NULL) {
-#ifdef HAVE_STRERROR
+	if ((fp = R_fopen(cfile, "rb")) == NULL)
 	    error(_("cannot open file '%s': %s"), cfile, strerror(errno));
-#else
-	    error(_("cannot open file '%s'"), cfile);
-#endif
-	}
 	if (fseek(fp, offset, SEEK_SET) != 0) {
 	    fclose(fp);
 	    error(_("seek failed on %s"), cfile);

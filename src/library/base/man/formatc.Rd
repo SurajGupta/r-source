@@ -16,13 +16,14 @@ formatC(x, digits = NULL, width = NULL,
         format = NULL, flag = "", mode = NULL,
         big.mark = "", big.interval = 3,
       small.mark = "", small.interval = 5,
-    decimal.mark = ".", preserve.width = "individual")
+    decimal.mark = ".", preserve.width = "individual",
+        zero.print = NULL, drop0trailing = FALSE)
 
 prettyNum(x, big.mark = "",   big.interval = 3,
           small.mark = "", small.interval = 5,
           decimal.mark = ".",
           preserve.width = c("common", "individual", "none"),
-          zero.print = NULL, \dots)
+          zero.print = NULL, drop0trailing = FALSE, \dots)
 }
 \arguments{
   \item{x}{an atomic numerical or character object, typically a vector
@@ -34,7 +35,8 @@ prettyNum(x, big.mark = "",   big.interval = 3,
 
     Default: 2 for integer, 4 for real numbers.  If less than 0,
     the C default of 6 digits is used.  If specified as more than 50, 50
-    will be used with a warning.  (Not more than about 15--21 digits need be
+    will be used with a warning unless \code{format = "f"} where it is
+    limited to typically 324. (Not more than 15--21 digits need be
     accurate, depending on the OS and compiler used.  This limit is
     just a precaution against segfaults in the underlying C runtime.)
   }
@@ -97,6 +99,9 @@ prettyNum(x, big.mark = "",   big.interval = 3,
   \item{zero.print}{logical, character string or \code{NULL} specifying
     if and how \emph{zeros} should be formatted specially.  Useful for
     pretty printing \sQuote{sparse} objects.}
+  \item{drop0trailing}{logical, indicating if trailing zeros,
+    i.e., \code{"0"} \emph{after} the decimal mark, should be removed;
+    also drops \code{"e+00"} in exponential formats.}
   \item{\dots}{arguments passed to \code{format}.}
 }
 \value{
@@ -129,8 +134,6 @@ prettyNum(x, big.mark = "",   big.interval = 3,
   unexpectedly if \code{x} is a \code{character} vector not resulting from
   something like \code{format(<number>)}: in particular it assumes that
   a period is a decimal mark.
-
-  Character inputs with embedded nul bytes will be truncated at the first nul.
 }
 \author{
   \code{formatC} was originally written by Bill Dunlap, later much
@@ -160,7 +163,9 @@ xx <- c(1e-12,-3.98765e-10,1.45645e-69,1e-70,pi*1e37,3.44e4)
 ##       1        2             3        4      5       6
 formatC(xx)
 formatC(xx, format="fg")       # special "fixed" format.
-formatC(xx, format="f", digits=80) #>> also long strings
+formatC(xx[1:4], format="f", digits=75) #>> even longer strings
+
+formatC(c(3.24, 2.3e-6), format="f", digits=11, drop0trailing=TRUE)
 
 r <- c("76491283764.97430", "29.12345678901", "-7.1234", "-100.1","1123")
 ## American:

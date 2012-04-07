@@ -1,5 +1,5 @@
 
-R version 2.7.0 Patched (2008-04-22 r45429)
+R version 2.8.0 Under development (unstable) (2008-09-11 r46529)
 Copyright (C) 2008 The R Foundation for Statistical Computing
 ISBN 3-900051-07-0
 
@@ -358,12 +358,12 @@ There were 22 warnings (use warnings() to see them)
  $ y  : num  1 2 3 4 5 6 7 8 9 10
  $ fac: Factor w/ 3 levels "A","B","C": 1 3 2 3 3 1 2 3 2 2
 > (d0  <- d[, FALSE]) # NULL dataframe with 10 rows
-NULL data frame with 10 rows
+data frame with 0 columns and 10 rows
 > (d.0 <- d[FALSE, ]) # <0 rows> dataframe  (3 cols)
 [1] x   y   fac
 <0 rows> (or 0-length row.names)
 > (d00 <- d0[FALSE,]) # NULL dataframe with 0 rows
-NULL data frame with 0 rows
+data frame with 0 columns and 0 rows
 > stopifnot(identical(d, cbind(d, d0)),
 +           identical(d, cbind(d0, d)))
 > stopifnot(identical(d, rbind(d,d.0)),
@@ -1203,11 +1203,6 @@ Error in cov(rnorm(10), NULL) :
 Error in cor(rnorm(10), NULL) : 
   supply both 'x' and 'y' or a matrix-like 'x'
 > ## gave the variance and 1 respectively in 1.2.2.
-> try(var(NULL))
-Error in var(NULL) : 'x' is empty
-> try(var(numeric(0)))
-Error in var(numeric(0)) : 'x' is empty
-> ## gave NA in 1.2.2
 > 
 > 
 > ## PR 960 (format() of a character matrix converts to vector)
@@ -4047,7 +4042,7 @@ In readBin(zz, "character", 100) :
 > seek(zz, 0, "start")
 [1] 18
 > readChar(zz, length(xx)) # truncates at embedded nul
-[1] "A test string\0more"
+[1] "A test string"
 > seek(zz) # make sure current position is reported properly
 [1] 18
 > close(zz)
@@ -4912,7 +4907,7 @@ NULL
   `--[dendrogram w/ 2 branches and 2 members at h = 89.2]
      |--leaf "Branch 3" (h= 44.8 midpoint = 6.8, x.member = 14 )
      `--leaf "Branch 4" (h= 54.7 midpoint = 7.65, x.member = 20 )
-> ## gave much too many spaces in 2.2.[01]
+> ## {{for Emacs: `}}  gave much too many spaces in 2.2.[01]
 > 
 > 
 > ## formatC on Windows (PR#8337)
@@ -5372,7 +5367,7 @@ Levels: A B C D E
 > 
 > ## [ on a zero-column data frame, names of such
 > data.frame()[FALSE]
-NULL data frame with 0 rows
+data frame with 0 columns and 0 rows
 > names(data.frame())
 character(0)
 > # gave NULL names and hence spurious warning.
@@ -5729,7 +5724,7 @@ $weight
 > 
 > ## data.frame() with zero columns ignored 'row.names'
 > (x <- data.frame(row.names=1:4))
-NULL data frame with 4 rows
+data frame with 0 columns and 4 rows
 > nrow(x)
 [1] 4
 > row.names(x)
@@ -6150,4 +6145,51 @@ In `[<-.data.frame`(`*tmp*`, , 3, value = list(a = 1:3, b = 2:4)) :
 2 2 3   2
 3 3 4   3
 > ## warning during printing < 2.7.0
+> 
+> 
+> ## format.factor used to lose dim[names] and names (PR#11512)
+> x <- factor(c("aa", letters[-1]))
+> dim(x) <- c(13,2)
+> format(x, justify="right")
+      [,1] [,2]
+ [1,] "aa" " n"
+ [2,] " b" " o"
+ [3,] " c" " p"
+ [4,] " d" " q"
+ [5,] " e" " r"
+ [6,] " f" " s"
+ [7,] " g" " t"
+ [8,] " h" " u"
+ [9,] " i" " v"
+[10,] " j" " w"
+[11,] " k" " x"
+[12,] " l" " y"
+[13,] " m" " z"
+> ##
+> 
+> 
+> ## removing columns in within (PR#1131)
+> abc <- data.frame(a=1:5, b=2:6, c=3:7)
+> within(abc, b<-NULL)
+  a c
+1 1 3
+2 2 4
+3 3 5
+4 4 6
+5 5 7
+> within(abc,{d<-a+7;b<-NULL})
+  a c  d
+1 1 3  8
+2 2 4  9
+3 3 5 10
+4 4 6 11
+5 5 7 12
+> within(abc,{a<-a+7;b<-NULL})
+   a c
+1  8 3
+2  9 4
+3 10 5
+4 11 6
+5 12 7
+> ## Second produced corrupt data frame in 2.7.1
 > 

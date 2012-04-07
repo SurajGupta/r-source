@@ -88,7 +88,7 @@ function(lines)
 
     ## Looks stupid, but ... we need a loop to determine the skip list
     ## to deal with nested conditionals.
-    skip_list <- integer(0)
+    skip_list <- integer()
     skip_level <- 0L
     skip_indices <- pp_line_indices
     for(i in seq_along(pp_types)) {
@@ -195,10 +195,10 @@ function(RdFiles)
     RdFiles <- path.expand(RdFiles[file_test("-f", RdFiles)])
 
     if(length(RdFiles) == 0L) {
-        out <- data.frame(File = character(0),
-                          Name = character(0),
-                          Type = character(0),
-                          Title = character(0),
+        out <- data.frame(File = character(),
+                          Name = character(),
+                          Type = character(),
+                          Title = character(),
                           Encoding = character(),
                           stringsAsFactors = FALSE)
         out$Aliases <- list()
@@ -444,8 +444,22 @@ function(package, dir, lib.loc = NULL)
         names(db) <- docs_files
     }
 
-    db
+    ## Add package encoding metadata if available and not override by
+    ## Rd \encoding entries.
+    encoding <-
+        .get_package_metadata(dir, !missing(package))["Encoding"]
+    ## Should we catch cases where (non-installed) packages have no
+    ## DESCRIPTION or DESCRIPTION.in files (then really they cannot be
+    ## packages ...)?
+    if(!is.na(encoding)) {
+        ## For simplicity, always add a package \encoding entry at the
+        ## end (so that an explicit \encoding entry in an Rd file always
+        ## takes precedence.
+        db <- Map(c, db, sprintf("\\encoding{%s}", encoding))
+        ## (As we want mapply(SIMPLIFY = FALSE, USE.NAMES = TRUE).)
+    }
 
+    db
 }
 
 ### * Rd_parse
@@ -861,8 +875,9 @@ function(txt, cmd, FUN)
 .apply_Rd_filter_to_Rd_db <-
 function(db, FUN, ...)
 {
-    db <- lapply(db, function(t) try(FUN(t, ...), silent = TRUE))
-    idx <- as.logical(sapply(db, inherits, "try-error"))
+    db <- lapply(db,
+                 function(t) tryCatch(FUN(t, ...), error = identity))
+    idx <- as.logical(sapply(db, inherits, "error"))
     if(any(idx)) {
 	msg <- gettext("Rd syntax errors found")
 	for(i in which(idx))
@@ -870,7 +885,7 @@ function(db, FUN, ...)
 		c(msg,
 		  gettextf("Syntax error in documentation object '%s':",
 			   names(db)[i]),
-		  db[[i]])
+		  conditionMessage(db[[i]]))
 	stop(paste(msg, collapse = "\n"), call. = FALSE, domain = NA)
     }
     db

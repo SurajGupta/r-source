@@ -1,6 +1,6 @@
 R FAQ
 Frequently Asked Questions on R
-Version 2.7.2008-08-22
+Version 2.7.2008-09-17
 ISBN 3-900051-08-9
 Kurt Hornik
 
@@ -1554,6 +1554,9 @@ distributions of R.)
 *CTFS*
      The CTFS large plot forest dynamics analyses.
 
+*CTT*
+     Classical Test Theory functions.
+
 *CVThresh*
      Level-dependent Cross-Validation Thresholding.
 
@@ -1700,6 +1703,9 @@ distributions of R.)
 *ETC*
      Tests and simultaneous confidence intervals for equivalence to control.
 
+*EVER*
+     Estimation of Variance by Efficient Replication.
+
 *EbayesThresh*
      Empirical Bayes thresholding and related methods.
 
@@ -1783,6 +1789,10 @@ distributions of R.)
 
 *GEOmap*
      Topographic and geologic mapping.
+
+*GExMap*
+     Functions for the analysis of genomic distribution of genes lists
+     produced by transcriptomic studies.
 
 *GLDEX*
      Fit RS and FMKL generalised lambda distributions using discretized and
@@ -2043,8 +2053,15 @@ distributions of R.)
 *MFDA*
      Model Based Functional Data Analysis.
 
+*MIfuns*
+     Pharmacometric tools for data preparation, analysis, simulation, and
+     reporting.
+
 *MKLE*
      Maximum kernel likelihood estimation.
+
+*MKmisc*
+     Miscellaneous Functions from M. Kohl.
 
 *MLDA*
      Methylation Linear Discriminant Analysis (MLDA).
@@ -2072,6 +2089,9 @@ distributions of R.)
 *MSBVAR*
      Bayesian vector autoregression models, impulse responses and
      forecasting.
+
+*MSVAR*
+     Markov Switching VAR.
 
 *MarkedPointProcess*
      Non-parametric analysis of the marks of marked point processes.
@@ -2126,6 +2146,10 @@ distributions of R.)
 
 *NetIndices*
      Estimates network indices, including trophic structure of foodwebs.
+
+*OPE*
+     Fit an outer-product emlator to the multivariate evaluations of a
+     computer model.
 
 *ORMDR*
      Odds ratio based multivactor-dimensionality reduction method for
@@ -2433,6 +2457,9 @@ distributions of R.)
 *RaschSampler*
      Sampling binary matrices with fixed margins.
 
+*Ratings*
+     Model-based ratings figures.
+
 *Rcapture*
      Loglinear models in capture-recapture experiments.
 
@@ -2504,6 +2531,9 @@ distributions of R.)
      also provides an interactive R slave environment in which distributed
      statistical computing can be carried out.
 
+*RobAStBase*
+     Base classes and functions for robust asymptotic statistics.
+
 *RobLox*
      Optimally robust influence curves for location and scale.
 
@@ -2519,6 +2549,9 @@ distributions of R.)
 *Rserve*
      A socket server (TCP/IP or local sockets) which allows binary requests
      to be sent to R.
+
+*Rsge*
+     Interface to the SGE cluster/grid queuing system.
 
 *Rsundials*
      SUite of Nonlinear DIfferential ALgebraic equations Solvers in R.
@@ -2585,14 +2618,17 @@ distributions of R.)
 *SNPmaxsel*
      Maximally selected statistics for SNP data.
 
-*SRPM*
-     Shared Reproducibility Package Management.
-
 *SQLiteMap*
      Manage vector graphical maps using SQLite.
 
 *SQLiteDF*
      Stores data frames and matrices in SQLite tables.
+
+*SRPM*
+     Shared Reproducibility Package Management.
+
+*STAR*
+     Spike Train Analysis with R.
 
 *SciViews*
      A bundle of packages to implement a full reusable GUI API for R.
@@ -2601,9 +2637,6 @@ distributions of R.)
      miscellaneous supporting functions, and *svViews* providing views and
      report features (views are HTML presentations of the content of R
      objects, combining text, tables and graphs in the same document).
-
-*SiZer*
-     Significant Zero crossings.
 
 *SemiPar*
      Functions for semiparametric regression analysis, to complement the
@@ -2623,10 +2656,17 @@ distributions of R.)
 *SharedHT2*
      Shared Hotelling T^2 test for small sample microarray experiments.
 
+*SiZer*
+     Significant Zero crossings.
+
 *SimHap*
      A comprehensive modeling framework for epidemiological outcomes and a
      multiple-imputation approach to haplotypic analysis of population-based
      data.
+
+*SimpleTable*
+     Bayesian inference and sensitivity analysis for causal effects from 2
+     x 2 and 2 x 2 x K tables in the presence of unmeasured confounding.
 
 *Snowball*
      Snowball stemmers.
@@ -2720,6 +2760,9 @@ distributions of R.)
      A set of demonstration functions that can be used in a classroom to
      demonstrate statistical concepts, or on your own to better understand
      the concepts or the programming.
+
+*TinnR*
+     Resources for the Tinn-R GUI/Editor for R.
 
 *TraMineR*
      Sequences and trajectories mining for social scientists.
@@ -3190,6 +3233,9 @@ distributions of R.)
      Clustering for Business Analytics, including implementations of
      Proximus and Rock.
 
+*ccgarch*
+     Conditional Correlation GARCH models.
+
 *cclust*
      Convex clustering methods, including k-means algorithm, on-line update
      algorithm (Hard Competitive Learning) and Neural Gas algorithm (Soft
@@ -3380,6 +3426,9 @@ distributions of R.)
 *contrast*
      A collection of contrast methods.
 
+*convexHaz*
+     Nonparametric MLE/LSE of convex hazard.
+
 *copas*
      Statistical methods to model and adjust for bias in meta-analysis.
 
@@ -3445,6 +3494,10 @@ distributions of R.)
 
 *cyclones*
      Cyclone identification.
+
+*data.table*
+     Extension of data frames to allow subscripting by expressions evaluated
+     within the frame.
 
 *dataframes2xls*
      Write data frames to `.xls' files.
@@ -3544,6 +3597,9 @@ distributions of R.)
 *diptest*
      Compute Hartigan's dip test statistic for unimodality.
 
+*dirichlet*
+     Dirichlet model of consumer buying behavior for marketing research.
+
 *dispmod*
      Functions for modelling dispersion in GLMs.
 
@@ -3558,14 +3614,25 @@ distributions of R.)
 *distrEx*
      Extensions of package *distr*.
 
+*distrMod*
+     Object orientated implementation of probability models based on
+     *distr* and *distrEx*.
+
 *distrSim*
      Simulation classes based on package *distr*.
 
 *distrTEst*
      Estimation and Testing classes based on package *distr*.
 
+*distrTeach*
+     Extensions of *distr* for teaching stochastics/statistics in secondary
+     school.
+
 *distributions*
      Probability distributions based on TI-83 Plus.
+
+*divagis*
+     Tools for quality checks of georeferenced plant species accessions.
 
 *diveMove*
      Dive analysis and calibration.
@@ -3714,6 +3781,9 @@ distributions of R.)
      Probabilistic forecasting using Bayesian Model Averaging of ensembles
      using a mixture of normal distributions.
 
+*entropy*
+     Entropy estimation.
+
 *epiR*
      Functions for analyzing epidemiological data.
 
@@ -3725,6 +3795,9 @@ distributions of R.)
 
 *epitools*
      Basic tools for applied epidemiology.
+
+*eqtl*
+     Tools for analyzing eQTL experiments.
 
 *equivalence*
      Tests and graphics for assessing tests of equivalence.
@@ -4149,6 +4222,9 @@ distributions of R.)
 *glmmAK*
      Generalized Linear Mixed Models.
 
+*glmmBUGS*
+     Generalised Linear Mixed Models with WinBUGS.
+
 *glmmML*
      A Maximum Likelihood approach to generalized linear models with random
      intercept.
@@ -4311,6 +4387,9 @@ distributions of R.)
 
 *hints*
      Provide hints on what to do next.
+
+*hlr*
+     Hidden logistic regression.
 
 *hmm.discnp*
      Hidden Markov models with discrete non-parametric observation
@@ -4849,6 +4928,10 @@ distributions of R.)
      A collection of miscellaneous 3d plots, including rgl-based
      isosurfaces.
 
+*mirf*
+     Multiple Imputation and Random Forests for unobservable phase,
+     high-dimensional data.
+
 *mitools*
      Tools to perform analyses and combine results from multiple-imputation
      datasets.
@@ -4862,6 +4945,9 @@ distributions of R.)
 
 *mixdist*
      Finite mixture distribution models.
+
+*mixnet*
+     Random graph clustering via estimation of Erdo''s-Rényi mixtures.
 
 *mixreg*
      Functions to fit mixtures of regressions.
@@ -5673,6 +5759,9 @@ distributions of R.)
 *rda*
      Shrunken Centroids Regularized Discriminant Analysis.
 
+*rdetools*
+     Relevant Dimension Estimation (RDE) in feature spaces.
+
 *realized*
      Realized variance toolkit.
 
@@ -5803,6 +5892,10 @@ distributions of R.)
      Nonlinear root finding, equilibrium and steady-state analysis of
      ordinary differential equations.
 
+*roxygen*
+     A Doxygen-like in-source documentation system for Rd, collation,
+     namespace and callgraphs.
+
 *rpanel*
      Simple interactive controls for R using the tcltk package.
 
@@ -5840,8 +5933,14 @@ distributions of R.)
 *rtiff*
      Read TIFF format images and return them as pixmap objects.
 
+*runjags*
+     Run Bayesian MCMC models in the BUGS syntax using JAGS.
+
 *rv*
      Simulation-based random variable object class.
+
+*rwm*
+     R Workspace Manager.
 
 *rwt*
      Rice Wavelet Toolbox wrapper, providing a set of functions for
@@ -6335,6 +6434,9 @@ distributions of R.)
 
 *timsac*
      TIMe Series Analysis and Control package.
+
+*tis*
+     Time indexes and time indexed series.
 
 *titan*
      Titration analysis for mass spectrometry data.

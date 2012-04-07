@@ -21,7 +21,7 @@ DISTFILES = \
 	resources.texi \
 	R-exts.R R-exts.c R-intro.R \
 	refman.top refman.bot \
-	ISBN Rman.css
+	ISBN Rman.css Rfaq.css
 SUBDIRS_WITH_NO_BUILD = images
 
 OBJECTS_DVI = $(SOURCES_TEXI:.texi=.dvi)
@@ -122,6 +122,15 @@ R-admin.html: $(srcdir)/R-admin.texi
 	    $(ECHO) "creating doc/manual/$@"; \
 	    $(TEXI2HTML) -I$(srcdir) $(srcdir)/R-admin.texi -o $@ || touch $@;\
 	  fi ; \
+	fi
+
+R-FAQ.html: $(srcdir)/R-FAQ.texi
+	@if test "$(MAKEINFO)" = false; then \
+	  $(ECHO) "'makeinfo' v4.7 or later needed to make HTML docs but missing on your system." ; \
+	  $(ECHO) "file $@ will be missing"; \
+	else \
+	  $(ECHO) "creating doc/manual/$@"; \
+	  $(MAKEINFO) --html --no-split --css-include=$(srcdir)/Rfaq.css -D UseExternalXrefs -I$(srcdir) $< -o $@ || touch $@; \
 	fi
 
 dvi: refman.dvi $(OBJECTS_DVI)
@@ -249,6 +258,7 @@ R-exts.html: $(texiincludes) $(srcdir)/Rman.css
 R-intro.html: $(texiincludes) $(srcdir)/Rman.css
 R-ints.html: $(texiincludes) $(srcdir)/Rman.css
 R-lang.html: $(texiincludes) $(srcdir)/Rman.css
+R-FAQ.html: $(srcdir)/Rfaq.css
 
 info: $(OBJECTS_INFO)
 R-admin.info: $(texiincludes)

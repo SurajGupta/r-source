@@ -768,6 +768,7 @@ SEXP L_upviewport(SEXP n)
     xx2 = REAL(parentClip)[2];
     yy2 = REAL(parentClip)[3];
     GESetClip(xx1, yy1, xx2, yy2, dd);
+#if 0
 	    /* This is a VERY short term fix to avoid mucking
 	     * with the core graphics during feature freeze
 	     * It should be removed post R 1.4 release
@@ -776,6 +777,7 @@ SEXP L_upviewport(SEXP n)
 	    dd->dev->clipRight = fmax2(xx1, xx2);
 	    dd->dev->clipTop = fmax2(yy1, yy2);
 	    dd->dev->clipBottom = fmin2(yy1, yy2); 
+#endif
     /* Set the value of the current viewport for the current device
      * Need to do this in here so that redrawing via R BASE display
      * list works 
@@ -2978,6 +2980,11 @@ SEXP L_points(SEXP x, SEXP y, SEXP pch, SEXP size)
 	     */
 	    symbolSize = toDeviceWidth(symbolSize, GE_INCHES, dd);
 	    if (R_FINITE(symbolSize)) {
+                /* 
+                 * FIXME:
+                 * Resolve any differences between this and FixupPch()
+                 * in plot.c ? 
+                 */
 	        if (isString(pch)) {
 		    ipch = GEstring_to_pch(STRING_ELT(pch, i % npch));
 		} else if (isInteger(pch)) {
@@ -2990,6 +2997,12 @@ SEXP L_points(SEXP x, SEXP y, SEXP pch, SEXP size)
 		 * special case for pch = "."
 		 */
 		if (ipch == 46) symbolSize = gpCex(currentgp, i);
+                /*
+                 * FIXME: 
+                 * For character-based symbols, we need to modify
+                 * gc->cex so that the FONT size corresponds to
+                 * the specified symbolSize.
+                 */
 	        GESymbol(xx[i], yy[i], ipch, symbolSize, &gc, dd);
 	    }
 	}
@@ -3104,7 +3117,7 @@ SEXP L_pretty(SEXP scale) {
     /* FIXME:  "log" flag hard-coded to FALSE because we do not
      * have log scales yet
      */
-    return CreateAtVector(axp, usr, n, FALSE);
+    return Rf_CreateAtVector(axp, usr, n, FALSE);
 }
 
 /* 

@@ -17,8 +17,6 @@
  *  http://www.r-project.org/Licenses/
  */
 
-/* <UTF8> char here is either ASCII or handled as a whole */
-
 
 #ifdef HAVE_CONFIG_H
 #include <config.h>
@@ -77,11 +75,11 @@ Rboolean attribute_hidden compute_identical(SEXP x, SEXP y)
 			if(streql(tx, "row.names")) {
                             PROTECT(atrx = getAttrib(x, R_RowNamesSymbol));
                             PROTECT(atry = getAttrib(y, R_RowNamesSymbol));
-			    if(!compute_identical(atrx, atry)) {
-                               UNPROTECT(2);      
+			    if(!compute_identical(atrx, atry)){
+                               UNPROTECT(2);
 			       return FALSE;
                             } else
-                               UNPROTECT(2);
+                              UNPROTECT(2);
 			} else
 			    if(!compute_identical(CAR(elx), CAR(ely)))
 				return FALSE;

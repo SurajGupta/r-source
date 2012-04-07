@@ -7,8 +7,8 @@ msgid ""
 msgstr ""
 "Project-Id-Version: R 2.3.0\n"
 "Report-Msgid-Bugs-To: bugs@r-project.org\n"
-"POT-Creation-Date: 2008-08-01 08:43\n"
-"PO-Revision-Date: 2008-04-05 10:53+0100\n"
+"POT-Creation-Date: 2008-10-06 07:30\n"
+"PO-Revision-Date: 2005-03-15 08:37+0000\n"
 "Last-Translator: 陈斐 <FeiChen@FairIsaac.com>\n"
 "Language-Team: Chinese\n"
 "MIME-Version: 1.0\n"
@@ -26,8 +26,64 @@ msgid "in .OldClassesPrototypes"
 msgstr "在.OldClassesPrototypes里"
 
 msgid ""
+"unnamed argument to initialize() for S3 class must have a class defintion; "
+"\"%s\" does not"
+msgstr ""
+"给S3类别用的initialize()函数中变元没有名字的话则必需具有类别室定义； \"%s\"没"
+"有"
+
+msgid ""
+"unnamed argument must extend either the S3 class or the class of the data "
+"part; not true of class \"%s\""
+msgstr "没有名字的变元要么扩充S3类别，要么扩充数据类别 \"%s\"类别没有做到"
+
+msgid ""
+"Class \"%s\" does not have an S3 data part, and so is of type \"S4\"; no S3 "
+"equivalent"
+msgstr "类别\"%s\"不包含S3数据部分，因此其种类为\"S4\"；不是S3同变类别"
+
+msgid ""
+"Class \"%s\" is VIRTUAL; not meaningful to create an S4 object from this "
+"class"
+msgstr "\"%s\"是虚拟类别；用这种类别来建立新的S4目标对象是没有意义的"
+
+msgid ""
+"Object must be a valid data part for class \"%s\"; not true of type \"%s\""
+msgstr "\"%s\"类别的目标对象必需包含有效的数据部分；但\"%s\"种类不是这样"
+
+msgid "Cannot specify matrix() arguments when specifying .Data"
+msgstr "在指定.Data时不能同时指定matrix()变元"
+
+msgid "Cannot specify array() arguments when specifying .Data"
+msgstr "在指定.Data时不能同时指定array()变元"
+
+msgid ""
 "methods may not be defined for primitive function \"%s\" in this version of R"
 msgstr "此版本的R没有给基元函数'%s'定义方法"
+
+msgid ""
+"S3Part() is only defined for classes set up by setOldCLass(), basic classes "
+"or subclasses of these:  not true of class \"%s\""
+msgstr ""
+"S3Part()只适用于由setOldCLass()，基本类别，或基本类别这子类别所建立的类别\"%s"
+"\"类别不是这样"
+
+msgid ""
+"The S3Class argument must be a superclass of \"%s\":  not true of class \"%s"
+"\""
+msgstr "S3Class变元必需是\"%s\"的母类别: \"%s\"不是这样"
+
+msgid "Replacement value must extend class \"%s\", got  \"%s\""
+msgstr "替换值必需扩充\"%s\"类别，不是\"%s\""
+
+msgid "Replacement value must be of class \""
+msgstr "替换值的类别必需为"
+
+msgid "\", got one of class \""
+msgstr "\"，不能是类别"
+
+msgid "\""
+msgstr "\""
 
 msgid ""
 "no 'replace' method was defined for as(x, \"%s\") <- value for class \"%s\""
@@ -38,6 +94,13 @@ msgid ""
 "an object of class \"%s\""
 msgstr ""
 "'setIs'的'coerce'变元值必需是单变元函数，而现在它却是类别为\"%s\"的对象"
+
+msgid ""
+"the computation: as(object,\"%s\") <- value is valid when object has class "
+"\"%s\" only if is(value, \"%s\") is TRUE (class(value) was \"%s\")"
+msgstr ""
+"运算出错：当object的类别是\"%2$s\"时，as(object,\"%1$s\") <- value只能在is"
+"(value, \"%3$s\")值为TRUE的时候才能用(class(value)的值不能是\"%4$s\")"
 
 msgid ""
 "there is no automatic definition for as(object, \"%s\") <- value when object "
@@ -59,6 +122,9 @@ msgstr "必需设定成员类别: %s没有这样的设定"
 msgid "unable to create union class:  could not set members %s"
 msgstr "无法建立併集类别: 无法设定%s成员"
 
+msgid "invalid argument \"name\": %s"
+msgstr "变元\"name\"无效: %s"
+
 msgid ""
 "\"%s\" is a primitive function;  methods can be defined, but the generic "
 "function is implicit, and cannot be changed."
@@ -76,11 +142,19 @@ msgid "must supply a function skeleton, explicitly or via an existing function"
 msgstr "必需提供函数骨架，要么是明确地提供，要么通过已存在的函数来提供"
 
 msgid ""
-"New generic for \"%s\" does not agree with implicit generic from package \"%s"
-"\"; a new generic will be assigned with package \"%s\""
+"Restoring the implicit generic function for \"%s\" from package \"%s\" into "
+"package \"%s\"; the generic differs from the default conversion (%s)"
 msgstr ""
-"\"%s\"的新同属函数与程序包\"%s\"里所隐含的同属函数不相符合；一个新的同属函数"
-"将会同程序包\"%s\"一起被分配"
+"把隐含同属函数\"%s\"从程辑包\"%s\"恢复到\"%s\"；同属函数与缺省转换(%s) 不一样"
+
+msgid ""
+"Creating a generic for \"%s\" in package  \"%s\"\n"
+"    (the supplied definition differs from and overrides the implicit generic "
+"in package \"%s\": %s)"
+msgstr ""
+"在程辑包\"%2$s\"中为\"%1$s\"建立同属函数\n"
+"    (所提供的函数定义与程辑包\"%3$s\"中的隐含同属函数定义不相同，因此将之覆"
+"盖：%4$s)"
 
 msgid ""
 "No generic version of  \"%s\" on package \"%s\" is allowed; a new generic "
@@ -129,6 +203,9 @@ msgstr ""
 msgid "no existing definition for function \"%s\""
 msgstr "函数'%s'没有定义"
 
+msgid "Creating a generic function from function \"%s\""
+msgstr "用函数\"%s\"来建立新的同屬函数"
+
 msgid "Creating a new generic function for \"%s\" in \"%s\""
 msgstr "为'%1$s'里的'%2$s'建立新的同屬函数"
 
@@ -144,8 +221,10 @@ msgid ""
 "defined"
 msgstr "函数'%s'的方法和'%s'标记都被封闭了，因此无法将之重新定义"
 
-msgid "argument in method definition changed from (%s) to (%s)"
-msgstr "定义里的变元从(%s)改为(%s)"
+msgid ""
+"For function \"%s\", signature \"%s\": argument in method definition changed "
+"from (%s) to (%s)"
+msgstr "\"%s\"函数，\"%s\"标记：方法定义中的变元从(%s)改变成(%s)"
 
 msgid ""
 "primitive functions cannot be methods; they must be enclosed in a regular "
@@ -168,6 +247,12 @@ msgstr "找不到对函数'%s'和标记%s适用的方法"
 msgid "no generic function \"%s\" found"
 msgstr "不存在'%s'这一同屬函数"
 
+msgid "no environment or package corresponding to argument where=%s"
+msgstr "找不到与where=%s变元相配的环境或程辑包"
+
+msgid "No generic function found for \"%s\""
+msgstr "找不到\"%s\"同屬函数"
+
 msgid "No method found for function \"%s\" and signature %s"
 msgstr "找不到适用于函数'%s'和标记%s的方法"
 
@@ -188,6 +273,9 @@ msgstr "函数'%s'和标记%s没有设定方法"
 msgid "'file' must be a character string or a connection"
 msgstr "'file'必需是字符串或联结"
 
+msgid "No method for \"...\" matches class \"%s\""
+msgstr "\"...\"没有与\"%s\"类别对得上的方法"
+
 msgid "No method found for signature %s"
 msgstr "标记'%s'里不存在任何方法"
 
@@ -198,7 +286,7 @@ msgid "signature must be a vector of classes or an environment"
 msgstr "标记要么是个含类别的矢量，要么是个环境"
 
 msgid "selectMethod(): .SelectMethodOn - old stuff - please report"
-msgstr ""
+msgstr "selectMethod():.SelectMethodOn - 过时了的东西 - 请报告"
 
 msgid "no unique method corresponding to this signature"
 msgstr "这一标记没有与之相对应的唯一方法"
@@ -214,15 +302,6 @@ msgid ""
 "first argument should be the name(s) of generic functions (got object of "
 "class \"%s\")"
 msgstr "第一个变元应当为同屬函数的名称(现在却是类别为\"%s\"的对象)"
-
-msgid ""
-"No generic function found for \"%s\"; no action taken in removeMethodsObject"
-msgstr "找不到为\"%s\"设的同属函数；因此removeMethodsObject没有效果"
-
-msgid ""
-"the environment/package \"%s\" is locked; cannot remove methods data for \"%s"
-"\""
-msgstr "环境/程輯包'%s'被锁住了； 无法为'%s'删除方法信息"
 
 msgid "\"%s\" is not a generic function in \"%s\"; methods not removed"
 msgstr "'%s'不是在'%s'里的同屬函数；因此方法没有被删除掉"
@@ -269,14 +348,6 @@ msgstr "\"%s\"目前不是同属函数：请先将之定义以建立一个非较
 msgid "Must provide an environment table; got class \"%s\""
 msgstr "必需提供环境表；得到的是\"%s\"类别"
 
-msgid "Function \"%s\" may not be used as a generic (implicitly prohibited)"
-msgstr "函数\"%s\"不能当作同属函数来用"
-
-msgid ""
-"Implicit generic exists for \"%s\", but will be overriden by explicit call "
-"to setGeneric()"
-msgstr "\"%s\"有隐含同属，但明确调用用setGeneric()会将之置換"
-
 msgid ""
 "argument \"f\" must be a generic function or a single character string; got "
 "an object of class \"%s\""
@@ -284,18 +355,14 @@ msgstr ""
 "变元\"f\"要么是同屬函数要么是单一字符串；现在得到的却是类别为\"%s\"的目标对象"
 "对象"
 
-msgid "non-generic function given to findMethods()"
-msgstr "findMethods()没有非同屬函数"
+msgid "non-generic function '%s' given to findMethods()"
+msgstr "findMethods()不适用于非同屬函数'%s'"
 
-#, fuzzy
 msgid "Only FALSE is meaningful for 'inherited', when 'where' is supplied (got"
-msgstr "FALSE只对于继承类别有意义，当提供where时(得到了"
+msgstr "用'where'时，FALSE只对于'inherited'有意义，(得到了"
 
-msgid "\""
-msgstr "\""
-
-msgid "f does not correspond to a generic function and package not specified"
-msgstr "f不对应同属函数，也没有指定程序包"
+msgid "'%s' is not a generic function in '%s' {and 'package' not specified}"
+msgstr "'%s'不是'%s'里的同属函数，{也没有设定'package'}"
 
 msgid ""
 "invalid first argument: should be the name of the first argument in the "
@@ -389,14 +456,6 @@ msgid "the names in signature for method (%s) do not match %s's arguments (%s)"
 msgstr "方法(%s)标记里的名字同函数%s变元(%s)不相对应"
 
 msgid ""
-"'NextMethod' not defined because the current method is not a "
-"'MethodDefinition' object"
-msgstr "'NextMethod'没有设定，因为目前的方法不是'MethodDefinition'这种对象"
-
-msgid "expected a list of signature objects, got \"%s\""
-msgstr "需要的是标记对象串列，得到的却是\"%s\""
-
-msgid ""
 "a call to callNextMethod() appears in a call to \"%s\", but the call does "
 "not seem to come from either a generic function or another 'callNextMethod'"
 msgstr ""
@@ -472,6 +531,11 @@ msgid ""
 msgstr ""
 "是设定类别\"%s\"时，所提供的数据部分类别, \"%s\"有错(必需是基本类别或组合多个"
 "基本类别的虛擬类别)"
+
+msgid ""
+"No definition was found for superclass \"%s\" in the specification of class "
+"\"%s\""
+msgstr "在定义\"%2$s\"里不存在母类别\"%1$s\"的定义"
 
 msgid "class \"%s\" cannot be used as the data part of another class"
 msgstr "无法把类别\"%s\"当作另外一个类别的数据部分来用"
@@ -633,9 +697,8 @@ msgid ""
 "generic"
 msgstr "只有当'...'是同屬的变元时方法才能加变元"
 
-#, fuzzy
 msgid "Arguments of method and generic are not in the same order"
-msgstr "方法里的正式变元和函数两都的顺序不同"
+msgstr "方法里的变元和同属函数里的变元之顺序不同"
 
 msgid ""
 "arguments after '...' in the generic (%s) must appear in the method, in the "
@@ -657,16 +720,6 @@ msgstr "为'%s'找不到同屬函数"
 
 msgid "Empty function name in .getGeneric"
 msgstr ".getGeneric里不能有空的函数名字"
-
-msgid ""
-"the methods object name for \"%s\" must include the name of the package that "
-"contains the generic function, but no generic function of this name was found"
-msgstr ""
-"'%s'的方法对象名字必需有包含了同屬函数的程輯包的名字，但有这个名字的同屬函数"
-"却不存在"
-
-msgid "no way to associate a generic function with an object of class \"%s\""
-msgstr "无法将同屬函数与类别为\"%s\"的对象联系起来"
 
 msgid ""
 "Package \"%s\" seems to have out-of-date methods; need to reinstall from "
@@ -749,6 +802,21 @@ msgid ""
 "function \""
 msgstr "\"没有这样的作用(警告，停止，一次，忽视) ；函数没有记录作用"
 
+msgid "argument f must be a generic function with signature \"...\""
+msgstr "变元f必需是带\"...\"标记的同属函数"
+
+msgid "No method or default matching the \"...\" arguments in %s"
+msgstr "%s里没有同\"...\"变元相配的方法或默认函数"
+
+msgid "multiple direct matches:"
+msgstr "多个直接匹配："
+
+msgid "; using the first of these"
+msgstr "；用第一个"
+
+msgid "multiple equivalent inherited matches:"
+msgstr "多个等同继承匹配"
+
 msgid "\"%s\" has a sealed class definition and cannot be redefined"
 msgstr "\"%s\"的类别定义被封闭了，因此无法重新被定义"
 
@@ -810,15 +878,6 @@ msgstr "找不到\"%s\"类别定义(无效果)"
 msgid "class \"%s\" has multiple definitions visible; only the first removed"
 msgstr "类别\"%s\"有多种定义；只删除了第一个"
 
-msgid "The class to be removed  (\""
-msgstr "将被删除的类别(\""
-
-msgid "\") has defined subclasses that should also be removed: ("
-msgstr "\")带定义了的子类别，这些子类别也应该被删除：("
-
-msgid ")"
-msgstr ")"
-
 msgid "invalid class \"%s\" object:"
 msgstr "类别为\"%s\"的对象不对:"
 
@@ -845,6 +904,13 @@ msgstr "无法在new()里用类别为\"%s\"的对象；类别\"%s\"并不擴充�
 
 msgid "invalid names for slots of class \"%s\": %s"
 msgstr "类别\"%s\"的槽的名字不对：%s"
+
+msgid ""
+"Class \"%s\" is defined, with package \"%s\", but no corresponding metadata "
+"object was found (not exported?)"
+msgstr ""
+"\"%s\"类别已经在\"%s\"程序包里被定义过了，但没有与之相对应的元数据对象(有没有"
+"被出口过？)"
 
 msgid "no definition of \"%s\" to use for %s"
 msgstr "\"%s\"没有定义，不能为%s起作用"
@@ -959,9 +1025,12 @@ msgid ""
 msgstr "类别\"%s\"被封闭了；除了'setClassUnion'之外无法设定新的父类别"
 
 msgid ""
-"Unable to find package environment for class \"%s\" to revise subclass "
-"information"
-msgstr "找不到包含类别\"%s\"的环境，因此无法改变信息子类别"
+"Class \"%s\" is defined (with package slot \"%s\") but no metadata object "
+"found to revise %s information---not exported?  Making a copy in package \"%s"
+"\""
+msgstr ""
+"\"%s\"类别已经(在\"%s\"程序包槽里)被定义过了，但没有可用于修改%s信息的元数据"
+"对象--是不是出口了？在\"%s\"程序包里复制"
 
 msgid "class \"%s\" cannot extend class \"%s\""
 msgstr "类别\"%s\"无法擴充类别\"%s\""
@@ -1033,6 +1102,11 @@ msgstr ""
 "(使用显示的第一个标记)\n"
 "%s"
 
+msgid ""
+"No simply inherited methods found for function \"%s\"; using non-simple "
+"method"
+msgstr "找不到适用于函数\"%s\"的简单方法；用复杂方法"
+
 msgid "found"
 msgstr "找到了"
 
@@ -1059,6 +1133,9 @@ msgstr "找不到团体同属函数："
 msgid "Invalid group generic function in search for inherited method (class \""
 msgstr "在找继承方法时出现的同属函数不对"
 
+msgid "Invalid methods table request"
+msgstr "表要求方法出错"
+
 msgid "Trying to check signature length of group generic \""
 msgstr "检查团体同属的标记长度"
 
@@ -1083,15 +1160,27 @@ msgstr "好象有点不对：方法表字符里变元数目有矛盾"
 msgid "(using the largest value)"
 msgstr "(用最大值)"
 
-#, fuzzy
 msgid ""
 "No methods table for generic \"%s\" from package \"%s\" in package \"%s\""
-msgstr "\"%s\"找不到方法列表，\"%s\"程序包可能过时了"
+msgstr "在\"%3$s\"程序包中，程序包\"%2$s\"里的同属\"%1$s\"没有方法列表"
+
+msgid "not allowed to have test==TRUE and an S4Class definition"
+msgstr "test==TRUE和S4Class定义不能同时存在"
+
+msgid ""
+"argument S4Class must be a class definition:  got an object of class \"%s\""
+msgstr "变元S4Class必需是类别定义：现在得到的却是类别为\"%s\"的目标对象"
 
 msgid ""
 "inconsistent old-style class information for \"%s\" (maybe mixing old and "
 "new classes?)"
 msgstr "\"%s\"旧式类别信息有矛盾(会不会是将旧的和新的类别混在了一起用?)"
+
+msgid ""
+"The S3 class of the prototype, \"%s\", is undefined; only allowed when this "
+"is the S3 class being registered (\"%s\")"
+msgstr ""
+"S3类别的原型, \"%s\", 没有定义；只有在注册这个S3类别时才允许这种情况(\"%s\")"
 
 msgid "explicit coercion of old-style class (%s) is not defined"
 msgstr "旧式类别(%s)的明确强制转换没有定义"
@@ -1105,6 +1194,17 @@ msgid ""
 "argument 'Classes' must be a vector of two classes; got an argument of "
 "length %d"
 msgstr "变元'classes'必需是包含两个类别的矢量；现在得到的是长度为%d的变元"
+
+msgid ""
+"S3Class only defined for extensions of \"oldClass\" or classes with a data "
+"part:  not true of class \""
+msgstr ""
+"S3Class只能定义于\"oldClass\"的扩充类别或带数据部分的类别不适用于类别 \""
+
+msgid ""
+"S3Class can only be assigned to S4 objects that extend \"oldClass\"; not "
+"true of class \"%s\""
+msgstr "S3Class只能分配给扩充\"oldClass\"类别的S4目标对象；不适用于类别\"%s\""
 
 msgid "Created a package name, \"%s\", when none found"
 msgstr "建立了程輯包名: '%s'，因为没有找到其它名字"
@@ -1191,8 +1291,8 @@ msgstr "建立可追踪的类别"
 msgid "Environment of class \""
 msgstr "环境有类别"
 
-msgid "\" is locked; using base environment for new class"
-msgstr "\"被锁住了；在新的类别上用基本环境"
+msgid "\" is locked; using global environment for new class"
+msgstr "\"被锁住了；在新的类别上用全局环境"
 
 msgid "not a package name: \"%s\""
 msgstr "不程輯包名: '%s'"
@@ -1207,6 +1307,65 @@ msgid "in the method signature for function \"%s\" no definition for class: %s"
 msgid_plural ""
 "in the method signature for function \"%s\" no definition for classes: %s"
 msgstr[0] "函数'%s'的方法标记中没有类别定义：%s"
+
+#~ msgid "The class to be removed  (\""
+#~ msgstr "将被删除的类别(\""
+
+#~ msgid "\") has defined subclasses that should also be removed: ("
+#~ msgstr "\")带定义了的子类别，这些子类别也应该被删除：("
+
+#~ msgid ")"
+#~ msgstr ")"
+
+#~ msgid ""
+#~ "'NextMethod' not defined because the current method is not a "
+#~ "'MethodDefinition' object"
+#~ msgstr "'NextMethod'没有设定，因为目前的方法不是'MethodDefinition'这种对象"
+
+#~ msgid "expected a list of signature objects, got \"%s\""
+#~ msgstr "需要的是标记对象串列，得到的却是\"%s\""
+
+#~ msgid ""
+#~ "New generic for \"%s\" does not agree with implicit generic from package "
+#~ "\"%s\"; a new generic will be assigned with package \"%s\""
+#~ msgstr ""
+#~ "\"%s\"的新同属函数与程序包\"%s\"里所隐含的同属函数不相符合；一个新的同属函"
+#~ "数将会同程序包\"%s\"一起被分配"
+
+#~ msgid "Function \"%s\" may not be used as a generic (implicitly prohibited)"
+#~ msgstr "函数\"%s\"不能当作同属函数来用"
+
+#~ msgid ""
+#~ "Implicit generic exists for \"%s\", but will be overriden by explicit "
+#~ "call to setGeneric()"
+#~ msgstr "\"%s\"有隐含同属，但明确调用用setGeneric()会将之置換"
+
+#~ msgid ""
+#~ "Unable to find package environment for class \"%s\" to revise subclass "
+#~ "information"
+#~ msgstr "找不到包含类别\"%s\"的环境，因此无法改变信息子类别"
+
+#~ msgid ""
+#~ "No generic function found for \"%s\"; no action taken in "
+#~ "removeMethodsObject"
+#~ msgstr "找不到为\"%s\"设的同属函数；因此removeMethodsObject没有效果"
+
+#~ msgid ""
+#~ "the environment/package \"%s\" is locked; cannot remove methods data for "
+#~ "\"%s\""
+#~ msgstr "环境/程輯包'%s'被锁住了； 无法为'%s'删除方法信息"
+
+#~ msgid ""
+#~ "the methods object name for \"%s\" must include the name of the package "
+#~ "that contains the generic function, but no generic function of this name "
+#~ "was found"
+#~ msgstr ""
+#~ "'%s'的方法对象名字必需有包含了同屬函数的程輯包的名字，但有这个名字的同屬函"
+#~ "数却不存在"
+
+#~ msgid ""
+#~ "no way to associate a generic function with an object of class \"%s\""
+#~ msgstr "无法将同屬函数与类别为\"%s\"的对象联系起来"
 
 #~ msgid "Could not find generic function \"%s\" to initialize cached methods"
 #~ msgstr "找不到用于初始贮藏方法的同属函数\"%s\" "
@@ -1278,3 +1437,4 @@ msgstr[0] "函数'%s'的方法标记中没有类别定义：%s"
 
 #~ msgid "trying to use new() on a virtual class"
 #~ msgstr "不能在虛擬类别上用new()这一函数"
+

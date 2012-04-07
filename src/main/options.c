@@ -18,8 +18,6 @@
  *  http://www.r-project.org/Licenses/
  */
 
-/* <UTF8> char here is either ASCII or handled as a whole */
-
 #ifdef HAVE_CONFIG_H
 #include <config.h>
 #endif
@@ -318,7 +316,7 @@ SEXP attribute_hidden do_options(SEXP call, SEXP op, SEXP args, SEXP rho)
 	}
 	PROTECT(sind = allocVector(INTSXP, n));  indx = INTEGER(sind);
 	for (i = 0; i < n; i++) indx[i] = i;
-	orderVector1(indx, n, names, TRUE, FALSE);
+	orderVector1(indx, n, names, TRUE, FALSE, R_NilValue);
 	PROTECT(value2 = allocVector(VECSXP, n));
 	PROTECT(names2 = allocVector(STRSXP, n));
 	for(i = 0; i < n; i++) {
@@ -555,8 +553,7 @@ SEXP attribute_hidden do_options(SEXP call, SEXP op, SEXP args, SEXP rho)
 		SET_VECTOR_ELT(value, i, SetOption(tag, ScalarInteger(k)));
 	    }
 	    else if (streql(CHAR(namei), "par.ask.default")) {
-		warning(_("\"par.ask.default\" has been replaced by \"device.ask.default\""));
-		SET_VECTOR_ELT(value, i, SetOption(install("device.ask.default"), duplicate(argi)));
+		error(_("\"par.ask.default\" has been replaced by \"device.ask.default\""));
 	    }
 	    else {
 		SET_VECTOR_ELT(value, i, SetOption(tag, duplicate(argi)));
@@ -569,9 +566,7 @@ SEXP attribute_hidden do_options(SEXP call, SEXP op, SEXP args, SEXP rho)
 		error(R_MSG_IA);
 	    tag = CHAR(STRING_ELT(argi, 0));
 	    if (streql(tag, "par.ask.default")) {
-		warning(_("\"par.ask.default\" has been replaced by \"device.ask.default\""));
-		tag = "device.ask.default";
-		argi = mkString(tag);
+		error(_("\"par.ask.default\" has been replaced by \"device.ask.default\""));
 	    }
 
 	    SET_VECTOR_ELT(value, i, duplicate(CAR(FindTaggedItem(options, install(tag)))));

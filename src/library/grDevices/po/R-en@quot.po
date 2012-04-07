@@ -22,10 +22,10 @@
 #
 msgid ""
 msgstr ""
-"Project-Id-Version: R 2.7.1\n"
+"Project-Id-Version: R 2.8.0\n"
 "Report-Msgid-Bugs-To: bugs@r-project.org\n"
-"POT-Creation-Date: 2008-08-01 08:43\n"
-"PO-Revision-Date: 2008-08-01 08:43\n"
+"POT-Creation-Date: 2008-06-05 19:48\n"
+"PO-Revision-Date: 2008-06-05 19:48\n"
 "Last-Translator: Automatically generated\n"
 "Language-Team: none\n"
 "MIME-Version: 1.0\n"
@@ -135,6 +135,9 @@ msgstr "dev.displaylist() called without an open graphics device"
 msgid "invalid setting for 'getOption(\"device\")'"
 msgstr "invalid setting for ‘getOption(“device”)’"
 
+msgid "device '%s' not found"
+msgstr "device ‘%s’ not found"
+
 msgid "no suitable unused file name for pdf()"
 msgstr "no suitable unused file name for pdf()"
 
@@ -146,9 +149,6 @@ msgstr "no suitable unused file name for postscript()"
 
 msgid "dev.new(): using postscript(file=\"%s\")"
 msgstr "dev.new(): using postscript(file=“%s”)"
-
-msgid "device '%s' not found"
-msgstr "device ‘%s’ not found"
 
 msgid "invalid arguments in '%s' (need named args)"
 msgstr "invalid arguments in ‘%s’ (need named args)"

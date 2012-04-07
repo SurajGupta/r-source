@@ -238,6 +238,7 @@
  R_warn_partial_match_dollar
  R_wfopen
  Rconsolesetwidth
+ Rf_AdobeSymbol2ucs2
  Rf_CheckFormals
  Rf_CoercionWarning
  Rf_ComplexFromInteger
@@ -340,6 +341,7 @@
  Rf_regcomp
  Rf_regerror
  Rf_regexec
+ Rf_regfree
  Rf_setBaseDevice
  Rf_setIVector
  Rf_setRVector
@@ -892,7 +894,9 @@
  do_seq_len
  do_serializeToConn
  do_set
+ do_setSessionTimeLimit
  do_setStatusBar
+ do_setTimeLimit
  do_setTitle
  do_setToCConverterActiveStatus
  do_setencoding
@@ -1127,6 +1131,7 @@
  raise
  realp0_
  registerBase
+ resetTimeLimits
  reset_duplicate_counter
  rg_
  rpipeClose

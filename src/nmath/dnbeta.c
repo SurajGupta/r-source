@@ -29,21 +29,21 @@
  *    has density:
  *
  *		       Inf
- *	  f(x|a,b,d) = SUM p(i) * B(a+i,b) * x^(a+i-1) * (1-x)^(b-1)
+ *	f(x|a,b,ncp) = SUM  p(i) *  x^(a+i-1) * (1-x)^(b-1) / B(a+i,b)
  *		       i=0
  *
  *    where:
  *
- *		p(k) = exp(-ncp) ncp^k / k!
+ *		p(k) = exp(-ncp/2) (ncp/2)^k / k!
  *
- *	      B(a,b) = Gamma(a+b) / (Gamma(a) * Gamma(b))
+ *	      B(a,b) = Gamma(a) * Gamma(b) / Gamma(a+b)
  *
  *
  *    This can be computed efficiently by using the recursions:
  *
- *	      p(k+1) = (ncp/(k+1)) * p(k-1)
+ *	      p(k+1) = ncp/2 / (k+1) * p(k)
  *
- *	  B(a+k+1,b) = ((a+b+k)/(a+k)) * B(a+k,b)
+ *      B(a+k+1,b)   = (a+k)/(a+b+k) * B(a+k,b)
  *
  * The new algorithm first determines for which k the k-th term is maximal,
  * and then sums outwards to both sides from the 'mid'.

@@ -69,7 +69,8 @@ ISOdate(year, month, day, hour = 12, min = 0, sec = 0, tz = "GMT")
   Locale-specific conversions to and from character strings are used
   where appropriate and available.  This affects the names of the days
   and months, the AM/PM indicator (if used) and the separators in
-  formats such as \code{\%x} and \code{\%X}.
+  formats such as \code{\%x} and \code{\%X} (via the setting of the
+  \code{LC_TIME} locale category).
 
   The details of the formats are system-specific, but the following are
   defined by the ISO C / POSIX standard for \code{strftime} and are
@@ -96,7 +97,8 @@ ISOdate(year, month, day, hour = 12, min = 0, sec = 0, tz = "GMT")
     \item{\code{\%m}}{Month as decimal number (01--12).}
     \item{\code{\%M}}{Minute as decimal number (00--59).}
     \item{\code{\%p}}{AM/PM indicator in the locale.  Used in
-      conjuction with \code{\%I} and \bold{not} with \code{\%H}.}
+      conjuction with \code{\%I} and \bold{not} with \code{\%H}.  An
+      empty string in some locales.}
     \item{\code{\%S}}{Second as decimal number (00--61), allowing for
       up to two leap-seconds (but POSIX-compliant OSes will ignore leap
       seconds).}
@@ -111,8 +113,12 @@ ISOdate(year, month, day, hour = 12, min = 0, sec = 0, tz = "GMT")
     \item{\code{\%x}}{Date, locale-specific.}
     \item{\code{\%X}}{Time, locale-specific.}
     \item{\code{\%y}}{Year without century (00--99). If you use this on
+      % switching at 2068, 1969 is as given currently by POSIX,
+      % but the standard does say the recommendation may change in future.
+      % In May 2008 glibc, Solaris 10 and Mac OS 10.5.2 did this, and
+      % hence so does the emulation code used on Windows.
       input, which century you get is system-specific.  So don't!  Often
-      values up to 69 (or 68) are prefixed by 20 and 70 (or 69) to 99 by 19.}
+      values up to 68 (or 69) are prefixed by 20 and 69 (or 70) to 99 by 19.}
     \item{\code{\%Y}}{Year with century.}
 #ifdef unix
     \item{\code{\%z}}{(output only.) Offset from Greenwich, so
@@ -199,7 +205,7 @@ ISOdate(year, month, day, hour = 12, min = 0, sec = 0, tz = "GMT")
 }
 \value{
   The \code{format} methods and \code{strftime} return character vectors
-  representing the time.
+  representing the time.  \code{NA} times are returned as \code{NA_character_}.
 
   \code{strptime} turns character representations into an object of
   class \code{"\link{POSIXlt}"}.  The timezone is used to set the

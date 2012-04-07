@@ -243,8 +243,8 @@ scan(file = "", what = double(0), nmax = -1, n = -1, sep = "",
   chars: use an explicit separator to avoid this.
 
   Having \code{nul} bytes in fields (including \code{\0} if
-  \code{allowEscapes = TRUE}) may lead to scanning the field being
-  terminated at the \code{nul}.  They not normally present
+  \code{allowEscapes = TRUE}) may lead to interpretation of the
+  field being terminated at the \code{nul}.  They not normally present
   in text files -- see \code{\link{readBin}}.
 }
 \references{

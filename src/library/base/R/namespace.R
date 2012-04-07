@@ -21,21 +21,22 @@ getNamespace <- function(name) {
     ns <- .Internal(getRegisteredNamespace(as.name(name)))
     if (! is.null(ns)) ns
     else tryCatch(loadNamespace(name),
-                  error = function(e) {
-                    ## This assignment is needed because 'name' contains
-                    ## version as second component when called from internal
-                    ## serialization code
-                    name <- name[1]
-                      if (name %in% c("ctest","eda","modreg","mva","nls",
-                                       "stepfun","ts")) {
-                          old <- "stats"
-                          warning(gettextf("package '%s' has been merged into '%s'",
-                                           name, old),
-                                  call. = FALSE, domain = NA)
-                          return(getNamespace("stats"))
-                      }
-                      else stop(e)
-                  })
+		  error = function(e)
+	      {
+		  ## This assignment is needed because 'name' contains
+		  ## version as second component when called from internal
+		  ## serialization code
+		  name <- name[1]
+		  if (name %in% c("ctest","eda","modreg","mva","nls",
+				  "stepfun","ts")) {
+		      old <- "stats"
+		      warning(gettextf("package '%s' has been merged into '%s'",
+				       name, old),
+			      call. = FALSE, domain = NA)
+		      return(getNamespace("stats"))
+		  }
+		  else stop(e)
+	      })
 }
 
 loadedNamespaces <- function()
@@ -425,11 +426,12 @@ loadNamespace <- function (package, lib.loc = NULL,
 
         for (p in nsInfo$exportPatterns)
             exports <- c(ls(env, pattern = p, all.names = TRUE), exports)
-        ## A better test might be to see if the package depends on
-        ## 'methods' (or is 'methods') since no others should need
-        ## to go through here
-        if(.isMethodsDispatchOn() &&
-           !exists(".noGenerics", envir = ns, inherits = FALSE)) {
+        ## 
+        if(.isMethodsDispatchOn() && methods:::.hasS4MetaData(ns) &&
+           !identical(package, "methods") ) {
+            ## cache generics, classes in this namespace (but not methods itself,
+            ## which pre-cached at install time
+            methods:::cacheMetaData(ns, TRUE, ns) 
             ## process class definition objects
             expClasses <- nsInfo$exportClasses
             if(length(expClasses) > 0) {

@@ -38,12 +38,16 @@ packBits(x, type = c("raw", "integer"))
   \code{\link{Encoding}}).
 
   \code{rawToChar} converts raw bytes either to a single character
-  string or a character vector of single bytes.  (Note that a single
-  character string could contain embedded nuls.)
+  string or a character vector of single bytes (with \code{""} for
+  \code{0}).  (Note that a single character string could contain
+  embedded nuls, in which case it will be truncated at the first nul
+  with a warning.)  In either case it is possible to create a result
+  which is invalid in a multibyte locale, e.g. one using UTF-8.
 
   \code{rawToBits} returns a raw vector of 8 times the length of a raw
   vector with entries 0 or 1.  \code{intToBits} returns a raw vector
-  of 32 times the length of an integer vector with entries 0 or 1. In
+  of 32 times the length of an integer vector with entries 0 or 1. 
+  (Non-integral numeric values are truncated to integers.) In
   both cases the unpacking is least-significant bit first.
 
   \code{packBits} packs its input (using only the lowest bit for raw or

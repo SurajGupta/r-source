@@ -164,7 +164,7 @@ getOption(x)
     \item{\code{pager}:}{the command used for displaying text files by
       \code{\link{file.show}}.
 #ifdef unix
-      Defaults to \file{\var{R\_HOME}/bin/pager}, which selects a pager
+      Defaults to \file{\var{\link[base:Rhome]{R\_HOME}}/bin/pager}, which selects a pager
       via the \env{PAGER} environment variable (and that usually
       defaults to \code{less}).
 #endif
@@ -263,7 +263,9 @@ getOption(x)
       warnings are turned into errors.}
 
     \item{\code{warnEscapes}:}{logical.  If true (the default) the parser
-      warns on unrecognized (backslash) escape sequences.}
+      warns on unrecognized (backslash) escape sequences and there is a
+      truncation warning on any attempt to create a character string
+      containing an embedded nul.}
 
     \item{\code{warnPartialMatchArgs}:}{logical.  If true, warns if
       partial matching is used in argument matching.}
@@ -445,7 +447,10 @@ getOption(x)
 #endif
 #ifdef unix
       Possible values are \code{"source"} (the default except under the
-      CRAN Mac OS X build) and \code{"mac.binary"}.}
+      CRAN Mac OS X build) and \code{"mac.binary"}. The latter can
+      have a suffix if supported by a special build, such as
+      \code{"mac.binary.leopard"} to access the \code{"leopard"} tree
+      of repositories instead of the default \code{"universal"}.}
 #endif
 
     \item{\code{repos}:}{URLs of the repositories for use by
@@ -502,7 +507,7 @@ getOption(x)
   Wadsworth \& Brooks/Cole.
 }
 \examples{
-op <- options(); utils::str(op) # the values might be e.g. functions
+op <- options(); utils::str(op) # op() may contain functions.
 
 getOption("width") == options()$width # the latter needs more memory
 options(digits = 15)

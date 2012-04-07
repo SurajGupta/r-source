@@ -2,6 +2,8 @@ postscript("reg-tests-1.ps", encoding = "ISOLatin1.enc")
 
 ## force standard handling for data frames
 options(stringsAsFactors=TRUE)
+## .Machine
+(Meps <- .Machine$double.eps)# and use it in this file
 
 ## regression test for PR#376
 aggregate(ts(1:20), nfreq=1/3)
@@ -130,12 +132,12 @@ stopifnot(all.equal(dcauchy(-1:4), 1 / (pi*(1 + (-1:4)^2))))
 ## chol
 ( m <- matrix(c(5,1,1,3),2,2) )
 ( cm <- chol(m) )
-stopifnot(abs(m	 -  t(cm) %*% cm) < 100* .Machine$double.eps)
+stopifnot(abs(m	 -  t(cm) %*% cm) < 100* Meps)
 
 ## check with pivoting
 ( m <- matrix(c(5,1,1,3),2,2) )
 ( cm <- chol(m, TRUE) )
-stopifnot(abs(m	 -  t(cm) %*% cm) < 100* .Machine$double.eps)
+stopifnot(abs(m	 -  t(cm) %*% cm) < 100* Meps)
 
 x <- matrix(c(1:5, (1:5)^2), 5, 2)
 m <- crossprod(x)
@@ -191,11 +193,10 @@ stopifnot(
  month.abb == substr(month.name, 1, 3)
 )
 
-eps <- .Machine$double.eps
-stopifnot(all.equal(pi, 4*atan(1), tol= 2*eps))
+stopifnot(all.equal(pi, 4*atan(1), tol= 2*Meps))
 
 # John Machin (1705) computed 100 decimals of pi :
-stopifnot(all.equal(pi/4, 4*atan(1/5) - atan(1/239), 4*eps))
+stopifnot(all.equal(pi/4, 4*atan(1/5) - atan(1/239), 4*Meps))
 ## end of moved from Constants.Rd
 
 
@@ -254,7 +255,6 @@ stopifnot(duplicated(iris)[143] == TRUE)
 
 
 ## eigen
-Meps <- .Machine$double.eps
 set.seed(321, kind = "default")	 # force a particular seed
 m <- matrix(round(rnorm(25),3), 5,5)
 sm <- m + t(m) #- symmetric matrix
@@ -328,10 +328,9 @@ it <- findInterval(tt, X)
 
 ## See that this is N * Fn(.) :
 tt <- c(tt,X)
-eps <- 100 * .Machine$double.eps
 stopifnot(it[c(1,203)] == c(0, 100),
 	  all.equal(N * stats::ecdf(X)(tt),
-		    findInterval(tt, X),  tol = eps),
+		    findInterval(tt, X),  tol = 100 * Meps),
 	  findInterval(tt,X) ==	 apply( outer(tt, X, ">="), 1, sum)
 	  )
 ## end of moved from findint.Rd
@@ -420,23 +419,22 @@ stopifnot(all.equal(as.vector(lmx), as.vector(glmx)),
 
 
 ## Hyperbolic
-Ceps <- .Machine$double.eps # ``Computer epsilon''
 x <- seq(-3, 3, len=200)
 stopifnot(
- abs(cosh(x) - (exp(x) + exp(-x))/2) < 20*Ceps,
- abs(sinh(x) - (exp(x) - exp(-x))/2) < 20*Ceps,
- Mod(cosh(x) - cos(1i*x))	< 20*Ceps,
- Mod(sinh(x) - sin(1i*x)/1i)	< 20*Ceps,
- abs(tanh(x)*cosh(x) - sinh(x)) < 20*Ceps
+ abs(cosh(x) - (exp(x) + exp(-x))/2) < 20*Meps,
+ abs(sinh(x) - (exp(x) - exp(-x))/2) < 20*Meps,
+ Mod(cosh(x) - cos(1i*x))	< 20*Meps,
+ Mod(sinh(x) - sin(1i*x)/1i)	< 20*Meps,
+ abs(tanh(x)*cosh(x) - sinh(x)) < 20*Meps
 )
 
-stopifnot(abs(asinh(sinh(x)) - x) < 20*Ceps)
-stopifnot(abs(acosh(cosh(x)) - abs(x)) < 1000*Ceps) #- imprecise for small x
-stopifnot(abs(atanh(tanh(x)) - x) < 100*Ceps)
+stopifnot(abs(asinh(sinh(x)) - x) < 20*Meps)
+stopifnot(abs(acosh(cosh(x)) - abs(x)) < 1000*Meps) #- imprecise for small x
+stopifnot(abs(atanh(tanh(x)) - x) < 100*Meps)
 
-stopifnot(abs(asinh(x) - log(x + sqrt(x^2 + 1))) < 100*Ceps)
+stopifnot(abs(asinh(x) - log(x + sqrt(x^2 + 1))) < 100*Meps)
 cx <- cosh(x)
-stopifnot(abs(acosh(cx) - log(cx + sqrt(cx^2 - 1))) < 1000*Ceps)
+stopifnot(abs(acosh(cx) - log(cx + sqrt(cx^2 - 1))) < 1000*Meps)
 ## end of moved from Hyperbolic.Rd
 
 
@@ -536,13 +534,13 @@ stopifnot(is.list(pl) && is.pairlist(pl),
 stopifnot(all.equal(log(1:10), log(1:10, exp(1))))
 stopifnot(all.equal(log10(30), log(30, 10)))
 stopifnot(all.equal(log2(2^pi), 2^log2(pi)))
-stopifnot(Mod(pi - log(exp(pi*1i)) / 1i) < 10*.Machine$double.eps)
-stopifnot(Mod(1+exp(pi*1i)) < 10*.Machine$double.eps)
+stopifnot(Mod(pi - log(exp(pi*1i)) / 1i) < 10* Meps)
+stopifnot(Mod(1+exp(pi*1i)) < 10* Meps)
 ## end of moved from Log.Rd
 
 
 ## logistic
-eps <- 100 * .Machine$double.eps
+eps <- 100 * Meps
 x <- c(0:4, rlogis(100))
 stopifnot(all.equal(plogis(x),	1 / (1 + exp(-x)), tol = eps))
 stopifnot(all.equal(plogis(x, lower=FALSE),  exp(-x)/ (1 + exp(-x)), tol = eps))
@@ -554,7 +552,7 @@ stopifnot(all.equal(dlogis(x), exp(x) * (1 + exp(x))^-2, tol = eps))
 
 ## Lognormal
 x <- rlnorm(1000)	# not yet always :
-stopifnot(abs(x	 -  qlnorm(plnorm(x))) < 1e4 * .Machine$double.eps * x)
+stopifnot(abs(x	 -  qlnorm(plnorm(x))) < 1e4 * Meps * x)
 ## end of moved from Lognormal.Rd
 
 
@@ -598,14 +596,6 @@ for(p in list(c(1,2,5), 1:3, 3:1, 2:0, 0:2, c(1,2,1), c(0,0,1))) {
 ## end of moved from Multinom.Rd
 
 
-## plot.lm
-# which=4 failed in R 1.0.1
-par(mfrow=c(1,1), oma= rep(0,4))
-summary(lm.fm2 <- lm(Employed ~ . - Population - GNP.deflator, data = longley))
-for(wh in 1:6) plot(lm.fm2, which = wh)
-## end of moved from plot.lm.Rd
-
-
 ## Poisson
 dpois(c(0, 1, 0.17, 0.77), 1)
 ## end of moved from Poisson.Rd
@@ -635,13 +625,13 @@ X <- qr.X(qrstr) # X == x
 stopifnot(all.equal(X,	as.matrix(x)))
 
 ## X == Q %*% R :
-stopifnot((1 - X /( Q %*% R))< 100*.Machine$double.eps)
+stopifnot((1 - X /( Q %*% R))< 100*Meps)
 
 dim(Qc <- qr.Q(qrstr, complete=TRUE)) # Square: dim(Qc) == rep(nrow(x),2)
-stopifnot((crossprod(Qc) - diag(nrow(x))) < 10*.Machine $double.eps)
+stopifnot((crossprod(Qc) - diag(nrow(x))) < 10*Meps)
 
 QD <- qr.Q(qrstr, D=1:p)      # QD == Q \%*\% diag(1:p)
-stopifnot(QD - Q %*% diag(1:p)	< 8* .Machine$double.eps)
+stopifnot(QD - Q %*% diag(1:p)	< 8* Meps)
 
 dim(Rc <- qr.R(qrstr, complete=TRUE)) # == dim(x)
 dim(Xc <- qr.X(qrstr, complete=TRUE)) # square: nrow(x) ^ 2
@@ -661,7 +651,7 @@ ox <- c(ox, ox[n]) #- such that ox[n+1] := ox[n]
 p <- c(0,1,runif(100))
 i <- floor(r <- 1 + (n-1)*p)
 f <- r - i
-stopifnot(abs(quantile(x,p) - ((1-f)*ox[i] + f*ox[i+1])) < 20*.Machine$double.eps)
+stopifnot(abs(quantile(x,p) - ((1-f)*ox[i] + f*ox[i+1])) < 20*Meps)
 ## end of moved from quantile.Rd
 
 
@@ -722,7 +712,7 @@ stopifnot(substr(x, 2, 5) == substring(x, 2, 5))
 hilbert <- function(n) { i <- 1:n; 1 / outer(i - 1, i, "+") }
 str(X <- hilbert(9)[,1:6])
 str(s <- svd(X))
-Eps <- 100 * .Machine$double.eps
+Eps <- 100 * Meps
 
 D <- diag(s$d)
 stopifnot(abs(X - s$u %*% D %*% t(s$v)) < Eps)#	 X = U D V'
@@ -744,15 +734,15 @@ x <- rnorm(99)
 stopifnot(all.equal( sin(-x), - sin(x)))
 stopifnot(all.equal( cos(-x), cos(x)))
 x <- abs(x); y <- abs(rnorm(x))
-stopifnot(abs(atan2(y, x) - atan(y/x)) < 10 * .Machine$double.eps)
-stopifnot(abs(atan2(y, x) - atan(y/x)) < 10 * .Machine$double.eps)
+stopifnot(abs(atan2(y, x) - atan(y/x)) < 10 * Meps)
+stopifnot(abs(atan2(y, x) - atan(y/x)) < 10 * Meps)
 
 x <- 1:99/100
-stopifnot(Mod(1 - (cos(x) + 1i*sin(x)) / exp(1i*x)) < 10 * .Machine$double.eps)
+stopifnot(Mod(1 - (cos(x) + 1i*sin(x)) / exp(1i*x)) < 10 * Meps)
 ## error is about 650* at x=0.01:
-stopifnot(abs(1 - x / acos(cos(x))) < 1000 * .Machine$double.eps)
-stopifnot(abs(1 - x / asin(sin(x))) <= 10 * .Machine$double.eps)
-stopifnot(abs(1 - x / atan(tan(x))) <= 10 *.Machine$double.eps)
+stopifnot(abs(1 - x / acos(cos(x))) < 1000 * Meps)
+stopifnot(abs(1 - x / asin(sin(x))) <= 10 * Meps)
+stopifnot(abs(1 - x / atan(tan(x))) <= 10 *Meps)
 ## end of moved from Trig.Rd
 
 ## Uniform
@@ -783,12 +773,10 @@ x <- -1:(4*6 + 1)
 fx <- dwilcox(x, 4, 6)
 stopifnot(fx == dwilcox(x, 6, 4))
 Fx <- pwilcox(x, 4, 6)
-stopifnot(abs(Fx - cumsum(fx)) < 10 * .Machine$double.eps)
+stopifnot(abs(Fx - cumsum(fx)) < 10 * Meps)
 ## end of moved from Wilcoxon.Rd
 
 
-## .Machine
-(Meps <- .Machine$double.eps)
 ## All the following relations must hold :
 stopifnot(
  1 +	 Meps != 1,
@@ -2034,7 +2022,9 @@ Y <- matrix(rnorm(3 * n), n, 3)
 X <- matrix(rnorm(5 * n), n, 5)
 infm <- lm.influence(mod <- lm(Y ~ X))
 ## failed up to 2003-03-29 (pre 1.7.0)
-
+im1 <- influence.measures(mod)
+stopifnot(identical(unname(im1$infmat[,1:6]),
+		    unname(dfbetas(mod))))
 
 ## rbind.data.frame with character and ordered columns
 A <- data.frame(a=1)
@@ -2641,7 +2631,7 @@ stopifnot(identical(names(z), c("x", "y", "z")))
 ## cor(mat, use = "pair") was plainly wrong
 # longley has no NA's -- hence all "use = " should give the same!
 X <- longley
-ep <- 32 * .Machine$double.eps
+ep <- 32 * Meps
 for(meth in eval(formals(cor)$method)) {
     cat("method = ", meth,"\n")
     Cl <- cor(X, method = meth)
@@ -3874,33 +3864,25 @@ stopifnot(identical(x, t(x)),
 
 
 ## infinite influence measures (PR#8367)
-occupationalStatus <-
-    structure(as.integer(c(50, 16, 12, 11, 2, 12, 0, 0, 19, 40, 35,
-                           20, 8, 28, 6, 3, 26, 34, 65, 58, 12, 102,
-                           19, 14, 8, 18, 66, 110, 23, 162, 40, 32, 7,
-                           11, 35, 40, 25, 90, 21, 15, 11, 20, 88, 183,
-                           46, 554, 158, 126, 6, 8, 23, 64, 28, 230, 143,
-                           91, 2, 3, 21, 32, 12, 177, 71, 106)
-                         ), .Dim = c(8L, 8L), .Dimnames =
-              structure(list(origin = c("1", "2", "3", "4", "5", "6", "7", "8"),
-                             destination = c("1", "2", "3", "4", "5", "6", "7",
-                             "8")), .Names = c("origin", "destination")),
-              class = "table")
+data(occupationalStatus)
 Diag <- as.factor(diag(1:8))
 Rscore <- scale(as.numeric(row(occupationalStatus)), scale = FALSE)
 Cscore <- scale(as.numeric(col(occupationalStatus)), scale = FALSE)
-Uniform <- glm(Freq ~ origin + destination + Diag +
-               Rscore:Cscore, family = poisson, data = occupationalStatus)
+Uniform <- glm(Freq ~ origin + destination + Diag + Rscore:Cscore,
+	       family = poisson, data = occupationalStatus)
 Ind <- as.logical(diag(8))
 residuals(Uniform)[Ind] #zero/near-zero
-stopifnot(is.nan(rstandard(Uniform)[Ind]))
-stopifnot(is.nan(rstudent(Uniform)[Ind]))
-stopifnot(is.nan(dffits(Uniform)[Ind]))
-stopifnot(is.nan(covratio(Uniform)[Ind]))
-stopifnot(is.nan(cooks.distance(Uniform)[Ind]))
-# had infinities in 2.2.0 on some platforms
-plot(Uniform)
+stopifnot(is.nan(rstandard(Uniform)[Ind]),
+          is.nan(rstudent (Uniform)[Ind]),
+          is.nan(dffits   (Uniform)[Ind]),
+          is.nan(covratio (Uniform)[Ind]),
+          is.nan(cooks.distance(Uniform)[Ind]))
+## had infinities in 2.2.0 on some platforms
+## plot.lm() on <glm> objects:
+plot(Uniform) # last plot gives warning on h_ii ~= 1
 plot(Uniform, 6) # added 2006-01-10
+plot(Uniform, 5:6)# failed for a few days 2008-05
+plot(Uniform, 1:2, caption = "")# ditto
 ##
 
 
@@ -4020,9 +4002,9 @@ stopifnot(nchar(fc) == 11)
 DF <- data.frame(x=c("a", "b"), y=2:3)[FALSE,]
 stopifnot(is.numeric(data.matrix(DF)))
 # was logical in 2.2.1.
-DF <- data.frame(I(character(0)))
-X <- try(data.matrix(DF))
-stopifnot(inherits(X, "try-error"))
+DF <- data.frame(a=I(character(0)))
+X <- data.matrix(DF)
+stopifnot(is.numeric(X))
 ## gave logical matrix in 2.2.1.
 
 stopifnot(pbirthday(950, coincident=250) == 0,
@@ -4150,6 +4132,12 @@ sum(DF, DF) # failed
 DF[1, 1] <- NA
 stopifnot(is.na(sum(DF)), sum(DF, na.rm=TRUE) == 9)
 ## failures < 2.4.0
+
+## plot.lm
+# which=4 failed in R 1.0.1
+par(mfrow=c(1,1), oma= rep(0,4))
+summary(lm.fm2 <- lm(Employed ~ . - Population - GNP.deflator, data = longley))
+for(wh in 1:6) plot(lm.fm2, which = wh)
 
 op <- par(mfrow = c(2,2), mar = .1+c(3,3,2,1), mgp = c(1.5, .6, 0))
 y <- rt(200, df= 3)
@@ -5082,6 +5070,7 @@ stopifnot(identical(expect, gregexpr("", "abc", perl=TRUE)[[1]]))
 stopifnot(all.equal(round(d=2, x=pi), 3.14))
 ## used positional matching in 2.6.x
 
+
 ## kappa.tri(x, exact=TRUE) wrongly ended using exact=FALSE:
 data(longley)
 fm1 <- lm(Employed ~ ., data = longley)
@@ -5107,6 +5096,7 @@ df[, "b"] <- 10:12
 stopifnot(identical(attr(df, "foo"), 10))
 ## dropped attributes < 2.7.0
 
+
 ## r<foo> NA warnings, and rnorm(*, mu = +- Inf) consistency
 op <- options(warn=2)
 m <- c(-Inf,Inf)
@@ -5122,22 +5112,42 @@ stopifnot(sapply(R, function(ch) sub(".* : ", '', ch) ==
                  "(converted from warning) NAs produced\n"))
 ## was inconsistent in R < 2.7.0
 
+
 ## package.skeleton() with metadata-only code
-(cwd <- getwd())
-tDir <- tempdir()
-tmp <- tempfile(tmpdir = tDir)
+## work in current (= ./tests/ directory):
+tmp <- tempfile()
 writeLines(c('setClass("foo", contains="numeric")',
              'setMethod("show", "foo",',
              '          function(object) cat("I am a \\"foo\\"\\n"))'),
            tmp)
-setwd(tDir)
 if(file.exists("myTst")) unlink("myTst", recursive=TRUE)
-package.skeleton("myTst", code_files = tmp, namespace=TRUE)# with a file name warning
+package.skeleton("myTst", code_files = tmp)# with a file name warning
+file.copy(tmp, (tm2 <- paste(tmp,".R", sep="")))
+unlink("myTst", recursive=TRUE)
+op <- options(warn=2) # *NO* "invalid file name" warning {failed in 2.7.[01]}:
+package.skeleton("myTst", code_files = tm2, namespace=TRUE)
+options(op)
 stopifnot(1 == grep("setClass",
 	  readLines(list.files("myTst/R", full.names=TRUE))),
 	  c("foo-class.Rd","show-methods.Rd") %in% list.files("myTst/man"))
-setwd(cwd)
 ## failed for several reasons in R < 2.7.0
+##
+## Part 2: -- build, install, load and "inspect" the package:
+if(.Platform$OS.type == "unix") {
+    ## <FIXME> need build.package()
+    Rcmd <- paste(file.path(R.home("bin"), "R"), "CMD")
+    system(paste(Rcmd, "build", "myTst"))
+    # clean up any previous attempt (which might have left a 00LOCK)
+    system("rm -rf myLib")
+    dir.create("myLib")
+    install.packages("myTst", lib = "myLib", repos=NULL, type = "source") # with warnings
+    stopifnot(require("myTst",lib = "myLib"))
+    sm <- getMethods(show, where= as.environment("package:myTst"))
+    stopifnot(names(sm@methods) == "foo")
+    unlink("myLib", recursive=TRUE)
+    unlink("myTst_*")
+}
+unlink("myTst", recursive=TRUE)
 
 
 ## predict.loess with transformed variables
@@ -5151,3 +5161,251 @@ p2 <- predict(fit.log, log(nd))
 stopifnot(identical(p1,p2))
 
 
+## wishlist PR#11192
+plot(1:10)
+segments(1, 1, 10, 10, col='green')
+segments(numeric(0), numeric(0), numeric(0), numeric(0), col='green')
+## last was error in R < 2.8.0
+
+
+## merging with a zero-row data frame
+merge(NULL, women)
+merge(women, NULL)
+merge(women[FALSE, ], women)
+merge(women, women[FALSE, ])
+## first two failed in 2.7.0
+
+
+## influence.measures() for lm and glm, and its constituents
+if(require(MASS)) {
+    fit <- lm(formula = 1000/MPG.city ~ Weight + Cylinders + Type + EngineSize + DriveTrain, data = Cars93)
+    gf <- glm(formula(fit), data=Cars93) # should be "identical"
+    im1 <- influence.measures(fit)
+    im2 <- influence.measures(gf)
+    stopifnot(all.equal(im1[1:2], im2[1:2]),
+	      all.equal(unname(im1$infmat[,1:15]), unname(dfbetas(fit))),
+	      all.equal(im1$infmat[,"dffit"], dffits(fit)),
+	      all.equal(im1$infmat[,"cov.r"], covratio(fit)),
+	      all.equal(im1$infmat[,"cook.d"], cooks.distance(fit)),
+	      all.equal(im2$infmat[,"cook.d"], cooks.distance(gf)),
+	      all.equal(im1$infmat[,"hat"],  hatvalues(fit)))
+}
+## "cook.d" part of influence.measures(<glm>) differed in R <= 2.7.0
+
+
+## short list value for dimnames
+n <- matrix(c(1259, 845, 719,390,1360,1053,774,413), nrow = 2, byrow = TRUE)
+dimnames(n)[[1]] <- c("a", "b")
+## was (correctly) an error in R < 2.8.0
+
+
+## glob2rx(pattern, .) with "(", "[" or "{" in pattern :
+nm <- "my(ugly[file{name"
+stopifnot(identical(regexpr(glob2rx("*[*"), nm),
+		    structure(1L, match.length = 8L)),
+	  identical(regexpr(glob2rx("*{n*"), nm),
+		    structure(1L, match.length = 14L)),
+	  identical(regexpr(glob2rx("*y(*{*"), nm),
+		    structure(1L, match.length = 13L))
+	  )
+## gave 'Invalid regular expression' in R <= 2.7.0
+
+
+## showDefault() problem with "unregistered" S3 classes:
+show(structure(1:3, class = "myClass"))
+## failed in R <= 2.7.0
+
+
+## formatC(.., format="fg", flag="#"):
+x <- 0.599 * c(.1, .01, .001, 1e-4,1e-5,1e-6)
+(fCx <- formatC(x, digits=2, format="fg", flag="#"))
+stopifnot(sub(".*(..)$", "\\1", fCx) == "60")
+## dropped the trailing "0" in the last 3 cases, in R <= 2.7.0
+
+
+## c.noquote bug, posted to R-devel by Ray Brownrigg, 2008-06-16
+z <- c(noquote('z'), 'y', 'x', 'w')
+stopifnot(identical(unclass(z), c('z', 'y', 'x', 'w')))
+## repeated third and later args in R < 2.7.1.
+
+## PD found that f==f contains NA when f has NA levels (but no missing value)
+f1 <- factor(c(1, 2, NA), exclude = "")
+f2 <- factor(c(1, 2, NA), exclude = NULL)
+stopifnot(identical(f1, factor(c(1,2,NA))),
+          nlevels(f1) == 2, nlevels(f2) == 3,
+          all(f2 == f2), !any(f2 != f2),
+          identical(f1 == f1, c(TRUE,TRUE,NA)))
+
+f. <- f <- factor(c(letters[c(1:3,3:1)],"NA", "d","d", NA), exclude=NULL)
+is.na(f.)[2:3] <- TRUE
+f.
+stopifnot(all(f == f), identical(f == f., f. == f.),
+          identical(2:3, which(is.na(f. == f.))))
+## f == f was wrong in R 1.5.0 -- 2.7.1
+
+
+## data.frame[, <char>] must match exactly
+dd <- data.frame(ii = 1:10, xx = pi * -3:6)
+t1 <- try(dd[,"x"])# partial match
+t2 <- try(dd[,"C"])# no match
+stopifnot(inherits(t1, "try-error"),
+	  inherits(t2, "try-error"),
+	  ## partial matching is "ok" for '$' {hence don't use for dataframes!}
+	  identical(dd$x, dd[,"xx"]))
+## From 2.5.0 to 2.7.1, the non-match indexing gave NULL instead of error
+
+## data.frame[ (<NA>), ] when row.names had  "NA"
+x <- data.frame(x=1:3, y=2:4, row.names=c("a","b","NA"))
+y  <- x [c(2:3, NA),]
+y.ok <- data.frame(x=c(2:3,NA), y=c(3:4,NA), row.names=c("b", "NA", "NA.1"))
+stopifnot(identical(y, y.ok))
+## From 2.5.0 to 2.7.1,  y had row name "NA" twice
+
+stopifnot(shapiro.test(c(0,0,1))$p.value >= 0)
+## was wrong up to 2.7.1, because of rounding errors (in single precision).
+
+stopifnot(rcond(cbind(1, c(3,3))) == 0)
+## gave an error (because Lapack's LU detects exact singularity)
+
+
+## dispatch when primitives are called from lapply.
+x <- data.frame(d=Sys.Date())
+stopifnot(sapply(x, is.numeric) == FALSE)
+# TRUE in 2.7.1, tried to dispatch on "FUN"
+(ds <- seq(from=Sys.Date(), by=1, length=4))
+lapply(list(d=ds), round)
+# failed in 2.7.1 with 'dispatch error' since call had '...' arg
+## related to calls being passed unevaluated by lapply.
+
+
+## subsetting data frames with NA cols
+## Dieter Menne: https://stat.ethz.ch/pipermail/r-help/2008-January/151266.html
+df3 <- data.frame(a=0:10,b=10:20,c=20:30)
+names(df3) <- c("A","B", NA)
+df3[-2]
+df3[, -2]
+df3[1:4, -2]
+df3[c(TRUE,FALSE,TRUE)]
+df3[, c(TRUE,FALSE,TRUE)]
+df3[1:4, c(TRUE,FALSE,TRUE)]
+## all gave 'undefined columns selected', 2.6.1 to 2.7.x
+## note that you can only select columns by number, not by name
+
+
+## nls with weights in an unusual model
+Data <- data.frame(x=c(1,1,1,1,1,2,2,3,3,3,3,3,3,4,4,4,5,5,5,5,6,6,6,6,6,6,
+                   7,7,7,7,7,7,7,7,7,8,8,8, 8,8,8,8,8,8,8,9,9,9,9,9,11,12),
+                   y=c(73,73,70,74,75,115,105,107,124,107,116,125,102,144,178,
+                   149,177,124,157,128, 169,165,186,152,181,139,173,151,138,
+                   181,152,188,173,196,180,171,188,174,198, 172, 176,162,188,
+                   182,182,141,191,190,159,170,163,197),
+                   weight=c(1, rep(0.1, 51)))
+G.st <- c(k=0.005, g1=50,g2=550)
+# model has length-1 (and 52) variables
+Ta <- min(Data$x)
+Tb <- max(Data$x)
+
+#no weights
+nls(y~((g1)*exp((log(g2/g1))*(1-exp(-k*(x-Ta)))
+                /(1-exp(-k*(Tb-Ta))))), data=Data, start=G.st, trace=TRUE)
+
+#with weights
+nls(y~((g1)*exp((log(g2/g1))*(1-exp(-k*(x-Ta)))
+                /(1-exp(-k*(Tb-Ta))))), data=Data, start=G.st,
+    trace=TRUE, weights=weight)
+## failed for find weights in R <= 2.7.1
+
+
+## barplot(log = "y") with NAs (PR#11585)
+dat <- matrix(1:25, 5)
+dat[2,3] <- NA
+barplot(dat, beside = TRUE, log = "y")
+## failed in 2.7.1
+
+
+## related to PR#12551
+unique("a", c("a", "b"))
+unique(1, 1:2)
+# could seqfault in 2.7.1 on some platforms
+stopifnot(!duplicated(rep("a", 3), "a"))
+## wrong answer in 2.7.1
+
+
+## drop1.lm() bug
+dd <- stackloss ; dd[1,3] <- NA
+rr <- lm(stack.loss ~ ., data=dd, na.action=na.exclude)
+drop1(rr)
+## failed in 2.7.x
+
+
+## explicit row.names=NULL in data.frame()
+stopifnot(identical(row.names(data.frame(x=c(a=1,b=2), row.names=NULL)),
+                    c("1", "2")))
+stopifnot(identical(row.names(data.frame(x=c(a=1,b=2))), c("a", "b")))
+## same as default in 2.5.0 <= R < 2.7.2
+
+stopifnot(all.equal(chol2inv(2), matrix(0.25, 1), tol = 4*Meps),
+	  all.equal(solve(chol2inv(chol(4))), matrix(4, 1), tol = 10*Meps))
+## chol2inv() did not accept non-matrices up to 2.7.*
+
+
+## seek should discard pushback. (PR#12640)
+cat(c("1\t2\t3", "4\t5\t6"), file="foo.txt", sep="\n")
+fd <- file("foo.txt",open="rt")
+scan(file=fd,what=double(),n=2)
+seek(con=fd,where=0,origin="start")
+z <- scan(file=fd,what=double(),n=2)
+close(fd)
+unlink("foo.txt")
+stopifnot(identical(z, c(1,2)))
+## changed in 2.7.2 patched
+
+## cov / cor / var etc with NAs :
+stopifnot(inherits(try(var(NULL)), "try-error"))## gave NA in 1.2.2
+v0 <- var(0[FALSE]) # gave "'x' is empty" in the past;  NA in 1.2.2
+x <- c(1:2,NA)
+v1 <- var(c(1,NA))
+v2 <- var(c(NA,0/0, Inf-Inf))
+sx <- sd(x)# sd() -> var()
+## all three gave "missing observations in cov/cor"  for a long time in the past
+is.NA <- function(x) is.na(x) & !is.nan(x)
+stopifnot(is.NA(v1), is.NA(v2), is.NA(sx),
+	  all.equal(0.5, var(x, na.rm=TRUE), tol=8*Meps)# should even be exact
+	  )
+
+## write.dcf() indenting for ".<foo>" (PR#12816)
+zz <- textConnection("foo", "w")
+write.dcf(list(Description = 'what a fat goat .haha'),
+          file = zz, indent=1, width=10)
+stopifnot(substring(foo[-1], 1,1) == " ", length(foo) == 4,
+          foo[4] == "  .haha")
+## was " .haha" (not according to DCF standard)
+
+
+## Pdf() with CIDfonts active
+pdf(family="Japan1") # << for CIDfonts, pd->fonts is NULL
+plot(1,1,pch="", axes=FALSE)
+text(1,1,"F.1", family="Helvetica"); dev.off()
+## text() seg.faulted up to 2.7.2 (and early 2.8.0-alpha)
+
+## PS mixing CIDfonts and Type1 - reverse case
+postscript(family="Helvetica")
+plot(1,1,pch="", axes=FALSE)
+try(text(1,1,"A",family="Japan1"))
+## error instead of seg.fault
+
+
+## splinefun with derivatives evaluated to the left of first knot
+x <- 1:10; y <- sin(x)
+splfun <- splinefun(x,y, method='natural')
+x1 <- splfun( seq(0,1, 0.1), deriv=1 )
+x2 <- splfun( seq(0,1, 0.1), deriv=2 )
+x3 <- splfun( seq(0,1, 0.1), deriv=3 )
+stopifnot(x1 == x1[1], x2 == 0, x3 == 0)
+##
+
+
+## glm(y = FALSE), in part PR#1398
+fit <- glm(1:10 ~ I(1:10) + I((1:10)^2), y = FALSE)
+anova(fit)
+## obscure errors < 2.8.0

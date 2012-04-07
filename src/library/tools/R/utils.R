@@ -97,10 +97,10 @@ function(dir, exts, all.files = FALSE, full.names = TRUE)
     patt <- paste("\\.(", paste(exts, collapse="|"), ")$", sep = "")
     files <- grep(patt, files, value = TRUE)
     if(full.names)
-        files <- if(length(files) > 0L)
+        files <- if(length(files))
             file.path(dir, files)
         else
-            character(0)
+            character()
     files
 }
 
@@ -217,7 +217,8 @@ function(file, pdf = FALSE, clean = FALSE, quiet = TRUE,
     ## "" forces use of default paths.
     texinputs <- paste(c(texinputs, Rtexmf, ""), collapse = envSep)
     ## not clear if this is needed, but works
-    if(.Platform$OS.type == "windows") texinputs <- gsub("\\\\", "/", texinputs)
+    if(.Platform$OS.type == "windows")
+        texinputs <- gsub("\\\\", "/", texinputs)
 
     otexinputs <- Sys.getenv("TEXINPUTS", unset = NA)
     if(is.na(otexinputs)) {
@@ -238,33 +239,141 @@ function(file, pdf = FALSE, clean = FALSE, quiet = TRUE,
     } else on.exit(Sys.setenv(BSTINPUTS = bstinputs), add = TRUE)
     Sys.setenv(BSTINPUTS = paste(bstinputs, texinputs, sep = envSep))
 
-    if(nzchar(texi2dvi)) {
-        pdf <- if(pdf) "--pdf" else ""
-        clean <- if(clean) "--clean" else ""
-        if(quiet) {
-            quiet <- "--quiet"
-            extra <- if(.Platform$OS.type == "windows") "" else " > /dev/null"
-        } else {
-            extra <- quiet <- ""
+    if(nzchar(texi2dvi) && .Platform$OS.type != "windows") {
+        opt_pdf <- if(pdf) "--pdf" else ""
+        opt_quiet <- if(quiet) "--quiet" else ""
+        opt_extra <- ""
+        out <- .shell_with_capture(paste(shQuote(texi2dvi), "--help"))
+        if(length(grep("--no-line-error", out$stdout) > 0L))
+            opt_extra <- "--no-line-error"
+        ## (Maybe change eventually: the current heuristics for finding
+        ## error messages in log files should work for both regular and
+        ## file line error indicators.)
+
+        file.create(".timestamp")
+        out <- .shell_with_capture(paste(shQuote(texi2dvi), opt_pdf,
+                                         opt_quiet, opt_extra,
+                                         shQuote(file)))
+
+        ## We cannot necessarily rely on out$status, hence let us
+        ## analyze the log files in any case.
+        errors <- character()
+        ## (La)TeX errors.
+        log <- paste(file_path_sans_ext(file), "log", sep = ".")
+        if(file_test("-f", log)) {
+            lines <- .get_LaTeX_errors_from_log_file(log)
+            if(length(lines))
+                errors <- paste("LaTeX errors:",
+                                paste(lines, collapse = "\n"),
+                                sep = "\n")
+        }
+        ## BibTeX errors.
+        log <- paste(file_path_sans_ext(file), "blg", sep = ".")
+        if(file_test("-f", log)) {
+            lines <- .get_BibTeX_errors_from_blg_file(log)
+            if(length(lines))
+                errors <- paste("BibTeX errors:",
+                                paste(lines, collapse = "\n"),
+                                sep = "\n")
         }
 
-        if(.Platform$OS.type == "windows") {
-            ## look for MiKTeX (which this almost certainly is)
-            ## and set the path to R's style files.
-            ## -I works in MiKTeX >= 2.4, at least
-            ver <- system(paste(shQuote(texi2dvi), "--version"), intern = TRUE)
-            if(length(grep("MiKTeX", ver[1]))) {
-                paths <- paste ("-I", shQuote(texinputs))
-                clean <- paste(clean, paste(paths, collapse = " "))
-            }
+        msg <- ""
+        if(out$status) {
+            ## <NOTE>
+            ## If we cannot rely on out$status, we could test for
+            ##   if(out$status || length(errors))
+            ## But shouldn't we be able to rely on out$status on Unix?
+            ## </NOTE>
+            msg <- gettextf("Running 'texi2dvi' on '%s' failed.", file)
+            ## Error messages from GNU texi2dvi are rather terse, so
+            ## only use them in case no additional diagnostics are
+            ## available (e.g, makeindex errors).
+            if(length(errors))
+                msg <- paste(msg, errors, sep = "\n")
+            else if(length(out$stderr))
+                msg <- paste(msg, "Messages:",
+                             paste(out$stderr, collapse = "\n"),
+                             sep = "\n")
+            if(!quiet)
+                msg <- paste(msg, "Output:",
+                             paste(out$stdout, collapse = "\n"),
+                             sep = "\n")
         }
-        if(system( paste(shQuote(texi2dvi), quiet, pdf, clean,
-                         shQuote(file), extra) ))
-            stop(gettextf("running 'texi2dvi' on '%s' failed", file),
-                 domain = NA)
+
+        ## Clean up as needed.
+        if(clean) {
+            out_file <- paste(file_path_sans_ext(file),
+                              if(pdf) "pdf" else "dvi",
+                              sep = ".")
+            files <- list.files(all.files = TRUE) %w/o% c(".", "..",
+                                                          out_file)
+            file.remove(files[file_test("-nt", files, ".timestamp")])
+        }
+        file.remove(".timestamp")
+
+        if(nzchar(msg))
+            stop(msg, domain = NA)
+        else if(!quiet)
+            message(paste(paste(out$stderr, collapse = "\n"),
+                          paste(out$stdout, collapse = "\n"),
+                          sep = "\n"))
+    } else if(nzchar(texi2dvi)) {       # Windows
+        extra <- ""
+        ext <- if(pdf) "pdf" else "dvi"
+        pdf <- if(pdf) "--pdf" else ""
+        file.create(".timestamp")
+        quiet <- if(quiet) "--quiet" else ""
+
+        ## look for MiKTeX (which this almost certainly is)
+        ## and set the path to R's style files.
+        ## -I works in MiKTeX >= 2.4, at least
+        ver <- system(paste(shQuote(texi2dvi), "--version"), intern = TRUE)
+        if(length(grep("MiKTeX", ver[1]))) {
+            paths <- paste ("-I", shQuote(texinputs))
+            extra <- paste(extra, paste(paths, collapse = " "))
+        }
+        ## this only gives a failure in some cases, e.g. not for bibtex errors.
+        system(paste(shQuote(texi2dvi), quiet, pdf,
+                     shQuote(file), extra),
+               intern=TRUE, ignore.stderr=TRUE)
+        msg <- ""
+        ## (La)TeX errors.
+        log <- paste(file_path_sans_ext(file), "log", sep = ".")
+        if(file_test("-f", log)) {
+            lines <- .get_LaTeX_errors_from_log_file(log)
+            if(length(lines))
+                msg <- paste(msg, "LaTeX errors:",
+                             paste(lines, collapse = "\n"),
+                             sep = "\n")
+        }
+        ## BibTeX errors.
+        log <- paste(file_path_sans_ext(file), "blg", sep = ".")
+        if(file_test("-f", log)) {
+            lines <- .get_BibTeX_errors_from_blg_file(log)
+            if(length(lines))
+                msg <- paste(msg, "BibTeX errors:",
+                             paste(lines, collapse = "\n"),
+                             sep = "\n")
+        }
+
+        if(nzchar(msg))
+            msg <- paste(gettextf("running 'texi2dvi' on '%s' failed", file),
+                         msg, "", sep = "\n")
+        if(clean) {
+            out_file <- paste(file_path_sans_ext(file), ext, sep = ".")
+            files <- list.files(all.files = TRUE) %w/o% c(".", "..",
+                                                          out_file)
+            file.remove(files[file_test("-nt", files, ".timestamp")])
+        }
+        file.remove(".timestamp")
+
+        if(nzchar(msg)) stop(msg, domain = NA)
     } else {
-        ## do not have texi2dvi
-        ## needed at least on Windows except for MiKTeX
+        ## Do not have texi2dvi
+        ## Needed at least on Windows except for MiKTeX
+        ## Note that this does not do anything about running quietly,
+        ## nor cleaning, but it probably not used much anymore.
+
         texfile <- shQuote(file)
         base <- file_path_sans_ext(file)
         idxfile <- paste(base, ".idx", sep="")
@@ -282,7 +391,7 @@ function(file, pdf = FALSE, clean = FALSE, quiet = TRUE,
         if(system(paste(shQuote(latex), "-interaction=nonstopmode", texfile)))
             stop(gettextf("unable to run %s on '%s'", latex, file), domain = NA)
         nmiss <- length(grep("^LaTeX Warning:.*Citation.*undefined",
-                           readLines(paste(base, ".log", sep = ""))))
+                             readLines(paste(base, ".log", sep = ""))))
         for(iter in 1:10) { ## safety check
             ## This might fail as the citations have been included in the Rnw
             if(nmiss) system(paste(shQuote(bibtex), shQuote(base)))
@@ -302,17 +411,12 @@ function(file, pdf = FALSE, clean = FALSE, quiet = TRUE,
     }
 }
 
-
 ### * Internal utility functions.
 
 ### ** %w/o%
 
-"%w/o%" <-
-function(x, y)
-{
-    ## x without y, as in the examples of ?match.
-    x[!x %in% y]
-}
+## x without y, as in the examples of ?match.
+`%w/o%` <- function(x, y) { x[!x %in% y] }
 
 ### ** .OStype
 
@@ -325,20 +429,66 @@ function()
 
 ### ** .capture_output_from_print
 
-.capture_output_from_print <-
-function(x, ...)
+## <NOTE>
+## Should no longer be needed now that we have .eval_with_capture().
+## 
+## .capture_output_from_print <-
+## function(x, ...)
+## {
+##     ## Better to provide a simple variant of utils::capture.output()
+##     ## ourselves (so that bootstrapping R only needs base and tools).
+##     out <- NULL # Prevent codetools warning about "no visible binding
+##                 # for global variable out".  Maybe there will eventually
+##                 # be a better design for output text connections ...
+##     file <- textConnection("out", "w", local = TRUE)
+##     sink(file)
+##     on.exit({ sink(); close(file) })
+##     print(x, ...)
+##     out
+## }
+##
+## </NOTE>
+
+### ** .eval_with_capture
+
+.eval_with_capture <-
+function(expr, type = NULL)
 {
-    ## Better to provide a simple variant of utils::capture.output()
-    ## ourselves (so that bootstrapping R only needs base and tools).
-    out <- NULL # Prevent codetools warning about "no visible binding
-                # for global variable out".  Maybe there will eventually
-                # be a better design for output text connections ...
-    file <- textConnection("out", "w", local = TRUE)
-    sink(file)
-    on.exit({ sink(); close(file) })
-    print(x, ...)
-    out
+    ## Evaluate the given expression and return a list with elements
+    ## 'value', 'output' and 'message' (with obvious meanings).
+
+    ## <NOTE>
+    ## The current implementation gives character() if capturing was not
+    ## attempted of gave nothing.  If desired, one could modify the code
+    ## to return NULL in the former case.
+    ## </NOTE>
+
+    if(is.null(type))
+        capture_output <- capture_message <- TRUE
+    else {
+        type <- match.arg(type, c("output", "message"))
+        capture_output <- type == "output"
+        capture_message <- !capture_output
+    }
+
+    outcon <- file(open = "w+")
+    msgcon <- file(open = "w+")
+    if(capture_output) {
+        sink(outcon, type = "output")
+        on.exit(sink(type = "output"))
+    }
+    if(capture_message) {
+        sink(msgcon, type = "message")
+        on.exit(sink(type = "message"), add = capture_output)
+    }
+    on.exit({ close(outcon) ; close(msgcon) }, add = TRUE)
+    
+    value <- eval(expr)
+    list(value = value,
+         output = readLines(outcon, warn = FALSE), 
+         message = readLines(msgcon, warn = FALSE))
 }
+
 
 ### ** .file_append_ensuring_LFs
 
@@ -360,6 +510,46 @@ function(v, env, last = NA, default = NA) {
         else
             env <- parent.env(env)
     default
+}
+
+### ** .get_BibTeX_errors_from_blg_file
+
+.get_BibTeX_errors_from_blg_file <-
+function(con)
+{
+    ## Get BibTeX error info, using non-header lines until the first
+    ## warning or summary, hoping for the best ...
+    lines <- readLines(con, warn = FALSE)
+    ## How can we find out for sure that there were errors?  Try
+    ## guessing ... and peeking at tex-buf.el from AUCTeX.
+    really_has_errors <-
+        (length(grep("^---", lines)) ||
+         regexpr("There (was|were) ([0123456789]+) error messages?",
+                 lines[length(lines)]) > -1L)
+    ## (Note that warnings are ignored for now.)
+    ## MiKTeX does not give usage, so '(There were n error messages)' is
+    ## last.
+    pos <- grep("^(Warning|You|\\(There)", lines)
+    if(!really_has_errors || !length(pos) ) return(character())
+    ind <- seq.int(from = 3L, length.out = pos[1L] - 3L)
+    lines[ind]
+}
+
+### ** .get_LaTeX_errors_from_log_file
+
+.get_LaTeX_errors_from_log_file <-
+function(con, n = 4L)
+{
+    ## Get (La)TeX lines with error plus n (default 4) lines of trailing
+    ## context.
+    lines <- readLines(con, warn = FALSE)
+    ## Try matching both the regular error indicator ('!') as well as
+    ## the file line error indicator ('file:line:').
+    pos <- grep("^(!|.*:[0123456789]+:)", lines)
+    if(!length(pos)) return(character())
+    ## Error chunk extends to at most the next error line.
+    mapply(function(from, to) paste(lines[from : to], collapse = "\n"),
+           pos, pmin(pos + n, c(pos[-1L], length(lines))))
 }
 
 ### ** .get_contains_from_package_db
@@ -413,13 +603,53 @@ function(nsInfo)
     ## parseNamespaceFile(), as a 3-column character matrix with the
     ## names of the generic, class and method (as a function).
     S3_methods_list <- nsInfo$S3methods
-    if(!length(S3_methods_list)) return(matrix(character(), ncol = 3))
+    if(!length(S3_methods_list)) return(matrix(character(), ncol = 3L))
     idx <- is.na(S3_methods_list[, 3L])
     S3_methods_list[idx, 3L] <-
         paste(S3_methods_list[idx, 1L],
               S3_methods_list[idx, 2L],
               sep = ".")
     S3_methods_list
+}
+
+### ** .get_package_metadata
+
+.get_package_metadata <-
+function(dir, installed = FALSE)
+{
+    ## Get the package DESCRIPTION metadata for a package with root
+    ## directory 'dir'.  If an unpacked source (uninstalled) package,
+    ## base packages (have only a DESCRIPTION.in file with priority
+    ## "base") and bundle packages (have a DESCRIPTION.in file and need
+    ## additional metadata from the the bundle DESCRIPTION file) need
+    ## special attention.
+    dir <- file_path_as_absolute(dir)
+    dfile <- file.path(dir, "DESCRIPTION")
+    if(file_test("-f", dfile)) return(.read_description(dfile))
+    if(installed) stop("File 'DESCRIPTION' is missing.")
+    dfile <- file.path(dir, "DESCRIPTION.in")
+    if(file_test("-f", dfile))
+        meta <- .read_description(dfile)
+    else
+        stop("Files 'DESCRIPTION' and 'DESCRIPTION.in' are missing.")
+    if(identical(as.character(meta["Priority"]), "base")) return(meta)
+    ## Otherwise, this must be a bundle package.
+    bdfile <- file.path(dirname(dir), "DESCRIPTION")
+    if(file_test("-f", bdfile)) {
+        file <- tempfile()
+        on.exit(unlink(file))
+        writeLines(c(readLines(bdfile), readLines(dfile)), file)
+        .read_description(file)
+        ## Using an anonymous tempfile (con <- file()) would work too
+        ## for accumulating, e.g.,
+        ##   con <- file(open = "w+")
+        ##   on.exit(close(con))
+        ##   writeLines(c(readLines(bdfile), readLines(dfile)), con)
+        ## but .read_description() insists on an existing file (maybe
+        ## this should be changed?).
+    }
+    else
+        stop("Bundle 'DESCRIPTION' is missing.")
 }
 
 ### ** .get_requires_from_package_db
@@ -554,12 +784,6 @@ local({
 function()
     c("Package", "Version", "Priority", "Bundle",
       "Contains", "Depends", "Imports", "Suggests", "OS_type")
-
-### ** .identity
-
-.identity <-
-function(x)
-    x
 
 ### ** .is_ASCII
 
@@ -812,7 +1036,7 @@ function(package)
              )
     if(is.null(package)) return(unlist(stopList))
     thisPkg <- stopList[[package, exact = TRUE]] # 'st' matched 'stats'
-    if(!length(thisPkg)) character(0) else thisPkg
+    if(!length(thisPkg)) character() else thisPkg
 }
 
 ### ** .package_apply
@@ -880,11 +1104,37 @@ function(dfile)
     if(!file_test("-f", dfile))
         stop(gettextf("file '%s' does not exist", dfile),
              domain = NA)
-    db <- try(read.dcf(dfile)[1, ], silent = TRUE)
-    if(inherits(db, "try-error"))
-        stop(gettextf("file '%s' is not in valid DCF format", dfile),
-             domain = NA)
-    db
+    out <- tryCatch(read.dcf(dfile)[1L, ],
+                    error = function(e)
+                    stop(gettextf("file '%s' is not in valid DCF format",
+                                  dfile),
+                         domain = NA, call. = FALSE))
+    if(!is.na(encoding <- out["Encoding"]))
+        Encoding(out) <- encoding
+    out
+}
+
+### ** .shell_with_capture
+
+.shell_with_capture <-
+function(command, input = NULL)
+{
+    ## Invoke a system command using a shell and capture its status,
+    ## stdout and stderr into separate components.
+
+    ## Should try some sanity checking that there is no redirection in
+    ## command thus far ...
+    outfile <- tempfile("xshell")
+    errfile <- tempfile("xshell")
+    on.exit(unlink(c(outfile, errfile)))
+    status <-if(.Platform$OS.type == "windows")
+        shell(sprintf("'%s' > %s 2> %s", command, outfile, errfile),
+              input = input, shell = "cmd.exe")
+    else system(sprintf("%s > %s 2> %s", command, outfile, errfile),
+                input = input)
+    list(status = status,
+         stdout = readLines(outfile, warn = FALSE),
+         stderr = readLines(errfile, warn = FALSE))
 }
 
 ### ** .source_assignments
@@ -905,8 +1155,8 @@ function(file, envir, enc = NA)
         con <- file(file, encoding = enc)
         on.exit(close(con))
     } else con <- file
-    exprs <- parse(n = -1, file = con)
-    if(length(exprs) == 0L)
+    exprs <- parse(n = -1L, file = con)
+    if(!length(exprs))
         return(invisible())
     for(e in exprs) {
         if(e[[1L]] == assignmentSymbolLM || e[[1L]] == assignmentSymbolEq)
@@ -947,7 +1197,8 @@ function(dir, env, meta = character())
 
 ### * .split_dependencies
 
-.split_dependencies <- function(x)
+.split_dependencies <-
+function(x)
 {
     ## given one or more Depends: or Suggests: fields from DESCRIPTION
     ## return a named list of list (name, [op, version])
@@ -960,7 +1211,8 @@ function(dir, env, meta = character())
 
 ### * .split_op_version
 
-.split_op_version <- function(x)
+.split_op_version <-
+function(x)
 {
     ## given a single piece of dependency
     ## return a list of components (name, [op, version])
@@ -968,7 +1220,7 @@ function(dir, env, meta = character())
     x1 <- sub(pat, "\\1", x)
     x2 <- sub(pat, "\\2", x)
     if(x2 != x1) {
-        pat <- "[[:space:]]*([[<>=]+)[[:space:]]+(.*)"
+        pat <- "[[:space:]]*([[<>=!]+)[[:space:]]+(.*)"
         list(name = x1, op = sub(pat, "\\1", x2),
              version = package_version(sub(pat, "\\2", x2)))
     } else list(name=x1)
@@ -1004,16 +1256,16 @@ function(expr)
                                 grmbl = function(e, calls) {
                                     n <- length(sys.calls())
                                     ## Chop things off as needed ...
-                                    calls <- calls[-seq.int(length.out = n - 1)]
-                                    calls <- rev(calls)[-c(1, 2)]
+                                    calls <- calls[-seq.int(length.out = n - 1L)]
+                                    calls <- rev(calls)[-c(1L, 2L)]
                                     tb <- lapply(calls, deparse)
                                     stop(conditionMessage(e),
                                          "\nCall sequence:\n",
-                                         paste(utils::capture.output(traceback(tb)),
+                                         paste(.eval_with_capture(traceback(tb))$output,
                                                collapse = "\n"),
                                          call. = FALSE)
                                 }),
-                   error = .identity,
+                   error = identity,
                    finally = {
                        sink(type = "message")
                        sink(type = "output")
@@ -1030,7 +1282,7 @@ function(expr)
 function(args, msg)
 {
     len <- length(args)
-    if(len == 0L)
+    if(!len)
         character()
     else if(len == 1L)
         paste("argument", sQuote(args), msg)

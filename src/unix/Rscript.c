@@ -1,6 +1,6 @@
 /*
  *  R : A Computer Language for Statistical Data Analysis
- *  Copyright (C) 2006-7  The R Development Core Team
+ *  Copyright (C) 2006-8  The R Development Core Team
  *
  *  This program is free software; you can redistribute it and/or modify
  *  it under the terms of the GNU General Public License as published by
@@ -69,7 +69,7 @@ static char rhome[] = R_HOME;
 # include "rterm.c"
 #endif
 
-#define RSVERSION "$Rev: 45476 $"
+#define RSVERSION "$Rev: 46084 $"
 
 #ifdef HAVE_EXECV
 static int verbose = 0;
@@ -89,7 +89,7 @@ void usage(void)
     fprintf(stderr, "  --save              Do save workspace at the end of the session\n");
     fprintf(stderr, "  --no-environ        Don't read the site and user environment files\n");
     fprintf(stderr, "  --no-site-file      Don't read the site-wide Rprofile\n");
-    fprintf(stderr, "  --no-init-file      Don't read the .Rprofile or ~/.Rprofile files\n");
+    fprintf(stderr, "  --no-init-file      Don't read the user R profile\n");
     fprintf(stderr, "  --restore           Do restore previously saved objects at startup\n");
     fprintf(stderr, "  --vanilla           Combine --no-save, --no-restore, --no-site-file\n");
     fprintf(stderr, "                        --no-init-file and --no-environ\n");
@@ -221,7 +221,7 @@ int main(int argc, char *argv[])
     AppMain(ac, av);
 #endif
     return res;
-#else
+#else /* No execv*/
     fprintf(stderr, "Rscript is not supported on this system");
     exit(1);
 #endif

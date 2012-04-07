@@ -1,6 +1,6 @@
 % File src/library/base/man/numeric_version.Rd
 % Part of the R package, http://www.R-project.org
-% Copyright 1995-2007 R Core Development Team
+% Copyright 1995-2008 R Core Development Team
 % Distributed under GPL 2 or later
 
 \name{numeric_version}
@@ -23,7 +23,12 @@
 \alias{as.data.frame.numeric_version}
 \alias{as.list.numeric_version}
 \alias{c.numeric_version}
+\alias{duplicated.numeric_version}
 \alias{print.numeric_version}
+\alias{rep.numeric_version}
+%\alias{sort.numeric_version}
+\alias{unique.numeric_version}
+\alias{xtfrm.numeric_version}
 \alias{$.package_version}
 % Internal.
 \alias{.encode_numeric_version}
@@ -88,6 +93,6 @@ x[1, 3]      # 4 as an integer
 x[[2, 3]] <- 0   # zero the patchlevel
 x[[c(2,3)]] <- 0 # same
 x
-x[3] <- "2.2.3"; x
+x[[3]] <- "2.2.3"; x
 }
 \keyword{utilities}

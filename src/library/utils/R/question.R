@@ -16,29 +16,76 @@
 
 "?" <- function(e1, e2)
 {
-    e1Expr <- substitute(e1)
-    if(missing(e2)) {
-        if(is.call(e1Expr))
-            return(.helpForCall(e1Expr, parent.frame()))
-        if(is.name(e1Expr))
-            e1 <- as.character(e1Expr)
-        eval(substitute(help(TOPIC), list(TOPIC = e1)))
-    }
-    else {
-        ## interpret e1 as a type, but to allow customization, do NOT
-        ## force arbitrary expressions to be single character strings
-        ## (so that methods can be defined for topicName).
-        if(is.name(e1Expr))
-            e1 <- as.character(e1Expr)
-        e2Expr <- substitute(e2)
-        if(is.name(e2Expr))
-            e2 <- as.character(e2Expr)
-        else if(is.call(e2Expr) && identical(e1, "method"))
-            return(.helpForCall(e2Expr, parent.frame(), FALSE))
-        topic <- topicName(e1, e2)
-        doHelp <- .tryHelp(topic)
-        if(inherits(doHelp, "try-error")) {
-            stop(gettextf("no documentation of type '%s' and topic '%s' (or error in processing help)", e1, e2), domain = NA)
+    if (missing(e2)) {
+        type <- NULL
+    	topicExpr <- substitute(e1)
+    } else {
+     	type <- substitute(e1)
+     	topicExpr <- substitute(e2)
+    } 	
+    if (is.call(topicExpr) && topicExpr[[1]] == "?") {
+            # ??foo is parsed as `?`(`?`(foo))
+            	search <- TRUE
+            	topicExpr <- topicExpr[[2]]
+            	if (is.call(topicExpr) && topicExpr[[1]] == "?"
+            	    && is.call(topicExpr[[2]]) && topicExpr[[2]][[1]] == "?") {
+            	     cat("Contacting Delphi...")
+            	     flush.console()
+            	     Sys.sleep(2+rpois(1,2))
+            	     cat("the oracle is unavailable.\nWe apologize for any inconvenience.\n")
+            	     return(invisible())
+            	 }
+            } else 
+            	search <- FALSE
+
+    if (is.call(topicExpr) && (topicExpr[[1]] == "::" || topicExpr[[1]] == ":::")) {
+		package <- as.character(topicExpr[[2]])
+		topicExpr <- topicExpr[[3]]
+	    } else 
+		package <- NULL
+
+    if (search) {
+	if (is.null(type))
+	    return(eval(substitute(help.search(TOPIC, package = PACKAGE), 
+							list(TOPIC = as.character(topicExpr),
+							      PACKAGE = package))))
+	else
+	    return(eval(substitute(help.search(TOPIC, fields = FIELD, package = PACKAGE),
+	    						list(TOPIC = as.character(topicExpr),
+	    						      FIELD = as.character(type),
+	    						      PACKAGE = package))))
+    } else {
+        if (is.null(type)) {
+	    if (is.call(topicExpr))
+		return(.helpForCall(topicExpr, parent.frame()))
+	    if (is.name(topicExpr))
+	    	topic <- as.character(topicExpr)
+	    else
+	    	topic <- e1
+	    return(eval(substitute(help(TOPIC, package = PACKAGE), 
+							list(TOPIC = topic,
+							      PACKAGE = package))))
+	} else {
+	    ## interpret e1 as a type, but to allow customization, do NOT
+            ## force arbitrary expressions to be single character strings
+            ## (so that methods can be defined for topicName).	    
+            if (is.name(type))
+		type <- as.character(type)
+	    else
+		type <- e1
+	    if (is.name(topicExpr))
+		topic <- as.character(topicExpr)
+            else {
+            	if (is.call(topicExpr) && identical(type, "method"))
+            	    return(.helpForCall(topicExpr, parent.frame(), FALSE))
+            	topic <- e2
+	    }
+	    doHelp <- .tryHelp(topicName(type, topic), package = package)
+	    if(inherits(doHelp, "try-error")) {
+                if(is.language(topicExpr))
+                  topicExpr <- deparse(topicExpr)
+		stop(gettextf("no documentation of type '%s' and topic '%s' (or error in processing help)", type, topicExpr), domain = NA)
+            }
         }
     }
 }
@@ -75,7 +122,7 @@ topicName <- function(type, topic)
         call <- match.call(fdef, expr)
         ## make the signature
         sigNames <- fdef@signature
-        sigClasses <- rep.int("missing", length(sigNames))
+        sigClasses <- rep.int("ANY", length(sigNames))
         names(sigClasses) <- sigNames
         for(arg in sigNames) {
             argExpr <- methods::elNamed(call, arg)
@@ -102,9 +149,12 @@ topicName <- function(type, topic)
             }
         }
         method <- methods::selectMethod(f, sigClasses, optional=TRUE,
-                                        fdef = fdef) 
-        if(methods::is(method, "MethodDefinition"))
+                                        fdef = fdef)
+        if(methods::is(method, "MethodDefinition")) {
             sigClasses <- method@defined
+            if(length(sigClasses) < length(sigNames))
+              sigClasses<- c(sigClasses, rep("ANY", length(sigNames)-length(sigClasses)))
+        }
         else
             warning(gettextf("no method defined for function '%s' and signature '%s'",
                              f, paste(sigNames, " = ", dQuote(sigClasses),
@@ -118,11 +168,11 @@ topicName <- function(type, topic)
     }
 }
 
-.tryHelp <- function(topic) {
+.tryHelp <- function(topic, package = NULL) {
     opts <- options(error = function() TRUE,
                     show.error.messages = FALSE)
     on.exit(options(opts))
-    x <- try(do.call("help", list(topic)))
+    x <- try(do.call("help", list(topic, package = package)))
     ## If something was found, actually show it via print().
     ## Otherwise, give an error.
     if(!inherits(x, "try-error") && length(x))

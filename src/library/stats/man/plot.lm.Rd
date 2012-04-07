@@ -9,9 +9,10 @@
 \title{Plot Diagnostics for an lm Object}
 \usage{
 \method{plot}{lm}(x, which = c(1:3,5), %% was which = 1:4
-     caption = c("Residuals vs Fitted", "Normal Q-Q",
+     caption = list("Residuals vs Fitted", "Normal Q-Q",
           "Scale-Location", "Cook's distance",
-          "Residuals vs Leverage", "Cook's distance vs Leverage"),
+          "Residuals vs Leverage",
+	  expression("Cook's dist vs Leverage  " * h[ii] / (1 - h[ii]))),
      panel = if(add.smooth) panel.smooth else points,
      sub.caption = NULL, main = "",
      ask = prod(par("mfcol")) < length(which) && dev.interactive(),
@@ -26,7 +27,11 @@
     \code{\link{glm}}.}
   \item{which}{if a subset of the plots is required, specify a subset of
     the numbers \code{1:6}.}
-  \item{caption}{captions to appear above the plots}
+  \item{caption}{captions to appear above the plots;
+    \code{\link{character}} vector or \code{\link{list}} of valid
+    graphics annotations, see \code{\link[grDevices]{as.graphicsAnnot}}.
+    Can be set to \code{""} or \code{NA} to suppress all captions.
+  }
   \item{panel}{panel function.  The useful alternative to
     \code{\link{points}}, \code{\link{panel.smooth}} can be chosen
     by \code{add.smooth = TRUE}.}
@@ -87,10 +92,10 @@
 
   The Residual-Leverage plot shows contours of equal Cook's distance,
   for values of \code{cook.levels} (by default 0.5 and 1) and omits
-  cases with leverage one.  If the leverages are constant (as is
-  typically the case in a balanced \code{\link{aov}} situation) the plot
-  uses factor level combinations instead of the leverages for the
-  x-axis.  (The factor levels are ordered by mean fitted value.)
+  cases with leverage one with a warning.  If the leverages are constant
+  (as is typically the case in a balanced \code{\link{aov}} situation)
+  the plot uses factor level combinations instead of the leverages for
+  the x-axis.  (The factor levels are ordered by mean fitted value.)
 
   In the Cook's distance vs leverage/(1-leverage) plot, contours of
   standardized residuals that are equal in magnitude are lines through

@@ -173,23 +173,23 @@ reg-plot.Rout: reg-plot.R
 	-@diff reg-plot.ps $(srcdir)/reg-plot.ps.save
 	@$(ECHO) "$(ECHO_T) OK"
 
+## allow this to fail, as it must if the locale does not support Latin-1 chars
+## we can't use Rdiff as MacOS tr crashes on latin-1 chars in a UTF-8 locale
 reg-plot-latin1.Rout: reg-plot-latin1.R
 	@rm -f $@ $@.fail
+	@$(ECHO) "running tests of plotting Latin-1"
+	@$(ECHO) "  expect failure or some differences if not in a Latin or UTF-8 locale"
 	@$(ECHO) $(ECHO_N) "running code in '$<' ...$(ECHO_C)"
-	@$(R2) < $< > $@ 2>&1 || (mv $@ $@.fail && exit 1)
-	@$(ECHO) "$(ECHO_T) OK"
-	@if test -f $(srcdir)/$@.save ; then \
-	  mv $@ $@.fail; \
+	@$(R2) < $< > $@ 2>&1 || mv $@ $@.fail
+	@if test -e $@.fail; then \
+	  $(ECHO) "$(ECHO_T) FAILED"; \
+	else \
+	  $(ECHO) "$(ECHO_T) OK"; \
 	  $(ECHO) $(ECHO_N) \
-	    "comparing '$@' to '$(srcdir)/$@.save' ...$(ECHO_C)"; \
-	  $(RDIFF) $@.fail $(srcdir)/$@.save $(RVAL_IF_DIFF) || exit 1; \
-	  mv $@.fail $@; \
+	  "comparing 'reg-plot-latin1.ps' to '$(srcdir)/reg-plot-latin1.ps.save' ...$(ECHO_C)"; \
+	  diff reg-plot-latin1.ps $(srcdir)/reg-plot-latin1.ps.save && exitstatus=0; \
 	  $(ECHO) "$(ECHO_T) OK"; \
 	fi
-	@$(ECHO) $(ECHO_N) \
-	  "comparing 'reg-plot-latin1.ps' to '$(srcdir)/reg-plot-latin1.ps.save' ...$(ECHO_C)"
-	-@diff reg-plot-latin1.ps $(srcdir)/reg-plot-latin1.ps.save
-	@$(ECHO) "$(ECHO_T) OK"
 
 .R.Rout-gct:
 	@$(ECHO) "running gctorture() + '$<'"
@@ -436,9 +436,9 @@ clean:
 	-@rm -f stamp-R Makedeps Rplot* Rprof.out data dumpdata.R \
 	  reg-plot-latin1.ps reg-plot.ps reg-tests-?.ps \
 	  R-exts.* R-intro.R R-intro.Rout \
-	  FALSE.R FALSE.tex mirrors.html
+	  FALSE* .R .tex mirrors.html
 	-@rm -f testit.txt testit.html testit.tex testit-Ex.R
-	-@rm -rf anRpackage
+	-@rm -rf anRpackage myTst* myLib
 distclean: clean
 	-@for d in $(SUBDIRS); do \
 	  (cd $${d} && $(MAKE) $@); \

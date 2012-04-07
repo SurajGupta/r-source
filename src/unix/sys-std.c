@@ -117,16 +117,25 @@ int R_SelectEx(int  n,  fd_set  *readfds,  fd_set  *writefds,
 	       void (*intr)(void))
 {
     if (timeout != NULL && timeout->tv_sec == 0 && timeout->tv_usec == 0)
+	/* Is it right for select calls with a timeout to be
+	   non-interruptable? LT */
 	return select(n, readfds, writefds, exceptfds, timeout);
     else {
 	volatile sel_intr_handler_t myintr = intr != NULL ? intr : onintr;
+	volatile int old_interrupts_suspended = R_interrupts_suspended;
 	if (SIGSETJMP(seljmpbuf, 1)) {
 	    myintr();
+	    R_interrupts_suspended = old_interrupts_suspended;
 	    error(_("interrupt handler must not return"));
 	    return 0; /* not reached */
 	}
 	else {
 	    int val;
+
+	    /* make sure interrupts are enabled -- this will be
+	       restored if there is a LONGJMP from myintr() to another
+	       context. */
+	    R_interrupts_suspended = FALSE;
 
 	    /* install a temporary signal handler for breaking out of
 	       a blocking select */
@@ -142,6 +151,7 @@ int R_SelectEx(int  n,  fd_set  *readfds,  fd_set  *writefds,
 	       signal handler, and return the result of the select. */
 	    val = select(n, readfds, writefds, exceptfds, timeout);
 	    signal(SIGINT, oldSigintHandler);
+	    R_interrupts_suspended = old_interrupts_suspended;
 	    return val;
 	}
     }
@@ -228,6 +238,7 @@ removeInputHandler(InputHandler **handlers, InputHandler *it)
 
     if(*handlers == it) {
 	*handlers = (*handlers)->next;
+	free(it);
 	return(1);
     }
 
@@ -236,6 +247,7 @@ removeInputHandler(InputHandler **handlers, InputHandler *it)
     while(tmp) {
 	if(tmp->next == it) {
 	    tmp->next = it->next;
+	    free(it);
 	    return(1);
 	}
 	tmp = tmp->next;
@@ -352,16 +364,19 @@ setSelectMask(InputHandler *handlers, fd_set *readMask)
 
 void R_runHandlers(InputHandler *handlers, fd_set *readMask)
 {
-    InputHandler *tmp = handlers;
+    InputHandler *tmp = handlers, *next;
 
     if (readMask == NULL)
 	R_PolledEvents();
     else
 	while(tmp) {
+	    /* Do this way as the handler function might call 
+	       removeInputHandlers */
+	    next = tmp->next;
 	    if(FD_ISSET(tmp->fileDescriptor, readMask)
 	       && tmp->handler != NULL)
 		tmp->handler((void*) NULL);
-	    tmp = tmp->next;
+	    tmp = next;
 	}
 }
 
@@ -823,6 +838,9 @@ Rstd_ReadConsole(const char *prompt, unsigned char *buf, int len,
 	if(strlen(R_StdinEnc) && strcmp(R_StdinEnc, "native.enc")) {
 #if defined(HAVE_ICONV) && defined(ICONV_LATIN1)
 	    size_t res, inb = strlen((char *)buf), onb = len;
+	    /* NB: this is somewhat dangerous.  R's main loop and
+	       scan will not call it with a larger value, but
+	       contributed code might. */
 	    char obuf[CONSOLE_BUFFER_SIZE+1];
 	    const char *ib = (const char *)buf;
 	    char *ob = obuf;
@@ -1113,12 +1131,8 @@ Rstd_ShowFiles(int nfile,		/* number of files */
 			unlink(R_ExpandFileName(file[i]));
 		}
 		else
-#ifdef HAVE_STRERROR
 		    fprintf(tfp, _("Cannot open file '%s': %s\n\n"),
 			    file[i], strerror(errno));
-#else
-		    fprintf(tfp, _("Cannot open file '%s'\n\n"), file[i]);
-#endif
 	    }
 	    fclose(tfp);
 	}
@@ -1289,6 +1303,8 @@ SEXP attribute_hidden do_syssleep(SEXP call, SEXP op, SEXP args, SEXP rho)
 	Timeout = (int) (R_wait_usec ? R_MIN(tm, R_wait_usec) : tm);
 	what = R_checkActivity(Timeout, 1);
 
+	/* For polling, elapsed time limit ... */
+	R_CheckUserInterrupt();
 	/* Time up? */
 #ifdef HAVE_GETTIMEOFDAY
 	gettimeofday(&tv, NULL);

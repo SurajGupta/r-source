@@ -42,8 +42,6 @@ strwrap(x, width = 0.9 * getOption("width"), indent = 0,
   
   Indentation is relative to the number of characters in the prefix
   string.
-
-  Inputs with embedded nul bytes will be truncated at the first nul.
 }
 \value{
   A character vector in the current locale's encoding.

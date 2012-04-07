@@ -531,7 +531,7 @@ static void RemakeNextSEXP(FILE *fp, NodeInfo *node, int version, InputRoutines 
 	break;
     case CHARSXP:
 	len = m->InInteger(fp, d);
-	s = allocString(len);
+	s = allocCharsxp(len); /* This is not longer correct */
 	R_AllocStringBuffer(len, &(d->buffer));
 	/* skip over the string */
 	/* string = */ m->InString(fp, d);
@@ -1983,11 +1983,7 @@ SEXP attribute_hidden do_save(SEXP call, SEXP op, SEXP args, SEXP env)
     fp = RC_fopen(STRING_ELT(CADR(args), 0), "wb", TRUE);
     if (!fp) {
 	const char *cfile = CHAR(STRING_ELT(CADR(args), 0));
-#ifdef HAVE_STERROR
-	error(_("cannot open file '%s': %s"), cfile, strerror(error));
-#else
-	error(_("cannot open file '%s'"), cfile);
-#endif
+	error(_("cannot open file '%s': %s"), cfile, strerror(errno));
     }
 
     /* set up a context which will close the file if there is an error */
@@ -2185,12 +2181,8 @@ void R_SaveGlobalEnvToFile(const char *name)
     if (findVar(sym, R_GlobalEnv) == R_UnboundValue) { /* not a perfect test */
 	FILE *fp = R_fopen(name, "wb"); /* binary file */
 	if (!fp) {
-#ifdef HAVE_STRERROR
 	    error(_("cannot save data -- unable to open '%s': %s"),
 		  name, strerror(errno));
-#else
-	    error(_("cannot save data -- unable to open '%s'"), name);
-#endif
 	}
 	R_SaveToFile(FRAME(R_GlobalEnv), fp, 0);
 	fclose(fp);
@@ -2281,13 +2273,12 @@ SEXP attribute_hidden do_saveToConn(SEXP call, SEXP op, SEXP args, SEXP env)
     if (ep == NA_LOGICAL)
 	error(_("invalid '%s' argument"), "eval.promises");
 
-    source = CAR(nthcdr(args,4));
-    if (source != R_NilValue && TYPEOF(source) != ENVSXP)
-	error(_("bad environment"));
-
     wasopen = con->isopen;
     if(!wasopen && !con->open(con)) error(_("cannot open the connection"));
-    if(!con->canwrite) error(_("connection not open for writing"));
+    if(!con->canwrite) {
+	if(!wasopen) con->close(con);
+	error(_("connection not open for writing"));
+    }
 
     if (ascii) {
 	magic = "RDA2\n";
@@ -2364,6 +2355,10 @@ SEXP attribute_hidden do_loadFromConn2(SEXP call, SEXP op, SEXP args, SEXP env)
     wasopen = con->isopen;
     if(!wasopen)
 	if(!con->open(con)) error(_("cannot open the connection"));
+    if(!con->canread) {
+	if(!wasopen) con->close(con);
+	error(_("connection not open for reading"));
+    }
 
     aenv = CADR(args);
     if (TYPEOF(aenv) == NILSXP) {

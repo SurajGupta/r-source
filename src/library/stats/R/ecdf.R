@@ -47,12 +47,20 @@ print.ecdf <- function (x, digits= getOption("digits") - 2, ...)
 
 summary.ecdf <- function(object, ...)
 {
-    cat("Empirical CDF:	 ",
-	eval(expression(n), envir = environment(object)),
-        "unique values with summary\n")
-    summary(knots(object), ...)
+    header <- paste("Empirical CDF:	 ",
+                    eval(expression(n), envir = environment(object)),
+                    "unique values with summary\n")
+    structure(summary(knots(object), ...),
+              header = header, class = "summary.ecdf")
 }
 
+print.summary.ecdf <- function(x, ...)
+{
+    cat(attr(x, "header"))
+    y <- unclass(x); attr(y, "header") <- NULL
+    print(y, ...)
+    invisible(x)
+}
 
 ## add  conf.int = 0.95
 ## and  conf.type = c("none", "KS")
@@ -60,8 +68,8 @@ summary.ecdf <- function(object, ...)
 ## and use ./KS-confint.R 's  code !!!
 
 plot.ecdf <- function(x, ..., ylab="Fn(x)", verticals = FALSE,
-		      col.01line = "gray70")
+		      col.01line = "gray70", pch = 19)
 {
-    plot.stepfun(x, ..., ylab = ylab, verticals = verticals)
-    abline(h=c(0,1), col = col.01line, lty=2)
+    plot.stepfun(x, ..., ylab = ylab, verticals = verticals, pch = pch)
+    abline(h = c(0,1), col = col.01line, lty = 2)
 }

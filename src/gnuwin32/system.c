@@ -83,17 +83,57 @@ static void (*my_R_Busy)(int);
  *   Called at I/O, during eval etc to process GUI events.
  */
 
-void (* R_tcldo)(void) = NULL; /* Initialized to be sure */
+typedef void (*DO_FUNC)();
+static void (* R_Tcl_do)(void) = NULL; /* Initialized to be sure */
+
+void set_R_Tcldo(DO_FUNC ptr)
+{
+    if (R_Tcl_do)
+	error("Thief about! Something other than package tcltk has set or is attempting to set R_Tcl_do");
+    R_Tcl_do = ptr;
+    return;
+}
+
+void unset_R_Tcldo(DO_FUNC ptr)
+{
+    /* This needs to be a warning not an error, or tcltk will not be able
+       to be detached. */
+    if (R_Tcl_do != ptr)
+	warning("Thief about! Something other than package tcltk has set or is attempting to unset R_Tcl_do");
+    R_Tcl_do = NULL;
+    return;
+}
 
 void R_ProcessEvents(void)
 {
     while (peekevent()) doevent();
+    if (cpuLimit > 0.0 || elapsedLimit > 0.0) {
+	double cpu, data[5];
+	R_getProcTime(data);
+	cpu = data[0] + data[1];  /* children? */
+	if (elapsedLimit > 0.0 && data[2] > elapsedLimit) {
+	    cpuLimit = elapsedLimit = -1;
+	    if (elapsedLimit2 > 0.0 && data[2] > elapsedLimit2) {
+		elapsedLimit2 = -1.0;
+		error(_("reached session elapsed time limit"));
+	    } else
+		error(_("reached elapsed time limit"));
+	}
+	if (cpuLimit > 0.0 && cpu > cpuLimit) {
+	    cpuLimit = elapsedLimit = -1;
+	    if (cpuLimit2 > 0.0 && cpu > cpuLimit2) {
+		cpuLimit2 = -1.0;
+		error(_("reached session CPU time limit"));
+	    } else
+		error(_("reached CPU time limit"));
+	}
+    }
     if (UserBreak) {
 	UserBreak = FALSE;
 	onintr();
     }
     R_CallBackHook();
-    if(R_tcldo) R_tcldo();
+    if(R_Tcl_do) R_Tcl_do();
 }
 
 
@@ -244,12 +284,12 @@ ThreadedReadConsole(const char *prompt, char *buf, int len, int addtohistory)
 	if (!peekevent()) WaitMessage();
 	if (lineavailable) break;
 	doevent();
-	if(R_tcldo) R_tcldo();
+	if(R_Tcl_do) R_Tcl_do();
     }
     lineavailable = 0;
     /* restore handler  */
-    signal(SIGINT,oldint);
-    signal(SIGBREAK,oldbreak);
+    signal(SIGINT, oldint);
+    signal(SIGBREAK, oldbreak);
     return tlen;
 }
 
@@ -652,6 +692,12 @@ void R_SetWin32(Rstart Rp)
     strcpy(UserRHome, "R_USER=");
     strcat(UserRHome, Rp->home);
     putenv(UserRHome);
+    
+    if( !getenv("HOME") ) {
+	strcpy(UserRHome, "HOME=");
+	strcat(UserRHome, getRUser());
+	putenv(UserRHome);
+    }    
 
     /* Rterm and Rgui set CharacterMode during startup, then set Rp->CharacterMode
        from it in cmdlineoptions().  Rproxy never calls cmdlineoptions, so we need the
@@ -919,6 +965,7 @@ int cmdlineoptions(int ac, char **av)
 		Rp->R_Interactive = TRUE;
 		Rp->ReadConsole = ThreadedReadConsole;
 		InThreadReadConsole = FileReadConsole;
+		setvbuf(stdout, NULL, _IONBF, 0);
 	    } else if (!strcmp(*av, "--internet2")) {
 		UseInternet2 = TRUE;
 	    } else if (!strcmp(*av, "--mdi")) {

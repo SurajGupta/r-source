@@ -462,7 +462,7 @@ static SEXP VectorAssign(SEXP call, SEXP x, SEXP s, SEXP y)
 
     if ((TYPEOF(x) != VECSXP && TYPEOF(x) != EXPRSXP) || y != R_NilValue) {
 	if (n > 0 && ny == 0)
-	    error(_("nothing to replace with"));
+	    error(_("replacement has length zero"));
 	if (n > 0 && n % ny)
 	    warning(_("number of items to replace is not a multiple of replacement length"));
     }
@@ -732,7 +732,7 @@ static SEXP MatrixAssign(SEXP call, SEXP x, SEXP s, SEXP y)
        </TSL>  */
 
     if (n > 0 && ny == 0)
-	error(_("nothing to replace with"));
+	error(_("replacement has length zero"));
     if (n > 0 && n % ny)
 	error(_("number of items to replace is not a multiple of replacement length"));
 
@@ -999,7 +999,7 @@ static SEXP ArrayAssign(SEXP call, SEXP x, SEXP s, SEXP y)
     }
 
     if (n > 0 && ny == 0)
-	error(_("nothing to replace with"));
+	error(_("replacement has length zero"));
     if (n > 0 && n % ny)
 	error(_("number of items to replace is not a multiple of replacement length"));
 
@@ -1186,7 +1186,7 @@ static SEXP SimpleListAssign(SEXP call, SEXP x, SEXP s, SEXP y)
     nx = length(x);
 
     if (n > 0 && ny == 0)
-	error(_("nothing to replace with"));
+	error(_("replacement has length zero"));
     if (n > 0 && n % ny)
 	error(_("number of items to replace is not a multiple of replacement length"));
 
@@ -1362,8 +1362,7 @@ SEXP attribute_hidden do_subassign_dflt(SEXP call, SEXP op, SEXP args, SEXP rho)
 	}
 	break;
     default:
-	error(_("object of type '%s' is not subsettable"),
-	      type2char(TYPEOF(x)));
+	error(R_MSG_ob_nonsub, type2char(TYPEOF(x)));
 	break;
     }
 
@@ -1726,8 +1725,7 @@ do_subassign2_dflt(SEXP call, SEXP op, SEXP args, SEXP rho)
 	xtop = x;
 	UNPROTECT(1);
     }
-    else error(_("object of type '%s' is not subsettable"),
-	       type2char(TYPEOF(x)));
+    else error(R_MSG_ob_nonsub, type2char(TYPEOF(x)));
 
     UNPROTECT(1);
     SET_NAMED(xtop, 0);
@@ -1835,6 +1833,12 @@ SEXP R_subassign3_dflt(SEXP call, SEXP x, SEXP nlist, SEXP val)
     /* cannot use isEnvironment since we do not want NULL here */
     else if( TYPEOF(x) == ENVSXP ) {
       defineVar(nlist, val, x);
+    }
+    else if( TYPEOF(x) == SYMSXP || /* Used to 'work' in R < 2.8.0 */
+	     TYPEOF(x) == CLOSXP ||
+	     TYPEOF(x) == SPECIALSXP ||
+	     TYPEOF(x) == BUILTINSXP) {
+	error(R_MSG_ob_nonsub, type2char(TYPEOF(x)));
     }
     else {
 	int i, imatch, nx;

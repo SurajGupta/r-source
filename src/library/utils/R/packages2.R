@@ -79,28 +79,23 @@ install.packages <-
     }
 
     if(missing(pkgs) || !length(pkgs)) {
-        if(.Platform$OS.type == "windows" || .Platform$GUI == "AQUA") {
-            if(is.null(available))
-                available <- available.packages(contriburl = contriburl,
-                                                method = method)
-            if(NROW(available)) {
-                a <- explode_bundles(available)
-                pkgs <- implode_bundles(select.list(a, multiple = TRUE, title = "Packages"))
-            }
-            if(!length(pkgs)) stop("no packages were specified")
-        } else if(.Platform$OS.type == "unix" &&
-                  capabilities("tcltk") && capabilities("X11")) {
-            if(is.null(available))
-                available <- available.packages(contriburl = contriburl,
-                                                method = method)
-            if(NROW(available)) {
-                a <- explode_bundles(available)
-                pkgs <- implode_bundles(tcltk::tk_select.list(a, multiple = TRUE,
-                                              title ="Packages"))
-            }
-            if(!length(pkgs)) stop("no packages were specified")
-        } else
-            stop("no packages were specified")
+	if(.Platform$OS.type == "windows" || .Platform$GUI == "AQUA") {
+	    SelectList <- select.list
+	} else if(.Platform$OS.type == "unix" &&
+		  capabilities("tcltk") && capabilities("X11")) {
+	    SelectList <- tcltk::tk_select.list
+	} else
+	    stop("no packages were specified")
+
+	if(is.null(available))
+	    available <- available.packages(contriburl = contriburl,
+					    method = method)
+	if(NROW(available)) {
+	    a <- explode_bundles(available)
+	    pkgs <- implode_bundles(SelectList(a, multiple = TRUE,
+					       title = "Packages"))
+	}
+	if(!length(pkgs)) stop("no packages were specified")
     }
 
     if(missing(lib) || is.null(lib)) {
@@ -175,7 +170,7 @@ install.packages <-
         ## -- will mess up UNC names, but they don't work
         pkgs <- gsub("\\\\", "/", pkgs)
     } else {
-        if(type == "mac.binary") {
+        if(substr(type, 1, 10) == "mac.binary") {
             if(!length(grep("darwin", R.version$platform)))
                 stop("cannot install MacOS X binary packages on this plaform")
             .install.macbinary(pkgs = pkgs, lib = lib, contriburl = contriburl,

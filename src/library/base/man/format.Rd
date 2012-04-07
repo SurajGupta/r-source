@@ -21,7 +21,7 @@ format(x, \dots)
        width = NULL, na.encode = TRUE, scientific = NA,
        big.mark = "",   big.interval = 3,
      small.mark = "", small.interval = 5,
-   decimal.mark = ".", zero.print = NULL, \dots)
+   decimal.mark = ".", zero.print = NULL, drop0trailing = FALSE, \dots)
 
 \method{format}{data.frame}(x, \dots, justify = "none")
 
@@ -62,8 +62,8 @@ format(x, \dots)
   \item{\dots}{further arguments passed to or from other methods.}
 
   \item{big.mark, big.interval, small.mark,
-    small.interval, decimal.mark, zero.print}{%
-    used for prettying longer decimal sequences, passed to
+    small.interval, decimal.mark, zero.print, drop0trailing}{%
+    used for prettying (longish) decimal sequences, passed to
     \code{\link{prettyNum}}: that help page explains the details.}
 }
 \details{
@@ -102,12 +102,11 @@ format(x, \dots)
   needed to display all the elements to at least the \code{digit}
   significant digits.  However, if all the elements then have trailing
   zeroes, the number of decimal places is reduced until at least one
-  element has a non-zero final digit.
+  element has a non-zero final digit; see also the argument
+  documentation for \code{big.*}, \code{small.*} etc, above.
 
   Raw vectors are converted to their 2-digit hexadecimal representation
   by \code{\link{as.character}}.
-
-  Character inputs with embedded nul bytes will be truncated at the first nul.
 }
 \value{
   An object of similar structure to \code{x} containing character
@@ -137,8 +136,8 @@ format(x, \dots)
   formatted.
 
   \code{\link{formatC}}, \code{\link{paste}}, \code{\link{as.character}},
-  \code{\link{sprintf}}, \code{\link{print}}, \code{\link{toString}},
-  \code{\link{encodeString}}.
+  \code{\link{sprintf}}, \code{\link{print}}, \code{\link{prettyNum}},
+  \code{\link{toString}}, \code{\link{encodeString}}.
 }
 \examples{
 format(1:10)

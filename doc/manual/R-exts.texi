@@ -49,9 +49,9 @@ notice identical to this one except for the removal of this paragraph
 @value{ISBN-exts}
 @end titlepage
 
-@ifnothtml
+@c @ifnothtml
 @contents
-@end ifnothtml
+@c @end ifnothtml
 
 @ifnottex
 @node Top, Acknowledgements, (dir), (dir)
@@ -180,7 +180,7 @@ distribution (in directory @file{share/licenses}).
 
 For the conventions for files @file{NEWS} and @file{ChangeLog} in the
 GNU project see
-@uref{http://www.gnu.org/prep/standards/standards.html#Documentation}.
+@uref{http://@/www.gnu.org/prep/standards/standards.html#Documentation}.
 
 The package subdirectory should be given the same name as the package.
 Because some file systems (e.g., those on Windows) are not
@@ -206,6 +206,13 @@ only contain only @acronym{ASCII} characters not excluded already
 many utilities do not accept spaces in file paths): non-English alphabetic
 characters cannot be guaranteed to be supported in all locales.  It would
 be good practice to avoid the shell metacharacters @code{()@{@}'[]$}.
+
+A source package if possible should not contain binary executable files:
+they are not portable, and a security risk if they are of the
+appropriate architecture.  @command{R CMD check} will warn about
+them@footnote{false positives are possible, but only one has been seen
+so far.} unless they are listed (one filepath per line) in a file
+@file{BinaryFiles} at the top level of the package or bundle.
 
 The @R{} function @code{package.skeleton} can help to create the
 structure for a new package: see its help page for details.
@@ -278,7 +285,7 @@ contained in subdirectory @file{share/licenses} of the R source or home
 directory.
 @item
 The names of abbreviations of free or open software licenses as
-contained the the license data base in file
+contained in the license data base in file
 @file{share/licenses/license.db} in the R source or home directory,
 possibly (for versioned licenses) followed by a version restriction of
 the form @samp{(@var{op} @var{v})} with @var{op} one of the comparison
@@ -446,17 +453,17 @@ Windows build will zip up the data directory or no: set this to
 @samp{no} if your package will not work with a zipped data directory.
 
 If the @file{DESCRIPTION} file is not entirely in @acronym{ASCII} it
-should contain an @samp{Encoding} field specifying an encoding.  This
-is currently used as the encoding of the @file{DESCRIPTION} file
-itself and of the @file{R} and @file{NAMESPACE} files, and is taken as
-the default encoding of @file{.Rd} files as from @R{} 2.6.0.  As from
-@R{} 2.7.0, the examples are assumed to be in this encoding when
-running @command{R CMD check}.  Only encoding names @code{latin1},
-@code{latin2} and @code{UTF-8} are known to be portable.  (Do not
-specify an encoding unless one is actually needed: doing so makes the
-package @emph{less} portable.)
+should contain an @samp{Encoding} field specifying an encoding.  This is
+currently used as the encoding of the @file{DESCRIPTION} file itself and
+of the @file{R} and @file{NAMESPACE} files, and as the default encoding
+of @file{.Rd} files.  The examples are assumed to be in this encoding
+when running @command{R CMD check}.  As from @R{} 2.8.0 it is used for
+the encoding of the @code{CITATION} file.  Only encoding names
+@code{latin1}, @code{latin2} and @code{UTF-8} are known to be portable.
+(Do not specify an encoding unless one is actually needed: doing so
+makes the package @emph{less} portable.)
 
-The optional @samp{OS_ype} field specifies the OSes for which the
+The optional @samp{OS_type} field specifies the OS(es) for which the
 package is intended.  If present, it should be one of @code{unix} or
 @code{windows}, and indicates that the package should only be installed
 on a platform with @samp{.Platform$OS.type} having that value.
@@ -753,22 +760,23 @@ Note that most of this section is Unix-specific: see the comments
 later on about the Windows port of @R{}.
 
 If your package needs some system-dependent configuration before
-installation you can include a (Bourne shell) script @file{configure} in
-your package which (if present) is executed by @code{R CMD INSTALL}
-before any other action is performed.  This can be a script created by
-the Autoconf mechanism, but may also be a script written by yourself.
-Use this to detect if any nonstandard libraries are present such that
-corresponding code in the package can be disabled at install time rather
-than giving error messages when the package is compiled or used.  To
-summarize, the full power of Autoconf is available for your extension
-package (including variable substitution, searching for libraries,
-etc.).
+installation you can include an executable (Bourne shell) script
+@file{configure} in your package which (if present) is executed by
+@code{R CMD INSTALL} before any other action is performed.  This can be
+a script created by the Autoconf mechanism, but may also be a script
+written by yourself.  Use this to detect if any nonstandard libraries
+are present such that corresponding code in the package can be disabled
+at install time rather than giving error messages when the package is
+compiled or used.  To summarize, the full power of Autoconf is available
+for your extension package (including variable substitution, searching
+for libraries, etc.).
 
-The (Bourne shell) script @file{cleanup} is executed as last thing by
-@code{R CMD INSTALL} if present and option @option{--clean} was given,
-and by @code{R CMD build} when preparing the package for building from
-its source.  It can be used to clean up the package source tree.  In
-particular, it should remove all files created by @command{configure}.
+Under a Unix-alike only, an executable (Bourne shell) script
+@file{cleanup} is executed as last thing by @code{R CMD INSTALL} if
+option @option{--clean} was given, and by @code{R CMD build} when
+preparing the package for building from its source.  It can be used to
+clean up the package source tree.  In particular, it should remove all
+files created by @command{configure}.
 
 As an example consider we want to use functionality provided by a (C or
 FORTRAN) library @code{foo}.  Using Autoconf, we can create a configure
@@ -1056,7 +1064,7 @@ than dependencies)
 
 There are two another targets, @samp{before} and @samp{after}, which by
 default have neither dependencies nor commands so can be overridden in a
-@file{Makevars.win}.
+@file{Makevars.win}.  See the example in @ref{Linking to other packages on Windows}.
 
 
 
@@ -1263,6 +1271,11 @@ The files and directories are checked for sufficient permissions (Unix
 only).
 
 @item
+The files are checked for binary executables, using a suitable version
+of @command{file} if available.  (There may be rare false positives --
+package @pkg{foreign} has one.)
+
+@item
 The @file{DESCRIPTION} file is checked for completeness, and some of its
 entries for correctness.  Unless installation tests are skipped,
 checking is aborted if the package dependencies cannot be resolved at
@@ -1293,6 +1306,10 @@ value @samp{yes-maybe}) and there is no @file{src/Makefile} or
 
 To allow a @file{configure} script to generate suitable files, files
 ending in @samp{.in} will be allowed in the @file{R} directory.
+
+A warning is given for directory names that look like @R{} package check
+directories -- many packages have been submitted to CRAN containing
+these.
 
 @item
 The @R{} files are checked for syntax errors.  Bytes which are
@@ -1644,16 +1661,10 @@ admitted to the main @acronym{CRAN} package area.
 
 When all the testing is done, upload the @file{.tar.gz} file, using
 @samp{anonymous} as log-in name and your e-mail address as password, to
-
-@example
-@uref{ftp://CRAN.R-project.org/incoming/}
-@end example
-
-@noindent
-(note: use @code{ftp} and not @code{sftp} to connect to this server) and
-send a message to @email{CRAN@@R-project.org} about it.  The
-@acronym{CRAN} maintainers will run these tests before putting a
-submission in the main archive.
+@uref{ftp://CRAN.R-project.org/incoming/} (note: use @samp{ftp} and not
+@samp{sftp} to connect to this server) and send a message to
+@email{CRAN@@R-project.org} about it.  The @acronym{CRAN} maintainers
+will run these tests before putting a submission in the main archive.
 
 Note that @acronym{CRAN} generally does not accept submissions of
 precompiled binaries due to security reasons.
@@ -2624,6 +2635,13 @@ information, but it normally then gets outdated.  See @code{?citEntry}
 for further details of the information which can be provided.
 
 The @file{CITATION} should itself produce no output.
+
+As from @R{} 2.8.0, the @file{CITATION} file will be read in Latin-1 unless a
+package encoding is declared in the package's @file{DESCRIPTION} file.
+(@R{} 2.7.0 read the @file{CITATION} file in Latin-1, which covered all
+the examples at the time.  Earlier versions of @R{} read the file in the
+encoding of the session.)
+
 
 @node Package types, Services, CITATION files, Creating R packages
 @section Package types
@@ -3623,7 +3641,7 @@ contains
 @end example
 
 @noindent
-so that e.g.@: @kbd{help.search("Spearman")} will succeed in finding the
+so that e.g.@: @kbd{??Spearman} will succeed in finding the
 help page for the test for association between paired samples using
 Spearman's @eqn{\rho, rho}.  (Note that concepts are not currently
 supported by the @HTML{} search accessed @emph{via}
@@ -3698,7 +3716,9 @@ in finding non-@acronym{ASCII} bytes in the files.)
 
 For convenience, encoding names @samp{latin1} and @samp{latin2} are
 always recognized: these and @samp{UTF-8} are likely to work fairly
-widely.
+widely.  However, this does not mean that all characters in
+@samp{UTF-8} will be recognized, and the coverage of non-Latin
+characters is often low, especially when converting to @LaTeX{}.
 
 The @code{\enc} command (@pxref{Insertions}) can be used to provide
 transliterations which will be used in conversions that do not support
@@ -3722,10 +3742,11 @@ it might for example use
 
 @noindent
 (Use of @code{utf8} as an encoding requires @LaTeX{} dated 2003/12/01 or
-later.)
+later.  Also, the use of Cyrillic characters in @samp{UTF-8} appears to also
+need @samp{\usepackage[T2A]@{fontenc@}}.)
 
-Note that this mechanism works best with letters and for example the
-copyright symbol may be rendered as a subscript and the plus--minus
+Note that this mechanism works best with Latin letters and for example
+the copyright symbol may be rendered as a subscript and the plus--minus
 symbol cannot be used in text.
 
 
@@ -3854,11 +3875,10 @@ dump(ls(all = TRUE), file = "new.myfuns.R")
 and run @R{} with this as the source file, for example by @kbd{R
 --vanilla < tidy.R} or by pasting into an @R{} session.  Then the file
 @file{new.myfuns.R} will contain the functions in alphabetical order in
-the standard layout.  You may need to move comments to more appropriate
-places.
+the standard layout.  Warning:  comments in your functions will be lost.
 
 The standard format provides a good starting point for further tidying.
-Most package authors use a version of Emacs (on Unix or Windows) to edit
+Many package authors use a version of Emacs (on Unix or Windows) to edit
 @R{} code, using the ESS[S] mode of the @acronym{ESS} Emacs package.
 See @ref{R coding standards, , R coding standards, R-ints, R Internals}
 for style options within the ESS[S] mode recommended for the source code
@@ -3981,8 +4001,8 @@ useful to compare profiling code immediately after a call to @code{gc()}
 with a profiling run without a preceding call to @code{gc}.
 
 More detailed analysis of the output can be achieved by the tools in the
-CRAN package @pkg{proftools}: in particular this allows call graphs to
-be studied.
+CRAN packages @pkg{proftools} and @pkg{prof}: in particular these allow
+call graphs to be studied.
 
 @node Profiling R code for memory use, Profiling compiled code, Profiling R code for speed, Tidying and profiling R code
 @section Profiling R code for memory use
@@ -4164,7 +4184,7 @@ profile DLLs on Windows.
 @subsection Linux
 
 Options include using @command{sprof} for a shared object, and
-@command{oprofile} (see @uref{http://oprofile.sourceforge.net/}) for any
+@command{oprofile} (see @uref{http://@/oprofile.sourceforge.net/}) for any
 executable or shared object.
 
 @subsubsection sprof
@@ -4255,7 +4275,7 @@ collects information from shared libraries compiled with @option{-pg}.
 Developers have recommended @command{sample} (or @command{Sampler.app},
 which is a GUI version) and @command{Shark} (see
 @uref{http://developer.apple.com/tools/sharkoptimize.html} and
-@uref{http://developer.apple.com/tools/shark_optimize.html}).
+@uref{http://@/developer.@/apple.com/tools/shark_optimize.html}).
 
 
 @node Debugging, System and foreign language interfaces, Tidying and profiling R code, Top
@@ -4719,8 +4739,8 @@ It is possible to run all the examples, tests and vignettes covered by
 @node Using valgrind,  , Using gctorture, Using gctorture and valgrind
 @subsection Using valgrind
 
-If you have access to Linux on an @code{ix86}, @code{x86_64} or
-@code{ppc32} platform you can use @code{valgrind}
+If you have access to Linux on an @cputype{ix86}, @cputype{x86_64} or
+@cputype{ppc32} platform you can use @code{valgrind}
 (@uref{http://www.valgrind.org/}, pronounced to rhyme with `tinned') to
 check for possible problems.  To run some examples under @code{valgrind}
 use something like
@@ -5059,6 +5079,7 @@ $7 = 5
 * Creating shared objects::     
 * Interfacing C++ code::        
 * Fortran I/O::                 
+* Linking to other packages on Windows::  
 * Handling R objects in C::     
 * Interface functions .Call and .External::  
 * Evaluating R expressions from C::  
@@ -5357,11 +5378,27 @@ R_unload_mylib(DllInfo *info)
 @end cartouche
 @end quotation
 
-If a shared object/DLL is loaded more than once the most recent version is
-used.  More generally, if the same symbol name appears in several
+If a shared object/DLL is loaded more than once the most recent version
+is used.  More generally, if the same symbol name appears in several
 libraries, the most recently loaded occurrence is used.  The
-@code{PACKAGE} argument provides a good way to avoid any ambiguity in
-which occurrence is meant.
+@code{PACKAGE} argument and registration (see the next section) provide
+good ways to avoid any ambiguity in which occurrence is meant.
+
+On Unix-alikes the paths used to resolve dynamically linked dependent
+libraries are fixed (for security reasons) when the process is launched,
+so @code{dyn.load} will only look for such libraries in the locations
+set by the @file{R} shell script (@emph{via} @file{etc/ldpaths}) and in
+the OS-specific defaults.
+
+Windows allows more control (and less security) over where dependent
+DLLs are looked for.  On all versions this includes the @env{PATH}
+environment variable, but with lowest priority: note that it does not
+include the directory from which the DLL was loaded.  On XP and later it
+is possible@footnote{and we provide an emulation on Windows 2000): see
+@samp{?dyn.oad}.} to add a single path with quite high priority via the
+@code{Dllpath} argument to @code{dyn.load}.  This is (by default) used
+by @code{library.dynam} to include the package's @file{libs} directory
+in the DLL search path.
 
 
 @node Registering native routines, Creating shared objects, dyn.load and dyn.unload, System and foreign language interfaces
@@ -5519,7 +5556,8 @@ routines declared as
 @findex R_RegisterCCallable
 @findex R_GetCCallable
 @example
-void R_RegisterCCallable(const char *package, const char *name, DL_FUNC fptr);
+void R_RegisterCCallable(const char *package, const char *name,
+                         DL_FUNC fptr);
 DL_FUNC R_GetCCallable(const char *package, const char *name);
 @end example
 
@@ -5538,7 +5576,7 @@ pointer with a call of the form
 p_myCfun = R_GetCCallable("packA", "myCfun");
 @end example
 
-The author of @pkg{packB} is responsible for insuring that
+The author of @pkg{packB} is responsible for ensuring that
 @code{p_myCfun} has an appropriate declaration. In the future @R{} may
 provide some automated tools to simplify exporting larger numbers of
 routines.
@@ -5559,6 +5597,8 @@ compiled code can be found).
 This then arranges that the @file{include} directories in the installed
 linked-to packages are added to the include paths for C and C++ code.
 
+A CRAN example of the use of this mechanism is package @pkg{lme4}, which
+links to @pkg{Matrix}.
 
 @node Creating shared objects, Interfacing C++ code, Registering native routines, System and foreign language interfaces
 @section Creating shared objects
@@ -5622,8 +5662,8 @@ R Installation and Administration}.
 
 
 Note that as @code{R CMD SHLIB} uses Make, it will not remake a shared
-object just because the flags have changed, and if @code{test.c} and
-@code{test.f} both exist in the current directory
+object just because the flags have changed, and if @file{test.c} and
+@file{test.f} both exist in the current directory
 
 @example
 R CMD SHLIB test.f
@@ -5644,10 +5684,10 @@ system makefile and then any personal @file{Makevars} files.
 If the @file{src} subdirectory of package contains a file
 @file{Makefile}, this is used in place of the @code{R CMD SHLIB}
 mechanism.  @command{make} is called with makefiles
-@file{R_HOME/etc@var{R_ARCH}/Makeconf}@footnote{or the version specific to a
-sub-architecture}, @file{src/Makefile} and any personal @file{Makevars}
-files (in that order).  The first target found in @file{src/Makefile} is
-used.
+@file{@var{R_HOME}/etc@var{R_ARCH}/Makeconf}@footnote{or the version
+specific to a sub-architecture}, @file{src/Makefile} and any personal
+@file{Makevars} files (in that order).  The first target found in
+@file{src/Makefile} is used.
 
 It is better to make use of a @code{Makevars}
 file rather than a @code{Makefile}: the latter should be needed only
@@ -5797,7 +5837,7 @@ some @R{} headers as they in turn include C header files that may cause
 conflicts---if this happens, define @samp{NO_C_HEADERS} before including
 the @R{} headers, and include the appropriate headers yourself.
 
-@node Fortran I/O, Handling R objects in C, Interfacing C++ code, System and foreign language interfaces
+@node Fortran I/O, Linking to other packages on Windows, Interfacing C++ code, System and foreign language interfaces
 @section Fortran I/O
 
 We have already warned against the use of C++ iostreams not least
@@ -5808,7 +5848,7 @@ and @code{6}. @xref{Printing from FORTRAN}, which describes workarounds.
 In the past most Fortran compilers implemented I/O on top of the C I/O
 system and so the two interworked successfully.  This was true of
 @command{g77}, but it is less true of @command{gfortran} as used in
-@code{gcc 4.y.x}.  In particular, any package that makes use of Fortran
+@code{gcc 4.y.z}.  In particular, any package that makes use of Fortran
 I/O will when compiled on Windows interfere with C I/O: when the Fortran
 I/O is initialized (typically when the package is loaded) the C
 @code{stdout} and @code{stderr} are switched to LF line endings.
@@ -5818,8 +5858,88 @@ when running under the Windows GUI console (@code{Rgui}) would hang the
 @R{} session.  This is now avoided by ensuring that the Fortran output
 is written to a file (@file{fort.6} in the working directory).
 
+@node Linking to other packages on Windows, Handling R objects in C, Fortran I/O, System and foreign language interfaces
+@section Linking to other packages on Windows
 
-@node Handling R objects in C, Interface functions .Call and .External, Fortran I/O, System and foreign language interfaces
+It is not in general possible to link a DLL in package @pkg{packA} to
+a DLL provided by package @pkg{packB} (for the security reasons
+mentioned in the previous section), but it is on Windows.  This DLL can
+be either the package's DLL @file{packB/libs/packB.dll} or some other
+DLL provided for other packages to link to (and perhaps also for
+@file{packB.dll} to link to).
+
+To reiterate: the ideas of this section are not portable to any other OS.
+
+Suppose package @pkg{packA} wants to make use of compiled code provided
+by @pkg{packB} in DLL @file{packB/libs/exB.dll}.  (This can be extended
+to linking to more than one package in the same way.)  There are three
+issues to be addressed:
+
+@itemize
+
+@item
+Making headers provided by package @pkg{packB} available to the code to
+be compiled in package @pkg{packA}.
+
+This is done by the @code{LinkingTo} mechanism (@pxref{Registering native
+routines}).
+
+@item preparing @code{packA.dll} to link to @file{packB/libs/exB.dll}.
+
+This needs an entry in @file{Makevars.win} of the form
+
+@example
+PKG_LIBS= -L<something> -lexB
+@end example
+
+and one possibility is that @code{<something>} is the path to the
+installed @file{pkgB/libs} directory.  To find that we need to ask @R{}
+where it is by something like
+
+@example
+PKGB_PATH=`echo 'library(packB); cat(system.file("libs", package="packB"))'
+ | rterm --vanilla --slave`
+PKG_LIBS= -L"$(PKGB_PATH)" -lexB
+@end example
+
+Another possibility is to use an import library, shipping with package
+@pkg{packA} an exports file @file{exB.def}.  Then @file{Makevars.win}
+could contain
+
+@example
+PKG_LIBS= -L. -lexB
+
+before: libexB.dll.a
+libexB.dll.a: exB.def
+@end example
+
+and then installing package @pkg{packA} will make and use the import
+library for @file{exB.dll}.  (One way to prepare the exports file is to
+use @file{pexports.exe}.
+
+@item loading @file{packA.dll} which depends on @file{exB.dll}.
+
+If @code{exB.dll} was used by package @pkg{packB} (because it is in fact
+@file{packB.dll} or @file{packB.dll} depends on it) and @pkg{packB} has
+been loaded before @pkg{packA}, then nothing more needs to be done as
+@file{exB.dll} will already be loaded into the @R{} executable.  (This
+is the most common scenario).
+
+More generally, we can use the @code{Dllpath} argument to
+@code{library.dynam} to ensure that @code{exB.dll} is found, for example
+by setting
+
+@example
+library.dynam("packA", pkg, lib, 
+              Dllpath = system.file("libs", package="packB"))
+@end example
+
+Note that @code{DLLpath} can only set one path, and so for linking to
+two or more packages you would need to resort to setting @env{PATH}.
+
+@end itemize
+
+@node Handling R objects in C, Interface functions .Call and .External, Linking to other packages on Windows, System and foreign language interfaces
 @section Handling R objects in C
 @cindex Handling R objects in C
 
@@ -6443,18 +6563,17 @@ nul-terminated C-style string.  This function will return a pre-existing
 @code{CHARSXP} if one with a matching string already exists, otherwise
 it will create a new one and add it to the cache before returning it to
 you.   The variant @code{mkCharLen} can be used to create a
-@code{CHARSXP} from a buffer possibly containing nuls -- as from @R{}
-2.8.0 these are also cached.
+@code{CHARSXP} from part of a buffer and will ensure null-termination.
 
 Currently, it is still possible to create @code{CHARSXP}s using
-@code{allocVector}; @code{CHARSXP}s created in
-this way will not be captured by the global @code{CHARSXP} cache and
-this should be avoided.  In the future, all @code{CHARSXP}s will be
-captured by the cache and this will allow further optimizations, for
-example, replacing calls to @code{strcmp} with pointer comparisons.  A
-helper macro, @code{CallocCharBuf}, can be used to obtain a temporary
-character buffer for in-place string manipulation: this memory must be
-released using @code{Free}.
+@code{allocVector}; @code{CHARSXP}s created in this way will not be
+captured by the global @code{CHARSXP} cache and this should be avoided.
+In the future, all @code{CHARSXP}s will be captured by the cache and
+this will allow further optimizations, for example, replacing calls to
+@code{strcmp} with pointer comparisons.  A helper macro,
+@code{CallocCharBuf}, can be used to obtain a temporary character buffer
+for in-place string manipulation: this memory must be released using
+@code{Free}.
 
 @node Finding and setting variables, Some convenience functions, Handling character data, Handling R objects in C
 @subsection Finding and setting variables
@@ -6552,7 +6671,7 @@ and there are versions of this for all the atomic vector types (those for
 a length-one character vector being @code{ScalarString} with argument a
 @code{CHARSXP} and @code{mkString} with argument @code{const char *}).
 
-Some of the @code{isXXXX} functions differ from their apparent
+Some of the @code{is@var{XXXX}} functions differ from their apparent
 @R{}-level counterparts: for example @code{isVector} is true for any
 atomic vector type (@code{isVectorAtomic}) and for lists and expressions
 (@code{isVectorList}) (with no check on attributes).  @code{isMatrix} is
@@ -6979,8 +7098,8 @@ SEXP lapply(SEXP list, SEXP expr, SEXP rho)
   R_len_t i, n = length(list);
   SEXP ans;
 
-  if(!isNewList(list)) error("`list' must be a list");
-  if(!isEnvironment(rho)) error("`rho' should be an environment");
+  if(!isNewList(list)) error("'list' must be a list");
+  if(!isEnvironment(rho)) error("'rho' should be an environment");
   PROTECT(ans = allocVector(VECSXP, n));
   for(i = 0; i < n; i++) @{
     defineVar(install("x"), VECTOR_ELT(list, i), rho);
@@ -7006,9 +7125,9 @@ SEXP lapply2(SEXP list, SEXP fn, SEXP rho)
   R_len_t i, n = length(list);
   SEXP R_fcall, ans;
 
-  if(!isNewList(list)) error("`list' must be a list");
-  if(!isFunction(fn)) error("`fn' must be a function");
-  if(!isEnvironment(rho)) error("`rho' should be an environment");
+  if(!isNewList(list)) error("'list' must be a list");
+  if(!isFunction(fn)) error("'fn' must be a function");
+  if(!isEnvironment(rho)) error("'rho' should be an environment");
   PROTECT(R_fcall = lang2(fn, R_NilValue));
   PROTECT(ans = allocVector(VECSXP, n));
   for(i = 0; i < n; i++) @{
@@ -7635,7 +7754,8 @@ Function
 
 @findex reEnc
 @example
-const char *reEnc(const char *x, cetype_t ce_in, cetype_t ce_out, int subst);
+const char *reEnc(const char *x, cetype_t ce_in, cetype_t ce_out,
+                  int subst);
 @end example
 
 @noindent
@@ -7646,6 +7766,17 @@ returns a string allocated by @code{R_alloc}.  This can translate from
 invalid input: this is done byte-by-byte with @code{1} indicates to
 output hex of the form @code{<a0>}, and @code{2} to replace by @code{.},
 with any other value causing the byte to produce no output.
+
+@findex mkCharLenCE
+@R{} 2.8.0 added
+
+@example
+SEXP mkCharLenCE(const char *, int, cetype_t);
+@end example
+
+@noindent
+to create marked character strings of a given length.
+
 
 @node The R API, Generic functions and methods, System and foreign language interfaces, Top
 @chapter The R @acronym{API}: entry points for C code
@@ -7710,32 +7841,32 @@ files when using these entry points.
 
 This remapping can cause problems@footnote{Known problems are redefining
 @code{error}, @code{length}, @code{vector} and @code{warning}}, and can
-be eliminated by defining @code{R_NO_REMAP} and prepending @code{Rf_} to
+be eliminated by defining @code{R_NO_REMAP} and prepending @samp{Rf_} to
 @emph{all} the function names used from @file{Rinternals.h} and
 @file{R_ext/Error.h}.
 
 We can classify the entry points as
 
-@itemize
-@item @emph{API}
+@table @emph
+@item API
 Entry points which are documented in this manual and declared in an
 installed header file.  These can be used in distributed packages and
 will only be changed after deprecation.
 
-@item @emph{public}
+@item public
 Entry points declared in an installed header file that are exported
 on all @R{} platforms but are not documented and subject to change
 without notice.
 
-@item @emph{private}
+@item private
 Entry points that are used when building @R{} and exported on all @R{}
 platforms but are not declared in the installed header files.
 Do not use these in distributed code.
 
-@item @emph{hidden}
+@item hidden
 Entry points that are where possible (Windows and some modern Unix
 compilers/loaders when using @R{} as a shared library) not exported.
-@end itemize
+@end table
 
 @node Memory allocation, Error handling, The R API, The R API
 @section Memory allocation
@@ -9091,7 +9222,7 @@ The graphics systems are exposed in headers
 @file{R_ext/GraphicsEngine.h}, @file{R_ext/GraphicsDevice.h} (which it
 includes) and @file{R_ext/QuartzDevice.h}.  Some entry points from the
 @pkg{stats} package are in @file{R_ext/stats_package.h} (currently
-related to the internals of @samp{nls} and @samp{nlminb}).
+related to the internals of @code{nls} and @code{nlminb}).
 
 
 @node Generic functions and methods, Linking GUIs and other front-ends to R, The R API, Top
@@ -9331,7 +9462,7 @@ Setting @env{R_HOME} and checking it is valid, as well as the path
 Setting @env{LD_LIBRARY_PATH} to include the directories used in linking
 @R{}.  This is recorded as the default setting of
 @env{R_LD_LIBRARY_PATH} in the shell script
-@file{R_HOME/etc@var{R_ARCH}/ldpaths}.
+@file{@var{R_HOME}/etc@var{R_ARCH}/ldpaths}.
 
 @item
 Processing some of the arguments, for example to run @R{} under a

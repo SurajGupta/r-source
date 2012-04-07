@@ -45,7 +45,7 @@ add1.default <- function(object, scope, scale = 0, test=c("none", "Chisq"),
     ns <- length(scope)
     ans <- matrix(nrow = ns + 1, ncol = 2,
                   dimnames = list(c("<none>", scope), c("df", "AIC")))
-    ans[1,  ] <- extractAIC(object, scale, k = k, ...)
+    ans[1, ] <- extractAIC(object, scale, k = k, ...)
     n0 <- length(object$residuals)
     env <- environment(formula(object))
     for(i in seq(ns)) {
@@ -81,6 +81,20 @@ add1.default <- function(object, scope, scale = 0, test=c("none", "Chisq"),
     aod
 }
 
+check_exact <- function(object)
+{
+    w <- object$weights
+    if(is.null(w)) {
+        mss <- sum(object$fitted.values^2)
+        rss <- sum(object$residuals^2)
+    } else {
+        mss <- sum(w * object$fitted.values^2)
+        rss <- sum(w * object$residuals^2)
+    }
+    if(rss < 1e-10*mss)
+        warning("attempting model selection on an essentially perfect fit is nonsense", call. = FALSE)
+}
+
 add1.lm <- function(object, scope, scale = 0, test=c("none", "Chisq", "F"),
 		    x = NULL, k = 2,...)
 {
@@ -96,6 +110,7 @@ add1.lm <- function(object, scope, scale = 0, test=c("none", "Chisq", "F"),
 	list(Fs=Fs, P=P)
     }
 
+    check_exact(object)
     if(missing(scope) || is.null(scope)) stop("no terms in scope")
     if(!is.character(scope))
 	scope <- add.scope(object, update.formula(object, scope))
@@ -104,7 +119,8 @@ add1.lm <- function(object, scope, scale = 0, test=c("none", "Chisq", "F"),
     oTerms <- attr(object$terms, "term.labels")
     int <- attr(object$terms, "intercept")
     ns <- length(scope)
-    y <- object$residuals + predict(object)
+    y <- object$residuals + object$fitted.values
+    ## predict(object) applies na.action where na.exclude results in too long
     dfs <- numeric(ns+1)
     RSS <- numeric(ns+1)
     names(dfs) <- names(RSS) <- c("<none>", scope)
@@ -329,7 +345,7 @@ drop1.default <- function(object, scope, scale = 0, test=c("none", "Chisq"),
     ns <- length(scope)
     ans <- matrix(nrow = ns + 1, ncol = 2,
                   dimnames =  list(c("<none>", scope), c("df", "AIC")))
-    ans[1,  ] <- extractAIC(object, scale, k = k, ...)
+    ans[1, ] <- extractAIC(object, scale, k = k, ...)
     n0 <- length(object$residuals)
     env <- environment(formula(object))
     for(i in seq(ns)) {
@@ -368,6 +384,7 @@ drop1.default <- function(object, scope, scale = 0, test=c("none", "Chisq"),
 drop1.lm <- function(object, scope, scale = 0, all.cols = TRUE,
 		     test=c("none", "Chisq", "F"), k = 2, ...)
 {
+    check_exact(object)
     x <- model.matrix(object)
     offset <- model.offset(model.frame(object))
     iswt <- !is.null(wt <- object$weights)
@@ -387,12 +404,12 @@ drop1.lm <- function(object, scope, scale = 0, all.cols = TRUE,
     chisq <- deviance.lm(object)
     dfs <- numeric(ns)
     RSS <- numeric(ns)
-    y <- object$residuals + predict(object)
+    y <- object$residuals + object$fitted.values
+    ## predict(object) applies na.action where na.exclude results in too long
     na.coef <- (1:length(object$coefficients))[!is.na(object$coefficients)]
     for(i in 1:ns) {
 	ii <- seq_along(asgn)[asgn == ndrop[i]]
-	if(all.cols) jj <- setdiff(seq(ncol(x)), ii)
-	else jj <- setdiff(na.coef, ii)
+	jj <- setdiff(if(all.cols) seq(ncol(x)) else na.coef, ii)
 	z <- if(iswt) lm.wfit(x[, jj, drop = FALSE], y, wt, offset=offset)
 	else lm.fit(x[, jj, drop = FALSE], y, offset=offset)
 	dfs[i] <- z$rank

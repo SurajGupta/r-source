@@ -179,6 +179,13 @@ setMethod("Logic", signature("ANY", "brob"), logic2)
 ## Now ensure that using group members gives error:
 assertError <- function(expr)
     stopifnot(inherits(try(expr, silent = TRUE), "try-error"))
+assertWarning <- function(expr)
+    stopifnot(inherits(tryCatch(expr, warning = function(w)w), "warning"))
+assertWarning_atleast <- function(expr) {
+    r <- tryCatch(expr, warning = function(w)w, error = function(e)e)
+    stopifnot(inherits(r, "warning") || inherits(r, "error"))
+}
+
 assertError(b & b)
 assertError(b | 1)
 assertError(TRUE & b)
@@ -196,9 +203,13 @@ stopifnot(identical(m, cBind(m)))
 ## caused infinite recursion
 setClass("Foo", representation(name="character"), contains="matrix")
 (f <- new("Foo", name="Sam", matrix()))
+f2 <- new("Foo", .Data = diag(2), name="Diag")# explicit .Data
 (m <- as(f, "matrix"))
-show(m)
-print(m)
+## this has no longer (2.7.0) an S4 bit: set it explicitly just for testing:
+stopifnot(isS4(m. <- asS4(m)),
+          identical(m, f@.Data))
+show(m.)
+print(m.)
 ## fixed in 2.5.0 patched
 
 ## callGeneric inside a method with new arguments {hence using .local()}:
@@ -292,21 +303,16 @@ as.complex(x_c1)
 setMethod("as.raw", "c1", function(x) as.raw(10))
 as.raw(x_c1)
 
-# as.numeric sets methods on all the equivalent functions
+# as.double, as.real use as.numeric for their methods to maintain equivalence
 setMethod("as.numeric", "c1", function(x, ...) 42+pi)
-as.numeric(x_c1)
-as.double(x_c1)
-as.real(x_c1)
-showMethods(as.numeric)
-showMethods(as.double)
-showMethods(as.real)
+identical(as.numeric(x_c1),as.double(x_c1))
+identical(as.numeric(x_c1),as.real(x_c1))
+
 
 setMethod(as.double, "c2", function(x, ...) x@.Data+pi)
 x_c2 <- new("c2", pi)
-as.numeric(x_c2)
-showMethods(as.numeric)
-
-promptClass("c1", stdout())# want all methods
+identical(as.numeric(x_c2),as.double(x_c2))
+identical(as.numeric(x_c2),as.real(x_c2))
 
 ## '!' changed signature from 'e1' to 'x' in 2.6.0
 setClass("foo", "logical")
@@ -331,7 +337,7 @@ pfit <- function(data) {
 }
 AIC.pfit <- function(object, ..., k = 2) -2*object$loglik + k
 AIC(pfit(1:10))
-library(stats4)
+library(stats4) # and keep on search() for tests below
 AIC(pfit(1:10)) # failed in R < 2.7.0
 
 ## For a few days (~ 2008-01-30), this failed to work without any notice:
@@ -342,3 +348,96 @@ setClass("dCMat", contains = c("dMat", "CMat"))
 stopifnot(!isVirtualClass("dCMat"),
 	  length(slotNames(new("dCMat"))) == 3)
 
+
+## Passing "..." arguments in nested callGeneric()s
+setClass("m1", contains="matrix")
+setClass("m2", contains="m1")
+setClass("m3", contains="m2")
+##
+setGeneric("foo", function(x, ...) standardGeneric("foo"))
+setMethod("foo", signature(x = "m1"),
+	  function(x, ...) cat(" <m1> ", format(match.call()),"\n"))
+setMethod("foo", signature(x = "m2"),
+	  function(x, ...) {
+	      cat(" <m2> ", format(match.call()),"\n")
+	      x <- as(x, "m1"); callGeneric()
+	  })
+setMethod("foo", signature(x = "m3"),
+	  function(x, ...) {
+	      cat(" <m3> ", format(match.call()),"\n")
+	      x <- as(x, "m2"); callGeneric()
+	  })
+foo(new("m1"), bla = TRUE)
+foo(new("m2"), bla = TRUE)
+foo(new("m3"), bla = TRUE)
+## The last one used to loose 'bla = TRUE' {the "..."} when it got to m1
+
+## is() for S3 objects with multiple class strings
+setClassUnion("OptionalPOSIXct",   c("POSIXct",   "NULL"))
+stopifnot(is(Sys.time(), "OptionalPOSIXct"))
+## failed in R 2.7.0
+
+## getGeneric() / getGenerics() "problems" related to 'tools' usage:
+e4 <- as.environment("package:stats4")
+gg4 <- getGenerics(e4)
+stopifnot(c("BIC", "coef", "confint", "logLik", "plot", "profile",
+            "show", "summary", "update", "vcov") %in% gg4, # %in% : "future proof"
+          unlist(lapply(gg4, function(g) !is.null(getGeneric(g, where = e4)))),
+          unlist(lapply(gg4, function(g) !is.null(getGeneric(g)))))
+em <- as.environment("package:methods")
+ggm <- getGenerics(em)
+gms <- c("addNextMethod", "body<-", "cbind2", "initialize",
+	 "loadMethod", "Math", "Ops", "rbind2", "show")
+stopifnot(unlist(lapply(ggm, function(g) !is.null(getGeneric(g, where = em)))),
+	  unlist(lapply(ggm, function(g) !is.null(getGeneric(g)))),
+	  gms %in% ggm,
+	  gms %in% tools:::get_S4_generics_with_methods(em), # with "message"
+	  ## all above worked in 2.7.0, however:
+	  isGeneric("show",  where=e4),
+	  hasMethods("show", where=e4), hasMethods("show", where=em),
+	  ## isGeneric("dim", where=as.environment("package:Matrix"))
+	  identical(as.character(gg4), #gg4 has packages attr.; tools::: doesn't
+		    tools:::get_S4_generics_with_methods(e4))
+	  )
+## the last failed in R 2.7.0 : was not showing  "show"
+## TODO: use "Matrix" checks once that is >= 1.0
+
+## containing "array" ("matrix", "ts", ..)
+t. <- ts(1:10, frequency = 4, start = c(1959, 2))
+setClass("Arr", contains= "array"); x <- new("Arr", cbind(17))
+setClass("Ts",  contains= "ts");   tt <- new("Ts", t.); t2 <- as(t., "Ts")
+setClass("ts2", representation(x = "Ts", y = "ts"))
+tt2 <- new("ts2", x=t2, y=t.)
+stopifnot(dim(x) == c(1,1), is(tt, "ts"), is(t2, "ts"),
+          ## FIXME:  identical(tt, t2)
+          length(tt) == length(t.),
+          identical(tt2@x, t2), identical(tt2@y, t.))
+## new(..) failed in R 2.7.0
+
+## Method with wrong argument order :
+setGeneric("test1", function(x, printit = TRUE, name = "tmp")
+           standardGeneric("test1"))
+assertWarning_atleast(
+setMethod("test1", "numeric", function(x, name, printit) match.call())
+)## did not warn or error in R 2.7.0 and earlier
+
+library(stats4)
+c1 <- getClass("mle", where = "stats4")
+c2 <- getClass("mle", where = "package:stats4")
+s1 <- getMethod("summary", "mle", where = "stats4")
+s2 <- getMethod("summary", "mle", where = "package:stats4")
+stopifnot(is(c1, "classRepresentation"),
+	  is(s1, "MethodDefinition"),
+	  identical(c1,c2), identical(s1,s2))
+## failed at times in the past
+
+## Extending "matrix", the .Data slot etc:
+setClass("moo", representation("matrix"))
+m <- matrix(1:4, 2, dimnames= list(NULL, c("A","B")))
+nf <- new("moo", .Data = m)
+n2 <- new("moo", 3:1, 3,2)
+n3 <- new("moo", 1:6, ncol=2)
+stopifnot(identical(m,			as(nf, "matrix")),
+	  identical(matrix(3:1,3,2),	as(n2, "matrix")),
+	  identical(matrix(1:6,ncol=2), as(n3, "matrix")))
+## partly failed at times in pre-2.8.0

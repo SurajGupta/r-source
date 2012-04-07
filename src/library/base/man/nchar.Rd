@@ -42,10 +42,6 @@ nzchar(x)
   These will often be the same, and almost always will be in single-byte
   locales.  There will be differences between the first two with
   multibyte character sequences, e.g. in UTF-8 locales.
-  If the byte stream contains embedded \code{nul} bytes,
-  \code{type = "bytes"} looks at all the bytes whereas the other two
-  types look only at the string as printed by \code{cat}, up to the
-  first \code{nul} byte.
   
   The internal equivalent of the default method of
   \code{\link{as.character}} is performed on \code{x} (so there is no
@@ -80,11 +76,11 @@ nzchar(x)
   printed in \code{Rterm} as \code{<U+2642>}, which is what
   \code{encodeString} gives.
 #endif
-
-  Embedded \code{nul} bytes are included in the byte count (but not the
-  final \code{nul}).  In contrast, characters are counted up to the
-  string terminator (the first \code{nul} that is not part of a
-  character representation).
+#ifdef unix
+  Where character strings have been marked as UTF-8, the number of
+  characters and widths will be computed in UTF-8, even though printing
+  may use escapes such as \code{<U+2642>} in a non-UTF-8 locale.
+#endif
 }
 \references{
   Becker, R. A., Chambers, J. M. and Wilks, A. R. (1988)

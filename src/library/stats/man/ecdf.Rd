@@ -7,17 +7,20 @@
 \alias{ecdf}
 \alias{plot.ecdf}
 \alias{print.ecdf}
+\alias{summary.ecdf}
 \title{Empirical Cumulative Distribution Function}
 \usage{
 ecdf(x)
 
 \method{plot}{ecdf}(x, \dots, ylab="Fn(x)", verticals = FALSE,
-     col.01line = "gray70")
+     col.01line = "gray70", pch = 19)
 
 \method{print}{ecdf}(x, digits= getOption("digits") - 2, \dots)
+
+\method{summary}{ecdf}(object, \dots)
 }
 \arguments{
-  \item{x}{numeric vector of the observations for \code{ecdf};  for
+  \item{x, object}{numeric vector of the observations for \code{ecdf};  for
     the methods, an object inheriting from class \code{"ecdf"}.}
   \item{\dots}{arguments to be passed to subsequent methods, e.g.,
     \code{\link{plot.stepfun}} for the \code{plot} method.}
@@ -25,6 +28,7 @@ ecdf(x)
   \item{verticals}{see \code{\link{plot.stepfun}}.}
   \item{col.01line}{numeric or character specifying the color of the
     horizontal lines at y = 0 and 1, see \code{\link{colors}}.}
+  \item{pch}{plotting character.}
   \item{digits}{number of significant digits to use, see
     \code{\link{print}}.}
 }
@@ -52,6 +56,9 @@ ecdf(x)
 \value{
   For \code{ecdf}, a function of class \code{"ecdf"}, inheriting from the
   \code{"\link{stepfun}"} class.
+
+  For the \code{summary} method, a summary of the knots of \code{object}
+  with a \code{"header"} attribute.
 }
 \author{
   Martin Maechler, \email{maechler@stat.math.ethz.ch}.\cr

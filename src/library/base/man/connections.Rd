@@ -1,6 +1,6 @@
 % File src/library/base/man/connections.Rd
 % Part of the R package, http://www.R-project.org
-% Copyright 1995-2007 R Core Development Team
+% Copyright 1995-2008 R Core Development Team
 % Distributed under GPL 2 or later
 
 \name{connections}
@@ -177,6 +177,10 @@ isIncomplete(con)
   the maximal allowed by the current setting of \code{umask} (see
   \code{\link{Sys.umask}}).
 #endif
+  
+  \code{gzfile} connections are an exception, as the file always has to
+  be opened in binary mode.  Thus modes such as \code{r} are binary, and
+  \code{rt} is needed to have a text-mode connection.
 
   \code{close} closes and destroys a connection.  Note that this will
   happen automatically in due course if there is no \R object referring
@@ -224,7 +228,8 @@ isIncomplete(con)
 #ifdef windows
   only supported if \code{--internet2} was used (to make use of Internet
   Explorer internals), and then only if the certificate is considered to
-  be valid.
+  be valid.  With that option only, the \code{http://user:pass@site}
+  notation for sites requiring authentication is also accepted.
 #endif
 }
 \value{
@@ -356,7 +361,7 @@ isIncomplete(con)
   This differs from S, where it is the equivalent of \code{"r+"},
   known as \code{"*"}.
 
-  On platforms where \code{vsnprintf} does not return the needed length
+  On (rare) platforms where \code{vsnprintf} does not return the needed length
   of output there is a 100,000 character output limit on
   the length of line for \code{fifo}, \code{gzfile} and \code{bzfile}
   connections: longer lines will be truncated with a warning.
@@ -367,10 +372,17 @@ isIncomplete(con)
 }
 
 \seealso{
-  \code{\link{textConnection}}, \code{\link{seek}}, \code{\link{readLines}},
-  \code{\link{readBin}}, \code{\link{writeLines}}, \code{\link{writeBin}},
+  \code{\link{textConnection}}, \code{\link{seek}},
   \code{\link{showConnections}}, \code{\link{pushBack}}.
-
+  
+  Functions making direct use of connections are \code{\link{readLines}},
+  \code{\link{readBin}}, \code{\link{readChar}},
+  \code{\link{writeLines}}, \code{\link{writeBin}},
+  \code{\link{writeChar}}, \code{\link{cat}}, \code{\link{sink}},
+  \code{\link{scan}}, \code{\link{parse}}, \code{\link{read.dcf}},
+  \code{\link{load}}, \code{\link{save}}, \code{\link{dput}} and
+  \code{\link{dump}}.
+  
   \code{\link{capabilities}} to see if \code{url},
   \code{fifo} and \code{socketConnection} are supported by this build of \R.
 

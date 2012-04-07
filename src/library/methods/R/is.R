@@ -21,16 +21,30 @@ is <-
 function(object, class2)
 {
     cl <- class(object)
-    if(length(cl) > 1) {
-        if( is.na(match(cl[[1]], names(getClass("oldClass")@subclasses))))
-          return(class2 %in% cl) # must be an S3 class, treat like inherits()
-        cl <- cl[[1]]
-    }
+    S3Case <- length(cl) > 1
+    if(S3Case)
+      cl <- cl[[1]]
     if(missing(class2))
         return(extends(cl))
+    class1Def <- getClassDef(cl)
+    if(is.null(class1Def)) # an unregistered S3 class
+      return(inherits(object, class2))
+    if(is.character(class2))
+      class2Def <- getClassDef(class2, .classDefEnv(class1Def))
+    else {
+        class2Def <- class2
+        class2 <- class2Def@ className
+    }
+    ## S3 inheritance is applied if the object is not S4 and class2 is either a basic
+    ## class or an S3 class (registered or not)
+    S3Case <- S3Case || (is.object(object) && !isS4(object)) # first requirement
+    S3Case <- S3Case && (is.null(class2Def) || class2 %in% .BasicClasses ||
+                         extends(class2Def, "oldClass"))
+    if(S3Case)
+        return(inherits(object, class2))
     if(.identC(cl, class2) || .identC(class2, "ANY"))
         return(TRUE)
-    ext <- possibleExtends(cl, class2)
+    ext <- possibleExtends(cl, class2, class1Def, class2Def)
     if(is.logical(ext))
         ext
     else if(ext@simple)
@@ -45,6 +59,8 @@ extends <-
   function(class1, class2, maybe = TRUE, fullInfo = FALSE)
 {
     if(is.character(class1)) {
+        if(length(class1)>1)
+            class1 <- class1[[1]]
 	classDef1 <- getClassDef(class1)
     } else if(is(class1, "classRepresentation")) {
 	classDef1 <- class1
@@ -68,15 +84,15 @@ extends <-
         else
             return(c(class1,names(ext)))
     }
-
+    value <- NULL
     if(is.character(class2) && length(class2) == 1) { ## fast first checks
 	## the [[1]] below handles old-style classes & throws away package attributes
-	## {Really? :} A cleaner version needed, to also ignore attr's of class2
-	if(.identC(class1[[1]], class2) || .identC(class2, "ANY") ||
-	   (!is.null(classDef1) && class2 %in% names(classDef1@contains)))
-	    return(TRUE)
-	else
-	    classDef2 <- getClassDef(class2)
+	if(.identC(class1[[1]], class2) || .identC(class2, "ANY"))
+          return(TRUE)
+        if(!is.null(classDef1) && class2 %in% names(classDef1@contains))
+	    value <- classDef1@contains[[class2]]
+        else 
+          classDef2 <- getClassDef(class2)
     }
     else if(is(class2, "classRepresentation")) {
 	classDef2 <- class2
@@ -84,7 +100,8 @@ extends <-
     }
     else
 	stop("'class2' must be the name of a class or a class definition")
-    value <- possibleExtends(class1, class2, classDef1, classDef2)
+    if(is.null(value))
+      value <- possibleExtends(class1, class2, classDef1, classDef2)
     if(fullInfo)
         value
     else if(is.logical(value))
@@ -140,18 +157,13 @@ setIs <-
         obj <- extensionObject
     ## revise the superclass/subclass info in the stored class definition
     .validExtends(class1, class2, classDef,  classDef2, obj@simple)
-    where2 <- findClass(classDef2, where)
-    if(length(where2) > 0) {
-        where2 <- where2[[1]]
+    where2 <- .findOrCopyClass(class2, classDef2, where, "subclass")
         elNamed(classDef2@subclasses, class1) <- obj
         if(doComplete)
           classDef2@subclasses <- completeSubclasses(classDef2, class1, obj, where)
         assignClassDef(class2, classDef2, where2, TRUE)
         .removePreviousCoerce(class1, class2, where, prevIs)
-    }
-    else
-      stop(gettextf("Unable to find package environment for class \"%s\" to revise subclass information", class2))
-    where1 <- findClass(class1, where)[[1]]
+    where1 <- .findOrCopyClass(class1, classDef, where, "superClass")
     ## the direct contains information
     elNamed(classDef@contains, class2) <- obj
     if(doComplete) {
@@ -162,6 +174,18 @@ setIs <-
     assignClassDef(class1, classDef, where1, TRUE)
     invisible(classDef)
  }
+
+.findOrCopyClass <- function(class, classDef, where, purpose) {
+    whereIs <- findClass(classDef, where)
+    if(length(whereIs) > 0)
+      whereIs[[1]]
+    else {
+        warning(gettextf("Class \"%s\" is defined (with package slot \"%s\") but no metadata object found to revise %s information---not exported?  Making a copy in package \"%s\"",
+                 class, classDef@package, purpose, getPackageName(where, FALSE)), domain = NA)
+        where
+    }
+}
+       
 
 .validExtends <- function(class1, class2, classDef1,  classDef2, slotTests) {
     .msg <- function(class1, class2) gettextf("class \"%s\" cannot extend class \"%s\"", class1, class2)
