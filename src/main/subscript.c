@@ -1,8 +1,7 @@
 /*
  *  R : A Computer Language for Statistical Data Analysis
  *  Copyright (C) 1995, 1996  Robert Gentleman and Ross Ihaka
- *  Copyright (C) 1997--2007  Robert Gentleman, Ross Ihaka and the
- *                            R Development Core Team
+ *  Copyright (C) 1997--2010  The R Development Core Team
  *
  *  This program is free software; you can redistribute it and/or modify
  *  it under the terms of the GNU General Public License as published by
@@ -320,6 +319,42 @@ SEXP attribute_hidden mat2indsub(SEXP dims, SEXP s, SEXP call)
     return (rvec);
 }
 
+/*
+Special Matrix Subscripting: For the case x[i] where x is an n-way
+array and i is a character matrix with n columns, this code converts i
+to an integer matrix by matching against the dimnames of x. NA values
+in any row of i propagate to the result.  Unmatched entries result in
+a subscript out of bounds error.  */
+
+SEXP attribute_hidden strmat2intmat(SEXP s, SEXP dnamelist, SEXP call)
+{
+    /* XXX: assumes all args are protected */
+    int nr = nrows(s), i, j, v, idx;
+    SEXP dnames, snames, si, sicol, s_elt;
+    PROTECT(snames = allocVector(STRSXP, nr));
+    PROTECT(si = allocVector(INTSXP, length(s)));
+    dimgets(si, getAttrib(s, R_DimSymbol));
+    for (i = 0; i < length(dnamelist); i++) {
+        dnames = VECTOR_ELT(dnamelist, i);
+        for (j = 0; j < nr; j++) {
+            SET_STRING_ELT(snames, j, STRING_ELT(s, j + (i * nr)));
+        }
+        PROTECT(sicol = match(dnames, snames, 0));
+        for (j = 0; j < nr; j++) {
+            v = INTEGER(sicol)[j];
+            idx = j + (i * nr);
+            s_elt = STRING_ELT(s, idx);
+            if (s_elt == NA_STRING) v = NA_INTEGER;
+            if (!CHAR(s_elt)[0]) v = 0; /* disallow "" match */
+            if (v == 0) errorcall(call, _("subscript out of bounds"));
+            INTEGER(si)[idx] = v;
+        }
+        UNPROTECT(1);
+    }
+    UNPROTECT(2);
+    return si;
+}
+
 static SEXP nullSubscript(int n)
 {
     int i;
@@ -434,10 +469,9 @@ typedef SEXP (*StringEltGetter)(SEXP x, int i);
  * VectorAssign (in subassign.c).  If subscripting is used for
  * assignment, it is possible to extend a vector by supplying new
  * names, and we want to give the extended vector those names, so they
- * are returned as the attribute. Also, unset elements of the vector
+ * are returned as the use.names attribute. Also, unset elements of the vector
  * of new names (places where a match was found) are indicated by
- * setting the element of the newnames vector to NULL, even though it
- * is a character vector.
+ * setting the element of the newnames vector to NULL.
 */
 
 /* The original code (pre 2.0.0) used a ns x nx loop that was too
@@ -458,7 +492,7 @@ stringSubscript(SEXP s, int ns, int nx, SEXP names,
 
     PROTECT(s);
     PROTECT(names);
-    PROTECT(indexnames = allocVector(STRSXP, ns));
+    PROTECT(indexnames = allocVector(VECSXP, ns));
     nnames = nx;
     extra = nnames;
 
@@ -478,8 +512,7 @@ stringSubscript(SEXP s, int ns, int nx, SEXP names,
 	for (i = 0; i < ns; i++)
 	    if(STRING_ELT(s, i) == NA_STRING || !CHAR(STRING_ELT(s, i))[0])
 		INTEGER(indx)[i] = 0;
-	/* FIXME: this should not be allowed, CHARSXPs only */
-	for (i = 0; i < ns; i++) SET_STRING_ELT(indexnames, i, R_NilValue);
+	for (i = 0; i < ns; i++) SET_VECTOR_ELT(indexnames, i, R_NilValue);
     } else {
 	PROTECT(indx = allocVector(INTSXP, ns));
 	for (i = 0; i < ns; i++) {
@@ -492,8 +525,7 @@ stringSubscript(SEXP s, int ns, int nx, SEXP names,
 		    }
 		    if (NonNullStringMatch(STRING_ELT(s, i), names_j)) {
 			sub = j + 1;
-			/* FIXME: this should not be allowed, CHARSXPs only */
-			SET_STRING_ELT(indexnames, i, R_NilValue);
+			SET_VECTOR_ELT(indexnames, i, R_NilValue);
 			break;
 		    }
 		}
@@ -509,7 +541,7 @@ stringSubscript(SEXP s, int ns, int nx, SEXP names,
 	    for (j = 0 ; j < i ; j++)
 		if (NonNullStringMatch(STRING_ELT(s, i), STRING_ELT(s, j))) {
 		    sub = INTEGER(indx)[j];
-		    SET_STRING_ELT(indexnames, i, STRING_ELT(s, j));
+		    SET_VECTOR_ELT(indexnames, i, STRING_ELT(s, j));
 		    break;
 		}
 	}
@@ -519,14 +551,14 @@ stringSubscript(SEXP s, int ns, int nx, SEXP names,
 	    }
 	    extra += 1;
 	    sub = extra;
-	    SET_STRING_ELT(indexnames, i, STRING_ELT(s, i));
+	    SET_VECTOR_ELT(indexnames, i, STRING_ELT(s, i));
 	}
 	INTEGER(indx)[i] = sub;
     }
     /* We return the new names as the names attribute of the returned
        subscript vector. */
     if (extra != nnames)
-	setAttrib(indx, R_NamesSymbol, indexnames);
+	setAttrib(indx, R_UseNamesSymbol, indexnames);
     if (canstretch)
 	*stretch = extra;
     UNPROTECT(4);

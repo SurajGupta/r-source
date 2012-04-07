@@ -78,11 +78,11 @@ smooth.spline(x, y = NULL, w = NULL, df, spar = NULL,
 
   The computational \eqn{\lambda} used (as a function of
   \eqn{s=spar}{\code{spar}}) is
-  \eqn{\lambda = r * 256^{3 s - 1}}{lambda = r * 256^(3*spar - 1)}
+  \eqn{\lambda = r * 256^{3 s - 1}}{\lambda = r * 256^(3*spar - 1)}
   where
   \eqn{r = tr(X' W X) / tr(\Sigma)},
   \eqn{\Sigma} is the matrix given by
-  \eqn{\Sigma_{ij} = \int B_i''(t) B_j''(t) dt}{Sigma[i,j] = Integral B''[i](t) B''[j](t) dt},
+  \eqn{\Sigma_{ij} = \int B_i''(t) B_j''(t) dt}{\Sigma[i,j] = Integral B''[i](t) B''[j](t) dt},
   \eqn{X} is given by \eqn{X_{ij} = B_j(x_i)}{X[i,j] = B[j](x[i])},
   \eqn{W} is the diagonal matrix of weights (scaled such that
   its trace is \eqn{n}, the original number of observations)
@@ -107,10 +107,10 @@ smooth.spline(x, y = NULL, w = NULL, df, spar = NULL,
 %%   = 1/3 + {log(lam) - log(r)} / {24 log(2)}
 %%   = 1/3 - log(r)/{24 log(2)} +  log(lam) / {24 log(2)}
 %%   =               s0         + 0.0601 * log(lam)
-  \code{spar} is \eqn{s = s0 + 0.0601 * \bold{\log}\lambda}{spar = s0 + 0.0601 * log(lambda)},
+  \code{spar} is \eqn{s = s0 + 0.0601 * \bold{\log}\lambda}{spar = s0 + 0.0601 * log(\lambda)},
   which is intentionally \emph{different} from the S-PLUS implementation
   of \code{smooth.spline} (where \code{spar} is proportional to
-  \eqn{\lambda}).  In \R's (\eqn{\log \lambda}) scale, it makes more
+  \eqn{\lambda}).  In \R's (\eqn{\log \lambda}{log \lambda}) scale, it makes more
   sense to vary \code{spar} linearly.
 
   Note however that currently the results may become very unreliable

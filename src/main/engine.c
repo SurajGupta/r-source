@@ -105,12 +105,19 @@ void* GEsystemState(pGEDevDesc dd, int index)
  * system to a specific device.
  */
 static void registerOne(pGEDevDesc dd, int systemNumber, GEcallback cb) {
+    SEXP result;
     dd->gesd[systemNumber] =
 	(GESystemDesc*) calloc(1, sizeof(GESystemDesc));
     if (dd->gesd[systemNumber] == NULL)
 	error(_("unable to allocate memory (in GEregister)"));
-    cb(GE_InitState, dd, R_NilValue);
-    dd->gesd[systemNumber]->callback = cb;
+    result = cb(GE_InitState, dd, R_NilValue);
+    if (isNull(result)) {
+        /* tidy up */
+        free(dd->gesd[systemNumber]);
+	error(_("unable to allocate memory (in GEregister)"));
+    } else {
+        dd->gesd[systemNumber]->callback = cb;
+    }
 }
 
 /* Store the graphics system state and callback information
@@ -767,7 +774,7 @@ static void CScliplines(int n, double *x, double *y,
     double *xx, *yy;
     double x1, y1, x2, y2;
     cliprect cr;
-    void *vmax = vmaxget();
+    const void *vmax = vmaxget();
 
     if (toDevice)
 	getClipRectToDevice(&cr.xl, &cr.yb, &cr.xr, &cr.yt, dd);
@@ -1032,6 +1039,8 @@ static void clipPolygon(int n, double *x, double *y,
 			const pGEcontext gc, int toDevice, pGEDevDesc dd)
 {
     double *xc = NULL, *yc = NULL;
+    const void *vmax = vmaxget();
+
     /* if bg not specified then draw as polyline rather than polygon
      * to avoid drawing line along border of clipping region
      * If bg was NA then it has been converted to fully transparent */
@@ -1058,6 +1067,7 @@ static void clipPolygon(int n, double *x, double *y,
 	    dd->dev->polygon(npts, xc, yc, gc, dd->dev);
 	}
     }
+    vmaxset(vmax);
 }
 
 /****************************************************************
@@ -1070,7 +1080,7 @@ void GEPolygon(int n, double *x, double *y, const pGEcontext gc, pGEDevDesc dd)
      * Save (and reset below) the heap pointer to clean up
      * after any R_alloc's done by functions I call.
      */
-    void *vmaxsave = vmaxget();
+    const void *vmaxsave = vmaxget();
     if (gc->lty == LTY_BLANK)
 	/* "transparent" border */
 	gc->col = R_TRANWHITE;
@@ -1169,7 +1179,7 @@ static int clipCircleCode(double x, double y, double r,
  */
 void GECircle(double x, double y, double radius, const pGEcontext gc, pGEDevDesc dd)
 {
-    void *vmax;
+    const void *vmax;
     double *xc, *yc;
     int result;
 
@@ -1290,7 +1300,7 @@ static int clipRectCode(double x0, double y0, double x1, double y1,
 void GERect(double x0, double y0, double x1, double y1,
 	    const pGEcontext gc, pGEDevDesc dd)
 {
-    void *vmax;
+    const void *vmax;
     double *xc, *yc;
     int result;
 
@@ -1337,6 +1347,36 @@ void GERect(double x0, double y0, double x1, double y1,
 	    vmaxset(vmax);
 	}
     }
+}
+
+/****************************************************************
+ * GERaster
+ ****************************************************************
+ */
+
+void GERaster(unsigned int *raster, int w, int h,
+              double x, double y, 
+              double width, double height,
+              double angle, 
+              Rboolean interpolate,
+              const pGEcontext gc, pGEDevDesc dd)
+{
+    /* FIXME: what about clipping? (if the device can't) 
+     * Maybe not too bad because it is just a matter of shaving off
+     * some rows and columns from the image? (because R only does
+     * rectangular clipping regions) */
+    dd->dev->raster(raster, w, h, x, y, width, height,
+                    angle, interpolate, gc, dd->dev);
+}
+
+/****************************************************************
+ * GERaster
+ ****************************************************************
+ */
+
+SEXP GECap(pGEDevDesc dd)
+{
+    return dd->dev->cap(dd->dev);
 }
 
 /****************************************************************
@@ -1572,6 +1612,7 @@ void GEText(double x, double y, const char * const str, cetype_t enc,
 	    double xoff, yoff, hadj;
 	    double sin_rot, cos_rot;/* sin() & cos() of rot{ation} in radians */
 	    double xleft, ybottom;
+	    const void *vmax = vmaxget();
 
 	    enc2 = (gc->fontface == 5) ? CE_SYMBOL : enc;
 	    if(enc2 != CE_SYMBOL)
@@ -1600,6 +1641,8 @@ void GEText(double x, double y, const char * const str, cetype_t enc,
 		    double w = NA_REAL, h = NA_REAL;
 		    const char *str;
 		    *sb = '\0';
+		    /* This may R_alloc, but let's assume that
+		       there are not many lines of text per string */
 		    str = reEnc(sbuf, enc, enc2, 2);
 		    if (n > 1) {
 			/* first determine location of THIS line */
@@ -1760,6 +1803,7 @@ void GEText(double x, double y, const char * const str, cetype_t enc,
 		else *sb++ = *s;
 		if (!*s) break;
 	    }
+	    vmaxset(vmax);
 	}
 	R_Visible = savevis;
     }
@@ -1795,7 +1839,7 @@ SEXP GEXspline(int n, double *x, double *y, double *s, Rboolean open,
      * Save (and reset below) the heap pointer to clean up
      * after any R_alloc's done by functions I call.
      */
-    void *vmaxsave = vmaxget();
+    const void *vmaxsave = vmaxget();
     ys = (double *) R_alloc(n, sizeof(double));
     for (i = 0; i < n; i++) ys[i] = y[i]*asp;
     if (open) {
@@ -2340,6 +2384,7 @@ double GEStrWidth(const char *str, cetype_t enc, const pGEcontext gc, pGEDevDesc
 	    char *sb;
 	    double wdash;
 	    cetype_t enc2;
+	    const void *vmax = vmaxget();
 
 	    enc2 = (gc->fontface == 5) ? CE_SYMBOL : enc;
 	    if(enc2 != CE_SYMBOL)
@@ -2351,6 +2396,8 @@ double GEStrWidth(const char *str, cetype_t enc, const pGEcontext gc, pGEDevDesc
 		if (*s == '\n' || *s == '\0') {
 		    const char *str;
 		    *sb = '\0';
+		    /* This may R_alloc, but let's assume that
+		       there are not many lines of text per string */
 		    str = reEnc(sbuf, enc, enc2, 2);
 		    if(dd->dev->hasTextUTF8 == TRUE && enc2 == CE_UTF8)
 			wdash = dd->dev->strWidthUTF8(str, gc, dd->dev);
@@ -2362,6 +2409,7 @@ double GEStrWidth(const char *str, cetype_t enc, const pGEcontext gc, pGEDevDesc
 		else *sb++ = *s;
 		if (!*s) break;
 	    }
+	    vmaxset(vmax);
 	}
 	return w;
     }
@@ -2966,4 +3014,316 @@ SEXP GE_LTYget(unsigned int lty)
     }
     for(i = 0 ; i < ndash ; i++) cbuf[i] = HexDigits[dash[i]];
     return mkString(cbuf);
+}
+
+/****************************************************************
+ * 
+ * Some functions for operations on raster images
+ * (for those devices that cannot do these themselves)
+ ****************************************************************
+ */
+
+/* Some of this code is based on code from the leptonica library
+ * hence the following notice 
+ */
+
+/*====================================================================*
+-  Copyright (C) 2001 Leptonica.  All rights reserved.
+-  This software is distributed in the hope that it will be
+-  useful, but with NO WARRANTY OF ANY KIND.
+-  No author or distributor accepts responsibility to anyone for the
+-  consequences of using this software, or for whether it serves any
+-  particular purpose or works at all, unless he or she says so in
+-  writing.  Everyone is granted permission to copy, modify and
+-  redistribute this source code, for commercial or non-commercial
+-  purposes, with the following restrictions: (1) the origin of this
+-  source code must not be misrepresented; (2) modified versions must
+-  be plainly marked as such; and (3) this notice may not be removed
+-  or altered from any source or modified source distribution.
+*====================================================================*/
+
+/* 
+ * Scale a raster image to a desired size using 
+ * nearest-neighbour interpolation
+
+ * draster must be pre-allocated.
+ */
+void R_GE_rasterScale(unsigned int *sraster, int sw, int sh,
+                      unsigned int *draster, int dw, int dh) {
+    int i, j;
+    int sx, sy;
+    unsigned int pixel;
+
+    /* Iterate over the destination pixels */
+    for (i = 0; i < dh; i++) {
+        for (j = 0; j < dw; j++) {
+            sy = i * sh / dh;
+            sx = j * sw / dw;
+            if ((sx >= 0) && (sx < sw) && (sy >= 0) && sy < sh) {
+                pixel = sraster[sy * sw + sx];
+            } else {
+                pixel = 0;
+            }
+            draster[i * dw + j] = pixel;
+        }
+    }
+}
+
+/* 
+ * Scale a raster image to a desired size using 
+ * bilinear interpolation
+ * Code based on scaleColorLILow() from leptonica library
+
+ *  Divide each destination pixel into 16 x 16 sub-pixels.
+ *  Linear interpolation is equivalent to finding the 
+ *  fractional area (i.e., number of sub-pixels divided
+ *  by 256) associated with each of the four nearest src pixels,
+ *  and weighting each pixel value by this fractional area.
+
+ * draster must be pre-allocated.
+ */
+void R_GE_rasterInterpolate(unsigned int *sraster, int sw, int sh,
+                            unsigned int *draster, int dw, int dh) {
+    int i, j;
+    double scx, scy;
+    int wm2, hm2;
+    int xpm, ypm;  /* location in src image, to 1/16 of a pixel */
+    int xp, yp, xf, yf;  /* src pixel and pixel fraction coordinates */
+    int v00r, v01r, v10r, v11r, v00g, v01g, v10g, v11g;
+    int v00b, v01b, v10b, v11b, v00a, v01a, v10a, v11a;
+    int area00, area01, area10, area11;
+    unsigned int pixels1, pixels2, pixels3, pixels4, pixel;
+    unsigned int *sline, *dline;
+
+    /* (scx, scy) are scaling factors that are applied to the
+     * dest coords to get the corresponding src coords.
+     * We need them because we iterate over dest pixels
+     * and must find the corresponding set of src pixels. */
+    scx = (16. * sw) / dw;
+    scy = (16. * sh) / dh;
+
+    wm2 = sw - 2;
+    hm2 = sh - 2;
+
+    /* Iterate over the destination pixels */
+    for (i = 0; i < dh; i++) {
+        ypm = (int) fmax2(scy * i - 8, 0);
+        yp = ypm >> 4;
+        yf = ypm & 0x0f;
+        dline = draster + i * dw;
+        sline = sraster + yp * sw;
+        for (j = 0; j < dw; j++) {
+            xpm = (int) fmax2(scx * j - 8, 0);
+            xp = xpm >> 4;
+            xf = xpm & 0x0f;
+
+            pixels1 = *(sline + xp);
+
+            if (xp > wm2 || yp > hm2) {
+                if (yp > hm2 && xp <= wm2) {  /* pixels near bottom */
+                    pixels2 = *(sline + xp + 1);
+                    pixels3 = pixels1;
+                    pixels4 = pixels2;
+                }
+                else if (xp > wm2 && yp <= hm2) {  /* pixels near right side */
+                    pixels2 = pixels1;
+                    pixels3 = *(sline + sw + xp);
+                    pixels4 = pixels3;
+                }
+                else {  /* pixels at LR corner */
+                    pixels4 = pixels3 = pixels2 = pixels1;
+                }
+            }
+            else {
+                pixels2 = *(sline + xp + 1);
+                pixels3 = *(sline + sw + xp);
+                pixels4 = *(sline + sw + xp + 1);
+            }
+
+            area00 = (16 - xf) * (16 - yf);
+            area10 = xf * (16 - yf);
+            area01 = (16 - xf) * yf;
+            area11 = xf * yf;
+            v00r = area00 * R_RED(pixels1);
+            v00g = area00 * R_GREEN(pixels1);
+            v00b = area00 * R_BLUE(pixels1);
+            v00a = area00 * R_ALPHA(pixels1);
+            v10r = area10 * R_RED(pixels2);
+            v10g = area10 * R_GREEN(pixels2);
+            v10b = area10 * R_BLUE(pixels2);
+            v10a = area10 * R_ALPHA(pixels2);
+            v01r = area01 * R_RED(pixels3);
+            v01g = area01 * R_GREEN(pixels3);
+            v01b = area01 * R_BLUE(pixels3);
+            v01a = area01 * R_ALPHA(pixels3);
+            v11r = area11 * R_RED(pixels4);
+            v11g = area11 * R_GREEN(pixels4);
+            v11b = area11 * R_BLUE(pixels4);
+            v11a = area11 * R_ALPHA(pixels4);
+            pixel = (((v00r + v10r + v01r + v11r + 128) >>  8) & 0x000000ff) |
+                    (((v00g + v10g + v01g + v11g + 128)      ) & 0x0000ff00) |
+                    (((v00b + v10b + v01b + v11b + 128) <<  8) & 0x00ff0000) |
+                    (((v00a + v10a + v01a + v11a + 128) << 16) & 0xff000000);
+            *(dline + j) = pixel;
+        }
+    }
+}
+
+/*
+ * Calculate the size needed for rotated image
+ *
+ * Rotate top-right and bottom-right corners
+ * New width/height based on max of rotated corners
+ */
+void R_GE_rasterRotatedSize(int w, int h, double angle,
+                            int *wnew, int *hnew) {
+    double diag = sqrt(w*w + h*h);
+    double theta = atan2((double) h, (double) w);
+    double trx1 = diag*cos(theta + angle);
+    double trx2 = diag*cos(theta - angle);
+    double try1 = diag*sin(theta + angle);
+    double try2 = diag*sin(angle - theta);
+    *wnew = (int) (fmax2(fabs(trx1), fabs(trx2)) + 0.5);
+    *hnew = (int) (fmax2(fabs(try1), fabs(try2)) + 0.5);
+}
+
+/*
+ * Calculate offset for (left, bottom) or 
+ * (left, top) of image 
+ * to account for image rotation
+ */
+void R_GE_rasterRotatedOffset(int w, int h, double angle,
+                              int botleft,
+                              double *xoff, double *yoff) {
+    double hypot = .5*sqrt(w*w + h*h);
+    double theta, dw, dh;
+    if (botleft) {
+        theta = M_PI + atan2(h, w);
+        dw = hypot*cos(theta + angle);
+        dh = hypot*sin(theta + angle);
+        *xoff = dw + w/2;
+        *yoff = dh + h/2;
+    } else {
+        theta = -M_PI - atan2(h, w);
+        dw = hypot*cos(theta + angle);
+        dh = hypot*sin(theta + angle);
+        *xoff = dw + w/2;
+        *yoff = dh - h/2;
+    }
+}
+
+/* 
+ * Copy a raster image into the middle of a larger 
+ * raster image (ready for rotation)
+
+ * newRaster must be pre-allocated.
+ */
+void R_GE_rasterResizeForRotation(unsigned int *sraster, 
+                                  int w, int h, 
+                                  unsigned int *newRaster,
+                                  int wnew, int hnew,
+                                  const pGEcontext gc)
+{
+    int i, j, inew, jnew;
+    int xoff = (wnew - w)/2;
+    int yoff = (hnew - h)/2;
+
+    for (i=0; i<hnew; i++) {
+        for (j=0; j<wnew; j++) {
+            newRaster[i*wnew + j] = gc->fill;
+        }
+    }
+    for (i=0; i<h; i++) {
+        for (j=0; j<w; j++) {
+            inew = i+yoff;
+            jnew = j+xoff;
+            newRaster[inew*wnew + jnew] = sraster[i*w + j];
+        }
+
+    }
+}
+
+/* 
+ * Rotate a raster image 
+ * Code based on rotateAMColorLow() from leptonica library
+
+ * draster must be pre-allocated.
+ 
+ * smoothAlpha allows alpha channel to vary smoothly based on 
+ * interpolation.  If this is FALSE, then alpha values are 
+ * taken from MAX(alpha) of relevant pixels.  This means that
+ * areas of full transparency remain fully transparent, 
+ * areas of opacity remain opaque, edges between anything less than opacity
+ * and opacity are opaque, and edges between full transparency
+ * and semitransparency become semitransparent.
+ */
+void R_GE_rasterRotate(unsigned int *sraster, int w, int h, double angle,
+                       unsigned int *draster, const pGEcontext gc,
+                       Rboolean smoothAlpha) {
+    int i, j;
+    int xcen, ycen, wm2, hm2;
+    int xdif, ydif, xpm, ypm, xp, yp, xf, yf;
+    int rval, gval, bval, aval;
+    unsigned int word00, word01, word10, word11;
+    unsigned int *sline, *dline;
+    double sina, cosa;
+
+    /* 'angle' in leptonica is clockwise */
+    angle = -angle;
+
+    xcen = w / 2;
+    wm2 = w - 2;
+    ycen = h / 2;
+    hm2 = h - 2;
+    sina = 16. * sin(angle);
+    cosa = 16. * cos(angle);
+
+    for (i = 0; i < h; i++) {
+        ydif = ycen - i;
+        dline = draster + i * w;
+        for (j = 0; j < w; j++) {
+            xdif = xcen - j;
+            xpm = (int) (-xdif * cosa - ydif * sina);
+            ypm = (int) (-ydif * cosa + xdif * sina);
+            xp = xcen + (xpm >> 4);
+            yp = ycen + (ypm >> 4);
+            xf = xpm & 0x0f;
+            yf = ypm & 0x0f;
+
+                /* if off the edge, use transparent */
+            if (xp < 0 || yp < 0 || xp > wm2 || yp > hm2) {
+                *(dline + j) = gc->fill;
+                continue;
+            }
+
+            sline = sraster + yp * w;
+
+            word00 = *(sline + xp);
+            word10 = *(sline + xp + 1);
+            word01 = *(sline + w + xp);
+            word11 = *(sline + w + xp + 1);
+            rval = ((16 - xf) * (16 - yf) * R_RED(word00) +
+                    xf * (16 - yf) * R_RED(word10) +
+                    (16 - xf) * yf * R_RED(word01) +
+                    xf * yf * R_RED(word11) + 128) / 256;
+            gval = ((16 - xf) * (16 - yf) * R_GREEN(word00) +
+                    xf * (16 - yf) * R_GREEN(word10) +
+                    (16 - xf) * yf * R_GREEN(word01) +
+                    xf * yf * R_GREEN(word11) + 128) / 256;
+            bval = ((16 - xf) * (16 - yf) * R_BLUE(word00) +
+                    xf * (16 - yf) * R_BLUE(word10) +
+                    (16 - xf) * yf * R_BLUE(word01) +
+                    xf * yf * R_BLUE(word11) + 128) / 256;
+            if (smoothAlpha) {
+                aval = ((16 - xf) * (16 - yf) * R_ALPHA(word00) +
+                        xf * (16 - yf) * R_ALPHA(word10) +
+                        (16 - xf) * yf * R_ALPHA(word01) +
+                        xf * yf * R_ALPHA(word11) + 128) / 256;
+            } else {
+                aval = fmax2(fmax2(R_ALPHA(word00), R_ALPHA(word10)),
+                             fmax2(R_ALPHA(word01), R_ALPHA(word11)));
+            }
+            *(dline + j) = R_RGBA(rval, gval, bval, aval);
+        }
+    }
 }

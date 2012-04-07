@@ -221,6 +221,13 @@ static void GA_Size(double *left, double *right,
 		    double *bottom, double *top,
 		    pDevDesc dd);
 static void GA_Resize(pDevDesc dd);
+static void GA_Raster(unsigned int *raster, int w, int h,
+                      double x, double y, 
+                      double width, double height,
+                      double rot, 
+                      Rboolean interpolate,
+                      const pGEcontext gc, pDevDesc dd);
+static SEXP GA_Cap(pDevDesc dd);
 static double GA_StrWidth(const char *str,
 			  const pGEcontext gc,
 			  pDevDesc dd);
@@ -432,7 +439,7 @@ static void SaveAsPDF(pDevDesc dd, const char *fn)
 					 GE_INCHES, gdd),
 			((gadesc*) dd->deviceSpecific)->basefontsize,
 			1, 0, "R Graphics Output", R_NilValue, 1, 4,
-			"rgb", TRUE, TRUE, xd->fillOddEven))
+			"rgb", TRUE, TRUE, xd->fillOddEven, 64))
 	PrivateCopyDevice(dd, ndd, "PDF");
 }
 
@@ -2500,7 +2507,7 @@ static void GA_Polyline(int n, double *x, double *y,
 			const pGEcontext gc,
 			pDevDesc dd)
 {
-    char *vmax = vmaxget();
+    const void *vmax = vmaxget();
     point *p = (point *) R_alloc(n, sizeof(point));
     double devx, devy;
     int   i;
@@ -2549,7 +2556,7 @@ static void GA_Polygon(int n, double *x, double *y,
 		       const pGEcontext gc,
 		       pDevDesc dd)
 {
-    char *vmax = vmaxget();
+    const void *vmax = vmaxget();
     point *points;
     rect r;
     double devx, devy;
@@ -2609,6 +2616,296 @@ static void GA_Polygon(int n, double *x, double *y,
     SH;
 }
 
+static void doRaster(unsigned int *raster, int x, int y, int w, int h,
+                     double rot, 
+                     pDevDesc dd)
+{
+    const void *vmax = vmaxget();
+    int i;
+    gadesc *xd = (gadesc *) dd->deviceSpecific;
+    rect  sr, dr;
+    image img, mask;
+    byte *imageData, *maskData;
+    /* If there are any fully transparent pixels in the image
+     * then we will need to create a mask.
+     */
+    Rboolean fullTrans = FALSE; 
+    /* If there are any semitransparent pixels in the image
+     * then we will need to do alpha blending.
+     * NOTE though that we can only handle 1 level of semitransparency
+     * BUT we can handle some pixels fully transparent AND some
+     * pixels semitransparent.
+     */
+    Rboolean semiTrans = FALSE;
+    /* Index to pixel that contains fixed alpha for image */
+    int fixedAlpha = -1;
+
+    TRACEDEVGA("raster");
+    
+    dr = rect(x, y, w, h);
+    
+    /* Create image object */
+    img = newimage(w, h, 32);
+
+    /* Set the image pixels from the raster */
+    /* Need to swap ABGR to ARGB */
+    /* NOTE that graphapp usese 0 for opaque and 255 for transparent! */
+    imageData = (byte *) R_alloc(4*w*h, sizeof(byte));
+    for (i=0; i<w*h; i++) {
+        byte alpha = R_ALPHA(raster[i]);
+        if (alpha < 255) {
+            if (alpha == 0) {
+                /* Any fully transparent pixels will be masked out
+                 */
+                imageData[i*4 + 3] = 0;
+                imageData[i*4 + 2] = 255;
+                imageData[i*4 + 1] = 255;
+                imageData[i*4 + 0] = 255;
+                fullTrans = TRUE;
+            } else {
+                /* We will draw semitransparent pixels opaque 
+                 * then alpha blend using fixedAlpha
+                 */
+                imageData[i*4 + 3] = 0;
+                imageData[i*4 + 2] = R_RED(raster[i]);
+                imageData[i*4 + 1] = R_GREEN(raster[i]);
+                imageData[i*4 + 0] = R_BLUE(raster[i]);
+                semiTrans = TRUE;
+            }
+            /* The current implementation can only cope with
+             * a single constant alpha across the image
+             */
+            if (alpha > 0 && fixedAlpha < 0) {
+                fixedAlpha = i;
+            } 
+            if (alpha > 0 && fixedAlpha >= 0 && 
+                alpha != R_ALPHA(raster[fixedAlpha])) {
+                warning("Per-pixel alpha not supported on this device");
+            }
+        } else {
+            /* These are opaque pixels */
+            imageData[i*4 + 3] = 0;
+            imageData[i*4 + 2] = R_RED(raster[i]);
+            imageData[i*4 + 1] = R_GREEN(raster[i]);
+            imageData[i*4 + 0] = R_BLUE(raster[i]);
+        }
+    }
+
+    setpixels(img, imageData);
+    /* Get the image rect */
+    sr = getrect(img);
+
+    if (fullTrans) {
+        /* Create mask (b&w) */
+        mask = newimage(w, h, 32);
+        maskData = (byte *) R_alloc(4*w*h, sizeof(byte));
+        for (i=0; i<w*h; i++) {
+            byte alpha = R_ALPHA(raster[i]);
+            if (alpha == 0) {
+                /* Mask is black */
+                maskData[i*4 + 3] = 0;
+                maskData[i*4 + 2] = 0;
+                maskData[i*4 + 1] = 0;
+                maskData[i*4 + 0] = 0;
+            } else {
+                /* Mask is white */
+                maskData[i*4 + 3] = 0;
+                maskData[i*4 + 2] = 255;
+                maskData[i*4 + 1] = 255;
+                maskData[i*4 + 0] = 255;
+            }
+        }
+        setpixels(mask, maskData);
+        
+        if (semiTrans) {
+            if (xd->have_alpha) {
+                rect r = dr;
+                gsetcliprect(xd->bm, xd->clip);
+                gcopy(xd->bm2, xd->bm, r);
+                gmaskimage(xd->bm2, img, dr, sr, mask);
+                DRAW2(raster[fixedAlpha]);
+            } else {
+                WARN_SEMI_TRANS;
+            }
+        } else {
+            DRAW(gmaskimage(_d, img, dr, sr, mask));            
+        }
+        delimage(mask);
+    } else {
+        /* No fully transparent pixels */
+        if (semiTrans) {
+            if (xd->have_alpha) {
+                rect r = dr;
+                gsetcliprect(xd->bm, xd->clip);
+                gcopy(xd->bm2, xd->bm, r);
+                gdrawimage(xd->bm2, img, dr, sr);
+                DRAW2(raster[fixedAlpha]);
+            } else {
+                WARN_SEMI_TRANS;
+            }
+        } else {
+            /* OPAQUE image! */
+            DRAW(gdrawimage(_d, img, dr, sr));
+        }
+    }
+    
+    /* Tidy up */
+    delimage(img);
+    SH;
+    vmaxset(vmax);
+}
+
+static void GA_Raster(unsigned int *raster, int w, int h,
+                      double x, double y, 
+                      double width, double height,
+                      double rot, 
+                      Rboolean interpolate,
+                      const pGEcontext gc, pDevDesc dd)
+{
+    const void *vmax = vmaxget();
+    double angle = rot*M_PI/180;
+    unsigned int *image = raster;
+    int imageWidth = w;
+    int imageHeight = h;
+    int adjustXY = 0;
+
+    /* The alphablend code cannot handle negative width or height */
+    if (height < 0) {
+        height = -height;
+        adjustXY = 1;
+    }
+
+    if (interpolate) {
+        int newW = (int) width;
+        int newH = (int) height;
+        unsigned int *newRaster;
+        
+        newRaster = (unsigned int *) R_alloc(newW * newH, 
+                                             sizeof(unsigned int));
+        R_GE_rasterInterpolate(image, w, h,
+                               newRaster, newW, newH);
+        
+        image = newRaster;
+        imageWidth = newW;
+        imageHeight = newH;
+
+    } else {
+        /* Even if not interpolating, have to explicitly scale here
+         * before doing rotation, so that image to rotate
+         * is the right size AND so that can adjust (x, y) 
+         * correctly
+         */
+        int newW = (int) width;
+        int newH = (int) height;
+        unsigned int *newRaster;
+        
+        newRaster = (unsigned int *) R_alloc(newW * newH, 
+                                             sizeof(unsigned int));
+        R_GE_rasterScale(image, w, h,
+                         newRaster, newW, newH);
+        
+        image = newRaster;
+        imageWidth = newW;
+        imageHeight = newH;
+    }
+
+    if (adjustXY) {
+        /* convert (x, y) from bottom-left to top-right */
+        y = y - imageHeight*cos(angle);
+        if (angle != 0) {
+            x = x - imageHeight*sin(angle);
+        }        
+    }
+
+    if (angle != 0) {
+        int newW, newH;
+        double xoff, yoff;
+        unsigned int *resizedRaster, *rotatedRaster;
+
+        R_GE_rasterRotatedSize(imageWidth, imageHeight, angle, &newW, &newH);
+        R_GE_rasterRotatedOffset(imageWidth, imageHeight, angle, 0,
+                                 &xoff, &yoff);
+
+        resizedRaster = (unsigned int *) R_alloc(newW * newH, 
+                                             sizeof(unsigned int));
+        R_GE_rasterResizeForRotation(image, imageWidth, imageHeight, 
+                                     resizedRaster, newW, newH, gc);
+
+        rotatedRaster = (unsigned int *) R_alloc(newW * newH, 
+                                                 sizeof(unsigned int));
+        R_GE_rasterRotate(resizedRaster, newW, newH, angle, rotatedRaster, gc,
+                          /* Threshold alpha to 
+                           * transparent/opaque only
+                           */
+                          FALSE);
+
+        /* 
+         * Adjust (x, y) for resized and rotated image
+         */
+        x = x - (newW - imageWidth)/2 - xoff;
+        y = y - (newH - imageHeight)/2 + yoff;        
+
+        image = rotatedRaster;
+        imageWidth = newW;
+        imageHeight = newH;
+    }
+
+    doRaster(image, (int) x, (int) y, imageWidth, imageHeight, rot, dd);
+
+    vmaxset(vmax);
+}
+
+static SEXP GA_Cap(pDevDesc dd)
+{
+    gadesc *xd = (gadesc *) dd->deviceSpecific;
+    SEXP dim, raster = R_NilValue;
+    image img = NULL;
+    byte *screenData;
+
+    /* These in-place conversions are ok */
+    TRACEDEVGA("cap");
+
+    /* Only make sense for on-screen device ? */
+    if(xd->kind == SCREEN) {
+        img = bitmaptoimage(xd->gawin);
+        if (imagedepth(img) == 8) {
+            img = convert8to32(img);
+        }
+    }
+
+    if (img) {
+        int i;
+        int width = imagewidth(img);
+        int height = imageheight(img);
+        int size = width*height;
+        unsigned int *rint;
+
+        screenData = getpixels(img);
+
+        PROTECT(raster = allocVector(INTSXP, size));
+
+        /* Copy each byte of screen to an R matrix. 
+         * The ARGB32 needs to be converted to an R ABGR32 */
+        rint = (unsigned int *) INTEGER(raster);
+        for (i=0; i<size; i++) {
+            rint[i] = R_RGBA(screenData[i*4 + 2], 
+                             screenData[i*4 + 1],
+                             screenData[i*4 + 0], 
+                             255);
+        }
+        PROTECT(dim = allocVector(INTSXP, 2));
+        INTEGER(dim)[0] = height;
+        INTEGER(dim)[1] = width;
+        setAttrib(raster, R_DimSymbol, dim);
+
+        UNPROTECT(2);
+    }
+
+    /* Tidy up */
+    delimage(img);
+
+    return raster;
+}
 
 	/********************************************************/
 	/* device_Text should have the side-effect that the	*/
@@ -2883,6 +3180,8 @@ Rboolean GADeviceDriver(pDevDesc dd, const char *display, double width,
     dd->line = GA_Line;
     dd->polyline = GA_Polyline;
     dd->polygon = GA_Polygon;
+    dd->raster = GA_Raster;
+    dd->cap = GA_Cap;
     dd->locator = GA_Locator;
     dd->mode = GA_Mode;
     dd->metricInfo = GA_MetricInfo;
@@ -3243,7 +3542,7 @@ SEXP devga(SEXP args)
 {
     pGEDevDesc gdd;
     const char *display, *title;
-    char *vmax;
+    const void *vmax;
     double height, width, ps, xpinch, ypinch, gamma;
     int recording = 0, resize = 1, bg, canvas, xpos, ypos, buffered;
     Rboolean restoreConsole, clickToConfirm, fillOddEven;

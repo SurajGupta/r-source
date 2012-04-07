@@ -1,6 +1,6 @@
 /*
  *  R : A Computer Language for Statistical Data Analysis
- *  Copyright (C) 2000-2008  The R Development Core Team.
+ *  Copyright (C) 2000-2010  The R Development Core Team.
  *
  *  This program is free software; you can redistribute it and/or modify
  *  it under the terms of the GNU General Public License as published by
@@ -487,9 +487,11 @@ SEXP attribute_hidden do_systime(SEXP call, SEXP op, SEXP args, SEXP env)
 }
 
 
-#ifdef W64
+#ifdef WIN64
 extern void tzset(void);
-/* tzname is in the headers */
+/* tzname is in the headers as an import */
+#define tzname Rtzname
+extern char *Rtzname[2];
 #elif defined Win32
 extern void tzset(void);
 extern char *tzname[2];
@@ -734,8 +736,8 @@ SEXP attribute_hidden do_formatPOSIXlt(SEXP call, SEXP op, SEXP args, SEXP env)
 	error(_("invalid '%s' argument"), "usetz");
     tz = getAttrib(x, install("tzone"));
 
-    /* workaround for glibc & MacOS X bugs in strftime: they have
-       undocumented and non-POSIX/C99 time zone components
+    /* workaround for glibc/FreeBSD/MacOS X bugs in strftime: they have
+       non-POSIX/C99 time zone components
      */
     memset(&tm, 0, sizeof(tm));
 
@@ -768,10 +770,23 @@ SEXP attribute_hidden do_formatPOSIXlt(SEXP call, SEXP op, SEXP args, SEXP env)
 	    if(validate_tm(&tm) < 0) SET_STRING_ELT(ans, i, NA_STRING);
 	    else {
 		const char *q = CHAR(STRING_ELT(sformat, i%m));
-		char buf2[500];
-		strcpy(buf2,  q);
+		int n = strlen(q) + 50;
+		char *buf2 = alloca(n);
+#ifdef Win32
+		/* We want to override Windows' TZ names */
+		p = strstr(q, "%Z");
+		if (p) {
+		    memset(buf2, 0, n);
+		    strncpy(buf2, q, p - q);
+		    strcat(buf2, tm.tm_isdst > 0 ? tzname[1] : tzname[0]);
+		    strcat(buf2, p+2);
+		} else
+#endif		    
+		    strcpy(buf2, q);
+
 		p = strstr(q, "%OS");
 		if(p) {
+		    /* FIXME some of this should be outside the loop */
 		    int ns, nused = 4;
 		    char *p2 = strstr(buf2, "%OS");
 		    *p2 = '\0';
@@ -856,8 +871,8 @@ static void glibc_fix(struct tm *tm, int *invalid)
 SEXP attribute_hidden do_strptime(SEXP call, SEXP op, SEXP args, SEXP env)
 {
     SEXP x, sformat, ans, ansnames, klass, stz, tzone;
-    int i, n, m, N, invalid, isgmt = 0, settz = 0;
-    struct tm tm, tm2;
+    int i, n, m, N, invalid, isgmt = 0, settz = 0, offset;
+    struct tm tm, tm2, *ptm = &tm;
     const char *tz = NULL;
     char oldtz[20] = "";
     double psecs = 0.0;
@@ -898,9 +913,10 @@ SEXP attribute_hidden do_strptime(SEXP call, SEXP op, SEXP args, SEXP env)
 	tm.tm_year = tm.tm_mon = tm.tm_mday = tm.tm_yday =
 	    tm.tm_wday = NA_INTEGER;
 	tm.tm_isdst = -1;
+	offset = NA_INTEGER;
 	invalid = STRING_ELT(x, i%n) == NA_STRING ||
 	    !R_strptime(CHAR(STRING_ELT(x, i%n)),
-			CHAR(STRING_ELT(sformat, i%m)), &tm, &psecs);
+			CHAR(STRING_ELT(sformat, i%m)), &tm, &psecs, &offset);
 	if(!invalid) {
 	    /* Solaris sets missing fields to 0 */
 	    if(tm.tm_mday == 0) tm.tm_mday = NA_INTEGER;
@@ -908,16 +924,29 @@ SEXP attribute_hidden do_strptime(SEXP call, SEXP op, SEXP args, SEXP env)
 	       || tm.tm_year == NA_INTEGER)
 		glibc_fix(&tm, &invalid);
 	    tm.tm_isdst = -1;
-	    /* we do want to set wday, yday, isdst, but not to
-	       adjust structure at DST boundaries */
-	    memcpy(&tm2, &tm, sizeof(struct tm));
-	    mktime0(&tm2, 1-isgmt); /* set wday, yday, isdst */
-	    tm.tm_wday = tm2.tm_wday;
-	    tm.tm_yday = tm2.tm_yday;
-	    tm.tm_isdst = isgmt ? 0: tm2.tm_isdst;
+	    if (offset != NA_INTEGER) {
+		/* we know the offset, but not the timezone
+		   so all we can do is to convert to time_t, 
+		   adjust and convert back */
+		double t0;
+		memcpy(&tm2, &tm, sizeof(struct tm));
+		t0 = mktime0(&tm2, 0);
+		if (t0 != -1) {
+		    t0 -= offset; /* offset = -0800 is Seattle */
+		    ptm = localtime0(&t0, 1-isgmt, &tm2);
+		} else invalid = 1;
+	    } else {
+		/* we do want to set wday, yday, isdst, but not to
+		   adjust structure at DST boundaries */
+		memcpy(&tm2, &tm, sizeof(struct tm));
+		mktime0(&tm2, 1-isgmt); /* set wday, yday, isdst */
+		tm.tm_wday = tm2.tm_wday;
+		tm.tm_yday = tm2.tm_yday;
+		tm.tm_isdst = isgmt ? 0: tm2.tm_isdst;
+	    }
+	    invalid = validate_tm(&tm) != 0;
 	}
-	invalid = invalid || validate_tm(&tm) != 0;
-	makelt(&tm, ans, i, !invalid, psecs - floor(psecs));
+	makelt(ptm, ans, i, !invalid, psecs - floor(psecs));
     }
 
     setAttrib(ans, R_NamesSymbol, ansnames);

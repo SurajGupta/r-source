@@ -1,6 +1,6 @@
 % File src/library/base/man/strptime.Rd
 % Part of the R package, http://www.R-project.org
-% Copyright 1995-2009 R Core Development Team
+% Copyright 1995-2010 R Core Development Team
 % Distributed under GPL 2 or later
 
 \name{strptime}
@@ -9,8 +9,6 @@
 \alias{strftime}
 \alias{strptime}
 \alias{as.character.POSIXt}
-\alias{ISOdatetime}
-\alias{ISOdate}
 \title{Date-time Conversion Functions to and from Character}
 \description{
   Functions to convert between character representations and objects of
@@ -25,16 +23,14 @@
 
 strftime(x, format="", tz = "", usetz = FALSE, \dots)
 strptime(x, format, tz = "")
-
-ISOdatetime(year, month, day, hour, min, sec, tz = "")
-ISOdate(year, month, day, hour = 12, min = 0, sec = 0, tz = "GMT")
 }
 \arguments{
   \item{x}{An object to be converted.}
   \item{tz}{A timezone specification to be used for the conversion.
     System-specific (see \code{\link{as.POSIXlt}}), but \code{""} is the
     current time zone, and \code{"GMT"} is UTC.}
-  \item{format}{A character string.  The default is
+  \item{format}{A character string.  The default for the \code{format}
+    methods is
     \code{"\%Y-\%m-\%d \%H:\%M:\%S"} if any component has a time
     component which is not midnight, and \code{"\%Y-\%m-\%d"}
     otherwise.  If \code{\link{options}("digits.secs")} is set, up to
@@ -42,10 +38,7 @@ ISOdate(year, month, day, hour = 12, min = 0, sec = 0, tz = "GMT")
   \item{\dots}{Further arguments to be passed from or to other methods.}
   \item{usetz}{logical.  Should the timezone be appended to the output?
     This is used in printing times, and as a workaround for problems with
-    using \code{"\%Z"} on most Linux systems.}
-  \item{year, month, day}{numerical values to specify a day.}
-  \item{hour, min, sec}{numerical values for a time within a day.
-    Fractional seconds are allowed.}
+    using \code{"\%Z"} on some Linux systems.}
 }
 \details{
   The \code{format} and \code{as.character} methods and \code{strftime}
@@ -73,7 +66,7 @@ ISOdate(year, month, day, hour = 12, min = 0, sec = 0, tz = "GMT")
   \code{LC_TIME} locale category).
 
   The details of the formats are system-specific, but the following are
-  defined by the ISO C / POSIX standard for \code{strftime} and are
+  defined by the ISO C99 / POSIX standard for \code{strftime} and are
   likely to be widely available.  A \emph{conversion specification} is
   introduced by \code{\%}, usually followed by a single letter or
   \code{O} or \code{E} and then a single letter.
@@ -89,7 +82,8 @@ ISOdate(year, month, day, hour = 12, min = 0, sec = 0, tz = "GMT")
       locale. (Also matches full name on input.)}
     \item{\code{\%B}}{Full month name in the current locale.  (Also
       matches abbreviated name on input.)}
-    \item{\code{\%c}}{Date and time, locale-specific.}
+    \item{\code{\%c}}{Date and time.   Locale-specific on output,
+      \code{"\%a \%b \%e \%H:\%M:\%S \%Y"} on input.}
     \item{\code{\%d}}{Day of the month as decimal number (01--31).}
     \item{\code{\%H}}{Hours as decimal number (00--23).}
     \item{\code{\%I}}{Hours as decimal number (01--12).}
@@ -100,8 +94,8 @@ ISOdate(year, month, day, hour = 12, min = 0, sec = 0, tz = "GMT")
       conjunction with \code{\%I} and \bold{not} with \code{\%H}.  An
       empty string in some locales.}
     \item{\code{\%S}}{Second as decimal number (00--61), allowing for
-      up to two leap-seconds (but POSIX-compliant OSes will ignore leap
-      seconds).}
+      up to two leap-seconds (but POSIX-compliant implementations
+      will ignore leap seconds).}
     % see http://en.wikipedia.org/wiki/Week_number#Week_number
     \item{\code{\%U}}{Week of the year as decimal number (00--53) using
       Sunday as the first day 1 of the week (and typically with the
@@ -110,54 +104,40 @@ ISOdate(year, month, day, hour = 12, min = 0, sec = 0, tz = "GMT")
     \item{\code{\%W}}{Week of the year as decimal number (00--53) using
       Monday as the first day of week (and typically with the
       first Monday of the year as day 1 of week 1). The UK convention.}
-    \item{\code{\%x}}{Date, locale-specific.}
-    \item{\code{\%X}}{Time, locale-specific.}
-    \item{\code{\%y}}{Year without century (00--99). If you use this on
-      input, which century you get is system-specific.  So don't!  Most often
-      values 00 to 68 are prefixed by 20 and 69 to 99 by 19 -- that is
-      the behaviour specified by the 2001 POSIX standard, but it does
-      also say \sQuote{it is expected that in a future version of IEEE
-	Std 1003.1-2001 the default century inferred from a 2-digit year will
-	change}. 
+    \item{\code{\%x}}{Date.  Locale-specific on output,
+      \code{"\%y/\%m/\%d"} on input.}
+    \item{\code{\%X}}{Time.  Locale-specific on output,
+      \code{"\%H:\%M:\%S"} on input.}
+    \item{\code{\%y}}{Year without century (00--99). Values 00 to 68 are
+      prefixed by 20 and 69 to 99 by 19 -- that is the behaviour specified
+      by the 2004 POSIX standard, but it does also say \sQuote{it is
+	expected that in a future version of IEEE Std 1003.1-2001 the default
+	century inferred from a 2-digit year will change}.
     }
     \item{\code{\%Y}}{Year with century.}
-#ifdef unix
-    \item{\code{\%z}}{(output only.) Offset from Greenwich, so
-      \code{-0800} is 8 hours west of Greenwich.}
+    \item{\code{\%z}}{Signed offset in hours and minutes from UTC, so
+      \code{-0800} is 8 hours behind UTC.}
     \item{\code{\%Z}}{(output only.) Time zone as a character
       string (empty if not available).}
-#endif
-#ifdef windows
-    \item{\code{\%z}, \code{\%Z}}{(output only.)  Time zone as a character
-      string (empty if not available).  For \code{\%z} this differs
-      from POSIX.  Also, this is done by a Windows C function and so
-      will use Windows' idea of the timezone names, not that used by
-      other date-time functions.}
-#endif
   }
   Where leading zeros are shown they will be used on output but are
   optional on input.
-#ifdef windows
-  Windows allows the modifier \code{#} in conversion specifications for
-  output: \code{\%#c} and \code{\%#x} use longer forms, and for
-  \code{dHIjmMSUwWyY} leading zeros are suppressed.
-#endif
 
   Also defined in the current standards but less widely implemented
   (e.g. not for output on Windows) are
   \describe{
     \item{\code{\%C}}{Century (00--99): the integer part of the year
       divided by 100.}
-    \item{\code{\%D}}{Locale-specific date format such as
-      \code{\%m/\%d/\%y}: ISO C99 says it should be that exact format.}
+    \item{\code{\%D}}{Date format such as \code{\%m/\%d/\%y}: ISO C99
+      says it should be that exact format.}
     \item{\code{\%e}}{Day of the month as decimal number (1--31), with
       a leading space for a single-digit number.}
     \item{\code{\%F}}{Equivalent to \%Y-\%m-\%d (the ISO 8601 date
       format).}
     \item{\code{\%g}}{The last two digits of the week-based year
-      (see \code{\%V}).  (Typically accepted but ignored on input.)}
+      (see \code{\%V}).  (Accepted but ignored on input.)}
     \item{\code{\%G}}{The week-based year (see \code{\%V}) as a decimal
-      number.  (Typically accepted but ignored on input.)}
+      number.  (Accepted but ignored on input.)}
     \item{\code{\%h}}{Equivalent to \code{\%b}.}
     \item{\code{\%k}}{The 24-hour clock time with single digits preceded
       by a blank.}
@@ -174,13 +154,14 @@ ISOdate(year, month, day, hour = 12, min = 0, sec = 0, tz = "GMT")
       If the week (starting on Monday) containing 1 January has four or
       more days in the new year, then it is considered week 1.  Otherwise, it
       is the last week of the previous year, and the next week is week
-      1.  (Typically accepted but ignored on input.)}
+      1.  (Accepted but ignored on input.)}
   }
-  For output (and possibly input) there are also \code{\%O[dHImMUVwWy]}
-  which may emit numbers in an alternative locale-dependent format
-  (e.g. roman numerals), and \code{\%E[cCyYxX]} which can use an
-  alternative \sQuote{era} (e.g. a different religious calendar).  Which
-  of these are supported is OS-dependent.
+  For output there are also \code{\%O[dHImMUVwWy]} which may emit
+  numbers in an alternative locale-dependent format (e.g. roman
+  numerals), and \code{\%E[cCyYxX]} which can use an alternative
+  \sQuote{era} (e.g. a different religious calendar).  Which of these
+  are supported is OS-dependent.  These are accepted for input, but with
+  the standard interpretation.
 
   Specific to \R is \code{\%OSn}, which for output gives the
   seconds to \code{0 <= n <= 6} decimal places (and if \code{\%OS} is
@@ -198,11 +179,6 @@ ISOdate(year, month, day, hour = 12, min = 0, sec = 0, tz = "GMT")
   optionally followed by \code{#} and then by a single letter.  Any
   conversion specification which is unimplemented is ignored.
 #endif
-
-  \code{ISOdatetime} and \code{ISOdate} are convenience wrappers for
-  \code{strptime}, that differ only in their defaults and that
-  \code{ISOdate} sets a timezone.  (For dates without times it would be
-  better to use the \code{"\link{Date}"} class.)
 }
 \value{
   The \code{format} methods and \code{strftime} return character vectors
@@ -211,25 +187,19 @@ ISOdate(year, month, day, hour = 12, min = 0, sec = 0, tz = "GMT")
   \code{strptime} turns character representations into an object of
   class \code{"\link{POSIXlt}"}.  The timezone is used to set the
   \code{isdst} component and to set the \code{"tzone"} attribute if
-  \code{tz != ""}.
-
-  \code{ISOdatetime} and \code{ISOdate} return an object of class
-  \code{"\link{POSIXct}"}.
+  \code{tz != ""}.  If the specified time is invalid (in the specified
+  timezone) all the components of the result are \code{NA}.
 }
 \note{
   The default formats follow the rules of the ISO 8601 international
   standard which expresses a day as \code{"2001-02-28"} and a time as
   \code{"14:01:02"} using leading zeroes as here.  The ISO form uses no
   space to separate dates and times.
-
-  If the date string does not specify the date completely, the returned
-  answer may be system-specific.  The most common behaviour is to assume
-  that unspecified seconds, minutes or hours are zero, and a missing
-  year, month or day is the current one.  If it specifies a date
-  incorrectly, reliable implementations will give an error and the date
-  is reported as \code{NA}.  Unfortunately some common implementations
-  (such as \samp{glibc}) are unreliable and guess at the intended meaning.
-
+  
+  For \code{strptime} the input string need not specify the date
+  completely: it is assumed that unspecified seconds, minutes or hours
+  are zero, and an unspecified year, month or day is the current one.
+  
   If the timezone specified is invalid on your system, what happens is
   system-specific but it will probably be ignored.
 
@@ -241,7 +211,7 @@ ISOdate(year, month, day, hour = 12, min = 0, sec = 0, tz = "GMT")
   those cases is OS-specific.
 }
 \references{
-  International Organization for Standardization (2004, 1988, 1997,
+  International Organization for Standardization (2004, 2000, 1988, 1997,
   \dots)
   \emph{ISO 8601. Data elements and interchange formats --
     Information interchange -- Representation of dates and times.}
@@ -302,6 +272,9 @@ options(op)
 (x <- strptime(c("2006-01-08 10:07:52", "2006-08-07 19:33:02"),
                "\%Y-\%m-\%d \%H:\%M:\%S", tz="EST5EDT"))
 attr(x, "tzone")
+
+## An RFC 822 header (Eastern Canada, during DST)
+strptime("Tue, 23 Mar 2010 14:36:38 -0400",  "\%a, \%d \%b \%Y \%H:\%M:\%S \%z")
 }
 \keyword{utilities}
 \keyword{chron}

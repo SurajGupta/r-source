@@ -5,8 +5,8 @@
 
 \name{power.anova.test}
 \alias{power.anova.test}
-\encoding{latin1}
-\title{Power calculations for balanced one-way analysis of variance tests}
+\encoding{UTF-8}
+\title{Power Calculations for Balanced One-Way Analysis of Variance Tests}
 \usage{
 power.anova.test(groups = NULL, n = NULL,
                  between.var = NULL, within.var = NULL,
@@ -37,7 +37,7 @@ power.anova.test(groups = NULL, n = NULL,
   \code{note} elements. 
 }
 
-\author{Claus \enc{Ekstrøm}{Ekstroem}}
+\author{Claus \enc{EkstrÃ¸m}{Ekstroem}}
 \note{
   \code{uniroot} is used to solve power equation for unknowns, so
   you may see errors from it, notably about inability to bracket the

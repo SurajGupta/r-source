@@ -72,8 +72,8 @@
     \item the \env{DISPLAY} environment variable is set.
     \item appends \file{/usr/local/bin} to the \env{PATH} environment variable.
     \item the default graphics device is set to \code{quartz}.
-    \item selects native (rather than Tk) widget for
-    \code{\link{menu}(graphics = TRUE)}.
+    \item selects native (rather than Tk) widgets for the \code{graphics
+      = TRUE} options of \code{\link{menu}} and \code{\link{select.list}}.
     \item HTML help is displayed in the internal browser.
     \item The spreadsheet-like data editor/viewer uses a Quartz version
     rather than the X11 one.

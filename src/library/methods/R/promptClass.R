@@ -18,41 +18,33 @@ promptClass <-
 function (clName, filename = NULL, type = "class",
 	  keywords = "classes", where = topenv(parent.frame()))
 {
-    classesInSig <- function(g, where) {
-    ## given a generic g, obtain list of all classes
-    ## named among its signatures
-	mlist <- getMethods(g, where) # TODO: change this to findMethods()
-	if(is.null(mlist))
-	    return(NULL)
-	tmp <- listFromMlist(mlist)
-	if ((lt <- length(tmp[[1L]])) == 0L)
-	    NULL
-	else if (lt == 1)
-	    unlist(tmp[[1L]])
-	else { ## lt >= 2
-	    lapply(tmp[[1L]], unlist)
-	}
+    classInSig <- function(g, where, cl) {
+        ## given a generic g, is class cl in one of the method
+        ## signatures for the class?
+	cl %in% unique(unlist(findMethods(g, where)@signatures))
     }
     genWithClass <- function(cl, where) {
     ## given a class cl
     ## obtain list of all generics with cl in
     ## one of its signatures
 	allgen <- getGenerics(where = where)
-	o <- sapply(allgen, classesInSig, where = where, simplify = FALSE)
-	genl <- NULL
-	nmok <- names(o)
-	for (i in seq_along(o)) {
-	    if (!all(is.na(match(unlist(o[[i]]), cl))))
-		genl <- c(genl, nmok[i])
-	}
-	genl
+	ok <- sapply(allgen, classInSig, cl = cl, where = where)
+        allgen[ok]
     }
 
     sigsList <- function (g, where)
-    ## given a generic g, obtain list with one element per signature
+      ## given a generic g, obtain list with one element per signature,
+      ## with argument names inserted
     {
-	tmp <- listFromMlist(getMethods(g, where)) # TODO: change this to findMethods()
-	if (length(tmp[[1L]])) tmp[[1L]] # else NULL
+        methods <- findMethods(g, where)
+	value <- methods@signatures
+        args <- methods@arguments
+        if(length(value)) {
+            ## name the individual signature elements for output
+            length(args) <- length(value[[1]]) # all sigs are same length
+            value <- lapply(value, function(x){names(x) <- args; x})
+        }
+        value
     }
     slotClassWithSource <- function(clname) {
 	clDef <- getClassDef(clname)
@@ -72,7 +64,8 @@ function (clName, filename = NULL, type = "class",
     }
     paste0 <- function(...) paste(..., sep = "")
     pastePar <- function(x) {
-	xn <- names(x); x <- as.character(x)
+        xn <- names(x)
+	x <- as.character(x)
 	xn <- if(length(xn) == length(x)) paste(xn, "= ") else ""
 	paste("(", paste(xn, "\"", x, "\"", sep = "", collapse = ", "),
 	")", sep = "")
@@ -110,9 +103,10 @@ function (clName, filename = NULL, type = "class",
     .name <- paste0("\\name{", fullName, "}")
     .type <- paste0("\\docType{", type, "}")
     .alias <- paste0("\\alias{", fullName, "}")
-    .title <- paste0("\\title{Class \"", clName, "\" ~~~ }")
-    .desc <- paste0("\\description{", "	 ~~ A concise (1-5 lines) description of what the class is.  ~~",
-	"}")
+    .title <- paste0("\\title{Class \"", clName, "\"}")
+    .desc <- paste0("\\description{",
+                    "\n%%  ~~ A concise (1-5 lines) description of what the class is. ~~",
+                    "\n}")
     slotclasses <- getSlots(clDef)
     slotnames <- names(slotclasses)
     slotclasses <- as.character(slotclasses)
@@ -127,10 +121,13 @@ function (clName, filename = NULL, type = "class",
 	argNames <- formalArgs(initMethod)
 	## but for new() the first argument is the class name
 	argNames[[1L]] <- clNameQ
-	.usage <- c(paste0(.usage,"{"),
-		    paste0("Objects can be created by calls of the form \\code{",
-                           .makeCallString(initMethod, "new", argNames), "}."),
-		    "	 ~~ describe objects here ~~ ", "}")
+	.usage <-
+            c(paste0(.usage,"{"),
+              paste0("Objects can be created by calls of the form \\code{",
+                     .makeCallString(initMethod, "new", argNames),
+                     "}."),
+              "%%  ~~ describe objects here ~~ ",
+              "}")
     }
     .slots <- if (nslots > 0) {
 	slotclasses <- slotClassWithSource(clName)
@@ -205,21 +202,21 @@ function (clName, filename = NULL, type = "class",
 	     "section{Extends}" = .extends,
 	     "section{Methods}" =
 	     c(.meths.head, .meths.body, .meths.tail),
-	     references = paste("\\references{ ~put references to the",
-	     "literature/web site here ~ }"),
-	     author = "\\author{ ~~who you are~~ }",
+	     references = paste("\\references{\n%%  ~~put references to the",
+	     "literature/web site here~~\n}"),
+	     author = "\\author{\n%%  ~~who you are~~\n}",
 	     note =
-	     c("\\note{ ~~further notes~~ }",
+	     c("\\note{\n%%  ~~further notes~~\n}",
 	       "",
-	       paste(" ~Make other sections like Warning with",
+	       paste("%% ~Make other sections like Warning with",
 		     "\\section{Warning }{....} ~"),
 	       ""),
 	     seealso =
 	     c("\\seealso{",
-	       paste("	~~objects to See Also as",
+	       paste("%%  ~~objects to See Also as",
 		     "\\code{\\link{~~fun~~}}, ~~~"),
-	       paste("	or \\code{\\linkS4class{CLASSNAME}}",
-		     "for links to other classes"),
+	       paste("%%  ~~or \\code{\\linkS4class{CLASSNAME}}",
+		     "for links to other classes ~~~"),
 	       "}"),
 	     examples = c("\\examples{",
 	     paste0("showClass(", clNameQ, ")"),

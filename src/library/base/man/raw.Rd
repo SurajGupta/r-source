@@ -1,6 +1,6 @@
 % File src/library/base/man/raw.Rd
 % Part of the R package, http://www.R-project.org
-% Copyright 2004-2009 R Core Development Team
+% Copyright 2004-2010 R Core Development Team
 % Distributed under GPL 2 or later
 
 \name{raw}
@@ -48,9 +48,7 @@ is.raw(x)
   values which are outside the range \code{[0 \dots 255]} or are
   \code{NA} are set to \code{0} (the \code{nul} byte).
   
-  \code{as.raw} and \code{is.raw} are \link{primitive}, so
-  positional matching is used and any names of supplied arguments are
-  ignored.  This may not be true of methods for \code{as.raw}.  
+  \code{as.raw} and \code{is.raw} are \link{primitive} functions.
 }
 \seealso{
   \code{\link{charToRaw}}, \code{\link{rawShift}}, etc.

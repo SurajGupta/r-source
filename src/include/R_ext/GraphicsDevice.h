@@ -1,6 +1,6 @@
 /*
  *  R : A Computer Language for Statistical Data Analysis
- *  Copyright (C) 2001-8 The R Development Core Team.
+ *  Copyright (C) 2001-10 The R Development Core Team.
  *
  *  This program is free software; you can redistribute it and/or modify
  *  it under the terms of the GNU Lesser General Public License as published by
@@ -332,7 +332,7 @@ struct _DevDesc {
     /*
      * device_Mode is called whenever the graphics engine
      * starts drawing (mode=1) or stops drawing (mode=0)
-     * GMode (in graphics.c) also ways that 
+     * GMode (in graphics.c) also says that 
      * mode = 2 (graphical input on) exists.
      * The device is not required to do anything
      * An example is ...
@@ -423,6 +423,43 @@ struct _DevDesc {
 		 const pGEcontext gc, pDevDesc dd);
 #else
     void (*rect)();
+#endif
+    /* 
+     * device_Raster should draw a raster image justified 
+     * at the given location,
+     * size, and rotation (not all devices may be able to rotate?)
+     * 
+     * 'raster' gives the image data BY ROW, with every four bytes
+     * giving one R colour (ABGR).
+     *
+     * 'x and 'y' give the bottom-left corner.
+     *
+     * 'rot' is in degrees (as per device_Text), with positive
+     * rotation anticlockwise from the positive x-axis.
+     */
+#if R_USE_PROTOTYPES
+    void (*raster)(unsigned int *raster, int w, int h,
+                   double x, double y, 
+                   double width, double height,
+                   double rot, 
+                   Rboolean interpolate,
+                   const pGEcontext gc, pDevDesc dd);
+#else
+    void (*raster)();
+#endif
+    /* 
+     * device_Cap should return an integer matrix (R colors)
+     * representing the current contents of the device display.
+     * 
+     * The result is expected to be ROW FIRST.
+     *
+     * This will only make sense for raster devices and can 
+     * probably only be implemented for screen devices.
+     */
+#if R_USE_PROTOTYPES
+    SEXP (*cap)(pDevDesc dd);
+#else
+    SEXP (*cap)();
 #endif
     /*
      * device_Size is called whenever the device is

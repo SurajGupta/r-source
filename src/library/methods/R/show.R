@@ -72,6 +72,22 @@ showDefault <- function(object, oldMethods = TRUE)
     invisible() # documented return for show().
 }
 
+.extraSlotsDone <- new.env() # any unique reference value would do
+
+showExtraSlots <- function(object, ignore) {
+    if(is(ignore, "classRepresentation"))
+      ignore <- slotNames(ignore)
+    else if(!is(ignore, "character"))
+      stop(gettextf("invalid ignore= argument; should be a class definition or a character vector, got an object of class %s", dQuote(class(ignore))),
+           domain = NA)
+    slots <- slotNames(class(object))
+    for(s in slots[is.na(match(slots, ignore))]) {
+        cat("Slot ",s, ":\n", sep="")
+        show(slot(object, s))
+    }
+    .extraSlotsDone # a signal not to call this function (again)
+}
+
 ## temporary definition of show, to become the default method
 ## when .InitShowMethods is called
 show <- function(object)
@@ -152,7 +168,7 @@ classLabel <- function(Class) {
             className <- Class@className
             packageName <- Class@package
         }
-        else stop(gettextf("invalid call to 'classLabel': expected a name or a class definition, got an object of class \"%s\"", classLabel(class(Class))), domain = NA)
+        else stop(gettextf("invalid call to 'classLabel': expected a name or a class definition, got an object of class %s", classLabel(class(Class))), domain = NA)
     }
 ### TODO:  implement a test for the class NOT directly visible OR multiple versions
 ### and include the from... phrase in this case
@@ -164,5 +180,5 @@ classLabel <- function(Class) {
 #         className <- paste("\"", className, "\"", fromString, sep="")
 #     }
 #     else
-    dQuote(className)
+    .dQ(className)
 }

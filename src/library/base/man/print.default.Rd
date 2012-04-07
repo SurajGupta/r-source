@@ -29,7 +29,7 @@
   \item{na.print}{a character string which is used to indicate
     \code{\link{NA}} values in printed output, or \code{NULL}
     (see \sQuote{Details}).}
-  \item{print.gap}{a non-negative integer \eqn{\le 1024}{<= 1024},
+  \item{print.gap}{a non-negative integer \eqn{\le 1024},
     or \code{NULL} (meaning 1), giving the spacing between adjacent
     columns in printed vectors, matrices and arrays.}
   \item{right}{logical, indicating whether or not strings should be
@@ -83,11 +83,9 @@
   code: for example the UK currency pound sign in the C locale (if
   implemented correctly) is printed as \samp{\\243}.  Which characters
   are non-printable depends on the locale.
-#ifdef windows
   (Because some versions of Windows get this wrong, all bytes with the
   upper bit set are regarded as printable on Windows in a single-byte
   locale.)
-#endif
 }
 
 #ifdef unix

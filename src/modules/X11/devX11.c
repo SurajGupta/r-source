@@ -159,6 +159,11 @@ static void X11_Polyline(int n, double *x, double *y,
 			 const pGEcontext gc, pDevDesc dd);
 static void X11_Rect(double x0, double y0, double x1, double y1,
 		     const pGEcontext gc, pDevDesc dd);
+static void X11_Raster(unsigned int *raster, int w, int h,
+                       double x, double y, double width, double height,
+                       double rot, Rboolean interpolate,
+                       const pGEcontext gc, pDevDesc dd);
+static SEXP X11_Cap(pDevDesc dd);
 static void X11_Size(double *left, double *right,
 		     double *bottom, double *top,
 		     pDevDesc dd);
@@ -1954,6 +1959,151 @@ static void X11_Rect(double x0, double y0, double x1, double y1,
     }
 }
 
+static void X11_Raster(unsigned int *raster, int w, int h,
+                      double x, double y, 
+                      double width, double height,
+                      double rot, 
+                      Rboolean interpolate,
+                      const pGEcontext gc, pDevDesc dd)
+{
+    int i, j, pixel;
+    int imageWidth = (int) width;
+    int imageHeight = (int) height;
+    double angle = rot*M_PI/180;
+    pX11Desc xd = (pX11Desc) dd->deviceSpecific;
+    XImage *image;
+    unsigned int *rasterImage;
+    const void *vmax = vmaxget();
+   
+    if (imageHeight < 0) {
+        imageHeight = -imageHeight;
+        /* convert (x, y) from bottom-left to top-right */
+        y = y - imageHeight*cos(angle);
+        if (angle != 0) {
+            x = x - imageHeight*sin(angle);
+        }
+    }
+
+    rasterImage = (unsigned int *) R_alloc(imageWidth * imageHeight,
+                                           sizeof(unsigned int));
+    if (interpolate) {
+        R_GE_rasterInterpolate(raster, w, h, 
+                               rasterImage, imageWidth, imageHeight);
+    } else {
+        R_GE_rasterScale(raster, w, h, 
+                         rasterImage, imageWidth, imageHeight);
+    }
+    
+    if (rot != 0) {
+        
+        int newW, newH;
+        double xoff, yoff;
+        unsigned int *resizedRaster, *rotatedRaster;
+
+        R_GE_rasterRotatedSize(imageWidth, imageHeight, angle, &newW, &newH);
+        R_GE_rasterRotatedOffset(imageWidth, imageHeight, angle, 0,
+                                 &xoff, &yoff);
+
+        resizedRaster = (unsigned int *) R_alloc(newW * newH, 
+                                             sizeof(unsigned int));
+        R_GE_rasterResizeForRotation(rasterImage, imageWidth, imageHeight, 
+                                     resizedRaster, newW, newH, gc);
+
+        rotatedRaster = (unsigned int *) R_alloc(newW * newH, 
+                                                 sizeof(unsigned int));
+        R_GE_rasterRotate(resizedRaster, newW, newH, angle, rotatedRaster, gc,
+                          FALSE);
+
+        /* 
+         * Adjust (x, y) for resized and rotated image
+         */
+        x = x - (newW - imageWidth)/2 - xoff;
+        y = y - (newH - imageHeight)/2 + yoff;        
+
+        rasterImage = rotatedRaster;
+        imageWidth = newW;
+        imageHeight = newH;
+    }
+
+    image = XCreateImage(display, visual, depth, 
+                         ZPixmap,
+                         0, /* offset */
+                         /* This is just provides (at least enough)
+                          * allocated memory for the image data;  
+                          * each pixel is set separately below
+                          */
+                         (char *) rasterImage,
+                         imageWidth, imageHeight,
+                         depth, /* bitmap_pad */
+                         0); /* bytes_per_line: 0 means auto-calculate*/
+
+    if (XInitImage(image) == 0)
+        error(_("Unable to create XImage"));
+
+    for (i=0; i < imageHeight ;i++) {
+        for (j=0; j < imageWidth; j++) {
+            pixel = i * imageWidth + j;
+            XPutPixel(image, j, i, 
+                      GetX11Pixel(R_RED(rasterImage[pixel]), 
+                                  R_GREEN(rasterImage[pixel]), 
+                                  R_BLUE(rasterImage[pixel])));
+        }
+    }
+
+    XPutImage(display, xd->window, xd->wgc, 
+              image, 0, 0,
+              (int) x, (int) y, imageWidth, imageHeight);
+
+    /* XFree() rather than XDestroyImage() because the latter
+     * tries to free the image 'data' as well
+     */
+    XFree(image);
+
+    vmaxset(vmax);
+}
+
+static SEXP X11_Cap(pDevDesc dd)
+{
+    pX11Desc xd = (pX11Desc) dd->deviceSpecific;
+    XImage *image = XGetImage(display, xd->window, 0, 0,
+                              xd->windowWidth, xd->windowHeight, 
+                              AllPlanes, ZPixmap);
+    SEXP raster = R_NilValue;
+
+    if (image) {
+        int i, j;
+        SEXP dim;
+        int size = xd->windowWidth * xd->windowHeight;
+        const void *vmax = vmaxget();
+        unsigned int *rint;
+
+        PROTECT(raster = allocVector(INTSXP, size));
+        
+        /* Copy each byte of screen to an R matrix. 
+         * The ARGB32 needs to be converted to an R ABGR32 */
+        rint = (unsigned int *) INTEGER(raster);
+        for (i=0; i<xd->windowHeight; i++) {
+            for (j=0; j<xd->windowWidth; j++) {
+                /* 
+                 * Convert each pixel in image to an R colour
+                 */
+                rint[i*xd->windowWidth + j] = bitgp((void *) image, i, j);
+            }
+        }
+        PROTECT(dim = allocVector(INTSXP, 2));
+        INTEGER(dim)[0] = xd->windowHeight;
+        INTEGER(dim)[1] = xd->windowWidth;
+        setAttrib(raster, R_DimSymbol, dim);
+    
+        UNPROTECT(2);
+
+        XDestroyImage(image);
+        vmaxset(vmax);
+    }
+
+    return raster;
+}
+
 static void X11_Circle(double x, double y, double r,
 		       const pGEcontext gc, pDevDesc dd)
 {
@@ -2003,7 +2153,7 @@ static void X11_Line(double x1, double y1, double x2, double y2,
 static void X11_Polyline(int n, double *x, double *y,
 			 const pGEcontext gc, pDevDesc dd)
 {
-    char *vmax = vmaxget();
+    const void *vmax = vmaxget();
     XPoint *points;
     int i, j;
     pX11Desc xd = (pX11Desc) dd->deviceSpecific;
@@ -2034,7 +2184,7 @@ static void X11_Polyline(int n, double *x, double *y,
 static void X11_Polygon(int n, double *x, double *y,
 			const pGEcontext gc, pDevDesc dd)
 {
-    char *vmax = vmaxget();
+    const void *vmax = vmaxget();
     XPoint *points;
     int i;
     pX11Desc xd = (pX11Desc) dd->deviceSpecific;
@@ -2249,6 +2399,8 @@ Rf_setX11DeviceData(pDevDesc dd, double gamma_fac, pX11Desc xd)
 	dd->line = Cairo_Line;
 	dd->polyline = Cairo_Polyline;
 	dd->polygon = Cairo_Polygon;
+        dd->raster = Cairo_Raster;
+        dd->cap = Cairo_Cap;
 	dd->hasTextUTF8 = TRUE;
 	dd->wantSymbolUTF8 = TRUE;
 #ifdef HAVE_PANGOCAIRO
@@ -2268,6 +2420,8 @@ Rf_setX11DeviceData(pDevDesc dd, double gamma_fac, pX11Desc xd)
 	dd->strWidth = X11_StrWidth;
 	dd->text = X11_Text;
 	dd->rect = X11_Rect;
+        dd->raster     = X11_Raster;
+        dd->cap        = X11_Cap;
 	dd->circle = X11_Circle;
 	dd->line = X11_Line;
 	dd->polyline = X11_Polyline;
@@ -2522,7 +2676,7 @@ Rf_addX11Device(const char *display, double width, double height, double ps,
 static SEXP in_do_X11(SEXP call, SEXP op, SEXP args, SEXP env)
 {
     const char *display, *cname, *devname, *title;
-    char *vmax;
+    const void *vmax;
     double height, width, ps, gamma;
     int colormodel, maxcubesize, bgcolor, canvascolor, res, xpos, ypos,
 	useCairo, antialias;
@@ -2962,6 +3116,7 @@ BMDeviceDriver(pDevDesc dd, int kind, const char * filename,
     dd->line = Cairo_Line;
     dd->polyline = Cairo_Polyline;
     dd->polygon = Cairo_Polygon;
+    dd->raster = Cairo_Raster;
     dd->locator = null_Locator;
     dd->mode = null_Mode;
 #ifdef HAVE_PANGOCAIRO

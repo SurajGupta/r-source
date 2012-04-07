@@ -1,6 +1,6 @@
 % File src/library/stats/man/predict.lm.Rd
 % Part of the R package, http://www.R-project.org
-% Copyright 1995-2007 R Core Development Team
+% Copyright 1995-2010 R Core Development Team
 % Distributed under GPL 2 or later
 
 \name{predict.lm}
@@ -67,7 +67,7 @@
   \code{newdata} (or by default, the data used for the fit) with error
   variance(s) \code{pred.var}. This can be a multiple of \code{res.var},
   the estimated
-  value of \eqn{\sigma^2}{sigma^2}: the default is to assume that future
+  value of \eqn{\sigma^2}: the default is to assume that future
   observations have the same error variance as those
   used for fitting. If \code{weights} is supplied, the inverse of this
   is used as a scale factor. For a weighted fit, if the prediction
@@ -104,8 +104,9 @@
   not obtained from the fit. 
 }
 \seealso{
-  The model fitting function \code{\link{lm}}, \code{\link{predict}},
-  \code{\link{SafePrediction}}
+  The model fitting function \code{\link{lm}}, \code{\link{predict}}.
+  
+  \link{SafePrediction} for prediction from polynomial and spline fits.
 }
 \examples{
 require(graphics)

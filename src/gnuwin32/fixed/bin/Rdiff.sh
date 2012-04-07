@@ -1,9 +1,9 @@
 ##
 ## Rdiff -- diff 'without R version'
 
-revision='$Rev: 47505 $'
+revision='$Rev: 51455 $'
 version=`set - ${revision}; echo ${2}`
-version="R output diff r${version}
+version="R output diff: ${R_VERSION} (r${version})
 
 Copyright (C) 2000-2008 The R Core Development Team.
 This is free software; see the GNU General Public License version 2

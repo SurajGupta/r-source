@@ -12,9 +12,8 @@
 \description{
   Operators for the \code{"\link{Date}"} class.
 
-  There is a method for the \code{\link[=S3groupGeneric]{Ops}} group
-  generic handing the comparison operators and specific methods for
-  \code{+} and \code{-}.
+  There is an \code{\link[=S3groupGeneric]{Ops}} method and specific
+  methods for \code{+} and \code{-} for the \code{\link{Date}} class.
 }
 \usage{
 \special{date + x}
@@ -24,8 +23,8 @@
 }
 \arguments{
   \item{date}{date objects}
-  \item{date1, date2}{date objects.  One can be a character
-    vector which will be converted by \code{\link{as.Date}}.}
+  \item{date1, date2}{date objects or character vectors.  (Character
+    vectors are converted by \code{\link{as.Date}}.)}
   \item{x}{a numeric vector (in days) \emph{or} an object of class
     \code{"\link{difftime}"}, rounded to the nearest whole day.}
   \item{lop}{One of \code{==}, \code{!=}, \code{<}, \code{<=}, \code{>}

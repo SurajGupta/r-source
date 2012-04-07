@@ -1,7 +1,7 @@
 /*
  *  R : A Computer Language for Statistical Data Analysis
  *  Copyright (C) 1995, 1996, 1997  Robert Gentleman and Ross Ihaka
- *  Copyright (C) 2000-6	    The R Development Core Team.
+ *  Copyright (C) 2000-10	    The R Development Core Team.
  *  Copyright (C) 2005		    The R Foundation
  *
  *  This program is free software; you can redistribute it and/or modify
@@ -212,8 +212,13 @@ static double complex mycpow (double complex X, double complex Y)
 {
     double complex Res; int k;
     if (X == 0.0) {
-	__real__ Res = R_pow(0.0, __real__ Y);
-	__imag__ Res = 0.0;
+	if(cimag(Y) == 0.0){
+	    __real__ Res = R_pow(0.0, __real__ Y);
+	    __imag__ Res = 0.0;
+	} else {
+	    __real__ Res = R_NaN;
+	    __imag__ Res = R_NaN;
+	}
     } else if (__imag__ Y == 0.0 && __real__ Y == (k = (int)__real__ Y)
 	       && abs(k) <= 65536) {
 	return R_cpow_n(X, k);
@@ -246,9 +251,9 @@ static double complex mycpow (double complex X, double complex Y)
 static double complex mycpow (double complex X, double complex Y)
 {
     double iY = cimag(Y);
-    if (iY == 0) {/* X ^ <real> */
+    if (iY == 0.0) {/* X ^ <real> */
 	double complex Z; int k;
-	if (X == 0.) {
+	if (X == 0.0) {
 	    Z = R_pow(0., creal(Y));
 	} else if(creal(Y) == (k = (int)creal(Y)) && abs(k) <= 65536) {
 	    Z = R_cpow_n(X, k);
@@ -386,6 +391,7 @@ SEXP attribute_hidden do_cmathfuns(SEXP call, SEXP op, SEXP args, SEXP env)
     int i, n;
 
     checkArity(op, args);
+    check1arg(args, call, "z");
     if (DispatchGroup("Complex", call, op, args, env, &x))
 	return x;
     x = CAR(args);
@@ -892,7 +898,6 @@ SEXP attribute_hidden complex_math1(SEXP call, SEXP op, SEXP args, SEXP env)
     PROTECT(y = allocVector(CPLXSXP, n));
 
     switch (PRIMVAL(op)) {
-    case 10002: naflag = cmath1(z_atan, COMPLEX(x), COMPLEX(y), n); break;
     case 10003: naflag = cmath1(z_log, COMPLEX(x), COMPLEX(y), n); break;
 
     case 3: naflag = cmath1(z_sqrt, COMPLEX(x), COMPLEX(y), n); break;
@@ -904,6 +909,7 @@ SEXP attribute_hidden complex_math1(SEXP call, SEXP op, SEXP args, SEXP env)
     case 22: naflag = cmath1(z_tan, COMPLEX(x), COMPLEX(y), n); break;
     case 23: naflag = cmath1(z_acos, COMPLEX(x), COMPLEX(y), n); break;
     case 24: naflag = cmath1(z_asin, COMPLEX(x), COMPLEX(y), n); break;
+    case 25: naflag = cmath1(z_atan, COMPLEX(x), COMPLEX(y), n); break;
 
     case 30: naflag = cmath1(z_cosh, COMPLEX(x), COMPLEX(y), n); break;
     case 31: naflag = cmath1(z_sinh, COMPLEX(x), COMPLEX(y), n); break;
@@ -985,6 +991,8 @@ SEXP attribute_hidden complex_math2(SEXP call, SEXP op, SEXP args, SEXP env)
     case 10002:
 	return cmath2(op, CAR(args), CADR(args), z_atan2);
     case 10003:
+    case 2: /* passed from do_log1arg */
+    case 10:
 	return cmath2(op, CAR(args), CADR(args), z_logbase);
     case 10004:
 	return cmath2(op, CAR(args), CADR(args), z_prec);

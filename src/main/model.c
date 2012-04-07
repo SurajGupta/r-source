@@ -1,8 +1,7 @@
 /*
  *  R : A Computer Language for Statistical Data Analysis
  *  Copyright (C) 1995, 1996  Robert Gentleman and Ross Ihaka
- *  Copyright (C) 1997-2007   Robert Gentleman, Ross Ihaka and the
- *                            R Development Core Team
+ *  Copyright (C) 1997--2009  The R Development Core Team
  *
  *  This program is free software; you can redistribute it and/or modify
  *  it under the terms of the GNU General Public License as published by
@@ -671,8 +670,7 @@ static SEXP EncodeVars(SEXP formula)
 /* Returns 1 if variable ``whichBit'' in ``thisTerm'' */
 /* is to be encoded by contrasts and 2 if it is to be */
 /* encoded by dummy variables.  This is decided using */
-/* the heuristic of Chambers and Heiberger described */
-/* in Statistical Models in S, Page 38. */
+/* the heuristic described in Statistical Models in S, page 38. */
 
 static int TermCode(SEXP termlist, SEXP thisterm, int whichbit, SEXP term)
 {

@@ -18,7 +18,7 @@
 #endif /* !HAVE_WCTYPE_H */
 
 #include <ctype.h>
-#include "regex.h"
+#include "tre.h"
 
 #ifdef TRE_DEBUG
 #include <stdio.h>
@@ -106,6 +106,7 @@ typedef short tre_cint_t;
 
 #endif /* !TRE_WCHAR */
 
+/* WIN32 opt-out is R addition - iswctype is missing "blank" */
 #if !defined(WIN32) && defined(TRE_WCHAR) && defined(HAVE_ISWCTYPE) && defined(HAVE_WCTYPE)
 #define TRE_USE_SYSTEM_WCTYPE 1
 #endif
@@ -126,9 +127,10 @@ typedef enum { STR_WIDE, STR_BYTE, STR_MBS, STR_USER } tre_str_type_t;
 
 /* Returns number of bytes to add to (char *)ptr to make it
    properly aligned for the type. */
+/* R change:  was (long) but that is shorter than pointer on Win64 */
 #define ALIGN(ptr, type) \
-  ((((long)ptr) % sizeof(type)) \
-   ? (sizeof(type) - (((long)ptr) % sizeof(type))) \
+  ((((size_t)ptr) % sizeof(type)) \
+   ? (sizeof(type) - (((size_t)ptr) % sizeof(type))) \
    : 0)
 
 #undef MAX

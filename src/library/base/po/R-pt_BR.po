@@ -7,7 +7,7 @@ msgid ""
 msgstr ""
 "Project-Id-Version: R 2.3.0\n"
 "Report-Msgid-Bugs-To: bugs@r-project.org\n"
-"POT-Creation-Date: 2009-12-10 19:18\n"
+"POT-Creation-Date: 2010-03-22 15:15\n"
 "PO-Revision-Date: 2005-12-17 10:55-0200\n"
 "Last-Translator: Fernando Henrique Ferraz P. da Rosa <feferraz@ime.usp.br>\n"
 "Language-Team: Portuguese <ldp-br@bazar.conectiva.com.br>\n"
@@ -110,17 +110,26 @@ msgstr "*** Note que 'pos=1' resultará em erro no futuro."
 msgid "file '%s' not found"
 msgstr "arquivo '%s' não encontrado"
 
-msgid "invalid name"
-msgstr "nome inválido"
-
-msgid "is required by"
-msgstr "é exigido por"
-
-msgid "(still attached)"
-msgstr "(ainda anexado)"
+#, fuzzy
+msgid "invalid 'name' argument"
+msgstr "argumento 'category' inválido"
 
 #, fuzzy
-msgid "namespace cannot be unloaded"
+msgid "package %s is required by %s, which may no longer work correctly"
+msgstr "pacote '%s' foi compilado na versão do R %s"
+
+#, fuzzy
+msgid "package %s is required by %s so will not be detached"
+msgstr "pacote '%s' exigido por '%s' não pôde ser encontrado"
+
+msgid ""
+"%s failed in %s() for '%s', details:\n"
+"  call: %s\n"
+"  error: %s"
+msgstr ""
+
+#, fuzzy
+msgid "name space cannot be unloaded:"
 msgstr "espaço de nomes '%s' não carregado"
 
 #, fuzzy
@@ -238,7 +247,7 @@ msgid "invalid 'dimnames' given for data frame"
 msgstr "'dimnames' inválidos para um data frame"
 
 #, fuzzy
-msgid "cannot coerce class %s into a data.frame"
+msgid "cannot coerce class '%s' into a data.frame"
 msgstr "não é possível fazer coerção de classe \"%s\" para data.frame"
 
 msgid "invalid 'row.names', length %d for a data frame with %d rows"
@@ -485,6 +494,10 @@ msgstr "'lag' e differences' devem ser inteiros >= 1"
 msgid "do not know how to convert '%s' to class \"POSIXlt\""
 msgstr "não sei como converter '%s' para classe \"POSIXlt\""
 
+#, fuzzy
+msgid "do not know how to convert '%s' to class \"POSIXct\""
+msgstr "não sei como converter '%s' para classe \"POSIXlt\""
+
 msgid "wrong class"
 msgstr "classe errada"
 
@@ -671,26 +684,6 @@ msgstr "nenhum arquivo para onde fazer a vinculação"
 msgid "no files/directory to link to"
 msgstr "nenhum arquivo/diretório para onde fazer a vinculação"
 
-#, fuzzy
-msgid "'x' must have length 1"
-msgstr "'input' deve ter comprimento 1"
-
-#, fuzzy
-msgid "invalid digits"
-msgstr "'digits' inválido"
-
-#, fuzzy
-msgid "'x' cannot be coerced to 'octmode'"
-msgstr "não é possível fazer coerção para tabela"
-
-#, fuzzy
-msgid "'x' must be of length 1"
-msgstr "'to' deve ter comprimento 1"
-
-#, fuzzy
-msgid "'x' cannot be coerced to hexmode"
-msgstr "não é possível fazer coerção para tabela"
-
 msgid "'package' must be of length 1"
 msgstr "'package' deve ter comprimento 1"
 
@@ -772,27 +765,13 @@ msgstr "matriz deve ser quadrada"
 msgid "'object' must be a list"
 msgstr "'subset' deve ser lógico"
 
-msgid "This is R %s, package '%s' needs %s %s"
-msgstr "Esse é o R %s, o pacote '%s' precisa do %s %s"
-
-msgid "package '%s' was built before R 2.0.0: please re-install it"
-msgstr ""
-"pacote '%s' foi compilado antes do R 2.0.0: por favor instale-o novamente"
-
-msgid "package '%s' was built under R version %s"
-msgstr "pacote '%s' foi compilado na versão do R %s"
+msgid "package '%s' has not been installed properly"
+msgstr "pacote '%s' não foi instalado corretamente"
 
 #, fuzzy
-msgid ""
-"package '%s' was built under R version %s and help will not work correctly\n"
-"Please re-install it"
+msgid "package '%s' was built before R 2.10.0: please re-install it"
 msgstr ""
 "pacote '%s' foi compilado antes do R 2.0.0: por favor instale-o novamente"
-
-#, fuzzy
-msgid ""
-"package '%s' was built under R version %s and help may not work correctly"
-msgstr "pacote '%s' foi compilado na versão do R %s"
 
 #, fuzzy
 msgid ""
@@ -801,6 +780,12 @@ msgid ""
 msgstr ""
 "pacote '%s' foi compilado antes do R 2.0.0: por favor instale-o novamente"
 
+msgid "This is R %s, package '%s' needs %s %s"
+msgstr "Esse é o R %s, o pacote '%s' precisa do %s %s"
+
+msgid "package '%s' was built under R version %s"
+msgstr "pacote '%s' foi compilado na versão do R %s"
+
 msgid "package '%s' was built for %s"
 msgstr "pacote '%s' foi compilado para %s"
 
@@ -808,26 +793,26 @@ msgstr "pacote '%s' foi compilado para %s"
 msgid "package '%s' is not installed for 'arch=%s'"
 msgstr "pacote '%s' não foi instalado corretamente"
 
-msgid "package '%s' has not been installed properly"
-msgstr "pacote '%s' não foi instalado corretamente"
+msgid ""
+"package '%s' has a license that you need to accept in an interactive session"
+msgstr ""
 
-msgid "See the Note in ?library"
-msgstr "Veja a observação em ?library"
+msgid "Package '%s' has a license that you need to accept after viewing"
+msgstr ""
+
+msgid ""
+"Package '%s' has a license that you need to accept:\n"
+"according to the DESCRIPTION file it is"
+msgstr ""
+
+msgid "License"
+msgstr ""
+
+msgid "License for package '%s' not accepted"
+msgstr ""
 
 msgid "Attaching package: '%s'"
 msgstr "Anexando pacote: '%s'"
-
-msgid "The following object(s) are masked"
-msgstr ""
-
-msgid "_by_"
-msgstr ""
-
-msgid "from"
-msgstr ""
-
-msgid ":"
-msgstr ""
 
 #, fuzzy
 msgid "invalid package name"
@@ -848,11 +833,6 @@ msgstr "'%s' não encontrado no caminho de procura, usando pos = 2"
 
 msgid "package/namespace load failed for '%s'"
 msgstr "carregamento do pacote/espaço de nomes falhou para '%s'"
-
-#, fuzzy
-msgid "package was installed prior to 2.4.0 and must be re-installed"
-msgstr ""
-"pacote '%s' foi compilado antes do R 2.0.0: por favor instale-o novamente"
 
 msgid "unable to load R code in package '%s'"
 msgstr "não foi possivel carregar código R do pacote '%s'"
@@ -1077,15 +1057,8 @@ msgid "'%s' is not an exported object from 'namespace:%s'"
 msgstr "'%s' não é um objeto exportado de 'namespace:%s'"
 
 #, fuzzy
-msgid "package '%s' has no name space and"
+msgid "package %s has no name space and is not on the search path"
 msgstr "pacote '%s' não tem um espaõ de nomes"
-
-#, fuzzy
-msgid "is not on the search path"
-msgstr "'%s' não encontrado no caminho de procura, usando pos = 2"
-
-msgid "%s failed in 'attachNamespace'"
-msgstr "%s falhou em 'attachNamespace'"
 
 msgid "name space is already attached"
 msgstr "espaço de nomes já está anexo"
@@ -1095,9 +1068,6 @@ msgstr "%s não encontrado"
 
 msgid "cyclic name space dependencies are not supported"
 msgstr "dependências cíclicas entre espaços de nomes não estão implementadas"
-
-msgid "%s failed in 'loadNamespace' for '%s'"
-msgstr "%s falhou em 'loadNamespace' para '%s'"
 
 msgid "namespace '%s' is already sealed in loadNamespace"
 msgstr "espaço de nomes '%s' já está selado em loadNamespace"
@@ -1126,26 +1096,24 @@ msgstr "pacote '%s' não tem um espaõ de nomes"
 
 msgid ""
 "exportClassPattern specified in NAMESPACE but no matching classes in package "
-"'%s'"
+"%s"
 msgstr ""
 
 #, fuzzy
-msgid "in package '%s' classes for export not defined: %s"
+msgid "in package %s classes %s were specified for export but not defined"
 msgstr "em '%s' classes para expor~tação não definidas: %s"
 
 msgid "in '%s' methods for export not found: %s"
 msgstr "em '%s' métodos para exportação não encontrados: %s"
 
-msgid "Multiple methods tables found for '"
+msgid "multiple methods tables found for %s"
 msgstr ""
 
-msgid "'"
+msgid "failed to find metadata object for %s"
 msgstr ""
 
-msgid "Failed to find metadata object for \"%s\""
-msgstr ""
-
-msgid "in '%s' methods specified for export, but none defined: %s"
+#, fuzzy
+msgid "in package %s methods %s were specified for export but not defined"
 msgstr "em '%s' métodos especificados para exportação, mas nenhum definido: %s"
 
 msgid "not found"
@@ -1155,15 +1123,8 @@ msgid "not loading a name space"
 msgstr "não carregando um espaço de nomes"
 
 #, fuzzy
-msgid ""
-"%s failed in unloadNamespace(\"%s\"), details:\n"
-"  call: %s\n"
-"  message: %s"
-msgstr "%s falhou em unloadNamespace(%s)"
-
-#, fuzzy
-msgid "name space '%s' is still used by: %s"
-msgstr "espaço de nomes '%s' ainda em uso por:"
+msgid "name space %s is imported by %s so cannot be unloaded"
+msgstr "espaço de nomes '%s' não carregado"
 
 msgid "imperative name space directives are disabled"
 msgstr "diretivas imperativas de espaço de nomes estão desabilitadas"
@@ -1183,8 +1144,14 @@ msgstr "operação não permitida no espaço de nomes base"
 msgid "duplicate import names"
 msgstr "nomes de importação duplicados"
 
+msgid "replacing local value with import %s when loading %s"
+msgstr ""
+
 msgid "cannot import into a sealed name space"
 msgstr "não é possível importar em um espaço de nomes selado"
+
+msgid "replacing previous import %s when loading %s"
+msgstr ""
 
 msgid "invalid import target"
 msgstr "alvo de importação inválido"
@@ -1192,10 +1159,11 @@ msgstr "alvo de importação inválido"
 msgid "got invalid index for importing"
 msgstr ""
 
-msgid "Found methods to import for function \"%s\" but not the generic itself"
+msgid "found methods to import for function %s but not the generic itself"
 msgstr ""
 
-msgid "requested 'methods' objects not found in environment/package '%s': %s"
+#, fuzzy
+msgid "requested methods not found in environment/package %s: %s"
 msgstr ""
 "objetos exigidos do 'methods' não encontrados no ambiente/pacote '%s': %s"
 
@@ -1213,14 +1181,9 @@ msgstr "pacote '%s' não tem arquivo NAMESPACE"
 msgid "empty name in directive '%s' in NAMESPACE file"
 msgstr "pacote '%s' não tem arquivo NAMESPACE"
 
-msgid "duplicated symbol names"
+#, fuzzy
+msgid "duplicated symbol names %s in useDynlib(\"%s\")"
 msgstr "símbolos de importação duplicados"
-
-msgid "in useDynLib("
-msgstr "em useDynLib("
-
-msgid ")"
-msgstr ")"
 
 msgid "bad 'S3method' directive: %s"
 msgstr "diretiva 'S3method' inválida: %s"
@@ -1231,8 +1194,9 @@ msgstr "diretivas 'S3method' demais"
 msgid "unknown namespace directive: %s"
 msgstr "diretiva de espaço de nomes desconhecida: %s"
 
-msgid "S3 method '%s' was declared in NAMESPACE but not found"
-msgstr "método S3 '%s' foi declarado no NAMESPACE mas não encontrado"
+#, fuzzy
+msgid "S3 method %s was declared but not found"
+msgstr "método S3 %s foi declarado no NAMESPACE mas não encontrado"
 
 msgid "bad method"
 msgstr "método inválido"
@@ -1240,7 +1204,8 @@ msgstr "método inválido"
 msgid "object '%s' not found whilst loading namespace '%s'"
 msgstr "objeto '%s' não encontrado enquanto carregando espaço de nomes '%s'"
 
-msgid "found an S4 version of '%s' so it has not been imported correctly"
+#, fuzzy
+msgid "found an S4 version of %s so it has not been imported correctly"
 msgstr ""
 "foi encontrada uma versão S4 de '%s', portanto ele não foi importado "
 "corretamente"
@@ -1250,6 +1215,14 @@ msgstr "'%s' ainda não está implementado"
 
 msgid "argument '%s' is not used (yet)"
 msgstr "argumento '%s' (ainda) não é usado"
+
+#, fuzzy
+msgid "'x' cannot be coerced to 'octmode'"
+msgstr "não é possível fazer coerção para tabela"
+
+#, fuzzy
+msgid "'x' cannot be coerced to hexmode"
+msgstr "não é possível fazer coerção para tabela"
 
 #, fuzzy
 msgid "no arguments"
@@ -1415,6 +1388,9 @@ msgstr "'verbose' é TRUE, 'echo' não; ... fazendo 'echo <- TRUE'"
 msgid "unable to find a plausible encoding"
 msgstr "não foi possível achar uma codificação plausível"
 
+msgid "encoding = \"%s\" chosen"
+msgstr ""
+
 msgid "'chdir = TRUE' makes no sense for a URL"
 msgstr "'chdir = TRUE' não faz sentido para uma URL"
 
@@ -1546,8 +1522,8 @@ msgstr "não definido para objetos package_version"
 msgid "not defined for numeric_version objects"
 msgstr "não definido para objetos package_version"
 
-msgid "argument to 'which' is not logical"
-msgstr "argumento para 'which' não é lógico"
+msgid "<0 elements>"
+msgstr ""
 
 msgid "invalid 'digits'"
 msgstr "'digits' inválido"
@@ -1557,9 +1533,27 @@ msgid ""
 "Windows only"
 msgstr ""
 
+msgid "'intern' must be TRUE or FALSE"
+msgstr ""
+
+msgid "'ignore.stderr' must be TRUE or FALSE"
+msgstr ""
+
+msgid "'wait' must be TRUE or FALSE"
+msgstr ""
+
 #, fuzzy
 msgid "'input' must be a character vector or 'NULL'"
 msgstr "'input' e 'target' devem ser vetores de caracteres"
+
+msgid "'show.output.on.console' must be TRUE or FALSE"
+msgstr ""
+
+msgid "'minimized' must be TRUE or FALSE"
+msgstr ""
+
+msgid "'invisible' must be TRUE or FALSE"
+msgstr ""
 
 #, fuzzy
 msgid "'%s' could not be run"
@@ -1632,8 +1626,14 @@ msgstr[0] "%s não encontrado"
 msgstr[1] "%s não encontrado"
 
 #, fuzzy
-msgid "object '%s' is not exported by 'namespace:%s'"
-msgid_plural "objects '%s' are not exported by 'namespace:%s'"
+msgid "class %s is not exported by 'namespace:%s'"
+msgid_plural "classes %s are not exported by 'namespace:%s'"
+msgstr[0] "objeto %s não está exportado por 'namespace:%s'"
+msgstr[1] "objetos %s não estão exportados por 'namespace:%s'"
+
+#, fuzzy
+msgid "object %s is not exported by 'namespace:%s'"
+msgid_plural "objects %s are not exported by 'namespace:%s'"
 msgstr[0] "objeto %s não está exportado por 'namespace:%s'"
 msgstr[1] "objetos %s não estão exportados por 'namespace:%s'"
 
@@ -1653,8 +1653,74 @@ msgid_plural "Warning messages:\n"
 msgstr[0] "Mensagem de aviso:\n"
 msgstr[1] "Mensagens de aviso:\n"
 
+#, fuzzy
+#~ msgid "'x' must have length 1"
+#~ msgstr "'input' deve ter comprimento 1"
+
+#, fuzzy
+#~ msgid "invalid digits"
+#~ msgstr "'digits' inválido"
+
+#, fuzzy
+#~ msgid "'x' must be of length 1"
+#~ msgstr "'to' deve ter comprimento 1"
+
+#~ msgid "argument to 'which' is not logical"
+#~ msgstr "argumento para 'which' não é lógico"
+
+#, fuzzy
+#~ msgid "is not on the search path"
+#~ msgstr "'%s' não encontrado no caminho de procura, usando pos = 2"
+
+#~ msgid "in useDynLib("
+#~ msgstr "em useDynLib("
+
+#~ msgid ")"
+#~ msgstr ")"
+
+#~ msgid "S3 method '%s' was declared in NAMESPACE but not found"
+#~ msgstr "método S3 '%s' foi declarado no NAMESPACE mas não encontrado"
+
+#~ msgid "invalid name"
+#~ msgstr "nome inválido"
+
+#~ msgid "is required by"
+#~ msgstr "é exigido por"
+
+#~ msgid "(still attached)"
+#~ msgstr "(ainda anexado)"
+
+#, fuzzy
+#~ msgid "name space '%s' is still used by: %s"
+#~ msgstr "espaço de nomes '%s' ainda em uso por:"
+
+#~ msgid "See the Note in ?library"
+#~ msgstr "Veja a observação em ?library"
+
+#, fuzzy
+#~ msgid "package was installed prior to 2.4.0 and must be re-installed"
+#~ msgstr ""
+#~ "pacote '%s' foi compilado antes do R 2.0.0: por favor instale-o novamente"
+
+#~ msgid "%s failed in 'attachNamespace'"
+#~ msgstr "%s falhou em 'attachNamespace'"
+
+#~ msgid "%s failed in 'loadNamespace' for '%s'"
+#~ msgstr "%s falhou em 'loadNamespace' para '%s'"
+
 #~ msgid "name space '%s' is loaded"
 #~ msgstr "espaço de nomes '%s' não carregado"
+
+#~ msgid "%s failed in unloadNamespace(%s)"
+#~ msgstr "%s falhou em unloadNamespace(%s)"
+
+#, fuzzy
+#~ msgid ""
+#~ "package '%s' was built under R version %s and help will not work "
+#~ "correctly\n"
+#~ "Please re-install it"
+#~ msgstr ""
+#~ "pacote '%s' foi compilado antes do R 2.0.0: por favor instale-o novamente"
 
 #, fuzzy
 #~ msgid "extra arguments ignored:"

@@ -1,8 +1,7 @@
 /*
  *  R : A Computer Language for Statistical Data Analysis
  *  Copyright (C) 1995, 1996  Robert Gentleman and Ross Ihaka
- *  Copyright (C) 1997--2008  Robert Gentleman, Ross Ihaka and the
- *                            R Development Core Team
+ *  Copyright (C) 1997--2010  The R Development Core Team
  *
  *  This program is free software; you can redistribute it and/or modify
  *  it under the terms of the GNU General Public License as published by
@@ -391,6 +390,7 @@ Rboolean StringFalse(const char *name)
     return FALSE;
 }
 
+/* used in bind.c and options.c */
 SEXP attribute_hidden EnsureString(SEXP s)
 {
     switch(TYPEOF(s)) {
@@ -429,6 +429,19 @@ void Rf_checkArityCall(SEXP op, SEXP args, SEXP call)
     }
 }
 
+void attribute_hidden Rf_check1arg(SEXP arg, SEXP call, const char *formal)
+{
+    SEXP tag = TAG(arg);
+    const char *supplied;
+    int ns;
+    if (tag == R_NilValue) return;
+    supplied = CHAR(PRINTNAME(tag)); ns = strlen(supplied);
+    if (ns > strlen(formal) || strncmp(supplied, formal, ns))
+	errorcall(call, _("supplied argument name '%s' does not match '%s'"),
+		  supplied, formal);
+}
+
+
 SEXP nthcdr(SEXP s, int n)
 {
     if (isList(s) || isLanguage(s) || isFrame(s) || TYPEOF(s) == DOTSXP ) {
@@ -444,10 +457,13 @@ SEXP nthcdr(SEXP s, int n)
 }
 
 
+/* This is a primitive (with no arguments) */
 SEXP attribute_hidden do_nargs(SEXP call, SEXP op, SEXP args, SEXP rho)
 {
     RCNTXT *cptr;
     int nargs = NA_INTEGER;
+
+    checkArity(op, args);
     for (cptr = R_GlobalContext; cptr != NULL; cptr = cptr->nextcontext) {
 	if ((cptr->callflag & CTXT_FUNCTION) && cptr->cloenv == rho) {
 	    nargs = length(cptr->promargs);
@@ -1165,6 +1181,14 @@ Rboolean mbcsValid(const char *str)
 }
 
 
+extern int _pcre_valid_utf8(const char *string, int length);
+
+Rboolean utf8Valid(const char *str)
+{
+    return  (_pcre_valid_utf8(str, strlen(str)) < 0);
+}
+
+
 /* MBCS-aware versions of common comparisons.  Only used for ASCII c */
 char *Rf_strchr(const char *s, int c)
 {
@@ -1488,6 +1512,41 @@ double R_strtod(const char *str, char **endptr)
 double R_atof(const char *str)
 {
     return R_strtod4(str, NULL, '.', FALSE);
+}
+
+/* enc2native and enc2utf8, but they are the same in a UTF-8 locale */
+/* primitive */
+SEXP do_enc2(SEXP call, SEXP op, SEXP args, SEXP env)
+{
+    SEXP ans, el;
+    int i;
+    Rboolean duped = FALSE;
+
+    checkArity(op, args);
+    check1arg(args, call, "x");
+
+    if (!isString(CAR(args)))
+	errorcall(call, "argumemt is not a character vector");
+    ans = CAR(args);
+    for (i = 0; i < LENGTH(ans); i++) {
+	el = STRING_ELT(ans, i);
+	if(PRIMVAL(op) && !known_to_be_utf8) { /* enc2utf8 */
+	    if(!IS_UTF8(el) && !strIsASCII(CHAR(el))) {
+		if (!duped) { PROTECT(ans = duplicate(ans)); duped = TRUE; }
+		SET_STRING_ELT(ans, i, 
+			       mkCharCE(translateCharUTF8(el), CE_UTF8));
+	    }
+	} else { /* enc2native */
+	    if((known_to_be_latin1 && IS_UTF8(el)) ||
+	       (known_to_be_utf8 && IS_LATIN1(el)) ||
+	       ENC_KNOWN(el)) {
+		if (!duped) { PROTECT(ans = duplicate(ans)); duped = TRUE; }
+		SET_STRING_ELT(ans, i, mkChar(translateChar(el)));
+	    }
+	}
+    }
+    if(duped) UNPROTECT(1);
+    return ans;
 }
 
 #ifdef USE_ICU

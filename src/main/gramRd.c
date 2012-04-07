@@ -137,8 +137,7 @@
 /*
  *  R : A Computer Langage for Statistical Data Analysis
  *  Copyright (C) 1995, 1996, 1997  Robert Gentleman and Ross Ihaka
- *  Copyright (C) 1997--2008  Robert Gentleman, Ross Ihaka and the
- *                            R Development Core Team
+ *  Copyright (C) 1997--2010  The R Development Core Team
  *
  *  This program is free software; you can redistribute it and/or modify
  *  it under the terms of the GNU General Public License as published by
@@ -2798,14 +2797,20 @@ static int prevbytes[PUSHBACK_BUFSIZE];
 
 static int xxgetc(void)
 {
-    int c;
+    int c, oldpos;
     
     if(npush) c = pushback[--npush]; else  c = ptr_getc();
 
+    oldpos = prevpos;
     prevpos = (prevpos + 1) % PUSHBACK_BUFSIZE;
-    prevcols[prevpos] = xxcolno;
     prevbytes[prevpos] = xxbyteno;
     prevlines[prevpos] = xxlineno;    
+    /* We only advance the column for the 1st byte in UTF-8, so handle later bytes specially */
+    if (0x80 <= (unsigned char)c && (unsigned char)c <= 0xBF) {
+    	xxcolno--;   
+    	prevcols[prevpos] = prevcols[oldpos];
+    } else 
+    	prevcols[prevpos] = xxcolno;
     
     if (c == EOF) return R_EOF;
     
@@ -2820,9 +2825,6 @@ static int xxgetc(void)
         xxcolno++;
     	xxbyteno++;
     }
-    /* only advance column for 1st byte in UTF-8 */
-    if (0x80 <= (unsigned char)c && (unsigned char)c <= 0xBF)
-    	xxcolno--;
 
     if (c == '\t') xxcolno = ((xxcolno + 6) & ~7) + 1;
     
@@ -3074,6 +3076,7 @@ static keywords[] = {
     { "\\S3method",LATEXMACRO2 },
     { "\\S4method",LATEXMACRO2 },
     { "\\tabular", LATEXMACRO2 },
+    { "\\subsection", LATEXMACRO2 },
     
     /* This macro takes three LaTeX-like arguments. */
     
@@ -3091,7 +3094,7 @@ static keywords[] = {
     { "\\donttest",RCODEMACRO },
     { "\\testonly",RCODEMACRO },
     
-    /* This macro take one optional bracketed option and one R-like argument */
+    /* This macro takes one optional bracketed option and one R-like argument */
     
     { "\\Sexpr",   SEXPR },
     

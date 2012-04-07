@@ -22,10 +22,10 @@
 #
 msgid ""
 msgstr ""
-"Project-Id-Version: R 2.10.1\n"
+"Project-Id-Version: R 2.11.0\n"
 "Report-Msgid-Bugs-To: bugs@r-project.org\n"
-"POT-Creation-Date: 2009-12-10 19:18\n"
-"PO-Revision-Date: 2009-12-10 19:18\n"
+"POT-Creation-Date: 2010-03-16 09:19\n"
+"PO-Revision-Date: 2010-03-16 09:19\n"
 "Last-Translator: Automatically generated\n"
 "Language-Team: none\n"
 "MIME-Version: 1.0\n"
@@ -359,6 +359,9 @@ msgstr "'x', 'y', and ‘r’ must be units"
 msgid "'x', 'y', 'width', and 'height' must be units"
 msgstr "'x', 'y', 'width', and ‘height’ must be units"
 
+msgid "at least one of 'width' and 'height' must be specified"
+msgstr "at least one of ‘width’ and ‘height’ must be specified"
+
 msgid "Invalid 'rot' value"
 msgstr "Invalid ‘rot’ value"
 
@@ -436,6 +439,9 @@ msgstr "Index out of bounds (unit list subsetting)"
 
 msgid "It is invalid to combine unit objects with other types"
 msgstr "It is invalid to combine unit objects with other types"
+
+msgid "Invalid unit object"
+msgstr "Invalid unit object"
 
 msgid ""
 "unit.rep has been deprecated in favour of a unit method for the generic rep "

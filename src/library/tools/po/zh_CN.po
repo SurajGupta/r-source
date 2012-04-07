@@ -2,12 +2,12 @@
 # Copyright (C) 2006 The R Foundation
 # This file is distributed under the same license as the PACKAGE package.
 # 陈斐 <feic@avaya.com>, 2007.
-#
+# 
 msgid ""
 msgstr ""
 "Project-Id-Version: R 2.4.0\n"
 "Report-Msgid-Bugs-To: bugs@R-project.org\n"
-"POT-Creation-Date: 2009-12-10 19:18+0000\n"
+"POT-Creation-Date: 2009-11-12 09:44+0000\n"
 "PO-Revision-Date: 2005-02-04 08:37+0000\n"
 "Last-Translator: 陈斐 <feic@avaya.com>\n"
 "Language-Team: Chinese\n"
@@ -18,7 +18,7 @@ msgstr ""
 
 #: Rmd5.c:36
 msgid "argument 'files' must be character"
-msgstr "变元'files'必需是字符"
+msgstr "参数'files'必需是字符"
 
 #: Rmd5.c:50
 #, c-format
@@ -27,8 +27,8 @@ msgstr "用于'%s'文件的md5运行失败"
 
 #: text.c:65
 msgid "invalid argument type"
-msgstr "变元种类不对"
+msgstr "参数种类不对"
 
 #: text.c:189 text.c:208
 msgid "out of memory"
-msgstr ""
+msgstr "内存不足"

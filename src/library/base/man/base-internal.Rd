@@ -1,6 +1,6 @@
 % File src/library/base/man/base-internal.Rd
 % Part of the R package, http://www.R-project.org
-% Copyright 1995-2008 R Core Development Team
+% Copyright 1995-2010 R Core Development Team
 % Distributed under GPL 2 or later
 
 \name{base-internal}
@@ -23,6 +23,13 @@
 \alias{.TAOCP1997init}
 \alias{.gt}
 \alias{.gtn}
+%% moved from trace.Rd in 2.11.0
+\alias{.primTrace}
+\alias{.primUntrace}
+\alias{.POSIXct}
+\alias{.POSIXlt}
+\alias{.difftime}
+
 \title{Internal Functions in the Base Package}
 \description{
   Internal functions in the base package, which are only user-visible
@@ -59,8 +66,14 @@ lazyLoadDBfetch(key, file, compressed, hook)
 .TAOCP1997init(seed)
 
 .gt(x, i, j)
-
 .gtn(x, strictly)
+
+.primTrace(obj)
+.primUntrace(obj)
+
+.POSIXct(xx, tz = NULL)
+.POSIXlt(xx, tz = NULL)
+.difftime(xx, units)
 }
 \arguments{
   \item{x}{object from which to extract elements.}
@@ -94,6 +107,10 @@ lazyLoadDBfetch(key, file, compressed, hook)
   \item{seed}{a length-one integer vector.}
   \item{i, j}{indices.}
   \item{strictly}{logical.}
+  \item{obj}{an \R object.}
+  \item{xx}{a classless object to be placed into the class.}
+  \item{tz}{an optional timezone.}
+  \item{units}{see \code{\link{difftime}}.}
 }
 \details{
   The functions \code{.subset} and \code{.subset2} are essentially
@@ -174,6 +191,13 @@ lazyLoadDBfetch(key, file, compressed, hook)
 
   \code{.gt} and \code{.gtn} are callbacks from \code{\link{rank}} and
   \code{\link{is.unsorted}} used for classed objects.
+  
+  \code{.primTrace} and \code{.primUntrace} are the \link{primitive}
+  functions underlying \code{\link{trace}} and \code{\link{untrace}}
+  respectively.
+
+  \code{.POSIXct}, \code{.POSIXlt} and \code{.difftime} are class
+  generators added in \R 2.11.0.
 }
 \value{
   \code{.find.package} and \code{.path.packages} return a character

@@ -1,8 +1,7 @@
 /*
  *  R : A Computer Language for Statistical Data Analysis
  *  Copyright (C) 1995, 1996  Robert Gentleman and Ross Ihaka
- *  Copyright (C) 1997--2009  Robert Gentleman, Ross Ihaka and the
- *                            R Development Core Team
+ *  Copyright (C) 1997--2009  The R Development Core Team
  *
  *  This program is free software; you can redistribute it and/or modify
  *  it under the terms of the GNU General Public License as published by
@@ -22,7 +21,7 @@
 /* Names of  .Internal(.) and .Primitive(.)  R functions
  *
  * Must all return SEXP because of CCODE in Defn.h.
- * The do_math.(), etc are in ../main/arithmetic.h
+ * do_math*() and do_cmathfuns are in ../main/arithmetic.h
  */
 
 #ifndef R_INTERNAL_H
@@ -111,7 +110,6 @@ SEXP do_assign(SEXP, SEXP, SEXP, SEXP);
 SEXP do_asvector(SEXP, SEXP, SEXP, SEXP);
 SEXP do_AT(SEXP call, SEXP op, SEXP args, SEXP env);
 SEXP do_AT_assign(SEXP call, SEXP op, SEXP args, SEXP env);
-SEXP do_atan(SEXP, SEXP, SEXP, SEXP);
 SEXP do_attach(SEXP,SEXP,SEXP,SEXP);
 SEXP do_attr(SEXP, SEXP, SEXP, SEXP);
 SEXP do_attrgets(SEXP, SEXP, SEXP, SEXP);
@@ -203,6 +201,7 @@ SEXP do_eapply(SEXP, SEXP, SEXP, SEXP);
 SEXP do_edit(SEXP, SEXP, SEXP, SEXP);
 SEXP do_encoding(SEXP, SEXP, SEXP, SEXP);
 SEXP do_encodeString(SEXP, SEXP, SEXP, SEXP);
+SEXP do_enc2(SEXP, SEXP, SEXP, SEXP);
 SEXP do_envir(SEXP, SEXP, SEXP, SEXP);
 SEXP do_envirgets(SEXP, SEXP, SEXP, SEXP);
 SEXP do_envirName(SEXP, SEXP, SEXP, SEXP);
@@ -254,7 +253,6 @@ SEXP do_globalenv(SEXP, SEXP, SEXP, SEXP);
 SEXP do_emptyenv(SEXP, SEXP, SEXP, SEXP);
 SEXP do_baseenv(SEXP, SEXP, SEXP, SEXP);
 SEXP do_gray(SEXP, SEXP, SEXP, SEXP);
-SEXP do_gregexpr(SEXP, SEXP, SEXP, SEXP);
 SEXP do_grep(SEXP, SEXP, SEXP, SEXP);
 SEXP do_gsub(SEXP, SEXP, SEXP, SEXP);
 SEXP do_hsv(SEXP, SEXP, SEXP, SEXP);
@@ -265,7 +263,6 @@ SEXP do_identical(SEXP, SEXP, SEXP, SEXP);
 SEXP do_identify(SEXP, SEXP, SEXP, SEXP);
 SEXP do_if(SEXP, SEXP, SEXP, SEXP);
 SEXP do_image(SEXP, SEXP, SEXP, SEXP);
-SEXP do_indexsearch(SEXP, SEXP, SEXP, SEXP);
 SEXP do_inherits(SEXP, SEXP, SEXP, SEXP);
 SEXP do_inspect(SEXP, SEXP, SEXP, SEXP);
 SEXP do_intToUtf8(SEXP, SEXP, SEXP, SEXP);
@@ -304,7 +301,6 @@ SEXP do_logic2(SEXP, SEXP, SEXP, SEXP);
 SEXP do_logic3(SEXP, SEXP, SEXP, SEXP);
 SEXP do_ls(SEXP, SEXP, SEXP, SEXP);
 SEXP do_l10n_info(SEXP, SEXP, SEXP, SEXP);
-/* R_lsInternal -> ./Rinternals.h */
 SEXP do_machine(SEXP, SEXP, SEXP, SEXP);
 SEXP do_makelazy(SEXP, SEXP, SEXP, SEXP);
 SEXP do_makelist(SEXP, SEXP, SEXP, SEXP);
@@ -317,9 +313,6 @@ SEXP do_matprod(SEXP, SEXP, SEXP, SEXP);
 SEXP do_Math2(SEXP, SEXP, SEXP, SEXP);
 SEXP do_matrix(SEXP, SEXP, SEXP, SEXP);
 SEXP do_memlimits(SEXP, SEXP, SEXP, SEXP);
-SEXP do_memtrace(SEXP, SEXP, SEXP, SEXP);
-SEXP do_memretrace(SEXP, SEXP, SEXP, SEXP);
-SEXP do_memuntrace(SEXP, SEXP, SEXP, SEXP);
 SEXP do_memoryprofile(SEXP, SEXP, SEXP, SEXP);
 SEXP do_menu(SEXP, SEXP, SEXP, SEXP);
 SEXP do_merge(SEXP, SEXP, SEXP, SEXP);
@@ -398,6 +391,7 @@ SEXP do_readtablehead(SEXP, SEXP, SEXP, SEXP);
 SEXP do_recall(SEXP, SEXP, SEXP, SEXP);
 SEXP do_recordGraphics(SEXP, SEXP, SEXP, SEXP);
 SEXP do_rect(SEXP, SEXP, SEXP, SEXP);
+SEXP do_raster(SEXP, SEXP, SEXP, SEXP);
 SEXP do_regexpr(SEXP, SEXP, SEXP, SEXP);
 SEXP do_regFinaliz(SEXP, SEXP, SEXP, SEXP);
 SEXP do_relop(SEXP, SEXP, SEXP, SEXP);
@@ -456,6 +450,7 @@ SEXP do_storage_mode(SEXP, SEXP, SEXP, SEXP);
 SEXP do_strsplit(SEXP,SEXP,SEXP,SEXP);
 SEXP do_strptime(SEXP,SEXP,SEXP,SEXP);
 SEXP do_strtrim(SEXP,SEXP,SEXP,SEXP);
+SEXP do_strtoi(SEXP,SEXP,SEXP,SEXP);
 SEXP do_syschmod(SEXP,SEXP,SEXP,SEXP);
 SEXP do_sysinfo(SEXP,SEXP,SEXP,SEXP);
 SEXP do_syssleep(SEXP,SEXP,SEXP,SEXP);
@@ -465,7 +460,6 @@ SEXP do_subassign_dflt(SEXP, SEXP, SEXP, SEXP);
 SEXP do_subassign2(SEXP, SEXP, SEXP, SEXP);
 SEXP do_subassign2_dflt(SEXP, SEXP, SEXP, SEXP);
 SEXP do_subassign3(SEXP, SEXP, SEXP, SEXP);
-/* R_subassign3_dflt -> ./Rinternals.h */
 SEXP do_subassigndf(SEXP, SEXP, SEXP, SEXP);
 SEXP do_subassigndf2(SEXP, SEXP, SEXP, SEXP);
 SEXP do_subset(SEXP, SEXP, SEXP, SEXP);
@@ -473,7 +467,6 @@ SEXP do_subset_dflt(SEXP, SEXP, SEXP, SEXP);
 SEXP do_subset2(SEXP, SEXP, SEXP, SEXP);
 SEXP do_subset2_dflt(SEXP, SEXP, SEXP, SEXP);
 SEXP do_subset3(SEXP, SEXP, SEXP, SEXP);
-/* R_subset3_dflt -> ./Rinternals.h */
 SEXP do_subsetdf(SEXP, SEXP, SEXP, SEXP);
 SEXP do_subsetdf2(SEXP, SEXP, SEXP, SEXP);
 SEXP do_substitute(SEXP, SEXP, SEXP, SEXP);
@@ -509,12 +502,15 @@ SEXP do_unzip(SEXP, SEXP, SEXP, SEXP);
 SEXP do_updateform(SEXP, SEXP, SEXP, SEXP);
 SEXP do_usemethod(SEXP, SEXP, SEXP, SEXP);
 SEXP do_utf8ToInt(SEXP, SEXP, SEXP, SEXP);
+SEXP do_vapply(SEXP, SEXP, SEXP, SEXP);
 SEXP do_version(SEXP, SEXP, SEXP, SEXP);
 SEXP do_warning(SEXP, SEXP, SEXP, SEXP);
 SEXP do_while(SEXP, SEXP, SEXP, SEXP);
+SEXP do_which(SEXP, SEXP, SEXP, SEXP);
 SEXP do_withVisible(SEXP, SEXP, SEXP, SEXP);
 SEXP do_writetable(SEXP, SEXP, SEXP, SEXP);
 SEXP do_xspline(SEXP, SEXP, SEXP, SEXP);
+SEXP do_xtfrm(SEXP, SEXP, SEXP, SEXP);
 SEXP do_zeroin(SEXP, SEXP, SEXP, SEXP);
 SEXP do_zeroin2(SEXP, SEXP, SEXP, SEXP);
 
@@ -591,4 +587,7 @@ SEXP do_getNSRegistry(SEXP call, SEXP op, SEXP args, SEXP rho);
 SEXP do_importIntoEnv(SEXP call, SEXP op, SEXP args, SEXP rho);
 SEXP do_envprofile(SEXP call, SEXP op, SEXP args, SEXP rho);
 
+SEXP do_tracemem(SEXP, SEXP, SEXP, SEXP);
+SEXP do_retracemem(SEXP, SEXP, SEXP, SEXP);
+SEXP do_untracemem(SEXP, SEXP, SEXP, SEXP);
 #endif /* not R_INTERNAL_H */

@@ -44,7 +44,7 @@ ar.ols(x, aic = TRUE, order.max = NULL, na.action = na.fail,
   some of the series are non-stationary and/or co-integrated.
   For definiteness, note that the AR coefficients have the sign in
 
-  \deqn{x_t - \mu = a_0 + a_1(x_{t-1} - \mu) + \cdots + a_p(x_{t-p} - \mu) + e_t}{\code{(x[t] - m) = a[0] + a[1]*(x[t-1] - m) + \dots +  a[p]*(x[t-p] - m) + e[t]}}
+  \deqn{x_t - \mu = a_0 + a_1(x_{t-1} - \mu) + \cdots + a_p(x_{t-p} - \mu) + e_t}{(x[t] - m) = a[0] + a[1]*(x[t-1] - m) + \dots +  a[p]*(x[t-p] - m) + e[t]}
 
   where \eqn{a_0}{a[0]} is zero unless \code{intercept} is true, and
   \eqn{\mu}{m} is the sample mean if \code{demean} is true, zero
@@ -76,7 +76,8 @@ ar.ols(x, aic = TRUE, order.max = NULL, na.action = na.fail,
     of the series used in fitting and for use in prediction.}
   \item{x.intercept}{The intercept in the model for
     \code{x - x.mean}, or zero if \code{intercept} is false.}
-  \item{aic}{The value of the \code{aic} argument.}
+  \item{aic}{The differences in AIC between each model and the
+    best-fitting model.  Note that the latter can have an AIC of \code{-Inf}.}
   \item{n.used}{The number of observations in the time series.}
   \item{order.max}{The value of the \code{order.max} argument.}
   \item{partialacf}{\code{NULL}.  For compatibility with \code{ar}.}

@@ -1,7 +1,7 @@
 /*
  *  R : A Computer Language for Statistical Data Analysis
  *  Copyright (C) 1995, 1996  Robert Gentleman and Ross Ihaka
- *  Copyright (C) 1999-2008 the R Development Core Group.
+ *  Copyright (C) 1999-2008  The R Development Core Team.
  *
  *  This program is free software; you can redistribute it and/or modify
  *  it under the terms of the GNU General Public License as published by
@@ -1930,13 +1930,14 @@ R_isMissing(SEXP symbol, SEXP rho)
     return 0;
 }
 
-/* this is primitive */
+/* this is primitive and a SPECIALSXP */
 SEXP attribute_hidden do_missing(SEXP call, SEXP op, SEXP args, SEXP rho)
 {
     int ddv=0;
     SEXP rval, t, sym, s;
 
     checkArity(op, args);
+    check1arg(args, call, "x");
     s = sym = CAR(args);
     if( isString(sym) && length(sym)==1 )
 	s = sym = install(translateChar(STRING_ELT(CAR(args), 0)));
@@ -2197,7 +2198,7 @@ SEXP attribute_hidden do_detach(SEXP call, SEXP op, SEXP args, SEXP env)
     }
 #endif
     UNPROTECT(1);
-    return FRAME(s);
+    return s;
 }
 
 
@@ -2509,6 +2510,7 @@ SEXP attribute_hidden do_env2list(SEXP call, SEXP op, SEXP args, SEXP rho)
  * results in a list.
  * Equivalent to lapply(as.list(env, all.names=all.names), FUN, ...)
  */
+/* This is a special .Internal */
 SEXP attribute_hidden do_eapply(SEXP call, SEXP op, SEXP args, SEXP rho)
 {
     SEXP env, ans, R_fcall, FUN, tmp, tmp2, ind;
@@ -2718,6 +2720,9 @@ SEXP attribute_hidden do_pos2env(SEXP call, SEXP op, SEXP args, SEXP rho)
 {
     SEXP env, pos;
     int i, npos;
+    checkArity(op, args);
+    check1arg(args, call, "x");
+
     PROTECT(pos = coerceVector(CAR(args), INTSXP));
     npos = length(pos);
     if (npos <= 0)
@@ -2754,6 +2759,7 @@ do_as_environment(SEXP call, SEXP op, SEXP args, SEXP rho)
 {
     SEXP arg = CAR(args);
     checkArity(op, args);
+    check1arg(args, call, "object");
     if(isEnvironment(arg))
 	return arg;
     switch(TYPEOF(arg)) {
@@ -3468,25 +3474,22 @@ SEXP mkCharLenCE(const char *name, int len, cetype_t enc)
     case CE_ANY:
 	break;
     default:
-	error("unknown encoding: %d", enc);
+	error(_("unknown encoding: %d"), enc);
     }
     if (slen < len) {
 	SEXP c;
-	if (R_WarnEscapes) {
-	    /* This is tricky: we want to make a reasonable job of
-	       representing this string, and EncodeString() is the most
-	       comprehensive */
-	    c = allocCharsxp(len);
-	    memcpy(CHAR_RW(c), name, len);
-	    switch(enc) {
-	    case CE_UTF8: SET_UTF8(c); break;
-	    case CE_LATIN1: SET_LATIN1(c); break;
-	    default: break;
-	    }
-	    warning(_("truncating string with embedded nul: '%s'"),
-		    EncodeString(c, 0, 0, Rprt_adj_none));
+	/* This is tricky: we want to make a reasonable job of
+	   representing this string, and EncodeString() is the most
+	   comprehensive */
+	c = allocCharsxp(len);
+	memcpy(CHAR_RW(c), name, len);
+	switch(enc) {
+	case CE_UTF8: SET_UTF8(c); break;
+	case CE_LATIN1: SET_LATIN1(c); break;
+	default: break;
 	}
-	len = slen;
+	error(_("embedded nul in string: '%s'"),
+	      EncodeString(c, 0, 0, Rprt_adj_none));
     }
 
     if (enc && IsASCII(name, len)) enc = CE_NATIVE;

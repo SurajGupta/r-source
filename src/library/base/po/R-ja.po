@@ -2,8 +2,8 @@ msgid ""
 msgstr ""
 "Project-Id-Version: R 2.4.0 \n"
 "Report-Msgid-Bugs-To: bugs@r-project.org\n"
-"POT-Creation-Date: 2009-12-10 19:18\n"
-"PO-Revision-Date: 2009-10-07 19:17+0900 \n"
+"POT-Creation-Date: 2010-03-22 15:15\n"
+"PO-Revision-Date: 2010-04-03 18:36+0900 \n"
 "Last-Translator: takahashi <takahashi.kohske@gmail.com> \n"
 "Language-Team: RjpWiki Message Translation Team <mokada@md.tsukuba.ac.jp> \n"
 "MIME-Version: 1.0 \n"
@@ -102,16 +102,27 @@ msgstr " *** 'pos=1' はいずれエラーを与えることを注意して下�
 msgid "file '%s' not found"
 msgstr " ファイル '%s' が見付かりません "
 
-msgid "invalid name"
-msgstr " 不当な名前です "
+msgid "invalid 'name' argument"
+msgstr "無効な 'name' 引数です "
 
-msgid "is required by"
-msgstr " が以下により要求されました： "
+msgid "package %s is required by %s, which may no longer work correctly"
+msgstr ""
+"パッケージ '%s' が%sに要求されていますが、もはや正しく機能しないかもしれませ"
+"ん "
 
-msgid "(still attached)"
-msgstr " (まだアタッチされています) "
+msgid "package %s is required by %s so will not be detached"
+msgstr " パッケージ '%s' は '%s' によって要求されているのでdetachできません "
 
-msgid "namespace cannot be unloaded"
+msgid ""
+"%s failed in %s() for '%s', details:\n"
+"  call: %s\n"
+"  error: %s"
+msgstr ""
+" %sは%s()（%sに対する）の中で失敗しました、詳細は: \n"
+" call: %s \n"
+" error: %s "
+
+msgid "name space cannot be unloaded:"
 msgstr " 名前空間をアンロード出来ません "
 
 msgid "replaced regular expression pattern '[' by  '\\\\['"
@@ -226,7 +237,7 @@ msgstr " 'row.names' に欠損値があってはなりません "
 msgid "invalid 'dimnames' given for data frame"
 msgstr " データフレームに無効な 'dimnames' が与えられました "
 
-msgid "cannot coerce class %s into a data.frame"
+msgid "cannot coerce class '%s' into a data.frame"
 msgstr " クラス \"%s\" はデータフレームに強制変換できません "
 
 msgid "invalid 'row.names', length %d for a data frame with %d rows"
@@ -460,6 +471,9 @@ msgstr " 'lag' そして 'differences' は 1 以上の整数でなければな�
 msgid "do not know how to convert '%s' to class \"POSIXlt\""
 msgstr " '%s' をクラス \"POSIXlt\" へ変換する方法が分かりません "
 
+msgid "do not know how to convert '%s' to class \"POSIXct\""
+msgstr " '%s' をクラス \"POSIXct\" へ変換する方法が分かりません "
+
 msgid "wrong class"
 msgstr " 間違ったクラスです "
 
@@ -646,21 +660,6 @@ msgstr " リンクすべきファイルがありません "
 msgid "no files/directory to link to"
 msgstr " リンクすべきファイルもしくはディレクトリがありません "
 
-msgid "'x' must have length 1"
-msgstr " 'x' は長さ 1 でなければなりません "
-
-msgid "invalid digits"
-msgstr " 無効な桁数です "
-
-msgid "'x' cannot be coerced to 'octmode'"
-msgstr " 'x' は 'octmode' に強制変換できません "
-
-msgid "'x' must be of length 1"
-msgstr " 'x' は長さ 1 でなければなりません "
-
-msgid "'x' cannot be coerced to hexmode"
-msgstr " 'x' は hexmode に強制変換できません "
-
 msgid "'package' must be of length 1"
 msgstr " 'package' は長さ 1 でなければなりません "
 
@@ -741,36 +740,25 @@ msgstr " 三角行列は正方行列であるべきです "
 msgid "'object' must be a list"
 msgstr " 'object' はリストでなければなりません "
 
-msgid "This is R %s, package '%s' needs %s %s"
-msgstr " これは R %s です。パッケージ '%s' は %s %s を必要とします "
+msgid "package '%s' has not been installed properly"
+msgstr " パッケージ '%s' は正しくインストールされませんでした "
 
-msgid "package '%s' was built before R 2.0.0: please re-install it"
+msgid "package '%s' was built before R 2.10.0: please re-install it"
 msgstr ""
-" パッケージ '%s' は R 2.0.0 以前に造らました。新しくインストールして下さい "
+"パッケージ '%s' は R 2.10.0 以前に造らました。新しくインストールして下さい "
 
-msgid "package '%s' was built under R version %s"
-msgstr " パッケージ '%s' はバージョン %s の R の下で造られました "
-
-msgid ""
-"package '%s' was built under R version %s and help will not work correctly\n"
-"Please re-install it"
-msgstr ""
-"パッケージ '%s' はバージョン %s の R の下で造られました。ヘルプは正しく機能し"
-"ません。新しくインストールしてください "
-
-msgid ""
-"package '%s' was built under R version %s and help may not work correctly"
-msgstr ""
-" パッケージ '%s' はバージョン %s の R の下で造られました。ヘルプは正しく機能"
-"しないかもしれません "
-
-#, fuzzy
 msgid ""
 "package '%s' claims to be built under R version %s but is missing some help "
 "files and needs to be re-installed"
 msgstr ""
-"パッケージ '%s' はバージョン %s の R の下で造られました。ヘルプは正しく機能し"
-"ません。新しくインストールしてください "
+"パッケージ '%s' はバージョン %s の R の下で造らている必要があります。欠けてい"
+"るヘルプファイルがあります。新しくインストールしてください "
+
+msgid "This is R %s, package '%s' needs %s %s"
+msgstr " これは R %s です。パッケージ '%s' は %s %s を必要とします "
+
+msgid "package '%s' was built under R version %s"
+msgstr " パッケージ '%s' はバージョン %s の R の下で造られました "
 
 msgid "package '%s' was built for %s"
 msgstr " パッケージ '%s' は %s に対して造られました "
@@ -778,26 +766,29 @@ msgstr " パッケージ '%s' は %s に対して造られました "
 msgid "package '%s' is not installed for 'arch=%s'"
 msgstr " パッケージ '%s' は 'arch=%s' に対してインストールされていません "
 
-msgid "package '%s' has not been installed properly"
-msgstr " パッケージ '%s' は正しくインストールされませんでした "
+msgid ""
+"package '%s' has a license that you need to accept in an interactive session"
+msgstr ""
+"パッケージ '%s' は対話的セッションで受け入れる必要のあるライセンスです "
 
-msgid "See the Note in ?library"
-msgstr " ?library でノートを見て下さい "
+msgid "Package '%s' has a license that you need to accept after viewing"
+msgstr "パッケージ '%s' は閲覧後に受け入れる必要のあるライセンスです "
+
+msgid ""
+"Package '%s' has a license that you need to accept:\n"
+"according to the DESCRIPTION file it is"
+msgstr ""
+"パッケージ '%s' は受け入れる必要のあるライセンスです:Descriptionファイルによ"
+"れば、以下の通りです。 "
+
+msgid "License"
+msgstr "ライセンス"
+
+msgid "License for package '%s' not accepted"
+msgstr "パッケージ '%s' のライセンスは受け入れられていません "
 
 msgid "Attaching package: '%s'"
 msgstr " 次のパッケージを付け加えます: '%s' "
-
-msgid "The following object(s) are masked"
-msgstr " 次のオブジェクトは "
-
-msgid "_by_"
-msgstr " 以下により "
-
-msgid "from"
-msgstr " 以下からマスクされています "
-
-msgid ":"
-msgstr "  :  "
 
 msgid "invalid package name"
 msgstr " 不当なパッケージ名です "
@@ -816,11 +807,6 @@ msgstr " '%s' は検索パス上には見つかりませんでした。pos = 2 �
 
 msgid "package/namespace load failed for '%s'"
 msgstr " '%s' に対するパッケージもしくは名前空間のロードが失敗しました "
-
-msgid "package was installed prior to 2.4.0 and must be re-installed"
-msgstr ""
-" パッケージは R 2.4.0 以前にインストールされました。新しくインストールして下"
-"さい "
 
 msgid "unable to load R code in package '%s'"
 msgstr " パッケージ '%s' 中の R コードをロードできません "
@@ -1043,14 +1029,8 @@ msgid "'%s' is not an exported object from 'namespace:%s'"
 msgstr ""
 " '%s' は 'namespace:%s' からエクスポートされたオブジェクトではありません "
 
-msgid "package '%s' has no name space and"
-msgstr " パッケージ '%s' は名前空間を持っていませんし "
-
-msgid "is not on the search path"
-msgstr " 検索パス上にありません "
-
-msgid "%s failed in 'attachNamespace'"
-msgstr " %s は 'attachNamespace' で失敗しました "
+msgid "package %s has no name space and is not on the search path"
+msgstr " パッケージ '%s' は名前空間を持っていませんしサーチパス上にありません "
 
 msgid "name space is already attached"
 msgstr " 名前空間は既に付加されています "
@@ -1060,9 +1040,6 @@ msgstr " %s を見付けることができません "
 
 msgid "cyclic name space dependencies are not supported"
 msgstr " サイクリックな名前空間の従属性はサポートされていません "
-
-msgid "%s failed in 'loadNamespace' for '%s'"
-msgstr " %s は '%s' のための 'loadNamespace' で失敗しました "
 
 msgid "namespace '%s' is already sealed in loadNamespace"
 msgstr " 名前空間 '%s' は既に loadNamespace 中に封印(seal)されています "
@@ -1088,33 +1065,31 @@ msgstr " 以下に対する NativeSymbolInfo を代入できません "
 msgid "package '%s' does not have a name space"
 msgstr " パッケージ '%s' は名前空間を持っていません "
 
-#, fuzzy
 msgid ""
 "exportClassPattern specified in NAMESPACE but no matching classes in package "
-"'%s'"
+"%s"
 msgstr ""
-" exportClassPattern が指定されましたが、%s 中には対応するクラスがありません "
+"NAMESPACEの中で exportClassPattern が指定されましたが、%s パッケージには該当"
+"するクラスがありません "
 
-#, fuzzy
-msgid "in package '%s' classes for export not defined: %s"
-msgstr " '%s' 中にはエクスポートのためのクラスは見付かりません： %s "
+msgid "in package %s classes %s were specified for export but not defined"
+msgstr ""
+"パッケージ '%s' 中のクラス %s をエクスポートするように指定されていますが定義"
+"されていません "
 
 msgid "in '%s' methods for export not found: %s"
 msgstr " '%s' 中にはエクスポートのためのメソッドは見付かりません： %s "
 
-msgid "Multiple methods tables found for '"
-msgstr " 複数のメソッドテーブルが以下に見付かりました ' "
+msgid "multiple methods tables found for %s"
+msgstr " %s に対して複数のメソッドテーブルが見付かりました "
 
-msgid "'"
-msgstr "’ "
-
-msgid "Failed to find metadata object for \"%s\""
+msgid "failed to find metadata object for %s"
 msgstr " \"%s\" に対する metadata オブジェクトを見付けることができません "
 
-msgid "in '%s' methods specified for export, but none defined: %s"
+msgid "in package %s methods %s were specified for export but not defined"
 msgstr ""
-" '%s' 中にエクスポートのためのメソッドが指定されていますが、定義されていませ"
-"ん： %s "
+"パッケージ %s 中のメソッド %s をエクスポートするように指定されていますが、定"
+"義されていません "
 
 msgid "not found"
 msgstr " 見つかりません "
@@ -1122,15 +1097,9 @@ msgstr " 見つかりません "
 msgid "not loading a name space"
 msgstr " 名前空間をロードしません "
 
-#, fuzzy
-msgid ""
-"%s failed in unloadNamespace(\"%s\"), details:\n"
-"  call: %s\n"
-"  message: %s"
-msgstr " %s は unloadNamespace(%s) で失敗しました "
-
-msgid "name space '%s' is still used by: %s"
-msgstr " 名前空間 '%s' は以下によりまだ使用されています： %s "
+msgid "name space %s is imported by %s so cannot be unloaded"
+msgstr ""
+" 名前空間 %s は %s によってインポートされているのでアンロード出来ません "
 
 msgid "imperative name space directives are disabled"
 msgstr ""
@@ -1151,8 +1120,14 @@ msgstr " ベース名前空間では許可されない操作です "
 msgid "duplicate import names"
 msgstr " 重複したインポート名です "
 
+msgid "replacing local value with import %s when loading %s"
+msgstr "ローカル変数をインポート %s で置き換えています（%sのロード中） "
+
 msgid "cannot import into a sealed name space"
 msgstr " 封印された名前空間にはインポートできません "
+
+msgid "replacing previous import %s when loading %s"
+msgstr " 以前のインポート %s を置き換えています（%sのロード中） "
 
 msgid "invalid import target"
 msgstr " 無効なインポート対象です "
@@ -1160,14 +1135,14 @@ msgstr " 無効なインポート対象です "
 msgid "got invalid index for importing"
 msgstr "インポートに対する不正なインデックスです "
 
-msgid "Found methods to import for function \"%s\" but not the generic itself"
+msgid "found methods to import for function %s but not the generic itself"
 msgstr ""
 " 関数 \"%s\" に対するインポートメソッドをみつけましたが、総称的ではありませ"
 "ん "
 
-msgid "requested 'methods' objects not found in environment/package '%s': %s"
+msgid "requested methods not found in environment/package %s: %s"
 msgstr ""
-" 要求された 'methods' オブジェクトは環境もしくはパッケージ '%s' に見付かりま"
+" 要求された 'methods' オブジェクトは環境もしくはパッケージ '%s'中に見付かりま"
 "せん： %s "
 
 msgid "cannot add to exports of a sealed name space"
@@ -1182,14 +1157,8 @@ msgstr " パッケージ '%s' は NAMESPACE ファイルを持っていません
 msgid "empty name in directive '%s' in NAMESPACE file"
 msgstr " NAMESPACE ファイル中の directive '%s' 中には名前がありません "
 
-msgid "duplicated symbol names"
-msgstr " 重複したシンボル名です "
-
-msgid "in useDynLib("
-msgstr " useDynLib( "
-
-msgid ")"
-msgstr " ) 中に "
+msgid "duplicated symbol names %s in useDynlib(\"%s\")"
+msgstr " 重複したシンボル名 %s が useDynlib(\"%s\")中に見つかりました "
 
 msgid "bad 'S3method' directive: %s"
 msgstr " 誤った 'S3method' 指令です：%s "
@@ -1200,8 +1169,8 @@ msgstr " 'S3method' 指令が多すぎます "
 msgid "unknown namespace directive: %s"
 msgstr " 未知の名前空間指令です： %s "
 
-msgid "S3 method '%s' was declared in NAMESPACE but not found"
-msgstr " S3 メソッド '%s' が名前空間中で宣言されましたが、見付かりません "
+msgid "S3 method %s was declared but not found"
+msgstr "S3 メソッド %s が宣言されましたが、見つかりませんでした "
 
 msgid "bad method"
 msgstr " 誤ったメソッドです "
@@ -1211,7 +1180,7 @@ msgstr ""
 " オブジェクト '%s' を見つけることができませんでした(名前空間 '%s' のロード中"
 "に) "
 
-msgid "found an S4 version of '%s' so it has not been imported correctly"
+msgid "found an S4 version of %s so it has not been imported correctly"
 msgstr ""
 " '%s' の S4 版が見付かりました。したがってそれは正しくインポートされていませ"
 "ん "
@@ -1221,6 +1190,12 @@ msgstr " '%s' はまだ実装されていません "
 
 msgid "argument '%s' is not used (yet)"
 msgstr " 引数 '%s' は(まだ)使用されていません "
+
+msgid "'x' cannot be coerced to 'octmode'"
+msgstr " 'x' は 'octmode' に強制変換できません "
+
+msgid "'x' cannot be coerced to hexmode"
+msgstr " 'x' は hexmode に強制変換できません "
 
 msgid "no arguments"
 msgstr " 引数がありません "
@@ -1389,6 +1364,9 @@ msgstr ""
 msgid "unable to find a plausible encoding"
 msgstr " もっともらしいエンコーディングを見つけられません "
 
+msgid "encoding = \"%s\" chosen"
+msgstr "エンコーディング %s が選択されました "
+
 msgid "'chdir = TRUE' makes no sense for a URL"
 msgstr " 'chdir = TRUE' は URL に対しては意味がありません "
 
@@ -1515,8 +1493,8 @@ msgstr " '%s'はnumeric_version オブジェクトに対しては定義されて
 msgid "not defined for numeric_version objects"
 msgstr " numeric_version オブジェクトに対しては定義されていません "
 
-msgid "argument to 'which' is not logical"
-msgstr " 'which' への引数は論理値ではありません "
+msgid "<0 elements>"
+msgstr " <0要素> "
 
 msgid "invalid 'digits'"
 msgstr " 無効な 'digits' です "
@@ -1528,8 +1506,26 @@ msgstr ""
 " 引数 'show.output.on.console', 'minimized' そして 'invisible' は Windows 専"
 "用です "
 
+msgid "'intern' must be TRUE or FALSE"
+msgstr " 'intern' は 'TRUE' か 'FALSE' でなければなりません "
+
+msgid "'ignore.stderr' must be TRUE or FALSE"
+msgstr " 'ignore.stderr' は 'TRUE' か 'FALSE' でなければなりません "
+
+msgid "'wait' must be TRUE or FALSE"
+msgstr " 'wait' は 'TRUE' か 'FALSE' でなければなりません "
+
 msgid "'input' must be a character vector or 'NULL'"
 msgstr " 'input' は文字ベクトルまたは NULL でなければなりません "
+
+msgid "'show.output.on.console' must be TRUE or FALSE"
+msgstr " 'show.output.on.console' は 'TRUE' か 'FALSE' でなければなりません "
+
+msgid "'minimized' must be TRUE or FALSE"
+msgstr " 'minimiized' は 'TRUE' か 'FALSE' でなければなりません "
+
+msgid "'invisible' must be TRUE or FALSE"
+msgstr " 'invisible' は 'TRUE' か 'FALSE' でなければなりません "
 
 msgid "'%s' could not be run"
 msgstr " '%s' を実行できませんでした "
@@ -1590,8 +1586,12 @@ msgid "object %s not found"
 msgid_plural "objects %s not found"
 msgstr[0] " %s を見付けることができません "
 
-msgid "object '%s' is not exported by 'namespace:%s'"
-msgid_plural "objects '%s' are not exported by 'namespace:%s'"
+msgid "class %s is not exported by 'namespace:%s'"
+msgid_plural "classes %s are not exported by 'namespace:%s'"
+msgstr[0] "クラス '%s' は 'namespace:%s' によってエクスポートされていません "
+
+msgid "object %s is not exported by 'namespace:%s'"
+msgid_plural "objects %s are not exported by 'namespace:%s'"
 msgstr[0] ""
 "オブジェクト '%s' は 'namespace:%s' によってエクスポートされていません "
 
@@ -1608,8 +1608,76 @@ msgid "Warning message:\n"
 msgid_plural "Warning messages:\n"
 msgstr[0] " 警告メッセージ： \n"
 
+#~ msgid "'x' must have length 1"
+#~ msgstr " 'x' は長さ 1 でなければなりません "
+
+#~ msgid "invalid digits"
+#~ msgstr " 無効な桁数です "
+
+#~ msgid "'x' must be of length 1"
+#~ msgstr " 'x' は長さ 1 でなければなりません "
+
+#~ msgid "The following object(s) are masked"
+#~ msgstr " 次のオブジェクトは "
+
+#~ msgid "_by_"
+#~ msgstr " 以下により "
+
+#~ msgid "from"
+#~ msgstr " 以下からマスクされています "
+
+#~ msgid ":"
+#~ msgstr "  :  "
+
+#~ msgid "argument to 'which' is not logical"
+#~ msgstr " 'which' への引数は論理値ではありません "
+
+#~ msgid "is not on the search path"
+#~ msgstr " 検索パス上にありません "
+
+#~ msgid "'"
+#~ msgstr "’ "
+
+#~ msgid "in useDynLib("
+#~ msgstr " useDynLib( "
+
+#~ msgid ")"
+#~ msgstr " ) 中に "
+
+#~ msgid "S3 method '%s' was declared in NAMESPACE but not found"
+#~ msgstr " S3 メソッド '%s' が名前空間中で宣言されましたが、見付かりません "
+
+#~ msgid "invalid name"
+#~ msgstr " 不当な名前です "
+
+#~ msgid "is required by"
+#~ msgstr " が以下により要求されました： "
+
+#~ msgid "(still attached)"
+#~ msgstr " (まだアタッチされています) "
+
+#~ msgid "name space '%s' is still used by: %s"
+#~ msgstr " 名前空間 '%s' は以下によりまだ使用されています： %s "
+
+#~ msgid "See the Note in ?library"
+#~ msgstr " ?library でノートを見て下さい "
+
+#~ msgid "package was installed prior to 2.4.0 and must be re-installed"
+#~ msgstr ""
+#~ " パッケージは R 2.4.0 以前にインストールされました。新しくインストールして"
+#~ "下さい "
+
+#~ msgid "%s failed in 'attachNamespace'"
+#~ msgstr " %s は 'attachNamespace' で失敗しました "
+
+#~ msgid "%s failed in 'loadNamespace' for '%s'"
+#~ msgstr " %s は '%s' のための 'loadNamespace' で失敗しました "
+
 #~ msgid "name space '%s' is loaded"
 #~ msgstr " 名前空間 '%s' がロードされました "
+
+#~ msgid "%s failed in unloadNamespace(%s)"
+#~ msgstr " %s は unloadNamespace(%s) で失敗しました "
 
 #~ msgid "extra arguments ignored:"
 #~ msgstr " 余計な引数は無視されました: "

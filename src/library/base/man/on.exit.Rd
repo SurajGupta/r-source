@@ -1,6 +1,6 @@
 % File src/library/base/man/on.exit.Rd
 % Part of the R package, http://www.R-project.org
-% Copyright 1995-2008 R Core Development Team
+% Copyright 1995-2010 R Core Development Team
 % Distributed under GPL 2 or later
 
 \name{on.exit}
@@ -14,12 +14,9 @@
 
   If no expression is provided, i.e., the call is \code{on.exit()}, then
   the current \code{on.exit} code is removed.
-
-  \code{on.exit} is a primitive function so positional matching is
-  used and names of supplied arguments are ignored.
 }
 \usage{
-on.exit(expr, add = FALSE)
+on.exit(expr = NULL, add = FALSE)
 }
 \arguments{
   \item{expr}{an expression to be executed.}
@@ -39,8 +36,9 @@ on.exit(expr, add = FALSE)
   expression will be looked for in the function and its environment at
   the time of exit: to capture the current value in \code{expr} use
   \code{\link{substitute}} or similar.
-
-  This is a \link{primitive} function and uses positional matching.
+  
+  This is a \sQuote{special} \link{primitive} function: it only
+  evaluates the argument \code{add}.
 }
 \value{
   Invisible \code{NULL}.

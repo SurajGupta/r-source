@@ -46,8 +46,7 @@ SEXP attribute_hidden do_charToRaw(SEXP call, SEXP op, SEXP args, SEXP env)
 SEXP attribute_hidden do_rawToChar(SEXP call, SEXP op, SEXP args, SEXP env)
 {
     SEXP ans, x = CAR(args);
-    int i, nc = LENGTH(x), multiple, len;
-    char buf[2];
+    int i, j, nc = LENGTH(x), multiple;
 
     checkArity(op, args);
     if (!isRaw(x))
@@ -56,6 +55,7 @@ SEXP attribute_hidden do_rawToChar(SEXP call, SEXP op, SEXP args, SEXP env)
     if (multiple == NA_LOGICAL)
 	error(_("argument 'multiple' must be TRUE or FALSE"));
     if (multiple) {
+	char buf[2];
 	buf[1] = '\0';
 	PROTECT(ans = allocVector(STRSXP, nc));
 	for (i = 0; i < nc; i++) {
@@ -64,12 +64,13 @@ SEXP attribute_hidden do_rawToChar(SEXP call, SEXP op, SEXP args, SEXP env)
 	}
 	/* do we want to copy e.g. names here? */
     } else {
-	len = LENGTH(x);
+	/* String is not necessarily 0-terminated and may contain nuls.
+	   Strip trailing nuls */
+	for (i = 0, j = -1; i < nc; i++) if(RAW(x)[i]) j = i;
+	nc = j + 1;
 	PROTECT(ans = allocVector(STRSXP, 1));
-	/* String is not necessarily 0-terminated and may contain nuls
-	   so don't use mkString */
 	SET_STRING_ELT(ans, 0,
-		       mkCharLenCE((const char *)RAW(x), len, CE_NATIVE));
+		       mkCharLenCE((const char *)RAW(x), j+1, CE_NATIVE));
     }
     UNPROTECT(1);
     return ans;
@@ -269,6 +270,7 @@ SEXP attribute_hidden do_utf8ToInt(SEXP call, SEXP op, SEXP args, SEXP env)
 	error(_("argument must be a character vector of length 1"));
     if (LENGTH(x) > 1)
 	warning(_("argument should be a character vector of length 1\nall but the first element will be ignored"));
+    if (STRING_ELT(x, 0) == NA_STRING) return ScalarInteger(NA_INTEGER);
     nc = LENGTH(STRING_ELT(x, 0)); /* ints will be shorter */
     ians = (int *) R_alloc(nc,  sizeof(int *));
     for (i = 0, j = 0; i < nc; i++) {
@@ -326,16 +328,29 @@ SEXP attribute_hidden do_intToUtf8(SEXP call, SEXP op, SEXP args, SEXP env)
     if (multiple) {
 	PROTECT(ans = allocVector(STRSXP, nc));
 	for (i = 0; i < nc; i++) {
-	    used = inttomb(buf, INTEGER(x)[i]);
-	    buf[used] = '\0';
-	    SET_STRING_ELT(ans, i, mkCharCE(buf, CE_UTF8));
+	    if (INTEGER(x)[i] == NA_INTEGER)
+		SET_STRING_ELT(ans, i, NA_STRING);
+	    else {
+		used = inttomb(buf, INTEGER(x)[i]);
+		buf[used] = '\0';
+		SET_STRING_ELT(ans, i, mkCharCE(buf, CE_UTF8));
+	    }
 	}
 	/* do we want to copy e.g. names here? */
     } else {
+	Rboolean haveNA = FALSE;
 	/* Note that this gives zero length for input '0', so it is omitted */
-	for (i = 0, len = 0; i < nc; i++)
+	for (i = 0, len = 0; i < nc; i++) {
+	    if (INTEGER(x)[i] == NA_INTEGER) { haveNA = TRUE; break; }
 	    len += inttomb(NULL, INTEGER(x)[i]);
-	if(len >= 10000) {
+	}
+	if (haveNA) {
+	    PROTECT(ans = allocVector(STRSXP, 1));
+	    SET_STRING_ELT(ans, 0, NA_STRING);
+	    UNPROTECT(2);
+	    return ans;
+	}
+	if (len >= 10000) {
 	    tmp = Calloc(len+1, char);
 	} else {
 	    tmp = alloca(len+1); tmp[len] = '\0';

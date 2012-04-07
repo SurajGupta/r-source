@@ -29,12 +29,14 @@ stamp-recommended: $(OBJECTS)
 INSTALL_OPTS=--pkglock --install-tests --data-compress="xz"
 
 
-RCMD = ../../../bin/Rcmd
+RCMD = ../../../$(BINDIR)/Rcmd
 
+## force tar.exe, as internal tar gets wrong permissions on >= Vista
+## when run from Cygwin
 .tgz.ts:
 	@echo
 	@echo "----- installing recommended package" `basename $< .tgz`
-	@$(RCMD) INSTALL $(INSTALL_OPTS) -l $(RHOME)/library `basename $< .tgz`_*.tar.gz
+	@R_INSTALL_TAR=tar.exe $(RCMD) INSTALL $(INSTALL_OPTS) -l $(RHOME)/library `basename $< .tgz`_*.tar.gz
 	@touch $@
 
 clean:
@@ -44,3 +46,6 @@ clean:
 mgcv.ts: nlme.ts MASS.ts Matrix.ts
 nlme.ts: lattice.ts
 class.ts: MASS.ts
+## and for static html links
+boot.ts: MASS.ts survival.ts
+cluster.ts: MASS.ts

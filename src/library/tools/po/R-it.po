@@ -2,7 +2,7 @@ msgid ""
 msgstr ""
 "Project-Id-Version: R 2.3.0\n"
 "Report-Msgid-Bugs-To: bugs@r-project.org\n"
-"POT-Creation-Date: 2009-12-10 19:18\n"
+"POT-Creation-Date: 2010-03-16 09:20\n"
 "PO-Revision-Date: 2005-04-17 16:57+0200\n"
 "Last-Translator: stefano iacus <>\n"
 "Language-Team: Italian <it@li.org>\n"
@@ -298,6 +298,11 @@ msgstr ""
 msgid "package must be loaded"
 msgstr "il name space non deve essere caricato."
 
+msgid ""
+"package %s exists but was not installed under R >= 2.10.0 so xrefs cannot be "
+"checked"
+msgstr ""
+
 msgid "Obsolete package(s) %s in Rd xrefs"
 msgstr ""
 
@@ -333,6 +338,13 @@ msgid "Rd files with duplicated name '%s':"
 msgstr "I file Rd devono avere \\title non vuoto."
 
 msgid "Rd files with duplicated alias '%s':"
+msgstr ""
+
+#, fuzzy
+msgid "Argument items with no description in Rd object '%s':"
+msgstr "Errore di sintassi nella documentazione dell'oggetto '%s':"
+
+msgid "Auto-generated content requiring editing in Rd object '%s':"
 msgstr ""
 
 msgid "Generics g in env ="
@@ -460,7 +472,7 @@ msgid "unable to create '%s'"
 msgstr "impossibile creare '%s'"
 
 #, fuzzy
-msgid "unable to re-encode '%s'"
+msgid "unable to re-encode '%s' line(s) %s"
 msgstr "impossibile creare '%s'"
 
 #, fuzzy
@@ -493,16 +505,10 @@ msgstr "il file '%s' non è stato creato"
 msgid "cannot copy '%s' to '%s'"
 msgstr "impossibile copiare '%s' su '%s'"
 
-msgid "missing 'DESCRIPTION.in' for package '%s'"
-msgstr ""
-
 msgid "WARNING: malformed 'Depends' field in 'DESCRIPTION'"
 msgstr ""
 
 msgid "ERROR: this R is version %s, package '%s' requires R %s %s"
-msgstr ""
-
-msgid "ERROR: this R is version %s, bundle '%s' requires R %s %s"
 msgstr ""
 
 msgid "ERROR: this R is version %s, required is R %s %s"
@@ -537,13 +543,13 @@ msgstr "non può essere usato per il pacchetto 'base'"
 msgid "Link %s in package %s could not be located"
 msgstr "il name space non deve essere caricato."
 
-msgid "Unable to locate help document %s in package %s"
-msgstr ""
-
 msgid "No docs found for package %s"
 msgstr ""
 
-msgid "Only help files, %s and files under %s in a package can be viewed"
+msgid "Only help files, %s, %s and files under %s in a package can be viewed"
+msgstr ""
+
+msgid "NEWS"
 msgstr ""
 
 #, fuzzy
@@ -587,6 +593,9 @@ msgstr "non posso leggere le informazioni dell'indice nel file '%s'"
 msgid "ERROR:"
 msgstr ""
 
+msgid "this seems to be a bundle -- and they are defunct"
+msgstr ""
+
 #, fuzzy
 msgid "packaged installation of"
 msgstr "il pacchetto non contiene codice R"
@@ -597,6 +606,9 @@ msgstr ""
 msgid ""
 "'cleanup' exists but is not executable -- see the 'R Installation and "
 "Adminstration Manual'"
+msgstr ""
+
+msgid "installing to"
 msgstr ""
 
 msgid ""
@@ -637,7 +649,7 @@ msgstr "impossibile creare directory '%s'"
 msgid "invalid package"
 msgstr ""
 
-msgid "--pkglock applies only to a single bundle/package"
+msgid "--pkglock applies only to a single package"
 msgstr ""
 
 msgid "ERROR: no packages specified"
@@ -695,9 +707,6 @@ msgstr ""
 msgid "'type' must be one of 'txt', 'html', 'latex' or 'example'"
 msgstr ""
 
-msgid "Bundle package:"
-msgstr ""
-
 msgid "there is no package called '%s'"
 msgstr "non esiste un pacchetto chiamato '%s'"
 
@@ -706,10 +715,6 @@ msgstr "il name space non deve essere caricato."
 
 msgid "package seems to be using lazy loading for data already"
 msgstr "il pacchetto sembra già utilizzare il lazy loading per i dati"
-
-#, fuzzy
-msgid "object(s) %s are created by more than one data call"
-msgstr "creati da più di una chiamata data"
 
 msgid "source list must have names for all elements"
 msgstr "la lista sorgente deve avere i nomi per tutti gli elementi"
@@ -730,6 +735,9 @@ msgid ""
 "Cannot process chunk/lines:\n"
 "%s"
 msgstr ""
+
+msgid "Processing packages:"
+msgstr "Elaboro i pacchetti:"
 
 #, fuzzy
 msgid "cannot update HTML package index"
@@ -897,7 +905,7 @@ msgstr ""
 msgid "Files 'DESCRIPTION' and 'DESCRIPTION.in' are missing."
 msgstr ""
 
-msgid "Bundle 'DESCRIPTION' is missing."
+msgid "invalid package layout"
 msgstr ""
 
 msgid "file '%s' is not in valid DCF format"
@@ -908,9 +916,6 @@ msgstr "impossibile leggere codice sorgente del pacchetto"
 
 msgid "Call sequence:"
 msgstr "Successione delle chiamate:"
-
-msgid "Processing packages:"
-msgstr "Elaboro i pacchetti:"
 
 msgid "parsing '%s'"
 msgstr "analizzo '%s'"
@@ -936,6 +941,12 @@ msgid "Found .Internal call in the following function:"
 msgid_plural "Found .Internal calls in the following functions:"
 msgstr[0] ""
 msgstr[1] ""
+
+#, fuzzy
+msgid "object %s is created by more than one data call"
+msgid_plural "objects %s are created by more than one data call"
+msgstr[0] "creati da più di una chiamata data"
+msgstr[1] "creati da più di una chiamata data"
 
 #, fuzzy
 #~ msgid "Suspect link(s) in documentation object '%s':"

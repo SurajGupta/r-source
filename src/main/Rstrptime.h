@@ -1,5 +1,8 @@
-/* For inclusion by datetime.c if needed. A slightly modified version of
-   code from the GNU C library with locale support removed. */
+/* For inclusion by datetime.c. 
+
+   A modified version of code from the GNU C library with locale
+   support removed and wchar support added.
+*/
 
 /* Convert a string representation of time to a time value.
    Copyright (C) 1996, 1997, 1998, 1999, 2000 Free Software Foundation, Inc.
@@ -18,7 +21,7 @@
 
    You should have received a copy of the GNU Library General Public
    License along with the GNU C Library; see the file COPYING.LIB.  If not,
-   a copy is available at http://www.r-project.org/licenses/ 
+   a copy is available at http://www.r-project.org/licenses/
 */
 /* XXX This version of the implementation is not really complete.
    Some of the fields cannot add information alone.  But if seeing
@@ -71,7 +74,7 @@
   get_number(from, to, n)
 #define recursive(new_fmt) \
   (*(new_fmt) != '\0'							      \
-   && (rp = strptime_internal (rp, (new_fmt), tm, decided, psecs)) != NULL)
+   && (rp = strptime_internal (rp, (new_fmt), tm, decided, psecs, poffset)) != NULL)
 
 /* This version: may overwrite these with versions for the locale,
  * hence the extra length of the fields
@@ -129,10 +132,10 @@ day_of_the_week (struct tm *tm)
     int corr_year, wday;
 
     /* R bug fix: day_of_the_week needs year, month, mday set */
-    if(tm->tm_year == NA_INTEGER || 
-       tm->tm_mon == NA_INTEGER || 
+    if(tm->tm_year == NA_INTEGER ||
+       tm->tm_mon == NA_INTEGER ||
        tm->tm_mday == NA_INTEGER) return;
-    
+
     corr_year = 1900 + tm->tm_year - (tm->tm_mon < 2);
     wday = (-473
 	    + (365 * (tm->tm_year - 70))
@@ -149,8 +152,8 @@ static void
 day_of_the_year (struct tm *tm)
 {
     /* R bug fix: day_of_the_year needs year, month, mday set */
-    if(tm->tm_year == NA_INTEGER || 
-       tm->tm_mon == NA_INTEGER || 
+    if(tm->tm_year == NA_INTEGER ||
+       tm->tm_mon == NA_INTEGER ||
        tm->tm_mday == NA_INTEGER) return;
 
     tm->tm_yday = (__mon_yday[__isleap (1900 + tm->tm_year)][tm->tm_mon]
@@ -198,11 +201,12 @@ static int Rwcsncasecmp(const wchar_t *cs1, const wchar_t *s2)
 
 #define w_recursive(new_fmt) \
   (*(new_fmt) != '\0'							      \
-   && (rp = w_strptime_internal (rp, (new_fmt), tm, decided, psecs)) != NULL)
+   && (rp = w_strptime_internal (rp, (new_fmt), tm, decided, psecs, poffset)) != NULL)
 
-static wchar_t * 
-w_strptime_internal (wchar_t *rp, const wchar_t *fmt, struct tm *tm, 
-		     enum locale_status *decided, double *psecs)
+static wchar_t *
+w_strptime_internal (wchar_t *rp, const wchar_t *fmt, struct tm *tm,
+		     enum locale_status *decided, double *psecs, 
+		     int *poffset)
 {
     const wchar_t *rp_backup;
     int cnt;
@@ -246,7 +250,7 @@ w_strptime_internal (wchar_t *rp, const wchar_t *fmt, struct tm *tm,
 	/* We need this for handling the `E' modifier.  */
     start_over:
 
-        /* Make back up of current processing pointer.  */
+	/* Make back up of current processing pointer.  */
 	rp_backup = rp;
 
 	switch (*fmt++)
@@ -295,7 +299,7 @@ w_strptime_internal (wchar_t *rp, const wchar_t *fmt, struct tm *tm,
 	    break;
 	case L'c':
 	    /* Match locale's date and time format.  */
-	    if (!w_recursive (L"%I:%M:%S %p"))
+	    if (!w_recursive (L"%a %b %e %H:%M:%S %Y")) /* HERE_D_T_FMT */
 		return NULL;
 	    break;
 	case L'C':
@@ -321,7 +325,7 @@ w_strptime_internal (wchar_t *rp, const wchar_t *fmt, struct tm *tm,
 	  /* Fall through.  */
 	case L'D':
 	  /* Match standard day format.  */
-	  if (!w_recursive (L"%y/%m/%d"))
+	    if (!w_recursive (L"%y/%m/%d")) /* HERE_D_FMT */
 	    return NULL;
 	  want_xday = 1;
 	  break;
@@ -374,8 +378,8 @@ w_strptime_internal (wchar_t *rp, const wchar_t *fmt, struct tm *tm,
 	  }
 	  break;
 	case L'r':
-	  if (!w_recursive (L"%I:%M:%S %p"))
-	    return NULL;
+	    if (!w_recursive (L"%I:%M:%S %p")) /* HERE_T_FMT_AMPM */
+		return NULL;
 	  break;
 	case L'R':
 	    if (!w_recursive (L"%H:%M"))
@@ -411,7 +415,7 @@ w_strptime_internal (wchar_t *rp, const wchar_t *fmt, struct tm *tm,
 	case L'X':
 	    /* Fall through.  */
 	case L'T':
-	    if (!w_recursive (L"%H:%M:%S"))
+	    if (!w_recursive (L"%H:%M:%S")) /* HERE_T_FMT */
 		return NULL;
 	    break;
 	case L'u':
@@ -470,8 +474,32 @@ w_strptime_internal (wchar_t *rp, const wchar_t *fmt, struct tm *tm,
 	    want_century = 0;
 	    want_xday = 1;
 	    break;
+	case L'z':
+	    {
+		int n = 0, neg, off = 0;
+		val = 0;
+		while (*rp == L' ') ++rp;
+		if (*rp != L'+' && *rp != L'-') return NULL;
+		neg = *rp++ == L'-';
+		while (n < 4 && *rp >= L'0' && *rp <= L'9') {
+		    val = val * 10 + *rp++ - L'0';
+		    ++n;
+		}
+		if (n != 4) return NULL;
+		else {
+		    /* We have to convert the minutes into decimal.  */
+		    if (val % 100 >= 60) return NULL;
+		    val = (val / 100) * 100 + ((val % 100) * 50) / 30;
+		}
+		if (val > 1200) return NULL;
+		off = (val * 3600) / 100;
+		if (neg) off = -off;
+		*poffset = off;
+	    }
+	    break;
 	case L'Z':
-	    /* XXX How to handle this?  */
+	    error(_("use of %s for input is not supported"), "%Z");
+	    return NULL;
 	    break;
 	case L'E':
 	    /* We have no information about the era format.  Just use
@@ -522,7 +550,7 @@ w_strptime_internal (wchar_t *rp, const wchar_t *fmt, struct tm *tm,
 	    case L'S':
 		/* Match seconds using alternate numeric symbols.
 		get_alt_number (0, 61, 2); */
-		{  
+		{
 		    double sval;
 		    wchar_t *end;
 		    sval = wcstod(rp, &end);
@@ -638,9 +666,10 @@ w_strptime_internal (wchar_t *rp, const wchar_t *fmt, struct tm *tm,
 }
 
 
-static char * 
-strptime_internal (const char *rp, const char *fmt, struct tm *tm, 
-		   enum locale_status *decided, double *psecs)
+static char *
+strptime_internal (const char *rp, const char *fmt, struct tm *tm,
+		   enum locale_status *decided, double *psecs,
+		   int *poffset)
 {
     const char *rp_backup;
     int cnt;
@@ -684,7 +713,7 @@ strptime_internal (const char *rp, const char *fmt, struct tm *tm,
 	/* We need this for handling the `E' modifier.  */
     start_over:
 
-        /* Make back up of current processing pointer.  */
+	/* Make back up of current processing pointer.  */
 	rp_backup = rp;
 
 	switch (*fmt++)
@@ -733,7 +762,7 @@ strptime_internal (const char *rp, const char *fmt, struct tm *tm,
 	    break;
 	case 'c':
 	    /* Match locale's date and time format.  */
-	    if (!recursive (HERE_T_FMT_AMPM))
+	    if (!recursive (HERE_D_T_FMT))
 		return NULL;
 	    break;
 	case 'C':
@@ -895,7 +924,10 @@ strptime_internal (const char *rp, const char *fmt, struct tm *tm,
 	    /* Match year within century.  */
 	    get_number (0, 99, 2);
 	    /* The "Year 2000: The Millennium Rollover" paper suggests that
-	       values in the range 69-99 refer to the twentieth century.  */
+	       values in the range 69-99 refer to the twentieth century.
+	       And this is mandated by the POSIX 2001 standard, with a
+	       caveat that it might change in future.
+	    */
 	    tm->tm_year = val >= 69 ? val : val + 100;
 	    /* Indicate that we want to use the century, if specified.  */
 	    want_century = 1;
@@ -908,8 +940,33 @@ strptime_internal (const char *rp, const char *fmt, struct tm *tm,
 	    want_century = 0;
 	    want_xday = 1;
 	    break;
+	case 'z':
+	    /* Only recognize RFC 822 form */
+	    {
+		int n = 0, neg, off = 0;
+		val = 0;
+		while (*rp == ' ') ++rp;
+		if (*rp != '+' && *rp != '-') return NULL;
+		neg = *rp++ == '-';
+		while (n < 4 && *rp >= '0' && *rp <= '9') {
+		    val = val * 10 + *rp++ - '0';
+		    ++n;
+		}
+		if (n != 4) return NULL;
+		else {
+		    /* We have to convert the minutes into decimal.  */
+		    if (val % 100 >= 60) return NULL;
+		    val = (val / 100) * 100 + ((val % 100) * 50) / 30;
+		}
+		if (val > 1200) return NULL;
+		off = (val * 3600) / 100;
+		if (neg) off = -off;
+		*poffset = off;
+	    }
+	    break;
 	case 'Z':
-	    /* XXX How to handle this?  */
+	    error(_("use of %s for input is not supported"), "%Z");
+	    return NULL;
 	    break;
 	case 'E':
 	    /* We have no information about the era format.  Just use
@@ -960,7 +1017,7 @@ strptime_internal (const char *rp, const char *fmt, struct tm *tm,
 	    case 'S':
 		/* Match seconds using alternate numeric symbols.
 		   get_alt_number (0, 61, 2); */
-		   {  
+		   {
 		       double sval;
 		       char *end;
 		       sval = strtod(rp, &end);
@@ -1150,7 +1207,8 @@ static void get_locale_w_strings(void)
 
 /* We only care if the result is null or not */
 static char *
-R_strptime (const char *buf, const char *format, struct tm *tm, double *psecs)
+R_strptime (const char *buf, const char *format, struct tm *tm, 
+	    double *psecs, int *poffset)
 {
     enum locale_status decided;
     decided = raw;
@@ -1164,18 +1222,18 @@ R_strptime (const char *buf, const char *format, struct tm *tm, double *psecs)
 	if(n > 1000) error(_("input string is too long"));
 	n = mbstowcs(wbuf, buf, 1000);
 	if(n == -1) error(_("invalid multibyte input string"));
-	
+
 	n = mbstowcs(NULL, format, 1000);
 	if(n > 1000) error(_("format string is too long"));
 	n = mbstowcs(wfmt, format, 1000);
 	if(n == -1) error(_("invalid multibyte format string"));
-	return (char *) w_strptime_internal (wbuf, wfmt, tm, &decided, psecs);
+	return (char *) w_strptime_internal (wbuf, wfmt, tm, &decided, psecs, poffset);
     } else
 #endif
     {
 #ifdef HAVE_LOCALE_H
     get_locale_strings();
 #endif
-    return strptime_internal (buf, format, tm, &decided, psecs);
+    return strptime_internal (buf, format, tm, &decided, psecs, poffset);
     }
 }

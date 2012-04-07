@@ -1,7 +1,7 @@
 /*
  *  R : A Computer Language for Statistical Data Analysis
- *  Copyright (C) 1995-2007  Robert Gentleman, Ross Ihaka and the
- *			     R Development Core Team
+ *  Copyright (C) 1995,1996  Robert Gentleman, Ross Ihaka
+ *  Copyright (C) 1997-2010  The R Development Core Team
  *  Copyright (C) 2003-2009 The R Foundation
  *
  *  This program is free software; you can redistribute it and/or modify
@@ -321,12 +321,14 @@ SEXP attribute_hidden StringFromReal(double x, int *warn)
     int w, d, e;
     formatReal(&x, 1, &w, &d, &e, 0);
     if (ISNA(x)) return NA_STRING;
-    else
+    else {
 	/* Note that we recast EncodeReal()'s value to possibly modify it
 	 * destructively; this is harmless here (in a sequential
 	 * environment), as mkChar() creates a copy */
-	return mkChar(dropTrailing0((char *)EncodeReal(x, w, d, e, OutDec),
-				     OutDec));
+	/* Do it this way to avoid (3x) warnings in gcc 4.2.x */
+	char * tmp = (char *)EncodeReal(x, w, d, e, OutDec);
+	return mkChar(dropTrailing0(tmp, OutDec));
+    }
 }
 
 SEXP attribute_hidden StringFromComplex(Rcomplex x, int *warn)
@@ -1039,7 +1041,8 @@ static SEXP coerceVectorList(SEXP v, SEXPTYPE type)
 	}
     }
     else
-	error(_("(list) object cannot be coerced to type '%s'"), type2char(type));
+	error(_("(list) object cannot be coerced to type '%s'"), 
+	      type2char(type));
 
     if (warn) CoercionWarning(warn);
     names = getAttrib(v, R_NamesSymbol);
@@ -1056,7 +1059,13 @@ static SEXP coerceSymbol(SEXP v, SEXPTYPE type)
 	PROTECT(rval = allocVector(type, 1));
 	SET_VECTOR_ELT(rval, 0, v);
 	UNPROTECT(1);
-    }
+    } else if (type == CHARSXP)
+	rval = PRINTNAME(v);	
+    else if (type == STRSXP)
+	rval = ScalarString(PRINTNAME(v));
+    else
+	warning(_("(symbol) object cannot be coerced to type '%s'"), 
+		type2char(type));
     return rval;
 }
 
@@ -1298,6 +1307,7 @@ SEXP attribute_hidden do_ascharacter(SEXP call, SEXP op, SEXP args, SEXP rho)
     int type = STRSXP, op0 = PRIMVAL(op);
     char *name = NULL /* -Wall */;
 
+    check1arg(args, call, "x");
     switch(op0) {
 	case 0:
 	    name = "as.character"; break;
@@ -1460,11 +1470,15 @@ SEXP attribute_hidden do_asfunction(SEXP call, SEXP op, SEXP args, SEXP rho)
 }
 
 
+/* primitive */
 SEXP attribute_hidden do_ascall(SEXP call, SEXP op, SEXP args, SEXP rho)
 {
     SEXP ap, ans, names;
     int i, n;
+
     checkArity(op, args);
+    check1arg(args, call, "x");
+
     args = CAR(args);
     switch (TYPEOF(args)) {
     case LANGSXP:
@@ -1649,6 +1663,7 @@ SEXP attribute_hidden do_is(SEXP call, SEXP op, SEXP args, SEXP rho)
 {
     SEXP ans;
     checkArity(op, args);
+    check1arg(args, call, "x");
 
     /* These are all builtins, so we do not need to worry about
        evaluating arguments in DispatchOrEval */
@@ -1842,6 +1857,8 @@ SEXP attribute_hidden do_isna(SEXP call, SEXP op, SEXP args, SEXP rho)
     int i, n;
 
     checkArity(op, args);
+    check1arg(args, call, "x");
+
     if (DispatchOrEval(call, op, "is.na", args, rho, &ans, 1, 1))
 	return(ans);
     PROTECT(args = ans);
@@ -1953,6 +1970,8 @@ SEXP attribute_hidden do_isnan(SEXP call, SEXP op, SEXP args, SEXP rho)
     int i, n;
 
     checkArity(op, args);
+    check1arg(args, call, "x");
+
     if (DispatchOrEval(call, op, "is.nan", args, rho, &ans, 1, 1))
 	return(ans);
 
@@ -2049,7 +2068,10 @@ SEXP attribute_hidden do_isfinite(SEXP call, SEXP op, SEXP args, SEXP rho)
 {
     SEXP ans, x, names, dims;
     int i, n;
+
     checkArity(op, args);
+    check1arg(args, call, "x");
+
     if (DispatchOrEval(call, op, "is.finite", args, rho, &ans, 0, 1))
 	return(ans);
 #ifdef stringent_is
@@ -2101,7 +2123,10 @@ SEXP attribute_hidden do_isinfinite(SEXP call, SEXP op, SEXP args, SEXP rho)
     SEXP ans, x, names, dims;
     double xr, xi;
     int i, n;
+
     checkArity(op, args);
+    check1arg(args, call, "x");
+
     if (DispatchOrEval(call, op, "is.infinite", args, rho, &ans, 0, 1))
 	return(ans);
 #ifdef stringent_is
@@ -2154,10 +2179,13 @@ SEXP attribute_hidden do_isinfinite(SEXP call, SEXP op, SEXP args, SEXP rho)
     return ans;
 }
 
+/* This is a primitive SPECIALSXP */
 SEXP attribute_hidden do_call(SEXP call, SEXP op, SEXP args, SEXP rho)
 {
     SEXP rest, evargs, rfun;
 
+    if (length(args) < 1) errorcall(call, _("'name' is missing"));
+    check1arg(args, call, "name");
     PROTECT(rfun = eval(CAR(args), rho));
     /* zero-length string check used to be here but install gives
        better error message.
@@ -2336,14 +2364,23 @@ SEXP attribute_hidden substituteList(SEXP el, SEXP rho)
     return res;
 }
 
+
+/* This is a primitive SPECIALSXP */
 SEXP attribute_hidden do_substitute(SEXP call, SEXP op, SEXP args, SEXP rho)
 {
-    SEXP env, s, t;
+    SEXP ap, argList, env, s, t;
+
+    /* argument matching */
+    PROTECT(ap = list2(R_NilValue, R_NilValue));
+    SET_TAG(ap,  install("expr"));
+    SET_TAG(CDR(ap), install("env"));
+    PROTECT(argList = matchArgs(ap, args, call));
+
     /* set up the environment for substitution */
-    if (length(args) == 1)
+    if (CADR(argList) == R_MissingArg)
 	env = rho;
     else
-	env = eval(CADR(args), rho);
+	env = eval(CADR(argList), rho);
     if (env == R_GlobalEnv)	/* For historical reasons, don't substitute in R_GlobalEnv */
 	env = R_NilValue;
     else if (TYPEOF(env) == VECSXP)
@@ -2354,17 +2391,17 @@ SEXP attribute_hidden do_substitute(SEXP call, SEXP op, SEXP args, SEXP rho)
 	errorcall(call, _("invalid environment specified"));
 
     PROTECT(env);
-    PROTECT(t = duplicate(args));
-    SETCDR(t, R_NilValue);
+    PROTECT(t = CONS(duplicate(CAR(argList)), R_NilValue));
     s = substituteList(t, env);
-    UNPROTECT(2);
+    UNPROTECT(4);
     return CAR(s);
 }
 
+/* This is a primitive SPECIALSXP */
 SEXP attribute_hidden do_quote(SEXP call, SEXP op, SEXP args, SEXP rho)
 {
     checkArity(op, args);
-
+    check1arg(args, call, "expr");
     return(CAR(args));
 }
 
@@ -2510,9 +2547,12 @@ static SEXP R_set_class(SEXP obj, SEXP value, SEXP call)
 SEXP attribute_hidden R_do_set_class(SEXP call, SEXP op, SEXP args, SEXP env)
 {
     checkArity(op, args);
+    check1arg(args, call, "x");
+
     return R_set_class(CAR(args), CADR(args), call);
 }
 
+/* primitive */
 SEXP attribute_hidden do_storage_mode(SEXP call, SEXP op, SEXP args, SEXP env)
 {
 /* storage.mode(obj) <- value */
@@ -2520,6 +2560,8 @@ SEXP attribute_hidden do_storage_mode(SEXP call, SEXP op, SEXP args, SEXP env)
     SEXPTYPE type;
 
     checkArity(op, args);
+    check1arg(args, call, "x");
+
     obj = CAR(args);
 
     value = CADR(args);

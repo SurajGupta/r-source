@@ -55,6 +55,7 @@
  La_dgecon
  La_dgeqp3
  La_dgesv
+ La_dlange
  La_dtrcon
  La_rg
  La_rg_cmplx
@@ -960,6 +961,7 @@
  do_strheight
  do_strptime
  do_strsplit
+ do_strtoi
  do_strtrim
  do_strwidth
  do_subassign

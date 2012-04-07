@@ -453,7 +453,7 @@ par(\dots, no.readonly = FALSE)
         right)} giving the size of the outer margins in lines of text.}
     \item{\code{omd}}{A vector of the form \code{c(x1, x2, y1, y2)}
       giving the region \emph{inside} outer margins in NDC (=
-      normalized device coordinates), i.e., as fraction (in \eqn{[0,1]})
+      normalized device coordinates), i.e., as fraction (in \eqn{[0, 1]})
       of the device region.}
     \item{\code{omi}}{A vector of the form \code{c(bottom, left, top,
         right)} giving the size of the outer margins in inches.}
@@ -515,8 +515,10 @@ par(\dots, no.readonly = FALSE)
       \describe{
         \item{n=1}{will produce tick marks at \eqn{10^j} for
           integer \eqn{j},}
-        \item{n=2}{gives marks  \eqn{k 10^j} with \eqn{k \in \{1, 5\}},}
-        \item{n=3}{gives marks  \eqn{k 10^j} with \eqn{k \in \{1, 2, 5\}}.}
+        \item{n=2}{gives marks  \eqn{k 10^j} with
+	  \eqn{k \in \{1, 5\}}{k in {1,5}},}
+        \item{n=3}{gives marks  \eqn{k 10^j} with
+	  \eqn{k \in \{1, 2, 5\}}{k in {1,2,5}}.}
       }
       See \code{\link{axTicks}()} for a pure \R implementation of this.
 

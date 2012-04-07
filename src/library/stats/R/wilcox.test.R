@@ -22,10 +22,10 @@ function(x, y = NULL, alternative = c("two.sided", "less", "greater"),
          conf.int = FALSE, conf.level = 0.95, ...)
 {
     alternative <- match.arg(alternative)
-    if(!missing(mu) && ((length(mu) > 1) || !is.finite(mu)))
+    if(!missing(mu) && ((length(mu) > 1L) || !is.finite(mu)))
         stop("'mu' must be a single number")
     if(conf.int) {
-        if(!((length(conf.level) == 1)
+        if(!((length(conf.level) == 1L)
              && is.finite(conf.level)
              && (conf.level > 0)
              && (conf.level < 1)))
@@ -55,7 +55,7 @@ function(x, y = NULL, alternative = c("two.sided", "less", "greater"),
         x <- x[is.finite(x)]
     }
 
-    if(length(x) < 1)
+    if(length(x) < 1L)
         stop("not enough (finite) 'x' observations")
     CORRECTION <- 0
     if(is.null(y)) {
@@ -97,42 +97,29 @@ function(x, y = NULL, alternative = c("two.sided", "less", "greater"),
                                qu <- qsignrank(alpha / 2, n)
                                if(qu == 0) qu <- 1
                                ql <- n*(n+1)/2 - qu
-                               uci <- diffs[qu]
-                               lci <- diffs[ql+1]
-                               achieved.alpha<-2*psignrank(trunc(qu)-1,n)
-                               if (achieved.alpha-alpha > (alpha)/2){
-                                 warning("Requested conf.level not achievable")
-                                 conf.level<-1-signif(achieved.alpha,2)
-                               }
-                               c(uci, lci)
+                               achieved.alpha <- 2*psignrank(trunc(qu)-1,n)
+                               c(diffs[qu], diffs[ql+1])
                            },
                            "greater"= {
                                qu <- qsignrank(alpha, n)
                                if(qu == 0) qu <- 1
-                               uci <- diffs[qu]
-                               achieved.alpha<-psignrank(trunc(qu)-1,n)
-                               if (achieved.alpha-alpha > (alpha)/2){
-                                 warning("Requested conf.level not achievable")
-                                 conf.level<-1-signif(achieved.alpha,2)
-                               }
-                               c(uci, +Inf)
+                               achieved.alpha <- psignrank(trunc(qu)-1,n)
+                               c(diffs[qu], +Inf)
                            },
                            "less"= {
                                qu <- qsignrank(alpha, n)
                                if(qu == 0) qu <- 1
                                ql <- n*(n+1)/2 - qu
-                               lci <- diffs[ql+1]
-                               achieved.alpha<-psignrank(trunc(qu)-1,n)
-                               if (achieved.alpha-alpha > (alpha)/2){
-                                 warning("Requested conf.level not achievable")
-                                 conf.level<-1-signif(achieved.alpha,2)
-                               }
-                               c(-Inf, lci)
+                               achieved.alpha <- psignrank(trunc(qu)-1,n)
+                               c(-Inf, diffs[ql+1])
                            })
+                if (achieved.alpha - alpha > alpha/2){
+                    warning("Requested conf.level not achievable")
+                    conf.level<- 1 - signif(achieved.alpha, 2)
+                }
                 attr(cint, "conf.level") <- conf.level
                 ESTIMATE <- median(diffs)
                 names(ESTIMATE) <- "(pseudo)median"
-
             }
         } else { ## not exact, maybe ties or zeroes
             NTIES <- table(r)
@@ -195,57 +182,50 @@ function(x, y = NULL, alternative = c("two.sided", "less", "greater"),
                 ##
                 ## As in the exact case, interchange quantiles.
                 cint <- switch(alternative, "two.sided" = {
-                  repeat({
-                    mindiff<-wdiff(mumin,zq=qnorm(alpha/2, lower.tail=FALSE))
-                    maxdiff<-wdiff(mumax,zq=qnorm(alpha/2))
-                    if(mindiff<0 || maxdiff>0){
-                      alpha<-alpha*2
-                    } else break
-                    })
-                  if(1-conf.level < alpha*0.75){
-                    conf.level<-1-alpha
+                  repeat {
+                      mindiff <- wdiff(mumin,zq = qnorm(alpha/2, lower.tail = FALSE))
+                      maxdiff <- wdiff(mumax,zq = qnorm(alpha/2))
+                      if(mindiff < 0 || maxdiff > 0)  alpha <- alpha*2  else break
+                  }
+                  if(1 - conf.level < alpha*0.75) {
+                    conf.level <- 1 - alpha
                     warning("Requested conf.level not achievable")
                   }
                   l <- uniroot(wdiff, c(mumin, mumax), tol=1e-4,
                                zq=qnorm(alpha/2, lower.tail=FALSE))$root
                   u <- uniroot(wdiff, c(mumin, mumax), tol=1e-4,
-                               zq=qnorm(alpha/2))$root
+                               zq = qnorm(alpha/2))$root
                   c(l, u)
-                }, "greater"= {
-                  repeat({
-                    mindiff<-wdiff(mumin,zq=qnorm(alpha, lower.tail=FALSE))
-                    if(mindiff<0){
-                      alpha<-alpha*2
-                    } else break
-                    })
-                  if(1-conf.level < alpha*0.75){
-                    conf.level<-1-alpha
+                }, "greater" = {
+                  repeat {
+                      mindiff <- wdiff(mumin, zq = qnorm(alpha, lower.tail = FALSE))
+                      if(mindiff < 0)  alpha <- alpha*2  else break
+                  }
+                  if(1 - conf.level < alpha*0.75) {
+                    conf.level <- 1 - alpha
                     warning("Requested conf.level not achievable")
                   }
-                  l <- uniroot(wdiff, c(mumin, mumax), tol=1e-4,
-                               zq=qnorm(alpha, lower.tail=FALSE))$root
-                    c(l, +Inf)
-                }, "less"= {
-                  repeat({
-                    maxdiff<-wdiff(mumax,zq=qnorm(alpha))
-                    if(maxdiff>0){
-                      alpha<-alpha*2
-                    } else break
-                    })
-                  if(1-conf.level < alpha*0.75){
-                    conf.level<-1-alpha
+                  l <- uniroot(wdiff, c(mumin, mumax), tol = 1e-4,
+                               zq = qnorm(alpha, lower.tail = FALSE))$root
+                  c(l, +Inf)
+                }, "less" = {
+                  repeat {
+                      maxdiff <- wdiff(mumax, zq = qnorm(alpha))
+                      if(maxdiff > 0)  alpha <- alpha * 2  else break
+                  }
+                  if (1 - conf.level < alpha*0.75) {
+                    conf.level <- 1 - alpha
                     warning("Requested conf.level not achievable")
                   }
                   u <- uniroot(wdiff, c(mumin, mumax), tol=1e-4,
-                                  zq=qnorm(alpha))$root
+                               zq = qnorm(alpha))$root
                   c(-Inf, u)
                 })
                 attr(cint, "conf.level") <- conf.level
 		correct <- FALSE # no continuity correction for estimate
                 ESTIMATE <- uniroot(wdiff, c(mumin, mumax), tol=1e-4,
-                                    zq=0)$root
+                                    zq = 0)$root
 		names(ESTIMATE) <- "(pseudo)median"
-
             }
 
             if(exact && TIES) {
@@ -258,11 +238,10 @@ function(x, y = NULL, alternative = c("two.sided", "less", "greater"),
                 if(conf.int)
                     warning("cannot compute exact confidence interval with zeroes")
             }
-
 	}
     }
     else { ##-------------------------- 2-sample case ---------------------------
-        if(length(y) < 1)
+        if(length(y) < 1L)
             stop("not enough 'y' observations")
         METHOD <- "Wilcoxon rank sum test"
         r <- rank(c(x - mu, y))
@@ -278,15 +257,13 @@ function(x, y = NULL, alternative = c("two.sided", "less", "greater"),
                 switch(alternative,
                        "two.sided" = {
                            p <- if(STATISTIC > (n.x * n.y / 2))
-                               pwilcox(STATISTIC - 1, n.x, n.y,
-                                       lower.tail = FALSE)
+                               pwilcox(STATISTIC - 1, n.x, n.y, lower.tail = FALSE)
                            else
                                pwilcox(STATISTIC, n.x, n.y)
                            min(2 * p, 1)
                        },
                        "greater" = {
-                           pwilcox(STATISTIC - 1, n.x, n.y,
-                                   lower.tail = FALSE)
+                           pwilcox(STATISTIC - 1, n.x, n.y, lower.tail = FALSE)
                        },
                        "less" = pwilcox(STATISTIC, n.x, n.y))
             if(conf.int) {
@@ -301,38 +278,26 @@ function(x, y = NULL, alternative = c("two.sided", "less", "greater"),
                                qu <- qwilcox(alpha/2, n.x, n.y)
                                if(qu == 0) qu <- 1
                                ql <- n.x*n.y - qu
-                               uci <- diffs[qu]
-                               lci <- diffs[ql + 1]
-                               achieved.alpha<-2*pwilcox(trunc(qu)-1,n.x,n.y)
-                               if (achieved.alpha-alpha > alpha/2){
-                                 warning("Requested conf.level not achievable")
-                                 conf.level<-1-achieved.alpha
-                               }
-                               c(uci, lci)
+                               achieved.alpha <- 2*pwilcox(trunc(qu)-1,n.x,n.y)
+                               c(diffs[qu], diffs[ql + 1])
                            },
                            "greater"= {
                                qu <- qwilcox(alpha, n.x, n.y)
                                if(qu == 0) qu <- 1
-                               uci <- diffs[qu]
-                               achieved.alpha<-2*pwilcox(trunc(qu)-1,n.x,n.y)
-                               if (achieved.alpha-alpha > alpha/2){
-                                 warning("Requested conf.level not achievable")
-                                 conf.level<-1-achieved.alpha
-                               }
-                               c(uci, +Inf)
+                               achieved.alpha <- pwilcox(trunc(qu)-1,n.x,n.y)
+                               c(diffs[qu], +Inf)
                            },
                            "less"= {
                                qu <- qwilcox(alpha, n.x, n.y)
                                if(qu == 0) qu <- 1
                                ql <- n.x*n.y - qu
-                               lci <- diffs[ql + 1]
-                               achieved.alpha<-2*pwilcox(trunc(qu)-1,n.x,n.y)
-                               if (achieved.alpha-alpha > alpha/2){
-                                 warning("Requested conf.level not achievable")
-                                 conf.level<-1-achieved.alpha
-                               }
-                               c(-Inf, lci)
+                               achieved.alpha <- pwilcox(trunc(qu)-1,n.x,n.y)
+                               c(-Inf, diffs[ql + 1])
                            })
+                if (achieved.alpha-alpha > alpha/2) {
+                    warning("Requested conf.level not achievable")
+                    conf.level <- 1 - achieved.alpha
+                }
                 attr(cint, "conf.level") <- conf.level
                 ESTIMATE <- median(diffs)
                 names(ESTIMATE) <- "difference in location"
@@ -443,8 +408,8 @@ wilcox.test.formula <-
 function(formula, data, subset, na.action, ...)
 {
     if(missing(formula)
-       || (length(formula) != 3)
-       || (length(attr(terms(formula[-2]), "term.labels")) != 1))
+       || (length(formula) != 3L)
+       || (length(attr(terms(formula[-2L]), "term.labels")) != 1L))
         stop("'formula' missing or incorrect")
     m <- match.call(expand.dots = FALSE)
     if(is.matrix(eval(m$data, parent.frame())))
@@ -456,7 +421,7 @@ function(formula, data, subset, na.action, ...)
     names(mf) <- NULL
     response <- attr(attr(mf, "terms"), "response")
     g <- factor(mf[[-response]])
-    if(nlevels(g) != 2)
+    if(nlevels(g) != 2L)
         stop("grouping factor must have exactly 2 levels")
     DATA <- split(mf[[response]], g)
     names(DATA) <- c("x", "y")

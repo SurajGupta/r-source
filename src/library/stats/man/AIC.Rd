@@ -1,9 +1,10 @@
 % File src/library/stats/man/AIC.Rd
 % Part of the R package, http://www.R-project.org
-% Copyright 1995-2009 R Core Development Team
+% Copyright 1995-2010 R Core Development Team
 % Distributed under GPL 2 or later
 
 \name{AIC}
+\encoding{UTF-8}
 \alias{AIC}
 \title{Akaike's An Information Criterion}
 \description{
@@ -12,7 +13,8 @@
   can be obtained, according to the formula
   \eqn{-2 \mbox{log-likelihood} + k n_{par}}{-2*log-likelihood + k*npar},
   where \eqn{n_{par}}{npar} represents the number of parameters in the
-  fitted model, and \eqn{k = 2} for the usual AIC, or \eqn{k = \log(n)}
+  fitted model, and \eqn{k = 2} for the usual AIC, or
+  \eqn{k = \log(n)}{k = log(n)}
   (\eqn{n} the number of observations) for the so-called BIC or SBC
   (Schwarz's Bayesian criterion).
 }
@@ -52,7 +54,9 @@ AIC(object, \dots, k = 2)
   \emph{Akaike Information Criterion Statistics}.
   D. Reidel Publishing Company.
 }
-\author{Jose Pinheiro and Douglas Bates}
+\author{
+  \enc{José}{Jose} Pinheiro and Douglas Bates
+}
 \seealso{
   \code{\link{extractAIC}}, \code{\link{logLik}}.
 }
@@ -61,7 +65,7 @@ lm1 <- lm(Fertility ~ . , data = swiss)
 AIC(lm1)
 stopifnot(all.equal(AIC(lm1),
                     AIC(logLik(lm1))))
-## a version of BIC or Schwarz' BC :
+## a version of BIC or Schwarz's BC :
 AIC(lm1, k = log(nrow(swiss)))
 }
 \keyword{models}

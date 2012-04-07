@@ -2,8 +2,7 @@
 /*
  *  R : A Computer Langage for Statistical Data Analysis
  *  Copyright (C) 1995, 1996, 1997  Robert Gentleman and Ross Ihaka
- *  Copyright (C) 1997--2008  Robert Gentleman, Ross Ihaka and the
- *                            R Development Core Team
+ *  Copyright (C) 1997--2009  The R Development Core Team
  *
  *  This program is free software; you can redistribute it and/or modify
  *  it under the terms of the GNU General Public License as published by
@@ -137,6 +136,7 @@ static int mbcs_get_next(int c, wchar_t *wc)
 	    s[i] = xxgetc();
 	    if(s[i] == R_EOF) error(_("EOF whilst reading MBCS char at line %d"), ParseState.xxlineno);
 	}
+	s[clen] ='\0'; /* x86 Solaris requires this */
 	res = mbrtowc(wc, s, clen, NULL);
 	if(res == -1) error(_("invalid multibyte character in parser at line %d"), ParseState.xxlineno);
     } else {
@@ -385,15 +385,22 @@ static int prevbytes[PUSHBACK_BUFSIZE];
 
 static int xxgetc(void)
 {
-    int c;
+    int c, oldpos;
 
     if(npush) c = pushback[--npush]; else  c = ptr_getc();
 
+    oldpos = prevpos;
     prevpos = (prevpos + 1) % PUSHBACK_BUFSIZE;
-    prevcols[prevpos] = ParseState.xxcolno;
     prevbytes[prevpos] = ParseState.xxbyteno;
     prevlines[prevpos] = ParseState.xxlineno;    
-    
+
+    /* We only advance the column for the 1st byte in UTF-8, so handle later bytes specially */
+    if (0x80 <= (unsigned char)c && (unsigned char)c <= 0xBF && known_to_be_utf8)  {
+    	ParseState.xxcolno--;   
+    	prevcols[prevpos] = prevcols[oldpos];
+    } else 
+    	prevcols[prevpos] = ParseState.xxcolno;
+    	
     if (c == EOF) {
 	EndOfFile = 1;
 	return R_EOF;
@@ -409,9 +416,6 @@ static int xxgetc(void)
         ParseState.xxcolno++;
     	ParseState.xxbyteno++;
     }
-    /* only advance column for 1st byte in UTF-8 */
-    if (0x80 <= (unsigned char)c && (unsigned char)c <= 0xBF && known_to_be_utf8) 
-    	ParseState.xxcolno--;
 
     if (c == '\t') ParseState.xxcolno = ((ParseState.xxcolno + 7) & ~7);
     
@@ -806,13 +810,13 @@ static SEXP xxfuncall(SEXP expr, SEXP args)
     return ans;
 }
 
-static SEXP mkString2(const char *s, int len)
+static SEXP mkString2(const char *s, int len, Rboolean escaped)
 {
     SEXP t;
     cetype_t enc = CE_NATIVE;
 
     if(known_to_be_latin1) enc= CE_LATIN1;
-    else if(known_to_be_utf8) enc = CE_UTF8;
+    else if(!escaped && known_to_be_utf8) enc = CE_UTF8;
 
     PROTECT(t = allocVector(STRSXP, 1));
     SET_STRING_ELT(t, 0, mkCharLenCE(s, len, enc));
@@ -1059,9 +1063,10 @@ static SEXP NextArg(SEXP l, SEXP s, SEXP tag)
  *
  *
  *	SEXP R_Parse1File(FILE *fp, int gencode, ParseStatus *status, Rboolean first)
+ *   (used for R_ReplFile in main.c)
  *
  *	SEXP R_Parse1Buffer(IoBuffer *buffer, int gencode, ParseStatus *status, Rboolean first)
- *
+ *   (used for ReplIteration and R_ReplDLLdo1 in main.c)
  *
  *  The success of the parse is indicated as folllows:
  *
@@ -1077,10 +1082,16 @@ static SEXP NextArg(SEXP l, SEXP s, SEXP tag)
  *  their values in a single expression vector.
  *
  *	SEXP R_ParseFile(FILE *fp, int n, ParseStatus *status, SEXP srcfile)
+ *    (used for do_edit in file edit.c)
  *
  *	SEXP R_ParseVector(SEXP *text, int n, ParseStatus *status, SEXP srcfile)
+ *    (public, and used by parse(text=) in file source.c)
  *
  *	SEXP R_ParseBuffer(IoBuffer *buffer, int n, ParseStatus *status, SEXP prompt, SEXP srcfile)
+ *    (used by parse(file="") in file source.c)
+ *
+ *      SEXP R_ParseConn(Rconnection con, int n, ParseStatus *status, SEXP srcfile)
+ *    (used by parse(file=) in file source.c)
  *
  *  Here, status is 1 for a successful parse and 0 if parsing failed
  *  for some reason.
@@ -1181,7 +1192,7 @@ static int file_getc(void)
     return R_fgetc(fp_parse);
 }
 
-/* used in main.c and this file */
+/* used in main.c */
 attribute_hidden
 SEXP R_Parse1File(FILE *fp, int gencode, ParseStatus *status, SrcRefState *state)
 {
@@ -1203,9 +1214,10 @@ static int buffer_getc(void)
     return R_IoBufferGetc(iob);
 }
 
-/* Used only in main.c, rproxy_impl.c */
+/* Used only in main.c */
 attribute_hidden
-SEXP R_Parse1Buffer(IoBuffer *buffer, int gencode, ParseStatus *status, SrcRefState *state)
+SEXP R_Parse1Buffer(IoBuffer *buffer, int gencode, ParseStatus *status, 
+		    SrcRefState *state)
 {
     UseSrcRefState(state);
     ParseInit();
@@ -1347,7 +1359,8 @@ static const char *Prompt(SEXP prompt, int type)
 
 /* used in source.c */
 attribute_hidden
-SEXP R_ParseBuffer(IoBuffer *buffer, int n, ParseStatus *status, SEXP prompt, SEXP srcfile)
+SEXP R_ParseBuffer(IoBuffer *buffer, int n, ParseStatus *status, SEXP prompt, 
+		   SEXP srcfile)
 {
     SEXP rval, t;
     char *bufp, buf[CONSOLE_BUFFER_SIZE];
@@ -1385,7 +1398,8 @@ SEXP R_ParseBuffer(IoBuffer *buffer, int n, ParseStatus *status, SEXP prompt, SE
 	    if (c == ';' || c == '\n') break;
 	}
 
-	/* Was a call to R_Parse1Buffer, but we don't want to reset xxlineno and xxcolno */
+	/* Was a call to R_Parse1Buffer, but we don't want to reset
+	   xxlineno and xxcolno */
 	ParseInit();
 	ParseContextInit();
 	R_Parse1(status);
@@ -1982,6 +1996,7 @@ static int mbcs_get_next2(int c, ucs_t *wc)
 	    s[i] = xxgetc();
 	    if(s[i] == R_EOF) error(_("EOF whilst reading MBCS char at line %d"), ParseState.xxlineno);
 	}
+	s[clen] ='\0'; /* x86 Solaris requires this */
 	res = mbtoucs(wc, s, clen);
 	if(res == -1) error(_("invalid multibyte character in parser at line %d"), ParseState.xxlineno);
     } else {
@@ -2044,20 +2059,19 @@ static SEXP mkStringUTF8(const ucs_t *wcs, int cnt)
 static int StringValue(int c, Rboolean forSymbol)
 {
     int quote = c;
-    int have_warned = 0;
     char currtext[1010], *ct = currtext;
     char st0[MAXELTSIZE];
     unsigned int nstext = MAXELTSIZE;
     char *stext = st0, *bp = st0;
     int wcnt = 0;
     ucs_t wcs[10001];
-    Rboolean use_wcs = FALSE;
+    Rboolean oct_or_hex = FALSE, use_wcs = FALSE;
 
     while ((c = xxgetc()) != R_EOF && c != quote) {
 	CTEXT_PUSH(c);
 	if (c == '\n') {
 	    xxungetc(c);
-	    /* Fix by Mark Bravington to allow multiline strings
+	    /* Fix suggested by Mark Bravington to allow multiline strings
 	     * by pretending we've seen a backslash. Was:
 	     * return ERROR;
 	     */
@@ -2082,6 +2096,7 @@ static int StringValue(int c, Rboolean forSymbol)
 		    CTEXT_POP();
 		}
 		c = octal;
+		oct_or_hex = TRUE;
 	    }
 	    else if(c == 'x') {
 		int val = 0; int i, ext;
@@ -2094,17 +2109,15 @@ static int StringValue(int c, Rboolean forSymbol)
 			xxungetc(c);
 			CTEXT_POP();
 			if (i == 0) { /* was just \x */
-			    if(GenerateCode && R_WarnEscapes) {
-				have_warned++;
-				warningcall(R_NilValue, _("'\\x' used without hex digits"));
-			    }
-			    val = 'x';
+			    *ct = '\0';
+			    errorcall(R_NilValue, _("'\\x' used without hex digits in character string starting \"%s\""), currtext);
 			}
 			break;
 		    }
 		    val = 16*val + ext;
 		}
 		c = val;
+		oct_or_hex = TRUE;
 	    }
 	    else if(c == 'u') {
 		unsigned int val = 0; int i, ext; 
@@ -2124,12 +2137,9 @@ static int StringValue(int c, Rboolean forSymbol)
 		    else {
 			xxungetc(c);
 			CTEXT_POP();
-			if (i == 0) { /* was just \x */
-			    if(GenerateCode && R_WarnEscapes) {
-				have_warned++;
-				warningcall(R_NilValue, _("\\u used without hex digits"));
-			    }
-			    val = 'u';
+			if (i == 0) { /* was just \u */
+			    *ct = '\0';
+			    errorcall(R_NilValue, _("'\\u' used without hex digits in character string starting \"%s\""), currtext);
 			}
 			break;
 		    }
@@ -2162,12 +2172,9 @@ static int StringValue(int c, Rboolean forSymbol)
 		    else {
 			xxungetc(c);
 			CTEXT_POP();
-			if (i == 0) { /* was just \x */
-			    if(GenerateCode && R_WarnEscapes) {
-				have_warned++;
-				warningcall(R_NilValue, _("\\U used without hex digits"));
-			    }
-			    val = 'U';
+			if (i == 0) { /* was just \U */
+			    *ct = '\0';
+			    errorcall(R_NilValue, _("'\\U' used without hex digits in character string starting \"%s\""), currtext);
 			}
 			break;
 		    }
@@ -2214,11 +2221,8 @@ static int StringValue(int c, Rboolean forSymbol)
 		case '\n':
 		    break;
 		default:
-		    if(GenerateCode && R_WarnEscapes) {
-			have_warned++;
-			warningcall(R_NilValue, _("'\\%c' is an unrecognized escape in a character string"), c);
-		    }
-		    break;
+		    *ct = '\0';
+		    errorcall(R_NilValue, _("'\\%c' is an unrecognized escape in character string starting \"%s\""), c, currtext);
 		}
 	    }
 	} else if(mbcslocale) {
@@ -2265,26 +2269,15 @@ static int StringValue(int c, Rboolean forSymbol)
 	return SYMBOL;
     } else {
 	if(use_wcs) {
+	    if(oct_or_hex)
+		warning("mixing Unicode and octal/hex escapes in a string is discouraged");
 	    if(wcnt < 10000)
 		PROTECT(yylval = mkStringUTF8(wcs, wcnt)); /* include terminator */
 	    else
 		error(_("string at line %d containing Unicode escapes not in this locale\nis too long (max 10000 chars)"), ParseState.xxlineno);
 	} else
-	    PROTECT(yylval = mkString2(stext,  bp - stext - 1));
+	    PROTECT(yylval = mkString2(stext,  bp - stext - 1, oct_or_hex));
 	if(stext != st0) free(stext);
-	if(have_warned) {
-	    *ct = '\0';
-#ifdef ENABLE_NLS
-	    warningcall(R_NilValue,
-			ngettext("unrecognized escape removed from \"%s\"",
-				 "unrecognized escapes removed from \"%s\"",
-				 have_warned),
-			currtext);
-#else
-	    warningcall(R_NilValue,
-			"unrecognized escape(s) removed from \"%s\"", currtext);
-#endif
-	}
 	return STR_CONST;
     }
 }

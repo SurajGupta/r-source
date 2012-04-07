@@ -7,7 +7,7 @@ msgid ""
 msgstr ""
 "Project-Id-Version: R 2.3.0\n"
 "Report-Msgid-Bugs-To: bugs@r-project.org\n"
-"POT-Creation-Date: 2009-10-08 08:29\n"
+"POT-Creation-Date: 2010-03-19 11:18\n"
 "PO-Revision-Date: 2006-04-16 19:17-0300\n"
 "Last-Translator: Fernando Henrique Ferraz P. da Rosa <feferraz@.ime.usp.br>\n"
 "Language-Team: Portuguese <ldp-br@bazar.conectiva.com.br>\n"
@@ -33,7 +33,7 @@ msgid "'alpha', 'beta' and 'gamma' must be within the unit interval."
 msgstr "'alpha', 'beta' e 'gamma' devem estar no intervalo unitário."
 
 #, fuzzy
-msgid "data must be strictly non-negative for multiplicative Holt-Winters."
+msgid "data must be non-zero for multiplicative Holt-Winters."
 msgstr ""
 "dados devem ser estritamente não negativos para Holt-Winters multiplicativo"
 
@@ -155,8 +155,15 @@ msgstr "nenhum modelo para comparar"
 msgid "'by' must be a list"
 msgstr "'by' deve ser uma lista"
 
-msgid "'FUN' must always return a scalar"
-msgstr "'FUN' deve sempre retornar um escalar"
+#, fuzzy
+msgid "arguments must have same length"
+msgstr "argumentos devem ter o mesmo comprimento"
+
+msgid "'formula' missing or incorrect"
+msgstr "'formula' ausente ou incorreto"
+
+msgid "'formula' must have both left and right hand sides"
+msgstr "'formula' deve ter tanto o lado direito quando o esquerdo"
 
 msgid "cannot change frequency from %g to %g"
 msgstr "não é possível mudar a freqüência de %g para %g"
@@ -208,9 +215,6 @@ msgstr "não foi possível calcular valores p exatos com empates"
 
 msgid "cannot compute exact confidence intervals with ties"
 msgstr "não foi possível calcular intervalos de confiança exatos com empates"
-
-msgid "'formula' missing or incorrect"
-msgstr "'formula' ausente ou incorreto"
 
 msgid "grouping factor must have exactly 2 levels"
 msgstr "fator de agrupamento deve ter exatamente 2 níveis"
@@ -282,6 +286,10 @@ msgstr "'order.max' deve ser >= 1"
 msgid "'order.max' must be < 'n.used'"
 msgstr "'order.max' deve ser >= 1"
 
+#, fuzzy
+msgid "'n.ahead' must be at least 1"
+msgstr "'lag.max' deve ser pelo menos 1"
+
 msgid "number of series in 'object' and 'newdata' do not match"
 msgstr "número de séries em óbjeto' e 'newdata' não igual"
 
@@ -296,15 +304,6 @@ msgstr "MLE somente implementado para séries univariadas"
 
 msgid "'order.max' must be >= 0"
 msgstr "'order.max' deve ser >= 0"
-
-msgid "model order:"
-msgstr "ordem do modelo:"
-
-msgid "singularities in the computation of the projection matrix"
-msgstr "singularidades no cálculo da matriz de projeção"
-
-msgid "results are only valid up to model order"
-msgstr "resultados somente são válidos até a ordem do modelo"
 
 msgid "'order' must be a non-negative numeric vector of length 3"
 msgstr "'order' deve ser um vetor numérico não negativo de comprimento 3"
@@ -540,6 +539,9 @@ msgstr "grupo basal fora de limites"
 msgid "supply both 'x' and 'y' or a matrix-like 'x'"
 msgstr "especifique tanto 'x' como 'y' ou um 'x' matricial"
 
+msgid "'y' must be numeric"
+msgstr "'y' deve ser numérico"
+
 msgid "'x' is empty"
 msgstr "'x' é vazio"
 
@@ -555,6 +557,14 @@ msgstr "'V' não é uma matriz numérica quadrada"
 
 msgid "diag(.) had 0 or NA entries; non-finite result is doubtful"
 msgstr ""
+
+#, fuzzy
+msgid "'x' must be a numeric vector"
+msgstr "'y' deve ser um vetor numérico"
+
+#, fuzzy
+msgid "'y' must be a numeric vector"
+msgstr "'y' deve ser um vetor numérico"
 
 msgid "not enough finite observations"
 msgstr "não há um número suficiente de observações finitas"
@@ -973,9 +983,6 @@ msgstr "especificação de 'row.vars' incorreta"
 msgid "incorrect specification for 'col.vars'"
 msgstr "especificação de 'col.vars' incorreta"
 
-msgid "'formula' must have both left and right hand sides"
-msgstr "'formula' deve ter tanto o lado direito quando o esquerdo"
-
 msgid "interactions are not allowed"
 msgstr "interaçÕes não são permitidas"
 
@@ -1007,12 +1014,8 @@ msgid "'family' not recognized"
 msgstr "'family' não reconhecido"
 
 #, fuzzy
-msgid "invalid 'method': %s"
-msgstr "'method' inválido:"
-
-#, fuzzy
-msgid "invalid 'method'"
-msgstr "'method' inválido:"
+msgid "invalid 'method' argument"
+msgstr "argumento 'data' inválido"
 
 #, fuzzy
 msgid "'weights' must be a numeric vector"
@@ -1058,7 +1061,8 @@ msgstr "NAs em d(mu)/d(eta)"
 msgid "no observations informative at iteration"
 msgstr "sem obervações informativas na iteração"
 
-msgid "non-finite coefficients at iteration"
+#, fuzzy
+msgid "non-finite coefficients at iteration %d"
 msgstr "coeficientes não finitos na iteração"
 
 msgid "X matrix has rank %d, but only %d observations"
@@ -1082,16 +1086,20 @@ msgstr "tamanho do passo truncado: fora de limites"
 msgid "inner loop 2; cannot correct step size"
 msgstr "laço interno 2; não é possível corrigir o tamanho do passo"
 
-msgid "algorithm did not converge"
+#, fuzzy
+msgid "glm.fit: algorithm did not converge"
 msgstr "algoritmo não convergiu"
 
-msgid "algorithm stopped at boundary value"
+#, fuzzy
+msgid "glm.fit: algorithm stopped at boundary value"
 msgstr "algoritmo parou no valor de fronteira"
 
-msgid "fitted probabilities numerically 0 or 1 occurred"
+#, fuzzy
+msgid "glm.fit: fitted probabilities numerically 0 or 1 occurred"
 msgstr "probabilidades ajustadas numericamente iguais a 0 ou 1 ocorreram"
 
-msgid "fitted rates numerically 0 occurred"
+#, fuzzy
+msgid "glm.fit: fitted rates numerically 0 occurred"
 msgstr "taxas ajustadas numericamente iguais a 0 ocorreram"
 
 msgid "the following arguments to 'anova.glm' are invalid and dropped:"
@@ -1402,6 +1410,9 @@ msgstr "'start e 'table' devem ter o mesmo comprimento"
 
 msgid "this should not happen"
 msgstr "isso não deveria acontecer"
+
+msgid "algorithm did not converge"
+msgstr "algoritmo não convergiu"
 
 msgid "incorrect specification of 'table' or 'start'"
 msgstr "especificação de 'table' ou 'start' incorreta"
@@ -1901,6 +1912,9 @@ msgstr "'proj' não está implementado para \"mlm\" fits"
 msgid "'proj' is not implemented for multiple responses"
 msgstr "'proj' não está implementado para múltiplas respostas"
 
+msgid "table 'x' should have 2 entries"
+msgstr ""
+
 msgid "elements of 'n' must be positive"
 msgstr "elementos de 'n' devem ser positivos"
 
@@ -1927,6 +1941,10 @@ msgstr "'y', 'groups' e 'blocks' devem ter o mesmo comprimento"
 
 msgid "'formula' missing"
 msgstr "'formula' faltante"
+
+#, fuzzy
+msgid "factors are not allowed"
+msgstr "interaçÕes não são permitidas"
 
 msgid "missing values and NaN's not allowed if 'na.rm' is FALSE"
 msgstr "valores faltantes e NaN's não permitidos se 'na.rm' é FALSE"
@@ -2321,9 +2339,6 @@ msgstr "'ratio' deve ser um único número positivo"
 msgid "'x' and 'w' must have the same length"
 msgstr "'x' e 'w' devem ter o mesmo comprimento"
 
-msgid "'y' must be numeric"
-msgstr "'y' deve ser numérico"
-
 msgid "not enough (finite) 'x' observations"
 msgstr "não há observações o suficiente de 'x' (finitas)"
 
@@ -2423,6 +2438,26 @@ msgid "parameter %s does not occur in the model formula"
 msgid_plural "parameters %s do not occur in the model formula"
 msgstr[0] "parâmetro %s não ocorre na fórmula do modelo"
 msgstr[1] "parâmetros %s não ocorrem na fórmula do modelo"
+
+#~ msgid "'FUN' must always return a scalar"
+#~ msgstr "'FUN' deve sempre retornar um escalar"
+
+#~ msgid "model order:"
+#~ msgstr "ordem do modelo:"
+
+#~ msgid "singularities in the computation of the projection matrix"
+#~ msgstr "singularidades no cálculo da matriz de projeção"
+
+#~ msgid "results are only valid up to model order"
+#~ msgstr "resultados somente são válidos até a ordem do modelo"
+
+#, fuzzy
+#~ msgid "invalid 'method': %s"
+#~ msgstr "'method' inválido:"
+
+#, fuzzy
+#~ msgid "invalid 'method'"
+#~ msgstr "'method' inválido:"
 
 #~ msgid "'newdata' does not contain the variables needed"
 #~ msgstr "'newdata' não contem as variáveis necessárias"

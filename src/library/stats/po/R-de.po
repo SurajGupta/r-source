@@ -1,14 +1,14 @@
 # Translation of /src/library/stats/po/R-stats.pot
-# Copyright (C) 2008-2009 The R Foundation
+# Copyright (C) 2008-2010 The R Foundation
 # This file is distributed under the same license as the R package.
-# Detlef Steuer <steuer@hsu-hh.de>, 2008-2009.
+# Detlef Steuer <steuer@hsu-hh.de>, 2008-2010.
 #
 msgid ""
 msgstr ""
-"Project-Id-Version: R 2.10.0\n"
+"Project-Id-Version: R 2.11.0\n"
 "Report-Msgid-Bugs-To: bugs@r-project.org\n"
-"POT-Creation-Date: 2009-10-08 08:29\n"
-"PO-Revision-Date: 2009-10-07 14:33+0200\n"
+"POT-Creation-Date: 2010-03-19 11:18\n"
+"PO-Revision-Date: 2010-03-23 13:36+0100\n"
 "Last-Translator: Detlef Steuer <steuer@hsu-hh.de>\n"
 "Language-Team: R Core <r-core@r-project.org>\n"
 "MIME-Version: 1.0\n"
@@ -32,9 +32,8 @@ msgstr ""
 msgid "'alpha', 'beta' and 'gamma' must be within the unit interval."
 msgstr "'alpha', 'beta' und 'gamma' müssen im Einheitsintervall liegen"
 
-msgid "data must be strictly non-negative for multiplicative Holt-Winters."
-msgstr ""
-"Daten müssen für den multiplikativen Holt-Winters strikt nicht-negativ sein"
+msgid "data must be non-zero for multiplicative Holt-Winters."
+msgstr "Daten müssen für den multiplikativen Holt-Winters ungleich 0  sein"
 
 msgid "need at least 2 periods to compute seasonal start values."
 msgstr "benötige zumindest 2 Perioden, um saisonale Startwerte zu berechnen"
@@ -146,8 +145,14 @@ msgstr "keine Zeile für die Aggragation"
 msgid "'by' must be a list"
 msgstr "'by' muss eine Liste sein"
 
-msgid "'FUN' must always return a scalar"
-msgstr "'FUN' muss immer einen Skalar zurückgeben"
+msgid "arguments must have same length"
+msgstr "Argumente müssen dieselbe Länge haben"
+
+msgid "'formula' missing or incorrect"
+msgstr "'formula' fehlt oder ist falsch"
+
+msgid "'formula' must have both left and right hand sides"
+msgstr "'formula' benötigt sowohl eine linke als auch eine rechte Seite"
 
 msgid "cannot change frequency from %g to %g"
 msgstr "kann die Frequenz nicht von %g nach %g ändern"
@@ -198,9 +203,6 @@ msgstr "kann bei Bindungen keinen exakten p-Wert Berechnen"
 
 msgid "cannot compute exact confidence intervals with ties"
 msgstr "Kann kein exaktes Konfidenzinterval bei Bindungen berechnen"
-
-msgid "'formula' missing or incorrect"
-msgstr "'formula' fehlt oder ist falsch"
 
 msgid "grouping factor must have exactly 2 levels"
 msgstr "Gruppierender Faktor muss genau zwei Stufen haben"
@@ -274,6 +276,9 @@ msgstr "'order.max' muss >= 1 sein"
 msgid "'order.max' must be < 'n.used'"
 msgstr "'order.max' muss kleiner sein als 'n.used'"
 
+msgid "'n.ahead' must be at least 1"
+msgstr "'n.ahead' muss mindestens 1 sein"
+
 msgid "number of series in 'object' and 'newdata' do not match"
 msgstr "Anzahl von Reihen in 'object' und 'newdata' passen nicht"
 
@@ -288,15 +293,6 @@ msgstr "MLE nur für univariate Zeitreihen implementiert"
 
 msgid "'order.max' must be >= 0"
 msgstr "'order.max' muss >= 0 sein"
-
-msgid "model order:"
-msgstr "Modellordnung:"
-
-msgid "singularities in the computation of the projection matrix"
-msgstr "singlularitäten in der Berechnung der Projektionsmatrix"
-
-msgid "results are only valid up to model order"
-msgstr "Resultate nur valide bis zur Modellordnung"
 
 msgid "'order' must be a non-negative numeric vector of length 3"
 msgstr "'order' muss ein nicht-negativer numerischer Vektor der Länge 3 sein"
@@ -533,6 +529,9 @@ msgstr "Basisgruppenanzahl liegt außerhalb des Bereichs"
 msgid "supply both 'x' and 'y' or a matrix-like 'x'"
 msgstr "'x' und 'y' oder ein matrixähnliches 'x' müssen angegeben werden"
 
+msgid "'y' must be numeric"
+msgstr "'y' muss numerisch sein"
+
 msgid "'x' is empty"
 msgstr "'x' ist leer"
 
@@ -547,6 +546,12 @@ msgstr "'V' ist keine quadratische, numerische Matrix"
 
 msgid "diag(.) had 0 or NA entries; non-finite result is doubtful"
 msgstr "Einträge 0 oder NA in diag(.): nicht-endliches Ergebniss zweifelhaft"
+
+msgid "'x' must be a numeric vector"
+msgstr "'x' muss ein numerischer Vektor sein"
+
+msgid "'y' must be a numeric vector"
+msgstr "'y' muss ein numerischer Vektor sein"
 
 msgid "not enough finite observations"
 msgstr "zu wenig endliche Beobachtungen"
@@ -842,7 +847,6 @@ msgstr ""
 msgid "non-positive values not allowed for the gamma family"
 msgstr "nicht-positive Werte sind für die Gamma-Familie nicht zulässig"
 
-#, fuzzy
 msgid "using weights as shape parameters"
 msgstr "nutze Gewichte als Gestaltparameter"
 
@@ -951,9 +955,6 @@ msgstr "falsche Spezifikation für 'row.vars'"
 msgid "incorrect specification for 'col.vars'"
 msgstr "falsche Spezifikation für 'col.vars'"
 
-msgid "'formula' must have both left and right hand sides"
-msgstr "'formula' benötigt sowohl eine linke als auch eine rechte Seite"
-
 msgid "interactions are not allowed"
 msgstr "Wechselwirkungen sind nicht erlaubt"
 
@@ -984,11 +985,8 @@ msgstr "'col.vars' fehlt oder falsch"
 msgid "'family' not recognized"
 msgstr "'family' nicht erkannt"
 
-msgid "invalid 'method': %s"
-msgstr "unzulässige 'method': %s"
-
-msgid "invalid 'method'"
-msgstr "unzulässige 'method'"
+msgid "invalid 'method' argument"
+msgstr "unzulässiges 'method' Argument"
 
 msgid "'weights' must be a numeric vector"
 msgstr "'weights' muss ein numerischer Vektor sein"
@@ -1033,8 +1031,8 @@ msgstr "NAs in d(mu)/d(eta)"
 msgid "no observations informative at iteration"
 msgstr "keine informativen Beobachtungen bei Iteration"
 
-msgid "non-finite coefficients at iteration"
-msgstr "nicht-endliche Koeffizienten bei Iteration"
+msgid "non-finite coefficients at iteration %d"
+msgstr "nicht-endliche Koeffizienten bei Iteration %d"
 
 msgid "X matrix has rank %d, but only %d observations"
 msgstr "X Matrix hat Rang %d, aber nur %d Beobachtungen"
@@ -1055,18 +1053,17 @@ msgstr "Schrittweite abgeschnitten: Überlauf"
 msgid "inner loop 2; cannot correct step size"
 msgstr "innere Schleife 2; kann Schrittweite nicht korrigieren"
 
-msgid "algorithm did not converge"
-msgstr "Algorithmus konvergierte nicht"
+msgid "glm.fit: algorithm did not converge"
+msgstr "glm.fit: Algorithmus konvergierte nicht"
 
-msgid "algorithm stopped at boundary value"
-msgstr "Algortihmus stoppte am Rand"
+msgid "glm.fit: algorithm stopped at boundary value"
+msgstr "glm.fit: Algortihmus stoppte am Rand"
 
-msgid "fitted probabilities numerically 0 or 1 occurred"
-msgstr ""
-"angepasste Wahrscheinlichkeiten mit numerischem Wert 0 oder 1 aufgetreten"
+msgid "glm.fit: fitted probabilities numerically 0 or 1 occurred"
+msgstr "glm.fit: Angepasste Wahrscheinlichkeiten mit numerischem Wert 0 oder 1 aufgetreten"
 
-msgid "fitted rates numerically 0 occurred"
-msgstr "angepasste Raten, die numerich 0 sind, aufgetreten"
+msgid "glm.fit: fitted rates numerically 0 occurred"
+msgstr "glm.fit: angepasste Raten, die numerisch 0 sind, aufgetreten"
 
 msgid "the following arguments to 'anova.glm' are invalid and dropped:"
 msgstr ""
@@ -1375,6 +1372,9 @@ msgstr "'start' und 'table' müssen dieselbe Länge haben"
 
 msgid "this should not happen"
 msgstr "dies sollte nicht passieren"
+
+msgid "algorithm did not converge"
+msgstr "Algorithmus konvergierte nicht"
 
 msgid "incorrect specification of 'table' or 'start'"
 msgstr "falsche Spezifikation von 'table' oder 'start'"
@@ -1854,6 +1854,9 @@ msgstr "'proj' ist für \"mlm\" Fits nicht implementiert"
 msgid "'proj' is not implemented for multiple responses"
 msgstr "'proj' ist für multiple Zielgrößen nicht implementiert"
 
+msgid "table 'x' should have 2 entries"
+msgstr "Tabelle 'x' sollte 2 Einträge haben"
+
 msgid "elements of 'n' must be positive"
 msgstr "Elemente von 'n' müsse positiv sein"
 
@@ -1880,6 +1883,9 @@ msgstr "'y', 'groups' und 'blocks' müssen gleich lang sein"
 
 msgid "'formula' missing"
 msgstr "'formula' fehlt"
+
+msgid "factors are not allowed"
+msgstr "Faktoren sind nicht erlaubt"
 
 msgid "missing values and NaN's not allowed if 'na.rm' is FALSE"
 msgstr "fehlende Werte und NaNs sind nicht erlaubt, wenn 'na.rm' = FALSE"
@@ -2262,9 +2268,6 @@ msgstr "'ratio' muss eine einzelne positive Zahl sein"
 msgid "'x' and 'w' must have the same length"
 msgstr "'x' und 'w' müssen die selbe Länge haben"
 
-msgid "'y' must be numeric"
-msgstr "'y' muss numerisch sein"
-
 msgid "not enough (finite) 'x' observations"
 msgstr "nicht genug (endliche) 'x' Beobachtungen"
 
@@ -2358,6 +2361,24 @@ msgid "parameter %s does not occur in the model formula"
 msgid_plural "parameters %s do not occur in the model formula"
 msgstr[0] "Parameter %s kommt in der Modellgleichung nicht vor"
 msgstr[1] "Parameter %s kommen in der Modellgleichung nicht vor"
+
+#~ msgid "'FUN' must always return a scalar"
+#~ msgstr "'FUN' muss immer einen Skalar zurückgeben"
+
+#~ msgid "model order:"
+#~ msgstr "Modellordnung:"
+
+#~ msgid "singularities in the computation of the projection matrix"
+#~ msgstr "singlularitäten in der Berechnung der Projektionsmatrix"
+
+#~ msgid "results are only valid up to model order"
+#~ msgstr "Resultate nur valide bis zur Modellordnung"
+
+#~ msgid "invalid 'method': %s"
+#~ msgstr "unzulässige 'method': %s"
+
+#~ msgid "invalid 'method'"
+#~ msgstr "unzulässige 'method'"
 
 #~ msgid "'newdata' does not contain the variables needed"
 #~ msgstr "'newdata' enhält nicht die benötigten Variablen"

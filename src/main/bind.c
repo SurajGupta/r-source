@@ -1,8 +1,7 @@
 /*
  *  R : A Computer Language for Statistical Data Analysis
  *  Copyright (C) 1995, 1996  Robert Gentleman and Ross Ihaka
- *  Copyright (C) 1997--2007  Robert Gentleman, Ross Ihaka and the
- *			      R Development Core Team
+ *  Copyright (C) 1997--2007  The R Development Core Team
  *  Copyright (C) 2002--2005  The R Foundation
  *
  *  This program is free software; you can redistribute it and/or modify
@@ -708,6 +707,7 @@ static SEXP ExtractOptionals(SEXP ans, int *recurse, int *usenames, SEXP call)
    argument.
 */
 
+/* This is a primitive SPECIALSXP */
 SEXP attribute_hidden do_c(SEXP call, SEXP op, SEXP args, SEXP env)
 {
     SEXP ans;
@@ -970,6 +970,7 @@ SEXP attribute_hidden do_unlist(SEXP call, SEXP op, SEXP args, SEXP env)
 
 
 /* cbind(deparse.level, ...) and rbind(deparse.level, ...) : */
+/* This is a special .Internal */
 SEXP attribute_hidden do_bind(SEXP call, SEXP op, SEXP args, SEXP env)
 {
     SEXP a, t, obj, classlist, classname, method, classmethod, rho;
@@ -1201,6 +1202,7 @@ static SEXP cbind(SEXP call, SEXP args, SEXPTYPE mode, SEXP rho,
 	    }
 	    dn = getAttrib(u, R_NamesSymbol);
 	    if (k >= lenmin && (TAG(t) != R_NilValue ||
+				(deparse_level == 2) ||
 				((deparse_level == 1) &&
 				 isSymbol(substitute(CAR(t),R_NilValue)))))
 		have_cnames = TRUE;
@@ -1436,8 +1438,9 @@ static SEXP rbind(SEXP call, SEXP args, SEXPTYPE mode, SEXP rho,
 	    }
 	    dn = getAttrib(u, R_NamesSymbol);
 	    if (k >= lenmin && (TAG(t) != R_NilValue ||
-		      ((deparse_level == 1) &&
-		       isSymbol(substitute(CAR(t),R_NilValue)))))
+				(deparse_level == 2) ||
+				((deparse_level == 1) &&
+				 isSymbol(substitute(CAR(t),R_NilValue)))))
 		have_rnames = TRUE;
 	    nnames = imax2(nnames, length(dn));
 	}

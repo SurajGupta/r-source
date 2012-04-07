@@ -3,7 +3,11 @@ Rterm  ICON  R.ico
 #include <windows.h>
 #include "../../include/Rversion.h"
 
+#ifndef WIN64
 CREATEPROCESS_MANIFEST_RESOURCE_ID RT_MANIFEST "Rterm.exe.manifest"
+#else
+CREATEPROCESS_MANIFEST_RESOURCE_ID RT_MANIFEST "Rterm64.manifest"
+#endif
 
 VS_VERSION_INFO VERSIONINFO
 FILEVERSION R_FILEVERSION

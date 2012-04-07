@@ -1,15 +1,18 @@
 msgid ""
 msgstr ""
-"Project-Id-Version: R 2.3.0\n"
+"Project-Id-Version: R 2.11.0\n"
 "Report-Msgid-Bugs-To: bugs@r-project.org\n"
-"POT-Creation-Date: 2009-10-08 08:29\n"
-"PO-Revision-Date: 2005-05-26 15:05+0900\n"
-"Last-Translator: Korean <uiami@hanmail.com>\n"
-"Language-Team: Korean <translation-team-ko@lists.sourceforge.net>\n"
+"POT-Creation-Date: 2010-03-19 11:18\n"
+"PO-Revision-Date: 2010-03-25 14:29-0600\n"
+"Last-Translator: Chel Hee Lee <chl948@mail.usask.ca>\n"
+"Language-Team: Open Statistics Group Korea <gnustats@gmail.com>\n"
 "MIME-Version: 1.0\n"
 "Content-Type: text/plain; charset=UTF-8\n"
 "Content-Transfer-Encoding: 8bit\n"
 "Plural-Forms: nplurals=1; plural=0;\n"
+"X-Poedit-Language: Korean\n"
+"X-Poedit-Country: Korea, Republic Of\n"
+"X-Poedit-SourceCharset: utf-8\n"
 
 msgid "empty model supplied"
 msgstr "비어있는 모델이 제공되어졌습니다"
@@ -29,7 +32,7 @@ msgstr ""
 "'alpha', 'beta' 그리고 'gamma'는 단위 사이의 내부에 있을 필요가 있습니다"
 
 #, fuzzy
-msgid "data must be strictly non-negative for multiplicative Holt-Winters."
+msgid "data must be non-zero for multiplicative Holt-Winters."
 msgstr ""
 "곱셈적 Holt-Winters 모델에서 데이터는 non-negative가 아니면 되지 않습니다"
 
@@ -149,8 +152,15 @@ msgstr "비교해야할 모델이 없습니다"
 msgid "'by' must be a list"
 msgstr "'by'는 list가 아니면 되지 않습니다"
 
-msgid "'FUN' must always return a scalar"
-msgstr "'FUN'는 항상 sclalar를 돌려주지 않으면 되지 않습니다"
+#, fuzzy
+msgid "arguments must have same length"
+msgstr "인수는 동일 길이가 나오지 않으면 되지 않습니다"
+
+msgid "'formula' missing or incorrect"
+msgstr "'formula'가 없거나 부정확합니다"
+
+msgid "'formula' must have both left and right hand sides"
+msgstr "모델식('formula')은 좌변과 우변의 쌍방을 가지지 않으면 안됩니다"
 
 msgid "cannot change frequency from %g to %g"
 msgstr "빈도를 %g로부터 %g까지 변경 할수 없습니다"
@@ -200,9 +210,6 @@ msgstr "ties가 있기때문에, 정확한 p값을 돌려줍니다"
 
 msgid "cannot compute exact confidence intervals with ties"
 msgstr "ties가 있기때문에, 정확한 신뢰 구간을 계산할 수가 없습니다"
-
-msgid "'formula' missing or incorrect"
-msgstr "'formula'가 없거나 부정확합니다"
 
 msgid "grouping factor must have exactly 2 levels"
 msgstr "그룹화 인자는 꼭 2 levels을 가지지 않으면 안됩니다"
@@ -276,6 +283,10 @@ msgstr "'order.max'는 1 이상의 아니면 되지 않습니다"
 msgid "'order.max' must be < 'n.used'"
 msgstr "'order.max'는 1 이상의 아니면 되지 않습니다"
 
+#, fuzzy
+msgid "'n.ahead' must be at least 1"
+msgstr "'lag.max'는 적어도 1 입니다"
+
 msgid "number of series in 'object' and 'newdata' do not match"
 msgstr "'object'안의 계열의 수와 'newdata'가 일치하지 않습니다"
 
@@ -290,15 +301,6 @@ msgstr "MLE는 일변양계열에만 실제 적용되어 있습니다"
 
 msgid "'order.max' must be >= 0"
 msgstr "'order.max'는 non-negative이어야만 합니다"
-
-msgid "model order:"
-msgstr "모델의 차수:"
-
-msgid "singularities in the computation of the projection matrix"
-msgstr "개의 특이값이 투영 행렬의 계산중에 발생했습니다"
-
-msgid "results are only valid up to model order"
-msgstr "결과는 이하의 모델 차수까지만 적정이 아닙니다"
 
 msgid "'order' must be a non-negative numeric vector of length 3"
 msgstr "'order'는 길이 3의 non-negative 수치 벡터가 아니면 되지 않습니다"
@@ -534,6 +536,9 @@ msgstr "baseline의 그룹수가 범위를 넘어가고 있습니다"
 msgid "supply both 'x' and 'y' or a matrix-like 'x'"
 msgstr "'x' 그리고 'y'의 양쪽 모두를 주어지거나, 행렬형태의 'x'를 주어집니다"
 
+msgid "'y' must be numeric"
+msgstr "'y'는 수치가 아니면 되지 않습니다"
+
 msgid "'x' is empty"
 msgstr "'x'는 비어 있습니다"
 
@@ -549,6 +554,16 @@ msgstr "'V'는 수치 정방 행렬이 아닙니다"
 
 msgid "diag(.) had 0 or NA entries; non-finite result is doubtful"
 msgstr ""
+"대각행렬의 값이 0 또는 NA 가 있기 때문에 유한값을 가지지 않을 것으로 추측됩니"
+"다"
+
+#, fuzzy
+msgid "'x' must be a numeric vector"
+msgstr "'y' 수치 벡터가 아니면 되지 않습니다"
+
+#, fuzzy
+msgid "'y' must be a numeric vector"
+msgstr "'y' 수치 벡터가 아니면 되지 않습니다"
 
 msgid "not enough finite observations"
 msgstr "유한한 관측값이 충분히 없습니다"
@@ -672,7 +687,7 @@ msgid "'weights' must not be negative"
 msgstr "'x'는 non-negative가 나오지 않으면 되지 않습니다"
 
 msgid "sum(weights) != 1  -- will not get true density"
-msgstr ""
+msgstr "가중치의 합이 1이 아니므로 정확한 확률분포를 찾을 수 없습니다"
 
 msgid "need at least 2 points to select a bandwidth automatically"
 msgstr ""
@@ -795,7 +810,7 @@ msgid "negative values not allowed for the Poisson family"
 msgstr "포아송 패밀리에서 negative 값은 허용되지 않습니다"
 
 msgid "ignoring prior weights"
-msgstr ""
+msgstr "기존에 부여한 가중치를 무시합니다"
 
 #, fuzzy
 msgid ""
@@ -865,7 +880,7 @@ msgid "non-positive values not allowed for the gamma family"
 msgstr "정확하지 않는 값은 gamma family에서 허용되지 않습니다"
 
 msgid "using weights as shape parameters"
-msgstr ""
+msgstr "모양인수로서 가중치를 사용합니다"
 
 #, fuzzy
 msgid ""
@@ -879,7 +894,7 @@ msgid "positive values only allowed for the inverse.gaussian family"
 msgstr "역정규 패밀리에서 정의값만 허용되지 않습니다"
 
 msgid "Need CRAN package 'SuppDists' for 'inverse.gaussian' family"
-msgstr ""
+msgstr "'inverse.gaussian'를 사용하려면 CRAN package 'SuppDists'가 필요합니다"
 
 msgid "using weights as inverse variances"
 msgstr ""
@@ -934,10 +949,10 @@ msgid "'or' must be a single number between 0 and Inf"
 msgstr "'or'는 단일의 수치 또는 0 과 inf 간의 단일의 수가 아니면 되지 않습니다"
 
 msgid "need 2 or more non-zero row marginals"
-msgstr ""
+msgstr "음수가 아닌 2개이상의 마지널이 필요로 합니다"
 
 msgid "need 2 or more non-zero column marginals"
-msgstr ""
+msgstr "음수가 아닌 2개 이상의 열 마지널이 필요합니다"
 
 msgid "'hybrid' is ignored for a 2 x 2 table"
 msgstr ""
@@ -975,9 +990,6 @@ msgstr "'row.vars'의 지정이 부정확합니다"
 msgid "incorrect specification for 'col.vars'"
 msgstr "'col.vars'의 지정이 부정확합니다"
 
-msgid "'formula' must have both left and right hand sides"
-msgstr "모델식('formula')은 좌변과 우변의 쌍방을 가지지 않으면 안됩니다"
-
 msgid "interactions are not allowed"
 msgstr "상호작용은 허용되지 않습니다"
 
@@ -1009,12 +1021,8 @@ msgid "'family' not recognized"
 msgstr "'family'를 확인 할수 없습니다"
 
 #, fuzzy
-msgid "invalid 'method': %s"
-msgstr "무효인 'method' 입니다:"
-
-#, fuzzy
-msgid "invalid 'method'"
-msgstr "무효인 'method' 입니다:"
+msgid "invalid 'method' argument"
+msgstr "무효인 'data'인수입니다"
 
 #, fuzzy
 msgid "'weights' must be a numeric vector"
@@ -1061,7 +1069,8 @@ msgstr "D(mu)/d(eta)에서 NA가 있습니다"
 msgid "no observations informative at iteration"
 msgstr "반복에 두고 의미가 있는 관측값이 없습니다"
 
-msgid "non-finite coefficients at iteration"
+#, fuzzy
+msgid "non-finite coefficients at iteration %d"
 msgstr "반복에 두고 유한하지 않는 계수를 얻을 수 있었습니다"
 
 msgid "X matrix has rank %d, but only %d observations"
@@ -1083,16 +1092,20 @@ msgstr "step size가 잘라졌습니다: 한계를 넘어갔습니다"
 msgid "inner loop 2; cannot correct step size"
 msgstr "내부 루프 2; step size를 정정할 수가 없습니다"
 
-msgid "algorithm did not converge"
+#, fuzzy
+msgid "glm.fit: algorithm did not converge"
 msgstr "알고리즘은 수렴하지 않았습니다"
 
-msgid "algorithm stopped at boundary value"
+#, fuzzy
+msgid "glm.fit: algorithm stopped at boundary value"
 msgstr "알고리즘은 경계값으로 정지했습니다"
 
-msgid "fitted probabilities numerically 0 or 1 occurred"
+#, fuzzy
+msgid "glm.fit: fitted probabilities numerically 0 or 1 occurred"
 msgstr "수치적으로 0 또는 1인 확률이 초래해졌습니다"
 
-msgid "fitted rates numerically 0 occurred"
+#, fuzzy
+msgid "glm.fit: fitted rates numerically 0 occurred"
 msgstr "수치적으로 0인 적용시키고 비율이 초래해졌습니다"
 
 msgid "the following arguments to 'anova.glm' are invalid and dropped:"
@@ -1102,7 +1115,7 @@ msgid ","
 msgstr ","
 
 msgid "using F test with a %s family is inappropriate"
-msgstr ""
+msgstr "F 테스트가 부적절합니다"
 
 msgid "using F test with a fixed dispersion is inappropriate"
 msgstr ""
@@ -1338,7 +1351,7 @@ msgid ""
 msgstr ""
 
 msgid "Assuming constant prediction variance even though model fit is weighted"
-msgstr ""
+msgstr "모델이 적합하게 가중치가 부여되었음에도 일정한 분산치를 가집니다"
 
 #, fuzzy
 msgid "'weights' as formula should be one-sided"
@@ -1404,6 +1417,9 @@ msgstr "'start'와 'table'는 동일 길이가 나오지 않으면 되지 않습
 
 msgid "this should not happen"
 msgstr "이것은 있을 수가 있지 않는 것입니다"
+
+msgid "algorithm did not converge"
+msgstr "알고리즘은 수렴하지 않았습니다"
 
 msgid "incorrect specification of 'table' or 'start'"
 msgstr "'table' 또는 'start'의 부정확한 지정입니다"
@@ -1641,7 +1657,7 @@ msgid "unrecognized control element(s) named `"
 msgstr ""
 
 msgid "' ignored"
-msgstr ""
+msgstr "무시"
 
 msgid "Logical `hessian' argument not allowed.  See documentation."
 msgstr ""
@@ -1689,7 +1705,7 @@ msgid "No starting values specified for some parameters."
 msgstr "초기값이 주어지고 있지 않습니다"
 
 msgid "Intializing"
-msgstr ""
+msgstr "초기화중"
 
 msgid "to '1.'."
 msgstr ""
@@ -1705,7 +1721,7 @@ msgid "fitting parameters"
 msgstr "모든 파라미터가 고정되어 있었습니다"
 
 msgid "without any variables"
-msgstr ""
+msgstr "변수사용없이"
 
 #, fuzzy
 msgid "no parameters to fit"
@@ -1719,7 +1735,7 @@ msgid "argument 'na.action' will be ignored"
 msgstr ""
 
 msgid "Upper or lower bounds ignored unless algorithm = \"port\""
-msgstr ""
+msgstr "algorithm \"port\" 이 아니면, 상단과 하단값이 무시됩니다"
 
 msgid "cannot calculate REML log-likelihood for \"nls\" objects"
 msgstr "\"nls\" 오브젝트를 위한 REML 대수우도를 계산할 수 없습니다"
@@ -1737,7 +1753,7 @@ msgid "'%s' cannot be of mode '%s'"
 msgstr "'%s'는 모드 '%s'로는 될 수 없습니다"
 
 msgid "a two-sided formula is required"
-msgstr ""
+msgstr "two-sided 공식이 필요합니다"
 
 msgid "not enough groups"
 msgstr "충분하지 않는 group입니다"
@@ -1792,7 +1808,7 @@ msgid "'id.n' must be in {1,..,%d}"
 msgstr "'id.n' {1,..,%d}에서 없으면 되지 않습니다"
 
 msgid "hat values (leverages) are all ="
-msgstr ""
+msgstr "leverages 의 값은 "
 
 msgid "and there are no factor predictors; no plot no. 5"
 msgstr ""
@@ -1895,7 +1911,7 @@ msgid "'princomp' can only be used with more units than variables"
 msgstr "'princomp'에서 cases는 변수로부터 많지 않으면 되지 않습니다"
 
 msgid "cannot use cor=TRUE with a constant variable"
-msgstr ""
+msgstr "고정값으로서의 cor 를 사용할수 없습니다"
 
 msgid "covariance matrix is not non-negative definite"
 msgstr "공분산 행렬이 비부치정부호가 아닙니다"
@@ -1911,6 +1927,9 @@ msgstr "'proj'는 \"mlm\"에 의한 실제 적용되지 있지 않습니다"
 
 msgid "'proj' is not implemented for multiple responses"
 msgstr "'proj'는 다중 응답에 대해서는 실제 적용되지 않습니다"
+
+msgid "table 'x' should have 2 entries"
+msgstr ""
 
 msgid "elements of 'n' must be positive"
 msgstr "'n'의 요소는 poitive가 아니면 되지 않습니다"
@@ -1938,6 +1957,10 @@ msgstr "'y', 'groups' 그리고 'block'은 동일 길이가 나오지 않으면 
 
 msgid "'formula' missing"
 msgstr "'formula'가 잘못되었습니다"
+
+#, fuzzy
+msgid "factors are not allowed"
+msgstr "상호작용은 허용되지 않습니다"
 
 msgid "missing values and NaN's not allowed if 'na.rm' is FALSE"
 msgstr "'na.rm'가 FALSE 이라면, 결손값 그리고 NaN는 허용되지 않습니다"
@@ -2334,9 +2357,6 @@ msgstr "'ratio'는 단일의 positive의 수가 아니면 되지 않습니다"
 msgid "'x' and 'w' must have the same length"
 msgstr "'x'와 'w'는 동일 길이가 나오지 않으면 되지 않습니다"
 
-msgid "'y' must be numeric"
-msgstr "'y'는 수치가 아니면 되지 않습니다"
-
 msgid "not enough (finite) 'x' observations"
 msgstr "(유한한）'x'의 관측값이 충분하지는 않습니다"
 
@@ -2420,6 +2440,26 @@ msgid_plural "parameters %s do not occur in the model formula"
 msgstr[0] ""
 "모델식에서 파라미터 %s가 없습니다\n"
 "모델식에서 파라미터(복수) %s가 없습니다"
+
+#~ msgid "'FUN' must always return a scalar"
+#~ msgstr "'FUN'는 항상 sclalar를 돌려주지 않으면 되지 않습니다"
+
+#~ msgid "model order:"
+#~ msgstr "모델의 차수:"
+
+#~ msgid "singularities in the computation of the projection matrix"
+#~ msgstr "개의 특이값이 투영 행렬의 계산중에 발생했습니다"
+
+#~ msgid "results are only valid up to model order"
+#~ msgstr "결과는 이하의 모델 차수까지만 적정이 아닙니다"
+
+#, fuzzy
+#~ msgid "invalid 'method': %s"
+#~ msgstr "무효인 'method' 입니다:"
+
+#, fuzzy
+#~ msgid "invalid 'method'"
+#~ msgstr "무효인 'method' 입니다:"
 
 #~ msgid "'newdata' does not contain the variables needed"
 #~ msgstr "'newdata'는 필요로 하는 변수를 포함하고 있지 않습니다"

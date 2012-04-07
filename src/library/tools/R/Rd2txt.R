@@ -49,6 +49,7 @@ Rd2txt <-
     haveBlanks <- 0L		# How many blank lines have just been written?
     enumItem <- 0L		# Last enumeration item number
     inEqn <- FALSE		# Should we do edits needed in an eqn?
+    sectionLevel <- 0		# How deeply nested within sections/subsections
 
     startCapture <- function() {
     	save <- list(buffer=buffer, linestart=linestart, indent=indent,
@@ -105,7 +106,7 @@ Rd2txt <-
         txt <- paste(..., collapse="", sep="")
         trail <- grepl("\n$", txt)
         # Convert newlines
-        txt <- strsplit(txt, "\n", fixed = TRUE)[[1]]
+        txt <- strsplit(txt, "\n", fixed = TRUE)[[1L]]
         if (dropBlank) {
             while(length(txt) && grepl("^[[:space:]]*$", txt[1L]))
             	txt <- txt[-1L]
@@ -132,7 +133,7 @@ Rd2txt <-
 
     	if (wrapping) {
 	    if (keepFirstIndent) {
-		first <- nchar(psub1("[^ ].*", "", buffer[1]))
+		first <- nchar(psub1("[^ ].*", "", buffer[1L]))
 		keepFirstIndent <<- FALSE
 	    } else
 		first <- indent
@@ -240,7 +241,7 @@ Rd2txt <-
         if(inEqn) txt <- txt_eqn(txt)
         txt <- fsub('"\\{"', '"{"', txt)
         ## \dots gets left in noquote.Rd
-        txt <-fsub("\\dots",  "....", txt)
+        txt <-fsub("\\dots",  "...", txt)
         put(txt)
     }
 
@@ -253,15 +254,20 @@ Rd2txt <-
 	if (n > haveBlanks) {
 	    buffer <<- rep("", n - haveBlanks)
 	    flushBuffer()
+	    haveBlanks <<- n
 	}
-	haveBlanks <<- n
 	dropBlank <<- TRUE
     }
 
     txt_eqn <- function(x) {
-        x <- psub("\\\\(Gamma|alpha|Alpha|pi|mu|sigma|Sigma|lambda|beta|epsilaon|psi)", "\\1", x)
+        x <- psub("\\\\(Alpha|Beta|Gamma|Delta|Epsilon|Zeta|Eta|Theta|Iota|Kappa|Lambda|Mu|Nu|Xi|Omicron|Pi|Rho|Sigma|Tau|Upsilon|Phi|Chi|Psi|Omega|alpha|beta|gamma|delta|epsilon|zeta|eta|theta|iota|kappa|lambda|mu|nu|xi|omicron|pi|rho|sigma|tau|upsilon|phi|chi|psi|omega|sum|prod|sqrt)", "\\1", x)
+        x <- psub("\\\\(dots|ldots)", "...", x)
+        x <- fsub("\\le", "<=", x)
+        x <- fsub("\\ge", ">=", x)
+        x <- fsub("\\infty", "Inf", x)
+        ## FIXME: are these needed?
         x <- psub("\\\\(bold|strong|emph|var)\\{([^}]*)\\}", "\\2", x)
-        x <- psub("\\\\(ode|samp)\\{([^}]*)\\}", "'\\2'", x)
+        x <- psub("\\\\(code|samp)\\{([^}]*)\\}", "'\\2'", x)
         x
     }
 
@@ -374,7 +380,10 @@ Rd2txt <-
                "\\ldots" = put("..."),
                "\\R" = put("R"),
                "\\enc" = {
-                   txt <- as.character(block[[2L]])
+                   ## Test to see if we can convert the encoded version
+                   txt <- as.character(block[[1L]])
+                   test <- iconv(txt, "UTF-8", outputEncoding, mark = FALSE)
+                   txt <- if(!is.na(test)) txt else as.character(block[[2L]])
                    put(txt)
                } ,
                "\\eqn" = {
@@ -397,6 +406,7 @@ Rd2txt <-
     		   blankLine()
                },
                "\\tabular" = writeTabular(block),
+               "\\subsection" = writeSection(block, tag),
                "\\if"=,
                "\\ifelse" =
                    if (testRdConditional("text", block, Rdfile))
@@ -584,7 +594,7 @@ Rd2txt <-
                        } else {
                            if (class == "default")
                                putf('## Default S3 method:\n')
-                           else if (grepl("<-\\s*value", blocks[[i+1]][[1L]])) {
+                           else if (grepl("<-\\s*value", blocks[[i+1L]][[1L]])) {
                                putf("## S3 replacement method for class '")
                                writeCodeBlock(block[[2L]], tag)
                                putf("':\n")
@@ -754,12 +764,15 @@ Rd2txt <-
     writeSection <- function(section, tag) {
         if (tag %in% c("\\alias", "\\concept", "\\encoding", "\\keyword"))
             return()
-    	blankLine(0L)
-        indent <<- 5L
+    	save <- c(indent, sectionLevel, keepFirstIndent, dropBlank, wrapping)
+    	blankLine(min(sectionLevel, 1L))
+    	titlePrefix <- paste(rep("  ", sectionLevel), collapse="")
+        indent <<- 5L + 2L*sectionLevel
+        sectionLevel <<- sectionLevel + 1
         keepFirstIndent <<- TRUE
-        if (tag == "\\section") {
+        if (tag == "\\section" || tag == "\\subsection") {
             ## section header could have markup
-            putf(txt_header(toChar(section[[1L]])), ":")
+            putf(titlePrefix, txt_header(toChar(section[[1L]])), ":")
             blankLine()
             dropBlank <<- TRUE
             wrapping <<- TRUE
@@ -781,6 +794,12 @@ Rd2txt <-
             writeContent(section, tag)
         }
         blankLine()
+
+        indent <<- save[1]
+        sectionLevel <<- save[2]
+        keepFirstIndent <<- save[3]
+        dropBlank <<- save[4]
+        wrapping <<- save[5]
     }
 
     if (is.character(out)) {

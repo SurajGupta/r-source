@@ -22,10 +22,10 @@
 #
 msgid ""
 msgstr ""
-"Project-Id-Version: R 2.10.1\n"
+"Project-Id-Version: R 2.11.0\n"
 "Report-Msgid-Bugs-To: bugs@r-project.org\n"
-"POT-Creation-Date: 2009-12-10 19:18\n"
-"PO-Revision-Date: 2009-12-10 19:18\n"
+"POT-Creation-Date: 2010-03-16 09:20\n"
+"PO-Revision-Date: 2010-03-16 09:20\n"
 "Last-Translator: Automatically generated\n"
 "Language-Team: none\n"
 "MIME-Version: 1.0\n"
@@ -126,6 +126,12 @@ msgstr "No vignettes found by"
 
 msgid "call"
 msgstr "call"
+
+msgid "Package '"
+msgstr "Package '"
+
+msgid "' DESCRIPTION not found."
+msgstr "' DESCRIPTION not found."
 
 msgid "'file' must be NULL, a character string or a connection"
 msgstr "‘file’ must be NULL, a character string or a connection"
@@ -267,14 +273,8 @@ msgstr "class(es) of ‘name’ will be discarded"
 msgid "cannot edit NULL row names"
 msgstr "cannot edit NULL row names"
 
-msgid "no help file found for '%s'"
-msgstr "no help file found for ‘%s’"
-
-msgid "more than one help file found: using package '%s'"
-msgstr "more than one help file found: using package ‘%s’"
-
-msgid "'%s' has a help file but no examples"
-msgstr "‘%s’ has a help file but no examples"
+msgid "no help found for '%s'"
+msgstr "no help found for ‘%s’"
 
 msgid "test '%s' is not available"
 msgstr "test ‘%s’ is not available"
@@ -299,15 +299,6 @@ msgstr "‘form’ must be a two-sided formula with one term on each side"
 
 msgid "'topic' should be a name, length-one character vector or reserved word"
 msgstr "‘topic’ should be a name, length-one character vector or reserved word"
-
-msgid "offline = TRUE is deprecated: use help_type =\"postscript\""
-msgstr "offline = TRUE is deprecated: use help_type =“postscript”"
-
-msgid "chmhelp = TRUE is no longer supported: using help_type =\"text\""
-msgstr "chmhelp = TRUE is no longer supported: using help_type =“text”"
-
-msgid "htmhelp = TRUE is deprecated: use help_type =\"html\""
-msgstr "htmhelp = TRUE is deprecated: use help_type =“html”"
 
 msgid "No documentation for '%s' in specified packages and libraries:"
 msgstr "No documentation for ‘%s’ in specified packages and libraries:"
@@ -343,19 +334,15 @@ msgstr "HTML help is unavailable"
 msgid "R Help on '%s'"
 msgstr "R Help on ‘%s’"
 
-msgid ""
-"No text help for '%s' is available:\n"
-"corresponding file is missing"
-msgstr ""
-"No text help for ‘%s’ is available:\n"
-"corresponding file is missing"
+msgid "invalid '%s' argument"
+msgstr "invalid ‘%s’ argument"
 
 msgid ""
-"No offline help for '%s' is available:\n"
-"corresponding file is missing"
+"package %s exists but was not installed under R >= 2.10.0 so help cannot be "
+"accessed"
 msgstr ""
-"No offline help for ‘%s’ is available:\n"
-"corresponding file is missing"
+"package %s exists but was not installed under R >= 2.10.0 so help cannot be "
+"accessed"
 
 msgid "argument '%s' must be a single character string"
 msgstr "argument ‘%s’ must be a single character string"
@@ -575,16 +562,14 @@ msgstr "trying to use CRAN without setting a mirror"
 msgid "cannot choose a CRAN mirror non-interactively"
 msgstr "cannot choose a CRAN mirror non-interactively"
 
+msgid "cannot choose a BioC mirror non-interactively"
+msgstr "cannot choose a BioC mirror non-interactively"
+
 msgid "cannot set repositories non-interactively"
 msgstr "cannot set repositories non-interactively"
 
 msgid "--- Please select repositories for use in this session ---"
 msgstr "--- Please select repositories for use in this session ---"
-
-msgid ""
-"Enter one or more numbers separated by spaces, or an empty line to cancel"
-msgstr ""
-"Enter one or more numbers separated by spaces, or an empty line to cancel"
 
 msgid "'%s' must be supplied"
 msgstr "‘%s’ must be supplied"
@@ -667,6 +652,9 @@ msgstr ""
 
 msgid "no object named '%s' to show"
 msgstr "no object named ‘%s’ to show"
+
+msgid "must have max > min"
+msgstr "must have max > min"
 
 msgid "'pb' is not from class \"txtProgressBar\""
 msgstr "‘pb’ is not from class “txtProgressBar”"
@@ -864,9 +852,6 @@ msgstr "no events were recorded"
 msgid "'compressed' must be logical or character"
 msgstr "‘compressed’ must be logical or character"
 
-msgid "untar: using cmd ="
-msgstr "untar: using cmd ="
-
 msgid "invalid octal digit"
 msgstr "invalid octal digit"
 
@@ -887,9 +872,6 @@ msgstr "file ‘%s’ not found"
 
 msgid "file path is too long"
 msgstr "file path is too long"
-
-msgid "storing paths of more than 100 bytes is not portable:"
-msgstr "storing paths of more than 100 bytes is not portable:"
 
 msgid "linked path is too long"
 msgstr "linked path is too long"
@@ -913,8 +895,10 @@ msgstr "select.list() cannot be used non-interactively"
 msgid "'title' must be NULL or a length-1 character vector"
 msgstr "‘title’ must be NULL or a length-1 character vector"
 
-msgid "Enter zero or more numbers separated by space"
-msgstr "Enter zero or more numbers separated by space"
+msgid ""
+"Enter one or more numbers separated by spaces, or an empty line to cancel"
+msgstr ""
+"Enter one or more numbers separated by spaces, or an empty line to cancel"
 
 msgid "Invalid input, please try again"
 msgstr "Invalid input, please try again"
@@ -971,11 +955,11 @@ msgid "help.start() requires the HTTP server to be running"
 msgstr "help.start() requires the HTTP server to be running"
 
 msgid ""
-"If '%s' is already running, it is *not* restarted, and you must switch to "
-"its window."
+"If the browser launched by '%s' is already running, it is *not* restarted, "
+"and you must switch to its window."
 msgstr ""
-"If ‘%s’ is already running, it is *not* restarted, and you must switch to "
-"its window."
+"If the browser launched by ‘%s’ is already running, it is *not* restarted, "
+"and you must switch to its window."
 
 msgid "Otherwise, be patient ..."
 msgstr "Otherwise, be patient ..."
@@ -997,12 +981,6 @@ msgstr "‘tar’ returned non-zero exit code %d"
 
 msgid "package '%s' successfully unpacked and MD5 sums checked"
 msgstr "package ‘%s’ successfully unpacked and MD5 sums checked"
-
-msgid "malformed bundle DESCRIPTION file, no Contains field"
-msgstr "malformed bundle DESCRIPTION file, no Contains field"
-
-msgid "bundle '%s' successfully unpacked and MD5 sums checked"
-msgstr "bundle ‘%s’ successfully unpacked and MD5 sums checked"
 
 msgid "unable to move temporary installation '%s' to '%s'"
 msgstr "unable to move temporary installation ‘%s’ to ‘%s’"

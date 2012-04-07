@@ -1,7 +1,7 @@
 /*
  *  R : A Computer Language for Statistical Data Analysis
  *  Copyright (C) 1995  Robert Gentleman and Ross Ihaka
- *  Copyright (C) 1997--2007  The R Development Core Team
+ *  Copyright (C) 1997--2010  The R Development Core Team
  *  Copyright (C) 2003	      The R Foundation
  *
  *  This program is free software; you can redistribute it and/or modify
@@ -472,15 +472,14 @@ static SEXP CPtrToRObj(void *p, SEXP arg, int Fort,
     case RAWSXP:
     s = allocVector(type, n);
     rawptr = (Rbyte *)p;
-    for (i = 0; i < n; i++)
-	RAW(s)[i] = rawptr[i];
+    for (i = 0; i < n; i++) RAW(s)[i] = rawptr[i];
     break;
     case LGLSXP:
+	/* FIXME: should this not force 0, 1, NA_LOGICAL? */
     case INTSXP:
 	s = allocVector(type, n);
 	iptr = (int*)p;
-	for(i=0 ; i<n ; i++)
-	    INTEGER(s)[i] = iptr[i];
+	for(i = 0 ; i < n ; i++) INTEGER(s)[i] = iptr[i];
 	break;
     case REALSXP:
     case SINGLESXP:
@@ -490,15 +489,13 @@ static SEXP CPtrToRObj(void *p, SEXP arg, int Fort,
 	    for(i=0 ; i<n ; i++) REAL(s)[i] = (double) sptr[i];
 	} else {
 	    rptr = (double*) p;
-	    for(i=0 ; i<n ; i++) REAL(s)[i] = rptr[i];
+	    for(i = 0 ; i < n ; i++) REAL(s)[i] = rptr[i];
 	}
 	break;
     case CPLXSXP:
 	s = allocVector(type, n);
 	zptr = (Rcomplex*)p;
-	for(i=0 ; i<n ; i++) {
-	    COMPLEX(s)[i] = zptr[i];
-	}
+	for(i = 0 ; i < n ; i++) COMPLEX(s)[i] = zptr[i];
 	break;
     case STRSXP:
 	if(Fort) {
@@ -547,15 +544,13 @@ static SEXP CPtrToRObj(void *p, SEXP arg, int Fort,
     case VECSXP:
 	PROTECT(s = allocVector(VECSXP, n));
 	lptr = (SEXP*)p;
-	for (i = 0 ; i < n ; i++) {
-	    SET_VECTOR_ELT(s, i, lptr[i]);
-	}
+	for (i = 0 ; i < n ; i++) SET_VECTOR_ELT(s, i, lptr[i]);
 	UNPROTECT(1);
 	break;
     case LISTSXP:
 	PROTECT(t = s = allocList(n));
 	lptr = (SEXP*)p;
-	for(i=0 ; i<n ; i++) {
+	for(i = 0 ; i < n ; i++) {
 	    SETCAR(t, lptr[i]);
 	    t = CDR(t);
 	}
@@ -763,9 +758,11 @@ SEXP attribute_hidden do_External(SEXP call, SEXP op, SEXP args, SEXP env)
     R_ExternalRoutine fun = NULL;
     SEXP retval;
     R_RegisteredNativeSymbol symbol = {R_EXTERNAL_SYM, {NULL}, NULL};
-    void *vmax = vmaxget();
+    const void *vmax = vmaxget();
     char buf[MaxSymbolBytes];
 
+    if (length(args) < 1) errorcall(call, _("'name' is missing"));
+    check1arg(args, call, "name");
     args = resolveNativeRoutine(args, &ofun, &symbol, buf, NULL, NULL,
 				NULL, call);
     fun = (R_ExternalRoutine) ofun;
@@ -804,9 +801,11 @@ SEXP attribute_hidden do_dotcall(SEXP call, SEXP op, SEXP args, SEXP env)
     SEXP retval, nm, cargs[MAX_ARGS], pargs;
     R_RegisteredNativeSymbol symbol = {R_CALL_SYM, {NULL}, NULL};
     int nargs;
-    void *vmax = vmaxget();
+    const void *vmax = vmaxget();
     char buf[MaxSymbolBytes];
 
+    if (length(args) < 1) errorcall(call, _("'name' is missing"));
+    check1arg(args, call, "name");
     nm = CAR(args);
     args = resolveNativeRoutine(args, &ofun, &symbol, buf, NULL, NULL,
 				NULL, call);
@@ -1487,6 +1486,18 @@ SEXP attribute_hidden do_dotcall(SEXP call, SEXP op, SEXP args, SEXP env)
 
 /*  Call dynamically loaded "internal" graphics functions
     .External.graphics (unused) and  .Call.graphics (used in grid).
+
+    If there is an error or user-interrupt in the above
+    evaluation, dd->recordGraphics is set to TRUE
+    on all graphics devices (see GEonExit(); called in errors.c)
+
+    NOTE: if someone uses try() around this call and there
+    is an error, then dd->recordGraphics stays FALSE, so
+    subsequent pages of graphics output are NOT saved on
+    the display list.  A workaround is to deliberately
+    force an error in a graphics call (e.g., a grid popViewport()
+    while in the ROOT viewport) which will reset dd->recordGraphics
+    to TRUE as per the comment above.
 */
 
 SEXP attribute_hidden do_Externalgr(SEXP call, SEXP op, SEXP args, SEXP env)
@@ -1496,19 +1507,6 @@ SEXP attribute_hidden do_Externalgr(SEXP call, SEXP op, SEXP args, SEXP env)
     Rboolean record = dd->recordGraphics;
     dd->recordGraphics = FALSE;
     PROTECT(retval = do_External(call, op, args, env));
-    /*
-     * If there is an error or user-interrupt in the above
-     * evaluation, dd->recordGraphics is set to TRUE
-     * on all graphics devices (see GEonExit(); called in errors.c)
-     *
-     * NOTE: if someone uses try() around this call and there
-     * is an error, then dd->recordGraphics stays FALSE, so
-     * subsequent pages of graphics output are NOT saved on
-     * the display list.  A workaround is to deliberately
-     * force an error in a graphics call (e.g., a grid popViewport()
-     * while in the ROOT viewport) which will reset dd->recordGraphics
-     * to TRUE as per the comment above.
-     */
     dd->recordGraphics = record;
     if (GErecording(call, dd)) {
 	if (!GEcheckState(dd))
@@ -1526,19 +1524,6 @@ SEXP attribute_hidden do_dotcallgr(SEXP call, SEXP op, SEXP args, SEXP env)
     Rboolean record = dd->recordGraphics;
     dd->recordGraphics = FALSE;
     PROTECT(retval = do_dotcall(call, op, args, env));
-    /*
-     * If there is an error or user-interrupt in the above
-     * evaluation, dd->recordGraphics is set to TRUE
-     * on all graphics devices (see GEonExit(); called in errors.c)
-     *
-     * NOTE: if someone uses try() around this call and there
-     * is an error, then dd->recordGraphics stays FALSE, so
-     * subsequent pages of graphics output are NOT saved on
-     * the display list.  A workaround is to deliberately
-     * force an error in a graphics call (e.g., a grid popViewport()
-     * while in the ROOT viewport) which will reset dd->recordGraphics
-     * to TRUE as per the comment above.
-     */
     dd->recordGraphics = record;
     if (GErecording(call, dd)) {
 	if (!GEcheckState(dd))
@@ -1643,6 +1628,8 @@ SEXP attribute_hidden do_dotCode(SEXP call, SEXP op, SEXP args, SEXP env)
     void *vmax;
     char symName[MaxSymbolBytes], encname[101];
 
+    if (length(args) < 1) errorcall(call, _("'name' is missing"));
+    check1arg(args, call, "name");
     if (NaokSymbol == NULL || DupSymbol == NULL || PkgSymbol == NULL) {
 	NaokSymbol = install("NAOK");
 	DupSymbol = install("DUP");

@@ -481,10 +481,8 @@ rowsum(matrix(1:12, 3,4), c("Y","X","Y"))
 
 ## PR#1115 (saving strings with ascii=TRUE)
 x <- y <- unlist(as.list(
-    parse(text=paste("\"\\",
-          as.character(structure(1:255,class="octmode")),
-             "\"",sep=""))))
-save(x, ascii=T, file=(fn <- tempfile()))
+    parse(text=paste("\"\\", as.character(as.octmode(1:255)), "\"",sep=""))))
+save(x, ascii=TRUE, file=(fn <- tempfile()))
 load(fn)
 all(x==y)
 unlink(fn)
@@ -2414,3 +2412,38 @@ print(m22, na.print="<missing value>")
 ## https://stat.ethz.ch/pipermail/r-devel/2009-July/054184.html
 update(`a: b` ~ x, ~ . + y)
 ## 2.9.1 dropped backticks
+
+
+## print(ls.str(.)) did evaluate calls
+E <- new.env(); E$cl <- call("print", "Boo !")
+ls.str(E)
+## 2.10.0 did print..
+
+
+## complete.cases with no input
+try(complete.cases())
+try(complete.cases(list(), list()))
+## gave unhelpful messages in 2.10.0, silly results in pre-2.10.1
+
+
+## error messages from (C-level) evalList
+tst <- function(y) { stopifnot(is.numeric(y)); y+ 1 }
+try(tst())
+try(c(1,,2))
+## change in 2.8.0 made these less clear
+
+
+## empty levels from cut.Date (cosmetic, PR#14162)
+x <- as.Date(c("2009-03-21","2009-03-31"))
+cut(x, breaks= "quarter") # had two levels in 2.10.1
+cut(as.POSIXlt(x), breaks= "quarter")
+## remove empty final level
+
+
+## tests of error conditions in switch()
+switch("a", a=, b=, c=, 4)
+switch("a", a=, b=, c=, )
+.Last.value
+switch("a", a=, b=, c=, invisible(4))
+.Last.value
+## visiblilty changed in 2.11.0

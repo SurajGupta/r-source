@@ -1,6 +1,6 @@
 % File src/library/base/man/trace.Rd
 % Part of the R package, http://www.R-project.org
-% Copyright 1995-2007 R Core Development Team
+% Copyright 1995-2010 R Core Development Team
 % Distributed under GPL 2 or later
 
 \name{trace}
@@ -9,9 +9,6 @@
 \alias{untrace}
 \alias{tracingState}
 \alias{.doTrace}
-%% internal
-\alias{.primTrace}
-\alias{.primUntrace}
 \description{
   A call to \code{trace} allows you to insert debugging code (e.g., a
   call to \code{\link{browser}} or \code{\link{recover}}) at chosen
@@ -229,13 +226,13 @@ f <- function(x, y) {
 
 ## arrange to call the browser on entering and exiting
 ## function f
-trace("f", browser, exit = browser)
+trace("f", quote(browser(skipCalls=4)), exit = quote(browser(skipCalls=4)))
 
 ## instead, conditionally assign some data, and then browse
 ## on exit, but only then.  Don't bother me otherwise
 
 trace("f", quote(if(any(y < 0)) yOrig <- y),
-      exit = quote(if(exists("yOrig")) browser()),
+      exit = quote(if(exists("yOrig")) browser(skipCalls=4)),
       print = FALSE)
       
 ## Enter the browser just before stop() is called.  First, find
@@ -246,7 +243,7 @@ as.list(body(f)[[3]])
 
 ## Now call the browser there
 
-trace("f", quote(browser()), at=list(c(3,4)))
+trace("f", quote(browser(skipCalls=4)), at=list(c(3,4)))
 
 ## trace a utility function, with recover so we
 ## can browse in the calling functions as well.

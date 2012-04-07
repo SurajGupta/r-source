@@ -24,8 +24,8 @@ file.copy(from, to, overwrite = recursive, recursive = FALSE)
 file.symlink(from, to)
 }
 \arguments{
-  \item{\dots, file1, file2, from, to}{character vectors,
-    containing file names or paths.}
+  \item{\dots, file1, file2}{character vectors, containing file names or paths.}
+  \item{from, to}{character string, containing a file name or path.}
   \item{overwrite}{logical; should the destination files be overwritten?}
   \item{showWarnings}{logical; should the warnings on failure be shown?}
   \item{recursive}{logical. If \code{to} is a directory, should
@@ -68,6 +68,9 @@ file.symlink(from, to)
   This is subject to the limitations of the OS's corresponding system
   call: in particular in the interpretation of \sQuote{file}: also most
   platforms will not rename files across file systems.
+#ifdef Windows
+  (As from \R 2.11.0, \code{file.rename} works across Windows' volumes.)
+#endif
 
   \code{file.append} attempts to append the files named by its
   second argument to those named by its first.  The \R subscript
@@ -83,12 +86,13 @@ file.symlink(from, to)
   which support them.  The \code{to} argument can specify a single
   existing directory.
 #ifdef windows
-  (Windows Vista/Server 2008 have a version of symbolic links on NTFS
+  (Windows Vista/Server 2008/7 have a version of symbolic links on NTFS
   filesystems, but this seems too limited to be worth implementing.)
 #endif
 }
 \value{
-  \code{file.rename} returns a logical value, true for success.
+  \code{file.rename} and \code{file.symlink} returns a logical value,
+  true for success.
 
   The remaining functions return a logical vector indicating which
   operation succeeded for each of the files attempted.  Using a missing

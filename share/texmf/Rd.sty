@@ -104,6 +104,7 @@
 % \keyword{<topic>}{<header>}
 \newcommand{\keyword}[2]{\index{$*$Topic{\large\ \textbf{#1}}!#2@\texttt{#2}}}
 %
+% used prior to 2.10.0 only
 \newcommand{\Itemize}[1]{\begin{itemize}{#1}\end{itemize}}
 \newcommand{\Enumerate}[1]{\begin{enumerate}{#1}\end{enumerate}}
 \newcommand{\describe}[1]{\begin{description}{#1}\end{description}}
@@ -162,6 +163,11 @@
   \begin{Rdsection}{Usage}}{\end{Rdsection}}
 \newenvironment{Value}{%
   \begin{Rdsection}{Value}}{\end{Rdsection}}
+
+\newenvironment{SubSection}[1]{%
+  \begin{list}{}{\setlength{\leftmargin}{0.1in}}\item \textbf{#1: }}{\end{list}}
+\newenvironment{SubSubSection}[1]{%
+  \begin{list}{}{\setlength{\leftmargin}{0.1in}}\item \textit{#1: }}{\end{list}}
 
 \newenvironment{ExampleCode}{\small\verbatim}{\endverbatim}
 

@@ -17,8 +17,8 @@
 
 ## <entry>
 ## Deprecated in 2.10.0
-trySilent <- function(expr) {
-    .Deprecated("try(*, silent=TRUE)  or {more efficiently}\n tryCatch(*, error=function(e) e)")
-    try(expr, silent = TRUE)
-}
+## trySilent <- function(expr) {
+##     .Deprecated("try(*, silent=TRUE)  or {more efficiently}\n tryCatch(*, error=function(e) e)")
+##     try(expr, silent = TRUE)
+## }
 ## </entry>

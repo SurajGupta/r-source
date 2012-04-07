@@ -1,6 +1,6 @@
 % File src/library/base/man/integer.Rd
 % Part of the R package, http://www.R-project.org
-% Copyright 1995-2009 R Core Development Team
+% Copyright 1995-2010 R Core Development Team
 % Distributed under GPL 2 or later
 
 \name{integer}
@@ -23,35 +23,32 @@ is.integer(x)
 }
 \details{
   Integer vectors exist so that data can be passed to C or Fortran code
-  which expects them, and so that small integer data can be represented
+  which expects them, and so that (small) integer data can be represented
   exactly and compactly.
 
-  Note that on almost all implementations of \R the range of
-  representable integers is restricted to about
-  \eqn{\pm 2 \times 10^9}{+/-2*10^9}: \code{\link{double}}s can hold
-  much larger integers exactly.
-
-  \code{as.integer} and \code{is.integer} are \link{primitive}, so
-  positional matching is used and any names of supplied arguments are
-  ignored.  This may not be true of their methods.  
+  Note that current implementations of \R use 32-bit integers for
+  integer vectors, so the range of representable integers is restricted
+  to about \eqn{\pm 2 \times 10^9}{+/-2*10^9}: \code{\link{double}}s can
+  hold much larger integers exactly.
 }
 \value{
   \code{integer} creates a integer vector of the specified length.
   Each element of the vector is equal to \code{0}.
 
   \code{as.integer} attempts to coerce its argument to be of integer
-  type. The answer will be \code{NA} unless the coercion succeeds.
-  Real values larger in modulus than the largest integer are coerced to
-  \code{NA} (unlike S which gives the most extreme integer of the same sign).
-  Non-integral numeric values are truncated towards zero (i.e.,
+  type. The answer will be \code{NA} unless the coercion succeeds.  Real
+  values larger in modulus than the largest integer are coerced to
+  \code{NA} (unlike S which gives the most extreme integer of the same
+  sign).  Non-integral numeric values are truncated towards zero (i.e.,
   \code{as.integer(x)} equals \code{\link{trunc}(x)} there), and
   imaginary parts of complex numbers are discarded (with a warning).
-  Character strings containing either a decimal representation or a
-  hexadecimal representation (starting with \code{0x} or \code{0X}) can
-  be converted, as well as any allowed by the platform for real numbers.
-  Like \code{\link{as.vector}} it strips attributes including names.
-  (To ensure that an object is of integer type without stripping
-  attributes, use \code{\link{storage.mode}}.)
+  Character strings containing optional whitespace followed by either a
+  decimal representation or a hexadecimal representation (starting with
+  \code{0x} or \code{0X}) can be converted, as well as any allowed by
+  the platform for real numbers.  Like \code{\link{as.vector}} it strips
+  attributes including names.  (To ensure that an object \code{x} is of
+  integer type without stripping attributes, use
+  \code{\link{storage.mode}(x) <- "integer"}.)
 
   \code{is.integer} returns \code{TRUE} or \code{FALSE} depending on
   whether its argument is of integer \link{type} or not, unless it is a

@@ -1,6 +1,6 @@
 % File src/library/base/man/iconv.Rd
 % Part of the R package, http://www.R-project.org
-% Copyright 1995-2009 R Core Development Team
+% Copyright 1995-2010 R Core Development Team
 % Distributed under GPL 2 or later
 
 \name{iconv}
@@ -36,17 +36,12 @@ iconvlist()
   encoding of the current locale), \code{"latin1"} and \code{"UTF-8"}.
   Generally case is ignored when specifying an encoding.
 
-#ifdef unix
-  On many platforms \code{iconvlist} provides an alphabetical list of
-  the supported encodings.  On others, the information is on the man
-  page for \code{iconv(5)} or elsewhere in the man pages (but beware
-  that the system command \code{iconv} may not support the same set of
-  encodings as the C functions \R calls).  Unfortunately, the names are
-  rarely common across platforms.
-#endif
-#ifdef windows
-  \code{iconvlist} provides an alphabetical list of the supported encodings.
-#endif
+  On many platforms, including Windows, \code{iconvlist} provides an
+  alphabetical list of the supported encodings.  On others, the
+  information is on the man page for \code{iconv(5)} or elsewhere in the
+  man pages (but beware that the system command \code{iconv} may not
+  support the same set of encodings as the C functions \R calls).
+  Unfortunately, the names are rarely common across platforms.
 
   Elements of \code{x} which cannot be converted (perhaps because they
   are invalid or because they cannot be represented in the target
@@ -55,6 +50,11 @@ iconvlist()
   Most versions of \code{iconv} will allow transliteration by appending
   \samp{//TRANSLIT} to the \code{to} encoding: see the examples.
 
+  
+  Encoding \code{"ASCII"} is also accepted, but prior to \R 2.10.0
+  conversion to \code{"ASCII"} on Windows might have involved dropping
+  accents.
+  
   Any encoding bits (see \code{\link{Encoding}}) on elements of \code{x}
   are ignored: they will always be translated as if from \code{from}
   even if declared otherwise.
@@ -63,7 +63,7 @@ iconvlist()
 }
 
 \section{Implementation Details}{
-  \code{iconv} was optional before \R 2.10.0, but it absence was
+  \code{iconv} was optional before \R 2.10.0, but its absence was
   deprecated in \R 2.5.0.
 
   There are three main implementations of \code{iconv} in use.
@@ -73,7 +73,8 @@ iconvlist()
   based on Windows' codepages (but \samp{libiconv} can be used by
   swapping a DLL).  All three have \code{iconvlist}, ignore case in
   encoding names and support \samp{//TRANSLIT} (but with different
-  results).
+  results, and for \samp{win_iconv} currently a \sQuote{best fit}
+  strategy is used except for \code{to = "ASCII"}).
 
   Most commercial Unixes contain an implemetation of \code{iconv} but
   none we have encountered have supported the encoding names we need:

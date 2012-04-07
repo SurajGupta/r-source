@@ -40,7 +40,7 @@ stamp-recommended: $(OBJECTS)
 	@touch $@
 
 ## need to allow parallel installs
-INSTALL_OPTS=--no-lock
+INSTALL_OPTS=--no-lock --data-compress=xz
 
 .tgz.ts:
 	@$(ECHO) "begin installing recommended package" `basename $< .tgz`
@@ -108,3 +108,6 @@ distdir: $(DISTFILES)
 mgcv.ts: nlme.ts MASS.ts Matrix.ts
 nlme.ts: lattice.ts
 class.ts: MASS.ts
+## and for static html links
+boot.ts: MASS.ts survival.ts
+cluster.ts: MASS.ts

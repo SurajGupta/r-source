@@ -398,7 +398,7 @@ function(package, dir, lib.loc = NULL,
     functions_in_code <-
         Filter(function(f) {
                    f <- get(f, envir = code_env)
-                   is.function(f) && (length(formals(f)) > 0L)
+                   typeof(f) == "closure"
                },
                objects_in_code)
     ## Sourcing all R code files in the package is a problem for base,
@@ -1985,8 +1985,7 @@ function(package, dir, lib.loc = NULL)
                 else {
                     if(.isMethodsDispatchOn()
                        && methods::is(genfun, "genericFunction"))
-                        genfun <-
-                            methods::slot(genfun, "default")@methods$ANY
+                        genfun <- methods::slot(genfun, "default")
                     if (typeof(genfun) == "closure") environment(genfun)
                     else .BaseNamespaceEnv
                 }
@@ -2404,8 +2403,6 @@ function(dir)
     depends <- sapply(ldepends, `[[`, 1L)
     imports <- sapply(limports, `[[`, 1L)
     suggests <- sapply(lsuggests, `[[`, 1L)
-    ## Need this to handle bundles ...
-    contains <- .get_contains_from_package_db(db)
 
     standard_package_names <- .get_standard_package_names()
 
@@ -2483,11 +2480,7 @@ function(dir)
         ## since we need to reinstall if those change.
         allowed_imports <-
             standard_package_names$base %w/o% c("methods", "stats4")
-        reqs <- reqs %w/o% c(contains, imports, depends, allowed_imports)
-        ## Note that for bundles we currently cannot have package
-        ## dependencies different from bundle ones, and clearly a bundle
-        ## cannot depend on something it contains ...
-        ## </FIXME>
+        reqs <- reqs %w/o% c(imports, depends, allowed_imports)
         if(length(reqs))
             bad_depends$missing_namespace_depends <- reqs
     }
@@ -3224,24 +3217,21 @@ function(package, dir, lib.loc = NULL)
         top <- system.file(package = pkg, lib.loc = lib.loc)
         if(nzchar(top)) {
             RdDB <- file.path(top, "help", "paths.rds")
-            nm <- if(file.exists(RdDB))
-                sub("\\.[Rr]d", "", basename(.readRDS(RdDB)))
-            ## might be pre-2.10.0 and on Windows, hence zipped
-            else if(file.exists(f <- file.path(top, "help", "Rhelp.zip")))
-                utils::read.table(file.path(top, "help", "AnIndex"), sep="\t")[2]
-            else
-                list.files(file.path(top, "help"))
+            if(!file.exists(RdDB)) {
+                message(gettextf("package %s exists but was not installed under R >= 2.10.0 so xrefs cannot be checked", sQuote(pkg)),
+                        domain = NA)
+                next
+            }
+            nm <- sub("\\.[Rr]d", "", basename(.readRDS(RdDB)))
             good <- thisfile[this] %in% nm
             suspect <- if(any(!good)) {
                 aliases1 <- if (pkg %in% names(aliases)) aliases[[pkg]]
                 else Rd_aliases(pkg, lib.loc = lib.loc)
                 !good & (thisfile[this] %in% aliases1)
             } else FALSE
-        } else {
+            db[this, "bad"] <- !good & !suspect
+        } else
             unknown <- c(unknown, pkg)
-            next
-        }
-        db[this, "bad"] <- !good & !suspect
     }
 
     unknown <- unique(unknown)
@@ -3254,7 +3244,12 @@ function(package, dir, lib.loc = NULL)
     unknown <- unknown[!obsolete]
     if (length(unknown)) {
         repos <- .get_standard_repository_URLs()
-        known <- try(utils::available.packages(utils::contrib.url(repos, "source"))[, "Package"])
+        known <-
+            try(utils::available.packages(utils::contrib.url(repos,
+                                                             "source"),
+                                          filters =
+                                          c("R_version",
+                                            "duplicates"))[, "Package"])
         miss <- if(inherits(known, "try-error")) TRUE
         else unknown %in% c(known, c("BRugs", "GLMMGibbs", "survnnet", "yags"))
         ## from CRANextras
@@ -3710,36 +3705,16 @@ function(package, dir, lib.loc = NULL)
             dir <- file_path_as_absolute(dir)
         dfile <- file.path(dir, "DESCRIPTION")
         db <- .read_description(dfile)
-        ## we need to check for a bundle here
-        ## Need this to handle bundles ...
-        contains <- .get_contains_from_package_db(db)
-        if(length(contains)) {
+        code_dir <- file.path(dir, "R")
+        if(file_test("-d", code_dir)) {
             file <- tempfile()
             on.exit(unlink(file))
             if(!file.create(file)) stop("unable to create ", file)
-            for(pkg in contains) {
-                code_dir <- file.path(dir, pkg, "R")
-                if(file_test("-d", code_dir)) {
-                    if(!all(.file_append_ensuring_LFs(file,
-                                                      list_files_with_type(code_dir,
-                                                                           "code"))))
-                        stop("unable to write code files")
-                }
-            }
-        } else {
-            code_dir <- file.path(dir, "R")
-            if(file_test("-d", code_dir)) {
-                file <- tempfile()
-                on.exit(unlink(file))
-                if(!file.create(file)) stop("unable to create ", file)
-                if(!all(.file_append_ensuring_LFs(file,
-                                                  list_files_with_type(code_dir,
-                                                                       "code"))))
-                    stop("unable to write code files")
-            } else {
-                return(invisible())
-            }
-        }
+            if(!all(.file_append_ensuring_LFs(file,
+                                              list_files_with_type(code_dir,
+                                                                   "code"))))
+                stop("unable to write code files")
+        } else return(invisible())
     }
     pkg_name <- db["Package"]
     depends <- .get_requires_from_package_db(db, "Depends")
@@ -3747,18 +3722,14 @@ function(package, dir, lib.loc = NULL)
     suggests <- .get_requires_from_package_db(db, "Suggests")
     enhances <- .get_requires_from_package_db(db, "Enhances")
 
-    ## Need this to handle bundles ...
-    contains <- .get_contains_from_package_db(db)
-
     ## it is OK to refer to yourself and non-S4 standard packages
     standard_package_names <-
         .get_standard_package_names()$base %w/o% c("methods", "stats4")
     ## It helps to know if non-default standard packages are require()d
     default_package_names<-
          standard_package_names %w/o% c("grid", "splines", "tcltk", "tools")
-    depends_suggests <- c(depends, suggests, pkg_name, contains,
-                          default_package_names)
-    imports <- c(imports, depends, suggests, enhances, pkg_name, contains,
+    depends_suggests <- c(depends, suggests, pkg_name, default_package_names)
+    imports <- c(imports, depends, suggests, enhances, pkg_name,
                  standard_package_names)
     ## the first argument could be named, or could be a variable name.
     ## we just have a stop list here.
@@ -4127,9 +4098,9 @@ function(dir)
 .check_citation <-
 function(cfile)
 {
-    cfile <- tools::file_path_as_absolute(cfile)
+    cfile <- file_path_as_absolute(cfile)
     meta <- if(basename(dir <- dirname(cfile)) == "inst")
-        as.list(tools:::.get_package_metadata(dirname(dir)))
+        as.list(.get_package_metadata(dirname(dir)))
     else
         NULL
 
@@ -4214,6 +4185,7 @@ function(dir)
     class(out) <- "check_package_CRAN_incoming"
 
     meta <- .get_package_metadata(dir, FALSE)
+    foss <- analyze_license(meta["License"])$is_verified
 
     urls <- .get_standard_repository_URLs()
     ## We do not want to use utils::available.packages() for now, as
@@ -4249,7 +4221,11 @@ function(dir)
     ## This assumes the CRAN URL comes first, and drops packages in
     ## version-specific subdirectories.  It also does not know about
     ## archived versions.
-    if(!NROW(db)) return(out)
+    if(!NROW(db)) {
+        if(!foss)
+            out$bad_license <- meta["License"]
+        return(out)
+    }
     ## For now, there should be no duplicates ...
 
     ## Package versions should be newer than what we already have on
@@ -4273,6 +4249,10 @@ function(dir)
     if(!all(m_m == m_d))
         out$new_maintainer <- list(m_m, m_d)
 
+    l_d <- db[db[, "Package"] == package, "License"]
+    if(!foss && analyze_license(l_d)$is_verified)
+        out$new_license <- list(meta["License"], l_d)
+
     out
 
 }
@@ -4290,6 +4270,16 @@ function(x, ...)
         writeLines(c("New maintainer:",
                      strwrap(y[[1L]], indent = 2L, exdent = 4L),
                      "Old maintainer(s):",
+                     strwrap(y[[2L]], indent = 2L, exdent = 4L)))
+    }
+    if(length(y <- x$bad_license)) {
+        writeLines(sprintf("Non-FOSS package license (%s)", y))
+    }
+    if(length(y <- x$new_license)) {
+        writeLines(c("Change to non-FOSS package license.",
+                     "New license:",
+                     strwrap(y[[1L]], indent = 2L, exdent = 4L),
+                     "Old license:",
                      strwrap(y[[2L]], indent = 2L, exdent = 4L)))
     }
     invisible(x)
@@ -4382,6 +4372,103 @@ function(x, ...)
     invisible(x)
 }
 
+## * .check_Rd_contents
+
+.check_Rd_contents <-
+function(package, dir, lib.loc = NULL)
+{
+    out <- list()
+    class(out) <- "check_Rd_contents"
+
+    ## Argument handling.
+    if(!missing(package)) {
+        if(length(package) != 1L)
+            stop("argument 'package' must be of length 1")
+        dir <- .find.package(package, lib.loc)
+        ## Using package installed in @code{dir} ...
+    }
+    else {
+        if(missing(dir))
+            stop("you must specify 'package' or 'dir'")
+        ## Using sources from directory @code{dir} ...
+        if(!file_test("-d", dir))
+            stop(gettextf("directory '%s' does not exist", dir),
+                 domain = NA)
+        else
+            dir <- file_path_as_absolute(dir)
+    }
+
+    db <- if(!missing(package))
+        Rd_db(package, lib.loc = dirname(dir))
+    else
+        Rd_db(dir = dir)
+
+    names(db) <- .Rd_get_names_from_Rd_db(db)
+
+    ## Exclude internal objects from further computations.
+    ind <- sapply(lapply(db, .Rd_get_metadata, "keyword"),
+                  function(x) length(grep("^ *internal *$", x)) > 0L )
+    if(any(ind))                        # exclude them
+        db <- db[!ind]
+
+    check_offending_autogenerated_content <-
+        !identical(as.logical(Sys.getenv("_R_CHECK_RD_CONTENTS_AUTO_")),
+                   FALSE)
+    offending_autogenerated_content <- NULL
+
+    for(nm in names(db)) {
+        rd <- db[[nm]]
+
+        ## Arguments with no description.
+        arg_table <- .Rd_get_argument_table(rd)
+        arguments_with_no_description <-
+            arg_table[grepl("^[[:blank:]]*$", arg_table[, 2L]),
+                      1L]
+
+        ## Autogenerated Rd content which needs editing.
+        if(check_offending_autogenerated_content)
+            offending_autogenerated_content <-
+                .Rd_get_offending_autogenerated_content(rd)
+
+        if(length(arguments_with_no_description)
+           || length(offending_autogenerated_content)) {
+            out[[nm]] <-
+                list(arguments_with_no_description =
+                     arguments_with_no_description,
+                     offending_autogenerated_content =
+                     offending_autogenerated_content)
+        }
+    }
+    
+    out
+}
+
+print.check_Rd_contents <-
+function(x, ...)
+{
+    for(nm in names(x)) {
+        y <- x[[nm]]
+        arguments_with_no_description <-
+            y[["arguments_with_no_description"]]
+        if(length(arguments_with_no_description)) {
+            writeLines(gettextf("Argument items with no description in Rd object '%s':",
+                                nm))
+            .pretty_print(arguments_with_no_description)
+        }
+        offending_autogenerated_content <-
+            y[["offending_autogenerated_content"]]
+        if(length(offending_autogenerated_content)) {
+            writeLines(gettextf("Auto-generated content requiring editing in Rd object '%s':",
+                                nm))
+            writeLines(sprintf("  %s",
+                               offending_autogenerated_content[, 1L]))
+        }
+        writeLines("")
+    }
+
+    invisible(x)
+}
+
 
 ### * .find_charset
 
@@ -4389,7 +4476,7 @@ function(x, ...)
 function()
 {
     l10n <- l10n_info()
-    enc <- if(l10n[["UTF-8"]]) "UTF-8" else utils:::localeToCharset()
+    enc <- if(l10n[["UTF-8"]]) "UTF-8" else utils::localeToCharset()
     cat("charset: ", enc, "\n", sep="")
     invisible()
 }
@@ -4855,6 +4942,82 @@ function()
     sprintf("^[[:space:]]*(.*<%s>|ORPHANED)[[:space:]]*$",
             .make_RFC_2822_email_address_regexp())
 
+### ** .Rd_get_offending_autogenerated_content
+
+.Rd_get_offending_autogenerated_content <-
+function(x)
+{
+    out <- NULL
+
+    ## /data/rsync/PKGS/geoR/man/globalvar.Rd
+    s <- .Rd_get_section(x, "title")
+    if(length(s)) {
+        s <- .Rd_deparse(s, tag = FALSE)
+        if(.strip_whitespace(s) == "~~function to do ... ~~")
+            out <- rbind(out, c("\\title", s))
+    }
+    s <- .Rd_get_section(x, "description")
+    if(length(s)) {
+        s <- .Rd_deparse(s, tag = FALSE)
+        if(.strip_whitespace(s) ==
+           "~~ A concise (1-5 lines) description of what the function does. ~~")
+            out <- rbind(out, c("\\description", s))
+    }
+    s <- .Rd_get_section(x, "details")
+    if(length(s)) {
+        s <- .Rd_deparse(s, tag = FALSE)
+        if(.strip_whitespace(s) ==
+           "~~ If necessary, more details than the description above ~~")
+            out <- rbind(out, c("\\details", s))
+    }
+
+    ## /data/rsync/PKGS/mimR/man/plot.Rd:\author{ ~~who you are~~ }
+    s <- .Rd_get_section(x, "author")
+    if(length(s)) {
+        s <- .Rd_deparse(s, tag = FALSE)
+        if(.strip_whitespace(s) == "~~who you are~~")
+            out <- rbind(out, c("\\author", s))
+    }
+    ## /data/rsync/PKGS/mimR/man/mim-class.Rd:\note{ ~~further notes~~ }
+    s <- .Rd_get_section(x, "note")
+    if(length(s)) {
+        s <- .Rd_deparse(s, tag = FALSE)
+        if(.strip_whitespace(s) == "~~further notes~~")
+            out <- rbind(out, c("\\note", s))
+    }
+
+    tab <- .Rd_get_argument_table(x)
+    if(length(tab)) {
+        ## /data/rsync/PKGS/Rmpfr/man/mpfrArray.Rd:
+        ##   \item{precBits}{ ~~Describe \code{precBits} here~~ }
+        descriptions <- .strip_whitespace(tab[, 2L])
+        ind <- (descriptions ==
+                sprintf("~~Describe \\code{%s} here~~", tab[, 1L]))
+        if(any(ind))
+            out <- rbind(out,
+                         cbind(sprintf("\\arguments, description of item '%s'",
+                                       tab[ind, 1L]),
+                               tab[ind, 2L]))
+    }
+
+    ## <NOTE>
+    ## Obviously, auto-generation does too much here, so maybe do not
+    ## include these in production check code ...
+    tab <- .Rd_get_methods_description_table(x)
+    if(length(tab)) {
+        descriptions <- .strip_whitespace(tab[, 2L])        
+        ## /data/rsync/PKGS/coin/man/initialize-methods.Rd
+        ind <- descriptions == "~~describe this method here"
+        if(any(ind))
+            out <- rbind(out,
+                         cbind(sprintf("section 'Methods', description of item '%s'",
+                                       tab[ind, 1L]),
+                               tab[ind, 2L]))
+    }
+    ## </NOTE>
+
+    out
+}
 
 ### Local variables: ***
 ### mode: outline-minor ***

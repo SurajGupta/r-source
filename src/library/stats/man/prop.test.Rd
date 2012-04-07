@@ -12,10 +12,11 @@ prop.test(x, n, p = NULL,
 }
 \alias{prop.test}
 \arguments{
-  \item{x}{a vector of counts of successes or a matrix with 2 columns
+  \item{x}{a vector of counts of successes, a one-dimensional table with
+    two entries, or a two-dimensional table (or matrix) with 2 columns,
     giving the counts of successes and failures, respectively.}
   \item{n}{a vector of counts of trials; ignored if \code{x} is a
-    matrix.}
+    matrix or a table.}
   \item{p}{a vector of probabilities of success.  The length of
     \code{p} must be the same as the number of groups specified by
     \code{x}, and its elements must be greater than 0 and less than 1.}
@@ -59,7 +60,7 @@ prop.test(x, n, p = NULL,
 
   If there is only one group, then the null tested is that the
   underlying probability of success is \code{p}, or .5 if \code{p} is
-  not given.  The alternative is that the probability of success if less
+  not given.  The alternative is that the probability of success is less
   than, not equal to, or greater than \code{p} or 0.5, respectively, as
   specified by \code{alternative}.  A confidence interval for the
   underlying proportion with confidence level as specified by

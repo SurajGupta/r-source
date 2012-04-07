@@ -174,15 +174,15 @@ void attribute_hidden parseError(SEXP call, int linenum)
 
  The internal R_Parse.. functions are defined in ./gram.y (-> gram.c)
 
- .Internal( parse(file, n, text, prompt, srcfile) )
+ .Internal( parse(file, n, text, prompt, srcfile, encoding) )
  If there is text then that is read and the other arguments are ignored.
 */
 SEXP attribute_hidden do_parse(SEXP call, SEXP op, SEXP args, SEXP env)
 {
     SEXP text, prompt, s, source;
     Rconnection con;
-    Rboolean wasopen, old_latin1=known_to_be_latin1,
-	old_utf8=known_to_be_utf8, allKnown = TRUE;
+    Rboolean wasopen, old_latin1 = known_to_be_latin1,
+	old_utf8 = known_to_be_utf8, allKnown = TRUE;
     int ifile, num, i;
     const char *encoding;
     ParseStatus status;
@@ -198,7 +198,11 @@ SEXP attribute_hidden do_parse(SEXP call, SEXP op, SEXP args, SEXP env)
     num = asInteger(CAR(args));				args = CDR(args);
     if (num == 0)
 	return(allocVector(EXPRSXP, 0));
-    PROTECT(text = coerceVector(CAR(args), STRSXP));	args = CDR(args);
+
+    PROTECT(text = coerceVector(CAR(args), STRSXP));
+    if(length(CAR(args)) && !length(text))
+	errorcall(call, _("coercion of 'text' to character was unsuccessful"));
+    args = CDR(args);
     prompt = CAR(args);					args = CDR(args);
     source = CAR(args);					args = CDR(args);
     if(!isString(CAR(args)) || LENGTH(CAR(args)) != 1)

@@ -2,9 +2,9 @@ msgid ""
 msgstr ""
 "Project-Id-Version: R 2.1.0 \n"
 "Report-Msgid-Bugs-To: bugs@r-project.org\n"
-"POT-Creation-Date: 2009-12-10 19:18\n"
-"PO-Revision-Date: 2009-10-10 00:17+0900 \n"
-"Last-Translator: Shigeru Mase <maseshigeru@gmail.com> \n"
+"POT-Creation-Date: 2010-03-16 09:20\n"
+"PO-Revision-Date: 2010-04-03 10:33+0900 \n"
+"Last-Translator: takahashi <takahashi.kohske@gmail.com> \n"
 "Language-Team: RjpWiki Message Translation Team <mokada@md.tsukuba.ac.jp> \n"
 "MIME-Version: 1.0 \n"
 "Content-Type: text/plain; charset=utf-8 \n"
@@ -310,6 +310,13 @@ msgstr " 変数 '%s' 中に non-portable フラグ: "
 msgid "package must be loaded"
 msgstr " パッケージがロードされなければなりません "
 
+msgid ""
+"package %s exists but was not installed under R >= 2.10.0 so xrefs cannot be "
+"checked"
+msgstr ""
+"パッケージ%sは存在しますが、R >= 2.10.0 でインストールされていないので xrefs"
+"をチェックできません "
+
 msgid "Obsolete package(s) %s in Rd xrefs"
 msgstr " もう使われていない %s が Rd xrefs　中にあります "
 
@@ -347,6 +354,12 @@ msgstr " 名前 '%s' が重複する Rd ファイル: "
 
 msgid "Rd files with duplicated alias '%s':"
 msgstr " 重複するエイリアス '%s' を持ったRdファイル： "
+
+msgid "Argument items with no description in Rd object '%s':"
+msgstr "Rdオブジェクト '%s' に説明のない引数: "
+
+msgid "Auto-generated content requiring editing in Rd object '%s':"
+msgstr "Rdオブジェクト '%s' に編集する必要のある自動生成された項目: "
 
 msgid "Generics g in env ="
 msgstr " 総称的な g (以下の環境中） "
@@ -475,8 +488,8 @@ msgstr " '%s' 中のファイルが '%s' 欄から欠損しています: "
 msgid "unable to create '%s'"
 msgstr " '%s' を生成することが出来ません "
 
-msgid "unable to re-encode '%s'"
-msgstr " '%s' 再エンコード出来ません "
+msgid "unable to re-encode '%s' line(s) %s"
+msgstr " '%s' ('%s'行')を再エンコード出来ません "
 
 msgid "unable to copy INDEX to '%s'"
 msgstr " INDEX を '%s' にコピーすることが出来ません "
@@ -510,9 +523,6 @@ msgstr " ファイル '%s' は生成されませんでした "
 msgid "cannot copy '%s' to '%s'"
 msgstr " '%s' を '%s' にコピーすることが出来ません "
 
-msgid "missing 'DESCRIPTION.in' for package '%s'"
-msgstr "パッケージ '%s' には 'DESCRIPTION.in' がありません "
-
 msgid "WARNING: malformed 'Depends' field in 'DESCRIPTION'"
 msgstr " 警告：'DESCRIPTION' 中に混乱した 'Depends' 欄 "
 
@@ -520,11 +530,6 @@ msgid "ERROR: this R is version %s, package '%s' requires R %s %s"
 msgstr ""
 "エラー：この R はバージョン %s です。パッケージ '%s' は R %s %s を必要としま"
 "す "
-
-msgid "ERROR: this R is version %s, bundle '%s' requires R %s %s"
-msgstr ""
-"エラー：この R はバージョン %s です。パッケージバンドル '%s' は R %s %s を必"
-"要とします "
 
 msgid "ERROR: this R is version %s, required is R %s %s"
 msgstr "エラー：この R はバージョン %s です。 R %s %s を必要とします "
@@ -553,26 +558,23 @@ msgstr " パッケージ %s に対するヘルプが見つかりません "
 msgid "Link %s in package %s could not be located"
 msgstr " リンク %s （パッケージ %s 中の）は所在不明です "
 
-msgid "Unable to locate help document %s in package %s"
-msgstr ""
-"ヘルプドキュメント %s (パッケージ %s 内)の場所を見つけることができません "
-
 msgid "No docs found for package %s"
 msgstr " package %s にドキュメントは見つけられませんでした "
 
-msgid "Only help files, %s and files under %s in a package can be viewed"
-msgstr ""
+msgid "Only help files, %s, %s and files under %s in a package can be viewed"
+msgstr "ヘルプファイル%s, %s, パッケージの%s以下のファイルだけが閲覧できます "
 
-#, fuzzy
+msgid "NEWS"
+msgstr "NEWS "
+
 msgid "DESCRIPTION"
-msgstr " 不正な DESCRIPTION ファイルです "
+msgstr "DESCRIPTION "
 
-#, fuzzy
 msgid "doc/"
-msgstr " ドキュメント "
+msgstr " doc/ "
 
 msgid "unsupported URL %s"
-msgstr ""
+msgstr "未サポートのURL %s "
 
 msgid "URL %s was not found"
 msgstr "URL '%s' は見つかりませんでした "
@@ -604,6 +606,9 @@ msgstr " ファイル '%s' 中のインデックス情報を読み取ること�
 msgid "ERROR:"
 msgstr "エラー: "
 
+msgid "this seems to be a bundle -- and they are defunct"
+msgstr "バンドルされているようですが、現在は用いられていません "
+
 msgid "packaged installation of"
 msgstr " 以下のパッケージ化されたインストール "
 
@@ -616,6 +621,9 @@ msgid ""
 msgstr ""
 " 'cleanup' は存在しますが実行できません -- 参照 'R Installation and "
 "Adminstration Manual' "
+
+msgid "installing to"
+msgstr "にインストールしています "
 
 msgid ""
 "R include directory is empty -- perhaps need to install R-devel.rpm or "
@@ -639,7 +647,6 @@ msgstr "ソースファイルが見つかりません "
 msgid "empty 'data' directory"
 msgstr " 'data' ディレクトリが空です "
 
-#, fuzzy
 msgid "'--auto-zip' is for Windows only"
 msgstr " --auto-zip'  は Windows 専用です "
 
@@ -655,8 +662,8 @@ msgstr " 一時ディレクトリを生成することが出来ません "
 msgid "invalid package"
 msgstr " 不正なパッケージです "
 
-msgid "--pkglock applies only to a single bundle/package"
-msgstr " --pkglock は単一のバンドル/パッケージだけに適用されます "
+msgid "--pkglock applies only to a single package"
+msgstr " --pkglock は単一のパッケージだけに適用されます "
 
 msgid "ERROR: no packages specified"
 msgstr "パッケージが特定できません "
@@ -684,10 +691,10 @@ msgid "building a fake installation is disallowed"
 msgstr " まがい物(fake)インストールの構築は許されていません "
 
 msgid "--no-help overrides"
-msgstr ""
+msgstr " --no-help が優先されます "
 
 msgid "--"
-msgstr ""
+msgstr " -- "
 
 msgid "-o option without value"
 msgstr " 値のない -o オプションです "
@@ -712,9 +719,7 @@ msgstr "指定された 'type' ではありません "
 
 msgid "'type' must be one of 'txt', 'html', 'latex' or 'example'"
 msgstr ""
-
-msgid "Bundle package:"
-msgstr " バンドルパッケージ： "
+" 'type'は'txt', 'html', 'latex', 'example'のいずれかである必要があります "
 
 msgid "there is no package called '%s'"
 msgstr " '%s' という名前のパッケージが見当たりません "
@@ -725,9 +730,6 @@ msgstr " 名前空間はロードされてはいけません。 "
 msgid "package seems to be using lazy loading for data already"
 msgstr ""
 " パッケージは既にデータに対する遅延読み込みを使用しているように見えます "
-
-msgid "object(s) %s are created by more than one data call"
-msgstr " オブジェクト %s は1つ以上のデータ呼び出しにより生成されました "
 
 msgid "source list must have names for all elements"
 msgstr " ソースリストには全ての要素の名前が含まれていなければなりません "
@@ -750,6 +752,9 @@ msgid ""
 msgstr ""
 "チャンク/行を処理できません: \n"
 " %s "
+
+msgid "Processing packages:"
+msgstr " パッケージを処理中： "
 
 msgid "cannot update HTML package index"
 msgstr " HTMLパッケージのインデックスをアップデートすることが出来ません "
@@ -909,8 +914,8 @@ msgstr "ファイル'DESCRIPTION'が見当たりません。 "
 msgid "Files 'DESCRIPTION' and 'DESCRIPTION.in' are missing."
 msgstr "ファイル'DESCRIPTION'と'DESCRIPTION.in'が見当たりません。 "
 
-msgid "Bundle 'DESCRIPTION' is missing."
-msgstr " 'DESCRIPTION' バンドルが見当たりません。 "
+msgid "invalid package layout"
+msgstr " 不正なパッケージ構成です "
 
 msgid "file '%s' is not in valid DCF format"
 msgstr " ファイル '%s' は有効な DCF フォーマットではありません "
@@ -920,9 +925,6 @@ msgstr " パッケージコードを読み込めません "
 
 msgid "Call sequence:"
 msgstr " 呼び出しシーケンス： "
-
-msgid "Processing packages:"
-msgstr " パッケージを処理中： "
 
 msgid "parsing '%s'"
 msgstr " '%s' を構文解析中 "
@@ -945,6 +947,14 @@ msgid "Found .Internal call in the following function:"
 msgid_plural "Found .Internal calls in the following functions:"
 msgstr[0] " 以下の関数中に .internal 呼び出しが見つかりました "
 
+msgid "object %s is created by more than one data call"
+msgid_plural "objects %s are created by more than one data call"
+msgstr[0] " オブジェクト %s は1つ以上のデータ呼び出しにより生成されました "
+
+#~ msgid "Unable to locate help document %s in package %s"
+#~ msgstr ""
+#~ "ヘルプドキュメント %s (パッケージ %s 内)の場所を見つけることができません "
+
 #~ msgid "Suspect link(s) in documentation object '%s':"
 #~ msgstr " ドキュメントオブジェクト '%s' 中に疑わしいリンクが見つかりました: "
 
@@ -956,6 +966,20 @@ msgstr[0] " 以下の関数中に .internal 呼び出しが見つかりました
 #~ " 想定されるリンクは \\link[pkg]{a} の形で、ここで 'a' はファイル名ではなく"
 #~ "エイリアスとして存在します。こうしたリンクは R < 2.10.0　では使えず、現在"
 #~ "のバージョンでは,  HTML (PDF ではなく) ヘルプ中でのみ有効です。 "
+
+#~ msgid "missing 'DESCRIPTION.in' for package '%s'"
+#~ msgstr "パッケージ '%s' には 'DESCRIPTION.in' がありません "
+
+#~ msgid "ERROR: this R is version %s, bundle '%s' requires R %s %s"
+#~ msgstr ""
+#~ "エラー：この R はバージョン %s です。パッケージバンドル '%s' は R %s %s を"
+#~ "必要とします "
+
+#~ msgid "Bundle package:"
+#~ msgstr " バンドルパッケージ： "
+
+#~ msgid "Bundle 'DESCRIPTION' is missing."
+#~ msgstr " 'DESCRIPTION' バンドルが見当たりません。 "
 
 #, fuzzy
 #~ msgid "No package of named %s could be found"

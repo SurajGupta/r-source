@@ -20,19 +20,20 @@ rle <- function(x)
         stop("'x' must be an atomic vector")
     n <- length(x)
     if (n == 0L)
-        return(list(lengths = integer(0L), values = x))
+	return(structure(list(lengths = integer(0L), values = x),
+			 class = "rle"))
     y <- x[-1L] != x[-n]
     i <- c(which(y | is.na(y)), n)
     structure(list(lengths = diff(c(0L, i)), values = x[i]),
               class = "rle")
 }
 
-print.rle <- function(x, digits = getOption("digits"), ...)
+print.rle <- function(x, digits = getOption("digits"), prefix = "", ...)
 {
     if(is.null(digits)) digits <- getOption("digits")
-    cat("Run Length Encoding\n  lengths:")
+    cat("", "Run Length Encoding\n", "  lengths:", sep=prefix)
     utils::str(x$lengths)
-    cat("  values :")
+    cat("", "  values :", sep=prefix)
     utils::str(x$values, digits.d = digits)
     invisible(x)
 }

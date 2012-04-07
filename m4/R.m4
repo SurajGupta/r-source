@@ -990,7 +990,8 @@ if ${CC} ${CFLAGS} -c conftest.c 1>&AS_MESSAGE_LOG_FD 2>&AS_MESSAGE_LOG_FD; then
   ## Also, to be defensive there should be a similar test with SHLIB_LD
   ## and SHLIB_LDFLAGS (and note that on HPUX with native cc we have to
   ## use ld for SHLIB_LD) ...
-  if ${CC} ${LDFLAGS} ${MAIN_LDFLAGS} -o conftest${ac_exeext} \
+  ## Be nice to people who put compiler architecture opts in CFLAGS
+  if ${CC} ${CFLAGS} ${LDFLAGS} ${MAIN_LDFLAGS} -o conftest${ac_exeext} \
        conftest.${ac_objext} conftestf.${ac_objext} ${FLIBS} \
        ${LIBM} 1>&AS_MESSAGE_LOG_FD 2>&AS_MESSAGE_LOG_FD;
   ## </NOTE>
@@ -1079,7 +1080,7 @@ if ${CC} ${CFLAGS} -c conftest.c 1>&AS_MESSAGE_LOG_FD 2>&AS_MESSAGE_LOG_FD; then
   ## Also, to be defensive there should be a similar test with SHLIB_LD
   ## and SHLIB_LDFLAGS (and note that on HPUX with native cc we have to
   ## use ld for SHLIB_LD) ...
-  if ${CC} ${LDFLAGS} ${MAIN_LDFLAGS} -o conftest${ac_exeext} \
+  if ${CC} ${CFLAGS} ${LDFLAGS} ${MAIN_LDFLAGS} -o conftest${ac_exeext} \
        conftest.${ac_objext} conftestf.${ac_objext} ${FLIBS} \
        ${LIBM} 1>&AS_MESSAGE_LOG_FD 2>&AS_MESSAGE_LOG_FD;
   ## </NOTE>
@@ -1166,7 +1167,7 @@ if ${CC} ${CFLAGS} -c conftest.c 1>&AS_MESSAGE_LOG_FD 2>&AS_MESSAGE_LOG_FD; then
   ## Also, to be defensive there should be a similar test with SHLIB_LD
   ## and SHLIB_LDFLAGS (and note that on HPUX with native cc we have to
   ## use ld for SHLIB_LD) ...
-  if ${CC} ${LDFLAGS} ${MAIN_LDFLAGS} -o conftest${ac_exeext} \
+  if ${CC} ${CFLAGS} ${LDFLAGS} ${MAIN_LDFLAGS} -o conftest${ac_exeext} \
        conftest.${ac_objext} conftestf.${ac_objext} ${FLIBS} \
        ${LIBM} 1>&AS_MESSAGE_LOG_FD 2>&AS_MESSAGE_LOG_FD;
   ## </NOTE>
@@ -2027,6 +2028,17 @@ if test "${use_libpng}" = yes; then
 	      [Define if you have the PNG headers and libraries.])
   fi
 fi
+AC_CHECK_HEADERS(tiffio.h)
+# may need to resolve jpeg routines
+AC_CHECK_LIB(tiff, TIFFOpen, [have_tiff=yes], [have_tiff=no], [${BITMAP_LIBS}])
+if test "x${ac_cv_header_tiffio_h}" = xyes ; then
+  if test "x${have_tiff}" = xyes; then
+    AC_DEFINE(HAVE_TIFF, 1, [Define this if libtiff is available.])
+    BITMAP_LIBS="-ltiff ${BITMAP_LIBS}"
+  else
+    have_tiff=no
+  fi
+fi
 AC_SUBST(BITMAP_LIBS)
 ])# R_BITMAPS
 
@@ -2669,7 +2681,7 @@ if ${CC} ${CFLAGS} -c conftest.c 1>&AS_MESSAGE_LOG_FD 2>&AS_MESSAGE_LOG_FD; then
   ## Also, to be defensive there should be a similar test with SHLIB_LD
   ## and SHLIB_LDFLAGS (and note that on HPUX with native cc we have to
   ## use ld for SHLIB_LD) ...
-  if ${CC} ${LDFLAGS} ${MAIN_LDFLAGS} -o conftest${ac_exeext} \
+  if ${CC} ${CFLAGS} ${LDFLAGS} ${MAIN_LDFLAGS} -o conftest${ac_exeext} \
        conftest.${ac_objext} conftestf.${ac_objext} ${FLIBS} \
        ${LIBM} ${BLAS_LIBS} 1>&AS_MESSAGE_LOG_FD 2>&AS_MESSAGE_LOG_FD;
   ## </NOTE>
@@ -2809,7 +2821,7 @@ if ${CC} ${CFLAGS} -c conftest.c 1>&AS_MESSAGE_LOG_FD 2>&AS_MESSAGE_LOG_FD; then
   ## Also, to be defensive there should be a similar test with SHLIB_LD
   ## and SHLIB_LDFLAGS (and note that on HPUX with native cc we have to
   ## use ld for SHLIB_LD) ...
-  if ${CC} ${LDFLAGS} ${MAIN_LDFLAGS} -o conftest${ac_exeext} \
+  if ${CC} ${CFLAGS} ${LDFLAGS} ${MAIN_LDFLAGS} -o conftest${ac_exeext} \
        conftest.${ac_objext} ${FLIBS} \
        ${LIBM} ${BLAS_LIBS} 1>&AS_MESSAGE_LOG_FD 2>&AS_MESSAGE_LOG_FD;
   ## </NOTE>
@@ -3291,7 +3303,7 @@ AC_CACHE_CHECK(for iconv, ac_cv_func_iconv, [
 if test "$ac_cv_func_iconv" != no; then
   AC_DEFINE(HAVE_ICONV, 1, [Define if you have the `iconv' function.])
 
-  AC_CACHE_CHECK([whether iconv accepts "UTF-8", "latin1" and "UCS-*"],
+  AC_CACHE_CHECK([whether iconv accepts "UTF-8", "latin1", "ASCII" and "UCS-*"],
   [r_cv_iconv_latin1],
   [AC_RUN_IFELSE([AC_LANG_SOURCE([[
 #include "confdefs.h"
@@ -3318,6 +3330,9 @@ int main () {
   if(cd == (iconv_t)(-1)) exit(1);
   iconv_close(cd);
   cd = iconv_open("UTF-8","");
+  if(cd == (iconv_t)(-1)) exit(1);
+  iconv_close(cd);
+  cd = iconv_open("ASCII","");
   if(cd == (iconv_t)(-1)) exit(1);
   iconv_close(cd);
   cd = iconv_open("UCS-2LE","");
@@ -3397,7 +3412,9 @@ if test "$want_mbcs_support" = yes ; then
 ## These are all C99, but Cygwin lacks wcsftime & wcstod
   R_CHECK_FUNCS([mbrtowc wcrtomb wcscoll wcsftime wcstod], [#include <wchar.h>])
   R_CHECK_FUNCS([mbstowcs wcstombs], [#include <stdlib.h>])
-  R_CHECK_FUNCS([wctrans iswblank wctype iswctype], [#include <wctype.h>])
+  R_CHECK_FUNCS([wctrans iswblank wctype iswctype], 
+[#include <wchar.h>
+#include <wctype.h>])
   for ac_func in mbrtowc mbstowcs wcrtomb wcscoll wcstombs \
                  wctrans wctype iswctype
   do

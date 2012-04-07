@@ -5,7 +5,7 @@
 
 \name{factanal}
 \alias{factanal}
-\encoding{latin1}
+\encoding{UTF-8}
 \title{Factor Analysis}
 \description{
   Perform maximum-likelihood factor analysis on a covariance matrix or
@@ -60,7 +60,7 @@ factanal(x, factors, data = NULL, covmat = NULL, n.obs = NA,
 }
 \details{
   The factor analysis model is
-  \deqn{x = \Lambda f + e}{ x = Lambda f + e}
+  \deqn{x = \Lambda f + e}
   for a \eqn{p}--element row-vector \eqn{x}, a \eqn{p \times k}{p x k}
   matrix of \emph{loadings}, a \eqn{k}--element vector of \emph{scores}
   and a \eqn{p}--element vector of errors.  None of the components
@@ -69,9 +69,9 @@ factanal(x, factors, data = NULL, covmat = NULL, n.obs = NA,
   independent with variances \eqn{\Phi}{Phi}, the
   \emph{uniquenesses}.  Thus factor analysis is in essence a model for
   the covariance matrix of \eqn{x},
-  \deqn{\Sigma = \Lambda^\prime\Lambda + \Psi}{Sigma = Lambda'Lambda + Psi}
+  \deqn{\Sigma = \Lambda^\prime\Lambda + \Psi}{\Sigma = \Lambda'\Lambda + \Psi}
   There is still some indeterminacy in the model for it is unchanged
-  if \eqn{\Lambda}{Lambda} is replaced by \eqn{G\Lambda}{G Lambda} for
+  if \eqn{\Lambda} is replaced by \eqn{G \Lambda} for
   any orthogonal matrix \eqn{G}.  Such matrices \eqn{G} are known as
   \emph{rotations} (although the term is applied also to non-orthogonal
   invertible matrices).
@@ -91,7 +91,7 @@ factanal(x, factors, data = NULL, covmat = NULL, n.obs = NA,
   p. 27).)  All the starting values supplied in \code{start} are tried
   in turn and the best fit obtained is used.  If \code{start = NULL}
   then the first fit is started at the value suggested by
-  \enc{Jöreskog}{Joreskog} (1963) and given by Lawley & Maxwell
+  \enc{JÃ¶reskog}{Joreskog} (1963) and given by Lawley & Maxwell
   (1971, p. 31), and then \code{control$nstart - 1} other values are
   tried, randomly selected as equal values of the uniquenesses.
 
@@ -105,17 +105,17 @@ factanal(x, factors, data = NULL, covmat = NULL, n.obs = NA,
   second the weighted least squares method of Bartlett (1937, 8).
   Both are estimates of the unobserved scores \eqn{f}.  Thomson's method
   regresses (in the population) the unknown \eqn{f} on \eqn{x} to yield
-  \deqn{\hat f = \Lambda^\prime \Sigma^{-1} x}{hat f = Lambda' Sigma^-1 x}
+  \deqn{\hat f = \Lambda^\prime \Sigma^{-1} x}{hat f = \Lambda' \Sigma^-1 x}
   and then substitutes the sample estimates of the quantities on the
   right-hand side.  Bartlett's method minimizes the sum of squares of
   standardized errors over the choice of \eqn{f}, given (the fitted)
-  \eqn{\Lambda}{Lambda}.
+  \eqn{\Lambda}.
 
   If \code{x} is a formula then the standard NA-handling is applied to
   the scores (if requested): see \code{\link{napredict}}.
 
   The \code{print} method (documented under \code{\link{loadings}})
-  follows the facter analysis convention of drawing attention to the
+  follows the factor analysis convention of drawing attention to the
   patterns of the results, so the default precision is three decimal
   places, and small loadings are suppressed.
 }
@@ -159,7 +159,7 @@ factanal(x, factors, data = NULL, covmat = NULL, n.obs = NA,
   Bartlett, M. S. (1938) Methods of estimating mental
   factors. \emph{Nature}, \bold{141}, 609--610.
   
-  \enc{Jöreskog}{Joreskog}, K. G. (1963)
+  \enc{JÃ¶reskog}{Joreskog}, K. G. (1963)
   \emph{Statistical Estimation in Factor Analysis.}  Almqvist and Wicksell.
   
   Lawley, D. N. and Maxwell, A. E. (1971) \emph{Factor Analysis as a

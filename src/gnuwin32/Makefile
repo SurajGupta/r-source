@@ -1,28 +1,43 @@
-include MkRules
+## first time through MkRules will not exist.
+ifeq ($(wildcard MkRules?local),MkRules.local)
+include MkRules.local
+else
+include MkRules.dist
+endif
+include MkRules.rules
+
 include ../../share/make/vars.mk
 
 MK = $(MAKE) --no-print-directory
 
 all:
-	@$(MK) Rpwd.exe
+	@$(MK) MkRules Rpwd.exe
 	@if test -f  ../../SVN-REVISION ; then \
 	  cp ../../SVN-REVISION ../../SVN-REVISION.bak ; \
 	fi
 	@$(MK) rbuild
-	@$(MK) -C ../library -f Makefile.win all
+	@$(MK) -C ../library -f Makefile.win all WIN=$(WIN)
 	@$(MK) -C ../library -f Makefile.win docs
 	@$(MK) htmldocs
 	@$(MK)  -C ../../po -f Makefile.win
 
 rpackages:
-	@$(MK) -C ../library -f Makefile.win all
+	@$(MK) -C ../library -f Makefile.win all WIN=$(WIN)
 	@$(MK) -C ../library -f Makefile.win docs
+
+ifeq ($(wildcard MkRules?local),MkRules.local)
+MkRules: MkRules.local MkRules.rules
+	cat MkRules.local MkRules.rules > MkRules
+else
+MkRules: MkRules.dist MkRules.rules
+	cat MkRules.dist MkRules.rules > MkRules
+endif
 
 ## must be absolute and space-free.  
 ## NB: will not be set correctly first time through.
 RHOME = $(shell ./Rpwd.exe ../..)
 
-REXE = $(RHOME)/bin/rterm.exe --vanilla --slave
+REXE = $(RHOME)/$(BINDIR)/rterm.exe --vanilla --slave
 
 RPREFIX = $(shell $(PERL) fixed/rwver.pl ../../VERSION)
 
@@ -95,10 +110,10 @@ rbuild:
 	@$(MK) -C ../include -f Makefile.win
 	@$(MK) -C ../scripts -f Makefile.win
 ifdef USE_IMPLIBS
-	@$(MK) libiconv.dll.a
+	@$(MK) libRiconv.dll.a
 endif
 	@$(MK) libRblas.dll.a
-	@$(MK) ../../bin/R.dll
+	@$(MK) ../../$(BINDIR)/R.dll
 ifdef USE_IMPLIBS
 	@$(MK) implibs
 endif
@@ -117,6 +132,7 @@ rlibs:
 	done
 
 rmodules:
+	@$(MKDIR) -p ../../modules$(R_ARCH)
 	$(MK) -C ../modules -f Makefile.win \
 	  RHOME=$(RHOME) OPTFLAGS='$(OPTFLAGS)' FOPTFLAGS='$(FOPTFLAGS)'
 
@@ -125,7 +141,7 @@ COPYRIGHTS: ../../doc/COPYRIGHTS COPYRIGHTS.win
 
 
 fixfiles: docfiles 
-	@$(MKDIR) -p ../../bin
+	@$(MKDIR) -p ../../$(BINDIR) ../../bin
 	@$(MK) -C ./fixed
 
 fixed/fixdesc:
@@ -148,17 +164,16 @@ R.exp: $(OBJS) $(OBJS-EXTRA) $(MAINLIBS) $(EXTRALIBS) dllversion.o
 	@$(RM) R0.def
 
 
-Rdll: makeMakedeps libRblas.dll.a ../../bin/R.dll
+Rdll: makeMakedeps libRblas.dll.a ../../$(BINDIR)/R.dll
 
-../../bin/R.dll: FORCE
+../../$(BINDIR)/R.dll: FORCE
 	@$(MK) fixfiles
 	@$(MK) -C ../include -f Makefile.win
 	@$(MK) rlibs
 	@$(MK) makeMakedeps
 	@$(MK) R.dll
-	@$(MKDIR) -p ../../bin
-	$(CP) R.dll ../../bin/
-	@$(MKDIR) -p ./../modules/
+	@$(MKDIR) -p ../../$(BINDIR)
+	$(CP) R.dll ../../$(BINDIR)
 
 FORCE:
 
@@ -170,8 +185,8 @@ libR.dll.a: R.exp
 	$(DLLTOOL) $(DLLTOOLFLAGS) $(R-DLLTOOLFLAGS) --dllname R.dll \
 	  --input-def $< --output-lib $@
 
-libiconv.dll.a: unicode/iconv.def
-	$(DLLTOOL) $(DLLTOOLFLAGS) $(R-DLLTOOLFLAGS) --dllname iconv.dll \
+libRiconv.dll.a: unicode/iconv.def
+	$(DLLTOOL) $(DLLTOOLFLAGS) $(R-DLLTOOLFLAGS) --dllname Riconv.dll \
 	  --input-def $< --output-lib $@
 
 
@@ -223,7 +238,6 @@ libRblas.dll.a:  ../extra/blas/Rblas.def
 PKGDIR=../library
 pkgclean-%:
 	@(cd $(PKGDIR)/$*/src; rm -f *.d *.o *.dll *_res.rc Makedeps)
-	@rm -rf $(PKGDIR)/$*/chm
 
 EXTRA_DIRS = blas bzip2 graphapp intl pcre tre trio tzone xdr xz win_iconv zlib
 
@@ -239,17 +253,13 @@ clean: cleanwin
 	-$(MK) -C ../../tests -f Makefile.win clean
 	-$(MK) -C ../library/Recommended -f Makefile.win clean
 	$(RM) -f ../library/methods/all.R
-	for p in $(R_PKGS_RECOMMENDED); do \
-	  $(RM) -rf ../library/$$p; \
-	done
 
 distclean: clean
-	$(RM) -r ../library/*/chm
 	@for d in $(EXTRA_DIRS); do \
 	  $(MAKE) -C ../extra/$${d} -f Makefile.win distclean; \
 	done
 	@$(MAKE) -C ../../tests -f Makefile.win distclean RHOME=$(RHOME)
-	$(RM) -r ../../bin ../../include ../../lib ../../library ../../modules
+	$(RM) -r ../../$(BINDIR) ../../include ../../lib ../../library ../../modules
 	$(RM) ../include/config.h ../include/iconv.h ../include/psignal.h \
 	../include/Rconfig.h ../include/Rversion.h ../include/Rmath.h \
 	../include/libintl.h
@@ -267,6 +277,7 @@ distclean: clean
 	$(RM) ../../etc/Makeconf ../../etc/Rconsole ../../etc/Rdevga \
 	../../etc/Rprofile.site ../../etc/rgb.txt ../../etc/Rcmd_environ \
 	../../tests/*.Rout ../../tests/*.Rout.fail
+	$(RM) -r ../../etc/x64
 	$(RM) -r ../../share/zoneinfo
 	$(MAKE) -C fixed distclean
 	$(MAKE) -C ../include -f Makefile.win distclean
@@ -280,7 +291,8 @@ distclean: clean
 		cran/md5sum.txt cran/*.$(RPREFIX) 
 	$(RM) -r .vignettes # it gets left behind if there is an error
 	$(RM) -r ../../share/locale
-	$(RM) Rpwd.exe # do this last of all
+	$(RM) ../../doc/CHANGES*
+	$(RM) MkRules Rpwd.exe # do this last of all
 
 veryclean: distclean
 	$(RM) ../../doc/FAQ ../../doc/RESOURCES ../../doc/html/resources.html \
@@ -335,6 +347,12 @@ rw-FAQ: rw-FAQ.texi ../../VERSION
 	@$(SED) $(SEDVER) $< | \
 	  makeinfo --no-headers --number-sections -o $@
 
+rw-FAQ.pdf: rw-FAQ.texi ../../VERSION
+	@$(SED) $(SEDVER) $< > tmp.texi
+	@$(TEXI2DVI) --pdf tmp.texi
+	@$(TEXI2DVI) --pdf tmp.texi
+	@mv tmp.pdf $@
+	@rm tmp.*
 
 bitmapdll:
 	$(MAKE) -C bitmap
@@ -366,41 +384,44 @@ rinstaller:
 	@$(MAKE) -C installer EXTRA_PKGS='$(EXTRA_PKGS)'
 	@$(MAKE) -C installer clean
 
+ifeq ($(strip $(WIN)),64)
+BITSIZE=64
+BITSUFFIX=64
+OTHERBITSIZE=32
+OTHERBITSUFFIX=
+else
+BITSIZE=32
+BITSUFFIX=
+OTHERBITSIZE=64
+OTHERBITSUFFIX=64
+endif
+
 crandir:
-	$(CP) installer/$(RPREFIX)-win32.exe cran
 	$(CP) CHANGES cran/CHANGES.$(RPREFIX)
 	$(CP) ../../NEWS cran/NEWS.$(RPREFIX)
+	$(CP) installer/$(RPREFIX)-win$(BITSIZE).exe cran
 	(cd cran;\
-	 $(ECHO) 'cat(md5sum("$(RPREFIX)-win32.exe"),"*$(RPREFIX)-win32.exe")' \
+	 $(ECHO) 'cat(md5sum("$(RPREFIX)-win$(BITSIZE).exe"),"*$(RPREFIX)-win$(BITSIZE).exe")' \
          | $(REXE) R_DEFAULT_PACKAGES=tools >md5sum.txt)
-	$(CP) ../../doc/html/rw-FAQ.html cran
+	$(CP) ../../doc/html/rw-FAQ.html cran	
+	@for page in index rdevel rpatched rtest release; do \
+	  $(SED) -e s/@RWVER@/$(RPREFIX)/g \
+	    -e s/@RVER@/$(RVER)/g \
+	    -e "s/@DATE@/$(DATE)/g" \
+	    -e "s/@SVNREVISION@/$(SVNREVISION)/g" \
+	    -e "s/@FULLVERSION@/$(FULLVERSION)/g" \
+	    -e "s/@BITSIZE@/$(BITSIZE)/g" \
+	    -e "s/@BITSUFFIX@/$(BITSUFFIX)/g" \
+	    -e "s/@OTHERBITSIZE@/$(OTHERBITSIZE)/g" \
+	    -e "s/@OTHERBITSUFFIX@/$(OTHERBITSUFFIX)/g" \cran/$${page}.in > cran/$${page}.html; \
+	done
+	$(CP) cran/release.html cran/release.htm
 	$(SED) -e s/@RWVER@/$(RPREFIX)/g \
 	  -e s/@RVER@/$(RVER)/g \
 	  -e "s/@FULLVERSION@/$(FULLVERSION)/g" README > cran/README.$(RPREFIX)
 	$(SED) -e s/@RWVER@/$(RPREFIX)/g \
 	  -e s/@RVER@/$(RVER)/g \
 	  -e "s/@FULLVERSION@/$(FULLVERSION)/g" cran/ReadMe.in > cran/ReadMe	  
-	$(SED) -e s/@RWVER@/$(RPREFIX)/g \
-	  -e s/@RVER@/$(RVER)/g \
-	  -e "s/@DATE@/$(DATE)/g" \
-	  -e "s/@SVNREVISION@/$(SVNREVISION)/g" \
-	  -e "s/@FULLVERSION@/$(FULLVERSION)/g" cran/index.in > cran/index.html
-	$(SED) -e s/@RWVER@/$(RPREFIX)/g \
-	  -e s/@RVER@/$(RVER)/g \
-	  -e "s/@DATE@/$(DATE)/g" \
-	  -e "s/@SVNREVISION@/$(SVNREVISION)/g" \
-	  -e "s/@FULLVERSION@/$(FULLVERSION)/g" cran/rdevel.in > cran/rdevel.html
-	$(SED) -e s/@RWVER@/$(RPREFIX)/g \
-	  -e s/@RVER@/$(RVER)/g \
-	  -e "s/@DATE@/$(DATE)/g" \
-	  -e "s/@SVNREVISION@/$(SVNREVISION)/g" \
-	  -e "s/@FULLVERSION@/$(FULLVERSION)/g" cran/rpatched.in > cran/rpatched.html	  
-	$(SED) -e s/@RWVER@/$(RPREFIX)/g \
-	  -e s/@RVER@/$(RVER)/g \
-	  -e "s/@DATE@/$(DATE)/g" \
-	  -e "s/@SVNREVISION@/$(SVNREVISION)/g" \
-	  -e "s/@FULLVERSION@/$(FULLVERSION)/g" cran/rtest.in > cran/rtest.html	  	  
-	$(SED) -e s/@RWVER@/$(RPREFIX)/g cran/release.in > cran/release.htm
 	(cd cran;\
 	 zip dosfiles.zip CHANGES.$(RPREFIX) NEWS.$(RPREFIX) README.$(RPREFIX) ReadMe;\
 	 unzip -ao dosfiles.zip;\

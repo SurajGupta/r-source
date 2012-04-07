@@ -2,9 +2,9 @@ msgid ""
 msgstr ""
 "Project-Id-Version: R 2.1.0 \n"
 "Report-Msgid-Bugs-To: bugs@r-project.org\n"
-"POT-Creation-Date: 2009-12-10 19:18\n"
-"PO-Revision-Date: 2009-10-09 09:12+0900 \n"
-"Last-Translator: Shigeru Mase <maseshigeru@gmail.com> \n"
+"POT-Creation-Date: 2010-03-16 09:20\n"
+"PO-Revision-Date: 2010-04-03 09:55+0900 \n"
+"Last-Translator: takahashi <takahashi.kohske@gmail.com> \n"
 "Language-Team: RjpWiki Message Translation Team <mokada@md.tsukuba.ac.jp> \n"
 "MIME-Version: 1.0 \n"
 "Content-Type: text/plain; charset=UTF-8 \n"
@@ -103,6 +103,12 @@ msgstr " ビニエット(vignette)が見付かりません "
 
 msgid "call"
 msgstr " call "
+
+msgid "Package '"
+msgstr " パッケージ ' "
+
+msgid "' DESCRIPTION not found."
+msgstr "DESCRIPTION が見つかりません "
 
 msgid "'file' must be NULL, a character string or a connection"
 msgstr " 'file' はconnectionか文字列か NULL でなければなりません "
@@ -250,14 +256,8 @@ msgstr " 'name'のクラスは破棄されます "
 msgid "cannot edit NULL row names"
 msgstr " NULLの行の名前は編集できません "
 
-msgid "no help file found for '%s'"
+msgid "no help found for '%s'"
 msgstr " '%s' に対するヘルプファイルが見つかりません "
-
-msgid "more than one help file found: using package '%s'"
-msgstr " 複数のヘルプファイルが見つかりました：'%s' 中のものを使います "
-
-msgid "'%s' has a help file but no examples"
-msgstr " '%s' にはヘルプファイルはありますが、実行例はありません "
 
 msgid "test '%s' is not available"
 msgstr " テスト '%s' が利用できません "
@@ -283,19 +283,6 @@ msgstr ""
 
 msgid "'topic' should be a name, length-one character vector or reserved word"
 msgstr " 'topic'は名前、長さ１の文字列、または予約語でなければなりません "
-
-msgid "offline = TRUE is deprecated: use help_type =\"postscript\""
-msgstr ""
-" offline=TRUEは推奨されません: help_type=\"postscript\"を使ってください "
-
-#, fuzzy
-msgid "chmhelp = TRUE is no longer supported: using help_type =\"text\""
-msgstr ""
-" chmhelp=TRUEはもうサポートされていません: help_type=\"text\"を使ってくださ"
-"い "
-
-msgid "htmhelp = TRUE is deprecated: use help_type =\"html\""
-msgstr " htmhelp=TRUEは推奨されません: help_type=\"html\"を使ってください "
 
 msgid "No documentation for '%s' in specified packages and libraries:"
 msgstr ""
@@ -333,19 +320,15 @@ msgstr "HTMLヘルプは利用できません "
 msgid "R Help on '%s'"
 msgstr " '%s' に対する R ヘルプ "
 
-msgid ""
-"No text help for '%s' is available:\n"
-"corresponding file is missing"
-msgstr ""
-" '%s' に対するテキストヘルプはありません： \n"
-" 対応するファイルがありません "
+msgid "invalid '%s' argument"
+msgstr " 不正な '%s' 引数 "
 
 msgid ""
-"No offline help for '%s' is available:\n"
-"corresponding file is missing"
+"package %s exists but was not installed under R >= 2.10.0 so help cannot be "
+"accessed"
 msgstr ""
-" '%s' に対するオフラインのヘルプはありません： \n"
-" 対応するファイルがありません "
+"パッケージ%sは存在しますが、R >= 2.10.0 でインストールされていないためヘルプ"
+"ファイルにアクセスできません "
 
 msgid "argument '%s' must be a single character string"
 msgstr " 引数 '%s' は単一の文字列でなければなりません "
@@ -572,17 +555,14 @@ msgstr " ミラーを設定することなくCRANを使おうとしています 
 msgid "cannot choose a CRAN mirror non-interactively"
 msgstr " CRANミラーの選択は対話的にしかできません "
 
+msgid "cannot choose a BioC mirror non-interactively"
+msgstr "BioCミラーの選択は対話的にしかできません "
+
 msgid "cannot set repositories non-interactively"
 msgstr " リポジトリーの設定は対話的にしかできません "
 
 msgid "--- Please select repositories for use in this session ---"
 msgstr " --- このセッションで使うリポジトリーを選んでください --- "
-
-msgid ""
-"Enter one or more numbers separated by spaces, or an empty line to cancel"
-msgstr ""
-"スペースで区切られた1つ以上の数を入力するか、キャンセルするには空白行を入力し"
-"てください "
 
 msgid "'%s' must be supplied"
 msgstr " '%s' を与えてください "
@@ -671,6 +651,9 @@ msgstr ""
 
 msgid "no object named '%s' to show"
 msgstr " 表示すべき '%s' という名前のオブジェクトがありません "
+
+msgid "must have max > min"
+msgstr " max > minである必要があります "
 
 msgid "'pb' is not from class \"txtProgressBar\""
 msgstr " 'pb'はクラス\"txtProgressBar\"からではありません "
@@ -869,9 +852,8 @@ msgid "'digits' and 'digits.d' are both specified and the latter is not used"
 msgstr ""
 " 'digits'と'digits.d'の両方が指定されています。'digits.d'は使われません "
 
-#, fuzzy
 msgid "no lines found in %s"
-msgstr " '%s' に対するヘルプファイルが見つかりません "
+msgstr " %sには一行も存在しません "
 
 msgid "profile does not contain memory information"
 msgstr " プロファイルはメモリ情報を含んでいません "
@@ -881,9 +863,6 @@ msgstr " 如何なるイベントも記録されませんでした "
 
 msgid "'compressed' must be logical or character"
 msgstr " 'compress'は論理値か文字でなければなりません "
-
-msgid "untar: using cmd ="
-msgstr " untar: 以下を使用 cmd = "
 
 msgid "invalid octal digit"
 msgstr " 不正な８進数の数字です "
@@ -906,9 +885,6 @@ msgstr "ファイル '%s' が見付かりません "
 msgid "file path is too long"
 msgstr "ファイルパスが長すぎます "
 
-msgid "storing paths of more than 100 bytes is not portable:"
-msgstr ""
-
 msgid "linked path is too long"
 msgstr " linked pathが長すぎます "
 
@@ -928,12 +904,14 @@ msgstr " ビニエット '%s' は PDF ファイルを持ちません "
 msgid "select.list() cannot be used non-interactively"
 msgstr " select.list() は対話的にしか使えません "
 
-#, fuzzy
 msgid "'title' must be NULL or a length-1 character vector"
-msgstr " 'code_files' は文字ベクトルでなければなりません "
+msgstr " 'title'はNULLか長さ1の文字ベクトルでなければなりません "
 
-msgid "Enter zero or more numbers separated by space"
-msgstr " 0 を入力するか、空白で区切られたもっと多くの数値を入力して下さい "
+msgid ""
+"Enter one or more numbers separated by spaces, or an empty line to cancel"
+msgstr ""
+"スペースで区切られた1つ以上の数を入力するか、キャンセルするには空白行を入力し"
+"てください "
 
 msgid "Invalid input, please try again"
 msgstr " 不正な入力です、もう一度試みて下さい "
@@ -990,11 +968,11 @@ msgid "help.start() requires the HTTP server to be running"
 msgstr " help.start()にはHTTPサーバが実行されている必要があります "
 
 msgid ""
-"If '%s' is already running, it is *not* restarted, and you must switch to "
-"its window."
+"If the browser launched by '%s' is already running, it is *not* restarted, "
+"and you must switch to its window."
 msgstr ""
-" もし '%s' が既に実行中なら、それは再起動されません。そのウィンドウへ切替える"
-"必要があります "
+"もし'%s'で起動したブラウザが既に実行中なら、それは再起動されません。そのウィ"
+"ンドウへ切替える必要があります "
 
 msgid "Otherwise, be patient ..."
 msgstr " さもなければ、じっと待って ... "
@@ -1016,12 +994,6 @@ msgstr " 'tar' がゼロでない終了コード %d を返しました "
 
 msgid "package '%s' successfully unpacked and MD5 sums checked"
 msgstr " パッケージ '%s' は無事に開封され、MD5 サムもチェックされました "
-
-msgid "malformed bundle DESCRIPTION file, no Contains field"
-msgstr " 不備なバンドルの DESCRIPTION ファイルです、Contains 欄がありません "
-
-msgid "bundle '%s' successfully unpacked and MD5 sums checked"
-msgstr " バンドル '%s' は無事に開封され、MD5 サムもチェックされました "
 
 msgid "unable to move temporary installation '%s' to '%s'"
 msgstr " 一時的なインストール '%s' を '%s' へ移動できませんでした "
@@ -1092,11 +1064,56 @@ msgid "package '%s' is in use and will not be installed"
 msgid_plural "packages '%s' are in use and will not be installed"
 msgstr[0] " パッケージ '%s' は使用中ですから、インストールされません "
 
+#~ msgid "untar: using cmd ="
+#~ msgstr " untar: 以下を使用 cmd = "
+
+#~ msgid "Enter zero or more numbers separated by space"
+#~ msgstr " 0 を入力するか、空白で区切られたもっと多くの数値を入力して下さい "
+
+#~ msgid "more than one help file found: using package '%s'"
+#~ msgstr " 複数のヘルプファイルが見つかりました：'%s' 中のものを使います "
+
+#~ msgid "offline = TRUE is deprecated: use help_type =\"postscript\""
+#~ msgstr ""
+#~ " offline=TRUEは推奨されません: help_type=\"postscript\"を使ってください "
+
+#~ msgid "chmhelp = TRUE is no longer supported: use help_type =\"text\""
+#~ msgstr ""
+#~ " chmhelp=TRUEはもうサポートされていません: help_type=\"text\"を使ってくだ"
+#~ "さい "
+
+#~ msgid "htmhelp = TRUE is deprecated: use help_type =\"html\""
+#~ msgstr " htmhelp=TRUEは推奨されません: help_type=\"html\"を使ってください "
+
 #~ msgid "Using non-linked HTML file: hyperlinks may be incorrect"
 #~ msgstr " リンクなしHTMLを使います: ハイパーリンクは壊れています "
 
 #~ msgid "options(\"browser\") not set"
 #~ msgstr " options(\"browser\") が設定されていません "
+
+#~ msgid "'%s' has a help file but no examples"
+#~ msgstr " '%s' にはヘルプファイルはありますが、実行例はありません "
+
+#~ msgid ""
+#~ "No text help for '%s' is available:\n"
+#~ "corresponding file is missing"
+#~ msgstr ""
+#~ " '%s' に対するテキストヘルプはありません： \n"
+#~ " 対応するファイルがありません "
+
+#~ msgid ""
+#~ "No offline help for '%s' is available:\n"
+#~ "corresponding file is missing"
+#~ msgstr ""
+#~ " '%s' に対するオフラインのヘルプはありません： \n"
+#~ " 対応するファイルがありません "
+
+#~ msgid "malformed bundle DESCRIPTION file, no Contains field"
+#~ msgstr ""
+#~ " 不備なバンドルの DESCRIPTION ファイルです、Contains 欄がありません "
+
+#~ msgid "bundle '%s' successfully unpacked and MD5 sums checked"
+#~ msgstr " バンドル '%s' は無事に開封され、MD5 サムもチェックされました "
 
 #~ msgid ""
 #~ "No HTML help for '%s' is available:\n"

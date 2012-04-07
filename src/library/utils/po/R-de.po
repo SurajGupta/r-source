@@ -1,14 +1,14 @@
 # German translation of src/library/utils/po/R-utils.pot
-# Copyright (C) 2008-2009 The R Foundation
+# Copyright (C) 2008-2010 The R Foundation
 # This file is distributed under the same license as the R package.
-# Detlef Steuer <steuer@hsu-hh.de>, 2008-2009.
+# Detlef Steuer <steuer@hsu-hh.de>, 2008-2010.
 #
 msgid ""
 msgstr ""
-"Project-Id-Version: R 2.10.0\n"
+"Project-Id-Version: R 2.11.0\n"
 "Report-Msgid-Bugs-To: bugs@r-project.org\n"
-"POT-Creation-Date: 2009-12-10 19:18\n"
-"PO-Revision-Date: 2009-10-07 15:13+0200\n"
+"POT-Creation-Date: 2010-03-16 09:20\n"
+"PO-Revision-Date: 2010-03-24 12:26+0100\n"
 "Last-Translator: Detlef Steuer <steuer@hsu-hh.de>\n"
 "Language-Team: R Core <r-core@r-project.org>\n"
 "MIME-Version: 1.0\n"
@@ -109,6 +109,12 @@ msgstr "Keine Vignetten gefunden durch"
 
 msgid "call"
 msgstr "Aufruf"
+
+msgid "Package '"
+msgstr "Paket '"
+
+msgid "' DESCRIPTION not found."
+msgstr "DESCRIPTION nicht gefunden"
 
 msgid "'file' must be NULL, a character string or a connection"
 msgstr "'file' muss NULL, eine Zeichenkette oder eine Verbindung sein"
@@ -252,14 +258,8 @@ msgstr "Klasse(n) von 'name' wird verworfen"
 msgid "cannot edit NULL row names"
 msgstr "kann NULL Zeilennamen nicht editieren"
 
-msgid "no help file found for '%s'"
-msgstr "kein Hilfefile für '%s' gefunden"
-
-msgid "more than one help file found: using package '%s'"
-msgstr "mehr als ein Hilfefile gefunden: nutze Paket '%s'"
-
-msgid "'%s' has a help file but no examples"
-msgstr "'%s' hat eine Hilfe, aber keine Beispiele"
+msgid "no help found for '%s'"
+msgstr "kein Hilfe für '%s' gefunden"
 
 msgid "test '%s' is not available"
 msgstr "test '%s' ist nicht verfügbar"
@@ -287,17 +287,6 @@ msgid "'topic' should be a name, length-one character vector or reserved word"
 msgstr ""
 "'topic' sollte ein Name, ein Zeichenkettenvektor der Länge 1 oder ein "
 "reserviertes Word sein"
-
-msgid "offline = TRUE is deprecated: use help_type =\"postscript\""
-msgstr "offline = TRUE ist veraltet: nutzen sie help_type=\"postscript\""
-
-#, fuzzy
-msgid "chmhelp = TRUE is no longer supported: using help_type =\"text\""
-msgstr ""
-"chmhelp = TRUE ist nicht mehr unterstützt: nutzen Sie help_type = \"text\""
-
-msgid "htmhelp = TRUE is deprecated: use help_type =\"html\""
-msgstr "htmlhelp = TRUE ist veraltet: nutzen sei help_type = \"html\""
 
 msgid "No documentation for '%s' in specified packages and libraries:"
 msgstr "Keine Dokumentation für '%s' in angegebenen Paketen und Bibliotheken:"
@@ -333,19 +322,13 @@ msgstr "HTML Hilfe ist nicht verfügbar"
 msgid "R Help on '%s'"
 msgstr "R Hilfe zu '%s'"
 
-msgid ""
-"No text help for '%s' is available:\n"
-"corresponding file is missing"
-msgstr ""
-"Keine Texthilfe für '%s' verfügbar:\n"
-"zugehörige Datei fehlt"
+msgid "invalid '%s' argument"
+msgstr "unzulässiges '%s' Argument"
 
 msgid ""
-"No offline help for '%s' is available:\n"
-"corresponding file is missing"
-msgstr ""
-"Keine Offline-Hilfe für '%s' verfügbar:\n"
-"zugehörige Datei fehlt"
+"package %s exists but was not installed under R >= 2.10.0 so help cannot be "
+"accessed"
+msgstr "Paket %s exisitiert, wurde aber nicht unter R >= 2.10.0 installiert, weshalb die Hilfe nicht genutzt werden kann"
 
 msgid "argument '%s' must be a single character string"
 msgstr "Argument '%s' muss einzelne Zeichkette sein"
@@ -568,17 +551,14 @@ msgstr "versuche CRAN ohne einen Spiegelserver zu nutzen"
 msgid "cannot choose a CRAN mirror non-interactively"
 msgstr "kann keinen CRAN-Spiegel nicht-interaktiv nutzen"
 
+msgid "cannot choose a BioC mirror non-interactively"
+msgstr "kann keinen BioC-Spiegel nicht-interaktiv wählen"
+
 msgid "cannot set repositories non-interactively"
 msgstr "kann keine Repositories nicht-interaktiv setzen"
 
 msgid "--- Please select repositories for use in this session ---"
 msgstr "--- Bitte Repositories für diese Sitzung auswählen ---"
-
-msgid ""
-"Enter one or more numbers separated by spaces, or an empty line to cancel"
-msgstr ""
-"Bitte eine oder mehrere durch Leerstellen getrennte Zahlen oder eine leere "
-"Zeile eingeben, um abzubrechen"
 
 msgid "'%s' must be supplied"
 msgstr "'%s' muss angegeben werden"
@@ -661,6 +641,9 @@ msgstr ""
 
 msgid "no object named '%s' to show"
 msgstr "kein Objket namens '%s' anzuzeigen"
+
+msgid "must have max > min"
+msgstr "es muss max > min sein"
 
 msgid "'pb' is not from class \"txtProgressBar\""
 msgstr "'pb' ist nicht aus Klasse \"txtProgressBar\""
@@ -848,9 +831,8 @@ msgid "'digits' and 'digits.d' are both specified and the latter is not used"
 msgstr ""
 "'digits' und 'digits.d' sind beide angegeben und das letztere wird ignoriert"
 
-#, fuzzy
 msgid "no lines found in %s"
-msgstr "kein Hilfefile für '%s' gefunden"
+msgstr "kein Zeilen in  '%s'"
 
 msgid "profile does not contain memory information"
 msgstr "Profil einthält keine Speicherinformation"
@@ -860,9 +842,6 @@ msgstr "keine Ereignisse aufgezeichnet"
 
 msgid "'compressed' must be logical or character"
 msgstr "'commpressed' muss Boole'sch oder ein Charakter sein"
-
-msgid "untar: using cmd ="
-msgstr "untar: benutze cmd ="
 
 msgid "invalid octal digit"
 msgstr "unzulässige Oktalziffer"
@@ -885,9 +864,6 @@ msgstr "File '%s' nicht gefunden"
 msgid "file path is too long"
 msgstr "Pfad ist zu lang"
 
-msgid "storing paths of more than 100 bytes is not portable:"
-msgstr ""
-
 msgid "linked path is too long"
 msgstr "verlinkter Pfad ist zu lang"
 
@@ -907,12 +883,14 @@ msgstr "Vignette '%s' enthält kein PDF"
 msgid "select.list() cannot be used non-interactively"
 msgstr "select.list() kann nicht nicht-interaktiv benutzt werden"
 
-#, fuzzy
 msgid "'title' must be NULL or a length-1 character vector"
-msgstr "'code_files' muss ein Charaktervektor sein"
+msgstr "'title' muss NULL oder ein Charaktervektor mit Länge 1 sein"
 
-msgid "Enter zero or more numbers separated by space"
-msgstr "Geben Sie 0 oder mehr durch Leerstellen getrennte Zahlen ein"
+msgid ""
+"Enter one or more numbers separated by spaces, or an empty line to cancel"
+msgstr ""
+"Bitte eine oder mehrere durch Leerstellen getrennte Zahlen oder eine leere "
+"Zeile eingeben, um abzubrechen"
 
 msgid "Invalid input, please try again"
 msgstr "Unzulässige Eingabe, bitte nochmal probieren"
@@ -969,11 +947,9 @@ msgid "help.start() requires the HTTP server to be running"
 msgstr "help.start() benötigt den laufenden HTTP Server"
 
 msgid ""
-"If '%s' is already running, it is *not* restarted, and you must switch to "
-"its window."
-msgstr ""
-"Wenn '%s' bereits ausgeführt wird, wird er nicht neu gestartet, sondern Sie "
-"müssen in sein Fenster wechseln"
+"If the browser launched by '%s' is already running, it is *not* restarted, "
+"and you must switch to its window."
+msgstr "Wenn der Browser '%s' bereits ausgeführt wird, wird er nicht neu gestartet, sondern Sie müssen in sein Fenster wechseln"
 
 msgid "Otherwise, be patient ..."
 msgstr "Ansonsten: Geduld ..."
@@ -995,12 +971,6 @@ msgstr "'tar' hatte Exit-Status ungleich 0"
 
 msgid "package '%s' successfully unpacked and MD5 sums checked"
 msgstr "Paket '%s' erfolgreich ausgepackt und MD5 Summen abgeglichen"
-
-msgid "malformed bundle DESCRIPTION file, no Contains field"
-msgstr "kein Contains Feld in der Bundel DESCRIPTION Datei"
-
-msgid "bundle '%s' successfully unpacked and MD5 sums checked"
-msgstr "Bundel '%s' erfolgreich ausgepackt und MD5 Summen abgeglichen"
 
 msgid "unable to move temporary installation '%s' to '%s'"
 msgstr "kann temporäre Installation '%s' nicht nach '%s' verschieben"
@@ -1078,11 +1048,53 @@ msgid_plural "packages '%s' are in use and will not be installed"
 msgstr[0] "Paket '%s' wird gerade benutzt und deshab nicht installiert"
 msgstr[1] "Pakete '%s' werden gerade bennutzt und deshalb nicht installiert"
 
+#~ msgid "untar: using cmd ="
+#~ msgstr "untar: benutze cmd ="
+
+#~ msgid "Enter zero or more numbers separated by space"
+#~ msgstr "Geben Sie 0 oder mehr durch Leerstellen getrennte Zahlen ein"
+
+#~ msgid "more than one help file found: using package '%s'"
+#~ msgstr "mehr als ein Hilfefile gefunden: nutze Paket '%s'"
+
+#~ msgid "offline = TRUE is deprecated: use help_type =\"postscript\""
+#~ msgstr "offline = TRUE ist veraltet: nutzen sie help_type=\"postscript\""
+
+#~ msgid "chmhelp = TRUE is no longer supported: use help_type =\"text\""
+#~ msgstr ""
+#~ "chmhelp = TRUE ist nicht mehr unterstützt: nutzen Sie help_type = \"text\""
+
+#~ msgid "htmhelp = TRUE is deprecated: use help_type =\"html\""
+#~ msgstr "htmlhelp = TRUE ist veraltet: nutzen sei help_type = \"html\""
+
 #~ msgid "Using non-linked HTML file: hyperlinks may be incorrect"
 #~ msgstr "Nutze ungelinktes HTML Datei: Hyperlinks evtl. falsch"
 
 #~ msgid "options(\"browser\") not set"
 #~ msgstr "options(\"browser\") nicht gesetzt"
+
+#~ msgid "'%s' has a help file but no examples"
+#~ msgstr "'%s' hat eine Hilfe, aber keine Beispiele"
+
+#~ msgid ""
+#~ "No text help for '%s' is available:\n"
+#~ "corresponding file is missing"
+#~ msgstr ""
+#~ "Keine Texthilfe für '%s' verfügbar:\n"
+#~ "zugehörige Datei fehlt"
+
+#~ msgid ""
+#~ "No offline help for '%s' is available:\n"
+#~ "corresponding file is missing"
+#~ msgstr ""
+#~ "Keine Offline-Hilfe für '%s' verfügbar:\n"
+#~ "zugehörige Datei fehlt"
+
+#~ msgid "malformed bundle DESCRIPTION file, no Contains field"
+#~ msgstr "kein Contains Feld in der Bundel DESCRIPTION Datei"
+
+#~ msgid "bundle '%s' successfully unpacked and MD5 sums checked"
+#~ msgstr "Bundel '%s' erfolgreich ausgepackt und MD5 Summen abgeglichen"
 
 #~ msgid ""
 #~ "No HTML help for '%s' is available:\n"

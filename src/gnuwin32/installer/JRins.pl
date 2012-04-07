@@ -1,5 +1,5 @@
 #-*- perl -*-
-# Copyright (C) 2001-9 R Development Core Team
+# Copyright (C) 2001-10 R Development Core Team
 #
 # This program is free software; you can redistribute it and/or modify
 # it under the terms of the GNU General Public License as published by
@@ -16,8 +16,6 @@
 
 # Send any bug reports to r-bugs@r-project.org
 
-# Define next as and when we have a 64-bit build
-# mode64bit = 1
 
 use Cwd;
 use File::Find;
@@ -31,7 +29,7 @@ my $MDISDI=$ARGV[2];
 my $HelpStyle=$ARGV[3];
 my $Internet=$ARGV[4];
 my $Producer = $ARGV[5];
-
+my $mode64bit = $ARGV[6];
 
 $SRCDIR =~ s+/+\\+g; # need DOS-style paths
 
@@ -51,24 +49,37 @@ close ver;
 $SVN =~s/Revision: //;
 $RVER0 .= "." . $SVN;
 
+if($mode64bit) {
+    $suffix = "win64";
+    $PF = "pf64"; # "pf" should do
+    $QUAL = " x64"; # used for AppName
+    $SUFF = "-x64"; # used for default install dir
+    $RK = "R64"; # arch-specific key
+} else {
+    $suffix = "win32";
+    $PF = "pf32"; # "pf" should do
+    $QUAL = "";
+    $SUFF = "";
+    $RK = "R32";
+}
 open insfile, "> R.iss" || die "Cannot open R.iss\n";
 print insfile <<END;
 [Setup]
-OutputBaseFilename=${RW}-win32
+OutputBaseFilename=${RW}-${suffix}
 PrivilegesRequired=none
 MinVersion=0,5.0
 END
-print "ArchitecturesInstallIn64BitMode=x64\nArchitectures=x64Allowed" if $mode64bit;
+print insfile "ArchitecturesInstallIn64BitMode=x64\nArchitecturesAllowed=x64\n" if $mode64bit;
 
 my $lines=<<END;
-AppName=R for Windows $RVER
-AppVerName=R for Windows $RVER
+AppName=R for Windows$QUAL $RVER
+AppVerName=R for Windows$QUAL $RVER
 AppPublisherURL=http://www.r-project.org
 AppSupportURL=http://www.r-project.org
 AppUpdatesURL=http://www.r-project.org
 AppVersion=${RVER}
 VersionInfoVersion=$RVER0
-DefaultDirName={code:UserPF}\\R\\${RW}
+DefaultDirName={code:UserPF}\\R\\${RW}${SUFF}
 DefaultGroupName=R
 AllowNoIcons=yes
 InfoBeforeFile=${SRCDIR}\\COPYING
@@ -90,21 +101,23 @@ Name: br; MessagesFile: "compiler:Languages\\BrazilianPortuguese.isl"
 Name: ca; MessagesFile: "compiler:Languages\\Catalan.isl"
 Name: cz; MessagesFile: "compiler:Languages\\Czech.isl"
 Name: dk; MessagesFile: "compiler:Languages\\Danish.isl"
-Name: es; MessagesFile: "compiler:Languages\\Spanish.isl"
 Name: nl; MessagesFile: "compiler:Languages\\Dutch.isl"
-Name: fr; MessagesFile: "compiler:Languages\\French.isl"
 Name: fi; MessagesFile: "compiler:Languages\\Finnish.isl"
+Name: fr; MessagesFile: "compiler:Languages\\French.isl"
 Name: de; MessagesFile: "compiler:Languages\\German.isl"
+Name: he; MessagesFile: "compiler:Languages\\Hebrew.isl"
 Name: hu; MessagesFile: "compiler:Languages\\Hungarian.isl"
 Name: it; MessagesFile: "compiler:Languages\\Italian.isl"
+Name: ja; MessagesFile: "compiler:Languages\\Japanese.isl"
 Name: no; MessagesFile: "compiler:Languages\\Norwegian.isl"
 Name: po; MessagesFile: "compiler:Languages\\Polish.isl"
 Name: pt; MessagesFile: "compiler:Languages\\Portuguese.isl"
 Name: ru; MessagesFile: "compiler:Languages\\Russian.isl"
+Name: sk; MessagesFile: "compiler:Languages\\Slovak.isl"
 Name: sl; MessagesFile: "compiler:Languages\\Slovenian.isl"
+Name: es; MessagesFile: "compiler:Languages\\Spanish.isl"
 Name: chs; MessagesFile: "ChineseSimp.isl"
 Name: cht; MessagesFile: "ChineseTrad.isl"
-Name: ja; MessagesFile: "Japanese.isl"
 Name: ko; MessagesFile: "Korean.isl"
 
 #include "CustomMsg.txt"
@@ -117,10 +130,10 @@ Name: "associate"; Description: {cm:associate}; GroupDescription: {cm:regentries
 
 
 [Icons]
-Name: "{group}\\R $RVER"; Filename: "{app}\\bin\\Rgui.exe"; WorkingDir: "{userdocs}"; Parameters: {code:CmdParms}
-Name: "{group}\\Uninstall R $RVER"; Filename: "{uninstallexe}"
-Name: "{commondesktop}\\R $RVER"; Filename: "{app}\\bin\\Rgui.exe"; MinVersion: 0,5.0; Tasks: desktopicon; WorkingDir: "{userdocs}"; Parameters: {code:CmdParms}
-Name: "{userappdata}\\Microsoft\\Internet Explorer\\Quick Launch\\R $RVER"; Filename: "{app}\\bin\\Rgui.exe"; Tasks: quicklaunchicon; WorkingDir: "{userdocs}"; Parameters: {code:CmdParms}
+Name: "{group}\\R$QUAL $RVER"; Filename: "{app}\\bin\\Rgui.exe"; WorkingDir: "{userdocs}"; Parameters: {code:CmdParms}
+Name: "{group}\\Uninstall R$QUAL $RVER"; Filename: "{uninstallexe}"
+Name: "{commondesktop}\\R$QUAL $RVER"; Filename: "{app}\\bin\\Rgui.exe"; MinVersion: 0,5.0; Tasks: desktopicon; WorkingDir: "{userdocs}"; Parameters: {code:CmdParms}
+Name: "{userappdata}\\Microsoft\\Internet Explorer\\Quick Launch\\R$QUAL $RVER"; Filename: "{app}\\bin\\Rgui.exe"; Tasks: quicklaunchicon; WorkingDir: "{userdocs}"; Parameters: {code:CmdParms}
 
 
 [Registry] 
@@ -128,23 +141,37 @@ Root: HKLM; Subkey: "Software\\$Producer"; Flags: uninsdeletekeyifempty; Tasks: 
 Root: HKLM; Subkey: "Software\\$Producer\\R"; Flags: uninsdeletekeyifempty; Tasks: recordversion; Check: IsAdmin
 Root: HKLM; Subkey: "Software\\$Producer\\R"; Flags: uninsdeletevalue; ValueType: string; ValueName: "InstallPath"; ValueData: "{app}"; Tasks: recordversion; Check: IsAdmin
 Root: HKLM; Subkey: "Software\\$Producer\\R"; Flags: uninsdeletevalue; ValueType: string; ValueName: "Current Version"; ValueData: "${RVER}"; Tasks: recordversion; Check: IsAdmin
-
 Root: HKLM; Subkey: "Software\\$Producer\\R\\${RVER}"; Flags: uninsdeletekey; Tasks: recordversion; Check: IsAdmin
 Root: HKLM; Subkey: "Software\\$Producer\\R\\${RVER}"; ValueType: string; ValueName: "InstallPath"; ValueData: "{app}"; Tasks: recordversion; Check: IsAdmin
+
+Root: HKLM; Subkey: "Software\\$Producer\\${RK}"; Flags: uninsdeletekeyifempty; Tasks: recordversion; Check: IsAdmin
+Root: HKLM; Subkey: "Software\\$Producer\\${RK}"; Flags: uninsdeletevalue; ValueType: string; ValueName: "InstallPath"; ValueData: "{app}"; Tasks: recordversion; Check: IsAdmin
+Root: HKLM; Subkey: "Software\\$Producer\\${RK}"; Flags: uninsdeletevalue; ValueType: string; ValueName: "Current Version"; ValueData: "${RVER}"; Tasks: recordversion; Check: IsAdmin
+Root: HKLM; Subkey: "Software\\$Producer\\${RK}\\${RVER}"; Flags: uninsdeletekey; Tasks: recordversion; Check: IsAdmin
+Root: HKLM; Subkey: "Software\\$Producer\\${RK}\\${RVER}"; ValueType: string; ValueName: "InstallPath"; ValueData: "{app}"; Tasks: recordversion; Check: IsAdmin
 
 Root: HKCU; Subkey: "Software\\$Producer"; Flags: uninsdeletekeyifempty; Tasks: recordversion; Check: NonAdmin
 Root: HKCU; Subkey: "Software\\$Producer\\R"; Flags: uninsdeletekeyifempty; Tasks: recordversion; Check: NonAdmin
 Root: HKCU; Subkey: "Software\\$Producer\\R"; Flags: uninsdeletevalue; ValueType: string; ValueName: "InstallPath"; ValueData: "{app}"; Tasks: recordversion; Check: NonAdmin
 Root: HKCU; Subkey: "Software\\$Producer\\R"; Flags: uninsdeletevalue; ValueType: string; ValueName: "Current Version"; ValueData: "${RVER}"; Tasks: recordversion; Check: NonAdmin
-
 Root: HKCU; Subkey: "Software\\$Producer\\R\\${RVER}"; Flags: uninsdeletekey; Tasks: recordversion; Check: NonAdmin
 Root: HKCU; Subkey: "Software\\$Producer\\R\\${RVER}"; ValueType: string; ValueName: "InstallPath"; ValueData: "{app}"; Tasks: recordversion; Check: NonAdmin
+
+Root: HKCU; Subkey: "Software\\$Producer\\${RK}"; Flags: uninsdeletekeyifempty; Tasks: recordversion; Check: NonAdmin
+Root: HKCU; Subkey: "Software\\$Producer\\${RK}"; Flags: uninsdeletevalue; ValueType: string; ValueName: "InstallPath"; ValueData: "{app}"; Tasks: recordversion; Check: NonAdmin
+Root: HKCU; Subkey: "Software\\$Producer\\${RK}"; Flags: uninsdeletevalue; ValueType: string; ValueName: "Current Version"; ValueData: "${RVER}"; Tasks: recordversion; Check: NonAdmin
+Root: HKCU; Subkey: "Software\\$Producer\\${RK}\\${RVER}"; Flags: uninsdeletekey; Tasks: recordversion; Check: NonAdmin
+Root: HKCU; Subkey: "Software\\$Producer\\${RK}\\${RVER}"; ValueType: string; ValueName: "InstallPath"; ValueData: "{app}"; Tasks: recordversion; Check: NonAdmin
 
 Root: HKCR; Subkey: ".RData"; ValueType: string; ValueName: ""; ValueData: "RWorkspace"; Flags: uninsdeletevalue; Tasks: associate; Check: IsAdmin
 Root: HKCR; Subkey: "RWorkspace"; ValueType: string; ValueName: ""; ValueData: "R Workspace"; Flags: uninsdeletekey; Tasks: associate; Check: IsAdmin
 Root: HKCR; Subkey: "RWorkspace\\DefaultIcon"; ValueType: string; ValueName: ""; ValueData: "{app}\\bin\\RGui.exe,0"; Tasks: associate; Check: IsAdmin 
 Root: HKCR; Subkey: "RWorkspace\\shell\\open\\command"; ValueType: string; ValueName: ""; ValueData: """{app}\\bin\\RGui.exe"" ""%1"""; Tasks: associate; Check: IsAdmin
 END
+
+## It is OK to use the same keys in HKLM for 32- and 64-bit versions as the 
+## view of the Registry depends on the arch.
+## But not for HLCU (and file associations are necessarily for both).
 
 print insfile $lines;
 if($Producer eq "R-core") {
@@ -156,7 +183,7 @@ print insfile $lines2;
 print insfile <<END;
 
 [Icons]
-Name: "{group}\\R $RVER Help"; Filename: "{app}\\doc\\html\\index.html"; Components: html
+Name: "{group}\\R$QUAL $RVER Help"; Filename: "{app}\\doc\\html\\index.html"; Components: html
 
 [Types]
 Name: "user"; Description: {cm:user}
@@ -166,14 +193,15 @@ Name: "custom"; Description: {cm:custom}; Flags: iscustom
 
 [Components]
 Name: "main"; Description: "Main Files"; Types: user compact full custom; Flags: fixed
-Name: "html"; Description: "HTML Files"; Types: user full custom; Flags: checkablealone
-Name: "tcl"; Description: "Support Files for Package tcltk"; Types: user full custom; Flags: checkablealone
-Name: "tcl/chm"; Description: "Tcl/Tk Help (Compiled HTML)"; Types: full custom
+Name: "html"; Description: "HTML Manuals"; Types: user full custom
 Name: "manuals"; Description: "On-line PDF Manuals"; Types: user full custom
-Name: "manuals/basic"; Description: "Basic Manuals"; Types: user full custom; Flags: dontinheritcheck
-Name: "manuals/technical"; Description: "Technical Manuals"; Types: full custom; Flags: dontinheritcheck
-Name: "manuals/refman"; Description: "PDF help pages (reference manual)"; Types: full custom; Flags: dontinheritcheck
-Name: "libdocs"; Description: "Docs for Packages grid and Matrix"; Types: full custom
+Name: "manuals/basic"; Description: "Basic Manuals"; Types: user full custom
+Name: "manuals/technical"; Description: "Technical Manuals"; Types: full custom
+Name: "manuals/refman"; Description: "PDF help pages (reference manual)"; Types: full custom
+Name: "manuals/libdocs"; Description: "Docs for Packages grid and Matrix"; Types: full custom
+Name: "tcl"; Description: "Support Files for Package tcltk"; Types: user full custom; Flags: checkablealone
+Name: "tcl/tzdata"; Description: "Timezone files for Tcl"; Types: full custom
+Name: "tcl/chm"; Description: "Tcl/Tk Help (Compiled HTML)"; Types: full custom
 Name: "trans"; Description: "Message Translations"; Types: user full custom
 Name: "tests"; Description: "Test files"; Types: full custom
 
@@ -361,7 +389,7 @@ end;
 
 function UserPF(Param:String): String;
 begin
-  Result := ExpandConstant(\'{pf}\');
+  Result := ExpandConstant(\'{${PF}}\');
   if (not IsAdmin) then 
   begin
     try
@@ -391,15 +419,16 @@ sub listFiles {
 	$dir =~ s/\\$//;
 	$_ = $fn;
 	
+	## These manuals are on the Rgui menu, so should always be installed
 	if ($_ eq "doc\\manual\\R-FAQ.html"
 		 || $_ eq "doc\\html\\rw-FAQ.html"
 		 || $_ eq "share\\texmf\\Sweave.sty") {
 	    $component = "main";
-	} elsif (m/^library\\[^\\]*\\html/
-		 || $_ eq "library\\R.css") {
-	    $component = "html";
 	} elsif (m/^doc\\html/
-		 || m/^doc\\manual\\[^\\]*\.html/ ) {
+		 || m/^library\\[^\\]*\\html/
+		 || $_ eq "library\\R.css") {
+	    $component = "main";
+	} elsif (m/^doc\\manual\\[^\\]*\.html/ ) {
 	    $component = "html";
 	} elsif ($_ eq "doc\\manual\\R-data.pdf"
 		 || $_ eq "doc\\manual\\R-intro.pdf") {
@@ -413,18 +442,18 @@ sub listFiles {
 	    $component = "manuals/refman";
 	} elsif (m/^doc\\manual/ && $_ ne "doc\\manual\\R-FAQ.pdf") {
 	    $component = "manuals";
-	} elsif (m/^library\\[^\\]*\\latex/) {
-	    	$component = "latex";
 	} elsif (m/^library\\[^\\]*\\tests/) {
 	    	$component = "tests";
 	} elsif (m/^tests/) {
 	    	$component = "tests";
 	} elsif (m/^Tcl\\doc\\.*chm$/) {
 	    $component = "tcl/chm";
+	} elsif (m/^Tcl\\lib\\tcl8.5\\tzdata/) {
+	    $component = "tcl/tzdata";
 	} elsif (m/^Tcl/) {
 	    $component = "tcl";
 	} elsif (m/^library\\grid\\doc/ || m/^library\\Matrix\\doc/) {
-	    $component = "libdocs";
+	    $component = "manuals/libdocs";
 	} elsif (m/^share\\locale/ 
 		 || m/^library\\[^\\]*\\po/) {
 	    $component = "trans";

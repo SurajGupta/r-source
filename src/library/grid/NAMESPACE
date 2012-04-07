@@ -63,6 +63,7 @@ export(
        "getGrob", "setGrob", "addGrob", "removeGrob", "editGrob",
        "gEdit", "gEditList", "applyEdit", "applyEdits",
        "grid.grab", "grid.grabExpr",
+       "grid.cap",
        "setChildren",
 
        # Listing grobs and viewports
@@ -75,13 +76,14 @@ export(
        "grid.arrows", "grid.circle", "grid.clip", "grid.curve",
        "grid.line.to", "grid.lines", "grid.move.to", "grid.null", 
        "grid.points", "grid.polygon", "grid.polyline", 
-       "grid.rect", "grid.roundrect",
+       "grid.raster", "grid.rect", "grid.roundrect",
        "grid.segments", "grid.text", "grid.xspline",
        "arrowsGrob", "circleGrob", "clipGrob", "curveGrob",
        "linesGrob", "lineToGrob", "moveToGrob", "nullGrob",
        "pointsGrob", "polygonGrob", "polylineGrob",
-       "rectGrob", "roundrectGrob",
+       "rasterGrob", "rectGrob", "roundrectGrob",
        "segmentsGrob", "textGrob", "xsplineGrob",
+       "xsplinePoints",
        
        "grid.xaxis", "grid.yaxis",
        "xaxisGrob", "yaxisGrob", 
@@ -322,8 +324,6 @@ S3method("dim", "layout")
 
 # S3 method for generic rep (in base)
 S3method("rep", "unit")
-S3method("rep", "unit.arithmetic")
-S3method("rep", "unit.list")
 
 # S3 method for generic length (in base)
 S3method("length", "unit")

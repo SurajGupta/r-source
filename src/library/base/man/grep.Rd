@@ -20,26 +20,23 @@
   matches respectively.
 }
 \usage{
-grep(pattern, x, ignore.case = FALSE, extended = TRUE,
-     perl = FALSE, value = FALSE, fixed = FALSE, useBytes = FALSE,
-     invert = FALSE)
+grep(pattern, x, ignore.case = FALSE, perl = FALSE, value = FALSE,
+     fixed = FALSE, useBytes = FALSE, invert = FALSE)
 
-grepl(pattern, x, ignore.case = FALSE, extended = TRUE,
-     perl = FALSE, fixed = FALSE, useBytes = FALSE)
+grepl(pattern, x, ignore.case = FALSE, perl = FALSE, fixed = FALSE,
+      useBytes = FALSE)
 
-sub(pattern, replacement, x,
-    ignore.case = FALSE, extended = TRUE, perl = FALSE,
+sub(pattern, replacement, x, ignore.case = FALSE, perl = FALSE,
     fixed = FALSE, useBytes = FALSE)
 
-gsub(pattern, replacement, x,
-     ignore.case = FALSE, extended = TRUE, perl = FALSE,
+gsub(pattern, replacement, x, ignore.case = FALSE, perl = FALSE,
      fixed = FALSE, useBytes = FALSE)
 
-regexpr(pattern, text, ignore.case = FALSE, extended = TRUE,
-        perl = FALSE, fixed = FALSE, useBytes = FALSE)
+regexpr(pattern, text, ignore.case = FALSE, perl = FALSE,
+        fixed = FALSE, useBytes = FALSE)
 
-gregexpr(pattern, text, ignore.case = FALSE, extended = TRUE,
-         perl = FALSE, fixed = FALSE, useBytes = FALSE)
+gregexpr(pattern, text, ignore.case = FALSE, perl = FALSE,
+         fixed = FALSE, useBytes = FALSE)
 }
 \arguments{
   \item{pattern}{character string containing a \link{regular expression}
@@ -53,9 +50,6 @@ gregexpr(pattern, text, ignore.case = FALSE, extended = TRUE,
     object which can be coerced by \code{as.character} to a character vector.}
   \item{ignore.case}{if \code{FALSE}, the pattern matching is \emph{case
       sensitive} and if \code{TRUE}, case is ignored during matching.}
-  \item{extended}{if \code{TRUE}, extended regular expression matching
-    is used, and if \code{FALSE} basic regular expressions are used: the
-    latter are deprecated.}
   \item{perl}{logical. Should perl-compatible regexps be used?
     Has priority over \code{extended}.}
   \item{value}{if \code{FALSE}, a vector containing the (\code{integer})
@@ -85,13 +79,11 @@ gregexpr(pattern, text, ignore.case = FALSE, extended = TRUE,
   Arguments which should be character strings or character vectors are
   coerced to character if possible.
 
-  Each of these functions operates in one of four modes:
+  Each of these functions operates in one of three modes:
   \enumerate{
     \item \code{fixed = TRUE}: use exact matching.
     \item \code{perl = TRUE}: use Perl-style regular expressions.
-    \item \code{extended = FALSE}: use POSIX 1003.2 basic regular
-    expressions (this mode is deprecated).
-    \item Defaults for the above three arguments: use POSIX 1003.2
+    \item \code{fixed = FALSE, perl = FALSE}: use POSIX 1003.2
     extended regular expressions.
   }
   See the help pages on \link{regular expression} for details of the
@@ -114,6 +106,16 @@ gregexpr(pattern, text, ignore.case = FALSE, extended = TRUE,
   locale, and you should expect it only to work for ASCII characters if
   \code{useBytes = TRUE}.
 }
+
+\note{
+  Prior to \R 2.11.0 there was an argument \code{extended} which could
+  be used to select \sQuote{basic} regular expressions: this was often
+  used when \code{fixed = TRUE} would be preferable.  In the actual
+  implementation (as distinct from the POSIX standard) the only
+  difference was that \samp{?}, \samp{+}, \samp{\{}, \samp{|}, \samp{(},
+  and \samp{)} were not interpreted as metacharacters.
+}
+
 \value{
   \code{grep(value = FALSE)} returns an integer vector of the indices
   of the elements of \code{x} that yielded a match (or not, for
@@ -128,11 +130,11 @@ gregexpr(pattern, text, ignore.case = FALSE, extended = TRUE,
 
   For \code{sub} and \code{gsub} return a character vector of the same
   length and with the same attributes as \code{x} (after possible
-  coercion).  Elements of character vectors \code{x} which are not
-  substituted will be return unchanged (including any declared
-  encoding).  If \code{useBytes = FALSE} a non-ASCII result will often
-  be in UTF-8 with a marked encoding (e.g. if there is a UTF-8 input, in
-  a multibyte locale if \code{perl = TRUE}, and always for non-Perl regexps).
+  coercion to character).  Elements of character vectors \code{x} which
+  are not substituted will be returned unchanged (including any declared
+  encoding).  If \code{useBytes = FALSE} a non-ASCII substituted result
+  will often be in UTF-8 with a marked encoding (e.g. if there is a
+  UTF-8 input, and in a multibyte locale unless \code{fixed = TRUE}).
 
   \code{regexpr} returns an integer vector of the same length as
   \code{text} giving the starting position of the first match or
@@ -148,7 +150,7 @@ gregexpr(pattern, text, ignore.case = FALSE, extended = TRUE,
 }
 
 \section{Warning}{
-  The basic and extended modes of \code{gsub} and \code{gregexpr} do not
+  POSIX 1003.2 mode of \code{gsub} and \code{gregexpr} does not
   work correctly with repeated word-boundaries (e.g. \code{pattern =
   "\\b"}).  Use \code{perl = TRUE} for such matches (but that may not
   work as expected with non-ASCII inputs, as the meaning of
@@ -186,11 +188,13 @@ gregexpr(pattern, text, ignore.case = FALSE, extended = TRUE,
 
   For Perl-style matching PCRE (\url{http://www.pcre.org}) is used.
 }
+
 \references{
   Becker, R. A., Chambers, J. M. and Wilks, A. R. (1988)
   \emph{The New S Language}.
   Wadsworth & Brooks/Cole (\code{grep})
 }
+
 % the `aka' below is for ESS
 \seealso{
   \link{regular expression} (aka \code{\link{regexp}}) for the details
@@ -200,9 +204,12 @@ gregexpr(pattern, text, ignore.case = FALSE, extended = TRUE,
 
   \code{\link{agrep}} for approximate matching.
 
+  \code{\link{enc2native}} to re-encode the result of \code{sub}.
+
   \code{\link{tolower}}, \code{\link{toupper}} and \code{\link{chartr}}
   for character translations.
   \code{\link{charmatch}}, \code{\link{pmatch}}, \code{\link{match}}.
+
   \code{\link{apropos}} uses regexps and has more examples.
 }
 \examples{

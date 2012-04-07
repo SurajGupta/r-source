@@ -122,7 +122,7 @@ plot.stepfun <-
     if (missing(xlim)) {
         rx <- range(xval)
         dr <-
-            if(length(xval) > 1)
+            if(length(xval) > 1L)
                 max(0.08 * diff(rx), median(diff(xval)))
             else
                 abs(xval)/16
@@ -147,7 +147,7 @@ plot.stepfun <-
 	segments(ti.l, y, ti.r, y, col=col.hor, lty=lty, lwd=lwd, ...)
     else {
         if(missing(ylim)) ylim <- range(c(y,Fn.kn))
-	plot(0,0, type="n", xlim=xlim, ylim=ylim,
+	plot(NA,NA, type="n", xlim=xlim, ylim=ylim,
 	     xlab=xlab, ylab=ylab, main= main, ...)
 	segments(ti.l, y, ti.r, y, col=col.hor, lty=lty, lwd=lwd)
     }

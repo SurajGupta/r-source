@@ -7,7 +7,7 @@
 \alias{detach}
 \title{Detach Objects from the Search Path}
 \usage{
-detach(name, pos = 2, unload = FALSE, character.only = FALSE)
+detach(name, pos = 2, unload = FALSE, character.only = FALSE, force = FALSE)
 }
 \arguments{
   \item{name}{
@@ -30,6 +30,8 @@ detach(name, pos = 2, unload = FALSE, character.only = FALSE)
   }
   \item{character.only}{a logical indicating whether \code{name}
     can be assumed to be character strings.}
+  \item{force}{logical: should a package be detached even though other
+    loaded packages depend on it?}
 }
 \description{
   Detach a database, i.e., remove it from the \code{\link{search}()}
@@ -45,11 +47,11 @@ detach(name, pos = 2, unload = FALSE, character.only = FALSE)
   If a package has a namespace, detaching it does not by default unload
   the namespace (and may not even with \code{unload=TRUE}), and
   detaching will not in general unload any dynamically loaded compiled
-  code (DLLs).  Further, registered S3 methods from the namespace will not be
-  removed.  If you use \code{\link{library}} on a package whose name
-  space is loaded, it attaches the exports of the loaded name space.
-  So detaching and re-attaching a package may not refresh some
-  or all components of the package, and is inadvisable.
+  code (DLLs).  Further, registered S3 methods from the namespace will
+  not be removed.  If you use \code{\link{library}} on a package whose
+  name space is loaded, it attaches the exports of the already loaded
+  name space.  So detaching and re-attaching a package may not refresh
+  some or all components of the package, and is inadvisable.
 }
 \note{
   You cannot detach either the workspace (position 1) nor the \pkg{base}
@@ -58,10 +60,14 @@ detach(name, pos = 2, unload = FALSE, character.only = FALSE)
   
   Unloading some name spaces has undesirable side effects:
   e.g. unloading \pkg{grid} closes all graphics devices, and on most
-  systems \pkg{tcltk} cannot be reloaded once it has been unloaded.
+  systems \pkg{tcltk} cannot be reloaded once it has been unloaded and
+  may crash \R if this is attempted.
 }
 \value{
-  Invisible \code{NULL}.
+  The return value is \link{invisible}.  It is \code{NULL} when a
+  package is detached, otherwise the environment which was returned by
+  \code{\link{attach}} when the object was attached (incorporating any
+  changes since it was attached).
 }
 \references{
   Becker, R. A., Chambers, J. M. and Wilks, A. R. (1988)
@@ -79,6 +85,9 @@ detach(package:splines)
 ## or also
 library(splines)
 pkg <- "package:splines"
+\dontshow{
+stopifnot(inherits(tryCatch(detach(pkg), error=function(.).),  "error"))
+}
 detach(pkg, character.only = TRUE)
 
 ## careful: do not do this unless 'splines' is not already loaded.

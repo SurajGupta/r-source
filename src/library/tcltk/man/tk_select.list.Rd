@@ -10,10 +10,10 @@
   Select item(s) from a character vector using a Tk listbox.
 }
 \usage{
-tk_select.list(list, preselect = NULL, multiple = FALSE, title = NULL)
+tk_select.list(choices, preselect = NULL, multiple = FALSE, title = NULL)
 }
 \arguments{
-  \item{list}{a character vector of items.}
+  \item{choices}{a character vector of items.}
   \item{preselect}{a character vector, or \code{NULL}.  If non-null and
     if the string(s) appear in the list, the item(s) are selected
     initially.}

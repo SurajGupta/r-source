@@ -2,8 +2,8 @@ msgid ""
 msgstr ""
 "Project-Id-Version: R 2.3.0 \n"
 "Report-Msgid-Bugs-To: bugs@r-project.org\n"
-"POT-Creation-Date: 2009-10-08 08:29\n"
-"PO-Revision-Date: 2009-10-07 19:29+0900 \n"
+"POT-Creation-Date: 2010-03-19 11:18\n"
+"PO-Revision-Date: 2010-04-03 10:39+0900 \n"
 "Last-Translator: takahashi <takahashi.kohske@gmail.com> \n"
 "Language-Team: RjpWiki Message Translation Team <mokada@md.tsukuba.ac.jp> \n"
 "MIME-Version: 1.0 \n"
@@ -29,8 +29,8 @@ msgstr ""
 msgid "'alpha', 'beta' and 'gamma' must be within the unit interval."
 msgstr " 'alpha', 'beta' そして 'gamma' は単位区間の内部にある必要があります "
 
-msgid "data must be strictly non-negative for multiplicative Holt-Winters."
-msgstr " 乗法的 Holt-Winters モデルではデータは正値でなければなりません "
+msgid "data must be non-zero for multiplicative Holt-Winters."
+msgstr " 乗法的 Holt-Winters モデルではデータは非ゼロでなければなりません "
 
 msgid "need at least 2 periods to compute seasonal start values."
 msgstr " 季節的な開始値を計算するには少なくとも 2 期間が必要です "
@@ -142,8 +142,14 @@ msgstr " 合体すべき行がありません "
 msgid "'by' must be a list"
 msgstr " 'by' はリストでなければなりません "
 
-msgid "'FUN' must always return a scalar"
-msgstr " 'FUN' は常にスカラを返さねばなりません "
+msgid "arguments must have same length"
+msgstr " 引数は同じ長さでなければなりません "
+
+msgid "'formula' missing or incorrect"
+msgstr " モデル式('formula')が無いか、不正確です "
+
+msgid "'formula' must have both left and right hand sides"
+msgstr " モデル式('formula')は左辺と右辺の双方を持たなければなりません "
 
 msgid "cannot change frequency from %g to %g"
 msgstr " 頻度を %g から %g に変更できません "
@@ -193,9 +199,6 @@ msgstr " タイがあるため、正確な p 値を計算することができ�
 
 msgid "cannot compute exact confidence intervals with ties"
 msgstr " タイがあるため、正確な信頼区間を計算することができません "
-
-msgid "'formula' missing or incorrect"
-msgstr " モデル式('formula')が無いか、不正確です "
 
 msgid "grouping factor must have exactly 2 levels"
 msgstr " グループ化因子は丁度二つの水準を持たなければなりません "
@@ -268,6 +271,9 @@ msgstr " 'order.max' は 1 以上でなければなりません "
 msgid "'order.max' must be < 'n.used'"
 msgstr " 'order.max' は 'n.used' より小さくなければなりません "
 
+msgid "'n.ahead' must be at least 1"
+msgstr " 'n.ahead' は少なくとも 1 です "
+
 msgid "number of series in 'object' and 'newdata' do not match"
 msgstr " 'object' 中の系列の数と 'newdata' が一致しません "
 
@@ -282,15 +288,6 @@ msgstr " MLE は一変量系列にだけ実装されています "
 
 msgid "'order.max' must be >= 0"
 msgstr " 'order.max' は >= 0 でなければなりません "
-
-msgid "model order:"
-msgstr " モデルの次数: "
-
-msgid "singularities in the computation of the projection matrix"
-msgstr " 特異値が射影行列の計算中に生じました。 "
-
-msgid "results are only valid up to model order"
-msgstr " 結果はモデル次数までしか適正ではありません： "
 
 msgid "'order' must be a non-negative numeric vector of length 3"
 msgstr " 'order' は長さ 3 の非負の数値ベクトルでなければなりません "
@@ -528,6 +525,9 @@ msgstr " ベースラインのグループ数が範囲を越えています "
 msgid "supply both 'x' and 'y' or a matrix-like 'x'"
 msgstr " 'x' to 'y' の両方を与えるか、行列形の 'x' を与えてください "
 
+msgid "'y' must be numeric"
+msgstr " 'y' は数値でなければなりません "
+
 msgid "'x' is empty"
 msgstr " x は空です "
 
@@ -542,6 +542,12 @@ msgstr " 'V'は数値正方行列ではありません "
 
 msgid "diag(.) had 0 or NA entries; non-finite result is doubtful"
 msgstr " diag(.)が0またはNAを含んでいます; 有限でない結果は疑問です "
+
+msgid "'x' must be a numeric vector"
+msgstr " 'x' は数値ベクトルでなければなりません "
+
+msgid "'y' must be a numeric vector"
+msgstr " 'y' は数値ベクトルでなければなりません "
 
 msgid "not enough finite observations"
 msgstr " 有限な観測値が十分にありません "
@@ -841,9 +847,8 @@ msgstr ""
 msgid "non-positive values not allowed for the gamma family"
 msgstr " 正でない値はガンマファミリには許されません "
 
-#, fuzzy
 msgid "using weights as shape parameters"
-msgstr "シェイプパラメータとして重みを使います "
+msgstr " shapeパラメータとして重み(weights)を使います "
 
 msgid ""
 "link \"%s\" not available for inverse.gaussian family; available links are %s"
@@ -950,9 +955,6 @@ msgstr " 'row.vars' の指定が不正確です "
 msgid "incorrect specification for 'col.vars'"
 msgstr " 'col.vars' の指定が不正確です "
 
-msgid "'formula' must have both left and right hand sides"
-msgstr " モデル式('formula')は左辺と右辺の双方を持たなければなりません "
-
 msgid "interactions are not allowed"
 msgstr " 交互作用は許されません "
 
@@ -983,11 +985,8 @@ msgstr " 'col.vars' が無いか不正確です "
 msgid "'family' not recognized"
 msgstr " 'family' が確認できません "
 
-msgid "invalid 'method': %s"
-msgstr " 無効な 'method' です: %s "
-
-msgid "invalid 'method'"
-msgstr " 無効な 'method' です "
+msgid "invalid 'method' argument"
+msgstr " 無効な 'method' 引数です "
 
 msgid "'weights' must be a numeric vector"
 msgstr " 'weights' は数値ベクトルでなければなりません "
@@ -1032,8 +1031,8 @@ msgstr " D(mu)/d(eta) 中に NA があります "
 msgid "no observations informative at iteration"
 msgstr " 繰り返しにおいて意味のある観測値がありません "
 
-msgid "non-finite coefficients at iteration"
-msgstr " 繰り返しにおいて有限でない係数が得られました "
+msgid "non-finite coefficients at iteration %d"
+msgstr " 繰り返し%dにおいて有限でない係数が得られました "
 
 msgid "X matrix has rank %d, but only %d observations"
 msgstr " X 行列はランク %d を持ちますが、観測値は %d 個だけです　 "
@@ -1054,17 +1053,17 @@ msgstr " ステップサイズの切り詰め: 限界を越えました "
 msgid "inner loop 2; cannot correct step size"
 msgstr " 内部ループ 2; ステップサイズを訂正することができません "
 
-msgid "algorithm did not converge"
-msgstr " アルゴリズムは収束しませんでした "
+msgid "glm.fit: algorithm did not converge"
+msgstr " glm.fit: アルゴリズムは収束しませんでした "
 
-msgid "algorithm stopped at boundary value"
-msgstr " アルゴリズムは境界値で停止しました "
+msgid "glm.fit: algorithm stopped at boundary value"
+msgstr " glm.fit: アルゴリズムは境界値で停止しました "
 
-msgid "fitted probabilities numerically 0 or 1 occurred"
-msgstr " 数値的に 0 か 1 である確率が生じました "
+msgid "glm.fit: fitted probabilities numerically 0 or 1 occurred"
+msgstr " glm.fit: 数値的に 0 か 1 である確率が生じました "
 
-msgid "fitted rates numerically 0 occurred"
-msgstr " 数値的に 0 である当てはめ比率が生じました "
+msgid "glm.fit: fitted rates numerically 0 occurred"
+msgstr " glm.fit: 数値的に 0 である当てはめ比率が生じました "
 
 msgid "the following arguments to 'anova.glm' are invalid and dropped:"
 msgstr " 'anova.glm' への次の引数は無効であり、除去されました： "
@@ -1363,6 +1362,9 @@ msgstr " 'strat' と 'table' は同じ長さでなければなりません "
 
 msgid "this should not happen"
 msgstr " これはあり得ないことです "
+
+msgid "algorithm did not converge"
+msgstr " アルゴリズムは収束しませんでした "
 
 msgid "incorrect specification of 'table' or 'start'"
 msgstr " 'table' または 'start' の不正確な指定です "
@@ -1838,6 +1840,9 @@ msgstr " 'proj' は \"mlm\" による当てはめに対しては実装されて�
 msgid "'proj' is not implemented for multiple responses"
 msgstr " 'proj' は多重応答に対しては実装されていません "
 
+msgid "table 'x' should have 2 entries"
+msgstr "テーブル'x'には二つのエントリが必要です "
+
 msgid "elements of 'n' must be positive"
 msgstr " 'n' の要素は正でなければなりません "
 
@@ -1864,6 +1869,9 @@ msgstr " 'y', 'groups' 及び 'blocks' は同じ長さでなければなりま�
 
 msgid "'formula' missing"
 msgstr " モデル式('formula')がありません "
+
+msgid "factors are not allowed"
+msgstr " 要因(factor)は許されません "
 
 msgid "missing values and NaN's not allowed if 'na.rm' is FALSE"
 msgstr " 'na.rm ' が FALSE なら、欠測値及び NaN は許されません "
@@ -2247,9 +2255,6 @@ msgstr " 比率('ratio')は単一の正値でなければなりません "
 msgid "'x' and 'w' must have the same length"
 msgstr " 'x' と 'w' は同じ長さでなければなりません "
 
-msgid "'y' must be numeric"
-msgstr " 'y' は数値でなければなりません "
-
 msgid "not enough (finite) 'x' observations"
 msgstr " (有限な) 'x' の観察値の数が十分ではありません "
 
@@ -2330,6 +2335,24 @@ msgstr[0] " 欠損値のせいで %d 個の観測値が取り除かれました 
 msgid "parameter %s does not occur in the model formula"
 msgid_plural "parameters %s do not occur in the model formula"
 msgstr[0] "モデル式中にパラメータ %s がありません "
+
+#~ msgid "'FUN' must always return a scalar"
+#~ msgstr " 'FUN' は常にスカラを返さねばなりません "
+
+#~ msgid "model order:"
+#~ msgstr " モデルの次数: "
+
+#~ msgid "singularities in the computation of the projection matrix"
+#~ msgstr " 特異値が射影行列の計算中に生じました。 "
+
+#~ msgid "results are only valid up to model order"
+#~ msgstr " 結果はモデル次数までしか適正ではありません： "
+
+#~ msgid "invalid 'method': %s"
+#~ msgstr " 無効な 'method' です: %s "
+
+#~ msgid "invalid 'method'"
+#~ msgstr " 無効な 'method' です "
 
 #~ msgid "'newdata' does not contain the variables needed"
 #~ msgstr " 'newdata' は必要とされる変数を含んでいません "

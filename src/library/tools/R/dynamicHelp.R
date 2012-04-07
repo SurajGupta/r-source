@@ -23,22 +23,12 @@
 ##             or by file, /library/<pkg>/html/<file>.html
 httpd <- function(path, query, ...)
 {
-    .httpdHeader <- function(title)
-    {
-        paste('<!DOCTYPE html PUBLIC "-//W3C//DTD HTML 4.01 Transitional//EN">\n',
-              '<html><head><title>R: ', title , '</title>\n',
-              '<meta http-equiv="Content-Type" content="text/html; charset="UTF-8">\n',
-              '<link rel="stylesheet" type="text/css" href="/doc/html/R.css">\n',
-              '</head><body>\n',
-              sep = "")
-    }
-
-    .HTMLdirListing <- function(dir, base)
+    .HTMLdirListing <- function(dir, base, up)
     {
         files <- list.files(dir)    # note, no hidden files are listed
-        out <- c(.httpdHeader(dir),
-                 paste('<h1>', "Listing of directory<br>", dir, '</h1>\n\n<hr>\n',
-                       sep = ""))
+        out <- HTMLheader(paste("Listing of directory<br>", dir, sep=""),
+        		  headerTitle = paste("R:", dir), logo=FALSE,
+        		  up = up)
         if(!length(files))
             out <- c(out, gettext("No files in this directory"))
         else {
@@ -63,9 +53,8 @@ httpd <- function(path, query, ...)
             else help.search(query[1L], nm[-m], agrep = FALSE, use_UTF8 = TRUE)$matches
         }
         title <- "Search Results"
-        out <- c(.httpdHeader(title),
-                 paste('<h1>', title, '</h1>\n',
-                       'The search string was <b>"', query[1L], '"</b><hr>\n',
+        out <- c(HTMLheader(title),
+                 paste('The search string was <b>"', query[1L], '"</b><hr>\n',
                        sep=""))
         if(nrow(res)) {
             paths <- paste("/library/", res[, "Package"], "/html/",
@@ -123,17 +112,24 @@ httpd <- function(path, query, ...)
 
     error_page <- function(msg)
         list(payload =
-             paste(.httpdHeader("httpd error"),
+             paste(HTMLheader("httpd error"),
                    msg,
                    "\n</body></html>",
                    sep = ""))
 
     if (grepl("R\\.css$", path))
-        return(list(file = file.path(R.home("doc"), "html", "R.css")))
+        return(list(file = file.path(R.home("doc"), "html", "R.css"),
+                    "content-type" = "text/css"))
     else if(path == "/favicon.ico")
         return(list(file = file.path(R.home("doc"), "html", "favicon.ico")))
+    else if(path == "/NEWS") {
+     	db <- news()
+    	return( list(payload = paste(toHTML(db, title="R News"), collapse="\n")) )
+    } else if(path %in% c("/ONEWS", "/OONEWS")) 
+    	return(list(file = file.path(R.home(), sub("/", "", path)),
+    	            "content-type" = "text/plain"))
     else if(!grepl("^/(doc|library)/", path))
-        return(error_page(paste("Only URLs under", mono("/doc"),
+        return(error_page(paste("Only NEWS and URLs under", mono("/doc"),
                                 "and", mono("/library"), "are allowed")))
 
     ## ----------------------- per-package documentation ---------------------
@@ -141,6 +137,9 @@ httpd <- function(path, query, ...)
     fileRegexp <- "^/library/+([^/]*)/html/([^/]*)\\.html$"
     topicRegexp <- "^/library/+([^/]*)/help/([^/]*)$"
     docRegexp <- "^/library/([^/]*)/doc(.*)"
+    demoRegexp <- "^/library/([^/]*)/demo$"
+    newsRegexp <- "^/library/([^/]*)/NEWS$"
+    
     file <- NULL
     if (grepl(topicRegexp, path)) {
         ## ----------------------- package help by topic ---------------------
@@ -257,36 +256,21 @@ httpd <- function(path, query, ...)
         }
 
         ## Now we know which document we want in which package
-        ## It might be prebuilt, but we prefer to generate a dynamic version
-
 	dirpath <- dirname(path)
 	pkgname <- basename(dirpath)
 	RdDB <- file.path(path, pkgname)
-	if(file.exists(paste(RdDB, "rdx", sep="."))) {
-	    outfile <- tempfile("Rhttpd")
-	    temp <- Rd2HTML(tools:::fetchRdDB(RdDB, helpdoc),
-                            out = outfile, package = dirpath,
-                            dynamic = TRUE)
-	    on.exit(unlink(outfile))
-	    return(list(payload = paste(readLines(temp), collapse = "\n")))
-	} else {
-            ## Try for pre-generated HTML.
-            file <- paste(file.path(dirpath, "html", helpdoc),
-                          "html", sep = ".")
-            if(file.exists(file)) {
-                if(.Platform$OS.type == "windows") return(unfix(file))
-                return(list(file = file))
-            }
-            ## we probably should not get here
-            msg <- gettextf("Unable to locate help document %s in package %s",
-                           mono(h0), mono(pkg))
-            return(error_page(msg))
-        }
+        outfile <- tempfile("Rhttpd")
+        Rd2HTML(utils:::.getHelpFile(file.path(path, helpdoc)),
+                out = outfile, package = dirpath,
+                dynamic = TRUE)
+        on.exit(unlink(outfile))
+        return(list(payload = paste(readLines(outfile), collapse = "\n")))
     } else if (grepl(docRegexp, path)) {
         ## ----------------------- package doc directory ---------------------
     	pkg <- sub(docRegexp, "\\1", path)
     	rest <- sub(docRegexp, "\\2", path)
         docdir <- system.file("doc", package = pkg)
+        up <- paste("/library/", pkg, "/html/00Index.html", sep = "")
         if(!nzchar(docdir))
             return(error_page(gettextf("No docs found for package %s",
                                        mono(pkg))))
@@ -296,14 +280,31 @@ httpd <- function(path, query, ...)
             if(isTRUE(file.info(file)$isdir))
                 return(.HTMLdirListing(file,
                                        paste("/library/", pkg, "/doc", rest,
-                                             sep = "")))
+                                             sep = ""),
+                                       up))
             else
                 return(list(file = file, "content-type" = mime_type(path)))
         } else {
             ## request to list <pkg>/doc
             return(.HTMLdirListing(docdir,
-                                   paste("/library", pkg, "doc", sep="/")))
+                                   paste("/library", pkg, "doc", sep="/"),
+                                   up))
         }
+    } else if (grepl(demoRegexp, path)) {
+    	pkg <- sub(demoRegexp, "\\1", path)
+    	demos <- demo(package=pkg)
+    	return( list(payload = paste(toHTML(demos, title=paste("Demos in package", sQuote(pkg)),
+    	                                    up="html/00Index.html"), collapse="\n")) )
+    } else if (grepl(newsRegexp, path)) {
+    	pkg <- sub(newsRegexp, "\\1", path)
+    	formatted <- toHTML(news(package = pkg), 
+    		            title=paste("NEWS in package", sQuote(pkg)),
+    			    up="html/00Index.html")
+        if (length(formatted))
+    	    return( list(payload = paste(formatted, collapse="\n")) )
+    	else
+    	    return( list(file = system.file("NEWS", package = pkg),
+    	                 "content-type" = "text/plain") )
     } else if (grepl("^/library/", path)) {
         descRegexp <- "^/library/+([^/]+)/+DESCRIPTION$"
         if(grepl(descRegexp, path)) {
@@ -311,9 +312,9 @@ httpd <- function(path, query, ...)
             file <- system.file("DESCRIPTION", package = pkg)
             return(list(file = file, "content-type" = "text/plain"))
         } else
-            return(error_page(gettextf("Only help files, %s and files under %s in a package can be viewed", mono("DESCRIPTION"), mono("doc/"))))
+            return(error_page(gettextf("Only help files, %s, %s and files under %s in a package can be viewed", mono("NEWS"), 
+                              mono("DESCRIPTION"), mono("doc/"))))
     }
-
 
     ## ----------------------- R docs ---------------------
     if(path == "/doc/html/Search.html") {
@@ -405,3 +406,6 @@ startDynamicHelp <- function(start=TRUE)
     lockBinding("httpdPort", env)
     invisible(httpdPort)
 }
+
+## environment holding potential custom httpd handlers
+.httpd.handlers.env <- new.env()

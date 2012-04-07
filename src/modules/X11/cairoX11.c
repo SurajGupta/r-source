@@ -275,6 +275,117 @@ static void Cairo_Polygon(int n, double *x, double *y,
     }
 }
 
+static void Cairo_Raster(unsigned int *raster, int w, int h,
+                         double x, double y, 
+                         double width, double height,
+                         double rot, 
+                         Rboolean interpolate,
+                         const pGEcontext gc, pDevDesc dd)
+{
+    const void *vmax = vmaxget();
+    int i;
+    cairo_surface_t *image;
+    unsigned char *imageData;
+    pX11Desc xd = (pX11Desc) dd->deviceSpecific;
+
+    imageData = (unsigned char *) R_alloc(4*w*h, sizeof(unsigned char));
+    /* The R ABGR needs to be converted to a Cairo ARGB 
+     * AND values need to by premultiplied by alpha 
+     */
+    for (i=0; i<w*h; i++) {
+        int alpha = R_ALPHA(raster[i]);
+        imageData[i*4 + 3] = alpha;
+        if (alpha < 255) {
+            imageData[i*4 + 2] = R_RED(raster[i]) * alpha / 255;
+            imageData[i*4 + 1] = R_GREEN(raster[i]) * alpha / 255;
+            imageData[i*4 + 0] = R_BLUE(raster[i]) * alpha / 255;
+        } else {
+            imageData[i*4 + 2] = R_RED(raster[i]);
+            imageData[i*4 + 1] = R_GREEN(raster[i]);
+            imageData[i*4 + 0] = R_BLUE(raster[i]);
+        }
+    }
+    image = cairo_image_surface_create_for_data(imageData, 
+                                                CAIRO_FORMAT_ARGB32,
+                                                w, h, 
+                                                4*w);
+
+    cairo_save(xd->cc);
+
+    cairo_translate(xd->cc, x, y);
+    cairo_rotate(xd->cc, -rot*M_PI/180);
+    cairo_scale(xd->cc, width/w, height/h);
+    /* Flip vertical first */
+    cairo_translate(xd->cc, 0, h/2.0);
+    cairo_scale(xd->cc, 1, -1);
+    cairo_translate(xd->cc, 0, -h/2.0);
+
+    cairo_set_source_surface(xd->cc, image, 0, 0);
+
+    /* Use nearest-neighbour filter so that a scaled up image
+     * is "blocky";  alternative is some sort of linear
+     * interpolation, which gives nasty edge-effects
+     */
+    if (!interpolate) {
+        cairo_pattern_set_filter(cairo_get_source(xd->cc), 
+                                 CAIRO_FILTER_NEAREST);
+    }
+
+    cairo_paint(xd->cc); 
+
+    cairo_restore(xd->cc);
+    cairo_surface_destroy(image);
+
+    vmaxset(vmax);
+}
+
+static SEXP Cairo_Cap(pDevDesc dd)
+{
+    int i, width, height, size;
+    pX11Desc xd = (pX11Desc) dd->deviceSpecific;
+    cairo_surface_t* screen;
+    cairo_format_t format;
+    unsigned char *screenData;
+    SEXP dim, raster = R_NilValue;
+    unsigned int *rint;
+
+    screen = cairo_surface_reference(cairo_get_target(xd->cc));
+    width = cairo_image_surface_get_width(screen);
+    height = cairo_image_surface_get_height(screen);
+    screenData = cairo_image_surface_get_data(screen);
+
+    /* The type of image surface will depend on what sort
+     * of X11 color model has been used */
+    format = cairo_image_surface_get_format(screen);
+    /* For now, if format is not RGB24 just bail out */
+    if (format != CAIRO_FORMAT_RGB24) 
+        return raster;
+        
+    size = width*height;
+
+    PROTECT(raster = allocVector(INTSXP, size));
+
+    /* Copy each byte of screen to an R matrix. 
+     * The Cairo RGB24 needs to be converted to an R ABGR32 */
+    rint = (unsigned int *) INTEGER(raster);
+    for (i=0; i<size; i++) {
+        rint[i] = 255<<24 | ((screenData[i*4])<<16 | 
+                             (screenData[i*4 + 1])<<8 |
+                             (screenData[i*4 + 2]));
+    }
+    
+    PROTECT(dim = allocVector(INTSXP, 2));
+    INTEGER(dim)[0] = height;
+    INTEGER(dim)[1] = width;
+    setAttrib(raster, R_DimSymbol, dim);
+
+    /* Release MY reference to the screen surface */
+    cairo_surface_destroy(screen);    
+    UNPROTECT(2);
+    return raster;
+}
+
+                         
 #ifdef HAVE_PANGOCAIRO
 /* ------------- pangocairo section --------------- */
 
@@ -637,6 +748,7 @@ static double Cairo_StrWidth(const char *str, pGEcontext gc, pDevDesc dd)
     pX11Desc xd = (pX11Desc) dd->deviceSpecific;
     cairo_text_extents_t exts;
 
+    if (!utf8Valid(str)) error("invalid string in Cairo_StrWidth");
     FT_getFont(gc, dd, xd->fontscale);
     cairo_text_extents(xd->cc, str, &exts);
     return exts.x_advance;
@@ -648,6 +760,7 @@ static void Cairo_Text(double x, double y,
 {
     pX11Desc xd = (pX11Desc) dd->deviceSpecific;
 
+    if (!utf8Valid(str)) error("invalid string in Cairo_Text");
     if (R_ALPHA(gc->col) > 0) {
 	cairo_save(xd->cc);
 	FT_getFont(gc, dd, xd->fontscale);

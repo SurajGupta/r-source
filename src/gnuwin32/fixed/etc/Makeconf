@@ -1,5 +1,5 @@
 #-*- Makefile -*-
-# $(R_HOME}/etc/Makeconf
+# $(R_HOME}/etc$(R_ARCH)/Makeconf
 
 # Hand-edited version for gnuwin32.
 
@@ -11,8 +11,18 @@ else
   DEBUGFLAG=
 endif
 
+DLLFLAGS+= -static-libgcc
+
+WIN = 32
 BINPREF =
+
 IMPDIR = bin
+
+LOCAL_SOFT =
+ifneq ($(strip $(LOCAL_SOFT)),)
+LOCAL_CPPFLAGS = -I"$(LOCAL_SOFT)/include"
+LOCAL_LIBS = -L"$(LOCAL_SOFT)/lib"
+endif
 
 AS = $(BINPREF)as
 ## formerly used version without -k for front-ends/libproxy.a
@@ -97,7 +107,7 @@ OBJC = $(CC)
 OBJCFLAGS = -O2
 OBJC_LIBS = -lobjc
 OBJCXX =
-R_ARCH = 
+R_ARCH =
 RANLIB = $(BINPREF)ranlib
 SAFE_FFLAGS = -O3 -ffloat-store
 SED = sed
@@ -113,7 +123,7 @@ SHLIB_FCLDFLAGS = -shared
 SHLIB_FFLAGS = 
 SHLIB_LD = $(CC)
 SHLIB_LDFLAGS = -shared
-SHLIB_LIBADD = 
+SHLIB_LIBADD =
 SHLIB_LINK = $(SHLIB_LD) --export-all-symbols $(SHLIB_LDFLAGS) $(LDFLAGS)
 STRIP_LIBS = $(BINPREF)strip --strip-unneeded
 STRIP_STATIC_LIBS = $(BINPREF)strip --strip-debug
@@ -128,12 +138,12 @@ R_XTRA_CXXFLAGS =
 R_XTRA_FFLAGS = 
 
 ALL_CFLAGS = $(R_XTRA_CFLAGS) $(PKG_CFLAGS) $(CPICFLAGS) $(SHLIB_CFLAGS) $(CFLAGS)
-ALL_CPPFLAGS = $(R_XTRA_CPPFLAGS) $(PKG_CPPFLAGS) $(CPPFLAGS) $(CLINK_CPPFLAGS)
+ALL_CPPFLAGS = $(R_XTRA_CPPFLAGS) $(PKG_CPPFLAGS) $(CPPFLAGS) $(CLINK_CPPFLAGS) $(LOCAL_CPPFLAGS)
 ALL_CXXFLAGS = $(R_XTRA_CXXFLAGS) $(PKG_CXXFLAGS) $(CXXPICFLAGS) $(SHLIB_CXXFLAGS) $(CXXFLAGS)
 ALL_OBJCFLAGS = $(PKG_OBJCFLAGS) $(CPICFLAGS) $(SHLIB_CFLAGS) $(OBJCFLAGS)
 ALL_OBJCXXFLAGS = $(PKG_OBJCXXFLAGS) $(CXXPICFLAGS) $(SHLIB_CXXFLAGS) $(OBJCXXFLAGS)
 ALL_FFLAGS = $(R_XTRA_FFLAGS) $(PKG_FFLAGS) $(FPICFLAGS) $(SHLIB_FFLAGS) $(FFLAGS)
-ALL_LIBS = $(PKG_LIBS) $(SHLIB_LIBADD) $(LIBR) $(LIBINTL)
+ALL_LIBS = $(LOCAL_LIBS) $(PKG_LIBS) $(SHLIB_LIBADD) $(LIBR) $(LIBINTL)
 
 .SUFFIXES:
 .SUFFIXES: .c .cc .cpp .C .f .f90 .f95 .m .mm .M .o .a .def .dll .exe .rc
@@ -175,7 +185,7 @@ ALL_LIBS = $(PKG_LIBS) $(SHLIB_LIBADD) $(LIBR) $(LIBINTL)
 	$(FC) $(PKG_FCFLAGS) $(FCPICFLAGS) $(FCFLAGS) -c  $< -o $@
 
 %.exe:
-	$(LINKER) $(LINKFLAGS) $($*-LINKFLAGS) -o $@ $^ $($*-LIBS) $(LIBS)
+	$(LINKER) $(LINKFLAGS) $($*-LINKFLAGS) -o $@ $^ $($*-LIBS) $(LOCAL_LIBS) $(LIBS)
 
 %.dll:
 	@echo EXPORTS > $*.def
@@ -188,7 +198,7 @@ lib%.dll.a: %.def
 
 %.a:
 	@$(RM) $@
-	$(BINPREF)$(AR) crs $@ $^
+	$(AR) crs $@ $^
 
 %.o: %.rc
-	$(BINPREF)$(RESCOMP) $(RESFLAGS) -i $< -o $@
+	$(RESCOMP) $(RESFLAGS) -i $< -o $@

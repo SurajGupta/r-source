@@ -329,7 +329,8 @@ xx <- new("foo", FALSE)
 setMethod("as.vector", signature(x = "foo", mode = "missing"),
           function(x) unclass(x))
 ## whereas this fails in R versions earlier than 2.6.0:
-setMethod("as.vector", "foo", function(x) unclass(x))# gives message
+setMethod("as.vector", "foo", function(x) unclass(x))
+xx <- removeClass("foo")
 
 ## stats4::AIC in R < 2.7.0 used to clobber stats::AIC
 pfit <- function(data) {
@@ -446,17 +447,9 @@ stopifnot(identical(m,			as(nf, "matrix")),
 	  identical(matrix(1:6,ncol=2), as(n3, "matrix")))
 ## partly failed at times in pre-2.8.0
 
-if("S4_subsettable" == TRUE) { ## now (2.9.0) not thought to be a good idea
-## "[" subsetting of "simple S4" classes:
-for(bcl in c("list","integer","numeric")) {
-    setClass("C", contains= bcl)
-    x <- new("C", 1:3); x <- x[2:3]
-    stopifnot(is(x, "C"), is(rep(x, 3), "C"), is(rep.int(x, 2), "C"))
-}
-## used to drop the class in 2.8.0 and earlier
-}
-
-##From "Michael Lawrence" <....@fhcrc.org>  To r-devel@r-project, 25 Nov 2008:
+## From "Michael Lawrence" <....@fhcrc.org>  To r-devel@r-project, 25 Nov 2008:
+## NB: setting a generic on order() is *not* the approved method
+## -- set xtfrm() methods instead
 setGeneric("order", signature="...",
 	   function (..., na.last=TRUE, decreasing=FALSE)
 	   standardGeneric("order"))
@@ -466,7 +459,7 @@ setGeneric("rbind", function(..., deparse.level=1)
 stopifnot(identical(rbind(1), matrix(1,1,1)))
 ## gave Error in .Method( .... in R 2.8.0
 
-## median.default( <simple S4> )
+## median( <simple S4> )
 ## FIXME: if we use "C" instead of "L", this fails because of caching
 setClass("L", contains = "list")
 ## {simplistic, just for the sake of testing here} :
@@ -477,25 +470,20 @@ setMethod("Summary", "L",
 	  function(x, ..., na.rm=FALSE) {x <- unlist(x); callNextMethod()})
 setMethod("[", signature(x="L", i="ANY", j="missing",drop="missing"),
           function(x,i,j,drop) new(class(x), x@.Data[i]))
-## This example requires a method for sort(), now that class "L"
-## inherits S3 methods for "list"; i.e., sort.list
-setMethod("sort", signature = "L", function(x, decreasing = FALSE, ...)
-          sort.L(x, decreasing, ...))
-##FIXME:  it should not be necessary to define an a S3 method, but
-## defining S4 methods for sort() has no effect currently on calls to
-## sort() from functions in base; e.g., median.default.
-sort.L <- function(x, ...) { x@.Data <- as.list(sort(unlist(x@.Data), ...)); x}
-
-## NB: median is documented to use mean(), but was incorrectly changed
-## to use sum() in 2.8.1.  So we need an S3 mean method:
+## defining S4 methods for sort() has no effect on calls to
+## sort() from functions in a name space; e.g., median.default.
+## but setting an xtfrm() method works.
+setMethod("xtfrm", "L", function(x) xtfrm(unlist(x@.Data)))
+## median is documented to use mean(), so we need an S3 mean method:
+## An S4 method will not do because of the long-standing S4 scoping bug.
 mean.L <- function(x, ...) new("L", mean(unlist(x@.Data), ...))
 x <- new("L", 1:3); x2 <- x[-2]
 stopifnot(unlist(x2) == (1:3)[-2],
 	  is(mx <- median(x), "L"), mx == 2,
-	  identical(mx, quantile(x, 0.5, names=FALSE)),
 	  ## median of two
 	  median(x2) == x[2])
-## median.default(x) was too stringent on x
+## NB: quantile() is not said to work on such an object, and only does so
+## for order statistics (so should not be tested, but was in earlier versions).
 
 ## Buglet in as() generation for class without own slots
 setClass("SIG", contains="signature")
@@ -517,3 +505,27 @@ removeClass("myF")
 ## as(x, .)   when x is from an "unregistered" S3 class :
 as(structure(1:3, class = "foobar"), "vector")
 ## failed to work in R <= 2.9.0
+
+## S4 dispatch in the internal generic xtfrm (added in 2.11.0)
+setClass("numWithId", representation(id = "character"), contains = "numeric")
+x <- new("numWithId", 1:3, id = "An Example")
+xtfrm(x) # works as the base representation is numeric
+setMethod('xtfrm', 'numWithId', function(x) x@.Data)
+xtfrm(x)
+stopifnot(identical(xtfrm(x), 1:3))
+## new in 2.11.0
+
+## [-dispatch using callNextMethod()
+setClass("C1", representation(a = "numeric"))
+setClass("C2", contains = "C1")
+setMethod("[", "C1", function(x,i,j,...,drop=TRUE)
+	  cat("drop in C1-[ :", drop, "\n"))
+setMethod("[", "C2", function(x,i,j,...,drop=TRUE) {
+    cat("drop in C2-[ :", drop, "\n")
+    callNextMethod()
+})
+x <- new("C1"); y <- new("C2")
+x[1, drop=FALSE]
+y[1, drop=FALSE]
+## the last gave TRUE on C1-level in R 2.10.x;
+## the value of drop was wrongly taken from the default.

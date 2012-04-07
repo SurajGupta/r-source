@@ -1,6 +1,6 @@
 % File src/library/stats/man/Fdist.Rd
 % Part of the R package, http://www.R-project.org
-% Copyright 1995-2007 R Core Development Team
+% Copyright 1995-2010 R Core Development Team
 % Distributed under GPL 2 or later
 
 \name{FDist}
@@ -30,7 +30,7 @@ rf(n, df1, df2, ncp)
   \item{ncp}{non-centrality parameter. If omitted the central F is assumed.}
   \item{log, log.p}{logical; if TRUE, probabilities p are given as log(p).}
   \item{lower.tail}{logical; if TRUE (default), probabilities are
-    \eqn{P[X \le x]}{P[X <= x]}, otherwise, \eqn{P[X > x]}{P[X > x]}.}
+    \eqn{P[X \le x]}, otherwise, \eqn{P[X > x]}.}
 }
 \value{
   \code{df} gives the density,
@@ -47,7 +47,7 @@ rf(n, df1, df2, ncp)
     f(x) = \frac{\Gamma(n_1/2 + n_2/2)}{\Gamma(n_1/2)\Gamma(n_2/2)}
     \left(\frac{n_1}{n_2}\right)^{n_1/2} x^{n_1/2 -1}
     \left(1 + \frac{n_1 x}{n_2}\right)^{-(n_1 + n_2) / 2}%
-  }{f(x) = Gamma((n1 + n2)/2) / (Gamma(n1/2) Gamma(n2/2))
+  }{f(x) = \Gamma((n1 + n2)/2) / (\Gamma(n1/2) \Gamma(n2/2))
     (n1/n2)^(n1/2) x^(n1/2 - 1)
     (1 + (n1/n2) x)^-(n1 + n2)/2}
   for \eqn{x > 0}.
@@ -86,6 +86,11 @@ rf(n, df1, df2, ncp)
   Johnson, N. L., Kotz, S. and Balakrishnan, N. (1995)
   \emph{Continuous Univariate Distributions}, volume 2, chapters 27 and 30.
   Wiley, New York.
+}
+\note{
+  The code for non-zero \code{ncp} is principally intended to be used
+  for moderate values of \code{ncp}: it will not be highly accurate,
+  especially in the tails, for large values.
 }
 \seealso{
   \code{\link{dchisq}} for chi-squared and \code{\link{dt}} for Student's

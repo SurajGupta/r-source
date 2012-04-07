@@ -6,6 +6,7 @@ srcdir = .
 top_srcdir = ../..
 top_builddir = ../..
 
+include ../gnuwin32/MkRules
 include ../../share/make/vars.mk
 
 ECHO = echo
@@ -14,7 +15,7 @@ INSTALL_DATA = cp
 RVER = $(shell cut -d' ' -f1 ../../VERSION | sed -n 1p)
 RHOME = $(shell ../gnuwin32/Rpwd.exe ../..)
 
-R_EXE = $(top_builddir)/bin/R --vanilla --slave
+R_EXE = $(top_builddir)/$(BINDIR)/Rterm --vanilla --slave
 
 .SUFFIXES: .Rdts
 
@@ -25,10 +26,11 @@ all: R
 R:
 	@$(MKINSTALLDIRS) $(top_builddir)/library
 	@for pkg in $(R_PKGS_BASE); do \
-	  $(MAKE) -C $${pkg} -f Makefile.win RHOME=$(RHOME) \
-		R_OSTYPE=windows VERSION=$(RVER) all install-tests || exit 1; \
+	  $(MAKE) -C $${pkg} -f Makefile.win RHOME=$(RHOME) R_ARCH=$(R_ARCH) \
+		R_OSTYPE=windows VERSION=$(RVER) BINDIR=$(BINDIR) \
+	        all install-tests || exit 1; \
 	done
-	@(cd base && $(MAKE) -f Makefile.win RHOME=$(RHOME) mkdesc)
+	@(cd base && $(MAKE) -f Makefile.win RHOME=$(RHOME) BINDIR=$(BINDIR) mkdesc)
 	@$(ECHO) "tools:::.vinstall_package_descriptions_as_RDS(\"$(top_builddir)/library\", \"$(R_PKGS_BASE)\")" | \
 	  R_DEFAULT_PACKAGES=tools LC_ALL=C $(R_EXE) > /dev/null
 	@$(ECHO) "installing parsed NAMESPACE files"
@@ -45,6 +47,9 @@ docs:
 	@$(MAKE) -f Makefile.win Rdobjects
 	@$(MAKE) -f Makefile.win metadata
 	@$(MAKE) -f Makefile.win help-indices
+ifeq ($(strip $(BUILD_HTML)),YES)
+	@$(MAKE) -f Makefile.win Rdfiles
+endif
 	@touch stamp-docs
 
 # fix the order to make best use of parallel builds
@@ -68,6 +73,13 @@ help-indices:
 	  $(ECHO) "tools:::.writePkgIndices(\"$${pkg}\", \"$(top_builddir)/library/$${pkg}\")" | R_DEFAULT_PACKAGES=utils LC_ALL=C $(R_EXE) || exit 1; \
 	done
 	@$(ECHO)
+
+## FIXME: do this in parallel (but avoid interleaving output)
+Rdfiles:
+	@$(ECHO) "building all R object docs"
+	@for pkg in $(R_PKGS_BASE); do \
+	  $(ECHO) "tools:::.convertRdfiles(\"$(srcdir)/$${pkg}\", \"$(top_builddir)/library/$${pkg}\", silent = TRUE)" | LC_ALL=C $(R_EXE) || exit 1; \
+	done
 
 metadata:
 	@$(ECHO) "building/updating package metadata ..."

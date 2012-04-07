@@ -1,6 +1,6 @@
 /*
  *  R : A Computer Language for Statistical Data Analysis
- *  Copyright (C) 2002--2009     the R Development Core Team
+ *  Copyright (C) 2002--2009     The R Development Core Team
  *
  *  This program is free software; you can redistribute it and/or modify
  *  it under the terms of the GNU General Public License as published by
@@ -25,6 +25,7 @@
 
 #include <Defn.h>
 #include "RBufferUtils.h"
+#include <R_ext/RS.h> /* for Calloc/Free */
 
 #define MAXLINE MAXELTSIZE
 #define MAXNARGS 100
@@ -309,9 +310,15 @@ SEXP attribute_hidden do_sprintf(SEXP call, SEXP op, SEXP args, SEXP env)
 				break;
 			    case 's':
 				if(TYPEOF(_this) != STRSXP) {
+				    /* as.character method might call sprintf() */
+				    int nc = strlen(outputString);
+				    char *z = Calloc(nc+1, char);
+				    strcpy(z, outputString);
 				    PROTECT(tmp = lang2(install("as.character"), _this));
 
 				    COERCE_THIS_TO_A
+				    strcpy(outputString, z);
+				    Free(z);
 				}
 				break;
 			    default:

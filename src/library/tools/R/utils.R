@@ -16,6 +16,17 @@
 
 ### * File utilities.
 
+### ** file_ext
+
+file_ext <-
+function(x)
+{
+    ## Return the file extensions.
+    ## (Only purely alphanumeric extensions are recognized.)
+    pos <- regexpr("\\.([[:alnum:]]+)$", x)
+    ifelse(pos > -1L, substring(x, pos + 1L), "")
+}
+
 ### ** file_path_as_absolute
 
 file_path_as_absolute <-
@@ -154,12 +165,15 @@ function(x)
 {
     ## All that is needed here is an 8-bit encoding that includes ASCII.
     ## The only one we guarantee to exist is 'latin1'.
-    ## The default sub=NA is faster.
-    ind <- is.na(iconv(x, "latin1", "ASCII"))
+    ## The default sub=NA is faster, but on some platforms
+    ## some characters just lose their accents, so two tests.
+    asc <- iconv(x, "latin1", "ASCII")
+    ind <- is.na(asc) | asc != x
     if(any(ind))
         cat(paste(which(ind), ": ",
                   iconv(x[ind], "latin1", "ASCII", sub="byte"), sep=""),
             sep="\n")
+    invisible(x[ind])
 }
 
 ### * Text utilities.
@@ -398,7 +412,7 @@ function(file, pdf = FALSE, clean = FALSE, quiet = TRUE,
 ### ** .BioC_version_associated_with_R_version
 
 .BioC_version_associated_with_R_version <-
-    numeric_version("2.5")
+    numeric_version("2.6")
 ## (Could also use something programmatically mapping (R) 2.10.x to
 ## (BioC) 2.5, 2.9.x to 2.4, ..., 2.1.x to 1.6, but what if R 3.0.0
 ## comes out?)
@@ -619,9 +633,7 @@ function(dir, installed = FALSE)
     ## Get the package DESCRIPTION metadata for a package with root
     ## directory 'dir'.  If an unpacked source (uninstalled) package,
     ## base packages (have only a DESCRIPTION.in file with priority
-    ## "base") and bundle packages (have a DESCRIPTION.in file and need
-    ## additional metadata from the the bundle DESCRIPTION file) need
-    ## special attention.
+    ## "base") need special attention.
     dir <- file_path_as_absolute(dir)
     dfile <- file.path(dir, "DESCRIPTION")
     if(file_test("-f", dfile)) return(.read_description(dfile))
@@ -632,23 +644,7 @@ function(dir, installed = FALSE)
     else
         stop("Files 'DESCRIPTION' and 'DESCRIPTION.in' are missing.")
     if(identical(as.character(meta["Priority"]), "base")) return(meta)
-    ## Otherwise, this must be a bundle package.
-    bdfile <- file.path(dirname(dir), "DESCRIPTION")
-    if(file_test("-f", bdfile)) {
-        file <- tempfile()
-        on.exit(unlink(file))
-        writeLines(c(readLines(bdfile), readLines(dfile)), file)
-        .read_description(file)
-        ## Using an anonymous tempfile (con <- file()) would work too
-        ## for accumulating, e.g.,
-        ##   con <- file(open = "w+")
-        ##   on.exit(close(con))
-        ##   writeLines(c(readLines(bdfile), readLines(dfile)), con)
-        ## but .read_description() insists on an existing file (maybe
-        ## this should be changed?).
-    }
-    else
-        stop("Bundle 'DESCRIPTION' is missing.")
+    stop("invalid package layout")
 }
 
 ### ** .get_requires_from_package_db
@@ -818,7 +814,6 @@ function() {
 .get_standard_repository_db_fields <-
 function()
     c("Package", "Version", "Priority",
-      "Bundle", "Contains",
       "Depends", "Imports", "LinkingTo", "Suggests", "Enhances",
       "OS_type", "License")
 
@@ -1171,6 +1166,8 @@ function(file)
                             colClasses =
                             c(rep.int("character", 3L),
                               rep.int("logical", 4L)))
+    if("win64.binary" %in% names(db))
+        db[["win64.binary"]] <- as.logical(db[["win64.binary"]])
     db[, "URL"] <- .expand_BioC_repository_URLs(db[, "URL"])
     db
 }

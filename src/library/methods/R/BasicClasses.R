@@ -245,7 +245,7 @@
                 Classi <- class(obj)
                 defi <- getClassDef(Classi)
                 if(is.null(defi))
-                  stop(gettextf("unnamed argument to initialize() for S3 class must have a class defintion; \"%s\" does not", Classi), domain = NA)
+                  stop(gettextf("unnamed argument to initialize() for S3 class must have a class definition; \"%s\" does not", Classi), domain = NA)
                 if(is(obj, S3ClassP)) {
                     ## eligible to be the S3 part; merge other slots from prototype;
                     ## obj then becomes the object, with its original class as the S3Class
@@ -496,14 +496,17 @@
                    c("aov","mlm")
                    )
 
-.InitSpecialTypes <- function(where) {
+.InitSpecialTypesAndClasses <- function(where) {
     if(!exists(".S3MethodsClasses", envir = where, inherits = FALSE)) {
       S3table <- new.env()
       assign(".S3MethodsClasses", S3table, envir = where)
     }
     else S3table <- get(".S3MethodsClasses", envir = where)
-  for(cl in c("environment", "externalptr", "name", "NULL")) {
-      ncl <- paste(".",cl, sep="")
+    specialTypes <- c("environment", "externalptr", "name", "NULL")
+    specialClasses <- paste(".", specialTypes, sep="")
+    for(i in seq_along(specialTypes)) {
+        cl <- specialTypes[[i]]
+      ncl <- specialClasses[[i]]
       setClass(ncl, representation(.xData = cl), where = where)
       setIs(ncl, cl, coerce = function(from) from@.xData,
         replace = function(from, value){ from@.xData <- value; from},
@@ -517,10 +520,23 @@
     eval.parent(call)
     x
   })
-  setMethod("[[<-", ".environment", function (x, i, j, ..., value) {
+  setMethod("[[<-", ".environment", function (x, i, j, ..., exact = TRUE, value) {
     call <- sys.call()
     call[[2]] <- x@.Data
     eval.parent(call)
     x
   })
+    ## a few other special classes
+    setClass("namedList", representation(names = "character"),
+             contains = "list", where = where)
+    setMethod("show", "namedList", function(object) {
+        cat("An object of class ", dQuote(class(object)), "\n")
+        print(structure(object@.Data, names=object@names))
+        showExtraSlots(object, getClass("namedList"))
+    })
+    setClass("listOfMethods", representation(  arguments = "character",
+                                                 signatures = "list", generic = "genericFunction"), contains = "namedList",
+             where = where)
+    specialClasses <- c(specialClasses, "namedList", "listOfMethods")
+    assign(".SealedClasses", c(get(".SealedClasses", where), specialClasses), where)
 }

@@ -60,8 +60,13 @@ getOption(x, default = NULL)
       \code{TRUE}.  Could also be set to an integer for specifying how
       many (simulated) smooths should be added.  This is currently only
       used by \code{\link{plot.lm}}.}
+    
+    \item{\code{checkPackageLicense}:}{logical, not set by default.  If
+      true, \code{\link{library}} asks a user to accept any non-standard
+      license at first use.
+    }
 
-      \item{\code{check.bounds}:}{logical, defaulting to \code{FALSE}.  If
+    \item{\code{check.bounds}:}{logical, defaulting to \code{FALSE}.  If
       true, a \link{warning} is produced whenever a
       vector (atomic or \code{\link{list}}) is extended, by something
       like \code{x <- 1:3; x[5] <- 6}.}
@@ -285,11 +290,6 @@ getOption(x, default = NULL)
       printed as they occur.  If \code{warn} is two or larger all
       warnings are turned into errors.}
 
-    \item{\code{warnEscapes}:}{logical.  If true (the default) the parser
-      warns on unrecognized (backslash) escape sequences and there is a
-      truncation warning on any attempt to create a character string
-      containing an embedded nul.}
-
     \item{\code{warnPartialMatchArgs}:}{logical.  If true, warns if
       partial matching is used in argument matching.}
 
@@ -320,6 +320,9 @@ getOption(x, default = NULL)
       80.  (The limits on valid values are in file \file{Print.h} and can be
       changed by re-compiling \R.)  Some \R consoles automatically change
       the value when they are resized.
+
+      See the examples on \link{Startup} for one way to set this
+      automatically from the terminal width when \R is started.
     }
  }
 
@@ -426,6 +429,13 @@ getOption(x, default = NULL)
   These will be set when package \pkg{utils} (or its name space)
   is loaded if not already set.
   \describe{
+    \item{\code{BioC_mirror}:}{The URL of a Bioconductor mirror
+      for use by \code{\link{setRepositories}},
+      e.g. the default \samp{"http://www.bioconductor.org"}
+      or the European mirror
+      \samp{"http://bioconductor.statistik.tu-dortmund.de"}.  Can be set
+      by \code{\link{chooseBioCmirror}}.}
+
     \item{\code{browser}:}{default HTML browser used by
       \code{\link{help.start}()} and \code{\link{browseURL}} on UNIX, or
       a non-default browser on Windows.  Alternatively, an \R function that
@@ -466,10 +476,11 @@ getOption(x, default = NULL)
       printed on URL downloads etc.  Default is 2, for failure causes.
       Set to 1 or 0 to get more information.}
 
-    \item{\code{menu.graphics}:}{Logical: should graphical menus be
-      used if available?.  Defaults to \code{TRUE}.  Currently applies
-      to \code{\link{chooseCRANmirror}}, \code{\link{setRepositories}}
-      and to select from multiple help files in \code{\link{help}}.}
+    \item{\code{menu.graphics}:}{Logical: should graphical menus be used
+      if available?.  Defaults to \code{TRUE}.  Currently applies to
+      \code{\link{select.list}}, \code{\link{chooseCRANmirror}},
+      \code{\link{setRepositories}} and to select from multiple (text)
+      help files in \code{\link{help}}.}
 
     \item{\code{pkgType}:}{The default type of packages to be downloaded
       and installed -- see \code{\link{install.packages}}.

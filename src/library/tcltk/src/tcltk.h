@@ -1,6 +1,6 @@
 /*
  *  R : A Computer Language for Statistical Data Analysis
- *  Copyright (C) 2000--2007  The R Development Core Team
+ *  Copyright (C) 2000--2010  The R Development Core Team
  *
  *  This program is free software; you can redistribute it and/or modify
  *  it under the terms of the GNU General Public License as published by
@@ -27,6 +27,8 @@
 #define CONST84
 #endif
 
+typedef CONST84 char Cchar;
+
 #include <Rinternals.h>
 #include <R_ext/PrtUtil.h>
 #include <R_ext/Parse.h>
@@ -39,7 +41,7 @@ void Tcl_unix_setup(void);
 /* Globals exported from  ./tcltk.c : */
 
 Tcl_Interp *RTcl_interp;      /* Interpreter for this application. */
-void tcltk_init(void);
+void tcltk_init(int *);
 
 SEXP dotTcl(SEXP args);
 SEXP dotTclObjv(SEXP args);

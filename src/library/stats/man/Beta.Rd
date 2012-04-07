@@ -31,14 +31,14 @@ rbeta(n, shape1, shape2, ncp = 0)
   \item{ncp}{non-centrality parameter.}
   \item{log, log.p}{logical; if TRUE, probabilities p are given as log(p).}
   \item{lower.tail}{logical; if TRUE (default), probabilities are
-    \eqn{P[X \le x]}{P[X <= x]}, otherwise, \eqn{P[X > x]}{P[X > x]}.}
+    \eqn{P[X \le x]}, otherwise, \eqn{P[X > x]}.}
 }
 \details{
   The Beta distribution with parameters \code{shape1} \eqn{= a} and
   \code{shape2} \eqn{= b} has density
   \deqn{f(x)=\frac{\Gamma(a+b)}{\Gamma(a)\Gamma(b)}{x}^{a} {(1-x)}^{b}%
-  }{Gamma(a+b)/(Gamma(a)Gamma(b))x^(a-1)(1-x)^(b-1)}
-  for \eqn{a > 0}, \eqn{b > 0} and \eqn{0 \le x \le 1}{0 <= x <= 1}
+  }{\Gamma(a+b)/(\Gamma(a)\Gamma(b))x^(a-1)(1-x)^(b-1)}
+  for \eqn{a > 0}, \eqn{b > 0} and \eqn{0 \le x \le 1}
   where the boundary values at \eqn{x=0} or \eqn{x=1} are defined as
   by continuity (as limits).
   \cr
@@ -55,7 +55,7 @@ rbeta(n, shape1, shape2, ncp = 0)
 
   The noncentral Beta distribution (with \code{ncp} \eqn{ = \lambda})
   is defined (Johnson et al, 1995, pp. 502) as the distribution of
-  \eqn{X/(X+Y)} where \eqn{X \sim \chi^2_{2a}(\lambda)}{X ~ chi^2_2a(lambda)}
+  \eqn{X/(X+Y)} where \eqn{X \sim \chi^2_{2a}(\lambda)}{X ~ chi^2_2a(\lambda)}
   and \eqn{Y \sim \chi^2_{2b}}{Y ~ chi^2_2b}.
 }
 \value{
@@ -93,6 +93,10 @@ rbeta(n, shape1, shape2, ncp = 0)
   Frick, H. (1990)'s AS R84, \emph{Appl. Statist}, \bold{39}, 311--2,
   and\cr
   Lam, M.L. (1995)'s AS R95, \emph{Appl. Statist}, \bold{44}, 551--2.
+
+  This computes the lower tail only, so the upper tail suffers from
+  cancellation and a warning will be given when this is likely to be
+  significant.
 
   \code{qbeta} is based on a C translation of
 

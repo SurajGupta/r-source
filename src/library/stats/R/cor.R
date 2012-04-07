@@ -16,22 +16,26 @@
 
 #### cor() , cov() and var() : Based on the same C code
 
-cor <-
-function(x, y=NULL, use="everything", method = c("pearson", "kendall", "spearman"))
+cor <- function(x, y = NULL, use = "everything",
+         method = c("pearson", "kendall", "spearman"))
 {
     na.method <-
 	pmatch(use, c("all.obs", "complete.obs", "pairwise.complete.obs",
 		      "everything", "na.or.complete"))
     method <- match.arg(method)
-    if(is.data.frame(y)) y <- as.matrix(y) else stopifnot(is.atomic(y))
+    if(is.data.frame(y)) y <- as.matrix(y)
     if(is.data.frame(x)) x <- as.matrix(x)
-    else {
-	stopifnot(is.atomic(x))
-	if(!is.matrix(x)) {
-	    if(is.null(y)) stop("supply both 'x' and 'y' or a matrix-like 'x'")
-	    x <- as.vector(x)
-	}
+    if(!is.matrix(x) && is.null(y))
+        stop("supply both 'x' and 'y' or a matrix-like 'x'")
+    ## non-atomic x should not be 'numeric', but in case a method messes up
+    ## allow logicals for back-compatibility (package mice).
+    if(!(is.numeric(x) || is.logical(x))) stop("'x' must be numeric")
+    stopifnot(is.atomic(x))
+    if(!is.null(y)) {
+        if(!(is.numeric(y) || is.logical(y))) stop("'y' must be numeric")
+        stopifnot(is.atomic(y))
     }
+
     if(method == "pearson")
         .Internal(cor(x, y, na.method, FALSE))
     else if (na.method != 3L) {
@@ -74,7 +78,7 @@ function(x, y=NULL, use="everything", method = c("pearson", "kendall", "spearman
          }
          ## vector/matrix x vector/matrix
          else {
-             if(length(x) == 0 || length(y) == 0)
+             if(length(x) == 0L || length(y) == 0L)
                  stop("both 'x' and 'y' must be non-empty")
              matrix_result <- is.matrix(x) || is.matrix(y)
 	     if (!is.matrix(x)) x <- matrix(x, ncol=1L)
@@ -99,28 +103,27 @@ function(x, y=NULL, use="everything", method = c("pearson", "kendall", "spearman
      }
 }
 
-cov <-
-function(x, y=NULL, use="everything", method = c("pearson", "kendall", "spearman"))
+cov <- function(x, y = NULL, use = "everything",
+                method = c("pearson", "kendall", "spearman"))
 {
     na.method <-
 	pmatch(use, c("all.obs", "complete.obs", "pairwise.complete.obs",
 		      "everything", "na.or.complete"))
     method <- match.arg(method)
-    if(is.data.frame(y)) y <- as.matrix(y) else stopifnot(is.atomic(y))
+    if(is.data.frame(y)) y <- as.matrix(y)
     if(is.data.frame(x)) x <- as.matrix(x)
-    else {
-	stopifnot(is.atomic(x))
-	if(!is.matrix(x)) {
-	    if(is.null(y)) stop("supply both 'x' and 'y' or a matrix-like 'x'")
-	    x <- as.vector(x)
-	}
-    }
+    if(!is.matrix(x) && is.null(y))
+        stop("supply both 'x' and 'y' or a matrix-like 'x'")
+    ## non-atomic x should not be 'numeric', but in case a method messes up
+    stopifnot(is.numeric(x) || is.logical(x), is.atomic(x))
+    if(!is.null(y)) stopifnot(is.numeric(y) || is.logical(y), is.atomic(y))
+
     if(method == "pearson")
 	.Internal(cov(x, y, na.method, method == "kendall"))
     else if (na.method != 3L) {
 	## Rank transform
 	Rank <- function(u) {
-	    if(length(u) == 0) u else
+	    if(length(u) == 0L) u else
 	    if(is.matrix(u)) apply(u, 2L, rank, na.last="keep")
 	    else rank(u, na.last="keep")
 	}

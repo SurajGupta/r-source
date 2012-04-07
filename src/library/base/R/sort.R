@@ -143,12 +143,19 @@ sort.list <- function(x, partial = NULL, na.last = TRUE, decreasing = FALSE,
     else .Internal(order(na.last, decreasing, x))
 }
 
-xtfrm <- function(x) UseMethod("xtfrm")
+
+## xtfrm is now primitive
+## xtfrm <- function(x) UseMethod("xtfrm")
 xtfrm.default <- function(x)
-    as.vector(rank(x, ties.method="min", na.last="keep"))
+    if(is.numeric(x)) unclass(x) else as.vector(rank(x, ties.method="min", na.last="keep"))
 xtfrm.factor <- function(x) as.integer(x) # primitive, so needs a wrapper
 xtfrm.Surv <- function(x)
-    if(ncol(x) == 2) order(x[,1], x[,2]) else order(x[,1], x[,2], x[,3]) # needed by 'party'
+    if(ncol(x) == 2L) order(x[,1L], x[,2L]) else order(x[,1L], x[,2L], x[,3L]) # needed by 'party'
+xtfrm.AsIs <- function(x)
+{
+    if(length(cl<- class(x)) > 1) oldClass(x) <- cl[-1L]
+    NextMethod("xtfrm")
+}
 
 .gt <- function(x, i, j)
 {

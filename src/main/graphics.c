@@ -1,8 +1,7 @@
 /*
  *  R : A Computer Language for Statistical Data Analysis
  *  Copyright (C) 1995, 1996  Robert Gentleman and Ross Ihaka
- *  Copyright (C) 1997--2008  Robert Gentleman, Ross Ihaka and the
- *			      R Development Core Team
+ *  Copyright (C) 1997--2010  The R Development Core Team
  *  Copyright (C) 2002--2005  The R Foundation
  *
  *  This program is free software; you can redistribute it and/or modify
@@ -2783,7 +2782,7 @@ void GPolygon(int n, double *x, double *y, int coords,
     int i;
     double *xx;
     double *yy;
-    void *vmaxsave = vmaxget();
+    const void *vmaxsave = vmaxget();
     R_GE_gcontext gc; gcontextFromGP(&gc, dd);
 
     if (gpptr(dd)->lty == LTY_BLANK)
@@ -2822,7 +2821,7 @@ void GPolyline(int n, double *x, double *y, int coords, pGEDevDesc dd)
     int i;
     double *xx;
     double *yy;
-    void *vmaxsave = vmaxget();
+    const void *vmaxsave = vmaxget();
     R_GE_gcontext gc; gcontextFromGP(&gc, dd);
 
     /*
@@ -2904,6 +2903,22 @@ void GRect(double x0, double y0, double x1, double y1, int coords,
     gc.col = fg;
     gc.fill = bg;
     GERect(x0, y0, x1, y1, &gc, dd);
+}
+
+void GRaster(unsigned int* image, int w, int h, 
+             double x0, double y0, double x1, double y1, 
+             double angle, Rboolean interpolate, 
+             pGEDevDesc dd)
+{
+    R_GE_gcontext gc; gcontextFromGP(&gc, dd);
+
+    /*
+     * Ensure that the base clipping region is set on the device
+     */
+    GClip(dd);
+
+    GERaster(image, w, h, x0, y0, x1, y1, angle, interpolate, 
+             &gc, dd);
 }
 
 /* Compute string width. */

@@ -1,6 +1,6 @@
 % File src/library/base/man/findInterval.Rd
 % Part of the R package, http://www.R-project.org
-% Copyright 1995-2007 R Core Development Team
+% Copyright 1995-2009 R Core Development Team
 % Distributed under GPL 2 or later
 
 \name{findInterval}
@@ -16,13 +16,13 @@ findInterval(x, vec, rightmost.closed = FALSE, all.inside = FALSE)
   \item{rightmost.closed}{logical; if true, the rightmost interval,
     \code{vec[N-1] .. vec[N]} is treated as \emph{closed}, see below.}
   \item{all.inside}{logical; if true, the returned indices are coerced
-    into \eqn{\{1,\dots,N-1\}}, i.e., 0 is mapped to 1 and \eqn{N} to
-    \eqn{N-1}.}
+    into \code{1,\dots,N-1}, i.e., \code{0} is mapped to \code{1}
+    and \code{N} to \code{N-1}.}
 }
 \description{
   Find the indices of \code{x} in \code{vec}, where \code{vec} must be
   sorted (non-decreasingly); i.e., if \code{i <- findInterval(x,v)},
-  we have \eqn{v_{i_j} \le x_j < v_{i_j + 1}}{v[i[j]] <= x[j] < v[i[j] + 1]}
+  we have \eqn{v_{i_j} \le x_j < v_{i_j + 1}}{v[i[j]] \le x[j] < v[i[j] + 1]}
   where \eqn{v_0 := -\infty}{v[0] := - Inf},
   \eqn{v_{N+1} := +\infty}{v[N+1] := + Inf}, and \code{N <- length(vec)}.
   At the two boundaries, the returned index may differ by 1, depending
@@ -43,9 +43,9 @@ findInterval(x, vec, rightmost.closed = FALSE, all.inside = FALSE)
     X[1],..,X[n])} where \eqn{F_n}{Fn} is the empirical distribution
   function of \eqn{X_1,\dots,X_n}{X[1],..,X[n]}.
 
-  When \code{rightmost.closed = TRUE}, the result
-  for \code{x[j] = vec[N]} (\eqn{ = \max(vec)}), is \code{N - 1} as for
-  all other values in the last interval.
+  When \code{rightmost.closed = TRUE}, the result for \code{x[j] = vec[N]}
+  (\eqn{ = \max vec}{ = max(vec)}), is \code{N - 1} as for all other
+  values in the last interval.
 }
 \value{
   vector of length \code{length(x)} with values in \code{0:N} (and

@@ -1,8 +1,7 @@
 /*
  *  R : A Computer Language for Statistical Data Analysis
  *  Copyright (C) 1995-1996   Robert Gentleman and Ross Ihaka
- *  Copyright (C) 1997-2008   Robert Gentleman, Ross Ihaka
- *                            and the R Development Core Team
+ *  Copyright (C) 1997-2010   The R Development Core Team
  *
  *  This program is free software; you can redistribute it and/or modify
  *  it under the terms of the GNU General Public License as published by
@@ -51,7 +50,7 @@
 # include <sys/stat.h>
 #endif
 
-#if HAVE_AQUA
+#ifdef HAVE_AQUA
 extern int (*ptr_CocoaSystem)(char*);
 extern	Rboolean useaqua;
 #endif
@@ -200,9 +199,10 @@ char *R_HomeDir(void)
     return getenv("R_HOME");
 }
 
-
+/* This is a primitive (with no arguments) */
 SEXP attribute_hidden do_interactive(SEXP call, SEXP op, SEXP args, SEXP rho)
 {
+    checkArity(op, args);
     return ScalarLogical( (R_Interactive) ? 1 : 0 );
 }
 
@@ -301,7 +301,6 @@ extern char ** environ;
 /* _wenviron is declared in stdlib.h */
 # define WIN32_LEAN_AND_MEAN 1
 # include <windows.h> /* _wgetenv etc */
-const wchar_t *wtransChar(SEXP x);
 #endif
 
 SEXP attribute_hidden do_getenv(SEXP call, SEXP op, SEXP args, SEXP env)
@@ -646,7 +645,7 @@ SEXP attribute_hidden do_iconv(SEXP call, SEXP op, SEXP args, SEXP env)
 cetype_t getCharCE(SEXP x)
 {
     if(TYPEOF(x) != CHARSXP)
-	error(_("'%s' must be called on a CHARSXP"), "getEncChar");
+	error(_("'%s' must be called on a CHARSXP"), "getCharCE");
     if(IS_UTF8(x)) return CE_UTF8;
     else if(IS_LATIN1(x)) return CE_LATIN1;
     else return CE_NATIVE;
@@ -868,11 +867,10 @@ static const char TO_WCHAR[] = "UCS-4LE";
 static void *latin1_wobj = NULL, *utf8_wobj=NULL;
 
 /* Translate from current encoding to wchar_t = UCS-2/4
-   NB: this is not general.
-
-   Not in a general header, as wchar_t is not needed except where used.
+   NB: that wchar_t is UCS-4 is an assumption, but not easy to avoid.
 */
-attribute_hidden /* but not hidden on Windows */
+
+attribute_hidden /* but not hidden on Windows, where it was used in tcltk.c */
 const wchar_t *wtransChar(SEXP x)
 {
     void * obj;
@@ -1370,6 +1368,8 @@ char * R_tmpnam(const char * prefix, const char * tempdir)
     if(!done)
 	error(_("cannot find unused tempfile name"));
     res = (char *) malloc((strlen(tm)+1) * sizeof(char));
+    if(!res)
+	error(_("allocation failed in R_tmpnam"));
     strcpy(res, tm);
     return res;
 }
@@ -1378,6 +1378,8 @@ SEXP attribute_hidden do_proctime(SEXP call, SEXP op, SEXP args, SEXP env)
 #ifdef _R_HAVE_TIMING_
 {
     SEXP ans, nm;
+
+    checkArity(op, args);
     PROTECT(ans = allocVector(REALSXP, 5));
     PROTECT(nm = allocVector(STRSXP, 5));
     R_getProcTime(REAL(ans));

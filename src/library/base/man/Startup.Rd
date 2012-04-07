@@ -1,6 +1,6 @@
 % File src/library/base/man/Startup.Rd
 % Part of the R package, http://www.R-project.org
-% Copyright 1995-2007 R Core Development Team
+% Copyright 1995-2009 R Core Development Team
 % Distributed under GPL 2 or later
 
 \name{Startup}
@@ -39,11 +39,7 @@
   The name of the user file can be specified by the \env{R_ENVIRON_USER}
   environment variable; if this is unset, the user files searched for are
   \file{.Renviron} in the current or in the user's home directory (in
-  that order).
-#ifdef windows
-  (See \sQuote{See also} for how the home directory is found on Windows.)
-#endif
-  See \sQuote{Details} for how the files are read.
+  that order). See \sQuote{Details} for how the files are read.
 
   Then \R searches for the site-wide startup profile unless the command
   line option \option{--no-site-file} was given.  The name of this file
@@ -132,6 +128,11 @@
   \code{\var{value}} is then processed in a similar way to a Unix shell:
   in particular the outermost level of (single or double) quotes is
   stripped, and backslashes are removed except inside quotes.
+  
+  On systems with sub-architectures (mainly Mac OS X), the files
+  \file{Renviron.site} and \file{Rprofile.site} are looked for first in
+  architecture-specific directories,
+  e.g. \file{\var{\link{R_HOME}}/etc/i386/Renviron.site}.
 }
 \note{
 #ifdef unix
@@ -151,11 +152,10 @@
 #endif
 }
 \seealso{
-#ifdef windows
-  For the definition of the home directory see the rw-FAQ.  It can be
-  found from a running \R by \code{Sys.getenv("R_USER")}.
+  For the definition of the \sQuote{home} directory on Windows see the
+  \file{rw-FAQ} Q2.14 It can be found from a running \R by
+  \code{Sys.getenv("R_USER")}.
 
-#endif
   \code{\link{.Last}} for final actions at the close of an \R session.
   \code{\link{commandArgs}} for accessing the command line arguments.
 
@@ -204,6 +204,9 @@ local({
   old <- getOption("defaultPackages"); r <- getOption("repos")
   r["CRAN"] <- "http://my.local.cran"
   options(defaultPackages = c(old, "MASS"), repos = r)
+  ## (for Unix terminal users) set the width from COLUMNS if set
+  cols <- Sys.getenv("COLUMNS")
+  if(nzchar(cols)) options(width = as.integer(cols))
 })
 
 ## if .Renviron contains

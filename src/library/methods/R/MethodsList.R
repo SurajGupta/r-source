@@ -44,6 +44,11 @@ MethodsList <-
 makeMethodsList <- function(object, level=1)
 {
     mnames <- allNames(object)
+    if(.noMlists()) {
+        keep <- mnames %in% c("", "ANY")
+        mnames <- mnames[keep]
+        object <- object[keep]
+    }
     value <- new("MethodsList")
     i <- match("", mnames)
     if(!is.na(i)) {
@@ -100,6 +105,8 @@ insertMethod <-
   ## the signature, and return the modified MethodsList.
   function(mlist, signature, args, def, cacheOnly = FALSE)
 {
+    if(.noMlists() && !identical(unique(signature), "ANY"))
+      return(mlist)
     ## Checks for assertions about valid calls.
     ## See rev. 1.17 for the code before the assertions added.
     if(identical(args[1L], "...") && !identical(names(signature), "...")) {
@@ -180,7 +187,7 @@ MethodsListSelect <-
     function(f, env,
              mlist = NULL,
              fEnv = if(is(fdef, "genericFunction")) environment(fdef) else baseenv(),
-             finalDefault = finalDefaultMethod(mlist, f),
+             finalDefault = finalDefaultMethod(mlist),
              evalArgs = TRUE,
              useInherited = TRUE,  ## supplied when evalArgs is FALSE
              fdef = getGeneric(f, where = env), # MUST BE SAFE FROM RECUSIVE METHOD SELECTION
@@ -355,15 +362,23 @@ insertMethodInEmptyList <- function(mlist, def) {
 
 
 finalDefaultMethod <-
-  ## The real default method of this `MethodsList' object,
-  ## found by going down the default branch (i.e., class `"ANY"')
-  ## until either `NULL' or a function definition is found.
-  function(mlist, fname = "NULL")
+  ## Return the default method from the generic (it may be NULL, a method object or a primitive.
+  ## this previously searched in a MethodsList object.  Once those are gone, the loop should
+  ## be irrelevant except as an error check.
+  function(method)
 {
-    value <- NULL
-    while(is(mlist, "MethodsList"))
-            mlist <- value <- elNamed(slot(mlist, "methods"), "ANY")
-    value
+    repeat {
+        if(is.function(method) #somewhat liberal, but catches both methods and primitives
+           || is.null(method))
+          break
+        value <- NULL
+        if(is(method, "MethodsList"))
+            method <-  elNamed(slot(method, "methods"), "ANY")
+        else
+          stop(gettextf("Default method must be a method definition, a primitive or NULL: got an object of class %s", dQuote(class(method))),
+               domain = NA)
+    }
+    method
 }
 
 
@@ -439,15 +454,20 @@ matchSignature <-
         return(character())
     sigClasses <- as.character(signature)
     if(!identical(where, baseenv())) {
-        unknown <- !sapply(sigClasses, function(x, where)isClass(x, where=where), where = where)
+        unknown <- !sapply(sigClasses, function(x, where)
+			   isClass(x, where=where), where = where)
         if(any(unknown)) {
             unknown <- unique(sigClasses[unknown])
-            warning(sprintf(ngettext(length(unknown),
-                                     "in the method signature for function \"%s\" no definition for class: %s",
-                                     "in the method signature for function \"%s\" no definition for classes: %s"),
-                            fun@generic,
-                            paste(dQuote(unknown), collapse = ", ")),
-                    domain = NA)
+            ## coerce(), i.e., setAs() may use *one* unknown class
+	    MSG <- if(identical(as.vector(coerce@generic), "coerce") &&
+		      length(unknown) == 1) message
+	    else function(...) warning(..., call. = FALSE)
+	    MSG(.renderSignature(fun@generic, signature),
+		sprintf(ngettext(length(unknown),
+				 "no definition for class %s",
+				 "no definition for classes %s"),
+			paste(.dQ(unknown), collapse = ", ")),
+		domain = NA)
         }
     }
     signature <- as.list(signature)
@@ -614,7 +634,8 @@ promptMethods <- function(f, filename = NULL, methods)
 		   utils:::topicName("method", c(f, signatures[i,])),
 		   "}")
     }
-    text <- paste0("\n\\item{", labels, "}{ ~~describe this method here }")
+    text <- paste0("\n\\item{", labels,
+                   "}{\n%%  ~~describe this method here~~\n}")
     text <- c("\\section{Methods}{\n\\describe{", text, "}}")
     aliasText <- c(paste0("\\alias{", escape(fullName), "}"), escape(aliases))
     if(identical(filename, FALSE))
@@ -627,14 +648,19 @@ promptMethods <- function(f, filename = NULL, methods)
         list(name = paste0("\\name{", fullName, "}"),
              type = "\\docType{methods}",
              aliases = aliasText,
+             ## <FIXME>
+             ## Title and description are ok as auto-generated: should
+             ## they be flagged as such (via '~~' which are quite often
+             ## left in by authors)?
              title = paste("\\title{ ~~ Methods for Function", f,
              packageString, "~~}"),
              description = paste0("\\description{\n ~~ Methods for function",
              " \\code{", f, "} ", packageString,
              " ~~\n}"),
+             ## </FIXME>
              "section{Methods}" = text,
              keywords = c("\\keyword{methods}",
-             "\\keyword{ ~~ other possible keyword(s)}"))
+             "\\keyword{ ~~ other possible keyword(s) ~~ }"))
 
     if(is.na(filename)) return(Rdtxt)
 
@@ -771,3 +797,33 @@ asMethodDefinition <- function(def, signature = list(), sealed = FALSE, fdef = d
   mlist@allMethods <- mlist@allMethods[fromClass]
   mlist
 }
+
+.noMlistsFlag <- TRUE
+.noMlists <- function() {
+   ## if this were to be dynamically variable, but
+  ## it can't, IMO
+  ## identical(getOption("noMlists"), TRUE)
+  ## so instead
+  .noMlistsFlag
+}
+
+.MlistDepTable <- new.env()
+.MlistDeprecated <- function(this = "<default>", instead) {
+    if(is.character(this)) {
+        if(exists(this, envir = .MlistDepTable, inherits = FALSE))
+            return()
+        else
+            assign(this, TRUE, envir = .MlistDepTable)
+    }
+    if(missing(this)) 
+        msg <-"Use of the \"MethodsList\" meta data objects is deprecated."
+    else if(is.character(this))
+        msg <- gettextf("%s, along with other use of the \"MethodsList\" metadata objects, is deprecated.", dQuote(this))
+    else
+        msg <- gettextf("In %s: use of \"MethodsList\" metadata objects is deprecated.", deparse(this))
+    if(!missing(instead))
+      msg <- paste(msg, gettextf("Use %s instead.", dQuote(instead)))
+    msg <- paste(msg, "See ?MethodsList. (This warning is shown once per session.)")
+    base::.Deprecated(msg = msg)
+}
+

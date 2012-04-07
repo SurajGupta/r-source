@@ -49,9 +49,10 @@ extern "C" {
  *             Move displayList, DLlastElt, savedSnapshot from
  *             NewDevDesc to GEDevDesc.
  *             Add 'ask' to GEDevDesc.
+ * Version 6:  Add dev_Raster() and dev_Cap()
  */
 
-#define R_GE_version 5
+#define R_GE_version 6
 
 int R_GE_getVersion(void);
 
@@ -79,6 +80,9 @@ typedef enum {
 typedef enum {
     /* In response to this event, the registered graphics system
      * should allocate and initialise the systemSpecific structure
+     * 
+     * Should return R_NilValue on failure so that engine
+     * can tidy up memory allocation
      */
     GE_InitState = 0,
     /* This event gives the registered system a chance to undo
@@ -377,6 +381,11 @@ void GECircle(double x, double y, double radius,
 	      const pGEcontext gc, pGEDevDesc dd);
 void GERect(double x0, double y0, double x1, double y1,
 	    const pGEcontext gc, pGEDevDesc dd);
+void GERaster(unsigned int *raster, int w, int h,
+              double x, double y, double width, double height,
+              double angle, Rboolean interpolate,
+              const pGEcontext gc, pGEDevDesc dd);
+SEXP GECap(pGEDevDesc dd);
 void GEText(double x, double y, const char * const str, cetype_t enc,
 	    double xc, double yc, double rot,
 	    const pGEcontext gc, pGEDevDesc dd);
@@ -400,6 +409,27 @@ int GEstring_to_pch(SEXP pch);
  */
 unsigned int GE_LTYpar(SEXP, int);
 SEXP GE_LTYget(unsigned int);
+
+/*
+ * Raster operations
+ */
+void R_GE_rasterScale(unsigned int *sraster, int sw, int sh,
+                      unsigned int *draster, int dw, int dh);
+void R_GE_rasterInterpolate(unsigned int *sraster, int sw, int sh,
+                            unsigned int *draster, int dw, int dh);
+void R_GE_rasterRotatedSize(int w, int h, double angle,
+                            int *wnew, int *hnew);
+void R_GE_rasterRotatedOffset(int w, int h, double angle, int botleft,
+                              double *xoff, double *yoff);
+void R_GE_rasterResizeForRotation(unsigned int *sraster, 
+                                  int w, int h, 
+                                  unsigned int *newRaster,
+                                  int wnew, int hnew,
+                                  const pGEcontext gc);
+void R_GE_rasterRotate(unsigned int *sraster, int w, int h, double angle,
+                       unsigned int *draster, const pGEcontext gc,
+                       Rboolean perPixelAlpha);
+
 
 /* 
  * From plotmath.c 

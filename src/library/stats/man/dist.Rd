@@ -1,6 +1,6 @@
 % File src/library/stats/man/dist.Rd
 % Part of the R package, http://www.R-project.org
-% Copyright 1995-2009 R Core Development Team
+% Copyright 1995-2010 R Core Development Team
 % Distributed under GPL 2 or later
 
 \name{dist}
@@ -67,6 +67,10 @@ as.dist(m, diag = FALSE, upper = FALSE)
       \eqn{\sum_i |x_i - y_i| / |x_i + y_i|}{sum(|x_i - y_i| / |x_i + y_i|)}.
       Terms with zero numerator and denominator are omitted from the sum
       and treated as if the values were missing.
+
+      This is intended for non-negative values (e.g. counts): taking the
+      absolute value of the denominator is a 1998 \R modification to
+      avoid negative distances.
     }
 
     \item{\code{binary}:}{(aka \emph{asymmetric binary}): The vectors
@@ -106,7 +110,7 @@ as.dist(m, diag = FALSE, upper = FALSE)
   The lower triangle of the distance matrix stored by columns in a
   vector, say \code{do}. If \code{n} is the number of
   observations, i.e., \code{n <- attr(do, "Size")}, then
-  for \eqn{i < j <= n}, the dissimilarity between (row) i and j is
+  for \eqn{i < j \le n}, the dissimilarity between (row) i and j is
   \code{do[n*(i-1) - i*(i-1)/2 + j-i]}.
   The length of the vector is \eqn{n*(n-1)/2}, i.e., of order \eqn{n^2}.
 

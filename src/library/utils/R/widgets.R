@@ -14,44 +14,56 @@
 #  A copy of the GNU General Public License is available at
 #  http://www.r-project.org/Licenses/
 
-select.list <- function(list, preselect=NULL, multiple=FALSE, title=NULL)
+select.list <-
+    function(choices, preselect = NULL, multiple = FALSE, title = NULL,
+             graphics = getOption("menu.graphics"))
 {
     if(!interactive()) stop("select.list() cannot be used non-interactively")
     if(!is.null(title) && (!is.character(title) || length(title) != 1))
         stop("'title' must be NULL or a length-1 character vector")
-    if(.Platform$OS.type == "windows" | .Platform$GUI == "AQUA")
-        return(.Internal(select.list(list, preselect, multiple, title)))
+    if(isTRUE(graphics)) {
+        if (.Platform$OS.type == "windows" || .Platform$GUI == "AQUA")
+        return(.Internal(select.list(choices, preselect, multiple, title)))
+        ## must be Unix here
+        ## Tk might not require X11 on Mac OS X, but if DISPLAY is set
+        ## this will work for Aqua Tcl/Tk.
+        ## OTOH, we do want to check Tk works!
+        else if(graphics && capabilities("tcltk") &&
+                capabilities("X11") && suppressWarnings(tcltk:::.TkUp))
+            return(tcltk::tk_select.list(choices, preselect, multiple, title))
+    }
     ## simple text-based alternatives.
     if(!multiple) {
-        res <- menu(list, , title)
-        if(res < 1L || res > length(list)) return("")
-        else return(list[res])
+        res <- menu(choices, FALSE, title)
+        if(res < 1L || res > length(choices)) return("")
+        else return(choices[res])
     } else {
-        nc <- length(list)
-        cat(title, "\n")
+        nc <- length(choices)
+        if (length(title) && nzchar(title[1L]))
+            cat(title, "\n", sep = "")
         def <- if(is.null(preselect)) rep(FALSE, nc)
-        else list %in% preselect
+        else choices %in% preselect
         op <- paste(format(seq_len(nc)), ": ",
-                    ifelse(def, "+", " "), " ", list, sep="")
+                    ifelse(def, "+", " "), " ", choices, sep="")
         if(nc > 10L) {
             fop <- format(op)
-            nw <- nchar(fop[1L], "w") + 2
+            nw <- nchar(fop[1L], "w") + 2L
             ncol <- getOption("width") %/% nw
             if(ncol > 1L)
-                op <- paste(fop, c(rep("  ", ncol - 1), "\n"),
+                op <- paste(fop, c(rep("  ", ncol - 1L), "\n"),
                             sep ="", collapse="")
             cat("", op, sep="\n")
         } else cat("", op, "", sep="\n")
-	cat(gettext("Enter zero or more numbers separated by space\n"))
+        cat(gettext("Enter one or more numbers separated by spaces, or an empty line to cancel\n"))
 	repeat {
             res <- tryCatch(scan("", what=0, quiet=TRUE, nlines=1),
                             error = identity)
 	    if(!inherits(res, "error")) break
 	    cat(gettext("Invalid input, please try again\n"))
 	}
-        if(!length(res) || (length(res) == 1L && !res[1L])) return(character(0L))
+        if(!length(res) || (length(res) == 1L && !res[1L])) return(character())
         res <- sort(res[1 <= res && res <= nc])
-        return(list[res])
+        return(choices[res])
     }
 }
 

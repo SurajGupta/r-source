@@ -1,8 +1,8 @@
 msgid ""
 msgstr ""
-"Project-Id-Version: R 2.10.1\n"
+"Project-Id-Version: R 2.11.0\n"
 "Report-Msgid-Bugs-To: bugs@r-project.org\n"
-"POT-Creation-Date: 2009-12-10 19:18\n"
+"POT-Creation-Date: 2010-03-16 09:20\n"
 "PO-Revision-Date: YEAR-MO-DA HO:MI+ZONE\n"
 "Last-Translator: FULL NAME <EMAIL@ADDRESS>\n"
 "Language-Team: LANGUAGE <LL@li.org>\n"
@@ -269,6 +269,9 @@ msgstr ""
 msgid "package must be loaded"
 msgstr ""
 
+msgid "package %s exists but was not installed under R >= 2.10.0 so xrefs cannot be checked"
+msgstr ""
+
 msgid "Obsolete package(s) %s in Rd xrefs"
 msgstr ""
 
@@ -300,6 +303,12 @@ msgid "Rd files with duplicated name '%s':"
 msgstr ""
 
 msgid "Rd files with duplicated alias '%s':"
+msgstr ""
+
+msgid "Argument items with no description in Rd object '%s':"
+msgstr ""
+
+msgid "Auto-generated content requiring editing in Rd object '%s':"
 msgstr ""
 
 msgid "Generics g in env ="
@@ -416,7 +425,7 @@ msgstr ""
 msgid "unable to create '%s'"
 msgstr ""
 
-msgid "unable to re-encode '%s'"
+msgid "unable to re-encode '%s' line(s) %s"
 msgstr ""
 
 msgid "unable to copy INDEX to '%s'"
@@ -443,16 +452,10 @@ msgstr ""
 msgid "cannot copy '%s' to '%s'"
 msgstr ""
 
-msgid "missing 'DESCRIPTION.in' for package '%s'"
-msgstr ""
-
 msgid "WARNING: malformed 'Depends' field in 'DESCRIPTION'"
 msgstr ""
 
 msgid "ERROR: this R is version %s, package '%s' requires R %s %s"
-msgstr ""
-
-msgid "ERROR: this R is version %s, bundle '%s' requires R %s %s"
 msgstr ""
 
 msgid "ERROR: this R is version %s, required is R %s %s"
@@ -482,13 +485,13 @@ msgstr ""
 msgid "Link %s in package %s could not be located"
 msgstr ""
 
-msgid "Unable to locate help document %s in package %s"
-msgstr ""
-
 msgid "No docs found for package %s"
 msgstr ""
 
-msgid "Only help files, %s and files under %s in a package can be viewed"
+msgid "Only help files, %s, %s and files under %s in a package can be viewed"
+msgstr ""
+
+msgid "NEWS"
 msgstr ""
 
 msgid "DESCRIPTION"
@@ -530,6 +533,9 @@ msgstr ""
 msgid "ERROR:"
 msgstr ""
 
+msgid "this seems to be a bundle -- and they are defunct"
+msgstr ""
+
 msgid "packaged installation of"
 msgstr ""
 
@@ -537,6 +543,9 @@ msgid "as"
 msgstr ""
 
 msgid "'cleanup' exists but is not executable -- see the 'R Installation and Adminstration Manual'"
+msgstr ""
+
+msgid "installing to"
 msgstr ""
 
 msgid "R include directory is empty -- perhaps need to install R-devel.rpm or similar"
@@ -572,7 +581,7 @@ msgstr ""
 msgid "invalid package"
 msgstr ""
 
-msgid "--pkglock applies only to a single bundle/package"
+msgid "--pkglock applies only to a single package"
 msgstr ""
 
 msgid "ERROR: no packages specified"
@@ -626,9 +635,6 @@ msgstr ""
 msgid "'type' must be one of 'txt', 'html', 'latex' or 'example'"
 msgstr ""
 
-msgid "Bundle package:"
-msgstr ""
-
 msgid "there is no package called '%s'"
 msgstr ""
 
@@ -636,9 +642,6 @@ msgid "name space must not be loaded."
 msgstr ""
 
 msgid "package seems to be using lazy loading for data already"
-msgstr ""
-
-msgid "object(s) %s are created by more than one data call"
 msgstr ""
 
 msgid "source list must have names for all elements"
@@ -657,6 +660,9 @@ msgid "package seems to be using lazy loading already"
 msgstr ""
 
 msgid "Cannot process chunk/lines:\n%s"
+msgstr ""
+
+msgid "Processing packages:"
 msgstr ""
 
 msgid "cannot update HTML package index"
@@ -815,7 +821,7 @@ msgstr ""
 msgid "Files 'DESCRIPTION' and 'DESCRIPTION.in' are missing."
 msgstr ""
 
-msgid "Bundle 'DESCRIPTION' is missing."
+msgid "invalid package layout"
 msgstr ""
 
 msgid "file '%s' is not in valid DCF format"
@@ -825,9 +831,6 @@ msgid "cannot source package code"
 msgstr ""
 
 msgid "Call sequence:"
-msgstr ""
-
-msgid "Processing packages:"
 msgstr ""
 
 msgid "parsing '%s'"
@@ -850,5 +853,10 @@ msgstr[1]    ""
 
 msgid        "Found .Internal call in the following function:"
 msgid_plural "Found .Internal calls in the following functions:"
+msgstr[0]    ""
+msgstr[1]    ""
+
+msgid        "object %s is created by more than one data call"
+msgid_plural "objects %s are created by more than one data call"
 msgstr[0]    ""
 msgstr[1]    ""

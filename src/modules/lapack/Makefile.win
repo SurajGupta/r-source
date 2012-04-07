@@ -4,11 +4,11 @@ include ../../gnuwin32/MkRules
 MODULE=lapack
 all: 
 	@$(MAKE) --no-print-directory -f Makefile.win -s makeMakedeps 
-	@$(MAKE) --no-print-directory -f Makefile.win ../../../bin/Rlapack.dll 
+	@$(MAKE) --no-print-directory -f Makefile.win ../../../$(BINDIR)/Rlapack.dll 
 ifdef USE_IMPLIBS
 	@$(MAKE) --no-print-directory -f Makefile.win implib
 endif
-	@$(MAKE) --no-print-directory -f Makefile.win ../../../modules/$(MODULE).dll
+	@$(MAKE) --no-print-directory -f Makefile.win install
 
 CSOURCES = Lapack.c
 OBJS=$(CSOURCES:.c=.o) dllversion.o
@@ -24,9 +24,9 @@ CFLAGS=$(OPTFLAGS)
 FFLAGS=$(FOPTFLAGS)
 dlamch-FFLAGS=-ffloat-store
 
-../../../modules/$(MODULE).dll: $(MODULE).dll
-	$(MKDIR) -p ../../../modules
-	$(CP) $< $@
+install: $(MODULE).dll
+	@$(MKDIR) -p ../../../modules$(R_ARCH)
+	$(CP) $< ../../../modules$(R_ARCH)/$(MODULE).dll
 
 lapack-DLLLIBS=-L../../../$(IMPDIR) -lRlapack -lRblas -lR
 
@@ -42,7 +42,7 @@ Rlapack.def: $(LIBOBJECTS)
 
 $(MODULE).dll: $(OBJS)
 
-../../../bin/Rlapack.dll: $(LIBOBJECTS)
+../../../$(BINDIR)/Rlapack.dll: $(LIBOBJECTS)
 	$(DLL) -shared -s -o $@ $^ -L../../../$(IMPDIR) -lR -lRblas $(FLIBS)
 
 clean:

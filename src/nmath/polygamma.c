@@ -145,7 +145,7 @@
 
 #define n_max (100)
 
-/* only used for kode = 1, m = 1, n in {0,1,2,3} : */
+/* From R, currently only used for kode = 1, m = 1, n in {0,1,2,3} : */
 void dpsifn(double x, int n, int kode, int m, double *ans, int *nz, int *ierr)
 {
     const static double bvalues[] = {	/* Bernoulli Numbers */
@@ -501,7 +501,7 @@ double psigamma(double x, double deriv)
     }
     dpsifn(x, n, 1, 1, &ans, &nz, &ierr);
     ML_TREAT_psigam(ierr);
-    /* ans ==  A := (-1)^(n+1) * gamma(n+1) * psi(n, x) */
+    /* Now, ans ==  A := (-1)^(n+1) / gamma(n+1) * psi(n, x) */
     ans = -ans; /* = (-1)^(0+1) * gamma(0+1) * A */
     for(k = 1; k <= n; k++)
 	ans *= (-k);/* = (-1)^(k+1) * gamma(k+1) * A */

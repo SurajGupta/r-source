@@ -49,12 +49,6 @@ packageDescription <- function(pkg, lib.loc=NULL, fields=NULL, drop=TRUE,
             }
     }
 
-    ## we no longer have versioned installs:
-##     if(pkgpath == "") {
-##         ## This is slow and does a lot of checking we do here,
-##         ## but is needed for versioned installs
-##         pkgpath <- system.file(package = pkg, lib.loc = lib.loc)
-##     }
     if(pkgpath == "") {
         warning(gettextf("no package '%s' was found", pkg), domain = NA)
         return(NA)
@@ -128,8 +122,34 @@ print.packageDescription <- function(x, ...)
     invisible(x)
 }
 
-index.search <- function(topic, path, file = "AnIndex", type = "help")
-    .Internal(index.search(topic, path, file, .Platform$file.sep, type))
+# Simple convenience function 
+
+maintainer <- function(pkg){
+  pkg # force evaluation
+  return(packageDescription(pkg)$Maintainer)
+}
+
+## used with firstOnly = TRUE for example()
+## used with firstOnly = FALSE in help()
+index.search <- function(topic, paths, firstOnly = FALSE)
+{
+    res <- character()
+    for (p in paths) {
+        if(file.exists(f <- file.path(p, "help", "aliases.rds")))
+            al <- .readRDS(f)
+        else if(file.exists(f <- file.path(p, "help", "AnIndex"))) {
+            ## aliases.rds was introduced before 2.10.0, as can phase this out
+            foo <- scan(f, what = list(a="", b=""), sep = "\t", quote = "",
+                        na.strings = "", quiet = TRUE)
+            al <- structure(foo$b, names = foo$a)
+        } else next
+        f <- al[topic]
+        if(is.na(f)) next
+        res <- c(res, file.path(p, "help", f))
+        if(firstOnly) break
+    }
+    res
+}
 
 print.packageIQR <-
 function(x, ...)

@@ -541,10 +541,12 @@ stopifnot(0   == qgamma(0, sh))
 ## the first gave Inf, NaN, and 99.425 in R 2.1.1 and earlier
 
 ## In extreme left tail {PR#11030}
-qg <- qgamma(10:123*1e-12, shape=19)
+p <- 10:123*1e-12
+qg <- qgamma(p, shape=19)
 qg2<- qgamma(1:100 * 1e-9, shape=11)
 stopifnot(diff(qg, diff=2) < -6e-6,
           diff(qg2,diff=2) < -6e-6,
+	  abs(1 - pgamma(qg, 19)/ p) < 1e-13,
           All.eq(qg  [1], 2.35047385139143),
           All.eq(qg2[30], 1.11512318734547))
 ## was non-continuous in R 2.6.2 and earlier
@@ -629,7 +631,12 @@ for(nu in df.set) {
     pqq <- pt(-qq, df = nu, log=TRUE)
     stopifnot(is.finite(pqq))
 }
-
+## more extreme case
+x <- (256:512)/1024
+P <- pbeta(x, 3, 2200, lower.tail=FALSE, log.p=TRUE)
+stopifnot(is.finite(P), P < -600,
+	  -1 < (D3P <- diff(P, diff = 3)), D3P < 0, diff(D3P) < 0)
+##
 All.eq(pt(2^-30, df=10),
        0.50000000036238542)# = .5+ integrate(dt, 0,2^-30, df=10, rel.tol=1e-20)
 
@@ -661,9 +668,11 @@ stopifnot(plnorm(-1:0, lower.tail=FALSE, log.p=TRUE) == 0,
 ## was wrongly == 'log.p=FALSE' up to R <= 2.7.1 (PR#11867)
 
 
-## pchisq(df=0) was wrong in 2.7.1
-stopifnot(pchisq(c(-1,0,1), df=0) == c(0,1,1),
-          pchisq(c(-1,0,1), df=0, lower.tail=FALSE) == c(1,0,0))
+## pchisq(df=0) was wrong in 2.7.1; then, upto 2.10.1, P*(0,0) gave 1
+stopifnot(pchisq(c(-1,0,1), df=0) == c(0,0,1),
+          pchisq(c(-1,0,1), df=0, lower.tail=FALSE) == c(1,1,0),
+	  ## for ncp >= 80, gave values >= 1 in 2.10.0
+	  pchisq(500:700, 1.01, ncp = 80) <= 1)
 
 ## dnbinom for extreme  size and/or mu :
 mu <- 20
@@ -687,7 +696,8 @@ stopifnot(-0.047 < dP, dP < -0.0455)
 stopifnot(0 == dchisq(c(Inf, 1e80, 1e50, 1e40), df=10, ncp=1))
 ## did hang in 2.8.0 and earlier (PR#13309).
 
-## qbinom() .. particuarly for large sizes, small prob:
+
+## qbinom() .. particularly for large sizes, small prob:
 p.s <- c(.01, .001, .1, .25)
 pr <- (2:20)*1e-7
 sizes <- 1000*(5000 + c(0,6,16)) + 279
@@ -704,5 +714,34 @@ for(sz in sizes) {
 }
 ## do_search() in qbinom() contained a thinko up to 2.9.0 (PR#13711)
 
+
+## pbeta(x, a,b, log=TRUE)  for small x and a  is ~ log-linear
+x <- 2^-(200:10)
+for(a in c(1e-8, 1e-12, 16e-16, 4e-16))
+    for(b in c(0.6, 1, 2, 10)) {
+        dp <- diff(pbeta(x, a, b, log=TRUE)) # constant approximately
+        stopifnot(sd(dp) / mean(dp) < 0.0007)
+    }
+## had  accidental cancellation '1 - w'
+
+## qgamma(p, a) for small a and (hence) small p
+## pgamma(x, a) for very very small a
+a <- 2^-seq(10,1000, .25)
+q.1c <- qgamma(1e-100,a,lower.tail=FALSE)
+q.3c <- qgamma(1e-300,a,lower.tail=FALSE)
+p.1c <- pgamma(q.1c[q.1c > 0], a[q.1c > 0], lower.tail=FALSE)
+p.3c <- pgamma(q.3c[q.3c > 0], a[q.3c > 0], lower.tail=FALSE)
+x <- 1+1e-7*c(-1,1); pg <- pgamma(x, shape = 2^-64, lower.tail=FALSE)
+stopifnot(qgamma(.99, .00001) == 0,
+          abs(pg[2] - 1.18928249197237758088243e-20) < 1e-33,
+	  abs(diff(pg) + diff(x)*dgamma(1, 2^-64)) < 1e-13 * mean(pg),
+	  abs(1 - p.1c/1e-100) < 10e-13,# max = 2.243e-13 / 2.442 e-13
+	  abs(1 - p.3c/1e-300) < 28e-13)# max = 7.057e-13
+## qgamma() was wrong here, orders of magnitude up to R 2.10.0
+## pgamma() had inaccuracies, e.g.,
+## pgamma(x, shape = 2^-64, lower.tail=FALSE)  was discontinuous at x=1
+
+stopifnot(all(qpois((0:8)/8, lambda=0) == 0))
+## gave Inf as p==1 was checked *before* lambda==0
 
 cat("Time elapsed: ", proc.time() - .ptime,"\n")

@@ -1,6 +1,6 @@
 % File src/library/base/man/double.Rd
 % Part of the R package, http://www.R-project.org
-% Copyright 1995-2007 R Core Development Team
+% Copyright 1995-2010 R Core Development Team
 % Distributed under GPL 2 or later
 
 \name{double}
@@ -44,24 +44,20 @@ as.single(x, \dots)
   except they set the attribute \code{Csingle} that is used in the
   \code{\link{.C}} and \code{\link{.Fortran}} interface, and they are
   intended only to be used in that context.
-  
-  \code{as.double} and \code{is.double} are \link{primitive}, so
-  positional matching is used and any names of supplied arguments are
-  ignored.  This may not be true of methods for \code{as.double}.
 }
 \value{
   \code{double} creates a double-precision vector of the specified
   length.  The elements of the vector are all equal to \code{0}.
 
-  \code{as.double} attempts to coerce its argument to be of double
-  type: like \code{\link{as.vector}} it strips attributes including
-  names.  (To ensure that an object is of double type without
-  stripping attributes, use \code{\link{storage.mode}}.)
-  Character strings containing either a decimal representation or a
-  hexadecimal representation (starting with \code{0x} or \code{0X}) can
-  be converted. \code{as.double} for factors yields the codes underlying
-  the factor levels, not the numeric representation of the labels, see
-  also \code{\link{factor}}.
+  \code{as.double} attempts to coerce its argument to be of double type:
+  like \code{\link{as.vector}} it strips attributes including names.
+  (To ensure that an object is of double type without stripping
+  attributes, use \code{\link{storage.mode}}.)  Character strings
+  containing optional whitespace followed by either a decimal
+  representation or a hexadecimal representation (starting with
+  \code{0x} or \code{0X}) can be converted.  \code{as.double} for
+  factors yields the codes underlying the factor levels, not the numeric
+  representation of the labels, see also \code{\link{factor}}.
 
   \code{is.double} returns \code{TRUE} or \code{FALSE} depending on
   whether its argument is of double \link{type} or not.
@@ -74,8 +70,7 @@ as.single(x, \dots)
 
   \code{double} is the name of the \link{type}.
   \code{numeric} is the name of the \link{mode} and also of the implicit
-  \link{class}.  As an S4 formal class, use \code{"numeric"} (there was
-  a formal class \code{"double"} prior to \R 2.7.0).
+  \link{class}.  As an S4 formal class, use \code{"numeric"}.
 
   \code{real} is deprecated and should not be used in new code.
 

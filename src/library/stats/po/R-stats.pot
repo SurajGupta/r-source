@@ -1,8 +1,8 @@
 msgid ""
 msgstr ""
-"Project-Id-Version: R 2.10.1\n"
+"Project-Id-Version: R 2.11.0\n"
 "Report-Msgid-Bugs-To: bugs@r-project.org\n"
-"POT-Creation-Date: 2009-12-10 19:18\n"
+"POT-Creation-Date: 2010-03-19 11:18\n"
 "PO-Revision-Date: YEAR-MO-DA HO:MI+ZONE\n"
 "Last-Translator: FULL NAME <EMAIL@ADDRESS>\n"
 "Language-Team: LANGUAGE <LL@li.org>\n"
@@ -26,7 +26,7 @@ msgstr ""
 msgid "'alpha', 'beta' and 'gamma' must be within the unit interval."
 msgstr ""
 
-msgid "data must be strictly non-negative for multiplicative Holt-Winters."
+msgid "data must be non-zero for multiplicative Holt-Winters."
 msgstr ""
 
 msgid "need at least 2 periods to compute seasonal start values."
@@ -134,7 +134,13 @@ msgstr ""
 msgid "'by' must be a list"
 msgstr ""
 
-msgid "'FUN' must always return a scalar"
+msgid "arguments must have same length"
+msgstr ""
+
+msgid "'formula' missing or incorrect"
+msgstr ""
+
+msgid "'formula' must have both left and right hand sides"
 msgstr ""
 
 msgid "cannot change frequency from %g to %g"
@@ -183,9 +189,6 @@ msgid "cannot compute exact p-value with ties"
 msgstr ""
 
 msgid "cannot compute exact confidence intervals with ties"
-msgstr ""
-
-msgid "'formula' missing or incorrect"
 msgstr ""
 
 msgid "grouping factor must have exactly 2 levels"
@@ -257,6 +260,9 @@ msgstr ""
 msgid "'order.max' must be < 'n.used'"
 msgstr ""
 
+msgid "'n.ahead' must be at least 1"
+msgstr ""
+
 msgid "number of series in 'object' and 'newdata' do not match"
 msgstr ""
 
@@ -270,15 +276,6 @@ msgid "MLE only implemented for univariate series"
 msgstr ""
 
 msgid "'order.max' must be >= 0"
-msgstr ""
-
-msgid "model order:"
-msgstr ""
-
-msgid "singularities in the computation of the projection matrix"
-msgstr ""
-
-msgid "results are only valid up to model order"
 msgstr ""
 
 msgid "'order' must be a non-negative numeric vector of length 3"
@@ -509,6 +506,9 @@ msgstr ""
 msgid "supply both 'x' and 'y' or a matrix-like 'x'"
 msgstr ""
 
+msgid "'y' must be numeric"
+msgstr ""
+
 msgid "'x' is empty"
 msgstr ""
 
@@ -522,6 +522,12 @@ msgid "'V' is not a square numeric matrix"
 msgstr ""
 
 msgid "diag(.) had 0 or NA entries; non-finite result is doubtful"
+msgstr ""
+
+msgid "'x' must be a numeric vector"
+msgstr ""
+
+msgid "'y' must be a numeric vector"
 msgstr ""
 
 msgid "not enough finite observations"
@@ -899,9 +905,6 @@ msgstr ""
 msgid "incorrect specification for 'col.vars'"
 msgstr ""
 
-msgid "'formula' must have both left and right hand sides"
-msgstr ""
-
 msgid "interactions are not allowed"
 msgstr ""
 
@@ -932,10 +935,7 @@ msgstr ""
 msgid "'family' not recognized"
 msgstr ""
 
-msgid "invalid 'method': %s"
-msgstr ""
-
-msgid "invalid 'method'"
+msgid "invalid 'method' argument"
 msgstr ""
 
 msgid "'weights' must be a numeric vector"
@@ -977,7 +977,7 @@ msgstr ""
 msgid "no observations informative at iteration"
 msgstr ""
 
-msgid "non-finite coefficients at iteration"
+msgid "non-finite coefficients at iteration %d"
 msgstr ""
 
 msgid "X matrix has rank %d, but only %d observations"
@@ -998,16 +998,16 @@ msgstr ""
 msgid "inner loop 2; cannot correct step size"
 msgstr ""
 
-msgid "algorithm did not converge"
+msgid "glm.fit: algorithm did not converge"
 msgstr ""
 
-msgid "algorithm stopped at boundary value"
+msgid "glm.fit: algorithm stopped at boundary value"
 msgstr ""
 
-msgid "fitted probabilities numerically 0 or 1 occurred"
+msgid "glm.fit: fitted probabilities numerically 0 or 1 occurred"
 msgstr ""
 
-msgid "fitted rates numerically 0 occurred"
+msgid "glm.fit: fitted rates numerically 0 occurred"
 msgstr ""
 
 msgid "the following arguments to 'anova.glm' are invalid and dropped:"
@@ -1293,6 +1293,9 @@ msgid "'start' and 'table' must be same length"
 msgstr ""
 
 msgid "this should not happen"
+msgstr ""
+
+msgid "algorithm did not converge"
 msgstr ""
 
 msgid "incorrect specification of 'table' or 'start'"
@@ -1745,6 +1748,9 @@ msgstr ""
 msgid "'proj' is not implemented for multiple responses"
 msgstr ""
 
+msgid "table 'x' should have 2 entries"
+msgstr ""
+
 msgid "elements of 'n' must be positive"
 msgstr ""
 
@@ -1770,6 +1776,9 @@ msgid "'y', 'groups' and 'blocks' must have the same length"
 msgstr ""
 
 msgid "'formula' missing"
+msgstr ""
+
+msgid "factors are not allowed"
 msgstr ""
 
 msgid "missing values and NaN's not allowed if 'na.rm' is FALSE"
@@ -2139,9 +2148,6 @@ msgid "'ratio' must be a single positive number"
 msgstr ""
 
 msgid "'x' and 'w' must have the same length"
-msgstr ""
-
-msgid "'y' must be numeric"
 msgstr ""
 
 msgid "not enough (finite) 'x' observations"

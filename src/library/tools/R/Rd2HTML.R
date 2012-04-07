@@ -54,7 +54,8 @@ get_link <- function(arg, tag, Rdfile) {
 # translation of Utils.pm function of the same name, plus "unknown"
 mime_canonical_encoding <- function(encoding)
 {
-    encoding[encoding %in% c("", "unknown")] <- localeToCharset()[1]
+    encoding[encoding %in% c("", "unknown")] <-
+        utils::localeToCharset()[1L]
     encoding <- tolower(encoding)
     encoding <- sub("iso_8859-([0-9]+)", "iso-8859-\\1", encoding)
     encoding <- sub("iso8859-([0-9]+)", "iso-8859-\\1", encoding)
@@ -74,6 +75,44 @@ mime_canonical_encoding <- function(encoding)
     encoding[encoding == "utf8"] <-    "utf-8"
     encoding[encoding == "ascii"] <-   "us-ascii" # from W3C validator
     encoding
+}
+
+htmlify <- function(x) {
+    x <- fsub("&", "&amp;", x)
+    x <- fsub("---", "&mdash;", x)
+    x <- fsub("--", "&ndash;", x)
+    x <- fsub("``", "&ldquo;", x)
+    x <- fsub("''", "&rdquo;", x)
+    x <- psub("`([^']+)'", "&lsquo;\\1&rsquo;", x)
+    x <- fsub("`", "'", x)
+    x <- fsub("<", "&lt;", x)
+    x <- fsub(">", "&gt;", x)
+    x <- fsub('"\\{"', '"{"', x)
+    x
+}
+
+vhtmlify <- function(x, inEqn = FALSE) { # code version
+    x <- fsub("&", "&amp;", x)
+    x <- fsub("<", "&lt;", x)
+    x <- fsub(">", "&gt;", x)
+    x <- fsub('"\\{"', '"{"', x)
+    ## http://htmlhelp.com/reference/html40/entities/symbols.html
+    if(inEqn) {
+        x <- psub("\\\\(Alpha|Beta|Gamma|Delta|Epsilon|Zeta|Eta|Theta|Iota|Kappa|Lambda|Mu|Nu|Xi|Omicron|Pi|Rho|Sigma|Tau|Upsilon|Phi|Chi|Psi|Omega|alpha|beta|gamma|delta|epsilon|zeta|eta|theta|iota|kappa|lambda|mu|nu|xi|omicron|pi|rho|sigma|tau|upsilon|phi|chi|psi|omega|le|ge|sum|prod)", "&\\1;", x)
+        x <- psub("\\\\(dots|ldots)", "&\\hellip;", x)
+        x <- fsub("\\infty", "&infin;", x)
+        x <- fsub("\\sqrt", "&radic;", x)
+    }
+    x
+}
+
+# URL encode anything other than alphanumeric, . and _
+
+urlify <- function(x) { # make a string legal in a URL
+    chars <- unlist(strsplit(x, ""))
+    hex <- paste("%", as.character(charToRaw(x)), sep="")
+    mixed <- ifelse(grepl("[0-9a-zA-Z._]", chars), chars, hex)
+    paste(mixed, collapse="")
 }
 
 ## This gets used two ways:
@@ -149,6 +188,10 @@ Rd2HTML <-
 
     pendingClose <- pendingOpen <- character(0)  # Used for infix methods
 
+    inEqn <- FALSE		# Should we do edits needed in an eqn?
+    sectionLevel <- 0L		# How deeply nested within section/subsection
+
+
 ### These correspond to HTML wrappers
     HTMLTags <- c("\\bold"="B",
     	          "\\cite"="CITE",
@@ -199,38 +242,6 @@ Rd2HTML <-
         else x
     }
 
-    htmlify <- function(x) {
-	x <- fsub("&", "&amp;", x)
-	x <- fsub("---", "&mdash;", x)
-	x <- fsub("--", "&ndash;", x)
-	x <- fsub("``", "&ldquo;", x)
-	x <- fsub("''", "&rdquo;", x)
-        x <- psub("`([^']+)'", "&lsquo;\\1&rsquo;", x)
-	x <- fsub("`", "'", x)
-	x <- fsub("<", "&lt;", x)
-	x <- fsub(">", "&gt;", x)
-	x
-    }
-
-    vhtmlify <- function(x) { # code version
-	x <- fsub("&", "&amp;", x)
-	x <- fsub("<", "&lt;", x)
-	x <- fsub(">", "&gt;", x)
-	x
-    }
-
-    HTMLeqn <- function(x)
-    {
-        x <- htmlify(x)
-        ## historical escapes for math
-        x <- psub("\\\\(Gamma|alpha|Alpha|pi|mu|sigma|Sigma|lambda|beta|epsilaon)", "&\\1;", x)
-        x <- fsub("\\left(", "(", x)
-        x <- fsub("\\right", ")", x)
-        x <- fsub("\\le", "&lt;=", x)
-        x <- fsub("\\ge", "&gt;=", x)
-        x
-    }
-
     writeWrapped <- function(tag, block) {
     	of0("<", HTMLTags[tag], ">")
     	writeContent(block, tag)
@@ -240,8 +251,8 @@ Rd2HTML <-
     checkInfixMethod <- function(blocks)
     	# Is this a method which needs special formatting?
     	if ( length(blocks) == 1 && RdTags(blocks) == "TEXT" &&
-    	     blocks[[1]] %in% c("[", "[[", "$") ) {
-    	    pendingOpen <<- blocks[[1]]
+    	     blocks[[1L]] %in% c("[", "[[", "$") ) {
+    	    pendingOpen <<- blocks[[1L]]
     	    TRUE
     	} else FALSE
 
@@ -258,7 +269,7 @@ Rd2HTML <-
             ## ---------------- \link{topic} and \link[=topic]{foo}
             topic <- parts$dest
     	    if (dynamic) { # never called with package=""
-                htmlfile <- paste("../../", package, "/help/", topic, sep="")
+                htmlfile <- paste("../../", urlify(package), "/help/", urlify(topic), sep="")
                 writeHref()
                 return()
             } else {
@@ -280,7 +291,7 @@ Rd2HTML <-
                 writeContent(block, tag)
             } else {
                 ## treat links in the same package specially -- was needed for CHM
-                pkg_regexp <- paste("^../../", package, "/html/", sep = "")
+                pkg_regexp <- paste("^../../", urlify(package), "/html/", sep = "")
                 if (grepl(pkg_regexp, htmlfile)) {
                     htmlfile <- sub(pkg_regexp, "", htmlfile)
                 }
@@ -288,7 +299,7 @@ Rd2HTML <-
             }
     	} else {
             ## ----------------- \link[pkg]{file} and \link[pkg:file]{bar}
-            htmlfile <- paste(parts$targetfile, ".html", sep="")
+            htmlfile <- paste(urlify(parts$targetfile), ".html", sep="")
             if (!dynamic && !no_links &&
                nzchar(pkgpath <- system.file(package = parts$pkg))) {
                 ## check the link, only if the package is found
@@ -303,9 +314,8 @@ Rd2HTML <-
                 } else OK <- TRUE
                 if (!OK) {
                     ## so how about as a topic?
-                    file <- index.search(parts$targetfile, pkgpath,
-                                         type = "html")
-                    if (nzchar(file)) {
+                    file <- utils:::index.search(parts$targetfile, pkgpath)
+                    if (!length(file)) {
                         warnRd(block, Rdfile,
                                "file link ", sQuote(parts$targetfile),
                                " in package ", sQuote(parts$pkg),
@@ -322,7 +332,7 @@ Rd2HTML <-
                 writeHref()
             } else {
                 ## href = "../../pkg/html/file.html"
-                htmlfile <- paste("../../", parts$pkg, "/html/", htmlfile,
+                htmlfile <- paste("../../", urlify(parts$pkg), "/html/", htmlfile,
                                   sep="")
                 writeHref()
             }
@@ -357,7 +367,7 @@ Rd2HTML <-
     writeBlock <- function(block, tag, blocktag) {
 	switch(tag,
                UNKNOWN =,
-               VERB =,
+               VERB = of1(vhtmlify(block, inEqn)),
                RCODE = of1(vhtmlify(block)),
                TEXT = of1(if(blocktag == "\\command") vhtmlify(block) else addParaBreaks(htmlify(block), blocktag)),
                COMMENT = {},
@@ -408,17 +418,21 @@ Rd2HTML <-
                "\\dontrun"= writeDR(block, tag),
                "\\enc" = writeContent(block[[1L]], tag),
                "\\eqn" = {
+                   inEqn <<- TRUE
                    of1("<i>")
                    block <- block[[length(block)]];
                    ## FIXME: space stripping needed: see Special.html
                    writeContent(block, tag)
                    of1("</i>")
+                   inEqn <<- FALSE
                },
                "\\deqn" = {
+                   inEqn <<- TRUE
                    of1('</p><p align="center"><i>')
                    block <- block[[length(block)]];
                    writeContent(block, tag)
                    of1('</i></p><p>')
+                   inEqn <<- FALSE
                },
                "\\dontshow" =,
                "\\testonly" = {}, # do nothing
@@ -443,6 +457,7 @@ Rd2HTML <-
                        writeContent(block[[1L]], tag)
                },
                "\\tabular" = writeTabular(block),
+               "\\subsection" = writeSection(block, tag),
                "\\if" =,
                "\\ifelse" =
                	    if (testRdConditional("html", block, Rdfile))
@@ -600,8 +615,11 @@ Rd2HTML <-
     writeSection <- function(section, tag) {
         if (tag %in% c("\\alias", "\\concept", "\\encoding", "\\keyword"))
             return() ## \alias only used on CHM header
-    	of1("\n\n<h3>")
-    	if (tag == "\\section") {
+        save <- sectionLevel
+        sectionLevel <<- sectionLevel + 1L
+    	of1(paste("\n\n<h", sectionLevel+2L, ">", sep=""))
+    	
+    	if (tag == "\\section" || tag == "\\subsection") {
     	    title <- section[[1L]]
     	    section <- section[[2L]]
             ## FIXME: this needs trimming of whitespace
@@ -610,17 +628,18 @@ Rd2HTML <-
     	    of1(sectionTitles[tag])
     	if (tag %in% c("\\examples", "\\synopsis", "\\usage"))
     	    para <- "pre" else para <- "p"
-        of1("</h3>\n")
+        of1(paste("</h", sectionLevel+2L, ">\n", sep=""))
         ## \arguments is a single table, not a para
         if (tag == "\\arguments") para <- ""
     	if (nzchar(para)) of0("\n<", para, ">")
     	if (length(section)) {
 	    ## There may be an initial \n, so remove that
 	    s1 <- section[[1L]][1L]
-	    if (RdTags(s1) == "TEXT" && s1 == "\n") section <- section[-1]
+	    if (RdTags(s1) == "TEXT" && s1 == "\n") section <- section[-1L]
 	    writeContent(section, tag)
 	}
     	if (nzchar(para)) of0("</", para, ">\n")
+    	sectionLevel <<- save
     }
 
     if (is.character(out)) {
@@ -654,12 +673,15 @@ Rd2HTML <-
         mime_canonical_encoding(outputEncoding),
         '">\n')
 
-    of0('<link rel="stylesheet" type="text/css"',
+    of0('<link rel="stylesheet" type="text/css" ',
         if (no_links) 'href="R.css">' else 'href="../../R.css">',
         '\n</head><body>\n\n',
-        '<table width="100%" summary="page for ', name, ' {', package,
-        '}"><tr><td>',name,' {', package,
-        '}</td><td align="right">R Documentation</td></tr></table>\n\n')
+        '<table width="100%" summary="page for ', name)
+    if (nchar(package))
+    	of0(' {', package, '}"><tr><td>',name,' {', package,'}')
+    else
+        of0('"><tr><td>',name)
+    of0('</td><td align="right">R Documentation</td></tr></table>\n\n')
 
     of0("<h2>", title,'</h2>\n')
 
@@ -670,10 +692,13 @@ Rd2HTML <-
         version <- paste('Package <em>', package,
                          '</em> version ', version,
                          ' ', sep='')
-    of0('\n',
-        '<hr><div align="center">[', version,
-        if (!no_links) '<a href="00Index.html">Index</a>',
-        ']</div>\n', '</body></html>\n')
+    of0('\n')
+    if (version != "")
+    	of0('<hr><div align="center">[', version,
+            if (!no_links) '<a href="00Index.html">Index</a>',
+            ']</div>')
+    of0('\n', 
+        '</body></html>\n')
     invisible(out)
 }
 

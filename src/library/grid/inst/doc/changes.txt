@@ -1,3 +1,23 @@
+Changes from grid_2.10.0 to grid_2.11.0:
+--------------------------------------
+
+1.  Added xsplinePoints() function to return the (x, y) 
+    locations that an Xspline would be drawn through.
+    Useful for, e.g., clipping an Xspline against a
+    boundary.
+
+2.  Added grid.raster() function for rendering raster images.
+
+3.  Added grid.cap() function for capturing output on
+    current graphics device as a raster image.
+
+4.  Fixed PROTECT() bug in grid.rect() PR#14199
+    Thanks to Andrew Runnalls for the bug report.
+
+5.  Fixed multiple problems in rep.unit() and unit subsetting.
+    Motivated by PR#14170.  Thanks to Bert Gunter.
+    
+
 Changes from grid_2.9.0 to grid_2.10.0:
 --------------------------------------
 

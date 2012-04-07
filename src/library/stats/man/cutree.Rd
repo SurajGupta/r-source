@@ -5,7 +5,7 @@
 
 \name{cutree}
 \alias{cutree}
-\title{Cut a tree into groups of data}
+\title{Cut a Tree into Groups of Data}
 \description{
   Cuts a tree, e.g., as resulting from \code{\link{hclust}}, into several
   groups either by specifying the desired number(s) of groups or the cut
@@ -41,12 +41,12 @@ cutree(tree, k = NULL, h = NULL)
 \examples{
 hc <- hclust(dist(USArrests))
 
-cutree(hc, k=1:5)#k = 1 is trivial
+cutree(hc, k=1:5) #k = 1 is trivial
 cutree(hc, h=250)
 
-## Compare the 2 and 3 grouping:
+## Compare the 2 and 4 grouping:
 g24 <- cutree(hc, k = c(2,4))
-table(g24[,"2"], g24[,"4"])
+table(grp2=g24[,"2"], grp4=g24[,"4"])
 }
 \keyword{multivariate}
 \keyword{cluster}

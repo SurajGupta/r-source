@@ -52,3 +52,9 @@ glm.fit.null <- function(x, y, weights , start = NULL,
 ## Defunct in 2.4.0
 mauchley.test <- function(...) .Defunct("mauchly.test")
 ## </entry>
+
+## <entry>
+## Deprecated in 2.10.0
+## Defunct in 2.11.0
+clearNames <- function( object ) .Defunct("unname")
+## </entry>

@@ -1,6 +1,6 @@
 
-R version 2.10.0 Under development (unstable) (2009-08-05 r49069)
-Copyright (C) 2009 The R Foundation for Statistical Computing
+R version 2.11.0 Under development (unstable) (2010-03-07 r51216)
+Copyright (C) 2010 The R Foundation for Statistical Computing
 ISBN 3-900051-07-0
 
 R is free software and comes with ABSOLUTELY NO WARRANTY.
@@ -1416,10 +1416,8 @@ Y    4   10   16   22
 > 
 > ## PR#1115 (saving strings with ascii=TRUE)
 > x <- y <- unlist(as.list(
-+     parse(text=paste("\"\\",
-+           as.character(structure(1:255,class="octmode")),
-+              "\"",sep=""))))
-> save(x, ascii=T, file=(fn <- tempfile()))
++     parse(text=paste("\"\\", as.character(as.octmode(1:255)), "\"",sep=""))))
+> save(x, ascii=TRUE, file=(fn <- tempfile()))
 > load(fn)
 > all(x==y)
 [1] TRUE
@@ -1795,10 +1793,8 @@ Warning messages:
 23: step size truncated: out of bounds
 24: step size truncated: out of bounds
 25: step size truncated: out of bounds
-26: In glm.fit(x = X, y = Y, weights = weights, start = start,  ... :
-  algorithm did not converge
-27: In glm.fit(x = X, y = Y, weights = weights, start = start,  ... :
-  algorithm stopped at boundary value
+26: glm.fit: algorithm did not converge
+27: glm.fit: algorithm stopped at boundary value
 > 
 > 
 > ## extending char arrrays
@@ -6475,4 +6471,52 @@ Error in `[[<-.data.frame`(`*tmp*`, "NewCol", value = integer(0)) :
 > update(`a: b` ~ x, ~ . + y)
 `a: b` ~ x + y
 > ## 2.9.1 dropped backticks
+> 
+> 
+> ## print(ls.str(.)) did evaluate calls
+> E <- new.env(); E$cl <- call("print", "Boo !")
+> ls.str(E)
+cl :  language print("Boo !")
+> ## 2.10.0 did print..
+> 
+> 
+> ## complete.cases with no input
+> try(complete.cases())
+Error in complete.cases() : no input has determined the number of cases
+> try(complete.cases(list(), list()))
+Error in complete.cases(list(), list()) : 
+  no input has determined the number of cases
+> ## gave unhelpful messages in 2.10.0, silly results in pre-2.10.1
+> 
+> 
+> ## error messages from (C-level) evalList
+> tst <- function(y) { stopifnot(is.numeric(y)); y+ 1 }
+> try(tst())
+Error in is.numeric(y) : 'y' is missing
+> try(c(1,,2))
+Error in c(1, , 2) : argument 2 is empty
+> ## change in 2.8.0 made these less clear
+> 
+> 
+> ## empty levels from cut.Date (cosmetic, PR#14162)
+> x <- as.Date(c("2009-03-21","2009-03-31"))
+> cut(x, breaks= "quarter") # had two levels in 2.10.1
+[1] 2009-01-01 2009-01-01
+Levels: 2009-01-01
+> cut(as.POSIXlt(x), breaks= "quarter")
+[1] 2009-01-01 2009-01-01
+Levels: 2009-01-01
+> ## remove empty final level
+> 
+> 
+> ## tests of error conditions in switch()
+> switch("a", a=, b=, c=, 4)
+[1] 4
+> switch("a", a=, b=, c=, )
+> .Last.value
+NULL
+> switch("a", a=, b=, c=, invisible(4))
+> .Last.value
+[1] 4
+> ## visiblilty changed in 2.11.0
 > 

@@ -58,10 +58,18 @@ attach <- function(what, pos = 2, name = deparse(substitute(what)),
                                         inherits = FALSE))
                 same <- same[is_fn1 == is_fn2]
                 if(length(same)) {
-                    cat("\n\tThe following object(s) are masked",
-                        if (i < db.pos) "_by_" else "from", sp[i],
-                        if (sum(sp == sp[i]) > 1L) paste("( position", i, ")"),
-                        ":\n\n\t", same, "\n\n")
+                    objs <- strwrap(paste(same, collapse=", "), indent=4,
+                                    exdent=4)
+                    pkg <-
+                        if (sum(sp == sp[i]) > 1L) {
+                            sprintf("%s (position %d)", sp[i], i)
+                        } else {
+                            sp[i]
+                        }
+                    msg <- sprintf("The following object(s) are masked %s '%s':\n\n%s\n",
+                                   if (i < db.pos) "_by_" else "from",
+                                   pkg, paste(objs, collapse="\n"))
+                    cat(msg)
                 }
             }
         }
@@ -85,73 +93,84 @@ attach <- function(what, pos = 2, name = deparse(substitute(what)),
        !exists(".conflicts.OK", envir = value, inherits = FALSE)) {
         checkConflicts(value)
     }
-    if( length(objects(envir = value, all.names = TRUE) )
-       && .isMethodsDispatchOn())
-      methods:::cacheMetaData(value, TRUE)
+    if( length(ls(envir = value, all.names = TRUE)) && .isMethodsDispatchOn() )
+        methods:::cacheMetaData(value, TRUE)
     invisible(value)
 }
 
-detach <- function(name, pos=2, unload=FALSE, character.only = FALSE)
+detach <- function(name, pos = 2, unload = FALSE, character.only = FALSE,
+                   force = FALSE)
 {
     if(!missing(name)) {
-	if(!character.only)
-	    name <- substitute(name)# when a name..
+	if(!character.only) name <- substitute(name)
 	pos <-
-	    if(is.numeric(name))
-                name
+	    if(is.numeric(name)) name
 	    else {
-                if (!is.character(name))
-                    name <- deparse(name)
+                if (!is.character(name)) name <- deparse(name)
                 match(name, search())
             }
-	if(is.na(pos))
-	    stop("invalid name")
+	if(is.na(pos)) stop("invalid 'name' argument")
     }
-    env <- as.environment(pos)
+
     packageName <- search()[[pos]]
 
-    ## we need treat packages differently from other objects.
-    isPkg <- grepl("^package:", packageName)
-    if (!isPkg) {
-        .Internal(detach(pos))
-        return(invisible())
+    ## we need to treat packages differently from other objects, so get those
+    ## out of the way now
+    if (! grepl("^package:", packageName) ) {
+        res <- .Internal(detach(pos))
+        return(invisible(res))
     }
 
     pkgname <- sub("^package:", "", packageName)
+    for(pkg in search()[-1L]) {
+        if(grepl("^package:", pkg) &&
+           exists(".Depends", pkg, inherits = FALSE) &&
+           pkgname %in% get(".Depends", pkg, inherits = FALSE))
+            if(force)
+                warning(gettextf("package %s is required by %s, which may no longer work correctly",
+                                 sQuote(pkgname), sQuote(sub("^package:", "", pkg))),
+                     call. = FALSE, domain = NA)
+            else
+                stop(gettextf("package %s is required by %s so will not be detached",
+                              sQuote(pkgname), sQuote(sub("^package:", "", pkg))),
+                     call. = FALSE, domain = NA)
+    }
+    env <- as.environment(pos)
     libpath <- attr(env, "path")
-    hook <- getHook(packageEvent(pkgname, "detach")) # might be list()
+    hook <- getHook(packageEvent(pkgname, "detach")) # might be list
     for(fun in rev(hook)) try(fun(pkgname, libpath))
-    if(exists(".Last.lib", mode = "function", where = pos, inherits=FALSE)) {
+    if(exists(".Last.lib", mode = "function", where = pos, inherits = FALSE)) {
         .Last.lib <- get(".Last.lib",  mode = "function", pos = pos,
-                         inherits=FALSE)
-        if(!is.null(libpath)) try(.Last.lib(libpath))
+                         inherits = FALSE)
+        if(!is.null(libpath)) {
+            res <- tryCatch(.Last.lib(libpath), error=identity)
+            if (inherits(res, "error")) {
+                warning(gettextf("%s failed in %s() for '%s', details:\n  call: %s\n  error: %s",
+                                 ".Last.lib", "detach", pkgname,
+                                 deparse(conditionCall(res))[1L],
+                                 conditionMessage(res)),
+                        call. = FALSE, domain = NA)
+            }
+        }
     }
     .Internal(detach(pos))
-
-    ## Check for detaching a package require()d by another package (not
-    ## by .GlobalEnv because detach() can't currently fix up the
-    ## .required there)
-    for(pkg in search()[-1L]) {
-        ## How can a namespace environment get on the search list?
-        ## (base fails isNamespace).
-        if(!isNamespace(as.environment(pkg)) &&
-           exists(".required", pkg, inherits = FALSE) &&
-           pkgname %in% get(".required", pkg, inherits = FALSE))
-            warning(packageName, " is required by ", pkg, " (still attached)")
-    }
 
     if(pkgname %in% loadedNamespaces()) {
         ## the lazyload DB is flushed when the name space is unloaded
         if(unload) {
             tryCatch(unloadNamespace(pkgname),
                      error = function(e)
-                     warning(pkgname, " namespace cannot be unloaded\n",
+                     warning(sQuote(pkgname),
+                             " name space cannot be unloaded:\n  ",
                              conditionMessage(e), call. = FALSE))
         }
-    } else
+    } else {
+        if(.isMethodsDispatchOn() && methods:::.hasS4MetaData(env))
+            methods:::cacheMetaData(env, FALSE)
         .Call("R_lazyLoadDBflush",
               paste(libpath, "/R/", pkgname, ".rdb", sep=""),
               PACKAGE="base")
+    }
     invisible()
 }
 

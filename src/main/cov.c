@@ -1,7 +1,6 @@
 /*
  *  R : A Computer Language for Statistical Data Analysis
- *  Copyright (C) 1995-2006	Robert Gentleman, Ross Ihaka and the
- *				R Development Core Team
+ *  Copyright (C) 1995-2010	The R Development Core Team
  *  Copyright (C) 2003		The R Foundation
  *
  *  This program is free software; you can redistribute it and/or modify
@@ -765,12 +764,12 @@ SEXP attribute_hidden do_cov(SEXP call, SEXP op, SEXP args, SEXP env)
 	else {
 	    x = getAttrib(x, R_DimNamesSymbol);
 	    y = getAttrib(y, R_DimNamesSymbol);
-	    if ((!isNull(x) && !isNull(VECTOR_ELT(x, 1))) ||
-		(!isNull(y) && !isNull(VECTOR_ELT(y, 1)))) {
+	    if ((length(x) >= 2 && !isNull(VECTOR_ELT(x, 1))) ||
+		(length(y) >= 2 && !isNull(VECTOR_ELT(y, 1)))) {
 		PROTECT(ind = allocVector(VECSXP, 2));
-		if (!isNull(x) && !isNull(VECTOR_ELT(x, 1)))
+		if (length(x) >= 2 && !isNull(VECTOR_ELT(x, 1)))
 		    SET_VECTOR_ELT(ind, 0, duplicate(VECTOR_ELT(x, 1)));
-		if (!isNull(y) && !isNull(VECTOR_ELT(y, 1)))
+		if (length(y) >= 2 && !isNull(VECTOR_ELT(y, 1)))
 		    SET_VECTOR_ELT(ind, 1, duplicate(VECTOR_ELT(y, 1)));
 		setAttrib(ans, R_DimNamesSymbol, ind);
 		UNPROTECT(1);

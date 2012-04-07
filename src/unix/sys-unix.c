@@ -1,7 +1,7 @@
 /*
  *  R : A Computer Language for Statistical Data Analysis
  *  Copyright (C) 1995, 1996  Robert Gentleman and Ross Ihaka
- *  Copyright (C) 1997--2006  Robert Gentleman, Ross Ihaka
+ *  Copyright (C) 1997--2010  Robert Gentleman, Ross Ihaka
  *                            and the R Development Core Team
  *
  *  This program is free software; you can redistribute it and/or modify
@@ -61,7 +61,7 @@ extern Rboolean LoadInitFile;
 attribute_hidden
 FILE *R_OpenInitFile(void)
 {
-    char buf[256], *home, *p = getenv("R_PROFILE_USER");
+    char buf[PATH_MAX], *home, *p = getenv("R_PROFILE_USER");
     FILE *fp;
 
     fp = NULL;
@@ -72,7 +72,7 @@ FILE *R_OpenInitFile(void)
 	    return fp;
 	if((home = getenv("HOME")) == NULL)
 	    return NULL;
-	sprintf(buf, "%s/.Rprofile", home);
+	snprintf(buf, PATH_MAX, "%s/.Rprofile", home);
 	if((fp = R_fopen(buf, "r")))
 	    return fp;
     }
@@ -224,8 +224,8 @@ void R_getProcTime(double *data)
 	1e-3 * (self.ru_stime.tv_usec/1000);
     data[3] = (double) children.ru_utime.tv_sec +
 	1e-3 * (children.ru_utime.tv_usec/1000);
-    data[4] = (double) children.ru_utime.tv_sec +
-	1e-3 * (children.ru_utime.tv_usec/1000);
+    data[4] = (double) children.ru_stime.tv_sec +
+	1e-3 * (children.ru_stime.tv_usec/1000);
 #else
     data[0] = rround(timeinfo.tms_utime / clk_tck, 3);
     data[1] = rround(timeinfo.tms_stime / clk_tck, 3);

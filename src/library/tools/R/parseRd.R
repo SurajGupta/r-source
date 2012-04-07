@@ -55,6 +55,7 @@ parse_Rd <- function(file, srcfile = NULL, encoding = "unknown",
     	srcfile <- srcfile(file0)
     basename <- basename(srcfile$filename)
     srcfile$encoding <- encoding
+    srcfile$Enc <- "UTF-8"
 
     if (encoding == "ASCII") {
         if (any(is.na(iconv(lines, "", "ASCII"))))
@@ -122,10 +123,10 @@ as.character.Rd <- function(x, deparse = FALSE, ...)
     	    } else if (tag %in% EQN) {
     	    	result <- tag
     	    	inEqn <<- 1L
-    	    	result <- c(result, pr(x[[1]], quoteBraces))
+    	    	result <- c(result, pr(x[[1L]], quoteBraces))
     	    	inEqn <<- 0L
     	    	if (length(x) > 1L)
-    	    	    result <- c(result, pr(x[[2]], quoteBraces))
+    	    	    result <- c(result, pr(x[[2L]], quoteBraces))
     	    } else {
     	    	result <- tag
     	    	if (!is.null(option <- attr(x, "Rd_option")))

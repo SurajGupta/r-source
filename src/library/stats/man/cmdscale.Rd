@@ -17,7 +17,7 @@ cmdscale(d, k = 2, eig = FALSE, add = FALSE, x.ret = FALSE)
   \item{d}{a distance structure such as that returned by \code{dist}
     or a full symmetric matrix containing the dissimilarities.}
   \item{k}{the dimension of the space which the data are to be
-    represented in; must be in \eqn{\{1,2,\ldots,n-1\}}.}
+    represented in; must be in \eqn{\{1, 2, \ldots, n-1\}}{{1, 2, \dots, n-1}}.}
   \item{eig}{indicates whether eigenvalues should be returned.}
   \item{add}{logical indicating if an additive constant \eqn{c*} should
     be computed, and added to the non-diagonal dissimilarities such that
@@ -54,9 +54,9 @@ cmdscale(d, k = 2, eig = FALSE, add = FALSE, x.ret = FALSE)
   \item{x}{the doubly centered distance matrix if \code{x.ret} is true.}
   \item{GOF}{a numeric vector of length 2, equal to say
     \eqn{(g_1,g_2)}{(g.1,g.2)}, where
-    \eqn{g_i = (\sum_{j=1}^k \lambda_j)/ (\sum_{j=1}^n T_i(\lambda_j))}{g.i = (sum{j=1..k} lambda[j]) / (sum{j=1..n} T.i(lambda[j]))},
-    where \eqn{\lambda_j}{lambda[j]} are the eigenvalues (sorted
-    decreasingly),
+    \eqn{g_i = (\sum_{j=1}^k \lambda_j)/ (\sum_{j=1}^n T_i(\lambda_j))}{g.i = (sum{j=1..k} \lambda[j]) / (sum{j=1..n} T.i(\lambda[j]))},
+    where \eqn{\lambda_j}{\lambda[j]} are the eigenvalues (sorted in
+    decreasing order),
     \eqn{T_1(v) = \left| v \right|}{T.1(v) = abs(v)}, and
     \eqn{T_2(v) = max( v, 0 )}{T.2(v) = max(v, 0)}.
   }

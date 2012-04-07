@@ -667,6 +667,8 @@ stopifnot(abs(quantile(x,p) - ((1-f)*ox[i] + f*ox[i+1])) < 20*Meps)
 ## rep
 stopifnot(identical(rep(letters, 0), character(0)),
 	  identical(rep.int(1:2, 0), integer(0)))
+
+stopifnot(sum(1:8) == length(rep(1:4, 1:8, each=2)))
 ## end of moved from rep.Rd
 
 
@@ -2150,14 +2152,6 @@ stopifnot(length(res) == 5)
 ## all length one in 1.7.0
 
 
-## PR#3035 problems with sep > ASCII(127)
-f <- tempfile()
-cat("x¦a¦b¦c¦d", "1¦7¦13¦19¦25", "2¦8¦14¦20¦26", "3¦9¦15¦21¦27",
-    "4¦10¦16¦22¦28", "5¦11¦17¦23¦29", "6¦12¦18¦24¦30", sep="\n", file=f)
-read.table(f, header = TRUE, sep ="¦")
-## failed in 1.7.0
-
-
 ## PR#2993 need to consider delta=NULL in power.t.test{ctest}
 power.t.test(n=10, delta=NULL, power=.9, alternative="two.sided")
 ## failed in 1.7.0
@@ -2172,10 +2166,12 @@ stopifnot(is.matrix(eigen(A, EISPACK = TRUE)$vectors))
 
 
 ## [[<-.data.frame
-testdata <- data.frame(a=1:2, b = rep(NA, 2))
-try(testdata[["a"]] <- strptime(c("31121991", "31121991"), "%d%m%Y"))
+testdata <- data.frame(a=1:2, b = c(TRUE, NA))
+td <- strptime(c("31121991", "31121992"), "%d%m%Y")
+testdata[["a"]] <- td
+if(FALSE)
 stopifnot(inherits(.Last.value, "try-error"))
-## succeeded in 1.7.0
+## succeeded in 1.7.0 and again in 2.11.x {should it not?}
 
 
 ## pacf on n x 1 matrix: Paul Gilbert, R-devel, 2003-06-18
@@ -2380,8 +2376,8 @@ stopifnot(identical(rd0, as.POSIXlt(d0)))
 
 
 ## New det() function
-stopifnot(det(m <- cbind(1, c(1, 1))) == 0,
-          determinant(m           )$mod == -Inf,
+m <- cbind(1, c(1, 1))
+stopifnot(det(m) == 0, determinant(m)$mod == -Inf,
           determinant(m, log=FALSE)$mod == 0)
 ## gave error for singular matrices in earlier Aug.2003
 
@@ -2966,8 +2962,11 @@ try(options(list('digits', 'width')))# give an error
 list.files('.', all.files = TRUE, recursive = TRUE)
 
 
-## PR#7116 seg faulted :
-cor(as.array(c(a=1,b=2)), cbind(1:2))
+## PR#7116 segfaulted on A, later versions segfaulted on B or gave different
+## dims for the results.
+A <- cor(as.array(c(a=1,b=2)), cbind(1:2))
+B <- cor(cbind(1:2), as.array(c(a=1,b=2)))
+stopifnot(identical(A, B))
 
 
 ## regression test for PR#7108
@@ -5169,11 +5168,23 @@ if(.Platform$OS.type == "unix") {
     unlink("myTst_*")
 
     ## More building & installing packages
+    ## NB: tests were added here for 2.11.0.
+    ## NB^2: do not do this in the R sources!
+    pkgSrcPath <- file.path(Sys.getenv("SRCDIR"), "Pkgs")
+    ## could use file.copy(recursive = TRUE), but this is Unix-only
+    system(paste('cp -r',
+                 shQuote(file.path(Sys.getenv("SRCDIR"), "Pkgs")),
+                 shQuote(tempdir())
+                 ))
+    pkgPath <- file.path(tempdir(), "Pkgs")
     op <- options(warn=2) # There should be *NO* warnings here!
+    ## pkgB tests an empty R directory
+    dir.create(file.path(pkgPath, "pkgB", "R"), recursive = TRUE,
+               showWarnings = FALSE)
     p.lis <- c("pkgA", "pkgB", "exS4noNS", "exNSS4")
     for(p. in p.lis) {
 	cat("building package", p., "...\n")
-	r <- build.pkg(file.path(Sys.getenv("SRCDIR"), "Pkgs", p.))
+	r <- build.pkg(file.path(pkgPath, p.))
 	cat("installing package", p., "using file", r, "...\n")
 	## we could install the tar file ... (see build.pkg()'s definition)
 	install.packages(r, lib = "myLib", repos=NULL, type = "source")
@@ -5183,7 +5194,8 @@ if(.Platform$OS.type == "unix") {
     ## TODO: not just print, but check the "list":
     print(installed.packages(lib.loc = "myLib", priority = "NA"))
     options(op)
-    unlink("myLib", recursive=TRUE)
+    unlink("myLib", recursive = TRUE)
+    unlink(file.path(pkgPath), recursive = TRUE)
 }
 unlink("myTst", recursive=TRUE)
 
@@ -5466,9 +5478,8 @@ cut(d, "weeks")
 
 ## (Deliberate) overshot in seq(from, to, by) because of fuzz
 stopifnot(seq(0, 1, 0.00025+5e-16) <= 1, seq.int(0, 1, 0.00025+5e-16) <= 1)
-stopifnot(rev(seq(0, 1, 0.00025+5e-16))[1] == 1,
-          rev(seq.int(0, 1, 0.00025+5e-16))[1] == 1)
-# overshot by about 2e-12 in 2.8.x
+## overshot by about 2e-12 in 2.8.x
+## no longer reaches 1 in 2.11.0 (needed a fuzz of 8e-9)
 
 
 ## str() with an "invalid object"
@@ -5885,3 +5896,225 @@ unlink(tf)
 x <- c(101, 102, NA)
 stopifnot(all.equal(mean(x, na.rm = TRUE), weighted.mean(x, na.rm = TRUE)))
 ## divided by 3 in 2.10.0 (only)
+
+
+## regexpr(fixed = TRUE) with a single-byte pattern matching to a MBCS string
+x <- iconv("fa\xE7ile a ", "latin1", "UTF-8")
+stopifnot(identical(regexpr(" ", x), regexpr(" ", x, fixed=TRUE)))
+# fixed=TRUE reported match position in bytes in R <= 2.10.0
+stopifnot(identical(regexpr(" a", x), regexpr(" a", x, fixed=TRUE)))
+## always worked.
+
+## unname() on 0-length vector
+stopifnot(identical(1[FALSE], unname(c(a=1)[FALSE])))
+## failed to drop names in 2.10.0
+
+
+## complete.cases on 0-column data frame
+complete.cases(data.frame(1:10)[-1])
+## failed in 2.10.0
+
+
+## PR#14035, converting (partially) unnamed lists to environments.
+(qq <- with(list(2), ls()))
+nchar(qq)
+with(list(a=1, 2), ls())
+## failed in R < 2.11.0
+
+
+## chisq.test with over-long 'x' or 'y' arg
+# https://stat.ethz.ch/pipermail/r-devel/2009-November/055700.html
+x <- y <- rep(c(1000, 1001, 1002), each=5)
+z <- eval(substitute(chisq.test(x,y), list(x=x)))
+z
+z$observed
+## failed in 2.10.0
+
+
+## unsplit(drop = TRUE) on a data frame failed (PR#14084)
+dff <- data.frame(gr1 = factor(c(1,1,1,1,1,2,2,2,2,2,2), levels=1:4),
+                  gr2 = factor(c(1,2,1,2,1,2,1,2,1,2,3), levels=1:4),
+                  yy = rnorm(11), row.names = as.character(1:11))
+dff2 <- split(dff, list(dff$gr1, dff$gr2), drop=TRUE)
+dff3 <- unsplit(dff2, list(dff$gr1, dff$gr2), drop=TRUE)
+stopifnot(identical(dff, dff3))
+## failed in 2.10.0
+
+
+## mean.difftime ignored its na.rm argument
+z <- as.POSIXct(c("1980-01-01", "1980-02-01", NA, "1980-03-01", "1980-04-01"))
+zz <- diff(z)
+stopifnot(is.finite(mean(zz, na.rm=TRUE)))
+## was NA in 2.10.0
+
+
+## weighted means with zero weights and infinite values
+x <- c(0, 1, 2, Inf)
+w <- c(1, 1, 1, 0)
+z <- weighted.mean(x, w)
+stopifnot(is.finite(z))
+## was NaN in 2.10.x
+
+
+## Arithmetic operations involving "difftime"
+z <- as.POSIXct(c("2009-12-01", "2009-12-02"), tz="UTC")
+(zz <- z[2] - z[1])
+(zzz <- z[1] + zz)
+stopifnot(identical(zzz, z[2]),
+          identical(zz + z[1], z[2]),
+          identical(z[2] - zz, z[1]))
+z <- as.Date(c("2009-12-01", "2009-12-02"))
+(zz <- z[2] - z[1])
+(zzz <- z[1] + zz)
+stopifnot(identical(zzz, z[2]),
+          identical(zz + z[1], z[2]),
+          identical(z[2] - zz, z[1]))
+## failed/gave wrong answers when Ops.difftime was introduced.
+
+
+## quantiles, new possibilities in 2.11.0
+x <- ordered(1:11, labels=letters[1:11])
+quantile(x, type = 1)
+quantile(x, type = 3)
+st <- as.Date("1998-12-17")
+en <- as.Date("2000-1-7")
+ll <- seq(as.Date("2000-1-7"), as.Date("1997-12-17"), by="-1 month")
+quantile(ll, type = 1)
+quantile(ll, type = 3)
+## failed prior to 2.11.0
+
+
+## (asymptotic) point estimate in wilcox.test(*, conf.int=TRUE)
+alt <- eval(formals(stats:::wilcox.test.default)$alternative)
+Z <- c(-2, 0, 1, 1, 2, 2, 3, 5, 5, 5, 7)
+E1 <- sapply(alt, function(a.)
+	     wilcox.test(Z, conf.int = TRUE,
+			 alternative = a., exact = FALSE)$estimate)
+X <- c(6.5, 6.8, 7.1, 7.3, 10.2)
+Y <- c(5.8, 5.8, 5.9, 6, 6, 6, 6.3, 6.3, 6.4, 6.5, 6.5)
+E2 <- sapply(alt, function(a.)
+	     wilcox.test(X,Y, conf.int = TRUE,
+			 alternative = a., exact = FALSE)$estimate)
+stopifnot(E1[-1] == E1[1],
+	  E2[-1] == E2[1])
+## was continiuity corrected, dependent on 'alternative', prior to 2.10.1
+
+
+## read.table with embedded newlines in header (PR#14103)
+writeLines(c('"B1', 'B2"', 'B3'), "test.dat")
+z <- read.table("test.dat", header = TRUE)
+unlink("test.dat")
+stopifnot(identical(z, data.frame("B1.B2"="B3")))
+## Left part of header to be read as data in R < 2.11.0
+
+## switch() with  empty  '...'
+stopifnot(is.null(switch("A")),
+	  is.null(switch(1)), is.null(switch(3L)))
+## the first one hung, 2nd gave error, in R <= 2.10.1
+
+
+## factors with NA levels
+V <- addNA(c(0,0,NA,0,1,1,0,NA,1,1))
+stopifnot(identical(V, V[, drop = TRUE]))
+stopifnot(identical(model.frame(~V), model.frame(~V, xlev = list(V=levels(V)))))
+# dropped NA levels (in two places) in 2.10.1
+V <- c(0,0,NA,0,1,1,0,NA,1,1)
+stopifnot(identical(V, V[, drop = TRUE]))
+stopifnot(identical(model.frame(~V), model.frame(~V, xlev = list(V=levels(V)))))
+## check other cases have not been changed
+
+
+## ks.test gave p=1 rather than p=0.9524 because abs(1/2-4/5)>3/10 was TRUE
+stopifnot(all.equal(ks.test(1:5, c(2.5,4.5))$p.value, 20/21))
+
+
+## NAs in utf8ToInt and v.v.
+stopifnot(identical(utf8ToInt(NA_character_), NA_integer_),
+          identical(intToUtf8(NA_integer_), NA_character_),
+          identical(intToUtf8(NA_integer_, multiple = TRUE), NA_character_))
+## no NA-handling prior to 2.11.0
+
+
+## tcrossprod() for  matrix - vector combination
+u <- 1:3 ; v <- 1:5
+## would not work identically: names(u) <- LETTERS[seq_along(u)]
+U <- as.matrix(u)
+stopifnot(identical(tcrossprod(u,v), tcrossprod(U,v)),
+	  identical(tcrossprod(u,v), u %*% t(v)),
+	  identical(tcrossprod(v,u), tcrossprod(v,U)),
+	  identical(tcrossprod(v,u), v %*% t(u)))
+## tcrossprod(v,U) and (U,v) wrongly failed in R <= 2.10.1
+
+
+## det() and determinant() in NA cases
+m <- matrix(c(0, NA, 0, NA, NA, 0, 0, 0, 1), 3,3)
+m0 <- rbind(0, cbind(0, m))
+if(FALSE) { ## ideally, we'd want -- FIXME --
+stopifnot(is.na(det(m)), 0 == det(m0))
+} else print(c(det.m = det(m), det.m0 = det(m0)))
+## the first wrongly gave 0  (still gives .. FIXME)
+
+
+## c/rbind(deparse.level=2)
+attach(mtcars)
+(cn <- colnames(cbind(qsec, hp, disp)))
+stopifnot(identical(cn, c("qsec", "hp", "disp")))
+(cn <- colnames(cbind(qsec, hp, disp, deparse.level = 2)))
+stopifnot(identical(cn, c("qsec", "hp", "disp")))
+(cn <- colnames(cbind(qsec, log(hp), sqrt(disp))))
+stopifnot(identical(cn, c("qsec", "", "")))
+(cn <- colnames(cbind(qsec, log(hp), sqrt(disp), deparse.level = 2)))
+stopifnot(identical(cn, c("qsec", "log(hp)", "sqrt(disp)")))
+detach()
+## 2.10.1 gave no column names for deparse.level=2
+
+
+## Infinite-loops with match(incomparables=)
+match(c("A", "B", "C"), "A", incomparables=NA)
+match(c("A", "B", "C"), c("A", "B"), incomparables="A")
+## infinite-looped in 2.10.1
+
+
+## path.expand did not propagate NA
+stopifnot(identical(c("foo", NA), path.expand(c("foo", NA))))
+## 2.10.1 gave "NA"
+
+
+## prettyNum(drop0trailing=TRUE) mangled complex values (PR#14201)
+z <- c(1+2i, 1-3i)
+str(z) # a user
+stopifnot(identical(format(z, drop0trailing=TRUE), as.character(z)))
+## 2.10.1 gave 'cplx [1:2] 1+2i 1+3i'
+
+
+## "exact" fisher.test
+dd <- data.frame(group=1, score=c(rep(0,14), rep(1,29), rep(2, 16)))[rep(1:59, 2),]
+dd[,"group"] <- c(rep("DOG", 59), rep("kitty", 59))
+Pv <- with(dd, fisher.test(score, group)$p.value)
+stopifnot(0 <= Pv, Pv <= 1)
+## gave P-value 1 + 1.17e-13  in R < 2.11.0
+
+
+## Use of switch inside lapply (from BioC package ChromHeatMap)
+lapply("forward", switch, forward = "posS", reverse = "negS")
+## failed  when first converted to primitive.
+
+
+## evaluation of arguments of log2
+assertError(try(log2(quote(1:10))))
+## 'worked' in 2.10.x by evaluting the arg twice.
+
+
+## mean with NAs and trim (Bill Dunlap,
+## https://stat.ethz.ch/pipermail/r-devel/2010-March/056982.html)
+stopifnot(is.na(mean(c(1,10,100,NA), trim=0.1)),
+          is.na(mean(c(1,10,100,NA), trim=0.26)))
+## gave error, real value respectively in R <= 2.10.1
+
+
+## all.equal(*, tol) for objects with numeric attributes
+a <- structure(1:17, xtras = c(pi, exp(1)))
+b <- a * (II <- (1 + 1e-7))
+attr(b,"xtras") <- attr(a,"xtras") * II
+stopifnot(all.equal(a,b, tol=2e-7))
+## gave  "Attributes: .... relative difference: 1e-07"  in R <= 2.10.x

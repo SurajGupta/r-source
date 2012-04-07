@@ -37,6 +37,11 @@
               else
               NA)
     if(identical(saved, FALSE)) {
+        ## optionally turn off old-style mlists
+        mopt <- Sys.getenv("R_MLIST")
+        .noMlistsFlag <<- (is.character(mopt) && all(mopt != "YES"))
+        if(!.noMlistsFlag) 
+            cat("Initializing with support for old-style methods list objects\n")
         cat("initializing class and method definitions ...")
         on.exit(assign(".saveImage", NA, envir = where))
         ## set up default prototype (uses .Call so has be at load time)
@@ -64,7 +69,7 @@
         assign(".isPrototype", ..isPrototype, envir = where)
         .InitClassUnion(where)
         .InitS3Classes(where)
-        .InitSpecialTypes(where)
+        .InitSpecialTypesAndClasses(where)
         ## now seal the classes defined in the package
         for(cl in get(".SealedClasses", where))
             sealClass(cl, where)
@@ -140,3 +145,8 @@
 
 .saveImage <- FALSE
 ## cat("Saving namespace image ...\n")
+
+## want ASCII quotes, not fancy nor translated ones
+.dQ <- function (x) paste('"', x, '"', sep = '')
+
+

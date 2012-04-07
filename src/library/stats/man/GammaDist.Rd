@@ -35,7 +35,7 @@ rgamma(n, shape, rate = 1, scale = 1/rate)
   \item{log, log.p}{logical; if \code{TRUE}, probabilities/densities \eqn{p}
     are returned as \eqn{log(p)}.}
   \item{lower.tail}{logical; if TRUE (default), probabilities are
-    \eqn{P[X \le x]}{P[X <= x]}, otherwise, \eqn{P[X > x]}{P[X > x]}.}
+    \eqn{P[X \le x]}, otherwise, \eqn{P[X > x]}.}
 }
 \value{
   \code{dgamma} gives the density,
@@ -90,7 +90,7 @@ rgamma(n, shape, rate = 1, scale = 1/rate)
   Karl Pearson in his 1922 tables) omit the normalizing factor,
   defining the incomplete gamma function as \code{pgamma(x, a) * gamma(a)}.
   A few use the \sQuote{upper} incomplete gamma function, the integral
-  from \eqn{x} to \eqn{\infty} which can be computed by
+  from \eqn{x} to \eqn{\infty}{infinity} which can be computed by
   \code{pgamma(x, a, lower=FALSE) * gamma(a)}, or its normalized
   version. See also
   \url{http://en.wikipedia.org/wiki/Incomplete_gamma_function}.

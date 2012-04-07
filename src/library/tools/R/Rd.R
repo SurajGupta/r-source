@@ -542,13 +542,26 @@ function(x)
     .strip_whitespace(txt)
 }
 
+### * .Rd_get_argument_table
+
+.Rd_get_argument_table <-
+function(x)
+{
+    x <- .Rd_get_section(x, "arguments")
+    if(!length(x)) return(matrix(character(), 0L, 2L))
+    ## Extract two-arg \item tags at top level ... non-recursive.
+    x <- x[RdTags(x) == "\\item"]
+    if(!length(x)) return(matrix(character(), 0L, 2L))
+    x <- lapply(x[sapply(x, length) == 2L], sapply, .Rd_deparse)
+    matrix(unlist(x), ncol = 2L, byrow = TRUE)
+}
+
 ### * .Rd_get_item_tags
 
 .Rd_get_item_tags <-
 function(x)
 {
     ## Extract two-arg \item tags at top level ... non-recursive.
-
     x <- x[RdTags(x) == "\\item"]
     out <- lapply(x[sapply(x, length) == 2L],
                   function(e) .Rd_deparse(e[[1L]]))
@@ -585,6 +598,22 @@ function(x)
     }
 
     .Rd_deparse(recurse(x), tag = FALSE)
+}
+
+### * .Rd_get_methods_description_table
+
+.Rd_get_methods_description_table <-
+function(x)
+{
+    y <- matrix(character(), 0L, 2L)
+    x <- .Rd_get_section(x, "Methods", FALSE)
+    if(!length(x)) return(y)
+    x <- .Rd_get_section(x, "describe")
+    if(!length(x)) return(y)
+    x <- x[RdTags(x) == "\\item"]
+    if(!length(x)) return(y)
+    x <- lapply(x[sapply(x, length) == 2L], sapply, .Rd_deparse)
+    matrix(unlist(x), ncol = 2L, byrow = TRUE)
 }
 
 ### * .Rd_get_doc_type
@@ -708,20 +737,23 @@ function(x)
 
 ### * fetchRdDB
 
-fetchRdDB <- function (filebase, key = NULL)
+fetchRdDB <-
+function(filebase, key = NULL)
 {
     data <- paste(filebase, "rdb", sep = ".")
-    v <- .readRDS(paste(filebase, "rdx", sep = "."))$variables
+    v <- .readRDS(paste(filebase, "rdx", sep = "."))
+    compress <- v$compressed
+    v <- v$variables
     if(length(key)) {
         if(! key %in% names(v))
             stop(gettextf("No help on %s found in RdDB %s",
                           sQuote(key), sQuote(filebase)),
                  domain = NA)
-        lazyLoadDBfetch(v[key][[1]], data, TRUE, function(n){})
+        lazyLoadDBfetch(v[key][[1L]], data, compress, function(n){})
     } else {
         res <- v # a list of the right names
         for(i in seq_along(res))
-            res[[i]] <- lazyLoadDBfetch(v[i][[1]], data, TRUE, function(n){})
+            res[[i]] <- lazyLoadDBfetch(v[i][[1L]], data, compress, function(n){})
         invisible(res)
     }
 }

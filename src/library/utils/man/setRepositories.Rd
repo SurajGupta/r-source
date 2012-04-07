@@ -1,6 +1,6 @@
 % File src/library/utils/man/setRepositories.Rd
 % Part of the R package, http://www.R-project.org
-% Copyright 1995-2009 R Core Development Team
+% Copyright 1995-2010 R Core Development Team
 % Distributed under GPL 2 or later
 
 \name{setRepositories}
@@ -13,15 +13,10 @@
 setRepositories(graphics = getOption("menu.graphics"), ind = NULL)
 }
 \arguments{
-  \item{graphics}{Logical.
-#ifdef windows
-    If true use a listbox,
-#endif
-#ifdef unix
-    If true and \pkg{tcltk} and an X server are available, use a Tk
-    widget, or if under the AQUA interface use a Mac OS X widget,
-#endif
-    otherwise use a text list in the console.}
+  \item{graphics}{Logical. If true, use a graphical list: on Windows or
+    Mac OS X GUI use a list box, and on a Unix-alike if \pkg{tcltk} and an X
+    server are available, use Tk widget. Otherwise use a text
+    \code{\link{menu}}.}
   \item{ind}{\code{NULL} or a vector of integer indices, which have the
     same effect as if they were entered at the prompt for
     \code{graphics=FALSE}.}
@@ -33,7 +28,7 @@ setRepositories(graphics = getOption("menu.graphics"), ind = NULL)
   in \file{\var{HOME}/.R/repositories} which will take precedence.
   
   A Bioconductor mirror can be selected by setting
-  \code{options("BioC_mirror")}: the default value is
+  \code{\link{options}("BioC_mirror")}: the default value is
   \samp{"http://www.bioconductor.org"}.
   
   The items that are preselected are those that are currently in
@@ -43,6 +38,8 @@ setRepositories(graphics = getOption("menu.graphics"), ind = NULL)
   The list of repositories offered depends on the setting of option
   \code{"pkgType"} as some repositories only offer a subset of types
   (e.g. only source packages or not Mac OS X binary packages).
+  Further, for binary packages some repositories (notably R-Forge) only
+  offer packages for the current or recent versions of \R.
 
   This function requires the \R session to be interactive unless
   \code{ind} is supplied.

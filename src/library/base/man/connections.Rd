@@ -39,7 +39,7 @@
 }
 \usage{
 file(description = "", open = "", blocking = TRUE,
-     encoding = getOption("encoding"))
+     encoding = getOption("encoding"), raw = FALSE)
 
 url(description, open = "", blocking = TRUE,
     encoding = getOption("encoding"))
@@ -85,6 +85,11 @@ isIncomplete(con)
   \item{blocking}{logical.  See the \sQuote{Blocking} section.}
   \item{encoding}{The name of the encoding to be used.  See the
     \sQuote{Encoding} section.}
+  \item{raw}{logical.  If true, a \sQuote{raw} interface is used which
+    will be more suitable for arguments which are not regular files,
+    e.g. character devices.  This suppresses the check for a compressed
+    file when opening for text-mode reading, and asserts that the
+    \sQuote{file} may not be seekable.}
   \item{compression}{integer in 0--9.  The amount of compression to be
     applied when writing, from none to maximal available.  For
     \code{xzfile} can also be negative: see the \sQuote{Compression}
@@ -117,7 +122,7 @@ isIncomplete(con)
 #ifdef windows
   in a console or embedded version of \R, and is not in \code{RGui}).
 #endif
-  (See also \code{\link{stdin}} for the subtly different R-level concept
+  (See also \code{\link{stdin}()} for the subtly different R-level concept
   of \code{stdin}.)
 
   For \code{url} the description is a complete URL, including scheme
@@ -148,11 +153,9 @@ isIncomplete(con)
   environment variable.)
 #endif
 
-  For \code{fifo} the description is the path of the fifo.
-#ifdef windows
-  (Windows does not have fifos, so attempts to use this function are an
+  For \code{fifo} the description is the path of the fifo.  (Windows
+  does not have fifos, so attempts to use this function there are an
   error.)
-#endif
 
   All platforms support \code{file}, \code{gzfile}, \code{bzfile},
   \code{xzfile} \code{unz} and \code{url("file://")} connections.  The
@@ -243,8 +246,8 @@ isIncomplete(con)
 \section{Modes}{
   Possible values for the argument \code{open} are
   \describe{
-    \item{\code{"r"} or \code{"rt"}}{Open for reading in (usually) text mode.}
-    \item{\code{"w"} or \code{"wt"}}{Open for writing in (usually) text mode.}
+    \item{\code{"r"} or \code{"rt"}}{Open for reading in text mode.}
+    \item{\code{"w"} or \code{"wt"}}{Open for writing in text mode.}
     \item{\code{"a"} or \code{"at"}}{Open for appending in text mode.}
     \item{\code{"rb"}}{Open for reading in binary mode.}
     \item{\code{"wb"}}{Open for writing in binary mode.}
@@ -256,7 +259,7 @@ isIncomplete(con)
   }
   Not all modes are applicable to all connections: for example URLs can
   only be opened for reading.  Only file and socket connections can be
-  opened for both reading and writing/appending.
+  opened for both reading and writing.
   
 #ifdef unix
   If a file or fifo is created on a Unix-alike, its permissions will be
@@ -267,7 +270,7 @@ isIncomplete(con)
   For many connections there is little or no difference between text and
   binary modes. For file-like connections on Windows, translation of
   line endings (between LF and CRLF) is done in text mode only (but text
-  read operations on connectiions such as \code{\link{readLines}},
+  read operations on connections such as \code{\link{readLines}},
   \code{\link{scan}} and \code{\link{source}} work for any form of line
   ending).  Various \R operations are possible in only one of the modes:
   for example \code{\link{pushBack}} is text-oriented and is only
@@ -279,23 +282,24 @@ isIncomplete(con)
   The mode of a connection is determined when actually opened, which is
   deferred if \code{open = ""} is given (the default for all but socket
   connections).  An explicit call to \code{open} can specify the mode,
-  but otherwise the mode will be \code{"r"}.  \code{gzfile},
+  but otherwise the mode will be \code{"r"}.  (\code{gzfile},
   \code{bzfile} and \code{xzfile} connections are exceptions, as the
   compressed file always has to be opened in binary mode and no
-  conversion of line-endings is done even on Windows.  Most operations
-  that need write access or text-only or binary-only mode will override
-  the default mode of a non-yet-open connection.
+  conversion of line-endings is done even on Windows, so the default
+  mode is interpreted as \code{"rb"}.)  Most operations that need write
+  access or text-only or binary-only mode will override the default mode
+  of a non-yet-open connection.
 }
 
 \section{Compression}{
   \R has for a long time supported \command{gzip} and \command{bzip2}
-  compression, and support for \command{xz} compresssion (and read-only
+  compression, and support for \command{xz} compression (and read-only
   support for its precursor \code{lzma} compression) was added in \R
   2.10.0.
 
   For reading, the type of compression (if any) can be determined from
   the first few bytes of the file, and this is exploited as from \R
-  2.10.0.  Thus for \code{file} connections, if \code{open} is
+  2.10.0.  Thus for \code{file(raw = FALSE)} connections, if \code{open} is
   \code{""}, \code{"r"} or \code{"rt"} the connection can read any of
   the compressed file types as well as uncompressed files.  (Using
   \code{"rb"} will allow compressed files to be read byte-by-byte.)
@@ -303,7 +307,7 @@ isIncomplete(con)
   compression and uncompressed files in any read mode.
 
   (The type of compression is determined when the connection is created
-  if \code{open} is unspecifed and a file of that name exists.  If the
+  if \code{open} is unspecified and a file of that name exists.  If the
   intention is to open the connection to write a file with a
   \emph{different} form of compression under that name, specify
   \code{open = "w"} when the connection is created or

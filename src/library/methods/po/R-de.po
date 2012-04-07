@@ -1,14 +1,14 @@
 # Translation of src/library/methods/po/R-methods.pot
 # to German
-# Copyright (C) 2005-2009 The R Foundation
+# Copyright (C) 2005-2010 The R Foundation
 # This file is distributed under the same license as the R package.
-# Detlef Steuer <steuer@hsu-hh.de>, 2007-2009.
+# Detlef Steuer <steuer@hsu-hh.de>, 2007-2010.
 msgid ""
 msgstr ""
-"Project-Id-Version: R 2.10.0\n"
+"Project-Id-Version: R 2.11.0\n"
 "Report-Msgid-Bugs-To: bugs@r-project.org\n"
-"POT-Creation-Date: 2009-12-10 19:18\n"
-"PO-Revision-Date: 2009-10-07 14:27+0200\n"
+"POT-Creation-Date: 2010-04-06 07:17\n"
+"PO-Revision-Date: 2010-03-23 16:16+0100\n"
 "Last-Translator: Detlef Steuer <detlef.steuer@hsu-hh.de>\n"
 "Language-Team: R-core <R-core@r-project.org>\n"
 "MIME-Version: 1.0\n"
@@ -25,8 +25,9 @@ msgstr "OOPS: mit der Zeile ist irgendetwas falsch"
 msgid "in .OldClassesPrototypes"
 msgstr "in .OldClassesPrototypes"
 
+#, fuzzy
 msgid ""
-"unnamed argument to initialize() for S3 class must have a class defintion; "
+"unnamed argument to initialize() for S3 class must have a class definition; "
 "\"%s\" does not"
 msgstr ""
 "namenloses Argument für initialize() für eine S3 Klasse muss eine "
@@ -203,14 +204,6 @@ msgstr ""
 msgid "generic function \"%s\" not found for removal"
 msgstr "generische Funktion \"%s\" nicht gefunden, um sie zu entfernen"
 
-#, fuzzy
-msgid ""
-"invalid argument 'f', expected a function or its name, got an object of "
-"class %s"
-msgstr ""
-"unzulässiges Argument \"f\", erwartet ist eine Funktion oder deren Name, "
-"bekam Objekt der Klasse \"%s\""
-
 msgid ""
 "internal error: did not get a valid generic function object for function \"%s"
 "\""
@@ -307,6 +300,9 @@ msgstr "keine generische Funktion für \"%s\" gefunden"
 msgid "No method found for function \"%s\" and signature %s"
 msgstr "Keine Methode für Funktion \"%s\" und Signatur %s gefunden"
 
+msgid "Warning:  using defunct methods list search"
+msgstr ""
+
 msgid ""
 "apparent inconsistency in the methods for function \"%s\"; argument \"%s\" "
 "in the signature corresponds to \"%s\" in the methods list object"
@@ -321,11 +317,19 @@ msgstr ""
 "keine S4 Methode für Funktion \"%s\" und Signatur %s; beachten Sie "
 "getS3method(), falls S3 Methode gesucht"
 
-msgid "no method defined for function \"%s\" and signature %s"
+#, fuzzy
+msgid ""
+"no method defined in methods list object for function \"%s\" and signature %s"
 msgstr "keine Methode für Funktion \"%s\" und Signatur %s definiert"
 
 msgid "'file' must be a character string or a connection"
 msgstr "'file' muss eine Zeichenkette oder eine Verbindung sein"
+
+msgid ""
+"argument \"signature\" is not meaningful with the current implementation and "
+"is ignored \n"
+"(extract a subset of the methods list instead)"
+msgstr ""
 
 msgid "No method for \"...\" matches class \"%s\""
 msgstr "keine Methode für \"...\" passt auf Klasse \"%s\""
@@ -519,6 +523,14 @@ msgstr ""
 "'useInherited' muss TRUE oder FALSE sein oder ein benannter Vektor solcher "
 "Werte; bekam ein Objekt der Klasse \"%s\""
 
+#, fuzzy
+msgid ""
+"Default method must be a method definition, a primitive or NULL: got an "
+"object of class %s"
+msgstr ""
+"eine Validierungsmethode muss eine Funktion mit einem Argument sein, bekam "
+"Objekt der Klasse \"%s\""
+
 msgid ""
 "trying to match a method signature to an object (of class \"%s\") that is "
 "not a generic function"
@@ -561,6 +573,17 @@ msgstr "keine generische Funktion für \"%s\" gefunden"
 
 msgid "skipping methods list element %s of unexpected class \"%s\""
 msgstr "überspringe Methodenlistenelement %s der unerwarteten Klasse \"%s\""
+
+msgid ""
+"%s, along with other use of the \"MethodsList\" metadata objects, is "
+"deprecated."
+msgstr ""
+
+msgid "In %s: use of \"MethodsList\" metadata objects is deprecated."
+msgstr ""
+
+msgid "Use %s instead."
+msgstr ""
 
 msgid "invalid object for formal method definition: type \"%s\""
 msgstr "unzulässiges Objekt für die formale Methodendefinition: Typ \"%s\""
@@ -954,6 +977,11 @@ msgstr "keine generische Funktion für \"%s\" gefunden"
 
 msgid "Empty function name in .getGeneric"
 msgstr "Leerer Funktionsname in .getGeneric"
+
+msgid ""
+"Methods list objects are not maintained in this version of R:  request for "
+"function %s may return incorrect information"
+msgstr ""
 
 msgid ""
 "Package \"%s\" seems to have out-of-date methods; need to reinstall from "
@@ -1391,7 +1419,8 @@ msgstr ""
 "Ungültiges Objekt im Metatable der Methoden für \"%s\", Label \"%s\", hatte "
 "Klasse \"%s\""
 
-msgid "Invalid mlist element  for signature \""
+#, fuzzy
+msgid "Invalid mlist element for signature \""
 msgstr "Ungültiges mlist Element für die Signatur \""
 
 msgid "\" at level"
@@ -1614,6 +1643,14 @@ msgstr ""
 "keine Definiton der Klasse \"%s\" an der angegebenen Position, %s, "
 "Definitinen bei: %s"
 
+#, fuzzy
+msgid ""
+"invalid ignore= argument; should be a class definition or a character "
+"vector, got an object of class %s"
+msgstr ""
+"Argument \"f\" muss eine generische Funktion oder eine Zeichenkette sein;\n"
+" bekam ein Objekt aus Klasse \"%s\""
+
 msgid "An object of class \""
 msgstr "Ein Objekt der Klasse \""
 
@@ -1719,6 +1756,14 @@ msgid "no definition for class %s"
 msgid_plural "no definition for classes %s"
 msgstr[0] "keine Definition der Klasse \"%s\" gefunden"
 msgstr[1] "keine Definition der Klasse \"%s\" gefunden"
+
+#, fuzzy
+#~ msgid ""
+#~ "invalid argument 'f', expected a function or its name, got an object of "
+#~ "class %s"
+#~ msgstr ""
+#~ "unzulässiges Argument \"f\", erwartet ist eine Funktion oder deren Name, "
+#~ "bekam Objekt der Klasse \"%s\""
 
 #~ msgid "Arguments of method and generic are not in the same order"
 #~ msgstr ""

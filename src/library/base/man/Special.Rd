@@ -1,6 +1,6 @@
 % File src/library/base/man/Special.Rd
 % Part of the R package, http://www.R-project.org
-% Copyright 1995-2009 R Core Development Team
+% Copyright 1995-2010 R Core Development Team
 % Distributed under GPL 2 or later
 
 \name{Special}
@@ -49,7 +49,7 @@ lfactorial(x)
 \details{
   The functions \code{beta} and \code{lbeta} return the beta function
   and the natural logarithm of the beta function,
-  \deqn{B(a,b) = \frac{\Gamma(a)\Gamma(b)}{\Gamma(a+b)}.}{B(a,b) = (Gamma(a)Gamma(b))/(Gamma(a+b)).}
+  \deqn{B(a,b) = \frac{\Gamma(a)\Gamma(b)}{\Gamma(a+b)}.}{B(a,b) = \Gamma(a)\Gamma(b)/\Gamma(a+b).}
   The formal definition is
   \deqn{B(a, b) = \int_0^1 t^{a-1} (1-t)^{b-1} dt}{integral_0^1 t^(a-1) (1-t)^(b-1) dt}
   (Abramowitz and Stegun section 6.2.1, page 258).  Note that it is only
@@ -60,9 +60,12 @@ lfactorial(x)
   \eqn{\Gamma(x)} and the natural logarithm of \emph{the absolute value of} the
   gamma function.  The gamma function is defined by
   (Abramowitz and Stegun section 6.1.1, page 255)
-  \deqn{\Gamma(x) = \int_0^\infty t^{x-1} e^{-t} dt}{integral_0^Inf t^(x-1) exp(-t) dt}
+  \deqn{\Gamma(x) = \int_0^\infty t^{x-1} e^{-t} dt}{\Gamma(x) = integral_0^Inf t^(x-1) exp(-t) dt}
   for all real \code{x} except zero and negative integers (when
-  \code{NaN} is returned).
+  \code{NaN} is returned).  There will be a warning on possible loss of
+  precision for values which are too close (within about
+  \eqn{10^{-8}}{1e-8})) to a negative integer less than \samp{-10}.
+
   \code{factorial(x)} (\eqn{x!} for non-negative integer \code{x})
   is defined to be \code{gamma(x+1)} and \code{lfactorial} to be
   \code{lgamma(x+1)}.
@@ -72,16 +75,17 @@ lfactorial(x)
   \code{psigamma(x, deriv)} (\code{deriv >= 0}) computes the
   \code{deriv}-th derivative of \eqn{\psi(x)}.
   \deqn{\code{digamma(x)} = \psi(x) = \frac{d}{dx}\ln\Gamma(x) =
-    \frac{\Gamma'(x)}{\Gamma(x)}}{digamma(x) = psi(x) = d/dx{ln Gamma(x)} = Gamma'(x) / Gamma(x)}
+    \frac{\Gamma'(x)}{\Gamma(x)}}{digamma(x) = \psi(x) = d/dx{ln \Gamma(x)} = \Gamma'(x) / \Gamma(x)}
   This is often called the \sQuote{polygamma} function, e.g. in
-  Abramowitz and Stegun (section 6.4.1, page 260); and its higher
+  Abramowitz and Stegun (section 6.4.1, page 260); and higher
   derivatives (\code{deriv = 2:4}) have occasionally been called
   \sQuote{tetragamma}, \sQuote{pentagamma}, and \sQuote{hexagamma}.
 
   The functions \code{choose} and \code{lchoose} return binomial
-  coefficients and their logarithms.  Note that \code{choose(n,k)} is
-  defined for all real numbers \eqn{n} and integer \eqn{k}.  For \eqn{k
-    \ge 1}{k >= 1} as \eqn{n(n-1)\cdots(n-k+1) / k!}{n(n-1)...(n-k+1) / k!},
+  coefficients and the logarithms of their absolute values.  Note that
+  \code{choose(n,k)} is defined for all real numbers \eqn{n} and integer
+  \eqn{k}.  For \eqn{k \ge 1} it is defined as
+  \eqn{n(n-1)\cdots(n-k+1) / k!}{n(n-1)\dots(n-k+1) / k!},
   as \eqn{1} for \eqn{k = 0} and as \eqn{0} for negative \eqn{k}.
   Non-integer values of \code{k} are rounded to an integer, with a warning.
   \cr \code{choose(*,k)} uses direct arithmetic (instead of
@@ -90,8 +94,9 @@ lfactorial(x)
   \pkg{utils}) for enumeration of all possible combinations.
 
   The \code{gamma}, \code{lgamma}, \code{digamma} and \code{trigamma}
-  functions are generic: methods can be defined for them individually or
-  via the \code{\link[=S3groupGeneric]{Math}} group generic.
+  functions are \link{internal generic} \link{primitive} functions: methods can be
+  defined for them individually or via the
+  \code{\link[=S3groupGeneric]{Math}} group generic.
 }
 \source{
   \code{gamma}, \code{lgamma}, \code{beta} and \code{lbeta} are based on
@@ -178,8 +183,10 @@ sqrt(1.25)
 sum(choose(1/2, k)* .25^k)
 
 \dontshow{
-stopifnot(all.equal(  choose(1/2, -1:9),
-                    mychoose(1/2, -1:9)),
+k. <- 1:9
+stopifnot(all.equal( (choose(1/2, k.) -> ck.),
+                    mychoose(1/2, k.)),
+          all.equal(lchoose(1/2, k.), log(abs(ck.))),
           all.equal(sqrt(1.25),
                     sum(choose(1/2, k)* .25^k)))
 }

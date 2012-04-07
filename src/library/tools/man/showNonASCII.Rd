@@ -1,6 +1,6 @@
 % File src/library/tools/man/showNonASCII.Rd
 % Part of the R package, http://www.R-project.org
-% Copyright 2008 R Core Development Team
+% Copyright 2008-10 R Core Development Team
 % Distributed under GPL 2 or later
 
 \name{showNonASCII}
@@ -24,7 +24,10 @@ showNonASCII(x)
   preceded by the line number and with non-ASCII bytes highlighted
   \emph{via} \code{\link{iconv}(sub = "byte")}.
 }
-
+\value{
+  The elements of \code{x} containing non-ASCII characters will be returned 
+  invisibly.
+}
 \examples{
 out <- c(
 "fa\xE7ile test of showNonASCII():",
@@ -33,9 +36,10 @@ out <- c(
 "   This has an \xfcmlaut in it.",
 "   OK again.",
 "}")
-cat(out, file = "my.Rd", sep = "\n")
+f <- tempfile()
+cat(out, file = f, sep = "\n")
 
-showNonASCII(readLines("my.Rd"))
-unlink("my.Rd")
+showNonASCII(readLines(f))
+unlink(f)
 }
 \keyword{utilities}

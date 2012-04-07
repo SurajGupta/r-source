@@ -1,7 +1,7 @@
 /*
  *  R : A Computer Language for Statistical Data Analysis
  *  Copyright (C) 1995, 1996  Robert Gentleman and Ross Ihaka
- *  Copyright (C) 1998, 2001-9 The R Development Core Team
+ *  Copyright (C) 1998, 2001-10 The R Development Core Team
  *
  *  This program is free software; you can redistribute it and/or modify
  *  it under the terms of the GNU General Public License as published by
@@ -147,9 +147,11 @@ static void Init_R_Platform(SEXP rho)
 #else
     SET_VECTOR_ELT(value, 4, mkString("little"));
 #endif
-#ifdef Win32
+#if defined(WIN64)
+    SET_VECTOR_ELT(value, 5, mkString("win64.binary"));
+#elif defined(Win32)
     SET_VECTOR_ELT(value, 5, mkString("win.binary"));
-#else /* not Win32 */
+#else /* not Windows */
 /* pkgType should be "mac.binary" for CRAN build *only*, not for all
    AQUA builds. Also we want to be able to use "mac.binary.leopard"
    and similar for special builds. */
@@ -271,7 +273,7 @@ SEXP attribute_hidden do_date(SEXP call, SEXP op, SEXP args, SEXP rho)
 SEXP attribute_hidden do_fileshow(SEXP call, SEXP op, SEXP args, SEXP rho)
 {
     SEXP fn, tl, hd, pg;
-    const char **f, **h, *t, *pager;
+    const char **f, **h, *t, *pager = NULL /* -Wall */;
     Rboolean dl;
     int i, n;
 
@@ -294,26 +296,29 @@ SEXP attribute_hidden do_fileshow(SEXP call, SEXP op, SEXP args, SEXP rho)
     h = (const char**) R_alloc(n, sizeof(char*));
     for (i = 0; i < n; i++) {
 	SEXP el = STRING_ELT(fn, i);
-	if (!isNull(el))
+	if (!isNull(el) && el != NA_STRING)
 #ifdef Win32
 	    f[i] = acopy_string(reEnc(CHAR(el), getCharCE(el), CE_UTF8, 1));
 #else
 	    f[i] = acopy_string(translateChar(el));
 #endif
 	else
-	    f[i] = "";
-	if (!isNull(STRING_ELT(hd, i)))
+            error(_("invalid filename specification"));
+	if (STRING_ELT(hd, i) != NA_STRING)
 	    h[i] = acopy_string(translateChar(STRING_ELT(hd, i)));
 	else
-	    h[i] = "";
+            error(_("invalid '%s' argument"), "headers");
     }
-    if (length(tl) >= 1 || !isNull(STRING_ELT(tl, 0)))
+    if (isValidStringF(tl))
 	t = acopy_string(translateChar(STRING_ELT(tl, 0)));
     else
 	t = "";
-    if (length(pg) >= 1 || !isNull(STRING_ELT(pg, 0))) {
+    if (isValidStringF(pg)) {
 	SEXP pg0 = STRING_ELT(pg, 0);
-	pager = acopy_string(CHAR(pg0));
+        if (pg0 != NA_STRING)
+            pager = acopy_string(CHAR(pg0));
+        else
+            error(_("invalid '%s' argument"), "pager");
     } else
 	pager = "";
     R_ShowFiles(n, f, h, t, dl, pager);
@@ -864,66 +869,11 @@ static SEXP filename(const char *dir, const char *file)
     return ans;
 }
 
-# include <tre/regex.h>
-# define regcomp tre_regcomp
-# define regexec tre_regexec
-# define regfree tre_regfree
-# define regerror tre_regerror
+#include <tre/tre.h>
 
-static void count_files(const char *dnp, int *count,
-			Rboolean allfiles, Rboolean recursive,
-			int pattern, regex_t reg)
-{
-    DIR *dir;
-    struct dirent *de;
-    char p[PATH_MAX];
-#ifdef Windows
-    /* For consistency with other functions */
-    struct _stati64 sb;
-#else
-    struct stat sb;
-#endif
-
-    if (strlen(dnp) >= PATH_MAX)  /* should not happen! */
-	error(_("directory/folder path name too long"));
-    if ((dir = opendir(dnp)) == NULL) {
-	warning(_("list.files: '%s' is not a readable directory"), dnp);
-    } else {
-	while ((de = readdir(dir))) {
-	    if (allfiles || !R_HiddenFile(de->d_name)) {
-		if (recursive) {
-#ifdef Win32
-		    if (strlen(dnp) == 2 && dnp[1] == ':')
-			snprintf(p, PATH_MAX, "%s%s", dnp, de->d_name);
-		    else
-			snprintf(p, PATH_MAX, "%s%s%s", dnp, R_FileSep, de->d_name);
-#else
-		    snprintf(p, PATH_MAX, "%s%s%s", dnp, R_FileSep, de->d_name);
-#endif		    
-#ifdef Windows
-		    _stati64(p, &sb);
-#else
-		    stat(p, &sb);
-#endif
-		    if ((sb.st_mode & S_IFDIR) > 0) {
-			if (strcmp(de->d_name, ".") && strcmp(de->d_name, ".."))
-				count_files(p, count, allfiles, recursive,
-					    pattern, reg);
-			continue;
-		    }
-		}
-		if (pattern) {
-		    if (regexec(&reg, de->d_name, 0, NULL, 0) == 0) (*count)++;
-		} else (*count)++;
-	    }
-	}
-	closedir(dir);
-    }
-}
-
-static void list_files(const char *dnp, const char *stem, int *count, SEXP ans,
+static void list_files(const char *dnp, const char *stem, int *count, SEXP *pans,
 		       Rboolean allfiles, Rboolean recursive,
-		       int pattern, regex_t reg)
+                       const regex_t *reg, int *countmax, PROTECT_INDEX idx)
 {
     DIR *dir;
     struct dirent *de;
@@ -934,7 +884,7 @@ static void list_files(const char *dnp, const char *stem, int *count, SEXP ans,
 #else
     struct stat sb;
 #endif
-
+    R_CheckUserInterrupt();
     if ((dir = opendir(dnp)) != NULL) {
 	while ((de = readdir(dir))) {
 	    if (allfiles || !R_HiddenFile(de->d_name)) {
@@ -969,19 +919,20 @@ static void list_files(const char *dnp, const char *stem, int *count, SEXP ans,
 #endif
 			    } else
 				strcpy(stem2, de->d_name);
-			    list_files(p, stem2, count, ans, allfiles,
-				       recursive, pattern, reg);
+			    list_files(p, stem2, count, pans, allfiles,
+				       recursive, reg, countmax, idx);
 			}
 			continue;
 		    }
 		}
-		if (pattern) {
-		    if (regexec(&reg, de->d_name, 0, NULL, 0) == 0)
-			SET_STRING_ELT(ans, (*count)++,
-				       filename(stem, de->d_name));
-		} else
-		    SET_STRING_ELT(ans, (*count)++,
-				   filename(stem, de->d_name));
+		if (!reg || tre_regexec(reg, de->d_name, 0, NULL, 0) == 0) {
+                    if (*count == *countmax - 1) {
+                        *countmax *= 2;
+                        REPROTECT(*pans = lengthgets(*pans, *countmax), idx);
+                    }
+                    SET_STRING_ELT(*pans, (*count)++,
+                                   filename(stem, de->d_name));
+                }
 	    }
 	}
 	closedir(dir);
@@ -990,11 +941,13 @@ static void list_files(const char *dnp, const char *stem, int *count, SEXP ans,
 
 SEXP attribute_hidden do_listfiles(SEXP call, SEXP op, SEXP args, SEXP rho)
 {
+    PROTECT_INDEX idx;
     SEXP d, p, ans;
     int allfiles, fullnames, count, pattern, recursive, igcase, flags;
     int i, ndir;
     const char *dnp;
     regex_t reg;
+    int countmax = 128;
 
     checkArity(op, args);
     d = CAR(args);  args = CDR(args);
@@ -1014,24 +967,19 @@ SEXP attribute_hidden do_listfiles(SEXP call, SEXP op, SEXP args, SEXP rho)
     flags = REG_EXTENDED;
     if (igcase) flags |= REG_ICASE;
 
-    if (pattern && regcomp(&reg, translateChar(STRING_ELT(p, 0)), flags))
+    if (pattern && tre_regcomp(&reg, translateChar(STRING_ELT(p, 0)), flags))
 	error(_("invalid 'pattern' regular expression"));
+    PROTECT_WITH_INDEX(ans = allocVector(STRSXP, countmax), &idx);
     count = 0;
     for (i = 0; i < ndir ; i++) {
 	if (STRING_ELT(d, i) == NA_STRING) continue;
 	dnp = R_ExpandFileName(translateChar(STRING_ELT(d, i)));
-	count_files(dnp, &count, allfiles, recursive, pattern, reg);
+	list_files(dnp, fullnames ? dnp : NULL, &count, &ans, allfiles,
+		   recursive, pattern ? &reg : NULL, &countmax, idx);
     }
-    PROTECT(ans = allocVector(STRSXP, count));
-    count = 0;
-    for (i = 0; i < ndir ; i++) {
-	if (STRING_ELT(d, i) == NA_STRING) continue;
-	dnp = R_ExpandFileName(translateChar(STRING_ELT(d, i)));
-	list_files(dnp, fullnames ? dnp : NULL, &count, ans, allfiles,
-		   recursive, pattern, reg);
-    }
+    REPROTECT(ans = lengthgets(ans, count), idx);
     if (pattern)
-	regfree(&reg);
+	tre_regfree(&reg);
     ssort(STRING_PTR(ans), count);
     UNPROTECT(1);
     return ans;
@@ -1080,93 +1028,6 @@ SEXP attribute_hidden do_fileexists(SEXP call, SEXP op, SEXP args, SEXP rho)
 	} else LOGICAL(ans)[i] = FALSE;
     }
     return ans;
-}
-
-/* <FIXME> can \n or \r occur as part of a MBCS extra bytes?
-   Not that I know of */
-static int filbuf(char *buf, FILE *fp)
-{
-    int c;
-    while ((c = fgetc(fp)) != EOF) {
-	if (c == '\n' || c == '\r') {
-	    *buf = '\0';
-	    return 1;
-	}
-	*buf++ = c;
-    }
-    return 0;
-}
-
-SEXP attribute_hidden do_indexsearch(SEXP call, SEXP op, SEXP args, SEXP rho)
-{
-/* index.search(topic, path, file, .Platform$file.sep, type) */
-    SEXP topic, path, indexname, sep, type;
-    char linebuf[256], topicbuf[256], *p, ctype[256];
-    int i, npath, ltopicbuf;
-    FILE *fp;
-
-    checkArity(op, args);
-    topic = CAR(args); args = CDR(args);
-    if (!isString(topic) || length(topic) < 1 || isNull(topic))
-	error(_("invalid '%s' argument"), "topic");
-    path = CAR(args); args = CDR(args);
-    if (!isString(path) || length(path) < 1 || isNull(path))
-	error(_("invalid '%s' argument"), "path");
-    indexname = CAR(args); args = CDR(args);
-    if (!isString(indexname) || length(indexname) < 1 || isNull(indexname))
-	error(_("invalid '%s' argument"), "indexname");
-    sep = CAR(args); args = CDR(args);
-    if (!isString(sep) || length(sep) < 1 || isNull(sep))
-	error(_("invalid '%s' argument"), "sep");
-    type = CAR(args);
-    if (!isString(type) || length(type) < 1 || isNull(type))
-	error(_("invalid '%s' argument"), "type");
-    strcpy(ctype, CHAR(STRING_ELT(type, 0)));
-    snprintf(topicbuf, 256, "%s\t", translateChar(STRING_ELT(topic, 0)));
-    ltopicbuf = strlen(topicbuf);
-    npath = length(path);
-    for (i = 0; i < npath; i++) {
-	snprintf(linebuf, 256, "%s%s%s%s%s",
-		translateChar(STRING_ELT(path, i)),
-		CHAR(STRING_ELT(sep, 0)),
-		"help", CHAR(STRING_ELT(sep, 0)),
-		CHAR(STRING_ELT(indexname, 0)));
-	if ((fp = R_fopen(R_ExpandFileName(linebuf), "rt")) != NULL){
-	    while (filbuf(linebuf, fp)) {
-		if (strncmp(linebuf, topicbuf, ltopicbuf) == 0) {
-		    p = &linebuf[ltopicbuf - 1];
-		    while (isspace((int)*p)) p++;
-		    fclose(fp);
-		    if (!strcmp(ctype, "html"))
-			snprintf(topicbuf, 256, "%s%s%s%s%s%s",
-				translateChar(STRING_ELT(path, i)),
-				CHAR(STRING_ELT(sep, 0)),
-				"html", CHAR(STRING_ELT(sep, 0)),
-				p, ".html");
-		    else if (!strcmp(ctype, "R-ex"))
-			snprintf(topicbuf, 256, "%s%s%s%s%s%s",
-				translateChar(STRING_ELT(path, i)),
-				CHAR(STRING_ELT(sep, 0)),
-				"R-ex", CHAR(STRING_ELT(sep, 0)),
-				p, ".R");
-		    else if (!strcmp(ctype, "latex"))
-			snprintf(topicbuf, 256, "%s%s%s%s%s%s",
-				translateChar(STRING_ELT(path, i)),
-				CHAR(STRING_ELT(sep, 0)),
-				"latex", CHAR(STRING_ELT(sep, 0)),
-				p, ".tex");
-		    else /* type = "help" */
-			snprintf(topicbuf, 256, "%s%s%s%s%s",
-				translateChar(STRING_ELT(path, i)),
-				CHAR(STRING_ELT(sep, 0)),
-				ctype, CHAR(STRING_ELT(sep, 0)), p);
-		    return mkString(topicbuf);
-		}
-	    }
-	    fclose(fp);
-	}
-    }
-    return mkString("");
 }
 
 #define CHOOSEBUFSIZE 1024
@@ -1699,8 +1560,10 @@ SEXP attribute_hidden do_pathexpand(SEXP call, SEXP op, SEXP args, SEXP rho)
     n = length(fn);
     PROTECT(ans = allocVector(STRSXP, n));
     for (i = 0; i < n; i++) {
-	SEXP tmp = markKnown(R_ExpandFileName(translateChar(STRING_ELT(fn, i))),
-			     STRING_ELT(fn, i));
+        SEXP tmp = STRING_ELT(fn, i);
+        if (tmp != NA_STRING) {
+            tmp = markKnown(R_ExpandFileName(translateChar(tmp)), tmp);
+        }
 	SET_STRING_ELT(ans, i, tmp);
     }
     UNPROTECT(1);
@@ -1800,7 +1663,7 @@ SEXP attribute_hidden do_capabilities(SEXP call, SEXP op, SEXP args, SEXP rho)
 
     SET_STRING_ELT(ansnames, i, mkChar("X11"));
 #ifdef HAVE_X11
-# if defined(Unix) && !defined(__APPLE_CC__)
+# if defined(Unix) /*  && !defined(__APPLE_CC__) removed in 2.11.0 */
     LOGICAL(ans)[i++] = X11;
 # else
     LOGICAL(ans)[i++] = TRUE;

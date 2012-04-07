@@ -1,6 +1,6 @@
 % File src/library/base/man/Extract.Rd
 % Part of the R package, http://www.R-project.org
-% Copyright 1995-2007 R Core Development Team
+% Copyright 1995-2010 R Core Development Team
 % Distributed under GPL 2 or later
 
 \name{Extract}
@@ -26,6 +26,10 @@ x[i, j, \dots , drop = TRUE]
 x[[i, exact = TRUE]]
 x[[i, j, \dots, exact = TRUE]]
 x$name
+
+x[i] <- value
+x[i, j, \dots] <- value
+x$i <- value
 }
 \arguments{
   \item{x}{
@@ -70,6 +74,8 @@ x$name
     \code{NA} allows partial matching but issues a warning when it
     occurs.  Value \code{FALSE} allows partial matching without any
     warning.}
+  \item{value}{typically an array-like \R object of a similar class as
+    \code{x}.}
 }
 \details{
   These operators are generic.  You can write methods to handle indexing
@@ -105,13 +111,14 @@ x$name
   adjusted suitably).  Subassignment is done sequentially, so if an
   index is specified more than once the latest assigned value for an
   index will result.
-  
+
   It is an error to apply any of these operators to an object which is
   not subsettable (e.g. a function).
 }
 \section{Atomic vectors}{
   The usual form of indexing is \code{"["}.  \code{"[["} can be used to
-  select a single element, but \code{"["} can also do so.
+  select a single element \emph{dropping} \code{\link{names}}, whereas
+  \code{"["} keeps them, e.g., in \code{c(abc = 123)[1]}.
 
   The index object \code{i} can be numeric, logical, character or empty.
   Indexing by factors is allowed and is equivalent to indexing by the
@@ -140,6 +147,14 @@ x$name
   not allowed in the index matrix.  \code{NA} and zero values are allowed:
   rows of an index matrix containing a zero are ignored, whereas rows
   containing an \code{NA} produce an \code{NA} in the result.
+
+  Indexing via a character matrix with one column per dimensions is also
+  supported if the array has dimension names.  As with numeric matrix
+  indexing, each row of the index matrix selects a single element of the
+  array.  Indices are matched against the appropriate dimension names.
+  \code{NA} is allowed and will produce an \code{NA} in the result.
+  Unmatched indices as well as the empty string (\code{""}) are not
+  allowed and will result in an error.
 
   A vector obtained by matrix indexing will be unnamed unless \code{x}
   is one-dimensional when the row names (if any) will be indexed to
@@ -212,12 +227,20 @@ x$name
   \code{exact} must be named).
 }
 \section{S4 methods}{
-  These operators are also S4 generic, but as primitives, S4 methods
-  will be dispatched only on S4 objects.
+  These operators are also implicit S4 generics, but as primitives, S4
+  methods will be dispatched only on S4 objects \code{x}.
 
-  S4 methods for \code{$} will be passed \code{name} as a character
-  vector: despite the message given by \code{getGeneric("$")} you cannot
-  usefully write methods based on the class of \code{name}.
+%   not yet implemented
+%   These operators are also implicit S4 generics, but the implementation
+%   of the primitive functions will only dispatch S4 methods if one of the
+%   arguments is an S4 object (it is no longer true that only the first
+%   argument is checked).  Method signatures can include any formal
+%   argument, but the primitive evaluation will only look for a method if
+%   \code{\link{isS4}} would return \code{TRUE} for some argument.
+
+  The implicit generics for the \code{$} and \code{$<-} operators do not
+  have \code{name} in their signature because the grammar only allows
+  symbols or string constants for the \code{name} argument.
 }
 \section{Character indices}{
   Character indices can in some circumstances be partially matched (see
@@ -262,15 +285,19 @@ x$name
 }
 %% Fixme: Link (to html in 'help.start()', pdf from 'ref manual',
 %% 'info' from ESS, see \url{http://cran.R-project.org/manuals.html}.
-  
+
 \examples{
-x <- 1:12; m <- matrix(1:6, nrow=2); li <- list(pi=pi, e = exp(1))
+x <- 1:12
+m <- matrix(1:6, nrow=2, dimnames=list(c("a", "b"), LETTERS[1:3]))
+li <- list(pi=pi, e = exp(1))
 x[10]                 # the tenth element of x
 x <- x[-1]            # delete the 1st element of x
 m[1,]                 # the first row of matrix m
 m[1, , drop = FALSE]  # is a 1-row matrix
 m[,c(TRUE,FALSE,TRUE)]# logical indexing
-m[cbind(c(1,2,1),3:1)]# matrix index
+m[cbind(c(1,2,1),3:1)]# matrix numeric index
+ci <- cbind(c("a", "b", "a"), c("A", "C", "B"))
+m[ci]                 # matrix character index
 m <- m[,-1]           # delete the first column of m
 li[[1]]               # the first element of list li
 y <- list(1,2,a=4,5)
@@ -281,6 +308,15 @@ y$a                   # the element of y named a
 (i <- 3.999999999) # "4" is printed
 (1:5)[i]  # 3
 
+## named atomic vectors, compare "[" and "[[" :
+nx <- c(Abc = 123, pi = pi)
+nx[1] ; nx["pi"] # keeps names, whereas "[[" does not:
+nx[[1]] ; nx[["pi"]]
+\dontshow{
+stopifnot(identical(names(nx[1]), "Abc"),
+        identical(names(nx["pi"]), "pi"),
+        is.null(names(nx[["Abc"]])), is.null(names(nx[[2]])))
+}
 ## recursive indexing into lists
 z <- list( a=list( b=9, c='hello'), d=1:5)
 unlist(z)

@@ -1,7 +1,6 @@
 /*
  *   R : A Computer Language for Statistical Data Analysis
- *   Copyright (C) 1997-2007   Robert Gentleman, Ross Ihaka
- *                             and the R Development Core Team
+ *   Copyright (C) 1997-2010   The R Development Core Team
  *
  *  This program is free software; you can redistribute it and/or modify
  *  it under the terms of the GNU General Public License as published by
@@ -87,11 +86,11 @@ static char *findRbrace(char *s)
     return pr;
 }
 
-
+#define BUF_SIZE 10000
 static char *findterm(char *s)
 {
     char *p, *q, *r, *r2, *ss=s;
-    static char ans[1000];
+    static char ans[BUF_SIZE];
     int nans;
 
     if(!strlen(s)) return "";
@@ -109,11 +108,11 @@ static char *findterm(char *s)
 	strncpy(r, p, q - p + 1);
 	r[q - p + 1] = '\0';
 	r2 = subterm(r);
-	if(strlen(ans) + strlen(r2) < 1000) strcat(ans, r2); else return ss;
+	if(strlen(ans) + strlen(r2) < BUF_SIZE) strcat(ans, r2); else return ss;
 	/* now repeat on the tail */
 	s = q+1;
     }
-    if(strlen(ans) + strlen(s) < 1000) strcat(ans, s); else return ss;
+    if(strlen(ans) + strlen(s) < BUF_SIZE) strcat(ans, s); else return ss;
     return ans;
 }
 
@@ -171,7 +170,6 @@ static void Putenv(char *a, char *b)
 }
 
 
-#define BUF_SIZE 255
 #define MSG_SIZE 2000
 static int process_Renviron(const char *filename)
 {
@@ -235,6 +233,10 @@ void process_system_Renviron()
 	R_ShowMessage("cannot find system Renviron");
 }
 
+#ifdef HAVE_UNISTD_H
+#include <unistd.h> /* for access, R_OK */
+#endif
+
 /* try site Renviron: R_ENVIRON, then R_HOME/etc/Renviron.site. */
 void process_site_Renviron ()
 {
@@ -244,6 +246,17 @@ void process_site_Renviron ()
 	process_Renviron(p);
 	return;
     }
+#ifdef R_ARCH
+    if(strlen(R_Home) + strlen("/etc/Renviron.site") + strlen(R_ARCH) > PATH_MAX - 2) {
+	R_ShowMessage("path to arch-specific Renviron.site is too long: skipping");
+    } else {
+	snprintf(buf, PATH_MAX, "%s/etc/%s/Renviron.site", R_Home, R_ARCH);
+	if(access(buf, R_OK) == 0) {
+	    process_Renviron(buf);
+	    return;
+	}
+    }
+#endif
     if(strlen(R_Home) + strlen("/etc/Renviron.site") > PATH_MAX - 1) {
 	R_ShowMessage("path to Renviron.site is too long: skipping");
 	return;
@@ -268,7 +281,7 @@ void process_user_Renviron()
 #endif
 #ifdef Win32
     {
-	char buf[1024];
+	char buf[1024]; /* MAX_PATH is less than this */
 	/* R_USER is not necessarily set yet, so we have to work harder */
 	s = getenv("R_USER");
 	if(!s) s = getenv("HOME");

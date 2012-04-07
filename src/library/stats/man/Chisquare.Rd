@@ -1,6 +1,6 @@
 % File src/library/stats/man/Chisquare.Rd
 % Part of the R package, http://www.R-project.org
-% Copyright 1995-2009 R Core Development Team
+% Copyright 1995-2010 R Core Development Team
 % Distributed under GPL 2 or later
 
 \name{Chisquare}
@@ -31,7 +31,7 @@ rchisq(n, df, ncp=0)
   \item{ncp}{non-centrality parameter (non-negative).}
   \item{log, log.p}{logical; if TRUE, probabilities p are given as log(p).}
   \item{lower.tail}{logical; if TRUE (default), probabilities are
-    \eqn{P[X \le x]}{P[X <= x]}, otherwise, \eqn{P[X > x]}{P[X > x]}.}
+    \eqn{P[X \le x]}, otherwise, \eqn{P[X > x]}.}
 }
 \value{
   \code{dchisq} gives the density, \code{pchisq} gives the distribution
@@ -41,9 +41,9 @@ rchisq(n, df, ncp=0)
   Invalid arguments will result in return value \code{NaN}, with a warning.
 }
 \details{
-  The chi-squared distribution with \code{df}\eqn{= n \ge 0}{= n >= 0}
+  The chi-squared distribution with \code{df}\eqn{= n \ge 0}
   degrees of freedom has density
-  \deqn{f_n(x) = \frac{1}{{2}^{n/2} \Gamma (n/2)} {x}^{n/2-1} {e}^{-x/2}}{f_n(x) = 1 / (2^(n/2) Gamma(n/2))  x^(n/2-1) e^(-x/2)}
+  \deqn{f_n(x) = \frac{1}{{2}^{n/2} \Gamma (n/2)} {x}^{n/2-1} {e}^{-x/2}}{f_n(x) = 1 / (2^(n/2) \Gamma(n/2))  x^(n/2-1) e^(-x/2)}
   for \eqn{x > 0}.  The mean and variance are \eqn{n} and \eqn{2n}.
 
   The non-central chi-squared distribution with \code{df}\eqn{= n}
@@ -51,9 +51,9 @@ rchisq(n, df, ncp=0)
   \eqn{= \lambda} has density
   \deqn{
     f(x) = e^{-\lambda / 2}
-      \sum_{r=0}^\infty \frac{(\lambda/2)^r}{r!}\, f_{n + 2r}(x)}{f(x) = exp(-lambda/2) SUM_{r=0}^infty ((lambda/2)^r / r!) dchisq(x, df + 2r)
+      \sum_{r=0}^\infty \frac{(\lambda/2)^r}{r!}\, f_{n + 2r}(x)}{f(x) = exp(-\lambda/2) SUM_{r=0}^\infty ((\lambda/2)^r / r!) dchisq(x, df + 2r)
   }
-  for \eqn{x \ge 0}{x >= 0}.  For integer \eqn{n}, this is the distribution of
+  for \eqn{x \ge 0}.  For integer \eqn{n}, this is the distribution of
   the sum of squares of \eqn{n} normals each with variance one,
   \eqn{\lambda} being the sum of squares of the normal means; further,
   \cr
@@ -62,7 +62,8 @@ rchisq(n, df, ncp=0)
 
   Note that the degrees of freedom \code{df}\eqn{= n}, can be
   non-integer, and also \eqn{n = 0} which is relevant for
-  non-centrality \eqn{\lambda > 0}, see Johnson et al. (1995, chapter~29).
+  non-centrality \eqn{\lambda > 0},
+  see Johnson et al. (1995, chapter 29).
 
   Note that \code{ncp} values larger than about 1e5 may give inaccurate
   results with many warnings for \code{pchisq} and \code{qchisq}.
@@ -75,14 +76,15 @@ rchisq(n, df, ncp=0)
 
   The non-central \code{pchisq} is for \code{ncp < 80} computed from
   the Poisson mixture of central chi-squares and for larger \code{ncp}
-  based on a C translation of
+  \emph{via} a C translation of
 
   Ding, C. G. (1992)
   Algorithm AS275: Computing the non-central chi-squared
   distribution function. \emph{Appl.Statist.}, \bold{41} 478--482.
 
   which computes the lower tail only (so the upper tail suffers from
-  cancellation).
+  cancellation and a warning will be given when this is likely to be
+  significant).
 
   The non-central \code{qchisq} is based on inversion of \code{pchisq}.
 }
@@ -94,6 +96,11 @@ rchisq(n, df, ncp=0)
   Johnson, N. L., Kotz, S. and Balakrishnan, N. (1995)
   \emph{Continuous Univariate Distributions}, chapters 18 (volume 1)
   and 29 (volume 2). Wiley, New York.
+}
+\note{
+  The code for non-zero \code{ncp} is principally intended to be used
+  for moderate values of \code{ncp}: it will not be highly accurate,
+  especially in the tails, for large values.
 }
 \seealso{
   A central chi-squared distribution with \eqn{n} degrees of freedom

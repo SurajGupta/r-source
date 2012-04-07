@@ -32,7 +32,7 @@ rhyper(nn, m, n, k)
     is taken to be the number required.}
   \item{log, log.p}{logical; if TRUE, probabilities p are given as log(p).}
   \item{lower.tail}{logical; if TRUE (default), probabilities are
-    \eqn{P[X \le x]}{P[X <= x]}, otherwise, \eqn{P[X > x]}{P[X > x]}.}
+    \eqn{P[X \le x]}, otherwise, \eqn{P[X > x]}.}
 }
 \value{
   \code{dhyper} gives the density,
@@ -50,7 +50,7 @@ rhyper(nn, m, n, k)
   \deqn{
     p(x) = \left. {m \choose x}{n \choose k-x} \right/ {m+n \choose k}%
   }{p(x) =      choose(m, x) choose(n, k-x) / choose(m+n, k)}
-  for \eqn{x = 0, \ldots, k}{x = 0, ..., k}.
+  for \eqn{x = 0, \ldots, k}.
 
   The quantile is defined as the smallest value \eqn{x} such that
   \eqn{F(x) \ge p}, where \eqn{F} is the distribution function.

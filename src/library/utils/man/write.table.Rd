@@ -57,8 +57,9 @@ write.csv2(\dots)
     escaped in C style by a backslash, or \code{"double"}, in which case
     it is doubled.  You can specify just the initial letter.}
 
-  \item{\dots}{arguments to \code{write.table}: \code{col.names},
-    \code{sep}, \code{dec} and \code{qmethod} cannot be altered.
+  \item{\dots}{arguments to \code{write.table}: \code{append},
+    \code{col.names}, \code{sep}, \code{dec} and \code{qmethod}
+    cannot be altered.
   }
 }
 \details{
@@ -98,11 +99,9 @@ write.csv2(\dots)
 
   If \code{file} is not open for writing, an attempt is made to open it
   and then close it after use.
-#ifdef windows
   
   To write a Unix-style file on Windows, use a binary connection
   e.g. \code{file = file("fn", "wb")}.
-#endif
 }
 \section{CSV files}{
   By default there is no column name for a column of row names.  If
@@ -124,8 +123,8 @@ write.csv2(\dots)
 
   These wrappers are deliberately inflexible: they are designed to
   ensure that the correct conventions are used to write a valid file.
-  Attempts to change \code{col.names}, \code{sep}, \code{dec} or
-  \code{qmethod} are ignored, with a warning.
+  Attempts to change \code{append}, \code{col.names}, \code{sep},
+  \code{dec} or \code{qmethod} are ignored, with a warning.
 }
 \note{
   \code{write.table} can be slow for data frames with large numbers

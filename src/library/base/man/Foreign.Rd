@@ -1,6 +1,6 @@
 % File src/library/base/man/Foreign.Rd
 % Part of the R package, http://www.R-project.org
-% Copyright 1995-2007 R Core Development Team
+% Copyright 1995-2010 R Core Development Team
 % Distributed under GPL 2 or later
 
 \name{Foreign}
@@ -9,8 +9,6 @@
 \alias{.Fortran}
 \alias{.External}
 \alias{.Call}
-\alias{.External.graphics}
-\alias{.Call.graphics}
 \title{Foreign Function Interface}
 \description{
   Functions to make calls to compiled code that has been loaded into \R.
@@ -20,9 +18,6 @@
  .Fortran(name, \dots, NAOK = FALSE, DUP = TRUE, PACKAGE, ENCODING)
 .External(name, \dots, PACKAGE)
     .Call(name, \dots, PACKAGE)
-
-.External.graphics(name, \dots, PACKAGE)
-    .Call.graphics(name, \dots, PACKAGE)
 }
 \arguments{
   \item{name}{a character string giving the name of a C function or
@@ -50,34 +45,32 @@
   the \code{\dots} list of arguments passed in, but reflecting any
   changes made by the C or Fortran code.
 
-  \code{.External}, \code{.Call}, \code{.External.graphics},
-  and \code{.Call.graphics} return an \R object.
+  \code{.External} and \code{.Call} return an (arbitrary) \R object.
 
   These calls are typically made in conjunction with
   \code{\link{dyn.load}} which links DLLs to \R.
-
-  The \code{.graphics} versions of \code{.Call} and \code{.External}
-  are used when calling code which makes low-level graphics calls.
-  They take additional steps to ensure that the device driver display
-  lists are updated correctly.
 }
 \details{
   The functions \code{.C} and \code{.Fortran} can be used to make calls
   to compiled C and Fortran code.
 
-  \code{.External} and \code{.External.graphics} can be used to call
-  compiled code that uses \R objects in the same way as internal
-  \R functions.
+  \code{.Call} can be used to call compiled code
+  which makes use of internal \R objects, passing the arguments to
+  the C code as a sequence of \R objects.
 
-  \code{.Call} and \code{.Call.graphics} can be used to call compiled code
-  which makes use of internal \R objects.  The arguments are passed to
-  the C code as a sequence of \R objects.  It is included to provide
-  compatibility with S version 4.
+  \code{.External} can be used to call compiled code that uses \R
+  objects in the same way as internal \R functions: this allows for a
+  variable number of arguments.
 
   Specifying \code{ENCODING} overrides any declared encodings (see
   \code{\link{Encoding}}) which are otherwise used to translate to the
   current locale before passing the strings to the compiled code.
-
+  
+  These functions are all \link{primitive}, and \code{name} is always
+  matched to the first argument supplied (which if named must partially
+  match \code{name}).  The other named arguments follow \code{\dots} and
+  so cannot be abbreviated.
+  
   For details about how to write code to use with \code{.Call} and
   \code{.External}, see the chapter on \dQuote{System and foreign language
     interfaces} in the \dQuote{Writing \R Extensions} manual.
@@ -118,9 +111,15 @@
   availability of a mapping of \code{complex} to Fortran may be compiler
   dependent.
 
+  Logical values are sent as \code{0} (\code{FALSE}), \code{1}
+  (\code{TRUE}) or \code{INT_MIN = -2147483648} (\code{NA}, but only if
+  \code{NAOK = TRUE}), and the compiled code should return one of these
+  three values.
+
   \emph{Note:} The C types corresponding to \code{integer} and
   \code{logical} are \code{int}, not \code{long} as in S.  This
-  difference matters on 64-bit platforms.
+  difference matters on most 64-bit platforms, where \code{int} is
+  32-bit and \code{long} is 64-bit (but not on 64-bit Windows).
 
   The first character string of a character vector is passed as a C
   character array to Fortran: that string may be usable as
@@ -132,7 +131,7 @@
   Missing (\code{NA}) string values are passed to \code{.C} as the string
   "NA". As the C \code{char} type can represent all possible bit patterns
   there appears to be no way to distinguish missing strings from the
-  string \code{"NA"}. If this distinction is important use \code{.Call}.
+  string \code{"NA"}.  If this distinction is important use \code{.Call}.
 
   Functions, expressions, environments and other language elements are
   passed as the internal \R pointer type \code{SEXP}.  This type is
@@ -152,7 +151,8 @@
 }
 %%-- This note by Thomas Lumley, (minimally edited by MM,
 %%      edited by BDR for 1.2.0's non-moving garbage collector):
-\section{Warning}{\emph{\code{DUP=FALSE} is dangerous.}
+\section{Warning}{
+  \emph{\code{DUP=FALSE} is dangerous.}
 
   There are two dangers with using \code{DUP=FALSE}.
 
@@ -189,25 +189,22 @@
 }
 
 \section{Fortran symbol names}{
-  All compilers that can be used with \R map symbol names to lower case,
-  and so does \code{.Fortran}.
+  All Fortran compilers that can be used to compile \R map symbol names
+  to lower case, and so does \code{.Fortran}.
 
   Symbol names containing underscores are not valid Fortran 77 (although
-  they are valid in Fortran 9x).  Many Fortran 77 compilers (including
-  \code{g77}) will allow them but translate them in a different way to
-  names not containing underscores.  Such names will work with
-  \code{.Fortran}, but portable code should not use Fortran names
-  containing underscores.
+  they are valid in Fortran 9x).  Many Fortran 77 compilers will allow
+  them but may translate them in a different way to names not containing
+  underscores.  Such names will often work with \code{.Fortran} (since
+  how they are translated is detected when \R is built and the
+  information used by \code{.Fortran}), but portable code should not use
+  Fortran names containing underscores.
 
   Use \code{.Fortran} with care for compiled Fortran 9x code: it may not
   work if the Fortran 9x compiler used differs from the Fortran compiler
   used when configuring \R, especially if the subroutine name is not
-  lower-case or includes an underscore.
-#ifdef windows
-  This \emph{is} the case under Windows, where \code{gfortran} and
-  \code{g95} treat underscores differently from \code{g77} with which \R
-  is compiled.
-#endif
+  lower-case or includes an underscore.  It is also possible to use
+  \code{.C} and do any necessary symbol-name translation yourself.
 }
 
 \section{Header files for external code}{

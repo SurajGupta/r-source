@@ -34,26 +34,25 @@ rnbinom(n, size, prob, mu)
   \item{mu}{alternative parametrization via mean: see \sQuote{Details}.}
   \item{log, log.p}{logical; if TRUE, probabilities p are given as log(p).}
   \item{lower.tail}{logical; if TRUE (default), probabilities are
-    \eqn{P[X \le x]}{P[X <= x]}, otherwise, \eqn{P[X > x]}{P[X > x]}.}
+    \eqn{P[X \le x]}, otherwise, \eqn{P[X > x]}.}
 }
 \details{
   The negative binomial distribution with \code{size} \eqn{= n} and
   \code{prob} \eqn{= p} has density
   \deqn{
-    p(x) = \frac{\Gamma(x+n)}{\Gamma(n) x!} p^n (1-p)^x}{p(x) = Gamma(x+n)/(Gamma(n) x!) p^n (1-p)^x}
-  for \eqn{x = 0, 1, 2, \ldots}, \eqn{n > 0} and
-  \eqn{0 < p \le 1}{0 < p <= 1}.
+    p(x) = \frac{\Gamma(x+n)}{\Gamma(n) x!} p^n (1-p)^x}{
+    \Gamma(x+n)/(\Gamma(n) x!) p^n (1-p)^x}
+  for \eqn{x = 0, 1, 2, \ldots}, \eqn{n > 0} and \eqn{0 < p \le 1}.
 
   This represents the number of failures which occur in a sequence of
   Bernoulli trials before a target number of successes is reached.
 
   A negative binomial distribution can arise as a mixture of Poisson
-  distributions with mean distributed as a
-  \eqn{\Gamma} (\code{\link{pgamma}}) distribution with scale parameter
-  \code{(1 - prob)/prob} and shape parameter \code{size}.  (This
-  definition allows non-integer values of \code{size}.)
-  In this model \code{prob} = \code{1/(1+size)}, and the mean is
-  \code{size * (1 - prob)/prob}.
+  distributions with mean distributed as a gamma distribution
+  (see\code{\link{pgamma}}) with scale parameter \code{(1 - prob)/prob}
+  and shape parameter \code{size}.  (This definition allows non-integer
+  values of \code{size}.)  In this model \code{prob} =
+  \code{1/(1+size)}, and the mean is \code{size * (1 - prob)/prob}.
 
   The alternative parametrization (often used in ecology) is by the
   \emph{mean} \code{mu}, and \code{size}, the \emph{dispersion parameter},
@@ -65,7 +64,7 @@ rnbinom(n, size, prob, mu)
   is zero, with a warning.
 
   The quantile is defined as the smallest value \eqn{x} such that
-  \eqn{F(x) \ge p}{F(x) >= p}, where \eqn{F} is the distribution function.
+  \eqn{F(x) \ge p}, where \eqn{F} is the distribution function.
 }
 \value{
   \code{dnbinom} gives the density,

@@ -25,7 +25,7 @@ quantile(x, \dots)
     \sQuote{details}). \code{\link{NA}} and \code{NaN} values are not
     allowed in numeric vectors unless \code{na.rm} is \code{TRUE}.}
   \item{probs}{numeric vector of probabilities with values in
-    \eqn{[0,1]}.  (As from \R 2.8.0 values up to 2e-14 outside that
+    \eqn{[0,1]}.  (As from \R 2.8.0 values up to \samp{2e-14} outside that
     range are accepted and moved to the nearby endpoint.}
   \item{na.rm}{logical; if true, any \code{\link{NA}} and \code{NaN}'s
     are removed from \code{x} before the quantiles are computed.}
@@ -42,12 +42,15 @@ quantile(x, \dots)
   \code{\link{NA}} and \code{\link{NaN}} values in \code{probs} are
   propagated to the result.
   
-  The default method does not allow factors, but works with objects
-  sufficiently like numeric vectors that \code{sort}, addition and
-  multiplication work correctly.  In principle only sorts and weighted
-  means are needed, so datatimes could have quantiles -- but this is not
-  implemented.  Note that as this is in a namespace, the copy of
-  \code{sort} in \pkg{base} will be used, not some S4 generic of that name.
+  The default method works with objects sufficiently like numeric
+  vectors that \code{sort} and (not needed by types 1 and 3) addition of
+  elements and multiplication by a number work correctly.  Note that as
+  this is in a namespace, the copy of \code{sort} in \pkg{base} will be
+  used, not some S4 generic of that name.
+  
+  There is a method for the date-time classes (see
+  \code{"\link{POSIXt}"}).  Types 1 and 3 can be used for class
+  \code{"\link{Date}"} and for ordered factors.
 }
 \section{Types}{
   \code{quantile} returns estimates of underlying distribution quantiles
@@ -59,11 +62,11 @@ quantile(x, \dots)
   All sample quantiles are defined as weighted averages of 
   consecutive order statistics. Sample quantiles of type \eqn{i} 
   are defined by:
-  \deqn{Q_{i}(p) = (1 - \gamma)x_{j} + \gamma x_{j+1}}{Q[i](p) = (1 - gamma) x[j] + gamma x[j+1],}
-  where \eqn{1 \le i \le 9}{1 <= i <= 9},
-  \eqn{\frac{j - m}{n} \le p < \frac{j - m + 1}{n}}{(j-m)/n <= p < (j-m+1)/n},
+  \deqn{Q_{i}(p) = (1 - \gamma)x_{j} + \gamma x_{j+1}}{Q[i](p) = (1 - \gamma) x[j] + \gamma x[j+1],}
+  where \eqn{1 \le i \le 9},
+  \eqn{\frac{j - m}{n} \le p < \frac{j - m + 1}{n}}{(j-m)/n \le p < (j-m+1)/n},
   \eqn{x_{j}}{x[j]} is the \eqn{j}th order statistic, \eqn{n} is the
-  sample size, the value of \eqn{\gamma}{gamma} is a function of
+  sample size, the value of \eqn{\gamma} is a function of
   \eqn{j = \lfloor np + m\rfloor}{j = floor(np + m)} and \eqn{g = np + m - j}, 
   and \eqn{m} is a constant determined by the sample quantile type. 
   
@@ -75,11 +78,11 @@ quantile(x, \dots)
 
   \describe{
     \item{Type 1}{Inverse of empirical distribution function.
-      \eqn{\gamma = 0}{gamma = 0} if \eqn{g = 0}, and 1 otherwise.}
+      \eqn{\gamma = 0} if \eqn{g = 0}, and 1 otherwise.}
     \item{Type 2}{Similar to type 1 but with averaging at discontinuities.
-      \eqn{\gamma = 0.5}{gamma = 0.5} if \eqn{g = 0}, and 1 otherwise.}
+      \eqn{\gamma = 0.5} if \eqn{g = 0}, and 1 otherwise.}
     \item{Type 3}{SAS definition: nearest even order statistic.
-      \eqn{\gamma = 0}{gamma = 0} if \eqn{g = 0} and \eqn{j} is even,
+      \eqn{\gamma = 0} if \eqn{g = 0} and \eqn{j} is even,
       and 1 otherwise.}
   }
 

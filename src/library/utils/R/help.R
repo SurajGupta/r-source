@@ -18,10 +18,7 @@ help <-
 function(topic, package = NULL, lib.loc = NULL,
          verbose = getOption("verbose"),
          try.all.packages = getOption("help.try.all.packages"),
-         help_type = getOption("help_type"),
-         chmhelp = getOption("chmhelp"),
-         htmlhelp = getOption("htmlhelp"),
-         offline = FALSE)
+         help_type = getOption("help_type"))
 {
     if(!missing(package))
         if(is.name(y <- substitute(package)))
@@ -53,53 +50,20 @@ function(topic, package = NULL, lib.loc = NULL,
         topic <- stopic
     }
 
-    help_type <- if(!length(help_type)) {
-        if(offline) {
-            warning('offline = TRUE is deprecated: use help_type ="postscript"')
-            "ps"
-        } else if(.Platform$OS.type == "windows" &&
-                is.logical(chmhelp) && !is.na(chmhelp) && chmhelp) {
-            warning('chmhelp = TRUE is no longer supported: using help_type ="text"')
-            "text"
-        } else if(is.logical(htmlhelp) && !is.na(htmlhelp) && htmlhelp) {
-            warning('htmhelp = TRUE is deprecated: use help_type ="html"')
-            "html"
-        } else
-            "text"
-    } else match.arg(tolower(help_type),
-                     c("text", "html", "postscript", "ps", "pdf"))
-    type <- switch(help_type,
-                   "text" = "help",
-                   "postscript" =,
-                   "ps" =,
-                   "pdf" = "latex",
-                   help_type)
+    help_type <- if(!length(help_type)) "text"
+    else match.arg(tolower(help_type),
+                   c("text", "html", "postscript", "ps", "pdf"))
 
-    ## Note that index.search() (currently?) only returns the first
-    ## match for the given sequence of indices, and returns the empty
-    ## string in case of no match.
-    paths <- sapply(.find.package(package, lib.loc, verbose = verbose),
-                    function(p) index.search(topic, p, "AnIndex", type))
-    paths <- paths[paths != ""]
-
+    paths <- index.search(topic, .find.package(package, lib.loc, verbose = verbose))
     tried_all_packages <- FALSE
     if(!length(paths)
        && is.logical(try.all.packages) && !is.na(try.all.packages)
        && try.all.packages && missing(package) && missing(lib.loc)) {
         ## Try all the remaining packages.
-        lib.loc <- .libPaths()
-        packages <- .packages(all.available = TRUE, lib.loc = lib.loc)
-        packages <- packages[is.na(match(packages, .packages()))]
-        for(lib in lib.loc) {
-            ## <FIXME>
-            ## Why does this loop over packages *inside* the loop
-            ## over libraries?
-            for(pkg in packages) {
-                dir <- system.file(package = pkg, lib.loc = lib)
-                paths <- c(paths,
-                           index.search(topic, dir, "AnIndex", "help"))
-            }
-            ## </FIXME>
+        for(lib in .libPaths()) {
+            packages <- .packages(TRUE, lib)
+            packages <- packages[is.na(match(packages, .packages()))]
+            paths <- c(paths, index.search(topic, file.path(lib, packages)))
         }
         paths <- paths[paths != ""]
         tried_all_packages <- TRUE
@@ -201,7 +165,7 @@ function(x, ...)
                     tmp[tools::file_path_sans_ext(tmp$File) == tp[i], "Title"]
                 }
                 txt <- paste(titles, " {", basename(paths), "}", sep="")
-                ## FIXME: use html page for HTML help.
+                ## the default on menu() is currtently graphics = FALSE
                 res <- menu(txt, title = gettext("Choose one"),
                             graphics = getOption("menu.graphics"))
                 if(res > 0) file <- p[res]
@@ -219,7 +183,7 @@ function(x, ...)
 		pkgname <- basename(dirpath)
 		browseURL(paste("http://127.0.0.1:", tools:::httpdPort,
                                 "/library/", pkgname, "/html/", basename(file),
-                                sep=""), browser)
+                                ".html", sep = ""), browser)
             } else {
                 warning("HTML help is unavailable", call. = FALSE)
                 att <- attributes(x)
@@ -229,61 +193,17 @@ function(x, ...)
                 print(xx)
             }
         } else if(type == "text") {
-            path <- dirname(file)
-            dirpath <- dirname(path)
-            pkgname <- basename(dirpath)
-            RdDB <- file.path(path, pkgname)
-            if(file.exists(paste(RdDB, "rdx", sep="."))) {
-                temp <- tools::Rd2txt(tools:::fetchRdDB(RdDB, basename(file)),
-                                      out=tempfile("Rtxt"), package=pkgname)
-                file.show(temp,
-                          title = gettextf("R Help on '%s'", topic),
-                          delete.file = TRUE)
-            } else {
-                ## Fallback to the old system with help pages
-                ## stored as plain text
-                zfile <- zip.file.extract(file, "Rhelp.zip")
-                if (file.exists(zfile)) {
-                    first <- readLines(zfile, n = 1L)
-                    enc <- if(length(grep("\\(.*\\)$", first)))
-                        sub("[^(]*\\((.*)\\)$", "\\1", first) else ""
-                    if(enc == "utf8") enc <- "UTF-8"
-                    ## allow for 'smart' quotes on Windows, which work
-                    ## in all but CJK encodings
-                    if(.Platform$OS.type == "windows" && enc == ""
-                       && l10n_info()$codepage < 1000) enc <- "CP1252"
-                    file.show(zfile,
-                              title = gettextf("R Help on '%s'", topic),
-                              delete.file = (zfile != file),
-                              encoding = enc)
-                } else
-		    stop(gettextf("No text help for '%s' is available:\ncorresponding file is missing", topic), domain = NA)
-            }
+            pkgname <- basename(dirname(dirname(file)))
+            temp <- tools::Rd2txt(.getHelpFile(file), out = tempfile("Rtxt"),
+                                  package = pkgname)
+            file.show(temp, title = gettextf("R Help on '%s'", topic),
+                      delete.file = TRUE)
         }
         else if(type %in% c("ps", "postscript", "pdf")) {
-            ok <- FALSE
-            zfile <- zip.file.extract(file, "Rhelp.zip")
-            if(zfile != file) on.exit(unlink(zfile))
-            if(file.exists(zfile)) {
-                .show_help_on_topic_offline(zfile, topic, type)
-                ok <- TRUE
-            } else {
-                ## look for stored Rd files
-                path <- dirname(file) # .../pkg/latex
-                dirpath <- dirname(path)
-                pkgname <- basename(dirpath)
-                RdDB <- file.path(dirpath, "help", pkgname)
-                if(file.exists(paste(RdDB, "rdx", sep="."))) {
-                    ## message("on-demand Rd conversion for ", sQuote(topic))
-                    key <- sub("\\.tex$", "", basename(file))
-                    tf2 <- tempfile("Rlatex")
-                    tools::Rd2latex(tools:::fetchRdDB(RdDB, key), tf2)
-                    .show_help_on_topic_offline(tf2, topic, type)
-                    ok <- TRUE
-                }
-            }
-            if(!ok)
-                stop(gettextf("No offline help for '%s' is available:\ncorresponding file is missing", topic), domain = NA)
+            tf2 <- tempfile("Rlatex")
+            tools::Rd2latex(.getHelpFile(file), tf2)
+            .show_help_on_topic_offline(tf2, topic, type)
+            unlink(tf2)
         }
     }
 
@@ -318,4 +238,18 @@ function(x, ...)
     else utils:::offline_help_helper
     helper(texfile, type)
     invisible()
+}
+
+
+.getHelpFile <- function(file)
+{
+    path <- dirname(file)
+    dirpath <- dirname(path)
+    if(!file.exists(dirpath))
+        stop(gettextf("invalid '%s' argument", "file"), domain = NA)
+    pkgname <- basename(dirpath)
+    RdDB <- file.path(path, pkgname)
+    if(!file.exists(paste(RdDB, "rdx", sep=".")))
+                stop(gettextf("package %s exists but was not installed under R >= 2.10.0 so help cannot be accessed", sQuote(pkgname)), domain = NA)
+    tools:::fetchRdDB(RdDB, basename(file))
 }

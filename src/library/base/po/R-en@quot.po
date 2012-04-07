@@ -22,10 +22,10 @@
 #
 msgid ""
 msgstr ""
-"Project-Id-Version: R 2.10.1\n"
+"Project-Id-Version: R 2.11.0\n"
 "Report-Msgid-Bugs-To: bugs@r-project.org\n"
-"POT-Creation-Date: 2009-12-10 19:18\n"
-"PO-Revision-Date: 2009-12-10 19:18\n"
+"POT-Creation-Date: 2010-03-22 15:15\n"
+"PO-Revision-Date: 2010-03-22 15:15\n"
 "Last-Translator: Automatically generated\n"
 "Language-Team: none\n"
 "MIME-Version: 1.0\n"
@@ -123,17 +123,26 @@ msgstr "*** Note that ‘pos=1’ will give an error in the future"
 msgid "file '%s' not found"
 msgstr "file ‘%s’ not found"
 
-msgid "invalid name"
-msgstr "invalid name"
+msgid "invalid 'name' argument"
+msgstr "invalid ‘name’ argument"
 
-msgid "is required by"
-msgstr "is required by"
+msgid "package %s is required by %s, which may no longer work correctly"
+msgstr "package %s is required by %s, which may no longer work correctly"
 
-msgid "(still attached)"
-msgstr "(still attached)"
+msgid "package %s is required by %s so will not be detached"
+msgstr "package %s is required by %s so will not be detached"
 
-msgid "namespace cannot be unloaded"
-msgstr "namespace cannot be unloaded"
+msgid ""
+"%s failed in %s() for '%s', details:\n"
+"  call: %s\n"
+"  error: %s"
+msgstr ""
+"%s failed in %s() for '%s', details:\n"
+"  call: %s\n"
+"  error: %s"
+
+msgid "name space cannot be unloaded:"
+msgstr "name space cannot be unloaded:"
 
 msgid "replaced regular expression pattern '[' by  '\\\\['"
 msgstr "replaced regular expression pattern ‘[’ by  ‘\\\\[’"
@@ -246,8 +255,8 @@ msgstr "missing values in ‘row.names’ are not allowed"
 msgid "invalid 'dimnames' given for data frame"
 msgstr "invalid ‘dimnames’ given for data frame"
 
-msgid "cannot coerce class %s into a data.frame"
-msgstr "cannot coerce class %s into a data.frame"
+msgid "cannot coerce class '%s' into a data.frame"
+msgstr "cannot coerce class ‘%s’ into a data.frame"
 
 msgid "invalid 'row.names', length %d for a data frame with %d rows"
 msgstr "invalid 'row.names', length %d for a data frame with %d rows"
@@ -475,6 +484,9 @@ msgstr "‘lag’ and ‘differences’ must be integers >= 1"
 msgid "do not know how to convert '%s' to class \"POSIXlt\""
 msgstr "do not know how to convert ‘%s’ to class “POSIXlt”"
 
+msgid "do not know how to convert '%s' to class \"POSIXct\""
+msgstr "do not know how to convert ‘%s’ to class “POSIXct”"
+
 msgid "wrong class"
 msgstr "wrong class"
 
@@ -655,21 +667,6 @@ msgstr "no files to link from"
 msgid "no files/directory to link to"
 msgstr "no files/directory to link to"
 
-msgid "'x' must have length 1"
-msgstr "‘x’ must have length 1"
-
-msgid "invalid digits"
-msgstr "invalid digits"
-
-msgid "'x' cannot be coerced to 'octmode'"
-msgstr "‘x’ cannot be coerced to ‘octmode’"
-
-msgid "'x' must be of length 1"
-msgstr "‘x’ must be of length 1"
-
-msgid "'x' cannot be coerced to hexmode"
-msgstr "‘x’ cannot be coerced to hexmode"
-
 msgid "'package' must be of length 1"
 msgstr "‘package’ must be of length 1"
 
@@ -745,26 +742,11 @@ msgstr "triangular matrix should be square"
 msgid "'object' must be a list"
 msgstr "‘object’ must be a list"
 
-msgid "This is R %s, package '%s' needs %s %s"
-msgstr "This is R %s, package ‘%s’ needs %s %s"
+msgid "package '%s' has not been installed properly"
+msgstr "package ‘%s’ has not been installed properly"
 
-msgid "package '%s' was built before R 2.0.0: please re-install it"
-msgstr "package ‘%s’ was built before R 2.0.0: please re-install it"
-
-msgid "package '%s' was built under R version %s"
-msgstr "package ‘%s’ was built under R version %s"
-
-msgid ""
-"package '%s' was built under R version %s and help will not work correctly\n"
-"Please re-install it"
-msgstr ""
-"package ‘%s’ was built under R version %s and help will not work correctly\n"
-"Please re-install it"
-
-msgid ""
-"package '%s' was built under R version %s and help may not work correctly"
-msgstr ""
-"package ‘%s’ was built under R version %s and help may not work correctly"
+msgid "package '%s' was built before R 2.10.0: please re-install it"
+msgstr "package ‘%s’ was built before R 2.10.0: please re-install it"
 
 msgid ""
 "package '%s' claims to be built under R version %s but is missing some help "
@@ -773,32 +755,41 @@ msgstr ""
 "package ‘%s’ claims to be built under R version %s but is missing some help "
 "files and needs to be re-installed"
 
+msgid "This is R %s, package '%s' needs %s %s"
+msgstr "This is R %s, package ‘%s’ needs %s %s"
+
+msgid "package '%s' was built under R version %s"
+msgstr "package ‘%s’ was built under R version %s"
+
 msgid "package '%s' was built for %s"
 msgstr "package ‘%s’ was built for %s"
 
 msgid "package '%s' is not installed for 'arch=%s'"
 msgstr "package ‘%s’ is not installed for ‘arch=%s’"
 
-msgid "package '%s' has not been installed properly"
-msgstr "package ‘%s’ has not been installed properly"
+msgid ""
+"package '%s' has a license that you need to accept in an interactive session"
+msgstr ""
+"package ‘%s’ has a license that you need to accept in an interactive session"
 
-msgid "See the Note in ?library"
-msgstr "See the Note in ?library"
+msgid "Package '%s' has a license that you need to accept after viewing"
+msgstr "Package ‘%s’ has a license that you need to accept after viewing"
+
+msgid ""
+"Package '%s' has a license that you need to accept:\n"
+"according to the DESCRIPTION file it is"
+msgstr ""
+"Package ‘%s’ has a license that you need to accept:\n"
+"according to the DESCRIPTION file it is"
+
+msgid "License"
+msgstr "License"
+
+msgid "License for package '%s' not accepted"
+msgstr "License for package ‘%s’ not accepted"
 
 msgid "Attaching package: '%s'"
 msgstr "Attaching package: ‘%s’"
-
-msgid "The following object(s) are masked"
-msgstr "The following object(s) are masked"
-
-msgid "_by_"
-msgstr "_by_"
-
-msgid "from"
-msgstr "from"
-
-msgid ":"
-msgstr ":"
 
 msgid "invalid package name"
 msgstr "invalid package name"
@@ -817,9 +808,6 @@ msgstr "‘%s’ not found on search path, using pos = 2"
 
 msgid "package/namespace load failed for '%s'"
 msgstr "package/namespace load failed for ‘%s’"
-
-msgid "package was installed prior to 2.4.0 and must be re-installed"
-msgstr "package was installed prior to 2.4.0 and must be re-installed"
 
 msgid "unable to load R code in package '%s'"
 msgstr "unable to load R code in package ‘%s’"
@@ -1038,14 +1026,8 @@ msgstr "invalid to change the storage mode of a factor"
 msgid "'%s' is not an exported object from 'namespace:%s'"
 msgstr "‘%s’ is not an exported object from ‘namespace:%s’"
 
-msgid "package '%s' has no name space and"
-msgstr "package ‘%s’ has no name space and"
-
-msgid "is not on the search path"
-msgstr "is not on the search path"
-
-msgid "%s failed in 'attachNamespace'"
-msgstr "%s failed in ‘attachNamespace’"
+msgid "package %s has no name space and is not on the search path"
+msgstr "package %s has no name space and is not on the search path"
 
 msgid "name space is already attached"
 msgstr "name space is already attached"
@@ -1055,9 +1037,6 @@ msgstr "%s not found"
 
 msgid "cyclic name space dependencies are not supported"
 msgstr "cyclic name space dependencies are not supported"
-
-msgid "%s failed in 'loadNamespace' for '%s'"
-msgstr "%s failed in ‘loadNamespace’ for ‘%s’"
 
 msgid "namespace '%s' is already sealed in loadNamespace"
 msgstr "namespace ‘%s’ is already sealed in loadNamespace"
@@ -1085,28 +1064,25 @@ msgstr "package ‘%s’ does not have a name space"
 
 msgid ""
 "exportClassPattern specified in NAMESPACE but no matching classes in package "
-"'%s'"
+"%s"
 msgstr ""
 "exportClassPattern specified in NAMESPACE but no matching classes in package "
-"‘%s’"
+"%s"
 
-msgid "in package '%s' classes for export not defined: %s"
-msgstr "in package ‘%s’ classes for export not defined: %s"
+msgid "in package %s classes %s were specified for export but not defined"
+msgstr "in package %s classes %s were specified for export but not defined"
 
 msgid "in '%s' methods for export not found: %s"
 msgstr "in ‘%s’ methods for export not found: %s"
 
-msgid "Multiple methods tables found for '"
-msgstr "Multiple methods tables found for '"
+msgid "multiple methods tables found for %s"
+msgstr "multiple methods tables found for %s"
 
-msgid "'"
-msgstr "'"
+msgid "failed to find metadata object for %s"
+msgstr "failed to find metadata object for %s"
 
-msgid "Failed to find metadata object for \"%s\""
-msgstr "Failed to find metadata object for “%s”"
-
-msgid "in '%s' methods specified for export, but none defined: %s"
-msgstr "in ‘%s’ methods specified for export, but none defined: %s"
+msgid "in package %s methods %s were specified for export but not defined"
+msgstr "in package %s methods %s were specified for export but not defined"
 
 msgid "not found"
 msgstr "not found"
@@ -1114,17 +1090,8 @@ msgstr "not found"
 msgid "not loading a name space"
 msgstr "not loading a name space"
 
-msgid ""
-"%s failed in unloadNamespace(\"%s\"), details:\n"
-"  call: %s\n"
-"  message: %s"
-msgstr ""
-"%s failed in unloadNamespace(“%s”), details:\n"
-"  call: %s\n"
-"  message: %s"
-
-msgid "name space '%s' is still used by: %s"
-msgstr "name space ‘%s’ is still used by: %s"
+msgid "name space %s is imported by %s so cannot be unloaded"
+msgstr "name space %s is imported by %s so cannot be unloaded"
 
 msgid "imperative name space directives are disabled"
 msgstr "imperative name space directives are disabled"
@@ -1144,8 +1111,14 @@ msgstr "operation not allowed on base name space"
 msgid "duplicate import names"
 msgstr "duplicate import names"
 
+msgid "replacing local value with import %s when loading %s"
+msgstr "replacing local value with import %s when loading %s"
+
 msgid "cannot import into a sealed name space"
 msgstr "cannot import into a sealed name space"
+
+msgid "replacing previous import %s when loading %s"
+msgstr "replacing previous import %s when loading %s"
 
 msgid "invalid import target"
 msgstr "invalid import target"
@@ -1153,11 +1126,11 @@ msgstr "invalid import target"
 msgid "got invalid index for importing"
 msgstr "got invalid index for importing"
 
-msgid "Found methods to import for function \"%s\" but not the generic itself"
-msgstr "Found methods to import for function “%s” but not the generic itself"
+msgid "found methods to import for function %s but not the generic itself"
+msgstr "found methods to import for function %s but not the generic itself"
 
-msgid "requested 'methods' objects not found in environment/package '%s': %s"
-msgstr "requested ‘methods’ objects not found in environment/package '%s': %s"
+msgid "requested methods not found in environment/package %s: %s"
+msgstr "requested methods not found in environment/package %s: %s"
 
 msgid "cannot add to exports of a sealed name space"
 msgstr "cannot add to exports of a sealed name space"
@@ -1171,14 +1144,8 @@ msgstr "package ‘%s’ has no NAMESPACE file"
 msgid "empty name in directive '%s' in NAMESPACE file"
 msgstr "empty name in directive ‘%s’ in NAMESPACE file"
 
-msgid "duplicated symbol names"
-msgstr "duplicated symbol names"
-
-msgid "in useDynLib("
-msgstr "in useDynLib("
-
-msgid ")"
-msgstr ")"
+msgid "duplicated symbol names %s in useDynlib(\"%s\")"
+msgstr "duplicated symbol names %s in useDynlib(“%s”)"
 
 msgid "bad 'S3method' directive: %s"
 msgstr "bad ‘S3method’ directive: %s"
@@ -1189,8 +1156,8 @@ msgstr "too many ‘S3method’ directives"
 msgid "unknown namespace directive: %s"
 msgstr "unknown namespace directive: %s"
 
-msgid "S3 method '%s' was declared in NAMESPACE but not found"
-msgstr "S3 method ‘%s’ was declared in NAMESPACE but not found"
+msgid "S3 method %s was declared but not found"
+msgstr "S3 method %s was declared but not found"
 
 msgid "bad method"
 msgstr "bad method"
@@ -1198,14 +1165,20 @@ msgstr "bad method"
 msgid "object '%s' not found whilst loading namespace '%s'"
 msgstr "object ‘%s’ not found whilst loading namespace ‘%s’"
 
-msgid "found an S4 version of '%s' so it has not been imported correctly"
-msgstr "found an S4 version of ‘%s’ so it has not been imported correctly"
+msgid "found an S4 version of %s so it has not been imported correctly"
+msgstr "found an S4 version of %s so it has not been imported correctly"
 
 msgid "'%s' is not implemented yet"
 msgstr "‘%s’ is not implemented yet"
 
 msgid "argument '%s' is not used (yet)"
 msgstr "argument ‘%s’ is not used (yet)"
+
+msgid "'x' cannot be coerced to 'octmode'"
+msgstr "‘x’ cannot be coerced to ‘octmode’"
+
+msgid "'x' cannot be coerced to hexmode"
+msgstr "‘x’ cannot be coerced to hexmode"
 
 msgid "no arguments"
 msgstr "no arguments"
@@ -1371,6 +1344,9 @@ msgstr "‘verbose’ is TRUE, ‘echo’ not; ... coercing ‘echo <- TRUE’"
 msgid "unable to find a plausible encoding"
 msgstr "unable to find a plausible encoding"
 
+msgid "encoding = \"%s\" chosen"
+msgstr "encoding = “%s” chosen"
+
 msgid "'chdir = TRUE' makes no sense for a URL"
 msgstr "‘chdir = TRUE’ makes no sense for a URL"
 
@@ -1497,8 +1473,8 @@ msgstr "‘%s’ not defined for “numeric_version” objects"
 msgid "not defined for numeric_version objects"
 msgstr "not defined for numeric_version objects"
 
-msgid "argument to 'which' is not logical"
-msgstr "argument to ‘which’ is not logical"
+msgid "<0 elements>"
+msgstr "<0 elements>"
 
 msgid "invalid 'digits'"
 msgstr "invalid ‘digits’"
@@ -1510,8 +1486,26 @@ msgstr ""
 "arguments 'show.output.on.console', ‘minimized’ and ‘invisible’ are for "
 "Windows only"
 
+msgid "'intern' must be TRUE or FALSE"
+msgstr "‘intern’ must be TRUE or FALSE"
+
+msgid "'ignore.stderr' must be TRUE or FALSE"
+msgstr "‘ignore.stderr’ must be TRUE or FALSE"
+
+msgid "'wait' must be TRUE or FALSE"
+msgstr "‘wait’ must be TRUE or FALSE"
+
 msgid "'input' must be a character vector or 'NULL'"
 msgstr "‘input’ must be a character vector or ‘NULL’"
+
+msgid "'show.output.on.console' must be TRUE or FALSE"
+msgstr "‘show.output.on.console’ must be TRUE or FALSE"
+
+msgid "'minimized' must be TRUE or FALSE"
+msgstr "‘minimized’ must be TRUE or FALSE"
+
+msgid "'invisible' must be TRUE or FALSE"
+msgstr "‘invisible’ must be TRUE or FALSE"
 
 msgid "'%s' could not be run"
 msgstr "‘%s’ could not be run"
@@ -1577,10 +1571,15 @@ msgid_plural "objects %s not found"
 msgstr[0] "object %s not found"
 msgstr[1] "objects %s not found"
 
-msgid "object '%s' is not exported by 'namespace:%s'"
-msgid_plural "objects '%s' are not exported by 'namespace:%s'"
-msgstr[0] "object ‘%s’ is not exported by ‘namespace:%s’"
-msgstr[1] "objects ‘%s’ are not exported by ‘namespace:%s’"
+msgid "class %s is not exported by 'namespace:%s'"
+msgid_plural "classes %s are not exported by 'namespace:%s'"
+msgstr[0] "class %s is not exported by ‘namespace:%s’"
+msgstr[1] "classes %s are not exported by ‘namespace:%s’"
+
+msgid "object %s is not exported by 'namespace:%s'"
+msgid_plural "objects %s are not exported by 'namespace:%s'"
+msgstr[0] "object %s is not exported by ‘namespace:%s’"
+msgstr[1] "objects %s are not exported by ‘namespace:%s’"
 
 msgid "previous export '%s' is being replaced"
 msgid_plural "previous exports '%s' are being replaced"

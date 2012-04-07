@@ -428,6 +428,11 @@ prepare2_Rd <- function(Rd, Rdfile)
     if (length(RdTags(Rd[[2L]])) > 1L)
         stopRd(RdTags(Rd[[2L]]), Rdfile,"\\name must only contain simple text")
 
+    ## R-exts points out that ! | @ cause problems in \name:
+    ## ggplot2 demonstrated it
+    name_text <- as.character(Rd[[2L]])
+    if(grepl("[!|@]", name_text))
+        warnRd(RdTags(Rd[[2L]]), Rdfile,"\\name should not contain !, | or @")
     structure(Rd, meta = list(docType = docTypes))
 }
 
@@ -484,19 +489,19 @@ sectionTitles <-
 
 psub <- function(pattern, replacement, x)
 ##    gsub(pattern, replacement, x, perl = TRUE, useBytes = TRUE)
-    .Internal(gsub(pattern, replacement, x, FALSE, TRUE, TRUE, FALSE, TRUE))
+    .Internal(gsub(pattern, replacement, x, FALSE, TRUE, FALSE, TRUE))
 
 psub1 <- function(pattern, replacement, x)
 ##    sub(pattern, replacement, x, perl = TRUE, useBytes = TRUE)
-    .Internal(sub(pattern, replacement, x, FALSE, TRUE, TRUE, FALSE, TRUE))
+    .Internal(sub(pattern, replacement, x, FALSE, TRUE, FALSE, TRUE))
 
 fsub <- function(pattern, replacement, x)
 ##    gsub(pattern, replacement, x, fixed = TRUE, useBytes = TRUE)
-    .Internal(gsub(pattern, replacement, x, FALSE, TRUE, FALSE, TRUE, TRUE))
+    .Internal(gsub(pattern, replacement, x, FALSE, FALSE, TRUE, TRUE))
 
 fsub1 <- function(pattern, replacement, x)
 ##    sub(pattern, replacement, x, fixed = TRUE, useBytes = TRUE)
-    .Internal(sub(pattern, replacement, x, FALSE, TRUE, FALSE, TRUE, TRUE))
+    .Internal(sub(pattern, replacement, x, FALSE, FALSE, TRUE, TRUE))
 
 
 ## for lists of messages, see ../man/checkRd.Rd
@@ -612,17 +617,18 @@ checkRd <- function(Rd, defines=.Platform$OS.type, stages="render",
                    if (length(block) > 1L) checkContent(block[[2L]])
                },
                "\\tabular" = checkTabular(block),
+               "\\subsection" = checkSection(block, tag),
                "\\if" =,
                "\\ifelse" = {
     		   condition <- block[[1L]]
     		   tags <- RdTags(condition)
-    		   if (!all(tags %in% c("TEXT", "\\Sexpr"))) 
+    		   if (!all(tags %in% c("TEXT", "\\Sexpr")))
     		       stopRd(block, Rdfile, "Condition must be \\Sexpr or plain text")
     		   condition <- condition[tags == "TEXT"]
     		   allow <- .strip_whitespace(strsplit(paste(condition, collapse=""), ",")[[1L]])
-    		   unknown <- allow[!(allow %in% 
+    		   unknown <- allow[!(allow %in%
     		          c("", "latex", "example", "text", "html", "TRUE", "FALSE"))]
-    		   if (length(unknown)) 
+    		   if (length(unknown))
     		       warnRd(block, Rdfile, "Unrecognized format: ", unknown)
                    checkContent(block[[2L]])
                    if (tag == "\\ifelse")
@@ -772,7 +778,7 @@ checkRd <- function(Rd, defines=.Platform$OS.type, stages="render",
 
     has_text <- FALSE
     checkSection <- function(section, tag) {
-    	if (tag == "\\section") {
+    	if (tag == "\\section" || tag == "\\subsection") {
     	    title <- section[[1L]]
             ## should be simple text
             if(length(title) < 1L || attr(title[[1L]], "Rd_tag") != "TEXT") {
@@ -838,6 +844,11 @@ checkRd <- function(Rd, defines=.Platform$OS.type, stages="render",
     Rdfile <- attr(Rd, "Rdfile")
     sections <- RdTags(Rd)
 
+    if (sections[1] == "\\title")  # if not, we've already been warned...
+    	if (!all(RdTags(Rd[[1]]) == "TEXT"))
+    	    warnRd(Rd[[1]], Rdfile, level = 5,
+    	    	   "\\title content must be plain text")
+
     enc <- which(sections == "\\encoding")
     ## sanity was checked in prepare2_Rd
     if (length(enc)) def_enc <- TRUE
@@ -866,7 +877,7 @@ testRdConditional <- function(format, conditional, Rdfile) {
     condition <- conditional[[1L]]
     tags <- RdTags(condition)
     if (!all(tags == "TEXT")) stopRd(conditional, Rdfile, "condition must be plain text")
-    
+
     allow <- .strip_whitespace(strsplit(paste(condition, collapse=""), ",")[[1L]])
     any(c("TRUE", format) %in% allow)
 }

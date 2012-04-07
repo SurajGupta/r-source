@@ -535,6 +535,7 @@ R_PROG_INSTALL
 
 ## we would like a POSIX sed, and need one on Solaris
 AC_PATH_PROGS(SED, sed, /bin/sed, [/usr/xpg4/bin:$PATH])
+AC_PATH_PROGS(TR, tr, /bin/tr, [/usr/xpg4/tr:$PATH])
 ## Make
 : ${MAKE=make}
 AC_SUBST(MAKE)
@@ -592,7 +593,7 @@ AC_DISABLE_STATIC
 LT_INIT
 AC_SUBST(LIBTOOL_DEPS)
 
-## cross-compiling
+## cross-compiling: added May 2007, not actually used
 R_CROSS_COMPILING
 AC_SUBST(BUILD_CC)
 AC_SUBST(BUILD_R)
@@ -2043,21 +2044,6 @@ R_LZMA
 ## PCRE headers and libraries.
 R_PCRE
 
-## libtiff
-AC_CHECK_HEADERS(tiffio.h)
-# may need to resolve jpeg routines
-AC_CHECK_LIB(tiff, TIFFOpen, [have_tiff=yes], [have_tiff=no], [${BITMAP_LIBS}])
-if test "x${ac_cv_header_tiffio_h}" = xyes ; then
-  if test "x${have_tiff}" = xyes; then
-    AC_DEFINE(HAVE_TIFF, 1, [Define this if libtiff is available.])
-    TIFF_LIBS=-ltiff
-  else
-    have_tiff=no
-  fi
-fi
-AC_SUBST(TIFF_LIBS)
-
- 
 ## POSIX times.
 R_SYS_POSIX_LEAPSECONDS
  

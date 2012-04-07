@@ -708,7 +708,7 @@ void Rcons_vprintf(const char *format, va_list arg)
     char buf[R_BUFSIZE], *p = buf;
     int res;
 #ifdef HAVE_VA_COPY
-    void *vmax = vmaxget();
+    const void *vmax = vmaxget();
     int usedRalloc = FALSE, usedVasprintf = FALSE;
     va_list aq;
 
@@ -730,6 +730,7 @@ void Rcons_vprintf(const char *format, va_list arg)
 	p = R_alloc(res+1, sizeof(char));
 	vsprintf(p, format, arg);
     } else if(res < 0) { /* just a failure indication */
+	usedRalloc = TRUE;
 	p = R_alloc(10*R_BUFSIZE, sizeof(char));
 	res = vsnprintf(p, 10*R_BUFSIZE, format, arg);
 	if (res < 0) {

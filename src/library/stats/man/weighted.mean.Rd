@@ -27,22 +27,31 @@ weighted.mean(x, w, \dots)
 \details{
   This is a generic function and methods can be defined for the first
   argument \code{x}: apart from the default methods there are methods
-  for the date-time classes \code{"POSIXct"}, \code{"POSIXlt"} and
-  \code{"Date"}.  The default method will work for any numeric-like
-  object for which multiplication and \code{\link{sum}} have suitable
-  methods.
+  for the date-time classes \code{"POSIXct"}, \code{"POSIXlt"},
+  \code{"difftime"} and \code{"Date"}.  The default method will work for
+  any numeric-like object for which \code{[}, multiplication and
+  \code{\link{sum}} have suitable methods, including complex vectors.
   
-  If \code{w} is missing then all elements of \code{x} are
-  given the same weight, otherwise the weights are normalized to sum to one.
+  If \code{w} is missing then all elements of \code{x} are given the
+  same weight, otherwise the weights coerced to numeric by
+  \code{\link{as.numeric}} and normalized to sum to one (if possible: if
+  their sum is zero or infinite the value is likely to be \code{NaN}).
   
-  Missing values in \code{w} are not handled.
+  Missing values in \code{w} are not handled specially and so give a
+  missing value as the result.  However, as from \R 2.11.0 zero weights
+  \emph{are} handled specially and the corresponding \code{x} values are
+  omitted from the sum.
 }
-\seealso{\code{\link{mean}}
+\value{
+  For the default method, a length-one numeric vector.
+}
+\seealso{
+  \code{\link{mean}}
 }
 \examples{
 ## GPA from Siegel 1994
 wt <- c(5,  5,  4,  1)/15
 x <- c(3.7,3.3,3.5,2.8)
-xm <- weighted.mean(x,wt)
+xm <- weighted.mean(x, wt)
 }
 \keyword{univar}

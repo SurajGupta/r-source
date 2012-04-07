@@ -1,7 +1,7 @@
 /*
  *  R : A Computer Language for Statistical Data Analysis
  *  Copyright (C) 1995, 1996  Robert Gentleman and Ross Ihaka
- *  Copyright (C) 1997-2008   Robert Gentleman, Ross Ihaka and the R core team.
+ *  Copyright (C) 1997--2010  The R Development Core Team
  *
  *  This program is free software; you can redistribute it and/or modify
  *  it under the terms of the GNU General Public License as published by
@@ -781,7 +781,7 @@ int addContourLines(double *x, int nx, double *y, int ny,
 SEXP GEcontourLines(double *x, int nx, double *y, int ny,
 		    double *z, double *levels, int nl)
 {
-    void *vmax;
+    const void *vmax;
     int i, nlines, len;
     double atom, zmin, zmax;
     SEGP* segmentDB;
@@ -921,7 +921,7 @@ static void contour(SEXP x, int nx, SEXP y, int ny, SEXP z,
 {
 /* draw a contour for one given contour level 'zc' */
 
-    char *vmax;
+    const void *vmax;
 
     double xend, yend;
     int i, ii, j, jj, ns, ns2, dir;
@@ -1347,7 +1347,8 @@ SEXP attribute_hidden do_contour(SEXP call, SEXP op, SEXP args, SEXP env)
     rcolor colsave;
     double cexsave;
     double atom, zmin, zmax;
-    char *vmax, *vmax0, familysave[201];
+    const void *vmax, *vmax0;
+    char familysave[201];
     int method;
     Rboolean drawLabels;
     double labcex;
@@ -1358,6 +1359,7 @@ SEXP attribute_hidden do_contour(SEXP call, SEXP op, SEXP args, SEXP env)
 
     if (length(args) < 4)
 	error(_("too few arguments"));
+    PrintDefaults(R_GlobalEnv); /* prepare for labelformat */
 
     oargs = args;
 
@@ -1653,6 +1655,7 @@ SEXP attribute_hidden do_filledcontour(SEXP call, SEXP op, SEXP args, SEXP env)
     GCheckState(dd);
 
     checkArity(op,args);
+    PrintDefaults(R_GlobalEnv); /* prepare for labelformat */
     oargs = args;
 
     sx = CAR(args);

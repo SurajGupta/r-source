@@ -2175,13 +2175,17 @@ void R_getProcTime(double *data);
 static double gctimes[5], gcstarttimes[5];
 static Rboolean gctime_enabled = FALSE;
 
+/* this is primitive */
 SEXP attribute_hidden do_gctime(SEXP call, SEXP op, SEXP args, SEXP env)
 {
     SEXP ans;
+
     if (args == R_NilValue)
 	gctime_enabled = TRUE;
-    else
+    else {
+	check1arg(args, call, "on");
 	gctime_enabled = asLogical(CAR(args));
+    }
     ans = allocVector(REALSXP, 5);
     REAL(ans)[0] = gctimes[0];
     REAL(ans)[1] = gctimes[1];
@@ -2668,8 +2672,7 @@ void (SET_STRING_ELT)(SEXP x, int i, SEXP v) {
     if(TYPEOF(x) != STRSXP)
 	error("%s() can only be applied to a '%s', not a '%s'",
 	      "SET_STRING_ELT", "character vector", type2char(TYPEOF(x)));
-    /* NULL is used in subscript.c */
-    if(TYPEOF(v) != CHARSXP && TYPEOF(v) != NILSXP)
+    if(TYPEOF(v) != CHARSXP)
        error("Value of SET_STRING_ELT() must be a 'CHARSXP' not a '%s'",
 	     type2char(TYPEOF(v)));
     CHECK_OLD_TO_NEW(x, v);
@@ -3058,6 +3061,11 @@ int Seql(SEXP a, SEXP b)
     /* Leave this to compiler to optimize */
     if (IS_CACHED(a) && IS_CACHED(b) && ENC_KNOWN(a) == ENC_KNOWN(b))
 	return 0;
-    return !strcmp(translateChar(a), translateChar(b));
+    else {
+    	SEXP vmax = R_VStack;
+    	int result = !strcmp(translateCharUTF8(a), translateCharUTF8(b));
+    	R_VStack = vmax; /* discard any memory used by translateCharUTF8 */
+    	return result;
+    }
 }
 

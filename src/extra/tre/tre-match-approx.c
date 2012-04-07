@@ -27,8 +27,11 @@ char *alloca ();
 #endif
 #endif /* TRE_USE_ALLOCA */
 
+/* These seem compiler/OS-specific, but unexplained
+On Linux the first is intended to be used only with GCC.
 #define __USE_STRING_INLINES
 #undef __NO_INLINE__
+*/
 
 #include <assert.h>
 #include <stdlib.h>
@@ -49,7 +52,7 @@ char *alloca ();
 
 #include "tre-internal.h"
 #include "tre-match-utils.h"
-#include "regex.h"
+#include "tre.h"
 #include "xmalloc.h"
 
 #define TRE_M_COST	0

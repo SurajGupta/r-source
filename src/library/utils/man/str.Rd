@@ -1,6 +1,6 @@
 % File src/library/utils/man/str.Rd
 % Part of the R package, http://www.R-project.org
-% Copyright 1995-2007 R Core Development Team
+% Copyright 1995-2009 R Core Development Team
 % Distributed under GPL 2 or later
 
 \name{str}
@@ -23,7 +23,7 @@ str(object, \dots)
                        collapse = ".."),
     comp.str="$ ", no.list = FALSE, envir = baseenv(),
     strict.width = strO$strict.width,
-    formatNum = strO$formatNum, \dots)
+    formatNum = strO$formatNum, list.len = 99, \dots)
 
 strOptions(strict.width = "no", digits.d = 3, vec.len = 4,
            formatNum = function(x, ...)
@@ -88,8 +88,9 @@ strOptions(strict.width = "no", digits.d = 3, vec.len = 4,
     formatting numeric vectors.  It defaults to the \code{formatNum}
     component of option \code{"str"}, see \dQuote{Usage} of
     \code{strOptions()} above, which is almost back compatible to \R
-    version \eqn{\le}{<=} 2.7.x, however, using \code{\link{formatC}}
-    may be slightly better.}
+    <= 2.7.x, however, using \code{\link{formatC}} may be slightly better.}
+  \item{list.len}{numeric; maximum number of list elements to display
+    within a level.}
   \item{\dots}{potential further arguments (required for Method/Generic
     reasons).}
 }
@@ -127,6 +128,7 @@ need.dev <-
 ch <- letters[1:12]; is.na(ch) <- 3:5
 str(ch) # character NA's
 
+str(list(a="A", L = as.list(1:100)), list.len = 9)
 nchar(longch <- paste(rep(letters,100), collapse=""))
 str(longch)
 str(longch, nchar.max = 52)

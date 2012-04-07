@@ -27,6 +27,8 @@ function(x, y, alternative = c("two.sided", "less", "greater"),
 
     if(length(x) != length(y))
 	stop("'x' and 'y' must have the same length")
+    if(!is.numeric(x)) stop("'x' must be a numeric vector")
+    if(!is.numeric(y)) stop("'y' must be a numeric vector")
     OK <- complete.cases(x, y)
     x <- x[OK]
     y <- y[OK]
@@ -211,7 +213,7 @@ function(formula, data, subset, na.action, ...)
 {
     if(missing(formula)
        || !inherits(formula, "formula")
-       || length(formula) != 2)
+       || length(formula) != 2L)
         stop("'formula' missing or invalid")
     m <- match.call(expand.dots = FALSE)
     if(is.matrix(eval(m$data, parent.frame())))
@@ -219,7 +221,7 @@ function(formula, data, subset, na.action, ...)
     m[[1L]] <- as.name("model.frame")
     m$... <- NULL
     mf <- eval(m, environment(formula))
-    if(length(mf) != 2)
+    if(length(mf) != 2L)
         stop("invalid formula")
     DNAME <- paste(names(mf), collapse = " and ")
     names(mf) <- c("x", "y")

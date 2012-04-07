@@ -1,8 +1,7 @@
 /*
  *  R : A Computer Language for Statistical Data Analysis
  *  Copyright (C) 1995, 1996  Robert Gentleman and Ross Ihaka
- *  Copyright (C) 1997--2008  Robert Gentleman, Ross Ihaka and the
- *			      R Development Core Team
+ *  Copyright (C) 1997--2010  The R Development Core Team
  *  Copyright (C) 2003--2008  The R Foundation
  *
  *  This program is free software; you can redistribute it and/or modify
@@ -452,9 +451,9 @@ void FixupProb(double *p, int n, int require_k, Rboolean replace)
 	p[i] /= sum;
 }
 
-/* do_sample - equal probability sampling with/without replacement. */
-/* Implements sample(n, k, r) - choose k elements from 1 to n */
-/* with/without replacement according to r. */
+/* do_sample - probability sampling with/without replacement.
+   .Internal(sample(n, size, replace, prob))
+*/
 SEXP attribute_hidden do_sample(SEXP call, SEXP op, SEXP args, SEXP rho)
 {
     SEXP x, y, prob, sreplace;
@@ -463,7 +462,7 @@ SEXP attribute_hidden do_sample(SEXP call, SEXP op, SEXP args, SEXP rho)
 
     checkArity(op, args);
     n = asInteger(CAR(args)); args = CDR(args);
-    k = asInteger(CAR(args)); args = CDR(args);
+    k = asInteger(CAR(args)); args = CDR(args); /* size */
     sreplace = CAR(args); args = CDR(args);
     if(length(sreplace) != 1)
 	 error(_("invalid '%s' argument"), "replace");
@@ -471,7 +470,7 @@ SEXP attribute_hidden do_sample(SEXP call, SEXP op, SEXP args, SEXP rho)
     prob = CAR(args);
     if (replace == NA_LOGICAL)
 	error(_("invalid '%s' argument"), "replace");
-    if (n == NA_INTEGER || n < 1)
+    if (n == NA_INTEGER || n < 0 || (k > 0 && n == 0))
 	error(_("invalid first argument"));
     if (k == NA_INTEGER || k < 0)
 	error(_("invalid '%s' argument"), "size");
@@ -554,6 +553,7 @@ R_r2dtable(SEXP n, SEXP r, SEXP c)
     int n_of_samples, n_of_cases;
     double *fact;
     SEXP ans, tmp;
+    const void *vmax = vmaxget();
 
     nr = length(r);
     nc = length(c);
@@ -606,6 +606,7 @@ R_r2dtable(SEXP n, SEXP r, SEXP c)
     PutRNGstate();
 
     UNPROTECT(1);
+    vmaxset(vmax);
 
     return(ans);
 }

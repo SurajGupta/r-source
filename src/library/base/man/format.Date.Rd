@@ -1,6 +1,6 @@
 % File src/library/base/man/format.Date.Rd
 % Part of the R package, http://www.R-project.org
-% Copyright 1995-2009 R Core Development Team
+% Copyright 1995-2010 R Core Development Team
 % Distributed under GPL 2 or later
 
 \name{format.Date}
@@ -52,7 +52,7 @@ as.Date(x, \dots)
 
   The \code{as.Date} methods accept character strings, factors, logical
   \code{NA} and objects of classes \code{"\link{POSIXlt}"} and
-  \code{"\link{POSIXct}"}.  (The last are converted to days by
+  \code{"\link{POSIXct}"}.  (The last is converted to days by
   ignoring the time after midnight in the
   representation of the time in UTC.)  Also objects of class
   \code{"date"} (from package \pkg{\link[date:as.date]{date}}) and
@@ -100,14 +100,12 @@ as.Date(x, \dots)
   \link{Date} for details of the date class;
   \code{\link{locales}} to query or set a locale.
 
-  Your system's help pages on \code{strftime} and \code{strptime} to
-  see how to specify their formats.
-#ifdef windows
-  Windows users will find no help page for \code{strptime}: code based
-  on \samp{glibc} is used (with corrections), so all the format
-  specifiers described here are supported, but with no alternative
-  number representation nor era available in any locale.
-#endif
+  Your system's help pages on \code{strftime} and \code{strptime} to see
+  how to specify their formats.  Windows users will find no help page
+  for \code{strptime}: code based on \samp{glibc} is used (with
+  corrections), so all the format specifiers described here are
+  supported, but with no alternative number representation nor era
+  available in any locale.
 }
 \examples{
 ## locale-specific version of the date
@@ -128,6 +126,14 @@ as.Date(dates, "\%m/\%d/\%y")
 
 ## date given as number of days since 1900-01-01 (a date in 1989)
 as.Date(32768, origin="1900-01-01")
+% http://support.microsoft.com/kb/214330
+## Excel is said to use 1900-01-01 as day 1 (Windows default) or
+## 1904-01-01 as day 0 (Mac default), but this is complicated by Excel
+## thinking 1900 was a leap year.
+## So for recent dates from Windows Excel
+as.Date(35981, origin="1899-12-30") # 1998-07-05
+## and Mac Excel
+as.Date(34519, origin="1904-01-01") # 1998-07-05
 }
 \keyword{utilities}
 \keyword{chron}

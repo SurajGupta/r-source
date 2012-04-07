@@ -145,11 +145,17 @@ static SEXP VectorSubset(SEXP x, SEXP s, SEXP call)
     /* Check to see if we have special matrix subscripting. */
     /* If we do, make a real subscript vector and protect it. */
 
-    if (isMatrix(s) && isArray(x) && (isInteger(s) || isReal(s)) &&
-	    ncols(s) == length(attrib)) {
-	s = mat2indsub(attrib, s, call);
-	UNPROTECT(1);
-	PROTECT(s);
+    if (isMatrix(s) && isArray(x) && ncols(s) == length(attrib)) {
+        if (isString(s)) {
+            s = strmat2intmat(s, GetArrayDimnames(x), call);
+            UNPROTECT(1);
+            PROTECT(s);
+        }
+        if (isInteger(s) || isReal(s)) {
+            s = mat2indsub(attrib, s, call);
+            UNPROTECT(1);
+            PROTECT(s);
+        }
     }
 
     /* Convert to a vector of integer subscripts */
@@ -354,7 +360,7 @@ static SEXP ArraySubset(SEXP x, SEXP s, SEXP call, int drop)
     int i, j, k, ii, jj, mode, n;
     int **subs, *indx, *offset, *bound;
     SEXP dimnames, dimnamesnames, p, q, r, result, xdims;
-    void *vmaxsave;
+    const void *vmaxsave;
 
     mode = TYPEOF(x);
     xdims = getAttrib(x, R_DimSymbol);
@@ -573,7 +579,6 @@ static int ExtractExactArg(SEXP args)
     return exact;
 }
 
-
 /* The "[" subset operator.
  * This provides the most general form of subsetting. */
 
@@ -588,6 +593,7 @@ SEXP attribute_hidden do_subset(SEXP call, SEXP op, SEXP args, SEXP rho)
     /* retains any missing argument indicators. */
 
     if(DispatchOrEval(call, op, "[", args, rho, &ans, 0, 0))
+/*     if(DispatchAnyOrEval(call, op, "[", args, rho, &ans, 0, 0)) */
 	return(ans);
 
     /* Method dispatch has failed, we now */
@@ -760,6 +766,7 @@ SEXP attribute_hidden do_subset2(SEXP call, SEXP op, SEXP args, SEXP rho)
     /* evaluation retains any missing argument indicators. */
 
     if(DispatchOrEval(call, op, "[[", args, rho, &ans, 0, 0))
+/*     if(DispatchAnyOrEval(call, op, "[[", args, rho, &ans, 0, 0)) */
 	return(ans);
 
     /* Method dispatch has failed. */

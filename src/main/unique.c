@@ -1,8 +1,7 @@
 /*
  *  R : A Computer Language for Statistical Data Analysis
  *  Copyright (C) 1995, 1996  Robert Gentleman and Ross Ihaka
- *  Copyright (C) 1997--2009  Robert Gentleman, Ross Ihaka and the
- *                            R Development Core Team
+ *  Copyright (C) 1997--2010  The R Development Core Team
  *
  *  This program is free software; you can redistribute it and/or modify
  *  it under the terms of the GNU General Public License as published by
@@ -133,6 +132,7 @@ static int shash(SEXP x, int indx, HashData *d)
 {
     unsigned int k;
     const char *p;
+    const void *vmax = vmaxget();
     if(d->useUTF8)
 	p = translateCharUTF8(STRING_ELT(x, indx));
     else
@@ -140,6 +140,7 @@ static int shash(SEXP x, int indx, HashData *d)
     k = 0;
     while (*p++)
 	    k = 11 * k + *p; /* was 8 but 11 isn't a power of 2 */
+    vmaxset(vmax); /* discard any memory used by translateChar */
     return scatter(k, d);
 }
 
@@ -367,14 +368,13 @@ static void removeEntry(SEXP table, SEXP x, int indx, HashData *d)
 
     h = INTEGER(d->HashTable);
     i = d->hash(x, indx, d);
-    while (h[i] != NIL) {
+    while (h[i] >= 0) {
 	if (d->equal(table, h[i], x, indx)) {
 	    h[i] = NA_INTEGER;  /* < 0, only index values are inserted */
 	    return;
 	}
 	i = (i + 1) % d->M;
     }
-    h[i] = NA_INTEGER;
 }
 
 SEXP duplicated(SEXP x, Rboolean from_last)
@@ -399,8 +399,8 @@ SEXP duplicated(SEXP x, Rboolean from_last)
     DUPLICATED_INIT;
 
     PROTECT(data.HashTable);
-    ans = allocVector(LGLSXP, n);
-    UNPROTECT(1);
+    PROTECT(ans = allocVector(LGLSXP, n));
+
     v = LOGICAL(ans);
 
     for (i = 0; i < data.M; i++) h[i] = NIL;
@@ -409,21 +409,25 @@ SEXP duplicated(SEXP x, Rboolean from_last)
     else
 	for (i = 0; i < n; i++) v[i] = isDuplicated(x, i, &data);
 
+    UNPROTECT(2);
     return ans;
 }
 
 /* simpler version of the above : return 1-based index of first, or 0 : */
 int any_duplicated(SEXP x, Rboolean from_last)
 {
+    int result = 0;
     DUPLICATED_INIT;
+    PROTECT(data.HashTable);
 
     for (i = 0; i < data.M; i++) h[i] = NIL;
     if(from_last) {
-	for (i = n-1; i >= 0; i--) if(isDuplicated(x, i, &data)) return ++i;
+	for (i = n-1; i >= 0; i--) if(isDuplicated(x, i, &data)) { result = ++i; break; }
     } else {
-	for (i = 0; i < n; i++)    if(isDuplicated(x, i, &data)) return ++i;
+	for (i = 0; i < n; i++)    if(isDuplicated(x, i, &data)) { result = ++i; break; }
     }
-    return 0;
+    UNPROTECT(1);
+    return result;
 }
 
 SEXP duplicated3(SEXP x, SEXP incomp, Rboolean from_last)
@@ -434,8 +438,8 @@ SEXP duplicated3(SEXP x, SEXP incomp, Rboolean from_last)
     DUPLICATED_INIT;
 
     PROTECT(data.HashTable);
-    ans = allocVector(LGLSXP, n);
-    UNPROTECT(1);
+    PROTECT(ans = allocVector(LGLSXP, n));
+
     v = LOGICAL(ans);
 
     for (i = 0; i < data.M; i++) h[i] = NIL;
@@ -454,7 +458,7 @@ SEXP duplicated3(SEXP x, SEXP incomp, Rboolean from_last)
 	    }
 	UNPROTECT(1);
     }
-
+    UNPROTECT(2);
     return ans;
 }
 
@@ -464,6 +468,7 @@ int any_duplicated3(SEXP x, SEXP incomp, Rboolean from_last)
     int j, m = length(incomp);
 
     DUPLICATED_INIT;
+    PROTECT(data.HashTable);
 
     if(!m)
 	error(_("any_duplicated3(., <0-length incomp>)"));
@@ -494,7 +499,7 @@ int any_duplicated3(SEXP x, SEXP incomp, Rboolean from_last)
             IS_DUPLICATED_CHECK;
     }
 
-    UNPROTECT(1);
+    UNPROTECT(2);
     return 0;
 }
 
@@ -552,8 +557,7 @@ SEXP attribute_hidden do_duplicated(SEXP call, SEXP op, SEXP args, SEXP env)
 	    k++;
 
     PROTECT(dup);
-    ans = allocVector(TYPEOF(x), k);
-    UNPROTECT(1);
+    PROTECT(ans = allocVector(TYPEOF(x), k));
 
     k = 0;
     switch (TYPEOF(x)) {
@@ -594,6 +598,7 @@ SEXP attribute_hidden do_duplicated(SEXP call, SEXP op, SEXP args, SEXP env)
     default:
 	UNIMPLEMENTED_TYPE("duplicated", x);
     }
+    UNPROTECT(2);
     return ans;
 }
 
@@ -643,10 +648,11 @@ static SEXP HashLookup(SEXP table, SEXP x, HashData *d)
     int i, n;
 
     n = LENGTH(x);
-    ans = allocVector(INTSXP, n);
+    PROTECT(ans = allocVector(INTSXP, n));
     for (i = 0; i < n; i++) {
 	INTEGER(ans)[i] = Lookup(table, x, i, d);
     }
+    UNPROTECT(1);
     return ans;
 }
 
@@ -732,7 +738,7 @@ SEXP match4(SEXP itable, SEXP ix, int nmatch, SEXP incomp)
     }
     PROTECT(data.HashTable);
     DoHashing(table, &data);
-    UndoHashing(incomp, itable, &data);
+    UndoHashing(incomp, table, &data);
     ans = HashLookup(table, x, &data);
     UNPROTECT(4);
     return ans;
@@ -921,6 +927,7 @@ SEXP attribute_hidden do_charmatch(SEXP call, SEXP op, SEXP args, SEXP env)
     int i, j, k, imatch, n_input, n_target, temp, no_match, *ians;
     const char *ss, *st;
     Rboolean useUTF8 = FALSE;
+    const void *vmax;
 
     checkArity(op, args);
 
@@ -942,6 +949,7 @@ SEXP attribute_hidden do_charmatch(SEXP call, SEXP op, SEXP args, SEXP env)
     PROTECT(ans = allocVector(INTSXP, n_input));
     ians = INTEGER(ans);
 
+    vmax = vmaxget();
     for (i = 0; i < n_input; i++) {
 	if (useUTF8)
 	    ss = translateCharUTF8(STRING_ELT(input, i));
@@ -950,6 +958,7 @@ SEXP attribute_hidden do_charmatch(SEXP call, SEXP op, SEXP args, SEXP env)
 	temp = strlen(ss);
 	imatch = NA_INTEGER;
 	perfect = FALSE;
+	/* we could reset vmax here too: worth it? */
 	for (j = 0; j < n_target; j++) {
 	    if (useUTF8)
 		st = translateCharUTF8(STRING_ELT(target, j));
@@ -974,6 +983,7 @@ SEXP attribute_hidden do_charmatch(SEXP call, SEXP op, SEXP args, SEXP env)
 	    }
 	}
 	INTEGER(ans)[i] = (imatch == NA_INTEGER) ? no_match : imatch;
+	vmaxset(vmax);
     }
     UNPROTECT(1);
     return ans;
@@ -1377,12 +1387,13 @@ static SEXP duplicated2(SEXP x, HashData *d)
     n = LENGTH(x);
     HashTableSetup(x, d);
     PROTECT(d->HashTable);
-    ans = allocVector(INTSXP, n);
-    UNPROTECT(1);
+    PROTECT(ans = allocVector(INTSXP, n));
+
     h = INTEGER(d->HashTable);
     v = INTEGER(ans);
     for (i = 0; i < d->M; i++) h[i] = NIL;
     for (i = 0; i < n; i++) v[i] = isDuplicated2(x, i, d);
+    UNPROTECT(2);    
     return ans;
 }
 
@@ -1392,6 +1403,7 @@ SEXP attribute_hidden do_makeunique(SEXP call, SEXP op, SEXP args, SEXP env)
     int i, n, cnt, len, maxlen = 0, *cnts, dp;
     HashData data;
     const char *csep, *ss; char *buf;
+    void *vmax;
 
     checkArity(op, args);
     names = CAR(args);
@@ -1403,10 +1415,12 @@ SEXP attribute_hidden do_makeunique(SEXP call, SEXP op, SEXP args, SEXP env)
 	error(_("'sep' must be a character string"));
     csep = translateChar(STRING_ELT(sep, 0));
     PROTECT(ans = allocVector(STRSXP, n));
+    vmax = vmaxget();
     for(i = 0; i < n; i++) {
 	SET_STRING_ELT(ans, i, STRING_ELT(names, i));
 	len = strlen(translateChar(STRING_ELT(names, i)));
 	if(len > maxlen) maxlen = len;
+	vmaxset(vmax);
     }
     if(n > 1) {
 	/* +2 for terminator and rounding error */
@@ -1424,6 +1438,7 @@ SEXP attribute_hidden do_makeunique(SEXP call, SEXP op, SEXP args, SEXP env)
 	PROTECT(newx = allocVector(STRSXP, 1));
 	PROTECT(dup = duplicated2(names, &data));
 	PROTECT(data.HashTable);
+	vmax = vmaxget();
 	for(i = 1; i < n; i++) { /* first cannot be a duplicate */
 	    dp = INTEGER(dup)[i]; /* 1-based number of first occurrence */
 	    if(dp == 0) continue;
@@ -1437,6 +1452,7 @@ SEXP attribute_hidden do_makeunique(SEXP call, SEXP op, SEXP args, SEXP env)
 	    SET_STRING_ELT(ans, i, STRING_ELT(newx, 0));
 	    /* insert it */ (void) isDuplicated(ans, i, &data);
 	    cnts[dp-1] = cnt+1; /* cache the first unused cnt value */
+	    vmaxset(vmax);
 	}
 	UNPROTECT(3);
     }
@@ -1483,8 +1499,8 @@ SEXP attribute_hidden csduplicated(SEXP x)
     n = LENGTH(x);
     HashTableSetup1(x, &data);
     PROTECT(data.HashTable);
-    ans = allocVector(LGLSXP, n);
-    UNPROTECT(1);
+    PROTECT(ans = allocVector(LGLSXP, n));
+
     h = INTEGER(data.HashTable);
     v = LOGICAL(ans);
 
@@ -1494,5 +1510,6 @@ SEXP attribute_hidden csduplicated(SEXP x)
     for (i = 0; i < n; i++)
 	v[i] = isDuplicated(x, i, &data);
 
+    UNPROTECT(2);
     return ans;
 }

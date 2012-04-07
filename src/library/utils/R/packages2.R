@@ -28,9 +28,6 @@ getDependencies <-
         warning("Do not know which element of 'lib' to install dependencies into\nskipping dependencies")
         depends <- FALSE
     }
-    bundles <- .find_bundles(available)
-    for(bundle in names(bundles))
-        pkgs[ pkgs %in% bundles[[bundle]] ] <- bundle
     p0 <- unique(pkgs)
     miss <-  !p0 %in% row.names(available)
     if(sum(miss)) {
@@ -81,8 +78,6 @@ getDependencies <-
             flush.console()
         }
 
-        for(bundle in names(bundles))
-            pkgs[ pkgs %in% bundles[[bundle]] ] <- bundle
         pkgs <- unique(pkgs)
         pkgs <- pkgs[pkgs %in% row.names(available)]
         if(length(pkgs) > length(p0)) {
@@ -173,11 +168,10 @@ install.packages <-
 
     if(missing(pkgs) || !length(pkgs)) {
         ## if no packages were specified, use a menu
-	if(.Platform$OS.type == "windows" || .Platform$GUI == "AQUA") {
-	    SelectList <- select.list
-	} else if(.Platform$OS.type == "unix" &&
-		  capabilities("tcltk") && capabilities("X11")) {
-	    SelectList <- tcltk::tk_select.list
+	if(.Platform$OS.type == "windows" || .Platform$GUI == "AQUA"
+           || (capabilities("tcltk")
+               && capabilities("X11")&& suppressWarnings(tcltk:::.TkUp)) ) {
+            ## this is the condition for a graphical select.list()
 	} else
 	    stop("no packages were specified")
 
@@ -185,31 +179,10 @@ install.packages <-
 	    available <- available.packages(contriburl = contriburl,
 					    method = method)
 	if(NROW(available)) {
-            explode_bundles <- function(a)
-            {
-                contains <- .find_bundles(a, FALSE)
-                extras <- unlist(lapply(names(contains), function(x)
-                                        paste(contains[[x]], " (", x, ")", sep="")))
-                sort(as.vector(c(a[, 1L], extras)))
-            }
-
-            implode_bundles <- function(pkgs)
-            {
-                bundled <- grep(".* \\(.*\\)$", pkgs)
-                if (length(bundled)) {
-                    bundles <- unique(gsub(".* \\((.*)\\)$", "\\1",
-                                           pkgs[bundled]))
-                    pkgs <- c(pkgs[-bundled], bundles)
-                }
-                pkgs
-            }
-
-	    a <- explode_bundles(available)
-	    pkgs <- implode_bundles(SelectList(a, multiple = TRUE,
-					       title = "Packages"))
-            ## avoid duplicate entries in menus, since the latest will
-            ## be picked up
-            pkgs <- unique(pkgs)
+            ## avoid duplicate entries in menus, since the latest available
+            ## will be picked up
+	    pkgs <- select.list(unique(rownames(available)), multiple = TRUE,
+                                title = "Packages", graphics = TRUE)
 	}
 	if(!length(pkgs)) stop("no packages were specified")
     }
@@ -265,11 +238,13 @@ install.packages <-
     ## check if we should infer repos=NULL
     if(length(pkgs) == 1L && missing(repos) && missing(contriburl)) {
         if((type == "source" && length(grep("\\.tar.gz$", pkgs))) ||
-           (type == "win.binary" && length(grep("\\.zip$", pkgs))) ||
+           (type %in% c("win.binary", "win64.binary")
+            && length(grep("\\.zip$", pkgs))) ||
            (substr(type, 1L, 10L) == "mac.binary"
             && length(grep("\\.tgz$", pkgs)))) {
             repos <- NULL
             message("inferring 'repos = NULL' from the file name")
+
         }
     }
 
@@ -277,7 +252,8 @@ install.packages <-
         if(type == "mac.binary")
             stop("cannot install MacOS X binary packages on Windows")
 
-        if(type == "win.binary") {      # include local .zip files
+        if(type %in% c("win.binary", "win64.binary")) {
+            ## include local .zip files
             .install.winbinary(pkgs = pkgs, lib = lib, contriburl = contriburl,
                                method = method, available = available,
                                destdir = destdir,
@@ -307,7 +283,7 @@ install.packages <-
             return(invisible())
         }
 
-        if(type == "win.binary")
+        if(type %in% c("win.binary", "win64.binary"))
             stop("cannot install Windows binary packages on this plaform")
 
         if(!file.exists(file.path(R.home("bin"), "INSTALL")))

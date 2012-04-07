@@ -1,6 +1,6 @@
 % File src/library/base/man/Control.Rd
 % Part of the R package, http://www.R-project.org
-% Copyright 1995-2008 R Core Development Team
+% Copyright 1995-2010 R Core Development Team
 % Distributed under GPL 2 or later
 
 \name{Control}
@@ -71,7 +71,8 @@ next
 }
 \value{
   \code{if} returns the value of the expression evaluated, or
-  \code{NULL} if none was (which may happen if there is no \code{else}).
+  \code{NULL} invisibly if none was (which may happen if there is no
+  \code{else}).
 
   \code{for}, \code{while} and \code{repeat} return \code{NULL} invisibly.
   \code{for} sets \code{var} to the last used element of \code{seq},
@@ -88,8 +89,9 @@ next
 }
 \seealso{
   \code{\link{Syntax}} for the basic \R syntax and operators,
-  \code{\link{Paren}} for parentheses and braces; further,
-  \code{\link{ifelse}}, \code{\link{switch}}.
+  \code{\link{Paren}} for parentheses and braces.
+  
+  \code{\link{ifelse}}, \code{\link{switch}} for other ways to control flow.
 }
 \examples{
 for(i in 1:5) print(1:i)

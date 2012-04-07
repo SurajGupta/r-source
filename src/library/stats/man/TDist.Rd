@@ -1,10 +1,10 @@
 % File src/library/stats/man/TDist.Rd
 % Part of the R package, http://www.R-project.org
-% Copyright 1995-2009 R Core Development Team
+% Copyright 1995-2010 R Core Development Team
 % Distributed under GPL 2 or later
 
 \name{TDist}
-\encoding{latin1}
+\encoding{UTF-8}
 \alias{TDist}
 \alias{dt}
 \alias{pt}
@@ -29,12 +29,12 @@ rt(n, df, ncp)
     is taken to be the number required.}
   \item{df}{degrees of freedom (\eqn{> 0}, maybe non-integer).  \code{df
       = Inf} is allowed.}
-  \item{ncp}{non-centrality parameter \eqn{\delta};
+  \item{ncp}{non-centrality parameter \eqn{\delta}{delta};
     currently except for \code{rt()}, only for \code{abs(ncp) <= 37.62}.
     If omitted, use the central t distribution.}
   \item{log, log.p}{logical; if TRUE, probabilities p are given as log(p).}
   \item{lower.tail}{logical; if TRUE (default), probabilities are
-    \eqn{P[X \le x]}{P[X <= x]}, otherwise, \eqn{P[X > x]}{P[X > x]}.}
+    \eqn{P[X \le x]}, otherwise, \eqn{P[X > x]}.}
 }
 \value{
   \code{dt} gives the density,
@@ -48,6 +48,10 @@ rt(n, df, ncp)
   Setting \code{ncp = 0} is \emph{not} equivalent to omitting
   \code{ncp}.  \R uses the non-centrality functionality whenever \code{ncp}
   is specified which provides continuous behavior at \eqn{ncp = 0}.
+
+  The code for non-zero \code{ncp} is principally intended to be used
+  for moderate values of \code{ncp}: it will not be highly accurate,
+  especially in the tails, for large values.
 }
 \details{
   The \eqn{t} distribution with \code{df} \eqn{= \nu}{= n} degrees of
@@ -55,7 +59,7 @@ rt(n, df, ncp)
   \deqn{
     f(x) = \frac{\Gamma ((\nu+1)/2)}{\sqrt{\pi \nu} \Gamma (\nu/2)}
     (1 + x^2/\nu)^{-(\nu+1)/2}%
-  }{f(x) = Gamma((n+1)/2) / (sqrt(n pi) Gamma(n/2)) (1 + x^2/n)^-((n+1)/2)}
+  }{f(x) = \Gamma((n+1)/2) / (\sqrt(n \pi) \Gamma(n/2)) (1 + x^2/n)^-((n+1)/2)}
   for all real \eqn{x}.
   It has mean \eqn{0} (for \eqn{\nu > 1}{n > 1}) and
   variance \eqn{\frac{\nu}{\nu-2}}{n/(n-2)} (for \eqn{\nu > 2}{n > 2}).
@@ -63,28 +67,28 @@ rt(n, df, ncp)
   The general \emph{non-central} \eqn{t}
   with parameters \eqn{(\nu, \delta)}{(df, Del)} \code{= (df, ncp)}
   is defined as the distribution of
-  \eqn{T_{\nu}(\delta) := (U + \delta)/\sqrt{V/\nu}}{T(df, Del) := (U + Del) / sqrt(V/df) }
+  \eqn{T_{\nu}(\delta) := (U + \delta)/\sqrt{V/\nu}}{T(df, Del) := (U + Del) / \sqrt(V/df) }
   where \eqn{U} and \eqn{V}  are independent random
-  variables, \eqn{U \sim {\cal N}(0,1)}{U \~ N(0,1)} and
-  \eqn{V \sim \chi^2_\nu}{V \~ Chi^2(df)} (see \link{Chisquare}).
+  variables, \eqn{U \sim {\cal N}(0,1)}{U ~ N(0,1)} and
+  \eqn{V \sim \chi^2_\nu}{V ~ \chi^2(df)} (see \link{Chisquare}).
 
   The most used applications are power calculations for \eqn{t}-tests:\cr
   Let \eqn{T = \frac{\bar{X} - \mu_0}{S/\sqrt{n}}}{T= (mX - m0) / (S/sqrt(n))}
   where
   \eqn{\bar{X}}{mX} is the \code{\link{mean}} and \eqn{S} the sample standard
   deviation (\code{\link{sd}}) of \eqn{X_1, X_2, \dots, X_n} which are
-  i.i.d. \eqn{{\cal N}(\mu, \sigma^2)}{N(mu, sigma^2)}
+  i.i.d. \eqn{{\cal N}(\mu, \sigma^2)}{N(\mu, \sigma^2)}
   Then \eqn{T} is distributed as non-central \eqn{t} with
-  \code{df}\eqn{{} = n-1}
+  \code{df}\eqn{{} = n-1}{= n - 1}
   degrees of freedom and \bold{n}on-\bold{c}entrality \bold{p}arameter
-  \code{ncp}\eqn{{} = (\mu - \mu_0) \sqrt{n}/\sigma}{ = (mu - m0) * sqrt(n)/sigma}.
+  \code{ncp}\eqn{{} = (\mu - \mu_0) \sqrt{n}/\sigma}{ = (\mu - m0) * sqrt(n)/\sigma}.
 }
 \source{
   The central \code{dt} is computed via an accurate formula
   provided by Catherine Loader (see the reference in \code{\link{dbinom}}).
 
-  For the non-central case of \code{dt}, contributed by
-  Claus \enc{Ekstrøm}{Ekstroem} based on the relationship (for
+  For the non-central case of \code{dt}, C code contributed by
+  Claus \enc{EkstrÃ¸m}{Ekstroem} based on the relationship (for
   \eqn{x \neq 0}{x != 0}) to the cumulative distribution.
 
   For the central case of \code{pt}, a normal approximation in the
@@ -95,6 +99,10 @@ rt(n, df, ncp)
   Lenth, R. V. (1989). \emph{Algorithm AS 243} ---
   Cumulative distribution function of the non-central \eqn{t} distribution,
   \emph{Applied Statistics} \bold{38}, 185--189.
+
+  This computes the lower tail only, so the upper tail suffers from
+  cancellation and a warning will be given when this is likely to be
+  significant.
 
   For central \code{qt}, a C translation of
 

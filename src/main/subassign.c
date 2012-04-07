@@ -433,12 +433,19 @@ static SEXP VectorAssign(SEXP call, SEXP x, SEXP s, SEXP y)
     /* If so, we manufacture a real subscript vector. */
 
     dim = getAttrib(x, R_DimSymbol);
-    if (isMatrix(s) && isArray(x) &&
-	    (isInteger(s) || isReal(s)) &&
-	    ncols(s) == length(dim)) {
-	s = mat2indsub(dim, s, R_NilValue);
-    }
     PROTECT(s);
+    if (isMatrix(s) && isArray(x) && ncols(s) == length(dim)) {
+        if (isString(s)) {
+            s = strmat2intmat(s, GetArrayDimnames(x), call);
+            UNPROTECT(1);
+            PROTECT(s);
+        }
+        if (isInteger(s) || isReal(s)) {
+            s = mat2indsub(dim, s, R_NilValue);
+            UNPROTECT(1);
+            PROTECT(s);
+        }
+    }
 
     stretch = 1;
     PROTECT(indx = makeSubscript(x, s, &stretch, R_NilValue));
@@ -659,18 +666,18 @@ static SEXP VectorAssign(SEXP call, SEXP x, SEXP s, SEXP y)
 	warningcall(call, "sub assignment (*[*] <- *) not done; __bug?__");
     }
     /* Check for additional named elements. */
-    /* Note makeSubscript passes the additional names back as the names
-       attribute of the generated subscript vector */
-    newnames = getAttrib(indx, R_NamesSymbol);
+    /* Note makeSubscript passes the additional names back as the use.names
+       attribute (a vector list) of the generated subscript vector */
+    newnames = getAttrib(indx, R_UseNamesSymbol);
     if (newnames != R_NilValue) {
 	SEXP oldnames = getAttrib(x, R_NamesSymbol);
 	if (oldnames != R_NilValue) {
 	    for (i = 0; i < n; i++) {
-		if (STRING_ELT(newnames, i) != R_NilValue) {
+		if (VECTOR_ELT(newnames, i) != R_NilValue) {
 		    ii = INTEGER(indx)[i];
 		    if (ii == NA_INTEGER) continue;
 		    ii = ii - 1;
-		    SET_STRING_ELT(oldnames, ii, STRING_ELT(newnames, i));
+		    SET_STRING_ELT(oldnames, ii, VECTOR_ELT(newnames, i));
 		}
 	    }
 	}
@@ -679,11 +686,11 @@ static SEXP VectorAssign(SEXP call, SEXP x, SEXP s, SEXP y)
 	    for (i = 0; i < nx; i++)
 		SET_STRING_ELT(oldnames, i, R_BlankString);
 	    for (i = 0; i < n; i++) {
-		if (STRING_ELT(newnames, i) != R_NilValue) {
+		if (VECTOR_ELT(newnames, i) != R_NilValue) {
 		    ii = INTEGER(indx)[i];
 		    if (ii == NA_INTEGER) continue;
 		    ii = ii - 1;
-		    SET_STRING_ELT(oldnames, ii, STRING_ELT(newnames, i));
+		    SET_STRING_ELT(oldnames, ii, VECTOR_ELT(newnames, i));
 		}
 	    }
 	    setAttrib(x, R_NamesSymbol, oldnames);
@@ -968,7 +975,7 @@ static SEXP ArrayAssign(SEXP call, SEXP x, SEXP s, SEXP y)
     int **subs, *indx, *bound, *offset;
     SEXP dims, tmp;
     double ry;
-    void *vmax = vmaxget();
+    const void *vmax = vmaxget();
 
     PROTECT(dims = getAttrib(x, R_DimSymbol));
     if (dims == R_NilValue || (k = LENGTH(dims)) != length(s))
@@ -1231,7 +1238,7 @@ static SEXP listRemove(SEXP x, SEXP s, int ind)
 {
     SEXP a, pa, px;
     int i, ii, *indx, ns, nx, stretch=0;
-    void *vmax;
+    const void *vmax;
 
     vmax = vmaxget();
     nx = length(x);
@@ -1306,6 +1313,7 @@ SEXP attribute_hidden do_subassign(SEXP call, SEXP op, SEXP args, SEXP rho)
     /* If the dispatch fails, we "drop through" to the default code below. */
 
     if(DispatchOrEval(call, op, "[<-", args, rho, &ans, 0, 0))
+/*     if(DispatchAnyOrEval(call, op, "[<-", args, rho, &ans, 0, 0)) */
       return(ans);
 
     return do_subassign_dflt(call, op, ans, rho);
@@ -1439,6 +1447,7 @@ SEXP attribute_hidden do_subassign2(SEXP call, SEXP op, SEXP args, SEXP rho)
     SEXP ans;
 
     if(DispatchOrEval(call, op, "[[<-", args, rho, &ans, 0, 0))
+/*     if(DispatchAnyOrEval(call, op, "[[<-", args, rho, &ans, 0, 0)) */
       return(ans);
 
     return do_subassign2_dflt(call, op, ans, rho);
@@ -1515,6 +1524,8 @@ do_subassign2_dflt(SEXP call, SEXP op, SEXP args, SEXP rho)
     
     stretch = 0;
     if (isVector(x)) {
+	if (!isVectorList(x) && LENGTH(y) == 0)
+	    error(_("replacement has length zero"));
 	if (!isVectorList(x) && LENGTH(y) > 1)
 	    error(_("more elements supplied than there are to replace"));
 	if (nsubs == 0 || CAR(subs) == R_MissingArg)

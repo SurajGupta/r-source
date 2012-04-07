@@ -116,9 +116,16 @@
 }
 
 .storeMlist <- function(table, sig, mlist, i, add, fenv) {
+    ## once generic functions are installed from 2.11.0 or later, this should
+    ## only be called with mlist a method or NULL.
+    if(is.null(mlist)) return(table)
+    m <- (if(is(mlist, "MethodsList")) mlist@methods
+        else list(ANY=mlist)
+        )
+  ## once MethodsList is defunct, this should be rewritten (and renamed!)
+        
   ## the methods slot is a list named by class, with elements either
   ## method definitions or mlists
-  m <- mlist@methods
   classes <- names(m)
   for(j in seq_along(m)) {
     el <- m[[j]]
@@ -139,7 +146,7 @@
       Recall(table, sig, el, i1, add, fenv)
     }
     else
-      stop("Invalid mlist element  for signature \"", classes[[j]],
+      stop("Invalid mlist element for signature \"", classes[[j]],
 	   "\" at level ", i,
            "( should be methods list or method, had class \"",
            class(el), "\")")
@@ -215,6 +222,9 @@
              returnAll = !(doMtable || doExcluded),
              simpleOnly = .simpleInheritanceGeneric(fdef), verbose = FALSE)
 {
+    ## to avoid infinite recursion, and somewhat for speed, turn off S4 methods for primitives
+    primMethods <- .allowPrimitiveMethods(FALSE)
+    on.exit(.allowPrimitiveMethods(primMethods))
   ## classes is a list of the class(x) for each arg in generic
   ## signature, with "missing" for missing args
   if(!is.environment(table)) {
@@ -519,10 +529,8 @@
     for(i in seqn) {
       for(j in seqn[-i]) {
         diffs <- pos[,j] - pos[,i]
-        if(any(diffs < 0))
-          best[i] <- FALSE
-        if(all(diffs <= 0))
-          dominated[i] <- TRUE
+	if(any(diffs < 0))  { best[i] <- FALSE; if(dominated[i]) break }
+	if(all(diffs <= 0)) { dominated[i] <- TRUE; if(!best[i]) break }
       }
     }
     if(verbose)
@@ -613,7 +621,7 @@
     argSyms <- lapply(generic@signature, as.name)
     assign(".SigArgs", argSyms, envir = env)
     if(initialize) {
-        mlist <- generic@default # either a list with the default or an empty list
+        mlist <- generic@default # from 2.11.0: method, primitive or NULL, not MethodsList 
         mtable <- .mlistAddToTable(generic, mlist) # by default, adds to an empty table
         assign(".MTable", mtable, envir = env)
     }
@@ -935,10 +943,12 @@ outerLabels <- function(labels, new) {
   .cacheMethodInTable(fdef, signature, definition, table)
 }
 
+## Assertion: following is unused
 .assignMethodsMetaTable <- function(mlist, generic, where, overwrite = TRUE) {
+    .MlistDeprecated(".assignMethodsMetaTable")
     tname <- .TableMetaName(generic@generic, generic@package)
     if(overwrite || !exists(tname, envir = where, inherits = FALSE)) {
-        table <- .mlistAddToTable(generic, mlist)
+        table <- .mlistAddToTable(generic, mlist) # asserted never to be called.
         assign(tname, table, envir = where)
     }
 }
@@ -1057,7 +1067,7 @@ listFromMethods <- function(generic, where, table) {
         table <- get(what, envir = where)
     else
         table <- new.env()
-    value <- new("MethodsList", argument = generic@default@argument)
+    value <- new("MethodsList", argument = as.name(generic@signature[[1]]))
     allNames <- objects(table, all.names = TRUE)
     if(length(allNames) == 0L)
       return(value)
@@ -1164,16 +1174,21 @@ testInheritedMethods <- function(f, signatures, test = TRUE,  virtual = FALSE,
   fname <- f@generic
   if(missing(signatures)) {
     mdefs <- findMethods(f)
+    mnames <- names(mdefs)
+    sigs <-  findMethodSignatures(methods = mdefs)
     if(groupMethods) {
       groups <- getGroup(f, recursive = TRUE)
       for(group in groups) {
         fg <- getGeneric(group)
         mg <- findMethods(fg)
-        mg <- mg[is.na(match(names(mg), names(mdefs)))]
-        mdefs <- c(mdefs, mg)
+        sigsg <- findMethodSignatures(methods = mg)
+        newSigs <- is.na(match(names(mg), mnames))
+        mg <- mg[newSigs]
+        mdefs <- c(mdefs, mg[newSigs])
+        sigs <- rbind(sigs, sigsg[newSigs,])
+        mnames <- c(mnames, names(mg)[newSigs])
       }
     }
-    sigs <-  findMethodSignatures(methods = mdefs)
     if(length(sigs) == 0)
       return(new("MethodSelectionReport", generic = fname))
     ## possible selection of which args to include with inheritance

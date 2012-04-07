@@ -16,7 +16,8 @@
 
 # a srcfile is a file with a timestamp
 
-srcfile <- function(filename, encoding = getOption("encoding")) {
+srcfile <- function(filename, encoding = getOption("encoding"), Enc = "unknown")
+{
     stopifnot(is.character(filename), length(filename) == 1L)
 
     e <- new.env(parent=emptyenv())
@@ -26,9 +27,10 @@ srcfile <- function(filename, encoding = getOption("encoding")) {
 
     # If filename is a URL, this will return NA
     e$timestamp <- file.info(filename)[1,"mtime"]
-    
+
     if (identical(encoding, "unknown")) encoding <- "native.enc"
     e$encoding <- encoding
+    e$Enc <- Enc
 
     class(e) <- "srcfile"
     return(e)
@@ -37,6 +39,20 @@ srcfile <- function(filename, encoding = getOption("encoding")) {
 print.srcfile <- function(x, ...) {
     cat(x$filename, "\n")
     invisible(x)
+}
+
+summary.srcfile <- function(object, ...) {
+    cat(utils:::.normalizePath(object$filename, object$wd), "\n")
+    
+    if (inherits(object$timestamp, "POSIXt"))
+    	cat("Timestamp: ", format(object$timestamp, usetz=TRUE), "\n", sep="")
+    
+    cat('Encoding: "', object$encoding, '"', sep="")
+    if (!is.null(object$Enc) && object$Enc != object$encoding && object$Enc != "unknown")
+    	cat(', re-encoded to "', object$Enc, '"', sep="")
+    cat("\n")
+    
+    invisible(object)
 }
 
 open.srcfile <- function(con, line, ...) {
@@ -53,12 +69,13 @@ open.srcfile <- function(con, line, ...) {
 	    on.exit(setwd(olddir))
 	}
 	timestamp <- file.info(srcfile$filename)[1,"mtime"]
-	if (!is.null(srcfile$timestamp) 
-	    && !is.na(srcfile$timestamp) 
+	if (!is.null(srcfile$timestamp)
+	    && !is.na(srcfile$timestamp)
 	    && ( is.na(timestamp) || timestamp != srcfile$timestamp) )
 	    warning("Timestamp of '",srcfile$filename,"' has changed", call.=FALSE)
 	if (is.null(srcfile$encoding)) encoding <- getOption("encoding")
 	else encoding <- srcfile$encoding
+	# Specifying encoding below means that reads will convert to the native encoding
 	srcfile$conn <- conn <- file(srcfile$filename, open="rt", encoding=encoding)
 	srcfile$line <- 1L
 	oldline <- 1L
@@ -68,7 +85,7 @@ open.srcfile <- function(con, line, ...) {
 	oldline <- 1L
     }
     if (oldline < line) {
-	readLines(conn, line-oldline, warn=FALSE)
+	readLines(conn, line - oldline, warn = FALSE)
 	srcfile$line <- line
     }
     invisible(conn)
@@ -94,6 +111,7 @@ srcfilecopy <- function(filename, lines) {
     e$filename <- filename
     e$lines <- as.character(lines)
     e$timestamp <- Sys.time()
+    e$Enc <- "unknown"
 
     class(e) <- c("srcfilecopy", "srcfile")
     return(e)
@@ -117,7 +135,7 @@ open.srcfilecopy <- function(con, line, ...) {
 	oldline <- 1L
     }
     if (oldline < line) {
-	readLines(conn, line-oldline, warn=FALSE)
+	readLines(conn, line - oldline, warn = FALSE)
 	srcfile$line <- line
     }
     invisible(conn)
@@ -129,20 +147,24 @@ open.srcfilecopy <- function(con, line, ...) {
 }
 
 getSrcLines <- function(srcfile, first, last) {
-    if (first > last) return(character(0L))
+    if (first > last) return(character())
     if (!.isOpen(srcfile)) on.exit(close(srcfile))
     conn <- open(srcfile, first)
-    lines <- readLines(conn, n=last-first+1L, warn=FALSE)
+    lines <- readLines(conn, n = last - first + 1L, warn = FALSE)
+    # Re-encode from native encoding to specified one
+    if (!is.null(Enc <- srcfile$Enc) && !(Enc %in% c("unknown", "native.enc")))
+    	lines <- iconv(lines, "", Enc)
     srcfile$line <- first + length(lines)
     return(lines)
 }
 
 # a srcref gives start and stop positions of text
-# lloc entries are first_line, first_column, last_line, last_column
+# lloc entries are first_line, first_byte, last_line, last_byte, first_column, last_column
 # all are inclusive
 
 srcref <- function(srcfile, lloc) {
-    stopifnot(inherits(srcfile, "srcfile"), length(lloc) == 4L)
+    stopifnot(inherits(srcfile, "srcfile"), length(lloc) %in% c(4L,6L))
+    if (length(lloc) == 4) lloc <- c(lloc, lloc[2], lloc[4])
     structure(as.integer(lloc), srcfile=srcfile, class="srcref")
 }
 
@@ -153,12 +175,15 @@ as.character.srcref <- function(x, useSource = TRUE, ...)
     if (useSource) lines <- try(getSrcLines(srcfile, x[1L], x[3L]), TRUE)
     if (!useSource || inherits(lines, "try-error"))
     	lines <- paste("<srcref: file \"", srcfile$filename, "\" chars ",
-                       x[1L],":",x[2L], " to ",x[3L],":",x[4L], ">", sep="")
+                       x[1L],":",x[5L], " to ",x[3L],":",x[6L], ">", sep="")
     else {
+    	enc <- Encoding(lines)
+    	Encoding(lines) <- "latin1"  # so byte counting works
         if (length(lines) < x[3L] - x[1L] + 1L)
             x[4L] <- .Machine$integer.max
     	lines[length(lines)] <- substring(lines[length(lines)], 1L, x[4L])
     	lines[1L] <- substring(lines[1L], x[2L])
+    	Encoding(lines) <- enc
     }
     lines
 }
@@ -166,4 +191,9 @@ as.character.srcref <- function(x, useSource = TRUE, ...)
 print.srcref <- function(x, useSource = TRUE, ...) {
     cat(as.character(x, useSource = useSource), sep="\n")
     invisible(x)
+}
+
+summary.srcref <- function(object, useSource = FALSE, ...) {
+    cat(as.character(object, useSource = useSource), sep="\n")
+    invisible(object)
 }

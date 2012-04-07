@@ -18,7 +18,7 @@
 
 latex_canonical_encoding  <- function(encoding)
 {
-    if (encoding == "") encoding <- localeToCharset()[1]
+    if (encoding == "") encoding <- utils::localeToCharset()[1L]
     encoding <- tolower(encoding)
     encoding <- sub("iso_8859-([0-9]+)", "iso-8859-\\1", encoding)
     encoding <- sub("iso8859-([0-9]+)", "iso-8859-\\1", encoding)
@@ -42,7 +42,8 @@ latex_canonical_encoding  <- function(encoding)
 
 ## 'encoding' is passed to parse_Rd, as the input encoding
 Rd2latex <- function(Rd, out="", defines=.Platform$OS.type, stages="render",
-		     outputEncoding = "ASCII", ...)
+		     outputEncoding = "ASCII", ...,
+                     writeEncoding = TRUE)
 {
     encode_warn <- FALSE
     WriteLines <-
@@ -93,6 +94,7 @@ Rd2latex <- function(Rd, out="", defines=.Platform$OS.type, stages="render",
     inCode <- FALSE
     inEqn <- FALSE
     inPre <- FALSE
+    sectionLevel <- 0
 
     addParaBreaks <- function(x, tag) {
         start <- attr(x, "srcref")[2L]
@@ -177,9 +179,9 @@ Rd2latex <- function(Rd, out="", defines=.Platform$OS.type, stages="render",
     	wrapper <- wrappers[[tag]]
     	if (is.null(wrapper))
     	    wrapper <- c(paste(tag, "{", sep=""), "}")
-    	of1(wrapper[1])
+    	of1(wrapper[1L])
     	writeContent(block, tag)
-    	of1(wrapper[2])
+    	of1(wrapper[2L])
     }
 
     writeURL <- function(block, tag) {
@@ -318,7 +320,7 @@ Rd2latex <- function(Rd, out="", defines=.Platform$OS.type, stages="render",
     writeAlias <- function(block, tag) {
         alias <- as.character(block)
         aa <- "\\aliasA{"
-        ## some versions of hyperref have trouble indexing these
+        ## some versions of hyperref (from 6.79d) have trouble indexing these
         ## |, || in base, |.bit, %||% in ggplot2 ...
         if(grepl("|", alias, fixed = TRUE)) aa <- "\\aliasB{"
         if(is.na(currentAlias)) currentAlias <<- name
@@ -340,8 +342,9 @@ Rd2latex <- function(Rd, out="", defines=.Platform$OS.type, stages="render",
                TEXT = of1(addParaBreaks(texify(block), blocktag)),
                COMMENT = {},
                LIST = writeContent(block, tag),
-               "\\describe"= { # Avoid the Rd.sty \describe, \Enumerate and \Itemize:
-               		       # They don't support verbatim arguments, which we might need.
+               ## Avoid Rd.sty's \describe, \Enumerate and \Itemize:
+               ## They don't support verbatim arguments, which we might need.
+               "\\describe"= {
                    of1("\\begin{description}\n")
                    writeContent(block, tag)
                    of1("\n\\end{description}\n")
@@ -411,10 +414,13 @@ Rd2latex <- function(Rd, out="", defines=.Platform$OS.type, stages="render",
                "\\R" = of0(tag, "{}"),
                "\\donttest" = writeContent(block, tag),
                "\\dontrun"= writeDR(block, tag),
-               "\\enc" = { # some people put more things in \enc than a word.
-                   writeContent(block[[1L]], tag)
-                   ##txt <- as.character(block[[1L]])
-                   ##of1(txt)
+               "\\enc" = {
+                   ## some people put more things in \enc than a word,
+                   ## but Rd2txt does not cover that case ....
+                   if (outputEncoding == "ASCII")
+                       writeContent(block[[2L]], tag)
+                   else
+                       writeContent(block[[1L]], tag)
                } ,
                "\\eqn" =,
                "\\deqn" = {
@@ -437,6 +443,7 @@ Rd2latex <- function(Rd, out="", defines=.Platform$OS.type, stages="render",
                    writeContent(block[[1L]], tag)
                },
                "\\tabular" = writeTabular(block),
+               "\\subsection" = writeSection(block, tag),
                "\\if" =,
                "\\ifelse" =
 		    if (testRdConditional("latex", block, Rdfile))
@@ -453,7 +460,7 @@ Rd2latex <- function(Rd, out="", defines=.Platform$OS.type, stages="render",
         ## FIXME does no check of correct format
     	format <- table[[1L]]
     	content <- table[[2L]]
-    	if (length(format) != 1 || RdTags(format) != "TEXT")
+    	if (length(format) != 1L || RdTags(format) != "TEXT")
     	    stopRd(table, Rdfile, "\\tabular format must be simple text")
         tags <- RdTags(content)
         of0('\n\\Tabular{', format, '}{')
@@ -523,7 +530,7 @@ Rd2latex <- function(Rd, out="", defines=.Platform$OS.type, stages="render",
                        } else {
                            if (class == "default")
                                of1('## Default S3 method:\n')
-                           else if (grepl("<-\\s*value", blocks[[i+1]][[1L]])) {
+                           else if (grepl("<-\\s*value", blocks[[i+1L]][[1L]])) {
                                of1("## S3 replacement method for class '")
                                writeContent(block[[2L]], tag)
                                of1("':\n")
@@ -598,17 +605,20 @@ Rd2latex <- function(Rd, out="", defines=.Platform$OS.type, stages="render",
     writeSection <- function(section, tag) {
         if (tag %in% c("\\encoding", "\\concept"))
             return()
+        save <- sectionLevel
+        sectionLevel <<- sectionLevel + 1
         if (tag == "\\alias")
             writeAlias(section, tag)
         else if (tag == "\\keyword") {
             key <- trim(section)
             of0("\\keyword{", latex_escape_name(key), "}{", ltxname, "}\n")
-        } else if (tag == "\\section") {
-            of0("%\n\\begin{Section}{")
+        } else if (tag == "\\section" || tag == "\\subsection") {
+            macro <- c("Section", "SubSection", "SubSubSection")[min(sectionLevel, 3)]
+    	    of0("%\n\\begin{", macro, "}{")
             writeContent(section[[1L]], tag)
             of1("}")
     	    writeSectionInner(section[[2L]], tag)
-            of1("\\end{Section}\n")
+            of0("\\end{", macro, "}\n")
     	} else {
             title <- envTitles[tag]
             of0("%\n\\begin{", title, "}")
@@ -623,6 +633,7 @@ Rd2latex <- function(Rd, out="", defines=.Platform$OS.type, stages="render",
             if(!is.na(extra)) of0("\\end{", extra, "}\n")
             of0("\\end{", title, "}\n")
         }
+        sectionLevel <<- save
     }
 
     Rd <- prepare_Rd(Rd, defines=defines, stages=stages, ...)
@@ -630,7 +641,6 @@ Rd2latex <- function(Rd, out="", defines=.Platform$OS.type, stages="render",
     sections <- RdTags(Rd)
 
     enc <- which(sections == "\\encoding")
-    if (length(enc)) outputEncoding <- as.character(Rd[[enc[1L]]][[1L]])
 
     if (is.character(out)) {
         if(out == "") {
@@ -646,7 +656,7 @@ Rd2latex <- function(Rd, out="", defines=.Platform$OS.type, stages="render",
 
    if (outputEncoding != "ASCII") {
         latexEncoding <- latex_canonical_encoding(outputEncoding)
-        of0("\\inputencoding{", latexEncoding, "}\n")
+        if(writeEncoding) of0("\\inputencoding{", latexEncoding, "}\n")
     } else latexEncoding <- NA
 
     ## we know this has been ordered by prepare2_Rd, but

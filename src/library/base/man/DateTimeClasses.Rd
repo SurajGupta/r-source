@@ -1,6 +1,6 @@
 % File src/library/base/man/DateTimeClasses.Rd
 % Part of the R package, http://www.R-project.org
-% Copyright 1995-2009 R Core Development Team
+% Copyright 1995-2010 R Core Development Team
 % Distributed under GPL 2 or later
 
 \name{DateTimeClasses}
@@ -27,12 +27,14 @@
 \alias{[<-.POSIXlt}
 \alias{as.data.frame.POSIXct}
 \alias{as.data.frame.POSIXlt}
+\alias{as.list.POSIXct}
 \alias{.leap.seconds}
 \alias{is.na.POSIXlt}
 \alias{all.equal.POSIXct}
 \alias{c.POSIXct}
 \alias{c.POSIXlt}
 \alias{as.matrix.POSIXlt}
+\alias{length.POSIXlt}
 \alias{mean.POSIXct}
 \alias{mean.POSIXlt}
 \alias{str.POSIXt}
@@ -46,7 +48,7 @@
 \title{Date-Time Classes}
 \description{
   Description of the classes \code{"POSIXlt"} and \code{"POSIXct"}
-  representing calendar dates and times (to the nearest second). 
+  representing calendar dates and times (to the nearest second).
 }
 \usage{
 \method{print}{POSIXct}(x, \dots)
@@ -75,8 +77,8 @@
 \details{
   There are two basic classes of date/times.  Class \code{"POSIXct"}
   represents the (signed) number of seconds since the beginning of 1970
-  as a numeric vector.  Class \code{"POSIXlt"} is a named list of
-  vectors representing
+  (in the UTC timezone) as a numeric vector.  Class \code{"POSIXlt"} is
+  a named list of vectors representing
   \describe{
     \item{\code{sec}}{0--61: seconds}
     \item{\code{min}}{0--59: minutes}
@@ -98,7 +100,10 @@
   \code{"POSIXct"} is more convenient for including in data frames, and
   \code{"POSIXlt"} is closer to human-readable forms.
   A virtual class \code{"POSIXt"} inherits from both of the classes: it
-  is used to allow operations such as subtraction to mix the two classes.
+  is used to allow operations such as subtraction to mix the two
+  classes.  Note that \code{\link{length}(x)} is the length of the
+  corresponding (abstract) date/time vector, also in the
+  \code{"POSIXlt"} case.
 
   Components \code{wday} and \code{yday} of \code{"POSIXlt"} are for
   information, and are not used in the conversion to calendar time.
@@ -109,7 +114,7 @@
   platform-dependent.
   % POSIX says used 'initially', so it should probably be ignored.
   % glibc has a complicated fixup.
-  
+
   Logical comparisons and limited arithmetic are available for both
   classes.  One can add or subtract a number of seconds from a date-time
   object, but not add two date-time objects.  Subtraction of two
@@ -172,7 +177,7 @@
   tz="UTC")} will give \code{"1969-12-31 23:59:50"}.  Other OSes
   (including the code used by \R on Windows) report errors separately
   and so are able to handle that time as valid.
-} 
+}
 \section{Sub-second Accuracy}{
   Classes \code{"POSIXct"} and  \code{"POSIXlt"} are able to express
   fractions of a second.  (Conversion of fractions between the two forms
@@ -183,7 +188,7 @@
 }
 \seealso{
   \link{Dates} for dates without times.
-  
+
   \code{\link{as.POSIXct}} and \code{\link{as.POSIXlt}} for conversion
   between the classes.
 
@@ -204,7 +209,7 @@
   Some Unix-like systems (especially Linux ones) do not have \code{"TZ"}
   set, yet have internal code that expects it (as does POSIX).  We have
   tried to work around this, but if you get unexpected results try
-  setting \code{"TZ"}.  See \code{\link{as.POSIXlt}} for valid settings.
+  setting \code{"TZ"}.  See \code{\link{Sys.timezone}} for valid settings.
 }
 \examples{
 (z <- Sys.time())             # the current date, as class "POSIXct"
