@@ -666,7 +666,7 @@ but in a UTF-8 locale on a Unix-alike is likely to need
 @example
 con <- file("intro.dat", "r")
 seek(con, 3)  # step over the 3 initial bytes, the BOM
-foo <- read.table("intro.dat")
+foo <- read.table(con)
 close(con)
 @end example
 
@@ -1349,9 +1349,10 @@ The BioConductor project has updated @pkg{RdbiPgSQL} (formerly on
 @code{http://@/www.joeconway.com/@/plr/}}) is a project to embed R into
 PostgreSQL.
 
-Package @pkg{RMongo} provides an @R{} inteface to a Java client for
-`MongoDB'(@uref{http://en.wikipedia.org/wiki/MongoDB}) databases, which
-are queried using JavaScript rather than SQL.
+Package @pkg{RMongo} provides an @R{} interface to a Java client for
+`MongoDB' (@uref{http://en.wikipedia.org/wiki/MongoDB}) databases, which
+are queried using JavaScript rather than SQL.  Package @pkg{rmongodb} is
+another client using @pkg{mongodb}'s C driver.
 
 
 @menu
@@ -1746,10 +1747,11 @@ handle binary files.
 @findex netCDF
 @cindex network Common Data Form
 
-Packages @pkg{hdf5}, @pkg{RNetCDF}, @pkg{ncdf} and @pkg{ncdf4} on
-@acronym{CRAN} provide interfaces to @acronym{NASA}'s HDF5 (Hierarchical
-Data Format, see @uref{http://hdf.ncsa.uiuc.edu/HDF5/}) and to UCAR's
-netCDF data files (network Common Data Form, see
+Packages @pkg{hdf5}, @pkg{h5r}, Bioconductor's @pkg{rhdf5},
+@pkg{RNetCDF}, @pkg{ncdf} and @pkg{ncdf4} on @acronym{CRAN} provide
+interfaces to @acronym{NASA}'s HDF5 (Hierarchical Data Format, see
+@uref{http://hdf.ncsa.uiuc.edu/HDF5/}) and to UCAR's netCDF data files
+(network Common Data Form, see
 @uref{http://www.unidata.ucar.edu/packages/netcdf/}).
 
 Both of these are systems to store scientific data in array-oriented

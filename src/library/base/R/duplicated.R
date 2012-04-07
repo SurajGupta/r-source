@@ -25,7 +25,7 @@ duplicated.data.frame <- function(x, incomparables = FALSE, fromLast = FALSE, ..
 	.NotYetUsed("incomparables != FALSE")
     if(length(x) != 1L)
         duplicated(do.call("paste", c(x, sep="\r")), fromLast = fromLast)
-    else duplicated(x[[1L]])
+    else duplicated(x[[1L]], fromLast = fromLast)
 }
 
 duplicated.matrix <- duplicated.array <-
@@ -36,7 +36,7 @@ duplicated.matrix <- duplicated.array <-
     dx <- dim(x)
     ndim <- length(dx)
     if (length(MARGIN) > ndim || any(MARGIN > ndim))
-        stop("MARGIN = ", MARGIN, " is invalid for dim = ", dx)
+	stop("MARGIN = ", MARGIN, " is invalid for dim = ", dx)
     collapse <- (ndim > 1L) && (prod(dx[-MARGIN]) > 1L)
     temp <- if(collapse) apply(x, MARGIN, function(x) paste(x, collapse = "\r")) else x
     res <- duplicated.default(temp, fromLast = fromLast)
@@ -66,10 +66,12 @@ anyDuplicated.matrix <- anyDuplicated.array <-
 {
     if(!identical(incomparables, FALSE))
 	.NotYetUsed("incomparables != FALSE")
-    ndim <- length(dim(x))
+    dx <- dim(x)
+    ndim <- length(dx)
     if (length(MARGIN) > ndim || any(MARGIN > ndim))
-        stop("MARGIN = ", MARGIN, " is invalid for dim = ", dim(x))
-    temp <- apply(x, MARGIN, function(x) paste(x, collapse = "\r"))
+	stop("MARGIN = ", MARGIN, " is invalid for dim = ", dx)
+    collapse <- (ndim > 1L) && (prod(dx[-MARGIN]) > 1L)
+    temp <- if(collapse) apply(x, MARGIN, function(x) paste(x, collapse = "\r")) else x
     anyDuplicated.default(temp, fromLast = fromLast)
 }
 

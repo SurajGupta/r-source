@@ -44,6 +44,7 @@ newPSOCKnode <- function(machine = "localhost", ...,
     rscript <- if (getClusterOption("homogeneous", options)) {
         shQuote(getClusterOption("rscript", options))
     } else "Rscript"
+
     cmd <- paste(rscript, "-e", shQuote(arg), env)
 
     ## We do redirection of connections at R level once the process is
@@ -62,6 +63,9 @@ newPSOCKnode <- function(machine = "localhost", ...,
             ## This assumes an ssh-like command
             rshcmd <- getClusterOption("rshcmd", options)
             user <- getClusterOption("user", options)
+            ## this assume that rshcmd will use a shell, and that is
+            ## the same shell as on the master.
+            cmd <- shQuote(cmd)
             cmd <- paste(rshcmd, "-l", user, machine, cmd)
         }
 
@@ -74,7 +78,7 @@ newPSOCKnode <- function(machine = "localhost", ...,
             ## at least, on Windows password-less authentication is
             ## necessary.
             ##
-            ## (Not clear if that is the current behaviour.)
+            ## (Not clear if that is the current behaviour: works for me)
             system(cmd, wait = FALSE, input = "")
         }
         else system(cmd, wait = FALSE)

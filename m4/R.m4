@@ -139,7 +139,7 @@ if test -z "${ac_cv_path_PDFTEX}" ; then
 fi
 AC_PATH_PROGS(PDFLATEX, [${PDFLATEX} pdflatex], )
 if test -z "${ac_cv_path_PDFLATEX}" ; then
-  warn_pdf2="you cannot build PDF versions of all the help pages"
+  warn_pdf2="you cannot build PDF versions of vignettes and help pages"
   AC_MSG_WARN([${warn_pdf2}])
 fi
 AC_PATH_PROGS(MAKEINDEX, [${MAKEINDEX} makeindex], )
@@ -152,7 +152,18 @@ fi
 AC_SUBST(TEXI2DVICMD)
 : ${R_RD4DVI="ae"}
 AC_SUBST(R_RD4DVI)
-: ${R_RD4PDF="times,inconsolata,hyper"}
+AC_PATH_PROGS(KPSEWHICH, [${KPSEWHICH} kpsewhich], "")
+r_rd4pdf="times,inconsolata,hyper"
+if test -n "${KPSEWHICH}"; then
+  if test -z `${KPSEWHICH} inconsolata.sty`; then
+     r_rd4pdf="times,hyper"
+     if test -z "${R_RD4PDF}" ;  then
+       warn_pdf3="inconsolata.sty not found: PDF vignettes and package manuals will not be rendered optimally"
+       AC_MSG_WARN([${warn_pdf3}])
+     fi
+  fi
+fi
+: ${R_RD4PDF=${r_rd4pdf}}
 AC_SUBST(R_RD4PDF)
 ])# R_PROG_TEXMF
 
@@ -2050,6 +2061,7 @@ AC_EGREP_CPP([yes],
 ## otherwise.
 ## /opt/csw/lib and /usr/sfw/lib are for Solaris (blastwave and sunfreeware
 ## respectively).
+## /opt/freeware/lib is for 'IBM AIX Toolbox for Linux Applications'
 ## We want to look in LIBnn only here.
 AC_DEFUN([_R_PATH_TCL_CONFIG],
 [AC_MSG_CHECKING([for tclConfig.sh in library (sub)directories])

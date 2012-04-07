@@ -173,7 +173,7 @@ envRefSetField <- function(object, field,
     else {
         if(nargs() > 1) {
             .Object <-
-                methods::initFieldArgs(.Object, classDef, selfEnv, ...)
+                methods::initRefFields(.Object, classDef, selfEnv, list(...))
         }
     }
     if(is.function(classDef@refMethods$finalize))
@@ -183,8 +183,11 @@ envRefSetField <- function(object, field,
     .Object
 }
 
-initFieldArgs <- function(.Object, classDef, selfEnv, ...) {
-    args <- list(...)
+## old version, for back compatibility.  Could be deleted after 2.15.0
+initFieldArgs <- function(.Object, classDef, selfEnv, ...)
+    initRefFields(.Object, classDef, selfEnv, list(...))
+
+initRefFields <- function(.Object, classDef, selfEnv, args) {
     if(length(args)) {
         fieldDefs <- classDef@fieldClasses
         fieldNames <- names(fieldDefs)
@@ -289,7 +292,8 @@ that class itself, but then you could just overrwite the object).
                  value <- value$export(Class)
              classDef <- getClass(Class)
              if(is(classDef, "refClassRepresentation") &&
-                !is.na(match(Class, .refClassDef@refSuperClasses))) {
+                (!is.na(match(Class, .refClassDef@refSuperClasses))
+                || identical(classDef@className, .refClassDef@className))) {
                  env <- as.environment(value)
                  selfEnv <- as.environment(.self)
                  fieldClasses <- .refClassDef@fieldClasses
@@ -311,7 +315,7 @@ that class itself, but then you could just overrwite the object).
          callSuper = function(...) stop("direct calls to callSuper() are invalid:  should only be called from another method"),
          initFields = function(...) {
              if(length(list(...))>0)
-                 initFieldArgs(.self, .refClassDef, as.environment(.self), ...)
+                 initRefFields(.self, .refClassDef, as.environment(.self),list(...))
              else
                  .self
          },
@@ -530,6 +534,9 @@ c('Usage:  $help(topic) where topic is the name of a method (quoted or not)',
     }
 },
 lock =  function(...) {
+    lockedFields <- .getLockedFieldNames(def)
+    if(nargs()<1)
+        return(lockedFields)
     fields <- c(...)
     if(is.character(fields) && all(nzchar(fields))) {}
     else
@@ -542,6 +549,11 @@ lock =  function(...) {
     env <- def@fieldPrototypes
     className <- def@className
     for(what in fields) {
+        if(what %in% lockedFields) {
+            warning(gettextf("Field \"%s\" is already locked", what),
+                    domain = NA)
+            next
+        }
         current <- env[[what]]
         if(is.null(current))
             stop(gettextf("\"%s\" is not a field in class %s",
@@ -566,7 +578,9 @@ lock =  function(...) {
             metaName <- .bindingMetaName(what)
             env[[metaName]] <- current
         }
+        lockedFields <- c(lockedFields, what)
     }
+    .setLockedFieldNames(def, lockedFields)
     invisible(env)
 },
 ## define accessor functions, store them in the refMethods environment
@@ -971,17 +985,24 @@ showClassMethod <- function(object) {
         .printNames("Methods used: ", object@mayCall)
 }
 
-.printNames <- function(header, names) {
+.printNames <- function(header, names, separateLine = TRUE) {
+    if(separateLine)
         cat("\n",header,"\n    ")
-        cat(paste('"', names, '"', sep = ""), sep = ", ", fill = TRUE)
-        cat("\n")
+    else
+        cat(header,": ",sep="")
+    cat(paste('"', names, '"', sep = ""), sep = ", ", fill = TRUE)
+    cat("\n")
     }
 
 showRefClassDef <- function(object, title = "Reference Class") {
     cat(title," \"", object@className,"\":\n", sep="")
     fields <- object@fieldClasses
-    if(length(fields))
+    if(length(fields)) {
         printPropertiesList(fields, "Class fields")
+        locked <- .getLockedFieldNames(object)
+        if(length(locked))
+            .printNames("Locked Fields", locked, FALSE)
+    }
     else
         cat("\nNo fields defined\n")
     methods <- objects(object@refMethods, all.names = TRUE)
@@ -1110,3 +1131,19 @@ all.equal.environment <- function(target, current, ...) {
     msg
 }
 
+## the locked fields are stored as a hidden object in the fieldPrototypes environment
+## but this might change, so the .get, .set functions should be used
+.lockedFieldsMetaName <- ".#lockedFields"
+.getLockedFieldNames <- function(def) {
+    env <- def@fieldPrototypes
+    value <- env[[.lockedFieldsMetaName]]
+    if(is.null(value))
+        character()
+    else
+        value
+}
+.setLockedFieldNames <- function(def, value) {
+    env <- def@fieldPrototypes
+    env[[.lockedFieldsMetaName]] <- value
+    value
+}

@@ -3101,7 +3101,7 @@ PSDeviceDriver(pDevDesc dd, const char *file, const char *paper,
     strcpy(pd->filename, file);
     strcpy(pd->papername, paper);
     strncpy(pd->title, title, 1024);
-    if (streql(pd->colormodel, "grey")) strcpy("gray", colormodel);
+    if (streql(colormodel, "grey")) strcpy(pd->colormodel, "grey");
     else strncpy(pd->colormodel, colormodel, 30);
     pd->useKern = (useKern != 0);
     pd->fillOddEven = fillOddEven;
@@ -5864,7 +5864,7 @@ PDFDeviceDriver(pDevDesc dd, const char *file, const char *paper,
     strcpy(pd->papername, paper);
     strncpy(pd->title, title, 1024);
     memset(pd->fontUsed, 0, 100*sizeof(Rboolean));
-    if (streql(pd->colormodel, "grey")) strcpy("gray", colormodel);
+    if (streql(colormodel, "grey")) strcpy(pd->colormodel, "gray");
     else strncpy(pd->colormodel, colormodel, 30);
     pd->dingbats = (dingbats != 0);
     pd->useKern = (useKern != 0);
@@ -7050,11 +7050,12 @@ static void PDF_endpage(PDFDesc *pd)
 	uLong outlen = 1.001*len + 20;
 	Bytef *buf2 = Calloc(outlen, Bytef);
 	size_t res = fread(buf, 1, len, pd->pdffp);
-	if (res < len) error("internal error in PDF_endpage");
+	if (res < len) error("internal read error in PDF_endpage");
 	fclose(pd->pdffp);
 	pd->pdffp = pd->mainfp;
 	int res2 = compress(buf2, &outlen, buf, len);
-	if(res2 != Z_OK) error("internal error %d in PDF_endpage", res2);
+	if(res2 != Z_OK) 
+	    error("internal compression error %d in PDF_endpage", res2);
 	fprintf(pd->pdffp, "%d 0 obj\n<<\n/Length %d /Filter /FlateDecode\n>>\nstream\n", 
 		pd->nobjs, (int) outlen);
 	size_t nwrite = fwrite(buf2, 1, outlen, pd->pdffp);

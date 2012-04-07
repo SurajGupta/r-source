@@ -366,8 +366,8 @@ characters.  The canonical form is as shown in the example, and a
 version such as @samp{0.01} or @samp{0.01.0} will be handled as if it
 were @samp{0.1-0}.
 
-The mandatory @samp{License} field should specify the license of the package in
-the following standardized form.  Alternatives are indicated @emph{via}
+The mandatory @samp{License} field should specify the license of the
+package in a standardized form.  Alternatives are indicated @emph{via}
 vertical bars.  Individual specifications must be one of
 @itemize @bullet
 @item
@@ -440,10 +440,13 @@ package. Some package listings may truncate the title to 65 characters.
 It should be capitalized, not use any markup, not have any continuation
 lines, and not end in a period.
 
-The mandatory @samp{Author} field describes who wrote the package.  It
-is a plain text field intended for human readers, but not for automatic
-processing (such as extracting the email addresses of all listed
-contributors).
+The mandatory @samp{Author} field describes who wrote @emph{the
+package}.  It is a plain text field intended for human readers, but not
+for automatic processing (such as extracting the email addresses of all
+listed contributors: for that use @samp{Authors@@R}).  Note that all
+significant contributors must be included: if you wrote an @R{} wrapper
+for the work of others included in the @file{src} directory, you are not
+the sole (and maybe not even the main) author.
 
 The mandatory @samp{Maintainer} field should give a @emph{single} name
 with a @emph{valid} (RFC 2822) email address in angle brackets (for
@@ -465,6 +468,10 @@ this specification; in @R{} 2.14.0 or later, the @samp{Author} and
 @samp{Maintainer} fields are auto-generated from it if needed when
 building or installing.
 
+Several optional fields take @emph{logical values}: these can be
+specified as @samp{yes}, @samp{true}, @samp{no} or @samp{false}:
+capitalized values are also accepted.
+
 The @samp{Date} field gives the release date of the current
 version of the package.  It is strongly recommended to use the yyyy-mm-dd
 format conforming to the ISO 8601 standard.
@@ -472,25 +479,24 @@ format conforming to the ISO 8601 standard.
 The @samp{Depends} field gives a comma-separated list of package names
 which this package depends on.  The package name may be optionally
 followed by a comment in parentheses.  The comment should contain a
-comparison operator@footnote{only @samp{>=} is supported for package
-versions by @code{install.packages}.}, whitespace and a valid version
-number.  You can also use the special package name @samp{R} if your
-package depends on a certain version of @R{} --- e.g., if the package
-works only with @R{} version 2.11.0 or later, include @samp{R (>=
-2.11.0)} in the @samp{Depends} field.  You can also require a certain
-SVN revision for R-devel or R-patched, e.g.@: @samp{R (>= 2.14.0), R (>=
-r56550)} requires a version later than R-devel of late July 2011.  Both
-@code{library} and the @R{} package checking facilities use this field:
-hence it is an error to use improper syntax or misuse the @samp{Depends}
-field for comments on other software that might be needed.  Other
-dependencies (external to the @R{} system) should be listed in the
-@samp{SystemRequirements} field, possibly amplified in a separate
-@file{README} file.  The @R{} @command{INSTALL} facilities check if the
-version of @R{} used is recent enough for the package being installed,
-and the list of packages which is specified will be attached (after
-checking version requirements) before the current package, both when
-@code{library} is called and when preparing for lazy-loading during
-installation.
+comparison operator, whitespace and a valid version number.  You can
+also use the special package name @samp{R} if your package depends on a
+certain version of @R{} --- e.g., if the package works only with @R{}
+version 2.11.0 or later, include @samp{R (>= 2.11.0)} in the
+@samp{Depends} field.  You can also require a certain SVN revision for
+R-devel or R-patched, e.g.@: @samp{R (>= 2.14.0), R (>= r56550)}
+requires a version later than R-devel of late July 2011 (including
+released versions of 2.14.0).  Both @code{library} and the @R{} package
+checking facilities use this field: hence it is an error to use improper
+syntax or misuse the @samp{Depends} field for comments on other software
+that might be needed.  Other dependencies (external to the @R{} system)
+should be listed in the @samp{SystemRequirements} field, possibly
+amplified in a separate @file{README} file.  The @R{} @command{INSTALL}
+facilities check if the version of @R{} used is recent enough for the
+package being installed, and the list of packages which is specified
+will be attached (after checking version requirements) before the
+current package, both when @code{library} is called and when preparing
+for lazy-loading during installation.
 
 A package (or @samp{R}) can appear more than once in the @samp{Depends},
 but only the first occurrence will be used in versions of @R{} prior to
@@ -521,7 +527,11 @@ suppose an example from package @pkg{foo} uses a dataset from package
 @pkg{bar}. Then it is not necessary to have @pkg{bar} use @pkg{foo}
 unless one wants to execute all the examples/tests/vignettes: it is
 useful to have @pkg{bar}, but not necessary.  Version requirements can
-be specified, and will be used by @command{R CMD check}.
+be specified, and will be used by @command{R CMD check}.  Note that
+someone wanting to run the examples/tests/vignettes may not have a
+suggested package available (and it may not even be possible to install
+it for that platform), so it is helpful if the use of suggested packages
+is made conditional @emph{via} @code{if(require(@var{pkgname}))}).
 
 Finally, the @samp{Enhances} field lists packages ``enhanced''
 by the package at hand, e.g., by providing methods for classes from
@@ -588,32 +598,30 @@ Paths containing white space or quotes need to be quoted.  An
 OS-specific collation field (@samp{Collate.unix} or
 @samp{Collate.windows}) will be used instead of @samp{Collate}.
 
-The @samp{LazyData} field controls whether the @R{} datasets use
-lazy-loading: set the field's value to @samp{yes} or @samp{true} for
-lazy-loading and @samp{no} or @samp{false} for no lazy-loading.
-(Capitalized values are also accepted.)  The @samp{LazyLoad} field was
-used in versions prior to 2.14.0, but now is ignored (with a warning if
-a false value is supplied).
+The @samp{LazyData} logical field controls whether the @R{} datasets use
+lazy-loading.  The @samp{LazyLoad} field was used in versions prior to
+2.14.0, but now is ignored (with a warning if a false value is
+supplied).
 
-The @samp{KeepSource} field controls if the package code is sourced
+The @samp{KeepSource} logical field controls if the package code is sourced
 using @code{keep.source = TRUE} or @code{FALSE}: it might be needed
 exceptionally for a package designed to always be used with
 @code{keep.source = TRUE}.
 
-The @samp{ByteCompile} field controls if the package code is
+The @samp{ByteCompile} logical field controls if the package code is
 byte-compiled on installation: the default is currently not to, so this
 may be useful for a package known to benefit particularly from
 byte-compilation (which can take quite a long time and increases the
 installed size of the package).
 
-The @samp{ZipData} field controls whether the automatic Windows build
-will zip up the data directory or not: set this to @samp{no} if your
-package will not work with a zipped data directory.  (Setting to any
-other value is deprecated, and it is unused as from @R{} 2.13.0: but it
+The @samp{ZipData} logical field controls whether the automatic Windows
+build will zip up the data directory or not: set this to @samp{no} if
+your package will not work with a zipped data directory.  (Setting to
+any other value is deprecated, and it is unused from @R{} 2.13.0: but it
 might still be needed if the package can be installed under earlier
 versions of @R{}.)
 
-The @samp{BuildVignettes} field can be set to a false value to stop
+The @samp{BuildVignettes} logical field can be set to a false value to stop
 @command{R CMD build} from attempting to rebuild the vignettes, as well
 as preventing @command{R CMD check} from testing this.  This should only
 be used exceptionally, for example if the PDFs need large figures which
@@ -1145,6 +1153,22 @@ in order to use the correct version of @R{} when running the script as
 part of @code{R CMD INSTALL}, and the quotes since @samp{$@{R_HOME@}}
 might contain spaces.)
 
+If your code does load checks then you may also need
+@example
+LDFLAGS=`"$@{R_HOME@}/bin/R" CMD config LDFLAGS`
+@end example
+
+@noindent
+and packages written with C++ need to pick up the details for the C++
+compiler and switch the current language to C++ by
+@example
+AC_LANG(C++)
+@end example
+
+@noindent
+The latter is important, as for example C headers may not be available
+to C++ programs or may not be written to avoid C++ name-mangling.
+
 @findex R CMD config
 You can use @code{R CMD config} for getting the value of the basic
 configuration variables, or the header and library flags necessary for
@@ -1258,6 +1282,7 @@ pkg-config --list-all | sort
 
 @menu
 * OpenMP support::              
+* Using pthreads::              
 @end menu
 
 Sometimes writing your own @file{configure} script can be avoided by
@@ -1488,10 +1513,10 @@ Visual C++), but might be import libraries.  See for example
 @uref{http://sourceware.org/@/binutils/@/docs-2.20/@/ld/@/WIN32.html#WIN32}.
 
 The fly in the ointment is that the DLL might not be named
-@file{libxxx.dll}, and in fact on 32-bit Windows there is
-@file{libxml2.dll} whereas on 64-bit Windows the DLL is called
-@file{libxml2-2.dll}.  Using import libraries can cover over these
-differences but can cause equal difficulties.
+@file{libxxx.dll}, and in fact on 32-bit Windows there is a
+@file{libxml2.dll} whereas on one build for 64-bit Windows the DLL is
+called @file{libxml2-2.dll}.  Using import libraries can cover over
+these differences but can cause equal difficulties.
 
 If static libraries are available they can save a lot of problems with
 run-time finding of DLLs, especially when binary packages are to be
@@ -1500,7 +1525,7 @@ using DLLs is unavoidable we normally arrange (@emph{via}
 @file{configure.win}) to ship them in the same directory as the package
 DLL.
 
-@node OpenMP support,  , Using Makevars, Using Makevars
+@node OpenMP support, Using pthreads, Using Makevars, Using Makevars
 @subsubsection OpenMP support
 
 @cindex OpenMP
@@ -1519,15 +1544,15 @@ SHLIB_OPENMP_FFLAGS
 @end example
 
 @noindent
-are available for use in @file{Makevars}.@footnote{They could also be
-used with @file{Makevars.win}, but at present the compilers used for
-@R{} on Windows do not support pthreads nor OpenMP.}  Include the
-appropriate macro in @code{PKG_CFLAGS}, @code{PKG_CPPFLAGS} and so on,
-and also in @code{PKG_LIBS}.  C/C++ code that needs to be conditioned on
-the use of OpenMP can be used inside @code{#ifdef SUPPORT_OPENMP}, a
-macro defined in the header @file{Rconfig.h} (@pxref{Platform and
-version information}): however the use of OpenMP is most often indicated
-by @samp{#pragma} statements.
+are available for use in @file{src/Makevars}.@footnote{They could also
+be used with @file{src/Makevars.win}, but until @R{} 2.15.x the
+compilers used for @R{} on Windows do not support pthreads nor OpenMP.}
+Include the appropriate macro in @code{PKG_CFLAGS}, @code{PKG_CPPFLAGS}
+and so on, and also in @code{PKG_LIBS}.  C/C++ code that needs to be
+conditioned on the use of OpenMP can be used inside @code{#ifdef
+SUPPORT_OPENMP}, a macro defined in the header @file{Rconfig.h}
+(@pxref{Platform and version information}): however the use of OpenMP is
+most often indicated by @samp{#pragma} statements.
 
 For example, a package with C code written for OpenMP should have in
 @file{src/Makevars} the lines
@@ -1538,9 +1563,67 @@ PKG_LIBS = $(SHLIB_OPENMP_CFLAGS)
 @end example
 
 There is nothing to say what version of OpenMP is supported: version 3.0
-is supported by recent versions of the main platforms (except Windows,
-where there is currently no support), but portable packages cannot
-assume that end users have recent versions.
+(May 2008) is supported by recent versions of the main platforms (but
+note that Mac OS X binaries are built for 10.5 using compilers which
+support version 2.5), but portable packages cannot assume that end users
+have recent versions (there are some years-old versions of Linux in
+use), and it may be safest to assume version 2.5.
+
+The performance of OpenMP varies substantially between platforms.  Both
+the Mac OS X and Windows implementations have substantial overheads and
+are only beneficial if quite substantial tasks are run in parallel.
+
+@node Using pthreads,  , OpenMP support, Using Makevars
+@subsubsection Using pthreads
+
+There is no direct support for the POSIX threads (more commonly known as
+@code{pthreads}): by the time we considered adding it several packages
+were using it unconditionally so it seems that nowadays it is
+universally available (except on Windows).
+
+For reasonably recent versions of @command{gcc} the correct
+specification is
+
+@example
+PKG_CPPFLAGS = -pthreads
+PKG_LIBS = -pthreads
+@end example
+
+@noindent
+(and the singular version is also accepted).  For other platforms the
+specification is
+
+@example
+PKG_CPPFLAGS = -D_REENTRANT
+PKG_LIBS = -lpthread
+@end example
+@noindent
+(and note that the library name is singular).  This is what
+@option{-pthreads} does on all known current platforms (although earlier
+version of OpenBSD used a different library name).
+
+For a tutorial see
+@uref{https://computing.llnl.gov/@/tutorials/@/pthreads/}.
+
+POSIX threads are not normally used on Windows, which has its own native
+concepts of threads.  However, there are two projects implementing
+@code{pthreads} on top of Windows, @code{pthreads-w32} and
+@code{winpthreads} (a recent part of the MinGW-w64 project).  Both
+implement @code{libptheads} as an import library for a DLL.
+
+Whether Windows toolchains implement @code{pthreads} is up to the
+toolchain provider.  One issue has been licenses: @code{pthreads-w32} is
+licensed under LGPL which requires source code to be made available.
+The toolchains used to compile @R{} prior to version 2.15.0 do not
+contain @code{pthreads}, although in some cases @code{pthreads-w32}
+could be retro-fitted.  It is expected that the toolchain used for @R{}
+2.15.0 will support @code{pthreads}: however as it is not used by @R{}
+itself, the DLLs are not distributed with @R{}, and a package using
+@code{pthreads} would need to arrange to ship the relevant DLLs (and
+meet the license conditions).
+
+See also the comments on performance under OpenMP: on all known @R{}
+platforms OpenMP is implemented @emph{via} @code{pthreads}.
 
 @node Configure example, Using F95 code, Using Makevars, Configure and cleanup
 @subsection Configure example
@@ -1865,9 +1948,9 @@ sections of @file{Rd} files are documented in the corresponding
 @item
 C, C++ and FORTRAN source and header files are tested for portable
 (LF-only) line endings.  If there is a @file{Makefile} or
-@file{Makefile.in} or @file{Makevars} or @file{Makevars.in} file in the
-@file{src} directory, it is checked for portable line endings and the
-correct use of @samp{$(BLAS_LIBS)}.  Compiled code is checked for
+@file{Makefile.in} or @file{Makevars} or @file{Makevars.in} file under
+the @file{src} directory, it is checked for portable line endings and
+the correct use of @samp{$(BLAS_LIBS)}.  Compiled code is checked for
 symbols corresponding to functions which might terminate @R{} or write
 to @file{stdout}/@file{stderr} instead of the console.
 
@@ -1964,8 +2047,7 @@ compiled code, which are otherwise only checked under the main
 sub-architecture.)  This will run the loading tests, examples and
 @file{tests} directory under each installed sub-architecture in turn,
 and give an error if any fail.  Where environment variables (including
-@env{PATH}@footnote{this is needed on Windows to select the appropriate
-GTK+ and @samp{graphviz} DLLs.}) need to be set differently for each
+perhaps @env{PATH}) need to be set differently for each
 sub-architecture, these can be set in architecture-specific files such
 as @file{@var{R_HOME}/etc/i386/Renviron.site}.
 
@@ -2396,23 +2478,20 @@ this @emph{via} personal @file{Makevars} files.
  R-admin,  R Installation and Administration},
 @end ifset
 
-@code{R CMD check} checks for LF line endings on makefiles and sources
-in directory @file{src}, but not in any subdirectories, so please check
-the latter yourself.
-
 Note that it is particularly important to use @option{-Wall -pedantic}
 with C++ code: the @acronym{GNU} C++ compiler has many extensions which
 are not supported by other compilers, and this will report @emph{some}
 of them (such as the misuse of variable-length arrays).  If possible,
 check C++ code on a standards-conformant compiler.
 
-Although there is now a 2011 version of the C++ standard, it is not
-widely implemented and portable C++ code needs to follow the 1998
-standard (and not use features from C99).
+Although there is now a 2011 version of the C++ standard, it is not yet
+implemented (nor is it likely to be widely available for many years) and
+portable C++ code needs to follow the 1998 standard (and not use
+features from C99).
 
 @item
 Study the output from running your examples, in file
-@file{@var{pkg}.Rcheck/@var{pkg}-Ex.Rout}.  Often warnings there
+@file{@var{mypkg}.Rcheck/@var{mypkg}-Ex.Rout}.  Often warnings there
 indicate actual errors, and warnings about your mistakes (which the @R{}
 developers are warning you that they are working around for you) will
 just annoy or confuse your users.
@@ -2447,63 +2526,22 @@ more than 5Mb, detailing directories of more than 1Mb.  It notes
 inefficient compression of data: @command{R CMD build --resave-data}
 will compact data as best it can.  Watch out for unnecessary files in
 @file{inst/doc}.  As a general rule, @file{doc} directories should not
-exceed 5Mb, and where @file{data} directories need to be 10Mb or more,
-consideration should be given to a separate package containing just the
-data.  (Similarly for external data directories, large @file{jar} files
-and other libraries that need to be installed.)
+exceed 5Mb, and where @file{data} directories need to be more than
+5--10Mb, consideration should be given to a separate package containing
+just the data.  (Similarly for external data directories, large
+@file{jar} files and other libraries that need to be installed.)
 
-There are a several tools available to reduce the size of PDF files,
-including Adobe Acrobat (not Reader), Apple's Preview@footnote{Select
-`Save as', and select `Reduce file size' from the `Quartz filter' menu':
-this can be accessed in other ways, for example by Automator.}, some
-versions of Multivalent, Pdftk
-(@uref{http://www.pdflabs.com/@/tools/@/pdftk-the-pdf-toolkit/}),
-@command{qpdf} (@uref{http://qpdf.sourceforge.net/}), and Ghostscript
-(which converts PDF to PDF by
+See below for ways to reduce the size of PDF files such as vignettes.
 
-@example
-ps2pdf @var{options} -dAutoRotatePages=/None @var{in}.pdf @var{out}.pdf
-@end example
+@item
+Ensure that checking the package takes no more time than is needed (the
+CRAN check farm is a resource shared between several thousand packages).
 
-@noindent
-and suitable options might be
-
-@example
--dPDFSETTINGS=/ebook
--dPDFSETTINGS=/printer
-@end example
-
-@noindent
-; see @uref{http://pages.cs.wisc.edu/@/~ghost/@/doc/@/cvs/@/Ps2pdf.htm}
-for more such and consider all the options for image downsampling) as
-well as numerous commercial and shareware Windows programs.  Note that
-these do not all try the same size-reduction strategies, and Acrobat and
-@command{ps2pdf} can be much better at reducing the size of embedded
-images than some of the others.
-
-Since @command{qpdf} is fairly readily available (e.g.@: it has binaries
-for Windows and packages in Debian/Ubuntu, and is installed as part of
-the @acronym{CRAN} Mac OS X distribution of @R{}), there is an option
-@option{--compact-vignettes} to @command{R CMD build} to run
-@command{qpdf} over PDF files under @file{inst/doc} and replace them if
-at least 10Kb and 10% is saved.  The full path to the @command{qpdf}
-command can be supplied as environment variable @env{R_QPDF} (and is on
-the CRAN binary of @R{} for Mac OS X).  This is done @emph{via} the
-function @code{tools::compactPDF} which has other options including
-running Ghostscript.
-
-Most of the large PDFs we have encountered have been large because of
-the inclusion of figures, for example complex figures from @R{} (where
-@file{.png} versions may be more appropriate, and PDF compression was
-not used by @code{pdf()} prior to @R{} 2.14.0, so it may help to
-re-generate them) and screendumps.  However, some have been
-unnecessarily large due to @command{pdftex} settings.  The modern
-default is to use both PDF compression and PDF object compression (which
-needs the PDF 1.5 specification from 2003): this is the default in most
-@TeX{} distributions but not MiKTeX.  It can be overridden by code in
-the preamble of an Sweave or @LaTeX{} file: see how this is done for the
-@R{} reference manual at
-@uref{https://svn.r-project.org/R/trunk/doc/manual/refman.top}.
+If you want to look at the timings for examples, use option
+@option{--timings} to @command{R CMD check}.  This generates a file
+called @file{@var{mypkg}.Rcheck/@var{mypkg}-Ex.timings} containing
+timings for each help files (as given by @code{system.time()}).  It is a
+tab-delimited file which can be read into @R{} for further analysis.
 @end enumerate
 
 @noindent
@@ -2527,18 +2565,83 @@ maintainers will run these tests before putting a submission online.
 Note also that for running @LaTeX{}, the Debian @acronym{GNU}/Linux
 @acronym{CRAN} check systems use the Debian TeXLive@footnote{currently
 the long obsolete TeXLive 2009.} distribution
-(@uref{http://packages.debian.org/@/en/@/sid/@/texlive}); for the
-Windows @acronym{CRAN} server, a reasonably recent version of MikTeX
-(including all packages available directly for MikTeX) is employed: the
-Mac OS X builders use a current full version of MacTeX.  Developers
-wanting to have their vignettes use @TeX{} packages or style files not
-(yet) included in these distributions should add the corresponding style
-files to the @file{inst/doc} subdirectory of their package.
+(@uref{http://packages.debian.org/@/en/@/sid/@/texlive}); the Fedora and
+Solaris check systems use current TexLive; the Windows @acronym{CRAN}
+builder uses a reasonably recent version of MikTeX (including all
+packages available directly for MikTeX); the Mac OS X builders use a
+current full version of MacTeX.  Developers wanting to have their
+vignettes use @TeX{} packages or style files not (yet) included in these
+distributions should add the corresponding style files to the
+@file{vignettes} (or for the legacy layout, @file{inst/doc})
+subdirectory of their package.
+
+@menu
+* PDF size::                    
+* Windows external software::   
+@end menu
+
+@node PDF size, Windows external software, Submitting a package to CRAN, Submitting a package to CRAN
+@subsection PDF size
+
+There are a several tools available to reduce the size of PDF files,
+including Adobe Acrobat (not Reader), Apple's Preview@footnote{Select
+`Save as', and select `Reduce file size' from the `Quartz filter' menu':
+this can be accessed in other ways, for example by Automator.},
+@command{qpdf} (@uref{http://qpdf.sourceforge.net/}), and Ghostscript
+(which converts PDF to PDF by
+
+@example
+ps2pdf @var{options} -dAutoRotatePages=/None @var{in}.pdf @var{out}.pdf
+@end example
+
+@noindent
+and suitable options might be
+
+@example
+-dPDFSETTINGS=/ebook
+-dPDFSETTINGS=/printer
+@end example
+
+@noindent
+; see @uref{http://www.ghostscript.com/@/doc/@/9.04/@/Ps2pdf.htm} for
+more such and consider all the options for image downsampling) as well
+as numerous commercial and shareware Windows programs.  Note that these
+do not all try the same size-reduction strategies, and Acrobat and
+@command{ps2pdf} can sometimes do much better at reducing the size of
+embedded bitmap images, and @command{ps2pdf} does not use PDF object
+compression (see below).
+
+Since @command{qpdf} is fairly readily available (e.g.@: it has binaries
+for Windows and packages in Debian/Ubuntu, and is installed as part of
+the @acronym{CRAN} Mac OS X distribution of @R{}), there is an option
+@option{--compact-vignettes} to @command{R CMD build} to run
+@command{qpdf} over PDF files under @file{inst/doc} and replace them if
+at least 10Kb and 10% is saved.  The full path to the @command{qpdf}
+command can be supplied as environment variable @env{R_QPDF} (and is on
+the CRAN binary of @R{} for Mac OS X).  This is done @emph{via} the
+function @code{tools::compactPDF} which has other options including
+running Ghostscript.
+
+Most of the large PDFs we have encountered have been large because of
+the inclusion of figures, for example complex figures from @R{} (where
+@file{.png} versions may be more appropriate, and PDF compression was
+not used by @code{pdf()} prior to @R{} 2.14.0, so it may help to
+re-generate them) and screendumps.  However, some have been
+unnecessarily large due to @command{pdftex} settings.  The modern
+default is to use both PDF compression and PDF object compression (which
+needs PDF version 1.5 from 2003): this is the default in most @TeX{}
+distributions but not MiKTeX.  It can be overridden by code in the
+preamble of an Sweave or @LaTeX{} file: see how this is done for the
+@R{} reference manual at
+@uref{https://svn.r-project.org/R/trunk/doc/manual/refman.top}.
+
+@node Windows external software,  , PDF size, Submitting a package to CRAN
+@subsection Windows external software
 
 Note that @acronym{CRAN} does not accept submissions of precompiled
 binaries due to security concerns, and does not allow binary executables
-in packages.  Maintainers who need additional software for the Windows
-binaries of their packages on @acronym{CRAN} have three options
+in source packages.  Maintainers who need additional software for the
+Windows binaries of their packages on @acronym{CRAN} have three options
 @enumerate
 @item
 To arrange for installation of the package to download the
@@ -2547,7 +2650,9 @@ additional software from a URL, as e.g.@: package @pkg{Cairo} does.
 @item
 To negotiate with Uwe Ligges to host the additional components on
 WinBuilder, and write a @file{configure.win} file to install them.
-There are many examples, e.g.@: package @pkg{rgdal}.
+There are used to be many examples, e.g.@: package @pkg{rgdal} (however
+nowadays CRAN prefers to use a uniform cross-compilation approach for
+software such as GDAL).
 
 @item
 To negotiate with Brian Ripley to host the package on @acronym{CRAN}
@@ -3191,7 +3296,7 @@ platforms but do not have the intended results.
 The use of @code{$@{shell ...@}} can be avoided by using backticks, e.g.@:
 
 @example
-PKG_CFLAGS = `gsl-config --cflags`
+PKG_CPPFLAGS = `gsl-config --cflags`
 @end example
 
 @noindent
@@ -3241,7 +3346,8 @@ checking will reject it.}) and typedef your own type to be @code{long} or
 It is not safe to assume that @code{long} and pointer types are the same
 size, and they are not on 64-bit Windows.  If you need to convert
 pointers to and from integers use the C99 integer types @code{intptr_t}
-and @code{uintptr_t}.
+and @code{uintptr_t} (which are defined in the header @code{<stdint.h>}
+and are not required to be implemented by the C99 standard).
 
 Note that @code{integer} in @acronym{FORTRAN} corresponds to @code{int}
 in C on all @R{} platforms.
@@ -3263,7 +3369,7 @@ found in the package's shared object/DLL, they are reported by
 
 @item
 Compiled code should not write to @file{stdout} or @file{stderr} and C++
-and Fortran I/O should be be used.  Where @command{R CMD check} can
+and Fortran I/O should not be used.  Where @command{R CMD check} can
 detect this in the package's shared object/DLL it will report it: as
 with the previous item such calls may come from external software and
 may never be called.  (This seems particularly common on Mac OS X and
@@ -3302,6 +3408,11 @@ Do not use (hard or symbolic) file links in your package sources.
 not usually a problem, but versions 1.24 and later of GNU @command{tar}
 dereference some links to hard links which may not be handled correctly
 by @command{R CMD INSTALL}.
+
+@item
+If you do not yourself have a Windows system, submit your source package
+to WinBuilder (@uref{http://win-builder.r-project.org/}) before
+distribution (including submission to @acronym{CRAN}).
 
 @end itemize
 
@@ -3845,7 +3956,7 @@ R-Forge (@uref{http://R-Forge.r-project.org, R-Forge.r-project.org}) and
 RForge (@uref{http://www.rforge.net, www.rforge.net}) are similar
 services with similar names.  Both provide source-code management
 through SVN, daily building and checking, mailing lists and a repository
-that can be accessed @emph{via} @code{install.packages} (R-Forge can be
+that can be accessed @emph{via} @code{install.packages} (they can be
 selected by @code{setRepositories} and the GUI menus that use it).
 Package developers have the opportunity to present their work on the
 basis of project websites or news announcements.  Mailing lists, forums
@@ -6276,11 +6387,11 @@ mechanism can be helpful in isolating memory protect problems.
 @subsection Using valgrind
 
 If you have access to Linux on an @cputype{ix86}, @cputype{x86_64},
-@cputype{ppc32} or @cputype{ppc64} platform, or Mac OS 10.5 or 10.6 on
-@cputype{i386} or @cputype{x86_64} you can use @code{valgrind}
-(@uref{http://www.valgrind.org/}, pronounced to rhyme with `tinned') to
-check for possible problems.  To run some examples under @code{valgrind}
-use something like
+@cputype{ppc32}, @cputype{ppc64} or @cputype{s390x} platform, or Mac OS
+10.5/6/7 on @cputype{i386} or @cputype{x86_64} you can use
+@code{valgrind} (@uref{http://www.valgrind.org/}, pronounced to rhyme
+with `tinned') to check for possible problems.  To run some examples
+under @code{valgrind} use something like
 
 @example
 R -d valgrind --vanilla < mypkg-Ex.R
@@ -6291,10 +6402,11 @@ R -d "valgrind --tool=memcheck --leak-check=full" --vanilla < mypkg-Ex.R
 where @file{mypkg-Ex.R} is a set of examples, e.g.@: the file created in
 @file{mypkg.Rcheck} by @code{R CMD check}.  Occasionally this reports
 memory reads of `uninitialised values' that are the result of compiler
-optimization, so can be worth checking under an unoptimized compile.  We
-know there will be some small memory leaks from @code{readline} and @R{}
-itself --- these are memory areas that are in use right up to the end of
-the @R{} session.  Expect this to run around 20x slower than without
+optimization, so can be worth checking under an unoptimized compile: for
+maximal information use a build with debugging symbols.  We know there
+will be some small memory leaks from @code{readline} and @R{} itself ---
+these are memory areas that are in use right up to the end of the @R{}
+session.  Expect this to run around 20x slower than without
 @code{valgrind}, and in some cases even slower than that.  Earlier
 versions (at least) of @code{valgrind} are not happy with many optimized
 BLASes that use @acronym{CPU}-specific instructions (3D now, SSE, SSE2,
@@ -6365,6 +6477,16 @@ It is possible to run all the examples, tests and vignettes covered by
 
 @noindent
 or setting the environment variable @env{VALGRIND_OPTS}.
+
+On Mac OS X you may need to ensure that debugging symbols are made
+available (so @command{valgrind} reports line numbers in files).  This
+can usually be done with the @command{valgrind} option
+@option{--dysmutil=yes} to ask for the symbols to be dumped when the
+@file{.so} file is loaded.  This will not work where packages are
+installed into a system area (such as the @file{R.framework}) and can be
+slow.  Installing packages with environment variable @env{PKG_MAKE_DSYM}
+set to a non-empty value installs the dumped sybols.
+
 
 @node Debugging compiled code,  , Using gctorture and valgrind, Debugging
 @section Debugging compiled code
@@ -8223,16 +8345,6 @@ nul-terminated C-style string.  This function will return a pre-existing
 it will create a new one and add it to the cache before returning it to
 you.   The variant @code{mkCharLen} can be used to create a
 @code{CHARSXP} from part of a buffer and will ensure null-termination.
-
-Currently, it is still possible to create @code{CHARSXP}s using
-@code{allocVector}; @code{CHARSXP}s created in this way will not be
-captured by the global @code{CHARSXP} cache and this should be avoided.
-In the future, all @code{CHARSXP}s will be captured by the cache and
-this will allow further optimizations, for example, replacing calls to
-@code{strcmp} with pointer comparisons.  A helper macro,
-@code{CallocCharBuf}, can be used to obtain a temporary character buffer
-for in-place string manipulation: this memory must be released using
-@code{Free}.
 
 @node Finding and setting variables, Some convenience functions, Handling character data, Handling R objects in C
 @subsection Finding and setting variables

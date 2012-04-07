@@ -17,23 +17,28 @@ fg <- setRefClass("foo", list(bar = "numeric", flag = "character",
                       b
                   } )
                   )
+fg$lock("flag")
+stopifnot(identical(fg$lock(), "flag"))
+
 ff <- new("foo", bar = 1.5)
 stopifnot(identical(ff$bar, 1.5))
 ff$bar <- pi
 stopifnot(identical(ff$bar, pi))
+## flag has not yet been set
+ff$flag <- "flag test"
+stopifnot(identical(ff$flag, "flag test"))
+## but no second assign
+stopifnot(is(tryCatch(ff$flag <- "new", error = function(e)e), "error"))
+
 ## test against generator
 
-f2 <- fg$new(bar = pi)
+f2 <- fg$new(bar = pi, flag = "flag test")
 ## identical does not return TRUE if *contents* of env are identical
 stopifnot(identical(ff$bar, f2$bar), identical(ff$flag, f2$flag))
-
-f2$flag <- "standard flag"
-stopifnot(identical(f2$flag, "standard flag"))
+## but flag was now assigned once
+stopifnot(is(tryCatch(f2$flag <- "new", error = function(e)e), "error"))
 
 str(f2)
-
-## fg$lock("flag")
-## tryCatch(f2$flag <- "other", error = function(e)e)
 
 
 ## add some accessor methods
@@ -66,7 +71,7 @@ stopifnot(is(tryCatch(setRefClass("foo2", list(b2 = "numeric",
                 setB2(getB2() + incr)
                 })),
           error = function(e)e), "error"))
-## but with flag as a subclass of "character", should work
+## but with flag as a subclass of "characters", should work
 ## Also subclasses "tag" which had class "ANY before
 setClass("ratedChar", contains = "character",
          representation(score = "numeric"))
@@ -126,9 +131,18 @@ stopifnot(is(tryCatch(f3$flag <- "Try again",
          error = function(e)e), "error"))
 str(f3)
 
+## importing the same class (not very useful but documented to work)
+f3 <- foo3$new()
+f4 <- foo3$new(bar = -3, flag = as("More", "ratedChar"), b2 =  1:3, flag2 = f2$flag)
+f3$import(f4)
+stopifnot(identical(f3$bar, f4$bar),
+          identical(f3$flag, f4$flag),
+          identical(f3$b2, f4$b2),
+          identical(f3$flag2, f4$flag2))
+
 ## similar to $import() but using superclass object in the $new() call
 ## The explicitly supplied flag= should override and be allowed
-## by the default $initialize() 
+## by the default $initialize()
 f3b <- foo3$new(f2, flag = as("Other", "ratedChar"),
                 flag2 = as("More", "ratedChar"))
 ## check that inherited and direct field assignments worked
@@ -136,7 +150,7 @@ stopifnot(identical(f3b$tag, f2$tag),
           identical(f3b$flag, as("Other", "ratedChar")),
           identical(f3b$flag2, as("More", "ratedChar")))
 
-## a class with an initialize method, and an extra slot
+## a class with an initialize method, and an extra slot (legal, not a good idea)
 setOldClass(c("simple.list", "list"))
 fg4 <- setRefClass("foo4",
             contains = "foo2",
@@ -149,7 +163,7 @@ fg4 <- setRefClass("foo4",
             representation = list(made = "simple.list")
             )
 
-f4 <- new("foo4", flag = "another test", bar = 1:3)
+f4 <- new("foo4", flag = as("another test", "ratedChar"), bar = 1:3)
 stopifnot(identical(f4@made, R.version))
 
 ## a trivial class with no fields, using fields = list(), failed up to rev 56035
@@ -461,3 +475,11 @@ stopifnot(identical(tgg$def, tggg$def),
 ## a package attribute, which would allow:
 ##          identical(tg$className, tgg$className))
 
+## this used to fail in initFieldArgs() from partial matching "self"
+selfClass <- setRefClass("selfClass",
+        fields=list(
+            self="character", super="character", sub="character"
+        )
+    )
+
+stopifnot(identical(selfClass$new(self="B", super="A", sub="C")$self, "B"))

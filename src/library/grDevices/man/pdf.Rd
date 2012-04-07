@@ -22,9 +22,15 @@ pdf(file = ifelse(onefile, "Rplots.pdf", "Rplot\%03d.pdf"),
 }
 \arguments{
   \item{file}{a character string giving the name of the file.
+    If it is of the form \code{"|cmd"}, the output is piped to the
+    command given by \command{cmd}.  If it is \code{NULL},
+    then no external file is created (effectively, no drawing occurs),
+    but the device may still be queried (e.g., for size of text).
     For use with \code{onefile = FALSE} give a C integer format such
     as \code{"Rplot\%03d.pdf"} (the default in that case).
     (See \code{\link{postscript}} for further details.)
+
+    Tilde expansion (see \code{\link{path.expand}}) is done.
   }
   \item{width, height}{the width and height of the graphics region in
     inches.  The default values are \code{7}.}
@@ -72,7 +78,9 @@ pdf(file = ifelse(onefile, "Rplots.pdf", "Rplot\%03d.pdf"),
   \item{useDingbats}{logical.  Should small circles be rendered
     \emph{via} the Dingbats font?  Defaults to \code{TRUE}, which produces
     smaller and better output.  Setting this to \code{FALSE} can work
-    around font display problems in broken PDF viewers.
+    around font display problems in broken PDF viewers: although this
+    font is one of the 14 guaranteed to be available in all PDF viewers,
+    that guarantee is not always honoured.
 #ifdef unix
     See the \sQuote{Note} for a possible fix for such viewers.
 #endif
@@ -254,6 +262,13 @@ pdf(file = ifelse(onefile, "Rplots.pdf", "Rplot\%03d.pdf"),
   viewers using \sQuote{fontconfig} are given in the \sQuote{Cairo Fonts}
   section of the help for \code{\link{X11}}.
 #endif
+#ifdef windows
+  The TeXworks PDF viewer is one of those which has been seen to fail to
+  display Dingbats correctly.  Whereas on other platforms the problems
+  seen are incorrect output, on Windows points are silently omitted.  One
+  workaround is to use the argument \code{useDingbats = FALSE}: another
+  it to use a better PDF viewer.
+#endif
 }
 
 \seealso{
@@ -261,9 +276,13 @@ pdf(file = ifelse(onefile, "Rplots.pdf", "Rplot\%03d.pdf"),
   \code{\link{embedFonts}},
   \code{\link{Devices}},
   \code{\link{postscript}}.
-#ifdef unix
-  
+
+#ifdef unix  
   \code{\link{cairo_pdf}} and (on Mac OS X only) \code{\link{quartz}}
+  for other devices that can produce PDF.
+#endif
+#ifdef windows  
+  \code{\link{cairo_pdf}} and (on Mac OS X only) \code{quartz}
   for other devices that can produce PDF.
 #endif
 

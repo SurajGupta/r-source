@@ -723,7 +723,7 @@ adding @samp{r_arch=@var{name}} to the @command{configure} line.  Here
 @var{name} can be anything non-empty, and is used to name subdirectories
 of @file{lib}, @file{etc}, @file{include} and the package @file{libs}
 subdirectories.  Example names from other systems are the use of
-@file{sparcv9} on Sparc Solaris and @file{32} by @code{gcc} on
+@file{sparcv9} on Sparc Solaris and @file{32} by @command{gcc} on
 @cputype{x86_64} Linux.
 
 If you have two or more such builds you can install them over each other
@@ -1001,7 +1001,7 @@ will call this directory @file{@var{R_HOME}} below.
 
 For a 64-bit build you will need a 64-bit toolchain and the appropriate
 64-bit version of Tcl/Tk: both of these are contained in
-@file{Rtools213.exe}.
+@file{Rtools214.exe}.
 
 @node Getting the source files, Building the core files, Getting the tools, Building from source
 @subsection Getting the source files
@@ -1058,9 +1058,10 @@ build you will also need
 @itemize
 
 @item
-The Tcl/Tk support files are contained in @file{Rtools*.exe}.
-Please make sure you install the right version: there is a 32-bit version
-and a 64-bit version.  
+The Tcl/Tk support files are contained in @file{Rtools*.exe} and
+available from @uref{http://www.stats.ox.ac.uk/pub/Rtools}.  Please make
+sure you install the right version: there is a 32-bit version and a
+64-bit version.
 
 @item
 You need @code{libpng}, @code{jpeg} and @code{libtiff} sources
@@ -1093,7 +1094,7 @@ Example:
 @end example
 
 @noindent
-(and see the comment about about @option{--no-same-owner}).
+(and see the comment above about @option{--no-same-owner}).
 
 @end itemize
 
@@ -1320,8 +1321,8 @@ installer please do check that license requirements are met -- note that
 the installer will state that the contents are distributed under GPL-2
 and this has a requirement for @emph{you} to supply the complete sources
 (including the R sources even if you started with a binary distribution
-of R, and also the sources of packages (including their external
-software) which are included).
+of R, and also the sources of any extra packages (including their
+external software) which are included).
 
 
 The defaults for the startup parameters may also be customized.  For example
@@ -1772,12 +1773,9 @@ system: see for example
 For 64-bit builds, packages using Gtk+ (@pkg{Cairo}, @pkg{RGtk2},
 @pkg{cairoDevice} and those that depend on them) need the @file{bin}
 directory of a bundled distribution from
-@uref{http://www.gtk.org/@/download-windows-64bit.html} in the path: note
-that this conflicts with the directory of DLLs needed for 32-bit Gtk+ so
-you need the correct one first in your path if using both.  One way to
-achieve this is to set the @env{PATH} environment variable in files
-@file{R_HOME/etc/i386/Renviron.site} and
-@file{R_HOME/etc/x64/Renviron.site}.
+@uref{http://www.gtk.org/@/download-windows-64bit.html} in the path: it
+should work to have both Gtk+ @file{bin} directories in the path on a
+64-bit version of @R{}.
 
 @command{R CMD INSTALL} works in Windows to install source packages if
 you have set up the tools needed (see @ref{The Windows toolset}).  No
@@ -1952,7 +1950,7 @@ selected repositories).  For example
 
 @example
 > inst <- packageStatus()$inst
-> with(inst, inst[Status != "ok", c(1, 3, 14)])
+> inst[inst$Status != "ok", c("Package", "Version", "Status")])
                   Package Version      Status
 Biobase           Biobase   2.8.0 unavailable
 RCurl               RCurl   1.4-2     upgrade
@@ -3862,10 +3860,12 @@ significant performance improvements on recent CPUs (especially for
 @cputype{ix86}): one possibility is to add @option{-mtune=native} for
 the best possible performance on the machine on which @R{} is being
 installed: if the compilation is for a site-wide installation, it may
-still be desirable to use something like @option{-mtume=core2}.  It is
-also possible to increase the optimization levels to @option{-O3}:
-however for many versions of the compilers this has caused problems in
-at least one @acronym{CRAN} package.
+still be desirable to use something like
+@option{-mtume=core2}.@footnote{or @code{-mtune=corei7} for Intel Core
+i3/15/17 with @command{gcc >= 4.6.0}.} It is also possible to increase the
+optimization levels to @option{-O3}: however for many versions of the
+compilers this has caused problems in at least one @acronym{CRAN}
+package.
 
 For platforms with both 64- and 32-bit support, it is likely that
 
@@ -4026,7 +4026,7 @@ pkg_add -r R
 
 @noindent
 (on the system this was tested on, this installed Tcl, Tk, blas, lapack
-and @code{gcc-4.5.3} which includes @command{gfortran45}).  A listing of
+and @code{gcc-4.6.2} which includes @command{gfortran46}).  A listing of
 dependencies (not necessarily for current @R{}) can be found at
 @uref{http://www.freebsd.org/@/ports/@/lang.html}: you will however also
 need a @TeX{} system@footnote{TeXLive is recommended.} to build the
@@ -4035,7 +4035,7 @@ manuals.
 Then @R{} itself can be built by something like
 
 @example
-./configure CC=gcc45 F77=gfortran45 CXX=g++45 FC=gfortran45
+./configure CC=gcc46 F77=gfortran46 CXX=g++46 FC=gfortran46
 @end example
 
 There are also FreeBSD packages for a small eclectic collection of
@@ -4054,8 +4054,11 @@ to 10.5 (Leopard).  You will also need @command{gfortran} and
 @code{libreadline} (or configure with @option{--without-readline}).
 
 For more information on how to find these tools please read the
-@uref{http://CRAN.R-project.org/@/bin/@/macosx/@/RMacOSX-FAQ.html, R for Mac
-OS X @acronym{FAQ}}.
+@uref{http://CRAN.R-project.org/@/bin/@/macosx/@/RMacOSX-FAQ.html, R for
+Mac OS X @acronym{FAQ}} or look at
+@url{http://r.research.att.com/@/tools/}.  You will typically need to
+install Xcode and a matching version of @command{gfortran} from the
+tools page.
 
 @cindex BLAS library
 @cindex LAPACK library
@@ -4081,6 +4084,7 @@ distribution).
 @menu
 * 64-bit builds::               
 * Snow Leopard::                
+* Lion::                        
 @end menu
 
 @node 64-bit builds, Snow Leopard, Mac OS X, Mac OS X
@@ -4103,7 +4107,7 @@ in @file{config.site} or on the @command{configure} command line.  (Or
 on Leopard specify @option{gcc-4.2} etc: those versions are the default
 on Snow Leopard.)
 
-@node Snow Leopard,  , 64-bit builds, Mac OS X
+@node Snow Leopard, Lion, 64-bit builds, Mac OS X
 @subsection Snow Leopard
 
 On Snow Leopard you will most likely to need to specify @option{-arch
@@ -4140,6 +4144,32 @@ OBJC='gcc -arch i386'
 LIBS=-L/usr/X11/lib
 @end example
 
+@node Lion,  , Snow Leopard, Mac OS X
+@subsection Lion
+
+With Xcode 4.2 you need to install a package named like
+@url{http://r.research.att.com/@/tools/@/gcc-42-5666.3-darwin11.pkg} to
+provide compilers named @command{gcc-4.2}, @command{g++-4.2} and
+@command{gfortran-4.2}.  These default to 64-bit, so for a 64-bit build
+@file{config.site} in the top-level build directory should contain
+
+@example
+CC=gcc-4.2
+CXX=g++-4.2
+F77=gfortran-4.2
+FC=gfortran-4.2
+OBJC=gcc-4.2
+@end example
+
+and for a 32-bit build add @option{-arch i386} as displayed under Snow
+Leopard.
+
+It is also possible to build @R{} using Apple's C/C++ compilers supplied
+with Xcode, but these do need to be supplemented by a Fortran compiler
+(such as @code{gfortran-4.2}).  @command{/usr/bin/gcc} is a link to
+@command{llvm-gcc}, an LLVM-based compiler with a @command{gcc 4.2.1}
+front end, and @command{clang} can also be used (and @command{clang++}
+for C++).
 
 @node Solaris, AIX, Mac OS X, Platform notes
 @section Solaris
@@ -4150,16 +4180,17 @@ LIBS=-L/usr/X11/lib
 12@footnote{versions 12u1 and 12.2; a beta of 12.3 in Oct 2011 gave a
 segfault on powers of complex numbers and required @code{HAVE_CPOW}
 undefined.} compilers: there has been some success with
-@command{gcc}@tie{}4/@command{gfortran}, mainly on Sparc.  Sun packages
-for @R{} are available from @uref{http://www.sunfreeware.com/} for both
-32-bit architectures, but recently have often been several versions
+@command{gcc}@tie{}4/@command{gfortran}.  Sun packages for @R{} are
+available from @uref{http://www.sunfreeware.com/} for both 32-bit
+architectures, but recently have often been several versions
 old.@footnote{For example, 2.11.1 at the time of release of 2.13.2.}
 (Recent Sun machines are AMD Opterons or Intel Xeons (@cputype{amd64})
 rather than @cputype{x86}, but 32-bit @cputype{x86} executables are the
 default.)
 
-There were also reports of success on OpenSolaris (also known as Solaris
-Express Community Edition, and dropped in August 2010) on @cputype{x86}.
+There have been no reports on Solaris 11.  Solaris 9 and earlier are now
+so old that it is unlikely that @R{} is still used with them, and they
+will not be considered here.
 
 The Solaris versions of several of the tools needed to build @R{}
 (e.g.@: @command{make}, @command{ar} and @command{ld}) are in
@@ -4211,6 +4242,22 @@ R_LD_LIBRARY_PATH="/usr/local/lib:/opt/csw/gcc4/lib:/opt/csw/lib"
 For a 64-bit target add @option{-m64} to the compiler macros
 and use something like @code{LDFLAGS=-L/usr/local/lib/sparcv9} or
 @code{LDFLAGS=-L/usr/local/lib/amd64} as appropriate.
+It will also be necessary to point @command{pkg-config} at the 64-bit
+directories, e.g.@: one of
+
+@example
+PKG_CONFIG_PATH=/opt/csw/lib/amd64/pkgconfig:/usr/lib/amd64/pkgconfig
+PKG_CONFIG_PATH=/opt/csw/lib/sparcv9/pkgconfig:/usr/lib/sparcv9/pkgconfig
+@end example
+
+@noindent
+and to specify a 64-bit Java VM by e.g.@:
+
+@example
+JAVA_LD_LIBRARY_PATH = $(JAVA_HOME)/lib/amd64/server
+JAVA_LIBS = -L$(JAVA_HOME)/lib/amd64/server \
+  -R$(JAVA_HOME)/lib/amd64/server -ljvm
+@end example
 
 With Solaris Studio 12.2 on Sparc, @code{FCLIBS} needs to be
 
@@ -4228,11 +4275,12 @@ later: @file{libRblas.so} and @file{lapack.so} are generated with code
 that causes relocation errors (which is being linked in from the Fortran
 libraries).  This means that building @R{} as a shared library may be
 impossible with Solaris Studio 12.2.  For a standard build the trick
-seems to be to manually set @code{FLIBS}.  For example, on @cputype{amd64},
-set in @file{Makeconf}
+seems to be to manually set @code{FLIBS} to avoid the troublesome
+libraries.  For example, on @cputype{amd64}, set in @file{Makeconf}
 
 @example
 FLIBS_IN_SO = -R/opt/solstudio12.2/lib/amd64 \
+  /opt/solstudio12.2/lib/amd64/libfui.so \
   /opt/solstudio12.2/lib/amd64/libfsu.so
 @end example
 
@@ -4247,7 +4295,9 @@ FLIBS = -R/opt/solstudio12.2/prod/lib/sparc/64 -lifai -lsunimath -lfai -lfai2 \
 @end example
 
 @noindent
-in @file{Makeconf} and @file{etc/Makefconf}.
+in @file{config.site}, or manually in both in @file{Makeconf} and
+@file{etc/Makeconf}.
+
 
 By default the Solaris Studio compilers do not by default conform to the C99
 standard (appendix F 8.9) on the return values of functions such as
@@ -4262,7 +4312,7 @@ performance: Oracle recommend
 @end example
 
 @noindent
-(in @code{CFLAGS} etc.) as a good compromise for recent Sparc chipsets.
+(in @code{CFLAGS} etc) as a good compromise for recent Sparc chipsets.
 Using @code{-libmil} in @code{CFLAGS} allows more system mathematical
 functions to be inlined.
 
@@ -4330,8 +4380,8 @@ version of Solaris in use.  (This can be ascertained from @command{gcc
 several reports of problems were due to using @command{gcc} compiled on
 one version of Solaris on a later version.
 
-Compilation for a 32-bit Sparc target with @command{gcc}@tie{}4.3.3 (the
-most recent version on OpenCSW) needed
+Compilation for a 32-bit Sparc target with @command{gcc}@tie{}4.6.2
+needed
 
 @example
 CPPFLAGS=-I/opt/csw/include
@@ -4355,18 +4405,25 @@ be in the
 @enindex LD_LIBRARY_PATH
 @env{LD_LIBRARY_PATH} during configuration.
 
-Tests with @command{gcc}@footnote{specifically @command{gcc}@tie{}4.3.3
-and @command{gcc}@tie{}3.4.6 from OpenCSW.} for @cputype{x86} and
-@cputype{amd64} have been less successful.
 
-@cputype{x86} builds have built successfully but failed or gave
-incorrect results on various tests unless built without any optimization
-in @code{CFLAGS}: the issue seems to be that @command{gcc} and the
-system libraries differ over the use of SSE registers.
+Compilation for an @cputype{x86} target with @command{gcc}@tie{}4.6.2
+needed
 
-For @cputype{amd64} the builds have failed to complete in
-several different ways, most recently with relocation errors for
-@file{libRblas.so}.
+@example
+CC="/opt/csw/gcc4/bin/gcc -m32"
+CPPFLAGS="-I/opt/csw/include -I/usr/local/include"
+F77="/opt/csw/gcc4/bin/gfortran -m32"
+CXX="/opt/csw/gcc4/bin/g++ -m32"
+FC="/opt/csw/gcc4/bin/gfortran -m32"
+LDFLAGS="-L/opt/csw/gcc4/lib -L/opt/csw/lib -L/usr/local/lib"
+@end example
+
+(@code{-L/opt/csw/lib} is needed since TexLive 2011 was built using
+32-bit @code{gcc}, and we need @file{/opt/csw/lib} in
+@code{R_LD_LIBRARY_PATH}.)
+
+For @cputype{amd64} the builds have failed to complete in several
+different ways, currently with relocation errors for @file{libRblas.so}.
 
 
 
@@ -4522,27 +4579,31 @@ environment can be found in the ``R on AIX'' project on R-Forge
 
 The Cygwin emulation layer on Windows can be treated as a Unix-alike OS.
 This is unsupported, but experiments have been conducted and a few
-workarounds added.  @R{} requires C99 complex type support, which
-is available as from Cygwin 1.7.8 (March 2011).  However, the (new)
-implementation of @code{cacos} gives incorrect results, so
-@code{HAVE_CACOS} is undefined in @file{src/main/complex.c}.
+workarounds added.  @R{} requires C99 complex type support, which is
+available as from Cygwin 1.7.8 (March 2011).  However, the (new)
+implementation of @code{cacos} gives incorrect results, so we undefine
+@code{HAVE_CACOS} in @file{src/main/complex.c} on that platform.
 
-Currently Cygwin 1.7.9-1 is unable to build @R{}: the support for
-dynamic loading of DLLs is broken.
+Many versions of Cygwin during 2011 were unable to build @R{}: 1.7.9-1
+with @acronym{GCC} 4.5.3-3 in November 2011 was able to do so.
 
 Only building as a shared library can possibly work,@footnote{Windows
 DLLs need to have all links resolved at build time and so cannot resolve
 against @file{R.bin}.} so use e.g@:
 
 @example
-./configure --disable-nls --enable-R-shlib
+./configure --disable-nls --enable-R-shlib FLIBS=-lgfortran
 make
 @end example
 
 @noindent
-NLS does work if required, although adding
+Enabling NLS does work if required, although adding
 @option{--with-included-gettext} is preferable.  You will see many
-warnings about the use of auto-import.
+warnings about the use of auto-import.  Setting @samp{FLIBS} explicitly
+seems needed currently as the auto-detection gives an incorrect values.
+
+You will need the @pkg{tetex-extra} Cygwin package to build
+@file{NEWS.pdf} and the vignettes.
 
 Note that this gives you a command-line application using @code{readline}
 for command editing.  The @samp{X11} graphics device will work if a
@@ -4558,9 +4619,11 @@ TK_LIB_SPEC='-ltk84'
 The overhead of using shell scripts makes this noticeably slower than a
 native build of @R{} on Windows.
 
-Even with Cygwin 1.7.8, not all the tests passed: there were incorrect
-results from wide-character regular expressions code and from sourcing
-CR-delimited files.
+Even when @R{} can be built, not all the tests passed: there were
+incorrect results from wide-character regular expressions code and from
+sourcing CR-delimited files.
+
+Do not use Cygwin's BLAS library: it is known to give incorrect results.
 
 @node New platforms,  , Cygwin, Platform notes
 @section New platforms
@@ -4609,7 +4672,8 @@ may need to be compiled without optimization.  Set the configure
 variable @env{SAFE_FFLAGS} to the flags to be used for this file.  If
 configure detects @acronym{GNU} FORTRAN it adds flag
 @option{-ffloat-store} to @env{FFLAGS}.  (Other settings are needed when
-using @command{icc} on @cputype{ix86} Linux, for example.)
+using @command{icc} on @cputype{ix86} Linux, for example.  Using
+@option{-mpc64} is preferable on more recent GCC compilers.)
 
 If you do manage to get @R{} running on a new platform please let us
 know about it so we can modify the configuration procedures to include
@@ -4657,7 +4721,8 @@ See the subsections below for detailed descriptions.
 @item
 The command line tools (in @file{Rtools*.exe})
 @item
-The MinGW toolchain to compile C, Fortran and C++.
+The (32-bit) MinGW or (64-bit) MinGW-w64 toolchain to compile C, Fortran
+and C++.
 @end itemize
 For installing simple source packages containing data or @R{} source but
 no compiled code, none of these are needed.  Perl is no longer needed to
@@ -4796,12 +4861,13 @@ also need @code{zip} and @code{unzip} from the Info-ZIP project
 @c comm cp diff echo gzip make mkdir rm sh sort tar uniq zip
 
 @strong{Beware}: `Native' ports of make are @strong{not} suitable
-(including that called `MinGW make' at the MinGW SourceForge site).
-There were also problems with other versions of the Cygwin tools and
-DLLs.  To avoid frustration, please use our tool set, and make sure it
-is at the front of your path (including before the Windows system
-directories).  If you are using a Windows shell, type @code{PATH} at the
-prompt to find out.
+(including those called `MinGW make' at the MinGW SourceForge site and
+@command{mingw32-make} in some MinGW-w64 distributions).  There were
+also problems with other versions of the Cygwin tools and DLLs.  To
+avoid frustration, please use our tool set, and make sure it is at the
+front of your path (including before the Windows system directories).
+If you are using a Windows shell, type @code{PATH} at the prompt to find
+out.
 
 @enindex CYGWIN
 You may need to set the environment variable @env{CYGWIN} to a value
@@ -4893,7 +4959,7 @@ when building external software.
 @section Useful additional programs
 
 The process of making the installer will make use of @code{qpdf} to
-compact some of the package vignettes, if it is available.  MinGW
+compact some of the package vignettes, if it is available.  Windows
 binaries of @code{qpdf} are available from
 @uref{http://sourceforge.net/@/projects/@/qpdf/@/files/}.  Set the path
 to the @code{qpdf} installation in file @file{MkRules.local}.

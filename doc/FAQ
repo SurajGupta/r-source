@@ -1,6 +1,6 @@
 R FAQ
 Frequently Asked Questions on R
-Version 2.14.2011-10-24
+Version 2.14.2011-12-16
 ISBN 3-900051-08-9
 Kurt Hornik
 
@@ -258,7 +258,7 @@ i386-freebsd, rs6000-ibm-aix, and sparc-sun-solaris.
 2.3 What is the current version of R?
 =====================================
 
-The current released version is 2.14.0.  Based on this
+The current released version is 2.14.1.  Based on this
 `major.minor.patchlevel' numbering scheme, there are two development
 versions of R, a patched version of the current release (`r-patched') and
 one working towards the next minor or eventually major (`r-devel') releases
@@ -1310,9 +1310,21 @@ similar to the use of the *brew* (http://CRAN.R-project.org/package=brew)
 package with Rapache (http://rapache.net/) with the advantage of
 cross-platform support and easy installation.
 
-   Finally, the *Rook* (http://CRAN.R-project.org/package=Rook) package by
-Jeffrey Horner provides a web server server interface borrowing heavily
-from Ruby's Rack project.
+   The *Rook* (http://CRAN.R-project.org/package=Rook) package by Jeffrey
+Horner provides a web server interface borrowing heavily from Ruby's Rack
+project.
+
+   Finally, Concerto (http://code.google.com/p/concerto-platform/) is a
+user friendly open-source Web Interface to R developed at the Psychometrics
+Centre of Cambridge University.  It was designed as an online platform to
+design and run Computerized Adaptive Tests, but can be also used as a
+general-purpose R Web Interface.  It allows R users with no programming or
+web designing background to quickly develop flexible and powerful online
+applications, websites, and psychometrics tests.  To maximize its
+reliability, security, and performance, Concerto relies on the popular and
+reliable open-source elements such as MySQL server (exchange and storage of
+the data), Rstudio (http://rstudio.org/) (R code designing and testing,
+file management), CKEditor (HTML Layer design), and PHP.
 
 5 R Add-On Packages
 *******************
@@ -1373,7 +1385,8 @@ The R distribution comes with the following packages:
 former *base* was split into the four packages *base*, *graphics*, *stats*,
 and *utils*.  Packages *ctest*, *eda*, *modreg*, *mva*, *nls*, *stepfun* and
 *ts* were merged into *stats*, package *lqs* returned to the recommended
-package *MASS*, and package *mle* moved to *stats4*.
+package *MASS* (http://CRAN.R-project.org/package=MASS), and package *mle*
+moved to *stats4*.
 
 5.1.2 Add-on packages from CRAN
 -------------------------------
@@ -1921,9 +1934,10 @@ task at hand (as `as.numeric()' or `unclass()' give the internal codes).
 7.11 Are Trellis displays implemented in R?
 ===========================================
 
-The recommended package *lattice* (which is based on another recommended
-package, *grid*) provides graphical functionality that is compatible with
-most Trellis commands.
+The recommended package *lattice*
+(http://CRAN.R-project.org/package=lattice) (which is based on base package
+*grid*) provides graphical functionality that is compatible with most
+Trellis commands.
 
    You could also look at `coplot()' and `dotchart()' which might do at
 least some of what you want.  Note also that the R version of `pairs()' is
@@ -2052,11 +2066,12 @@ Package *gam* (http://CRAN.R-project.org/package=gam) from CRAN implements
 all the Generalized Additive Models (GAM) functionality as described in the
 GAM chapter of the White Book.  In particular, it implements backfitting
 with both local regression and smoothing splines, and is extendable.  There
-is a `gam()' function for GAMs in package *mgcv*, but it is not an exact
-clone of what is described in the White Book (no `lo()' for example).
-Package *gss* (http://CRAN.R-project.org/package=gss) can fit spline-based
-GAMs too.  And if you can accept regression splines you can use `glm()'.
-For Gaussian GAMs you can use `bruto()' from package *mda*
+is a `gam()' function for GAMs in package *mgcv*
+(http://CRAN.R-project.org/package=mgcv), but it is not an exact clone of
+what is described in the White Book (no `lo()' for example).  Package *gss*
+(http://CRAN.R-project.org/package=gss) can fit spline-based GAMs too.  And
+if you can accept regression splines you can use `glm()'.  For Gaussian
+GAMs you can use `bruto()' from package *mda*
 (http://CRAN.R-project.org/package=mda).
 
 7.16 Why is the output not printed when I source() a file?
@@ -2524,8 +2539,8 @@ quietly interpreted as just `p'.  Current versions of R emit a warning.
 Some functions will display a particular kind of plot with error bars, such
 as the `bar.err()' function in the *agricolae*
 (http://CRAN.R-project.org/package=agricolae) package, the `plotCI()'
-function in the *gplots* (http://CRAN.R-project.org/package=gplots)
-package, the `plotCI()' and `brkdn.plot()' functions in the *plotrix*
+function in the *gplots* (http://CRAN.R-project.org/package=gplots) package,
+the `plotCI()' and `brkdn.plot()' functions in the *plotrix*
 (http://CRAN.R-project.org/package=plotrix) package and the `error.bars()',
 `error.crosses()' and `error.bars.by()' functions in the *psych*
 (http://CRAN.R-project.org/package=psych) package.  Within these types of

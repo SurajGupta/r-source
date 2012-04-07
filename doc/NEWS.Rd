@@ -5,6 +5,162 @@
 \title{ R News}
 \encoding{UTF-8}
 
+\section{\Rlogo CHANGES IN R VERSION 2.14.0 patched}{
+  \subsection{NEW FEATURES}{
+    \itemize{
+      \item \code{parallel::detectCores()} is now able to find the
+      number of physical cores (rather than CPUs) on Sparc Solaris.
+
+      It can also do so on most versions of Windows; however the default
+      remains \code{detectCores(logical = TRUE)} on that platform.
+
+      \item Reference classes now keep a record of which fields are
+      locked.  \code{$lock()} with no arguments returns the names
+      of the locked fields.
+
+      \item \code{HoltWinters()} reports a warning rather than an error
+      for some optimization failures (where the answer might be a
+      reasonable one).
+
+      \item \code{tools::dependsOnPkg()} now accepts the shorthand
+      \code{dependencies = "all"}.
+
+      \item \code{parallel::clusterExport()} now allows specification of
+      an environment from which to export.
+      
+      \item The \code{quartz()} device now does tilde expansion on its
+      \code{file} argument.
+      
+      \item \code{tempfile()} on a Unix-alike now takes the process ID
+      into account.  This is needed with \pkg{multicore} (and as part of
+      \pkg{parallel}) because the parent and all the children share a
+      session temporary directory, and they can share the C random
+      number stream used to produce the uniaue part.  Further, two
+      children can call \code{tempfile()} simultaneously.
+      
+      \item Option \code{print} in Sweave's \code{RweaveLatex()} driver
+      now emulates auto-printing rather than printing (which can differ
+      for an S4 object by calling \code{show()} rather than
+      \code{print()}).
+      
+      \item \code{filled.contour()} now accepts infinite values:
+      previously it might have generated invalid graphics files
+      (e.g. containing NaN values).
+    }
+  }
+
+  \subsection{INSTALLATION}{
+    \itemize{
+      \item On 64-bit Linux systems, \command{configure} now only sets
+      \samp{LIBnn} to \code{lib64} if \file{/usr/lib64} exists.  This
+      may obviate setting \samp{LIBnn} explicitly on Debian-derived
+      systems.
+
+      It is still necessary to set \samp{LIBnn = lib} (or
+      \samp{lib32}) for 32-bit builds of \R on a 64-bit OS on those Linux
+      distributions capable for supporting that concept.
+
+      \item \command{configure} looks for \file{inconsolata.sty}, and if
+      not found adjusts the default \env{R_RD4PDF} to not use it (with a
+      warning, since it is needed for high-quality rendering of manuals).
+    }
+  }
+
+  \subsection{PACKAGE INSTALLATION}{
+    \itemize{
+      \item \command{R CMD INSTALL} will now do a test load for all
+      sub-architectures for which code was compiled (rather than just
+      the primary sub-architecture).
+    }
+  }
+
+  \subsection{UTILITIES}{
+    \itemize{
+      \item When checking examples under more than one sub-architecture,
+      \command{R CMD check} now uses a separate directory
+      \file{examples_arch} for each sub-architecture, and leaves the
+      output in file \file{pkgname-Ex_arch.Rout}.  Some packages
+      expect their examples to be run in a clean directory \dots{}.
+     }
+   }
+   
+   \subsection{BUG FIXES}{
+    \itemize{
+      \item \code{stack()} now gives an error if no vector column is
+      selected, rather than returning a 1-column data frame (contrary to
+      its documentation).
+
+      \item \code{summary.mlm()} did not handle objects where the
+      formula had been specified by an expression.  (Reported by
+      Helios de Rosario Martinez).
+
+      \item \code{tools::deparseLatex(dropBraces=TRUE)} could drop
+      text as well as braces.
+
+      \item \code{colormodel = "grey"} (new in \R 2.14.0))
+      did not always work in \code{postscript()} and \code{pdf()}.
+
+      \item \code{file.append()} could return \code{TRUE} for failures.
+      (\PR{14727})
+
+      \item \code{gzcon()} connections are no longer subject to garbage
+      collection: it was possible for this to happen when unintended
+      (e.g. when calling \code{load()}).
+
+      \item \code{nobs()} does not count zero-weight observations for
+      \code{glm()} fits, for consistency with \code{lm()}.  This affects
+      the \code{BIC()} values reported for such \code{glm()} fits.
+      (Spotted by Bill Dunlap.)
+
+      \item \code{options(warn = 0)} failed to end a (C-level) context
+      with more than 50 accumulated warnings.  (Spotted by Jeffery
+      Horner.)
+
+      \item The internal \code{plot.default()} code did not do sanity
+      checks on a \code{cex} argument, so invalid input could cause
+      problems.  (Reported by Ben Bolker.)
+
+      \item \code{anyDuplicated(<array>, MARGIN=0)} no longer fails.
+      (Reported by Hervé Pagès.)
+
+      \item \code{read.dcf()} removes trailing blanks: unfortunately
+      on some platforms this included \code{\\xa0} (non-breaking space)
+      which is the trailing byte of a UTF-8 character.  It now only
+      considers ASCII space and tab to be \sQuote{blank}.
+      
+      \item There was a sign error in part of the calculations for the
+      variance returned by \code{KalmanSmooth()}.  (\PR{14738})
+      
+      \item \code{pbinom(10, 1e6, 0.01, log.p = TRUE)} was \code{NaN}
+      thanks to the buggy fix to \PR{14320} in \R 2.11.0.  (\PR{14739})
+      
+      \item \code{RweaveLatex()} now emulates auto-printing rather than
+      printing, by calling \code{methods::show()} when auto-printing
+      would.
+      
+      \item \code{duplicated()} ignored \code{fromLast} for a
+      one-column data frame.  (\PR{14742})
+      
+      \item \code{source()} and related functions did not put the correct
+      timestamp on the source references; \code{srcfilecopy()} has gained
+      a new argument \code{timestamp} to support this fix. (\PR{14750})
+      
+      \item LaTeX conversion of Rd files did not correctly handle
+      preformatted backslashes.  (\PR{14751})
+      
+      \item HTML conversion of Rd files did not handle markup within
+      tabular cells properly.  (\PR{14708})
+      
+      \item \code{source()} on an empty file with \code{keep.source =
+	TRUE} tried to read from \code{stdin()}, in \R 2.14.0 only.
+      (\PR{14753})
+      
+      \item The code to check Rd files in packages would abort if
+      duplicate description sections were present.      
+    }
+  }
+}
+
 \section{\Rlogo CHANGES IN R VERSION 2.14.0}{
   \subsection{SIGNIFICANT USER-VISIBLE CHANGES}{
     \itemize{
@@ -55,7 +211,7 @@
       The version released for \R 2.14.0 contains base functionality:
       higher-level convenience functions are planned (and some are
       already available in the \sQuote{R-devel} version of \R).
-      
+
       \item Building PDF manuals (for \R itself or packages,
       e.g. \emph{via} \command{R CMD check}) by default requires the
       LaTeX package \samp{inconsolata}: see the section on
@@ -294,6 +450,11 @@
       copy of the source file using the \code{"srcfilecopy"} class or
       the new \code{"srcfilealias"} class.
 
+      \strong{NB:} This means that functions sourced with
+      \code{keep.source = TRUE} and saved (e.g., by \code{save()} or
+      \code{readRDS()}) in earlier versions of \R will no longer show
+      the original sources (including comments).
+
       \item New items \href{UserManuals.html}{User Manuals} and
       \href{http://developer.r-project.org/TechDocs}{Technical Papers}
       have been added to the HTML help main page.  These link to
@@ -443,7 +604,7 @@
       independent) \code{axisTicks()} which can make use of a new
       utility \code{.axisPars()}.  Further, it now returns a decreasing
       sequence (as for \code{log=FALSE}) when \code{usr} is decreasing.
-      
+
       \item Using \code{fix()} or \code{edit()} on a \R{} object (except
       perhaps a matrix or data frame) writes its temporary file with
       extension \file{.R} so editors which select their mode based on
@@ -676,11 +837,11 @@
       \item \command{R CMD check} now uses a \code{pdf()} device when
       checking examples (rather than \code{postscript()}).
 
-       \item \command{R CMD check} now checks line-endings of makefiles
-       and C/C++/Fortran sources in subdirectories of \file{src} as well
-       as in \file{src} itself.
-       
-       \item \command{R CMD check} now reports as a NOTE what look like
+      \item \command{R CMD check} now checks line-endings of makefiles
+      and C/C++/Fortran sources in subdirectories of \file{src} as well
+      as in \file{src} itself.
+
+      \item \command{R CMD check} now reports as a NOTE what look like
       methods documented with their full names even if there is a
       namespace and they are exported.  In almost all cases they are
       intended to be used only as methods and should use the
@@ -770,7 +931,7 @@
       \item It is deprecated to use \code{mean(x)} and \code{sd(x)}
       directly on data frames (or also matrices, for \code{sd})
       \code{x}, instead of simply using \code{sapply}.
-      
+
       In the same spirit, \code{median(x)} now gives an error for a data
       frame \code{x} (it often gave nonsensical results).
 
@@ -778,7 +939,7 @@
       \code{require()} is deprecated: it was only used for packages
       installed without lazy-loading, and now all packages are
       lazy-loaded.
-      
+
       \item Using a false value for the \file{DESCRIPTION} field
       \samp{LazyLoad} is deprecated.
     }
@@ -919,23 +1080,20 @@
 
       \code{unstack()} sometimes produced incorrect results (a list or a
       vector) if the factor on which to un-split had only one level.
-  
+
       \item On some systems \code{help(".C", help_type = "pdf")} and
       similar generated file names that TeX was unable to handle.
-      
+
       \item Non-blocking listening socket connections continued to
       report \code{isIncomplete()} as true even when the peer had closed
       down and all available input had been read.
-      
+
       \item The revised HTML search system now generates better
       hyperlinks to help topics found: previously it gave problems with
       help pages with names containing e.g. spaces and slashes.
-      
+
       \item A late change in \R 2.13.2 broke \samp{\Sexpr} expressions
       in Rd files.
-      
-      \item The creation of ticks on log axes (including
-      \code{axTicks()} sometimes incorrectly omitted a tick at one end
 
       \item The creation of ticks on log axes (including by
       \code{axTicks()}) sometimes incorrectly omitted a tick at one end
@@ -943,13 +1101,13 @@
       could be seen in the examples for \code{axTicks()}, where with
       axis limits \code{c(0.2, 88)} the tick for \code{0.2} was
       sometimes omitted.
-      
+
       \item \code{qgamma()} for small \code{shape} underflows to
       \code{0} rather than sometimes giving \code{NaN}.
       (\PR{8528}, \PR{14710})
-      
+
       \item \code{mapply()} now gives an explicit error message (rather
-      than an obscure one) is inputs of zero and positive length are
+      than an obscure one) if inputs of zero and positive length are
       mixed.
 
       \item Setting a Hershey font family followed by string height

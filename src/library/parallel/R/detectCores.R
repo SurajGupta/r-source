@@ -18,8 +18,11 @@
 
 detectCores <-
     if(.Platform$OS.type == "windows") {
-        function(all.tests = FALSE, logical = TRUE)
-            .Call(C_ncpus, FALSE, PACKAGE = "parallel")
+        function(all.tests = FALSE, logical = TRUE) {
+            ## result is # cores, logical processors.
+            res <- .Call(C_ncpus, FALSE, PACKAGE = "parallel")
+            ifelse(logical, res[2L], res[1L]);
+        }
     } else {
         function(all.tests = FALSE, logical = FALSE) {
             systems <-
@@ -28,7 +31,7 @@ detectCores <-
                      linux = "grep processor /proc/cpuinfo 2>/dev/null | wc -l",
                      irix  = c("hinv | grep Processors | sed 's: .*::'",
                      "hinv | grep '^Processor '| wc -l"),
-                     solaris = if(logical) "/usr/sbin/psrinfo -v | grep 'Status of.*processor' | wc -l" else "/usr/sbin/psrinfo -p")
+                     solaris = if(logical) "/usr/sbin/psrinfo -v | grep 'Status of.*processor' | wc -l" else "/bin/kstat -p -m cpu_info | grep :core_id | cut -f2 | uniq | wc -l")
             for (i in seq(systems))
                 if(all.tests ||
                    length(grep(paste("^", names(systems)[i], sep=''),

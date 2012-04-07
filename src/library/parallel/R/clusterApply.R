@@ -67,10 +67,10 @@ clusterEvalQ <- function(cl, expr)
 
 clusterExport <- local({
     gets <- function(n, v) { assign(n, v, envir = .GlobalEnv); NULL }
-    function(cl, varlist) {
+    function(cl, varlist, envir = .GlobalEnv) {
         ## do this with only one clusterCall--loop on workers?
         for (name in varlist) {
-            clusterCall(cl, gets, name, get(name, envir = .GlobalEnv))
+            clusterCall(cl, gets, name, get(name, envir = envir))
         }
     }
 })
@@ -126,6 +126,20 @@ splitIndices <- function(nx, ncl)
     i <- seq_len(nx)
     if (ncl == 1L) i
     else structure(split(i, cut(i, ncl)), names = NULL)
+}
+
+# The fuzz used by cut() is too small when nx and ncl are both large
+# and causes some groups to be empty. The definition below avoids that
+# while minimizing changes from the results produced by the definition
+# above.
+splitIndices <- function(nx, ncl) {
+    i <- 1:nx;
+    if (ncl == 1) i
+    else {
+        fuzz <- min((nx - 1) / 1000, 0.4 * nx / ncl)
+        breaks <- seq(1 - fuzz, nx + fuzz, length = ncl + 1)
+        structure(split(i, cut(i, breaks)), names = NULL)
+    }
 }
 
 clusterSplit <- function(cl, seq)

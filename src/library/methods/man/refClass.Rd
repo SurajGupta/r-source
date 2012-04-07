@@ -4,6 +4,7 @@
 \alias{setRefClass}
 \alias{getRefClass}
 \alias{initFieldArgs}
+\alias{initRefFields}
 \alias{activeBindingFunction-class}
 \alias{defaultBindingFunction-class}
 \alias{uninitializedField-class}
@@ -492,6 +493,9 @@ The fields named in the arguments are locked; specifically, after the
 lock method is called, the field may be set once.  Any further attempt
 to set it will generate an error.
 
+If called with no arguments, the method returns the names of the
+locked fields.
+
 Fields that are defined by an explicit accessor function can not be
 locked (on the other hand, the accessor function can be defined to
 generate an error if called with an argument).
@@ -501,9 +505,8 @@ class; that is, the read-only nature of the fields is meant to be part
 of the class definition, not a dynamic property added later.
 In particular, fields can not be locked in a class in an attached
 package with a namespace:  The class method checks for a locked
-binding of the class definition.
-
-
+binding of the class definition.  Locked fields can not be
+subsequently unlocked.
 }
 
 \item{\code{$trace(what, ..., classMethod = FALSE)}}{ %$}{

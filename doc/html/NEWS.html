@@ -8,6 +8,223 @@
 
 <h2> R News</h2>
 
+<h3><img src="../help/figures/../../html/logo.jpg" alt="../../html/logo.jpg" /> CHANGES IN R VERSION 2.14.0 patched</h3>
+
+
+
+
+<h4>NEW FEATURES</h4>
+
+
+
+<ul>
+<li> <p><code>parallel::detectCores()</code> is now able to find the
+number of physical cores (rather than CPUs) on Sparc Solaris.
+</p>
+<p>It can also do so on most versions of Windows; however the default
+remains <code>detectCores(logical = TRUE)</code> on that platform.
+</p>
+</li>
+<li><p> Reference classes now keep a record of which fields are
+locked.  <code>$lock()</code> with no arguments returns the names
+of the locked fields.
+</p>
+</li>
+<li> <p><code>HoltWinters()</code> reports a warning rather than an error
+for some optimization failures (where the answer might be a
+reasonable one).
+</p>
+</li>
+<li> <p><code>tools::dependsOnPkg()</code> now accepts the shorthand
+<code>dependencies = "all"</code>.
+</p>
+</li>
+<li> <p><code>parallel::clusterExport()</code> now allows specification of
+an environment from which to export.
+</p>
+</li>
+<li><p> The <code>quartz()</code> device now does tilde expansion on its
+<code>file</code> argument.
+</p>
+</li>
+<li> <p><code>tempfile()</code> on a Unix-alike now takes the process ID
+into account.  This is needed with <span class="pkg">multicore</span> (and as part of
+<span class="pkg">parallel</span>) because the parent and all the children share a
+session temporary directory, and they can share the C random
+number stream used to produce the uniaue part.  Further, two
+children can call <code>tempfile()</code> simultaneously.
+</p>
+</li>
+<li><p> Option <code>print</code> in Sweave's <code>RweaveLatex()</code> driver
+now emulates auto-printing rather than printing (which can differ
+for an S4 object by calling <code>show()</code> rather than
+<code>print()</code>).
+</p>
+</li>
+<li> <p><code>filled.contour()</code> now accepts infinite values:
+previously it might have generated invalid graphics files
+(e.g. containing NaN values).
+</p>
+</ul>
+
+
+
+
+<h4>INSTALLATION</h4>
+
+
+
+<ul>
+<li><p> On 64-bit Linux systems, <CODE>configure</CODE> now only sets
+<span class="samp">LIBnn</span> to <code>lib64</code> if &lsquo;<span class="file">/usr/lib64</span>&rsquo; exists.  This
+may obviate setting <span class="samp">LIBnn</span> explicitly on Debian-derived
+systems.
+</p>
+<p>It is still necessary to set <span class="samp">LIBnn = lib</span> (or
+<span class="samp">lib32</span>) for 32-bit builds of <font face="Courier New,Courier" color="#666666"><b>R</b></font> on a 64-bit OS on those Linux
+distributions capable for supporting that concept.
+</p>
+</li>
+<li> <p><CODE>configure</CODE> looks for &lsquo;<span class="file">inconsolata.sty</span>&rsquo;, and if
+not found adjusts the default <span class="env">R_RD4PDF</span> to not use it (with a
+warning, since it is needed for high-quality rendering of manuals).
+</p>
+</ul>
+
+
+
+
+<h4>PACKAGE INSTALLATION</h4>
+
+
+
+<ul>
+<li> <p><CODE>R CMD INSTALL</CODE> will now do a test load for all
+sub-architectures for which code was compiled (rather than just
+the primary sub-architecture).
+</p>
+</ul>
+
+
+
+
+<h4>UTILITIES</h4>
+
+
+
+<ul>
+<li><p> When checking examples under more than one sub-architecture,
+<CODE>R CMD check</CODE> now uses a separate directory
+&lsquo;<span class="file">examples_arch</span>&rsquo; for each sub-architecture, and leaves the
+output in file &lsquo;<span class="file">pkgname-Ex_arch.Rout</span>&rsquo;.  Some packages
+expect their examples to be run in a clean directory ....
+</p>
+</ul>
+
+
+
+
+<h4>BUG FIXES</h4>
+
+
+
+<ul>
+<li> <p><code>stack()</code> now gives an error if no vector column is
+selected, rather than returning a 1-column data frame (contrary to
+its documentation).
+</p>
+</li>
+<li> <p><code>summary.mlm()</code> did not handle objects where the
+formula had been specified by an expression.  (Reported by
+Helios de Rosario Martinez).
+</p>
+</li>
+<li> <p><code>tools::deparseLatex(dropBraces=TRUE)</code> could drop
+text as well as braces.
+</p>
+</li>
+<li> <p><code>colormodel = "grey"</code> (new in <font face="Courier New,Courier" color="#666666"><b>R</b></font> 2.14.0))
+did not always work in <code>postscript()</code> and <code>pdf()</code>.
+</p>
+</li>
+<li> <p><code>file.append()</code> could return <code>TRUE</code> for failures.
+(<a href="https://bugs.R-project.org/bugzilla3/show_bug.cgi?id=14727">PR#14727</a>)
+</p>
+</li>
+<li> <p><code>gzcon()</code> connections are no longer subject to garbage
+collection: it was possible for this to happen when unintended
+(e.g. when calling <code>load()</code>).
+</p>
+</li>
+<li> <p><code>nobs()</code> does not count zero-weight observations for
+<code>glm()</code> fits, for consistency with <code>lm()</code>.  This affects
+the <code>BIC()</code> values reported for such <code>glm()</code> fits.
+(Spotted by Bill Dunlap.)
+</p>
+</li>
+<li> <p><code>options(warn = 0)</code> failed to end a (C-level) context
+with more than 50 accumulated warnings.  (Spotted by Jeffery
+Horner.)
+</p>
+</li>
+<li><p> The internal <code>plot.default()</code> code did not do sanity
+checks on a <code>cex</code> argument, so invalid input could cause
+problems.  (Reported by Ben Bolker.)
+</p>
+</li>
+<li> <p><code>anyDuplicated(&lt;array&gt;, MARGIN=0)</code> no longer fails.
+(Reported by Hervé Pagès.)
+</p>
+</li>
+<li> <p><code>read.dcf()</code> removes trailing blanks: unfortunately
+on some platforms this included <code>\xa0</code> (non-breaking space)
+which is the trailing byte of a UTF-8 character.  It now only
+considers ASCII space and tab to be &lsquo;blank&rsquo;.
+</p>
+</li>
+<li><p> There was a sign error in part of the calculations for the
+variance returned by <code>KalmanSmooth()</code>.  (<a href="https://bugs.R-project.org/bugzilla3/show_bug.cgi?id=14738">PR#14738</a>)
+</p>
+</li>
+<li> <p><code>pbinom(10, 1e6, 0.01, log.p = TRUE)</code> was <code>NaN</code>
+thanks to the buggy fix to <a href="https://bugs.R-project.org/bugzilla3/show_bug.cgi?id=14320">PR#14320</a> in <font face="Courier New,Courier" color="#666666"><b>R</b></font> 2.11.0.  (<a href="https://bugs.R-project.org/bugzilla3/show_bug.cgi?id=14739">PR#14739</a>)
+</p>
+</li>
+<li> <p><code>RweaveLatex()</code> now emulates auto-printing rather than
+printing, by calling <code>methods::show()</code> when auto-printing
+would.
+</p>
+</li>
+<li> <p><code>duplicated()</code> ignored <code>fromLast</code> for a
+one-column data frame.  (<a href="https://bugs.R-project.org/bugzilla3/show_bug.cgi?id=14742">PR#14742</a>)
+</p>
+</li>
+<li> <p><code>source()</code> and related functions did not put the correct
+timestamp on the source references; <code>srcfilecopy()</code> has gained
+a new argument <code>timestamp</code> to support this fix. (<a href="https://bugs.R-project.org/bugzilla3/show_bug.cgi?id=14750">PR#14750</a>)
+</p>
+</li>
+<li><p> LaTeX conversion of Rd files did not correctly handle
+preformatted backslashes.  (<a href="https://bugs.R-project.org/bugzilla3/show_bug.cgi?id=14751">PR#14751</a>)
+</p>
+</li>
+<li><p> HTML conversion of Rd files did not handle markup within
+tabular cells properly.  (<a href="https://bugs.R-project.org/bugzilla3/show_bug.cgi?id=14708">PR#14708</a>)
+</p>
+</li>
+<li> <p><code>source()</code> on an empty file with <code>keep.source =
+	TRUE</code> tried to read from <code>stdin()</code>, in <font face="Courier New,Courier" color="#666666"><b>R</b></font> 2.14.0 only.
+(<a href="https://bugs.R-project.org/bugzilla3/show_bug.cgi?id=14753">PR#14753</a>)
+</p>
+</li>
+<li><p> The code to check Rd files in packages would abort if
+duplicate description sections were present.      
+</p>
+</ul>
+
+
+
+
 <h3><img src="../help/figures/../../html/logo.jpg" alt="../../html/logo.jpg" /> CHANGES IN R VERSION 2.14.0</h3>
 
 
@@ -363,6 +580,11 @@ environments, compiled byte code, etc.
 attribute.  The <code>"srcref"</code> attribute references an in-memory
 copy of the source file using the <code>"srcfilecopy"</code> class or
 the new <code>"srcfilealias"</code> class.
+</p>
+<p><STRONG>NB:</STRONG> This means that functions sourced with
+<code>keep.source = TRUE</code> and saved (e.g., by <code>save()</code> or
+<code>readRDS()</code>) in earlier versions of <font face="Courier New,Courier" color="#666666"><b>R</b></font> will no longer show
+the original sources (including comments).
 </p>
 </li>
 <li><p> New items <a href="UserManuals.html">User Manuals</a> and
@@ -1180,10 +1402,6 @@ help pages with names containing e.g. spaces and slashes.
 in Rd files.
 </p>
 </li>
-<li><p> The creation of ticks on log axes (including
-<code>axTicks()</code> sometimes incorrectly omitted a tick at one end
-</p>
-</li>
 <li><p> The creation of ticks on log axes (including by
 <code>axTicks()</code>) sometimes incorrectly omitted a tick at one end
 of the range by rounding error in a platform-dependent way.  This
@@ -1198,7 +1416,7 @@ sometimes omitted.
 </p>
 </li>
 <li> <p><code>mapply()</code> now gives an explicit error message (rather
-than an obscure one) is inputs of zero and positive length are
+than an obscure one) if inputs of zero and positive length are
 mixed.
 </p>
 </li>

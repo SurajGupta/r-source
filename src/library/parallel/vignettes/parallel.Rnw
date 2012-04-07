@@ -158,6 +158,12 @@ designed to exploit.  It can also be used with several computers
 running the same version of \R{} connected by (reasonable-speed)
 ethernet: the computers need not be running the same OS.
 
+Note that all these methods of communication use
+\code{serialize}/\code{unserialize} to send \R{} objects between
+processes.  This has limits (typically hundreds of millions of
+elements) which a well-designed parallelized algorithm should not
+approach.
+
 %<<>>=
 %library(parallel)
 %@
@@ -192,14 +198,14 @@ But in so far as it is a useful guideline, function
 machine on which \R{} is running: it has ways to do so on all known
 current \R{} platforms.  What exactly it measures is OS-specific: we
 try where possible to report the number of physical cores available.
-One OS where this is not the case is Windows, where only the number of
-logical CPUs is readily available.  On modern hardware (e.g.{} Intel
-\emph{Core i7}) the latter may not be unreasonable as hyper-threading
-does give a significant extra throughput: on what are now rather old
-Pentium 4's it will simply over-estimate by a factor of two.  Note
-that we said `available': in most cases when virtual machines are in
-use what is reported is the maximum number of virtual CPUs which can
-be used simultaneously by that virtual machine.
+
+On Windows the default is to report the number of logical CPUs.  On
+modern hardware (e.g.{} Intel \emph{Core i7}) the latter may not be
+unreasonable as hyper-threading does give a significant extra
+throughput.  What \code{detectCores(logical = FALSE)} reports is
+OS-version-dependent: on recent versions of Windows it reports the
+number of physical cores but on older versions it might report the
+number of physical CPU packages.
 
 \section{Analogues of apply functions}
 
@@ -256,6 +262,29 @@ the \emph{connections} of those names, not the C-level file handles.
 Thus properly written \R{} packages using \code{Rprintf} will have
 their output redirected, but not direct C-level output.
 
+If clusters are to be created on a host other than the current machine
+(\samp{localhost}), \code{makeCluster} may need to be be given more
+information in the shape of extra arguments.
+\begin{itemize}
+  \item If the worker machines are not set up in exactly the same way
+    as the master (for example if they are of a different
+    architecture), use \code{homogeneous = FALSE} and perhaps set
+    \code{rscript} to the full path to \command{Rscript} on the workers.
+  \item The worker machines need to know how to communicate with the
+    master: normally this can be done using the hostname found by
+    \code{Sys.info()}, but on private networks this need not be the
+    case and \code{master} may need to be supplied as a name or IP
+    address, e.g. \code{master = "192.168.1.111"}.
+  \item By default \command{ssh} is used to launch R on the workers.
+    If it is known by some other name, use e.g.{} \code{rshcmd =
+      "plink.exe"} for a Windows box using PUTTY.  SSH should be set
+    up to use silent authentication: setups which require a password
+    to be supplied may or may not work.
+  \item Socket communication is done over port 10187: site policies
+    might require some other port to be used, in which case set
+    argument \code{port} or environment variable \env{R\_PARALLEL\_PORT}.
+\end{itemize}
+
 \section{Forking}
 
 Except on Windows, the package contains a copy of \pkg{multicore}:
@@ -278,6 +307,13 @@ force \code{mc.cores = 1}.)
 
 Note the earlier comments about using forking in a GUI environment.
 
+The parent and forked \R{} processes share the per-session temporary
+directory \code{tempdir()}, which can be a problem as a lot of code
+has assumed it is private to the \R{} process.  Further, prior to \R{}
+2.14.1 it was possibly for \code{tempfile} in two processes to select
+the same filename in that temporary directory, and do it sufficiently
+simultaneously that neither saw it as being in use.
+
 The forked workers share file handles with the master: this means that
 any output from the worker should go to the same place as
 \file{stdout} and \file{stderr} of the master process.  (This does not
@@ -285,6 +321,11 @@ work reliably on all OSes: problems have also been noted when forking
 a session that is processing batch input from \file{stdin}.)  Setting
 argument \code{mc.silent = TRUE} silences \file{stdout} for the child:
 \file{stderr} is not affected.
+
+Sharing file handles also impacts graphics devices as forked workers
+inherit all open graphics devices of the parent: they should not
+attempt to make use of them.
+
 
 \section{Random-number generation}
 
@@ -326,7 +367,7 @@ has a fairly long period with a small seed (6 integers), and unlike
 the seed by a fixed number of steps.  The generator is the combination
 of two:
 \begin{eqnarray*}
-  x_n &=& 1403580 \times x_{n-1} - 810728 \times x_{n-3} \mod{(2^{32} - 209)}\\
+  x_n &=& 1403580 \times x_{n-2} - 810728 \times x_{n-3} \mod{(2^{32} - 209)}\\
   y_n &=& 527612 \times y_{n-1} - 1370589 \times y_{n-3} \mod{(2^{32} - 22853)}\\
   z_n &=& (x_n - y_n) \mod{4294967087}\\
   u_n &=& z_n/4294967088\ \mbox{unless $z_n = 0$}
@@ -337,8 +378,9 @@ pre-computed coefficients for $k$ steps ahead.  For $k = 2^{127}$, the
 seed is advanced by $k$ steps by \R{} call
 \code{.Random.seed <- nextRNGStream(.Random.seed)}.
 
+% use \verb to get consistent quote mapping.
 The \citet{lecuyer.1999} generator is available in \R{} as from
-version 2.14.0 \emph{via} \code{RNGkind("L'Ecuyer-CMRG")}.  Thus using
+version 2.14.0 \emph{via} \verb|RNGkind("L'Ecuyer-CMRG")|.  Thus using
 the ideas of \citet{lecuyer.2002} is as simple as
 \begin{verbatim}
 RNGkind("L'Ecuyer-CMRG")
@@ -379,6 +421,8 @@ disparate capabilities.  But some \emph{caveats} are in order:
 \item Random number streams are allocated to nodes, so if the tasks
   involve random numbers they are likely to be non-repeatable (as the
   allocation of tasks to nodes depends on the workloads of the nodes).
+  It would however take only slightly more work to allocate a stream to
+  each task.
 \item More care is needed is allocating the tasks.  If 1000 tasks need
   to be allocated to 10 nodes, the standard approach send chunks of
   100 tasks to each of the nodes.  The load-balancing approach sends
@@ -419,7 +463,7 @@ code is package \pkg{boot}, version \code{1.3-3} or later.
 library(parallel)
 @
 
-Probably the most common use of coarse-grained paralllelization in
+Probably the most common use of coarse-grained parallelization in
 statistics is to do multiple simulation runs, for example to do large
 numbers of bootstrap replicates or several runs of an MCMC simulation.
 We show an example of each.
@@ -434,7 +478,7 @@ by \citet{Davison.Hinkley.97}.  Bootstrapping is often used as an
 example of easy parallelization, and some methods of producing
 confidence intervals require many thousands of bootstrap samples.
 As from version \code{1.3-1} the package itself has parallel support
-within its main functions, but we illustrate how use the original
+within its main functions, but we illustrate how to use the original
 (serial) functions in parallel computations.
 
 We consider two examples using the \code{cd4} dataset from package
@@ -490,14 +534,14 @@ boot.ci(cd4.boot,  type = c("norm", "basic", "perc"),
         conf = 0.9, h = atanh, hinv = tanh)
 stopCluster(cl)
 @
-Note that whereas with \code{mclapply} all the packages and objects we
-use are automatically available on the workers, this is not in
+Note that whereas with \code{mclapply} all the packages and objects
+we use are automatically available on the workers, this is not in
 general\footnote{it is with clusters set up with
   \code{makeForkCluster}.} the case with the \code{parLapply}
 approach.  There is often a delicate choice of where to do the
-computations: for example we could compute \code{cd4.mle} on the works
-(as about) or on the master and send the value to the workers. We
-illustrate the latter by the following code
+computations: for example we could compute \code{cd4.mle} on the
+workers (as above) or on the master and send the value to the
+workers. We illustrate the latter by the following code
 <<>>=
 cl <- makeCluster(mc)
 cd4.rg <- function(data, mle) MASS::mvrnorm(nrow(data), mle$m, mle$v)
@@ -628,6 +672,10 @@ Aliased functions \code{collect} and \code{parallel} are no longer provided.
 
 \subsection{Differences from snow}
 
+\pkg{snow} set a timeout that exceeded the maximum value required by
+POSIX, and did not provide a means to set the timeout on the workers.
+This resulted in process interlocks on Solaris.
+
 \code{makeCluster} creates PVM, MPI or NWS clusters by calling \pkg{snow}.
 
 \code{makePSOCKcluster} has been streamlined, as package \pkg{parallel} is in
@@ -640,7 +688,7 @@ so multiple processes can be logged.
 \code{clusterMap()} gains \code{SIMPLIFY} and \code{USE.NAMES}
 arguments to make it a parallel version of \code{mapply} and \code{Map}.
 
-The timimng interface has not been copied.
+The timing interface has not been copied.
 
 \bibliographystyle{jss}
 \bibliography{parallel}

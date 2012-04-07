@@ -40,9 +40,9 @@ R_runR <- function(cmd = NULL, Ropts = "", env = "",
             ## In principle this should escape \
             Rin <- tempfile("Rin"); on.exit(unlink(Rin)); writeLines(cmd, Rin)
         } else Rin <- stdin
-        system2(if(nzchar(arch)) file.path(R.home(), "bin", arch, "Rterm.exe")
-                else file.path(R.home("bin"), "Rterm.exe"),
-                c(Ropts, paste("-f", Rin)), stdout, stderr, env = env)
+        suppressWarnings(system2(if(nzchar(arch)) file.path(R.home(), "bin", arch, "Rterm.exe")
+                                 else file.path(R.home("bin"), "Rterm.exe"),
+                                 c(Ropts, paste("-f", Rin)), stdout, stderr, env = env))
     } else {
         suppressWarnings(system2(file.path(R.home("bin"), "R"),
                                  c(if(nzchar(arch)) paste("--arch=", arch, sep = ""), Ropts),
@@ -72,11 +72,16 @@ R_runR <- function(cmd = NULL, Ropts = "", env = "",
     }
 
     R_runR2 <-
-        if(WINDOWS)
+        if(WINDOWS) {
             function(cmd,
                      env = "R_DEFAULT_PACKAGES=utils,grDevices,graphics,stats")
-                R_runR(cmd, R_opts2, env)
-        else
+                {
+                    out <- R_runR(cmd, R_opts2, env)
+                    ## pesky gdata ....
+                    grep("^(ftype: not found|File type)", out,
+                         invert = TRUE, value = TRUE)
+                }
+        } else
             function(cmd,
                      env = "R_DEFAULT_PACKAGES='utils,grDevices,graphics,stats'")
             {
@@ -1238,7 +1243,7 @@ R_runR <- function(cmd = NULL, Ropts = "", env = "",
             td <- tempfile('pdf')
             dir.create(td)
             file.copy(pdfs, td)
-            res <- compactPDF(td)
+            res <- compactPDF(td, gs_cmd = "") # we say we use qpdf
             res <- format(res, diff = 1e5)
             if(length(res)) {
                 resultLog(Log, "NOTE")
@@ -1351,6 +1356,7 @@ R_runR <- function(cmd = NULL, Ropts = "", env = "",
 
     check_sos <- function() {
         checkingLog(Log, "compiled code")
+        ## from sotools.R
         Rcmd <- paste("options(warn=1)\n",
                       sprintf("tools:::check_compiled_code(\"%s\")",
                               file.path(libdir, pkgname)))
@@ -1461,7 +1467,8 @@ R_runR <- function(cmd = NULL, Ropts = "", env = "",
                              stdout = exout, stderr = exout,
                              stdin = exfile, arch = arch)
             if (status) {
-                errorLog(Log, "Running examples in ", sQuote(exfile),
+                errorLog(Log, "Running examples in ",
+                         sQuote(basename(exfile)),
                          " failed")
                 ## Try to spot the offending example right away.
                 txt <- paste(readLines(exout, warn = FALSE),
@@ -1560,8 +1567,19 @@ R_runR <- function(cmd = NULL, Ropts = "", env = "",
                         if (arch %in% R_check_skip_examples_arch) {
                             resultLog(Log, "SKIPPED")
                         } else {
+                            tdir <- paste("examples_", arch, sep = "")
+                            dir.create(tdir)
+                            if (!dir.exists(tdir)) {
+                                errorLog(Log,
+                                         "unable to create examples directory")
+                                do_exit(1L)
+                            }
+                            od <- setwd(tdir)
                             exout <- paste(pkgname, "-Ex_", arch, ".Rout", sep = "")
-                            run_one_arch(exfile, exout, arch)
+                            run_one_arch(file.path("..", exfile),
+                                         file.path("..", exout),
+                                         arch)
+                            setwd(od)
                         }
                     }
                     Log$stars <<-  "*"
@@ -2533,14 +2551,15 @@ R_runR <- function(cmd = NULL, Ropts = "", env = "",
         cat("Usage: R CMD check [options] pkgs",
             "",
             "Check R packages from package sources, which can be directories or",
-            "package 'tar' archives with extension '.tar.gz', '.tar.bz2' or '.tgz'.",
+            "package 'tar' archives with extension '.tar.gz', '.tar.bz2',",
+            "'.tar.xz' or '.tgz'.",
             "",
             "A variety of diagnostic checks on directory structure, index and",
             "control files are performed.  The package is installed into the log",
-            "directory (which includes the translation of all Rd files into several",
-            "formats), and the Rd files are tested by LaTeX.",
+            "directory and production of the package PDF manual is tested.",
             "All examples and tests provided by the package are tested to see if",
-            "they run successfully.",
+            "they run successfully.  Code in the vignettes is tested,",
+            "as is re-building the vignette PDFs.",
             "",
             "Options:",
             "  -h, --help		print short help message and exit",

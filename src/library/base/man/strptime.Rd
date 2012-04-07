@@ -199,7 +199,9 @@ strptime(x, format, tz = "")
   \code{isdst} component and to set the \code{"tzone"} attribute if
   \code{tz != ""}.  If the specified time is invalid (for example
   \samp{"2010-02-30 08:00"}) all the components of the result are
-  \code{NA}.
+  \code{NA}.  (NB: this does means exactly what it says -- if it is an
+  invalid time, not just a time that does not exist in some timezone.)
+  %% One of Master B Diggs moments of infamy
 }
 \note{
   The default formats follow the rules of the ISO 8601 international
@@ -220,7 +222,10 @@ strptime(x, format, tz = "")
   Remember that in most timezones some times do not occur and some occur
   twice because of transitions to/from summer time.  \code{strptime}
   does not validate such times (it does not assume a specific timezone),
-  but conversion by \code{\link{as.POSIXct}}) will do so.
+  but conversion by \code{\link{as.POSIXct}}) will do so.  Conversion by
+  \code{strftime} and formatting/printing uses OS facilities and may
+  (and does on Windows) return nonsensical results for non-existent
+  times at DST transitions.
 }
 \references{
   International Organization for Standardization (2004, 2000, 1988, 1997,

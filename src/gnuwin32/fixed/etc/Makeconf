@@ -17,8 +17,8 @@ LINKFLAGS+= -static-libgcc
 ## Things which are substituted by fixed/Makefile (and also -O3 -> -O2)
 WIN = 32
 BINPREF =
-# SYMPAT = 's/^.* [BCDRT] _/ /p' or 32-bit and older 64-bit toolchains
-# SYMPAT = 's/^.* [BCDRT] / /p' for 64-bit >= May 2010
+# SYMPAT = 's/^.* [BCDRT] _/ /p' for 32-bit
+# SYMPAT = 's/^.* [BCDRT] / /p' for 64-bit
 SYMPAT = @SYMPAT@
 IMPDIR = bin
 # flags for multilib builds, for compilers, dlltool and windres
@@ -31,11 +31,11 @@ LOCAL_SOFT =
 
 ifneq ($(strip $(LOCAL_SOFT)),)
 LOCAL_CPPFLAGS = -I"$(LOCAL_SOFT)/include"
-LOCAL_LIBS = -L"$(LOCAL_SOFT)/lib"
+LOCAL_LIBS = -L"$(LOCAL_SOFT)/lib$(R_ARCH)" -L"$(LOCAL_SOFT)/lib"
 endif
 
-DLLTOOL = $(BINPREF)dlltool
-DLLTOOLFLAGS =--as $(BINPREF)as $(DT_ARCH) -k
+DLLTOOL = $(BINPREF)dlltool --as $(BINPREF)as $(DT_ARCH)
+DLLTOOLFLAGS = -k
 NM = $(BINPREF)nm
 RESCOMP = $(BINPREF)windres $(RC_ARCH)
 ## MAIN_LD needs to be set by the package
@@ -121,7 +121,7 @@ OBJCFLAGS = -O2
 OBJC_LIBS = -lobjc
 OBJCXX =
 R_ARCH =
-RANLIB = $(BINPREF)ranlib $(M_ARCH)
+RANLIB = $(BINPREF)ranlib
 SAFE_FFLAGS = -O3 -ffloat-store
 SED = sed
 ## it seems some makes (but not ours) get upset if SHELL is set.
@@ -139,14 +139,14 @@ SHLIB_FFLAGS =
 SHLIB_LD = $(CC)
 SHLIB_LDFLAGS = -shared
 SHLIB_LIBADD =
-SHLIB_LINK = $(SHLIB_LD) --export-all-symbols $(SHLIB_LDFLAGS) $(LDFLAGS)
+SHLIB_LINK = $(SHLIB_LD) -Wl,--export-all-symbols $(SHLIB_LDFLAGS) $(LDFLAGS)
 # not implemented in current toolchain
 SHLIB_OPENMP_CFLAGS =
 SHLIB_OPENMP_CXXFLAGS =
 SHLIB_OPENMP_FCFLAGS =
 SHLIB_OPENMP_FFLAGS =
-STRIP_LIBS = $(BINPREF)strip $(M_ARCH) --strip-unneeded
-STRIP_STATIC_LIBS = $(BINPREF)strip $(M_ARCH) --strip-debug
+STRIP_LIBS = $(BINPREF)strip --strip-unneeded
+STRIP_STATIC_LIBS = $(BINPREF)strip --strip-debug
 TCLTK_CPPFLAGS = -I "$(TCL_HOME)/include" -DWin32
 TCLTK_LIBS = -L"$(TCL_HOME)/bin" -ltcl$(TCL_VERSION) -ltk$(TCL_VERSION)
 
