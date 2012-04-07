@@ -7,7 +7,7 @@
 ## Trap interrupts, most importantly 2 (^C from keyboard)
 trap do_exit_on_error 1 2 15
 
-revision='$Rev: 45602 $'
+revision='$Rev: 46353 $'
 version=`set - ${revision}; echo ${2}`
 version="R add-on package installer ${version}
 
@@ -609,7 +609,8 @@ do_install_source () {
   if test -d src && test "${fake}" != "true"; then
     message "libs"
     has_error=false
-    CLINK_CPPFLAGS=`echo "tools:::.find_cinclude_paths(file='DESCRIPTION')" | \
+    ## prepend ${lib} to library path.
+    CLINK_CPPFLAGS=`echo "invisible(.libPaths(c(\"${lib}\", .libPaths())));tools:::.find_cinclude_paths(file='DESCRIPTION')" | \
       "${R_EXE}" --vanilla --slave`
     export CLINK_CPPFLAGS
     if ${debug}; then set -x; fi

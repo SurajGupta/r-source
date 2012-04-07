@@ -20,7 +20,7 @@
 use Getopt::Long;
 use R::Utils;
 
-my $revision = ' $Rev: 43267 $ ';
+my $revision = ' $Rev: 43268 $ ';
 my $version;
 my $name;
 

@@ -1,6 +1,6 @@
 % File src/library/base/man/data.matrix.Rd
 % Part of the R package, http://www.R-project.org
-% Copyright 1995-2007 R Core Development Team
+% Copyright 1995-2008 R Core Development Team
 % Distributed under GPL 2 or later
 
 \name{data.matrix}
@@ -28,6 +28,10 @@ data.matrix(frame, rownames.force = NA)
   Supplying a data frame with columns which are not numeric, factor or logical
   is an error.  A warning is given if any non-factor column has a class,
   as then information can be lost.
+
+  Since historically they had been, \code{"\link{Date}"} and
+  \code{"\link{POSIXct}"} columns are regarded as numeric even though
+  \code{\link{is.numeric}} will say otherwise.
 }
 \value{
   If \code{frame} inherits from class \code{"data.frame"}, an integer or

@@ -407,7 +407,7 @@ data.frame <-
                 vnames[[i]] <- tmpname
             }
         } # end of ncols[i] <= 1
-	if(is.null(row.names) && nrows[i] > 0L) {
+	if(missing(row.names) && nrows[i] > 0L) {
             rowsi <- attr(xi, "row.names")
             ## old way to mark optional names
             if(!(rowsi[[1L]] %in% ""))
@@ -508,9 +508,9 @@ data.frame <-
         ## not quite the same as the 1/2-arg case, as 'drop' is used.
         if(missing(j) && drop && length(x) == 1L) return(.subset2(x, 1L))
         y <- if(missing(j)) x else .subset(x, j)
-        if(drop && length(y) == 1L) return(.subset2(y, 1L))
 	cols <- names(y)
 	if(any(is.na(cols))) stop("undefined columns selected")
+        if(drop && length(y) == 1L) return(.subset2(y, 1L))
         if(any(duplicated(cols))) names(y) <- make.unique(cols)
         nrow <- .row_names_info(x, 2L)
         if(drop && !mdrop && nrow == 1L)
@@ -581,6 +581,7 @@ data.frame <-
         rows <- rows[i]
 	if((ina <- any(is.na(rows))) | (dup <- any(duplicated(rows)))) {
 	    ## both will coerce integer 'rows' to character:
+	    if (!dup && is.character(rows)) dup <- "NA" %in% rows
 	    if(ina)
 		rows[is.na(rows)] <- "NA"
 	    if(dup)

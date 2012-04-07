@@ -6,6 +6,173 @@
 	**************************************************
 
 
+		CHANGES IN R VERSION 2.7.2
+
+
+NEW FEATURES
+
+    o	sprintf() returns elements of the result in UTF-8 when the
+	format or any character input has a corresponding element
+	declared as UTF-8.  Similarly for paste(), elements of the
+	result are in UTF-8 when any input to that element is declared
+	as UTF-8.
+
+    o	axis() has new arguments 'col.ticks' and 'lwd.ticks' to allow
+	the colour and line width of ticks to be set separately from
+	that of the line (e.g. to set one or the other to transparent
+	or zero width).
+
+    o	legend() has a new argument 'box.col' to set the colour of the
+	enclosing box.
+
+    o	legend() gains a 'xpd' argument to make it easier to place a
+	legend in the margins or outer margins.
+
+    o	stripchart() now passes '...' to title() (as well as to
+	plot.default() and axis()). (Wish of PR#12202)
+
+    o	help.search() has new argument 'searchEngine' to go
+	directly to the search form: this is needed by users of
+	Firefox 3 to workaround a bug in interpreting the search
+	results pages.
+
+
+BUG FIXES
+
+    o	Plotmath computed the glyph metrics for the wrong character (and
+	perhaps for a non-existent one) if this was a single-byte
+	character with the top bit set.  An example was	symbol("\300").
+
+    o	sink() and cat() could divert output to a non-writable connection.
+
+    o	phyper(x, 0,0,0) no longer hangs for huge x and gives 1 for x >= 0.
+	(PR#11813)
+
+    o	plnorm(x, ..., log.p=TRUE) is now correct for x <= 0. (PR#11867)
+
+    o	<data.frame>[, ch] gives an error (again!) when ch is a string not
+	exactly matching the column names, thanks to an oral bug report by
+	Matthew Dowle.
+
+    o	data.frame(x=1:2, y=3:4, row.names=c("a","NA"))[c(2,NA),] has
+	correct row names c("NA,"NA.1") again.
+
+    o	The GUI data editor for dataframes did not handle escape
+	characters in entries properly. (PR#11897)
+
+    o	PCRE has been updated to 7.7 (bugfix release).
+
+    o	package.skeleton() wrongly warned about invalid code_files names
+	when these were not in the current directory.
+
+    o	shapiro.test(c(0,0,1)) now has P value >= 0 (instead of barely
+	negative).
+
+    o	assign() now warns if given a character vector of length > 1,
+	rather than silently taking the first element.
+
+    o	rcond(<exactly singular matrix>) now gives 0 instead of an error.
+
+    o	There was a memory leak in C function ucstoutf8 used by some
+	graphics devices.
+
+    o	Plots of profile.mle() objects (package 'stats4') were
+	misbehaving when the 'which' argument had been used in their
+	calculation.
+
+    o	dnbinom(x, size, mu=*, ..) is now more accurate for very large
+	'size'.  The same applies to pnbinom() and rnbinom().
+
+    o	axis() was ignoring par() mgp[3] if mgp was set in-line.
+
+    o	Closing an X11 View() or dataentry window via its frame's
+	close control now works better on some window managers.
+
+    o	Calling lapply() was not handling method dispatch correctly for
+	is.numeric(), is.matrix(), is.array(), log() and the Math2
+	group.  This affected data.matrix() which incorrectly regarded
+	"Date" and "POSIXct" objects as numeric, and has been adjusted
+	to do so as exceptions.
+
+    o	package.skeleton() was not looking for non-function objects in
+    	its 'environment' argument.
+
+    o	nls() was only finding its 'weights' argument in the case when
+    	all the variables in the formula were of the same length and
+    	hence that model.frame() could be used.
+
+	It was silently ignoring 'subset' and 'na.action' except in
+	that case.  Now they are ignored only if 'data' is a list and
+	variables taken from 'data' are not all of the same length,
+	in which case a warning is given.
+
+    o	The 'mle' confint() method now takes 'level' into account when
+	setting 'alpha' for the profile.
+
+    o	within() was not handling correctly expressions that produced
+	NULL columns.  (PR#11131)
+
+    o	dev.print() and dev.copy2{eps,pdf}() now ensure that the current
+	device is restored as the active device even if an error
+	occurs. (PR#9801)
+
+    o	as.Date() could fail to convert character strings representing
+	days on which midnight did not exist in the current timezone
+	(as happened in parts of Africa on 1960-01-01).
+
+    o	The automatic placement of legend() with 'title' and a
+	reversed 'x' axis was incorrect. (PR#12019)
+
+    o	The use of multiple packages in 'LinkingTo' works again, and
+    	now works when the dependent packages are in the library to be
+    	installed to (but not in the library path seen by R --vanilla).
+
+    o	bxp() (and hence boxplot) now respects in-line graphical
+	parameters 'xaxp'/'yaxp' as appropriate.  (PR#11463)
+
+    o	barplot(log = "y") failed if there were NAs in the 'height'
+	argument.  (PR#11585)
+
+    o	pbeta() is more accurate in some cases with extreme values of
+	'ncp'.  (PR#11277).
+
+    o	edit.data.frame() no longer fails if called on a 0-column
+	data frame and no column is created.
+
+    o	pchisq(x, df=0) was always one even for x < 0; similarly for
+	pgamma(x, alpha=0).
+
+    o	add1() and drop1() now return a P-value of NaN in cases with
+	df=0 for test="Chisq" (they gave NaN until pchisq was altered
+	in R 2.6.2).
+
+    o	The default methods of drop1() and add1() now re-evaluate in the
+	object's formula environment, rather than simply in the parent
+	(informal bug report by Werner Stahel).
+
+    o	The undocumented limit of 8191 bytes on comments (from # to
+	the end of the line) in R code has been removed.
+
+    o	qgamma() warns if used with shape < 1e-10, when it may be
+ 	unreliable.  (PR#12324)
+
+    o	Installing a source package was not using the package's declared
+	encoding (if any) as a default encoding for the help.search()
+	database in Meta/hsearch.rds.  This could cause packages with
+	a default encoding to have some of their entries rejected by
+	help.search() in a multi-byte locale (such as a UTF-8 locale).
+
+    o	duplicated() and unique() now handle 'incomparables' better,
+    	and avoid occasional segfaults (PR#12551).
+
+    o	data.frame(row.names=NULL) once again behaves differently from
+	the default (as documented).
+
+    o	plot(isoreg(x,y)) now plots the points correctly, also when 'x'
+	is not sorted.
+
+
+
 		CHANGES IN R VERSION 2.7.1
 
 
@@ -841,6 +1008,9 @@ BUG FIXES
 	method = "pearson" but an error for the other two methods.
 	(Note that this is pretty arbitrary, but zero-length vectors
 	always give an error so it is at least consistent.)
+
+	Since sd(na.rm=TRUE) and var(na.rm=TRUE) both call cov(use =
+	"complete.obs"), this applies also to them.
 
 	cor(use="pair") used to give diagonal 1 even if the variable
 	was completely missing for the rank methods but NA for the

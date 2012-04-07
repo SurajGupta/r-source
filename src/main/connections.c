@@ -2023,25 +2023,29 @@ static int text_vfprintf(Rconnection con, const char *format, va_list ap)
 	already = strlen(this->lastline);
     SEXP tmp;
 
+#ifdef HAVE_VA_COPY
+    va_list aq;
+    va_copy(aq, ap);
     if(already >= BUFSIZE) {
 	/* This will fail so just call vsnprintf to get the length of
 	   the new piece */
-	res = vsnprintf(buf, 0, format, ap);
+	res = vsnprintf(buf, 0, format, aq);
 	if(res > 0) res += already;
 	buffree = 0;
     } else {
 	strcpy(b, this->lastline);
 	p = b + already;
 	buffree = BUFSIZE - already;
-	res = vsnprintf(p, buffree, format, ap);
+	res = vsnprintf(p, buffree, format, aq);
     }
+    va_end(aq);
     if(res >= buffree) { /* res is the desired output length */
 	usedRalloc = TRUE;
 	b = R_alloc(res + already + 1, sizeof(char));
 	strcpy(b, this->lastline);
 	p = b + already;
 	vsprintf(p, format, ap);
-    } else if(res < 0) { /* just a failure indication -- e.g. Windows */
+    } else if(res < 0) { /* just a failure indication */
 #define NBUFSIZE (already + 100*BUFSIZE)
 	usedRalloc = TRUE;
 	b = R_alloc(NBUFSIZE, sizeof(char));
@@ -2054,6 +2058,19 @@ static int text_vfprintf(Rconnection con, const char *format, va_list ap)
 	    warning(_("printing of extremely long output is truncated"));
 	}
     }
+#else /* no va_copy: very rare so don't try too hard */
+    if(already >= BUFSIZE) {
+	res = -1;
+    } else {
+	strcpy(b, this->lastline);
+	p = b + already;
+	buffree = BUFSIZE - already;
+	res = vsnprintf(p, buffree, format, ap);
+	b[BUFSIZE-1] = '\0';
+    }
+    if (res >= buffree || res < 0)
+	warning(_("printing of extremely long output is truncated"));
+#endif
 
     /* copy buf line-by-line to object */
     for(p = b; ; p = q+1) {
@@ -3676,7 +3693,7 @@ SEXP attribute_hidden do_clearpushback(SEXP call, SEXP op, SEXP args, SEXP env)
 
 /* ------------------- sink functions  --------------------- */
 
-/* Switch output to connection number icon, or popd stack if icon < 0
+/* Switch output to connection number icon, or pop stack if icon < 0
  */
 
 static Rboolean
@@ -3697,10 +3714,17 @@ switch_or_tee_stdout(int icon, int closeOnExit, int tee)
 	SinkConsClose[R_SinkNumber] = 0;
     } else if(icon >= 3) {
 	Rconnection con = getConnection(icon); /* checks validity */
+	if(!con->canwrite)
+	    error(_("connection is not writable"));
 	toclose = 2*closeOnExit;
 	if(!con->isopen) {
 	    if(!con->open(con)) error(_("cannot open the connection"));
 	    toclose = 1;
+	    /* Once open, writability may have changed */
+	    if(!con->canwrite) {
+		con->close(con);
+		error(_("connection is not writable"));
+	    }
 	}
 	R_OutputCon = SinkCons[++R_SinkNumber] = icon;
 	SinkConsClose[R_SinkNumber] = toclose;
@@ -3728,7 +3752,7 @@ switch_or_tee_stdout(int icon, int closeOnExit, int tee)
 /* This is not only used by cat(), but is in a public
    header, so we need a wrapper
 
-   Mo, Rconnections.h is not public and not installed.
+   No, Rconnections.h is not public and not installed.
 */
 
 Rboolean attribute_hidden switch_stdout(int icon, int closeOnExit)
@@ -4459,7 +4483,7 @@ SEXP attribute_hidden do_sockselect(SEXP call, SEXP op, SEXP args, SEXP rho)
     for (i = 0; i < nsock; i++) {
 	Rconnection conn = getConnection(asInteger(VECTOR_ELT(insock, i)));
 	Rsockconn scp = (Rsockconn) conn->private;
-	if (strcmp(conn->class, "socket") != 0)
+	if (strcmp(conn->class, "sockconn") != 0)
 	    error(_("not a socket connection"));
 	INTEGER(insockfd)[i] = scp->fd;
 	if (! LOGICAL(write)[i] && scp->pstart < scp->pend) {

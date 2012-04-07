@@ -1659,6 +1659,7 @@ setupScreenDevice(pDevDesc dd, gadesc *xd, double w, double h,
     setredraw(xd->gawin, HelpExpose);
     setmousedown(xd->gawin, HelpMouseClick);
     setmousemove(xd->gawin, HelpMouseMove);
+    setmousedrag(xd->gawin, HelpMouseMove);
     setmouseup(xd->gawin, HelpMouseUp);
     setkeydown(xd->gawin, NHelpKeyIn);
     setkeyaction(xd->gawin, CHelpKeyIn);
@@ -1705,6 +1706,9 @@ static Rboolean GA_Open(pDevDesc dd, gadesc *xd, const char *dsp,
 		    */
     xd->xshift = xd->yshift = 0;
     xd->npage = 0;
+    xd->fp = NULL; /* not all devices (e.g. TIFF) use the file pointer, but SaveAsBitmap
+                      looks at it */
+    
     if (!dsp[0]) {
 	if (!setupScreenDevice(dd, xd, w, h, recording, resize, xpos, ypos))
 	    return FALSE;
@@ -1945,10 +1949,24 @@ static void GA_MetricInfo(int c,
 static void GA_Clip(double x0, double x1, double y0, double y1, pDevDesc dd)
 {
     gadesc *xd = (gadesc *) dd->deviceSpecific;
+    rect r;
 
-    xd->clip = rcanon(rpt(pt(x0, y0), pt(x1, y1)));
-    xd->clip.width  += 1;
-    xd->clip.height += 1;
+    /* the grid package sets arbitrary clipping regions, so intersect
+       with the device region here. */
+    r = rcanon(rpt(pt(x0, y0), pt(x1, y1)));
+    r.width  += 1;
+    r.height += 1;
+    if (r.x < 0) {
+	r.width += r.x;
+	r.x = 0;
+    }
+    if (r.y < 0) {
+	r.height += r.y;
+	r.y = 0;
+    }
+    r.width = min(r.width, xd->windowWidth - r.x);
+    r.height = min(r.height, xd->windowHeight - r.y);
+    xd->clip = r;
 }
 
 	/********************************************************/
@@ -2134,9 +2152,6 @@ static void GA_NewPage(const pGEcontext gc,
 	    DRAW(gfillrect(_d, xd->bgcolor, xd->clip));
 	} else if(xd->kind == PNG) {
 	    DRAW(gfillrect(_d, PNG_TRANS, xd->clip));
-	    /* disable support for semi-transparency as alpha-blending
-	       with this false colour does not work */
-	    //xd->have_alpha = FALSE;
 	}
 	if(xd->kind == PNG) xd->pngtrans = ggetpixel(xd->gawin, pt(0,0));
     } else {
@@ -2146,7 +2161,6 @@ static void GA_NewPage(const pGEcontext gc,
     SH;
 }
 
-#ifdef UNUSED
 static void deleteGraphMenus(int devnum)
 {
     char prefix[15];
@@ -2154,7 +2168,6 @@ static void deleteGraphMenus(int devnum)
     sprintf(prefix, "$Graph%i", devnum);
     windelmenus(prefix);
 }
-#endif
 
 	/********************************************************/
 	/* device_Close is called when the device is killed	*/
@@ -2187,6 +2200,8 @@ static void GA_Close(pDevDesc dd)
 	del(xd->bm);
 	/* If this is the active device and buffered, shut updates off */
 	if (xd == GA_xd) GA_xd = NULL;
+	deleteGraphMenus(ndevNumber(dd) + 1);
+	
     } else if ((xd->kind == PNG) || (xd->kind == JPEG) 
 	       || (xd->kind == BMP) || (xd->kind == TIFF)) {
 	SaveAsBitmap(dd, xd->res_dpi);
@@ -2604,6 +2619,7 @@ static void GA_Text0(double x, double y, const char *str, int enc,
 	/*  it is too hard to get a correct bounding box */
 	if(xd->have_alpha) {
 	    rect r = xd->clip; 
+	    r = getregion(xd);
 	    gsetcliprect(xd->bm, xd->clip);
 	    gcopy(xd->bm2, xd->bm, r);
 	    if(gc->fontface != 5) {
@@ -3305,6 +3321,7 @@ static Rboolean GA_NewFrameConfirm(pDevDesc dev)
     R_WriteConsole("\n", 1);
     R_FlushConsole();
     settext(xd->gawin, G_("Click or hit ENTER for next page"));
+    BringToTop(xd->gawin, 0);
     dev->onExit = GA_onExit;  /* install callback for cleanup */
     while (!xd->clicked && !xd->enterkey) {
 	SH;
