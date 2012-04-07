@@ -227,26 +227,11 @@ extern void R_ProcessEvents(void);
 #include <string.h>
 
 /* declare substitutions */
-#if !defined(acosh) && defined(HAVE_DECL_ACOSH) && !HAVE_DECL_ACOSH
-extern double acosh(double x);
-#endif
-#if !defined(asinh) && defined(HAVE_DECL_ASINH) && !HAVE_DECL_ASINH
-extern double asinh(double x);
-#endif
-#if !defined(atanh) && defined(HAVE_DECL_ATANH) && !HAVE_DECL_ATANH
-extern double atanh(double x);
-#endif
-#if !defined(snprintf) && defined(HAVE_DECL_SNPRINTF) && !HAVE_DECL_SNPRINTF
-extern int snprintf (char *s, size_t n, const char *format, ...);
-#endif
 #if !defined(strdup) && defined(HAVE_DECL_STRDUP) && !HAVE_DECL_STRDUP
 extern char *strdup(const char *s1);
 #endif
 #if !defined(strncascmp) && defined(HAVE_DECL_STRNCASECMP) && !HAVE_DECL_STRNCASECMP
 extern int strncasecmp(const char *s1, const char *s2, size_t n);
-#endif
-#if !defined(vsnprintf) && defined(HAVE_DECL_VSNPRINTF) && !HAVE_DECL_VSNPRINTF
-extern int vsnprintf (char *str, size_t count, const char *fmt, va_list arg);
 #endif
 
 /* Glibc manages to not define this in -pedantic -ansi */
@@ -296,13 +281,6 @@ extern int putenv(char *string);
 # define JMP_BUF jmp_buf
 # define SETJMP(x) setjmp(x)
 # define LONGJMP(x,i) longjmp(x,i)
-#endif
-
-/* Availability of timing: on Unix, we need times(2).
-   On Windows and the Mac, we can do without.
-*/
-#if (defined(HAVE_TIMES) || defined(Win32))
-# define _R_HAVE_TIMING_ 1
 #endif
 
 #define HSIZE	   4119	/* The size of the hash table for symbols */
@@ -459,6 +437,7 @@ void (UNLOCK_BINDING)(SEXP b);
 #endif /* USE_RINTERNALS */
 
 #ifdef BYTECODE
+typedef SEXP R_bcstack_t;
 # ifdef BC_INT_STACK
 typedef union { void *p; int i; } IStackval;
 # endif
@@ -678,7 +657,6 @@ extern0 Rboolean R_warn_partial_match_attr INI_as(FALSE);
 extern0 Rboolean R_ShowWarnCalls INI_as(FALSE);
 extern0 Rboolean R_ShowErrorCalls INI_as(FALSE);
 extern0 int	R_NShowCalls INI_as(50);
-extern0 SEXP	R_Srcref;
 
 LibExtern Rboolean utf8locale  INI_as(FALSE);  /* is this a UTF-8 locale? */
 LibExtern Rboolean mbcslocale  INI_as(FALSE);  /* is this a MBCS locale? */
@@ -698,6 +676,7 @@ extern int Rf_initEmbeddedR(int argc, char **argv);
 /* GUI type */
 
 extern char	*R_GUIType	INI_as("unknown");
+extern Rboolean R_isForkedChild		INI_as(FALSE); /* was this forked? */
 
 extern double cpuLimit			INI_as(-1.0);
 extern double cpuLimit2			INI_as(-1.0);
@@ -709,7 +688,7 @@ extern double elapsedLimitValue		INI_as(-1.0);
 void resetTimeLimits(void);
 
 #ifdef BYTECODE
-#define R_BCNODESTACKSIZE 10000
+#define R_BCNODESTACKSIZE 100000
 extern0 SEXP *R_BCNodeStackBase, *R_BCNodeStackTop, *R_BCNodeStackEnd;
 # ifdef BC_INT_STACK
 #define R_BCINTSTACKSIZE 10000
@@ -1092,7 +1071,6 @@ SEXP R_syscall(int,RCNTXT*);
 int R_sysparent(int,RCNTXT*);
 SEXP R_sysframe(int,RCNTXT*);
 SEXP R_sysfunction(int,RCNTXT*);
-char* R_tmpnam2(const char *, const char *, const char *); /* in the API in R 2.14.0+ */
 Rboolean tsConform(SEXP,SEXP);
 SEXP tspgets(SEXP, SEXP);
 SEXP type2symbol(SEXPTYPE);
@@ -1240,8 +1218,6 @@ extern char *locale2charset(const char *);
 } while(0)
 
 
-/* FreeBSD defines alloca in stdlib.h, _and_ does not allow a definition
-   as here.  (Since it uses GCC, it should use the first clause.) */
 #ifdef __GNUC__
 # undef alloca
 # define alloca(x) __builtin_alloca((x))
@@ -1249,16 +1225,9 @@ extern char *locale2charset(const char *);
 # ifdef HAVE_ALLOCA_H
 #  include <alloca.h>
 # endif
-# if !HAVE_DECL_ALLOCA  && !defined(__FreeBSD__)
-extern char *alloca(size_t);
+# if !HAVE_DECL_ALLOCA
+extern void *alloca(size_t);
 # endif
-#endif
-
-/* Or use typedef? */
-#if SIZEOF_LONG_DOUBLE
-# define LDOUBLE long double
-#else
-# define LDOUBLE double
 #endif
 
 #endif /* DEFN_H_ */

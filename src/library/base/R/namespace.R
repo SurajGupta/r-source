@@ -69,28 +69,27 @@ getNamespaceUsers <- function(ns) {
 getExportedValue <- function(ns, name) {
     getInternalExportName <- function(name, ns) {
         exports <- getNamespaceInfo(ns, "exports")
-        if (! exists(name, envir = exports, inherits = FALSE))
-            stop(gettextf("'%s' is not an exported object from 'namespace:%s'",
-                          name, getNamespaceName(ns)),
-                 call. = FALSE, domain = NA)
-        get(name, envir = exports, inherits = FALSE)
+        if (exists(name, envir = exports, inherits = FALSE))
+            get(get(name, envir = exports, inherits = FALSE), envir = ns)
+        else {
+            ld <- getNamespaceInfo(ns, "lazydata")
+            if (exists(name, envir = ld, inherits = FALSE))
+                get(name, envir = ld, inherits = FALSE)
+            else
+                stop(gettextf("'%s' is not an exported object from 'namespace:%s'",
+                              name, getNamespaceName(ns)),
+                     call. = FALSE, domain = NA)
+        }
     }
     ns <- asNamespace(ns)
     if (isBaseNamespace(ns)) get(name, envir = ns, inherits = FALSE)
-    else get(getInternalExportName(name, ns), envir = ns)
+    else getInternalExportName(name, ns)
 }
 
 `::` <- function(pkg, name) {
     pkg <- as.character(substitute(pkg))
     name <- as.character(substitute(name))
-    ns <- tryCatch(asNamespace(pkg), hasNoNamespaceError = function(e) NULL)
-    if (is.null(ns)) {
-        pos <- match(paste("package", pkg, sep=":"), search(), 0L)
-        if (pos == 0L)
-            stop(gettextf("package %s has no name space and is not on the search path", sQuote(pkg)), domain = NA)
-        get(name, pos = pos, inherits = FALSE)
-    }
-    else getExportedValue(pkg, name)
+    getExportedValue(pkg, name)
 }
 
 `:::` <- function(pkg, name) {
@@ -99,12 +98,63 @@ getExportedValue <- function(ns, name) {
     get(name, envir = asNamespace(pkg), inherits = FALSE)
 }
 
+.Firstlib_as_onLoad <-
+    c(## automatically detected as calls to library.dynam
+      "AnalyzeFMRI", "BAS", "BBMM", "BMA", "BPHO", "BTSPAS",
+      "BioPhysConnectoR", "Bmix", "BradleyTerry",
+      "CHsharp", "CPE", "CompQuadForm", "CompRandFld", "CorrBin",
+      "Covpath", "DAAGbio", "DAAGxtras", "DCluster", "DDHFm", "DIME",
+      "EMD", "ExPD2D", "FAmle", "FactoClass", "FracSim", "GEOmap",
+      "GWASExactHW", "GenKern", "Geneland", "HH", "HiddenMarkov", "ICE",
+      "IFP", "LogicReg", "LowRankQP", "MAMSE", "MHadaptive", "MISA",
+      "NORMT3", "OPE", "ORMDR", "OSACC", "PKfit", "POT", "PSCN", "PSM",
+      "Peaks", "QRMlib", "RANN", "RArcInfo", "RFA", "RSEIS",
+      "RSVGTipsDevice", "RSvgDevice", "ReadImages",
+      "Rsundials", "Rwave", "SigWinR", "SpatialEpi", "SpatialExtremes",
+      "SpherWave", "TAHMMAnnot", "WINRPACK", "WMTregions", "acepack",
+      "adaptivetau", "ade4", "adephylo", "alphahull", "analogue", "aod",
+      "aqp", "bclust", "bdoc", "bear", "bild", "binomSamSize", "bise",
+      "biseVec", "bisoreg", "bitops", "boolfun", "bootstrap", "bqtl",
+      "brainwaver", "caTools", "cat", "cclust", "changeLOS", "cheb",
+      "clusterSim", "codep", "coenoflex", "crosshybDetector", "crrSC",
+      "dblcens", "depth", "devEMF", "dixon",
+      "dynCorr", "dynamo", "ebdbNet", "ecespa", "energy", "envelope",
+      "epinet", "evd", "evdbayes", "exactLoglinTest", "fEcofin",
+      "fImport", "fMultivar", "fdim", "fdrtool", "forensim",
+      "fpow", "gRc", "gafit", "gdsfmt", "geepack", "gibbs.met",
+      "gld", "gllm", "glmmAK", "gss", "haplo.stats", "hapsim", "hbmem",
+      "hddplot", "hier.part", "hot", "ifs", "imputeMDR", "infotheo",
+      "intcox", "integrOmics", "ivivc", "kknn",
+      "knncat", "kohonen", "labeltodendro", "lago", "lasso2", "lazy",
+      "ljr", "locpol", "logspline", "lokern", "lpridge", "magnets",
+      "maxLinear", "mcga", "mclust", "mhsmm", "mixAK", "mixstock",
+      "mlbench", "mlegp", "moc", "mpa", "mra", "mspath", "mvgraph",
+      "mvnmle", "mvpart", "mvtnormpcs", "nbpMatching",
+      "ncomplete", "negenes", "nlstools", "norm", "noverlap", "npde",
+      "npst", "nsRFA", "onemap", "opefimor", "pamctdp", "panel",
+      "pbivnorm", "permax", "phybase", "pi0", "picante", "plugdensity",
+      "poibin", "polspline", "popgen", "ppMeasures", "predbayescor",
+      "predmixcor", "proptest", "ptw", "qp", "qtl", "ref",
+      "rich", "rimage", "ringscale", "rioja", "rjson", "robust", "rpvm",
+      "rqmcmb2", "rsdepth", "rvmbinary", "rworldmap", "sampfling",
+      "sampling", "seqCBS", "simba", "spc", "speedRlibTF", "speedRlibs",
+      "stab", "stepwise", "surv2sample",
+      "survPresmooth", "survivalROC", "svmpath", "tdm", "tdthap",
+      "tnet", "tweedie", "twopartqtl", "twslm", "ucminf", "uncompress",
+      "wavelets", "waveslim", "wccsom", "wombsoft",
+      ## Manually checked
+      "CarbonEL", "JavaGD", "LogConcDEAD", "Rmpi", "Rniftilib", "akima",
+      "amei", "distory", "dynaTree", "ecodist", "ftnonpar", "glpk",
+      "iSubpathwayMiner", "ifultools", "mnormT", "monomvn", "rlecuyer",
+      "rngwell19937", "trex", "tripack", "udunits2", "wgaim")
+
 attachNamespace <- function(ns, pos = 2, dataPath = NULL, depends = NULL)
 {
-    runHook <- function(hookname, env, ...)
+    ## only used to run .onAttach
+    runHook <- function(hookname, env, libname, pkgname) {
         if (exists(hookname, envir = env, inherits = FALSE)) {
             fun <- get(hookname, envir = env, inherits = FALSE)
-            res <- tryCatch(fun(...), error=identity)
+            res <- tryCatch(fun(libname, pkgname), error=identity)
             if (inherits(res, "error")) {
                 stop(gettextf("%s failed in %s() for '%s', details:\n  call: %s\n  error: %s",
                               hookname, "attachNamespace", nsname,
@@ -112,34 +162,58 @@ attachNamespace <- function(ns, pos = 2, dataPath = NULL, depends = NULL)
                               conditionMessage(res)),
                      call. = FALSE, domain = NA)
             }
+        } else if (!nsname %in% .Firstlib_as_onLoad &&
+                   !exists(".onLoad", envir = ns, inherits = FALSE) &&
+                   !exists(".onAttach", envir = ns, inherits = FALSE) &&
+                   exists(".First.lib", envir = env, inherits = FALSE)) {
+            ## ignore .First.lib except for auto-generated NAMESPACEs
+            ns <- readLines(file.path(libname, pkgname, "NAMESPACE"),
+                            warn = FALSE)
+            if(grepl("# Default NAMESPACE created by R", ns[1L],
+                     useBytes = TRUE)) {
+                if (nsname == Sys.getenv("R_INSTALL_PKG"))
+                    message(gettextf("running .First.lib() for package %s as .onLoad/.onAttach were not found", sQuote(nsname)),
+                            domain = NA)
+                fn <- get(".First.lib", envir = env, inherits = FALSE)
+                fn(libname, pkgname)
+            }
         }
+    }
+    runUserHook <- function(pkgname, pkgpath) {
+        hook <- getHook(packageEvent(pkgname, "attach")) # might be list()
+        for(fun in hook) try(fun(pkgname, pkgpath))
+    }
 
     ns <- asNamespace(ns, base.OK = FALSE)
     nsname <- getNamespaceName(ns)
     nspath <- getNamespaceInfo(ns, "path")
     attname <- paste("package", nsname, sep = ":")
     if (attname %in% search())
-        stop("name space is already attached")
+        stop("namespace is already attached")
     env <- attach(NULL, pos = pos, name = attname)
     ## we do not want to run e.g. .Last.lib here
     on.exit(.Internal(detach(pos)))
     attr(env, "path") <- nspath
     exports <- getNamespaceExports(ns)
     importIntoEnv(env, exports, ns, exports)
-    if(!is.null(dataPath)) {
-        dbbase <- file.path(dataPath, "Rdata")
-        if(file.exists(paste(dbbase, ".rdb", sep = ""))) lazyLoad(dbbase, env)
-    }
+    ## always exists, might be empty
+    dimpenv <- getNamespaceInfo(ns, "lazydata")
+    dnames <- ls(dimpenv, all.names = TRUE)
+    .Internal(importIntoEnv(env, dnames, dimpenv, dnames))
     if(length(depends)) assign(".Depends", depends, env)
+    Sys.setenv("_R_NS_LOAD_" = nsname)
+    on.exit(Sys.unsetenv("_R_NS_LOAD_"), add = TRUE)
     runHook(".onAttach", ns, dirname(nspath), nsname)
     lockEnvironment(env, TRUE)
+    runUserHook(nsname, nspath)
     on.exit()
+    Sys.unsetenv("_R_NS_LOAD_")
     invisible(env)
 }
 
 loadNamespace <- function (package, lib.loc = NULL,
                            keep.source = getOption("keep.source.pkgs"),
-                           partial = FALSE, declarativeOnly = FALSE)
+                           partial = FALSE)
 {
     package <- as.character(package)[[1L]]
 
@@ -159,7 +233,7 @@ loadNamespace <- function (package, lib.loc = NULL,
     }
     loading <- dynGet("__NameSpacesLoading__", NULL)
     if (match(package, loading, 0L))
-        stop("cyclic name space dependency detected when loading ",
+        stop("cyclic namespace dependency detected when loading ",
              sQuote(package), ", already loading ",
              paste(sQuote(loading), collapse = ", "),
              domain = NA)
@@ -169,10 +243,11 @@ loadNamespace <- function (package, lib.loc = NULL,
     if (! is.null(ns))
         ns
     else {
-        runHook <- function(hookname, pkgname, env, ...) {
+        ## only used here for .onLoad
+        runHook <- function(hookname, env, libname, pkgname) {
             if (exists(hookname, envir = env, inherits = FALSE)) {
                 fun <- get(hookname, envir = env, inherits = FALSE)
-                res <- tryCatch(fun(...), error=identity)
+                res <- tryCatch(fun(libname, pkgname), error = identity)
                 if (inherits(res, "error")) {
                     stop(gettextf("%s failed in %s() for '%s', details:\n  call: %s\n  error: %s",
                                   hookname, "loadNamespace", pkgname,
@@ -180,11 +255,22 @@ loadNamespace <- function (package, lib.loc = NULL,
                                   conditionMessage(res)),
                          call. = FALSE, domain = NA)
                 }
+            } else if (pkgname %in% .Firstlib_as_onLoad &&
+                       !exists(".onLoad", envir = env, inherits = FALSE) &&
+                       exists(".First.lib", envir = env, inherits = FALSE)) {
+                ## ignore .First.lib except for auto-generated NAMESPACEs
+                ns <- readLines(file.path(libname, pkgname, "NAMESPACE"),
+                                warn = FALSE)
+                if(grepl("# Default NAMESPACE created by R", ns[1L],
+                         useBytes = TRUE)) {
+                    fn <- get(".First.lib", envir = env, inherits = FALSE)
+                    fn(libname, pkgname)
+                }
             }
         }
         runUserHook <- function(pkgname, pkgpath) {
-            hook <- getHook(packageEvent(pkgname, "onLoad")) # might be list()
-            for(fun in hook) try(fun(pkgname, pkgpath))
+            hooks <- getHook(packageEvent(pkgname, "onLoad")) # might be list()
+            for(fun in hooks) try(fun(pkgname, pkgpath))
         }
         makeNamespace <- function(name, version = NULL, lib = NULL) {
             impenv <- new.env(parent = .BaseNamespaceEnv, hash = TRUE)
@@ -196,6 +282,9 @@ loadNamespace <- function (package, lib.loc = NULL,
             assign(".__NAMESPACE__.", info, envir = env)
             assign("spec", c(name = name,version = version), envir = info)
             setNamespaceInfo(env, "exports", new.env(hash = TRUE, parent = baseenv()))
+            dimpenv <- new.env(parent = baseenv(), hash = TRUE)
+            attr(dimpenv, "name") <- paste("lazydata", name, sep=":")
+            setNamespaceInfo(env, "lazydata", dimpenv)
             setNamespaceInfo(env, "imports", list("base" = TRUE))
             ## this should be an absolute path
             setNamespaceInfo(env, "path",
@@ -213,8 +302,8 @@ loadNamespace <- function (package, lib.loc = NULL,
                environmentIsLocked(ns)
             ns <- asNamespace(ns, base.OK = FALSE)
             if (namespaceIsSealed(ns))
-                stop(gettextf("namespace '%s' is already sealed in loadNamespace",
-                              getNamespaceName(ns)),
+                stop(gettextf("namespace %s is already sealed in loadNamespace",
+                              sQuote(getNamespaceName(ns))),
                      call. = FALSE, domain = NA)
             lockEnvironment(ns, TRUE)
             lockEnvironment(parent.env(ns), TRUE)
@@ -291,10 +380,10 @@ loadNamespace <- function (package, lib.loc = NULL,
             symbols
           }
 
-        ## find package and check it has a name space
+        ## find package and check it has a namespace
         pkgpath <- find.package(package, lib.loc, quiet = TRUE)
         if (length(pkgpath) == 0L)
-            stop(gettextf("there is no package called '%s'", package),
+            stop(gettextf("there is no package called %s", sQuote(package)),
                  domain = NA)
         bindTranslations(package, pkgpath)
         package.lib <- dirname(pkgpath)
@@ -303,8 +392,8 @@ loadNamespace <- function (package, lib.loc = NULL,
             hasNoNamespaceError <-
                 function (package, package.lib, call = NULL) {
                 class <- c("hasNoNamespaceError", "error", "condition")
-                msg <- gettextf("package '%s' does not have a name space",
-                                package)
+                msg <- gettextf("package %s does not have a namespace",
+                                sQuote(package))
                 structure(list(message = msg, package = package,
                                package.lib = package.lib, call = call),
                           class = class)
@@ -317,7 +406,7 @@ loadNamespace <- function (package, lib.loc = NULL,
         ## 'package.rds'?
         ## No, not during builds of standard packages
         ## stats4 depends on methods, but exports do not matter
-        ## whilst it is being built on
+        ## whilst it is being built
         nsInfoFilePath <- file.path(pkgpath, "Meta", "nsInfo.rds")
         nsInfo <- if(file.exists(nsInfoFilePath)) readRDS(nsInfoFilePath)
         else parseNamespaceFile(package, package.lib, mustExist = FALSE)
@@ -327,13 +416,14 @@ loadNamespace <- function (package, lib.loc = NULL,
             pkgInfo <- readRDS(pkgInfoFP)
             version <- pkgInfo$DESCRIPTION["Version"]
             if(is.null(built <- pkgInfo$Built))
-                stop(gettextf("package '%s' has not been installed properly\n",
-                              basename(pkgpath)),
+                stop(gettextf("package %s has not been installed properly\n",
+                              sQuote(basename(pkgpath))),
                      call. = FALSE, domain = NA)
             R_version_built_under <- as.numeric_version(built$R)
             if(R_version_built_under < "2.10.0")
-                stop(gettextf("package '%s' was built before R 2.10.0: please re-install it",
-                              basename(pkgpath)), call. = FALSE, domain = NA)
+                stop(gettextf("package %s was built before R 2.10.0: please re-install it",
+                             sQuote(basename(pkgpath))),
+                     call. = FALSE, domain = NA)
             ## we need to ensure that S4 dispatch is on now if the package
             ## will require it, or the exports will be incomplete.
             dependsMethods <- "methods" %in% names(pkgInfo$Depends)
@@ -361,12 +451,7 @@ loadNamespace <- function (package, lib.loc = NULL,
                                                      c(lib.loc, .libPaths())),
                                    imp[[2L]])
 
-
-
-        ## dynamic variable to allow/disable .Import and friends
-        "__NamespaceDeclarativeOnly__" <- declarativeOnly
-
-        ## store info for loading name space for loadingNamespaceInfo to read
+        ## store info for loading namespace for loadingNamespaceInfo to read
         "__LoadingNamespaceInfo__" <- list(libname = package.lib,
                                            pkgname = package)
 
@@ -380,10 +465,12 @@ loadNamespace <- function (package, lib.loc = NULL,
         if (file.exists(codeFile)) {
             res <- try(sys.source(codeFile, env, keep.source = keep.source))
             if(inherits(res, "try-error"))
-                stop(gettextf("unable to load R code in package '%s'", package),
-                     call. = FALSE, domain = NA)
-        } else warning(gettextf("package '%s' contains no R code", package),
-                       domain = NA)
+                stop(gettextf("unable to load R code in package %s",
+                              sQuote(package)), call. = FALSE, domain = NA)
+        }
+        # a package without R code currently is required to have a namespace
+        # else warning(gettextf("package %s contains no R code",
+        #                        sQuote(package)), call. = FALSE, domain = NA)
 
         ## partial loading stops at this point
         ## -- used in preparing for lazy-loading
@@ -392,6 +479,11 @@ loadNamespace <- function (package, lib.loc = NULL,
         ## lazy-load any sysdata
         dbbase <- file.path(pkgpath, "R", "sysdata")
         if (file.exists(paste(dbbase, ".rdb", sep = ""))) lazyLoad(dbbase, env)
+
+        ## load any lazydata into a separate environment
+        dbbase <- file.path(pkgpath, "data", "Rdata")
+        if(file.exists(paste(dbbase, ".rdb", sep = "")))
+            lazyLoad(dbbase, getNamespaceInfo(ns, "lazydata"))
 
         ## register any S3 methods
         registerS3methods(nsInfo$S3methods, package, env)
@@ -418,8 +510,10 @@ loadNamespace <- function (package, lib.loc = NULL,
         addNamespaceDynLibs(env, nsInfo$dynlibs)
 
 
+        Sys.setenv("_R_NS_LOAD_" = package)
+        on.exit(Sys.unsetenv("_R_NS_LOAD_"), add = TRUE)
         ## run the load hook
-        runHook(".onLoad", package, env, package.lib, package)
+        runHook(".onLoad", env, package.lib, package)
 
         ## process exports, seal, and clear on.exit action
         exports <- nsInfo$exports
@@ -483,8 +577,8 @@ loadNamespace <- function (package, lib.loc = NULL,
                              exports[!is.na(match(exports, allGenerics))]))
                 missingMethods <- !(expMethods %in% allGenerics)
                 if(any(missingMethods))
-                    stop(gettextf("in '%s' methods for export not found: %s",
-                                  package,
+                    stop(gettextf("in %s methods for export not found: %s",
+                                  sQuote(package),
                                   paste(expMethods[missingMethods],
                                         collapse = ", ")),
                          domain = NA)
@@ -540,11 +634,34 @@ loadNamespace <- function (package, lib.loc = NULL,
         }
         namespaceExport(ns, exports)
         sealNamespace(ns)
-        ## run user hooks here
-        runUserHook(package, file.path(package.lib, package))
+        runUserHook(package, pkgpath)
         on.exit()
+        Sys.unsetenv("_R_NS_LOAD_")
         ns
     }
+}
+
+## A version which returns TRUE/FALSE
+requireNamespace <- function (package, ..., quietly = FALSE)
+{
+    package <- as.character(package)[[1L]] # like loadNamespace
+    ns <- .Internal(getRegisteredNamespace(as.name(package)))
+    res <- TRUE
+    if (is.null(ns)) {
+        packageStartupMessage(gettextf("Loading required namespace: %s",
+                                       package), domain = NA)
+        value <- tryCatch(loadNamespace(package, ...), error = function(e) e)
+        if (inherits(value, "error")) {
+            if (!quietly) {
+                msg <- conditionMessage(value)
+                cat("Failed with error:  ",
+                    sQuote(msg), "\n", file = stderr(), sep = "")
+                .Internal(printDeferredWarnings())
+            }
+            res <- FALSE
+        }
+    }
+    invisible(res)
 }
 
 loadingNamespaceInfo <- function() {
@@ -558,7 +675,7 @@ loadingNamespaceInfo <- function() {
         }
         notFound
     }
-    dynGet("__LoadingNamespaceInfo__", stop("not loading a name space"))
+    dynGet("__LoadingNamespaceInfo__", stop("not loading a namespace"))
 }
 
 topenv <- function(envir = parent.frame(),
@@ -601,7 +718,7 @@ unloadNamespace <- function(ns)
     if (! is.na(pos)) detach(pos = pos)
     users <- getNamespaceUsers(ns)
     if (length(users))
-        stop(gettextf("name space %s is imported by %s so cannot be unloaded",
+        stop(gettextf("namespace %s is imported by %s so cannot be unloaded",
                       sQuote(getNamespaceName(ns)),
                       paste(sQuote(users), collapse = ", ")),
              domain = NA)
@@ -638,9 +755,9 @@ asNamespace <- function(ns, base.OK = TRUE) {
     if (is.character(ns) || is.name(ns))
         ns <- getNamespace(ns)
     if (! isNamespace(ns))
-        stop("not a name space")
+        stop("not a namespace")
     else if (! base.OK && isBaseNamespace(ns))
-        stop("operation not allowed on base name space")
+        stop("operation not allowed on base namespace")
     else ns
 }
 
@@ -695,7 +812,7 @@ namespaceImportFrom <- function(self, ns, vars, generics, packages)
     }
     else if (isNamespace(self)) {
         if (namespaceIsSealed(self))
-            stop("cannot import into a sealed name space")
+            stop("cannot import into a sealed namespace")
         impenv <- parent.env(self)
         msg <- gettext("replacing previous import %s when loading %s")
         register <- TRUE
@@ -830,7 +947,7 @@ namespaceExport <- function(ns, vars) {
     namespaceIsSealed <- function(ns)
        environmentIsLocked(ns)
     if (namespaceIsSealed(ns))
-        stop("cannot add to exports of a sealed name space")
+        stop("cannot add to exports of a sealed namespace")
     ns <- asNamespace(ns, base.OK = FALSE)
     if (length(vars)) {
         addExports <- function(ns, new) {
@@ -938,7 +1055,7 @@ parseNamespaceFile <- function(package, package.lib, mustExist = TRUE)
 	    parse(con)
         } else parse(nsFile)
     else if (mustExist)
-        stop(gettextf("package '%s' has no NAMESPACE file", package),
+        stop(gettextf("package %s has no NAMESPACE file", sQuote(package)),
              domain = NA)
     else directives <- NULL
     exports <- character()

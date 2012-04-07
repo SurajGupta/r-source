@@ -61,26 +61,46 @@
   else
       allTable <- get(".AllMTable", envir = fenv)
   n <- get(".SigLength", envir = fenv)
-  anySig <- rep("ANY", n)
+  anySig <- rep("ANY", n) # assert doesn't need to be a real signature
   anyLabel <- .sigLabel(anySig)
   newMethods <- objects(newtable, all.names=TRUE)
   for(what in newMethods) {
     obj <- get(what, envir = newtable)
     if(is.primitive(obj))
-      sig <- anySig ## Assert doesn't need to be a signature obj., won't change ns
+      sig <- anySig
     else if(is(obj, "MethodDefinition"))
       sig <- obj@defined
+    else if(is.environment(obj)) {
+       objsWhat <- objects(obj, all.names=TRUE)
+       if(length(objsWhat) == 0)
+           next # empty environment, ignore
+       sig <- NULL
+       for(ww in objsWhat) {
+           objw <- get(ww, envir = obj)
+           if(is(objw, "MethodDefinition"))
+               sig <- objw@defined
+       }
+       if(is.null(sig))
+           sig <- anySig
+    }
     else
-      stop(gettextf(
-                    "Invalid object in meta table of methods for \"%s\", label \"%s\", had class \"%s\"",
-                    generic@generic, what, class(obj)), domain=NA)
+      stop(gettextf("Invalid object in meta table of methods for %s, label \"%s\", had class %s",
+                    sQuote(generic@generic),
+                    what,
+                    dQuote(class(obj))),
+           domain = NA)
     ns <- length(sig)
     if(ns == n) {}
     else {
       if(ns < n) {
-        sig <-  new("signature", generic, c(sig@.Data, rep("ANY", n-ns)))
-        obj@defined <- sig
-        obj@target <- sig
+        nadd <- n - ns
+        sigPackage <- packageSlot(sig)
+        if(length(sigPackage)< ns) # probably out of date?
+            sigPackage <- c(sigPackage, rep("", ns - length(sigPackage)))
+        sig <-  .simpleSignature(c(sig, rep("ANY", nadd)),
+                    names = generic@signature[1:n],
+                    package = c(sigPackage, rep("methods", nadd)))
+        obj <- .xpdSignature(obj, sig, n-ns)
         what <- .sigLabel(sig)
         ns <- n
       }
@@ -94,6 +114,7 @@
     }
     if(add) {
         if(exists(what, envir = table, inherits = FALSE)) {
+            obj <- .newOrMultipleMethod(obj, what, table)
             ## must replace in .AllMTable also
             if(is.null(allTable))
                 allTable <- get(".AllMTable", envir = fenv)
@@ -110,6 +131,89 @@
     ## else warning?
   }
   NULL
+}
+
+.xpdSignature <- function(obj, sig, nadd) {
+    if(is(obj, "MethodDefinition")) {
+        obj@defined <- sig
+        obj@target <- sig
+    }
+    else if(is.environment(obj)) {
+        xtrPkg <- rep("methods", nadd)
+        for(what in objects(obj)) {
+            objw <- get(what, envir = obj)
+            if(is(objw, "MethodDefinition")) {
+                sigw <- objw@defined
+                pkgw <- packageSlot(sigw)
+                if(length(pkgw) < length(sigw))
+                    pkgw <- c(pkgw, rep("", length(sigw) - length(pkgw)))
+                sigw <- .simpleSignature( c(sigw, rep("ANY", nadd)),
+                        names = names(sig),
+                        package = c(pkgw, rep("methods", nadd)))
+                objw@defined <- objw@target <- sigw
+                remove(list = what, envir = obj)
+                var <- .pkgMethodLabel(objw)
+                if(nzchar(var)) assign(var, objw, envir = obj)
+            }
+        }
+    }
+    obj
+}
+
+## a simpler version of setting up a signature object
+## For better or worse, the initialize() method expects
+## a function definition and calls .MakeSignature()
+.simpleSignature <- function(classes, names, packages) {
+    object <- new("signature")
+    object@.Data <- classes
+    object@names <- names
+    object@package <- packages
+    object
+}
+
+.newOrMultipleMethod <- function(obj, what, table) {
+    if(!.duplicateClassesExist())
+        return(obj)
+    current <- get(what, envir = table)
+    if(is.environment(current)) {
+        if(is.environment(obj))
+            for(whatObj in objects(obj, all.names = TRUE))
+                assign(whatObj, get(whatObj, envir = obj),
+                       envir = current)
+        else if(is(obj, "MethdodDefinition")) {
+            var <- .pkgMethodLabel(obj)
+            if(nzchar(var)) assign(var, obj, envir = current)
+        }
+        current
+    }
+    else if(is(current, "MethodDefinition")) {
+        curPkg <- packageSlot(current@defined)
+        if(is(obj, "MethodDefinition")) {
+            objPkg <- packageSlot(obj@defined)
+            if(is.null(curPkg) || is.null(objPkg) ||
+               identical(curPkg, objPkg))
+                return(obj)
+            else {
+                merge <- new.env()
+                var <- .pkgMethodLabel(obj)
+                if(nzchar(var)) assign(var, obj, envir = merge)
+                var <- .pkgMethodLabel(current)
+                if(nzchar(var)) assign(var, current, envir = merge)
+                return(merge)
+            }
+        }
+        else if(is.environment(obj)) {
+            merge <- new.env()
+            assign(.pkgMethodLabel(current), current, envir = merge)
+            for(whatObj in objects(obj, all.names = TRUE))
+                assign(whatObj, get(whatObj, envir = obj),
+                       envir = merge)
+            return(merge)
+        }
+        ## else adding a primitive, should do nothing
+        else
+            current
+    }
 }
 
 
@@ -179,44 +283,162 @@
     .setupMethodsTables(fdef)
   sig <- .matchSigLength(sig, fdef, fenv, TRUE)
   label <- .sigLabel(sig)
-  if(is.null(def)) {
-      if(exists(label, envir = table, inherits = FALSE))
-          ## remove the method (convention for setMethod)
+  isCurrent <- exists(label, envir = table, inherits = FALSE)
+  if(is.null(def)) { # remove the method (convention for setMethod)
+      if(isCurrent)
           remove(list = label, envir = table)
   }
-  else
+  else {
+      dupl <- .duplicateClassesExist()
+      ## ensure that a valid object is assigned:  if duplicate classes
+      ## exist, may need a table by package label; else, make sure
+      ## the target and defined slots are complete
+      ## IF we believed all methods up to date, the call could be conditional
+      ##    if(dupl || isCurrent)
+      def <- .methodPackageSlots(def, label, table, dupl, isCurrent)
       assign(label, def, envir = table)
+  }
+}
+
+## check for duplicate classes and embed method in an environment if so
+.methodPackageSlots <- function(def, ...) def
+
+## the real version
+..methodPackageSlots <- function(def, label, table, duplicatesExist, isCurrent) {
+    sig <- def@target
+    dups <- FALSE
+    if(duplicatesExist) {
+        def <- .fixPackageSlot(def, sig)
+        for(cl in sig) {
+            if(exists(cl, envir = .classTable, inherits = FALSE) && is.list(get(cl, envir = .classTable))) {
+                dups <- TRUE
+                break
+            }
+        }
+        if(isCurrent) { # check that this is overwriting identical signature
+            current <- get(label, envir = table)
+            dups <- dups || !identical(current@target, sig)
+        }
+        if(dups) {
+            if(isCurrent) {
+                if(is(current, "MethodDefinition")) {
+                    pkg <- attr(current@target, "package")
+                    if(length(pkg) == 0)
+                        current <- .fixPackageSlot(current, current@target)
+                    env <- new.env()
+                    ## zero-length seen 2011-07-29
+                    var <- .pkgMethodLabel(current)
+                    if(nzchar(var)) assign(var, current, envir = env)
+                }
+                else if(is.environment(current))
+                    env <- current
+                else
+                    stop(
+                         gettextf("bad method object stored in method table, class %s",
+                                  dQuote(class(current))),
+                         domain = NA)
+            }
+            else
+                env <- new.env()
+            assign(.pkgMethodLabel(def), def, envir = env)
+            env
+        }
+        else # no change
+            def
+    }
+    else # no duplicate classes
+        def
+}
+
+.fixPackageSlot <- function(def, sig) {
+    ## check the pkg slot
+    pkgs <- attr(sig, "package")
+    if(is.null(pkgs))
+        pkgs <- character(length(sig))
+    fixme <- !nzchar(pkgs)
+    if(any(fixme)) {
+        for(i in seq_along(pkgs)[fixme])
+            pkgs[[i]] <- getClass(sig[[i]], .Force = TRUE)@package
+        attr(sig, "package") <- pkgs
+        def@target <- sig
+        ## check the defined signature as well
+        sig <- def@defined
+        pkgs <- attr(sig, "package")
+        if(is.null(pkgs))
+            pkgs <- character(length(sig))
+        fixme <- !nzchar(pkgs)
+        if(any(fixme)) {
+            for(i in seq_along(pkgs)[fixme])
+                pkgs[[i]] <- getClass(sig[[i]], .Force = TRUE)@package
+            attr(sig, "package") <- pkgs
+            def@defined <- sig
+        }
+    }
+    def
+}
+
+.okMethodLabel <- function(method) {
+    if(is(method, "MethodDefinition")) {
+        pkgs <- packageSlot(method@target)
+        length(pkgs) > 0 && all(nzchar(pkgs))
+    }
+    else
+        TRUE # primitive or environment
 }
 
 
+.pkgMethodLabel <- function(method) {
+    sig <- method@target
+    pkgs <- packageSlot(sig)
+    if( (length(pkgs) < length(as.character(sig))) || any(!nzchar(pkgs)))
+        stop("package slot missing from signature for generic ",
+             sQuote(method@generic), "\n",
+             "and classes ", paste(sig, collapse = ", "), "\n",
+             "cannot use with duplicate class names (the package may need to be re-installed)",
+             call. = FALSE, domain = NA)
+    paste(pkgs, collapse = "#")
+}
+
 .resetTable <- function(table, n, signames) {
-  ## after updating a methods table, the maximum no. of arguments in
-  ## the signature increased to n.  Reassign any objects whose label
-  ## does not match n classes from the defined slot
-  anyLabel <- rep("ANY", n); seqN <- 1L:n
-  labels <- objects(table, all.names = TRUE)
-  for(what in labels) {
-    method <- get(what, envir = table)
-    if(is.primitive(method)) # stored as default ?
-      label <- anyLabel
-    else if(is(method, "MethodDefinition"))
-      label <- method@defined
-    else
-      stop("Invalid object in methods table (\"", what,
-           "\"), expected a method, got an object of class \"",
-           class(method), "\"")
-    if(length(label) < n) {
-      label@.Data <- ifelse(seqN > length(label), anyLabel, label@.Data)
-      label@names <- signames
-      method@defined <- method@target <- label
+    ## protect this computation, in case it's resetting
+    ## something used in the computation
+    primMethods <- .allowPrimitiveMethods(FALSE)
+    on.exit(.allowPrimitiveMethods(primMethods))
+    ## after updating a methods table, the maximum no. of arguments in
+    ## the signature increased to n.  Reassign any objects whose label
+    ## does not match n classes from the defined slot
+    anyLabel <- rep("ANY", n)
+    anyPkg <- rep("methods", n)
+    seqN <- 1L:n
+    labels <- objects(table, all.names = TRUE)
+    for(what in labels) {
+        method <- get(what, envir = table)
+        if(is.primitive(method)) # stored as default ?
+            newSig <- anyLabel
+        else if(is(method, "MethodDefinition"))
+            newSig <- method@defined
+        else if(is(method, "environment")) {
+            newSig <- strsplit(what, "#", fixed = TRUE)[[1]]
+            .resetTable(method, n, signames)
+        }
+        else
+            stop("Invalid object in methods table (\"", what,
+                 "\"), expected a method, got an object of class \"",
+                 class(method), "\"")
+        if(is(method, "MethodDefinition")) {
+            pkgs <- packageSlot(newSig)
+            newSig <- as(ifelse(seqN > length(newSig), anyLabel, newSig), "signature")
+            newSig@names <- signames
+            newSig@package <-  ifelse(seqN > length(pkgs), anyPkg, pkgs)
+            method@defined <- method@target <- newSig
+            newLabel <- .sigLabel(newSig)
+        }
+        else
+            newLabel <- .sigLabel(ifelse(seqN > length(newSig), anyLabel, newSig))
+        remove(list=what, envir = table)
+        assign(newLabel, method, envir = table)
     }
-    newLabel <- .sigLabel(label)
-    if(!identical(what, newLabel)) {
-      assign(newLabel, method, envir = table)
-      remove(list=what, envir = table)
-    }
-  }
-  NULL
+    NULL
 }
 
 ### the tag associated with a method signature.
@@ -224,8 +446,6 @@
 ### however, that code breaks out early in the collapse loop if no match.
 ### This code is not used for quick matching, so efficiency less critical.
 .sigLabel <- function(sig)
-  ## TODO:  should include package; i.e., class:package#class:...
-  ## BUT:  not until defined, target slots have classes with package attribute
   paste(sig, collapse = "#")
 
 ## workhorse of selectMethod() [ -> ../Methods.R ] "
@@ -282,9 +502,9 @@
           c(cl1, .eligibleSuperClasses(def@contains, simpleOnly), "ANY")
       else cl1
     supersList <- list(labels)
+    classDefs <- vector("list", nargs)
+    classDefs[[1L]] <- def
     if(nargs > 1) { ## further arguments
-        classDefs <- vector("list", nargs)
-        classDefs[[1L]] <- def
         for(i in 2:nargs) {
             cc <- classDefs[[i]] <- getClass(classes[[i]], .Force = TRUE)
             allLabels <- if(missing(useInherited) || useInherited[[i]])
@@ -327,6 +547,22 @@
             fromGroup <- fromGroup[-i]
         }
     }
+    ## resolve any duplicate-class ambiguities
+    if(.duplicateClassesExist()) {
+        found <- integer()
+        nm <- names(methods)
+        for(i in seq_along(methods)) {
+            m <-methods[[i]]
+            if(is.environment(m)) {
+                methods[[i]] <- .checkDuplicateMethodClasses(classDefs, m, nm[[i]])
+                found <- c(found, i)
+            }
+        }
+        if(length(found))
+            methods <- unlist(methods, recursive = FALSE)
+        if(!is.list(methods)) # reduced to a single method?
+            methods <- list(methods)
+    }
     if(doExcluded)
       methods <- methods[is.na(match(names(methods), as.character(excluded)))]
     if(length(methods) > 1L && !returnAll) {
@@ -343,8 +579,9 @@
             if(is.null(condAction))
               condAction <- .ambiguousMethodMessage
             else if(!is(condAction, "function"))
-              stop(gettextf("The \"ambiguousMethodSelection\" option should be a function to be called as the condition action; got an object of class \"%s\"",
-                            class(condAction)), domain = NA)
+              stop(gettextf("The \"ambiguousMethodSelection\" option should be a function to be called as the condition action; got an object of class %s",
+                            dQuote(class(condAction))),
+                   domain = NA)
 
             select <- withCallingHandlers(
                                           .disambiguateMethods(classes, select, fdef@generic,
@@ -358,8 +595,9 @@
         methods <- Recall(classes, fdef, mtable, table, excluded, useInherited,
                           verbose, returnAll, FALSE)
         if(length(methods) > 0L)
-          message(gettextf("No simply inherited methods found for function \"%s\"; using non-simple method",
-                           fdef@generic), domain = NA)
+          message(gettextf("No simply inherited methods found for function %s; using non-simple method",
+                           sQuote(fdef@generic)),
+                  domain = NA)
     }
     if(doCache && length(methods)) { ## Cache the newly found one
         if(verbose) cat(" .fI> caching newly found methods ..\n")
@@ -376,6 +614,35 @@
         assign(tlabel, m, envir = mtable)
     }
     methods
+}
+
+.checkDuplicateMethodClasses <- function(classDefs, env, label){
+    matches <- list()
+    supers <- strsplit(label, "#", TRUE)[[1]]
+    plabels <- strsplit(objects(env, all.names = TRUE), "#", TRUE)
+    for(plabel in plabels) {
+        if(.hasThisSubclass(classDefs, supers, plabel))
+            matches[[plabel]] <- get(plabel, envir = env)
+    }
+    matches
+}
+
+.hasThisSubclass <- function(classDefs, supers, plabel) {
+    for(i in seq_along(plabel)) {
+        pkg <- classDefs[[i]]@package
+        cl <- classDefs[[i]]@className
+        si <- supers[[i]]
+        pki <- plabel[[i]]
+        if(identical(si, "ANY") ||
+           (identical(cl, si) && identical(pkg, pki)))
+            next
+        cli <- getClassDef(si, package = pki)
+        if(is.null(cli)) return(FALSE)
+        sub <- cli@subclasses[[cl]]
+        if(is.null(sub) || !identical(pkg, sub@package))
+            return(FALSE)
+    }
+    TRUE
 }
 
 .ambiguousMethodMessage <- function(cond) {
@@ -405,26 +672,26 @@
         if(simpleOnly)
             eligible <- sapply(contains, function(x) (is.logical(x) && x) || x@simple)
         else # eliminate conditional inheritance
-            eligible <- sapply(contains, function(x) (is.logical(x) && x) || x@simple || identical(x@test, .simpleExtTest))
+            eligible <- sapply(contains, function(x) (is.logical(x) && x) || x@simple || identical(body(x@test), TRUE))
         what[eligible]
     }
 }
 
 .newSignature <- function(classes, names) {
   ## a simple version to deal with boostrapping stage, used in new() etc
-  i <- seq_len(min(length(classes), length(names)))
+    n <- min(length(classes), length(names))
+  i <- seq_len(n)
+    ## a corresponding set of package names
+    ## <FIXME> There should be a "<unknown>" package name instead of "methods"
+    ## but this requires a way to deal with that generally </FIXME>
+    pkgs <- c(packageSlot(classes), rep("methods", n))[i]
 
   ## Simplified version ...
   structure(as.character(classes)[i],
-            class = getClass("signature")@className,
-            names = as.character(names)[i])
-  ## ... of the following (which uses `@<-` in non-standard way):
-  ## value <- as.character(classes)[i]
-  ## class(value) <- getClass("signature")@className
-  ## attr(value,"names") <- as.character(names)[i]
-  ## value@names <- as.character(names)[i]
-  ## value
-}
+            class = .signatureClassName,
+            names = as.character(names)[i],
+            package = pkgs )
+ }
 
 .findNextFromTable <- function(method, f, optional, envir, prev = character()) {
   fdef <- getGeneric(f)
@@ -474,8 +741,18 @@
     label <- .sigLabel(signature)
 ##     allMethods <- objects(table, all.names=TRUE)
 ##     if(match(label, allMethods, nomatch = 0L))
-    if(exists(label, envir = table, inherits = FALSE))
-        get(label, envir = table) ## else NULL
+    if(exists(label, envir = table, inherits = FALSE)) {
+        value <- get(label, envir = table) ## else NULL
+        if(is.environment(value)) {
+            pkgs <- objects(value, all.names = TRUE)
+            if(length(pkgs) == 1)
+                value <- get(pkgs, envir = value)
+            else if(length(pkgs) == 0)
+                value <- NULL
+            ## else, return the environment indicating multiple possibilities
+        }
+        value
+    } # else, NULL
 }
 
 ## inheritance distances:  0 for the class, 1 for immediate contains, 2 for other contains
@@ -750,6 +1027,13 @@
     doFun(f,p)
     for(what in labels) {
 	m <- get(what, envir = table)
+        if(is.environment(m)) {  ## duplicate class case -- compare .findMethodInTable()
+            pkgs <- objects(m)
+            if(length(pkgs) == 1)
+                m <- get(pkgs, envir = m)
+            else if(length(pkgs) > 1)
+                cf("  (", length(pkgs), " methods defined for this signature, with different packages)\n")
+        }
 	if( is(m, "MethodDefinition")) {
 	    t <- m@target
 	    if(length(t) == 0L)
@@ -932,13 +1216,13 @@ outerLabels <- function(labels, new) {
 }
 
 .resetSigLength <- function(fdef, n) {
-      fenv <- environment(fdef)
-      assign(".SigLength", n, envir = fenv)
-      mtable <- .getMethodsTable(fdef, fenv, check = FALSE)
-      signames <- fdef@signature
-      length(signames) <- n
-      .resetTable(mtable, n, signames)
-      .resetInheritedMethods(fenv, mtable)
+    fenv <- environment(fdef)
+    assign(".SigLength", n, envir = fenv)
+    mtable <- .getMethodsTable(fdef, fenv, check = FALSE)
+    signames <- fdef@signature
+    length(signames) <- n
+    .resetTable(mtable, n, signames)
+    .resetInheritedMethods(fenv, mtable)
 }
 
 .TableMetaName <- function(name, package)
@@ -1132,8 +1416,10 @@ listFromMethods <- function(generic, where, table) {
     else if(optional)
       NULL
     else
-      stop(gettextf("No methods table for generic \"%s\" from package \"%s\" in package \"%s\"",
-                    generic@generic, generic@package, getPackageName(where)),
+      stop(gettextf("No methods table for generic %s from package %s in package %s",
+                    sQuote(generic@generic),
+                    sQuote(generic@package),
+                    sQuote(getPackageName(where))),
            domain = NA)
 }
 

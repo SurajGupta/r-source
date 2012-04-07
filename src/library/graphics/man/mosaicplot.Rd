@@ -17,7 +17,7 @@ mosaicplot(x, \dots)
            sub = NULL, xlab = NULL, ylab = NULL,
            sort = NULL, off = NULL, dir = NULL,
            color = NULL, shade = FALSE, margin = NULL,
-           cex.axis = 0.66, las = par("las"),
+           cex.axis = 0.66, las = par("las"), border = NULL,
            type = c("pearson", "deviance", "FT"), \dots)
 
 \method{mosaicplot}{formula}(formula, data = NULL, \dots,
@@ -62,6 +62,7 @@ mosaicplot(x, \dots)
   \item{cex.axis}{The magnification to be used for axis annotation,
     as a multiple of \code{par("cex")}.}
   \item{las}{numeric; the style of axis labels, see \code{\link{par}}.}
+  \item{border}{colour of borders of cells: see \code{\link{polygon}}.}
   \item{type}{a character string indicating the type of residual to be
     represented.  Must be one of \code{"pearson"} (giving components of
     Pearson's \eqn{\chi^2}{chi-squared}), \code{"deviance"} (giving
@@ -87,20 +88,20 @@ mosaicplot(x, \dots)
   (\code{mosaicplot.formula}).
 
   Extended mosaic displays visualize standardized residuals of a
-  loglinear model for the table by color and outline of the
-  mosaic's tiles.  (Standardized residuals are often referred to a
-  standard normal distribution.)  Negative residuals are drawn in shaded
-  of red and with broken outlines; positive ones are drawn in blue with
-  solid outlines.
+  loglinear model for the table by color and outline of the mosaic's
+  tiles.  (Standardized residuals are often referred to a standard
+  normal distribution.)  Cells representing negative residuals are drawn
+  in shaded of red and with broken borders; positive ones are drawn in
+  blue with solid borders.
 
   For the formula method, if \code{data} is an object inheriting from
-  classes \code{"table"} or \code{"ftable"}, or an array with more than
-  2 dimensions, it is taken as a contingency table, and hence all
-  entries should be nonnegative.  In this case, the left-hand side of
-  \code{formula} should be empty, and the variables on the right-hand
+  class \code{"table"} or class \code{"ftable"} or an array with more
+  than 2 dimensions, it is taken as a contingency table, and hence all
+  entries should be non-negative.  In this case the left-hand side of
+  \code{formula} should be empty and the variables on the right-hand
   side should be taken from the names of the dimnames attribute of the
   contingency table.  A marginal table of these variables is computed,
-  and a mosaic of this table is produced.
+  and a mosaic plot of that table is produced.
 
   Otherwise, \code{data} should be a data frame or matrix, list or
   environment containing the variables to be cross-tabulated.  In this
@@ -143,7 +144,7 @@ mosaicplot(x, \dots)
   The strucplot framework: Visualizing multi-way contingency tables with vcd.
   \emph{Report 22}, Department of Statistics and Mathematics, 
   \enc{Wirtschaftsuniversität}{Wirtschaftsuniversitaet} Wien, Research Report Series.
-  \url{http://epub.wu-wien.ac.at/dyn/openURL?id=oai:epub.wu-wien.ac.at:epub-wu-01_8a1}
+  \url{http://epub.wu.ac.at/dyn/openURL?id=oai:epub.wu-wien.ac.at:epub-wu-01_8a1}
 
   The home page of Michael Friendly
   (\url{http://www.math.yorku.ca/SCS/friendly.html}) provides

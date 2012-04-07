@@ -32,9 +32,6 @@
 /* Define to 1 if you have the `access' function. */
 #undef HAVE_ACCESS
 
-/* Define to 1 if you have the `acosh' function. */
-#undef HAVE_ACOSH
-
 /* Define to 1 if you have `alloca', as a function or macro. */
 #undef HAVE_ALLOCA
 
@@ -61,14 +58,8 @@
 /* Define to 1 if you have the <arpa/inet.h> header file. */
 #undef HAVE_ARPA_INET_H
 
-/* Define to 1 if you have the `asinh' function. */
-#undef HAVE_ASINH
-
 /* Define to 1 if you have the `asprintf' function. */
 #undef HAVE_ASPRINTF
-
-/* Define to 1 if you have the `atanh' function. */
-#undef HAVE_ATANH
 
 /* Define if you have BSD networking headers and libraries. */
 #undef HAVE_BSD_NETWORKING
@@ -126,6 +117,9 @@
 /* Define to 1 if you have the `chmod' function. */
 #undef HAVE_CHMOD
 
+/* Define to 1 if you have the `clock_gettime' function. */
+#undef HAVE_CLOCK_GETTIME
+
 /* Define to 1 if you have the `clog' function. */
 #undef HAVE_CLOG
 
@@ -154,21 +148,9 @@
    */
 #undef HAVE_DCGETTEXT
 
-/* Define to 1 if you have the declaration of `acosh', and to 0 if you don't.
-   */
-#undef HAVE_DECL_ACOSH
-
 /* Define to 1 if you have the declaration of `alloca', and to 0 if you don't.
    */
 #undef HAVE_DECL_ALLOCA
-
-/* Define to 1 if you have the declaration of `asinh', and to 0 if you don't.
-   */
-#undef HAVE_DECL_ASINH
-
-/* Define to 1 if you have the declaration of `atanh', and to 0 if you don't.
-   */
-#undef HAVE_DECL_ATANH
 
 /* Define to 1 if you have the declaration of `feof_unlocked', and to 0 if you
    don't. (For intl) */
@@ -214,10 +196,6 @@
    don't. */
 #undef HAVE_DECL_SIZE_MAX
 
-/* Define to 1 if you have the declaration of `snprintf', and to 0 if you
-   don't. */
-#undef HAVE_DECL_SNPRINTF
-
 /* Define to 1 if you have the declaration of `strdup', and to 0 if you don't.
    */
 #undef HAVE_DECL_STRDUP
@@ -229,10 +207,6 @@
 /* Define to 1 if you have the declaration of `vasprintf', and to 0 if you
    don't. */
 #undef HAVE_DECL_VASPRINTF
-
-/* Define to 1 if you have the declaration of `vsnprintf', and to 0 if you
-   don't. */
-#undef HAVE_DECL_VSNPRINTF
 
 /* Define to 1 if you have the declaration of `_snprintf', and to 0 if you
    don't. (For intl) */
@@ -320,6 +294,9 @@
 /* Define to 1 if you have the `getpagesize' function. */
 #undef HAVE_GETPAGESIZE
 
+/* Define to 1 if you have the `getpriority' function. */
+#undef HAVE_GETPRIORITY
+
 /* Define to 1 if you have the `getpwuid' function. */
 #undef HAVE_GETPWUID
 
@@ -404,6 +381,9 @@
 /* Define if you have KeySym defined in X11. */
 #undef HAVE_KEYSYM
 
+/* Define to 1 if you have the `kill' function. */
+#undef HAVE_KILL
+
 /* Define if you have <langinfo.h> and nl_langinfo(CODESET). */
 #undef HAVE_LANGINFO_CODESET
 
@@ -430,6 +410,9 @@
 
 /* Define to 1 if you have the `readline' library (-lreadline). */
 #undef HAVE_LIBREADLINE
+
+/* Define to 1 if you have the `rt' library (-lrt). */
+#undef HAVE_LIBRT
 
 /* Define to 1 if you have the `termcap' library (-ltermcap). */
 #undef HAVE_LIBTERMCAP
@@ -668,6 +651,18 @@
 /* Define to 1 if you have the `strtoul' function. */
 #undef HAVE_STRTOUL
 
+/* Define to 1 if `st_atimensec' is a member of `struct stat'. */
+#undef HAVE_STRUCT_STAT_ST_ATIMENSEC
+
+/* Define to 1 if `st_atimespec.tv_nsec' is a member of `struct stat'. */
+#undef HAVE_STRUCT_STAT_ST_ATIMESPEC_TV_NSEC
+
+/* Define to 1 if `st_atim.st__tim.tv_nsec' is a member of `struct stat'. */
+#undef HAVE_STRUCT_STAT_ST_ATIM_ST__TIM_TV_NSEC
+
+/* Define to 1 if `st_atim.tv_nsec' is a member of `struct stat'. */
+#undef HAVE_STRUCT_STAT_ST_ATIM_TV_NSEC
+
 /* Define to 1 if you have the `symlink' function. */
 #undef HAVE_SYMLINK
 
@@ -722,14 +717,8 @@
 /* Define to 1 if you have the <tiffio.h> header file. */
 #undef HAVE_TIFFIO_H
 
-/* Define to 1 if you have the `time' function. */
-#undef HAVE_TIME
-
 /* Define to 1 if you have the `times' function. */
 #undef HAVE_TIMES
-
-/* Define to 1 if you have the <time.h> header file. */
-#undef HAVE_TIME_H
 
 /* Define to 1 if you have the `tsearch' function. */
 #undef HAVE_TSEARCH
@@ -757,6 +746,15 @@
    */
 #undef HAVE_UNSIGNED_LONG_LONG_INT
 
+/* Define to 1 if you have the `utime' function. */
+#undef HAVE_UTIME
+
+/* Define to 1 if you have the `utimes' function. */
+#undef HAVE_UTIMES
+
+/* Define to 1 if you have the <utime.h> header file. */
+#undef HAVE_UTIME_H
+
 /* Define to 1 if you have the `vasprintf' function. */
 #undef HAVE_VASPRINTF
 
@@ -772,9 +770,6 @@
 
 /* Define to 1 if __attribute__((visibility())) is supported */
 #undef HAVE_VISIBILITY_ATTRIBUTE
-
-/* Define to 1 if you have the `vsnprintf' function. */
-#undef HAVE_VSNPRINTF
 
 /* Define to 1 if you have the <wchar.h> header file. */
 #undef HAVE_WCHAR_H
@@ -984,8 +979,9 @@
 /* Define to enable provoking compile errors on write barrier violation. */
 #undef TESTING_WRITE_BARRIER
 
-/* Define to 1 if you can safely include both <sys/time.h> and <time.h>. */
-#undef TIME_WITH_SYS_TIME
+/* Define to 1 if the type of the st_atim member of a struct stat is struct
+   timespec. */
+#undef TYPEOF_STRUCT_STAT_ST_ATIM_IS_STRUCT_TIMESPEC
 
 /* Define to use ICU for collation. */
 #undef USE_ICU

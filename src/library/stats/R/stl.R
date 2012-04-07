@@ -58,7 +58,7 @@ stl <- function(x, s.window,
     l.degree <- deg.check(l.degree)
     if(is.null(t.window))
 	t.window <- nextodd(ceiling( 1.5 * period / (1- 1.5/s.window)))
-    z <- .Fortran(R_stl,
+    z <- .Fortran(C_stl,
 		  as.double(x),
 		  as.integer(n),
 		  as.integer(period),
@@ -136,9 +136,10 @@ plot.stl <- function(x, labels = colnames(X),
     nplot <- ncomp + 1
     if(range.bars)
 	mx <- min(apply(rx <- apply(X,2, range), 2, diff))
+    dev.hold(); on.exit(dev.flush())
     if(length(set.pars)) {
 	oldpar <- do.call("par", as.list(names(set.pars)))
-	on.exit(par(oldpar))
+	on.exit(par(oldpar), add = TRUE)
 	do.call("par", set.pars)
     }
     for(i in 1L:nplot) {

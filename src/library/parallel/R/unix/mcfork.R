@@ -1,0 +1,150 @@
+#  File src/library/parallel/R/unix/mcfork.R
+#  Part of the R package, http://www.R-project.org
+#
+#  This program is free software; you can redistribute it and/or modify
+#  it under the terms of the GNU General Public License as published by
+#  the Free Software Foundation; either version 2 of the License, or
+#  (at your option) any later version.
+#
+#  This program is distributed in the hope that it will be useful,
+#  but WITHOUT ANY WARRANTY; without even the implied warranty of
+#  MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
+#  GNU General Public License for more details.
+#
+#  A copy of the GNU General Public License is available at
+#  http://www.r-project.org/Licenses/
+
+### Derived from multicore version 0.1-6 by Simon Urbanek
+
+### --- multicore --- low-level functions ---
+
+## all not exported in parallel.
+
+mc_pids <- new.env()
+assign("pids", integer(), envir = mc_pids)
+clean_pids <- function(e) {
+    pids <- get("pids", envir = e)
+    if(length(pids)) {
+        library.dynam("tools", "tools", .Library)
+        .Call("ps_kill", pids, 9L, PACKAGE = "tools")
+    }
+}
+
+mcfork <- function() {
+    r <- .Call(C_mc_fork, PACKAGE = "parallel")
+    assign("pids", c(get("pids",envir = mc_pids), r[1L]), envir = mc_pids)
+    structure(list(pid = r[1L], fd = r[2:3]),
+              class = c(if(r[1L]) "childProcess"
+                        else "masterProcess", "process"))
+}
+
+## not used
+readChildren <- function(timeout = 0)
+    .Call(C_mc_read_children, as.double(timeout), PACKAGE="parallel")
+
+## used by mccollect, mclapply
+readChild <- function(child)
+{
+    if (inherits(child, "process")) child <- processID(child)
+    if (!is.numeric(child)) stop("invalid 'child' argument")
+    .Call(C_mc_read_child, as.integer(child), PACKAGE = "parallel")
+}
+
+## used by mccollect, mclapply
+selectChildren <- function(children = NULL, timeout = 0)
+{
+    if (!length(children)) children <- integer()
+    if (inherits(children, "process")) children <- processID(children)
+    if (is.list(children))
+        children <- unlist(lapply(children, function(x) if (inherits(x, "process")) x$pid
+        else stop("'children' must be a list of processes or a single process")))
+    if (!is.numeric(children))
+        stop("'children' must be a list of processes or a single process")
+    .Call(C_mc_select_children, as.double(timeout), as.integer(children))
+}
+
+rmChild <- function(child)
+{
+    if (inherits(child, "process")) child <- processID(child)
+    if (!is.numeric(child)) stop("invalid 'child' argument")
+    .Call(C_mc_rm_child, as.integer(child), PACKAGE = "parallel")
+}
+
+## used in pvec, mclapply
+mckill <- function(process, signal = 2L)
+{
+    process <- processID(process)
+    ## or simply parallel::pskill(process, signal)
+    unlist(lapply(process, function(p)
+                  .Call(C_mc_kill, as.integer(p), as.integer(signal))))
+}
+
+## used by mcparallel, mclapply
+sendMaster <- function(what)
+{
+    if (!is.raw(what)) what <- serialize(what, NULL, FALSE)
+    .Call(C_mc_send_master, what, PACKAGE = "parallel")
+}
+
+processID <- function(process) {
+    if (inherits(process, "process")) process$pid
+    else if (is.list(process)) unlist(lapply(process, processID))
+    else stop("'process' must be of the class \"process\"")
+}
+
+# unused
+sendChildStdin <- function(child, what)
+{
+    if (inherits(child, "process") || is.list(child)) child <- processID(child)
+    if (!is.numeric(child) || !length(child))
+        stop("'child' must be a valid child process")
+    child <- as.integer(child)
+    if (is.character(what)) what <- charToRaw(paste(what, collapse='\n'))
+    if (!is.raw(what)) stop("'what' must be a character or raw vector")
+    invisible(unlist(lapply(child, function(p)
+                            .Call(C_mc_send_child_stdin, p, what,
+                                  PACKAGE = "parallel"))))
+}
+
+## used by mcparallel, mclapply
+mcexit <- function(exit.code = 0L, send = NULL)
+{
+    if (!is.null(send)) try(sendMaster(send), silent = TRUE)
+    .Call(C_mc_exit, as.integer(exit.code), PACKAGE = "parallel")
+}
+
+## used by mccollect, mclapply
+children <- function(select)
+{
+    p <- .Call(C_mc_children, PACKAGE = "parallel")
+    if (!missing(select)) p <- p[p %in% processID(select)]
+    ## FIXME: this is not the meaning of this class as returned by mcfork
+    lapply(p, function(x)
+           structure(list(pid = x), class = c("childProcess", "process")))
+}
+
+childrenDescriptors <- function(index = 0L)
+    .Call(C_mc_fds, as.integer(index), PACKAGE = "parallel")
+
+masterDescriptor <- function() .Call(C_mc_master_fd, PACKAGE = "parallel")
+
+isChild <- function() .Call(C_mc_is_child, PACKAGE = "parallel")
+
+closeStdout <- function() .Call(C_mc_close_stdout, PACKAGE = "parallel")
+closeStderr <- function() .Call(C_mc_close_stderr, PACKAGE = "parallel")
+closeFD <- function(fds)
+    .Call(C_mc_close_fds, as.integer(fds), PACKAGE = "parallel")
+
+closeAll <- function(includeStd = FALSE)
+{
+    if (!isChild()) {
+        warning("closeAll() is a no-op in the master process", domain = NA)
+        return(invisible(FALSE))
+    }
+    fds <- masterDescriptor()
+    if (identical(fds, -1L)) fds <- integer(0)
+    if (includeStd) fds <- c(1L, 2L, fds)
+    mf <- max(fds) + 16L # take a few more ...
+    ## close all but those that we actually use
+    closeFD((1:mf)[-fds])
+}

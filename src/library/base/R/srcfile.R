@@ -112,9 +112,10 @@ srcfilecopy <- function(filename, lines) {
     # Remove embedded newlines
     if (any(grepl("\n", lines, fixed=TRUE)))
 	lines <- unlist(strsplit(sub("$", "\n", as.character(lines)), "\n"))
-
+  
     e$filename <- filename
     e$lines <- as.character(lines)
+    e$fixedNewlines <- TRUE  	# we have removed the newlines already
     e$timestamp <- Sys.time()
     e$Enc <- "unknown"
 
@@ -146,6 +147,24 @@ open.srcfilecopy <- function(con, line, ...) {
     invisible(conn)
 }
 
+srcfilealias <- function(filename, srcfile) {
+    stopifnot(is.character(filename), length(filename) == 1L)
+
+    e <- new.env(parent=emptyenv())
+    
+    e$filename <- filename
+    e$original <- srcfile
+
+    class(e) <- c("srcfilealias", "srcfile")
+    return(e)
+}
+    
+open.srcfilealias <- function(con, line, ...) 
+    open(con$original, line, ...)
+
+close.srcfilealias <- function(con, ...)
+    close(con$original, ...)
+    
 .isOpen <- function(srcfile) {
     conn <- srcfile$conn
     return( !is.null(conn) && isOpen(conn) )
@@ -153,9 +172,19 @@ open.srcfilecopy <- function(con, line, ...) {
 
 getSrcLines <- function(srcfile, first, last) {
     if (first > last) return(character())
+    if (inherits(srcfile, "srcfilealias")) 
+    	srcfile <- srcfile$original
     if (inherits(srcfile, "srcfilecopy")) {
+	# Remove embedded newlines if we haven't done this already
+	if (is.null(srcfile$fixedNewlines)) {
+	    lines <- srcfile$lines
+    	    if (any(grepl("\n", lines, fixed=TRUE))) 
+		srcfile$lines <- unlist(strsplit(sub("$", "\n", as.character(lines)), "\n"))
+	    srcfile$fixedNewlines <- TRUE
+	}
         last <- min(last, length(srcfile$lines))
-    	return(srcfile$lines[first:last])
+        if (first > last) return(character())
+        else return(srcfile$lines[first:last])
     }
     if (!.isOpen(srcfile)) on.exit(close(srcfile))
     conn <- open(srcfile, first)
@@ -173,7 +202,7 @@ getSrcLines <- function(srcfile, first, last) {
 # all are inclusive
 
 srcref <- function(srcfile, lloc) {
-    stopifnot(inherits(srcfile, "srcfile"), length(lloc) %in% c(4L,6L))
+    stopifnot(inherits(srcfile, "srcfile"), length(lloc) %in% c(4L,6L,8L))
     if (length(lloc) == 4) lloc <- c(lloc, lloc[c(2,4)])
     if (length(lloc) == 6) lloc <- c(lloc, lloc[c(1,3)])
     structure(as.integer(lloc), srcfile=srcfile, class="srcref")
@@ -182,9 +211,13 @@ srcref <- function(srcfile, lloc) {
 as.character.srcref <- function(x, useSource = TRUE, ...)
 {
     srcfile <- attr(x, "srcfile")
-    if (!is.null(srcfile) && !inherits(srcfile, "srcfile")) class(srcfile) <- "srcfile"
+    if (!is.null(srcfile) && !inherits(srcfile, "srcfile")) {
+       cat("forcing class on") ## debug
+	print(str(srcfile))
+       class(srcfile) <- c("srcfilealias", "srcfile")
+    }
     if (useSource) {
-    	if (inherits(srcfile, "srcfilecopy"))
+    	if (inherits(srcfile, "srcfilecopy") || inherits(srcfile, "srcfilealias"))
     	    lines <- try(getSrcLines(srcfile, x[7L], x[8L]), TRUE)
     	else
  	    lines <- try(getSrcLines(srcfile, x[1L], x[3L]), TRUE)

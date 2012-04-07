@@ -31,7 +31,6 @@
 /* Device drivers here (for ease of access) */
 
 SEXP do_X11(SEXP, SEXP, SEXP, SEXP);
-SEXP do_cairo(SEXP, SEXP, SEXP, SEXP);
 SEXP do_saveplot(SEXP, SEXP, SEXP, SEXP);
 
 #if defined(__APPLE_CC__) && defined(HAVE_AQUA)
@@ -92,10 +91,12 @@ SEXP do_addhistory(SEXP, SEXP, SEXP, SEXP);
 SEXP do_addCondHands(SEXP, SEXP, SEXP, SEXP);
 SEXP do_addRestart(SEXP, SEXP, SEXP, SEXP);
 SEXP do_addTryHandlers(SEXP, SEXP, SEXP, SEXP);
+SEXP do_adist(SEXP, SEXP, SEXP, SEXP);
 SEXP do_agrep(SEXP, SEXP, SEXP, SEXP);
 SEXP do_allnames(SEXP, SEXP, SEXP, SEXP);
 SEXP do_anydf(SEXP, SEXP, SEXP, SEXP);
 SEXP do_aperm(SEXP, SEXP, SEXP, SEXP);
+SEXP do_aregexec(SEXP, SEXP, SEXP, SEXP);
 SEXP do_args(SEXP, SEXP, SEXP, SEXP);
 SEXP do_arith(SEXP, SEXP, SEXP, SEXP);
 SEXP do_arrows(SEXP, SEXP, SEXP, SEXP);
@@ -169,9 +170,12 @@ SEXP do_deparse(SEXP, SEXP, SEXP, SEXP);
 SEXP do_deparseRd(SEXP, SEXP, SEXP, SEXP);
 SEXP do_deriv(SEXP, SEXP, SEXP, SEXP);
 SEXP do_detach(SEXP,SEXP,SEXP,SEXP);
+SEXP do_devcap(SEXP, SEXP, SEXP, SEXP);
+SEXP do_devcapture(SEXP, SEXP, SEXP, SEXP);
 SEXP do_devcontrol(SEXP,SEXP,SEXP,SEXP);
 SEXP do_devcopy(SEXP,SEXP,SEXP,SEXP);
 SEXP do_devcur(SEXP, SEXP, SEXP, SEXP);
+SEXP do_devholdflush(SEXP, SEXP, SEXP, SEXP);
 SEXP do_devnext(SEXP, SEXP, SEXP, SEXP);
 SEXP do_devoff(SEXP, SEXP, SEXP, SEXP);
 SEXP do_devprev(SEXP, SEXP, SEXP, SEXP);
@@ -402,6 +406,7 @@ SEXP do_recall(SEXP, SEXP, SEXP, SEXP);
 SEXP do_recordGraphics(SEXP, SEXP, SEXP, SEXP);
 SEXP do_rect(SEXP, SEXP, SEXP, SEXP);
 SEXP do_raster(SEXP, SEXP, SEXP, SEXP);
+SEXP do_regexec(SEXP, SEXP, SEXP, SEXP);
 SEXP do_regexpr(SEXP, SEXP, SEXP, SEXP);
 SEXP do_regFinaliz(SEXP, SEXP, SEXP, SEXP);
 SEXP do_relop(SEXP, SEXP, SEXP, SEXP);

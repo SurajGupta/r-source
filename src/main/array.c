@@ -443,7 +443,7 @@ static void matprod(double *x, int nrx, int ncx,
     char *transa = "N", *transb = "N";
     int i,  j, k;
     double one = 1.0, zero = 0.0;
-    LDOUBLE sum;
+    long double sum;
     Rboolean have_na = FALSE;
 
     if (nrx > 0 && ncx > 0 && nry > 0 && ncy > 0) {
@@ -488,7 +488,7 @@ static void cmatprod(Rcomplex *x, int nrx, int ncx,
 #else
     int i, j, k;
     double xij_r, xij_i, yjk_r, yjk_i;
-    LDOUBLE sum_i, sum_r;
+    long double sum_i, sum_r;
 
     for (i = 0; i < nrx; i++)
 	for (k = 0; k < ncy; k++) {
@@ -1064,7 +1064,7 @@ SEXP attribute_hidden do_aperm(SEXP call, SEXP op, SEXP args, SEXP rho)
 
     /* check the permutation */
 
-    int *pp = (int *) R_alloc(n, sizeof(int));
+    int *pp = (int *) R_alloc((size_t) n, sizeof(int));
     perm = CADR(args);
     if (length(perm) == 0) {
 	for (i = 0; i < n; i++) pp[i] = n-1-i;
@@ -1091,7 +1091,7 @@ SEXP attribute_hidden do_aperm(SEXP call, SEXP op, SEXP args, SEXP rho)
 	} else error(_("'perm' is of wrong length"));
     }
 
-    int *iip = (int *) R_alloc(n, sizeof(int));
+    int *iip = (int *) R_alloc((size_t) n, sizeof(int));
     for (i = 0; i < n; iip[i++] = 0);
     for (i = 0; i < n; i++)
 	if (pp[i] >= 0 && pp[i] < n) iip[pp[i]]++;
@@ -1101,7 +1101,7 @@ SEXP attribute_hidden do_aperm(SEXP call, SEXP op, SEXP args, SEXP rho)
 
     /* create the stride object and permute */
 
-    int *stride = (int *) R_alloc(n, sizeof(int));
+    int *stride = (int *) R_alloc((size_t) n, sizeof(int));
     for (iip[0] = 1, i = 1; i<n; i++) iip[i] = iip[i-1] * isa[i-1];
     for (i = 0; i < n; i++) stride[i] = iip[pp[i]];
 
@@ -1218,7 +1218,7 @@ SEXP attribute_hidden do_colsum(SEXP call, SEXP op, SEXP args, SEXP rho)
     Rboolean NaRm, keepNA;
     int *ix;
     double *rx;
-    LDOUBLE sum = 0.0;
+    long double sum = 0.0;
 #ifdef HAVE_OPENMP
     int nthreads;
 #endif
@@ -1286,9 +1286,7 @@ SEXP attribute_hidden do_colsum(SEXP call, SEXP op, SEXP args, SEXP rho)
 		/* we checked the type above, but be sure */
 		UNIMPLEMENTED_TYPEt("do_colsum", type);
 	    }
-	    if (OP == 1) {
-		if (cnt > 0) sum /= cnt; else sum = NA_REAL;
-	    }
+	    if (OP == 1) sum /= cnt;
 	    REAL(ans)[j] = sum;
 	}
     }
@@ -1300,12 +1298,12 @@ SEXP attribute_hidden do_colsum(SEXP call, SEXP op, SEXP args, SEXP rho)
 	/* interchange summation order to improve cache hits */
 	if (type == REALSXP) {
 	    int *Cnt = NULL, *c;
-	    LDOUBLE *rans, *ra;
+	    long double *rans, *ra;
 	    if(n <= 10000) {
-		rans = (LDOUBLE *) alloca(n * sizeof(LDOUBLE));
+		rans = (long double *) alloca(n * sizeof(long double));
 		R_CheckStack();
-		memset(rans, 0, n*sizeof(LDOUBLE));
-	    } else rans = Calloc(n, LDOUBLE);
+		memset(rans, 0, n*sizeof(long double));
+	    } else rans = Calloc(n, long double);
 	    rx = REAL(x);
 	    if (!keepNA && OP == 3) Cnt = Calloc(n, int);
 	    for (j = 0; j < p; j++) {
@@ -1324,7 +1322,7 @@ SEXP attribute_hidden do_colsum(SEXP call, SEXP op, SEXP args, SEXP rho)
 		    for (ra = rans, i = 0; i < n; i++) *ra++ /= p;
 		else {
 		    for (ra = rans, c = Cnt, i = 0; i < n; i++, c++)
-			if (*c > 0) *ra++ /= *c; else *ra++ = NA_REAL;
+			*ra++ /= *c;
 		    Free(Cnt);
 		}
 	    }
@@ -1352,9 +1350,7 @@ SEXP attribute_hidden do_colsum(SEXP call, SEXP op, SEXP args, SEXP rho)
 		/* we checked the type above, but be sure */
 		UNIMPLEMENTED_TYPEt("do_colsum", type);
 	    }
-	    if (OP == 3) {
-		if (cnt > 0) sum /= cnt; else sum = NA_REAL;
-	    }
+	    if (OP == 3) sum /= cnt; /* gives NaN for cnt = 0 */
 	    REAL(ans)[i] = sum;
 	}
     }

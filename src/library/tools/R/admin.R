@@ -80,15 +80,14 @@ function(dir, outDir)
     ## simplified to
     ##   db["Built"] <- Built
     ##   write.dcf(rbind(db), file.path(outDir, "DESCRIPTION"))
+    ## But in any case, it is true for fields obtained from expanding R
+    ## fields (Authors@R): these should not be reformatted.
 
-    ## Avoid declared encodings
-    dbn <- db; Encoding(dbn) <- "unknown"
-    outConn <- file(file.path(outDir, "DESCRIPTION"), open = "w")
-    write.dcf(rbind(dbn), outConn)
-    writeLines(paste("Built", Built, sep = ": "), outConn)
-    close(outConn)
-
-    db["Built"] <- Built
+    db <- c(db,     
+            .expand_package_description_db_R_fields(db),
+            Built = Built)
+    
+    .write_description(db, file.path(outDir, "DESCRIPTION"))
 
     outMetaDir <- file.path(outDir, "Meta")
     if(!file_test("-d", outMetaDir) && !dir.create(outMetaDir))
@@ -123,6 +122,9 @@ function(db, verbose = FALSE)
     } else Built <- NULL
     ## might perhaps have multiple entries
     Depends <- .split_dependencies(db[names(db) %in% "Depends"])
+    ## several packages 'Depends' on base!
+    ind <- match("base", names(Depends), 0L)
+    if(ind) Depends <- Depends[-ind]
     ## We only need Rdepends for R < 2.7.0, but we still need to be
     ## able to check that someone is not trying to load this into a
     ## very old version of R.
@@ -461,10 +463,11 @@ function(dir, outDir)
 function(dir, outDir, encoding = "")
 {
     dir <- file_path_as_absolute(dir)
-    vignetteDir <- file.path(dir, "inst", "doc")
-    ## Create a vignette index only if the vignette dir exists.
+    vignetteDir <- file.path(dir, "vignettes")
     if(!file_test("-d", vignetteDir))
-        return(invisible())
+        vignetteDir <- file.path(dir, "inst", "doc")
+    ## Create a vignette index only if the vignette dir exists.
+    if(!file_test("-d", vignetteDir)) return(invisible())
 
     outDir <- file_path_as_absolute(outDir)
     packageName <- basename(outDir)
@@ -488,25 +491,31 @@ function(dir, outDir, encoding = "")
         return(invisible())
     }
 
-    vignetteIndex <- .build_vignette_index(vignetteDir)
-    ## For base package vignettes there is no PDF in @file{vignetteDir}
-    ## but there might/should be one in @file{outVignetteDir}.
+    if (basename(vignetteDir) == "vignettes") {
+        ## copy vignette sources over.
+        vigns <- list_files_with_type(vignetteDir, "vignette")
+        file.copy(vigns, outVignetteDir)
+    }
+    vignetteIndex <- .build_vignette_index(outVignetteDir)
     if(NROW(vignetteIndex) > 0L) {
-        vignettePDFs <-
-            sub("$", ".pdf",
-                basename(file_path_sans_ext(vignetteIndex$File)))
-        ind <- file_test("-f", file.path(outVignetteDir, vignettePDFs))
-        vignetteIndex$PDF[ind] <- vignettePDFs[ind]
-
-        ## install tangled versions of all vignettes
         cwd <- getwd()
         if (is.null(cwd))
             stop("current working directory cannot be ascertained")
         setwd(outVignetteDir)
+        vignettePDFs <-
+            sub("$", ".pdf",
+                basename(file_path_sans_ext(vignetteIndex$File)))
+        ind <- file_test("-f", vignettePDFs)
+        vignetteIndex$PDF[ind] <- vignettePDFs[ind]
+
+        ## install tangled versions of all vignettes
+        cat("*** tangling vignette sources ...\n")
         for(srcfile in vignetteIndex$File) {
             enc <- getVignetteEncoding(srcfile, TRUE)
             if(enc %in% c("non-ASCII", "unknown")) enc <- encoding
-            tryCatch(utils::Stangle(srcfile, quiet = TRUE, encoding = enc),
+            cat("  ", sQuote(basename(srcfile)),
+                if(nzchar(enc)) paste("using", sQuote(enc)), "\n")
+           tryCatch(utils::Stangle(srcfile, quiet = TRUE, encoding = enc),
                      error = function(e)
                      stop(gettextf("running Stangle on vignette '%s' failed with message:\n%s",
                                    srcfile, conditionMessage(e)),
@@ -571,25 +580,21 @@ function(src_dir, out_dir, packages)
 function(dir, outDir, keep.source = TRUE)
 {
     dir <- file_path_as_absolute(dir)
-    vignetteDir <- file.path(dir, "inst", "doc")
-    if(!file_test("-d", vignetteDir)) return(invisible())
-    vignetteFiles <- list_files_with_type(vignetteDir, "vignette")
-    if(!length(vignetteFiles)) return(invisible())
+    vigns <- pkgVignettes(dir = dir)
+    if(is.null(vigns) || !length(vigns$docs)) return(invisible())
 
     outDir <- file_path_as_absolute(outDir)
     outVignetteDir <- file.path(outDir, "doc")
     if(!file_test("-d", outVignetteDir) && !dir.create(outVignetteDir))
         stop(gettextf("cannot open directory '%s'", outVignetteDir),
              domain = NA)
-    ## For the time being, assume that no PDFs are available in
-    ## vignetteDir.
+
     vignettePDFs <-
         file.path(outVignetteDir,
                   sub("$", ".pdf",
-                      basename(file_path_sans_ext(vignetteFiles))))
-    upToDate <- file_test("-nt", vignettePDFs, vignetteFiles)
-    if(all(upToDate))
-        return(invisible())
+                      basename(file_path_sans_ext(vigns$docs))))
+    upToDate <- file_test("-nt", vignettePDFs, vigns$docs)
+    if(all(upToDate)) return(invisible())
 
     ## The primary use of this function is to build and install
     ## vignettes in base packages.
@@ -605,9 +610,9 @@ function(dir, outDir, keep.source = TRUE)
     on.exit(setwd(cwd))
     setwd(buildDir)
 
-    for(srcfile in vignetteFiles[!upToDate]) {
+    for(srcfile in vigns$docs[!upToDate]) {
         base <- basename(file_path_sans_ext(srcfile))
-        message("processing '", basename(srcfile), "'")
+        message("processing ", sQuote(basename(srcfile)))
         texfile <- paste(base, ".tex", sep = "")
         tryCatch(utils::Sweave(srcfile, pdf = TRUE, eps = FALSE,
                                quiet = TRUE, keep.source = keep.source,
@@ -621,7 +626,7 @@ function(dir, outDir, keep.source = TRUE)
         ## We need to ensure that vignetteDir is in TEXINPUTS and BIBINPUTS.
         ## <FIXME>
         ## What if this fails?
-        texi2dvi(texfile, pdf = TRUE, quiet = TRUE, texinputs = vignetteDir)
+        texi2pdf(texfile, quiet = TRUE, texinputs = vigns$dir)
         ## </FIXME>
         pdffile <-
             paste(basename(file_path_sans_ext(srcfile)), ".pdf", sep = "")
@@ -767,9 +772,17 @@ function(dir)
             ## .check_package_description will insist on these operators
             if(!depends$op %in% c("<=", ">=", "<", ">", "==", "!="))
                 message("WARNING: malformed 'Depends' field in 'DESCRIPTION'")
-            else
-                status <- !do.call(depends$op,
-                                   list(current, depends$version))
+            else {
+                status <- if(inherits(depends$version, "numeric_version"))
+                    !do.call(depends$op, list(current, depends$version))
+                else {
+                    ver <- R.version
+                    if (ver$status %in% c("", "Patched")) FALSE
+                    else !do.call(depends$op,
+                                 list(ver[["svn rev"]],
+                                      as.numeric(sub("^r", "", depends$version))))
+                }
+            }
             if(status != 0) {
                 package <- Sys.getenv("R_PACKAGE_NAME")
                 if(!nzchar(package))

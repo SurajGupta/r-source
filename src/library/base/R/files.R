@@ -80,8 +80,8 @@ list.files <- function(path = ".", pattern = NULL, all.files = FALSE,
 
 dir <- list.files
 
-list.dirs <- function(path = ".", full.names = TRUE)
-    .Internal(list.dirs(path, full.names))
+list.dirs <- function(path = ".", full.names = TRUE, recursive = TRUE)
+    .Internal(list.dirs(path, full.names, recursive))
 
 
 file.path <-
@@ -203,8 +203,8 @@ path.expand <- function(path)
 Sys.glob <- function(paths, dirmark = FALSE)
     .Internal(Sys.glob(path.expand(paths), dirmark))
 
-unlink <- function(x, recursive = FALSE)
-    .Internal(unlink(as.character(x), recursive))
+unlink <- function(x, recursive = FALSE, force = FALSE)
+    .Internal(unlink(as.character(x), recursive, force))
 
 Sys.chmod <- function(paths, mode = "0777", use_umask= TRUE)
     .Internal(Sys.chmod(paths, as.octmode(mode), use_umask))
@@ -220,3 +220,12 @@ readRenviron <- function(path)
 
 normalizePath <- function(path, winslash = "\\", mustWork = NA)
     .Internal(normalizePath(path.expand(path), winslash, mustWork))
+
+Sys.setFileTime <- function(path, time)
+{
+    if (!is.character(path) || length(path) != 1L)
+        stop("invalid 'path' argument")
+    time <- as.POSIXct(time)
+    if (is.na(time))  stop("invalid 'time' argument")
+    invisible(.Call("R_setFileTime", path, time, PACKAGE = "base"))
+}

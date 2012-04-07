@@ -2,7 +2,7 @@ msgid ""
 msgstr ""
 "Project-Id-Version: 2.13.0\n"
 "Report-Msgid-Bugs-To: bugs@r-project.org\n"
-"POT-Creation-Date: 2011-03-22 15:33\n"
+"POT-Creation-Date: 2011-09-05 08:24\n"
 "PO-Revision-Date: 2011-03-26 08:56-0300\n"
 "Last-Translator: Fernando Henrique <pessoal@fernandohrosa.com.br>\n"
 "Language-Team: http://www.feferraz.net/br/P/Projeto_Traducao_R_Portugues\n"
@@ -12,6 +12,9 @@ msgstr ""
 "Content-Transfer-Encoding: 8bit\n"
 "Plural-Forms: nplurals=2; plural=(n > 1);\n"
 "X-Generator: Pootle 2.0.5\n"
+
+msgid "invalid 'filename'"
+msgstr "'filename' inválido"
 
 msgid "'coef' must not be negative"
 msgstr "'coef' não pode ser negativo"
@@ -30,9 +33,6 @@ msgstr "'bias' deve ser positivo"
 
 msgid "at least 3 columns needed"
 msgstr "pelo menos 3 colunas necessárias"
-
-msgid "The 'gamma' argument is deprecated and has no effect"
-msgstr "O argumento 'gamma' é obsoleto e não tem mais efeito"
 
 msgid "rgb matrix must be numeric"
 msgstr "matriz rgb deve ser numérica"
@@ -161,6 +161,9 @@ msgstr "argumento 'family' inválido"
 
 msgid "invalid 'file'"
 msgstr "'file' inválido"
+
+msgid "'maxRasters' is no longer needed, and will be ignored"
+msgstr ""
 
 msgid "invalid PDF version"
 msgstr "versão PDF inválida"
@@ -300,6 +303,9 @@ msgstr "dispositivo '%s' não está disponível"
 msgid "Available devices are %s"
 msgstr "dispositivos disponíveis são %s"
 
+msgid "'res' must be specified unless 'units = \"px\"'"
+msgstr "'res' deve ser especificada a não ser 'units = \"px\"'"
+
 msgid "invalid 'title'"
 msgstr "'title' inválido"
 
@@ -312,11 +318,11 @@ msgstr "argumentos inválidos em quartzFonts (devem ser nomes de fontes)"
 msgid "invalid arguments in quartzFonts (need named args)"
 msgstr "argumentos inválidos em quartzFonts (precisa de argumentos nomeados)"
 
-msgid "invalid 'filename'"
-msgstr "'filename' inválido"
+msgid "cairo-based types are not supported on this build - using \"Xlib\""
+msgstr ""
 
-msgid "'res' must be specified unless 'units = \"px\"'"
-msgstr "'res' deve ser especificada a não ser 'units = \"px\"'"
+msgid "unknown family for X11(type = \"XLib\")"
+msgstr ""
 
 msgid "invalid X11 font specification:"
 msgstr "especificação de fonte X11 inválido:"
@@ -379,6 +385,9 @@ msgid "%d z value <= 0 omitted from logarithmic plot"
 msgid_plural "%d z values <= 0 omitted from logarithmic plot"
 msgstr[0] "valores %d z <= 0 omitidos do gráfico logarítmico"
 msgstr[1] ""
+
+#~ msgid "The 'gamma' argument is deprecated and has no effect"
+#~ msgstr "O argumento 'gamma' é obsoleto e não tem mais efeito"
 
 #~ msgid "No valid indices"
 #~ msgstr "Sem nenhum índice válido"

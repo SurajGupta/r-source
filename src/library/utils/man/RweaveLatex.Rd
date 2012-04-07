@@ -118,7 +118,7 @@ RweaveLatexSetup(file, syntax, output = NULL, quiet = FALSE,
     \item{echo:}{logical (\code{TRUE}). Include \R code in the output
       file?}
 
-    \item{keep.source:}{logical (\code{FALSE}).  When echoing, if
+    \item{keep.source:}{logical (\code{TRUE}).  When echoing, if
       \code{keep.source == TRUE} the original source is copied to the
       file.  Otherwise, deparsed source is echoed.}
     
@@ -187,8 +187,9 @@ RweaveLatexSetup(file, syntax, output = NULL, quiet = FALSE,
     \item{pdf:}{logical (\code{TRUE}), indicating whether PDF figures
       should be generated.  Ignored if \code{fig = FALSE}.}
     
-    \item{pdf.version, pdf.encoding:}{passed to \code{\link{pdf}} to set
-      the version and encoding.  Defaults taken from \code{pdf.options()}.}
+    \item{pdf.version, pdf.encoding, pdf.compress:}{passed to
+      \code{\link{pdf}} to set the version, encoding and compression (or
+      not).  Defaults taken from \code{pdf.options()}.}
     
     \item{png:}{logical (\code{FALSE}), indicating whether PNG figures
       should be generated.  Ignored if \code{fig = FALSE}.  Only
@@ -217,18 +218,19 @@ RweaveLatexSetup(file, syntax, output = NULL, quiet = FALSE,
       This is an experimental feature; see the source code for the
       output format, which is subject to change in future releases.}
     
-    \item{figs.only:}{logical (\code{TRUE}).  By default each figure
-      chunk is run once for each selected type of graphics, for which a
-      new graphics device is opened and then closed.  Setting this
-      option to false will open a default graphics device for the first
-      figure chunk and use that device for the first evaluation of all
-      subsequent chunks, the default behaviour prior to \R 2.14.0.}
+    \item{figs.only:}{logical (\code{FALSE}).
+      By default each figure chunk is run once, then re-run for each
+      selected type of graphics.  That will open a default graphics
+      device for the first figure chunk and use that device for the first
+      evaluation of all subsequent chunks.  If this option is true, the
+      figure chunk is run only for each selected type of graphics, for
+      which a new graphics device is opened and then closed.}
   }
 
   In addition, users can specify further options, either in the header
   of an individual code section or in a \samp{\\SweaveOpts\{\}} line in
-  the document.  Note that (for historical reasons) unrecognized options
-  are taken to be logical.
+  the document. Prior to \R 2.14.0 unknown options were taken as
+  logical: now their type is set at first use.
 }
 
 \section{Custom Graphics Devices}{

@@ -14,8 +14,7 @@
 #  A copy of the GNU General Public License is available at
 #  http://www.r-project.org/Licenses/
 
-load <-
-    function (file, envir = parent.frame())
+load <- function (file, envir = parent.frame())
 {
     if (is.character(file)) {
         ## files are allowed to be of an earlier format
@@ -25,13 +24,15 @@ load <-
         ## Since the connection is not open this opens it in binary mode
         ## and closes it again.
         magic <- readChar(con, 5L, useBytes = TRUE)
-        if (!grepl("RD[AX]2\n", magic)) {
+	if (!length(magic)) stop("empty (zero-byte) input file")
+	if (!grepl("RD[AX]2\n", magic)) {
             ## a check while we still know the call to load()
             if(grepl("RD[ABX][12]\r", magic))
                 stop("input has been corrupted, with LF replaced by CR")
             ## Not a version 2 magic number, so try the pre-R-1.4.0 code
-            warning(gettextf("file '%s' has magic number '%s'\n   Use of save versions prior to 2 is deprecated",
-                             basename(file), gsub("[\n\r]*", "", magic)),
+            warning(gettextf("file %s has magic number '%s'\n   Use of save versions prior to 2 is deprecated",
+                             sQuote(basename(file)),
+                             gsub("[\n\r]*", "", magic)),
                     domain = NA, call. = FALSE)
             return(.Internal(load(file, envir)))
         }
@@ -60,7 +61,7 @@ save <- function(..., list = character(),
 
     names <- as.character( substitute( list(...)))[-1L]
     list<- c(list, names)
-    if (! is.null(version) && version == 1)
+    if (!is.null(version) && version == 1)
         invisible(.Internal(save(list, file, ascii, version, envir,
                                  eval.promises)))
     else {
@@ -79,29 +80,39 @@ save <- function(..., list = character(),
             }
         }
         if (is.character(file)) {
-            if (file == "") stop("'file' must be non-empty string")
-            con <- if (identical(compress, "bzip2")) {
-                if (!missing(compression_level))
-                    bzfile(file, "wb", compression = compression_level)
-                else bzfile(file, "wb")
-            } else if (identical(compress, "xz")) {
-                if (!missing(compression_level))
-                    xzfile(file, "wb", compression = compression_level)
-                else xzfile(file, "wb", compression = 9)
-            } else if (identical(compress, "gzip") || compress) {
-                if (!missing(compression_level))
-                    gzfile(file, "wb", compression = compression_level)
-                else gzfile(file, "wb")
-            } else file(file, "wb")
-            on.exit(close(con))
-        }
-        else if (inherits(file, "connection"))
-            con <- file
-        else stop("bad file argument")
-        if(isOpen(con) && summary(con)$text != "binary")
-            stop("can only save to a binary connection")
-        invisible(.Internal(saveToConn(list, con, ascii, version, envir,
-                                       eval.promises)))
+	    if(!nzchar(file)) stop("'file' must be non-empty string")
+	    if(!is.character(compress)) {
+		if(!is.logical(compress))
+		    stop("'compress' must be logical or character")
+		compress <- if(compress) "gzip" else "no compression"
+	    }
+	    con <- switch(compress,
+			  "bzip2" = {
+			      if (!missing(compression_level))
+				  bzfile(file, "wb", compression = compression_level)
+			      else bzfile(file, "wb")
+			  }, "xz" = {
+			      if (!missing(compression_level))
+				  xzfile(file, "wb", compression = compression_level)
+			      else xzfile(file, "wb", compression = 9)
+			  }, "gzip" = {
+			      if (!missing(compression_level))
+				  gzfile(file, "wb", compression = compression_level)
+			      else gzfile(file, "wb")
+			  },
+			  "no compression" = file(file, "wb"),
+
+			  ## otherwise:
+			  stop(gettextf("'compress = \"%s\"' is invalid", compress)))
+	    on.exit(close(con))
+	}
+	else if (inherits(file, "connection"))
+	    con <- file
+	else stop("bad file argument")
+	if(isOpen(con) && summary(con)$text != "binary")
+	    stop("can only save to a binary connection")
+	invisible(.Internal(saveToConn(list, con, ascii, version, envir,
+				       eval.promises)))
     }
 }
 
@@ -166,7 +177,7 @@ sys.save.image <- function(name)
 findPackageEnv <- function(info)
 {
     if(info %in% search()) return(as.environment(info))
-    message(gettextf("Attempting to load the environment '%s'", info),
+    message(gettextf("Attempting to load the environment %s", sQuote(info)),
             domain = NA)
     pkg <- substr(info, 9L, 1000L)
     if(require(pkg, character.only=TRUE, quietly = TRUE))

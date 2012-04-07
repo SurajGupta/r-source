@@ -8,10 +8,10 @@
 \alias{pbirthday}
 \title{Probability of coincidences}
 \description{
-  Computes approximate answers to a generalised \emph{birthday paradox}
-  problem.  \code{pbirthday} computes the probability of a coincidence
-  and \code{qbirthday} computes the smallest number of observations
-  needed to have at least a specified probability of coincidence.
+  Computes answers to a generalised \emph{birthday paradox} problem.
+  \code{pbirthday} computes the probability of a coincidence and
+  \code{qbirthday} computes the smallest number of observations needed
+  to have at least a specified probability of coincidence.
 }
 \usage{
 qbirthday(prob = 0.5, classes = 365, coincident = 2)
@@ -39,10 +39,13 @@ pbirthday(n, classes = 365, coincident = 2)
  other than 0.5, numbers of coincident events other than 2, and numbers
  of classes other than 365.
 
- This formula is approximate.  For \code{coincident = 2} the exact
- computation is straightforward (see the examples) and may be
- preferable.  The approximation based on Diaconis and Mosteller (1989),
- and was a mis-reading prior to \R 2.13.1.
+ The formula used is approximate for \code{coincident > 2}.  The
+ approximation is very good for moderate values of \code{prob} but less
+ good for very small probabilities.
+}
+\note{
+  Prior to \R 2.14.0 the approximate formula was used even for
+  \code{coincident = 2}.
 }
 \references{
   Diaconis, P. and Mosteller F. (1989)
@@ -53,7 +56,15 @@ pbirthday(n, classes = 365, coincident = 2)
 require(graphics)
 
 ## the standard version
-qbirthday()
+qbirthday() # 23
+## probability of > 2 people with the same birthday
+pbirthday(23, coincident = 3)
+
+## examples from Diaconis & Mosteller p. 858.
+## 'coincidence' is that husband, wife, daughter all born on the 16th
+qbirthday(classes = 30, coincident = 3) # approximately 18
+qbirthday(coincident = 4)  # exact value 187
+qbirthday(coincident = 10) # exact value 1181
 
 ## same 4-digit PIN number
 qbirthday(classes = 10^4)
@@ -66,18 +77,5 @@ pbirthday(150, coincident = 4)
 
 ## 100 or more coincident birthdays in 1000 people: very rare
 pbirthday(1000, coincident = 100)
-
-## Accuracy compared to exact calculation
-x1 <-  sapply(10:100, pbirthday)
-x2 <- 1-sapply(10:100, function(n) prod((365:(365-n+1))/rep(365,n)))
-par(mfrow = c(2, 2))
-plot(x1, x2, xlab = "approximate", ylab = "exact")
-abline(0, 1)
-plot(x1, x1-x2, xlab = "approximate", ylab = "error")
-abline(h = 0)
-plot(x1, x2, log = "xy", xlab = "approximate", ylab = "exact")
-abline(0, 1)
-plot(1-x1, 1-x2, log = "xy", xlab = "approximate", ylab = "exact")
-abline(0, 1)
 }
 \keyword{distribution}

@@ -1,3 +1,4 @@
+
 #  File src/library/tools/R/Rd2HTML.R
 #  Part of the R package, http://www.R-project.org
 #
@@ -145,7 +146,8 @@ Rd2HTML <-
     function(Rd, out = "", package = "", defines = .Platform$OS.type,
              Links = NULL, Links2 = NULL,
              stages = "render", outputEncoding = "UTF-8",
-             dynamic = FALSE, no_links = FALSE, fragment=FALSE, ...)
+             dynamic = FALSE, no_links = FALSE, fragment=FALSE, 
+             stylesheet = "R.css", ...)
 {
     if (missing(no_links) && is.null(Links) && !dynamic) no_links <- TRUE
     version <- ""
@@ -497,6 +499,25 @@ Rd2HTML <-
                    leavePara(FALSE)
                    inEqn <<- FALSE                   
                },
+               "\\figure" = {
+                   ## This is what is needed for static html pages
+                   if(dynamic) of1('<img src="figures/')
+                   else of1('<img src="../help/figures/')
+                   writeContent(block[[1]], tag)
+                   of1('" ')
+               	   if (length(block) > 1L
+               	       && length(imgoptions <- .Rd_get_latex(block[[2]]))
+		       && grepl("^options: ", imgoptions)) {
+		       # There may be escaped percent signs within
+		       imgoptions <- gsub("\\%", "%", imgoptions, fixed=TRUE)
+                       of1(sub("^options: ", "", imgoptions))
+	           } else {
+		       of1('alt="')
+		       writeContent(block[[length(block)]])
+		       of1('"')
+		   }
+                   of1(' />')
+               },
                "\\dontshow" =,
                "\\testonly" = {}, # do nothing
                "\\method" =,
@@ -758,7 +779,9 @@ Rd2HTML <-
 	    mime_canonical_encoding(outputEncoding),
 	    '">\n')
 
-	of0('<link rel="stylesheet" type="text/css" href="R.css">\n',
+	of0('<link rel="stylesheet" type="text/css" href="',
+	    stylesheet,
+	    '">\n',
 	    '</head><body>\n\n',
 	    '<table width="100%" summary="page for ', htmlify(name))
 	if (nchar(package))

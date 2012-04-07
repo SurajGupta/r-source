@@ -16,20 +16,16 @@ DISTFILES = DESCRIPTION.in Makefile.in Makefile.win NAMESPACE
 pkg = stats4
 
 R_EXE = $(top_builddir)/bin/R --vanilla --slave
+DEFPKGS = "methods,graphics,stats"
 
 all: Makefile DESCRIPTION
 	@$(ECHO) "building package '$(pkg)'"
 	@$(MKINSTALLDIRS) $(top_builddir)/library/$(pkg)
 	@$(MAKE) mkR2 mkdesc mkpo
-	@$(MAKE) Rfiles
+@BYTE_COMPILE_PACKAGES_FALSE@	@$(MAKE) mklazy
+@BYTE_COMPILE_PACKAGES_TRUE@	@$(MAKE) mklazycomp
 
-
-Rfiles: $(top_builddir)/library/$(pkg)/R/$(pkg).rdb
-
-$(top_builddir)/library/$(pkg)/R/$(pkg).rdb: all.R
-	@$(INSTALL_DATA) all.R $(top_builddir)/library/$(pkg)/R/$(pkg)
-	@$(ECHO) "tools:::makeLazyLoading(\"$(pkg)\")" | \
-	  R_DEFAULT_PACKAGES="methods,graphics,stats" LC_ALL=C $(R_EXE) > /dev/null
-
+mkR: mkR2
 
 include $(top_srcdir)/share/make/basepkg.mk
+include $(top_srcdir)/share/make/lazycomp.mk

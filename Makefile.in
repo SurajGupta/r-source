@@ -29,6 +29,7 @@ Makeconf: $(srcdir)/Makeconf.in $(top_builddir)/config.status
 	@cd $(top_builddir) && $(SHELL) ./config.status $@
 
 ACLOCAL_M4 = aclocal.m4
+## NB: this is duplicated in m4/Makefile.in
 ACINCLUDE_DEPENDENCIES = \
 	m4/R.m4 \
 	m4/bigendian.m4 \
@@ -37,7 +38,8 @@ ACINCLUDE_DEPENDENCIES = \
 	m4/codeset.m4 \
 	m4/gettext.m4 m4/gettext-lib.m4 \
 	m4/java.m4 \
-	m4/libtool.m4 m4/ltoptions.m4 m4/ltversion.m4 m4/ltsugar.m4 m4/lt~obsolete.m4
+	m4/libtool.m4 m4/ltoptions.m4 m4/ltversion.m4 m4/ltsugar.m4 m4/lt~obsolete.m4 \
+	m4/stat-time.m4
 CONFIGURE_DEPENDENCIES = $(srcdir)/VERSION
 config.status: $(srcdir)/configure
 	@$(SHELL) ./config.status --recheck
@@ -195,15 +197,17 @@ distdir: $(DISTFILES) vignettes
 	      | (cd $(distdir); $(TAR) -x -f -)) \
 	    || exit 1; \
 	done
-	@cp library/grid/doc/*.pdf $(distdir)/src/library/grid/inst/doc
-	@cp library/utils/doc/*.pdf $(distdir)/src/library/utils/inst/doc
+	@for d in grid parallel utils; do \
+	  mkdir -p $(distdir)/src/library/$${d}/inst/doc; \
+	  cp library/$${d}/doc/*.pdf $(distdir)/src/library/$${d}/inst/doc; \
+	done
 	@(cd $(distdir); tools/link-recommended)
 
-dvi info pdf:
+info pdf:
 	-@(cd doc && $(MAKE) $@)
-install-dvi install-info install-pdf:
+install-info install-pdf:
 	-@(cd doc/manual && $(MAKE) $@)
-uninstall-dvi uninstall-info uninstall-pdf:
+uninstall-info uninstall-pdf:
 	-@(cd doc/manual && $(MAKE) $@)
 
 install-tests:
@@ -219,24 +223,5 @@ check check-devel check-all check-recommended:
 
 reset-recommended:
 	@(cd src/library/Recommended && $(MAKE) clean)
-
-## This is a temporary target -- we'll do a better job soon
-bytecode: all
-	@if test ! -e $(top_builddir)/library/compiler; \
-	    then $(ECHO) "install the compiler first"; exit 1; fi
-	    exit
-	@for pkg in $(R_PKGS_BASE); do \
-	    $(ECHO) compiling code in package \"$${pkg}\"; \
-            touch $(top_builddir)/src/library/$${pkg}/all.R; \
-            (cd $(top_builddir)/src/library/$${pkg}; \
-	     R_COMPILE_PKGS=1 R_COMPILER_SUPPRESS_ALL=1 $(MAKE)) \
-	done
-	@for pkg in $(R_PKGS_RECOMMENDED); do \
-	    $(ECHO) compiling code in package \"$${pkg}\"; \
-	    R_COMPILE_PKGS=1 R_COMPILER_SUPPRESS_ALL=1 \
-	    $(top_builddir)/bin/R CMD INSTALL \
-	        -l $(top_builddir)/library \
-		$(srcdir)/src/library/Recommended/$${pkg}.tgz; \
-	done
 
 TAGS:

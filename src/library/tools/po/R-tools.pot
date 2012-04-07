@@ -1,8 +1,8 @@
 msgid ""
 msgstr ""
-"Project-Id-Version: R 2.13.0\n"
+"Project-Id-Version: R 2.14.0\n"
 "Report-Msgid-Bugs-To: bugs@r-project.org\n"
-"POT-Creation-Date: 2011-03-22 15:33\n"
+"POT-Creation-Date: 2011-10-03 18:49\n"
 "PO-Revision-Date: YEAR-MO-DA HO:MI+ZONE\n"
 "Last-Translator: FULL NAME <EMAIL@ADDRESS>\n"
 "Language-Team: LANGUAGE <LL@li.org>\n"
@@ -272,6 +272,21 @@ msgstr ""
 msgid "See the information on DESCRIPTION files in section 'Creating R packages' of the 'Writing R Extensions' manual."
 msgstr ""
 
+msgid "Malformed Authors@R field:"
+msgstr ""
+
+msgid "Cannot extract Author field from Authors@R field:"
+msgstr ""
+
+msgid "Authors@R field gives no person with author role."
+msgstr ""
+
+msgid "Cannot extract Maintainer field from Authors@R field:"
+msgstr ""
+
+msgid "Authors@R field gives no person with maintainer role and email address."
+msgstr ""
+
 msgid "Encoding '%s' is not portable"
 msgstr ""
 
@@ -317,6 +332,42 @@ msgstr ""
 msgid "found %s"
 msgstr ""
 
+msgid "File %s:"
+msgstr ""
+
+msgid "%s has wrong argument list %s"
+msgstr ""
+
+msgid ","
+msgstr ""
+
+msgid "%s calls:"
+msgstr ""
+
+msgid "Package startup functions should have two arguments with names starting with %s and %s, respectively."
+msgstr ""
+
+msgid "lib"
+msgstr ""
+
+msgid "pkg"
+msgstr ""
+
+msgid "Package startup functions should not change the search path."
+msgstr ""
+
+msgid "Package startup functions should use %s to generate messages."
+msgstr ""
+
+msgid "packageStartupMessage"
+msgstr ""
+
+msgid "See section %s in ?.onAttach."
+msgstr ""
+
+msgid "Good practice"
+msgstr ""
+
 msgid "package 'methods' is used but not declared"
 msgstr ""
 
@@ -348,9 +399,6 @@ msgid "Generics g in env ="
 msgstr ""
 
 msgid "where hasMethods(g, env) errors:"
-msgstr ""
-
-msgid ","
 msgstr ""
 
 msgid "May need something like"
@@ -431,6 +479,9 @@ msgstr ""
 msgid "no inputs"
 msgstr ""
 
+msgid "DVI output from Rd2dvi is deprecated"
+msgstr ""
+
 msgid "Error in running tools::texi2dvi"
 msgstr ""
 
@@ -440,6 +491,9 @@ msgstr ""
 msgid "invalid value for '%s' : %s"
 msgstr ""
 
+msgid "Only one Rd section per \\Sexpr is supported."
+msgstr ""
+
 msgid "unable to create temp directory"
 msgstr ""
 
@@ -447,6 +501,9 @@ msgid "processing vignette '%s' failed with diagnostics:\n%s"
 msgstr ""
 
 msgid "running 'make' failed"
+msgstr ""
+
+msgid "In '%s' vignettes '%s' and '%s' have the same vignette name"
 msgstr ""
 
 msgid "argument 'vignette' must be of length 1"
@@ -462,12 +519,6 @@ msgid "*** someone has corrupted the Built field in package '%s' ***"
 msgstr ""
 
 msgid "cannot open directory '%s'"
-msgstr ""
-
-msgid "WARNING: 'Depends' entry has multiple dependencies on R:"
-msgstr ""
-
-msgid "only the first will be used in R < 2.7.0"
 msgstr ""
 
 msgid "WARNING: omitting pointless dependence on 'R' without a version requirement"
@@ -500,10 +551,7 @@ msgstr ""
 msgid "cannot create directory '%s'"
 msgstr ""
 
-msgid "processing '"
-msgstr ""
-
-msgid "'"
+msgid "processing"
 msgstr ""
 
 msgid "running Sweave on vignette '%s' failed with message:\n%s"
@@ -533,24 +581,6 @@ msgstr ""
 msgid "The default JSS style may not be modified."
 msgstr ""
 
-msgid "--binary is deprecated"
-msgstr ""
-
-msgid "use of '--auto-zip' is defunct"
-msgstr ""
-
-msgid "use of '--use-zip-data' is defunct"
-msgstr ""
-
-msgid "use of '--no-docs' is deprecated: use '--install-args' instead"
-msgstr ""
-
-msgid "** Options"
-msgstr ""
-
-msgid "are only for '--binary'  and will be ignored"
-msgstr ""
-
 msgid "Error: cannot rename directory to"
 msgstr ""
 
@@ -566,6 +596,9 @@ msgstr ""
 msgid "Error: no packages were specified"
 msgstr ""
 
+msgid "ERROR: cannot create check dir %s"
+msgstr ""
+
 msgid "package dir"
 msgstr ""
 
@@ -575,7 +608,19 @@ msgstr ""
 msgid "No files in this directory"
 msgstr ""
 
+msgid "Unrecognized search field:"
+msgstr ""
+
 msgid "No results found"
+msgstr ""
+
+msgid "Vignettes:"
+msgstr ""
+
+msgid "Code demonstrations:"
+msgstr ""
+
+msgid "Help pages:"
 msgstr ""
 
 msgid "No help found for topic %s in any package."
@@ -599,7 +644,7 @@ msgstr ""
 msgid "No docs found for package %s"
 msgstr ""
 
-msgid "Only help files, %s, %s and files under %s in a package can be viewed"
+msgid "Only help files, %s, %s and files under %s and %s in a package can be viewed"
 msgstr ""
 
 msgid "NEWS"
@@ -609,6 +654,9 @@ msgid "DESCRIPTION"
 msgstr ""
 
 msgid "doc/"
+msgstr ""
+
+msgid "demo/"
 msgstr ""
 
 msgid "unsupported URL %s"
@@ -662,10 +710,16 @@ msgstr ""
 msgid "'cleanup' exists but is not executable -- see the 'R Installation and Administration Manual'"
 msgstr ""
 
+msgid "installing via 'install.libs.R' to"
+msgstr ""
+
 msgid "installing to"
 msgstr ""
 
 msgid "generating debug symbols (dSYM)"
+msgstr ""
+
+msgid "package %s successfully unpacked and MD5 sums checked"
 msgstr ""
 
 msgid "R include directory is empty -- perhaps need to install R-devel.rpm or similar"
@@ -725,7 +779,10 @@ msgstr ""
 msgid "there is no package called '%s'"
 msgstr ""
 
-msgid "name space must not be loaded."
+msgid "namespace must not be already loaded"
+msgstr ""
+
+msgid "all packages should have a NAMESPACE"
 msgstr ""
 
 msgid "package seems to be using lazy loading for data already"
@@ -770,7 +827,10 @@ msgstr ""
 msgid "%s"
 msgstr ""
 
-msgid "Malformed NEWS.Rd file."
+msgid "Malformed NEWS.Rd file:\nChunk starting\n  %s\ncontains no \\itemize."
+msgstr ""
+
+msgid "Malformed NEWS.Rd file:\nChunk starting\n  %s\ncontains more than one \\itemize.\nUsing the first one."
 msgstr ""
 
 msgid "Processing packages:"
@@ -806,6 +866,87 @@ msgstr ""
 msgid "found encoding"
 msgstr ""
 
+msgid "%s must be a character string or a file/raw connection"
+msgstr ""
+
+msgid "PDF header not found"
+msgstr ""
+
+msgid "EOF marker not found"
+msgstr ""
+
+msgid "cannot find startxref"
+msgstr ""
+
+msgid "cannot find xref table"
+msgstr ""
+
+msgid "cannot read xref table"
+msgstr ""
+
+msgid "wrong class"
+msgstr ""
+
+msgid "attempting to select less than one element"
+msgstr ""
+
+msgid "attempting to select more than one element"
+msgstr ""
+
+msgid "looking at %s"
+msgstr ""
+
+msgid "cannot read literal string object"
+msgstr ""
+
+msgid "cannot read hexadecimal string object"
+msgstr ""
+
+msgid "cannot read name object"
+msgstr ""
+
+msgid "cannot read array object"
+msgstr ""
+
+msgid "cannot read dictionary object"
+msgstr ""
+
+msgid "cannot read stream object"
+msgstr ""
+
+msgid "cannot read indirect reference object"
+msgstr ""
+
+msgid "cannot find object header at xrefed position %d"
+msgstr ""
+
+msgid "mismatch in object numbers (given: %d, found: %d)"
+msgstr ""
+
+msgid "mismatch in generation numbers (given: %d, found: %d)"
+msgstr ""
+
+msgid "cannot read stream data"
+msgstr ""
+
+msgid "invalid index in object stream lookup"
+msgstr ""
+
+msgid "processing %s"
+msgstr ""
+
+msgid "expanding %s"
+msgstr ""
+
+msgid "unsupported filter %s"
+msgstr ""
+
+msgid "unsupported flatedecode predictor %d"
+msgstr ""
+
+msgid "unsupported PNG filter %d"
+msgstr ""
+
 msgid "argument 'pkg' must be of length 1"
 msgstr ""
 
@@ -828,6 +969,18 @@ msgid "unimplemented encoding"
 msgstr ""
 
 msgid "file"
+msgstr ""
+
+msgid "Found %s, possibly from %s"
+msgstr ""
+
+msgid "%s (%s)"
+msgstr ""
+
+msgid "ssname"
+msgstr ""
+
+msgid "language"
 msgstr ""
 
 msgid "cannot be opened"
@@ -854,7 +1007,7 @@ msgstr ""
 msgid "results differ from reference results"
 msgstr ""
 
-msgid "no examples found"
+msgid "no examples found for package %s"
 msgstr ""
 
 msgid "Running specific tests for package"
@@ -966,6 +1119,9 @@ msgid "invalid package layout"
 msgstr ""
 
 msgid "file '%s' is not in valid DCF format"
+msgstr ""
+
+msgid "Unknown encoding with non-ASCII data: converting to ASCII"
 msgstr ""
 
 msgid "cannot source package code"

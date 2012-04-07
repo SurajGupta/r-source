@@ -57,9 +57,6 @@ tempdir()
   contains a space in any of the components, the path returned will use
   the shortnames version of the path.
 #endif
-
-  The optional argument \code{fileext} can be used to supply a file
-  extension, for example \code{fileext=".png"}.    
 }
 \references{
   Becker, R. A., Chambers, J. M. and Wilks, A. R. (1988)

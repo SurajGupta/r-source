@@ -17,6 +17,7 @@
 \alias{extendsMetaName}
 \alias{classPrototypeDef-class}
 %%
+\alias{classLabel}
 \alias{testVirtual}
 \alias{makePrototypeFromClassDef}
 \alias{newEmptyObject}
@@ -63,6 +64,8 @@
 }
 
 \usage{
+classLabel(Class)
+
 testVirtual(properties, extends, prototype, where)
 
 makePrototypeFromClassDef(slots, ClassDef, extends, where)
@@ -285,6 +288,11 @@ setDataPart(object, value, check = TRUE)
       functions to test and/or coerce the relationship.
     }
 
+{\code{classLabel}: }{
+        Returns an informative character string identifying the class
+        and, if appropriate, the package from which the class came.
+    }
+
     \item{\code{completeExtends}:}{
       complete the extends information in the class definition, by
       following transitive chains.
@@ -349,7 +357,7 @@ setDataPart(object, value, check = TRUE)
 
     \item{\code{.InitBasicClasses}, \code{.InitMethodsListClass}, \code{.setCoerceGeneric}:}{
       These functions perform part of the initialization of classes and
-      methods, and are called (only!) from \code{.First.lib}.
+      methods, and are called (only!) from \code{.onLoad}.
     }
 
     \item{\code{isClassDef}:}{

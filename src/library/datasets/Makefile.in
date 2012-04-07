@@ -11,11 +11,9 @@ subdir = src/library/datasets
 include $(top_builddir)/Makeconf
 
 distdir = $(top_builddir)/$(PACKAGE)-$(VERSION)/$(subdir)
-DISTFILES = DESCRIPTION.in Makefile.in Makefile.win
+DISTFILES = DESCRIPTION.in Makefile.in Makefile.win NAMESPACE
 
 pkg = datasets
-
-RSRC = $(srcdir)/R/zzz.R
 
 R_EXE = $(top_builddir)/bin/R --vanilla --slave
 
@@ -34,3 +32,11 @@ all: Makefile DESCRIPTION
 	  $(top_builddir)/library/$(pkg)/data
 
 include $(top_srcdir)/share/make/basepkg.mk
+
+mkR:
+	@$(INSTALL_DATA) $(srcdir)/NAMESPACE $(top_builddir)/library/$(pkg)
+	@rm -f $(top_builddir)/library/$(pkg)/Meta/nsInfo.rds
+
+
+# dummy targets
+Rsimple Rlazy Rlazycomp:

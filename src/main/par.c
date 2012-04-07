@@ -125,6 +125,7 @@ ParTable  [] = {
     { "yaxp",		 0 },
     { "yaxs",		 0 },
     { "yaxt",		 0 },
+    { "ylbias",		 1 },
     { "ylog",		 1 },
     /* Obsolete pars */
     { "gamma",		-2},
@@ -247,6 +248,7 @@ static void Specify(const char *what, SEXP value, pGEDevDesc dd, SEXP call)
  *	"pin", "plt", "ps", "pty"
  *	"usr",
  *	"xlog", "ylog"
+ *	"ylbias",
  */
     double x;
     int ix = 0;
@@ -642,6 +644,10 @@ static void Specify(const char *what, SEXP value, pGEDevDesc dd, SEXP call)
 	if (ix == NA_LOGICAL)
 	    par_error(what);
 	R_DEV__(ylog) = (ix != 0);
+    }
+    else if (streql(what, "ylbias")) {
+	lengthCheck(what, value, 1, call);
+	dd->dev->yLineBias = asReal(value);
     }
     /* We do not need these as Query will already have warned.
     else if (streql(what, "type")) {
@@ -1084,6 +1090,10 @@ static SEXP Query(const char *what, pGEDevDesc dd)
 	buf[1] = '\0';
 	value = mkString(buf);
     }
+    else if (streql(what, "ylbias")) {
+	value = allocVector(REALSXP, 1);
+	REAL(value)[0] = dd->dev->yLineBias;
+    }
     else if (streql(what, "ylog")) {
 	value = allocVector(LGLSXP, 1);
 	LOGICAL(value)[0] = dpptr(dd)->ylog;
@@ -1156,20 +1166,6 @@ SEXP attribute_hidden do_par(SEXP call, SEXP op, SEXP args, SEXP env)
     
     UNPROTECT(2);
     return value;
-}
-
-SEXP attribute_hidden Rg_readonlypars(void)
-{
-    SEXP result;
-
-    PROTECT(result = allocVector(STRSXP, 5));
-    SET_STRING_ELT(result, 0, mkChar("cin"));
-    SET_STRING_ELT(result, 1, mkChar("cra"));
-    SET_STRING_ELT(result, 2, mkChar("csi"));
-    SET_STRING_ELT(result, 3, mkChar("cxy"));
-    SET_STRING_ELT(result, 4, mkChar("din"));
-    UNPROTECT(1);
-    return result;
 }
 
 /*

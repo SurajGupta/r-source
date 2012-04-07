@@ -29,7 +29,7 @@ trace <- function(what, tracer, exit, at, print, signature, where = topenv(paren
     tState <- tracingState(FALSE)
     on.exit(tracingState(tState))
     ## now call the version in the methods package, to ensure we get
-    ## the correct name space (e.g., correct version of class())
+    ## the correct namespace (e.g., correct version of class())
     call <- sys.call()
     call[[1L]] <- quote(methods::.TraceWithMethods)
     call$where <- where
@@ -50,7 +50,7 @@ untrace <- function(what, signature = NULL, where = topenv(parent.frame())) {
         return(.primUntrace(what)) ## can't have called trace except in primitive form
     ## at this point we can believe that the methods namespace was successfully loaded
     ## now call the version in the methods package, to ensure we get
-    ## the correct name space (e.g., correct version of class())
+    ## the correct namespace (e.g., correct version of class())
     call <- sys.call()
     call[[1L]] <- quote(methods::.TraceWithMethods)
     call$where <- where
@@ -73,31 +73,31 @@ isS4 <- function(object)
 asS4 <- function(object, flag = TRUE, complete = TRUE) {
     flag <- methods::as(flag, "logical")
     if(length(flag) != 1L || is.na(flag))
-      stop("Expected a single logical value for the S4 state flag")
+	stop("Expected a single logical value for the S4 state flag")
     .Call("R_setS4Object", object, flag, complete, PACKAGE = "base")
-  }
+}
 
 asS3 <- function(object, flag = TRUE, complete = TRUE) {
     flag <- methods::as(flag, "logical")
     if(length(flag) != 1L || is.na(flag))
-      stop("Expected a single logical value for the S3 state flag")
+	stop("Expected a single logical value for the S3 state flag")
     .Call("R_setS4Object", object, !flag, complete, PACKAGE = "base")
-  }
+}
 
 
 
 .doTrace <- function(expr, msg) {
-    on <- tracingState(FALSE) # turn it off QUICKLY (via a .Call)
+    on <- tracingState(FALSE)	   # turn it off QUICKLY (via a .Call)
     if(on) {
-        on.exit(tracingState(TRUE)) # restore on exit, keep off during trace
-        if(!missing(msg)) {
-            call <- deparse(sys.call(sys.parent(1L)))
-            if(length(call) > 1L)
-              call <- paste(call[[1L]], "....")
-            cat("Tracing", call, msg, "\n")
-        }
-        exprObj <- substitute(expr)
-        eval.parent(exprObj)
+	on.exit(tracingState(TRUE)) # restore on exit, keep off during trace
+	if(!missing(msg)) {
+	    call <- deparse(sys.call(sys.parent(1L)))
+	    if(length(call) > 1L)
+		call <- paste(call[[1L]], "....")
+	    cat("Tracing", call, msg, "\n")
+	}
+	exprObj <- substitute(expr)
+	eval.parent(exprObj)
     }
     NULL
 }

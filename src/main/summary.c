@@ -68,7 +68,7 @@ static Rboolean isum(int *x, int n, int *value, Rboolean narm, SEXP call)
 
 static Rboolean rsum(double *x, int n, double *value, Rboolean narm)
 {
-    LDOUBLE s = 0.0;
+    long double s = 0.0;
     int i;
     Rboolean updated = FALSE;
 
@@ -85,7 +85,7 @@ static Rboolean rsum(double *x, int n, double *value, Rboolean narm)
 
 static Rboolean csum(Rcomplex *x, int n, Rcomplex *value, Rboolean narm)
 {
-    LDOUBLE sr = 0.0, si = 0.0;
+    long double sr = 0.0, si = 0.0;
     int i;
     Rboolean updated = FALSE;
 
@@ -270,7 +270,7 @@ static Rboolean iprod(int *x, int n, double *value, Rboolean narm)
 
 static Rboolean rprod(double *x, int n, double *value, Rboolean narm)
 {
-    LDOUBLE s = 1.0;
+    long double s = 1.0;
     int i;
     Rboolean updated = FALSE;
 
@@ -287,7 +287,7 @@ static Rboolean rprod(double *x, int n, double *value, Rboolean narm)
 
 static Rboolean cprod(Rcomplex *x, int n, Rcomplex *value, Rboolean narm)
 {
-    LDOUBLE sr, si, tr, ti;
+    long double sr, si, tr, ti;
     int i;
     Rboolean updated = FALSE;
     sr = 1;
@@ -363,7 +363,7 @@ SEXP attribute_hidden do_summary(SEXP call, SEXP op, SEXP args, SEXP env)
 	   or *value ([ir]min / max) is assigned */
 
     if(PRIMVAL(op) == 1) { /* mean */
-	LDOUBLE s = 0., si = 0., t = 0., ti = 0.;
+	long double s = 0., si = 0., t = 0., ti = 0.;
 	int i, n = LENGTH(CAR(args));
 	SEXP x = CAR(args);
 	switch(TYPEOF(x)) {
@@ -1013,7 +1013,7 @@ SEXP attribute_hidden do_compcases(SEXP call, SEXP op, SEXP args, SEXP rho)
     return R_NilValue; /* -Wall */
 }
 
-/* op = 0 is pmin.int, op = 1 is pmax.int
+/* op = 0 is pmin, op = 1 is pmax
    It seems that NULL and logicals are supposed to be handled as
    if they have been coerced to integer.
  */
@@ -1066,6 +1066,14 @@ SEXP attribute_hidden do_pmin(SEXP call, SEXP op, SEXP args, SEXP rho)
     }
     if(anstype < INTSXP) anstype = INTSXP;
     if(len == 0) return allocVector(anstype, 0);
+    /* Check for fractional recycling (added in 2.14.0) */
+    for(a = args; a != R_NilValue; a = CDR(a)) {
+	n = length(CAR(a));
+	if (len % n) {
+	    warning(_("an argument will be fractionally recycled"));
+	    break;
+	}
+    }
 
     PROTECT(ans = allocVector(anstype, len));
     switch(anstype) {

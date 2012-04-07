@@ -16,19 +16,15 @@
 Sys.localeconv()
 }
 \details{
-  These settings are usually controlled by the environment variables
-  \env{LC_NUMERIC} and \env{LC_MONETARY} and if not set the values of
-  \env{LC_ALL} or \env{LANG}.
-
   Normally \R is run without looking at the value of \env{LC_NUMERIC},
   so the decimal point remains '\code{.}'.  So the first three of these
   components will only be useful if you have set the locale category
   \code{LC_NUMERIC} using \code{Sys.setlocale} in the current \R session
   (when \R may not work correctly).
 
-  On most platforms the locale category \code{LC_MONETARY} will be at
-  the initial value of \code{"C"}: see the examples for how to trigger
-  setting it.
+  The monetary components will only be set to non-default values (see
+  the \sQuote{Examples} section if the \code{LC_MONETARY} category is
+  set.  It often is not set: set the examples for how to trigger setting it.
 }
 \value{
   A character vector with 18 named components.  See your ISO C
@@ -56,8 +52,8 @@ Sys.localeconv()
 
 ## Now try your default locale (which might be "C").
 \dontrun{old <- Sys.getlocale()
-## This sets the locale category (if supported) from the OS default
-## or environment variables.
+## The category may not be set:
+## the following may do so, but it might not be supported. 
 Sys.setlocale("LC_MONETARY", locale = "")
 Sys.localeconv()
 ## or set an appropriate value yourself, e.g.

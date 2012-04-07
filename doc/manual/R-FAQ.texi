@@ -4,11 +4,11 @@
 @settitle R FAQ
 @setchapternewpage on
 @set FAQ_YEAR 2011
-@set FAQ_DATE @value{FAQ_YEAR}-09-17
+@set FAQ_DATE @value{FAQ_YEAR}-10-24
 @set REL_YEAR 2011
 @set REL_MAJOR 2
-@set REL_MINOR 13
-@set REL_PATCHLEVEL 1
+@set REL_MINOR 14
+@set REL_PATCHLEVEL 0
 @set REL_VERSION @value{REL_MAJOR}.@value{REL_MINOR}.@value{REL_PATCHLEVEL}
 @set FAQ_VERSION @value{REL_MAJOR}.@value{REL_MINOR}.@value{FAQ_DATE}
 
@@ -1756,6 +1756,8 @@ The R distribution comes with the following packages:
 @c 3.0.0
 @item base
 Base R functions (and datasets before R 2.0.0).
+@item compiler
+R byte code compiler (added in R 2.13.0).
 @item datasets
 Base R datasets (added in R 2.0.0).
 @item grDevices
@@ -1769,6 +1771,9 @@ interaction.
 @item methods
 Formally defined methods and classes for R objects, plus other
 programming tools, as described in the Green Book.
+@item parallel
+Support for parallel computation, including by forking and by sockets, 
+and random-number generation (added in R 2.14.0).
 @item splines
 Regression spline functions and classes.
 @item stats

@@ -4,14 +4,133 @@
 \title{Windows-specific changes to R}
 \encoding{UTF-8}
 
+\section{CHANGES IN R VERSION 2.14.0}{
+  \subsection{NEW FEATURES}{
+    \itemize{
+      \item The \code{yLineBias} of the \code{windows()} family of
+      devices has been changed from 0.1 to 0.2: this changes slightly
+      the vertical positioning of text (including axis annotations).
+      This can be overridden by setting the new \code{"ylbias"} graphical
+      parameter.  This was done for consistency with other devices
+      such as \code{pdf()}.
+
+      \item \command{R CMD build} once again attempts to preserve file
+      permissions on Windows.
+
+      \item There is support for cairographics-based devices using the
+      same code as on Unix-alikes.  This can be selected by the new
+      \code{type} argument of the bitmap devices \code{bmp()},
+      \code{jpeg()}, \code{png()} and \code{tiff()}, and devices
+      \code{svg()}, \code{cairo_pdf()} and \code{cairo_ps()} are now
+      available on Windows.
+
+      These are not compiled in by default when building from source:
+      see the instructions in the \sQuote{R Installation and
+	Administration Manual}.
+
+      \item All the Windows-specific graphics devices now have a
+      \code{family} argument.  If non-empty this specifies an initial
+      family to be used for fonts 1--4.  If empty the fonts specified in
+      the \file{Rdevga} configuration file are used for the Windows GDI
+      devices and \code{"sans"} for cairographics-based devices.
+
+      This will generally be a Windows font name such as
+      \code{"Lucida Bright"} or one of the device-independent names
+      (\code{"sans"}, \code{"serif"} and \code{"mono"}).  Outside
+      Western Europe you may need to select a family that better
+      supports your locale such as \code{"Arial MS Unicode"} or one
+      specific to Chinese/Korean/Thai \dots{}.
+
+      \item There is a new \file{antialias} argument to
+      \code{windows()}, \code{win.print()} and the bitmap devices.
+      This is an option that can be set in \code{windows.options()} to
+      set the default for \code{windows()} (and \code{win.graph()}).
+
+      This gives a hint to the Windows plotting system.  Whether
+      anti-aliasing is actually used principally depends on the OS
+      settings: this argument should at least be able to turn it
+      off.  The default behaviour (unchanged from before) is that Windows
+      will use anti-aliasing for screen devices (and bitmap devices, as
+      they plot on a hidden screen) if ClearType has been enabled.  For
+      those not using ClearType, \code{windows.options(antialias =
+	"cleartype")} will make this the default, and it will probably
+      give more legible plots. 
+
+      The argument can also be used for the cairographics-based versions
+      of the bitmap devices.
+
+      \item The \sQuote{Update packages ...} menu item now runs
+      \code{update.packages(ask="graphics", checkBuilt=TRUE)}.
+
+      \item \code{R CMD INSTALL} preserves the package-directory
+      modification time when it restores an earlier install of the package.
+
+      \item File extensions \code{.xz}, \code{.rda} and \code{.RData}
+      have been added to those which default to binary transfer for
+      \code{download.file()}.
+
+      \item \code{install.packages()} and \command{R CMD check} have a
+      small delay after removing a directory to counteract some
+      interference from anti-virus software.
+
+      \item There is a Danish translation of the RGui menus.
+    }
+  }
+
+  \subsection{INSTALLATION}{
+    \itemize{
+      \item Compilation of C and Fortran code now uses the optimization
+      flag \option{-mtune=core2}: this will improve performance a few
+      percent on recent CPUs at the expense of those which are several
+      years old.  Its effect is particularly evident on 64-bit builds.
+
+      This can be overridden when building from the sources: see the
+      \samp{EOPTS} macro defined in file \file{MkRules.dist}.
+
+      \item Where both 32- and 64-bit versions of R are installed, the
+      file association for \file{.RData} files defaults to 64-bit R (it
+      defaulted to 32-bit in R 2.12.x and 2.13.x).
+
+      \item There is preliminary support for \sQuote{multilib}
+      toolchains which use options \option{--m32} or \option{--m64} to
+      select the architecture; set the appropriate macros in
+      \file{MkRules.local}.
+
+      It is the intention to move to such a toolchain when they become
+      mature enough.
+    }
+  }
+
+  \subsection{PACKAGE INSTALLATION}{
+    \itemize{
+      \item \file{Rzlib.dll} (sometimes used in packages \emph{via}
+      \samp{$(ZLIB_LIBS)}) does not include the buggy gzio   % for balance: $
+      interface from zlib 1.2.5.
+    }
+  }
+
+  \subsection{DEFUNCT}{
+    \itemize{
+      \item{zip.unpack()} (deprecated in \R 2.13.0) is defunct:
+      use \code{unzip()} instead.
+    }
+  }
+
+  \subsection{BUG FIXES}{
+    \itemize{
+      \item Raster drawing on \code{win.metafile()} (or copying a plot
+      that includes a raster image from another device to a Metafile)
+      now does not crash.  (Reported by Stefan Gelissen.)
+    }
+  }
+}
+
 \section{CHANGES IN R VERSION 2.13.2}{
   \subsection{BUG FIXES}{
     \itemize{
-      \item \command{R CMD Sweave} and \command{R CMD Stangle} did not run.
-
       \item The fix for \PR{14583} caused inconsistent behaviour in other
       areas, e.g. \PR{14628}, extra lines appearing in image displays,
-      and uneven bases on histograms \PR{14632}.
+      and uneven bases on histograms.  (\PR{14632}).
       
       \item Opening large numbers of \code{windows()} graphics devices
       could cause some of them to fail to redraw (\PR{14668}).

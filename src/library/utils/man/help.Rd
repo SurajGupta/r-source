@@ -57,7 +57,7 @@ help(topic, package = NULL, lib.loc = NULL,
     If for some reason HTML help is unavailable (see
     \code{\link{startDynamicHelp}}), plain text help will be used
     instead.
-    \item For \code{help} only, typeset as a PostScript or PDF file --
+    \item For \code{help} only, typeset as a PDF or PostScript file --
     see the section on \sQuote{Offline help}.
   }
 #ifdef unix
@@ -74,11 +74,16 @@ help(topic, package = NULL, lib.loc = NULL,
   used do not support these quotes so this can be turned off by setting
   \code{\link{options}(useFancyQuotes = FALSE)}.
 
-  \code{topic} is not optional: if it is omitted \R will give (text)
-  information on the package (including hints to suitable help topics)
-  if a package is specified, a (text) list of available packages if
-  \code{lib.loc} only is specified, and help on \code{help} itself if
-  none of the first three arguments is specified.
+  \code{topic} is not optional: if it is omitted \R will give
+  \itemize{
+    \item If a package is specified, (text or, in interactive use only,
+    HTML) information on the package, including hints/links to suitable
+    help topics.
+    \item If \code{lib.loc} only is specified, a (text) list of available
+    packages.
+    \item Help on \code{help} itself if none of the first three
+  arguments is specified.
+  }
 
   Some topics need to be quoted (by \link{backtick}s) or given as a
   character string.  These include those which cannot syntactically
@@ -102,26 +107,30 @@ help(topic, package = NULL, lib.loc = NULL,
 
 \section{Offline help}{
   Typeset documentation is produced by running the LaTeX version of the
-  help page through \command{latex} and \command{dvips} or, if
-  \code{help_type = "PDF"}, \command{pdflatex}.  This will produce
-  either a PostScript or PDF file and possibly (depending on the
-  configuration of \command{dvips}) send a PostScript file to a printer.
-  You can set \code{\link{options}("dvipscmd")} to customize how
-  \command{dvips}) is called.
+  help page through \command{pdflatex} or (deprecated) \command{latex}
+  and \command{dvips}.  This will produce a PDF or PostScript file and
+  possibly (depending on the configuration of \command{dvips}) send a
+  PostScript file to a printer.
 
   The appearance of the output can be customized through a file
   \file{Rhelp.cfg} somewhere in your LaTeX search path: this will be
-  input as a LaTeX style file after \code{Rd.sty}.  Some 
+  input as a LaTeX style file after \code{Rd.sty}.  Some
   \link{environment variables} are consulted, notably \env{R_PAPERSIZE}
-  (\emph{via} \code{getOption("papersize")}) and \env{R_RD4DVI} /
-  \env{R_RD4PDF} (see \sQuote{Making manuals} in the
-  \sQuote{R Installation and Administration Manual}).
+  (\emph{via} \code{getOption("papersize")}) and \env{R_RD4PDF} (see
+  \sQuote{Making manuals} in the \sQuote{R Installation and
+  Administration Manual}).
 
   If there is a function \code{offline_help_helper} in the workspace or
   further down the search path it is used to do the typesetting,
-  otherwise the function of that name in the \code{utils} name space
-  (to which the first paragraph applies).  It should have two 
-  arguments, the name of the LaTeX file to be typeset and the type.
+  otherwise the function of that name in the \code{utils} namespace (to
+  which the first paragraph applies).  It should accept at least two
+  arguments, the name of the LaTeX file to be typeset and the type.  As
+  from \R 2.14.0 it should accept a third argument, \code{texinputs},
+  which will give the graphics path when the help document contains
+  figures, and will otherwise not be supplied.
+  
+  PostScript rendering of help pages containing figures will often not
+  include the figures (which is one reason it is deprecated).
 }
 
 \note{

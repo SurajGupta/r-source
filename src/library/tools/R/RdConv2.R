@@ -263,12 +263,13 @@ processRdChunk <- function(code, stage, options, env, Rdfile)
 	    res <- as.character(err)   # The last value of the chunk
 	    tmpcon <- file()
 	    writeLines(res, tmpcon, useBytes = TRUE)
-	    res <- suppressWarnings(try(parse_Rd(tmpcon, fragment=FALSE), silent=TRUE))
-	    if (inherits(res, "try-error")) {
-	    	seek(tmpcon, 0)
-	    	res <- parse_Rd(tmpcon, fragment=TRUE)
-	    }
-	    close(tmpcon)
+	    parseFragment <- function(cond) {
+	    	               seek(tmpcon, 0)
+	    	               parse_Rd(tmpcon, fragment=TRUE)
+	    	            }
+	    res <- tryCatch(parse_Rd(tmpcon, fragment=FALSE), 
+	    	            warning = parseFragment, error = parseFragment,
+	    	            finally = close(tmpcon))
 	    # Now remove that extra newline added by the writeLines
 	    last <- res[[length(res)]]
 	    if (attr(last, "Rd_tag") == "TEXT" && (len <- length(last)))
@@ -704,7 +705,8 @@ checkRd <- function(Rd, defines=.Platform$OS.type, stages="render",
                    inEnc2 <<- FALSE
                },
                "\\eqn" =,
-               "\\deqn" = {
+               "\\deqn" =,
+               "\\figure" = {
                    checkContent(block[[1L]])
                    if (length(block) > 1L) checkContent(block[[2L]])
                },

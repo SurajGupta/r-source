@@ -84,7 +84,7 @@ function(package, dir, lib.loc = NULL,
             setwd(startdir)
         }
     }
-    if(tangle && weave && latex) {
+    if(weave && latex) {
         if(!("Makefile" %in% list.files(vigns$dir))) {
             ## <NOTE>
             ## This used to run texi2dvi on *all* vignettes, including
@@ -106,8 +106,7 @@ function(package, dir, lib.loc = NULL,
                 bf <- file_path_sans_ext(basename(f))
                 if(bf %in% bad_vignettes) break
                 bft <- paste(bf, ".tex", sep = "")
-                .eval_with_capture(tryCatch(texi2dvi(file = bft, pdf = TRUE,
-                                                     clean = FALSE,
+                .eval_with_capture(tryCatch(texi2pdf(file = bft, clean = FALSE,
                                                      quiet = TRUE),
                                             error = function(e)
                                             result$latex[[f]] <<-
@@ -134,9 +133,9 @@ function(x, ...)
         }
     }
 
-    mycat(x$weave,  "*** Weave Errors ***")
     mycat(x$tangle, "*** Tangle Errors ***")
     mycat(x$source, "*** Source Errors ***")
+    mycat(x$weave,  "*** Weave Errors ***")
     mycat(x$latex,  "*** PDFLaTeX Errors ***")
 
     invisible(x)
@@ -156,17 +155,17 @@ function(package, dir, lib.loc = NULL)
             stop("argument 'package' must be of length 1")
         docdir <- file.path(find.package(package, lib.loc), "doc")
         ## Using package installed in @code{dir} ...
-    }
-    else {
+    } else {
         if(missing(dir))
             stop("you must specify 'package' or 'dir'")
         ## Using sources from directory @code{dir} ...
         if(!file_test("-d", dir))
-            stop(gettextf("directory '%s' does not exist", dir),
-                 domain = NA)
-        else
-            docdir <- file.path(file_path_as_absolute(dir), "inst",
-                                "doc")
+            stop(gettextf("directory '%s' does not exist", dir), domain = NA)
+        else {
+            docdir <- file.path(file_path_as_absolute(dir), "vignettes")
+            if(!file_test("-d", docdir))
+                docdir <- file.path(file_path_as_absolute(dir), "inst", "doc")
+        }
     }
 
     if(!file_test("-d", docdir)) return(NULL)
@@ -229,7 +228,7 @@ function(package, dir, lib.loc = NULL, quiet = TRUE, clean = TRUE)
         setwd(startdir)
         ## This can fail if run in a directory whose path contains spaces.
         if(!have.makefile)
-            texi2dvi(file = bft, pdf = TRUE, clean = FALSE, quiet = quiet)
+            texi2pdf(file = bft, clean = FALSE, quiet = quiet)
     }
 
     if(have.makefile) {
@@ -403,6 +402,15 @@ function(vignetteDir)
                       row.names = NULL, # avoid trying to compute row
                                         # names
                       stringsAsFactors = FALSE)
+
+    if (any(dups <- duplicated(names <- file_path_sans_ext(out$File)))) {
+    	dup <- out$File[dups][1]
+    	dupname <- names[dups][1]
+    	orig <- out$File[ names == dupname ][1]
+    	stop(gettextf("In '%s' vignettes '%s' and '%s' have the same vignette name",
+    		      basename(dirname(vignetteDir)), orig, dup),
+             domain = NA)
+    }
     out$Depends <- contents[, "Depends"]
     out$Keywords <- contents[, "Keywords"]
     out
@@ -442,10 +450,7 @@ function(x, ...)
 function(pkg, con, vignetteIndex = NULL)
 {
     ## FIXME: in principle we could need to set an encoding here
-    html <- c('<!DOCTYPE html PUBLIC "-//W3C//DTD HTML 4.01 Transitional//EN">',
-              paste("<html><head><title>R:", pkg, "vignettes</title>"),
-              '<link rel="stylesheet" type="text/css" href="../html/R.css">',
-              "</head><body>",
+    html <- c(HTMLheader("Vignettes"),
               paste("<h2>Vignettes from package '", pkg,"'</h2>", sep = ""))
 
     if(is.null(vignetteIndex) || nrow(vignetteIndex) == 0L) {
@@ -454,19 +459,8 @@ function(pkg, con, vignetteIndex = NULL)
               "Sorry, the package contains no vignette meta-information nor an index.",
               'Please browse the <a href=".">directory</a>.')
     } else {
-        ## We must not assume that there are PDFs: by default the
-        ## grid vignettes are installed without PDFs.
-        oneLink <- function(s) {
-            ## Format as used in utils::browseVignettes()
-            sprintf("  <li>%s  -  \n    %s  \n    %s  \n    %s \n  </li>\n",
-                    s[, "Title"],
-                    ifelse(nzchar(pdf<- s[, "PDF"]),
-                           sprintf("<a href='%s'>PDF</a>&nbsp;", pdf), ""),
-                    ifelse(nzchar(rcode <- s[, "R"]),
-                           sprintf("<a href='%s'>R</a>&nbsp;", rcode), ""),
-                    sprintf("<a href='%s'>LaTeX/noweb</a>&nbsp;", s[, "File"]))
-        }
-        html <- c(html, oneLink(vignetteIndex))
+    	vignetteIndex <- cbind(Package=pkg, as.matrix(vignetteIndex[,c("File", "Title", "PDF", "R")]))
+        html <- c(html, makeVignetteTable(vignetteIndex, depth=3))
     }
     html <- c(html, "</body></html>")
     writeLines(html, con=con)
@@ -527,7 +521,7 @@ function(vigDeps)
     td <- tempfile()
     dir.create(td)
     file.copy(docDir, td, recursive = TRUE)
-    setwd(file.path(td, "doc"))
+    setwd(file.path(td, basename(docDir)))
     result <- NULL
     tryCatch(utils::Stangle(vig_name, quiet = TRUE, encoding = encoding),
              error = function(e) result <<- conditionMessage(e))

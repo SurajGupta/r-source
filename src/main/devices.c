@@ -248,7 +248,7 @@ int selectDevice(int devNum)
 
 	if (!NoDevices()) {
 	    pGEDevDesc oldd = GEcurrentDevice();
-	    oldd->dev->deactivate(oldd->dev);
+	    if (oldd->dev->deactivate) oldd->dev->deactivate(oldd->dev);
 	}
 
 	R_CurrentDevice = devNum;
@@ -260,7 +260,7 @@ int selectDevice(int devNum)
 
 	gdd = GEcurrentDevice(); /* will start a device if current is null */
 	if (!NoDevices()) /* which it always will be */
-	    gdd->dev->activate(gdd->dev);
+	    if (gdd->dev->activate) gdd->dev->activate(gdd->dev);
 	return devNum;
     }
     else
@@ -303,7 +303,7 @@ void removeDevice(int devNum, Rboolean findNext)
 		/* activate new current device */
 		if (R_CurrentDevice) {
 		    pGEDevDesc gdd = GEcurrentDevice();
-		    gdd->dev->activate(gdd->dev);
+		    if(gdd->dev->activate) gdd->dev->activate(gdd->dev);
 		}
 	    }
 	}
@@ -449,7 +449,7 @@ void GEaddDevice(pGEDevDesc gdd)
 
     if (!NoDevices())  {
 	oldd = GEcurrentDevice();
-	oldd->dev->deactivate(oldd->dev);
+	if(oldd->dev->deactivate) oldd->dev->deactivate(oldd->dev);
     }
 
     /* find empty slot for new descriptor */
@@ -473,7 +473,7 @@ void GEaddDevice(pGEDevDesc gdd)
     active[i] = TRUE;
 
     GEregisterWithDevice(gdd);
-    gdd->dev->activate(gdd->dev);
+    if(gdd->dev->activate) gdd->dev->activate(gdd->dev);
 
     /* maintain .Devices (.Device has already been set) */
     PROTECT(t = ScalarString(STRING_ELT(getSymbolValue(R_DeviceSymbol), 0)));
@@ -570,7 +570,7 @@ void NewFrameConfirm(pDevDesc dd)
 }
 
 /* This needs to manage R_Visible */
-SEXP do_devAskNewPage(SEXP call, SEXP op, SEXP args, SEXP env)
+SEXP attribute_hidden do_devAskNewPage(SEXP call, SEXP op, SEXP args, SEXP env)
 {
     int ask;
     pGEDevDesc gdd = GEcurrentDevice();
@@ -588,7 +588,7 @@ SEXP do_devAskNewPage(SEXP call, SEXP op, SEXP args, SEXP env)
     return ScalarLogical(oldask);
 }
 
-SEXP do_devsize(SEXP call, SEXP op, SEXP args, SEXP env)
+SEXP attribute_hidden do_devsize(SEXP call, SEXP op, SEXP args, SEXP env)
 {
     SEXP ans;
     pDevDesc dd = GEcurrentDevice()->dev;
@@ -599,4 +599,88 @@ SEXP do_devsize(SEXP call, SEXP op, SEXP args, SEXP env)
     REAL(ans)[0] = fabs(right - left);
     REAL(ans)[1] = fabs(bottom - top);
     return(ans);
+}
+
+SEXP attribute_hidden do_devholdflush(SEXP call, SEXP op, SEXP args, SEXP env)
+{
+    pDevDesc dd = GEcurrentDevice()->dev;
+
+    checkArity(op, args);
+    int level = asInteger(CAR(args));
+    if(dd->holdflush && level != NA_INTEGER) level = (dd->holdflush(dd, level));
+    else level = 0;
+    return ScalarInteger(level);
+}
+
+SEXP attribute_hidden do_devcap(SEXP call, SEXP op, SEXP args, SEXP env)
+{
+    SEXP ans;
+    int i = 0;
+    pDevDesc dd = GEcurrentDevice()->dev;
+
+    checkArity(op, args);
+
+    PROTECT(ans = allocVector(INTSXP, 9));
+    INTEGER(ans)[i] = dd->haveTransparency;
+    INTEGER(ans)[++i] = dd->haveTransparentBg;
+    /* These will be NULL if the device does not define them */
+    INTEGER(ans)[++i] = (dd->raster != NULL) ? dd->haveRaster : 1;
+    INTEGER(ans)[++i] = (dd->cap != NULL) ? dd->haveCapture : 1;
+    INTEGER(ans)[++i] = (dd->locator != NULL) ? dd->haveLocator : 1;
+    INTEGER(ans)[++i] = (int)(dd->canGenMouseDown);
+    INTEGER(ans)[++i] = (int)(dd->canGenMouseMove);
+    INTEGER(ans)[++i] = (int)(dd->canGenMouseUp);
+    INTEGER(ans)[++i] = (int)(dd->canGenKeybd);
+    /* FIXME:  there should be a way for a device to declare its own
+               events, and return information on how to set them */
+
+    UNPROTECT(1);
+    return ans;
+}
+
+SEXP attribute_hidden do_devcapture(SEXP call, SEXP op, SEXP args, SEXP env)
+{
+    int i, col, row, nrow, ncol, size;
+    Rboolean native;
+    pGEDevDesc gdd = GEcurrentDevice();
+    int *rint;
+    SEXP raster, image, idim;
+    
+    checkArity(op, args);
+
+    native = asLogical(CAR(args));
+    if (native != TRUE) native = FALSE;
+
+    raster = GECap(gdd);
+    if (isNull(raster)) /* NULL = unsupported */
+	return raster;
+
+    PROTECT(raster);
+    if (native) {
+	setAttrib(raster, R_ClassSymbol, mkString("nativeRaster"));
+	UNPROTECT(1);
+	return raster;
+    }
+
+    /* non-native, covert to color strings (this is based on grid.cap) */
+    size = LENGTH(raster);
+    nrow = INTEGER(getAttrib(raster, R_DimSymbol))[0];
+    ncol = INTEGER(getAttrib(raster, R_DimSymbol))[1];
+        
+    PROTECT(image = allocVector(STRSXP, size));
+    rint = INTEGER(raster);
+    for (i = 0; i < size; i++) {
+	col = i % ncol + 1;
+	row = i / ncol + 1;
+	SET_STRING_ELT(image, (col - 1) * nrow + row - 1, 
+		       mkChar(col2name(rint[i])));
+    }
+        
+    PROTECT(idim = allocVector(INTSXP, 2));
+    INTEGER(idim)[0] = nrow;
+    INTEGER(idim)[1] = ncol;
+    setAttrib(image, R_DimSymbol, idim);
+    UNPROTECT(3);
+
+    return image;    
 }

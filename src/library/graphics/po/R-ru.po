@@ -9,9 +9,9 @@ msgid ""
 msgstr ""
 "Project-Id-Version: R 2.10.0\n"
 "Report-Msgid-Bugs-To: bugs@r-project.org\n"
-"POT-Creation-Date: 2011-02-18 12:36\n"
-"PO-Revision-Date: 2011-03-30 02:32+0300\n"
-"Last-Translator: Anton Korobeynikov <asl at math dot spbu dot ru>\n"
+"POT-Creation-Date: 2011-07-16 22:46\n"
+"PO-Revision-Date: 2011-10-18 19:34-0600\n"
+"Last-Translator: Alexey Shipunov <dactylorhiza@gmail.com>\n"
 "Language-Team: Russian\n"
 "Language: \n"
 "MIME-Version: 1.0\n"
@@ -136,11 +136,17 @@ msgstr "слишком маленькое произведение строки * колонки"
 msgid "Missing rows"
 msgstr "Пропущенные строки"
 
-msgid "'expr' must be a function, call or an expression containing 'x'"
-msgstr "'expr' должен быть функцией, вызовом или выражением содержащим 'x'"
+msgid "'expr' must be a function, or a call or an expression containing '%s'"
+msgstr "'expr' должен быть функцией, вызовом или выражением содержащим '%s'"
+
+msgid "'add' will be ignored as there is no existing plot"
+msgstr "'add' будут пропущена, потому что графика нет"
 
 msgid "'from' and 'to' must be > 0 with log=\"x\""
 msgstr "'from' и 'to' должны быть > 0 и log=\"x\""
+
+msgid "'expr' did not evaluate to an object of length 'n'"
+msgstr "'expr' не раскрывается в объект длины 'n'"
 
 msgid "wrong method"
 msgstr "неправильный метод"
@@ -150,6 +156,9 @@ msgstr "'breaks' должны быть указаны в hist(<POSIXt>)"
 
 msgid "invalid specification of 'breaks'"
 msgstr "неправильное указание 'breaks'"
+
+msgid "Must specify 'breaks' in hist(<Date>)"
+msgstr "'breaks' должны быть указаны в hist(<Date>)"
 
 msgid "'x' must be a numeric vector or matrix"
 msgstr "'y' должен быть числовым вектором или матрицей"
@@ -302,6 +311,9 @@ msgstr "только одна колонка в аргументе pairs'"
 msgid "the 'panel' function made a new plot"
 msgstr "функция 'panel' создала новый график"
 
+msgid "surface extends beyond the box"
+msgstr "поверхность продолжается за область графика"
+
 msgid "'x' values must be positive."
 msgstr "значения 'x' должны быть положительными."
 
@@ -433,9 +445,8 @@ msgstr[2] "аргументы %s не для использования"
 
 #~ msgid "explanatory variable should be numeric"
 #~ msgstr "независимая переменная должна быть числовой"
-
 #~ msgid "regression coefficients"
 #~ msgstr "коэффициенты регресии"
-
 #~ msgid "argument 'col' is deprecated in favour of 'boxfill'"
 #~ msgstr "аргумент 'col' не одобряется, пользуйтесь 'boxfill'"
+

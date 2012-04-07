@@ -191,6 +191,14 @@ function(x, delim = c("{", "}"), syntax = "Rd")
 
 ### * LaTeX utilities
 
+### ** texi2pdf
+texi2pdf <-
+function(file, clean = FALSE, quiet = TRUE,
+         texi2dvi = getOption("texi2dvi"),
+         texinputs = NULL, index = TRUE)
+    texi2dvi(file = file, pdf = TRUE, clean = clean, quiet = quiet,
+             texi2dvi = texi2dvi, texinputs = texinputs, index = index)
+
 ### ** texi2dvi
 
 texi2dvi <-
@@ -431,7 +439,7 @@ function(file, pdf = FALSE, clean = FALSE, quiet = TRUE,
 ### ** .BioC_version_associated_with_R_version
 
 .BioC_version_associated_with_R_version <-
-    numeric_version("2.8")
+    numeric_version("2.9")
 ## (Could also use something programmatically mapping (R) 2.10.x to
 ## (BioC) 2.5, 2.9.x to 2.4, ..., 2.1.x to 1.6, but what if R 3.0.0
 ## comes out? Also, pre-2.12.0 is out weeks before all of BioC 2.7)
@@ -440,15 +448,15 @@ function(file, pdf = FALSE, clean = FALSE, quiet = TRUE,
 ### ** .vc_dir_names
 
 ## Version control directory names: CVS, .svn (Subversion), .arch-ids
-## (arch), .bzr, .git and .hg (mercurial).
+## (arch), .bzr, .git, .hg (mercurial) and _darcs (Darcs)
 
 .vc_dir_names <-
-    c("CVS", ".svn", ".arch-ids", ".bzr", ".git", ".hg")
+    c("CVS", ".svn", ".arch-ids", ".bzr", ".git", ".hg", "_darcs")
 
 ## and RE version (beware of the need for escapes if amending)
 
 .vc_dir_names_re <-
-    "/(CVS|\\.svn|\\.arch-ids|\\.bzr|\\.git|\\.hg)(/|$)"
+    "/(CVS|\\.svn|\\.arch-ids|\\.bzr|\\.git|\\.hg|_darcs)(/|$)"
 
 ### * Internal utility functions.
 
@@ -555,6 +563,30 @@ function(file1, file2)
     .Internal(codeFiles.append(file1, file2))
 }
 
+### ** .find_calls
+
+.find_calls <-
+function(x, f = NULL, recursive = FALSE)
+{
+    x <- as.list(x)
+    
+    predicate <- if(is.null(f))
+        function(e) is.call(e)
+    else
+        function(e) is.call(e) && f(e)
+
+    if(!recursive) return(Filter(predicate, x))
+
+    calls <- list()
+    gatherer <- function(e) {
+        if(predicate(e)) calls <<- c(calls, list(e))
+        if(is.recursive(e))
+            for(i in seq_along(e)) gatherer(e[[i]])
+    }
+    gatherer(x)
+    calls
+}
+
 ### ** .find_owner_env
 
 .find_owner_env <-
@@ -618,17 +650,6 @@ function(con, n = 4L)
     ## Error chunk extends to at most the next error line.
     mapply(function(from, to) paste(lines[from : to], collapse = "\n"),
            pos, pmin(pos + n, c(pos[-1L], length(lines))))
-}
-
-### ** .get_contains_from_package_db
-
-.get_contains_from_package_db <-
-function(db)
-{
-    if("Contains" %in% names(db))
-        unlist(strsplit(db["Contains"], "[[:space:]]+"))
-    else
-        character()
 }
 
 ### ** .get_internal_S3_generics
@@ -769,7 +790,6 @@ function(dir, installed = TRUE, primitive = FALSE)
             reqs <- intersect(c(depends, imports), loadedNamespaces())
             if(length(reqs))
                 env_list <- c(env_list, lapply(reqs, getNamespace))
-            ## note .packages give versioned names.
             reqs <- intersect(depends %w/o% loadedNamespaces(),
                               .packages())
             if(length(reqs))
@@ -845,21 +865,24 @@ local({
 ### ** .get_standard_repository_URLs
 
 .get_standard_repository_URLs <-
-function() {
+function()
+{
     repos <- Sys.getenv("_R_CHECK_XREFS_REPOSITORIES_", "")
-    repos <- if(nzchar(repos)) {
-        .expand_BioC_repository_URLs(strsplit(repos, " +")[[1L]])
+    if(nzchar(repos)) {
+        repos <-
+            .expand_BioC_repository_URLs(strsplit(repos, " +")[[1L]])
     } else {
+        nms <- c("CRAN", "Omegahat", "BioCsoft", "BioCann", "BioCexp")
         p <- file.path(Sys.getenv("HOME"), ".R", "repositories")
-        if(file_test("-f", p)) {
+        repos <- if(file_test("-f", p)) {
             a <- .read_repositories(p)
-            a[c("CRAN", "Omegahat", "BioCsoft", "BioCann", "BioCexp"),
-              "URL"]
+            a[nms, "URL"]
         } else {
             a <- .read_repositories(file.path(R.home("etc"),
                                               "repositories"))
-            c("http://cran.r-project.org", a[3:6, "URL"])
+            c("http://cran.r-project.org", a[nms[-1L], "URL"])
         }
+        names(repos) <- nms
     }
     repos
 }
@@ -963,31 +986,6 @@ function(fname, envir, mustMatch = TRUE)
     }
     res <- isUME(body(f))
     if(mustMatch) res == fname else nzchar(res)
-}
-
-### ** .list_dirs
-
-## Should have base::list.dirs eventually ...
-
-.list_dirs <-
-function(path = ".", full.names = FALSE, recursive = FALSE)
-{
-    ## Always find all directories for now.
-
-    ## Note that list.files(recursive = TRUE) excludes directories.
-    files <- list.files(path, all.files = TRUE)
-    dirs <- files[file_test("-d", file.path(path, files))]
-    if(recursive) # this misses empty dirs
-        dirs <- unique(c(dirs,
-                         dirname(list.files(path, all.files = TRUE,
-                                            recursive = TRUE))))
-    ## <FIXME>
-    ## What should we do about "." and ".."?
-    dirs <- dirs %w/o% c(".", "..")
-    ## </FIXME>
-    if(full.names)
-        dirs <- file.path(path, dirs)
-    dirs
 }
 
 ### ** .load_package_quietly
@@ -1116,17 +1114,22 @@ function(package)
              ## deliberately different arg names.
              "rep.int", "round.POSIXt",
              "seq.int", "sort.int", "sort.list"),
+             AMORE = "sim.MLPnet",
              BSDA = "sign.test",
-             GLDEX = "pretty.su",
-             Hmisc = c("abs.error.pred", "t.test.cluster"),
+             ElectoGraph = "plot.wedding.cake",
+             FrF2 = "all.2fis.clear.catlg",
+             GLDEX = c("hist.su", "pretty.su"),
+             Hmisc = c("abs.error.pred", "all.digits", "all.is.numeric",
+                       "format.df", "format.pval", "t.test.cluster"),
              HyperbolicDist = "log.hist",
              MASS = c("frequency.polygon",
-             "gamma.dispersion", "gamma.shape",
-             "hist.FD", "hist.scott"),
+                      "gamma.dispersion", "gamma.shape",
+                      "hist.FD", "hist.scott"),
              ## FIXME: since these are already listed with 'base',
              ##        they should not need to be repeated here:
              Matrix = c("qr.Q", "qr.R", "qr.coef", "qr.fitted",
                         "qr.qty", "qr.qy", "qr.resid"),
+             RCurl = "merge.list",
              RNetCDF = c("close.nc", "dim.def.nc", "dim.inq.nc",
                          "dim.rename.nc", "open.nc", "print.nc"),
              SMPracticals = "exp.gibbs",
@@ -1136,26 +1139,36 @@ function(package)
              boot = "exp.tilt",
              car = "scatterplot.matrix",
 	     calibrator = "t.fun",
+             clusterfly = "ggobi.som",
+             coda = "as.mcmc.list",
+             crossdes = "all.combn",
              ctv = "update.views",
+             deSolve = "plot.1D",
              equivalence = "sign.boot",
              fields = c("qr.q2ty", "qr.yq2"),
              gbm = c("pretty.gbm.tree", "quantile.rug"),
+             gpclib = "scale.poly",
              grDevices = "boxplot.stats",
              graphics = c("close.screen",
              "plot.design", "plot.new", "plot.window", "plot.xy",
              "split.screen"),
+             ic.infer = "all.R2",
              hier.part = "all.regs",
              lasso2 = "qr.rtr.inv",
-             mratios = c("t.test.ratio.default", "t.test.ratio.formula"),
+             moments = c("all.cumulants", "all.moments"),
+             mratios = c("t.test.ration", "t.test.ratio.default",
+                         "t.test.ratio.formula"),
              ncdf = c("open.ncdf", "close.ncdf",
                       "dim.create.ncdf", "dim.def.ncdf",
                       "dim.inq.ncdf", "dim.same.ncdf"),
              quadprog = c("solve.QP", "solve.QP.compact"),
              reposTools = "update.packages2",
+             rgeos = "scale.poly",
              sac = "cumsum.test",
              sm = "print.graph",
              stats = c("anova.lmlist", "fitted.values", "lag.plot",
-             "influence.measures", "t.test"),
+             "influence.measures", "t.test",
+             "plot.spec.phase", "plot.spec.coherency"),
              supclust = c("sign.change", "sign.flip"),
 	     tensorA = "chol.tensor",
              utils = c("close.socket", "flush.console", "update.packages")
@@ -1217,6 +1230,9 @@ function(txt)
 
 ### ** .read_description
 
+.keep_white_description_fields <-
+    c("Description", "Author", "Built", "Packaged")
+
 .read_description <-
 function(dfile)
 {
@@ -1229,7 +1245,9 @@ function(dfile)
     ## </NOTE>
     if(!file_test("-f", dfile))
         stop(gettextf("file '%s' does not exist", dfile), domain = NA)
-    out <- tryCatch(read.dcf(dfile)[1L, ],
+    out <- tryCatch(read.dcf(dfile,
+                             keep.white =
+                             .keep_white_description_fields)[1L, ],
                     error = function(e)
                     stop(gettextf("file '%s' is not in valid DCF format",
                                   dfile),
@@ -1241,6 +1259,37 @@ function(dfile)
         else out <- iconv(out, encoding, "", sub = "byte")
     }
     out
+}
+
+.write_description <-
+function(x, dfile)
+{
+    ## Invert how .read_description() handles package encodings.
+    if(!is.na(encoding <- x["Encoding"])) {
+        ## For UTF-8 or latin1 encodings, .read_description() would
+        ## simply have marked the encoding.  But we might have added
+        ## fields encoded differently ...
+        ind <- is.na(match(Encoding(x), c(encoding, "unknown")))
+        if(any(ind))
+            x[ind] <- mapply(iconv, x[ind], Encoding(x)[ind], encoding,
+                             sub = "byte")
+    } else {
+        ## If there is no declared encoding, we cannot have non-ASCII
+        ## content.
+        ## Cf. tools::showNonASCII():
+        asc <- iconv(x, "latin1", "ASCII")
+        ind <- is.na(asc) | (asc != x)
+        if(any(ind)) {
+            warning(gettext("Unknown encoding with non-ASCII data: converting to ASCII"),
+                    domain = NA)
+            x[ind] <- iconv(x[ind], "latin1", "ASCII", sub = "byte")
+        }
+    }
+    ## Avoid declared encodings when writing out.
+    Encoding(x) <- "unknown"
+    ## Avoid folding for Description, Author, Built, and Packaged.
+    write.dcf(rbind(x), dfile,
+              keep.white = .keep_white_description_fields)
 }
 
 ### ** .read_repositories
@@ -1257,7 +1306,8 @@ function(file)
 }
 
 .expand_BioC_repository_URLs <-
-function(x) {
+function(x)
+{
     x <- sub("%bm",
              as.character(getOption("BioC_mirror",
                                     "http://www.bioconductor.org")),
@@ -1265,6 +1315,22 @@ function(x) {
     sub("%v",
         as.character(.BioC_version_associated_with_R_version),
         x, fixed = TRUE)
+}
+
+.expand_package_description_db_R_fields <-
+function(x)
+{
+    y <- character()
+    if(!is.na(aar <- x["Authors@R"])) {
+        aar <- utils:::.read_authors_at_R_field(aar)
+        if(is.na(x["Author"]))
+            y["Author"] <-
+                utils:::.format_authors_at_R_field_for_author(aar)
+        if(is.na(x["Maintainer"]))
+            y["Maintainer"] <-
+                utils:::.format_authors_at_R_field_for_maintainer(aar)
+    }
+    y
 }
 
 ### ** .shell_with_capture
@@ -1377,8 +1443,9 @@ function(x)
     x2 <- sub(pat, "\\2", x)
     if(x2 != x1) {
         pat <- "[[:space:]]*([[<>=!]+)[[:space:]]+(.*)"
-        list(name = x1, op = sub(pat, "\\1", x2),
-             version = package_version(sub(pat, "\\2", x2)))
+        version <- sub(pat, "\\2", x2)
+        if (!grepl("^r", version)) version <- package_version(version)
+        list(name = x1, op = sub(pat, "\\1", x2), version = version)
     } else list(name = x1)
 }
 
@@ -1452,6 +1519,18 @@ function(args, msg)
 }
 
 
+### ** pskill
+
+pskill <- function(pid, signal = SIGTERM)
+    invisible(.Call(ps_kill, pid, signal, PACKAGE = "tools"))
+
+### ** psnice
+
+psnice <- function(pid = Sys.getpid(), value = NA_integer_)
+{
+    res <- .Call(ps_priority, pid, value,  PACKAGE = "tools")
+    if(is.na(value)) res else invisible(res)
+}
 ### Local variables: ***
 ### mode: outline-minor ***
 ### outline-regexp: "### [*]+" ***

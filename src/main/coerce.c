@@ -1362,7 +1362,7 @@ SEXP attribute_hidden do_asvector(SEXP call, SEXP op, SEXP args, SEXP rho)
     checkArity(op, args);
     x = CAR(args);
 
-    if (!isString(CADR(args)) || LENGTH(CADR(args)) < 1)
+    if (!isString(CADR(args)) || LENGTH(CADR(args)) != 1)
 	errorcall_return(call, R_MSG_mode);
     if (!strcmp("function", (CHAR(STRING_ELT(CADR(args), 0))))) /* ASCII */
 	type = CLOSXP;
@@ -1846,7 +1846,7 @@ SEXP attribute_hidden do_isvector(SEXP call, SEXP op, SEXP args, SEXP rho)
 
     checkArity(op, args);
     x = CAR(args);
-    if (!isString(CADR(args)) || LENGTH(CADR(args)) <= 0)
+    if (!isString(CADR(args)) || LENGTH(CADR(args)) != 1)
 	errorcall_return(call, R_MSG_mode);
 
     stype = CHAR(STRING_ELT(CADR(args), 0)); /* ASCII */
@@ -2023,10 +2023,11 @@ SEXP attribute_hidden do_isnan(SEXP call, SEXP op, SEXP args, SEXP rho)
     }
     else dims = names = R_NilValue;
     switch (TYPEOF(x)) {
-    case LGLSXP:
-    case INTSXP:
     case STRSXP:
     case RAWSXP:
+    case NILSXP:
+    case LGLSXP:
+    case INTSXP:
 	for (i = 0; i < n; i++)
 	    LOGICAL(ans)[i] = 0;
 	break;
@@ -2039,46 +2040,8 @@ SEXP attribute_hidden do_isnan(SEXP call, SEXP op, SEXP args, SEXP rho)
 	    LOGICAL(ans)[i] = (R_IsNaN(COMPLEX(x)[i].r) ||
 			       R_IsNaN(COMPLEX(x)[i].i));
 	break;
-
-/* Same code for LISTSXP and VECSXP : */
-
-#define LIST_VEC_NAN(s)							\
-	if (!isVector(s) || length(s) != 1)				\
-		LOGICAL(ans)[i] = 0;					\
-	else {								\
-		switch (TYPEOF(s)) {					\
-		case LGLSXP:						\
-		case INTSXP:						\
-		case STRSXP:						\
-		    LOGICAL(ans)[i] = 0;				\
-		    break;						\
-		case REALSXP:						\
-		    LOGICAL(ans)[i] = R_IsNaN(REAL(s)[0]);		\
-		    break;						\
-		case CPLXSXP:						\
-		    LOGICAL(ans)[i] = (R_IsNaN(COMPLEX(s)[0].r) ||	\
-				       R_IsNaN(COMPLEX(s)[0].i));	\
-		    break;						\
-		}							\
-	}
-
-    case LISTSXP:
-	for (i = 0; i < n; i++) {
-	    LIST_VEC_NAN(CAR(x));
-	    x = CDR(x);
-	}
-	break;
-    case VECSXP:
-	for (i = 0; i < n; i++) {
-	    SEXP s = VECTOR_ELT(x, i);
-	    LIST_VEC_NAN(s);
-	}
-	break;
     default:
-	warningcall(call, _("%s() applied to non-(list or vector) of type '%s'"),
-		    "is.nan", type2char(TYPEOF(x)));
-	for (i = 0; i < n; i++)
-	    LOGICAL(ans)[i] = 0;
+        errorcall(call, _("default method not implemented for type '%s'"), type2char(TYPEOF(x)));
     }
     if (dims != R_NilValue)
 	setAttrib(ans, R_DimSymbol, dims);
@@ -2121,6 +2084,12 @@ SEXP attribute_hidden do_isfinite(SEXP call, SEXP op, SEXP args, SEXP rho)
     }
     else dims = names = R_NilValue;
     switch (TYPEOF(x)) {
+    case STRSXP:
+    case RAWSXP:
+    case NILSXP:
+	for (i = 0; i < n; i++)
+	    LOGICAL(ans)[i] = 0;
+	break;
     case LGLSXP:
     case INTSXP:
 	for (i = 0; i < n; i++)
@@ -2135,8 +2104,7 @@ SEXP attribute_hidden do_isfinite(SEXP call, SEXP op, SEXP args, SEXP rho)
 	    LOGICAL(ans)[i] = (R_FINITE(COMPLEX(x)[i].r) && R_FINITE(COMPLEX(x)[i].i));
 	break;
     default:
-	for (i = 0; i < n; i++)
-	    LOGICAL(ans)[i] = 0;
+        errorcall(call, _("default method not implemented for type '%s'"), type2char(TYPEOF(x)));
     }
     if (dims != R_NilValue)
 	setAttrib(ans, R_DimSymbol, dims);
@@ -2176,6 +2144,14 @@ SEXP attribute_hidden do_isinfinite(SEXP call, SEXP op, SEXP args, SEXP rho)
     }
     else	dims = names = R_NilValue;
     switch (TYPEOF(x)) {
+    case STRSXP:
+    case RAWSXP:
+    case NILSXP:
+    case LGLSXP:
+    case INTSXP:
+	for (i = 0; i < n; i++)
+	    LOGICAL(ans)[i] = 0;
+	break;
     case REALSXP:
 	for (i = 0; i < n; i++) {
 	    xr = REAL(x)[i];
@@ -2196,8 +2172,7 @@ SEXP attribute_hidden do_isinfinite(SEXP call, SEXP op, SEXP args, SEXP rho)
 	}
 	break;
     default:
-	for (i = 0; i < n; i++)
-	    LOGICAL(ans)[i] = 0;
+        errorcall(call, _("default method not implemented for type '%s'"), type2char(TYPEOF(x)));
     }
     if (!isNull(dims))
 	setAttrib(ans, R_DimSymbol, dims);
@@ -2551,7 +2526,7 @@ static SEXP R_set_class(SEXP obj, SEXP value, SEXP call)
 	      do_unsetS4(obj, value);
 	}
 	else if(!strcmp("array", valueString)) {
-	    if(length(getAttrib(obj, R_DimSymbol))<= 0)
+	    if(length(getAttrib(obj, R_DimSymbol)) <= 0)
 		error(_("cannot set class to \"array\" unless the dimension attribute has length > 0"));
 	    setAttrib(obj, R_ClassSymbol, R_NilValue);
 	    if(IS_S4_OBJECT(obj)) /* NULL class is only valid for S3 objects */

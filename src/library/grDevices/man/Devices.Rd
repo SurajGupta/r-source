@@ -12,10 +12,6 @@
 #ifdef windows
     \item \code{\link{windows}} The graphics device for Windows (on screen,
     to printer and to Windows metafile).
-    \item \code{\link{png}} PNG bitmap device
-    \item \code{\link{jpeg}} JPEG bitmap device
-    \item \code{\link{bmp}} BMP bitmap device
-    \item \code{\link{tiff}} TIFF bitmap device
 #endif
     \item \code{\link{pdf}} Write PDF graphics commands to a file
     \item \code{\link{postscript}} Writes PostScript graphics commands to
@@ -26,11 +22,12 @@
     \item \code{\link{pictex}} Writes TeX/PicTeX graphics commands to a
     file (of historical interest only)
   }
-#ifdef unix
   The following devices will be functional if \R was compiled to use
   them (they exist but will return with a warning on other systems):
   \itemize{
-    \item \code{\link{X11}} The graphics device for the X11 Window system
+#ifdef unix    
+    \item \code{\link{X11}} The graphics device for the X11 windowing system
+#endif
     \item \code{\link{cairo_pdf}}, \code{cairo_ps} PDF and PostScript
     devices based on cairo graphics.
     \item \code{\link{svg}} SVG device based on cairo graphics.
@@ -38,14 +35,15 @@
     \item \code{\link{jpeg}} JPEG bitmap device
     \item \code{\link{bmp}} BMP bitmap device
     \item \code{\link{tiff}} TIFF bitmap device
+#ifdef unix    
 
     \item \code{\link{quartz}} The graphics device for the Mac OS X
     native Quartz 2d graphics system.  (This is only functional on Mac
     OS X where it can be used from the \code{R.app} GUI and from the
     command line: but it will display on the local screen even for a
     remote session.)
-  }
 #endif
+  }
 }
 \details{
   If no device is open, using a high-level graphics function will cause

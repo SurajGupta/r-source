@@ -9,9 +9,9 @@ msgid ""
 msgstr ""
 "Project-Id-Version: R 2.11.0\n"
 "Report-Msgid-Bugs-To: bugs@r-project.org\n"
-"POT-Creation-Date: 2011-03-22 15:33\n"
-"PO-Revision-Date: 2011-03-30 02:30+0300\n"
-"Last-Translator: Anton Korobeynikov <asl at math dot spbu dot ru>\n"
+"POT-Creation-Date: 2011-10-03 18:49\n"
+"PO-Revision-Date: 2011-10-18 22:43-0600\n"
+"Last-Translator: Alexey Shipunov <dactylorhiza@gmail.com>\n"
 "Language-Team: Russian\n"
 "Language: \n"
 "MIME-Version: 1.0\n"
@@ -284,6 +284,21 @@ msgstr "Пакеты с привилегиями 'base' или 'recommended' или 'defunct-base' должны
 msgid "See the information on DESCRIPTION files in section 'Creating R packages' of the 'Writing R Extensions' manual."
 msgstr "См. информацию о файлах DESCRIPTION в секции  'Creating R пакетs' руководства 'Writing R Extensions'."
 
+msgid "Malformed Authors@R field:"
+msgstr "Плохо сформированное поле Authors@R:"
+
+msgid "Cannot extract Author field from Authors@R field:"
+msgstr "Не могу вынуть поле Author из поля Authors@R:"
+
+msgid "Authors@R field gives no person with author role."
+msgstr "В поле Authors@R нет никого в роли автора."
+
+msgid "Cannot extract Maintainer field from Authors@R field:"
+msgstr "Не могу вынуть поле Maintainer из поля Authors@R:"
+
+msgid "Authors@R field gives no person with maintainer role and email address."
+msgstr "В поле Authors@R нет никого в роли разработчика с адресом электронной почты."
+
 msgid "Encoding '%s' is not portable"
 msgstr "Кодировка '%s' не переносима"
 
@@ -329,6 +344,42 @@ msgstr "См. информацию в секции 'Cross-references' руководства 'Writing R Extens
 msgid "found %s"
 msgstr "найден %s"
 
+msgid "File %s:"
+msgstr "Файл %s:"
+
+msgid "%s has wrong argument list %s"
+msgstr "у %s неправильный список аргументов %s"
+
+msgid ","
+msgstr ","
+
+msgid "%s calls:"
+msgstr "%s вызывает:"
+
+msgid "Package startup functions should have two arguments with names starting with %s and %s, respectively."
+msgstr "Стартовые функции пакета должны иметь два аргумента с именами, начинающимися с %s и %s, соответственно."
+
+msgid "lib"
+msgstr "lib"
+
+msgid "pkg"
+msgstr "pkg"
+
+msgid "Package startup functions should not change the search path."
+msgstr "Стартовые функции пакета не должны менять путь поиска."
+
+msgid "Package startup functions should use %s to generate messages."
+msgstr "Стартовые функции пакета должны использовать %s для создания сообщений."
+
+msgid "packageStartupMessage"
+msgstr "packageStartupMessage"
+
+msgid "See section %s in ?.onAttach."
+msgstr "См. раздел %s в ?.onAttach."
+
+msgid "Good practice"
+msgstr "Хорошо сделано"
+
 msgid "package 'methods' is used but not declared"
 msgstr "пакет 'methods' используется, но не объявлен"
 
@@ -361,9 +412,6 @@ msgstr "Общие 'g' в env ="
 
 msgid "where hasMethods(g, env) errors:"
 msgstr "где ошибки hasMethods(g, env):"
-
-msgid ","
-msgstr ","
 
 msgid "May need something like"
 msgstr "Возможно, надо что-то вроде"
@@ -449,6 +497,9 @@ msgstr "невозможно перейти в текущий рабочий каталог"
 msgid "no inputs"
 msgstr "нет вводов"
 
+msgid "DVI output from Rd2dvi is deprecated"
+msgstr "Вывод DVI из Rd2dvi не рекомендуется"
+
 msgid "Error in running tools::texi2dvi"
 msgstr "Ошибка запуска tools::texi2dvi"
 
@@ -457,6 +508,9 @@ msgstr "более чем одна \\секция примеров, использую первую"
 
 msgid "invalid value for '%s' : %s"
 msgstr "неправильное значение '%s' : %s"
+
+msgid "Only one Rd section per \\Sexpr is supported."
+msgstr "Поддерживается только один раздел Rd на \\Sexpr."
 
 msgid "unable to create temp directory"
 msgstr "не могу создать временную папку"
@@ -470,6 +524,9 @@ msgstr ""
 
 msgid "running 'make' failed"
 msgstr "не удался запуск 'make'"
+
+msgid "In '%s' vignettes '%s' and '%s' have the same vignette name"
+msgstr "Среди миниатюр '%s' '%s' и '%s' имеют одинаковые имена"
 
 msgid "argument 'vignette' must be of length 1"
 msgstr "аргумент 'vignette' должен быть единичной длины"
@@ -485,12 +542,6 @@ msgstr "*** что-то сломалось в поле 'Built' пакета '%s'***"
 
 msgid "cannot open directory '%s'"
 msgstr "не могу открыть папку '%s'"
-
-msgid "WARNING: 'Depends' entry has multiple dependencies on R:"
-msgstr "ПРЕДУПРЕЖДЕНИЕ: У 'Depends' множественные зависимости в R:"
-
-msgid "only the first will be used in R < 2.7.0"
-msgstr "только первый будет использован R < 2.7.0"
 
 msgid "WARNING: omitting pointless dependence on 'R' without a version requirement"
 msgstr "ПРЕДУПРЕЖДЕНИЕ: пробускаю бессмысленную зависимость от 'R' без указания требуемой версии"
@@ -526,11 +577,8 @@ msgstr ""
 msgid "cannot create directory '%s'"
 msgstr "Не могу создать папку '%s'"
 
-msgid "processing '"
-msgstr "обрабытываю '"
-
-msgid "'"
-msgstr "'"
+msgid "processing"
+msgstr "обрабытываю"
 
 msgid ""
 "running Sweave on vignette '%s' failed with message:\n"
@@ -563,24 +611,6 @@ msgstr "Изменения требуют определенного 'style'"
 msgid "The default JSS style may not be modified."
 msgstr "Исходную библиотеку стиля JSS нельзя изменять. "
 
-msgid "--binary is deprecated"
-msgstr "--binary устарело"
-
-msgid "use of '--auto-zip' is defunct"
-msgstr "'--auto-zip' не работает"
-
-msgid "use of '--use-zip-data' is defunct"
-msgstr "'--use-zip-data' не работает"
-
-msgid "use of '--no-docs' is deprecated: use '--install-args' instead"
-msgstr "использование '--no-docs' устарело: используйте '--install-args' вместо"
-
-msgid "** Options"
-msgstr "** Опции"
-
-msgid "are only for '--binary'  and will be ignored"
-msgstr "только для '--binary' и будет пропущено"
-
 msgid "Error: cannot rename directory to"
 msgstr "Ошибка: не могу переименовать папку в"
 
@@ -596,6 +626,9 @@ msgstr "'--multiarch' определен только для одной используемой субархитектуры"
 msgid "Error: no packages were specified"
 msgstr "Ошибка: пакеты не определены"
 
+msgid "ERROR: cannot create check dir %s"
+msgstr "ОШИБКА: не могу создать проверочную директорию %s"
+
 msgid "package dir"
 msgstr "директория пакетов"
 
@@ -605,8 +638,20 @@ msgstr "не существует"
 msgid "No files in this directory"
 msgstr "В этой папке нет файлов"
 
+msgid "Unrecognized search field:"
+msgstr "Неизвестное поле поиска:"
+
 msgid "No results found"
 msgstr "Не найдено результатов"
+
+msgid "Vignettes:"
+msgstr "Миниатюры:"
+
+msgid "Code demonstrations:"
+msgstr "Примеры работы кода:"
+
+msgid "Help pages:"
+msgstr "Страницы помощи:"
 
 msgid "No help found for topic %s in any package."
 msgstr "Не найдено помощи по теме %s ни в одном из пакетов."
@@ -629,8 +674,8 @@ msgstr "Ссылка %s в пакете %s не найдена"
 msgid "No docs found for package %s"
 msgstr "Не могу найти документации для пакета %s"
 
-msgid "Only help files, %s, %s and files under %s in a package can be viewed"
-msgstr "Только файлы помощи, %s, %s и файлы внутри %s могут быть просмотрены в пакете"
+msgid "Only help files, %s, %s and files under %s and %s in a package can be viewed"
+msgstr "Только файлы помощи, %s, %s и файлы внутри %s в пакете могут быть просмотрены"
 
 msgid "NEWS"
 msgstr "НОВОСТИ"
@@ -640,6 +685,9 @@ msgstr "ОПИСАНИЕ"
 
 msgid "doc/"
 msgstr "doc/"
+
+msgid "demo/"
+msgstr "demo/"
 
 msgid "unsupported URL %s"
 msgstr "неподдерживаемые URL %s"
@@ -692,11 +740,17 @@ msgstr "как"
 msgid "'cleanup' exists but is not executable -- see the 'R Installation and Administration Manual'"
 msgstr "'cleanup' есть, но его невозможно выполнить  -- смотрите 'R Installation and Adminstration Manual'"
 
+msgid "installing via 'install.libs.R' to"
+msgstr "инсталлирую четез 'install.libs.R' в"
+
 msgid "installing to"
 msgstr "устанавливаю в"
 
 msgid "generating debug symbols (dSYM)"
 msgstr "создаю символы отладки (dSYM)"
+
+msgid "package %s successfully unpacked and MD5 sums checked"
+msgstr "пакет %s удачно распакован, MD5 sums проверены"
 
 msgid "R include directory is empty -- perhaps need to install R-devel.rpm or similar"
 msgstr "Включаемая папка R пуста -- возможно, надо установить R-devel.rpm или похожее"
@@ -759,8 +813,11 @@ msgstr "нахожу ссылки HTML второго уровня..."
 msgid "there is no package called '%s'"
 msgstr "нет пакета по имени '%s'"
 
-msgid "name space must not be loaded."
-msgstr "должно быть загружено пространство имен."
+msgid "namespace must not be already loaded"
+msgstr "должно быть уже загружено пространство имен"
+
+msgid "all packages should have a NAMESPACE"
+msgstr "все пакеты должны иметь NAMESPACE"
 
 msgid "package seems to be using lazy loading for data already"
 msgstr "кажется, пакет уже использует ленивую загрузку данных"
@@ -812,8 +869,29 @@ msgstr "Не могу выделить информацию о версии из следующих заголовков секции:"
 msgid "%s"
 msgstr "%s"
 
-msgid "Malformed NEWS.Rd file."
-msgstr "Плохо сформированный файл NEWS.Rd."
+msgid ""
+"Malformed NEWS.Rd file:\n"
+"Chunk starting\n"
+"  %s\n"
+"contains no \\itemize."
+msgstr ""
+"Неправильный файл NEWS.Rd:\n"
+"Кусок, начинающий\n"
+"  %s\n"
+"не содержит \\itemize."
+
+msgid ""
+"Malformed NEWS.Rd file:\n"
+"Chunk starting\n"
+"  %s\n"
+"contains more than one \\itemize.\n"
+"Using the first one."
+msgstr ""
+"Неправильный файл NEWS.Rd:\n"
+"Кусок, начинающий\n"
+"  %s\n"
+"содержит много \\itemize.\n"
+"Использую первый."
 
 msgid "Processing packages:"
 msgstr "Обрабатываю пакеты:"
@@ -848,6 +926,87 @@ msgstr "уже определен быть"
 msgid "found encoding"
 msgstr "найдена кодировка"
 
+msgid "%s must be a character string or a file/raw connection"
+msgstr "%s должен быть текстовой строкой или файлом/простым соединением"
+
+msgid "PDF header not found"
+msgstr "Заголовок PDF не найден"
+
+msgid "EOF marker not found"
+msgstr "Маркер EOF не найден"
+
+msgid "cannot find startxref"
+msgstr "не могу найти startxref"
+
+msgid "cannot find xref table"
+msgstr "не могу найти таблицу xref"
+
+msgid "cannot read xref table"
+msgstr "не могу прочитать таблицу xref"
+
+msgid "wrong class"
+msgstr "неправильный класс"
+
+msgid "attempting to select less than one element"
+msgstr "попытка выбрать менее одного элемента"
+
+msgid "attempting to select more than one element"
+msgstr "попытка выбрать более одного элемента"
+
+msgid "looking at %s"
+msgstr "смотрю на %s"
+
+msgid "cannot read literal string object"
+msgstr "не могу прочитать буквенный строковый объект"
+
+msgid "cannot read hexadecimal string object"
+msgstr "не могу прочитать шестнадцатиричный строковый объект"
+
+msgid "cannot read name object"
+msgstr "не могу прочитать именной объект"
+
+msgid "cannot read array object"
+msgstr "не могу прочитать многомерный матричный объект"
+
+msgid "cannot read dictionary object"
+msgstr "не могу прочитать словарный объект"
+
+msgid "cannot read stream object"
+msgstr "не могу прочитать потоковый объект"
+
+msgid "cannot read indirect reference object"
+msgstr "не могу прочитать непрямой ссылочный объект"
+
+msgid "cannot find object header at xrefed position %d"
+msgstr "не могу найти заголовок объекта в xref позиции %d"
+
+msgid "mismatch in object numbers (given: %d, found: %d)"
+msgstr "несоответствие в номерах объектов (дано: %d, найдено: %d)"
+
+msgid "mismatch in generation numbers (given: %d, found: %d)"
+msgstr "несоответствие в номерах генерации (дано: %d, найдено: %d)"
+
+msgid "cannot read stream data"
+msgstr "не могу прочитать потоковые данные"
+
+msgid "invalid index in object stream lookup"
+msgstr "неправильный индекс в просмотре потока"
+
+msgid "processing %s"
+msgstr "обрабатываю %s"
+
+msgid "expanding %s"
+msgstr "раскрываю %s"
+
+msgid "unsupported filter %s"
+msgstr "неподдерживаемый фильтр %s"
+
+msgid "unsupported flatedecode predictor %d"
+msgstr "неподдерживаемый flatedecode predictor %d"
+
+msgid "unsupported PNG filter %d"
+msgstr "неподдерживаемый фильтр PNG %s"
+
 msgid "argument 'pkg' must be of length 1"
 msgstr "аргумент 'pkg' должен быть единичной длины"
 
@@ -871,6 +1030,18 @@ msgstr "не разработанная кодировка"
 
 msgid "file"
 msgstr "файл"
+
+msgid "Found %s, possibly from %s"
+msgstr "Нашел %s, возможно, из %s"
+
+msgid "%s (%s)"
+msgstr "%s (%s)"
+
+msgid "ssname"
+msgstr "ssname"
+
+msgid "language"
+msgstr "язык"
 
 msgid "cannot be opened"
 msgstr "нельзя открыть"
@@ -896,8 +1067,8 @@ msgstr "OK"
 msgid "results differ from reference results"
 msgstr "результаты отличаются от эталонных"
 
-msgid "no examples found"
-msgstr "не найдено примеров"
+msgid "no examples found for package %s"
+msgstr "не найдено примеров для пакета %s"
 
 msgid "Running specific tests for package"
 msgstr "Запускаю специфические тесты для пакета"
@@ -1010,6 +1181,9 @@ msgstr "неправильная структура пакета"
 msgid "file '%s' is not in valid DCF format"
 msgstr "файл '%s' не является правильным форматом DCF"
 
+msgid "Unknown encoding with non-ASCII data: converting to ASCII"
+msgstr "Неизвестная кодировка с не-ASCII данными: конвертирую в ASCII"
+
 msgid "cannot source package code"
 msgstr "не могу выполнить код пакета"
 
@@ -1067,48 +1241,68 @@ msgstr[0] "объект %s создан больше чем за один вызов данных"
 msgstr[1] "объекты %s созданы больше чем за один вызов данных"
 msgstr[2] "объекты %s созданы больше чем за один вызов данных"
 
+#, fuzzy
+#~ msgid ""
+#~ "installing a top-level 'COPYING' file is deprecated -- see the 'Writing R "
+#~ "Extensions' manual'"
+#~ msgstr ""
+#~ "См. информацию о файлах DESCRIPTION в секции  'Creating R пакетs' "
+#~ "руководства 'Writing R Extensions'."
+#~ msgid "Malformed NEWS.Rd file."
+#~ msgstr "Плохо сформированный файл NEWS.Rd."
+
+#, fuzzy
+#~ msgid "cannot read boolean object"
+#~ msgstr "нельзя открыть"
+#~ msgid "no examples found"
+#~ msgstr "не найдено примеров"
+#~ msgid "WARNING: 'Depends' entry has multiple dependencies on R:"
+#~ msgstr "ПРЕДУПРЕЖДЕНИЕ: У 'Depends' множественные зависимости в R:"
+#~ msgid "only the first will be used in R < 2.7.0"
+#~ msgstr "только первый будет использован R < 2.7.0"
+#~ msgid "'"
+#~ msgstr "'"
+#~ msgid "--binary is deprecated"
+#~ msgstr "--binary устарело"
+#~ msgid "use of '--auto-zip' is defunct"
+#~ msgstr "'--auto-zip' не работает"
+#~ msgid "use of '--use-zip-data' is defunct"
+#~ msgstr "'--use-zip-data' не работает"
+#~ msgid "use of '--no-docs' is deprecated: use '--install-args' instead"
+#~ msgstr ""
+#~ "использование '--no-docs' устарело: используйте '--install-args' вместо"
+#~ msgid "** Options"
+#~ msgstr "** Опции"
+#~ msgid "are only for '--binary'  and will be ignored"
+#~ msgstr "только для '--binary' и будет пропущено"
 #~ msgid "--pkglock applies only to a single package"
 #~ msgstr "--pkglock применим только к одиночному пакету"
-
 #~ msgid "--no-help overrides"
 #~ msgstr "--no-help переписан"
-
 #~ msgid "--"
 #~ msgstr "--"
-
 #~ msgid "'--auto-zip' is for Windows only"
 #~ msgstr "'--auto-zip' -- это только для Windows"
-
 #~ msgid "cannot update HTML package index"
 #~ msgstr "не могу обновить HTML-индекс пакетов"
-
 #~ msgid "'DESCRIPTION' has 'Encoding' field and re-encoding is not possible"
 #~ msgstr "у 'DESCRIPTION' есть поле 'Encoding', перекодировка невозможна"
-
 #~ msgid "cannot create HTML package index"
 #~ msgstr "не могу создать HTML-индекс пакета"
-
 #~ msgid "Running examples in package"
 #~ msgstr "Запускаю примеры к пакету"
-
 #~ msgid "making DLL ..."
 #~ msgstr "делаю DLL..."
-
 #~ msgid "... done"
 #~ msgstr "... готово"
-
 #~ msgid "Unable to locate help document %s in package %s"
 #~ msgstr "Не могу найти документ помощи %s в пакете %s"
-
 #~ msgid "missing 'DESCRIPTION.in' for package '%s'"
 #~ msgstr "пропущен 'DESCRIPTION.in' у пакета '%s'"
-
 #~ msgid "ERROR: this R is version %s, bundle '%s' requires R %s %s"
 #~ msgstr "ОШИБКА: это R версии %s, а набор '%s' требует R %s %s"
-
 #~ msgid "Bundle package:"
 #~ msgstr "Связка пакетов:"
-
 #~ msgid "Bundle 'DESCRIPTION' is missing."
 #~ msgstr "У связки пакетов отсутствует 'DESCRIPTION'."
 
@@ -1119,135 +1313,96 @@ msgstr[2] "объекты %s созданы больше чем за один вызов данных"
 #, fuzzy
 #~ msgid "No package of named %s could be found"
 #~ msgstr "должен быть загружен пакет"
-
 #~ msgid "*** 'hhc.exe' not found: not building CHM help"
 #~ msgstr "*** 'hhc.exe' не найден: не собираю CHM помощь"
-
 #~ msgid "package '%s' has no .rda file"
 #~ msgstr "у пакета '%s' нет .rda-файлов"
-
 #~ msgid "Rd files with syntax errors:"
 #~ msgstr "Rd-файлы с синтаксическими ошибками:"
-
 #~ msgid "Rd files with likely Rd problems:"
 #~ msgstr "Rd-файлы, по-видимому, с проблемами Rd:"
-
 #~ msgid "Unaccounted top-level text in file '%s':"
 #~ msgstr "Неопределенный текст верхнего уровня в файле '%s':"
-
 #~ msgid "Following section '%s'"
 #~ msgstr "Следующий раздел '%s'"
-
 #~ msgid "Rd files with unknown encoding:"
 #~ msgstr "Rd-файлы неизвестной кодировки:"
-
 #~ msgid "Rd files with invalid non-ASCII metadata:"
 #~ msgstr "Rd-файлы с неправильными не-ASCII метаданными:"
-
 #~ msgid "Rd files with non-ASCII section titles:"
 #~ msgstr "Rd-файлы с не-ASCII заголовками разделов:"
-
 #~ msgid "Rd files with missing or empty '\\name':"
 #~ msgstr "Rd-файлы с пропущенными или пустыми именами '\\имя':"
-
 #~ msgid "Rd files with missing or empty '\\title':"
 #~ msgstr "Rd-файлы с пропущенными или пустыми \\title':"
-
 #~ msgid "Rd files without '%s':"
 #~ msgstr "Rd-файлы без '%s':"
-
 #~ msgid "These entries are required in an Rd file."
 #~ msgstr "Эти пункты требуются для Rd-файла."
-
 #~ msgid "These entries must be unique in an Rd file."
 #~ msgstr "Эти пункты в Rd-файле должны быть уникальными."
-
 #~ msgid "Rd files with unknown sections:"
 #~ msgstr "Rd-файлы с неизвестными разделами:"
-
 #~ msgid "Rd files with non-standard keywords:"
 #~ msgstr "Rd-файлы с нестандартными ключевыми словами:"
-
 #~ msgid ""
 #~ "Each '\\keyword' entry should specify one of the standard keywords (as "
 #~ "listed in file 'KEYWORDS' in the R documentation directory)."
 #~ msgstr ""
 #~ "Каждый вход '\\keyword' должен определять одно из стандартных ключевых "
 #~ "слов (как перечислено в файле 'KEYWORDS' в папке документации R)."
-
 #~ msgid "Rd files with empty sections:"
 #~ msgstr "Rd-файлы с пустыми разделами:"
 
 #, fuzzy
 #~ msgid "checkRd is designed for Rd version 2 or higher"
 #~ msgstr "Rd2HTML разработан для Rd версии 2 или выше."
-
 #~ msgid "there are no help pages in this package"
 #~ msgstr "в пакете нет файлов помощи"
-
 #~ msgid "skipping repeated alias(es)"
 #~ msgstr "пропускаю повторяющиеся имена-ссылк(и)"
-
 #~ msgid "in file"
 #~ msgstr "в файле"
-
 #~ msgid "directory '%s' does not contain Rd sources"
 #~ msgstr "папка '%s' не содержит Rd-исходников"
-
 #~ msgid "Package Rd sources were installed without preserving Rd file names."
 #~ msgstr "Rd-исходники пакета были установлены без сохранения имен Rd-файлов."
-
 #~ msgid "Please reinstall using a current version of R."
 #~ msgstr "Пожалуйста, переустановите, используя текущую версию R."
-
 #~ msgid "*** error on file"
 #~ msgstr "*** ошибка в файле"
-
 #~ msgid "argument 'lines' must be a character vector"
 #~ msgstr "аргумент 'lines' должен быть текстовым вектором"
-
 #~ msgid "encoding '%s' is not portable"
 #~ msgstr "кодировка '%s' не переносима"
-
 #~ msgid "unterminated section '%s'"
 #~ msgstr "незаконченный раздел '%s'"
-
 #~ msgid "incomplete section 'section{%s}'"
 #~ msgstr "неполный раздел 'section{%s}'"
-
 #~ msgid "unterminated section 'section{%s}'"
 #~ msgstr "незаконченный раздел 'section{%s}'"
-
 #~ msgid "unmatched \\item name in '\\item{%s'"
 #~ msgstr "несоответствующее \\item имя в '\\item{%s'"
-
 #~ msgid "no \\item description for item '%s'"
 #~ msgstr "нет \\item описания для файла '%s'"
-
 #~ msgid "unmatched \\item description for item '%s'"
 #~ msgstr "несоответствующее определение \\item для пункта '%s'"
-
 #~ msgid "unclosed \\link"
 #~ msgstr "незакрытая \\link"
-
 #~ msgid "unclosed \\%s"
 #~ msgstr "незакрытое \\%s"
-
 #~ msgid "Rd syntax errors found"
 #~ msgstr "В Rd найдена ошибка синтаксиса"
-
 #~ msgid "Syntax error in documentation object '%s':"
 #~ msgstr "Синтаксическая ошибка в объекте документации '%s':"
-
 #~ msgid "should not get here"
 #~ msgstr "сюда не должно дойти"
 
 #, fuzzy
 #~ msgid "there is a 'man' dir but no help pages in this package"
 #~ msgstr "в пакете нет файлов помощи"
-
 #~ msgid "multiple \\encoding lines in file"
 #~ msgstr "несколько \\строк кодировок в файле"
-
 #~ msgid "no or more than one match"
 #~ msgstr "нет или более одного соответствия"
+

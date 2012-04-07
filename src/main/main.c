@@ -37,9 +37,7 @@
 #include "Parse.h"
 #include "Startup.h"
 
-#ifdef HAVE_LOCALE_H
-# include <locale.h>
-#endif
+#include <locale.h>
 
 #ifdef ENABLE_NLS
 void attribute_hidden nl_Rdummy(void)
@@ -223,7 +221,7 @@ Rf_ReplIteration(SEXP rho, int savestack, int browselevel, R_ReplState *state)
     }
 
     R_PPStackTop = savestack;
-    R_CurrentExpr = R_Parse1Buffer(&R_ConsoleIob, 0, &state->status, NULL);
+    R_CurrentExpr = R_Parse1Buffer(&R_ConsoleIob, 0, &state->status);
     
     switch(state->status) {
 
@@ -240,7 +238,7 @@ Rf_ReplIteration(SEXP rho, int savestack, int browselevel, R_ReplState *state)
     case PARSE_OK:
 
 	R_IoBufferReadReset(&R_ConsoleIob);
-	R_CurrentExpr = R_Parse1Buffer(&R_ConsoleIob, 1, &state->status, NULL);
+	R_CurrentExpr = R_Parse1Buffer(&R_ConsoleIob, 1, &state->status);
 	if (browselevel) {
 	    browsevalue = ParseBrowser(R_CurrentExpr, rho);
 	    if(browsevalue == 1) return -1;
@@ -342,7 +340,7 @@ int R_ReplDLLdo1(void)
 	if(c == ';' || c == '\n') break;
     }
     R_PPStackTop = 0;
-    R_CurrentExpr = R_Parse1Buffer(&R_ConsoleIob, 0, &status, NULL);
+    R_CurrentExpr = R_Parse1Buffer(&R_ConsoleIob, 0, &status);
 
     switch(status) {
     case PARSE_NULL:
@@ -351,7 +349,7 @@ int R_ReplDLLdo1(void)
 	break;
     case PARSE_OK:
 	R_IoBufferReadReset(&R_ConsoleIob);
-	R_CurrentExpr = R_Parse1Buffer(&R_ConsoleIob, 1, &status, NULL);
+	R_CurrentExpr = R_Parse1Buffer(&R_ConsoleIob, 1, &status);
 	R_Visible = FALSE;
 	R_EvalDepth = 0;
 	resetTimeLimits();
@@ -663,19 +661,9 @@ static void R_LoadProfile(FILE *fparg, SEXP env)
 
 int R_SignalHandlers = 1;  /* Exposed in R_interface.h */
 
-/* Use this to allow e.g. Win32 malloc to call warning.
-   Don't use R-specific type, e.g. Rboolean */
-/* int R_Is_Running = 0; now in Defn.h */
+unsigned int TimeToSeed(void); /* datetime.c */
 
-#include <time.h>
-#ifdef HAVE_SYS_TIME_H
-# include <sys/time.h>
-#endif
-
-#ifdef Win32
-# include <windows.h> /* for GetTickCount */
-# include <process.h> /* for getpid */
-#endif
+const char* get_workspace_name();  /* from startup.c */
 
 void setup_Rmainloop(void)
 {
@@ -744,8 +732,13 @@ void setup_Rmainloop(void)
 		 "Setting LC_MESSAGES failed, using \"C\"\n");
 #endif
     /* NB: we do not set LC_NUMERIC */
+#ifdef LC_MONETARY
+    if(!setlocale(LC_MONETARY, ""))
+	snprintf(deferred_warnings[ndeferred_warnings++], 250,
+		 "Setting LC_PAPER failed, using \"C\"\n");
+#endif
 #ifdef LC_PAPER
-    if(!setlocale(LC_PAPER, ""))
+    if(!setlocale(LC_MONETARY, ""))
 	snprintf(deferred_warnings[ndeferred_warnings++], 250,
 		 "Setting LC_PAPER failed, using \"C\"\n");
 #endif
@@ -774,28 +767,8 @@ void setup_Rmainloop(void)
 #endif
 #endif
 
-    /* make sure srand is called before R_tmpnam, PR#14381
-       Copied from RNG.c: Randomize */
-    {
-	int seed;
-#if HAVE_GETTIMEOFDAY
-	{
-	    struct timeval tv;
-	    gettimeofday (&tv, NULL);
-	    seed = ((uint64_t) tv.tv_usec << 16) ^ tv.tv_sec;
-	}
-#elif defined(Win32)
-	/* Try to avoid coincidence for processes launched almost
-	   simultaneously */
-	seed = (int) GetTickCount() + getpid();
-#elif HAVE_TIME
-	/* C89, so should work */
-	seed = time(NULL);
-#else
-	/* unlikely, but use random contents */
-#endif
-	srand(seed);    
-    }
+    /* make sure srand is called before R_tmpnam, PR#14381 */
+    srand(TimeToSeed());
 
     InitTempDir(); /* must be before InitEd */
     InitMemory();
@@ -931,9 +904,12 @@ void setup_Rmainloop(void)
 	doneit = 1;
 	R_InitialData();
     }
-    else
-	R_Suicide(_("unable to restore saved data in .RData\n"));
-
+    else {
+    	if (! SETJMP(R_Toplevel.cjmpbuf)) {
+	    warning(_("unable to restore saved data in %s\n"), get_workspace_name());
+	}
+    }
+    
     /* Initial Loading is done.
        At this point we try to invoke the .First Function.
        If there is an error we continue. */

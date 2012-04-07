@@ -1,5 +1,5 @@
 
-R version 2.13.1 Patched (2011-09-01 r56878)
+R version 2.14.0 alpha (2011-10-03 r57134)
 Copyright (C) 2011 The R Foundation for Statistical Computing
 ISBN 3-900051-07-0
 Platform: x86_64-unknown-linux-gnu (64-bit)
@@ -191,8 +191,6 @@ $allowed
 > sines <- outer(1:20, 1:4, function(x, y) sin(x / 20 * pi * y))
 > matplot(sines, type = "b", pch = 21:23, col = 2:5, bg = 2:5,
 +         main = "Using an 'opaque ('translucent') color palette")
-Warning in plot.xy(xy, type, ...) :
-  semi-transparency is not supported on this device: reported only once per page
 > 
 > x. <- adjustcolor(x, offset=c(0.5,0.5,0.5, 0), # <- "more white"
 +                   transform=diag(c(.7, .7, .7, 0.6)))
@@ -210,8 +208,6 @@ Warning in plot.xy(xy, type, ...) :
 > plot(0:9,0:9, type="n",axes=FALSE, xlab="",ylab="",
 +      main="adjustcolor() -> translucent")
 > text(1:8, labels=paste(x,"++",sep=""), col=x., cex=8)
-Warning in text.default(1:8, labels = paste(x, "++", sep = ""), col = x.,  :
-  semi-transparency is not supported on this device: reported only once per page
 > par(op)
 > 
 > ## and
@@ -362,6 +358,51 @@ Warning in text.default(1:8, labels = paste(x, "++", sep = ""), col = x.,  :
 > 
 > 
 > 
+> cleanEx()
+> nameEx("axisTicks")
+> ### * axisTicks
+> 
+> flush(stderr()); flush(stdout())
+> 
+> ### Name: axisTicks
+> ### Title: Compute Pretty Axis Tick Scales
+> ### Aliases: axisTicks .axisPars
+> ### Keywords: dplot
+> 
+> ### ** Examples
+> 
+> ##--- Demonstrating correspondence between graphics'
+> ##--- axis() and the graphics-engine agnostic  axisTicks() :
+> 
+> require("graphics")
+> plot(10*(0:10)); (pu <- par("usr"))
+[1]   0.6  11.4  -4.0 104.0
+> aX <- function(side, at, ...)
++     axis(side, at=at, labels=FALSE, lwd.ticks=2, col.ticks=2, tck=0.05, ...)
+> aX(1, print(xa <- axisTicks(pu[1:2], log=FALSE)))# x axis
+[1]  2  4  6  8 10
+> aX(2, print(ya <- axisTicks(pu[3:4], log=FALSE)))# y axis
+[1]   0  20  40  60  80 100
+> 
+> axisTicks(pu[3:4], log=FALSE, n = 10)
+ [1]   0  10  20  30  40  50  60  70  80  90 100
+> 
+> plot(10*(0:10), log="y"); (pu <- par("usr"))
+Warning in xy.coords(x, y, xlabel, ylabel, log) :
+  1 y value <= 0 omitted from logarithmic plot
+[1]  0.60 11.40  0.96  2.04
+> aX(2, print(ya <- axisTicks(pu[3:4], log=TRUE)))# y axis
+[1]  10  20  50 100
+> 
+> plot(2^(0:9), log="y"); (pu <- par("usr"))
+[1]  0.6400000 10.3600000 -0.1083708  2.8176408
+> aX(2, print(ya <- axisTicks(pu[3:4], log=TRUE)))# y axis
+[1]   1   2   5  10  20  50 100 200 500
+> 
+> 
+> 
+> 
+> graphics::par(get("par.postscript", pos = 'CheckExEnv'))
 > cleanEx()
 > nameEx("boxplot.stats")
 > ### * boxplot.stats
@@ -1687,6 +1728,41 @@ Copyright M. P. Wand 1997-2009
 > 
 > 
 > cleanEx()
+> nameEx("dev.capabilities")
+> ### * dev.capabilities
+> 
+> flush(stderr()); flush(stdout())
+> 
+> ### Name: dev.capabilities
+> ### Title: Query Capabilities of the Current Graphics Device
+> ### Aliases: dev.capabilities
+> ### Keywords: dplot
+> 
+> ### ** Examples
+> 
+> dev.capabilities()
+$semiTransparency
+[1] TRUE
+
+$transparentBackground
+[1] "semi"
+
+$rasterImage
+[1] "yes"
+
+$capture
+[1] FALSE
+
+$locator
+[1] FALSE
+
+$events
+character(0)
+
+> 
+> 
+> 
+> cleanEx()
 > nameEx("dev.interactive")
 > ### * dev.interactive
 > 
@@ -1867,7 +1943,7 @@ Copyright M. P. Wand 1997-2009
 > csphd(hcl(h = c(30, 120, 210, 300)))
 > 
 > # Same, but lighter and less colorful
-> # Turn of automatic correction to make sure
+> # Turn off automatic correction to make sure
 > # that we have defined real colors.
 > csphd(hcl(h = c(30, 120, 210, 300),
 +           c = 20, l = 90, fixup = FALSE))
@@ -2094,8 +2170,6 @@ Sturges   Scott      FD
 +        main = "Alpha-Transparency Palette\n alpha = 0.3")
 > xy[,1] <- -xy[,1]
 > points(xy, col=8, pch=16, cex = 1.5)
-Warning in plot.xy(xy.coords(x, y), type = type, ...) :
-  semi-transparency is not supported on this device: reported only once per page
 > palette("default")
 > 
 > 
@@ -2207,11 +2281,11 @@ List of 18
  $ fg         : chr "black"
  $ pointsize  : num 12
  $ pagecentre : logi TRUE
- $ colormodel : chr "rgb"
+ $ colormodel : chr "srgb"
  $ useDingbats: logi TRUE
  $ useKerning : logi TRUE
  $ fillOddEven: logi FALSE
- $ maxRasters : int 1000
+ $ compress   : logi TRUE
 > pdf.options(reset = TRUE) # back to factory-fresh
 > 
 > 
@@ -2234,8 +2308,8 @@ List of 18
 > pictex()
 > plot(1:11,(-5:5)^2, type='b', main="Simple Example Plot")
 > dev.off()
-postscript 
-         2 
+pdf 
+  2 
 > ##--------------------
 > ## Not run: 
 > ##D %% LaTeX Example
@@ -2944,15 +3018,15 @@ List of 18
  $ encoding   : chr "default"
  $ bg         : chr "pink"
  $ fg         : chr "black"
- $ width      : num 7
- $ height     : num 7
+ $ width      : num 0
+ $ height     : num 0
  $ horizontal : logi TRUE
  $ pointsize  : num 12
- $ paper      : chr "a4"
+ $ paper      : chr "default"
  $ pagecentre : logi TRUE
  $ print.it   : logi FALSE
  $ command    : chr "default"
- $ colormodel : chr "rgb"
+ $ colormodel : chr "srgb"
  $ useKerning : logi TRUE
  $ fillOddEven: logi FALSE
 > 
@@ -2977,14 +3051,14 @@ List of 18
  $ bg         : chr "pink"
  $ fg         : chr "black"
  $ width      : int [1:13] 0 1 2 3 4 5 6 7 8 9 ...
- $ height     : num 7
+ $ height     : num 0
  $ horizontal : logi TRUE
  $ pointsize  : num 12
- $ paper      : chr "a4"
+ $ paper      : chr "default"
  $ pagecentre : logi TRUE
  $ print.it   : logi FALSE
  $ command    : chr "default"
- $ colormodel : chr "rgb"
+ $ colormodel : chr "srgb"
  $ useKerning : logi TRUE
  $ fillOddEven: logi FALSE
 > ps.options(reset = TRUE) # back to factory-fresh
@@ -3397,7 +3471,7 @@ $zlab
 > ### * <FOOTER>
 > ###
 > cat("Time elapsed: ", proc.time() - get("ptime", pos = 'CheckExEnv'),"\n")
-Time elapsed:  2.989 0.092 3.204 0 0 
+Time elapsed:  1.915 0.066 2.059 0 0 
 > grDevices::dev.off()
 null device 
           1 

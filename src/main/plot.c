@@ -702,6 +702,9 @@ SEXP CreateAtVector(double *axp, double *usr, int nint, Rboolean logflag)
 			"usr[0] = %g > %g = usr[1] !", umin, umax);
 	    }
 	}
+	/* allow a fuzz since we will do things like 0.2*dn >= umin */
+	umin *= 1 - 1e-12;
+	umax *= 1 + 1e-12;
 
 	dn = axp[0];
 	if (dn < DBL_MIN) {/* was 1e-300; now seems too cautious */
@@ -2029,7 +2032,7 @@ SEXP attribute_hidden do_raster(SEXP call, SEXP op, SEXP args, SEXP env)
 	GConvert(&x0, &y0, USER, DEVICE, dd);
 	GConvert(&x1, &y1, USER, DEVICE, dd);
 	if (R_FINITE(x0) && R_FINITE(y0) && R_FINITE(x1) && R_FINITE(y1))
-           GRaster(image, INTEGER(dim)[1], INTEGER(dim)[0], 
+           GRaster(image, INTEGER(dim)[1], INTEGER(dim)[0],
                    x0, y0, x1 - x0, y1 - y0,
                    REAL(angle)[i % LENGTH(angle)],
                    LOGICAL(interpolate)[i % LENGTH(interpolate)], dd);

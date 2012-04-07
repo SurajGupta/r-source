@@ -7,8 +7,8 @@ msgid ""
 msgstr ""
 "Project-Id-Version: R 2.12.0\n"
 "Report-Msgid-Bugs-To: bugs@r-project.org\n"
-"POT-Creation-Date: 2011-02-18 12:36\n"
-"PO-Revision-Date: 2011-03-27 22:20+0100\n"
+"POT-Creation-Date: 2011-07-16 22:46\n"
+"PO-Revision-Date: 2011-10-15 15:12+0100\n"
 "Last-Translator: Philippe Grosjean <phgrosjean@sciviews.org>\n"
 "Language-Team: French <R-core@r-project.org>\n"
 "Language: fr\n"
@@ -132,11 +132,17 @@ msgstr "rows * columns trop petit"
 msgid "Missing rows"
 msgstr "Lignes manquantes"
 
-msgid "'expr' must be a function, call or an expression containing 'x'"
-msgstr "'expr' doit être une fonction, un appel ou une expression contenant 'x'"
+msgid "'expr' must be a function, or a call or an expression containing '%s'"
+msgstr "'expr' doit être une fonction, un appel ou une expression contenant '%s'"
+
+msgid "'add' will be ignored as there is no existing plot"
+msgstr "'add' sera ignoré puisqu'il n'y a aucun graphique"
 
 msgid "'from' and 'to' must be > 0 with log=\"x\""
 msgstr "'from' et 'to' doivent être > 0 avec log=\"x\""
+
+msgid "'expr' did not evaluate to an object of length 'n'"
+msgstr "'expr' n'a pas été avalué vers un objet de taille 'n'"
 
 msgid "wrong method"
 msgstr "mauvaise méthode"
@@ -146,6 +152,9 @@ msgstr "'breaks' doit être spécifié dans hist(<POSIXt>)"
 
 msgid "invalid specification of 'breaks'"
 msgstr "valeur de 'breaks' incorrecte"
+
+msgid "Must specify 'breaks' in hist(<Date>)"
+msgstr "'breaks' doit être spécifié dans hist(<Date>)"
 
 msgid "'x' must be a numeric vector or matrix"
 msgstr "'y' doit être un vecteur numérique ou une matrice"
@@ -297,6 +306,9 @@ msgstr "seulement une colonne dans l'argument pour 'pairs'"
 
 msgid "the 'panel' function made a new plot"
 msgstr "la fonction 'panel' a créé un nouveau graphe"
+
+msgid "surface extends beyond the box"
+msgstr "la surface s'étend au delà de la boite"
 
 msgid "'x' values must be positive."
 msgstr "les valeurs de 'x' doivent être positives."

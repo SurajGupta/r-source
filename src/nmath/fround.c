@@ -72,17 +72,17 @@ double fround(double x, double digits) {
 #define MAX_DIGITS DBL_MAX_10_EXP
     /* = 308 (IEEE); was till R 0.99: (DBL_DIG - 1) */
     /* Note that large digits make sense for very small numbers */
-    LDOUBLE pow10, sgn, intx;
+    long double pow10, sgn, intx;
     int dig;
 
-#ifdef IEEE_754
     if (ISNAN(x) || ISNAN(digits))
 	return x + digits;
     if(!R_FINITE(x)) return x;
-#endif
 
-    if (digits > MAX_DIGITS)
-	digits = MAX_DIGITS;
+    if(digits == ML_POSINF) return x;
+    else if(digits == ML_NEGINF) return 0.0;
+
+    if (digits > MAX_DIGITS) digits = MAX_DIGITS;
     dig = (int)floor(digits + 0.5);
     if(x < 0.) {
 	sgn = -1.;

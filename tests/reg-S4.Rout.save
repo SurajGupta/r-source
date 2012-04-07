@@ -1,5 +1,5 @@
 
-R version 2.13.0 Patched (2011-04-19 r55507)
+R Under development (unstable) (2011-09-08 r56975)
 Copyright (C) 2011 The R Foundation for Statistical Computing
 ISBN 3-900051-07-0
 Platform: x86_64-unknown-linux-gnu (64-bit)
@@ -124,7 +124,7 @@ show method
 > ## show(foo)
 > 
 > setMethod("print", "bar", function(x, ...){cat("S4 print method\n")})
-Creating a new generic function for "print" in ".GlobalEnv"
+Creating a generic function for 'print' from package 'base' in the global environment
 [1] "print"
 > foo
 show method
@@ -326,7 +326,8 @@ Slot "name":
 [1,]   NA
 > ## this has no longer (2.7.0) an S4 bit: set it explicitly just for testing:
 > stopifnot(isS4(m. <- asS4(m)),
-+           identical(m, f@.Data))
++           identical(m, f@.Data),
++ 	  .hasSlot(f, "name"))# failed in R <= 2.13.1
 > show(m.)
      [,1]
 [1,]   NA
@@ -540,7 +541,7 @@ $answer.all
 > setMethod("!", "foo", function(e1) e1+NA)
 [1] "!"
 Warning message:
-For function "!", signature "foo": argument in method definition changed from (e1) to (x) 
+For function '!', signature "foo": argument in method definition changed from (e1) to (x) 
 > selectMethod("!", "foo")
 Method Definition:
 
@@ -559,7 +560,7 @@ An object of class "foo"
 > ## This failed for about one day -- as.vector(x, mode) :
 > setMethod("as.vector", signature(x = "foo", mode = "missing"),
 +           function(x) unclass(x))
-Creating a new generic function for "as.vector" in ".GlobalEnv"
+Creating a generic function for 'as.vector' from package 'base' in the global environment
 [1] "as.vector"
 > ## whereas this fails in R versions earlier than 2.6.0:
 > setMethod("as.vector", "foo", function(x) unclass(x))
@@ -712,16 +713,12 @@ Creating a new generic function for "as.vector" in ".GlobalEnv"
 > setGeneric("order", signature="...",
 + 	   function (..., na.last=TRUE, decreasing=FALSE)
 + 	   standardGeneric("order"))
-Creating a generic for 'order' in package '.GlobalEnv'
-    (the supplied definition differs from and overrides the implicit generic
-    in package 'base': Signatures differ:  (...), (na.last, decreasing))
+Creating a new generic function for 'order' in the global environment
 [1] "order"
 > stopifnot(identical(rbind(1), matrix(1,1,1)))
 > setGeneric("rbind", function(..., deparse.level=1)
 + 	   standardGeneric("rbind"), signature = "...")
-Creating a generic for 'rbind' in package '.GlobalEnv'
-    (the supplied definition differs from and overrides the implicit generic
-    in package 'base': Signatures differ:  (...), (deparse.level))
+Creating a new generic function for 'rbind' in the global environment
 [1] "rbind"
 > stopifnot(identical(rbind(1), matrix(1,1,1)))
 > ## gave Error in .Method( .... in R 2.8.0
@@ -742,7 +739,7 @@ Creating a generic for 'rbind' in package '.GlobalEnv'
 +           function(x,i,j,drop) new(class(x), x@.Data[i]))
 [1] "["
 > ## defining S4 methods for sort() has no effect on calls to
-> ## sort() from functions in a name space; e.g., median.default.
+> ## sort() from functions in a namespace; e.g., median.default.
 > ## but setting an xtfrm() method works.
 > setMethod("xtfrm", "L", function(x) xtfrm(unlist(x@.Data)))
 [1] "xtfrm"
@@ -861,7 +858,7 @@ List of 7
 > ## implicit generics ..
 > setMethod("sample", "C2",
 +           function(x, size, replace=FALSE, prob=NULL) {"sample.C2"})
-Creating a new generic function for "sample" in ".GlobalEnv"
+Creating a generic function for 'sample' from package 'base' in the global environment
 [1] "sample"
 > stopifnot(is(sample,"standardGeneric"),
 + 	  ## the signature must come from the implicit generic:
@@ -875,9 +872,7 @@ Creating a new generic function for "sample" in ".GlobalEnv"
 > ## (For test, qqplot must be a "simple" function:)
 > stopifnot(is.function(qqplot) && identical(class(qqplot), "function"))
 > setGeneric("qqplot", function(x, y, ...) standardGeneric("qqplot"))
-Creating a generic for 'qqplot' in package '.GlobalEnv'
-    (the supplied definition differs from and overrides the implicit generic
-    in package 'stats': Formal arguments differ: (x, y, ...), (x, y, plot.it, xlab, ylab, ...))
+Creating a new generic function for 'qqplot' in the global environment
 [1] "qqplot"
 > stopifnot(is(qqplot, "standardGeneric"),
 + 	  identical(qqplot@signature, c("x","y")))

@@ -7,7 +7,7 @@
 \alias{ks.test}
 \title{Kolmogorov-Smirnov Tests}
 \description{
-  Performs one or two sample Kolmogorov-Smirnov tests.
+  Perform a one- or two-sample Kolmogorov-Smirnov test.
 }
 \usage{
 ks.test(x, y, \dots,
@@ -29,8 +29,8 @@ ks.test(x, y, \dots,
     See \sQuote{Details} for the meanings of the possible values.}
   \item{exact}{\code{NULL} or a logical indicating whether an exact
     p-value should be computed.  See \sQuote{Details} for the meaning of
-    \code{NULL}.  Not available if ties are present, nor for the
-    one-sided two-sample case.}
+    \code{NULL}.  Not available in the two-sample case for a one-sided
+    test or if ties are present.}
 }
 \details{
   If \code{y} is numeric, a two-sample test of the null hypothesis
@@ -60,21 +60,23 @@ ks.test(x, y, \dots,
   functions, and the test statistic is the maximum difference in value,
   with the statistic in the \code{"greater"} alternative being
   \eqn{D^+ = \max_u [ F_x(u) - F_y(u) ]}{D^+ = max[F_x(u) - F_y(u)]}.
-  Thus in the two-sample case
-  \code{alternative="greater"} includes distributions for which \code{x}
-  is stochastically \emph{smaller} than \code{y} (the CDF of \code{x} lies
-  above and hence to the left of that for \code{y}), in contrast to
-  \code{\link{t.test}} or \code{\link{wilcox.test}}.
+  Thus in the two-sample case \code{alternative = "greater"} includes
+  distributions for which \code{x} is stochastically \emph{smaller} than
+  \code{y} (the CDF of \code{x} lies above and hence to the left of that
+  for \code{y}), in contrast to \code{\link{t.test}} or
+  \code{\link{wilcox.test}}.
   
-  Exact p-values are not available for the one-sided two-sample case, or
-  in the case of ties.  If \code{exact = NULL} (the default), an exact
-  p-value is computed if the sample size is less than 100 in the
-  one-sample case, and if the product of the sample sizes is less than
-  10000 in the two-sample case.  Otherwise, asymptotic distributions are
-  used whose approximations may be inaccurate in small samples.  In the
-  one-sample two-sided case, exact p-values are obtained as described in
-  Marsaglia, Tsang & Wang (2003).  The formula of Birnbaum & Tingey
-  (1951) is used for the one-sample one-sided case.
+  Exact p-values are not available for the two-sample case if one-sided
+  or in the presence of ties.  If \code{exact = NULL} (the default), an
+  exact p-value is computed if the sample size is less than 100 in the
+  one-sample case \emph{and there are no ties}, and if the product of
+  the sample sizes is less than 10000 in the two-sample case.
+  Otherwise, asymptotic distributions are used whose approximations may
+  be inaccurate in small samples.  In the one-sample two-sided case,
+  exact p-values are obtained as described in Marsaglia, Tsang & Wang
+  (2003) (but not using the optional approximation in the right tail, so
+  this can be slow for small p-values).  The formula of Birnbaum &
+  Tingey (1951) is used for the one-sample one-sided case.
 
   If a single-sample test is used, the parameters specified in
   \code{\dots} must be pre-specified and not estimated from the data.

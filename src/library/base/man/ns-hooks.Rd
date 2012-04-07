@@ -7,16 +7,18 @@
 \alias{.onLoad}
 \alias{.onUnload}
 \alias{.onAttach}
-\title{Hooks for Name Space events}
+\alias{.Last.lib}
+\title{Hooks for Namespace Events}
 \description{
-  Packages with namespaces can supply functions to be called when
-  loaded, attached or unloaded.
+  Packages can supply functions to be called when
+  loaded, attached, detached or unloaded.
 }
 
 \usage{
 .onLoad(libname, pkgname)
 .onAttach(libname, pkgname)
 .onUnload(libpath)
+.Last.lib(libpath)
 }
 \arguments{
   \item{libname}{a character string giving the library directory where
@@ -25,8 +27,6 @@
   \item{libpath}{a character string giving the complete path to the package.}
 }
 \details{
-  These functions apply only to packages with namespaces.
-
   After loading, \code{\link{loadNamespace}} looks for a hook function
   named \code{.onLoad} and calls it (with two unnamed arguments) before
   sealing the namespace and processing exports.
@@ -53,28 +53,18 @@
   visible.  (Do not use the double colon operator in \code{.onLoad} as
   exports have not been processed at the point it is run.)
 
-  When the package is attached (via \code{\link{library}}), the hook
-  function \code{.onAttach} is looked for and if found is called
-  after the exported functions are attached and before the package
-  environment is sealed.  This is less likely to be useful than
-  \code{.onLoad}, which should be seen as the analogue of
-  \code{\link{.First.lib}} (which is only used for packages without a
-  namespace).
-
   \code{.onLoad}, \code{.onUnload} and \code{.onAttach} are looked for
   as internal objects in the namespace and should not be exported
   (whereas \code{.Last.lib} should be).
   
-  If a function \code{\link{.Last.lib}} is visible in the package, it
-  will be called when the package is detached: this does need to be exported.
-
   Anything needed for the functioning of the namespace should be
   handled at load/unload times by the \code{.onLoad} and
   \code{.onUnload} hooks.  For example, DLLs can be loaded (unless done
   by a \code{useDynLib} directive in the \file{NAMESPACE} file) and
   initialized in \code{.onLoad} and unloaded in \code{.onUnload}.  Use
   \code{.onAttach} only for actions that are needed only when the
-  package becomes visible to the user, for example a start-up message.
+  package becomes visible to the user (for example a start-up message)
+  or need to be run after the package environment has been created.
 }
 \section{Good practice}{
   Loading a namespace should where possible be silent, with startup
@@ -88,10 +78,16 @@
   that the dependence is documented and packages are loaded in the
   correct order.  Loading a namespace should not change the search path,
   so rather than attach a package, dependence of a namespace on another
-  package is best achieved by (selectively) importing from the other
+  package should be achieved by (selectively) importing from the other
   package's namespace.
+
+  As from \R 2.14.0, uses of \code{library} with argument \code{help} to
+  display basic information about the package should use \code{format}
+  on the computed package information object and pass this to
+  \code{packageStartupMessage}.
 }
 \seealso{
-  \code{\link{setHook}} shows how users can set hooks on the same events.
+  \code{\link{setHook}} shows how users can set hooks on the same events, and 
+  lists the sequence of events involving all of the hooks.
 }
 \keyword{utilities}

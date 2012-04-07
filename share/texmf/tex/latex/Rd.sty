@@ -1,6 +1,6 @@
 %%% Rd.sty ... Style for printing the R manual
 %%% Part of the R package, http://www.R-project.org
-%%% Copyright (C) 2003-2010 The R Foundation
+%%% Copyright (C) 2003-2011 The R Foundation
 %%% Distributed under GPL 2 or later
 %%%
 %%% Modified 1998/01/05 by Friedrich Leisch
@@ -21,11 +21,15 @@
 \newboolean{Rd@use@cm-super}
 \newboolean{Rd@has@lm}
 \newboolean{Rd@use@lm}
+\newboolean{Rd@use@beramono}
+\newboolean{Rd@use@inconsolata}
 \DeclareOption{ae}{\setboolean{Rd@use@ae}{true}}
 \DeclareOption{hyper}{\setboolean{Rd@use@hyper}{true}}
 \DeclareOption{times}{\setboolean{Rd@use@times}{true}}
 \DeclareOption{lm}{\setboolean{Rd@use@lm}{true}}
 \DeclareOption{cm-super}{\setboolean{Rd@use@cm-super}{true}}
+\DeclareOption{beramono}{\setboolean{Rd@use@beramono}{true}}
+\DeclareOption{inconsolata}{\setboolean{Rd@use@inconsolata}{true}}
 \ProcessOptions
 \RequirePackage{longtable}
 \setcounter{LTchunksize}{250}
@@ -45,7 +49,7 @@
 %% rather than (the identical) \@noligs from the LaTeX2e kernel.
 %% Hence, we add to \verbatim@font ... suggestion by Bernd Raichle
 %% <raichle@Informatik.Uni-Stuttgart.DE>.
-\RequirePackage{upquote}
+\ifthenelse{\boolean{Rd@use@inconsolata}}{}{\RequirePackage{upquote}}
 \g@addto@macro\verbatim@font\@noligs
 
 \addtolength{\textheight}{12mm}
@@ -187,6 +191,8 @@
 %% as from R 2.12.0 set \file in monospaced font, not sans-serif
 \newcommand{\file}[1]{`\texttt{#1}'}
 
+\newcommand{\Figure}[2]{\includegraphics[#2]{#1}}
+
 \ifthenelse{\boolean{Rd@use@hyper}}
 {\newcommand{\link}[1]{\hyperlink{Rfn.#1}{#1}\index{#1@\texttt{#1}}}}
 {\newcommand{\link}[1]{#1\index{#1@\texttt{#1}}}}
@@ -254,6 +260,10 @@
   {\message{NOT loading lmodern}}
 \ifthenelse{\boolean{Rd@use@cm-super}}{%
   \usepackage[T1]{fontenc}}{}
+\ifthenelse{\boolean{Rd@use@beramono}}{%
+  \usepackage[scaled=.8]{beramono}}{}
+\ifthenelse{\boolean{Rd@use@inconsolata}}{%
+  \usepackage{inconsolata}}{}
 
 \ifthenelse{\boolean{Rd@use@hyper}}{%
   \RequirePackage{color}    

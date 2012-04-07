@@ -58,7 +58,7 @@
 
 extern SA_TYPE SaveAction;
 extern Rboolean UsingReadline;
-extern FILE* ifp;
+extern FILE* ifp; /* from system.c */
 
 /*
  *  1) FATAL MESSAGES AT STARTUP
@@ -190,9 +190,9 @@ InputHandler * initStdinHandler(void)
   This sets the global variable InputHandlers if it is not already set.
   In the standard interactive case, this will have been set to be the
   BasicInputHandler object.
+
   Returns the newly created handler which can be used in a call to
-  removeInputHandler (prior to R 2.10.0 it returned the handler root [never
-  used] which made it impossible to identify the new handler).
+  removeInputHandler.
  */
 InputHandler *
 addInputHandler(InputHandler *handlers, int fd, InputHandlerProc handler,
@@ -282,11 +282,10 @@ getInputHandler(InputHandler *handlers, int fd)
  calls and change it only when a listener is added or deleted.
  Later.
 
-
- This replaces the previous version which looked only on stdin and the X11
- device connection.  This allows more than one X11 device to be open on a different
- connection. Also, it allows connections a la S4 to be developed on top of this
- mechanism. The return type of this routine has changed.
+ This replaces the previous version which looked only on stdin and the
+ X11 device connection.  This allows more than one X11 device to be
+ open on a different connection. Also, it allows connections a la S4
+ to be developed on top of this mechanism.
 */
 
 /* A package can enable polled event handling by making R_PolledEvents
@@ -296,8 +295,12 @@ getInputHandler(InputHandler *handlers, int fd)
 static void nop(void){}
 
 void (* R_PolledEvents)(void) = nop;
-
 int R_wait_usec = 0; /* 0 means no timeout */
+
+/* For X11 devices */
+void (* Rg_PolledEvents)(void) = nop;
+int Rg_wait_usec = 0;
+
 
 static int setSelectMask(InputHandler *, fd_set *);
 
@@ -368,9 +371,10 @@ void R_runHandlers(InputHandler *handlers, fd_set *readMask)
 {
     InputHandler *tmp = handlers, *next;
 
-    if (readMask == NULL)
+    if (readMask == NULL) {
+	Rg_PolledEvents();
 	R_PolledEvents();
-    else
+    } else
 	while(tmp) {
 	    /* Do this way as the handler function might call 
 	       removeInputHandlers */
@@ -537,7 +541,8 @@ static void popReadline(void)
 
 static void readline_handler(char *line)
 {
-    int l, buflen = rl_top->readline_len;
+    int l;
+    R_size_t buflen = rl_top->readline_len;
 
     popReadline();
 
@@ -903,8 +908,11 @@ Rstd_ReadConsole(const char *prompt, unsigned char *buf, int len,
 	for (;;) {
 	    fd_set *what;
 
-	    what = R_checkActivityEx(R_wait_usec ? R_wait_usec : -1, 0,
-				     handleInterrupt);
+	    int wt = -1;
+	    if (R_wait_usec > 0) wt = R_wait_usec;
+	    if (Rg_wait_usec > 0 && (wt < 0 || wt > Rg_wait_usec))
+		wt = Rg_wait_usec;
+	    what = R_checkActivityEx(wt, 0, handleInterrupt);
 	    /* This is slightly clumsy. We have advertised the
 	     * convention that R_wait_usec == 0 means "wait forever",
 	     * but we also need to enable R_checkActivity to return
@@ -1083,8 +1091,8 @@ void attribute_hidden Rstd_CleanUp(SA_TYPE saveact, int status, int runLast)
     if(saveact != SA_SUICIDE) KillAllDevices();
     R_CleanTempDir();
     if(saveact != SA_SUICIDE && R_CollectWarnings)
-	PrintWarnings();	/* from device close and .Last */
-    if(ifp) fclose(ifp);
+	PrintWarnings();	/* from device close and (if run) .Last */
+    if(ifp) fclose(ifp);        /* input file from -f or --file= */
     fpu_setup(FALSE);
 
     exit(status);
@@ -1263,40 +1271,13 @@ void attribute_hidden Rstd_addhistory(SEXP call, SEXP op, SEXP args, SEXP env)
 }
 
 
-
-#ifdef _R_HAVE_TIMING_
-# include <time.h>
-# ifdef HAVE_SYS_TIMES_H
-#  include <sys/times.h>
-# endif
-# ifndef CLK_TCK
-/* this is in ticks/second, generally 60 on BSD style Unix, 100? on SysV
- */
-#  ifdef HZ
-#   define CLK_TCK HZ
-#  else
-#   define CLK_TCK 60
-#  endif
-# endif /* not CLK_TCK */
-
-
-
 #define R_MIN(a, b) ((a) < (b) ? (a) : (b))
 
-/* This could in principle overflow times.  It is of type clock_t,
-   typically long int.  So use gettimeofday if you have it, which
-   is also more accurate.
- */
+double currentTime(void); /* from datetime.c */
 SEXP attribute_hidden do_syssleep(SEXP call, SEXP op, SEXP args, SEXP rho)
 {
     int Timeout;
-    double tm;
-#ifdef HAVE_GETTIMEOFDAY
-    struct timeval tv;
-#else
-    struct tms timeinfo;
-#endif
-    double timeint, start, elapsed;
+    double tm, timeint, start, elapsed;
 
     checkArity(op, args);
     timeint = asReal(CAR(args));
@@ -1304,51 +1285,33 @@ SEXP attribute_hidden do_syssleep(SEXP call, SEXP op, SEXP args, SEXP rho)
 	errorcall(call, _("invalid '%s' value"), "time");
     tm = timeint * 1e6;
 
-#ifdef HAVE_GETTIMEOFDAY
-    gettimeofday(&tv, NULL);
-    start = (double) tv.tv_sec + 1e-6 * (double) tv.tv_usec;
-#else
-    start = times(&timeinfo);
-#endif
+    start = currentTime();
     for (;;) {
 	fd_set *what;
 	tm = R_MIN(tm, 2e9); /* avoid integer overflow */
-	Timeout = (int) (R_wait_usec ? R_MIN(tm, R_wait_usec) : tm);
+	
+	int wt = -1;
+	if (R_wait_usec > 0) wt = R_wait_usec;
+	if (Rg_wait_usec > 0 && (wt < 0 || wt > Rg_wait_usec))
+	    wt = Rg_wait_usec;
+	Timeout = (int) (wt > 0 ? R_MIN(tm, wt) : tm);
 	what = R_checkActivity(Timeout, 1);
 
 	/* For polling, elapsed time limit ... */
 	R_CheckUserInterrupt();
 	/* Time up? */
-#ifdef HAVE_GETTIMEOFDAY
-	gettimeofday(&tv, NULL);
-	elapsed = (double) tv.tv_sec + 1e-6 * (double) tv.tv_usec - start;
-#else
-	elapsed = (times(&timeinfo) - start) / (double)CLK_TCK;
-#endif
+	elapsed = currentTime() - start;
 	if(elapsed >= timeint) break;
 
 	/* Nope, service pending events */
 	R_runHandlers(R_InputHandlers, what);
 
 	/* Servicing events might take some time, so recheck: */
-#ifdef HAVE_GETTIMEOFDAY
-	gettimeofday(&tv, NULL);
-	elapsed = (double) tv.tv_sec + 1e-6 * (double) tv.tv_usec - start;
-#else
-	elapsed = (times(&timeinfo) - start) / (double)CLK_TCK;
-#endif
+	elapsed = currentTime() - start;
 	if(elapsed >= timeint) break;
 
-	tm = 1e6*(timeint - elapsed); /* old code had "+ 10000;" */
+	tm = 1e6*(timeint - elapsed);
     }
 
     return R_NilValue;
 }
-
-#else /* not _R_HAVE_TIMING_ */
-SEXP attribute_hidden do_syssleep(SEXP call, SEXP op, SEXP args, SEXP rho)
-{
-    error(_("Sys.sleep is not implemented on this system"));
-    return R_NilValue;		/* -Wall */
-}
-#endif /* not _R_HAVE_TIMING_ */

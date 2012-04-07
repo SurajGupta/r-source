@@ -356,7 +356,11 @@ static SEXP DeleteItem(SEXP symbol, SEXP lst)
 {
     if (lst != R_NilValue) {
 	SETCDR(lst, DeleteItem(symbol, CDR(lst)));
-	if (TAG(lst) == symbol) lst = CDR(lst);
+	if (TAG(lst) == symbol) {
+	    SETCAR(lst, R_UnboundValue); /* in case binding is cached */
+	    LOCK_BINDING(lst);           /* in case binding is cached */
+	    lst = CDR(lst);
+	}
     }
     return lst;
 }
@@ -594,7 +598,7 @@ static SEXP R_HashProfile(SEXP table)
    sxpinfo).
 
    It is possible that the benefit of caching may be significantly
-   reduced if we introduce name space management.  Since maintaining
+   reduced if we introduce namespace management.  Since maintaining
    cache integrity is a bit tricky and since it might complicate
    threading a bit (I'm not sure it will but it needs to be thought
    through if nothing else) it might make sense to remove caching at
@@ -624,7 +628,7 @@ void attribute_hidden InitBaseEnv()
 
 void attribute_hidden InitGlobalEnv()
 {
-    R_GlobalEnv = NewEnvironment(R_NilValue, R_NilValue, R_BaseEnv);
+    R_GlobalEnv = R_NewHashedEnv(R_BaseEnv, ScalarInteger(0));
 #ifdef NEW_CODE /* Not used */
     HASHTAB(R_GlobalEnv) = R_NewHashTable(100);
 #endif
@@ -642,7 +646,7 @@ void attribute_hidden InitGlobalEnv()
     R_NamespaceRegistry = R_NewHashedEnv(R_NilValue, ScalarInteger(0));
     R_PreserveObject(R_NamespaceRegistry);
     defineVar(install("base"), R_BaseNamespace, R_NamespaceRegistry);
-    /**** needed to properly initialize the base name space */
+    /**** needed to properly initialize the base namespace */
 }
 
 #ifdef USE_GLOBAL_CACHE
@@ -743,6 +747,8 @@ static SEXP RemoveFromList(SEXP thing, SEXP list, int *found)
     }
     else if (TAG(list) == thing) {
 	*found = 1;
+	SETCAR(list, R_UnboundValue); /* in case binding is cached */
+	LOCK_BINDING(list);           /* in case binding is cached */
 	return CDR(list);
     }
     else {
@@ -751,6 +757,8 @@ static SEXP RemoveFromList(SEXP thing, SEXP list, int *found)
 	while (next != R_NilValue) {
 	    if (TAG(next) == thing) {
 		*found = 1;
+		SETCAR(next, R_UnboundValue); /* in case binding is cached */
+		LOCK_BINDING(next);           /* in case binding is cached */
 		SETCDR(last, CDR(next));
 		return list;
 	    }
@@ -821,6 +829,11 @@ static SEXP findVarLocInFrame(SEXP rho, SEXP symbol, Rboolean *canCache)
     SEXP frame, c;
 
     if (rho == R_BaseEnv || rho == R_BaseNamespace) {
+	error("'findVarLocInFrame' cannot be used on the base environment");
+	/* the code below doesn't really make sense as it returns the
+	   value, not the binding.  We _could_ return the symbol as
+	   the binding object in that case, but it isn't clear that
+	   would be useful. LT */
 	c = SYMBOL_BINDING_VALUE(symbol);
 	return (c == R_UnboundValue) ? R_NilValue : c;
     }
@@ -835,6 +848,10 @@ static SEXP findVarLocInFrame(SEXP rho, SEXP symbol, Rboolean *canCache)
 	/* Better to use exists() here if we don't actually need the value! */
 	val = table->get(CHAR(PRINTNAME(symbol)), canCache, table);
 	if(val != R_UnboundValue) {
+	    /* The result should probably be identified as being from
+	       a user database, or maybe use an active binding
+	       mechanism to allow setting a new value to get back to
+	       the data base. */
 	    tmp = allocSExp(LISTSXP);
 	    SETCAR(tmp, val);
 	    SET_TAG(tmp, symbol);
@@ -2661,57 +2678,6 @@ SEXP attribute_hidden do_builtins(SEXP call, SEXP op, SEXP args, SEXP rho)
 
 /*----------------------------------------------------------------------
 
-  do_libfixup
-
-  This function copies the bindings in the loading environment to the
-  library environment frame (the one that gets put in the search path)
-  and removes the bindings from the loading environment.  Values that
-  contain promises (created by delayedAssign, for example) are not forced.
-  Values that are closures with environments equal to the loading
-  environment are reparented to .GlobalEnv.  Finally, all bindings are
-  removed from the loading environment.
-
-  This routine can die if we automatically create a name space when
-  loading a package.
-*/
-
-SEXP attribute_hidden do_libfixup(SEXP call, SEXP op, SEXP args, SEXP rho)
-{
-    SEXP libenv, loadenv, p;
-    checkArity(op, args);
-    loadenv = CAR(args);
-    libenv = CADR(args);
-    if (TYPEOF(libenv) != ENVSXP || !isEnvironment(loadenv))
-	errorcall(call, _("invalid arguments"));
-    if (HASHTAB(loadenv) != R_NilValue) {
-	int i, n;
-	n = length(HASHTAB(loadenv));
-	for (i = 0; i < n; i++) {
-	    p = VECTOR_ELT(HASHTAB(loadenv), i);
-	    while (p != R_NilValue) {
-		if (TYPEOF(CAR(p)) == CLOSXP && CLOENV(CAR(p)) == loadenv)
-		    SET_CLOENV(CAR(p), R_GlobalEnv);
-		defineVar(TAG(p), CAR(p), libenv);
-		p = CDR(p);
-	    }
-	}
-    }
-    else {
-	p = FRAME(loadenv);
-	while (p != R_NilValue) {
-	    if (TYPEOF(CAR(p)) == CLOSXP && CLOENV(CAR(p)) == loadenv)
-		SET_CLOENV(CAR(p), R_GlobalEnv);
-	    defineVar(TAG(p), CAR(p), libenv);
-	    p = CDR(p);
-	}
-    }
-    SET_HASHTAB(loadenv, R_NilValue);
-    SET_FRAME(loadenv, R_NilValue);
-    return libenv;
-}
-
-/*----------------------------------------------------------------------
-
   do_pos2env
 
   This function returns the environment at a specified position in the
@@ -3209,9 +3175,9 @@ SEXP attribute_hidden do_isNSEnv(SEXP call, SEXP op, SEXP args, SEXP rho)
 
 SEXP R_NamespaceEnvSpec(SEXP rho)
 {
-    /* The name space spec is a character vector that specifies the
-       name space.  The first element is the name space name.  The
-       second element, if present, is the name space version.  Further
+    /* The namespace spec is a character vector that specifies the
+       namespace.  The first element is the namespace name.  The
+       second element, if present, is the namespace version.  Further
        elements may be added later. */
     if (rho == R_BaseNamespace)
 	return R_BaseNamespaceName;
@@ -3252,7 +3218,7 @@ static SEXP checkNSname(SEXP call, SEXP name)
 	}
 	/* else fall through */
     default:
-	errorcall(call, _("bad name space name"));
+	errorcall(call, _("bad namespace name"));
     }
     return name;
 }
@@ -3264,7 +3230,7 @@ SEXP attribute_hidden do_regNS(SEXP call, SEXP op, SEXP args, SEXP rho)
     name = checkNSname(call, CAR(args));
     val = CADR(args);
     if (findVarInFrame(R_NamespaceRegistry, name) != R_UnboundValue)
-	errorcall(call, _("name space already registered"));
+	errorcall(call, _("namespace already registered"));
     defineVar(name, val, R_NamespaceRegistry);
     return R_NilValue;
 }
@@ -3276,7 +3242,7 @@ SEXP attribute_hidden do_unregNS(SEXP call, SEXP op, SEXP args, SEXP rho)
     checkArity(op, args);
     name = checkNSname(call, CAR(args));
     if (findVarInFrame(R_NamespaceRegistry, name) == R_UnboundValue)
-	errorcall(call, _("name space not registered"));
+	errorcall(call, _("namespace not registered"));
     if( !HASHASH(PRINTNAME(name)))
 	hashcode = R_Newhashpjw(CHAR(PRINTNAME(name)));
     else

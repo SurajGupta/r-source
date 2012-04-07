@@ -25,9 +25,10 @@ source(file, local = FALSE, echo = verbose, print.eval = echo,
   \item{file}{a \link{connection} or a character string giving the pathname
     of the file or URL to read from.  \code{""} indicates the connection
     \code{\link{stdin}()}.}
-  \item{local}{if \code{local} is \code{FALSE}, the parsed expressions
-    are evaluated in the user's workspace (the global environment),
-    otherwise in the environment calling \code{source}.}
+  \item{local}{\code{TRUE}, \code{FALSE} or an environment, determining
+    where the parsed expressions are evaluated.  \code{TRUE} corresponds
+    to the user's workspace (the global environment) and \code{FALSE} to
+    the environment from \code{source} is called.}
   \item{echo}{logical; if \code{TRUE}, each expression is printed
     after parsing, before evaluation.}
   \item{print.eval}{logical; if \code{TRUE}, the result of
@@ -74,18 +75,15 @@ source(file, local = FALSE, echo = verbose, print.eval = echo,
   (as used on classic Mac OS) and map this to newline.  The final line
   can be incomplete, that is missing the final end-of-line marker.
 
-  If \code{options("keep.source")} is true (the default in interactive
-  use), the source of functions is kept so they can be listed exactly as
-  input.  This imposes a limit of 128K bytes on the function size and a
-  nesting limit of 265.  Use \code{options(keep.source = FALSE)} when
-  these limits might take effect: if exceeded they generate an error.
+  If \code{keep.source} is true (the default in interactive use), the
+  source of functions is kept so they can be listed exactly as input.
   
-  Using \code{echo = TRUE} and \code{keep.source = TRUE} may interact
-  badly with source code that includes \samp{#line nn "filename"}
-  directives (e.g. code produced by older versions of
-  \code{\link{Stangle}()}): \code{source()} will attempt to obtain the
-  source from the named file which may have changed since the code was
-  produced.  Use \code{keep.source = FALSE} to avoid this.
+%   Using \code{echo = TRUE} and \code{keep.source = TRUE} may interact
+%   badly with source code that includes \samp{#line nn "filename"}
+%   directives (e.g. code produced by older versions of
+%   \code{\link{Stangle}()}): \code{source()} will attempt to obtain the
+%   source from the named file which may have changed since the code was
+%   produced.  Use \code{keep.source = FALSE} to avoid this.
   
   Unlike input from a console, lines in the file or on a connection can
   contain an unlimited number of characters.

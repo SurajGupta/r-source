@@ -30,9 +30,6 @@
 /* Define to 1 if you have the `access' function. */
 #define HAVE_ACCESS 1
 
-/* Define to 1 if you have the `acosh' function. */
-#define HAVE_ACOSH 1
-
 /* Define to 1 if you have `alloca', as a function or macro. */
 #define HAVE_ALLOCA 1
 
@@ -59,14 +56,8 @@
 /* Define to 1 if you have the <arpa/inet.h> header file. */
 /* #undef HAVE_ARPA_INET_H */
 
-/* Define to 1 if you have the `asinh' function. */
-#define HAVE_ASINH 1
-
 /* Define to 1 if you have the `asprintf' function. */
 /* #undef HAVE_ASPRINTF */
-
-/* Define to 1 if you have the `atanh' function. */
-#define HAVE_ATANH 1
 
 /* Define if you have BSD networking headers and libraries. */
 /* #undef HAVE_BSD_NETWORKING */
@@ -124,6 +115,9 @@
 /* Define to 1 if you have the `chmod' function. */
 #define HAVE_CHMOD 1
 
+/* Define to 1 if you have the `clock_gettime' function. */
+/* #undef HAVE_CLOCK_GETTIME */
+
 /* Define to 1 if you have the `clog' function. */
 #define HAVE_CLOG 1
 
@@ -152,21 +146,9 @@
    */
 /* #undef HAVE_DCGETTEXT */
 
-/* Define to 1 if you have the declaration of `acosh', and to 0 if you don't.
-   */
-#define HAVE_DECL_ACOSH 1
-
 /* Define to 1 if you have the declaration of `alloca', and to 0 if you don't.
    */
 #define HAVE_DECL_ALLOCA 0
-
-/* Define to 1 if you have the declaration of `asinh', and to 0 if you don't.
-   */
-#define HAVE_DECL_ASINH 1
-
-/* Define to 1 if you have the declaration of `atanh', and to 0 if you don't.
-   */
-#define HAVE_DECL_ATANH 1
 
 /* Define to 1 if you have the declaration of `feof_unlocked', and to 0 if you
    don't. (For intl) */
@@ -212,10 +194,6 @@
    don't. */
 #define HAVE_DECL_SIZE_MAX 1
 
-/* Define to 1 if you have the declaration of `snprintf', and to 0 if you
-   don't. */
-#define HAVE_DECL_SNPRINTF 1
-
 /* Define to 1 if you have the declaration of `strdup', and to 0 if you don't.
    */
 #define HAVE_DECL_STRDUP 1
@@ -227,10 +205,6 @@
 /* Define to 1 if you have the declaration of `vasprintf', and to 0 if you
    don't. */
 #define HAVE_DECL_VASPRINTF 0
-
-/* Define to 1 if you have the declaration of `vsnprintf', and to 0 if you
-   don't. */
-#define HAVE_DECL_VSNPRINTF 1
 
 /* Define to 1 if you have the declaration of `_snprintf', and to 0 if you
    don't. (For intl) */
@@ -616,9 +590,6 @@
 /* Define to 1 if you have the `sigemptyset' function. */
 /* #undef HAVE_SIGEMPTYSET */
 
-/* Define to 1 if you have the `snprintf' function. */
-#define HAVE_SNPRINTF 1
-
 /* Define if you have support for sockets. */
 #define HAVE_SOCKETS 1
 
@@ -722,14 +693,8 @@
 /* Define to 1 if you have the <tiffio.h> header file. */
 /* #undef HAVE_TIFFIO_H */
 
-/* Define to 1 if you have the `time' function. */
-#define HAVE_TIME 1
-
 /* Define to 1 if you have the `times' function. */
 #define HAVE_TIMES 1
-
-/* Define to 1 if you have the <time.h> header file. */
-#define HAVE_TIME_H 1
 
 /* Define to 1 if you have the `tsearch' function. */
 #ifndef WIN64
@@ -759,6 +724,15 @@
    */
 #define HAVE_UNSIGNED_LONG_LONG_INT 1
 
+/* Define to 1 if you have the `utime' function. */
+/* #undef HAVE_UTIME */
+
+/* Define to 1 if you have the `utimes' function. */
+/* #undef HAVE_UTIMES */
+
+/* Define to 1 if you have the <utime.h> header file. */
+/* #undef HAVE_UTIME_H */
+
 /* Define to 1 if you have the `vasprintf' function. */
 #define HAVE_VASPRINTF 1
 
@@ -774,9 +748,6 @@
 
 /* Define to 1 if __attribute__((visibility())) is supported */
 /* #undef HAVE_VISIBILITY_ATTRIBUTE */
-
-/* Define to 1 if you have the `vsnprintf' function. */
-#define HAVE_VSNPRINTF 1
 
 /* Define to 1 if you have the <wchar.h> header file. */
 #define HAVE_WCHAR_H 1
@@ -1001,9 +972,6 @@
 
 /* Define to enable provoking compile errors on write barrier violation. */
 /* #undef TESTING_WRITE_BARRIER */
-
-/* Define to 1 if you can safely include both <sys/time.h> and <time.h>. */
-#define TIME_WITH_SYS_TIME 1
 
 /* Define to use ICU for collation. */
 /* #undef USE_ICU */

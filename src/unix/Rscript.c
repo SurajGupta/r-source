@@ -102,7 +102,7 @@ void usage(void)
     fprintf(stderr, "  --restore           Do restore previously saved objects at startup\n");
     fprintf(stderr, "  --vanilla           Combine --no-save, --no-restore, --no-site-file\n");
     fprintf(stderr, "                        --no-init-file and --no-environ\n");
-    fprintf(stderr, "\n'file' should not contain spaces nor shell metacharacters\n");
+    fprintf(stderr, "\n'file' may contain spaces but not shell metacharacters\n");
 }
 
 
@@ -117,7 +117,7 @@ int main(int argc, char *argv[])
 	usage();
 	exit(1);
     }
-    av = (char **) malloc((argc+4)*sizeof(char *));
+    av = (char **) malloc((size_t) (argc+4)*sizeof(char *));
     if(!av) {
 	fprintf(stderr, "malloc failure\n");
 	exit(1);

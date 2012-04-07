@@ -68,8 +68,9 @@ makeMethodsList <- function(object, level=1)
                 is(eli, "named"))
             el(object, i) <- Recall(eli, NULL, level+1)
         else
-            stop(gettextf("element %d at level %d (class \"%s\") cannot be interpreted as a function or named list",
-                          i, level, class(eli)), domain = NA)
+            stop(gettextf("element %d at level %d (class %s) cannot be interpreted as a function or named list",
+                          i, level, dQuote(class(eli))),
+                 domain = NA)
     }
     slot(value, "methods") <- object
     value
@@ -111,16 +112,20 @@ insertMethod <-
     ## See rev. 1.17 for the code before the assertions added.
     if(identical(args[1L], "...") && !identical(names(signature), "...")) {
         if(identical(signature[[1L]], "ANY"))
-           stop(gettextf("inserting method with invalid signature matching argument '...' to class \"%s\"", signature[[1L]]), domain = NA)
+           stop(gettextf("inserting method with invalid signature matching argument '...' to class %s",
+                         dQuote(signature[[1L]])),
+                domain = NA)
         args <- args[-1L]
         signature <- signature[-1L]
-        if(length(signature) == 0)
+        if(length(signature) == 0L)
             return(mlist)
     }
-    if(length(signature) == 0)
+    if(length(signature) == 0L)
         stop("inserting method corresponding to empty signature")
     if(!is(mlist, "MethodsList"))
-        stop(gettextf("inserting method into non-methods-list object (class \"%s\")", .class1(mlist)), domain = NA)
+        stop(gettextf("inserting method into non-methods-list object (class %s)",
+                      dQuote(.class1(mlist))),
+             domain = NA)
     if(length(args) > 1 && !cacheOnly)
         mlist <- balanceMethodsList(mlist, args)
     Class <- el(signature, 1)
@@ -213,17 +218,21 @@ MethodsListSelect <-
         if(is.null(f)) # recursive recall of MethodsListSelect
             stop("invalid method sublist")
         else if(!is.null(mlist)) # NULL => 1st call to genericFunction
-            stop(gettextf("'%f' is not a valid generic function: methods list was an object of class \"%s\"", f, class(mlist)), domain = NA)
+            stop(gettextf("%f is not a valid generic function: methods list was an object of class %s",
+                          sQuote(f), dQuote(class(mlist))),
+                 domain = NA)
     }
     if(!is.logical(useInherited))
-        stop(gettextf("'useInherited' must be TRUE, FALSE, or a named logical vector of those values; got an object of class \"%s\"",
-                      class(useInherited)), domain = NA)
+        stop(gettextf("%s must be TRUE, FALSE, or a named logical vector of those values; got an object of class %s",
+                      sQuote("useInherited"),
+                      dQuote(class(useInherited))),
+             domain = NA)
     if(identical(mlist, .getMethodsForDispatch(fdef))) {
         resetNeeded <- TRUE
         ## On the initial call:
         ## turn off any further method dispatch on this function, to avoid recursive
         ## loops if f is a function used in MethodsListSelect.
-        ## TODO: Using name spaces in the methods package would eliminate the need for this
+        ## TODO: Using namespaces in the methods package would eliminate the need for this
         .setMethodsForDispatch(f, fdef, finalDefault)
         if(is(mlist, "MethodsList")) {
             on.exit(.setMethodsForDispatch(f, fdef, mlist))
@@ -446,16 +455,53 @@ matchSignature <-
   function(signature, fun, where = baseenv())
 {
     if(!is(fun, "genericFunction"))
-        stop(gettextf("trying to match a method signature to an object (of class \"%s\") that is not a generic function", class(fun)), domain = NA)
+        stop(gettextf("trying to match a method signature to an object (of class %s) that is not a generic function",
+                      dQuote(class(fun))),
+             domain = NA)
     anames <- fun@signature
-    if(!is(signature, "list") && !is(signature, "character"))
-        stop(gettextf("trying to match a method signature of class \"%s\"; expects a list or a character vector", class(signature)), domain = NA)
-    if(length(signature) == 0)
+    if(length(signature) == 0L)
         return(character())
-    sigClasses <- as.character(signature)
+    if(is(signature,"character")) {
+        pkgs <- packageSlot(signature) # includes case of  "ObjectsWithPackage"
+        if(is.null(pkgs))
+            pkgs <- character(length(signature))
+        else if(length(pkgs) != length(signature))
+            stop("invalid \"package\" slot or attribute, wrong length")
+        sigClasses <- as.character(signature)
+    }
+    else if(is(signature, "list")) {
+        sigClasses <- pkgs <- character(length(signature))
+        for(i in seq_along(signature)) {
+            cli <- signature[[i]]
+            if(is(cli, "classRepresentation")) {
+                sigClasses[[i]] <- cli@className
+                pkgs[[i]] <- cli@package
+            }
+            else if(is(cli, "character") && length(cli) == 1) {
+                sigClasses[[i]] <- cli
+                pkgi <- packageSlot(cli)
+                if(is.character(pkgi))
+                    pkgs[[i]] <- pkgi
+            }
+            else
+                stop(gettextf("invalid element in a list for \"signature\" argument; element %d is neither a class definition nor a class name",
+                     i), domain = NA)
+        }
+    }
+    else
+        stop(gettextf("trying to match a method signature of class %s; expects a list or a character vector",
+                      dQuote(class(signature))),
+             domain = NA)
     if(!identical(where, baseenv())) {
-        unknown <- !sapply(sigClasses, function(x, where)
-			   isClass(x, where=where), where = where)
+        ## fill in package information, warn about undefined classes
+        unknown <- !nzchar(pkgs)
+        for(i in seq_along(sigClasses)[unknown]) {
+            cli <- getClassDef(sigClasses[[i]], where)
+            if(!is.null(cli)) {
+                pkgs[[i]] <- cli@package
+                unknown[[i]] <- FALSE
+            }
+        }
         if(any(unknown)) {
             unknown <- unique(sigClasses[unknown])
             ## coerce(), i.e., setAs() may use *one* unknown class
@@ -466,14 +512,16 @@ matchSignature <-
 		sprintf(ngettext(length(unknown),
 				 "no definition for class %s",
 				 "no definition for classes %s"),
-			paste(.dQ(unknown), collapse = ", ")),
+			paste(dQuote(unknown), collapse = ", ")),
 		domain = NA)
         }
     }
     signature <- as.list(signature)
     if(length(sigClasses) != length(signature))
-        stop(gettextf("object to use as a method signature for function \"%s\" does not look like a legitimate signature (a vector of single class names): there were %d class names, but %d elements in the signature object",
-                      fun@generic, length(sigClasses), length(signature)),
+        stop(gettextf("object to use as a method signature for function %s does not look like a legitimate signature (a vector of single class names): there were %d class names, but %d elements in the signature object",
+                      sQuote(fun@generic),
+                      length(sigClasses),
+                      length(signature)),
              domain = NA)
     if(is.null(names(signature))) {
         which <- seq_along(signature)
@@ -485,7 +533,10 @@ matchSignature <-
     else {
     ## construct a function call with the same naming pattern  &
       ## values as signature
-    fcall <- do.call("call", c("fun", signature))
+    sigList <- signature
+    for(i in seq_along(sigList))
+        sigList[[i]] <- c(sigClasses[[i]], pkgs[[i]])
+    fcall <- do.call("call", c("fun", sigList))
     ## match the call to the formal signature (usually the formal args)
     if(identical(anames, formalArgs(fun)))
         smatch <- match.call(fun, fcall)
@@ -500,22 +551,33 @@ matchSignature <-
     ## Assertion:  match.call has permuted the args into the order of formal args,
     ## and carried along the values.  Get the supplied classes in that
     ## order, from the matched args in the call object.
-    sigClasses <- as.character(smatch)[-1L]
     if(any(is.na(which)))
-        stop(gettextf("in the method signature for function \"%s\" invalid argument names in the signature: %s",
-                      fun@generic,
+        stop(gettextf("in the method signature for function %s invalid argument names in the signature: %s",
+                      sQuote(fun@generic),
                       paste(snames[is.na(which)], collapse = ", ")),
              domain = NA)
+    smatch <- smatch[-1]
+    for(i in seq_along(smatch)) {
+        eli <- smatch[[i]]
+        sigClasses[[i]] <- eli[[1]]
+        pkgs[[i]] <- eli[[2]]
+    }
 }
     n <- length(anames)
     value <- rep("ANY", n)
+    valueP <- rep("methods", n)
     names(value) <- anames
     value[which] <- sigClasses
+    valueP[which] <- pkgs
     unspec <- value == "ANY"
     ## remove the trailing unspecified classes
     while(n > 1 && unspec[[n]])
         n <- n-1
-    length(value) <- n
+    length(value) <- length(valueP) <- n
+    attr(value, "package") <- valueP
+    ## <FIXME> Is there a reason (bootstrapping?) why this
+    ## is not an actual object from class "signature"?
+    ## See .MakeSignature() </FIXME>
     value
 }
 
@@ -650,7 +712,7 @@ promptMethods <- function(f, filename = NULL, methods)
              ## Title and description are ok as auto-generated: should
              ## they be flagged as such (via '~~' which are quite often
              ## left in by authors)?
-             title = 
+             title =
              sprintf("\\title{ ~~ Methods for Function \\code{%s} %s ~~}",
                      f, packageString),
              description =
@@ -673,7 +735,7 @@ promptMethods <- function(f, filename = NULL, methods)
 
 linearizeMlist <-
     ## Undo the recursive nature of the methods list, making a list of
-    ## function defintions, with the names of the list being the
+    ## function definitions, with the names of the list being the
     ## corresponding signatures (designed for printing; for looping over
     ## the methods, use `listFromMlist' instead).
     ##
@@ -710,8 +772,9 @@ linearizeMlist <-
                 arguments <- c(arguments, lapply(mi@arguments, preC, argname))
             }
             else
-                warning(gettextf("skipping methods list element %s of unexpected class \"%s\"\n\n",
-                                paste(cnames[i], collapse = ", "), .class1(mi)),
+                warning(gettextf("skipping methods list element %s of unexpected class %s\n\n",
+                                 paste(cnames[i], collapse = ", "),
+                                 dQuote(.class1(mi))),
                         domain = NA)
         }
         new("LinearMethodsList", methods = value, classes = classes, arguments = arguments)
@@ -780,7 +843,7 @@ listFromMlist <-
 ## Define a trivial version of asMethodDefinition for bootstrapping.
 ## The real version requires several class definitions as well as
 ## methods for as<-
-asMethodDefinition <- function(def, signature = list(), sealed = FALSE, fdef = def) {
+asMethodDefinition <- function(def, signature = list(.anyClassName), sealed = FALSE, fdef = def) {
   if(is.primitive(def))
     def
   else {
@@ -816,7 +879,7 @@ asMethodDefinition <- function(def, signature = list(), sealed = FALSE, fdef = d
         else
             assign(this, TRUE, envir = .MlistDepTable)
     }
-    if(missing(this)) 
+    if(missing(this))
         msg <-"Use of the \"MethodsList\" meta data objects is deprecated."
     else if(is.character(this))
         msg <- gettextf("%s, along with other use of the \"MethodsList\" metadata objects, is deprecated.", dQuote(this))

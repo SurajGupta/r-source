@@ -145,8 +145,10 @@ function(dir, fields = NULL,
             if(!inherits(temp, "try-error")) {
                 temp <- tryCatch(read.dcf(p, fields = fields)[1L, ],
                                  error = identity)
-                if(!inherits(temp, "error"))
+                if(!inherits(temp, "error")) {
+                    temp["MD5sum"] <- md5sum(files[i])
                     db[[i]] <- temp
+                }
             }
             unlink(packages[i], recursive = TRUE)
         }
@@ -181,22 +183,19 @@ function(dir, fields = NULL, verbose = getOption("verbose"))
 }
 
 dependsOnPkgs <-
-function(pkgs,
-         dependencies = c("Depends", "Imports", "LinkingTo"),
-         recursive = TRUE,
-         lib.loc = NULL,
+function(pkgs, dependencies = c("Depends", "Imports", "LinkingTo"),
+         recursive = TRUE, lib.loc = NULL,
          installed = installed.packages(lib.loc, fields = "Enhances"))
 {
-    need <- apply(installed[, dependencies, drop = FALSE], 1L,
-                  function(x)
+    av <- installed[, dependencies, drop = FALSE]
+    need <- apply(av, 1L, function(x)
                   any(pkgs %in% utils:::.clean_up_dependencies(x)) )
     uses <- rownames(installed)[need]
     if(recursive) {
         p <- pkgs
         repeat {
             p <- unique(c(p, uses))
-            need <- apply(installed[, dependencies, drop = FALSE], 1L,
-                          function(x)
+            need <- apply(av, 1L, function(x)
                           any(p %in% utils:::.clean_up_dependencies(x)) )
             uses <- unique(c(p, rownames(installed)[need]))
             if(length(uses) <= length(p)) break

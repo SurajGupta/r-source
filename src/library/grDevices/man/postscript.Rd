@@ -108,8 +108,10 @@ postscript(file = ifelse(onefile, "Rplots.ps", "Rplot\%03d.ps"),
 #endif
   }
   \item{colormodel}{a character string describing the color model:
-    currently allowed values as \code{"rgb"}, \code{"rgb-nogray"},
-    \code{"gray"} and \code{"cmyk"}.  Defaults to \code{"rgb"}.}
+    currently allowed values as \code{"srgb"}, \code{"srgb+gray"},
+    \code{"rgb"}, \code{"rgb-nogray"}, \code{"gray"} (or \code{"grey")} and
+    \code{"cmyk"}.  Defaults to \code{"srgb"}.  See section
+    \sQuote{Color models}.}
   \item{useKerning}{logical.  Should kerning corrections be included in
     setting text and calculating string widths?  Defaults to \code{TRUE}.}
   \item{fillOddEven}{logical controlling the polygon fill mode:  see
@@ -265,6 +267,7 @@ postscript(file = ifelse(onefile, "Rplots.ps", "Rplot\%03d.ps"),
   and \sQuote{grave} respectively), as they are in the Adobe
   documentation.
 }
+
 \section{TeX fonts}{
   TeX has traditionally made use of fonts such as Computer Modern which
   are encoded rather differently, in a 7-bit encoding.  This encoding
@@ -289,26 +292,29 @@ postscript(file = ifelse(onefile, "Rplots.ps", "Rplot\%03d.ps"),
   special-casing the postscript code generated from the supplied
   \file{CM_symbol_10.afm}.
 }
+
 \section{Color models}{
-  The default color model is sRGB, with pure gray colors expressed as
-  greyscales (which results in smaller files and can be
-  advantageous with some printer drivers).
+  The default color model (\code{"srgb"}) is sRGB.
+
+  The alternative \code{"srgb+gray"} uses sRGB for colors, but with pure
+  gray colors (including black and white) expressed as greyscales (which
+  results in smaller files and can be advantageous with some printer
+  drivers).  Conversely, its files can be rendered much slower on some
+  viewers, and there can be a noticeable discontinuity in color
+  gradients involving gray or white.
   
-  Color model \code{"rgb-nogray"} uses only sRGB, model \code{"cmyk"}
-  only CMYK, and model \code{"gray"} only greyscales (and selecting any
-  other colour is an error).  The simplest possible conversion from sRGB
-  to CMYK is used
-  (\url{http://en.wikipedia.org/wiki/CMYK_color_model#Mapping_RGB_to_CMYK}).
-  
-  In the default \code{"rgb"} model the viewing program has to switch to
-  and from the sRGB colorspace and this can be slow if done many times
-  (e.g. with coloured fills in scatterplots using \code{pch = 21} and
-  \code{\link{image}} plots).  This can be avoided by using the
-  \code{"rgb-nogray"} colorspace, although some printer drivers may
-  render grey colors using RGB inks in that space.
-  
-  Raster images are output in RGB under the \code{"gray"} and
-  \code{"cmyk"} models.  
+  Other possibilities are \code{"gray"} (or \code{"grey"}) which used
+  only greyscales (and converts other colours to a luminance), and
+  \code{"cmyk"}.  The simplest possible conversion from sRGB to CMYK is
+  used
+  (\url{http://en.wikipedia.org/wiki/CMYK_color_model#Mapping_RGB_to_CMYK}),
+  and raster images are output in RGB.
+
+  Color models provided for backwards compatibility are \code{"rgb"})
+  (which is RGB+gray) and \code{"rgb-nogray"} which use uncalibrated RGB
+  (as used in \R prior to 2.13.0).  These result in slightly smaller
+  files which may render faster, but do rely on the viewer being
+  properly calibrated.
 }
 
 \section{Printing}{
@@ -351,7 +357,7 @@ postscript(file = ifelse(onefile, "Rplots.ps", "Rplot\%03d.ps"),
 
   At very small line widths, the line type may be forced to solid.
   
-  Raster images are (currently) limited to 10,000 pixels and opaque colours.
+  Raster images are currently limited to opaque colours.
 }
 
 \note{
@@ -371,6 +377,7 @@ postscript(file = ifelse(onefile, "Rplots.ps", "Rplot\%03d.ps"),
   \emph{The New S Language}.
   Wadsworth & Brooks/Cole.
 }
+
 \seealso{
   \code{\link{postscriptFonts}},
   \code{\link{Devices}},
@@ -387,10 +394,12 @@ postscript(file = ifelse(onefile, "Rplots.ps", "Rplot\%03d.ps"),
   and PDF graphics. \emph{R News}, 6(2):41--47.
   \url{http://cran.r-project.org/doc/Rnews/Rnews_2006-2.pdf}.
 }
+
 \author{
   Support for Computer Modern fonts is based on a contribution by
   Brian D'Urso \email{durso@hussle.harvard.edu}.
 }
+
 \examples{
 require(graphics)
 \dontrun{

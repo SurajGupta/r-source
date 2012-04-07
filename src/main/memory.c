@@ -2015,14 +2015,14 @@ char *S_alloc(long nelem, int eltsize)
 
 char *S_realloc(char *p, long new, long old, int size)
 {
-    int nold;
+    size_t nold;
     char *q;
     /* shrinking is a no-op */
     if(new <= old) return p;
-    q = R_alloc(new, size);
-    nold = old * size;
+    q = R_alloc((size_t)new, size);
+    nold = (size_t)old * size;
     memcpy(q, p, nold);
-    memset(q + nold, 0, new*size - nold);
+    memset(q + nold, 0, (size_t)new*size - nold);
     return q;
 }
 
@@ -2209,6 +2209,48 @@ SEXP allocVector(SEXPTYPE type, R_len_t length)
 #if VALGRIND_LEVEL > 0
     R_size_t actual_size = 0;
 #endif
+
+    /* Handle some scalars directly to improve speed. */
+    if (length == 1) {
+	switch(type) {
+	case REALSXP:
+	case INTSXP:
+	case LGLSXP:
+	    node_class = 1;
+	    alloc_size = NodeClassSize[1];
+	    if (FORCE_GC || NO_FREE_NODES() || VHEAP_FREE() < alloc_size) {
+		R_gc_internal(alloc_size);
+		if (NO_FREE_NODES())
+		    mem_err_cons();
+		if (VHEAP_FREE() < alloc_size)
+		    mem_err_heap(size);
+	    }
+
+	    CLASS_GET_FREE_NODE(node_class, s);
+#if VALGRIND_LEVEL > 2
+	    VALGRIND_MAKE_WRITABLE(&ATTRIB(s), sizeof(void *));
+            VALGRIND_MAKE_WRITABLE(s, 3);
+#endif
+#if VALGRIND_LEVEL > 1
+	    switch(type) {
+	    case REALSXP: actual_size = sizeof(double); break;
+	    case INTSXP: actual_size = sizeof(int); break;
+	    case LGLSXP: actual_size = sizeof(int); break;
+	    }
+	    VALGRIND_MAKE_WRITABLE(DATAPTR(s), actual_size);
+#endif
+	    s->sxpinfo = UnmarkedNodeTemplate.sxpinfo;
+	    SET_NODE_CLASS(s, node_class);
+	    R_SmallVallocSize += alloc_size;
+	    ATTRIB(s) = R_NilValue;
+	    TYPEOF(s) = type;
+	    LENGTH(s) = length;
+	    TRUELENGTH(s) = 0;
+	    NAMED(s) = 0;
+	    return(s);
+	}
+    }
+
     if (length < 0 )
 	errorcall(R_GlobalContext->call,
 		  _("negative length vectors are not allowed"));
@@ -2387,6 +2429,7 @@ SEXP allocVector(SEXPTYPE type, R_len_t length)
 	GC_PROT(s = allocSExpNonCons(type));
     }
     LENGTH(s) = length;
+    TRUELENGTH(s) = 0;
     NAMED(s) = 0;
 
     /* The following prevents disaster in the case */
@@ -2468,9 +2511,8 @@ static void R_gc_full(R_size_t size_needed)
     R_gc_internal(size_needed);
 }
 
-#ifdef _R_HAVE_TIMING_
-double R_getClockIncrement(void);
-void R_getProcTime(double *data);
+extern double R_getClockIncrement(void);
+extern void R_getProcTime(double *data);
 
 static double gctimes[5], gcstarttimes[5];
 static Rboolean gctime_enabled = FALSE;
@@ -2494,25 +2536,15 @@ SEXP attribute_hidden do_gctime(SEXP call, SEXP op, SEXP args, SEXP env)
     REAL(ans)[4] = gctimes[4];
     return ans;
 }
-#else /* not _R_HAVE_TIMING_ */
-SEXP attribute_hidden do_gctime(SEXP call, SEXP op, SEXP args, SEXP env)
-{
-    error(_("gc.time() is not implemented on this system"));
-    return R_NilValue;		/* -Wall */
-}
-#endif /* not _R_HAVE_TIMING_ */
 
 static void gc_start_timing(void)
 {
-#ifdef _R_HAVE_TIMING_
     if (gctime_enabled)
 	R_getProcTime(gcstarttimes);
-#endif /* _R_HAVE_TIMING_ */
 }
 
 static void gc_end_timing(void)
 {
-#ifdef _R_HAVE_TIMING_
     if (gctime_enabled) {
 	double times[5], delta;
 	R_getProcTime(times);
@@ -2521,11 +2553,10 @@ static void gc_end_timing(void)
 	/* add delta to compensate for timer resolution */
 	gctimes[0] += times[0] - gcstarttimes[0] + delta;
 	gctimes[1] += times[1] - gcstarttimes[1] + delta;
-	gctimes[2] += times[2] - gcstarttimes[2] + delta;
+	gctimes[2] += times[2] - gcstarttimes[2];
 	gctimes[3] += times[3] - gcstarttimes[3];
 	gctimes[4] += times[4] - gcstarttimes[4];
     }
-#endif /* _R_HAVE_TIMING_ */
 }
 
 #define R_MAX(a,b) (a) < (b) ? (b) : (a)

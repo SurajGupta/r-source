@@ -710,8 +710,8 @@ int addContourLines(double *x, int nx, double *y, int ny,
 		    s = s->next;
 		}
 		if(ns == max_contour_segments)
-		    warning(_("contour(): circular/long seglist -- bug.report()!"));
-
+		    warning(_("contour(): circular/long seglist -- set %s > %d?"), 
+		            "options(\"max.contour.segments\")", max_contour_segments);
 		/*
 		 * "write" the contour locations into the list of contours
 		 */
@@ -995,7 +995,8 @@ static void contour(SEXP x, int nx, SEXP y, int ny, SEXP z,
 		s = s->next;
 	    }
 	    if(ns == max_contour_segments)
-		warning(_("contour(): circular/long seglist -- bug.report()!"));
+		warning(_("contour(): circular/long seglist -- set %s > %d?"), 
+		        "options(\"max.contour.segments\")", max_contour_segments);
 
 	    /* contour midpoint : use for labelling sometime (not yet!)
 	       int ns2;
@@ -1028,7 +1029,7 @@ static void contour(SEXP x, int nx, SEXP y, int ny, SEXP z,
 			    (iii < ns-1) ? "," : "\n");
 #endif
 
-	    GMode(1, dd);
+//	    GMode(1, dd);
 
 	    if (drawLabels) {
 		/* If user supplied labels, use i'th one of them
@@ -1302,7 +1303,7 @@ static void contour(SEXP x, int nx, SEXP y, int ny, SEXP z,
 		GPolyline(ns, xxx, yyy, USER, dd);
 	    }
 
-	    GMode(0, dd);
+//	    GMode(0, dd);
 	    vmaxset(vmax);
 	} /* while */
       } /* for(i .. )  for(j ..) */

@@ -1,6 +1,6 @@
 % File src/library/stats/man/optim.Rd
 % Part of the R package, http://www.R-project.org
-% Copyright 1995-2009 R Core Development Team
+% Copyright 1995-2011 R Core Development Team
 % Distributed under GPL 2 or later
 
 \name{optim}
@@ -15,7 +15,7 @@
 }
 \usage{
 optim(par, fn, gr = NULL, \dots,
-      method = c("Nelder-Mead", "BFGS", "CG", "L-BFGS-B", "SANN"),
+      method = c("Nelder-Mead", "BFGS", "CG", "L-BFGS-B", "SANN", "Brent"),
       lower = -Inf, upper = Inf,
       control = list(), hessian = FALSE)
 }
@@ -33,7 +33,8 @@ optim(par, fn, gr = NULL, \dots,
    kernel is used.}
  \item{\dots}{Further arguments to be passed to \code{fn} and \code{gr}.}
  \item{method}{The method to be used. See \sQuote{Details}.}
- \item{lower, upper}{Bounds on the variables for the \code{"L-BFGS-B"} method.}
+ \item{lower, upper}{Bounds on the variables for the \code{"L-BFGS-B"}
+   method, or bounds in which to \emph{search} for method \code{"Brent"}.}
  \item{control}{A list of control parameters. See \sQuote{Details}.}
  \item{hessian}{Logical. Should a numerically differentiated Hessian
    matrix be returned?}
@@ -88,6 +89,11 @@ optim(par, fn, gr = NULL, \dots,
   parameters. It is not a general-purpose method but can be very useful
   in getting to a good value on a very rough surface.
 
+  Method \code{"Brent"} is for one-dimensional problems only, using
+  \code{\link{optimize}()}.  It can be useful in cases where
+  \code{optim()} is used inside other functions where only \code{method}
+  can be specified, such as in \code{\link{mle}} from package \pkg{stats4}.
+
   Function \code{fn} can return \code{NA} or \code{Inf} if the function
   cannot be evaluated at the supplied value, but the initial value must
   have a computable finite value of \code{fn}.
@@ -114,7 +120,8 @@ optim(par, fn, gr = NULL, \dots,
     \item{\code{parscale}}{A vector of scaling values for the parameters.
         Optimization is performed on \code{par/parscale} and these should be
         comparable in the sense that a unit change in any element produces
-        about a unit change in the scaled value.}
+        about a unit change in the scaled value.  Not used (nor needed)
+	for \code{method = "Brent"}.}
     \item{\code{ndeps}}{A vector of step sizes for the finite-difference
       approximation to the gradient, on \code{par/parscale}
       scale. Defaults to \code{1e-3}.}
@@ -173,8 +180,8 @@ optim(par, fn, gr = NULL, \dots,
     to compute the Hessian, if requested, and any calls to \code{fn} to
     compute a finite-difference approximation to the gradient.}
   \item{convergence}{An integer code. \code{0} indicates successful
-    completion (which is always the case for \code{"SANN"}). Possible
-  error codes are
+    completion (which is always the case for \code{"SANN"} and
+    \code{"Brent"}).  Possible error codes are
     \describe{
       \item{\code{1}}{indicates that the iteration limit \code{maxit}
       had been reached.}
@@ -194,8 +201,9 @@ optim(par, fn, gr = NULL, \dots,
 }
 \note{
   \code{optim} will work with one-dimensional \code{par}s, but the
-  default method does not work well (and will warn).  Use
-  \code{\link{optimize}} instead.
+  default method does not work well (and will warn).  Method
+  \code{"Brent"} uses \code{\link{optimize}} provided bounds are available;
+  \code{"BFGS"} often works well enough if not.
 }
 \source{
   The code for methods \code{"Nelder-Mead"}, \code{"BFGS"} and
@@ -211,7 +219,7 @@ optim(par, fn, gr = NULL, \dots,
 }
 \references{
   Belisle, C. J. P. (1992) Convergence theorems for a class of simulated
-  annealing algorithms on \eqn{R^d}{Rd}. \emph{J Applied Probability},
+  annealing algorithms on \eqn{R^d}{Rd}. \emph{J. Applied Probability},
   \bold{29}, 885--895.
 
   Byrd, R. H., Lu, P., Nocedal, J. and Zhu, C.  (1995) A limited

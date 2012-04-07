@@ -1,6 +1,6 @@
 /*
  *  R : A Computer Language for Statistical Data Analysis
- *  Copyright (C) 2004-10   The R Development Core Team.
+ *  Copyright (C) 2004-11   The R Development Core Team.
  *
  *  This program is free software; you can redistribute it and/or modify
  *  it under the terms of the GNU General Public License as published by
@@ -73,8 +73,11 @@ static R_CMethodDef CEntries [] = {
 #define CALLDEF(name, n)  {#name, (DL_FUNC) &name, n}
 
 static const R_CallMethodDef CallEntries[] = {
+    // NB: each *also* needs an entry in useDynLib() in ../NAMESPACE !
     CALLDEF(Type1FontInUse, 2),
     CALLDEF(CIDFontInUse, 2),
+    CALLDEF(R_CreateAtVector, 4),
+    CALLDEF(R_GAxisPars, 3),
     {"R_GD_nullDevice", (DL_FUNC) &R_GD_nullDevice, 0},
 #ifndef WIN32
     CALLDEF(makeQuartzDefault, 0),
@@ -90,8 +93,9 @@ static const R_ExternalMethodDef ExtEntries[] = {
     EXTDEF(PostScript, 16),
     EXTDEF(XFig, 11),
     EXTDEF(PDF, 16),
+    EXTDEF(devCairo, 10),
 #ifdef WIN32
-    EXTDEF(devga, 17),
+    EXTDEF(devga, 19),
     EXTDEF(savePlot, 3),
 #else
     EXTDEF(Quartz, 12),

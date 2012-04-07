@@ -15,7 +15,7 @@ R_RD4DVI=${R_RD4DVI-'@R_RD4DVI@'}
 R_RD4PDF=${R_RD4PDF-'@R_RD4PDF@'}
 ## used for options("texi2dvi")
 R_TEXI2DVICMD=${R_TEXI2DVICMD-${TEXI2DVI-'@TEXI2DVICMD@'}}
-## used by INSTALL, check, build
+## used by INSTALL, untar() and installing grDevices
 R_GZIPCMD=${R_GZIPCMD-'@R_GZIPCMD@'}
 ## Default zip/unzip commands
 R_UNZIPCMD=${R_UNZIPCMD-'@R_UNZIPCMD@'}
@@ -35,8 +35,11 @@ MAKE=${MAKE-'@MAKE@'}
 ## Prefer a POSIX-compliant sed on e.g. Solaris
 SED=${SED-'@SED@'}
 ## Prefer a tar that can automagically read compressed archives
-## Used in tar(), untar(), R CMD INSTALL|build|check
+## Used in tar(), untar(), R CMD INSTALL --build, R CMD build
 TAR=${TAR-'@TAR@'}
+
+## System and compiler types.
+R_SYSTEM_ABI='@R_SYSTEM_ABI@'
 
 @BUILD_AQUA_FALSE@R_LIBS_USER=${R_LIBS_USER-'~/R/@R_PLATFORM@-library/@MAJ_MIN_VERSION@'}
 @BUILD_AQUA_TRUE@R_LIBS_USER=${R_LIBS_USER-'~/Library/R/@MAJ_MIN_VERSION@/library'}

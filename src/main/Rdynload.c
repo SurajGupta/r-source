@@ -1,7 +1,7 @@
 /*
  *  R : A Computer Language for Statistical Data Analysis
  *  Copyright (C) 1995-1996 Robert Gentleman and Ross Ihaka
- *  Copyright (C) 1997-2010 The R Development Core Team
+ *  Copyright (C) 1997-2011 The R Development Core Team
  *
  *  This program is free software; you can redistribute it and/or modify
  *  it under the terms of the GNU General Public License as published by
@@ -258,7 +258,8 @@ R_registerRoutines(DllInfo *info, const R_CMethodDef * const croutines,
 
     if(croutines) {
 	for(num=0; croutines[num].name != NULL; num++) {;}
-	info->CSymbols = (Rf_DotCSymbol*)calloc(num, sizeof(Rf_DotCSymbol));
+	info->CSymbols = (Rf_DotCSymbol*)calloc((size_t) num,
+						sizeof(Rf_DotCSymbol));
 	info->numCSymbols = num;
 	for(i = 0; i < num; i++) {
 	    R_addCRoutine(info, croutines+i, info->CSymbols + i);
@@ -268,7 +269,8 @@ R_registerRoutines(DllInfo *info, const R_CMethodDef * const croutines,
     if(fortranRoutines) {
 	for(num=0; fortranRoutines[num].name != NULL; num++) {;}
 	info->FortranSymbols =
-	    (Rf_DotFortranSymbol*)calloc(num, sizeof(Rf_DotFortranSymbol));
+	    (Rf_DotFortranSymbol*)calloc((size_t) num,
+					 sizeof(Rf_DotFortranSymbol));
 	info->numFortranSymbols = num;
 
 	for(i = 0; i < num; i++) {
@@ -280,7 +282,7 @@ R_registerRoutines(DllInfo *info, const R_CMethodDef * const croutines,
     if(callRoutines) {
 	for(num=0; callRoutines[num].name != NULL; num++) {;}
 	info->CallSymbols =
-	    (Rf_DotCallSymbol*)calloc(num, sizeof(Rf_DotCallSymbol));
+	    (Rf_DotCallSymbol*)calloc((size_t) num, sizeof(Rf_DotCallSymbol));
 	info->numCallSymbols = num;
 	for(i = 0; i < num; i++) {
 	    R_addCallRoutine(info, callRoutines+i, info->CallSymbols + i);
@@ -290,7 +292,8 @@ R_registerRoutines(DllInfo *info, const R_CMethodDef * const croutines,
     if(externalRoutines) {
 	for(num=0; externalRoutines[num].name != NULL; num++) {;}
 	info->ExternalSymbols =
-	    (Rf_DotExternalSymbol*)calloc(num, sizeof(Rf_DotExternalSymbol));
+	    (Rf_DotExternalSymbol*)calloc((size_t) num,
+					  sizeof(Rf_DotExternalSymbol));
 	info->numExternalSymbols = num;
 
 	for(i = 0; i < num; i++) {
@@ -307,12 +310,12 @@ R_setPrimitiveArgTypes(const R_FortranMethodDef * const croutine,
 		       Rf_DotFortranSymbol *sym)
 {
     sym->types = (R_NativePrimitiveArgType *)
-	malloc(sizeof(R_NativePrimitiveArgType) * croutine->numArgs);
+	malloc(sizeof(R_NativePrimitiveArgType) * (size_t) croutine->numArgs);
     if(!sym->types)
 	error("allocation failure in R_setPrimitiveArgTypes");
     if(sym->types)
 	memcpy(sym->types, croutine->types,
-	       sizeof(R_NativePrimitiveArgType) * croutine->numArgs);
+	       sizeof(R_NativePrimitiveArgType) * (size_t) croutine->numArgs);
 
 }
 
@@ -321,12 +324,12 @@ R_setArgStyles(const R_FortranMethodDef * const croutine,
 	       Rf_DotFortranSymbol *sym)
 {
     sym->styles = (R_NativeArgStyle *)
-	malloc(sizeof(R_NativeArgStyle) * croutine->numArgs);
+	malloc(sizeof(R_NativeArgStyle) * (size_t) croutine->numArgs);
     if(!sym->styles)
 	error("allocation failure in R_setArgStyles");
     if(sym->styles)
 	memcpy(sym->styles, croutine->styles,
-	       sizeof(R_NativeArgStyle) * croutine->numArgs);
+	       sizeof(R_NativeArgStyle) * (size_t) croutine->numArgs);
 }
 
 static void
@@ -888,7 +891,7 @@ SEXP attribute_hidden do_dynload(SEXP call, SEXP op, SEXP args, SEXP env)
     DllInfo *info;
 
     checkArity(op,args);
-    if (!isString(CAR(args)) || length(CAR(args)) < 1)
+    if (!isString(CAR(args)) || LENGTH(CAR(args)) != 1)
 	error(_("character argument expected"));
     GetFullDLLPath(call, buf, translateChar(STRING_ELT(CAR(args), 0)));
     /* AddDLL does this DeleteDLL(buf); */
@@ -904,7 +907,7 @@ SEXP attribute_hidden do_dynunload(SEXP call, SEXP op, SEXP args, SEXP env)
     char buf[2 * PATH_MAX];
 
     checkArity(op,args);
-    if (!isString(CAR(args)) || length(CAR(args)) < 1)
+    if (!isString(CAR(args)) || LENGTH(CAR(args)) != 1)
 	error(_("character argument expected"));
     GetFullDLLPath(call, buf, translateChar(STRING_ELT(CAR(args), 0)));
     if(!DeleteDLL(buf))
@@ -925,6 +928,26 @@ int R_moduleCdynload(const char *module, int local, int now)
 #else
     snprintf(dllpath, PATH_MAX, "%s%smodules%s%s%s", p, FILESEP, FILESEP,
 	     module, SHLIB_EXT);
+#endif
+    res = AddDLL(dllpath, local, now, "");
+    if(!res)
+	warning(_("unable to load shared object '%s':\n  %s"),
+		dllpath, DLLerror);
+    return res != NULL ? 1 : 0;
+}
+
+int R_cairoCdynload(int local, int now)
+{
+    char dllpath[PATH_MAX], *p = getenv("R_HOME"), *module = "cairo";
+    DllInfo *res;
+
+    if(!p) return 0;
+#ifdef R_ARCH
+    snprintf(dllpath, PATH_MAX, "%s/library/grDevices/libs/%s/%s%s", 
+	     p, R_ARCH, module, SHLIB_EXT);
+#else
+    snprintf(dllpath, PATH_MAX, "%s/library/grDevices/libs/%s%s", 
+	     p, module, SHLIB_EXT);
 #endif
     res = AddDLL(dllpath, local, now, "");
     if(!res)

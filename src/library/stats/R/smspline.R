@@ -33,12 +33,13 @@ n.knots <- function(n) {
 smooth.spline <-
     function(x, y = NULL, w = NULL, df, spar = NULL, cv = FALSE,
              all.knots = FALSE, nknots = NULL, keep.data = TRUE,
-             df.offset = 0, penalty = 1, control.spar = list())
+             df.offset = 0, penalty = 1, control.spar = list(),
+             tol = 1e-6 * IQR(x))
 {
-    contr.sp <- list(low = -1.5,## low = 0.      was default till R 1.3.x
+    contr.sp <- list(low = -1.5, # low = 0.      was default till R 1.3.x
                      high = 1.5,
-                     tol = 1e-4,## tol = 0.001   was default till R 1.3.x
-                     eps = 2e-8,## eps = 0.00244 was default till R 1.3.x
+                     tol = 1e-4, # tol = 0.001   was default till R 1.3.x
+                     eps = 2e-8, # eps = 0.00244 was default till R 1.3.x
                      maxit = 500, trace = getOption("verbose"))
     contr.sp[names(control.spar)] <- control.spar
     if(!all(sapply(contr.sp[1:4], is.numeric)) ||
@@ -58,28 +59,28 @@ smooth.spline <-
 	    if(any(w < 0)) stop("all weights should be non-negative")
 	    if(all(w == 0)) stop("some weights should be positive")
 	    (w * sum(w > 0))/sum(w)
-	}# now sum(w) == #{obs. with weight > 0} == sum(w > 0)
+	} # now sum(w) == #{obs. with weight > 0} == sum(w > 0)
 
-    ## Replace y[] for same x[] (to 6 digits precision) by their mean :
-    x <- signif(x, 6L)
-    ux <- unique(sort(x))
+    ## Replace y[], w[] for same x[] (to a precision of 'tol') by their mean :
+    xx <- round((x - mean(x))/tol)  # de-mean to avoid possible overflow
+    nd <- !duplicated(xx); ux <- sort(x[nd]); uxx <- sort(xx[nd])
     nx <- length(ux)
     if(nx <= 3L) stop("need at least four unique 'x' values")
     if(nx == n) { # speedup
 	ox <- TRUE
 	tmp <- cbind(w, w*y, w*y^2)[order(x),]
     } else {
-	ox <- match(x, ux)
+	ox <- match(xx, uxx)
 	## Faster, much simplified version of tapply()
 	tapply1 <- function (X, INDEX, FUN = NULL, ..., simplify = TRUE) {
-	    sapply(unname(split(X, INDEX)), FUN, ...,
+	    sapply(X = unname(split(X, INDEX)), FUN = FUN, ...,
 		   simplify = simplify, USE.NAMES = FALSE)
 	}
 	tmp <- matrix(unlist(tapply1(seq_len(n), ox,
-				     function(i,y,w)
+				     function(i, y, w)
 				     c(sum(w[i]), sum(w[i]*y[i]),sum(w[i]*y[i]^2)),
-				     y = y, w = w)),
-		      ncol = 3, byrow=TRUE)
+				     y = y, w = w), use.names = FALSE),
+		      ncol = 3, byrow = TRUE)
     }
     wbar <- tmp[, 1L]
     ybar <- tmp[, 2L]/ifelse(wbar > 0, wbar, 1)
@@ -97,7 +98,7 @@ smooth.spline <-
             warning("'all.knots' is TRUE; 'nknots' specification is disregarded")
         nknots <- nx
     } else {
-	##was knot <- sknotl(xbar, nknots)
+	## was knot <- sknotl(xbar, nknots)
         if(is.null(nknots))
             nknots <- n.knots(nx)
         else if(!is.numeric(nknots))
@@ -108,7 +109,7 @@ smooth.spline <-
             stop("cannot use more inner knots than unique 'x' values")
     }
     knot <- c(rep(xbar[1 ], 3),
-              if(all.knots) xbar else xbar[seq.int(1,nx, length.out= nknots)],
+              if(all.knots) xbar else xbar[seq.int(1, nx, length.out = nknots)],
               rep(xbar[nx], 3))
     nk <- nknots + 2L ## == length(knot) - 4
 
@@ -141,7 +142,7 @@ smooth.spline <-
     ## This uses DUP = FALSE which is dangerous since it does change
     ## its argument w.  We don't assume that as.double will
     ## always duplicate, although it does in R 2.3.1.
-    fit <- .Fortran(R_qsbart,		# code in ../src/qsbart.f
+    fit <- .Fortran(C_qsbart,		# code in ../src/qsbart.f
 		    as.double(penalty),
 		    as.double(dofoff),
 		    x = as.double(xbar),
@@ -287,7 +288,7 @@ predict.smooth.spline.fit <- function(object, x, deriv = 0, ...)
     n <- sum(interp) # number of xs in [0,1]
     y <- xs
     if(any(interp))
-	y[interp] <- .Fortran(R_bvalus,
+	y[interp] <- .Fortran(C_bvalus,
 			      n	  = as.integer(n),
 			      knot= as.double(object$knot),
 			      coef= as.double(object$coef),
@@ -344,8 +345,8 @@ supsmu <-
         stop("no finite observations")
     if(diff <- n - leno)
 	warning(diff, " observation(s) with NAs, NaNs and/or Infs deleted")
-    .Fortran(R_setsmu)
-    smo <- .Fortran(R_supsmu,
+    .Fortran(C_setsmu)
+    smo <- .Fortran(C_supsmu,
 		    as.integer(leno),
 		    as.double(xo),
 		    as.double(y[ord]),

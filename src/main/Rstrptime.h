@@ -32,6 +32,10 @@
 #include <limits.h>
 #include <string.h>*/
 
+/* This is C90 */
+#ifndef HAVE_LOCALE_H
+# define HAVE_LOCALE_H 1
+#endif
 #ifdef HAVE_STRINGS_H
 #include <strings.h>  /* for strncasecmp */
 #endif
@@ -330,7 +334,7 @@ w_strptime_internal (wchar_t *rp, const wchar_t *fmt, struct tm *tm,
 	case L'k':
 	case L'H':
 	  /* Match hour in 24-hour clock.  */
-	  get_number (0, 23, 2);
+	  get_number (0, 24, 2); /* allow 24:00:00 */
 	  tm->tm_hour = val;
 	  have_I = 0;
 	  break;
@@ -789,7 +793,7 @@ strptime_internal (const char *rp, const char *fmt, struct tm *tm,
 	case 'k':
 	case 'H':
 	  /* Match hour in 24-hour clock.  */
-	  get_number (0, 23, 2);
+	  get_number (0, 24, 2);  /* allow 24:00:00 */
 	  tm->tm_hour = val;
 	  have_I = 0;
 	  break;

@@ -56,7 +56,7 @@ R_set_command_line_arguments(int argc, char **argv)
     int i;
 
     NumCommandLineArgs = argc;
-    CommandLineArgs = (char**) calloc(argc, sizeof(char*));
+    CommandLineArgs = (char**) calloc((size_t) argc, sizeof(char*));
 
     for(i = 0; i < argc; i++)
 	CommandLineArgs[i] = strdup(argv[i]);
@@ -200,6 +200,9 @@ R_common_command_line(int *pac, char **argv, Rstart Rp)
 		     !strncmp(*av, "--max-nsize", 11) ||
 		     !strncmp(*av, "--min-vsize", 11) ||
 		     !strncmp(*av, "--max-vsize", 11) ) {
+		snprintf(msg, 1024,
+			 "WARNING: option '%s' is deprecated", *av);
+		R_ShowMessage(msg);
 		if(strlen(*av) < 13) {
 		    if(ac > 1) {ac--; av++; p = *av;} else p = NULL;
 		}
@@ -245,7 +248,7 @@ R_common_command_line(int *pac, char **argv, Rstart Rp)
 
 		else if (lval > 500000)
 		    R_ShowMessage(_("WARNING: '--max-ppsize' value is too large: ignored"));
-		else Rp->ppsize = lval;
+		else Rp->ppsize = (size_t) lval;
 	    }
 	    else { /* unknown -option */
 		argv[newac++] = *av;

@@ -22,7 +22,7 @@
 }
 \usage{
 X11(display = "", width, height, pointsize, gamma, bg, canvas,
-    fonts, xpos, ypos, title, type, antialias)
+    fonts, family, xpos, ypos, title, type, antialias)
 
 X11.options(\dots, reset = FALSE)
 }
@@ -57,6 +57,12 @@ X11.options(\dots, reset = FALSE)
     size will be substituted.  There are two, the first for fonts 1 to 4
     and the second for font 5, the symbol font.  See section \sQuote{Fonts}.}
   
+  \item{family}{The default family: a length-one character string.  This
+    is primarily intended for cairo-based devices, but for \code{type =
+    "Xlib"}, the \code{\link{X11Fonts}()} database is used to map family
+    names to \code{fonts} (and this argument takes precedence over that
+    one).}
+  
   \item{xpos, ypos}{integer: initial position of the top left corner of the
     window, in pixels.  Negative values are from the opposite corner,
     e.g. \code{xpos=-100} says the top right corner should be 100 pixels
@@ -71,10 +77,11 @@ X11.options(\dots, reset = FALSE)
     details).  How non-ASCII titles are handled is
     implementation-dependent.}
   
-  \item{type}{character string, one of \code{"Xlib"}, \code{"cairo"} or
-    \code{"nbcairo"}.  The latter two will only be available if the
-    system was compiled with support for cairo.  Default \code{"cairo"}
-    where available and reliable, otherwise \code{"Xlib"}.}
+  \item{type}{character string, one of \code{"Xlib"}, \code{"cairo"},
+    \code{"nbcairo"} or \code{"dbcairo"}.  Only the first will be
+    available if the system was compiled without support for
+    cairographics.  The default is \code{"cairo"} where available except
+    on Mac OS X, otherwise \code{"Xlib"}.}
   
   \item{antialias}{for cairo types, the type of anti-aliasing (if any)
     to be used.  One of \code{c("default", "none", "gray", "subpixel")}.}
@@ -109,15 +116,23 @@ X11.options(\dots, reset = FALSE)
     plot in many languages on a single figure (and this will work even
     in non-UTF-8 locales).  The output should be locale-independent.
   }
-  \code{type = "nbcairo"} is the same device as \code{type = "cairo"}
-  without buffering: which is faster will depend on the X11
-  connection.  Both will be slower than \code{type = "Xlib"}, especially
-  on a slow X11 connection as all the rendering is done on the machine
-  running \R rather than in the X server.  On slow connections
-  \code{type = "nbcairo"} will be faster than \code{type = "cairo"}: on
-  fast connections and with complicated plots the buffering done by
-  \code{type = "cairo"} will make repainting much faster (unless backing
-  store is in use, which for example it always is on Mac OS X displays).
+  
+  There are three variants of the cairo-based device.  \code{type =
+  "nbcairo"} has no buffering.  \code{type = "cairo"} has some
+  buffering, and supports \code{\link{dev.hold}} and \code{dev.flush}.
+  \code{type = "dbcairo"} buffers output and updates the screen about
+  every 100ms (by default).  The refresh interval can be set (in units
+  of seconds) by e.g.  \code{\link{options}(X11updates = 0.25)}: the
+  value is consulted when a device is opened.  Updates are only looked
+  for every 50ms (at most), and during heavy graphics computations only
+  every 500ms.
+
+  Which version will be fastest depends on the X11 connection and the
+  type of plotting.  You will probably want to use a buffered type
+  unless backing store is in use on the X server (which for example it
+  always is on Mac OS X displays), as otherwise repainting when the
+  window is exposed will be slow.  On slow connections \code{type =
+    "dbcairo"} will probably give the best performance.
   
   Because of known problems with font selection on Mac OS X without
   Pango (for example, the CRAN distribution), \code{type = "cairo"} is
@@ -130,7 +145,14 @@ X11.options(\dots, reset = FALSE)
   internal structures, which means that they must use the same
   \code{display} and visual.  If you want to change display, first close
   all such devices.
+  
+  The cursor shown indicates the state of the device.  If quiescent the
+  cursor is an arrow: when the locator is in use it is a crosshair
+  cursor, and when plotting computations are in progress (and this can
+  be detected) it is a watch cursor.  (The exact cursors displayed will
+  depend on the window manager in use.)
 }
+
 \section{X11 Fonts}{
   This section applies only to \code{type = "Xlib"}.
 
@@ -139,7 +161,10 @@ X11.options(\dots, reset = FALSE)
   family is specified (e.g., via \code{par(family=)} in the graphics
   package), the X11 device makes use of the X11 font database (see
   \code{X11Fonts}) to convert the R graphics font family to an
-  X11-specific font family description.
+  X11-specific font family description.  If \code{family} is supplied as
+  an argument, the X11 font database is used to convert that, but
+  otherwise the argument \code{fonts} (with default given by
+  \code{X11.options}) is used.
 
   X11 chooses fonts by matching to a pattern, and it is quite possible
   that it will choose a font in the wrong encoding or which does not
@@ -159,8 +184,9 @@ X11.options(\dots, reset = FALSE)
 }
 
 \section{Cairo Fonts}{
-  The cairographics-based devices work directly with font family names such as
-  \code{"Helvetica"} which should be selected by \code{\link{par}} or
+  The cairographics-based devices work directly with font family names
+  such as \code{"Helvetica"} which can be selected initially by the
+  \code{family} argument and subsequently by \code{\link{par}} or
   \code{\link{gpar}}.  There are mappings for the three
   device-independent font families, \code{"sans"} for a sans-serif font
   (to \code{"Helvetica"}), \code{"serif"} for a serif font (to
@@ -204,6 +230,10 @@ X11.options(\dots, reset = FALSE)
 </match>
 </fontconfig>
 }
+A test for this is to run at the command line \command{fc-match Symbol}.
+If that shows \code{symbol.ttf} that may be the Wine symbol font -- use
+\command{locate symbol.ttf} to see if it is found from a directory with
+\samp{wine} in the name.
 }
 
 \section{Resources}{
@@ -258,7 +288,20 @@ X11.options(\dots, reset = FALSE)
   is set by \code{X11.options(maxcolorsize=)} and defaults to
   256.  With that setting the largest cube tried is 4 levels each for
   RGB, using 64 colours in the palette.
+
+  % A test in 2011 showed that cairo >= 1.6 works on 8-bit visuals,
+  % but does not interpret colours correctly.  Done via VNC.
+  The cairographics-based devices most likely only work (or work
+  correctly) with \sQuote{TrueColor} visuals, although in principle this
+  depends on the cairo installation: a warning is given if any other
+  visual is encountered.
+
+  \code{type = "Xlib"} supports \sQuote{TrueColor},
+  \sQuote{PseudoColor}, \sQuote{GrayScale}, \code{StaticGray} and
+  \code{MonoChrome} visuals: \sQuote{StaticColor} and
+  \sQuote{DirectColor} visuals are handled only in black/white.
 }
+
 \section{Anti-aliasing}{
   Anti-aliasing is only supported for cairographics-based devices, and
   applies to graphics and to fonts.  It is generally preferable for
@@ -268,6 +311,7 @@ X11.options(\dots, reset = FALSE)
   \code{antialias = "default"} is in principle platform-dependent, but
   seems most often equivalent to \code{antialias = "gray"}.
 }
+
 \section{Conventions}{
   This section describes the implementation of the conventions for
   graphics devices set out in the \dQuote{R Internals Manual}.
@@ -284,6 +328,7 @@ X11.options(\dots, reset = FALSE)
     \emph{assumed} to conform to sRGB.
   }
 }
+
 \seealso{
   \code{\link{Devices}}, \code{\link{X11Fonts}}, \code{\link{savePlot}}.
 }

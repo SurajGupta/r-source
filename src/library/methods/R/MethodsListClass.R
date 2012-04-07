@@ -37,8 +37,12 @@
     ## prior to 2.11.0, the default slot in generic function objects was a MethodsList or NULL
     setIs("MethodsList", "optionalMethod", where = envir) #only until MethodsList class is defunct
 
-    ## signatures -- used mainly as named character vectors
-    setClass("signature", representation("character", names = "character"), where = envir); clList <- c(clList, "signature")
+    ## signatures -- multiple class names w. package slot in ||
+    setClass("signature", representation("character", names = "character", package = "character"), where = envir); clList <- c(clList, "signature")
+
+    ## className -- a single class name with package
+    setClass("className", contains = "character",
+             representation(package = "character"))
 
     ## formal method definition for all but primitives
     setClass("MethodDefinition", contains = "function",
@@ -80,7 +84,7 @@
 ## some initializations that need to be done late
 .InitMethodDefinitions <- function(envir) {
     assign("asMethodDefinition",
-           function(def, signature = list(), sealed = FALSE, fdef = def) {
+           function(def, signature = list(.anyClassName), sealed = FALSE, fdef = def) {
         ## primitives can't take slots, but they are only legal as default methods
         ## and the code will just have to accomodate them in that role, w/o the
         ## MethodDefinition information.
@@ -91,17 +95,20 @@
                stop(gettextf("invalid object for formal method definition: type \"%s\"",
                              typeof(def)), domain = NA)
                )
-        if(is(def, "MethodDefinition"))
+        if(is(def, "MethodDefinition")) {
             value <- def
+            if(missing(signature))
+                signature <- value@defined
+        }
         else
             value <- new("MethodDefinition", def)
 
         if(sealed)
             value <- new("SealedMethodDefinition", value)
-        ## this is really new("signature",  def, signature)
-        ## but bootstrapping problems force us to make
-        ## the initialize method explicit here
-        classes <- .MakeSignature(new("signature"),  def, signature, fdef)
+        if(is(signature, "signature"))
+            classes <- signature
+        else
+            classes <- .MakeSignature(new("signature"),  def, signature, fdef)
         value@target <- classes
         value@defined <- classes
         value
@@ -141,7 +148,9 @@
                   ## ignore S3 with multiple classes  or basic classes
                     if(is.na(match(cv, .BasicClasses)) &&
                        length(cv) == 1L) {
-                        warning(gettextf("missing package slot (%s) in object of class \"%s\" (package info added)", packageSlot(co), class(.Object)),
+                        warning(gettextf("missing package slot (%s) in object of class %s (package info added)",
+                                         packageSlot(co),
+                                         dQuote(class(.Object))),
                                 domain = NA)
                         class(value) <- class(.Object)
                     }
@@ -149,8 +158,10 @@
                         return(value)
                 }
                 else
-                    stop(gettextf("initialize method returned an object of class \"%s\" instead of the required class \"%s\"",
-                                  paste(class(value), collapse=", "), class(.Object)), domain = NA)
+                    stop(gettextf("initialize method returned an object of class %s instead of the required class %s",
+                                  paste(dQuote(class(value)), collapse=", "),
+                                  dQuote(class(.Object))),
+                         domain = NA)
             }
             value
         }
@@ -359,10 +370,17 @@
 
 
 .MakeSignature <- function(object, def = NULL, signature, fdef = def) {
+    ## fill in the signature information in object
+    ## In effect, object must come from class "signature" or a subclass
+    ## but the only explicit requirement is that it has compatible
+    ## .Data and "package" slots
     signature <- unlist(signature)
     if(length(signature)>0) {
         classes <- as.character(signature)
         sigArgs <- names(signature)
+        pkgs <- attr(signature, "package")
+        if(is.null(pkgs))
+            pkgs <- character(length(signature))
         if(is(fdef, "genericFunction"))
             formalNames <- fdef@signature
         else if(is.function(def)) {
@@ -383,10 +401,8 @@
                             paste(formalNames, collapse = ", ")),
                    domain = NA)
         }
-        ## the named classes become the signature object
-        class(signature) <- class(object)
-        signature
+        object@.Data <- signature
+        object@package <- pkgs
     }
-    else
-        object
+    object
 }

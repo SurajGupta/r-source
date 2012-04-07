@@ -14,7 +14,7 @@
 }
 \usage{
 \method{plot}{profile.nls}(x, levels, conf = c(99, 95, 90, 80, 50)/100,
-     absVal = TRUE, \dots)
+     absVal = TRUE, ylab = NULL, lty = 2, \dots)
 }
 \arguments{
   \item{x}{an object of class \code{"profile.nls"} }
@@ -26,8 +26,9 @@
    Defaults to \code{c(0.99, 0.95, 0.90, 0.80, 0.50).}}
  \item{absVal}{a logical value indicating whether or not the plots
    should be on the scale of the absolute value of the profile t.
-   Defaults to \code{TRUE}.} 
- \item{\dots}{other arguments to the \code{\link{plot.default}}
+   Defaults to \code{TRUE}.}
+ \item{lty}{the line type to be used for axis and dropped lines.}
+ \item{ylab, \dots}{other arguments to the \code{\link{plot.default}}
    function can be passed here (but not \code{xlab}, \code{xlim},
    \code{ylim} nor \code{type}).}
 }

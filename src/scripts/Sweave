@@ -4,4 +4,11 @@ R_EXE="${R_HOME}/bin/R"
 
 R_SWEAVE_OPTIONS=${R_SWEAVE_OPTIONS:='--no-restore --slave'}
 
-echo "utils:::.Sweave(\"$1\")" | "${R_EXE}" $R_SWEAVE_OPTIONS
+args=
+while test -n "${1}"; do
+  ## quote each argument here, unquote in R code.
+  args="${args}nextArg${1}"
+  shift
+done
+
+echo "utils:::.Sweave()" | "${R_EXE}" $R_SWEAVE_OPTIONS --args ${args}

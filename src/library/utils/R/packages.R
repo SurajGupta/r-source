@@ -57,11 +57,18 @@ function(contriburl = contrib.url(getOption("repos"), type), method,
                 on.exit(unlink(tmpf))
                 op <- options("warn")
                 options(warn = -1)
+
+                ## Two kinds of errors can happen:  PACKAGES.gz may not exist,
+                ## or a junk error page that is not a valid dcf file may be
+                ## returned.  Handle both...
+
                 ## This is a binary file
                 z <- tryCatch(download.file(url = paste(repos, "PACKAGES.gz", sep = "/"),
                                             destfile = tmpf, method = method,
                                             cacheOK = FALSE, quiet = TRUE, mode = "wb"),
-                         error = identity)
+                              error = identity)
+		if(!inherits(z, "error"))
+		    z <- res0 <- tryCatch(read.dcf(file = tmpf), error = identity)
                 if(inherits(z, "error")) {
                     ## read.dcf is going to interpret CRLF as LF, so use
                     ## binary mode to avoid CRCRLF.
@@ -70,14 +77,15 @@ function(contriburl = contrib.url(getOption("repos"), type), method,
                                                 cacheOK = FALSE, quiet = TRUE,
                                                 mode = "wb"),
                              error = identity)
-                }
-                options(op)
-                if(inherits(z, "error")) {
-                    warning(gettextf("unable to access index for repository %s", repos),
-                            call. = FALSE, immediate. = TRUE, domain = NA)
-                    next
-                }
-                res0 <- read.dcf(file = tmpf)
+		    options(op)
+		    if(inherits(z, "error")) {
+			warning(gettextf("unable to access index for repository %s", repos),
+				call. = FALSE, immediate. = TRUE, domain = NA)
+			next
+		    }
+		    res0 <- read.dcf(file = tmpf)
+		} else
+		    options(op)
                 if(length(res0)) rownames(res0) <- res0[, "Package"]
                 saveRDS(res0, dest, compress = TRUE)
                 unlink(tmpf)
@@ -287,6 +295,13 @@ update.packages <- function(lib.loc = NULL, repos = getOption("repos"),
     if(is.null(available))
         available <- available.packages(contriburl = contriburl,
                                         method = method)
+
+    if(!is.matrix(oldPkgs) && is.character(oldPkgs)) {
+    	subset <- oldPkgs
+    	oldPkgs <- NULL
+    } else
+    	subset <- NULL
+
     if(is.null(oldPkgs)) {
         ## since 'available' is supplied, 'contriburl' and 'method' are unused
 	oldPkgs <- old.packages(lib.loc = lib.loc,
@@ -294,9 +309,14 @@ update.packages <- function(lib.loc = NULL, repos = getOption("repos"),
 				available = available, checkBuilt = checkBuilt)
 	if(is.null(oldPkgs))
 	    return(invisible())
+    } else if (!(is.matrix(oldPkgs) && is.character(oldPkgs)))
+	stop("invalid 'oldPkgs'; must be a character vector or a result from old.packages()")
+
+    if(!is.null(subset)) {
+    	oldPkgs <- oldPkgs[ rownames(oldPkgs) %in% subset, ,drop=FALSE]
+    	if (nrow(oldPkgs) == 0)
+    	    return(invisible())
     }
-    else if(!(is.matrix(oldPkgs) && is.character(oldPkgs)))
-	stop("invalid 'oldPkgs'; must be a result from old.packages()")
 
     update <- if(is.character(ask) && ask == "graphics") {
         if(.Platform$OS.type == "windows" || .Platform$GUI == "AQUA"
@@ -453,7 +473,7 @@ new.packages <- function(lib.loc = NULL, repos = getOption("repos"),
             md <- readRDS(file)
             desc <- md$DESCRIPTION[fields]
             if (!length(desc)) {
-                warning(gettextf("metadata of '%s' is corrupt", pkgpath),
+                warning(gettextf("metadata of %s is corrupt", sQuote(pkgpath)),
                         domain = NA)
                 next
             }
@@ -480,22 +500,33 @@ installed.packages <-
     fields <- .instPkgFields(fields)
     retval <- matrix(character(0), 0L, 2L + length(fields))
     for(lib in lib.loc) {
-	dest <- file.path(tempdir(),
-			  paste("libloc_", URLencode(lib, TRUE),
-				paste(fields, collapse=","), ".rds",
-				sep=""))
-	if(!noCache && file.exists(dest) &&
-	    file.info(dest)$mtime > file.info(lib)$mtime) {
-	    ## use the cache file
-	    retval <- rbind(retval, readRDS(dest))
-	} else {
-	    ret0 <- .readPkgDesc(lib, fields)
-	    if(length(ret0)) {
-		retval <- rbind(retval, ret0)
-		## save the cache file
-		saveRDS(ret0, dest, compress = TRUE)
-	    }
-	}
+        if(noCache) {
+            ret0 <- .readPkgDesc(lib, fields)
+            if(length(ret0)) retval <- rbind(retval, ret0)
+        } else {
+            ## Previously used URLencode for e.g. Windows paths with drives
+            ## This version works for very long file names.
+            base <- paste(c(lib, fields), collapse = ",")
+            enc <- sprintf("%d_%s", nchar(base),
+                           ## add 64-bit CRC in hex (in theory, seems
+                           ## it is actually 32-bit on some systems)
+                           .Call("crc64ToString", base, PACKAGE = "base"))
+            dest <- file.path(tempdir(),
+                              paste("libloc_", enc, ".rds", sep = ""))
+            if(file.exists(dest) &&
+               file.info(dest)$mtime > file.info(lib)$mtime &&
+               (val <- readRDS(dest))$base == base)
+                ## use the cache file
+                retval <- rbind(retval, val$value)
+            else {
+                ret0 <- .readPkgDesc(lib, fields)
+                if(length(ret0)) {
+                    retval <- rbind(retval, ret0)
+                    ## save the cache file
+                    saveRDS(list(base = base, value = ret0), dest)
+                }
+            }
+        }
     }
 
     .fixupPkgMat(retval, fields, priority, subarch)
@@ -575,7 +606,7 @@ download.packages <- function(pkgs, destdir, available = NULL,
         ok <- (available[,"Package"] == p)
         ok <- ok & !is.na(ok)
         if(!any(ok))
-            warning(gettextf("no package '%s' at the repositories", p),
+            warning(gettextf("no package %s at the repositories", sQuote(p)),
                     domain = NA, immediate. = TRUE)
         else {
             if(sum(ok) > 1L) { # have multiple copies
@@ -614,7 +645,7 @@ download.packages <- function(pkgs, destdir, available = NULL,
                 if(file.exists(fn))
                     retval <- rbind(retval, c(p, fn))
                 else
-                    warning(gettextf("package '%s' does not exist on the local repository", p),
+                    warning(gettextf("package %s does not exist on the local repository", sQuote(p)),
                             domain = NA, immediate. = TRUE)
             } else {
                 url <- paste(repos, fn, sep="/")
@@ -624,7 +655,7 @@ download.packages <- function(pkgs, destdir, available = NULL,
                 if(!inherits(res, "try-error") && res == 0L)
                     retval <- rbind(retval, c(p, destfile))
                 else
-                    warning(gettextf("download of package '%s' failed", p),
+                    warning(gettextf("download of package %s failed", sQuote(p)),
                             domain = NA, immediate. = TRUE)
             }
         }
@@ -858,11 +889,8 @@ function(pkgs, available, dependencies = c("Depends", "Imports", "LinkingTo"))
     ## return a named list of character vectors of their dependencies
     if(!length(pkgs)) return(NULL)
     if(is.null(available))
-        stop(gettextf("'%s' must be supplied", available), domain = NA)
+        stop(gettextf("%s must be supplied", sQuote(available)), domain = NA)
     info <- available[pkgs, dependencies, drop = FALSE]
-    ## we always want a list here, but apply can simplify to a matrix.
-    ## x <- apply(info, 1L, .clean_up_dependencies)
-    ## if(length(pkgs) == 1) {x <- list(as.vector(x)); names(x) <- pkgs}
     x <- vector("list", length(pkgs)); names(x) <- pkgs
     for (i in seq_along(pkgs))
         x[[i]] <- .clean_up_dependencies(info[i, ])
@@ -896,4 +924,3 @@ function(pkgs, available, dependencies = c("Depends", "Imports", "LinkingTo"))
     }
     done
 }
-

@@ -15,45 +15,51 @@
 #  http://www.r-project.org/Licenses/
 
 curve <- function(expr, from = NULL, to = NULL, n = 101, add = FALSE,
-                  type = "l", ylab = NULL, log = NULL, xlim = NULL, ...)
+                  type = "l", xname = "x", xlab = xname,
+                  ylab = NULL, log = NULL, xlim = NULL, ...)
 {
     sexpr <- substitute(expr)
-    if(is.name(sexpr)) {
-	fcall <- paste(sexpr, "(x)")
-	expr <- parse(text = fcall)
-	if(is.null(ylab)) ylab <- fcall
+    if (is.name(sexpr)) {
+        ## beter than parse() !
+        expr <- call(as.character(sexpr), as.name(xname))
     } else {
-	if( !( (is.call(sexpr) || is.expression(sexpr)) &&
-              "x" %in% all.vars(sexpr) ))
-	    stop("'expr' must be a function, or a call or an expression containing 'x'")
+	if ( !( (is.call(sexpr) || is.expression(sexpr)) &&
+              xname %in% all.vars(sexpr) ))
+	    stop(gettextf("'expr' must be a function, or a call or an expression containing '%s'", xname), domain = NA)
 	expr <- sexpr
-	if(is.null(ylab)) ylab <- deparse(sexpr)
     }
-    if (is.null(xlim))
-	delayedAssign("lims",
-		  {pu <- par("usr")[1L:2L]
-		   if(par("xaxs") == "r") pu <- extendrange(pu, f = -1/27)
-		   if(par("xlog")) 10^pu else pu })
-    else lims <- xlim
-    if(is.null(from)) from <- lims[1L]
-    if(is.null(to))     to <- lims[2L]
-    lg <-
-        if(length(log)) log
-        else paste(if(add && par("xlog"))"x",
-                   if(add && par("ylog"))"y", sep="")
-    if(length(lg) == 0) lg <- ""
-    x <-
-	if(lg != "" && "x" %in% strsplit(lg, NULL)[[1L]]) {
-	    if(any(c(from,to) <= 0))
-		stop("'from' and 'to' must be > 0 with log=\"x\"")
-	    exp(seq.int(log(from), log(to), length.out=n))
-	} else seq.int(from, to, length.out=n)
-    y <- eval(expr, envir=list(x = x), enclos=parent.frame())
+    if (dev.cur() == 1L && !identical(add, FALSE)) {
+        warning("'add' will be ignored as there is no existing plot")
+        add <- FALSE
+    }
+    addF <- identical(add, FALSE)
+    if (is.null(ylab)) ylab <- deparse(expr)
+    if (is.null(from) || is.null(to)) {
+        xl <- if (!is.null(xlim)) xlim
+        else if (!addF) {
+            ## determine xlim of current plot.
+            pu <- par("usr")[1L:2L]
+            if (par("xaxs") == "r") pu <- extendrange(pu, f = -1/27)
+            if (par("xlog")) 10^pu else pu
+       } else c(0, 1) # was c(1/27, 26/27) in R < 2.14.0
+        if (is.null(from)) from <- xl[1L]
+        if (is.null(to)) to <- xl[2L]
+    }
+    lg <- if (length(log)) log else if (!addF && par("xlog")) "x" else ""
+    if (length(lg) == 0) lg <- ""
+    if (grepl("x", lg, fixed = TRUE)) {
+        if (from <= 0 || to <= 0)
+            stop("'from' and 'to' must be > 0 with log=\"x\"")
+        x <- exp(seq.int(log(from), log(to), length.out = n))
+    } else x <- seq.int(from, to, length.out = n)
+    ll <- list(x = x); names(ll) <- xname
+    y <- eval(expr, envir = ll, enclos = parent.frame())
     if (length(y) != length(x))
         stop("'expr' did not evaluate to an object of length 'n'")
-    if(add)
-	lines(x, y, type = type, ...)
+    if (isTRUE(add))
+	lines(x = x, y = y, type = type, ...)
     else
-	plot(x, y, type = type, ylab = ylab, xlim = xlim, log = lg, ...)
+        plot(x = x, y = y, type = type, xlab = xlab, ylab = ylab,
+             xlim = xlim, log = lg, ...)
     invisible(list(x = x, y = y))
 }

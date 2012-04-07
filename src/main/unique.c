@@ -147,6 +147,7 @@ static int shash(SEXP x, int indx, HashData *d)
     const char *p;
     const void *vmax = vmaxget();
     if(!d->useUTF8 && d->useCache) return cshash(x, indx, d);
+    /* Not having d->useCache really should not happen anymore. */
     p = translateCharUTF8(STRING_ELT(x, indx));
     k = 0;
     while (*p++)
@@ -281,14 +282,13 @@ static int vhash(SEXP x, int indx, HashData *d)
 static int vequal(SEXP x, int i, SEXP y, int j)
 {
     if (i < 0 || j < 0) return 0;
-    return R_compute_identical(VECTOR_ELT(x, i), VECTOR_ELT(y, j),
-			       TRUE, TRUE, TRUE);
+    return R_compute_identical(VECTOR_ELT(x, i), VECTOR_ELT(y, j), 0);
 }
 
 /*
   Choose M to be the smallest power of 2
   not less than 2*n and set K = log2(M).
-  Need K >= 1 and hence M >= 2, and 2^M <= 2^31 -1, hence n <= 2^29.
+  Need K >= 1 and hence M >= 2, and 2^M <= 2^31 -1, hence n <= 2^30.
 
   Dec 2004: modified from 4*n to 2*n, since in the worst case we have
   a 50% full table, and that is still rather efficient -- see
@@ -296,13 +296,13 @@ static int vequal(SEXP x, int i, SEXP y, int j)
 */
 static void MKsetup(int n, HashData *d)
 {
-    int n4 = 2 * n;
+    int n2 = 2 * n;
 
-    if(n < 0 || n > 536870912) /* protect against overflow to -ve */
+    if(n < 0 || n > 1073741824) /* protect against overflow to -ve */
 	error(_("length %d is too large for hashing"), n);
     d->M = 2;
     d->K = 1;
-    while (d->M < n4) {
+    while (d->M < n2) {
 	d->M *= 2;
 	d->K += 1;
     }
@@ -406,8 +406,15 @@ SEXP duplicated(SEXP x, Rboolean from_last)
     if(TYPEOF(x) == STRSXP) {					\
 	data.useUTF8 = FALSE; data.useCache = TRUE;		\
 	for(i = 0; i < length(x); i++) {			\
-	    if(ENC_KNOWN(STRING_ELT(x, i))) {data.useUTF8 = TRUE; break;} \
-	    if(!IS_CACHED(STRING_ELT(x, i))) {data.useCache = FALSE; break;} \
+	    if(IS_BYTES(STRING_ELT(x, i))) {			\
+		data.useUTF8 = FALSE; break;			\
+	    }                                                   \
+    	    if(ENC_KNOWN(STRING_ELT(x, i))) {                   \
+		data.useUTF8 = TRUE;                            \
+	    }							\
+	    if(!IS_CACHED(STRING_ELT(x, i))) {                  \
+		data.useCache = FALSE; break;                   \
+	    }							\
 	}							\
     }
 
@@ -723,18 +730,39 @@ SEXP match5(SEXP itable, SEXP ix, int nmatch, SEXP incomp, SEXP env)
     data.nomatch = nmatch;
     HashTableSetup(table, &data);
     if(type == STRSXP) {
+	Rboolean useBytes = FALSE;
 	Rboolean useUTF8 = FALSE;
         Rboolean useCache = TRUE;
 	for(i = 0; i < length(x); i++) {
             SEXP s = STRING_ELT(x, i);
-	    if(ENC_KNOWN(s)) {useUTF8 = TRUE; break;}
-            if(!IS_CACHED(s)) {useCache = FALSE; break;}
+	    if(IS_BYTES(s)) {
+		useBytes = TRUE;
+		useUTF8 = FALSE;
+		break;
+	    }
+	    if(ENC_KNOWN(s)) {
+		useUTF8 = TRUE;
+	    }
+            if(!IS_CACHED(s)) {
+		useCache = FALSE;
+		break;
+	    }
         }
-	if (!useUTF8 || useCache) {
+	if(!useBytes || useCache) {
 	    for(i = 0; i < length(table); i++) {
                 SEXP s = STRING_ELT(table, i);
-		if(ENC_KNOWN(s)) {useUTF8 = TRUE; break;}
-		if(!IS_CACHED(s)) {useCache = FALSE; break;}
+		if(IS_BYTES(s)) {
+		    useBytes = TRUE;
+		    useUTF8 = FALSE;
+		    break;
+		}
+		if(ENC_KNOWN(s)) {
+		    useUTF8 = TRUE;
+		}
+		if(!IS_CACHED(s)) {
+		    useCache = FALSE;
+		    break;
+		}
             }
         }
 	data.useUTF8 = useUTF8;
@@ -803,12 +831,13 @@ SEXP attribute_hidden do_match(SEXP call, SEXP op, SEXP args, SEXP env)
 SEXP attribute_hidden do_pmatch(SEXP call, SEXP op, SEXP args, SEXP env)
 {
     SEXP ans, input, target;
-    int i, j,  mtch, n_input, n_target, mtch_count, temp, dups_ok, no_match;
+    int i, j,  mtch, n_input, n_target, mtch_count, dups_ok, no_match;
+    size_t temp;
     int nexact = 0;
     int *used = NULL, *ians;
     const char **in, **tar;
     Rboolean no_dups;
-    Rboolean useUTF8 = FALSE;
+    Rboolean useBytes = FALSE, useUTF8 = FALSE;
 
     checkArity(op, args);
     input = CAR(args);
@@ -825,33 +854,56 @@ SEXP attribute_hidden do_pmatch(SEXP call, SEXP op, SEXP args, SEXP env)
 	error(_("argument is not of mode character"));
 
     if(no_dups) {
-	used = (int *) R_alloc(n_target, sizeof(int));
+	used = (int *) R_alloc((size_t) n_target, sizeof(int));
 	for (j = 0; j < n_target; j++) used[j] = 0;
     }
 
-    for(i = 0; i < n_input; i++)
-	if(ENC_KNOWN(STRING_ELT(input, i))) {useUTF8 = TRUE; break;}
-    if (!useUTF8)
-	for(i = 0; i < n_target; i++)
-	    if(ENC_KNOWN(STRING_ELT(target, i))) {useUTF8 = TRUE; break;}
+    for(i = 0; i < n_input; i++) {
+	if(IS_BYTES(STRING_ELT(input, i))) {
+	    useBytes = TRUE;
+	    useUTF8 = FALSE;
+	    break;
+	} else if(ENC_KNOWN(STRING_ELT(input, i))) {
+	    useUTF8 = TRUE;
+	}
+    }
+    if(!useBytes) {
+	for(i = 0; i < n_target; i++) {
+	    if(IS_BYTES(STRING_ELT(target, i))) {
+		useBytes = TRUE;
+		useUTF8 = FALSE;
+		break;
+	    } else if(ENC_KNOWN(STRING_ELT(target, i))) {
+		useUTF8 = TRUE;
+	    }
+	}
+    }
 
-    in = (const char **) R_alloc(n_input, sizeof(char *));
-    tar = (const char **) R_alloc(n_target, sizeof(char *));
+    in = (const char **) R_alloc((size_t) n_input, sizeof(char *));
+    tar = (const char **) R_alloc((size_t) n_target, sizeof(char *));
     PROTECT(ans = allocVector(INTSXP, n_input));
     ians = INTEGER(ans);
-    if(useUTF8) {
-	for (i = 0; i < n_input; i++) {
+    if(useBytes) {
+	for(i = 0; i < n_input; i++) {
+	    in[i] = CHAR(STRING_ELT(input, i));
+	    ians[i] = 0;
+	}
+	for(j = 0; j < n_target; j++)
+	    tar[j] = CHAR(STRING_ELT(target, j));
+    }
+    else if(useUTF8) {
+	for(i = 0; i < n_input; i++) {
 	    in[i] = translateCharUTF8(STRING_ELT(input, i));
 	    ians[i] = 0;
 	}
-	for (j = 0; j < n_target; j++)
+	for(j = 0; j < n_target; j++)
 	    tar[j] = translateCharUTF8(STRING_ELT(target, j));
     } else {
-	for (i = 0; i < n_input; i++) {
+	for(i = 0; i < n_input; i++) {
 	    in[i] = translateChar(STRING_ELT(input, i));
 	    ians[i] = 0;
 	}
-	for (j = 0; j < n_target; j++)
+	for(j = 0; j < n_target; j++)
 	    tar[j] = translateChar(STRING_ELT(target, j));
     }
     /* First pass, exact matching */
@@ -874,7 +926,11 @@ SEXP attribute_hidden do_pmatch(SEXP call, SEXP op, SEXP args, SEXP env)
 	   since the tradeoff involves memory as well as time
 	   it is not really possible to optimize there.
 	 */
-	if(n_target > 100 && 10*n_input > n_target) {
+	if((n_target > 100) && (10*n_input > n_target)) {
+	    /* <FIXME>
+	       Currently no hashing when using bytes.
+	       </FIXME>
+	    */
 	    HashData data;
 	    HashTableSetup(target, &data);
 	    data.useUTF8 = useUTF8;
@@ -939,9 +995,10 @@ SEXP attribute_hidden do_charmatch(SEXP call, SEXP op, SEXP args, SEXP env)
 {
     SEXP ans, input, target;
     Rboolean perfect;
-    int i, j, k, imatch, n_input, n_target, temp, no_match, *ians;
+    int i, j, k, imatch, n_input, n_target, no_match, *ians;
+    size_t temp;
     const char *ss, *st;
-    Rboolean useUTF8 = FALSE;
+    Rboolean useBytes = FALSE, useUTF8 = FALSE;
     const void *vmax;
 
     checkArity(op, args);
@@ -955,18 +1012,35 @@ SEXP attribute_hidden do_charmatch(SEXP call, SEXP op, SEXP args, SEXP env)
 	error(_("argument is not of mode character"));
     no_match = asInteger(CADDR(args));
 
-    for(i = 0; i < n_input; i++)
-	if(ENC_KNOWN(STRING_ELT(input, i))) {useUTF8 = TRUE; break;}
-    if (!useUTF8)
-	for(i = 0; i < n_target; i++)
-	    if(ENC_KNOWN(STRING_ELT(target, i))) {useUTF8 = TRUE; break;}
+    for(i = 0; i < n_input; i++) {
+	if(IS_BYTES(STRING_ELT(input, i))) {
+	    useBytes = TRUE;
+	    useUTF8 = FALSE;
+	    break;
+	} else if(ENC_KNOWN(STRING_ELT(input, i))) {
+	    useUTF8 = TRUE;
+	}
+    }
+    if(!useBytes) {
+	for(i = 0; i < n_target; i++) {
+	    if(IS_BYTES(STRING_ELT(target, i))) {
+		useBytes = TRUE;
+		useUTF8 = FALSE;
+		break;
+	    } else if(ENC_KNOWN(STRING_ELT(target, i))) {
+		useUTF8 = TRUE;
+	    }
+	}
+    }
 
     PROTECT(ans = allocVector(INTSXP, n_input));
     ians = INTEGER(ans);
 
     vmax = vmaxget();
-    for (i = 0; i < n_input; i++) {
-	if (useUTF8)
+    for(i = 0; i < n_input; i++) {
+	if(useBytes)
+	    ss = CHAR(STRING_ELT(input, i));
+	else if(useUTF8)
 	    ss = translateCharUTF8(STRING_ELT(input, i));
 	else
 	    ss = translateChar(STRING_ELT(input, i));
@@ -974,8 +1048,10 @@ SEXP attribute_hidden do_charmatch(SEXP call, SEXP op, SEXP args, SEXP env)
 	imatch = NA_INTEGER;
 	perfect = FALSE;
 	/* we could reset vmax here too: worth it? */
-	for (j = 0; j < n_target; j++) {
-	    if (useUTF8)
+	for(j = 0; j < n_target; j++) {
+	    if(useBytes)
+		st = CHAR(STRING_ELT(target, j));
+	    else if(useUTF8)
 		st = translateCharUTF8(STRING_ELT(target, j));
 	    else
 		st = translateChar(STRING_ELT(target, j));
@@ -1246,8 +1322,8 @@ SEXP attribute_hidden do_matchcall(SEXP call, SEXP op, SEXP args, SEXP env)
 #    include <memory.h>
 #endif
 /* int and double zeros are all bits off */
-#define ZEROINT(X,N,I) do{memset(INTEGER(X),0,N*sizeof(int));}while(0)
-#define ZERODBL(X,N,I) do{memset(REAL(X),0,N*sizeof(double));}while(0)
+#define ZEROINT(X,N,I) do{memset(INTEGER(X),0,(size_t)(N)*sizeof(int));}while(0)
+#define ZERODBL(X,N,I) do{memset(REAL(X),0,(size_t)(N)*sizeof(double));}while(0)
 
 SEXP attribute_hidden
 Rrowsum_matrix(SEXP x, SEXP ncol, SEXP g, SEXP uniqueg, SEXP snarm)
@@ -1420,7 +1496,8 @@ static SEXP duplicated2(SEXP x, HashData *d)
 SEXP attribute_hidden do_makeunique(SEXP call, SEXP op, SEXP args, SEXP env)
 {
     SEXP names, sep, ans, dup, newx;
-    int i, n, cnt, len, maxlen = 0, *cnts, dp;
+    int i, cnt, *cnts, dp;
+    R_len_t n, len, maxlen = 0;
     HashData data;
     const char *csep, *ss;
     void *vmax;
@@ -1438,19 +1515,20 @@ SEXP attribute_hidden do_makeunique(SEXP call, SEXP op, SEXP args, SEXP env)
     vmax = vmaxget();
     for(i = 0; i < n; i++) {
 	SET_STRING_ELT(ans, i, STRING_ELT(names, i));
-	len = strlen(translateChar(STRING_ELT(names, i)));
+	len = (R_len_t) strlen(translateChar(STRING_ELT(names, i)));
 	if(len > maxlen) maxlen = len;
 	vmaxset(vmax);
     }
     if(n > 1) {
 	/* +2 for terminator and rounding error */
-	char buf[maxlen + strlen(csep) + (int) (log((double)n)/log(10.0)) + 2];
+	char buf[maxlen + (R_len_t) strlen(csep)
+		 + (R_len_t) (log((double)n)/log(10.0)) + 2];
 	if(n < 10000) {
-	    cnts = (int *) alloca(n * sizeof(int));
+	    cnts = (int *) alloca(((size_t) n) * sizeof(int));
 	} else {
 	    /* This is going to be slow so use expensive allocation
 	       that will be recovered if interrupted. */
-	    cnts = (int *) R_alloc(n,  sizeof(int));
+	    cnts = (int *) R_alloc((size_t) n,  sizeof(int));
 	}
 	R_CheckStack();
 	for(i = 0; i < n; i++) cnts[i] = 1;

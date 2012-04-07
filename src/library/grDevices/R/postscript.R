@@ -14,9 +14,9 @@
 #  A copy of the GNU General Public License is available at
 #  http://www.r-project.org/Licenses/
 
-## An environment not exported from namespace:graphics used to
-## pass .PostScript.Options to the windows() device for use in its menus.
-## and also to hide the variable.
+## An environment not exported from namespace:graphics used to pass
+## .PostScript.Options and .PDF.options to the windows() device for
+## use in its menus, and also to hide the variables.
 .PSenv <- new.env()
 
 check.options <-
@@ -291,7 +291,8 @@ xfig <- function (file = ifelse(onefile,"Rplots.fig", "Rplot%03d.fig"),
 pdf <- function(file = ifelse(onefile, "Rplots.pdf", "Rplot%03d.pdf"),
                 width, height, onefile, family, title, fonts, version,
                 paper, encoding, bg, fg, pointsize, pagecentre, colormodel,
-                useDingbats, useKerning, fillOddEven, maxRasters)
+                useDingbats, useKerning, fillOddEven, maxRasters,
+                compress)
 {
     ## do initialization if needed
     initPSandPDFfonts()
@@ -314,7 +315,9 @@ pdf <- function(file = ifelse(onefile, "Rplots.pdf", "Rplot%03d.pdf"),
     if(!missing(useDingbats)) new$useDingbats <- useDingbats
     if(!missing(useKerning)) new$useKerning <- useKerning
     if(!missing(fillOddEven)) new$fillOddEven <- fillOddEven
-    if(!missing(maxRasters)) new$maxRasters <- maxRasters
+    if(!missing(maxRasters))
+        warning("'maxRasters' is no longer needed, and will be ignored")
+    if(!missing(compress)) new$compress <- compress
 
     old <- check.options(new, name.opt = ".PDF.Options", envir = .PSenv)
 
@@ -352,7 +355,7 @@ pdf <- function(file = ifelse(onefile, "Rplots.pdf", "Rplot%03d.pdf"),
     }
     # Extract version
     version <- old$version
-    versions <- c("1.1", "1.2", "1.3", "1.4", "1.5", "1.6")
+    versions <- c("1.1", "1.2", "1.3", "1.4", "1.5", "1.6", "1.7", "2.0")
     if (version %in% versions)
         version <- as.integer(strsplit(version, "[.]")[[1L]])
     else
@@ -365,7 +368,7 @@ pdf <- function(file = ifelse(onefile, "Rplots.pdf", "Rplot%03d.pdf"),
               old$width, old$height, old$pointsize, onefile, old$pagecentre,
               old$title, old$fonts, version[1L], version[2L],
               old$colormodel, old$useDingbats, old$useKerning,
-              old$fillOddEven, old$maxRasters)
+              old$fillOddEven, old$compress)
     invisible()
 }
 
@@ -394,6 +397,10 @@ pdf <- function(file = ifelse(onefile, "Rplots.pdf", "Rplot%03d.pdf"),
 "/cl  { grestore gsave newpath 3 index 3 index moveto 1 index",
 "       4 -1 roll lineto  exch 1 index lineto lineto",
 "       closepath clip newpath } bind def",
+"/rgb { setrgbcolor } bind def",
+"/s   { scalefont setfont } bind def")
+
+.ps.prolog.srgb <- c(## From PLRM 3rd Ed pg 225
 "/sRGB { [ /CIEBasedABC",
 "          << /DecodeLMN",
 "               [ { dup 0.03928 le",
@@ -407,8 +414,8 @@ pdf <- function(file = ifelse(onefile, "Rplots.pdf", "Rplot%03d.pdf"),
 "                         0.180437 0.072175 0.950301]",
 "             /WhitePoint [0.9505 1.0 1.0890]",
 "           >>",
-"         ] setcolorspace } bind def",
-"/s   { scalefont setfont } bind def")
+"         ] setcolorspace } bind def"
+)
 
 ####################
 # PostScript font database
@@ -650,7 +657,7 @@ assign(".PostScript.Options",
          pagecentre = TRUE,
 	 print.it   = FALSE,
 	 command    = "default",
-         colormodel = "rgb",
+         colormodel = "srgb",
          useKerning = TRUE,
          fillOddEven= FALSE), envir = .PSenv)
 assign(".PostScript.Options.default",
@@ -671,103 +678,103 @@ assign(".PDF.Options",
 	 fg	= "black",
 	 pointsize  = 12,
 	 pagecentre = TRUE,
-         colormodel = "rgb",
+         colormodel = "srgb",
          useDingbats = TRUE,
          useKerning = TRUE,
          fillOddEven = FALSE,
-         maxRasters = 1000L), envir = .PSenv)
+         compress = TRUE), envir = .PSenv)
 assign(".PDF.Options.default",
        get(".PDF.Options", envir = .PSenv),
        envir = .PSenv)
 
 
 postscriptFonts(# Default Serif font is Times
-                serif=Type1Font("Times",
+                serif = Type1Font("Times",
                   c("Times-Roman.afm", "Times-Bold.afm",
                     "Times-Italic.afm", "Times-BoldItalic.afm",
                     "Symbol.afm")),
                 # Default Sans Serif font is Helvetica
-                sans=Type1Font("Helvetica",
+                sans = Type1Font("Helvetica",
                   c("Helvetica.afm", "Helvetica-Bold.afm",
                     "Helvetica-Oblique.afm", "Helvetica-BoldOblique.afm",
                     "Symbol.afm")),
                 # Default Monospace font is Courier
-                mono=Type1Font("Courier",
+                mono = Type1Font("Courier",
                   c("Courier.afm", "Courier-Bold.afm",
                     "Courier-Oblique.afm", "Courier-BoldOblique.afm",
                     "Symbol.afm")),
                 # Remainder are standard Adobe fonts that
                 # should be present on PostScript devices
-                AvantGarde=Type1Font("AvantGarde",
+                AvantGarde = Type1Font("AvantGarde",
                   c("agw_____.afm", "agd_____.afm",
                     "agwo____.afm", "agdo____.afm",
                     "Symbol.afm")),
-                Bookman=Type1Font("Bookman",
+                Bookman = Type1Font("Bookman",
                   c("bkl_____.afm", "bkd_____.afm",
                     "bkli____.afm", "bkdi____.afm",
                     "Symbol.afm")),
-                Courier=Type1Font("Courier",
+                Courier = Type1Font("Courier",
                   c("Courier.afm", "Courier-Bold.afm",
                     "Courier-Oblique.afm", "Courier-BoldOblique.afm",
                     "Symbol.afm")),
-                Helvetica=Type1Font("Helvetica",
+                Helvetica = Type1Font("Helvetica",
                   c("Helvetica.afm", "Helvetica-Bold.afm",
                     "Helvetica-Oblique.afm", "Helvetica-BoldOblique.afm",
                     "Symbol.afm")),
-                "Helvetica-Narrow"=Type1Font("Helvetica-Narrow",
+                "Helvetica-Narrow" = Type1Font("Helvetica-Narrow",
                   c("hvn_____.afm", "hvnb____.afm",
                     "hvno____.afm", "hvnbo___.afm",
                     "Symbol.afm")),
-                NewCenturySchoolbook=Type1Font("NewCenturySchoolbook",
+                NewCenturySchoolbook = Type1Font("NewCenturySchoolbook",
                   c("ncr_____.afm", "ncb_____.afm",
                     "nci_____.afm", "ncbi____.afm",
                     "Symbol.afm")),
-                Palatino=Type1Font("Palatino",
+                Palatino = Type1Font("Palatino",
                   c("por_____.afm", "pob_____.afm",
                     "poi_____.afm", "pobi____.afm",
                     "Symbol.afm")),
-                Times=Type1Font("Times",
+                Times = Type1Font("Times",
                   c("Times-Roman.afm", "Times-Bold.afm",
                     "Times-Italic.afm", "Times-BoldItalic.afm",
                     "Symbol.afm")),
                 # URW equivalents
-                URWGothic=Type1Font("URWGothic",
+                URWGothic = Type1Font("URWGothic",
                   c("a010013l.afm", "a010015l.afm",
                     "a010033l.afm", "a010035l.afm",
                     "s050000l.afm")),
-                URWBookman=Type1Font("URWBookman",
+                URWBookman = Type1Font("URWBookman",
                   c("b018012l.afm", "b018015l.afm",
                     "b018032l.afm", "b018035l.afm",
                     "s050000l.afm")),
-                NimbusMon=Type1Font("NimbusMon",
+                NimbusMon = Type1Font("NimbusMon",
                   c("n022003l.afm", "n022004l.afm",
                     "n022023l.afm", "n022024l.afm",
                     "s050000l.afm")),
-                NimbusSan=Type1Font("NimbusSan",
+                NimbusSan = Type1Font("NimbusSan",
                   c("n019003l.afm", "n019004l.afm",
                     "n019023l.afm", "n019024l.afm",
                     "s050000l.afm")),
-                URWHelvetica=Type1Font("URWHelvetica",
+                URWHelvetica = Type1Font("URWHelvetica",
                   c("n019003l.afm", "n019004l.afm",
                     "n019023l.afm", "n019024l.afm",
                     "s050000l.afm")),
-                NimbusSanCond=Type1Font("NimbusSanCond",
+                NimbusSanCond = Type1Font("NimbusSanCond",
                   c("n019043l.afm", "n019044l.afm",
                     "n019063l.afm", "n019064l.afm",
                     "s050000l.afm")),
-                CenturySch=Type1Font("CenturySch",
+                CenturySch = Type1Font("CenturySch",
                   c("c059013l.afm", "c059016l.afm",
                     "c059033l.afm", "c059036l.afm",
                     "s050000l.afm")),
-                URWPalladio=Type1Font("URWPalladio",
+                URWPalladio = Type1Font("URWPalladio",
                   c("p052003l.afm", "p052004l.afm",
                     "p052023l.afm", "p052024l.afm",
                     "s050000l.afm")),
-                NimbusRom=Type1Font("NimbusRom",
+                NimbusRom = Type1Font("NimbusRom",
                   c("n021003l.afm", "n021004l.afm",
                     "n021023l.afm", "n021024l.afm",
                     "s050000l.afm")),
-                URWTimes=Type1Font("URWTimes",
+                URWTimes = Type1Font("URWTimes",
                   c("n021003l.afm", "n021004l.afm",
                     "n021023l.afm", "n021024l.afm",
                     "s050000l.afm"))
@@ -778,11 +785,11 @@ do.call("pdfFonts", postscriptFonts())
 
 ## add ComputerModern to postscript only
 postscriptFonts(# Computer Modern as recoded by Brian D'Urso
-                ComputerModern=Type1Font("ComputerModern",
+                ComputerModern = Type1Font("ComputerModern",
                   c("CM_regular_10.afm", "CM_boldx_10.afm",
                     "CM_italic_10.afm", "CM_boldx_italic_10.afm",
                     "CM_symbol_10.afm"), encoding = "TeXtext.enc"),
-                 ComputerModernItalic=Type1Font("ComputerModernItalic",
+                 ComputerModernItalic = Type1Font("ComputerModernItalic",
                   c("CM_regular_10.afm", "CM_boldx_10.afm", "cmti10.afm",
                     "cmbxti10.afm", "CM_symbol_10.afm"),
                  encoding = "TeXtext.enc")
@@ -815,7 +822,7 @@ pdfFonts(Japan1 = CIDFont("KozMinPro-Regular-Acro", "EUC-H", "EUC-JP",
                  "   1 632 500 ",
                  "   8718 [500 500] ",
                  "]\n",
-                 sep="\n      ")),
+                 sep = "\n      ")),
          Japan1HeiMin = CIDFont("HeiseiMin-W3-Acro", "EUC-H", "EUC-JP",
            paste("/FontDescriptor",
                  "<<",
@@ -831,7 +838,7 @@ pdfFonts(Japan1 = CIDFont("KozMinPro-Regular-Acro", "EUC-H", "EUC-JP",
                  "   1 632 500 ",
                  "   8718 [500 500] ",
                  "]\n",
-                 sep="\n      ")),
+                 sep = "\n      ")),
          Japan1GothicBBB = CIDFont("GothicBBB-Medium", "EUC-H", "EUC-JP",
            paste("/FontDescriptor",
                  "<<",
@@ -847,7 +854,7 @@ pdfFonts(Japan1 = CIDFont("KozMinPro-Regular-Acro", "EUC-H", "EUC-JP",
                  "   1 632 500",
                  "   8718 [500 500]",
                  "]\n",
-                 sep="\n      ")),
+                 sep = "\n      ")),
          Japan1Ryumin = CIDFont("Ryumin-Light", "EUC-H", "EUC-JP",
            paste("/FontDescriptor",
                  "<<",
@@ -863,7 +870,7 @@ pdfFonts(Japan1 = CIDFont("KozMinPro-Regular-Acro", "EUC-H", "EUC-JP",
                  "   1 632 500",
                  "   8718 [500 500]",
                  "]\n",
-                 sep="\n      ")),
+                 sep = "\n      ")),
          Korea1 = CIDFont("HYSMyeongJoStd-Medium-Acro", "KSCms-UHC-H", "CP949",
            paste("/FontDescriptor",
                  "<<",
@@ -880,7 +887,7 @@ pdfFonts(Japan1 = CIDFont("KozMinPro-Regular-Acro", "EUC-H", "EUC-JP",
                  "   97 [500] ",
                  "   8094 8190 500",
                  "]\n",
-                 sep="\n      ")),
+                 sep = "\n      ")),
          Korea1deb = CIDFont("HYGothic-Medium-Acro", "KSCms-UHC-H", "CP949",
            paste("/FontDescriptor",
                  "<<",
@@ -897,7 +904,7 @@ pdfFonts(Japan1 = CIDFont("KozMinPro-Regular-Acro", "EUC-H", "EUC-JP",
                  "   97 [500] ",
                  "   8094 8190 500",
                  "]\n",
-                 sep="\n      ")),
+                 sep = "\n      ")),
          CNS1 = CIDFont("MSungStd-Light-Acro", "B5pc-H", "CP950",
            paste("/FontDescriptor",
                  "<<",
@@ -918,7 +925,7 @@ pdfFonts(Japan1 = CIDFont("KozMinPro-Regular-Acro", "EUC-H", "EUC-JP",
                  "     13648 13742 500",
                  "     17603 [500]",
                  "]\n",
-                 sep="\n      ")),
+                 sep = "\n      ")),
          GB1 = CIDFont("STSong-Light-Acro", "GBK-EUC-H", "GBK",
            paste("/FontDescriptor",
                  "<<",
@@ -936,7 +943,7 @@ pdfFonts(Japan1 = CIDFont("KozMinPro-Regular-Acro", "EUC-H", "EUC-JP",
                  "     7712 7716 500",
                  "     22127 22357 500",
                  "]\n",
-                 sep="\n      ")))
+                 sep = "\n      ")))
 }
 
 # Call ghostscript to process postscript or pdf file to embed fonts

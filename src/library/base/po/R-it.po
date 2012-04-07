@@ -7,7 +7,7 @@ msgid ""
 msgstr ""
 "Project-Id-Version: R 2.3.0\n"
 "Report-Msgid-Bugs-To: bugs@r-project.org\n"
-"POT-Creation-Date: 2011-03-29 21:44\n"
+"POT-Creation-Date: 2011-10-23 14:54\n"
 "PO-Revision-Date: 2005-02-16 08:34\n"
 "Last-Translator: Stefano M. Iacus <Stefano.Iacus@R-project.org>\n"
 "Language-Team: Italian\n"
@@ -143,7 +143,7 @@ msgid ""
 msgstr ""
 
 #, fuzzy
-msgid "name space cannot be unloaded:"
+msgid "namespace cannot be unloaded:"
 msgstr "namespace '%s' caricato"
 
 #, fuzzy
@@ -725,6 +725,14 @@ msgstr "'package' deve avere lunghezza 1"
 msgid "no file found"
 msgstr "non trovato"
 
+#, fuzzy
+msgid "invalid 'path' argument"
+msgstr "argomento 'category' non valido"
+
+#, fuzzy
+msgid "invalid 'time' argument"
+msgstr "argomento 'category' non valido"
+
 msgid "'vec' contains NAs"
 msgstr "'vec' contiene NA"
 
@@ -775,21 +783,43 @@ msgstr "' non trovato"
 msgid "all arguments must be named"
 msgstr "tutti gli argomenti devono avere la stessa lunghezza"
 
-msgid "'pattern' must be a non-empty character string"
-msgstr "il 'pattern' deve essere una stringa di caratteri non vuota"
-
 #, fuzzy
-msgid "invalid multibyte string for 'pattern'"
-msgstr "stringa non valida per 'by'"
-
-msgid "'max.distance' must be non-negative"
-msgstr "'max.distance' deve essere non negativa"
+msgid "match distance components must be non-negative"
+msgstr "le componenti di 'max.distance' devono essere non negative"
 
 msgid "unknown match distance components ignored"
 msgstr "le componenti sconosciute della distanza verranno ignorate"
 
-msgid "'max.distance' components must be non-negative"
+#, fuzzy
+msgid "unknown cost components ignored"
+msgstr "le componenti sconosciute della distanza verranno ignorate"
+
+#, fuzzy
+msgid "cost components must be non-negative"
 msgstr "le componenti di 'max.distance' devono essere non negative"
+
+#, fuzzy
+msgid "%s and %s must have the same length"
+msgstr "'x' e 'y' devono avere la stessa lunghezza"
+
+msgid "need non-overlapping matches for %s"
+msgstr ""
+
+#, fuzzy
+msgid "missing replacement values are not allowed"
+msgstr "'row.names' mancanti non sono permesse"
+
+msgid "must have replacement values for matches"
+msgstr ""
+
+msgid "value does not provide any replacement values"
+msgstr ""
+
+msgid "must have replacements for non-matches"
+msgstr ""
+
+msgid "must have replacements for matches"
+msgstr ""
 
 msgid "norm '%s' currently always uses exact = FALSE"
 msgstr ""
@@ -802,46 +832,55 @@ msgstr "la matrice deve essere quadrata"
 msgid "'object' must be a list"
 msgstr "'subset' deve essere di tipo logico"
 
-msgid "package '%s' has not been installed properly"
+msgid "'keep.source' is deprecated and will be ignored"
+msgstr ""
+
+#, fuzzy
+msgid "package %s has not been installed properly"
 msgstr "il pacchetto '%s' non è stato installato correttamente"
 
 #, fuzzy
-msgid "package '%s' was built before R 2.10.0: please re-install it"
+msgid "package %s was built before R 2.10.0: please re-install it"
 msgstr ""
 "il pacchetto '%s' è stato creato prima di R 2.0.0: si prega di re-installarlo"
 
-msgid "This is R %s, package '%s' needs %s %s"
+#, fuzzy
+msgid "This is R %s, package %s needs %s %s"
 msgstr "Questo è R %s, il pacchetto '%s' necessita di %s %s"
 
-msgid "package '%s' was built under R version %s"
+#, fuzzy
+msgid "package %s was built under R version %s"
 msgstr "il pacchetto '%s' è stato creato con R versione %s"
 
-msgid "package '%s' was built for %s"
+#, fuzzy
+msgid "package %s was built for %s"
 msgstr "il pacchetto '%s' è stato creato per %s"
 
 #, fuzzy
-msgid "package '%s' is not installed for 'arch=%s'"
+msgid "package %s is not installed for 'arch=%s'"
 msgstr "il pacchetto '%s' non è stato installato correttamente"
 
 msgid ""
-"package '%s' has a license that you need to accept in an interactive session"
+"package %s has a license that you need to accept in an interactive session"
 msgstr ""
 
-msgid "Package '%s' has a license that you need to accept after viewing"
+msgid "Package %s has a license that you need to accept after viewing"
 msgstr ""
 
 msgid ""
-"Package '%s' has a license that you need to accept:\n"
+"Package %s has a license that you need to accept:\n"
 "according to the DESCRIPTION file it is"
 msgstr ""
 
 msgid "License"
 msgstr ""
 
-msgid "License for package '%s' not accepted"
-msgstr ""
+#, fuzzy
+msgid "License for package %s not accepted"
+msgstr "pacchetto %s non caricato"
 
-msgid "Attaching package: '%s'"
+#, fuzzy
+msgid "Attaching package: %s"
 msgstr "Carico il pacchetto richiesto: '%s'"
 
 msgid "'verbose' and 'quietly' are both true; being verbose then .."
@@ -851,38 +890,38 @@ msgstr ""
 msgid "invalid package name"
 msgstr "nome non valido"
 
-msgid "there is no package called '%s'"
+#, fuzzy
+msgid "there is no package called %s"
 msgstr "non c'è alcun pacchetto chiamato '%s'"
 
 msgid "no library trees found in 'lib.loc'"
 msgstr ""
 
 #, fuzzy
-msgid "'%s' is not a valid installed package"
+msgid "%s is not a valid installed package"
 msgstr "'%s' non è una scelta valida"
 
-msgid "'%s' not found on search path, using pos = 2"
+#, fuzzy
+msgid "%s not found on search path, using pos = 2"
 msgstr "'%s' non trovato nel percorso di ricerca, uso pos = 2"
 
-msgid "package/namespace load failed for '%s'"
+#, fuzzy
+msgid "package/namespace load failed for %s"
 msgstr "caricamento pacchetto/namespace fallito per '%s'"
 
-msgid "unable to load R code in package '%s'"
-msgstr "impossibile caricare il codice R del pacchetto '%s'"
+#, fuzzy
+msgid "package %s does not have a NAMESPACE and should be re-installed"
+msgstr "il pacchetto '%s' non ha un namespace"
 
-msgid "package '%s' contains no R code"
-msgstr "il pacchetto '%s' non contiene codice R"
-
-msgid ".First.lib failed for '%s'"
-msgstr ".First.lib fallita per '%s'"
-
-msgid "package '%s' already present in search()"
+#, fuzzy
+msgid "package %s already present in search()"
 msgstr "il pacchetto '%s' è già presente in search()"
 
 msgid "'DESCRIPTION' has 'Encoding' field and re-encoding is not possible"
 msgstr ""
 
-msgid "%sPackages in library '%s':"
+#, fuzzy
+msgid "%sPackages in library %s:"
 msgstr "%sPacchetti nella libreria '%s':"
 
 msgid "no packages found"
@@ -891,15 +930,15 @@ msgstr "nessun pacchetto trovato"
 msgid "R packages available"
 msgstr "Pacchetti di R disponibili"
 
-msgid "DLL '%s' not found: maybe not installed for this architecture?"
+msgid "DLL %s not found: maybe not installed for this architecture?"
 msgstr ""
 
 #, fuzzy
-msgid "shared object '%s' not found"
+msgid "shared object %s not found"
 msgstr "%s non trovato"
 
 #, fuzzy
-msgid "DLL '%s' already loaded"
+msgid "DLL %s already loaded"
 msgstr "libreria condivisa '%s' già caricata"
 
 #, fuzzy
@@ -918,27 +957,23 @@ msgid "no shared object was specified"
 msgstr "non è stata specificata alcuna libreria condivisa"
 
 #, fuzzy
-msgid "DLL '%s' was not loaded"
+msgid "DLL %s was not loaded"
 msgstr "libreria condivisa '%s' non caricata"
 
 #, fuzzy
-msgid "shared object '%s' was not loaded"
+msgid "shared object %s was not loaded"
 msgstr "libreria condivisa '%s' non caricata"
 
 #, fuzzy
-msgid "DLL '%s' not found"
+msgid "DLL %s not found"
 msgstr "file '%s' non trovato"
+
+#, fuzzy
+msgid "shared object '%s' not found"
+msgstr "%s non trovato"
 
 msgid "now dyn.unload(\"%s\") ..."
 msgstr "eseguo dyn.unload(\"%s\") ..."
-
-#, fuzzy
-msgid "use of 'save' is deprecated"
-msgstr "'%s' è deprecata"
-
-#, fuzzy
-msgid "save != FALSE is defunct"
-msgstr "'%s' è disattivata"
 
 msgid "Loading required package: %s"
 msgstr "Carico il pacchetto richiesto: %s"
@@ -946,16 +981,17 @@ msgstr "Carico il pacchetto richiesto: %s"
 msgid "none of the packages are loaded"
 msgstr "nessuno dei pacchetti è stato caricato"
 
+#, fuzzy
 msgid ""
-"package '%s' found more than once,\n"
-"using the one found in '%s'"
+"package %s found more than once,\n"
+"using the one found in %s"
 msgstr ""
 "il pacchetto '%s' è stato trovato più volte,\n"
 "uso quello trovato in '%s'"
 
+#, fuzzy
 msgid ""
-"Further information is available in the following vignettes in directory "
-"'%s':"
+"Further information is available in the following vignettes in directory %s:"
 msgstr ""
 "Maggiori informazioni si trovano nelle vignette nella seguente directory "
 "'%s':"
@@ -969,29 +1005,38 @@ msgstr "Descrizione:"
 msgid "Index:"
 msgstr "Indice:"
 
-msgid "Information on package '%s'"
+#, fuzzy
+msgid "Information on package %s"
 msgstr "Carico il pacchetto richiesto: '%s'"
 
-msgid "Documentation for package '%s'"
+#, fuzzy
+msgid "Documentation for package %s"
 msgstr "Carico il pacchetto richiesto: '%s'"
 
-msgid "package '%s' required by '%s' could not be found"
+#, fuzzy
+msgid "package %s required by %s could not be found"
 msgstr "pacchetto '%s' richiesto da '%s' ma non trovato"
 
-msgid "package '%s' %s was found, but %s %s is required by '%s'"
+#, fuzzy
+msgid "package %s %s was found, but %s %s is required by %s"
 msgstr "pacchetto '%s' non trovato, ma %s %s è richiesto da '%s'"
 
-msgid "package '%s' could not be loaded"
+#, fuzzy
+msgid "package %s could not be loaded"
 msgstr "pacchetto '%s' non caricato"
 
-msgid "package '%s' %s is loaded, but %s %s is required by '%s'"
+#, fuzzy
+msgid "package %s %s is loaded, but %s %s is required by %s"
 msgstr "pacchetto '%s' %s caricato, ma %s %s richiesto da '%s'"
+
+msgid "empty (zero-byte) input file"
+msgstr ""
 
 msgid "input has been corrupted, with LF replaced by CR"
 msgstr "l'input è stato danneggiato, LF sostituiti da CR"
 
 msgid ""
-"file '%s' has magic number '%s'\n"
+"file %s has magic number '%s'\n"
 "   Use of save versions prior to 2 is deprecated"
 msgstr ""
 
@@ -1007,6 +1052,13 @@ msgstr ""
 msgid "'file' must be non-empty string"
 msgstr "'file' deve essere una stringa non vuota"
 
+#, fuzzy
+msgid "'compress' must be logical or character"
+msgstr "'normal.kind' deve essere una stringa di caratteri di lunghezza 1"
+
+msgid "'compress = \"%s\"' is invalid"
+msgstr ""
+
 msgid "bad file argument"
 msgstr "argomento file non corretto"
 
@@ -1019,7 +1071,7 @@ msgstr "l'immagine non può essere rinominata ed è stata lasciata in"
 msgid "[Previously saved workspace restored]"
 msgstr "[Caricato workspace precedentemente salvato]"
 
-msgid "Attempting to load the environment '%s'"
+msgid "Attempting to load the environment %s"
 msgstr ""
 
 msgid "not found: using .GlobalEnv instead"
@@ -1123,17 +1175,18 @@ msgstr ""
 msgid "'%s' is not an exported object from 'namespace:%s'"
 msgstr "'%s' non è un oggetto esportato dal 'namespace:%s'"
 
-#, fuzzy
-msgid "package %s has no name space and is not on the search path"
-msgstr "il pacchetto '%s' non ha un namespace"
+msgid "running .First.lib() for package %s as .onLoad/.onAttach were not found"
+msgstr ""
 
-msgid "name space is already attached"
+#, fuzzy
+msgid "namespace is already attached"
 msgstr "il namespace è già agganciato"
 
 msgid "%s not found"
 msgstr "%s non trovato"
 
-msgid "namespace '%s' is already sealed in loadNamespace"
+#, fuzzy
+msgid "namespace %s is already sealed in loadNamespace"
 msgstr "namespace '%s' già sigillato in loadNamespace"
 
 msgid "failed to assign RegisteredNativeSymbol for"
@@ -1155,8 +1208,13 @@ msgstr "non è un namespace"
 msgid "failed to assign NativeSymbolInfo for"
 msgstr ""
 
-msgid "package '%s' does not have a name space"
+#, fuzzy
+msgid "package %s does not have a namespace"
 msgstr "il pacchetto '%s' non ha un namespace"
+
+#, fuzzy
+msgid "unable to load R code in package %s"
+msgstr "impossibile caricare il codice R del pacchetto '%s'"
 
 msgid ""
 "exportClassPattern specified in NAMESPACE but no matching classes in package "
@@ -1167,7 +1225,8 @@ msgstr ""
 msgid "in package %s classes %s were specified for export but not defined"
 msgstr "in '%s', classi da esportare non definite: %s"
 
-msgid "in '%s' methods for export not found: %s"
+#, fuzzy
+msgid "in %s methods for export not found: %s"
 msgstr "in '%s', metodi da esportare non trovati: %s"
 
 msgid "multiple methods tables found for %s"
@@ -1180,20 +1239,27 @@ msgstr ""
 msgid "in package %s methods %s were specified for export but not defined"
 msgstr "in '%s', metodi da esportare specificati, ma nessuno definito: %s"
 
+#, fuzzy
+msgid "Loading required namespace: %s"
+msgstr "Carico il pacchetto richiesto: %s"
+
 msgid "not found"
 msgstr "non trovato"
 
-msgid "not loading a name space"
+#, fuzzy
+msgid "not loading a namespace"
 msgstr "non sto caricando un namespace"
 
 #, fuzzy
-msgid "name space %s is imported by %s so cannot be unloaded"
+msgid "namespace %s is imported by %s so cannot be unloaded"
 msgstr "namespace '%s' caricato"
 
-msgid "not a name space"
+#, fuzzy
+msgid "not a namespace"
 msgstr "non è un namespace"
 
-msgid "operation not allowed on base name space"
+#, fuzzy
+msgid "operation not allowed on base namespace"
 msgstr "operazione non permessa sul namespace base"
 
 msgid "duplicate import names"
@@ -1202,7 +1268,8 @@ msgstr "nomi importati doppi"
 msgid "replacing local value with import %s when loading %s"
 msgstr ""
 
-msgid "cannot import into a sealed name space"
+#, fuzzy
+msgid "cannot import into a sealed namespace"
 msgstr "non posso importare in un namespace sigillato"
 
 msgid "replacing previous import %s when loading %s"
@@ -1219,14 +1286,16 @@ msgid "requested methods not found in environment/package %s: %s"
 msgstr ""
 "oggetti  'methods' richiesti non trovati nel environment/pacchetto '%s': %s"
 
-msgid "cannot add to exports of a sealed name space"
+#, fuzzy
+msgid "cannot add to exports of a sealed namespace"
 msgstr "non è possibile aggiungere esportazioni ad un namespace sigillato"
 
 #, fuzzy
 msgid "undefined exports:"
 msgstr "esportazioni indefinite :"
 
-msgid "package '%s' has no NAMESPACE file"
+#, fuzzy
+msgid "package %s has no NAMESPACE file"
 msgstr "il pacchetto '%s' non ha il file NAMESPACE"
 
 #, fuzzy
@@ -1278,6 +1347,10 @@ msgstr "non posso trasformarlo in una table"
 #, fuzzy
 msgid "no arguments"
 msgstr "argomento sbagliato"
+
+#, fuzzy
+msgid "an argument will be fractionally recycled"
+msgstr "l'argomento drop verrà ignorato"
 
 msgid "invalid 'n' value"
 msgstr "valore 'n' non valido"
@@ -1442,6 +1515,9 @@ msgstr "method=\"quick\" è solo per 'x' di tipo numeric"
 
 msgid "method=\"radix\" is only for integer 'x'"
 msgstr "method=\"radix\" è solo per 'x' interi"
+
+msgid "'local' must be TRUE, FALSE or an environment"
+msgstr ""
 
 msgid "'echo' must be logical"
 msgstr "'echo' deve essere di tpo logico"
@@ -1633,6 +1709,9 @@ msgstr "'to' deve avere  lunghezza 1"
 msgid "'stderr' must be of length 1"
 msgstr "'to' deve avere  lunghezza 1"
 
+msgid "'which' was not found on this platform"
+msgstr ""
+
 msgid "'show.output.on.console' must be TRUE or FALSE"
 msgstr ""
 
@@ -1679,10 +1758,7 @@ msgstr ""
 msgid "have been removed from the search path"
 msgstr "'%s' non trovato nel percorso di ricerca, uso pos = 2"
 
-msgid "cannot find name space environment"
-msgstr ""
-
-msgid "package '%s' has a non-function '.First.lib'"
+msgid "cannot find namespace environment"
 msgstr ""
 
 msgid "deparse option %s is not recognized"
@@ -1740,8 +1816,46 @@ msgid_plural "Warning messages:\n"
 msgstr[0] "Messaggio di avvertimento:\n"
 msgstr[1] "Messaggi di avvertimento:\n"
 
+#~ msgid "'pattern' must be a non-empty character string"
+#~ msgstr "il 'pattern' deve essere una stringa di caratteri non vuota"
+
+#, fuzzy
+#~ msgid "invalid multibyte string for 'pattern'"
+#~ msgstr "stringa non valida per 'by'"
+
+#~ msgid "'max.distance' must be non-negative"
+#~ msgstr "'max.distance' deve essere non negativa"
+
+#, fuzzy
+#~ msgid "%s must be a character vector"
+#~ msgstr "'normal.kind' deve essere una stringa di caratteri di lunghezza 1"
+
+#, fuzzy
+#~ msgid "%s must be a list of character vectors"
+#~ msgstr "'normal.kind' deve essere una stringa di caratteri di lunghezza 1"
+
+#, fuzzy
+#~ msgid "package %s has no namespace and is not on the search path"
+#~ msgstr "il pacchetto '%s' non ha un namespace"
+
+#, fuzzy
+#~ msgid "package %s contains no R code"
+#~ msgstr "il pacchetto '%s' non contiene codice R"
+
+#, fuzzy
+#~ msgid ".First.lib failed for %s"
+#~ msgstr ".First.lib fallita per '%s'"
+
 #~ msgid "no files to copy from"
 #~ msgstr "nessun file da cui copiare"
+
+#, fuzzy
+#~ msgid "use of 'save' is deprecated"
+#~ msgstr "'%s' è deprecata"
+
+#, fuzzy
+#~ msgid "save != FALSE is defunct"
+#~ msgstr "'%s' è disattivata"
 
 #~ msgid "cyclic name space dependencies are not supported"
 #~ msgstr "dipendenze circolari nel namespace non sono supportate"

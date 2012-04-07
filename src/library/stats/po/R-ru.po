@@ -10,9 +10,9 @@ msgid ""
 msgstr ""
 "Project-Id-Version: R 2.11.0\n"
 "Report-Msgid-Bugs-To: bugs@r-project.org\n"
-"POT-Creation-Date: 2011-03-22 15:33\n"
-"PO-Revision-Date: 2011-03-30 02:50+0300\n"
-"Last-Translator: Anton Korobeynikov <asl at math dot spbu dot ru>\n"
+"POT-Creation-Date: 2011-10-12 18:01\n"
+"PO-Revision-Date: 2011-10-18 22:22-0600\n"
+"Last-Translator: Alexey Shipunov <dactylorhiza@gmail.com>\n"
 "Language-Team: Russian\n"
 "Language: \n"
 "MIME-Version: 1.0\n"
@@ -44,6 +44,9 @@ msgstr "данные должны быть неотрицательными для мультипликативного варианта мето
 
 msgid "need at least 2 periods to compute seasonal start values."
 msgstr "нужны по крайней мере 3 периода, чтобы вычислить стартовые значения сезона."
+
+msgid "optimization failure"
+msgstr "ошибка оптимизации"
 
 msgid "time series has no or less than 2 periods"
 msgstr "временной ряд не имеет или имеет меньше 2 периодов"
@@ -595,12 +598,8 @@ msgstr "неправильный 'tree' (компонент слияния)"
 msgid "either 'k' or 'h' must be specified"
 msgstr "либо 'k', либо 'h' нужно указать"
 
-msgid ""
-"the 'height' component of 'tree' is not sorted\n"
-"(increasingly); consider applying as.hclust() first"
-msgstr ""
-"у 'tree' компонент 'height' не сортирован\n"
-"(по возрастанию); попробуйте сначала использовать as.hclust()"
+msgid "the 'height' component of 'tree' is not sorted (increasingly)"
+msgstr "у 'tree' компонент 'height' не сортирован (по возрастанию)"
 
 msgid "elements of 'k' must be between 1 and %d"
 msgstr "элементы 'k' должны быть между 1 и %d"
@@ -1202,11 +1201,17 @@ msgstr "недостаточно данных 'x'"
 msgid "not enough 'y' data"
 msgstr "недостаточно данных 'y'"
 
-msgid "cannot compute correct p-values with ties"
-msgstr "совпадающие значения: не могу высчитать корректные p-values"
+msgid "cannot compute exact p-values with ties"
+msgstr "не могу подсчитать точные p-values при наличии повторяющихся значений"
 
-msgid "'y' must be numeric or a string naming a valid function"
-msgstr "'y' должен быть числовым или строкой с названием правильной функции"
+msgid "p-values will be approximate in the presence of ties"
+msgstr "p-values будут примерными в присутствии повторяющихся значений"
+
+msgid "'y' must be numeric or a function or a string naming a valid function"
+msgstr "'y' должен быть числовым или функцией или строкой именующей правильную функцию"
+
+msgid "ties should not be present for the Kolmogorov-Smirnov test"
+msgstr "в тесте Колмогорова-Смирнова не должно быть повторяющихся значений"
 
 msgid ""
 "numeric y must be supplied.\n"
@@ -1335,6 +1340,15 @@ msgstr "указанный квадрат предиктора будет сброшен к только одному числовому пре
 
 msgid "specified parametric for all predictors"
 msgstr "указан параметрический для всех предикторов"
+
+msgid "invalid argument 'span'"
+msgstr "неправильный аргумент 'span'"
+
+msgid "invalid argument 'cell'"
+msgstr "неправильный аргумент 'cell'"
+
+msgid "invalid argument 'degree'"
+msgstr "неправильный аргумент 'degree'"
 
 msgid "first argument must be a \"loess\" object"
 msgstr "первый аргумент должен быть объектом \"loess\""
@@ -1619,8 +1633,8 @@ msgstr "Не заданы стартовые значения"
 msgid "No starting values specified for some parameters."
 msgstr "Для некоторых параметров не указаны стартовые значения."
 
-msgid "Intializing"
-msgstr "Инициализация"
+msgid "Initializing"
+msgstr "Инициализую"
 
 msgid "to '1.'."
 msgstr "до '1.'."
@@ -1670,8 +1684,8 @@ msgstr "нужна двусторонняя формула"
 msgid "not enough groups"
 msgstr "недостаточно групп"
 
-msgid "bounds can only be used with method L-BFGS-B"
-msgstr "границы можно использовать только в методе L-BFGS-B"
+msgid "bounds can only be used with method L-BFGS-B (or Brent)"
+msgstr "границы можно использовать только в методе L-BFGS-B (или Brent)"
 
 msgid "unknown names in control:"
 msgstr "неизвестные имена в директиве:"
@@ -1685,8 +1699,17 @@ msgstr "'trace != 0' нуждается в 'REPORT >= 1'"
 msgid "method L-BFGS-B uses 'factr' (and 'pgtol') instead of 'reltol' and 'abstol'"
 msgstr "метод L-BFGS-B использует 'factr' (и 'pgtol') вместо 'reltol' и 'abstol'"
 
-msgid "one-diml optimization by Nelder-Mead is unreliable: use optimize"
-msgstr "одномерная оптимизация методом Нелдера-Мида ненадежна: используйте 'optimize'"
+msgid "one-diml optimization by Nelder-Mead is unreliable:"
+msgstr "одномерная оптимизация методом Нелдера-Мида ненадежна:"
+
+msgid "use \"Brent\" or optimize() directly"
+msgstr "используйте \"Brent\" или optimize() прямо"
+
+msgid "method = \"Brent\" is only available for one-dimensional optimization"
+msgstr "метод = \"Brent\" доступен только для одномерной оптимизации"
+
+msgid "'lower' and 'upper' must be finite values"
+msgstr "'lower' и 'upper' должны быть конечными значениями"
 
 msgid "Pooling of SD is incompatible with paired tests"
 msgstr "Собирание SD несовместимо с парными тестами"
@@ -1945,6 +1968,9 @@ msgstr "неправильное конечное правило"
 
 msgid "invalid 'control.spar'"
 msgstr "неправильный 'control.spar'"
+
+msgid "missing or infinite values in inputs are not allowed"
+msgstr "пропущенные или бесконечные значения не разрешены во вводе"
 
 msgid "lengths of 'x' and 'w' must match"
 msgstr "длины 'x' и 'w' должны соответствовать"
@@ -2327,47 +2353,36 @@ msgstr[0] "параметр %s не встречается в формуле модели"
 msgstr[1] "параметры %s не встречаются в формуле модели"
 msgstr[2] "параметры %s не встречаются в формуле модели"
 
+#~ msgid "cannot compute correct p-values with ties"
+#~ msgstr "совпадающие значения: не могу высчитать корректные p-values"
 #~ msgid "'FUN' must always return a scalar"
 #~ msgstr "'FUN' должен всегда возвращать скаляр"
-
 #~ msgid "model order:"
 #~ msgstr "порядок модели:"
-
 #~ msgid "singularities in the computation of the projection matrix"
 #~ msgstr "сингулярности при вычислении матрицы проекции"
-
 #~ msgid "results are only valid up to model order"
 #~ msgstr "результаты действительны только для порядка модели"
-
 #~ msgid "invalid 'method': %s"
 #~ msgstr "неправильный 'method': %s"
-
 #~ msgid "invalid 'method'"
 #~ msgstr "неправильный 'method'"
-
 #~ msgid "'newdata' does not contain the variables needed"
 #~ msgstr "'newdata' не содержит нужных переменных"
-
 #~ msgid "diagonal has non-finite entries"
 #~ msgstr "диагональ имеет не-конечные элементы"
-
 #~ msgid "no 'time' or 'id' specified"
 #~ msgstr "не указан ни 'time', ни 'id'"
-
 #~ msgid "trying +"
 #~ msgstr "пробую +"
-
 #~ msgid "trying -"
 #~ msgstr "пробую -"
-
 #~ msgid "Start:  AIC="
 #~ msgstr "Старт:  AIC="
-
 #~ msgid "Step:  AIC="
 #~ msgstr "Ступень:  AIC="
-
 #~ msgid "contrasts not defined for 0 degrees of freedom"
 #~ msgstr "контрасты для 0 степеней свободы не определены"
-
 #~ msgid "Convergence failure:"
 #~ msgstr "Ошибка схождения:"
+

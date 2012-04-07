@@ -63,21 +63,11 @@ typedef enum {
 #  include <cairo.h>
 # endif
 #  include <cairo-xlib.h>
-# ifdef HAVE_CAIRO_SVG
-#  include <cairo-svg.h>
-# endif
-# ifdef HAVE_CAIRO_PDF
-#  include <cairo-pdf.h>
-# endif
-# ifdef HAVE_CAIRO_PS
-#  include <cairo-ps.h>
-# endif
 #endif
-
 
 Rboolean X11DeviceDriver(pDevDesc, const char*, double, double, double,
 			 double, X_COLORTYPE, int, int, int, SEXP,
-			 int, int, int, const char *, int, int);
+			 int, int, int, const char *, int, int, const char *);
 
 
 	/********************************************************/
@@ -124,7 +114,6 @@ typedef struct {
     int resize;				/* Window resized */
     Window window;			/* Graphics Window */
     GC wgc;				/* GC for window */
-    Cursor gcursor;			/* Graphics Cursor */
     XSetWindowAttributes attributes;	/* Window attributes */
     XRectangle clip;			/* The clipping rectangle */
 
@@ -132,7 +121,7 @@ typedef struct {
     char fontfamily[500];               /* CURRENT fontfamily */
     char symbolfamily[500];
     X_GTYPE type;			/* Window or pixmap? */
-    int npages;				/* counter for a pixmap */
+    int npages;				/* counter for a bitmap device */
     FILE *fp;				/* file for a bitmap device */
     char filename[PATH_MAX];		/* filename for a bitmap device */
     int quality;			/* JPEG quality/TIFF compression */
@@ -141,23 +130,29 @@ typedef struct {
 					   be handled externally from R (TRUE),
 					   or whether R is to handle the events
 					   (FALSE) */
-    int res_dpi;			/* used for png/jpeg */
+    int res_dpi;			/* used for png/jpeg/tiff */
     Rboolean warn_trans;		/* have we warned about translucent cols? */
     char title[101];
     Rboolean onefile;
 
 #ifdef HAVE_WORKING_CAIRO
+    /* In the buffered cases, xcc and xcs are the xlib context and surface
+       whereas cc, cs are an RGB24 image surface.
+       In the non-buffered case, xcc and xcs are NULL and cc, cs are the
+       cairo context and surface used directly.
+    */
     Rboolean useCairo, buffered;
     cairo_t *cc, *xcc;
     cairo_surface_t *cs, *xcs;
     cairo_antialias_t antialias;
+    double last, last_activity, update_interval;
 #endif
 
     double fontscale;
+    int holdlevel;
 } X11Desc;
 
 typedef X11Desc* pX11Desc;
-
 
 /* This is a private header, so why are these here? */
 
@@ -167,5 +162,4 @@ int Rf_setX11Display(Display *dpy, double gamma_fac, X_COLORTYPE colormodel,
 		     int maxcube, Rboolean setHandlers);
 
 int Rf_setX11DeviceData(pDevDesc dd, double gamma_fac, X11Desc *xd);
-
 #endif

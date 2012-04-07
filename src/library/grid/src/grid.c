@@ -2939,7 +2939,7 @@ SEXP L_cap()
      * to be BY COLUMN (though the dimensions are correct) */
     SEXP image, idim;
     
-    PROTECT(raster = GECap(dd));    
+    PROTECT(raster = GECap(dd));
     /* Non-complying devices will return NULL */
     if (isNull(raster)) {
         image = raster;
@@ -3436,7 +3436,7 @@ SEXP L_locator() {
      * Get a mouse click
      * Fails if user did not click mouse button 1
      */
-    if (dd->dev->locator(&x, &y, dd->dev)) {
+    if(dd->dev->locator && dd->dev->locator(&x, &y, dd->dev)) {
 	REAL(answer)[0] = fromDeviceX(x, GE_INCHES, dd);
 	REAL(answer)[1] = fromDeviceY(y, GE_INCHES, dd);
     } else {

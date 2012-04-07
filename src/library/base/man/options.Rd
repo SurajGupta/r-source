@@ -61,7 +61,7 @@ getOption(x, default = NULL)
       \code{TRUE}.  Could also be set to an integer for specifying how
       many (simulated) smooths should be added.  This is currently only
       used by \code{\link{plot.lm}}.}
-    
+
     \item{\code{browserNLdisabled}:}{logical: whether newline is
       disabled as a synonym for \code{"n"} is the browser.}
 
@@ -103,6 +103,9 @@ getOption(x, default = NULL)
       print when formatting time values in seconds.  Valid values
       are 0\dots6 with default 0.  See \code{\link{strftime}}.}
 
+    \item{\code{download.file.extra}:}{Extra command-line argument(s) for
+      non-default methods: see \code{\link{download.file}}.}
+
     \item{\code{download.file.method}:}{Method to be used for
       \code{download.file}.  Currently download methods
       \code{"internal"}, \code{"wget"} and \code{"lynx"} are available.
@@ -142,24 +145,14 @@ getOption(x, default = NULL)
       allowing comments to be kept in the right places.  Retrieve the
       source by printing or using \code{deparse(fn, control =
       "useSource")}.
- 
+
       The default is \code{\link{interactive}()}, i.e., \code{TRUE} for
       interactive use.}
 
-    \item{\code{keep.source.pkgs}:}{As for \code{keep.source}, for
-      functions in packages loaded by \code{\link{library}} or
-      \code{\link{require}}.  Defaults to \code{FALSE} unless the
-      environment variable \env{R_KEEP_PKG_SOURCE} is set to
-      \code{yes}.
-
-      Note this does not apply to packages using lazy-loading.  Whether
-      they have kept source is determined when they are
-      installed (and is almost certainly false).}
-
-    \item{\code{max.contour.segments}:}{positive integer, defaulting to
-      \code{250000} and usually not set.  A limit on the number of
-      segments in a single contour line in \code{\link{contour}} or
-      \code{\link{contourLines}}.}
+    %% used by tools::makeLazyLoading
+    \item{\code{keep.source.pkgs}:}{As for \code{keep.source}, used only
+    when packages are installed.  Defaults to \code{FALSE} unless the
+    environment variable \env{R_KEEP_PKG_SOURCE} is set to \code{yes}.}
 
     \item{\code{max.print}:}{integer, defaulting to \code{99999}.
       \code{\link{print}} or \code{\link{show}} methods can make use of
@@ -185,7 +178,8 @@ getOption(x, default = NULL)
       console itself.
 #endif
       Can be a character string or an \R function, in which case it
-      needs to accept the same first four arguments as
+      needs to accept the arguments \code{(files, header,
+	title, delete.file)} corresponding to the first four arguments of
       \code{\link{file.show}}.}
 
     \item{\code{papersize}:}{the default paper format used by
@@ -259,8 +253,8 @@ getOption(x, default = NULL)
     \item{\code{stringsAsFactors}:}{The default setting for arguments of
       \code{\link{data.frame}} and \code{\link{read.table}}.}
 
-    \item{\code{texi2dvi}:}{used by function
-      \code{\link{texi2dvi}} in package \pkg{tools}.
+    \item{\code{texi2dvi}:}{used by functions
+      \code{\link{texi2dvi}} and \code{\link{texi2pdf}} in package \pkg{tools}.
 #ifdef unix
       Set at startup from the environment variable \env{R_TEXI2DVICMD}.
 #endif
@@ -356,9 +350,16 @@ getOption(x, default = NULL)
   Others are set from environment variables or are platform-dependent.
 }
 \section{Options set in package grDevices}{
-  These will be set when package \pkg{grDevices} (or its name space)
+  These will be set when package \pkg{grDevices} (or its namespace)
   is loaded if not already set.
   \describe{
+#ifdef unix
+    \item{\code{bitmapType}:}{(Unix-only) character.  The default type for the
+      bitmap devices such as \code{\link{png}}.  Defaults to
+      \code{"cairo"} on systems where that is available, or to
+      \code{"quartz"} on Mac OS X where that is available.}
+#endif
+
     \item{\code{device}:}{a character string giving
       the name of a function, or the function object itself,
       which when called creates a new graphics device of the default
@@ -383,12 +384,6 @@ getOption(x, default = NULL)
       and \code{identify} be confirmed by a bell?  Default \code{TRUE}.
       Honoured at least on \code{X11} and \code{windows} devices.}
 
-#ifdef unix
-    \item{\code{bitmapType}:}{(Unix-only) character.  The default type for the
-      bitmap devices such as \code{\link{png}}.  Defaults to
-      \code{"cairo"} on systems where that is available, or to
-      \code{"quartz"} on Mac OS X where that is available.}
-#endif
 #ifdef windows
     \item{\code{windowsTimeout}:}{(Windows-only) integer vector of length 2
       representing two times in milliseconds.  These control the
@@ -400,8 +395,16 @@ getOption(x, default = NULL)
 #endif
   }
 }
+\section{Other options used by package graphics}{
+  \describe{
+    \item{\code{max.contour.segments}:}{positive integer, defaulting to
+      \code{25000} if not set.  A limit on the number of
+      segments in a single contour line in \code{\link{contour}} or
+      \code{\link{contourLines}}.}
+  }
+}
 \section{Options set in package stats}{
-  These will be set when package \pkg{stats} (or its name space)
+  These will be set when package \pkg{stats} (or its namespace)
   is loaded if not already set.
   \describe{
     \item{\code{contrasts}:}{the default \code{\link{contrasts}} used in
@@ -433,7 +436,7 @@ getOption(x, default = NULL)
   }
 }
 \section{Options set in package utils}{
-  These will be set when package \pkg{utils} (or its name space)
+  These will be set when package \pkg{utils} (or its namespace)
   is loaded if not already set.
   \describe{
     \item{\code{BioC_mirror}:}{The URL of a Bioconductor mirror
@@ -451,7 +454,7 @@ getOption(x, default = NULL)
     \item{\code{ccaddress}:}{default Cc: address used by
       \code{\link{create.post}} (and hence\code{\link{bug.report}} and
       \code{\link{help.request}}).  Can be \code{FALSE} or \code{""}.}
-    
+
     \item{\code{de.cellwidth}:}{integer: the cell widths (number of
       characters) to be used in the data editor \code{\link{dataentry}}.
       If this is unset (the default), 0, negative or \code{NA}, variable
@@ -471,6 +474,9 @@ getOption(x, default = NULL)
 
     \item{\code{help.ports}:}{optional integer vector for setting ports
       of the internal HTTP server, see \code{\link{startDynamicHelp}}.}
+
+    \item{\code{help.search.types}:}{default types of documentation
+      to be searched by \code{\link{help.search}} and \code{\link{??}}.}
 
     \item{\code{help.try.all.packages}:}{default for an argument of
       \code{\link{help}}.}
@@ -493,11 +499,11 @@ getOption(x, default = NULL)
     \item{\code{internet.info}:}{The minimum level of information to be
       printed on URL downloads etc.  Default is 2, for failure causes.
       Set to 1 or 0 to get more information.}
-    
+
     \item{\code{mailer}:}{default emailing method used by
       \code{\link{create.post}} and hence \code{\link{bug.report}} and
       \code{\link{help.request}}.}
-    
+
     \item{\code{menu.graphics}:}{Logical: should graphical menus be used
       if available?.  Defaults to \code{TRUE}.  Currently applies to
       \code{\link{select.list}}, \code{\link{chooseCRANmirror}},
@@ -546,12 +552,23 @@ getOption(x, default = NULL)
     }
   }
 }
-
+\section{Options set in package parallel}{
+  These will be set when package \pkg{parallel} (or its namespace)
+  is loaded if not already set.
+  \describe{
+    \item{\code{mc.cores}:}{a integer giving the maximum allowed number
+      of \emph{additional} \R processes allowed to be run in parallel to
+      the current \R process.  Defaults to the setting of the
+      environment variable \env{MC_CORES} if set.  Most applications
+      which use this assume a limit of \code{2} if it is unset.
+    }
+  }
+}
 \section{Options used on Unix only}{
   \describe{
     \item{\code{dvipscmd}:}{character string giving a command to be used in
-    off-line printing of help pages \emph{via} PostScript.  Defaults to
-    \command{"dvips"}.}
+    the (deprecated) off-line printing of help pages \emph{via}
+    PostScript.  Defaults to \command{"dvips"}.}
   }
 }
 \section{Options used on Windows only}{

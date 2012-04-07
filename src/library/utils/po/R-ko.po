@@ -2,7 +2,7 @@ msgid ""
 msgstr ""
 "Project-Id-Version: R 2.3.0\n"
 "Report-Msgid-Bugs-To: bugs@r-project.org\n"
-"POT-Creation-Date: 2011-03-30 20:23\n"
+"POT-Creation-Date: 2011-10-17 10:14\n"
 "PO-Revision-Date: 2011-01-18 13:55+0000\n"
 "Last-Translator: Korean <uiami@hanmail.com>\n"
 "Language-Team: Korean <translation-team-ko@lists.sourceforge.net>\n"
@@ -19,7 +19,7 @@ msgid ""
 msgstr ""
 
 #, fuzzy
-msgid "no documentation for '%s' found in package '%s'"
+msgid "no documentation for %s found in package %s"
 msgstr "함수 '%s' 그리고 기호 '%s' 때문에 documentation이 없습니다"
 
 #, fuzzy
@@ -35,22 +35,27 @@ msgstr "탐색에 관한 query는 받아들여졌습니다"
 msgid "The results page should open in your browser shortly"
 msgstr "page가 당신의 브라우저에서 곧 열어야만 할 결과입니다"
 
-msgid "reference to unknown chunk '%s'"
+#, fuzzy
+msgid "reference to unknown chunk %s"
 msgstr "알수 없는 chunk '%s'에 언급합니다"
 
-msgid "no Sweave file with name '%s' found"
+#, fuzzy
+msgid "no Sweave file with name %s found"
 msgstr "이름 '%s'를 구성된 Sweave 파일은 검색되지 않았습니다"
 
-msgid "%d Sweave files for basename '%s' found:"
+#, fuzzy
+msgid "%d Sweave files for basename %s found:"
 msgstr "basename '%s' 때문에 Sweave 파일은 검색되어졌습니다"
 
 msgid "more than one syntax specification found, using the first one"
 msgstr "1 개를 넘는 문장 구조법 명세는 최초의 하나를 사용해 검색되어졌습니다"
 
-msgid "object '%s' does not have class \"SweaveSyntax\""
+#, fuzzy
+msgid "object %s does not have class \"SweaveSyntax\""
 msgstr "오브젝트 '%s'는 클래스 \"SweavaeSyntax\"를 가지고 있지 않습니다"
 
-msgid "recursive Sweave input '%s' in stack"
+#, fuzzy
+msgid "recursive Sweave input %s in stack"
 msgstr "스택에서 재귀적인 Sweave 입력'%s'입니다"
 
 msgid "target syntax not of class \"SweaveSyntax\""
@@ -64,17 +69,28 @@ msgid ""
 "%s"
 msgstr "%s에 있어서 에러 또는 비어 있는 옵션을 해석해주십시오"
 
-msgid "path to '%s' contains spaces,"
+msgid "Warning: unknown option"
+msgstr ""
+
+msgid "Created PDF document"
+msgstr ""
+
+#, fuzzy
+msgid "path to %s contains spaces,"
 msgstr "'%s'에서 패스(path)는 space를 포함하고 있습니다"
 
 msgid "this may cause problems when running LaTeX"
 msgstr "LaxTeX를 실행하는경우, 이것은 문제를 일으킬지도 모릅니다"
 
-msgid "\\SweaveInput is not compatible with concordances."
+#, fuzzy
+msgid "invalid value for %s : %s"
+msgstr "'%s'에 적절하지 않는 value입니다: %s"
+
+msgid "value of 'results' option should be lowercase"
 msgstr ""
 
-msgid "invalid value for '%s' : %s"
-msgstr "'%s'에 적절하지 않는 value입니다: %s"
+msgid "value of 'strip.white' option should be lowercase"
+msgstr ""
 
 msgid "elements of 'what' after the first will be ignored"
 msgstr "'what' 요소의 첫번째가 무시될 것입니다"
@@ -116,11 +132,8 @@ msgid "call"
 msgstr ""
 
 #, fuzzy
-msgid "Package '"
-msgstr "패키지"
-
-msgid "' DESCRIPTION not found."
-msgstr ""
+msgid "Package %s: DESCRIPTION not found"
+msgstr "'%s' 패키지가 검색되지 않습니다"
 
 #, fuzzy
 msgid "'file' must be NULL, a character string or a connection"
@@ -137,29 +150,23 @@ msgstr ""
 msgid ","
 msgstr ""
 
-msgid "Use either 'given' or 'first'/'middle' but not both."
+msgid "Use either %s or %s/%s but not both."
 msgstr ""
 
-msgid "It is recommended to use 'given' instead of 'first'."
+msgid "It is recommended to use %s instead of %s."
 msgstr ""
 
-msgid "It is recommended to use 'given' instead of 'middle'."
-msgstr ""
-
-msgid "Use either 'family' or 'last' but not both."
-msgstr ""
-
-msgid "It is recommended to use 'family' instead of 'last'."
+msgid "Use either %s or %s but not both."
 msgstr ""
 
 #, fuzzy
 msgid "Invalid role specification(s): %s."
 msgstr "'agrep' 명세는 적적하지 않습니다"
 
-msgid "It is recommended to use given/family instead of first/middle/last."
+msgid "It is recommended to use %s/%s instead of %s/%s/%s."
 msgstr ""
 
-msgid "method is just applicable to 'person' objects"
+msgid "method is just applicable to %s objects"
 msgstr ""
 
 msgid "all arguments must be of class \"person\""
@@ -171,38 +178,32 @@ msgstr ""
 msgid "all fields have to be named"
 msgstr ""
 
-msgid "'bibtype' has to be one of"
+msgid "%s has to be one of %s"
 msgstr ""
 
-msgid "A bibentry of bibtype '"
+msgid "A bibentry of bibtype %s has to correctly specify the field(s): %s"
 msgstr ""
 
-msgid "' has to correctly specify the field(s):"
+msgid "%s should be one of %s"
 msgstr ""
 
-msgid "'style' should be one of %s"
+msgid "A bibentry of bibtype %s has to specify the field(s): %s"
 msgstr ""
 
-msgid "' has to specify the field(s):"
-msgstr ""
-
-msgid "method is just applicable to 'bibentry' objects"
-msgstr ""
-
-msgid "package '%s' not found"
+#, fuzzy
+msgid "package %s not found"
 msgstr "'%s' 패키지가 검색되지 않습니다"
 
 msgid "broken installation, no CITATION file in the base package."
 msgstr "파손 되어진 설치, 기초 패키지로서 CITATION 파일은 없습니다"
 
-msgid "no date field in DESCRIPTION file of package '%s'"
+#, fuzzy
+msgid "no date field in DESCRIPTION file of package %s"
 msgstr "패키지 '%s'의  DESCRIPTION 파일에서 date 필드가 있습니다"
 
-msgid "could not determine year for '%s' from package DESCRIPTION file"
+#, fuzzy
+msgid "could not determine year for %s from package DESCRIPTION file"
 msgstr "패키지 DESCRIPTION 파일로부터'%s'때문에 year를 결정할수 없었습니다"
-
-msgid "Enhanced author specification provides no authors."
-msgstr ""
 
 msgid "m < 0"
 msgstr ""
@@ -231,15 +232,17 @@ msgstr ""
 "다"
 
 #, fuzzy
-msgid "data index for package '%s' is invalid and will be ignored"
+msgid "data index for package %s is invalid and will be ignored"
 msgstr ""
 "package %s는 사용되고 있어 인스톨 되지 않을 것입니다\n"
 "packages %s는 사용되고 있어 인스톨 되지 않을 것입니다"
 
-msgid "file 'filelist' is missing for directory '%s'"
+#, fuzzy
+msgid "file 'filelist' is missing for directory %s"
 msgstr "파일 'filelist'는 디렉토리 '%s'에서 잘못되어져 있습니다 "
 
-msgid "data set '%s' not found"
+#, fuzzy
+msgid "data set %s not found"
 msgstr "data set '%s'는 검색되지 않습니다"
 
 msgid "kind '%s' not yet implemented"
@@ -292,12 +295,14 @@ msgstr ""
 msgid "No suitable frames for recover()"
 msgstr "recover()를 위한 적절한 구조가 없습니다"
 
-msgid "No demo found for topic '%s'"
+#, fuzzy
+msgid "No demo found for topic %s"
 msgstr "demo는 topic '%s'에 검색하지 못하였습니다"
 
+#, fuzzy
 msgid ""
-"Demo for topic '%s' found more than once,\n"
-"using the one found in '%s'"
+"Demo for topic %s' found more than once,\n"
+"using the one found in %s"
 msgstr ""
 "topic '%s' demo는 '%s'로 검색되어진 것을 사용하고,\n"
 "두번이상 검색되었습니다"
@@ -334,11 +339,11 @@ msgid "cannot edit NULL row names"
 msgstr ""
 
 #, fuzzy
-msgid "no help found for '%s'"
+msgid "no help found for %s"
 msgstr "help file는 '%s'에 검색되어져 있지 않았습니다"
 
 #, fuzzy
-msgid "'%s' has a help file but no examples"
+msgid "%s has a help file but no examples"
 msgstr "'%s'는 help file를 지원하지만, examples 파일을 지원하지 않습니다"
 
 #, fuzzy
@@ -370,15 +375,24 @@ msgstr ""
 msgid "'topic' should be a name, length-one character vector or reserved word"
 msgstr "'package'는 문자열이나 NULL이어야만 합니다"
 
-msgid "No documentation for '%s' in specified packages and libraries:"
+#, fuzzy
+msgid "Postscript offline help is deprecated"
+msgstr "인수 'help.db'는 반대합니다"
+
+#, fuzzy
+msgid "No documentation for %s in specified packages and libraries:"
 msgstr "지정된 패키지 및 라이브러리에서 '%s'때문에 documentation는 없습니다"
 
 #, fuzzy
-msgid "you could try '??%s'"
+msgid "you could try %s"
 msgstr "help.search(\"%s\")를 시도할 수 있었습니다"
 
+msgid "??"
+msgstr ""
+
+#, fuzzy
 msgid ""
-"Help for topic '%s' is not in any loaded package but can be found in the "
+"Help for topic %s is not in any loaded package but can be found in the "
 "following packages:"
 msgstr ""
 "topic '%s'의 help는 임의러 적재한 패키지중은 아니지만, \n"
@@ -390,7 +404,8 @@ msgstr "패키지"
 msgid "Library"
 msgstr "라이브러리"
 
-msgid "Help on topic '%s' was found in the following packages:"
+#, fuzzy
+msgid "Help on topic %s was found in the following packages:"
 msgstr "topic '%s'에서 help는 다음의 패키지로 검색되었습니다"
 
 msgid "Choose one"
@@ -405,11 +420,12 @@ msgstr ""
 "dependency '%s'는 이용 가능하지는 않습니다\n"
 "dependencies '%s'는 이용 가능하지는 않습니다"
 
-msgid "R Help on '%s'"
+#, fuzzy
+msgid "R Help on %s"
 msgstr "'%s'에서 R Help입니다"
 
 #, fuzzy
-msgid "invalid '%s' argument"
+msgid "invalid %s argument"
 msgstr "무효의 'data' 인수입니다"
 
 msgid ""
@@ -417,7 +433,23 @@ msgid ""
 "accessed"
 msgstr ""
 
-msgid "argument '%s' must be a single character string"
+#, fuzzy
+msgid "running %s failed"
+msgstr "패키지 '%s'의 다운로드는 실패했습니다"
+
+msgid "%s produced no output file: sent to printer?"
+msgstr ""
+
+#, fuzzy
+msgid "creation of %s failed"
+msgstr "패키지 '%s'의 다운로드는 실패했습니다"
+
+#, fuzzy
+msgid "Saving help page to"
+msgstr "첫번째 match를 사용해주십시오..."
+
+#, fuzzy
+msgid "argument %s must be a single character string"
 msgstr "인수 '%s'는 단일의 문자열이어야만 합니다"
 
 msgid "incorrect field specification"
@@ -425,6 +457,10 @@ msgstr "올바르지 않는 필드 명세입니다"
 
 msgid "do not know what to search"
 msgstr "무엇을 검색해야할 것인지를 알수가 없습니다"
+
+#, fuzzy
+msgid "incorrect type specification"
+msgstr "올바르지 않는 필드 명세입니다"
 
 msgid "argument 'help.db' is deprecated"
 msgstr "인수 'help.db'는 반대합니다"
@@ -441,10 +477,11 @@ msgstr ""
 msgid "."
 msgstr ""
 
-msgid "could not find package '%s'"
+#, fuzzy
+msgid "could not find package %s"
 msgstr "패키지 '%s'를 검색할수 가 없었습니다"
 
-msgid "package '%s' has empty hsearch data - strangely"
+msgid "package %s has empty hsearch data - strangely"
 msgstr ""
 
 msgid "no hsearch.rds meta data for package"
@@ -466,7 +503,7 @@ msgstr "첫번째 match를 사용해주십시오..."
 msgid "... database rebuilt"
 msgstr ""
 
-msgid "no information in the database for package '%s': need 'rebuild = TRUE'?"
+msgid "no information in the database for package %s: need 'rebuild = TRUE'?"
 msgstr ""
 
 msgid "incorrect 'agrep' specification"
@@ -580,6 +617,12 @@ msgstr "S3 메소드 '%s'는 검색되지 않았습니다"
 msgid "environment specified is not a package"
 msgstr "지정된 환경은 패키지가 아닙니다"
 
+msgid "changing locked binding for %s in %s whilst loading %s"
+msgstr ""
+
+msgid "changing locked binding for %s in %s"
+msgstr ""
+
 msgid "'fixInNamespace' requires a name"
 msgstr "'fixInNamespace'는 이름을 요구합니다"
 
@@ -588,10 +631,6 @@ msgstr "수치의 색인만은 사용할 수 있습니다"
 
 msgid "cannot create directory '%s'"
 msgstr "디렉토리 '%s'를 작성할수 없습니다"
-
-#, fuzzy
-msgid "'namespace' must be a single logical"
-msgstr "인수 '%s'는 단일의 문자열이어야만 합니다"
 
 #, fuzzy
 msgid "'code_files' must be a character vector"
@@ -616,6 +655,13 @@ msgstr "디렉토리 '%s'는 이미 존재합니다"
 msgid "Creating DESCRIPTION ..."
 msgstr ""
 
+msgid "From R 2.14.0 on, every package gets a NAMESPACE."
+msgstr ""
+
+#, fuzzy
+msgid "Argument 'namespace' is deprecated."
+msgstr "인수 'help.db'는 반대합니다"
+
 msgid "Creating NAMESPACE ..."
 msgstr ""
 
@@ -623,6 +669,11 @@ msgid "Creating Read-and-delete-me ..."
 msgstr ""
 
 msgid "Saving functions and data ..."
+msgstr ""
+
+msgid ""
+"Generic functions and other S4 objects (e.g., '%s') cannot be dumped; use "
+"the code_files= argument"
 msgstr ""
 
 msgid "Copying code files ..."
@@ -654,7 +705,8 @@ msgstr "reposityory %s를 위한 인덱스에 액세스 할수 없습니다"
 msgid "Invalid 'filters' argument."
 msgstr "무효의 'data' 인수입니다"
 
-msgid "invalid 'oldPkgs'; must be a result from old.packages()"
+msgid ""
+"invalid 'oldPkgs'; must be a character vector or a result from old.packages()"
 msgstr ""
 
 msgid "illformed 'instPkgs' matrix"
@@ -664,7 +716,11 @@ msgid "no installed packages for (invalid?) 'lib.loc=%s'"
 msgstr "'lib.loc=%s'를 위한 (무효?) 인스톨 된 패키지가 없습니다"
 
 #, fuzzy
-msgid "metadata of '%s' is corrupt"
+msgid "no new packages are available"
+msgstr "지정된 R 오브젝트는 없거나 이용가능합니다"
+
+#, fuzzy
+msgid "metadata of %s is corrupt"
 msgstr "패키지 '%s'의 DESCRIPTION 파일은 잘못되어지거나 파손되었습니다"
 
 msgid "'priority' must be character or NULL"
@@ -682,14 +738,16 @@ msgstr ""
 msgid "'destdir' is not a directory"
 msgstr "'destdir'는 디렉토리가 아닙니다"
 
-msgid "no package '%s' at the repositories"
+#, fuzzy
+msgid "no package %s at the repositories"
 msgstr "repository로의 패키지 '%s'는 없습니다"
 
 #, fuzzy
-msgid "package '%s' does not exist on the local repository"
+msgid "package %s does not exist on the local repository"
 msgstr "repository로의 패키지 '%s'는 없습니다"
 
-msgid "download of package '%s' failed"
+#, fuzzy
+msgid "download of package %s failed"
 msgstr "패키지 '%s'의 다운로드는 실패했습니다"
 
 msgid "--- Please select a CRAN mirror for use in this session ---"
@@ -713,7 +771,8 @@ msgstr ""
 msgid "--- Please select repositories for use in this session ---"
 msgstr "--- 이 세션에서 사용한 repository를 선택해주십시오 ---"
 
-msgid "'%s' must be supplied"
+#, fuzzy
+msgid "%s must be supplied"
 msgstr "'%s'는 제공하여야만 합니다"
 
 msgid "every package depends on at least one other"
@@ -745,7 +804,7 @@ msgstr ""
 
 msgid ""
 "Would you like to create a personal library\n"
-"'%s'\n"
+"%s\n"
 "to install packages into?"
 msgstr ""
 
@@ -763,10 +822,12 @@ msgstr ""
 msgid "cannot install MacOS X binary packages on Windows"
 msgstr "windows에 MacOs의 X 2진법의 패키지를 인스톨 할수 없습니다"
 
-msgid "cannot install MacOS X binary packages on this plaform"
+#, fuzzy
+msgid "cannot install MacOS X binary packages on this platform"
 msgstr "이 plaform에  MacOS의  X 2진법의 패키지를 인스톨 할수 없습니다"
 
-msgid "cannot install Windows binary packages on this plaform"
+#, fuzzy
+msgid "cannot install Windows binary packages on this platform"
 msgstr "이 plaform에 windows의 2진법 패키지를 인스톨 할수 없습니다"
 
 msgid ""
@@ -777,11 +838,12 @@ msgstr ""
 "source 패키지를 인스톨 하기 위해서는 up 되지 않습니다, R-devel RPM를 필요로 "
 "할지도 모릅니다"
 
-msgid "installation of package '%s' had non-zero exit status"
+#, fuzzy
+msgid "installation of package %s had non-zero exit status"
 msgstr "패키지 '%s'의 설치는 zero이 아닌 exit 상태를 가지고 있었습니다"
 
 #, fuzzy
-msgid "unable to create temporary directory '%s'"
+msgid "unable to create temporary directory %s"
 msgstr "일시적 디렉토리 '%s'를 작성할수가 없습니다"
 
 msgid ""
@@ -801,6 +863,10 @@ msgstr ""
 "'%s' 라는\n"
 " 이름의 오브젝트가 없습니다"
 
+#, fuzzy
+msgid "'file' must be \"\" or an open connection object"
+msgstr "'package'는 문자열이나 NULL이어야만 합니다"
+
 msgid "must have max > min"
 msgstr ""
 
@@ -810,38 +876,44 @@ msgstr ""
 msgid "cannot determine a usable name"
 msgstr "사용 가능한 이름을 결정할 수 없습니다"
 
-msgid "Created file named '%s'."
+#, fuzzy
+msgid "Created file named %s."
 msgstr "'%s' 라고 하는 이름으로 작성된 파일입니다"
 
 msgid "Edit the file and move it to the appropriate directory."
 msgstr "파일을 편집하고 적절한 디렉토리에 그것을 이동시켜 주십시오"
 
-msgid ""
-"no documentation of type '%s' and topic '%s' (or error in processing help)"
+#, fuzzy
+msgid "no documentation of type %s and topic %s (or error in processing help)"
 msgstr ""
 "유형 '%s' 그리고 topic '%s'(혹은 지원의 처리에 있어서 에러)documentation는 없"
 "습니다"
 
+#, fuzzy
 msgid ""
-"the object of class \"%s\" in the function call '%s' could not be used as a "
+"the object of class \"%s\" in the function call %s could not be used as a "
 "documentation topic"
 msgstr ""
 "documentation topic으로서 함수 호출 \"%s\"로 클래스 '%s'의 오브젝트를 사용하"
 "는것이\n"
 "할수 없을지도 모릅니다"
 
-msgid "no methods for '%s' and no documentation for it as a function"
+#, fuzzy
+msgid "no methods for %s and no documentation for it as a function"
 msgstr ""
 "'%s'를 위한 메소드 그리고 함수으로서 그것을 위한 documentation가 없습니다"
 
-msgid "error in trying to evaluate the expression for argument '%s' (%s)"
+#, fuzzy
+msgid "error in trying to evaluate the expression for argument %s (%s)"
 msgstr ""
 "인수 '%s'(%s)때문에 표현을 평가하려고 하는것에 시도할수 있는 에러입니다"
 
-msgid "no method defined for function '%s' and signature '%s'"
+#, fuzzy
+msgid "no method defined for function %s and signature %s"
 msgstr "함수 '%s' 또는 기호 '%s' 때문에 정의된 메소드가 없습니다"
 
-msgid "no documentation for function '%s' and signature '%s'"
+#, fuzzy
+msgid "no documentation for function %s and signature %s"
 msgstr "함수 '%s' 그리고 기호 '%s' 때문에 documentation이 없습니다"
 
 msgid "No DIF data on clipboard"
@@ -1045,17 +1117,20 @@ msgstr ""
 msgid "linked path is too long"
 msgstr ""
 
+#, fuzzy
 msgid ""
-"vignette '%s' found more than once,\n"
-"using the one found in '%s'"
+"vignette %s found more than once,\n"
+"using the one found in %s"
 msgstr ""
 "vignette(당초무늬) '%s'로 검색된것을 사용하고,\n"
 "두번 이상 검색되어졌습니다"
 
-msgid "vignette '%s' *not* found"
+#, fuzzy
+msgid "vignette %s not found"
 msgstr "vignette(당초무늬) '%s' *not*는 검색되어졌습니다"
 
-msgid "vignette '%s' has no PDF"
+#, fuzzy
+msgid "vignette %s has no PDF"
 msgstr "vignette '%s'는 PDF를 가지고 있지 않습니다"
 
 msgid "select.list() cannot be used non-interactively"
@@ -1129,24 +1204,11 @@ msgstr "다운로드 메소드는 검색되지 않았습니다"
 msgid "download had nonzero exit status"
 msgstr "다운로드는 non-zreo인 exit 상태를 가지고 있었습니다"
 
-msgid "running '%s' failed"
-msgstr ""
-
-msgid "'%s' produced no output file: sent to printer?"
-msgstr ""
-
-#, fuzzy
-msgid "creation of '%s' failed"
-msgstr "패키지 '%s'의 다운로드는 실패했습니다"
-
-#, fuzzy
-msgid "Saving help page to"
-msgstr "첫번째 match를 사용해주십시오..."
-
 msgid "'tar' returned non-zero exit code %d"
 msgstr "non-zero exit 코드를 반환하는 'tar' 입니다"
 
-msgid "package '%s' successfully unpacked and MD5 sums checked"
+#, fuzzy
+msgid "package %s successfully unpacked and MD5 sums checked"
 msgstr "패키지 '%s'는 성공적으로 unpack 하였고 MD5 합계가 체크되었습니다"
 
 msgid "ERROR: failed to lock directory"
@@ -1161,11 +1223,11 @@ msgstr ""
 msgid "ERROR: failed to create lock directory"
 msgstr "일시적 디렉토리 '%s'를 작성할수가 없습니다"
 
-msgid "restored '%s'"
+msgid "restored %s"
 msgstr ""
 
 #, fuzzy
-msgid "unable to move temporary installation '%s' to '%s'"
+msgid "unable to move temporary installation %s to %s"
 msgstr "'%s'에 임시 설치 '%d'를 이동시킬 수 없습니다"
 
 msgid "cannot remove prior installation of package"
@@ -1180,16 +1242,25 @@ msgstr ""
 msgid "method 'mailx' is Unix-only"
 msgstr ""
 
-msgid "zipfile '%s' not found"
+#, fuzzy
+msgid ""
+"If nothing happens, you should open\n"
+"%s yourself"
+msgstr "아무것도 일어나지 않는 경우, 그 자체에 '%s'를 열어야 합니다"
+
+#, fuzzy
+msgid "zipfile %s not found"
 msgstr "검색되지 않는 zip파일'%s'입니다"
 
-msgid "failed to create '%s'"
+#, fuzzy
+msgid "failed to create %s"
 msgstr "'%s'를 작성하는데 실패 되었습니다"
 
-msgid "there is no 'libs' directory in package '%s'"
+msgid "there is no 'libs' directory in package %s"
 msgstr ""
 
-msgid "cannot remove prior installation of package '%s'"
+#, fuzzy
+msgid "cannot remove prior installation of package %s"
 msgstr "패키지 '%s'의 이전 설치를 삭제할수 없습니다"
 
 #, fuzzy
@@ -1235,15 +1306,24 @@ msgstr[0] ""
 "한층 더 depengencies를 인스톨 합니다"
 
 #, fuzzy
-msgid "'lib' element '%s' is not a writable directory"
-msgid_plural "'lib' elements '%s' are not writable directories"
+msgid "'lib' element %s is not a writable directory"
+msgid_plural "'lib' elements %s are not writable directories"
 msgstr[0] "'destdir'는 디렉토리가 아닙니다"
 
-msgid "package '%s' is in use and will not be installed"
-msgid_plural "packages '%s' are in use and will not be installed"
+#, fuzzy
+msgid "package %s is in use and will not be installed"
+msgid_plural "packages %s are in use and will not be installed"
 msgstr[0] ""
 "package '%s'는 사용되고 있어 인스톨 되지 않을 것입니다\n"
 "packages '%s'는 사용되고 있어 인스톨 되지 않을 것입니다"
+
+#, fuzzy
+#~ msgid "'namespace' must be a single logical"
+#~ msgstr "인수 '%s'는 단일의 문자열이어야만 합니다"
+
+#, fuzzy
+#~ msgid "Package '"
+#~ msgstr "패키지"
 
 #~ msgid "You can now run LaTeX on '%s'"
 #~ msgstr "현재 '%s'에서 LaTeX를 실행할수 있습니다"

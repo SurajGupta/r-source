@@ -1,7 +1,9 @@
 ## ${R_HOME}/share/make/basepkg.mk
 
 
-.PHONY: front instdirs mkR mkR2 mkdesc mkdemos mkexec mklazy mkman mkpo mksrc mksrc-win
+.PHONY: front instdirs mkR mkR1 mkR2 mkRbase mkdesc mkdesc2 mkdemos mkdemos2 \
+  mkexec mkman mkpo mksrc mksrc-win mksrc-win2 mkRsimple mklazy mklazycomp \
+  mkfigs
 
 front:
 	@for f in $(FRONTFILES); do \
@@ -20,11 +22,11 @@ instdirs:
 	   done; \
 	 fi; done
 
-mkR:
+## used for base on Windows.  Every package except base has a namespace
+mkR1:
 	@$(MKINSTALLDIRS) $(top_builddir)/library/$(pkg)/R
 	@(f=$${TMPDIR:-/tmp}/R$$$$; \
 	  if test "$(R_KEEP_PKG_SOURCE)" = "yes"; then \
-	    $(ECHO) > "$${f}"; \
 	    for rsrc in $(RSRC); do \
 	      $(ECHO) "#line 1 \"$${rsrc}\"" >> "$${f}"; \
 	      cat $${rsrc} >> "$${f}"; \
@@ -33,8 +35,6 @@ mkR:
 	    cat $(RSRC) > "$${f}"; \
 	  fi; \
 	  $(SHELL) $(top_srcdir)/tools/move-if-change "$${f}" all.R)
-	@$(SHELL) $(top_srcdir)/tools/copy-if-change all.R \
-	  $(top_builddir)/library/$(pkg)/R/$(pkg)
 	@if test -f $(srcdir)/NAMESPACE;  then \
 	  $(INSTALL_DATA) $(srcdir)/NAMESPACE $(top_builddir)/library/$(pkg); \
 	fi
@@ -55,12 +55,11 @@ mkR2:
 	  fi; \
 	  $(SHELL) $(top_srcdir)/tools/move-if-change "$${f}" all.R)
 	@rm -f $(top_builddir)/library/$(pkg)/Meta/nsInfo.rds
-	@if test -f $(srcdir)/NAMESPACE;  then \
-	  $(INSTALL_DATA) $(srcdir)/NAMESPACE $(top_builddir)/library/$(pkg); \
-	fi
+	@$(INSTALL_DATA) $(srcdir)/NAMESPACE $(top_builddir)/library/$(pkg)
 	@rm -f $(top_builddir)/library/$(pkg)/Meta/nsInfo.rds
 
 ## version for base on Unix, substitutes for @which@
+## (and so cannot be in src/library/base/Makefile.in)
 mkRbase:
 	@$(MKINSTALLDIRS) $(top_builddir)/library/$(pkg)/R
 	@(f=$${TMPDIR:-/tmp}/R$$$$; \
@@ -77,9 +76,12 @@ mkRbase:
 	  sed -e "s:@WHICH@:${WHICH}:" "$${f}" > "$${f2}"; \
 	  rm -f "$${f}"; \
 	  $(SHELL) $(top_srcdir)/tools/move-if-change "$${f2}" all.R)
-	@$(SHELL) $(top_srcdir)/tools/copy-if-change all.R \
-	  $(top_builddir)/library/$(pkg)/R/$(pkg)
-
+	@if ! test -f $(top_builddir)/library/$(pkg)/R/$(pkg); then \
+	  $(INSTALL_DATA) all.R $(top_builddir)/library/$(pkg)/R/$(pkg); \
+	else if test all.R -nt $(top_builddir)/library/$(pkg)/R/$(pkg); then \
+	  $(INSTALL_DATA) all.R $(top_builddir)/library/$(pkg)/R/$(pkg); \
+	  fi \
+	fi
 
 mkdesc:
 	@if test -f DESCRIPTION; then \
@@ -112,10 +114,17 @@ mkexec:
 	  done; \
 	fi
 
+## only use if byte-compilation is disabled
 mklazy:
 	@$(INSTALL_DATA) all.R $(top_builddir)/library/$(pkg)/R/$(pkg)
 	@$(ECHO) "tools:::makeLazyLoading(\"$(pkg)\")" | \
-	  R_DEFAULT_PACKAGES=NULL LC_ALL=C $(R_EXE) > /dev/null
+	  R_DEFAULT_PACKAGES=$(DEFPKGS) LC_ALL=C $(R_EXE) > /dev/null
+
+mklazycomp: $(top_builddir)/library/$(pkg)/R/$(pkg).rdb
+
+mkRsimple:
+	@$(INSTALL_DATA) all.R $(top_builddir)/library/$(pkg)/R/$(pkg)
+	@rm -f $(top_builddir)/library/$(pkg)/R/$(pkg).rd?
 
 mkpo:
 	@if test -d $(srcdir)/inst/po; then \
@@ -135,6 +144,14 @@ mksrc:
 mksrc-win2:
 	@if test -d src; then \
 	  (cd src && $(MAKE) -f Makefile.win) || exit 1; \
+	fi
+
+## install man/figures: currently only used for graphics
+mkfigs:
+	@if test -d  $(srcdir)/man/figures; then \
+	  mkdir -p $(top_builddir)/library/$(pkg)/help/figures; \
+	  cp $(srcdir)/man/figures/* \
+	    $(top_builddir)/library/$(pkg)/help/figures; \
 	fi
 
 install-tests:
@@ -174,7 +191,7 @@ distdir: $(DISTFILES)
 	    || ln $(srcdir)/$${f} $(distdir)/$${f} 2>/dev/null \
 	    || cp -p $(srcdir)/$${f} $(distdir)/$${f}; \
 	done
-	@for d in R data demo exec inst man noweb src po tests; do \
+	@for d in R data demo exec inst man noweb src po tests vignettes; do \
 	  if test -d $(srcdir)/$${d}; then \
 	    ((cd $(srcdir); \
 	          $(TAR) -c -f - $(DISTDIR_TAR_EXCLUDE) $${d}) \

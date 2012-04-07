@@ -48,6 +48,8 @@
 #define GETBLUE(col)   (((col) >> BSHIFT) & 0xFF)
 #define GETALPHA(col)   (((col) >> 24) & 0xFF)
 
+#include "bitmap.h"
+
 #ifdef HAVE_PNG
 #include "png.h"
 #include <setjmp.h>
@@ -90,11 +92,12 @@ int R_SaveAsPng(void  *d, int width, int height,
     png_infop info_ptr;
     unsigned int  col, palette[256];
     png_color pngpalette[256];
-    png_bytep pscanline, scanline = (png_bytep) calloc(4*width,sizeof(png_byte));
+    png_bytep pscanline;
+    png_bytep scanline = (png_bytep) calloc((size_t)(4*width),sizeof(png_byte));
     png_byte trans[256];
     png_color_16 trans_values[1];
     int i, j, r, ncols, mid, high, low, withpalette, have_alpha;
-    DECLARESHIFTS;
+    volatile DECLARESHIFTS;
 
     /* Have we enough memory?*/
     if (scanline == NULL)
@@ -291,7 +294,7 @@ int R_SaveAsPng(void  *d, int width, int height,
 #else
 int R_SaveAsPng(void  *d, int width, int height,
 		unsigned int (*gp)(void *, int, int),
-		int bgr, FILE *fp, unsigned int transparent)
+		int bgr, FILE *fp, unsigned int transparent, int res)
 {
     warning("No png support in this version of R");
     return 0;
@@ -357,7 +360,7 @@ int R_SaveAsJpeg(void  *d, int width, int height,
     JSAMPLE *pscanline, *scanline = (JSAMPLE *) calloc(3*width,sizeof(JSAMPLE));
     int i, j;
     unsigned int col;
-    DECLARESHIFTS;
+    volatile DECLARESHIFTS;
 
     /* Have we enough memory?*/
     if (scanline == NULL)

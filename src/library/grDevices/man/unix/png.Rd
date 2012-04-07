@@ -27,7 +27,7 @@ jpeg(filename = "Rplot\%03d.jpeg",
 png(filename = "Rplot\%03d.png",
     width = 480, height = 480, units = "px", pointsize = 12,
      bg = "white",  res = NA, \dots,
-    type = c("cairo", "Xlib", "quartz"), antialias)
+    type = c("cairo", "cairo-png", "Xlib", "quartz"), antialias)
 
 tiff(filename = "Rplot\%03d.tiff",
      width = 480, height = 480, units = "px", pointsize = 12,
@@ -59,8 +59,12 @@ tiff(filename = "Rplot\%03d.tiff",
     bitmap file, if a positive integer.  Also used for \code{units}
     other than the default, and to convert points to pixels.}
   \item{\dots}{for \code{type = "Xlib"} only, additional arguments to
-    the underlying \code{\link{X11}} device, such as \code{gamma} and
-    \code{fonts}.}
+    the underlying \code{\link{X11}} device such as \code{fonts} or
+     \code{family}.
+
+    For types \code{"cairo"} and \code{"quartz"}, the \code{family}
+    argument can be supplied.  See the \sQuote{Cairo fonts}
+    section in the help for \code{\link{X11}}.}
   
   \item{type}{character string, one of \code{"Xlib"} or \code{"quartz"}
     (some Mac OS X builds) or \code{"cairo"}.  The latter will only be
@@ -72,7 +76,8 @@ tiff(filename = "Rplot\%03d.tiff",
   
   \item{antialias}{for \code{type = "cairo"}, giving the type of
     anti-aliasing (if any) to be used.  See \code{\link{X11}}.  The
-    default is set by \code{\link{X11.options}}.}
+    default is set by \code{\link{X11.options}}.  Also for \code{type =
+    "quartz"}, where antialiasing is used unless \code{antialias = "none"}.}
 }
 \details{
   Plots in PNG and JPEG format can easily be converted to many other
@@ -90,9 +95,10 @@ tiff(filename = "Rplot\%03d.tiff",
   correctly.)  When transparency is in use in the \code{type = "Xlib"}
   variant a very light grey is used as the background and so appear as
   transparent if used in the plot. This allows opaque white to be used,
-  as in the example.  The \code{type = "cairo"} and \code{type =
-  "quartz"} variants allow semi-transparent colours, including on a
-  transparent or semi-transparent background.
+  as in the example.  The \code{type = "cairo"}, \code{type =
+  "cairo-png"} and \code{type = "quartz"} variants allow
+  semi-transparent colours, including on a transparent or
+  semi-transparent background.
 
   \code{tiff} with types \code{"cairo"} and \code{"quartz"} supports
   semi-transparent colours, including on a transparent or
@@ -116,9 +122,13 @@ tiff(filename = "Rplot\%03d.tiff",
   (including font sizes in points) the resolution used is \code{res} (or
   72ppi if unset).
 
-  \code{png} will use a palette if there are less than 256 colours on
-  the page, and record a 24-bit RGB file otherwise (or a 32-bit RGBA
-  file if \code{type = "cairo"} and non-opaque colours are used).
+  \code{png} will normally use a palette if there are less than 256
+  colours on the page, and record a 24-bit RGB file otherwise (or a
+  32-bit RGBA file if \code{type = "cairo"} and non-opaque colours are
+  used).  However, \code{type = "cairo-png"} uses cairographics' PNG
+  backend which will never use a palette and normally creates a larger
+  32-bit ARGB file---this may work better for specialist uses with
+  semi-transparent colours.
 }
 
 \value{
@@ -132,6 +142,35 @@ tiff(filename = "Rplot\%03d.tiff",
   If you plot more than one page on one of these devices and do not
   include something like \code{\%d} for the sequence number in
   \code{file}, the file will contain the last page plotted.
+}
+
+\section{Differences between OSes}{
+  These functions are interfaces to three or more different underlying
+  devices.
+  \itemize{
+    \item On Windows, devices based on plotting to a hidden screen using
+    Windows' GDI calls.
+
+    \item On platforms with support for X11, plotting to a hidden X11
+    display.
+
+    \item On Mac OS X when working at the console and when \R is
+    compiled with suitable support, using Apple's Quartz plotting
+    system.
+
+    \item Where support has been compiled in for cairographics, plotting
+    on cairo surfaces.  This may use the native platform support for
+    fonts, or it may use \code{fontconfig} to support a wide range of
+    font formats.  (This was first available on Windows in \R 2.14.0.)
+  }
+  Inevitably there will be differences between the options supported and
+  output produced.  Perhaps the most important are support for
+  antialiased fonts and semi-transparent colours: the best results are
+  likely to be obtained with the cairo- or Quartz-based devices where
+  available.
+
+  The default extensions are \file{.jpg} and \file{.tif} on Windows, and
+  \file{.jpeg} and \file{.tiff} elsewhere.
 }
 
 \note{

@@ -24,15 +24,30 @@ all: Makefile R
 Makefile: $(srcdir)/Makefile.in $(top_builddir)/config.status
 	@cd $(top_builddir) && $(SHELL) ./config.status $(subdir)/$@
 
+@BYTE_COMPILE_PACKAGES_FALSE@R_NO_BASE_COMPILE = true
+
 ## FIXME: do some of this in parallel?
-## beware there is a bootstrapping problem here: tools uses tools to
+## Beware there is a bootstrapping problem here: tools uses tools to
 ## dump its namespace. So it works initially, but not to update.
-## When base is made we need to use 'date' to set the timestamp,
-## so we remake it before dumping the DESCRIPTION files.
+## When base is made we need to use 'date' to set the timestamp in
+## its DESCRIPTION, so we remake it before dumping the DESCRIPTION files.
+
 R:
 	@$(MKINSTALLDIRS) $(top_builddir)/library
-	@for pkg in profile $(R_PKGS_BASE); do \
-	  (cd $${pkg} && $(MAKE)) || exit 1; \
+	@for pkg in profile base tools compiler; do \
+	  (cd $${pkg} && $(MAKE) all) || exit 1; \
+	done
+	@if test -z "$(R_NO_BASE_COMPILE)"; then \
+	  for pkg in base tools; do \
+	    (cd $${pkg} && $(MAKE) mklazycomp) || exit 1; \
+	  done; \
+	else \
+	  for pkg in base tools; do \
+	    (cd $${pkg} && $(MAKE) Rlazy) || exit 1; \
+	  done; \
+	fi
+	@for pkg in $(R_PKGS_BASE1); do \
+	  (cd $${pkg} && $(MAKE) all) || exit 1; \
 	done
 	@(cd base && $(MAKE) mkdesc)
 	@$(ECHO) "tools:::.vinstall_package_descriptions_as_RDS(\"$(top_builddir)/library\", \"$(R_PKGS_BASE)\")" | \
@@ -51,7 +66,7 @@ docs:
 	@touch stamp-docs
 
 # fix the order to make best use of parallel builds
-RD-TS = base.Rdts stats.Rdts utils.Rdts methods.Rdts graphics.Rdts grDevices.Rdts datasets.Rdts grid.Rdts tools.Rdts tcltk.Rdts splines.Rdts stats4.Rdts compiler.Rdts
+RD-TS = base.Rdts stats.Rdts utils.Rdts methods.Rdts graphics.Rdts grDevices.Rdts datasets.Rdts grid.Rdts tools.Rdts tcltk.Rdts splines.Rdts stats4.Rdts compiler.Rdts parallel.Rdts
 # RD-TS = $(R_PKGS_BASE:=.Rdts)
 
 .inn.Rdts:
@@ -87,7 +102,7 @@ vignettes:
 	@if test -z "$(PDFLATEX)"; then \
 	  $(ECHO) "'pdflatex' is needed to make vignettes but is missing on your system."; \
 	else \
-	  for pkg in grid utils; do \
+	  for pkg in grid parallel utils; do \
 	    $(ECHO) "building/updating vignettes for package '$${pkg}' ..."; \
 	    ($(ECHO) "tools:::.install_package_vignettes(\"$(srcdir)/$${pkg}\", \"$(top_builddir)/library/$${pkg}\")") | \
 	        R_DEFAULT_PACKAGES="utils,tools" LC_ALL=C \
@@ -170,3 +185,31 @@ distdir: $(DISTFILES)
 	  (cd $${d} && $(MAKE) distdir) \
 	    || exit 1; \
 	done
+
+### ----------- targets for R-core use ----------
+### These are intended to be run on an already-built R, possibly after
+### editing the code in a standard package.
+### Targets of the same name can be run in individual package directories.
+### These do not change datasets (no R code)
+### R_PKGS_BASE2 is all except datasets and methods.
+
+### They are not currently safe for a parallel make.
+
+## methods needs to be dumped, so is omitted here.
+Rsimple:
+	@for pkg in $(R_PKGS_BASE2); do \
+	  (cd $${pkg} && $(MAKE) Rsimple) || exit 1; \
+	done
+
+## Lazy-loaded, not compiled
+Rlazy:
+	@for pkg in $(R_PKGS_BASE2) methods; do \
+	  (cd $${pkg} && $(MAKE) Rlazy) || exit 1; \
+	done
+
+## Lazy-loaded, compiled
+Rlazycomp:
+	@for pkg in $(R_PKGS_BASE2) methods; do \
+	  (cd $${pkg} && $(MAKE) Rlazycomp) || exit 1; \
+	done
+

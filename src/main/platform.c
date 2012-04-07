@@ -199,9 +199,7 @@ int static R_strieql(const char *a, const char *b)
 }
 #endif
 
-#ifdef HAVE_LOCALE_H
-# include <locale.h>
-#endif
+#include <locale.h>
 #ifdef HAVE_LANGINFO_CODESET
 # include <langinfo.h>
 #endif
@@ -354,7 +352,7 @@ SEXP attribute_hidden do_fileedit(SEXP call, SEXP op, SEXP args, SEXP rho)
     ed = CAR(args);
 
     n = length(fn);
-    if (!isString(ed))
+    if (!isString(ed) || length(ed) != 1)
 	error(_("invalid '%s' specification"), "editor");
     if (n > 0) {
 	if (!isString(fn))
@@ -385,15 +383,12 @@ SEXP attribute_hidden do_fileedit(SEXP call, SEXP op, SEXP args, SEXP rho)
 	title = (const char**) R_alloc(1, sizeof(char*));
 	title[0] = "";
     }
-    if (length(ed) >= 1 || !isNull(STRING_ELT(ed, 0))) {
-	SEXP ed0 = STRING_ELT(ed, 0);
+    SEXP ed0 = STRING_ELT(ed, 0);
 #ifdef Win32
-	editor = acopy_string(reEnc(CHAR(ed0), getCharCE(ed0), CE_UTF8, 1));
+    editor = acopy_string(reEnc(CHAR(ed0), getCharCE(ed0), CE_UTF8, 1));
 #else
-	editor = acopy_string(translateChar(ed0));
+    editor = acopy_string(translateChar(ed0));
 #endif
-    } else
-	editor = "";
     R_EditFiles(n, f, title, editor);
     return R_NilValue;
 }
@@ -567,7 +562,7 @@ SEXP attribute_hidden do_fileremove(SEXP call, SEXP op, SEXP args, SEXP rho)
 }
 
 #ifdef HAVE_UNISTD_H
-#include <unistd.h> /* for symlink */
+#include <unistd.h> /* for symlink, getpid */
 #endif
 
 SEXP attribute_hidden do_filesymlink(SEXP call, SEXP op, SEXP args, SEXP rho)
@@ -793,6 +788,20 @@ SEXP attribute_hidden do_filerename(SEXP call, SEXP op, SEXP args, SEXP rho)
 # endif
 #endif
 
+#if defined HAVE_STRUCT_STAT_ST_ATIM_TV_NSEC
+# ifdef TYPEOF_STRUCT_STAT_ST_ATIM_IS_STRUCT_TIMESPEC
+#  define STAT_TIMESPEC(st, st_xtim) ((st).st_xtim)
+# else
+#  define STAT_TIMESPEC_NS(st, st_xtim) ((st).st_xtim.tv_nsec)
+# endif
+#elif defined HAVE_STRUCT_STAT_ST_ATIMESPEC_TV_NSEC
+# define STAT_TIMESPEC(st, st_xtim) ((st).st_xtim##espec)
+#elif defined HAVE_STRUCT_STAT_ST_ATIMENSEC
+# define STAT_TIMESPEC_NS(st, st_xtim) ((st).st_xtim##ensec)
+#elif defined HAVE_STRUCT_STAT_ST_ATIM_ST__TIM_TV_NSEC
+# define STAT_TIMESPEC_NS(st, st_xtim) ((st).st_xtim.st__tim.tv_nsec)
+#endif
+
 SEXP attribute_hidden do_fileinfo(SEXP call, SEXP op, SEXP args, SEXP rho)
 {
     SEXP fn, ans, ansnames, fsize, mtime, ctime, atime, isdir,
@@ -854,7 +863,7 @@ SEXP attribute_hidden do_fileinfo(SEXP call, SEXP op, SEXP args, SEXP rho)
     for (i = 0; i < n; i++) {
 #ifdef Win32
 	wchar_t *wfn = filenameToWchar(STRING_ELT(fn, i), TRUE);
-	/* 'Sharpie and fellow ignorami use trailing / on Windows,
+	/* 'Sharpie' and fellow ignorami use trailing / on Windows,
 	   where it is not valid */
 	wchar_t *p = wfn + (wcslen(wfn) - 1);
 	if (*p == L'/' || *p == L'\\') *p = 0;
@@ -871,9 +880,27 @@ SEXP attribute_hidden do_fileinfo(SEXP call, SEXP op, SEXP args, SEXP rho)
 	    REAL(fsize)[i] = (double) sb.st_size;
 	    LOGICAL(isdir)[i] = (sb.st_mode & S_IFDIR) > 0;
 	    INTEGER(mode)[i]  = (int) sb.st_mode & 0007777;
+
+#if defined STAT_TIMESPEC
+	    /* POSIX 2008 changed this to a struct timespec st_mtim etc
+	       Not all OSes (e.g. Darwin) agree on this. */
+	    REAL(mtime)[i] = (double) STAT_TIMESPEC(sb, st_mtim).tv_sec
+		+ 1e-9 * STAT_TIMESPEC(sb, st_mtim).tv_nsec;
+	    REAL(ctime)[i] = (double) STAT_TIMESPEC(sb, st_ctim).tv_sec
+		+ 1e-9 * STAT_TIMESPEC(sb, st_ctim).tv_nsec;
+	    REAL(atime)[i] = (double) STAT_TIMESPEC(sb, st_atim).tv_sec
+		+ 1e-9 * STAT_TIMESPEC(sb, st_atim).tv_nsec;
+#else
+	    /* FIXME: there are higher-resolution ways to do this on Windows */
 	    REAL(mtime)[i] = (double) sb.st_mtime;
 	    REAL(ctime)[i] = (double) sb.st_ctime;
 	    REAL(atime)[i] = (double) sb.st_atime;
+# ifdef STAT_TIMESPEC_NS
+	    REAL(mtime)[i] += STAT_TIMESPEC_NS (st, st_mtim);
+	    REAL(ctime)[i] += STAT_TIMESPEC_NS (st, st_ctim);
+	    REAL(atime)[i] += STAT_TIMESPEC_NS (st, st_atim);
+# endif
+#endif
 #ifdef UNIX_EXTRAS
 	    INTEGER(uid)[i] = (int) sb.st_uid;
 	    INTEGER(gid)[i] = (int) sb.st_gid;
@@ -1063,7 +1090,7 @@ SEXP attribute_hidden do_listfiles(SEXP call, SEXP op, SEXP args, SEXP rho)
     checkArity(op, args);
     d = CAR(args);  args = CDR(args);
     if (!isString(d)) error(_("invalid '%s' argument"), "directory");
-    p = CAR(args);  args = CDR(args);
+    p = CAR(args); args = CDR(args);
     pattern = 0;
     if (isString(p) && length(p) >= 1 && STRING_ELT(p, 0) != NA_STRING)
 	pattern = 1;
@@ -1105,7 +1132,8 @@ SEXP attribute_hidden do_listfiles(SEXP call, SEXP op, SEXP args, SEXP rho)
 }
 
 static void list_dirs(const char *dnp, const char *stem, int *count, 
-		      SEXP *pans, int *countmax, PROTECT_INDEX idx)
+		      SEXP *pans, int *countmax, PROTECT_INDEX idx,
+		      Rboolean recursive)
 {
     DIR *dir;
     struct dirent *de;
@@ -1118,11 +1146,13 @@ static void list_dirs(const char *dnp, const char *stem, int *count,
 #endif
     R_CheckUserInterrupt();
     if ((dir = opendir(dnp)) != NULL) {
-	if (*count == *countmax - 1) {
-	    *countmax *= 2;
-	    REPROTECT(*pans = lengthgets(*pans, *countmax), idx);
+	if (recursive) {
+	    if (*count == *countmax - 1) {
+		*countmax *= 2;
+		REPROTECT(*pans = lengthgets(*pans, *countmax), idx);
+	    }
+	    SET_STRING_ELT(*pans, (*count)++, mkChar(dnp));
 	}
-	SET_STRING_ELT(*pans, (*count)++, mkChar(dnp));
 	while ((de = readdir(dir))) {
 #ifdef Win32
 	    if (strlen(dnp) == 2 && dnp[1] == ':')
@@ -1139,20 +1169,29 @@ static void list_dirs(const char *dnp, const char *stem, int *count,
 #endif
 	    if ((sb.st_mode & S_IFDIR) > 0) {
 		if (strcmp(de->d_name, ".") && strcmp(de->d_name, "..")) {
-		    if (stem) {
+		    if(recursive) {
+			if (stem) {
 #ifdef Win32
-			if(strlen(stem) == 2 && stem[1] == ':')
-			    snprintf(stem2, PATH_MAX, "%s%s", stem,
-				     de->d_name);
-			else
+			    if(strlen(stem) == 2 && stem[1] == ':')
+				snprintf(stem2, PATH_MAX, "%s%s", stem,
+					 de->d_name);
+			    else
+				snprintf(stem2, PATH_MAX, "%s%s%s", stem,
+					 R_FileSep, de->d_name);
+#else
 			    snprintf(stem2, PATH_MAX, "%s%s%s", stem,
 				     R_FileSep, de->d_name);
-#else
-			snprintf(stem2, PATH_MAX, "%s%s%s", stem,
-				 R_FileSep, de->d_name);
 #endif
-		    } else strcpy(stem2, de->d_name);
-		    list_dirs(p, stem2, count, pans, countmax, idx);
+			} else strcpy(stem2, de->d_name);
+			list_dirs(p, stem2, count, pans, countmax, idx, recursive);
+			
+		    } else {
+			if (*count == *countmax - 1) {
+			    *countmax *= 2;
+			    REPROTECT(*pans = lengthgets(*pans, *countmax), idx);
+			}
+			SET_STRING_ELT(*pans, (*count)++, mkChar(p));
+		    }
 		}
 	    }
 	}
@@ -1164,21 +1203,27 @@ SEXP attribute_hidden do_listdirs(SEXP call, SEXP op, SEXP args, SEXP rho)
 {
     PROTECT_INDEX idx;
     SEXP d, ans;
-    int fullnames, count, i;
+    int fullnames, count, i, recursive;
     const char *dnp;
     int countmax = 128;
 
     checkArity(op, args);
-    d = CAR(args);
+    d = CAR(args); args = CDR(args);    
     if (!isString(d)) error(_("invalid '%s' argument"), "directory");
-    fullnames = asLogical(CADR(args));
-
+    fullnames = asLogical(CAR(args)); args = CDR(args);
+    if (fullnames == NA_LOGICAL)
+	error(_("invalid '%s' argument"), "full.names");
+    recursive = asLogical(CAR(args)); args = CDR(args);
+    if (recursive == NA_LOGICAL)
+	error(_("invalid '%s' argument"), "recursive");
+    
     PROTECT_WITH_INDEX(ans = allocVector(STRSXP, countmax), &idx);
     count = 0;
     for (i = 0; i < LENGTH(d) ; i++) {
 	if (STRING_ELT(d, i) == NA_STRING) continue;
 	dnp = R_ExpandFileName(translateChar(STRING_ELT(d, i)));
-	list_dirs(dnp, fullnames ? dnp : NULL, &count, &ans, &countmax, idx);
+	list_dirs(dnp, fullnames ? dnp : NULL, &count, &ans, &countmax,
+		  idx, recursive);
     }
     REPROTECT(ans = lengthgets(ans, count), idx);
     ssort(STRING_PTR(ans), count);
@@ -1257,7 +1302,7 @@ SEXP attribute_hidden do_filechoose(SEXP call, SEXP op, SEXP args, SEXP rho)
 extern int winAccessW(const wchar_t *path, int mode);
 #endif
 
-/* require 'access' as from 2.12.0 */
+/* we require 'access' as from 2.12.0 */
 SEXP attribute_hidden do_fileaccess(SEXP call, SEXP op, SEXP args, SEXP rho)
 {
     SEXP fn, ans;
@@ -1300,11 +1345,13 @@ static int R_rmdir(const wchar_t *dir)
     return _wrmdir(tmp);
 }
 
-static int R_unlink(wchar_t *name, int recursive)
+static int R_unlink(wchar_t *name, int recursive, int force)
 {
     if (wcscmp(name, L".") == 0 || wcscmp(name, L"..") == 0) return 0;
     //printf("R_unlink(%ls)\n", name);
     if (!R_WFileExists(name)) return 0;
+    if (force) _wchmod(name, _S_IWRITE);
+
     if (recursive) {
 	_WDIR *dir;
 	struct _wdirent *de;
@@ -1329,9 +1376,12 @@ static int R_unlink(wchar_t *name, int recursive)
 		    _wstati64(p, &sb);
 		    if ((sb.st_mode & S_IFDIR) > 0) { /* a directory */
 			/* printf("is a directory\n"); */
-			ans += R_unlink(p, recursive);
-		    } else
+			if (force) _wchmod(p, _S_IWRITE);
+			ans += R_unlink(p, recursive, force);
+		    } else {
+			if (force) _wchmod(p, _S_IWRITE);
 			ans += (_wunlink(p) == 0) ? 0 : 1;
+		    }
 		}
 		_wclosedir(dir);
 	    } else { /* we were unable to read a dir */
@@ -1353,11 +1403,11 @@ void R_CleanTempDir(void)
 	SetCurrentDirectory(R_HomeDir());
 	wchar_t w[2*(n+1)];
 	mbstowcs(w, Sys_TempDir, n+1);
-	R_unlink(w, 1);
+	R_unlink(w, 1, 1); /* recursive=TRUE, force=TRUE */
     }
 }
 #else
-static int R_unlink(const char *name, int recursive)
+static int R_unlink(const char *name, int recursive, int force)
 {
     struct stat sb;
     int res, res2;
@@ -1367,6 +1417,7 @@ static int R_unlink(const char *name, int recursive)
        symbolic links 
        if (!R_FileExists(name)) return 0; */
     res  = stat(name, &sb);
+    if (!res && force) chmod(name, sb.st_mode | S_IWUSR);
 
     if (!res && recursive) {
 	DIR *dir;
@@ -1387,9 +1438,12 @@ static int R_unlink(const char *name, int recursive)
 				 de->d_name);
 		    stat(p, &sb);
 		    if ((sb.st_mode & S_IFDIR) > 0) { /* a directory */
-			ans += R_unlink(p, recursive);
-		    } else
+			if (force) chmod(p, sb.st_mode | S_IWUSR | S_IXUSR);
+			ans += R_unlink(p, recursive, force);
+		    } else {
+			if (force) chmod(p, sb.st_mode | S_IWUSR);
 			ans += (unlink(p) == 0) ? 0 : 1;
+		    }
 		}
 		closedir(dir);
 	    } else { /* we were unable to read a dir */
@@ -1413,7 +1467,7 @@ static int R_unlink(const char *name, int recursive)
 SEXP attribute_hidden do_unlink(SEXP call, SEXP op, SEXP args, SEXP env)
 {
     SEXP  fn;
-    int i, j, nfiles, res, failures = 0, recursive;
+    int i, j, nfiles, res, failures = 0, recursive, force;
     const wchar_t *names;
     wglob_t globbuf;
 
@@ -1426,6 +1480,9 @@ SEXP attribute_hidden do_unlink(SEXP call, SEXP op, SEXP args, SEXP env)
 	recursive = asLogical(CADR(args));
 	if (recursive == NA_LOGICAL)
 	    error(_("invalid '%s' argument"), "recursive");
+	force = asLogical(CADDR(args));
+	if (force == NA_LOGICAL)
+	    error(_("invalid '%s' argument"), "force");
 	for (i = 0; i < nfiles; i++) {
 	    if (STRING_ELT(fn, i) != NA_STRING) {
 		names = filenameToWchar(STRING_ELT(fn, i), TRUE);
@@ -1434,7 +1491,7 @@ SEXP attribute_hidden do_unlink(SEXP call, SEXP op, SEXP args, SEXP env)
 		if (res == GLOB_NOSPACE)
 		    error(_("internal out-of-memory condition"));
 		for (j = 0; j < globbuf.gl_pathc; j++)
-		    failures += R_unlink(globbuf.gl_pathv[j], recursive);
+		    failures += R_unlink(globbuf.gl_pathv[j], recursive, force);
 		dos_wglobfree(&globbuf);
 	    } else failures++;
 	}
@@ -1449,7 +1506,7 @@ SEXP attribute_hidden do_unlink(SEXP call, SEXP op, SEXP args, SEXP env)
 SEXP attribute_hidden do_unlink(SEXP call, SEXP op, SEXP args, SEXP env)
 {
     SEXP  fn;
-    int i, nfiles, failures = 0, recursive;
+    int i, nfiles, failures = 0, recursive, force;
     const char *names;
 #if defined(HAVE_GLOB)
     int j, res;
@@ -1465,6 +1522,9 @@ SEXP attribute_hidden do_unlink(SEXP call, SEXP op, SEXP args, SEXP env)
 	recursive = asLogical(CADR(args));
 	if (recursive == NA_LOGICAL)
 	    error(_("invalid '%s' argument"), "recursive");
+	force = asLogical(CADDR(args));
+	if (force == NA_LOGICAL)
+	    error(_("invalid '%s' argument"), "force");
 	for (i = 0; i < nfiles; i++) {
 	    if (STRING_ELT(fn, i) != NA_STRING) {
 		names = R_ExpandFileName(translateChar(STRING_ELT(fn, i)));
@@ -1479,11 +1539,11 @@ SEXP attribute_hidden do_unlink(SEXP call, SEXP op, SEXP args, SEXP env)
 		    error(_("internal out-of-memory condition"));
 # endif
 		for (j = 0; j < globbuf.gl_pathc; j++)
-		    failures += R_unlink(globbuf.gl_pathv[j], recursive);
+		    failures += R_unlink(globbuf.gl_pathv[j], recursive, force);
 		globfree(&globbuf);
 	    } else failures++;
 #else /* HAVE_GLOB */
-	        failures += R_unlink(names, recursive);
+	        failures += R_unlink(names, recursive, force);
 	    } else failures++;
 #endif
 	}
@@ -1556,7 +1616,6 @@ SEXP attribute_hidden do_dirchmod(SEXP call, SEXP op, SEXP args, SEXP env)
 
 SEXP attribute_hidden do_getlocale(SEXP call, SEXP op, SEXP args, SEXP rho)
 {
-#ifdef HAVE_LOCALE_H
     int cat;
     char *p = NULL;
 
@@ -1584,9 +1643,6 @@ SEXP attribute_hidden do_getlocale(SEXP call, SEXP op, SEXP args, SEXP rho)
     }
     if (cat != NA_INTEGER) p = setlocale(cat, NULL);
     return mkString(p ? p : "");
-#else
-    return R_NilValue;
-#endif
 }
 
 extern void invalidate_cached_recodings(void);  /* from sysutils.c */
@@ -1596,7 +1652,6 @@ extern void resetICUcollator(void); /* from util.c */
 /* Locale specs are always ASCII */
 SEXP attribute_hidden do_setlocale(SEXP call, SEXP op, SEXP args, SEXP rho)
 {
-#ifdef HAVE_LOCALE_H
     SEXP locale = CADR(args), ans;
     int cat;
     const char *p;
@@ -1645,11 +1700,16 @@ SEXP attribute_hidden do_setlocale(SEXP call, SEXP op, SEXP args, SEXP rho)
 	cat = LC_TIME;
 	p = setlocale(cat, CHAR(STRING_ELT(locale, 0)));
 	break;
-#if defined LC_MESSAGES && !defined Win32
-/* this seems to exist in MinGW, but it does not work in Windows */
+#if defined LC_MESSAGES
     case 7:
 	cat = LC_MESSAGES;
+#ifdef Win32
+/* this seems to exist in MinGW, but it does not work in Windows */
+	warning(_("LC_MESSAGES exists on Windows but is not operational"));
+	p = NULL;
+#else
 	p = setlocale(cat, CHAR(STRING_ELT(locale, 0)));
+#endif
 	break;
 #endif
 #ifdef LC_PAPER
@@ -1679,16 +1739,12 @@ SEXP attribute_hidden do_setlocale(SEXP call, SEXP op, SEXP args, SEXP rho)
     R_check_locale();
     invalidate_cached_recodings();
     return ans;
-#else
-    return R_NilValue;
-#endif
 }
 
 
 
 SEXP attribute_hidden do_localeconv(SEXP call, SEXP op, SEXP args, SEXP rho)
 {
-#ifdef HAVE_LOCALE_H
     SEXP ans, ansnames;
     struct lconv *lc = localeconv();
     int i = 0;
@@ -1743,9 +1799,6 @@ SEXP attribute_hidden do_localeconv(SEXP call, SEXP op, SEXP args, SEXP rho)
     setAttrib(ans, R_NamesSymbol, ansnames);
     UNPROTECT(2);
     return ans;
-#else
-    return R_NilValue;
-#endif
 }
 
 /* .Internal function for path.expand */
@@ -1949,6 +2002,15 @@ SEXP attribute_hidden do_capabilities(SEXP call, SEXP op, SEXP args, SEXP rho)
     SET_STRING_ELT(ansnames, i, mkChar("cairo"));
 #ifdef HAVE_WORKING_CAIRO
     LOGICAL(ans)[i++] = TRUE;
+#elif defined(Win32)
+{
+    /* This is true iff winCairo.dll is available */
+    struct stat sb;
+    char path[1000];
+    snprintf(path, 1000, "%s/library/grDevices/libs/%s/winCairo.dll", 
+	     R_HomeDir(), R_ARCH);
+    LOGICAL(ans)[i++] = stat(path, &sb) == 0;
+}
 #else
     LOGICAL(ans)[i++] = FALSE;
 #endif
@@ -2006,12 +2068,18 @@ SEXP attribute_hidden do_sysgetpid(SEXP call, SEXP op, SEXP args, SEXP rho)
 }
 
 
+/* NB: we save errno immediately after the call here.  This should not
+  be necessary on a POSIX OS, but it is on Windows, where it seems
+  that on some versions strerror itself changes errno (something
+  allowed in C99 but disallowed in POSIX).  Also, something under
+  warning() might set errno in a future version.
+*/
 #ifndef Win32
 /* mkdir is defined in <sys/stat.h> */
 SEXP attribute_hidden do_dircreate(SEXP call, SEXP op, SEXP args, SEXP env)
 {
     SEXP path;
-    int res, show, recursive, mode;
+    int res, show, recursive, mode, serrno = 0;
     char *p, dir[PATH_MAX];
 
     checkArity(op, args);
@@ -2036,17 +2104,20 @@ SEXP attribute_hidden do_dircreate(SEXP call, SEXP op, SEXP args, SEXP env)
 	    res = mkdir(dir, mode);
 	    /* Solaris 10 returns ENOSYS on automount, PR#13834
 	       EROFS is allowed by POSIX, so we skip that too */
-	    if (res && errno != EEXIST && errno != ENOSYS && errno != EROFS) 
+	    serrno = errno;
+	    if (res && serrno != EEXIST && serrno != ENOSYS && serrno != EROFS) 
 		goto end;
 	    *p = '/';
 	}
     }
     res = mkdir(dir, mode);
-    if (show && res && errno == EEXIST)
+    serrno = errno;
+    if (show && res && serrno == EEXIST)
 	warning(_("'%s' already exists"), dir);
 end:
-    if (show && res && errno != EEXIST)
-	warning(_("cannot create dir '%s', reason '%s'"), dir, strerror(errno));
+    if (show && res && serrno != EEXIST)
+	warning(_("cannot create dir '%s', reason '%s'"), dir,
+		strerror(serrno));
     return ScalarLogical(res == 0);
 }
 #else /* Win32 */
@@ -2550,8 +2621,8 @@ SEXP attribute_hidden do_Cstack_info(SEXP call, SEXP op, SEXP args, SEXP rho)
     return ans;
 }
 
-#ifdef Win32 /* untested */
-static void winSetFileTime(const char *fn, time_t ftime)
+#ifdef Win32
+static int winSetFileTime(const char *fn, time_t ftime)
 {
     SYSTEMTIME st;
     FILETIME modft;
@@ -2559,7 +2630,7 @@ static void winSetFileTime(const char *fn, time_t ftime)
     HANDLE hFile;
 
     utctm = gmtime(&ftime);
-    if (!utctm) return; 
+    if (!utctm) return 0;
 
     st.wYear         = (WORD) utctm->tm_year + 1900;
     st.wMonth        = (WORD) utctm->tm_mon + 1;
@@ -2568,32 +2639,42 @@ static void winSetFileTime(const char *fn, time_t ftime)
     st.wHour         = (WORD) utctm->tm_hour;
     st.wMinute       = (WORD) utctm->tm_min;
     st.wSecond       = (WORD) utctm->tm_sec;
-    st.wMilliseconds = 0;
-    if (!SystemTimeToFileTime(&st, &modft)) return;
+    st.wMilliseconds = (WORD) 0;
+    if (!SystemTimeToFileTime(&st, &modft)) return 0;
 
     hFile = CreateFile(fn, GENERIC_WRITE, 0, NULL, OPEN_EXISTING,
 		       FILE_FLAG_BACKUP_SEMANTICS, NULL);
-    if (hFile == INVALID_HANDLE_VALUE) return;
-    SetFileTime(hFile, NULL, NULL, &modft);
+    if (hFile == INVALID_HANDLE_VALUE) return 0;
+    int res  = SetFileTime(hFile, NULL, NULL, &modft);
     CloseHandle(hFile);
+    return res != 0; /* success is non-zero */
 }
 #else
-# include <sys/time.h>
-# include <utime.h>
+# ifdef HAVE_UTIMES
+#  include <sys/time.h>
+# elif defined(HAVE_UTIME)
+#  include <utime.h>
+# endif
 #endif
 
 SEXP attribute_hidden R_setFileTime(SEXP name, SEXP time)
 {
     const char *fn = translateChar(STRING_ELT(name, 0));
-    int ftime = asInteger(time);
+    int ftime = asInteger(time), res;
 
 #ifdef Win32
-    winSetFileTime(fn, (time_t)ftime);
-#else
+    res  = winSetFileTime(fn, (time_t)ftime);
+#elif defined(HAVE_UTIMES)
+    struct timeval times[2];
+
+    times[0].tv_sec = times[1].tv_sec = ftime;
+    times[0].tv_usec = times[1].tv_usec = 0;
+    res = utimes(fn, times) == 0;
+#elif defined(HAVE_UTIME)
     struct utimbuf settime;
 
     settime.actime = settime.modtime = ftime;
-    utime(fn, &settime);
+    res = utime(fn, &settime) == 0;
 #endif
-    return R_NilValue;
+    return ScalarLogical(res);
 }

@@ -1,6 +1,6 @@
 % File src/library/grDevices/man/unix/x11Fonts.Rd
 % Part of the R package, http://www.R-project.org
-% Copyright 1995-2007 R Core Development Team
+% Copyright 1995-2011 R Core Development Team
 % Distributed under GPL 2 or later
 
 \name{X11Fonts}
@@ -43,7 +43,12 @@ X11Fonts(...)
 
   Default mappings are provided for three device-independent font family
   names: \code{"sans"} for a sans-serif font, \code{"serif"} for a serif
-  font and \code{"mono"} for a monospaced font.
+  font and \code{"mono"} for a monospaced font.  As from \R 2.14.0,
+  further mappings are provided for \code{"Helvetica"} (the device
+  default), \code{"Times"}, \code{"CyrHelvetica"}, \code{"CyrTimes"}
+  (versions of these fonts with Cyrillic support, at least on Linux),
+  \code{"Arial"} (on some platforms including Mac OS X and Solaris) and
+  \code{"Mincho"} (a CJK font).
 }
 \seealso{
   \code{\link{X11}}

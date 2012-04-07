@@ -1,6 +1,6 @@
 ## From PR#10000 on
 
-postscript("reg-tests-1.ps", encoding = "ISOLatin1.enc")
+pdf("reg-tests-1a.pdf", encoding = "ISOLatin1.enc")
 
 ## force standard handling for data frames
 options(stringsAsFactors=TRUE)
@@ -499,9 +499,10 @@ stopifnot(
     !is.nan(NA)	 &&  !is.infinite(NA)  && !is.finite(NA),
      is.nan(NaN) &&  !is.infinite(NaN) && !is.finite(NaN),
     !is.nan(c(1,NA)),
-    c(FALSE,TRUE,FALSE) == is.nan(c   (1,NaN,NA)),
-    c(FALSE,TRUE,FALSE) == is.nan(list(1,NaN,NA))#-> FALSE in older versions
+    c(FALSE,TRUE,FALSE) == is.nan(c   (1,NaN,NA))
 )
+assertError(is.nan(list(1,NaN,NA))) #-> result allowed but varies in older versions
+
 
 stopifnot(identical(lgamma(Inf), Inf))
 stopifnot(identical(Inf + Inf, Inf))
@@ -3569,7 +3570,7 @@ stopifnot(all.equal(Arg(-1), pi))
 
 ## PR#7973: reversed log-scaled axis
 plot(1:100, log="y", ylim=c(100,10))
-stopifnot(axTicks(2) == 10*c(1,2,5,10))
+stopifnot(axTicks(2) == 10*c(10,5,2,1))
 ## empty < 2.2.0
 
 

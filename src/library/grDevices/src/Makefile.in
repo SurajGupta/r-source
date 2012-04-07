@@ -13,7 +13,7 @@ R_HOME = $(top_builddir)
 R_SHARE_DIR = $(R_HOME)/share
 R_INCLUDE_DIR = $(R_HOME)/include
 
-SOURCES_C = chull.c devNull.c devPicTeX.c devPS.c devQuartz.c init.c @BUILD_AQUA_TRUE@ qdBitmap.c qdPDF.c
+SOURCES_C = axis_scales.c chull.c devCairo.c devNull.c devPicTeX.c devPS.c devQuartz.c init.c @BUILD_AQUA_TRUE@ qdBitmap.c qdPDF.c
 SOURCES_M = @BUILD_AQUA_TRUE@ qdCocoa.m
 
 DEPENDS = $(SOURCES_C:.c=.d) $(SOURCES_M:.m=.d)
@@ -21,13 +21,18 @@ OBJECTS = $(SOURCES_C:.c=.o) $(SOURCES_M:.m=.o)
 
 SHLIB = $(pkg)@SHLIB_EXT@
 
+ZLIB_CPPFLAGS = @BUILD_ZLIB_TRUE@ -I$(top_srcdir)/src/extra/zlib
 # need Defn.h etc, and config.h
-PKG_CPPFLAGS =-I../../../include -I$(top_srcdir)/src/include -DHAVE_CONFIG_H
-@BUILD_AQUA_TRUE@PKG_LIBS=-framework AppKit
+PKG_CPPFLAGS =-I../../../include -I$(top_srcdir)/src/include -DHAVE_CONFIG_H $(ZLIB_CPPFLAGS)
+
+@BUILD_AQUA_TRUE@AQUA_LIBS=-framework AppKit
+@BUILD_ZLIB_TRUE@R_ZLIBS=$(top_builddir)/src/extra/zlib/libz.a
+@BUILD_ZLIB_FALSE@R_ZLIBS=-lz
+PKG_LIBS = $(AQUA_LIBS) $(R_ZLIBS)
 
 all: Makefile Makedeps
 	@$(MAKE) Makedeps
-	@$(MAKE) shlib
+	@$(MAKE) shlib @BUILD_DEVCAIRO_TRUE@ cairodevice
 
 Makefile: $(srcdir)/Makefile.in $(top_builddir)/config.status
 	@cd $(top_builddir) && $(SHELL) ./config.status $(subdir)/$@
@@ -42,6 +47,9 @@ shlib: $(SHLIB)
 	@$(SHELL) $(top_srcdir)/tools/copy-if-change $(SHLIB) \
 	  $(top_builddir)/library/$(pkg)/libs@R_ARCH@/$(SHLIB)
 
+cairodevice:
+	@(cd cairo && $(MAKE))
+
 include $(R_HOME)/etc${R_ARCH}/Makeconf
 include $(top_srcdir)/share/make/shlib.mk
 
@@ -49,8 +57,10 @@ mostlyclean: clean
 clean:
 	@-rm -rf .libs _libs
 	@-rm -f Makedeps *.d *.o *$(SHLIB_EXT)
+	@(cd cairo && $(MAKE) clean)
 distclean: clean
 	@-rm -f Makefile
+	@(cd cairo && $(MAKE) distclean)
 maintainer-clean: distclean
 
 ## Automagically generated dependencies:

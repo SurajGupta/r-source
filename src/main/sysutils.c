@@ -566,6 +566,7 @@ SEXP attribute_hidden do_iconv(SEXP call, SEXP op, SEXP args, SEXP env)
     const char *sub;
     size_t inb, outb, res;
     R_StringBuffer cbuff = {NULL, 0, MAXELTSIZE};
+    Rboolean isRawlist = FALSE;
 
     checkArity(op, args);
     if(isNull(x)) {  /* list locales */
@@ -579,25 +580,31 @@ SEXP attribute_hidden do_iconv(SEXP call, SEXP op, SEXP args, SEXP env)
 	PROTECT(ans = R_NilValue);
 #endif
     } else {
-	int mark;
+	int mark, toRaw;
 	const char *from, *to;
 	Rboolean isLatin1 = FALSE, isUTF8 = FALSE;
 
-	if(TYPEOF(x) != STRSXP)
-	    error(_("'x' must be a character vector"));
-	if(!isString(CADR(args)) || length(CADR(args)) != 1)
+	args = CDR(args);
+	if(!isString(CAR(args)) || length(CAR(args)) != 1)
 	    error(_("invalid '%s' argument"), "from");
-	if(!isString(CADDR(args)) || length(CADDR(args)) != 1)
+	from = CHAR(STRING_ELT(CAR(args), 0)); /* ASCII */
+	args = CDR(args);
+	if(!isString(CAR(args)) || length(CAR(args)) != 1)
 	    error(_("invalid '%s' argument"), "to");
-	if(!isString(CADDDR(args)) || length(CADDDR(args)) != 1)
+	to = CHAR(STRING_ELT(CAR(args), 0));
+	args = CDR(args);
+	if(!isString(CAR(args)) || length(CAR(args)) != 1)
 	    error(_("invalid '%s' argument"), "sub");
-	if(STRING_ELT(CADDDR(args), 0) == NA_STRING) sub = NULL;
-	else sub = translateChar(STRING_ELT(CADDDR(args), 0));
-	mark = asLogical(CAD4R(args));
+	if(STRING_ELT(CAR(args), 0) == NA_STRING) sub = NULL;
+	else sub = translateChar(STRING_ELT(CAR(args), 0));
+	args = CDR(args);
+	mark = asLogical(CAR(args));
 	if(mark == NA_LOGICAL)
 	    error(_("invalid '%s' argument"), "mark");	
-	from = CHAR(STRING_ELT(CADR(args), 0)); /* ASCII */
-	to = CHAR(STRING_ELT(CADDR(args), 0));
+	args = CDR(args);
+	toRaw = asLogical(CAR(args));
+	if(toRaw == NA_LOGICAL)
+	    error(_("invalid '%s' argument"), "toRaw");	
 	/* some iconv's allow "UTF8", but libiconv does not */
 	if(streql(from, "UTF8") || streql(from, "utf8") ) from = "UTF-8";
 	if(streql(to, "UTF8") || streql(from, "utf8") ) to = "UTF-8";
@@ -615,16 +622,42 @@ SEXP attribute_hidden do_iconv(SEXP call, SEXP op, SEXP args, SEXP env)
 #else
 	    error(_("unsupported conversion from '%s' to '%s'"), from, to);
 #endif
-	PROTECT(ans = duplicate(x));
+	isRawlist = (TYPEOF(x) == VECSXP);
+	if(isRawlist) {
+	    if(toRaw)
+		PROTECT(ans = duplicate(x));
+	    else {
+		PROTECT(ans = allocVector(STRSXP, LENGTH(x)));
+		DUPLICATE_ATTRIB(ans, x);
+	    }
+	} else {   
+	    if(TYPEOF(x) != STRSXP)
+		error(_("'x' must be a character vector"));
+	    if(toRaw) {
+		PROTECT(ans = allocVector(VECSXP, LENGTH(x)));
+		DUPLICATE_ATTRIB(ans, x);
+	    } else 
+		PROTECT(ans = duplicate(x));
+	}
 	R_AllocStringBuffer(0, &cbuff);  /* 0 -> default */
 	for(i = 0; i < LENGTH(x); i++) {
-	    si = STRING_ELT(x, i);
-	    if (si == NA_STRING) {
-		SET_STRING_ELT(ans, i, NA_STRING);
-		continue;
+	    if (isRawlist) {
+		si = VECTOR_ELT(x, i);
+		if (TYPEOF(si) == NILSXP) {
+		    if (!toRaw) SET_STRING_ELT(ans, i, NA_STRING);
+		    continue;
+		} else if (TYPEOF(si) != RAWSXP)
+		    error(_("'x' must be a list of NULL or raw vectors"));
+	    } else {
+		si = STRING_ELT(x, i);
+		if (si == NA_STRING) {
+		    if(!toRaw) SET_STRING_ELT(ans, i, NA_STRING);
+		    continue;
+		}
 	    }
 	top_of_loop:
-	    inbuf = CHAR(si); inb = LENGTH(si);
+	    inbuf = isRawlist ? (const char *) RAW(si) : CHAR(si); 
+	    inb = LENGTH(si);
 	    outbuf = cbuff.data; outb = cbuff.bufsize - 1;
 	    /* First initialize output */
 	    Riconv (obj, NULL, NULL, &outbuf, &outb);
@@ -660,17 +693,25 @@ SEXP attribute_hidden do_iconv(SEXP call, SEXP op, SEXP args, SEXP env)
 		goto next_char;
 	    }
 
-	    if(res != -1 && inb == 0) {
-		cetype_t ienc = CE_NATIVE;
-
-		nout = cbuff.bufsize - 1 - outb;
-		if(mark) {
-		    if(isLatin1) ienc = CE_LATIN1;
-		    else if(isUTF8) ienc = CE_UTF8;
-		}
-		SET_STRING_ELT(ans, i, mkCharLenCE(cbuff.data, nout, ienc));
+	    if(toRaw) {
+		if(res != -1 && inb == 0) {
+		    nout = cbuff.bufsize - 1 - outb;
+		    SEXP el = allocVector(RAWSXP, nout);
+		    memcpy(RAW(el), cbuff.data, nout);
+		    SET_VECTOR_ELT(ans, i, el);
+		} /* otherwise is already NULL */
+	    } else {
+		if(res != -1 && inb == 0) {
+		    cetype_t ienc = CE_NATIVE;
+		    
+		    nout = cbuff.bufsize - 1 - outb;
+		    if(mark) {
+			if(isLatin1) ienc = CE_LATIN1;
+			else if(isUTF8) ienc = CE_UTF8;
+		    }
+		    SET_STRING_ELT(ans, i, mkCharLenCE(cbuff.data, nout, ienc));
+		} else SET_STRING_ELT(ans, i, NA_STRING);
 	    }
-	    else SET_STRING_ELT(ans, i, NA_STRING);
 	}
 	Riconv_close(obj);
 	R_FreeStringBuffer(&cbuff);
@@ -1455,7 +1496,6 @@ char * R_tmpnam2(const char * prefix, const char * tempdir, const char * fileext
 }
 
 SEXP attribute_hidden do_proctime(SEXP call, SEXP op, SEXP args, SEXP env)
-#ifdef _R_HAVE_TIMING_
 {
     SEXP ans, nm;
 
@@ -1473,16 +1513,9 @@ SEXP attribute_hidden do_proctime(SEXP call, SEXP op, SEXP args, SEXP env)
     UNPROTECT(2);
     return ans;
 }
-#else
-{
-    error(_("proc.time() is not implemented on this system"));
-    return R_NilValue;		/* -Wall */
-}
-#endif
 
 void attribute_hidden resetTimeLimits()
 {
-#ifdef _R_HAVE_TIMING_
     double data[5];
     R_getProcTime(data);
 
@@ -1498,14 +1531,11 @@ void attribute_hidden resetTimeLimits()
 #endif
     if (cpuLimit2 > 0.0 && (cpuLimit <= 0.0 || cpuLimit2 < cpuLimit))
 	cpuLimit = cpuLimit2;
-
-#endif
 }
 
 SEXP attribute_hidden
 do_setTimeLimit(SEXP call, SEXP op, SEXP args, SEXP rho)
 {
-#ifdef _R_HAVE_TIMING_
     double cpu, elapsed, old_cpu = cpuLimitValue,
 	old_elapsed = elapsedLimitValue;
     int transient;
@@ -1526,9 +1556,6 @@ do_setTimeLimit(SEXP call, SEXP op, SEXP args, SEXP rho)
 	cpuLimitValue = old_cpu;
 	elapsedLimitValue = old_elapsed;
     }
-#else
-    error(_("setTimelimit() is not implemented on this system"));
-#endif
 
     return R_NilValue;
 }
@@ -1536,7 +1563,6 @@ do_setTimeLimit(SEXP call, SEXP op, SEXP args, SEXP rho)
 SEXP attribute_hidden
 do_setSessionTimeLimit(SEXP call, SEXP op, SEXP args, SEXP rho)
 {
-#ifdef _R_HAVE_TIMING_
     double cpu, elapsed, data[5];
 
     checkArity(op, args);
@@ -1554,9 +1580,6 @@ do_setSessionTimeLimit(SEXP call, SEXP op, SEXP args, SEXP rho)
 
     if (R_FINITE(elapsed) && elapsed > 0) elapsedLimit2 = elapsed + data[2];
     else elapsedLimit2 = -1;
-#else
-    error(_("setSessionTimelimit() is not implemented on this system"));
-#endif
 
     return R_NilValue;
 }

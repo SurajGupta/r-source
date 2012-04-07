@@ -99,7 +99,7 @@ list(
 
 ## utilities to get and set the primitive generics.
 ## Version below uses the environment, not the list
-## in order to work with namespace for methods pacakge
+## in order to work with namespace for methods package
 # genericForPrimitive <- function(f, where = topenv(parent.frame())) {
 #     what <- methodsPackageMetaName("G", f)
 #     if(exists(what, where))
@@ -115,13 +115,15 @@ list(
 
 genericForPrimitive <- function(f, where = topenv(parent.frame())) {
 #    if(.matchBasic(f, .ExcludePrimitiveGenerics, FALSE))
-#        stop(gettextf("methods may not be defined for primitive function \"%s\" in this version of R", f), domain = NA)
+#        stop(gettextf("methods may not be defined for primitive function %s in this version of R", sQuote(f)), domain = NA)
     env <- .findBasicFuns(where)
     funs <- get(".BasicFunsList", envir = env)
     ans <- elNamed(funs, f)
     ## this element may not exist (yet, during loading), dom't test null
     if(identical(ans, FALSE))
-        stop(gettextf("methods may not be defined for primitive function \"%s\" in this version of R", f), domain = NA)
+        stop(gettextf("methods may not be defined for primitive function %s in this version of R",
+                      sQuote(f)),
+             domain = NA)
     ans
 }
 

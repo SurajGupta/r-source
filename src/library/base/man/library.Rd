@@ -1,22 +1,20 @@
 % File src/library/base/man/library.Rd
 % Part of the R package, http://www.R-project.org
-% Copyright 1995-2010 R Core Development Team
+% Copyright 1995-2011 R Core Development Team
 % Distributed under GPL 2 or later
 
 \name{library}
 \title{Loading and Listing of Packages}
 \alias{library}
 \alias{require}
-\alias{.First.lib}
-\alias{.Last.lib}
+
 \alias{.noGenerics}
+\alias{format.libraryIQR}
 \alias{print.libraryIQR}
+\alias{format.packageInfo}
 \alias{print.packageInfo}
 \description{
   \code{library} and \code{require} load add-on packages.
-
-  \code{.First.lib} is called when a package without a name space is attached;
-  \code{.Last.lib} is called when a package is detached.
 }
 \usage{
 library(package, help, pos = 2, lib.loc = NULL,
@@ -28,10 +26,7 @@ library(package, help, pos = 2, lib.loc = NULL,
 require(package, lib.loc = NULL, quietly = FALSE,
         warn.conflicts = TRUE,
         keep.source = getOption("keep.source.pkgs"),
-        character.only = FALSE, save = FALSE)
-
-.First.lib(libname, pkgname)
-.Last.lib(libpath)
+        character.only = FALSE)
 }
 \arguments{
   \item{package, help}{the name of a package, given as a \link{name} or
@@ -39,9 +34,7 @@ require(package, lib.loc = NULL, quietly = FALSE,
     whether \code{character.only} is \code{FALSE} (default) or
     \code{TRUE}).}
   \item{pos}{the position on the search list at which to attach the
-    loaded package.  Note that \code{.First.lib} may attach other
-    packages, and \code{pos} is computed \emph{after} \code{.First.lib}
-    has been run.  Can also be the name of a position on the current
+    loaded package.  Can also be the name of a position on the current
     search list as given by \code{\link{search}()}.}
   \item{lib.loc}{a character vector describing the location of \R
     library trees to search through, or \code{NULL}.  The default value
@@ -58,27 +51,15 @@ require(package, lib.loc = NULL, quietly = FALSE,
     \code{.conflicts.OK}.  A conflict is a function masking a function,
     or a non-function masking a non-function.
   }
-  \item{keep.source}{logical.  If \code{TRUE}, functions
-    \sQuote{keep their source} including comments, see argument
-    \code{keep.source} to \code{\link{options}}.  This applies only to
-    the named package, and not to any packages or name spaces which might be
-    loaded to satisfy dependencies or imports.
-
-    This argument does not apply to packages using lazy-loading.
-    Whether they have kept source is determined when they are installed
-    (and is most likely false).
+  \item{keep.source}{logical. Now ignored.
+    This argument does not apply to packages using lazy-loading:
+    whether they have kept source is determined when they are installed.
   }
   \item{verbose}{a logical.  If \code{TRUE}, additional diagnostics are
     printed.}
   \item{quietly}{a logical.  If \code{TRUE}, no message confirming
     package loading is printed, and most often, no errors/warnings are
     printed if package loading fails.}
-  \item{save}{For back-compatibility: only \code{FALSE} is allowed.}
-  \item{libname}{a character string giving the library directory where
-    the package was found.}
-  \item{pkgname}{a character string giving the name of the package.}
-  \item{libpath}{a character string giving the complete path to the
-    package.}
 }
 \details{
   \code{library(package)} and \code{require(package)} both load the
@@ -87,9 +68,9 @@ require(package, lib.loc = NULL, quietly = FALSE,
   (rather than an error as \code{library()} does by default) if the
   package does not exist.  Both functions check and update the list of
   currently loaded packages and do not reload a package which is already
-  loaded.  (Furthermore, if the package has a name space and a name
+  loaded.  (Furthermore, if the package has a namespace and a name
   space of that name is already loaded, they work from the existing
-  name space rather than reloading from the file system.  If you want to
+  namespace rather than reloading from the file system.  If you want to
   reload such a package, call \code{\link{detach}(unload = TRUE)} or
   \code{\link{unloadNamespace}} first.)
 
@@ -114,30 +95,11 @@ require(package, lib.loc = NULL, quietly = FALSE,
   future versions.  When used with the default value (\code{NULL}) for
   \code{lib.loc}, the attached packages are searched before the libraries.
 
-  \code{.First.lib} is called when a package without a name space is
-  attached by \code{library}.  (For packages with name spaces see
-  \code{\link{.onLoad}}.)  It is called with two arguments, the name of
-  the library directory where the package was found (i.e., the
-  corresponding element of \code{lib.loc}), and the name of the package.
-  It is a good place to put calls to \code{\link{library.dynam}} which
-  are needed when loading a package into this function (don't call
-  \code{library.dynam} directly, as this will not work if the package is
-  not installed in a standard location).  \code{.First.lib} is invoked
-  after the search path interrogated by \code{search()} has been
-  updated, so \code{as.environment(match("package:name", search()))}
-  will return the environment in which the package is stored.  If
-  calling \code{.First.lib} gives an error the loading of the package is
-  abandoned, and the package will be unavailable.  Similarly, if the
-  option \code{".First.lib"} has a list element with the package's name,
-  this element is called in the same manner as \code{.First.lib} when
-  the package is attached.  This mechanism allows the user to set package
-  \sQuote{load hooks} in addition to startup code as provided by the
-  package maintainers, but \code{\link{setHook}} is preferred.
-
-  \code{.Last.lib} is called when a package is detached.  Beware
-  that it might be called if \code{.First.lib} has failed, so it
-  should be written defensively.  (It is called within \code{\link{try}},
-  so errors will not stop the package being detached.)
+  In versions of \R{} prior to 2.14.0, a \code{.First.lib} function 
+  would be called when a package without a namespace was attached.
+  As of 2.14.0, all functions have namespaces; see 
+  \code{\link{.onLoad}} for current behaviour, and \sQuote{Writing R Extensions}
+  for a description of the older mechanism.
 }
 \value{
   Normally \code{library} returns (invisibly) the list of attached
@@ -239,11 +201,6 @@ detach(pos = match(paste("package", pkg, sep=":"), search()))
 
 require(nonexistent)        # FALSE
 \dontrun{
-## Suppose a package needs to call a DLL named 'fooEXT',
-## where 'EXT' is the system-specific extension.  Then you should use
-.First.lib <- function(lib, pkg)
-  library.dynam("foo", pkg, lib)
-
 ## if you want to mask as little as possible, use
 library(mypkg, pos = "package:base")
 }}

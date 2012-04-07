@@ -26,6 +26,7 @@ assign(".X11.Options",
             colortype = "true", maxcubesize = 256,
             fonts = c("-adobe-helvetica-%s-%s-*-*-%d-*-*-*-*-*-*-*",
             "-adobe-symbol-medium-r-*-*-%d-*-*-*-*-*-*-*"),
+            family = "sans",
             xpos = NA_integer_, ypos = NA_integer_,
 	    title = "", type = "cairo", antialias = "default"),
        envir = .X11env)
@@ -34,9 +35,7 @@ assign(".X11.Options.default",
        get(".X11.Options", envir = .X11env),
        envir = .X11env)
 
-assign("antialiases",
-       c("default", "none", "gray", "subpixel"),
-       envir = .X11env)
+aa.cairo  <- c("default", "none", "gray", "subpixel")
 
 X11.options <- function(..., reset = FALSE)
 {
@@ -53,7 +52,8 @@ X11.options <- function(..., reset = FALSE)
 }
 
 X11 <- function(display = "", width, height, pointsize, gamma,
-                bg, canvas, fonts, xpos, ypos, title, type, antialias)
+                bg, canvas, fonts, family,
+                xpos, ypos, title, type, antialias)
 {
     if(display == "" && .Platform$GUI == "AQUA" &&
        is.na(Sys.getenv("DISPLAY", NA))) Sys.setenv(DISPLAY = ":0")
@@ -70,221 +70,42 @@ X11 <- function(display = "", width, height, pointsize, gamma,
     if(!missing(ypos)) new$ypos <- ypos
     if(!missing(title)) new$title <- title
     if(!checkIntFormat(new$title)) stop("invalid 'title'")
-    if(!missing(type))
-        new$type <- match.arg(type, c("Xlib", "cairo", "nbcairo"))
+    if(!missing(type)) {
+        new$type <- match.arg(type, c("Xlib", "cairo", "nbcairo", "dbcairo"))
+        if(!capabilities("cairo") && type != "Xlib")
+            warning("cairo-based types are not supported on this build - using \"Xlib\"")
+    }
+    if(!missing(family)) new$family <- family
     if(!missing(fonts)) new$fonts <- fonts
-
-    antialiases <- get("antialiases", envir = .X11env)
-    if(!missing(antialias))
-        new$antialias <- match.arg(antialias, antialiases)
+    if(!missing(antialias) && type != "Xlib")
+        new$antialias <- match.arg(antialias, aa.cairo)
     d <- check.options(new, name.opt = ".X11.Options", envir = .X11env)
+    if(d$type == "Xlib" && !missing(family)) {
+        fns <- X11Fonts()
+        if (! family %in% names(fns))
+            stop('unknown family for X11(type = "XLib")')
+        d$fonts[1] <- fns[[family]]
+    }
     type <-
 	if(capabilities("cairo"))
-	    switch(d$type, "cairo" = 1, "nbcairo" = 2, # otherwise:
-		   0)
-	else 0
+            switch(d$type, "cairo" = 1L, "nbcairo" = 2L, "dbcairo" = 3L, 0L)
+	else 0L
     ## Aargh -- trkplot has a trapdoor and does not set type.
-    if (display == "XImage") type <- 0
-    antialias <- match(d$antialias, antialiases)
+    if (display == "XImage") type <- 0L
+    antialias <- match(d$antialias, aa.cairo)
     .Internal(X11(d$display, d$width, d$height, d$pointsize, d$gamma,
                   d$colortype, d$maxcubesize, d$bg, d$canvas, d$fonts,
-                  NA_integer_, d$xpos, d$ypos, d$title, type, antialias))
+                  NA_integer_, d$xpos, d$ypos, d$title,
+                  type, antialias, d$family))
 }
 
 x11 <- X11
 
 
-png <- function(filename = "Rplot%03d.png",
-                width = 480, height = 480, units = "px",
-                pointsize = 12, bg = "white", res = NA, ...,
-                type = c("cairo", "Xlib", "quartz"), antialias)
-{
-    if(!checkIntFormat(filename)) stop("invalid 'filename'")
-    units <- match.arg(units, c("in", "px", "cm", "mm"))
-    if(units != "px" && is.na(res))
-        stop("'res' must be specified unless 'units = \"px\"'")
-    height <-
-        switch(units, "in"=res, "cm"=res/2.54, "mm"=res/25.4, "px"=1) * height
-    width <-
-        switch(units, "in"=res, "cm"=res/2.54, "mm"=res/25.4, "px"=1) * width
-    new <- list(...)
-    if(missing(type)) type <- getOption("bitmapType")
-    type <- match.arg(type)
-    antialiases <- get("antialiases", envir = .X11env)
-    if(!missing(antialias))
-        new$antialias <- match.arg(antialias, antialiases)
-    d <- check.options(new, name.opt = ".X11.Options", envir = .X11env)
-    antialias <- match(d$antialias, antialiases)
-    ## do these separately so can remove from X11 module in due course
-    if(type == "quartz" && capabilities("aqua")) {
-        width <- width/ifelse(is.na(res), 72, res);
-        height <- height/ifelse(is.na(res), 72, res);
-        invisible(.External(CQuartz, "png", path.expand(filename), width, height,
-                            pointsize, "Helvetica", TRUE, TRUE, "", bg,
-                            "white", if(is.na(res)) NULL else res))
-    } else if (type == "cairo" && capabilities("cairo"))
-        .Internal(cairo(filename, 2L, width, height, pointsize, bg,
-			res, antialias, 100L))
-    else
-        .Internal(X11(paste("png::", filename, sep=""),
-                      width, height, pointsize, d$gamma,
-                      d$colortype, d$maxcubesize, bg, bg, d$fonts, res,
-                      0L, 0L, "", 0, 0))
-}
-
-jpeg <- function(filename = "Rplot%03d.jpeg",
-                 width = 480, height = 480, units = "px",
-                 pointsize = 12, quality = 75,
-                 bg = "white", res = NA, ...,
-                 type = c("cairo", "Xlib", "quartz"), antialias)
-{
-    if(!checkIntFormat(filename)) stop("invalid 'filename'")
-    units <- match.arg(units, c("in", "px", "cm", "mm"))
-    if(units != "px" && is.na(res))
-        stop("'res' must be specified unless 'units = \"px\"'")
-    height <-
-        switch(units, "in"=res, "cm"=res/2.54, "mm"=res/25.4, "px"=1) * height
-    width <-
-        switch(units, "in"=res, "cm"=res/2.54, "mm"=res/25.4, "px"=1) * width
-    new <- list(...)
-    if(!missing(type)) new$type <- match.arg(type)
-    antialiases <- get("antialiases", envir = .X11env)
-    if(!missing(antialias))
-        new$antialias <- match.arg(antialias, antialiases)
-    d <- check.options(new, name.opt = ".X11.Options", envir = .X11env)
-    ## do this separately so can remove from X11 module in due course
-    if(type == "quartz" && capabilities("aqua")) {
-        width <- width/ifelse(is.na(res), 72, res);
-        height <- height/ifelse(is.na(res), 72, res);
-        invisible(.External(CQuartz, "jpeg", path.expand(filename), width, height,
-                            pointsize, "Helvetica", TRUE, TRUE, "", bg,
-                            "white", if(is.na(res)) NULL else res))
-    } else if (type == "cairo" && capabilities("cairo"))
-        .Internal(cairo(filename, 3L, width, height, pointsize, bg,
-			res, match(d$antialias, antialiases), quality))
-    else
-        .Internal(X11(paste("jpeg::", quality, ":", filename, sep=""),
-                      width, height, pointsize, d$gamma,
-                      d$colortype, d$maxcubesize, bg, bg, d$fonts, res,
-                      0L, 0L, "", 0, 0))
-}
-
-tiff <- function(filename = "Rplot%03d.tiff",
-                 width = 480, height = 480, units = "px", pointsize = 12,
-                 compression = c("none", "rle", "lzw", "jpeg", "zip"),
-                 bg = "white", res = NA, ...,
-                 type = c("cairo", "Xlib", "quartz"), antialias)
-{
-    if(!checkIntFormat(filename)) stop("invalid 'filename'")
-    units <- match.arg(units, c("in", "px", "cm", "mm"))
-    if(units != "px" && is.na(res))
-        stop("'res' must be specified unless 'units = \"px\"'")
-    height <-
-        switch(units, "in"=res, "cm"=res/2.54, "mm"=res/25.4, "px"=1) * height
-    width <-
-        switch(units, "in"=res, "cm"=res/2.54, "mm"=res/25.4, "px"=1) * width
-    new <- list(...)
-    type <- if(!missing(type)) match.arg(type) else getOption("bitmapType")
-    antialiases <- get("antialiases", envir = .X11env)
-    if(!missing(antialias))
-        new$antialias <- match.arg(antialias, antialiases)
-    d <- check.options(new, name.opt = ".X11.Options", envir = .X11env)
-    comp <- switch( match.arg(compression),
-                   "none" = 1, "rle" = 2, "lzw" = 5, "jpeg" = 7, "zip" = 8)
-    if(type == "quartz" && capabilities("aqua")) {
-        width <- width/ifelse(is.na(res), 72, res);
-        height <- height/ifelse(is.na(res), 72, res);
-        invisible(.External(CQuartz, "tiff", path.expand(filename), width, height,
-                            pointsize, "Helvetica", TRUE, TRUE, "", bg,
-                            "white", if(is.na(res)) NULL else res))
-    } else if (type == "cairo" && capabilities("cairo"))
-        .Internal(cairo(filename, 8L, width, height, pointsize, bg,
-			res, match(d$antialias, antialiases), comp))
-    else
-        .Internal(X11(paste("tiff::", comp, ":", filename, sep=""),
-                      width, height, pointsize, d$gamma,
-                      d$colortype, d$maxcubesize, bg, bg, d$fonts, res,
-                      0L, 0L, "", 0, 0))
-}
-
-bmp <- function(filename = "Rplot%03d.bmp",
-                width = 480, height = 480, units = "px", pointsize = 12,
-                bg = "white", res = NA, ...,
-                type = c("cairo", "Xlib", "quartz"), antialias)
-{
-    if(!checkIntFormat(filename)) stop("invalid 'filename'")
-    units <- match.arg(units, c("in", "px", "cm", "mm"))
-    if(units != "px" && is.na(res))
-        stop("'res' must be specified unless 'units = \"px\"'")
-    height <-
-        switch(units, "in"=res, "cm"=res/2.54, "mm"=res/25.4, "px"=1) * height
-    width <-
-        switch(units, "in"=res, "cm"=res/2.54, "mm"=res/25.4, "px"=1) * width
-    new <- list(...)
-    type <- if(!missing(type)) match.arg(type) else getOption("bitmapType")
-    antialiases <- get("antialiases", envir = .X11env)
-    if(!missing(antialias))
-        new$antialias <- match.arg(antialias, antialiases)
-    d <- check.options(new, name.opt = ".X11.Options", envir = .X11env)
-    if(type == "quartz" && capabilities("aqua")) {
-        width <- width/ifelse(is.na(res), 72, res);
-        height <- height/ifelse(is.na(res), 72, res);
-        invisible(.External(CQuartz, "bmp", path.expand(filename), width, height,
-                            pointsize, "Helvetica", TRUE, TRUE, "", bg,
-                            "white", if(is.na(res)) NULL else res))
-    } else if (type == "cairo" && capabilities("cairo"))
-        .Internal(cairo(filename, 9L, width, height, pointsize, bg,
-			res, match(d$antialias, antialiases), 100L))
-    else
-        .Internal(X11(paste("bmp::", filename, sep=""),
-                      width, height, pointsize, d$gamma,
-                      d$colortype, d$maxcubesize, bg, bg, d$fonts, res,
-                      0L, 0L, "", 0, 0))
-}
-
-svg <- function(filename = if(onefile) "Rplots.svg" else "Rplot%03d.svg",
-                width = 7, height = 7, pointsize = 12,
-                onefile = FALSE, bg = "white",
-                antialias = c("default", "none", "gray", "subpixel"))
-{
-    if(!checkIntFormat(filename)) stop("invalid 'filename'")
-    new <- list()
-    antialiases <- eval(formals()$antialias)
-    antialias <- match(match.arg(antialias, antialiases), antialiases)
-    .Internal(cairo(filename, 4L, 72*width, 72*height, pointsize, bg,
-                    NA_integer_, antialias, onefile))
-}
-
-cairo_pdf <- function(filename = if(onefile) "Rplots.pdf" else "Rplot%03d.pdf",
-                      width = 7, height = 7, pointsize = 12,
-                      onefile = FALSE, bg = "white",
-                      antialias = c("default", "none", "gray", "subpixel"))
-{
-    if(!checkIntFormat(filename)) stop("invalid 'filename'")
-    antialiases <- eval(formals()$antialias)
-    antialias <- match(match.arg(antialias, antialiases), antialiases)
-    .Internal(cairo(filename, 6L, 72*width, 72*height, pointsize, bg,
-                    NA_integer_, antialias, onefile))
-}
-
-cairo_ps <- function(filename = if(onefile) "Rplots.ps" else "Rplot%03d.ps",
-                     width = 7, height = 7, pointsize = 12,
-                     onefile = FALSE, bg = "white",
-                     antialias = c("default", "none", "gray", "subpixel"))
-{
-    if(!checkIntFormat(filename)) stop("invalid 'filename'")
-    antialiases <- eval(formals()$antialias)
-    antialias <- match(match.arg(antialias, antialiases), antialiases)
-    .Internal(cairo(filename, 7L, 72*width, 72*height, pointsize, bg,
-                    NA_integer_, antialias, onefile))
-}
-
 ####################
 # X11 font database
 ####################
 
-# Each font family has a name, plus a vector of 4 or 5 directories
-# for font metric afm files
 assign(".X11.Fonts", list(), envir = .X11env)
 
 X11FontError <- function(errDesc)
@@ -360,11 +181,18 @@ X11Fonts <- function(...)
 X11Font <- function(font) checkX11Font(font)
 
 X11Fonts(# Default Serif font is Times
-         serif=X11Font("-*-times-%s-%s-*-*-%d-*-*-*-*-*-*-*"),
+         serif = X11Font("-*-times-%s-%s-*-*-%d-*-*-*-*-*-*-*"),
          # Default Sans Serif font is Helvetica
-         sans=X11Font("-*-helvetica-%s-%s-*-*-%d-*-*-*-*-*-*-*"),
+         sans = X11Font("-*-helvetica-%s-%s-*-*-%d-*-*-*-*-*-*-*"),
          # Default Monospace font is Courier
-         mono=X11Font("-*-courier-%s-%s-*-*-%d-*-*-*-*-*-*-*"))
+         mono = X11Font("-*-courier-%s-%s-*-*-%d-*-*-*-*-*-*-*"),
+         Times = X11Font("-adobe-times-%s-%s-*-*-%d-*-*-*-*-*-*-*"),
+         Helvetica = X11Font("-adobe-helvetica-%s-%s-*-*-%d-*-*-*-*-*-*-*"),
+         CyrTimes = X11Font("-cronyx-times-%s-%s-*-*-%d-*-*-*-*-*-*-*"),
+         CyrHelvetica = X11Font("-cronyx-helvetica-%s-%s-*-*-%d-*-*-*-*-*-*-*"),
+         Arial = X11Font("-monotype-arial-%s-%s-*-*-%d-*-*-*-*-*-*-*"),
+         Mincho = X11Font("-*-mincho-%s-%s-*-*-%d-*-*-*-*-*-*-*")
+         )
 
 savePlot <- function(filename = paste("Rplot", type, sep="."),
                      type = c("png", "jpeg", "tiff", "bmp"),

@@ -42,6 +42,7 @@ pbirthday <- function(n, classes = 365, coincident = 2)
     k <- coincident
     c <- classes
     if (k < 2) return(1)
+    if (k == 2) return( 1 - prod((c:(c-n+1))/rep(c, n)) )
     if (k > n) return(0)
     if (n > c*(k-1)) return(1)
     ## use Diaconis & Mosteller expression (7.5) on log scale
@@ -49,3 +50,4 @@ pbirthday <- function(n, classes = 365, coincident = 2)
     lxx <- k*log(LHS) - (k-1)*log(c) - lgamma(k+1)
     -expm1(-exp(lxx))
 }
+

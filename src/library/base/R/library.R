@@ -14,7 +14,8 @@
 #  A copy of the GNU General Public License is available at
 #  http://www.r-project.org/Licenses/
 
-testPlatformEquivalence <- function(built, run)
+testPlatformEquivalence <-
+function(built, run)
 {
     ## args are "cpu-vendor-os", but os might be 'linux-gnu'!
     ## remove vendor field
@@ -33,19 +34,22 @@ function(package, help, pos = 2, lib.loc = NULL, character.only = FALSE,
 	 quietly = FALSE, keep.source = getOption("keep.source.pkgs"),
          verbose = getOption("verbose"))
 {
+    if (!missing(keep.source))
+        warning("'keep.source' is deprecated and will be ignored")
     paste0 <- function(...) paste(..., sep="")
     testRversion <- function(pkgInfo, pkgname, pkgpath)
     {
         if(is.null(built <- pkgInfo$Built))
-            stop(gettextf("package '%s' has not been installed properly\n", pkgname),
+            stop(gettextf("package %s has not been installed properly\n",
+                          sQuote(pkgname)),
                  call. = FALSE, domain = NA)
 
         ## which version was this package built under?
         ## must be >= 2.10.0 (new help system)
         R_version_built_under <- as.numeric_version(built$R)
         if(R_version_built_under < "2.10.0")
-            stop(gettextf("package '%s' was built before R 2.10.0: please re-install it",
-                          pkgname), call. = FALSE, domain = NA)
+            stop(gettextf("package %s was built before R 2.10.0: please re-install it",
+                          sQuote(pkgname)), call. = FALSE, domain = NA)
 
         current <- getRversion()
         ## depends on R version?
@@ -53,18 +57,26 @@ function(package, help, pos = 2, lib.loc = NULL, character.only = FALSE,
         if(length(Rdeps <- pkgInfo$Rdepends2)) {
             for(dep in Rdeps)
                 if(length(dep) > 1L) {
-                    target <- as.numeric_version(dep$version)
-                    res <- eval(parse(text=paste("current", dep$op, "target")))
+                    res <- if(is.character(target <- dep$version)) {
+                        ver <- R.version
+                        # if (ver$status %in% c("", "Patched")) FALSE else
+                        do.call(dep$op,
+                                list(ver[["svn rev"]],
+                                     as.numeric(sub("^r", "", dep$version))))
+                    } else {
+                        target <- as.numeric_version(dep$version)
+                        eval(parse(text=paste("current", dep$op, "target")))
+                    }
                     if(!res)
-                        stop(gettextf("This is R %s, package '%s' needs %s %s",
-                                      current, pkgname, dep$op, target),
+                        stop(gettextf("This is R %s, package %s needs %s %s",
+                                      current, sQuote(pkgname), dep$op, target),
                              call. = FALSE, domain = NA)
                 }
         }
         ## warn if installed under a later version of R
         if(R_version_built_under > current)
-            warning(gettextf("package '%s' was built under R version %s",
-                             pkgname, as.character(built$R)),
+            warning(gettextf("package %s was built under R version %s",
+                             sQuote(pkgname), as.character(built$R)),
                     call. = FALSE, domain = NA)
         platform <- built$Platform
         r_arch <- .Platform$r_arch
@@ -74,24 +86,24 @@ function(package, help, pos = 2, lib.loc = NULL, character.only = FALSE,
             ## build system.
             if(!nzchar(r_arch) && length(grep("\\w", platform)) &&
                !testPlatformEquivalence(platform, R.version$platform))
-                stop(gettextf("package '%s' was built for %s",
-                              pkgname, platform),
+                stop(gettextf("package %s was built for %s",
+                              sQuote(pkgname), platform),
                      call. = FALSE, domain = NA)
         } else {  # Windows
             ## a check for 'mingw' suffices, since i386 and x86_64
             ## have DLLs in different places.  This allows binary packages
             ## to be merged.
             if(nzchar(platform) && !grepl("mingw", platform))
-                stop(gettextf("package '%s' was built for %s",
-                              pkgname, platform),
+                stop(gettextf("package %s was built for %s",
+                              sQuote(pkgname), platform),
                      call. = FALSE, domain = NA)
         }
         ## if using r_arch subdirs, check for presence
         if(nzchar(r_arch)
            && file.exists(file.path(pkgpath, "libs"))
            && !file.exists(file.path(pkgpath, "libs", r_arch)))
-            stop(gettextf("package '%s' is not installed for 'arch=%s'",
-                          pkgname, r_arch),
+            stop(gettextf("package %s is not installed for 'arch=%s'",
+                          sQuote(pkgname), r_arch),
                  call. = FALSE, domain = NA)
     }
 
@@ -108,11 +120,11 @@ function(package, help, pos = 2, lib.loc = NULL, character.only = FALSE,
                 if(pkg %in% agreed) return()
             } else agreed <- character()
             if(!interactive())
-                stop(gettextf("package '%s' has a license that you need to accept in an interactive session", pkg), domain = NA)
+                stop(gettextf("package %s has a license that you need to accept in an interactive session", sQuote(pkg)), domain = NA)
             lfiles <- file.path(pkgpath, c("LICENSE", "LICENCE"))
             lfiles <- lfiles[file.exists(lfiles)]
             if(length(lfiles)) {
-                message(gettextf("Package '%s' has a license that you need to accept after viewing", pkg), domain = NA)
+                message(gettextf("Package %s has a license that you need to accept after viewing", sQuote(pkg)), domain = NA)
                 readline("press RETURN to view license")
                 encoding <- pkgInfo$DESCRIPTION["Encoding"]
                 if(is.na(encoding)) encoding <- ""
@@ -120,14 +132,14 @@ function(package, help, pos = 2, lib.loc = NULL, character.only = FALSE,
                 if(encoding == "latin1") encoding <- "cp1252"
                 file.show(lfiles[1L], encoding = encoding)
             } else {
-                message(gettextf("Package '%s' has a license that you need to accept:\naccording to the DESCRIPTION file it is", pkg), domain = NA)
+                message(gettextf("Package %s has a license that you need to accept:\naccording to the DESCRIPTION file it is", sQuote(pkg)), domain = NA)
                 message(pkgInfo$DESCRIPTION["License"])
             }
             choice <- menu(c("accept", "decline"),
                            title = paste("License for", sQuote(pkg)))
             if(choice != 1)
-                stop(gettextf("License for package '%s' not accepted", package),
-                     domain = NA, call. = FALSE)
+                stop(gettextf("License for package %s not accepted",
+                              sQuote(package)), domain = NA, call. = FALSE)
             dir.create(dirname(personal_file), showWarnings=FALSE)
             writeLines(c(agreed, pkg), personal_file)
         }
@@ -193,25 +205,20 @@ function(package, help, pos = 2, lib.loc = NULL, character.only = FALSE,
                 if(length(same)) {
                     if (fst) {
                         fst <- FALSE
-                        packageStartupMessage(gettextf("\nAttaching package: '%s'\n",
-                                                       package),
+                        packageStartupMessage(gettextf("\nAttaching package: %s\n",
+                                                       sQuote(package)),
                                               domain = NA)
                     }
 
                     objs <- strwrap(paste(same, collapse=", "), indent=4,
                                     exdent=4)
-                    msg <- sprintf("The following object(s) are masked %s '%s':\n\n%s\n",
+                    msg <- sprintf("The following object(s) are masked %s %s:\n\n%s\n",
                                    if (i < lib.pos) "_by_" else "from",
-                                   sp[i], paste(objs, collapse="\n"))
+                                   sQuote(sp[i]), paste(objs, collapse="\n"))
 		    packageStartupMessage(msg)
                 }
             }
         }
-    }
-
-    runUserHook <- function(pkgname, pkgpath) {
-        hook <- getHook(packageEvent(pkgname, "attach")) # might be list()
-        for(fun in hook) try(fun(pkgname, pkgpath))
     }
 
     bindTranslations <- function(pkgname, pkgpath)
@@ -242,14 +249,14 @@ function(package, help, pos = 2, lib.loc = NULL, character.only = FALSE,
             ## Check for the methods package before attaching this
             ## package.
             ## Only if it is _already_ here do we do cacheMetaData.
-            ## The methods package caches all other libs when it is
+            ## The methods package caches all other pkgs when it is
             ## attached.
 
             pkgpath <- find.package(package, lib.loc, quiet = TRUE,
                                     verbose = verbose)
             if(length(pkgpath) == 0L) {
                 txt <- if(length(lib.loc))
-                    gettextf("there is no package called '%s'", package)
+                    gettextf("there is no package called %s", sQuote(package))
                 else
                     gettext("no library trees found in 'lib.loc'")
                 if(logical.return) {
@@ -261,8 +268,8 @@ function(package, help, pos = 2, lib.loc = NULL, character.only = FALSE,
             pfile <- system.file("Meta", "package.rds", package = package,
                                  lib.loc = which.lib.loc)
             if(!nzchar(pfile))
-            	stop(gettextf("'%s' is not a valid installed package",
-                              package), domain = NA)
+            	stop(gettextf("%s is not a valid installed package",
+                              sQuote(package)), domain = NA)
             pkgInfo <- readRDS(pfile)
             testRversion(pkgInfo, package, pkgpath)
             ## avoid any bootstrapping issues by these exemptions
@@ -277,125 +284,78 @@ function(package, help, pos = 2, lib.loc = NULL, character.only = FALSE,
             if(is.character(pos)) {
                 npos <- match(pos, search())
                 if(is.na(npos)) {
-                    warning(gettextf("'%s' not found on search path, using pos = 2", pos), domain = NA)
+                    warning(gettextf("%s not found on search path, using pos = 2", sQuote(pos)), domain = NA)
                     pos <- 2
                 } else pos <- npos
             }
             .getRequiredPackages2(pkgInfo, quietly = quietly)
             deps <- unique(names(pkgInfo$Depends))
-            ## If the name space mechanism is available and the package
-            ## has a name space, then the name space loading mechanism
-            ## takes over.
-            if (packageHasNamespace(package, which.lib.loc)) {
-                tt <- try({
-                    ns <- loadNamespace(package, c(which.lib.loc, lib.loc),
-                                        keep.source = keep.source)
-                    dataPath <- file.path(which.lib.loc, package, "data")
-                    env <- attachNamespace(ns, pos = pos,
-                                           dataPath = dataPath, deps)
-                })
-                if (inherits(tt, "try-error"))
-                    if (logical.return)
-                        return(FALSE)
-                    else stop(gettextf("package/namespace load failed for '%s'",
-                                       package),
-                              call. = FALSE, domain = NA)
-                else {
-                    on.exit(detach(pos=pos))
-                    ## If there are S4 generics then the package should
-                    ## depend on methods
-                    nogenerics <-
-                        !.isMethodsDispatchOn() || checkNoGenerics(env, package)
-                    if(warn.conflicts &&
-                       !exists(".conflicts.OK", envir = env, inherits = FALSE))
-                        checkConflicts(package, pkgname, pkgpath,
-                                       nogenerics, ns)
-                    runUserHook(package, pkgpath)
-                    on.exit()
-                    if (logical.return)
-                        return(TRUE)
-                    else
-                        return(invisible(.packages()))
-                }
-            }
 
-            ## non-namespace branch
-            codeFile <- file.path(which.lib.loc, package, "R", package)
-            ## create environment (not attached yet)
-            loadenv <- new.env(hash = TRUE, parent = .GlobalEnv)
-            ## save the package name in the environment
-            assign(".packageName", package, envir = loadenv)
-            if(length(deps)) assign(".Depends", deps, envir = loadenv)
-            ## source file into loadenv
-            if(file.exists(codeFile)) {
-                res <- try(sys.source(codeFile, loadenv,
-                                      keep.source = keep.source))
-                if(inherits(res, "try-error"))
-                    stop(gettextf("unable to load R code in package '%s'",
-                                  package),
-                         call. = FALSE, domain = NA)
-            } else if(verbose)
-                warning(gettextf("package '%s' contains no R code",
-                                 package), domain = NA)
-            ## lazy-load data sets if required
-            dbbase <- file.path(which.lib.loc, package, "data", "Rdata")
-            if(file.exists(paste0(dbbase, ".rdb")))
-                lazyLoad(dbbase, loadenv)
-            ## lazy-load a sysdata database if present
-            dbbase <- file.path(which.lib.loc, package, "R", "sysdata")
-            if(file.exists(paste0(dbbase, ".rdb")))
-                lazyLoad(dbbase, loadenv)
-            ## now transfer contents of loadenv to an attached frame
-            env <- attach(NULL, pos = pos, name = pkgname)
-            ## detach does not allow character vector args
-            on.exit(do.call("detach", list(name = pkgname)))
-            attr(env, "path") <- file.path(which.lib.loc, package)
-            ## the actual copy has to be done by C code to avoid forcing
-            ## promises that might have been created using delayedAssign().
-            .Internal(lib.fixup(loadenv, env))
+            dir.exists <- function(x)
+                !is.na(isdir <- file.info(x)$isdir) & isdir
+            if (package != "datasets" &&
+                dir.exists(file.path(pkgpath, "R"))) {
+                ## Check is package specified keep.source: only
+                ## relevant if not lazy-loaded (and hence installed < R 2.14.0)
+                if (!is.na(value <- pkgInfo$DESCRIPTION["KeepSource"]))
+                    keep.source <-
+                        switch(value,
+                               "yes"=, "Yes" =, "true" =, "True" =, "TRUE" = TRUE,
+                               "no" =, "No" =, "false" =, "False" =, "FALSE" = FALSE,
+                               keep.source)
 
-            ## Do this before we use any code from the package
-            bindTranslations(package, pkgpath)
+                ## If the namespace mechanism is available and the package
+                ## has a namespace, then the namespace loading mechanism
+                ## takes over.
+                if (packageHasNamespace(package, which.lib.loc)) {
+                    tt <- try({
+                        ns <- loadNamespace(package, c(which.lib.loc, lib.loc))
+                        dataPath <- file.path(which.lib.loc, package, "data")
+                        env <- attachNamespace(ns, pos = pos,
+                                               dataPath = dataPath, deps)
+                    })
+                    if (inherits(tt, "try-error"))
+                        if (logical.return)
+                            return(FALSE)
+                        else stop(gettextf("package/namespace load failed for %s",
+                                           sQuote(package)),
+                                  call. = FALSE, domain = NA)
+                    else {
+                        on.exit(detach(pos = pos))
+                        ## If there are S4 generics then the package should
+                        ## depend on methods
+                        nogenerics <-
+                            !.isMethodsDispatchOn() || checkNoGenerics(env, package)
+                        if(warn.conflicts &&
+                           !exists(".conflicts.OK", envir = env, inherits = FALSE))
+                            checkConflicts(package, pkgname, pkgpath,
+                                           nogenerics, ns)
+                        on.exit()
+                        if (logical.return)
+                            return(TRUE)
+                        else
+                            return(invisible(.packages()))
+                    }
+                } else
+                    stop(gettextf("package %s does not have a NAMESPACE and should be re-installed",
+                                  sQuote(package)), domain = NA)
 
-            ## run .First.lib
-            if(exists(".First.lib", mode = "function",
-                      envir = env, inherits = FALSE)) {
-                firstlib <- get(".First.lib", mode = "function",
-                                envir = env, inherits = FALSE)
-                tt <- try(firstlib(which.lib.loc, package))
-                if(inherits(tt, "try-error"))
-                    if (logical.return) return(FALSE)
-                    else stop(gettextf(".First.lib failed for '%s'",
-                                       package), domain = NA)
+            }  else { # no R code
+                env <- attach(NULL, pos = pos, name = pkgname)
+                attr(env, "path") <- file.path(which.lib.loc, package)
+                assign(".packageName", package, envir = env)
+                if(length(deps)) assign(".Depends", deps, envir = env)
+                ## lazy-load data sets if required
+                dbbase <- file.path(which.lib.loc, package, "data", "Rdata")
+                if(file.exists(paste0(dbbase, ".rdb"))) lazyLoad(dbbase, env)
+                ## lazy-load a sysdata database if present
+                dbbase <- file.path(which.lib.loc, package, "R", "sysdata")
+                if(file.exists(paste0(dbbase, ".rdb"))) lazyLoad(dbbase, env)
             }
-            if(!is.null(firstlib <- getOption(".First.lib")[[package]])) {
-                tt <- try(firstlib(which.lib.loc, package))
-                if(inherits(tt, "try-error"))
-                    if (logical.return) return(FALSE)
-                    else stop(gettextf(".First.lib failed for '%s'",
-                                       package), domain = NA)
-            }
-            ## If there are generics or metadata the package should
-            ## depend on methods and so have turned methods dispatch on.
-            if(.isMethodsDispatchOn()) {
-                nogenerics <- checkNoGenerics(env, package)
-                doCache <- !nogenerics || methods:::.hasS4MetaData(env)
-            }
-            else {
-                nogenerics <- TRUE; doCache <- FALSE
-            }
-            if(warn.conflicts &&
-               !exists(".conflicts.OK", envir = env, inherits = FALSE))
-                checkConflicts(package, pkgname, pkgpath, nogenerics, env)
-
-            if(doCache)
-                methods::cacheMetaData(env, TRUE, searchWhere = .GlobalEnv)
-            runUserHook(package, pkgpath)
-            on.exit()
 	}
 	if (verbose && !newpackage)
-            warning(gettextf("package '%s' already present in search()",
-                             package), domain = NA)
+            warning(gettextf("package %s already present in search()",
+                             sQuote(package)), domain = NA)
 
     }
     else if(!missing(help)) {
@@ -504,40 +464,36 @@ function(package, help, pos = 2, lib.loc = NULL, character.only = FALSE,
     else invisible(.packages())
 }
 
-print.libraryIQR <-
+format.libraryIQR <-
 function(x, ...)
 {
     db <- x$results
+    if(!nrow(db)) return(character())
     ## Split according to LibPath, preserving order of libraries.
     libs <- db[, "LibPath"]
-    libs <- factor(libs, levels=unique(libs))
-    out <- if(nrow(db) == 0L)
-        NULL
-    else lapply(split(1 : nrow(db), libs),
-                function(ind) db[ind, c("Package", "Title"),
-                                 drop = FALSE])
-    outFile <- tempfile("RlibraryIQR")
-    outConn <- file(outFile, open = "w")
-    first <- TRUE
-    for(lib in names(out)) {
-        writeLines(gettextf("%sPackages in library '%s':\n",
-                            ifelse(first, "", "\n"),
-                            lib),
-                   outConn)
-        writeLines(formatDL(out[[lib]][, "Package"],
-                            out[[lib]][, "Title"]),
-                   outConn)
-        first <- FALSE
-    }
-    if(first) {
-        close(outConn)
-        unlink(outFile)
+    libs <- factor(libs, levels = unique(libs))
+    out <- lapply(split(1 : nrow(db), libs),
+                  function(ind) db[ind, c("Package", "Title"),
+                                   drop = FALSE])
+    c(unlist(Map(function(lib, sep) {
+        c(gettextf("%sPackages in library %s:\n", sep, sQuote(lib)),
+          formatDL(out[[lib]][, "Package"],
+                   out[[lib]][, "Title"]))
+    },
+                 names(out),
+                 c("", rep.int("\n", length(out) - 1L)))),
+      x$footer)
+}
+
+print.libraryIQR <-
+function(x, ...)
+{
+    s <- format(x)
+    if(!length(s)) {
         message("no packages found")
-    }
-    else {
-        if(!is.null(x$footer))
-            writeLines(c("\n", x$footer), outConn)
-        close(outConn)
+    } else {
+        outFile <- tempfile("RlibraryIQR")
+        writeLines(s, outFile)
         file.show(outFile, delete.file = TRUE,
                   title = gettext("R packages available"))
     }
@@ -554,37 +510,46 @@ function(chname, package = NULL, lib.loc = NULL,
     if(missing(chname) || (nc_chname <- nchar(chname, "c")) == 0L)
         return(dll_list)
 
+    if(missing(package) || missing(lib.loc))
+        warning("use of library.dynam() without specifying both 'package' and 'lib.loc' is deprecated", immediate. = TRUE, domain = NA)
     ## Be defensive about possible system-specific extension for shared
     ## objects, although the docs clearly say they should not be
     ## added.
+    chname0 <- chname
     nc_file_ext <- nchar(file.ext, "c")
     if(substr(chname, nc_chname - nc_file_ext + 1L, nc_chname) == file.ext)
         chname <- substr(chname, 1L, nc_chname - nc_file_ext)
+    if (chname != chname0)
+        warning("use of 'chname' with an extension is deprecated",
+                domain = NA)
 
     r_arch <- .Platform$r_arch
+    chname1 <- paste(chname, file.ext, sep = "")
+    ## it is not clear we should allow this, rather require a single
+    ## package and library.
     for(pkg in find.package(package, lib.loc, verbose = verbose)) {
         DLLpath <- if(nzchar(r_arch)) file.path(pkg, "libs", r_arch)
 	else    file.path(pkg, "libs")
-        file <- file.path(DLLpath, paste(chname, file.ext, sep = ""))
+        file <- file.path(DLLpath, chname1)
         if(file.exists(file)) break else file <- ""
     }
     if(file == "")
         if(.Platform$OS.type == "windows")
-            stop(gettextf("DLL '%s' not found: maybe not installed for this architecture?", chname), domain = NA)
+            stop(gettextf("DLL %s not found: maybe not installed for this architecture?", sQuote(chname)), domain = NA)
         else
-            stop(gettextf("shared object '%s' not found", chname), domain = NA)
+            stop(gettextf("shared object %s not found", sQuote(chname1)),
+                 domain = NA)
     ## for consistency with library.dyn.unload:
-    file <- file.path(normalizePath(DLLpath, "/", TRUE),
-                      paste(chname, file.ext, sep = ""))
+    file <- file.path(normalizePath(DLLpath, "/", TRUE), chname1)
     ind <- vapply(dll_list, function(x) x[["path"]] == file, NA)
     if(length(ind) && any(ind)) {
         if(verbose)
             if(.Platform$OS.type == "windows")
-                message(gettextf("DLL '%s' already loaded", chname),
+                message(gettextf("DLL %s already loaded", sQuote(chname1)),
                         domain = NA)
             else
-                message(gettextf("shared object '%s' already loaded", chname),
-                        domain = NA)
+                message(gettextf("shared object '%s' already loaded",
+                                 sQuote(chname1)), domain = NA)
         return(invisible(dll_list[[ seq_along(dll_list)[ind] ]]))
     }
     if(.Platform$OS.type == "windows") {
@@ -624,32 +589,38 @@ function(chname, libpath, verbose = getOption("verbose"),
     ## Be defensive about possible system-specific extension for shared
     ## objects, although the docs clearly say they should not be
     ## added.
+    chname0 <- chname
     nc_file_ext <- nchar(file.ext, "c")
     if(substr(chname, nc_chname - nc_file_ext + 1L, nc_chname)
        == file.ext)
         chname <- substr(chname, 1L, nc_chname - nc_file_ext)
+    if (chname != chname0)
+        warning("use of 'chname' with an extension is deprecated",
+                domain = NA)
 
-    ## We need an absolute path here, and separators consistent with library.dynam.unload
+    ## We need an absolute path here, and separators consistent with
+    ## library.dynam
     libpath <- normalizePath(libpath, "/", TRUE)
+    chname1 <- paste(chname, file.ext, sep = "")
     file <- if(nzchar(.Platform$r_arch))
-             file.path(libpath, "libs", .Platform$r_arch,
-                       paste(chname, file.ext, sep = ""))
-     else    file.path(libpath, "libs",
-                       paste(chname, file.ext, sep = ""))
+             file.path(libpath, "libs", .Platform$r_arch, chname1)
+     else    file.path(libpath, "libs", chname1)
 
     pos <- which(vapply(dll_list, function(x) x[["path"]] == file, NA))
     if(!length(pos))
         if(.Platform$OS.type == "windows")
-            stop(gettextf("DLL '%s' was not loaded", chname), domain = NA)
+            stop(gettextf("DLL %s was not loaded", sQuote(chname1)),
+                 domain = NA)
         else
-            stop(gettextf("shared object '%s' was not loaded", chname),
+            stop(gettextf("shared object %s was not loaded", sQuote(chname1)),
                  domain = NA)
 
     if(!file.exists(file))
         if(.Platform$OS.type == "windows")
-            stop(gettextf("DLL '%s' not found", chname), domain = NA)
+            stop(gettextf("DLL %s not found", sQuote(chname1)), domain = NA)
         else
-            stop(gettextf("shared object '%s' not found", chname), domain = NA)
+            stop(gettextf("shared object '%s' not found", sQuote(chname1)),
+                 domain = NA)
     if(verbose)
         message(gettextf("now dyn.unload(\"%s\") ...", file), domain = NA)
     dyn.unload(file)
@@ -660,11 +631,11 @@ function(chname, libpath, verbose = getOption("verbose"),
 require <-
 function(package, lib.loc = NULL, quietly = FALSE, warn.conflicts = TRUE,
          keep.source = getOption("keep.source.pkgs"),
-         character.only = FALSE, save = FALSE)
+         character.only = FALSE)
 {
-    if(!missing(save)) warning("use of 'save' is deprecated")
-    if(!identical(save, FALSE)) stop("save != FALSE is defunct")
-    if( !character.only )
+    if (!missing(keep.source))
+        warning("'keep.source' is deprecated and will be ignored")
+    if(!character.only)
         package <- as.character(substitute(package)) # allowing "require(eda)"
     loaded <- paste("package", package, sep = ":") %in% search()
 
@@ -676,8 +647,7 @@ function(package, lib.loc = NULL, quietly = FALSE, warn.conflicts = TRUE,
                                   character.only = TRUE,
                                   logical.return = TRUE,
                                   warn.conflicts = warn.conflicts,
-				  quietly = quietly,
-                                  keep.source = keep.source),
+				  quietly = quietly),
                           error = function(e) e)
         if (inherits(value, "error")) {
             if (!quietly) {
@@ -693,7 +663,8 @@ function(package, lib.loc = NULL, quietly = FALSE, warn.conflicts = TRUE,
     invisible(value)
 }
 
-.packages <- function(all.available = FALSE, lib.loc = NULL)
+.packages <-
+function(all.available = FALSE, lib.loc = NULL)
 {
     if(is.null(lib.loc))
         lib.loc <- .libPaths()
@@ -710,7 +681,8 @@ function(package, lib.loc = NULL, quietly = FALSE, warn.conflicts = TRUE,
     return(invisible(substring(s[substr(s, 1L, 8L) == "package:"], 9)))
 }
 
-path.package <- function(package = NULL, quiet = FALSE)
+path.package <-
+function(package = NULL, quiet = FALSE)
 {
     if(is.null(package)) package <- .packages()
     if(length(package) == 0L) return(character())
@@ -738,8 +710,8 @@ path.package <- function(package = NULL, quiet = FALSE)
 
 ## As from 2.9.0 ignore versioned installs
 find.package <-
-    function(package = NULL, lib.loc = NULL, quiet = FALSE,
-             verbose = getOption("verbose"))
+function(package = NULL, lib.loc = NULL, quiet = FALSE,
+         verbose = getOption("verbose"))
 {
     if(is.null(package) && is.null(lib.loc) && !verbose) {
         ## We only want the paths to the attached packages.
@@ -751,8 +723,8 @@ find.package <-
     ## time with 1000+ packages installed.
     if(length(package) == 1L  &&
        package %in% c("base", "tools", "utils", "grDevices", "graphics",
-                      "stats", "datasets", "methods", "grid", "splines",
-                      "stats4", "tcltk"))
+                      "stats", "datasets", "methods", "grid", "parallel",
+                      "splines", "stats4", "tcltk"))
         return(file.path(.Library, package))
 
     use_attached <- FALSE
@@ -774,7 +746,7 @@ find.package <-
                                pattern = paste("^", pkg, "$", sep = ""),
                                full.names = TRUE)
             ## Note that we cannot use tools::file_test() here, as
-            ## cyclic name space dependencies are not supported.  Argh.
+            ## cyclic namespace dependencies are not supported.  Argh.
             paths <- c(paths,
                        dirs[file.info(dirs)$isdir &
                             file.exists(file.path(dirs,
@@ -830,8 +802,8 @@ find.package <-
             ## If a package was found more than once ...
             paths <- paths[1L]
             if(verbose)
-                warning(gettextf("package '%s' found more than once,\nusing the one found in '%s'",
-                                 pkg, paths), domain = NA)
+                warning(gettextf("package %s found more than once,\nusing the one found in %s",
+                                 sQuote(pkg), sQuote(paths)), domain = NA)
         }
         out <- c(out, paths)
     }
@@ -839,7 +811,7 @@ find.package <-
     if(!quiet && length(bad)) {
         if(length(out) == 0L) {
             if(length(bad) == 1L) {
-                stop(gettextf("there is no package called '%s'", pkg),
+                stop(gettextf("there is no package called %s", sQuote(pkg)),
                      domain = NA)
             } else {
                 stop(ngettext(length(bad),
@@ -850,47 +822,50 @@ find.package <-
             }
         }
         for(pkg in bad)
-            warning(gettextf("there is no package called '%s'", pkg),
+            warning(gettextf("there is no package called %s", sQuote(pkg)),
                     domain = NA)
     }
 
     out
 }
 
-print.packageInfo <- function(x, ...)
+format.packageInfo <-
+function(x, ...)
 {
     if(!inherits(x, "packageInfo")) stop("wrong class")
-    outFile <- tempfile("RpackageInfo")
-    outConn <- file(outFile, open = "w")
     vignetteMsg <-
-        gettextf("Further information is available in the following vignettes in directory '%s':",
-                 file.path(x$path, "doc"))
-    headers <- c(gettext("Description:\n\n"),
-                 gettext("Index:\n\n"),
-                 paste(paste(strwrap(vignetteMsg), collapse = "\n"),
-                       "\n\n", sep = ""))
-    footers <- c("\n", "\n", "")
+        gettextf("Further information is available in the following vignettes in directory %s:",
+                 sQuote(file.path(x$path, "doc")))
+    headers <- sprintf("\n%s\n",
+                       c(gettext("Description:"),
+                         gettext("Index:"),
+                         paste(strwrap(vignetteMsg), collapse = "\n")))
     formatDocEntry <- function(entry) {
         if(is.list(entry) || is.matrix(entry))
             formatDL(entry, style = "list")
         else
             entry
     }
-    writeLines(gettextf("\n\t\tInformation on package '%s'\n", x$name),
-               outConn)
-    for(i in which(!vapply(x$info, is.null, NA))) {
-        writeLines(headers[i], outConn, sep = "")
-        writeLines(formatDocEntry(x$info[[i]]), outConn)
-        writeLines(footers[i], outConn, sep = "")
-    }
-    close(outConn)
+    c(gettextf("\n\t\tInformation on package %s", sQuote(x$name)),
+      unlist(lapply(which(!vapply(x$info, is.null, NA)),
+                    function(i)
+                        c(headers[i], formatDocEntry(x$info[[i]])))))
+
+}
+
+print.packageInfo <-
+function(x, ...)
+{
+    outFile <- tempfile("RpackageInfo")
+    writeLines(format(x), outFile)
     file.show(outFile, delete.file = TRUE,
-              title = gettextf("Documentation for package '%s'", x$name))
+              title =
+              gettextf("Documentation for package %s", sQuote(x$name)))
     invisible(x)
 }
 
 .getRequiredPackages <-
-    function(file="DESCRIPTION", lib.loc = NULL, quietly = FALSE, useImports = FALSE)
+function(file="DESCRIPTION", lib.loc = NULL, quietly = FALSE, useImports = FALSE)
 {
     ## OK to call tools as only used during installation.
     pkgInfo <- tools:::.split_description(tools:::.read_description(file))
@@ -905,6 +880,8 @@ function(pkgInfo, quietly = FALSE, lib.loc = NULL, useImports = FALSE)
     if (length(pkgs)) {
         pkgname <- pkgInfo$DESCRIPTION["Package"]
         for(pkg in pkgs) {
+            ## several packages 'Depends' on base!
+            if (pkg == "base") next
             ## allow for multiple occurrences
             zs <- pkgInfo$Depends[names(pkgInfo$Depends) == pkg]
             have_vers <- any(vapply(zs, length, 1L) > 1L)
@@ -913,16 +890,17 @@ function(pkgInfo, quietly = FALSE, lib.loc = NULL, useImports = FALSE)
                     pfile <- system.file("Meta", "package.rds",
                                          package = pkg, lib.loc = lib.loc)
                     if(!nzchar(pfile))
-                        stop(gettextf("package '%s' required by '%s' could not be found",
-                                      pkg, pkgname),
+                        stop(gettextf("package %s required by %s could not be found",
+                                      sQuote(pkg), sQuote(pkgname)),
                              call. = FALSE, domain = NA)
                     current <- readRDS(pfile)$DESCRIPTION["Version"]
                     for(z in zs)
                         if(length(z) > 1L) {
                             target <- as.numeric_version(z$version)
                             if (!eval(parse(text=paste("current", z$op, "target"))))
-                                stop(gettextf("package '%s' %s was found, but %s %s is required by '%s'",
-                                              pkg, current, z$op, target, pkgname),
+                                stop(gettextf("package %s %s was found, but %s %s is required by %s",
+                                              sQuote(pkg), current, z$op,
+                                              target, sQuote(pkgname)),
                                      call. = FALSE, domain = NA)
                         }
                 }
@@ -932,7 +910,7 @@ function(pkgInfo, quietly = FALSE, lib.loc = NULL, useImports = FALSE)
                                      pkg), domain = NA)
                 library(pkg, character.only = TRUE, logical.return = TRUE,
                         lib.loc = lib.loc) ||
-                stop(gettextf("package '%s' could not be loaded", pkg),
+                stop(gettextf("package %s could not be loaded", sQuote(pkg)),
                      call. = FALSE, domain = NA)
             } else {
                 ## check the required version number, if any
@@ -944,8 +922,9 @@ function(pkgInfo, quietly = FALSE, lib.loc = NULL, useImports = FALSE)
                         if (length(z) > 1L) {
                             target <- as.numeric_version(z$version)
                             if (!eval(parse(text=paste("current", z$op, "target"))))
-                                stop(gettextf("package '%s' %s is loaded, but %s %s is required by '%s'",
-                                              pkg, current, z$op, target, pkgname),
+                                stop(gettextf("package %s %s is loaded, but %s %s is required by %s",
+                                              sQuote(pkg), current, z$op,
+                                              target, sQuote(pkgname)),
                                      call. = FALSE, domain = NA)
                         }
                 }

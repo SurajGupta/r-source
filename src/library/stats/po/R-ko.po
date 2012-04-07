@@ -2,7 +2,7 @@ msgid ""
 msgstr ""
 "Project-Id-Version: R 2.3.0\n"
 "Report-Msgid-Bugs-To: bugs@r-project.org\n"
-"POT-Creation-Date: 2011-03-22 15:33\n"
+"POT-Creation-Date: 2011-10-12 18:01\n"
 "PO-Revision-Date: 2005-05-26 15:05+0900\n"
 "Last-Translator: Korean <uiami@hanmail.com>\n"
 "Language-Team: Korean <translation-team-ko@lists.sourceforge.net>\n"
@@ -41,6 +41,9 @@ msgstr ""
 #, fuzzy
 msgid "need at least 2 periods to compute seasonal start values."
 msgstr "계절적 개시값을 계산하기에는 적어도 3개가 필요합니다"
+
+msgid "optimization failure"
+msgstr ""
 
 #, fuzzy
 msgid "time series has no or less than 2 periods"
@@ -619,9 +622,8 @@ msgstr "무효인 'tree'(merge 성분)입니다"
 msgid "either 'k' or 'h' must be specified"
 msgstr "'k' 이거나 'h'가 지정되지 않으면 안됩니다"
 
-msgid ""
-"the 'height' component of 'tree' is not sorted\n"
-"(increasingly); consider applying as.hclust() first"
+#, fuzzy
+msgid "the 'height' component of 'tree' is not sorted (increasingly)"
 msgstr ""
 "'tree'의 'height'요소는 승순에 sort되어 있지 않습니다.\n"
 "최초로 as.hclust()를 적용하는 것을 고려해 주십시오"
@@ -1288,11 +1290,19 @@ msgstr "'x' 데이터의 수가 충분하지는 않습니다"
 msgid "not enough 'y' data"
 msgstr "'y' 데이터의 수가 충분하지는 않습니다"
 
-msgid "cannot compute correct p-values with ties"
-msgstr "ties가 있기 때문에, 올바른 p값을 계산할 수가 없습니다"
+#, fuzzy
+msgid "cannot compute exact p-values with ties"
+msgstr "ties가 있기때문에, 정확한 p값을 돌려줍니다"
 
-msgid "'y' must be numeric or a string naming a valid function"
+msgid "p-values will be approximate in the presence of ties"
+msgstr ""
+
+#, fuzzy
+msgid "'y' must be numeric or a function or a string naming a valid function"
 msgstr "'y'는 수치 또는 유효한 함수의 이름인 문자열이 아니면 안됩니다"
+
+msgid "ties should not be present for the Kolmogorov-Smirnov test"
+msgstr ""
 
 #, fuzzy
 msgid ""
@@ -1438,6 +1448,18 @@ msgstr ""
 
 msgid "specified parametric for all predictors"
 msgstr "모든 예측자가 parametric과 지정되었습니다"
+
+#, fuzzy
+msgid "invalid argument 'span'"
+msgstr "무효인 인수 'omit'입니다"
+
+#, fuzzy
+msgid "invalid argument 'cell'"
+msgstr "무효인 인수 'omit'입니다"
+
+#, fuzzy
+msgid "invalid argument 'degree'"
+msgstr "무효인 인수 'omit'입니다"
 
 msgid "first argument must be a \"loess\" object"
 msgstr "최초의 인수는\"loess\" 오브젝트가 아니면 되지 않습니다"
@@ -1748,7 +1770,7 @@ msgstr "초기값이 주어지고 있지 않습니다"
 msgid "No starting values specified for some parameters."
 msgstr "초기값이 주어지고 있지 않습니다"
 
-msgid "Intializing"
+msgid "Initializing"
 msgstr ""
 
 msgid "to '1.'."
@@ -1802,7 +1824,8 @@ msgstr ""
 msgid "not enough groups"
 msgstr "충분하지 않는 group입니다"
 
-msgid "bounds can only be used with method L-BFGS-B"
+#, fuzzy
+msgid "bounds can only be used with method L-BFGS-B (or Brent)"
 msgstr "bounds는 L-BFGS-B method이라고 하는것만 사용할 수가 없습니다"
 
 #, fuzzy
@@ -1821,10 +1844,21 @@ msgstr ""
 "L-BFGS-B method는 'reltol' 그리고 'abstol'대신에 \n"
 "'factr' (와 'pgtol')를 사용합니다"
 
-msgid "one-diml optimization by Nelder-Mead is unreliable: use optimize"
+#, fuzzy
+msgid "one-diml optimization by Nelder-Mead is unreliable:"
 msgstr ""
 "Nelder-Mead method에 의한 1 차원 최적화는 인정 할수가 없습니다: optimize를 사"
 "용해 주십시오"
+
+msgid "use \"Brent\" or optimize() directly"
+msgstr ""
+
+msgid "method = \"Brent\" is only available for one-dimensional optimization"
+msgstr ""
+
+#, fuzzy
+msgid "'lower' and 'upper' must be finite values"
+msgstr "'k' 그리고 'h'는 scalar가 아니면 되지 않습니다"
 
 msgid "Pooling of SD is incompatible with paired tests"
 msgstr ""
@@ -2116,6 +2150,10 @@ msgstr "잘못한 단점규칙입니다"
 
 msgid "invalid 'control.spar'"
 msgstr "무효인 'control.spar'입니다"
+
+#, fuzzy
+msgid "missing or infinite values in inputs are not allowed"
+msgstr "결손 또는 negative의 중량감은 허용되지 않습니다"
 
 msgid "lengths of 'x' and 'w' must match"
 msgstr "'x'와 'w'의 길이는 일치하지 않으면 되지 않습니다"
@@ -2515,6 +2553,9 @@ msgid_plural "parameters %s do not occur in the model formula"
 msgstr[0] ""
 "모델식에서 파라미터 %s가 없습니다\n"
 "모델식에서 파라미터(복수) %s가 없습니다"
+
+#~ msgid "cannot compute correct p-values with ties"
+#~ msgstr "ties가 있기 때문에, 올바른 p값을 계산할 수가 없습니다"
 
 #~ msgid "'FUN' must always return a scalar"
 #~ msgstr "'FUN'는 항상 sclalar를 돌려주지 않으면 되지 않습니다"

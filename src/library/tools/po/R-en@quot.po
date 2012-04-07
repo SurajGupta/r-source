@@ -22,10 +22,10 @@
 #
 msgid ""
 msgstr ""
-"Project-Id-Version: R 2.13.0\n"
+"Project-Id-Version: R 2.14.0\n"
 "Report-Msgid-Bugs-To: bugs@r-project.org\n"
-"POT-Creation-Date: 2011-03-22 15:33\n"
-"PO-Revision-Date: 2011-03-22 15:33\n"
+"POT-Creation-Date: 2011-10-03 18:49\n"
+"PO-Revision-Date: 2011-10-03 18:49\n"
 "Last-Translator: Automatically generated\n"
 "Language-Team: none\n"
 "MIME-Version: 1.0\n"
@@ -321,6 +321,22 @@ msgstr ""
 "See the information on DESCRIPTION files in section ‘Creating R packages’ of "
 "the ‘Writing R Extensions’ manual."
 
+msgid "Malformed Authors@R field:"
+msgstr "Malformed Authors@R field:"
+
+msgid "Cannot extract Author field from Authors@R field:"
+msgstr "Cannot extract Author field from Authors@R field:"
+
+msgid "Authors@R field gives no person with author role."
+msgstr "Authors@R field gives no person with author role."
+
+msgid "Cannot extract Maintainer field from Authors@R field:"
+msgstr "Cannot extract Maintainer field from Authors@R field:"
+
+msgid "Authors@R field gives no person with maintainer role and email address."
+msgstr ""
+"Authors@R field gives no person with maintainer role and email address."
+
 msgid "Encoding '%s' is not portable"
 msgstr "Encoding ‘%s’ is not portable"
 
@@ -374,6 +390,46 @@ msgstr ""
 msgid "found %s"
 msgstr "found %s"
 
+msgid "File %s:"
+msgstr "File %s:"
+
+msgid "%s has wrong argument list %s"
+msgstr "%s has wrong argument list %s"
+
+msgid ","
+msgstr ","
+
+msgid "%s calls:"
+msgstr "%s calls:"
+
+msgid ""
+"Package startup functions should have two arguments with names starting with "
+"%s and %s, respectively."
+msgstr ""
+"Package startup functions should have two arguments with names starting with "
+"%s and %s, respectively."
+
+msgid "lib"
+msgstr "lib"
+
+msgid "pkg"
+msgstr "pkg"
+
+msgid "Package startup functions should not change the search path."
+msgstr "Package startup functions should not change the search path."
+
+msgid "Package startup functions should use %s to generate messages."
+msgstr "Package startup functions should use %s to generate messages."
+
+msgid "packageStartupMessage"
+msgstr "packageStartupMessage"
+
+msgid "See section %s in ?.onAttach."
+msgstr "See section %s in ?.onAttach."
+
+msgid "Good practice"
+msgstr "Good practice"
+
 msgid "package 'methods' is used but not declared"
 msgstr "package ‘methods’ is used but not declared"
 
@@ -406,9 +462,6 @@ msgstr "Generics g in env ="
 
 msgid "where hasMethods(g, env) errors:"
 msgstr "where hasMethods(g, env) errors:"
-
-msgid ","
-msgstr ","
 
 msgid "May need something like"
 msgstr "May need something like"
@@ -489,6 +542,9 @@ msgstr "current working directory cannot be ascertained"
 msgid "no inputs"
 msgstr "no inputs"
 
+msgid "DVI output from Rd2dvi is deprecated"
+msgstr "DVI output from Rd2dvi is deprecated"
+
 msgid "Error in running tools::texi2dvi"
 msgstr "Error in running tools::texi2dvi"
 
@@ -497,6 +553,9 @@ msgstr "more than one \\examples section, using the first"
 
 msgid "invalid value for '%s' : %s"
 msgstr "invalid value for ‘%s’ : %s"
+
+msgid "Only one Rd section per \\Sexpr is supported."
+msgstr "Only one Rd section per \\Sexpr is supported."
 
 msgid "unable to create temp directory"
 msgstr "unable to create temp directory"
@@ -510,6 +569,9 @@ msgstr ""
 
 msgid "running 'make' failed"
 msgstr "running ‘make’ failed"
+
+msgid "In '%s' vignettes '%s' and '%s' have the same vignette name"
+msgstr "In ‘%s’ vignettes ‘%s’ and ‘%s’ have the same vignette name"
 
 msgid "argument 'vignette' must be of length 1"
 msgstr "argument ‘vignette’ must be of length 1"
@@ -525,12 +587,6 @@ msgstr "*** someone has corrupted the Built field in package ‘%s’ ***"
 
 msgid "cannot open directory '%s'"
 msgstr "cannot open directory ‘%s’"
-
-msgid "WARNING: 'Depends' entry has multiple dependencies on R:"
-msgstr "WARNING: ‘Depends’ entry has multiple dependencies on R:"
-
-msgid "only the first will be used in R < 2.7.0"
-msgstr "only the first will be used in R < 2.7.0"
 
 msgid ""
 "WARNING: omitting pointless dependence on 'R' without a version requirement"
@@ -568,11 +624,8 @@ msgstr ""
 msgid "cannot create directory '%s'"
 msgstr "cannot create directory ‘%s’"
 
-msgid "processing '"
-msgstr "processing '"
-
-msgid "'"
-msgstr "'"
+msgid "processing"
+msgstr "processing"
 
 msgid ""
 "running Sweave on vignette '%s' failed with message:\n"
@@ -605,24 +658,6 @@ msgstr "Changes require specified ‘style’"
 msgid "The default JSS style may not be modified."
 msgstr "The default JSS style may not be modified."
 
-msgid "--binary is deprecated"
-msgstr "--binary is deprecated"
-
-msgid "use of '--auto-zip' is defunct"
-msgstr "use of ‘--auto-zip’ is defunct"
-
-msgid "use of '--use-zip-data' is defunct"
-msgstr "use of ‘--use-zip-data’ is defunct"
-
-msgid "use of '--no-docs' is deprecated: use '--install-args' instead"
-msgstr "use of ‘--no-docs’ is deprecated: use ‘--install-args’ instead"
-
-msgid "** Options"
-msgstr "** Options"
-
-msgid "are only for '--binary'  and will be ignored"
-msgstr "are only for ‘--binary’  and will be ignored"
-
 msgid "Error: cannot rename directory to"
 msgstr "Error: cannot rename directory to"
 
@@ -638,6 +673,9 @@ msgstr "‘--multiarch’ specified with only one usable sub-architecture"
 msgid "Error: no packages were specified"
 msgstr "Error: no packages were specified"
 
+msgid "ERROR: cannot create check dir %s"
+msgstr "ERROR: cannot create check dir %s"
+
 msgid "package dir"
 msgstr "package dir"
 
@@ -647,8 +685,20 @@ msgstr "does not exist"
 msgid "No files in this directory"
 msgstr "No files in this directory"
 
+msgid "Unrecognized search field:"
+msgstr "Unrecognized search field:"
+
 msgid "No results found"
 msgstr "No results found"
+
+msgid "Vignettes:"
+msgstr "Vignettes:"
+
+msgid "Code demonstrations:"
+msgstr "Code demonstrations:"
+
+msgid "Help pages:"
+msgstr "Help pages:"
 
 msgid "No help found for topic %s in any package."
 msgstr "No help found for topic %s in any package."
@@ -671,8 +721,10 @@ msgstr "Link %s in package %s could not be located"
 msgid "No docs found for package %s"
 msgstr "No docs found for package %s"
 
-msgid "Only help files, %s, %s and files under %s in a package can be viewed"
-msgstr "Only help files, %s, %s and files under %s in a package can be viewed"
+msgid ""
+"Only help files, %s, %s and files under %s and %s in a package can be viewed"
+msgstr ""
+"Only help files, %s, %s and files under %s and %s in a package can be viewed"
 
 msgid "NEWS"
 msgstr "NEWS"
@@ -682,6 +734,9 @@ msgstr "DESCRIPTION"
 
 msgid "doc/"
 msgstr "doc/"
+
+msgid "demo/"
+msgstr "demo/"
 
 msgid "unsupported URL %s"
 msgstr "unsupported URL %s"
@@ -738,11 +793,17 @@ msgstr ""
 "‘cleanup’ exists but is not executable -- see the ‘R Installation and "
 "Administration Manual’"
 
+msgid "installing via 'install.libs.R' to"
+msgstr "installing via ‘install.libs.R’ to"
+
 msgid "installing to"
 msgstr "installing to"
 
 msgid "generating debug symbols (dSYM)"
 msgstr "generating debug symbols (dSYM)"
+
+msgid "package %s successfully unpacked and MD5 sums checked"
+msgstr "package %s successfully unpacked and MD5 sums checked"
 
 msgid ""
 "R include directory is empty -- perhaps need to install R-devel.rpm or "
@@ -809,8 +870,11 @@ msgstr "finding level-2 HTML links ..."
 msgid "there is no package called '%s'"
 msgstr "there is no package called ‘%s’"
 
-msgid "name space must not be loaded."
-msgstr "name space must not be loaded."
+msgid "namespace must not be already loaded"
+msgstr "namespace must not be already loaded"
+
+msgid "all packages should have a NAMESPACE"
+msgstr "all packages should have a NAMESPACE"
 
 msgid "package seems to be using lazy loading for data already"
 msgstr "package seems to be using lazy loading for data already"
@@ -862,8 +926,29 @@ msgstr "Cannot extract version info from the following section titles:"
 msgid "%s"
 msgstr "%s"
 
-msgid "Malformed NEWS.Rd file."
-msgstr "Malformed NEWS.Rd file."
+msgid ""
+"Malformed NEWS.Rd file:\n"
+"Chunk starting\n"
+"  %s\n"
+"contains no \\itemize."
+msgstr ""
+"Malformed NEWS.Rd file:\n"
+"Chunk starting\n"
+"  %s\n"
+"contains no \\itemize."
+
+msgid ""
+"Malformed NEWS.Rd file:\n"
+"Chunk starting\n"
+"  %s\n"
+"contains more than one \\itemize.\n"
+"Using the first one."
+msgstr ""
+"Malformed NEWS.Rd file:\n"
+"Chunk starting\n"
+"  %s\n"
+"contains more than one \\itemize.\n"
+"Using the first one."
 
 msgid "Processing packages:"
 msgstr "Processing packages:"
@@ -898,6 +983,87 @@ msgstr "already defined to be"
 msgid "found encoding"
 msgstr "found encoding"
 
+msgid "%s must be a character string or a file/raw connection"
+msgstr "%s must be a character string or a file/raw connection"
+
+msgid "PDF header not found"
+msgstr "PDF header not found"
+
+msgid "EOF marker not found"
+msgstr "EOF marker not found"
+
+msgid "cannot find startxref"
+msgstr "cannot find startxref"
+
+msgid "cannot find xref table"
+msgstr "cannot find xref table"
+
+msgid "cannot read xref table"
+msgstr "cannot read xref table"
+
+msgid "wrong class"
+msgstr "wrong class"
+
+msgid "attempting to select less than one element"
+msgstr "attempting to select less than one element"
+
+msgid "attempting to select more than one element"
+msgstr "attempting to select more than one element"
+
+msgid "looking at %s"
+msgstr "looking at %s"
+
+msgid "cannot read literal string object"
+msgstr "cannot read literal string object"
+
+msgid "cannot read hexadecimal string object"
+msgstr "cannot read hexadecimal string object"
+
+msgid "cannot read name object"
+msgstr "cannot read name object"
+
+msgid "cannot read array object"
+msgstr "cannot read array object"
+
+msgid "cannot read dictionary object"
+msgstr "cannot read dictionary object"
+
+msgid "cannot read stream object"
+msgstr "cannot read stream object"
+
+msgid "cannot read indirect reference object"
+msgstr "cannot read indirect reference object"
+
+msgid "cannot find object header at xrefed position %d"
+msgstr "cannot find object header at xrefed position %d"
+
+msgid "mismatch in object numbers (given: %d, found: %d)"
+msgstr "mismatch in object numbers (given: %d, found: %d)"
+
+msgid "mismatch in generation numbers (given: %d, found: %d)"
+msgstr "mismatch in generation numbers (given: %d, found: %d)"
+
+msgid "cannot read stream data"
+msgstr "cannot read stream data"
+
+msgid "invalid index in object stream lookup"
+msgstr "invalid index in object stream lookup"
+
+msgid "processing %s"
+msgstr "processing %s"
+
+msgid "expanding %s"
+msgstr "expanding %s"
+
+msgid "unsupported filter %s"
+msgstr "unsupported filter %s"
+
+msgid "unsupported flatedecode predictor %d"
+msgstr "unsupported flatedecode predictor %d"
+
+msgid "unsupported PNG filter %d"
+msgstr "unsupported PNG filter %d"
+
 msgid "argument 'pkg' must be of length 1"
 msgstr "argument ‘pkg’ must be of length 1"
 
@@ -921,6 +1087,18 @@ msgstr "unimplemented encoding"
 
 msgid "file"
 msgstr "file"
+
+msgid "Found %s, possibly from %s"
+msgstr "Found %s, possibly from %s"
+
+msgid "%s (%s)"
+msgstr "%s (%s)"
+
+msgid "ssname"
+msgstr "ssname"
+
+msgid "language"
+msgstr "language"
 
 msgid "cannot be opened"
 msgstr "cannot be opened"
@@ -946,8 +1124,8 @@ msgstr "OK"
 msgid "results differ from reference results"
 msgstr "results differ from reference results"
 
-msgid "no examples found"
-msgstr "no examples found"
+msgid "no examples found for package %s"
+msgstr "no examples found for package %s"
 
 msgid "Running specific tests for package"
 msgstr "Running specific tests for package"
@@ -1059,6 +1237,9 @@ msgstr "invalid package layout"
 
 msgid "file '%s' is not in valid DCF format"
 msgstr "file ‘%s’ is not in valid DCF format"
+
+msgid "Unknown encoding with non-ASCII data: converting to ASCII"
+msgstr "Unknown encoding with non-ASCII data: converting to ASCII"
 
 msgid "cannot source package code"
 msgstr "cannot source package code"

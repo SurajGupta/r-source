@@ -78,9 +78,10 @@ file.info(\dots)
   systems).  What is meant by \sQuote{file access} and hence the
   \sQuote{last access time} is system-dependent.
   
-  The times are reported to an accuracy of a second.  Many file systems
-  only record times in seconds, and some (e.g. modification time on FAT
-  systems) are recorded in increments of 2 or more seconds.
+  The times are reported to an accuracy of seconds, and perhaps more on
+  some systems.  However, many file systems only record times in
+  seconds, and some (e.g. modification time on FAT systems) are recorded
+  in increments of 2 or more seconds.
 }
 #ifdef unix
 \note{

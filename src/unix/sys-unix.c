@@ -40,12 +40,15 @@
 # include <unistd.h>
 #endif
 
-#ifdef HAVE_SYS_TIME_H
-# include <sys/time.h>		/* for struct timeval */
+#ifndef HAVE_GETRUSAGE
+# ifdef HAVE_SYS_TIME_H
+#  include <sys/times.h>
+# endif
 #endif
 
 #if defined(HAVE_SYS_RESOURCE_H) && defined(HAVE_GETRUSAGE)
 /* on MacOS X it seems sys/resource.h needs sys/time.h first */
+# include <sys/time.h>
 # include <sys/resource.h>
 #endif
 
@@ -160,25 +163,16 @@ SEXP attribute_hidden do_machine(SEXP call, SEXP op, SEXP args, SEXP env)
     return mkString("Unix");
 }
 
-#ifdef _R_HAVE_TIMING_
-# include <time.h>
 # ifdef HAVE_SYS_TIMES_H
-#  include <sys/times.h>
+#  include <sys/times.h> /* times */
 # endif
 
-static clock_t StartTime;
-static struct tms timeinfo;
-#ifdef HAVE_GETTIMEOFDAY
-static double StartTime2;
-#endif
-static double clk_tck;
+static double clk_tck, StartTime;
+
+extern double currentTime(void); /* from datetime.c */
 
 void R_setStartTime(void)
 {
-#ifdef HAVE_GETTIMEOFDAY
-    struct timeval tv;
-#endif
-
 #ifdef HAVE_SYSCONF
     clk_tck = (double) sysconf(_SC_CLK_TCK);
 #else
@@ -194,29 +188,22 @@ void R_setStartTime(void)
     clk_tck = (double) CLK_TCK;
 #endif
     /* printf("CLK_TCK = %d\n", CLK_TCK); */
-    StartTime = times(&timeinfo);
-#ifdef HAVE_GETTIMEOFDAY
-    gettimeofday(&tv, NULL);
-    StartTime2 = (double) tv.tv_sec + 1e-6 * (double) tv.tv_usec;
-#endif
+    StartTime = currentTime();
 }
 
+/* NOTE
+   This used to use times() for elapsed times, which is measured in
+   clock ticks (which can overflow).  It is possible this version uses
+   time() and so is in seconds.  But even Cygwin has gettimeofday.
+ */
 attribute_hidden
 void R_getProcTime(double *data)
 {
-#ifdef HAVE_GETTIMEOFDAY
-    struct timeval tv;
-    double now;
-#endif
+    /* docs say this is rounded to the nearest ms */
+    double et = currentTime() - StartTime;
+    data[2] = 1e-3 * rint(1000*et);
 #ifdef HAVE_GETRUSAGE
     struct rusage self, children;
-#endif
-
-#if !defined(HAVE_GETTIMEOFDAY) || !defined(HAVE_GETRUSAGE)
-    data[2] = (times(&timeinfo) - StartTime) / clk_tck;
-#endif
-
-#ifdef HAVE_GETRUSAGE
     getrusage(RUSAGE_SELF, &self);
     getrusage(RUSAGE_CHILDREN, &children);
     data[0] = (double) self.ru_utime.tv_sec +
@@ -228,27 +215,22 @@ void R_getProcTime(double *data)
     data[4] = (double) children.ru_stime.tv_sec +
 	1e-3 * (children.ru_stime.tv_usec/1000);
 #else
+    struct tms timeinfo;
+    times(&timeinfo);
     data[0] = fround(timeinfo.tms_utime / clk_tck, 3);
     data[1] = fround(timeinfo.tms_stime / clk_tck, 3);
     data[3] = fround(timeinfo.tms_cutime / clk_tck, 3);
     data[4] = fround(timeinfo.tms_cstime / clk_tck, 3);
 #endif
-#ifdef HAVE_GETTIMEOFDAY
-    gettimeofday(&tv, NULL);
-    now = (double) tv.tv_sec + 1e-6 * (double) tv.tv_usec;
-    data[2] = now - StartTime2;
-#endif
-    data[2] = fround(data[2], 3);
 }
 
+/* used in memory.c */
 attribute_hidden
 double R_getClockIncrement(void)
 {
     return 1.0 / clk_tck;
 }
-#else /* not _R_HAVE_TIMING_ */
-void R_setStartTime(void) {}
-#endif /* not _R_HAVE_TIMING_ */
+
 
 #ifdef HAVE_SYS_WAIT_H
 # include <sys/wait.h>
@@ -355,7 +337,7 @@ SEXP attribute_hidden do_sysinfo(SEXP call, SEXP op, SEXP args, SEXP rho)
     char *login;
 
     checkArity(op, args);
-    PROTECT(ans = allocVector(STRSXP, 7));
+    PROTECT(ans = allocVector(STRSXP, 8));
     if(uname(&name) == -1) {
 	UNPROTECT(1);
 	return R_NilValue;
@@ -376,7 +358,16 @@ SEXP attribute_hidden do_sysinfo(SEXP call, SEXP op, SEXP args, SEXP rho)
 #else
     SET_STRING_ELT(ans, 6, mkChar("unknown"));
 #endif
-    PROTECT(ansnames = allocVector(STRSXP, 7));
+#if defined(HAVE_PWD_H) && defined(HAVE_GETPWUID) && defined(HAVE_GETEUID)
+    {
+	struct passwd *stpwd;
+	stpwd = getpwuid(geteuid());
+	SET_STRING_ELT(ans, 7, stpwd ? mkChar(stpwd->pw_name) : mkChar("unknown"));
+    }
+#else
+    SET_STRING_ELT(ans, 7, mkChar("unknown"));
+#endif
+    PROTECT(ansnames = allocVector(STRSXP, 8));
     SET_STRING_ELT(ansnames, 0, mkChar("sysname"));
     SET_STRING_ELT(ansnames, 1, mkChar("release"));
     SET_STRING_ELT(ansnames, 2, mkChar("version"));
@@ -384,6 +375,7 @@ SEXP attribute_hidden do_sysinfo(SEXP call, SEXP op, SEXP args, SEXP rho)
     SET_STRING_ELT(ansnames, 4, mkChar("machine"));
     SET_STRING_ELT(ansnames, 5, mkChar("login"));
     SET_STRING_ELT(ansnames, 6, mkChar("user"));
+    SET_STRING_ELT(ansnames, 7, mkChar("effective_user"));
     setAttrib(ans, R_NamesSymbol, ansnames);
     UNPROTECT(2);
     return ans;
@@ -402,7 +394,14 @@ SEXP do_sysinfo(SEXP call, SEXP op, SEXP args, SEXP rho)
 DL_FUNC ptr_R_ProcessEvents;
 void R_ProcessEvents(void)
 {
+#if HAVE_AQUA
+    /* disable ProcessEvents in child,
+       since we can't call CoreFoundation there. */
+    if (ptr_R_ProcessEvents && !R_isForkedChild) ptr_R_ProcessEvents();
+#else
+    /* We might in due course want to always inhibit in a child */
     if (ptr_R_ProcessEvents) ptr_R_ProcessEvents();
+#endif
     R_PolledEvents();
     if (cpuLimit > 0.0 || elapsedLimit > 0.0) {
 	double cpu, data[5];

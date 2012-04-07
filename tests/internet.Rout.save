@@ -1,5 +1,5 @@
 
-R version 2.13.2 RC (2011-09-28 r57107)
+R version 2.14.0 Under development (unstable) (2011-06-20 r56193)
 Copyright (C) 2011 The R Foundation for Statistical Computing
 ISBN 3-900051-07-0
 Platform: x86_64-unknown-linux-gnu (64-bit)
@@ -30,7 +30,7 @@ Type 'q()' to quit R.
 > 
 > # test do_download.
 > nrow(available.packages(contrib.url("http://cran.r-project.org")))
-[1] 3299
+[1] 3383
 > 
 > # test url connections on http
 > zz <- url("http://cran.r-project.org/")

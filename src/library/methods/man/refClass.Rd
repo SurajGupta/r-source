@@ -1,4 +1,5 @@
 \name{ReferenceClasses}
+\title{Objects With Fields Treated by Reference (OOP-style)}
 \alias{ReferenceClasses}
 \alias{setRefClass}
 \alias{getRefClass}
@@ -13,11 +14,9 @@
 \alias{refMethodDef-class}
 \alias{refMethodDefWithTrace-class}
 \alias{SuperClassMethod-class}
+\alias{show,envRefClass-method}
 \alias{show,refMethodDef-method}
 \alias{show,refClassRepresentation-method}
-\title{
-Objects With Fields Treated by Reference (OOP-style)
-}
 \description{
 The software described here supports reference classes whose objects have
 fields
@@ -37,7 +36,6 @@ setRefClass(Class, fields = , contains = , methods =,
      where =, ...)
 
 getRefClass(Class, where =)
-
 }
 \arguments{
   \item{Class}{
@@ -90,11 +88,8 @@ in the section \dQuote{Reference Object Generators}.
 If a \code{finalize} method is defined, a function will be
 \link[=reg.finalizer]{registered} to invoke it before the environment
 in the object is discarded by the garbage collector. See the matrix
-viewer example for both initialize and finalize methods.
+viewer example for both initialize and finalize methods.}
 
-
- }
- 
   \item{where}{
 the environment in which to store the class definition.  Defaults to
 the package namespace or environment for code that is part of an \R{}
@@ -212,6 +207,15 @@ name \code{.self}, as shown in the \code{save=} method of the
 example.
 The special object \code{.refClassDef} contains the definition of the
 class of the object.
+These fields are read-only (it makes no sense to modify these
+references), with one exception.
+The \code{.self} field can be modified in the \code{$initialize} %$
+method, because the object is still being created at this stage.
+(Assignments to this field, as to all fields, need to use the
+non-local assignment operator.)
+This is the preferred way to assign S4-style attributes to the object,
+if you need to do so; but remember that these attributes will not
+behave according to reference semantics, unlike fields.
 
 The methods available include methods inherited from superclasses, as
 discussed in the next section.
@@ -251,7 +255,7 @@ The code in a method can refer to  inherited methods in the same
 way as directly specified methods.
 
 A method may override a method of the same name in a superclass.
-The overriding method can call the superclass method by 
+The overriding method can call the superclass method by
 \code{callSuper(...)} as described below.
 
 All reference classes inherit from the class \code{"envRefClass"},
@@ -298,18 +302,18 @@ method replaces the direct use of a field name, when the name of the
 field must be calculated, or for looping over several fields.
 }
 
+\item{\code{$export(Class)}}{ %$
+Returns the result of coercing the object to \code{Class} (typically
+one of the superclasses of the object's class).  Calling the method
+has no side effect on the object itself.
+}
+
 \item{\code{$getRefClass()}; \code{$getClass()}}{
 These return respectively the generator object and the formal class
 definition for the reference class of this object, efficiently.
 }
 
 
-
-\item{\code{$export(Class)}}{ %$
-Returns the result of coercing the object to \code{Class} (typically
-one of the superclasses of the object's class).  Calling the method
-has no side effect on the object itself.
-}
 
 \item{\code{$import(value, Class = class(value))}}{ %$
 Import the object \code{value} into the current object, replacing the
@@ -333,7 +337,20 @@ to perform standard initialization, as shown in the
 \code{matrixViewer} class in the example below.
 }
 
-\item{\code{$trace(what, ...)}, \code{$untrace(what)} }{ 
+\item{\code{$show()}}{ %$
+This method is called when the object is printed automatically,
+analogously to the \code{\link{show}} function.  A general method is
+defined for class \code{"envRefClass"}.  User-defined reference
+classes will often define their own method: see the Example below.
+
+Note two points in the example.  As with any \code{show()} method, it
+is a good idea to print the class explicitly to allow for subclasses
+using the method.  Second, to call the \emph{function} \code{show()}
+from the method, as opposed to the \code{$show()} %$
+method itself, refer to \code{methods::show()} explicitly.
+}
+
+\item{\code{$trace(what, ...)}, \code{$untrace(what)} }{
 Apply the tracing and debugging facilities of the \code{\link{trace}}
 function to the reference method \code{what}.
 
@@ -383,7 +400,7 @@ this method will be called once the reference object has been
 created.  You should write such a method for a class that needs to do
 some special initialization.
 In particular, a reference method is recommended rather than a method
-for the S4 generic function, because some special initialization is
+for the S4 generic function \code{initialize()}, because some special initialization is
 required for reference objects \emph{before} the initialization of
 fields.
 As with S4 classes, methods are written for \code{$initialize()} %$
@@ -392,8 +409,23 @@ both for the previous reason and also because \code{$new()} %$
 is invoked on the generator object and would be a method for that class.
 
 The default method for \code{$initialize()} %$
-is equivalent to invoking the method \code{$initFields(...)} %$
-with named fields as its arguments.  For technical reasons, the
+is equivalent to invoking the method \code{$initFields(...)}. %$
+Named arguments assign initial values to the corresponding fields.
+Unnamed arguments must be objects from this class or a reference
+superclass of this class.
+Fields will be initialized to the contents of the fields in such
+objects, but named arguments override the corresponding inherited
+fields.
+Note that fields are simply assigned.  If the field is itself a
+reference object, that object is not copied.
+The new and previous object will share the reference.
+Also, a field assigned from an unnamed argument counts as an
+assignment for locked fields.
+To override an inherited value for a locked field, the new value must
+be one of the named arguments in the initializing call.
+A later assignment of the field will result in an error.
+
+For technical reasons, the
 default method does not currently appear explicitly, but can be
 invoked by \code{$callSuper(...)} %$
 from a method for \code{$initialize()}. %$
@@ -429,6 +461,15 @@ Named arguments
 are method definitions, which will be
 installed in the class, as if they had been supplied in the
 \code{methods} argument to \code{setRefClass()}.
+Supplying methods in this way, rather than in the call to
+\code{setRefClass()}, is largely for the sake of clearer source code
+when many or large methods are being defined.
+All methods for a class should be defined in the source code that
+defines the class, typically as part of a package.
+In particular, methods can not be redefined in a class in an attached
+package with a namespace: The class method checks for a locked
+binding of the class definition.
+
 
 The new methods can refer to any currently defined method by name
 (including other methods supplied in this call to
@@ -454,6 +495,15 @@ to set it will generate an error.
 Fields that are defined by an explicit accessor function can not be
 locked (on the other hand, the accessor function can be defined to
 generate an error if called with an argument).
+
+All code to lock fields should normally be part of the definition of a
+class; that is, the read-only nature of the fields is meant to be part
+of the class definition, not a dynamic property added later.
+In particular, fields can not be locked in a class in an attached
+package with a namespace:  The class method checks for a locked
+binding of the class definition.
+
+
 }
 
 \item{\code{$trace(what, ..., classMethod = FALSE)}}{ %$}{
@@ -519,7 +569,7 @@ environment of the function.
 }
 
 \section{Inter-System Interfaces}{
-A number of 
+A number of
 languages use a similar reference-based programming model with classes
 and class-based methods.
 Aside from differences in choice of terminology and other details,
@@ -579,7 +629,7 @@ of the \code{\link{trace}} function.
 A corresponding \code{$trace()} %$
 reference method is available for
 either an object or for the reference class generator
-(\code{xx$trace()} or \code{mEditor$trace()} in the example below).
+(\code{xx$trace()} or \code{mEdit$trace()} in the example below).
 Using \code{$trace()} on an object sets up a tracing
 version for future invocations of the specified method for that
 object.
@@ -597,14 +647,13 @@ reference method interactively.
 
 }
 \author{
-John Chambers
+  John Chambers
 }
 
-
- \examples{
+\examples{
 ## a simple editor for matrix objects.  Method  $edit() changes some
 ## range of values; method $undo() undoes the last edit.
-mEditor <- setRefClass("matrixEditor",
+mEdit <- setRefClass("mEdit",
       fields = list( data = "matrix",
         edits = "list"),
       methods = list(
@@ -630,29 +679,39 @@ mEditor <- setRefClass("matrixEditor",
          ## trim the edits list
          length(edits) <<- length(edits) - 2
          invisible(prev)
+     },
+     show = function() {
+       'Method for automatically printing matrix editors'
+       cat("Reference matrix editor object of class",
+          classLabel(class(.self)), "\n")
+       cat("Data: \n")
+       methods::show(data)
+       cat("Undo list is of length", length(edits), "\n")
      }
      ))
-    
+
 xMat <- matrix(1:12,4,3)
-xx <- mEditor$new(data = xMat)
+xx <- mEdit$new(data = xMat)
 xx$edit(2, 2, 0)
-xx$data
+xx
 xx$undo()
-mEditor$help("undo")
+mEdit$help("undo")
 stopifnot(all.equal(xx$data, xMat))
 
+utils::str(xx) # show fields and names of non-trivial methods
+
 ## add a method to save the object
-mEditor$methods(
+mEdit$methods(
      save = function(file) {
        'Save the current object on the file
         in R external object format.
        '
          base::save(.self, file = file)
      }
-)  
+)
 
 tf <- tempfile()
-xx$save(tf) #$
+xx$save(tf)
 \dontshow{
 load(tf)
 unlink(tf)
@@ -661,9 +720,9 @@ stopifnot(identical(xx$data, .self$data))
 
 \dontrun{
 ## Inheriting a reference class:  a matrix viewer
-mv <- setRefClass("matrixViewer", 
+mv <- setRefClass("matrixViewer",
     fields = c("viewerDevice", "viewerFile"),
-    contains = "matrixEditor",
+    contains = "mEdit",
     methods = list( view = function() {
         dd <- dev.cur(); dev.set(viewerDevice)
         devAskNewPage(FALSE)
@@ -676,7 +735,7 @@ mv <- setRefClass("matrixViewer",
           }))
 
 ## initialize and finalize methods
-mv$methods( initialize = 
+mv$methods( initialize =
   function(file = "./matrixView.pdf", ...) {
     viewerFile <<- file
     pdf(viewerFile)
@@ -691,11 +750,11 @@ mv$methods( initialize =
 ## debugging an object: call browser() in method $edit()
 xx$trace(edit, browser)
 
-## debugging all objects from class mEditor in method $undo()
-mEditor$trace(undo, browser)
+## debugging all objects from class mEdit in method $undo()
+mEdit$trace(undo, browser)
 }
 \dontshow{
-removeClass("matrixEditor")
+removeClass("mEdit")
 resetGeneric("$")
 resetGeneric("initialize")
 } %$

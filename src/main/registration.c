@@ -239,12 +239,13 @@ static R_CallMethodDef callMethods [] = {
 
     /* base graphics */
     CALLDEF(Rg_contourDef, 0),
-    CALLDEF(Rg_readonlypars, 0),
 
     CALLDEF(bitwiseNot, 1),
     CALLDEF(bitwiseAnd, 2),
     CALLDEF(bitwiseOr,  2),
     CALLDEF(bitwiseXor, 2),
+
+    CALLDEF(crc64ToString, 1),
 
     {NULL, NULL, 0}
 };

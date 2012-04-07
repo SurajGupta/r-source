@@ -10,9 +10,9 @@ msgid ""
 msgstr ""
 "Project-Id-Version: R 2.11.0\n"
 "Report-Msgid-Bugs-To: bugs@r-project.org\n"
-"POT-Creation-Date: 2011-03-30 20:23\n"
-"PO-Revision-Date: 2011-03-30 02:42+0300\n"
-"Last-Translator: Anton Korobeynikov <asl at math dot spbu dot ru>\n"
+"POT-Creation-Date: 2011-10-17 10:14\n"
+"PO-Revision-Date: 2011-10-18 23:02-0600\n"
+"Last-Translator: Alexey Shipunov <dactylorhiza@gmail.com>\n"
 "Language-Team: Russian\n"
 "Language: \n"
 "MIME-Version: 1.0\n"
@@ -30,8 +30,8 @@ msgstr ""
 "указывающим на\n"
 "   файл документации"
 
-msgid "no documentation for '%s' found in package '%s'"
-msgstr "для функции '%s' из пакета '%s' нет документации"
+msgid "no documentation for %s found in package %s"
+msgstr "для функции %s из пакета %s нет документации"
 
 msgid "document not found"
 msgstr "документ не найден"
@@ -42,23 +42,23 @@ msgstr "Поисковый запрос должен быть послан в"
 msgid "The results page should open in your browser shortly"
 msgstr "Страница с результатами должна скоро открыться в браузере"
 
-msgid "reference to unknown chunk '%s'"
-msgstr "ссылка на неизвестный фрагмент '%s'"
+msgid "reference to unknown chunk %s"
+msgstr "ссылка на неизвестный фрагмент %s"
 
-msgid "no Sweave file with name '%s' found"
-msgstr "Sweave-файл с именем '%s' не найден"
+msgid "no Sweave file with name %s found"
+msgstr "Sweave-файл с именем %s не найден"
 
-msgid "%d Sweave files for basename '%s' found:"
-msgstr "%d Sweave-файлов с базовым именем '%s' найдено:"
+msgid "%d Sweave files for basename %s found:"
+msgstr "%d Sweave-файлов с базовым именем %s найдено:"
 
 msgid "more than one syntax specification found, using the first one"
 msgstr "найдено более одного указания на синтаксис, использую первое"
 
-msgid "object '%s' does not have class \"SweaveSyntax\""
-msgstr "у объекта '%s' нет класса \"SweaveSyntax\""
+msgid "object %s does not have class \"SweaveSyntax\""
+msgstr "у объекта %s нет класса \"SweaveSyntax\""
 
-msgid "recursive Sweave input '%s' in stack"
-msgstr "рекурсивный Sweave-ввод '%s' в стек"
+msgid "recursive Sweave input %s in stack"
+msgstr "рекурсивный Sweave-ввод %s в стек"
 
 msgid "target syntax not of class \"SweaveSyntax\""
 msgstr "целевой синтаксис не имеет класса \"SweaveSyntax\""
@@ -73,17 +73,26 @@ msgstr ""
 "ошибка разбора или пустая опция в\n"
 "%s"
 
-msgid "path to '%s' contains spaces,"
-msgstr "путь у '%s' содержит пробелов,"
+msgid "Warning: unknown option"
+msgstr "Предупреждение: неизвестная опция"
+
+msgid "Created PDF document"
+msgstr "Созданный документ PDF"
+
+msgid "path to %s contains spaces,"
+msgstr "путь у %s содержит пробелы,"
 
 msgid "this may cause problems when running LaTeX"
 msgstr "это может привести к проблемам с LaTeX"
 
-msgid "\\SweaveInput is not compatible with concordances."
-msgstr ""
+msgid "invalid value for %s : %s"
+msgstr "неправильное значение %s: %s"
 
-msgid "invalid value for '%s' : %s"
-msgstr "неправильное значение '%s': %s"
+msgid "value of 'results' option should be lowercase"
+msgstr "значение опции 'results' должно быть в нижнем регистре"
+
+msgid "value of 'strip.white' option should be lowercase"
+msgstr "значение опции 'strip.white' должно быть в нижнем регистре"
 
 msgid "elements of 'what' after the first will be ignored"
 msgstr "элементы 'what' после первого будут пропущены"
@@ -123,11 +132,8 @@ msgstr "Не найдено миниатюр в"
 msgid "call"
 msgstr "вызов"
 
-msgid "Package '"
-msgstr "Пакет '"
-
-msgid "' DESCRIPTION not found."
-msgstr "' DESCRIPTION не найдено."
+msgid "Package %s: DESCRIPTION not found"
+msgstr "Пакет %s: DESCRIPTION не найдено"
 
 msgid "'file' must be NULL, a character string or a connection"
 msgstr "'file' должен быть NULL, текстовой строкой или соединением"
@@ -143,29 +149,23 @@ msgstr "Не все аргументы имеют одну длину, следующие надо зациклить: %s"
 msgid ","
 msgstr ","
 
-msgid "Use either 'given' or 'first'/'middle' but not both."
-msgstr "Используйте либо 'given' или 'first'/'middle', но не оба сразу."
+msgid "Use either %s or %s/%s but not both."
+msgstr "Используйте либо %s, либо %s/%s, но не оба сразу."
 
-msgid "It is recommended to use 'given' instead of 'first'."
-msgstr "Рекомендуется использовать 'given' вместо 'first'."
+msgid "It is recommended to use %s instead of %s."
+msgstr "Рекомендуется использовать %s вместо %s."
 
-msgid "It is recommended to use 'given' instead of 'middle'."
-msgstr "рекомендуется использовать 'given' вместо 'middle'."
-
-msgid "Use either 'family' or 'last' but not both."
-msgstr "Используйте либо 'family', либо 'last', но не оба сразу."
-
-msgid "It is recommended to use 'family' instead of 'last'."
-msgstr "Рекомендуется использовать 'family' вместо 'last'."
+msgid "Use either %s or %s but not both."
+msgstr "Используйте либо %s, либо %s, но не оба сразу."
 
 msgid "Invalid role specification(s): %s."
 msgstr "Неправильное указание роли: %s"
 
-msgid "It is recommended to use given/family instead of first/middle/last."
-msgstr "Рекомендуется использовать given/family вместо first/middle/last."
+msgid "It is recommended to use %s/%s instead of %s/%s/%s."
+msgstr "Рекомендуется использовать %s/%s вместо %s/%s/%s."
 
-msgid "method is just applicable to 'person' objects"
-msgstr "метод не подходит для объектов 'person'"
+msgid "method is just applicable to %s objects"
+msgstr "метод не подходит для объектов %s"
 
 msgid "all arguments must be of class \"person\""
 msgstr "все аргументы должны быть класса \"person\""
@@ -176,38 +176,30 @@ msgstr "по крайней мере одно поле надо определить"
 msgid "all fields have to be named"
 msgstr "все поля надо поименовать"
 
-msgid "'bibtype' has to be one of"
-msgstr "'bibtype' не имеет ни одного из"
+msgid "%s has to be one of %s"
+msgstr "%s должен быть одним из %s"
 
-msgid "A bibentry of bibtype '"
-msgstr "Библиографическая запись типа bibtype '"
+msgid "A bibentry of bibtype %s has to correctly specify the field(s): %s"
+msgstr ""
+"Библиографическая запись типа %s имеет неправильно определенные пол(я): %s"
 
-msgid "' has to correctly specify the field(s):"
-msgstr "' должна корректно определять пол(я):"
+msgid "%s should be one of %s"
+msgstr "%s должен быть одним из %s"
 
-msgid "'style' should be one of %s"
-msgstr "'style' должен быть одним из %s"
+msgid "A bibentry of bibtype %s has to specify the field(s): %s"
+msgstr "Библиографическая запись типа %s должна определять пол(я): %s"
 
-msgid "' has to specify the field(s):"
-msgstr "' должна определять пол(я):"
-
-msgid "method is just applicable to 'bibentry' objects"
-msgstr "метод подходит только для объектов 'bibentry'"
-
-msgid "package '%s' not found"
-msgstr "пакет '%s' не найден"
+msgid "package %s not found"
+msgstr "пакет %s не найден"
 
 msgid "broken installation, no CITATION file in the base package."
 msgstr "нерабочая установка, в пакете base нет файла CITATION."
 
-msgid "no date field in DESCRIPTION file of package '%s'"
-msgstr "в файле DESCRIPTION пакета '%s' нет поля date"
+msgid "no date field in DESCRIPTION file of package %s"
+msgstr "в файле DESCRIPTION пакета %s нет поля date"
 
-msgid "could not determine year for '%s' from package DESCRIPTION file"
-msgstr "не могу определить год для '%s' из файла DESCRIPTION пакета"
-
-msgid "Enhanced author specification provides no authors."
-msgstr "Улучшенный перечень авторов не содержит ни одного автора."
+msgid "could not determine year for %s from package DESCRIPTION file"
+msgstr "не могу определить год для %s из файла DESCRIPTION пакета"
 
 msgid "m < 0"
 msgstr "m < 0"
@@ -230,14 +222,14 @@ msgstr "файлы данных перемещены из пакета 'base' в пакет 'datasets'"
 msgid "datasets have been moved from package 'stats' to package 'datasets'"
 msgstr "файлы данных перемещены из пакета 'stats' в пакет 'datasets'"
 
-msgid "data index for package '%s' is invalid and will be ignored"
-msgstr "индекс данных пакета '%s' неправильный и будет пропущен"
+msgid "data index for package %s is invalid and will be ignored"
+msgstr "индекс данных пакета %s неправильный и будет пропущен"
 
-msgid "file 'filelist' is missing for directory '%s'"
-msgstr "файл 'filelist' в папке '%s' пропущен"
+msgid "file 'filelist' is missing for directory %s"
+msgstr "файл 'filelist' в папке %s не найден"
 
-msgid "data set '%s' not found"
-msgstr "данные '%s' не найдены"
+msgid "data set %s not found"
+msgstr "данные %s не найдены"
 
 msgid "kind '%s' not yet implemented"
 msgstr "'%s' еще не реализован"
@@ -289,15 +281,15 @@ msgstr ""
 msgid "No suitable frames for recover()"
 msgstr "Нет подходящих кадров для recover()"
 
-msgid "No demo found for topic '%s'"
-msgstr "Для темы '%s' не найден демо"
+msgid "No demo found for topic %s"
+msgstr "Для темы %s не найден демо"
 
 msgid ""
-"Demo for topic '%s' found more than once,\n"
-"using the one found in '%s'"
+"Demo for topic %s' found more than once,\n"
+"using the one found in %s"
 msgstr ""
-"Для темы '%s' найдено более одного демо,\n"
-"использую тот, который найден в '%s'"
+"Для темы %s' найдено более одного демо,\n"
+"использую тот, который найден в %s"
 
 msgid "invalid 'data' argument"
 msgstr "неправильный аргумент 'data'"
@@ -329,11 +321,11 @@ msgstr "класс(ы) у \"name' будут пропущены"
 msgid "cannot edit NULL row names"
 msgstr "не могу редактировать NULL-имена строк"
 
-msgid "no help found for '%s'"
-msgstr "в '%s' не найдено помощи"
+msgid "no help found for %s"
+msgstr "в %s не найдено помощи"
 
-msgid "'%s' has a help file but no examples"
-msgstr "у '%s' есть файл помощи, но нет примеров"
+msgid "%s has a help file but no examples"
+msgstr "у %s есть файл помощи, но нет примеров"
 
 msgid "test '%s' is not available"
 msgstr "тест '%s' недоступен"
@@ -362,17 +354,23 @@ msgstr ""
 "'topic' должен быть именем, текстовой строкой единичной длины или "
 "зарезервированным словом"
 
-msgid "No documentation for '%s' in specified packages and libraries:"
-msgstr "В указанных пакетах и библиотеках нет документации для '%s':"
+msgid "Postscript offline help is deprecated"
+msgstr "Локальная помощь Postscript устарела"
 
-msgid "you could try '??%s'"
-msgstr "можете попробовать '??%s'"
+msgid "No documentation for %s in specified packages and libraries:"
+msgstr "В указанных пакетах и библиотеках нет документации для %s:"
+
+msgid "you could try %s"
+msgstr "можете попробовать %s"
+
+msgid "??"
+msgstr "??"
 
 msgid ""
-"Help for topic '%s' is not in any loaded package but can be found in the "
+"Help for topic %s is not in any loaded package but can be found in the "
 "following packages:"
 msgstr ""
-"Справки по '%s' нет в загруженных пакетах, но она может быть найдена в "
+"Справки по %s нет в загруженных пакетах, но она может быть найдена в "
 "следующих пакетах:"
 
 msgid "Package"
@@ -381,8 +379,8 @@ msgstr "Пакет"
 msgid "Library"
 msgstr "Библиотека"
 
-msgid "Help on topic '%s' was found in the following packages:"
-msgstr "Справка по '%s' найдена в следующих пакетах:"
+msgid "Help on topic %s was found in the following packages:"
+msgstr "Справка по %s найдена в следующих пакетах:"
 
 msgid "Choose one"
 msgstr "Выберите один"
@@ -393,11 +391,11 @@ msgstr "Использую первое совпадение..."
 msgid "HTML help is unavailable"
 msgstr "Помощь HTML недоступна"
 
-msgid "R Help on '%s'"
-msgstr "Помощь R по '%s'"
+msgid "R Help on %s"
+msgstr "Помощь R по %s"
 
-msgid "invalid '%s' argument"
-msgstr "неправильный аргумент '%s'"
+msgid "invalid %s argument"
+msgstr "неправильный аргумент %s"
 
 msgid ""
 "package %s exists but was not installed under R >= 2.10.0 so help cannot be "
@@ -406,14 +404,29 @@ msgstr ""
 "пакет %s существует, но не установлен под R >= 2.10.0, поэтому помощь "
 "недоступна"
 
-msgid "argument '%s' must be a single character string"
-msgstr "аргумент '%s' должен быть одной текстовой строкой"
+msgid "running %s failed"
+msgstr "запуск %s не удался"
+
+msgid "%s produced no output file: sent to printer?"
+msgstr "%s не дал выходного файла: послан на принтер?"
+
+msgid "creation of %s failed"
+msgstr "создание %s не удалось"
+
+msgid "Saving help page to"
+msgstr "Сохраняю страницу помощи в"
+
+msgid "argument %s must be a single character string"
+msgstr "аргумент %s должен быть одной текстовой строкой"
 
 msgid "incorrect field specification"
 msgstr "неправильное указание поля"
 
 msgid "do not know what to search"
 msgstr "непонятно, что искать"
+
+msgid "incorrect type specification"
+msgstr "неправильное указание типа"
 
 msgid "argument 'help.db' is deprecated"
 msgstr "аргумент 'help.db' устарел"
@@ -430,11 +443,11 @@ msgstr "Пакеты {readRDS() последовательно}:"
 msgid "."
 msgstr "."
 
-msgid "could not find package '%s'"
-msgstr "не могу найти пакет '%s'"
+msgid "could not find package %s"
+msgstr "не могу найти пакет %s"
 
-msgid "package '%s' has empty hsearch data - strangely"
-msgstr "пакет '%s' странным образом имеет пустые данные hsearch"
+msgid "package %s has empty hsearch data - strangely"
+msgstr "пакет %s странным образом имеет пустые данные hsearch"
 
 msgid "no hsearch.rds meta data for package"
 msgstr "нет метаданных hsearch.rds к пакету"
@@ -454,8 +467,8 @@ msgstr "Сохраняю базу данных..."
 msgid "... database rebuilt"
 msgstr "... база данных перестроена"
 
-msgid "no information in the database for package '%s': need 'rebuild = TRUE'?"
-msgstr "в базе данных нет информации о пакете '%s': надо 'rebuild = TRUE'?"
+msgid "no information in the database for package %s: need 'rebuild = TRUE'?"
+msgstr "в базе данных нет информации о пакете %s: надо 'rebuild = TRUE'?"
 
 msgid "incorrect 'agrep' specification"
 msgstr "неправильное указание 'agrep'"
@@ -553,6 +566,12 @@ msgstr "метод S3 '%s' не найден"
 msgid "environment specified is not a package"
 msgstr "указанное окружение не является пакетом"
 
+msgid "changing locked binding for %s in %s whilst loading %s"
+msgstr "изменяю заблокированную привязку для %s в %s во время загрузки %s"
+
+msgid "changing locked binding for %s in %s"
+msgstr "изменяю заблокированную привязку для %s в %s"
+
 msgid "'fixInNamespace' requires a name"
 msgstr "'fixInNamespace' требует имя"
 
@@ -561,9 +580,6 @@ msgstr "можно использовать только числовые индексы"
 
 msgid "cannot create directory '%s'"
 msgstr "не могу создать папку '%s'"
-
-msgid "'namespace' must be a single logical"
-msgstr "'namepace' должно быть простым логическим значением"
 
 msgid "'code_files' must be a character vector"
 msgstr "'code_files' должны быть текстовым вектором"
@@ -586,6 +602,13 @@ msgstr "папка '%s' уже есть"
 msgid "Creating DESCRIPTION ..."
 msgstr "Создаю DESCRIPTION..."
 
+msgid "From R 2.14.0 on, every package gets a NAMESPACE."
+msgstr ""
+
+#, fuzzy
+msgid "Argument 'namespace' is deprecated."
+msgstr "аргумент 'help.db' устарел"
+
 msgid "Creating NAMESPACE ..."
 msgstr "Создаю NAMESPACE..."
 
@@ -594,6 +617,13 @@ msgstr "Создаю Read-and-delete-me..."
 
 msgid "Saving functions and data ..."
 msgstr "Сохраняю функции и данные..."
+
+msgid ""
+"Generic functions and other S4 objects (e.g., '%s') cannot be dumped; use "
+"the code_files= argument"
+msgstr ""
+"Общие функции и другие объекты S4 (например, '%s') не могут быть сброшены; "
+"используйте аргумент code_files="
 
 msgid "Copying code files ..."
 msgstr "Копирую файлы с кодом..."
@@ -622,8 +652,11 @@ msgstr "недоступен индекс для хранилища %s"
 msgid "Invalid 'filters' argument."
 msgstr "Неправильные аргументы 'filter'"
 
-msgid "invalid 'oldPkgs'; must be a result from old.packages()"
-msgstr "неверное значение 'oldPkgs'; должен быть результатом old.packages()"
+msgid ""
+"invalid 'oldPkgs'; must be a character vector or a result from old.packages()"
+msgstr ""
+"неверное значение oldPkgs; должна быть текстовая строка или результат old."
+"packages()"
 
 msgid "illformed 'instPkgs' matrix"
 msgstr "Неверная матрица 'instPkgs'"
@@ -631,8 +664,11 @@ msgstr "Неверная матрица 'instPkgs'"
 msgid "no installed packages for (invalid?) 'lib.loc=%s'"
 msgstr "нет установленных пакетов для (неправильного?) 'lib.loc=%s'"
 
-msgid "metadata of '%s' is corrupt"
-msgstr "метаданные пакета '%s' повреждены"
+msgid "no new packages are available"
+msgstr "нет новых пакетов"
+
+msgid "metadata of %s is corrupt"
+msgstr "метаданные пакета %s повреждены"
 
 msgid "'priority' must be character or NULL"
 msgstr "'priority' должен быть текстом или NULL"
@@ -650,14 +686,14 @@ msgstr ""
 msgid "'destdir' is not a directory"
 msgstr "'destdir' не является папкой"
 
-msgid "no package '%s' at the repositories"
-msgstr "в хранилище нет пакета '%s'"
+msgid "no package %s at the repositories"
+msgstr "в хранилищах нет пакета %s"
 
-msgid "package '%s' does not exist on the local repository"
-msgstr "в локальном хранилище нет пакета '%s'"
+msgid "package %s does not exist on the local repository"
+msgstr "в локальном хранилище нет пакета %s"
 
-msgid "download of package '%s' failed"
-msgstr "скачивание пакета '%s' не удалось"
+msgid "download of package %s failed"
+msgstr "скачивание пакета %s не удалось"
 
 msgid "--- Please select a CRAN mirror for use in this session ---"
 msgstr ""
@@ -678,8 +714,8 @@ msgstr "не могу установить хранилища неинтерактивно"
 msgid "--- Please select repositories for use in this session ---"
 msgstr "--- Пожалуйста, выберите хранилища для использования в этой сессии ---"
 
-msgid "'%s' must be supplied"
-msgstr "надо указать '%s'"
+msgid "%s must be supplied"
+msgstr "надо указать %s"
 
 msgid "every package depends on at least one other"
 msgstr "каждый пакет зависит по меньшей мере от одного другого"
@@ -709,11 +745,11 @@ msgstr "'lib = \"%s\"' не для записи"
 
 msgid ""
 "Would you like to create a personal library\n"
-"'%s'\n"
+"%s\n"
 "to install packages into?"
 msgstr ""
 "Не хотите ли Вы создать персональную библиотеку\n"
-"'%s'\n"
+"%s\n"
 "для того чтобы инсталлировать пакеты в нее?"
 
 msgid "unable to install packages"
@@ -728,10 +764,10 @@ msgstr "выставляю 'repos = NULL' на основе имени файла"
 msgid "cannot install MacOS X binary packages on Windows"
 msgstr "не могу установить бинарные пакеты MacOS X под Windows"
 
-msgid "cannot install MacOS X binary packages on this plaform"
+msgid "cannot install MacOS X binary packages on this platform"
 msgstr "не могу установить бинарные пакеты MacOS X на этой платформе"
 
-msgid "cannot install Windows binary packages on this plaform"
+msgid "cannot install Windows binary packages on this platform"
 msgstr "не могу установить бинарные пакеты Windows на этой платформе"
 
 msgid ""
@@ -741,11 +777,11 @@ msgstr ""
 "Эта версия R не подготовлена для инсталляции пакетов из исходников\n"
 "Если она была поставлена из RPM, Вам, возможно, потребуется R-devel RPM"
 
-msgid "installation of package '%s' had non-zero exit status"
-msgstr "установка пакета '%s' имеет ненулевой статус выхода"
+msgid "installation of package %s had non-zero exit status"
+msgstr "установка пакета %s имеет ненулевой статус выхода"
 
-msgid "unable to create temporary directory '%s'"
-msgstr "не могу создать временную папку '%s'"
+msgid "unable to create temporary directory %s"
+msgstr "не могу создать временную директорию %s"
 
 msgid ""
 "installation of one of more packages failed,\n"
@@ -764,6 +800,9 @@ msgstr ""
 msgid "no object named '%s' to show"
 msgstr "нет объекта с именем '%s' для показа"
 
+msgid "'file' must be \"\" or an open connection object"
+msgstr "'file' должен быть \"\" или открытым соединением"
+
 msgid "must have max > min"
 msgstr "должен быть max > min"
 
@@ -773,35 +812,33 @@ msgstr "'pb' не из класса \"txtProgressBar\""
 msgid "cannot determine a usable name"
 msgstr "не могу определить имя, которое можно использовать"
 
-msgid "Created file named '%s'."
-msgstr "Создан файл по имени '%s'."
+msgid "Created file named %s."
+msgstr "Создан файл с именем %s."
 
 msgid "Edit the file and move it to the appropriate directory."
 msgstr "Редактируется файл и перемещается в положенную папку."
 
-msgid ""
-"no documentation of type '%s' and topic '%s' (or error in processing help)"
-msgstr ""
-"нет документации на тип '%s' и разделу '%s' (или ошибка в обработке помощи)"
+msgid "no documentation of type %s and topic %s (or error in processing help)"
+msgstr "нет документации на тип %s и раздел %s (или ошибка в обработке помощи)"
 
 msgid ""
-"the object of class \"%s\" in the function call '%s' could not be used as a "
+"the object of class \"%s\" in the function call %s could not be used as a "
 "documentation topic"
 msgstr ""
-"объект класса \"%s\" в вызове функции '%s' нельзя использовать как раздел "
+"объект класса \"%s\" в вызове функции %s нельзя использовать как раздел "
 "документации"
 
-msgid "no methods for '%s' and no documentation for it as a function"
-msgstr "для '%s' нет методов и нет документации как по функции"
+msgid "no methods for %s and no documentation for it as a function"
+msgstr "для %s нет методов и нет документации для него как функции"
 
-msgid "error in trying to evaluate the expression for argument '%s' (%s)"
-msgstr "ошибка при попытке выполнить выражение для аргумента '%s' (%s)"
+msgid "error in trying to evaluate the expression for argument %s (%s)"
+msgstr "ошибка при попытке выполнить выражение для аргумента %s (%s)"
 
-msgid "no method defined for function '%s' and signature '%s'"
-msgstr "для функции '%s' и подписи '%s' не определено метода"
+msgid "no method defined for function %s and signature %s"
+msgstr "для функции %s и подписи %s не определено метода"
 
-msgid "no documentation for function '%s' and signature '%s'"
-msgstr "для функции '%s' и подписи '%s' нет документации"
+msgid "no documentation for function %s and signature %s"
+msgstr "для функции %s и подписи %s нет документации"
 
 msgid "No DIF data on clipboard"
 msgstr "В буфере обмена нет DIF-данных"
@@ -998,17 +1035,17 @@ msgid "linked path is too long"
 msgstr "путь ссылки слишком длинный"
 
 msgid ""
-"vignette '%s' found more than once,\n"
-"using the one found in '%s'"
+"vignette %s found more than once,\n"
+"using the one found in %s"
 msgstr ""
-"миниатюра '%s' найдена больше одного раза,\n"
-"использую ту, которая найдена в '%s'"
+"миниатюра %s найдена больше одного раза,\n"
+"использую ту, которая найдена в %s"
 
-msgid "vignette '%s' *not* found"
-msgstr "миниатюра '%s' *не* найдена"
+msgid "vignette %s not found"
+msgstr "миниатюра %s не найдена"
 
-msgid "vignette '%s' has no PDF"
-msgstr "у миниатюры '%s' нет PDF"
+msgid "vignette %s has no PDF"
+msgstr "у миниатюры %s нет PDF"
 
 msgid "select.list() cannot be used non-interactively"
 msgstr "select.list() нельзя использовать неинтерактивно"
@@ -1078,23 +1115,11 @@ msgstr "не найдено метода скачивания"
 msgid "download had nonzero exit status"
 msgstr "у скачивания ненулевой статус выхода"
 
-msgid "running '%s' failed"
-msgstr "запуск '%s' не удался"
-
-msgid "'%s' produced no output file: sent to printer?"
-msgstr "'%s' не дал выходного файла: послать на принтер?"
-
-msgid "creation of '%s' failed"
-msgstr "создание '%s' не удалось"
-
-msgid "Saving help page to"
-msgstr "Сохраняю страницу помощи в"
-
 msgid "'tar' returned non-zero exit code %d"
 msgstr "'tar' вернул ненулевой код выхода %d"
 
-msgid "package '%s' successfully unpacked and MD5 sums checked"
-msgstr "пакет '%s' успешно распакован, MD5-суммы проверены"
+msgid "package %s successfully unpacked and MD5 sums checked"
+msgstr "пакет %s успешно распакован, MD5-суммы проверены"
 
 msgid "ERROR: failed to lock directory"
 msgstr "ОШИБКА: невозможно заблокировать каталог"
@@ -1109,11 +1134,11 @@ msgstr ""
 msgid "ERROR: failed to create lock directory"
 msgstr "ОШИБКА: не могу создать каталог для блокировок"
 
-msgid "restored '%s'"
-msgstr "восстановлен '%s'"
+msgid "restored %s"
+msgstr "восстановлен %s"
 
-msgid "unable to move temporary installation '%s' to '%s'"
-msgstr "не могу перенести временную установку из '%s' в '%s'"
+msgid "unable to move temporary installation %s to %s"
+msgstr "не могу перенести временную установку из %s в %s"
 
 msgid "cannot remove prior installation of package"
 msgstr "не могу удалить прежнюю установку пакета"
@@ -1127,17 +1152,24 @@ msgstr "'memory.limit()' -- Windows-специфичный"
 msgid "method 'mailx' is Unix-only"
 msgstr "метод 'mailx' только для Unix"
 
-msgid "zipfile '%s' not found"
-msgstr "zip-файл '%s' не найден"
+msgid ""
+"If nothing happens, you should open\n"
+"%s yourself"
+msgstr ""
+"Если ничего не произойдет, надо открыть\n"
+"%s самостоятельно"
 
-msgid "failed to create '%s'"
-msgstr "не удалось создать '%s'"
+msgid "zipfile %s not found"
+msgstr "zip-файл %s не найден"
 
-msgid "there is no 'libs' directory in package '%s'"
-msgstr "нет папки 'libs' в пакете '%s'"
+msgid "failed to create %s"
+msgstr "не удалось создать %s"
 
-msgid "cannot remove prior installation of package '%s'"
-msgstr "не могу удалить прежнюю установку пакета '%s'"
+msgid "there is no 'libs' directory in package %s"
+msgstr "нет директории 'libs' в пакете %s"
+
+msgid "cannot remove prior installation of package %s"
+msgstr "не могу удалить прежнюю установку пакета %s"
 
 msgid "winDialog() cannot be used non-interactively"
 msgstr "winDialog() нельзя использовать неинтерактивно"
@@ -1178,17 +1210,45 @@ msgstr[0] "устанавливаю также зависимость"
 msgstr[1] "устанавливаю также зависимости"
 msgstr[2] "устанавливаю также зависимости"
 
-msgid "'lib' element '%s' is not a writable directory"
-msgid_plural "'lib' elements '%s' are not writable directories"
+msgid "'lib' element %s is not a writable directory"
+msgid_plural "'lib' elements %s are not writable directories"
 msgstr[0] "'lib' элемент '%s' -- папка не для записи"
 msgstr[1] "'lib' элементы '%s' -- папки не для записи"
 msgstr[2] "'lib' элементы '%s' -- папки не для записи"
 
-msgid "package '%s' is in use and will not be installed"
-msgid_plural "packages '%s' are in use and will not be installed"
+msgid "package %s is in use and will not be installed"
+msgid_plural "packages %s are in use and will not be installed"
 msgstr[0] "пакет '%s' сейчас используется и не будет установлен"
 msgstr[1] "пакеты '%s' сейчас используются и не будут установлены"
 msgstr[2] "пакеты '%s' сейчас используются и не будут установлены"
+
+#~ msgid "Use either 'given' or 'first'/'middle' but not both."
+#~ msgstr "Используйте либо 'given' или 'first'/'middle', но не оба сразу."
+
+#~ msgid "It is recommended to use 'given' instead of 'middle'."
+#~ msgstr "рекомендуется использовать 'given' вместо 'middle'."
+
+#~ msgid "It is recommended to use 'family' instead of 'last'."
+#~ msgstr "Рекомендуется использовать 'family' вместо 'last'."
+
+#~ msgid "It is recommended to use given/family instead of first/middle/last."
+#~ msgstr "Рекомендуется использовать given/family вместо first/middle/last."
+
+#~ msgid "A bibentry of bibtype '"
+#~ msgstr "Библиографическая запись типа bibtype '"
+
+#~ msgid "method is just applicable to 'bibentry' objects"
+#~ msgstr "метод подходит только для объектов 'bibentry'"
+
+#, fuzzy
+#~ msgid "Enhanced authors specification provides no authors."
+#~ msgstr "Улучшенный перечень авторов не содержит ни одного автора."
+
+#~ msgid "'namespace' must be a single logical"
+#~ msgstr "'namepace' должно быть простым логическим значением"
+
+#~ msgid "Package '"
+#~ msgstr "Пакет '"
 
 #~ msgid "You can now run LaTeX on '%s'"
 #~ msgstr "Теперь можно запустить LaTeX на '%s'"

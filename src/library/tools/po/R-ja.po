@@ -2,9 +2,9 @@ msgid ""
 msgstr ""
 "Project-Id-Version: R 2.1.0 \n"
 "Report-Msgid-Bugs-To: bugs@r-project.org\n"
-"POT-Creation-Date: 2011-03-22 15:33\n"
-"PO-Revision-Date: 2011-03-25 14:21+0900 \n"
-"Last-Translator: Triad sou <triadsou@gmail.com> \n"
+"POT-Creation-Date: 2011-10-03 18:49\n"
+"PO-Revision-Date: 2011-10-23 00:23+0900 \n"
+"Last-Translator: Masafumi OKADA <mokada@mail.ne.jp> \n"
 "Language-Team: RjpWiki Message Translation Team <mokada@md.tsukuba.ac.jp> \n"
 "Language: \n"
 "MIME-Version: 1.0 \n"
@@ -315,6 +315,21 @@ msgstr ""
 " マニュアル'Writing R Extensions' の章'Creating R packages'中のDESCRIPTION"
 "ファイルにある情報を参照してください． "
 
+msgid "Malformed Authors@R field:"
+msgstr " 不正なAuthors@Rフィールドです。 "
+
+msgid "Cannot extract Author field from Authors@R field:"
+msgstr "Authors@RフィールドからAuthorフィールドを抽出できません: "
+
+msgid "Authors@R field gives no person with author role."
+msgstr "Authors@Rフィールドに役割が明示された人がいません "
+
+msgid "Cannot extract Maintainer field from Authors@R field:"
+msgstr "Authors@RフィールドからMaintainerフィールドを抽出できません: "
+
+msgid "Authors@R field gives no person with maintainer role and email address."
+msgstr "Authors@Rにメインテナの役割とe-mailアドレスを持った人がいません。 "
+
 msgid "Encoding '%s' is not portable"
 msgstr " エンコーディング '%s' は移植出来ません "
 
@@ -368,6 +383,48 @@ msgstr ""
 msgid "found %s"
 msgstr " %s が見つかりました "
 
+msgid "File %s:"
+msgstr " ファイル '%s'： "
+
+msgid "%s has wrong argument list %s"
+msgstr " %sは誤った引数リスト%sを持っています "
+
+msgid ","
+msgstr " , "
+
+msgid "%s calls:"
+msgstr " %sの呼び出し: "
+
+msgid ""
+"Package startup functions should have two arguments with names starting with "
+"%s and %s, respectively."
+msgstr ""
+" パッケージのスターツアップ関数は%sと%sで始まる名前を持つ２つの引数が必要で"
+"す。 "
+
+msgid "lib"
+msgstr " lib "
+
+msgid "pkg"
+msgstr " pkg "
+
+msgid "Package startup functions should not change the search path."
+msgstr " パッケージのスターツアップ関数はサーチパスを変更できません。 "
+
+msgid "Package startup functions should use %s to generate messages."
+msgstr ""
+" パッケージのスターツアップ関数は%sを使ってメッセージを生成する必要がありま"
+"す。 "
+
+msgid "packageStartupMessage"
+msgstr " packageStartupMessage "
+
+msgid "See section %s in ?.onAttach."
+msgstr " ?.onAttachのセクション%sを見てください。 "
+
+msgid "Good practice"
+msgstr " 良い方法です。 "
+
 msgid "package 'methods' is used but not declared"
 msgstr " パッケージ \"methods\" が使われていますが、宣言されていません "
 
@@ -403,9 +460,6 @@ msgstr " 総称的な g (以下の環境中） "
 
 msgid "where hasMethods(g, env) errors:"
 msgstr " hasMethods(g, env) のエラー： "
-
-msgid ","
-msgstr " , "
 
 msgid "May need something like"
 msgstr " 以下のようなものが必要なのでは: "
@@ -494,6 +548,9 @@ msgstr " 現在の作業ディレクトリを確認することができませ�
 msgid "no inputs"
 msgstr " 入力がありません "
 
+msgid "DVI output from Rd2dvi is deprecated"
+msgstr "Rd2dviからのDVI出力は廃止予定です。 "
+
 msgid "Error in running tools::texi2dvi"
 msgstr " tools::texi2dvi を実行中にエラーがありました "
 
@@ -502,6 +559,9 @@ msgstr " 2つ以上の\\examples節があります、1番目を用います "
 
 msgid "invalid value for '%s' : %s"
 msgstr " '%s' に対する不正な値 : %s "
+
+msgid "Only one Rd section per \\Sexpr is supported."
+msgstr " \\SexprはRdセクションを1つしか持てません。 "
 
 msgid "unable to create temp directory"
 msgstr " 仮ディレクトリを生成することが出来ません "
@@ -515,6 +575,10 @@ msgstr ""
 
 msgid "running 'make' failed"
 msgstr " make の実行に失敗しました "
+
+msgid "In '%s' vignettes '%s' and '%s' have the same vignette name"
+msgstr ""
+" '%s' において、ビニエット '%s' と '%s' は同じビニエット名になっています "
 
 msgid "argument 'vignette' must be of length 1"
 msgstr " 引数 'vignette' は長さ1でなければなりません "
@@ -530,12 +594,6 @@ msgstr " *** 誰かがパッケージ '%s' 中の Built 欄を壊しました **
 
 msgid "cannot open directory '%s'"
 msgstr " ディレクトリ '%s' を開くことが出来ません "
-
-msgid "WARNING: 'Depends' entry has multiple dependencies on R:"
-msgstr " 警告：'Depends' 項目は多重依存性を持ちます "
-
-msgid "only the first will be used in R < 2.7.0"
-msgstr " 最初のものだけが使われます "
 
 msgid ""
 "WARNING: omitting pointless dependence on 'R' without a version requirement"
@@ -572,11 +630,8 @@ msgstr ""
 msgid "cannot create directory '%s'"
 msgstr " ディレクトリ '%s' を生成することが出来ません "
 
-msgid "processing '"
-msgstr " 以下を処理中 ' "
-
-msgid "'"
-msgstr " , "
+msgid "processing"
+msgstr " 処理中 "
 
 msgid ""
 "running Sweave on vignette '%s' failed with message:\n"
@@ -611,26 +666,6 @@ msgstr " 指定された 'style' の変更が必要です "
 msgid "The default JSS style may not be modified."
 msgstr " 既定の JSS スタイルは変更できないかもしれません "
 
-msgid "--binary is deprecated"
-msgstr ""
-
-msgid "use of '--auto-zip' is defunct"
-msgstr " '--auto-zip'の使用は廃止になりました "
-
-msgid "use of '--use-zip-data' is defunct"
-msgstr " '--use-zip-data' の使用は廃止になりました "
-
-msgid "use of '--no-docs' is deprecated: use '--install-args' instead"
-msgstr ""
-" '--no-docs' の使用は推奨されません。代わりに '--install-args' を使用してくだ"
-"さい "
-
-msgid "** Options"
-msgstr " ** オプション "
-
-msgid "are only for '--binary'  and will be ignored"
-msgstr " 　は '--binary' 専用ですから無視されます "
-
 msgid "Error: cannot rename directory to"
 msgstr " エラー：ディレクトリの名前を以下に変更できません "
 
@@ -647,6 +682,9 @@ msgstr ""
 msgid "Error: no packages were specified"
 msgstr " エラー：パッケージが指定されていません "
 
+msgid "ERROR: cannot create check dir %s"
+msgstr " エラー：チェックディレクトリ '%s' を生成することが出来ません "
+
 msgid "package dir"
 msgstr " パッケージ dir "
 
@@ -656,8 +694,20 @@ msgstr " は存在しません "
 msgid "No files in this directory"
 msgstr " このディレクトリにはファイルが存在しません "
 
+msgid "Unrecognized search field:"
+msgstr " 認識できない検索フィールド: "
+
 msgid "No results found"
 msgstr " いかなる結果も見つかりません "
+
+msgid "Vignettes:"
+msgstr " ビニエット: "
+
+msgid "Code demonstrations:"
+msgstr " コード実例: "
+
+msgid "Help pages:"
+msgstr " ヘルプページ: "
 
 msgid "No help found for topic %s in any package."
 msgstr " トピック %s に対するヘルプはどんなパッケージにも見つかりません。 "
@@ -680,8 +730,11 @@ msgstr " リンク %s （パッケージ %s 中の）は所在不明です "
 msgid "No docs found for package %s"
 msgstr " package %s にドキュメントは見つけられませんでした "
 
-msgid "Only help files, %s, %s and files under %s in a package can be viewed"
-msgstr " ヘルプファイル%s, %s, パッケージの%s以下のファイルだけが閲覧できます "
+msgid ""
+"Only help files, %s, %s and files under %s and %s in a package can be viewed"
+msgstr ""
+" パッケージのヘルプファイル, %s, %s, %s 以下のファイル, %s だけが閲覧できま"
+"す "
 
 msgid "NEWS"
 msgstr "NEWS "
@@ -691,6 +744,9 @@ msgstr "DESCRIPTION "
 
 msgid "doc/"
 msgstr " doc/ "
+
+msgid "demo/"
+msgstr " demo/ "
 
 msgid "unsupported URL %s"
 msgstr " 未サポートのURL %s "
@@ -740,7 +796,6 @@ msgstr " 以下のパッケージ化されたインストール "
 msgid "as"
 msgstr " として "
 
-#, fuzzy
 msgid ""
 "'cleanup' exists but is not executable -- see the 'R Installation and "
 "Administration Manual'"
@@ -748,11 +803,17 @@ msgstr ""
 " 'cleanup' は存在しますが実行できません -- 参照 'R Installation and "
 "Adminstration Manual' "
 
+msgid "installing via 'install.libs.R' to"
+msgstr " 'install.libs.R' を用いて、以下にインストール中: "
+
 msgid "installing to"
-msgstr " にインストールしています "
+msgstr " 以下にインストール中: "
 
 msgid "generating debug symbols (dSYM)"
 msgstr " デバッグシンボル (dSYM) を生成中 "
+
+msgid "package %s successfully unpacked and MD5 sums checked"
+msgstr " パッケージ %s の解凍およびMD5サムの検証に成功しました "
 
 msgid ""
 "R include directory is empty -- perhaps need to install R-devel.rpm or "
@@ -820,8 +881,11 @@ msgstr " level-2 HTML リンクを検索... "
 msgid "there is no package called '%s'"
 msgstr " '%s' という名前のパッケージが見当たりません "
 
-msgid "name space must not be loaded."
+msgid "namespace must not be already loaded"
 msgstr " 名前空間はロードされてはいけません。 "
+
+msgid "all packages should have a NAMESPACE"
+msgstr " すべてのパッケージは NAMESPACE を持っていなければなりません "
 
 msgid "package seems to be using lazy loading for data already"
 msgstr ""
@@ -879,8 +943,29 @@ msgstr " 以下のセクションタイトルからバージョン情報を取�
 msgid "%s"
 msgstr " %s "
 
-msgid "Malformed NEWS.Rd file."
-msgstr " 不正な NEWS.Rd ファイルです． "
+msgid ""
+"Malformed NEWS.Rd file:\n"
+"Chunk starting\n"
+"  %s\n"
+"contains no \\itemize."
+msgstr ""
+"NEWS.Rd ファイルが壊れています: \n"
+"\n"
+" %s \n"
+" で始まるチャンクに、\\itemize が含まれていません "
+
+msgid ""
+"Malformed NEWS.Rd file:\n"
+"Chunk starting\n"
+"  %s\n"
+"contains more than one \\itemize.\n"
+"Using the first one."
+msgstr ""
+"NEWS.Rd ファイルが壊れています: \n"
+"\n"
+" %s \n"
+" ではじまるチャンクに、２つ以上の\\itemize が含まれています。 \n"
+" 最初の１つを使用します "
 
 msgid "Processing packages:"
 msgstr " パッケージを処理中： "
@@ -915,6 +1000,88 @@ msgstr " は既に以下のように定義されています "
 msgid "found encoding"
 msgstr " 見つけられたエンコーディング "
 
+msgid "%s must be a character string or a file/raw connection"
+msgstr ""
+" %s は文字列ベクトルかファイル、もしくはコネクションでなければなりません "
+
+msgid "PDF header not found"
+msgstr "PDFヘッダが見つかりませんでした "
+
+msgid "EOF marker not found"
+msgstr "EOFマーカーが見つかりませんでした "
+
+msgid "cannot find startxref"
+msgstr " startxref が見つかりません "
+
+msgid "cannot find xref table"
+msgstr " xref テーブルが見つかりません "
+
+msgid "cannot read xref table"
+msgstr " xref テーブルを読み込めません "
+
+msgid "wrong class"
+msgstr " クラスが間違っています "
+
+msgid "attempting to select less than one element"
+msgstr " 1個未満の要素を選択しようとしました "
+
+msgid "attempting to select more than one element"
+msgstr " 2個以上の要素を選択しようとしました "
+
+msgid "looking at %s"
+msgstr " %s を見ています "
+
+msgid "cannot read literal string object"
+msgstr " 文字列リテラルオブジェクトを読めません "
+
+msgid "cannot read hexadecimal string object"
+msgstr " 16進数文字列オブジェクトを読めません "
+
+msgid "cannot read name object"
+msgstr " 名前オブジェクトを読めません "
+
+msgid "cannot read array object"
+msgstr " 配列オブジェクトを読めません "
+
+msgid "cannot read dictionary object"
+msgstr " ディレクトリオブジェクトを読めません "
+
+msgid "cannot read stream object"
+msgstr " ストリームオブジェクトを読めません "
+
+msgid "cannot read indirect reference object"
+msgstr " 間接参照オブジェクトを読めません "
+
+msgid "cannot find object header at xrefed position %d"
+msgstr " クロスリファレンスされた位置 %d にオブジェクトヘッダが見つかりません "
+
+msgid "mismatch in object numbers (given: %d, found: %d)"
+msgstr " オブジェクト数に不一致があります( %d のはずが, %d 見つかりました ) "
+
+msgid "mismatch in generation numbers (given: %d, found: %d)"
+msgstr " 生成数に不一致があります (%d のはずが, %d 見つかりました) "
+
+msgid "cannot read stream data"
+msgstr " ストリームデータを読めません "
+
+msgid "invalid index in object stream lookup"
+msgstr " オブジェクトストリームの検索で不正なインデックスがあります "
+
+msgid "processing %s"
+msgstr " %s を処理中 "
+
+msgid "expanding %s"
+msgstr " %s を展開中 "
+
+msgid "unsupported filter %s"
+msgstr " 未サポートのフィルタ %s "
+
+msgid "unsupported flatedecode predictor %d"
+msgstr " 未サポートの flatedecode predictor %d "
+
+msgid "unsupported PNG filter %d"
+msgstr " 未サポートのPNGフィルタ %d "
+
 msgid "argument 'pkg' must be of length 1"
 msgstr " 引数 'pkg' は長さ1でなければなりません "
 
@@ -938,6 +1105,18 @@ msgstr " 実装されていないエンコード "
 
 msgid "file"
 msgstr " ファイル "
+
+msgid "Found %s, possibly from %s"
+msgstr " %s が見つかりました（おそらく %s から） "
+
+msgid "%s (%s)"
+msgstr " %s (%s) "
+
+msgid "ssname"
+msgstr " ssname "
+
+msgid "language"
+msgstr " language "
 
 msgid "cannot be opened"
 msgstr " オープンできません "
@@ -963,8 +1142,8 @@ msgstr "OK "
 msgid "results differ from reference results"
 msgstr " 結果が参照結果と異なります "
 
-msgid "no examples found"
-msgstr " 例がが見つかりません "
+msgid "no examples found for package %s"
+msgstr " パッケージ %s に対する例文が見つかりません "
 
 msgid "Running specific tests for package"
 msgstr " 指定されたテストをパッケージに対して実行中 "
@@ -1079,6 +1258,9 @@ msgstr " 不正なパッケージ構成です "
 msgid "file '%s' is not in valid DCF format"
 msgstr " ファイル '%s' は有効な DCF フォーマットではありません "
 
+msgid "Unknown encoding with non-ASCII data: converting to ASCII"
+msgstr " 非ASCIIデータをもつ未知のエンコーディングです: ASCIIに変換します "
+
 msgid "cannot source package code"
 msgstr " パッケージコードを読み込めません "
 
@@ -1121,6 +1303,50 @@ msgstr[0] " 以下の関数中に .internal 呼び出しが見つかりました
 msgid "object %s is created by more than one data call"
 msgid_plural "objects %s are created by more than one data call"
 msgstr[0] " オブジェクト %s は1つ以上のデータ呼び出しにより生成されました "
+
+#, fuzzy
+#~ msgid ""
+#~ "installing a top-level 'COPYING' file is deprecated -- see the 'Writing R "
+#~ "Extensions' manual'"
+#~ msgstr ""
+#~ " マニュアル'Writing R Extensions' の章'Creating R packages'中のDESCRIPTION"
+#~ "ファイルにある情報を参照してください． "
+
+#~ msgid "Malformed NEWS.Rd file."
+#~ msgstr " 不正な NEWS.Rd ファイルです． "
+
+#, fuzzy
+#~ msgid "cannot read boolean object"
+#~ msgstr " オープンできません "
+
+#~ msgid "no examples found"
+#~ msgstr " 例がが見つかりません "
+
+#~ msgid "WARNING: 'Depends' entry has multiple dependencies on R:"
+#~ msgstr " 警告：'Depends' 項目は多重依存性を持ちます "
+
+#~ msgid "only the first will be used in R < 2.7.0"
+#~ msgstr " 最初のものだけが使われます "
+
+#~ msgid "'"
+#~ msgstr " , "
+
+#~ msgid "use of '--auto-zip' is defunct"
+#~ msgstr " '--auto-zip'の使用は廃止になりました "
+
+#~ msgid "use of '--use-zip-data' is defunct"
+#~ msgstr " '--use-zip-data' の使用は廃止になりました "
+
+#~ msgid "use of '--no-docs' is deprecated: use '--install-args' instead"
+#~ msgstr ""
+#~ " '--no-docs' の使用は推奨されません。代わりに '--install-args' を使用して"
+#~ "ください "
+
+#~ msgid "** Options"
+#~ msgstr " ** オプション "
+
+#~ msgid "are only for '--binary'  and will be ignored"
+#~ msgstr " 　は '--binary' 専用ですから無視されます "
 
 #~ msgid "--pkglock applies only to a single package"
 #~ msgstr " --pkglock は単一のパッケージだけに適用されます "

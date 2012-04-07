@@ -32,7 +32,9 @@ RtangleSetup(file, syntax, output = NULL, annotate = TRUE,
 \details{
   Unless \code{split = TRUE}, the default name of the output file is
   \code{basename(file)} with an extension corresponding to the Sweave
-  syntax (e.g. \file{Rnw}, \file{Stex}) replaced by \file{R}.
+  syntax (e.g. \file{Rnw}, \file{Stex}) replaced by \file{R}.  File
+  names \code{"stdout"} and \code{"stderr"} are interpreted as the
+  output and message connection respectively.
 
   If splitting is selected (including by the options in the file), each
   chunk is written to a separate file with extension the name of the
@@ -63,7 +65,7 @@ using either the chunk label or the file name and line numbers.
     \item{engine:}{character string (\code{"R"}).  Only chunks with
       \code{engine} equal to \code{"R"} or \code{"S"} are processed.}
     
-    \item{keep.source:}{logical (\code{FALSE}).  If \code{keep.source ==
+    \item{keep.source:}{logical (\code{TRUE}).  If \code{keep.source ==
       TRUE} the original source is copied to the file.  Otherwise,
       deparsed source is output.}
     

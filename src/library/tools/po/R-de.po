@@ -4,10 +4,10 @@
 # Detlef Steuer <steuer@hsu-hh.de>, 2008-2011.
 msgid ""
 msgstr ""
-"Project-Id-Version: R 2.12.0\n"
+"Project-Id-Version: R 2.14.0\n"
 "Report-Msgid-Bugs-To: bugs@r-project.org\n"
-"POT-Creation-Date: 2011-03-22 15:33\n"
-"PO-Revision-Date: 2011-03-24 11:04+0100\n"
+"POT-Creation-Date: 2011-10-03 18:49\n"
+"PO-Revision-Date: 2011-10-13 15:53+0200\n"
 "Last-Translator: Detlef Steuer <steuer@hsu-hh.de>\n"
 "Language-Team: R Core <r-core@r-project.org>\n"
 "Language: \n"
@@ -312,6 +312,21 @@ msgstr ""
 "Information über DESCRIPTION Dateien finden sie im Abschnitt 'Creating R "
 "packages' im 'Writing R Extension' Handbuch"
 
+msgid "Malformed Authors@R field:"
+msgstr "Falsch formatiertes Authors@R Feld:"
+
+msgid "Cannot extract Author field from Authors@R field:"
+msgstr "Kann kein Author Feld aus dem Authors@R Feld extrahieren:"
+
+msgid "Authors@R field gives no person with author role."
+msgstr "Das Authors@R Feld enthält keine Person mit Autorenrolle"
+
+msgid "Cannot extract Maintainer field from Authors@R field:"
+msgstr "Kann kein Maintainer Feld aus dem Authors@R Feld extrahieren:"
+
+msgid "Authors@R field gives no person with maintainer role and email address."
+msgstr "Das Authors@R Feld enthält keine Person als Maintainer mit email Adresse."
+
 msgid "Encoding '%s' is not portable"
 msgstr "Kodierung '%s' ist nicht portabel"
 
@@ -365,6 +380,46 @@ msgstr ""
 msgid "found %s"
 msgstr "'%s' gefunden"
 
+msgid "File %s:"
+msgstr "Datei %s:"
+
+msgid "%s has wrong argument list %s"
+msgstr "%s hat falsche Argumentliste %s"
+
+msgid ","
+msgstr ","
+
+msgid "%s calls:"
+msgstr "%s ruft auf:"
+
+msgid ""
+"Package startup functions should have two arguments with names starting with "
+"%s and %s, respectively."
+msgstr ""
+"Startfunktionen des Pakets sollten zwei Argumente haben, deren Namen\n"
+"mit %s bzw. %s beginnen."
+
+msgid "lib"
+msgstr "lib"
+
+msgid "pkg"
+msgstr "pkg"
+
+msgid "Package startup functions should not change the search path."
+msgstr "Startfunktionen des Pakets sollten den Suchpfad nicht ändern."
+
+msgid "Package startup functions should use %s to generate messages."
+msgstr "Startfunktionen des Pakets sollten %s nutzen, um Nachrichten zu generieren."
+
+msgid "packageStartupMessage"
+msgstr "packageStartupMessage"
+
+msgid "See section %s in ?.onAttach."
+msgstr "Siehe Abschnitt %s in ?.onAttach."
+
+msgid "Good practice"
+msgstr "Gute Paxis"
+
 msgid "package 'methods' is used but not declared"
 msgstr "Paket 'methods' wird benutzt, wurde aber nicht angemeldet"
 
@@ -398,9 +453,6 @@ msgstr "Generische g in env ="
 
 msgid "where hasMethods(g, env) errors:"
 msgstr "wo hasMethods(g, env) fehlt:"
-
-msgid ","
-msgstr ","
 
 msgid "May need something like"
 msgstr "Benötige etwas wie"
@@ -481,6 +533,9 @@ msgstr "das aktuelle ARbeitsverzeichnis kann nicht bestimmt werden"
 msgid "no inputs"
 msgstr "keine Eingaben"
 
+msgid "DVI output from Rd2dvi is deprecated"
+msgstr "DVI Ausgabe mit Rd2dvi ist veraltet"
+
 msgid "Error in running tools::texi2dvi"
 msgstr "Fehler bei der Ausführung von tools::texi2dvi"
 
@@ -489,6 +544,9 @@ msgstr "mehr als eine \\examples section, benutze die erste"
 
 msgid "invalid value for '%s' : %s"
 msgstr "Ungültiger Wert für '%s' : %s"
+
+msgid "Only one Rd section per \\Sexpr is supported."
+msgstr "Nur ein Rd Abschnitt pro \\Sepr wird unterstützt"
 
 msgid "unable to create temp directory"
 msgstr "kann kein temp Verzeichnis erzeugen"
@@ -502,6 +560,9 @@ msgstr ""
 
 msgid "running 'make' failed"
 msgstr "Ausführen von 'make ' fehlgeschlagen"
+
+msgid "In '%s' vignettes '%s' and '%s' have the same vignette name"
+msgstr "In '%s' Vignetten '%s' und '%s' haben denselben Vignettennamen"
 
 msgid "argument 'vignette' must be of length 1"
 msgstr "Argument 'vignette' muss Länge 1 haben"
@@ -517,12 +578,6 @@ msgstr "*** jemand hat das 'Built' Feld im Paket '%s' beschädigt ***"
 
 msgid "cannot open directory '%s'"
 msgstr "kann Verzeichnis '%s' nicht öffnen"
-
-msgid "WARNING: 'Depends' entry has multiple dependencies on R:"
-msgstr "Warnung: 'Depends' Eintrag hat mehrfache Abhängigkeiten von R:"
-
-msgid "only the first will be used in R < 2.7.0"
-msgstr "nur die Erste wird genutzt in R < 2.7.0"
 
 msgid ""
 "WARNING: omitting pointless dependence on 'R' without a version requirement"
@@ -560,11 +615,8 @@ msgstr ""
 msgid "cannot create directory '%s'"
 msgstr "kann  Verzeichnis '%s' nicht erzeugen"
 
-msgid "processing '"
-msgstr "Bearbeiten von'"
-
-msgid "'"
-msgstr "'"
+msgid "processing"
+msgstr "Bearbeite"
 
 msgid ""
 "running Sweave on vignette '%s' failed with message:\n"
@@ -598,24 +650,6 @@ msgstr "Änderungen benötigen den angegebenen 'style'"
 msgid "The default JSS style may not be modified."
 msgstr "Der Standard JSS style darf nicht geändert werden"
 
-msgid "--binary is deprecated"
-msgstr ""
-
-msgid "use of '--auto-zip' is defunct"
-msgstr "Nutzung von '--auto-zip' nicht mehr möglich"
-
-msgid "use of '--use-zip-data' is defunct"
-msgstr "Nutzung von '--use-zip-data' nicht mehr möglich"
-
-msgid "use of '--no-docs' is deprecated: use '--install-args' instead"
-msgstr "Nutzung von '--no-docs' ist veraltet; bitte '--install-args' nutzen"
-
-msgid "** Options"
-msgstr "** Optionen"
-
-msgid "are only for '--binary'  and will be ignored"
-msgstr "sind nur für '--binary' und werden ignoriert"
-
 msgid "Error: cannot rename directory to"
 msgstr "Fehler: kann  Verzeichnis nicht umbennen in"
 
@@ -631,6 +665,9 @@ msgstr "'--multiarch' angegeben, obwohl es nur eine sub-Architektur gibt"
 msgid "Error: no packages were specified"
 msgstr "Fehler: keine Pakete angegeben"
 
+msgid "ERROR: cannot create check dir %s"
+msgstr "Fehler: kann  Verzeichnis %s für Check nicht erzeugen"
+
 msgid "package dir"
 msgstr "Paket Verzeichnis"
 
@@ -640,8 +677,20 @@ msgstr "existiert nicht"
 msgid "No files in this directory"
 msgstr "Keine Dateien in diesem Verzeichnis"
 
+msgid "Unrecognized search field:"
+msgstr "Nicht erkanntes Suchfeld:"
+
 msgid "No results found"
 msgstr "keine Ergebnisse gefunden"
+
+msgid "Vignettes:"
+msgstr "Vignetten:"
+
+msgid "Code demonstrations:"
+msgstr "Kode Demos:"
+
+msgid "Help pages:"
+msgstr "Hilfeseiten:"
 
 msgid "No help found for topic %s in any package."
 msgstr "Keine Hilfe zum Stichwort %s in irgendeinem Paket gefunden"
@@ -664,10 +713,9 @@ msgstr "Link %s konnte im Paket %s nicht gefunden werden"
 msgid "No docs found for package %s"
 msgstr "Keine Dokumente zu Paket %s gefunden"
 
-msgid "Only help files, %s, %s and files under %s in a package can be viewed"
-msgstr ""
-"Nur Hilfeseiten, %s, %s und Dateien unter %s in einem Paket können "
-"angeschaut werden"
+msgid ""
+"Only help files, %s, %s and files under %s and %s in a package can be viewed"
+msgstr "Nur Hilfeseiten, %s, %s und Dateien unter %s und %s in einem Paket können angeschaut werden"
 
 msgid "NEWS"
 msgstr "Neuigkeiten"
@@ -677,6 +725,9 @@ msgstr "DESCRIPTION"
 
 msgid "doc/"
 msgstr "doc/"
+
+msgid "demo/"
+msgstr "demo/"
 
 msgid "unsupported URL %s"
 msgstr "nicht unterstützte URL %s"
@@ -729,15 +780,19 @@ msgstr "als"
 msgid ""
 "'cleanup' exists but is not executable -- see the 'R Installation and "
 "Administration Manual'"
-msgstr ""
-"'cleanup' existiert, ist aber nicht ausführbar -- bitte im 'R Installation "
-"and Administration Manual' nachlesen"
+msgstr "'cleanup' existiert, ist aber nicht ausführbar -- bitte im 'R Installation and Administration Manual' nachlesen"
+
+msgid "installing via 'install.libs.R' to"
+msgstr "installiere mittels 'install.libs.R' nach"
 
 msgid "installing to"
 msgstr "installiert nach"
 
 msgid "generating debug symbols (dSYM)"
 msgstr "erzeuge Debug-Symbole (dSYM)"
+
+msgid "package %s successfully unpacked and MD5 sums checked"
+msgstr "Paket %s erfolgreich entpackt und MD5 Summen überprüft"
 
 msgid ""
 "R include directory is empty -- perhaps need to install R-devel.rpm or "
@@ -805,8 +860,11 @@ msgstr "suche HTML Links auf 2. Stufe ..."
 msgid "there is no package called '%s'"
 msgstr "es gibt kein Paket names '%s'"
 
-msgid "name space must not be loaded."
-msgstr "Namensraum darf nicht geladen werden"
+msgid "namespace must not be already loaded"
+msgstr "Namensraum darf nicht bereits geladen sein"
+
+msgid "all packages should have a NAMESPACE"
+msgstr "alle Pakete sollten einen NAMESPACE haben"
 
 msgid "package seems to be using lazy loading for data already"
 msgstr "Paket scheint für Daten bereits lazyloading zu nutzen"
@@ -863,8 +921,29 @@ msgstr ""
 msgid "%s"
 msgstr "%s"
 
-msgid "Malformed NEWS.Rd file."
-msgstr "Falsch formatierte NEWS.Rd Datei."
+msgid ""
+"Malformed NEWS.Rd file:\n"
+"Chunk starting\n"
+"  %s\n"
+"contains no \\itemize."
+msgstr ""
+"Schlecht formatierte NEWS.Rd Datei:\n"
+"Abschnitt beginnend\n"
+" %s\n"
+"enthält kein \\itemize."
+
+msgid ""
+"Malformed NEWS.Rd file:\n"
+"Chunk starting\n"
+"  %s\n"
+"contains more than one \\itemize.\n"
+"Using the first one."
+msgstr ""
+"Schlecht formatierte NEWS.Rd Datei:\n"
+"Abschnitt beginnend\n"
+" %s\n"
+"enthält mehr als ein \\itemize.\n"
+"Nutze das erste."
 
 msgid "Processing packages:"
 msgstr "Bearbeitete Pakete:"
@@ -899,6 +978,87 @@ msgstr "schon definert als"
 msgid "found encoding"
 msgstr "gefundene Kodierung"
 
+msgid "%s must be a character string or a file/raw connection"
+msgstr "%s muss eine Zeichenkette oder eine Datei/raw -Verbindung sein"
+
+msgid "PDF header not found"
+msgstr "PDF Header nicht gefunden"
+
+msgid "EOF marker not found"
+msgstr "EOF Markierunge nicht gefunden"
+
+msgid "cannot find startxref"
+msgstr "kann startxref nicht finden"
+
+msgid "cannot find xref table"
+msgstr "kann xref Tabelle nicht finden"
+
+msgid "cannot read xref table"
+msgstr "kann xref Tabelle nicht lesen"
+
+msgid "wrong class"
+msgstr "falsche Klasse"
+
+msgid "attempting to select less than one element"
+msgstr "Versuch weniger als ein Element auszuwählen"
+
+msgid "attempting to select more than one element"
+msgstr "Versuch mehr als ein Element auszuwählen"
+
+msgid "looking at %s"
+msgstr "schaue auf %s"
+
+msgid "cannot read literal string object"
+msgstr "kann literales Zeichenkettenobjekt nicht lesen"
+
+msgid "cannot read hexadecimal string object"
+msgstr "kann hexasezimales Zeichenkettenobjekt nicht lesen"
+
+msgid "cannot read name object"
+msgstr "kann Namensobjekt nicht lesen"
+
+msgid "cannot read array object"
+msgstr "kann Arrayobjekt nicht lesen"
+
+msgid "cannot read dictionary object"
+msgstr "kann Dictionary-Objekt nicht lesen"
+
+msgid "cannot read stream object"
+msgstr "kann Streamobjekt nicht lesen"
+
+msgid "cannot read indirect reference object"
+msgstr "kann indirektes Referenzobjekt nicht lesen"
+
+msgid "cannot find object header at xrefed position %d"
+msgstr "kann Objektheader an der xref (-erenzieren) Position %d nicht finden"
+
+msgid "mismatch in object numbers (given: %d, found: %d)"
+msgstr "verschiedene Objektzahlen (angegeben: %d, gefunden: %d)"
+
+msgid "mismatch in generation numbers (given: %d, found: %d)"
+msgstr "verschiedene Erzeugungszahlen (angegeben: %d, gefunden: %d)"
+
+msgid "cannot read stream data"
+msgstr "kann Streamdaten nicht lesen"
+
+msgid "invalid index in object stream lookup"
+msgstr "unzulässiger Index beim Lesen eines Objektstroms"
+
+msgid "processing %s"
+msgstr "bearbeite %s'"
+
+msgid "expanding %s"
+msgstr "erweitere %s"
+
+msgid "unsupported filter %s"
+msgstr "nicht unterstützter Filter %s"
+
+msgid "unsupported flatedecode predictor %d"
+msgstr "nichtunterstützter flatedecode Prediktor %d"
+
+msgid "unsupported PNG filter %d"
+msgstr "nicht unterstützter PNG Filter %d"
+
 msgid "argument 'pkg' must be of length 1"
 msgstr "Argument 'pkg' muss Länge 1 haben"
 
@@ -906,7 +1066,7 @@ msgid "package '%s' was not found"
 msgstr "Paket '%s' nicht gefunden"
 
 msgid "bad operand"
-msgstr "ungeeigneter Operator"
+msgstr "ungeeigneter Operand"
 
 msgid "Package '%s' had its dependencies reduced to a minimal set."
 msgstr "Abhängigkeiten von Paket '%s' auf minimale Menge reduziert."
@@ -922,6 +1082,18 @@ msgstr "nicht implementierte Kodierung"
 
 msgid "file"
 msgstr "Datei"
+
+msgid "Found %s, possibly from %s"
+msgstr "%s gefunden, vielleicht aus %s"
+
+msgid "%s (%s)"
+msgstr "%s (%s)"
+
+msgid "ssname"
+msgstr "ssname"
+
+msgid "language"
+msgstr "Sprache"
 
 msgid "cannot be opened"
 msgstr "kann nicht geöffnet werden"
@@ -947,8 +1119,8 @@ msgstr "OK"
 msgid "results differ from reference results"
 msgstr "Ergebnisse unterscheiden sich von den Referenzergebnissen"
 
-msgid "no examples found"
-msgstr "keine Beispiele gefunden"
+msgid "no examples found for package %s"
+msgstr "Keine Beispiele zum Paket %s gefunden"
 
 msgid "Running specific tests for package"
 msgstr "Ausführen spezifischer Tests für das Paket"
@@ -1064,6 +1236,9 @@ msgstr "ungültige Paketstruktur"
 msgid "file '%s' is not in valid DCF format"
 msgstr "Datei '%s' liegt nicht in gültigem DCF Format vor"
 
+msgid "Unknown encoding with non-ASCII data: converting to ASCII"
+msgstr "Unbekannte Kodierung mit nicht-ASCII Daten: konvertiere nach ASCII"
+
 msgid "cannot source package code"
 msgstr "kann Paketquelltext nicht einlesen"
 
@@ -1114,6 +1289,48 @@ msgid "object %s is created by more than one data call"
 msgid_plural "objects %s are created by more than one data call"
 msgstr[0] "Objekt %s wird durch mehr als einen Datenaufruf erzeugt"
 msgstr[1] "Objekt(e) %s werden durch mehr als einen Datenaufruf erzeugt"
+
+#, fuzzy
+#~ msgid ""
+#~ "installing a top-level 'COPYING' file is deprecated -- see the 'Writing R "
+#~ "Extensions' manual'"
+#~ msgstr ""
+#~ "Information über DESCRIPTION Dateien finden sie im Abschnitt 'Creating R "
+#~ "packages' im 'Writing R Extension' Handbuch"
+
+#~ msgid "Malformed NEWS.Rd file."
+#~ msgstr "Falsch formatierte NEWS.Rd Datei."
+
+#, fuzzy
+#~ msgid "cannot read boolean object"
+#~ msgstr "kann nicht geöffnet werden"
+
+#~ msgid "no examples found"
+#~ msgstr "keine Beispiele gefunden"
+
+#~ msgid "WARNING: 'Depends' entry has multiple dependencies on R:"
+#~ msgstr "Warnung: 'Depends' Eintrag hat mehrfache Abhängigkeiten von R:"
+
+#~ msgid "only the first will be used in R < 2.7.0"
+#~ msgstr "nur die Erste wird genutzt in R < 2.7.0"
+
+#~ msgid "'"
+#~ msgstr "'"
+
+#~ msgid "use of '--auto-zip' is defunct"
+#~ msgstr "Nutzung von '--auto-zip' nicht mehr möglich"
+
+#~ msgid "use of '--use-zip-data' is defunct"
+#~ msgstr "Nutzung von '--use-zip-data' nicht mehr möglich"
+
+#~ msgid "use of '--no-docs' is deprecated: use '--install-args' instead"
+#~ msgstr "Nutzung von '--no-docs' ist veraltet; bitte '--install-args' nutzen"
+
+#~ msgid "** Options"
+#~ msgstr "** Optionen"
+
+#~ msgid "are only for '--binary'  and will be ignored"
+#~ msgstr "sind nur für '--binary' und werden ignoriert"
 
 #~ msgid "--pkglock applies only to a single package"
 #~ msgstr "--pkglock bezieht sich nur auf eine einzelnes Paket"

@@ -22,16 +22,53 @@
 
 /*
     These use POSIX functions that are not available on all platforms,
-    and where they are they may be partially or incorrectly implemented.
-    A number of lightweight alternatives are supplied, but generally
-    timezone support is only available if the OS supplies it.
+    and where they are they may be partially or incorrectly
+    implemented.  A number of lightweight alternatives are supplied,
+    but generally timezone support is only available if the OS
+    supplies it.  However, as these are now also mandated by C99, they
+    are almost universally available, albeit with more room for
+    implementation variations.
 
-    A particular problem is the setting of the timezone TZ on Unix/Linux.
-    POSIX appears to require it, yet many Linux systems do not set it
-    and do not give the correct results/crash strftime if it is not set
-    (or even if it is: see the workaround below).
-    We use unsetenv() to work around this: that is a BSD construct but
+    A particular problem is the setting of the timezone TZ on
+    Unix/Linux.  POSIX appears to require it, yet older Linux systems
+    do not set it and do not give the correct results/crash strftime
+    if it is not set (or even if it is: see the workaround below).  We
+    use unsetenv() to work around this: that is a BSD construct but
     seems to be available on the affected platforms.
+
+    Notes on various time functions:
+
+    The current (2008) POSIX recommendation to find the calendar time
+    is to call clock_gettime(), defined in <time.h>.  This may also be
+    used to find time since some unspecified starting point
+    (e.g. machine reboot), but is not currently so used in R.  It
+    returns in second and nanoseconds, although not necessarily to
+    more than clock-tick accuracy.
+
+    The previous POSIX recommendation was gettimeofday(), defined in
+    <sys/time.h>.  This returns in seconds and microseconds (with
+    unspecified granularity).
+
+    Many systems (including AIX, FreeBSD, Linux, Solaris) have
+    clock_gettime().  Mac OS X and Cygwin have gettimeofday().
+
+    Function time() is C99 and defined in <time.h>.  C99 does not
+    mandate the units, but POSIX does (as the number of seconds since
+    the epoch: although not mandated, time_t seems always to be an
+    integer type).
+
+    Function clock() is C99 and defined in <time.h>.  It measures CPU
+    time at CLOCKS_PER_SEC: there is a small danger of integer
+    overflow.
+
+    Function times() is POSIX and defined in <sys/times.h>.  It
+    returns the elapsed time in clock ticks, plus CPU times in a
+    struct tms* argument (also in clock ticks).
+
+    More precise information on CPU times may be available from the
+    POSIX function getrusage() defined in <sys/resource.h>.  This
+    returns the same time structure as gettimeofday() and on some
+    systems offers millisecond resolution.
  */
 
 #ifdef HAVE_CONFIG_H
@@ -101,38 +138,14 @@ static const int days_in_month[12] =
 #define days_in_year(year) (isleap(year) ? 366 : 365)
 
 #ifndef HAVE_POSIX_LEAPSECONDS
-/* There have been 23 leapseconds, the last being on 2005-12-31.
-   But older OSes will not necessarily know about number 23, so we do
-   a run-time test (the OS could have been patched since configure).
-
-   And a 24th on 2008-12-31, but all OSes seem to ignore
-   leap secnds these days.
+/* There have been 24 leapseconds, the last being on 2008-12-31.
  */
-static int n_leapseconds = -1;
+static int n_leapseconds = 24;
 static const time_t leapseconds[] =
 {  78796800, 94694400,126230400,157766400,189302400,220924800,252460800,
   283996800,315532800,362793600,394329600,425865600,489024000,567993600,
   631152000,662688000,709948800,741484800,773020800,820454400,867715200,
   915148800,1136073600,1230768000};
-
-static void set_n_leapseconds(void)
-{
-    struct tm tm;
-    int t1, t2;
-
-    tm.tm_year = 105;
-    tm.tm_mon = 11;
-    tm.tm_mday = 31;
-    tm.tm_hour = 12;
-    tm.tm_min = 0;
-    tm.tm_sec = 0;
-    t1 = mktime(&tm);
-    tm.tm_year = 106;
-    tm.tm_mon = 0;
-    tm.tm_mday = 1;
-    t2 = mktime(&tm);
-    n_leapseconds = t2 - t1 == 84601) ? 24 : 22;
-}
 #endif
 
 /*
@@ -158,6 +171,18 @@ static int validate_tm (struct tm *tm)
 	if(tm->tm_min < 0) {tm->tm_min += 60; tm->tm_hour--;}
     }
 
+    if(tm->tm_hour == 24 && tm->tm_min == 0 && tm->tm_sec == 0) {
+	tm->tm_hour = 0; tm->tm_mday++;
+	if(tm->tm_mon >= 0 && tm->tm_mon <= 11) {
+	    if(tm->tm_mday > days_in_month[tm->tm_mon] +
+	       ((tm->tm_mon==1 && isleap(1900+tm->tm_year) ? 1 : 0))) {
+		   tm->tm_mon++; tm->tm_mday = 1;
+		   if(tm->tm_mon == 12) {
+		       tm->tm_year++; tm->tm_mon = 0;
+		   }
+	       }
+	}
+    }
     if (tm->tm_hour < 0 || tm->tm_hour > 23) {
 	res++;
 	tmp = tm->tm_hour/24;
@@ -358,7 +383,6 @@ static double mktime0 (struct tm *tm, const int local)
 	res = (double) mktime(tm);
 	if (res == (double)-1) return res;
 #ifndef HAVE_POSIX_LEAPSECONDS
-	if (n_leapseconds < 0) set_n_leapseconds();
 	for(i = 0; i < n_leapseconds; i++)
 	    if(res > leapseconds[i]) res -= 1.0;
 #endif
@@ -383,7 +407,6 @@ static struct tm * localtime0(const double *tp, const int local, struct tm *ltm)
 	   fix t instead as needed. */
 	if (d < 0.0 && (double) t != d) t--;
 #ifndef HAVE_POSIX_LEAPSECONDS
-	if (n_leapseconds < 0) set_n_leapseconds();
 	for(y = 0; y < n_leapseconds; y++) if(t > leapseconds[y] + y - 1) t++;
 #endif
 	return local ? localtime(&t) : gmtime(&t);
@@ -445,49 +468,81 @@ static struct tm * localtime0(const double *tp, const int local, struct tm *ltm)
 }
 
 
+/* clock_gettime, time are in <time.h>, already included */
 #ifdef HAVE_SYS_TIME_H
+/* gettimeoday, including on Windows */
 # include <sys/time.h>
 #endif
-#ifdef Win32
-# define WIN32_LEAN_AND_MEAN 1
-# include <windows.h>
+
+double currentTime(void)
+{
+    double ans = NA_REAL;
+
+#if defined(HAVE_CLOCK_GETTIME) && defined(CLOCK_REALTIME)
+    struct timespec tp;
+    int res = clock_gettime(CLOCK_REALTIME, &tp);
+    if(res == 0)
+	ans = (double) tp.tv_sec + 1e-9 * (double) tp.tv_nsec;
+
+#elif defined(HAVE_GETTIMEOFDAY)
+    struct timeval tv;
+    int res = gettimeofday(&tv, NULL);
+    if(res == 0)
+	ans = (double) tv.tv_sec + 1e-6 * (double) tv.tv_usec;
+
+#else
+    /* No known current OSes */
+    time_t res = time(NULL);
+    if(res != (time_t)(-1)) /* -1 must be an error as the real value -1 
+			       was ca 1969 */
+	ans = (double) res;
 #endif
+
+#ifndef HAVE_POSIX_LEAPSECONDS
+    /* No known current OSes */
+    /* Disallowed by POSIX (1988-):
+       http://www.mail-archive.com/leapsecs@rom.usno.navy.mil/msg00109.html
+       http://en.wikipedia.org/wiki/Unix_time
+    */
+    if (!ISNAN(ans)) {
+	ans -= n_leapseconds;
+    }
+#endif
+    return ans;
+}
 
 SEXP attribute_hidden do_systime(SEXP call, SEXP op, SEXP args, SEXP env)
 {
-    SEXP ans = allocVector(REALSXP, 1);
-#if defined(HAVE_GETTIMEOFDAY) && !defined(Win32)
-    struct timeval tv;
-    int res = gettimeofday(&tv, NULL);
-    if(res == 0) {
-	double tmp = (double) tv.tv_sec + 1e-6 * (double) tv.tv_usec;
-#ifndef HAVE_POSIX_LEAPSECONDS
-	if (n_leapseconds < 0) set_n_leapseconds();
-	tmp -= n_leapseconds;
+    return ScalarReal(currentTime());
+}
+
+#ifdef HAVE_UNISTD_H
+#include <unistd.h> /* for getpid */
 #endif
-	REAL(ans)[0] = tmp;
-    } else
-	REAL(ans)[0] = NA_REAL;
-    return ans;
+
+/* For RNG.c, main.c, mkdtemp.c */
+attribute_hidden
+unsigned int TimeToSeed(void)
+{
+    unsigned int seed, pid = getpid();
+#if defined(HAVE_CLOCK_GETTIME) && defined(CLOCK_REALTIME)
+    {
+	struct timespec tp;
+	clock_gettime(CLOCK_REALTIME, &tp);
+	seed = ((uint64_t) tp.tv_nsec << 16) ^ tp.tv_sec;
+    }
+#elif defined(HAVE_GETTIMEOFDAY)
+    {
+	struct timeval tv;
+	gettimeofday (&tv, NULL);
+	seed = ((uint64_t) tv.tv_usec << 16) ^ tv.tv_sec;
+    }
 #else
-    time_t res = time(NULL);
-    double tmp = res;
-    if(res != (time_t)(-1)) { /* -1 must be an error */
-#ifndef HAVE_POSIX_LEAPSECONDS
-	if (n_leapseconds < 0) set_n_leapseconds();
-	tmp -= n_leapseconds;
+    /* C89, so must work */
+    seed = (Int32) time(NULL);
 #endif
-#ifdef Win32
-	{
-	    SYSTEMTIME st;
-	    GetSystemTime(&st);
-	    tmp += 1e-3 * st.wMilliseconds;
-	}
-#endif
-	REAL(ans)[0] = tmp;
-    } else REAL(ans)[0] = NA_REAL;
-    return ans;
-#endif
+    seed ^= (pid <<16);
+    return seed;
 }
 
 
@@ -863,7 +918,6 @@ static void glibc_fix(struct tm *tm, int *invalid)
     struct tm *tm0;
     int tmp;
 #ifndef HAVE_POSIX_LEAPSECONDS
-    if (n_leapseconds < 0) set_n_leapseconds();
     t -= n_leapseconds;
 #endif
     tm0 = localtime(&t);

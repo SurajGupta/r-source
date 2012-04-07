@@ -130,9 +130,9 @@ void formatInteger(int *x, int n, int *fieldwidth)
 # define R_nearbyintl rintl
 # else
 # define R_nearbyintl private_nearbyintl
-LDOUBLE private_nearbyintl(LDOUBLE x)
+long double private_nearbyintl(long double x)
 {
-    LDOUBLE x1;
+    long double x1;
     x1 = - floorl(-x + 0.5);
     x = floorl(x + 0.5);
     if (x == x1) return(x);
@@ -167,7 +167,7 @@ static void format_via_sprintf(double r, int d, int *kpower, int *nsig)
 }
 
 
-static const LDOUBLE tbl[] =
+static const long double tbl[] =
 {
     /* Powers exactly representable with 64 bit mantissa */
     1e00, 1e01, 1e02, 1e03, 1e04, 1e05, 1e06, 1e07, 1e08, 1e09,
@@ -175,7 +175,7 @@ static const LDOUBLE tbl[] =
     1e20, 1e21, 1e22, 1e23, 1e24, 1e25, 1e26, 1e27
 };
 
-static void scientific(double *x, int *sgn, int *kpower, int *nsig, double eps)
+static void scientific(double *x, int *sgn, int *kpower, int *nsig)
 {
     /* for a number x , determine
      *	sgn    = 1_{x < 0}  {0/1}
@@ -205,14 +205,14 @@ static void scientific(double *x, int *sgn, int *kpower, int *nsig, double eps)
         }
         kp = floor(log10(r)) - R_print.digits + 1;/* r = |x|; 10^(kp + digits - 1) <= r */
 #if SIZEOF_LONG_DOUBLE > SIZEOF_DOUBLE
-        LDOUBLE r_prec = r;
+        long double r_prec = r;
         /* use exact scaling factor in long double precision, if possible */
         if (abs(kp) <= 27) {
             if (kp > 0) r_prec /= tbl[kp]; else if (kp < 0) r_prec *= tbl[ -kp];
         }
 #ifdef HAVE_POWL
 	else
-            r_prec /= powl(10.0, (LDOUBLE) kp);
+            r_prec /= powl(10.0, (long double) kp);
 #else
         else if (kp <= R_dec_min_exponent)
             r_prec = (r_prec * 1e+303)/pow(10.0, (double)(kp+303));
@@ -224,7 +224,7 @@ static void scientific(double *x, int *sgn, int *kpower, int *nsig, double eps)
             kp--;
         }
         /* round alpha to integer, 10^(digits-1) <= alpha <= 10^digits
-	   accuracy limited by double rounding problem, 
+	   accuracy limited by double rounding problem,
 	   alpha already rounded to 64 bits */
         alpha = R_nearbyintl(r_prec);
 #else
@@ -283,11 +283,6 @@ void formatReal(double *x, int n, int *w, int *d, int *e, int nsmall)
     int neg, sgn, kpower, nsig;
     int i, naflag, nanflag, posinf, neginf;
 
-    double eps = pow(10.0, -(double)R_print.digits);
-    /* better to err on the side of too few signif digits rather than
-       far too many */
-    if(eps < 2*DBL_EPSILON) eps = 2*DBL_EPSILON;
-
     nanflag = 0;
     naflag = 0;
     posinf = 0;
@@ -303,7 +298,7 @@ void formatReal(double *x, int n, int *w, int *d, int *e, int nsmall)
 	    else if(x[i] > 0) posinf = 1;
 	    else neginf = 1;
 	} else {
-	    scientific(&x[i], &sgn, &kpower, &nsig, eps);
+	    scientific(&x[i], &sgn, &kpower, &nsig);
 
 	    left = kpower + 1;
 	    sleft = sgn + ((left <= 0) ? 1 : left); /* >= 1 */
@@ -381,9 +376,6 @@ void formatComplex(Rcomplex *x, int n, int *wr, int *dr, int *er,
     Rcomplex tmp;
     Rboolean all_re_zero = TRUE, all_im_zero = TRUE;
 
-    double eps = pow(10.0, -(double)R_print.digits);
-    if(eps < 2*DBL_EPSILON) eps = 2*DBL_EPSILON;
-
     naflag = 0;
     rnanflag = 0;
     rposinf = 0;
@@ -410,7 +402,7 @@ void formatComplex(Rcomplex *x, int n, int *wr, int *dr, int *er,
 		else rneginf = 1;
 	    } else {
 		if(x[i].r != 0) all_re_zero = FALSE;
-		scientific(&(tmp.r), &sgn, &kpower, &nsig, eps);
+		scientific(&(tmp.r), &sgn, &kpower, &nsig);
 
 		left = kpower + 1;
 		sleft = sgn + ((left <= 0) ? 1 : left); /* >= 1 */
@@ -434,7 +426,7 @@ void formatComplex(Rcomplex *x, int n, int *wr, int *dr, int *er,
 		else iposinf = 1;
 	    } else {
 		if(x[i].i != 0) all_im_zero = FALSE;
-		scientific(&(tmp.i), &sgn, &kpower, &nsig, eps);
+		scientific(&(tmp.i), &sgn, &kpower, &nsig);
 
 		left = kpower + 1;
 		sleft = ((left <= 0) ? 1 : left);

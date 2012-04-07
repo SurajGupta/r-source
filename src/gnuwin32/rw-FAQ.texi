@@ -81,7 +81,7 @@ that version.  The main R FAQ can be found at
 @end display
 
 The information here applies only to recent versions of R for Windows,
-(@samp{2.12.0} or later).
+(@samp{2.14.0} or later).
 
 
 @newchap{}
@@ -118,6 +118,7 @@ The information here applies only to recent versions of R for Windows,
 * Can I use R on 64-bit Windows?::  
 * Should I run 32-bit or 64-bit R?::  
 * Can both 32- and 64-bit R be installed on the same machine?::  
+* Rcmd is not found in my PATH!::  
 @end menu
 
 
@@ -127,7 +128,7 @@ The information here applies only to recent versions of R for Windows,
 Go to any CRAN site (see @uref{http://cran.r-project.org/@/mirrors.html}
 for a list), navigate to the @file{bin/windows/base} directory and
 collect the file(s) you need.  The current release is distributed as an
-installer @samp{@RWVER@-win.exe} of about 38Mb.  This contains all the
+installer @samp{@RWVER@-win.exe} of about 45Mb.  This contains all the
 components and allows as complete as installation as you choose.
 
 There are also links on that page to the @samp{r-patched} and
@@ -152,9 +153,10 @@ mainly 64-bit Windows 7 and Server 2008, but to a limited extent on
 32-bit XP SP3.
 
 Your file system must allow case-honouring long file names (as is likely
-except perhaps for some network-mounted systems).  A typical 32- or
-64-bit installation takes 45--50Mb of disk space, of both about 60Mb, a
-full installation about 80Mb and a minimal 32-bit one about 30Mb.
+except perhaps for some network-mounted systems).  A typical
+installation for one architecture takes 55Mb of disk space, for both
+about 70Mb, a full installation about 90Mb and a minimal 32-bit one
+about 40Mb.
 
 If you want to be able to build packages from sources, we recommend that
 you choose an installation path not containing spaces.  (Using a path
@@ -316,18 +318,20 @@ running @code{update.packages(checkBuilt=TRUE, ask=FALSE)}.
 @section There seems to be a limit on the memory it uses!
 
 Indeed there is.  It is set by the command-line flag
-@option{--max-mem-size} (@pxref{How do I install R for Windows?}) and R
-defaults to the smaller of the amount of physical RAM in the machine and
-0.5GB less than the limit on user virtual memory for a process (most
-often 2GB on a 32-bit build).
+@option{--max-mem-size} (@pxref{How do I install R for Windows?}). For a
+64-bit build of R it defaults to the amount of RAM.
+
+For a 32-bit build of R it defaults to the smaller of the amount of
+physical RAM in the machine and 0.5GB less than the limit on user
+virtual memory for a process (most often 2GB when using a 32-bit edition
+of Windows).
 
 Use @code{?Memory} and @code{?memory.size} for information about memory
 usage.  The limit can be raised (if possible) by calling
 @code{memory.limit} within a running R session.
 
-The 32-bit executables @file{Rgui.exe} and @file{Rterm.exe} support up
-to 3GB of user address space per process under suitably enabled versions
-of 32-bit Windows (see
+The 32-bit executables support up to 3GB of user address space per
+process under suitably enabled versions of 32-bit Windows (see
 @uref{http://www.microsoft.com/@/whdc/@/system/@/platform/@/server/@/PAE/@/PAEmem.mspx},
 @uref{http://msdn.microsoft.com/@/en-us/@/library/@/bb613473%28VS.85%29.aspx};
 this is not enabled by default).  On such systems, the default for
@@ -336,7 +340,6 @@ all but the earliest 64-bit versions of Windows the user address space
 for a 32-bit process is 4GB, and there the default for
 @code{--max-mem-size} is the smaller of the amount of RAM and 3.5GB.
 
-For a 64-bit build, the default is the amount of RAM.
 
 @c limits are documented at http://msdn.microsoft.com/en-us/library/aa366778%28VS.85%29.aspx
 
@@ -462,11 +465,11 @@ See @code{?Startup} for more details of environment files.
 
 @item
 For all applications via Windows.  How you set an environment variable
-is system specific: under Windows 2000/XP/Server 2003 you can use
-`System' in the control panel or the properties of `My Computer' (under
-the `Advanced' tab).  Under Vista/7, go to `User Accounts' in the
-Control Panel, and select your account and then `Change my environment
-variables'.
+is system specific: under Windows XP/Server 2003 you can use `System' in
+the control panel or the properties of `My Computer' (under the
+`Advanced' tab).  Under Vista/7/Server 2008, go to `User Accounts' in
+the Control Panel, and select your account and then `Change my
+environment variables'.
 @end enumerate
 
 The order of precedence for environmental variables is the order in
@@ -632,10 +635,10 @@ percentage of the apparent total number of CPUs.  We say `apparent' as
 it treats so-called `hyper-threaded' CPUs such as many Pentium 4s as two
 CPUs even though there is only one physical CPU.
 
-Hyper-threading has been re-introduced for Intel i3/i5/i7 CPUs and some
-Xeons: these will usually be reported as 4 or more CPUs and so R will be
-shown as using 25% or less.  You can see how many `CPU's are assumed by
-looking at the number of graphs of `CPU Usage History' on the
+Hyper-threading has been re-introduced for some Intel i3/i5/i7, Atom and
+Xeon CPUs: these will usually be reported as 4 or more CPUs and so R
+will be shown as using 25% or less.  You can see how many `CPU's are
+assumed by looking at the number of graphs of `CPU Usage History' on the
 `Performance' tab of the Windows Task manager.
 
 
@@ -839,7 +842,9 @@ to be moved around, and that less external software is available for
 64-bit versions of the OS. The 64-bit compilers are able to take
 advantage of extra features of all x86-64 chips (more registers, SSE2/3
 instructions, @dots{}) and so the code may run faster despite using
-larger pointers.
+larger pointers.  Changes in the compilation options in R 2.14.0 mean
+that the 64-bit build is now usually slightly faster than the 32-bit
+build on a recent CPU (Core 2 Duo or later).
 
 For advanced users the choice may be dictated by whether the contributed
 packages needed are available in 64-bit builds (and if CRAN binary
@@ -854,7 +859,7 @@ installed 64-bit Microsoft Office you can only install the 64-bit
 drivers and so need to use 64-bit @code{RODBC} and hence R.  (And
 similarly for 32-bit Microsoft Office.)
 
-@node Can both 32- and 64-bit R be installed on the same machine?,  , Should I run 32-bit or 64-bit R?, Installation and Usage
+@node Can both 32- and 64-bit R be installed on the same machine?, Rcmd is not found in my PATH!, Should I run 32-bit or 64-bit R?, Installation and Usage
 @section Can both 32- and 64-bit R be installed on the same machine?
 
 Obviously, only relevant if the machine is running a 64-bit version of
@@ -865,10 +870,61 @@ For many Registry items, 32- and 64-bit programs have different views of
 the Registry, but clashes can occur.  The most obvious problem is the
 file association for @file{.RData} files, which will use the last
 installation for which this option is selected, and if that was for an
-installation of both, will use 32-bit R.  To change the association the
+installation of both, will use 64-bit R.  To change the association the
 safest way is to edit the Registry entry
 @samp{HKEY_CLASSES_ROOT\RWorkspace\shell\open\command}
 and replace @samp{i386} by @samp{x64} or @emph{vice versa}.
+
+
+@node Rcmd is not found in my PATH!,  , Can both 32- and 64-bit R be installed on the same machine?, Installation and Usage
+@section Rcmd is not found in my PATH!
+
+This has often been reported after an upgrade.
+
+The R installer does not put @command{Rcmd.exe} (nor any other R
+executable) on your @env{PATH}.  What seems to have happened is that
+people did this for themselves in the past, upgraded R (which by default
+will install to a different location) and un-installed the old version
+of R.  If you do that (or install R for the first time), you need to
+edit the @env{PATH}.
+
+In recent versions of R (it was different before 2.12.0) the element you
+want to add to the path is something like
+
+@example
+c:\Program Files\R\R-2.14.0\bin\i386
+@end example
+
+@noindent
+for 32-bit @command{Rcmd.exe}, replacing @code{i386} by @code{x64} for
+64-bit.
+
+How you set the path depends on your OS version.  On Windows XP/Server
+2003 you can use `System' in the control panel or the properties of `My
+Computer' (under the `Advanced' tab).  Under Vista/7/Server 2008, go to
+`User Accounts' in the Control Panel, and select your account and then
+`Change my environment variables'.  (System policies can prevent end
+users making changes.)
+
+An alternative is to set the @env{PATH} in the shell you are running
+(@command{Rcmd.exe} is  a command-line program).  For those using the
+standard Windows `Command Prompt' Duncan Murdoch suggested:
+@c https://stat.ethz.ch/pipermail/r-help/2011-October/293413.html
+
+The simple way to do it just for the command prompt is to write a little 
+batch file @command{setpath.bat} containing
+
+@example
+set PATH=newstuff;%PATH%
+@end example
+
+@noindent
+and then run @command{cmd} with
+
+@example
+CMD /K setpath.bat
+@end example
+
 
 @newchap{}
 @node Languages and Internationalization, Packages, Installation and Usage, Top
@@ -1066,30 +1122,30 @@ handles internationalization slightly odd.
 
 Yes, but you will need a lot of tools to do so, unless the author or the
 maintainers of the @file{bin/windows/contrib} section on CRAN have been
-kind enough to provide a pre-compiled version for Windows as a
+kind enough to provide a binary version for Windows as a
 @code{.zip} file, or the package is a simple one involving no compiled
-code (and pre-compiled versions are usually available for simple
+code (and binary versions are usually available for simple
 packages).
 
-You can install pre-compiled packages either from a repository such as
+You can install binary packages either from a repository such as
 CRAN or from a local @code{.zip} file by using @code{install.packages}:
 see its help page.  There are menu items on the @code{Packages} menu to
 provide a point-and-click interface to package installation.  The
 packages for each minor (2.x) version will be stored in a separate area,
 so for R 2.13.? the files are in @file{bin/windows/contrib/2.13}.
 
-Note that the pre-compiled versions on CRAN are unsupported: see
+Note that the binary versions on CRAN are unsupported: see
 @uref{http://cran.r-project.org/@/bin/@/windows/@/contrib/@/2.13/@/ReadMe},
-which also gives the locations of a few other pre-compiled packages.
+which also gives the locations of a few other binary packages.
 
-If there is not a pre-compiled version or that is not up-to-date or you
-prefer compiling from source, read the `R Installation and
-Administration' manual section on `Add-on Packages'.  Source packages
-which contain no C/C++/Fortran code which needs compilation can simply
-be installed by @code{install.packages(type = "source")} or @command{R
-CMD INSTALL pkgname} at a Windows command prompt.  For packages with
-code that needs compilation you will need to collect and install several
-tools: you can download them via the portal at
+If there is no binary package or that is not up-to-date or you prefer
+compiling from source, read the `R Installation and Administration'
+manual section on `Add-on Packages'.  Source packages which contain no
+C/C++/Fortran code which needs compilation can simply be installed by
+@code{install.packages(type = "source")} or @command{R CMD INSTALL
+pkgname} at a Windows command prompt.  For packages with code that needs
+compilation you will need to collect and install several tools: you can
+download them via the portal at
 @uref{http://www.murdoch-sutherland.com/Rtools/}.  Once you have done
 so, just run @command{R CMD INSTALL pkgname} at a Windows command
 prompt.  To check the package (including running all the examples on its
@@ -1173,11 +1229,6 @@ for R 2.12.0 or later.
 
 You can tell the version the package was compiled for by looking at the
 @samp{Built:} line in its @file{DESCRIPTION} file 
-@c Next does not work in Vista/7, and in any case there may be multiple DLLs
-@c or at the @samp{Version} tab of its DLL in the @file{libs} directory.
-@c (Right-click on the DLL in Windows Explorer and select @samp{Version}
-@c tab of the @samp{Properties}, or use the @code{DLL.version} function
-@c inside R.)
 
 For a small number of binary packages you need to install additional
 software and have its DLLs in your @code{PATH}.  Windows will normally
@@ -1681,20 +1732,10 @@ make DEBUG=T
 @end example
 
 @noindent
-and make a debug version of your package by either
+and make a debug version of your package by
 
 @example
-make pkgclean-mypkg
-make DEBUG=T pkg-mypkg
-@end example
-
-@noindent
-or
-
-@example
-Rcmd install -c mypkg
-set DEBUG=T
-Rcmd install mypkg
+Rcmd INSTALL --debug mypkg
 @end example
 
 @noindent

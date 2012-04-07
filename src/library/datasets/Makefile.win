@@ -11,8 +11,6 @@ include $(top_builddir)/Makeconf
 
 pkg = datasets
 
-RSRC = $(srcdir)/R/zzz.R
-
 all:
 	@$(ECHO) "building package '$(pkg)'"
 	@$(MKINSTALLDIRS) $(top_builddir)/library/$(pkg)
@@ -27,5 +25,11 @@ all:
 	@$(INSTALL_DATA) $(srcdir)/data/morley.tab \
 	  $(top_builddir)/library/$(pkg)/data
 
-
 include $(top_srcdir)/share/make/basepkg.mk
+
+mkR:
+	@$(INSTALL_DATA) $(srcdir)/NAMESPACE $(top_builddir)/library/$(pkg)
+	@rm -f $(top_builddir)/library/$(pkg)/Meta/nsInfo.rds
+
+# dummy targets
+Rsimple Rlazy Rlazycomp:

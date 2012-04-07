@@ -232,7 +232,7 @@ SEXPTYPE str2type(const char *s)
     int i;
     for (i = 0; TypeTable[i].str; i++) {
 	if (!strcmp(s, TypeTable[i].str))
-	    return TypeTable[i].type;
+	    return (SEXPTYPE) TypeTable[i].type;
     }
     /* SEXPTYPE is an unsigned int, so the compiler warns us w/o the cast. */
     return (SEXPTYPE) -1;
@@ -329,12 +329,12 @@ size_t mbcsToUcs2(const char *in, ucs2_t *out, int nout, int enc)
     i_buf = (char *)in;
     i_len = strlen(in); /* not including terminator */
     o_buf = (char *)out;
-    o_len = nout * sizeof(ucs2_t);
+    o_len = ((size_t) nout) * sizeof(ucs2_t);
     status = Riconv(cd, &i_buf, (size_t *)&i_len, &o_buf, (size_t *)&o_len);
-
+    int serrno = errno;
     Riconv_close(cd);
     if (status == (size_t)-1) {
-	switch(errno){
+	switch(serrno){
 	case EINVAL:
 	    return (size_t) -2;
 	case EILSEQ:
@@ -356,10 +356,10 @@ size_t mbcsToUcs2(const char *in, ucs2_t *out, int nout, int enc)
 Rboolean isBlankString(const char *s)
 {
     if(mbcslocale) {
-	wchar_t wc; int used; mbstate_t mb_st;
+	wchar_t wc; size_t used; mbstate_t mb_st;
 	mbs_init(&mb_st);
 	while( (used = Mbrtowc(&wc, s, MB_CUR_MAX, &mb_st)) ) {
-	    if(!iswspace(wc)) return FALSE;
+	    if(!iswspace((wint_t) wc)) return FALSE;
 	    s += used;
 	}
     } else
@@ -422,13 +422,13 @@ void Rf_checkArityCall(SEXP op, SEXP args, SEXP call)
 	if (PRIMINTERNAL(op))
 	    error(ngettext("%d argument passed to .Internal(%s) which requires %d",
 		     "%d arguments passed to .Internal(%s) which requires %d",
-		     length(args)),
+			   (unsigned long) length(args)),
 		  length(args), PRIMNAME(op), PRIMARITY(op));
 	else
 	    errorcall(call,
 		      ngettext("%d argument passed to '%s' which requires %d",
 			       "%d arguments passed to '%s' which requires %d",
-			       length(args)),
+			       (unsigned long) length(args)),
 		      length(args), PRIMNAME(op), PRIMARITY(op));
     }
 }
@@ -437,7 +437,7 @@ void attribute_hidden Rf_check1arg(SEXP arg, SEXP call, const char *formal)
 {
     SEXP tag = TAG(arg);
     const char *supplied;
-    int ns;
+    size_t ns;
     if (tag == R_NilValue) return;
     supplied = CHAR(PRINTNAME(tag)); ns = strlen(supplied);
     if (ns > strlen(formal) || strncmp(supplied, formal, ns))
@@ -581,8 +581,8 @@ SEXP attribute_hidden do_merge(SEXP call, SEXP op, SEXP args, SEXP rho)
 	error(_("'all.y' must be TRUE or FALSE"));
 
     /* 0. sort the indices */
-    ix = (int *) R_alloc(nx, sizeof(int));
-    iy = (int *) R_alloc(ny, sizeof(int));
+    ix = (int *) R_alloc((size_t) nx, sizeof(int));
+    iy = (int *) R_alloc((size_t) ny, sizeof(int));
     for(i = 0; i < nx; i++) ix[i] = i+1;
     for(i = 0; i < ny; i++) iy[i] = i+1;
     isort_with_index(INTEGER(xi), ix, nx);
@@ -1095,47 +1095,48 @@ utf8toucs(wchar_t *wc, const char *s)
 	*w = (wchar_t) byte;
 	return 1;
     } else if (byte < 0xE0) {
-	if(strlen(s) < 2) return -2;
+	if(strlen(s) < 2) return (size_t)-2;
 	if ((s[1] & 0xC0) == 0x80) {
 	    *w = (wchar_t) (((byte & 0x1F) << 6) | (s[1] & 0x3F));
 	    return 2;
-	} else return -1;
+	} else return (size_t)-1;
     } else if (byte < 0xF0) {
-	if(strlen(s) < 3) return -2;
+	if(strlen(s) < 3) return (size_t)-2;
 	if (((s[1] & 0xC0) == 0x80) && ((s[2] & 0xC0) == 0x80)) {
 	    *w = (wchar_t) (((byte & 0x0F) << 12)
-		    | ((s[1] & 0x3F) << 6) | (s[2] & 0x3F));
-	    byte = *w;
+			    | (unsigned int) ((s[1] & 0x3F) << 6)
+			    | (s[2] & 0x3F));
+	    byte = (unsigned int) *w;
 	    /* Surrogates range */
-	    if(byte >= 0xD800 && byte <= 0xDFFF) return -1;
-	    if(byte == 0xFFFE || byte == 0xFFFF) return -1;
+	    if(byte >= 0xD800 && byte <= 0xDFFF) return (size_t)-1;
+	    if(byte == 0xFFFE || byte == 0xFFFF) return (size_t)-1;
 	    return 3;
-	} else return -1;
+	} else return (size_t)-1;
     }
-    if(sizeof(wchar_t) < 4) return -2;
+    if(sizeof(wchar_t) < 4) return (size_t)-2;
     /* So now handle 4,5.6 byte sequences with no testing */
     if (byte < 0xf8) {
-	if(strlen(s) < 4) return -2;
+	if(strlen(s) < 4) return (size_t)-2;
 	*w = (wchar_t) (((byte & 0x0F) << 18)
-			| ((s[1] & 0x3F) << 12)
-			| ((s[2] & 0x3F) << 6)
+			| (unsigned int) ((s[1] & 0x3F) << 12)
+			| (unsigned int) ((s[2] & 0x3F) << 6)
 			| (s[3] & 0x3F));
 	return 4;
     } else if (byte < 0xFC) {
-	if(strlen(s) < 5) return -2;
+	if(strlen(s) < 5) return (size_t)-2;
 	*w = (wchar_t) (((byte & 0x0F) << 24)
-			| ((s[1] & 0x3F) << 12)
-			| ((s[2] & 0x3F) << 12)
-			| ((s[3] & 0x3F) << 6)
+			| (unsigned int) ((s[1] & 0x3F) << 12)
+			| (unsigned int) ((s[2] & 0x3F) << 12)
+			| (unsigned int) ((s[3] & 0x3F) << 6)
 			| (s[4] & 0x3F));
 	return 5;
     } else {
-	if(strlen(s) < 6) return -2;
+	if(strlen(s) < 6) return (size_t)-2;
 	*w = (wchar_t) (((byte & 0x0F) << 30)
-			| ((s[1] & 0x3F) << 24)
-			| ((s[2] & 0x3F) << 18)
-			| ((s[3] & 0x3F) << 12)
-			| ((s[4] & 0x3F) << 6)
+			| (unsigned int) ((s[1] & 0x3F) << 24)
+			| (unsigned int) ((s[2] & 0x3F) << 18)
+			| (unsigned int) ((s[3] & 0x3F) << 12)
+			| (unsigned int) ((s[4] & 0x3F) << 6)
 			| (s[5] & 0x3F));
 	return 6;
     }
@@ -1144,14 +1145,14 @@ utf8toucs(wchar_t *wc, const char *s)
 size_t
 utf8towcs(wchar_t *wc, const char *s, size_t n)
 {
-    int m, res = 0;
+    ssize_t m, res = 0;
     const char *t;
     wchar_t *p;
     wchar_t local;
 
     if(wc)
 	for(p = wc, t = s; ; p++, t += m) {
-	    m  = utf8toucs(p, t);
+	    m  = (ssize_t) utf8toucs(p, t);
 	    if (m < 0) error(_("invalid input '%s' in 'utf8towcs'"), s);
 	    if (m == 0) break;
 	    res ++;
@@ -1159,22 +1160,22 @@ utf8towcs(wchar_t *wc, const char *s, size_t n)
 	}
     else
 	for(t = s; ; res++, t += m) {
-	    m  = utf8toucs(&local, t);
+	    m  = (ssize_t) utf8toucs(&local, t);
 	    if (m < 0) error(_("invalid input '%s' in 'utf8towcs'"), s);
 	    if (m == 0) break;
 	}
-    return res;
+    return (size_t) res;
 }
 
 /* based on pcre.c */
-static const int utf8_table1[] =
+static const unsigned int utf8_table1[] =
   { 0x7f, 0x7ff, 0xffff, 0x1fffff, 0x3ffffff, 0x7fffffff};
-static const int utf8_table2[] = { 0, 0xc0, 0xe0, 0xf0, 0xf8, 0xfc};
+static const unsigned int utf8_table2[] = { 0, 0xc0, 0xe0, 0xf0, 0xf8, 0xfc};
 
 static size_t Rwcrtomb(char *s, const wchar_t wc)
 {
-    register int i, j;
-    unsigned int cvalue = wc;
+    register size_t i, j;
+    unsigned int cvalue = (unsigned int) wc;
     char buf[10], *b;
 
     b = s ? s : buf;
@@ -1183,22 +1184,22 @@ static size_t Rwcrtomb(char *s, const wchar_t wc)
 	if (cvalue <= utf8_table1[i]) break;
     b += i;
     for (j = i; j > 0; j--) {
-	*b-- = 0x80 | (cvalue & 0x3f);
+	*b-- = (char) (0x80 | (cvalue & 0x3f));
 	cvalue >>= 6;
     }
-    *b = utf8_table2[i] | cvalue;
+    *b = (char) (utf8_table2[i] | cvalue);
     return i + 1;
 }
 
 /* attribute_hidden? */
 size_t wcstoutf8(char *s, const wchar_t *wc, size_t n)
 {
-    int m, res=0;
+    ssize_t m, res=0;
     char *t;
     const wchar_t *p;
     if(s) {
 	for(p = wc, t = s; ; p++) {
-	    m  = Rwcrtomb(t, *p);
+	    m  = (ssize_t) Rwcrtomb(t, *p);
 	    if(m <= 0) break;
 	    res += m;
 	    if(res >= n) break;
@@ -1206,12 +1207,12 @@ size_t wcstoutf8(char *s, const wchar_t *wc, size_t n)
 	}
     } else {
 	for(p = wc; ; p++) {
-	    m  = Rwcrtomb(NULL, *p);
+	    m  = (ssize_t) Rwcrtomb(NULL, *p);
 	    if(m <= 0) break;
 	    res += m;
 	}
     }
-    return res;
+    return (size_t) res;
 }
 
 
@@ -1224,7 +1225,7 @@ size_t Mbrtowc(wchar_t *wc, const char *s, size_t n, mbstate_t *ps)
     used = mbrtowc(wc, s, n, ps);
     if((int) used < 0) {
 	/* This gets called from the menu setup in RGui */
-	if (!R_Is_Running) return -1;
+	if (!R_Is_Running) return (size_t)-1;
 	/* let's try to print out a readable version */
 	char err[4*strlen(s) + 1], *q;
 	const char *p;
@@ -1270,7 +1271,7 @@ extern int _pcre_valid_utf8(const char *string, int length);
 
 Rboolean utf8Valid(const char *str)
 {
-    return  (_pcre_valid_utf8(str, strlen(str)) < 0);
+    return  (_pcre_valid_utf8(str, (int) strlen(str)) < 0);
 }
 #endif
 
@@ -1280,7 +1281,7 @@ char *Rf_strchr(const char *s, int c)
 {
     char *p = (char *)s;
     mbstate_t mb_st;
-    int used;
+    size_t used;
 
     if(!mbcslocale || utf8locale) return strchr(s, c);
     mbs_init(&mb_st);
@@ -1295,7 +1296,7 @@ char *Rf_strrchr(const char *s, int c)
 {
     char *p = (char *)s, *plast = NULL;
     mbstate_t mb_st;
-    int used;
+    size_t used;
 
     if(!mbcslocale || utf8locale) return strrchr(s, c);
     mbs_init(&mb_st);
@@ -1367,7 +1368,7 @@ void F77_SYMBOL(rexitc)(char *msg, int *nchar)
 	warning(_("error message truncated to 255 chars"));
 	nc = 255;
     }
-    strncpy(buf, msg, nc);
+    strncpy(buf, msg, (size_t) nc);
     buf[nc] = '\0';
     error("%s", buf);
 }
@@ -1380,7 +1381,7 @@ void F77_SYMBOL(rwarnc)(char *msg, int *nchar)
 	warning(_("warning message truncated to 255 chars"));
 	nc = 255;
     }
-    strncpy(buf, msg, nc);
+    strncpy(buf, msg, (size_t) nc);
     buf[nc] = '\0';
     warning("%s", buf);
 }
@@ -1394,9 +1395,9 @@ void F77_SYMBOL(rchkusr)(void)
 char *acopy_string(const char *in)
 {
     char *out;
-    int len = strlen(in);
+    size_t len = strlen(in);
     if (len > 0) {
-	out = (char *) R_alloc(1+strlen(in), sizeof(char));
+	out = (char *) R_alloc(1 + len, sizeof(char));
 	strcpy(out, in);
     } else
 	out = "";
@@ -1448,15 +1449,15 @@ void *Rf_AdobeSymbol2utf8(char *work, const char *c0, int nwork)
     while (*c) {
 	if (*c < 32) *t++ = ' ';
 	else {
-	    unsigned int u = s2u[*c - 32];
-	    if (u < 128) *t++ = u;
+	    unsigned int u = (unsigned int) s2u[*c - 32];
+	    if (u < 128) *t++ = (unsigned char) u;
 	    else if (u < 0x800) {
-		*t++ = 0xc0 | (u >> 6);
-		*t++ = 0x80 | (u & 0x3f);
+		*t++ = (unsigned char) (0xc0 | (u >> 6));
+		*t++ = (unsigned char) (0x80 | (u & 0x3f));
 	    } else {
-		*t++ = 0xe0 | (u >> 12);
-		*t++ = 0x80 | ((u >> 6) & 0x3f);
-		*t++ = 0x80 | (u & 0x3f);
+		*t++ = (unsigned char) (0xe0 | (u >> 12));
+		*t++ = (unsigned char) (0x80 | ((u >> 6) & 0x3f));
+		*t++ = (unsigned char) (0x80 | (u & 0x3f));
 	    }
 	}
 	if (t+6 > (unsigned char *)(work + nwork)) break;
@@ -1474,7 +1475,7 @@ int attribute_hidden Rf_AdobeSymbol2ucs2(int n)
 
 double R_strtod4(const char *str, char **endptr, char dec, Rboolean NA)
 {
-    LDOUBLE ans = 0.0, p10 = 10.0, fac = 1.0;
+    long double ans = 0.0, p10 = 10.0, fac = 1.0;
     int n, expn = 0, sign = 1, ndigits = 0, exph = -1;
     const char *p = str;
 
@@ -1602,7 +1603,7 @@ double R_atof(const char *str)
 
 /* enc2native and enc2utf8, but they are the same in a UTF-8 locale */
 /* primitive */
-SEXP do_enc2(SEXP call, SEXP op, SEXP args, SEXP env)
+SEXP attribute_hidden do_enc2(SEXP call, SEXP op, SEXP args, SEXP env)
 {
     SEXP ans, el;
     int i;
@@ -1636,9 +1637,7 @@ SEXP do_enc2(SEXP call, SEXP op, SEXP args, SEXP env)
 }
 
 #ifdef USE_ICU
-# ifdef HAVE_LOCALE_H
-#  include <locale.h>
-# endif
+# include <locale.h>
 #ifdef USE_ICU_APPLE
 /* Mac OS X is missing the headers */
 typedef int UErrorCode; /* really an enum these days */
@@ -1685,8 +1684,8 @@ typedef enum {
       UCOL_ATTRIBUTE_COUNT
 } UColAttribute;
 
-/* UCharIterator struct has to be defined sice we use its instances as
-   local variables, but we don't acutally use any of its members. */
+/* UCharIterator struct has to be defined since we use its instances as
+   local variables, but we don't actually use any of its members. */
 typedef struct UCharIterator {
   const void *context;
   int32_t length, start, index, limit, reservedField;
@@ -1865,3 +1864,18 @@ int Scollate(SEXP a, SEXP b)
 
 # endif
 #endif
+
+#include <lzma.h>
+
+SEXP crc64ToString(SEXP in)
+{
+    uint64_t crc = 0;
+    char ans[17];
+    if (!isString(in)) error("input must be a character string");
+    const char *str = CHAR(STRING_ELT(in, 0));
+
+    /* Seems this is realy 64-bit only on 64-bit platforms */
+    crc = lzma_crc64((uint8_t *)str, strlen(str), crc);
+    snprintf(ans, 17, "%lx", (long unsigned int) crc);
+    return mkString(ans);
+}

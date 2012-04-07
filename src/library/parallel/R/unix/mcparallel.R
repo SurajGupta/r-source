@@ -1,0 +1,76 @@
+#  File src/library/parallel/R/unix/mcparallel.R
+#  Part of the R package, http://www.R-project.org
+#
+#  This program is free software; you can redistribute it and/or modify
+#  it under the terms of the GNU General Public License as published by
+#  the Free Software Foundation; either version 2 of the License, or
+#  (at your option) any later version.
+#
+#  This program is distributed in the hope that it will be useful,
+#  but WITHOUT ANY WARRANTY; without even the implied warranty of
+#  MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
+#  GNU General Public License for more details.
+#
+#  A copy of the GNU General Public License is available at
+#  http://www.r-project.org/Licenses/
+
+### Derived from multicore version 0.1-6 by Simon Urbanek
+
+mcparallel <- function(expr, name, mc.set.seed = TRUE, silent = FALSE)
+{
+    f <- mcfork()
+    env <- parent.frame()
+    if (isTRUE(mc.set.seed)) mc.advance.stream()
+    if (inherits(f, "masterProcess")) {
+        on.exit(mcexit(1L, structure("fatal error in wrapper code",
+                                  class = "try-error")))
+        if (isTRUE(mc.set.seed)) mc.set.stream()
+        if (isTRUE(silent)) closeStdout()
+        sendMaster(try(eval(expr, env), silent = TRUE))
+        mcexit(0L)
+    }
+    if (!missing(name) && !is.null(name)) f$name <- as.character(name)[1L]
+    class(f) <- c("parallelJob", class(f))
+    f
+}
+
+mccollect <- function(jobs, wait = TRUE, timeout = 0, intermediate = FALSE)
+{
+    if (missing(jobs)) jobs <- children()
+    if (!length(jobs)) return (NULL)
+    if (isTRUE(intermediate)) intermediate <- str
+    if (!wait) {
+        s <- selectChildren(jobs, timeout)
+        if (is.logical(s) || !length(s)) return(NULL)
+        lapply(s, function(x) {
+            r <- readChild(x)
+            if (is.raw(r)) unserialize(r) else NULL
+        })
+    } else {
+        pids <- if (inherits(jobs, "process") || is.list(jobs))
+            processID(jobs) else jobs
+        if (!length(pids)) return(NULL)
+        if (!is.numeric(pids)) stop("invalid 'jobs' argument")
+        pids <- as.integer(pids)
+        pnames <- as.character(pids)
+        if (!inherits(jobs, "process") && is.list(jobs))
+            for(i in seq(jobs))
+                if (!is.null(jobs[[i]]$name))
+                    pnames[i] <- as.character(jobs[[i]]$name)
+        res <- lapply(pids, function(x) NULL)
+        names(res) <- pnames
+        fin <- rep(FALSE, length(jobs))
+        while (!all(fin)) {
+            s <- selectChildren(pids, 0.5)
+            if (is.integer(s)) {
+                for (pid in s) {
+                    r <- readChild(pid)
+                    if (is.integer(r) || is.null(r)) fin[pid == pids] <- TRUE
+                    if (is.raw(r)) res[[which(pid == pids)]] <- unserialize(r)
+                }
+                if (is.function(intermediate)) intermediate(res)
+            } else if (all(is.na(match(pids, processID(children()))))) break
+        }
+        res
+    }
+}

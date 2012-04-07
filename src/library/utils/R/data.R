@@ -80,7 +80,9 @@ function(..., list = character(), package = NULL, lib.loc = NULL,
                 if(is.matrix(entries) && ncol(entries) == 2L)
                     db <- rbind(db, cbind(packageName, dirname(path), entries))
                 else
-                    warning(gettextf("data index for package '%s' is invalid and will be ignored", packageName), domain=NA, call.=FALSE)
+                    warning(gettextf("data index for package %s is invalid and will be ignored",
+                                     sQuote(packageName)),
+                            domain=NA, call.=FALSE)
             }
         }
         colnames(db) <- c("Package", "LibPath", "Item", "Title")
@@ -111,7 +113,7 @@ function(..., list = character(), package = NULL, lib.loc = NULL,
                     ## found it, so copy objects from database
                     found <- TRUE
                     if(verbose)
-                        message(sprintf("name=%s:\t found in Rdata.rdb", name),
+                        message(sprintf("name=%s:\t found in Rdata.rds", name),
                                 domain=NA)
                     thispkg <- sub(".*/([^/]*)/data$", "\\1", p)
                     thispkg <- sub("_.*$", "", thispkg) # versioned installs.
@@ -120,7 +122,10 @@ function(..., list = character(), package = NULL, lib.loc = NULL,
                     lazyLoad(file.path(p, "Rdata"), envir = envir,
                              filter = function(x) x %in% objs)
                     break
-                }
+		} else if(verbose)
+		    message(sprintf("name=%s:\t NOT found in names() of Rdata.rds, i.e.,\n\t%s\n",
+				    name, paste(names(rds), collapse=",")),
+				domain=NA)
             }
             ## check for zipped data dir
             if(file_test("-f", file.path(p, "Rdata.zip"))) {
@@ -131,7 +136,7 @@ function(..., list = character(), package = NULL, lib.loc = NULL,
                 if(file_test("-f", fp <- file.path(p, "filelist")))
                     files <- file.path(p, scan(fp, what="", quiet = TRUE))
                 else {
-                    warning(gettextf("file 'filelist' is missing for directory '%s'", p), domain = NA)
+                    warning(gettextf("file 'filelist' is missing for directory %s", sQuote(p)), domain = NA)
                     next
                 }
             } else {
@@ -202,7 +207,8 @@ function(..., list = character(), package = NULL, lib.loc = NULL,
         }
 
         if(!found)
-            warning(gettextf("data set '%s' not found", name), domain = NA)
+            warning(gettextf("data set %s not found", sQuote(name)),
+                    domain = NA)
     }
     invisible(names)
 }

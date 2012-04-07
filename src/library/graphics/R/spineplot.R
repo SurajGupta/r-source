@@ -22,7 +22,7 @@ spineplot <- function(x, ...) {
 }
 
 spineplot.formula <-
-function(formula, data = list(),
+function(formula, data = NULL,
          breaks = NULL, tol.ylab = 0.05, off = NULL, ylevels = NULL,
          col = NULL, main = "", xlab = NULL, ylab = NULL,
          xaxlabels = NULL, yaxlabels = NULL,
@@ -108,7 +108,7 @@ function(x, y = NULL,
 	    xorig <- x
 	    x <- as.numeric(x)
 	}
-        ## compute breaks for x	
+        ## compute breaks for x
         if(is.null(breaks)) {
 	    breaks <- list()
 	} else {
@@ -148,6 +148,7 @@ function(x, y = NULL,
     }
 
     ## setup plot
+    dev.hold(); on.exit(dev.flush())
     plot(0, 0, xlim = xlim, ylim = ylim, type = "n", axes = FALSE,
          xaxs = "i", yaxs = "i", main = main, xlab = xlab, ylab = ylab)
 

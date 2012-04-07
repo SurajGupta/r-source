@@ -65,7 +65,9 @@
     else if(is(genericFunction, "genericFunction"))
         value <- genericFunction
     else
-        stop(gettextf("the 'genericFunction' argument must be NULL or a generic function object; got an object of class \"%s\"", class(genericFunction)),
+        stop(gettextf("the %s argument must be NULL or a generic function object; got an object of class %s",
+                      sQuote("genericFunction"),
+                      dQuote(class(genericFunction))),
              domain = NA)
     value@.Data <- fdef
     value@generic <- f
@@ -198,15 +200,19 @@ makeStandardGeneric <-
         ## methods are prohibited)
         fgen <- genericForPrimitive(f)
         if(identical(fgen, FALSE))
-            stop(gettextf("special function \"%s\" is not permitted to have methods",
-                          f), domain = NA)
+            stop(gettextf("special function %s is not permitted to have methods",
+                          sQuote(f)),
+                 domain = NA)
         if(is.null(fgen)) {
-            warning(gettextf("special function \"%s\" has no known argument list; will assume '(x, ...)'", f), domain = NA)
+            warning(gettextf("special function %s has no known argument list; will assume '(x, ...)'",
+                             sQuote(f)),
+                    domain = NA)
             ## unknown
             fgen <- function(x, ...) {}
         }
         else {
-            message(gettextf("making a generic for special function \"%s\"", f),
+            message(gettextf("making a generic for special function %s",
+                             sQuote(f)),
                     domain = NA)
             setPrimitiveMethods(f, fdef, "reset", fgen, NULL)
         }
@@ -448,8 +454,8 @@ getGeneric <-
         if(is.primitive(baseDef)) {
             value <- genericForPrimitive(f)
             if(!is.function(value) && mustFind)
-                stop(gettextf("methods cannot be defined for the primitive function \"%s\"",
-                              f), domain = NA)
+                stop(gettextf("methods cannot be defined for the primitive function %s",
+                              sQuote(f)), domain = NA)
             if(is(value, "genericFunction"))
                 value <- .cacheGeneric(f, value)
         }
@@ -710,7 +716,7 @@ getMethodsMetaData <- function(f, where = topenv(parent.frame()))
         return(NULL)
     if(.noMlists()) {
         warning(gettextf("Methods list objects are not maintained in this version of R:  request for function %s may return incorrect information",
-                         dQuote(fdef@generic)),
+                         sQuote(fdef@generic)),
                 domain = NA)
     }
     mname <- methodsPackageMetaName("M",fdef@generic, fdef@package)
@@ -820,6 +826,21 @@ cacheMetaData <-
 {
     ## a collection of actions performed on attach or detach
     ## to update class and method information.
+    pkg <- getPackageName(where)
+    classes <- getClasses(where)
+    for(cl in classes) {
+        cldef <- (if(attach) get(classMetaName(cl), where) # NOT getClassDef, it will use cache
+                  else  getClassDef(cl, searchWhere))
+        if(is(cldef, "classRepresentation")) {
+            if(attach) {
+                .cacheClass(cl, cldef, is(cldef, "ClassUnionRepresentation"), where)
+            }
+            else if(identical(cldef@package, pkg)) {
+                .uncacheClass(cl, cldef)
+                .removeSuperclassBackRefs(cl, cldef, searchWhere)
+            }
+        }
+    }
     generics <- .getGenerics(where)
     packages <- attr(generics, "package")
     if(length(packages) <  length(generics))
@@ -832,7 +853,6 @@ cacheMetaData <-
     ## check for duplicates
     dups <- duplicated(generics) & duplicated(packages)
     generics <- generics[!dups]
-    pkg <- getPackageName(where)
     for(i in seq_along(generics)) {
         f <- generics[[i]]
         fpkg <- packages[[i]]
@@ -870,20 +890,6 @@ cacheMetaData <-
             .uncacheGeneric(f, fdef)
         methods <- .updateMethodsInTable(fdef, where, attach)
         cacheGenericsMetaData(f, fdef, attach, where, fdef@package, methods)
-    }
-    classes <- getClasses(where)
-    for(cl in classes) {
-        cldef <- (if(attach) get(classMetaName(cl), where) # NOT getClassDef, it will use cache
-                  else  getClassDef(cl, searchWhere))
-        if(is(cldef, "classRepresentation")) {
-            if(attach) {
-                .cacheClass(cl, cldef, is(cldef, "ClassUnionRepresentation"), where)
-            }
-            else if(identical(cldef@package, pkg)) {
-                .uncacheClass(cl, cldef)
-                .removeSuperclassBackRefs(cl, cldef, searchWhere)
-            }
-        }
     }
     invisible(NULL) ## as some people call this at the end of functions
 }
@@ -1070,7 +1076,11 @@ methodSignatureMatrix <- function(object, sigSlots = c("target", "defined"))
     if(length(classes)) {
         for(Cl in classes)
             if(is(object, Cl)) return(object)
-        stop(gettextf("invalid value from generic function \"%s\", class \"%s\", expected %s", fname, class(object), paste("\"", classes, "\"", sep = "", collapse = " or ")), domain = NA)
+        stop(gettextf("invalid value from generic function %s, class %s, expected %s",
+                      sQuote(fname),
+                      dQuote(class(object)),
+                      paste(dQuote(classes), collapse = " or ")),
+             domain = NA)
     }
     ## empty test is allowed
     object
@@ -1211,7 +1221,9 @@ metaNameUndo <- function(strings, prefix, searchForm = FALSE)
         else if(is(mi, "MethodsList"))
             mi <- Recall(mi, f)
         else
-            stop(gettextf("internal error: Bad methods list object in fixing methods for primitive function \"%s\"", f), domain = NA)
+            stop(gettextf("internal error: Bad methods list object in fixing methods for primitive function %s",
+                          sQuote(f)),
+                 domain = NA)
         methods[[i]] <- mi
     }
     mlist@methods <- methods
@@ -1239,10 +1251,13 @@ metaNameUndo <- function(strings, prefix, searchForm = FALSE)
 .ChangeFormals <- function(def, defForArgs, msg = "<unidentified context>")
 {
     if(!is(def, "function"))
-        stop(gettextf("trying to change the formal arguments in %s, in an object of class \"%s\"; expected a function definition", msg, class(def)),
+        stop(gettextf("trying to change the formal arguments in %s, in an object of class %s; expected a function definition",
+                      msg, dQuote(class(def))),
              domain = NA)
     if(!is(defForArgs, "function"))
-        stop(gettextf("trying to change the formal arguments in %s, but getting the new formals from an object of class \"%s\"; expected a function definition", msg, class(def)), domain = NA)
+        stop(gettextf("trying to change the formal arguments in %s, but getting the new formals from an object of class %s; expected a function definition",
+                      msg, dQuote(class(def))),
+             domain = NA)
     old <- formalArgs(def)
     new <- formalArgs(defForArgs)
     if(length(old) < length(new))
@@ -1317,7 +1332,7 @@ metaNameUndo <- function(strings, prefix, searchForm = FALSE)
 ## to .methodsNamespace.  But that is currently initialized to .GlobalEnv.
 ##
 ## The logic will fail if a function in a package with a namespace calls a (non-methods)
-## function in a pacakge with no namespace, and that function then calls a methods package
+## function in a package with no namespace, and that function then calls a methods package
 ## function.  The right answer then is .GlobalEnv, but we will instead get the package
 ## namespace.
 .externalCallerEnv <- function(n = 2, nmax = sys.nframe() - n + 1)
@@ -1333,7 +1348,7 @@ metaNameUndo <- function(strings, prefix, searchForm = FALSE)
             ## Note that "fun" may actually be a method definition, and still will be counted.
             ## This appears to be the correct semantics, in
             ## the sense that, if the call came from a method, it's the method's environment
-            ## where one would expect to start the search (for a class defintion, e.g.)
+            ## where one would expect to start the search (for a class definition, e.g.)
             ev <- environment(fun)
             if(!identical(ev, .methodsNamespace))
                 break
@@ -1368,13 +1383,12 @@ metaNameUndo <- function(strings, prefix, searchForm = FALSE)
 }
 
 ## Mark the method as derived from a non-generic.
-## FIXME:  This can't work for primitives, which cannot have slots
-## However, primitives are not to be restored locally in any case.
 .derivedDefaultMethod <- function(fdef)
 {
     if(is.function(fdef) && !is.primitive(fdef)) {
         value <- new("derivedDefaultMethod")
         value@.Data <- fdef
+        value@target <- value@defined <- .newSignature(.anyClassName, formalArgs(fdef))
         value
     }
     else
@@ -1457,8 +1471,9 @@ getGroupMembers <- function(group, recursive = FALSE, character = TRUE)
                 else if(is(x, "genericFunction"))
                     x@generic
                 else
-		    stop(gettextf("invalid element in the groupMembers slot (class \"%s\")",
-				  class(x)), domain = NA)
+		    stop(gettextf("invalid element in the groupMembers slot (class %s)",
+				  dQuote(class(x))),
+                         domain = NA)
             })
         else
             members
@@ -1661,7 +1676,8 @@ getGroupMembers <- function(group, recursive = FALSE, character = TRUE)
     else if(is.character(what))
         paste("single string; got a character vector of length", length(what))
     else
-        gettextf("single string; got an object of class \"%s\"", class(what)[[1]])
+        gettextf("single string; got an object of class %s",
+                 dQuote(class(what)[[1L]]))
 }
 
 .dotsClass <- function(...) {
@@ -1675,3 +1691,96 @@ getGroupMembers <- function(group, recursive = FALSE, character = TRUE)
 ## loading of the methods package
 .methodsIsLoaded <- function()
     identical(.saveImage, TRUE)
+
+## Defined but not currently used:
+## utilitity to test well-defined classes in signature,
+## for setMethod(), setAs() [etc.?], the result to be
+## assigned in package where=
+## Returns a list of signature, messages and level of error
+.validSignature <- function(signature, generic, where) {
+    thisPkg <- getPackageName(where, FALSE)
+    checkDups <- .duplicateClassesExist()
+    if(is(signature, "character")) { # including class "signature"
+        classes <- as.character(signature)
+        names <- allNames(signature)
+        pkgs <- attr(signature, "package")
+    }
+    else if(is(signature, "list")) {
+        classes <- sapply(signature, as.character)
+        names <- names(signature)
+        pkgs <- character(length(signature))
+        for(i in seq_along(pkgs)) {
+            pkgi <- attr(signature[[i]], "package")
+            pkgs[[i]] <- if(is.null(pkgi)) "" else pkgi
+        }
+    }
+    msgs <- character(); level <- integer()
+    for(i in seq_along(classes)) {
+        ## classes must be defined
+        ## if duplicates exist check for them
+        ## An ambiguous duplicate is a warning if it can match thisPkg
+        ## else, an error
+        classi <- classes[[i]]
+        pkgi <- pkgs[[i]]
+        classDefi <- getClass(classi, where = where)
+        if(checkDups &&
+           classi %in% mulipleClasses()) { # hardly ever, we hope
+            clDefsi <- get(classi, envir = .classTable)
+            if(nzchar(pkgi) && pkgi %in% names(clDefsi))
+                ## use the chosen class, no message
+                classDefi <- clDefsi[[pkgi]]
+            else if(nzchar(pkgi)){
+                ## this is only a warning because it just might
+                ## be the result of identical class defs (e.g., from setOldClass()
+                msgs <- c(msgs,
+                          gettextf("Multiple definitions exist for class %s, but the supplied package (%s) is not one of them (%s)",
+                                   dQuote(classi), sQuote(pkgi),
+                                   paste(dQuote(get(classi, envir = .classTable)), collapse = ", ")))
+                level <- c(level, 2) #warn
+            }
+            else {
+                msgs <- c(msgs,
+                          gettextf("Multiple definitions exist for class %s; should specify one of them (%s), e.g. by className()",
+                                   dQuote(classi),
+                                   paste(dQuote(get(classi, envir = .classTable)), collapse = ", ")))
+            }
+        }
+        else {
+            ## just possibly the first reference to an available
+            ## package not yet loaded.  It's an error to specify
+            ## a non-loadable package
+            if(nzchar(pkgi)) {
+                loadNamespace(pkgi)
+                classDefi <- getClass(classi, where = ns)
+            }
+            if(is.null(classDefi)) {
+                classDefi <- getClassDef
+                msgi <- gettextf("No definition found for class %s",
+                                 dQuote(classi))
+                ## ensure only one error message
+                if(length(level) && any(level == 3))
+                    msgs[level == 3] <- paste(msgs[level == 3], msgi, sep = "; ")
+                else
+                    msgs <- c(msgs, msgi)
+                level <- c(level, 3)
+            }
+            ## note that we do not flag a pkgi different from
+            ## the package of the def., mainly because of setOldClass()
+            ## which currently generates potentially multiple versions
+            ## of the same S3 class.
+        }
+        ## except for the obscure multiple identical class case
+        ## we should not get here w/o a valid class def.
+        if(is.null(classDefi)) {}
+        else
+            pkgs[[i]] <- classDefi@package
+    }
+    signature <- .MakeSignature(new("signature"), generic,
+                                structure(classes, names = names, package = package))
+    if(length(msgs) > 1) {
+        ## sort by severity, to get all messages before errror
+        ii <- sort.list(level)
+        msgs <- msgs[ii]; level <- level[ii]
+    }
+    list(signature = signature, message = msgs, level = level)
+}

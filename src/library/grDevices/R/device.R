@@ -342,3 +342,28 @@ dev.size <- function(units = c("in", "cm", "px"))
     if(units == "px") size else size * graphics::par("cin")/graphics::par("cra") *
         if(units == "cm") 2.54 else 1
 }
+
+dev.hold <- function(level = 1L) .Internal(devHoldFlush(max(0L, level)))
+dev.flush <- function(level = 1L) .Internal(devHoldFlush(-max(0L, level)))
+
+dev.capture <- function(native = FALSE) .Internal(devCapture(native))
+
+dev.capabilities <- function(what = NULL)
+{
+    zz <- .Internal(dev.capabilities())
+    z <- vector("list", 6L)
+    names(z) <-  c("semiTransparency", "transparentBackground",
+                   "rasterImage", "capture", "locator",
+                   "events")
+    z[[1L]] <- c(NA, FALSE, TRUE)[zz[1L] + 1L]
+    z[[2L]] <- c(NA, "no", "fully", "semi")[zz[2L] + 1L]
+    z[[3L]] <- c(NA, "no", "yes", "non-missing")[zz[3L] + 1L]
+    z[[4L]] <- c(NA, FALSE, TRUE)[zz[4L] + 1L]
+    z[[5L]] <- c(NA, FALSE, TRUE)[zz[5L] + 1L]
+    z[[6L]] <- c( "",
+                  if (zz[6L]) "MouseDown",
+                  if (zz[7L]) "MouseMove",
+                  if (zz[8L]) "MouseUp",
+                  if (zz[9L]) "Keybd" )[-1L]
+    if (!is.null(what)) z[charmatch(what, names(z), 0L)] else z
+}

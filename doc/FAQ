@@ -1,6 +1,6 @@
 R FAQ
 Frequently Asked Questions on R
-Version 2.13.2011-09-17
+Version 2.14.2011-10-24
 ISBN 3-900051-08-9
 Kurt Hornik
 
@@ -258,7 +258,7 @@ i386-freebsd, rs6000-ibm-aix, and sparc-sun-solaris.
 2.3 What is the current version of R?
 =====================================
 
-The current released version is 2.13.1.  Based on this
+The current released version is 2.14.0.  Based on this
 `major.minor.patchlevel' numbering scheme, there are two development
 versions of R, a patched version of the current release (`r-patched') and
 one working towards the next minor or eventually major (`r-devel') releases
@@ -1328,6 +1328,9 @@ The R distribution comes with the following packages:
 *base*
      Base R functions (and datasets before R 2.0.0).
 
+*compiler*
+     R byte code compiler (added in R 2.13.0).
+
 *datasets*
      Base R datasets (added in R 2.0.0).
 
@@ -1344,6 +1347,10 @@ The R distribution comes with the following packages:
 *methods*
      Formally defined methods and classes for R objects, plus other
      programming tools, as described in the Green Book.
+
+*parallel*
+     Support for parallel computation, including by forking and by sockets,
+     and random-number generation (added in R 2.14.0).
 
 *splines*
      Regression spline functions and classes.

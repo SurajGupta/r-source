@@ -211,7 +211,8 @@ f2 <- new("Foo", .Data = diag(2), name="Diag")# explicit .Data
 (m <- as(f, "matrix"))
 ## this has no longer (2.7.0) an S4 bit: set it explicitly just for testing:
 stopifnot(isS4(m. <- asS4(m)),
-          identical(m, f@.Data))
+          identical(m, f@.Data),
+	  .hasSlot(f, "name"))# failed in R <= 2.13.1
 show(m.)
 print(m.)
 ## fixed in 2.5.0 patched
@@ -471,7 +472,7 @@ setMethod("Summary", "L",
 setMethod("[", signature(x="L", i="ANY", j="missing",drop="missing"),
           function(x,i,j,drop) new(class(x), x@.Data[i]))
 ## defining S4 methods for sort() has no effect on calls to
-## sort() from functions in a name space; e.g., median.default.
+## sort() from functions in a namespace; e.g., median.default.
 ## but setting an xtfrm() method works.
 setMethod("xtfrm", "L", function(x) xtfrm(unlist(x@.Data)))
 ## median is documented to use mean(), so we need an S3 mean method:

@@ -23,29 +23,17 @@ code2LazyLoadDB <-
     if(!length(pkgpath))
         stop(gettextf("there is no package called '%s'", package),
              domain = NA)
-    barepackage <- sub("([^-]+)_.*", "\\1", package)
     loadenv <- new.env(hash=TRUE)
-    codeFile <- file.path(pkgpath, "R", barepackage)
-    dbbase <- file.path(pkgpath, "R", barepackage)
+    codeFile <- file.path(pkgpath, "R", package)
+    dbbase <- file.path(pkgpath, "R", package)
     if (packageHasNamespace(package, dirname(pkgpath))) {
         if (! is.null(.Internal(getRegisteredNamespace(as.name(package)))))
-            stop("name space must not be loaded.")
-        ns <- loadNamespace(package, lib.loc, keep.source, TRUE, TRUE)
+            stop("namespace must not be already loaded")
+        ns <- suppressPackageStartupMessages(loadNamespace(package, lib.loc, keep.source, partial = TRUE))
         makeLazyLoadDB(ns, dbbase, compress = compress)
     }
-    else {
-        loadenv <- new.env(hash = TRUE, parent = .GlobalEnv)
-        if(file.exists(codeFile))
-            sys.source(codeFile, loadenv, keep.source = keep.source)
-        ## now transfer contents of loadenv to a new env to mimic library
-        ## the actual copy has to be done by C code to avoid forcing
-        ## promises that might have been created using delay().
-        env <- new.env(hash=TRUE)
-        .Internal(lib.fixup(loadenv, env))
-        ## save the package name in the environment
-        assign(".packageName", barepackage, envir = env)
-        makeLazyLoadDB(env, dbbase, compress = compress)
-    }
+    else
+        stop("all packages should have a NAMESPACE")
 }
 
 sysdata2LazyLoadDB <- function(srcFile, destDir, compress = TRUE)
@@ -265,7 +253,7 @@ makeLazyLoading <-
 {
     if(!is.logical(compress) && ! compress %in% c(2,3))
         stop("invalid value for 'compress': should be FALSE, TRUE, 2 or 3")
-    options(warn=1)
+    options(warn = 1L)
     findpack <- function(package, lib.loc) {
         pkgpath <- find.package(package, lib.loc, quiet = TRUE)
         if(!length(pkgpath))
@@ -274,16 +262,12 @@ makeLazyLoading <-
         pkgpath
     }
 
-    pkgpath <- findpack(package, lib.loc)
-    barepackage <- sub("([^-]+)_.*", "\\1", package)
-
     if (package == "base")
         stop("this cannot be used for package 'base'")
-    else if (packageHasNamespace(package, dirname(pkgpath)))
-        loaderFile <- file.path(R.home("share"), "R", "nspackloader.R")
-    else
-        loaderFile <- file.path(R.home("share"), "R", "packloader.R")
-    codeFile <- file.path(pkgpath, "R", barepackage)
+
+    loaderFile <- file.path(R.home("share"), "R", "nspackloader.R")
+    pkgpath <- findpack(package, lib.loc)
+    codeFile <- file.path(pkgpath, "R", package)
 
     if (!file.exists(codeFile)) {
         warning("package contains no R code")

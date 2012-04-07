@@ -48,10 +48,12 @@
       omits \pkg{methods} as it takes about 60\% of the startup time.
     }
   }
-
-#ifdef unix
-  \code{file} should not contain spaces nor shell metacharacters.
   
+  Spaces are allowed in \code{expression} and \code{file} (but will need
+  to be protected from the shell in use, if any, for example by
+  enclosing the argument in quotes).
+  
+#ifdef unix
   Normally the version of \R is determined at installation, but this can
   be overridden by setting the environment variable \env{RHOME}.
 #endif

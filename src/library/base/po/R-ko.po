@@ -2,7 +2,7 @@ msgid ""
 msgstr ""
 "Project-Id-Version: R 2.3.0\n"
 "Report-Msgid-Bugs-To: bugs@r-project.org\n"
-"POT-Creation-Date: 2011-03-29 21:44\n"
+"POT-Creation-Date: 2011-10-23 14:54\n"
 "PO-Revision-Date: 2005-05-31 09:39+0900\n"
 "Last-Translator: Korean <uiami@hanmail.com>\n"
 "Language-Team: Korean <translation-team-ko@lists.sourceforge.net>\n"
@@ -134,7 +134,7 @@ msgid ""
 msgstr ""
 
 #, fuzzy
-msgid "name space cannot be unloaded:"
+msgid "namespace cannot be unloaded:"
 msgstr "name space '%s'가 적재 되었습니다"
 
 #, fuzzy
@@ -708,6 +708,14 @@ msgstr "'package'는 길이 1이 나오지 않으면 되지 않습니다"
 msgid "no file found"
 msgstr "검색되지 않습니다"
 
+#, fuzzy
+msgid "invalid 'path' argument"
+msgstr "무효인 'category' 인수입니다"
+
+#, fuzzy
+msgid "invalid 'time' argument"
+msgstr "무효인 'category' 인수입니다"
+
 msgid "'vec' contains NAs"
 msgstr "'vec'는 NA값을 포함하고 있습니다"
 
@@ -764,21 +772,43 @@ msgstr "(을)를 찾아낼수가 없습니다"
 msgid "all arguments must be named"
 msgstr "모든 인수는 동일 길이가 나오지 않으면 되지 않습니다"
 
-msgid "'pattern' must be a non-empty character string"
-msgstr "'pattern'는 비어 있지 않는 문자열이 아니면 되지 않습니다"
-
 #, fuzzy
-msgid "invalid multibyte string for 'pattern'"
-msgstr "'by'에 대한 무효인 문자열입니다"
-
-msgid "'max.distance' must be non-negative"
-msgstr "'max.distance'는 non-negative이 나오지 않으면 되지 않습니다"
+msgid "match distance components must be non-negative"
+msgstr "'max.distance'요소는 non-negative가 나오지 않으면 되지 않습니다"
 
 msgid "unknown match distance components ignored"
 msgstr "알수 없는 일치거리요소는 무시되었습니다"
 
-msgid "'max.distance' components must be non-negative"
+#, fuzzy
+msgid "unknown cost components ignored"
+msgstr "알수 없는 일치거리요소는 무시되었습니다"
+
+#, fuzzy
+msgid "cost components must be non-negative"
 msgstr "'max.distance'요소는 non-negative가 나오지 않으면 되지 않습니다"
+
+#, fuzzy
+msgid "%s and %s must have the same length"
+msgstr "'x' 그리고 'y'는 동일 길이를 가지지 않으면 안됩니다"
+
+msgid "need non-overlapping matches for %s"
+msgstr ""
+
+#, fuzzy
+msgid "missing replacement values are not allowed"
+msgstr "'row.names'가 빠져 있어 되지 않습니다"
+
+msgid "must have replacement values for matches"
+msgstr ""
+
+msgid "value does not provide any replacement values"
+msgstr ""
+
+msgid "must have replacements for non-matches"
+msgstr ""
+
+msgid "must have replacements for matches"
+msgstr ""
 
 msgid "norm '%s' currently always uses exact = FALSE"
 msgstr ""
@@ -791,45 +821,56 @@ msgstr "정방 행렬이어야 합니다"
 msgid "'object' must be a list"
 msgstr "'subset'는 논리값이 아니면 되지 않습니다"
 
-msgid "package '%s' has not been installed properly"
+msgid "'keep.source' is deprecated and will be ignored"
+msgstr ""
+
+#, fuzzy
+msgid "package %s has not been installed properly"
 msgstr "패키지 '%s'는 올바르고 인스톨 되지 않았습니다"
 
 #, fuzzy
-msgid "package '%s' was built before R 2.10.0: please re-install it"
+msgid "package %s was built before R 2.10.0: please re-install it"
 msgstr "패키지 '%s' R 2.0.0 이전 것입니다. 그것을 다시 인스톨을 해주십시오"
 
-msgid "This is R %s, package '%s' needs %s %s"
+#, fuzzy
+msgid "This is R %s, package %s needs %s %s"
 msgstr "이것은 R %s입니다.패키지 '%s'는 %s %s를 필요로 합니다"
 
-msgid "package '%s' was built under R version %s"
+#, fuzzy
+msgid "package %s was built under R version %s"
 msgstr "패키지 '%s'는 버전 %s의 R미만에서 작성되어졌습니다"
 
-msgid "package '%s' was built for %s"
+#, fuzzy
+msgid "package %s was built for %s"
 msgstr "패키지 '%s'는 %s에 대해서 작성되었습니다"
 
 #, fuzzy
-msgid "package '%s' is not installed for 'arch=%s'"
+msgid "package %s is not installed for 'arch=%s'"
 msgstr "패키지 '%s'는 올바르고 인스톨 되지 않았습니다"
 
 msgid ""
-"package '%s' has a license that you need to accept in an interactive session"
+"package %s has a license that you need to accept in an interactive session"
 msgstr ""
 
-msgid "Package '%s' has a license that you need to accept after viewing"
+msgid "Package %s has a license that you need to accept after viewing"
 msgstr ""
 
 msgid ""
-"Package '%s' has a license that you need to accept:\n"
+"Package %s has a license that you need to accept:\n"
 "according to the DESCRIPTION file it is"
 msgstr ""
 
 msgid "License"
 msgstr ""
 
-msgid "License for package '%s' not accepted"
+#, fuzzy
+msgid "License for package %s not accepted"
 msgstr ""
+"패키지 %s는 적재되지 않습니다\n"
+"패키지(복수)%s는 적재되지 않습니다"
 
-msgid "Attaching package: '%s'"
+#, fuzzy
+msgid "Attaching package: %s"
 msgstr "다음의 패키지를 첨가합니다: '%s'"
 
 msgid "'verbose' and 'quietly' are both true; being verbose then .."
@@ -839,32 +880,31 @@ msgstr ""
 msgid "invalid package name"
 msgstr "부적절한 이름입니다"
 
-msgid "there is no package called '%s'"
+#, fuzzy
+msgid "there is no package called %s"
 msgstr "'%s'라는 이름의 패키지는 없습니다"
 
 msgid "no library trees found in 'lib.loc'"
 msgstr ""
 
 #, fuzzy
-msgid "'%s' is not a valid installed package"
+msgid "%s is not a valid installed package"
 msgstr "'%s'는 유효한 선택이 아닙니다"
 
-msgid "'%s' not found on search path, using pos = 2"
+#, fuzzy
+msgid "%s not found on search path, using pos = 2"
 msgstr "'%s'는 탐색 패스에서는 검색되지 않았습니다. pos = 2를 사용합니다"
 
-msgid "package/namespace load failed for '%s'"
+#, fuzzy
+msgid "package/namespace load failed for %s"
 msgstr "'%s'에 대한 패키지 또는 이름 공간의 적재가 실패했습니다"
 
-msgid "unable to load R code in package '%s'"
-msgstr "패키지 '%s'에서의 R 코드를 적재할수가 없습니다"
+#, fuzzy
+msgid "package %s does not have a NAMESPACE and should be re-installed"
+msgstr "패키지 '%s'는 이름 공간을 가지고 있지 않습니다"
 
-msgid "package '%s' contains no R code"
-msgstr "패키지 '%s'는 R코드를 포함하고 있지 않습니다"
-
-msgid ".First.lib failed for '%s'"
-msgstr "First.lib는 '%s'에 대해서 실패했습니다"
-
-msgid "package '%s' already present in search()"
+#, fuzzy
+msgid "package %s already present in search()"
 msgstr "패키지'%s'는  이미 search()에 존재합니다"
 
 msgid "'DESCRIPTION' has 'Encoding' field and re-encoding is not possible"
@@ -872,7 +912,8 @@ msgstr ""
 "'DESCRIPTION' 는 'Encoding' 필드를 가지고 있습니다. 그리고 re-encoding는 가능"
 "하지는 않습니다"
 
-msgid "%sPackages in library '%s':"
+#, fuzzy
+msgid "%sPackages in library %s:"
 msgstr "라이브러리 '%s'에서의 %s패키지:"
 
 msgid "no packages found"
@@ -881,15 +922,15 @@ msgstr "어떠한 패키지도 검색되지 않았습니다"
 msgid "R packages available"
 msgstr "이용 가능한 R 패키지"
 
-msgid "DLL '%s' not found: maybe not installed for this architecture?"
+msgid "DLL %s not found: maybe not installed for this architecture?"
 msgstr ""
 
 #, fuzzy
-msgid "shared object '%s' not found"
+msgid "shared object %s not found"
 msgstr "%s를 검색해낼수가 없습니다"
 
 #, fuzzy
-msgid "DLL '%s' already loaded"
+msgid "DLL %s already loaded"
 msgstr "공용 라이브러리 '%s'는 적재되지 않았습니다"
 
 #, fuzzy
@@ -908,27 +949,23 @@ msgid "no shared object was specified"
 msgstr "공용 라이브러리가 아무것도 지정되지 않았습니다"
 
 #, fuzzy
-msgid "DLL '%s' was not loaded"
+msgid "DLL %s was not loaded"
 msgstr "공용 라이브러리'%s'는 로드 되지 않았습니다"
 
 #, fuzzy
-msgid "shared object '%s' was not loaded"
+msgid "shared object %s was not loaded"
 msgstr "공용 라이브러리'%s'는 로드 되지 않았습니다"
 
 #, fuzzy
-msgid "DLL '%s' not found"
+msgid "DLL %s not found"
 msgstr "파일 '%s'가 검색되지 않습니다"
+
+#, fuzzy
+msgid "shared object '%s' not found"
+msgstr "%s를 검색해낼수가 없습니다"
 
 msgid "now dyn.unload(\"%s\") ..."
 msgstr "dyn.unload(\"%s\")중입니다..."
-
-#, fuzzy
-msgid "use of 'save' is deprecated"
-msgstr "'%s'는 없어져 버릴 예정입니다"
-
-#, fuzzy
-msgid "save != FALSE is defunct"
-msgstr "'%s'는 없어져 버렸습니다"
 
 msgid "Loading required package: %s"
 msgstr "요구된 패키지 %s를 로드중입니다"
@@ -936,16 +973,17 @@ msgstr "요구된 패키지 %s를 로드중입니다"
 msgid "none of the packages are loaded"
 msgstr "어느 패키지도 로드 되지 않습니다"
 
+#, fuzzy
 msgid ""
-"package '%s' found more than once,\n"
-"using the one found in '%s'"
+"package %s found more than once,\n"
+"using the one found in %s"
 msgstr ""
 "패키지 '%s'가 복수(여러개) 검색되었습니다.\n"
 "'%s'에 검색된 것을 사용합니다"
 
+#, fuzzy
 msgid ""
-"Further information is available in the following vignettes in directory "
-"'%s':"
+"Further information is available in the following vignettes in directory %s:"
 msgstr "이상의 정보는 디렉토리'%s'에 있는 이하의 vignettes에 있습니다"
 
 msgid "doc"
@@ -957,30 +995,39 @@ msgstr "기술 :"
 msgid "Index:"
 msgstr "색인: "
 
-msgid "Information on package '%s'"
+#, fuzzy
+msgid "Information on package %s"
 msgstr "패키지 '%s'의 정보"
 
-msgid "Documentation for package '%s'"
+#, fuzzy
+msgid "Documentation for package %s"
 msgstr "패키지 '%s'를 위한 문서"
 
-msgid "package '%s' required by '%s' could not be found"
+#, fuzzy
+msgid "package %s required by %s could not be found"
 msgstr "'%s'가 요구한 패키지 '%s'는 검색해낼수 없었습니다"
 
-msgid "package '%s' %s was found, but %s %s is required by '%s'"
+#, fuzzy
+msgid "package %s %s was found, but %s %s is required by %s"
 msgstr "패키지 '%s' %s는 검색되었지만, %s %s가 '%s'에 의해 요구되어 있습니다"
 
-msgid "package '%s' could not be loaded"
+#, fuzzy
+msgid "package %s could not be loaded"
 msgstr "패키지 '%s'를 적재할수가 없었습니다"
 
-msgid "package '%s' %s is loaded, but %s %s is required by '%s'"
+#, fuzzy
+msgid "package %s %s is loaded, but %s %s is required by %s"
 msgstr ""
 "패키지 '%s' %s는 적재 되었습니다만, %s %s 가 '%s'에 의해 요구되어 있습니다"
+
+msgid "empty (zero-byte) input file"
+msgstr ""
 
 msgid "input has been corrupted, with LF replaced by CR"
 msgstr "입력 오류가 발생되어지고 있습니다. LF가 CR로 옮겨 놓을 수가 있습니다"
 
 msgid ""
-"file '%s' has magic number '%s'\n"
+"file %s has magic number '%s'\n"
 "   Use of save versions prior to 2 is deprecated"
 msgstr ""
 
@@ -996,6 +1043,13 @@ msgstr ""
 msgid "'file' must be non-empty string"
 msgstr "'file'는 비어 있지 않는 문자열이 아니면 되지 않습니다"
 
+#, fuzzy
+msgid "'compress' must be logical or character"
+msgstr "'normal.kind'는 길이1의 문자열이 아니면 안됩니다"
+
+msgid "'compress = \"%s\"' is invalid"
+msgstr ""
+
 msgid "bad file argument"
 msgstr "잘못된 파일 인수입니다"
 
@@ -1008,7 +1062,7 @@ msgstr ""
 msgid "[Previously saved workspace restored]"
 msgstr "[이전에 저장된 workspace를 복귀합니다]"
 
-msgid "Attempting to load the environment '%s'"
+msgid "Attempting to load the environment %s"
 msgstr ""
 
 msgid "not found: using .GlobalEnv instead"
@@ -1112,17 +1166,18 @@ msgstr ""
 msgid "'%s' is not an exported object from 'namespace:%s'"
 msgstr "'%s'는 'namespace:%s' 로부터  export된 오브젝트가 아닙니다"
 
-#, fuzzy
-msgid "package %s has no name space and is not on the search path"
-msgstr "패키지 '%s'는 이름 공간을 가지고 있지 않습니다"
+msgid "running .First.lib() for package %s as .onLoad/.onAttach were not found"
+msgstr ""
 
-msgid "name space is already attached"
+#, fuzzy
+msgid "namespace is already attached"
 msgstr "name space는 이미 부가되어 있습니다"
 
 msgid "%s not found"
 msgstr "%s를 검색해낼수가 없습니다"
 
-msgid "namespace '%s' is already sealed in loadNamespace"
+#, fuzzy
+msgid "namespace %s is already sealed in loadNamespace"
 msgstr "%s는 '%s'때문에 'loadNamespace'에 이미 밀폐되었습니다"
 
 msgid "failed to assign RegisteredNativeSymbol for"
@@ -1144,8 +1199,13 @@ msgstr "이름 공간이 아닙니다"
 msgid "failed to assign NativeSymbolInfo for"
 msgstr ""
 
-msgid "package '%s' does not have a name space"
+#, fuzzy
+msgid "package %s does not have a namespace"
 msgstr "패키지 '%s'는 이름 공간을 가지고 있지 않습니다"
+
+#, fuzzy
+msgid "unable to load R code in package %s"
+msgstr "패키지 '%s'에서의 R 코드를 적재할수가 없습니다"
 
 msgid ""
 "exportClassPattern specified in NAMESPACE but no matching classes in package "
@@ -1156,7 +1216,8 @@ msgstr ""
 msgid "in package %s classes %s were specified for export but not defined"
 msgstr "'%s'에는 export를 위한 클래스는 검색되지 않습니다"
 
-msgid "in '%s' methods for export not found: %s"
+#, fuzzy
+msgid "in %s methods for export not found: %s"
 msgstr "'%s'에는 export를 위한 메소드는 검색되지 않습니다"
 
 msgid "multiple methods tables found for %s"
@@ -1171,20 +1232,27 @@ msgstr ""
 "'%s'에 export를 위한 메소드가 지정되어 있습니다만, 어느것도 정의되지 않았습니"
 "다:%s"
 
+#, fuzzy
+msgid "Loading required namespace: %s"
+msgstr "요구된 패키지 %s를 로드중입니다"
+
 msgid "not found"
 msgstr "검색되지 않습니다"
 
-msgid "not loading a name space"
+#, fuzzy
+msgid "not loading a namespace"
 msgstr "이름 공간을 적재하지 않습니다"
 
 #, fuzzy
-msgid "name space %s is imported by %s so cannot be unloaded"
+msgid "namespace %s is imported by %s so cannot be unloaded"
 msgstr "name space '%s'가 적재 되었습니다"
 
-msgid "not a name space"
+#, fuzzy
+msgid "not a namespace"
 msgstr "이름 공간이 아닙니다"
 
-msgid "operation not allowed on base name space"
+#, fuzzy
+msgid "operation not allowed on base namespace"
 msgstr "base 이름 공간에서 허용되지 않는 operation입니다"
 
 msgid "duplicate import names"
@@ -1193,7 +1261,8 @@ msgstr "중복한 import명입니다"
 msgid "replacing local value with import %s when loading %s"
 msgstr ""
 
-msgid "cannot import into a sealed name space"
+#, fuzzy
+msgid "cannot import into a sealed namespace"
 msgstr "밀폐된 name 공간에는 import할수가 없지 않습니다"
 
 msgid "replacing previous import %s when loading %s"
@@ -1209,14 +1278,16 @@ msgstr ""
 msgid "requested methods not found in environment/package %s: %s"
 msgstr "요구된 'methods' 오브젝트는 환경/패키지 '%s'에 검색되지 않습니다 :%s"
 
-msgid "cannot add to exports of a sealed name space"
+#, fuzzy
+msgid "cannot add to exports of a sealed namespace"
 msgstr "밀폐된 이름 공간의 export에 추가할수가 없습니다"
 
 #, fuzzy
 msgid "undefined exports:"
 msgstr "정의하지 않는 export입니다 :"
 
-msgid "package '%s' has no NAMESPACE file"
+#, fuzzy
+msgid "package %s has no NAMESPACE file"
 msgstr "패키지 '%s'는 NAMESPACE 파일을 가지고 있지 않습니다"
 
 #, fuzzy
@@ -1271,6 +1342,10 @@ msgstr "테이블에 강제 변환 할수 없습니다"
 #, fuzzy
 msgid "no arguments"
 msgstr "잘못된 인수입니다"
+
+#, fuzzy
+msgid "an argument will be fractionally recycled"
+msgstr "drop인수는 무시됩니다"
 
 msgid "invalid 'n' value"
 msgstr "무효인 'n'값입니다"
@@ -1434,6 +1509,9 @@ msgstr "method=\"quick\"는 수치의 'x'입니다"
 
 msgid "method=\"radix\" is only for integer 'x'"
 msgstr "method=\"radix\"는 정수값의 'x'전용입니다"
+
+msgid "'local' must be TRUE, FALSE or an environment"
+msgstr ""
 
 msgid "'echo' must be logical"
 msgstr "'echo'는 논리값이 아니면 되지 않습니다"
@@ -1626,6 +1704,9 @@ msgstr "'to'는 길이 1이 나오지 않으면 되지 않습니다"
 msgid "'stderr' must be of length 1"
 msgstr "'to'는 길이 1이 나오지 않으면 되지 않습니다"
 
+msgid "'which' was not found on this platform"
+msgstr ""
+
 msgid "'show.output.on.console' must be TRUE or FALSE"
 msgstr ""
 
@@ -1673,12 +1754,8 @@ msgid "have been removed from the search path"
 msgstr "'%s'는 탐색 패스에서는 검색되지 않았습니다. pos = 2를 사용합니다"
 
 #, fuzzy
-msgid "cannot find name space environment"
+msgid "cannot find namespace environment"
 msgstr "이름 공간이 아닙니다"
-
-#, fuzzy
-msgid "package '%s' has a non-function '.First.lib'"
-msgstr "패케지'%s'는 '%s'에 병합되었습니다"
 
 msgid "deparse option %s is not recognized"
 msgid_plural "deparse options %s are not recognized"
@@ -1741,8 +1818,50 @@ msgstr[0] ""
 "경고 메세지:\n"
 "경고 메세지(복수)\n"
 
+#~ msgid "'pattern' must be a non-empty character string"
+#~ msgstr "'pattern'는 비어 있지 않는 문자열이 아니면 되지 않습니다"
+
+#, fuzzy
+#~ msgid "invalid multibyte string for 'pattern'"
+#~ msgstr "'by'에 대한 무효인 문자열입니다"
+
+#~ msgid "'max.distance' must be non-negative"
+#~ msgstr "'max.distance'는 non-negative이 나오지 않으면 되지 않습니다"
+
+#, fuzzy
+#~ msgid "%s must be a character vector"
+#~ msgstr "'normal.kind'는 길이1의 문자열이 아니면 안됩니다"
+
+#, fuzzy
+#~ msgid "%s must be a list of character vectors"
+#~ msgstr "'normal.kind'는 길이1의 문자열이 아니면 안됩니다"
+
+#, fuzzy
+#~ msgid "package %s has no namespace and is not on the search path"
+#~ msgstr "패키지 '%s'는 이름 공간을 가지고 있지 않습니다"
+
+#, fuzzy
+#~ msgid "package %s contains no R code"
+#~ msgstr "패키지 '%s'는 R코드를 포함하고 있지 않습니다"
+
+#, fuzzy
+#~ msgid ".First.lib failed for %s"
+#~ msgstr "First.lib는 '%s'에 대해서 실패했습니다"
+
+#, fuzzy
+#~ msgid "package '%s' has a non-function '.First.lib'"
+#~ msgstr "패케지'%s'는 '%s'에 병합되었습니다"
+
 #~ msgid "no files to copy from"
 #~ msgstr "복사한부터 파일이 없습니다"
+
+#, fuzzy
+#~ msgid "use of 'save' is deprecated"
+#~ msgstr "'%s'는 없어져 버릴 예정입니다"
+
+#, fuzzy
+#~ msgid "save != FALSE is defunct"
+#~ msgstr "'%s'는 없어져 버렸습니다"
 
 #~ msgid "cyclic name space dependencies are not supported"
 #~ msgstr "cyclic name space의 종속성은 서포트되어 있지 않습니다"

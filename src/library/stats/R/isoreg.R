@@ -29,7 +29,7 @@ isoreg <- function(x, y=NULL)
 	ord <- order(x, -y) ## 'increasing in x, decreasing in y'
 	y <- y[ord]
     }
-    z <- .Call("R_isoreg", if(isOrd)xy$y else y, PACKAGE = "stats")
+    z <- .Call(C_R_isoreg, if(isOrd)xy$y else y, PACKAGE = "stats")
     structure(c(xy[c("x","y")], z[c("yf","yc","iKnots")],
                 list(isOrd = isOrd, ord = if(!isOrd) ord,
                      call = match.call())),
@@ -98,6 +98,7 @@ plot.isoreg <-
     ##Dbg    warning("x$iKnots differs from which(i[-1L]) ..")
 
     ## Plot of "Data" + Fit
+    dev.hold(); on.exit(dev.flush())
     plot(x0, c(NA, if(x$isOrd) x$y else x$y[x$ord]), ...,
 	 xlab = xlab, ylab = ylab, main = if(!both) main)
     lines (xx, x$yf, col = par.fit$col, lwd = par.fit$lwd, type = "S")

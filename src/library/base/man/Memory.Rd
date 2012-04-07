@@ -9,6 +9,8 @@
 \title{Memory Available for Data Storage}
 \description{
   Use command line options to control the memory available for \R.
+  
+  These are all deprecated as of \R 2.14.0.
 }
 \usage{
 #ifdef unix
@@ -88,6 +90,10 @@ mem.limits(nsize = NA, vsize = NA)
   garbage collection always prints memory use statistics.  Maxima will
   never be reduced below the current values for triggering garbage
   collection, and attempts to do so will be silently ignored.
+  
+  The function \code{mem.limits} is deprecated: use \code{\link{gc}}
+  instead, which reports the limits in the exceptional case that they are
+  set.
   
   The command-line option \option{--max-ppsize} controls the maximum
   size of the pointer protection stack.  This defaults to 50000, but can

@@ -121,10 +121,10 @@ options(device.ask.default=FALSE)
 Sweave(testfile)
 
 ## This can be compiled to PDF by
-## tools::texi2dvi("Sweave-test-1.tex", pdf=TRUE)
+## tools::texi2pdf("Sweave-test-1.tex")
 ## or outside R by
 #ifdef unix
-## R CMD texi2dvi --pdf Sweave-test-1.tex
+## R CMD texi2pdf Sweave-test-1.tex
 ## which sets the appropriate TEXINPUTS path.
 #endif
 #ifdef windows

@@ -1,7 +1,7 @@
 ## Regression tests for which the printed output is the issue
 ### _and_ must work (no Recommended packages, please)
 
-postscript("reg-tests-2.ps", encoding = "ISOLatin1.enc")
+pdf("reg-tests-2.pdf", encoding = "ISOLatin1.enc")
 
 ## force standard handling for data frames
 options(stringsAsFactors=TRUE)
@@ -204,7 +204,7 @@ is.na(paste(c(1,NA)))
 is.na(list())# logical(0)
 ll <- list(pi,"C",NaN,Inf, 1:3, c(0,NA), NA)
 is.na (ll)
-is.nan(ll)
+lapply(ll, is.nan)  # is.nan no longer works on lists
 ## end of moved from NA.Rd
 
 ## is.na was returning unset values on nested lists
@@ -2105,15 +2105,16 @@ all.equal(as.raw(1:3), as.raw(3:1))
 ## tests of deparsing
 # if we run this from stdin, we will have no source, so fake it
 f <- function(x, xm  = max(1L, x)) {xx <- 0L; yy <- NA_real_}
-attr(f, "source") <-
-    "function(x, xm  = max(1L, x)) {xx <- 0L; yy <- NA_real_}"
+attr(f, "srcref") <- srcref(srcfilecopy("",
+    "function(x, xm  = max(1L, x)) {xx <- 0L; yy <- NA_real_}"),
+    c(1L, 1L, 1L, 56L))
 f # uses the source
 dput(f) # not source
 dput(f, control="all") # uses the source
 cat(deparse(f), sep="\n")
 dump("f", file="")
 # remove the source
-attr(f, "source") <- NULL
+attr(f, "srcref") <- NULL
 f
 dput(f, control="all")
 dump("f", file="")
@@ -2364,7 +2365,7 @@ stopifnot(identical(of2, of),
 ## ^^ would have failed up to R 2.9.x
 foo
 print(foo, useSource = FALSE)
-attr(foo, "source") <- NULL
+attr(foo, "srcref") <- NULL
 foo
 (f <- structure(function(){}, note = "just a note",
                 yada = function() "not the same"))
@@ -2544,9 +2545,60 @@ y <- runif(10)
 x[3] <- NA; y[5] <- NA
 xy <- cbind(x, y)
 
-cor(x, y, method="spearman", use="complete.obs")
-cor(x, y, method="spearman", use="pairwise.complete.obs")
-cor(na.omit(xy),  method="spearman", use="complete.obs")
-cor(xy,  method="spearman", use="complete.obs")
-cor(xy,  method="spearman", use="pairwise.complete.obs")
+cor(x, y, method = "spearman", use = "complete.obs")
+cor(x, y, method = "spearman", use = "pairwise.complete.obs")
+cor(na.omit(xy),  method = "spearman", use = "complete.obs")
+cor(xy,  method = "spearman", use = "complete.obs")
+cor(xy,  method = "spearman", use = "pairwise.complete.obs")
 ## inconsistent in R < 2.13.0
+
+
+## integer overflow in rowsum() went undetected
+# https://stat.ethz.ch/pipermail/r-devel/2011-March/060304.html
+x <- 2e9L
+rowsum(c(x, x), c("a", "a"))
+rowsum(data.frame(z = c(x, x)), c("a", "a"))
+## overflow in R < 2.13.0.
+
+
+## method dispatch in [[.data.frame:
+## https://stat.ethz.ch/pipermail/r-devel/2011-April/060409.html
+d <- data.frame(num = 1:4,
+          fac = factor(letters[11:14], levels = letters[1:15]),
+          date = as.Date("2011-04-01") + (0:3),
+          pv = package_version(c("1.2-3", "4.5", "6.7", "8.9-10")))
+for (i in seq_along(d)) print(d[[1, i]])
+## did not dispatch in R < 2.14.0
+
+
+## some tests of 24:00 as midnight
+as.POSIXlt("2011-05-16 24:00:00", tz = "GMT")
+as.POSIXlt("2010-01-31 24:00:00", tz = "GMT")
+as.POSIXlt("2011-02-28 24:00:00", tz = "GMT")
+as.POSIXlt("2008-02-28 24:00:00", tz = "GMT")
+as.POSIXlt("2008-02-29 24:00:00", tz = "GMT")
+as.POSIXlt("2010-12-31 24:00:00", tz = "GMT")
+## new in 2.14.0
+
+
+## Unwarranted conversion of logical values
+try(double(FALSE))
+x <- 1:3
+try(length(x) <- TRUE)
+## coerced to integer in 2.13.x
+
+
+## filter(recursive = TRUE) on input with NAs
+# https://stat.ethz.ch/pipermail/r-devel/2011-July/061547.html
+x <- c(1:4, NA, 6:9)
+cbind(x, "1"=filter(x, 0.5, method="recursive"),
+         "2"=filter(x, c(0.5, 0.0), method="recursive"),
+         "3"=filter(x, c(0.5, 0.0, 0.0), method="recursive"))
+## NAs in wrong place in R <= 2.13.1.
+
+
+## PR#14679.  Format depends if TZ is set.
+x <- as.POSIXlt(c("2010-02-27 22:30:33", "2009-08-09 06:01:03",
+                  "2010-07-23 17:29:59"))
+stopifnot(is.na(trunc(x, units = "days")[1:3]))
+## gave NAs after the first in R < 2.13.2

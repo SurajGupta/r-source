@@ -95,7 +95,9 @@ FORCE:
 	  $(ECHO) "$(ECHO_T) OK"; \
 	fi
 
-## diff -b may be needed on Windows because of CRLF line endings.
+## We could use Rdiff now this is in R.
+## An attempt to use pdf(compress=FALSE) in Sept 2011 failed, as 
+## Win32 gave sligtly different answers (rounding error).
 reg-plot.Rout: reg-plot.R
 	@rm -f $@ $@.fail
 	@$(ECHO) $(ECHO_N) "running code in '$<' ...$(ECHO_C)"
@@ -103,11 +105,10 @@ reg-plot.Rout: reg-plot.R
 	@$(ECHO) "$(ECHO_T) OK"
 	@$(ECHO) $(ECHO_N) \
 	  "  comparing 'reg-plot.ps' to '$(srcdir)/reg-plot.ps.save' ...$(ECHO_C)"
-	-@diff -b reg-plot.ps $(srcdir)/reg-plot.ps.save
+	@$(RDIFF) reg-plot.ps $(srcdir)/reg-plot.ps.save
 	@$(ECHO) "$(ECHO_T) OK"
 
 ## allow this to fail, as it may if the locale does not support Latin-1 chars
-## we can't use Rdiff as MacOS tr crashes on latin-1 chars in a UTF-8 locale
 reg-plot-latin1.Rout: reg-plot-latin1.R
 	@rm -f $@ $@.fail
 	@$(ECHO) "running tests of plotting Latin-1"
@@ -120,7 +121,7 @@ reg-plot-latin1.Rout: reg-plot-latin1.R
 	  $(ECHO) "$(ECHO_T) OK"; \
 	  $(ECHO) $(ECHO_N) \
 	  "  comparing 'reg-plot-latin1.ps' to '$(srcdir)/reg-plot-latin1.ps.save' ...$(ECHO_C)"; \
-	  diff -b reg-plot-latin1.ps $(srcdir)/reg-plot-latin1.ps.save && exitstatus=0; \
+	  $(RDIFF) reg-plot-latin1.ps $(srcdir)/reg-plot-latin1.ps.save; \
 	  $(ECHO) "$(ECHO_T) OK"; \
 	fi
 
@@ -171,6 +172,7 @@ test-Packages:
 	@for p in $(R_PKGS_BASE); do \
 	  $(ECHO) "checking package '$${p}'"; \
 	  $(top_builddir)/bin/R CMD check --install=skip \
+	    --no-rebuild-vignettes \
 	    $(top_srcdir)/src/library/$${p} || $(ECHO); \
 	done
 
@@ -222,20 +224,20 @@ test-Segfault:
 test-Rd: $(srcdir)/testit.Rd $(srcdir)/ver20.Rd
 	@$(ECHO) "testing Rd conversion"
 	@$(RDCONV) -t txt $(srcdir)/testit.Rd > testit.txt
-	@diff -bw testit.txt $(srcdir)/testit.txt.save
 	@$(RDCONV) -t html $(srcdir)/testit.Rd > testit.html 2> /dev/null
-	@diff -bw testit.html $(srcdir)/testit.html.save
 	@$(RDCONV) -t latex $(srcdir)/testit.Rd > testit.tex
-	@diff -bw testit.tex $(srcdir)/testit.tex.save
 	@$(RDCONV) -t example $(srcdir)/testit.Rd > testit-Ex.R
+	@diff -bw testit.txt $(srcdir)/testit.txt.save
+	@diff -bw testit.html $(srcdir)/testit.html.save
+	@diff -bw testit.tex $(srcdir)/testit.tex.save
 	@diff -bw testit-Ex.R $(srcdir)/testit-Ex.R.save
 	@$(RDCONV) -t txt $(srcdir)/ver20.Rd > ver20.txt
-	@diff -bw ver20.txt $(srcdir)/ver20.txt.save
 	@$(RDCONV) -t html $(srcdir)/ver20.Rd > ver20.html
-	@diff -bw ver20.html $(srcdir)/ver20.html.save
 	@$(RDCONV) -t latex $(srcdir)/ver20.Rd > ver20.tex
-	@diff -bw ver20.tex $(srcdir)/ver20.tex.save
 	@$(RDCONV) -t example $(srcdir)/ver20.Rd > ver20-Ex.R
+	@diff -bw ver20.txt $(srcdir)/ver20.txt.save
+	@diff -bw ver20.html $(srcdir)/ver20.html.save
+	@diff -bw ver20.tex $(srcdir)/ver20.tex.save
 	@diff -bw ver20-Ex.R $(srcdir)/ver20-Ex.R.save
 
 test-DocFiles:
@@ -361,4 +363,4 @@ INSTFILES = README \
 	  reg-plot.ps.save reg-tests-2.Rout.save reg-tests-3.Rout.save \
 	  reg-plot-latin1.ps.save \
 	  encodings.R utf8-regex.R \
-	  nanbug.rda WinUnicode.dat keepsource.Rnw
+	  nanbug.rda WinUnicode.dat

@@ -16,30 +16,28 @@
 
 ### xy.coords() is now in the imported 'grDevices' package
 
-plot <- function (x, y, ...)
-{
-    if (is.function(x) && is.null(attr(x, "class"))) {
-	if (missing(y)) y <- NULL
-	hasylab <- function(...) !all(is.na(pmatch(names(list(...)), "ylab")))
-	## not ok: hasylab <- function(ylab, ...) !missing(ylab)
-	if (hasylab(...))
-	    plot.function(x, y, ...)
-	else
-	    plot.function(x, y, ylab=paste(deparse(substitute(x)),"(x)"), ...)
-    }
-    else UseMethod("plot")
-}
+plot <- function (x, y, ...)  UseMethod("plot")
+
 
 ## xlim = NULL (instead of "missing", since it will be passed to plot.default):
-plot.function <- function(x, y = 0, to = 1, from = y, xlim = NULL, ...)
+plot.function <-
+    function(x, y = 0, to = 1, from = y, xlim = NULL, ylab = NULL, ...)
 {
-    if(is.null(xlim)) {
-	if(is.null(from)) from <- 0
+    ## this is to allow things like plot(sin, 0, 2*pi)
+    if (!missing(y) && missing(from)) from <- y
+    if (is.null(xlim)) {
+	if(is.null(from)) from <- 0 # most likely from y = NULL
     } else {
-	if(is.null(from)) from <- xlim[1L]
-	if(missing(to))	  to   <- xlim[2L]
+	if(missing(from)) from <- xlim[1L]
+	if(missing(to))	to <- xlim[2L]
     }
-    curve(x, from, to, xlim = xlim, ...)
+    if (is.null(ylab)) {
+        xname <- list(...)[["xname"]]
+        if (is.null(xname)) xname <- "x"
+       ylab <- paste(substitute(x), "(", xname, ")", sep = "")
+    }
+    ## name args to avoid partial matches from ...
+    curve(expr = x, from = from, to = to, xlim = xlim, ylab = ylab, ...)
 }
 
 plot.default <-
@@ -61,9 +59,10 @@ plot.default <-
     ylab <- if (is.null(ylab)) xy$ylab else ylab
     xlim <- if (is.null(xlim)) range(xy$x[is.finite(xy$x)]) else xlim
     ylim <- if (is.null(ylim)) range(xy$y[is.finite(xy$y)]) else ylim
+    dev.hold(); on.exit(dev.flush())
     plot.new()
     localWindow(xlim, ylim, log, asp, ...)
-    panel.first # eval() is wrong here {Ross I.}
+    panel.first
     plot.xy(xy, type, ...)
     panel.last
     if (axes) {
@@ -141,56 +140,53 @@ function(formula, data = parent.frame(), ..., subset,
 {
     m <- match.call(expand.dots = FALSE)
     eframe <- parent.frame()
-    if (is.matrix(md <- eval(m$data, eframe)))
-	m$data <- md <- as.data.frame(data)
+    md <- eval(m$data, eframe)
+    if (is.matrix(md)) m$data <- md <- as.data.frame(data)
+    ## NB: this evaluates arguments in ... . (PR#14591)
     dots <- lapply(m$..., eval, md, eframe)
     ## need to avoid evaluation of expressions in do.call later.
     ## see PR#10525
     nmdots <- names(dots)
-    if("main" %in% nmdots) dots[["main"]] <- enquote(dots[["main"]])
-    if("sub" %in% nmdots) dots[["sub"]] <- enquote(dots[["sub"]])
-    if("xlab" %in% nmdots) dots[["xlab"]] <- enquote(dots[["xlab"]])
-
+    if ("main" %in% nmdots) dots[["main"]] <- enquote(dots[["main"]])
+    if ("sub" %in% nmdots) dots[["sub"]] <- enquote(dots[["sub"]])
+    if ("xlab" %in% nmdots) dots[["xlab"]] <- enquote(dots[["xlab"]])
 
     m$ylab <- m$... <- m$ask <- NULL
     subset.expr <- m$subset
     m$subset <- NULL
-    ## FIXME: model.frame is in stats
-    require(stats, quietly=TRUE)
-    m[[1L]] <- as.name("model.frame")
-    m <- as.call(c(as.list(m), list(na.action = NULL)))
+    m <- as.list(m)
+    m[[1L]] <- stats::model.frame.default
+    m <- as.call(c(m, list(na.action = NULL)))
     mf <- eval(m, eframe)
     if (!missing(subset)) {
 	s <- eval(subset.expr, data, eframe)
 	l <- nrow(mf)
 	dosub <- function(x) if (length(x) == l) x[s] else x
 	dots <- lapply(dots, dosub)
-	mf <- mf[s,]
+	mf <- mf[s, ]
     }
     ## check for horizontal arg
     horizontal <- FALSE
-    if("horizontal" %in% names(dots)) horizontal <- dots[["horizontal"]]
+    if ("horizontal" %in% names(dots)) horizontal <- dots[["horizontal"]]
     response <- attr(attr(mf, "terms"), "response")
     if (response) {
 	varnames <- names(mf)
 	y <- mf[[response]]
 	funname <- NULL
 	xn <- varnames[-response]
-        ## <FIXME> why is this trying to do method dispatch?
+        ## Dispatch on class of 'y' (plot() dispatches on class of 'x').
 	if( is.object(y) ) {
 	    found <- FALSE
 	    for(j in class(y)) {
-		funname <- paste("plot.",j,sep = "")
+		funname <- paste("plot.", j, sep = "")
 		if( exists(funname) ) {
 		    found <- TRUE
 		    break
 		}
 	    }
-	    if( !found )
-		funname <- NULL
+	    if( !found ) funname <- NULL
 	}
-	if( is.null(funname) )
-	    funname <- "plot"
+	if( is.null(funname) ) funname <- "plot"
 	if (length(varnames) > 2L) {
             oask <- devAskNewPage(ask)
             on.exit(devAskNewPage(oask))
@@ -206,8 +202,7 @@ function(formula, data = parent.frame(), ..., subset,
                         c(list(mf[[i]], y, ylab = yl, xlab = xl), dots))
                }
 	} else do.call(funname, c(list(y, ylab = ylab), dots))
-    }
-    else do.call("plot.data.frame", c(list(mf), dots))
+    } else do.call("plot.data.frame", c(list(mf), dots))
     invisible()
 }
 
@@ -216,12 +211,13 @@ function(formula,  data = parent.frame(), ..., subset)
 {
     m <- match.call(expand.dots = FALSE)
     eframe <- parent.frame()
-    if (is.matrix(md <- eval(m$data, eframe)))
-	m$data <- md <- as.data.frame(data)
+    md <- eval(m$data, eframe)
+    if (is.matrix(md)) m$data <- md <- as.data.frame(data)
     dots <- lapply(m$..., eval, md, eframe)
     m$... <- NULL
-    m[[1L]] <- as.name("model.frame")
-    m <- as.call(c(as.list(m), list(na.action = NULL)))
+    m <- as.list(m)
+    m[[1L]] <- stats::model.frame.default
+    m <- as.call(c(m, list(na.action = NULL)))
     mf <- eval(m, eframe)
     if (!missing(subset)) {
 	s <- eval(m$subset, data, eframe)
@@ -247,8 +243,7 @@ function(formula,  data = parent.frame(), ..., subset)
 	    do.call("lines", c(list(y), dots))
 	else
 	    do.call("lines", c(list(mf[[xn]], y), dots))
-    }
-    else
+    } else
 	stop("must have a response variable")
 }
 
@@ -257,12 +252,13 @@ function(formula, data = parent.frame(), ..., subset)
 {
     m <- match.call(expand.dots = FALSE)
     eframe <- parent.frame()
-    if (is.matrix(md <- eval(m$data, eframe)))
-	m$data <- md <- as.data.frame(data)
+    md <- eval(m$data, eframe)
+    if (is.matrix(md)) m$data <- md <- as.data.frame(data)
     dots <- lapply(m$..., eval, md, eframe)
     m$... <- NULL
-    m[[1L]] <- as.name("model.frame")
-    m <- as.call(c(as.list(m), list(na.action = NULL)))
+    m <- as.list(m)
+    m[[1L]] <- stats::model.frame.default
+    m <- as.call(c(m, list(na.action = NULL)))
     mf <- eval(m, eframe)
     if (!missing(subset)) {
 	s <- eval(m$subset, data, eframe)
@@ -288,8 +284,7 @@ function(formula, data = parent.frame(), ..., subset)
 	    do.call("points", c(list(y), dots))
 	else
 	    do.call("points", c(list(mf[[xn]], y), dots))
-    }
-    else
+    } else
 	stop("must have a response variable")
 }
 
@@ -297,12 +292,13 @@ text.formula <- function(formula, data = parent.frame(), ..., subset)
 {
     m <- match.call(expand.dots = FALSE)
     eframe <- parent.frame()
-    if (is.matrix(md <- eval(m$data, eframe)))
-	m$data <- md <- as.data.frame(data)
+    md <- eval(m$data, eframe)
+    if (is.matrix(md)) m$data <- md <- as.data.frame(data)
     dots <- lapply(m$..., eval, md, eframe)
     m$... <- NULL
-    m[[1L]] <- as.name("model.frame")
-    m <- as.call(c(as.list(m), list(na.action = NULL)))
+    m <- as.list(m)
+    m[[1L]] <- stats::model.frame.default
+    m <- as.call(c(m, list(na.action = NULL)))
     mf <- eval(m, eframe)
     if (!missing(subset)) {
 	s <- eval(m$subset, data, eframe)
@@ -328,8 +324,7 @@ text.formula <- function(formula, data = parent.frame(), ..., subset)
 	    do.call("text", c(list(y), dots))
 	else
 	    do.call("text", c(list(mf[[xn]], y), dots))
-    }
-    else
+    } else
 	stop("must have a response variable")
 }
 

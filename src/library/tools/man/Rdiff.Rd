@@ -1,6 +1,6 @@
 % File src/library/tools/man/Rdiff.Rd
 % Part of the R package, http://www.R-project.org
-% Copyright 2010-1 R Core Development Team
+% Copyright 2010-11 R Core Development Team
 % Distributed under GPL 2 or later
 
 \name{Rdiff}
@@ -8,10 +8,11 @@
 \title{Difference R Output Files}
 \description{
   Given two \R output files, compute differences ignoring headers,
-  footers and some encoding differences.
+  footers and some other differences.
 }
 \usage{
-Rdiff(from, to, useDiff = FALSE, forEx = FALSE, Log = FALSE)
+Rdiff(from, to, useDiff = FALSE, forEx = FALSE, nullPointers = TRUE,
+      Log = FALSE)
 }
 \arguments{
   \item{from, to}{filepaths to be compared}
@@ -19,17 +20,26 @@ Rdiff(from, to, useDiff = FALSE, forEx = FALSE, Log = FALSE)
     results?}
   \item{forEx}{logical: extra pruning for \file{-Ex.Rout} files to
     exclude the header.}
-  \item{Log}{logical: should be value include a log of differences found?}
+  \item{nullPointers}{logical: should the displayed addresses of
+    pointers be set to \code{0x00000000} before comparison?} 
+  \item{Log}{logical: should the returned value include a log of
+    differences found?}
 }
 \details{
   The \R startup banner and any timing information from \command{R CMD
-    BATCH} are removed from both files, together with lines about
-  loading packages.  UTF-8 fancy quotes (see \code{\link{sQuote}}) and on
-  Windows, Windows so-called \sQuote{smart quotes} are mapped to a
-  simple quote.  The files are then compared line-by-line.  If there are
-  the same number of lines and \code{useDiff} is false, a simple
-  \command{diff}-like display of differences is printed, otherwise
-  \command{diff -bw} is called on the edited files.
+    BATCH} are removed from both files, together with lines about loading
+  packages.  UTF-8 fancy quotes (see \code{\link{sQuote}}) and on
+  Windows, Windows' so-called \sQuote{smart quotes} are mapped to a
+  simple quote.  Addresses of environments, compiled bytecode and other
+  exotic types expressed as hex addresses (e.g. \code{<environment:
+    0x12345678>}) are mapped to \code{0x00000000}.  The files are then
+  compared line-by-line.  If there are the same number of lines and
+  \code{useDiff} is false, a simple \command{diff}-like display of
+  differences is printed, otherwise \command{diff -bw} is called on the
+  edited files.
+
+  As from \R 2.14.0 this can compare uncompressed PDF files, ignoring
+  differences in creation and modification dates.
 }
 \value{
   If \code{Log} is true, a list with components \code{status} (see

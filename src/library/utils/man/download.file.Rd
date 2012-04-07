@@ -14,7 +14,7 @@
 }
 \usage{
 download.file(url, destfile, method, quiet = FALSE, mode = "w",
-              cacheOK = TRUE)
+              cacheOK = TRUE, extra = getOption("download.file.extra"))
 }
 \arguments{
   \item{url}{A character string naming the URL of a resource to be
@@ -41,7 +41,11 @@ download.file(url, destfile, method, quiet = FALSE, mode = "w",
   }
 
   \item{cacheOK}{logical.  Is a server-side cached value acceptable?
-    Implemented for the \code{"internal"} and \code{"wget"} methods.}
+    Implemented for the \code{"internal"}, \code{"wget"} and
+    \code{"curl"} methods.}
+
+  \item{extra}{character vector of additional command-line arguments for
+    the \code{"wget"}, \code{"curl"} and \code{"lynx"} methods.}
 }
 \details{
   The function \code{download.file} can be used to download a single
@@ -90,7 +94,7 @@ download.file(url, destfile, method, quiet = FALSE, mode = "w",
   \code{quiet} argument and the \code{internet.info} option.  The
   details depend on the platform and scheme, but setting
   \code{internet.info} to 0 gives all available details, including
-  all server responses. Using 2 (the default) gives only serious
+  all server responses.  Using 2 (the default) gives only serious
   messages, and 3 or more suppresses all messages.
 
 #ifdef windows
@@ -100,10 +104,11 @@ download.file(url, destfile, method, quiet = FALSE, mode = "w",
   is exceeded.
 
   If \code{mode} is not supplied and \code{url} ends in one of
-  \code{.gz}, \code{.bz2}, \code{.tgz} or \code{.zip} a binary transfer
-  is done.  Since Windows (unlike Unix-alikes) does distinguish between
-  text and binary files, care is needed that other binary file types are
-  transferred with \code{mode = "wb"}.
+  \code{.gz}, \code{.bz2}, \code{.xz}, \code{.tgz}, \code{.zip},
+  \code{.rda} or \code{.RData} a binary transfer is done.  Since Windows
+  (unlike Unix-alikes) does distinguish between text and binary files,
+  care is needed that other binary file types are transferred with
+  \code{mode = "wb"}.
 
   There is an alternative method if you have Internet Explorer 4 or
   later installed.   You can use the command line flag \option{--internet2}, 
@@ -116,6 +121,9 @@ download.file(url, destfile, method, quiet = FALSE, mode = "w",
   A progress bar tracks the transfer.  If the file length is known, an
   equals sign represents 2\% of the transfer completed: otherwise a dot
   represents 10Kb.
+
+  Code written to download binary files must use \code{mode = "wb"}, but
+  the problems incurred by a text transfer will only be seen on Windows.
 #endif
 
   Method \code{"wget"} can be used with proxy firewalls which require

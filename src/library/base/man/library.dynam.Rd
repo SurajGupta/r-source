@@ -52,10 +52,9 @@ library.dynam.unload(chname, libpath,
   
   \code{library.dynam} is designed to be used inside a package rather
   than at the command line, and should really only be used inside
-  \code{\link{.First.lib}} or \code{\link{.onLoad}}.  The
-  system-specific extension for DLLs (e.g., \file{.so} or \file{.sl} on
-  Unix systems, \file{.so} on Mac OS X, \file{.dll} on Windows) should
-  not be added.
+  \code{\link{.onLoad}}.  The system-specific extension for DLLs (e.g.,
+  \file{.so} or \file{.sl} on Unix-alike systems,
+  \file{.dll} on Windows) should not be added.
 #ifdef windows
 
   If \code{\dots} does not include a named argument \code{DLLpath},
@@ -66,14 +65,17 @@ library.dynam.unload(chname, libpath,
 #endif
   
   \code{library.dynam.unload} is designed for use in
-  \code{\link{.Last.lib}} or \code{\link{.onUnload}}: it unloads the
-  DLL and updates the value of \code{.dynLibs()}
+  \code{\link{.onUnload}}: it unloads the DLL and updates the value of
+  \code{.dynLibs()}
 
   \code{.dynLibs} is used for getting (with no argument) or setting the
   DLLs which are currently loaded by packages (using \code{library.dynam}).
   
   \code{lib.loc} should contain absolute paths: versions of \R prior to
   2.12.0 may get confused by relative paths.
+  
+  Using the defaults for \code{package} or \code{lib.loc} is deprecated,
+  not least because they will not give work as intended from \code{.onLoad}.
 }
 \value{
    If \code{chname} is not specified, \code{library.dynam} returns an
@@ -81,13 +83,10 @@ library.dynam.unload(chname, libpath,
   loaded by packages.
 
   If \code{chname} is specified, an object of class
-  \code{"\link{DLLInfo}"} that identifies the DLL and can be used in
-  future calls is returned invisibly.  For packages that have name
-  spaces, a list of these objects is stored in the name space's
-  environment for use at run-time.
-
-  Note that the class \code{"\link{DLLInfo}"} has a method for \code{$}
-  which can be used to resolve native symbols within that DLL.
+  \code{"\link{DLLInfo}"} that identifies the DLL and which can be used
+  in future calls is returned invisibly.  Note that the class
+  \code{"\link{DLLInfo}"} has a method for \code{$} which can be used to
+  resolve native symbols within that DLL.
   
   \code{library.dynam.unload} invisibly returns an object of class
   \code{"\link{DLLInfo}"} identifying the DLL successfully unloaded.
@@ -109,7 +108,7 @@ library.dynam.unload(chname, libpath,
   \code{\link{getLoadedDLLs}} for information on \code{"DLLInfo"} and
   \code{"DLLInfoList"} objects.
   
-  \code{\link{.First.lib}}, \code{\link{library}},
+  \code{\link{.onLoad}}, \code{\link{library}},
   \code{\link{dyn.load}}, \code{\link{.packages}},
   \code{\link{.libPaths}}
   
@@ -121,7 +120,7 @@ library.dynam.unload(chname, libpath,
   Wadsworth & Brooks/Cole.
 }
 \examples{
-## Which DLLs were "dynamically loaded" by packages?
+## Which DLLs were dynamically loaded by packages?
 library.dynam() 
 }
 \keyword{data}

@@ -74,7 +74,7 @@ extends <-
         ext <- classDef1@contains
         if(!identical(maybe, TRUE) && length(ext) > 0)
         {
-            noTest <- sapply(ext, function(obj)identical(obj@test, .simpleExtTest))
+            noTest <- sapply(ext, function(obj)identical(body(obj@test), TRUE))
             ext <- ext[noTest]
         }
         if(fullInfo) {
@@ -106,7 +106,7 @@ extends <-
         value
     else if(is.logical(value))
         value
-    else if(value@simple || identical(value@test, .simpleExtTest))
+    else if(value@simple || identical(body(value@test), TRUE))
         TRUE
     else
         maybe
@@ -132,7 +132,10 @@ setIs <-
     where <- as.environment(where)
     classDef2 <- getClassDef(class2, where)
     if(is.null(classDef2))
-        stop(gettextf("class \"%s\" has no visible definition from package or environment \"%s\"", class2, getPackageName(where)), domain = NA)
+        stop(gettextf("class %s has no visible definition from package or environment %s",
+                      dQuote(class2),
+                      sQuote(getPackageName(where))),
+             domain = NA)
     ## check some requirements:
     ## One of the classes must be on the target environment (so that the relation can
     ## be retained by saving the corresponding image)
@@ -146,7 +149,9 @@ setIs <-
         stop(gettextf("cannot create a 'setIs' relation when neither of the classes (\"%s\" and \"%s\") is local and modifiable in this package",
                       class1, class2), domain = NA)
     if(classDef@sealed && !isClassUnion(classDef2))
-        stop(gettextf("class \"%s\" is sealed; new superclasses can not be defined, except by 'setClassUnion'", class1), domain = NA)
+        stop(gettextf("class %s is sealed; new superclasses can not be defined, except by 'setClassUnion'",
+                      dQuote(class1)),
+             domain = NA)
     prevIs <- !identical(possibleExtends(class1, class2,classDef, classDef2),
                          FALSE) # used in checking for previous coerce
     if(is.null(extensionObject))
@@ -192,7 +197,10 @@ setIs <-
 
 
 .validExtends <- function(class1, class2, classDef1,  classDef2, slotTests) {
-    .msg <- function(class1, class2) gettextf("class \"%s\" cannot extend class \"%s\"", class1, class2)
+    .msg <- function(class1, class2)
+        gettextf("class %s cannot extend class %s",
+                 dQuote(class1),
+                 dQuote(class2))
     if((is.null(classDef1) || is.null(classDef2)) &&
        !(isVirtualClass(class1) && isVirtualClass(class2)))
         return(c(.msg(class1, class2), ": ",
@@ -205,8 +213,9 @@ setIs <-
             n1 <- names(slots1)
             if(any(is.na(match(n2, n1))))
                 return(c(.msg(class1, class2), ": ",
-                     gettextf("class \"%s\" is missing slots from class \"%s\" (%s), and no coerce method was supplied",
-                              class1, class2,
+                     gettextf("class %s is missing slots from class %s (%s), and no coerce method was supplied",
+                              dQuote(class1),
+                              dQuote(class2),
                               paste(n2[is.na(match(n2, n1))], collapse = ", "))))
             bad <- character()
             for(what in n2)
@@ -214,8 +223,10 @@ setIs <-
                     bad <- c(bad, what)
             if(length(bad))
                 return(c(.msg(class1, class2), ": ",
-                     gettextf("slots in class \"%s\" must extend corresponding slots in class \"%s\": fails for %s",
-                              class1, class2, paste(bad, collapse = ", "))))
+                     gettextf("slots in class %s must extend corresponding slots in class %s: fails for %s",
+                              dQuote(class1),
+                              dQuote(class2),
+                              paste(bad, collapse = ", "))))
         }
     }
     TRUE

@@ -6929,8 +6929,8 @@ Combine @option{--no-save}, @option{--no-environ},
 @itemx --file=@var{file}
 (not @command{Rgui.exe}) Take input from @var{file}: @samp{-} means
 @code{stdin}.  Implies @option{--no-save} unless @option{--save} has
-been set.  On a Unix-alike, no spaces nor other characters which would
-be interpreted by a shell as allowed in @var{file}.
+been set.  On a Unix-alike, shell metacharacters should be avoided in
+@var{file} (but as from @R{} 2.14.0 spaces are allowed).
 
 @item -e @var{expression}
 (not @command{Rgui.exe}) Use @var{expression} as an input line.  One or
@@ -6952,7 +6952,8 @@ tilde-expansion: see the help for @code{path.expand}.
 @itemx --max-vsize=@var{N}
 @itemx --min-nsize=@var{N}
 @itemx --max-nsize=@var{N}
-Almost entirely of historical interest: see @code{?Memory} in @R{}.
+Deprecated, and almost entirely of historical interest: see
+@code{?Memory} in @R{}.
 
 @item --max-ppsize=@var{N}
 Specify the maximum size of the pointer protection stack as @var{N}
@@ -7069,10 +7070,8 @@ Post-process @R{} profiling files.
 Convert Rd format to various other formats, including @HTML{}, @LaTeX{},
 plain text, and extracting the examples.  @code{Rd2txt} can be used as
 shorthand for @code{Rd2conv -t txt}.
-@item Rd2dvi
 @itemx Rd2pdf
-Convert Rd format to DVI/PDF.  @code{Rd2pdf} can be used as shorthand
-for @code{Rd2dvi --pdf}.
+Convert Rd format to PDF.
 @item Stangle
 Extract S/R code from Sweave documentation
 @item Sweave

@@ -1,5 +1,861 @@
 R News
 
+CHANGES IN R VERSION 2.14.0:
+
+  SIGNIFICANT USER-VISIBLE CHANGES:
+
+    o All packages must have a namespace, and one is created on
+      installation if not supplied in the sources.  This means that any
+      package without a namespace must be re-installed under this
+      version of R (but previously-installed data-only packages without
+      R code can still be used).
+
+    o The yLineBias of the X11() and windows() families of devices has
+      been changed from 0.1 to 0.2: this changes slightly the vertical
+      positioning of text in the margins (including axis annotations).
+      This is mainly for consistency with other devices such as
+      quartz() and pdf().  (Wish of PR#14538.)
+
+      There is a new graphics parameter "ylbias" which allows the
+      y-line bias of the graphics device to be tweaked, including to
+      reproduce output from earlier versions of R.
+
+    o Labeling of the p-values in various anova tables has been
+      rationalized to be either "Pr(>F)" or "Pr(>Chi)" (i.e. the
+      "Pr(F)", "Pr(Chi)" and "P(>|Chi|)" variants have been
+      eliminated).  Code which extracts the p value _via_ indexing by
+      name may need adjustment.
+
+    o :: can now be used for datasets made available for lazy-loading
+      in packages with namespaces (which makes it consistent with its
+      use for data-only packages without namespaces in earlier versions
+      of R).
+
+    o There is a new package parallel.
+
+      It incorporates (slightly revised) copies of packages multicore
+      and snow (excluding MPI, PVM and NWS clusters).  Code written to
+      use the higher-level API functions in those packages should work
+      unchanged (apart from changing any references to their namespaces
+      to a reference to parallel, and links explicitly to multicore or
+      snow on help pages).
+
+      It also contains support for multiple RNG streams following
+      L'Ecuyer _et al_ (2002), with support for both mclapply and snow
+      clusters.  This replaces functions like clusterSetupRNG() from
+      snow (which are not in parallel).
+
+      The version released for R 2.14.0 contains base functionality:
+      higher-level convenience functions are planned (and some are
+      already available in the 'R-devel' version of R).
+
+    o Building PDF manuals (for R itself or packages, e.g. _via_ R CMD
+      check) by default requires the LaTeX package inconsolata: see the
+      section on 'Making the manuals' in the 'R Installation and
+      Administration Manual'.
+
+    o axTicks(*, log=TRUE) has changed in some cases to satisfy the
+      documented behavior and be consistent.
+
+  NEW FEATURES:
+
+    o txtProgressBar() can write to an open connection instead of the
+      console.
+
+    o Non-portable package names ending in . are no longer allowed.
+      Nor are single-character package names (R was already
+      disallowed).
+
+    o regexpr() and gregexpr() with perl = TRUE allows Python-style
+      named captures.  (Wish and contribution of PR#14518.)
+
+    o The placement of 'plotmath' text in the margins of plots done by
+      base graphics now makes the same vertical adjustment as ordinary
+      text, so using ordinary and plotmath text on the same margin line
+      will seem better aligned (but not exactly aligned, since ordinary
+      text has descenders below the baseline and plotmath places them
+      on the baseline).  (Related to PR#14537.)
+
+    o sunflowerplot() now has a formula interface.  (Wish of PR#14541.)
+
+    o iconv() has a new argument toRaw to handle encodings such as
+      UTF-16 with embedded nuls (as was possible before the CHARSXP
+      cache was introduced).
+
+      It will also accept as input the type of list generated with
+      toRaw = TRUE.
+
+    o Garbage-collecting an unused input text connection no longer
+      gives a warning (since it 'connects' to nothing outside R).
+
+    o read.table() and scan() have gained a text argument, to allow
+      reading data from a (possibly literal) character string.
+
+    o optim(*, method = .) now allows method = "Brent" as an interface
+      to optimize(), for use in cases such as mle() where optim() is
+      used internally.
+
+    o mosaicplot() gains a border argument.  (Wish of PR#14550.)
+
+    o smooth.spline() gains a tol argument which controls how different
+      x values need to be to be treated as distinct.  The default has
+      been changed to be more reliable for inputs whose range is small
+      compared to their maximum absolute value.  (Wish of PR#14452.)
+
+    o gl() runs faster by avoiding calling factor().
+
+    o The print() method for object.size() accepts B as well as b as an
+      abbreviation for 'bytes'.
+
+    o unlink() gains a force argument to work like rm -f and if
+      possible override restrictive permissions.
+
+    o pbirthday() and qbirthday() now use exact calculations for
+      coincident = 2.
+
+    o unzip() and unz() connections have been updated with support for
+      more recent Zip64 features (including large file sizes and bzip2
+      compression, but not UTF-8 file names).
+
+      unzip() has a new option to restore file times from those
+      recorded (in an unknown timezone) in the zip file.
+
+    o update.packages() now accepts a character vector of package names
+      for the oldPkgs argument.  (Suggestion of Tal Galili.)
+
+    o The special reference class fields .self and .refClassDef are now
+      read-only to prevent corrupting the object.
+
+    o decompose() now returns the original series as part of its value,
+      so it can be used (rather than reconstructed) when plotting.
+      (Suggestion of Rob Hyndman.)
+
+    o Rao's efficient score test has been implemented for glm objects.
+      Specifically, the add1, drop1, and anova methods now allow test =
+      "Rao".
+
+    o If a saved workspace (e.g. .RData) contains objects that cannot
+      be loaded, R will now start with an warning message and an empty
+      workspace, rather than failing to start.
+
+    o strptime() now accepts times such as 24:00 for midnight at the
+      end of the day, for although these are disallowed by POSIX
+      1003.1-2008, ISO 8601:2004 allows them.
+
+    o Assignment of names() to S4 objects now checks for a
+      corresponding "names" slot, and generates a warning or an error
+      if that slot is not defined.  See the section on slots in
+      ?Classes.
+
+    o The default methods for is.finite(), is.infinite() and is.nan()
+      now signal an error if their argument is not an atomic vector.
+
+    o The formula method for plot() no longer places package stats on
+      the search path (it loads the namespace instead).
+
+    o There now is a genuine "function" method for plot() rather than
+      the generic dispatching internally to graphics::plot.function().
+      It is now exported, so can be called directly as plot.function().
+
+    o The one-sided ks.test() allows exact = TRUE to be specified in
+      the presence of ties (but the approximate calculation remains the
+      default: the 'exact' computation makes assumptions known to be
+      invalid in the presence of ties).
+
+    o The behaviour of curve(add = FALSE) has changed: it now no longer
+      takes the default x limits from the previous plot (if any):
+      rather they default to c(0, 1) just as the "function" method for
+      plot().  To get the previous behaviour use curve(add = NA), which
+      also takes the default for log-scaling of the x-axis from the
+      previous plot.
+
+    o Both curve() and the plot() method for functions have a new
+      argument xname to facilitate plots such as sin(t) _vs_ t.
+
+    o The local argument to source() can specify an environment as well
+      as TRUE (parent.env()) and FALSE (.GlobalEnv).  It gives better
+      error messages for other values, such as NA.
+
+    o vcov() gains methods for classes "summary.lm" and "summary.glm".
+
+    o The plot() method for class "profile.nls" gains ylab and lty
+      arguments, and passes ... on to plot.default.
+
+    o Character-string arguments such as the mode argument of vector(),
+      as.vector() and is.vector() and the description argument of
+      file() are required to be of length exactly one, rather than any
+      further elements being silently discarded.  This helps catch
+      incorrect usage in programming.
+
+    o The length argument of vector() and its wrappers such as
+      numeric() is required to be of length exactly one (other values
+      are now an error rather than giving a warning as previously).
+
+    o vector(len) and length(x) <- len no longer acccept TRUE/FALSE for
+      len (not that they were ever documented to, but there was
+      special-casing in the C code).
+
+    o There is a new function Sys.setFileTime() to set the time of a
+      file (including a directory).  See its help for exactly which
+      times it sets on various OSes.
+
+    o The file times reported by file.info() are reported to sub-second
+      resolution on systems which support it.  (Currently the POSIX
+      2008 and FreeBSD/Darwin/NetBSD methods are detected.)
+
+    o New function getCall(m) as an abstraction for m$call, enabling
+      update()'s default method to apply more universally.  (NB: this
+      can be masked by existing functions in packages.)
+
+    o Sys.info() gains a euser component to report the 'effective' user
+      on OSes which have that concept.
+
+    o The result returned by try() now contains the original error
+      condition object as the "condition" attribute.
+
+    o All packages with R code are lazy-loaded irrespective of the
+      LazyLoad field in the DESCRIPTION file.  A warning is given if
+      the LazyLoad field is overridden.
+
+    o Rd markup has a new \figure tag so that figures can be included
+      in help pages when converted to HTML or LaTeX.  There are
+      examples on the help pages for par() and points().
+
+    o The built-in httpd server now allows access to files in the
+      session temporary directory tempdir(), addressed as the /session
+      directory on the httpd server.
+
+    o Development versions of R are no longer referred to by the number
+      under which they might be released, e.g. in the startup banner, R
+      --version and sessionUtils().  The correct way to refer to a
+      development version of R is 'R-devel', preferably with the date
+      and SVN version number.
+      E.g. R-devel (2011-07-04 r56266)
+
+    o There is a new function texi2pdf() in package tools, currently a
+      convenience wrapper for texi2dvi(pdf = TRUE).
+
+    o There are two new options for typesetting PDF manuals from Rd
+      files.  These are beramono and inconsolata, and used the named
+      font for monospaced output. They are intended to be used in
+      combination with times, and times,inconsolata,hyper is now the
+      default for the reference manual and package manuals.  If you do
+      not have that font installed, you can set R_RD4PF to one of the
+      other options: see the 'R Installation and Administration
+      Manual'.
+
+    o Automatic printing for reference classes is now done by the
+      $show() method.  A method is defined for class envRefClass and
+      may be overriden for user classes (see the ?ReferenceClasses
+      example).  S4 show() methods should no longer be needed for
+      reference classes.
+
+    o tools::Rdiff (by default) and R CMD Rdiff now ignore differences
+      in pointer values when comparing printed environments, compiled
+      byte code, etc.
+
+    o The "source" attribute on functions created with keep.source=TRUE
+      has been replaced with a "srcref" attribute.  The "srcref"
+      attribute references an in-memory copy of the source file using
+      the "srcfilecopy" class or the new "srcfilealias" class.
+
+    o New items User Manuals and Technical Papers have been added to
+      the HTML help main page.  These link to vignettes in the base and
+      recommended packages and to a collection of papers about R
+      issues, respectively.
+
+    o Documentation and messages have been standardized to use
+      "namespace" rather than "name space".
+
+    o setGeneric() now looks in the default packages for a non-generic
+      version of a function if called from a package with a namespace.
+      (It always did for packages without a namespace.)
+
+    o Setting the environment variable _R_WARN_ON_LOCKED_BINDINGS_ will
+      give a warning if an attempt is made to change a locked binding.
+
+    o \SweaveInput is now supported when generating concordances in
+      Sweave().
+
+    o findLineNum() and setBreakpoint() now allow the environment to be
+      specified indirectly; the latter gains a clear argument to allow
+      it to call untrace().
+
+    o The body of a closure can be one of further types of R objects,
+      including enviroments and external pointers.
+
+    o The Rd2HTML() function in package tools now has a stylesheet
+      argument, allowing pages to be displayed in alternate formats.
+
+    o New function requireNamespace() analogous to require(), returning
+      a logical value after attempting to load a namespace.
+
+    o There is a new type of RNG, "L'Ecuyer-CMRG", implementing
+      L'Ecuyer (1999)'s 'combined multiple-recursive generator'
+      MRG32k3a.  See the comments on ?RNG.
+
+    o help.search() and ?? can now display vignettes and demos as well
+      as help pages.  The new option "help.search.types" controls the
+      types of documentation and the order of their display.
+
+      This also applies to HTML searches, which now give results in all
+      of help pages, vignettes and demos.
+
+    o socketConnection() now has a timeout argument.  It is now
+      documented that large values (package snow used a year) do not
+      work on some OSes.
+
+    o The initialization of the random-number generator now uses the
+      process ID as well as the current time, just in case two R
+      processes are launched very rapidly on a machine with
+      low-resolution wall clock (some have a resolution of a second;
+      modern systems have microsecond-level resolution).
+
+    o New function pskill() in the tools package to send a terminate
+      signal to one or more processes, plus constants such as SIGTERM
+      to provide a portable way to refer to signals (since the numeric
+      values are OS-dependent).
+
+    o New function psnice() in the tools package to return or change
+      the 'niceness' of a process.  (Refers to the 'priority class' on
+      Windows.)
+
+    o list.dirs() gains a recursive argument.
+
+    o An Authors@R field in a package DESCRIPTION file can now be used
+      to generate Author and Maintainer fields if needed, and to
+      auto-generate package citations.
+
+    o New utility getElement() for accessing either a list component or
+      a slot in an S4 object.
+
+    o stars() gains a col.lines argument, thanks to Dustin Sallings.
+      (Wish of PR#14657.)
+
+    o New function regmatches() for extracting or replacing matched or
+      non-matched substrings from match data obtained by regexpr(),
+      gregexpr() and regexec().
+
+    o help(package = "pkg_name", help_type = "HTML") now gives HTML
+      help on the package rather than text help.  (This gives direct
+      access to the HTML version of the package manual shown _via_
+      help.start()'s 'Packages' menu.)
+
+    o agrep() gains a fixed argument to optionally allow approximate
+      regular expression matching, and a costs argument to specify
+      possibly different integer match costs for insertions, deletions
+      and substitutions.
+
+    o read.dcf() and write.dcf() gain a keep.white argument to indicate
+      fields where whitespace should be kept as is.
+
+    o available.packages() now works around servers that fail to return
+      an error code when PACKAGES.gz does not exist.  (Patch submitted
+      by Seth Schommer.)
+
+    o readBin() can now read more than 2^31 - 1 bytes in a single call
+      (the previously documented limitation).
+
+    o New function regexec() for finding the positions of matches as
+      well as all substrings corresponding to parenthesized
+      subexpressions of the given regular expression.
+
+    o New function adist() in package utils for computing 'edit'
+      (generalized Levenshtein) distances between strings.
+
+    o Class "raster" gains an is.na method to avoid confusion from the
+      misuse of the matrix method (such as PR#14618).
+
+    o The identical() function gains an ignore.bytecode argument to
+      control comparison of compiled functions.
+
+    o pmin and pmax now warn if an argument is partially recycled (wish
+      of PR#14638).
+
+    o The default for image(useRaster=) is now taken from option
+      "preferRaster": for the small print see ?image.
+
+    o str() now displays reference class objects and their fields,
+      rather than treating them as classical S4 classes.
+
+    o New function aregexec() in package utils for finding the
+      positions of approximate string matches as well as all substrings
+      corresponding to parenthesized subexpressions of the given
+      regular expression.
+
+    o download.file() has an extra argument to pass additional
+      command-line options to the non-default methods using
+      command-line utilities.
+
+      cacheOK = FALSE is now supported for method = "curl".
+
+    o interaction.plot(*, type = .) now also allows type "o" or "c".
+
+    o axTicks(*, log=TRUE) did sometimes give more values than the
+      ticks in the corresponding graphics::axis().  By default, it now
+      makes use of the new (graphics-package independent) axisTicks()
+      which can make use of a new utility .axisPars().  Further, it now
+      returns a decreasing sequence (as for log=FALSE) when usr is
+      decreasing.
+
+    o Using fix() or edit() on a R object (except perhaps a matrix or
+      data frame) writes its temporary file with extension .R so
+      editors which select their mode based on the extension will
+      select a suitable mode.
+
+  GRAPHICS DEVICES:
+
+    o The pdf() device makes use of Flate compression: this is
+      controlled by the new logical argument compress, and is enabled
+      by default.
+
+    o Devices svg(), cairo_pdf() and cairo_ps() gain a family argument.
+
+      On a Unix-alike X11() gains a family argument.  This is one of
+      the x11.options() and so can be passed as an argument to the
+      bmp(), jpeg(), png() and tiff() devices.
+
+      Analogous changes have been made on Windows, so all built-in R
+      graphics devices now have a family argument except pictex()
+      (which has no means to change fonts).
+
+    o The bmp(), jpeg(), png() and tiff() devices now make use of the
+      antialias argument for type = "quartz".
+
+    o There are several new built-in font mappings for X11(type =
+      "Xlib"): see the help on X11Fonts().
+
+    o There is a new type X11(type = "dbcairo") which updates the
+      screeen less frequently: see its help page.
+
+    o The X11() device now makes use of cursors to distinguish its
+      states.  The normal cursor is an arrow (rather than a crosshair);
+      the crosshair is used when the locator is in use, and a watch
+      cursor is shown when plotting computations are being done.
+      (These are the standard names for X11 cursors: how they are
+      actually displayed depends on the window manager.)
+
+    o New functions dev.hold() and dev.flush() for use with graphics
+      devices with buffering.  These are used for most of the
+      high-level graphics functions such as boxplot(), so that the plot
+      is only displayed when the page is complete.
+
+      Currently implemented for windows(buffered = TRUE), quartz() and
+      the cairographics-based X11() types with buffering (which are the
+      default on-screen devices).
+
+    o New function dev.capture() for capture of bitmap snapshots of
+      image-based devices (a superset of the functionality provided by
+      grid.cap() in grid).
+
+    o The default colormodel for pdf() and postscript() is now called
+      "srgb" to more accurately describe it.  (Instead of "rgb", and in
+      the case of postscript() it no longer switches to and from the
+      gray colorspace, by default.)
+
+      The colormodel for postscript() which does use both gray and sRGB
+      colorspaces is now called "srgb+gray".
+
+      Plots which are known to use only black/white/transparent can
+      advantageously use colormodel = "gray" (just as before, but there
+      is now slightly more advantage in doing so).
+
+    o postscript() with values colormodel = "rgb" and colormodel =
+      "rgb-nogray" give the behaviour prior to R 2.13.0 of uncalibrated
+      RGB, which under some circumstances can be rendered much faster
+      by a viewer.
+
+      pdf(colormodel = "rgb") gives the behaviour prior to R 2.13.0 of
+      uncalibrated RGB, which under some circumstances can be rendered
+      faster by a viewer, and the files will be smaller (by about 9KB
+      if compression is not used).
+
+    o The postscript() device only includes the definition of the sRGB
+      colorspace in the output file for the colormodels which use it.
+
+    o The postscript() and pdf() devices now output greyscale raster
+      images (and not RGB) when colormodel = "gray".
+
+    o postscript(colormodel = "gray") now accepts non-grey colours and
+      uses their luminance (as pdf() long has).
+
+    o colormodel = "grey" is allowed as an alternative name for
+      postscript() and pdf().
+
+    o pdf() in the default sRGB colorspace outputs many fewer changes
+      of colorspace, which may speed up rendering in some viewing
+      applications.
+
+    o There is a new function dev.capabilities() to query the
+      capabilities of the current device.  The initial set of
+      capabilities are support for semi-transparent colours, rendering
+      and capturing raster images, the locator and for interactive
+      events.
+
+    o For pdf(), maxRasters is increased as needed so the argument is
+      no longer used.
+
+  SWEAVE & VIGNETTES:
+
+    o Options keep.source = TRUE, figs.only = FALSE are now the
+      default.
+
+    o The way the type of user-defined options is determined has
+      changed.  Previously they were all regarded as logical: now the
+      type is determined by the value given at first use.
+
+    o The allowed values of logical options are now precisely those
+      allowed for character inputs to as.logical(): this means that t
+      and f are no longer allowed (although T and F still are).
+
+    o The preferred location for vignette sources is now the directory
+      vignettes and not inst/doc: R CMD build will now re-build
+      vignettes in directory vignettes and copy the .Rnw (etc) files
+      and the corresponding PDFs to inst/doc.  Further files to be
+      copied to inst/doc can be specified _via_ the file
+      vignettes/.install_extras.
+
+    o R CMD Sweave now supports a --driver option to select the Sweave
+      driver: the default is equivalent to --driver=RweaveLatex.
+
+    o R CMD Sweave and R CMD Stangle support options --encoding and
+      --options.
+
+    o The Rtangle() driver allows output = "stdout" or output =
+      "stderr" to select the output or message connection.  This is
+      convenient for scripting using something like
+      
+          R CMD Stangle --options='output="stdout"' foo.Rnw > foo2.R
+
+    o There is a new option pdf.compress controlling whether PDF
+      figures are generated using Flate compression (they are by
+      default).
+
+    o R CMD Sweave now has a --pdf option to produce a PDF version of
+      the processed Sweave document.
+
+    o It is no longer allowed to have two vignettes with the same
+      vignette basename (e.g. vig.Rnw and vig.Snw).  (Previously one
+      vignette hid the other in the vignette() function.)
+
+  C-LEVEL FACILITIES:
+
+    o Function R_tmpnam2 has been added to the API to allow a temporary
+      filename to include a specified extension.
+
+  PACKAGE INSTALLATION:
+
+    o Package DESCRIPTION file field KeepSource forces the package to
+      be installed with keep.source = TRUE (or FALSE).  (Suggestion of
+      Greg Snow.  Note that as all packages are lazy-loaded, this is
+      now only relevant at installation.)
+
+      There are corresponding options --with-keep.source and
+      --without-keep.source for R CMD INSTALL.
+
+    o R CMD INSTALL has a new option --byte-compile to byte-compile the
+      packages during installation (since all packages are now
+      lazy-loaded).  This can be controlled on a per-package basis by
+      the optional field ByteCompile in the DESCRIPTION file.
+
+    o A package R code but without a NAMESPACE file will have a default
+      one created at R CMD build or R CMD INSTALL time, so all packages
+      will be installed with namespaces.  A consequence of this is that
+      .First.lib() functions need to be copied to .onLoad() (usually)
+      or .onAttach().  For the time being, if there is an
+      auto-generated NAMESPACE file and no .onLoad() nor .onAttach()
+      function is found but .First.lib() is, it will be run as the
+      attach hook (unless the package is one of a list of known
+      exceptions, when it will be run as the load hook).
+
+    o A warning is given if test-loading a package changes a locked
+      binding in a package other than itself.  It is likely that this
+      will be disallowed in future releases.  (There are _pro tem_ some
+      exceptions to the warning.)
+
+    o A dependency on SVN revision is allowed for R, e.g. R (>=
+      r56550).  This should be used in conjunction with a version
+      number, e.g. R (>= 2.14.0), R (>= r56550) to distinguish beteen
+      R-patched and R-devel versions with the same SVN revision.
+
+    o installed.packages() now hashes the names of its cache files to
+      avoid very rare problems with excessively long path names.
+      (PR#14669)
+
+    o A top-level COPYING file in a package is no longer installed
+      (file names LICENSE or LICENCE having long been preferred).
+
+  UTILITIES:
+
+    o R CMD check now gives an error if the R code in a vignette fails
+      to run, unless this is caused by a missing package.
+
+    o R CMD check now unpacks tarballs in the same way as R CMD
+      INSTALL, including making use of the environment variable
+      R_INSTALL_TAR to override the default behaviour.
+
+    o R CMD check performs additional code analysis of package startup
+      functions, and notifies about incorrect argument lists and
+      (incorrect) calls to functions which modify the search path or
+      inappropriately generate messages.
+
+    o R CMD check now also checks compiled code for symbols
+      corresponding to functions which might terminate R or write to
+      stdout/stderr instead of the console.
+
+    o R CMD check now uses a pdf() device when checking examples
+      (rather than postscript()).
+
+    o R CMD check now checks line-endings of makefiles and
+      C/C++/Fortran sources in subdirectories of src as well as in src
+      itself.
+
+    o R CMD check now reports as a NOTE what look like methods
+      documented with their full names even if there is a namespace and
+      they are exported.  In almost all cases they are intended to be
+      used only as methods and should use the \method markup.  In the
+      other rare cases the recommended form is to use a function such
+      as coefHclust which would not get confused with a method,
+      document that and register it in the NAMESPACE file by
+      s3method(coef, hclust, coefHclust).
+
+    o The default for the environment variable _R_CHECK_COMPACT_DATA2_
+      is now true: thus if using the newer forms of compression
+      introduced in R 2.10.0 would be beneficial is now checked (by
+      default).
+
+    o Reference output for a vignette can be supplied when checking a
+      package by R CMD check: see 'Writing R Extensions'.
+
+    o R CMD Rd2dvi allows the use of LaTeX package inputenx rather than
+      inputenc: the value of the environment variable RD2DVI_INPUTENC
+      is used.  (LaTeX package inputenx is an optional install which
+      provides greater coverage of the UTF-8 encoding.)
+
+    o Rscript on a Unix-alike now accepts file names containing spaces
+      (provided these are escaped or quoted in the shell).
+
+    o R CMD build on a Unix-alike (only) now tries to preserve dates on
+      files it copies from its input directory.  (This was the
+      undocumented behaviour prior to R 2.13.0.)
+
+  DEPRECATED AND DEFUNCT:
+
+    o require() no longer has a save argument.
+
+    o The gamma argument to hsv(), rainbow(), and rgb2hsv() has been
+      removed.
+
+    o The --no-docs option for R CMD build --binary is defunct: use
+      --install-args instead.
+
+    o The option --unsafe to R CMD INSTALL is defunct: use the
+      identical option --no-lock instead.
+
+    o The entry point pythag formerly in Rmath.h is defunct: use
+      instead the C99 function hypot.
+
+    o R CMD build --binary is formally defunct: R CMD INSTALL --build
+      has long been the preferred alternative.
+
+    o zip.file.extract() is now defunct: use unzip() or unz() instead.
+
+    o R CMD Rd2dvi without the --pdf option is now deprecated: only PDF
+      output will be supported in future releases (since this allows
+      the use of fonts only supported for PDF), and only R CMD Rd2pdf
+      will be available.
+
+    o Options such as --max-nsize and the function mem.limits() are now
+      deprecated: these limits are nowadays almost never used, and are
+      reported by gc() when they are in use.
+
+    o Forms like binomial(link = "link") for GLM families deprecated
+      since R 2.4.0 are now defunct.
+
+    o The declarativeOnly argument to loadNamespace() (not relevant
+      since R 2.13.0) has been removed.
+
+    o Use of library.dynam() without specifying all the first three
+      arguments is deprecated.  (It is often called from a namespace,
+      and the defaults are only appropriate to a package.)
+
+      Use of chname in library.dynam() with the extension .so or .dll
+      (which is clearly not allowed according to the help page) is
+      deprecated.  This also applies to library.dynam.unload() and
+      useDynLib directives in NAMESPACE files.
+
+    o It is deprecated to use mean(x) and sd(x) directly on data frames
+      (or also matrices, for sd) x, instead of simply using sapply.
+
+      In the same spirit, median(x) now gives an error for a data frame
+      x (it often gave nonsensical results).
+
+    o The keep.source argument to library() and require() is
+      deprecated: it was only used for packages installed without
+      lazy-loading, and now all packages are lazy-loaded.
+
+    o Using a false value for the DESCRIPTION field LazyLoad is
+      deprecated.
+
+  INSTALLATION:
+
+    o The base and recommended packages are now byte-compiled
+      (equivalent to make bytecode in R 2.13.x).
+
+    o Configure option --with-system-zlib now only makes use of the
+      basic interface of zlib and not the C function gzseek which has
+      shown erroneous behaviour in zlib 1.2.4 and 1.2.5.
+
+    o The zlib in the R sources is now version 1.2.5.  (This is safe
+      even on 32-bit Linux systems because only the basic interface is
+      now used.)
+
+    o The .afm files in package grDevices are now installed as
+      compressed files (as long done on Windows), saving ca 2MB on the
+      installed size.
+
+    o The non-screen cairo-based devices are no longer in the X11
+      module and so can be installed without X11.  (We have never seen
+      a Unix-alike system with cairographics installed but not X11, but
+      a user might select --without-x.)
+
+    o Configure will try to use -fobjc-exceptions for the Objective-C
+      compiler (if present) to ensure that even compilers that do not
+      enable exceptions by default (such as vanilla gcc) can be used.
+      (Objective-C is currently only used on Mac OS X.)
+
+    o The system call times is required.
+
+    o The C99 functions acosh, asinh, atanh, snprintf and vsnprintf are
+      now required.
+
+    o There is no longer support for making DVI manuals _via_ make dvi,
+      make install-dvi and similar.  Only PDF manuals are supported (to
+      allow the use of fonts which are only available for PDF.)
+
+    o The configure arguments used during configuration of R are
+      included as a comment in Makeconf for informative purposes on
+      Unix-alikes in a form suitable for shell execution.  Note that
+      those are merely command-line arguments, they do not include
+      environment variables (one more reason to use configure variables
+      instead) or site configuration settings.
+
+    o Framework installation now supports DESTDIR (Mac OS X only).
+
+    o Java detection (R CMD javareconf) works around bogus
+      java.library.path property in recent Oracle Java binaries.
+
+  BUG FIXES:
+
+    o The locale category LC_MONETARY was only being set on startup on
+      Windows: that is now done on Unix-alikes where supported.
+
+    o Reference class utilities will detect an attempt to modify
+      methods or fields in a locked class definition (e.g., in a
+      namespace) and generate an error.
+
+    o The formula methods for lines(), points() and text() now work
+      even if package stats is not on the search path.
+
+    o In principle, S4 classes from different packages could have the
+      same name.  This has not previously worked.  Changes have now
+      been installed that should allow such classes and permit methods
+      to use them.  New functions className() and multipleClasses() are
+      related tools for programming.
+
+    o Work around an issue in Linux (a system select call resetting tv)
+      which prevented internet operations from timing out properly.
+
+    o Several stack trampling and overflow issues have been fixed in
+      TRE, triggered by agrep and friends with long patterns.
+      (PR#14627.)
+
+    o ("design infelicity") Field assignments in reference classes are
+      now consistent with slots in S4 classes: the assigned value must
+      come from the declared class (if any) for the field or from a
+      subclass.
+
+    o The methods objects constructed for "coerce" and "coerce<-" were
+      lacking some essential information in the generic, defined and
+      target slots; as() did not handle duplicate class definitions
+      correctly.
+
+    o The parser no longer accepts the digit 8 in an octal character
+      code in a string, nor does it accept unterminated strings in a
+      file.  (Reported by Bill Dunlap.)
+
+    o The print() method for class "summary.aov" did not pass on
+      argument digits when summary() was called on a single object, and
+      hence used more digits than documented.
+
+    o The X11() device's cairo back-end produced incorrect capture
+      snapshot images on big-endian machines.
+
+    o loglin() gave a spurious error when argument margin consisted of
+      a single element of length one.  (PR#14690)
+
+    o loess() is better protected against misuse, e.g. zero-length
+      span.  (PR#14691)
+
+    o HoltWinters() checks that the optimization succeeded. (PR#14694)
+
+    o The (undocumented) inclusion of superclass objects in default
+      initializing of reference classes overwrote explicit field
+      arguments. The bug is fixed, the feature documented and a test
+      added.
+
+    o round(x, -Inf) now does something sensible (return zero rather
+      than NA).
+
+    o signif(x, -Inf) now behaves as documented (signif(x, 1)) rather
+      than giving zero.
+
+    o The "table" method for Axis() hardcoded side = 1, hence calls to
+      plot(<vector>, <table>) labelled the wrong axis. (PR#14699)
+
+    o Creating a connection might fail under gctorture(TRUE).
+
+    o stack() and unstack() converted character columns to factors.
+
+      unstack() sometimes produced incorrect results (a list or a
+      vector) if the factor on which to un-split had only one level.
+
+    o On some systems help(".C", help_type = "pdf") and similar
+      generated file names that TeX was unable to handle.
+
+    o Non-blocking listening socket connections continued to report
+      isIncomplete() as true even when the peer had closed down and all
+      available input had been read.
+
+    o The revised HTML search system now generates better hyperlinks to
+      help topics found: previously it gave problems with help pages
+      with names containing e.g. spaces and slashes.
+
+    o A late change in R 2.13.2 broke \Sexpr expressions in Rd files.
+
+    o The creation of ticks on log axes (including axTicks() sometimes
+      incorrectly omitted a tick at one end
+
+    o The creation of ticks on log axes (including by axTicks())
+      sometimes incorrectly omitted a tick at one end of the range by
+      rounding error in a platform-dependent way.  This could be seen
+      in the examples for axTicks(), where with axis limits c(0.2, 88)
+      the tick for 0.2 was sometimes omitted.
+
+    o qgamma() for small shape underflows to 0 rather than sometimes
+      giving NaN.  (PR#8528, PR#14710)
+
+    o mapply() now gives an explicit error message (rather than an
+      obscure one) is inputs of zero and positive length are mixed.
+
+    o Setting a Hershey font family followed by string height query
+      would crash R.
+
+    o R CMD javareconf -e would fail for some shells due to a shift
+      error. Also the resulting paths will no longer contain
+      $(JAVA_HOME) as that can result in an unintended substitution
+      based on Makeconf instead of the shell setting.
+
 CHANGES IN R VERSION 2.13.2:
 
   NEW FEATURES:
@@ -13,8 +869,7 @@ CHANGES IN R VERSION 2.13.2:
       long datetime vectors.  (Suggestion of Yohan Chalabi.)
 
     o untar2() now works around errors generated with tar files that
-      use more than the standard 6 digits for the checksum.
-      (https://bugs.R-project.org/bugzilla3/show_bug.cgi?id=14654PR#14654)
+      use more than the standard 6 digits for the checksum. (PR#14654)
 
     o install.packages() with Ncpus > 1 guards against simultaneous
       installation of indirect dependencies as well as direct ones.
@@ -36,9 +891,9 @@ CHANGES IN R VERSION 2.13.2:
       call.
 
     o PCRE has been updated to version 8.13, a bug-fix release with
-      updated Unicode tables (version 6.0.0). An additional patch (r611
-      from PCRE 8.20-to-be) has been added to fix a collation symbol
-      recognition issue.
+      updated Unicode tables (version 6.0.0).  An additional patch
+      (r611 from PCRE 8.20-to-be) has been added to fix a collation
+      symbol recognition issue.
 
   INSTALLATION:
 
@@ -89,11 +944,9 @@ CHANGES IN R VERSION 2.13.2:
       containing NAs.  (Spotted by Bill Dunlap.)
 
     o Profiling stats::mle() fits with a fixed parameter was not
-      supported.
-      (https://bugs.R-project.org/bugzilla3/show_bug.cgi?id=14646PR#14646)
+      supported.  (PR#14646)
 
-    o retracemem() was still using positional matching.
-      (https://bugs.R-project.org/bugzilla3/show_bug.cgi?id=14650PR#14650)
+    o retracemem() was still using positional matching.  (PR#14650)
 
     o The quantile method for "ecdf" objects now works and is
       documented.
@@ -119,16 +972,14 @@ CHANGES IN R VERSION 2.13.2:
 
     o The print() method for class "summary.aov" did not pass on
       arguments such as signif.stars when summary() was called on a
-      single object.
-      (https://bugs.R-project.org/bugzilla3/show_bug.cgi?id=14684PR#14684)
+      single object.  (PR#14684)
 
     o In rare cases ks.test() could return a p-value very slightly less
-      than 0 by rounding error.
-      (https://bugs.R-project.org/bugzilla3/show_bug.cgi?id=14671PR#14671)
+      than 0 by rounding error.  (PR#14671)
 
     o If trunc() was called on a "POSIXlt" vector and the result was
       subsetted, all but the first element was converted to NA.
-      (https://bugs.R-project.org/bugzilla3/show_bug.cgi?id=14679PR#14679)
+      (PR#14679)
 
     o cbind() and rbind() could cause memory corruption when used on a
       combination of raw and logical/integer vectors.
@@ -141,8 +992,7 @@ CHANGES IN R VERSION 2.13.1:
 
     o persp(box = TRUE) now warns if the surface extends outside the
       box (since occlusion for the box and axes is computed assuming
-      the box is a bounding box).
-      (https://bugs.R-project.org/bugzilla3/show_bug.cgi?id=202PR#202.)
+      the box is a bounding box). (PR#202.)
 
     o RShowDoc() can now display the licences shipped with R, e.g.
       RShowDoc("GPL-3").
@@ -164,8 +1014,7 @@ CHANGES IN R VERSION 2.13.1:
       with cairo >= 1.6.
 
     o Binary reads (e.g. by readChar() and readBin()) are now supported
-      on clipboard connections.  (Wish of
-      https://bugs.R-project.org/bugzilla3/show_bug.cgi?id=14593PR#14593.)
+      on clipboard connections.  (Wish of PR#14593.)
 
     o as.POSIXlt.factor() now passes ... to the character method
       (suggestion of Joshua Ulrich).  [Intended for R 2.13.0 but
@@ -257,13 +1106,11 @@ CHANGES IN R VERSION 2.13.1:
     o plot.lm(which = 5) was intended to order factor levels in
       increasing order of mean standardized residual.  It ordered the
       factor labels correctly, but could plot the wrong group of
-      residuals against the label.
-      (https://bugs.R-project.org/bugzilla3/show_bug.cgi?id=14545PR#14545)
+      residuals against the label.  (PR#14545)
 
     o mosaicplot() could clip the factor labels, and could overlap them
       with the cells if a non-default value of cex.axis was used.
-      (Related to
-      https://bugs.R-project.org/bugzilla3/show_bug.cgi?id=14550PR#14550.)
+      (Related to PR#14550.)
 
     o dataframe[[row,col]] now dispatches on [[ methods for the
       selected column.  (Spotted by Bill Dunlap).
@@ -288,8 +1135,7 @@ CHANGES IN R VERSION 2.13.1:
       implemented for a gzfile() connection.
 
     o c(), unlist(), cbind() and rbind() could silently overflow the
-      maximum vector length and cause a segfault.
-      (https://bugs.R-project.org/bugzilla3/show_bug.cgi?id=14571PR#14571)
+      maximum vector length and cause a segfault.  (PR#14571)
 
     o The fonts argument to X11(type = "Xlib") was being ignored.
 
@@ -316,8 +1162,7 @@ CHANGES IN R VERSION 2.13.1:
     o addmargins() called numeric(apos) rather than
       numeric(length(apos)).
 
-    o The HTML help search sometimes produced bad links.
-      (https://bugs.R-project.org/bugzilla3/show_bug.cgi?id=14608PR#14608)
+    o The HTML help search sometimes produced bad links.  (PR#14608)
 
     o Command completion will no longer be broken if tail.default() is
       redefined by the user. (Problem reported by Henrik Bengtsson.)
@@ -372,8 +1217,7 @@ CHANGES IN R VERSION 2.13.0:
     o cmdscale(add = FALSE) now uses the more common definition that
       there is a representation in n-1 or less dimensions, and only
       dimensions corresponding to positive eigenvalues are used.
-      (Avoids confusion such as
-      https://bugs.R-project.org/bugzilla3/show_bug.cgi?id=14397PR#14397.)
+      (Avoids confusion such as PR#14397.)
 
     o Names used by c(), unlist(), cbind() and rbind() are marked with
       an encoding when this can be ascertained.
@@ -467,13 +1311,11 @@ CHANGES IN R VERSION 2.13.0:
       dim() function, making it more useful for objects (such as data
       frames) from classes with methods for dim().  It also uses
       attr<-() in preference to the generics name<-(), dim<-() and
-      dimnames<-().  (Related to
-      https://bugs.R-project.org/bugzilla3/show_bug.cgi?id=14469PR#14469.)
+      dimnames<-().  (Related to PR#14469.)
 
     o There is a new option "browserNLdisabled" to disable the use of
       an empty (e.g. via the 'Return' key) as a synonym for c in
-      browser() or n under debug().  (Wish of
-      https://bugs.R-project.org/bugzilla3/show_bug.cgi?id=14472PR#14472.)
+      browser() or n under debug().  (Wish of PR#14472.)
 
     o example() gains optional new arguments character.only and
       give.lines enabling programmatic exploration.
@@ -531,9 +1373,8 @@ CHANGES IN R VERSION 2.13.0:
 
     o R CMD REMOVE and remove.packages() now remove file R.css when
       removing all remaining packages in a library tree.  (Related to
-      the wish of
-      https://bugs.R-project.org/bugzilla3/show_bug.cgi?id=14475PR#14475:
-      note that this file is no longer installed.)
+      the wish of PR#14475: note that this file is no longer
+      installed.)
 
     o unzip() now has a unzip argument like zip.file.extract().  This
       allows an external unzip program to be used, which can be useful
@@ -546,7 +1387,7 @@ CHANGES IN R VERSION 2.13.0:
     o bzfile() connections can now read from concatenated bzip2 files
       (including files written with bzfile(open = "a")) and files
       created by some other compressors (such as the example of
-      https://bugs.R-project.org/bugzilla3/show_bug.cgi?id=14479PR#14479).
+      PR#14479).
 
     o The primitive function c() is now of type BUILTIN.
 
@@ -658,12 +1499,10 @@ CHANGES IN R VERSION 2.13.0:
     o The internal (C) function scientific(), at the heart of R's
       format.info(x), format(x), print(x), etc, for numeric x, has been
       re-written in order to provide slightly more correct results,
-      fixing
-      https://bugs.R-project.org/bugzilla3/show_bug.cgi?id=14491PR#14491,
-      notably in border cases including when digits >= 16, thanks to
-      substantial contributions (code and experiments) from Petr
-      Savicky.  This affects a noticable amount of numeric output from
-      R.
+      fixing PR#14491, notably in border cases including when digits >=
+      16, thanks to substantial contributions (code and experiments)
+      from Petr Savicky.  This affects a noticable amount of numeric
+      output from R.
 
     o A new function grepRaw() has been introduced for finding subsets
       of raw vectors. It supports both literal searches and regular
@@ -720,8 +1559,7 @@ CHANGES IN R VERSION 2.13.0:
 
     o factanal() now returns the rotation matrix if a rotation such as
       "promax" is used, and hence factor correlations are displayed.
-      (Wish of
-      https://bugs.R-project.org/bugzilla3/show_bug.cgi?id=12754PR#12754.)
+      (Wish of PR#12754.)
 
     o The gctorture2() function provides a more refined interface to
       the GC torture process.  Environment variables R_GCTORTURE,
@@ -748,8 +1586,7 @@ CHANGES IN R VERSION 2.13.0:
 
     o Sweave() has options to produce PNG and JPEG figures, and to use
       a custom function to open a graphics device (see ?RweaveLatex).
-      (Based in part on the contribution of
-      https://bugs.R-project.org/bugzilla3/show_bug.cgi?id=14418PR#14418.)
+      (Based in part on the contribution of PR#14418.)
 
     o The default for Sweave() is to produce only PDF figures (rather
       than both EPS and PDF).
@@ -1027,12 +1864,10 @@ CHANGES IN R VERSION 2.13.0:
       and turns dispatch on for this primitive.
 
     o Map() did not look up a character argument f in the correct
-      frame, thanks to lazy evaluation.
-      (https://bugs.R-project.org/bugzilla3/show_bug.cgi?id=14495PR#14495)
+      frame, thanks to lazy evaluation.  (PR#14495)
 
     o file.copy() did not tilde-expand from and to when to was a
-      directory.
-      (https://bugs.R-project.org/bugzilla3/show_bug.cgi?id=14507PR#14507)
+      directory.  (PR#14507)
 
     o It was possible (but very rare) for the loading test in R CMD
       INSTALL to crash a child R process and so leave around a lock
@@ -1048,24 +1883,21 @@ CHANGES IN R VERSION 2.13.0:
       removed.
 
     o data.frame(check.rows = TRUE) sometimes worked when it should
-      have detected an error.
-      (https://bugs.R-project.org/bugzilla3/show_bug.cgi?id=14530PR#14530)
+      have detected an error.  (PR#14530)
 
     o scan(sep= , strip.white=TRUE) sometimes stripped trailing spaces
-      from within quoted strings.  (The real bug in
-      https://bugs.R-project.org/bugzilla3/show_bug.cgi?id=14522PR#14522.)
+      from within quoted strings.  (The real bug in PR#14522.)
 
     o The rank-correlation methods for cor() and cov() with use =
       "complete.obs" computed the ranks before removing missing values,
       whereas the documentation implied incomplete cases were removed
-      first.
-      (https://bugs.R-project.org/bugzilla3/show_bug.cgi?id=14488PR#14488)
+      first.  (PR#14488)
 
       They also failed for 1-row matrices.
 
     o The perpendicular adjustment used in placing text and expressions
       in the margins of plots was not scaled by par("mex"). (Part of
-      https://bugs.R-project.org/bugzilla3/show_bug.cgi?id=14532PR#14532.)
+      PR#14532.)
 
     o Quartz Cocoa device now catches any Cocoa exceptions that occur
       during the creation of the device window to prevent crashes.  It
@@ -1078,10 +1910,8 @@ CHANGES IN R VERSION 2.13.0:
 
     o R's internal filename completion now properly handles filenames
       with spaces in them even when the readline library is used.  This
-      resolves
-      https://bugs.R-project.org/bugzilla3/show_bug.cgi?id=14452PR#14452
-      provided the internal filename completion is used (e.g., by
-      setting rc.settings(files = TRUE)).
+      resolves PR#14452 provided the internal filename completion is
+      used (e.g., by setting rc.settings(files = TRUE)).
 
     o Inside uniroot(f, ...), -Inf function values are now replaced by
       a maximally *negative* value.
@@ -1106,16 +1936,14 @@ CHANGES IN R VERSION 2.12.2 patched:
       S4 method selection; the error message is now printed.
 
     o PDF output with a non-RGB color model used RGB for the line
-      stroke color.
-      (https://bugs.R-project.org/bugzilla3/show_bug.cgi?id=14511PR#14511)
+      stroke color.  (PR#14511)
 
     o stats4::BIC() assumed without checking that an object of class
       "logLik" has an "nobs" attribute: glm() fits did not and so BIC()
       failed for them.
 
     o In some circumstances a one-sided mantelhaen.test() reported the
-      p-value for the wrong tail.
-      (https://bugs.R-project.org/bugzilla3/show_bug.cgi?id=14514PR#14514)
+      p-value for the wrong tail.  (PR#14514)
 
     o Passing the invalid value lty = NULL to axis() sent an invalid
       value to the graphics device, and might cause the device to
@@ -1216,14 +2044,12 @@ CHANGES IN R VERSION 2.12.2:
 
     o If the filename extension (usually .Rnw) was not included in a
       call to Sweave(), source references would not work properly and
-      the keep.source option failed.
-      (https://bugs.R-project.org/bugzilla3/show_bug.cgi?id=14459PR#14459)
+      the keep.source option failed.  (PR#14459)
 
     o format.data.frame() now keeps zero character column names.
 
     o pretty(x) no longer raises an error when x contains solely
-      non-finite values.
-      (https://bugs.R-project.org/bugzilla3/show_bug.cgi?id=14468PR#14468)
+      non-finite values. (PR#14468)
 
     o The plot.TukeyHSD() function now uses a line width of 0.5 for its
       reference lines rather than lwd = 0 (which caused problems for
@@ -1246,17 +2072,15 @@ CHANGES IN R VERSION 2.12.2:
       two or more leading directories which were not in the zipfile and
       did not already exist.  (It is unclear if such zipfiles are valid
       and the third-party C code used did not support them, but
-      https://bugs.R-project.org/bugzilla3/show_bug.cgi?id=14462PR#14462
-      created one.)
+      PR#14462 created one.)
 
     o combn(n, m) now behaves more regularly for the border case m = 0.
-      (https://bugs.R-project.org/bugzilla3/show_bug.cgi?id=14473PR#14473)
+      (PR#14473)
 
     o The rendering of numbers in plotmath expressions (e.g.
       expression(10^2)) used the current settings for conversion to
       strings rather than setting the defaults, and so could be
-      affected by what has been done before.
-      (https://bugs.R-project.org/bugzilla3/show_bug.cgi?id=14477PR#14477)
+      affected by what has been done before.  (PR#14477)
 
     o The methods of napredict() and naresid() for na.action =
       na.exclude fits did not work correctly in the very rare event
@@ -1341,8 +2165,7 @@ CHANGES IN R VERSION 2.12.1:
     o xz-utils has been updated to version 5.0.0.
 
     o reshape() now makes use of sep when forming names during
-      reshaping to wide format.
-      (https://bugs.R-project.org/bugzilla3/show_bug.cgi?id=14435PR#14435)
+      reshaping to wide format.  (PR#14435)
 
     o legend() allows the length of lines to be set by the end user
       _via_ the new argument seg.len.
@@ -1370,7 +2193,7 @@ CHANGES IN R VERSION 2.12.1:
   BUG FIXES:
 
     o seq.int() no longer sometimes evaluates arguments twice.
-      (https://bugs.R-project.org/bugzilla3/show_bug.cgi?id=14388PR#14388)
+      (PR#14388)
 
     o The data.frame method of format() failed if a column name was
       longer than 256 bytes (the maximum length allowed for an R name).
@@ -1383,7 +2206,7 @@ CHANGES IN R VERSION 2.12.1:
 
     o The TRE regular expressions engine could terminate R rather than
       give an error when given certain invalid regular expressions.
-      (https://bugs.R-project.org/bugzilla3/show_bug.cgi?id=14398PR#14398)
+      (PR#14398)
 
     o cmdscale(eig = TRUE) was documented to return n-1 eigenvalues but
       in fact only returned k.  It now returns all n eigenvalues.
@@ -1400,8 +2223,7 @@ CHANGES IN R VERSION 2.12.1:
       as for initially specified methods.
 
     o download.file() could leave the destination file open if the URL
-      was not able to be opened.
-      (https://bugs.R-project.org/bugzilla3/show_bug.cgi?id=14414PR#14414)
+      was not able to be opened.  (PR#14414)
 
     o Assignment of an environment to functions or as an attribute to
       other objects now works for S4 subclasses of "environment".
@@ -1414,8 +2236,7 @@ CHANGES IN R VERSION 2.12.1:
       initialize() methods when there is no explicit superclass method.
 
     o ! dropped attributes such as names and dimensions from a
-      length-zero argument.
-      (https://bugs.R-project.org/bugzilla3/show_bug.cgi?id=14424PR#14424)
+      length-zero argument.  (PR#14424)
 
     o When list2env() created an environment it was missing a PROTECT
       call and so was vulnerable to garbage collection.
@@ -1427,17 +2248,15 @@ CHANGES IN R VERSION 2.12.1:
     o The Fortran code used by nls(algorithm = "port") could
       infinite-loop when compiled with high optimization on a modern
       version of gcc, and SAFE_FFLAGS is now used to make this less
-      likely.
-      (https://bugs.R-project.org/bugzilla3/show_bug.cgi?id=14427PR#14427,
-      seen with 32-bit Windows using gcc 4.5.0 used from R 2.12.0.)
+      likely.  (PR#14427, seen with 32-bit Windows using gcc 4.5.0 used
+      from R 2.12.0.)
 
     o sapply() with default simplify = TRUE and mapply() with default
       SIMPLIFY = TRUE wrongly simplified language-like results, as,
       e.g., in mapply(1:2, c(3,7), FUN = function(i,j) call(':',i,j)).
 
     o Backreferences to undefined patterns in [g]sub(pcre = TRUE) could
-      cause a segfault.
-      (https://bugs.R-project.org/bugzilla3/show_bug.cgi?id=14431PR#14431)
+      cause a segfault.  (PR#14431)
 
     o The format() (and hence the print()) method for class "Date"
       rounded fractional dates towards zero: it now always rounds them
@@ -1465,12 +2284,10 @@ CHANGES IN R VERSION 2.12.1:
       example or test output which is invalid in the current locale.
 
     o qr.X() with column names and pivoting now also pivots the column
-      names.
-      (https://bugs.R-project.org/bugzilla3/show_bug.cgi?id=14438PR#14438)
+      names.  (PR#14438)
 
     o unit.pmax() and unit.pmin() in package grid gave incorrect
-      results when all inputs were of length 1.
-      (https://bugs.R-project.org/bugzilla3/show_bug.cgi?id=14443PR#14443)
+      results when all inputs were of length 1.  (PR#14443)
 
     o The parser for NAMESPACE files ignored misspelled directives,
       rather than signalling an error.  For 2.12.x a warning will be
@@ -1508,8 +2325,7 @@ CHANGES IN R VERSION 2.12.0:
 
     o difftime() now defaults to the "tzone" attribute of "POSIXlt"
       objects rather than to the current timezone as set by the default
-      for the tz argument.  (Wish of
-      https://bugs.R-project.org/bugzilla3/show_bug.cgi?id=14182PR#14182.)
+      for the tz argument.  (Wish of PR#14182.)
 
     o pretty() is now generic, with new methods for "Date" and "POSIXt"
       classes (based on code contributed by Felix Andrews).
@@ -1529,14 +2345,13 @@ CHANGES IN R VERSION 2.12.0:
       linebreaks in long calls in the same way that the print() methods
       for "summary.[g]lm" objects have long done.  This does change the
       layout of the examples for a number of packages, e.g. MASS.
-      (https://bugs.R-project.org/bugzilla3/show_bug.cgi?id=14250PR#14250)
+      (PR#14250)
 
-    o constrOptim() can now be used with method "SANN".
-      (https://bugs.R-project.org/bugzilla3/show_bug.cgi?id=14245PR#14245)
+    o constrOptim() can now be used with method "SANN".  (PR#14245)
 
       It gains an argument hessian to be passed to optim(), which
       allows all the ... arguments to be intended for f() and grad().
-      (https://bugs.R-project.org/bugzilla3/show_bug.cgi?id=14071PR#14071)
+      (PR#14071)
 
     o curve() now allows expr to be an object of mode "expression" as
       well as "call" and "function".
@@ -1547,8 +2362,7 @@ CHANGES IN R VERSION 2.12.0:
       There are no longer separate plot() methods for "POSIX[cl]t" and
       "Date": the default method has been able to handle those classes
       for a long time.  This _inter alia_ allows a single date-time
-      object to be supplied, the wish of
-      https://bugs.R-project.org/bugzilla3/show_bug.cgi?id=14016PR#14016.
+      object to be supplied, the wish of PR#14016.
 
       The methods had a different default ("") for xlab.
 
@@ -1616,8 +2430,7 @@ CHANGES IN R VERSION 2.12.0:
     o scan() gains a fileEncoding argument to match read.table().
 
     o points() and lines() gain "table" methods to match plot().  (Wish
-      of
-      https://bugs.R-project.org/bugzilla3/show_bug.cgi?id=10472PR#10472.)
+      of PR#10472.)
 
     o Sys.chmod() allows argument mode to be a vector, recycled along
       paths.
@@ -1685,11 +2498,9 @@ CHANGES IN R VERSION 2.12.0:
       for S3 Generic Functions" for recommendations and details.
 
     o format.pval() gains a ... argument to pass arguments such as
-      nsmall to format().  (Wish of
-      https://bugs.R-project.org/bugzilla3/show_bug.cgi?id=9574PR#9574)
+      nsmall to format().  (Wish of PR#9574)
 
-    o legend() supports title.adj.  (Wish of
-      https://bugs.R-project.org/bugzilla3/show_bug.cgi?id=13415PR#13415)
+    o legend() supports title.adj.  (Wish of PR#13415)
 
     o Added support for subsetting "raster" objects, plus assigning to
       a subset, conversion to a matrix (of colour strings), and
@@ -1768,8 +2579,7 @@ CHANGES IN R VERSION 2.12.0:
 
     o format() methods for date-time objects now attempt to make use of
       a "tzone" attribute with "%Z" and "%z" formats, but it is not
-      always possible.  (Wish of
-      https://bugs.R-project.org/bugzilla3/show_bug.cgi?id=14358PR#14358.)
+      always possible.  (Wish of PR#14358.)
 
     o tools::texi2dvi(file, clean = TRUE) now works in more cases (e.g.
       where emulation is used and when file is not in the current
@@ -1988,16 +2798,13 @@ CHANGES IN R VERSION 2.12.0:
 
     o The densities of non-central chi-squared are now more accurate in
       some cases in the extreme tails, e.g. dchisq(2000, 2, 1000), as a
-      series expansion was truncated too early.
-      (https://bugs.R-project.org/bugzilla3/show_bug.cgi?id=14105PR#14105)
+      series expansion was truncated too early.  (PR#14105)
 
     o pt() is more accurate in the left tail for ncp large, e.g.
-      pt(-1000, 3, 200).
-      (https://bugs.R-project.org/bugzilla3/show_bug.cgi?id=14069PR#14069)
+      pt(-1000, 3, 200).  (PR#14069)
 
     o The default C function (R_binary) for binary ops now sets the S4
-      bit in the result if either argument is an S4 object.
-      (https://bugs.R-project.org/bugzilla3/show_bug.cgi?id=13209PR#13209)
+      bit in the result if either argument is an S4 object.  (PR#13209)
 
     o source(echo=TRUE) failed to echo comments that followed the last
       statement in a file.
@@ -2033,13 +2840,11 @@ CHANGES IN R VERSION 2.12.0:
 
     o The standard Unix-alike termination dialog to ask whether to save
       the workspace takes a EOF response as n to avoid problems with a
-      damaged terminal connection.
-      (https://bugs.R-project.org/bugzilla3/show_bug.cgi?id=14332PR#14332)
+      damaged terminal connection.  (PR#14332)
 
     o Added warn.unused argument to hist.default() to allow suppression
       of spurious warnings about graphical parameters used with
-      plot=FALSE.
-      (https://bugs.R-project.org/bugzilla3/show_bug.cgi?id=14341PR#14341)
+      plot=FALSE.  (PR#14341)
 
     o predict.lm(), summary.lm(), and indeed lm() itself had issues
       with residual DF in zero-weighted cases (the latter two only in
@@ -2064,8 +2869,7 @@ CHANGES IN R VERSION 2.12.0:
       section.  (Reported by Claudia Beleites.)
 
     o writeBin() disallows attempts to write 2GB or more in a single
-      call.
-      (https://bugs.R-project.org/bugzilla3/show_bug.cgi?id=14362PR#14362)
+      call. (PR#14362)
 
     o new() and getClass() will now work if Class is a subclass of
       "classRepresentation" and should also be faster in typical calls.
@@ -2088,12 +2892,10 @@ CHANGES IN R VERSION 2.12.0:
       fix includes his optimizations as well.)
 
     o Task callbacks could report the wrong expression when the task
-      involved parsing new code.
-      (https://bugs.R-project.org/bugzilla3/show_bug.cgi?id=14368PR#14368)
+      involved parsing new code. (PR#14368)
 
     o getNamespaceVersion() failed; this was an accidental change in
-      2.11.0.
-      (https://bugs.R-project.org/bugzilla3/show_bug.cgi?id=14374PR#14374)
+      2.11.0. (PR#14374)
 
     o identical() returned FALSE for external pointer objects even when
       the pointer addresses were the same.
@@ -2102,15 +2904,12 @@ CHANGES IN R VERSION 2.12.0:
 
     o tempfile() now always gives a random file name (even if the
       directory is specified) when called directly after startup and
-      before the R RNG had been used.
-      (https://bugs.R-project.org/bugzilla3/show_bug.cgi?id=14381PR#14381)
+      before the R RNG had been used.  (PR#14381)
 
-    o quantile(type=6) behaved inconsistently.
-      (https://bugs.R-project.org/bugzilla3/show_bug.cgi?id=14383PR#14383)
+    o quantile(type=6) behaved inconsistently.  (PR#14383)
 
     o backSpline(.) behaved incorrectly when the knot sequence was
-      decreasing.
-      (https://bugs.R-project.org/bugzilla3/show_bug.cgi?id=14386PR#14386)
+      decreasing.  (PR#14386)
 
     o The reference BLAS included in R was assuming that 0*x and x*0
       were always zero (whereas they could be NA or NaN in IEC 60559
@@ -2121,34 +2920,28 @@ CHANGES IN R VERSION 2.12.0:
       region (in which case, you draw nothing) was wrong for screen
       devices (which have [0, 0] at top-left).  The symptom was (long)
       text disappearing when resizing a screen window (to make it
-      smaller).
-      (https://bugs.R-project.org/bugzilla3/show_bug.cgi?id=14391PR#14391)
+      smaller).  (PR#14391)
 
     o model.frame(drop.unused.levels = TRUE) did not take into account
-      NA values of factors when deciding to drop levels.
-      (https://bugs.R-project.org/bugzilla3/show_bug.cgi?id=14393PR#14393)
+      NA values of factors when deciding to drop levels. (PR#14393)
 
     o library.dynam.unload required an absolute path for libpath.
-      (https://bugs.R-project.org/bugzilla3/show_bug.cgi?id=14385PR#14385)
+      (PR#14385)
 
       Both library() and loadNamespace() now record absolute paths for
       use by searchpaths() and getNamespaceInfo(ns, "path").
 
     o The self-starting model NLSstClosestX failed if some deviation
-      was exactly zero.
-      (https://bugs.R-project.org/bugzilla3/show_bug.cgi?id=14384PR#14384)
+      was exactly zero.  (PR#14384)
 
     o X11(type = "cairo") (and other devices such as png using
       cairographics) and which use Pango font selection now work around
       a bug in Pango when very small fonts (those with sizes between 0
-      and 1 in Pango's internal units) are requested.
-      (https://bugs.R-project.org/bugzilla3/show_bug.cgi?id=14369PR#14369)
+      and 1 in Pango's internal units) are requested.  (PR#14369)
 
     o Added workaround for the font problem with X11(type = "cairo")
       and similar on Mac OS X whereby italic and bold styles were
-      interchanged.
-      (https://bugs.R-project.org/bugzilla3/show_bug.cgi?id=13463PR#13463
-      amongst many other reports.)
+      interchanged.  (PR#13463 amongst many other reports.)
 
     o source(chdir = TRUE) failed to reset the working directory if it
       could not be determined - that is now an error.
@@ -2157,8 +2950,7 @@ CHANGES IN R VERSION 2.12.0:
 
     o Force Quartz to bring the on-screen display up-to-date
       immediately before the snapshot is taken by grid.cap() in the
-      Cocoa implementation.
-      (https://bugs.R-project.org/bugzilla3/show_bug.cgi?id=14260PR#14260)
+      Cocoa implementation. (PR#14260)
 
     o model.frame had an unstated 500 byte limit on variable names.
       (Example reported by Terry Therneau.)
@@ -2194,8 +2986,7 @@ CHANGES IN R VERSION 2.11.1 patched:
     o R CMD Rd2dvi failed if run from a path containing space(s).  This
       also affected R CMD check, which calls Rd2dvi.
 
-    o stripchart() could fail with an empty factor level.
-      (https://bugs.R-project.org/bugzilla3/show_bug.cgi?id=14317PR#14317)
+    o stripchart() could fail with an empty factor level.  (PR#14317)
 
     o Text help rendering of \tabular{} has been improved: under some
       circumstances leading blank columns were not rendered.
@@ -2213,8 +3004,7 @@ CHANGES IN R VERSION 2.11.1 patched:
       the options for setting limits for Ncells or Vcells.
 
     o The internal strptime() could corrupt its copy of the timezone
-      which would then lead to spurious warnings.
-      (https://bugs.R-project.org/bugzilla3/show_bug.cgi?id=14338PR#14338)
+      which would then lead to spurious warnings. (PR#14338)
 
     o dir.create(recursive = TRUE) could fail if one of the components
       existed but was a directory on a read-only file system.  (Seen on
@@ -2225,7 +3015,7 @@ CHANGES IN R VERSION 2.11.1 patched:
       than 1 (they used to force such values to be 1).
 
     o Fixed font face for CID fonts in pdf() graphics output.
-      (https://bugs.R-project.org/bugzilla3/show_bug.cgi?id=14326PR#14326)
+      (PR#14326)
 
     o GERaster() now checks for width or height of zero and does
       nothing in those cases; previously the behaviour was undefined,
@@ -2233,8 +3023,7 @@ CHANGES IN R VERSION 2.11.1 patched:
 
     o wilcox.test(x, y, conf.int = TRUE) failed with an unhelpful
       message if x and y were constant vectors, and similarly in the
-      one-sample case.
-      (https://bugs.R-project.org/bugzilla3/show_bug.cgi?id=14329PR#14329)
+      one-sample case.  (PR#14329)
 
     o Improperly calling Recall() from outside a function could cause a
       segfault.  (Reported by Robert McGehee.)
@@ -2263,8 +3052,7 @@ CHANGES IN R VERSION 2.11.1 patched:
 
     o approxfun(), approx(), splinefun() and spline() could be confused
       by x values that were different but so close as to print
-      identically.
-      (https://bugs.R-project.org/bugzilla3/show_bug.cgi?id=14377PR#14377)
+      identically.  (PR#14377)
 
 CHANGES IN R VERSION 2.11.1:
 
@@ -2297,40 +3085,32 @@ CHANGES IN R VERSION 2.11.1:
   BUG FIXES:
 
     o The C function mkCharLenCE now no longer reads past len bytes
-      (unlikely to be a problem except in user code).
-      (https://bugs.R-project.org/bugzilla3/show_bug.cgi?id=14246PR#14246)
+      (unlikely to be a problem except in user code).  (PR#14246)
 
     o On systems without any default LD_LIBRARY_PATH (not even
       /usr/local/lib), [DY]LIB_LIBRARY_PATH is now set without a
-      trailing colon.
-      (https://bugs.R-project.org/bugzilla3/show_bug.cgi?id=13637PR#13637)
+      trailing colon.  (PR#13637)
 
     o More efficient implementation of utf8ToInt() on long multi-byte
-      strings with many multi-byte characters.
-      (https://bugs.R-project.org/bugzilla3/show_bug.cgi?id=14262PR#14262)
+      strings with many multi-byte characters.  (PR#14262)
 
     o aggregate.ts() gave platform-dependent results due to rounding
       error for ndeltat != 1.
 
     o package.skeleton() sometimes failed to fix filenames for .R or
-      .Rd files to start with an alphanumeric.
-      (https://bugs.R-project.org/bugzilla3/show_bug.cgi?id=14253PR#14253)
+      .Rd files to start with an alphanumeric.  (PR#14253)
 
       It also failed when only an S4 class without any methods was
-      defined.
-      (https://bugs.R-project.org/bugzilla3/show_bug.cgi?id=14280PR#14280)
+      defined.  (PR#14280)
 
     o splinefun(method = "monoH.FC") was not quite monotone in rare
-      cases.
-      (https://bugs.R-project.org/bugzilla3/show_bug.cgi?id=14215PR#14215)
+      cases.  (PR#14215)
 
     o Rhttpd no longer crashes due to SIGPIPE when the client closes
-      the connection prematurely.
-      (https://bugs.R-project.org/bugzilla3/show_bug.cgi?id=14266PR#14266)
+      the connection prematurely.  (PR#14266)
 
     o format.POSIXlt() could cause a stack overflow and crash when used
-      on very long vectors.
-      (https://bugs.R-project.org/bugzilla3/show_bug.cgi?id=14267PR#14267)
+      on very long vectors.  (PR#14267)
 
     o Rd2latex() incorrectly escaped special characters in \usage
       sections.
@@ -2345,40 +3125,36 @@ CHANGES IN R VERSION 2.11.1:
       duplicated, causing segfaults in split().
 
     o cut(d, breaks = <n>) now also works for "Date" or "POSIXt"
-      argument d.
-      (https://bugs.R-project.org/bugzilla3/show_bug.cgi?id=14288PR#14288)
+      argument d.  (PR#14288)
 
     o memDecompress() could decompress incompletely rare xz-compressed
       input due to incorrect documentation of xz utils.  (Report and
       patch from Olaf Mersmann.)
 
     o The S4 initialize() methods for "matrix", "array", and "ts" have
-      been fixed to call validObject().
-      (https://bugs.R-project.org/bugzilla3/show_bug.cgi?id=14284PR#14284)
+      been fixed to call validObject().  (PR#14284)
 
     o R CMD INSTALL now behaves the same way with or without
       --no-multiarch on platforms with only one installed architecture.
       (It used to clean the src directory without --no-multiarch.)
 
     o [<-.data.frame was not quite careful enough in assigning (and
-      potentially deleting) columns right-to-left.
-      (https://bugs.R-project.org/bugzilla3/show_bug.cgi?id=14263PR#14263)
+      potentially deleting) columns right-to-left.  (PR#14263)
 
     o rbeta(n, a, b) no longer occasionally returns NaN for a >> 1 > b.
-      (https://bugs.R-project.org/bugzilla3/show_bug.cgi?id=14291PR#14291)
+      (PR#14291)
 
     o pnorm(x, log.p = TRUE) could return NaN not -Inf for x near
       (minus for lower.tail=TRUE) the largest representable number.
 
     o Compressed data files *.(txt|tab|csv).(gz|bz2|xz) were not
       recognized for the list of data topics and hence for packages
-      using LazyData.
-      (https://bugs.R-project.org/bugzilla3/show_bug.cgi?id=14273PR#14273)
+      using LazyData.  (PR#14273)
 
     o textConnection() did an unnecessary translation on strings in a
       foreign encoding (e.g. UTF-8 strings on Windows) and so was
       slower than it could have been on very long input strings.
-      (https://bugs.R-project.org/bugzilla3/show_bug.cgi?id=14286PR#14286)
+      (PR#14286)
 
     o tools::Rd2txt() did not render poorly written Rd files
       consistently with other renderers.
@@ -2391,7 +3167,7 @@ CHANGES IN R VERSION 2.11.1:
       documented.
 
     o do.call()ing NextMethod in erronous ways no longer segfaults.
-      (https://bugs.R-project.org/bugzilla3/show_bug.cgi?id=13487PR#13487)
+      (PR#13487)
 
 CHANGES IN R VERSION 2.11.0:
 
@@ -2507,8 +3283,7 @@ CHANGES IN R VERSION 2.11.0:
       the argument force.
 
     o bquote() has been extended to work on function definitions.
-      (Wish of
-      https://bugs.R-project.org/bugzilla3/show_bug.cgi?id=14031PR#14031).
+      (Wish of PR#14031).
 
     o detach() when applied to an object other than a package returns
       the environment that has been detached, to parallel attach().
@@ -2549,10 +3324,7 @@ CHANGES IN R VERSION 2.11.0:
 
     o length(<POSIXlt>) now returns the length of the corresponding
       abstract timedate-vector rather than always 9 (the length of the
-      underlying list structure).  (Wish of
-      https://bugs.R-project.org/bugzilla3/show_bug.cgi?id=14073PR#14073
-      and
-      https://bugs.R-project.org/bugzilla3/show_bug.cgi?id=10507PR#10507.)
+      underlying list structure).  (Wish of PR#14073 and PR#10507.)
 
     o The readline completion backend no longer sorts possible
       completions alphabetically (e.g., function argument names) if R
@@ -2634,8 +3406,7 @@ CHANGES IN R VERSION 2.11.0:
       the dimension names.  NA indices are propagated to the result.
       Unmatched values and "" are not allowed and result in an error.
 
-    o interaction(drop=TRUE) uses less memory (related to
-      https://bugs.R-project.org/bugzilla3/show_bug.cgi?id=14121PR#14121).
+    o interaction(drop=TRUE) uses less memory (related to PR#14121).
 
     o summary() methods have been added to the "srcref" and "srcfile"
       classes, and various encoding issues have been cleaned up.
@@ -2670,8 +3441,7 @@ CHANGES IN R VERSION 2.11.0:
     o The 'fuzz' used by seq() and seq.int() has been reduced from 1e-7
       to 1e-10, which should be ample for the double-precision
       calculations used in R.  It ensures that the fuzz never comes
-      into play with sequences of integers (wish of
-      https://bugs.R-project.org/bugzilla3/show_bug.cgi?id=14169PR#14169).
+      into play with sequences of integers (wish of PR#14169).
 
     o The default value of RSiteSearch(restrict=) has been changed to
       include vignettes but to exclude R-help.  The R-help archives
@@ -2685,13 +3455,11 @@ CHANGES IN R VERSION 2.11.0:
       the degrees of freedom (suggestion of Terry Therneau).
 
     o cor() and cov() now test for misuse with non-numeric arguments,
-      such as the non-bug report
-      https://bugs.R-project.org/bugzilla3/show_bug.cgi?id=14207PR#14207.
+      such as the non-bug report PR#14207.
 
     o pchisq(ncp =, log.p = TRUE) is more accurate for probabilities
       near one.  E.g. pchisq(80, 4, ncp=1, log.p=TRUE).  (Maybe what
-      was meant in
-      https://bugs.R-project.org/bugzilla3/show_bug.cgi?id=14216PR#14216.)
+      was meant in PR#14216.)
 
     o maintainer() has been added, to give convenient access to the
       name of the maintainer of a package (contributed by David Scott).
@@ -2826,8 +3594,7 @@ CHANGES IN R VERSION 2.11.0:
   BUG FIXES:
 
     o Using with(), eval() etc with a list with some unnamed elements
-      now works.
-      (https://bugs.R-project.org/bugzilla3/show_bug.cgi?id=14035PR#14035)
+      now works.  (PR#14035)
 
     o The "quick" dispatch of S4 methods for primitive functions was
       not happening, forcing a search each time.  (Dispatch for
@@ -2869,20 +3636,16 @@ CHANGES IN R VERSION 2.11.0:
       labels removed from HTML.
 
     o cor(A, B) where A is n x 1 and B a 1-dimensional array segfaulted
-      or gave an internal error.  (The case cor(B, A) was
-      https://bugs.R-project.org/bugzilla3/show_bug.cgi?id=7116PR#7116.)
+      or gave an internal error.  (The case cor(B, A) was PR#7116.)
 
     o cut.POSIXt() applied to a start value after the DST transition on
       a DST-change day could give the wrong time for argument breaks in
-      units of days or longer.
-      (https://bugs.R-project.org/bugzilla3/show_bug.cgi?id=14208PR#14208)
+      units of days or longer.  (PR#14208)
 
-    o do_par() UNPROTECTed too early
-      (https://bugs.R-project.org/bugzilla3/show_bug.cgi?id=14214PR#14214)
+    o do_par() UNPROTECTed too early (PR#14214)
 
     o Subassignment x[[....]] <- y didn't check for a zero-length right
-      hand side, and inserted a rubbish value.
-      (https://bugs.R-project.org/bugzilla3/show_bug.cgi?id=14217PR#14217)
+      hand side, and inserted a rubbish value.  (PR#14217)
 
     o fisher.test() no longer gives a P-value *very* slightly > 1, in
       some borderline cases.
@@ -2912,8 +3675,7 @@ CHANGES IN R VERSION 2.11.0:
 
     o Extreme tail behavior of, pbeta() {and hence pf()}, e.g.,
       pbeta(x, 3, 2200, lower.tail=FALSE, log.p=TRUE) now returns
-      finite values instead of jumping to -Inf too early.
-      (https://bugs.R-project.org/bugzilla3/show_bug.cgi?id=14230PR#14230).
+      finite values instead of jumping to -Inf too early.  (PR#14230).
 
     o parse(text=x) misbehaved for objects x that were not coerced
       internally to character, notably symbols.  (Reported to R-devel
@@ -2938,7 +3700,7 @@ CHANGES IN R VERSION 2.11.0:
       does but cairo it seems does not).
 
     o read.fwf() misread multi-line records when n was specified.
-      (https://bugs.R-project.org/bugzilla3/show_bug.cgi?id=14241PR#14241)
+      (PR#14241)
 
     o all.equal(tolerance = e) passes the numeric tolerance also to the
       comparison of the attributes.
@@ -2950,8 +3712,7 @@ CHANGES IN R VERSION 2.11.0:
       request under certain circumstances.
 
     o gzcon( <textConnection> ), an error, no longer damages the
-      connection (in a way to have it segfault).
-      (https://bugs.R-project.org/bugzilla3/show_bug.cgi?id=14237PR#14237)
+      connection (in a way to have it segfault).  (PR#14237)
 
     o All the results from hist() now use the nominal breaks not those
       adjusted by the numeric 'fuzz': in recent versions the nominal
@@ -2961,8 +3722,7 @@ CHANGES IN R VERSION 2.11.0:
 
     o If xy[z].coords (used internally by many graphics functions) are
       given a list as x, they now check that the list has suitable
-      names and give a more informative error message.
-      (https://bugs.R-project.org/bugzilla3/show_bug.cgi?id=13936PR#13936)
+      names and give a more informative error message.  (PR#13936)
 
 CHANGES IN R VERSION 2.10.1 patched:
 
@@ -2996,18 +3756,14 @@ CHANGES IN R VERSION 2.10.1 patched:
   BUG FIXES:
 
     o Using read.table(header=TRUE) on a header with an embedded new
-      line would copy part of the header into the data.
-      (https://bugs.R-project.org/bugzilla3/show_bug.cgi?id=14103PR#14103)
+      line would copy part of the header into the data.  (PR#14103)
 
     o qpois(p = 1, lambda = 0) now gives 0 as for all other p.
-      (https://bugs.R-project.org/bugzilla3/show_bug.cgi?id=14135PR#14135)
+      (PR#14135)
 
     o Functions related to string comparison (e.g. unique(), match())
       could cause crashes when used with strings not in the native
-      encoding, e.g. UTF-8 strings on Windows.
-      (https://bugs.R-project.org/bugzilla3/show_bug.cgi?id=14114PR#14114
-      and
-      https://bugs.R-project.org/bugzilla3/show_bug.cgi?id=14125PR#14125)
+      encoding, e.g. UTF-8 strings on Windows.  (PR#14114 and PR#14125)
 
     o x[ , drop=TRUE] dropped an NA level even if it was in use.
 
@@ -3018,22 +3774,19 @@ CHANGES IN R VERSION 2.10.1 patched:
       function had no arguments but was documented to have some.
 
     o Help links containing special characters (e.g. "?") were not
-      generated correctly when rendered in HTML.
-      (https://bugs.R-project.org/bugzilla3/show_bug.cgi?id=14155PR#14155)
+      generated correctly when rendered in HTML.  (PR#14155)
 
     o lchoose(a, k) no longer wrongly gives NaN for negative a.
 
     o ks.test() could give a p-value that was off by one observation
-      due to rounding error.
-      (https://bugs.R-project.org/bugzilla3/show_bug.cgi?id=14145PR#14145)
+      due to rounding error.  (PR#14145)
 
     o readBin()/readChar() when reading millions of character strings
       in a single call used excessive amounts of memory (which also
       slowed them down).
 
     o R CMD SHLIB could fail if used with paths that were not
-      alphanumeric, e.g. contained +.
-      (https://bugs.R-project.org/bugzilla3/show_bug.cgi?id=14168PR#14168)
+      alphanumeric, e.g. contained +.  (PR#14168)
 
     o sprintf() was not re-entrant, which potentially caused problems
       if an as.character() method called it.
@@ -3054,19 +3807,16 @@ CHANGES IN R VERSION 2.10.1 patched:
       arguments was a vector and the other a matrix.
 
     o [cr]bind(..., deparse.level=2) was not always giving names when
-      documented to do so.  (Discovered whilst investigating
-      https://bugs.R-project.org/bugzilla3/show_bug.cgi?id=14189PR#14189.)
+      documented to do so.  (Discovered whilst investigating PR#14189.)
 
     o match(incomparables=<non-NULL>) could in rare cases
       infinite-loop.
 
     o poisson.test() needed to pass argument conf.level to
-      binom.test().
-      (https://bugs.R-project.org/bugzilla3/show_bug.cgi?id=14195PR#14195)
+      binom.test().  (PR#14195)
 
     o The "nls" method for df.residual() gave incorrect results for
-      models fitted with na.action = na.exclude.
-      (https://bugs.R-project.org/bugzilla3/show_bug.cgi?id=14194PR#14194)
+      models fitted with na.action = na.exclude.  (PR#14194)
 
     o A change to options(scipen=) was only implemented when printing
       next occurred, even though it should have affected intervening
@@ -3074,11 +3824,10 @@ CHANGES IN R VERSION 2.10.1 patched:
 
     o prettyNum(drop0trailing=TRUE) did not handle signs of imaginary
       parts of complex numbers correctly (and this was used by str():
-      https://bugs.R-project.org/bugzilla3/show_bug.cgi?id=14201PR#14201).
+      PR#14201).
 
     o system.time() had the sys.child component wrong (copied
-      user.child instead) on systems with HAVE_GETRUSAGE.
-      (https://bugs.R-project.org/bugzilla3/show_bug.cgi?id=14210PR#14210)
+      user.child instead) on systems with HAVE_GETRUSAGE.  (PR#14210)
 
     o Changing both line texture and line cap (end) resulted in the
       latter to be omitted form the PDF code.  In addition, line cap
@@ -3093,7 +3842,7 @@ CHANGES IN R VERSION 2.10.1 patched:
     o read.fwf() works again when argument file is a connection.
 
     o Startup files will now be found if their paths exceed 255 bytes.
-      (https://bugs.R-project.org/bugzilla3/show_bug.cgi?id=14228PR#14228)
+      (PR#14228)
 
     o contrasts<- (in the stats package) no longer has an undeclared
       dependence on methods (introduced in 2.10.0).
@@ -3141,16 +3890,14 @@ CHANGES IN R VERSION 2.10.1:
   BUG FIXES:
 
     o trigamma(x) and other psigamma(x, n) calls are now accurate for
-      very large abs(x).
-      (https://bugs.R-project.org/bugzilla3/show_bug.cgi?id=14020PR#14020)
+      very large abs(x).  (PR#14020)
 
     o [g]sub(perl=FALSE, fixed=FALSE) could use excessive stack space
       when used with a very long vector containing some non-ASCII
       strings.
 
     o The default method of weighted.mean(na.rm = TRUE) did not omit
-      weights for NA observations in 2.10.0.
-      (https://bugs.R-project.org/bugzilla3/show_bug.cgi?id=14032PR#14032)
+      weights for NA observations in 2.10.0.  (PR#14032)
 
     o [g]regexpr(pattern, fixed = TRUE) returned match positions in
       bytes (not characters) in an MBCS locale if pattern was a single
@@ -3178,14 +3925,13 @@ CHANGES IN R VERSION 2.10.1:
 
     o There have been small fixes to the rendering of help, e.g.
       \command is now rendered verbatim (so e.g. -- is not interpreted,
-      https://bugs.R-project.org/bugzilla3/show_bug.cgi?id=14045PR#14045).
+      PR#14045).
 
       Also, there are many small changes to help files where the new
       converters were not rendering them in the same way as before.
 
     o available.packages() would fail when run on a repository with no
-      packages meeting the filtering conditions.
-      (https://bugs.R-project.org/bugzilla3/show_bug.cgi?id=14042PR#14042)
+      packages meeting the filtering conditions.  (PR#14042)
 
     o rep(x, times, each = 2) gave invalid results when the times
       argument was a vector longer than x.  Reported by Bill Dunlap.
@@ -3203,8 +3949,7 @@ CHANGES IN R VERSION 2.10.1:
       considerably more accurate in some regions for very small a.
       qgamma() now correctly returns 0 instead of NaN in similar
       extreme cases, and qgamma() no longer warns in the case of small
-      a, see
-      (https://bugs.R-project.org/bugzilla3/show_bug.cgi?id=12324PR#12324).
+      a, see (PR#12324).
 
     o unname() now also removes names from a zero length vector.
 
@@ -3212,19 +3957,17 @@ CHANGES IN R VERSION 2.10.1:
       calls.
 
     o complete.cases() failed on a 0-column data frame argument.
-      (Underlies
-      https://bugs.R-project.org/bugzilla3/show_bug.cgi?id=14066PR#14066.)
+      (Underlies PR#14066.)
 
       It could return nonsensical results if no input determined the
       number of cases (seen in the no-segfault tests).
 
     o An error in nls() with a long formula could cause a segfault.
-      (https://bugs.R-project.org/bugzilla3/show_bug.cgi?id=14059PR#14059)
+      (PR#14059)
 
     o qchisq(p, df, ncp, lower.tail = FALSE) with ncp >= 80 was
       inaccurate for small p (as the help page said): it is now less
-      inaccurate.  (In part,
-      https://bugs.R-project.org/bugzilla3/show_bug.cgi?id=13999PR#13999.)
+      inaccurate.  (In part, PR#13999.)
 
       For ncp less than but close to 80, pchisq() and qchisq() are more
       accurate for probablilities very close to 1 (a series expansion
@@ -3236,7 +3979,7 @@ CHANGES IN R VERSION 2.10.1:
     o intToUtf8() could fail when asked to produce 10Mb or more
       strings, something it was never intended to do: unfortunately
       Windows crashed R (other OSes reported a lack of resources).
-      (https://bugs.R-project.org/bugzilla3/show_bug.cgi?id=14068PR#14068)
+      (PR#14068)
 
     o chisq.test() could fail when given argument x or y which deparsed
       to more than one line.  (Reported by Laurent Gauthier.)
@@ -3250,19 +3993,16 @@ CHANGES IN R VERSION 2.10.1:
       .External routines had earlier been unloaded.
 
     o bessel[JY](x, nu) with nu a negative integer (a singular case) is
-      now correct, analogously to besselI(), see
-      https://bugs.R-project.org/bugzilla3/show_bug.cgi?id=13556PR#13556.
+      now correct, analogously to besselI(), see PR#13556.
 
     o tools::file_path_as_absolute() doubled the file separator when
       applied to a file such as "/vmunix" or (on Windows) "d:/afile" in
       a directory for which getwd() would return a path with a trailing
       separator (largely cosmetic, as reasonable file systems handle
-      such a path correctly).  (Perhaps what was meant by
-      https://bugs.R-project.org/bugzilla3/show_bug.cgi?id=14078PR#14078.)
+      such a path correctly).  (Perhaps what was meant by PR#14078.)
 
     o unsplit(drop = TRUE) applied to a data frame failed to pass drop
-      to the computation of row names.
-      (https://bugs.R-project.org/bugzilla3/show_bug.cgi?id=14084PR#14084)
+      to the computation of row names.  (PR#14084)
 
     o The "difftime" method of mean() ignored its na.rm argument.
 
@@ -3280,7 +4020,7 @@ CHANGES IN R VERSION 2.10.1:
       depend on the alternative used.
 
     o help.search() failed when the package argument was specified.
-      (https://bugs.R-project.org/bugzilla3/show_bug.cgi?id=14113PR#14113)
+      (PR#14113)
 
     o switch(EXPR = "A") now returns NULL, as does switch(1) (which
       used to signal an error).
@@ -3328,8 +4068,7 @@ CHANGES IN R VERSION 2.10.0:
 
     o New debugonce() function; further, getOption("deparse.max.lines")
       is now observed when debugging, from a code suggestion by John
-      Brzustowski.
-      (https://bugs.R-project.org/bugzilla3/show_bug.cgi?id=13647PR#13647/8)
+      Brzustowski.  (PR#13647/8)
 
     o plot() methods for "stepfun" and hence "ecdf" no longer plot
       points by default for n >= 1000.
@@ -3389,8 +4128,7 @@ CHANGES IN R VERSION 2.10.0:
 
     o The Kendall and Spearman methods of cor.test() can optionally use
       continuity correction when not computing exact p-values.  (The
-      Kendall case is the wish of
-      https://bugs.R-project.org/bugzilla3/show_bug.cgi?id=13691PR#13691.)
+      Kendall case is the wish of PR#13691.)
 
     o R now keeps track of line numbers during execution for code
       sourced with options(keep.source = TRUE).  The source reference
@@ -3400,10 +4138,9 @@ CHANGES IN R VERSION 2.10.0:
 
     o More functions now have an implicit (S4) generic definition.
 
-    o quantile.default() now disallows factors (wish of
-      https://bugs.R-project.org/bugzilla3/show_bug.cgi?id=13631PR#13631)
-      and its help documents what numeric-like properties its input
-      need to have to work correctly.
+    o quantile.default() now disallows factors (wish of PR#13631) and
+      its help documents what numeric-like properties its input need to
+      have to work correctly.
 
     o weighted.mean() is now generic and has "Date", "POSIXct" and
       "POSIXlt" methods.
@@ -3413,8 +4150,7 @@ CHANGES IN R VERSION 2.10.0:
       method, but could have odd semantics for other methods, and do
       for the data.frame ones.)
 
-    o as.data.frame() has an "aovproj" method.  (Wish of
-      https://bugs.R-project.org/bugzilla3/show_bug.cgi?id=13505PR#13505)
+    o as.data.frame() has an "aovproj" method.  (Wish of PR#13505)
 
     o as.character(x) for numeric x no longer produces strings such as
       "0.30", i.e., with trailing zeros.  This change also renders
@@ -3524,8 +4260,7 @@ CHANGES IN R VERSION 2.10.0:
       stored in UTF-8 (and hence is suitable for portably including
       Unicode text in packages).
 
-    o New as.raw() method for "tclObj" objects (wish of
-      https://bugs.R-project.org/bugzilla3/show_bug.cgi?id=13758PR#13758).
+    o New as.raw() method for "tclObj" objects (wish of PR#13758).
 
     o Rd.sty now makes a better job of setting email addresses,
       including using a monospaced font.
@@ -3611,8 +4346,7 @@ CHANGES IN R VERSION 2.10.0:
       Hufthammer.
 
     o stripchart() allows par bg to be passed in for the background
-      colour for pch = 21 (wish of
-      https://bugs.R-project.org/bugzilla3/show_bug.cgi?id=13984PR#13984).
+      colour for pch = 21 (wish of PR#13984).
 
     o New generic function .DollarNames() to enable class authors to
       customize completion after the $ extractor.
@@ -3917,7 +4651,7 @@ CHANGES IN R VERSION 2.10.0:
 
     o prettyNum(z, drop0trailing=TRUE) did not work correctly when z
       was a complex vector.  Consequently, str(z, ...) also did not.
-      (https://bugs.R-project.org/bugzilla3/show_bug.cgi?id=13985PR#13985)
+      (PR#13985)
 
     o make distclean removed too many files in etc/ if builddir =
       srcdir.

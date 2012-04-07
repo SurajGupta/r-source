@@ -1,8 +1,8 @@
 
-R version 2.13.1 Patched (2011-07-08 r56327)
+R version 2.14.0 alpha (2011-10-02 r57130)
 Copyright (C) 2011 The R Foundation for Statistical Computing
 ISBN 3-900051-07-0
-Platform: i386-pc-mingw32/i386 (32-bit)
+Platform: x86_64-apple-darwin9.8.0/x86_64 (64-bit)
 
 R is free software and comes with ABSOLUTELY NO WARRANTY.
 You are welcome to redistribute it under certain conditions.
@@ -19,7 +19,7 @@ Type 'q()' to quit R.
 > ## Regression tests for which the printed output is the issue
 > ### _and_ must work (no Recommended packages, please)
 > 
-> postscript("reg-tests-2.ps", encoding = "ISOLatin1.enc")
+> pdf("reg-tests-2.pdf", encoding = "ISOLatin1.enc")
 > 
 > ## force standard handling for data frames
 > options(stringsAsFactors=TRUE)
@@ -748,8 +748,28 @@ logical(0)
 > ll <- list(pi,"C",NaN,Inf, 1:3, c(0,NA), NA)
 > is.na (ll)
 [1] FALSE FALSE  TRUE FALSE FALSE FALSE  TRUE
-> is.nan(ll)
-[1] FALSE FALSE  TRUE FALSE FALSE FALSE FALSE
+> lapply(ll, is.nan)  # is.nan no longer works on lists
+[[1]]
+[1] FALSE
+
+[[2]]
+[1] FALSE
+
+[[3]]
+[1] TRUE
+
+[[4]]
+[1] FALSE
+
+[[5]]
+[1] FALSE FALSE FALSE
+
+[[6]]
+[1] FALSE FALSE
+
+[[7]]
+[1] FALSE
+
 > ## end of moved from NA.Rd
 > 
 > ## is.na was returning unset values on nested lists
@@ -3715,12 +3735,12 @@ f1:f2  2 100371   50185
 
 Error: subject:f1
       Df Sum Sq Mean Sq
-f1     2 483.96  241.98
-f1:f2  4 869.69  217.42
+f1     2  484.0   242.0
+f1:f2  4  869.7   217.4
 
 Error: Within
           Df Sum Sq Mean Sq F value Pr(>F)
-Residuals 42  29204  695.34               
+Residuals 42  29204   695.3               
 > sample.aov <- aov(dep.variable ~ f1 * f2 + Error(subject/(f2+f1)), data=sample.df)
 Warning message:
 In aov(dep.variable ~ f1 * f2 + Error(subject/(f2 + f1)), data = sample.df) :
@@ -3770,12 +3790,12 @@ f1:f2  2 100371   50185
 
 Error: subject:f1
       Df Sum Sq Mean Sq
-f1     2 483.96  241.98
-f1:f2  4 869.69  217.42
+f1     2  484.0   242.0
+f1:f2  4  869.7   217.4
 
 Error: Within
           Df Sum Sq Mean Sq F value Pr(>F)
-Residuals 42  29204  695.34               
+Residuals 42  29204   695.3               
 > ## failed in 1.8.1
 > 
 > 
@@ -5790,8 +5810,9 @@ structure(list(X1.4 = 1:4), .Names = "X1.4", row.names = c("1",
 > ## tests of deparsing
 > # if we run this from stdin, we will have no source, so fake it
 > f <- function(x, xm  = max(1L, x)) {xx <- 0L; yy <- NA_real_}
-> attr(f, "source") <-
-+     "function(x, xm  = max(1L, x)) {xx <- 0L; yy <- NA_real_}"
+> attr(f, "srcref") <- srcref(srcfilecopy("",
++     "function(x, xm  = max(1L, x)) {xx <- 0L; yy <- NA_real_}"),
++     c(1L, 1L, 1L, 56L))
 > f # uses the source
 function(x, xm  = max(1L, x)) {xx <- 0L; yy <- NA_real_}
 > dput(f) # not source
@@ -5802,7 +5823,6 @@ function (x, xm = max(1L, x))
 }
 > dput(f, control="all") # uses the source
 function(x, xm  = max(1L, x)) {xx <- 0L; yy <- NA_real_}
-
 > cat(deparse(f), sep="\n")
 function (x, xm = max(1L, x)) 
 {
@@ -5812,9 +5832,8 @@ function (x, xm = max(1L, x))
 > dump("f", file="")
 f <-
 function(x, xm  = max(1L, x)) {xx <- 0L; yy <- NA_real_}
-
 > # remove the source
-> attr(f, "source") <- NULL
+> attr(f, "srcref") <- NULL
 > f
 function (x, xm = max(1L, x)) 
 {
@@ -6318,7 +6337,7 @@ function (given = NULL)
         callObj$default <- TRUE
     callObj
 }
-> attr(foo, "source") <- NULL
+> attr(foo, "srcref") <- NULL
 > foo
 function (given = NULL) 
 {
@@ -6349,13 +6368,16 @@ function ()
 > print.function <- function(x, ...) { str(x,...); invisible(x) }
 > print.function
 function (x, ...)  
- - attr(*, "source")= chr "function(x, ...) { str(x,...); invisible(x) }"
+ - attr(*, "srcref")=Class 'srcref'  atomic [1:8] 1 19 1 63 19 63 1 1
+  .. ..- attr(*, "srcfile")=Classes 'srcfilecopy', 'srcfile' <environment: 0x1042c22a8> 
 > f
 function ()  
- - attr(*, "source")= chr "function(){}"
+ - attr(*, "srcref")=Class 'srcref'  atomic [1:8] 1 17 1 28 17 28 1 1
+  .. ..- attr(*, "srcfile")=Classes 'srcfilecopy', 'srcfile' <environment: 0x1042b3158> 
  - attr(*, "note")= chr "just a note"
  - attr(*, "yada")=function ()  
-  ..- attr(*, "source")= chr "function() \"not the same\""
+  ..- attr(*, "srcref")=Class 'srcref'  atomic [1:8] 2 24 2 48 24 48 2 2
+  .. .. ..- attr(*, "srcfile")=Classes 'srcfilecopy', 'srcfile' <environment: 0x1042b3158> 
 > rm(print.function)
 > ## auto-printing and printing differed up to R 2.9.x
 > 
@@ -6692,21 +6714,104 @@ Read 7 items
 > x[3] <- NA; y[5] <- NA
 > xy <- cbind(x, y)
 > 
-> cor(x, y, method="spearman", use="complete.obs")
+> cor(x, y, method = "spearman", use = "complete.obs")
 [1] 0.2380952
-> cor(x, y, method="spearman", use="pairwise.complete.obs")
+> cor(x, y, method = "spearman", use = "pairwise.complete.obs")
 [1] 0.2380952
-> cor(na.omit(xy),  method="spearman", use="complete.obs")
+> cor(na.omit(xy),  method = "spearman", use = "complete.obs")
           x         y
 x 1.0000000 0.2380952
 y 0.2380952 1.0000000
-> cor(xy,  method="spearman", use="complete.obs")
+> cor(xy,  method = "spearman", use = "complete.obs")
           x         y
 x 1.0000000 0.2380952
 y 0.2380952 1.0000000
-> cor(xy,  method="spearman", use="pairwise.complete.obs")
+> cor(xy,  method = "spearman", use = "pairwise.complete.obs")
           x         y
 x 1.0000000 0.2380952
 y 0.2380952 1.0000000
 > ## inconsistent in R < 2.13.0
+> 
+> 
+> ## integer overflow in rowsum() went undetected
+> # https://stat.ethz.ch/pipermail/r-devel/2011-March/060304.html
+> x <- 2e9L
+> rowsum(c(x, x), c("a", "a"))
+  [,1]
+a   NA
+> rowsum(data.frame(z = c(x, x)), c("a", "a"))
+   z
+a NA
+> ## overflow in R < 2.13.0.
+> 
+> 
+> ## method dispatch in [[.data.frame:
+> ## https://stat.ethz.ch/pipermail/r-devel/2011-April/060409.html
+> d <- data.frame(num = 1:4,
++           fac = factor(letters[11:14], levels = letters[1:15]),
++           date = as.Date("2011-04-01") + (0:3),
++           pv = package_version(c("1.2-3", "4.5", "6.7", "8.9-10")))
+> for (i in seq_along(d)) print(d[[1, i]])
+[1] 1
+[1] k
+Levels: a b c d e f g h i j k l m n o
+[1] "2011-04-01"
+[1] '1.2.3'
+> ## did not dispatch in R < 2.14.0
+> 
+> 
+> ## some tests of 24:00 as midnight
+> as.POSIXlt("2011-05-16 24:00:00", tz = "GMT")
+[1] "2011-05-17 GMT"
+> as.POSIXlt("2010-01-31 24:00:00", tz = "GMT")
+[1] "2010-02-01 GMT"
+> as.POSIXlt("2011-02-28 24:00:00", tz = "GMT")
+[1] "2011-03-01 GMT"
+> as.POSIXlt("2008-02-28 24:00:00", tz = "GMT")
+[1] "2008-02-29 GMT"
+> as.POSIXlt("2008-02-29 24:00:00", tz = "GMT")
+[1] "2008-03-01 GMT"
+> as.POSIXlt("2010-12-31 24:00:00", tz = "GMT")
+[1] "2011-01-01 GMT"
+> ## new in 2.14.0
+> 
+> 
+> ## Unwarranted conversion of logical values
+> try(double(FALSE))
+Error in double(FALSE) : invalid 'length' argument
+> x <- 1:3
+> try(length(x) <- TRUE)
+Error in length(x) <- TRUE : invalid value
+> ## coerced to integer in 2.13.x
+> 
+> 
+> ## filter(recursive = TRUE) on input with NAs
+> # https://stat.ethz.ch/pipermail/r-devel/2011-July/061547.html
+> x <- c(1:4, NA, 6:9)
+> cbind(x, "1"=filter(x, 0.5, method="recursive"),
++          "2"=filter(x, c(0.5, 0.0), method="recursive"),
++          "3"=filter(x, c(0.5, 0.0, 0.0), method="recursive"))
+Time Series:
+Start = 1 
+End = 9 
+Frequency = 1 
+   x     1     2     3
+1  1 1.000 1.000 1.000
+2  2 2.500 2.500 2.500
+3  3 4.250 4.250 4.250
+4  4 6.125 6.125 6.125
+5 NA    NA    NA    NA
+6  6    NA    NA    NA
+7  7    NA    NA    NA
+8  8    NA    NA    NA
+9  9    NA    NA    NA
+> ## NAs in wrong place in R <= 2.13.1.
+> 
+> 
+> ## PR#14679.  Format depends if TZ is set.
+> x <- as.POSIXlt(c("2010-02-27 22:30:33", "2009-08-09 06:01:03",
++                   "2010-07-23 17:29:59"))
+> stopifnot(is.na(trunc(x, units = "days")[1:3]))
+Error: is.na(trunc(x, units = "days")[1:3]) is not all TRUE
+> ## gave NAs after the first in R < 2.13.2
 > 

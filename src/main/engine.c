@@ -195,8 +195,16 @@ void GEunregisterSystem(int registerIndex)
 
     /* safety check if called before Ginit() */
     if(registerIndex < 0) return;
-    if (numGraphicsSystems == 0)
-	error(_("no graphics system to unregister"));
+    if (numGraphicsSystems == 0) {
+	/* This gets called from KillAllDevices, which is called
+	   during shutdown.  Prior to 2.14.0 it gave an error, which
+	   would inhibit shutdown.  This should not happen, but
+	   apparently it did after a segfault:
+	   https://stat.ethz.ch/pipermail/r-devel/2011-June/061153.html
+	*/
+	warning(_("no graphics system to unregister"));
+	return;
+    }
     /* Run through the existing devices and remove the information
      * from any GEDevDesc's
      */
@@ -1946,7 +1954,7 @@ void GEMode(int mode, pGEDevDesc dd)
 {
     if (NoDevices())
 	error(_("no graphics device is active"));
-    dd->dev->mode(mode, dd->dev);
+    if(dd->dev->mode) dd->dev->mode(mode, dd->dev);
 }
 
 /****************************************************************
@@ -2493,7 +2501,7 @@ double GEStrHeight(const char *str, cetype_t enc, const pGEcontext gc, pGEDevDes
     if (vfontcode >= 100)
 	return R_GE_VStrHeight(str, enc, gc, dd);
     else if (vfontcode >= 0) {
-	gc->fontfamily[0] = vfontcode;
+	gc->fontfamily[3] = vfontcode;
 	gc->fontface = VFontFaceCode(vfontcode, gc->fontface);
 	return R_GE_VStrHeight(str, enc, gc, dd);
     } else {

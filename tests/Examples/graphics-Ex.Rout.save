@@ -1,5 +1,5 @@
 
-R version 2.13.1 RC (2011-07-05 r56282)
+R version 2.14.0 beta (2011-10-21 r57363)
 Copyright (C) 2011 The R Foundation for Statistical Computing
 ISBN 3-900051-07-0
 Platform: x86_64-unknown-linux-gnu (64-bit)
@@ -140,27 +140,36 @@ Hair    Brown Blue Hazel Green
 > for(x in 9999*c(1,2,8)) {
 +     plot(x,9, log = "x")
 +     cat(formatC(par("xaxp"), width=5),";", T <- axTicks(1),"\n")
-+     rug(T, col="red")
++     rug(T, col= adjustcolor("red", 0.5), lwd = 4)
 + }
  1000 1e+05     3 ; 200 500 1000 2000 5000 10000 20000 50000 1e+05 2e+05 5e+05 
  1000 1e+06     2 ; 500 1000 5000 10000 50000 1e+05 5e+05 1e+06 
  1000 1e+07     1 ; 1000 10000 1e+05 1e+06 1e+07 
 > par(op)
 > 
+> x <- 9.9*10^(-3:10)
+> plot(x, 1:14, log = "x")
+> axTicks(1) # now length 5, in R <= 2.13.x gave the following
+[1] 1e-02 1e+01 1e+04 1e+07 1e+10
+> axTicks(1, nintLog=Inf) # rather too many
+ [1] 1e-02 1e-01 1e+00 1e+01 1e+02 1e+03 1e+04 1e+05 1e+06 1e+07 1e+08 1e+09
+[13] 1e+10 1e+11
+> 
 > ## An example using axTicks() without reference to an existing plot
 > ## (copying R's internal procedures for setting axis ranges etc.),
+> ## You do need to supply _all_ of axp, usr, log, nintLog
 > ## standard logarithmic y axis labels
 > ylims <- c(0.2, 88)
 > get_axp <- function(x) 10^c(ceiling(x[1]), floor(x[2]))
 > ## mimic par("yaxs")=="i"
 > usr.i <- log10(ylims)
 > (aT.i <- axTicks(side=2, usr=usr.i,
-+                  axp=c(get_axp(usr.i), n=3), log=TRUE))
++                  axp=c(get_axp(usr.i), n=3), log=TRUE, nintLog=5))
 [1]  0.2  0.5  1.0  2.0  5.0 10.0 20.0 50.0
 > ## mimic (default) par("yaxs")=="r"
 > usr.r <- extendrange(r = log10(ylims), f = 0.04)
 > (aT.r <- axTicks(side=2, usr=usr.r,
-+                  axp=c(get_axp(usr.r),3), log=TRUE))
++                  axp=c(get_axp(usr.r),3), log=TRUE, nintLog=5))
 [1]   0.2   0.5   1.0   2.0   5.0  10.0  20.0  50.0 100.0
 > 
 > ## Prove that we got it right :
@@ -675,7 +684,7 @@ temperature no yes
 > for(tp in c("in", "dev", "ndc", "nfc", "npc", "nic"))
 +     print(grconvertX(c(1.0, 4.0), "user", tp))
 [1] 1.577778 3.022222
-[1] 282.5449 386.5449
+[1] 113.6 217.6
 [1] 0.2253968 0.4317460
 [1] 0.3134921 0.8293651
 [1] 0.03703704 0.96296296
@@ -747,8 +756,9 @@ temperature no yes
 > plot(qlogis, main = "The Inverse Logit : qlogis()")
 > abline(h = 0, v = 0:2/2, lty = 3, col = "gray")
 > 
-> curve(sin, -2*pi, 2*pi)
-> curve(tan, main = "curve(tan)  --> same x-scale as previous plot")
+> curve(sin, -2*pi, 2*pi, xname = "t")
+> curve(tan, xname = "t", add = NA,
++       main = "curve(tan)  --> same x-scale as previous plot")
 > 
 > op <- par(mfrow = c(2, 2))
 > curve(x^3 - 3*x, -2, 2)
@@ -1733,7 +1743,7 @@ armed.forces
 > plot(cars)
 > lines(lowess(cars))
 > 
-> plot(sin, -pi, 2*pi)
+> plot(sin, -pi, 2*pi) # see ?plot.function
 > 
 > ## Discrete Distribution Plot:
 > plot(table(rpois(100,5)), type = "h", col = "red", lwd=10,
@@ -1840,10 +1850,10 @@ armed.forces
 > 
 > Form <- breaks ~ wool + tension
 > summary(fm1 <- aov(Form, data = warpbreaks))
-            Df Sum Sq Mean Sq F value   Pr(>F)   
-wool         1  450.7  450.67  3.3393 0.073614 . 
-tension      2 2034.3 1017.13  7.5367 0.001378 **
-Residuals   50 6747.9  134.96                    
+            Df Sum Sq Mean Sq F value  Pr(>F)   
+wool         1    451   450.7   3.339 0.07361 . 
+tension      2   2034  1017.1   7.537 0.00138 **
+Residuals   50   6748   135.0                   
 ---
 Signif. codes:  0 ‘***’ 0.001 ‘**’ 0.01 ‘*’ 0.05 ‘.’ 0.1 ‘ ’ 1 
 > plot.design(       Form, data = warpbreaks, col = 2)# same as above
@@ -1988,6 +1998,7 @@ N
 > points.default # to see how it calls "plot.xy(xy.coords(x, y), ...)"
 function (x, y = NULL, type = "p", ...) 
 plot.xy(xy.coords(x, y), type = type, ...)
+<bytecode: 0x26c6cf0>
 <environment: namespace:graphics>
 > 
 > 
@@ -2065,6 +2076,15 @@ attr(,"class")
 > plot(x, sin(x), type="o", pch=21, bg=par("bg"), col = "blue", cex=.6,
 +  main='plot(..., type="o", pch=21, bg=par("bg"))')
 > par(op)
+> 
+> ## Not run: 
+> ##D ## The figure was produced by calls like
+> ##D png("pch.png", height=0.7, width = 7, res = 100, units="in")
+> ##D par(mar = rep(0,4))
+> ##D plot(c(-1, 26), 0:1, type="n", axes= FALSE)
+> ##D text(0:25, 0.6, 0:25, cex = 0.5)
+> ##D points(0:25, rep(0.3, 26), pch = 0:25, bg = "grey")
+> ## End(Not run)
 > 
 > ##-------- Showing all the extra & some char graphics symbols ---------
 > pchShow <-
@@ -2207,8 +2227,8 @@ attr(,"class")
 > 
 > graphics::par(get("par.postscript", pos = 'CheckExEnv'))
 > cleanEx()
-> nameEx("raster")
-> ### * raster
+> nameEx("rasterImage")
+> ### * rasterImage
 > 
 > flush(stderr()); flush(stdout())
 > 
@@ -2556,6 +2576,9 @@ temperature no yes
 > ## 'Spider':
 > stars(USJudgeRatings, locations=c(0,0), scale=FALSE,radius = FALSE,
 +       col.stars=1:10, key.loc = c(0,0), main="US Judges rated")
+> ## Same as above, but with colored lines instead of filled polygons.
+> stars(USJudgeRatings, locations=c(0,0), scale=FALSE,radius = FALSE,
++       col.lines=1:10, key.loc = c(0,0), main="US Judges rated")
 > ## 'Radar-Segments'
 > stars(USJudgeRatings[1:10,], locations = 0:1, scale=FALSE,
 +       draw.segments = TRUE, col.segments=0, col.stars=1:10,key.loc= 0:1,
@@ -2742,7 +2765,7 @@ $`11.33`
 > 
 > ### Name: sunflowerplot
 > ### Title: Produce a Sunflower Scatter Plot
-> ### Aliases: sunflowerplot
+> ### Aliases: sunflowerplot sunflowerplot.default sunflowerplot.formula
 > ### Keywords: hplot smooth nonparametric
 > 
 > ### ** Examples
@@ -2754,6 +2777,10 @@ $`11.33`
 > sunflowerplot(iris[, 3:4])
 > ## Imitating  Chambers et al., p.109, closely:
 > sunflowerplot(iris[, 3:4], cex=.2, cex.fact=1, size=.035, seg.lwd=.8)
+> ## or
+> sunflowerplot(Petal.Width ~ Petal.Length, data=iris,
++               cex=.2, cex.fact=1, size=.035, seg.lwd=.8)
+> 
 > 
 > sunflowerplot(x=sort(2*round(rnorm(100))), y= round(rnorm(100),0),
 +               main = "Sunflower Plot of Rounded N(0,1)")
@@ -2878,6 +2905,7 @@ function (xy = 1, warn.log = TRUE)
     u <- par("usr")
     xy * c(u[2L] - u[1L], u[4L] - u[3L])/par("pin")
 }
+<bytecode: 0x2b26778>
 <environment: namespace:graphics>
 > 
 > ## plot labels offset 0.12 inches to the right
@@ -2957,7 +2985,7 @@ function (xy = 1, warn.log = TRUE)
 > ### * <FOOTER>
 > ###
 > cat("Time elapsed: ", proc.time() - get("ptime", pos = 'CheckExEnv'),"\n")
-Time elapsed:  6.703 0.178 7.022 0 0 
+Time elapsed:  5.277 0.141 5.447 0 0 
 > grDevices::dev.off()
 null device 
           1 

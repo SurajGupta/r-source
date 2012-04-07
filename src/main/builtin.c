@@ -30,32 +30,26 @@
 
 static R_len_t asVecSize(SEXP x)
 {
-    int warn = 0, res;
-    double d;
-
     if (isVectorAtomic(x) && LENGTH(x) >= 1) {
-	if (LENGTH(x) > 1)
-	    warning(_("%d lengths supplied: the first will be used"), 
-		    LENGTH(x));
 	switch (TYPEOF(x)) {
-	case LGLSXP:
-	    res = IntegerFromLogical(LOGICAL(x)[0], &warn);
+	case INTSXP: 
+	{
+	    int res = INTEGER(x)[0];
 	    if(res == NA_INTEGER) error(_("vector size cannot be NA"));
 	    return res;
-	case INTSXP:
-	    res = INTEGER(x)[0];
-	    if(res == NA_INTEGER) error(_("vector size cannot be NA"));
-	    return res;
+	}
 	case REALSXP:
-	    d = REAL(x)[0];
+	{
+	    double d = REAL(x)[0];
 	    if(ISNAN(d)) error(_("vector size cannot be NA/NaN"));
 	    if(!R_FINITE(d)) error(_("vector size cannot be infinite"));
 	    if(d < 0) error(_("vector size cannot be negative"));
 	    if(d > R_LEN_T_MAX) error(_("vector size specified is too large"));
 	    return (R_size_t) d;
 	}
+	}
     }
-    return -1;
+    return -1;  /* which gives error in the caller */
 }
 
 SEXP attribute_hidden do_delayed(SEXP call, SEXP op, SEXP args, SEXP rho)
@@ -402,7 +396,7 @@ SEXP attribute_hidden do_envirName(SEXP call, SEXP op, SEXP args, SEXP rho)
 #endif
 static const char *trChar(SEXP x)
 {
-    int n = strlen(CHAR(x));
+    size_t n = strlen(CHAR(x));
     cetype_t ienc = getCharCE(x);
 
     if (ienc == CE_BYTES) {
@@ -723,11 +717,11 @@ SEXP attribute_hidden do_makevector(SEXP call, SEXP op, SEXP args, SEXP rho)
     SEXP s;
     SEXPTYPE mode;
     checkArity(op, args);
+    if (length(CADR(args)) != 1) error(_("invalid '%s' argument"), "length");
     len = asVecSize(CADR(args));
     if (len < 0) error(_("invalid '%s' argument"), "length");
     s = coerceVector(CAR(args), STRSXP);
-    if (length(s) == 0)
-	error(_("vector: zero-length 'mode' argument"));
+    if (length(s) != 1) error(_("invalid '%s' argument"), "mode");
     mode = str2type(CHAR(STRING_ELT(s, 0))); /* ASCII */
     if (mode == -1 && streql(CHAR(STRING_ELT(s, 0)), "double"))
 	mode = REALSXP;
@@ -756,7 +750,7 @@ SEXP attribute_hidden do_makevector(SEXP call, SEXP op, SEXP args, SEXP rho)
     else if (mode == CPLXSXP)
 	memset(COMPLEX(s), 0, len*sizeof(Rcomplex));
     else if (mode == RAWSXP)
-	memset(RAW(s), 0, len);
+	memset(RAW(s), 0, (size_t) len);
     /* other cases: list/expression have "NULL", ok */
     return s;
 }

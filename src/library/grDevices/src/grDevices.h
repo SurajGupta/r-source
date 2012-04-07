@@ -1,6 +1,6 @@
 /*
  *  R : A Computer Language for Statistical Data Analysis
- *  Copyright (C) 2004-8   The R Development Core Team.
+ *  Copyright (C) 2004-11   The R Development Core Team.
  *
  *  This program is free software; you can redistribute it and/or modify
  *  it under the terms of the GNU General Public License as published by
@@ -33,6 +33,9 @@ void R_chull(int *n, double *x, int *m, int *in,
 	   int *ia, int *ib,
 	   int *ih, int *nh, int *il);
 
+SEXP R_CreateAtVector(SEXP axp, SEXP usr, SEXP nint, SEXP is_log);
+SEXP R_GAxisPars(SEXP usr, SEXP is_log, SEXP nintLog);
+
 SEXP PicTeX(SEXP);
 
 SEXP PostScript(SEXP);
@@ -46,6 +49,8 @@ SEXP makeQuartzDefault();
 
 SEXP R_GD_nullDevice();
 
+SEXP devCairo(SEXP);
+
 Rboolean
 PSDeviceDriver(pDevDesc, const char*, const char*, const char*,
 	       const char **, const char*, const char*, const char*,
@@ -56,8 +61,8 @@ PSDeviceDriver(pDevDesc, const char*, const char*, const char*,
 Rboolean
 PDFDeviceDriver(pDevDesc, const char *, const char *, const char *,
 		const char **, const char *, const char *, const char *,
-		double, double, double, int, int, const char*, SEXP, 
-		int, int, const char *, int, int, Rboolean, int);
+		double, double, double, int, int, const char*, SEXP,
+		int, int, const char *, int, int, Rboolean, Rboolean);
 
 #ifdef WIN32
 SEXP devga(SEXP);

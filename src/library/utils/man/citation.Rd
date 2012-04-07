@@ -25,7 +25,9 @@ readCitationFile(file, meta = NULL)
   \item{auto}{a logical indicating whether the default citation
     auto-generated from the package \file{DESCRIPTION} metadata should
     be used or not, or \code{NULL} (default), indicating that a
-    \file{CITATION} file is used if it exists.}
+    \file{CITATION} file is used if it exists, or an object of class
+    \code{"\link{packageDescription}"} with package metadata (see
+    below).}
   \item{file}{a file name.}
   \item{meta}{a list of package metadata as obtained by
     \code{\link{packageDescription}}, or \code{NULL} (the default).}
@@ -44,11 +46,11 @@ readCitationFile(file, meta = NULL)
   is parsed, the resulting citation object may be arbitrarily bad, but
   is quite useful (at least as a starting point) in most cases.
 
-  In \R 2.12.0, one can use a \code{Author@R} field in
+  In \R >= 2.14.0, one can use a \samp{Authors@R} field in
   \file{DESCRIPTION} to provide (\R code giving) a
   \code{\link{person}} object with a refined, machine-readable
   description of the package \dQuote{authors} (in particular specifying
-  their precise roles).  Only those with an actual author role will be
+  their precise roles).  Only those with an author role will be
   included in the auto-generated citation.
 
   If only one reference is given, the print method for the object
@@ -78,6 +80,9 @@ readCitationFile(file, meta = NULL)
   is implemented using the new one), and one can write \file{CITATION}
   files using the unified \code{\link{bibentry}} interface.  Such files
   are not usable with versions of \R prior to 2.12.0.
+
+  In \R >= 2.14.0, one can include an auto-generated package citation in
+  the \file{CITATION} file via \code{citation(auto = meta)}.
 
   \code{readCitationFile} makes use of the \code{Encoding} element (if
   any) of \code{meta} to determine the encoding of the file.

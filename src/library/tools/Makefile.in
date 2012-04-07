@@ -19,17 +19,45 @@ RSRC = `LC_COLLATE=C ls $(srcdir)/R/*.R`
 
 R_EXE = $(top_builddir)/bin/R --vanilla --slave
 
+## For people who do make -C ../src/library/tools
+update:
+	@$(MAKE) all
+	@$(MAKE) mklazycomp
+
+## This is deliberately conservative: -nt seems to work differently in some shells
+## We first use mkdesc2 (with date) to install the DESCRIPTION, then re-install
 all: Makefile DESCRIPTION
 	@$(ECHO) "building package '$(pkg)'"
 	@$(MKINSTALLDIRS) $(top_builddir)/library/$(pkg)
-	@$(MAKE) mkR mkdesc2 mkpo
+	@$(MAKE) mkR1 mkdesc2 mkpo
 	@$(MAKE) mksrc
+	@if ! test -f $(top_builddir)/library/$(pkg)/R/$(pkg); then \
+	  $(INSTALL_DATA) all.R $(top_builddir)/library/$(pkg)/R/$(pkg); \
+	else if test all.R -nt $(top_builddir)/library/$(pkg)/R/$(pkg); then \
+	  $(INSTALL_DATA) all.R $(top_builddir)/library/$(pkg)/R/$(pkg); \
+	  fi \
+	fi
+	@$(ECHO) "tools:::.install_package_description('.', '"$(top_builddir)/library/${pkg}"')" | \
+	  R_DEFAULT_PACKAGES=NULL $(R_EXE) > /dev/null
+
+mkR: mkR1
+
+include $(top_srcdir)/share/make/basepkg.mk
+
+$(top_builddir)/library/$(pkg)/R/$(pkg).rdb: all.R
+	@$(ECHO) "byte-compiling package '$(pkg)'"
+	@$(INSTALL_DATA) all.R $(top_builddir)/library/$(pkg)/R/$(pkg)
+	@(cat $(srcdir)/R/makeLazyLoad.R; \
+	  $(ECHO) "makeLazyLoading(\"$(pkg)\")") | \
+	  R_COMPILE_PKGS=1 R_COMPILER_SUPPRESS_ALL=1 \
+	  R_DEFAULT_PACKAGES=NULL LC_ALL=C $(R_EXE) > /dev/null
+
+Rsimple: mkR mkRsimple
+
+Rlazy: mkR mkRsimple
 	@$(INSTALL_DATA) all.R $(top_builddir)/library/$(pkg)/R/$(pkg)
 	@(cat $(srcdir)/R/makeLazyLoad.R; \
 	  $(ECHO) "makeLazyLoading(\"$(pkg)\")") | \
 	  R_DEFAULT_PACKAGES=NULL LC_ALL=C $(R_EXE) > /dev/null
-	@$(ECHO) "tools:::.install_package_description('.', '"$(top_builddir)/library/${pkg}"')" | \
-	  R_DEFAULT_PACKAGES=NULL $(R_EXE) > /dev/null
 
-
-include $(top_srcdir)/share/make/basepkg.mk
+Rlazycomp: mkR mkRsimple mklazycomp

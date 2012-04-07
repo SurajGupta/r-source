@@ -1,6 +1,6 @@
 % File src/library/grDevices/man/pdf.options.Rd
 % Part of the R package, http://www.R-project.org
-% Copyright 1995-2007 R Core Development Team
+% Copyright 1995-2011 R Core Development Team
 % Distributed under GPL 2 or later
 
 \name{windows.options}
@@ -23,7 +23,7 @@ windows.options(\dots, reset = FALSE)
     \code{record}, \code{rescale}, \code{xpinch}, \code{ypinch},
     \code{bg}, \code{canvas}, \code{gamma}, \code{xpos}, \code{ypos},
     \code{buffered}, \code{restoreConsole}, \code{clickToConfirm},
-    \code{title} and \code{fillOddEven} can be supplied.}
+    \code{title}, \code{fillOddEven} and \code{antialias} can be supplied.}
   \item{reset}{logical: should the defaults be reset to their
     \sQuote{factory-fresh} values?}
 }
@@ -31,11 +31,15 @@ windows.options(\dots, reset = FALSE)
   If both \code{reset = TRUE} and \code{...} are supplied the defaults
   are first reset to the \sQuote{factory-fresh} values and then the new
   values are applied.
+
+  Option \code{antialias} applies to screen devices (\code{windows},
+  \code{win.graph}, \code{X11} and \code{x11})).  There is a separate option,
+  \code{bitmap.aa.win}, for bitmap devices with \code{type = "windows"}.
 }
 \value{
-  A named list of all the defaults.  If any arguments are
-  supplied the return values are the old values and the result has the
-  visibility flag turned off.
+  A named list of all the defaults.  If any arguments are supplied the
+  returned values are the old values and the result has the visibility
+  flag turned off.
 }
 \seealso{
   \code{\link{windows}}, \code{\link{ps.options}}.
@@ -44,7 +48,8 @@ windows.options(\dots, reset = FALSE)
 ## put something like this is your .Rprofile to customize the defaults
 setHook(packageEvent("grDevices", "onLoad"),
         function(...)
-            grDevices::windows.options(width=8, height=6, xpos=0,
-                                       pointsize=10))
+            grDevices::windows.options(width=8, height=6,
+                                       xpos=0, pointsize=10,
+                                       bitmap.aa.win="cleartype"))
 }}
 \keyword{device}

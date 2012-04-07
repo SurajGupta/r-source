@@ -65,7 +65,7 @@ hclust <- function(d, method="complete", members=NULL)
     else if(length(members) != n)
         stop("invalid length of members")
 
-    hcl <- .Fortran("hclust",
+    hcl <- .Fortran(C_hclust,
 		    n = n,
 		    len = len,
 		    method = as.integer(method),
@@ -81,7 +81,7 @@ hclust <- function(d, method="complete", members=NULL)
     ## 2nd step: interpret the information that we now have
     ## as merge, height, and order lists.
 
-    hcass <- .Fortran("hcass2",
+    hcass <- .Fortran(C_hcass2,
 		      n = as.integer(n),
 		      ia = as.integer(hcl$ia),
 		      ib = as.integer(hcl$ib),
@@ -128,6 +128,7 @@ plot.hclust <-
 		as.character(labels)
 	}
 
+    dev.hold(); on.exit(dev.flush())
     plot.new()
     .Internal(dend.window(n, merge, height,                 hang, labels, ...))
     .Internal(dend       (n, merge, height, order(x$order), hang, labels, ...))

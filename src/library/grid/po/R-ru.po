@@ -9,9 +9,9 @@ msgid ""
 msgstr ""
 "Project-Id-Version: R 2.11.0\n"
 "Report-Msgid-Bugs-To: bugs@r-project.org\n"
-"POT-Creation-Date: 2011-03-22 15:33\n"
-"PO-Revision-Date: 2011-03-30 02:43+0300\n"
-"Last-Translator: Anton Korobeynikov <asl at math dot spbu dot ru>\n"
+"POT-Creation-Date: 2011-07-16 22:46\n"
+"PO-Revision-Date: 2011-10-18 19:35-0600\n"
+"Last-Translator: Alexey Shipunov <dactylorhiza@gmail.com>\n"
 "Language-Team: Russian\n"
 "Language: \n"
 "MIME-Version: 1.0\n"
@@ -482,23 +482,19 @@ msgstr "Надо задать по крайней мере одно из 'x' или 'xscale'"
 msgid "Must specify at least one of 'y' or 'yscale'"
 msgstr "Надо задать по крайней мере одно из 'y' или 'yscale'"
 
-msgid "shutting down all devices when unloading 'grid' name space"
-msgstr "выгружаю все устройства после выгруprb пространства имен 'grid'"
+msgid "shutting down all devices when unloading 'grid' namespace"
+msgstr "выключаю все устройства после выгрузки пространства имен 'grid'"
 
 #~ msgid "at least one of 'width' and 'height' must be specified"
 #~ msgstr "по крайней мере 'width', и 'height' должны быть определены"
-
 #~ msgid "Viewport '%s' was not found"
 #~ msgstr "Оконница '%s' не найдена"
-
 #~ msgid "Invalid"
 #~ msgstr "Неправильный"
-
 #~ msgid "print"
 #~ msgstr "печать"
-
 #~ msgid "argument"
 #~ msgstr "аргумент"
-
 #~ msgid "'x' must be numeric"
 #~ msgstr "'x' должен быть числом"
+

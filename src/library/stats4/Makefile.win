@@ -11,19 +11,15 @@ include $(top_builddir)/Makeconf
 
 pkg = stats4
 
+DEFPKGS = "methods,graphics,stats"
+
 all:
 	@$(ECHO) "building package '$(pkg)'"
 	@$(MKINSTALLDIRS) $(top_builddir)/library/$(pkg)
 	@$(MAKE) -f Makefile.win mkR2 mkdesc mkpo
-	@$(MAKE) -f Makefile.win Rfiles
+	@$(MAKE) -f Makefile.win mklazycomp
 
-
-Rfiles: $(top_builddir)/library/$(pkg)/R/$(pkg).rdb
-
-$(top_builddir)/library/$(pkg)/R/$(pkg).rdb: all.R
-	@$(INSTALL_DATA) all.R $(top_builddir)/library/$(pkg)/R/$(pkg)
-	@$(ECHO) "tools:::makeLazyLoading(\"$(pkg)\")" | \
-	  R_DEFAULT_PACKAGES="methods,graphics,stats" LC_ALL=C $(R_EXE) > /dev/null
-
+mkR: mkR2
 
 include $(top_srcdir)/share/make/basepkg.mk
+include $(top_srcdir)/share/make/lazycomp.mk

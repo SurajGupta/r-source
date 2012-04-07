@@ -79,9 +79,10 @@
         if(!is(def, "refMethodDef")) {
             thisName <- substitute(what)
             stop(gettextf(
-             "\"%s\" is not a method for reference class \"%s\"",
-             as.character(if(is.symbol(thisName)) thisName else what),
-             class(where)), domain = NA)
+             "\"%s\" is not a method for reference class %s",
+                          as.character(if(is.symbol(thisName)) thisName else what),
+                          dQuote(class(where))),
+                 domain = NA)
         }
         what <- def@name
         whereF <- .where
@@ -133,8 +134,8 @@
         pname <- temp$pname
     }
     if(what %in% .InvalidTracedFunctions)
-        stop(gettextf("Tracing the internal function \"%s\" is not allowed",
-                      what))
+        stop(gettextf("Tracing the internal function %s is not allowed",
+                      sQuote(what)))
     if(.traceTraceState) {
         message(".TraceWithMethods: after computing what, whereF")
         browser()
@@ -163,6 +164,8 @@
                              what, paste(signature, collapse = ", ")))
             return(def)
         }
+        ## pick up signature with package slot from selectMethod
+        signature <- def@target
     }
     if(untrace) {
         if(.traceTraceState) {
@@ -326,7 +329,9 @@
             def <- Recall(def, tracer, exit, at, print, FALSE)
         def2 <- utils::edit(def, editor = editor, file = file)
         if(!is.function(def2))
-            stop(gettextf("the editing in trace() can only change the body of the function; got an object of class \"%s\"", class(def2)), domain = NA)
+            stop(gettextf("the editing in trace() can only change the body of the function; got an object of class %s",
+                          dQuote(class(def2))),
+                 domain = NA)
         if(!identical(args(def), args(def2)))
             stop("the editing in trace() can only change the body of the function, not the arguments or defaults")
         fBody <- body(def2)
@@ -469,8 +474,8 @@ setCacheOnAssign <- function(env, onOff = cacheOnAssign(env))
     if(verbose) {
         pname <- getPackageName(where)
         msg <-
-            gettextf("assigning over the binding of symbol \"%s\" in environment/package \"%s\"",
-                     what, pname)
+            gettextf("assigning over the binding of symbol %s in environment/package %s",
+                     sQuote(what), sQuote(pname))
         message(strwrap(msg), domain = NA)
     }
     warnOpt <- options(warn= -1) # kill the obsolete warning from R_LockBinding
@@ -498,7 +503,10 @@ setCacheOnAssign <- function(env, onOff = cacheOnAssign(env))
 
 .setMethodOverBinding <- function(what, signature, method, where, verbose = TRUE) {
     if(verbose)
-        warning(gettextf("setting a method over the binding of symbol \"%s\" in environment/package \"%s\"", what, getPackageName(where)), domain = NA)
+        warning(gettextf("setting a method over the binding of symbol %s in environment/package %s",
+                         sQuote(what),
+                         sQuote(getPackageName(where))),
+                domain = NA)
     if(exists(what, envir = where, inherits = FALSE)) {
         fdef <- get(what, envir = where)
         hasFunction <- is(fdef, "genericFunction")
@@ -615,18 +623,19 @@ setCacheOnAssign <- function(env, onOff = cacheOnAssign(env))
     message <- ""
     if(length(possible) == 0)
         stop("None of the objects in the source code could be found:  need to attach or specify the package")
-    else if(length(possible) > 1) {
+    else if(length(possible) > 1L) {
         global <- match(".GlobalEnv", names(possible), 0)
         if(global > 0) {
             possible <- possible[-global] # even if it's the most common
         }
-        if(length(possible) > 1)
-            warning(gettextf("Objects found in multiple packages: using \"%s\" and ignoring %s",
-                 names(possible[[1]]),
-                 paste('"', names(possible[-1]), '"',sep="", collapse = ", ")),
-                 domain = NA)
+        if(length(possible) > 1L)
+            warning(gettextf("Objects found in multiple packages: using %s and ignoring %s",
+                             sQuote(names(possible[[1L]])),
+                             paste(sQuote(names(possible[-1L])),
+                                   collapse = ", ")),
+                    domain = NA)
     }
-    sub("package:","", names(possible[1])) # the package name, or .GlobalEnv
+    sub("package:","", names(possible[1L])) # the package name, or .GlobalEnv
 }
 
 ## extract the new definitions from the source file
@@ -659,7 +668,9 @@ evalSource <- function(source, package = "", lock = TRUE, cache = FALSE) {
     else if(is(source, "connection"))
         sys.source(source, envir = env)
     else if(!is(source, "environment"))
-        stop(gettextf("Invalid source argument: expected file names(s) or connection, got an object of class \"%s\"", class(source)[[1]]), domain = NA)
+        stop(gettextf("Invalid source argument: expected file names(s) or connection, got an object of class %s",
+                      dQuote(class(source)[[1L]])),
+             domain = NA)
     if(lock)
         lockEnvironment(env, bindings = TRUE) # no further changes allowed
     env
@@ -721,8 +732,8 @@ insertSource <- function(source, package = "",
             envns <- tryCatch(asNamespace(package), error = function(cond)NULL)
     }
     if(nzchar(envPackage) && envPackage != package)
-        warning(gettextf("Supplied package, \"%s\", differs from package inferred from source, \"%s\"",
-                         package, envPackage),
+        warning(gettextf("Supplied package, %s, differs from package inferred from source, %s",
+                         sQuote(package), sQuote(envPackage)),
                 domain = NA)
     packageSlot(env) <- package
     ## at this point, envp is the target environment (package or other)

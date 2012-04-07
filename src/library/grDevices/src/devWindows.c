@@ -40,6 +40,9 @@
 #include "console.h"
 #include "rui.h"
 #define WIN32_LEAN_AND_MEAN 1
+#ifndef _WIN32_WINNT
+# define _WIN32_WINNT 0x0500
+#endif
 #include <windows.h>
 #include "devWindows.h"
 #include "grDevices.h"
@@ -68,13 +71,13 @@ Rboolean GADeviceDriver(pDevDesc dd, const char *display, double width,
 			double gamma, int xpos, int ypos, Rboolean buffered,
 			SEXP psenv, Rboolean restoreConsole,
 			const char *title, Rboolean clickToConfirm,
-			Rboolean fillOddEven);
+			Rboolean fillOddEven, const char *family, int quality);
 
 
 /* a colour used to represent the background on png if transparent
    NB: used as RGB and BGR
 */
-//#define PNG_TRANS 0xd6d3d6
+
 #define PNG_TRANS 0xfdfefd
 
 /* these really are globals: per machine, not per window */
@@ -117,8 +120,8 @@ static drawing _d;
 
 #define DRAW(a) {if(xd->kind != SCREEN) {_d=xd->gawin; CLIP; a;} else {_d=xd->bm; CLIP; a; if(!xd->buffered) {_d=xd->gawin; CLIP; a;} }}
 
-#define SHOW  if(xd->kind==SCREEN) {gbitblt(xd->gawin,xd->bm,pt(0,0),getrect(xd->bm));GALastUpdate=GetTickCount();}
-#define SH if(xd->kind==SCREEN && xd->buffered) GA_Timer(xd)
+#define SHOW  if(xd->kind==SCREEN) {gbitblt(xd->gawin, xd->bm, pt(0,0), getrect(xd->bm)); GALastUpdate = GetTickCount();}
+#define SH if(xd->kind==SCREEN && xd->buffered && GA_xd) GA_Timer(xd)
 
 
 #define SF 20  /* scrollbar resolution */
@@ -146,8 +149,25 @@ static rect getregion(gadesc *xd)
     return r;
 }
 
-/* Update the screen 100ms after last plotting call or 500ms after last
-   update */
+/* Update the screen 100ms after last plotting call or 500ms after
+   last update (by default).
+
+   This runs on (asynchronous) timers for each device.
+   Macro SHOW does an immediate update, and records the update 
+   in GALastUpdate.
+   SHOW is called for expose and mouse events, and newpage.
+
+   Macro SH calls GA_Timer.  If it is more than 500ms since the last
+   update it does an update; otherwise it sets a timer running for
+   100ms. In either case cancels any existing timer.
+   SH is called for the graphics primitives.  (This could probably be
+   replace by calling from Mode(0)).
+
+   There are two conditions:
+   (i) xd->buffered is true, which is a per-device condition.
+   (ii) GA_xd is non-null.  This is used to inhibit updates during shutdown
+   of the device, and also (post 2.14.0) when the device is held.
+*/
 
 static UINT_PTR TimerNo = 0;
 static gadesc *GA_xd;
@@ -174,6 +194,29 @@ static void GA_Timer(gadesc *xd)
 			   GA_timer_proc);
     }
 }
+
+static int GA_holdflush(pDevDesc dd, int level)
+{
+    gadesc *xd = (gadesc *) dd->deviceSpecific;
+    if(!xd->buffered) return 0;
+    int old = xd->holdlevel;
+    xd->holdlevel += level;
+    if(xd->holdlevel <= 0) xd->holdlevel = 0;
+    if(xd->holdlevel == 0) {
+	GA_xd = xd; 
+	gsetcursor(xd->gawin, ArrowCursor);
+	gbitblt(GA_xd->gawin, GA_xd->bm, pt(0,0), getrect(GA_xd->bm));
+	GALastUpdate = GetTickCount();
+    }
+    if (old == 0 && xd->holdlevel > 0) {
+	if(TimerNo != 0) KillTimer(0, TimerNo);
+	gbitblt(xd->gawin, xd->bm, pt(0,0), getrect(xd->bm));
+	GA_xd = NULL;
+	gsetcursor(xd->gawin, WatchCursor);
+    }
+    return xd->holdlevel;
+}
+
 
 	/********************************************************/
 	/* There are a number of actions that every device	*/
@@ -249,13 +292,15 @@ static Rboolean GA_NewFrameConfirm(pDevDesc);
 	/* end of list of required device driver actions	*/
 	/********************************************************/
 
+#include "rbitmap.h"
+
 	/* Support Routines */
 
 static double pixelHeight(drawing  d);
 static double pixelWidth(drawing d);
 static void SetColor(int, double, gadesc*);
 static void SetFont(pGEcontext, double, gadesc*);
-static int Load_Rbitmap_Dll();
+//static int Load_Rbitmap_Dll();
 static void SaveAsPng(pDevDesc dd, const char *fn);
 static void SaveAsJpeg(pDevDesc dd, int quality, const char *fn);
 static void SaveAsBmp(pDevDesc dd, const char *fn);
@@ -302,7 +347,8 @@ static void SaveAsWin(pDevDesc dd, const char *display,
 		       ((gadesc*) dd->deviceSpecific)->basefontsize,
 		       0, 1, White, White, 1, NA_INTEGER, NA_INTEGER, FALSE,
 		       R_GlobalEnv, restoreConsole, "", FALSE,
-		       ((gadesc*) dd->deviceSpecific)->fillOddEven))
+		       ((gadesc*) dd->deviceSpecific)->fillOddEven, "",
+		       DEFAULT_QUALITY))
 	PrivateCopyDevice(dd, ndd, display);
 }
 
@@ -397,6 +443,7 @@ static void SaveAsPDF(pDevDesc dd, const char *fn)
     gadesc *xd = (gadesc *) dd->deviceSpecific;
     char family[256], encoding[256], bg[256], fg[256];
     const char **afmpaths = NULL;
+    Rboolean useCompression = FALSE;
 
     if (!ndd) {
 	R_ShowMessage(_("Not enough memory to copy graphics window"));
@@ -420,20 +467,15 @@ static void SaveAsPDF(pDevDesc dd, const char *fn)
     /* and then try to get it from .PDF.Options */
     if ((s != R_UnboundValue) && (s != R_NilValue)) {
 	SEXP names = getAttrib(s, R_NamesSymbol);
-	int i, done;
-	for (i = 0, done = 0; (done < 4) && (i < length(s)) ; i++) {
-	    if(!strcmp("family", CHAR(STRING_ELT(names, i)))) {
+	for (int i = 0; i < length(s) ; i++) {
+	    if(!strcmp("family", CHAR(STRING_ELT(names, i))))
 		strncpy(family, CHAR(STRING_ELT(VECTOR_ELT(s, i), 0)),255);
-		done++;
-	    }
-	    if(!strcmp("bg", CHAR(STRING_ELT(names, i)))) {
+	    if(!strcmp("bg", CHAR(STRING_ELT(names, i))))
 		strncpy(bg, CHAR(STRING_ELT(VECTOR_ELT(s, i), 0)), 255);
-		done++;
-	    }
-	    if(!strcmp("fg", CHAR(STRING_ELT(names, i)))) {
+	    if(!strcmp("fg", CHAR(STRING_ELT(names, i))))
 		strncpy(fg, CHAR(STRING_ELT(VECTOR_ELT(s, i), 0)), 255);
-		done++;
-	    }
+	    if(!strcmp("compress", CHAR(STRING_ELT(names, i))))
+		useCompression = LOGICAL(VECTOR_ELT(s, i))[0] != 0;
 	}
     }
     if (PDFDeviceDriver(ndd, fn, "special", family, afmpaths, encoding,
@@ -444,10 +486,9 @@ static void SaveAsPDF(pDevDesc dd, const char *fn)
 					 GE_INCHES, gdd),
 			((gadesc*) dd->deviceSpecific)->basefontsize,
 			1, 0, "R Graphics Output", R_NilValue, 1, 4,
-			"rgb", TRUE, TRUE, xd->fillOddEven, 64))
+			"rgb", TRUE, TRUE, xd->fillOddEven, useCompression))
 	PrivateCopyDevice(dd, ndd, "PDF");
 }
-
 
 
 			/* Pixel Dimensions (Inches) */
@@ -609,6 +650,7 @@ static void SetFont(pGEcontext gc, double rot, gadesc *xd)
     int size, face = gc->fontface, usePoints;
     char* fontfamily;
     double fs = gc->cex * gc->ps;
+    int quality = xd->fontquality;
 
     usePoints = xd->kind <= METAFILE;
     if (!usePoints && xd->res_dpi > 0) fs *= xd->res_dpi/72.0;
@@ -629,15 +671,17 @@ static void SetFont(pGEcontext gc, double rot, gadesc *xd)
 	 * If specify face > 4 then get font from face via Rdevga
 	 * (whether specifed family or not).
 	 */
-	fontfamily = translateFontFamily(gc->fontfamily);
+	char * fm = gc->fontfamily;
+	if (!fm[0]) fm = xd->basefontfamily;
+	fontfamily = translateFontFamily(fm);
 	if (fontfamily && face <= 4) {
-	    xd->font = gnewfont(xd->gawin,
+	    xd->font = gnewfont2(xd->gawin,
 				fontfamily, fontstyle[face - 1],
-				size, rot, usePoints);
+				size, rot, usePoints, quality);
 	} else {
-	    xd->font = gnewfont(xd->gawin,
+	    xd->font = gnewfont2(xd->gawin,
 				fontname[face - 1], fontstyle[face - 1],
-				size, rot, usePoints);
+				size, rot, usePoints, quality);
 	}
 	if (xd->font) {
 	    strcpy(xd->fontfamily, gc->fontfamily);
@@ -647,9 +691,9 @@ static void SetFont(pGEcontext gc, double rot, gadesc *xd)
 	} else {
 	    /* Fallback: set Arial */
 	    if (face > 4) face = 1;
-	    xd->font = gnewfont(xd->gawin,
+	    xd->font = gnewfont2(xd->gawin,
 				"Arial", fontstyle[face - 1],
-				size, rot, usePoints);
+				size, rot, usePoints, quality);
 	    if (!xd->font)
 		error("unable to set or substitute a suitable font");
 	    xd->fontface = face;
@@ -1692,6 +1736,7 @@ setupScreenDevice(pDevDesc dd, gadesc *xd, double w, double h,
     dd->canGenKeybd = TRUE;
     dd->gettingEvent = FALSE;
 
+    GA_xd = xd;
     return TRUE;
 }
 
@@ -1740,7 +1785,7 @@ static Rboolean GA_Open(pDevDesc dd, gadesc *xd, const char *dsp,
 	xd->kind = (dsp[0]=='p') ? PNG : BMP;
 	if(strlen(dsp+4) >= 512) error(_("filename too long in %s() call"),
 				       (dsp[0]=='p') ? "png" : "bmp");
-	strcpy(xd->filename, dsp+4);
+	strcpy(xd->filename, R_ExpandFileName(dsp+4));
 	if (!Load_Rbitmap_Dll()) {
 	    warning(_("Unable to load Rbitmap.dll"));
 	    return FALSE;
@@ -1784,7 +1829,7 @@ static Rboolean GA_Open(pDevDesc dd, gadesc *xd, const char *dsp,
 	xd->quality = atoi(&dsp[5]);
 	*p = ':' ;
 	if(strlen(p+1) >= 512) error(_("filename too long in jpeg() call"));
-	strcpy(xd->filename, p+1);
+	strcpy(xd->filename, R_ExpandFileName(p+1));
 	if (w < 20 && h < 20)
 	    warning(_("'width=%d, height=%d' are unlikely values in pixels"),
 		    (int)w, (int) h);
@@ -1818,10 +1863,10 @@ static Rboolean GA_Open(pDevDesc dd, gadesc *xd, const char *dsp,
 	xd->quality = atoi(&dsp[5]);
 	*p = ':' ;
 	if(strlen(p+1) >= 512) error(_("filename too long in tiff() call"));
-	strcpy(xd->filename, p+1);
+	strcpy(xd->filename, R_ExpandFileName(p+1));
 	if (w < 20 && h < 20)
 	    warning(_("'width=%d, height=%d' are unlikely values in pixels"),
-		    (int)w, (int) h);
+		    (int) w, (int) h);
 	if((xd->gawin = newbitmap(w, h, 256)) == NULL) {
 	    warning(_("Unable to allocate bitmap"));
 	    return FALSE;
@@ -2129,7 +2174,7 @@ static void GA_NewPage(const pGEcontext gc,
 	SaveAsBitmap(dd, xd->res_dpi);
     }
     if (xd->kind == SCREEN) {
-	if(xd->buffered) SHOW;
+	if(xd->buffered && !xd->holdlevel) SHOW;
 	if (xd->recording && xd->needsave)
 	    AddtoPlotHistory(desc2GEDesc(dd)->savedSnapshot, 0);
 	if (xd->replaying)
@@ -2158,7 +2203,8 @@ static void GA_NewPage(const pGEcontext gc,
 	} else if(xd->kind == PNG) {
 	    DRAW(gfillrect(_d, PNG_TRANS, xd->clip));
 	}
-	if(xd->kind == PNG) xd->pngtrans = ggetpixel(xd->gawin, pt(0,0));
+	if(xd->kind == PNG) 
+	    xd->pngtrans = ggetpixel(xd->gawin, pt(0,0)) | 0xff000000;
     } else {
 	xd->clip = getregion(xd);
 	DRAW(gfillrect(_d, xd->bgcolor, xd->clip));
@@ -2738,12 +2784,13 @@ static void doRaster(unsigned int *raster, int x, int y, int w, int h,
 	imageData[i*4 + 0] = 0.49 + fac * R_BLUE(raster[i]);
     }
     setpixels(img, imageData);
-    gsetcliprect(xd->bm, xd->clip);
-    if(xd->kind != SCREEN) 
+    if(xd->kind != SCREEN) {
+        gsetcliprect(xd->gawin, xd->clip);
 	gcopyalpha2(xd->gawin, img, dr);
-    else {
+    } else {
+        gsetcliprect(xd->bm, xd->clip);
 	gcopyalpha2(xd->bm, img, dr); 
-	if(!xd->buffered) 
+        if(!xd->buffered) 
 	    gbitblt(xd->gawin, xd->bm, pt(0,0), getrect(xd->bm));
     }
 
@@ -2765,7 +2812,7 @@ static void GA_Raster(unsigned int *raster, int w, int h,
     unsigned int *image = raster;
     int imageWidth = w, imageHeight = h;
     Rboolean adjustXY = FALSE;
-
+ 
     /* The alphablend code cannot handle negative width or height */
     if (height < 0) {
         height = -height;
@@ -2855,39 +2902,40 @@ static SEXP GA_Cap(pDevDesc dd)
     /* These in-place conversions are ok */
     TRACEDEVGA("cap");
 
-    /* Only make sense for on-screen device ? */
+    /* Only make sense for on-screen device */
     if(xd->kind == SCREEN) {
         img = bitmaptoimage(xd->gawin);
         if (imagedepth(img) == 8) img = convert8to32(img);
+
+	if (img) {
+	    int width = imagewidth(img), height = imageheight(img),
+		size = width*height;
+	    unsigned int *rint;
+
+	    screenData = getpixels(img);
+
+	    PROTECT(raster = allocVector(INTSXP, size));
+
+	    /* Copy each byte of screen to an R matrix.
+	     * The ARGB32 needs to be converted to R's ABGR32 */
+	    rint = (unsigned int *) INTEGER(raster);
+	    for (int i = 0; i < size; i++)
+		rint[i] = R_RGBA(screenData[i*4 + 2],
+				 screenData[i*4 + 1],
+				 screenData[i*4 + 0],
+				 255);
+	    PROTECT(dim = allocVector(INTSXP, 2));
+	    INTEGER(dim)[0] = height;
+	    INTEGER(dim)[1] = width;
+	    setAttrib(raster, R_DimSymbol, dim);
+
+	    UNPROTECT(2);
+	}
+
+	/* Tidy up */
+	delimage(img);
     }
-
-    if (img) {
-        int width = imagewidth(img), height = imageheight(img),
-	    size = width*height;
-        unsigned int *rint;
-
-        screenData = getpixels(img);
-
-        PROTECT(raster = allocVector(INTSXP, size));
-
-        /* Copy each byte of screen to an R matrix.
-         * The ARGB32 needs to be converted to an R ABGR32 */
-        rint = (unsigned int *) INTEGER(raster);
-        for (int i = 0; i < size; i++)
-            rint[i] = R_RGBA(screenData[i*4 + 2],
-                             screenData[i*4 + 1],
-                             screenData[i*4 + 0],
-                             255);
-        PROTECT(dim = allocVector(INTSXP, 2));
-        INTEGER(dim)[0] = height;
-        INTEGER(dim)[1] = width;
-        setAttrib(raster, R_DimSymbol, dim);
-
-        UNPROTECT(2);
-    }
-
-    /* Tidy up */
-    delimage(img);
+    
 
     return raster;
 }
@@ -3005,6 +3053,8 @@ static Rboolean GA_Locator(double *x, double *y, pDevDesc dd)
 
     if (xd->kind != SCREEN)
 	return FALSE;
+    if (xd->holdlevel > 0)
+	error(_("attempt to use the locator after dev.hold()"));
     xd->locator = TRUE;
     xd->clicked = 0;
     show(xd->gawin);
@@ -3098,7 +3148,8 @@ Rboolean GADeviceDriver(pDevDesc dd, const char *display, double width,
 			double gamma, int xpos, int ypos, Rboolean buffered,
 			SEXP psenv, Rboolean restoreConsole,
 			const char *title, Rboolean clickToConfirm,
-			Rboolean fillOddEven)
+			Rboolean fillOddEven, const char *family,
+			int quality)
 {
     /* if need to bail out with some sort of "error" then */
     /* must free(dd) */
@@ -3135,6 +3186,9 @@ Rboolean GADeviceDriver(pDevDesc dd, const char *display, double width,
     xd->warn_trans = FALSE;
     strncpy(xd->title, title, 101);
     xd->title[100] = '\0';
+    strncpy(xd->basefontfamily, family, 101);
+    xd->basefontfamily[100] = '\0';
+    xd->fontquality = quality;
     xd->doSetPolyFill = TRUE;     /* will only set it once */
     xd->fillOddEven = fillOddEven;
 
@@ -3174,7 +3228,24 @@ Rboolean GADeviceDriver(pDevDesc dd, const char *display, double width,
     dd->textUTF8 = GA_Text_UTF8;
     dd->useRotatedTextInContour = TRUE;
     xd->cntxt = NULL;
+    dd->holdflush = GA_holdflush;
+    xd->holdlevel = 0;
 
+    dd->haveRaster = 2;  /* full support */
+    dd->haveCapture = dd->haveLocator = (xd->kind == SCREEN) ? 2 : 1;
+    dd->haveTransparency = 2;
+    switch(xd->kind) {
+    case SCREEN:
+	dd->haveTransparentBg = 3;
+    case PRINTER:
+    case METAFILE:
+    case PNG:
+	dd->haveTransparentBg = 2;
+	break;
+    default: /* JPEG, BMP, TIFF */
+	dd->haveTransparentBg = 1;
+	break;
+    }
     /* set graphics parameters that must be set by device driver */
     /* Window Dimensions in Pixels */
     rr = getrect(xd->gawin);
@@ -3209,7 +3280,7 @@ Rboolean GADeviceDriver(pDevDesc dd, const char *display, double width,
 
     dd->xCharOffset = 0.50;
     dd->yCharOffset = 0.40;
-    dd->yLineBias = 0.1;
+    dd->yLineBias = 0.2;
 
     /* Inches per raster unit */
 
@@ -3310,54 +3381,13 @@ SEXP savePlot(SEXP args)
 }
 
 
-/* Rbitmap  */
-typedef int (*R_SaveAsBitmap)(/* variable set of args */);
-static R_SaveAsBitmap R_SaveAsPng, R_SaveAsJpeg, R_SaveAsBmp, R_SaveAsTIFF;
-
-static int RbitmapAlreadyLoaded = 0;
-static HINSTANCE hRbitmapDll;
-
-static int Load_Rbitmap_Dll()
-{
-    if (!RbitmapAlreadyLoaded) {
-	char szFullPath[PATH_MAX];
-	strcpy(szFullPath, R_HomeDir());
-	strcat(szFullPath, "\\library\\grDevices\\libs\\");
-	strcat(szFullPath, R_ARCH);
-	strcat(szFullPath, "\\Rbitmap.dll");
-	if (((hRbitmapDll = LoadLibrary(szFullPath)) != NULL) &&
-	    ((R_SaveAsPng=
-	      (R_SaveAsBitmap)GetProcAddress(hRbitmapDll, "R_SaveAsPng"))
-	     != NULL) &&
-	    ((R_SaveAsBmp=
-	      (R_SaveAsBitmap)GetProcAddress(hRbitmapDll, "R_SaveAsBmp"))
-	     != NULL) &&
-	    ((R_SaveAsJpeg=
-	      (R_SaveAsBitmap)GetProcAddress(hRbitmapDll, "R_SaveAsJpeg"))
-	     != NULL) &&
-	    ((R_SaveAsTIFF=
-	      (R_SaveAsBitmap)GetProcAddress(hRbitmapDll, "R_SaveAsTIFF"))
-	     != NULL)
-	    ) {
-	    RbitmapAlreadyLoaded = 1;
-	} else {
-	    if (hRbitmapDll != NULL) FreeLibrary(hRbitmapDll);
-	    RbitmapAlreadyLoaded= -1;
-	    char buf[1000];
-	    snprintf(buf, 1000, "Unable to load '%s'", szFullPath);
-	    R_ShowMessage(buf);
-	}
-    }
-    return (RbitmapAlreadyLoaded > 0);
-}
-
 static int png_rows = 0;
 
 static unsigned int privategetpixel2(void *d,int i, int j)
 {
     rgb c;
     c = ((rgb *)d)[i*png_rows + j];
-    return c;
+    return c | 0xff000000;
 }
 
 /* This is the device version */
@@ -3516,19 +3546,23 @@ static void SaveAsTiff(pDevDesc dd, const char *fn)
 
 /* This is Guido's devga device, 'ga' for GraphApp. */
 
+#ifndef CLEARTYPE_QUALITY
+# define CLEARTYPE_QUALITY 5
+#endif
+
 SEXP devga(SEXP args)
 {
     pGEDevDesc gdd;
-    const char *display, *title;
+    const char *display, *title, *family;
     const void *vmax;
     double height, width, ps, xpinch, ypinch, gamma;
-    int recording = 0, resize = 1, bg, canvas, xpos, ypos, buffered;
+    int recording = 0, resize = 1, bg, canvas, xpos, ypos, buffered, quality;
     Rboolean restoreConsole, clickToConfirm, fillOddEven;
     SEXP sc, psenv;
 
     vmax = vmaxget();
     args = CDR(args); /* skip entry point name */
-    display = CHAR(STRING_ELT(CAR(args), 0)); /* no longer need SaveString */
+    display = CHAR(STRING_ELT(CAR(args), 0));
     args = CDR(args);
     width = asReal(CAR(args));
     args = CDR(args);
@@ -3584,6 +3618,22 @@ SEXP devga(SEXP args)
     fillOddEven = asLogical(CAR(args));
     if (fillOddEven == NA_LOGICAL)
 	error(_("invalid value of '%s'"), "fillOddEven");
+    args = CDR(args);
+    sc = CAR(args);
+    if (!isString(sc) || LENGTH(sc) != 1)
+	error(_("invalid value of '%s'"), "family");
+    family = CHAR(STRING_ELT(sc, 0));
+    quality = DEFAULT_QUALITY;
+    args = CDR(args);
+    quality = asInteger(CAR(args));
+//    printf("fontquality=%d\n", quality);
+    switch (quality) {
+    case 1: quality = DEFAULT_QUALITY; break;
+    case 2: quality = NONANTIALIASED_QUALITY; break;
+    case 3: quality = CLEARTYPE_QUALITY; break;
+    case 4: quality = ANTIALIASED_QUALITY; break;
+    default: quality = DEFAULT_QUALITY;
+    }
 
     R_GE_checkVersionOrDie(R_GE_version);
     R_CheckDeviceAvailable();
@@ -3595,7 +3645,8 @@ SEXP devga(SEXP args)
 	if (!GADeviceDriver(dev, display, width, height, ps,
 			    (Rboolean)recording, resize, bg, canvas, gamma,
 			    xpos, ypos, (Rboolean)buffered, psenv,
-			    restoreConsole, title, clickToConfirm, fillOddEven)) {
+			    restoreConsole, title, clickToConfirm, 
+			    fillOddEven, family, quality)) {
 	    char type[100], *p;
 	    free(dev);
 	    if (display[0]) {
@@ -3636,8 +3687,7 @@ static Rboolean GA_NewFrameConfirm(pDevDesc dev)
     char *msg;
     gadesc *xd = dev->deviceSpecific;
 
-    if (!xd || xd->kind != SCREEN)
-	return FALSE;
+    if (!xd || xd->kind != SCREEN) return FALSE;
 
     msg = G_("Waiting to confirm page change...");
     xd->confirmation = TRUE;
@@ -3685,4 +3735,44 @@ static void GA_eventHelper(pDevDesc dd, int code)
     	dd->onExit(dd);
 
     return;
+}
+
+
+static R_SaveAsBitmap R_devCairo;
+static int RcairoAlreadyLoaded = 0;
+static HINSTANCE hRcairoDll;
+
+static int Load_Rcairo_Dll()
+{
+    if (!RcairoAlreadyLoaded) {
+	char szFullPath[PATH_MAX];
+	strcpy(szFullPath, R_HomeDir());
+	strcat(szFullPath, "/library/grDevices/libs/");
+	strcat(szFullPath, R_ARCH);
+	strcat(szFullPath, "/winCairo.dll");
+	if (((hRcairoDll = LoadLibrary(szFullPath)) != NULL) &&
+	    ((R_devCairo = 
+	      (R_SaveAsBitmap)GetProcAddress(hRcairoDll, "in_Cairo"))
+	     != NULL)) {
+	    RcairoAlreadyLoaded = 1;
+	} else {
+	    if (hRcairoDll != NULL) FreeLibrary(hRcairoDll);
+	    RcairoAlreadyLoaded = -1;
+	    char buf[1000];
+	    snprintf(buf, 1000, "Unable to load '%s'", szFullPath);
+	    R_ShowMessage(buf);
+	}
+    }
+    return (RcairoAlreadyLoaded > 0);
+}
+
+/*
+   cairo(filename, type, width, height, pointsize, bg, res, antialias, quality)
+*/
+SEXP devCairo(SEXP args)
+{
+    if (!Load_Rcairo_Dll()) 
+	error(_("Unable to load winCairo.dll: was it built?"));
+    else (R_devCairo)(args);
+    return R_NilValue;
 }

@@ -1,6 +1,6 @@
 /*
  *  R : A Computer Language for Statistical Data Analysis
- *  Copyright (C) 2001-10 The R Development Core Team.
+ *  Copyright (C) 2001-11 The R Development Core Team.
  *
  *  This program is free software; you can redistribute it and/or modify
  *  it under the terms of the GNU Lesser General Public License as published by
@@ -184,6 +184,7 @@ struct _DevDesc {
      *
      * static void   X11_Activate(pDevDesc dd);
      *
+     * As from R 2.14.0 this can be omitted or set to NULL.
      */
 #if R_USE_PROTOTYPES
     void (*activate)(const pDevDesc );
@@ -261,6 +262,7 @@ struct _DevDesc {
      *
      * static void X11_Deactivate(pDevDesc dd)
      *
+     * As from R 2.14.0 this can be omitted or set to NULL.
      */
 #if R_USE_PROTOTYPES
     void (*deactivate)(pDevDesc );
@@ -277,6 +279,7 @@ struct _DevDesc {
      *
      * static Rboolean X11_Locator(double *x, double *y, pDevDesc dd)
      *
+     * As from R 2.14.0 this can be omitted or set to NULL.
      */
 #if R_USE_PROTOTYPES
     Rboolean (*locator)(double *x, double *y, pDevDesc dd);
@@ -339,6 +342,7 @@ struct _DevDesc {
      *
      * static void X11_Mode(int mode, pDevDesc dd);
      *
+     * As from R 2.14.0 this can be omitted or set to NULL.
      */
 #if R_USE_PROTOTYPES
     void (*mode)(int mode, pDevDesc dd);
@@ -488,6 +492,7 @@ struct _DevDesc {
      * added 2010-06-27
      *
      * As from R 2.13.2 this can be left unimplemented as NULL.
+     * For earlier versions of R it should return R_NilValue.
      */
 #if R_USE_PROTOTYPES
     SEXP (*cap)(pDevDesc dd);
@@ -643,6 +648,28 @@ struct _DevDesc {
 #else
     void (*eventHelper)();
 #endif
+
+    /* added in 2.14.0, only used by screen devices.
+
+       Allows graphics devices to have multiple levels of suspension: 
+       when this reaches zero output is flushed.
+
+       Can be left unimplemented as NULL.
+     */
+#if R_USE_PROTOTYPES
+    int (*holdflush)(pDevDesc dd, int level);
+#else
+    int (*holdflush)();
+#endif
+
+    /* added in 2.14.0, for dev.capabilities.
+       In all cases 0 means NA (unset).
+    */
+    int haveTransparency; /* 1 = no, 2 = yes */
+    int haveTransparentBg; /* 1 = no, 2 = fully, 3 = semi */
+    int haveRaster; /* 1 = no, 2 = yes, 3 = except for missing values */
+    int haveCapture, haveLocator;  /* 1 = no, 2 = yes */
+
 
     /* Area for future expansion.
        By zeroing this, devices are more likely to work if loaded
