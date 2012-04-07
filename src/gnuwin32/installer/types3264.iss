@@ -17,12 +17,13 @@ Name: "manuals"; Description: "On-line PDF Manuals"; Types: user user32 user64 f
 Name: "manuals/basic"; Description: "Basic Manuals"; Types: user user32 user64 full custom
 Name: "manuals/technical"; Description: "Technical Manuals"; Types: full custom
 Name: "manuals/refman"; Description: "PDF help pages (reference manual)"; Types: full custom
-Name: "manuals/libdocs"; Description: "Docs for Packages grid and Matrix"; Types: full custom
+Name: "manuals/libdocs"; Description: "Docs for Packages grid, Matrix and survival"; Types: full custom
 Name: "tcl"; Description: "SupportFiles for Package tcltk"; Types: user full custom; Flags: checkablealone
 Name: "tcl/noarch"; Description: "Main Files"; Types: user user32 user64 full custom
 Name: "tcl/32"; Description: "i386 Files for Package tcltk"; Types: user user32 full custom
 Name: "tcl/64"; Description: "x64 Files for Package tcltk"; Types: user user64 add64 full custom; Check: Is64BitInstallMode
 Name: "tcl/tzdata"; Description: "Timezone files for Tcl"; Types: full custom
 Name: "tcl/chm"; Description: "Tcl/Tk Help (Compiled HTML)"; Types: full custom
+Name: "tcl/msg"; Description: "Message translations for Tcl/Tk"; Types: full custom
 Name: "trans"; Description: "Message Translations"; Types: user user32 user64 full custom
 Name: "tests"; Description: "Test files"; Types: full custom

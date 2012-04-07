@@ -501,8 +501,10 @@ df(x, Inf, Inf)# (0, Inf, 0)  - since 2.1.1
 pf(x, Inf, Inf)# (0, 1/2, 1)
 
 pf(x, 5, Inf, ncp=0)
-pf(x, 5, 1e6, ncp=1)
-pf(x, 5, 1e7, ncp=1)
+all.equal(pf(x, 5, 1e6, ncp=1), tol = 1e-6,
+          c(0.065933194, 0.470879987, 0.978875867))
+all.equal(pf(x, 5, 1e7, ncp=1), tol = 1e-6,
+          c(0.06593309, 0.47088028, 0.97887641))
 all.equal(pf(x, 5, 1e8, ncp=1), tol = 1e-6,
           c(0.0659330751, 0.4708802996, 0.9788764591))
 pf(x, 5, Inf, ncp=1)
@@ -747,5 +749,12 @@ stopifnot(all(qpois((0:8)/8, lambda=0) == 0))
 ## extreme tail of non-central chisquare
 stopifnot(all.equal(pchisq(200, 4, ncp=.001, log.p=TRUE), -3.851e-42))
 ## jumped to zero too early up to R 2.10.1 (PR#14216)
+
+## logit() == qlogit() on the right extreme:
+x <- c(10:80, 80 + 5*(1:24), 200 + 20*(1:25))
+stopifnot(All.eq(x, qlogis(plogis(x, log.p=TRUE),
+                           log.p=TRUE)))
+## qlogis() gave Inf much too early for R <= 2.12.1
+
 
 cat("Time elapsed: ", proc.time() - .ptime,"\n")

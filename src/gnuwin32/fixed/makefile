@@ -20,7 +20,7 @@ fixetc: $(wildcard ./etc/*)
 	$(CP) -p $^ $(R_HOME)/etc
 	$(RM) $(R_HOME)/etc/Makeconf
 	$(MKDIR) -p $(R_HOME)/etc/$(R_ARCH)
-ifeq ($(strip $(WIN)),64)
+ifeq "$(WIN)" "64"
 	$(SED) -e 's/WIN = 32/WIN = 64/' \
 	  -e "s/-O3/-O2/" \
 	  -e "s/BINPREF =/BINPREF = $(BINPREF)/" \
@@ -38,6 +38,7 @@ else
 	  -e "s|@SYMPAT@|$(SYMPAT)|" \
 	  etc/Makeconf > $(R_HOME)/etc$(R_ARCH)/Makeconf
 endif
+	$(CP) -p Makeconf $(R_HOME)
 	@$(ECHO) done > fixetc
 
 fixdoc: $(wildcard ../CHANGES?)
@@ -51,4 +52,4 @@ clean:
 	$(RM) *~ */*~ fixhtml fixbin fixetc fixshare fixdoc
 
 distclean:
-	$(RM) $(R_HOME)/doc/CHANGES*
+	$(RM) $(R_HOME)/doc/CHANGES* $(R_HOME)/Makeconf

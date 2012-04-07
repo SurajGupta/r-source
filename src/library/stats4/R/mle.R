@@ -21,6 +21,7 @@ setClass("mle", representation(call = "language",
                                min = "numeric",
                                details = "list",
                                minuslogl = "function",
+                               nobs = "integer",
                                method = "character"))
 
 setClass("summary.mle", representation(call = "language",
@@ -30,8 +31,8 @@ setClass("summary.mle", representation(call = "language",
 setClass("profile.mle", representation(profile="list",
                                        summary="summary.mle"))
 
-mle <- function(minuslogl, start=formals(minuslogl), method="BFGS",
-                fixed=list(), ...)
+mle <- function(minuslogl, start = formals(minuslogl), method = "BFGS",
+                fixed = list(), nobs, ...)
 {
     # Insert sanity checks here...
     call <- match.call()
@@ -57,16 +58,19 @@ mle <- function(minuslogl, start=formals(minuslogl), method="BFGS",
         do.call("minuslogl", l)
     }
     oout <- if (length(start))
-        optim(start, f, method=method, hessian=TRUE, ...)
-    else list(par=numeric(0L),value=f(start))
+        optim(start, f, method = method, hessian = TRUE, ...)
+    else list(par = numeric(), value = f(start))
     coef <- oout$par
-    vcov <- if(length(coef)) solve(oout$hessian) else matrix(numeric(0L), 0L, 0L)
+    vcov <- if(length(coef)) solve(oout$hessian) else matrix(numeric(), 0L, 0L)
     min <-  oout$value
     fullcoef[nm] <- coef
-    new("mle", call=call, coef=coef, fullcoef=unlist(fullcoef), vcov=vcov,
-        min=min, details=oout, minuslogl=minuslogl, method=method)
+    new("mle", call = call, coef = coef, fullcoef = unlist(fullcoef),
+        vcov = vcov, min = min, details = oout, minuslogl = minuslogl,
+        nobs = if(missing(nobs)) NA_integer_ else nobs,
+        method = method)
 }
 
+setGeneric("coef")
 setMethod("coef", "mle", function(object) object@fullcoef )
 setMethod("coef", "summary.mle", function(object) object@coef )
 
@@ -85,6 +89,7 @@ setMethod("show", "summary.mle", function(object){
     cat("\n-2 log L:", object@m2logL, "\n")
 })
 
+setGeneric("summary")
 setMethod("summary", "mle", function(object, ...){
     cmat <- cbind(Estimate = object@coef,
                   `Std. Error` = sqrt(diag(object@vcov)))
@@ -92,6 +97,7 @@ setMethod("summary", "mle", function(object, ...){
     new("summary.mle", call=object@call, coef=cmat, m2logL= m2logL)
 })
 
+setGeneric("profile")
 setMethod("profile", "mle",
           function (fitted, which = 1L:p, maxsteps = 100,
                     alpha = 0.01, zmax = sqrt(qchisq(1 - alpha, 1L)),
@@ -178,6 +184,7 @@ setMethod("profile", "mle",
     new("profile.mle", profile = prof, summary = summ)
 })
 
+setGeneric("plot")
 setMethod("plot", signature(x="profile.mle", y="missing"),
 function (x, levels, conf = c(99, 95, 90, 80, 50)/100, nseg = 50,
           absVal = TRUE, ...)
@@ -266,6 +273,7 @@ function (x, levels, conf = c(99, 95, 90, 80, 50)/100, nseg = 50,
     par(opar)
 })
 
+setGeneric("confint")
 setMethod("confint", "profile.mle",
 function (object, parm, level = 0.95, ...)
 {
@@ -300,19 +308,24 @@ function (object, parm, level = 0.95, ...)
     confint(profile(object), alpha = (1 - level)/4, parm, level, ...)
 })
 
+setGeneric("logLik")
 setMethod("logLik", "mle",
 function (object, ...)
 {
     if(length(list(...)))
         warning("extra arguments discarded")
     val <- -object@min
+    if ("nobs" %in% slotNames(object) && # introduced in 2.13.0
+        !is.na(no <- object@nobs)) attr(val, "nobs") <- no
     attr(val, "df") <- length(object@coef)
     class(val) <- "logLik"
     val
 })
 
+setGeneric("vcov")
 setMethod("vcov", "mle", function (object, ...) object@vcov)
 
+setGeneric("update")
 setMethod("update", "mle", function (object, ..., evaluate = TRUE)
 {
     call <- object@call

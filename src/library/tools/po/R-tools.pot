@@ -1,8 +1,8 @@
 msgid ""
 msgstr ""
-"Project-Id-Version: R 2.12.1\n"
+"Project-Id-Version: R 2.13.0\n"
 "Report-Msgid-Bugs-To: bugs@r-project.org\n"
-"POT-Creation-Date: 2011-01-03 16:14\n"
+"POT-Creation-Date: 2011-03-22 15:33\n"
 "PO-Revision-Date: YEAR-MO-DA HO:MI+ZONE\n"
 "Last-Translator: FULL NAME <EMAIL@ADDRESS>\n"
 "Language-Team: LANGUAGE <LL@li.org>\n"
@@ -111,6 +111,9 @@ msgid "Documented arguments not in \\usage in documentation object '%s':"
 msgstr ""
 
 msgid "Objects in \\usage without \\alias in documentation object '%s':"
+msgstr ""
+
+msgid "Assignments in \\usage in documentation object '%s':"
 msgstr ""
 
 msgid "Bad \\usage lines found in documentation object '%s':"
@@ -521,10 +524,25 @@ msgstr ""
 msgid "ERROR: this R is version %s, required is R %s %s"
 msgstr ""
 
+msgid "loading failed"
+msgstr ""
+
 msgid "Changes require specified 'style'"
 msgstr ""
 
 msgid "The default JSS style may not be modified."
+msgstr ""
+
+msgid "--binary is deprecated"
+msgstr ""
+
+msgid "use of '--auto-zip' is defunct"
+msgstr ""
+
+msgid "use of '--use-zip-data' is defunct"
+msgstr ""
+
+msgid "use of '--no-docs' is deprecated: use '--install-args' instead"
 msgstr ""
 
 msgid "** Options"
@@ -534,12 +552,6 @@ msgid "are only for '--binary'  and will be ignored"
 msgstr ""
 
 msgid "Error: cannot rename directory to"
-msgstr ""
-
-msgid "cannot coerce"
-msgstr ""
-
-msgid "to logical"
 msgstr ""
 
 msgid "-l option without value"
@@ -632,7 +644,13 @@ msgstr ""
 msgid "ERROR:"
 msgstr ""
 
+msgid "error reading file '%s'"
+msgstr ""
+
 msgid "this seems to be a bundle -- and they are defunct"
+msgstr ""
+
+msgid "running 'zip' failed"
 msgstr ""
 
 msgid "packaged installation of"
@@ -641,7 +659,7 @@ msgstr ""
 msgid "as"
 msgstr ""
 
-msgid "'cleanup' exists but is not executable -- see the 'R Installation and Adminstration Manual'"
+msgid "'cleanup' exists but is not executable -- see the 'R Installation and Administration Manual'"
 msgstr ""
 
 msgid "installing to"
@@ -662,9 +680,6 @@ msgstr ""
 msgid "empty 'data' directory"
 msgstr ""
 
-msgid "'--auto-zip' is for Windows only"
-msgstr ""
-
 msgid "--merge-multiarch is Windows-only"
 msgstr ""
 
@@ -678,9 +693,6 @@ msgid "ERROR: --merge-multiarch can only be used on i386/x64 installations"
 msgstr ""
 
 msgid "invalid package"
-msgstr ""
-
-msgid "--pkglock applies only to a single package"
 msgstr ""
 
 msgid "ERROR: no packages specified"
@@ -704,12 +716,6 @@ msgstr ""
 msgid "building a fake installation is disallowed"
 msgstr ""
 
-msgid "--no-help overrides"
-msgstr ""
-
-msgid "--"
-msgstr ""
-
 msgid "finding HTML links ..."
 msgstr ""
 
@@ -729,6 +735,9 @@ msgid "source list must have names for all elements"
 msgstr ""
 
 msgid "source must be an environment or a list"
+msgstr ""
+
+msgid "invalid value for 'compress': should be FALSE, TRUE, 2 or 3"
 msgstr ""
 
 msgid "this cannot be used for package 'base'"
@@ -765,15 +774,6 @@ msgid "Malformed NEWS.Rd file."
 msgstr ""
 
 msgid "Processing packages:"
-msgstr ""
-
-msgid "cannot update HTML package index"
-msgstr ""
-
-msgid "'DESCRIPTION' has 'Encoding' field and re-encoding is not possible"
-msgstr ""
-
-msgid "cannot create HTML package index"
 msgstr ""
 
 msgid "Internal error, no tag"
@@ -836,13 +836,10 @@ msgstr ""
 msgid "testing '%s' failed"
 msgstr ""
 
-msgid "Collecting examples for package"
+msgid "Testing examples for package"
 msgstr ""
 
-msgid "Running examples in package"
-msgstr ""
-
-msgid "Comparing"
+msgid "comparing"
 msgstr ""
 
 msgid "to"
@@ -852,6 +849,9 @@ msgid "..."
 msgstr ""
 
 msgid "OK"
+msgstr ""
+
+msgid "results differ from reference results"
 msgstr ""
 
 msgid "no examples found"
@@ -864,6 +864,9 @@ msgid "Running"
 msgstr ""
 
 msgid "Running vignettes for package"
+msgstr ""
+
+msgid "Comparing"
 msgstr ""
 
 msgid "creation of"
@@ -882,9 +885,6 @@ msgid "running code in"
 msgstr ""
 
 msgid "FAILED"
-msgstr ""
-
-msgid "comparing"
 msgstr ""
 
 msgid "running strict specific tests"
@@ -950,6 +950,12 @@ msgstr ""
 msgid "unable to run %s on '%s'"
 msgstr ""
 
+msgid "cannot coerce"
+msgstr ""
+
+msgid "to logical"
+msgstr ""
+
 msgid "File 'DESCRIPTION' is missing."
 msgstr ""
 
@@ -970,6 +976,21 @@ msgstr ""
 
 msgid "parsing '%s'"
 msgstr ""
+
+msgid        "Note: found %d marked Latin-1 string"
+msgid_plural "Note: found %d marked Latin-1 strings"
+msgstr[0]    ""
+msgstr[1]    ""
+
+msgid        "Note: found %d marked UTF-8 string"
+msgid_plural "Note: found %d marked UTF-8 strings"
+msgstr[0]    ""
+msgstr[1]    ""
+
+msgid        "Note: found %d string marked as \"bytes\""
+msgid_plural "Note: found %d strings marked as \"bytes\""
+msgstr[0]    ""
+msgstr[1]    ""
 
 msgid        "Warning in file '%s':"
 msgid_plural "Warnings in file '%s':"

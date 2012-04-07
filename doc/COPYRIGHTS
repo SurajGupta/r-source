@@ -6,14 +6,17 @@ Development Core Team.
 
 See the file COPYING for the exact conditions under which you may
 redistribute it.  R as a whole is distributed under GPL version 2:
-most source files contain a copyright statement allow use of that file
-under GPL version 2 or later: the main exceptions are packages 'rpart'
-and 'survival' (GPL-2 only) and packages 'MASS', 'class', 'nnet' and
-'spatial' (GPL-2 or GPL-3).
+most source files contain a copyright statement allowing use of that
+file under GPL version 2 or later: the main exceptions are the
+currently included versions of packages 'rpart' (GPL-2 only), 'MASS',
+'class', 'nnet' and 'spatial' (GPL-2 or GPL-3).
 
 The status of files used only in the Windows port is in file
 src/gnuwin32/COPYRIGHTS.win, which is appended to this file in binary
 Windows distributions.
+
+Note that all the code *is* copyright and may only be reproduced if
+the copyright notice (that in the file or this notice) is preserved.
 
 	---------------------------------------------------
 
@@ -64,7 +67,8 @@ src/library/stats/src/PPsum.c
 
 
 Some of the code contains different copyright statements.  It is used
-here in accordance with the copyright conditions in that code.
+here in accordance with the copyright conditions in that code.  A
+not-necessarily-complete list of such files is:
 
 src/library/grDevices/inst/afm/*___.afm
 
@@ -101,7 +105,11 @@ in part
 	Copyright (C) 1997 R. Gentleman & R. Ihaka
 	Copyright (C) 1997, 1998 M. Maechler
 
-share/bibtex/bst/jss.bst
+shares/licenses/*
+
+	See the individual files.
+
+share/texmf/bibtex/bst/jss.bst
 
 	Copyright 1994-2005 Patrick W Daly
 
@@ -116,7 +124,7 @@ share/texmf/tex/latex/upquote.sty
 
 src/library/graphics/R/mosaicplot.R
 
-	Copyright (C) 1998 John W. Emerson
+	Original code copyright (C) 1998 John W. Emerson
 
 src/library/graphics/R/pairs.R
 
@@ -126,7 +134,19 @@ src/library/graphics/R/polygon.R
 
 	Copyright (C) 2001 by Kevin Buhr <buhr@stat.wisc.edu>
 
+src/library/splines/R/splineClasses.R
+
+	Copyright (C) 1998 Douglas M. Bates and William N. Venables.
+
+src/library/datasets/man/austres.Rd
+src/library/datasets/man/beavers.Rd
+src/library/datasets/man/lh.Rd
+src/library/datasets/man/rock.Rd
+src/library/datasets/man/UKLungDeaths.Rd
+src/library/datasets/man/USAccDeaths.Rd
 src/library/stats/R/bandwidths.R
+src/library/stats/R/cpgram.R
+src/library/stats/R/spectrum.R
 src/library/stats/src//bandwidths.c
 src/appl/maxcol.c
 
@@ -167,9 +187,15 @@ src/library/stats/R/zzModels.R
 
 	Copyright 1997,1999 Jose C. Pinheiro
 
+src/library/stats/R/runmed.R
 src/library/stats/src/Trunmed.c
 
 	In part Copyright (C) 1995 Berwin A. Turlach
+
+src/library/stats/src/loessc.c
+src/library/stats/src/loessf.f
+
+	In part Copyright (c) 1989, 1992 by AT&T
 
 src/library/tcltk/exec/{hierarchy,util*,widget}.tcl
 
@@ -267,7 +293,7 @@ src/extra/xdr/*
 
 src/extra/zlib/README, *.c, *.h
 
-  Taken from zlib-1.2.3 (C) 1995-2010 Jean-loup Gailly and Mark Adler
+  Taken from zlib-1.2.3 (C) 1995-2005 Jean-loup Gailly and Mark Adler
   See src/extra/zlib/README for the licence.
 
 

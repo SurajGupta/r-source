@@ -1,6 +1,6 @@
 % File src/library/base/man/connections.Rd
 % Part of the R package, http://www.R-project.org
-% Copyright 1995-2010 R Core Development Team
+% Copyright 1995-2011 R Core Development Team
 % Distributed under GPL 2 or later
 
 \name{connections}
@@ -299,8 +299,8 @@ isIncomplete(con)
   connections.  They do \strong{not} produce a single compressed stream
   on the file, but rather append a new compressed stream to the file.
   Readers (including \R) may or may not read beyond end of the first
-  stream: currently \R does so for \code{gzfile} and \code{xzfile}
-  connections, but not for \code{bzfile} connections.
+  stream: currently \R does so for \code{gzfile}, \code{bzfile} and
+  \code{xzfile} connections, but earlier versions did not.
 }
 
 \section{Compression}{

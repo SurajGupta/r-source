@@ -1,6 +1,6 @@
 % File src/library/utils/man/PkgUtils.Rd
 % Part of the R package, http://www.R-project.org
-% Copyright 1995-2010 R Core Development Team
+% Copyright 1995-2011 R Core Development Team
 % Distributed under GPL 2 or later
 
 \name{PkgUtils}
@@ -9,8 +9,7 @@
 \title{Utilities for Building and Checking Add-on Packages}
 \description{
   Utilities for checking whether the sources of an \R add-on package
-  work correctly, and for building a source or binary package from
-  them.
+  work correctly, and for building a source package from them.
 }
 \usage{
 \special{R CMD check [options] pkgdirs}
@@ -19,8 +18,9 @@
 \arguments{
   \item{pkgdirs}{a list of names of directories with sources of \R
     add-on packages.  For \code{check} these can also be the filenames of
-    compressed \command{tar} archives with extension \file{.tar.gz} or
-    \file{.tgz} or \file{.tar.bz2}.}
+    compressed \command{tar} archives with extension \file{.tar.gz},
+    \file{.tgz}, \file{.tar.bz2} or \file{.tar.xz} (where supported by
+    \command{tar}).}
   \item{options}{further options to control the processing, or for
     obtaining information about usage and version of the utility.}
 }
@@ -29,16 +29,19 @@
   checks \R add-on packages from their sources, performing a wide
   variety of diagnostic checks.
 
-  \command{R CMD build}
-  builds \R source or binary packages from their sources.  The name(s)
-  of the packages are taken from the \file{DESCRIPTION} files and not
-  from the directory names.
+  \command{R CMD build} builds \R source tarballs.  The name(s) of the
+  packages are taken from the \file{DESCRIPTION} files and not from the
+  directory names.  As from \R 2.13.0 this works entirely on a copy of
+  the supplied source directories.
 
-  Use \command{R CMD \var{foo} --help}
-  to obtain usage information on utility \code{\var{foo}}.
+  Use \command{R CMD \var{foo} --help} to obtain usage information on
+  utility \code{\var{foo}}.
 
-  Several of the options to \code{build --binary} are passed to
-  \code{\link{INSTALL}} so consult its help for the details.
+  The defaults for some of the options to \command{R CMD build} can be
+  set by environment variables \env{_R_BUILD_RESAVE_DATA_} and
+  \env{_R_BUILD_COMPACT_VIGNETTES_}: see \sQuote{Writing \R Extensions}.
+  Many of the checks in \command{R CMD check} can be turned off or on by
+  environment variables: see Chapter 6 of the \sQuote{R Internals} manual.
 }
 #ifdef windows
 \note{
@@ -56,7 +59,5 @@
 #ifdef windows
   (see the Manuals sub-menu of the Help menu on the console).
 #endif
-
-  \code{\link{INSTALL}} is called by \code{build --binary}.
 }
 \keyword{utilities}

@@ -46,8 +46,10 @@ FILE *R_OpenInitFile(void)
 
     fp = NULL;
     if (LoadInitFile) {
-	if(p && strlen(p))
+	if(p) {
+	    if(!*p) return NULL;  /* set to "" */
 	    return R_fopen(R_ExpandFileName(p), "r");
+	}
 	if ((fp = R_fopen(".Rprofile", "r")))
 	    return fp;
 	snprintf(buf, PATH_MAX, "%s/.Rprofile", getenv("R_USER"));
@@ -221,8 +223,7 @@ SEXP do_system(SEXP call, SEXP op, SEXP args, SEXP rho)
 	if(TYPEOF(Stderr) == LGLSXP)
 	    m = asLogical(Stderr) ? 2 : 0;
 	if(m  && TYPEOF(Stdout) == LGLSXP && asLogical(Stdout)) m = 3;
-	fp = rpipeOpen(CHAR(STRING_ELT(cmd, 0)),
-		       getCharCE(STRING_ELT(cmd, 0)),
+	fp = rpipeOpen(CHAR(STRING_ELT(cmd, 0)), getCharCE(STRING_ELT(cmd, 0)),
 		       vis, CHAR(STRING_ELT(fin, 0)), m, fout, ferr);
 	if (!fp) {
 	    /* If intern = TRUE generate an error */

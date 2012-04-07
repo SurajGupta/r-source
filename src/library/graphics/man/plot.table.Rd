@@ -7,7 +7,7 @@
 \alias{plot.table}
 \alias{lines.table}
 \alias{points.table}
-\title{Plot Methods for `table' Objects}
+\title{Plot Methods for \code{table} Objects}
 \description{
   This is a method of the generic \code{plot} function for
   (contingency) \code{\link{table}} objects.  Whereas for two- and more
@@ -17,11 +17,12 @@
 \usage{
 \method{plot}{table}(x, type = "h", ylim = c(0, max(x)), lwd = 2,
      xlab = NULL, ylab = NULL, frame.plot = is.num, \dots)
-\method{points}{table}(x, type = "h", lwd = 2, \dots)
-\method{lines}{table}(x, type = "h", lwd = 2, \dots)
+\method{points}{table}(x, y = NULL, type = "h", lwd = 2, \dots)
+\method{lines}{table}(x, y = NULL, type = "h", lwd = 2, \dots)
 }
 \arguments{
   \item{x}{a \code{\link{table}} (like) object.}
+  \item{y}{Must be \code{NULL}: there to protect against incorrect calls.}
   \item{type}{plotting type.}
   \item{ylim}{range of y-axis.}
   \item{lwd}{line width for bars when \code{type = "h"} is used in the 1D case.}

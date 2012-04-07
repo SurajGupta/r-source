@@ -18,13 +18,16 @@
   \code{unlink} deletes the file(s) or directories specified by \code{x}.
 }
 \details{
+  Tilde-expansion (see \code{\link{path.expand}}) is done on \code{x} as
+  from \R 2.13.0.
+  
   If \code{recursive = FALSE} directories are not deleted,
   not even empty ones.
 
 #ifdef unix
   On most platforms \sQuote{file} includes symbolic links, fifos and sockets.
-#endif  
   
+#endif  
   Wildcard expansion is done by the internal code of
   \code{\link{Sys.glob}}.  Wildcards never match a leading \file{.} in
   the filename, and files \file{.} and \file{..} will never be
@@ -52,6 +55,8 @@
 
   Windows cannot remove the current working directory, nor any file
   which is open nor any directory containing such a file.
+  
+  UTF-8-encoded paths not valid in the current locale can be used.
 #endif
 }
 \value{

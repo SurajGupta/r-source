@@ -23,11 +23,11 @@ seq.default <-
     if((One <- nargs() == 1L) && !missing(from)) {
 	lf <- length(from)
 	return(if(mode(from) == "numeric" && lf == 1L) 1L:from else
-	       if(lf) 1L:lf else integer(0L))
+	       if(lf) 1L:lf else integer())
     }
     if(!missing(along.with)) {
 	length.out <- length(along.with)
-	if(One) return(if(length.out) seq_len(length.out) else integer(0L))
+	if(One) return(if(length.out) seq_len(length.out) else integer())
     }
     else if(!missing(length.out)) {
         len <- length(length.out)
@@ -69,8 +69,7 @@ seq.default <-
 	}
     else if(!is.finite(length.out) || length.out < 0L)
 	stop("length must be non-negative number")
-    else if(length.out == 0L)
-	integer(0L)
+    else if(length.out == 0L) integer()
     else if (One) seq_len(length.out)
     else if(missing(by)) {
 	# if(from == to || length.out < 2) by <- 1
@@ -78,9 +77,8 @@ seq.default <-
 	    to <- from + length.out - 1L
 	if(missing(from))
 	    from <- to - length.out + 1L
-	if(length.out > 2L)
-	    if(from == to)
-		rep.int(from, length.out)
+	if(length.out > 2L) # not clear why these have as.vector, and not others
+	    if(from == to) rep.int(from, length.out)
 	    else as.vector(c(from, from + seq_len(length.out - 2L) * by, to))
 	else as.vector(c(from, to))[seq_len(length.out)]
     }

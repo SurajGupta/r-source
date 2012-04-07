@@ -17,17 +17,15 @@
 duplicated <- function(x, incomparables = FALSE, ...) UseMethod("duplicated")
 
 duplicated.default <- function(x, incomparables = FALSE, fromLast = FALSE, ...)
-{
-    if(is.na(fromLast <- as.logical(fromLast[1L])))
-        stop("'fromLast' must be TRUE or FALSE")
     .Internal(duplicated(x, incomparables, fromLast))
-}
 
 duplicated.data.frame <- function(x, incomparables = FALSE, fromLast = FALSE, ...)
 {
     if(!identical(incomparables, FALSE))
 	.NotYetUsed("incomparables != FALSE")
-    duplicated(do.call("paste", c(x, sep="\r")), fromLast = fromLast)
+    if(length(x) != 1L)
+        duplicated(do.call("paste", c(x, sep="\r")), fromLast = fromLast)
+    else duplicated(x[[1L]])
 }
 
 duplicated.matrix <- duplicated.array <-
@@ -35,26 +33,28 @@ duplicated.matrix <- duplicated.array <-
 {
     if(!identical(incomparables, FALSE))
 	.NotYetUsed("incomparables != FALSE")
-    ndim <- length(dim(x))
+    dx <- dim(x)
+    ndim <- length(dx)
     if (length(MARGIN) > ndim || any(MARGIN > ndim))
-        stop("MARGIN = ", MARGIN, " is invalid for dim = ", dim(x))
-    temp <- apply(x, MARGIN, function(x) paste(x, collapse = "\r"))
-    res <- duplicated(as.vector(temp), fromLast = fromLast)
+        stop("MARGIN = ", MARGIN, " is invalid for dim = ", dx)
+    collapse <- (ndim > 1L) && (prod(dx[-MARGIN]) > 1L)
+    temp <- if(collapse) apply(x, MARGIN, function(x) paste(x, collapse = "\r")) else x
+    res <- duplicated.default(temp, fromLast = fromLast)
     dim(res) <- dim(temp)
     dimnames(res) <- dimnames(temp)
     res
 }
 
-anyDuplicated <- function(x, incomparables = FALSE, ...) UseMethod("anyDuplicated")
+anyDuplicated <- function(x, incomparables = FALSE, ...)
+    UseMethod("anyDuplicated")
 
-anyDuplicated.default <- function(x, incomparables = FALSE, fromLast = FALSE, ...)
-{
-    if(is.na(fromLast <- as.logical(fromLast[1L])))
-        stop("'fromLast' must be TRUE or FALSE")
+anyDuplicated.default <-
+    function(x, incomparables = FALSE, fromLast = FALSE, ...)
     .Internal(anyDuplicated(x, incomparables, fromLast))
-}
 
-anyDuplicated.data.frame <- function(x, incomparables = FALSE, fromLast = FALSE, ...)
+
+anyDuplicated.data.frame <-
+    function(x, incomparables = FALSE, fromLast = FALSE, ...)
 {
     if(!identical(incomparables, FALSE))
 	.NotYetUsed("incomparables != FALSE")
@@ -70,7 +70,7 @@ anyDuplicated.matrix <- anyDuplicated.array <-
     if (length(MARGIN) > ndim || any(MARGIN > ndim))
         stop("MARGIN = ", MARGIN, " is invalid for dim = ", dim(x))
     temp <- apply(x, MARGIN, function(x) paste(x, collapse = "\r"))
-    anyDuplicated(as.vector(temp), fromLast = fromLast)
+    anyDuplicated.default(temp, fromLast = fromLast)
 }
 
 unique <- function(x, incomparables = FALSE, ...) UseMethod("unique")
@@ -80,8 +80,6 @@ unique <- function(x, incomparables = FALSE, ...) UseMethod("unique")
 ## so it needs to handle some other cases.
 unique.default <- function(x, incomparables = FALSE, fromLast = FALSE, ...)
 {
-    if(is.na(fromLast <- as.logical(fromLast[1L])))
-        stop("'fromLast' must be TRUE or FALSE")
     z <- .Internal(unique(x, incomparables, fromLast))
     if(is.factor(x))
 	factor(z, levels = seq_len(nlevels(x)), labels = levels(x),
@@ -105,12 +103,14 @@ unique.matrix <- unique.array <-
 {
     if(!identical(incomparables, FALSE))
 	.NotYetUsed("incomparables != FALSE")
-    ndim <- length(dim(x))
-    if (length(MARGIN) > 1L || any(MARGIN > ndim))
-        stop("MARGIN = ", MARGIN, " is invalid for dim = ", dim(x))
-    temp <- apply(x, MARGIN, function(x) paste(x, collapse = "\r"))
+    dx <- dim(x)
+    ndim <- length(dx)
+    if (length(MARGIN) > ndim || any(MARGIN > ndim))
+        stop("MARGIN = ", MARGIN, " is invalid for dim = ", dx)
+    collapse <- (ndim > 1L) && (prod(dx[-MARGIN]) > 1L)
+    temp <- if(collapse) apply(x, MARGIN, function(x) paste(x, collapse = "\r")) else x
     args <- rep(alist(a=), ndim)
     names(args) <- NULL
-    args[[MARGIN]] <- !duplicated(as.vector(temp), fromLast = fromLast)
+    args[[MARGIN]] <- !duplicated.default(temp, fromLast = fromLast)
     do.call("[", c(list(x), args, list(drop=FALSE)))
 }

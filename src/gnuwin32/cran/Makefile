@@ -1,7 +1,6 @@
 include ../MkRules
 
-
-R_HOME = $(shell ../Rpwd.exe ../../..)
+R_HOME = ../../..
 
 RPREFIX = $(shell ../../../bin$(R_ARCH)/Rscript ../fixed/rwver.R)
 FULLVERSION=`cat ../../../VERSION`
@@ -9,14 +8,14 @@ SVNREVISION=`sed -e 1s/Revision:.// -e q < $(R_HOME)/SVN-REVISION`
 RVER = $(shell cut -d' ' -f1 ../../../VERSION | sed -n 1p)
 DATE = $(shell date +%F)
 
-REXE = $(R_HOME)/$(BINDIR)/rterm.exe --vanilla --slave
+R_EXE = $(R_HOME)/$(BINDIR)/rterm.exe --vanilla --slave
 
 all:
 	$(CP) ../../../doc/html/CHANGES.html CHANGES.$(RPREFIX).html
 	$(CP) ../../../doc/html/NEWS.html NEWS.$(RPREFIX).html
 	$(CP) ../installer/$(RPREFIX)-win*.exe .
 	($(ECHO) 'cat(md5sum("$(RPREFIX)-win.exe"), "*$(RPREFIX)-win.exe")' \
-         | $(REXE) R_DEFAULT_PACKAGES=tools > md5sum.txt)
+         | $(R_EXE) R_DEFAULT_PACKAGES=tools > md5sum.txt)
 	$(CP) ../../../doc/html/rw-FAQ.html .	
 	@for page in index rdevel rpatched rtest release; do \
 	  $(SED) -e s/@RWVER@/$(RPREFIX)/g \

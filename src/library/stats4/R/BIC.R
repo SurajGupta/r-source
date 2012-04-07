@@ -16,24 +16,5 @@
 
 ## created for use in other packages, e.g. flexmix
 setGeneric("AIC")
-
-setGeneric("BIC", function(object, ...) standardGeneric("BIC"))
-
-setMethod("BIC", signature(object="logLik"),
-          function(object, ...)
-          -2 * c(object) + attr(object, "df") * log(attr(object, "nobs")) )
-
-setMethod("BIC", signature(object="ANY"),
-	  ## work like AIC with *multiple* objects
-	  function(object, ...) {
-	      if(length(list(...))) {# several objects: produce data.frame
-		  val <- lapply(list(object, ...), logLik)
-		  val <- as.data.frame(t(sapply(val,
-						function(el)
-						c(attr(el, "df"), BIC(el)),
-						USE.NAMES=FALSE)))
-		  names(val) <- c("df", "BIC")
-		  row.names(val) <- as.character(match.call()[-1L])
-		  val
-	      } else BIC(logLik(object))
-	  })
+setGeneric("BIC")
+setGeneric("nobs")

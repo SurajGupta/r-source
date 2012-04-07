@@ -1,7 +1,7 @@
 /*
  *  R : A Computer Language for Statistical Data Analysis
  *  Copyright (C) 1995, 1996, 1997  Robert Gentleman and Ross Ihaka
- *  Copyright (C) 2000-10	    The R Development Core Team.
+ *  Copyright (C) 2000-11	    The R Development Core Team.
  *  Copyright (C) 2005		    The R Foundation
  *
  *  This program is free software; you can redistribute it and/or modify
@@ -23,56 +23,90 @@
 #include <config.h>
 #endif
 
+/* Note: gcc may warn in several places about C99 features as extensions.
+   This is a very-long-standing GCC bug, http://gcc.gnu.org/PR7263
+   The system <complex.h> header can work around it: some do.
+*/
+
+#if 0
+/* For testing substitute fns */
+#undef HAVE_CARG
+#undef HAVE_CABS
+#undef HAVE_CPOW
+#undef HAVE_CEXP
+#undef HAVE_CLOG
+#undef HAVE_CSQRT
+#undef HAVE_CSIN
+#undef HAVE_CCOS
+#undef HAVE_CTAN
+#undef HAVE_CASIN
+#undef HAVE_CACOS
+#undef HAVE_CATAN
+#undef HAVE_CSINH
+#undef HAVE_CCOSH
+#undef HAVE_CTANH
+#endif
+
+#ifdef __CYGWIN__
+/* as of 1.7.8 it had cacos, but it does not work */
+#undef HAVE_CACOS
+#endif
+
 #include <Defn.h>		/* -> ../include/R_ext/Complex.h */
 #include <Rmath.h>
 #include <R_ext/Applic.h>	/* R_cpoly */
 
-static R_INLINE double fsign_int(double x, double y)
-{
-    if (ISNAN(x) || ISNAN(y))
-	return x + y;
-    return ((y >= 0) ? fabs(x) : -fabs(x));
-}
-
-
 #include "arithmetic.h"		/* complex_*  */
+#include <complex.h>
 
-#ifdef HAVE_C99_COMPLEX
-# include <complex.h>
-# ifdef USE_RINTERNALS
-#  define C99_COMPLEX(x) ((double complex *) DATAPTR(x))
-# else
-#  define C99_COMPLEX(x) ((double complex *) COMPLEX(x))
-# endif
+/* GCC has problems with header files on e.g. Solaris.
+   That OS defines the imaginary type, but GCC does not.
+   Probably needed elsewhere, e.g. AIX.
+   And use on Win32/64 suppresses warnings.
+   The warning is also seen on Mac OS 10.5.
+*/
+#if defined(__GNUC__) && (defined(__sun__) || defined(Win32))
+# undef  I
+# define I (__extension__ 1.0iF)
 #endif
 
-#ifndef HAVE_HYPOT
-# define hypot pythag
+
+static R_INLINE double complex toC99(Rcomplex *x)
+{
+#if __GNUC__
+    double complex ans = (double complex) 0; /* -Wall */
+    __real__ ans = x->r;
+    __imag__ ans = x->i;
+    return ans;
+#else
+    return x->r + x->i * I;
 #endif
+}
+#define C99_COMPLEX2(x, i) toC99(COMPLEX(x) + i)
+
+static R_INLINE void 
+SET_C99_COMPLEX(Rcomplex *x, int i, double complex value)
+{
+    Rcomplex *ans = x+i;
+    ans->r = creal(value);
+    ans->i = cimag(value);
+}
 
 SEXP attribute_hidden complex_unary(ARITHOP_TYPE code, SEXP s1, SEXP call)
 {
     int i, n;
-#ifndef HAVE_C99_COMPLEX
-    Rcomplex x;
-#endif
     SEXP ans;
 
     switch(code) {
     case PLUSOP:
 	return s1;
     case MINUSOP:
-
 	ans = duplicate(s1);
 	n = LENGTH(s1);
 	for (i = 0; i < n; i++) {
-#ifdef HAVE_C99_COMPLEX
-	    C99_COMPLEX(ans)[i] = - C99_COMPLEX(s1)[i];
-#else
-	    x = COMPLEX(s1)[i];
+	    Rcomplex x = COMPLEX(s1)[i];
 	    COMPLEX(ans)[i].r = -x.r;
 	    COMPLEX(ans)[i].i = -x.i;
-#endif
 	}
 	return ans;
     default:
@@ -81,192 +115,64 @@ SEXP attribute_hidden complex_unary(ARITHOP_TYPE code, SEXP s1, SEXP call)
     return R_NilValue; /* -Wall */
 }
 
-#ifndef HAVE_C99_COMPLEX
-/* c := a / b --- where c may overwrite 'b' but not 'a' */
-static void complex_div(Rcomplex *c, Rcomplex *a, Rcomplex *b)
+static R_INLINE double complex R_cpow_n(double complex X, int k)
 {
-    double ratio, den;
-    double abr, abi;
-
-    if( (abr = b->r) < 0)
-	abr = - abr;
-    if( (abi = b->i) < 0)
-	abi = - abi;
-    if( abr <= abi ) {
-	ratio = b->r / b->i ;
-	den = b->i * (1 + ratio*ratio);
-	c->r = (a->r*ratio + a->i) / den;
-	c->i = (a->i*ratio - a->r) / den;
-    }
-    else {
-	ratio = b->i / b->r ;
-	den = b->r * (1 + ratio*ratio);
-	c->r = (a->r + a->i*ratio) / den;
-	c->i = (a->i - a->r*ratio) / den;
-    }
-}
-#endif
-
-#ifndef HAVE_C99_COMPLEX
-
-static void R_cpow_n(Rcomplex *r, Rcomplex *x, int k) {
-    if(k == 0) {
-	r->r = 1.;
-	r->i = 0.;
-    } else if(k < 0) {
-	Rcomplex h;
-	R_cpow_n(r, x, -k);
-	/* r := 1/r : */
-	h.r = 1.; h.i = 0;
-	complex_div(r, &h, r);
-    }
+    if(k == 0) return (double complex) 1.;
+    else if(k == 1) return X;
+    else if(k < 0) return 1. / R_cpow_n(X, -k);
     else {/* k > 0 */
-	Rcomplex X;
-	r->r = X.r = x->r;
-	r->i = X.i = x->i;
-	k--;
+	double complex z = (double complex) 1.;;
 	while (k > 0) {
-	    double rr;
-	    if (k & 1) { /* r := r * X */
-		rr   = r->r * X.r - r->i * X.i;
-		r->i = r->r * X.i + r->i * X.r;
-		r->r = rr;
-	    }
-	    if(k == 1)
-		break;
+	    if (k & 1) z = z * X;
+	    if (k == 1) break;
 	    k >>= 1; /* efficient division by 2; now have k >= 1 */
-
-	    /* X := X * X : */
-	    rr	= (X.r - X.i) * (X.r + X.i); /* = X.r * X.r - X.i * X.i */
-	    X.i = 2 * X.r * X.i;	     /* = X.r * X.i + X.i * X.r */
-	    X.r = rr;
-	}
-	return;
-    }
-}
-
-static void complex_pow(Rcomplex *r, Rcomplex *a, Rcomplex *b)
-{
-/* r := a^b */
-    double logr, logi, x, y;
-    int ib;
-
-    if(b->i == 0.) {		/* ^ "real" : be fast (and more accurate)*/
-	if(b->r == 1.) {	/* a^1 */
-	    r->r = a->r; r->i = a->i; return;
-	}
-	if(a->i == 0. && a->r >= 0.) {
-	    r->r = R_pow(a->r, b->r); r->i = 0.; return;
-	}
-	if(b->r == (ib = (int)b->r)) { /* z ^ k  (k integer) */
-	    if(a->r == 0.) {/* (|a|*i)^b */
-		x = R_pow_di(a->i, ib);
-		if(ib % 2) {	/* ib is odd ==> imaginary r */
-		    r->r = 0.;
-		    r->i = ((ib>0 && ib %4 == 3)||(ib<0 && (-ib)%4 == 1))? -x : x;
-		} else {	/* even exponent b : real r */
-		    r->r = (ib %4)? -x : x; r->i = 0.;
-		}
-	    } else {
-		R_cpow_n(r, a, ib);
-	    }
-	    return;
-	}
-    }
-    logr = log(hypot(a->r, a->i) );
-    logi = atan2(a->i, a->r);
-    x = exp( logr * b->r - logi * b->i );
-    y = logr * b->i + logi * b->r;
-    r->r = x * cos(y);
-    r->i = x * sin(y);
-}
-
-#else /* HAVE_C99_COMPLEX */
-
-
-static double complex R_cpow_n(double complex X, int k) {
-    if(k == 0)
-	return (double complex) 1.;
-    else if(k < 0)
-	return 1. / R_cpow_n(X, -k);
-    else {/* k > 0 */
-	double complex z = X;
-	k--;
-	while (k > 0) {
-	    if (k & 1)
-		z = z * X;
-	    if(k == 1)
-		break;
-	    k >>= 1; /* efficient division by 2; now have k >= 1 */
-	    /* x := x * x */
 	    X = X * X;
 	}
 	return z;
     }
 }
 
-#ifdef Win32
-/* Need this because the system one is explicitly linked
-   against MSVCRT's pow, and gets (0+0i)^Y as 0+0i for all Y */
-static double complex mycpow (double complex X, double complex Y)
-{
-    double complex Res; int k;
-    if (X == 0.0) {
-	if(cimag(Y) == 0.0){
-	    __real__ Res = R_pow(0.0, __real__ Y);
-	    __imag__ Res = 0.0;
-	} else {
-	    __real__ Res = R_NaN;
-	    __imag__ Res = R_NaN;
-	}
-    } else if (__imag__ Y == 0.0 && __real__ Y == (k = (int)__real__ Y)
-	       && abs(k) <= 65536) {
-	return R_cpow_n(X, k);
-    } else {
-	double rho, r,i, theta;
-	r = hypot (__real__ X, __imag__ X);
-	i = carg (X);
-	theta = i * __real__ Y;
-
-	if (__imag__ Y == 0.0)
-	    rho = pow (r, __real__ Y);
-	else {
-	    r = log (r);
-	    /* rearrangement of cexp(X * clog(Y)) */
-	    theta += r * __imag__ Y;
-	    rho = exp (r * __real__ Y - i * __imag__ Y);
-	}
-	__real__ Res = rho * cos (theta);
-	__imag__ Res = rho * sin (theta);
-    }
-    return  Res;
-}
-#else /* not Win32 */
 /* reason for this:
- * 1) glibc gets (0+0i)^y = Inf+NaNi for y < 0
- * 2)   X ^ n  (e.g. for n = 2, 3)  is unnecessarily inaccurate;
- *	cut-off 65536 : guided from empirical speed measurements
-*/
+  1) glibc gets (0+0i)^y = Inf+NaNi for y < 0
+     [FIXME: But is that not actually correct?: 1/(0+0i) == Inf+NaNi]
+
+  2)   X^n  (e.g. for n = +/- 2, 3) is unnecessarily inaccurate in glibc;
+       cut-off 65536 : guided from empirical speed measurements
+
+  3) On Windows the system cpow is explicitly linked against the 
+     (slow) MinGW pow, and gets (0+0i)^Y as 0+0i for all Y.
+ */
 
 static double complex mycpow (double complex X, double complex Y)
 {
-    double iY = cimag(Y);
-    if (iY == 0.0) {/* X ^ <real> */
-	double complex Z; int k;
-	if (X == 0.0) {
-	    Z = R_pow(0., creal(Y));
-	} else if(creal(Y) == (k = (int)creal(Y)) && abs(k) <= 65536) {
-	    Z = R_cpow_n(X, k);
-	} else {
-	    Z = cpow(X, Y);
-	}
-	return Z;
+    double complex Z, yr = creal(Y), yi = cimag(Y); int k;
+    if (X == 0.0) {
+	if(yi == 0.0) Z = R_pow(0.0, creal(Y));
+	else Z = R_NaN + R_NaN*I;
+    } else if (yi == 0.0 && yr == (k = (int) yr) && abs(k) <= 65536) {
+	Z = R_cpow_n(X, k);
     } else
-	return cpow(X, Y);
-}
+#if defined(HAVE_CPOW) && !defined(Win32)
+	Z = cpow(X, Y);
+#else
+    {
+	double rho, r, i, theta;
+	r = hypot(creal(X), cimag(X));
+	i = atan2(cimag(X), creal(X));
+	theta = i * yr;
+	if (yi == 0.0)
+	    rho = pow(r, yr);
+	else {
+	    /* rearrangement of cexp(X * clog(Y)) */
+	    r = log(r);
+	    theta += r * yi;
+	    rho = exp(r * yr - i * yi);
+	}
+	Z = rho * cos (theta) + (rho * sin (theta)) * I;
+    }
 #endif
-
-#endif /* HAVE_C99_COMPLEX */
+    return Z;
+}
 
 /* See arithmetic.c */
 #define mod_iterate(n1,n2,i1,i2) for (i=i1=i2=0; i<n; \
@@ -277,12 +183,9 @@ static double complex mycpow (double complex X, double complex Y)
 SEXP attribute_hidden complex_binary(ARITHOP_TYPE code, SEXP s1, SEXP s2)
 {
     int i,i1, i2, n, n1, n2;
-#ifndef HAVE_C99_COMPLEX
-    Rcomplex x1, x2;
-#endif
     SEXP ans;
 
-    /* Note: "s1" and "s1" are protected in the calling code. */
+    /* Note: "s1" and "s2" are protected in the calling code. */
     n1 = LENGTH(s1);
     n2 = LENGTH(s2);
      /* S4-compatibility change: if n1 or n2 is 0, result is of length 0 */
@@ -308,61 +211,34 @@ SEXP attribute_hidden complex_binary(ARITHOP_TYPE code, SEXP s1, SEXP s2)
     switch (code) {
     case PLUSOP:
 	mod_iterate(n1, n2, i1, i2) {
-#ifdef HAVE_C99_COMPLEX
-	    C99_COMPLEX(ans)[i] = C99_COMPLEX(s1)[i1] + C99_COMPLEX(s2)[i2];
-#else
-	    x1 = COMPLEX(s1)[i1];
-	    x2 = COMPLEX(s2)[i2];
+	    Rcomplex x1 = COMPLEX(s1)[i1], x2 = COMPLEX(s2)[i2];
 	    COMPLEX(ans)[i].r = x1.r + x2.r;
 	    COMPLEX(ans)[i].i = x1.i + x2.i;
-#endif
 	}
 	break;
     case MINUSOP:
 	mod_iterate(n1, n2, i1, i2) {
-#ifdef HAVE_C99_COMPLEX
-	    C99_COMPLEX(ans)[i] = C99_COMPLEX(s1)[i1] - C99_COMPLEX(s2)[i2];
-#else
-	    x1 = COMPLEX(s1)[i1];
-	    x2 = COMPLEX(s2)[i2];
+	    Rcomplex x1 = COMPLEX(s1)[i1], x2 = COMPLEX(s2)[i2];
 	    COMPLEX(ans)[i].r = x1.r - x2.r;
 	    COMPLEX(ans)[i].i = x1.i - x2.i;
-#endif
 	}
 	break;
     case TIMESOP:
 	mod_iterate(n1, n2, i1, i2) {
-#ifdef HAVE_C99_COMPLEX
-	    C99_COMPLEX(ans)[i] = C99_COMPLEX(s1)[i1] * C99_COMPLEX(s2)[i2];
-#else
-	    x1 = COMPLEX(s1)[i1];
-	    x2 = COMPLEX(s2)[i2];
-	    COMPLEX(ans)[i].r = x1.r * x2.r - x1.i * x2.i;
-	    COMPLEX(ans)[i].i = x1.r * x2.i + x1.i * x2.r;
-#endif
+	    SET_C99_COMPLEX(COMPLEX(ans), i,
+			    C99_COMPLEX2(s1, i1) * C99_COMPLEX2(s2, i2));
 	}
 	break;
     case DIVOP:
 	mod_iterate(n1, n2, i1, i2) {
-#ifdef HAVE_C99_COMPLEX
-	    C99_COMPLEX(ans)[i] = C99_COMPLEX(s1)[i1] / C99_COMPLEX(s2)[i2];
-#else
-	    x1 = COMPLEX(s1)[i1];
-	    x2 = COMPLEX(s2)[i2];
-	    complex_div(&COMPLEX(ans)[i], &x1, &x2);
-#endif
+	    SET_C99_COMPLEX(COMPLEX(ans), i,
+			    C99_COMPLEX2(s1, i1) / C99_COMPLEX2(s2, i2));
 	}
 	break;
     case POWOP:
 	mod_iterate(n1, n2, i1, i2) {
-#ifdef HAVE_C99_COMPLEX
-	    C99_COMPLEX(ans)[i] =
-		mycpow(C99_COMPLEX(s1)[i1], C99_COMPLEX(s2)[i2]);
-#else
-	    x1 = COMPLEX(s1)[i1];
-	    x2 = COMPLEX(s2)[i2];
-	    complex_pow(&COMPLEX(ans)[i], &x1, &x2);
-#endif
+	    SET_C99_COMPLEX(COMPLEX(ans), i,
+			    mycpow(C99_COMPLEX2(s1, i1), C99_COMPLEX2(s2, i2)));
 	}
 	break;
     default:
@@ -379,8 +255,7 @@ SEXP attribute_hidden complex_binary(ARITHOP_TYPE code, SEXP s1, SEXP s2)
     else if (n1 == n2) {
 	copyMostAttrib(s2, ans);
 	copyMostAttrib(s1, ans);
-    }
-    else
+    } else
 	copyMostAttrib(s2, ans);
     return ans;
 }
@@ -401,27 +276,19 @@ SEXP attribute_hidden do_cmathfuns(SEXP call, SEXP op, SEXP args, SEXP env)
 	case 1:	/* Re */
 	    y = allocVector(REALSXP, n);
 	    for(i = 0 ; i < n ; i++)
-#ifdef HAVE_C99_COMPLEX
-		REAL(y)[i] = creal(C99_COMPLEX(x)[i]);
-#else
 		REAL(y)[i] = COMPLEX(x)[i].r;
-#endif
 	    break;
 	case 2:	/* Im */
 	    y = allocVector(REALSXP, n);
 	    for(i = 0 ; i < n ; i++)
-#ifdef HAVE_C99_COMPLEX
-		REAL(y)[i] = cimag(C99_COMPLEX(x)[i]);
-#else
 		REAL(y)[i] = COMPLEX(x)[i].i;
-#endif
 	    break;
 	case 3:	/* Mod */
 	case 6:	/* abs */
 	    y = allocVector(REALSXP, n);
 	    for(i = 0 ; i < n ; i++)
-#ifdef HAVE_C99_COMPLEX
-		REAL(y)[i] = cabs(C99_COMPLEX(x)[i]);
+#if HAVE_CABS
+		REAL(y)[i] = cabs(C99_COMPLEX2(x, i));
 #else
 		REAL(y)[i] = hypot(COMPLEX(x)[i].r, COMPLEX(x)[i].i);
 #endif
@@ -429,8 +296,8 @@ SEXP attribute_hidden do_cmathfuns(SEXP call, SEXP op, SEXP args, SEXP env)
 	case 4:	/* Arg */
 	    y = allocVector(REALSXP, n);
 	    for(i = 0 ; i < n ; i++)
-#ifdef HAVE_C99_COMPLEX
-		REAL(y)[i] = carg(C99_COMPLEX(x)[i]);
+#if HAVE_CARG
+		REAL(y)[i] = carg(C99_COMPLEX2(x, i));
 #else
 		REAL(y)[i] = atan2(COMPLEX(x)[i].i, COMPLEX(x)[i].r);
 #endif
@@ -438,12 +305,8 @@ SEXP attribute_hidden do_cmathfuns(SEXP call, SEXP op, SEXP args, SEXP env)
 	case 5:	/* Conj */
 	    y = allocVector(CPLXSXP, n);
 	    for(i = 0 ; i < n ; i++) {
-#ifdef HAVE_C99_COMPLEX
-		C99_COMPLEX(y)[i] = conj(C99_COMPLEX(x)[i]);
-#else
 		COMPLEX(y)[i].r = COMPLEX(x)[i].r;
 		COMPLEX(y)[i].i = -COMPLEX(x)[i].i;
-#endif
 	    }
 	    break;
 	}
@@ -490,12 +353,7 @@ SEXP attribute_hidden do_cmathfuns(SEXP call, SEXP op, SEXP args, SEXP env)
     return y;
 }
 
-static void z_rround(Rcomplex *r, Rcomplex *x, Rcomplex *p)
-{
-    r->r = rround(x->r, p->r); /* #defined to fround in Rmath.h */
-    r->i = rround(x->i, p->r);
-}
-
+/* used in format.c and printutils.c */
 #define MAX_DIGITS 22
 void attribute_hidden z_prec_r(Rcomplex *r, Rcomplex *x, double digits)
 {
@@ -517,377 +375,226 @@ void attribute_hidden z_prec_r(Rcomplex *r, Rcomplex *x, double digits)
     if (dig > 306) {
 	double pow10 = 1.0e4;
 	digits = (double)(dig - 4);
-	r->r = rround(pow10 * x->r, digits)/pow10;
-	r->i = rround(pow10 * x->i, digits)/pow10;
+	r->r = fround(pow10 * x->r, digits)/pow10;
+	r->i = fround(pow10 * x->i, digits)/pow10;
     } else {
 	digits = (double)(dig);
-	r->r = rround(x->r, digits);
-	r->i = rround(x->i, digits);
+	r->r = fround(x->r, digits);
+	r->i = fround(x->i, digits);
     }
 }
-static void z_prec(Rcomplex *r, Rcomplex *x, Rcomplex *p)
-{
-    z_prec_r(r, x, p->r);
-}
 
-#ifdef HAVE_C99_COMPLEX
-static void z_log(double complex *r, double complex *z)
-{
-    *r = clog(*z);
-}
+/* These substitute functions are rarely used, and not extensively
+   tested, e.g. over CRAN.  Please do not change without very good
+   reason!
 
-static void z_logbase(double complex *r, double complex *z,
-		      double complex *base)
-{
-    *r = clog(*z)/clog(*base);
-}
+   Currently (Feb 2011) they are used on FreeBSD.
+*/
 
-static void z_exp(double complex *r, double complex *z)
+#ifndef HAVE_CLOG
+#define clog R_clog
+/* FIXME: maybe add full IEC60559 support */
+static double complex clog(double complex x)
 {
-    *r = cexp(*z);
-}
-
-static void z_sqrt(double complex *r, double complex *z)
-{
-    *r = csqrt(*z);
-}
-#else
-static void z_log(Rcomplex *r, Rcomplex *z)
-{
-    r->i = atan2(z->i, z->r);
-    r->r = log(hypot( z->r, z->i ));
-}
-
-static void z_logbase(Rcomplex *r, Rcomplex *z, Rcomplex *base)
-{
-    Rcomplex t1, t2;
-    z_log(&t1, z);
-    z_log(&t2, base);
-    complex_div(r, &t1, &t2);
-}
-
-static void z_exp(Rcomplex *r, Rcomplex *z)
-{
-    double expx;
-    expx = exp(z->r);
-    r->r = expx * cos(z->i);
-    r->i = expx * sin(z->i);
-}
-
-static void z_sqrt(Rcomplex *r, Rcomplex *z)
-{
-    double mag;
-
-    if( (mag = hypot(z->r, z->i)) == 0.0)
-	r->r = r->i = 0.0;
-    else if(z->r > 0) {
-	r->r = sqrt(0.5 * (mag + z->r) );
-	r->i = z->i / r->r / 2;
-    }
-    else {
-	r->i = sqrt(0.5 * (mag - z->r) );
-	if(z->i < 0)
-	    r->i = - r->i;
-	r->r = z->i / r->i / 2;
-    }
+    double xr = creal(x), xi = cimag(x);
+    return log(hypot(xr, xi)) + atan2(xi, xr)*I;
 }
 #endif
 
-#ifdef HAVE_C99_COMPLEX
-static void z_cos(double complex *r, double complex *z)
+#ifndef HAVE_CSQRT
+#define csqrt R_csqrt
+/* FreeBSD does have this one */
+static double complex csqrt(double complex x)
 {
-    *r = ccos(*z);
+    return mycpow(x, 0.5+0.0*I);
 }
+#endif
 
-static void z_sin(double complex *r, double complex *z)
+#ifndef HAVE_CEXP
+#define cexp R_cexp
+/* FIXME: check/add full IEC60559 support */
+static double complex cexp(double complex x)
 {
-    *r = csin(*z);
+    double expx = exp(creal(x)), y = cimag(x);
+    return expx * cos(y) + (expx * sin(y)) * I;
 }
+#endif
 
-static void z_tan(double complex *r, double complex *z)
+#ifndef HAVE_CCOS
+#define ccos R_ccos
+static double complex ccos(double complex x)
 {
-    double y = cimag(*z);
-    *r = ctan(*z);
+    double xr = creal(x), xi = cimag(x);
+    return cos(xr)*cosh(xi) - sin(xr)*sinh(xi)*I; /* A&S 4.3.56 */
+}
+#endif
+
+#ifndef HAVE_CSIN
+#define csin R_csin
+static double complex csin(double complex x)
+{
+    double xr = creal(x), xi = cimag(x);
+    return sin(xr)*cosh(xi) + cos(xr)*sinh(xi)*I; /* A&S 4.3.55 */
+}
+#endif
+
+#ifndef HAVE_CTAN
+#define ctan R_ctan
+static double complex ctan(double complex z)
+{
+    /* A&S 4.3.57 */
+    double x2, y2, den, ri;
+    x2 = 2.0 * creal(z);
+    y2 = 2.0 * cimag(z);
+    den = cos(x2) + cosh(y2);
+    /* any threshold between -log(DBL_EPSILON) and log(DBL_XMAX) will do*/
+    if (ISNAN(y2) || fabs(y2) < 50.0) ri = sinh(y2)/den;
+    else ri = (y2 < 0 ? -1.0 : 1.0);
+    return sin(x2)/den + ri * I;
+}
+#endif
+
+#ifndef HAVE_CASIN
+#define casin R_casin
+static double complex casin(double complex z)
+{
+    /* A&S 4.4.37 */
+    double alpha, t1, t2, x = creal(z), y = cimag(z), ri;
+    t1 = 0.5 * hypot(x + 1, y);
+    t2 = 0.5 * hypot(x - 1, y);
+    alpha = t1 + t2;
+    ri = log(alpha + sqrt(alpha*alpha - 1));
+    /* This comes from 
+       'z_asin() is continuous from below if x >= 1
+        and continuous from above if x <= -1.'
+    */
+    if(y < 0 || (y == 0 && x > 1)) ri *= -1;
+    return asin(t1  - t2) + ri*I;
+}
+#endif
+
+#ifndef HAVE_CACOS
+#define cacos R_cacos
+static double complex cacos(double complex z)
+{
+    return M_PI_2 - casin(z);
+}
+#endif
+
+#ifndef HAVE_CATAN
+#define catan R_catan
+static double complex catan(double complex z)
+{
+    double x = creal(z), y = cimag(z), rr, ri;
+    rr = 0.5 * atan2(2 * x, (1 - x * x - y * y));
+    ri = 0.25 * log((x * x + (y + 1) * (y + 1)) /
+		    (x * x + (y - 1) * (y - 1)));
+    return rr + ri*I;
+}
+#endif
+
+#ifndef HAVE_CCOSH
+#define ccosh R_ccosh
+static double complex ccosh(double complex z)
+{
+    return ccos(z * I); /* A&S 4.5.8 */
+}
+#endif
+
+#ifndef HAVE_CSINH
+#define csinh R_csinh
+static double complex csinh(double complex z)
+{
+    return -I * csin(z * I); /* A&S 4.5.7 */
+}
+#endif
+
+#ifndef HAVE_CTANH
+#define ctanh R_ctanh
+static double complex ctanh(double complex z)
+{
+    return -I * ctan(z * I); /* A&S 4.5.9 */
+}
+#endif
+
+static double complex z_tan(double complex z)
+{
+    double y = cimag(z);
+    double complex r = ctan(z);
     if(R_FINITE(y) && fabs(y) > 25.0) {
 	/* at this point the real part is nearly zero, and the
-	   imaginary part is one: but some OSes get the imag wrong */
+	   imaginary part is one: but some OSes get the imag as NaN */
 #if __GNUC__
-	__imag__ *r = y < 0 ? -1.0 : 1.0;
+	__imag__ r = y < 0 ? -1.0 : 1.0;
 #else
-	*r = creal(*r) + (y < 0 ? -1.0 : 1.0) * I;
+	r = creal(r) + (y < 0 ? -1.0 : 1.0) * I;
 #endif
     }
+    return r;
 }
 
-static void z_atan2(double complex *r, double complex *csn,
-		    double complex *ccs)
+/* Don't rely on the OS at the branch cuts */
+
+static double complex z_asin(double complex z)
 {
-    if (*ccs == 0) {
-	if(*csn == 0) {
-#if __GNUC__
-	    __real__ *r = NA_REAL;
-	    __imag__ *r = NA_REAL;
-#else
-	    *r = NA_REAL + NA_REAL * I;
-#endif
-	} else
-	    *r = fsign_int(M_PI_2, creal(*csn));
-    } else {
-	*r = catan(*csn / *ccs);
-	if(creal(*ccs) < 0) *r += M_PI;
-	if(creal(*r) > M_PI) *r -= 2 * M_PI;
+    if(cimag(z) == 0 && fabs(creal(z)) > 1) {
+	double alpha, t1, t2, x = creal(z), ri;
+	t1 = 0.5 * fabs(x + 1);
+	t2 = 0.5 * fabs(x - 1);
+	alpha = t1 + t2;
+	ri = log(alpha + sqrt(alpha*alpha - 1));
+	if(x > 1) ri *= -1;
+	return asin(t1  - t2) + ri*I;
     }
+    return casin(z);
 }
 
-static void z_asin(double complex *r, double complex *z)
+static double complex z_acos(double complex z)
 {
-#ifdef Win32
-    /* broken for cabs(*z) >= 1 */
-    double alpha, t1, t2, x = __real__ *z, y = __imag__ *z;
-    t1 = 0.5 * hypot(x + 1, y);
-    t2 = 0.5 * hypot(x - 1, y);
-    alpha = t1 + t2;
-    __real__ *r = asin(t1 - t2);
-    __imag__ *r = log(alpha + sqrt(alpha*alpha - 1));
-    if(y < 0 || (y == 0 && x > 1)) __imag__ *r *= -1;
-#else
-    *r = casin(*z);
-#endif
+    if(cimag(z) == 0 && fabs(creal(z)) > 1) return M_PI_2 - z_asin(z);
+    return cacos(z);
 }
 
-static void z_acos(double complex *r, double complex *z)
+static double complex z_atan(double complex z)
 {
-#ifdef Win32
-    /* broken for cabs(*z) >= 1 */
-    double complex Asin;
-    z_asin(&Asin, z);
-    *r = M_PI_2 - Asin;
-#else
-    *r = cacos(*z);
-#endif
-}
-
-static void z_atan(double complex *r, double complex *z)
-{
-    *r = catan(*z);
-}
-
-static void z_acosh(double complex *r, double complex *z)
-{
-#ifdef Win32
-    /* workaround for PR#9403 */
-    if(__imag__ *z == 0.0) {
-	__real__ *r = acosh(__real__ *z);
-	__imag__ *r = 0.0;
-    } else
-#endif
-    *r = cacosh(*z);
-}
-
-static void z_asinh(double complex *r, double complex *z)
-{
-    *r = casinh(*z);
-}
-
-static void z_atanh(double complex *r, double complex *z)
-{
-    *r = catanh(*z);
-}
-
-static void z_cosh(double complex *r, double complex *z)
-{
-    *r = ccosh(*z);
-}
-
-static void z_sinh(double complex *r, double complex *z)
-{
-    *r = csinh(*z);
-}
-
-static void z_tanh(double complex *r, double complex *z)
-{
-    *r = ctanh(*z);
-}
-
-#else /* not HAVE_C99_COMPLEX */
-
-static void z_cos(Rcomplex *r, Rcomplex *z)
-{
-    r->r = cos(z->r) * cosh(z->i);
-    r->i = - sin(z->r) * sinh(z->i);
-}
-
-static void z_sin(Rcomplex *r, Rcomplex *z)
-{
-    r->r = sin(z->r) * cosh(z->i);
-    r->i = cos(z->r) * sinh(z->i);
-}
-
-static void z_tan(Rcomplex *r, Rcomplex *z)
-{
-    double x2, y2, den;
-    x2 = 2.0 * z->r;
-    y2 = 2.0 * z->i;
-    den = cos(x2) + cosh(y2);
-    r->r = sin(x2)/den;
-    /* any threshold between -log(DBL_EPSILON)
-       and log(DBL_XMAX) will do*/
-    if (ISNAN(y2) || fabs(y2) < 50.0)
-	r->i = sinh(y2)/den;
-    else
-	r->i = (y2 <0 ? -1.0 : 1.0);
-}
-
-	/* Complex Arcsin and Arccos Functions */
-	/* Equation (4.4.37) Abramowitz and Stegun */
-	/* with additional terms to force the branch */
-	/* to agree with figure 4.4, p79.  Continuity */
-	/* on the branch cuts (real axis; y==0, |x| > 1) is */
-	/* standard: z_asin() is continuous from below if x >= 1 */
-	/* and continuous from above if x <= -1. */
-
-static void z_asin(Rcomplex *r, Rcomplex *z)
-{
-    double alpha, bet, t1, t2, x, y;
-    x = z->r;
-    y = z->i;
-    t1 = 0.5 * hypot(x + 1, y);
-    t2 = 0.5 * hypot(x - 1, y);
-    alpha = t1 + t2;
-    bet = t1 - t2;
-    r->r = asin(bet);
-    r->i = log(alpha + sqrt(alpha*alpha - 1));
-    if(y < 0 || (y == 0 && x > 1)) r->i *= -1;
-}
-
-static void z_acos(Rcomplex *r, Rcomplex *z)
-{
-    Rcomplex Asin;
-    z_asin(&Asin, z);
-    r->r = M_PI_2 - Asin.r;
-    r->i = - Asin.i;
-}
-
-	/* Complex Arctangent Function */
-	/* Equation (4.4.39) Abramowitz and Stegun */
-	/* with additional terms to force the branch cuts */
-	/* to agree with figure 4.4, p79.  Continuity */
-	/* on the branch cuts (pure imaginary axis; x==0, |y|>1) */
-	/* is standard: z_asin() is continuous from the right */
-	/* if y >= 1, and continuous from the left if y <= -1.	*/
-
-static void z_atan(Rcomplex *r, Rcomplex *z)
-{
-    double x, y, den;
-    x = z->r;
-    y = z->i;
-    /* Fix for, e.g. atan(1i) */
-    den = 1 - x * x - y * y;
-    r->r = den == 0.0 ? 0.0 : 0.5 * atan(2 * x / den);
-    r->i = 0.25 * log((x * x + (y + 1) * (y + 1)) /
-		      (x * x + (y - 1) * (y - 1)));
-    if(x*x + y*y > 1) {
-	r->r += M_PI_2;
-	if(x < 0 || (x == 0 && y < 0)) r->r -= M_PI;
+    if(creal(z) == 0 && fabs(cimag(z)) > 1) {
+	double y = cimag(z), rr, ri;
+	rr = (y > 0) ? M_PI_2 : -M_PI_2;
+	ri = 0.25 * log(((y + 1) * (y + 1))/((y - 1) * (y - 1)));
+	return rr + ri*I;
     }
+    return catan(z);
 }
 
-static void z_atan2(Rcomplex *r, Rcomplex *csn, Rcomplex *ccs)
+static double complex z_acosh(double complex z)
 {
-    Rcomplex tmp;
-    if (ccs->r == 0 && ccs->i == 0) {
-	if(csn->r == 0 && csn->i == 0) {
-	    r->r = NA_REAL;
-	    r->i = NA_REAL;
-	}
-	else {
-	    r->r = fsign_int(M_PI_2, csn->r);
-	    r->i = 0;
-	}
-    }
-    else {
-	complex_div(&tmp, csn, ccs);
-	z_atan(r, &tmp);
-	if(ccs->r < 0) r->r += M_PI;
-	if(r->r > M_PI) r->r -= 2 * M_PI;
-    }
+    return z_acos(z) * I;
 }
 
-static void z_acosh(Rcomplex *r, Rcomplex *z)
+static double complex z_asinh(double complex z)
 {
-    Rcomplex a;
-    z_acos(&a, z);
-    r->r = -a.i;
-    r->i = a.r;
+    return -I * z_asin(z * I);
 }
 
-static void z_asinh(Rcomplex *r, Rcomplex *z)
+static double complex z_atanh(double complex z)
 {
-    Rcomplex a, b;
-    b.r = -z->i;
-    b.i =  z->r;
-    z_asin(&a, &b);
-    r->r =  a.i;
-    r->i = -a.r;
+    return -I * z_atan(z * I);
 }
 
-static void z_atanh(Rcomplex *r, Rcomplex *z)
-{
-    Rcomplex a, b;
-    b.r = -z->i;
-    b.i =  z->r;
-    z_atan(&a, &b);
-    r->r =  a.i;
-    r->i = -a.r;
-}
-
-static void z_cosh(Rcomplex *r, Rcomplex *z)
-{
-    Rcomplex a;
-    a.r = -z->i;
-    a.i =  z->r;
-    z_cos(r, &a);
-}
-
-static void z_sinh(Rcomplex *r, Rcomplex *z)
-{
-    Rcomplex a, b;
-    b.r = -z->i;
-    b.i =  z->r;
-    z_sin(&a, &b);
-    r->r =  a.i;
-    r->i = -a.r;
-}
-
-static void z_tanh(Rcomplex *r, Rcomplex *z)
-{
-    Rcomplex a, b;
-    b.r = -z->i;
-    b.i =  z->r;
-    z_tan(&a, &b);
-    r->r =  a.i;
-    r->i = -a.r;
-}
-#endif
-
-/* If we use a prototype here we have to distinguish Rcomplex and
-   double complex cases */
-static Rboolean cmath1(void (*f)(),
+static Rboolean cmath1(double complex (*f)(double complex),
 		       Rcomplex *x, Rcomplex *y, int n)
 {
     int i;
     Rboolean naflag = FALSE;
     for (i = 0 ; i < n ; i++) {
 	if (ISNA(x[i].r) || ISNA(x[i].i)) {
-	    y[i].r = NA_REAL;
-	    y[i].i = NA_REAL;
-	}
-	else {
-	    f(&y[i], &x[i]);
+	    y[i].r = NA_REAL; y[i].i = NA_REAL;
+	} else {
+	    SET_C99_COMPLEX(y, i, f(toC99(x + i)));
+	    if (ISNAN(y[i].r) || ISNAN(y[i].i)) naflag = TRUE;
 	}
     }
-
-    return(naflag);
+    return naflag;
 }
 
 SEXP attribute_hidden complex_math1(SEXP call, SEXP op, SEXP args, SEXP env)
@@ -895,35 +602,27 @@ SEXP attribute_hidden complex_math1(SEXP call, SEXP op, SEXP args, SEXP env)
     SEXP x, y;
     int n;
     Rboolean naflag = FALSE;
+
     PROTECT(x = CAR(args));
     n = length(x);
     PROTECT(y = allocVector(CPLXSXP, n));
 
     switch (PRIMVAL(op)) {
-    case 10003: naflag = cmath1(z_log, COMPLEX(x), COMPLEX(y), n); break;
-
-    case 3: naflag = cmath1(z_sqrt, COMPLEX(x), COMPLEX(y), n); break;
-
-    case 10: naflag = cmath1(z_exp, COMPLEX(x), COMPLEX(y), n); break;
-
-    case 20: naflag = cmath1(z_cos, COMPLEX(x), COMPLEX(y), n); break;
-    case 21: naflag = cmath1(z_sin, COMPLEX(x), COMPLEX(y), n); break;
+    case 10003: naflag = cmath1(clog, COMPLEX(x), COMPLEX(y), n); break;
+    case 3: naflag = cmath1(csqrt, COMPLEX(x), COMPLEX(y), n); break;
+    case 10: naflag = cmath1(cexp, COMPLEX(x), COMPLEX(y), n); break;
+    case 20: naflag = cmath1(ccos, COMPLEX(x), COMPLEX(y), n); break;
+    case 21: naflag = cmath1(csin, COMPLEX(x), COMPLEX(y), n); break;
     case 22: naflag = cmath1(z_tan, COMPLEX(x), COMPLEX(y), n); break;
     case 23: naflag = cmath1(z_acos, COMPLEX(x), COMPLEX(y), n); break;
     case 24: naflag = cmath1(z_asin, COMPLEX(x), COMPLEX(y), n); break;
     case 25: naflag = cmath1(z_atan, COMPLEX(x), COMPLEX(y), n); break;
-
-    case 30: naflag = cmath1(z_cosh, COMPLEX(x), COMPLEX(y), n); break;
-    case 31: naflag = cmath1(z_sinh, COMPLEX(x), COMPLEX(y), n); break;
-    case 32: naflag = cmath1(z_tanh, COMPLEX(x), COMPLEX(y), n); break;
+    case 30: naflag = cmath1(ccosh, COMPLEX(x), COMPLEX(y), n); break;
+    case 31: naflag = cmath1(csinh, COMPLEX(x), COMPLEX(y), n); break;
+    case 32: naflag = cmath1(ctanh, COMPLEX(x), COMPLEX(y), n); break;
     case 33: naflag = cmath1(z_acosh, COMPLEX(x), COMPLEX(y), n); break;
     case 34: naflag = cmath1(z_asinh, COMPLEX(x), COMPLEX(y), n); break;
     case 35: naflag = cmath1(z_atanh, COMPLEX(x), COMPLEX(y), n); break;
-
-#ifdef NOTYET
-	MATH1(40, lgammafn);
-	MATH1(41, gammafn);
-#endif
 
     default:
 	/* such as sign, gamma */
@@ -936,73 +635,96 @@ SEXP attribute_hidden complex_math1(SEXP call, SEXP op, SEXP args, SEXP env)
     return y;
 }
 
-/* FIXME : Use the trick in arithmetic.c to eliminate "modulo" ops */
+static void z_rround(Rcomplex *r, Rcomplex *x, Rcomplex *p)
+{
+    r->r = fround(x->r, p->r);
+    r->i = fround(x->i, p->r);
+}
 
-/* If we use a prototype here we have to distinguish Rcomplex and
-   double complex cases */
-static SEXP cmath2(SEXP op, SEXP sa, SEXP sb, void (*f)())
+static void z_prec(Rcomplex *r, Rcomplex *x, Rcomplex *p)
+{
+    z_prec_r(r, x, p->r);
+}
+
+static void z_logbase(Rcomplex *r, Rcomplex *z, Rcomplex *base)
+{
+    double complex dz = toC99(z), dbase = toC99(base);
+    SET_C99_COMPLEX(r, 0, clog(dz)/clog(dbase));
+}
+
+static void z_atan2(Rcomplex *r, Rcomplex *csn, Rcomplex *ccs)
+{
+    double complex dr, dcsn = toC99(csn), dccs = toC99(ccs);
+    if (dccs == 0) {
+	if(dcsn == 0) {
+	    r->r = NA_REAL; r->i = NA_REAL; /* Why not R_NaN? */
+	    return;
+	} else {
+	    double y = creal(dcsn);
+	    if (ISNAN(y)) dr = y;
+	    else dr = ((y >= 0) ? M_PI_2 : -M_PI_2);
+	}
+    } else {
+	dr = catan(dcsn / dccs);
+	if(creal(dccs) < 0) dr += M_PI;
+	if(creal(dr) > M_PI) dr -= 2 * M_PI;
+    }
+    SET_C99_COMPLEX(r, 0, dr);
+}
+
+
+	/* Complex Functions of Two Arguments */
+
+typedef void (*cm2_fun)(Rcomplex *, Rcomplex *, Rcomplex *);
+SEXP attribute_hidden complex_math2(SEXP call, SEXP op, SEXP args, SEXP env)
 {
     int i, n, na, nb;
     Rcomplex ai, bi, *a, *b, *y;
-    SEXP sy;
-    int naflag = 0;
-    na = length(sa);
-    nb = length(sb);
-    if ((na == 0) || (nb == 0))
-	return(allocVector(CPLXSXP, 0));
+    SEXP sa, sb, sy;
+    Rboolean naflag = FALSE;
+    cm2_fun f;
+
+    switch (PRIMVAL(op)) {
+    case 0: /* atan2 */
+	f = z_atan2; break;
+    case 10001: /* round */
+	f = z_rround; break;
+    case 2: /* passed from do_log1arg */
+    case 10:
+    case 10003: /* passed from do_log */
+	f = z_logbase; break;
+    case 10004: /* signif */
+	f = z_prec; break;
+    default:
+	errorcall_return(call, _("unimplemented complex function"));
+    }
+
+    PROTECT(sa = coerceVector(CAR(args), CPLXSXP));
+    PROTECT(sb = coerceVector(CADR(args), CPLXSXP));
+    na = length(sa); nb = length(sb);
+    if ((na == 0) || (nb == 0)) return(allocVector(CPLXSXP, 0));
     n = (na < nb) ? nb : na;
-    PROTECT(sa = coerceVector(sa, CPLXSXP));
-    PROTECT(sb = coerceVector(sb, CPLXSXP));
     PROTECT(sy = allocVector(CPLXSXP, n));
-    a = COMPLEX(sa);
-    b = COMPLEX(sb);
-    y = COMPLEX(sy);
-    naflag = 0;
+    a = COMPLEX(sa); b = COMPLEX(sb); y = COMPLEX(sy);
     for (i = 0; i < n; i++) {
-	ai = a[i % na];
-	bi = b[i % nb];
+	ai = a[i % na]; bi = b[i % nb];
 	if(ISNA(ai.r) && ISNA(ai.i) &&
 	   ISNA(bi.r) && ISNA(bi.i)) {
-	    y[i].r = NA_REAL;
-	    y[i].i = NA_REAL;
-	}
-	else {
+	    y[i].r = NA_REAL; y[i].i = NA_REAL;
+	} else {
 	    f(&y[i], &ai, &bi);
+	    if (ISNAN(y[i].r) || ISNAN(y[i].i)) naflag = TRUE;
 	}
     }
-    /* should really be warningcall */
     if (naflag)
-	warning("NAs produced in function \"%s\"", PRIMNAME(op));
+	warningcall(call, "NAs produced in function \"%s\"", PRIMNAME(op));
     if(n == na) {
 	DUPLICATE_ATTRIB(sy, sa);
-    }
-    else if(n == nb) {
+    } else if(n == nb) {
 	DUPLICATE_ATTRIB(sy, sb);
     }
     UNPROTECT(3);
     return sy;
-}
-
-	/* Complex Functions of Two Arguments */
-
-SEXP attribute_hidden complex_math2(SEXP call, SEXP op, SEXP args, SEXP env)
-{
-    switch (PRIMVAL(op)) {
-    case 10001:
-	return cmath2(op, CAR(args), CADR(args), z_rround);
-    case 10002:
-	return cmath2(op, CAR(args), CADR(args), z_atan2);
-    case 10003:
-    case 2: /* passed from do_log1arg */
-    case 10:
-	return cmath2(op, CAR(args), CADR(args), z_logbase);
-    case 10004:
-	return cmath2(op, CAR(args), CADR(args), z_prec);
-    case 0:
-	return cmath2(op, CAR(args), CADR(args), z_atan2);
-    default:
-	errorcall_return(call, _("unimplemented complex function"));
-    }
 }
 
 SEXP attribute_hidden do_complex(SEXP call, SEXP op, SEXP args, SEXP rho)

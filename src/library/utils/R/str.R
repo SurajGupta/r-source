@@ -41,10 +41,11 @@ str.data.frame <- function(object, ...)
     else invisible(NextMethod("str", give.length=FALSE,...))
 }
 
-str.POSIXt <- function(object, ...) {
+str.Date <- str.POSIXt <- function(object, ...) {
     cl <- oldClass(object)
     ## be careful to be fast for large object:
     n <- length(object)
+    if(n == 0L) return(str.default(object))
     if(n > 1000L) object <- object[seq_len(1000L)]
 
     give.length <- TRUE ## default
@@ -229,6 +230,8 @@ str.default <-
     } else { #- not function, not list
 	if(is.vector(object)
 	   || (is.array(object) && is.atomic(object))
+           ## FIXME: is.vector is not documented to allow those modes.
+           ## Should this not be is.language?
 	   || is.vector(object, mode= "language")
 	   || is.vector(object, mode= "symbol")## R bug(<=0.50-a4) should be part
 	   ) { ##-- Splus: FALSE for 'named vectors'

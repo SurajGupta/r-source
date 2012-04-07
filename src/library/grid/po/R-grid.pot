@@ -1,8 +1,8 @@
 msgid ""
 msgstr ""
-"Project-Id-Version: R 2.12.1\n"
+"Project-Id-Version: R 2.13.0\n"
 "Report-Msgid-Bugs-To: bugs@r-project.org\n"
-"POT-Creation-Date: 2011-01-03 16:13\n"
+"POT-Creation-Date: 2011-03-22 15:33\n"
 "PO-Revision-Date: YEAR-MO-DA HO:MI+ZONE\n"
 "Last-Translator: FULL NAME <EMAIL@ADDRESS>\n"
 "Language-Team: LANGUAGE <LL@li.org>\n"
@@ -38,6 +38,12 @@ msgstr ""
 msgid "'arrow' must be an arrow object or NULL"
 msgstr ""
 
+msgid "How did we get here?"
+msgstr ""
+
+msgid "Must start new page if showing leaves separately"
+msgstr ""
+
 msgid "Invalid 'edit' information"
 msgstr ""
 
@@ -69,6 +75,12 @@ msgid "Cannot specify more than one of 'side=[\"left\", \"right\"]', 'col', 'col
 msgstr ""
 
 msgid "Must specify exactly one of 'side=[\"top\", \"bottom\"]', 'row', 'row.before', or 'row.after'"
+msgstr ""
+
+msgid "Invalid 'n'"
+msgstr ""
+
+msgid "Invalid 'f'"
 msgstr ""
 
 msgid "gpar element '%s' must not be length 0"
@@ -453,12 +465,6 @@ msgid "A viewport path must contain at least one viewport name"
 msgstr ""
 
 msgid "Invalid viewport name(s)"
-msgstr ""
-
-msgid "How did we get here?"
-msgstr ""
-
-msgid "Must start new page if showing leaves separately"
 msgstr ""
 
 msgid "Must specify at least one of 'x' or 'xscale'"

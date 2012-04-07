@@ -2,10 +2,11 @@ msgid ""
 msgstr ""
 "Project-Id-Version: R 2.3.0 \n"
 "Report-Msgid-Bugs-To: bugs@r-project.org\n"
-"POT-Creation-Date: 2010-06-17 14:08\n"
-"PO-Revision-Date: 2010-04-03 09:46+0900 \n"
-"Last-Translator: takahashi <takahashi.kohske@gmail.com> \n"
+"POT-Creation-Date: 2011-03-22 15:33\n"
+"PO-Revision-Date: 2011-03-25 14:24+0900 \n"
+"Last-Translator: Triad sou <triadsou@gmail.com> \n"
 "Language-Team: RjpWiki Message Translation Team <mokada@md.tsukuba.ac.jp> \n"
+"Language: \n"
 "MIME-Version: 1.0 \n"
 "Content-Type: text/plain; charset=UTF-8 \n"
 "Content-Transfer-Encoding: 8bit \n"
@@ -37,6 +38,14 @@ msgstr " 'squareShape' は -1 と 1 の間になければなりません "
 
 msgid "'arrow' must be an arrow object or NULL"
 msgstr " 'arrow' は arrwo オブジェクトかまたは NULL でなければなりません "
+
+msgid "How did we get here?"
+msgstr " どうしてこうなったのかな？ "
+
+msgid "Must start new page if showing leaves separately"
+msgstr ""
+" もし提示したものが別々になったままなら、新しいページを開始する必要がありま"
+"す "
 
 msgid "Invalid 'edit' information"
 msgstr " 不正な 'edit' 情報です "
@@ -80,6 +89,12 @@ msgid ""
 msgstr ""
 " 'side=[\"top\", \"bottom\"]', 'row', 'row.before', 'row.after' のうち一つだ"
 "けを指定しなければいけません "
+
+msgid "Invalid 'n'"
+msgstr " 不正な 'n' です "
+
+msgid "Invalid 'f'"
+msgstr " 不正な 'f' です "
 
 msgid "gpar element '%s' must not be length 0"
 msgstr " gpar の要素 '%s' は長さ 0 にしてはいけません "
@@ -278,10 +293,10 @@ msgid "Invalid 'print' argument"
 msgstr " 不正な 'print' 引数です "
 
 msgid "Invalid object in listing"
-msgstr "リスト中に不正なオブジェクト "
+msgstr " リスト中に不正なオブジェクト "
 
 msgid "Invalid listing"
-msgstr " 不正なリスティング"
+msgstr " 不正なリスティング "
 
 msgid "Invalid 'origin'"
 msgstr " 不正な 'origin' です "
@@ -495,14 +510,6 @@ msgstr ""
 msgid "Invalid viewport name(s)"
 msgstr " 不正な viewport 名です "
 
-msgid "How did we get here?"
-msgstr " どうしてこうなったのかな？ "
-
-msgid "Must start new page if showing leaves separately"
-msgstr ""
-" もし提示したものが別々になったままなら、新しいページを開始する必要がありま"
-"す "
-
 msgid "Must specify at least one of 'x' or 'xscale'"
 msgstr " 'x' or 'xscale' のうち少なくとも一つを指定しなければなりません "
 
@@ -519,13 +526,13 @@ msgstr " 'grid'名前空間が読み込まれないうちにすべてのデバ�
 #~ msgstr " Viewport '%s' が見つかりません "
 
 #~ msgid "Invalid"
-#~ msgstr " 不正な"
+#~ msgstr " 不正な "
 
 #~ msgid "print"
-#~ msgstr "プリント "
+#~ msgstr " プリント "
 
 #~ msgid "argument"
-#~ msgstr " 引数"
+#~ msgstr " 引数 "
 
 #~ msgid "'x' must be numeric"
 #~ msgstr " 'x' は数値でなければなりません "

@@ -1,7 +1,7 @@
 /*
  *  R : A Computer Language for Statistical Data Analysis
  *  Copyright (C) 1995, 1996  Robert Gentleman and Ross Ihaka
- *  Copyright (C) 1999-2010  The R Development Core Team.
+ *  Copyright (C) 1999-2011  The R Development Core Team.
  *
  *  This program is free software; you can redistribute it and/or modify
  *  it under the terms of the GNU General Public License as published by
@@ -1537,15 +1537,8 @@ SEXP attribute_hidden do_assign(SEXP call, SEXP op, SEXP args, SEXP rho)
 
 
 /**
- * do_list2env : .Internal(list2env(x, envir, parent, hash, size))
- *
- * 2 cases: 1) envir = NULL -->  create new environment from list
- *             elements, using parent, assuming part of new.env() functionality.
- *
- *          2) envir = environment --> assign x entries to names(x) in
- *             *existing* envir
- * @return a newly created environment() or envir {with new content}
- */
+ * do_list2env : .Internal(list2env(x, envir))
+  */
 SEXP attribute_hidden do_list2env(SEXP call, SEXP op, SEXP args, SEXP rho)
 {
     SEXP x, xnms, envir;
@@ -1554,40 +1547,17 @@ SEXP attribute_hidden do_list2env(SEXP call, SEXP op, SEXP args, SEXP rho)
 
     if (TYPEOF(CAR(args)) != VECSXP)
 	error(_("first argument must be a named list"));
-    x = CAR(args); args = CDR(args);
+    x = CAR(args);
     n = LENGTH(x);
     xnms = getAttrib(x, R_NamesSymbol);
     if (TYPEOF(xnms) != STRSXP || LENGTH(xnms) != n)
 	error(_("names(x) must be a character vector of the same length as x"));
-    envir = CAR(args);  args = CDR(args);
-    if (TYPEOF(envir) == NILSXP) {
-	/* "copied" from do_newenv()  [ ./builtin.c ] */
-	SEXP enclos = CAR(args);
-	int hash = asInteger(CADR(args));
-	if( !isEnvironment(enclos) )
-	    error(_("'%s' must be an environment"), "parent");
-	if (hash) {
-	    SEXP size;
-	    PROTECT(size = coerceVector(CADDR(args), INTSXP));
-	    if (INTEGER(size)[0] == NA_INTEGER)
-		INTEGER(size)[0] = 0; /* so it will use the internal default */
-	    envir = R_NewHashedEnv(enclos, size);
-	    UNPROTECT(1);
-	} else
-	    envir = NewEnvironment(R_NilValue, R_NilValue, enclos);
+    envir = CADR(args);
 
-    } else { /* assign into existing environment */
-	if (TYPEOF(envir) != ENVSXP)
-	    error(_("invalid '%s' argument: must be NULL or environment"), 
-		  "envir");
-    }
-
-    PROTECT(envir);
-    for(int i = 0; i < n ; i++) {
+    for(int i = 0; i < LENGTH(x) ; i++) {
 	SEXP name = install(translateChar(STRING_ELT(xnms, i)));
 	defineVar(name, VECTOR_ELT(x, i), envir);
     }
-    UNPROTECT(1);
 
     return envir;
 }
@@ -3469,9 +3439,6 @@ void attribute_hidden InitStringHash()
     R_StringHash = R_NewHashTable(char_hash_size);
 }
 
-#define INT_IS_LATIN1(x) (x & LATIN1_MASK)
-#define INT_IS_UTF8(x)   (x & UTF8_MASK)
-
 /* #define DEBUG_GLOBAL_STRING_HASH 1 */
 
 /* Resize the global R_StringHash CHARSXP cache */
@@ -3566,6 +3533,7 @@ SEXP mkCharLenCE(const char *name, int len, cetype_t enc)
     case CE_NATIVE:
     case CE_UTF8:
     case CE_LATIN1:
+    case CE_BYTES:
     case CE_SYMBOL:
     case CE_ANY:
 	break;
@@ -3584,6 +3552,7 @@ SEXP mkCharLenCE(const char *name, int len, cetype_t enc)
 	switch(enc) {
 	case CE_UTF8: SET_UTF8(c); break;
 	case CE_LATIN1: SET_LATIN1(c); break;
+	case CE_BYTES: SET_BYTES(c); break;
 	default: break;
 	}
 	error(_("embedded nul in string: '%s'"),
@@ -3594,6 +3563,7 @@ SEXP mkCharLenCE(const char *name, int len, cetype_t enc)
     switch(enc) {
     case CE_UTF8: need_enc = UTF8_MASK; break;
     case CE_LATIN1: need_enc = LATIN1_MASK; break;
+    case CE_BYTES: need_enc = BYTES_MASK; break;
     default: need_enc = 0;
     }
 
@@ -3607,7 +3577,7 @@ SEXP mkCharLenCE(const char *name, int len, cetype_t enc)
 #ifdef USE_ATTRIB_FIELD_FOR_CHARSXP_CACHE_CHAINS
 	if (TYPEOF(val) != CHARSXP) break; /* sanity check */
 #endif
-	if (need_enc == ENC_KNOWN(val) &&
+	if (need_enc == (ENC_KNOWN(val) | IS_BYTES(val)) &&
 	    LENGTH(val) == len &&  /* quick pretest */
 	    memcmp(CHAR(val), name, len) == 0) {
 	    cval = val;
@@ -3626,6 +3596,9 @@ SEXP mkCharLenCE(const char *name, int len, cetype_t enc)
 	    break;
 	case CE_LATIN1:
 	    SET_LATIN1(cval);
+	    break;
+	case CE_BYTES:
+	    SET_BYTES(cval);
 	    break;
 	default:
 	    error("unknown encoding mask: %d", enc);
@@ -3677,6 +3650,8 @@ void do_show_cache(int n)
 		    Rprintf("U");
 		else if (IS_LATIN1(CXHEAD(chain)))
 		    Rprintf("L");
+		else if (IS_BYTES(CXHEAD(chain)))
+		    Rprintf("B");
 		Rprintf("|%s| ", CHAR(CXHEAD(chain)));
 		chain = CXTAIL(chain);
 	    } while(! ISNULL(chain));
@@ -3702,6 +3677,8 @@ void do_write_cache()
 			fprintf(f, "U");
 		    else if (IS_LATIN1(CXHEAD(chain)))
 			fprintf(f, "L");
+		    else if (IS_BYTES(CXHEAD(chain)))
+			fprintf(f, "B");
 		    fprintf(f, "|%s| ", CHAR(CXHEAD(chain)));
 		    chain = CXTAIL(chain);
 		} while(! ISNULL(chain));

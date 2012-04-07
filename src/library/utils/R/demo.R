@@ -19,7 +19,7 @@ function(topic, package = NULL, lib.loc = NULL,
 	 character.only = FALSE, verbose = getOption("verbose"),
 	 echo = TRUE, ask = getOption("demo.ask"))
 {
-    paths <- .find.package(package, lib.loc, verbose = verbose)
+    paths <- find.package(package, lib.loc, verbose = verbose)
 
     ## Find the directories with a 'demo' subdirectory.
     paths <- paths[file_test("-d", file.path(paths, "demo"))]
@@ -30,12 +30,12 @@ function(topic, package = NULL, lib.loc = NULL,
 	## List all possible demos.
 
 	## Build the demo db.
-	db <- matrix(character(0L), nrow = 0L, ncol = 4L)
+	db <- matrix(character(), nrow = 0L, ncol = 4L)
 	for(path in paths) {
 	    entries <- NULL
 	    ## Check for new-style 'Meta/demo.rds', then for '00Index'.
 	    if(file_test("-f", INDEX <- file.path(path, "Meta", "demo.rds"))) {
-		entries <- .readRDS(INDEX)
+		entries <- readRDS(INDEX)
 	    }
 	    if(NROW(entries)) {
 		db <- rbind(db,
@@ -62,7 +62,7 @@ function(topic, package = NULL, lib.loc = NULL,
 
     if(!character.only)
 	topic <- as.character(substitute(topic))
-    available <- character(0L)
+    available <- character()
     paths <- file.path(paths, "demo")
     for(p in paths) {
 	files <- basename(tools::list_files_with_type(p, "demo"))

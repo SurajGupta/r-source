@@ -1,11 +1,11 @@
 % File src/library/utils/man/install.packages.Rd
 % Part of the R package, http://www.R-project.org
-% Copyright 1995-2010 R Core Development Team
+% Copyright 1995-2011 R Core Development Team
 % Distributed under GPL 2 or later
 
 \name{install.packages}
 \alias{install.packages}
-\title{Install Packages from CRAN-like Repositories}
+\title{Install Packages from Repositories or Local Files}
 \description{
   Download and install packages from CRAN-like repositories or from
   local files.
@@ -17,7 +17,7 @@ install.packages(pkgs, lib, repos = getOption("repos"),
                  dependencies = NA, type = getOption("pkgType"),
                  configure.args = getOption("configure.args"),
                  configure.vars = getOption("configure.vars"),
-                 clean = FALSE, Ncpus = getOption("Ncpus"),
+                 clean = FALSE, Ncpus = getOption("Ncpus", 1L),
                  libs_only = FALSE, INSTALL_opts, \dots)
 }
 \arguments{
@@ -91,10 +91,10 @@ install.packages(pkgs, lib, repos = getOption("repos"),
   \item{type}{character, indicating the type of package to download and
     install.
 
-    Possible values are \code{"source"}, \code{"mac.binary"},
-    \code{"mac.binary.leopard"}, \code{"win.binary"} and
-    \code{"win64.binary"}: the binary types can be listed and downloaded
-    but not installed on other platforms.
+    Possible values are \code{"source"}, \code{"mac.binary"} (obsolete),
+    \code{"mac.binary.leopard"} and \code{"win.binary"}: the binary
+    types can be listed and downloaded but not installed on other
+    platforms.
 
     The default is the appropriate binary type on Windows and on
     the CRAN binary Mac OS X distribution, otherwise \code{"source"}.
@@ -128,10 +128,10 @@ install.packages(pkgs, lib, repos = getOption("repos"),
     of the package installation in addition to removing intermediate files.
   }
   \item{Ncpus}{The number of parallel processes to use for a parallel
-    install of source packages.  Values greater than one are supported
-    only if GNU \command{make} is in use (more precisely, if
-    \command{make -j \var{Ncpus}} works).  Defaults to \code{1} if the
-    option is unset.
+    install of more than one source package.  Values greater than one
+    are supported if the \command{make} command specified by
+    \code{Sys.getenv("MAKE", "make")} accepts argument \code{-k -j
+    \var{Ncpus}}.
   }
   \item{libs_only}{
     a logical value: should the \option{--libs-only} option be used to
@@ -146,7 +146,9 @@ install.packages(pkgs, lib, repos = getOption("repos"),
     \code{c("--html", "--no-multiarch")}.
   }
   \item{\dots}{
-    Arguments to be passed to \code{\link{download.file}}.
+    Arguments to be passed to \code{\link{download.file}}, or to the
+    functions for binary installs on Mac OS X and Windows (which accept
+    an argument \code{"lock"}: the the section on \sQuote{Locking}).
   }
 }
 \details{
@@ -156,7 +158,7 @@ install.packages(pkgs, lib, repos = getOption("repos"),
   of the Mac OS X GUI \code{R.app}.  \code{install.packages} can install
   either type, either by downloading a file from a repository or from a
   local file.  The default type is given by
-  \code{\link{getOption}("pkgType")}: this \code{"source"} apart from
+  \code{\link{getOption}("pkgType")}: this is \code{"source"} apart from
   under Windows or a CRAN binary distribution for Mac OS X.
   
   \code{install.packages} is used to install packages. It takes
@@ -172,7 +174,7 @@ install.packages(pkgs, lib, repos = getOption("repos"),
   \sQuote{Note} section.
 #endif
   
-  For source packages from a repository is used an attempt is made to
+  For source packages from a repository an attempt is made to
   install the packages in an order that respects their dependencies.
   This does assume that all the entries in \code{lib} are on the default
   library path for installs (set by \env{R_LIBS}).
@@ -183,8 +185,14 @@ install.packages(pkgs, lib, repos = getOption("repos"),
   Otherwise you will need to have installed the Rtools collection as
   described in the \sQuote{R for Windows FAQ} \emph{and} you must have the
   \env{PATH} set up as required by Rtools.
+  
+  When installing a binary package, \code{install.packages} will abort
+  the install if it detects that the package is already installed and is
+  currently in use.  In some circumstances (e.g. multiple instances of
+  R running at the same time and sharing a library) it will not detect a
+  problem, but the installation may fail.
 #endif
-
+ 
   You are advised to run \code{update.packages} before
   \code{install.packages} to ensure that any already installed
   dependencies have their latest versions.
@@ -194,6 +202,38 @@ install.packages(pkgs, lib, repos = getOption("repos"),
 }
 \value{
   Invisible \code{NULL}.
+}
+\section{Locking}{
+  There are various options for locking: these differ between source and
+  binary installs.
+  
+  By default for a source install, the library directory is
+  \sQuote{locked} by creating a directory \file{00LOCK} within it.  This
+  has two purposes: it prevents any other process installing into that
+  library concurrently, and is used to store any previous version of the
+  package to restore on error.  A finer-grained locking is provided by
+  the option \option{--pkglock} which creates a separate lock for each
+  package: this allows enough freedom for parallel
+  installation. Per-package locking is the default when installing a
+  single package, and for multiple packages when \code{Ncpus > 1L}
+  Finally locking (and restoration on error) can be suppressed by
+  \option{--no-lock}.
+  % and also options(install.lock=FALSE) in an \R startup file.
+  
+  For a Mac OS X or Windows binary install, no locking is done by
+  default.  Setting argument \code{lock} to \code{TRUE} (it defaults to
+  the value of \code{\link{getOption}("install.lock", FALSE)}) will use
+  per-directory locking as described for source installs: if the value
+  is \code{"pkglock"} per-package locking will be used.
+  
+  If package locking is used on Windows with \code{libs_only=TRUE} and
+  the installation fails, the package will be restored to its previous
+  state.
+  
+  Note that it is possible for the package installation to fail so badly
+  that the lock directory is not removed: this inhibits any further
+  installs to the library directory (or for \code{--pkglock}, of the
+  package) until the lock directory is removed manually.
 }
 
 #ifdef unix

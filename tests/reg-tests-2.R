@@ -1150,7 +1150,11 @@ binom.test(c(800,10))# p-value < epsilon
 
 ## Misleading error messages on integer overflow
 ## Uwe Ligges, R-devel, 2004-02-19
-try(numeric(2^31))
+## (modified to make printed result the same whether numeric() is
+##  compiled or interpreted)
+## try(numeric(2^31))
+tryCatch(numeric(2^31),
+         error = function(e) paste("Error:", conditionMessage(e)))
 try(matrix( , 2^31, 1))
 try(matrix( , 2^31/10, 100))
 try(array(dim=c(2^31/10, 100)))
@@ -1582,8 +1586,14 @@ df1[df1 == 2] # this is first coerced to a matrix, and drops to a vector
 df3 <- data.frame(a=1:2, b=2:3)
 df3[df3 == 2]            # had spurious names
 # but not allowed
-try(df2[df2 == 2] <- 1:2)
-try(m2[m2 == 2] <- 1:2)
+## (modified to make printed result the same whether numeric() is
+##  compiled or interpreted)
+## try(df2[df2 == 2] <- 1:2)
+## try(m2[m2 == 2] <- 1:2)
+tryCatch(df2[df2 == 2] <- 1:2,
+         error = function(e) paste("Error:", conditionMessage(e)))
+tryCatch(m2[m2 == 2] <- 1:2,
+         error = function(e) paste("Error:", conditionMessage(e)))
 ##
 
 
@@ -1624,7 +1634,7 @@ x # list
 
 
 ## printing of a kernel:
-kernel(1, 0)
+kernel(1)
 ## printed wrongly in R <= 2.1.1
 
 
@@ -1857,11 +1867,11 @@ x[2]
 x[[2]]
 stopifnot(identical(x[2], x[[2]]))
 as.list(x)
-unlist(as.list(x))
-stopifnot(identical(x, unlist(as.list(x))))
+(xx <- unlist(as.list(x)))
+stopifnot(identical(x, xx))
 as.vector(x, "list")
-sapply(x, na.pass)
-stopifnot(identical(x, sapply(x, na.pass)))
+(sx <- sapply(x, function(.).))
+stopifnot(identical(x, sx))
 ## changed in 2.4.0
 
 
@@ -1962,6 +1972,7 @@ fit <- lm(y ~ 1, na.action="na.exclude")
 summary(fit)
 ## failed < 2.4.0
 
+RNGkind("default","default")## reset to default - ease  R core
 
 ## prettyNum lost attributes (PR#8695)
 format(matrix(1:16, 4), big.mark = ",")
@@ -2463,3 +2474,79 @@ a <- c(0.1, 0.3, 0.4, 0.5, 0.3, 0.0001)
 format.pval(a, eps=0.01)
 format.pval(a, eps=0.01, nsmall =2)
 ## granted in 2.12.0
+
+
+## printing fractional dates
+as.Date(0.5, origin="1969-12-31")
+## changed to round down in 2.12.1
+
+
+## printing data frames with  ""  colnames
+dfr <- data.frame(x=1:6, CC=11:16, f = gl(3,2)); colnames(dfr)[2] <- ""
+dfr
+## now prints the same as data.matrix(dfr) does here
+
+
+## format(., zero.print) --> prettyNum()
+set.seed(9); m <- matrix(local({x <- rnorm(40)
+                                sign(x)*round(exp(2*x))/10}), 8,5)
+noquote(format(m, zero.print= "."))
+## used to print  ". 0" instead of ".  "
+
+
+## tests of NA having precedence over NaN -- all must print "NA"
+min(c(NaN, NA))
+min(c(NA, NaN)) # NaN in 2.12.2
+min(NaN, NA_real_)  # NaN in 2.12.2
+min(NA_real_, NaN)
+max(c(NaN, NA))
+max(c(NA, NaN))  # NaN in 2.12.2
+max(NaN, NA_real_)  # NaN in 2.12.2
+max(NA_real_, NaN)
+## might depend on compiler < 2.13.0
+
+
+## PR#14514
+# Data are from Conover, "Nonparametric Statistics", 3rd Ed, p. 197,
+# re-arranged to make a lower-tail test the issue of relevance:  we
+# want to see if pregnant nurses exposed to nitrous oxide have higher
+# rates of miscarriage, stratifying on the type of nurse.
+Nitrous <- array(c(32,210,8,26,18,21,3,3,7,75,0,10), dim = c(2,2,3),
+                 dimnames = list(c("Exposed","NotExposed"),
+                 c("FullTerm","Miscarriage"),
+                 c("DentalAsst","OperRoomNurse","OutpatientNurse")))
+mantelhaen.test(Nitrous, exact=TRUE, alternative="less")
+mantelhaen.test(Nitrous, exact=FALSE, alternative="less")
+## exact = FALSE gave the wrong tail in 2.12.2.
+
+
+## scan(strip.white=TRUE) could strip trailing (but not leading) space
+## inside quoted strings.
+writeLines(' "  A  "; "B" ;"C";" D ";"E ";  F  ;G  ', "foo")
+cat(readLines("foo"), sep = "\n")
+scan('foo', list(""), sep=";")[[1]]
+scan('foo', "", sep=";")
+scan('foo', list(""), sep=";", strip.white = TRUE)[[1]]
+scan('foo', "", sep=";", strip.white = TRUE)
+unlink('foo')
+
+writeLines(' "  A  "\n "B" \n"C"\n" D "\n"E "\n  F  \nG  ', "foo2")
+scan('foo2', "")
+scan('foo2', "", strip.white=TRUE) # documented to be ignored ...
+unlink('foo2')
+## Changed for 2.13.0, found when investigating non-bug PR#14522.
+
+
+## PR#14488: missing values in rank correlations
+set.seed(1)
+x <- runif(10)
+y <- runif(10)
+x[3] <- NA; y[5] <- NA
+xy <- cbind(x, y)
+
+cor(x, y, method="spearman", use="complete.obs")
+cor(x, y, method="spearman", use="pairwise.complete.obs")
+cor(na.omit(xy),  method="spearman", use="complete.obs")
+cor(xy,  method="spearman", use="complete.obs")
+cor(xy,  method="spearman", use="pairwise.complete.obs")
+## inconsistent in R < 2.13.0

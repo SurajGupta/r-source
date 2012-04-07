@@ -22,16 +22,20 @@
 #
 msgid ""
 msgstr ""
-"Project-Id-Version: R 2.12.1\n"
+"Project-Id-Version: R 2.13.0\n"
 "Report-Msgid-Bugs-To: bugs@r-project.org\n"
-"POT-Creation-Date: 2011-01-03 16:13\n"
-"PO-Revision-Date: 2011-01-03 16:13\n"
+"POT-Creation-Date: 2011-03-22 15:33\n"
+"PO-Revision-Date: 2011-03-22 15:33\n"
 "Last-Translator: Automatically generated\n"
 "Language-Team: none\n"
 "MIME-Version: 1.0\n"
 "Content-Type: text/plain; charset=UTF-8\n"
 "Content-Transfer-Encoding: 8bit\n"
+"Language: en\n"
 "Plural-Forms: nplurals=2; plural=(n != 1);\n"
+
+msgid "models are not all fitted to the same number of observations"
+msgstr "models are not all fitted to the same number of observations"
 
 msgid "empty model supplied"
 msgstr "empty model supplied"
@@ -473,8 +477,8 @@ msgstr "distances must be result of ‘dist’ or a square matrix"
 msgid "'k' must be in {1, 2, ..  n - 1}"
 msgstr "‘k’ must be in {1, 2, ..  n - 1}"
 
-msgid "some of the first %d eigenvalues are < 0"
-msgstr "some of the first %d eigenvalues are < 0"
+msgid "only %d of the first %d eigenvalues are > 0"
+msgstr "only %d of the first %d eigenvalues are > 0"
 
 msgid "initial value is not in the interior of the feasible region"
 msgstr "initial value is not in the interior of the feasible region"
@@ -542,6 +546,9 @@ msgstr "not enough degrees of freedom to define contrasts"
 
 msgid "baseline group number out of range"
 msgstr "baseline group number out of range"
+
+msgid "invalid 'use' argument"
+msgstr "invalid ‘use’ argument"
 
 msgid "supply both 'x' and 'y' or a matrix-like 'x'"
 msgstr "supply both ‘x’ and ‘y’ or a matrix-like ‘x’"
@@ -619,9 +626,6 @@ msgstr "elements of ‘k’ must be between 1 and %d"
 msgid "'merge' and 'height' do not fit!"
 msgstr "‘merge’ and ‘height’ do not fit!"
 
-msgid "we require a dendrogram"
-msgstr "we require a dendrogram"
-
 msgid "dendrogram node with non-positive #{branches}"
 msgstr "dendrogram node with non-positive #{branches}"
 
@@ -634,11 +638,17 @@ msgstr "non-leaf subtree of length 0"
 msgid "'order.dendrogram' requires a dendrogram"
 msgstr "‘order.dendrogram’ requires a dendrogram"
 
+msgid "we require a dendrogram"
+msgstr "we require a dendrogram"
+
 msgid "invalid (length 0) node in dendrogram"
 msgstr "invalid (length 0) node in dendrogram"
 
 msgid "dendrogram non-leaf node with non-positive #{branches}"
 msgstr "dendrogram non-leaf node with non-positive #{branches}"
+
+msgid "'height' must be at least %g, the maximal height of its components"
+msgstr "‘height’ must be at least %g, the maximal height of its components"
 
 msgid "'X' is not a dendrogram"
 msgstr "‘X’ is not a dendrogram"
@@ -1380,6 +1390,12 @@ msgstr "no models to compare"
 msgid "extra arguments discarded"
 msgstr "extra arguments discarded"
 
+msgid "no \"nobs\" attribute is available"
+msgstr "no “nobs” attribute is available"
+
+msgid "no 'nobs' method is available"
+msgstr "no ‘nobs’ method is available"
+
 msgid "'start' and 'table' must be same length"
 msgstr "‘start’ and ‘table’ must be same length"
 
@@ -1516,8 +1532,8 @@ msgstr "eff.aovlist: non-orthogonal contrasts would give an incorrect answer"
 msgid "cannot create a formula from a zero-column data frame"
 msgstr "cannot create a formula from a zero-column data frame"
 
-msgid "no terms component"
-msgstr "no terms component"
+msgid "no terms component nor attribute"
+msgstr "no terms component nor attribute"
 
 msgid "'termlabels' must be a character vector of length at least one"
 msgstr "‘termlabels’ must be a character vector of length at least one"
@@ -1988,12 +2004,6 @@ msgstr "attempt to smooth NA values"
 msgid "wrong endrule"
 msgstr "wrong endrule"
 
-msgid "'nknots' must be numeric <= n"
-msgstr "‘nknots’ must be numeric <= n"
-
-msgid "cannot use more inner knots than unique 'x' values"
-msgstr "cannot use more inner knots than unique ‘x’ values"
-
 msgid "invalid 'control.spar'"
 msgstr "invalid ‘control.spar’"
 
@@ -2009,8 +2019,26 @@ msgstr "some weights should be positive"
 msgid "need at least four unique 'x' values"
 msgstr "need at least four unique ‘x’ values"
 
+msgid "'cv' must not be NA when 'df' is specified"
+msgstr "‘cv’ must not be NA when ‘df’ is specified"
+
 msgid "crossvalidation with non-unique 'x' values seems doubtful"
 msgstr "crossvalidation with non-unique ‘x’ values seems doubtful"
+
+msgid "'all.knots' is TRUE; 'nknots' specification is disregarded"
+msgstr "‘all.knots’ is TRUE; ‘nknots’ specification is disregarded"
+
+msgid "'nknots' must be numeric (in {1,..,n})"
+msgstr "‘nknots’ must be numeric (in {1,..,n})"
+
+msgid "'nknots' must be at least 1"
+msgstr "‘nknots’ must be at least 1"
+
+msgid "cannot use more inner knots than unique 'x' values"
+msgstr "cannot use more inner knots than unique ‘x’ values"
+
+msgid "specified both 'df' and 'cv'; will disregard the latter"
+msgstr "specified both ‘df’ and 'cv'; will disregard the latter"
 
 msgid "you must supply 1 < df <= n,  n = #{unique x} ="
 msgstr "you must supply 1 < df <= n,  n = #{unique x} ="
@@ -2344,6 +2372,11 @@ msgid "there are %d Error terms: only 1 is allowed"
 msgid_plural "there are %d Error terms: only 1 is allowed"
 msgstr[0] "there are %d Error terms: only 1 is allowed"
 msgstr[1] "there are %d Error terms: only 1 is allowed"
+
+msgid "extra argument %s is not a \"%s\""
+msgid_plural "extra arguments %s are not \"%s\"s"
+msgstr[0] "extra argument %s is not a “%s”"
+msgstr[1] "extra arguments %s are not “%s”s"
 
 msgid "%d observation deleted due to missingness"
 msgid_plural "%d observations deleted due to missingness"

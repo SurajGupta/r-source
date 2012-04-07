@@ -1,10 +1,11 @@
 % File src/library/base/man/path.expand.Rd
 % Part of the R package, http://www.R-project.org
-% Copyright 1995-2008 R Core Development Team
+% Copyright 1995-2011 R Core Development Team
 % Distributed under GPL 2 or later
 
 \name{path.expand}
 \alias{path.expand}
+\alias{tilde expansion}
 \title{Expand File Paths}
 \description{
   Expand a path name, for example by replacing a leading tilde by the
@@ -35,7 +36,7 @@ path.expand(path)
 }
 #endif
 \seealso{
-  \code{\link{basename}}
+  \code{\link{basename}}, \code{\link{normalizePath}}.
 }
 \examples{
 path.expand("~/foo")

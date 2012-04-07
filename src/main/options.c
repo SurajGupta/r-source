@@ -1,7 +1,7 @@
 /*
  *  R : A Computer Language for Statistical Data Analysis
  *  Copyright (C) 1995, 1996  Robert Gentleman and Ross Ihaka
- *  Copyright (C) 1998-2007   The R Development Core Team.
+ *  Copyright (C) 1998-2011   The R Development Core Team.
  *
  *  This program is free software; you can redistribute it and/or modify
  *  it under the terms of the GNU General Public License as published by
@@ -40,7 +40,7 @@
  *
  *   2) Those used (and sometimes set) from C code;
  *	Either accessing and/or setting a global C variable,
- *	or just accessed by e.g.  GetOption(install("pager"), ..)
+ *	or just accessed by e.g.  GetOption1(install("pager"))
  *
  * A (complete?!) list of these (2):
  *
@@ -53,6 +53,7 @@
  *	"verbose"
  *	"keep.source"
  *	"keep.source.pkgs"
+ *	"browserNLdisabled"
 
  *	"de.cellwidth"		../unix/X11/ & ../gnuwin32/dataentry.c
  *	"device"
@@ -104,17 +105,22 @@ static SEXP makeErrorCall(SEXP fun)
 
 SEXP GetOption(SEXP tag, SEXP rho)
 {
+    return GetOption1(tag);
+}
+
+
+SEXP GetOption1(SEXP tag)
+{
     SEXP opt = findVar(Options(), R_BaseEnv);
-    if (!isList(opt))
-	error(_("corrupted options list"));
+    if (!isList(opt)) error(_("corrupted options list"));
     opt = FindTaggedItem(opt, tag);
     return CAR(opt);
 }
 
-int GetOptionWidth(SEXP rho)
+int GetOptionWidth(void)
 {
     int w;
-    w = asInteger(GetOption(install("width"), rho));
+    w = asInteger(GetOption1(install("width")));
     if (w < R_MIN_WIDTH_OPT || w > R_MAX_WIDTH_OPT) {
 	warning(_("invalid printing width, used 80"));
 	return 80;
@@ -122,10 +128,10 @@ int GetOptionWidth(SEXP rho)
     return w;
 }
 
-int GetOptionDigits(SEXP rho)
+int GetOptionDigits(void)
 {
     int d;
-    d = asInteger(GetOption(install("digits"), rho));
+    d = asInteger(GetOption1(install("digits")));
     if (d < R_MIN_DIGITS_OPT || d > R_MAX_DIGITS_OPT) {
 	warning(_("invalid printing digits, used 7"));
 	return 7;
@@ -137,7 +143,7 @@ int GetOptionDigits(SEXP rho)
 Rboolean Rf_GetOptionDeviceAsk(void)
 {
     int ask;
-    ask = asLogical(GetOption(install("device.ask.default"), R_BaseEnv));
+    ask = asLogical(GetOption1(install("device.ask.default")));
     if(ask == NA_LOGICAL) {
 	warning(_("invalid value for \"device.ask.default\", using FALSE"));
 	return FALSE;
@@ -218,9 +224,9 @@ void attribute_hidden InitOptions(void)
     char *p;
 
 #ifdef HAVE_RL_COMPLETION_MATCHES
-    PROTECT(v = val = allocList(13));
+    PROTECT(v = val = allocList(14));
 #else
-    PROTECT(v = val = allocList(12));
+    PROTECT(v = val = allocList(13));
 #endif
 
     SET_TAG(v, install("prompt"));
@@ -272,6 +278,10 @@ void attribute_hidden InitOptions(void)
 
     SET_TAG(v, install("OutDec"));
     SETCAR(v, mkString("."));
+    v = CDR(v);
+
+    SET_TAG(v, install("browserNLdisabled"));
+    SETCAR(v, ScalarLogical(FALSE));
     v = CDR(v);
 
 #ifdef HAVE_RL_COMPLETION_MATCHES
@@ -547,6 +557,15 @@ SEXP attribute_hidden do_options(SEXP call, SEXP op, SEXP args, SEXP rho)
 	    }
 	    else if (streql(CHAR(namei), "par.ask.default")) {
 		error(_("\"par.ask.default\" has been replaced by \"device.ask.default\""));
+	    }
+	    else if (streql(CHAR(namei), "browserNLdisabled")) {
+		if (TYPEOF(argi) != LGLSXP || LENGTH(argi) != 1)
+		    error(_("invalid value for '%s'"), CHAR(namei));
+		k = asLogical(argi);
+		if (k == NA_LOGICAL)
+		    error(_("invalid value for '%s'"), CHAR(namei));
+		R_DisableNLinBrowser = k;
+		SET_VECTOR_ELT(value, i, SetOption(tag, ScalarLogical(k)));
 	    }
 	    else {
 		SET_VECTOR_ELT(value, i, SetOption(tag, duplicate(argi)));

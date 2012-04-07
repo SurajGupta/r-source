@@ -13,10 +13,11 @@ Name: "manuals"; Description: "On-line PDF Manuals"; Types: user full custom
 Name: "manuals/basic"; Description: "Basic Manuals"; Types: user full custom
 Name: "manuals/technical"; Description: "Technical Manuals"; Types: full custom
 Name: "manuals/refman"; Description: "PDF help pages (reference manual)"; Types: full custom
-Name: "manuals/libdocs"; Description: "Docs for Packages grid and Matrix"; Types: full custom
+Name: "manuals/libdocs"; Description: "Docs for Packages grid, Matrix and survival"; Types: full custom
 Name: "tcl"; Description: "Support Files for Package tcltk"; Types: user full custom
 Name: "tcl/noarch"; Description: "Main Files"; Types: user full custom
 Name: "tcl/tzdata"; Description: "Timezone files for Tcl"; Types: full custom
 Name: "tcl/chm"; Description: "Tcl/Tk Help (Compiled HTML)"; Types: full custom
+Name: "tcl/msg"; Description: "Message translations for Tcl/Tk"; Types: full custom
 Name: "trans"; Description: "Message Translations"; Types: user full custom
 Name: "tests"; Description: "Test files"; Types: full custom

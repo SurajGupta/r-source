@@ -1,7 +1,7 @@
 /*
  *  R : A Computer Language for Statistical Data Analysis
  *  Copyright (C) 1995, 1996  Robert Gentleman and Ross Ihaka
- *  Copyright (C) 1998-2010   The R Development Core Team
+ *  Copyright (C) 1998-2011   The R Development Core Team
  *  Copyright (C) 2002-2005  The R Foundation
  *
  *  This program is free software; you can redistribute it and/or modify
@@ -136,12 +136,10 @@ char *R_PromptString(int browselevel, int type)
 		sprintf(BrowsePrompt, "Browse[%d]> ", browselevel);
 		return BrowsePrompt;
 	    }
-	    return (char *)CHAR(STRING_ELT(GetOption(install("prompt"),
-						     R_BaseEnv), 0));
+	    return (char *)CHAR(STRING_ELT(GetOption1(install("prompt")), 0));
 	}
 	else {
-	    return (char *)CHAR(STRING_ELT(GetOption(install("continue"),
-						     R_BaseEnv), 0));
+	    return (char *)CHAR(STRING_ELT(GetOption1(install("continue")), 0));
 	}
     }
 }
@@ -214,11 +212,7 @@ Rf_ReplIteration(SEXP rho, int savestack, int browselevel, R_ReplState *state)
     }
 #ifdef SHELL_ESCAPE /* not default */
     if (*state->bufp == '!') {
-#ifdef HAVE_SYSTEM
 	    R_system(&(state->buf[1]));
-#else
-	    REprintf(_("error: system commands are not supported in this version of R.\n"));
-#endif /* HAVE_SYSTEM */
 	    state->buf[0] = '\0';
 	    return(0);
     }
@@ -237,10 +231,11 @@ Rf_ReplIteration(SEXP rho, int savestack, int browselevel, R_ReplState *state)
 
 	/* The intention here is to break on CR but not on other
 	   null statements: see PR#9063 */
-	if (browselevel && !strcmp((char *) state->buf, "\n")) return -1;
+	if (browselevel && !R_DisableNLinBrowser
+	    && !strcmp((char *) state->buf, "\n")) return -1;
 	R_IoBufferWriteReset(&R_ConsoleIob);
 	state->prompt_type = 1;
-	return(1);
+	return 1;
 
     case PARSE_OK:
 
@@ -248,10 +243,10 @@ Rf_ReplIteration(SEXP rho, int savestack, int browselevel, R_ReplState *state)
 	R_CurrentExpr = R_Parse1Buffer(&R_ConsoleIob, 1, &state->status, NULL);
 	if (browselevel) {
 	    browsevalue = ParseBrowser(R_CurrentExpr, rho);
-	    if(browsevalue == 1) return(-1);
+	    if(browsevalue == 1) return -1;
 	    if(browsevalue == 2) {
 		R_IoBufferWriteReset(&R_ConsoleIob);
-		return(0);
+		return 0;
 	    }
 	}
 	R_Visible = FALSE;
@@ -726,6 +721,12 @@ void setup_Rmainloop(void)
 			 "Setting LC_MONETARY=%s failed\n", p);
 	} else setlocale(LC_MONETARY, Rlocale);
 	/* Windows does not have LC_MESSAGES */
+
+	/* We set R_ARCH here: Unix does it in the shell front-end */
+	char Rarch[30];
+	strcpy(Rarch, "R_ARCH=/");
+	strcat(Rarch, R_ARCH);
+	putenv(Rarch);
     }
 #else /* not Win32 */
     if(!setlocale(LC_CTYPE, ""))
@@ -788,6 +789,7 @@ void setup_Rmainloop(void)
 	   simultaneously */
 	seed = (int) GetTickCount() + getpid();
 #elif HAVE_TIME
+	/* C89, so should work */
 	seed = time(NULL);
 #else
 	/* unlikely, but use random contents */
@@ -809,7 +811,6 @@ void setup_Rmainloop(void)
     InitGraphics();
     R_Is_Running = 1;
     R_check_locale();
-    /* gc_inhibit_torture = 0; */
 
     /* Initialize the global context for error handling. */
     /* This provides a target for any non-local gotos */
@@ -970,7 +971,6 @@ void setup_Rmainloop(void)
 	}
 	UNPROTECT(1);
     }
-    /* gc_inhibit_torture = 0; */
     {
 	int i;
 	for(i = 0 ; i < ndeferred_warnings; i++)
@@ -980,6 +980,11 @@ void setup_Rmainloop(void)
 	REprintf(_("During startup - "));
 	PrintWarnings();
     }
+
+#ifdef BYTECODE
+    /* trying to do this earlier seems to run into bootstrapping issues. */
+    R_init_jit_enabled();
+#endif
 }
 
 extern SA_TYPE SaveAction; /* from src/main/startup.c */

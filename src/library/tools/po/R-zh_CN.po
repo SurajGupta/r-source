@@ -7,10 +7,11 @@ msgid ""
 msgstr ""
 "Project-Id-Version: R 2.4.0\n"
 "Report-Msgid-Bugs-To: bugs@r-project.org\n"
-"POT-Creation-Date: 2010-10-04 10:51\n"
+"POT-Creation-Date: 2011-03-22 15:33\n"
 "PO-Revision-Date: 2005-02-04 08:37+0000\n"
 "Last-Translator: 陈斐 <feic@avaya.com>\n"
 "Language-Team: Chinese\n"
+"Language: \n"
 "MIME-Version: 1.0\n"
 "Content-Type: text/plain; charset=UTF-8\n"
 "Content-Transfer-Encoding: 8bit\n"
@@ -118,6 +119,9 @@ msgstr "使用手冊对象'%s'里入档的文件参数没有在\\usage里提到:
 
 msgid "Objects in \\usage without \\alias in documentation object '%s':"
 msgstr "使用手冊对象'%s'里的\\usage对象没有\\alias这条目:"
+
+msgid "Assignments in \\usage in documentation object '%s':"
+msgstr "在文档目标对象'%s'里不能为\\usage分配:"
 
 msgid "Bad \\usage lines found in documentation object '%s':"
 msgstr "使用手冊对象'%s'有些\\usage不对:"
@@ -452,7 +456,7 @@ msgid "'type' must be one of 'txt', 'html', 'latex' or 'example'"
 msgstr "'type'值必需在'txt', 'html', 'latex'或'example'取一个"
 
 msgid "current working directory cannot be ascertained"
-msgstr ""
+msgstr "无法确定目前的工作目录"
 
 msgid "no inputs"
 msgstr "没有输入"
@@ -563,11 +567,26 @@ msgstr "错误：R的版本是%s，程序包'%s'要求版本为%s %s的R"
 msgid "ERROR: this R is version %s, required is R %s %s"
 msgstr "错误：R的版本是%s，需要的是版本为%s %s的R"
 
+msgid "loading failed"
+msgstr "载入失败"
+
 msgid "Changes require specified 'style'"
 msgstr "改动需要特别'style'"
 
 msgid "The default JSS style may not be modified."
 msgstr "不能对缺省JSS式样进行修改"
+
+msgid "--binary is deprecated"
+msgstr "--binary 不再有用"
+
+msgid "use of '--auto-zip' is defunct"
+msgstr "'--auto-zip'不再有用"
+
+msgid "use of '--use-zip-data' is defunct"
+msgstr "'--use-zip-data'不再有用"
+
+msgid "use of '--no-docs' is deprecated: use '--install-args' instead"
+msgstr "'--no-docs'不再有用；请用'--install-args'"
 
 msgid "** Options"
 msgstr "**选项"
@@ -577,12 +596,6 @@ msgstr "只能在'--binary'时用，现在略过不用"
 
 msgid "Error: cannot rename directory to"
 msgstr "错误：无法改变目录名字为"
-
-msgid "cannot coerce"
-msgstr "无法强迫改变"
-
-msgid "to logical"
-msgstr "为逻辑值"
 
 msgid "-l option without value"
 msgstr "-l选项一定得有值"
@@ -674,8 +687,14 @@ msgstr "无法从文件'%s'中读取索引信息"
 msgid "ERROR:"
 msgstr "错误："
 
+msgid "error reading file '%s'"
+msgstr "读取文件'%s'时出了错"
+
 msgid "this seems to be a bundle -- and they are defunct"
 msgstr "这看起来好象是捆绑软件--已经不存在了"
+
+msgid "running 'zip' failed"
+msgstr "调用'zip'失败"
 
 msgid "packaged installation of"
 msgstr "程辑包安装"
@@ -685,8 +704,8 @@ msgstr "如"
 
 msgid ""
 "'cleanup' exists but is not executable -- see the 'R Installation and "
-"Adminstration Manual'"
-msgstr "有'cleanup'但它不是执行文件--请参考'R安装和管理手册'"
+"Administration Manual'"
+msgstr "'cleanup'这个文件存在的，但它不是执行文件--请参考'R安装和管理手册'"
 
 msgid "installing to"
 msgstr "安装至"
@@ -708,9 +727,6 @@ msgstr "找不到源程序文件"
 msgid "empty 'data' directory"
 msgstr "空的'data'目录"
 
-msgid "'--auto-zip' is for Windows only"
-msgstr "'--auto-zip'只在Windows上有用"
-
 msgid "--merge-multiarch is Windows-only"
 msgstr "--merge-multiarch只在Windows上有用"
 
@@ -725,9 +741,6 @@ msgstr "错误：--merge-multiarch只适用i386/x64安装"
 
 msgid "invalid package"
 msgstr "程辑包无效."
-
-msgid "--pkglock applies only to a single package"
-msgstr "--pkglock只适用于单独程序包"
 
 msgid "ERROR: no packages specified"
 msgstr "错误：没有设定程序包"
@@ -754,12 +767,6 @@ msgstr "错误：无法建锁住的目录"
 msgid "building a fake installation is disallowed"
 msgstr "不充许伪造安装"
 
-msgid "--no-help overrides"
-msgstr "--no-help覆盖"
-
-msgid "--"
-msgstr "--"
-
 msgid "finding HTML links ..."
 msgstr "搜寻HTML链结…"
 
@@ -780,6 +787,9 @@ msgstr "源列里所有单元都必需要带名字"
 
 msgid "source must be an environment or a list"
 msgstr "源码要么是环境要么是列"
+
+msgid "invalid value for 'compress': should be FALSE, TRUE, 2 or 3"
+msgstr "'compress'的值不对：应该是FALSE,TRUE,2或3中的一个"
 
 msgid "this cannot be used for package 'base'"
 msgstr "这个程序无法用在程辑包'base'上"
@@ -824,15 +834,6 @@ msgstr "NEWS.Rd文件格式不对。"
 
 msgid "Processing packages:"
 msgstr "正在处理程辑包:"
-
-msgid "cannot update HTML package index"
-msgstr "无法更新HTML程辑包索引"
-
-msgid "'DESCRIPTION' has 'Encoding' field and re-encoding is not possible"
-msgstr "'DESCRIPTION'有'encoding'这个域，却无法重新编码"
-
-msgid "cannot create HTML package index"
-msgstr "无法建立HTML程辑包索引"
 
 msgid "Internal error, no tag"
 msgstr "内部错误，没有标签"
@@ -894,13 +895,10 @@ msgstr "打不开"
 msgid "testing '%s' failed"
 msgstr "试用'%s'失败了"
 
-msgid "Collecting examples for package"
-msgstr "收集范例程序包"
+msgid "Testing examples for package"
+msgstr "为程序包测试示例"
 
-msgid "Running examples in package"
-msgstr "调用例子在程序包"
-
-msgid "Comparing"
+msgid "comparing"
 msgstr "比较"
 
 msgid "to"
@@ -911,6 +909,9 @@ msgstr "…"
 
 msgid "OK"
 msgstr "好"
+
+msgid "results differ from reference results"
+msgstr "算出来的结果与参考结果不一样"
 
 msgid "no examples found"
 msgstr "没有范例"
@@ -923,6 +924,9 @@ msgstr "执行"
 
 msgid "Running vignettes for package"
 msgstr "执行小文品给程序包"
+
+msgid "Comparing"
+msgstr "比较"
 
 msgid "creation of"
 msgstr "建造"
@@ -941,9 +945,6 @@ msgstr "调用程序于"
 
 msgid "FAILED"
 msgstr "失败"
-
-msgid "comparing"
-msgstr "比较"
 
 msgid "running strict specific tests"
 msgstr "执行严格检验"
@@ -981,9 +982,8 @@ msgstr "执行正规表现回归检验"
 msgid "running tests to possibly trigger segfaults"
 msgstr "执行触发程序段故障检验"
 
-#, fuzzy
 msgid "'x' must be a single character string"
-msgstr "参数'txt'必需为字符串"
+msgstr "'x'必需为单个字符串"
 
 msgid "test '%s' is not available"
 msgstr "不存在'%s'这个测试"
@@ -1009,6 +1009,12 @@ msgstr "无法在'%2$s'上调用'%1$s'"
 msgid "unable to run %s on '%s'"
 msgstr "无法在'%2$s'上调用%1$s"
 
+msgid "cannot coerce"
+msgstr "无法强迫改变"
+
+msgid "to logical"
+msgstr "为逻辑值"
+
 msgid "File 'DESCRIPTION' is missing."
 msgstr "缺少'DESCRIPTION'这个文件"
 
@@ -1030,6 +1036,18 @@ msgstr "调用序列:"
 msgid "parsing '%s'"
 msgstr "文名分析'%s'"
 
+msgid "Note: found %d marked Latin-1 string"
+msgid_plural "Note: found %d marked Latin-1 strings"
+msgstr[0] "注意：发现％d显着的Latin-1的字符串"
+
+msgid "Note: found %d marked UTF-8 string"
+msgid_plural "Note: found %d marked UTF-8 strings"
+msgstr[0] "注意：发现％d显着的UTF-8的字符串"
+
+msgid "Note: found %d string marked as \"bytes\""
+msgid_plural "Note: found %d strings marked as \"bytes\""
+msgstr[0] "注意：发现％d显着的\"bytes\"的字符串"
+
 msgid "Warning in file '%s':"
 msgid_plural "Warnings in file '%s':"
 msgstr[0] "文件'%s'里有警告："
@@ -1050,6 +1068,30 @@ msgstr[0] "下面的函数调用了.Internal:"
 msgid "object %s is created by more than one data call"
 msgid_plural "objects %s are created by more than one data call"
 msgstr[0] "不能用多个数据调用来产生对象%s"
+
+#~ msgid "--pkglock applies only to a single package"
+#~ msgstr "--pkglock只适用于单独程序包"
+
+#~ msgid "--no-help overrides"
+#~ msgstr "--no-help覆盖"
+
+#~ msgid "--"
+#~ msgstr "--"
+
+#~ msgid "'--auto-zip' is for Windows only"
+#~ msgstr "'--auto-zip'只在Windows上有用"
+
+#~ msgid "cannot update HTML package index"
+#~ msgstr "无法更新HTML程辑包索引"
+
+#~ msgid "'DESCRIPTION' has 'Encoding' field and re-encoding is not possible"
+#~ msgstr "'DESCRIPTION'有'encoding'这个域，却无法重新编码"
+
+#~ msgid "cannot create HTML package index"
+#~ msgstr "无法建立HTML程辑包索引"
+
+#~ msgid "Running examples in package"
+#~ msgstr "调用例子在程序包"
 
 #~ msgid "making DLL ..."
 #~ msgstr "制造DLL…"
@@ -1193,3 +1235,4 @@ msgstr[0] "不能用多个数据调用来产生对象%s"
 
 #~ msgid "no or more than one match"
 #~ msgstr "没有成对的，或多于一双"
+

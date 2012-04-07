@@ -1,3 +1,20 @@
+#  File src/library/utils/R/aspell.R
+#  Part of the R package, http://www.R-project.org
+#
+#  This program is free software; you can redistribute it and/or modify
+#  it under the terms of the GNU General Public License as published by
+#  the Free Software Foundation; either version 2 of the License, or
+#  (at your option) any later version.
+#
+#  This program is distributed in the hope that it will be useful,
+#  but WITHOUT ANY WARRANTY; without even the implied warranty of
+#  MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
+#  GNU General Public License for more details.
+#
+#  A copy of the GNU General Public License is available at
+#  http://www.r-project.org/Licenses/
+
+
 aspell <-
 function(files, filter, control = list(), encoding = "unknown",
          program = NULL)
@@ -10,6 +27,10 @@ function(files, filter, control = list(), encoding = "unknown",
     program <- aspell_find_program(program)
     if(is.na(program))
         stop("No suitable spell check program found.")
+
+    ## Be nice.
+    if(inherits(files, "Rd"))
+        files <- list(files)
 
     files_are_names <- is.character(files)
 
@@ -60,18 +81,18 @@ function(files, filter, control = list(), encoding = "unknown",
     encoding <- rep(encoding, length.out = length(files))
 
     verbose <- getOption("verbose")
-    
+
     db <- data.frame(Original = character(), File = character(),
                      Line = integer(), Column = integer(),
                      stringsAsFactors = FALSE)
     db$Suggestions <- list()
-    
+
     tfile <- tempfile("aspell")
     on.exit(unlink(tfile))
 
     fnames <- names(files)
     files <- as.list(files)
-    
+
     for (i in seq_along(files)) {
 
         file <- files[[i]]
@@ -108,7 +129,7 @@ function(files, filter, control = list(), encoding = "unknown",
         ## them as data: the Aspell docs say
         ##   It is recommended that programmatic interfaces prefix every
         ##   data line with an uparrow to protect themselves against
-        ##   future changes in Aspell. 
+        ##   future changes in Aspell.
         writeLines(paste("^", lines, sep = ""), tfile)
         ## Note that this re-encodes character strings with marked
         ## encodings to the current encoding (which is definitely fine
@@ -151,13 +172,13 @@ function(files, filter, control = list(), encoding = "unknown",
 	## Blank lines separate the results for each line.
 	## Results for the word on each line are given as follows.
 	## * If the word was found in the main dictionary, or your personal
-	##   dictionary, then the line contains only a `*'. 
+	##   dictionary, then the line contains only a `*'.
 	## * If the word is not in the dictionary, but there are
 	##   suggestions, then the line contains an `&', a space, the
 	##   misspelled word, a space, the number of near misses, the number
 	##   of characters between the beginning of the line and the
 	##   beginning of the misspelled word, a colon, another space, and a
-	##   list of the suggestions separated by commas and spaces. 
+	##   list of the suggestions separated by commas and spaces.
 	## * If the word does not appear in the dictionary, and there are no
 	##   suggestions, then the line contains a `#', a space, the
 	##   misspelled word, a space, and the character offset from the
@@ -199,7 +220,7 @@ function(files, filter, control = list(), encoding = "unknown",
 	    db <- rbind(db, db1)
 	}
     }
-    
+
     class(db) <- c("aspell", "data.frame")
     db
 }
@@ -210,9 +231,9 @@ function(x, sort = TRUE, verbose = FALSE, indent = 2L, ...)
     ## A very simple printer ...
     if(!(nr <- nrow(x))) return(invisible(x))
 
-    if (sort) 
+    if (sort)
     	x <- x[order(x$Original, x$File, x$Line, x$Column), ]
-    
+
     if (verbose)
     	out <-
     	    sprintf("%sWord: %s (%s:%d:%d)\n%s",
@@ -245,7 +266,7 @@ function(object, ...)
     invisible(words)
 }
 
-aspell_filter_db <- new.env()
+aspell_filter_db <- new.env(hash = FALSE) # small
 aspell_filter_db$Rd <- tools::RdTextFilter
 aspell_filter_db$Sweave <- tools::SweaveTeXFilter
 
@@ -310,7 +331,7 @@ function(x, ...)
                      ""))
     }
     invisible(x)
-}                      
+}
 
 
 ## For spell-checking the R manuals:
@@ -319,7 +340,7 @@ function(x, ...)
 ## no texinfo mode.
 
 aspell_control_R_manuals <-
-    list(aspell =    
+    list(aspell =
          c("--master=en_US",
            "--add-extra-dicts=en_GB",
            "--mode=texinfo",
@@ -343,7 +364,7 @@ aspell_control_R_manuals <-
            ),
          hunspell =
          c("-d en_US,en_GB"))
-    
+
 aspell_R_manuals <-
 function(which = NULL, dir = NULL, program = NULL)
 {
@@ -361,7 +382,7 @@ function(which = NULL, dir = NULL, program = NULL)
     }
 
     program <- aspell_find_program(program)
-    
+
     aspell(files,
            control = aspell_control_R_manuals[[names(program)]],
            program = program)
@@ -373,7 +394,7 @@ aspell_control_R_Rd_files <-
     list(aspell =
          c("--master=en_US",
            "--add-extra-dicts=en_GB"),
-         hunspell = 
+         hunspell =
          c("-d en_US,en_GB"))
 
 aspell_R_Rd_files <-
@@ -404,7 +425,7 @@ aspell_package_Rd_files <-
 function(dir, drop = "\\references", control = list(), program = NULL)
 {
     dir <- tools::file_path_as_absolute(dir)
-    
+
     subdir <- file.path(dir, "man")
     files <- if(file_test("-d", subdir))
         tools::list_files_with_type(subdir,
@@ -433,7 +454,7 @@ function(dir, drop = "\\references", control = list(), program = NULL)
         if(!is.null(d <- defaults$program))
             program <- d
     }
-    
+
     aspell(files,
            filter = list("Rd", drop = drop),
            control = control,
@@ -447,7 +468,7 @@ function(dir, drop = "\\references", control = list(), program = NULL)
 ## less powerful TeX modes.
 
 aspell_control_R_vignettes <-
-    list(aspell = 
+    list(aspell =
          c("--mode=tex",
            "--master=en_US",
            "--add-extra-dicts=en_GB",
@@ -465,7 +486,7 @@ function(program = NULL)
                                 "*.Snw"))
 
     program <- aspell_find_program(program)
-    
+
     aspell(files,
            filter = "Sweave",
            control = aspell_control_R_vignettes[[names(program)]],
@@ -491,7 +512,7 @@ aspell_package_vignettes <-
 function(dir, control = list(), program = NULL)
 {
     dir <- tools::file_path_as_absolute(dir)
-    
+
     subdir <- file.path(dir, "inst", "doc")
     files <- if(file_test("-d", subdir))
         tools::list_files_with_type(subdir, "vignette")
@@ -514,7 +535,7 @@ function(dir, control = list(), program = NULL)
     }
 
     program <- aspell_find_program(program)
-    
+
     aspell(files,
            filter = "Sweave",
            control =

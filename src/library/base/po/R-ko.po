@@ -2,10 +2,11 @@ msgid ""
 msgstr ""
 "Project-Id-Version: R 2.3.0\n"
 "Report-Msgid-Bugs-To: bugs@r-project.org\n"
-"POT-Creation-Date: 2011-01-03 16:13\n"
+"POT-Creation-Date: 2011-03-29 21:44\n"
 "PO-Revision-Date: 2005-05-31 09:39+0900\n"
 "Last-Translator: Korean <uiami@hanmail.com>\n"
 "Language-Team: Korean <translation-team-ko@lists.sourceforge.net>\n"
+"Language: ko\n"
 "MIME-Version: 1.0\n"
 "Content-Type: text/plain; charset=UTF-8\n"
 "Content-Transfer-Encoding: 8bit\n"
@@ -82,6 +83,9 @@ msgstr "Kinderman-Ramage의 유사 Buggy 버전의 생성원(generator)을 사�
 
 msgid "malformed version string"
 msgstr "'%s'는 유효한 선택이 아닙니다"
+
+msgid "target is %s, current is %s"
+msgstr ""
 
 msgid "dim(X) must have a positive length"
 msgstr "dim(x)은 positive 길이를 가지지 않으면 되지 않습니다"
@@ -206,6 +210,10 @@ msgstr "유효한 재기동 지정이 아닙니다"
 
 msgid "argument 'where' of length 0"
 msgstr "길이 0의 인수"
+
+#, fuzzy
+msgid "argument 'object' must deparse to a single character string"
+msgstr "'pattern'는 비어 있지 않는 문자열이 아니면 되지 않습니다"
 
 msgid "'origin' must be one of 'start', 'current' or 'end'"
 msgstr ""
@@ -591,9 +599,6 @@ msgstr "행렬의 대각성분만을 옮겨놓을수가 있습니다"
 msgid "replacement diagonal has wrong length"
 msgstr "치환대각 성분의 길이가 잘못되어 있습니다"
 
-msgid "'fromLast' must be TRUE or FALSE"
-msgstr ""
-
 msgid "MARGIN ="
 msgstr "MARGIN ="
 
@@ -664,8 +669,15 @@ msgstr "효과인 인자 수준입니다. NAs가 발생했습니다"
 msgid "'%s' is not meaningful for ordered factors"
 msgstr "'%s'는 순서 인자에 대해서 무의미합니다"
 
-msgid "no files to copy from"
-msgstr "복사한부터 파일이 없습니다"
+#, fuzzy
+msgid "'%s' not defined for ordered factors"
+msgstr "'%s'는 순서 인자에 대해서 무의미합니다"
+
+#, fuzzy
+msgid ""
+"'%s' is only meaningful for ordered factors if all arguments have the same "
+"level sets"
+msgstr "'%s'는 순서 인자에 대해서 무의미합니다"
 
 msgid "no files to copy to"
 msgstr "복사한것에서 파일이 없습니다"
@@ -673,9 +685,8 @@ msgstr "복사한것에서 파일이 없습니다"
 msgid "more 'from' files than 'to' files"
 msgstr "복사하는 파일보다 많은 복사 전 파일이 있습니다"
 
-#, fuzzy
-msgid "'recursive' will be ignored"
-msgstr "drop인수는 무시됩니다"
+msgid "'recursive' will be ignored as 'to' is not a single existing directory"
+msgstr ""
 
 msgid "file can not be copied both 'from' and 'to'"
 msgstr "동일 파일에 복사할수가 없습니다"
@@ -686,8 +697,16 @@ msgstr "link 해야할 파일이 없습니다"
 msgid "no files/directory to link to"
 msgstr "link 해야할 파일 또는 디렉토리가 없습니다"
 
+#, fuzzy
+msgid "no files to link to"
+msgstr "link 해야할 파일이 없습니다"
+
 msgid "'package' must be of length 1"
 msgstr "'package'는 길이 1이 나오지 않으면 되지 않습니다"
+
+#, fuzzy
+msgid "no file found"
+msgstr "검색되지 않습니다"
 
 msgid "'vec' contains NAs"
 msgstr "'vec'는 NA값을 포함하고 있습니다"
@@ -903,12 +922,16 @@ msgstr "파일 '%s'가 검색되지 않습니다"
 msgid "now dyn.unload(\"%s\") ..."
 msgstr "dyn.unload(\"%s\")중입니다..."
 
-msgid "Loading required package: %s"
-msgstr "요구된 패키지 %s를 로드중입니다"
-
 #, fuzzy
 msgid "use of 'save' is deprecated"
 msgstr "'%s'는 없어져 버릴 예정입니다"
+
+#, fuzzy
+msgid "save != FALSE is defunct"
+msgstr "'%s'는 없어져 버렸습니다"
+
+msgid "Loading required package: %s"
+msgstr "요구된 패키지 %s를 로드중입니다"
 
 msgid "none of the packages are loaded"
 msgstr "어느 패키지도 로드 되지 않습니다"
@@ -921,8 +944,8 @@ msgstr ""
 "'%s'에 검색된 것을 사용합니다"
 
 msgid ""
-"Further information is available in the following vignettes in directory '%"
-"s':"
+"Further information is available in the following vignettes in directory "
+"'%s':"
 msgstr "이상의 정보는 디렉토리'%s'에 있는 이하의 vignettes에 있습니다"
 
 msgid "doc"
@@ -1099,9 +1122,6 @@ msgstr "name space는 이미 부가되어 있습니다"
 msgid "%s not found"
 msgstr "%s를 검색해낼수가 없습니다"
 
-msgid "cyclic name space dependencies are not supported"
-msgstr "cyclic name space의 종속성은 서포트되어 있지 않습니다"
-
 msgid "namespace '%s' is already sealed in loadNamespace"
 msgstr "%s는 '%s'때문에 'loadNamespace'에 이미 밀폐되었습니다"
 
@@ -1161,15 +1181,6 @@ msgstr "이름 공간을 적재하지 않습니다"
 msgid "name space %s is imported by %s so cannot be unloaded"
 msgstr "name space '%s'가 적재 되었습니다"
 
-msgid "imperative name space directives are disabled"
-msgstr "명령적인 이름공간의 지령은 사용 불가능합니다"
-
-msgid "all objects in base name space are currently exported."
-msgstr "base 이름 공간의 모드 오브젝트는 현재 export되어 있습니다"
-
-msgid "can only export from a name space"
-msgstr "name space으로부터만 export할수가 있습니다"
-
 msgid "not a name space"
 msgstr "이름 공간이 아닙니다"
 
@@ -1190,9 +1201,6 @@ msgstr ""
 
 msgid "invalid import target"
 msgstr "무효인 import target입니다"
-
-msgid "got invalid index for importing"
-msgstr ""
 
 msgid "found methods to import for function %s but not the generic itself"
 msgstr ""
@@ -1335,6 +1343,13 @@ msgstr "'scale'의 길이는 'x'의 열수에 동일하지 않으면 되지 않�
 msgid "either specify 'nmax' or 'n', but not both."
 msgstr "'nmax' 또는 'n'를 지정해 주십시오. 그러나 양쪽 모두는 안됩니다"
 
+#, fuzzy
+msgid "argument 'length.out' must be of length 1"
+msgstr "'length.out'는 길이 1이 나오지 않으면 되지 않습니다"
+
+msgid "first element used of 'length.out' argument"
+msgstr ""
+
 msgid "invalid (to - from)/by in seq(.)"
 msgstr "seq(.)안의 (to - from)/by가 부적절합니다"
 
@@ -1349,6 +1364,9 @@ msgstr "길이의 non-negative 수치가 아니면 되지 않습니다"
 
 msgid "too many arguments"
 msgstr "인수의 수가 너무 많습니다"
+
+msgid "'compress' is ignored unless 'file' is a file name"
+msgstr ""
 
 msgid "'connection' must be a connection"
 msgstr "'connection'는 connection가 아니면 되지 않습니다"
@@ -1496,6 +1514,9 @@ msgstr "외부에서 하는것이 아무것도 없습니다"
 
 msgid "all arguments must have the same length"
 msgstr "모든 인수는 동일 길이가 나오지 않으면 되지 않습니다"
+
+msgid "attempt to make a table with >= 2^31 elements"
+msgstr ""
 
 msgid "'object' must inherit from class \"table\""
 msgstr "'object'는 class \"table\"를 계승하지 않으면 되지 않습니다"
@@ -1719,6 +1740,25 @@ msgid_plural "Warning messages:\n"
 msgstr[0] ""
 "경고 메세지:\n"
 "경고 메세지(복수)\n"
+
+#~ msgid "no files to copy from"
+#~ msgstr "복사한부터 파일이 없습니다"
+
+#~ msgid "cyclic name space dependencies are not supported"
+#~ msgstr "cyclic name space의 종속성은 서포트되어 있지 않습니다"
+
+#, fuzzy
+#~ msgid "'recursive' will be ignored"
+#~ msgstr "drop인수는 무시됩니다"
+
+#~ msgid "imperative name space directives are disabled"
+#~ msgstr "명령적인 이름공간의 지령은 사용 불가능합니다"
+
+#~ msgid "all objects in base name space are currently exported."
+#~ msgstr "base 이름 공간의 모드 오브젝트는 현재 export되어 있습니다"
+
+#~ msgid "can only export from a name space"
+#~ msgstr "name space으로부터만 export할수가 있습니다"
 
 #~ msgid "shared library '%s' not found"
 #~ msgstr "공용 라이브러리 '%s'가 검색되지 않습니다"

@@ -211,7 +211,7 @@
         if(length(S3Class)) S3Class <- S3Class[[1L]]
         else S3Class <- "oldClass"      # or error?
         cat("Object of class \"", cl, "\"\n", sep = "")
-        print(S3Part(object, strict = TRUE))
+        print(S3Part(object, strictS3 = TRUE))
         otherSlots <- slotNames(cl)
         S3slots <- slotNames(S3Class)
         otherSlots <- otherSlots[is.na(match(otherSlots, S3slots))]
@@ -284,6 +284,18 @@
              representation(names = "character", row.names = "data.frameRowLabels"),
              contains = "list", prototype = unclass(data.frame()), where = envir) # the S4 version
     setOldClass("data.frame", S4Class = "data.frame", where = envir)
+    ## the S3 method for $<- does some stupid things to class()
+    ## This buffers the effect from S4 classes
+    setMethod("$<-", "data.frame", where = envir,
+              function(x, name, value) {
+                  x@.Data <- as.list(`$<-.data.frame`(structure(x@.Data, names = x@names,
+                         row.names = x@row.names, class = "data.frame"),
+                     name, value))
+                  ## Assert:  the only slot/attribute that can change
+                  ## in $<-.data.frame is "names", and the assignment
+                  ## of the .Data "slot" copies in the new names
+                  x
+              })
     ## methods to go from S4 to S3; first, using registered class; second, general S4 object
     setMethod("coerce", c("oldClass", "S3"), function (from, to, strict = TRUE)
               {

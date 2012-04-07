@@ -69,7 +69,7 @@ lm.influence <- function (model, do.coef = TRUE)
                         mqr$qraux,
                         wt.res = e,
                         hat = double(n),
-                        coefficients= if(do.coef) matrix(0, n, k) else double(0L),
+                        coefficients= if(do.coef) matrix(0, n, k) else double(),
                         sigma = double(n),
                         tol = 10 * .Machine$double.eps,
                         DUP = FALSE, PACKAGE="stats"
@@ -129,14 +129,20 @@ rstandard.lm <- function(model, infl = lm.influence(model, do.coef=FALSE),
     res
 }
 
-## FIXME ! -- make sure we are following "the literature":
-rstandard.glm <- function(model, infl = lm.influence(model, do.coef=FALSE), ...)
+### New version from Brett Presnell, March 2011
+### Slightly modified (dispersion bit) by pd
+rstandard.glm <-
+ function(model,
+          infl=influence(model, do.coef=FALSE),
+          type=c("deviance","pearson"), ...)
 {
-    res <- infl$wt.res # = "dev.res"  really
-    res <- res / sqrt(summary(model)$dispersion * (1 - infl$hat))
-    res[is.infinite(res)] <- NaN
-    res
+ type <- match.arg(type)
+ res <- switch(type, pearson = infl$pear.res, infl$dev.res)
+ res <- res/sqrt(summary(model)$dispersion * (1 - infl$hat))
+ res[is.infinite(res)] <- NaN
+ res
 }
+
 
 rstudent <- function(model, ...) UseMethod("rstudent")
 rstudent.lm <- function(model, infl = lm.influence(model, do.coef=FALSE),
@@ -306,6 +312,6 @@ summary.infl <- function(object, digits = max(2, getOption("digits") - 5), ...)
 	invisible(imat)
     } else {
 	cat("NONE\n")
-	numeric(0L)
+	numeric()
     }
 }

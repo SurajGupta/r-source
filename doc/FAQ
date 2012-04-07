@@ -1,6 +1,6 @@
 R FAQ
 Frequently Asked Questions on R
-Version 2.12.2011-02-22
+Version 2.13.2011-04-07
 ISBN 3-900051-08-9
 Kurt Hornik
 
@@ -255,7 +255,7 @@ i386-freebsd, rs6000-ibm-aix, and sparc-sun-solaris.
 2.3 What is the current version of R?
 =====================================
 
-The current released version is 2.12.2.  Based on this
+The current released version is 2.13.0.  Based on this
 `major.minor.patchlevel' numbering scheme, there are two development
 versions of R, a patched version of the current release (`r-patched') and
 one working towards the next minor or eventually major (`r-devel') releases

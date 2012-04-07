@@ -20,7 +20,8 @@ srcfile <- function(filename, encoding = getOption("encoding"), Enc = "unknown")
 {
     stopifnot(is.character(filename), length(filename) == 1L)
 
-    e <- new.env(parent=emptyenv())
+    ## This is small, no need to hash.
+    e <- new.env(hash = FALSE, parent = emptyenv())
 
     e$wd <- getwd()
     e$filename <- filename
@@ -43,15 +44,15 @@ print.srcfile <- function(x, ...) {
 
 summary.srcfile <- function(object, ...) {
     cat(utils:::.normalizePath(object$filename, object$wd), "\n")
-    
+
     if (inherits(object$timestamp, "POSIXt"))
     	cat("Timestamp: ", format(object$timestamp, usetz=TRUE), "\n", sep="")
-    
+
     cat('Encoding: "', object$encoding, '"', sep="")
     if (!is.null(object$Enc) && object$Enc != object$encoding && object$Enc != "unknown")
     	cat(', re-encoded to "', object$Enc, '"', sep="")
     cat("\n")
-    
+
     invisible(object)
 }
 
@@ -148,6 +149,10 @@ open.srcfilecopy <- function(con, line, ...) {
 
 getSrcLines <- function(srcfile, first, last) {
     if (first > last) return(character())
+    if (inherits(srcfile, "srcfilecopy")) {
+        last <- min(last, length(srcfile$lines))
+    	return(srcfile$lines[first:last])
+    }
     if (!.isOpen(srcfile)) on.exit(close(srcfile))
     conn <- open(srcfile, first)
     lines <- readLines(conn, n = last - first + 1L, warn = FALSE)
@@ -159,12 +164,14 @@ getSrcLines <- function(srcfile, first, last) {
 }
 
 # a srcref gives start and stop positions of text
-# lloc entries are first_line, first_byte, last_line, last_byte, first_column, last_column
+# lloc entries are first_line, first_byte, last_line, last_byte, 
+#  first_column, last_column, first_parse, last_parse
 # all are inclusive
 
 srcref <- function(srcfile, lloc) {
     stopifnot(inherits(srcfile, "srcfile"), length(lloc) %in% c(4L,6L))
-    if (length(lloc) == 4) lloc <- c(lloc, lloc[2], lloc[4])
+    if (length(lloc) == 4) lloc <- c(lloc, lloc[c(2,4)])
+    if (length(lloc) == 6) lloc <- c(lloc, lloc[c(1,3)])
     structure(as.integer(lloc), srcfile=srcfile, class="srcref")
 }
 
@@ -172,7 +179,12 @@ as.character.srcref <- function(x, useSource = TRUE, ...)
 {
     srcfile <- attr(x, "srcfile")
     if (!is.null(srcfile) && !inherits(srcfile, "srcfile")) class(srcfile) <- "srcfile"
-    if (useSource) lines <- try(getSrcLines(srcfile, x[1L], x[3L]), TRUE)
+    if (useSource) {
+    	if (inherits(srcfile, "srcfilecopy"))
+    	    lines <- try(getSrcLines(srcfile, x[7L], x[8L]), TRUE)
+    	else
+ 	    lines <- try(getSrcLines(srcfile, x[1L], x[3L]), TRUE)
+    }
     if (!useSource || inherits(lines, "try-error"))
     	lines <- paste("<srcref: file \"", srcfile$filename, "\" chars ",
                        x[1L],":",x[5L], " to ",x[3L],":",x[6L], ">", sep="")

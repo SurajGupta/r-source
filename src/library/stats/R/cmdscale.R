@@ -57,16 +57,21 @@ cmdscale <- function (d, k = 2, eig = FALSE, add = FALSE, x.ret = FALSE)
         .C(R_dblcen, x, as.integer(n), DUP = FALSE)
     }
     e <- eigen(-x/2, symmetric = TRUE)
-    ev <- e$values[1L:k]
-    if(any(ev < 0))
-        warning(gettextf("some of the first %d eigenvalues are < 0", k),
+    ev <- e$values[seq_len(k)]
+    evec <- e$vectors[, seq_len(k), drop = FALSE]
+    k1 <- sum(ev > 0)
+    if(k1 < k) {
+        warning(gettextf("only %d of the first %d eigenvalues are > 0", k1, k),
                 domain = NA)
-    points <- e$vectors[, 1L:k, drop = FALSE] * rep(sqrt(ev), each=n)
+        evec <- evec[, ev > 0,  drop = FALSE]
+        ev <- ev[ev > 0]
+    }
+    points <- evec * rep(sqrt(ev), each=n)
     dimnames(points) <- list(rn, NULL)
     if (eig || x.ret || add) {
-        evalus <- e$values[-n]
-        list(points = points, eig = if(eig) e$values, x = if(x.ret) x,
+        evalus <- e$values # Cox & Cox have sum up to n-1, though
+        list(points = points, eig = if(eig) evalus, x = if(x.ret) x,
              ac = if(add) add.c else 0,
-             GOF = sum(ev)/c(sum(abs(evalus)), sum(evalus[evalus > 0])))
+             GOF = sum(ev)/c(sum(abs(evalus)), sum(pmax(evalus, 0))) )
     } else points
 }

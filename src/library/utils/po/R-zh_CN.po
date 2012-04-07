@@ -7,10 +7,11 @@ msgid ""
 msgstr ""
 "Project-Id-Version: R 2.3.0\n"
 "Report-Msgid-Bugs-To: bugs@r-project.org\n"
-"POT-Creation-Date: 2010-08-17 16:04\n"
-"PO-Revision-Date: 2008-10-08 18:27+0100\n"
+"POT-Creation-Date: 2011-03-30 20:23\n"
+"PO-Revision-Date: 2011-01-18 13:56+0000\n"
 "Last-Translator: 陈斐 <FeiChen@FairIsaac.com>\n"
 "Language-Team: Chinese\n"
+"Language: \n"
 "MIME-Version: 1.0\n"
 "Content-Type: text/plain; charset=UTF-8\n"
 "Content-Transfer-Encoding: 8bit\n"
@@ -70,8 +71,8 @@ msgstr "指向'%s'的路径里不能有空格,"
 msgid "this may cause problems when running LaTeX"
 msgstr "这可能会对运行LaTeX里产生问题"
 
-msgid "You can now run LaTeX on '%s'"
-msgstr "现在你可以在'%s'上运行LaTeX"
+msgid "\\SweaveInput is not compatible with concordances."
+msgstr ""
 
 msgid "invalid value for '%s' : %s"
 msgstr "'%s'的值不对: %s"
@@ -129,9 +130,7 @@ msgstr "参数不对"
 msgid ""
 "Not all arguments are of the same length, the following need to be recycled: "
 "%s"
-msgstr ""
-"不是所有的参数的长度都一样，下面这些需要被再循环："
-"%s"
+msgstr "不是所有的参数的长度都一样，下面这些需要被再循环：%s"
 
 msgid ","
 msgstr ","
@@ -177,6 +176,9 @@ msgstr "参考项参考种类为'"
 
 msgid "' has to correctly specify the field(s):"
 msgstr "'必需正确地设定这些项："
+
+msgid "'style' should be one of %s"
+msgstr "'style'必需是这些%s中的一个"
 
 msgid "' has to specify the field(s):"
 msgstr "'必需设定这些项："
@@ -406,8 +408,8 @@ msgstr "重建help.search()数据库"
 msgid "..."
 msgstr "…"
 
-msgid "Packages {.readRDS() sequentially}:"
-msgstr "程序包{顺序.readRDS()}:"
+msgid "Packages {readRDS() sequentially}:"
+msgstr "程序包{顺序readRDS()}:"
 
 msgid "."
 msgstr "."
@@ -445,6 +447,33 @@ msgstr "'agrep'设定得不对"
 msgid "matched %d objects."
 msgstr "%d个匹配对象"
 
+msgid "invalid browser name, check options(\"browser\")."
+msgstr "浏览器的名字不对，请检查options(\"browser\")的设置。"
+
+msgid "help.start() requires the HTTP server to be running"
+msgstr "help.start()需要用HTTP服务器"
+
+msgid ""
+"If nothing happens, you should open\n"
+"'%s' yourself"
+msgstr "如果什么都不发生的话，你应该自己打开'%s'"
+
+msgid ""
+"If the browser launched by '%s' is already running, it is *not* restarted, "
+"and you must switch to its window."
+msgstr ""
+"如果由'%s'打开的浏览器已经在运行的话，它*不会*被重新启动，因此你必需人工地转"
+"换到它的窗口。"
+
+msgid "Otherwise, be patient ..."
+msgstr "否则的话请耐心等待…"
+
+msgid "'url' must be a non-empty character string"
+msgstr "url必需的非空字符串"
+
+msgid "'browser' must be a non-empty character string"
+msgstr "'browser'必需为非空字符串"
+
 msgid "no package '%s' was found"
 msgstr "找不到'%s'这样一个程序包"
 
@@ -465,6 +494,12 @@ msgstr "程序包"
 
 msgid "not found"
 msgstr "找不到"
+
+msgid "cannot update HTML package index"
+msgstr "无法更新HTML程序包索引"
+
+msgid "Making packages.html  ..."
+msgstr "制造packages.html..."
 
 msgid "menu() cannot be used non-interactively"
 msgstr "menu()不能在非互交形式下使用"
@@ -577,11 +612,14 @@ msgstr "'instPkgs'矩阵有错"
 msgid "no installed packages for (invalid?) 'lib.loc=%s'"
 msgstr "'lib.loc=%s'里没有已经安装好了的程序包"
 
-msgid "read.dcf() error on file '%s'"
-msgstr "read.dcf()在'%s'文件上出了错"
+msgid "metadata of '%s' is corrupt"
+msgstr "'%s'里元数据损坏"
 
 msgid "'priority' must be character or NULL"
 msgstr "'priority'的值要么是字符要么为NULL"
+
+msgid "Updating HTML index of packages in '.Library'"
+msgstr "更新'.Library'里的HTML程序包列表"
 
 msgid ""
 "Removing package(s) from %s\n"
@@ -901,6 +939,9 @@ msgstr "没有记录下任何事件"
 msgid "'compressed' must be logical or character"
 msgstr "'compressed'必需是字符向量"
 
+msgid "failed to create directory %s"
+msgstr "无法建立目录%s"
+
 msgid "invalid octal digit"
 msgstr "八进制数字格式不对"
 
@@ -912,6 +953,9 @@ msgstr "不完全文件锁"
 
 msgid "checksum error for entry '%s'"
 msgstr "项目'%s'检查和错误"
+
+msgid "failed to copy %s to %s"
+msgstr "无法把%s拷贝到%s"
 
 msgid "unsupported entry type"
 msgstr "不支持这一项目种类"
@@ -975,8 +1019,24 @@ msgstr "不能修改'%s'"
 msgid "'unzip' must be a single character string"
 msgstr "'unzip'必需是单字符串"
 
-msgid "'subject' missing"
+msgid "'files' must a character vector specifying one or more filepaths"
+msgstr "'files'必需是字符向量，设定一个或多个文件路径"
+
+msgid ""
+"cannot find program to open 'mailto:' URIs: reverting to 'method=\"none\"'"
+msgstr "找不到可用来打开'mailto:'URI的程序：因此回到'method=\"none\"'"
+
+msgid "Using the browser to open a mailto: URI"
+msgstr "用浏览器来打开mailto: URI"
+
+msgid "must specify 'address'"
+msgstr "必需设定'address'"
+
+msgid "'subject' is missing"
 msgstr "缺少'subject'值"
+
+msgid "'ccaddress' must be of length 1"
+msgstr "'ccaddress'长度必需为一"
 
 msgid "no download method found"
 msgstr "没有下载方法"
@@ -996,39 +1056,27 @@ msgstr "制造'%s'时出了问题"
 msgid "Saving help page to"
 msgstr "保存帮助页到"
 
-msgid "invalid browser name, check options(\"browser\")."
-msgstr "浏览器的名字不对，请检查options(\"browser\")的设置。"
-
-msgid "help.start() requires the HTTP server to be running"
-msgstr "help.start()需要用HTTP服务器"
-
-msgid ""
-"If the browser launched by '%s' is already running, it is *not* restarted, "
-"and you must switch to its window."
-msgstr ""
-"如果由'%s'打开的浏览器已经在运行的话，它*不会*被重新启动，因此你必需人工地转"
-"换到它的窗口。"
-
-msgid "Otherwise, be patient ..."
-msgstr "否则的话请耐心等待…"
-
-msgid "'url' must be a non-empty character string"
-msgstr "url必需的非空字符串"
-
-msgid "'browser' must be a non-empty character string"
-msgstr "'browser'必需为非空字符串"
-
-msgid "Making packages.html"
-msgstr "制造packages.html"
-
-msgid "Updating HTML index of packages in '.Library'"
-msgstr "更新'.Library'里的HTML程序包列表"
-
 msgid "'tar' returned non-zero exit code %d"
 msgstr "'tar'退出码为%d"
 
 msgid "package '%s' successfully unpacked and MD5 sums checked"
 msgstr "程序包'%s'打开成功，MD5和检查也通过"
+
+msgid "ERROR: failed to lock directory"
+msgstr "错误：无法锁定文件目录"
+
+msgid ""
+"for modifying\n"
+"Try removing"
+msgstr ""
+"在修改时\n"
+"试图移动"
+
+msgid "ERROR: failed to create lock directory"
+msgstr "错误：无法建立锁定目录"
+
+msgid "restored '%s'"
+msgstr "恢复到'%s'"
 
 msgid "unable to move temporary installation '%s' to '%s'"
 msgstr "无法将临时安装'%s'搬到'%s'"
@@ -1042,10 +1090,11 @@ msgstr "'memory.size()'只在Windows上有用"
 msgid "'memory.limit()' is Windows-specific"
 msgstr "'memory.limit()'只在Windows上有用"
 
-msgid ""
-"If nothing happens, you should open\n"
-"'%s' yourself"
-msgstr "如果什么都不发生的话，你应该自己打开'%s'"
+msgid "method 'mailx' is Unix-only"
+msgstr "'mailx'只适用于Unix"
+
+msgid "zipfile '%s' not found"
+msgstr "找不到'%s'这一zip文件"
 
 msgid "failed to create '%s'"
 msgstr "无法建立'%s'"
@@ -1055,15 +1104,6 @@ msgstr "在程序字'%s'里找不到'libs'这个目录"
 
 msgid "cannot remove prior installation of package '%s'"
 msgstr "无法将拆除原来安装的程序包 '%s'"
-
-msgid "zipfile '%s' not found"
-msgstr "找不到'%s'这一zip文件"
-
-msgid "updating HTML package descriptions"
-msgstr "更新HTML程序包的描述内容"
-
-msgid "cannot update HTML package index"
-msgstr "无法更新HTML程序包索引"
 
 msgid "winDialog() cannot be used non-interactively"
 msgstr "winDialog()不能在非互交形式下使用"
@@ -1082,9 +1122,9 @@ msgid "object '%s' not found"
 msgid_plural "objects '%s' not found"
 msgstr[0] "找不到'%s'这个对象"
 
-msgid "package %s is not available"
-msgid_plural "packages %s are not available"
-msgstr[0] "没有'%s'这个程序包"
+msgid "package %s is not available (for %s)"
+msgid_plural "packages %s are not available (for %s)"
+msgstr[0] "没有%s这个程序包(用于%s)"
 
 msgid "dependency %s is not available"
 msgid_plural "dependencies %s are not available"
@@ -1101,6 +1141,15 @@ msgstr[0] "'lib'元素'%s'不是可写的目录"
 msgid "package '%s' is in use and will not be installed"
 msgid_plural "packages '%s' are in use and will not be installed"
 msgstr[0] "正在使用'%s'这个程序包，因此不会被安装"
+
+#~ msgid "You can now run LaTeX on '%s'"
+#~ msgstr "现在你可以在'%s'上运行LaTeX"
+
+#~ msgid "updating HTML package descriptions"
+#~ msgstr "更新HTML程序包的描述内容"
+
+#~ msgid "read.dcf() error on file '%s'"
+#~ msgstr "read.dcf()在'%s'文件上出了错"
 
 #~ msgid "Could not find aspell or ispell executable."
 #~ msgstr "找不到aspell或ispell执行文件"
@@ -1287,4 +1336,3 @@ msgstr[0] "正在使用'%s'这个程序包，因此不会被安装"
 
 #~ msgid "Optionally other keywords from doc/KEYWORDS, one per line"
 #~ msgstr "可以从其他文件/KEYWORDS中任选其他关键字，每行一个"
-

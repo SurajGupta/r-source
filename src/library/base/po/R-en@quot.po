@@ -22,15 +22,16 @@
 #
 msgid ""
 msgstr ""
-"Project-Id-Version: R 2.12.1\n"
+"Project-Id-Version: R 2.13.0\n"
 "Report-Msgid-Bugs-To: bugs@r-project.org\n"
-"POT-Creation-Date: 2011-01-03 16:13\n"
-"PO-Revision-Date: 2011-01-03 16:13\n"
+"POT-Creation-Date: 2011-03-29 21:44\n"
+"PO-Revision-Date: 2011-03-29 21:44\n"
 "Last-Translator: Automatically generated\n"
 "Language-Team: none\n"
 "MIME-Version: 1.0\n"
 "Content-Type: text/plain; charset=UTF-8\n"
 "Content-Transfer-Encoding: 8bit\n"
+"Language: en\n"
 "Plural-Forms: nplurals=2; plural=(n != 1);\n"
 
 msgid "'%s' is defunct."
@@ -101,6 +102,9 @@ msgstr "Buggy version of Kinderman-Ramage generator is not allowed"
 
 msgid "malformed version string"
 msgstr "malformed version string"
+
+msgid "target is %s, current is %s"
+msgstr "target is %s, current is %s"
 
 msgid "dim(X) must have a positive length"
 msgstr "dim(X) must have a positive length"
@@ -221,6 +225,9 @@ msgstr "not a valid restart specification"
 
 msgid "argument 'where' of length 0"
 msgstr "argument ‘where’ of length 0"
+
+msgid "argument 'object' must deparse to a single character string"
+msgstr "argument ‘object’ must deparse to a single character string"
 
 msgid "'origin' must be one of 'start', 'current' or 'end'"
 msgstr "‘origin’ must be one of 'start', ‘current’ or ‘end’"
@@ -590,9 +597,6 @@ msgstr "only matrix diagonals can be replaced"
 msgid "replacement diagonal has wrong length"
 msgstr "replacement diagonal has wrong length"
 
-msgid "'fromLast' must be TRUE or FALSE"
-msgstr "‘fromLast’ must be TRUE or FALSE"
-
 msgid "MARGIN ="
 msgstr "MARGIN ="
 
@@ -658,8 +662,15 @@ msgstr "invalid factor level, NA generated"
 msgid "'%s' is not meaningful for ordered factors"
 msgstr "‘%s’ is not meaningful for ordered factors"
 
-msgid "no files to copy from"
-msgstr "no files to copy from"
+msgid "'%s' not defined for ordered factors"
+msgstr "‘%s’ not defined for ordered factors"
+
+msgid ""
+"'%s' is only meaningful for ordered factors if all arguments have the same "
+"level sets"
+msgstr ""
+"‘%s’ is only meaningful for ordered factors if all arguments have the same "
+"level sets"
 
 msgid "no files to copy to"
 msgstr "no files to copy to"
@@ -667,8 +678,8 @@ msgstr "no files to copy to"
 msgid "more 'from' files than 'to' files"
 msgstr "more ‘from’ files than ‘to’ files"
 
-msgid "'recursive' will be ignored"
-msgstr "‘recursive’ will be ignored"
+msgid "'recursive' will be ignored as 'to' is not a single existing directory"
+msgstr "‘recursive’ will be ignored as ‘to’ is not a single existing directory"
 
 msgid "file can not be copied both 'from' and 'to'"
 msgstr "file can not be copied both ‘from’ and ‘to’"
@@ -679,8 +690,14 @@ msgstr "no files to link from"
 msgid "no files/directory to link to"
 msgstr "no files/directory to link to"
 
+msgid "no files to link to"
+msgstr "no files to link to"
+
 msgid "'package' must be of length 1"
 msgstr "‘package’ must be of length 1"
+
+msgid "no file found"
+msgstr "no file found"
 
 msgid "'vec' contains NAs"
 msgstr "‘vec’ contains NAs"
@@ -874,11 +891,14 @@ msgstr "DLL ‘%s’ not found"
 msgid "now dyn.unload(\"%s\") ..."
 msgstr "now dyn.unload(“%s”) ..."
 
-msgid "Loading required package: %s"
-msgstr "Loading required package: %s"
-
 msgid "use of 'save' is deprecated"
 msgstr "use of ‘save’ is deprecated"
+
+msgid "save != FALSE is defunct"
+msgstr "save != FALSE is defunct"
+
+msgid "Loading required package: %s"
+msgstr "Loading required package: %s"
 
 msgid "none of the packages are loaded"
 msgstr "none of the packages are loaded"
@@ -891,11 +911,11 @@ msgstr ""
 "using the one found in ‘%s’"
 
 msgid ""
-"Further information is available in the following vignettes in directory '%"
-"s':"
+"Further information is available in the following vignettes in directory "
+"'%s':"
 msgstr ""
-"Further information is available in the following vignettes in directory '%"
-"s':"
+"Further information is available in the following vignettes in directory "
+"'%s':"
 
 msgid "doc"
 msgstr "doc"
@@ -1064,9 +1084,6 @@ msgstr "name space is already attached"
 msgid "%s not found"
 msgstr "%s not found"
 
-msgid "cyclic name space dependencies are not supported"
-msgstr "cyclic name space dependencies are not supported"
-
 msgid "namespace '%s' is already sealed in loadNamespace"
 msgstr "namespace ‘%s’ is already sealed in loadNamespace"
 
@@ -1122,15 +1139,6 @@ msgstr "not loading a name space"
 msgid "name space %s is imported by %s so cannot be unloaded"
 msgstr "name space %s is imported by %s so cannot be unloaded"
 
-msgid "imperative name space directives are disabled"
-msgstr "imperative name space directives are disabled"
-
-msgid "all objects in base name space are currently exported."
-msgstr "all objects in base name space are currently exported."
-
-msgid "can only export from a name space"
-msgstr "can only export from a name space"
-
 msgid "not a name space"
 msgstr "not a name space"
 
@@ -1151,9 +1159,6 @@ msgstr "replacing previous import %s when loading %s"
 
 msgid "invalid import target"
 msgstr "invalid import target"
-
-msgid "got invalid index for importing"
-msgstr "got invalid index for importing"
 
 msgid "found methods to import for function %s but not the generic itself"
 msgstr "found methods to import for function %s but not the generic itself"
@@ -1281,6 +1286,12 @@ msgstr "length of ‘scale’ must equal the number of columns of ‘x’"
 msgid "either specify 'nmax' or 'n', but not both."
 msgstr "either specify ‘nmax’ or 'n', but not both."
 
+msgid "argument 'length.out' must be of length 1"
+msgstr "argument ‘length.out’ must be of length 1"
+
+msgid "first element used of 'length.out' argument"
+msgstr "first element used of ‘length.out’ argument"
+
 msgid "invalid (to - from)/by in seq(.)"
 msgstr "invalid (to - from)/by in seq(.)"
 
@@ -1295,6 +1306,9 @@ msgstr "length must be non-negative number"
 
 msgid "too many arguments"
 msgstr "too many arguments"
+
+msgid "'compress' is ignored unless 'file' is a file name"
+msgstr "‘compress’ is ignored unless ‘file’ is a file name"
 
 msgid "'connection' must be a connection"
 msgstr "‘connection’ must be a connection"
@@ -1441,6 +1455,9 @@ msgstr "nothing to tabulate"
 
 msgid "all arguments must have the same length"
 msgstr "all arguments must have the same length"
+
+msgid "attempt to make a table with >= 2^31 elements"
+msgstr "attempt to make a table with >= 2^31 elements"
 
 msgid "'object' must inherit from class \"table\""
 msgstr "‘object’ must inherit from class “table”"

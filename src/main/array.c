@@ -1,7 +1,7 @@
 /*
  *  R : A Computer Language for Statistical Data Analysis
  *  Copyright (C) 1995, 1996  Robert Gentleman and Ross Ihaka
- *  Copyright (C) 1998-2001   The R Development Core Team
+ *  Copyright (C) 1998-2010   The R Development Core Team
  *  Copyright (C) 2002--2008  The R Foundation
  *
  *  This program is free software; you can redistribute it and/or modify
@@ -37,6 +37,8 @@
  * These are now very old, plus
  * ``When the "dimnames" attribute is
  *   grabbed off an array it is always adjusted to be a vector.''
+
+ They are used in bind.c and subset.c, and advertised in Rinternals.h
 */
 SEXP GetRowNames(SEXP dimnames)
 {
@@ -54,38 +56,58 @@ SEXP GetColNames(SEXP dimnames)
 	return R_NilValue;
 }
 
-/* Used to have 4 args, now has 5, R-devel has 7.
-   Called as .Internal in Matrix ... and others.
-*/
+/* Package matrix uses this .Internal with 5 args: should have 7 */
 SEXP attribute_hidden do_matrix(SEXP call, SEXP op, SEXP args, SEXP rho)
 {
-    SEXP vals, ans, snr, snc, dimnames = R_NilValue;
-    int nr, nc, byrow, lendat,nargs;
+    SEXP vals, ans, snr, snc, dimnames;
+    int nr = 1, nc = 1, byrow, lendat, miss_nr, miss_nc;
 
     checkArity(op, args);
-    nargs = length(args);
-    vals = CAR(args);
-    snr = CADR(args);
-    snc = CADDR(args);
-    if (!isNumeric(snr) || !isNumeric(snc))
-	error(_("non-numeric matrix extent"));
-    byrow = asLogical(CADDDR(args));
+    vals = CAR(args); args = CDR(args);
+    /* Supposedly as.vector() gave a vector type, but we check */
+    switch(TYPEOF(vals)) {
+	case LGLSXP:
+	case INTSXP:
+	case REALSXP:
+	case CPLXSXP:
+	case STRSXP:
+	case RAWSXP:
+	case EXPRSXP:
+	case VECSXP:
+	    break;
+	default:
+	    error(_("'data' must be of a vector type"));
+    }
+    lendat = length(vals);
+    snr = CAR(args); args = CDR(args);
+    snc = CAR(args); args = CDR(args);
+    byrow = asLogical(CAR(args)); args = CDR(args);
     if (byrow == NA_INTEGER)
 	error(_("invalid '%s' argument"), "byrow");
-    dimnames = CAD4R(args);
+    dimnames = CAR(args);
+    args = CDR(args);
+    miss_nr = asLogical(CAR(args)); args = CDR(args);
+    miss_nc = asLogical(CAR(args));
 
-
-    lendat = length(vals);
-    nr = asInteger(snr);
-    if (nr == NA_INTEGER) /* This is < 0 */
-	error(_("invalid 'nrow' value (too large or NA)"));
-    if (nr < 0)
-	error(_("invalid 'nrow' value (< 0)"));
-    nc = asInteger(snc);
-    if (nc == NA_INTEGER)
-	error(_("invalid 'ncol' value (too large or NA)"));
-    if (nc < 0)
-	error(_("invalid 'ncol' value (< 0)"));
+    if (!miss_nr) {
+	if (!isNumeric(snr)) error(_("non-numeric matrix extent"));
+	nr = asInteger(snr);
+	if (nr == NA_INTEGER)
+	    error(_("invalid 'nrow' value (too large or NA)"));
+	if (nr < 0)
+	    error(_("invalid 'nrow' value (< 0)"));
+    }
+    if (!miss_nc) {
+	if (!isNumeric(snc)) error(_("non-numeric matrix extent"));
+	nc = asInteger(snc);
+	if (nc == NA_INTEGER)
+	    error(_("invalid 'ncol' value (too large or NA)"));
+	if (nc < 0)
+	    error(_("invalid 'ncol' value (< 0)"));
+    }
+    if (miss_nr && miss_nc) nr = lendat;
+    else if (miss_nr) nr = ceil(lendat/(double) nc);
+    else if (miss_nc) nc = ceil(lendat/(double) nr);
 
     if(lendat > 0 ) {
 	if (lendat > 1 && (nr * nc) % lendat != 0) {
@@ -1197,6 +1219,9 @@ SEXP attribute_hidden do_colsum(SEXP call, SEXP op, SEXP args, SEXP rho)
     int *ix;
     double *rx;
     LDOUBLE sum = 0.0;
+#ifdef HAVE_OPENMP
+    int nthreads;
+#endif
 
     checkArity(op, args);
     x = CAR(args); args = CDR(args);
@@ -1222,6 +1247,17 @@ SEXP attribute_hidden do_colsum(SEXP call, SEXP op, SEXP args, SEXP rho)
     if (OP == 0 || OP == 1) { /* columns */
 	cnt = n;
 	PROTECT(ans = allocVector(REALSXP, p));
+#ifdef HAVE_OPENMP
+	/* This gives a spurious -Wunused-but-set-variable error */
+	if (R_num_math_threads > 0)
+	    nthreads = R_num_math_threads;
+	else
+	    nthreads = 1; /* for now */
+#pragma omp parallel for num_threads(nthreads) default(none) \
+    private(j, i, ix, rx) \
+    firstprivate(x, ans, n, p, type, cnt, sum, \
+		 NaRm, keepNA, R_NaReal, R_NaInt, OP)
+#endif
 	for (j = 0; j < p; j++) {
 	    switch (type) {
 	    case REALSXP:

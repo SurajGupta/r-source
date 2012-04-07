@@ -42,7 +42,7 @@ Support for UTF-8-encoded strings in non-UTF-8 locales
 Comparison is done directly unless you happen to be comparing the same
 string in different encodings.
 
-nzchar and nchar(, "bytes") are indpendent of the encoding
+nzchar and nchar(, "bytes") are independent of the encoding
 nchar(, "char") nchar(, "width") handle UTF-8 directly, translate Latin-1
 substr substr<-  handle UTF-8 and Latin-1 directly
 tolower toupper chartr  translate UTF-8 to wchar, rest to current charset
@@ -51,6 +51,16 @@ abbreviate strtrim  translate
 
 All the string matching functions handle UTF-8 directly, otherwise
 translate (latin1 to UTF-8, otherwise to native).
+
+Support for "bytes" marked encoding
+===================================
+
+nzchar and nchar(, "bytes") are independent of the encoding.
+
+nchar(, "char") nchar(, "width") give NA (if allowed) or error.
+substr substr<-  work in bytes
+
+abbreviate chartr make.names strtrim tolower toupper give error.
 
 */
 
@@ -140,6 +150,10 @@ SEXP attribute_hidden do_nchar(SEXP call, SEXP op, SEXP args, SEXP env)
 		nc = 0;
 		for( ; *p; p += utf8clen(*p)) nc++;
 		INTEGER(s)[i] = nc;
+	    } else if (IS_BYTES(sxi)) {
+		if (!allowNA) /* could do chars 0 */
+		    error(_("number of characters is not computable for element %d in \"bytes\" encoding"), i+1);
+		INTEGER(s)[i] = NA_INTEGER;
 	    } else if (mbcslocale) {
 		nc = mbstowcs(NULL, translateChar(sxi), 0);
 		if (!allowNA && nc < 0)
@@ -157,6 +171,10 @@ SEXP attribute_hidden do_nchar(SEXP call, SEXP op, SEXP args, SEXP env)
 		    nc += Ri18n_wcwidth(wc1);
 		}
 		INTEGER(s)[i] = nc;
+	    } else if (IS_BYTES(sxi)) {
+		if (!allowNA) /* could do width 0 */
+		    error(_("width is not computable for element %d in \"bytes\" encoding"), i+1);
+		INTEGER(s)[i] = NA_INTEGER;
 	    } else if (mbcslocale) {
 		xi = translateChar(sxi);
 		nc = mbstowcs(NULL, xi, 0);
@@ -198,7 +216,7 @@ static void substr(char *buf, const char *str, int ienc, int sa, int so)
 	    if (i < sa - 1) { str+= used; continue; }
 	    for (j = 0; j < used; j++) *buf++ = *str++;
 	}
-    } else if (ienc == CE_LATIN1) {
+    } else if (ienc == CE_LATIN1 || ienc == CE_BYTES) {
 	for (str += (sa - 1), i = sa; i <= so; i++) *buf++ = *str++;
     } else {
 	if (mbcslocale && !strIsASCII(str)) {
@@ -282,7 +300,7 @@ substrset(char *buf, const char *const str, cetype_t ienc, int sa, int so)
 	}
 	if (in != out) memmove(buf+in, buf+out, strlen(buf+out)+1);
 	memcpy(buf, str, in);
-    } else if (ienc == CE_LATIN1) {
+    } else if (ienc == CE_LATIN1 || ienc == CE_BYTES) {
 	in = strlen(str);
 	out = so - sa + 1;
 	memcpy(buf + sa - 1, str, (in < out) ? in : out);
@@ -507,7 +525,7 @@ donesc:
 SEXP attribute_hidden do_abbrev(SEXP call, SEXP op, SEXP args, SEXP env)
 {
     SEXP x, ans;
-    int i, len, minlen, uclass;
+    int i, len, minlen;
     Rboolean warn = FALSE;
     const char *s;
     const void *vmax;
@@ -521,7 +539,6 @@ SEXP attribute_hidden do_abbrev(SEXP call, SEXP op, SEXP args, SEXP env)
 
     PROTECT(ans = allocVector(STRSXP, len));
     minlen = asInteger(CADR(args));
-    uclass = asLogical(CADDR(args));
     vmax = vmaxget();
     for (i = 0 ; i < len ; i++) {
 	if (STRING_ELT(x, i) == NA_STRING)

@@ -175,11 +175,10 @@ pdf(file = ifelse(onefile, "Rplots.pdf", "Rplot\%03d.pdf"),
   output, you may need to specify a larger value for \code{maxRasters}.
 }
 \section{Color models}{
-  The default color model is RGB, and model \code{"gray"} maps RGB
+  The default color model is sRGB, and model \code{"gray"} maps sRGB
   colors to greyscale using perceived luminosity (biased towards green).
-  \code{"cmyk"} outputs in CMYK colorspace.  Nothing in \R specifies the
-  interpretation of the RGB or CMYK color spaces, and the simplest
-  possible conversion to CMYK is used
+  \code{"cmyk"} outputs in CMYK colorspace.  The simplest
+  possible conversion from sRGB to CMYK is used
   (\url{http://en.wikipedia.org/wiki/CMYK_color_model#Mapping_RGB_to_CMYK}).
 }
 \section{Conventions}{
@@ -190,22 +189,25 @@ pdf(file = ifelse(onefile, "Rplots.pdf", "Rplot\%03d.pdf"),
     \item The default device size is 7 inches square.
     \item Font sizes are in big points.
     \item The default font family is Helvetica.
-    \item Line widths are as a multiple of 1/96 inch, with no minimum. 
+    \item Line widths are as a multiple of 1/96 inch, with a minimum
+    of 0.01 enforced.   
     \item Circles of any radius are allowed.  Unless \code{useDingbats =
     FALSE}, opaque circles of less than 10 big
     points radius are rendered using char 108 in the Dingbats font:
     all semi-transparent and larger circles using a \enc{Bézier}{Bezier}
     curve for each quadrant.
-    \item Colours are interpreted by the viewing/printing application.
+    \item Colours are specified as sRGB.
   }
+
+  At very small line widths, the line type may be forced to solid.
 }
 \note{
-  If you see problems with PDF output, do remember that the
-  problem is much more likely to be in your viewer than in \R.  Try
-  another viewer if possible.  Symptoms for which the viewer has been at
-  fault are apparent grids on image plots (turn off graphics
-  anti-aliasing in your viewer if you) and missing or incorrect glyphs
-  in text (viewers silently doing font substitution).
+  If you see problems with PDF output, do remember that the problem is
+  much more likely to be in your viewer than in \R.  Try another
+  viewer if possible.  Symptoms for which the viewer has been at fault
+  are apparent grids on image plots (turn off graphics anti-aliasing
+  in your viewer if you can) and missing or incorrect glyphs in text
+  (viewers silently doing font substitution).
 
   Unfortunately the default viewers on most Linux and Mac OS X systems
   have these problems, and no obvious way to turn off graphics anti-aliasing.
@@ -233,8 +235,7 @@ pdf(file = ifelse(onefile, "Rplots.pdf", "Rplot\%03d.pdf"),
   of font names to those used by the system.  Adding the following lines
   to \file{~/.fonts.conf} or \file{/etc/fonts/local.conf} may circumvent
   this problem.
-\preformatted{
-<fontconfig>    
+\preformatted{<fontconfig>    
 <alias binding="same">
   <family>ZapfDingbats</family>
   <accept><family>Dingbats</family></accept>

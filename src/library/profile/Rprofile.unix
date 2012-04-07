@@ -18,13 +18,13 @@ if(!nchar(papersize)) {
         if(length(grep("(_US|_CA)", lcpaper))) "letter" else "a4"
     else Sys.getenv("R_PAPERSIZE")
 }
-options(papersize = as.vector(papersize),
-        printcmd = as.vector(Sys.getenv("R_PRINTCMD")),
-        dvipscmd = as.vector(Sys.getenv("DVIPS", "dvips")),
-        texi2dvi = as.vector(Sys.getenv("R_TEXI2DVICMD")),
-        browser = as.vector(Sys.getenv("R_BROWSER")),
+options(papersize = papersize,
+        printcmd = Sys.getenv("R_PRINTCMD"),
+        dvipscmd = Sys.getenv("DVIPS", "dvips"),
+        texi2dvi = Sys.getenv("R_TEXI2DVICMD"),
+        browser = Sys.getenv("R_BROWSER"),
         pager = file.path(R.home(), "bin", "pager"),
-        pdfviewer = as.vector(Sys.getenv("R_PDFVIEWER")),
+        pdfviewer = Sys.getenv("R_PDFVIEWER"),
         useFancyQuotes = TRUE)
 })
 

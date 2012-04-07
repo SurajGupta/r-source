@@ -2,10 +2,11 @@ msgid ""
 msgstr ""
 "Project-Id-Version: R 2.3.0\n"
 "Report-Msgid-Bugs-To: bugs@r-project.org\n"
-"POT-Creation-Date: 2010-10-04 10:51\n"
+"POT-Creation-Date: 2011-03-22 15:33\n"
 "PO-Revision-Date: 2005-04-17 16:57+0200\n"
 "Last-Translator: stefano iacus <>\n"
 "Language-Team: Italian <it@li.org>\n"
+"Language: it\n"
 "MIME-Version: 1.0\n"
 "Content-Type: text/plain; charset=UTF-8\n"
 "Content-Transfer-Encoding: 8bit\n"
@@ -121,6 +122,10 @@ msgstr "Errore di sintassi nella documentazione dell'oggetto '%s':"
 
 #, fuzzy
 msgid "Objects in \\usage without \\alias in documentation object '%s':"
+msgstr "Errore di sintassi nella documentazione dell'oggetto '%s':"
+
+#, fuzzy
+msgid "Assignments in \\usage in documentation object '%s':"
 msgstr "Errore di sintassi nella documentazione dell'oggetto '%s':"
 
 #, fuzzy
@@ -574,10 +579,26 @@ msgstr ""
 msgid "ERROR: this R is version %s, required is R %s %s"
 msgstr ""
 
+#, fuzzy
+msgid "loading failed"
+msgstr "esecuzione di make fallita"
+
 msgid "Changes require specified 'style'"
 msgstr ""
 
 msgid "The default JSS style may not be modified."
+msgstr ""
+
+msgid "--binary is deprecated"
+msgstr ""
+
+msgid "use of '--auto-zip' is defunct"
+msgstr ""
+
+msgid "use of '--use-zip-data' is defunct"
+msgstr ""
+
+msgid "use of '--no-docs' is deprecated: use '--install-args' instead"
 msgstr ""
 
 msgid "** Options"
@@ -589,12 +610,6 @@ msgstr ""
 #, fuzzy
 msgid "Error: cannot rename directory to"
 msgstr "impossibile creare directory '%s'"
-
-msgid "cannot coerce"
-msgstr ""
-
-msgid "to logical"
-msgstr ""
 
 msgid "-l option without value"
 msgstr ""
@@ -694,8 +709,16 @@ msgstr "non posso leggere le informazioni dell'indice nel file '%s'"
 msgid "ERROR:"
 msgstr ""
 
+#, fuzzy
+msgid "error reading file '%s'"
+msgstr "errore analisi file '%s'"
+
 msgid "this seems to be a bundle -- and they are defunct"
 msgstr ""
+
+#, fuzzy
+msgid "running 'zip' failed"
+msgstr "esecuzione di make fallita"
 
 #, fuzzy
 msgid "packaged installation of"
@@ -706,7 +729,7 @@ msgstr ""
 
 msgid ""
 "'cleanup' exists but is not executable -- see the 'R Installation and "
-"Adminstration Manual'"
+"Administration Manual'"
 msgstr ""
 
 msgid "installing to"
@@ -730,9 +753,6 @@ msgstr ""
 msgid "empty 'data' directory"
 msgstr ""
 
-msgid "'--auto-zip' is for Windows only"
-msgstr ""
-
 msgid "--merge-multiarch is Windows-only"
 msgstr ""
 
@@ -747,9 +767,6 @@ msgid "ERROR: --merge-multiarch can only be used on i386/x64 installations"
 msgstr ""
 
 msgid "invalid package"
-msgstr ""
-
-msgid "--pkglock applies only to a single package"
 msgstr ""
 
 msgid "ERROR: no packages specified"
@@ -777,12 +794,6 @@ msgstr "impossibile creare directory temporanea"
 msgid "building a fake installation is disallowed"
 msgstr ""
 
-msgid "--no-help overrides"
-msgstr ""
-
-msgid "--"
-msgstr ""
-
 msgid "finding HTML links ..."
 msgstr ""
 
@@ -803,6 +814,9 @@ msgstr "la lista sorgente deve avere i nomi per tutti gli elementi"
 
 msgid "source must be an environment or a list"
 msgstr "il sorgente deve essere un environment o una lista"
+
+msgid "invalid value for 'compress': should be FALSE, TRUE, 2 or 3"
+msgstr ""
 
 msgid "this cannot be used for package 'base'"
 msgstr "non può essere usato per il pacchetto 'base'"
@@ -843,17 +857,6 @@ msgstr ""
 
 msgid "Processing packages:"
 msgstr "Elaboro i pacchetti:"
-
-#, fuzzy
-msgid "cannot update HTML package index"
-msgstr "impossibile leggere codice sorgente del pacchetto"
-
-msgid "'DESCRIPTION' has 'Encoding' field and re-encoding is not possible"
-msgstr ""
-
-#, fuzzy
-msgid "cannot create HTML package index"
-msgstr "impossibile leggere codice sorgente del pacchetto"
 
 msgid "Internal error, no tag"
 msgstr ""
@@ -920,13 +923,10 @@ msgstr ""
 msgid "testing '%s' failed"
 msgstr "esecuzione di make fallita"
 
-msgid "Collecting examples for package"
+msgid "Testing examples for package"
 msgstr ""
 
-msgid "Running examples in package"
-msgstr ""
-
-msgid "Comparing"
+msgid "comparing"
 msgstr ""
 
 msgid "to"
@@ -936,6 +936,9 @@ msgid "..."
 msgstr ""
 
 msgid "OK"
+msgstr ""
+
+msgid "results differ from reference results"
 msgstr ""
 
 msgid "no examples found"
@@ -948,6 +951,9 @@ msgid "Running"
 msgstr ""
 
 msgid "Running vignettes for package"
+msgstr ""
+
+msgid "Comparing"
 msgstr ""
 
 msgid "creation of"
@@ -967,9 +973,6 @@ msgid "running code in"
 msgstr "esecuzione di make fallita"
 
 msgid "FAILED"
-msgstr ""
-
-msgid "comparing"
 msgstr ""
 
 msgid "running strict specific tests"
@@ -1040,6 +1043,12 @@ msgstr "impossibile eseguire bibtext su '%s'"
 msgid "unable to run %s on '%s'"
 msgstr "impossibile eseguire bibtext su '%s'"
 
+msgid "cannot coerce"
+msgstr ""
+
+msgid "to logical"
+msgstr ""
+
 msgid "File 'DESCRIPTION' is missing."
 msgstr ""
 
@@ -1060,6 +1069,21 @@ msgstr "Successione delle chiamate:"
 
 msgid "parsing '%s'"
 msgstr "analizzo '%s'"
+
+msgid "Note: found %d marked Latin-1 string"
+msgid_plural "Note: found %d marked Latin-1 strings"
+msgstr[0] ""
+msgstr[1] ""
+
+msgid "Note: found %d marked UTF-8 string"
+msgid_plural "Note: found %d marked UTF-8 strings"
+msgstr[0] ""
+msgstr[1] ""
+
+msgid "Note: found %d string marked as \"bytes\""
+msgid_plural "Note: found %d strings marked as \"bytes\""
+msgstr[0] ""
+msgstr[1] ""
 
 #, fuzzy
 msgid "Warning in file '%s':"
@@ -1088,6 +1112,14 @@ msgid "object %s is created by more than one data call"
 msgid_plural "objects %s are created by more than one data call"
 msgstr[0] "creati da più di una chiamata data"
 msgstr[1] "creati da più di una chiamata data"
+
+#, fuzzy
+#~ msgid "cannot update HTML package index"
+#~ msgstr "impossibile leggere codice sorgente del pacchetto"
+
+#, fuzzy
+#~ msgid "cannot create HTML package index"
+#~ msgstr "impossibile leggere codice sorgente del pacchetto"
 
 #, fuzzy
 #~ msgid "... done"

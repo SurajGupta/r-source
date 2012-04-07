@@ -52,7 +52,7 @@ try <- function(expr, silent = FALSE) {
 }
 
 comment <- function(x).Internal(comment(x))
-"comment<-" <- function(x,value).Internal("comment<-"(x, value))
+`comment<-` <- function(x,value).Internal("comment<-"(x, value))
 
 logb <- function(x, base=exp(1)) if(missing(base)) log(x) else log(x, base)
 
@@ -76,7 +76,7 @@ commandArgs <- function(trailingOnly = FALSE) {
     args <- .Internal(commandArgs())
     if(trailingOnly) {
         m <- match("--args", args, 0L)
-        if(m) args[-seq_len(m)] else character(0L)
+        if(m) args[-seq_len(m)] else character()
     } else args
 }
 
@@ -147,6 +147,8 @@ gc <- function(verbose = getOption("verbose"),	reset=FALSE)
 }
 gcinfo <- function(verbose) .Internal(gcinfo(verbose))
 gctorture <- function(on=TRUE) invisible(.Internal(gctorture(on)))
+gctorture2 <- function(step, wait = step, inhibit_release = FALSE)
+    .Internal(gctorture2(step, wait, inhibit_release))
 
 is.unsorted <- function(x, na.rm = FALSE, strictly = FALSE)
 {

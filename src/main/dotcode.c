@@ -783,7 +783,7 @@ SEXP attribute_hidden do_External(SEXP call, SEXP op, SEXP args, SEXP env)
     if(symbol.symbol.external && symbol.symbol.external->numArgs > -1) {
 	if(symbol.symbol.external->numArgs != length(args))
 	    errorcall(call,
-		      _("Incorrect number of arguments (%d), expecting %d for %s"),
+		      _("Incorrect number of arguments (%d), expecting %d for '%s'"),
 		      length(args), symbol.symbol.external->numArgs, buf);
     }
 #endif
@@ -804,7 +804,7 @@ SEXP attribute_hidden do_dotcall(SEXP call, SEXP op, SEXP args, SEXP env)
 {
     DL_FUNC ofun = NULL;
     VarFun fun = NULL;
-    SEXP retval, nm, cargs[MAX_ARGS], pargs;
+    SEXP retval, cargs[MAX_ARGS], pargs;
     R_RegisteredNativeSymbol symbol = {R_CALL_SYM, {NULL}, NULL};
     int nargs;
     const void *vmax = vmaxget();
@@ -812,7 +812,6 @@ SEXP attribute_hidden do_dotcall(SEXP call, SEXP op, SEXP args, SEXP env)
 
     if (length(args) < 1) errorcall(call, _("'name' is missing"));
     check1arg(args, call, "name");
-    nm = CAR(args);
     args = resolveNativeRoutine(args, &ofun, &symbol, buf, NULL, NULL,
 				NULL, call);
     args = CDR(args);
@@ -827,7 +826,7 @@ SEXP attribute_hidden do_dotcall(SEXP call, SEXP op, SEXP args, SEXP env)
     if(symbol.symbol.call && symbol.symbol.call->numArgs > -1) {
 	if(symbol.symbol.call->numArgs != nargs)
 	    errorcall(call,
-		      _("Incorrect number of arguments (%d), expecting %d for %s"),
+		      _("Incorrect number of arguments (%d), expecting %d for '%s'"),
 		      nargs, symbol.symbol.call->numArgs, buf);
     }
 
@@ -1655,7 +1654,7 @@ SEXP attribute_hidden do_dotCode(SEXP call, SEXP op, SEXP args, SEXP env)
     if(symbol.symbol.c && symbol.symbol.c->numArgs > -1) {
 	if(symbol.symbol.c->numArgs != nargs)
 	    errorcall(call,
-		      _("Incorrect number of arguments (%d), expecting %d for %s"),
+		      _("Incorrect number of arguments (%d), expecting %d for '%s'"),
 		      nargs, symbol.symbol.c->numArgs, symName);
 
 	checkTypes = symbol.symbol.c->types;
@@ -2430,15 +2429,6 @@ void call_R(char *func, long nargs, void **arguments, char **modes,
 		SET_STRING_ELT(CAR(pcall), i, mkChar(str));
 	    }
 	    break;
-	    /* FIXME : This copy is unnecessary! */
-	    /* FIXME : This is obviously incorrect so disable
-	case VECSXP:
-	    n = lengths[i];
-	    SETCAR(pcall, allocVector(VECSXP, n));
-	    for (j = 0 ; j < n ; j++) {
-		SET_VECTOR_ELT(s, i, (SEXP)(arguments[i]));
-	    }
-	    break; */
 	default:
 	    error(_("mode '%s' is not supported in call_R"), modes[i]);
 	}

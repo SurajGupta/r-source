@@ -76,7 +76,7 @@ print.formula <- function(x, showEnv = !identical(e, .GlobalEnv), ...)
     invisible(.x)
 }
 
-"[.formula" <- function(x,i) {
+`[.formula` <- function(x,i) {
     ans <- NextMethod("[")
     ## as.character gives a vector.
     if(as.character(ans[[1L]])[1L] == "~") {
@@ -101,8 +101,10 @@ as.formula <- function(object, env = parent.frame())
 terms <- function(x, ...) UseMethod("terms")
 terms.default <- function(x, ...) {
     v <- x$terms
-    if(is.null(v))
-        stop("no terms component")
+    if(is.null(v)) {
+        v <- attr(x, "terms")
+        if(is.null(v)) stop("no terms component nor attribute")
+    }
     v
 }
 
@@ -139,7 +141,7 @@ delete.response <- function (termobj)
     termobj
 }
 
-reformulate <- function (termlabels, response=NULL)
+reformulate <- function (termlabels, response=NULL, intercept = TRUE)
 {
     if(!is.character(termlabels) || !length(termlabels))
         stop("'termlabels' must be a character vector of length at least one")
@@ -147,6 +149,7 @@ reformulate <- function (termlabels, response=NULL)
     termtext <- paste(if(has.resp) "response", "~",
 		      paste(termlabels, collapse = "+"),
 		      collapse = "")
+    if(!intercept) termtext <- paste(termtext, "- 1")
     rval <- eval(parse(text = termtext)[[1L]])
     if(has.resp) rval[[2L]] <-
         if(is.character(response)) as.symbol(response) else response
@@ -163,19 +166,20 @@ drop.terms <- function(termobj, dropx = NULL, keep.response = FALSE)
         if(!inherits(termobj, "terms"))
             stop("'termobj' must be a object of class \"terms\"")
 	newformula <- reformulate(attr(termobj, "term.labels")[-dropx],
-				  if (keep.response) termobj[[2L]] else NULL)
+				  if (keep.response) termobj[[2L]] else NULL,
+                                  attr(termobj, "intercept"))
         environment(newformula) <- environment(termobj)
 	terms(newformula, specials=names(attr(termobj, "specials")))
     }
 }
 
 
-"[.terms" <-function (termobj, i)
+`[.terms` <-function (termobj, i)
 {
     resp <- if (attr(termobj, "response")) termobj[[2L]] else NULL
     newformula <- attr(termobj, "term.labels")[i]
     if (length(newformula) == 0L) newformula <- "1"
-    newformula <- reformulate(newformula, resp)
+    newformula <- reformulate(newformula, resp, attr(termobj, "intercept"))
     environment(newformula)<-environment(termobj)
     terms(newformula, specials = names(attr(termobj, "specials")))
 }
@@ -248,6 +252,12 @@ anova <- function(object, ...)UseMethod("anova")
 effects <- function(object, ...)UseMethod("effects")
 
 weights <- function(object, ...)UseMethod("weights")
+## used for class "lm", e.g. in drop1.
+weights.default <- function(object, ...)
+{
+    wts <-  object$weights
+    if (is.null(wts)) wts else napredict(object$na.action, wts)
+}
 
 df.residual <- function(object, ...)UseMethod("df.residual")
 df.residual.default <- function(object, ...) object$df.residual

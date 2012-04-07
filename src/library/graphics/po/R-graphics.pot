@@ -1,8 +1,8 @@
 msgid ""
 msgstr ""
-"Project-Id-Version: R 2.12.1\n"
+"Project-Id-Version: R 2.13.0\n"
 "Report-Msgid-Bugs-To: bugs@r-project.org\n"
-"POT-Creation-Date: 2011-01-03 16:13\n"
+"POT-Creation-Date: 2011-02-18 12:36\n"
 "PO-Revision-Date: YEAR-MO-DA HO:MI+ZONE\n"
 "Last-Translator: FULL NAME <EMAIL@ADDRESS>\n"
 "Language-Team: LANGUAGE <LL@li.org>\n"
@@ -134,10 +134,16 @@ msgstr ""
 msgid "wrong method"
 msgstr ""
 
+msgid "Must specify 'breaks' in hist(<POSIXt>)"
+msgstr ""
+
 msgid "invalid specification of 'breaks'"
 msgstr ""
 
 msgid "'x' must be a numeric vector or matrix"
+msgstr ""
+
+msgid "'x' is neither a vector nor a matrix: using as.numeric(x)"
 msgstr ""
 
 msgid "'x' must be an array"
@@ -213,6 +219,9 @@ msgid "breaks must all be finite"
 msgstr ""
 
 msgid "dimensions of z are not length(x)(-1) times length(y)(-1)"
+msgstr ""
+
+msgid "useRaster=TRUE can only be used with a regular grid"
 msgstr ""
 
 msgid "'respect' must be logical or matrix with same dimension as 'mat'"

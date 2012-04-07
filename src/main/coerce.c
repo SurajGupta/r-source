@@ -1,7 +1,7 @@
 /*
  *  R : A Computer Language for Statistical Data Analysis
  *  Copyright (C) 1995,1996  Robert Gentleman, Ross Ihaka
- *  Copyright (C) 1997-2010  The R Development Core Team
+ *  Copyright (C) 1997-2011  The R Development Core Team
  *  Copyright (C) 2003-2009 The R Foundation
  *
  *  This program is free software; you can redistribute it and/or modify
@@ -695,14 +695,14 @@ static SEXP coerceToString(SEXP v)
 	    SET_STRING_ELT(ans, i, StringFromInteger(INTEGER(v)[i], &warn));
 	break;
     case REALSXP:
-	PrintDefaults(R_NilValue);
+	PrintDefaults();
 	savedigits = R_print.digits; R_print.digits = DBL_DIG;/* MAX precision */
 	for (i = 0; i < n; i++)
 	    SET_STRING_ELT(ans, i, StringFromReal(REAL(v)[i], &warn));
 	R_print.digits = savedigits;
 	break;
     case CPLXSXP:
-	PrintDefaults(R_NilValue);
+	PrintDefaults();
 	savedigits = R_print.digits; R_print.digits = DBL_DIG;/* MAX precision */
 	for (i = 0; i < n; i++)
 	    SET_STRING_ELT(ans, i, StringFromComplex(COMPLEX(v)[i], &warn));
@@ -1239,25 +1239,28 @@ static SEXP asFunction(SEXP x)
 static SEXP ascommon(SEXP call, SEXP u, SEXPTYPE type)
 {
     /* -> as.vector(..) or as.XXX(.) : coerce 'u' to 'type' : */
+    /* code assumes u is protected */
+
     SEXP v;
     if (type == CLOSXP) {
 	return asFunction(u);
     }
     else if (isVector(u) || isList(u) || isLanguage(u)
 	     || (isSymbol(u) && type == EXPRSXP)) {
-	/* this duplication appears not to be needed in all cases,
-	   but beware that other code relies on it */
-	v = NAMED(u) ? duplicate(u) : u;
-	if (type != ANYSXP) {
-	    PROTECT(v);
-	    v = coerceVector(v, type);
-	    UNPROTECT(1);
-	}
-	/* drop attributes() and class() in some cases: */
-	if ((type == LISTSXP
-	     /* already loses 'names' where it shouldn't:
-		|| type == VECSXP) */
-	    ) &&
+	v = u;
+	/* this duplication may appear not to be needed in all cases,
+	   but beware that other code relies on it.
+	   (E.g  we clear attributes in do_asvector and do_ascharacter.)
+
+	   Generally coerceVector will copy over attributes.
+	*/
+	if (type != ANYSXP && TYPEOF(u) != type) v = coerceVector(u, type);
+	else if (NAMED(u)) v = duplicate(u);
+
+	/* drop attributes() and class() in some cases for as.pairlist:
+	   But why?  (And who actually coerces to pairlists?)
+	 */
+	if ((type == LISTSXP) &&
 	    !(TYPEOF(u) == LANGSXP || TYPEOF(u) == LISTSXP ||
 	      TYPEOF(u) == EXPRSXP || TYPEOF(u) == VECSXP)) {
 	    CLEAR_ATTRIB(v);
@@ -1332,13 +1335,19 @@ SEXP attribute_hidden do_ascharacter(SEXP call, SEXP op, SEXP args, SEXP rho)
 
     checkArity(op, args);
     x = CAR(args);
-    if(TYPEOF(x) == type && ATTRIB(x) == R_NilValue) return x;
+    if(TYPEOF(x) == type) {
+	if(ATTRIB(x) == R_NilValue) return x;
+	ans = NAMED(x) ? duplicate(x) : x;
+	CLEAR_ATTRIB(ans);
+	return ans;
+    }
     ans = ascommon(call, CAR(args), type);
     CLEAR_ATTRIB(ans);
     return ans;
 }
 
-
+/* NB: as.vector is used for several other as.xxxx, including
+   as.expression, as.list, as.pairlist, as.symbol, (as.single) */
 SEXP attribute_hidden do_asvector(SEXP call, SEXP op, SEXP args, SEXP rho)
 {
     SEXP x, ans;
@@ -1360,16 +1369,19 @@ SEXP attribute_hidden do_asvector(SEXP call, SEXP op, SEXP args, SEXP rho)
     else
 	type = str2type(CHAR(STRING_ELT(CADR(args), 0))); /* ASCII */
 
-
-    if(TYPEOF(x) == type) {
-	switch(type) {
+    /* "any" case added in 2.13.0 */
+    if(type == ANYSXP || TYPEOF(x) == type) {
+	switch(TYPEOF(x)) {
 	case LGLSXP:
 	case INTSXP:
 	case REALSXP:
 	case CPLXSXP:
 	case STRSXP:
 	case RAWSXP:
-	    if(ATTRIB(x) != R_NilValue) break;
+	    if(ATTRIB(x) == R_NilValue) return x;
+	    ans  = NAMED(x) ? duplicate(x) : x;
+	    CLEAR_ATTRIB(ans);
+	    return ans;
 	case EXPRSXP:
 	case VECSXP:
 	    return x;
@@ -1381,20 +1393,20 @@ SEXP attribute_hidden do_asvector(SEXP call, SEXP op, SEXP args, SEXP rho)
     if(IS_S4_OBJECT(x) && TYPEOF(x) == S4SXP) {
         SEXP v = R_getS4DataSlot(x, ANYSXP);
 	if(v == R_NilValue)
-	  error(_("no method for coercing this S4 class to a vector"));
+	    error(_("no method for coercing this S4 class to a vector"));
 	x = v;
     }
 
     switch(type) {/* only those are valid : */
-    case SYMSXP:
+    case SYMSXP: /* for as.symbol */
     case LGLSXP:
     case INTSXP:
     case REALSXP:
     case CPLXSXP:
     case STRSXP:
-    case EXPRSXP:
+    case EXPRSXP: /* for as.expression */
     case VECSXP: /* list */
-    case LISTSXP:/* pairlist */
+    case LISTSXP:/* for as.pairlist */
     case CLOSXP: /* non-primitive function */
     case RAWSXP:
     case ANYSXP: /* any */
@@ -1403,12 +1415,12 @@ SEXP attribute_hidden do_asvector(SEXP call, SEXP op, SEXP args, SEXP rho)
 	errorcall_return(call, R_MSG_mode);
     }
     ans = ascommon(call, x, type);
-    switch(TYPEOF(ans)) {/* keep attributes for these:*/
-    case NILSXP:
+    switch(TYPEOF(ans)) { /* keep attributes for these: */
+    case NILSXP: /* doesn't have any */
+    case LISTSXP: /* but ascommon fiddled */
+    case LANGSXP:
     case VECSXP:
     case EXPRSXP:
-    case LISTSXP:
-    case LANGSXP:
 	break;
     default:
 	CLEAR_ATTRIB(ans);
@@ -1829,21 +1841,27 @@ SEXP attribute_hidden do_is(SEXP call, SEXP op, SEXP args, SEXP rho)
 
 SEXP attribute_hidden do_isvector(SEXP call, SEXP op, SEXP args, SEXP rho)
 {
-    SEXP ans, a;
+    SEXP ans, a, x;
+    const char *stype;
+
     checkArity(op, args);
+    x = CAR(args);
     if (!isString(CADR(args)) || LENGTH(CADR(args)) <= 0)
 	errorcall_return(call, R_MSG_mode);
 
+    stype = CHAR(STRING_ELT(CADR(args), 0)); /* ASCII */
+
     PROTECT(ans = allocVector(LGLSXP, 1));
-    if (streql(CHAR(STRING_ELT(CADR(args), 0)), "any")) { /* ASCII */
-	LOGICAL(ans)[0] = isVector(CAR(args));/* from ./util.c */
+    if (streql(stype, "any")) {
+	/* isVector is inlined, means atomic or VECSXP or EXPRSXP */
+	LOGICAL(ans)[0] = isVector(x);
+    } 
+    else if (streql(stype, "numeric")) {
+	LOGICAL(ans)[0] = (isNumeric(x) && !isLogical(x));
     }
-    else if (streql(CHAR(STRING_ELT(CADR(args), 0)), "numeric")) { /* ASCII */
-	LOGICAL(ans)[0] = (isNumeric(CAR(args)) &&
-			   !isLogical(CAR(args)));
-    }
-    else if (streql(CHAR(STRING_ELT(CADR(args), 0)), /* ASCII */
-		    type2char(TYPEOF(CAR(args))))) {
+    /* So this allows any type, including undocumented ones such as
+       "closure", but not aliases such as "name" and "function". */
+    else if (streql(stype, type2char(TYPEOF(x)))) {
 	LOGICAL(ans)[0] = 1;
     }
     else
@@ -2262,20 +2280,6 @@ SEXP attribute_hidden do_docall(SEXP call, SEXP op, SEXP args, SEXP rho)
     }
     call = eval(call, envir);
 
-    /*
-    cptr = R_GlobalContext;
-    while (cptr->nextcontext != NULL) {
-	if (cptr->callflag & CTXT_FUNCTION ) {
-		if(cptr->cloenv == rho)
-		   break;
-	}
-    }
-    if( cptr->cloenv == rho )
-	call = eval(call, cptr->sysparent);
-    else
-	error(_("do.call: could not find parent environment"));
-    */
-
     UNPROTECT(1);
     return call;
 }
@@ -2500,13 +2504,14 @@ static SEXP R_set_class(SEXP obj, SEXP value, SEXP call)
 	error(_("invalid replacement object to be a class string"));
     }
     else {
-	const char *valueString, *classString; int whichType;
+	const char *valueString;
+	int whichType;
+
 	SEXP cur_class; SEXPTYPE valueType;
 	valueString = CHAR(asChar(value)); /* ASCII */
 	whichType = class2type(valueString);
 	valueType = (whichType == -1) ? -1 : classTable[whichType].sexp;
 	PROTECT(cur_class = R_data_class(obj, FALSE)); nProtect++;
-	classString = CHAR(asChar(cur_class)); /* ASCII */
 	/*  assigning type as a class deletes an explicit class attribute. */
 	if(valueType != -1) {
 	    setAttrib(obj, R_ClassSymbol, R_NilValue);

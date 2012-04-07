@@ -14,7 +14,8 @@ load(file, envir = parent.frame())
 }
 \arguments{
   \item{file}{a (readable binary-mode) \link{connection} or a character string
-    giving the name of the file to load.}
+    giving the name of the file to load (when \link{tilde expansion}
+    is done).}
   \item{envir}{the environment where the data should be loaded.}
 }
 \details{
@@ -49,11 +50,17 @@ load(file, envir = parent.frame())
   conversion of end of line markers.  \code{load} tries to detect this
   case and give an informative error message.
 }
+#ifdef windows
+\note{
+  \code{file} can be a UTF-8-encoded filepath that cannot be translated to
+  the current locale.
+}
+#endif
 \seealso{
   \code{\link{save}}, \code{\link{download.file}}.
 
   For other interfaces to the underlying serialization format, see
-  \code{\link{unserialize}} and \code{\link{.readRDS}}.
+  \code{\link{unserialize}} and \code{\link{readRDS}}.
 }
 \examples{
 ## save all data

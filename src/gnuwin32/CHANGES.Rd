@@ -4,6 +4,96 @@
 \title{Windows-specific changes to R}
 \encoding{UTF-8}
 
+\section{CHANGES IN R VERSION 2.13.0}{
+  \subsection{WINDOWS VERSION}{
+    \itemize{
+      \item Windows 2000 is no longer supported.  (It went end-of-life in
+      July 2010.)
+    }
+  }
+    
+  \subsection{NEW FEATURES}{
+    \itemize{
+      \item \code{win_iconv} has been updated: this version has a change
+      in the behaviour with BOMs on UTF-16 and UTF-32 files -- it
+      removes BOMs when reading and adds them when writing.  (This is
+      consistent with Microsoft applications, but Unix versions of
+      \code{iconv} usually ignore them.)
+
+      \item Support for repository type \samp{win64.binary} (used for
+      64-bit Windows binaries for \R 2.11.x only) has been removed.
+
+      \item The installers no longer put an \sQuote{Uninstall} item on
+      the start menu (to conform to current Microsoft UI guidelines).
+
+      \item Running \R always sets the environment variable \env{R_ARCH}
+      (as it does on a Unix-alike from the shell-script front-end).
+
+      \item The defaults for \code{options("browser")} and
+      \code{options("pdfviewer")} are now set from environment variables
+      \env{R_BROWSER} and \env{R_PDFVIEWER} respectively (as on a
+      Unix-alike).  A value of \code{"false"} suppresses display (even
+      if there is no \command{false.exe} present on the path).
+      
+      \item If \code{options("install.lock")} is set to \code{TRUE},
+      binary package installs are protected against failure similar to
+      the way source package installs are protected.
+
+      \item \code{file.exists()} and \code{unlink()} have more support
+      for files > 2GB.
+
+      \item The versions of \command{R.exe} in
+      \file{R_HOME/bin/{i386,x64}/bin} now support options such as
+      \command{R --vanilla CMD}: there is no comparable interface for
+      \file{Rcmd.exe}.
+
+      \item A few more file operations will now work with >2GB files.
+
+      \item The environment variable \env{R_HOME} in an \R session now
+      uses slash as the path separator (as it always has when set by
+      \command{Rcmd.exe}).
+
+      \item \command{Rgui} has a new menu item for the PDF
+      \sQuote{Sweave User Manual}.
+    }
+  }
+
+  \subsection{DEPRECATED}{
+    \itemize{
+      \item{zip.unpack()} is deprecated: use \code{unzip()}.
+    }
+  }
+  \subsection{INSTALLATION}{
+    \itemize{
+      \item There is support for \samp{libjpeg-turbo} \emph{via}
+      setting \code{JPEGDIR} to that value in \file{MkRules.local}.
+
+      Support for \samp{jpeg-6b} has been removed.
+
+      \item The sources now work with \samp{libpng-1.5.1}, 
+      \samp{ jpegsrc.v8c} (which are used in the CRAN builds) and
+      \samp{tiff-4.0.0beta6} (CRAN builds use 3.9.1). It is possible
+      that they no longer work with older versions than 
+      \samp{libpng-1.4.5}. 
+    } 
+  }
+
+  \subsection{BUG FIXES}{
+    \itemize{
+      \item Workaround for the incorrect values given by Windows'
+      \code{casinh} function on the branch cuts.
+
+      \item Bug fixes for drawing raster objects on \code{windows()}.  The
+      symptom was the occasional raster image not being drawn, especially
+      when drawing multiple raster images in a single expression.
+      Thanks to Michael Sumner for report and testing.
+      
+      \item Printing extremely long string values could overflow the
+      stack and cause the GUI to crash.  (\PR{14543})
+    }
+  }
+}
+
 \section{CHANGES IN R VERSION 2.12.2}{
   \subsection{NEW FEATURES}{
     \itemize{
@@ -29,10 +119,9 @@
       unravelling symbolic links in the tarball (but still with many
       limitations).
       
-      \item Bug fixes for drawing raster objects on \code{windows()}.  The
-      symptom was the occasional raster image not being drawn, especially
-      when drawing multiple raster images in a single expression.
-      Thanks to Michael Sumner for report and testing.
+      \item The graphical dialog version of \code{select.list()} could
+      cause later dialogs to fail if Windows events were not processed
+      between the calls.
     }
   }
 }

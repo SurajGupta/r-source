@@ -49,10 +49,10 @@ system2(command, args = character(),
 \details{
   Unlike \code{\link{system}}, \code{command} is always quoted by
   \code{\link{shQuote}}, so it must be a single command without arguments.
-
+  
   For details of how \code{command} is found see \code{\link{system}}.
 
-  On Windows, \code{env} is currently only supported for comamnds such
+  On Windows, \code{env} is currently only supported for commands such
   as \command{R} and \command{make} which accept environment variables on
   their command line.
   
@@ -61,7 +61,8 @@ system2(command, args = character(),
   pipe whereas \code{stdout = "some_file_name"} uses redirection.
 
   Because of the way it is implemented, on a Unix-alike \code{stderr =
-    TRUE} implies \code{stdout = TRUE}.
+    TRUE} implies \code{stdout = TRUE}: a warning is given if this is
+  not what was specified.
 }
 %% We use popen, and that pipes stdout only
 

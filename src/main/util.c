@@ -36,7 +36,7 @@
 #endif
 
 #ifdef Win32
-static void R_UTF8fixslash(char *s);
+void R_UTF8fixslash(char *s);
 static void R_wfixslash(wchar_t *s);
 #endif
 
@@ -131,8 +131,6 @@ const static char * const falsenames[] = {
     (char *) NULL,
 };
 
-/* a caller which uses numeric or complex 'x' ought to set R_print,
-   e.g. by calling PrintDefaults */
 SEXP asChar(SEXP x)
 {
     if (LENGTH(x) >= 1) {
@@ -155,9 +153,11 @@ SEXP asChar(SEXP x)
 		sprintf(buf, "%d", INTEGER(x)[0]);
 		return mkChar(buf);
 	    case REALSXP:
+		PrintDefaults();
 		formatReal(REAL(x), 1, &w, &d, &e, 0);
 		return mkChar(EncodeReal(REAL(x)[0], w, d, e, OutDec));
 	    case CPLXSXP:
+		PrintDefaults();
 		formatComplex(COMPLEX(x), 1, &w, &d, &e, &wi, &di, &ei, 0);
 		return mkChar(EncodeComplex(COMPLEX(x)[0], w, d, e, wi, di, ei, OutDec));
 	    case STRSXP:
@@ -867,6 +867,76 @@ SEXP attribute_hidden do_dirname(SEXP call, SEXP op, SEXP args, SEXP rho)
 }
 #endif
 
+
+#ifndef Win32 /* Windows version is in src/gnuwin32/extra.c */
+#ifndef HAVE_DECL_REALPATH
+extern char *realpath(const char *path, char *resolved_path);
+#endif
+
+SEXP attribute_hidden do_normalizepath(SEXP call, SEXP op, SEXP args, SEXP rho)
+{
+    SEXP ans, paths = CAR(args);
+    int i, n = LENGTH(paths);
+    const char *path;
+    char abspath[PATH_MAX+1];
+
+    checkArity(op, args);
+    if (!isString(paths))
+	error(_("'path' must be a character vector"));
+
+    int mustWork = asLogical(CADDR(args)); /* 1, NA_LOGICAL or 0 */
+
+/* Does any platform not have this? */
+#ifdef HAVE_REALPATH
+    PROTECT(ans = allocVector(STRSXP, n));
+    for (i = 0; i < n; i++) {
+	path = translateChar(STRING_ELT(paths, i));
+	char *res = realpath(path, abspath);
+	if (res) 
+	    SET_STRING_ELT(ans, i, mkChar(abspath));
+	else {
+	    SET_STRING_ELT(ans, i, STRING_ELT(paths, i));
+	    /* and report the problem */
+	    if (mustWork == 1)
+		error("path[%d]=\"%s\": %s", i+1, path, strerror(errno));
+	    else if (mustWork == NA_LOGICAL)
+		warning("path[%d]=\"%s\": %s", i+1, path, strerror(errno));
+	}
+    }
+#else
+    Rboolean OK;
+    warning("this platform does not have realpath so the results may not be canonical");
+    PROTECT(ans = allocVector(STRSXP, n));
+    for (i = 0; i < n; i++) {
+	path = translateChar(STRING_ELT(paths, i));
+	OK = strlen(path) <= PATH_MAX;
+	if (OK) {
+	    if (path[0] == '/') strncpy(abspath, path, PATH_MAX);
+	    else {
+		OK = getcwd(abspath, PATH_MAX) != NULL;
+		OK = OK && (strlen(path) + strlen(abspath) + 1 <= PATH_MAX);
+		if (OK) {strcat(abspath, "/"); strcat(abspath, path);}
+	    }
+	}
+	/* we need to check that this exists */
+	if (OK) OK = (access(abspath, 0 /* F_OK */) == 0);
+	if (OK) SET_STRING_ELT(ans, i, mkChar(abspath));
+	else {
+	    SET_STRING_ELT(ans, i, STRING_ELT(paths, i));
+	    /* and report the problem */
+	    if (mustWork == 1)
+		error("path[%d]=\"%s\": %s", i+1, path, strerror(errno));
+	    else if (mustWork == NA_LOGICAL)
+		warning("path[%d]=\"%s\": %s", i+1, path, strerror(errno));
+	}
+    }
+#endif
+    UNPROTECT(1);
+    return ans;
+}
+#endif
+
+
 /* encodeString(x, w, quote, justify) */
 SEXP attribute_hidden do_encodeString(SEXP call, SEXP op, SEXP args, SEXP rho)
 {
@@ -931,7 +1001,8 @@ SEXP attribute_hidden do_encoding(SEXP call, SEXP op, SEXP args, SEXP rho)
     n = LENGTH(x);
     PROTECT(ans = allocVector(STRSXP, n));
     for (i = 0; i < n; i++) {
-	if(IS_LATIN1(STRING_ELT(x, i))) tmp = "latin1";
+	if(IS_BYTES(STRING_ELT(x, i))) tmp = "bytes";
+	else if(IS_LATIN1(STRING_ELT(x, i))) tmp = "latin1";
 	else if(IS_UTF8(STRING_ELT(x, i))) tmp = "UTF-8";
 	else tmp = "unknown";
 	SET_STRING_ELT(ans, i, mkChar(tmp));
@@ -962,10 +1033,12 @@ SEXP attribute_hidden do_setencoding(SEXP call, SEXP op, SEXP args, SEXP rho)
 	this = CHAR(STRING_ELT(enc, i % m)); /* ASCII */
 	if(streql(this, "latin1")) ienc = CE_LATIN1;
 	else if(streql(this, "UTF-8")) ienc = CE_UTF8;
+	else if(streql(this, "bytes")) ienc = CE_BYTES;
 	tmp = STRING_ELT(x, i);
 	if(tmp == NA_STRING) continue;
 	if (! ((ienc == CE_LATIN1 && IS_LATIN1(tmp)) ||
 	       (ienc == CE_UTF8 && IS_UTF8(tmp)) ||
+	       (ienc == CE_BYTES && IS_BYTES(tmp)) ||
 	       (ienc == CE_NATIVE && ! IS_LATIN1(tmp) && ! IS_UTF8(tmp))))
 	    SET_STRING_ELT(x, i, mkCharLenCE(CHAR(tmp), LENGTH(tmp), ienc));
     }
@@ -1240,7 +1313,7 @@ void R_fixslash(char *s)
 	if(s[0] == '/' && s[1] == '/') s[0] = s[1] = '\\';
 }
 
-static void R_UTF8fixslash(char *s)
+void R_UTF8fixslash(char *s)
 {
     char *p = s;
 
@@ -1774,16 +1847,9 @@ int Scollate(SEXP a, SEXP b)
 }
 
 # else
-
-#  ifdef HAVE_STRCOLL
-#   define STRCOLL strcoll
-#  else
-#   define STRCOLL strcmp
-#  endif
-
 int Scollate(SEXP a, SEXP b)
 {
-    return STRCOLL(translateChar(a), translateChar(b));
+    return strcoll(translateChar(a), translateChar(b));
 }
 
 # endif

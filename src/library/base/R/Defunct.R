@@ -92,7 +92,7 @@ printNoClass <- function(x, digits = NULL, quote = TRUE, na.print = NULL,
 codes <- function(x, ...) .Defunct()
 codes.factor <- function(x, ...) .Defunct("unclass")
 codes.ordered <- function(x, ...) .Defunct("unclass")
-"codes<-" <- function(x, ..., value) .Defunct()
+`codes<-` <- function(x, ..., value) .Defunct()
 # removed in 2.9.1, as it caused confusion for an S4 class union of this name.
 #print.atomic <- function(x, quote = TRUE, ...) .Defunct("print.default")
 ## </entry>
@@ -165,4 +165,17 @@ gammaCody <- function(x) .Defunct("gamma")
 ## Deprecated inter alia in 2.8.1
 ## Defunct in 2.9.0
 manglePackageName <- function (pkgName, pkgVersion) .Defunct()
+## </entry>
+
+## <entry>
+## Deprecated in 2.12.2 (and only ever experimental)
+## Defunct in 2.13.0
+.Import <- function(...)
+    .Defunct(msg = "name spaces should be specified via the 'NAMESPACE' file")
+.ImportFrom <- function(name, ...)
+    .Defunct(msg = "name spaces should be specified via the 'NAMESPACE' file")
+.Export <- function(...)
+    .Defunct(msg = "name spaces should be specified via the 'NAMESPACE' file")
+.S3method <- function(generic, class, method)
+    .Defunct(msg = "name spaces should be specified via the 'NAMESPACE' file")
 ## </entry>

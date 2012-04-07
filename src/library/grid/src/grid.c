@@ -1210,13 +1210,13 @@ SEXP L_layoutRegion(SEXP layoutPosRow, SEXP layoutPosCol) {
     double vpWidthCM, vpHeightCM;
     double rotationAngle;
     LTransform transform;
-    SEXP currentvp, currentgp;
+    SEXP currentvp;
     /* 
      * Get the current device 
      */
     pGEDevDesc dd = getDevice();
     currentvp = gridStateElement(dd, GSS_VP);
-    currentgp = gridStateElement(dd, GSS_GPAR);
+    //currentgp = gridStateElement(dd, GSS_GPAR);
     /* 
      * We do not need the current transformation, but
      * we need the side effects of calculating it in
@@ -1476,20 +1476,34 @@ static void hullEdge(double *x, double *y, int n,
     const void *vmax;
     int i, nh;
     double *hx, *hy;
-    SEXP xin, yin, chullFn, R_fcall, hull;
-    /*
-     * Determine convex hull
-     */
+    SEXP xin, yin, chullFn, R_fcall, hull;    
+    int adjust = 0;
+    double *xkeep, *ykeep;
+    vmax = vmaxget();
+    /* Remove any NA's because chull() can't cope with them */
+    xkeep = (double *) R_alloc(n, sizeof(double));
+    ykeep = (double *) R_alloc(n, sizeof(double));
+    for (i=0; i<n; i++) {
+        if (!R_FINITE(x[i]) || !R_FINITE(y[i])) {
+            adjust--;
+        } else {
+            xkeep[i + adjust] = x[i];
+            ykeep[i + adjust] = y[i];
+        }
+    }
+    n = n + adjust;
     PROTECT(xin = allocVector(REALSXP, n));
     PROTECT(yin = allocVector(REALSXP, n));
     for (i=0; i<n; i++) {
-	REAL(xin)[i] = x[i];
-	REAL(yin)[i] = y[i];
+        REAL(xin)[i] = xkeep[i];
+        REAL(yin)[i] = ykeep[i];
     }
+    /*
+     * Determine convex hull
+     */
     PROTECT(chullFn = findFun(install("chull"), R_gridEvalEnv));
     PROTECT(R_fcall = lang3(chullFn, xin, yin));
     PROTECT(hull = eval(R_fcall, R_gridEvalEnv));
-    vmax = vmaxget();
     nh = LENGTH(hull);
     hx = (double *) R_alloc(nh, sizeof(double));
     hy = (double *) R_alloc(nh, sizeof(double));
@@ -2132,16 +2146,12 @@ SEXP L_segments(SEXP x0, SEXP y0, SEXP x1, SEXP y1, SEXP arrow)
 static int getArrowN(SEXP x1, SEXP x2, SEXP xnm1, SEXP xn, 
 		     SEXP y1, SEXP y2, SEXP ynm1, SEXP yn)
 {      
-    int nx1, nx2, nxnm1, nxn, ny1, ny2, nynm1, nyn, maxn;
+    int nx2, nxnm1, nxn, ny1, ny2, nynm1, nyn, maxn;
     maxn = 0;
     /* 
      * x1, y1, xnm1, and ynm1 could be NULL if this is adding
      * arrows to a line.to
      */
-    if (isNull(x1))
-	nx1 = 0;
-    else
-	nx1 = unitLength(x1); 
     if (isNull(y1))
 	ny1 = 0;
     else

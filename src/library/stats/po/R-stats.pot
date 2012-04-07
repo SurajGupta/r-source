@@ -1,8 +1,8 @@
 msgid ""
 msgstr ""
-"Project-Id-Version: R 2.12.1\n"
+"Project-Id-Version: R 2.13.0\n"
 "Report-Msgid-Bugs-To: bugs@r-project.org\n"
-"POT-Creation-Date: 2011-01-03 16:13\n"
+"POT-Creation-Date: 2011-03-22 15:33\n"
 "PO-Revision-Date: YEAR-MO-DA HO:MI+ZONE\n"
 "Last-Translator: FULL NAME <EMAIL@ADDRESS>\n"
 "Language-Team: LANGUAGE <LL@li.org>\n"
@@ -10,6 +10,9 @@ msgstr ""
 "Content-Type: text/plain; charset=CHARSET\n"
 "Content-Transfer-Encoding: 8bit\n"
 
+
+msgid "models are not all fitted to the same number of observations"
+msgstr ""
 
 msgid "empty model supplied"
 msgstr ""
@@ -446,7 +449,7 @@ msgstr ""
 msgid "'k' must be in {1, 2, ..  n - 1}"
 msgstr ""
 
-msgid "some of the first %d eigenvalues are < 0"
+msgid "only %d of the first %d eigenvalues are > 0"
 msgstr ""
 
 msgid "initial value is not in the interior of the feasible region"
@@ -510,6 +513,9 @@ msgid "not enough degrees of freedom to define contrasts"
 msgstr ""
 
 msgid "baseline group number out of range"
+msgstr ""
+
+msgid "invalid 'use' argument"
 msgstr ""
 
 msgid "supply both 'x' and 'y' or a matrix-like 'x'"
@@ -584,9 +590,6 @@ msgstr ""
 msgid "'merge' and 'height' do not fit!"
 msgstr ""
 
-msgid "we require a dendrogram"
-msgstr ""
-
 msgid "dendrogram node with non-positive #{branches}"
 msgstr ""
 
@@ -599,10 +602,16 @@ msgstr ""
 msgid "'order.dendrogram' requires a dendrogram"
 msgstr ""
 
+msgid "we require a dendrogram"
+msgstr ""
+
 msgid "invalid (length 0) node in dendrogram"
 msgstr ""
 
 msgid "dendrogram non-leaf node with non-positive #{branches}"
+msgstr ""
+
+msgid "'height' must be at least %g, the maximal height of its components"
 msgstr ""
 
 msgid "'X' is not a dendrogram"
@@ -1310,6 +1319,12 @@ msgstr ""
 msgid "extra arguments discarded"
 msgstr ""
 
+msgid "no \"nobs\" attribute is available"
+msgstr ""
+
+msgid "no 'nobs' method is available"
+msgstr ""
+
 msgid "'start' and 'table' must be same length"
 msgstr ""
 
@@ -1442,7 +1457,7 @@ msgstr ""
 msgid "cannot create a formula from a zero-column data frame"
 msgstr ""
 
-msgid "no terms component"
+msgid "no terms component nor attribute"
 msgstr ""
 
 msgid "'termlabels' must be a character vector of length at least one"
@@ -1898,12 +1913,6 @@ msgstr ""
 msgid "wrong endrule"
 msgstr ""
 
-msgid "'nknots' must be numeric <= n"
-msgstr ""
-
-msgid "cannot use more inner knots than unique 'x' values"
-msgstr ""
-
 msgid "invalid 'control.spar'"
 msgstr ""
 
@@ -1919,7 +1928,25 @@ msgstr ""
 msgid "need at least four unique 'x' values"
 msgstr ""
 
+msgid "'cv' must not be NA when 'df' is specified"
+msgstr ""
+
 msgid "crossvalidation with non-unique 'x' values seems doubtful"
+msgstr ""
+
+msgid "'all.knots' is TRUE; 'nknots' specification is disregarded"
+msgstr ""
+
+msgid "'nknots' must be numeric (in {1,..,n})"
+msgstr ""
+
+msgid "'nknots' must be at least 1"
+msgstr ""
+
+msgid "cannot use more inner knots than unique 'x' values"
+msgstr ""
+
+msgid "specified both 'df' and 'cv'; will disregard the latter"
 msgstr ""
 
 msgid "you must supply 1 < df <= n,  n = #{unique x} ="
@@ -2248,6 +2275,11 @@ msgstr ""
 
 msgid        "there are %d Error terms: only 1 is allowed"
 msgid_plural "there are %d Error terms: only 1 is allowed"
+msgstr[0]    ""
+msgstr[1]    ""
+
+msgid        "extra argument %s is not a \"%s\""
+msgid_plural "extra arguments %s are not \"%s\"s"
 msgstr[0]    ""
 msgstr[1]    ""
 

@@ -1,7 +1,7 @@
 /*
  *  R : A Computer Language for Statistical Data Analysis
  *  Copyright (C) 1995, 1996  Robert Gentleman and Ross Ihaka
- *  Copyright (C) 1998-2008   The R Development Core Team.
+ *  Copyright (C) 1998-2011   The R Development Core Team.
  *
  *  This program is free software; you can redistribute it and/or modify
  *  it under the terms of the GNU General Public License as published by
@@ -318,13 +318,14 @@ fillBuffer(SEXPTYPE type, int strip, int *bch, LocalData *d,
    bch is used to distinguish \r, \n and EOF from more input available.
 */
     char *bufp;
-    int c, quote, filled, nbuf = MAXELTSIZE, m;
+    int c, quote, filled, nbuf = MAXELTSIZE, m, mm = 0;
     Rboolean dbcslocale = (MB_CUR_MAX == 2);
 
     m = 0;
     filled = 1;
     if (d->sepchar == 0) {
 	/* skip all space or tabs: only look at lead bytes here */
+	strip = 0; /* documented to be ignored in this case */
 	while ((c = scanchar(FALSE, d)) == ' ' || c == '\t') ;
 	if (c == '\n' || c == '\r' || c == R_EOF) {
 	    filled = c;
@@ -349,6 +350,7 @@ fillBuffer(SEXPTYPE type, int strip, int *bch, LocalData *d,
 		    buffer->data[m++] = scanchar2(d);
 	    }
 	    c = scanchar(FALSE, d);
+	    mm = m;
 	}
 	else { /* not a quoted char string */
 	    do {
@@ -405,6 +407,7 @@ fillBuffer(SEXPTYPE type, int strip, int *bch, LocalData *d,
 			buffer->data[m++] = quote;
 			goto inquote; /* FIXME: Ick! Clean up logic */
 		    }
+		    mm = m;
 		    if (c == d->sepchar || c == '\n' || c == '\r' || c == R_EOF){
 			filled = c;
 			goto donefill;
@@ -429,8 +432,8 @@ fillBuffer(SEXPTYPE type, int strip, int *bch, LocalData *d,
  donefill:
     /* strip trailing white space, if desired and if item is non-null */
     bufp = &buffer->data[m];
-   if (strip && m > 0) {
-	do {c = (int)*--bufp;} while(Rspace(c));
+   if (strip && m > mm) {
+	do {c = (int)*--bufp;} while(m-- > mm && Rspace(c));
 	bufp++;
     }
     *bufp = '\0';
@@ -1182,7 +1185,7 @@ SEXP attribute_hidden do_typecvt(SEXP call, SEXP op, SEXP args, SEXP env)
 {
     SEXP cvec, a, dup, levs, dims, names, dec;
     SEXP rval = R_NilValue; /* -Wall */
-    int i, j, len, numeric, asIs;
+    int i, j, len, asIs;
     Rboolean done = FALSE;
     char *endp;
     const char *tmp = NULL;
@@ -1218,8 +1221,6 @@ SEXP attribute_hidden do_typecvt(SEXP call, SEXP op, SEXP args, SEXP env)
 
     cvec = CAR(args);
     len = length(cvec);
-
-    numeric = 1;
 
     /* save the dim/dimnames attributes */
 
@@ -1741,7 +1742,7 @@ SEXP attribute_hidden do_writetable(SEXP call, SEXP op, SEXP args, SEXP rho)
 	if(this >  0) quote_col[this - 1] = TRUE;
     }
     R_AllocStringBuffer(0, &strBuf);
-    PrintDefaults(R_NilValue);
+    PrintDefaults();
     wi.savedigits = R_print.digits; R_print.digits = DBL_DIG;/* MAX precision */
     wi.con = con;
     wi.wasopen = wasopen;

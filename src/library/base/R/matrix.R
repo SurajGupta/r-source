@@ -16,12 +16,12 @@
 
 matrix <- function(data=NA, nrow=1, ncol=1, byrow=FALSE, dimnames=NULL)
 {
-    data <- as.vector(data)
-    if(missing(nrow))
-        nrow <- ceiling(length(data)/ncol)
-    else if(missing(ncol))
-        ncol <- ceiling(length(data)/nrow)
-    .Internal(matrix(data, nrow, ncol, byrow, dimnames))
+    ## avoid copying to strip attributes in simple cases
+    if (is.object(data) || !is.atomic(data)) data <- as.vector(data)
+    ## NB: the defaults are not really nrow=1, ncol=1: missing values
+    ## are treated differently, using length(data).
+    .Internal(matrix(data, nrow, ncol, byrow, dimnames,
+                     missing(nrow), missing(ncol)))
 }
 
 nrow <- function(x) dim(x)[1L]
@@ -39,7 +39,7 @@ rownames <- function(x, do.NULL = TRUE, prefix = "row")
         nr <- NROW(x)
 	if(do.NULL) NULL
         else if(nr > 0L) paste(prefix, seq_len(nr), sep="")
-        else character(0L)
+        else character()
     }
 }
 
@@ -74,7 +74,7 @@ colnames <- function(x, do.NULL = TRUE, prefix = "col")
         nc <- NCOL(x)
 	if(do.NULL) NULL
         else if(nc > 0L) paste(prefix, seq_len(nc), sep="")
-        else character(0L)
+        else character()
     }
 }
 

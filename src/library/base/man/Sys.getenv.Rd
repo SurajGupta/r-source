@@ -1,17 +1,20 @@
 % File src/library/base/man/Sys.getenv.Rd
 % Part of the R package, http://www.R-project.org
-% Copyright 1995-2008 R Core Development Team
+% Copyright 1995-2011 R Core Development Team
 % Distributed under GPL 2 or later
 
 \name{Sys.getenv}
 \title{Get Environment Variables}
 \usage{
-Sys.getenv(x = NULL, unset = "")
+Sys.getenv(x = NULL, unset = "", names = NA)
 }
 \alias{Sys.getenv}
 \arguments{
   \item{x}{a character vector, or \code{NULL}.}
   \item{unset}{a character string.}
+  \item{names}{logical: should the result be named?  If \code{NA} (the
+    default) single-element results are not named whereas multi-element
+    results are.}
 }
 \description{
   \code{Sys.getenv} obtains the values of the environment variables.
@@ -20,14 +23,15 @@ Sys.getenv(x = NULL, unset = "")
   Both arguments will be coerced to character if necessary.
 
   Setting \code{unset = NA} will enable unset variables and those set to
-  the value \code{""} to be distinguished, \emph{if the OS does}.
+  the value \code{""} to be distinguished, \emph{if the OS does}.  POSIX
+  requires the OS to distinguish, and all known current \R platforms do.
 }
 \value{
-  A vector of the same length as \code{x}, with the variable names as
-  its \code{names} attribute.  Each element holds the value of the
-  environment variable named by the corresponding component of \code{x}
-  (or the value of \code{unset} if no environment variable with that
-  name was found).
+  A vector of the same length as \code{x}, with (if \code{names ==
+  TRUE}) the variable names as its \code{names} attribute.  Each element
+  holds the value of the environment variable named by the corresponding
+  component of \code{x} (or the value of \code{unset} if no environment
+  variable with that name was found).
 
   On most platforms \code{Sys.getenv()} will return a named vector
   giving the values of all the environment variables, sorted in the
@@ -35,6 +39,9 @@ Sys.getenv(x = NULL, unset = "")
   some platforms allow but POSIX does not.  (Windows is such a platform:
   there names including \code{=} are truncated just before the first
   \code{=}.)
+  
+  Argument \code{names} was introduced in \R 2.13.0 to avoid needing the
+  common use of \code{as.vector(Sys.getenv())}.
 }
 \seealso{
   \code{\link{Sys.setenv}},

@@ -1,29 +1,25 @@
 #-*- Makefile -*-
 
-ifeq ($(strip $(WIN)),64)
+ifeq "$(WIN)" "64"
 BINPREF = $(BINPREF64)
 SYMPAT = $(SYMPAT64)
 R_ARCH = /x64
-DEFINES = -DR_ARCH='"x64"' -DW64
+DEFS_W64 = -DW64
+arch_DEFS = -DR_ARCH='"x64"'
 else
 R_ARCH = /i386
-DEFINES = -DR_ARCH='"i386"' $(DEFS_W64)
+arch_DEFS = -DR_ARCH='"i386"'
 SYMPAT = 's/^.* [BCDRT] _/ /p'
 endif
 
 ## -std=c99 would force __STRICT_ANSI__ disabling strdup etc, and also alloca
 C99FLAG=-std=gnu99
 
-# No other alternative is currently supported, but this could be used for ICC
-BUILD=GCC4
-
-
-ifeq ($(strip $(BUILD)),GCC4)
 F77=$(BINPREF)gfortran$(GCC4_SUFF)
 FLIBS=-lgfortran
 ## earlier Rtools needed -sjlj; the alternative is -dw2, which failed building R.
 GCC4_SUFF=
-endif
+
 
 BINDIR=bin$(R_ARCH)
 
@@ -32,11 +28,6 @@ IMPDIR=lib
 else
 IMPDIR=$(BINDIR)
 endif
-
-## use in front-ends and internet module
-GRAPHAPP_LIB=-lRgraphapp
-## used in stats/src/Makevars.win
-BLAS_LIBS=-L$(RHOME)/$(IMPDIR) -lRblas
 
 AR=$(BINPREF)ar
 AS=$(BINPREF)as
@@ -52,13 +43,11 @@ DLLTOOL=$(BINPREF)dlltool
 ## even for native builds
 DLLTOOLFLAGS=--as $(AS) -k
 ECHO=echo
-## FIND is only used in installer/Makefile
-FIND=find
 LINKER=$(MAIN_LD)
 MAIN_LD=$(CC)
 MKDIR=mkdir
 NM=$(BINPREF)nm
-PERL=perl
+# PERL=perl
 RANLIB=$(BINPREF)ranlib
 RESCOMP=$(BINPREF)windres
 # as set by make

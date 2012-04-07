@@ -4,10 +4,6 @@ Meps <- .Machine$double.eps
 ## complex
 z <- 0i ^ (-3:3)
 stopifnot(Re(z) == 0 ^ (-3:3))
-set.seed(123)
-z <- complex(real = rnorm(100), imag = rnorm(100))
-stopifnot(Mod ( 1 -  sin(z) / ( (exp(1i*z)-exp(-1i*z))/(2*1i) )) < 20 * Meps)
-## end of moved from complex.Rd
 
 
 ## powers, including complex ones
@@ -20,8 +16,40 @@ stopifnot(m[,as.character(0:2)] == cbind(1,a,a*a),
           all.equal(unname(m[,"0.5"]),
                     sqrt(abs(a))*ifelse(a < 0, 1i, 1),
                     tol= 20*Meps))
+
+## 2.10.0-2.12.1 got z^n wrong in the !HAVE_C99_COMPLEX case
+z <- 0.2853725+0.3927816i
+z2 <- z^(1:20)
+z3 <- z^-(1:20)
+z0 <- cumprod(rep(z, 20))
+stopifnot(all.equal(z2, z0), all.equal(z3, 1/z0))
+## was z^3 had value z^2 ....
+
 ## fft():
 for(n in 1:30) cat("\nn=",n,":", round(fft(1:n), 8),"\n")
+
+
+## polyroot():
+stopifnot(abs(1 + polyroot(choose(8, 0:8))) < 1e-10)# maybe smaller..
+
+## precision of complex numbers
+signif(1.678932e80+0i, 5)
+signif(1.678932e-300+0i, 5)
+signif(1.678932e-302+0i, 5)
+signif(1.678932e-303+0i, 5)
+signif(1.678932e-304+0i, 5)
+signif(1.678932e-305+0i, 5)
+signif(1.678932e-306+0i, 5)
+signif(1.678932e-307+0i, 5)
+signif(1.678932e-308+0i, 5)
+signif(1.678932-1.238276i, 5)
+signif(1.678932-1.238276e-1i, 5)
+signif(1.678932-1.238276e-2i, 5)
+signif(1.678932-1.238276e-3i, 5)
+signif(1.678932-1.238276e-4i, 5)
+signif(1.678932-1.238276e-5i, 5)
+signif(8.678932-9.238276i, 5)
+## prior to 2.2.0 rounded real and imaginary parts separately.
 
 
 ## Complex Trig.:
@@ -45,9 +73,10 @@ Isi <- Im(atan(tan(1i + rnorm(100)))) #-- tan(atan(..)) does NOT work (Math!)
 all(abs(Isi-1) < 100* Meps)
 ##P table(2*abs(Isi-1)	/ Meps)
 
-
-## polyroot():
-stopifnot(abs(1 + polyroot(choose(8, 0:8))) < 1e-10)# maybe smaller..
+set.seed(123)
+z <- complex(real = rnorm(100), imag = rnorm(100))
+stopifnot(Mod ( 1 -  sin(z) / ( (exp(1i*z)-exp(-1i*z))/(2*1i) )) < 20 * Meps)
+## end of moved from complex.Rd
 
 
 ## PR#7781
@@ -73,26 +102,28 @@ stopifnot(all.equal(z, pi/2+0i))
 ## was NA in 2.1.1
 
 
-## precision of complex numbers
-signif(1.678932e80+0i, 5)
-signif(1.678932e-300+0i, 5)
-signif(1.678932e-302+0i, 5)
-signif(1.678932e-303+0i, 5)
-signif(1.678932e-304+0i, 5)
-signif(1.678932e-305+0i, 5)
-signif(1.678932e-306+0i, 5)
-signif(1.678932e-307+0i, 5)
-signif(1.678932e-308+0i, 5)
-signif(1.678932-1.238276i, 5)
-signif(1.678932-1.238276e-1i, 5)
-signif(1.678932-1.238276e-2i, 5)
-signif(1.678932-1.238276e-3i, 5)
-signif(1.678932-1.238276e-4i, 5)
-signif(1.678932-1.238276e-5i, 5)
-signif(8.678932-9.238276i, 5)
-## prior to 2.2.0 rounded real and imaginary parts separately.
+## Hyperbolic
+x <- seq(-3, 3, len=200)
+Meps <- .Machine$double.eps
+stopifnot(
+ Mod(cosh(x) - cos(1i*x))	< 20*Meps,
+ Mod(sinh(x) - sin(1i*x)/1i)	< 20*Meps
+)
+## end of moved from Hyperbolic.Rd
 
-## 2.10.0-2.12.1 got z^n wrong in the !HAVE_C99_COMPLEX case
-z <- 0.2853725+0.3927816i
-stopifnot(all.equal(z^3, z*z*z))
-## was z^2
+## values near and on branch cuts
+options(digits=5)
+z <- c(2+0i, 2-0.0001i, -2+0i, -2+0.0001i)
+asin(z)
+acos(z)
+atanh(z)
+z <- c(0+2i, 0.0001+2i, 0-2i, -0.0001i-2i)
+asinh(z)
+acosh(z)
+atan(z)
+## According to C99, should have continuity from the side given if there
+## are not signed zeros
+## Both glibc 2.12 and Mac OS X 10.6 use continuity from above in the first set
+## but they seem to assume signed zeros.
+## Windows gave incorrect (NaN) values on the cuts.
+

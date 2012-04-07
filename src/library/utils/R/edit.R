@@ -50,9 +50,12 @@ edit.default <-
     function (name = NULL, file = "", title = NULL,
               editor = getOption("editor"), ...)
 {
-    if(is.matrix(name) &&
-       (mode(name) == "numeric" || mode(name) == "character"))
-        edit.matrix(name=name, ...)
+    if(FALSE){}
+# This should no longer be necessary, and caused problems in the no-GUI
+# situation.
+#is.matrix(name) &&
+#       (mode(name) == "numeric" || mode(name) == "character"))
+#        edit.matrix(name=name, ...)
     else {
 	if (is.null(title)) title <- deparse(substitute(name))
         if (is.function(editor))
@@ -88,12 +91,12 @@ edit.data.frame <-
     factors <- if (length(name))
         which(sapply(name, is.factor))
     else
-        numeric(0L)
+        numeric()
 
     logicals <- if (length(name))
     	which(sapply(name, is.logical))
     else
-    	numeric(0L)
+    	numeric()
 
     if(length(name)) {
         has_class <-
@@ -221,10 +224,22 @@ edit.matrix <-
 }
 
 file.edit <-
-  function (..., title = file, editor=getOption("editor"))
+  function (..., title = file, editor=getOption("editor"), fileEncoding="")
 {
     file <- path.expand(c(...))
     title <- rep(as.character(title), len=length(file))
+    if(nzchar(fileEncoding) && fileEncoding != "native.enc") {
+        tfile <- file
+        for(i in seq_along(file)) {
+            ## We won't know when that is done with
+            ## so leave around for the R session.
+            tfile <- tempfile()
+            con <- file(file[i], encoding = fileEncoding)
+            writeLines(readLines(con), tfile)
+            close(con)
+            file[i] <- tfile
+        }
+    }
     if (is.function(editor)) invisible(editor(file = file, title = title))
     else .Internal(file.edit(file, title, editor))
 }

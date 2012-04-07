@@ -7,10 +7,11 @@ msgid ""
 msgstr ""
 "Project-Id-Version: R 2.12.0\n"
 "Report-Msgid-Bugs-To: bugs@r-project.org\n"
-"POT-Creation-Date: 2011-01-03 16:13\n"
-"PO-Revision-Date: 2010-10-01 20:57+0100\n"
+"POT-Creation-Date: 2011-03-29 21:44\n"
+"PO-Revision-Date: 2011-03-29 20:10+0100\n"
 "Last-Translator: Philippe Grosjean <phgrosjean@sciviews.org>\n"
 "Language-Team: French <R-core@r-project.org>\n"
+"Language: fr\n"
 "MIME-Version: 1.0\n"
 "Content-Type: text/plain; charset=ISO-8859-1\n"
 "Content-Transfer-Encoding: 8bit\n"
@@ -86,6 +87,9 @@ msgstr "La version boggée du générateur Kinderman-Ramage n'est pas autorisée"
 
 msgid "malformed version string"
 msgstr "chaîne de caractères de version incorrecte"
+
+msgid "target is %s, current is %s"
+msgstr "la cible est %s, l'actuel est %s"
 
 msgid "dim(X) must have a positive length"
 msgstr "dim(X) doit avoir un longueur positive"
@@ -211,6 +215,11 @@ msgstr "mauvaise spécification de redémarrage"
 
 msgid "argument 'where' of length 0"
 msgstr "argument 'where' de longueur nulle"
+
+msgid "argument 'object' must deparse to a single character string"
+msgstr ""
+"la reconstruction de code (deparse)  de l'argument 'object' doit résulter en "
+"une chaîne de caractères unique"
 
 msgid "'origin' must be one of 'start', 'current' or 'end'"
 msgstr "'origin' doit être un de 'start', 'current' ou 'end'"
@@ -604,9 +613,6 @@ msgstr "seules les diagonales des matrices peuvent être remplacées"
 msgid "replacement diagonal has wrong length"
 msgstr "la diagonale a une mauvaise longueur pour le remplacement"
 
-msgid "'fromLast' must be TRUE or FALSE"
-msgstr "'fromLast' doit être TRUE ou FALSE"
-
 msgid "MARGIN ="
 msgstr "MARGIN ="
 
@@ -676,8 +682,15 @@ msgstr "niveau de facteur incorrect, NAs générés"
 msgid "'%s' is not meaningful for ordered factors"
 msgstr "'%s' n'a pas de sens pour des facteurs ordonnés"
 
-msgid "no files to copy from"
-msgstr "aucun fichier d'où copier"
+msgid "'%s' not defined for ordered factors"
+msgstr "'%s' n'est pas défini pour des facteurs ordonnés"
+
+msgid ""
+"'%s' is only meaningful for ordered factors if all arguments have the same "
+"level sets"
+msgstr ""
+"'%s' n'a de sens pour des facteurs ordonnés que si tous les arguments ont "
+"les mêmes niveaux"
 
 msgid "no files to copy to"
 msgstr "aucun fichier vers où copier"
@@ -685,8 +698,9 @@ msgstr "aucun fichier vers où copier"
 msgid "more 'from' files than 'to' files"
 msgstr "plus de fichiers 'from' que de fichiers 'to'"
 
-msgid "'recursive' will be ignored"
-msgstr "l'argument 'recursive' sera ignoré"
+msgid "'recursive' will be ignored as 'to' is not a single existing directory"
+msgstr ""
+"'recursive' sera ignoré puisque 'to' n'est pas un unique répertoire existant"
 
 msgid "file can not be copied both 'from' and 'to'"
 msgstr "un fichier à copier ne peut à la fois être 'from' et 'to'"
@@ -697,8 +711,14 @@ msgstr "aucun fichier vers où pointer un lien"
 msgid "no files/directory to link to"
 msgstr "aucun fichier / répertoire vers où pointer un lien"
 
+msgid "no files to link to"
+msgstr "aucuns fichiers vers où pointer"
+
 msgid "'package' must be of length 1"
 msgstr "'package' doit être de longueur unaire"
+
+msgid "no file found"
+msgstr "fichier introuvable"
 
 msgid "'vec' contains NAs"
 msgstr "'vec' contient des valeurs manquantes (NAs)"
@@ -908,11 +928,14 @@ msgstr "DLL '%s' introuvable"
 msgid "now dyn.unload(\"%s\") ..."
 msgstr "dyn.unload(\"%s\") en cours ..."
 
-msgid "Loading required package: %s"
-msgstr "Le chargement a nécessité le package : %s"
-
 msgid "use of 'save' is deprecated"
 msgstr "l'utilisation de 'save' est obsolète"
+
+msgid "save != FALSE is defunct"
+msgstr "save != FALSE n'est plus autorisé"
+
+msgid "Loading required package: %s"
+msgstr "Le chargement a nécessité le package : %s"
 
 msgid "none of the packages are loaded"
 msgstr "aucun des packages n'est chargé"
@@ -925,11 +948,11 @@ msgstr ""
 "utilisation de celui trouvé dans '%s'"
 
 msgid ""
-"Further information is available in the following vignettes in directory '%"
-"s':"
+"Further information is available in the following vignettes in directory "
+"'%s':"
 msgstr ""
-"Plus d'information disponible dans les vignettes suivantes (répertoire '%"
-"s') :"
+"Plus d'information disponible dans les vignettes suivantes (répertoire "
+"'%s') :"
 
 msgid "doc"
 msgstr "doc"
@@ -1104,9 +1127,6 @@ msgstr "l'espace de noms est déjà attaché"
 msgid "%s not found"
 msgstr "%s introuvable"
 
-msgid "cyclic name space dependencies are not supported"
-msgstr "dépendances cycliques d'espaces de noms non supportées"
-
 msgid "namespace '%s' is already sealed in loadNamespace"
 msgstr "l'espace de noms '%s' est déjà verrouillé dans loadNamespace"
 
@@ -1167,16 +1187,6 @@ msgid "name space %s is imported by %s so cannot be unloaded"
 msgstr ""
 "l'espace de noms %s est importé par %s et ne peut, donc, pas être déchargé"
 
-msgid "imperative name space directives are disabled"
-msgstr "les directives impératives d'espaces de noms sont désactivées"
-
-msgid "all objects in base name space are currently exported."
-msgstr ""
-"tous les objets dans l'espace de noms de base sont actuellement exportés."
-
-msgid "can only export from a name space"
-msgstr "impossible d'exporter sans espace de noms"
-
 msgid "not a name space"
 msgstr "ceci n'est pas un espace de noms"
 
@@ -1199,9 +1209,6 @@ msgstr "remplacement de l'importation précédente %s lors du chargement de %s"
 msgid "invalid import target"
 msgstr "cible d'importation incorrecte"
 
-msgid "got invalid index for importing"
-msgstr "index incorrect lors de l'importation"
-
 msgid "found methods to import for function %s but not the generic itself"
 msgstr ""
 "des méthodes sont disponibles à l'importation pour la fonction %s mais pas "
@@ -1209,8 +1216,8 @@ msgstr ""
 
 msgid "requested methods not found in environment/package %s: %s"
 msgstr ""
-"des méthodes demandées sont introuvables dans l'environnement / le package %"
-"s : %s"
+"des méthodes demandées sont introuvables dans l'environnement / le package "
+"%s : %s"
 
 msgid "cannot add to exports of a sealed name space"
 msgstr "impossible d'ajouter aux exportations d'un espace de noms verouillé"
@@ -1335,6 +1342,12 @@ msgstr "la longueur de 'scale' doit être égale au nombre de colonnes de 'x'"
 msgid "either specify 'nmax' or 'n', but not both."
 msgstr "spécifiez soit 'nmax', soit 'n', mais pas les deux à la fois"
 
+msgid "argument 'length.out' must be of length 1"
+msgstr "l'argument 'length.out' doit être de longueur 1"
+
+msgid "first element used of 'length.out' argument"
+msgstr "seul le premier élément de 'length.out' est utilisé"
+
 msgid "invalid (to - from)/by in seq(.)"
 msgstr "(to - from) / by incorrect dans seq(.)"
 
@@ -1349,6 +1362,9 @@ msgstr "'length' doit être positif ou nul"
 
 msgid "too many arguments"
 msgstr "trop d'arguments"
+
+msgid "'compress' is ignored unless 'file' is a file name"
+msgstr "'compress' est ignoré à moins que 'file' ne soit le nom d'un fichier"
 
 msgid "'connection' must be a connection"
 msgstr "'connection' doit être une connexion"
@@ -1496,6 +1512,9 @@ msgstr "rien à tabuler"
 
 msgid "all arguments must have the same length"
 msgstr "tous les arguments doivent avoir la même longueur"
+
+msgid "attempt to make a table with >= 2^31 elements"
+msgstr "tentative de création d'une table contenant 2^31 éléments ou plus"
 
 msgid "'object' must inherit from class \"table\""
 msgstr "'object' doit hériter de la classe \"table\""
@@ -1699,6 +1718,31 @@ msgid "Warning message:\n"
 msgid_plural "Warning messages:\n"
 msgstr[0] "Message d'avis :\n"
 msgstr[1] "Messages d'avis :\n"
+
+#~ msgid "no files to copy from"
+#~ msgstr "aucun fichier d'où copier"
+
+#~ msgid "got invalid index for importing"
+#~ msgstr "index incorrect lors de l'importation"
+
+#~ msgid "cyclic name space dependencies are not supported"
+#~ msgstr "dépendances cycliques d'espaces de noms non supportées"
+
+#~ msgid "'recursive' will be ignored"
+#~ msgstr "l'argument 'recursive' sera ignoré"
+
+#~ msgid "imperative name space directives are disabled"
+#~ msgstr "les directives impératives d'espaces de noms sont désactivées"
+
+#~ msgid "all objects in base name space are currently exported."
+#~ msgstr ""
+#~ "tous les objets dans l'espace de noms de base sont actuellement exportés."
+
+#~ msgid "can only export from a name space"
+#~ msgstr "impossible d'exporter sans espace de noms"
+
+#~ msgid "'fromLast' must be TRUE or FALSE"
+#~ msgstr "'fromLast' doit être TRUE ou FALSE"
 
 #~ msgid "shared library '%s' not found"
 #~ msgstr "la librairie partagée '%s' est introuvable"

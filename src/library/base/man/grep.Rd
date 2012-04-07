@@ -1,6 +1,6 @@
 % File src/library/base/man/grep.Rd
 % Part of the R package, http://www.R-project.org
-% Copyright 1995-2009 R Core Development Team
+% Copyright 1995-2011 R Core Development Team
 % Distributed under GPL 2 or later
 
 \name{grep}
@@ -102,8 +102,10 @@ gregexpr(pattern, text, ignore.case = FALSE, perl = FALSE,
 
   The main effect of \code{useBytes} is to avoid errors/warnings about
   invalid inputs and spurious matches in multibyte locales, but for
-  \code{regexpr} it changes the interpretation of the output.  As from
-  \R 2.10.0 it inhibits the conversion of inputs with marked encodings.
+  \code{regexpr} it changes the interpretation of the output.
+  It inhibits the conversion of inputs with marked encodings, and is
+  forced (with a warning) if any input is found which is marked as
+  \code{"bytes"}.
   
   Caseless matching does not make much sense for bytes in a multibyte
   locale, and you should expect it only to work for ASCII characters if
@@ -215,6 +217,8 @@ gregexpr(pattern, text, ignore.case = FALSE, perl = FALSE,
   for character translations.
   
   \code{\link{apropos}} uses regexps and has more examples.
+
+  \code{\link{grepRaw}} for matching raw vectors.
 }
 \examples{
 grep("[a-z]", letters)

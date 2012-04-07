@@ -933,13 +933,6 @@ stopifnot(identical(NaN, weighted.mean(0[0])),
 ## all three gave 0  in 2.10.x and 2.11.x (but not previously)
 
 
-## regexpr(fixed = TRUE) with a single-byte pattern matching to a MBCS string
-x <- iconv("fa\xE7ile a ", "latin1", "UTF-8")
-stopifnot(identical(regexpr(" ", x), regexpr(" ", x, fixed=TRUE)))
-# fixed=TRUE reported match position in bytes in R <= 2.10.0
-stopifnot(identical(regexpr(" a", x), regexpr(" a", x, fixed=TRUE)))
-## always worked.
-
 ## unname() on 0-length vector
 stopifnot(identical(1[FALSE], unname(c(a=1)[FALSE])))
 ## failed to drop names in 2.10.0
@@ -1340,17 +1333,21 @@ z2 <- quantile(x, type = 6, probs = c(.5, 0))
 stopifnot(z1 == rev(z2))
 ## differed in 2.11.x
 
-
-
-## found from fallback test in slam 0.1-15
-## most likely indicates an inaedquate BLAS.
-x <- matrix(c(1, 0, NA, 1), 2, 2)
-y <- matrix(c(1, 0, 0, 2, 1, 0), 3, 2)
-(z <- tcrossprod(x, y))
-stopifnot(identical(z, x %*% t(y)))
-stopifnot(is.nan(log(0) %*% 0))
-## depended on the BLAS in use: some (including the reference BLAS)
-## had z[1,3] == 0 and log(0) %*% 0 as as.matrix(0).
+## backspline() with decreasing knot locations
+require(splines)
+d1 <- c(616.1, 570.1, 523.7, 477.3, 431.3, 386.2, 342.4, 300.4, 260.4,
+        222.7, 187.8, 155.7, 126.7, 100.8,  78.1,  58.6,  42.2,  28.7,
+         18.1,  10.2)
+r1 <- c(104.4, 110  , 115.5, 121,   126.6, 132.1, 137.7, 143.2, 148.8,
+        154.3, 159.9, 165.4, 170.9, 176.5, 182,   187.6, 193.1, 198.7,
+        204.2, 209.8)
+sp1 <- interpSpline(r1,d1)# 'x' as function of 'y' (!)
+psp1 <- predict(sp1)
+bsp1 <- backSpline(sp1)
+dy <- diff(predict(bsp1, .5 + 18:30)$y)
+stopifnot(-.9 < dy, dy < -.35)
+## failed in R <= 2.11.x: "bizarre jumps"
+detach("package:splines")
 
 
 ## PR#14393
@@ -1358,6 +1355,17 @@ f <- factor(c(NA, 1, 2), levels = 1:3, labels = 1:3)
 mf <- model.frame(~ f, na.action = na.pass, drop.unused.levels = TRUE)
 stopifnot(identical(mf$f, f[,drop=TRUE]))
 ## failed to drop < 2.12.0
+
+
+## problem with deparsing variable names of > 500 bytes in model.frame
+## reported by Terry Therneau to R-devel, 2010-10-07
+tname <- paste('var', 1:50, sep='')
+tmat <- matrix(rnorm(500), ncol=50, dimnames=list(NULL, tname))
+tdata <- data.frame(tmat)
+temp1 <- paste( paste(tname, tname, sep='='), collapse=', ')
+temp2 <- paste("~1 + cbind(", temp1, ")")
+foo <- model.frame(as.formula(temp2), tdata)
+## gave invalid variable name.
 
 
 ## subassignment to expressions sometimes coerced them to lists.
@@ -1394,6 +1402,39 @@ try(regexpr("a{2-}", ""))
 ## terminated R <= 2.12.0
 
 
+## ! on zero-length objects (PR#14244)
+M <- matrix(FALSE, 0, 2)
+stopifnot(identical(attributes(!M), attributes(M)))
+# and for back compatibiility
+!list() # logical(0)
+## dropped all attributes in 2.12.0
+
+
+## Preserve intercepts in drop.terms
+tt <- terms(~a+b-1)
+tt2 <- terms(~b-1)
+stopifnot(identical(drop.terms(tt, 1), tt2))
+stopifnot(identical(tt[2], tt2))
+stopifnot(identical(tt[1:2], tt))
+## reset intercept term < R 2.13.0
+
+
+## Test new defn of cmdscale()
+mds <- cmdscale(eurodist, eig = TRUE, k = 14)
+stopifnot(ncol(mds$points) == 11L)
+## Used negative eigenvalues in 2.12.0
+
+
+## Sweave() comments with  keep.source=TRUE
+utils::Sweave(file.path(Sys.getenv("SRCDIR"), "keepsource.Rnw"))
+texl <- readLines("keepsource.tex")
+comml <- grep("##", texl, value=TRUE)
+stopifnot(length(comml) == 2,
+	  grepl("initial comment line", comml[1]),
+	  grepl("last comment", comml[2]))
+## the first was lost in 2.12.0;  the last in most/all previous versions of R
+
+
 ## mapply() & sapply() should not wrongly simplify e.g. for "call":
 f2 <- function(i,j) call(':',i,j)
 stopifnot(identical(2:3,
@@ -1402,5 +1443,167 @@ stopifnot(identical(2:3,
 	  length(s <- sapply(1:3, f2, j=7)) == 3)
 ## length wrongly were 6 and 9, in R <= 2.12.0
 
+
+## 'sep' in reshape() (PR#14335)
+test <- data.frame(x=rnorm(100), y=rnorm(100), famid=rep(1:50, each=2),
+                   time=rep(1:2, 50))
+
+wide <- reshape(data=test, v.names=c("x", "y"), idvar="famid",
+                timevar="time", sep="", direction="wide")
+stopifnot(identical(names(wide), c("famid", "x1", "y1", "x2", "y2")))
+## was c("famid", "x.1", "y.1", "x.2", "y.2") in R <= 2.12.0
+
+
+## PR#14438
+X <- matrix(0+1:10, ncol=2)[, c(1,1,2,2)]
+colnames(X) <- c("X1","Dup1", "X2", "Dup2")
+X2 <- qr.X(qr(X))
+X2
+identical(colnames(X), colnames(X2))
+## failed to pivot colnames in R <= 2.12.0
+
+
+## improvements to aggregate.data.frame in 2.13.0
+a <- data.frame(nm = c("a", "b", "a", "b"), time = rep(Sys.time(), 4))
+b <- with(a, aggregate(time, list(nm=nm), max))
+stopifnot(inherits(b$x, "POSIXt"))
+##
+
+
+## pretty(<only non-finite>)  PR#14468
+stopifnot(length(pretty(-2:1 / 0)) == 0)
+## gave an error in R <= 2.12.1
+
+
+## revised behaviour of as.POSIXlt in R 2.13.0
+x <- c("2001-02-03", "2001-02-03 04:05")
+stopifnot(identical(as.POSIXlt(x), rev(as.POSIXlt(rev(x)))))
+## used different formats earlier
+
+
+## seq.Date could overshoot
+x <- seq(as.Date("2011-01-07"), as.Date("2011-03-01"), by = "month")
+stopifnot(length(x) == 2)
+x <- seq(as.POSIXct("2011-01-07"), as.POSIXct("2011-03-01"), by = "month")
+stopifnot(length(x) == 2)
+## was 3 in R < 2.13.0
+
+
+## mostattributes<- now sometimes works for data frames (PR#14469)
+x <- women
+mostattributes(x) <- attributes(women) # did not set names in R < 2.13.0
+## but there are still problems with row.names (see the help)
+
+
+## naresid.exclude when all cases have been omitted
+## (reported by Simon Wood to R-help, 2011-01-14)
+x <- NA_real_
+na.act <- na.action(na.exclude(x))
+z <- naresid(na.act, rep(0, 0))
+stopifnot(identical(z, x))
+## gave length-0 result
+
+
+## weighted.residuals did not work correctly with mlm fits
+## see https://stat.ethz.ch/pipermail/r-devel/2011-January/059642.html
+d4 <- data.frame(y1=1:4, y2=2^(0:3), wt=log(1:4), fac=LETTERS[c(1,1,2,2)])
+fit <- lm(data=d4, cbind(y1,y2)~fac, weights=wt)
+wtr <- weighted.residuals(fit)
+stopifnot(identical(dim(wtr), 3:2))
+## dropped dims in 2.12.1
+
+
+## ccf did not work with na.action=na.pass
+## https://stat.ethz.ch/pipermail/r-help/2011-January/265992.html
+z <- matrix(rnorm(50),,2); z[6,] <- NA; z <- ts(z)
+acf(z, na.action=na.pass, plot = FALSE)
+ccf(z[,1], z[,2], na.action=na.pass, plot=FALSE)
+## failed in 2.12.1
+
+
+## tests of append mode on compressed connections.
+tf <- tempfile(); con <- gzfile(tf, "w")
+writeLines(as.character(1:50), con)
+close(con); con <- gzfile(tf, "a")
+writeLines(as.character(51:70), con)
+close(con)
+stopifnot(length(readLines(tf)) == 70)
+unlink(tf)
+
+con <- bzfile(tf, "w")
+writeLines(as.character(1:50), con)
+close(con); con <- bzfile(tf, "a")
+writeLines(as.character(51:70), con)
+close(con)
+stopifnot(length(readLines(tf)) == 70)
+unlink(tf)
+
+con <- xzfile(tf, "w")
+writeLines(as.character(1:50), con)
+close(con); con <- xzfile(tf, "a")
+writeLines(as.character(51:70), con)
+close(con)
+stopifnot(length(readLines(tf)) == 70)
+unlink(tf)
+## bzfile warned and did not work R < 2.13.0
+
+
+## NA_complex_ in prettyNum()
+format(c(pi+0i, NA),   drop0=TRUE)
+prettyNum(NA_complex_, drop0=TRUE)
+## gave errors in R < 2.12.2
+
+
+## Map() needed to call match.fun() itself (PR#14495)
+local({a <- sum; Map("a", list(1:5))})
+## failed R < 2.13.0
+
+
+## correct format() / rounding, print()ing -- (PR#14491)
+stopifnot(format.info(7.921,     digits=2) == c(3,1,0),
+          format.info(5.9994001, digits=4) == c(5,3,0))
+## gave (1, 0, 0) in all R versions < 2.13.0
+stopifnot(identical(format(0.2204, digits=3), "0.22"))
+## gave "0.220" previously
+
+
+## regression test for PR#14517
+try(unzip('non-existing_file.zip', list=TRUE, unzip="internal"))
+## crashed on some platforms in pre-2.13.0
+
+
+## plot.formula(*, data=<matrix>) etc
+A <- data.matrix(anscombe)
+plot  (y1 ~ x1, data = A, main = "Anscombe's first two sets")
+points(y2 ~ x2, data = A, col=2, pch=2)
+lines (y2 ~ x2, data = A, lwd=2, col="gray")
+## using a matrix failed in R < 2.13.0  *when* there was an extra argument
+
+
+## PR#14530
+dfA <- data.frame(A=1:2, B=3:4, row.names=letters[1:2])
+dfB <- dfA[2:1,]
+res <- try(data.frame(dfA, dfA[2:1,], check.rows=TRUE))
+stopifnot(inherits(res, "try-error"))
+## worked in 2.12.2.
+
+
+## uniroot(f,..) when f(.) == -Inf :
+## now play with different  g(.)'s ..
+g <- function(x) exp( 5*sign(x)*abs(x)^2.1 )
+if(FALSE) { ## if you want to see how it *did* go wrong:
+    ff1 <- function(x) {r <- log(g(x)); print(c(x,r)); r}
+    str(ur <- uniroot(ff1, c(-90,100)))
+}
+str(ur <- uniroot(function(x) log(g(x)), c(-90,100)))# -> 2 warnings .. -Inf replaced ..
+stopifnot(abs(ur$root) < 0.001)
+## failed badly in R < 2.13.0, as -Inf was replaced by +1e308
+
+
+## as.matrix.dist
+x <- matrix(,0,0)
+d <- dist(x)
+as.matrix(d)
+## Threw an error < 2.13.0
 
 proc.time()

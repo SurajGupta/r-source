@@ -1,6 +1,6 @@
 % File src/library/base/man/as.POSIXlt.Rd
 % Part of the R package, http://www.R-project.org
-% Copyright 1995-2010 R Core Development Team
+% Copyright 1995-2011 R Core Development Team
 % Distributed under GPL 2 or later
 
 \name{as.POSIX*}
@@ -66,8 +66,8 @@ as.POSIXlt(x, tz = "", \dots)
   but can be converted via a format specification by
   \code{\link{strptime}}.)  Fractional seconds are allowed.
   Alternatively, \code{format} can be specified for character vectors or
-  factors: if it is not specified and no standard format works for the
-  first non-\code{NA} input an error is thrown.
+  factors: if it is not specified and no standard format works for
+  all non-\code{NA} inputs an error is thrown.
   
   If \code{format} is specified, remember that some of the format
   specifications are locale-specific, and you may need to set the
@@ -91,8 +91,7 @@ as.POSIXlt(x, tz = "", \dots)
   \code{"POSIXlt"} to \code{"POSIXct"} will validate times in the
   selected timezone.  One issue is what happens at transitions
   to and from DST, for example in the UK
-\preformatted{
-  as.POSIXct(strptime('2011-03-27 01:30:00', '\%Y-\%m-\%d \%H:\%M:\%S'))
+\preformatted{as.POSIXct(strptime('2011-03-27 01:30:00', '\%Y-\%m-\%d \%H:\%M:\%S'))
   as.POSIXct(strptime('2010-10-31 01:30:00', '\%Y-\%m-\%d \%H:\%M:\%S'))
 }
   are respectively invalid (the clocks went forward at 1:00 GMT to 2:00

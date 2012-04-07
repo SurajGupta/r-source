@@ -303,7 +303,7 @@ fixInNamespace <- function (x, ns, pos = -1, envir = as.environment(pos), ...)
 getAnywhere <- function(x)
 {
     x <- as.character(substitute(x))
-    objs <- list(); where <- character(0L); visible <- logical(0L)
+    objs <- list(); where <- character(); visible <- logical()
     ## first look on search path
     if(length(pos <- find(x, numeric = TRUE))) {
         objs <- lapply(pos, function(pos, x) get(x, pos=pos), x=x)
@@ -319,7 +319,7 @@ getAnywhere <- function(x)
             if (gen == "" || cl == "") next
             # f might be a special, not a closure, and not have an environment, so
             # be careful below
-            if(!is.null(f <- getS3method(gen, cl, TRUE)) && !is.null(environment(f))) {    
+            if(!is.null(f <- getS3method(gen, cl, TRUE)) && !is.null(environment(f))) {
                 ev <- topenv(environment(f), baseenv())
                 nmev <- if(isNamespace(ev)) getNamespaceName(ev) else NULL
                 objs <- c(objs, f)
@@ -381,7 +381,7 @@ print.getAnywhere <- function(x, ...)
     invisible(x)
 }
 
-"[.getAnywhere" <- function(x, i)
+`[.getAnywhere` <- function(x, i)
 {
     if(!is.numeric(i)) stop("only numeric indices can be used")
     if(length(i) == 1L) x$objs[[i]]

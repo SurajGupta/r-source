@@ -1,6 +1,6 @@
 % File src/library/utils/man/SweaveSyntConv.Rd
 % Part of the R package, http://www.R-project.org
-% Copyright 1995-2007 R Core Development Team
+% Copyright 1995-2011 R Core Development Team
 % Distributed under GPL 2 or later
 
 \name{SweaveSyntConv}
@@ -23,11 +23,12 @@ SweaveSyntConv(file, syntax, output = NULL)
     syntax. Any directory names in \code{file} are also removed such
     that the output is created in the current working directory.}}
 \author{Friedrich Leisch}
-\references{
-  Friedrich Leisch: Sweave User Manual, 2008\cr
-  \url{http://www.stat.uni-muenchen.de/~leisch/Sweave}
+\seealso{
+  \sQuote{\href{../doc/Sweave.pdf}{Sweave User Manual}}, a vignette in
+  the \pkg{utils} package.
+
+  \code{\link{RweaveLatex}}, \code{\link{Rtangle}}
 }
-\seealso{\code{\link{RweaveLatex}}, \code{\link{Rtangle}}}
 \examples{
 testfile <- system.file("Sweave", "Sweave-test-1.Rnw", package = "utils")
 

@@ -67,7 +67,10 @@ function(package, dir, lib.loc = NULL,
     }
 
     if(tangle) {
-        ## Tangling can create several source files if splitting is on.
+        ## Tangling can create several source files if splitting is on,
+        ## and these can be .R or .S (at least).  However, there is
+        ## no guarantee that running them in alphabetical order in a
+        ## session will work -- with named chunks it normally will not.
         cwd <- getwd()
         if (is.null(cwd))
             stop("current working directory cannot be ascertained")
@@ -81,8 +84,8 @@ function(package, dir, lib.loc = NULL,
             setwd(startdir)
         }
     }
-    if(weave && latex) {
-        if(!("makefile" %in% tolower(list.files(vigns$dir)))) {
+    if(tangle && weave && latex) {
+        if(!("Makefile" %in% list.files(vigns$dir))) {
             ## <NOTE>
             ## This used to run texi2dvi on *all* vignettes, including
             ## the ones already known from the above to give trouble.
@@ -151,7 +154,7 @@ function(package, dir, lib.loc = NULL)
     if(!missing(package)) {
         if(length(package) != 1L)
             stop("argument 'package' must be of length 1")
-        docdir <- file.path(.find.package(package, lib.loc), "doc")
+        docdir <- file.path(find.package(package, lib.loc), "doc")
         ## Using package installed in @code{dir} ...
     }
     else {
@@ -186,15 +189,27 @@ function(package, dir, lib.loc = NULL, quiet = TRUE, clean = TRUE)
     vigns <- pkgVignettes(package = package, dir = dir, lib.loc = lib.loc)
     if(is.null(vigns)) return(invisible())
 
+    ## unset SWEAVE_STYLEPATH_DEFAULT here to avoid problems
+    Sys.unsetenv("SWEAVE_STYLEPATH_DEFAULT")
+
+    op <- options(warn = 1) # we run vignettes in this process
     wd <- getwd()
     if (is.null(wd))
         stop("current working directory cannot be ascertained")
-    on.exit(setwd(wd))
+    on.exit({
+        setwd(wd)
+        options(op)
+    })
+
     setwd(vigns$dir)
 
-    ## should this recurse into subdirs?
+    ## FIXME: should this recurse into subdirs?
     origfiles <- list.files(all.files = TRUE)
-    have.makefile <- "makefile" %in% tolower(origfiles)
+
+    ## Note, as from 2.13.0, only this case
+    have.makefile <- "Makefile" %in% origfiles
+    WINDOWS <- .Platform$OS.type == "windows"
+
     file.create(".build.timestamp")
 
     pdfs <- character()
@@ -212,15 +227,26 @@ function(package, dir, lib.loc = NULL, quiet = TRUE, clean = TRUE)
                           domain = NA, call. = FALSE)
                  })
         setwd(startdir)
+        ## This can fail if run in a directory whose path contains spaces.
         if(!have.makefile)
             texi2dvi(file = bft, pdf = TRUE, clean = FALSE, quiet = quiet)
     }
 
     if(have.makefile) {
-    	make <- Sys.getenv("MAKE")
+        if (WINDOWS) {
+            ## Some people have *assumed* that R_HOME uses / in Makefiles
+            ## Spaces in paths might still cause trouble.
+            rhome <- chartr("\\", "/", R.home())
+            Sys.setenv(R_HOME = rhome)
+        }
+    	make <- Sys.getenv("MAKE", "make")
         if(!nzchar(make)) make <- "make"
         yy <- system(make)
-        if(make == "" || yy > 0) stop("running 'make' failed")
+        if(yy > 0) stop("running 'make' failed")
+        ## See if Makefile has a clean: target, and if so run it.
+        if(clean &&
+           any(grepl("^clean:", readLines("Makefile", warn = FALSE))))
+            system(paste(make, "clean"))
     } else {
         ## Badly-written vignettes open a pdf() device on Rplots.pdf and
         ## fail to close it.
@@ -228,7 +254,8 @@ function(package, dir, lib.loc = NULL, quiet = TRUE, clean = TRUE)
         if(clean) {
             f <- list.files(all.files = TRUE) %w/o% c(".", "..", pdfs)
             newer <- file_test("-nt", f, ".build.timestamp")
-            file.remove(f[newer])
+            ## some packages, e.g. SOAR, create directories
+            unlink(f[newer], recursive = TRUE)
         }
         f <- list.files(all.files = TRUE)
         file.remove(f %w/o% c(".", "..", pdfs, origfiles))
@@ -238,6 +265,52 @@ function(package, dir, lib.loc = NULL, quiet = TRUE, clean = TRUE)
     ## Might have been in origfiles ...
 
     invisible(NULL)
+}
+
+### * .getVignetteEncoding
+
+getVignetteEncoding <-  function(file, ...)
+{
+    lines <- readLines(file, warn = FALSE)
+    .getVignetteEncoding(lines, ...)
+}
+
+.getVignetteEncoding <- function(lines, convert = FALSE)
+{
+    ## Look for input enc lines using inputenc or inputenx
+    ## Note, multiple languages are excluded.
+
+    poss <-
+        grep("^[[:space:]]*\\\\usepackage\\[([[:alnum:]]+)\\]\\{inputen[cx]\\}",
+             lines, useBytes = TRUE)
+    ## Check it is in the preamble
+    start <- grep("^[[:space:]]*\\\\begin\\{document\\}",
+                  lines, useBytes = TRUE)
+    if(length(start)) poss <- poss[poss < start[1L]]
+    if(!length(poss)) {
+        asc <- iconv(lines, "latin1", "ASCII")
+        ind <- is.na(asc) | asc != lines
+        if(any(ind)) return("non-ASCII")
+        return("") # or "ASCII"
+    }
+    poss <- lines[poss[1L]]
+    res <- gsub("^[[:space:]]*\\\\usepackage\\[([[:alnum:]]+)\\].*", "\\1",
+                poss) # This line should be ASCII.
+    if (convert) {
+        ## see Rd2latex.R.
+        ## Currently utf8, utf8x, latin1, latin9 and ansinew are in use.
+        switch(res,
+               "utf8" =, "utf8x" = "UTF-8",
+               "latin1" = "latin1",
+               "latin2" = "latin2",
+               "latin9" = "LATIN-9", # only form known to GNU libiconv
+               "arabic" = "ISO-8859-6",
+               "cyrillic" = "ISO-8859-5",
+               "greek" = "ISO-8859-7",
+               "hebrew" = "ISO-8859-8",
+               "ansinew" = "CP1252",
+               "unknown")
+    } else res
 }
 
 ### * .build_vignette_index
@@ -276,10 +349,10 @@ function(file)
     keywords <- if(!length(keywords)) {
         ## No old-style \VignetteKeywords entries found.
         .get_vignette_metadata(lines, "Keyword")
-    }
-    else
-        unlist(strsplit(keywords[1L], ", *"))
-    list(file = file, title = title, depends = depends,
+    } else unlist(strsplit(keywords[1L], ", *"))
+    ## no point in recording the file path since this is called on
+    ## package installation.
+    list(file = basename(file), title = title, depends = depends,
          keywords = keywords)
 }
 
@@ -361,25 +434,32 @@ function(x, ...)
 .writeVignetteHtmlIndex <-
 function(pkg, con, vignetteIndex = NULL)
 {
+    ## FIXME: in principle we could need to set an encoding here
     html <- c('<!DOCTYPE html PUBLIC "-//W3C//DTD HTML 4.01 Transitional//EN">',
               paste("<html><head><title>R:", pkg, "vignettes</title>"),
-              "<link rel=\"stylesheet\" type=\"text/css\" href=\"../../R.css\">",
+              '<link rel="stylesheet" type="text/css" href="../html/R.css">',
               "</head><body>",
-              paste("<h2>Vignettes of package", pkg,"</h2>"))
+              paste("<h2>Vignettes from package '", pkg,"'</h2>", sep = ""))
 
     if(is.null(vignetteIndex) || nrow(vignetteIndex) == 0L) {
-        html <- c(html, "Sorry, the package contains no vignette meta-information or index.",
-                  "Please browse the <a href=\".\">directory</a>.")
-    }
-    else{
-        html <- c(html, "<dl>")
-        for(k in seq_len(nrow(vignetteIndex))){
-            html <- c(html,
-                      paste("<dt><a href=\"", vignetteIndex[k, "PDF"], "\">",
-                            vignetteIndex[k, "PDF"], "</a>:", sep=""),
-                      paste("<dd>", vignetteIndex[k, "Title"]))
+        html <-
+            c(html,
+              "Sorry, the package contains no vignette meta-information nor an index.",
+              'Please browse the <a href=".">directory</a>.')
+    } else {
+        ## We must not assume that there are PDFs: by default the
+        ## grid vignettes are installed without PDFs.
+        oneLink <- function(s) {
+            ## Format as used in utils::browseVignettes()
+            sprintf("  <li>%s  -  \n    %s  \n    %s  \n    %s \n  </li>\n",
+                    s[, "Title"],
+                    ifelse(nzchar(pdf<- s[, "PDF"]),
+                           sprintf("<a href='%s'>PDF</a>&nbsp;", pdf), ""),
+                    ifelse(nzchar(rcode <- s[, "R"]),
+                           sprintf("<a href='%s'>R</a>&nbsp;", rcode), ""),
+                    sprintf("<a href='%s'>LaTeX/noweb</a>&nbsp;", s[, "File"]))
         }
-        html <- c(html, "</dl>")
+        html <- c(html, oneLink(vignetteIndex))
     }
     html <- c(html, "</body></html>")
     writeLines(html, con=con)
@@ -428,6 +508,31 @@ function(vigDeps)
         NA
 }
 
+### * .run_one_vignette
+### helper for R CMD check
+
+.run_one_vignette <-
+    function(vig_name, docDir)
+{
+    td <- tempfile()
+    dir.create(td)
+    file.copy(docDir, td, recursive = TRUE)
+    setwd(file.path(td, "doc"))
+    result <- NULL
+    tryCatch(utils::Stangle(vig_name, quiet = TRUE),
+             error = function(e) result <<- conditionMessage(e))
+    if(length(result)) {
+        cat("\n  When tangling ", sQuote(vig_name), ":\n", sep="")
+        stop(result, call. = FALSE, domain = NA)
+    }
+    f <- sub("\\.[RrSs](nw|tex)$", ".R", vig_name)
+    tryCatch(source(f, echo = TRUE),
+             error = function(e) result <<- conditionMessage(e))
+    if(length(result)) {
+        cat("\n  When sourcing ", sQuote(f), ":\n", sep="")
+        stop(result, call. = FALSE, domain = NA)
+    }
+}
 
 ### Local variables: ***
 ### mode: outline-minor ***

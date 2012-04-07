@@ -124,41 +124,11 @@ if test "${PAGER}" = false; then
 fi
 ])# R_PROG_PAGER
 
-## R_PROG_PERL
-## -----------
-AC_DEFUN([R_PROG_PERL],
-[AC_PATH_PROGS(PERL, [${PERL} perl])
-if test -n "${PERL}"; then
-  _R_PROG_PERL_VERSION
-fi
-if test "${r_cv_prog_perl_v5}" != yes; then
-  ## in case available at runtime: 'false' is an alternative
-  PERL="/usr/bin/env perl"
-fi
-])# R_PROG_PERL
-
-## _R_PROG_PERL_VERSION
-## --------------------
-
-## Building the R documentation system (Rdconv and friends) requires
-## Perl version 5.8.0 or better.
-## [2.10.0: probably no longer true, but 5.8.0 is ancient now.]
-## Set shell variable r_cv_prog_perl_v5 to 'yes' if a recent enough
-## Perl is found, and to 'no' otherwise.
-AC_DEFUN([_R_PROG_PERL_VERSION],
-[AC_CACHE_CHECK([whether perl version is at least 5.8.0],
-                [r_cv_prog_perl_v5],
-[if ${PERL} -e 'require 5.8.0 or exit 1'; then
-  r_cv_prog_perl_v5=yes
-else
-  r_cv_prog_perl_v5=no
-fi])
-])# _R_PROG_PERL_VERSION
 
 ## R_PROG_TEXMF
 ## ------------
 AC_DEFUN([R_PROG_TEXMF],
-[AC_REQUIRE([R_PROG_PERL])
+[
 ## TEX PDFTEX LATEX PDFLATEX MAKEINDEX TEXI2DVI are used to make manuals
 ## TEXI2DVICMD sets default for R_TEXI2DVICMD, used for options('texi2dvi')
 AC_PATH_PROGS(TEX, [${TEX} tex], )
@@ -204,7 +174,7 @@ if test -n "${MAKEINFO}"; then
   AC_PATH_PROGS(INSTALL_INFO, [${INSTALL_INFO} install-info], false)
   if test "ac_cv_path_INSTALL_INFO" = "false"; then
     if test "${r_cv_prog_perl_v5}" = yes; then
-      INSTALL_INFO="\$(PERL) \$(top_srcdir)/tools/install-info.pl"
+      INSTALL_INFO="perl \$(top_srcdir)/tools/install-info.pl"
     fi
   fi
   AC_SUBST(INSTALL_INFO)
@@ -2036,11 +2006,11 @@ AC_EGREP_CPP([yes],
 ## Set shell variable r_cv_header_png_h to 'yes' if a recent enough
 ## 'png.h' is found, and to 'no' otherwise.
 AC_DEFUN([_R_HEADER_PNG],
-[AC_CACHE_CHECK([if libpng version >= 1.0.5],
+[AC_CACHE_CHECK([if libpng version >= 1.2.7],
                 [r_cv_header_png_h],
 AC_EGREP_CPP([yes],
 [#include <png.h>
-#if (PNG_LIBPNG_VER >= 10005)
+#if (PNG_LIBPNG_VER >= 10207)
   yes
 #endif
 ],
@@ -3363,6 +3333,7 @@ static int count_one (unsigned int namescount, char * *names, void *data)
 if test "$ac_cv_func_iconvlist" = yes; then
   AC_DEFINE(HAVE_ICONVLIST, 1, [Define if you have the `iconvlist' function.])
 fi
+AM_ICONV dnl from gettext.m4
 ])# R_ICONV
 
 
@@ -3431,50 +3402,13 @@ AC_DEFUN([R_C99_COMPLEX],
     AC_CHECK_TYPE([double complex], , r_cv_c99_complex=no,
                   [#include <complex.h>])
   fi
-  if test "${r_cv_c99_complex}" = "yes"; then
-    for ac_func in cexp clog csqrt cpow ccos csin ctan cacos casin catan \
-	 	   ccosh csinh ctanh cacosh casinh catanh
-    do
-      R_CHECK_DECL($ac_func, , [r_cv_c99_complex=no], [#include<complex.h>])
-    done
-  fi
-  dnl Now check if the representation is the same as Rcomplex
-  if test "${r_cv_c99_complex}" = "yes"; then
-  AC_MSG_CHECKING([whether C99 double complex is compatible with Rcomplex])
-AC_RUN_IFELSE([AC_LANG_SOURCE([[
-#include "confdefs.h"
-#include <complex.h>
-#include <stdlib.h>
-typedef struct {
-        double r;
-        double i;
-} Rcomplex;
-
-void set_it(Rcomplex *z)
-{
-    z[0].r = 3.14159265;
-    z[0].i = 2.172;
-    z[1].i = 3.14159265;
-    z[1].r = 2.172;
-    z[2].r = 123.456;
-    z[2].i = 0.123456;
-}
-int main () {
-    double complex z[3];
-
-    set_it(z);
-    if(cabs(z[2] - 123.456 - 0.123456 * _Complex_I) < 1e-4) exit(0);
-    else exit(1);
-}
-]])], [r_c99_complex=yes], [r_c99_complex=no], [r_c99_complex=no])
-  AC_MSG_RESULT(${r_c99_complex})
-  r_cv_c99_complex=${r_c99_complex}
+  dnl we are supposed to have a C99 compiler, so fail at this point.
+  if test "${r_cv_c99_complex}" = "no"; then
+    AC_MSG_ERROR([Support for C99 double complex type is required.])
   fi
 ])
-if test "${r_cv_c99_complex}" = "yes"; then
-AC_DEFINE(HAVE_C99_COMPLEX, 1, [Define this if you have support for C99 complex types.])
-AC_SUBST(HAVE_C99_COMPLEX)
-fi
+R_CHECK_FUNCS([cabs carg cexp clog csqrt cpow ccos csin ctan \
+	       cacos casin catan ccosh csinh ctanh], [#include <complex.h>])
 ])# R_COMPLEX
 
 ## R_CHECK_DECL(SYMBOL,

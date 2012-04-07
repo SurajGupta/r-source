@@ -529,10 +529,17 @@ int any_duplicated3(SEXP x, SEXP incomp, Rboolean from_last)
 SEXP attribute_hidden do_duplicated(SEXP call, SEXP op, SEXP args, SEXP env)
 {
     SEXP x, incomp, dup, ans;
-    int i, k, n;
+    int i, k, n, fromLast;
 
     checkArity(op, args);
     x = CAR(args);
+    incomp = CADR(args);
+    if (length(CADDR(args)) < 1)
+	error(_("'fromLast' must be length 1"));
+    fromLast = asLogical(CADDR(args));
+    if (fromLast == NA_LOGICAL)
+	error(_("'fromLast' must be TRUE or FALSE"));
+
     /* handle zero length vectors, and NULL */
     if ((n = length(x)) == 0)
 	return(PRIMVAL(op) <= 1
@@ -545,20 +552,18 @@ SEXP attribute_hidden do_duplicated(SEXP call, SEXP op, SEXP args, SEXP env)
 	       (PRIMVAL(op) == 1 ? "unique" : /* 2 */ "anyDuplicated")));
     }
 
-    incomp = CADR(args);
-
     if(length(incomp) && /* S has FALSE to mean empty */
        !(isLogical(incomp) && length(incomp) == 1 && LOGICAL(incomp)[0] == 0)) {
 	if(PRIMVAL(op) == 2) /* return R's 1-based index :*/
-	    return ScalarInteger(any_duplicated3(x, incomp, asLogical(CADDR(args))));
+	    return ScalarInteger(any_duplicated3(x, incomp, fromLast));
 	else
-	    dup = duplicated3(x, incomp, asLogical(CADDR(args)));
+	    dup = duplicated3(x, incomp, fromLast);
     }
     else {
 	if(PRIMVAL(op) == 2)
-	    return ScalarInteger(any_duplicated(x, asLogical(CADDR(args))));
+	    return ScalarInteger(any_duplicated(x, fromLast));
 	else
-	    dup = duplicated(x, asLogical(CADDR(args)));
+	    dup = duplicated(x, fromLast);
     }
     if (PRIMVAL(op) == 0) /* "duplicated()" */
 	return dup;
@@ -635,11 +640,7 @@ static void DoHashing(SEXP table, HashData *d)
 /* invalidate entries */
 static void UndoHashing(SEXP x, SEXP table, HashData *d)
 {
-    int *h, i, n;
-
-    n = LENGTH(x);
-    h = INTEGER(d->HashTable);
-    for (i = 0; i < n; i++) removeEntry(table, x, i, d);
+    for (int i = 0; i < LENGTH(x); i++) removeEntry(table, x, i, d);
 }
 
 static int Lookup(SEXP table, SEXP x, int indx, HashData *d)
@@ -996,7 +997,7 @@ SEXP attribute_hidden do_charmatch(SEXP call, SEXP op, SEXP args, SEXP env)
 		}
 	    }
 	}
-	INTEGER(ans)[i] = (imatch == NA_INTEGER) ? no_match : imatch;
+	ians[i] = (imatch == NA_INTEGER) ? no_match : imatch;
 	vmaxset(vmax);
     }
     UNPROTECT(1);
@@ -1267,7 +1268,7 @@ Rrowsum_matrix(SEXP x, SEXP ncol, SEXP g, SEXP uniqueg, SEXP snarm)
     DoHashing(uniqueg, &data);
     PROTECT(matches = HashLookup(uniqueg, g, &data));
 
-    PROTECT(ans=allocMatrix(TYPEOF(x), ng, p));
+    PROTECT(ans = allocMatrix(TYPEOF(x), ng, p));
 
     offset = 0; offsetg = 0;
 
@@ -1292,9 +1293,15 @@ Rrowsum_matrix(SEXP x, SEXP ncol, SEXP g, SEXP uniqueg, SEXP snarm)
 			INTEGER(ans)[INTEGER(matches)[j]-1+offsetg]
 			    = NA_INTEGER;
 		} else if (INTEGER(ans)[INTEGER(matches)[j]-1+offsetg]
-			 != NA_INTEGER)
-		    INTEGER(ans)[INTEGER(matches)[j]-1+offsetg]
-			+= INTEGER(x)[j+offset];
+			   != NA_INTEGER) {
+		    /* check for integer overflows */
+		    int itmp = INTEGER(ans)[INTEGER(matches)[j]-1+offsetg];
+		    double dtmp = itmp;
+		    dtmp += INTEGER(x)[j+offset];
+		    if (dtmp < INT_MIN || dtmp > INT_MAX) itmp = NA_INTEGER;
+		    else itmp += INTEGER(x)[j+offset];
+		    INTEGER(ans)[INTEGER(matches)[j]-1+offsetg] = itmp;
+		}
 	    }
 	    offset += n;
 	    offsetg += ng;
@@ -1313,7 +1320,7 @@ SEXP attribute_hidden
 Rrowsum_df(SEXP x, SEXP ncol, SEXP g, SEXP uniqueg, SEXP snarm)
 {
     SEXP matches,ans,col,xcol;
-    int i, j, n, p, ng = 0, offset, offsetg, narm;
+    int i, j, n, p, ng = 0, narm;
     HashData data;
     data.nomatch = 0;
 
@@ -1329,8 +1336,6 @@ Rrowsum_df(SEXP x, SEXP ncol, SEXP g, SEXP uniqueg, SEXP snarm)
     PROTECT(matches = HashLookup(uniqueg, g, &data));
 
     PROTECT(ans = allocVector(VECSXP, p));
-
-    offset = 0; offsetg = 0;
 
     for(i = 0; i < p; i++) {
 	xcol = VECTOR_ELT(x,i);
@@ -1353,8 +1358,14 @@ Rrowsum_df(SEXP x, SEXP ncol, SEXP g, SEXP uniqueg, SEXP snarm)
 		if (INTEGER(xcol)[j] == NA_INTEGER) {
 		    if(!narm)
 			INTEGER(col)[INTEGER(matches)[j]-1] = NA_INTEGER;
-		} else if (INTEGER(col)[INTEGER(matches)[j]-1] != NA_INTEGER)
-		    INTEGER(col)[INTEGER(matches)[j]-1] += INTEGER(xcol)[j];
+		} else if (INTEGER(col)[INTEGER(matches)[j]-1] != NA_INTEGER) {
+		    int itmp = INTEGER(col)[INTEGER(matches)[j]-1];
+		    double dtmp = itmp;
+		    dtmp += INTEGER(xcol)[j];
+		    if (dtmp < INT_MIN || dtmp > INT_MAX) itmp = NA_INTEGER;
+		    else itmp += INTEGER(xcol)[j];
+		    INTEGER(col)[INTEGER(matches)[j]-1] = itmp;
+		}
 	    }
 	    SET_VECTOR_ELT(ans, i, col);
 	    UNPROTECT(1);

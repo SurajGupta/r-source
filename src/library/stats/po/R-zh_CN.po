@@ -7,14 +7,18 @@ msgid ""
 msgstr ""
 "Project-Id-Version: R 2.2.0\n"
 "Report-Msgid-Bugs-To: bugs@r-project.org\n"
-"POT-Creation-Date: 2011-01-03 16:13\n"
+"POT-Creation-Date: 2011-03-22 15:33\n"
 "PO-Revision-Date: 2005-04-08 08:37+0000\n"
 "Last-Translator: 陈斐 <FeiChen@FairIsaac.com>\n"
 "Language-Team: Chinese\n"
+"Language: \n"
 "MIME-Version: 1.0\n"
 "Content-Type: text/plain; charset=UTF-8\n"
 "Content-Transfer-Encoding: 8bit\n"
 "Plural-Forms: nplurals=1; plural=0;\n"
+
+msgid "models are not all fitted to the same number of observations"
+msgstr "模型拟合时没有都用相同大小的数据集"
 
 msgid "empty model supplied"
 msgstr "提供的模型是空的"
@@ -43,9 +47,8 @@ msgstr "時間序列的周期不能小于二"
 msgid "the series is entirely NA"
 msgstr "时间序列里所有的值都是NA"
 
-#, fuzzy
 msgid "frequency must be a positive integer >= 2 for BSM"
-msgstr "用BSM时頻率必需是正整数"
+msgstr "用BSM时頻率必需是大于2的正整数"
 
 msgid "only implemented for univariate time series"
 msgstr "只适用于单变量时间序列"
@@ -456,8 +459,8 @@ msgstr "距离必需是'dist'计算出结果或是正方形矩阵"
 msgid "'k' must be in {1, 2, ..  n - 1}"
 msgstr "'k'必需是{1, 2, ..  n - 1}中的一个"
 
-msgid "some of the first %d eigenvalues are < 0"
-msgstr "%d个特征值小于零"
+msgid "only %d of the first %d eigenvalues are > 0"
+msgstr "前%2$d个特征值里只有%1$d个大于零"
 
 msgid "initial value is not in the interior of the feasible region"
 msgstr "初始值不是在可行区域内"
@@ -523,6 +526,9 @@ msgstr "设定对比的自由度不够"
 
 msgid "baseline group number out of range"
 msgstr "基線组在值域外"
+
+msgid "invalid 'use' argument"
+msgstr "'use'参数不对"
 
 msgid "supply both 'x' and 'y' or a matrix-like 'x'"
 msgstr "要么同时设定'x'和'y'，要么只设定矩阵式的'x'"
@@ -600,9 +606,6 @@ msgstr "'k'的单元必需在一和%d之间"
 msgid "'merge' and 'height' do not fit!"
 msgstr "'merge'和'height'不合!"
 
-msgid "we require a dendrogram"
-msgstr "需要系統樹圖"
-
 msgid "dendrogram node with non-positive #{branches}"
 msgstr "系統樹圖節點有非正#{分支}"
 
@@ -615,11 +618,17 @@ msgstr "长度为零的非叶子树"
 msgid "'order.dendrogram' requires a dendrogram"
 msgstr "'order.dendrogram'必需用在系統樹圖上"
 
+msgid "we require a dendrogram"
+msgstr "需要系統樹圖"
+
 msgid "invalid (length 0) node in dendrogram"
 msgstr "系統樹圖里的节点不对(长度为零)"
 
 msgid "dendrogram non-leaf node with non-positive #{branches}"
 msgstr "系統樹圖里有非正#{分支}的非叶節點"
+
+msgid "'height' must be at least %g, the maximal height of its components"
+msgstr "'height'的值至少是%g ，其元件的最大高度"
 
 msgid "'X' is not a dendrogram"
 msgstr "'X'不是系統樹圖"
@@ -1349,6 +1358,12 @@ msgstr "没有可用来比较的模型"
 msgid "extra arguments discarded"
 msgstr "额外参数不用"
 
+msgid "no \"nobs\" attribute is available"
+msgstr "没有\"nobs\"这样一个属性"
+
+msgid "no 'nobs' method is available"
+msgstr "没有可用的'nobs'方法"
+
 msgid "'start' and 'table' must be same length"
 msgstr "'start'和'table'的长度必需相等"
 
@@ -1485,8 +1500,8 @@ msgstr "eff.aovlist: 用非正交对比来算的结果会出错"
 msgid "cannot create a formula from a zero-column data frame"
 msgstr "无法用空数据框来建立公式"
 
-msgid "no terms component"
-msgstr "没有项组件"
+msgid "no terms component nor attribute"
+msgstr "没有项组件也没有属性"
 
 msgid "'termlabels' must be a character vector of length at least one"
 msgstr "'termlabels'必需是长度至少为一的字节矢量"
@@ -1883,9 +1898,8 @@ msgstr "'ref'必需是存在的层次"
 msgid "ref = %d must be in 1L:%d"
 msgstr "ref = %d必需在1L:%d里"
 
-#, fuzzy
 msgid "'sep' must be a character string"
-msgstr "'file'必需是字符串或链结"
+msgstr "'sep'必需是字符串"
 
 msgid "Failed to guess time-varying variables from their names"
 msgstr "没有能够从它们的名字里来猜测时变参数"
@@ -1952,12 +1966,6 @@ msgstr "不能平滑NA值"
 msgid "wrong endrule"
 msgstr "尺尾不对"
 
-msgid "'nknots' must be numeric <= n"
-msgstr "'nknots'必需是小于等于n的数值"
-
-msgid "cannot use more inner knots than unique 'x' values"
-msgstr "内部结点数止比相互不同的'x'数目要多"
-
 msgid "invalid 'control.spar'"
 msgstr "'control.spar'不对"
 
@@ -1973,8 +1981,26 @@ msgstr "至少有一些权数应该是正的"
 msgid "need at least four unique 'x' values"
 msgstr "至少需要四个相互不同的'x'值"
 
+msgid "'cv' must not be NA when 'df' is specified"
+msgstr "'df'有定义的话'cv'不能是NA"
+
 msgid "crossvalidation with non-unique 'x' values seems doubtful"
 msgstr "用有重复的'x'来做crossvalidation好象不太对"
+
+msgid "'all.knots' is TRUE; 'nknots' specification is disregarded"
+msgstr "'all.knots'的值是TRUE；'nknots'的值就略过不用了"
+
+msgid "'nknots' must be numeric (in {1,..,n})"
+msgstr "'nknots'必需是{1,..,n}集内的数值"
+
+msgid "'nknots' must be at least 1"
+msgstr "'nknots'至少必需为一"
+
+msgid "cannot use more inner knots than unique 'x' values"
+msgstr "内部结点数止比相互不同的'x'数目要多"
+
+msgid "specified both 'df' and 'cv'; will disregard the latter"
+msgstr "因为'df'和'cv'两个都被设定，后者略过不用"
 
 msgid "you must supply 1 < df <= n,  n = #{unique x} ="
 msgstr "你必需提供1 < df <= n,  n = #{unique x} ="
@@ -2306,6 +2332,10 @@ msgid "there are %d Error terms: only 1 is allowed"
 msgid_plural "there are %d Error terms: only 1 is allowed"
 msgstr[0] "有%d个错误项，但最多只允许有一个"
 
+msgid "extra argument %s is not a \"%s\""
+msgid_plural "extra arguments %s are not \"%s\"s"
+msgstr[0] "额外参数%s不是\"%s\""
+
 msgid "%d observation deleted due to missingness"
 msgid_plural "%d observations deleted due to missingness"
 msgstr[0] "因为不存在，%d个观察量被删除了"
@@ -2377,8 +2407,8 @@ msgstr[0] "参数%s没有在模型公式里出现过"
 #~ "link \"%s\" not available for inverse gauss family, available links are "
 #~ "\"inverse\", \"1/mu^2\", \"log\" and \"identity\""
 #~ msgstr ""
-#~ "逆gauss分布族里没有\"%s\"这一鏈結函数；可以用的鏈結是\"inverse\", \"1/mu^2"
-#~ "\", \"log\"和\"identity\""
+#~ "逆gauss分布族里没有\"%s\"这一鏈結函数；可以用的鏈結是\"inverse\", \"1/"
+#~ "mu^2\", \"log\"和\"identity\""
 
 #~ msgid "'k1' is not a kernel"
 #~ msgstr "'k1'不是内核"
@@ -2401,3 +2431,4 @@ msgstr[0] "参数%s没有在模型公式里出现过"
 #~ msgstr ""
 #~ "quasibinomial分布族里没有\"%s\"这一鏈結函数；可以用的鏈結是\"logit\", \", "
 #~ "\"\"probit\"和\"cloglog\""
+

@@ -31,15 +31,15 @@ eval.parent <- function(expr, n = 1){
 evalq <-
     function (expr, envir = parent.frame(), enclos = if (is.list(envir) ||
     is.pairlist(envir)) parent.frame() else baseenv())
-      .Internal(eval(substitute(expr), envir, enclos)) 
+      .Internal(eval(substitute(expr), envir, enclos))
 
-new.env <- function (hash=FALSE, parent=parent.frame(), size=29L)
+new.env <- function (hash = TRUE, parent = parent.frame(), size = 29L)
     .Internal(new.env(hash, parent, size))
 
 parent.env <- function(env)
     .Internal(parent.env(env))
 
-"parent.env<-" <- function(env, value)
+`parent.env<-` <- function(env, value)
     .Internal("parent.env<-"(env, value))
 
 local <-

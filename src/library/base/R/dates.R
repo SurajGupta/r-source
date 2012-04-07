@@ -116,8 +116,9 @@ summary.Date <- function(object, digits = 12, ...)
     x
 }
 
-"+.Date" <- function(e1, e2)
+`+.Date` <- function(e1, e2)
 {
+    ## need to drop "units" attribute here
     coerceTimeUnit <- function(x)
         as.vector(round(switch(attr(x,"units"),
                                secs = x/86400, mins = x/1440, hours = x/24,
@@ -132,7 +133,7 @@ summary.Date <- function(object, digits = 12, ...)
     structure(unclass(e1) + unclass(e2), class = "Date")
 }
 
-"-.Date" <- function(e1, e2)
+`-.Date` <- function(e1, e2)
 {
     coerceTimeUnit <- function(x)
         as.vector(round(switch(attr(x,"units"),
@@ -174,7 +175,7 @@ Summary.Date <- function (..., na.rm)
     val
 }
 
-"[.Date" <- function(x, ..., drop = TRUE)
+`[.Date` <- function(x, ..., drop = TRUE)
 {
     cl <- oldClass(x)
     class(x) <- NULL
@@ -183,7 +184,7 @@ Summary.Date <- function (..., na.rm)
     val
 }
 
-"[[.Date" <- function(x, ..., drop = TRUE)
+`[[.Date` <- function(x, ..., drop = TRUE)
 {
     cl <- oldClass(x)
     class(x) <- NULL
@@ -192,12 +193,12 @@ Summary.Date <- function (..., na.rm)
     val
 }
 
-"[<-.Date" <- function(x, ..., value)
+`[<-.Date` <- function(x, ..., value)
 {
-    if(!as.logical(length(value))) return(x)
-    value <- as.Date(value)
+    if(!length(value)) return(x)
+    value <- unclass(as.Date(value))
     cl <- oldClass(x)
-    class(x) <- class(value) <- NULL
+    class(x) <- NULL
     x <- NextMethod(.Generic)
     class(x) <- cl
     x
@@ -421,7 +422,7 @@ diff.Date <- function (x, lag = 1L, differences = 1L, ...)
     if (length(lag) > 1L || length(differences) > 1L || lag < 1L || differences < 1L)
         stop("'lag' and 'differences' must be integers >= 1")
     if (lag * differences >= xlen)
-        return(structure(numeric(0L), class="difftime", units="days"))
+        return(structure(numeric(), class="difftime", units="days"))
     r <- x
     i1 <- -seq_len(lag)
     if (ismat)

@@ -1,6 +1,6 @@
 
-R version 2.12.0 Patched (2010-11-17 r53625)
-Copyright (C) 2010 The R Foundation for Statistical Computing
+R version 2.13.0 beta (2011-04-02 r55251)
+Copyright (C) 2011 The R Foundation for Statistical Computing
 ISBN 3-900051-07-0
 Platform: x86_64-unknown-linux-gnu (64-bit)
 
@@ -32,7 +32,7 @@ Type 'q()' to quit R.
 > 
 > ### Name: AIC
 > ### Title: Akaike's An Information Criterion
-> ### Aliases: AIC
+> ### Aliases: AIC BIC
 > ### Keywords: models
 > 
 > ### ** Examples
@@ -42,9 +42,18 @@ Type 'q()' to quit R.
 [1] 326.0716
 > stopifnot(all.equal(AIC(lm1),
 +                     AIC(logLik(lm1))))
-> ## a version of BIC or Schwarz's BC :
-> AIC(lm1, k = log(nrow(swiss)))
+> BIC(lm1)
 [1] 339.0226
+> 
+> lm2 <- update(lm1, . ~ . -Examination)
+> AIC(lm1, lm2)
+    df      AIC
+lm1  7 326.0716
+lm2  6 325.2408
+> BIC(lm1, lm2)
+    df      BIC
+lm1  7 339.0226
+lm2  6 336.3417
 > 
 > 
 > 
@@ -205,7 +214,7 @@ Type 'q()' to quit R.
 > dchisq(1, df=1:3)
 [1] 0.2419707 0.3032653 0.2419707
 > pchisq(1, df= 3)
-[1] 0.1987480
+[1] 0.198748
 > pchisq(1, df= 3, ncp = 0:4)# includes the above
 [1] 0.19874804 0.13229855 0.08787311 0.05824691 0.03853592
 > 
@@ -323,18 +332,6 @@ Type 'q()' to quit R.
 [1] 0.1 0.2 0.3 0.4 0.5 0.6 0.7 0.8 0.9
 > 1 - 1/exp(qgamma(p, shape=1))
 [1] 0.1 0.2 0.3 0.4 0.5 0.6 0.7 0.8 0.9
-> 
-> # even for shape = 0.001 about half the mass is on numbers
-> # that cannot be represented accurately (and most of those as zero)
-> pgamma(.Machine$double.xmin, 0.001)
-[1] 0.4927171
-> pgamma(5e-324, 0.001)  # on most machines 5e-324 is the smallest
-[1] 0.4752741
->                        # representable non-zero number
-> table(rgamma(1e4, 0.001) == 0)/1e4
-
- FALSE   TRUE 
-0.5244 0.4756 
 > 
 > 
 > 
@@ -468,9 +465,9 @@ s12   0.92099
 > m <- 10; n <- 7; k <- 8
 > x <- 0:(k+1)
 > rbind(phyper(x, m, n, k), dhyper(x, m, n, k))
-     [,1]         [,2]       [,3]      [,4]      [,5]      [,6]      [,7]
-[1,]    0 0.0004113534 0.01336898 0.1170300 0.4193747 0.7821884 0.9635952
-[2,]    0 0.0004113534 0.01295763 0.1036610 0.3023447 0.3628137 0.1814068
+     [,1]         [,2]       [,3]     [,4]      [,5]      [,6]      [,7]
+[1,]    0 0.0004113534 0.01336898 0.117030 0.4193747 0.7821884 0.9635952
+[2,]    0 0.0004113534 0.01295763 0.103661 0.3023447 0.3628137 0.1814068
            [,8]       [,9] [,10]
 [1,] 0.99814891 1.00000000     1
 [2,] 0.03455368 0.00185109     0
@@ -1166,18 +1163,18 @@ Residual standard error: 0.04103 on 7 degrees of freedom
  [1] 0.000000 2.214486 3.930988 5.261945 5.659813 5.084852 4.587699 3.916808
  [9] 3.318395 2.579204 0.943593
 attr(,"gradient")
-             lKe         lKa       lCl
- [1,]  0.0000000  0.00000000  0.000000
- [2,]  2.1902842  1.78781716 -2.214486
- [3,]  3.8255178  2.35519507 -3.930988
- [4,]  4.9527133  1.75648252 -5.261945
- [5,]  4.9765205  0.53458070 -5.659813
- [6,]  3.7528222 -0.18560297 -5.084852
- [7,]  2.9068593 -0.22729852 -4.587699
- [8,]  1.8617711 -0.20447579 -3.916808
- [9,]  1.0271293 -0.17383515 -3.318395
-[10,]  0.1483700 -0.13513891 -2.579204
-[11,] -0.8945410 -0.04944021 -0.943593
+            lKe         lKa       lCl
+ [1,]  0.000000  0.00000000  0.000000
+ [2,]  2.190284  1.78781716 -2.214486
+ [3,]  3.825518  2.35519507 -3.930988
+ [4,]  4.952713  1.75648252 -5.261945
+ [5,]  4.976520  0.53458070 -5.659813
+ [6,]  3.752822 -0.18560297 -5.084852
+ [7,]  2.906859 -0.22729852 -4.587699
+ [8,]  1.861771 -0.20447579 -3.916808
+ [9,]  1.027129 -0.17383515 -3.318395
+[10,]  0.148370 -0.13513891 -2.579204
+[11,] -0.894541 -0.04944021 -0.943593
 > getInitial(conc ~ SSfol(Dose, Time, lKe, lKa, lCl), data = Theoph.1)
 $lKe
 [1] -2.994845
@@ -1605,8 +1602,8 @@ Call:
 StructTS(x = trees, type = "level")
 
 Variances:
-    level    epsilon  
-0.0003700  0.0719877  
+  level  epsilon  
+0.00037  0.07199  
 > plot(trees)
 > lines(fitted(fit), col = "green")
 > tsdiag(fit)
@@ -3129,8 +3126,8 @@ BJsales.lead  0.0276       0.4970
 , , 2
 
               BJsales BJsales.lead
-BJsales       0.02041      -1.1335
-BJsales.lead -0.02193       0.2940
+BJsales       0.02041       -1.133
+BJsales.lead -0.02193        0.294
 
 , , 3
 
@@ -3289,8 +3286,8 @@ BJsales.lead -0.21501      0.06115
 , , 9
 
               BJsales BJsales.lead
-BJsales      -0.11531      -1.4640
-BJsales.lead  0.03536       0.2700
+BJsales      -0.11531       -1.464
+BJsales.lead  0.03536        0.270
 
 , , 10
 
@@ -3310,9 +3307,9 @@ $x.intercept
      0.19630     -0.07022 
 
 $var.pred
-               BJsales BJsales.lead
-BJsales       0.040100    -0.000931
-BJsales.lead -0.000931     0.068214
+                BJsales BJsales.lead
+BJsales       0.0400996   -0.0009311
+BJsales.lead -0.0009311    0.0682137
 
 > 
 > x <- diff(log(EuStockMarkets))
@@ -3687,7 +3684,7 @@ detaching ‘package:cluster’
 > 
 > asOneSidedFormula("age")
 ~age
-<environment: 0x1024f0718>
+<environment: 0x3a3c1b8>
 > asOneSidedFormula(~ age)
 ~age
 > 
@@ -4102,27 +4099,38 @@ I(x^3) -0.73        0.93 -0.99
 > 
 > ### ** Examples
 > 
-> ## Not really a good example
-> chisq.test(InsectSprays$count > 7, InsectSprays$spray)
+> 
+> ## From Agresti(2007) p.39
+> M <- as.table(rbind(c(762, 327, 468), c(484,239,477)))
+> dimnames(M) <- list(gender=c("M","F"), party=c("Democrat","Independent", "Republican"))
+> (Xsq <- chisq.test(M))  # Prints test summary
 
 	Pearson's Chi-squared test
 
-data:  InsectSprays$count > 7 and InsectSprays$spray 
-X-squared = 60.9915, df = 5, p-value = 7.582e-12
+data:  M 
+X-squared = 30.0701, df = 2, p-value = 2.954e-07
 
->                                 # Prints test summary
-> chisq.test(InsectSprays$count > 7, InsectSprays$spray)$observed
-                      InsectSprays$spray
-InsectSprays$count > 7  A  B  C  D  E  F
-                 FALSE  1  1 12 11 12  0
-                 TRUE  11 11  0  1  0 12
->                                 # Counts observed
-> chisq.test(InsectSprays$count > 7, InsectSprays$spray)$expected
-                      InsectSprays$spray
-InsectSprays$count > 7        A        B        C        D        E        F
-                 FALSE 6.166667 6.166667 6.166667 6.166667 6.166667 6.166667
-                 TRUE  5.833333 5.833333 5.833333 5.833333 5.833333 5.833333
->                                 # Counts expected under the null
+> Xsq$observed   # observed counts (same as M) 
+      party
+gender Democrat Independent Republican
+     M      762         327        468
+     F      484         239        477
+> Xsq$expected   # expected counts under the null
+      party
+gender Democrat Independent Republican
+     M 703.6714    319.6453   533.6834
+     F 542.3286    246.3547   411.3166
+> Xsq$residuals  # Pearson residuals
+      party
+gender   Democrat Independent Republican
+     M  2.1988558   0.4113702 -2.8432397
+     F -2.5046695  -0.4685829  3.2386734
+> Xsq$stdres     # standardized residuals
+      party
+gender   Democrat Independent Republican
+     M  4.5020535   0.6994517 -5.3159455
+     F -4.5020535  -0.6994517  5.3159455
+> 
 > 
 > ## Effect of simulating p-values
 > x <- matrix(c(12, 5, 7, 7), ncol = 2)
@@ -4296,12 +4304,12 @@ wt 0.3800887 1.622518
 > glm.D93 <- glm(counts ~ outcome + treatment, family=poisson())
 > confint(glm.D93)
 Waiting for profiling to be done...
-                 2.5 %     97.5 %
-(Intercept)  2.6958215  3.3665558
-outcome2    -0.8577018 -0.0625584
-outcome3    -0.6753696  0.0824409
-treatment2  -0.3932548  0.3932548
-treatment3  -0.3932548  0.3932548
+                 2.5 %      97.5 %
+(Intercept)  2.6958215  3.36655581
+outcome2    -0.8577018 -0.06255840
+outcome3    -0.6753696  0.08244089
+treatment2  -0.3932548  0.39325483
+treatment3  -0.3932548  0.39325483
 > confint.default(glm.D93)  # based on asymptotic normality
                  2.5 %      97.5 %
 (Intercept)  2.7095672  3.37947764
@@ -4413,7 +4421,7 @@ Levels: a b c d e f g h i j k l m n o p q r s t u v w x y z
 factor> as.integer(ff)  # the internal codes
  [1] 19 20  1 20  9 19 20  9  3 19
 
-factor> factor(ff)      # drops the levels that do not occur
+factor> (f. <- factor(ff))# drops the levels that do not occur
  [1] s t a t i s t i c s
 Levels: a c i s t
 
@@ -4430,6 +4438,19 @@ factor> factor(letters[1:20], labels="letter")
 factor> class(ordered(4:1)) # "ordered", inheriting from "factor"
 [1] "ordered" "factor" 
 
+factor> z <- factor(LETTERS[3:1], ordered = TRUE)
+
+factor> ## and "relational" methods work:
+factor> stopifnot(sort(z)[c(1,3)] == range(z), min(z) < max(z))
+
+factor> ## Don't show: 
+factor> of <- ordered(ff)
+
+factor> stopifnot(identical(range(of, rev(of)), of[3:2]),
+factor+ 	  identical(max(of), of[2]))
+
+factor> ## End Don't show
+factor> 
 factor> ## suppose you want "NA" as a level, and to allow missing values.
 factor> (x <- factor(c(1, 2, NA), exclude = NULL))
 [1] 1    2    <NA>
@@ -4699,10 +4720,10 @@ attr(,"legend")
 > ## How much do they differ?
 > i <- lower.tri(Cl)
 > cor(cbind(P = Cl[i], S = clS[i], K = clK[i]))
-          P        S         K
-P 1.0000000 0.980239 0.9572562
-S 0.9802390 1.000000 0.9742171
-K 0.9572562 0.974217 1.0000000
+          P         S         K
+P 1.0000000 0.9802390 0.9572562
+S 0.9802390 1.0000000 0.9742171
+K 0.9572562 0.9742171 1.0000000
 > 
 > 
 > ## cov2cor() scales a covariance matrix by its diagonal
@@ -5410,7 +5431,12 @@ NULL
 NULL
 
 [[1]][[1]][[2]][[2]][[2]]
-list()
+[[1]][[1]][[2]][[2]][[2]][[1]]
+NULL
+
+[[1]][[1]][[2]][[2]][[2]][[2]]
+NULL
+
 
 
 
@@ -5420,7 +5446,12 @@ list()
 NULL
 
 [[1]][[2]][[2]]
-list()
+[[1]][[2]][[2]][[1]]
+NULL
+
+[[1]][[2]][[2]][[2]]
+NULL
+
 
 
 
@@ -5430,7 +5461,12 @@ list()
 NULL
 
 [[2]][[1]][[2]]
-list()
+[[2]][[1]][[2]][[1]]
+NULL
+
+[[2]][[1]][[2]][[2]]
+NULL
+
 
 
 [[2]][[2]]
@@ -5438,7 +5474,12 @@ list()
 NULL
 
 [[2]][[2]][[2]]
-list()
+[[2]][[2]][[2]][[1]]
+NULL
+
+[[2]][[2]][[2]][[2]]
+NULL
+
 
 
 
@@ -5475,8 +5516,9 @@ list()
 > ### Name: dendrogram
 > ### Title: General Tree Structures
 > ### Aliases: dendrogram as.dendrogram as.dendrogram.dendrogram
-> ###   as.dendrogram.hclust cut.dendrogram [[.dendrogram print.dendrogram
-> ###   rev.dendrogram str.dendrogram plot.dendrogram is.leaf
+> ###   as.dendrogram.hclust as.hclust.dendrogram cut.dendrogram
+> ###   [[.dendrogram merge.dendrogram plot.dendrogram print.dendrogram
+> ###   rev.dendrogram str.dendrogram is.leaf
 > ### Keywords: multivariate tree hplot
 > 
 > ### ** Examples
@@ -5542,14 +5584,14 @@ list()
      |     |  `--[dendrogram w/ 2 branches and 2 members at h = 12.6]
      |     |     |--leaf "Arkansas" 
      |     |     `--leaf "Tennessee" 
-     |     `--[dendrogram w/ 2 branches and 3 members at h = 24.0]
+     |     `--[dendrogram w/ 2 branches and 3 members at h = 24]
      |        |--leaf "Georgia" 
      |        `--[dendrogram w/ 2 branches and 2 members at h = 14.5]
      |           |--leaf "Colorado" 
      |           `--leaf "Texas" 
      `--[dendrogram w/ 2 branches and 20 members at h = 54.7]
         |--[dendrogram w/ 2 branches and 10 members at h = 20.6]
-        |  |--[dendrogram w/ 2 branches and 4 members at h = 15.0]
+        |  |--[dendrogram w/ 2 branches and 4 members at h = 15]
         |  |  |--leaf "Idaho" 
         |  |  `--[dendrogram w/ 2 branches and 3 members at h = 12.4]
         |  |     |--leaf "Nebraska" 
@@ -5576,7 +5618,7 @@ list()
               |     |--leaf "Maine" 
               |     `--leaf "South Dakota" 
               `--[dendrogram w/ 2 branches and 6 members at h = 27.8]
-                 |--[dendrogram w/ 2 branches and 2 members at h = 13.0]
+                 |--[dendrogram w/ 2 branches and 2 members at h = 13]
                  |  |--leaf "North Dakota" 
                  |  `--leaf "Vermont" 
                  `--[dendrogram w/ 2 branches and 4 members at h = 19]
@@ -5586,14 +5628,14 @@ list()
                        `--[dendrogram w/ 2 branches and 2 members at h = 2.29]
                           |--leaf "Iowa" 
                           `--leaf "New Hampshire" 
-> str(dend1, max = 2) # only the first two sub-levels
+> str(dend1, max = 2, last.str= "'") # only the first two sub-levels
 --[dendrogram w/ 2 branches and 50 members at h = 152]
   |--[dendrogram w/ 2 branches and 16 members at h = 77.6]
   |  |--[dendrogram w/ 2 branches and 2 members at h = 38.5] ..
-  |  `--[dendrogram w/ 2 branches and 14 members at h = 44.3] ..
-  `--[dendrogram w/ 2 branches and 34 members at h = 89.2]
+  |  '--[dendrogram w/ 2 branches and 14 members at h = 44.3] ..
+  '--[dendrogram w/ 2 branches and 34 members at h = 89.2]
      |--[dendrogram w/ 2 branches and 14 members at h = 44.8] ..
-     `--[dendrogram w/ 2 branches and 20 members at h = 54.7] ..
+     '--[dendrogram w/ 2 branches and 20 members at h = 54.7] ..
 > 
 > op <- par(mfrow= c(2,2), mar = c(5,2,1,4))
 > plot(dend1)
@@ -5605,6 +5647,9 @@ list()
 > plot(dend1, nodePar=list(pch = 2:1,cex=.4*2:1, col = 2:3),
 +      horiz=TRUE)
 > 
+> ## simple test for as.hclust() as the inverse of as.dendrogram():
+> stopifnot(identical(as.hclust(dend1)[1:4], hc[1:4]))
+> 
 > dend2 <- cut(dend1, h=70)
 > plot(dend2$upper)
 > ## leaves are wrong horizontally:
@@ -5615,20 +5660,33 @@ list()
 > plot(dend2$lower[[2]], nodePar=list(col=1),# non empty list
 +      edgePar = list(lty=1:2, col=2:1), edge.root=TRUE)
 > par(op)
-> str(d3 <- dend2$lower[[2]][[2]][[1]])
+> d3 <- dend2$lower[[2]][[2]][[1]]
+> stopifnot(identical(d3, dend2$lower[[2]][[c(2,1)]]))
+> str(d3, last.str="'")
 --[dendrogram w/ 2 branches and 7 members at h = 26.4]
   |--[dendrogram w/ 2 branches and 3 members at h = 16.9]
   |  |--leaf "Delaware" 
-  |  `--[dendrogram w/ 2 branches and 2 members at h = 15.5]
+  |  '--[dendrogram w/ 2 branches and 2 members at h = 15.5]
   |     |--leaf "Alabama" 
-  |     `--leaf "Louisiana" 
-  `--[dendrogram w/ 2 branches and 4 members at h = 18.4]
+  |     '--leaf "Louisiana" 
+  '--[dendrogram w/ 2 branches and 4 members at h = 18.4]
      |--[dendrogram w/ 2 branches and 2 members at h = 6.24]
      |  |--leaf "Illinois" 
-     |  `--leaf "New York" 
-     `--[dendrogram w/ 2 branches and 2 members at h = 13.3]
+     |  '--leaf "New York" 
+     '--[dendrogram w/ 2 branches and 2 members at h = 13.3]
         |--leaf "Michigan" 
-        `--leaf "Nevada" 
+        '--leaf "Nevada" 
+> 
+> ## merge() to join dendrograms:
+> (d13 <- merge(dend2$lower[[1]], dend2$lower[[3]]))
+'dendrogram' with 2 branches and 16 members total, at height 49.32173 
+> ## merge() all parts back (using default 'height' instead of original one):
+> den.1 <- Reduce(merge, dend2$lower)
+> ## or merge() all four parts at same height --> 4 branches (!)
+> d. <- merge(dend2$lower[[1]], dend2$lower[[2]], dend2$lower[[3]], dend2$lower[[4]])
+> ## (with a warning) or the same using  do.call :
+> stopifnot(identical(d., do.call(merge, dend2$lower)))
+> plot(d., main="merge(d1, d2, d3, d4)  |->  dendrogram with a 4-split")
 > 
 > ## "Zoom" in to the first dendrogram :
 > plot(dend1, xlim = c(1,20), ylim = c(1,50))
@@ -6526,7 +6584,7 @@ v3 0.5128866 0.4124441 1.0000000 0.8770750 0.5128866 0.4320310
 v4 0.4320310 0.4084281 0.8770750 1.0000000 0.4320310 0.4323259
 v5 0.4664948 0.4363925 0.5128866 0.4320310 1.0000000 0.9473451
 v6 0.4086076 0.4326113 0.4320310 0.4323259 0.9473451 1.0000000
-> factanal(m1, factors=3) # varimax is the default
+> factanal(m1, factors = 3) # varimax is the default
 
 Call:
 factanal(x = m1, factors = 3)
@@ -6548,30 +6606,6 @@ v6 0.193   0.959   0.196
 SS loadings      1.893   1.886   1.797
 Proportion Var   0.316   0.314   0.300
 Cumulative Var   0.316   0.630   0.929
-
-The degrees of freedom for the model is 0 and the fit was 0.4755 
-> factanal(m1, factors=3, rotation="promax")
-
-Call:
-factanal(x = m1, factors = 3, rotation = "promax")
-
-Uniquenesses:
-   v1    v2    v3    v4    v5    v6 
-0.005 0.101 0.005 0.224 0.084 0.005 
-
-Loadings:
-   Factor1 Factor2 Factor3
-v1          0.985         
-v2          0.951         
-v3                  1.003 
-v4                  0.867 
-v5  0.910                 
-v6  1.033                 
-
-               Factor1 Factor2 Factor3
-SS loadings      1.903   1.876   1.772
-Proportion Var   0.317   0.313   0.295
-Cumulative Var   0.317   0.630   0.925
 
 The degrees of freedom for the model is 0 and the fit was 0.4755 
 > # The following shows the g factor as PC1
@@ -6610,91 +6644,6 @@ v6 0.4047824  0.49580764  0.3209708  0.2866938 -0.2682391 -0.57719858
 16  0.4224366  2.0453079  1.2864761
 17  1.4713902  1.2947716  0.5451562
 18  1.8822320  0.3086244  1.9547752
-> 
-> ## a realistic example from Bartholomew (1987, pp. 61-65)
-> utils::example(ability.cov)
-
-ablty.> require(stats)
-
-ablty.> (ability.FA <- factanal(factors = 1, covmat=ability.cov))
-
-Call:
-factanal(factors = 1, covmat = ability.cov)
-
-Uniquenesses:
-general picture  blocks    maze reading   vocab 
-  0.535   0.853   0.748   0.910   0.232   0.280 
-
-Loadings:
-        Factor1
-general 0.682  
-picture 0.384  
-blocks  0.502  
-maze    0.300  
-reading 0.877  
-vocab   0.849  
-
-               Factor1
-SS loadings      2.443
-Proportion Var   0.407
-
-Test of the hypothesis that 1 factor is sufficient.
-The chi square statistic is 75.18 on 9 degrees of freedom.
-The p-value is 1.46e-12 
-
-ablty.> update(ability.FA, factors=2)
-
-Call:
-factanal(factors = 2, covmat = ability.cov)
-
-Uniquenesses:
-general picture  blocks    maze reading   vocab 
-  0.455   0.589   0.218   0.769   0.052   0.334 
-
-Loadings:
-        Factor1 Factor2
-general 0.499   0.543  
-picture 0.156   0.622  
-blocks  0.206   0.860  
-maze    0.109   0.468  
-reading 0.956   0.182  
-vocab   0.785   0.225  
-
-               Factor1 Factor2
-SS loadings      1.858   1.724
-Proportion Var   0.310   0.287
-Cumulative Var   0.310   0.597
-
-Test of the hypothesis that 2 factors are sufficient.
-The chi square statistic is 6.11 on 4 degrees of freedom.
-The p-value is 0.191 
-
-ablty.> update(ability.FA, factors=2, rotation="promax")
-
-Call:
-factanal(factors = 2, covmat = ability.cov, rotation = "promax")
-
-Uniquenesses:
-general picture  blocks    maze reading   vocab 
-  0.455   0.589   0.218   0.769   0.052   0.334 
-
-Loadings:
-        Factor1 Factor2
-general  0.364   0.470 
-picture          0.671 
-blocks           0.932 
-maze             0.508 
-reading  1.023         
-vocab    0.811         
-
-               Factor1 Factor2
-SS loadings      1.853   1.807
-Proportion Var   0.309   0.301
-Cumulative Var   0.309   0.610
-
-Test of the hypothesis that 2 factors are sufficient.
-The chi square statistic is 6.11 on 4 degrees of freedom.
-The p-value is 0.191 
 > 
 > 
 > 
@@ -6781,7 +6730,7 @@ List of 12
 > gf$linkinv
 function (eta) 
 1/eta
-<environment: 0x106e8eb80>
+<environment: 0x6a19a30>
 > gf$variance(-3:4) #- == (.)^2
 [1]  9  4  1  0  1  4  9 16
 > 
@@ -7183,7 +7132,7 @@ attr(,".Environment")
 > environment(as.formula("y ~ x"))
 <environment: R_GlobalEnv>
 > environment(as.formula("y ~ x", env=new.env()))
-<environment: 0x1050a7260>
+<environment: 0x5d62170>
 > 
 > 
 > ## Create a formula for a model with a large number of variables:
@@ -7604,8 +7553,8 @@ Signif. codes:  0 ‘***’ 0.001 ‘**’ 0.01 ‘*’ 0.05 ‘.’ 0.1 ‘ ’
 
 (Dispersion parameter for Gamma family taken to be 0.002446059)
 
-    Null deviance: 3.512826  on 8  degrees of freedom
-Residual deviance: 0.016730  on 7  degrees of freedom
+    Null deviance: 3.51283  on 8  degrees of freedom
+Residual deviance: 0.01673  on 7  degrees of freedom
 AIC: 37.99
 
 Number of Fisher Scoring iterations: 3
@@ -7886,7 +7835,7 @@ FAMI   -3   87   84   84   96   94   94   94   98   99   99  100
 > ### ** Examples
 > 
 > integrate(dnorm, -1.96, 1.96)
-0.9500042 with absolute error < 1.0e-11
+0.9500042 with absolute error < 1e-11
 > integrate(dnorm, -Inf, Inf)
 1 with absolute error < 9.4e-05
 > 
@@ -8345,7 +8294,7 @@ data:  x and x2
 t = 5.6742, df = 96.85, p-value = 7.242e-08
 alternative hypothesis: true difference in means is greater than 0 
 95 percent confidence interval:
- 0.706975      Inf 
+ 0.7069751       Inf 
 sample estimates:
  mean of x  mean of y 
  0.1004483 -0.8990693 
@@ -8584,8 +8533,7 @@ List of 4
 > 
 > ### Name: lm.summaries
 > ### Title: Accessing Linear Model Fits
-> ### Aliases: family.lm formula.lm residuals.lm labels.lm weights
-> ###   weights.default
+> ### Aliases: family.lm formula.lm residuals.lm labels.lm
 > ### Keywords: regression models
 > 
 > ### ** Examples
@@ -8758,7 +8706,7 @@ $df
 > x <- 1:5
 > lmx <- lm(x ~ 1)
 > logLik(lmx) # using print.logLik() method
-'log Lik.' -8.82756 (df=2)
+'log Lik.' -8.827561 (df=2)
 > utils::str(logLik(lmx))
 Class 'logLik' : -8.828 (df=2)
 > 
@@ -8775,7 +8723,7 @@ Coefficients:
    -0.21706  
 
 > logLik(fm1)
-'log Lik.' -97.2499 (df=8)
+'log Lik.' -97.24991 (df=8)
 > logLik(fm1, REML = TRUE)
 'log Lik.' -102.6851 (df=8)
 > 
@@ -9159,7 +9107,7 @@ common odds ratio
 +   1 - pchisq(sum(w * (log(or) - weighted.mean(log(or), w)) ^ 2), k - 1)
 + }
 > woolf(UCBAdmissions)
-[1] 0.003427200
+[1] 0.0034272
 > ## => p = 0.003, indicating that there is significant heterogeneity.
 > ## (And hence the Mantel-Haenszel test cannot be used.)
 > 
@@ -9591,7 +9539,7 @@ NA        0    3    0
 > flush(stderr()); flush(stdout())
 > 
 > ### Name: model.frame
-> ### Title: Extracting the "Environment" of a Model Formula
+> ### Title: Extracting the Model Frame from a Formula or Fit
 > ### Aliases: model.frame model.frame.default model.frame.lm model.frame.glm
 > ###   model.frame.aovlist get_all_vars
 > ### Keywords: models
@@ -9972,7 +9920,7 @@ iteration = 1
 Step:
 [1] -9 -8
 Parameter:
-[1] 1.000000 2.000000
+[1] 1 2
 Function Value
 [1] 1.721748e-13
 Gradient:
@@ -10513,7 +10461,7 @@ attr(,"gradient")
 	One-way analysis of means (not assuming equal variances)
 
 data:  extra and group 
-F = 3.4626, num df = 1.000, denom df = 17.776, p-value = 0.0794
+F = 3.4626, num df = 1.000, denom df = 17.776, p-value = 0.07939
 
 > ## Assuming equal variances
 > oneway.test(extra ~ group, data = sleep, var.equal = TRUE)
@@ -10591,7 +10539,7 @@ $objective
 [1] 0.6653777
 [1] 0.6667786
 [1] 0.6666728
-[1] 0.666632
+[1] 0.6666321
 [1] 0.6667135
 [1] 0.6666728
 $minimum
@@ -10613,7 +10561,7 @@ $objective
 [1] 16.49845
 [1] 17.83592
 [1] 18.66253
-[1] 19.17340
+[1] 19.1734
 [1] 19.48913
 [1] 19.68427
 [1] 19.80487
@@ -10621,7 +10569,7 @@ $objective
 [1] 19.92547
 [1] 19.95393
 [1] 19.97153
-[1] 19.98240
+[1] 19.9824
 [1] 19.98913
 [1] 19.99328
 [1] 19.99585
@@ -10708,7 +10656,8 @@ $objective
 [41] "Hawaii"         "Minnesota"      "Wisconsin"      "Iowa"          
 [45] "New Hampshire"  "West Virginia"  "Maine"          "South Dakota"  
 [49] "North Dakota"   "Vermont"       
-> stopifnot(labels(d2) == rownames(USArrests)[order.dendrogram(d2)])
+> stopifnot(identical(labels(d2),
++    rownames(USArrests)[order.dendrogram(d2)]))
 > 
 > 
 > 
@@ -11559,22 +11508,22 @@ attr(,"degree")
 $linkfun
 function (mu) 
 mu
-<environment: 0x105d4d3f8>
+<environment: 0x62fd928>
 
 $linkinv
 function (eta) 
 eta
-<environment: 0x105d4d3f8>
+<environment: 0x62fd928>
 
 $mu.eta
 function (eta) 
 rep.int(1, length(eta))
-<environment: 0x105d4d3f8>
+<environment: 0x62fd928>
 
 $valideta
 function (eta) 
 TRUE
-<environment: 0x105d4d3f8>
+<environment: 0x62fd928>
 
 $name
 [1] "identity"
@@ -11585,12 +11534,12 @@ attr(,"class")
 $linkfun
 function (mu) 
 mu^lambda
-<environment: 0x10589bf08>
+<environment: 0x62f2410>
 
 $linkinv
 function (eta) 
 pmax(eta^(1/lambda), .Machine$double.eps)
-<environment: 0x10589bf08>
+<environment: 0x62f2410>
 
 > 
 > 
@@ -11746,7 +11695,7 @@ pmax(eta^(1/lambda), .Machine$double.eps)
 
      Two-sample t test power calculation 
 
-              n = 22.02110
+              n = 22.0211
           delta = 1
              sd = 1
       sig.level = 0.05
@@ -12003,10 +11952,10 @@ Rape    -0.5393836 -0.8179779 -0.1999436
 > plot(prcomp(USArrests))
 > summary(prcomp(USArrests, scale = TRUE))
 Importance of components:
-                         PC1    PC2     PC3     PC4
-Standard deviation     1.575 0.9949 0.59713 0.41645
-Proportion of Variance 0.620 0.2474 0.08914 0.04336
-Cumulative Proportion  0.620 0.8675 0.95664 1.00000
+                          PC1    PC2     PC3     PC4
+Standard deviation     1.5749 0.9949 0.59713 0.41645
+Proportion of Variance 0.6201 0.2474 0.08914 0.04336
+Cumulative Proportion  0.6201 0.8675 0.95664 1.00000
 > biplot(prcomp(USArrests, scale = TRUE))
 > 
 > 
@@ -13640,7 +13589,7 @@ Signif. codes:  0 ‘***’ 0.001 ‘**’ 0.01 ‘*’ 0.05 ‘.’ 0.1 ‘ ’
 
 Residual standard error: 11.62 on 50 degrees of freedom
 Multiple R-squared: 0.2691,	Adjusted R-squared: 0.2253 
-F-statistic: 6.138 on 3 and 50 DF,  p-value: 0.001230 
+F-statistic: 6.138 on 3 and 50 DF,  p-value: 0.00123 
 
 > 
 > 
@@ -14398,7 +14347,7 @@ Contrast 1
   14.24547 
 > (t.stat <- sum(cont*score)/se.contrast(fit, as.matrix(cont)))
 Contrast 1 
- -1.263560 
+  -1.26356 
 > summary(fit, split=list(B=1:2), expand.split = TRUE)
             Df  Sum Sq Mean Sq F value   Pr(>F)   
 A            1  18.778  18.778  2.2208 0.146606   
@@ -14530,7 +14479,7 @@ eff.vl> options(contrasts = old)
 +     xy[["z"]] <- log(z/(1 - z))         # logit transformation
 +     aux <- coef(lm(x ~ z, xy))
 +     parameters(xy) <- list(xmid = aux[1], scal = aux[2])
-+     pars <- as.vector(coef(nls(y ~ 1/(1 + exp((xmid - x)/scal)), 
++     pars <- as.vector(coef(nls(y ~ 1/(1 + exp((xmid - x)/scal)),
 +                              data = xy, algorithm = "plinear")))
 +     value <- c(pars[3], pars[1], pars[2])
 +     names(value) <- mCall[c("Asym", "xmid", "scal")]
@@ -14538,7 +14487,7 @@ eff.vl> options(contrasts = old)
 +   }, c("Asym", "xmid", "scal"))
 > 
 > # 'first.order.log.model' is a function object defining a first order
-> # compartment model 
+> # compartment model
 > # 'first.order.log.initial' is a function object which calculates initial
 > # values for the parameters in 'first.order.log.model'
 > 
@@ -14546,6 +14495,30 @@ eff.vl> options(contrasts = old)
 > ## Not run: 
 > ##D SSfol <- selfStart(first.order.log.model, first.order.log.initial)
 > ## End(Not run)
+> 
+> ## Explore the self-starting models already available in R's  "stats":
+> pos.st <- which("package:stats" == search())
+> mSS <- apropos("^SS..", where=TRUE, ignore.case=FALSE)
+> (mSS <- unname(mSS[names(mSS) == pos.st]))
+ [1] "SSasymp"     "SSasympOff"  "SSasympOrig" "SSbiexp"     "SSfol"      
+ [6] "SSfpl"       "SSgompertz"  "SSlogis"     "SSmicmen"    "SSweibull"  
+> fSS <- sapply(mSS, get, pos = pos.st, mode = "function")
+> all(sapply(fSS, inherits, "selfStart"))# -> TRUE
+[1] TRUE
+> 
+> ## Show the argument list of each self-starting function:
+> str(fSS, give.attr=FALSE)
+List of 10
+ $ SSasymp    :function (input, Asym, R0, lrc)  
+ $ SSasympOff :function (input, Asym, lrc, c0)  
+ $ SSasympOrig:function (input, Asym, lrc)  
+ $ SSbiexp    :function (input, A1, lrc1, A2, lrc2)  
+ $ SSfol      :function (Dose, input, lKe, lKa, lCl)  
+ $ SSfpl      :function (input, A, B, xmid, scal)  
+ $ SSgompertz :function (x, Asym, b2, b3)  
+ $ SSlogis    :function (input, Asym, xmid, scal)  
+ $ SSmicmen   :function (input, Vm, K)  
+ $ SSweibull  :function (x, Asym, Drop, lrc, pwr)  
 > 
 > 
 > 
@@ -14846,18 +14819,29 @@ Smoothing Parameter  spar= 0.3928105  lambda= 9.672776e-05 (13 iterations)
 Equivalent Degrees of Freedom (Df): 8.494168 
 Penalized Criterion: 3.59204 
 GCV: 0.7155391 
-> (s02 <- smooth.spline(y18, spar = 0.2))
+> (s02  <- smooth.spline(y18, spar = 0.2))
 Call:
 smooth.spline(x = y18, spar = 0.2)
 
 Smoothing Parameter  spar= 0.2  lambda= 3.911187e-06 
-Equivalent Degrees of Freedom (Df): 15.25900 
+Equivalent Degrees of Freedom (Df): 15.259 
 Penalized Criterion: 0.4973656 
 GCV: 1.191602 
+> (s02. <- smooth.spline(y18, spar = 0.2, cv=NA))
+Call:
+smooth.spline(x = y18, spar = 0.2, cv = NA)
+
+Smoothing Parameter  spar= 0.2  lambda= 3.911187e-06 
+Equivalent Degrees of Freedom (Df): NA 
+Penalized Criterion: 0.4973656 
 > plot(y18, main=deparse(s2$call), col.main=2)
 > lines(s2, col = "gray"); lines(predict(s2, xx), col = 2)
 > lines(predict(s02, xx), col = 3); mtext(deparse(s02$call), col = 3)
 > 
+> ## Don't show: 
+> stopifnot(all.equal(predict(s02, xx),
++ 		    predict(s02., xx), tol= 1e-15))
+> ## End Don't show
 > 
 > 
 > cleanEx()
@@ -15212,7 +15196,7 @@ function (v)
     xout = as.double(v), as.integer(length(v)), as.integer(method), 
     as.double(yleft), as.double(yright), as.double(f), NAOK = TRUE, 
     PACKAGE = "stats")$xout
-<environment: 0x1073ed7b8>
+<environment: 0x37431d0>
 attr(,"call")
 stepfun(1:3, y0, f = 0)
 > ls(envir = environment(sfun0))
@@ -15886,7 +15870,7 @@ mean of x mean of y
 	Welch Two Sample t-test
 
 data:  extra[group == 1] and extra[group == 2] 
-t = -1.8608, df = 17.776, p-value = 0.0794
+t = -1.8608, df = 17.776, p-value = 0.07939
 alternative hypothesis: true difference in means is not equal to 0 
 95 percent confidence interval:
  -3.3654832  0.2054832 
@@ -15900,7 +15884,7 @@ mean of x mean of y
 	Welch Two Sample t-test
 
 data:  extra by group 
-t = -1.8608, df = 17.776, p-value = 0.0794
+t = -1.8608, df = 17.776, p-value = 0.07939
 alternative hypothesis: true difference in means is not equal to 0 
 95 percent confidence interval:
  -3.3654832  0.2054832 
@@ -17387,7 +17371,7 @@ Signif. codes:  0 ‘***’ 0.001 ‘**’ 0.01 ‘*’ 0.05 ‘.’ 0.1 ‘ ’
 
 Residual standard error: 11.62 on 50 degrees of freedom
 Multiple R-squared: 0.2691,	Adjusted R-squared: 0.2253 
-F-statistic: 6.138 on 3 and 50 DF,  p-value: 0.001230 
+F-statistic: 6.138 on 3 and 50 DF,  p-value: 0.00123 
 
 > 
 > 
@@ -17432,7 +17416,7 @@ Number of Fisher Scoring iterations: 6
 > ### * <FOOTER>
 > ###
 > cat("Time elapsed: ", proc.time() - get("ptime", pos = 'CheckExEnv'),"\n")
-Time elapsed:  18.393 0.77 19.362 0 0 
+Time elapsed:  15.321 0.327 15.965 0 0 
 > grDevices::dev.off()
 null device 
           1 

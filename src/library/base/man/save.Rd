@@ -18,7 +18,7 @@
   happens with \code{\link{q}("yes")}.
 }
 \usage{
-save(\dots, list = character(0L),
+save(\dots, list = character(),
      file = stop("'file' must be specified"),
      ascii = FALSE, version = NULL, envir = parent.frame(),
      compress = !ascii, compression_level,
@@ -33,8 +33,8 @@ save.image(file = ".RData", version = NULL, ascii = FALSE,
   \item{list}{A character vector containing the names of objects to be
     saved.}
   \item{file}{a (writable binary-mode) \link{connection} or the name of the
-    file where the data will be saved.  Must be a file name for
-    \code{version = 1}.} 
+    file where the data will be saved (when \link{tilde expansion}
+    is done).  Must be a file name for \code{version = 1}.}
   \item{ascii}{if \code{TRUE}, an ASCII representation of the data is
     written.  The default value of \code{ascii} is \code{FALSE} which
     leads to a binary file being written.}
@@ -112,8 +112,7 @@ save.image(file = ".RData", version = NULL, ascii = FALSE,
   The most common reason for failure is lack of write permission in the
   current directory.  For \code{save.image} and for saving at the end of
   a session this will shown by messages like
-\preformatted{
-    Error in gzfile(file, "wb") : unable to open connection
+\preformatted{    Error in gzfile(file, "wb") : unable to open connection
     In addition: Warning message:
     In gzfile(file, "wb") :
       cannot open compressed file '.RDataTmp',
@@ -124,6 +123,11 @@ save.image(file = ".RData", version = NULL, ascii = FALSE,
   2.3.0 and for \code{save.image} in 2.4.0.  Any recent version of \R
   can read compressed save files, and a compressed file can be
   uncompressed (by \code{gzip -d}) for use with very old versions of \R.
+#ifdef windows
+
+  \code{file} can be a UTF-8-encoded filepath that cannot be translated to
+  the current locale.
+#endif
 }
 
 \section{Warnings}{
@@ -148,7 +152,7 @@ save.image(file = ".RData", version = NULL, ascii = FALSE,
   \code{\link{data}}.
 
   For other interfaces to the underlying serialization format, see
-  \code{\link{serialize}} and \code{\link{.saveRDS}}.
+  \code{\link{serialize}} and \code{\link{saveRDS}}.
 }
 \examples{
 x <- stats::runif(20)

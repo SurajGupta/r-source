@@ -86,6 +86,8 @@
         if(personal)'   <Property Id="ALLUSERS"></Property>'
         else '    <Property Id="ALLUSERS">1</Property>',
         sprintf('    <Property Id="RVersion">%s</Property>', Rver),
+        '    <Icon Id="icon.ico" SourceFile="..\\front-ends\\R.ico"/>',
+        '    <Property Id="ARPPRODUCTICON" Value="icon.ico" />',
         '')
 
     if (have64bit) {
@@ -123,8 +125,7 @@
                           "doc/html/rw-FAQ.html",
                           "share/texmf/Sweave.sty"))
                 component <- "main"
-            else if (grepl("^doc/html", g) || grepl("^library/[^/]*/html", g) ||
-                     g == "library/R.css")
+            else if (grepl("^doc/html", g) || grepl("^library/[^/]*/html", g))
                 component <- "main"
             else if (grepl("^doc/manual/[^/]*\\.html", g))
                 component <- "html"
@@ -151,9 +152,12 @@
                 component <- "tcl/chm"
             else if (grepl("^Tcl/lib/tcl8.5/tzdata", g))
                 component <- "tcl/tzdata"
+            else if (grepl("^Tcl/.*\\.msg$", f))
+                component <- "tcl/msg"
             else if (grepl("^Tcl", g))
                 component <- "tcl/noarch"
             else if (grepl("^library/grid/doc", g) ||
+                     grepl("^library/survival/doc", g) ||
                      grepl("^library/Matrix/doc", g))
                 component <- "manuals/libdocs"
             else if (grepl("^share/locale", g) ||
@@ -414,7 +418,7 @@ sprintf("           <Verb Id='open' Command='Open' TargetFile='%s' Argument='\"%
 
     cat(file = con, sep="\n",
         '',
-        '      <Feature Id="libdocs" Title="Docs for Packages grid and Matrix" Description="Docs for packages grid and Matrix: mainly PDF vignettes and their sources and code" Level="1000"',
+        '      <Feature Id="libdocs" Title="Docs for Packages grid, Matrix and survival" Description="Docs for packages grid, Matrix and survival: mainly PDF vignettes and their sources and code" Level="1000"',
         '       InstallDefault="local" AllowAdvertise="no">')
     for(id in ids[comps == 'manuals/libdocs'])
         cat(file = con,
@@ -470,9 +474,18 @@ sprintf("           <Verb Id='open' Command='Open' TargetFile='%s' Argument='\"%
 
     cat(file = con, sep="\n",
         '',
-        '      <Feature Id="tcl2" Title="Timezone files" Description="Timezone files for Tcl" Level="1000"',
+        '      <Feature Id="tcl2" Title="Timezone Files" Description="Timezone files for Tcl" Level="1000"',
         '       InstallDefault="local" AllowAdvertise="no">')
     for(id in ids[comps == 'tcl/tzdata'])
+        cat(file = con,
+            "      <ComponentRef Id='", id, "' />\n", sep="")
+    cat(file = con, '      </Feature>\n')
+
+    cat(file = con, sep="\n",
+        '',
+        '      <Feature Id="tcl3" Title="Message Translations for Tcl/Tk" Description="Timezone files for Tcl" Level="1000"',
+        '       InstallDefault="local" AllowAdvertise="no">')
+    for(id in ids[comps == 'tcl/msg'])
         cat(file = con,
             "      <ComponentRef Id='", id, "' />\n", sep="")
     cat(file = con, '      </Feature>\n')

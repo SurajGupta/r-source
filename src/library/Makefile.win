@@ -13,7 +13,6 @@ ECHO = echo
 MKINSTALLDIRS = mkdir -p
 INSTALL_DATA = cp
 RVER = $(shell cut -d' ' -f1 ../../VERSION | sed -n 1p)
-RHOME = $(shell ../gnuwin32/Rpwd.exe ../..)
 
 R_EXE = $(top_builddir)/$(BINDIR)/Rterm --vanilla --slave
 
@@ -26,21 +25,27 @@ all: R
 R:
 	@$(MKINSTALLDIRS) $(top_builddir)/library
 	@for pkg in $(R_PKGS_BASE); do \
-	  $(MAKE) -C $${pkg} -f Makefile.win RHOME=$(RHOME) R_ARCH=$(R_ARCH) \
+	  $(MAKE) -C $${pkg} -f Makefile.win R_ARCH=$(R_ARCH) \
 		R_OSTYPE=windows VERSION=$(RVER) BINDIR=$(BINDIR) \
 	        all install-tests || exit 1; \
 	done
-	@(cd base && $(MAKE) -f Makefile.win RHOME=$(RHOME) BINDIR=$(BINDIR) mkdesc)
+	@(cd base && $(MAKE) -f Makefile.win BINDIR=$(BINDIR) mkdesc)
 	@$(ECHO) "tools:::.vinstall_package_descriptions_as_RDS(\"$(top_builddir)/library\", \"$(R_PKGS_BASE)\")" | \
 	  R_DEFAULT_PACKAGES=tools LC_ALL=C $(R_EXE) > /dev/null
 	@$(ECHO) "installing parsed NAMESPACE files"
 	@rm -f $(top_builddir)/library/tools/Meta/nsInfo.rds
 	@$(ECHO) "tools:::.vinstall_package_namespaces_as_RDS(\"$(top_builddir)/library\", \"$(R_PKGS_BASE)\")" | \
 	  R_DEFAULT_PACKAGES=tools LC_ALL=C $(R_EXE) > /dev/null
-	@$(INSTALL_DATA) $(top_srcdir)/doc/html/R.css \
-	  $(top_builddir)/library
 	@gzip -9f ../../library/grDevices/afm/*.afm
-	@cp -p ../library/datasets/data/morley.tab ../../library/datasets/data
+
+bytecode: R
+	@for pkg in $(R_PKGS_BASE); do \
+	  $(ECHO) "--- compiling R code in package '$${pkg}' ---"; \
+          touch $(top_builddir)/src/library/$${pkg}/all.R; \
+	  $(MAKE) -C $${pkg} -f Makefile.win R_ARCH=$(R_ARCH) \
+	    R_OSTYPE=windows VERSION=$(RVER) BINDIR=$(BINDIR) \
+	    R_COMPILE_PKGS=1 R_COMPILER_SUPPRESS_ALL=1 all; \
+	done
 
 ## do Rdobjects before metadata before help indices
 docs:
@@ -53,12 +58,12 @@ endif
 	@touch stamp-docs
 
 # fix the order to make best use of parallel builds
-RD-TS = base.Rdts stats.Rdts utils.Rdts methods.Rdts graphics.Rdts grDevices.Rdts datasets.Rdts grid.Rdts tools.Rdts tcltk.Rdts splines.Rdts stats4.Rdts
+RD-TS = base.Rdts stats.Rdts utils.Rdts methods.Rdts graphics.Rdts grDevices.Rdts datasets.Rdts grid.Rdts tools.Rdts tcltk.Rdts splines.Rdts stats4.Rdts compiler.Rdts
 # RD-TS = $(R_PKGS_BASE:=.Rdts)
 Rd-ts: $(RD-TS)
 
 %.Rdts:
-	@$(ECHO) "tools:::.install_package_Rd_objects(\"$(srcdir)/$*\", \"$(top_builddir)/library/$*\")" | R_DEFAULT_PACKAGES=NULL $(R_EXE) || exit 1
+	@$(ECHO) "options(warn=1);tools:::.install_package_Rd_objects(\"$(srcdir)/$*\", \"$(top_builddir)/library/$*\")" | R_DEFAULT_PACKAGES=NULL $(R_EXE) || exit 1
 	@$(ECHO) -n " $*$(ECHO_C)"
 
 Rdobjects:
@@ -70,7 +75,7 @@ help-indices:
 	@$(ECHO) -n "writing indices for package:"
 	@for pkg in $(R_PKGS_BASE); do \
 	  $(ECHO) -n " $${pkg}" ; \
-	  $(ECHO) "tools:::.writePkgIndices(\"$${pkg}\", \"$(top_builddir)/library/$${pkg}\")" | R_DEFAULT_PACKAGES=utils LC_ALL=C $(R_EXE) || exit 1; \
+	  $(ECHO) "options(warn=1);tools:::.writePkgIndices(\"$${pkg}\", \"$(top_builddir)/library/$${pkg}\")" | R_DEFAULT_PACKAGES=utils LC_ALL=C $(R_EXE) || exit 1; \
 	done
 	@$(ECHO)
 
@@ -89,7 +94,7 @@ metadata:
 clean:
 	@for pkg in $(R_PKGS_BASE); do \
 	  $(MAKE) --no-print-directory -C $${pkg} \
-	    -f Makefile.win RHOME=$(RHOME) clean-win; \
+	    -f Makefile.win R_ARCH=$(R_ARCH) clean-win; \
 	done
 	-@rm -f stamp-*
 

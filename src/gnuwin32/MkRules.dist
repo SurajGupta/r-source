@@ -24,10 +24,6 @@ ATLAS_PATH=/R/ATLAS/lib/WinNT_P4SSE2
 
 # Support for the ACML and Goto BLASes has been withdrawn: see R-admin.html
 
-# Where does Tcl/Tk live?  Spaces allowed.
-TCL_HOME = $(RHOME)/Tcl
-TCL_VERSION = 85
-
 # Define to use svnversion to set SVN-REVISION (slow, and requires a clean
 # checkout with no modifications).
 # USE_SVNVERSION = YES
@@ -61,16 +57,19 @@ SYMPAT64 = 's/^.* [BCDRT] / /p'
 ICU_PATH=/sources/icu
 
 # optional overrides for making bitmapdll: names of source directories
-# JPEGDIR = jpeg-8a
-# PNGDIR = libpng-1.2.35
+# JPEGDIR = jpeg-8c
+# PNGDIR = libpng
 # TIFFDIR = libtiff
 
 # set this to YES to build static HTML help
 BUILD_HTML = NO
 
+# unset this if you are *not* using MiKTeX
+MIKTEX = TRUE
+
 ## ====== configuration macros for building installer ===========
 
-# location where Inno Setup 5.3.x was installed. Spaces allowed.
+# location where Inno Setup 5.[34].x was installed. Spaces allowed.
 ISDIR=C:/packages/Inno
 
 # optional location where qpdf was installed (in $(QPDF)/bin). Spaces allowed.

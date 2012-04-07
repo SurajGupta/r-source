@@ -2,14 +2,19 @@ msgid ""
 msgstr ""
 "Project-Id-Version: R 2.3.0\n"
 "Report-Msgid-Bugs-To: bugs@r-project.org\n"
-"POT-Creation-Date: 2011-01-03 16:13\n"
+"POT-Creation-Date: 2011-03-22 15:33\n"
 "PO-Revision-Date: 2005-05-26 15:05+0900\n"
 "Last-Translator: Korean <uiami@hanmail.com>\n"
 "Language-Team: Korean <translation-team-ko@lists.sourceforge.net>\n"
+"Language: ko\n"
 "MIME-Version: 1.0\n"
 "Content-Type: text/plain; charset=UTF-8\n"
 "Content-Transfer-Encoding: 8bit\n"
 "Plural-Forms: nplurals=1; plural=0;\n"
+
+#, fuzzy
+msgid "models are not all fitted to the same number of observations"
+msgstr "model는 모두 동일 사이즈의 데이터 세트에 적용시킬수 없습니다"
 
 msgid "empty model supplied"
 msgstr "비어있는 모델이 제공되어졌습니다"
@@ -471,7 +476,8 @@ msgstr "거리는 'dist'의 결과 또는 정방 행렬이 필요가 있습니�
 msgid "'k' must be in {1, 2, ..  n - 1}"
 msgstr "'k'는 {1,2,...n - 1}내에 있을 필요가 있습니다"
 
-msgid "some of the first %d eigenvalues are < 0"
+#, fuzzy
+msgid "only %d of the first %d eigenvalues are > 0"
 msgstr "최초의 %d개의 고유치 중 몇개인가는 negative입니다"
 
 #, fuzzy
@@ -541,6 +547,10 @@ msgstr "대비를 정의 하기 위해서 충분한 자유도가 아닙니다"
 
 msgid "baseline group number out of range"
 msgstr "baseline의 그룹수가 범위를 넘어가고 있습니다"
+
+#, fuzzy
+msgid "invalid 'use' argument"
+msgstr "무효인 'data'인수입니다"
 
 msgid "supply both 'x' and 'y' or a matrix-like 'x'"
 msgstr "'x' 그리고 'y'의 양쪽 모두를 주어지거나, 행렬형태의 'x'를 주어집니다"
@@ -622,9 +632,6 @@ msgstr "'k'의 요소는 1과 %d의 사이에 없으면 되지 않습니다"
 msgid "'merge' and 'height' do not fit!"
 msgstr "'merge' 그리고 'height'가 적합하고 있지 않습니다!"
 
-msgid "we require a dendrogram"
-msgstr "dendrogram이 필요합니다"
-
 msgid "dendrogram node with non-positive #{branches}"
 msgstr "지수가 non-positive이 아닌 dendrogram입니다"
 
@@ -638,11 +645,17 @@ msgstr "길이 0의 non-leaf인 subtree입니다"
 msgid "'order.dendrogram' requires a dendrogram"
 msgstr "'order.dendrogram'는 dendrogram을 필요로 합니다"
 
+msgid "we require a dendrogram"
+msgstr "dendrogram이 필요합니다"
+
 msgid "invalid (length 0) node in dendrogram"
 msgstr "dendrogram에 부적절한(길이 0)노드가 있습니다"
 
 msgid "dendrogram non-leaf node with non-positive #{branches}"
 msgstr "지수가 non-positive dendrogram의 #{non-leaf}노드입니다"
+
+msgid "'height' must be at least %g, the maximal height of its components"
+msgstr ""
 
 msgid "'X' is not a dendrogram"
 msgstr "'X'는 dendrogram이 아닙니다"
@@ -1435,6 +1448,13 @@ msgstr "비교해야할 모델이 없습니다"
 msgid "extra arguments discarded"
 msgstr "불필요한 인수는 버려졌습니다"
 
+msgid "no \"nobs\" attribute is available"
+msgstr ""
+
+#, fuzzy
+msgid "no 'nobs' method is available"
+msgstr "'x'에 대해서 적용 가능한 'as.stepfun'메소드는 없습니다"
+
 msgid "'start' and 'table' must be same length"
 msgstr "'start'와 'table'는 동일 길이가 나오지 않으면 되지 않습니다"
 
@@ -1579,7 +1599,8 @@ msgstr "eff.aovlist: non-orthogonal의 차이는 올바르지 않게 반응할�
 msgid "cannot create a formula from a zero-column data frame"
 msgstr ""
 
-msgid "no terms component"
+#, fuzzy
+msgid "no terms component nor attribute"
 msgstr "terms 요소가 없습니다"
 
 #, fuzzy
@@ -2093,12 +2114,6 @@ msgstr "NA값을 smoothing 하려고 했습니다"
 msgid "wrong endrule"
 msgstr "잘못한 단점규칙입니다"
 
-msgid "'nknots' must be numeric <= n"
-msgstr "'nknots'는 n이하의 수치가 아니면 되지 않습니다"
-
-msgid "cannot use more inner knots than unique 'x' values"
-msgstr "유일이 되는 'x'값보다 내부 결절점을 사용할 수가 없습니다"
-
 msgid "invalid 'control.spar'"
 msgstr "무효인 'control.spar'입니다"
 
@@ -2114,8 +2129,28 @@ msgstr "어떠한 중량감는 poitive 일 ��요가 있습니다"
 msgid "need at least four unique 'x' values"
 msgstr "'x'값에는 적어도 4게의 다른 값이 필요합니다"
 
+msgid "'cv' must not be NA when 'df' is specified"
+msgstr ""
+
 msgid "crossvalidation with non-unique 'x' values seems doubtful"
 msgstr "유일하지 않는 'x'값에 의한 크로스 확인은 문제가 있을지도 모릅니다"
+
+msgid "'all.knots' is TRUE; 'nknots' specification is disregarded"
+msgstr ""
+
+#, fuzzy
+msgid "'nknots' must be numeric (in {1,..,n})"
+msgstr "'nknots'는 n이하의 수치가 아니면 되지 않습니다"
+
+#, fuzzy
+msgid "'nknots' must be at least 1"
+msgstr "'lag.max'는 적어도 1 입니다"
+
+msgid "cannot use more inner knots than unique 'x' values"
+msgstr "유일이 되는 'x'값보다 내부 결절점을 사용할 수가 없습니다"
+
+msgid "specified both 'df' and 'cv'; will disregard the latter"
+msgstr ""
 
 msgid "you must supply 1 < df <= n,  n = #{unique x} ="
 msgstr ""
@@ -2464,6 +2499,11 @@ msgstr ""
 msgid "there are %d Error terms: only 1 is allowed"
 msgid_plural "there are %d Error terms: only 1 is allowed"
 msgstr[0] "개의 에러 terms가 있습니다. 하나만 허용됩니다"
+
+#, fuzzy
+msgid "extra argument %s is not a \"%s\""
+msgid_plural "extra arguments %s are not \"%s\"s"
+msgstr[0] "불필요한 인수는 버려졌습니다"
 
 msgid "%d observation deleted due to missingness"
 msgid_plural "%d observations deleted due to missingness"

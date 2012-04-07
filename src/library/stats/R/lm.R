@@ -51,7 +51,7 @@ lm <- function (formula, data, subset, weights, na.action,
     if (is.empty.model(mt)) {
 	x <- NULL
 	z <- list(coefficients = if (is.matrix(y))
-                  matrix(,0,3) else numeric(0L), residuals = y,
+                  matrix(,0,3) else numeric(), residuals = y,
 		  fitted.values = 0 * y, weights = w, rank = 0L,
 		  df.residual = if(!is.null(w)) sum(w != 0) else
                   if (is.matrix(y)) nrow(y) else length(y))
@@ -92,7 +92,7 @@ lm.fit <- function (x, y, offset = NULL, method = "qr", tol = 1e-07,
     p <- ncol(x)
     if (p == 0L) {
         ## oops, null model
-        return(list(coefficients = numeric(0L), residuals = y,
+        return(list(coefficients = numeric(), residuals = y,
                     fitted.values = 0 * y, rank = 0,
                     df.residual = length(y)))
     }
@@ -127,7 +127,7 @@ lm.fit <- function (x, y, offset = NULL, method = "qr", tol = 1e-07,
     r1 <- seq_len(z$rank)
     dn <- colnames(x); if(is.null(dn)) dn <- paste("x", 1L:p, sep="")
     nmeffects <- c(dn[pivot[r1]], rep.int("", n - z$rank))
-    r2 <- if(z$rank < p) (z$rank+1L):p else integer(0L)
+    r2 <- if(z$rank < p) (z$rank+1L):p else integer()
     if (is.matrix(y)) {
 	coef[r2, ] <- NA
 	coef[pivot, ] <- coef
@@ -188,7 +188,7 @@ lm.wfit <- function (x, y, w, offset = NULL, method = "qr", tol = 1e-7,
     p <- ncol(x)
     if (p == 0) {
         ## oops, null model
-        return(list(coefficients = numeric(0L), residuals = y,
+        return(list(coefficients = numeric(), residuals = y,
                     fitted.values = 0 * y, weights = w, rank = 0L,
                     df.residual = length(y)))
     }
@@ -209,7 +209,7 @@ lm.wfit <- function (x, y, w, offset = NULL, method = "qr", tol = 1e-7,
     r1 <- seq_len(z$rank)
     dn <- colnames(x); if(is.null(dn)) dn <- paste("x", 1L:p, sep="")
     nmeffects <- c(dn[pivot[r1]], rep.int("", n - z$rank))
-    r2 <- if(z$rank < p) (z$rank+1L):p else integer(0L)
+    r2 <- if(z$rank < p) (z$rank+1L):p else integer()
     if (is.matrix(y)) {
 	coef[r2, ] <- NA
 	coef[pivot, ] <- coef
@@ -497,16 +497,6 @@ simulate.lm <- function(object, nsim = 1, seed = NULL, ...)
     val
 }
 
-#fitted.lm <- function(object, ...)
-#    napredict(object$na.action, object$fitted.values)
-
-# coef.lm <- function(object, ...) object$coefficients
-
-## need this for results of lm.fit() in drop1():
-weights.default <- function(object, ...)
-    naresid(object$na.action, object$weights)
-
-
 deviance.lm <- function(object, ...)
     sum(weighted.residuals(object)^2, na.rm=TRUE)
 
@@ -543,7 +533,7 @@ variable.names.lm <- function(object, full = FALSE, ...)
 {
     if(full) dimnames(qr.lm(object)$qr)[[2L]]
     else if(object$rank) dimnames(qr.lm(object)$qr)[[2L]][seq_len(object$rank)]
-    else character(0L)
+    else character()
 }
 
 case.names.lm <- function(object, full = FALSE, ...)
@@ -577,7 +567,7 @@ anova.lm <- function(object, ...)
     } else {
         ss <- ssr
         df <- dfr
-        tlabels <- character(0L)
+        tlabels <- character()
     }
     ms <- ss/df
     f <- ms/(ssr/dfr)

@@ -1035,7 +1035,7 @@ static void SetLinetype(const pGEcontext gc, pX11Desc xd)
 	xd->ljoin = gc->ljoin;
 	newlend = gcToX11lend(gc->lend);
 	newljoin = gcToX11ljoin(gc->ljoin);
-	if (newlty == 0) {/* special hack for lty = 0 -- only for X11 */
+	if (newlty == 0 || newlty == NA_INTEGER) {/* special hack for lty = 0 -- only for X11 */
 	    XSetLineAttributes(display, xd->wgc,
 			       (int)(newlwd*xd->lwdscale+0.5),
 			       LineSolid, newlend, newljoin);
@@ -1147,8 +1147,6 @@ X11_Open(pDevDesc dd, pX11Desc xd, const char *dsp,
     X_GTYPE type;
     const char *p = dsp;
     XGCValues gcv;
-    /* Indicates whether the display is created within this particular call: */
-    Rboolean DisplayOpened = FALSE;
     XSizeHints *hint;
 
     if (!XSupportsLocale ())
@@ -1263,7 +1261,6 @@ X11_Open(pDevDesc dd, pX11Desc xd, const char *dsp,
 	    return FALSE;
 	}
 	XSetIOErrorHandler(old);
-	DisplayOpened = TRUE;
 	Rf_setX11Display(display, gamma_fac, colormodel, maxcube, TRUE);
 	displayOpen = TRUE;
 	if(xd->handleOwnEvents == FALSE)
@@ -2270,8 +2267,7 @@ static Rboolean X11_Locator(double *x, double *y, pDevDesc dd)
 	    ddEvent = (pDevDesc) temp;
 	    if (ddEvent == dd) {
 		if (event.xbutton.button == Button1) {
-		    int useBeep = asLogical(GetOption(install("locatorBell"),
-						      R_BaseEnv));
+		    int useBeep = asLogical(GetOption1(install("locatorBell")));
 		    *x = event.xbutton.x;
 		    *y = event.xbutton.y;
 		       /* Make a beep! Was print "\07", but that
@@ -2362,14 +2358,16 @@ static void X11_eventHelper(pDevDesc dd, int code)
 	    char *keystart=keybuffer;
 	    XComposeStatus compose;
   	    KeySym keysym;
-	    int count, keycode;
+	    int keycode;
 	    if (event.xkey.state & ControlMask) {
 	    	keystart += 5; 
 	    	sprintf(keybuffer, "ctrl-"); /* report control keys using labels like "ctrl-A" */
 	    	event.xkey.state &= !ControlMask;
 	    	event.xkey.state |= ShiftMask;
 	    }
-      	    count = XLookupString(&event.xkey, keystart, sizeof(keybuffer)-(keystart-keybuffer), &keysym, &compose);
+      	    XLookupString(&event.xkey, keystart, 
+			  sizeof(keybuffer)-(keystart-keybuffer), 
+			  &keysym, &compose);
       	    /* Rprintf("keysym=%x\n", keysym); */
       	    if ((keycode = translate_key(keysym)) > knUNKNOWN)
       	    	doKeybd(dd, keycode, NULL);

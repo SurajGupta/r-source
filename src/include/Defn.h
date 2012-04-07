@@ -1,7 +1,7 @@
 /*
  *  R : A Computer Language for Statistical Data Analysis
  *  Copyright (C) 1995, 1996  Robert Gentleman and Ross Ihaka
- *  Copyright (C) 1998--2010  The R Development Core Team.
+ *  Copyright (C) 1998--2011  The R Development Core Team.
  *
  *  This program is free software; you can redistribute it and/or modify
  *  it under the terms of the GNU General Public License as published by
@@ -88,6 +88,17 @@ extern0 SEXP	R_WholeSrcrefSymbol;   /* "wholeSrcref" */
 extern0 SEXP	R_SrcrefSymbol;     /* "srcref" */
 extern0 SEXP	R_TmpvalSymbol;     /* "*tmp*" */
 extern0 SEXP	R_UseNamesSymbol;   /* "use.names" */
+extern0 SEXP	R_DoubleColonSymbol;   /* "::" */
+extern0 SEXP	R_TripleColonSymbol;   /* ":::" */
+extern0 SEXP    R_ConnIdSymbol;  /* "conn_id" */
+extern0 SEXP    R_DevicesSymbol;  /* ".Devices" */
+
+extern0 SEXP    R_dot_Generic;  /* ".Generic" */
+extern0 SEXP    R_dot_Methods;  /* ".Methods" */
+extern0 SEXP    R_dot_Group;  /* ".Group" */
+extern0 SEXP    R_dot_Class;  /* ".Class" */
+extern0 SEXP    R_dot_GenericCallEnv;  /* ".GenericCallEnv" */
+extern0 SEXP    R_dot_GenericDefEnv;  /* ".GenericDefEnv" */
 
 extern0 SEXP	R_StringHash;       /* Global hash of CHARSXPs */
 
@@ -96,13 +107,16 @@ extern0 SEXP	R_StringHash;       /* Global hash of CHARSXPs */
 #define CHAR_RW(x)	((char *) CHAR(x))
 
 /* CHARSXP charset bits */
+#define BYTES_MASK (1<<1)
 #define LATIN1_MASK (1<<2)
 #define UTF8_MASK (1<<3)
 #define CACHED_MASK (1<<5)
 #define HASHASH_MASK 1
-/**** HASHASH uses the first bit -- see HASHAS_MASK defined below */
+/**** HASHASH uses the first bit -- see HASHASH_MASK defined below */
 
 #ifdef USE_RINTERNALS
+# define IS_BYTES(x) ((x)->sxpinfo.gp & BYTES_MASK)
+# define SET_BYTES(x) (((x)->sxpinfo.gp) |= BYTES_MASK)
 # define IS_LATIN1(x) ((x)->sxpinfo.gp & LATIN1_MASK)
 # define SET_LATIN1(x) (((x)->sxpinfo.gp) |= LATIN1_MASK)
 # define IS_UTF8(x) ((x)->sxpinfo.gp & UTF8_MASK)
@@ -112,6 +126,8 @@ extern0 SEXP	R_StringHash;       /* Global hash of CHARSXPs */
 # define IS_CACHED(x) (((x)->sxpinfo.gp) & CACHED_MASK)
 #else
 /* Needed only for write-barrier testing */
+int IS_BYTES(SEXP x);
+void SET_BYTES(SEXP x);
 int IS_LATIN1(SEXP x);
 void SET_LATIN1(SEXP x);
 int IS_UTF8(SEXP x);
@@ -290,7 +306,10 @@ extern int putenv(char *string);
 #endif
 
 #define HSIZE	   4119	/* The size of the hash table for symbols */
-#define MAXIDSIZE   256	/* Largest symbol size, in bytes excluding terminator */
+#define MAXIDSIZE 10000	/* Largest symbol size, 
+			   in bytes excluding terminator.
+			   Was 256 prior to 2.13.0, now just a sanity check.
+			*/
 
 /* The type of the do_xxxx functions. */
 /* These are the built-in R functions. */
@@ -571,8 +590,6 @@ FUNTAB	R_FunTab[];	    /* Built in functions */
 #define extern0 extern
 #endif
 
-extern int	gc_inhibit_torture INI_as(1);
-
 LibExtern Rboolean R_interrupts_suspended INI_as(FALSE);
 LibExtern int R_interrupts_pending INI_as(0);
 
@@ -660,7 +677,7 @@ extern0 Rboolean R_warn_partial_match_dollar INI_as(FALSE);
 extern0 Rboolean R_warn_partial_match_attr INI_as(FALSE);
 extern0 Rboolean R_ShowWarnCalls INI_as(FALSE);
 extern0 Rboolean R_ShowErrorCalls INI_as(FALSE);
-extern0 int R_NShowCalls INI_as(50);
+extern0 int	R_NShowCalls INI_as(50);
 extern0 SEXP	R_Srcref;
 
 LibExtern Rboolean utf8locale  INI_as(FALSE);  /* is this a UTF-8 locale? */
@@ -673,6 +690,7 @@ extern0   void WinCheckUTF8(void);
 #endif
 
 extern0 char OutDec	INI_as('.');  /* decimal point used for output */
+extern0 Rboolean R_DisableNLinBrowser	INI_as(FALSE);
 
 /* Initialization of the R environment when it is embedded */
 extern int Rf_initEmbeddedR(int argc, char **argv);
@@ -697,7 +715,14 @@ extern0 SEXP *R_BCNodeStackBase, *R_BCNodeStackTop, *R_BCNodeStackEnd;
 #define R_BCINTSTACKSIZE 10000
 extern0 IStackval *R_BCIntStackBase, *R_BCIntStackTop, *R_BCIntStackEnd;
 # endif
+extern0 int R_jit_enabled INI_as(0);
+extern0 int R_compile_pkgs INI_as(0);
+extern SEXP R_cmpfun(SEXP);
+extern void R_init_jit_enabled(void);
 #endif
+
+LibExtern int R_num_math_threads INI_as(1);
+LibExtern int R_max_num_math_threads INI_as(1);
 
 /* Pointer  type and utilities for dispatch in the methods package */
 typedef SEXP (*R_stdGen_ptr_t)(SEXP, SEXP, SEXP); /* typedef */
@@ -728,7 +753,6 @@ extern0 unsigned int max_contour_segments INI_as(25000);
 
 extern0 Rboolean known_to_be_latin1 INI_as(FALSE);
 extern0 Rboolean known_to_be_utf8 INI_as(FALSE);
-
 
 #ifdef __MAIN__
 # undef extern
@@ -836,6 +860,7 @@ extern0 Rboolean known_to_be_utf8 INI_as(FALSE);
 # define PrintValueEnv		Rf_PrintValueEnv
 # define PrintValueRec		Rf_PrintValueRec
 # define PrintVersion		Rf_PrintVersion
+# define PrintVersion_part_1	Rf_PrintVersion_part_1
 # define PrintVersionString    	Rf_PrintVersionString
 # define PrintWarnings		Rf_PrintWarnings
 # define promiseArgs		Rf_promiseArgs
@@ -1024,11 +1049,12 @@ RETSIGTYPE onsigusr1(int);
 RETSIGTYPE onsigusr2(int);
 int OneIndex(SEXP, SEXP, int, int, SEXP*, int, SEXP);
 SEXP parse(FILE*, int);
-void PrintDefaults(SEXP);
+void PrintDefaults(void);
 void PrintGreeting(void);
 void PrintValueEnv(SEXP, SEXP);
 void PrintValueRec(SEXP, SEXP);
 void PrintVersion(char *);
+void PrintVersion_part_1(char *);
 void PrintVersionString(char *);
 void PrintWarnings(void);
 void process_site_Renviron(void);
@@ -1043,6 +1069,7 @@ SEXP R_LoadFromFile(FILE*, int);
 SEXP R_NewHashedEnv(SEXP, SEXP);
 extern int R_Newhashpjw(const char *);
 FILE* R_OpenLibraryFile(const char *);
+SEXP R_Primitive(const char *);
 void R_RestoreGlobalEnv(void);
 void R_RestoreGlobalEnvFromFile(const char *, Rboolean);
 void R_SaveGlobalEnv(void);
@@ -1065,6 +1092,7 @@ SEXP R_syscall(int,RCNTXT*);
 int R_sysparent(int,RCNTXT*);
 SEXP R_sysframe(int,RCNTXT*);
 SEXP R_sysfunction(int,RCNTXT*);
+char* R_tmpnam2(const char *, const char *, const char *); /* in the API in R 2.14.0+ */
 Rboolean tsConform(SEXP,SEXP);
 SEXP tspgets(SEXP, SEXP);
 SEXP type2symbol(SEXPTYPE);
@@ -1227,7 +1255,7 @@ extern char *alloca(size_t);
 #endif
 
 /* Or use typedef? */
-#ifdef HAVE_LONG_DOUBLE
+#if SIZEOF_LONG_DOUBLE
 # define LDOUBLE long double
 #else
 # define LDOUBLE double

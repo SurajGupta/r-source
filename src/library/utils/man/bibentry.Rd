@@ -1,3 +1,8 @@
+% File src/library/utils/man/bibentry.Rd
+% Part of the R package, http://www.R-project.org
+% Copyright 1995-2011 R Core Development Team
+% Distributed under GPL 2 or later
+
 \name{bibentry}
 \alias{bibentry}
 \alias{print.bibentry}
@@ -10,9 +15,7 @@
 bibentry(bibtype, textVersion = NULL, header = NULL, footer = NULL,
          key = NULL, ..., other = list(),
          mheader = NULL, mfooter = NULL)
-\method{print}{bibentry}(x, style = c("text", "Bibtex", "citation",
-                   "html", "latex", "textVersion"),
-      .bibstyle = "JSS", ...)
+\method{print}{bibentry}(x, style = "text", .bibstyle = "JSS", ...)
 }
 \arguments{
   \item{bibtype}{a character string with a BibTeX entry type.
@@ -40,7 +43,8 @@ bibentry(bibtype, textVersion = NULL, header = NULL, footer = NULL,
     text.}
   \item{x}{an object inheriting from class \code{"bibentry"}.}
   \item{style}{a character string specifying the print style.
-    Must be a unique abbreviation of the choices indicated in the usage.}
+    Must be a unique abbreviation (with case ignored) of the available
+    styles, see \bold{Details}.}
   \item{.bibstyle}{a character string naming a bibliography style.}
 }
 \details{

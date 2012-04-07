@@ -54,7 +54,7 @@ function(topic, package = NULL, lib.loc = NULL,
     else match.arg(tolower(help_type),
                    c("text", "html", "postscript", "ps", "pdf"))
 
-    paths <- index.search(topic, .find.package(package, lib.loc, verbose = verbose))
+    paths <- index.search(topic, find.package(package, lib.loc, verbose = verbose))
     tried_all_packages <- FALSE
     if(!length(paths)
        && is.logical(try.all.packages) && !is.na(try.all.packages)
@@ -159,7 +159,7 @@ function(x, ...)
                 if(type == "html" || type == "latex")
                     tp <- tools::file_path_sans_ext(tp)
                 for (i in seq_along(fp)) {
-                    tmp <- try(.readRDS(fp[i]))
+                    tmp <- try(readRDS(fp[i]))
                     titles[i] <- if(inherits(tmp, "try-error"))
                         "unknown title" else
                     tmp[tools::file_path_sans_ext(tmp$File) == tp[i], "Title"]

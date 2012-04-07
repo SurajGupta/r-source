@@ -117,16 +117,15 @@ httpd <- function(path, query, ...)
                    "\n</body></html>",
                    sep = ""))
 
-    if (grepl("R\\.css$", path))
+    cssRegexp <- "^/library/([^/]*)/html/R.css$"
+    if (grepl("R\\.css$", path) && !grepl(cssRegexp, path))
         return(list(file = file.path(R.home("doc"), "html", "R.css"),
                     "content-type" = "text/css"))
     else if(path == "/favicon.ico")
         return(list(file = file.path(R.home("doc"), "html", "favicon.ico")))
-    else if(path == "/NEWS") {
+    else if(path == "/NEWS")
          return(list(file = file.path(R.home("doc"), "html", "NEWS.html")))
-#    	db <- news()
-#    	return( list(payload = paste(toHTML(db, title="R News"), collapse="\n")) )
-    } else if(path %in% c("/ONEWS", "/OONEWS")) # not installed
+    else if(path %in% c("/ONEWS", "/OONEWS")) # not installed
     	return(list(file = file.path(R.home(), sub("/", "", path)),
     	            "content-type" = "text/plain"))
     else if(!grepl("^/(doc|library)/", path))
@@ -176,7 +175,7 @@ httpd <- function(path, query, ...)
             tp <- basename(file)
             titles <- tp
             for (i in seq_along(fp)) {
-                tmp <- try(.readRDS(fp[i]))
+                tmp <- try(readRDS(fp[i]))
                 titles[i] <- if(inherits(tmp, "try-error"))
                     "unknown title" else
                     tmp[file_path_sans_ext(tmp$File) == tp[i], "Title"]
@@ -226,7 +225,7 @@ httpd <- function(path, query, ...)
             return(error_page(msg))
         }
         ## if 'topic' is not a help doc, try it as an alias in the package
-        contents <- .readRDS(sub("/help", "/Meta/Rd.rds", path, fixed = TRUE))
+        contents <- readRDS(sub("/help", "/Meta/Rd.rds", path, fixed = TRUE))
         files <- sub("\\.[Rr]d$", "", contents$File)
         if(! helpdoc %in% files) {
             ## or call help()
@@ -306,6 +305,10 @@ httpd <- function(path, query, ...)
     	else
     	    return( list(file = system.file("NEWS", package = pkg),
     	                 "content-type" = "text/plain") )
+    } else if (grepl(cssRegexp, path)) {
+    	pkg <- sub(cssRegexp, "\\1", path)
+        return( list(file = system.file("html", "R.css", package = pkg),
+                     "content-type" = "text/css") )
     } else if (grepl("^/library/", path)) {
         descRegexp <- "^/library/+([^/]+)/+DESCRIPTION$"
         if(grepl(descRegexp, path)) {

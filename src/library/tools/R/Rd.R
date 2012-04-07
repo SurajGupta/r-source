@@ -127,7 +127,7 @@ function(contents, outFile)
     ## <NOTE>
     ## To deal with possible changes in the format of the contents db
     ## in the future, use a version attribute and/or a formal class.
-    .saveRDS(contents, file = outFile, compress = TRUE)
+    saveRDS(contents, file = outFile, compress = TRUE)
     ## </NOTE>
 }
 
@@ -272,7 +272,7 @@ function(package, dir, lib.loc = NULL)
     if(!missing(package)) {
         if(length(package) != 1L)
             stop("argument 'package' must be of length 1")
-        dir <- .find.package(package, lib.loc)
+        dir <- find.package(package, lib.loc)
         ## Using package installed in @code{dir} ...
         docs_dir <- file.path(dir, "man")
         ## For an installed package, we might have
@@ -287,7 +287,7 @@ function(package, dir, lib.loc = NULL)
         if(file_test("-f", paste(db_file, "rdx", sep="."))) {
             db <- fetchRdDB(db_file)
             pathfile <- file.path(dir, "help", "paths.rds")
-            if(file.exists(pathfile)) names(db) <- .readRDS(pathfile)
+            if(file.exists(pathfile)) names(db) <- readRDS(pathfile)
             return(db)
         }
         db_file <- file.path(docs_dir, sprintf("%s.Rd.gz", package))
@@ -331,7 +331,7 @@ function(package, dir, lib.loc = NULL)
                  domain = NA)
         else
             dir <- file_path_as_absolute(dir)
-        db <- .build_Rd_db(dir)
+        db <- .build_Rd_db(dir, stages = "build")
     }
 
     db
@@ -347,7 +347,7 @@ function(x, ...)
 }
 
 .build_Rd_db <-
-function(dir = NULL, files = NULL, encoding = "unknown", db_file = NULL, 
+function(dir = NULL, files = NULL, encoding = "unknown", db_file = NULL,
          stages = c("build", "install"), os = .OStype(), step = 3L, built_file = NULL)
 {
     if(!is.null(dir)) {
@@ -371,11 +371,11 @@ function(dir = NULL, files = NULL, encoding = "unknown", db_file = NULL,
         structure(Rd, prepared = step)
     }
 
-    if(!is.null(db_file) && file_test("-f", db_file)) { 
+    if(!is.null(db_file) && file_test("-f", db_file)) {
         ## message("updating database of parsed Rd files")
         db <- fetchRdDB(sub("\\.rdx$", "", db_file))
         db_names <- names(db) <-
-            .readRDS(file.path(dirname(db_file), "paths.rds"))
+            readRDS(file.path(dirname(db_file), "paths.rds"))
         ## Files in the db in need of updating:
         indf <- (files %in% db_names) & file_test("-nt", files, db_file)
         ## Also files not in the db:
@@ -385,18 +385,18 @@ function(dir = NULL, files = NULL, encoding = "unknown", db_file = NULL,
         ind <- !(db_names %in% files) | (db_names %in% files[indf])
 	if(any(ind))
             db <- db[!ind]
-	files <- files[indf]    
-    } else 
+	files <- files[indf]
+    } else
     	db <- list()
-    	
+
     # The built_file is a file of partially processed Rd objects, where build time
     # \Sexprs have been evaluated.  We'll put the object in place of its
     # filename to continue processing.
 
-    names(files) <- files    
-    if(!is.null(built_file) && file_test("-f", built_file)) {	
+    names(files) <- files
+    if(!is.null(built_file) && file_test("-f", built_file)) {
         basenames <- basename(files)
- 	built <- .readRDS(built_file)
+ 	built <- readRDS(built_file)
  	names_built <- names(built)
  	if ("install" %in% stages) {
  	    this_os <- grepl(paste("^", os, "/", sep=""), names_built)
@@ -410,12 +410,12 @@ function(dir = NULL, files = NULL, encoding = "unknown", db_file = NULL,
  	if (length(built)) {
  	    which <- match(names(built), basenames)
  	    if (all(file_test("-nt", built_file, files[which]))) {
- 	    	files <- as.list(files) 	
+ 	    	files <- as.list(files)
 	    	files[which] <- built
 	    }
 	}
     }
-    	
+
     if(length(files)) {
         ## message("building database of parsed Rd files")
         db1 <- lapply(files, .fetch_Rd_object)
@@ -436,10 +436,10 @@ function(package, dir, lib.loc = NULL)
     ## unpacked package sources.
 
     if(!missing(package)) {
-        dir <- .find.package(package, lib.loc)
+        dir <- find.package(package, lib.loc)
         rds <- file.path(dir, "Meta", "Rd.rds")
         if(file_test("-f", rds)) {
-            aliases <- .readRDS(rds)$Aliases
+            aliases <- readRDS(rds)$Aliases
             if(length(aliases)) sort(unlist(aliases)) else character()
         } else
             character()
@@ -666,13 +666,13 @@ function(x)
 ### * .Rd_get_title
 
 .Rd_get_title <-
-function(x, encoding="")
+function(x)
 {
     title <- .Rd_get_section(x, "title")
 
     result <- character()
     if(length(title)) {
-        result <- .Rd_get_text(title, encoding=encoding)
+        result <- .Rd_get_text(title)
         result <- result[result != ""]
     }
     paste(result, collapse=" ")
@@ -680,22 +680,26 @@ function(x, encoding="")
 
 ### * .Rd_get_text
 
+# Return display form of text, encoded in UTF-8.  Note that
+# textConnection converts to the local encoding, and we convert back,
+# so unrepresentable characters will be lost
+
 .Rd_get_text <-
-function(x, encoding="") {
+function(x) {
     # We'd like to use capture.output here, but don't want to depend
     # on utils, so we duplicate some of it
     rval <- NULL
     file <- textConnection("rval", "w", local = TRUE)
-    
+
     save <- options(useFancyQuotes = FALSE)
     sink(file)
-    tryCatch(Rd2txt(x, fragment=TRUE, encoding=encoding),
-             finally = {sink(); options(save); close(file)})    
-    
-    if (is.null(rval)) character()
-    else rval
+    tryCatch(Rd2txt(x, fragment=TRUE),
+             finally = {sink(); options(save); close(file)})
+
+    if (is.null(rval)) rval <- character()
+    else enc2utf8(rval)
 }
-     
+
 ### * .Rd_get_xrefs
 
 .Rd_get_xrefs <-
@@ -785,22 +789,33 @@ function(x)
 fetchRdDB <-
 function(filebase, key = NULL)
 {
-    data <- paste(filebase, "rdb", sep = ".")
-    v <- .readRDS(paste(filebase, "rdx", sep = "."))
-    compress <- v$compressed
-    v <- v$variables
-    if(length(key)) {
-        if(! key %in% names(v))
-            stop(gettextf("No help on %s found in RdDB %s",
-                          sQuote(key), sQuote(filebase)),
-                 domain = NA)
-        lazyLoadDBfetch(v[key][[1L]], data, compress, function(n){})
-    } else {
-        res <- v # a list of the right names
-        for(i in seq_along(res))
-            res[[i]] <- lazyLoadDBfetch(v[i][[1L]], data, compress, function(n){})
-        invisible(res)
+    fun <- function(db) {
+        vals <- db$vals
+        vars <- db$vars
+        datafile <- db$datafile
+        compressed <- db$compressed
+        envhook <- db$envhook
+
+        fetch <- function(key)
+            lazyLoadDBfetch(vals[key][[1L]], datafile, compressed, envhook)
+
+        if(length(key)) {
+            if(! key %in% vars)
+                stop(gettextf("No help on %s found in RdDB %s",
+                              sQuote(key), sQuote(filebase)),
+                     domain = NA)
+            fetch(key)
+        } else {
+            res <- lapply(vars, fetch)
+            names(res) <- vars
+            res
+        }
     }
+    res <- lazyLoadDBexec(filebase, fun)
+    if (length(key))
+        res
+    else
+        invisible(res)
 }
 
 

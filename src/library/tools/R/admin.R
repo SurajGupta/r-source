@@ -96,7 +96,7 @@ function(dir, outDir)
                        outMetaDir),
               domain = NA)
     saveInfo <- .split_description(db)
-    .saveRDS(saveInfo, file.path(outMetaDir, "package.rds"))
+    saveRDS(saveInfo, file.path(outMetaDir, "package.rds"))
 
     invisible()
 }
@@ -176,7 +176,7 @@ function(dir, packages)
                      package_info_rds_file,
                      package_info_dcf_file))
             next
-        .saveRDS(.split_description(.read_description(package_info_dcf_file)),
+        saveRDS(.split_description(.read_description(package_info_dcf_file)),
                  package_info_rds_file)
     }
     invisible()
@@ -413,7 +413,7 @@ function(dir, outDir)
         RdsFile <- file.path("Meta", "Rd.rds")
         if(file.exists(RdsFile)) { ## for Rd files
             ## this has file names without path
-            files <- .readRDS(RdsFile)$File
+            files <- readRDS(RdsFile)$File
             if(!identical(basename(allRd), files)) upToDate <- FALSE
         }
         ## we want to proceed if any is NA.
@@ -429,12 +429,12 @@ function(dir, outDir)
         .write_Rd_contents_as_RDS(contents,
                                   file.path(outDir, "Meta", "Rd.rds"))
 
-        defaultEncoding <- as.vector(.readRDS(file.path(outDir, "Meta", "package.rds"))$DESCRIPTION["Encoding"])
+        defaultEncoding <- as.vector(readRDS(file.path(outDir, "Meta", "package.rds"))$DESCRIPTION["Encoding"])
         if(is.na(defaultEncoding)) defaultEncoding <- NULL
-        .saveRDS(.build_hsearch_index(contents, packageName, defaultEncoding),
+        saveRDS(.build_hsearch_index(contents, packageName, defaultEncoding),
                  file.path(outDir, "Meta", "hsearch.rds"))
 
-        .saveRDS(.build_links_index(contents, packageName),
+        saveRDS(.build_links_index(contents, packageName),
                  file.path(outDir, "Meta", "links.rds"))
 
         ## If there is no @file{INDEX} file in the package sources, we
@@ -442,22 +442,22 @@ function(dir, outDir)
         ## <NOTE>
         ## We currently do not also save this in RDS format, as we can
         ## always do
-        ##   .build_Rd_index(.readRDS(file.path(outDir, "Meta", "Rd.rds"))
+        ##   .build_Rd_index(readRDS(file.path(outDir, "Meta", "Rd.rds"))
         if(!file_test("-f", file.path(dir, "INDEX")))
             writeLines(formatDL(.build_Rd_index(contents)),
                        file.path(outDir, "INDEX"))
         ## </NOTE>
     } else {
         contents <- NULL
-        .saveRDS(.build_hsearch_index(contents, packageName, defaultEncoding),
+        saveRDS(.build_hsearch_index(contents, packageName, defaultEncoding),
                  file.path(outDir, "Meta", "hsearch.rds"))
 
-        .saveRDS(.build_links_index(contents, packageName),
+        saveRDS(.build_links_index(contents, packageName),
                  file.path(outDir, "Meta", "links.rds"))
 
     }
     if(file_test("-d", dataDir))
-        .saveRDS(.build_data_index(dataDir, contents),
+        saveRDS(.build_data_index(dataDir, contents),
                  file.path(outDir, "Meta", "data.rds"))
     invisible()
 }
@@ -474,18 +474,10 @@ function(dir, outDir)
         return(invisible())
 
     outDir <- file_path_as_absolute(outDir)
-    ## <FIXME>
-    ## Not clear whether we should use the basename of the directory we
-    ## install to, or the package name as obtained from the DESCRIPTION
-    ## file in the directory we install from (different for versioned
-    ## installs).  We definitely do not want the basename of the dir we
-    ## install from.
     packageName <- basename(outDir)
-    ## </FIXME>
     outVignetteDir <- file.path(outDir, "doc")
-    if(!file_test("-d", outVignetteDir) && !dir.create(outVignetteDir))
-        stop(gettextf("cannot open directory '%s'", outVignetteDir),
-             domain = NA)
+    ## Fake installs do not have a outVignetteDir.
+    if(!file_test("-d", outVignetteDir)) return(invisible())
 
     ## If there is an HTML index in the @file{inst/doc} subdirectory of
     ## the package source directory (@code{dir}), we do not overwrite it
@@ -524,15 +516,21 @@ function(dir, outDir)
                      stop(gettextf("running Stangle on vignette '%s' failed with message:\n%s",
                                    srcfile, conditionMessage(e)),
                           domain = NA, call. = FALSE))
-        vignetteIndex$R <-
+        ## remove any zero-length files
+        Rfiles <- Sys.glob(c("*.R", "*.S", "*.r", "*.s"))
+        sizes <- file.info(Rfiles)$size
+        unlink(Rfiles[sizes == 0])
+        ## This is an assumption: Sweave can do much more that this!
+        Rfiles <-
             sub("$", ".R", basename(file_path_sans_ext(vignetteIndex$File)))
+        vignetteIndex$R <- ifelse(file.exists(Rfiles), Rfiles, "")
         setwd(cwd)
     }
 
     if(!hasHtmlIndex)
         .writeVignetteHtmlIndex(packageName, htmlIndex, vignetteIndex)
 
-    .saveRDS(vignetteIndex,
+    saveRDS(vignetteIndex,
              file = file.path(outDir, "Meta", "vignette.rds"))
 
     invisible()
@@ -546,7 +544,7 @@ function(dir, outDir)
     demoDir <- file.path(dir, "demo")
     if(!file_test("-d", demoDir)) return(invisible())
     demoIndex <- .build_demo_index(demoDir)
-    .saveRDS(demoIndex,
+    saveRDS(demoIndex,
              file = file.path(outDir, "Meta", "demo.rds"))
     invisible()
 }
@@ -567,24 +565,22 @@ function(src_dir, out_dir, packages)
     for(p in unlist(strsplit(packages, "[[:space:]]+")))
         .install_package_indices(file.path(src_dir, p),
                                          file.path(out_dir, p))
-    unix.packages.html(.Library)
+    utils::make.packages.html(.Library, verbose=FALSE)
     invisible()
 }
 
 ### * .install_package_vignettes
 
 ## called from src/library/Makefile
-## this is only used when building R, to build the 'grid' vignettes.
+## this is only used when building R, to build the 'grid' and 'utils' vignettes.
 .install_package_vignettes <-
 function(dir, outDir, keep.source = FALSE)
 {
     dir <- file_path_as_absolute(dir)
     vignetteDir <- file.path(dir, "inst", "doc")
-    if(!file_test("-d", vignetteDir))
-        return(invisible())
+    if(!file_test("-d", vignetteDir)) return(invisible())
     vignetteFiles <- list_files_with_type(vignetteDir, "vignette")
-    if(!length(vignetteFiles))
-        return(invisible())
+    if(!length(vignetteFiles)) return(invisible())
 
     outDir <- file_path_as_absolute(outDir)
     outVignetteDir <- file.path(outDir, "doc")
@@ -602,7 +598,7 @@ function(dir, outDir, keep.source = FALSE)
         return(invisible())
 
     ## For the time being, the primary use of this function is to
-    ## build and install vignettes in base packages (which means grid).
+    ## build and install vignettes in base packages.
     ## Hence, we build in a subdir of the current directory rather than
     ## a temp dir:
     ## this allows inspection of problems and automatic cleanup via Make.
@@ -668,7 +664,7 @@ function(dir, outDir)
     if(!file_test("-d", outMetaDir) && !dir.create(outMetaDir))
         stop(gettextf("cannot open directory '%s'", outMetaDir),
              domain = NA)
-    .saveRDS(nsInfo, nsInfoFilePath)
+    saveRDS(nsInfo, nsInfoFilePath)
     invisible()
 }
 
@@ -708,12 +704,12 @@ function(dir, outDir, encoding = "unknown")
     ## Actually, it seems no more costly than these tests, which it also does
     pathsFile <- file.path(manOutDir, "paths.rds")
     if(!file_test("-f", db_file) || !file.exists(pathsFile) ||
-       !identical(sort(manfiles), sort(.readRDS(pathsFile))) ||
+       !identical(sort(manfiles), sort(readRDS(pathsFile))) ||
        !all(file_test("-nt", db_file, manfiles))) {
         db <- .build_Rd_db(dir, manfiles, db_file = db_file,
                            encoding = encoding, built_file = built_file)
         nm <- as.character(names(db)) # Might be NULL
-        .saveRDS(nm, pathsFile)
+        saveRDS(nm, pathsFile)
         names(db) <- sub("\\.[Rr]d$", "", basename(nm))
         makeLazyLoadDB(db, file.path(manOutDir, basename(outDir)))
     }
@@ -753,7 +749,7 @@ function(pkgs, lib.loc = NULL, file = NULL)
         pkgs <- tmp
     }
     pkgs <- strsplit(pkgs[1L], ",[[:blank:]]*")[[1L]]
-    paths <- .find.package(pkgs, lib.loc, quiet=TRUE)
+    paths <- find.package(pkgs, lib.loc, quiet=TRUE)
     if(length(paths))
         cat(paste(paste('-I"', paths, '/include"', sep=""), collapse=" "))
     return(invisible())
@@ -804,6 +800,16 @@ function(dir)
     q(status = .Rtest_package_depends_R_version(dir))
 
 
+### * .test_load_package
+
+.test_load_package <- function(pkg_name, lib)
+{
+    res <- try(suppressPackageStartupMessages(library(pkg_name, lib.loc = lib, character.only = TRUE, logical.return = TRUE)))
+    if (inherits(res, "try-error") || !res)
+        stop("loading failed", call. = FALSE)
+}
+
+
 ### * checkRdaFiles
 
 checkRdaFiles <- function(paths)
@@ -849,8 +855,10 @@ resaveRdaFiles <- function(paths,
     if (missing(compression_level))
         compression_level <- switch(compress, "gzip" = 6, 9)
     for(p in paths) {
-        env <- new.env()
-        load(p, envir = env)
+        env <- new.env(hash = TRUE) # probably small, need not be
+#        sink(tempfile()) ## suppress startup messages to stdout, for BARD
+        suppressPackageStartupMessages(load(p, envir = env))
+#        sink()
         if(compress == "auto") {
             f1 <- tempfile()
             save(file = f1, list = ls(env, all.names = TRUE), envir = env)
@@ -875,6 +883,87 @@ resaveRdaFiles <- function(paths,
                  compress = compress, compression_level = compression_level)
     }
 }
+
+### * compactPDF
+
+compactPDF <-
+    function(paths, qpdf = Sys.getenv("R_QPDF", "qpdf"),
+             gs_cmd = Sys.getenv("R_GSCMD", ""),
+             gs_quality = c("printer", "ebook", "screen"),
+             gs_extras = character())
+{
+    if(!nzchar(Sys.which(qpdf)) && !nzchar(Sys.which(gs_cmd))) 
+    	return()
+    if(length(paths) == 1L && isTRUE(file.info(paths)$isdir))
+        paths <- Sys.glob(file.path(paths, "*.pdf"))
+    gs_quality <- match.arg(gs_quality)
+    tf <- tempfile("pdf")
+    dummy <- rep.int(NA_real_, length(paths))
+    ans <- data.frame(old = dummy, new = dummy, row.names = paths)
+    for (p in paths) {
+        res <- if (nzchar(gs_cmd))
+            system2(gs_cmd,
+                    c("-q -dNOPAUSE -dBATCH -sDEVICE=pdfwrite",
+                      sprintf("-dPDFSETTINGS=/%s", gs_quality),
+                      "-dCompatibilityLevel=1.5",
+                      "-dAutoRotatePages=/None",
+                      sprintf("-sOutputFile=%s", tf),
+                      gs_extras,
+                      p), FALSE, FALSE)
+        else
+            system2(qpdf, c("--stream-data=compress", p, tf), FALSE, FALSE)
+        if(!res && file.exists(tf)) {
+            old <- file.info(p)$size; new <-  file.info(tf)$size
+            if(new/old < 0.9 && new < old - 1e4) {
+                file.copy(tf, p, overwrite = TRUE)
+                ans[p, ] <- c(old, new)
+            }
+        }
+        unlink(tf)
+    }
+    structure(na.omit(ans), class = c("compactPDF", "data.frame"))
+}
+
+format.compactPDF <- function(x, ratio = 0.9, diff = 1e4, ...)
+{
+    if(!nrow(x)) return(character())
+    z <- y <- x[with(x, new/old < ratio & new < old - diff), ]
+    if(!nrow(z)) return(character())
+    z[] <- lapply(y, function(x) sprintf("%.0fKb", x/1024))
+    large <- y$new >= 1024^2
+    z[large, ] <- lapply(y[large, ], function(x) sprintf("%.1fMb", x/1024^2))
+    paste('  compacted', sQuote(basename(row.names(y))),
+          'from', z[, 1L], 'to', z[, 2L])
+}
+
+print.compactPDF <- function(x, ...)
+{
+    writeLines(format(x, ...))
+    x
+}
+
+### * add_datalist
+
+add_datalist <- function(pkgpath, force = FALSE)
+{
+    dlist <- file.path(pkgpath, "data", "datalist")
+    if (!force && file.exists(dlist)) return()
+    fi <- file.info(Sys.glob(file.path(pkgpath, "data", "*")))
+    size <- sum(fi$size)
+    if(size <= 1024^2) return()
+    z <- suppressPackageStartupMessages(list_data_in_pkg(dataDir = file.path(pkgpath, "data"))) # for BARD
+    if(!length(z)) return()
+    con <- file(dlist, "w")
+    for (nm in names(z)) {
+        zz <- z[[nm]]
+        if (length(zz) == 1L && zz == nm) writeLines(nm, con)
+        else cat(nm, ": ", paste(zz, collapse = " "), "\n",
+                 sep = "", file = con)
+    }
+    close(con)
+    invisible()
+}
+
 
 ### Local variables: ***
 ### mode: outline-minor ***

@@ -1471,9 +1471,7 @@ NULL
 If @var{value} is a character vector then the element of @samp{...} with
 a name that exactly matches @var{value} is evaluated.  If there is no
 match a single unnamed argument will be used as a default.  If no
-default is specified, @code{NULL} is returned.  (Currently the first
-of multiple defaults will be used with a warning; as of R 2.13.0, only
-one default will be allowed.)
+default is specified, @code{NULL} is returned.
 
 @example
 > y <- "fruit"

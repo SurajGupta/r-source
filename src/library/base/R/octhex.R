@@ -41,7 +41,7 @@ print.octmode <- function(x, ...)
     invisible(x)
 }
 
-"[.octmode" <- function (x, i)
+`[.octmode` <- function (x, i)
 {
     cl <- oldClass(x)
     y <- NextMethod("[")
@@ -91,7 +91,7 @@ print.hexmode <- function(x, ...)
     invisible(x)
 }
 
-"[.hexmode" <- function (x, i)
+`[.hexmode` <- function (x, i)
 {
     cl <- oldClass(x)
     y <- NextMethod("[")
@@ -112,12 +112,18 @@ as.hexmode <- function(x)
 }
 
 
+`!.octmode` <- function(a)
+    as.octmode(.Call("bitwiseNot", as.octmode(a), PACKAGE = "base"))
+
 `&.octmode` <- function(a, b)
     as.octmode(.Call("bitwiseAnd", as.octmode(a), as.octmode(b), PACKAGE = "base"))
 `|.octmode` <- function(a, b)
     as.octmode(.Call("bitwiseOr", as.octmode(a), as.octmode(b), PACKAGE = "base"))
 xor.octmode <- function(a, b)
     as.octmode(.Call("bitwiseXor", as.octmode(a), as.octmode(b), PACKAGE = "base"))
+
+`!.hexmode` <- function(a)
+    as.hexmode(.Call("bitwiseNot", as.hexmode(a), PACKAGE = "base"))
 
 `&.hexmode` <- function(a, b)
     as.hexmode(.Call("bitwiseAnd", as.hexmode(a), as.hexmode(b), PACKAGE = "base"))

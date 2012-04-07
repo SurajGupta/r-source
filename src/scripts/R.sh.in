@@ -103,7 +103,6 @@ Commands:
   Rd2dvi		Convert Rd format to DVI
   Rd2pdf		Convert Rd format to PDF
   Rd2txt		Convert Rd format to pretty text
-  Sd2Rd			Convert S documentation to Rd format
   Stangle		Extract S/R code from Sweave documentation
   Sweave		Process Sweave documentation
   Rdiff			Diff R output ignoring headers etc
@@ -114,17 +113,10 @@ Commands:
 Please use 'R CMD command --help' to obtain further information about
 the usage of 'command'.
 
+Options --arch, --no-environ, --no-init-file, --no-site-file and --vanilla
+can be placed between R and CMD, to apply to R processes run by 'command'
+
 Report bugs to <r-bugs@r-project.org>."
-
-### We also have this in compiled code -> use that one to always be in sync
-# version="R REPLACE_BY_VERSION.
-# Copyright (C) REPLACE_BY_YEAR R Development Core Team
-
-# R is free software and comes with ABSOLUTELY NO WARRANTY.
-# You are welcome to redistribute it under the terms of the GNU
-# General Public License.  For more information about these matters,
-# see http://www.gnu.org/copyleft/gpl.html."
-
 
 ## some systems have a more portable sed, e.g. /usr/xpg4/bin/sed on Solaris,
 ## so make sure that is used.
@@ -148,7 +140,7 @@ while test -n "${1}"; do
     CMD)
       shift;
       export R_ARCH
-      . ${R_HOME}/etc${R_ARCH}/ldpaths
+      . "${R_HOME}/etc${R_ARCH}/ldpaths"
       exec sh "${R_HOME}/bin/Rcmd" @OSF_SH_BUG@ ;;
     -g|--gui)
       if test -n "`echo ${2} | ${SED} 's/^-.*//'`"; then      
@@ -176,9 +168,6 @@ while test -n "${1}"; do
       debugger_args=`echo "${1}" | ${SED} -e 's/[^=]*=//'` ;;
     -h|--help)
       echo "${usage}"; exit 0 ;;
-## use the version in compiled code to always be in sync      
-#    --version)
-#      echo "${version}"; exit 0 ;;
     --args)
       break ;;
     --arch)
@@ -209,13 +198,33 @@ while test -n "${1}"; do
       fi
       args="${args} -e $a"
       ;;
+    --no-environ)
+      export R_ENVIRON=''
+      export R_ENVIRON_USER=''
+      args="${args} ${1}"
+      ;;
+    --no-site-file)
+      export R_PROFILE=''
+      args="${args} ${1}"
+      ;;
+    --no-init-file)
+      export R_PROFILE_USER=''
+      args="${args} ${1}"
+      ;;
+    --vanilla)
+      export R_ENVIRON=''
+      export R_ENVIRON_USER=''
+      export R_PROFILE=''
+      export R_PROFILE_USER=''
+      args="${args} ${1}"
+      ;;
     *)
       args="${args} ${1}" ;;
   esac
   shift
 done
 
-. ${R_HOME}/etc${R_ARCH}/ldpaths
+. "${R_HOME}/etc${R_ARCH}/ldpaths"
 
 R_binary="${R_HOME}/bin/exec${R_ARCH}/R"
 export R_ARCH

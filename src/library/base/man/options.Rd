@@ -1,12 +1,13 @@
 % File src/library/base/man/options.Rd
 % Part of the R package, http://www.R-project.org
-% Copyright 1995-2010 R Core Development Team
+% Copyright 1995-2011 R Core Development Team
 % Distributed under GPL 2 or later
 
 \name{options}
 \alias{options}
 \alias{.Options}
 \alias{getOption}
+\alias{option} % so help files can do 'set \link{} \code{"foo"}'
 \title{Options Settings}
 \description{
   Allow the user to set and examine a variety of global \emph{options}
@@ -61,6 +62,9 @@ getOption(x, default = NULL)
       many (simulated) smooths should be added.  This is currently only
       used by \code{\link{plot.lm}}.}
     
+    \item{\code{browserNLdisabled}:}{logical: whether newline is
+      disabled as a synonym for \code{"n"} is the browser.}
+
     \item{\code{checkPackageLicense}:}{logical, not set by default.  If
       true, \code{\link{library}} asks a user to accept any non-standard
       license at first use.
@@ -92,7 +96,7 @@ getOption(x, default = NULL)
 
     \item{\code{digits}:}{controls the number of digits to print when
       printing numeric values.  It is a suggestion only.  Valid values
-      are 1\dots{}22 with default 7.  See the warning in
+      are 1\dots{}22 with default 7.  See the note in
       \code{\link{print.default}} about values greater than 15.}
 
     \item{\code{digits.secs}:}{controls the maximum number of digits to
@@ -134,10 +138,11 @@ getOption(x, default = NULL)
       where it is possible you may want to increase that.}
 
     \item{\code{keep.source}:}{When \code{TRUE}, the source code for
-      functions (newly defined or loaded) is stored in their
-      \code{"source"} attribute (see \code{\link{attr}}) allowing
-      comments to be kept in the right places.
-
+      functions (newly defined or loaded) is stored internally
+      allowing comments to be kept in the right places.  Retrieve the
+      source by printing or using \code{deparse(fn, control =
+      "useSource")}.
+ 
       The default is \code{\link{interactive}()}, i.e., \code{TRUE} for
       interactive use.}
 
@@ -150,9 +155,6 @@ getOption(x, default = NULL)
       Note this does not apply to packages using lazy-loading.  Whether
       they have kept source is determined when they are
       installed (and is almost certainly false).}
-
-    \item{\code{mailer}:}{default mailer used by
-      \code{\link{bug.report}()}.  Can be \code{"none"}.}
 
     \item{\code{max.contour.segments}:}{positive integer, defaulting to
       \code{250000} and usually not set.  A limit on the number of
@@ -200,13 +202,13 @@ getOption(x, default = NULL)
     }
 
     \item{\code{pdfviewer}:}{default PDF viewer.
+      The default is set from the environment variable \env{R_PDFVIEWER},
 #ifdef unix
-      The default is set from the environment variable
-      \env{R_PDFVIEWER}, the default value of which is set when \R is
-      configured.
+      the default value of which is set when \R is configured.
 #endif
 #ifdef windows
-      Defaults to the full path to \samp{open.exe}, a utility supplied with \R.
+      which defaults to the full path to \command{open.exe}, a utility
+      supplied with \R.
 #endif
     }
 
@@ -219,7 +221,7 @@ getOption(x, default = NULL)
     \item{\code{prompt}:}{a non-empty string to be used for \R's prompt;
       should usually end in a blank (\code{" "}).}
 
-      % verbatim, for checking " \t\n\"\\'`><=%;,|&{()}"    
+      % verbatim, for checking " \t\n\"\\'`><=%;,|&{()}"
 #ifdef unix
     \item{\code{rl_word_breaks}:}{Used for the readline-based terminal
       interface.  Default value \code{" \\t\\n\\"\\\\'`><=\%;,|&\{()\}"}.%"
@@ -271,9 +273,11 @@ getOption(x, default = NULL)
     \item{\code{topLevelEnvironment}:}{see \code{\link{topenv}} and
       \code{\link{sys.source}}.}
 
-    \item{\code{useFancyQuotes}:}{logical: controls the use of
+    \item{\code{useFancyQuotes}:}{controls the use of
       directional quotes in \code{\link{sQuote}}, \code{dQuote} and in
-      rendering text help (see \code{\link{Rd2txt}}).}
+      rendering text help (see \code{\link{Rd2txt}} in package
+      \pkg{tools}).  Can be \code{TRUE}, \code{FALSE}, \code{"TeX"} or
+      \code{"UTF-8"}.}
 
     \item{\code{verbose}:}{logical.  Should \R report extra information
       on progress?  Set to \code{TRUE} by the command-line option
@@ -444,6 +448,10 @@ getOption(x, default = NULL)
       a non-default browser on Windows.  Alternatively, an \R function that
       is called with a URL as its argument.}
 
+    \item{\code{ccaddress}:}{default Cc: address used by
+      \code{\link{create.post}} (and hence\code{\link{bug.report}} and
+      \code{\link{help.request}}).  Can be \code{FALSE} or \code{""}.}
+    
     \item{\code{de.cellwidth}:}{integer: the cell widths (number of
       characters) to be used in the data editor \code{\link{dataentry}}.
       If this is unset (the default), 0, negative or \code{NA}, variable
@@ -461,21 +469,35 @@ getOption(x, default = NULL)
     \item{\code{example.ask}:}{default for the \code{ask} argument of
       \code{\link{example}}.}
 
+    \item{\code{help.ports}:}{optional integer vector for setting ports
+      of the internal HTTP server, see \code{\link{startDynamicHelp}}.}
+
     \item{\code{help.try.all.packages}:}{default for an argument of
       \code{\link{help}}.}
-    
+
     \item{\code{help_type}:}{default for an argument of
     \code{\link{help}}, used also as the help type by \code{\link{?}}.}
 
     \item{\code{HTTPUserAgent}:}{string used as the user agent in HTTP
       requests.  If \code{NULL}, HTTP requests will be made without a
       user agent header.  The default is \code{R (<version> <platform>
-      <arch> <os>)}}
+	<arch> <os>)}}
+
+    \item{\code{install.lock}:}{logical: should per-directory package
+      locking be used by \code{\link{install.packages}}?  Most useful
+      for binary installs on Mac OS X and Windows, but can be used in a
+      startup file for source installs \emph{via}
+      \command{R CMD \link{INSTALL}}.  For binary installs, can also be
+      the character string \code{"pkgloack"}.}
 
     \item{\code{internet.info}:}{The minimum level of information to be
       printed on URL downloads etc.  Default is 2, for failure causes.
       Set to 1 or 0 to get more information.}
-
+    
+    \item{\code{mailer}:}{default emailing method used by
+      \code{\link{create.post}} and hence \code{\link{bug.report}} and
+      \code{\link{help.request}}.}
+    
     \item{\code{menu.graphics}:}{Logical: should graphical menus be used
       if available?.  Defaults to \code{TRUE}.  Currently applies to
       \code{\link{select.list}}, \code{\link{chooseCRANmirror}},

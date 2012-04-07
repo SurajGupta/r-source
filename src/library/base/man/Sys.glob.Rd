@@ -1,6 +1,6 @@
 % File src/library/base/man/Sys.glob.Rd
 % Part of the R package, http://www.R-project.org
-% Copyright 1995-2009 R Core Development Team
+% Copyright 1995-2011 R Core Development Team
 % Distributed under GPL 2 or later
 
 \name{Sys.glob}
@@ -30,7 +30,7 @@ Sys.glob(paths, dirmark = FALSE)
   POSIX 1003.2 standard (see
   \url{http://www.opengroup.org/onlinepubs/009695399/functions/glob.html})
   but some OSes will go beyond this.  The \R implementation will always
-  do tilde-expansion (see \code{\link{path.expand}}).
+  do \link{tilde expansion}.
 
   All systems should interpret \code{*} (match zero or more characters),
   \code{?} (match a single character) and (probably) \code{[} (begin a
@@ -85,9 +85,10 @@ Sys.glob(paths, dirmark = FALSE)
 
   File paths in Windows are interpreted with separator \code{\\} or
   \code{/}.  Paths with a drive but relative (such as \code{c:foo\\bar})
-  are tricky, but an attempt is made to handle them correctly.  As from
-  \R 2.9.2 an attempt is made to handle UNC paths starting with a double
-  backslash.
+  are tricky, but an attempt is made to handle them correctly.  An
+  attempt is made to handle UNC paths starting with a double
+  backslash. UTF-8-encoded paths not valid in the current locale can be
+  used.
 #endif
 }
 \value{

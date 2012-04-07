@@ -92,8 +92,7 @@
                       "doc/html/rw-FAQ.html",
                       "share/texmf/Sweave.sty"))
             component <- "main"
-	else if (grepl("^doc/html", f) || grepl("^library/[^/]*/html", f) ||
-                 f == "library/R.css")
+	else if (grepl("^doc/html", f) || grepl("^library/[^/]*/html", f))
 	    component <- "main"
 	else if (grepl("^doc/manual/[^/]*\\.html", f))
 	    component <- "html"
@@ -120,9 +119,12 @@
 	    component <- "tcl/chm"
 	else if (grepl("^Tcl/lib/tcl8.5/tzdata", f))
 	    component <- "tcl/tzdata"
+	else if (grepl("^Tcl/.*\\.msg$", f))
+	    component <- "tcl/msg"
 	else if (grepl("^Tcl", f))
 	    component <- "tcl/noarch"
 	else if (grepl("^library/grid/doc", f) ||
+                 grepl("^library/survival/doc", f) ||
                  grepl("^library/Matrix/doc", f))
 	    component <- "manuals/libdocs"
 	else if (grepl("^share/locale", f) ||

@@ -1145,7 +1145,8 @@ listFromMethods <- function(generic, where, table) {
 testInheritedMethods <- function(f, signatures, test = TRUE,  virtual = FALSE,
                                  groupMethods = TRUE,  where = .GlobalEnv)
 {
-  getSigs <- function(fdef) objects(methods:::.getMethodsTable(fdef), all=TRUE)
+  getSigs <- function(fdef)
+      objects(methods:::.getMethodsTable(fdef), all.names = TRUE)
 
   ## Function relevantClasses is defined here to set object .undefClasses
   ## in testInheritedMethods as a marker to warn about undefined subclasses

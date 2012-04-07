@@ -41,27 +41,25 @@ LINKER=$(MAIN_LD)
 DLL=$(CC)
 
 ## Things defined in Renviron on Unix
-AWK = gawk
-EGREP = grep -e
-PERL = perl
 SED = sed
 TAR = tar
 
 ## Things defined in MkRules
 CAT = cat
 CP = cp
-FIND = find
-LN_S = cp -p
 MKDIR = mkdir
 RM = rm -f
 SORT = sort
 
 GRAPHAPP_LIB = -lRgraphapp
+## Used by packages tcltk and tkrplot
 TCL_HOME = $(R_HOME)/Tcl
 TCL_VERSION = 85
 ZLIB_LIBS = -lRzlib
 
 AR = $(BINPREF)ar
+## Used by packages 'maps' and 'mapdata'
+AWK = gawk
 BLAS_LIBS = -L"$(R_HOME)/$(IMPDIR)" -lRblas
 C_VISIBILITY = 
 CC = $(BINPREF)gcc
@@ -146,7 +144,7 @@ R_XTRA_CXXFLAGS =
 R_XTRA_FFLAGS = 
 
 ALL_CFLAGS = $(R_XTRA_CFLAGS) $(PKG_CFLAGS) $(CPICFLAGS) $(SHLIB_CFLAGS) $(CFLAGS)
-ALL_CPPFLAGS = $(R_XTRA_CPPFLAGS) $(PKG_CPPFLAGS) $(CPPFLAGS) $(CLINK_CPPFLAGS) $(LOCAL_CPPFLAGS)
+ALL_CPPFLAGS = $(R_XTRA_CPPFLAGS) $(PKG_CPPFLAGS) $(CPPFLAGS) $($*-CPPFLAGS) $(CLINK_CPPFLAGS) $(LOCAL_CPPFLAGS)
 ALL_CXXFLAGS = $(R_XTRA_CXXFLAGS) $(PKG_CXXFLAGS) $(CXXPICFLAGS) $(SHLIB_CXXFLAGS) $(CXXFLAGS)
 ALL_OBJCFLAGS = $(PKG_OBJCFLAGS) $(CPICFLAGS) $(SHLIB_CFLAGS) $(OBJCFLAGS)
 ALL_OBJCXXFLAGS = $(PKG_OBJCXXFLAGS) $(CXXPICFLAGS) $(SHLIB_CXXFLAGS) $(OBJCXXFLAGS)
@@ -154,13 +152,13 @@ ALL_FFLAGS = $(R_XTRA_FFLAGS) $(PKG_FFLAGS) $(FPICFLAGS) $(SHLIB_FFLAGS) $(FFLAG
 ALL_LIBS = $(LOCAL_LIBS) $(PKG_LIBS) $(SHLIB_LIBADD) $(LIBR) $(LIBINTL)
 
 .SUFFIXES:
-.SUFFIXES: .c .cc .cpp .f .f90 .f95 .m .mm .M .o .a .def .dll .exe .rc
+.SUFFIXES: .c .cc .cpp .f .f90 .f95 .m .mm .M .o .a .def .dll .exe .rc .d
 
 .c.o:
 	$(CC) $(ALL_CPPFLAGS) $(ALL_CFLAGS) -c $< -o $@
 .c.d:
 	@echo "making $@ from $<"
-	@gcc -std=gnu99 -MM $(ALL_CPPFLAGS) $< > $@
+	@$(CC) -std=gnu99 -MM $(ALL_CPPFLAGS) $< > $@
 .cc.o:
 	$(CXX) $(ALL_CPPFLAGS) $(ALL_CXXFLAGS) -c $< -o $@
 .cpp.o:
@@ -175,7 +173,7 @@ ALL_LIBS = $(LOCAL_LIBS) $(PKG_LIBS) $(SHLIB_LIBADD) $(LIBR) $(LIBINTL)
 	$(OBJC) $(ALL_CPPFLAGS) $(ALL_OBJCFLAGS) -c $< -o $@
 .m.d:
 	@echo "making $@ from $<"
-	@gcc -MM $(ALL_CPPFLAGS) $< > $@
+	@$(OBJC) -MM $(ALL_CPPFLAGS) $< > $@
 .mm.o:
 	$(OBJCXX) $(ALL_CPPFLAGS) $(ALL_OBJCXXFLAGS) -c $< -o $@
 .M.o:

@@ -7,10 +7,11 @@ msgid ""
 msgstr ""
 "Project-Id-Version: R 2.4.0\n"
 "Report-Msgid-Bugs-To: bugs@r-project.org\n"
-"POT-Creation-Date: 2010-06-17 14:08\n"
+"POT-Creation-Date: 2011-03-22 15:33\n"
 "PO-Revision-Date: 2005-02-04 08:37+0000\n"
 "Last-Translator: 陈斐 <feic@avaya.com>\n"
 "Language-Team: Chinese\n"
+"Language: \n"
 "MIME-Version: 1.0\n"
 "Content-Type: text/plain; charset=UTF-8\n"
 "Content-Transfer-Encoding: 8bit\n"
@@ -42,6 +43,12 @@ msgstr "'squareShape'的值必需在-1和1之间"
 
 msgid "'arrow' must be an arrow object or NULL"
 msgstr "'arrow' 要么是箭头对象，要么是NULL值"
+
+msgid "How did we get here?"
+msgstr "是怎么到这里的？"
+
+msgid "Must start new page if showing leaves separately"
+msgstr "如果分别显示树叶的话需要重新开一页"
 
 msgid "Invalid 'edit' information"
 msgstr "'edit'信息不对"
@@ -83,6 +90,12 @@ msgid ""
 msgstr ""
 "只能设定'side=[\"top\", \"bottom\"]', 'row', 'row.before'或'row.after'中的一"
 "个"
+
+msgid "Invalid 'n'"
+msgstr "'n'的值不对"
+
+msgid "Invalid 'f'"
+msgstr "'f'的值不对"
 
 msgid "gpar element '%s' must not be length 0"
 msgstr "gpar成分'%s'的长度不能为零"
@@ -476,12 +489,6 @@ msgstr "视口路径至少要有一个视口的名字"
 msgid "Invalid viewport name(s)"
 msgstr "视口名字不对"
 
-msgid "How did we get here?"
-msgstr "是怎么到这里的？"
-
-msgid "Must start new page if showing leaves separately"
-msgstr "如果分别显示树叶的话需要重新开一页"
-
 msgid "Must specify at least one of 'x' or 'xscale'"
 msgstr "至少要设定'x'或'xscale'两个中的一个"
 
@@ -511,3 +518,4 @@ msgstr "卸载'grid'名字空间时关闭所有的设备"
 
 #~ msgid "'x' must be numeric"
 #~ msgstr "'x'必需是数字"
+

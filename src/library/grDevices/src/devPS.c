@@ -1,8 +1,7 @@
 /*
  *  R : A Computer Language for Statistical Data Analysis
  *  Copyright (C) 1995, 1996  Robert Gentleman and Ross Ihaka
- *  Copyright (C) 1998--2010  Robert Gentleman, Ross Ihaka and the
- *                            R Development Core Team
+ *  Copyright (C) 1998--2011  The R Development Core Team
  *
  *  This program is free software; you can redistribute it and/or modify
  *  it under the terms of the GNU General Public License as published by
@@ -41,7 +40,7 @@ mbcsToSbcs(const char *in, char *out, const char *encoding, int enc);
 
 #include <R_ext/Riconv.h>
 
-#include <Rmath.h>		/* for rround */
+#include <Rmath.h>		/* for fround */
 #define R_USE_PROTOTYPES 1
 #include <R_ext/GraphicsEngine.h>
 #include <R_ext/Error.h>
@@ -2606,6 +2605,18 @@ static void PostScriptEndPage(FILE *fp)
     fprintf(fp, "ep\n");
 }
 
+static void PostScriptInitColorSpace(FILE *fp)
+{
+    /* From PLRM 3rd Ed pg 225 */
+    fprintf(fp, "[ /CIEBasedABC\n");
+    fprintf(fp, "  << /DecodeLMN\n");
+    fprintf(fp, "       [ { dup 0.03928 le {12.92321 div} {0.055 add 1.055 div 2.4 exp } ifelse } bind dup dup ]\n");
+    fprintf(fp, "     /MatrixLMN [0.412457 0.212673 0.019334 0.357576 0.715152 0.119192 0.180437 0.072175 0.950301]\n");
+    fprintf(fp, "     /WhitePoint [0.9505 1.0 1.0890]\n");
+    fprintf(fp, "  >>\n");
+    fprintf(fp, "] setcolorspace\n");
+}
+
 static void PostScriptSetClipRect(FILE *fp, double x0, double x1,
 				  double y0, double y1)
 {
@@ -2614,6 +2625,9 @@ static void PostScriptSetClipRect(FILE *fp, double x0, double x1,
 
 static void PostScriptSetLineWidth(FILE *fp, double linewidth)
 {
+    /* Must not allow line width to be zero */
+    if (linewidth < .01)
+        linewidth = .01;
     fprintf(fp, "%.2f setlinewidth\n", linewidth);
 }
 
@@ -2678,16 +2692,22 @@ PostScriptSetLineTexture(FILE *fp, const char *dashlist, int nlty,
    has been left in for back-compatibility
 */
 #define PP_SetLineTexture(_CMD_, adj)				\
-    double dash, a = adj;					\
+    double dash[8], a = adj;					\
     int i;							\
-    fprintf(fp,"[");						\
+    Rboolean allzero = TRUE;                                    \
     for (i = 0; i < nlty; i++) {				\
-	dash = lwd *				\
+	dash[i] = lwd *				                \
 	    ((i % 2) ? (dashlist[i] + a)			\
 	     : ((nlty == 1 && dashlist[i] == 1.) ? 1. : dashlist[i] - a) ); \
-	if (dash < 0) dash = 0;					\
-	fprintf(fp," %.2f", dash);				\
+	if (dash[i] < 0) dash[i] = 0;					\
+        if (dash[i] > .01) allzero = FALSE;                     \
     }								\
+    fprintf(fp,"[");						\
+    if (!allzero) {                                             \
+        for (i = 0; i < nlty; i++) {				\
+            fprintf(fp," %.2f", dash[i]);                       \
+        }                                                       \
+    }                                                           \
     fprintf(fp,"] 0 %s\n", _CMD_)
 
     PP_SetLineTexture("setdash", (lend == GE_BUTT_CAP) ? 0. : 1.);
@@ -2702,8 +2722,8 @@ static void PostScriptMoveTo(FILE *fp, double x, double y)
 static void PostScriptRLineTo(FILE *fp, double x0, double y0,
 			      double x1, double y1)
 {
-    double x = rround(x1, 2) - rround(x0, 2),
-	y = rround(y1, 2) - rround(y0, 2);
+    double x = fround(x1, 2) - fround(x0, 2),
+	y = fround(y1, 2) - fround(y0, 2);
     /* Warning: some machines seem to compute these differently from
        others, and we do want to diff the output.  x and y should be
        above around 0.01 or negligible (1e-14), and it is the latter case
@@ -2891,14 +2911,13 @@ PostScriptTextKern(FILE *fp, double x, double y,
 	/* We have to start at the left edge, as we are going
 	   to do this in pieces */
 	if (xc != 0) {
-	    double s = 0.0, rot1 = rot * M_PI/180.;
+	    double rot1 = rot * M_PI/180.;
 	    int w = 0; short wx;
 	    for(i = 0; i < n; i++) {
 		unsigned char p1 = str[i];
 		wx = metrics->CharInfo[(int)p1].WX;
 		w += (wx == NA_SHORT) ? 0 : wx;
 	    }
-	    s = w * fac;
 	    x -= xc*fac*cos(rot1)*w;
 	    y -= xc*fac*sin(rot1)*w;
 	}
@@ -3029,7 +3048,7 @@ static void PostScriptSetCol(FILE *fp, double r, double g, double b,
 	    if(b == 0) fprintf(fp, " 0");
 	    else if (b == 1) fprintf(fp, " 1");
 	    else fprintf(fp, " %.4f", b);
-	    fprintf(fp," rgb");
+	    fprintf(fp," setrgb");
 	}
     }
 }
@@ -3288,7 +3307,7 @@ PSDeviceDriver(pDevDesc dd, const char *file, const char *paper,
     pd->paperspecial = FALSE;
     if(!strcmp(pd->papername, "Default") ||
        !strcmp(pd->papername, "default")) {
-	SEXP s = STRING_ELT(GetOption(install("papersize"), R_BaseEnv), 0);
+	SEXP s = STRING_ELT(GetOption1(install("papersize")), 0);
 	if(s != NA_STRING && strlen(CHAR(s)) > 0)
 	    strcpy(pd->papername, CHAR(s));
 	else strcpy(pd->papername, "a4");
@@ -3676,6 +3695,7 @@ static void PS_NewPage(const pGEcontext gc,
 	pd->pageno = 1;
     } else pd->pageno++;
     PostScriptStartPage(pd->psfp, pd->pageno);
+    PostScriptInitColorSpace(pd->psfp);
     Invalidate(dd);
     CheckAlpha(gc->fill, pd);
     if(R_OPAQUE(gc->fill)) {
@@ -4787,7 +4807,7 @@ XFigDeviceDriver(pDevDesc dd, const char *file, const char *paper,
 
     if(!strcmp(pd->papername, "Default") ||
        !strcmp(pd->papername, "default")) {
-	SEXP s = STRING_ELT(GetOption(install("papersize"), R_BaseEnv), 0);
+	SEXP s = STRING_ELT(GetOption1(install("papersize")), 0);
 	if(s != NA_STRING && strlen(CHAR(s)) > 0)
 	    strcpy(pd->papername, CHAR(s));
 	else strcpy(pd->papername, "A4");
@@ -5637,7 +5657,7 @@ static void writeRasterXObject(rasterImage raster, int n,
     fprintf(pd->pdffp, "  /Subtype /Image\n");
     fprintf(pd->pdffp, "  /Width %d\n", raster.w);
     fprintf(pd->pdffp, "  /Height %d\n", raster.h);
-    fprintf(pd->pdffp, "  /ColorSpace /DeviceRGB\n");
+    fprintf(pd->pdffp, "  /ColorSpace 5 0 R\n"); /* sRGB */
     fprintf(pd->pdffp, "  /BitsPerComponent 8\n");
     /* Number of bytes in stream: 2 hex digits per original pixel
      * which has 3 color channels, plus final '>' char*/
@@ -6023,7 +6043,7 @@ PDFDeviceDriver(pDevDesc dd, const char *file, const char *paper,
 
     if(!strcmp(pd->papername, "Default") ||
        !strcmp(pd->papername, "default")) {
-	SEXP s = STRING_ELT(GetOption(install("papersize"), R_NilValue), 0);
+	SEXP s = STRING_ELT(GetOption1(install("papersize")), 0);
 	if(s != NA_STRING && strlen(CHAR(s)) > 0)
 	    strcpy(pd->papername, CHAR(s));
 	else strcpy(pd->papername, "a4");
@@ -6281,14 +6301,14 @@ static void PDF_SetLineColor(int color, pDevDesc dd)
 	    if(k == 1.0) c = m = y = 0.0;
 	    else { c = (c-k)/(1-k); m = (m-k)/(1-k); y = (y-k)/(1-k); }
 	    fprintf(pd->pdffp, "%.3f %.3f %.3f %.3f K\n", c, m, y, k);
-	} else
+	} else {
 	    if (!streql(pd->colormodel, "rgb"))
 		warning(_("unknown 'colormodel', using 'rgb'"));
-	    fprintf(pd->pdffp, "%.3f %.3f %.3f RG\n",
+	    fprintf(pd->pdffp, "/sRGB CS %.3f %.3f %.3f SCN\n",
 		    R_RED(color)/255.0,
 		    R_GREEN(color)/255.0,
 		    R_BLUE(color)/255.0);
-
+	}
 	pd->current.col = color;
     }
 }
@@ -6322,7 +6342,7 @@ static void PDF_SetFill(int color, pDevDesc dd)
 	} else {
 	    if (!streql(pd->colormodel, "rgb"))
 		warning(_("unknown 'colormodel', using 'rgb'"));
-	    fprintf(pd->pdffp, "%.3f %.3f %.3f rg\n",
+	    fprintf(pd->pdffp, "/sRGB cs %.3f %.3f %.3f scn\n",
 		    R_RED(color)/255.0,
 		    R_GREEN(color)/255.0,
 		    R_BLUE(color)/255.0);
@@ -6383,7 +6403,8 @@ static void PDF_SetLineStyle(const pGEcontext gc, pDevDesc dd)
     char dashlist[8];
     int i;
     int newlty = gc->lty;
-    double newlwd = gc->lwd;
+    double linewidth;
+    double newlwd = gc->lwd; 
     R_GE_lineend newlend = gc->lend;
     R_GE_linejoin newljoin = gc->ljoin;
     double newlmitre = gc->lmitre;
@@ -6392,7 +6413,11 @@ static void PDF_SetLineStyle(const pGEcontext gc, pDevDesc dd)
 	pd->current.lend != newlend) {
 	pd->current.lwd = newlwd;
 	pd->current.lty = newlty;
-	fprintf(pd->pdffp, "%.2f w\n", newlwd * 0.75);
+        linewidth = newlwd * 0.75;
+        /* Must not allow line width to be zero */
+        if (linewidth < .01)
+            linewidth = .01;
+	fprintf(pd->pdffp, "%.2f w\n", linewidth);
 	/* process lty : */
 	for(i = 0; i < 8 && newlty & 15 ; i++) {
 	    dashlist[i] = newlty & 15;
@@ -6492,6 +6517,27 @@ static void PDF_Encodings(PDFDesc *pd)
     }
 }
 
+/* Read HexDecode version of sRGB profile from icc/srgb
+ * http://code.google.com/p/ghostscript/source/browse/trunk/gs/iccprofiles/srgb.icc
+ */
+static void PDFwritesRGBcolorspace(PDFDesc *pd) 
+{
+    char buf[BUFSIZE], line[50];
+    FILE *fp;
+
+    snprintf(buf, BUFSIZE,"%s%slibrary%sgrDevices%sicc%ssrgb",
+             R_Home, FILESEP, FILESEP, FILESEP, FILESEP);
+    if (!(fp = R_fopen(R_ExpandFileName(buf), "r")))
+        error(_("Failed to load sRGB colorspace file"));
+    while (!feof(fp)) {
+        char *p;
+	p = fgets(line, 50, fp); /* avoid compiler warning on Fedora */
+	if(!p) error("fgets read error in PDFwritesRGBcolorspace");
+        fprintf(pd->pdffp, "%s", line);
+    }
+    fclose(fp);
+}
+
 #include <time.h>
 #include <Rversion.h>
 
@@ -6535,6 +6581,14 @@ static void PDF_startfile(PDFDesc *pd)
     ++pd->nobjs;
 
     /* Object 4 will be at the end */
+
+    ++pd->nobjs;
+
+    /* Object 5 will be at the end */
+
+    ++pd->nobjs;
+
+    /* Object 6 will be at the end */
 
     ++pd->nobjs;
 }
@@ -6691,8 +6745,25 @@ static void PDF_endfile(PDFDesc *pd)
     }
     fprintf(pd->pdffp, ">>\n");
 
+    /* The sRGB colorspace */
+    fprintf(pd->pdffp, "/ColorSpace << /sRGB 5 0 R >>\n");
+
     fprintf(pd->pdffp, ">>\nendobj\n");
 
+    /* Objects 5 and 6 are the sRGB color space */
+
+    /* sRGB colorspace */
+    pd->pos[5] = (int) ftell(pd->pdffp);
+    fprintf(pd->pdffp, "5 0 obj\n[/ICCBased 6 0 R]\n");
+    fprintf(pd->pdffp,
+            "endobj\n");
+    pd->pos[6] = (int) ftell(pd->pdffp);
+    fprintf(pd->pdffp,
+            "6 0 obj\n<< /N 3 /Alternate /DeviceRGB /Length 9433 /Filter /ASCIIHexDecode >>\nstream\n");
+    PDFwritesRGBcolorspace(pd);    
+    fprintf(pd->pdffp,
+            " >\nendstream\nendobj\n");
+    
     /*
      * Write out objects representing the encodings
      */

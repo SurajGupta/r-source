@@ -1,8 +1,8 @@
 
-R version 2.12.0 Under development (unstable) (2010-08-22 r52792)
-Copyright (C) 2010 The R Foundation for Statistical Computing
+R version 2.14.0 Under development (unstable) (2011-03-20 r54899)
+Copyright (C) 2011 The R Foundation for Statistical Computing
 ISBN 3-900051-07-0
-Platform: x86_64-apple-darwin10.4.0 (64-bit)
+Platform: x86_64-unknown-linux-gnu (64-bit)
 
 R is free software and comes with ABSOLUTELY NO WARRANTY.
 You are welcome to redistribute it under certain conditions.
@@ -3183,8 +3183,8 @@ Error in `[.data.frame`(x, 1, c("a", "c")) : undefined columns selected
 [41] subset        summary       t             tail          transform    
 [46] unique        unstack       within       
 > meth2gen("dendrogram")
-[1] [[         cophenetic cut        labels     plot       print      reorder   
-[8] rev        str       
+ [1] [[         as.hclust  cophenetic cut        labels     merge     
+ [7] plot       print      reorder    rev        str       
 > ## --> the output may need somewhat frequent updating..
 > 
 > 
@@ -3636,8 +3636,12 @@ probability of success
 > 
 > ## Misleading error messages on integer overflow
 > ## Uwe Ligges, R-devel, 2004-02-19
-> try(numeric(2^31))
-Error in vector("double", length) : vector size specified is too large
+> ## (modified to make printed result the same whether numeric() is
+> ##  compiled or interpreted)
+> ## try(numeric(2^31))
+> tryCatch(numeric(2^31),
++          error = function(e) paste("Error:", conditionMessage(e)))
+[1] "Error: vector size specified is too large"
 > try(matrix( , 2^31, 1))
 Error in matrix(, 2^31, 1) : invalid 'nrow' value (too large or NA)
 In addition: Warning message:
@@ -4653,9 +4657,9 @@ Analysis of Variance Table
 
 Model 1: y ~ 1
 Model 2: y ~ z
-  Res.Df    RSS Df Sum of Sq      F    Pr(>F)    
-1      9 89.130                                  
-2      8  6.316  1    82.814 104.90 7.099e-06 ***
+  Res.Df    RSS Df Sum of Sq     F    Pr(>F)    
+1      9 89.130                                 
+2      8  6.316  1    82.814 104.9 7.099e-06 ***
 ---
 Signif. codes:  0 '***' 0.001 '**' 0.01 '*' 0.05 '.' 0.1 ' ' 1 
 > add1(lm1, scope = ~ z)
@@ -4725,12 +4729,16 @@ out-of-range values treated as 0 in coercion to raw
 > df3[df3 == 2]            # had spurious names
 [1] 2 2
 > # but not allowed
-> try(df2[df2 == 2] <- 1:2)
-Error in x[[v]][thisvar] <- if (N > 1L) value[n + seq_len(nv)] else value : 
-  NAs are not allowed in subscripted assignments
-> try(m2[m2 == 2] <- 1:2)
-Error in m2[m2 == 2] <- 1:2 : 
-  NAs are not allowed in subscripted assignments
+> ## (modified to make printed result the same whether numeric() is
+> ##  compiled or interpreted)
+> ## try(df2[df2 == 2] <- 1:2)
+> ## try(m2[m2 == 2] <- 1:2)
+> tryCatch(df2[df2 == 2] <- 1:2,
++          error = function(e) paste("Error:", conditionMessage(e)))
+[1] "Error: NAs are not allowed in subscripted assignments"
+> tryCatch(m2[m2 == 2] <- 1:2,
++          error = function(e) paste("Error:", conditionMessage(e)))
+[1] "Error: NAs are not allowed in subscripted assignments"
 > ##
 > 
 > 
@@ -4790,7 +4798,7 @@ $foo
 > 
 > 
 > ## printing of a kernel:
-> kernel(1, 0)
+> kernel(1)
 unknown 
 coef[0] = 1
 > ## printed wrongly in R <= 2.1.1
@@ -5332,10 +5340,10 @@ Levels: A B C D E
 [1] D
 Levels: A B C D E
 
-> unlist(as.list(x))
+> (xx <- unlist(as.list(x)))
 [1] B C D
 Levels: A B C D E
-> stopifnot(identical(x, unlist(as.list(x))))
+> stopifnot(identical(x, xx))
 > as.vector(x, "list")
 [[1]]
 [1] B
@@ -5349,10 +5357,10 @@ Levels: A B C D E
 [1] D
 Levels: A B C D E
 
-> sapply(x, na.pass)
+> (sx <- sapply(x, function(.).))
 [1] B C D
 Levels: A B C D E
-> stopifnot(identical(x, sapply(x, na.pass)))
+> stopifnot(identical(x, sx))
 > ## changed in 2.4.0
 > 
 > 
@@ -5549,6 +5557,7 @@ Residual standard error: 1.735 on 44 degrees of freedom
 
 > ## failed < 2.4.0
 > 
+> RNGkind("default","default")## reset to default - ease  R core
 > 
 > ## prettyNum lost attributes (PR#8695)
 > format(matrix(1:16, 4), big.mark = ",")
@@ -6068,8 +6077,8 @@ Error in cor(X, use = "complete", method = "kendall") :
 > cor(X, use = "pair")
      [,1]       [,2]       [,3]
 [1,]   NA         NA         NA
-[2,]   NA  1.0000000 -0.2784939
-[3,]   NA -0.2784939  1.0000000
+[2,]   NA  1.0000000 -0.1942739
+[3,]   NA -0.1942739  1.0000000
 > cor(X, use = "pair", method="spearman")
      [,1] [,2] [,3]
 [1,]   NA   NA   NA
@@ -6100,8 +6109,8 @@ Error in cor(X, use = "complete", method = "kendall") :
 > cor(X, use = "pair")
      [,1]       [,2]       [,3]
 [1,]   NA         NA         NA
-[2,]   NA  1.0000000 -0.2784939
-[3,]   NA -0.2784939  1.0000000
+[2,]   NA  1.0000000 -0.1942739
+[3,]   NA -0.1942739  1.0000000
 > cor(X, use = "pair", method="spearman")
      [,1] [,2] [,3]
 [1,]   NA   NA   NA
@@ -6121,15 +6130,15 @@ Error in cor(X, use = "complete", method = "kendall") :
 +                    ans = rnorm(10))
 > fit <-  lm(ans ~ x + u, data = junk)
 > confint(fit)
-                2.5 %   97.5 %
-(Intercept) -1.442871 1.553126
-x                  NA       NA
-uY          -2.548846 1.688133
+                 2.5 %    97.5 %
+(Intercept) -0.4634457 1.6198116
+x                   NA        NA
+uY          -2.3607073 0.5854635
 > confint.default(fit)
-                2.5 %   97.5 %
-(Intercept) -1.218080 1.328335
-x                  NA       NA
-uY          -2.230944 1.370232
+                 2.5 %    97.5 %
+(Intercept) -0.3071384 1.4635043
+x                   NA        NA
+uY          -2.1396554 0.3644116
 > ## Mismatch gave NA for 'u' in 2.6.1
 > 
 > 
@@ -6235,22 +6244,22 @@ foo(1, bar = 2)
 > ## https://stat.ethz.ch/pipermail/r-devel/2008-December/051669.html
 > try(.Call("R_GD_nullDevice", NULL))
 Error in .Call("R_GD_nullDevice", NULL) : 
-  Incorrect number of arguments (1), expecting 0 for R_GD_nullDevice
+  Incorrect number of arguments (1), expecting 0 for 'R_GD_nullDevice'
 > sym <- getDLLRegisteredRoutines("grDevices")$.Call[["R_GD_nullDevice"]]
 > try(.Call(sym, NULL))
 Error in .Call(sym, NULL) : 
-  Incorrect number of arguments (1), expecting 0 for R_GD_nullDevice
+  Incorrect number of arguments (1), expecting 0 for 'R_GD_nullDevice'
 > try(.Call(sym$address, NULL))
 Error in .Call(sym$address, NULL) : 
-  Incorrect number of arguments (1), expecting 0 for R_GD_nullDevice
+  Incorrect number of arguments (1), expecting 0 for 'R_GD_nullDevice'
 > ## wrong error in 2.8.1
 > sym <- getDLLRegisteredRoutines("stats")$.C$prho
 > try(.C(sym, NULL))
 Error in .C(sym, NULL) : 
-  Incorrect number of arguments (1), expecting 5 for prho
+  Incorrect number of arguments (1), expecting 5 for 'prho'
 > try(.C(sym$address, NULL))
 Error in .C(sym$address, NULL) : 
-  Incorrect number of arguments (1), expecting 5 for prho
+  Incorrect number of arguments (1), expecting 5 for 'prho'
 > ## were OK
 > 
 > options(keep.source = TRUE)
@@ -6551,4 +6560,153 @@ Frequency = 0.2
 > format.pval(a, eps=0.01, nsmall =2)
 [1] "0.10"  "0.30"  "0.40"  "0.50"  "0.30"  "<0.01"
 > ## granted in 2.12.0
+> 
+> 
+> ## printing fractional dates
+> as.Date(0.5, origin="1969-12-31")
+[1] "1969-12-31"
+> ## changed to round down in 2.12.1
+> 
+> 
+> ## printing data frames with  ""  colnames
+> dfr <- data.frame(x=1:6, CC=11:16, f = gl(3,2)); colnames(dfr)[2] <- ""
+> dfr
+  x    f
+1 1 11 1
+2 2 12 1
+3 3 13 2
+4 4 14 2
+5 5 15 3
+6 6 16 3
+> ## now prints the same as data.matrix(dfr) does here
+> 
+> 
+> ## format(., zero.print) --> prettyNum()
+> set.seed(9); m <- matrix(local({x <- rnorm(40)
++                                 sign(x)*round(exp(2*x))/10}), 8,5)
+> noquote(format(m, zero.print= "."))
+     [,1] [,2] [,3] [,4] [,5]
+[1,]  .   -0.1 -0.1  .    0.8
+[2,]  .    .    .   21.4  0.1
+[3,] -0.1  1.3  0.6  0.2  0.1
+[4,] -0.1  .    .    .    .  
+[5,]  0.2  0.1  3.4  0.2  0.2
+[6,]  .   -0.1  0.1  0.2  .  
+[7,]  1.1  4.0 -0.1  .    0.2
+[8,] -0.1  .    0.6 -0.1  0.1
+> ## used to print  ". 0" instead of ".  "
+> 
+> 
+> ## tests of NA having precedence over NaN -- all must print "NA"
+> min(c(NaN, NA))
+[1] NA
+> min(c(NA, NaN)) # NaN in 2.12.2
+[1] NA
+> min(NaN, NA_real_)  # NaN in 2.12.2
+[1] NA
+> min(NA_real_, NaN)
+[1] NA
+> max(c(NaN, NA))
+[1] NA
+> max(c(NA, NaN))  # NaN in 2.12.2
+[1] NA
+> max(NaN, NA_real_)  # NaN in 2.12.2
+[1] NA
+> max(NA_real_, NaN)
+[1] NA
+> ## might depend on compiler < 2.13.0
+> 
+> 
+> ## PR#14514
+> # Data are from Conover, "Nonparametric Statistics", 3rd Ed, p. 197,
+> # re-arranged to make a lower-tail test the issue of relevance:  we
+> # want to see if pregnant nurses exposed to nitrous oxide have higher
+> # rates of miscarriage, stratifying on the type of nurse.
+> Nitrous <- array(c(32,210,8,26,18,21,3,3,7,75,0,10), dim = c(2,2,3),
++                  dimnames = list(c("Exposed","NotExposed"),
++                  c("FullTerm","Miscarriage"),
++                  c("DentalAsst","OperRoomNurse","OutpatientNurse")))
+> mantelhaen.test(Nitrous, exact=TRUE, alternative="less")
+
+	Exact conditional test of independence in 2 x 2 x k tables
+
+data:  Nitrous 
+S = 57, p-value = 0.1959
+alternative hypothesis: true common odds ratio is less than 1 
+95 percent confidence interval:
+ 0.000000 1.388197 
+sample estimates:
+common odds ratio 
+        0.6652418 
+
+> mantelhaen.test(Nitrous, exact=FALSE, alternative="less")
+
+	Mantel-Haenszel chi-squared test with continuity correction
+
+data:  Nitrous 
+Mantel-Haenszel X-squared = 0.7143, df = 1, p-value = 0.199
+alternative hypothesis: true common odds ratio is less than 1 
+95 percent confidence interval:
+ 0.000000 1.260053 
+sample estimates:
+common odds ratio 
+        0.6645374 
+
+> ## exact = FALSE gave the wrong tail in 2.12.2.
+> 
+> 
+> ## scan(strip.white=TRUE) could strip trailing (but not leading) space
+> ## inside quoted strings.
+> writeLines(' "  A  "; "B" ;"C";" D ";"E ";  F  ;G  ', "foo")
+> cat(readLines("foo"), sep = "\n")
+ "  A  "; "B" ;"C";" D ";"E ";  F  ;G  
+> scan('foo', list(""), sep=";")[[1]]
+Read 7 records
+[1] "   A  " " B "    "C"      " D "    "E "     "  F  "  "G  "   
+> scan('foo', "", sep=";")
+Read 7 items
+[1] "   A  " " B "    "C"      " D "    "E "     "  F  "  "G  "   
+> scan('foo', list(""), sep=";", strip.white = TRUE)[[1]]
+Read 7 records
+[1] "  A  " "B"     "C"     " D "   "E "    "F"     "G"    
+> scan('foo', "", sep=";", strip.white = TRUE)
+Read 7 items
+[1] "  A  " "B"     "C"     " D "   "E "    "F"     "G"    
+> unlink('foo')
+> 
+> writeLines(' "  A  "\n "B" \n"C"\n" D "\n"E "\n  F  \nG  ', "foo2")
+> scan('foo2', "")
+Read 7 items
+[1] "  A  " "B"     "C"     " D "   "E "    "F"     "G"    
+> scan('foo2', "", strip.white=TRUE) # documented to be ignored ...
+Read 7 items
+[1] "  A  " "B"     "C"     " D "   "E "    "F"     "G"    
+> unlink('foo2')
+> ## Changed for 2.13.0, found when investigating non-bug PR#14522.
+> 
+> 
+> ## PR#14488: missing values in rank correlations
+> set.seed(1)
+> x <- runif(10)
+> y <- runif(10)
+> x[3] <- NA; y[5] <- NA
+> xy <- cbind(x, y)
+> 
+> cor(x, y, method="spearman", use="complete.obs")
+[1] 0.2380952
+> cor(x, y, method="spearman", use="pairwise.complete.obs")
+[1] 0.2380952
+> cor(na.omit(xy),  method="spearman", use="complete.obs")
+          x         y
+x 1.0000000 0.2380952
+y 0.2380952 1.0000000
+> cor(xy,  method="spearman", use="complete.obs")
+          x         y
+x 1.0000000 0.2380952
+y 0.2380952 1.0000000
+> cor(xy,  method="spearman", use="pairwise.complete.obs")
+          x         y
+x 1.0000000 0.2380952
+y 0.2380952 1.0000000
+> ## inconsistent in R < 2.13.0
 > 

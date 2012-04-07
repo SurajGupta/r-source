@@ -8,7 +8,8 @@
 \title{Edit One or More Files}
 \description{Edit one or more files in a text editor.}
 \usage{
-file.edit(\dots, title = file, editor = getOption("editor"))
+file.edit(\dots, title = file, editor = getOption("editor"),
+          fileEncoding = "")
 }
 \arguments{
   \item{\dots}{one or more character vectors containing the names of the
@@ -16,6 +17,9 @@ file.edit(\dots, title = file, editor = getOption("editor"))
     \code{\link{path.expand}}.}
   \item{title}{the title to use in the editor; defaults to the filename.}  
   \item{editor}{the text editor to be used.  See \sQuote{Details}.}
+  \item{fileEncoding}{the encoding to assume for the file: the default
+    is to assume the native encoding.  See the \sQuote{Encoding} section
+    of the help for \code{\link{file}}.}
 }
 \details{
   The behaviour of this function is very system dependent.  Currently
@@ -36,6 +40,10 @@ file.edit(\dots, title = file, editor = getOption("editor"))
   \code{editor}.  On Unix the default is set from the environment
   variables \env{EDITOR} or \env{VISUAL} if either is set, otherwise
   \code{vi} is used.
+#ifdef windows
+  
+  UTF-8-encoded paths not valid in the current locale can be used.  
+#endif  
 }
 \seealso{
   \code{\link{files}},

@@ -54,7 +54,8 @@ sort.int <-
         y <- if(length(partial) <= 10L) {
             partial <- .Internal(qsort(partial, FALSE))
             .Internal(psort(x, partial))
-        } else .Internal(qsort(x, FALSE))
+        } else if (is.double(x)) .Internal(qsort(x, FALSE))
+        else .Internal(sort(x, FALSE))
     }
     else {
         nms <- names(x)
@@ -103,12 +104,11 @@ order <- function(..., na.last = TRUE, decreasing = FALSE)
     } else if(!is.na(na.last))
         return(.Internal(order(na.last, decreasing, ...)))
     ## remove nas
-    if(any(diff(sapply(z, length)) != 0L))
+    if(any(diff(l.z <- vapply(z, length, 1L)) != 0L))
         stop("argument lengths differ")
-    ans <- sapply(z, is.na)
-    if(is.list(ans)) return(integer(0L)) # happens for 0-length input
+    ans <- vapply(z, is.na, rep.int(NA, l.z[1L]))
     ok <- if(is.matrix(ans)) !apply(ans, 1, any) else !any(ans)
-    if(all(!ok)) return(integer(0L))
+    if(all(!ok)) return(integer())
     z[[1L]][!ok] <- NA
     ans <- do.call("order", c(z, decreasing=decreasing))
     keep <- seq_along(ok)[ok]

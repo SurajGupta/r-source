@@ -2,7 +2,7 @@
 ###
 ### Process this file with autoconf to produce a configure script.
 ###
-### Copyright (C) 1998-2010 R Core Team
+### Copyright (C) 1998-2011 R Core Team
 ###
 ### This file is part of R.
 ###
@@ -20,7 +20,7 @@
 ### along with R; if not, a copy is available at
 ### http://www.r-project.org/Licenses/
 
-AC_PREREQ(2.60)
+AC_PREREQ(2.62)
 
 ## We want to get the version number from file 'VERSION' (rather than
 ## specifying the version info in 'configure.ac'.  Hence, we need a bit
@@ -72,6 +72,23 @@ AC_DEFINE_UNQUOTED(R_VENDOR, "${host_vendor}",
 [Define this to be the name of the vendor of your system.])
 AC_DEFINE_UNQUOTED(R_OS, "${host_os}",
 [Define this to be the name of the OS of your system.])
+
+## exclude some unsupported OSes
+case "${host_os}" in
+   ## Darwin 1.3.1 was OS X 10.0, 1.4.1 was 10.1, 5 is 10.2 etc
+   ## with 11 being 10.7.  We no longer support < 10.4 (Tiger)
+   ## http://en.wikipedia.org/wiki/Darwin_OS
+   darwin1.*)
+     AC_MSG_ERROR([The earliest supported MacOS X is 10.4.]
+     ;; 
+  darwin[[567]]*)
+     AC_MSG_ERROR([The earliest supported MacOS X is 10.4.]
+     ;; 
+  aix[123]*|aix4.[01]*)
+    ## These need a form of linking we no longer support
+    AC_MSG_ERROR([AIX prior to 4.2 is not supported])
+    ;;
+esac
 
 R_PLATFORM="${host}"
 AC_SUBST(R_PLATFORM)
@@ -419,6 +436,15 @@ AC_ARG_WITH([ICU],
 [R_ARG_USE(ICU)],
 [use_ICU=yes])
 
+## Byte-compilation of packages.
+AC_ARG_ENABLE([byte-compiled-packages],
+[AS_HELP_STRING([--enable-byte-compiled-packages],
+                [(not yet operational) byte-compile R packages @<:@no@:>@])],
+[want_byte_compiled_packages="${enableval}"],
+[want_byte_compiled_packages=no])
+AM_CONDITIONAL(BYTE_COMPILE_PACKAGES,
+               [test "x${want_byte_compiled_packages}" = xyes])
+
 ### ** Precious variables.
 
 AC_ARG_VAR([R_PRINTCMD],
@@ -467,7 +493,7 @@ AC_ARG_VAR([SHLIB_CXXLD],
             files from the C++ compiler])
 AC_ARG_VAR([SHLIB_CXXLDFLAGS],
            [special flags used by SHLIB_CXXLD])
-AC_ARG_VAR([SHLIB_FCD],
+AC_ARG_VAR([SHLIB_FCLD],
            [command for linking shared objects which contain object
             files from the Fortran 95 compiler])
 AC_ARG_VAR([SHLIB_FCLDFLAGS],
@@ -511,7 +537,7 @@ AC_SUBST([R_XTRA_CPPFLAGS2])
 
 AC_PATH_PROG(GETWD, pwd, pwd)
 AC_MSG_CHECKING([whether builddir is srcdir])
-if test "`cd ${srcdir} && ${GETWD}`" = "`${GETWD}`"; then
+if test "`cd \"${srcdir}\" && ${GETWD}`" = "`${GETWD}`"; then
   BUILDDIR_IS_SRCDIR=yes
 else
   BUILDDIR_IS_SRCDIR=no
@@ -526,17 +552,13 @@ R_MISSING_PROG(AUTOCONF, autoconf)
 R_MISSING_PROG(AUTOMAKE, automake)
 R_MISSING_PROG(AUTOHEADER, autoheader)
 AC_PROG_AWK
-AC_PROG_EGREP
 AC_PROG_LN_S
-## AC_PROG_RANLIB
 AC_PROG_YACC
 R_PROG_AR
 R_PROG_INSTALL
 
 ## we would like a POSIX sed, and need one on Solaris
 AC_PATH_PROGS(SED, sed, /bin/sed, [/usr/xpg4/bin:$PATH])
-## we need an tr that interprets \r for Rdiff
-AC_PATH_PROGS(TR, tr, /bin/tr, [/usr/xpg4/bin:$PATH])
 ## 'which' is not POSIX, and might be a shell builtin or alias
 ##  (but should not be in 'sh')
 AC_PATH_PROGS(WHICH, which, which)
@@ -545,8 +567,6 @@ AC_PATH_PROGS(WHICH, which, which)
 AC_SUBST(MAKE)
 ## Pager
 R_PROG_PAGER
-## Perl
-R_PROG_PERL
 ## Tar -- we prefer a GNU version
 AC_PATH_PROGS(TAR, [${TAR} gtar gnutar tar], "")
 ## TeXMF stuff
@@ -560,6 +580,8 @@ AC_PATH_PROGS(R_BZIPCMD, [${BZIP} bzip2], "")
 R_PROG_BROWSER
 ## PDF viewer
 R_PROG_PDFVIEWER
+## Noweb
+AC_PATH_PROG(NOTANGLE, notangle, false)
 
 ## Cairo needs pkg-config
 AC_PATH_PROG(PKGCONF,pkg-config,[],[$PATH:/usr/local/bin:/ext/bin:/ext:/sw/bin:/opt/bin])
@@ -569,7 +591,7 @@ AC_PROG_CC
 AC_PROG_GCC_TRADITIONAL
 AC_PROG_CPP
 R_PROG_CPP_CPPFLAGS
-## see if the user set FFLAGS
+## see if the user set FFLAGS: used for Intel compilers
 userFFLAGS=${FFLAGS}
 R_PROG_F77
 AC_PROG_CXX
@@ -611,7 +633,9 @@ AM_CONDITIONAL(CROSS_COMPILING, [test "${cross_compiling}" = yes])
 ## Should be needed for tests using AC_RUN_IFELSE()?
 ## Make sure that non-standard directories specified via '-L' are really
 ## searched in the tests.
-## Note: earlier versions used LIBS rather than LDFLAGS.
+## OTOH, R_LD_LIBRARY_PATH in the environment is meant to be the final version.
+R_LD_LIBRARY_PATH_save=${R_LD_LIBRARY_PATH}
+R_LD_LIBRARY_PATH=
 case "${host_os}" in
   darwin*)
     ## Darwin provides a full path in the ID of each library such 
@@ -633,7 +657,6 @@ case "${host_os}" in
     done
     ;;
 esac
-## </FIXME>
 
 ## Record name of environment variable which tells the dynamic linker
 ## where to find shlibs (typically, 'LD_LIBRARY_PATH').
@@ -662,9 +685,8 @@ AC_SUBST(LIBM)
 AC_CHECK_LIB(m, sin)
 case "${host_os}" in
   darwin*)
-    ## MacOS <= 10.2 doesn't have dlcompat, >= 10.3 include it in libSystem
-    ## since R 2.3 we don't provide a work-around for missing dl anymore
-    AC_SEARCH_LIBS(dlopen, dl,,[AC_MSG_ERROR([Please install dlcompat or update to a more recent OS X.])])
+    ## MacOS <= 10.2 dlcompat, >= 10.3 included dlcompat in libSystem
+    AC_SEARCH_LIBS(dlopen, dl,,[AC_MSG_ERROR([Your OS X is too old.])])
     ## SI says we want '-lcc_dynamic' on Darwin, although currently
     ## http://developer.apple.com/documentation/MacOSX/ has nothing
     ## official.  Bill Northcott <w.northcott@unsw.edu.au> points out
@@ -719,6 +741,9 @@ AC_SUBST(READLINE_LIBS)
 AC_HEADER_STDC
 AC_HEADER_TIME
 AC_HEADER_DIRENT
+if test "${ac_cv_search_opendir}" = "no"; then
+   AC_MSG_ERROR([Building R requires the 'opendir' system call])
+fi
 AC_HEADER_SYS_WAIT
 ## <NOTE>
 ## Some of these are also checked for when Autoconf computes the default
@@ -792,6 +817,8 @@ dnl ])
 R_PROG_CC_MAKEFRAG
 R_PROG_CC_LO_MAKEFRAG
 
+AC_OPENMP
+
 ### *** Fortran 77 compiler.
 
 R_PROG_F77_FLIBS
@@ -803,9 +830,18 @@ R_PROG_F77_CC_COMPAT_COMPLEX
 AM_CONDITIONAL(COMPILE_FORTRAN_DOUBLE_COMPLEX,
                [test "x${HAVE_FORTRAN_DOUBLE_COMPLEX}" != x])
 
+AC_LANG_PUSH(Fortran 77)
+AC_OPENMP
+AC_LANG_POP(Fortran 77)
+
+
 ### *** C++ compiler.
 
 R_PROG_CXX_MAKEFRAG
+
+AC_LANG_PUSH(C++)
+AC_OPENMP
+AC_LANG_POP(C++)
 
 ### *** ObjC compiler
 
@@ -882,24 +918,10 @@ case "${host_os}" in
     AC_DEFINE(HAVE_NO_SYMBOL_UNDERSCORE)
     ;;
   darwin*)
-    ## This is needed for Apple's dlsym included in >= 10.3 
-    ## and so we've changed dlfcn-darwin.c for 2.1.0
     AC_DEFINE(HAVE_NO_SYMBOL_UNDERSCORE)
-    ## Need '-no-cpp-precomp' say J de Leeuw <deleeuw@stat.ucla.edu> and
-    ## http://fink.sourceforge.net/doc/porting/basics.php.
-    if test "${GCC}" = yes; then
-      ## only old Apple builds of gcc support (and need?) -no-cpp-precomp
-      APPLEBLD=`${CC} --version|sed -n -e 's:.*Apple.*build \([[0-9]]\{1,\}\).*:\1:p' 2>/dev/null`
-      if test -n "${APPLEBLD}" -a "${APPLEBLD}" -lt 5300 2>/dev/null; then
-        R_SH_VAR_ADD(R_XTRA_CPPFLAGS, [-no-cpp-precomp])
-      fi
-    fi
     ;;
   hpux*)
     AC_DEFINE(HAVE_NO_SYMBOL_UNDERSCORE)
-    AC_DEFINE(USE_BUILTIN_RINT, 1,
-              [Define if your rint() is broken on your system.
-               Apparently needed on HPUX.])
     case "${CC}" in
       cc|c89)
 	## Luke Tierney says we also need '-Wp,-H16000' which tells the
@@ -958,28 +980,6 @@ case "${host_os}" in
         ;;
     esac
     case  "${F77}" in
-      ## gfortran: At least for 4.3.x -O2 gives faulty code
-      gfortran*)
- 	if test "x$userFFLAGS" = x; then
-          if test $ac_cv_prog_f77_g = yes; then
-	    case "${host_cpu}" in
-	      x86_64)
-	        FFLAGS="-g -O"
-		;;
-	      *)
-		;;
-	    esac
-          else
-	    case "${host_cpu}" in
-	      x86_64)
-	        FFLAGS="-O"
-		;;
-	      *)
-		;;
-	    esac
-          fi
-        fi
-        ;;
       ## Intel compilers
       *ifc|*ifort)
 	if test "x$userFFLAGS" = x; then
@@ -1132,22 +1132,22 @@ AC_PATH_PROG(XMKMF, xmkmf, [], [${r_xtra_path}])
 if test -n "${XMKMF}"; then
   echo > Imakefile
   ${XMKMF} > /dev/null 2>&1 || echo > Makefile
-  cc=`${srcdir}/tools/GETMAKEVAL CC`
+  cc=`"${srcdir}/tools/GETMAKEVAL" CC`
   cc=`echo ${cc} | sed "s/ .*//"`
   ## Paul Gilbert reported on R-devel 2006-04-13 a system with cc=""
   if test -n "${cc}" ; then
     r_cc_cmd=`echo ${CC} | sed "s/ .*//"`
     if test "`which ${cc}`" = "`which ${r_cc_cmd}`"; then
-      shlib_ldflags=`${srcdir}/tools/GETMAKEVAL SHLIBLDFLAGS`
-      cpicflags=`${srcdir}/tools/GETMAKEVAL PICFLAGS`
+      shlib_ldflags=`"${srcdir}/tools/GETMAKEVAL" SHLIBLDFLAGS`
+      cpicflags=`"${srcdir}/tools/GETMAKEVAL" PICFLAGS`
     fi
   fi
-  cxx=`${srcdir}/tools/GETMAKEVAL CXX`
+  cxx=`"${srcdir}/tools/GETMAKEVAL" CXX`
   cxx=`echo ${cxx} | sed "s/ .*//"`
   if test -n "${cxx}" ; then
     r_cxx_cmd=`echo ${CXX} | sed "s/ .*//"`
     if test "`which ${cxx}`" = "`which ${r_cxx_cmd}`"; then
-      cxxpicflags=`${srcdir}/tools/GETMAKEVAL CXXPICFLAGS`
+      cxxpicflags=`"${srcdir}/tools/GETMAKEVAL" CXXPICFLAGS`
     fi
   fi
   rm -f Imakefile Makefile
@@ -1197,10 +1197,6 @@ fi
 dylib_undefined_allowed=yes
 is_cygwin=no
 case "${host_os}" in
-  aix[123]*|aix4.[01]*)
-    ## These need a form of linking we no longer support
-    AC_MSG_ERROR([AIX prior to 4.2 is not supported])
-    ;;
   aix*)
     use_exportfiles=yes
     ## All AIX code is PIC.
@@ -1245,9 +1241,6 @@ case "${host_os}" in
     darwin_pic="-fPIC"
     dylib_undefined_allowed=no
     darwin_dylib_ldflags="-dynamiclib"
-    ## Used to need this for GUI and quartz device, but neither are in
-    ## R or libR.dylib any longer (2.1.0).
-    ## main_ldflags="-framework Carbon"
     ## Want '-mdynamic-no-pic' for GCC 3, says Jan de Leeuw.
     if test "${GCC}" = yes; then
       case "${CC_VERSION}" in
@@ -1276,25 +1269,6 @@ case "${host_os}" in
 	  ;;
     esac
     case "${host_os}" in
-      ## According to Jan de Leeuw, OS X 10.1 is darwin 5, OS X 10.2 is
-      ## darwin 6, and the real difference is between darwin < and >= 5.
-      ## It would be nice to use R.bin (or libR.dylib) as bundle_loader
-      ## together with '-undefined suppress' for darwin 5 or better, but
-      ## the paths to these change when installing.
-      ## The Darwin 1.[012] special casing is from libtool and could be
-      ## eliminated ('-flat_namespace' is the default if available).
-      ## FIXME: Rblas is entirely untested and possibly doesn't work
-      ## for any darwin before darwin7!
-      darwin1.[[012]]*)
-        shlib_ldflags="-bundle -undefined suppress"
-        darwin_pic="${darwin_pic} -fno-common"
-        ;;
-      ## although OS X 10.3 (Panther = Darwin 7) has some useful features,
-      ## dlopen doesn't work with dylibs and RTLD_LOCAL, so we can't use them.
-      darwin[[567]]*)
-	shlib_ldflags="-flat_namespace -bundle -undefined suppress"
-        darwin_pic="${darwin_pic} -fno-common"
-        ;;
       ## * recent ld has -single_module so it doesn't need -fno-common
       ##   we have to use dylib instead of a bundle
       ## * dylib+single_module+flat_namespace=pretty much what other platforms call .so
@@ -1349,7 +1323,6 @@ rm -f libconftest${DYLIB_EXT} conftest.c
     fi
     ;;
   freebsd*)
-    ## Only sure for FreeBSD 3 and above.
     main_ldflags="-export-dynamic"
     shlib_ldflags="-shared"
     ;;
@@ -1508,6 +1481,7 @@ esac
 
 ## Step 5.  Overrides from the environment and error checking.
 if test -z "${MAIN_LD}"; then
+  main_ld_was_given=no
   MAIN_LD="${main_ld}"
   R_SH_VAR_ADD(MAIN_LDFLAGS, [${main_ldflags}])
 fi
@@ -1549,6 +1523,7 @@ if test -z "${CXXPICFLAGS}"; then
 fi
 
 if test -z "${SHLIB_LD}"; then
+  shlib_ld_was_given=no
   SHLIB_LD="${shlib_ld}"
   R_SH_VAR_ADD(SHLIB_LDFLAGS, [${shlib_ldflags}])
 fi
@@ -1558,6 +1533,7 @@ if test -z "${SHLIB_LDFLAGS}"; then
 fi
 
 if test -z "${SHLIB_CXXLD}"; then
+  shlib_cxxld_was_given=no
   SHLIB_CXXLD="${shlib_cxxld}"
   R_SH_VAR_ADD(SHLIB_CXXLDFLAGS, [${shlib_cxxldflags}])
 fi
@@ -1612,6 +1588,7 @@ case "${host_os}" in
 esac
 
 if test -z "${DYLIB_LD}"; then
+  dylib_ld_was_given=no
   DYLIB_LD="${SHLIB_LD}"
   R_SH_VAR_ADD(DYLIB_LDFLAGS, [${dylib_ldflags}])
 else
@@ -1647,6 +1624,61 @@ AC_SUBST(RLAPACK_LDFLAGS)
 AC_SUBST(LAPACK_LDFLAGS)
 AC_SUBST(FW_VERSION)
 
+### OpenMP.
+
+## The basic checking is performed via AC_OPENMP added in Autoconf 2.62,
+## which we already called for determining the appropriate flags for the
+## C, C++, Fortran 77, Fortran compiler/linker.  Note that this gives
+## variables OPENMP_CFLAGS etc., which are meant to be used for *both*
+## compiling and linking.  So we can really only used them provided that
+## we use the respective compilers for linking as well (or we need a
+## different mechanism for determining what is needed).
+##
+## For compiling R itself, we use MAIN_LD and DYLIB_LD for linking, both
+## defaulting to CC.  Hence:
+## 
+##    If both MAIN_LD and DYLIB_LD were not specified by the user and
+##    equal CC and this was determined to support OpenMP, then we (try
+##    to) provide OpenMP support by adding OPENMP_CFLAGS to the linker
+##    flags and OPENMP_CFLAGS and OPENMP_FFLAGS to the C and Fortran 77
+##    compiler flags, and defining HAVE_OPENMP.
+##
+## (The Fortran 77 compiler is never used for linking by default.)
+
+if test "x${main_ld_was_given}" = xno -a "${MAIN_LD}" = "${CC}" -a \
+        "x${dylib_ld_was_given}" = xno -a "${DYLIB_LD}" = "${CC}" -a \
+        "x${ac_cv_prog_c_openmp}" != "xunsupported"; then
+  R_OPENMP_CFLAGS="${OPENMP_CFLAGS}"
+  R_OPENMP_FFLAGS="${OPENMP_FFLAGS}"
+  R_SH_VAR_ADD(MAIN_LDFLAGS, [${OPENMP_CFLAGS}])
+  R_SH_VAR_ADD(DYLIB_LDFLAGS, [${OPENMP_CFLAGS}])
+  AC_DEFINE(HAVE_OPENMP, 1, 
+            [Define if you have C OpenMP support.])
+else
+  R_OPENMP_CFLAGS=
+  R_OPENMP_FFLAGS=
+fi
+AC_SUBST(R_OPENMP_CFLAGS)
+AC_SUBST(R_OPENMP_FFLAGS)
+
+## For compiling package code, we use SHLIB_FCLD, SHLIB_CXXLD or
+## SHLIB_LD for linking, depending on whether the package contains
+## Fortran (90/95) code, C++ (or ObjC) code, or "just" C and Fortran 77.
+## However, we (currently) do not conditionalize compilation flags.  So
+## the only "safe" thing we can do for now is:
+##
+##    If none of SHLIB_LD, SHLIB_CXXLD and SHLIB_FCLD were specified by
+##    the user and equal CC, CXX and FC, respectively, and these were
+##    determined to support OpenMP, the we try to provide OpenMP support
+##    for packages by adding OPENMP_FCFLAGS, OPENMP_CXXFLAGS and
+##    OPENMP_CFLAGS to the respective linker flags, and add the OPENMP
+##    flags to all (C, C++, Fortran and Fortran 77) compiler flags.
+
+## <FIXME>
+## Need to do this after configuring Fortran 90/95 support, which comes
+## way below: should this be moved up to the compiler section?
+## </FIXME>
+
 ### Now we have found all the flags, we need to use them to test appropriately.
 ### We don't currently have any C++ tests, but future-proof.
 ### In principle we should do this before testing for C-Fortran compatibility.
@@ -1675,34 +1707,49 @@ AC_CHECK_DECLS([alloca], , ,
 # include <alloca.h>
 #endif])
 
-## C99 functions: we don't as yet require a C99 compiler/runtime
-## (and not everyone has one).
-R_CHECK_FUNCS([expm1 hypot log1p log2 log10 rint], [#include <math.h>])
+## C99 functions: 
+## not all C99 runtimes are complete,
+## but we have substitutes for expm1 hypot log1p and (internally) nearbyint[l]
+## FreeBSD 8.2 lacks log2
+## FreeBSD 7.3 lacks nearbyintl/rintl (nearbyint appeared in 5.2)
+## Apparently rint was once broken on HP-UX: undefine HAVE_RINT for such platforms
+## Cygwin and FreeBSD lack powl
+## Cygwin has rintl but not nearbyintl
+R_CHECK_FUNCS([expm1 hypot log1p log2 log10 nearbyint nearbyintl powl rint rintl], [#include <math.h>])
+## va_copy is C99: required as from R 2.13.0
+R_CHECK_FUNCS([va_copy], [#include <stdarg.h>])
+if test "${ac_cv_have_decl_va_copy}" = "no"; then
+   AC_MSG_ERROR([Building R requires the 'va_copy' system call])
+fi
+## isblank should be a macro according to C99.  It was missing on Solaris 8
+AC_CHECK_FUNCS(isblank)
 
-## fseeko/ftello may be macros, matherr is redefined
-## isblank should be a macro according to C99
-AC_CHECK_FUNCS(fseeko ftello isblank matherr)
+## time is C89
+R_CHECK_FUNCS([time], [#include <time.h>])
 
+## fseeko/ftello are POSIX, may be macros
+## matherr is SVID, redefined in arithmetic.c if present
+AC_CHECK_FUNCS(fseeko ftello matherr)
+
+## POSIX functions
 R_CHECK_FUNCS([fcntl], [#include <fcntl.h>])
 R_CHECK_FUNCS([getgrgid], [#include <grp.h>])
 R_CHECK_FUNCS([getpwuid], [#include <pwd.h>])
 R_CHECK_FUNCS([sigaction sigaltstack sigemptyset], [#include <signal.h>])
-## va_copy is C99
-R_CHECK_FUNCS([va_copy __va_copy], [#include <stdarg.h>])
 R_CHECK_FUNCS([fdopen popen], [#include <stdio.h>])
 if test "${ac_cv_have_decl_popen}" = "no"; then
-   AC_MSG_ERROR([Building R requires the 'stat' system call])
+   AC_MSG_ERROR([Building R requires the 'popen' system call])
 fi
-## system is C89: [un]setenv are POSIX and BSD
-R_CHECK_FUNCS([setenv system unsetenv], [#include <stdlib.h>])
-## strcoll is C89
-R_CHECK_FUNCS([strcoll], [#include <string.h>])
+## Windows has neither setenv nor unsetenv
+R_CHECK_FUNCS([setenv unsetenv], [#include <stdlib.h>])
 R_CHECK_FUNCS([getrlimit getrusage], [#include <sys/resource.h>])
 R_CHECK_FUNCS([chmod mkfifo stat umask], [#include <sys/stat.h>])
+if test "${ac_cv_have_decl_stat}" = "no"; then
+   AC_MSG_ERROR([Building R requires the 'stat' system call])
+fi
 R_CHECK_FUNCS([gettimeofday], [#include <sys/time.h>])
 R_CHECK_FUNCS([times], [#include <sys/times.h>])
-R_CHECK_FUNCS([time], [#include <time.h>])
-R_CHECK_FUNCS([access chdir execv ftruncate getcwd getuid readlink symlink sysconf],
+R_CHECK_FUNCS([access chdir execv ftruncate getcwd getuid link readlink symlink sysconf],
 [#ifdef HAVE_UNISTD_H
 # include <unistd.h>
 #endif])
@@ -1711,10 +1758,10 @@ R_CHECK_FUNCS([access chdir execv ftruncate getcwd getuid readlink symlink sysco
 ## It is not always declared, so we do not require a declaration.
 AC_CHECK_FUNCS(putenv)
 AC_CHECK_DECLS([putenv], , , [#include <stdlib.h>])
-## this is a GNU extension so usually hidden
+## this is a GNU extension so usually hidden.  Not on Solaris
 AC_CHECK_FUNCS(vasprintf)
 AC_CHECK_DECLS([vasprintf], , , [#include <stdio.h>])
-## mempcpy is a GNU extension used by the included gettext
+## mempcpy is a GNU extension used by the included gettext.  Not on Solaris
 AC_CHECK_FUNCS(mempcpy)
 ## realpath is a POSIX 2001 (and BSD)
 ## Some early GNU libc systems had it in unistd.h.
@@ -1723,18 +1770,11 @@ AC_CHECK_DECLS([realpath], , , [#include <stdlib.h>
 #ifdef HAVE_UNISTD_H
 #include <unistd.h>
 #endif])
-
+## glob is POSIX: we have a substitute on Windows
 R_CHECK_FUNCS([glob], [#ifdef HAVE_GLOB_H
 # include <glob.h>
 #endif])
 
-## we can't use dir() or unlink(recursive=TRUE) without these
-if test "${ac_cv_have_decl_stat}" = "no"; then
-   AC_MSG_ERROR([Building R requires the 'stat' system call])
-fi
-if test "${ac_cv_search_opendir}" = "no"; then
-   AC_MSG_ERROR([Building R requires the 'opendir' system call])
-fi
 ## Lots of uses of getwd(), file.access(), Sys.glob()
 case "${host_os}" in
   mingw*)
@@ -1790,6 +1830,12 @@ else
   RMATH_HAVE_EXPM1="# undef HAVE_EXPM1"
 fi
 AC_SUBST(RMATH_HAVE_EXPM1)
+if test "${ac_cv_have_decl_hypot}" = yes; then
+  RMATH_HAVE_HYPOT="# define HAVE_HYPOT 1"
+else
+  RMATH_HAVE_HYPOT="# undef HAVE_HYPOT"
+fi
+AC_SUBST(RMATH_HAVE_HYPOT)
 if test "${ac_cv_have_decl_log1p}" = yes; then
   RMATH_HAVE_LOG1P="# define HAVE_LOG1P 1"
 else
@@ -1798,6 +1844,7 @@ fi
 AC_SUBST(RMATH_HAVE_LOG1P)
 
 ## Do we need substitutes?
+## mkdtemp is not on Solaris
 AC_REPLACE_FUNCS(acosh asinh atanh mkdtemp snprintf strdup strncasecmp vsnprintf)
 ## Enable declarations in Defn.h?
 AC_CHECK_DECLS([acosh, asinh, atanh], , , [#include <math.h>])
@@ -1837,7 +1884,7 @@ fi
 
 if test "${acx_blas_ok}" != "yes"; then
   case "${host_os}" in
-    darwin[[1-7]]*|aix*)
+    aix*)
       ;;
     *)
       if test "${use_blas_shlib}" = "unset"; then
@@ -2124,19 +2171,51 @@ AC_SUBST(R_BATCHSAVE)
 R_JAVA
 
 ## F90/F95 support
-userFCFLAGS=${FCFLAGS}
 AC_PROG_FC()
 AC_LANG_PUSH(Fortran)
 AC_FC_SRCEXT(f90, [dummy=1], [dummy=0])
 AC_FC_SRCEXT(f95, [dummy=1], [dummy=0])
+AC_OPENMP
 AC_LANG_POP()
-: ${SHLIB_FCLD="${FC}"}
+if test -z "${SHLIB_FCLD}"; then
+  shlib_fcld_was_given=no
+  SHLIB_FCLD="${FC}"
+fi
 : ${SHLIB_FCLDFLAGS="${SHLIB_LDFLAGS}"}
 AC_SUBST(SHLIB_FCLD)
 AC_SUBST(SHLIB_FCLDFLAGS)
 ## x86 Solaris' f95 needs additional libs when building a DSO
 FCLIBS=${FCLIBS}
 AC_SUBST(FCLIBS)
+
+## OpenMP package stuff (needs to come *after* configuration of all
+## compilers).
+if test "x${shlib_ld_was_given}" = xno -a \
+        "${SHLIB_LD}" = "${CC}" -a \
+        "x${ac_cv_prog_c_openmp}" != "xunsupported" -a \
+        "x${shlib_cxxld_was_given}" = xno -a \
+        "${SHLIB_CXXLD}" = "${CXX}" -a \
+        "x${ac_cv_prog_cxx_openmp}" != "xunsupported" -a \
+        "x${shlib_fcld_was_given}" = xno -a \
+        "${SHLIB_FCLD}" = "${FC}" -a \
+        "x${ac_cv_prog_fc_openmp}" != "xunsupported"; then
+  SHLIB_OPENMP_CFLAGS="${OPENMP_CFLAGS}"
+  SHLIB_OPENMP_CXXFLAGS="${OPENMP_CXXFLAGS}"
+  SHLIB_OPENMP_FCFLAGS="${OPENMP_FCFLAGS}"
+  SHLIB_OPENMP_FFLAGS="${OPENMP_FFLAGS}"
+  ## next macro is copied into Rconfig.h
+  AC_DEFINE(SUPPORT_OPENMP, 1,
+            [Define if you have C/C++/Fortran OpenMP support for package code.])
+else
+  SHLIB_OPENMP_CFLAGS=
+  SHLIB_OPENMP_CXXFLAGS=
+  SHLIB_OPENMP_FCFLAGS=
+  SHLIB_OPENMP_FFLAGS=
+fi
+AC_SUBST(SHLIB_OPENMP_CFLAGS)
+AC_SUBST(SHLIB_OPENMP_CXXFLAGS)
+AC_SUBST(SHLIB_OPENMP_FCFLAGS)
+AC_SUBST(SHLIB_OPENMP_FFLAGS)
 
 
 ## Look for FCPICFLAGS
@@ -2165,27 +2244,6 @@ case "${host_os}" in
     ;;
   linux*)
     case  "${FC}" in
-      gfortran)
- 	if test "x$userFCFLAGS" = x; then
-          if test $ac_cv_prog_fc_g = yes; then
-	    case "${host_cpu}" in
-	      x86_64)
-	        FCFLAGS="-g -O"
-		;;
-	      *)
-		;;
-	    esac
-          else
-	    case "${host_cpu}" in
-	      x86_64)
-	        FCFLAGS="-O"
-		;;
-	      *)
-		;;
-	    esac
-          fi
-        fi
-        ;;
       ## Intel compilers: probably get identified as GNU, but make sure.
       *ifc|*ifort)
         fcpicflags="-fpic"
@@ -2232,13 +2290,11 @@ done
 LIBS="${LIBS1} ${LIBS2}"
 
 ## R_LD_LIBRARY_PATH.
-## <FIXME>
-## This should not be necessary when using libtool for linking.
-## In any case, is this really good enough?
-## On Linux, do not add the ld.so system directories '/lib' and
+
+## On Linux, do not add the ld.so system directories such as '/lib' and
 ## '/usr/lib', so that the entries from '/etc/ld.so.conf' are not
 ## shadowed (otherwise, e.g. optimized ATLAS libs would not be used).
-## On OS X (Darwin) /usr/X11R6/lib shadows OpenGL framework and is not
+## On OS X (Darwin) /usr/X11R6/lib shadows the OpenGL framework and is not
 ## needed in DYLD_LIBRARY_PATH.
 case "${host_os}" in
   linux*)
@@ -2254,6 +2310,11 @@ case "${host_os}" in
     r_ld_library_defaults=
     ;;
 esac
+if test -n "${R_LD_LIBRARY_PATH_save}"; then
+  R_LD_LIBRARY_PATH=${R_LD_LIBRARY_PATH_save}
+else
+## We already added -L's from LDFLAGS (except on Darwin): 
+## seem to be doing it again
 for arg in ${LDFLAGS} ${FLIBS} ${BLAS_LIBS} ${LAPACK_LIBS} ${X_LIBS} \
            ${TCLTK_LIBS}; do
   case "${arg}" in
@@ -2283,6 +2344,8 @@ for arg in ${LDFLAGS} ${FLIBS} ${BLAS_LIBS} ${LAPACK_LIBS} ${X_LIBS} \
       ;;
   esac
 done
+fi
+
 ## Handle JAVA_LD_LIBRARY_PATH specially so that users can conveniently set just
 ## R_JAVA_LD_LIBRARY_PATH in their environment.
 if test -n "${JAVA_LD_LIBRARY_PATH}"; then
@@ -2328,15 +2391,17 @@ AM_CONDITIONAL(USE_RECOMMENDED_PACKAGES,
 # gettextize -f -c --intl
 AM_NLS
 if test "${USE_NLS}" = "yes"; then
+  echo
+  echo "Configuring src/extra/intl directory"
   AM_GNU_GETTEXT_VERSION(0.14.5)
-  AM_GNU_GETTEXT(, [need-ngettext], [../extra/intl])
+  AM_GNU_GETTEXT([no-libtool], [need-ngettext], [../extra/intl])
   if test -n "$INTL_MACOSX_LIBS"; then
     XTRA_INTL_CPPFLAGS=-I/System/Library/Frameworks/CoreFoundation.framework/Headers
   fi
+  echo "Finished configuring src/extra/intl directory"
+  echo
 else
   USE_INCLUDED_LIBINTL=no
-  ## for ICONV_CONST
-  AM_ICONV
 fi
 AC_SUBST(XTRA_INTL_CPPFLAGS)
 
@@ -2421,6 +2486,8 @@ AC_CONFIG_FILES(
   src/library/Makefile
   src/library/base/DESCRIPTION
   src/library/base/Makefile
+  src/library/compiler/DESCRIPTION
+  src/library/compiler/Makefile
   src/library/datasets/DESCRIPTION
   src/library/datasets/Makefile
   src/library/graphics/DESCRIPTION
@@ -2462,8 +2529,6 @@ AC_CONFIG_FILES(
   src/scripts/Makefile
   src/scripts/R.sh
   src/scripts/Rcmd
-  src/scripts/Rdiff
-  src/scripts/Sd2Rd
   src/scripts/f77_f2c
   src/scripts/mkinstalldirs
   src/scripts/pager

@@ -2,14 +2,19 @@ msgid ""
 msgstr ""
 "Project-Id-Version: R 2.3.0\n"
 "Report-Msgid-Bugs-To: bugs@r-project.org\n"
-"POT-Creation-Date: 2011-01-03 16:13\n"
+"POT-Creation-Date: 2011-03-22 15:33\n"
 "PO-Revision-Date: 2005-04-14 18:07+0200\n"
 "Last-Translator: stefano iacus <>\n"
 "Language-Team: Italian <it@li.org>\n"
+"Language: it\n"
 "MIME-Version: 1.0\n"
 "Content-Type: text/plain; charset=UTF-8\n"
 "Content-Transfer-Encoding: 8bit\n"
 "Plural-Forms: nplurals=2; plural=(n != 1);\n"
+
+#, fuzzy
+msgid "models are not all fitted to the same number of observations"
+msgstr "i modelli sono stati stimati per differenti ampiezze campaionarie"
 
 msgid "empty model supplied"
 msgstr "specificato modello vuoto"
@@ -476,7 +481,8 @@ msgstr ""
 msgid "'k' must be in {1, 2, ..  n - 1}"
 msgstr "'k' deve essere in {1, 2, ..  n - 1}"
 
-msgid "some of the first %d eigenvalues are < 0"
+#, fuzzy
+msgid "only %d of the first %d eigenvalues are > 0"
 msgstr "alcuni dei primi %d autovalori sono < 0"
 
 #, fuzzy
@@ -549,6 +555,10 @@ msgstr "numero di gradi di libertà insufficiente per definire i contrasti"
 
 msgid "baseline group number out of range"
 msgstr "numero gruppo di base fuori range"
+
+#, fuzzy
+msgid "invalid 'use' argument"
+msgstr "argomento 'data' non valido"
 
 msgid "supply both 'x' and 'y' or a matrix-like 'x'"
 msgstr "fornire sia 'x' che 'y' o una 'x' in forma matriciale"
@@ -629,9 +639,6 @@ msgstr "gli elementi di 'k' devono essere tra 1 e %d"
 msgid "'merge' and 'height' do not fit!"
 msgstr "'merge' e 'height' in disaccordo!"
 
-msgid "we require a dendrogram"
-msgstr "necessario un dendrogramma"
-
 msgid "dendrogram node with non-positive #{branches}"
 msgstr "nodo del dendrogramma con #{branches} non positivi"
 
@@ -644,11 +651,17 @@ msgstr "sotto-albero non-terminale di lunghezza 0"
 msgid "'order.dendrogram' requires a dendrogram"
 msgstr "'order.dendrogram' richiede un dendrogramma"
 
+msgid "we require a dendrogram"
+msgstr "necessario un dendrogramma"
+
 msgid "invalid (length 0) node in dendrogram"
 msgstr "nodo non valido (lunghezza 0) nel dendrogramma"
 
 msgid "dendrogram non-leaf node with non-positive #{branches}"
 msgstr "nodo non terminale del dendrogramma con #{branches} non positivi"
+
+msgid "'height' must be at least %g, the maximal height of its components"
+msgstr ""
 
 msgid "'X' is not a dendrogram"
 msgstr "'X' non è un dendrogramma"
@@ -1434,6 +1447,13 @@ msgstr "nessun modello da confrontare"
 msgid "extra arguments discarded"
 msgstr "argometni extra ignorati"
 
+msgid "no \"nobs\" attribute is available"
+msgstr ""
+
+#, fuzzy
+msgid "no 'nobs' method is available"
+msgstr "nessun metodo 'as.stepfun' disponibile per 'x'"
+
 msgid "'start' and 'table' must be same length"
 msgstr "'start' e 'table' devono avere la stessa lunghezza"
 
@@ -1575,7 +1595,8 @@ msgstr "eff.aovlist: contrasti non ortogonali forniranno una risposta errata"
 msgid "cannot create a formula from a zero-column data frame"
 msgstr ""
 
-msgid "no terms component"
+#, fuzzy
+msgid "no terms component nor attribute"
 msgstr "manca compoenente terms"
 
 #, fuzzy
@@ -1589,8 +1610,8 @@ msgstr "'centers' deve essere un numero o una matrice"
 #, fuzzy
 msgid "variable '%s' was fitted with type \"%s\" but type \"%s\" was supplied"
 msgstr ""
-"variabile '%s' stimata con classe \"%s\" ma è stata specificata la classe \"%"
-"s\""
+"variabile '%s' stimata con classe \"%s\" ma è stata specificata la classe "
+"\"%s\""
 
 #, fuzzy
 msgid "variables %s were specified with different types from the fit"
@@ -2089,12 +2110,6 @@ msgstr "tentativo di allisciare valori NA"
 msgid "wrong endrule"
 msgstr "'endrule' sbagliata"
 
-msgid "'nknots' must be numeric <= n"
-msgstr "'knots' deve essere numeric <= n"
-
-msgid "cannot use more inner knots than unique 'x' values"
-msgstr "non posso usare più nodi interni che valori unici di 'x'"
-
 msgid "invalid 'control.spar'"
 msgstr "'control.spar' non valido"
 
@@ -2110,8 +2125,28 @@ msgstr "alcuni pesi dovrebbero essere positivi"
 msgid "need at least four unique 'x' values"
 msgstr "necessari almeno quattro valori distinti 'x'"
 
+msgid "'cv' must not be NA when 'df' is specified"
+msgstr ""
+
 msgid "crossvalidation with non-unique 'x' values seems doubtful"
 msgstr "crossvalidation per valori non unici di 'x' sembra essere dubbia"
+
+msgid "'all.knots' is TRUE; 'nknots' specification is disregarded"
+msgstr ""
+
+#, fuzzy
+msgid "'nknots' must be numeric (in {1,..,n})"
+msgstr "'knots' deve essere numeric <= n"
+
+#, fuzzy
+msgid "'nknots' must be at least 1"
+msgstr "'lag.max' deve essere almeno 1"
+
+msgid "cannot use more inner knots than unique 'x' values"
+msgstr "non posso usare più nodi interni che valori unici di 'x'"
+
+msgid "specified both 'df' and 'cv'; will disregard the latter"
+msgstr ""
 
 msgid "you must supply 1 < df <= n,  n = #{unique x} ="
 msgstr "si deve fornire 1 < df <= n, n = #{x distrinti} ="
@@ -2476,6 +2511,12 @@ msgid "there are %d Error terms: only 1 is allowed"
 msgid_plural "there are %d Error terms: only 1 is allowed"
 msgstr[0] ""
 msgstr[1] ""
+
+#, fuzzy
+msgid "extra argument %s is not a \"%s\""
+msgid_plural "extra arguments %s are not \"%s\"s"
+msgstr[0] "argometni extra ignorati"
+msgstr[1] "argometni extra ignorati"
 
 msgid "%d observation deleted due to missingness"
 msgid_plural "%d observations deleted due to missingness"

@@ -1,6 +1,6 @@
 % File src/library/base/man/NA.Rd
 % Part of the R package, http://www.R-project.org
-% Copyright 1995-2010 R Core Development Team
+% Copyright 1995-2011 R Core Development Team
 % Distributed under GPL 2 or later
 
 \name{NA}
@@ -13,10 +13,10 @@
 \alias{is.na.data.frame}
 \alias{is.na<-}
 \alias{is.na<-.default}
-\title{Not Available / ``Missing'' Values}
+\title{\sQuote{Not Available} / Missing Values}
 \description{
   \code{NA} is a logical constant of length 1 which contains a missing
-  value indicator.  \code{NA} can be freely coerced to any other vector
+  value indicator.  \code{NA} can be coerced to any other vector
   type except raw.  There are also constants \code{NA_integer_},
   \code{NA_real_}, \code{NA_complex_} and \code{NA_character_} of the
   other atomic vector types which support missing values: all of these
@@ -53,6 +53,10 @@ is.na(x) <- value
 
   Function \code{is.na<-} may provide a safer way to set missingness.
   It behaves differently for factors, for example.
+  
+  Computations using \code{NA} will normally result in \code{NA}: a
+  possible exception is where \code{\link{NaN}} is also involved, in
+  which case either might result.
 }
 \value{
   The default method for \code{is.na} applied to an atomic vector

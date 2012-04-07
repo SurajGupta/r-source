@@ -38,11 +38,13 @@ dir.exists <- function(x)
     is.character(x) && file.exists(x) && file.info(path.expand(x))$isdir
 build.pkg <- function(dir) {
     stopifnot(dir.exists(dir))
+    patt <- paste(basename(dir), ".*tar\\.gz$", sep="_")
+    unlink(dir('.', pattern = patt))
     Rcmd <- paste(file.path(R.home("bin"), "R"), "CMD")
+    r <- tail(system(paste(Rcmd, "build --keep-empty-dirs", dir),
+                     intern = TRUE), 3)
     ## return name of tar file built
-    r <- tail(system(paste(Rcmd, "build", dir), intern = TRUE), 3)
-    sub(".*'", "", sub("'$", "",
-                       grep("building.*tar\\.gz", r, value=TRUE)))
+    dir('.', pattern = patt)
 }
 build.pkg("myTst")
 ## clean up any previous attempt (which might have left a 00LOCK)
@@ -51,8 +53,8 @@ dir.create("myLib")
 install.packages("myTst", lib = "myLib", repos=NULL, type = "source") # with warnings
 print(installed.packages(lib.loc= "myLib", priority= "NA"))## (PR#13332)
 stopifnot(require("myTst",lib = "myLib"))
-sm <- getMethods(show, where= as.environment("package:myTst"))
-stopifnot(names(sm@methods) == "foo")
+sm <- findMethods(show, where= as.environment("package:myTst"))
+stopifnot(names(sm@names) == "foo")
 unlink("myTst_*")
 
 ## More building & installing packages
@@ -62,10 +64,7 @@ unlink("myTst_*")
 pkgSrcPath <- file.path(Sys.getenv("SRCDIR"), "Pkgs")
 if(file_test("-d", pkgSrcPath)) {
     ## could use file.copy(recursive = TRUE)
-    system(paste('cp -r',
-                 shQuote(file.path(Sys.getenv("SRCDIR"), "Pkgs")),
-                 shQuote(tempdir())
-                 ))
+    system(paste('cp -r', shQuote(pkgSrcPath), shQuote(tempdir())))
     pkgPath <- file.path(tempdir(), "Pkgs")
     op <- options(warn=2)    # There should be *NO* warnings here!
     ## pkgB tests an empty R directory

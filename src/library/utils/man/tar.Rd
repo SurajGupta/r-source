@@ -14,7 +14,7 @@
 \usage{
 tar(tarfile, files = NULL,
     compression = c("none", "gzip", "bzip2", "xz"),
-    compression_level = 6, tar = Sys.getenv("tar"))
+    compression_level = 6, tar = Sys.getenv("tar"), extra_flags = "")
 }
 
 \arguments{
@@ -33,7 +33,10 @@ tar(tarfile, files = NULL,
 
   \item{tar}{character string: the path to the command to be used.  If
     the command itself contains spaces it needs to be quoted -- but
-    \code{tar} can also contain flags separated from the command by spaces.}
+    \code{tar} can also contain flags separated from the command by
+    spaces.}
+
+  \item{extra_flags}{any extra flags for an external \command{tar}.}
 }
 
 \details{
@@ -43,6 +46,14 @@ tar(tarfile, files = NULL,
   \code{""}.  Note that whereas Unix-alike versions of \R set the
   environment variable \env{TAR}, its value is not the default for this
   function.
+
+  Argument \code{extra_flags} is passed to an external \command{tar} and
+  so is platform-dependent.  Possibly useful values include \option{-h}
+  (follow symbolic links, also \option{-L} on some platforms),
+  \samp{--acls}, \option{--exclude-backups}, \option{--exclude-vcs} (and
+  similar) and on Windows \option{--force-local} (so drives can be
+  included in filepaths: this is the default for the \command{Rtools}
+  \command{tar}.
 }
 
 \section{Portability}{
@@ -86,8 +97,6 @@ tar(tarfile, files = NULL,
   \samp{nul} to a multiple of 20 blocks (10KB).  Implementations differ
   to whether the block padding should occur before or after compression
   (or both).
-
-  The internal implementation currently skips empty directories.
 }
 
 \value{

@@ -1,3 +1,8 @@
+% File src/library/tools/man/Rdiff.Rd
+% Part of the R package, http://www.R-project.org
+% Copyright 2010-1 R Core Development Team
+% Distributed under GPL 2 or later
+
 \name{Rdiff}
 \alias{Rdiff}
 \title{Difference R Output Files}
@@ -6,7 +11,7 @@
   footers and some encoding differences.
 }
 \usage{
-Rdiff(from, to, useDiff = FALSE, forEx = FALSE)
+Rdiff(from, to, useDiff = FALSE, forEx = FALSE, Log = FALSE)
 }
 \arguments{
   \item{from, to}{filepaths to be compared}
@@ -14,6 +19,7 @@ Rdiff(from, to, useDiff = FALSE, forEx = FALSE)
     results?}
   \item{forEx}{logical: extra pruning for \file{-Ex.Rout} files to
     exclude the header.}
+  \item{Log}{logical: should be value include a log of differences found?}
 }
 \details{
   The \R startup banner and any timing information from \command{R CMD
@@ -26,7 +32,12 @@ Rdiff(from, to, useDiff = FALSE, forEx = FALSE)
   \command{diff -bw} is called on the edited files.
 }
 \value{
-  \code{0L} if no differences were found, otherwise \code{1L}
+  If \code{Log} is true, a list with components \code{status} (see
+  below) and \code{out}, a character vector of descriptions of
+  differences, possibly of zero length.
+
+  Otherwise, a status indicator, \code{0L} if and only if no differences
+  were found.
 }
 
 \seealso{

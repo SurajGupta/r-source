@@ -456,11 +456,24 @@ getGeneric <-
     }
     if(is.function(value))
         value
-    else if(mustFind)
-        ## the C code will have thrown an error if f is not a single string
-        stop(gettextf("no generic function found for \"%s\"", f), domain = NA)
-    else
-        NULL
+    else {
+        if(nzchar(package) && is.na(match(package, c("methods", "base")))) {
+            ## try to load package, or attach it if necessary
+            ev <- tryCatch(loadNamespace(package), error = function(e)e)
+            if(is(ev, "error") &&
+               require(package, character.only =TRUE))
+                ev <- as.environment(paste("package",package,sep=":"))
+            if(is.environment(ev))
+                value <- .getGeneric(f, ev, package)
+        }
+        if(is.function(value))
+            value
+        else if(mustFind)
+            ## the C code will have thrown an error if f is not a single string
+            stop(gettextf("no generic function found for \"%s\"", f), domain = NA)
+        else
+            NULL
+    }
 }
 
 ## low-level version
@@ -1483,13 +1496,6 @@ getGroupMembers <- function(group, recursive = FALSE, character = TRUE)
     generic
 }
 
-
-.setDeprecatedAction <- function(f, what)
-    switch(what,
-           warn = , stop = , once = , ignore =  .deprecatedActions[[f]] <<- what,
-           warning('"', what, '" is not a known action (warn, stop, once, ignore); no action recorded for function "', f, '"')
-           )
-
 .NamespaceOrPackage <- function(what)
 {
     name <- as.name(what)
@@ -1584,7 +1590,7 @@ getGroupMembers <- function(group, recursive = FALSE, character = TRUE)
     .pasteC <- function(names) paste('"', names, '"', sep="", collapse = ", ")
     found <- character()
     distances <- numeric()
-    methods <- objects(mtable, all=TRUE)
+    methods <- objects(mtable, all.names = TRUE)
     direct <- match(classes, methods, 0L) > 0L
     if(all(direct)) {
         if(length(classes) > 1L) {
@@ -1664,3 +1670,8 @@ getGroupMembers <- function(group, recursive = FALSE, character = TRUE)
     else
       class(..1)
 }
+
+## a utility to exclude various annoying glitches during
+## loading of the methods package
+.methodsIsLoaded <- function()
+    identical(.saveImage, TRUE)

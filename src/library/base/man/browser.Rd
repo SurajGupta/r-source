@@ -50,7 +50,7 @@ browser(text="", condition=NULL, expr=TRUE, skipCalls=0L)
   followed by a newline.  The commands are
 
   \describe{
-    \item{\code{c}}{(or just an empty line) exit the browser
+    \item{\code{c}}{(or just an empty line, by default) exit the browser
     and continue execution at the next statement.}
     \item{\code{cont}}{synonym for \code{c}.}
     \item{\code{n}}{enter the step-through debugger.  This changes the
@@ -70,6 +70,11 @@ browser(text="", condition=NULL, expr=TRUE, skipCalls=0L)
 
   The number of lines printed for the deparsed call can be limited by
   setting \code{\link{options}(deparse.max.lines)}.
+  
+  Setting \link{option} \code{"browserNLdisabled"} to \code{TRUE}
+  disables the use of an empty line as a synonym for \code{c}.  If this
+  is done, the user will be re-prompted for input until a valid command
+  or an expression is entered.
   
   This is a primitive function but does argument matching in the
   standard way.

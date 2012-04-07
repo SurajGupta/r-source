@@ -8,6 +8,1296 @@
 
 <h2>R News</h2>
 
+<h3>CHANGES IN R VERSION 2.13.0</h3>
+
+<p>
+
+
+<h4>SIGNIFICANT USER-VISIBLE CHANGES</h4>
+
+<p>
+
+<ul>
+<li> <code>replicate()</code> (by default) and <code>vapply()</code> (always)
+now return a higher-dimensional array instead of a matrix in the case
+where the inner function value is an array of dimension &gt;= 2.
+</p>
+<p>
+</li>
+<li>Printing and formatting of floating point numbers is now
+using the correct number of digits, where it previously rarely
+differed by a few digits. (See &ldquo;scientific&rdquo; entry below.)
+This affects <EM>many</EM> &lsquo;<span class="file">*.Rout.save</span>&rsquo; checks in packages.
+</ul>
+
+</p>
+
+
+
+<h4>NEW FEATURES</h4>
+
+<p>
+
+<ul>
+<li> <code>normalizePath()</code> has been moved to the <span class="pkg">base</span>
+package (from <span class="pkg">utils</span>): this is so it can be used by
+<code>library()</code> and friends.
+</p>
+<p>
+It now does tilde expansion.
+</p>
+<p>
+It gains new arguments <code>winslash</code> (to select the separator on
+Windows) and <code>mustWork</code> to control the action if a canonical
+path cannot be found.
+</p>
+<p>
+</li>
+<li>The previously barely documented limit of 256 bytes on a
+symbol name has been raised to 10,000 bytes (a sanity check).
+Long symbol names can sometimes occur when deparsing expressions
+(for example, in <code>model.frame</code>).
+</p>
+<p>
+</li>
+<li><code>reformulate()</code> gains a <code>intercept</code> argument.
+</p>
+<p>
+</li>
+<li><code>cmdscale(add = FALSE)</code> now uses the more common
+definition that there is a representation in <code>n-1</code> or less
+dimensions, and only dimensions corresponding to positive
+eigenvalues are used.  (Avoids confusion such as <a href="https://bugs.R-project.org/bugzilla3/show_bug.cgi?id=14397">PR#14397</a>.)
+</p>
+<p>
+</li>
+<li>Names used by <code>c()</code>, <code>unlist()</code>, <code>cbind()</code>
+and <code>rbind()</code> are marked with an encoding when this can be
+ascertained.
+</p>
+<p>
+</li>
+<li>R colours are now defined to refer to the sRGB color space.
+</p>
+<p>
+The PDF, PostScript, and Quartz graphics devices record this fact.
+X11 (and Cairo) and Windows just assume that your screen conforms.
+</p>
+<p>
+</li>
+<li><code>system.file()</code> gains a <code>mustWork</code> argument
+(suggestion of Bill Dunlap).
+</p>
+<p>
+</li>
+<li><code>new.env(hash = TRUE)</code> is now the default.
+</p>
+<p>
+</li>
+<li><code>list2env(envir = NULL)</code> defaults to hashing (with a
+suitably sized environment) for lists of more than 100 elements.
+</p>
+<p>
+</li>
+<li><code>text()</code> gains a formula method.
+</p>
+<p>
+</li>
+<li><code>IQR()</code> now has a <code>type</code> argument which is passed
+to <code>quantile()</code>.
+</p>
+<p>
+</li>
+<li><code>as.vector()</code>, <code>as.double()</code> etc duplicate less
+when they leave the mode unchanged but remove attributes.
+</p>
+<p>
+<code>as.vector(mode = "any")</code> no longer duplicates when it does
+not remove attributes.  This helps memory usage in <code>matrix()</code>
+and <code>array()</code>.
+</p>
+<p>
+<code>matrix()</code> duplicates less if <code>data</code> is an atomic vector
+with attributes such as names (but no class).
+</p>
+<p>
+<code>dim(x) &lt;- NULL</code> duplicates less if <code>x</code> has neither
+dimensions nor names (since this operation removes names and
+dimnames).
+</p>
+<p>
+</li>
+<li><code>setRepositories()</code> gains an <code>addURLs</code> argument.
+</p>
+<p>
+</li>
+<li><code>chisq.test()</code> now also returns a <code>stdres</code>
+component, for standardized residuals (which have unit variance,
+unlike the Pearson residuals).
+</p>
+<p>
+</li>
+<li><code>write.table()</code> and friends gain a <code>fileEncoding</code>
+argument, to simplify writing files for use on other OSes (e.g. a
+spreadsheet intended for Windows or Mac OS X Excel).
+</p>
+<p>
+</li>
+<li>Assignment expressions of the form <code>foo::bar(x) &lt;- y</code>
+and <code>foo:::bar(x) &lt;- y</code> now work; the replacement functions
+used are <code>foo::`bar&lt;-`</code> and <code>foo:::`bar&lt;-`</code>.
+</p>
+<p>
+</li>
+<li><code>Sys.getenv()</code> gains a <code>names</code> argument so
+<code>Sys.getenv(x, names = FALSE)</code> can replace the common idiom
+of <code>as.vector(Sys.getenv())</code>.  The default has been changed
+to not name a length-one result.
+</p>
+<p>
+</li>
+<li>Lazy loading of environments now preserves attributes and
+locked status. (The locked status of bindings and active bindings
+are still not preserved; this may be addressed in the future).
+</p>
+<p>
+</li>
+<li><code>options("install.lock")</code> may be set to <code>FALSE</code>
+so that <code>install.packages()</code> defaults to <span class="option">--no-lock</span>
+installs, or (on Windows) to <code>TRUE</code> so that binary installs
+implement locking.
+</p>
+<p>
+</li>
+<li><code>sort(partial = p)</code> for large <code>p</code> now tries
+Shellsort if quicksort is not appropriate and so works for
+non-numeric atomic vectors.
+</p>
+<p>
+</li>
+<li><code>sapply()</code> gets a new option <code>simplify = "array"</code>
+which returns a &ldquo;higher rank&rdquo; array instead of just a matrix
+when <code>FUN()</code> returns a <code>dim()</code> length of two or more.
+</p>
+<p>
+<code>replicate()</code> has this option set by default, and
+<code>vapply()</code> now behaves that way internally.
+</p>
+<p>
+</li>
+<li><code>aperm()</code> becomes S3 generic and gets a <code>table</code>
+method which preserves the class.
+</p>
+<p>
+</li>
+<li><code>merge()</code> and <code>as.hclust()</code> methods for objects of
+class <code>"dendrogram"</code> are now provided.
+</p>
+<p>
+</li>
+<li><code>as.POSIXlt.factor()</code> now passes <code>...</code> to the
+character method (suggestion of Joshua Ulrich).
+</p>
+<p>
+</li>
+<li>The character method of <code>as.POSIXlt()</code> now tries to
+find a format that works for all non-<code>NA</code> inputs, not just
+the first one.
+</p>
+<p>
+</li>
+<li><code>str()</code> now has a method for class <code>"Date"</code>
+analogous to that for class <code>"POSIXt"</code>.
+</p>
+<p>
+</li>
+<li>New function <code>file.link()</code> to create hard links on
+those file systems (POSIX, NTFS but not FAT) that support them.
+</p>
+<p>
+</li>
+<li>New <code>Summary()</code> group method for class <code>"ordered"</code>
+implements <code>min()</code>, <code>max()</code> and <code>range()</code> for
+ordered factors.
+</p>
+<p>
+</li>
+<li><code>mostattributes&lt;-()</code> now consults the <code>"dim"</code>
+attribute and not the <code>dim()</code> function, making it more useful
+for objects (such as data frames) from classes with methods for
+<code>dim()</code>.  It also uses <code>attr&lt;-()</code> in preference to the
+generics <code>name&lt;-()</code>, <code>dim&lt;-()</code> and <code>dimnames&lt;-()</code>.
+(Related to <a href="https://bugs.R-project.org/bugzilla3/show_bug.cgi?id=14469">PR#14469</a>.)
+</p>
+<p>
+</li>
+<li>There is a new option <code>"browserNLdisabled"</code> to disable
+the use of an empty (e.g. via the &lsquo;Return&rsquo; key) as a synonym
+for <code>c</code> in <code>browser()</code> or <code>n</code> under <code>debug()</code>.
+(Wish of <a href="https://bugs.R-project.org/bugzilla3/show_bug.cgi?id=14472">PR#14472</a>.)
+</p>
+<p>
+</li>
+<li><code>example()</code> gains optional new arguments
+<code>character.only</code> and <code>give.lines</code> enabling programmatic
+exploration.
+</p>
+<p>
+</li>
+<li><code>serialize()</code> and <code>unserialize()</code> are no longer
+described as &lsquo;experimental&rsquo;.  The interface is now regarded
+as stable, although the serialization format may well change in
+future releases.  (<code>serialize()</code> has a new argument
+<code>version</code> which would allow the current format to be written
+if that happens.)
+</p>
+<p>
+New functions <code>saveRDS()</code> and <code>readRDS()</code> are public
+versions of the &lsquo;internal&rsquo; functions <code>.saveRDS()</code> and
+<code>.readRDS()</code> made available for general use.  The dot-name
+versions remain available as several package authors have made use
+of them, despite the documentation.
+</p>
+<p>
+<code>saveRDS()</code> supports <code>compress = "xz"</code>.
+</p>
+<p>
+</li>
+<li>Many functions when called with a not-open connection will
+now ensure that the connection is left not-open in the event of
+error.  These include <code>read.dcf()</code>, <code>dput()</code>,
+<code>dump()</code>, <code>load()</code>, <code>parse()</code>, <code>readBin()</code>,
+<code>readChar()</code>, <code>readLines()</code>, <code>save()</code>,
+<code>writeBin()</code>, <code>writeChar()</code>, <code>writeLines()</code>,
+<code>.readRDS()</code>, <code>.saveRDS()</code> and <code>tools::parse_Rd()</code>,
+as well as functions calling these.
+</p>
+<p>
+</li>
+<li>Public functions <code>find.package()</code> and <code>path.package()</code>
+replace the internal dot-name versions.
+</p>
+<p>
+</li>
+<li>The default method for <code>terms()</code> now looks for a
+<code>"terms"</code> attribute if it does not find a <code>"terms"</code>
+component, and so works for model frames.
+</p>
+<p>
+</li>
+<li><code>httpd()</code> handlers receive an additional argument
+containing the full request headers as a raw vector (this can be
+used to parse cookies, multi-part forms etc.). The recommended
+full signature for handlers is therefore <code>function(url,
+	query, body, headers, ...)</code>.
+</p>
+<p>
+</li>
+<li><code>file.edit()</code> gains a <code>fileEncoding</code> argument to
+specify the encoding of the file(s).
+</p>
+<p>
+</li>
+<li>The format of the HTML package listings has changed.  If
+there is more than one library tree , a table of links to
+libraries is provided at the top and bottom of the page.  Where a
+library contains more than 100 packages, an alphabetic index is
+given at the top of the section for that library.  (As a
+consequence, package names are now sorted case-insensitively
+whatever the locale.)
+</p>
+<p>
+</li>
+<li><code>isSeekable()</code> now returns <code>FALSE</code> on connections
+which have non-default <code>encoding</code>.  Although documented to
+record if &lsquo;in principle&rsquo; the connection supports seeking,
+it seems safer to report <code>FALSE</code> when it may not work.
+</p>
+<p>
+</li>
+<li><CODE>R CMD REMOVE</CODE> and <code>remove.packages()</code> now
+remove file <code>R.css</code> when removing all remaining packages in a
+library tree.  (Related to the wish of <a href="https://bugs.R-project.org/bugzilla3/show_bug.cgi?id=14475">PR#14475</a>: note that this
+file is no longer installed.)
+</p>
+<p>
+</li>
+<li><code>unzip()</code> now has a <code>unzip</code> argument like
+<code>zip.file.extract()</code>.  This allows an external
+<CODE>unzip</CODE> program to be used, which can be useful to access
+features supported by Info-ZIP's <CODE>unzip</CODE> version 6 which
+is now becoming more widely available.
+</p>
+<p>
+</li>
+<li>There is a simple <code>zip()</code> function, as wrapper for an
+external <CODE>zip</CODE> command.
+</p>
+<p>
+</li>
+<li><code>bzfile()</code> connections can now read from concatenated
+<CODE>bzip2</CODE> files (including files written with
+<code>bzfile(open = "a")</code>) and files created by some other
+compressors (such as the example of <a href="https://bugs.R-project.org/bugzilla3/show_bug.cgi?id=14479">PR#14479</a>).
+</p>
+<p>
+</li>
+<li>The primitive function <code>c()</code> is now of type BUILTIN.
+</p>
+<p>
+</li>
+<li><code>plot(&lt;dendrogram&gt;, .., nodePar=*)</code> now obeys an optional
+<code>xpd</code> specification (allowing clipping to be turned off
+completely).
+</p>
+<p>
+</li>
+<li><code>nls(algorithm="port")</code> now shares more code with
+<code>nlminb()</code>, and is more consistent with the other
+<code>nls()</code> algorithms in its return value.
+</p>
+<p>
+</li>
+<li><CODE>xz</CODE> has been updated to 5.0.1 (very minor bugfix
+release).
+</p>
+<p>
+</li>
+<li><code>image()</code> has gained a logical <code>useRaster</code>
+argument allowing it to use a bitmap raster for plotting a
+regular grid instead of polygons. This can be more efficient, but
+may not be supported by all devices. The default is <code>FALSE</code>.
+</p>
+<p>
+</li>
+<li><code>list.files()</code>/<code>dir()</code> gains a new argument
+<code>include.dirs()</code> to include directories in the listing when
+<code>recursive = TRUE</code>.
+</p>
+<p>
+</li>
+<li>New function <code>list.dirs()</code> lists all directories,
+(even empty ones).
+</p>
+<p>
+</li>
+<li><code>file.copy()</code> now (by default) copies
+read/write/execute permissions on files, moderated by the current
+setting of <code>Sys.umask()</code>.
+</p>
+<p>
+</li>
+<li><code>Sys.umask()</code> now accepts <code>mode = NA</code> and returns
+the current <code>umask</code> value (visibly) without changing it.
+</p>
+<p>
+</li>
+<li>There is a <code>!</code> method for classes <code>"octmode"</code> and
+<code>"hexmode"</code>: this allows <code>xor(a, b)</code> to work if both
+<code>a</code> and <code>b</code> are from one of those classes.
+</p>
+<p>
+</li>
+<li><code>as.raster()</code> no longer fails for vectors or matrices
+containing <code>NA</code>s.
+</p>
+<p>
+</li>
+<li>New hook <code>"before.new.plot"</code> allows functions to be run
+just before advancing the frame in <code>plot.new</code>, which is
+potentially useful for custom figure layout implementations.
+</p>
+<p>
+</li>
+<li>Package <span class="pkg">tools</span> has a new function <code>compactPDF()</code>
+to try to reduce the size of PDF files <EM>via</EM> <CODE>qpdf</CODE>
+or <CODE>gs</CODE>.
+</p>
+<p>
+</li>
+<li><code>tar()</code> has a new argument <code>extra_flags</code>.
+</p>
+<p>
+</li>
+<li><code>dotchart()</code> accepts more general objects <code>x</code> such
+as 1D tables which can be coerced by <code>as.numeric()</code> to a
+numeric vector, with a warning since that might not be
+appropriate.
+</p>
+<p>
+</li>
+<li>The previously internal function <code>create.post()</code> is now
+exported from <span class="pkg">utils</span>, and the documentation for
+<code>bug.report()</code> and <code>help.request()</code> now refer to that
+for <code>create.post()</code>.
+</p>
+<p>
+It has a new <code>method = "mailto"</code> on Unix-alikes similar to
+that on Windows: it invokes a default mailer via <CODE>open</CODE>
+(Mac OS X) or <code>xdg-open</code> or the default browser (elsewhere).
+</p>
+<p>
+The default for <code>ccaddress</code> is now
+<code>getOption("ccaddress")</code> which is by default unset: using the
+username as a mailing address nowadays rarely works as expected.
+</p>
+<p>
+</li>
+<li>The default for <code>options("mailer")</code> is now
+<code>"mailto"</code> on all platforms.
+</p>
+<p>
+</li>
+<li><code>unlink()</code> now does tilde-expansion (like most other
+file functions).
+</p>
+<p>
+</li>
+<li><code>file.rename()</code> now allows vector arguments (of the
+same length).
+</p>
+<p>
+</li>
+<li>The <code>"glm"</code> method for <code>logLik()</code> now returns an
+<code>"nobs"</code> attribute (which <code>stats4::BIC()</code> assumed it
+did).
+</p>
+<p>
+The <code>"nls"</code> method for <code>logLik()</code> gave incorrect results
+for zero weights.
+</p>
+<p>
+</li>
+<li>There is a new generic function <code>nobs()</code> in package
+<span class="pkg">stats</span>, to extract from model objects a suitable value for
+use in BIC calculations.  An S4 generic derived from it is defined
+in package <span class="pkg">stats4</span>.
+</p>
+<p>
+</li>
+<li>Code for S4 reference-class methods is now examined for
+possible errors in non-local assignments.
+</p>
+<p>
+</li>
+<li><code>findClasses</code>, <code>getGeneric</code>, <code>findMethods</code>
+and <code>hasMethods</code> are revised to deal consistently with
+the <code>package=</code> argument and be consistent with soft namespace
+policy for finding objects.
+</p>
+<p>
+</li>
+<li><code>tools::Rdiff()</code> now has the option to return not only
+the status but a character vector of observed differences (which
+are still by default sent to &lsquo;<span class="file">stdout</span>&rsquo;).
+</p>
+<p>
+</li>
+<li>The startup environment variables <span class="env">R_ENVIRON_USER</span>,
+<span class="env">R_ENVIRON</span>, <span class="env">R_PROFILE_USER</span> and <span class="env">R_PROFILE</span> are now
+treated more consistently.  In all cases an empty value is
+considered to be set and will stop the default being used, and for
+the last two tilde expansion is performed on the file name.  (Note
+that setting an empty value is probably impossible on Windows.)
+</p>
+<p>
+</li>
+<li>Using <CODE>R --no-environ CMD</CODE>, <CODE>R
+	--no-site-file CMD</CODE> or <CODE>R --no-init-file CMD</CODE> sets
+environment variables so these settings are passed on to child <font face="Courier New,Courier" color="#666666"><b>R</b></font>
+processes, notably those run by <code>INSTALL</code>, <code>check</code> and
+<code>build</code>. <CODE>R --vanilla CMD</CODE> sets these three options
+(but not <span class="option">--no-restore</span>).
+</p>
+<p>
+</li>
+<li><code>smooth.spline()</code> is somewhat faster.  With
+<code>cv=NA</code> it allows some leverage computations to be skipped,
+</p>
+<p>
+</li>
+<li>The internal (C) function <span class="samp">scientific()</span>, at the heart
+of <font face="Courier New,Courier" color="#666666"><b>R</b></font>'s <code>format.info(x)</code>, <code>format(x)</code>, <code>print(x)</code>,
+etc, for numeric <code>x</code>, has been re-written in order to provide
+slightly more correct results, fixing <a href="https://bugs.R-project.org/bugzilla3/show_bug.cgi?id=14491">PR#14491</a>, notably in
+border cases including when <code>digits &gt;= 16</code>, thanks to
+substantial contributions (code and experiments) from Petr
+Savicky.  This affects a noticable amount of numeric output from
+<font face="Courier New,Courier" color="#666666"><b>R</b></font>.
+</p>
+<p>
+</li>
+<li>A new function <code>grepRaw()</code> has been introduced for
+finding subsets of raw vectors. It supports both literal searches
+and regular expressions.
+</p>
+<p>
+</li>
+<li>Package <span class="pkg">compiler</span> is now provided as a standard
+package.  See <code>?compiler::compile</code> for information on how to
+use the compiler.  This package implements a byte code compiler
+for <font face="Courier New,Courier" color="#666666"><b>R</b></font>: by default the compiler is not used in this release.  See
+the &lsquo;R Installation and Administration Manual&rsquo; for how to
+compile the base and recommended packages.
+</p>
+<p>
+</li>
+<li>Providing an <code>exportPattern</code> directive in a NAMESPACE
+file now causes classes to be exported according to the same
+pattern, for example the default from <code>package.skeleton()</code>
+to specify all names starting with a letter.  An explicit
+directive to <code>exportClassPattern</code> will still over-ride.
+</p>
+<p>
+</li>
+<li>There is an additional marked encoding <code>"bytes"</code> for
+character strings.  This is intended to be used for non-ASCII
+strings which should be treated as a set of bytes, and never
+re-encoded as if they were in the encoding of the currrent locale:
+<code>useBytes = TRUE</code> is autmatically selected in functions such
+as <code>writeBin()</code>, <code>writeLines()</code>, <code>grep()</code> and
+<code>strsplit()</code>.
+</p>
+<p>
+Only a few character operations are supported (such as <code>substr()</code>).
+</p>
+<p>
+Printing, <code>format()</code> and <code>cat()</code> will represent non-ASCII
+bytes in such strings by a <span class="samp">\xab</span> escape.
+</p>
+<p>
+</li>
+<li>The new function <code>removeSource()</code> removes the internally
+stored source from a function.
+</p>
+<p>
+</li>
+<li><code>"srcref"</code> attributes now include two additional
+line number values, recording the line numbers in the order they
+were parsed.
+</p>
+<p>
+</li>
+<li>New functions have been added for source reference access:
+<code>getSrcFilename()</code>, <code>getSrcDirectory()</code>,
+<code>getSrcLocation()</code> and <code>getSrcref()</code>.
+</p>
+<p>
+</li>
+<li><code>Sys.chmod()</code> has an extra argument <code>use_umask</code>
+which defaults to true and restricts the file mode by the current
+setting of <code>umask</code>.  This means that all the <font face="Courier New,Courier" color="#666666"><b>R</b></font> functions
+which manipulate file/directory permissions by default respect
+<code>umask</code>, notably <CODE>R CMD INSTALL</CODE>.
+</p>
+<p>
+</li>
+<li><code>tempfile()</code> has an extra argument <code>fileext</code> to
+create a temporary filename with a specified extension.
+(Suggestion and initial implementation by Dirk Eddelbuettel.)
+</p>
+<p>
+There are improvements in the way <code>Sweave()</code> and
+<code>Stangle()</code> handle non-ASCII vignette sources, especially in
+a UTF-8 locale: see &lsquo;Writing R Extensions&rsquo; which now has a
+subsection on this topic.
+</p>
+<p>
+</li>
+<li><code>factanal()</code> now returns the rotation matrix if a
+rotation such as <code>"promax"</code> is used, and hence factor
+correlations are displayed.  (Wish of <a href="https://bugs.R-project.org/bugzilla3/show_bug.cgi?id=12754">PR#12754</a>.)
+</p>
+<p>
+</li>
+<li>The <code>gctorture2()</code> function provides a more refined
+interface to the GC torture process.  Environment variables
+<span class="env">R_GCTORTURE</span>, <span class="env">R_GCTORTURE_WAIT</span>, and
+<span class="env">R_GCTORTURE_INHIBIT_RELEASE</span> can also be used to control the
+GC torture process.
+</p>
+<p>
+</li>
+<li><code>file.copy(from, to)</code> no longer regards it as an error
+to supply a zero-length <code>from</code>: it now simply does nothing.
+</p>
+<p>
+</li>
+<li><code>rstandard.glm</code> gains a <code>type</code> argument which can
+be used to request standardized Pearson residuals.
+</p>
+<p>
+</li>
+<li>A start on a Turkish translation, thanks to Murat Alkan.
+</p>
+<p>
+</li>
+<li><code>.libPaths()</code> calls <code>normalizePath(winslash = "/")</code>
+on the paths: this helps (usually) present them in a
+user-friendly form and should detect duplicate paths accessed via
+different symbolic links.
+</ul>
+
+</p>
+
+</p>
+<p>
+
+
+<h4>SWEAVE CHANGES</h4>
+
+<p>
+
+<ul>
+<li> <code>Sweave()</code> has options to produce PNG and JPEG figures,
+and to use a custom function to open a graphics device (see
+<code>?RweaveLatex</code>).<br>
+(Based in part on the contribution of <a href="https://bugs.R-project.org/bugzilla3/show_bug.cgi?id=14418">PR#14418</a>.)
+</p>
+<p>
+</li>
+<li>The default for <code>Sweave()</code> is to produce only PDF
+figures (rather than both EPS and PDF).
+</p>
+<p>
+</li>
+<li>Environment variable <span class="env">SWEAVE_OPTIONS</span> can be used to
+supply defaults for existing or new options to be applied after
+the Sweave driver setup has been run.
+</p>
+<p>
+</li>
+<li>The Sweave manual is now included as a vignette in the
+<span class="pkg">utils</span> package.
+</p>
+<p>
+</li>
+<li><code>Sweave()</code> handles <code>keep.source=TRUE</code> much better:
+it could duplicate some lines and omit comments. (Reported by John
+Maindonald and others.)
+</ul>
+
+</p>
+
+</p>
+<p>
+
+
+<h4>C-LEVEL FACILITIES</h4>
+
+<p>
+
+<ul>
+<li> Because they use a C99 interface which a C++ compiler is not
+required to support, <code>Rvprintf</code> and <code>REvprintf</code> are only
+defined by &lsquo;<span class="file">R_ext/Print.h</span>&rsquo; in C++ code if the macro
+<code>R_USE_C99_IN_CXX</code> is defined when it is included.
+</p>
+<p>
+</li>
+<li><code>pythag</code> duplicated the C99 function <code>hypot</code>.  It
+is no longer provided, but is used as a substitute for <code>hypot</code>
+in the very unlikely event that the latter is not available.
+</p>
+<p>
+</li>
+<li><code>R_inspect(obj)</code> and <code>R_inspect3(obj, deep, pvec)</code>
+are (hidden) C-level entry points to the internal <code>inspect</code>
+function and can be used for C-level debugging (e.g., in conjunction
+with the <code>p</code> command in <code>gdb</code>).
+</p>
+<p>
+</li>
+<li>Compiling R with <span class="option">--enable-strict-barrier</span> now also
+enables additional checking for use of unprotected objects. In
+combination with <code>gctorture()</code> or <code>gctorture2()</code> and a
+C-level debugger this can be useful for tracking down memory
+protection issues.
+</ul>
+
+</p>
+
+</p>
+<p>
+
+
+<h4>UTILITIES</h4>
+
+<p>
+
+<ul>
+<li> <CODE>R CMD Rdiff</CODE> is now implemented in <font face="Courier New,Courier" color="#666666"><b>R</b></font> on
+Unix-alikes (as it has been on Windows since <font face="Courier New,Courier" color="#666666"><b>R</b></font> 2.12.0).
+</p>
+<p>
+</li>
+<li><CODE>R CMD build</CODE> no longer does any cleaning in the
+supplied package directory: all the cleaning is done in the copy.
+</p>
+<p>
+It has a new option <span class="option">--install-args</span> to pass arguments to
+<CODE>R CMD INSTALL</CODE> for <span class="option">--build</span> (but not when
+installing to rebuild vignettes).
+</p>
+<p>
+There is new option, <span class="option">--resave-data</span>, to call
+<code>tools::resaveRdaFiles()</code> on the &lsquo;<span class="file">data</span>&rsquo; directory, to
+compress tabular files (&lsquo;<span class="file">.tab</span>&rsquo;, &lsquo;<span class="file">.csv</span>&rsquo; etc) and to
+convert &lsquo;<span class="file">.R</span>&rsquo; files to &lsquo;<span class="file">.rda</span>&rsquo; files.  The default,
+<span class="option">--resave-data=gzip</span>, is to do so in a way compatible even
+with years-old versions of <font face="Courier New,Courier" color="#666666"><b>R</b></font>, but better compression is given by
+<span class="option">--resave-data=best</span>, requiring <font face="Courier New,Courier" color="#666666"><b>R</b></font> &gt;= 2.10.0.
+</p>
+<p>
+It now adds a &lsquo;<span class="file">datalist</span>&rsquo; file for &lsquo;<span class="file">data</span>&rsquo; directories of
+more than 1Mb.
+</p>
+<p>
+Patterns in &lsquo;<span class="file">.Rbuildignore</span>&rsquo; are now also matched against all
+directory names (including those of empty directories).
+</p>
+<p>
+There is a new option, <span class="option">--compact-vignettes</span>, to try
+reducing the size of PDF files in the &lsquo;<span class="file">inst/doc</span>&rsquo; directory.
+Currently this tries <CODE>qpdf</CODE>: other options may be used in
+future.
+</p>
+<p>
+When re-building vignettes and a &lsquo;<span class="file">inst/doc/Makefile</span>&rsquo; file is
+found, <code>make clean</code> is run if the makefile has a
+<code>clean:</code> target.
+</p>
+<p>
+After re-building vignettes the default clean-up operation will
+remove any directories (and not just files) created during the
+process: e.g. one package created a &lsquo;<span class="file">.R_cache</span>&rsquo; directory.
+</p>
+<p>
+Empty directories are now removed unless the option
+<span class="option">--keep-empty-dirs</span> is given (and a few packages do
+deliberately include empty directories).
+</p>
+<p>
+If there is a field <code>BuildVignettes</code> in the package
+&lsquo;<span class="file">DESCRIPTION</span>&rsquo; file with a false value, re-building the
+vignettes is skipped.
+</p>
+<p>
+</li>
+<li><CODE>R CMD check</CODE> now also checks for filenames that are
+case-insensitive matches to Windows' reserved file names with
+extensions, such as &lsquo;<span class="file">nul.Rd</span>&rsquo;, as these have caused problems
+on some Windows systems.
+</p>
+<p>
+It checks for inefficiently saved &lsquo;<span class="file">data/*.rda</span>&rsquo; and
+&lsquo;<span class="file">data/*.RData</span>&rsquo; files, and reports on those large than 100Kb.
+A more complete check (including of the type of compression, but
+potentially much slower) can be switched on by setting environment
+variable <span class="env">_R_CHECK_COMPACT_DATA2_</span> to <span class="samp">TRUE</span>.
+</p>
+<p>
+The types of files in the <code>data</code> directory are now checked,
+as packages are <EM>still</EM> misusing it for non-<font face="Courier New,Courier" color="#666666"><b>R</b></font> data files.
+</p>
+<p>
+It now extracts and runs the <font face="Courier New,Courier" color="#666666"><b>R</b></font> code for each vignette in a
+separate directory and <font face="Courier New,Courier" color="#666666"><b>R</b></font> process: this is done in the package's
+declared encoding.  Rather than call
+<code>tools::checkVignettes()</code>, it calls
+<code>tool::buildVignettes()</code> to see if the vignettes can be
+re-built as they would be by <CODE>R CMD build</CODE>.  Option
+<span class="option">--use-valgrind</span> now applies only to these runs, and not
+when running code to rebuild the vignettes.  This version does a
+much better job of suppressing output from successful vignette
+tests.
+</p>
+<p>
+The &lsquo;<span class="file">00check.log</span>&rsquo; file is a more complete record of what is
+output to &lsquo;<span class="file">stdout</span>&rsquo;: in particular contains more details of
+the tests.
+</p>
+<p>
+It now check all syntactically valid Rd usage entries, and warns
+about assignments (unless these give the usage of replacement
+functions).
+</p>
+<p>
+&lsquo;<span class="file">.tar.xz</span>&rsquo; compressed tarballs are now allowed, if
+<CODE>tar</CODE> supports them (and setting environment variable
+<span class="env">TAR</span> to <span class="samp">internal</span> ensures so on all platforms).
+</p>
+<p>
+</li>
+<li><CODE>R CMD check</CODE> now warns if it finds
+&lsquo;<span class="file">inst/doc/makefile</span>&rsquo;, and <CODE>R CMD build</CODE> renames such a
+file to &lsquo;<span class="file">inst/doc/Makefile</span>&rsquo;.
+</ul>
+
+</p>
+
+</p>
+<p>
+
+
+<h4>INSTALLATION</h4>
+
+<p>
+
+<ul>
+<li> Installing <font face="Courier New,Courier" color="#666666"><b>R</b></font> no longer tries to find <CODE>perl</CODE>, and
+<CODE>R CMD</CODE> no longer tries to substitute a full path for
+<CODE>awk</CODE> nor <CODE>perl</CODE> &ndash; this was a legacy from the
+days when they were used by <font face="Courier New,Courier" color="#666666"><b>R</b></font> itself.  Because a couple of
+packages do use <CODE>awk</CODE>, it is set as the <CODE>make</CODE>
+(rather than environment) variable <span class="env">AWK</span>.
+</p>
+<p>
+</li>
+<li><CODE>make check</CODE> will now fail if there are differences
+from the reference output when testing package examples and if
+environment variable <span class="env">R_STRICT_PACKAGE_CHECK</span> is set to a true
+value.
+</p>
+<p>
+</li>
+<li>The C99 double complex type is now required.
+</p>
+<p>
+The C99 complex trigonometric functions (such as <span class="samp">csin</span>) are
+not currently required (FreeBSD lacks most of them): substitutes
+are used if they are missing.
+</p>
+<p>
+</li>
+<li>The C99 system call <span class="samp">va_copy</span> is now required.
+</p>
+<p>
+</li>
+<li>If environment variable <span class="env">R_LD_LIBRARY_PATH</span> is set
+during configuration (for example in &lsquo;<span class="file">config.site</span>&rsquo;) it is
+used unchanged in file &lsquo;<span class="file">etc/ldpaths</span>&rsquo; rather than being
+appended to.
+</p>
+<p>
+</li>
+<li><CODE>configure</CODE> looks for support for OpenMP and if
+found compiles <font face="Courier New,Courier" color="#666666"><b>R</b></font> with appropriate flags and also makes them
+available for use in packages: see &lsquo;Writing R Extensions&rsquo;.
+</p>
+<p>
+This is currently experimental, and is only used in <font face="Courier New,Courier" color="#666666"><b>R</b></font> with a
+single thread for <code>colSums()</code> and <code>colMeans()</code>.  Expect
+it to be more widely used in later versions of <font face="Courier New,Courier" color="#666666"><b>R</b></font>.
+</p>
+<p>
+This can be disabled by the <span class="option">--disable-openmp</span> flag.
+</ul>
+
+</p>
+
+</p>
+<p>
+
+
+<h4>PACKAGE INSTALLATION</h4>
+
+<p>
+
+<ul>
+<li> <CODE>R CMD INSTALL --clean</CODE> now removes copies of a
+&lsquo;<span class="file">src</span>&rsquo; directory which are created when multiple
+sub-architectures are in use.  (Following a comment from
+Berwin Turlach.)
+</p>
+<p>
+</li>
+<li>File &lsquo;<span class="file">R.css</span>&rsquo; is now installed on a per-package basis
+(in the package's &lsquo;<span class="file">html</span>&rsquo; directory) rather than in each
+library tree, and this is used for all the HTML pages in the
+package.  This helps when installing packages with static HTML
+pages for use on a webserver.  It will also allow future versions
+of <font face="Courier New,Courier" color="#666666"><b>R</b></font> to use different stylesheets for the packages they install.
+</p>
+<p>
+</li>
+<li>A top-level file &lsquo;<span class="file">.Rinstignore</span>&rsquo; in the package sources
+can list (in the same way as &lsquo;<span class="file">.Rbuildignore</span>&rsquo;) files under
+<code>inst</code> that should not be installed.  (Why should there be any
+such files?  Because all the files needed to re-build vignettes
+need to be under <code>inst/doc</code>, but they may not need to be
+installed.)
+</p>
+<p>
+</li>
+<li><CODE>R CMD INSTALL</CODE> has a new option
+<span class="option">--compact-docs</span> to compact any PDFs under the
+&lsquo;<span class="file">inst/doc</span>&rsquo; directory.  Currently this uses <CODE>qpdf</CODE>,
+which must be installed (see &lsquo;Writing R Extensions&rsquo;).
+</p>
+<p>
+</li>
+<li>There is a new option <span class="option">--lock</span> which can be used to
+cancel the effect of <span class="option">--no-lock</span> or <span class="option">--pkglock</span> earlier
+on the command line.
+</p>
+<p>
+</li>
+<li>Option <span class="option">--pkglock</span> can now be used with more than one
+package, and is now the default if only one package is specified.
+</p>
+<p>
+</li>
+<li>Argument <code>lock</code> of <code>install.packages()</code> can now be
+use for Mac binary installs as well as for Windows ones.  The
+value <code>"pkglock"</code> is now accepted, as well as <code>TRUE</code> and
+<code>FALSE</code> (the default).
+</p>
+<p>
+</li>
+<li>There is a new option <span class="option">--no-clean-on-error</span> for
+<CODE>R CMD INSTALL</CODE> to retain a partially installed package for
+forensic analysis.
+</p>
+<p>
+</li>
+<li>Packages with names ending in &lsquo;<span class="file">.</span>&rsquo; are not portable
+since Windows does not work correctly with such directory names.
+This is now warned about in <CODE>R CMD check</CODE>, and will not be
+allowed in <font face="Courier New,Courier" color="#666666"><b>R</b></font> 2.14.x.
+</p>
+<p>
+</li>
+<li>The vignette indices are more comprehensive (in the style of
+<code>browseVignetttes()</code>).
+</ul>
+
+</p>
+
+</p>
+<p>
+
+
+<h4>DEPRECATED &amp; DEFUNCT</h4>
+
+<p>
+
+<ul>
+<li> <code>require(save = TRUE)</code> is defunct, and use of the
+<code>save</code> argument is deprecated.
+</p>
+<p>
+</li>
+<li><CODE>R CMD check --no-latex</CODE> is defunct: use
+<span class="option">--no-manual</span> instead.
+</p>
+<p>
+</li>
+<li><CODE>R CMD Sd2Rd</CODE> is defunct.
+</p>
+<p>
+</li>
+<li>The <code>gamma</code> argument to <code>hsv()</code>,
+<code>rainbow()</code>, and <code>rgb2hsv()</code> is deprecated
+and no longer has any effect.
+</p>
+<p>
+</li>
+<li>The previous options for <CODE>R CMD build --binary</CODE>
+(<span class="option">--auto-zip</span>, <span class="option">--use-zip-data</span> and
+<span class="option">--no-docs</span>) are deprecated (or defunct):
+use the new option <span class="option">--install-args</span> instead.
+</p>
+<p>
+</li>
+<li>When a character value is used for the <code>EXPR</code>
+argument in <code>switch()</code>, only a single unnamed alternative
+value is now allowed.
+</p>
+<p>
+</li>
+<li>The wrapper <code>utils::link.html.help()</code> is no longer
+available.
+</p>
+<p>
+</li>
+<li>Zip-ing data sets in packages (and hence <CODE>R CMD
+	INSTALL</CODE> options <span class="option">--use-zip-data</span> and <span class="option">--auto-zip</span>, as
+well as the <span class="samp">ZipData: yes</span> field in a <code>DESCRIPTION</code> file)
+is defunct.
+</p>
+<p>
+Installed packages with zip-ed data sets can still be used, but a
+warning that they should be re-installed will be given.
+</p>
+<p>
+</li>
+<li>The &lsquo;experimental&rsquo; alternative specification of a
+name space via <code>.Export()</code> etc is now defunct.
+</p>
+<p>
+</li>
+<li>The option <span class="option">--unsafe</span> to <CODE>R CMD INSTALL</CODE> is
+deprecated: use the identical option <span class="option">--no-lock</span> instead.
+</p>
+<p>
+</li>
+<li>The entry point <code>pythag</code> in &lsquo;<span class="file">Rmath.h</span>&rsquo; is deprecated
+in favour of the C99 function <code>hypot</code>.  A wrapper for
+<code>hypot</code> is provided for <font face="Courier New,Courier" color="#666666"><b>R</b></font> 2.13.x only.
+</p>
+<p>
+</li>
+<li>Direct access to the <code>"source"</code> attribute of functions
+is deprecated; use <code>deparse(fn, control="useSource")</code> to access
+it, and <code>removeSource(fn)</code> to remove it.
+</p>
+<p>
+</li>
+<li><CODE>R CMD build --binary</CODE> is now formally deprecated:
+<CODE>R CMD INSTALL --build</CODE> has long been the preferred
+alternative.
+</p>
+<p>
+</li>
+<li>Single-character package names are deprecated (and <span class="pkg">R</span>
+is already disallowed to avoid confusion in <span class="samp">Depends:</span>
+fields).
+</ul>
+
+</p>
+
+</p>
+<p>
+
+
+<h4>BUG FIXES</h4>
+
+<p>
+
+<ul>
+<li> <code>drop.terms</code> and the <code>[</code> method for class
+<code>"terms"</code> no longer add back an intercept.  (Reported by
+Niels Hansen.)
+</p>
+<p>
+</li>
+<li><code>aggregate</code> preserves the class of a column (e.g. a
+date) under some circumstances where it discarded the class
+previously.
+</p>
+<p>
+</li>
+<li><code>p.adjust()</code> now always returns a vector result, as
+documented.  In previous versions it copied attributes (such as
+dimensions) from the <code>p</code> argument: now it only copies names.
+</p>
+<p>
+</li>
+<li>On PDF and PostScript devices, a line width of zero was
+recorded verbatim and this caused problems for some viewers
+(a very thin line combined with a non-solid line dash pattern
+could also cause a problem).  On these devices, the line width is
+now limited at 0.01 and for very thin lines with complex dash
+patterns the device may force the line dash pattern to be solid.
+(Reported by Jari Oksanen.)
+</p>
+<p>
+</li>
+<li>The <code>str()</code> method for class <code>"POSIXt"</code> now gives
+sensible output for 0-length input.
+</p>
+<p>
+</li>
+<li>The one- and two-argument complex maths functions failed to
+warn if NAs were generated (as their numeric analogues do).
+</p>
+<p>
+</li>
+<li>Added <code>.requireCachedGenerics</code> to the <code>dont.mind</code>
+list for <code>library()</code> to avoid warnings about duplicates.
+</p>
+<p>
+</li>
+<li><code>$&lt;-.data.frame</code> messed with the class attribute,
+breaking any S4 subclass.  The S4 <code>data.frame</code> class now has its own
+<code>$&lt;-</code> method, and turns dispatch on for this primitive.
+</p>
+<p>
+</li>
+<li><code>Map()</code> did not look up a character argument <code>f</code>
+in the correct frame, thanks to lazy evaluation.  (<a href="https://bugs.R-project.org/bugzilla3/show_bug.cgi?id=14495">PR#14495</a>)
+</p>
+<p>
+</li>
+<li><code>file.copy()</code> did not tilde-expand <code>from</code> and <code>to</code>
+when <code>to</code> was a directory.  (<a href="https://bugs.R-project.org/bugzilla3/show_bug.cgi?id=14507">PR#14507</a>)
+</p>
+<p>
+</li>
+<li>It was possible (but very rare) for the loading test in
+<CODE>R CMD INSTALL</CODE> to crash a child <font face="Courier New,Courier" color="#666666"><b>R</b></font> process and so leave
+around a lock directory and a partially installed package.  That
+test is now done in a separate process.
+</p>
+<p>
+</li>
+<li><code>plot(&lt;formula&gt;, data=&lt;matrix&gt;,..)</code> now works in more
+cases; similarly for <code>points()</code>, <code>lines()</code> and
+<code>text()</code>.
+</p>
+<p>
+</li>
+<li><code>edit.default()</code> contained a manual dispatch for matrices
+(the <code>"matrix"</code> class didn't really exist when it was written).
+This caused an infinite recursion in the no-GUI case and has now
+been removed.
+</p>
+<p>
+</li>
+<li><code>data.frame(check.rows = TRUE)</code> sometimes worked when
+it should have detected an error.  (<a href="https://bugs.R-project.org/bugzilla3/show_bug.cgi?id=14530">PR#14530</a>)
+</p>
+<p>
+</li>
+<li><code>scan(sep= , strip.white=TRUE)</code> sometimes stripped
+trailing spaces from within quoted strings.  (The real bug in
+<a href="https://bugs.R-project.org/bugzilla3/show_bug.cgi?id=14522">PR#14522</a>.)
+</p>
+<p>
+</li>
+<li>The rank-correlation methods for <code>cor()</code> and
+<code>cov()</code> with <code>use = "complete.obs"</code> computed the ranks
+before removing missing values, whereas the documentation implied
+incomplete cases were removed first.  (<a href="https://bugs.R-project.org/bugzilla3/show_bug.cgi?id=14488">PR#14488</a>)
+</p>
+<p>
+They also failed for 1-row matrices.
+</p>
+<p>
+</li>
+<li>The perpendicular adjustment used in placing text and
+expressions in the margins of plots was not scaled by
+<code>par("mex")</code>. (Part of <a href="https://bugs.R-project.org/bugzilla3/show_bug.cgi?id=14532">PR#14532</a>.)
+</p>
+<p>
+</li>
+<li>Quartz Cocoa device now catches any Cocoa exceptions that
+occur during the creation of the device window to prevent crashes.
+It also imposes a limit of 144 ft^2 on the area used by a window
+to catch user errors (unit misinterpretation) early.
+</p>
+<p>
+</li>
+<li>The browser (invoked by <code>debug()</code>, <code>browser()</code>
+or otherwise) would display attributes such as <code>"wholeSrcref"</code>
+that were intended for internal use only.
+</p>
+<p>
+</li>
+<li>R's internal filename completion now properly handles
+filenames with spaces in them even when the readline library is
+used.  This resolves <a href="https://bugs.R-project.org/bugzilla3/show_bug.cgi?id=14452">PR#14452</a> provided the internal filename
+completion is used (e.g., by setting <code>rc.settings(files =
+	TRUE)</code>).
+</p>
+<p>
+</li>
+<li>Inside <code>uniroot(f, ...)</code>, <code>-Inf</code> function values
+are now replaced by a maximally <B>negative</B> value.
+</p>
+<p>
+</li>
+<li><code>rowsum()</code> could silently over/underflow on integer
+inputs (reported by Bill Dunlap).
+</p>
+<p>
+</li>
+<li><code>as.matrix()</code> did not handle <code>"dist"</code> objects with
+zero rows.
+</ul>
+
+</p>
+
+</p>
+
+
+<h3>CHANGES IN R VERSION 2.12.2 patched</h3>
+
+<p>
+
+
+<h4>NEW FEATURES</h4>
+
+<p>
+
+<ul>
+<li> <code>max()</code> and <code>min()</code> work harder to ensure that
+<code>NA</code> has precedence over <code>NaN</code>, so e.g. <code>min(NaN,
+	NA)</code> is <code>NA</code>.  (This was not previously documented except
+for within a single numeric vector, where compiler optimizations
+often defeated the code.)
+</ul>
+
+</p>
+
+</p>
+<p>
+
+
+<h4>BUG FIXES</h4>
+
+<p>
+
+<ul>
+<li> A change to the C function <span class="samp">R_tryEval</span> had broken error
+messages in S4 method selection; the error message is now printed.
+</p>
+<p>
+</li>
+<li>PDF output with a non-RGB color model used RGB for the line
+stroke color.  (<a href="https://bugs.R-project.org/bugzilla3/show_bug.cgi?id=14511">PR#14511</a>)
+</p>
+<p>
+</li>
+<li><code>stats4::BIC()</code> assumed without checking that an object
+of class <code>"logLik"</code> has an <code>"nobs"</code> attribute:
+<code>glm()</code> fits did not and so <code>BIC()</code> failed for them.
+</p>
+<p>
+</li>
+<li>In some circumstances a one-sided <code>mantelhaen.test()</code>
+reported the p-value for the wrong tail.  (<a href="https://bugs.R-project.org/bugzilla3/show_bug.cgi?id=14514">PR#14514</a>)
+</p>
+<p>
+</li>
+<li>Passing the invalid value <code>lty = NULL</code> to <code>axis()</code>
+sent an invalid value to the graphics device, and might cause the
+device to segfault.
+</p>
+<p>
+</li>
+<li><code>Sweave()</code> with <code>concordance=TRUE</code> could lead to
+invalid PDF files; &lsquo;<span class="file">Sweave.sty</span>&rsquo; has been updated to avoid
+this.
+</p>
+<p>
+</li>
+<li>Non-ASCII characters in the titles of help pages were
+not rendered properly in some locales, and could cause errors
+or warnings.
+</p>
+<p>
+</li>
+<li><code>checkRd()</code> gave a spurious error if the <code>\href</code>
+macro was used.
+</ul>
+
+</p>
+
+</p>
+
+
 <h3>CHANGES IN R VERSION 2.12.2</h3>
 
 <p>
@@ -122,7 +1412,7 @@ file will be used to set the value for the
 <p>
 </li>
 <li>Files &lsquo;<span class="file">R/sysdata.rda</span>&rsquo; of more than 1Mb are now stored
-in the lazyload daabase using <CODE>xz</CODE> compression: this for
+in the lazyload database using <CODE>xz</CODE> compression: this for
 example halves the installed size of package <span class="pkg">Imap</span>.
 </p>
 <p>

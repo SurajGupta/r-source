@@ -20,7 +20,7 @@ all.equal.default <-
     function(target, current, ...)
 {
     ## Really a dispatcher given mode() of args :
-    ## use data.class as unlike class it does not give "Integer"
+    ## use data.class as unlike class it does not give "integer"
     if(is.language(target) || is.function(target) || is.environment(target))
 	return(all.equal.language(target, current, ...))
     if(is.recursive(target))
@@ -35,8 +35,8 @@ all.equal.default <-
 		   ## assumes that slots are implemented as attributes :
 		   S4 = attr.all.equal(target, current, ...),
                    if(data.class(target) != data.class(current)) {
-                       paste("target is ", data.class(target), ", current is ",
-                             data.class(current), sep = "")
+                       gettextf("target is %s, current is %s",
+                                data.class(target), data.class(current))
                    } else NULL)
     if(is.null(msg)) TRUE else msg
 }
@@ -55,7 +55,7 @@ all.equal.numeric <-
 
     lt <- length(target)
     lc <- length(current)
-    cplx <- is.complex(target)
+    cplx <- is.complex(target) # and so current must be too.
     if(lt != lc) {
 	## *replace* the 'Lengths' msg[] from attr.all.equal():
 	if(!is.null(msg)) msg <- msg[- grep("\\bLengths\\b", msg)]
@@ -63,6 +63,8 @@ all.equal.numeric <-
 			    ": lengths (", lt, ", ", lc, ") differ", sep = ""))
 	return(msg)
     }
+    ## remove atttributes (remember these are both numeric or complex vectors)
+    ## one place this is needed is to unclass Surv objects in the rpart test suite.
     target <- as.vector(target)
     current <- as.vector(current)
     out <- is.na(target)
@@ -77,7 +79,7 @@ all.equal.numeric <-
     target <- target[!out]
     current <- current[!out]
     if(is.integer(target) && is.integer(current)) target <- as.double(target)
-    xy <- mean((if(cplx)Mod else abs)(target - current))
+    xy <- mean((if(cplx) Mod else abs)(target - current))
     what <-
 	if(is.null(scale)) {
 	    xn <- mean(abs(target))
@@ -227,6 +229,7 @@ all.equal.list <- function(target, current, check.attributes = TRUE, ...)
     if(is.null(msg)) TRUE else msg
 }
 
+## also used for logical
 all.equal.raw <-
     function(target, current, check.attributes = TRUE, ...)
 {

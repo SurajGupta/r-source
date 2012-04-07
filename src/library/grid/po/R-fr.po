@@ -7,10 +7,11 @@ msgid ""
 msgstr ""
 "Project-Id-Version: R 2.12.0\n"
 "Report-Msgid-Bugs-To: bugs@r-project.org\n"
-"POT-Creation-Date: 2010-06-17 14:08\n"
-"PO-Revision-Date: 2010-10-01 20:59+0100\n"
+"POT-Creation-Date: 2011-03-22 15:33\n"
+"PO-Revision-Date: 2011-03-27 22:26+0100\n"
 "Last-Translator: Philippe Grosjean <phgrosjean@sciviews.org>\n"
 "Language-Team: French <R-core@r-project.org>\n"
+"Language: fr\n"
 "MIME-Version: 1.0\n"
 "Content-Type: text/plain; charset=ISO-8859-1\n"
 "Content-Transfer-Encoding: 8bit\n"
@@ -44,6 +45,12 @@ msgstr "'squareShape' doit être compris entre -1 et 1"
 msgid "'arrow' must be an arrow object or NULL"
 msgstr "'arrow' doit être un objet 'arrow' ou NULL"
 
+msgid "How did we get here?"
+msgstr "Comment sommes-nous arrivés ici ?"
+
+msgid "Must start new page if showing leaves separately"
+msgstr "Il faut démarrer une nouvelle page pour afficher les feuilles séparément"
+
 msgid "Invalid 'edit' information"
 msgstr "Information 'edit' incorrecte"
 
@@ -76,6 +83,12 @@ msgstr "Il n'est pas possible de spécifier plus d'un 'side=[\"left\", \"right\"]
 
 msgid "Must specify exactly one of 'side=[\"top\", \"bottom\"]', 'row', 'row.before', or 'row.after'"
 msgstr "Il faut spécifier un argument parmi 'side=[\"top\", \"bottom\"]', 'row', 'row.before', ou 'row.after'"
+
+msgid "Invalid 'n'"
+msgstr "'n' incorrect"
+
+msgid "Invalid 'f'"
+msgstr "'f' incorrect"
 
 msgid "gpar element '%s' must not be length 0"
 msgstr "l'élément '%s' de 'gpar' doit être de longueur unitaire"
@@ -460,12 +473,6 @@ msgstr "Un chemin de vue doit contenir au moins un nom de vue"
 
 msgid "Invalid viewport name(s)"
 msgstr "Nom(s) de vue(s) incorrect(s)"
-
-msgid "How did we get here?"
-msgstr "Comment sommes-nous arrivés ici ?"
-
-msgid "Must start new page if showing leaves separately"
-msgstr "Il faut démarrer une nouvelle page pour afficher les feuilles séparément"
 
 msgid "Must specify at least one of 'x' or 'xscale'"
 msgstr "Il faut spécifier au moins 'x' ou 'xscale'"

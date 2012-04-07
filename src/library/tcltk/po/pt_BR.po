@@ -4,16 +4,16 @@
 # FIRST AUTHOR <EMAIL@ADDRESS>, YEAR.
 msgid ""
 msgstr ""
-"Project-Id-Version: PACKAGE VERSION\n"
+"Project-Id-Version: 2.13.0\n"
 "Report-Msgid-Bugs-To: bugs@R-project.org\n"
-"POT-Creation-Date: 2010-03-26 08:42+0000\n"
-"PO-Revision-Date: 2010-11-15 18:58+0200\n"
+"POT-Creation-Date: 2011-03-29 21:46+0100\n"
+"PO-Revision-Date: 2011-03-26 08:58-0300\n"
 "Last-Translator: Fernando Henrique <pessoal@fernandohrosa.com.br>\n"
-"Language-Team: LANGUAGE <LL@li.org>\n"
+"Language-Team: http://www.feferraz.net/br/P/Projeto_Traducao_R_Portugues\n"
+"Language: \n"
 "MIME-Version: 1.0\n"
 "Content-Type: text/plain; charset=UTF-8\n"
 "Content-Transfer-Encoding: 8bit\n"
-"Language: pt_BR\n"
 "Plural-Forms: nplurals=2; plural=(n > 1);\n"
 "X-Generator: Pootle 2.0.5\n"
 
@@ -25,24 +25,24 @@ msgstr "erro de análise na expressão R"
 msgid "tcl error.\n"
 msgstr "erro tcl.\n"
 
-#: tcltk.c:187 tcltk.c:702
+#: tcltk.c:187 tcltk.c:700
 msgid "invalid argument"
 msgstr "argumento inválido"
 
-#: tcltk.c:284 tcltk.c:302 tcltk.c:372 tcltk.c:435 tcltk.c:487
+#: tcltk.c:282 tcltk.c:300 tcltk.c:370 tcltk.c:433 tcltk.c:485
 msgid "invalid tclObj -- perhaps saved from another session?"
 msgstr "objeto tclObj inválido - talvez salvo em outra sessão?"
 
-#: tcltk.c:577
+#: tcltk.c:575
 msgid "argument list is too long in tcltk internal function 'callback_closure'"
 msgstr ""
 "lista de argumentos muito longa na função tcltk interna: 'callback_closure'"
 
-#: tcltk.c:610
+#: tcltk.c:608
 msgid "argument is not of correct type"
 msgstr "argumento não é do tipo correto"
 
-#: tcltk.c:661
+#: tcltk.c:659
 msgid "no DISPLAY variable so Tk is not available"
 msgstr "sem variável DISPLAY então Tk não está disponível"
 

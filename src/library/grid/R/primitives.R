@@ -34,7 +34,7 @@ arrow <- function(angle=30, length=unit(0.25, "inches"),
 }
 
 # Method for subsetting "arrow" objects
-"[.arrow" <- function(x, index, ...) {
+`[.arrow` <- function(x, index, ...) {
     if (length(index) == 0)
         return(NULL)
     maxn <- max(do.call("max", lapply(x, length)),
@@ -314,10 +314,18 @@ drawDetails.segments <- function(x, recording=TRUE) {
   grid.Call.graphics("L_segments", x$x0, x$y0, x$x1, x$y1, x$arrow)
 }
 
+segmentBounds <- function(x, theta) {
+    n <- max(length(x$x0), length(x$x1),
+             length(x$y0), length(x$y1))
+    x0 <- rep(x$x0, length.out=n)
+    x1 <- rep(x$x1, length.out=n)
+    y0 <- rep(x$y0, length.out=n)
+    y1 <- rep(x$y1, length.out=n)
+    grid.Call("L_locnBounds", unit.c(x0, x1), unit.c(y0, y1), theta)
+}
+  
 xDetails.segments <- function(x, theta) {
-    bounds <- grid.Call("L_locnBounds",
-                        unit.c(x$x0, x$x1),
-                        unit.c(x$y0, x$y1), theta)
+    bounds <- segmentBounds(x, theta)
     if (is.null(bounds))
         unit(0.5, "npc")
     else
@@ -325,9 +333,7 @@ xDetails.segments <- function(x, theta) {
 }
 
 yDetails.segments <- function(x, theta) {
-    bounds <- grid.Call("L_locnBounds",
-                        unit.c(x$x0, x$x1),
-                        unit.c(x$y0, x$y1), theta)
+    bounds <- segmentBounds(x, theta)
     if (is.null(bounds))
         unit(0.5, "npc")
     else
@@ -335,23 +341,19 @@ yDetails.segments <- function(x, theta) {
 }
 
 widthDetails.segments <- function(x) {
-  bounds <- grid.Call("L_locnBounds",
-                      unit.c(x$x0, x$x1),
-                      unit.c(x$y0, x$y1), 0)
-  if (is.null(bounds))
-    unit(0, "inches")
-  else
-    unit(bounds[3L], "inches")
+    bounds <- segmentBounds(x, 0)
+    if (is.null(bounds))
+        unit(0, "inches")
+    else
+        unit(bounds[3L], "inches")
 }
 
 heightDetails.segments <- function(x) {
-  bounds <- grid.Call("L_locnBounds",
-                      unit.c(x$x0, x$x1),
-                      unit.c(x$y0, x$y1), 0)
-  if (is.null(bounds))
-    unit(0, "inches")
-  else
-    unit(bounds[4L], "inches")
+    bounds <- segmentBounds(x, 0)
+    if (is.null(bounds))
+        unit(0, "inches")
+    else
+        unit(bounds[4L], "inches")
 }
 
 segmentsGrob <- function(x0=unit(0, "npc"), y0=unit(0, "npc"),
@@ -655,9 +657,60 @@ grid.polygon <- function(x=c(0, 0.5, 1, 0.5), y=c(0.5, 1, 0.5, 0),
 # PATH primitive
 ######################################
 
+validDetails.pathgrob <- function(x) {
+    if (!is.unit(x$x) || !is.unit(x$y))
+        stop("'x' and 'y' must be units")
+    if (!is.null(x$id) && !is.null(x$id.lengths))
+        stop("It is invalid to specify both 'id' and 'id.lengths'")
+    if (length(x$x) != length(x$y))
+        stop("'x' and 'y' must be same length")
+    if (!is.null(x$id) && (length(x$id) != length(x$x)))
+        stop("'x' and 'y' and 'id' must all be same length")
+    if (!is.null(x$id))
+        x$id <- as.integer(x$id)
+    if (!is.null(x$id.lengths) && (sum(x$id.lengths) != length(x$x)))
+        stop("'x' and 'y' and 'id.lengths' must specify same overall length")
+    if (!is.null(x$id.lengths))
+        x$id.lengths <- as.integer(x$id.lengths)
+    x
+}
+  
+xDetails.pathgrob <- function(x, theta) {
+    bounds <- grid:::grid.Call("L_locnBounds", x$x, x$y, theta)
+    if (is.null(bounds))
+        unit(0.5, "npc")
+    else
+        unit(bounds[1L], "inches")
+}
+
+yDetails.pathgrob <- function(x, theta) {
+    bounds <- grid:::grid.Call("L_locnBounds", x$x, x$y, theta)
+    if (is.null(bounds))
+        unit(0.5, "npc")
+    else
+        unit(bounds[2L], "inches")
+}
+
+widthDetails.pathgrob <- function(x) {
+    bounds <- grid:::grid.Call("L_locnBounds", x$x, x$y, 0)
+    if (is.null(bounds))
+        unit(0, "inches")
+    else
+        unit(bounds[3L], "inches")
+}
+
+heightDetails.pathgrob <- function(x) {
+    bounds <- grid:::grid.Call("L_locnBounds", x$x, x$y, 0)
+    if (is.null(bounds))
+        unit(0, "inches")
+    else
+        unit(bounds[4L], "inches")
+}
+
+  
 drawDetails.pathgrob <- function(x, recording=TRUE) {
-  if (is.null(x$id) && is.null(x$id.lengths))
-    grid.Call.graphics("L_polygon", x$x, x$y,
+      if (is.null(x$id) && is.null(x$id.lengths))
+          grid.Call.graphics("L_polygon", x$x, x$y,
                        list(as.integer(seq_along(x$x))))
   else {
     if (is.null(x$id)) {

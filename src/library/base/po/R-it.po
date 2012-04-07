@@ -7,10 +7,11 @@ msgid ""
 msgstr ""
 "Project-Id-Version: R 2.3.0\n"
 "Report-Msgid-Bugs-To: bugs@r-project.org\n"
-"POT-Creation-Date: 2011-01-03 16:13\n"
+"POT-Creation-Date: 2011-03-29 21:44\n"
 "PO-Revision-Date: 2005-02-16 08:34\n"
 "Last-Translator: Stefano M. Iacus <Stefano.Iacus@R-project.org>\n"
 "Language-Team: Italian\n"
+"Language: \n"
 "MIME-Version: 1.0\n"
 "Content-Type: text/plain; charset=UTF-8\n"
 "Content-Transfer-Encoding: 8bit\n"
@@ -91,6 +92,9 @@ msgstr ""
 
 msgid "malformed version string"
 msgstr "versione stringa mal composta"
+
+msgid "target is %s, current is %s"
+msgstr ""
 
 msgid "dim(X) must have a positive length"
 msgstr "dim(X) deve avere lunghezza positiva"
@@ -215,6 +219,10 @@ msgstr "specificazione di riavvio non valida"
 
 msgid "argument 'where' of length 0"
 msgstr "l'argomento 'where' lunghezza 0"
+
+#, fuzzy
+msgid "argument 'object' must deparse to a single character string"
+msgstr "il 'pattern' deve essere una stringa di caratteri non vuota"
 
 msgid "'origin' must be one of 'start', 'current' or 'end'"
 msgstr "'origin' deve essere uno tra 'start', 'current' o 'end'"
@@ -605,9 +613,6 @@ msgstr "si possono sostituire solo le diagonali della matrice"
 msgid "replacement diagonal has wrong length"
 msgstr "la diagonale sostitutiva ha lunghezza sbagliata"
 
-msgid "'fromLast' must be TRUE or FALSE"
-msgstr ""
-
 msgid "MARGIN ="
 msgstr "MARGIN ="
 
@@ -681,8 +686,15 @@ msgstr "livello non valido in factor, sono stati generati degli NA"
 msgid "'%s' is not meaningful for ordered factors"
 msgstr "'%s' è senza senso per le variabili qualitative ordinali"
 
-msgid "no files to copy from"
-msgstr "nessun file da cui copiare"
+#, fuzzy
+msgid "'%s' not defined for ordered factors"
+msgstr "'%s' è senza senso per le variabili qualitative ordinali"
+
+#, fuzzy
+msgid ""
+"'%s' is only meaningful for ordered factors if all arguments have the same "
+"level sets"
+msgstr "'%s' è senza senso per le variabili qualitative ordinali"
 
 msgid "no files to copy to"
 msgstr "nessun file su cui copiare"
@@ -690,9 +702,8 @@ msgstr "nessun file su cui copiare"
 msgid "more 'from' files than 'to' files"
 msgstr "ci sono più file 'from' che file 'to'"
 
-#, fuzzy
-msgid "'recursive' will be ignored"
-msgstr "l'argomento drop verrà ignorato"
+msgid "'recursive' will be ignored as 'to' is not a single existing directory"
+msgstr ""
 
 msgid "file can not be copied both 'from' and 'to'"
 msgstr "il file non può essere copiato sia da 'from' che su 'to'"
@@ -703,8 +714,16 @@ msgstr "nessun file cui collegarsi"
 msgid "no files/directory to link to"
 msgstr "nessun file/directory da collegare"
 
+#, fuzzy
+msgid "no files to link to"
+msgstr "nessun file cui collegarsi"
+
 msgid "'package' must be of length 1"
 msgstr "'package' deve avere lunghezza 1"
+
+#, fuzzy
+msgid "no file found"
+msgstr "non trovato"
 
 msgid "'vec' contains NAs"
 msgstr "'vec' contiene NA"
@@ -913,12 +932,16 @@ msgstr "file '%s' non trovato"
 msgid "now dyn.unload(\"%s\") ..."
 msgstr "eseguo dyn.unload(\"%s\") ..."
 
-msgid "Loading required package: %s"
-msgstr "Carico il pacchetto richiesto: %s"
-
 #, fuzzy
 msgid "use of 'save' is deprecated"
 msgstr "'%s' è deprecata"
+
+#, fuzzy
+msgid "save != FALSE is defunct"
+msgstr "'%s' è disattivata"
+
+msgid "Loading required package: %s"
+msgstr "Carico il pacchetto richiesto: %s"
 
 msgid "none of the packages are loaded"
 msgstr "nessuno dei pacchetti è stato caricato"
@@ -931,11 +954,11 @@ msgstr ""
 "uso quello trovato in '%s'"
 
 msgid ""
-"Further information is available in the following vignettes in directory '%"
-"s':"
+"Further information is available in the following vignettes in directory "
+"'%s':"
 msgstr ""
-"Maggiori informazioni si trovano nelle vignette nella seguente directory '%"
-"s':"
+"Maggiori informazioni si trovano nelle vignette nella seguente directory "
+"'%s':"
 
 msgid "doc"
 msgstr "doc"
@@ -1110,9 +1133,6 @@ msgstr "il namespace è già agganciato"
 msgid "%s not found"
 msgstr "%s non trovato"
 
-msgid "cyclic name space dependencies are not supported"
-msgstr "dipendenze circolari nel namespace non sono supportate"
-
 msgid "namespace '%s' is already sealed in loadNamespace"
 msgstr "namespace '%s' già sigillato in loadNamespace"
 
@@ -1170,15 +1190,6 @@ msgstr "non sto caricando un namespace"
 msgid "name space %s is imported by %s so cannot be unloaded"
 msgstr "namespace '%s' caricato"
 
-msgid "imperative name space directives are disabled"
-msgstr "direttive imperative del namespace disabilitate"
-
-msgid "all objects in base name space are currently exported."
-msgstr "tutti gli oggetti del namespace base sono attualmente esportati."
-
-msgid "can only export from a name space"
-msgstr "posso solo esportare da un namespace"
-
 msgid "not a name space"
 msgstr "non è un namespace"
 
@@ -1199,9 +1210,6 @@ msgstr ""
 
 msgid "invalid import target"
 msgstr "destinazione per importazione non valida"
-
-msgid "got invalid index for importing"
-msgstr ""
 
 msgid "found methods to import for function %s but not the generic itself"
 msgstr ""
@@ -1345,6 +1353,13 @@ msgstr "la lunghezza di 'scale' deve essere uguale al numero di colonne di 'x'"
 msgid "either specify 'nmax' or 'n', but not both."
 msgstr "si specifichi 'nmax' o 'n', ma non entrambi"
 
+#, fuzzy
+msgid "argument 'length.out' must be of length 1"
+msgstr "'lenght.out' deve avere lunghezza 1"
+
+msgid "first element used of 'length.out' argument"
+msgstr ""
+
 msgid "invalid (to - from)/by in seq(.)"
 msgstr "specificazione di (to - from)/by non valida in seq(.)"
 
@@ -1359,6 +1374,9 @@ msgstr "la lunghezza deve essere un numero non negativo"
 
 msgid "too many arguments"
 msgstr "troppi argomenti"
+
+msgid "'compress' is ignored unless 'file' is a file name"
+msgstr ""
 
 msgid "'connection' must be a connection"
 msgstr "'connection' deve essere una connessione"
@@ -1503,6 +1521,9 @@ msgstr "nulla da tabulare"
 
 msgid "all arguments must have the same length"
 msgstr "tutti gli argomenti devono avere la stessa lunghezza"
+
+msgid "attempt to make a table with >= 2^31 elements"
+msgstr ""
 
 msgid "'object' must inherit from class \"table\""
 msgstr "'object' deve ereditare dalla classe \"table\""
@@ -1718,6 +1739,25 @@ msgid "Warning message:\n"
 msgid_plural "Warning messages:\n"
 msgstr[0] "Messaggio di avvertimento:\n"
 msgstr[1] "Messaggi di avvertimento:\n"
+
+#~ msgid "no files to copy from"
+#~ msgstr "nessun file da cui copiare"
+
+#~ msgid "cyclic name space dependencies are not supported"
+#~ msgstr "dipendenze circolari nel namespace non sono supportate"
+
+#, fuzzy
+#~ msgid "'recursive' will be ignored"
+#~ msgstr "l'argomento drop verrà ignorato"
+
+#~ msgid "imperative name space directives are disabled"
+#~ msgstr "direttive imperative del namespace disabilitate"
+
+#~ msgid "all objects in base name space are currently exported."
+#~ msgstr "tutti gli oggetti del namespace base sono attualmente esportati."
+
+#~ msgid "can only export from a name space"
+#~ msgstr "posso solo esportare da un namespace"
 
 #~ msgid "shared library '%s' not found"
 #~ msgstr "libraria condivisa '%s' non trovata"

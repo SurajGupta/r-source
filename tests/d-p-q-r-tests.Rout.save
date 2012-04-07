@@ -1,7 +1,8 @@
 
-R version 2.12.0 Under development (unstable) (2010-04-14 r51722)
-Copyright (C) 2010 The R Foundation for Statistical Computing
+R version 2.13.0 Under development (unstable) (2011-03-05 r54672)
+Copyright (C) 2011 The R Foundation for Statistical Computing
 ISBN 3-900051-07-0
+Platform: x86_64-unknown-linux-gnu (64-bit)
 
 R is free software and comes with ABSOLUTELY NO WARRANTY.
 You are welcome to redistribute it under certain conditions.
@@ -488,10 +489,10 @@ p.sI    0  0.5  0.5  0.5  0.5  0.5  0.5  0.5  0.5     1
  [1] 531 522 385 583 731 461 542 590 485 582 571 475 702 537 395 571 603 515 477
 [20] 609
 > (Rt	  <- rt	      (n, df = 11) )
- [1] -0.49984609 -1.67069848 -0.72975770  0.00988246  1.51883080 -1.10548091
- [7] -0.07391342 -0.32360193 -0.30921048  1.07149067 -1.73064836 -0.28314148
-[13]  0.20530996  0.40967685  3.13749439  0.18707089 -1.15413093  0.97040836
-[19] -1.34067841  1.43776923
+ [1] -0.499846093 -1.670698483 -0.729757704  0.009882459  1.518830804
+ [6] -1.105480914 -0.073913420 -0.323601935 -0.309210484  1.071490670
+[11] -1.730648357 -0.283141485  0.205309956  0.409676847  3.137494386
+[16]  0.187070891 -1.154130926  0.970408359 -1.340678412  1.437769232
 > ## Rt2 below (to preserve the following random numbers!)
 > (Runif	  <- runif    (n, min = .2, max = 2) )
  [1] 1.3077353 0.6915398 0.3146723 0.3301459 1.7723202 0.8530850 1.9021199
@@ -1007,10 +1008,12 @@ p.sI    0  0.5  0.5  0.5  0.5  0.5  0.5  0.5  0.5     1
 > 
 > pf(x, 5, Inf, ncp=0)
 [1] 0.097730624 0.584119813 0.992270750
-> pf(x, 5, 1e6, ncp=1)
-[1] 0.065933194 0.470879987 0.978875867
-> pf(x, 5, 1e7, ncp=1)
-[1] 0.06593309 0.47088028 0.97887641
+> all.equal(pf(x, 5, 1e6, ncp=1), tol = 1e-6,
++           c(0.065933194, 0.470879987, 0.978875867))
+[1] TRUE
+> all.equal(pf(x, 5, 1e7, ncp=1), tol = 1e-6,
++           c(0.06593309, 0.47088028, 0.97887641))
+[1] TRUE
 > all.equal(pf(x, 5, 1e8, ncp=1), tol = 1e-6,
 +           c(0.0659330751, 0.4708802996, 0.9788764591))
 [1] TRUE
@@ -1283,6 +1286,13 @@ Warning messages:
 > stopifnot(all.equal(pchisq(200, 4, ncp=.001, log.p=TRUE), -3.851e-42))
 > ## jumped to zero too early up to R 2.10.1 (PR#14216)
 > 
+> ## logit() == qlogit() on the right extreme:
+> x <- c(10:80, 80 + 5*(1:24), 200 + 20*(1:25))
+> stopifnot(All.eq(x, qlogis(plogis(x, log.p=TRUE),
++                            log.p=TRUE)))
+> ## qlogis() gave Inf much too early for R <= 2.12.1
+> 
+> 
 > cat("Time elapsed: ", proc.time() - .ptime,"\n")
-Time elapsed:  1.494 0.007 1.501 0 0 
+Time elapsed:  1.443 0.018 1.463 0 0 
 > 

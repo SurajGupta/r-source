@@ -14,12 +14,11 @@
   \item{pkgs}{a space-separated list with the path names of the packages to be
     installed.}
   \item{lib}{the path name of the \R library tree to install to.  Also
-    accepted in the form \samp{--library=lib}.}
+    accepted in the form \samp{--library=lib}.  Paths including spaces should
+    be quoted, using the conventions for the shell in use.}
   \item{options}{a space-separated list of options through which in
     particular the process for building the help files can be controlled.
-    Most options should only be given once, and paths including spaces should
-    be quoted.  Use \command{R CMD INSTALL --help} for the full current
-    list of options.}
+    Use \command{R CMD INSTALL --help} for the full current list of options.}
 }
 \details{
   This will stop at the first error, so if you want all the \code{pkgs}
@@ -52,11 +51,11 @@
   \command{xz} or \command{compress}.
 #ifdef unix
   Finally, binary package archive files (as created by
-  \command{R CMD INSTALL --binary}) can be supplied.
+  \command{R CMD INSTALL --build}) can be supplied.
 #endif
 #ifdef windows
   Finally, zipped binary packages (as created by
-  \command{R CMD INSTALL --binary}) can be supplied.
+  \command{R CMD INSTALL --build}) can be supplied.
 #endif
 
   Tarballs are by default unpackaged by the internal \code{\link{untar}}
@@ -93,54 +92,50 @@
   install is interrupted from the keyboard: after cleaning up the script
   terminates.
 
-  By default the library directory is \sQuote{locked} by creating a
-  directory \file{00LOCK} within it.  This has two purposes: it
-  prevents any other process installing into that library concurrently,
-  and is used to store any previous version of the package to
-  restore on error.  A finer-grained locking is provided by the option
-  \option{--pkglock} which creates a separate lock for each
-  package: this allows enough freedom for careful parallel
-  installation as done by \code{\link{install.packages}(Ncpus =
-  \var{n})} with \code{\var{n} > 1}.  Finally locking (and restoration
-  on error) can be suppressed by \option{--no-lock} or \option{--unsafe}
-  (two names for the same option).
+  For details of the locking which is done, see the section
+  \sQuote{Locking} in the help for \code{\link{install.packages}}.
+  
 #ifdef windows
   
-  Windows-only option \option{--build} can be used to zip up the
-  installed package for distribution: it implies
-  \option{--auto-zip} which selects if data file are zipped up to save
-  disc space.
+  Option \option{--build} can be used to zip up the installed package
+  for distribution.
 #endif
 #ifdef unix
   
-  Some platforms (notably Mac OS X) support sub-architectures in which
-  binaries for different CPUs are installed within the same library
-  tree. For such installations, the default behaviour is to try to build
-  packages for all installed sub-architectures unless the package has a
-  configure script or a \file{src/Makefile}, when only the
-  sub-architecture running \command{R CMD INSTALL} is used.  To use only
-  that sub-architecture, use \option{--no-multiarch}.  To install just
-  the compiled code for another sub-architecture, use
-  \option{--libs-only}.
+  Some platforms (notably Mac OS X and Windows) support
+  sub-architectures in which binaries for different CPUs are installed
+  within the same library tree. For such installations, the default
+  behaviour is to try to build packages for all installed
+  sub-architectures unless the package has a configure script or a
+  \file{src/Makefile}, when only the sub-architecture running \command{R
+  CMD INSTALL} is used.  To use only that sub-architecture, use
+  \option{--no-multiarch}.  To install just the compiled code for
+  another sub-architecture, use \option{--libs-only}.
 #endif
 
   By default a package is installed with static HTML help pages if and
-  only if \R was: use option \option{--html} to override this.
+  only if \R was: use options \option{--html} and \option{--no-html} to
+  override this.
   
   Use \command{R CMD INSTALL --help} for concise usage information,
   including all the available options.
 }
 
-#ifdef unix
 \note{
+  The options do not have to precede \samp{pkgs} on the command line,
+  although it will be more legible if they do.  All the options are
+  processed before any packages, and where options have conflicting
+  effects the last  one will win.
+#ifdef unix
+  
   Some parts of the operation of \code{INSTALL} depend on the \R
   temporary directory (see \code{\link{tempdir}}, usually under
   \file{/tmp}) having both write and execution access to the account
   running \R.  This is usually the case, but if \file{/tmp} has been
   mounted as \code{noexec}, environment variable \env{TMPDIR} may need
   to be set to a directory from which execution is allowed.
-}
 #endif
+}
 
 \section{Packages using the methods package}{
   Packages that require the methods package and make use functions such
@@ -160,7 +155,7 @@
     Administration} and the chapter on \dQuote{Creating R packages} in
   \dQuote{Writing \R Extensions}
 #ifdef windows
-  (on the Help menu in \code{RGui},
+  (on the Help menu in \code{RGui}),
 #endif
   \code{\link{RShowDoc}} and the \file{doc/manual} subdirectory of the
   \R source tree).

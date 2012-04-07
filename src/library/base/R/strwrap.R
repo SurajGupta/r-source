@@ -39,7 +39,7 @@ function(x, width = 0.9 * getOption("width"), indent = 0, exdent = 0,
     ## paragraph j of x[i].
 
     for(i in seq_along(z)) {
-        yi <- character(0L)
+        yi <- character()
         for(j in seq_along(z[[i]])) {
             ## Format paragraph j in x[i].
             words <- z[[i]][[j]]
@@ -130,7 +130,7 @@ function(x, width = 0.9 * getOption("width"), indent = 0, exdent = 0,
             c(y, "")
     }
 
-    if(simplify) y <- unlist(y)
+    if(simplify) y <- as.character(unlist(y))
     y
 }
 
@@ -139,7 +139,7 @@ function(x, y, style = c("table", "list"),
          width = 0.9 * getOption("width"), indent = NULL)
 {
     if(is.list(x)) {
-        if((length(x) == 2L) && (diff(sapply(x, length)) == 0L)) {
+        if(length(x) == 2L && diff(vapply(x, length, 1L)) == 0L) {
             y <- x[[2L]]; x <- x[[1L]]
         }
         else

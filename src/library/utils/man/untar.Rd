@@ -1,6 +1,6 @@
 % File src/library/utils/man/untar.Rd
 % Part of the R package, http://www.R-project.org
-% Copyright 2009-10 R Core Development Team
+% Copyright 2009-11 R Core Development Team
 % Distributed under GPL 2 or later
 
 \name{untar}
@@ -72,24 +72,22 @@ untar(tarfile, files = NULL, list = FALSE, exdir = ".",
   Arguments \code{compressed}, \code{extras} and \code{verbose} are only
   used when an external \command{tar} is used.
 
-  The internal implementation restores symbolic links as symbolic links
-  on a Unix-alike, and as file copies on Windows (which works only for
-  existing files, not for directories).  Hard links are always restored
-  as file copies (POSIX does not allow hard links to directories).
-  Since it uses \code{\link{gzfile}} to read a file it can handle files
-  compressed by any of the methods that function can handle: at least
-  \command{compress}, \command{gzip}, \command{bzip2} and \command{xz}
-  compression, and some types of \command{lzma} compression.  It does
-  not guard against restoring absolute file paths, as some \command{tar}
-  implementations do.  It will create the parent directories for
-  directories or files in the archive if necessary.  It handles both the
-  standard (USTAR/POSIX) and GNU ways of handling file paths of more
-  than 100 bytes.
+  The internal implementation restores symbolic links as links on a
+  Unix-alike, and as file copies on Windows (which works only for
+  existing files, not for directories), and hard links as links.  If the
+  linking operation fails (as it may on a FAT file system), a file copy
+  is tried.  Since it uses \code{\link{gzfile}} to read a file it can
+  handle files compressed by any of the methods that function can
+  handle: at least \command{compress}, \command{gzip}, \command{bzip2}
+  and \command{xz} compression, and some types of \command{lzma}
+  compression.  It does not guard against restoring absolute file paths,
+  as some \command{tar} implementations do.  It will create the parent
+  directories for directories or files in the archive if necessary.  It
+  handles both the standard (USTAR/POSIX) and GNU ways of handling file
+  paths of more than 100 bytes.
 
   You may see warnings from the internal implementation such as
-\preformatted{
-unsupported entry type 'x' 
-}
+\preformatted{unsupported entry type 'x'}
   This often indicates an invalid archive: entry types \code{"A-Z"} are
   allowed as extensions, but other types are reserved (this example is
   from Mac OS 10.6.3).  The only thing you can do with such an archive

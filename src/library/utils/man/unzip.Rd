@@ -13,7 +13,7 @@
 }
 \usage{
 unzip(zipfile, files = NULL, list = FALSE, overwrite = TRUE,
-       junkpaths = FALSE, exdir = ".")
+       junkpaths = FALSE, exdir = ".", unzip = "internal")
 }
 \arguments{
   \item{zipfile}{The pathname of the zip file: tilde expansion (see
@@ -33,24 +33,37 @@ unzip(zipfile, files = NULL, list = FALSE, overwrite = TRUE,
   
   \item{exdir}{The directory to extract files to (the equivalent of
     \code{unzip -d}).  It will be created if necessary.}
+
+  \item{unzip}{The method to be used. An alternative is to use
+  \code{getOption("unzip"}), which on a Unix-alike may be set to the
+  path to a \command{unzip} program.}
 }
 \note{
   This is a minimal implementation, principally designed for Windows'
   users to be able to unpack Windows binary packages without external
   software.  It does not (for example) support Unicode filenames and
-  large files as introduced in \command{zip 3.0}.
+  large files as introduced in \command{zip 3.0}: for that use
+  \code{unzip = "unzip"} with \command{unzip 6.00} or later.
+
+  If \code{unzip} specifies a program, the format of the dates listed
+  with \code{list=TRUE} is unknown (on Windows it can even depend on
+  the current locale) and the return values could be \code{NA} or
+  expressed in the wrong timezone or misinterpreted (the latter being
+  far less likely as from \command{unzip 6.00}).
 }
 
 \value{
-  If \code{list = TRUE}, a data frame with columns \code{Name},
-  \code{Length} (the size of the uncompressed file) and \code{Date} (of
-  class \code{"\link{POSIXct}"}).
+  If \code{list = TRUE}, a data frame with columns \code{Name}
+  (character) \code{Length} (the size of the uncompressed file, usually
+  integer, conceivably numeric with an external \code{unzip}) and
+  \code{Date} (of class \code{"\link{POSIXct}"}).
 
-  Otherwise, a character vector of the filepaths extracted to, invisibly.
+  Otherwise for the \code{"internal"} method, a character vector of the
+  filepaths extracted to, invisibly.
 }
 
 \source{
-  The C code uses \code{zlib} and is in particular based on the
+  The internal C code uses \code{zlib} and is in particular based on the
   contributed \samp{minizip} application in the \code{zlib} sources
   (from \url{http://zlib.net}) by Gilles Vollant.
 }
@@ -58,6 +71,8 @@ unzip(zipfile, files = NULL, list = FALSE, overwrite = TRUE,
 \seealso{
   \code{\link{unz}} and \code{\link{zip.file.extract}} to read a single
   component from a zip file.
+
+  \code{\link{zip}}.
 }
 
 \keyword{file}

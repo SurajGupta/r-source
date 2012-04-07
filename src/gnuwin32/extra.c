@@ -910,6 +910,7 @@ SEXP do_selectlist(SEXP call, SEXP op, SEXP args, SEXP rho)
 
     cleanup();
     show(RConsole);
+    R_ProcessEvents();
     UNPROTECT(1);
     return ans;
 }
@@ -1109,57 +1110,101 @@ SEXP do_writeClipboard(SEXP call, SEXP op, SEXP args, SEXP rho)
 
 const char *formatError(DWORD res);
 
+
+void R_UTF8fixslash(char *s); /* from main/util.c */
 SEXP do_normalizepath(SEXP call, SEXP op, SEXP args, SEXP rho)
 {
-    SEXP ans, paths = CAR(args), el;
+    SEXP ans, paths = CAR(args), el, slash;
     int i, n = LENGTH(paths), res;
     char tmp[MAX_PATH], longpath[MAX_PATH], *tmp2;
     wchar_t wtmp[32768], wlongpath[32768], *wtmp2;
+    int mustWork, fslash = 0;
 
     checkArity(op, args);
     if(!isString(paths))
 	errorcall(call, _("'path' must be a character vector"));
 
+    slash = CADR(args);
+    if(!isString(slash) || LENGTH(slash) != 1)
+	errorcall(call, "'winslash' must be a character string");
+    const char *sl = CHAR(STRING_ELT(slash, 0));
+    if (strcmp(sl, "/") && strcmp(sl, "\\"))
+	errorcall(call, "'winslash' must be '/' or '\\\\'");
+    if (strcmp(sl, "/") == 0) fslash = 1;
+    
+    mustWork = asLogical(CADDR(args));
+
     PROTECT(ans = allocVector(STRSXP, n));
     for (i = 0; i < n; i++) {
-    	int warn=0;
+    	int warn = 0;
     	SEXP result;
 	el = STRING_ELT(paths, i);
+	result = el;
 	if(getCharCE(el) == CE_UTF8) {
 	    if ((res = GetFullPathNameW(filenameToWchar(el, FALSE), 32768, 
 					wtmp, &wtmp2)) && res <= 32768) {
 		if ((res = GetLongPathNameW(wtmp, wlongpath, 32768))
 		    && res <= 32768) {
 	    	    wcstoutf8(longpath, wlongpath, wcslen(wlongpath)+1);
+		    if(fslash) R_UTF8fixslash(longpath);
 	    	    result = mkCharCE(longpath, CE_UTF8);
+		} else if(mustWork == 1) {
+		    errorcall(call, "path[%d]=\"%s\": %s", i+1, 
+			      translateChar(el), 
+			      formatError(GetLastError()));	
 	    	} else {
 	    	    wcstoutf8(tmp, wtmp, wcslen(wtmp)+1);
+		    if(fslash) R_UTF8fixslash(tmp);
 	    	    result = mkCharCE(tmp, CE_UTF8);
 	    	    warn = 1;
 	    	}
+	    } else if(mustWork == 1) {
+		errorcall(call, "path[%d]=\"%s\": %s", i+1, 
+			  translateChar(el), 
+			  formatError(GetLastError()));	
 	    } else {
-	    	result = el;
+		if (fslash) {
+		    strcpy(tmp, translateCharUTF8(el));
+		    R_UTF8fixslash(tmp);
+	    	    result = mkCharCE(tmp, CE_UTF8);
+		}
 	    	warn = 1;
 	    }
-	    if (warn)
-	    	warningcall(call, "path[%d]=\"%ls\": %s", i+1, filenameToWchar(el,FALSE), 
-	    	          formatError(GetLastError()));
+	    if (warn && (mustWork == NA_LOGICAL))
+	    	warningcall(call, "path[%d]=\"%ls\": %s", i+1, 
+			    filenameToWchar(el,FALSE), 
+			    formatError(GetLastError()));
 	} else {
-	    if ((res = GetFullPathName(translateChar(el), MAX_PATH, tmp, &tmp2))
+	    if ((res = GetFullPathName(translateChar(el), MAX_PATH, tmp, &tmp2)) 
 		&& res <= MAX_PATH) {
 	    	if ((res = GetLongPathName(tmp, longpath, MAX_PATH))
-		    && res <= MAX_PATH)
+		    && res <= MAX_PATH) {
+		    if(fslash) R_fixslash(longpath);
 	    	    result = mkChar(longpath);
-	    	else {
+		} else if(mustWork == 1) {
+		    errorcall(call, "path[%d]=\"%s\": %s", i+1, 
+			      translateChar(el), 
+			      formatError(GetLastError()));	
+	    	} else {
+		    if(fslash) R_fixslash(tmp);
 	    	    result = mkChar(tmp);
 	    	    warn = 1;
 	    	}
+	    } else if(mustWork == 1) {
+		errorcall(call, "path[%d]=\"%s\": %s", i+1, 
+			  translateChar(el), 
+			  formatError(GetLastError()));	
 	    } else {
-	    	result = el;
+		if (fslash) {
+		    strcpy(tmp, translateChar(el));
+		    R_fixslash(tmp);
+		    result = mkChar(tmp);
+		}
 	    	warn = 1;
 	    }
-	    if (warn)
-		warningcall(call, "path[%d]=\"%s\": %s", i+1, translateChar(el), 
+	    if (warn && (mustWork == NA_LOGICAL))
+		warningcall(call, "path[%d]=\"%s\": %s", i+1, 
+			    translateChar(el), 
 			    formatError(GetLastError()));	
 	}
 	SET_STRING_ELT(ans, i, result);
@@ -1489,14 +1534,12 @@ static BOOL CALLBACK EnumWindowsProc(HWND handle, LPARAM param)
 
 SEXP do_getWindowHandles(SEXP call, SEXP op, SEXP args, SEXP rho)
 {
-    SEXP which;
     PROTECT_WITH_INDEX(EnumResult = allocVector(VECSXP, 8), &EnumIndex);
     setAttrib(EnumResult, R_NamesSymbol, allocVector(STRSXP, 8));
     EnumCount = 0;
     const char * w;
 
     checkArity(op, args);
-    which = CAR(args);
     w = CHAR(STRING_ELT(CAR(args), 0));
     EnumMinimized = LOGICAL(CADR(args))[0];
 

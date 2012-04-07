@@ -17,7 +17,8 @@
 write.table <-
 function (x, file = "", append = FALSE, quote = TRUE, sep = " ",
           eol = "\n", na = "NA", dec = ".", row.names = TRUE,
-          col.names = TRUE, qmethod = c("escape", "double"))
+          col.names = TRUE, qmethod = c("escape", "double"),
+          fileEncoding = "")
 {
     qmethod <- match.arg(qmethod)
     if(is.logical(quote) && (length(quote) != 1L || is.na(quote)))
@@ -40,13 +41,13 @@ function (x, file = "", append = FALSE, quote = TRUE, sep = " ",
         if(is.null(d[[2L]]) && makeColnames && p > 0L)
             d[[2L]] <- paste("V", 1L:p, sep="")
         if(qset)
-            quote <- if(is.character(x)) seq_len(p) else numeric(0L)
+            quote <- if(is.character(x)) seq_len(p) else numeric()
     } else { ## data.frame
         if(qset)
             quote <- if(length(x))
                 which(unlist(lapply(x, function(x)
                                     is.character(x) || is.factor(x))))
-            else numeric(0L)
+            else numeric()
         ## fix up embedded matrix columns into separate cols:
         if(any(sapply(x, function(z) length(dim(z)) == 2 && dim(z)[2L] > 1))) {
             c1 <- names(x)
@@ -96,10 +97,11 @@ function (x, file = "", append = FALSE, quote = TRUE, sep = " ",
 	    stop("invalid 'col.names' specification")
     }
 
-    if(file == "")
-        file <- stdout()
+    if(file == "") file <- stdout()
     else if(is.character(file)) {
-        file <- file(file, ifelse(append, "a", "w"))
+        file <- if(nzchar(fileEncoding))
+            file(file, ifelse(append, "a", "w"), encoding = fileEncoding)
+            else file(file, ifelse(append, "a", "w"))
         on.exit(close(file))
     } else if(!isOpen(file, "w")) {
         open(file, "w")

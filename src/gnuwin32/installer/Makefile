@@ -1,9 +1,11 @@
 # Makefile for R for Windows Installers
 
 include ../MkRules
+
+## Formerly in MkRules
+FIND = find
+
 R_HOME = ../../..
-## for TCL_HOME
-RHOME = ../../..
 include $(R_HOME)/share/make/vars.mk
 
 ## use this to install other packages from main library
@@ -21,7 +23,7 @@ Internet = 0
 ## Used to set Registry entries
 Producer = R-core
 
-ifeq ($(strip $(WIN)),64)
+ifeq "$(WIN)" "64"
 ifneq ($(strip $(HOME32)),)
 SUFF = win
 else
@@ -32,9 +34,8 @@ SUFF = win32
 endif
 
 FULLVERSION=`cat ../../../VERSION`
-#RPREFIX = $(shell $(R_HOME)/tools/GETRWVERSION $(R_HOME)/VERSION)
 RPREFIX = $(shell ../../../bin$(R_ARCH)/Rscript ../fixed/rwver.R)
-LIBFILES = $(foreach i, $(R_PKGS_BASE) $(R_PKGS_RECOMMENDED) $(EXTRA_PKGS), $(R_HOME)/library/$i) $(R_HOME)/library/R.css
+LIBFILES = $(foreach i, $(R_PKGS_BASE) $(R_PKGS_RECOMMENDED) $(EXTRA_PKGS), $(R_HOME)/library/$i)
 
 INFO_FILES = COPYING NEWS README
 DOC_INFO_FILES = AUTHORS COPYING COPYING.LIB FAQ RESOURCES THANKS CHANGES
@@ -116,8 +117,8 @@ md5sums:
 PDF_FILES = $(wildcard $(RPREFIX)/library/*/doc/*.pdf)
 
 fixups:
-	echo "make.packages.html(.Library, verbose=FALSE)" | $(RPREFIX)/$(BINDIR)/Rterm.exe --vanilla --slave LC_COLLATE=C
-	$(CP) -prf "$(TCL_HOME)" $(RPREFIX)
+	echo "make.packages.html(.Library,temp=FALSE,verbose=FALSE)" | $(RPREFIX)/$(BINDIR)/Rterm.exe --vanilla --slave LC_COLLATE=C
+	$(CP) -prf $(R_HOME)/Tcl $(RPREFIX)
 	$(RM) $(RPREFIX)/Tcl*/lib/*.lib
 ifneq ($(strip $(QPDF)),)
 	@for f in $(PDF_FILES); do \
@@ -127,7 +128,7 @@ ifneq ($(strip $(QPDF)),)
 endif
 
 32bit:
-ifeq ($(strip $(WIN)),64)
+ifeq "$(WIN)" "64"
 ifneq ($(strip $(HOME32)),)
 	@echo "------------ including 32-bit files"
 	(cd "$(HOME32)"; zip -qr9X 32bit */i386 library/*/libs/i386 bin/R.exe bin/Rscript.exe)

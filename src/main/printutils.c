@@ -430,11 +430,11 @@ const char *EncodeString(SEXP s, int w, int quote, Rprt_adj justify)
 		i = Rstrlen(s, quote);
 		cnt = LENGTH(s);
 	    } else {
-		p = translateChar(s);
+		p = translateChar0(s);
 		if(p == CHAR(s)) {
 		    i = Rstrlen(s, quote);
 		    cnt = LENGTH(s);
-		} else { /* drop anything after embedded nul */
+		} else {
 		    cnt = strlen(p);
 		    i = Rstrwid(p, cnt, CE_NATIVE, quote);
 		}
@@ -443,13 +443,34 @@ const char *EncodeString(SEXP s, int w, int quote, Rprt_adj justify)
 	} else
 #endif
 	{
-	    p = translateChar(s);
-	    if(p == CHAR(s)) {
-		i = Rstrlen(s, quote);
-		cnt = LENGTH(s);
-	    } else { /* drop anything after embedded nul */
+	    if(IS_BYTES(s)) {
+		p = CHAR(s);
 		cnt = strlen(p);
-		i = Rstrwid(p, cnt, CE_NATIVE, quote);
+		const char *q;
+		char *pp = R_alloc(4*cnt+1, 1), *qq = pp, buf[5];
+		for (q = p; *q; q++) {
+		    unsigned char k = (unsigned char) *q;
+		    if (k >= 0x20 && k < 0x80) {
+			*qq++ = *q;
+			if (quote && *q == '"') cnt++;
+		    } else {
+			snprintf(buf, 5, "\\x%02x", k);
+			for(j = 0; j < 4; j++) *qq++ = buf[j];
+			cnt += 3;
+		    }
+		}
+		*qq = '\0';
+		p = pp;
+		i = cnt;
+	    } else {
+		p = translateChar(s);
+		if(p == CHAR(s)) {
+		    i = Rstrlen(s, quote);
+		    cnt = LENGTH(s);
+		} else {
+		    cnt = strlen(p);
+		    i = Rstrwid(p, cnt, CE_NATIVE, quote);
+		}
 	    }
 	}
     }
@@ -478,8 +499,9 @@ const char *EncodeString(SEXP s, int w, int quote, Rprt_adj justify)
 	mbstate_t mb_st;
 	wchar_t wc;
 	unsigned int k; /* not wint_t as it might be signed */
+#ifndef __STDC_ISO_10646__
 	Rboolean Unicode_warning = FALSE;
-
+#endif
 	if(ienc != CE_UTF8)  mbs_init(&mb_st);
 #ifdef Win32
 	else if(WinUTF8out) { memcpy(q, UTF8in, 3); q += 3; }
@@ -531,7 +553,9 @@ const char *EncodeString(SEXP s, int w, int quote, Rprt_adj justify)
 			for(j = 0; j < res; j++) *q++ = *p++;
 		    } else {
 #ifndef Win32
+# ifndef __STDC_ISO_10646__
 			Unicode_warning = TRUE;
+# endif
 			if(k > 0xffff)
 			    snprintf(buf, 11, "\\U%08x", k);
 			else
@@ -692,22 +716,11 @@ int vasprintf(char **strp, const char *fmt, va_list ap)
 ;
 #endif
 
-#if !HAVE_VA_COPY && HAVE___VA_COPY
-# define va_copy __va_copy
-# undef HAVE_VA_COPY
-# define HAVE_VA_COPY 1
-#endif
-
-#ifdef HAVE_VA_COPY
 # define R_BUFSIZE BUFSIZE
-#else
-# define R_BUFSIZE 100000
-#endif
 void Rcons_vprintf(const char *format, va_list arg)
 {
     char buf[R_BUFSIZE], *p = buf;
     int res;
-#ifdef HAVE_VA_COPY
     const void *vmax = vmaxget();
     int usedRalloc = FALSE, usedVasprintf = FALSE;
     va_list aq;
@@ -739,29 +752,16 @@ void Rcons_vprintf(const char *format, va_list arg)
 	}
     }
 #endif /* HAVE_VASPRINTF */
-#else
-    res = vsnprintf(p, R_BUFSIZE, format, arg);
-    if(res >= R_BUFSIZE || res < 0) {
-	/* res is the desired output length or just a failure indication */
-	    buf[R_BUFSIZE - 1] = '\0';
-	    warning(_("printing of extremely long output is truncated"));
-	    res = R_BUFSIZE;
-    }
-#endif /* HAVE_VA_COPY */
     R_WriteConsole(p, strlen(p));
-#ifdef HAVE_VA_COPY
     if(usedRalloc) vmaxset(vmax);
     if(usedVasprintf) free(p);
-#endif
 }
 
 void Rvprintf(const char *format, va_list arg)
 {
     int i=0, con_num=R_OutputCon;
     Rconnection con;
-#ifdef HAVE_VA_COPY
     va_list argcopy;
-#endif
     static int printcount = 0;
 
     if (++printcount > 100) {
@@ -771,19 +771,12 @@ void Rvprintf(const char *format, va_list arg)
 
     do{
       con = getConnection(con_num);
-#ifdef HAVE_VA_COPY
       va_copy(argcopy, arg);
-      /* Parentheses added for FC4 with gcc4 and -D_FORTIFY_SOURCE=2 */
+      /* Parentheses added for Fedora with -D_FORTIFY_SOURCE=2 */
       (con->vfprintf)(con, format, argcopy);
       va_end(argcopy);
-#else /* don't support sink(,split=TRUE) */
-      (con->vfprintf)(con, format, arg);
-#endif
       con->fflush(con);
       con_num = getActiveSink(i++);
-#ifndef HAVE_VA_COPY
-      if (con_num>0) error("Internal error: this platform does not support split output");
-#endif
     } while(con_num>0);
 
 

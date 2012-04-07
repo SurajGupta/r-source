@@ -59,9 +59,11 @@ win.print(width = 7, height = 7, pointsize = 12, printer = "",
   \item{canvas}{color.  The color of the canvas which is visible
     when the background color is transparent.  Should be a solid color
     (and any alpha value will be ignored).  Default \code{"white"}.}
-  \item{gamma}{the gamma correction factor to assume for the display.
-    This value is used to ensure that the colors perceived are linearly
-    related to RGB values (see \code{\link{hsv}}).  Default \code{1}.}
+  \item{gamma}{gamma correction fudge factor.
+    Colours in R are sRGB;  if your monitor does not conform to
+    sRGB, you might be able to improve things by tweaking this
+    parameter to apply additional gamma correction to the RGB channels.
+    By default 1 (no additional gamma correction).}
   \item{xpos, ypos}{integer.  Position of the top left of the window, in
     pixels.  Negative values are taken from the opposite edge of the
     monitor.  Missing values (the default) mean take the default from the
@@ -205,14 +207,8 @@ win.print(width = 7, height = 7, pointsize = 12, printer = "",
     one pixel. 
     \item The minimum radius of a circle is 1 pixel.
     \item Colours are interpreted via the unprofiled colour mapping of
-    the graphics card -- this is likely to be close to sRGB.
+    the graphics card -- this is \emph{assumed} to conform to sRGB.
   }
-}
-\section{Gamma}{
-  PC displays map RGB numbers non-linearly to luminosities (and the
-  eye/brain system also perceives non-linearly).  For a typical PC
-  display, a value of \code{gamma} of around \code{2.2} will result in
-  the unit steps in the RGB values are being perceived as roughly equal.
 }
 
 \value{

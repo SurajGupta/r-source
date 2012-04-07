@@ -333,7 +333,7 @@ processRdIfdefs <- function(blocks, defines)
 
 processRdSexprs <-
     function(block, stage, options = RweaveRdDefaults,
-             env = new.env(parent=globalenv()))
+             env = new.env(hash = TRUE, parent = globalenv()))
 {
     recurse <- function(block) {
     	if (!any(getDynamicFlags(block)[stage])) return(block)
@@ -695,6 +695,11 @@ checkRd <- function(Rd, defines=.Platform$OS.type, stages="render",
                    checkContent(block[[2L]])
                    if (tag == "\\ifelse")
                        checkContent(block[[3L]])
+               },
+               "\\href" = {
+                   if (!identical(RdTags(block[[1L]]), "VERB"))
+                   	stopRd(block, Rdfile, "First argument to \\href must be verbatim URL")
+               	   checkContent(block[[2L]], tag)
                },
                "\\out" = {
                	   tags <- RdTags(block)

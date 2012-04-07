@@ -271,7 +271,7 @@ static void vwarningcall_dflt(SEXP call, const char *format, va_list ap)
     if (inWarning)
 	return;
 
-    s = GetOption(install("warning.expression"), R_BaseEnv);
+    s = GetOption1(install("warning.expression"));
     if( s != R_NilValue ) {
 	if( !isLanguage(s) &&  ! isExpression(s) )
 	    error(_("invalid option \"warning.expression\""));
@@ -282,7 +282,7 @@ static void vwarningcall_dflt(SEXP call, const char *format, va_list ap)
 	return;
     }
 
-    w = asInteger(GetOption(install("warn"), R_BaseEnv));
+    w = asInteger(GetOption1(install("warn")));
 
     if( w == NA_INTEGER ) /* set to a sensible value */
 	w = 0;
@@ -498,6 +498,10 @@ void PrintWarnings(void)
 
 static char errbuf[BUFSIZE];
 
+const char *R_curErrorBuf() {
+    return (const char *)errbuf;
+}
+
 /* temporary hook to allow experimenting with alternate error mechanisms */
 static void (*R_ErrorHook)(SEXP, char *) = NULL;
 
@@ -559,7 +563,8 @@ static void verrorcall_dflt(SEXP call, const char *format, va_list ap)
 		    msgline1 = wd(tmp);
 		    *p = '\n';
 		} else msgline1 = wd(tmp);
-		if (14 + wd(dcall) + wd(tmp) > LONGWARN) strcat(errbuf, tail);
+		if (14 + wd(dcall) + msgline1 > LONGWARN)
+		    strcat(errbuf, tail);
 	    } else {
 		int msgline1 = strlen(tmp);
 		char *p = strchr(tmp, '\n');
@@ -709,8 +714,8 @@ static void jump_to_top_ex(Rboolean traceback,
 	if (! inError)
 	    inError = 1;
 
-	/*now see if options("error") is set */
-	s = GetOption(install("error"), R_BaseEnv);
+	/* now see if options("error") is set */
+	s = GetOption1(install("error"));
 	haveHandler = ( s != R_NilValue );
 	if (haveHandler) {
 	    if( !isLanguage(s) &&  ! isExpression(s) )  /* shouldn't happen */
@@ -929,7 +934,7 @@ SEXP attribute_hidden do_ngettext(SEXP call, SEXP op, SEXP args, SEXP rho)
     int n = asInteger(CAR(args));
 
     checkArity(op, args);
-    if(n == NA_INTEGER || n < 0) error(_("invalid '%s' arguemnt"), "n");
+    if(n == NA_INTEGER || n < 0) error(_("invalid '%s' argument"), "n");
     if(!isString(msg1) || LENGTH(msg1) != 1)
 	error(_("'msg1' must be a character string"));
     if(!isString(msg2) || LENGTH(msg2) != 1)

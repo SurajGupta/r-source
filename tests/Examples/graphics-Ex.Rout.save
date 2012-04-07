@@ -1,7 +1,8 @@
 
-R version 2.12.0 Under development (unstable) (2010-08-28 r52822)
-Copyright (C) 2010 The R Foundation for Statistical Computing
+R version 2.13.0 Under development (unstable) (2011-03-13 r54760)
+Copyright (C) 2011 The R Foundation for Statistical Computing
 ISBN 3-900051-07-0
+Platform: x86_64-unknown-linux-gnu (64-bit)
 
 R is free software and comes with ABSOLUTELY NO WARRANTY.
 You are welcome to redistribute it under certain conditions.
@@ -145,6 +146,29 @@ Hair    Brown Blue Hazel Green
  1000 1e+06     2 ; 500 1000 5000 10000 50000 1e+05 5e+05 1e+06 
  1000 1e+07     1 ; 1000 10000 1e+05 1e+06 1e+07 
 > par(op)
+> 
+> ## An example using axTicks() without reference to an existing plot
+> ## (copying R's internal procedures for setting axis ranges etc.),
+> ## standard logarithmic y axis labels
+> ylims <- c(0.2, 88)
+> get_axp <- function(x) 10^c(ceiling(x[1]), floor(x[2]))
+> ## mimic par("yaxs")=="i"
+> usr.i <- log10(ylims)
+> (aT.i <- axTicks(side=2, usr=usr.i,
++                  axp=c(get_axp(usr.i), n=3), log=TRUE))
+[1]  0.2  0.5  1.0  2.0  5.0 10.0 20.0 50.0
+> ## mimic (default) par("yaxs")=="r"
+> usr.r <- extendrange(r = log10(ylims), f = 0.04)
+> (aT.r <- axTicks(side=2, usr=usr.r,
++                  axp=c(get_axp(usr.r),3), log=TRUE))
+[1]   0.2   0.5   1.0   2.0   5.0  10.0  20.0  50.0 100.0
+> 
+> ## Prove that we got it right :
+> plot(0:1,ylims,log="y",yaxs="i")
+> stopifnot(all.equal(aT.i, axTicks(side=2)))
+> 
+> plot(0:1,ylims,log="y",yaxs="r")
+> stopifnot(all.equal(aT.r, axTicks(side=2)))
 > 
 > 
 > 
@@ -1803,7 +1827,7 @@ armed.forces
 > flush(stderr()); flush(stdout())
 > 
 > ### Name: plot.design
-> ### Title: Plot Univariate Effects of a 'Design' or Model
+> ### Title: Plot Univariate Effects of a Design or Model
 > ### Aliases: plot.design
 > ### Keywords: hplot
 > 
@@ -1874,8 +1898,8 @@ Signif. codes:  0 ‘***’ 0.001 ‘**’ 0.01 ‘*’ 0.05 ‘.’ 0.1 ‘ ’
 > 
 > ### Name: plot.formula
 > ### Title: Formula Notation for Scatterplots
-> ### Aliases: plot.formula lines.formula points.formula
-> ### Keywords: hplot
+> ### Aliases: plot.formula lines.formula points.formula text.formula
+> ### Keywords: hplot aplot
 > 
 > ### ** Examples
 > 
@@ -1884,6 +1908,12 @@ Signif. codes:  0 ‘***’ 0.001 ‘**’ 0.01 ‘*’ 0.05 ‘.’ 0.1 ‘ ’
 > plot(Ozone ~ Wind, data = airquality, pch=as.character(Month),
 +      subset = Month != 7)
 > par(op)
+> 
+> ## text.formula() can be very natural:
+> wb <- within(warpbreaks, {
++     time <- seq_along(breaks); W.T <- wool:tension })
+> plot(breaks ~ time, data = wb, type = "b")
+> text(breaks ~ time, data = wb, label = W.T, col = 1+as.integer(wool))
 > 
 > 
 > 
@@ -2758,22 +2788,22 @@ List of 3
 > y <- sort(10*runif(10))
 > z <- runif(10)
 > z3 <- cbind(z, 2*runif(10), runif(10))
-> symbols(x, y, thermometers=cbind(.5, 1, z), inches=.5, fg = 1:10)
-> symbols(x, y, thermometers = z3, inches=FALSE)
+> symbols(x, y, thermometers = cbind(.5, 1, z), inches = .5, fg = 1:10)
+> symbols(x, y, thermometers = z3, inches = FALSE)
 > text(x,y, apply(format(round(z3, digits=2)), 1, paste, collapse = ","),
-+      adj = c(-.2,0), cex = .75, col = "purple", xpd=NA)
++      adj = c(-.2,0), cex = .75, col = "purple", xpd = NA)
 > 
 > ## Note that  example(trees)  shows more sensible plots!
 > N <- nrow(trees)
 > with(trees, {
 + ## Girth is diameter in inches
-+ symbols(Height, Volume, circles=Girth/24, inches=FALSE,
-+         main="Trees' Girth")# xlab and ylab automatically
++ symbols(Height, Volume, circles = Girth/24, inches = FALSE,
++         main = "Trees' Girth") # xlab and ylab automatically
 + ## Colours too:
-+ palette(rainbow(N, end = 0.9))
-+ symbols(Height, Volume, circles=Girth/16, inches=FALSE, bg = 1:N,
-+         fg="gray30", main="symbols(*, circles=Girth/16, bg = 1:N)")
-+ palette("default")
++ op <- palette(rainbow(N, end = 0.9))
++ symbols(Height, Volume, circles = Girth/16, inches = FALSE, bg = 1:N,
++         fg = "gray30", main = "symbols(*, circles = Girth/16, bg = 1:N)")
++ palette(op)
 + })
 > 
 > 
@@ -2923,7 +2953,7 @@ function (xy = 1, warn.log = TRUE)
 > ### * <FOOTER>
 > ###
 > cat("Time elapsed: ", proc.time() - get("ptime", pos = 'CheckExEnv'),"\n")
-Time elapsed:  7.556 0.487 8.208 0 0 
+Time elapsed:  4.298 0.093 4.391 0 0 
 > grDevices::dev.off()
 null device 
           1 

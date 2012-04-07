@@ -140,11 +140,10 @@ function(formula, data = parent.frame(), ..., subset,
          ylab = varnames[response], ask = dev.interactive())
 {
     m <- match.call(expand.dots = FALSE)
-    if (is.matrix(eval(m$data, parent.frame())))
-	m$data <- as.data.frame(data)
-
-    dots <- m$...
-    dots <- lapply(dots, eval, data, parent.frame())
+    eframe <- parent.frame()
+    if (is.matrix(md <- eval(m$data, eframe)))
+	m$data <- md <- as.data.frame(data)
+    dots <- lapply(m$..., eval, md, eframe)
     ## need to avoid evaluation of expressions in do.call later.
     ## see PR#10525
     nmdots <- names(dots)
@@ -160,9 +159,9 @@ function(formula, data = parent.frame(), ..., subset,
     require(stats, quietly=TRUE)
     m[[1L]] <- as.name("model.frame")
     m <- as.call(c(as.list(m), list(na.action = NULL)))
-    mf <- eval(m, parent.frame())
+    mf <- eval(m, eframe)
     if (!missing(subset)) {
-	s <- eval(subset.expr, data, parent.frame())
+	s <- eval(subset.expr, data, eframe)
 	l <- nrow(mf)
 	dosub <- function(x) if (length(x) == l) x[s] else x
 	dots <- lapply(dots, dosub)
@@ -216,23 +215,23 @@ lines.formula <-
 function(formula,  data = parent.frame(), ..., subset)
 {
     m <- match.call(expand.dots = FALSE)
-    if (is.matrix(eval(m$data, parent.frame())))
-	m$data <- as.data.frame(data)
-    dots <- m$...
-    dots <- lapply(dots, eval, data, parent.frame())
+    eframe <- parent.frame()
+    if (is.matrix(md <- eval(m$data, eframe)))
+	m$data <- md <- as.data.frame(data)
+    dots <- lapply(m$..., eval, md, eframe)
     m$... <- NULL
     m[[1L]] <- as.name("model.frame")
     m <- as.call(c(as.list(m), list(na.action = NULL)))
-    mf <- eval(m, parent.frame())
+    mf <- eval(m, eframe)
     if (!missing(subset)) {
-	s <- eval(m$subset, data, parent.frame())
+	s <- eval(m$subset, data, eframe)
         ## need the number of points before subsetting
 	if(!missing(data)) {
             l <- nrow(data)
         } else {
             mtmp <- m
             mtmp$subset <- NULL
-            l <- nrow(eval(mtmp, parent.frame()))
+            l <- nrow(eval(mtmp, eframe))
         }
 	dosub <- function(x) if (length(x) == l) x[s] else x
 	dots <- lapply(dots, dosub)
@@ -257,23 +256,23 @@ points.formula <-
 function(formula, data = parent.frame(), ..., subset)
 {
     m <- match.call(expand.dots = FALSE)
-    if (is.matrix(eval(m$data, parent.frame())))
-	m$data <- as.data.frame(data)
-    dots <- m$...
-    dots <- lapply(dots, eval, data, parent.frame())
+    eframe <- parent.frame()
+    if (is.matrix(md <- eval(m$data, eframe)))
+	m$data <- md <- as.data.frame(data)
+    dots <- lapply(m$..., eval, md, eframe)
     m$... <- NULL
     m[[1L]] <- as.name("model.frame")
     m <- as.call(c(as.list(m), list(na.action = NULL)))
-    mf <- eval(m, parent.frame())
+    mf <- eval(m, eframe)
     if (!missing(subset)) {
-	s <- eval(m$subset, data, parent.frame())
+	s <- eval(m$subset, data, eframe)
         ## need the number of points before subsetting
 	if(!missing(data)) {
             l <- nrow(data)
         } else {
             mtmp <- m
             mtmp$subset <- NULL
-            l <- nrow(eval(mtmp, parent.frame()))
+            l <- nrow(eval(mtmp, eframe))
         }
 	dosub <- function(x) if (length(x) == l) x[s] else x
 	dots <- lapply(dots, dosub)
@@ -294,6 +293,46 @@ function(formula, data = parent.frame(), ..., subset)
 	stop("must have a response variable")
 }
 
+text.formula <- function(formula, data = parent.frame(), ..., subset)
+{
+    m <- match.call(expand.dots = FALSE)
+    eframe <- parent.frame()
+    if (is.matrix(md <- eval(m$data, eframe)))
+	m$data <- md <- as.data.frame(data)
+    dots <- lapply(m$..., eval, md, eframe)
+    m$... <- NULL
+    m[[1L]] <- as.name("model.frame")
+    m <- as.call(c(as.list(m), list(na.action = NULL)))
+    mf <- eval(m, eframe)
+    if (!missing(subset)) {
+	s <- eval(m$subset, data, eframe)
+        ## need the number of points before subsetting
+	if(!missing(data)) {
+            l <- nrow(data)
+        } else {
+            mtmp <- m
+            mtmp$subset <- NULL
+            l <- nrow(eval(mtmp, eframe))
+        }
+	dosub <- function(x) if (length(x) == l) x[s] else x
+	dots <- lapply(dots, dosub)
+    }
+    response <- attr(attr(mf, "terms"), "response")
+    if (response) {
+	varnames <- names(mf)
+	y <- mf[[response]]
+	if (length(varnames) > 2L)
+	    stop("cannot handle more than one 'x' coordinate")
+	xn <- varnames[-response]
+	if (length(xn) == 0L)
+	    do.call("text", c(list(y), dots))
+	else
+	    do.call("text", c(list(mf[[xn]], y), dots))
+    }
+    else
+	stop("must have a response variable")
+}
+
 plot.xy <- function(xy, type, pch = par("pch"), lty = par("lty"),
                     col = par("col"), bg = NA, cex = 1, lwd = par("lwd"),
                     ...)
@@ -302,6 +341,11 @@ plot.xy <- function(xy, type, pch = par("pch"), lty = par("lty"),
 
 plot.new <- function()
 {
+    # TODO: define a general runHook() and use instead
+    for (fun in getHook("before.plot.new")) {
+        if (is.character(fun)) fun <- get(fun)
+        try(fun())
+    }
     .Internal(plot.new())
     for(fun in getHook("plot.new")) {
         if(is.character(fun)) fun <- get(fun)

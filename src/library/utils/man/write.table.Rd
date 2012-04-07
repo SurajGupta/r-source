@@ -16,7 +16,8 @@
 \usage{
 write.table(x, file = "", append = FALSE, quote = TRUE, sep = " ",
             eol = "\n", na = "NA", dec = ".", row.names = TRUE,
-            col.names = TRUE, qmethod = c("escape", "double"))
+            col.names = TRUE, qmethod = c("escape", "double"),
+            fileEncoding = "")
 
 write.csv(\dots)
 write.csv2(\dots)
@@ -58,6 +59,9 @@ write.csv2(\dots)
     \code{"double"} (default for \code{write.csv} and
     \code{write.csv2}), in which case it is doubled.  You can specify
     just the initial letter.}
+  \item{fileEncoding}{character string: if non-empty declares the
+    encoding to be used on a file (not a connection) so the character data can
+    be re-encoded as they are written.  See \code{\link{file}}.}
 
   \item{\dots}{arguments to \code{write.table}: \code{append},
     \code{col.names}, \code{sep}, \code{dec} and \code{qmethod}
@@ -110,9 +114,7 @@ write.csv2(\dots)
   \code{col.names = NA} and \code{row.names = TRUE} a blank column name
   is added, which is the convention used for CSV files to be read by
   spreadsheets.  Note that such CSV files can be read in \R by
-\preformatted{
-    read.csv(file = "<filename>", row.names = 1)    
-}
+\preformatted{  read.csv(file = "<filename>", row.names = 1)}
 
   \code{write.csv} and \code{write.csv2} provide convenience wrappers
   for writing CSV files.  They set \code{sep} and \code{dec} (see
@@ -130,6 +132,17 @@ write.csv2(\dots)
   ensure that the correct conventions are used to write a valid file.
   Attempts to change \code{append}, \code{col.names}, \code{sep},
   \code{dec} or \code{qmethod} are ignored, with a warning.
+  
+  CSV files do not record an encoding, and this causes problems if they
+  are not ASCII for many other applications.  Windows Excel 2007/10 will
+  open files (e.g. by the file association mechanism) correctly if they
+  are ASCII or UTF-16 (use \code{fileEncoding = "UTF-16LE"}) or perhaps in
+  the current Windows codepage (e.g. \code{"CP1252"}), but the
+  \sQuote{Text Import Wizard} (from the \sQuote{Data} tab) allows far
+  more choice of encodings.  Excel:mac 2004/8 can \emph{import} only
+  Macintosh (which seems to mean MacRoman), Windows (perhaps Latin-1)
+  and \sQuote{PC-8} files.  OpenOffice 3.x asks for the character set
+  when opening the file.
 
   There is an IETF RFC4180 (\url{http://tools.ietf.org/html/rfc4180})
   for CSV files, which mandates comma as the separator and CRLF line
@@ -167,6 +180,11 @@ read.csv("foo.csv", row.names = 1)
 ## or without row names
 write.csv(x, file = "foo.csv", row.names = FALSE)
 read.csv("foo.csv")
+
+## To write a file in MacRoman for simple use in Mac Excel 2004/8
+write.csv(x, file = "foo.csv", fileEncoding = "macroman")
+## or for Windows Excel 2007/10
+write.csv(x, file = "foo.csv", fileEncoding = "UTF-16LE")
 }}
 \keyword{print}
 \keyword{file}

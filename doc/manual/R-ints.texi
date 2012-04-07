@@ -70,6 +70,7 @@ The current version of this document is @value{VERSION}.
 * .Internal vs .Primitive::     
 * Internationalization in the R sources::  
 * Package Structure::           
+* Files::                       
 * Graphics Devices::            
 * Tools::                       
 * R coding standards::          
@@ -367,7 +368,10 @@ need to know the charset to handle ASCII strings.  From @R{} 2.8.0 it is
 guaranteed that they will not be set for @code{CHARSXP}s created by @R{}
 itself.)  As from @R{} 2.8.0 bit 5 is used to indicate that a
 @code{CHARSXP} is hashed by its address, that is @code{NA_STRING} or in
-the @code{CHARSXP} cache: this is not serialized.
+the @code{CHARSXP} cache: this is not serialized.  As from @R{} 2.13.0,
+bit 1 is used to indicate if the @code{CHARSXP} should be treated as a
+set of bytes, not necessarily representing a character in any known
+encoding.
 
 @node The 'data', Allocation classes, Rest of header, SEXPs
 @subsection The `data'
@@ -1130,20 +1134,21 @@ For background papers see
 
 @cindex serialization
 Serialized versions of @R{} objects are used by @code{load}/@code{save}
-and also at a slightly lower level by @code{.saveRDS}/@code{.readRDS}
-and @code{serialize}/@code{unserialize}.  These differ in what they
+and also at a slightly lower level by @code{saveRDS}/@code{readRDS} (and
+their earlier `internal' dot-name versions) and
+@code{serialize}/@code{unserialize}.  These differ in what they
 serialize to (a file, a connection, a raw vector) and whether they are
 intended to serialize a single object or a collection of objects
 (typically the workspace).  @code{save} writes a header at the beginning
 of the file (a single LF-terminated line) which the lower-level versions
 do not.
 
-@code{save} and @code{.saveRDS} allow various forms of compression, and
+@code{save} and @code{saveRDS} allow various forms of compression, and
 @command{gzip} compression has been the default (except for ASCII saves)
 since @R{} 2.4.0.  Compression is applied to the whole file stream,
 including the headers, so serialized files can be uncompressed or
 re-compressed by external programs.  Since @R{} 2.10.0 both @code{load}
-and @code{.readRDS} can read @command{gzip}, @command{bzip2} and
+and @code{readRDS} can read @command{gzip}, @command{bzip2} and
 @command{xz} forms of compression when reading from a file, and
 @command{gzip} compression when reading from a connection.
 
@@ -1952,7 +1957,7 @@ this makes lazy-loading unsuitable for really large objects: the
 unserialized length of an @R{} object can exceed 4GB.)
 
 The index or `map' file @file{@var{name}.rdx} is a compressed serialized
-@R{} object to be read by @code{.readRDS}.  It is a list with three
+@R{} object to be read by @code{readRDS}.  It is a list with three
 elements @code{variables}, @code{references} and @code{compressed}.  The
 first two are named lists of integer vectors of length 2 giving the
 offset and length of the serialized object in the @file{@var{name}.rdb}
@@ -2243,8 +2248,7 @@ evaluate their second argument, and @code{~}, @code{.Internal},
 arguments.
 
 @code{rep} and @code{seq.int} are special as they evaluate some of their
-arguments conditional on which are non-missing.  @code{c} is special to
-allow it to be used with language objects.
+arguments conditional on which are non-missing.
 
 @code{log}, @code{round} and @code{signif} are special to allow default
 values to be given to missing arguments.
@@ -2452,7 +2456,7 @@ This is handled separately: see
 
 See file @file{po/README} for how to update the message templates and catalogs.
 
-@node Package Structure, Graphics Devices, Internationalization in the R sources, Top
+@node Package Structure, Files, Internationalization in the R sources, Top
 @chapter Structure of an Installed Package
 
 @menu
@@ -2502,10 +2506,9 @@ plus a file @file{Rdata.rds} which contain a named character vector used
 by @code{data()} in the (unusual) event that it is used for such a
 package.  Otherwise it is a copy of the @file{data} directory in the
 sources, with saved images re-compressed if @command{R CMD INSTALL
---resave-data} was used.  If @command{R CMD INSTALL --use-data-zip} was
-specified or selected @emph{via} @option{--auto-zip}, the contents of
-the directory are moved to a zip file @file{Rdata.zip} and a listing
-written in file @file{filelist}.
+--resave-data} was used.  Prior to @R{} 2.12.0 the contents of the
+directory could be moved to a zip file @file{Rdata.zip} and a listing
+written in file @file{filelist}: this was principally done on Windows.
 
 Subdirectory @file{demo} supports the @code{demo} function, and is
 copied from the sources.
@@ -2517,7 +2520,7 @@ catalogs.
 @section Metadata
 
 Directory @file{Meta} contains several files in @code{.rds} format, that
-is serialized @R{} objects written by @code{.saveRDS}.  All packages
+is serialized @R{} objects written by @code{saveRDS}.  All packages
 have files @file{Rd.rds}, @file{hsearch.rds}, @file{links.rds} and
 @file{package.rds}.  Packages with name spaces have a file
 @file{nsInfo.rds}, and those with data, demos or vignettes have
@@ -2609,8 +2612,98 @@ File @file{aliases.rds} is the same information as @file{AnIndex} as a
 named character vector (names the topics, values the file basename), for
 faster access by @R{} >= 2.11.0.
 
+@node Files, Graphics Devices, Package Structure, Top
+@chapter Files
 
-@node Graphics Devices, Tools, Package Structure, Top
+@R{} provides may functions to work with files and directories: many of
+these have been added relatively recently to facilitate scripting in
+@R{} and in particular the replacement of Perl scripts by @R{} scripts
+in the management of @R{} itself.
+
+These functions are implemented by standard C/POSIX library calls,
+except on Windows.  That means that filenames must be encoded in the
+current locale as the OS provides no other means to access the file
+system: increasingly filenames are stored in UTF-8 and the OS will
+translate filenames to UTF-8 in other locales.  So using a UTF-8 locale
+gives transparent access to the whole file system.
+
+Windows is another story.  There the internal view of filenames is in
+UTF-16LE (so-called `Unicode'), and standard C library calls can only
+access files whose names can be expressed in the current codepage.  To
+circumvent that restriction, there is a parallel set of Windows-specific
+calls which take wide-character arguments for filepaths.  Much of the
+file-handling in @R{} has been moved over to using these functions, so
+filenames can be manipulated in @R{} as UTF-8 encoded character strings,
+converted to wide characters (which on Windows are UTF-16LE) and passed
+to the OS.  The utilities @code{RC_fopen} and @code{filenameToWchar}
+help this process.  Currently @code{file.copy} to a directory,
+@code{list.files}, @code{list.dirs} and @code{path.expand} work only
+with filepaths encoded in the current codepage.
+
+All these functions do tilde expansion, in the same way as
+@code{path.expand}, with the deliberate exception of @code{Sys.glob}.
+
+File names may be case sensitive or not: the latter is the norm on
+Windows and Mac OS X, the former on other Unix-alikes.  Note that this
+is a property of both the OS and the file system: it is often possible
+to map names to upper or lower case when mounting the file system.  This
+can affect the matching of patterns in @code{list.files} and
+@code{Sys.glob}.
+
+File names commonly contain spaces on Windows and Mac OS X but not
+elsewhere.  As file names are handled as character strings by @R{},
+spaces are not usually a concern unless file names are passed to other
+process, e.g.@: by a @code{system} call.
+
+Windows has another couple of peculiarities.  Whereas a POSIX file
+system has a single root directory (and other physical file systems are
+mounted onto logical directories under that root), Windows has separate
+roots for each physical or logical file system (`volume'), organized
+under @emph{drives} (with file paths starting @code{D:} for an ASCII
+letter, case-insensitively) and @emph{network shares} (with paths like
+@code{\netname\topdir\myfiles\a file}.  There is a current drive, and
+path names without a drive part are relative to the current drive.
+Further, each drive has a current directory, and relative paths are
+relative to that current directory, on a particular drive if one is
+specified.  So @file{D:dir\file} and @file{D:} are valid path
+specifications (the last being the current directory on drive
+@file{D:}).
+
+spaces
+case insensitivity
+
+globbing
+
+@c basename        Wchar   na
+@c dir.create      Wchar   ~
+@c dirname         Wchar   ~
+@c getwd
+@c file.access     Wchar   ~
+@c file.append     RC_fopen
+@c file.copy       no      ~ (+ file.append)
+@c file.create     RC_fopen
+@c file.edit       UTF-8   in R code
+@c file.exists     Wchar   ~
+@c file.info       Wchar   ~
+@c file.link       8-bit   ~
+@c file.remove     Wchar   ~
+@c file.rename     Wchar   ~
+@c file.show       UTF-8   in R code
+@c file.symlink    not     ~
+@c file_test
+@c list.dirs       no      ~
+@c list.files      no      ~
+@c normalizePath   Wchar   ~
+@c path.expand     no
+@c setwd           Wchar   ~
+@c Sys.chmod       Wchar   ~
+@c Sys.glob        Wchar   not
+@c Sys.readlink    not     ~
+@c Sys.umask
+@c unlink          Wchar   ~
+
+
+@node Graphics Devices, Tools, Files, Top
 @chapter Graphics
 
 @R{}'s graphics internals were revised for version 1.4.0 (and tidied up
@@ -3451,11 +3544,6 @@ Default: false.
 @item _R_CHECK_FORCE_SUGGESTS_
 If true, give an error if suggested packages are not available.
 Default: true.
-@item _R_CHECK_LATEX_VIGNETTES_
-If true (and @code{R_check_weave_vignettes} is also true),
-@command{latex} package vignettes in the process of checking them: this
-will show up @code{Sweave} source errors, including missing source
-files.  Default: true.
 @item _R_CHECK_RD_CONTENTS_
 If true, check @file{Rd} files for auto-generated content which needs editing,
 and missing argument documentation.
@@ -3474,19 +3562,20 @@ Default: false.
 Initial setting for @option{--check-subdirs}.
 Default: @samp{default} (which checks only tarballs, and checks in the
 @file{src} only if there is no @file{configure} file).
-@item _R_CHECK_USE_INSTALL_LOG_
-If true, record the output from installing a package as part of its
-check to a log file (@file{00install.out} by default), even when running
-interactively.
-Default: true.
-@item _R_CHECK_WEAVE_VIGNETTES_
-If true, weave package vignettes in the process of checking them.
-Default: true.
 @item _R_CHECK_USE_CODETOOLS_
 If true, make use of the @pkg{codetools} package, which provides a
 detailed analysis of visibility of objects (but may give false
 positives).
 Default: true.
+@item _R_CHECK_USE_INSTALL_LOG_
+If true, record the output from installing a package as part of its
+check to a log file (@file{00install.out} by default), even when running
+interactively.
+Default: true.
+@item _R_CHECK_VIGNETTES_NLINES_
+Maximum umber of lines to show of the bottom of the output when reporting
+errors in running vignettes.
+Default: 10.
 @item _R_CHECK_CODOC_S4_METHODS_
 Control whether @code{codoc()} testing is also performed on S4 methods.
 This was off by default in R versions prior to 2.10.0 as it gave false
@@ -3548,6 +3637,14 @@ Default: true.
 @item _R_CHECK_ASCII_DATA_
 If true, check data for non-ascii characters.
 Default: true.
+@item _R_CHECK_COMPACT_DATA_
+If true, check data for ascii and uncompressed saves.
+Default: true.
+@item _R_CHECK_COMPACT_DATA2_
+If true, check data for ascii and uncompressed saves, and also check if
+using @command{bzip2} or @code{xz} compression would be significantly
+better.  Implies @env{_R_CHECK_COMPACT_DATA_} is true.
+Default: false.
 @item _R_CHECK_SKIP_ARCH_
 Comma-separated list of architectures that will be omitted from
 checking in a multi-arch setup.
@@ -3555,11 +3652,26 @@ Default: none.
 @item _R_CHECK_SKIP_TESTS_ARCH_
 Comma-separated list of architectures that will be omitted from
 running tests in a multi-arch setup.
-Default:none.
+Default: none.
 @item _R_CHECK_SKIP_EXAMPLES_ARCH_
 Comma-separated list of architectures that will be omitted from
 running examples in a multi-arch setup.
-Default:none.
+Default: none.
+@item _R_CHECK_VC_DIRS_
+Should the unpacked package directory be checked for version-control
+directories (@file{CVS}, @file{.svn} @dots{})?
+Default: true for tarballs.
+@item _R_CHECK_PKG_SIZES_
+Should @command{du} be used to find the installed sizes of packages?
+@command{R CMD check} does check for the availability of @command{du}.
+but this option allows the check to be overruled if an unsuitable
+command is found (including one that does not respect the @option{-k}
+flag to report in units of 1Kb, or reports in a different format -- the
+GNU, Mac OS X and Solaris @command{du} commands have been tested).
+Default: true if @command{du} is found.
+@item _R_CHECK_DOC_SIZES_
+Should @command{qpdf} be used to find the installed sizes of PDFs?
+Default: true if @command{qpdf} is found.
 @end vtable
 
 @node R coding standards, Testing R code, Tools, Top

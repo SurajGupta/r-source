@@ -1,22 +1,21 @@
 include ../MkRules
 R_HOME = ../../..
 
+CFLAGS=-O3 -Wall -pedantic
 ifdef DEBUG
-  OPTFLAGS=$(G_FLAG) -O3 -Wall
-  LINKFLAGS=
-  DLLFLAGS=
+ CFLAGS+=$(G_FLAG)
+ LINKFLAGS=
+ DLLFLAGS=
 else
-  OPTFLAGS=-O3 -Wall -pedantic
-  LINKFLAGS=-s
-  DLLFLAGS=-s
+ LINKFLAGS=-s
+ DLLFLAGS=-s
 endif
-CPPFLAGS=-I../../include
-CFLAGS=$(OPTFLAGS)
+CPPFLAGS=-I../../include $(arch_DEFS)
 
 ## Increase stack size to 10Mb
 LARGE_STACK=-Wl,--stack=0xA00000
 ## allow 32-bit builds to address over 2Gb
-ifeq ($(strip $(WIN)),32)
+ifeq "$(WIN)" "32"
 LARGE_ADDR=-Wl,--large-address-aware
 endif
 
@@ -72,9 +71,9 @@ rterm-CPPFLAGS=-DWin32
 graphappmain-CPPFLAGS=$(DEFS_W64)
 
 ## -luser32 -lkernel32 -ladvapi32 -lshell32 are now standard
-Rgui-LIBS=-L../../../$(IMPDIR) -lR $(GRAPHAPP_LIB)
-Rscript-LIBS=-L../../../$(IMPDIR) -lR $(GRAPHAPP_LIB)
-Rterm-LIBS=-L../../../$(IMPDIR) -lR $(GRAPHAPP_LIB)
+Rgui-LIBS=-L../../../$(IMPDIR) -lR -lRgraphapp
+Rscript-LIBS=-L../../../$(IMPDIR) -lR -lRgraphapp
+Rterm-LIBS=-L../../../$(IMPDIR) -lR -lRgraphapp
 
 Rgui-LINKFLAGS=-mwindows $(LARGE_ADDR) $(LARGE_STACK)
 Rterm-LINKFLAGS=$(LARGE_ADDR) $(LARGE_STACK)
@@ -83,10 +82,10 @@ Rscript-LINKFLAGS=$(LARGE_ADDR) $(LARGE_STACK)
 Rgui.exe: graphappmain.o rgui.o rgico.o
 Rterm.exe: graphappmain.o rterm.o rtico.o
 
-ifneq ($(strip $(WIN)),64)
+ifneq "$(WIN)" "64"
 rcico.o: Rcmd.exe.manifest
-rgico.o: Rgui.exe.manifest
-rtico.o: Rterm.exe.manifest
+rgico.o: Rgui32.manifest
+rtico.o: Rterm32.manifest
 else
 rtico.o: Rterm64.manifest
 rgico.o: Rgui64.manifest
@@ -105,6 +104,7 @@ Rscript.o: ../../unix/Rscript.c
 
 Rscript.exe: Rscript.o rcico.o
 
+## Not currently used (2.13.0)
 Rpwd:
 	$(MAKE) -C ../../include -f Makefile.win version
 	$(MAKE) Rpwd.exe

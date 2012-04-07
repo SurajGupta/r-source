@@ -22,11 +22,11 @@ R.home <- function(component="home")
            "bin" = if(.Platform$OS.type == "windows" &&
                       nzchar(p <- .Platform$r_arch)) file.path(rh, component, p)
            else file.path(rh, component),
-           "share" = if(nzchar(p <- as.vector(Sys.getenv("R_SHARE_DIR")))) p
+           "share" = if(nzchar(p <- Sys.getenv("R_SHARE_DIR"))) p
            else file.path(rh, component),
-	   "doc" = if(nzchar(p <- as.vector(Sys.getenv("R_DOC_DIR")))) p
+	   "doc" = if(nzchar(p <- Sys.getenv("R_DOC_DIR"))) p
            else file.path(rh, component),
-           "include" = if(nzchar(p <- as.vector(Sys.getenv("R_INCLUDE_DIR")))) p
+           "include" = if(nzchar(p <- Sys.getenv("R_INCLUDE_DIR"))) p
            else file.path(rh, component),
            "modules" = if(nzchar(p <- .Platform$r_arch)) file.path(rh, component, p)
            else file.path(rh, component),
@@ -74,11 +74,15 @@ file.rename <- function(from, to)
 
 list.files <- function(path = ".", pattern = NULL, all.files = FALSE,
                        full.names = FALSE, recursive = FALSE,
-                       ignore.case = FALSE)
+                       ignore.case = FALSE, include.dirs = FALSE)
     .Internal(list.files(path, pattern, all.files, full.names,
-                         recursive, ignore.case))
+                         recursive, ignore.case, include.dirs))
 
 dir <- list.files
+
+list.dirs <- function(path = ".", full.names = TRUE)
+    .Internal(list.dirs(path, full.names))
+
 
 file.path <-
 function(..., fsep=.Platform$file.sep)
@@ -92,29 +96,33 @@ file.create <- function(..., showWarnings =  TRUE)
 
 file.choose <- function(new=FALSE) .Internal(file.choose(new))
 
-file.copy <- function(from, to, overwrite = recursive, recursive = FALSE)
+file.copy <- function(from, to,
+                      overwrite = recursive, recursive = FALSE,
+                      copy.mode = TRUE)
 {
-    if (!(nf <- length(from))) stop("no files to copy from")
+    if (!(nf <- length(from))) return(logical())
     if (!(nt <- length(to)))   stop("no files to copy to")
     ## we don't use file_test as that is in utils.
     if (nt == 1 && file.exists(to) && file.info(to)$isdir) {
-        ## on Windows we need \ for compiled code
+        ## on Windows we need \ for the compiled code (e.g. mkdir).
         if(.Platform$OS.type == "windows") {
             from <- gsub("/", "\\", from, fixed = TRUE)
             to <- gsub("/", "\\", to, fixed = TRUE)
         }
-        return(.Internal(file.copy(from, to, overwrite, recursive)))
-        # to <- file.path(to, basename(from))
+        return(.Internal(file.copy(from, to, overwrite, recursive, copy.mode)))
     } else if (nf > nt) stop("more 'from' files than 'to' files")
-    else if (recursive) warning("'recursive' will be ignored")
+    else if (recursive)
+        warning("'recursive' will be ignored as 'to' is not a single existing directory")
     if(nt > nf) from <- rep(from, length.out = nt)
     okay <- file.exists(from)
     if (!overwrite) okay[file.exists(to)] <- FALSE
     if (any(from[okay] %in% to[okay]))
         stop("file can not be copied both 'from' and 'to'")
-    if (any(okay)) { ## care: create could fail but append work.
+    if (any(okay)) { # care: file.create could fail but file.append work.
     	okay[okay] <- file.create(to[okay])
     	if(any(okay)) okay[okay] <- file.append(to[okay], from[okay])
+        if(copy.mode)
+            Sys.chmod(to[okay], file.info(from[okay])$mode, TRUE)
     }
     okay
 }
@@ -125,6 +133,12 @@ file.symlink <- function(from, to) {
     if (nt == 1 && file.exists(to) && file.info(to)$isdir)
         to <- file.path(to, basename(from))
     .Internal(file.symlink(from, to))
+}
+
+file.link <- function(from, to) {
+    if (!(length(from))) stop("no files to link from")
+    if (!(nt <- length(to)))   stop("no files to link to")
+    .Internal(file.link(from, to))
 }
 
 file.info <- function(...)
@@ -150,20 +164,20 @@ dir.create <- function(path, showWarnings = TRUE, recursive = FALSE,
     invisible(.Internal(dir.create(path, showWarnings, recursive,
                                    as.octmode(mode))))
 
-system.file <- function(..., package = "base", lib.loc = NULL)
+system.file <- function(..., package = "base", lib.loc = NULL, mustWork = FALSE)
 {
     if(nargs() == 0L)
         return(file.path(.Library, "base"))
     if(length(package) != 1L)
         stop("'package' must be of length 1")
-    packagePath <- .find.package(package, lib.loc, quiet = TRUE)
-    if(length(packagePath) == 0L)
-        return("")
-    FILES <- file.path(packagePath, ...)
-    present <- file.exists(FILES)
-    if(any(present))
-        FILES[present]
-    else ""
+    packagePath <- find.package(package, lib.loc, quiet = TRUE)
+    ans <- if(length(packagePath)) {
+        FILES <- file.path(packagePath, ...)
+        present <- file.exists(FILES)
+        if(any(present)) FILES[present] else ""
+    } else ""
+    if (mustWork && identical(ans, "")) stop("no file found")
+    ans
 }
 
 getwd <- function()
@@ -190,14 +204,17 @@ Sys.glob <- function(paths, dirmark = FALSE)
 unlink <- function(x, recursive = FALSE)
     .Internal(unlink(as.character(x), recursive))
 
-Sys.chmod <- function(paths, mode = "0777")
-    .Internal(Sys.chmod(paths, as.octmode(mode)))
+Sys.chmod <- function(paths, mode = "0777", use_umask= TRUE)
+    .Internal(Sys.chmod(paths, as.octmode(mode), use_umask))
 
-Sys.umask <- function(mode = "0000")
-    .Internal(Sys.umask(as.octmode(mode)))
+Sys.umask <- function(mode = NA)
+    .Internal(Sys.umask(if(is.na(mode)) NA_integer_ else as.octmode(mode)))
 
 Sys.readlink <- function(paths)
     .Internal(Sys.readlink(paths))
 
 readRenviron <- function(path)
     .Internal(readRenviron(path))
+
+normalizePath <- function(path, winslash = "\\", mustWork = NA)
+    .Internal(normalizePath(path.expand(path), winslash, mustWork))

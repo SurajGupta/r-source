@@ -1,7 +1,7 @@
 /*
  *  R : A Computer Language for Statistical Data Analysis
  *  Copyright (C) 1995, 1996  Robert Gentleman and Ross Ihaka
- *  Copyright (C) 1998--2009  The R Development Core Team
+ *  Copyright (C) 1998--2011  The R Development Core Team
  *
  *  This program is free software; you can redistribute it and/or modify
  *  it under the terms of the GNU General Public License as published by
@@ -79,7 +79,7 @@ SEXP attribute_hidden do_fmin(SEXP call, SEXP op, SEXP args, SEXP rho)
     struct callinfo info;
 
     checkArity(op, args);
-    PrintDefaults(rho);
+    PrintDefaults();
 
     /* the function to be minimized */
 
@@ -124,7 +124,6 @@ SEXP attribute_hidden do_fmin(SEXP call, SEXP op, SEXP args, SEXP rho)
 
 /* One Dimensional Root Finding --  just wrapper code for Brent's "zeroin" */
 
-
 static double fcn2(double x, struct callinfo *info)
 {
     SEXP s;
@@ -142,8 +141,13 @@ static double fcn2(double x, struct callinfo *info)
     case REALSXP:
 	if (length(s) != 1) goto badvalue;
 	if (!R_FINITE(REAL(s)[0])) {
-	    warning(_("NA/Inf replaced by maximum positive value"));
-	    return DBL_MAX;
+	    if(REAL(s)[0] == R_NegInf) { // keep sign for root finding !
+		warning(_("-Inf replaced by maximally negative value"));
+		return -DBL_MAX;
+	    } else {
+		warning(_("NA/Inf replaced by maximum positive value"));
+		return DBL_MAX;
+	    }
 	}
 	else return REAL(s)[0];
 	break;
@@ -166,7 +170,7 @@ SEXP attribute_hidden do_zeroin(SEXP call, SEXP op, SEXP args, SEXP rho)
     struct callinfo info;				\
 							\
     checkArity(op, args);				\
-    PrintDefaults(rho);					\
+    PrintDefaults();					\
 							\
     /* the function to be minimized */			\
     v = CAR(args);					\
@@ -407,7 +411,7 @@ static void fcn(int n, const double x[], double *f, function_info
     }
     FT_store(n, *f, x, g, h, state);
     UNPROTECT(1 + state->have_gradient + state->have_hessian);
-    return; 
+    return;
 
  badvalue:
     error(_("invalid function value in 'nlm' optimizer"));
@@ -575,7 +579,7 @@ SEXP attribute_hidden do_nlm(SEXP call, SEXP op, SEXP args, SEXP rho)
     function_info *state;
 
     checkArity(op, args);
-    PrintDefaults(rho);
+    PrintDefaults();
 
     state = (function_info *) R_alloc(1, sizeof(function_info));
 

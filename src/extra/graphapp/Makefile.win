@@ -3,16 +3,12 @@ include ../../gnuwin32/MkRules
 
 all: makeMakedeps DLL implib
 
-CPPFLAGS=-I. -I../../gnuwin32 -I../../include
-DEFS=-DGA_DLL_BUILD -DENABLE_NLS=1
-CPPFLAGS+=$(DEFS)
-CFLAGS=$(OPTFLAGS)
-# -O3 gives ICE in gcc 4.3.0
-gimage-CFLAGS=-O2
-image-CFLAGS=-O2
+CPPFLAGS = -I. -I../../gnuwin32 -I../../include
+DEFS = -DGA_DLL_BUILD -DENABLE_NLS=1
+CPPFLAGS += $(DEFS)
 
-SOURCES=$(wildcard *.c)
-OBJECTS=$(SOURCES:.c=.o)
+SOURCES = $(wildcard *.c)
+OBJECTS = $(SOURCES:.c=.o)
 
 DLL: libR.dll.a Rgraphapp.dll
 	@cp Rgraphapp.dll ../../../$(BINDIR)
@@ -36,7 +32,7 @@ Rgraphapp.def: $(OBJECTS)
 	@$(RM) g.def
 
 Rgraphapp.dll: $(OBJECTS) dllversion.o Rgraphapp.def
-	$(DLL) -shared -mwindows -o $@ Rgraphapp.def $(OBJECTS) dllversion.o -L. -lR -lcomctl32 -limm32
+	$(DLL) -shared -mwindows -o $@ Rgraphapp.def $(OBJECTS) dllversion.o -L. -lR -lcomctl32 -limm32 -lmsimg32
 
 ## need to break mutual dependence with R.dll
 libR.dll.a: R.def

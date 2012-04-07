@@ -1,6 +1,6 @@
 % File src/library/base/man/factor.Rd
 % Part of the R package, http://www.R-project.org
-% Copyright 1995-2009 R Core Development Team
+% Copyright 1995-2011 R Core Development Team
 % Distributed under GPL 2 or later
 
 \name{factor}
@@ -16,6 +16,7 @@
 \alias{Ops.factor}
 \alias{Summary.factor}
 \alias{Ops.ordered}
+\alias{Summary.ordered}
 \alias{addNA}
 \concept{categorical variable}
 \concept{enumerated type}
@@ -23,9 +24,9 @@
 \description{
   The function \code{factor} is used to encode a vector as a factor (the
   terms \sQuote{category} and \sQuote{enumerated type} are also used for
-  factors).  If \code{ordered} is \code{TRUE}, the factor levels are
-  assumed to be ordered.
-  For compatibility with S there is also a function \code{ordered}.
+  factors).  If argument \code{ordered} is \code{TRUE}, the factor
+  levels are assumed to be ordered.  For compatibility with S there is
+  also a function \code{ordered}.
 
   \code{is.factor}, \code{is.ordered}, \code{as.factor} and \code{as.ordered}
   are the membership and coercion functions for these classes.
@@ -69,8 +70,8 @@ addNA(x, ifany=FALSE)
   \code{factor} returns an object of class \code{"factor"} which has a
   set of integer codes the length of \code{x} with a \code{"levels"}
   attribute of mode \code{\link{character}} and unique
-  (\code{!\link{anyDuplicated}(.)}) entries.  If \code{ordered} is true
-  (or \code{ordered} is used) the result has class
+  (\code{!\link{anyDuplicated}(.)}) entries.  If argument \code{ordered}
+  is true (or \code{ordered()} is used) the result has class
   \code{c("ordered", "factor")}.
 
   Applying \code{factor} to an ordered or unordered factor returns a
@@ -79,8 +80,8 @@ addNA(x, ifany=FALSE)
 
   \code{is.factor} returns \code{TRUE} or \code{FALSE} depending on
   whether its argument is of type factor or not.  Correspondingly,
-  \code{is.ordered} returns \code{TRUE} when its
-  argument is ordered and \code{FALSE} otherwise.
+  \code{is.ordered} returns \code{TRUE} when its argument is an ordered
+  factor and \code{FALSE} otherwise.
 
   \code{as.factor} coerces its argument to a factor.
   It is an abbreviated form of \code{factor}.
@@ -154,11 +155,13 @@ addNA(x, ifany=FALSE)
 
 \section{Comparison operators and group generic methods}{
   There are \code{"factor"} and \code{"ordered"} methods for the
-  \link{group generic} \code{\link[=S3groupGeneric]{Ops}}, which
-  provide methods for the \link{Comparison} operators.  (The rest of the
-  group and the \code{\link[=S3groupGeneric]{Math}} and
-  \code{\link[=S3groupGeneric]{Summary}} groups generate an error as
-  they are not meaningful for factors.)
+  \link{group generic} \code{\link[=S3groupGeneric]{Ops}} which
+  provide methods for the \link{Comparison} operators,
+  and for the \code{\link{min}},\code{\link{max}}, and
+  \code{\link{range}} generics in \code{\link[=S3groupGeneric]{Summary}}
+  of \code{"ordered"}.  (The rest of the groups and the
+  \code{\link[=S3groupGeneric]{Math}} group generate an error as they
+  are not meaningful for factors.)
 
   Only \code{==} and \code{!=} can be used for factors: a factor can
   only be compared to another factor with an identical set of levels
@@ -167,7 +170,7 @@ addNA(x, ifany=FALSE)
   mechanism precludes comparing ordered and unordered factors.
 
   All the comparison operators are available for ordered factors.
-  Sorting is done by the levels of the operands: if both operands are
+  Collation is done by the levels of the operands: if both operands are
   ordered factors they must have the same level set.
 }
 \note{
@@ -194,12 +197,20 @@ addNA(x, ifany=FALSE)
 \examples{
 (ff <- factor(substring("statistics", 1:10, 1:10), levels=letters))
 as.integer(ff)  # the internal codes
-factor(ff)      # drops the levels that do not occur
+(f. <- factor(ff))# drops the levels that do not occur
 ff[, drop=TRUE] # the same, more transparently
 
 factor(letters[1:20], labels="letter")
 
 class(ordered(4:1)) # "ordered", inheriting from "factor"
+z <- factor(LETTERS[3:1], ordered = TRUE)
+## and "relational" methods work:
+stopifnot(sort(z)[c(1,3)] == range(z), min(z) < max(z))
+\dontshow{
+of <- ordered(ff)
+stopifnot(identical(range(of, rev(of)), of[3:2]),
+	  identical(max(of), of[2]))
+}
 
 ## suppose you want "NA" as a level, and to allow missing values.
 (x <- factor(c(1, 2, NA), exclude = NULL))
