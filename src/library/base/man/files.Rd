@@ -32,8 +32,8 @@ file.link(from, to)
     alternatively be the path to a single existing directory.}
   \item{overwrite}{logical; should existing destination files be overwritten?}
   \item{showWarnings}{logical; should the warnings on failure be shown?}
-  \item{recursive}{logical. If \code{to} is a directory, should
-    directories in \code{from} be copied (and their contents).}
+  \item{recursive}{logical.  If \code{to} is a directory, should
+    directories in \code{from} be copied (and their contents)?}
   \item{copy.mode}{logical:  should file permission bits be copied where
     possible?  This applies to both files and directories.}
 }
@@ -124,6 +124,9 @@ file.link(from, to)
 
   Most of these functions accept UTF-8 filepaths not valid in the
   current locale.
+
+  User error in supplying invalid file names (and note that \file{foo/}
+  \emph{is} invalid on Windows) has undefined consequences.
 }
 #endif
 

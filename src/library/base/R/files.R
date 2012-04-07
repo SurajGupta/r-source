@@ -39,7 +39,7 @@ file.show <-
 {
     files <- path.expand(c(...))
     nfiles <- length(files)
-    if(nfiles == 0)
+    if(nfiles == 0L)
         return(invisible(NULL))
     ## avoid re-encoding files to the current encoding.
     if(l10n_info()[["UTF-8"]] && encoding == "UTF-8") encoding <- ""
@@ -103,7 +103,7 @@ file.copy <- function(from, to,
     if (!(nf <- length(from))) return(logical())
     if (!(nt <- length(to)))   stop("no files to copy to")
     ## we don't use file_test as that is in utils.
-    if (nt == 1 && file.exists(to) && file.info(to)$isdir) {
+    if (nt == 1 && isTRUE(file.info(to)$isdir)) {
         ## on Windows we need \ for the compiled code (e.g. mkdir).
         if(.Platform$OS.type == "windows") {
             from <- gsub("/", "\\", from, fixed = TRUE)
@@ -120,9 +120,11 @@ file.copy <- function(from, to,
         stop("file can not be copied both 'from' and 'to'")
     if (any(okay)) { # care: file.create could fail but file.append work.
     	okay[okay] <- file.create(to[okay])
-    	if(any(okay)) okay[okay] <- file.append(to[okay], from[okay])
-        if(copy.mode)
-            Sys.chmod(to[okay], file.info(from[okay])$mode, TRUE)
+    	if(any(okay)) {
+            okay[okay] <- file.append(to[okay], from[okay])
+            if(copy.mode)
+                Sys.chmod(to[okay], file.info(from[okay])$mode, TRUE)
+        }
     }
     okay
 }

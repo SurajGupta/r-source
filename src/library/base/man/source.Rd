@@ -53,7 +53,7 @@ source(file, local = FALSE, echo = verbose, print.eval = echo,
   \item{skip.echo}{integer; how many comment lines at the start of the
     file to skip if \code{echo = TRUE}.}
   \item{keep.source}{logical: should the source formatting be retained
-    when echo expressions, if possible?}
+    when echoing expressions, if possible?}
 }
 \details{
   Note that running code via \code{source} differs in a few respects
@@ -62,7 +62,7 @@ source(file, local = FALSE, echo = verbose, print.eval = echo,
   need to include explicit \code{print} calls for things you want to be
   printed (and remember that this includes plotting by \pkg{lattice},
   FAQ Q7.22).  Since the complete file is parsed before any of it is
-  run, syntax errors result in none of the code being run. If an error
+  run, syntax errors result in none of the code being run.  If an error
   occurs in running a syntactically correct script, anything assigned
   into the workspace by code that has been run will be kept (just as
   from the command line), but diagnostic information such as
@@ -74,18 +74,18 @@ source(file, local = FALSE, echo = verbose, print.eval = echo,
   (as used on classic Mac OS) and map this to newline.  The final line
   can be incomplete, that is missing the final end-of-line marker.
 
-  If \code{keep.source} is true (the default in interactive use), the
-  source of functions is kept so they can be listed exactly as input.
-  This imposes a limit of 128K bytes on the function size and a nesting
-  limit of 265.  Use \code{keep.source = FALSE} when these limits might
-  take effect: if exceeded they generate an error.
+  If \code{options("keep.source")} is true (the default in interactive
+  use), the source of functions is kept so they can be listed exactly as
+  input.  This imposes a limit of 128K bytes on the function size and a
+  nesting limit of 265.  Use \code{options(keep.source = FALSE)} when
+  these limits might take effect: if exceeded they generate an error.
   
   Using \code{echo = TRUE} and \code{keep.source = TRUE} may interact
   badly with source code that includes \samp{#line nn "filename"}
-  directives (e.g. code produced by \code{\link{Stangle}()}):
-  \code{source()} will attempt to obtain the source from the named file,
-  which may have changed since the code was produced.  Use
-  \code{keep.source = FALSE} to avoid this.
+  directives (e.g. code produced by older versions of
+  \code{\link{Stangle}()}): \code{source()} will attempt to obtain the
+  source from the named file which may have changed since the code was
+  produced.  Use \code{keep.source = FALSE} to avoid this.
   
   Unlike input from a console, lines in the file or on a connection can
   contain an unlimited number of characters.

@@ -6492,16 +6492,17 @@ packages, R-FAQ, R FAQ}, for a complete list.
 @section Contributed packages and @acronym{CRAN}
 @cindex CRAN
 
-There are hundreds of contributed packages for @R{}, written by many
+There are thousands of contributed packages for @R{}, written by many
 different authors.  Some of these packages implement specialized
 statistical methods, others give access to data or hardware, and others
 are designed to complement textbooks.  Some (the @emph{recommended}
 packages) are distributed with every binary distribution of @R{}.  Most
 are available for download from @acronym{CRAN}
-(@uref{http://CRAN.R-project.org/} and its mirrors), and other
-repositories such as Bioconductor (@uref{http://www.bioconductor.org/}).
-The @emph{R FAQ} contains a list that was current at the time of
-release, but the collection of available packages changes frequently.
+(@uref{http://CRAN.R-project.org/} and its mirrors) and other
+repositories such as Bioconductor (@uref{http://www.bioconductor.org/})
+and Omegahat (@uref{http://www.omegahat.org/}).  The @emph{R FAQ}
+contains a list of CRAN packages current at the time of release, but the
+collection of available packages changes very frequently.
 
 @node Namespaces,  , Contributed packages and CRAN, Packages
 @section Namespaces
@@ -6930,14 +6931,16 @@ Combine @option{--no-save}, @option{--no-environ},
 @itemx --file=@var{file}
 (not @command{Rgui.exe}) Take input from @var{file}: @samp{-} means
 @code{stdin}.  Implies @option{--no-save} unless @option{--save} has
-been set.
+been set.  On a Unix-alike, no spaces nor other characters which would
+be interpreted by a shell as allowed in @var{file}.
 
 @item -e @var{expression}
 (not @command{Rgui.exe}) Use @var{expression} as an input line.  One or
 more @option{-e} options can be used, but not together with @option{-f}
 or @option{--file}.  Implies @option{--no-save} unless @option{--save}
 has been set.  (There is a limit of 10,000 bytes on the total length of
-expressions used in this way.)
+expressions used in this way.  Expressions containing spaces or shell
+metacharacters will need to be quoted.)
 
 @item --no-readline
 (UNIX only) Turn off command-line editing via @strong{readline}.  This
@@ -7054,7 +7057,8 @@ Currently, the following tools are available.
 
 @table @code
 @item BATCH
-Run @R{} in batch mode.
+Run @R{} in batch mode.  Runs @command{R --restore --save} with possibly
+further options (see @code{?BATCH}).
 @item COMPILE
 (UNIX only) Compile C, C++, Fortran @dots{} files for use with @R{}.
 @item SHLIB
@@ -7113,7 +7117,13 @@ In addition, you can use@footnote{as from @R{} 2.13.0.}  options
 @option{--no-site-file} and @option{--vanilla} between @command{R} and
 @command{CMD}: these affect any @R{} processes run by the tools.  (Here
 @option{--vanilla} is equivalent to @option{--no-environ --no-site-file
---no-init-file}.)
+--no-init-file}.)  However, note that @command{R CMD} does not of itself
+use any @R{} startup files (in particular, neither user nor site
+@file{Renviron} files), and all of the @R{} processes run by these tools
+(except @command{BATCH}) use @option{--no-restore}.  Most use
+@option{--vanilla} and so invoke no @R{} startup files: the current
+exceptions are @command{INSTALL}, @command{REMOVE}, @command{Sweave} and
+@command{SHLIB} (which uses @option{--no-site-file --no-init-file}).
 
 @example
 R CMD @var{cmd} @var{args}
@@ -7318,6 +7328,9 @@ but here @code{stdin()} refers to the program source and
 Very short scripts can be passed to @command{Rscript} on the
 command-line via the @option{-e} flag.
 
+Note that on a Unix-alike the input filename (such as @file{foo.R})
+should not contain spaces nor shell metacharacters.
+
 
 @node The command-line editor, Function and variable index, Invoking R, Top
 @appendix The command-line editor
@@ -7341,20 +7354,22 @@ file @file{README.Rterm} for command-line editing under
 @code{Rterm.exe}.
 
 When using @R{} with @strong{readline} capabilities, the functions
-described below are available.
+described below are available, as well as others (probably) documented
+in @command{man readline} or @command{info readline} on your system.
 
 Many of these use either Control or Meta characters.  Control
 characters, such as @kbd{Control-m}, are obtained by holding the
 @key{CTRL} down while you press the @key{m} key, and are written as
 @kbd{C-m} below.  Meta characters, such as @kbd{Meta-b}, are typed by
 holding down @key{META}@footnote{On a PC keyboard this is usually the
-Alt key, occasionally the `Windows' key.} and pressing @key{b}, and
-written as @kbd{M-b} in the following.  If your terminal does not have a
-@key{META} key enabled, you can still type Meta characters using
-two-character sequences starting with @kbd{ESC}.  Thus, to enter
-@kbd{M-b}, you could type @key{ESC}@key{b}.  The @kbd{ESC} character
-sequences are also allowed on terminals with real Meta keys.  Note that
-case is significant for Meta characters.
+Alt key, occasionally the `Windows' key.  On a Mac keyboard normally no
+meta key is available.} and pressing @key{b}, and written as @kbd{M-b}
+in the following.  If your terminal does not have a @key{META} key
+enabled, you can still type Meta characters using two-character
+sequences starting with @kbd{ESC}.  Thus, to enter @kbd{M-b}, you could
+type @key{ESC}@key{b}.  The @kbd{ESC} character sequences are also
+allowed on terminals with real Meta keys.  Note that case is significant
+for Meta characters.
 
 @appendixsection Editing actions
 
@@ -7366,7 +7381,9 @@ this editing phase causes the characters to be inserted in the command
 you are editing, displacing any characters to the right of the cursor.
 In @emph{vi} mode character insertion mode is started by @kbd{M-i} or
 @kbd{M-a}, characters are typed and insertion mode is finished by typing
-a further @key{ESC}.
+a further @key{ESC}.  (The default is Emacs-style, and only that is
+described here: for @emph{vi} mode see the @strong{readline}
+documentation.)
 
 Pressing the @key{RET} command at any time causes the command to be
 re-submitted.

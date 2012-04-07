@@ -45,9 +45,6 @@
     paste0 <- function(...) paste(..., sep="")
 
     MAKE <- Sys.getenv("MAKE")
-    TAR <- Sys.getenv("TAR", 'tar') # used by default on Unix only
-    GZIP <- Sys.getenv("R_GZIPCMD") # used on Unix only
-    if (!nzchar(GZIP)) GZIP <- "gzip"
     rarch <- Sys.getenv("R_ARCH") # unix only
     if (WINDOWS && nzchar(.Platform$r_arch))
         rarch <- paste0("/", .Platform$r_arch)
@@ -67,8 +64,7 @@
         ## Some people have *assumed* that R_HOME uses /
         Sys.setenv(R_HOME = rhome)
         if (nzchar(rarch)) {
-            Sys.setenv(R_ARCH = rarch)
-            Sys.setenv(R_ARCH_BIN = rarch)
+            Sys.setenv(R_ARCH = rarch, R_ARCH_BIN = rarch)
         }
     }
 
@@ -101,6 +97,7 @@
             "			without using a lock directory",
             "      --lock		use a per-library lock directory (default)",
             "      --pkglock		use a per-package lock directory",
+            "      			(default for a single package)",
             "      --build    	build binaries of the installed package(s)",
             "      --install-tests	install package-specific tests (if any)",
             "      --no-R, --no-libs, --no-data, --no-help, --no-demo, --no-exec,",
@@ -123,7 +120,7 @@
             "\nand on Windows only",
             "      --force-biarch	attempt to build both architectures",
             "			even if there is a non-empty configure.win",
-            "      --merge-multiarch	bi-arch by merging",
+            "      --merge-multiarch	bi-arch by merging from a tarball",
             "",
             "Which of --html or --no-html is the default depends on the build of R:",
             paste0("for this one it is ",
@@ -169,7 +166,11 @@
                     ## FIXME: this does not preserve dates
                     file.copy(lp, dirname(pkgdir), recursive = TRUE)
                     unlink(lp, recursive = TRUE)
-                } else system(paste("mv", shQuote(lp), shQuote(pkgdir)))
+                } else {
+                    ## some shells require that they be run in a known dir
+                    setwd(startdir)
+                    system(paste("mv", shQuote(lp), shQuote(pkgdir)))
+                }
             }
         }
 
@@ -185,7 +186,7 @@
         full
     }
 
-
+    ## used for LazyData, LazyLoad, KeepSource
     parse_description_field <- function(desc, field, default=TRUE)
     {
         tmp <- desc[field]
@@ -278,8 +279,10 @@
                                Sys.getenv("R_PLATFORM"), ".tar")
             filepath <- shQuote(file.path(startdir, filename))
             owd <- setwd(lib)
+            TAR <- Sys.getenv("TAR", 'tar')
             system(paste(TAR, "-chf", filepath,
                          paste(curPkg, collapse = " ")))
+            GZIP <- Sys.getenv("R_GZIPCMD", "gzip")
             system(paste(GZIP, "-9f", filepath))
             if (grepl("darwin", R.version$os)) {
                 filename <- paste0(filename, ".gz")
@@ -338,6 +341,7 @@
                              shQuote(file.path(lockdir, pkg))))
             dir.create(instdir, recursive = TRUE, showWarnings = FALSE)
         }
+        TAR <- Sys.getenv("TAR", 'tar')
         res <- system(paste("cp -r .", shQuote(instdir),
                             "|| (", TAR, "cd - .| (cd", shQuote(instdir), "&&", TAR, "-xf -))"
                             ))
@@ -392,6 +396,23 @@
     {
         shlib_install <- function(instdir, arch)
         {
+            ## install.lib.R allows customization of the libs installation process
+            if (file.exists("install.libs.R")) {
+                message("installing via 'install.libs.R' to ", instdir)
+                ## the following variables are defined to be available,
+                ## and to prevent abuse we don't expose anything else
+                local.env <- local({ SHLIB_EXT <- SHLIB_EXT
+                                     R_PACKAGE_DIR <- instdir
+                                     R_PACKAGE_NAME <- pkg_name
+                                     R_PACKAGE_SOURCE <- pkg_dir
+                                     R_ARCH <- arch
+                                     WINDOWS <- WINDOWS
+                                     environment()})
+                parent.env(local.env) <- .GlobalEnv
+                evalq(source("install.libs.R", local=TRUE), local.env)
+                return(TRUE)
+            }
+            ## otherwise proceed with the default which is to just copy *${SHLIB_EXT}
             files <- Sys.glob(paste0("*", SHLIB_EXT))
             if (length(files)) {
                 libarch <- if (nzchar(arch)) paste0("libs", arch) else "libs"
@@ -609,7 +630,8 @@
                     if (res == 0) shlib_install(instdir, rarch)
                     else has_error <- TRUE
                 } else { ## no src/Makefile.win
-                    srcs <- dir(pattern = "\\.([cfmM]|cc|cpp|f90|f95|mm)$")
+                    srcs <- dir(pattern = "\\.([cfmM]|cc|cpp|f90|f95|mm)$",
+                                all.files = TRUE)
                     ## NB, not R.home("bin")
                     f  <- dir(file.path(R.home(), "bin"))
                     archs <- f[f %in% c("i386", "x64")]
@@ -619,14 +641,13 @@
                         ## These are packages which have arch-independent
                         ## code in configure.win
                         if(!pkg_name %in% c("AnalyzeFMRI", "CORElearn",
-                                            "PearsonDS", "RBGL",
-                                            "RNetCDF","RODBC",
-                                            "RSiena", "Rcpp", "Runuran",
-                                            "cairoDevice", "foreign",
-                                            "fastICA", "glmnet", "gstat",
-                                            "mvabund", "png", "proj4",
-                                            "randtoolbox", "rngWELL",
-                                            "tcltk2"))
+                                            "PearsonDS", "RBGL", "RGtk2",
+                                            "RNetCDF", "RODBC", "Rcpp",
+                                            "Runuran", "cairoDevice",
+                                            "foreign", "fastICA", "glmnet",
+                                            "gstat", "igraph", "png", "proj4",
+                                            "randtoolbox", "rgdal", "rngWELL",
+                                            "rphast", "tcltk2"))
                             one_only <- sum(nchar(readLines("../configure.win"), "bytes")) > 0
                         if(one_only && !force_biarch)
                             warning("this package has a non-empty 'configure.win' file,\nso building only the main architecture\n", call. = FALSE, domain=NA)
@@ -646,8 +667,7 @@
                             file.copy(files, ss, recursive = TRUE)
                             setwd(ss)
                             ra <- paste0("/", arch)
-                            Sys.setenv(R_ARCH = ra)
-                            Sys.setenv(R_ARCH_BIN = ra)
+                            Sys.setenv(R_ARCH = ra, R_ARCH_BIN = ra)
                             has_error0 <- run_shlib(pkg_name, srcs, instdir, ra)
                             setwd(owd)
                             ## allow archs other than the current one to fail.
@@ -683,7 +703,8 @@
                     setwd(owd)
                 } else { ## no src/Makefile
                     owd <- setwd("src")
-                    srcs <- dir(pattern = "\\.([cfmM]|cc|cpp|f90|f95|mm)$")
+                    srcs <- dir(pattern = "\\.([cfmM]|cc|cpp|f90|f95|mm)$",
+                                all.files = TRUE)
                     ## This allows Makevars to set OBJECTS or its own targets.
                     allfiles <- if (file.exists("Makevars")) c("Makevars", srcs) else srcs
                     wd2 <- setwd(file.path(R.home("bin"), "exec"))
@@ -751,7 +772,7 @@
 	    ## This cannot be done in a C locale
 	    res <- try(.install_package_code_files(".", instdir))
 	    if (inherits(res, "try-error"))
-		pkgerrmsg("unable to collate files", pkg_name)
+		pkgerrmsg("unable to collate and parse R files", pkg_name)
 
 	    if (file.exists(f <- file.path("R", "sysdata.rda"))) {
                 comp <- TRUE
@@ -928,6 +949,7 @@
 
 	## LazyLoading
 	value <- parse_description_field(desc, "LazyLoad", default = lazy)
+        if(!value) warning("LazyLoad = FALSE is deprecated", call. = FALSE)
 	if (install_R && dir.exists("R") && value) {
 	    starsmsg(stars, "preparing package for lazy loading")
 	    ## Something above, e.g. lazydata,  might have loaded the namespace
@@ -967,7 +989,9 @@
 	## pkg indices: this also tangles the vignettes (if installed)
 	if (install_inst || install_demo || install_help) {
 	    starsmsg(stars, "building package indices ...")
-	    res <- try(.install_package_indices(".", instdir))
+            enc <- desc["Encoding"]
+            if (is.na(enc)) enc <- ""
+	    res <- try(.install_package_indices(".", instdir, enc))
 	    if (inherits(res, "try-error"))
 		errmsg("installing package indices failed")
 	}
@@ -1902,6 +1926,7 @@
     }
 
     ## Now check for files to remove.
+    ## These start with a letter.
     bfs <- sub("\\.[Rr]d$", "", basename(files)) # those to keep
     if ("html" %in% types) {
         type <- "html"

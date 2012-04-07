@@ -1,5 +1,197 @@
 R News
 
+CHANGES IN R VERSION 2.13.1:
+
+  NEW FEATURES:
+
+    • iconv() no longer translates NA strings as "NA".
+
+    • persp(box = TRUE) now warns if the surface extends outside the
+      box (since occlusion for the box and axes is computed assuming
+      the box is a bounding box). (PR#202.)
+
+    • RShowDoc() can now display the licences shipped with R, e.g.
+      RShowDoc("GPL-3").
+
+    • New wrapper function showNonASCIIfile() in package tools.
+
+    • nobs() now has a "mle" method in package stats4.
+
+    • trace() now deals correctly with S4 reference classes and
+      corresponding reference methods (e.g., $trace()) have been added.
+
+    • xz has been updated to 5.0.3 (very minor bugfix release).
+
+    • tools::compactPDF() gets more compression (usually a little,
+      sometimes a lot) by using the compressed object streams of PDF
+      1.5.
+
+    • cairo_ps(onefile = TRUE) generates encapsulated EPS on platforms
+      with cairo >= 1.6.
+
+    • Binary reads (e.g. by readChar() and readBin()) are now supported
+      on clipboard connections.  (Wish of PR#14593.)
+
+    • as.POSIXlt.factor() now passes ... to the character method
+      (suggestion of Joshua Ulrich).  [Intended for R 2.13.0 but
+      accidentally removed before release.]
+
+    • vector() and its wrappers such as integer() and double() now warn
+      if called with a length argument of more than one element.  This
+      helps track down user errors such as calling double(x) instead of
+      as.double(x).
+
+  INSTALLATION:
+
+    • Building the vignette PDFs in packages grid and utils is now part
+      of running make from an SVN checkout on a Unix-alike: a separate
+      make vignettes step is no longer required.
+
+      These vignettes are now made with keep.source = TRUE and hence
+      will be laid out differently.
+
+    • make install-strip failed under some configuration options.
+
+    • Packages can customize non-standard installation of compiled code
+      via a src/install.libs.R script. This allows packages that have
+      architecture-specific binaries (beyond the package's shared
+      objects/DLLs) to be installed in a multi-architecture setting.
+
+  SWEAVE & VIGNETTES:
+
+    • Sweave() and Stangle() gain an encoding argument to specify the
+      encoding of the vignette sources if the latter do not contain a
+      \usepackage[]{inputenc} statement specifying a single input
+      encoding.
+
+    • There is a new Sweave option figs.only = TRUE to run each figure
+      chunk only for each selected graphics device, and not first using
+      the default graphics device.  This will become the default in R
+      2.14.0.
+
+    • Sweave custom graphics devices can have a custom function
+      foo.off() to shut them down.
+
+    • Warnings are issued when non-portable filenames are found for
+      graphics files (and chunks if split = TRUE).  Portable names are
+      regarded as alphanumeric plus hyphen, underscore, plus and hash
+      (periods cause problems with recognizing file extensions).
+
+    • The Rtangle() driver has a new option show.line.nos which is by
+      default false; if true it annotates code chunks with a comment
+      giving the line number of the first line in the sources (the
+      behaviour of R >= 2.12.0).
+
+    • Package installation tangles the vignette sources: this step now
+      converts the vignette sources from the vignette/package encoding
+      to the current encoding, and records the encoding (if not ASCII)
+      in a comment line at the top of the installed .R file.
+
+  LICENCE:
+
+    • No parts of R are now licensed solely under GPL-2.  The licences
+      for packages rpart and survival have been changed, which means
+      that the licence terms for R as distributed are GPL-2 | GPL-3.
+
+  DEPRECATED AND DEFUNCT:
+
+    • The internal functions .readRDS() and .saveRDS() are now
+      deprecated in favour of the public functions readRDS() and
+      saveRDS() introduced in R 2.13.0.
+
+    • Switching off lazy-loading of code _via_ the LazyLoad field of
+      the DESCRIPTION file is now deprecated.  In future all packages
+      will be lazy-loaded.
+
+    • The off-line help() types "postscript" and "ps" are deprecated.
+
+  UTILITIES:
+
+    • R CMD check on a multi-architecture installation now skips the
+      user's .Renviron file for the architecture-specific tests (which
+      do read the architecture-specific Renviron.site files).  This is
+      consistent with single-architecture checks, which use
+      --no-environ.
+
+    • R CMD build now looks for DESCRIPTION fields BuildResaveData and
+      BuildKeepEmpty for per-package overrides.  See ‘Writing R
+      Extensions’.
+
+  BUG FIXES:
+
+    • plot.lm(which = 5) was intended to order factor levels in
+      increasing order of mean standardized residual.  It ordered the
+      factor labels correctly, but could plot the wrong group of
+      residuals against the label.  (PR#14545)
+
+    • mosaicplot() could clip the factor labels, and could overlap them
+      with the cells if a non-default value of cex.axis was used.
+      (Related to PR#14550.)
+
+    • dataframe[[row,col]] now dispatches on [[ methods for the
+      selected column (spotted by Bill Dunlap).
+
+    • sort.int() would strip the class of an object, but leave its
+      object bit set.  (Reported by Bill Dunlap.)
+
+    • pbirthday() and qbirthday() did not implement the algorithm
+      exactly as given in their reference and so were unnecessarily
+      inaccurate.
+
+      pbirthday() now solves the approximate formula analytically
+      rather than using uniroot() on a discontinuous function.
+
+      The description of the problem was inaccurate: the probability is
+      a tail probablity (‘2 _or more_ people share a birthday’)
+
+    • Complex arithmetic sometimes warned incorrectly about producing
+      NAs when there were NaNs in the input.
+
+    • seek(origin = "current") incorrectly reported it was not
+      implemented for a gzfile() connection.
+
+    • c(), unlist(), cbind() and rbind() could silently overflow the
+      maximum vector length and cause a segfault.  (PR#14571)
+
+    • The fonts argument to X11(type = "Xlib") was being ignored.
+
+    • Reading (e.g. with readBin()) from a raw connection was not
+      advancing the pointer, so successive reads would read the same
+      value.  (Spotted by Bill Dunlap.)
+
+    • Parsed text containing embedded newlines was printed incorrectly
+      by as.character.srcref().  (Reported by Hadley Wickham.)
+
+    • decompose() used with a series of a non-integer number of periods
+      returned a seasonal component shorter than the original series.
+      (Reported by Rob Hyndman.)
+
+    • fields = list() failed for setRefClass().  (Reported by Michael
+      Lawrence.)
+
+    • Reference classes could not redefine an inherited field which had
+      class "ANY". (Reported by Janko Thyson.)
+
+    • Methods that override previously loaded versions will now be
+      installed and called.  (Reported by Iago Mosqueira.)
+
+    • addmargins() called numeric(apos) rather than
+      numeric(length(apos)).
+
+    • The HTML help search sometimes produced bad links.  (PR#14608)
+
+    • Command completion will no longer be broken if tail.default() is
+      redefined by the user. (Problem reported by Henrik Bengtsson.)
+
+    • LaTeX rendering of markup in titles of help pages has been
+      improved; in particular, \eqn{} may be used there.
+
+    • isClass() used its own namespace as the default of the where
+      argument inadvertently.
+
+    • Rd conversion to latex mis-handled multi-line titles (including
+      cases where there was a blank line in the \title section).
+
 CHANGES IN R VERSION 2.13.0:
 
   SIGNIFICANT USER-VISIBLE CHANGES:
@@ -42,7 +234,7 @@ CHANGES IN R VERSION 2.13.0:
     • R colours are now defined to refer to the sRGB color space.
 
       The PDF, PostScript, and Quartz graphics devices record this
-      fact.  X11 (and Cairo) and Windows just assume that your screen
+      fact.  X11 (and cairo) and Windows just assume that your screen
       conforms.
 
     • system.file() gains a mustWork argument (suggestion of Bill
@@ -112,9 +304,6 @@ CHANGES IN R VERSION 2.13.0:
     • merge() and as.hclust() methods for objects of class "dendrogram"
       are now provided.
 
-    • as.POSIXlt.factor() now passes ... to the character method
-      (suggestion of Joshua Ulrich).
-
     • The character method of as.POSIXlt() now tries to find a format
       that works for all non-NA inputs, not just the first one.
 
@@ -150,6 +339,8 @@ CHANGES IN R VERSION 2.13.0:
       ‘internal’ functions .saveRDS() and .readRDS() made available for
       general use.  The dot-name versions remain available as several
       package authors have made use of them, despite the documentation.
+      readRDS() no longer wraps non-file connections in a call to
+      gzcon(), for efficiency (see its documentation).
 
       saveRDS() supports compress = "xz".
 
@@ -292,7 +483,7 @@ CHANGES IN R VERSION 2.13.0:
 
     • findClasses, getGeneric, findMethods and hasMethods are revised
       to deal consistently with the package= argument and be consistent
-      with soft namespace policy for finding objects.
+      with soft name space policy for finding objects.
 
     • tools::Rdiff() now has the option to return not only the status
       but a character vector of observed differences (which are still
@@ -387,15 +578,18 @@ CHANGES IN R VERSION 2.13.0:
     • file.copy(from, to) no longer regards it as an error to supply a
       zero-length from: it now simply does nothing.
 
-    • rstandard.glm gains a type argument which can be used to request
-      standardized Pearson residuals.
+    • rstandard.glm() gains a type argument which can be used to
+      request standardized Pearson residuals.
 
     • A start on a Turkish translation, thanks to Murat Alkan.
 
     • .libPaths() calls normalizePath(winslash = "/") on the paths:
-      this helps (usually) present them in a user-friendly form and
+      this helps (usually) to present them in a user-friendly form and
       should detect duplicate paths accessed via different symbolic
       links.
+
+    • download.file() can be now used with external methods even if
+      there are spaces in the URL or the target filename.
 
   SWEAVE CHANGES:
 
@@ -1118,12 +1312,12 @@ CHANGES IN R VERSION 2.12.1:
     • Rendering raster images in PDF output was resetting the clipping
       region.
 
-    • Rendering of raster images on Cairo X11 device was wrong,
+    • Rendering of raster images on cairo X11 device was wrong,
       particularly when a small image was being scaled up using
       interpolation.
 
-      With Cairo < 1.6, will be better than before, though still a
-      little clunky.  With Cairo >= 1.6, should be sweet as.
+      With cairo < 1.6, will be better than before, though still a
+      little clunky.  With cairo >= 1.6, should be sweet as.
 
     • Several bugs fixed in read.DIF(): single column inputs caused
       errors, cells marked as "character" could be converted to other

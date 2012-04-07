@@ -4,6 +4,232 @@
 \title{R News}
 \encoding{UTF-8}
 
+\section{CHANGES IN R VERSION 2.13.1}{
+  \subsection{NEW FEATURES}{
+    \itemize{
+      \item \code{iconv()} no longer translates \code{NA} strings as
+      \code{"NA"}.
+      
+      \item \code{persp(box = TRUE)} now warns if the surface extends
+      outside the box (since occlusion for the box and axes is computed
+      assuming the box is a bounding box). (\PR{202}.)
+      
+      \item \code{RShowDoc()} can now display the licences shipped with
+      \R, e.g. \code{RShowDoc("GPL-3")}.
+
+      \item New wrapper function \code{showNonASCIIfile()} in package
+      \pkg{tools}.
+
+      \item \code{nobs()} now has a \code{"mle"} method in package
+      \pkg{stats4}.
+
+      \item \code{trace()} now deals correctly with S4 reference classes
+      and corresponding reference methods (e.g., \code{$trace()})%$
+      have been added.
+
+      \item \command{xz} has been updated to 5.0.3 (very minor bugfix
+      release).
+
+      \item \code{tools::compactPDF()} gets more compression (usually a
+      little, sometimes a lot) by using the compressed object streams of
+      PDF 1.5.
+
+      \item \code{cairo_ps(onefile = TRUE)} generates encapsulated EPS
+      on platforms with cairo >= 1.6.
+
+      \item Binary reads (e.g. by \code{readChar()} and \code{readBin()})
+      are now supported on clipboard connections.  (Wish of \PR{14593}.)
+
+      \item \code{as.POSIXlt.factor()} now passes \code{...} to the
+      character method (suggestion of Joshua Ulrich).  [Intended for \R
+      2.13.0 but accidentally removed before release.]
+      
+      \item \code{vector()} and its wrappers such as \code{integer()}
+      and \code{double()} now warn if called with a \code{length}
+      argument of more than one element.  This helps track down user
+      errors such as calling \code{double(x)} instead of
+      \code{as.double(x)}.
+    }
+  }
+
+  \subsection{INSTALLATION}{
+    \itemize{
+      \item Building the vignette PDFs in packages \pkg{grid} and
+      \pkg{utils} is now part of running \command{make} from an SVN
+      checkout on a Unix-alike: a separate \command{make vignettes} step
+      is no longer required.
+
+      These vignettes are now made with \code{keep.source = TRUE} and
+      hence will be laid out differently.
+
+      \item \command{make install-strip} failed under some configuration
+      options.
+
+      \item Packages can customize non-standard installation of compiled
+      code via a \code{src/install.libs.R} script. This allows packages that
+      have architecture-specific binaries (beyond the package's shared
+      objects/DLLs) to be installed in a multi-architecture setting.
+    }
+  }
+  
+  \subsection{SWEAVE & VIGNETTES}{
+    \itemize{
+      \item \code{Sweave()} and \code{Stangle()} gain an \code{encoding}
+      argument to specify the encoding of the vignette sources if the
+      latter do not contain a \samp{\\usepackage[]{inputenc}} statement
+      specifying a single input encoding.
+
+      \item There is a new Sweave option \code{figs.only = TRUE} to run
+      each figure chunk only for each selected graphics device, and not
+      first using the default graphics device.   This will become the
+      default in \R 2.14.0.
+
+      \item Sweave custom graphics devices can have a custom function
+      \code{foo.off()} to shut them down.      
+
+      \item Warnings are issued when non-portable filenames are found
+      for graphics files (and chunks if \code{split = TRUE}).  Portable
+      names are regarded as alphanumeric plus hyphen, underscore, plus
+      and hash (periods cause problems with recognizing file
+      extensions).
+
+      \item The \code{Rtangle()} driver has a new option
+      \code{show.line.nos} which is by default false; if true it
+      annotates code chunks with a comment giving the line number of the
+      first line in the sources (the behaviour of \R >= 2.12.0).
+
+      \item Package installation tangles the vignette sources: this step
+      now converts the vignette sources from the vignette/package
+      encoding to the current encoding, and records the encoding (if not
+      ASCII) in a comment line at the top of the installed \file{.R}
+      file.
+    }
+  }
+
+  \subsection{LICENCE}{
+    \itemize{
+      \item No parts of \R are now licensed solely under GPL-2.  The
+      licences for packages \pkg{rpart} and \pkg{survival} have been
+      changed, which means that the licence terms for \R as distributed
+      are GPL-2 | GPL-3.
+    }
+  }
+  
+  \subsection{DEPRECATED AND DEFUNCT}{
+   \itemize{
+     \item The internal functions \code{.readRDS()} and
+      \code{.saveRDS()} are now deprecated in favour of the public
+      functions \code{readRDS()} and \code{saveRDS()} introduced in \R
+      2.13.0.
+      
+      \item Switching off lazy-loading of code \emph{via} the
+      \samp{LazyLoad} field of the \file{DESCRIPTION} file is now
+      deprecated.  In future all packages will be lazy-loaded.
+      
+      \item The off-line \code{help()} types \samp{"postscript"} and
+      \samp{"ps"} are deprecated.
+    }
+  }
+  
+  \subsection{UTILITIES}{
+    \itemize{      
+      \item \command{R CMD check} on a multi-architecture installation now
+      skips the user's \file{.Renviron} file for the
+      architecture-specific tests (which do read the 
+      architecture-specific \file{Renviron.site} files).  This is
+      consistent with single-architecture checks, which use
+      \option{--no-environ}.
+
+      \item \command{R CMD build} now looks for \file{DESCRIPTION}
+      fields \samp{BuildResaveData} and \samp{BuildKeepEmpty} for
+      per-package overrides.  See \sQuote{Writing R Extensions}.
+    }
+  }
+  
+  \subsection{BUG FIXES}{
+    \itemize{
+      \item \code{plot.lm(which = 5)} was intended to order factor
+      levels in increasing order of mean standardized residual.   It
+      ordered the factor labels correctly, but could plot the wrong
+      group of residuals against the label.  (\PR{14545})
+
+      \item \code{mosaicplot()} could clip the factor labels, and could
+      overlap them with the cells if a non-default value of
+      \code{cex.axis} was used.  (Related to \PR{14550}.)
+
+      \item \code{dataframe[[row,col]]} now dispatches on \code{[[}
+      methods for the selected column (spotted by Bill Dunlap).
+      
+      \item \code{sort.int()} would strip the class of an object, but
+      leave its object bit set.  (Reported by Bill Dunlap.)      
+      
+      \item \code{pbirthday()} and \code{qbirthday()} did not implement
+      the algorithm exactly as given in their reference and so were
+      unnecessarily inaccurate.
+
+      \code{pbirthday()} now solves the approximate formula analytically
+      rather than using \code{uniroot()} on a discontinuous function.
+
+      The description of the problem was inaccurate: the probability is
+      a tail probablity (\sQuote{2 \emph{or more} people share a birthday})
+      
+      \item Complex arithmetic sometimes warned incorrectly about
+      producing NAs when there were NaNs in the input.
+
+      \item \code{seek(origin = "current")} incorrectly reported it was
+      not implemented for a \code{gzfile()} connection.
+
+      \item \code{c()}, \code{unlist()}, \code{cbind()} and
+      \code{rbind()} could silently overflow the maximum vector length
+      and cause a segfault.  (\PR{14571})
+
+      \item The \code{fonts} argument to \code{X11(type = "Xlib")} was
+      being ignored.
+
+      \item Reading (e.g. with \code{readBin()}) from a raw connection
+      was not advancing the pointer, so successive reads would read the
+      same value.  (Spotted by Bill Dunlap.)
+      
+      \item Parsed text containing embedded newlines was printed
+      incorrectly by \code{as.character.srcref()}.  (Reported by Hadley
+      Wickham.)
+      
+      \item \code{decompose()} used with a series of a non-integer
+      number of periods returned a seasonal component shorter than the
+      original series.  (Reported by Rob Hyndman.)
+
+      \item \code{fields = list()} failed for \code{setRefClass()}.
+      (Reported by Michael Lawrence.)
+
+      \item Reference classes could not redefine an inherited field
+      which had class \code{"ANY"}. (Reported by Janko Thyson.)
+
+      \item Methods that override previously loaded versions will now
+      be installed and called.  (Reported by Iago Mosqueira.)
+
+      \item \code{addmargins()} called \code{numeric(apos)} rather than
+      \code{numeric(length(apos))}.
+      
+      \item The HTML help search sometimes produced bad links.
+      (\PR{14608})
+
+      \item Command completion will no longer be broken if
+      \code{tail.default()} is redefined by the user. (Problem reported
+      by Henrik Bengtsson.)
+      
+      \item LaTeX rendering of markup in titles of help pages has been
+      improved; in particular, \code{\\eqn{}} may be used there.
+
+      \item \code{isClass()} used its own namespace as the default of
+      the \code{where} argument inadvertently.
+      
+      \item Rd conversion to latex mis-handled multi-line titles
+      (including cases where there was a blank line in the \samp{\title}
+      section).
+    }
+  }
+}
+
 \section{CHANGES IN R VERSION 2.13.0}{
   \subsection{SIGNIFICANT USER-VISIBLE CHANGES}{
     \itemize{
@@ -48,7 +274,7 @@
       \item R colours are now defined to refer to the sRGB color space.
 
       The PDF, PostScript, and Quartz graphics devices record this fact.
-      X11 (and Cairo) and Windows just assume that your screen conforms.
+      X11 (and cairo) and Windows just assume that your screen conforms.
 
       \item \code{system.file()} gains a \code{mustWork} argument
       (suggestion of Bill Dunlap).
@@ -122,9 +348,6 @@
       \item \code{merge()} and \code{as.hclust()} methods for objects of
       class \code{"dendrogram"} are now provided.
 
-      \item \code{as.POSIXlt.factor()} now passes \code{...} to the
-      character method (suggestion of Joshua Ulrich).
-
       \item The character method of \code{as.POSIXlt()} now tries to
       find a format that works for all non-\code{NA} inputs, not just
       the first one.
@@ -166,7 +389,9 @@
       versions of the \sQuote{internal} functions \code{.saveRDS()} and
       \code{.readRDS()} made available for general use.  The dot-name
       versions remain available as several package authors have made use
-      of them, despite the documentation.
+      of them, despite the documentation.  \code{readRDS()} no longer
+      wraps non-file connections in a call to \code{gzcon()}, for
+      efficiency (see its documentation).
 
       \code{saveRDS()} supports \code{compress = "xz"}.
 
@@ -320,7 +545,7 @@
 
       \item \code{findClasses}, \code{getGeneric}, \code{findMethods}
       and \code{hasMethods} are revised to deal consistently with
-      the \code{package=} argument and be consistent with soft namespace
+      the \code{package=} argument and be consistent with soft name space
       policy for finding objects.
 
       \item \code{tools::Rdiff()} now has the option to return not only
@@ -421,19 +646,22 @@
 
       \item \code{file.copy(from, to)} no longer regards it as an error
       to supply a zero-length \code{from}: it now simply does nothing.
-      
-      \item \code{rstandard.glm} gains a \code{type} argument which can
+
+      \item \code{rstandard.glm()} gains a \code{type} argument which can
       be used to request standardized Pearson residuals.
 
       \item A start on a Turkish translation, thanks to Murat Alkan.
 
       \item \code{.libPaths()} calls \code{normalizePath(winslash = "/")}
-      on the paths: this helps (usually) present them in a
+      on the paths: this helps (usually) to present them in a
       user-friendly form and should detect duplicate paths accessed via
       different symbolic links.
+
+      \item \code{download.file()} can be now used with external methods
+      even if there are spaces in the URL or the target filename.
     }
   }
-  
+
   \subsection{SWEAVE CHANGES}{
     \itemize{
       \item \code{Sweave()} has options to produce PNG and JPEG figures,
@@ -456,7 +684,7 @@
       Maindonald and others.)
     }
   }
-  
+
   \subsection{C-LEVEL FACILITIES}{
     \itemize{
       \item Because they use a C99 interface which a C++ compiler is not
@@ -1248,12 +1476,12 @@
       \item Rendering raster images in PDF output was resetting the
       clipping region.
 
-      \item Rendering of raster images on Cairo X11 device was wrong,
+      \item Rendering of raster images on cairo X11 device was wrong,
       particularly when a small image was being scaled up using
       interpolation.
 
-      With Cairo < 1.6, will be better than before, though still a
-      little clunky.  With Cairo >= 1.6, should be sweet as.
+      With cairo < 1.6, will be better than before, though still a
+      little clunky.  With cairo >= 1.6, should be sweet as.
 
       \item Several bugs fixed in \code{read.DIF()}:  single column
       inputs caused errors, cells marked as \code{"character"} could

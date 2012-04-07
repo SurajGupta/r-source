@@ -336,9 +336,10 @@ function(dir, outDir)
 
 
 ### * .install_package_indices
+## called from R CMD INSTALL
 
 .install_package_indices <-
-function(dir, outDir)
+function(dir, outDir, encoding = "")
 {
     options(warn = 1)                   # to ensure warnings get seen
     if(!file_test("-d", dir))
@@ -363,7 +364,7 @@ function(dir, outDir)
          stop(gettextf("cannot open directory '%s'", outMetaDir),
               domain = NA)
     .install_package_Rd_indices(dir, outDir)
-    .install_package_vignette_index(dir, outDir)
+    .install_package_vignette_index(dir, outDir, encoding)
     .install_package_demo_index(dir, outDir)
     invisible()
 }
@@ -463,9 +464,10 @@ function(dir, outDir)
 }
 
 ### * .install_package_vignette_index
+## only called from .install_package_indices
 
 .install_package_vignette_index <-
-function(dir, outDir)
+function(dir, outDir, encoding = "")
 {
     dir <- file_path_as_absolute(dir)
     vignetteDir <- file.path(dir, "inst", "doc")
@@ -476,13 +478,13 @@ function(dir, outDir)
     outDir <- file_path_as_absolute(outDir)
     packageName <- basename(outDir)
     outVignetteDir <- file.path(outDir, "doc")
-    ## Fake installs do not have a outVignetteDir.
+    ## --fake  and --no-inst installs do not have a outVignetteDir.
     if(!file_test("-d", outVignetteDir)) return(invisible())
 
     ## If there is an HTML index in the @file{inst/doc} subdirectory of
     ## the package source directory (@code{dir}), we do not overwrite it
     ## (similar to top-level @file{INDEX} files).  Installation already
-    ## copies/d this over.
+    ## copied this over.
     hasHtmlIndex <- file_test("-f", file.path(vignetteDir, "index.html"))
     htmlIndex <- file.path(outDir, "doc", "index.html")
 
@@ -510,19 +512,22 @@ function(dir, outDir)
         if (is.null(cwd))
             stop("current working directory cannot be ascertained")
         setwd(outVignetteDir)
-        for(srcfile in vignetteIndex$File)
-            tryCatch(utils::Stangle(srcfile, quiet = TRUE),
+        for(srcfile in vignetteIndex$File) {
+            enc <- getVignetteEncoding(srcfile, TRUE)
+            if(enc %in% c("non-ASCII", "unknown")) enc <- encoding
+            tryCatch(utils::Stangle(srcfile, quiet = TRUE, encoding = enc),
                      error = function(e)
                      stop(gettextf("running Stangle on vignette '%s' failed with message:\n%s",
                                    srcfile, conditionMessage(e)),
                           domain = NA, call. = FALSE))
-        ## remove any zero-length files
-        Rfiles <- Sys.glob(c("*.R", "*.S", "*.r", "*.s"))
-        sizes <- file.info(Rfiles)$size
-        unlink(Rfiles[sizes == 0])
-        ## This is an assumption: Sweave can do much more that this!
-        Rfiles <-
-            sub("$", ".R", basename(file_path_sans_ext(vignetteIndex$File)))
+        }
+        Rfiles <- sub("\\.[RrSs](nw|tex)$", ".R", basename(vignetteIndex$File))
+        ## remove any files with no R code (they will have header comments).
+        ## if not correctly declared they might not be in the current encoding
+        for(f in Rfiles)
+            if(all(grepl("(^###|^[[:space:]]*$)",
+                         readLines(f, warn = FALSE)), useBytes = TRUE))
+                unlink(f)
         vignetteIndex$R <- ifelse(file.exists(Rfiles), Rfiles, "")
         setwd(cwd)
     }
@@ -560,21 +565,19 @@ function(src_dir, out_dir, packages)
     ## indices.
     ## Really only useful for base packages under Unix.
     ## See @file{src/library/Makefile.in}.
-    ## These days this is mostly installing the metadata
 
     for(p in unlist(strsplit(packages, "[[:space:]]+")))
-        .install_package_indices(file.path(src_dir, p),
-                                         file.path(out_dir, p))
-    utils::make.packages.html(.Library, verbose=FALSE)
+        .install_package_indices(file.path(src_dir, p), file.path(out_dir, p))
+    utils::make.packages.html(.Library, verbose = FALSE)
     invisible()
 }
 
 ### * .install_package_vignettes
 
-## called from src/library/Makefile
+## called from src/library/Makefile[.win]
 ## this is only used when building R, to build the 'grid' and 'utils' vignettes.
 .install_package_vignettes <-
-function(dir, outDir, keep.source = FALSE)
+function(dir, outDir, keep.source = TRUE)
 {
     dir <- file_path_as_absolute(dir)
     vignetteDir <- file.path(dir, "inst", "doc")
@@ -597,11 +600,11 @@ function(dir, outDir, keep.source = FALSE)
     if(all(upToDate))
         return(invisible())
 
-    ## For the time being, the primary use of this function is to
-    ## build and install vignettes in base packages.
-    ## Hence, we build in a subdir of the current directory rather than
-    ## a temp dir:
-    ## this allows inspection of problems and automatic cleanup via Make.
+    ## The primary use of this function is to build and install
+    ## vignettes in base packages.
+    ## Hence, we build in a subdir of the current directory rather
+    ## than a temp dir: this allows inspection of problems and
+    ## automatic cleanup via Make.
     cwd <- getwd()
     if (is.null(cwd))
         stop("current working directory cannot be ascertained")
@@ -645,6 +648,7 @@ function(dir, outDir, keep.source = FALSE)
     setwd(cwd)
     unlink(buildDir, recursive = TRUE)
     ## Now you need to update the HTML index!
+    ## This also creates the .R files
     .install_package_vignette_index(dir, outDir)
     invisible()
 }
@@ -892,7 +896,7 @@ compactPDF <-
              gs_quality = c("printer", "ebook", "screen"),
              gs_extras = character())
 {
-    if(!nzchar(Sys.which(qpdf)) && !nzchar(Sys.which(gs_cmd))) 
+    if(!nzchar(Sys.which(qpdf)) && !nzchar(Sys.which(gs_cmd)))
     	return()
     if(length(paths) == 1L && isTRUE(file.info(paths)$isdir))
         paths <- Sys.glob(file.path(paths, "*.pdf"))
@@ -911,7 +915,8 @@ compactPDF <-
                       gs_extras,
                       p), FALSE, FALSE)
         else
-            system2(qpdf, c("--stream-data=compress", p, tf), FALSE, FALSE)
+            system2(qpdf, c("--stream-data=compress", 
+			    "--object-streams=generate", p, tf), FALSE, FALSE)
         if(!res && file.exists(tf)) {
             old <- file.info(p)$size; new <-  file.info(tf)$size
             if(new/old < 0.9 && new < old - 1e4) {

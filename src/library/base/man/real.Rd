@@ -1,6 +1,6 @@
 % File src/library/base/man/real.Rd
 % Part of the R package, http://www.R-project.org
-% Copyright 1995-2010 R Core Development Team
+% Copyright 1995-2011 R Core Development Team
 % Distributed under GPL 2 or later
 
 \name{real}
@@ -18,7 +18,9 @@ is.real(x)
   and are provided for backwards compatibility only.
 }
 \arguments{
-  \item{length}{desired length.}
+  \item{length}{A non-negative integer specifying the desired length.
+    Double values will be coerced to integer:
+    supplying an argument of length other than one will give a warning.}
   \item{x}{object to be coerced or tested.}
   \item{\dots}{further arguments passed to or from other methods.}
 }

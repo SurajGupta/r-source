@@ -41,7 +41,7 @@
 
   Regular expressions are constructed analogously to arithmetic
   expressions, by using various operators to combine smaller
-  expressions. The whole expression matches zero or more characters
+  expressions.  The whole expression matches zero or more characters
   (read \sQuote{character} as \sQuote{byte} if \code{useBytes = TRUE}).
 
   The fundamental building blocks are the regular expressions that match
@@ -69,9 +69,9 @@
   giving the first and last characters, separated by a hyphen.  (Because
   their interpretation is locale- and implementation-dependent, they are
   best avoided.)  The only portable way to specify all ASCII letters is
-  to list them all as the character class
-  \samp{[ABCDEFGHIJKLMNOPQRSTUVWXYZabcdefghijklmnopqrstuvwxyz]}.  (The
-  current implementation uses numerical order of the encoding: prior to
+  to list them all as the character class\cr
+  \samp{[ABCDEFGHIJKLMNOPQRSTUVWXYZabcdefghijklmnopqrstuvwxyz]}.\cr
+  (The current implementation uses numerical order of the encoding: prior to
   \R 2.10.0 locale-specific collation was used, and might be again.)
 
   Certain named classes of characters are predefined.  Their
@@ -103,7 +103,7 @@
     \item{\samp{[:print:]}}{
       Printable characters: \samp{[:alnum:]}, \samp{[:punct:]} and space.}
 
-    \item{\samp{[:punct:]}}{Punctuation characters:
+    \item{\samp{[:punct:]}}{Punctuation characters:\cr
       \samp{! " # $ \% & ' ( ) * + , - . / : ; < = > ? @ [ \\ ] ^ _ ` \{ | \} ~}.}
 %'"`  keep Emacs Rd mode happy
 
@@ -113,7 +113,7 @@
 
     \item{\samp{[:upper:]}}{Upper-case letters in the current locale.}
 
-    \item{\samp{[:xdigit:]}}{Hexadecimal digits:
+    \item{\samp{[:xdigit:]}}{Hexadecimal digits:\cr
       \samp{0 1 2 3 4 5 6 7 8 9 A B C D E F a b c d e f}.}
   }
 
@@ -201,7 +201,7 @@
   For complete details please consult the man pages for PCRE, especially
   \command{man pcrepattern} and \command{man pcreapi}), on your system or from
   the sources at \url{http://www.pcre.org}. If PCRE support was compiled
-  from the sources within \R, the PCRE version is 8.0 as described here.
+  from the sources within \R, the PCRE version is 8.12 as described here.
 
   Perl regular expressions can be computed byte-by-byte or
   (UTF-8) character-by-character: the latter is used in all multibyte
@@ -274,7 +274,7 @@
   matches only at end of a subject. and \samp{\\G} matches at first
   matching position in a subject (which is subtly different from Perl's
   end of the previous match).  \samp{\\C} matches a single
-  byte. including a newline, but its use is warned against.  In UTF-8
+  byte, including a newline, but its use is warned against.  In UTF-8
   mode, \samp{\\R} matches any Unicode newline character (not just CR),
   and \samp{\\X} matches any number of Unicode characters that form an
   extended Unicode sequence.
@@ -311,7 +311,7 @@
 }
 \author{
   This help page is based on the documentation of GNU grep 2.4.2, the
-  TRE documentation and the POSIX standard,  and the \code{pcrepattern}
+  TRE documentation and the POSIX standard, and the \code{pcrepattern}
   man page from PCRE 8.0.
 }
 \seealso{
@@ -323,7 +323,7 @@
   \url{http://laurikari.net/tre/documentation/regex-syntax/}).
 
   The POSIX 1003.2 standard at
-  \url{http://www.opengroup.org/onlinepubs/009695399/basedefs/xbd_chap09.html}
+  \url{http://pubs.opengroup.org/onlinepubs/9699919799/basedefs/V1_chap09.html#tag_09}
 
   The \code{pcrepattern} can be found as part of
   \url{http://www.pcre.org/pcre.txt}, and details of Perl's own

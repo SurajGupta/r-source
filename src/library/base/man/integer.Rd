@@ -17,7 +17,9 @@ as.integer(x, \dots)
 is.integer(x)
 }
 \arguments{
-  \item{length}{desired length.}
+  \item{length}{A non-negative integer specifying the desired length.
+    Double values will be coerced to integer:
+    supplying an argument of length other than one will give a warning.}
   \item{x}{object to be coerced or tested.}
   \item{\dots}{further arguments passed to or from other methods.}
 }
@@ -36,7 +38,7 @@ is.integer(x)
   Each element of the vector is equal to \code{0}.
 
   \code{as.integer} attempts to coerce its argument to be of integer
-  type. The answer will be \code{NA} unless the coercion succeeds.  Real
+  type.  The answer will be \code{NA} unless the coercion succeeds.  Real
   values larger in modulus than the largest integer are coerced to
   \code{NA} (unlike S which gives the most extreme integer of the same
   sign).  Non-integral numeric values are truncated towards zero (i.e.,

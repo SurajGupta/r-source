@@ -176,7 +176,7 @@ Sweave which control the final output.
 Options control how code chunks and their output (text, figures) are
 transferred from the \texttt{.Rnw} file to the \texttt{.tex} file. All
 options have the form \texttt{key=value}, where \texttt{value} can be
-a number, string or logical value. Several options can be specified at
+a number, string or logical value.  Several options can be specified at
 once (separated by commas), all options must take a value (which must
 not contain a comma or equal sign). Logical options can take the
 values \texttt{TRUE}, \texttt{FALSE}, \texttt{T}, \texttt{F} as well
@@ -256,7 +256,7 @@ document.  Note that if \texttt{prefix.string} is used it can specify
 a directory as part of the prefix, so that for example if
 \verb|\SweaveOpts{prefix.string=figures/fig}|, the auto-generated
 figures will be placed in sub-directory \verb|figures|: the Sweave
-document should arrage to create this before use.
+document should arrange to create this before use.
 
 \subsection{Using multiple input files}
 
@@ -533,23 +533,28 @@ width is controlled by option \texttt{"width"}.
 
 The default graphics device for \texttt{fig=TRUE} chunks is
 \texttt{pdf()}: the standard options \texttt{pdf}, \texttt{eps},
-\texttt{png} and \texttt{jpg} (the latter two available only in \R{} >=
-2.13.0) allow one or more of these to be selected for a particular
-chunk or (via \verb|\SweaveOpts|) for the whole document.  It can be
-convenient to select PNG for a particular chunk by something like
-\verb|<<figN, fig=TRUE, pdf=FALSE, png=TRUE|: \texttt{pdflatex} should
-automatically include the PNG file.
+\texttt{png} and \texttt{jpg}\footnote{the latter two available only
+  from \R{} 2.13.0.} allow one or more of these to be selected for a
+particular chunk or (via \verb|\SweaveOpts|) for the whole document.
+It can be convenient to select PNG for a particular figure chunk by
+something like \verb|<<figN, fig=TRUE, pdf=FALSE, png=TRUE>>|:
+\texttt{pdflatex} should automatically include the PNG file for that
+chunk.
 
-In addition, \R{} >= 2.13.0 allows you to define your own graphics
-devices and select one of them by the option \texttt{grdevice=my.Swd}
-where the device function (here \texttt{my.Swd}) is defined in a hidden
-code chunk. For example, we could make use of the \texttt{cairo\_pdf}
-device by
+You can define your own graphics devices\footnote{in \R{} 2.13.0 and
+  later.} and select one of them by the option
+\texttt{grdevice=my.Swd} where the device function (here
+\texttt{my.Swd}) is defined in a hidden code chunk. For example, we
+could make use of the \texttt{cairo\_pdf} device by
 \begin{verbatim}
 my.Swd <- function(name, width, height, ...)
-  grdevices::cairo_pdf(filename = paste(name, "pdf", sep = "."),
+  grDevices::cairo_pdf(filename = paste(name, "pdf", sep = "."),
                        width = width, height = height)
 \end{verbatim}
+Specialized custom graphics devices may need a customized way to shut
+them down in place of \verb|graphics.off()|: this can be
+supplied\footnote{from \R{} 2.13.1} \emph{via} a companion function
+\verb|my.Swd.off|, which is called with no arguments.
 
 \subsection{The \texttt{Rtangle} driver}
 
@@ -722,19 +727,17 @@ R CMD Sweave file.Rnw
  \subsection{How can I set default \texttt{par()} settings for figure
     chunks?}
 
-  Because each EPS and PDF file opens a new device, using \texttt{par()}
-  has only an effect if it is used inside a figure chunk. If you want
-  to use the same settings for a series of figures, it is easier to
-  use a hook function than repeating the same \texttt{par()} statement
-  in each figure chunk.
+  Because Sweave opens a new device for each graphics file in each
+  figure chunk, using \texttt{par()} has only an effect if it is used
+  inside a figure chunk. If you want to use the same settings for a
+  series of figures, it is easier to use a hook function than
+  repeating the same \texttt{par()} statement in each figure chunk.
 
   The effect of
 \begin{verbatim}
   options(SweaveHooks = list(fig = function() par(bg = "red", fg = "blue")))
 \end{verbatim}
-  should be easy to spot. Do not forget to remove the hook at the end
-  of the Sweave file unless you want to use it as a global option for
-  all Sweave files.
+  should be easy to spot.
 
   \subsection{How can I change the formatting of R input and output
      chunks?}
@@ -759,8 +762,8 @@ R CMD Sweave file.Rnw
 
   \subsection{Can I use Sweave for Word files?}
 
-  Not directly, but SWord provides similar functionality for Microsoft
-  Word on Windows platforms.
+  Not directly, but package \texttt{SWord} provides similar
+  functionality for Microsoft Word on Windows platforms.
 
   \subsection{Can I use Sweave for OpenOffice files?}
 
@@ -778,7 +781,7 @@ R CMD Sweave file.Rnw
    Package \texttt{R2HTML} registers an Sweave driver for HTML files
    using the same file extensions as the default \texttt{noweb}
    syntax, and after that its syntax is on the search list before the
-   default syntax.
+   default syntax.  Using
 \begin{verbatim}
   options(SweaveSyntax = "SweaveSyntaxNoweb")
 \end{verbatim}
@@ -786,7 +789,7 @@ or calling Sweave like
 \begin{verbatim}
   Sweave(..., syntax = "SweaveSyntaxNoweb")
 \end{verbatim}
-ensures the default syntax even after loading \texttt{R2HTML}.
+ensures the default syntax even after loading package \texttt{R2HTML}.
 
 
 \subsection{Why does Sweave delete all comments from the R code? Why
@@ -797,10 +800,30 @@ are the result from running the code through \texttt{parse()} and
 \texttt{deparse()}, which by default discards all comments and
 reformats line breaks. If you want to keep the code as it is in the
 source file, use
-\begin{verbatim}
-  \SweaveOpts{keep.source=TRUE}
-\end{verbatim}
+\begin{quote}
+  \verb|\SweaveOpts{keep.source=TRUE}|
+\end{quote}
 This will become the default in \R{} 2.14.0.
+
+\subsection{`Sweave executes figure chunks twice'}
+
+Or variations on this, as in
+\url{https://stat.ethz.ch/pipermail/r-help/2011-April/275198.html}.
+
+Currently Sweave runs every code chunk once (unless option
+\texttt{eval=FALSE}).  For figure chunks it then runs the chunk once
+more for each graphics device selected, so by default figure chunks
+are run twice, once like any other chunk and once to produce the PDF
+figure.
+
+This can cause problems if figure chunks produce output or have side
+effects, so it is good practice to use figure chunks purely to produce
+the figure.
+
+Option \verb|figs.only = TRUE| changes this behaviour, so
+figure chunks are only run for the selected graphics device(s).  This
+will become the default in \R{} 2.14.0.
+
 \end{document}
 
 %%% Local Variables:

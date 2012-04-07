@@ -10,8 +10,8 @@
   Draw an X-spline, a curve drawn relative to control points.
 }
 \usage{
-xspline(x, y = NULL, shape = 0, open = TRUE, repEnds = TRUE, draw = TRUE,
-        border = par("fg"), col = NA, \dots)
+xspline(x, y = NULL, shape = 0, open = TRUE, repEnds = TRUE,
+        draw = TRUE, border = par("fg"), col = NA, \dots)
 }
 \arguments{
   \item{x,y}{vectors containing the coordinates of the vertices
@@ -29,7 +29,7 @@ xspline(x, y = NULL, shape = 0, open = TRUE, repEnds = TRUE, draw = TRUE,
     omit borders.}
   \item{col}{the color for filling the shape. The default,
     \code{NA}, is to leave unfilled.}
-  \item{\dots}{graphical parameters such as \code{lty}, \code{xpd},
+  \item{\dots}{\link{graphical parameters} such as \code{lty}, \code{xpd},
     \code{lend}, \code{ljoin} and \code{lmitre} can be given as arguments.}
 }
 \details{

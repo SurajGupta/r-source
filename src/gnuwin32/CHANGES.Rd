@@ -4,6 +4,51 @@
 \title{Windows-specific changes to R}
 \encoding{UTF-8}
 
+\section{CHANGES IN R VERSION 2.13.1}{
+  \subsection{NEW FEATURES}{
+    \itemize{
+      \item \command{R CMD build} no longer attempts to preserve file
+      permissions on Windows, because Windows (unlike POSIX-compliant
+      OSes) stops read-only files being deleted in version-control
+      directories.
+      
+      \item \code{shell.exec()} now interprets files relative to the current
+      working directory (rather than \samp{R_HOME}).
+
+      \item \code{file.info()} now accepts \sQuote{file} names with
+      trailing directory separators, even though such names are invalid
+      on Windows.
+
+      \item The \code{windows()} family of devices now supports()
+      per-pixel alpha for raster images.
+    }
+  }
+  
+  \subsection{BUG FIXES}{
+    \itemize{
+      \item Launching the PDF manuals from the Rgui menus did not work
+      on some versions of Windows.
+      
+      \item The windows() screen device would sometimes fail to plot
+      (visibly) points with \code{pch="."}. \PR{14583}
+      
+      \item \code{system()} and related functions sometimes failed
+      when run in \file{Rgui}.
+
+      \item Saving to PDF from the menu of a \code{windows()} device
+      used defaults for \code{family}, \code{fg} and \code{bg} from
+      \code{ps.options()} rather than \code{pdf.options()} (but
+      the factory-fresh defaults were the same).
+      
+      \item Shutting down the \R session cleaned up the temporary
+      directory before closing all graphics devices.  On Windows this
+      necessitated changing the working directory, so some devices
+      (e.g. \code{tiff()}) could write files in the wrong directory if
+      closed during shutdown.  The order has been reversed.      
+    }
+  }
+}
+  
 \section{CHANGES IN R VERSION 2.13.0}{
   \subsection{WINDOWS VERSION}{
     \itemize{
@@ -71,8 +116,8 @@
       Support for \samp{jpeg-6b} has been removed.
 
       \item The sources now work with \samp{libpng-1.5.1}, 
-      \samp{ jpegsrc.v8c} (which are used in the CRAN builds) and
-      \samp{tiff-4.0.0beta6} (CRAN builds use 3.9.1). It is possible
+      \samp{jpegsrc.v8c} (which are used in the CRAN builds) and
+      \samp{tiff-4.0.0beta6} (CRAN builds use 3.9.1).  It is possible
       that they no longer work with older versions than 
       \samp{libpng-1.4.5}. 
     } 

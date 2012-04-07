@@ -1,6 +1,6 @@
 R FAQ
 Frequently Asked Questions on R
-Version 2.13.2011-04-07
+Version 2.13.2011-07-05
 ISBN 3-900051-08-9
 Kurt Hornik
 
@@ -99,6 +99,8 @@ R FAQ
   7.37 Why does backslash behave strangely inside strings?
   7.38 How can I put error bars or confidence bands on my plot?
   7.39 How do I create a plot with two y-axes?
+  7.40 How do I access the source code for a function?
+  7.41 Why does summary() report strange results for the R^2 estimate when I fit a linear model with no intercept?
 8 R Programming
   8.1 How should I write summary methods?
   8.2 How can I debug dynamically loaded code?
@@ -255,7 +257,7 @@ i386-freebsd, rs6000-ibm-aix, and sparc-sun-solaris.
 2.3 What is the current version of R?
 =====================================
 
-The current released version is 2.13.0.  Based on this
+The current released version is 2.13.1.  Based on this
 `major.minor.patchlevel' numbering scheme, there are two development
 versions of R, a patched version of the current release (`r-patched') and
 one working towards the next minor or eventually major (`r-devel') releases
@@ -391,11 +393,9 @@ The `bin/linux' directory of a CRAN site contains the following packages.
 
                CPU           Versions                      Provider
      ----------------------------------------------------------------------- 
-     Debian    i386/amd64    etch-cran                     Johannes Ranke
-               i386          lenny-cran                    Johannes Ranke
+     Debian    i386/amd64    etch/lenny/squeeze            Johannes Ranke
      Red Hat   i386/x86_64   fedora10/fedora11             Martyn Plummer
-     Ubuntu    i386          hardy/karmic/lucid/maverick   Vincent Goulet
-               amd64         hardy/karmic/lucid/maverick   Michael Rutter
+     Ubuntu    i386/amd64    hardy/lucid/maverick/natty    Michael Rutter
 
    Debian packages, maintained by Dirk Eddelbuettel, have long been part of
 the Debian distribution, and can be accessed through APT, the Debian
@@ -408,7 +408,7 @@ provided by Johannes Ranke, and available from CRAN.  See
 `http://CRAN.R-project.org/bin/linux/debian/README' for details on R Debian
 packages and installing the backports, which should also be suitable for
 other Debian derivatives.  Native backports for Ubuntu are provided by
-Vincent Goulet and Michael Rutter.
+Michael Rutter.
 
    R binaries for Fedora, maintained by Tom "Spot" Callaway, are provided
 as part of the Fedora distribution and can be accessed through `yum', the
@@ -425,9 +425,6 @@ statutory Fedora review process.
 
    See `http://cran.r-project.org/bin/linux/suse/README.html' for
 information about RPMs for openSUSE.
-
-   The `bin/solaris' directory of a CRAN site contains binary packages for
-Solaris on the SPARC and x64 platforms, provided by Mithun Sridharan.
 
    No other binary distributions are currently publically available via
 CRAN.
@@ -1302,15 +1299,19 @@ interface is created automatically.  There is no need for the user to do
 any extra scripting or learn any new scripting techniques.  Rwui can also
 be found at `http://rwui.cryst.bbk.ac.uk'.
 
-   Finally, the *R.rsp* (http://CRAN.R-project.org/package=R.rsp) package
-by Henrik Bengtsson introduces "R Server Pages".  Analogous to Java Server
-Pages, an R server page is typically HTML with embedded R code that gets
-evaluated when the page is requested.  The package includes an internal
+   The *R.rsp* (http://CRAN.R-project.org/package=R.rsp) package by Henrik
+Bengtsson introduces "R Server Pages".  Analogous to Java Server Pages, an
+R server page is typically HTML with embedded R code that gets evaluated
+when the page is requested.  The package includes an internal
 cross-platform HTTP server implemented in Tcl, so provides a good framework
 for including web-based user interfaces in packages.  The approach is
 similar to the use of the *brew* (http://CRAN.R-project.org/package=brew)
 package with Rapache (http://rapache.net/) with the advantage of
 cross-platform support and easy installation.
+
+   Finally, the *Rook* (http://CRAN.R-project.org/package=Rook) package by
+Jeffrey Horner provides a web server server interface borrowing heavily
+from Ruby's Rack project.
 
 5 R Add-On Packages
 *******************
@@ -2553,6 +2554,38 @@ constructing such graphs is to use `par(new=TRUE)' (see `?par'); functions
 package) automate the process somewhat.  See
 `http://rwiki.sciviews.org/doku.php?id=tips:graphics-base:2yaxes' for more
 information, including strong arguments against this sort of graph.
+
+7.40 How do I access the source code for a function?
+====================================================
+
+In most cases, typing the name of the function will print its source code.
+However, code is sometimes hidden in a namespace, or compiled.  For a
+complete overview on how to access source code, see Uwe Ligges (2006),
+"Help Desk: Accessing the sources", _R News_, *6/4*, 43-45
+(`http://cran.r-project.org/doc/Rnews/Rnews_2006-4.pdf').
+
+7.41 Why does summary() report strange results for the R^2 estimate when I fit a linear model with no intercept?
+================================================================================================================
+
+As described in `?summary.lm', when the intercept is zero (e.g., from `y ~
+x - 1' or `y ~ x + 0'), `summary.lm()' uses the formula   R^2 = 1 -
+Sum(R[i]^2) / Sum((y[i])^2) which is different from the usual   R^2 = 1 -
+Sum(R[i]^2) / Sum((y[i] - mean(y))^2).  There are several reasons for this:
+   * Otherwise the R^2 could be negative (because the model with zero
+     intercept can fit _worse_ than the constant-mean model it is
+     implicitly compared to).
+
+   * If you set the slope to zero in the model with a line through the
+     origin you get fitted values y*=0
+
+   * The model with constant, non-zero mean is not nested in the model with
+     a line through the origin.
+
+   All these come down to saying that if you know _a priori_ that E[Y]=0
+when x=0 then the `null' model that you should compare to the fitted line,
+the model where x doesn't explain any of the variance, is the model where
+E[Y]=0 everywhere.  (If you don't know a priori that E[Y]=0 when x=0, then
+you probably shouldn't be fitting a line through the origin.)
 
 8 R Programming
 ***************

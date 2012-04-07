@@ -36,7 +36,7 @@ self from reference class thisClass.'
             value <- installClassMethod(value, self, field, selfEnv, thisClass)
         }
         else
-            stop(gettextf("Field \"%s\" is not a valid field or method name for reference class \"%s\"",
+            stop(gettextf("\"%s\" is not a valid field or method name for reference class \"%s\"",
                           field, thisClass@className),
                  domain = NA)
     }
@@ -209,9 +209,12 @@ initFieldArgs <- function(.Object, classDef, selfEnv, ...) {
     if(exists(what, envir = selfEnv, inherits = FALSE))
         ## either a field or previously cached method
         get(what, envir = selfEnv)
-    else
+    else if(is(x, "envRefClass"))
         ## infer (usually) the method, cache it and return it
         envRefInferField(x, what, getClass(class(x)), selfEnv)
+    else # don't know the reference class(e.g., x is the refMethods env.)
+        stop(gettextf("\"%s\" is not a valid field or method name for this class",
+               what), domain = NA)
 }
 
 .dollarGetsForEnvRefClass <- function(x, name, value) {
@@ -320,6 +323,22 @@ that class itself, but then you could just overrwite the object).
                  stop(gettextf("\"%s\" is not a field in this class", name),
                       domain = NA)
              assign(name, value, envir = .self)
+         },
+         trace = function(..., classMethod = FALSE) {
+             ' Insert trace debugging for the specified method.  The arguments are
+ the same as for the trace() function in package "base".  The first argument
+ should be the name of the method to be traced, quoted or not.
+
+ The additional argument classMethod= can be supplied as TRUE (by name only)
+ in order to trace a method in a generator object (e.g., "new") rather than
+ in the objects generated from that class.
+'
+             .TraceWithMethods(..., where = .self, classMethod = classMethod)
+         },
+         untrace = function(..., classMethod = FALSE) {
+             ' Untrace the method given as the first argument.
+'
+             .TraceWithMethods(..., untrace = TRUE,  where = .self, classMethod = classMethod)
          }
          )
 
@@ -371,6 +390,8 @@ makeEnvRefMethods <- function() {
                             refClassName = "character",
                             superClassMethod = "SuperClassMethod"),
              contains = "function", where = envir)
+    ## and make a traceable version of the class
+    .makeTraceClass(.traceClassName("refMethodDef"), "refMethodDef", FALSE)
     setIs("refMethodDef", "SuperClassMethod", where = envir)
     setClass("envRefClass", contains = c("environment","refClass"), where =envir)
     ## bootstrap envRefClass as a refClass
@@ -578,7 +599,7 @@ accessors = function(...) {
     if(any(hasFields)) {
         for(field in newNames[hasFields])
             ## the new field class must be a subclass of the old
-            if(is.na(match(fieldList[[field]], extends(value[[field]]))))
+            if(is.na(match(fieldList[[field]], c(extends(value[[field]]),"ANY"))))
                 stop(gettextf("The overriding class(\"%s\") of field \"%s\" is not a subclass of the existing field definition (\"%s\")",
                       value[[field]], field, fieldList[[field]]),
                      domain = NA)
@@ -797,10 +818,14 @@ setRefClass <- function(Class, fields = character(),
         names(fields) <- fieldNames
     }
     else if(is.list(fields)) {
-        fieldNames <- names(fields)
-        if(is.null(fieldNames) ||
-           !all(nzchar(fieldNames)))
-            stop("A list argument for fields must have nonempty names for all the fields")
+        if(length(fields) > 0) {
+            fieldNames <- names(fields)
+            if(is.null(fieldNames) ||
+               !all(nzchar(fieldNames)))
+                stop("A list argument for fields must have nonempty names for all the fields")
+        }
+        else
+            fieldNames <- character()
     }
     else
         stop(gettextf("Argument fields must be a list of the field classes or definitions, or else just the names of the fields; got an object of class \"%s\"",
@@ -839,17 +864,23 @@ setRefClass <- function(Class, fields = character(),
 }
 
 getRefClass <- function(Class, where = topenv(parent.frame())) {
-    if(is(Class, "envRefClass"))
-        classDef <- get(".refClassDef", envir = Class)
-    else
+    if(is(Class, "refClassRepresentation")) {
+        classDef <- Class
+        Class <- classDef@className
+    }
+    else if(is.character(Class)) {
         classDef <- getClass(Class, where = where)
-    if(!is(classDef, "refClassRepresentation"))
-        stop(gettextf("Class \"%s\" is defined but is not a reference class",
+        if(!is(classDef, "refClassRepresentation"))
+            stop(gettextf("Class \"%s\" is defined but is not a reference class",
                       Class), domain = NA)
+    }
+    else
+        stop(gettextf("Class must be a reference class representation or a character string; got an object of class \"%s\"",
+                      class(Class)), domain = NA)
     value <- new("refObjectGenerator")
     env <- as.environment(value)
-    env$def <- classDef
     env$className <- Class
+    env$def <- classDef
     value
 }
 

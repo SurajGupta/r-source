@@ -216,6 +216,13 @@ RweaveLatexSetup(file, syntax, output = NULL, quiet = FALSE,
       file to link the input line numbers to the output line numbers.
       This is an experimental feature; see the source code for the
       output format, which is subject to change in future releases.}
+    
+    \item{figs.only:}{logical (\code{TRUE}).  By default each figure
+      chunk is run once for each selected type of graphics, for which a
+      new graphics device is opened and then closed.  Setting this
+      option to false will open a default graphics device for the first
+      figure chunk and use that device for the first evaluation of all
+      subsequent chunks, the default behaviour prior to \R 2.14.0.}
   }
 
   In addition, users can specify further options, either in the header
@@ -227,20 +234,24 @@ RweaveLatexSetup(file, syntax, output = NULL, quiet = FALSE,
 \section{Custom Graphics Devices}{
   If option \code{grdevice} is supplied for a code chunk with both
   \code{fig} and \code{eval} true, the following call is made
-\preformatted{  get(options$grdevice, envir = .GlobalEnv)(name=, width=, height=, options)
+  \preformatted{  get(options$grdevice, envir = .GlobalEnv)(name=, width=,
+                                              height=, options)
 }
   which should open a graphics device.  The chunk's code is then
   evaluated and \code{\link{dev.off}} is called.  Normally a function of
   the name given will have been defined earlier in the Sweave document, e.g.
 \preformatted{<<results=hide>>=
 my.Swd <- function(name, width, height, ...)
-  grdevices::png(filename = paste(name, "png", sep = "."),
-                 width = width, height = height, res = 100, units = "in",
-                 type = "quartz", bg = "transparent")
+  grDevices::png(filename = paste(name, "png", sep = "."),
+                 width = width, height = height, res = 100,
+                 units = "in", type = "quartz", bg = "transparent")
 @
 }
   Currently only one custom device can be used for each chunk, but
   different devices can be used for different chunks.
+
+  A replacement for \code{\link{dev.off}} can be provided as a function
+  with suffix \code{.off}, e.g. \code{my.Swd.off()}.
 }
 
 \section{Hook Functions}{

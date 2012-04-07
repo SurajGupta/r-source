@@ -7,6 +7,7 @@
 
 @c @documentencoding ISO-8859-1
 
+@c Put the functions in the variable index
 @syncodeindex fn vr
 
 @dircategory Programming
@@ -93,14 +94,14 @@ provided information on the C++ interface) are gratefully acknowledged.
 @cindex Packages
 @cindex Creating packages
 
-Packages provide a mechanism for loading optional code and attached
-documentation as needed.  The @R{} distribution itself includes about 25
+Packages provide a mechanism for loading optional code, data and
+documentation as needed.  The @R{} distribution itself includes about 30
 packages.
 
-In the following, we assume that you know the @samp{library()} command,
-including its @samp{lib.loc} argument, and we also assume basic
-knowledge of the @code{INSTALL} utility.  Otherwise, please look at @R{}'s
-help pages
+In the following, we assume that you know the @code{library()} command,
+including its @code{lib.loc} argument, and we also assume basic
+knowledge of the @command{R CMD INSTALL} utility.  Otherwise, please
+look at @R{}'s help pages on
 
 @example
 ?library
@@ -123,6 +124,79 @@ R-admin, R Installation and Administration}, for further details.
 @end ifset
 
 Other types of extensions are supported (but rare): @xref{Package types}.
+
+Some notes on terminology complete this introduction.  These will help
+with the reading of this manual, and also in describing concepts
+accurately when asking for help.
+
+A @emph{package} is a directory of files which extend @R{}, either a
+@emph{source package} (the master files of a package), or a tarball
+containing the files of a source package, or an @emph{installed}
+package, the result of running @command{R CMD INSTALL} on a source
+package.  On some platforms there are also @emph{binary packages}, a zip
+or tarball containing the files of an installed package which can be
+unpacked rather than installing from sources.
+
+A package is @strong{not}@footnote{although this is common mis-usage.
+It seems to stem from S, whose analogues of @R{}'s packages were
+officially known as @emph{library sections} and later as
+@emph{chapters}, but almost always referred to as @emph{libraries}.} a
+@emph{library}.  The latter is used in two senses in @R{} documentation.
+The first is a directory into which packages are installed, e.g.@:
+@file{/usr/lib/R/library}: in that sense it is sometimes referred to as
+a @emph{library directory} or @emph{library tree} (since the library is
+a directory which contains packages as directories, which themselves
+contain directories).  The second sense is that used by the operating
+system, as a shared library or static library or (especially on Windows)
+a DLL, where the second L stands for `library'.  Installed packages may
+contain compiled code in what is known on most Unix-alikes as a
+@emph{shared object} and on Windows as a DLL (and used to be called a
+@emph{shared library} on some Unix-alikes).  The concept of a
+@emph{shared library} (@emph{dynamic library} on Mac OS X) as a
+collection of compiled code to which a package might link is also used,
+especially for @R{} itself on some platforms.
+
+There are a number of well-defined operations on source packages.  The
+most common is @emph{installation} which takes a source package and
+installs it in a library using @command{R CMD INSTALL} or
+@code{install.packages}.  Source packages can be @emph{built}, a
+distinct concept.  This involves taking a source directory and creating
+a tarball ready for distribution, including cleaning it up and creating
+PDF documentation from any @emph{vignettes} it may contain.  Source
+packages (and most often tarballs) can be @emph{checked}, when a test
+installation is done and tested (including running its examples); also,
+the contents of the package are tested in various ways for consistency
+and portability.
+
+@emph{Compilation} is not a correct term for a package.  Installing a
+source package which contains C, C++ or Fortran code will involve
+compiling that code.  As from @R{} 2.13.0 there is also the possibility
+of (`byte') compiling the @R{} code in a package (using the facilities
+of package @pkg{compiler}): at some future time this might be done
+routinely when @emph{compiling} a package may come to mean compiling its
+@R{} code.
+
+It used to be unambiguous to talk about @emph{loading} an installed
+package using @code{library()}, but since the advent of package name
+spaces this has been less clear: people now often talk about
+@emph{loading} the package's name space and then @emph{attaching} the
+package so it becomes visible on the search path.  Function
+@code{library} performs both steps, but a package's name space can be
+loaded without the package being attached (for example by calls like
+@code{splines::ns}).
+
+The option of @emph{lazy loading} of code or data is mentioned at
+several points.  This is an optional part of the installation, selected
+by default for @R{} code (and not using it is deprecated).  When used
+the @R{} objects of the package are created at installation time, and
+stored in a database in the @file{R} directory of the installed package,
+being loaded into the session at first use.  This makes the @R{} session
+run faster and used less (virtual) memory.
+@ifset UseExternalXrefs
+(For technical details,
+@pxref{Lazy loading, , Lazy loading, R-ints,  R Internals}.)
+@end ifset
+
 
 @menu
 * Package structure::           
@@ -152,7 +226,7 @@ should not be empty).  The package subdirectory may also contain files
 @file{LICENSE}, @file{LICENCE}, @file{COPYING} and @file{NEWS}.  Other
 files such as @file{INSTALL} (for non-standard installation
 instructions), @file{README} or @file{ChangeLog} will be ignored by
-@R{}, but may be useful to end-users.
+@R{}, but may be useful to end users.
 
 The @file{DESCRIPTION} and @file{INDEX} files are described in the
 subsections below.  The @file{NAMESPACE} file is described in the
@@ -501,15 +575,18 @@ Paths containing white space or quotes need to be quoted.  An
 OS-specific collation field (@samp{Collate.unix} or
 @samp{Collate.windows}) will be used instead of @samp{Collate}.
 
-The @samp{LazyLoad} and @samp{LazyData} fields control whether
-the @R{} objects and the datasets (respectively) use lazy-loading: set
-the field's value to @samp{yes} or @samp{true} for lazy-loading and
+The @samp{LazyLoad} and @samp{LazyData} fields control whether the @R{}
+objects and the datasets (respectively) use lazy-loading: set the
+field's value to @samp{yes} or @samp{true} for lazy-loading and
 @samp{no} or @samp{false} for no lazy-loading.  (Capitalized values are
 also accepted.)  If the package you are writing uses the @pkg{methods}
-package, specify @samp{LazyLoad: yes}.
+package, specify@footnote{That is the default, but this stops someone
+overriding it when using @command{R CMD INSTALL}.}  @samp{LazyLoad:
+yes}.  The use of @samp{LazyLoad: no} is now deprecated and will be
+removed in @R{} 2.14.0.
 
 The @samp{ZipData} field controls whether the automatic Windows build
-will zip up the data directory or no: set this to @samp{no} if your
+will zip up the data directory or not: set this to @samp{no} if your
 package will not work with a zipped data directory.  (Setting to any
 other value is deprecated, and it is unused as from @R{} 2.13.0: but it
 might still be needed if the package can be installed under earlier
@@ -693,6 +770,8 @@ platforms} with associated extensions @file{.c}, @file{.cc} or
 headers, also for C++@footnote{Using @file{.hpp}, although somewhat
 popular, is not guaranteed to be portable.} or Fortran 9x include files.
 (Use of extension @file{.C} for C++ is no longer supported.)
+Files in the @file{src} directory should not be hidden (start with a
+dot), and hidden files will under some versions of @R{} be ignored.
 
 It is not portable (and may not be possible at all) to mix all these
 languages in a single package, and we do not support using both C++ and
@@ -717,13 +796,39 @@ removes all files generated by running @command{make} (to be used by
 @samp{R CMD INSTALL --clean} and @samp{R CMD INSTALL --preclean}).
 There are platform-specific file names on Windows:
 @file{src/Makevars.win} takes precedence over @file{src/Makevars} and
-@file{src/Makefile.win} must be used. Some @command{make} programs
+@file{src/Makefile.win} must be used.  Some @command{make} programs
 require makefiles to have a complete final line, including a newline.
 
 A few packages use the @file{src} directory for purposes other than
 making a shared object (e.g.@: to create executables).  Such packages
 should have files @file{src/Makefile} and @file{src/Makefile.win}
 (unless intended for only Unix-alikes or only Windows).
+
+In very special cases packages may create binary files other than the
+shared objects/DLLs in the @file{src} directory.  Such files will not be
+installed in multi-arch setting since @code{R CMD INSTALL --libs-only}
+is used to merge multiple architectures and it only copies shared
+objects/DLLs.  If a package wants to install other binaries (for example
+executable programs), it should to provide an @R{} script
+@file{src/install.libs.R} which will be run as part of the installation
+in the @code{src} build directory @emph{instead of} copying the shared
+objects/DLLs. The script is run in a separate @R{} environment
+containing the following variables: @code{R_PACKAGE_NAME} (the name of
+the package), @code{R_PACKAGE_SOURCE} (the path to the source directory
+of the package), @code{R_PACKAGE_DIR} (the path of the target
+installation directory of the package), @code{R_ARCH} (the
+arch-dependent part of the path), @code{SHLIB_EXT} (the extension of
+shared objects) and @code{WINDOWS} (@code{TRUE} on Windows, @code{FALSE}
+elsewhere).  Something close to the default behavior could be replicated
+with the following @file{src/install.libs.R} file:
+
+@example
+files <- Sys.glob(paste("*", SHLIB_EXT, sep=''))
+libarch <- if (nzchar(R_ARCH)) paste('libs', R_ARCH, sep='') else 'libs'
+dest <- file.path(R_PACKAGE_DIR, libarch)
+dir.create(dest, recursive = TRUE, showWarnings = FALSE)
+file.copy(files, dest, overwrite = TRUE)
+@end example
 
 The @file{data} subdirectory is for data files: @xref{Data in packages}.
 
@@ -786,7 +891,12 @@ file, these two are compared, with differences being reported but not
 causing an error.  The directory @file{tests} is copied to the check
 area, and the tests are run with the copy as the working directory and
 with @code{R_LIBS} set to ensure that the copy of the package installed
-during testing will be found by @code{library(@var{pkg_name})}.
+during testing will be found by @code{library(@var{pkg_name})}.  Note
+that the package-specific tests are run in a vanilla @R{} session
+without setting the random-number seed, so tests which use random
+numbers will need to do so to obtain reproducible results (and it can be
+helpful to do so in all cases, to avoid occasional failures when tests
+are run by others).
 
 If @file{tests} has a subdirectory @file{Examples} containing a file
 @code{@var{pkg}-Ex.Rout.save}, this is compared to the output file for
@@ -796,8 +906,9 @@ Subdirectory @file{exec} could contain additional executables the
 package needs, typically scripts for interpreters such as the shell,
 Perl, or Tcl.  This mechanism is currently used only by a very few
 packages, and still experimental.  NB: only files (and not directories)
-under @file{exec} are installed, and they are all marked as executable
-(mode @code{755}, moderated by @samp{umask}) on POSIX platforms.
+under @file{exec} are installed (and those starting with a dot are
+ignored), and they are all marked as executable (mode @code{755},
+moderated by @samp{umask}) on POSIX platforms.
 
 Subdirectory @file{po} is used for files related to @emph{localization}:
 @pxref{Internationalization}.
@@ -814,19 +925,20 @@ Support for package bundles was removed in @R{} 2.11.0.
 The @file{data} subdirectory is for data files, either to be made
 available @emph{via} lazy-loading or for loading using @code{data()}.
 (The choice is made by the @samp{LazyData} field in the
-@file{DESCRIPTION} file.)  It should not be used for other data files
-needed by the package, and the convention has grown up to use directory
-@file{inst/extdata} for such files.
+@file{DESCRIPTION} file: the default is not to do so.)  It should not be
+used for other data files needed by the package, and the convention has
+grown up to use directory @file{inst/extdata} for such files.
 
 Data files can have one of three types as indicated by their extension:
-plain @R{} code (@file{.R} or @file{.r}), tables (@file{.tab}, @file{.txt},
-or @file{.csv}, see @code{?data} for the file formats, and note that
-@file{.csv} is @strong{not} the
-standard@footnote{e.g@: @uref{http://tools.ietf.org/@/html/@/rfc4180}.} CSV
-format), or @code{save()} images (@file{.RData} or @file{.rda}). Note
-that @R{} code should be ``self-sufficient'' and not make use of extra
-functionality provided by the package, so that the data file can also be
-used without having to load the package.
+plain @R{} code (@file{.R} or @file{.r}), tables (@file{.tab},
+@file{.txt}, or @file{.csv}, see @code{?data} for the file formats, and
+note that @file{.csv} is @strong{not} the standard@footnote{e.g@:
+@uref{http://tools.ietf.org/@/html/@/rfc4180}.} CSV format), or
+@code{save()} images (@file{.RData} or @file{.rda}).  The files should
+not be hidden (have names starting with a dot).  Note that @R{} code
+should be ``self-sufficient'' and not make use of extra functionality
+provided by the package, so that the data file can also be used without
+having to load the package.
 
 Images (extensions @file{.RData} or @file{.rda}) can contain references
 to the name spaces of packages that were used to create them.
@@ -878,6 +990,9 @@ field in the @file{DESCRIPTION} file.  Useful values are @code{bzip2},
 is best is to try them all and look at the size of the
 @file{@var{pkgname}/data/Rdata.rdb} file.
 
+Lazy-loading is not supported for very large datasets (those which when
+serialized exceed 2GB).
+
 @node Non-R scripts in packages,  , Data in packages, Package structure
 @subsection Non-R scripts in packages
 
@@ -911,7 +1026,7 @@ of it:
 @node Configure and cleanup, Checking and building packages, Package structure, Creating R packages
 @section Configure and cleanup
 
-Note that most of this section is specfic to Unix-alikes: see the
+Note that most of this section is specific to Unix-alikes: see the
 comments later on about the Windows port of @R{}.
 
 If your package needs some system-dependent configuration before
@@ -1130,6 +1245,12 @@ Sometimes writing your own @file{configure} script can be avoided by
 supplying a file @file{Makevars}: also one of the most common uses of a
 @file{configure} script is to make @file{Makevars} from
 @file{Makevars.in}.
+
+A @file{Makevars} file is a makefile and is used as one of several
+makefiles by @command{R CMD SHLIB} (which is called by @command{R CMD
+INSTALL} to compile code in the @file{src} directory).  It should be
+written if at all possible in a portable style, in particular (except
+for @file{Makevars.win}) without the use of GNU extensions.
 
 The most common use of a @file{Makevars} file is to set additional
 preprocessor options (for example include paths) for C/C++ files
@@ -1749,13 +1870,13 @@ possible.
 
 @item
 The code in package vignettes (@pxref{Writing package vignettes}) is
-executed, and the vignettes re-made from their sources as a check of
-completeness of the sources (unless there is a @samp{Vignettes}
-field in the package's @file{DESCRIPTION} file with a false value).
+executed, and the vignette PDFs re-made from their sources as a check of
+completeness of the sources (unless there is a @samp{Vignettes} field in
+the package's @file{DESCRIPTION} file with a false value).
 
 If there is an error in executing the @R{} code in vignette
 @file{@var{foo}}, a log file @file{@var{foo}.log} is created in the
-check directory.  The vignettes are re-made in a copy of the package
+check directory.  The vignette PDFs are re-made in a copy of the package
 sources in the @file{vign_test} subdirectory of the check directory, so
 for further information on errors look in directory
 @file{@var{pkgname}/vign_test/inst/doc}.  (It is only retained if there
@@ -1826,6 +1947,7 @@ files are tested and converted to LF line-endings if necessary.
 Run-time checks whether the package works correctly should be performed
 using @command{R CMD check} prior to invoking the final build procedure.
 
+@cindex .Rbuildignore file
 To exclude files from being put into the package, one can specify a list
 of exclude patterns in file @file{.Rbuildignore} in the top-level source
 directory.  These patterns should be Perl-like regular expressions (see
@@ -1867,7 +1989,10 @@ the package.)
 
 One of the checks that @command{R CMD build} runs is for empty source
 directories.  These are in most (but not all) cases unintentional, if
-they are intentional use the option @option{--keep-empty-dirs}.
+they are intentional use the option @option{--keep-empty-dirs} (or set
+the environment variable @env{_R_BUILD_KEEP_EMPTY_DIRS_} to @samp{TRUE},
+or have a @samp{BuildKeepEmpty} field with a true value in the
+@file{DESCRIPTION} file).
 
 The @option{--resave-data} option allows saved images (@file{.rda} and
 @file{.RData} files) in the @file{data} directory to be optimized for
@@ -1881,7 +2006,9 @@ effective compression.  Using @code{best} adds a dependence on @code{R
 @command{xz} compression is selected for any of the files.  If this is
 thought undesirable, @option{--resave-data=gzip} (which is the default
 if that option is not supplied) will do what compression it can with
-@command{gzip}.
+@command{gzip}.  A package can control how its data is resaved by
+supplying a @samp{BuildResaveData} field (with one of the values given
+earlier in this paragraph) in its @file{DESCRIPTION} file.
 
 The @option{--compact-vignettes} option will run
 @code{tools::compactPDF} over the PDF files in @file{inst/doc} (and its
@@ -1931,26 +2058,28 @@ and be comprised entirely of @acronym{ASCII} letters or digits or hyphen
 or underscore.
 
 A special case are PDF documents with sources in Sweave format, which we
-call @emph{package vignettes}.  These are normally given the file
-extension @file{.Rnw} or @file{.Rtex}, but for historical reasons
-extensions@footnote{and to avoid problems with case-insensitive file
-systems, lower-case versions of all these extensions.} @file{.Snw} and
-@file{.Stex} are also recognized as vignettes.  Sweave allows the
-integration of @LaTeX{} documents: see the @code{Sweave} help page in
-@R{} for details on the document format.  Package vignettes found in
-directory @file{inst/doc} are tested by @code{R CMD check} by executing
-all @R{} code chunks they contain (except those with option
-@code{eval=FALSE}).  The @R{} working directory for all vignette tests
-in @code{R CMD check} is a @emph{copy} of the @file{doc} subdirectory.
-Make sure all files needed by the vignette (data sets, @dots{}) are
-accessible by either placing them in the @file{inst/doc} hierarchy of
-the source package or by using calls to @code{system.file()}.  All other
-files needed to re-make the vignette PDFs (such as LaTeX style files,
-BiBTeX input files and files for any figures not created by running the
-code in the vignette) must in the sources (usually under
-@file{inst/doc}, but a file @file{.Rinstignore} can be used to exclude
-them from the installed package).  References to parallel source
-directories such as
+call @emph{package vignettes}.  
+
+Vignette sources are normally given the file extension @file{.Rnw} or
+@file{.Rtex}, but for historical reasons extensions@footnote{and to
+avoid problems with case-insensitive file systems, lower-case versions
+of all these extensions.} @file{.Snw} and @file{.Stex} are also
+recognized as vignettes.  Sweave allows the integration of @LaTeX{}
+documents: see the @code{Sweave} help page in @R{} and the @code{Sweave}
+vignette in package @pkg{utils} for details on the document format.
+Package vignettes found in directory @file{inst/doc} are tested by
+@code{R CMD check} by executing all @R{} code chunks they contain
+(except those with option @code{eval=FALSE}).  The @R{} working
+directory for all vignette tests in @code{R CMD check} is a @emph{copy}
+of the @file{doc} subdirectory.  Make sure all files needed to run the
+vignette (data sets, @dots{}) are accessible by either placing them in
+the @file{inst/doc} hierarchy of the source package or by using calls to
+@code{system.file()}.  All other files needed to re-make the vignette
+PDFs (such as LaTeX style files, BiBTeX input files and files for any
+figures not created by running the code in the vignette) must in the
+sources (usually under @file{inst/doc}, but a file @file{.Rinstignore}
+can be used to exclude them from the installed package).  References to
+parallel source directories such as
 @example
 \graphicspath@{@{../../manual/@}@}
 @end example
@@ -2056,12 +2185,15 @@ can become very complicated.
 The vignette source file should be written in ASCII or contain a
 declaration of the encoding (see below).  This applies even to comments
 within the source file, since @code{Sweave()} processes comments to look
-for options and metadata lines.  It is @strong{not} assumed that the
-vignette sources are in the packages' encoding (and there are packages
-for which the vignettes have different encodings).
+for options and metadata lines.  When @code{Sweave()} or
+@code{Stangle()} is called on the vignette source, it will be
+converted@footnote{provided the encoding is known: currently if it is
+not, it is guessed to be Latin-1.} to the encoding of the current @R{}
+session.
 
-@code{Stangle()} will produce an @R{} code file: this is almost always
-ASCII.
+@code{Stangle()} will produce an @R{} code file in the current locale's
+encoding: for a non-ASCII vignette what that is recorded in a comment at
+the top of the file.
 
 @code{Sweave()} will produce a @file{.tex} file in the current locale's
 encoding.  That needs to be declared to @LaTeX{} via a line like
@@ -2076,29 +2208,6 @@ may only be re-createable on the author's own machine. @command{R CMD
 check} will report on any non-ASCII vignettes it finds which do not have
 such a declaration.  (It is also possible to use the more recent
 @samp{inputenx} @LaTeX{} package.)
-
-For @R{} 2.13.0 (at least), how non-ASCII vignettes are handled depends
-on the locale of the @R{} session.
-
-@itemize @bullet
-@item
-In an 8-bit locale the documents and @R{} output are handled
-byte-by-byte.  This may lead to invalid results if the vignette was
-intended to be in UTF-8 and the @R{} output is in the 8-bit locale.
-
-@item
-In a UTF-8 locale the vignette is translated as if in Latin-1, and the
-output file translated back to Latin-1.  It does not actually need to be
-in Latin-1 provided all the bytes used@footnote{and on some platforms
-this will work even with bytes outside Latin-1} in the vignette exist in
-Latin-1: think of this as a way of temporarily escaping 8-bit
-characters.
-
-@item
-In any other multi-byte locale @code{Sweave()} and @code{Stangle()}
-throw an error.
-
-@end itemize
 
 @code{Sweave()} will also parse and evaluate the @R{} code in each
 chunk.  The @R{} output will also be in the current locale, and should
@@ -2238,7 +2347,8 @@ these do not all try the same size-reduction strategies, and Acrobat and
 images than some of the others.
 
 Since @command{qpdf} is fairly readily available (e.g.@: it has binaries
-for Windows and packages in Debian/Ubuntu), there is an option
+for Windows and packages in Debian/Ubuntu, and is installed as part of
+the @acronym{CRAN} Mac OS X distribution of @R{}), there is an option
 @option{--compact-vignettes} to @command{R CMD build} to run
 @command{qpdf} over PDF files under @file{inst/doc} and replace them if
 at least 10Kb and 10% is saved.  The full path to the @command{qpdf}
@@ -2246,6 +2356,17 @@ command can be supplied as environment variable @env{R_QPDF} (and is on
 the CRAN binary of @R{} for Mac OS X).  This is done @emph{via} the
 function @code{tools::compactPDF} which has other options including
 running Ghostscript.
+
+Most of the large PDFs we have encountered have been large because of
+the inclusion of figures, for example complex figures from @R{} (where
+@file{.png} versions may be more appropriate) and screendumps.  However,
+some have been unnecessarily large due to @command{pdftex} settings.  The
+modern default is to use both PDF compression and PDF object compression
+(which needs the PDF 1.5 specification from 2003): this is the default
+in most @TeX{} distributions by not MiKTeX.  It can be overridden by
+code in the preamble of an Sweave or @LaTeX{} file: see how this is done
+for the @R{} reference manual at
+@uref{https://svn.r-project.org/R/trunk/doc/manual/refman.top}.
 @end enumerate
 
 @noindent
@@ -2269,7 +2390,7 @@ maintainers will run these tests before putting a submission online.
 Note also that for running @LaTeX{}, the Debian @acronym{GNU}/Linux
 @acronym{CRAN} check systems use reasonably recent versions of the
 Debian TexLive distribution
-(@uref{http://packages.debian.org/@/de/@/sid/@/texlive}); for the Windows
+(@uref{http://packages.debian.org/@/en/@/sid/@/texlive}); for the Windows
 @acronym{CRAN} server, a reasonably recent version of MikTeX (including
 all packages available directly for MikTeX) is employed: the Mac OS X
 builders use a current full version of MacTeX.  Developers wanting to
@@ -2293,7 +2414,7 @@ There are many examples, e.g.@: package @pkg{rgdal}.
 
 @item
 To negotiate with Brian Ripley to host the package on @acronym{CRAN}
-extras, as was done for package @pkg{BRugs}.
+extras, as was done for package @pkg{BRugs} versions 0.5-x.
 @end enumerate
 
 @noindent
@@ -3030,7 +3151,7 @@ rendered incorrectly, or cause your @R{} code to give an error.
 For documentation, marking the encoding and including @acronym{ASCII}
 transliterations is likely to do a reasonable job.
 
-Function @code{showNonASCII} in package @pkg{tools} can help in
+Function @code{showNonASCIIfile} in package @pkg{tools} can help in
 finding non-@acronym{ASCII} bytes in files.
 
 
@@ -4863,7 +4984,7 @@ Wherever possible, avoid non-@acronym{ASCII} chars in @file{Rd} files, and
 even symbols such as @samp{<}, @samp{>}, @samp{$}, @samp{^}, @samp{&},
 @samp{|}, @samp{@@}, @samp{~}, and @samp{*} outside verbatim
 environments (since they may disappear in fonts designed to render
-text).  (Function @code{showNonASCII} in package @pkg{tools} can help
+text).  (Function @code{showNonASCIIfile} in package @pkg{tools} can help
 in finding non-@acronym{ASCII} bytes in the files.)
 
 For convenience, encoding names @samp{latin1} and @samp{latin2} are
@@ -4872,8 +4993,10 @@ widely.  However, this does not mean that all characters in UTF-8 will
 be recognized, and the coverage of non-Latin characters@footnote{@R{}
 2.9.0 added support for UTF-8 Cyrillic characters in @LaTeX{}, but on
 some OSes this will need Cyrillic support added to @LaTeX{}, so
-environment variable @env{_R_CYRILLIC_TEX_} needs to be set to a
-non-empty value to enable this.} is low.
+environment variable @env{_R_CYRILLIC_TEX_} may need to be set to a
+non-empty value to enable this.} is fairly low.  Using @LaTeX{}
+@code{inputenx} (see @code{?Rd2dvi} in @R{}) will give greater coverage
+of UTF-8.
 
 The @code{\enc} command (@pxref{Insertions}) can be used to provide
 transliterations which will be used in conversions that do not support
@@ -6446,13 +6569,13 @@ easy in C code.)  We could do this using @code{.C} by
 @group
 void convolve(double *a, int *na, double *b, int *nb, double *ab)
 @{
-  int i, j, nab = *na + *nb - 1;
+    R_len_t i, j, nab = *na + *nb - 1;
 
-  for(i = 0; i < nab; i++)
-    ab[i] = 0.0;
-  for(i = 0; i < *na; i++)
-    for(j = 0; j < *nb; j++)
-      ab[i + j] += a[i] * b[j];
+    for(i = 0; i < nab; i++)
+        ab[i] = 0.0;
+    for(i = 0; i < *na; i++)
+        for(j = 0; j < *nb; j++)
+            ab[i + j] += a[i] * b[j];
 @}
 @end group
 @end example
@@ -6463,12 +6586,12 @@ called from @R{} by
 @example
 @group
 conv <- function(a, b)
-  .C("convolve",
-     as.double(a),
-     as.integer(length(a)),
-     as.double(b),
-     as.integer(length(b)),
-     ab = double(length(a) + length(b) - 1))$ab
+    .C("convolve",
+       as.double(a),
+       as.integer(length(a)),
+       as.double(b),
+       as.integer(length(b)),
+       ab = double(length(a) + length(b) - 1))$ab
 @end group
 @end example
 
@@ -7431,12 +7554,12 @@ First we use the macros in @file{Rinternals.h}:
 #include <R.h>
 #include <Rinternals.h>
 
-  SEXP ab;
-    ....
-  PROTECT(ab = allocVector(REALSXP, 2));
-  REAL(ab)[0] = 123.45;
-  REAL(ab)[1] = 67.89;
-  UNPROTECT(1);
+    SEXP ab;
+      ....
+    PROTECT(ab = allocVector(REALSXP, 2));
+    REAL(ab)[0] = 123.45;
+    REAL(ab)[1] = 67.89;
+    UNPROTECT(1);
 @end group
 @end example
 
@@ -7448,12 +7571,12 @@ and then those in @file{Rdefines.h}:
 #include <R.h>
 #include <Rdefines.h>
 
-  SEXP ab;
-    ....
-  PROTECT(ab = NEW_NUMERIC(2));
-  NUMERIC_POINTER(ab)[0] = 123.45;
-  NUMERIC_POINTER(ab)[1] = 67.89;
-  UNPROTECT(1);
+    SEXP ab;
+      ....
+    PROTECT(ab = NEW_NUMERIC(2));
+    NUMERIC_POINTER(ab)[0] = 123.45;
+    NUMERIC_POINTER(ab)[1] = 67.89;
+    UNPROTECT(1);
 @end group
 @end example
 
@@ -7620,8 +7743,8 @@ vectors (which @code{outer} and @code{%o%} already do).  As usual the
 @example
 out <- function(x, y)
 @{
-   storage.mode(x) <- storage.mode(y) <- "double"
-   .Call("out", x, y)
+    storage.mode(x) <- storage.mode(y) <- "double"
+    .Call("out", x, y)
 @}
 @end example
 
@@ -7639,20 +7762,19 @@ C code to do the computations is
 
 SEXP out(SEXP x, SEXP y)
 @{
-  int i, j, nx, ny;
-  double tmp, *rx = REAL(x), *ry = REAL(y), *rans;
-  SEXP ans;
+    R_len_t i, j, nx = length(x), ny = length(y);
+    double tmp, *rx = REAL(x), *ry = REAL(y), *rans;
+    SEXP ans;
 
-  nx = length(x); ny = length(y);
-  PROTECT(ans = allocMatrix(REALSXP, nx, ny));
-  rans = REAL(ans);
-  for(i = 0; i < nx; i++) @{
-    tmp = rx[i];
-    for(j = 0; j < ny; j++)
-      rans[i + nx*j] = tmp * ry[j];
-  @}
-  UNPROTECT(1);
-  return(ans);
+    PROTECT(ans = allocMatrix(REALSXP, nx, ny));
+    rans = REAL(ans);
+    for(i = 0; i < nx; i++) @{
+        tmp = rx[i];
+        for(j = 0; j < ny; j++)
+            rans[i + nx*j] = tmp * ry[j];
+    @}
+    UNPROTECT(1);
+    return(ans);
 @}
 @end group
 @end example
@@ -7672,38 +7794,37 @@ set the @code{dim} attribute directly.
 @group
 SEXP out(SEXP x, SEXP y)
 @{
-  R_len_t i, j, nx, ny;
-  double tmp, *rx = REAL(x), *ry = REAL(y), *rans;
-  SEXP ans, dim, dimnames;
+    R_len_t i, j, nx = length(x), ny = length(y);
+    double tmp, *rx = REAL(x), *ry = REAL(y), *rans;
+    SEXP ans, dim, dimnames;
 @end group
 
 @group
-  nx = length(x); ny = length(y);
-  PROTECT(ans = allocVector(REALSXP, nx*ny));
-  rans = REAL(ans);
-  for(i = 0; i < nx; i++) @{
+    PROTECT(ans = allocVector(REALSXP, nx*ny));
+    rans = REAL(ans);
+    for(i = 0; i < nx; i++) @{
     tmp = rx[i];
     for(j = 0; j < ny; j++)
-      rans[i + nx*j] = tmp * ry[j];
-  @}
+         rans[i + nx*j] = tmp * ry[j];
+    @}
 @end group
 
 @group
-  PROTECT(dim = allocVector(INTSXP, 2));
-  INTEGER(dim)[0] = nx; INTEGER(dim)[1] = ny;
-  setAttrib(ans, R_DimSymbol, dim);
+    PROTECT(dim = allocVector(INTSXP, 2));
+    INTEGER(dim)[0] = nx; INTEGER(dim)[1] = ny;
+    setAttrib(ans, R_DimSymbol, dim);
 @end group
 
 @group
-  PROTECT(dimnames = allocVector(VECSXP, 2));
-  SET_VECTOR_ELT(dimnames, 0, getAttrib(x, R_NamesSymbol));
-  SET_VECTOR_ELT(dimnames, 1, getAttrib(y, R_NamesSymbol));
-  setAttrib(ans, R_DimNamesSymbol, dimnames);
+    PROTECT(dimnames = allocVector(VECSXP, 2));
+    SET_VECTOR_ELT(dimnames, 0, getAttrib(x, R_NamesSymbol));
+    SET_VECTOR_ELT(dimnames, 1, getAttrib(y, R_NamesSymbol));
+    setAttrib(ans, R_DimNamesSymbol, dimnames);
 @end group
 
 @group
-  UNPROTECT(3);
-  return(ans);
+    UNPROTECT(3);
+    return(ans);
 @}
 @end group
 @end example
@@ -7731,11 +7852,11 @@ need to add a symbol for it @emph{via} a call to
 
 @example
 @group
-  SEXP version;
-  PROTECT(version = allocVector(REALSXP, 1));
-  REAL(version)[0] = 3.0;
-  setAttrib(ans, install("version"), version);
-  UNPROTECT(1);
+    SEXP version;
+    PROTECT(version = allocVector(REALSXP, 1));
+    REAL(version)[0] = 3.0;
+    setAttrib(ans, install("version"), version);
+    UNPROTECT(1);
 @end group
 @end example
 
@@ -7756,14 +7877,14 @@ Suppose we want to give the return value in our example the class
 @group
 #include <R.h>
 #include <Rdefines.h>
-    ....
-  SEXP ans, dim, dimnames, class;
-    ....
-  PROTECT(class = allocVector(STRSXP, 1));
-  SET_STRING_ELT(class, 0, mkChar("mat"));
-  classgets(ans, class);
-  UNPROTECT(4);
-  return(ans);
+      ....
+    SEXP ans, dim, dimnames, class;
+      ....
+    PROTECT(class = allocVector(STRSXP, 1));
+    SET_STRING_ELT(class, 0, mkChar("mat"));
+    classgets(ans, class);
+    UNPROTECT(4);
+    return(ans);
 @}
 @end group
 @end example
@@ -7787,7 +7908,7 @@ List elements can be retrieved or set by direct access to the elements
 of the generic vector.  Suppose we have a list object
 
 @example
-a <- list(f=1, g=2, h=3)
+a <- list(f = 1, g = 2, h = 3)
 @end example
 
 @noindent
@@ -7795,9 +7916,9 @@ Then we can access @code{a$g} as @code{a[[2]]} by
 
 @example
 @group
-  double g;
-    ....
-  g = REAL(VECTOR_ELT(a, 1))[0];
+    double g;
+      ....
+    g = REAL(VECTOR_ELT(a, 1))[0];
 @end group
 @end example
 
@@ -7810,17 +7931,16 @@ one in package @pkg{stats}) is very useful:
 
 SEXP getListElement(SEXP list, const char *str)
 @{
-  SEXP elmt = R_NilValue, names = getAttrib(list, R_NamesSymbol);
-  int i;
+    SEXP elmt = R_NilValue, names = getAttrib(list, R_NamesSymbol);
 @end group
 
 @group
-  for (i = 0; i < length(list); i++)
-    if(strcmp(CHAR(STRING_ELT(names, i)), str) == 0) @{
-      elmt = VECTOR_ELT(list, i);
-      break;
-    @}
-  return elmt;
+    for (R_len_t i = 0; i < length(list); i++)
+        if(strcmp(CHAR(STRING_ELT(names, i)), str) == 0) @{
+           elmt = VECTOR_ELT(list, i);
+           break;
+        @}
+    return elmt;
 @}
 @end group
 @end example
@@ -7888,15 +8008,15 @@ envir = rho)}.
 @group
 SEXP getvar(SEXP name, SEXP rho)
 @{
-  SEXP ans;
+    SEXP ans;
 
-  if(!isString(name) || length(name) != 1)
-    error("name is not a single string");
-  if(!isEnvironment(rho))
-    error("rho should be an environment");
-  ans = findVar(install(CHAR(STRING_ELT(name, 0))), rho);
-  Rprintf("first value is %f\n", REAL(ans)[0]);
-  return(R_NilValue);
+    if(!isString(name) || length(name) != 1)
+        error("name is not a single string");
+    if(!isEnvironment(rho))
+        error("rho should be an environment");
+    ans = findVar(install(CHAR(STRING_ELT(name, 0))), rho);
+    Rprintf("first value is %f\n", REAL(ans)[0]);
+    return(R_NilValue);
 @}
 @end group
 @end example
@@ -7940,13 +8060,11 @@ Some operations are done so frequently that there are convenience
 functions to handle them. (All these are provided via the header file
 @file{Rinternals.h}.)
 
-Suppose we wanted to pass a single logical
-argument @code{ignore_quotes}: we could use
+Suppose we wanted to pass a single logical argument
+@code{ignore_quotes}: we could use
 
 @example
-    int ign;
-
-    ign = asLogical(ignore_quotes);
+    int ign = asLogical(ignore_quotes);
     if(ign == NA_LOGICAL) error("'ignore_quotes' must be TRUE or FALSE");
 @end example
 
@@ -8137,30 +8255,24 @@ must be transferred to the C code, which is
 
 SEXP convolve2(SEXP a, SEXP b)
 @{
-  int i, j, na, nb, nab;
-  double *xa, *xb, *xab;
-  SEXP ab;
+    R_len_t i, j, na, nb, nab;
+    double *xa, *xb, *xab;
+    SEXP ab;
 
-  PROTECT(a = AS_NUMERIC(a));
-  PROTECT(b = AS_NUMERIC(b));
-  na = LENGTH(a); nb = LENGTH(b); nab = na + nb - 1;
-  PROTECT(ab = NEW_NUMERIC(nab));
-  xa = NUMERIC_POINTER(a); xb = NUMERIC_POINTER(b);
-  xab = NUMERIC_POINTER(ab);
-  for(i = 0; i < nab; i++) xab[i] = 0.0;
-  for(i = 0; i < na; i++)
-    for(j = 0; j < nb; j++) xab[i + j] += xa[i] * xb[j];
-  UNPROTECT(3);
-  return(ab);
+    PROTECT(a = AS_NUMERIC(a));
+    PROTECT(b = AS_NUMERIC(b));
+    na = LENGTH(a); nb = LENGTH(b); nab = na + nb - 1;
+    PROTECT(ab = NEW_NUMERIC(nab));
+    xa = NUMERIC_POINTER(a); xb = NUMERIC_POINTER(b);
+    xab = NUMERIC_POINTER(ab);
+    for(i = 0; i < nab; i++) xab[i] = 0.0;
+    for(i = 0; i < na; i++)
+         for(j = 0; j < nb; j++) xab[i + j] += xa[i] * xb[j];
+    UNPROTECT(3);
+    return(ab);
 @}
 @end group
 @end example
-
-Note that unlike the macros in @Sl{} version 4, the @R{} versions of
-these macros do check that coercion can be done and raise an error if it
-fails.  They will raise warnings if missing values are introduced by
-coercion.  Although we illustrate doing the coercion in the C code here,
-it often is simpler to do the necessary coercions in the @R{} code.
 
 Now for the version in @R{}-internal style.  Only the C code changes.
 
@@ -8171,21 +8283,21 @@ Now for the version in @R{}-internal style.  Only the C code changes.
 
 SEXP convolve2(SEXP a, SEXP b)
 @{
-  R_len_t i, j, na, nb, nab;
-  double *xa, *xb, *xab;
-  SEXP ab;
+    R_len_t i, j, na, nb, nab;
+    double *xa, *xb, *xab;
+    SEXP ab;
 
-  PROTECT(a = coerceVector(a, REALSXP));
-  PROTECT(b = coerceVector(b, REALSXP));
-  na = length(a); nb = length(b); nab = na + nb - 1;
-  PROTECT(ab = allocVector(REALSXP, nab));
-  xa = REAL(a); xb = REAL(b);
-  xab = REAL(ab);
-  for(i = 0; i < nab; i++) xab[i] = 0.0;
-  for(i = 0; i < na; i++)
-    for(j = 0; j < nb; j++) xab[i + j] += xa[i] * xb[j];
-  UNPROTECT(3);
-  return(ab);
+    PROTECT(a = coerceVector(a, REALSXP));
+    PROTECT(b = coerceVector(b, REALSXP));
+    na = length(a); nb = length(b); nab = na + nb - 1;
+    PROTECT(ab = allocVector(REALSXP, nab));
+    xa = REAL(a); xb = REAL(b);
+    xab = REAL(ab);
+    for(i = 0; i < nab; i++) xab[i] = 0.0;
+    for(i = 0; i < na; i++)
+        for(j = 0; j < nb; j++) xab[i + j] += xa[i] * xb[j];
+    UNPROTECT(3);
+    return(ab);
 @}
 @end group
 @end example
@@ -8217,12 +8329,12 @@ the arguments.
 
 SEXP convolveE(SEXP args)
 @{
-  int i, j, na, nb, nab;
-  double *xa, *xb, *xab;
-  SEXP a, b, ab;
+    R_len_t i, j, na, nb, nab;
+    double *xa, *xb, *xab;
+    SEXP a, b, ab;
 
-  PROTECT(a = coerceVector(CADR(args), REALSXP));
-  PROTECT(b = coerceVector(CADDR(args), REALSXP));
+    PROTECT(a = coerceVector(CADR(args), REALSXP));
+    PROTECT(b = coerceVector(CADDR(args), REALSXP));
     ...
 @}
 @end group
@@ -8273,46 +8385,48 @@ value of its arguments if they are vector types.
 
 SEXP showArgs(SEXP args)
 @{
-  int i;
-  Rcomplex cpl;
-  const char *name;
-  SEXP el;
-@end group
-
-@group
-  args = CDR(args); /* skip 'name' */
-  for(i = 0; args != R_NilValue; i++, args = CDR(args)) @{
-    name = isNull(TAG(args)) ? "" : CHAR(PRINTNAME(TAG(args)));
-    el = CAR(args);
-    switch(TYPEOF(el)) @{
-    case REALSXP:
-      Rprintf("[%d] '%s' %f\n", i+1, name, REAL(el)[0]);
-      break;
+    args = CDR(args); /* skip 'name' */
+    for(int i = 0; args != R_NilValue; i++, args = CDR(args)) @{
+        const char *name = 
+            isNull(TAG(args)) ? "" : CHAR(PRINTNAME(TAG(args)));
+        SEXP el = CAR(args);
+        if (length(el) == 0) @{
+            Rprintf("[%d] '%s' R type, length 0\n", i+1, name);
+           continue;
+        @}
 @end group
 @group
-    case LGLSXP:
-    case INTSXP:
-      Rprintf("[%d] '%s' %d\n", i+1, name, INTEGER(el)[0]);
-      break;
+        switch(TYPEOF(el)) @{
+        case REALSXP:
+            Rprintf("[%d] '%s' %f\n", i+1, name, REAL(el)[0]);
+            break;
 @end group
 @group
-    case CPLXSXP:
-      cpl = COMPLEX(el)[0];
-      Rprintf("[%d] '%s' %f + %fi\n", i+1, name, cpl.r, cpl.i);
-      break;
+        case LGLSXP:
+        case INTSXP:
+            Rprintf("[%d] '%s' %d\n", i+1, name, INTEGER(el)[0]);
+            break;
 @end group
 @group
-    case STRSXP:
-      Rprintf("[%d] '%s' %s\n", i+1, name,
-             CHAR(STRING_ELT(CAR(args), 0)));
-      break;
+        case CPLXSXP:
+        @{
+            Rcomplex cpl = COMPLEX(el)[0];
+            Rprintf("[%d] '%s' %f + %fi\n", i+1, name, cpl.r, cpl.i);
+        @}
+            break;
 @end group
 @group
-    default:
-      Rprintf("[%d] '%s' R type\n", i+1, name);
+        case STRSXP:
+            Rprintf("[%d] '%s' %s\n", i+1, name,
+                   CHAR(STRING_ELT(el, 0)));
+           break;
+@end group
+@group
+        default:
+            Rprintf("[%d] '%s' R type\n", i+1, name);
+       @}
     @}
-  @}
-  return(R_NilValue);
+    return(R_NilValue);
 @}
 @end group
 @end example
@@ -8359,9 +8473,9 @@ or @code{convolveE}:
   for(i = 0; i < na; i++)
     for(j = 0; j < nb; j++)
         if(ISNA(xa[i]) || ISNA(xb[j]) || ISNA(xab[i + j]))
-          xab[i + j] = NA_REAL;
+            xab[i + j] = NA_REAL;
         else
-          xab[i + j] += xa[i] * xb[j];
+            xab[i + j] += xa[i] * xb[j];
     ...
 @end group
 @end example
@@ -8414,19 +8528,19 @@ with C code
 @group
 SEXP lapply(SEXP list, SEXP expr, SEXP rho)
 @{
-  R_len_t i, n = length(list);
-  SEXP ans;
+    R_len_t i, n = length(list);
+    SEXP ans;
 
-  if(!isNewList(list)) error("'list' must be a list");
-  if(!isEnvironment(rho)) error("'rho' should be an environment");
-  PROTECT(ans = allocVector(VECSXP, n));
-  for(i = 0; i < n; i++) @{
-    defineVar(install("x"), VECTOR_ELT(list, i), rho);
-    SET_VECTOR_ELT(ans, i, eval(expr, rho));
-  @}
-  setAttrib(ans, R_NamesSymbol, getAttrib(list, R_NamesSymbol));
-  UNPROTECT(1);
-  return(ans);
+    if(!isNewList(list)) error("'list' must be a list");
+    if(!isEnvironment(rho)) error("'rho' should be an environment");
+    PROTECT(ans = allocVector(VECSXP, n));
+    for(i = 0; i < n; i++) @{
+        defineVar(install("x"), VECTOR_ELT(list, i), rho);
+        SET_VECTOR_ELT(ans, i, eval(expr, rho));
+    @}
+    setAttrib(ans, R_NamesSymbol, getAttrib(list, R_NamesSymbol));
+    UNPROTECT(1);
+    return(ans);
 @}
 @end group
 @end example
@@ -8441,21 +8555,21 @@ obscure) to do this in C code.  The following is based on the code in
 @group
 SEXP lapply2(SEXP list, SEXP fn, SEXP rho)
 @{
-  R_len_t i, n = length(list);
-  SEXP R_fcall, ans;
+    R_len_t i, n = length(list);
+    SEXP R_fcall, ans;
 
-  if(!isNewList(list)) error("'list' must be a list");
-  if(!isFunction(fn)) error("'fn' must be a function");
-  if(!isEnvironment(rho)) error("'rho' should be an environment");
-  PROTECT(R_fcall = lang2(fn, R_NilValue));
-  PROTECT(ans = allocVector(VECSXP, n));
-  for(i = 0; i < n; i++) @{
-    SETCADR(R_fcall, VECTOR_ELT(list, i));
-    SET_VECTOR_ELT(ans, i, eval(R_fcall, rho));
-  @}
-  setAttrib(ans, R_NamesSymbol, getAttrib(list, R_NamesSymbol));
-  UNPROTECT(2);
-  return(ans);
+    if(!isNewList(list)) error("'list' must be a list");
+    if(!isFunction(fn)) error("'fn' must be a function");
+    if(!isEnvironment(rho)) error("'rho' should be an environment");
+    PROTECT(R_fcall = lang2(fn, R_NilValue));
+    PROTECT(ans = allocVector(VECSXP, n));
+    for(i = 0; i < n; i++) @{
+        SETCADR(R_fcall, VECTOR_ELT(list, i));
+        SET_VECTOR_ELT(ans, i, eval(R_fcall, rho));
+    @}
+    setAttrib(ans, R_NamesSymbol, getAttrib(list, R_NamesSymbol));
+    UNPROTECT(2);
+    return(ans);
 @}
 @end group
 @end example
@@ -8522,13 +8636,13 @@ The @R{} code and an example are
 
 @example
 zero <- function(f, guesses, tol = 1e-7) @{
-  f.check <- function(x) @{
-    x <- f(x)
-    if(!is.numeric(x)) stop("Need a numeric result")
-    as.double(x)
-  @}
-  .Call("zero", body(f.check), as.double(guesses), as.double(tol),
-        new.env())
+    f.check <- function(x) @{
+        x <- f(x)
+        if(!is.numeric(x)) stop("Need a numeric result")
+        as.double(x)
+    @}
+    .Call("zero", body(f.check), as.double(guesses), as.double(tol),
+          new.env())
 @}
 
 cube1 <- function(x) (x^2 + 1) * (x - 1.5)
@@ -8611,20 +8725,20 @@ An interpreted @R{} version and an example are
 @group
 numeric.deriv <- function(expr, theta, rho=sys.frame(sys.parent()))
 @{
-  eps <- sqrt(.Machine$double.eps)
-  ans <- eval(substitute(expr), rho)
-  grad <- matrix(,length(ans), length(theta),
-                 dimnames=list(NULL, theta))
-  for (i in seq_along(theta)) @{
-    old <- get(theta[i], envir=rho)
-    delta <- eps * min(1, abs(old))
-    assign(theta[i], old+delta, envir=rho)
-    ans1 <- eval(substitute(expr), rho)
-    assign(theta[i], old, envir=rho)
-    grad[, i] <- (ans1 - ans)/delta
-  @}
-  attr(ans, "gradient") <- grad
-  ans
+    eps <- sqrt(.Machine$double.eps)
+    ans <- eval(substitute(expr), rho)
+    grad <- matrix(, length(ans), length(theta),
+                   dimnames=list(NULL, theta))
+    for (i in seq_along(theta)) @{
+        old <- get(theta[i], envir=rho)
+        delta <- eps * min(1, abs(old))
+        assign(theta[i], old+delta, envir=rho)
+        ans1 <- eval(substitute(expr), rho)
+        assign(theta[i], old, envir=rho)
+        grad[, i] <- (ans1 - ans)/delta
+    @}
+    attr(ans, "gradient") <- grad
+    ans
 @}
 omega <- 1:5; x <- 1; y <- 2
 numeric.deriv(sin(omega*x*y), c("x", "y"))
@@ -8661,47 +8775,47 @@ Here is the complete C code which we will explain section by section.
 
 SEXP numeric_deriv(SEXP args)
 @{
-  SEXP theta, expr, rho, ans, ans1, gradient, par, dimnames;
-  double tt, xx, delta, eps = sqrt(DOUBLE_EPS), *rgr, *rans;
-  int start, i, j;
+    SEXP theta, expr, rho, ans, ans1, gradient, par, dimnames;
+    double tt, xx, delta, eps = sqrt(DOUBLE_EPS), *rgr, *rans;
+    R_len_t start, i, j;
 @end group
 
 @group
-  expr = CADR(args);
-  if(!isString(theta = CADDR(args)))
-    error("theta should be of type character");
-  if(!isEnvironment(rho = CADDDR(args)))
-    error("rho should be an environment");
+    expr = CADR(args);
+    if(!isString(theta = CADDR(args)))
+        error("theta should be of type character");
+    if(!isEnvironment(rho = CADDDR(args)))
+        error("rho should be an environment");
 @end group
 
 @group
-  PROTECT(ans = coerceVector(eval(expr, rho), REALSXP));
-  PROTECT(gradient = allocMatrix(REALSXP, LENGTH(ans), LENGTH(theta)));
-  rgr = REAL(gradient); rans = REAL(ans);
+    PROTECT(ans = coerceVector(eval(expr, rho), REALSXP));
+    PROTECT(gradient = allocMatrix(REALSXP, LENGTH(ans), LENGTH(theta)));
+    rgr = REAL(gradient); rans = REAL(ans);
 @end group
 
 @group
-  for(i = 0, start = 0; i < LENGTH(theta); i++, start += LENGTH(ans)) @{
-    PROTECT(par = findVar(install(CHAR(STRING_ELT(theta, i))), rho));
-    tt = REAL(par)[0];
-    xx = fabs(tt);
-    delta = (xx < 1) ? eps : xx*eps;
-    REAL(par)[0] += delta;
-    PROTECT(ans1 = coerceVector(eval(expr, rho), REALSXP));
-    for(j = 0; j < LENGTH(ans); j++)
-      rgr[j + start] = (REAL(ans1)[j] - rans[j])/delta;
-    REAL(par)[0] = tt;
-    UNPROTECT(2); /* par, ans1 */
-  @}
+    for(i = 0, start = 0; i < LENGTH(theta); i++, start += LENGTH(ans)) @{
+        PROTECT(par = findVar(install(CHAR(STRING_ELT(theta, i))), rho));
+        tt = REAL(par)[0];
+        xx = fabs(tt);
+        delta = (xx < 1) ? eps : xx*eps;
+        REAL(par)[0] += delta;
+        PROTECT(ans1 = coerceVector(eval(expr, rho), REALSXP));
+        for(j = 0; j < LENGTH(ans); j++)
+            rgr[j + start] = (REAL(ans1)[j] - rans[j])/delta;
+        REAL(par)[0] = tt;
+        UNPROTECT(2); /* par, ans1 */
+    @}
 @end group
 
 @group
-  PROTECT(dimnames = allocVector(VECSXP, 2));
-  SET_VECTOR_ELT(dimnames, 1,  theta);
-  dimnamesgets(gradient, dimnames);
-  setAttrib(ans, install("gradient"), gradient);
-  UNPROTECT(3); /* ans  gradient  dimnames */
-  return ans;
+    PROTECT(dimnames = allocVector(VECSXP, 2));
+    SET_VECTOR_ELT(dimnames, 1,  theta);
+    dimnamesgets(gradient, dimnames);
+    setAttrib(ans, install("gradient"), gradient);
+    UNPROTECT(3); /* ans  gradient  dimnames */
+    return ans;
 @}
 @end group
 @end example
@@ -8710,11 +8824,11 @@ The code to handle the arguments is
 
 @example
 @group
-  expr = CADR(args);
-  if(!isString(theta = CADDR(args)))
-    error("theta should be of type character");
-  if(!isEnvironment(rho = CADDDR(args)))
-    error("rho should be an environment");
+    expr = CADR(args);
+    if(!isString(theta = CADDR(args)))
+        error("theta should be of type character");
+    if(!isEnvironment(rho = CADDDR(args)))
+        error("rho should be an environment");
 @end group
 @end example
 
@@ -8729,14 +8843,14 @@ The first step in the code is to evaluate the expression in the
 environment @code{rho}, by
 
 @example
-  PROTECT(ans = coerceVector(eval(expr, rho), REALSXP));
+    PROTECT(ans = coerceVector(eval(expr, rho), REALSXP));
 @end example
 
 @noindent
 We then allocate space for the calculated derivative by
 
 @example
-  PROTECT(gradient = allocMatrix(REALSXP, LENGTH(ans), LENGTH(theta)));
+    PROTECT(gradient = allocMatrix(REALSXP, LENGTH(ans), LENGTH(theta)));
 @end example
 
 @noindent
@@ -8746,8 +8860,8 @@ arguments are the numbers of rows and columns.
 
 @example
 @group
-  for(i = 0, start = 0; i < LENGTH(theta); i++, start += LENGTH(ans)) @{
-    PROTECT(par = findVar(install(CHAR(STRING_ELT(theta, i))), rho));
+    for(i = 0, start = 0; i < LENGTH(theta); i++, start += LENGTH(ans)) @{
+        PROTECT(par = findVar(install(CHAR(STRING_ELT(theta, i))), rho));
 @end group
 @end example
 
@@ -8764,11 +8878,11 @@ install the name and use @code{findVar} to find its value.
 
 @example
 @group
-    tt = REAL(par)[0];
-    xx = fabs(tt);
-    delta = (xx < 1) ? eps : xx*eps;
-    REAL(par)[0] += delta;
-    PROTECT(ans1 = coerceVector(eval(expr, rho), REALSXP));
+        tt = REAL(par)[0];
+        xx = fabs(tt);
+        delta = (xx < 1) ? eps : xx*eps;
+        REAL(par)[0] += delta;
+        PROTECT(ans1 = coerceVector(eval(expr, rho), REALSXP));
 @end group
 @end example
 
@@ -8783,11 +8897,11 @@ changed parameter value.
 
 @example
 @group
-    for(j = 0; j < LENGTH(ans); j++)
-      rgr[j + start] = (REAL(ans1)[j] - rans[j])/delta;
-    REAL(par)[0] = tt;
-    UNPROTECT(2);
-  @}
+        for(j = 0; j < LENGTH(ans); j++)
+            rgr[j + start] = (REAL(ans1)[j] - rans[j])/delta;
+        REAL(par)[0] = tt;
+        UNPROTECT(2);
+    @}
 @end group
 @end example
 
@@ -8797,12 +8911,12 @@ it is accessed: @R{} stores matrices by column (like FORTRAN).
 
 @example
 @group
-  PROTECT(dimnames = allocVector(VECSXP, 2));
-  SET_VECTOR_ELT(dimnames, 1, theta);
-  dimnamesgets(gradient, dimnames);
-  setAttrib(ans, install("gradient"), gradient);
-  UNPROTECT(3);
-  return ans;
+    PROTECT(dimnames = allocVector(VECSXP, 2));
+    SET_VECTOR_ELT(dimnames, 1, theta);
+    dimnamesgets(gradient, dimnames);
+    setAttrib(ans, install("gradient"), gradient);
+    UNPROTECT(3);
+    return ans;
 @}
 @end group
 @end example
@@ -8840,7 +8954,6 @@ SEXP menu_ttest3()
 @{
     char cmd[256];
     SEXP cmdSexp, cmdexpr, ans = R_NilValue;
-    int i;
     ParseStatus status;
    ...
     if(done == 1) @{
@@ -8852,7 +8965,7 @@ SEXP menu_ttest3()
             error("invalid call %s", cmd);
         @}
         /* Loop is needed here as EXPSEXP will be of length > 1 */
-        for(i = 0; i < length(cmdexpr); i++)
+        for(R_len_t i = 0; i < length(cmdexpr); i++)
             ans = eval(VECTOR_ELT(cmdexpr, i), R_GlobalEnv);
         UNPROTECT(2);
     @}
@@ -9855,7 +9968,7 @@ missing or infinite or @code{NaN}.
 Computes @code{log(1 + @var{x})} (@emph{log 1 @b{p}lus x}), accurately
 even for small @var{x}, i.e., @eqn{|x| \ll 1, |x| << 1}.
 
-This may be provided by your platform, in which case it is not included
+This should be provided by your platform, in which case it is not included
 in @file{Rmath.h}, but is (probably) in @file{math.h} which
 @file{Rmath.h} includes.
 @end deftypefun
@@ -9869,7 +9982,7 @@ accurately even for small @var{x}, i.e., @eqn{|x| \ll 1, |x| << 1}.
 Computes @code{exp(@var{x}) - 1} (@emph{exp x @b{m}inus 1}), accurately
 even for small @var{x}, i.e., @eqn{|x| \ll 1, |x| << 1}.
 
-This may be provided by your platform, in which case it is not included
+This should be provided by your platform, in which case it is not included
 in @file{Rmath.h}, but is (probably) in @file{math.h} which
 @file{Rmath.h} includes.
 @end deftypefun
@@ -9881,10 +9994,10 @@ accurately even for small @var{x}, i.e., @eqn{0 < x < 0.5, 0 < x < 0.5}.
 
 @deftypefun double logspace_add (double @var{logx}, double @var{logy})
 @deftypefunx double logspace_sub (double @var{logx}, double @var{logy})
-Compute the log of a sum or difference from logs of terms, i.e.,
-``x + y'' as @code{log (exp(@var{logx}) + exp(@var{logy}))} and
-``x - y'' as @code{log (exp(@var{logx}) - exp(@var{logy}))},
-without causing overflows or throwing away too much accuracy.
+Compute the log of a sum or difference from logs of terms, i.e., ``x +
+y'' as @code{log (exp(@var{logx}) + exp(@var{logy}))} and ``x - y'' as
+@code{log (exp(@var{logx}) - exp(@var{logy}))}, without causing
+unnecessary overflows or throwing away too much accuracy.
 @end deftypefun
 
 @deftypefun int imax2 (int @var{x}, int @var{y})
@@ -9892,12 +10005,15 @@ without causing overflows or throwing away too much accuracy.
 @deftypefunx double fmax2 (double @var{x}, double @var{y})
 @deftypefunx double fmin2 (double @var{x}, double @var{y})
 Return the larger (@code{max}) or smaller (@code{min}) of two integer or
-double numbers, respectively.
+double numbers, respectively.  Note that @code{fmax2} and @code{fmin2}
+differ from C99's @code{fmax} and @code{fmin} when one of the arguments
+is a @code{NaN}: these versions return @code{NaN}.
 @end deftypefun
 
 @deftypefun double sign (double @var{x})
 Compute the @emph{signum} function, where sign(@var{x}) is 1, 0, or
-@math{-1}, when @var{x} is positive, 0, or negative, respectively.
+@math{-1}, when @var{x} is positive, 0, or negative, respectively, and
+@code{NaN} if @code{x} is a @code{NaN}.
 @end deftypefun
 
 @deftypefun double fsign (double @var{x}, double @var{y})

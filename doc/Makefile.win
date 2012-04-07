@@ -12,10 +12,10 @@ all: NEWS.rds html/NEWS.html ../NEWS ../NEWS.pdf \
   CHANGES.rds CHANGES html/CHANGES.html
 
 NEWS.rds: NEWS.Rd
-	@$(ECHO) ".saveRDS(tools:::prepare_Rd(tools::parse_Rd(\"$<\"), stages = \"install\"), \"$@\")" | $(R_EXE)
+	@$(ECHO) "saveRDS(tools:::prepare_Rd(tools::parse_Rd(\"$<\"), stages = \"install\"), \"$@\")" | $(R_EXE)
 
 CHANGES.rds: ../src/gnuwin32/CHANGES.Rd
-	@$(ECHO) "options(warn=1);.saveRDS(tools:::prepare_Rd(tools::parse_Rd(\"$<\"), stages = \"install\"), \"$@\")" | $(R_EXE)
+	@$(ECHO) "options(warn=1);saveRDS(tools:::prepare_Rd(tools::parse_Rd(\"$<\"), stages = \"install\"), \"$@\")" | $(R_EXE)
 
 ## Force ASCII output, for portability on Windows
 ../NEWS: NEWS.rds
@@ -23,9 +23,10 @@ CHANGES.rds: ../src/gnuwin32/CHANGES.Rd
 	@$(ECHO) "options(warn=1);tools:::Rd2txt_NEWS_in_Rd(\"$<\", \"$@\")" | \
 	  $(R_EXE) LC_ALL=C
 
+## Should be allowed to fail if pdflatex is not available
 ../NEWS.pdf: NEWS.rds
 	@$(ECHO) "creating NEWS.pdf"
-	@$(ECHO) "options(warn=1);tools:::Rd2pdf_NEWS_in_Rd(\"$<\", \"$@\")" | \
+	-@$(ECHO) "options(warn=1);tools:::Rd2pdf_NEWS_in_Rd(\"$<\", \"$@\")" | \
 	  $(R_EXE)
 
 CHANGES: CHANGES.rds

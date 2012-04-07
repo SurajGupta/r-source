@@ -6,8 +6,6 @@
 \name{base-internal}
 \alias{.subset}
 \alias{.subset2}
-\alias{.find.package}
-\alias{.path.package}
 \alias{.getRequiredPackages}
 \alias{.getRequiredPackages2}
 \alias{testPlatformEquivalence}
@@ -89,7 +87,8 @@ lazyLoadDBfetch(key, file, compressed, hook)
   \item{file}{The full path to the \file{DESCRIPTION} file of a package.}
   \item{lib.loc}{a character vector describing the location of \R
     library trees to search through, or \code{NULL}.  The default value
-    of \code{NULL} corresponds to all libraries currently known.}
+    of \code{NULL} corresponds to all libraries currently known to
+    \code{\link{.libPaths}()}.}
   \item{quiet}{logical.  Should this not give warnings or an error
     if the package(s) are not found?}
   \item{useImports}{logical.  Should  the \code{Imports} field be processed?}
@@ -100,7 +99,7 @@ lazyLoadDBfetch(key, file, compressed, hook)
   \item{name}{name of image file to save or load.}
   \item{x}{an object with a \code{"row.names"} attribute, typically a
     data frame.}
-  \item{type}{integer. Currently \code{type = 0} returns the internal
+  \item{type}{integer.  Currently \code{type = 0} returns the internal
     \code{"row.names"} attribute (possibly \code{NULL}), \code{type = 2}
     the number of rows implied by the attribute, and \code{type = 1} the
     latter with a negative sign for \sQuote{automatic} row names.}
@@ -196,7 +195,8 @@ lazyLoadDBfetch(key, file, compressed, hook)
   \code{.path.package} are internal-only versions (and the only versions
   available prior to \R 2.13.0) of \code{\link{.readRDS}},
   \code{\link{.saveRDS}}, \code{\link{.find.package}} and
-  \code{\link{.path.package}}.
+  \code{\link{.path.package}}.  \code{.readRDS} and \code{.saveRDS} were
+  deprecated in \R 2.14.0.
 }
 \value{
   \code{.getRequiredPackages} and \code{.getRequiredPackages2}

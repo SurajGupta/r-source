@@ -24,8 +24,9 @@ plot.window(xlim, ylim, log = "", asp = NA, \dots)
   \item{xlim, ylim}{numeric vectors of length 2, giving the x and y
     coordinates ranges.}
   \item{log}{character; indicating which axes should be in log scale.}
-  \item{asp}{numeric, giving the \bold{asp}ect ratio y/x, see below.}
-  \item{\dots}{further graphical parameters as in \code{\link{par}}.
+  \item{asp}{numeric, giving the \bold{asp}ect ratio y/x,
+    see \sQuote{Details}.}
+  \item{\dots}{further \link{graphical parameters} as in \code{\link{par}}.
     The relevant ones are \code{xaxs}, \code{yaxs} and \code{lab}.
   }
 }
@@ -47,6 +48,10 @@ plot.window(xlim, ylim, log = "", asp = NA, \dots)
       latitude and longitude.
   }}
 
+  Note that the coordinate ranges will be extended by 4\% if the
+  appropriate \link{graphical parameter} \code{xaxs} or \code{yaxs} has value
+  \code{"s"} (which is the default).
+
   To reverse an axis, use \code{xlim} or \code{ylim} of the form
   \code{c(hi, lo)}.
 
@@ -54,19 +59,21 @@ plot.window(xlim, ylim, log = "", asp = NA, \dots)
   both of \code{xlim} and \code{ylim} is of length one or the two values
   given are identical, but it is better to avoid that case.
 
-  Usually, one should rather use the higher level functions such as
+  Usually, one should rather use the higher-level functions such as
   \code{\link{plot}}, \code{\link{hist}}, \code{\link{image}}, \dots,
   instead and refer to their help pages for explanation of the
   arguments.
 
   A side-effect of the call is to set up the \code{usr}, \code{xaxp} and
-  \code{yaxp} graphical parameters.  (It is for the latter two that
+  \code{yaxp} \link{graphical parameters}.  (It is for the latter two that
   \code{lab} is used.)
 }
 \seealso{
   \code{\link{xy.coords}},
   \code{\link{plot.xy}},
   \code{\link{plot.default}}.
+
+  \code{\link{par}} for the graphical parameters mentioned.
 }
 \examples{
 ##--- An example for the use of 'asp' :

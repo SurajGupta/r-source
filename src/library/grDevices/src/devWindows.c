@@ -3,7 +3,7 @@
  *  Copyright (C) 1995, 1996  Robert Gentleman and Ross Ihaka
  *  Copyright (C) 1998--2003  Guido Masarotto and Brian Ripley
  *  Copyright (C) 2004        The R Foundation
- *  Copyright (C) 2004-10     The R Development Core Team
+ *  Copyright (C) 2004-11     The R Development Core Team
  *
  *  This program is free software; you can redistribute it and/or modify
  *  it under the terms of the GNU General Public License as published by
@@ -353,25 +353,25 @@ static void SaveAsPostscript(pDevDesc dd, const char *fn)
     s = findVar(install(".PostScript.Options"), xd->psenv);
     if ((s != R_UnboundValue) && (s != R_NilValue)) {
 	SEXP names = getAttrib(s, R_NamesSymbol);
-	int i,done;
-	for (i=0, done=0; (done<4) && (i<length(s)) ; i++) {
+	int i, done;
+	for (i = 0, done = 0; (done<  4) && (i < length(s)) ; i++) {
 	    if(!strcmp("family", CHAR(STRING_ELT(names, i)))) {
 		strncpy(family, CHAR(STRING_ELT(VECTOR_ELT(s, i), 0)), 255);
-		done += 1;
+		done++;
 	    }
 	    if(!strcmp("paper", CHAR(STRING_ELT(names, i)))) {
 		strncpy(paper, CHAR(STRING_ELT(VECTOR_ELT(s, i), 0)), 255);
-		done += 1;
+		done++;
 		if(strcmp("paper", "default") == 0)
 		    strncpy(paper, "special", 255);
 	    }
 	    if(!strcmp("bg", CHAR(STRING_ELT(names, i)))) {
 		strncpy(bg, CHAR(STRING_ELT(VECTOR_ELT(s, i), 0)), 255);
-		done += 1;
+		done++;
 	    }
 	    if(!strcmp("fg", CHAR(STRING_ELT(names, i)))) {
 		strncpy(fg, CHAR(STRING_ELT(VECTOR_ELT(s, i), 0)), 255);
-		done += 1;
+		done++;
 	    }
 	}
     }
@@ -412,27 +412,27 @@ static void SaveAsPDF(pDevDesc dd, const char *fn)
 
     /* Set default values... */
     init_PS_PDF();
-    s = findVar(install(".PostScript.Options"), xd->psenv);
+    s = findVar(install(".PDF.Options"), xd->psenv);
     strncpy(family, "Helvetica", 256);
     strcpy(encoding, "ISOLatin1.enc");
     strncpy(bg, "transparent", 256);
     strncpy(fg, "black", 256);
-    /* and then try to get it from .PostScript.Options */
+    /* and then try to get it from .PDF.Options */
     if ((s != R_UnboundValue) && (s != R_NilValue)) {
 	SEXP names = getAttrib(s, R_NamesSymbol);
-	int i,done;
-	for (i=0, done=0; (done<3) && (i<length(s)) ; i++) {
+	int i, done;
+	for (i = 0, done = 0; (done < 4) && (i < length(s)) ; i++) {
 	    if(!strcmp("family", CHAR(STRING_ELT(names, i)))) {
 		strncpy(family, CHAR(STRING_ELT(VECTOR_ELT(s, i), 0)),255);
-		done += 1;
+		done++;
 	    }
 	    if(!strcmp("bg", CHAR(STRING_ELT(names, i)))) {
 		strncpy(bg, CHAR(STRING_ELT(VECTOR_ELT(s, i), 0)), 255);
-		done += 1;
+		done++;
 	    }
 	    if(!strcmp("fg", CHAR(STRING_ELT(names, i)))) {
 		strncpy(fg, CHAR(STRING_ELT(VECTOR_ELT(s, i), 0)), 255);
-		done += 1;
+		done++;
 	    }
 	}
     }
@@ -2318,7 +2318,7 @@ static void GA_Rect(double x0, double y0, double x1, double y1,
 	y0 = y1;
 	y1 = tmp;
     }
-    r = rect((int) x0, (int) y0, (int) x1 - (int) x0, (int) y1 - (int) y0);
+    r = rect((int) x0, (int) y0, nearbyint(x1 - x0), nearbyint(y1 - y0));
 
     SetColor(gc->fill, gc->gamma, xd);
     if (R_OPAQUE(gc->fill)) {
@@ -2673,7 +2673,7 @@ static void GA_Path(double *x, double *y,
     SetLineStyle(gc, dd);
     if (R_OPAQUE(gc->col)) {
         pointIndex = points;
-        for (i=0; i < npoly; i++) {
+        for (i = 0; i < npoly; i++) {
             DRAW(gdrawpolygon(_d, xd->lwd, xd->lty, xd->fgcolor,
                               pointIndex, nper[i], 0,
                               xd->lend, xd->ljoin, xd->lmitre));
@@ -2685,7 +2685,7 @@ static void GA_Path(double *x, double *y,
 	    gsetcliprect(xd->bm, xd->clip);
 	    gcopy(xd->bm2, xd->bm, r);
             pointIndex = points;
-            for (i=0; i < npoly; i++) {
+            for (i = 0; i < npoly; i++) {
                 gdrawpolygon(xd->bm2, xd->lwd, xd->lty, xd->fgcolor,
                              pointIndex, nper[i], 0,
                              xd->lend, xd->ljoin, xd->lmitre);
@@ -2699,136 +2699,43 @@ static void GA_Path(double *x, double *y,
 }
 
 static void doRaster(unsigned int *raster, int x, int y, int w, int h,
-                     double rot,
-                     pDevDesc dd)
+                     double rot, pDevDesc dd)
 {
     const void *vmax = vmaxget();
-    int i;
     gadesc *xd = (gadesc *) dd->deviceSpecific;
-    rect  sr, dr;
-    image img, mask;
-    byte *imageData, *maskData;
-    /* If there are any fully transparent pixels in the image
-     * then we will need to create a mask.
-     */
-    Rboolean fullTrans = FALSE;
-    /* If there are any semitransparent pixels in the image
-     * then we will need to do alpha blending.
-     * NOTE though that we can only handle 1 level of semitransparency
-     * BUT we can handle some pixels fully transparent AND some
-     * pixels semitransparent.
-     */
-    Rboolean semiTrans = FALSE;
-    /* Index to pixel that contains fixed alpha for image */
-    int fixedAlpha = -1;
+    rect  dr = rect(x, y, w, h);
+    image img;
+    byte *imageData;
 
     TRACEDEVGA("raster");
-
-    dr = rect(x, y, w, h);
 
     /* Create image object */
     img = newimage(w, h, 32);
 
-    /* Set the image pixels from the raster */
-    /* Need to swap ABGR to ARGB */
-    /* NOTE that graphapp usese 0 for opaque and 255 for transparent! */
+    /* Set the image pixels from the raster.
+       Windows uses 0xaarrggbb.
+       AlphaBlend requires pre-multiplied alpha, that is it uses
+       (src + (1-alpha)*dest) for each pixel colour.
+       We could re-order the lines here (top to bottom) to avoid a copy
+       in imagetobitmap.
+     */
     imageData = (byte *) R_alloc(4*w*h, sizeof(byte));
-    for (i=0; i<w*h; i++) {
+    for (int i = 0; i < w*h; i++) {
         byte alpha = R_ALPHA(raster[i]);
-        if (alpha < 255) {
-            if (alpha == 0) {
-                /* Any fully transparent pixels will be masked out
-                 */
-                imageData[i*4 + 3] = 0;
-                imageData[i*4 + 2] = 255;
-                imageData[i*4 + 1] = 255;
-                imageData[i*4 + 0] = 255;
-                fullTrans = TRUE;
-            } else {
-                /* We will draw semitransparent pixels opaque
-                 * then alpha blend using fixedAlpha
-                 */
-                imageData[i*4 + 3] = 0;
-                imageData[i*4 + 2] = R_RED(raster[i]);
-                imageData[i*4 + 1] = R_GREEN(raster[i]);
-                imageData[i*4 + 0] = R_BLUE(raster[i]);
-                semiTrans = TRUE;
-            }
-            /* The current implementation can only cope with
-             * a single constant alpha across the image
-             */
-            if (alpha > 0 && fixedAlpha < 0) {
-                fixedAlpha = i;
-            }
-            if (alpha > 0 && fixedAlpha >= 0 &&
-                alpha != R_ALPHA(raster[fixedAlpha])) {
-                warning("Per-pixel alpha not supported on this device");
-            }
-        } else {
-            /* These are opaque pixels */
-            imageData[i*4 + 3] = 0;
-            imageData[i*4 + 2] = R_RED(raster[i]);
-            imageData[i*4 + 1] = R_GREEN(raster[i]);
-            imageData[i*4 + 0] = R_BLUE(raster[i]);
-        }
+	double fac = alpha/255.0;
+	imageData[i*4 + 3] = alpha;
+	imageData[i*4 + 2] = 0.49 + fac * R_RED(raster[i]);
+	imageData[i*4 + 1] = 0.49 + fac * R_GREEN(raster[i]);
+	imageData[i*4 + 0] = 0.49 + fac * R_BLUE(raster[i]);
     }
-
     setpixels(img, imageData);
-    /* Get the image rect */
-    sr = getrect(img);
-
-    if (fullTrans) {
-        /* Create mask (b&w) */
-        mask = newimage(w, h, 32);
-        maskData = (byte *) R_alloc(4*w*h, sizeof(byte));
-        for (i=0; i<w*h; i++) {
-            byte alpha = R_ALPHA(raster[i]);
-            if (alpha == 0) {
-                /* Mask is black */
-                maskData[i*4 + 3] = 0;
-                maskData[i*4 + 2] = 0;
-                maskData[i*4 + 1] = 0;
-                maskData[i*4 + 0] = 0;
-            } else {
-                /* Mask is white */
-                maskData[i*4 + 3] = 0;
-                maskData[i*4 + 2] = 255;
-                maskData[i*4 + 1] = 255;
-                maskData[i*4 + 0] = 255;
-            }
-        }
-        setpixels(mask, maskData);
-
-        if (semiTrans) {
-            if (xd->have_alpha) {
-                rect r = dr;
-                gsetcliprect(xd->bm, xd->clip);
-                gcopy(xd->bm2, xd->bm, r);
-                gmaskimage(xd->bm2, img, dr, sr, mask);
-                DRAW2(raster[fixedAlpha]);
-            } else {
-                WARN_SEMI_TRANS;
-            }
-        } else {
-            DRAW(gmaskimage(_d, img, dr, sr, mask));
-        }
-        delimage(mask);
-    } else {
-        /* No fully transparent pixels */
-        if (semiTrans) {
-            if (xd->have_alpha) {
-                rect r = dr;
-                gsetcliprect(xd->bm, xd->clip);
-                gcopy(xd->bm2, xd->bm, r);
-                gdrawimage(xd->bm2, img, dr, sr);
-                DRAW2(raster[fixedAlpha]);
-            } else {
-                WARN_SEMI_TRANS;
-            }
-        } else {
-            /* OPAQUE image! */
-            DRAW(gdrawimage(_d, img, dr, sr));
-        }
+    gsetcliprect(xd->bm, xd->clip);
+    if(xd->kind != SCREEN) 
+	gcopyalpha2(xd->gawin, img, dr);
+    else {
+	gcopyalpha2(xd->bm, img, dr); 
+	if(!xd->buffered) 
+	    gbitblt(xd->gawin, xd->bm, pt(0,0), getrect(xd->bm));
     }
 
     /* Tidy up */
@@ -2847,26 +2754,22 @@ static void GA_Raster(unsigned int *raster, int w, int h,
     const void *vmax = vmaxget();
     double angle = rot*M_PI/180;
     unsigned int *image = raster;
-    int imageWidth = w;
-    int imageHeight = h;
-    int adjustXY = 0;
+    int imageWidth = w, imageHeight = h;
+    Rboolean adjustXY = FALSE;
 
     /* The alphablend code cannot handle negative width or height */
     if (height < 0) {
         height = -height;
-        adjustXY = 1;
+        adjustXY = TRUE;
     }
 
     if (interpolate) {
-        int newW = (int) (width + .5);
-        int newH = (int) (height + .5);
+        int newW = (int) (width + .5), newH = (int) (height + .5);
         unsigned int *newRaster;
 
         newRaster = (unsigned int *) R_alloc(newW * newH,
                                              sizeof(unsigned int));
-        R_GE_rasterInterpolate(image, w, h,
-                               newRaster, newW, newH);
-
+        R_GE_rasterInterpolate(image, w, h, newRaster, newW, newH);
         image = newRaster;
         imageWidth = newW;
         imageHeight = newH;
@@ -2877,15 +2780,12 @@ static void GA_Raster(unsigned int *raster, int w, int h,
          * is the right size AND so that can adjust (x, y)
          * correctly
          */
-        int newW = (int) (width + .5);
-        int newH = (int) (height + .5);
+        int newW = (int) (width + .5), newH = (int) (height + .5);
         unsigned int *newRaster;
 
         newRaster = (unsigned int *) R_alloc(newW * newH,
                                              sizeof(unsigned int));
-        R_GE_rasterScale(image, w, h,
-                         newRaster, newW, newH);
-
+        R_GE_rasterScale(image, w, h, newRaster, newW, newH);
         image = newRaster;
         imageWidth = newW;
         imageHeight = newH;
@@ -2893,10 +2793,8 @@ static void GA_Raster(unsigned int *raster, int w, int h,
 
     if (adjustXY) {
         /* convert (x, y) from bottom-left to top-right */
-        y = y - imageHeight*cos(angle);
-        if (angle != 0) {
-            x = x - imageHeight*sin(angle);
-        }
+        y -= imageHeight*cos(angle);
+        if (angle != 0) x -= imageHeight*sin(angle);
     }
 
     if (angle != 0) {
@@ -2924,8 +2822,8 @@ static void GA_Raster(unsigned int *raster, int w, int h,
         /*
          * Adjust (x, y) for resized and rotated image
          */
-        x = x - (newW - imageWidth)/2 - xoff;
-        y = y - (newH - imageHeight)/2 + yoff;
+        x -= (newW - imageWidth)/2 - xoff;
+        y -= (newH - imageHeight)/2 + yoff;
 
         image = rotatedRaster;
         imageWidth = newW;
@@ -2951,16 +2849,12 @@ static SEXP GA_Cap(pDevDesc dd)
     /* Only make sense for on-screen device ? */
     if(xd->kind == SCREEN) {
         img = bitmaptoimage(xd->gawin);
-        if (imagedepth(img) == 8) {
-            img = convert8to32(img);
-        }
+        if (imagedepth(img) == 8) img = convert8to32(img);
     }
 
     if (img) {
-        int i;
-        int width = imagewidth(img);
-        int height = imageheight(img);
-        int size = width*height;
+        int width = imagewidth(img), height = imageheight(img),
+	    size = width*height;
         unsigned int *rint;
 
         screenData = getpixels(img);
@@ -2970,12 +2864,11 @@ static SEXP GA_Cap(pDevDesc dd)
         /* Copy each byte of screen to an R matrix.
          * The ARGB32 needs to be converted to an R ABGR32 */
         rint = (unsigned int *) INTEGER(raster);
-        for (i=0; i<size; i++) {
+        for (int i = 0; i < size; i++)
             rint[i] = R_RGBA(screenData[i*4 + 2],
                              screenData[i*4 + 1],
                              screenData[i*4 + 0],
                              255);
-        }
         PROTECT(dim = allocVector(INTSXP, 2));
         INTEGER(dim)[0] = height;
         INTEGER(dim)[1] = width;

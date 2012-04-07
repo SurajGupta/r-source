@@ -34,6 +34,9 @@ static R_len_t asVecSize(SEXP x)
     double d;
 
     if (isVectorAtomic(x) && LENGTH(x) >= 1) {
+	if (LENGTH(x) > 1)
+	    warning(_("%d lengths supplied: the first will be used"), 
+		    LENGTH(x));
 	switch (TYPEOF(x)) {
 	case LGLSXP:
 	    res = IntegerFromLogical(LOGICAL(x)[0], &warn);
@@ -724,7 +727,7 @@ SEXP attribute_hidden do_makevector(SEXP call, SEXP op, SEXP args, SEXP rho)
     if (len < 0) error(_("invalid '%s' argument"), "length");
     s = coerceVector(CAR(args), STRSXP);
     if (length(s) == 0)
-	error(_("vector: zero-length 'type' argument"));
+	error(_("vector: zero-length 'mode' argument"));
     mode = str2type(CHAR(STRING_ELT(s, 0))); /* ASCII */
     if (mode == -1 && streql(CHAR(STRING_ELT(s, 0)), "double"))
 	mode = REALSXP;

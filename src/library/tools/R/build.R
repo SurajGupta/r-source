@@ -154,14 +154,17 @@ get_exclude_patterns <- function()
 
     env_path <- function(...) file.path(..., fsep = .Platform$path.sep)
 
-    parse_description_field <- function(desc, field, default=TRUE)
+    parse_description_field <-
+        function(desc, field, default = TRUE, logical = TRUE)
     {
         tmp <- desc[field]
         if (is.na(tmp)) default
-        else switch(tmp,
-                    "yes"=, "Yes" =, "true" =, "True" =, "TRUE" = TRUE,
-                    "no" =, "No" =, "false" =, "False" =, "FALSE" = FALSE,
-                    default)
+        else if(logical)
+            switch(tmp,
+                   "yes"=, "Yes" =, "true" =, "True" =, "TRUE" = TRUE,
+                   "no" =, "No" =, "false" =, "False" =, "FALSE" = FALSE,
+                   default)
+        else tmp
     }
 
     Usage <- function() {
@@ -517,10 +520,13 @@ get_exclude_patterns <- function()
             if (grepl("/\\.+$", dd)) next
             find_empty_dirs(dd)
         }
-        if (!keep_empty) # might have removed a dir
+        ## allow per-package override
+        keep_empty1 <- parse_description_field(desc, "BuildKeepEmpty",
+                                               keep_empty)
+        if (!keep_empty1) # might have removed a dir
             files <- dir(d, all.files = TRUE, full.names = TRUE)
         if (length(files) <= 2L) { # always has ., ..
-            if (keep_empty) {
+            if (keep_empty1) {
                 printLog(Log, "WARNING: directory ", sQuote(d), " is empty\n")
             } else {
                 unlink(d, recursive = TRUE)
@@ -646,7 +652,6 @@ get_exclude_patterns <- function()
     }
 
     force <- FALSE
-    keep_empty <- FALSE
     vignettes <- TRUE
     binary <- FALSE
     manual <- TRUE  # Install the manual if Rds contain \Sexprs
@@ -667,6 +672,9 @@ get_exclude_patterns <- function()
                                          "FALSE"))
     resave_data <-
         Sys.getenv("_R_BUILD_RESAVE_DATA_", "gzip")
+
+    keep_empty <-
+        config_val_to_logical(Sys.getenv("_R_BUILD_KEEP_EMPTY_DIRS_", "FALSE"))
 
     if (is.null(args)) {
         args <- commandArgs(TRUE)
@@ -780,7 +788,9 @@ get_exclude_patterns <- function()
         filepath <- file.path(startdir, filename)
         Tdir <- tempfile("Rbuild")
         dir.create(Tdir, mode = "0755")
-        if (!file.copy(pkgname, Tdir, recursive = TRUE)) {
+        ## on Windows we will not be able to delete read-only files in .svn
+        if (!file.copy(pkgname, Tdir, recursive = TRUE,
+                       copy.mode = !WINDOWS)) {
             errorLog(Log, "copying to build directory failed")
             do_exit(1L)
         }
@@ -874,8 +884,11 @@ get_exclude_patterns <- function()
             tryCatch(add_datalist(pkgname),
                      error = function(e)
                      printLog(Log, "  unable to create a 'datalist' file: may need the package to be installed\n"))
-            resave_data_others(pkgname, resave_data)
-            resave_data_rda(pkgname, resave_data)
+            ## allow per-package override
+            resave_data1 <- parse_description_field(desc, "BuildResaveData",
+                                                    resave_data, FALSE)
+            resave_data_others(pkgname, resave_data1)
+            resave_data_rda(pkgname, resave_data1)
         }
 
         ## Finalize

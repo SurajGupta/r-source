@@ -1,6 +1,6 @@
 % File src/library/base/man/EnvVar.Rd
 % Part of the R package, http://www.R-project.org
-% Copyright 2007-2010 R Core Development Team
+% Copyright 2007-2011 R Core Development Team
 % Distributed under GPL 2 or later
 
 \name{EnvVar}
@@ -26,6 +26,7 @@
 \alias{R_TEXI2DVICMD}
 \alias{R_UNZIPCMD}
 \alias{R_ZIPCMD}
+\alias{TMPDIR}
 
 % R_PROFILE, R_ENVIRON are in ?Startup
 % R_LIBS* are in ?.libPaths
@@ -76,7 +77,7 @@
     \item{\env{R_COMPLETION}:}{Optional.  If set to \code{FALSE},
       command-line completion is not used.  (Not used by Mac OS GUI.)}
     \item{\env{R_DEFAULT_PACKAGES}:}{A comma-separated list of packages
-      which are to be loaded in every session.  See \code{\link{options}}.}
+      which are to be attached in every session.  See \code{\link{options}}.}
     \item{\env{R_DOC_DIR}:}{The location of the \R \file{doc}
       directory.  Set by \R.}
     \item{\env{R_ENVIRON}:}{Optional.  The path to the site environment
@@ -138,14 +139,14 @@
     }
     \item{\env{R_UNZIPCMD}:}{The path to \command{unzip}.  Sets the
       initial value for \code{\link{options}("unzip")} on a Unix-alike
-      when package \pkg{utils} is loaded.}
+      when name space \pkg{utils} is loaded.}
     \item{\env{R_ZIPCMD}:}{The path to \command{zip}. Used by
       \code{\link{zip}} and by \command{R CMD INSTALL --build} on Windows.}
     \item{\env{TMPDIR}, \env{TMP}, \env{TEMP}:}{Consulted (in that
       order) when setting the temporary directory for the session: see
       \code{\link{tempdir}}.  \env{TMPDIR} is also used by some of the
       utilities see the help for \code{\link{build}}.}
-    \item{\env{TZ}:}{Optional. The current timezone.  See
+    \item{\env{TZ}:}{Optional.  The current timezone.  See
       \code{\link{Sys.timezone}} for the system-specific
       formats.  Consulted as needed.}
     \item{\env{no_proxy}, \env{http_proxy}, \env{ftp_proxy}:}{
@@ -161,7 +162,7 @@
     \item{\env{DISPLAY}:}{Optional: used by \code{\link{X11}}, Tk (in
       package \pkg{tcltk}), the data editor and various packages.}
     \item{\env{EDITOR}:}{The path to the default editor: sets the
-      default for \code{\link{options}("editor")} when package
+      default for \code{\link{options}("editor")} when name space
       \pkg{utils} is loaded.}
     \item{\env{PAGER}:}{The path to the pager with the default setting of
       \code{\link{options}("pager")}. The default value is chosen at
@@ -181,7 +182,7 @@
       \env{R_GSCMD} is not set.}
     \item{\env{R_USER}:}{The user's \sQuote{home} directory.  Set by
       \R.  (\env{HOME} will be set to the same value if not already set.)}
-    \item{\env{TZDIR}:}{Optional. The top-level directory of the
+    \item{\env{TZDIR}:}{Optional.  The top-level directory of the
       timezone database.  See \code{\link{Sys.timezone}}.}
   }
 }

@@ -853,7 +853,11 @@ SEXP attribute_hidden do_fileinfo(SEXP call, SEXP op, SEXP args, SEXP rho)
 #endif
     for (i = 0; i < n; i++) {
 #ifdef Win32
-	const wchar_t *wfn = filenameToWchar(STRING_ELT(fn, i), TRUE);
+	wchar_t *wfn = filenameToWchar(STRING_ELT(fn, i), TRUE);
+	/* 'Sharpie and fellow ignorami use trailing / on Windows,
+	   where it is not valid */
+	wchar_t *p = wfn + (wcslen(wfn) - 1);
+	if (*p == L'/' || *p == L'\\') *p = 0;
 #else
 	const char *efn = R_ExpandFileName(translateChar(STRING_ELT(fn, i)));
 #endif
@@ -2051,7 +2055,7 @@ SEXP attribute_hidden do_dircreate(SEXP call, SEXP op, SEXP args, SEXP env)
 {
     SEXP  path;
     wchar_t *p, dir[MAX_PATH];
-    int res, show, recursive;
+    int res, show, recursive, serrno = 0;
 
     checkArity(op, args);
     path = CAR(args);
@@ -2078,18 +2082,21 @@ SEXP attribute_hidden do_dircreate(SEXP call, SEXP op, SEXP args, SEXP env)
 	    *p = L'\0';
 	    if (*(p-1) != L':') {
 		res = _wmkdir(dir);
-		if (res && errno != EEXIST) goto end;
+		serrno = errno;
+		if (res && serrno != EEXIST) goto end;
 	    }
 	    *p = L'\\';
 	}
     }
     res = _wmkdir(dir);
-    if (show && res && errno == EEXIST)
+    serrno = errno;
+    if (show && res && serrno == EEXIST)
 	warning(_("'%ls' already exists"), dir);
+    return ScalarLogical(res == 0);
 end:
-    if (show && res && errno != EEXIST)
+    if (show && res && serrno != EEXIST)
 	warning(_("cannot create dir '%ls', reason '%s'"), dir, 
-		strerror(errno));
+		strerror(serrno));
     return ScalarLogical(res == 0);
 }
 #endif
@@ -2414,7 +2421,7 @@ SEXP attribute_hidden do_syschmod(SEXP call, SEXP op, SEXP args, SEXP env)
     PROTECT(smode = coerceVector(CADR(args), INTSXP));
     modes = INTEGER(smode);
     m = LENGTH(smode);
-    if(!m) error(_("'mode' must be of length at least one"));
+    if(!m && n) error(_("'mode' must be of length at least one"));
     int useUmask = asLogical(CADDR(args));
     if (useUmask == NA_LOGICAL)
 	error(_("invalid '%s' argument"), "use_umask");

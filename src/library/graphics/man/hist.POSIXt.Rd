@@ -31,7 +31,7 @@
     plus \code{"secs"}, \code{"mins"}, \code{"hours"} for
     date-time objects.
  }
-  \item{\dots}{graphical parameters, or arguments to
+  \item{\dots}{\link{graphical parameters}, or arguments to
     \code{\link{hist.default}} such as \code{include.lowest},
       \code{right} and \code{labels}.}
   \item{xlab}{a character string giving the label for the x axis, if plotted.}
@@ -46,6 +46,8 @@
   \item{format}{for the x-axis labels. See \code{\link{strptime}}.}
 }
 \details{
+  Note that unlike the default method, \code{breaks} is a required argument.
+
   Using \code{breaks = "quarters"} will create intervals of 3 calendar
   months, with the intervals beginning on January 1, April 1,
   July 1 or October 1, based upon \code{min(x)} as appropriate.

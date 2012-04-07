@@ -182,7 +182,8 @@ isIncomplete(con)
   connections of various types, but these are usually larger than 125.
 
   \code{flush} flushes the output stream of a connection open for
-  write/append (where implemented).
+  write/append (where implemented, currently for file and clipboard
+  connections, \code{\link{stdout}} and \code{\link{stderr}}).
 
   If for a \code{file} or \code{fifo} connection the description is
   \code{""}, the file/fifo is immediately opened (in \code{"w+"} mode
@@ -547,7 +548,7 @@ cat("abc\ndef\n", file=Tfile)
 readLines(Tfile)
 close(Tfile)
 
-\donttest{## fifo example -- may fail, e.g. on Cygwin, even with OS support for fifos
+\donttest{## fifo example -- may fail even with OS support for fifos
 if(capabilities("fifo")) {
   zz <- fifo("foo-fifo", "w+")
   writeLines("abc", zz)

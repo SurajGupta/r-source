@@ -8,6 +8,375 @@
 
 <h2>R News</h2>
 
+<h3>CHANGES IN R VERSION 2.13.1</h3>
+
+<p>
+
+
+<h4>NEW FEATURES</h4>
+
+<p>
+
+<ul>
+<li> <code>iconv()</code> no longer translates <code>NA</code> strings as
+<code>"NA"</code>.
+</p>
+<p>
+</li>
+<li><code>persp(box = TRUE)</code> now warns if the surface extends
+outside the box (since occlusion for the box and axes is computed
+assuming the box is a bounding box). (<a href="https://bugs.R-project.org/bugzilla3/show_bug.cgi?id=202">PR#202</a>.)
+</p>
+<p>
+</li>
+<li><code>RShowDoc()</code> can now display the licences shipped with
+<font face="Courier New,Courier" color="#666666"><b>R</b></font>, e.g. <code>RShowDoc("GPL-3")</code>.
+</p>
+<p>
+</li>
+<li>New wrapper function <code>showNonASCIIfile()</code> in package
+<span class="pkg">tools</span>.
+</p>
+<p>
+</li>
+<li><code>nobs()</code> now has a <code>"mle"</code> method in package
+<span class="pkg">stats4</span>.
+</p>
+<p>
+</li>
+<li><code>trace()</code> now deals correctly with S4 reference classes
+and corresponding reference methods (e.g., <code>$trace()</code>)
+have been added.
+</p>
+<p>
+</li>
+<li><CODE>xz</CODE> has been updated to 5.0.3 (very minor bugfix
+release).
+</p>
+<p>
+</li>
+<li><code>tools::compactPDF()</code> gets more compression (usually a
+little, sometimes a lot) by using the compressed object streams of
+PDF 1.5.
+</p>
+<p>
+</li>
+<li><code>cairo_ps(onefile = TRUE)</code> generates encapsulated EPS
+on platforms with cairo &gt;= 1.6.
+</p>
+<p>
+</li>
+<li>Binary reads (e.g. by <code>readChar()</code> and <code>readBin()</code>)
+are now supported on clipboard connections.  (Wish of <a href="https://bugs.R-project.org/bugzilla3/show_bug.cgi?id=14593">PR#14593</a>.)
+</p>
+<p>
+</li>
+<li><code>as.POSIXlt.factor()</code> now passes <code>...</code> to the
+character method (suggestion of Joshua Ulrich).  [Intended for <font face="Courier New,Courier" color="#666666"><b>R</b></font>
+2.13.0 but accidentally removed before release.]
+</p>
+<p>
+</li>
+<li><code>vector()</code> and its wrappers such as <code>integer()</code>
+and <code>double()</code> now warn if called with a <code>length</code>
+argument of more than one element.  This helps track down user
+errors such as calling <code>double(x)</code> instead of
+<code>as.double(x)</code>.
+</ul>
+
+</p>
+
+</p>
+<p>
+
+
+<h4>INSTALLATION</h4>
+
+<p>
+
+<ul>
+<li> Building the vignette PDFs in packages <span class="pkg">grid</span> and
+<span class="pkg">utils</span> is now part of running <CODE>make</CODE> from an SVN
+checkout on a Unix-alike: a separate <CODE>make vignettes</CODE> step
+is no longer required.
+</p>
+<p>
+These vignettes are now made with <code>keep.source = TRUE</code> and
+hence will be laid out differently.
+</p>
+<p>
+</li>
+<li><CODE>make install-strip</CODE> failed under some configuration
+options.
+</p>
+<p>
+</li>
+<li>Packages can customize non-standard installation of compiled
+code via a <code>src/install.libs.R</code> script. This allows packages that
+have architecture-specific binaries (beyond the package's shared
+objects/DLLs) to be installed in a multi-architecture setting.
+</ul>
+
+</p>
+
+</p>
+<p>
+
+
+<h4>SWEAVE &amp; VIGNETTES</h4>
+
+<p>
+
+<ul>
+<li> <code>Sweave()</code> and <code>Stangle()</code> gain an <code>encoding</code>
+argument to specify the encoding of the vignette sources if the
+latter do not contain a <span class="samp">\usepackage[]{inputenc}</span> statement
+specifying a single input encoding.
+</p>
+<p>
+</li>
+<li>There is a new Sweave option <code>figs.only = TRUE</code> to run
+each figure chunk only for each selected graphics device, and not
+first using the default graphics device.   This will become the
+default in <font face="Courier New,Courier" color="#666666"><b>R</b></font> 2.14.0.
+</p>
+<p>
+</li>
+<li>Sweave custom graphics devices can have a custom function
+<code>foo.off()</code> to shut them down.      
+</p>
+<p>
+</li>
+<li>Warnings are issued when non-portable filenames are found
+for graphics files (and chunks if <code>split = TRUE</code>).  Portable
+names are regarded as alphanumeric plus hyphen, underscore, plus
+and hash (periods cause problems with recognizing file
+extensions).
+</p>
+<p>
+</li>
+<li>The <code>Rtangle()</code> driver has a new option
+<code>show.line.nos</code> which is by default false; if true it
+annotates code chunks with a comment giving the line number of the
+first line in the sources (the behaviour of <font face="Courier New,Courier" color="#666666"><b>R</b></font> &gt;= 2.12.0).
+</p>
+<p>
+</li>
+<li>Package installation tangles the vignette sources: this step
+now converts the vignette sources from the vignette/package
+encoding to the current encoding, and records the encoding (if not
+ASCII) in a comment line at the top of the installed &lsquo;<span class="file">.R</span>&rsquo;
+file.
+</ul>
+
+</p>
+
+</p>
+<p>
+
+
+<h4>LICENCE</h4>
+
+<p>
+
+<ul>
+<li> No parts of <font face="Courier New,Courier" color="#666666"><b>R</b></font> are now licensed solely under GPL-2.  The
+licences for packages <span class="pkg">rpart</span> and <span class="pkg">survival</span> have been
+changed, which means that the licence terms for <font face="Courier New,Courier" color="#666666"><b>R</b></font> as distributed
+are GPL-2 | GPL-3.
+</ul>
+
+</p>
+
+</p>
+<p>
+
+
+<h4>DEPRECATED AND DEFUNCT</h4>
+
+<p>
+
+<ul>
+<li> The internal functions <code>.readRDS()</code> and
+<code>.saveRDS()</code> are now deprecated in favour of the public
+functions <code>readRDS()</code> and <code>saveRDS()</code> introduced in <font face="Courier New,Courier" color="#666666"><b>R</b></font>
+2.13.0.
+</p>
+<p>
+</li>
+<li>Switching off lazy-loading of code <EM>via</EM> the
+<span class="samp">LazyLoad</span> field of the &lsquo;<span class="file">DESCRIPTION</span>&rsquo; file is now
+deprecated.  In future all packages will be lazy-loaded.
+</p>
+<p>
+</li>
+<li>The off-line <code>help()</code> types <span class="samp">"postscript"</span> and
+<span class="samp">"ps"</span> are deprecated.
+</ul>
+
+</p>
+
+</p>
+<p>
+
+
+<h4>UTILITIES</h4>
+
+<p>
+      
+<ul>
+<li> <CODE>R CMD check</CODE> on a multi-architecture installation now
+skips the user's &lsquo;<span class="file">.Renviron</span>&rsquo; file for the
+architecture-specific tests (which do read the 
+architecture-specific &lsquo;<span class="file">Renviron.site</span>&rsquo; files).  This is
+consistent with single-architecture checks, which use
+<span class="option">--no-environ</span>.
+</p>
+<p>
+</li>
+<li><CODE>R CMD build</CODE> now looks for &lsquo;<span class="file">DESCRIPTION</span>&rsquo;
+fields <span class="samp">BuildResaveData</span> and <span class="samp">BuildKeepEmpty</span> for
+per-package overrides.  See &lsquo;Writing R Extensions&rsquo;.
+</ul>
+
+</p>
+
+</p>
+<p>
+
+
+<h4>BUG FIXES</h4>
+
+<p>
+
+<ul>
+<li> <code>plot.lm(which = 5)</code> was intended to order factor
+levels in increasing order of mean standardized residual.   It
+ordered the factor labels correctly, but could plot the wrong
+group of residuals against the label.  (<a href="https://bugs.R-project.org/bugzilla3/show_bug.cgi?id=14545">PR#14545</a>)
+</p>
+<p>
+</li>
+<li><code>mosaicplot()</code> could clip the factor labels, and could
+overlap them with the cells if a non-default value of
+<code>cex.axis</code> was used.  (Related to <a href="https://bugs.R-project.org/bugzilla3/show_bug.cgi?id=14550">PR#14550</a>.)
+</p>
+<p>
+</li>
+<li><code>dataframe[[row,col]]</code> now dispatches on <code>[[</code>
+methods for the selected column (spotted by Bill Dunlap).
+</p>
+<p>
+</li>
+<li><code>sort.int()</code> would strip the class of an object, but
+leave its object bit set.  (Reported by Bill Dunlap.)      
+</p>
+<p>
+</li>
+<li><code>pbirthday()</code> and <code>qbirthday()</code> did not implement
+the algorithm exactly as given in their reference and so were
+unnecessarily inaccurate.
+</p>
+<p>
+<code>pbirthday()</code> now solves the approximate formula analytically
+rather than using <code>uniroot()</code> on a discontinuous function.
+</p>
+<p>
+The description of the problem was inaccurate: the probability is
+a tail probablity (&lsquo;2 <EM>or more</EM> people share a birthday&rsquo;)
+</p>
+<p>
+</li>
+<li>Complex arithmetic sometimes warned incorrectly about
+producing NAs when there were NaNs in the input.
+</p>
+<p>
+</li>
+<li><code>seek(origin = "current")</code> incorrectly reported it was
+not implemented for a <code>gzfile()</code> connection.
+</p>
+<p>
+</li>
+<li><code>c()</code>, <code>unlist()</code>, <code>cbind()</code> and
+<code>rbind()</code> could silently overflow the maximum vector length
+and cause a segfault.  (<a href="https://bugs.R-project.org/bugzilla3/show_bug.cgi?id=14571">PR#14571</a>)
+</p>
+<p>
+</li>
+<li>The <code>fonts</code> argument to <code>X11(type = "Xlib")</code> was
+being ignored.
+</p>
+<p>
+</li>
+<li>Reading (e.g. with <code>readBin()</code>) from a raw connection
+was not advancing the pointer, so successive reads would read the
+same value.  (Spotted by Bill Dunlap.)
+</p>
+<p>
+</li>
+<li>Parsed text containing embedded newlines was printed
+incorrectly by <code>as.character.srcref()</code>.  (Reported by Hadley
+Wickham.)
+</p>
+<p>
+</li>
+<li><code>decompose()</code> used with a series of a non-integer
+number of periods returned a seasonal component shorter than the
+original series.  (Reported by Rob Hyndman.)
+</p>
+<p>
+</li>
+<li><code>fields = list()</code> failed for <code>setRefClass()</code>.
+(Reported by Michael Lawrence.)
+</p>
+<p>
+</li>
+<li>Reference classes could not redefine an inherited field
+which had class <code>"ANY"</code>. (Reported by Janko Thyson.)
+</p>
+<p>
+</li>
+<li>Methods that override previously loaded versions will now
+be installed and called.  (Reported by Iago Mosqueira.)
+</p>
+<p>
+</li>
+<li><code>addmargins()</code> called <code>numeric(apos)</code> rather than
+<code>numeric(length(apos))</code>.
+</p>
+<p>
+</li>
+<li>The HTML help search sometimes produced bad links.
+(<a href="https://bugs.R-project.org/bugzilla3/show_bug.cgi?id=14608">PR#14608</a>)
+</p>
+<p>
+</li>
+<li>Command completion will no longer be broken if
+<code>tail.default()</code> is redefined by the user. (Problem reported
+by Henrik Bengtsson.)
+</p>
+<p>
+</li>
+<li>LaTeX rendering of markup in titles of help pages has been
+improved; in particular, <code>\eqn{}</code> may be used there.
+</p>
+<p>
+</li>
+<li><code>isClass()</code> used its own namespace as the default of
+the <code>where</code> argument inadvertently.
+</p>
+<p>
+</li>
+<li>Rd conversion to latex mis-handled multi-line titles
+(including cases where there was a blank line in the <span class="samp">\title</span>
+section).
+</ul>
+
+</p>
+
+</p>
+
+
 <h3>CHANGES IN R VERSION 2.13.0</h3>
 
 <p>
@@ -81,7 +450,7 @@ ascertained.
 </p>
 <p>
 The PDF, PostScript, and Quartz graphics devices record this fact.
-X11 (and Cairo) and Windows just assume that your screen conforms.
+X11 (and cairo) and Windows just assume that your screen conforms.
 </p>
 <p>
 </li>
@@ -195,11 +564,6 @@ class <code>"dendrogram"</code> are now provided.
 </p>
 <p>
 </li>
-<li><code>as.POSIXlt.factor()</code> now passes <code>...</code> to the
-character method (suggestion of Joshua Ulrich).
-</p>
-<p>
-</li>
 <li>The character method of <code>as.POSIXlt()</code> now tries to
 find a format that works for all non-<code>NA</code> inputs, not just
 the first one.
@@ -256,7 +620,9 @@ New functions <code>saveRDS()</code> and <code>readRDS()</code> are public
 versions of the &lsquo;internal&rsquo; functions <code>.saveRDS()</code> and
 <code>.readRDS()</code> made available for general use.  The dot-name
 versions remain available as several package authors have made use
-of them, despite the documentation.
+of them, despite the documentation.  <code>readRDS()</code> no longer
+wraps non-file connections in a call to <code>gzcon()</code>, for
+efficiency (see its documentation).
 </p>
 <p>
 <code>saveRDS()</code> supports <code>compress = "xz"</code>.
@@ -482,7 +848,7 @@ possible errors in non-local assignments.
 </li>
 <li><code>findClasses</code>, <code>getGeneric</code>, <code>findMethods</code>
 and <code>hasMethods</code> are revised to deal consistently with
-the <code>package=</code> argument and be consistent with soft namespace
+the <code>package=</code> argument and be consistent with soft name space
 policy for finding objects.
 </p>
 <p>
@@ -623,7 +989,7 @@ to supply a zero-length <code>from</code>: it now simply does nothing.
 </p>
 <p>
 </li>
-<li><code>rstandard.glm</code> gains a <code>type</code> argument which can
+<li><code>rstandard.glm()</code> gains a <code>type</code> argument which can
 be used to request standardized Pearson residuals.
 </p>
 <p>
@@ -633,9 +999,14 @@ be used to request standardized Pearson residuals.
 <p>
 </li>
 <li><code>.libPaths()</code> calls <code>normalizePath(winslash = "/")</code>
-on the paths: this helps (usually) present them in a
+on the paths: this helps (usually) to present them in a
 user-friendly form and should detect duplicate paths accessed via
 different symbolic links.
+</p>
+<p>
+</li>
+<li><code>download.file()</code> can be now used with external methods
+even if there are spaces in the URL or the target filename.
 </ul>
 
 </p>
@@ -1919,13 +2290,13 @@ clipping region.
 </p>
 <p>
 </li>
-<li>Rendering of raster images on Cairo X11 device was wrong,
+<li>Rendering of raster images on cairo X11 device was wrong,
 particularly when a small image was being scaled up using
 interpolation.
 </p>
 <p>
-With Cairo &lt; 1.6, will be better than before, though still a
-little clunky.  With Cairo &gt;= 1.6, should be sweet as.
+With cairo &lt; 1.6, will be better than before, though still a
+little clunky.  With cairo &gt;= 1.6, should be sweet as.
 </p>
 <p>
 </li>

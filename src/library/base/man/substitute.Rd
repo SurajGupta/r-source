@@ -1,6 +1,6 @@
 % File src/library/base/man/substitute.Rd
 % Part of the R package, http://www.R-project.org
-% Copyright 1995-2010 R Core Development Team
+% Copyright 1995-2011 R Core Development Team
 % Distributed under GPL 2 or later
 
 \name{substitute}
@@ -23,8 +23,7 @@ enquote(cl)
 
   \code{enquote} is a simple one-line utility which transforms a call of
   the form \code{Foo(....)} into the call \code{quote(Foo(....))}.  This
-  is typically only used to protect a \code{\link{call}} from early
-  evaluation.
+  is typically used to protect a \code{\link{call}} from early evaluation.
 }
 \arguments{
   \item{expr}{any syntactically valid \R expression}
@@ -43,14 +42,14 @@ enquote(cl)
 
   Substitution takes place by examining each component of the parse tree
   as follows: If it is not a bound symbol in \code{env}, it is
-  unchanged. If it is a promise object, i.e., a formal argument to a
+  unchanged.  If it is a promise object, i.e., a formal argument to a
   function or explicitly created using \code{\link{delayedAssign}()},
-  the expression slot of the promise replaces the symbol. If it is an
+  the expression slot of the promise replaces the symbol.  If it is an
   ordinary variable, its value is substituted, unless \code{env} is
   \code{\link{.GlobalEnv}} in which case the symbol is left unchanged.
 
-  These are both \sQuote{special} \link{primitive} functions, which do
-  not evaluate their arguments.
+  Both \code{quote} and \code{substitute} are \sQuote{special}
+  \link{primitive} functions which do not evaluate their arguments.
 }
 \value{
   The \code{\link{mode}} of the result is generally \code{"call"} but
@@ -59,11 +58,11 @@ enquote(cl)
   appropriate base mode.
 }
 \note{
-  Substitute works on a purely lexical basis. There is no guarantee
-  that the resulting expression makes any sense.
+  \code{substitute} works on a purely lexical basis.  There is no
+  guarantee that the resulting expression makes any sense.
 
-  Substituting and quoting often causes confusion when the argument is
-  \code{expression(\dots)}. The result is a call to the
+  Substituting and quoting often cause confusion when the argument is
+  \code{expression(\dots)}.  The result is a call to the
   \code{\link{expression}} constructor function and needs to be evaluated
   with \code{\link{eval}} to give the actual expression object.
 }

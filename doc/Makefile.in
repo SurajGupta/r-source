@@ -11,7 +11,7 @@ subdir = doc
 include $(top_builddir)/Makeconf
 
 distdir = $(top_builddir)/$(PACKAGE)-$(VERSION)/$(subdir)
-INSTFILES = AUTHORS COPYING COPYING.LIB COPYRIGHTS CRAN_mirrors.csv \
+INSTFILES = AUTHORS COPYING COPYRIGHTS CRAN_mirrors.csv \
 	KEYWORDS KEYWORDS.db THANKS
 DISTFILES = Makefile.in Makefile.win $(INSTFILES) R.aux Rscript.1 NEWS.Rd
 ## NEWS.rds is also installed, but generated later.
@@ -43,7 +43,7 @@ R.1:
 	  $(top_builddir)/bin/R
 
 NEWS.rds: $(srcdir)/NEWS.Rd
-	@$(ECHO) "options(warn=1);.saveRDS(tools:::prepare_Rd(tools::parse_Rd(\"$(srcdir)/NEWS.Rd\"), stages = 'install'), 'NEWS.rds')" | $(R_EXE)
+	@$(ECHO) "options(warn=1);saveRDS(tools:::prepare_Rd(tools::parse_Rd(\"$(srcdir)/NEWS.Rd\"), stages = 'install'), 'NEWS.rds')" | $(R_EXE)
 
 ../NEWS: NEWS.rds
 	@$(ECHO) "creating NEWS"

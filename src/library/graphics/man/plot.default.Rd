@@ -1,6 +1,6 @@
 % File src/library/graphics/man/plotdefault.Rd
 % Part of the R package, http://www.R-project.org
-% Copyright 1995-2007 R Core Development Team
+% Copyright 1995-2011 R Core Development Team
 % Distributed under GPL 2 or later
 
 \name{plot.default}
@@ -30,7 +30,10 @@
     \code{"h"} for histogram-like vertical lines.  Finally,
     \code{"n"} does not produce any points or lines.}
   \item{xlim}{the x limits (x1, x2) of the plot.  Note that \code{x1 > x2}
-    is allowed and leads to a \sQuote{reversed axis}.}
+    is allowed and leads to a \sQuote{reversed axis}.
+
+    The default value, \code{NULL}, indicates that the range of the
+    \link{finite} values to be plotted should be used.}
   \item{ylim}{the y limits of the plot.}
   \item{log}{a character string which contains \code{"x"} if the x axis
     is to be logarithmic, \code{"y"} if the y axis is to be logarithmic
@@ -44,23 +47,28 @@
   \item{ann}{a logical value indicating whether the default annotation
     (title and x and y axis labels) should appear on the plot.}
   \item{axes}{a logical value indicating whether both axes should be drawn on
-    the plot.  Use graphical parameter \code{"xaxt"} or \code{"yaxt"}
+    the plot.  Use \link{graphical parameter} \code{"xaxt"} or \code{"yaxt"}
     to suppress just one of the axes.}
   \item{frame.plot}{a logical indicating whether a box should be drawn
     around the plot.}
 
-  \item{panel.first}{an expression to be evaluated after the plot axes
-    are set up but before any plotting takes place.  This can be useful
-    for drawing background grids or scatterplot smooths.}
+  \item{panel.first}{an \sQuote{expression} to be evaluated after the
+    plot axes are set up but before any plotting takes place.  This can
+    be useful for drawing background grids or scatterplot smooths.  Note
+    that this works by lazy evaluation: passing this argument from other
+    \code{plot} methods may well not work since it may be evaluated too
+    early.}
+  
   \item{panel.last}{an expression to be evaluated after plotting has
-    taken place.}
+    taken place but before the axes, title and box are added.  See the
+    comments about \code{panel.first}.}
 
   \item{asp}{the \eqn{y/x} aspect ratio, see \code{\link{plot.window}}.}
-  \item{\dots}{other graphical parameters (see \code{\link{par}} and
+  \item{\dots}{other \link{graphical parameters} (see \code{\link{par}} and
     section \sQuote{Details} below).}
 }
 \details{
-  Commonly used graphical parameters are:
+  Commonly used \link{graphical parameters} are:
   \describe{
     \item{\code{col}}{The colors for lines and points.  Multiple colors can be
       specified so that each point can be given its own color.  If there

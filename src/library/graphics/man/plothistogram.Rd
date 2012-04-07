@@ -18,7 +18,8 @@
                             paste(x$xname, collapse="\n")),
                sub = NULL, xlab = x$xname, ylab,
                xlim = range(x$breaks), ylim = NULL,
-               axes = TRUE, labels = FALSE, add = FALSE, ann = TRUE, \dots)
+               axes = TRUE, labels = FALSE, add = FALSE,
+               ann = TRUE, \dots)
 
 \method{lines}{histogram}(x, \dots)
 }
@@ -47,7 +48,8 @@
   \item{add}{logical.  If \code{TRUE}, only the bars are added to the
     current plot.  This is what \code{lines.histogram(*)} does.}
   \item{ann}{logical.  Should annotations (titles and axis titles) be plotted?}
-  \item{\dots}{further graphical parameters to \code{title} and \code{axis}.}
+  \item{\dots}{further \link{graphical parameters} to
+    \code{title} and \code{axis}.}
 }
 \details{
   \code{lines.histogram(*)} is the same as

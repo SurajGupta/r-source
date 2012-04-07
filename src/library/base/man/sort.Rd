@@ -80,7 +80,7 @@ sort.int(x, partial = NULL, na.last = NA, decreasing = FALSE,
   \code{partial} is \code{NULL}.  (For other types of \code{x} Shellsort
   is used, silently.)  It is normally somewhat faster than Shellsort
   (perhaps twice as fast on vectors of length a million) but has poor
-  performance in the rare worst case. (Peto's modification using a
+  performance in the rare worst case.  (Peto's modification using a
   pseudo-random midpoint is used to make the worst case rarer.)  This is
   not a stable sort, and ties may be reordered.
 }
@@ -117,7 +117,7 @@ sort.int(x, partial = NULL, na.last = NA, decreasing = FALSE,
   A new upper bound for Shell sort.
   \emph{J. Algorithms} \bold{7}, 159--173.
 
-  Singleton, R. C. (1969) An efficient algorithm for sorting with
+  Singleton, R. C. (1969)  An efficient algorithm for sorting with
   minimal storage: Algorithm 347.
   \emph{Communications of the ACM} \bold{12}, 185--187.
 }
@@ -145,9 +145,9 @@ sort(c(10:3,2:12), method = "qu", index.return=TRUE) # is not
 ##        ^^^^^
 
 x <- c(1:3, 3:5, 10)
-is.unsorted(x)                #-> FALSE: is sorted
-is.unsorted(x, strictly=TRUE) #-> TRUE : is not (and cannot be) sorted strictly
-
+is.unsorted(x)                # FALSE: is sorted
+is.unsorted(x, strictly=TRUE) # TRUE : is not (and cannot be)
+                              # sorted strictly
 \dontrun{
 ## Small speed comparison simulation:
 N <- 2000

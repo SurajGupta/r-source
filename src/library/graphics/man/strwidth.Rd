@@ -1,6 +1,6 @@
 % File src/library/graphics/man/strwidth.Rd
 % Part of the R package, http://www.R-project.org
-% Copyright 1995-2007 R Core Development Team
+% Copyright 1995-2011 R Core Development Team
 % Distributed under GPL 2 or later
 
 \name{strwidth}
@@ -12,8 +12,11 @@
   or as fraction of the figure width \code{par("fin")}.
 }
 \usage{
-strwidth(s, units = "user", cex = NULL, font = NULL, vfont = NULL, ...)
-strheight(s, units = "user", cex = NULL, font = NULL, vfont = NULL, ...)
+strwidth(s, units = "user", cex = NULL, font = NULL,
+         vfont = NULL, ...)
+
+strheight(s, units = "user", cex = NULL, font = NULL,
+          vfont = NULL, ...)
 }
 \alias{strwidth}
 \alias{strheight}
@@ -32,9 +35,13 @@ strheight(s, units = "user", cex = NULL, font = NULL, vfont = NULL, ...)
     see \code{\link{text}}.}
 }
 \details{
-  Where an element of \code{s} is a multi-line string (that is, contains
-  newlines \samp{\\n}), the width and height are of an enclosing
-  rectangle of the string as plotted by \code{\link{text}}.  The
+  Note that the \sQuote{height} of a string is determined only by the
+  number of linefeeds (\code{"\n"}) it contains: it is the (number of
+  linefeeds - 1) times the line spacing plus the height of \code{"M"} in
+  the selected font.  For an expression it is the height of the
+  bounding box as computed by \link{plotmath}.  Thus in both cases it is
+  an estimate of how far \bold{above} the final baseline the typeset
+  object extends.  (It may also extend below the baseline.)  The
   inter-line spacing is controlled by \code{cex},
   \code{\link{par}("lheight")} and the \sQuote{point size} (but not the
   actual font in use).
@@ -44,7 +51,7 @@ strheight(s, units = "user", cex = NULL, font = NULL, vfont = NULL, ...)
   thrown.
 }
 \value{
-  Numeric vector with the same length as \code{s}, giving the
+  Numeric vector with the same length as \code{s}, giving the estimate of
   width or height for each \code{s[i]}.  \code{NA} strings are given
   width and height 0 (as they are not plotted).
 }

@@ -38,8 +38,8 @@
 
   Then \R searches for the site-wide startup profile file of \R code
   unless the command line option \option{--no-site-file} was given.  The
-  name of this file is taken from the value of the \env{R_PROFILE}
-  environment variable (after \link{tilde expansion}.  If this variable
+  path of this file is taken from the value of the \env{R_PROFILE}
+  environment variable (after \link{tilde expansion}).  If this variable
   is unset, the default is \file{\var{\link{R_HOME}}/etc/Rprofile.site},
   which is used if it exists
 #ifdef unix
@@ -55,7 +55,7 @@
   executed: see the examples.
 
   Then, unless \option{--no-init-file} was given, \R searches for a user
-  profile, a file of \R code.  The name of this file can be specified by
+  profile, a file of \R code.  The path of this file can be specified by
   the \env{R_PROFILE_USER} environment variable (and
   \link{tilde expansion} will be performed).  If this is unset, a file
   called \file{.Rprofile} is searched for in the current directory or in
@@ -74,7 +74,7 @@
 
   Next, if a function \code{.First} is found on the search path,
   it is executed as \code{.First()}.  Finally, function
-  \code{.First.sys()} in the \pkg{base} package is run. This calls
+  \code{.First.sys()} in the \pkg{base} package is run.  This calls
   \code{\link{require}} to attach the default packages specified by
   \code{\link{options}("defaultPackages")}.  If the \pkg{methods}
   package is included, this will have been attached earlier (by function
@@ -99,7 +99,7 @@
 
   The command-line option \option{--vanilla} implies
   \option{--no-site-file}, \option{--no-init-file},
-  \option{--no-environ} and (except for for \command{R CMD})
+  \option{--no-environ} and (except for \command{R CMD})
   \option{--no-restore}
 #ifdef windows
   Under Windows, it also implies \option{--no-Rconsole}, which
@@ -121,7 +121,7 @@
   otherwise \code{bar}.  (If it is of the form \code{${foo}}, the
   default is \code{""}.)  This construction can be nested, so \code{bar}
   can be of the same form (as in \code{${foo-${bar-blah}}}).  Note that
-  the braces are essential: \code{$HOME} will not be interpreted.
+  the braces are essential: for example \code{$HOME} will not be interpreted.
 
   Leading and trailing white space in \code{\var{value}} are stripped.
   \code{\var{value}} is then processed in a similar way to a Unix shell:
@@ -131,8 +131,9 @@
   On systems with sub-architectures (mainly Mac OS X and Windows), the
   files \file{Renviron.site} and \file{Rprofile.site} are looked for
   first in architecture-specific directories,
-  e.g. \file{\var{\link{R_HOME}}/etc/i386/Renviron.site}.  And e.g.
-  \file{.Renviron.i386} will be used in preference to \file{.Renviron}.
+  e.g. \file{\var{\link{R_HOME}}/etc/i386/Renviron.site}.
+  And e.g. \file{.Renviron.i386} will be used in preference
+  to \file{.Renviron}.
 }
 \note{
 #ifdef unix
@@ -145,9 +146,9 @@
   distinct from \file{\var{\link{R_HOME}}/etc/Renviron.site}.
 #endif
 #ifdef windows
-  The startup options are for \command{Rgui} and \code{Rterm} but not
-  for \command{Rcmd}: attempting to use e.g. \option{--vanilla} will
-  give a warning or error.
+  The startup options are for \command{Rgui}, \command{Rterm} and
+  \code{R} but not for \command{Rcmd}: attempting to use
+  e.g. \option{--vanilla} with the latter will give a warning or error.
   
   Unix versions of \R have a file \file{\var{\link{R_HOME}}/etc/Renviron}
   which is read very early in the start-up processing.  It contains

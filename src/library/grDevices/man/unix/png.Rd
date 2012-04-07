@@ -1,6 +1,6 @@
 % File src/library/grDevices/man/unix/png.Rd
 % Part of the R package, http://www.R-project.org
-% Copyright 1995-2009 R Core Development Team
+% Copyright 1995-2011 R Core Development Team
 % Distributed under GPL 2 or later
 
 \name{png}
@@ -10,22 +10,23 @@
 \alias{bmp}
 \title{BMP, JPEG, PNG and TIFF graphics devices}
 \description{
-  Graphics devices for JPEG, PNG or TIFF format bitmap files.
+  Graphics devices for BMP, JPEG, PNG and TIFF format bitmap files.
 }
 \usage{
 bmp(filename = "Rplot\%03d.bmp",
-    width = 480, height = 480, units = "px",
-    pointsize = 12, bg = "white", res = NA, \dots,
+    width = 480, height = 480, units = "px", pointsize = 12,
+    bg = "white", res = NA, \dots,
     type = c("cairo", "Xlib", "quartz"), antialias)
 
 jpeg(filename = "Rplot\%03d.jpeg",
-     width = 480, height = 480, units = "px",
-     pointsize = 12, quality = 75, bg = "white", res = NA, \dots,
+     width = 480, height = 480, units = "px", pointsize = 12,
+     quality = 75,
+     bg = "white", res = NA, \dots,
      type = c("cairo", "Xlib", "quartz"), antialias)
 
 png(filename = "Rplot\%03d.png",
-    width = 480, height = 480, units = "px",
-    pointsize = 12, bg = "white",  res = NA, \dots,
+    width = 480, height = 480, units = "px", pointsize = 12,
+     bg = "white",  res = NA, \dots,
     type = c("cairo", "Xlib", "quartz"), antialias)
 
 tiff(filename = "Rplot\%03d.tiff",
@@ -47,14 +48,14 @@ tiff(filename = "Rplot\%03d.tiff",
     given.  Can be \code{px} (pixels, the default), \code{in} (inches),
     \code{cm} or \code{mm}.}
   \item{pointsize}{the default pointsize of plotted text, interpreted as
-    big points (1/72 inch) at \code{res} dpi.}
+    big points (1/72 inch) at \code{res} ppi.}
   \item{bg}{the initial background colour: can be overridden by setting
     par("bg").}
   \item{quality}{the \sQuote{quality} of the JPEG image, as a
     percentage.  Smaller values will give more compression but also more
     degradation of the image.}
   \item{compression}{the type of compression to be used.}
-  \item{res}{The nominal resolution in dpi which will be recorded in the
+  \item{res}{The nominal resolution in ppi which will be recorded in the
     bitmap file, if a positive integer.  Also used for \code{units}
     other than the default, and to convert points to pixels.}
   \item{\dots}{for \code{type = "Xlib"} only, additional arguments to
@@ -85,34 +86,35 @@ tiff(filename = "Rplot\%03d.tiff",
   which is their main virtue over PNG.
 
   \code{png} supports transparent backgrounds: use \code{bg =
-  "transparent"}.  Not all PNG viewers render files with transparency
-  correctly.  When transparency is in use in the \code{type = "Xlib"}
+  "transparent"}.  (Not all PNG viewers render files with transparency
+  correctly.)  When transparency is in use in the \code{type = "Xlib"}
   variant a very light grey is used as the background and so appear as
   transparent if used in the plot. This allows opaque white to be used,
   as in the example.  The \code{type = "cairo"} and \code{type =
-  "cairo1"} variants allows semi-transparent colours, including on a
+  "quartz"} variants allow semi-transparent colours, including on a
   transparent or semi-transparent background.
 
-  \code{tiff(type = "cairo")} supports semi-transparent colours,
-  including on a transparent or semi-transparent background.
+  \code{tiff} with types \code{"cairo"} and \code{"quartz"} supports
+  semi-transparent colours, including on a transparent or
+  semi-transparent background.
 
-  \R can be compiled without support for each of these devices: this
-  will be reported if you attempt to use them on a system where they are
-  not supported.  For \code{type = "Xlib"} they may not be usable unless
-  the X11 display is available to the owner of the \R process.
-  \code{type = "cairo"} requires cairo 1.2 or later.  \code{type =
-  "quartz"} uses the \code{\link{quartz}} device and so is only
-  available where that is (on some Mac OS X builds: see
+  \R can be compiled without support for some or all of the types for
+  each of these devices: this will be reported if you attempt to use
+  them on a system where they are not supported.  For \code{type =
+  "Xlib"} they may not be usable unless the X11 display is available to
+  the owner of the \R process.  \code{type = "cairo"} requires cairo 1.2
+  or later.  \code{type = "quartz"} uses the \code{\link{quartz}} device
+  and so is only available where that is (on some Mac OS X builds: see
   \code{\link{capabilities}("aqua")}).
 
   By default no resolution is recorded in the file.  Viewers will often
-  assume a nominal resolution of 72dpi when none is recorded.  As
+  assume a nominal resolution of 72ppi when none is recorded.  As
   resolutions in PNG files are recorded in pixels/metre, the reported
-  dpi value will be changed slightly.
+  ppi value will be changed slightly.
 
   For graphics parameters that make use of dimensions in inches
   (including font sizes in points) the resolution used is \code{res} (or
-  72dpi if unset).
+  72ppi if unset).
 
   \code{png} will use a palette if there are less than 256 colours on
   the page, and record a 24-bit RGB file otherwise (or a 32-bit RGBA
@@ -124,9 +126,9 @@ tiff(filename = "Rplot\%03d.tiff",
 }
 
 \section{Warnings}{
-  Note that by default the \code{width} and \code{height} are in pixels
-  not inches.  A warning will be issued if both are less than 20.
-
+  Note that by default the \code{width} and \code{height} values are in
+  pixels not inches.  A warning will be issued if both are less than 20.
+  
   If you plot more than one page on one of these devices and do not
   include something like \code{\%d} for the sequence number in
   \code{file}, the file will contain the last page plotted.
@@ -147,12 +149,9 @@ tiff(filename = "Rplot\%03d.tiff",
   \code{\link{capabilities}} to see if these devices are
   supported by this build of \R, and if \code{type = "cairo"} is supported.
 
-  \code{\link{bitmap}} provides an alternative way to generate PNG and
-  JPEG plots that does not depend on accessing the X11 display but does
-  depend on having GhostScript installed.  (Devices \code{GDD} in
-  CRAN package \pkg{GDD} and \code{CairoJPEG} / \code{CairoPNG} in CRAN
-  package \pkg{Cairo} are further alternatives using several other
-  additional pieces of software.)
+  \code{\link{bitmap}} provides an alternative way to generate plots in many
+  bitmap formats that does not depend on accessing the X11 display but does
+  depend on having GhostScript installed.
 }
 
 \section{Conventions}{
@@ -161,10 +160,11 @@ tiff(filename = "Rplot\%03d.tiff",
 
   \itemize{
     \item The default device size is in pixels.
-    \item Font sizes are in big points interpreted at \code{res} dpi.
+    \item Font sizes are in big points interpreted at \code{res} ppi.
     \item The default font family is Helvetica.
-    \item Line widths in 1/96 inch, minimum one pixel for \code{type =
-      "Xlib"}, 0.01 for \code{type = "cairo"}.
+    \item Line widths in 1/96 inch (interpreted at \code{res} ppi),
+    minimum one pixel for \code{type = "Xlib"}, 0.01 for \code{type =
+      "cairo"}.
     \item For \code{type = "Xlib"} circle radii are in pixels with
     minimum one.
     \item Colours are interpreted by the viewing application.

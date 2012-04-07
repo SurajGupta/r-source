@@ -278,7 +278,7 @@ getVignetteEncoding <-  function(file, ...)
 .getVignetteEncoding <- function(lines, convert = FALSE)
 {
     ## Look for input enc lines using inputenc or inputenx
-    ## Note, multiple languages are excluded.
+    ## Note, multiple encodings are excluded.
 
     poss <-
         grep("^[[:space:]]*\\\\usepackage\\[([[:alnum:]]+)\\]\\{inputen[cx]\\}",
@@ -303,12 +303,13 @@ getVignetteEncoding <-  function(file, ...)
                "utf8" =, "utf8x" = "UTF-8",
                "latin1" = "latin1",
                "latin2" = "latin2",
-               "latin9" = "LATIN-9", # only form known to GNU libiconv
+               "latin9" = "latin-9", # only form known to GNU libiconv
                "arabic" = "ISO-8859-6",
                "cyrillic" = "ISO-8859-5",
                "greek" = "ISO-8859-7",
                "hebrew" = "ISO-8859-8",
                "ansinew" = "CP1252",
+               "applemac" = "macroman",
                "unknown")
     } else res
 }
@@ -320,7 +321,7 @@ function(lines, tag)
 {
     meta_RE <- paste("[[:space:]]*%+[[:space:]]*\\\\Vignette", tag,
                      "\\{([^}]*)\\}", sep = "")
-    meta <- grep(meta_RE, lines, value = TRUE)
+    meta <- grep(meta_RE, lines, value = TRUE, useBytes = TRUE)
     .strip_whitespace(gsub(meta_RE, "\\1", meta))
 }
 
@@ -512,14 +513,17 @@ function(vigDeps)
 ### helper for R CMD check
 
 .run_one_vignette <-
-    function(vig_name, docDir)
+    function(vig_name, docDir, encoding = "")
 {
+    ## The idea about encodings here is that Stangle reads the
+    ## file, converts on read and outputs in the current encoding.
+    ## Then source() can assume the current encoding.
     td <- tempfile()
     dir.create(td)
     file.copy(docDir, td, recursive = TRUE)
     setwd(file.path(td, "doc"))
     result <- NULL
-    tryCatch(utils::Stangle(vig_name, quiet = TRUE),
+    tryCatch(utils::Stangle(vig_name, quiet = TRUE, encoding = encoding),
              error = function(e) result <<- conditionMessage(e))
     if(length(result)) {
         cat("\n  When tangling ", sQuote(vig_name), ":\n", sep="")
@@ -532,6 +536,7 @@ function(vigDeps)
         cat("\n  When sourcing ", sQuote(f), ":\n", sep="")
         stop(result, call. = FALSE, domain = NA)
     }
+    cat("\n *** Run successfully completed ***\n")
 }
 
 ### Local variables: ***
