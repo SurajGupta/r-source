@@ -13,12 +13,39 @@
 	**************************************************
 
 
+		CHANGES IN R VERSION 2.9.1
+
+
+BUG FIXES
+
+    o	memory.limit(size) gave a spurious error message.
+    
+    o	file.choose() and the save console dialog did not set the
+	file filters properly.
+
+    o	Rcmd INSTALL --build in 2.9.0 did not make _bundles_ in the
+	format install.packages() expected.
+
+    o	Calling setWinProgressBar() on a closed bar gives an error
+	message, rather than crashing R.  (PR#13709)
+
+    o	sprintf("%a") works better in some cases thanks to a patch to
+	trio from Ei-ji Nakama.
+
+    o	Scrolling controls (e.g. from View() and edit()) did not handle
+	large line counts well.
+
+    o	capabilities("tiff") was incorrectly being reported as FALSE
+	(due to an error in the Windows-specific config.h file).
+
+    
+
     		CHANGES IN R VERSION 2.9.0
 
 
 NEW FEATURES
 
-    o	memory.size() and memory.limits() now return rounded values.
+    o	memory.size() and memory.limit() now return rounded values.
     
     o	The Rgui preferences dialog now allows more flexible colour
     	settings, and shows a sample of what will be displayed.
@@ -71,7 +98,7 @@ NEW FEATURES
 	packages, as the latest versions it had were for R 2.7.x.
 
 
-INSTALLATIOM
+INSTALLATION
 
     o	The installer now checks for Windows 2000 or later.
 

@@ -129,7 +129,7 @@ setting of @code{umask} whilst building and installing.)
 @node Getting patched and development versions,  , Getting and unpacking the sources, Obtaining R
 @section Getting patched and development versions
 
-A patched version of the current release, @samp{r-patched} and the
+A patched version of the current release, @samp{r-patched}, and the
 current development version, @samp{r-devel}, are available as daily
 tarballs and via access to the R Subversion repository.  (For the two
 weeks prior to the release of a minor (2.x.0) version, @samp{r-patched}
@@ -1176,9 +1176,17 @@ make myR IMAGEDIR=rootdir
 
 @noindent
 where @file{rootdir} is the path to the root of the customized
-installation (forward slashes and no spaces, please).  This creates an
-executable with the standard name, @file{@value{RWVERSION}-win32.exe}, so
-please rename it to indicate that it is customized.
+installation (forward slashes and no spaces, please).  
+
+Both methods create an executable with the standard name,
+@file{@value{RWVERSION}-win32.exe}, so please rename it to indicate that
+it is customized.  If you intend to @emph{distribute} a customized
+installer please do check that license requirements are met -- note that
+the installer will (unless modified) state that the contents are
+distributed under GPL-2 and this has a requirement for supplying the
+sources (including the R sources even if you started with a binary
+distribution of R).
+
 
 The defaults for the startup parameters may also be customized.  For example
 
@@ -2335,7 +2343,8 @@ suitable code can be compiled.  These tests will fail if
 @code{Gtk+} 2.8 or later installed will have suitable libraries, but
 some (e.g.@: Solaris 10) may need @code{cairo} added separately.  Mac OS
 X comes with none of these libraries, but @code{cairo} support has been
-added to the binary distribution.
+added to the binary distribution: @code{pkg-config} is still needed and
+can be compiled from the sources.
 
 For the best font experience with these devices you need suitable fonts
 installed: Linux users will want the @code{urw-fonts} package.  Another
@@ -3424,9 +3433,10 @@ on @cputype{x86_64} with Fedora 8 we used
 
 @example
 CC="gcc -m32"
-CXXFLAGS="-m32 -O2 -g" 
-FFLAGS="-m32 -O2 -g"
-FCFLAGS="-m32 -O2 -g"
+CXX="g++ -m32"
+F77="gfortran -m32"
+FC=$@{F77@}
+OBJC=$@{CC@}
 LDFLAGS="-L/usr/local/lib"
 LIBnn=lib
 @end example

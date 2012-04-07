@@ -927,8 +927,8 @@ data.frame <-
             if(N > nrows)
                 stop(gettextf("replacement has %d rows, data has %d", N, nrows),
                      domain = NA)
-            if(N < nrows && N > 0L)
-                if(nrows %% N == 0L && length(dim(value)) <= 1L)
+            if(N < nrows)
+                if(N > 0L && (nrows %% N == 0L) && length(dim(value)) <= 1L)
                     value <- rep(value, length.out = nrows)
                 else
                     stop(gettextf("replacement has %d rows, data has %d",
@@ -1001,7 +1001,7 @@ data.frame <-
 }
 
 ## added in 1.8.0
-"$<-.data.frame"<- function(x, i, value)
+"$<-.data.frame"<- function(x, name, value)
 {
     cl <- oldClass(x)
     ## delete class: Version 3 idiom
@@ -1015,15 +1015,15 @@ data.frame <-
         if(N > nrows)
             stop(gettextf("replacement has %d rows, data has %d", N, nrows),
                  domain = NA)
-        if(N < nrows && N > 0L)
-            if(nrows %% N == 0L && length(dim(value)) <= 1L)
+        if (N < nrows)
+            if (N > 0L && (nrows %% N == 0L) && length(dim(value)) <= 1L)
                 value <- rep(value, length.out = nrows)
             else
                 stop(gettextf("replacement has %d rows, data has %d", N, nrows),
                      domain = NA)
         if(is.atomic(value)) names(value) <- NULL
     }
-    x[[i]] <- value
+    x[[name]] <- value
     class(x) <- cl
     return(x)
 }

@@ -174,15 +174,15 @@ update.packages <- function(lib.loc = NULL, repos = getOption("repos"),
         available <- available.packages(contriburl = contriburl,
                                         method = method)
     if(is.null(oldPkgs)) {
+        ## since 'available' is supplied, 'contriburl' and 'method' are unused
 	oldPkgs <- old.packages(lib.loc = lib.loc,
-				contriburl = contriburl,
-				method = method,
+				contriburl = contriburl, method = method,
 				available = available, checkBuilt = checkBuilt)
 	if(is.null(oldPkgs))
 	    return(invisible())
     }
     else if(!(is.matrix(oldPkgs) && is.character(oldPkgs)))
-	stop("invalid 'oldPkgs'; must be as result from old.packages()")
+	stop("invalid 'oldPkgs'; must be a result from old.packages()")
 
     if(is.character(ask) && ask == "graphics") {
         if(.Platform$OS.type == "unix" && .Platform$GUI != "AQUA"
@@ -191,7 +191,7 @@ update.packages <- function(lib.loc = NULL, repos = getOption("repos"),
                                        title = "Packages to be updated")
             update <- oldPkgs[match(k, oldPkgs[,1L]), , drop=FALSE]
         } else if(.Platform$OS.type == "windows" || .Platform$GUI == "AQUA") {
-            k <- select.list(oldPkgs[,1], oldPkgs[,1], multiple = TRUE,
+            k <- select.list(oldPkgs[,1L], oldPkgs[,1L], multiple = TRUE,
                              title = "Packages to be updated")
             update <- oldPkgs[match(k, oldPkgs[,1L]), , drop=FALSE]
         } else update <- text.select(oldPkgs)
@@ -201,11 +201,11 @@ update.packages <- function(lib.loc = NULL, repos = getOption("repos"),
 
 
     if(!is.null(update)) {
-        if(is.null(instlib)) instlib <-  update[,"LibPath"]
+        if(is.null(instlib)) instlib <-  update[, "LibPath"]
         ## do this a library at a time, to handle dependencies correctly.
         libs <- unique(instlib)
         for(l in libs)
-            install.packages(update[instlib == l ,"Package"], l,
+            install.packages(update[instlib == l , "Package"], l,
                              contriburl = contriburl, method = method,
                              available = available, ..., type = type)
     }
@@ -219,31 +219,17 @@ old.packages <- function(lib.loc = NULL, repos = getOption("repos"),
     if(is.null(lib.loc))
         lib.loc <- .libPaths()
     if(!missing(instPkgs)) {
-        if(!is.matrix(instPkgs) || !is.character(instPkgs[,"Package"]))
+        ## actually we need rather more than this
+        if(!is.matrix(instPkgs) || !is.character(instPkgs[, "Package"]))
             stop("illformed 'instPkgs' matrix")
     }
     if(NROW(instPkgs) == 0L) return(NULL)
-    ##    stop(gettextf("no installed packages for (invalid?) 'lib.loc=%s'",
-    ##                  lib.loc), domain = NA)
-    if(is.null(available))
-        available <- available.packages(contriburl = contriburl,
-                                        method = method)
-    available <- .remove_stale_dups(available)
 
-    ## For bundles it is sufficient to install the first package
-    ## contained in the bundle, as this will install the complete bundle
-    ## However, a bundle might be installed in more than one place.
-    for(b in unique(instPkgs[, "Bundle"])){
-        if(!is.na(b))
-            for (w in unique(instPkgs[, "LibPath"])) {
-                ok <- which(instPkgs[, "Bundle"] == b & instPkgs[, "LibPath"] == w)
-                if(length(ok) > 1L) instPkgs <- instPkgs[-ok[-1L], ]
-            }
-    }
+    available <- if(is.null(available))
+        available.packages(contriburl = contriburl, method = method)
+    else .remove_stale_dups(available)
 
-    ## for packages contained in bundles use bundle names from now on
-    ok <- !is.na(instPkgs[, "Bundle"])
-    instPkgs[ok, "Package"] <- instPkgs[ok, "Bundle"]
+    ## This should be true in the PACKAGES file, is on CRAN
     ok <- !is.na(available[, "Bundle"])
     available[ok, "Package"] <- available[ok, "Bundle"]
 
@@ -253,8 +239,16 @@ old.packages <- function(lib.loc = NULL, repos = getOption("repos"),
     minorR[[c(1L, 3L)]] <- 0L # set patchlevel to 0
     for(k in 1L:nrow(instPkgs)) {
         if (instPkgs[k, "Priority"] %in% "base") next
-        z <- match(instPkgs[k, "Package"], available[,"Package"])
-        if(is.na(z)) next
+        z <- match(instPkgs[k, "Package"], available[, "Package"])
+        if(is.na(z)) {
+            bundle <- instPkgs[k, "Bundle"]
+            if(!is.na(bundle)) {
+                ## no match to the package, so look for update to the bundle
+                z <- match(bundle, available[, "Package"])
+                if(is.na(z)) next
+                instPkgs[k, "Package"] <- bundle
+            } else next
+        }
         onRepos <- available[z, ]
         ## works OK if Built: is missing (which it should not be)
 	if((!checkBuilt || package_version(instPkgs[k, "Built"]) >= minorR) &&
@@ -277,7 +271,8 @@ old.packages <- function(lib.loc = NULL, repos = getOption("repos"),
         colnames(update) <- c("Package", "LibPath", "Installed", "Built",
                               "ReposVer", "Repository")
     rownames(update) <- update[, "Package"]
-    update
+    ## finally, remove duplicate rows (which bundles may give)
+    update[!duplicated(update), , drop = FALSE]
 }
 
 new.packages <- function(lib.loc = NULL, repos = getOption("repos"),
@@ -294,32 +289,19 @@ new.packages <- function(lib.loc = NULL, repos = getOption("repos"),
     if(is.null(available))
         available <- available.packages(contriburl = contriburl,
                                         method = method)
-    ## For packages contained in bundles use bundle names from now on.
-    ## We used not to have enough information to know if they are complete,
-    ## as they may be out of date and the contents may have changed
-    ## However, as from 2.1.0 we install the Contains: field.
-    ok <- !is.na(instPkgs[, "Bundle"])
-    if(any(ok)) { # we have at least one bundle installed
-        for(b in unique(instPkgs[ok, "Bundle"]))
-            if(!is.na(b)) {
-                if(! b %in% rownames(available)) next
-                ok1 <- which(instPkgs[, "Bundle"] == b)
-                contains <- instPkgs[ok1[1L], "Contains"]
-                if(!is.na(contains)) {
-                    contains <- strsplit(contains, "[[:space:]]+")[[1L]]
-                    if(!all(contains %in% instPkgs[ok1, "Package"]))
-                        warning(gettextf("bundle '%s' is incompletely installed", b), domain = NA)
-                }
-                new <- setdiff(strsplit(available[b, "Contains"], "[[:space:]]+")[[1L]],
-                               instPkgs[ok1, "Package"])
-                if(length(new))
-                    warning(gettextf("bundle '%s' has extra contents %s", b,
-                                     paste(sQuote(new), collapse = ", ")),
-                            domain = NA)
-            }
-    }
-    instPkgs[ok, "Package"] <- instPkgs[ok, "Bundle"]
+
     installed <- unique(instPkgs[, "Package"])
+
+    ## We need to work out what to do with bundles, and unfortunately some
+    ## people have used the same name for a bundle and a package (both as
+    ## one of the components and replacing a package by a bundle or v.v.).
+    ## Since 'available' will have names of bundles or single packages, we
+    ## add the bundle names to the list of installed packages: this means
+    ## that if there is a package installed with the name of a bundle, the
+    ## bundle is regarded as installed.
+    ok <- !is.na(instPkgs[, "Bundle"])
+    if(any(ok)) installed <- c(installed, unique(instPkgs[ok, "Bundle"]))
+
     poss <- sort(unique(available[ ,"Package"])) # sort in local locale
     res <- setdiff(poss, installed)
 
@@ -468,6 +450,8 @@ remove.packages <- function(pkgs, lib)
         warning(gettextf("argument 'lib' is missing: using %s", lib),
                 immediate. = TRUE, domain = NA)
     }
+    ## For bundles, remove all of the bundle.  This should remain
+    ## this way even if bundles are unbundled, for back compatibility.
     have <- installed.packages(lib.loc=lib)
     is_bundle <- pkgs %in% have[, "Bundle"]
     pkgs0 <- pkgs; pkgs <- pkgs[!is_bundle]
@@ -500,6 +484,8 @@ download.packages <- function(pkgs, destdir, available = NULL,
     retval <- matrix(character(0L), 0L, 2L)
     for(p in unique(pkgs))
     {
+        ## Normally bundles have a Package field of the same name, but
+        ## allow for repositories that do not.
         ok <- (available[,"Package"] == p) | (available[,"Bundle"] == p)
         ok <- ok & !is.na(ok)
         if(!any(ok))
@@ -712,12 +698,10 @@ compareVersion <- function(a, b)
 .find_bundles <- function(available, all=TRUE)
 {
     ## Sort out bundles. Returns a named list of character vectors
+    ## Once upon a time all=TRUE told it about the VR bundle.
+    ## which might not have been in 'available' on Windows.
     bundles <- available[!is.na(available[, "Bundle"]), "Contains"]
-    ans <- strsplit(bundles, "[[:space:]]+")
-    ## As VR is recommended, it may not be the same version
-    ## as on CRAN (and for Windows etc may not be there).
-    if(all) ans$VR <- c("MASS", "class", "nnet","spatial")
-    ans
+    strsplit(bundles, "[[:space:]]+")
 }
 
 .clean_up_dependencies <- function(x, available = NULL)
@@ -869,5 +853,6 @@ function(pkgs, available, dependencies = c("Depends", "Imports"))
         stale_dups[i:end_i] <- wh
         i <- end_i + 1L
     }
-    if(length(stale_dups)) ap[-stale_dups, ] else ap
+    ## Possible to have only one package in a repository
+    if(length(stale_dups)) ap[-stale_dups, , drop = FALSE] else ap
 }

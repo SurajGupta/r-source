@@ -225,7 +225,7 @@ span.env{font-family: monospace}
 
 <p>This is a guide to installation and administration for R.
 
-   <p>The current version of this document is 2.9.0 (2009-04-17).
+   <p>The current version of this document is 2.9.1 (2009-06-26).
 
    <p>ISBN 3-900051-09-7
 
@@ -267,7 +267,7 @@ setting of <code>umask</code> whilst building and installing.)
 
 <h3 class="section">1.2 Getting patched and development versions</h3>
 
-<p>A patched version of the current release, &lsquo;<samp><span class="samp">r-patched</span></samp>&rsquo; and the
+<p>A patched version of the current release, &lsquo;<samp><span class="samp">r-patched</span></samp>&rsquo;, and the
 current development version, &lsquo;<samp><span class="samp">r-devel</span></samp>&rsquo;, are available as daily
 tarballs and via access to the R Subversion repository.  (For the two
 weeks prior to the release of a minor (2.x.0) version, &lsquo;<samp><span class="samp">r-patched</span></samp>&rsquo;
@@ -618,7 +618,7 @@ specified on the <samp><span class="command">make install</span></samp> command 
 <code>libdir</code>.  The C header files can be installed to the value of
 <code>rincludedir</code>: note that as the headers are not installed into a
 subdirectory you probably want something like
-<code>rincludedir=/usr/local/include/R-2.9.0</code>.
+<code>rincludedir=/usr/local/include/R-2.9.1</code>.
 
    <p>If you want the R home to be something other than
 <samp><var>libdir</var><span class="file">/R</span></samp>, use <samp><span class="option">rhome</span></samp>: for example
@@ -848,7 +848,7 @@ from <acronym>CRAN</acronym> to run on Windows 2000 or later on ix86 CPUs
    <p>Your file system must allow long file names (as is likely except
 perhaps for some network-mounted systems).
 
-   <p>Installation is <em>via</em> the installer <samp><span class="file">R-2.9.0-win32.exe</span></samp>. 
+   <p>Installation is <em>via</em> the installer <samp><span class="file">R-2.9.1-win32.exe</span></samp>. 
 Just double-click on the icon and follow the instructions.  You can
 uninstall R from the Control Panel.  (Note that you will probably
 (depending on the Windows language settings) be asked to choose a
@@ -885,11 +885,11 @@ will call this directory <var>R_HOME</var> below.
 
 <p>You need to collect the following sets of files:
      <ul>
-<li>Get the R source code <samp><span class="file">R-2.9.0.tar.gz</span></samp> from
+<li>Get the R source code <samp><span class="file">R-2.9.1.tar.gz</span></samp> from
 <acronym>CRAN</acronym>.  Open a command window (or another shell) at
 directory <var>R_HOME</var>, and run
 
-     <pre class="example">          tar zxvf R-2.9.0.tar.gz
+     <pre class="example">          tar zxvf R-2.9.1.tar.gz
 </pre>
      <p class="noindent">to create the source tree in <var>R_HOME</var>.  <strong>Beware</strong>: do use
 <samp><span class="command">tar</span></samp> to extract the sources rather than tools such as WinZip
@@ -1122,9 +1122,16 @@ customizations to that installation.  Then in
 <pre class="example">     make myR IMAGEDIR=rootdir
 </pre>
    <p class="noindent">where <samp><span class="file">rootdir</span></samp> is the path to the root of the customized
-installation (forward slashes and no spaces, please).  This creates an
-executable with the standard name, <samp><span class="file">R-2.9.0-win32.exe</span></samp>, so
-please rename it to indicate that it is customized.
+installation (forward slashes and no spaces, please).
+
+   <p>Both methods create an executable with the standard name,
+<samp><span class="file">R-2.9.1-win32.exe</span></samp>, so please rename it to indicate that
+it is customized.  If you intend to <em>distribute</em> a customized
+installer please do check that license requirements are met &ndash; note that
+the installer will (unless modified) state that the contents are
+distributed under GPL-2 and this has a requirement for supplying the
+sources (including the R sources even if you started with a binary
+distribution of R).
 
    <p>The defaults for the startup parameters may also be customized.  For example
 
@@ -1209,7 +1216,7 @@ binaries for Mac OS X for a base distribution and a large number of
 add-on packages from <acronym>CRAN</acronym> to run on Mac OS X version 10.4.4 or
 higher.
 
-   <p>The simplest way is to use <samp><span class="file">R-2.9.0.dmg</span></samp>.  Just
+   <p>The simplest way is to use <samp><span class="file">R-2.9.1.dmg</span></samp>.  Just
 double-click on the icon and the disk image file will be mounted. Read
 the <samp><span class="file">ReadMe.txt</span></samp> inside the disk image and follow the instructions.
 
@@ -1224,8 +1231,8 @@ mentioned <a href="http://CRAN.R-project.org/bin/macosx/RMacOSX-FAQ.html">R for 
 and install some tools as explained in the document.  Then you have to
 expand the R sources and configure R appropriately, for example
 
-<pre class="example">     tar zxvf R-2.9.0.tar.gz
-     cd R-2.9.0
+<pre class="example">     tar zxvf R-2.9.1.tar.gz
+     cd R-2.9.1
      ./configure --with-blas='-framework vecLib' --with-lapack --with-ICU \
        --with-aqua --enable-R-framework
      make
@@ -2124,7 +2131,8 @@ suitable code can be compiled.  These tests will fail if
 <code>Gtk+</code> 2.8 or later installed will have suitable libraries, but
 some (e.g. Solaris 10) may need <code>cairo</code> added separately.  Mac OS
 X comes with none of these libraries, but <code>cairo</code> support has been
-added to the binary distribution.
+added to the binary distribution: <code>pkg-config</code> is still needed and
+can be compiled from the sources.
 
    <p>For the best font experience with these devices you need suitable fonts
 installed: Linux users will want the <code>urw-fonts</code> package.  Another
@@ -3053,9 +3061,10 @@ libraries in <samp><span class="file">/usr/local/lib64</span></samp>.  To build 
 on &lsquo;<samp><span class="samp">x86_64</span></samp>&rsquo; with Fedora 8 we used
 
 <pre class="example">     CC="gcc -m32"
-     CXXFLAGS="-m32 -O2 -g"
-     FFLAGS="-m32 -O2 -g"
-     FCFLAGS="-m32 -O2 -g"
+     CXX="g++ -m32"
+     F77="gfortran -m32"
+     FC=${F77}
+     OBJC=${CC}
      LDFLAGS="-L/usr/local/lib"
      LIBnn=lib
 </pre>
@@ -4044,7 +4053,7 @@ but no compiled code, only the first two of these are needed.
 
    <p>A complete build of R including compiled <acronym>HTML</acronym> help files and
 PDF manuals, and producing the standalone installer
-<samp><span class="file">R-2.9.0-win32.exe</span></samp> will also need the following:
+<samp><span class="file">R-2.9.1-win32.exe</span></samp> will also need the following:
      <ul>
 <li>The Microsoft <acronym>HTML</acronym> Help Workshop
 <li>LaTeX
@@ -4134,7 +4143,7 @@ suitably; ensure you have the required fonts installed.
 
 <h3 class="section">E.4 The Inno Setup installer</h3>
 
-<p>To make the installer package (<samp><span class="file">R-2.9.0-win32.exe</span></samp>) we
+<p>To make the installer package (<samp><span class="file">R-2.9.1-win32.exe</span></samp>) we
 require Inno Setup 5.1.7 or later (including 5.2.x) from
 <a href="http://jrsoftware.org/">http://jrsoftware.org/</a>.  This is <em>not</em> included in
 <samp><span class="file">Rtools.exe</span></samp>.

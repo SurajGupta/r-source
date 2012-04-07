@@ -52,6 +52,8 @@ parse_Rd <- function(file, srcfile = NULL, encoding = "unknown",
             if(encoding == "unknown") encoding <- "UTF-8"
             lines <- iconv(lines, enc, encoding, sub = "byte")
         }
+    } else {
+    	enc <- encoding
     }
     ## The parser is fine with encodings in which ASCII bytes mean ASCII
     ## All known 8-bit encodings and UTF-8 meet that requirement
@@ -67,6 +69,7 @@ parse_Rd <- function(file, srcfile = NULL, encoding = "unknown",
     if (!inherits(srcfile, "srcfile")) 
     	srcfile <- srcfile(file0)
     basename <- basename(srcfile$filename)
+    srcfile$encoding <- enc
     .Internal(parse_Rd(tcon, srcfile, encoding, verbose, basename))
 }
 
@@ -75,6 +78,8 @@ print.Rd <- function(x, ...) {
 }
 
 as.character.Rd <- function(x, ...) {
+    TWOARG <- c("\\section", "\\item", "\\enc", "\\method", "\\S3method", 
+                "\\S4method", "\\tabular", "\\deqn", "\\eqn")
     pr <- function(x) {
         tag <- attr(x, "Rd_tag")
         if (is.null(tag) || tag == "LIST") tag <- ""
@@ -87,6 +92,9 @@ as.character.Rd <- function(x, ...) {
     	    	x <- x[[2L]]
     	    	for (i in seq_along(x)) result <- c(result, pr(x[[i]]))
     	    	result <- c(result, "#endif\n")
+    	    } else if (tag %in% TWOARG) {
+    	    	result <- tag
+    	    	for (i in seq_along(x)) result <- c(result, pr(x[[i]]))
     	    } else {
     	    	result <- tag
     	    	if (!is.null(option <- attr(x, "Rd_option"))) 

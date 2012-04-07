@@ -970,6 +970,9 @@ SEXP deparse1s(SEXP call);
 int DispatchOrEval(SEXP, SEXP, const char *, SEXP, SEXP, SEXP*, int, int);
 int DispatchGroup(const char *, SEXP,SEXP,SEXP,SEXP,SEXP*);
 SEXP duplicated(SEXP, Rboolean);
+SEXP duplicated3(SEXP, SEXP, Rboolean);
+int any_duplicated(SEXP, Rboolean);
+int any_duplicated3(SEXP, SEXP, Rboolean);
 SEXP dynamicfindVar(SEXP, RCNTXT*);
 void endcontext(RCNTXT*);
 int envlength(SEXP);
@@ -1206,11 +1209,10 @@ extern char *locale2charset(const char *);
 #endif
 #define gettext_noop(String) String
 #define N_(String) gettext_noop (String)
-#define P_(StringS, StringP, N) ngettext (StringS, StringP, N)
 #else /* not NLS */
 #define _(String) (String)
 #define N_(String) String
-#define P_(String, StringP, N) (N > 1 ? StringP: String)
+#define ngettext(String, StringP, N) (N > 1 ? StringP: String)
 #endif
 
 

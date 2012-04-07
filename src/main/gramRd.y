@@ -900,12 +900,16 @@ static int token(void)
     	    if (!xxinEqn && yylloc.first_column == 1) return mkIfdef(c);
     	    break;
     	case LBRACE:
-    	    if (!xxinRString) xxbraceDepth++;
-    	    if (outsideLiteral) return c;
+    	    if (!xxinRString) {
+    	    	xxbraceDepth++;
+    	    	if (outsideLiteral) return c;
+    	    }
     	    break;
     	case RBRACE:
-    	    if (!xxinRString) xxbraceDepth--;
-    	    if (outsideLiteral || xxbraceDepth == 0) return c;
+    	    if (!xxinRString) {
+    	    	xxbraceDepth--;
+    	    	if (outsideLiteral || xxbraceDepth == 0) return c;
+    	    }
     	    break;
     	case '[':
     	case ']':
@@ -986,8 +990,8 @@ static int mkCode(int c)
     char *stext = st0, *bp = st0;
     
     /* Avoid double counting initial braces */
-    if (c == LBRACE) xxbraceDepth--;
-    if (c == RBRACE) xxbraceDepth++; 
+    if (c == LBRACE && !xxinRString) xxbraceDepth--;
+    if (c == RBRACE && !xxinRString) xxbraceDepth++; 
     
     while(1) {
 	int escaped = 0;
@@ -1025,12 +1029,20 @@ static int mkCode(int c)
     	} else {
     	    if (c == '#') {
     	    	do {
+    	    	    int escaped = 0;
     	    	    TEXT_PUSH(c);
     	    	    c = xxgetc();
-    	    	    if (c == LBRACE) xxbraceDepth++;
-    	    	    else if (c == RBRACE) xxbraceDepth--;
+    	    	    if (c == '\\') {
+		        int lookahead = xxgetc();
+		        if (lookahead == '\\' || lookahead == '%' || lookahead == LBRACE || lookahead == RBRACE) {
+		            c = lookahead;
+		            escaped = 1;
+		        } else xxungetc(lookahead);
+    		    }
+    	    	    if (c == LBRACE && !escaped) xxbraceDepth++;
+    	    	    else if (c == RBRACE && !escaped) xxbraceDepth--;
     	    	} while (c != '\n' && c != R_EOF && xxbraceDepth > 0);
-    	    	if (c == RBRACE) xxbraceDepth++; /* avoid double counting */
+    	    	if (c == RBRACE && !escaped) xxbraceDepth++; /* avoid double counting */
     	    }
     	    if (c == '\'' || c == '"' || c == '`') {
     	    	xxinRString = c;

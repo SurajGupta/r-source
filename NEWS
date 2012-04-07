@@ -6,12 +6,214 @@
 	**************************************************
 
 
+		CHANGES IN R VERSION 2.9.1
+
+
+NEW FEATURES
+
+    o	New function anyDuplicated(x) returns 0 (= FALSE) or the index
+	of the first duplicated entry of x.
+
+    o	matplot(), matlines() and matpoints() now also obey a 'lend'
+	argument, determining line end styles. (Wish of PR#13619).
+
+    o	bw.SJ(), bw.bcv() and bw.ucv() now gain an optional 'tol'
+	argument allowing more accurate estimates.
+
+    o	new.packages() no longer regards packages with the same name
+	as a member of an installed bundle as 'new' (this is now
+	consistent with the dependency checks in install.packages()).
+
+	It no longer reports on partially installed bundles (since
+	members can be updated individually if a bundle is unbundled).
+
+    o	old.packages() and hence updates.packages() will look for
+	updates to members of package bundles before updates to the
+	whole bundle: this allow bundles to be split and installations
+	updated.
+
+    o	nlminb() gives better non-convergence messages in some cases.
+
+    o	S3 method dispatch will support S4 class inheritance for S3
+	methods, for primitives and via UseMethod(), if the argument
+	S3methods=TRUE is given to setClass().  S4 method dispatch
+	will use S3 per-object inheritance if S3Class() is set on the
+	object.  See ?Methods and the paper referenced there.
+
+    o	R CMD INSTALL is more tolerant of (malformed) packages with a
+	'man' directory but no validly named .Rd files.
+
+    o	R CMD check now reports where options are used that cause some
+	of the checks to be skipped.
+	
+    o	RSiteSearch has been updated to be consistent with the new
+	layout of the search site itself, which now includes separate
+	options for vignettes, views, and r-sig-mixed-models, as well
+	as changed names for r-help. (Contributed by Jonathan Baron.)
+
+    o	That R CMD check makes use of a
+	<pkg>/tests/Examples/<pkg>-Ex.Rout.save file as a reference
+	result is now documented in 'Writing R Extensions'.
+
+
+DEPRECATED & DEFUNCT
+
+    o	print.atomic() (defunct since 1.9.0) has been removed since it
+	caused confusion for an S4 class union "atomic".
+
+    o	png(type="cairo1") is deprecated -- it was only needed for
+	platforms with 1.0 <= cairo < 1.2.
+
+
+BUG FIXES
+
+    o	The ... argument was not handled properly when ... was found
+	in the enclosure of the current function, rather than in the
+	function header itself.	 (This caused integrate() to fail in
+	certain cases.)
+
+    o	col2rgb("#00000080", TRUE) would return the background colour.
+	(Reported by Hadley Wickham.)
+
+    o	interaction() now ensures that the levels of the result are unique.
+
+    o	packageDescription() and hence sessionInfo() now report the correct
+	package version also for a non-attached loaded namespace of
+	a version different from the default lib.loc.
+
+    o	smoothScatter() now also works when e.g. xlim[2] < xlim[1].
+
+    o	Invalid use of sprintf() such as sprintf("%S%") now give an error
+	instead of a segmentation fault, as do very unusual cases such as
+	sprintf("%s", tryCatch(stop(), error=identity)).  (It was
+	always documented that misuse could crash R in
+	platform-dependent ways.)
+
+    o	parse_Rd() would mishandle braces when they occurred at
+	the start of a line within an R string in an Rd file (reported
+	by Alex Couture-Beil) or when they occurred in an R comment
+	(reported by Mark Bravington).
+
+    o	readNEWS() missed version numbers with more than one digit.
+
+    o	building R --without-x no longer fails (PR#13665)
+
+    o	printCoefmat(cbind(0,1)) now works too (PR#13677)
+
+    o	bw.SJ(c(1:99, 1e6)) now works too.
+
+    o	Rd2txt() could not handle empty descriptions of items in an Rd
+	file (reported by Mark Bravington), and did not wrap long lists
+	of arguments if they were given in a single item.
+
+    o	stars() would do a partial plot when called with plot = FALSE;
+	it now consistently returns the locations of the stars.
+
+    o	Rd2latex() could not handle empty sections.
+
+    o	old.packages() and hence update.packages() would fail on a
+	repository which contained only one package but with multiple
+	versions of that package.
+
+    o	as.character.Rd() added extra braces when displaying two-argument
+	macros.	 (Report and fix by Manuel Eugster.)
+
+    o	unsplit() was misbehaving in the case of single-column data
+	frames. (Reported by Will Gray.)
+
+    o	as(I(1), "vector") and similar coercions from objects of
+	"unregistered" S3 classes now work.
+
+    o	srcref records produced by parse() and parse_Rd() did not record
+	the encoding of the source file.  (Reported by Romain Francois.)
+
+    o	The X11 version of View() was misbehaving in MBCS locales, and
+	PgUp/PgDn now behave better, thanks to a patch from Ei-ji Nakama.
+
+    o	R CMD check looked at the environment variable PDFLATEX, but
+	as from R 2.8.1 R CMD Rd2dvi used R_PDFLATEXCMD in
+	preference, and that was set by R CMD (and not PDFLATEX).  Now
+	R CMD check looks at R_PDFLATEXCMD.
+
+    o	sprintf() now signals an error when the result of single format
+	specification would be longer than the limit (8192 bytes); it would
+	return "somewhat random" results or segfault previously. (PR#13667)
+	Further, arguments of type "language" or "symbol" are no longer
+	allowed, as these, e.g., sprintf("%s", quote(list())), typically
+	lead to unexpected results or hard to understand error messages.
+
+    o	The new (in 2.9.0) 'stringsAsFactors' argument to expand.grid()
+	was not working: it now does work but has default TRUE for
+	backwards compatibility.
+
+    o	tcrossprod(<1d-array>, <matrix>) now does work when the arguments
+	are of compatible dimensions.
+
+    o	qbinom() now is accurate also in (large size, small prob)
+	cases.  (PR#13711)
+
+    o	The calculation of the Spearman p-value in cor.test() is
+	slightly more accurate in some cases.  (PR#13574)
+
+    o	The digamma(), trigamma() and psigamma() functions could be
+	inaccurate for values of x around 1e-15 due to cancellation.
+	(PR#13714).
+
+    o	median.default() was altered in 2.8.1 to use sum() rather
+	than mean(), although it was still documented to use mean().
+	This caused problems for POSIXt objects, for which mean() but
+	not sum() makes sense, so the change has been reverted.
+
+    o	Assigning an extra 0-length column to a data frame by
+    	DF$foo <- value gave a corrupt data frame rather than failing.
+	(PR#13724)  This also happened for DF[["foo"]] <- value.
+
+    o	R CMD INSTALL no longer gives a spurious warning about old R
+	versions ignoring multiple dependencies, if the conditions are
+	known to be satisfied.
+
+    o	The test for setting dim() allowed a value with two or more
+	NAs to be set on a 0-length object.  (PR#13729)  Also, it
+	allowed an even number of negative values.
+
+    o	xtfrm(), rank(), sort() and order() did not always make use of
+	custom comparison methods specific to the class of elements
+	being sorted.
+
+    o	Increase NAMED value on 'seq' value in for() loop so loop code
+	cannot modify 'seq' value.
+
+    o	Prevent rectangles of size < 0.5 pixel from disappearing in
+	Quartz when using rastered backend.  (PR#13744)
+
+    o	Printing _NA_complex_ had a low-level thinko; patch thanks to
+	Bill Dunlap.
+
+    o	CP1257 encoding for postscript/PDF has been corrected.  (PR#13736)
+
+    o	aov() with an error term was evaluating the ... arguments in
+	2.9.0 whilst checking their names, so could fail by evaluating
+	them in the wrong place.  (PR#13733)
+
+    o	The print() method for arima() failed if all coefs were fixed.
+
+    o	R CMD INSTALL --no-latex was not implemented in 2.9.0 (only).
+
+    o	Added a needed PROTECT call in RunFinalizers to handle cases where
+	the routine is called recursively from a GC in a finalizer.
+
+    o	Constructing error messages about unused arguments in calls to
+	closures no longer evaluates the arguments.
+
+    o   qr(x, LAPACK=TRUE) did not coerce integer x to numeric.
+
+    o   qr.coef() misbehaved in the LAPACK case with a matrix RHS, so
+        that solve(qr(x, LAPACK=TRUE)) gave wrong results. (Found by
+        Avraham Adler, PR#13762 by Ravi Varadhan.)
+
+
+
 		CHANGES IN R VERSION 2.9.0
-
-
-SIGNIFICANT USER-VISIBLE CHANGES
-
-    o	expand.grid() by default no longer coerces strings into factors.
 
 
 NEW FEATURES
@@ -53,12 +255,12 @@ NEW FEATURES
 	avoid passing invalid formats to the OS (which have a tendency
 	to crash under such inputs).
 
-    o	expand.grid() gains a 'stringsAsFactor' argument to ask for
+    o	expand.grid() gains a 'stringsAsFactors' argument to ask for
 	automatic conversion of character vectors to factors (which
-	happened for many years but was not previously documented, and
-	is no longer the default).
+	happened for many years but was not previously documented).
+	[This did not actually work prior to R 2.9.1.]
 
-    o	bxp() now coputes the 'ylim' including the outliers only if
+    o	bxp() now computes the 'ylim' including the outliers only if
 	'outline = TRUE'.  (Wish of PR#13196)
 
     o	barplot() gains a 'args.legend' argument.  (Wish of PR#13265).
@@ -211,7 +413,7 @@ NEW FEATURES
     	was checked when the package was installed.  .packages() only
     	considers such packages to be validly installed (any others
     	were installed in a long-obsolete version of R).  Both changes
-    	speed up searches in libraries of thousands of packages().
+    	speed up searches in libraries of thousands of packages.
 
     o	boxplot() uses butt line endings for its median line
 	(suggestion of Uwe Ligges, PR#13553).
@@ -244,13 +446,13 @@ NEW FEATURES
     o	unlink() is now able to remove broken symbolic links on
 	Unix-alikes.
 
-    o	New selectSuperClasses() utility.
+    o	New selectSuperClasses() utility in package 'methods'.
 
     o	HoltWinters() now allows parameters alpha and beta to be fixed
 	at 0 and hence beta = FALSE and gamma = FALSE are used to
 	specify restricted models.
 
-    o	A new function smoothScatter has been added to package
+    o	A new function smoothScatter() has been added to package
 	'graphics'.  It is appropriate for very dense scatter plots
 	and uses density estimation and color to reflect density of
 	plotting.
@@ -510,7 +712,7 @@ BUG FIXES
 	Also,  c(as.raw(12), TRUE) or c(raw(3), pi) do.
 
     o	duplicated(<data frame>, incomparables = NA) now gives the
-	intended error message.
+	intended error message. (PR#13632)
 
     o   name handling of as.data.frame() has been sanitized somewhat
 
@@ -1450,7 +1652,6 @@ BUG FIXES
 	*	       2.7 SERIES NEWS			 *
 	*						 *
 	**************************************************
-
 
 
 		CHANGES IN R VERSION 2.7.2 patched
@@ -2655,7 +2856,6 @@ BUG FIXES
 	*	       2.6 SERIES NEWS			 *
 	*						 *
 	**************************************************
-
 
 
 		CHANGES IN R VERSION 2.6.2 patched

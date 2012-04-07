@@ -52,6 +52,15 @@ setOldClass <- function(Classes, prototype = NULL,
     }
     prevClass <- "oldClass"
     S3Class <- character()  #will accumulate the S3 classes inherited
+    ## The table of S3 classes, used
+    ## to convert S4 objects in S3 method dispatch.
+    ## TODO:  should provide an optional argument to setOldClass()
+    ## to prevednt this conversion if it's not needed
+    if(!exists(".S3MethodsClasses", envir = where, inherits = FALSE)) {
+      S3table <- new.env()
+      assign(".S3MethodsClasses", S3table, envir = where)
+    }
+    else S3table <- get(".S3MethodsClasses", envir = where)
     for(cl in rev(Classes)) {
        S3Class <- c(cl, S3Class)
         if(isClass(cl, where)) {
@@ -83,6 +92,8 @@ setOldClass <- function(Classes, prototype = NULL,
             attr(clp, ".S3Class") <- S3Class
             def@prototype <- .notS4(clp)
             assignClassDef(cl, def, where = where)
+            ## add the class to the table of S3 classes
+            assign(cl, def, envir= S3table)
         }
        prevClass <- cl
     }
@@ -100,6 +111,8 @@ setOldClass <- function(Classes, prototype = NULL,
 }
 
 .S4OldClass <- function(Class, prevClass, def,where, prevDef) {
+    ## def is the S4 version of this class def'n, maybe by another class
+    ## name, and may or may not already extend oldClass
     curDef <- getClassDef(Class, where) # asserted to be defined
     ## arrange to restore previous definition if there was one.  Also done in setOldClass
     ## when no S4Class argument supplied
@@ -122,7 +135,10 @@ setOldClass <- function(Classes, prototype = NULL,
         ext <- .resolveSuperclasses(def, ext, root, where)
     }
     def@contains <- ext
-    def@subclasses <- c(def@subclasses, curDef@subclasses)
+    subcls <- curDef@subclasses
+    if(length(subcls) > 0) {
+      def@subclasses[names(subcls)]  <- subcls
+    }
     proto <- def@prototype
     if(is.null(attr(proto, ".S3Class"))) { # no S3 class slot, as will usually be true
         attr(proto, ".S3Class") <- if(.identC(prevClass, "oldClass")) Class else S3Class(curDef@prototype)
@@ -193,7 +209,7 @@ slotsFromS3 <- function(object) {
     for(cl in Classes[-1L]) {
         tfun <- .oldTestFun
         body(tfun, envir = environment(tfun)) <-
-            substitute(CLASS %in% attr(object, "class"), list(CLASS = cl))
+            substitute(inherits(object, CLASS), list(CLASS = cl))
         setIs(Class1, cl, test = tfun, coerce = .oldCoerceFun,
               replace = .oldReplaceFun, where = where)
     }

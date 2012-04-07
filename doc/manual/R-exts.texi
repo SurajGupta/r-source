@@ -611,6 +611,9 @@ an example.  Note that packages which use internal objects extensively
 should hide those objects in a name space, when they do not need to be
 documented (@pxref{Package name spaces}).
 
+Having a @file{man} directory containing no documentation files may give
+an installation error.
+
 The @file{R} and @file{man} subdirectories may contain OS-specific
 subdirectories named @file{unix} or @file{windows}.
 
@@ -723,6 +726,10 @@ copy as the working directory and with @code{R_LIBS} set to ensure that
 the copy of the package installed during testing will be found by
 @code{library(@var{pkg_name})}.
 
+If @file{tests} has a subdirectory @file{Examples} containing a file
+@code{@var{pkg}-Ex.Rout.save},  this is compared to the output file for
+running the examples when the latter are checked.
+
 Subdirectory @file{exec} could contain additional executables the package
 needs, typically scripts for interpreters such as the shell, Perl, or
 Tcl.  This mechanism is currently used only by a very few packages, and
@@ -738,7 +745,9 @@ Subdirectory @file{po} is used for files related to @emph{localization}:
 Sometimes it is convenient to distribute several packages as a
 @emph{bundle}.  (An example is @pkg{VR} which contains four packages.)
 The installation procedures on both Unix-alikes and Windows can handle
-package bundles.
+package bundles.  However, it has been announced that this will be
+removed in @R{} 2.11.0, so it is recommended that no new bundles be
+created.
 
 The @file{DESCRIPTION} file of a bundle has a @samp{Bundle}
 field and no @samp{Package} field, as in
@@ -1466,7 +1475,9 @@ correct use of @samp{$(BLAS_LIBS)}.
 @item
 The examples provided by the package's documentation are run.
 (@pxref{Writing R documentation files}, for information on using
-@code{\examples} to create executable example code.)
+@code{\examples} to create executable example code.)  If there is a file
+@file{tests/Examples/@var{pkg}-Ex-Rout.save}, the output of running the
+examples is compared to that file.
 
 Of course, released packages should be able to run at least their own
 examples.  Each example is run in a `clean' environment (so earlier
@@ -1533,7 +1544,7 @@ directory.  These patterns should be Perl regexps, one per line, to be
 matched against the file names relative to the top-level source
 directory.  In addition, directories from source control
 systems@footnote{called @file{CVS} or @file{.svn} or @file{.arch-ids} or
-@file{.bzr} or @file{git}.}, directories with names ending
+@file{.bzr} or @file{.git}.}, directories with names ending
 @file{.Rcheck} or @file{Old} or @file{old} and files @file{GNUMakefile},
 @file{Read-and-delete-me} or with base names starting with @samp{.#}, or
 starting and ending with @samp{#}, or ending in @samp{~}, @samp{.bak} or
@@ -1802,6 +1813,14 @@ will run these tests before putting a submission in the main archive.
 Note that @acronym{CRAN} generally does not accept submissions of
 precompiled binaries due to security reasons.
 
+Note also that for running @LaTeX{}, the Debian GNU/Linux @acronym{CRAN}
+check systems use reasonably recent versions of the Debian texlive
+distribution (@uref{http://packages.debian.org/de/sid/texlive}); for
+the Windows @acronym{CRAN} server, a reasonably recent of MikTeX
+(including all packages available for MikTeX) is employed.  Developers
+wanting to have their vignettes use @TeX{} packages or style files not
+(yet) included in these distributions should add the corresponding style
+files to the @file{inst/doc} subdirectory of their package.
 
 @node Package name spaces, Writing portable packages, Submitting a package to CRAN, Creating R packages
 @section Package name spaces
@@ -5532,9 +5551,9 @@ the call is from the body of a function defined in a package with a
 name space, the shared object loaded by the first (if any)
 @code{useDynLib} directive will be used.)
 
-For @code{.C} only you can specify an @code{ENCODING} argument: this
-requests that (unless @code{DUP = FALSE}) character vectors be
-re-encoded to the requested encoding before being passed in, and
+For @code{.C} and @code{.Fortran} you can specify an @code{ENCODING}
+argument: this requests that (unless @code{DUP = FALSE}) character vectors
+be re-encoded to the requested encoding before being passed in, and
 re-encoded from the requested encoding when passed back.  Note that
 encoding names are not standardized, and not all @R{} builds support
 re-encoding. (The argument is ignored with a warning if re-encoding is
@@ -5718,8 +5737,8 @@ Windows allows more control (and less security) over where dependent
 DLLs are looked for.  On all versions this includes the @env{PATH}
 environment variable, but with lowest priority: note that it does not
 include the directory from which the DLL was loaded.  On XP and later it
-is possible@footnote{and we provide an emulation on Windows 2000): see
-@samp{?dyn.oad}.} to add a single path with quite high priority via the
+is possible@footnote{and we provide an emulation on Windows 2000: see
+@samp{?dyn.load}.} to add a single path with quite high priority via the
 @code{DLLpath} argument to @code{dyn.load}.  This is (by default) used
 by @code{library.dynam} to include the package's @file{libs} directory
 in the DLL search path.

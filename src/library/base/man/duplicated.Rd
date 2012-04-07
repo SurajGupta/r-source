@@ -4,12 +4,17 @@
 % Distributed under GPL 2 or later
 
 \name{duplicated}
+\title{Determine Duplicate Elements}
 \alias{duplicated}
 \alias{duplicated.default}
 \alias{duplicated.data.frame}
 \alias{duplicated.matrix}
 \alias{duplicated.array}
-\title{Determine Duplicate Elements}
+\alias{anyDuplicated}
+\alias{anyDuplicated.default}
+\alias{anyDuplicated.array}
+\alias{anyDuplicated.matrix}
+\alias{anyDuplicated.data.frame}
 \description{
   Determines which elements of a vector or data frame are duplicates
   of elements with smaller subscripts, and returns a logical vector
@@ -21,8 +26,14 @@ duplicated(x, incomparables = FALSE, \dots)
 \method{duplicated}{default}(x, incomparables = FALSE,
            fromLast = FALSE, \dots)
 
-\method{duplicated}{array}(x, incomparables = FALSE, MARGIN = 1L,
+\method{duplicated}{array}(x, incomparables = FALSE, MARGIN = 1,
            fromLast = FALSE, \dots)
+
+anyDuplicated(x, incomparables = FALSE, \dots)
+\method{anyDuplicated}{default}(x, incomparables = FALSE,
+           fromLast = FALSE, \dots)
+\method{anyDuplicated}{array}(x, incomparables = FALSE,
+           MARGIN = 1, fromLast = FALSE, \dots)
 }
 \arguments{
   \item{x}{a vector or a data frame or an array or \code{NULL}.}
@@ -39,8 +50,17 @@ duplicated(x, incomparables = FALSE, \dots)
     \code{\link{apply}}.}
 }
 \details{
-  This is a generic function with methods for vectors (including lists),
-  data frames and arrays (including matrices).
+  These are generic functions with methods for vectors (including
+  lists), data frames and arrays (including matrices).
+
+  For the default methods, and whenever there are equivalent method
+  definitions for \code{duplicated} and \code{anyDuplicated},
+  \code{anyDuplicated(x,...)} is a \dQuote{generalized} shortcut for
+  \code{any(duplicated(x,...))}, in the sense that it returns the
+  \emph{index} \code{i} of the first duplicated entry \code{x[i]} if
+  there is one, and \code{0} otherwise.  Their behaviours may be
+  different when at least one of \code{duplicated} and
+  \code{anyDuplicated} has a relevant method.
 
   \code{duplicated(x, fromLast=TRUE)} is equivalent to but faster than
   \code{rev(duplicated(rev(x)))}.
@@ -58,16 +78,19 @@ duplicated(x, incomparables = FALSE, \dots)
 
   Missing values are regarded as equal, but \code{NaN} is not equal to
   \code{NA_real_}.
-  
+
   Values in \code{incomparables} will never be marked as duplicated.
   This is intended to be used for a fairly small set of values and will
   not be efficient for a very large set.
 }
 \value{
-  For a vector input, a logical vector of the same length as
-  \code{x}.  For a data frame, a logical vector with one element for
-  each row.  For a matrix or array, a logical array with the same
-  dimensions and dimnames.
+    \code{duplicated()}:
+    For a vector input, a logical vector of the same length as
+    \code{x}.  For a data frame, a logical vector with one element for
+    each row.  For a matrix or array, a logical array with the same
+    dimensions and dimnames.
+
+    \code{anyDuplicated()}: a non-negative integer (of length one).
 }
 \section{Warning}{
   Using this for lists is potentially slow, especially if the elements
@@ -94,6 +117,13 @@ stopifnot(identical(xu,  unique(x)),
 duplicated(iris)[140:143]
 
 duplicated(iris3, MARGIN = c(1, 3))
+anyDuplicated(iris) ## 143
+\dontshow{% array & data.frame methods:
+stopifnot(identical(anyDuplicated(iris), 143L),
+          identical(anyDuplicated(iris3, MARGIN = c(1, 3)), 143L))
+}
+anyDuplicated(x)
+anyDuplicated(x, fromLast = TRUE)
 }
 \keyword{logic}
 \keyword{manip}

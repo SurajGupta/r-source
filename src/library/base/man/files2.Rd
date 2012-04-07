@@ -76,11 +76,11 @@ Sys.umask(mode = "0000")
 #endif  
 }
 \value{
-  \code{dir.create} and \code{Sys.chmod} return a logical vector
-  indicating which operation succeeded for each of the files attempted.
+  \code{dir.create} and \code{Sys.chmod} return invisibly a logical vector
+  indicating if the operation succeeded for each of the files attempted.
   Using a missing value for a path name will always be regarded as a
-  failure.  \code{dir.create} indicates failure if the dirwctory already
-  exiss.  If \code{showWarnings = TRUE}, \code{dir.create} will give a
+  failure.  \code{dir.create} indicates failure if the directory already
+  exists.  If \code{showWarnings = TRUE}, \code{dir.create} will give a
   warning for an unexpected failure (e.g. not for a missing value nor
   for an already existing component for \code{recursive = TRUE}).
 
@@ -89,7 +89,7 @@ Sys.umask(mode = "0000")
 }
 #ifdef windows
 \note{
-  There is no guarantee that these fcuntions will handle Windows
+  There is no guarantee that these functions will handle Windows
   relative paths of the form \file{d:path}: try \file{d:./path}
   instead.  In particular, \file{d:} is not recognized as a directory.
 }

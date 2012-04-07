@@ -3,7 +3,7 @@
  *  file extra.c
  *  Copyright (C) 1998--2003  Guido Masarotto and Brian Ripley
  *  Copyright (C) 2004	      The R Foundation
- *  Copyright (C) 2005--2008  The R Development Core Team
+ *  Copyright (C) 2005--2009  The R Development Core Team
  *
  *  This program is free software; you can redistribute it and/or modify
  *  it under the terms of the GNU General Public License as published by
@@ -151,13 +151,13 @@ static void internal_shellexecW(const wchar_t * file)
     if(ret <= 32) { /* an error condition */
 	if(ret == ERROR_FILE_NOT_FOUND  || ret == ERROR_PATH_NOT_FOUND
 	   || ret == SE_ERR_FNF || ret == SE_ERR_PNF)
-	    error(_("'%s' not found"), file);
+	    error(_("'%ls' not found"), file);
 	if(ret == SE_ERR_ASSOCINCOMPLETE || ret == SE_ERR_NOASSOC)
-	    error(_("file association for '%s' not available or invalid"),
+	    error(_("file association for '%ls' not available or invalid"),
 		  file);
 	if(ret == SE_ERR_ACCESSDENIED || ret == SE_ERR_SHARE)
-	    error(_("access to '%s' denied"), file);
-	error(_("problem in displaying '%s'"), file);
+	    error(_("access to '%ls' denied"), file);
+	error(_("problem in displaying '%ls'"), file);
     }
 }
 
@@ -455,6 +455,8 @@ SEXP do_setwinprogressbar(SEXP call, SEXP op, SEXP args, SEXP env)
 
     checkArity(op, args);
     pbar = R_ExternalPtrAddr(ptr);
+    if(!pbar)
+	error("invalid progressbar -- has it been closed?");
     value = pbar->val;
     if(!isNull(CADR(args))) {
 	int iv;
@@ -689,26 +691,12 @@ struct mallinfo mallinfo(void);
 SEXP do_memsize(SEXP call, SEXP op, SEXP args, SEXP rho)
 {
     SEXP ans;
-    int maxmem;
+    int maxmem = NA_LOGICAL;
 
     checkArity(op, args);
-    if(isLogical(CAR(args))) {
+    if(isLogical(CAR(args))) 
 	maxmem = asLogical(CAR(args));
-	PROTECT(ans = allocVector(REALSXP, 1));
-#ifdef LEA_MALLOC
-	if(maxmem == NA_LOGICAL)
-	    REAL(ans)[0] = R_max_memory;
-	else if(maxmem)
-	    REAL(ans)[0] = mallinfo().usmblks;
-	else
-	    REAL(ans)[0] = mallinfo().uordblks;
-	REAL(ans)[0] /= 1048576.0;
-#else
-	REAL(ans)[0] = NA_REAL;
-#endif
-	UNPROTECT(1);
-	return ans;
-    } else if(isReal(CAR(args))) {
+    else if(isReal(CAR(args))) {
 	unsigned int newmax;
 	double mem = asReal(CAR(args));
 	if (!R_FINITE(mem))
@@ -724,7 +712,21 @@ SEXP do_memsize(SEXP call, SEXP op, SEXP args, SEXP rho)
 #endif
     } else
 	errorcall(call, _("incorrect argument"));
-    return R_NilValue;
+	
+    PROTECT(ans = allocVector(REALSXP, 1));
+#ifdef LEA_MALLOC
+    if(maxmem == NA_LOGICAL)
+	REAL(ans)[0] = R_max_memory;
+    else if(maxmem)
+	REAL(ans)[0] = mallinfo().usmblks;
+    else
+	REAL(ans)[0] = mallinfo().uordblks;
+    REAL(ans)[0] /= 1048576.0;
+#else
+    REAL(ans)[0] = NA_REAL;
+#endif
+    UNPROTECT(1);
+    return ans;
 }
 
 SEXP do_dllversion(SEXP call, SEXP op, SEXP args, SEXP rho)
@@ -1832,7 +1834,7 @@ SEXP do_readRegistry(SEXP call, SEXP op, SEXP args, SEXP env)
     hive = find_hive(CHAR(STRING_ELT(CADR(args), 0)));
     res = RegOpenKeyExW(hive, key, 0, KEY_READ, &hkey);
     if (res == ERROR_FILE_NOT_FOUND)
-	error(_("Registry key '%s' not found"), key);
+	error(_("Registry key '%ls' not found"), key);
     if (res != ERROR_SUCCESS)
 	error("RegOpenKeyEx error code %d: '%s'", (int) res, formatError(res));
     ans = readRegistryKey(hkey, maxdepth);
@@ -1923,7 +1925,7 @@ SEXP attribute_hidden do_filechoose(SEXP call, SEXP op, SEXP args, SEXP rho)
     char str[MAX_PATH+1];
 
     checkArity(op, args);
-    setuserfilter("All files (*.*)\0*.*\0\0");
+    setuserfilterW(L"All files (*.*)\0*.*\0\0");
     fn = askfilenameW(G_("Select file"), "");
     if (!fn)
 	error(_("file choice cancelled"));

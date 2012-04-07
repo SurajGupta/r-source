@@ -203,7 +203,7 @@
         bundle_name <- desc["Bundle"]
         is_bundle <- !is.na(bundle_name)
         if (is_bundle) {
-            contains <- strsplit(desc["Contains"], " ")[[1]]
+            contains <- .get_contains_from_package_db(desc)
             for(p in contains) {
                 if (.file_test("-d", file.path(pkg, p))) {
                     pkgs <- c(pkgs, p)
@@ -228,8 +228,9 @@
                     warning("problem installing per-package DESCRIPTION files",
                             call. = FALSE)
             }
-            ##if (tar_up)
-            ##    errmsg("cannot create a binary bundle: use 'R CMD build --binary' to do so")
+            ## This cannot create a binary bundle, no top-level DESCRIPTION
+            if (tar_up)
+                errmsg("cannot create a binary bundle: use 'R CMD build --binary' to do so")
             bundle_pkgs <<- contains
         } else {
             bundle_name <- desc["Package"]
@@ -307,9 +308,14 @@
             owd <- setwd(lib)
             system(paste(ZIP, "-r9Xq", filepath,
                          paste(bundle_pkgs, collapse = " ")))
+	    if(is_bundle) {
+                ## need to add top-level DESCRIPTION file
+                setwd(pkg)
+                system(paste(ZIP, "-9Xq", filepath, "DESCRIPTION"))
+	    }
+            setwd(owd)
             message("packaged installation of ",
                     sQuote(bundle_name), " as ", filename)
-            setwd(owd)
         }
 
         starsmsg(stars, "DONE (", bundle_name, ")")
@@ -982,6 +988,8 @@
             build_text <- FALSE
         } else if (a == "--no-html") {
             build_html <- FALSE
+        } else if (a == "--no-latex") {
+            build_latex <- FALSE
         } else if (a == "--no-example") {
             build_example <- FALSE
         } else if (a == "--no-chm") {
@@ -1402,6 +1410,10 @@
         text <- desc[f]
         ## munge 'text' appropriately (\\, {, }, "...")
         ## not sure why just these: copied from Rd2dvi, then added to.
+        ## KH: the LaTeX special characters are
+        ##   # $ % & _ ^ ~ { } \
+        ## \Rd@AsIs@dospecials in Rd.sty handles the first seven, so
+        ## braces and backslashes need explicit handling.
         text <- gsub('"([^"]*)"', "\\`\\`\\1''", text)
         text <- gsub("\\", "\\textbackslash{}", text, fixed = TRUE)
         text <- gsub("([{}$#_])", "\\\\\\1", text)
@@ -1411,7 +1423,8 @@
         text <- strsplit(text, "\n\n")[[1]]
         Encoding(text) <- "unknown"
         wrap <- paste("\\AsIs{", text, "}", sep = "")
-        cat("\\item[", gsub("([_#])", "\\\\\\1", f),
+        ## Not entirely safe: in theory, tags could contain \ ~ ^.
+        cat("\\item[", gsub("([#$%&_{}])", "\\\\\\1", f),
             "]", paste(wrap, collapse = "\n\n"),  "\n", sep = "", file=out)
     }
     cat("\\end{description}\n", file = out)
@@ -1674,7 +1687,7 @@
             sep = "", file = conn)
     }
 
-    chm_toc<- function(dir, pkg, M)
+    chm_toc <- function(dir, pkg, M)
     {
         conn <- file(file.path(dir, "chm", paste(pkg, ".toc", sep = "")), "wt")
         on.exit(close(conn))
@@ -1719,11 +1732,14 @@
     }
 
     mandir <- file.path(dir, "man")
-    if(!file_test("-d", mandir))
-        stop("there are no help pages in this package")
+    if(!file_test("-d", mandir)) {
+        warning("there are no help pages in this package")
+        return()
+    }
 
     ## This may well already have been done:
-    Rd <- if (file.exists(f <- file.path(outDir, "Meta", "Rd.rds"))) .readRDS(f)
+    Rd <- if (file.exists(f <- file.path(outDir, "Meta", "Rd.rds")))
+        .readRDS(f)
     else {
         ## or use list_files_with_type
         files <- Sys.glob(file.path(mandir, "*.[Rr]d"))
@@ -1733,6 +1749,11 @@
         ## suffix .Rd or .rd, according to 'Writing R Extensions'.
         OK <- grep("^[A-Za-z0-9]", basename(files))
         files <- files[OK]
+        if(!length(files)) {
+            warning("there is a 'man' dir but no help pages in this package",
+                    call. = FALSE)
+            return()
+        }
         Rdcontents(files)
     }
 
@@ -2164,7 +2185,7 @@
                      "\\cleardoublepage{}",
                      "\\pagenumbering{arabic}"), out)
         desc <- read.dcf(file.path(pkgdir, "DESCRIPTION"))[1,]
-        bundle_pkgs <- strsplit(desc["Contains"], "[[:blank:]]+")[[1]]
+        bundle_pkgs <- .get_contains_from_package_db(desc)
         for (p in bundle_pkgs) {
             message("Bundle package: ", p)
             cat("\\chapter{Package `", p, "'}\n", sep = "", file = out)

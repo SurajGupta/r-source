@@ -1,6 +1,6 @@
 R FAQ
 Frequently Asked Questions on R
-Version 2.9.2009-04-15
+Version 2.9.2009-06-25
 ISBN 3-900051-08-9
 Kurt Hornik
 
@@ -254,7 +254,7 @@ sparc-sun-solaris.
 2.3 What is the current version of R?
 =====================================
 
-The current released version is 2.9.0.  Based on this
+The current released version is 2.9.1.  Based on this
 `major.minor.patchlevel' numbering scheme, there are two development
 versions of R, a patched version of the current release (`r-patched') and
 one working towards the next minor or eventually major (`r-devel') releases
@@ -1380,9 +1380,6 @@ distributions of R.)
      A MORE flexible neural network package, providing the TAO robust neural
      network algorithm.
 
-*ARES*
-     Allelic richness estimation, with extrapolation beyond the sample size.
-
 *AcceptanceSampling*
      Creation and evaluation of acceptance sampling plans,
 
@@ -1418,6 +1415,9 @@ distributions of R.)
      *calibrator*, and *emulator*, for Bayesian prediction of complex
      computer codes, calibration of computer models, and emulation of
      computer programs, respectively.
+
+*BAMD*
+     Bayesian association model for genomic data with missing covariates.
 
 *BARD*
      Better Automated ReDistricting.
@@ -1537,11 +1537,17 @@ distributions of R.)
 *CCA*
      Canonical correlation analysis.
 
+*CDFt*
+     Statistical downscaling through CDF transform.
+
 *CDNmoney*
      Components of Canadian monetary aggregates.
 
 *CGIwithR*
      Facilities for the use of R to write CGI scripts.
+
+*CHNOSZ*
+     Chemical thermodynamics and activity diagrams.
 
 *CHsharp*
      Choi and Hall clustering in 3d.
@@ -1569,6 +1575,9 @@ distributions of R.)
      PNG, PDF, SVG, PostScript output and interactive display devices such
      as X11.
 
+*CalciOMatic*
+     Automatic calcium imaging analysis.
+
 *CarbonEL*
      Carbon Event Loop.
 
@@ -1581,6 +1590,9 @@ distributions of R.)
 *CircStats*
      Circular Statistics, from "Topics in Circular Statistics" by S. Rao
      Jammalamadaka and A. SenGupta, 2001, World Scientific.
+
+*ClinicalRobustPriors*
+     Robust Bayesian priors in clinical trials.
 
 *CoCo*
      Graphical modeling for contingency tables using CoCo.
@@ -1638,9 +1650,6 @@ distributions of R.)
      A set of functions for the detection of spatial clusters of diseases
      using count data.
 
-*DDHFm*
-     Variance stabilization by Data-Driven Haar-Fisz (for microarrays).
-
 *DEA*
      Data Envelopment Analysis.
 
@@ -1654,13 +1663,22 @@ distributions of R.)
 *DPpackage*
      Semiparametric Bayesian analysis using Dirichlet process priors.
 
+*DSpat*
+     Spatial modelling for distance sampling data.
+
 *DTK*
      Dunnett-Tukey-Kramer: pairwise multiple comparison test adjusted for
      unequal variances and unequal sample sizes.
 
+*Daim*
+     Diagnostic accuracy of classification models.
+
 *Davies*
      Functions for the Davies quantile function and the Generalized Lambda
      distribution.
+
+*Deducer*
+     An intuitive graphical data analysis system for use with *JGR*.
 
 *Defaults*
      Create global function defaults.
@@ -1704,6 +1722,9 @@ distributions of R.)
      R companion to "Curve and Surface Fitting with Splines" by Paul
      Dierckx, 1993, Oxford University Press.
 
+*DoE.base*
+     Full factorials, orthogonal arrays and base utilities for DoE packages.
+
 *EDR*
      Estimation of the effective dimension reduction (EDR) space.
 
@@ -1715,6 +1736,9 @@ distributions of R.)
 
 *EMD*
      Empirical mode decomposition and Hilbert spectral analysis.
+
+*EMJumpDiffusion*
+     EM algorithm for jump diffusion processes.
 
 *ETC*
      Tests and simultaneous confidence intervals for equivalence to control.
@@ -1737,6 +1761,9 @@ distributions of R.)
      Statistical Learning: Data Mining, Inference, and Prediction" by Trevor
      Hastie, Robert Tibshirani and Jerome Friedman (2001), Springer.
 
+*EnQuireR*
+     Questionnaires.
+
 *EngrExpt*
      Data sets from the book "Introductory Statistics for Engineering
      Experimentation" by Peter Nelson, Marie Coffin and Karen Copeland
@@ -1746,8 +1773,18 @@ distributions of R.)
      Statistical analysis in epidemiology, with functions for demographic
      and epidemiological analysis in the Lexis diagram.
 
+*ExPD2D*
+     Exact computation of bivariate projection depth.
+
 *FAiR*
      Factor Analysis in R, using genetic algorithms.
+
+*FBN*
+     FISH Based Normalization and copy number inference of SNP microarray
+     data.
+
+*FD*
+     Measuring functional diversity (FD) from multiple traits.
 
 *FGN*
      Fractional Gaussian Noise model fitting.
@@ -1760,6 +1797,12 @@ distributions of R.)
 
 *FKF*
      Fast Kalman Filter.
+
+*FRB*
+     Fast and Robust Bootstrap.
+
+*FSelector*
+     Selecting attributes.
 
 *FTICRMS*
      Analysis of Fourier Transform-Ion Cyclotron Resonance Mass Spectrometry
@@ -1831,6 +1874,9 @@ distributions of R.)
      Fit RS and FMKL generalised lambda distributions using discretized and
      maximum likelihood methods.
 
+*GOFSN*
+     Goodness-Of-Fit tests for the family of Skew-Normal models.
+
 *GOSim*
      Computation of functional similarities between GO terms and gene
      products.
@@ -1872,6 +1918,10 @@ distributions of R.)
 *GeneNet*
      Modeling and inferring gene networks.
 
+*GeneReg*
+     Infer gene regulatory networks with time delay using time course gene
+     expression data.
+
 *Geneland*
      MCMC inference from individual genetic data based on a spatial
      statistical model.
@@ -1891,6 +1941,10 @@ distributions of R.)
 *HAPim*
      Methods for QTL detection and fine mapping.
 
+*HFWutils*
+     Utilities by H. Felix Wittmann: Excel connections, string matching, and
+     passing by reference.
+
 *HH*
      Support software for "Statistical Analysis and Data Display" by
      Richard M. Heiberger and Burt Holland, Springer, 2005.
@@ -1903,16 +1957,18 @@ distributions of R.)
      of Statistical Analyses Using R" by Brian S. Everitt and Torsten
      Hothorn (2006), Chapman & Hall/CRC.
 
-*HTMLapplets*
-     Functions inserting dynamic scatterplots and grids in documents
-     generated by *R2HTML*.
+*HTMLUtils*
+     Facilitate automated HTML report creation.
 
-*HFWutils*
-     Utilities by H. Felix Wittmann: Excel connections, string matching, and
-     passing by reference.
+*HWEBayes*
+     Bayesian investigation of Hardy-Weinberg Equilibrium.
 
 *HadoopStreaming*
      Utilities for using R scripts in Hadoop streaming.
+
+*Haplin*
+     Analyzing case-parent triad and/or case-control data with SNP
+     haplotypes.
 
 *HaploSim*
      Simulate haplotypes through meioses.
@@ -1930,6 +1986,10 @@ distributions of R.)
      clustering, character string manipulation, conversion of S objects to
      LaTeX code, recoding variables, and bootstrap repeated measures
      analysis.
+
+*HybridMC*
+     Implementation of the Hybrid Monte Carlo and Multipoint Hybrid Monte
+     Carlo sampling techniques.
 
 *HydroMe*
      Estimation of soil hydraulic parameters from experimental data.
@@ -1977,6 +2037,10 @@ distributions of R.)
 
 *Iso*
      Functions to perform isotonic regression.
+
+*IsoGene*
+     Testing for monotonic relationship between gene expression and doses in
+     a microarray experiment.
 
 *JADE*
      JADE and ICA performance criteria.
@@ -2028,9 +2092,6 @@ distributions of R.)
 *LLAhclust*
      Hierarchical clustering of variables or objects based on the likelihood
      linkage analysis method.
-
-*LLN*
-     Learning with latent networks.
 
 *LMGene*
      Date transformation and identification of differentially expressed
@@ -2103,10 +2164,6 @@ distributions of R.)
 *MChtest*
      Monte Carlo hypothesis tests.
 
-*MDD*
-     Minimum Detectable Difference calculations for several continuous and
-     binary endpoints.
-
 *MEMSS*
      Data sets and sample analyses from "Mixed-effects Models in S and
      S-PLUS" by J. Pinheiro and D. Bates, 2000, Springer.
@@ -2178,6 +2235,9 @@ distributions of R.)
 *MiscPsycho*
      Miscellaneous Psychometrics.
 
+*MixSim*
+     Simulating data to study performance of clustering algorithms.
+
 *ModelMap*
      Random forest and stochastic gradient boosting models for building
      detailed prediction maps.
@@ -2185,6 +2245,9 @@ distributions of R.)
 *MultEq*
      Equivalence tests and simultaneous confidence intervals for multiple
      endpoints.
+
+*Multiclasstesting*
+     Performance of N-ary classification testing.
 
 *NADA*
      Methods described in "Nondetects And Data Analysis: Statistics for
@@ -2208,6 +2271,9 @@ distributions of R.)
 *NRAIA*
      Data sets with sample code from "Nonlinear Regression Analysis and Its
      Applications" by Doug Bates and Donald Watts, 1988, Wiley.
+
+*NeatMap*
+     Non-clustered heatmap alternatives.
 
 *NestedCohort*
      Survival analysis for cohorts with missing covariate information.
@@ -2233,6 +2299,9 @@ distributions of R.)
 *Oncotree*
      Estimation of oncogenetic trees.
 
+*OrdFacReg*
+     Least squares, logistic, and Cox regression with ordered predictors.
+
 *OrdMonReg*
      Compute least squares estimates of one bounded or two ordered antitonic
      regression curves.
@@ -2253,6 +2322,9 @@ distributions of R.)
 *PBSmodelling*
      Software to facilitate the design, testing, and operation of computer
      models.
+
+*PCS*
+     Calculate the Probability of Correct Selection.
 
 *PET*
      Simulation and reconstruction of PET images.
@@ -2348,6 +2420,10 @@ distributions of R.)
 *R.cache*
      Fast and light-weight caching of objects.
 
+*R.filesets*
+     Easy handling of and access to files organized in structured
+     directories.
+
 *R.huge*
      Methods for accessing huge amounts of data.
 
@@ -2391,6 +2467,9 @@ distributions of R.)
      ColorBrewer palettes for drawing nice maps shaded according to a
      variable.
 
+*RDS*
+     Respondent-Driven Sampling.
+
 *RDieHarder*
      R interface to the dieharder random number generator test suite.
 
@@ -2431,6 +2510,10 @@ distributions of R.)
      Estimation of the relative index of inequality for interval-censored
      data using natural cubic splines.
 
+*RImageJ*
+     R bindings for the ImageJ Java based image processing and analysis
+     platform.
+
 *RItools*
      Randomization inference tools.
 
@@ -2455,6 +2538,9 @@ distributions of R.)
 
 *RM2*
      Revenue management and pricing.
+
+*RMTstat*
+     Distributions and statistics from Random Matrix Theory.
 
 *RMySQL*
      An interface between R and the MySQL database system.
@@ -2518,6 +2604,9 @@ distributions of R.)
 
 *RSeqMeth*
      analysis of Sequenom EpiTYPER data.
+
+*RSiteSearch*
+     Alternative interfaces to RSiteSearch.
 
 *RSurvey*
      Analysis of spatially distributed data.
@@ -2617,6 +2706,9 @@ distributions of R.)
      Access old data saved in fixed-width format based on ISI-formatted
      codebooks.
 
+*ReadImages*
+     Functions for reading JPEG and PNG files.
+
 *Reliability*
      Functions for estimating parameters in software reliability models.
 
@@ -2632,14 +2724,14 @@ distributions of R.)
 *Rglpk*
      R/GNU Linear Programming Kit interface.
 
+*RgoogleMaps*
+     Overlays on Google map tiles in R.
+
 *RiboSort*
      Classification and analysis of microbial community profiles.
 
 *Rigroup*
      Provides small integer group functions.
-
-*Rlab*
-     Functions and data sets for the NCSU ST370 class.
 
 *Rlabkey*
      Data retrieval from a Labkey database.
@@ -2681,6 +2773,9 @@ distributions of R.)
      An R interface to the SYMPHONY mixed integer linear program (MILP)
      solver.
 
+*RthroughExcelWorkbooksInstaller*
+     Excel workbooks supporting statistics courses using "R through Excel".
+
 *Runuran*
      Interface to the UNU.RAN library for Universal Non-Uniform RANdom
      variate generators.
@@ -2697,6 +2792,10 @@ distributions of R.)
 
 *Ryacas*
      An R interfaces to the yacas computer algebra system.
+
+*RxCEcolInf*
+     R x C Ecological Inference with optional incorporation of survey
+     information.
 
 *SASPECT*
      Significant AnalysiS of PEptide CounTs.
@@ -2716,6 +2815,9 @@ distributions of R.)
      Functions and data sets from "Sampling: Design and Analysis" by S.
      Lohr, 1999, Duxbury.
 
+*SEMModComp*
+     Model Comparisons for SEM.
+
 *SGCS*
      Spatial Graph based Clustering Summaries for spatial point patterns.
 
@@ -2732,6 +2834,10 @@ distributions of R.)
 
 *SMC*
      Sequential Monte Carlo (SMC) Algorithm.
+
+*SMIR*
+     Companion to "Statistical Modelling in R" by Murray Aitkin, Brian
+     Francis, John Hinde and Ross Darnell, 2009, Oxford University Press.
 
 *SMPracticals*
      Data sets and a few functions for use with the practicals outlined in
@@ -2790,6 +2896,9 @@ distributions of R.)
 
 *SiZer*
      Significant Zero crossings.
+
+*SigWinR*
+     SigWin-detector implementation in R.
 
 *SimComp*
      Simultaneous Comparisons for multiple endpoints.
@@ -2938,6 +3047,9 @@ distributions of R.)
 *TraMineR*
      Sequences and trajectories mining for social scientists.
 
+*TripleR*
+     Social Relation Model (SRM) analyses for single round-robin groups.
+
 *TwoWaySurvival*
      Additive two-way hazards modeling of right censored survival data.
 
@@ -2976,6 +3088,9 @@ distributions of R.)
 *VaR*
      Methods for calculation of Value at Risk (VaR).
 
+*VarianceGamma*
+     The variance gamma distribution.
+
 *VhayuR*
      R interface to the Vhayu Velocity high volume fast financial market
      data archival and analysis products.
@@ -2987,12 +3102,6 @@ distributions of R.)
      Functions and datasets for the book "Linear Mixed Models: A Practical
      Guide Using Statistical Software" by B. West, K. Welch, and A. Galecki,
      2006, Chapman & Hall/CRC.
-
-*WaveCGH*
-     Wavelet changepoint detection for array CGH.
-
-*WeedMap*
-     Map of weed intensity.
 
 *WhatIf*
      Software for evaluating counterfactuals.
@@ -3022,6 +3131,10 @@ distributions of R.)
      Everyone's statistical software: an easy-to-use program that can
      estimate, and help interpret the results of, an enormous range of
      statistical models.
+
+*aCGH.Spline*
+     Robust spline interpolation for dual color array comparative genomic
+     hybridisation data.
 
 *aaMI*
      Mutual information for protein sequence alignments.
@@ -3154,6 +3267,12 @@ distributions of R.)
 
 *arm*
      Data Analysis using Regression and Multilevel/hierarchical models.
+
+*aroma.apd*
+     A probe-level data file format used by *aroma.affymetrix*.
+
+*aroma.core*
+     Support package for *aroma.affymetrix* et al.
 
 *arrayImpute*
      Missing imputation for microarray data.
@@ -3316,11 +3435,18 @@ distributions of R.)
      Asymptotic simultaneous confidence intervals for many-to-one
      comparisons of proportions.
 
+*binarySimCLF*
+     Simulate correlated binary data.
+
 *bindata*
      Generation of correlated artificial binary data.
 
 *binom*
      Binomial confidence intervals for several parameterizations.
+
+*binomSamSize*
+     Confidence intervals and sample size determination for a binomial
+     proportion under simple random sampling and pooled sampling.
 
 *bio.infer*
      Compute biological inferences.
@@ -3368,17 +3494,13 @@ distributions of R.)
 *boa*
      Bayesian Output Analysis Program for MCMC.
 
-*boolean*
-     Boolean logit and probit: a procedure for testing Boolean hypotheses.
-
-*boost*
-     Boosting methods for real and simulated data, featuring `BagBoost',
-     `LogitBoost', `AdaBoost', and `L2Boost'.
-
 *boot*
      Functions and datasets for bootstrapping from the book "Bootstrap
      Methods and Their Applications" by A. C. Davison and D. V. Hinkley,
      1997, Cambridge University Press.  _Recommended_.
+
+*bootRes*
+     Bootstrapped response and correlation functions.
 
 *bootStepAIC*
      Model selection by bootstrapping the `stepAIC()' procedure.
@@ -3459,9 +3581,6 @@ distributions of R.)
 
 *caretNWS*
      Classification and REgression Training in parallel using NetworkSpaces.
-
-*cat*
-     Analysis of categorical-variable datasets with missing values.
 
 *catmap*
      Case-control and TDT meta-analysis package.
@@ -3606,9 +3725,19 @@ distributions of R.)
 *clv*
      Cluster validation techniques.
 
+*cmm*
+     Categorical Marginal Models.
+
 *cmprsk*
      Estimation, testing and regression modeling of subdistribution
      functions in competing risks.
+
+*cmprskContin*
+     Continuous mark-specific relative risks for two groups.
+
+*cmrutils*
+     Miscellaneous functions from the Center for the Mathematical Research,
+     Stankin, Moskow.
 
 *cobs99*
      Constrained B-splines: outdated 1999 version.
@@ -3702,6 +3831,9 @@ distributions of R.)
 
 *corrperm*
      Permutation tests of correlation with repeated measurements.
+
+*countrycode*
+     Convert country names and coding schemes.
 
 *covRobust*
      Robust covariance estimation via nearest neighbor cleaning.
@@ -3823,6 +3955,10 @@ distributions of R.)
 *depth*
      Depth functions tools for multivariate analysis.
 
+*descr*
+     Functions to describe weighted categorical variables, and to facilitate
+     the character encoding conversion of objects.
+
 *desirability*
      Desirabiliy function optimization and ranking.
 
@@ -3852,6 +3988,12 @@ distributions of R.)
      Baseline identification and peak decomposition for x-ray
      diffractograms.
 
+*diffusionMap*
+     Diffusion map method of data parametrization.
+
+*digeR*
+     GUI for analyzing 2D DIGE data.
+
 *digest*
      Two functions for the creation of "hash" digests of arbitrary R
      objects using the md5 and sha-1 algorithms permitting easy comparison
@@ -3862,6 +4004,12 @@ distributions of R.)
 
 *dirichlet*
      Dirichlet model of consumer buying behavior for marketing research.
+
+*dirmult*
+     Estimation of Dirichlet-Multinomial distribution.
+
+*diseasemapping*
+     Calculate SMRs from population and case data.
 
 *dispmod*
      Functions for modelling dispersion in GLMs.
@@ -3912,9 +4060,6 @@ distributions of R.)
 *dplR*
      Dendrochronology Program Library in R.
 
-*dprep*
-     Data preprocessing and visualization functions for classification.
-
 *dr*
      Functions, methods, and datasets for fitting dimension reduction
      regression, including pHd and inverse regression methods SIR and SAVE.
@@ -3952,6 +4097,9 @@ distributions of R.)
 
 *dynCorr*
      Dynamic correlation.
+
+*dynGraph*
+     Interactive visualization of data frames and factorial planes.
 
 *dynamicGraph*
      Interactive graphical tool for manipulating graphs.
@@ -4015,6 +4163,9 @@ distributions of R.)
 *elasticnet*
      Elastic net regularization and variable selection.
 
+*elec*
+     Functions for statistical election audits.
+
 *ellipse*
      Package for drawing ellipses and ellipse-like confidence regions.
 
@@ -4041,8 +4192,14 @@ distributions of R.)
      Empirical likelihood ratio for means/quantiles/hazards from possibly
      right censored data.
 
+*emplik2*
+     Empirical likelihood test (two-sample, censored data).
+
 *emu*
      Interface to the Emu speech database system.
+
+*endogMNP*
+     Fitting Multinomial Probit Models with Endogenous selection.
 
 *energy*
      E-statistics (energy) tests for comparing distributions: multivariate
@@ -4077,6 +4234,9 @@ distributions of R.)
 *ergm*
      An integrated set of tools to analyze and simulate networks based on
      exponential-family random graph models (ERGM).
+
+*estout*
+     Stores model estimates and format them as LaTeX table.
 
 *etm*
      Empirical Transition Matrix.
@@ -4120,6 +4280,9 @@ distributions of R.)
 
 *extRemes*
      Extreme value toolkit.
+
+*ez*
+     Easy analysis and visualization of factorial experiments.
 
 *fArma*
      The Rmetrics module for "ARMA Time Series Modelling".
@@ -4271,6 +4434,9 @@ distributions of R.)
      Flexible Mixture Modeling: a general framework for finite mixtures of
      regression models using the EM algorithm.
 
+*flubase*
+     Baseline of mortality free of influenza epidemics.
+
 *fmri*
      Functions for the analysis of fMRI experiments.
 
@@ -4322,9 +4488,16 @@ distributions of R.)
 *fractal*
      Insightful fractal time series modeling and analysis.
 
+*fractalrock*
+     Generate fractal time series with non-normal returns distribution.
+
 *frailtypack*
      Fit a shared gamma frailty model and Cox proportional hazards model
      using a Penalized Likelihood on the hazard function.
+
+*freqMAP*
+     Frequency Moving Average Plots (MAP) of multinomial data by a
+     continuous covariate.
 
 *frontier*
      Maximum likelihood estimation of stochastic frontier production and
@@ -4358,6 +4531,9 @@ distributions of R.)
 
 *g.data*
      Create and maintain delayed-data packages (DDP's).
+
+*gPdtest*
+     Bootstrap goodness-of-fit test for the generalized Pareto distribution.
 
 *gRain*
      Probability propagation in graphical independence networks.
@@ -4503,9 +4679,6 @@ distributions of R.)
      Functions for defining directed acyclic graphs and undirected graphs,
      finding induced graphs and fitting Gaussian Markov models.
 
-*ggplot*
-     Grammar of graphics based plots for R.
-
 *ggplot2*
      An implementation of the Grammar of Graphics in R.
 
@@ -4542,6 +4715,9 @@ distributions of R.)
 
 *glmpath*
      L1 regularization path for Generalized Linear Models.
+
+*glmulti*
+     GLM model selection and multimodel inference made easy.
 
 *glpk*
      Interface to the GNU Linear Programming Kit (GLPK).
@@ -4587,6 +4763,9 @@ distributions of R.)
 
 *gplots*
      Various functions to draw plots.
+
+*gputools*
+     A few GPU-enabled data mining functions.
 
 *grImport*
      Importing vector graphics.
@@ -4835,12 +5014,18 @@ distributions of R.)
 *influence.ME*
      Tools for recognizing influential data in mixed models.
 
+*infotheo*
+     Information-theoretic tools.
+
 *inline*
      Inline C/C++ function calls from R.
 
 *intcox*
      Implementation of the Iterated Convex Minorant Algorithm for the Cox
      proportional hazard model for interval censored event data.
+
+*integrOmics*
+     Integrate Omics data project.
 
 *intervals*
      Tools for working with points and intervals.
@@ -4871,6 +5056,10 @@ distributions of R.)
 
 *irtoys*
      Simple interface to the estimation and plotting of IRT models.
+
+*isa2*
+     The Iterative Signature Algorithm for finding modules in an input
+     matrix.
 
 *ismev*
      Functions to support the computations carried out in "An Introduction
@@ -4925,6 +5114,10 @@ distributions of R.)
 
 *klin*
      Linear equations with Kronecker structure.
+
+*kmi*
+     Kaplan-Meier multiple imputation for the analysis of cumulative
+     incidence functions in the competing risks setting.
 
 *kml*
      K-Means for Longitudinal data.
@@ -5105,6 +5298,9 @@ distributions of R.)
      Marginally specified logistic normal models for longitudinal binary
      data.
 
+*localdepth*
+     Simplicial, Mahalanobis and ellipsoid local and global depth.
+
 *locfdr*
      Computation of local false discovery rates.
 
@@ -5145,6 +5341,9 @@ distributions of R.)
 
 *longitudinal*
      Analysis of multiple time course data.
+
+*longitudinalData*
+     Tools for longitudinal data.
 
 *longmemo*
      Datasets and Functionality from the textbook "Statistics for
@@ -5205,6 +5404,9 @@ distributions of R.)
 *mapLD*
      Linkage Disequilibrium mapping.
 
+*mapReduce*
+     Flexible mapReduce algorithm for parallel computation.
+
 *mapdata*
      Supplement to package *maps*, providing the larger and/or
      higher-resolution databases.
@@ -5225,6 +5427,9 @@ distributions of R.)
      Functions with example data for graphing and mapping models from
      hierarchical clustering and classification and regression trees.
 
+*mar1s*
+     Multiplicative AR(1) with seasonal processes.
+
 *marelac*
      Datasets, constants, conversion factors, utilities for the marine and
      lacustrine sciences.
@@ -5235,12 +5440,19 @@ distributions of R.)
 *marginalmodelplots*
      Marginal model plots for linear and generalized linear models.
 
+*markerSearchPower*
+     Power calculation for marker detection strategies in genome-wide
+     association studies.
+
 *mathgraph*
      Tools for constructing and manipulating objects from a class of
      directed and undirected graphs.
 
 *matlab*
      Emulate MATLAB code using R.
+
+*matrixStats*
+     Methods that apply to rows and columns of a matrix.
 
 *matrixcalc*
      Collection of functions for matrix differential calculus.
@@ -5263,6 +5475,9 @@ distributions of R.)
 *mc2d*
      Tools for two-dimensional Monte-Carlo simulations.
 
+*mcclust*
+     Process an MCMC sample of clusterings.
+
 *mcgibbsit*
      Warnes and Raftery's MCGibbsit MCMC diagnostic.
 
@@ -5279,6 +5494,9 @@ distributions of R.)
 *mco*
      Multi criteria optimization algorithms.
 
+*mcsm*
+     Functions for Monte Carlo methods.
+
 *mda*
      Code for mixture discriminant analysis (MDA), flexible discriminant
      analysis (FDA), penalized discriminant analysis (PDA), multivariate
@@ -5287,6 +5505,12 @@ distributions of R.)
 
 *meboot*
      Maximum entropy bootstrap for time series.
+
+*medAdherence*
+     Medication Adherence: commonly used definitions.
+
+*mediation*
+     Causal mediation analysis.
 
 *mefa*
      Faunistic count data handling and reporting.
@@ -5305,11 +5529,14 @@ distributions of R.)
      Fixed and random effects meta-analysis, with functions for tests of
      bias, forest and funnel plot.
 
+*metaMA*
+     Meta-analysis for MicroArrays.
+
 *metacor*
      Meta-analysis of correlation coefficients.
 
-*metaMA*
-     Meta-analysis for MicroArrays.
+*metafor*
+     Meta-analysis.
 
 *mfp*
      Multiple Fractional Polynomials.
@@ -5361,6 +5588,9 @@ distributions of R.)
      Estimation/multiple imputation programs for mixed categorical and
      continuous data.
 
+*mixAK*
+     Mixture of methods including mixtures.
+
 *mixPHM*
      Mixtures of proportional hazard models.
 
@@ -5394,9 +5624,6 @@ distributions of R.)
 
 *mlegp*
      Maximum Likelihood Estimates of Gaussian Processes.
-
-*mlica*
-     Independent Component Analysis using Maximum Likelihood.
 
 *mlmRev*
      Examples from Multilevel Modelling Software Review.
@@ -5455,9 +5682,6 @@ distributions of R.)
 *moonsun*
      Basic astronomical calculations.
 
-*mota*
-     Mean Optimal Transformation Approach.
-
 *mpm*
      Spectral map analysis.
 
@@ -5472,6 +5696,10 @@ distributions of R.)
 
 *mrdrc*
      Model-robust concentration-response analysis.
+
+*mrt*
+     Data sets and functions for the book "Modern Regression Techniques
+     Using R" by D. B. Wright and K. London, 2009, Sage Publications.
 
 *msBreast*
      Protein mass spectra dataset from a breast cancer study.
@@ -5531,11 +5759,17 @@ distributions of R.)
 *multipol*
      Utilities to manipulate multivariate polynomials.
 
+*multmod*
+     Testing of multiple outcomes.
+
 *multtest*
      Resampling-based multiple hypothesis testing.
 
 *muscor*
      Multi-stage Convex Relaxation.
+
+*mvShapiroTest*
+     Generalized Shapiro-Wilk test for multivariate normality.
 
 *mvbutils*
      Utilities by Mark V. Bravington for project organization, editing and
@@ -5661,9 +5895,6 @@ distributions of R.)
      estimation or clustering algorithms research and teaching; providing
      the widely used Marron-Wand densities.
 
-*norm*
-     Analysis of multivariate normal datasets with missing values.
-
 *normwm.test*
      Normality and white noise testing.
 
@@ -5707,6 +5938,9 @@ distributions of R.)
 *nws*
      Functions for NetWorkSpaces and Sleigh.
 
+*obliqueTree*
+     Oblique trees for classification data.
+
 *obsSens*
      Sensitivity analysis for observational studies.
 
@@ -5722,6 +5956,9 @@ distributions of R.)
 
 *odfWeave*
      Sweave processing of Open Document Format (ODF) files.
+
+*odfWeave.survey*
+     Support for *odfWeave* on the *survey* package.
 
 *ofw*
      Optimal Feature Weighting algorithm.
@@ -5751,6 +5988,10 @@ distributions of R.)
 
 *operators*
      Additional binary operators for R.
+
+*optBiomarker*
+     Estimates optimal number of biomarkers for two-group classification
+     based on microarray data.
 
 *optmatch*
      Functions to perform optimal matching, particularly full matching.
@@ -5788,6 +6029,10 @@ distributions of R.)
 *pack*
      Create and manipulate raw vectors.
 
+*packS4*
+     Toy example of S4 package illustrating the book "Petit Manuel de
+     Programmation Orientee Objet sous R".
+
 *packClassic*
      Illustrate the tutorial "S4: From Idea To Package".
 
@@ -5800,6 +6045,9 @@ distributions of R.)
 
 *paltran*
      Functions for paleolimnology.
+
+*pamm*
+     Power analysis for random effects in mixed models.
 
 *pamr*
      Pam: Prediction Analysis for Microarrays.
@@ -5816,11 +6064,14 @@ distributions of R.)
 *paran*
      Horn's test of principal components/factors.
 
+*parcor*
+     Regularized estimation of partial correlation matrices.
+
+*partDSA*
+     Partitioning using Deletion, Substitution, and Addition moves.
+
 *partitions*
      Additive partitions of integers.
-
-*partsm*
-     Periodic AutoRegressive Time Series Models.
 
 *party*
      Unbiased recursive partitioning in a conditional inference framework.
@@ -5855,6 +6106,12 @@ distributions of R.)
 
 *pedigree*
      Pedigree functions.
+
+*pedigreemm*
+     Pedigree-based mixed-effects models.
+
+*pegas*
+     Population and Evolutionary Genetics Analysis System.
 
 *penalized*
      Penalized estimation in generalized linear models.
@@ -5913,6 +6170,9 @@ distributions of R.)
 *plRasch*
      Log linear by linear asscociation models.
 
+*plan*
+     Tools for project planning.
+
 *playwith*
      A GUI for interactive plots using GTK+.
 
@@ -5944,6 +6204,9 @@ distributions of R.)
 
 *plspm*
      Partial Least Squares Path Modeling.
+
+*plus*
+     Penalized Linear Unbiased Selection.
 
 *plyr*
      Tools for splitting, applying and combining data.
@@ -6004,6 +6267,10 @@ distributions of R.)
 
 *powerGWASinteraction*
      Power calculations for interactions for GWAS.
+
+*powerSurvEpi*
+     Power and sample size calculation for survival analysis of
+     epidemiological studies.
 
 *powerpkg*
      Power analyses for the affected sib pair and the TDT design.
@@ -6198,6 +6465,9 @@ distributions of R.)
 *race*
      Implementation of some racing methods for the empirical selection of
      the best.
+
+*rainbow*
+     Rainbow plots, functional bagplot, and functional HDR boxplot.
 
 *rake*
      Raking survey datasets by re-weighting.
@@ -6408,6 +6678,10 @@ distributions of R.)
 *robust*
      Insightful robust package.
 
+*robustX*
+     eXperimental eXtraneous eXtraordinary ... functionality for robust
+     statistics.
+
 *robustbase*
      Basic Robust Statistics.
 
@@ -6556,6 +6830,9 @@ distributions of R.)
 *sdcTable*
      Statistical Disclosure Control for tabular data.
 
+*sddpack*
+     SemiDiscrete Decomposition.
+
 *sde*
      Simulation and inference for Stochastic Differential Equations.
 
@@ -6658,6 +6935,10 @@ distributions of R.)
 *simecol*
      SIMulation of ECOLogical (and other) dynamic systems.
 
+*simctest*
+     Sequential (or Safe) Implementation of Monte Carlo TESTs with uniformly
+     bounded resampling risk.
+
 *simex*
      SIMEX and MCSIMEX algorithms for measurement error models.
 
@@ -6752,6 +7033,9 @@ distributions of R.)
 *sparseLDA*
      Sparse Linear Discriminant Analysis for gaussians and mixture of
      gaussians models.
+
+*spatcounts*
+     Fit spatial CAR count regression models using MCMC.
 
 *spatclus*
      Arbitrarily shaped multiple spatial cluster detection for case event
@@ -6904,6 +7188,9 @@ distributions of R.)
 
 *sudoku*
      Sudoku puzzle solver.
+
+*sugaR*
+     Plots to help optimizing diabetes therapy.
 
 *supclust*
      Methodology for supervised grouping of predictor variables.
@@ -7060,6 +7347,9 @@ distributions of R.)
 *tmvtnorm*
      Truncated multivariate normal distribution.
 
+*tnet*
+     Analysis of weighted and longitudinal networks.
+
 *topmodel*
      An R implementation of TOPMODEL.
 
@@ -7071,6 +7361,10 @@ distributions of R.)
 
 *trackObjs*
      Track objects.
+
+*tractor.base*
+     Basic TractoR (tractography with R) functions for working with magnetic
+     images.
 
 *tradeCosts*
      Post-trade analysis of transaction costs.
@@ -7160,6 +7454,9 @@ distributions of R.)
 *uncompress*
      For uncompressing `.Z' files.
 
+*uniCox*
+     Univarate shrinkage prediction in the Cox model.
+
 *untb*
      Ecological drift under the UNTB (Unified Neutral Theory of
      Biodiversity).
@@ -7169,9 +7466,6 @@ distributions of R.)
 
 *urn*
      Functions for sampling without replacement (simulated urns).
-
-*uroot*
-     Unit root tests and graphics for seasonal time series.
 
 *vabayelMix*
      Variational Bayesian mixture model.
@@ -7199,9 +7493,6 @@ distributions of R.)
 *verification*
      Utilities for verification of discrete and probabilistic forecasts.
 
-*verify*
-     Construction of test suites using verify objects.
-
 *vioplot*
      Violin plots, which are a combination of a box plot and a kernel
      density plot.
@@ -7219,9 +7510,6 @@ distributions of R.)
 *wasim*
      Tools for data processing and visualization of results of the WASIM-ETH
      hydrological model.
-
-*waveclock*
-     Time-frequency analysis of cycling cell luminescence data.
 
 *waved*
      WaveD transform in R.
@@ -7273,6 +7561,9 @@ distributions of R.)
 
 *xtable*
      Export data to LaTeX and HTML tables.
+
+*xterm256*
+     Support for xterm256 escape sequences.
 
 *xts*
      Extensible time series.
@@ -7342,8 +7633,14 @@ available via `http://www.omegahat.org/R/'.
      machines and allows R functionality to be exported in the same way to
      other applications.
 
+*CodeDepends*
+     Analysis of R code for reproducible research and code view.
+
 *Combinations*
      Compute the combinations of choosing r items from n elements.
+
+*FlashMXML*
+     A simple Flash graphics device for R.
 
 *IDocs*
      Infrastructure for interactive documents.
@@ -7356,9 +7653,15 @@ available via `http://www.omegahat.org/R/'.
      class-based method definition are supported in the style of languages
      such as Java and C++.
 
+*RCSS*
+     Facilities for reading and working with CSS files in R.
+
 *RCurl*
      Allows one to compose HTTP requests to fetch URIs, post forms, etc.,
      and process the results returned by the Web server.
+
+*RDA*
+     Read RDA files using R.
 
 *RDCOMClient*
      Provides dynamic client-side access to (D)COM applications from within
@@ -7389,6 +7692,9 @@ available via `http://www.omegahat.org/R/'.
 
 *RGoogleDocs*
      Initial, elementary interface to Google's Document API.
+
+*RGraphicsDevice*
+     A framework for developing R graphics devices entirely in R.
 
 *RGtk*
      Facilities in the S language for programming graphical interfaces using
@@ -7454,6 +7760,9 @@ available via `http://www.omegahat.org/R/'.
 
 *RXLisp*
      An interface to call XLisp-Stat functions from within R.
+
+*Rcartogram*
+     An interface to Mark Newman's cartogram software.
 
 *Rcompression*
      In-memory decompression for GNU zip and bzip2 formats.
@@ -7526,6 +7835,9 @@ available via `http://www.omegahat.org/R/'.
 *XMLRPC*
      RPC via XML.
 
+*XMLSchema*
+     R facilities to read XML schema.
+
 *Zillow*
      Simple interface to Zillow.com's house price estimate API.
 
@@ -7554,9 +7866,8 @@ Bioconductor, with more packages under development.
 *AffyExpress*
      Affymetrix quality assessment and analysis tool.
 
-*AnnBuilder*
-     Processing annotation date from public data repositories and building
-     annoation data packages or XML data documents using the source data.
+*AffyTiling*
+     Easy extraction of individual probes in Affymetrix tiling arrays.
 
 *AnnotationDbi*
      Annotation DataBase Interface.
@@ -7597,6 +7908,9 @@ Bioconductor, with more packages under development.
      Calibration model for estimating absolute expression levels from
      microarray data.
 
+*CAMERA*
+     Collection of annotation related methods for mass spectrometry data.
+
 *CGHcall*
      Calling aberrations for array CGH tumor profiles.
 
@@ -7608,6 +7922,9 @@ Bioconductor, with more packages under development.
 
 *CoCiteStats*
      A collection of software tools for dealing with co-citation data.
+
+*DAVIDQuery*
+     Retrieval from the DAVID bioinformatics data resource into R.
 
 *DEDS*
      Differential Expression via Distance Summary for microarray data.
@@ -7642,6 +7959,9 @@ Bioconductor, with more packages under development.
 *GLAD*
      Gain and Loss Analysis of DNA.
 
+*GOSemSim*
+     GO-terms Semantic Similarity measures.
+
 *GOstats*
      Tools for manipulating GO and microarrays.
 
@@ -7660,6 +7980,14 @@ Bioconductor, with more packages under development.
 
 *GeneRfold*
      R for genes and sequences, using viennaRNA package (fold).
+
+*GeneRegionScan*
+     Analysis of Affymetrix data within discrete regions of the genome.
+
+*GeneSelectMMD*
+     Gene selection based on the marginal distributions of gene profiles
+     that characterized by a mixture of three-component multivariate
+     distributions.
 
 *GeneSelector*
      GeneSelector.
@@ -7708,6 +8036,9 @@ Bioconductor, with more packages under development.
 *KEGGSOAP*
      Client-side SOAP access KEGG.
 
+*KEGGgraph*
+     A graph approach to KEGG PATHWAY.
+
 *LBE*
      Estimation of the false discovery rate.
 
@@ -7721,6 +8052,9 @@ Bioconductor, with more packages under development.
 
 *MANOR*
      Micro-Array NORmalization.
+
+*MCRestimate*
+     Misclassification error estimation with cross-validation.
 
 *MLInterfaces*
      Uniform interfaces to machine learning code for the exprSet class from
@@ -7766,6 +8100,9 @@ Bioconductor, with more packages under development.
      Outlier detection using quantile regression on the M-A scatterplots of
      high-throughput data.
 
+*PAnnBuilder*
+     Protein annotation data package builder.
+
 *PCpheno*
      Phenotypes and cellular organizational units.
 
@@ -7791,9 +8128,6 @@ Bioconductor, with more packages under development.
 *ROC*
      Receiver Operating Characteristic (ROC) approach for identifying genes
      that are differentially expressed in two types of samples.
-
-*RSNPper*
-     Interface to chip.org::SNPper for SNP-related data.
 
 *RWebServices*
      Expose R functions as web services through Java/Axis/Apache.
@@ -7830,6 +8164,9 @@ Bioconductor, with more packages under development.
 *Rintact*
      Interface to EBI Intact protein interaction data base.
 
+*Rmagpie*
+     Micro-array gene-expression-based program in error rate estimation.
+
 *Rredland*
      Interface to redland RDF utilities.
 
@@ -7860,11 +8197,21 @@ Bioconductor, with more packages under development.
 *SNPchip*
      Classes and methods for high throughput SNP chip data.
 
+*SPIA*
+     Signaling Pathway Impact Analysis using combined evidence of pathway
+     over-representation and unusual signaling perturbations.
+
+*SSPA*
+     Sample Size and Power Analysis for microarray data.
+
 *ScISI*
      In Silico Interactome.
 
 *SemSim*
      Gene ontology-based semantic similarity measures.
+
+*TargetSearch*
+     Analysis of GC-MS metabolite profiling data.
 
 *TypeInfo*
      Optional type specification prototype.
@@ -7948,6 +8295,9 @@ Bioconductor, with more packages under development.
 *beadarraySNP*
      Normalization and reporting of Illumina SNP bead arrays.
 
+*betr*
+     Identify differentially expressed genes in microarray time-course data.
+
 *bgafun*
      A method to identify specifity determining residues in protein
      families.
@@ -7957,6 +8307,9 @@ Bioconductor, with more packages under development.
 
 *bioDist*
      A collection of software tools for calculating distance measures.
+
+*biocDatasets*
+     Synthetic datasets for bioconductor.
 
 *biocGraph*
      Graph examples and use cases in Bioinformatics.
@@ -7997,6 +8350,10 @@ Bioconductor, with more packages under development.
 *cosmoGUI*
      GUI for constructing constraint sets used by the *cosmo* package.
 
+*crlmm*
+     Genotype calling (CRLMM) and copy number analysis tool for Affymetrix
+     SNP 5.0 and 6.0 and Illumina arrays.
+
 *ctc*
      Tools to export and import Tree and Cluster to other programs.
 
@@ -8007,6 +8364,9 @@ Bioconductor, with more packages under development.
 
 *diffGeneAnalysis*
      Performs differential Gene expression Analysis.
+
+*dyebias*
+     Methods to correct for gene-specific dye bias.
 
 *ecolitk*
      Metadata and tools to work with E. coli.
@@ -8035,14 +8395,24 @@ Bioconductor, with more packages under development.
 *fdrame*
      FDR Adjustments of Microarray Experiments (FDR-AME).
 
+*flagme*
+     Analysis of metabolomics GC/MS data.
+
 *flowClust*
      Clustering for flow cytometry.
 
 *flowCore*
      Basic structures for flow cytometry data.
 
+*flowFlowJo*
+     Tools for extracting information from a FlowJo workspace and working
+     with the data in the *flowCore* paradigm.
+
 *flowQ*
      Qualitiy control for flow cytometry.
+
+*flowStats*
+     Statistical methods for the analysis of flow cytometry data.
 
 *flowUtils*
      Utilities for flow cytometry.
@@ -8062,6 +8432,10 @@ Bioconductor, with more packages under development.
 *genArise*
      A tool for dual color microarray data.
 
+*gene2pathway*
+     Prediction of KEGG pathway membership for individual genes based on
+     InterPro domain signatures.
+
 *geneRecommender*
      A gene recommender algorithm to identify genes coexpressed with a query
      set of genes.
@@ -8077,6 +8451,9 @@ Bioconductor, with more packages under development.
      Graphical tools for genomic data, for example for plotting expression
      data along a chromosome or producing color images of expression data
      matrices.
+
+*genomeIntervals*
+     Operations on genomic intervals.
 
 *globaltest*
      Testing globally whether a group of genes is significantly related to
@@ -8173,6 +8550,9 @@ Bioconductor, with more packages under development.
 *metaArray*
      Integration of microarray data for meta-analysis.
 
+*metahdep*
+     Hierarchical dependence in meta-analysis.
+
 *multtest*
      Multiple testing procedures for controlling the family-wise error rate
      (FWER) and the false discovery rate (FDR).  Tests can be based on t-
@@ -8260,6 +8640,12 @@ Bioconductor, with more packages under development.
 *puma*
      Propagating Uncertainty in Microarray Analysis.
 
+*qpcrNorm*
+     Data-driven normalization strategies for high-throughput qPCR data.
+
+*qpgraph*
+     Reverse engineering of molecular regulatory networks with qp-graphs.
+
 *quantsmooth*
      Quantile smoothing and genomic visualization of array data.
 
@@ -8268,6 +8654,10 @@ Bioconductor, with more packages under development.
 
 *rHVDM*
      Hidden Variable Dynamic Modeling.
+
+*rMAT*
+     R implementation from MAT program to normalize and analyze tiling
+     arrays and ChIP-chip data.
 
 *rama*
      Robust Analysis of MicroArrays: robust estimation of cDNA microarray
@@ -8324,6 +8714,9 @@ Bioconductor, with more packages under development.
 *spikeLI*
      Affymetrix Spike-in Langmuir Isotherm data analysis tool.
 
+*spkTools*
+     Methods for spike-in arrays.
+
 *splicegear*
      A set of tools to work with alternative splicing.
 
@@ -8357,6 +8750,9 @@ Bioconductor, with more packages under development.
 
 *topGO*
      Enrichment analysis for Gene Ontology.
+
+*tspair*
+     Top scoring pairs for microarray classification.
 
 *twilight*
      Estimation of local false discovery rate.
